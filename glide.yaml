@@ -1,0 +1,22 @@
+package: github.com/openshift/osde2e
+import:
+- package: github.com/openshift-online/uhc-sdk-go
+  version: ~0.1.6
+  subpackages:
+  - pkg/client
+- package: github.com/openshift/api
+  subpackages:
+  - project/v1
+- package: github.com/openshift/client-go
+  version: be319837212db97ca55549af6d0e44acc12db7fc
+  subpackages:
+  - project/clientset/versioned
+- package: k8s.io/apimachinery
+  version: kubernetes-1.13.4
+  subpackages:
+  - pkg/apis/meta/v1
+- package: k8s.io/client-go
+  version: kubernetes-1.13.4
+  subpackages:
+  - rest
+  - tools/clientcmd
