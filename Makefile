@@ -9,7 +9,11 @@ build-image:
 	docker build -t "$(IMAGE_NAME):$(IMAGE_TAG)" .
 
 push-image:
-	docker push "$(IMAGE_NAME):$(IMAGE_TAG)"
+	@docker --config=$(DOCKER_CONF) push "$(IMAGE_NAME):$(IMAGE_TAG)"
+
+push-latest:
+	docker tag "$(IMAGE_NAME):$(IMAGE_TAG)" "$(IMAGE_NAME):latest"
+	@docker --config=$(DOCKER_CONF) push "$(IMAGE_NAME):latest"
 
 out/osde2e: out
 	go build -v -o $@ $(PKG)/cmd/osde2e
