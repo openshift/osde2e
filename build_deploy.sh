@@ -1,6 +1,9 @@
-#!/bin/bash
+#!/bin/bash -e
 
-DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source "${DIR}/commons.sh"
+# configure docker credentials
+DOCKER_CONF="$PWD/.docker"
+mkdir -p "$DOCKER_CONF"
+docker --config="$DOCKER_CONF" login -u="$QUAY_USER" -p="$QUAY_TOKEN" quay.io
 
-build_image
+make build-image
+make push-image
