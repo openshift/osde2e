@@ -1,3 +1,3 @@
 #!/bin/bash -e
 
-exit 0
+make docker-test

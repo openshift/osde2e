@@ -20,3 +20,7 @@ import:
   subpackages:
   - rest
   - tools/clientcmd
+- package: github.com/onsi/ginkgo
+  version: ~1.8.0
+- package: github.com/onsi/gomega
+  version: ~1.5.0

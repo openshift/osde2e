@@ -1,30 +1,31 @@
 package verify
 
 import (
-	image "github.com/openshift/client-go/image/clientset/versioned"
+	"fmt"
+
+	"github.com/onsi/ginkgo"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func (c *Cluster) checkImageStreams() (interface{}, error) {
-	proj, err := c.createProject("imagestreams")
-	if err != nil {
-		return nil, err
-	}
-	defer c.cleanup(proj.Name)
+var _ = ginkgo.Describe("ImageStreams", func() {
+	defer ginkgo.GinkgoRecover()
 
-	client, err := image.NewForConfig(c.cfg)
+	cluster, err := NewCluster(nil)
 	if err != nil {
-		return nil, err
+		ginkgo.Fail("couldn't configure cluster client: " + err.Error())
 	}
 
-	list, err := client.ImageV1().ImageStreams(proj.Name).List(metav1.ListOptions{})
-	if err != nil {
-		return nil, err
-	}
+	ginkgo.It("ImageStreams should exist in the cluster", func() {
+		list, err := cluster.Image().ImageV1().ImageStreams(cluster.proj).List(metav1.ListOptions{})
+		if err != nil {
+			ginkgo.Fail("Couldn't list clusters: " + err.Error())
+		}
 
-	if len(list.Items) > 20 {
-		return true, nil
-	} else {
-		return false, nil
-	}
-}
+		minImages := 20
+		if len(list.Items) < minImages {
+			msg := fmt.Sprintf("wanted at least '%d' images but have only '%d'", minImages, len(list.Items))
+			ginkgo.Fail(msg)
+		}
+	})
+})

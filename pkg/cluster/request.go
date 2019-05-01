@@ -1,4 +1,4 @@
-package main
+package cluster
 
 import (
 	"encoding/json"
@@ -8,9 +8,9 @@ import (
 	uhc "github.com/openshift-online/uhc-sdk-go/pkg/client"
 )
 
-func createClusterReq(cluster interface{}) (interface{}, error) {
+func createClusterReq(conn *uhc.Connection, cluster interface{}) (interface{}, error) {
 	params := map[string]interface{}{"provision": true}
-	resp, err := doRequest("POST", "clusters", params, cluster)
+	resp, err := doRequest(conn, "POST", "clusters", params, cluster)
 	if err != nil {
 		return nil, fmt.Errorf("couldn't create cluster: %v", err)
 	}
@@ -20,9 +20,9 @@ func createClusterReq(cluster interface{}) (interface{}, error) {
 	return createdCluster, err
 }
 
-func getClusterReq(clusterId string) (interface{}, error) {
+func getClusterReq(conn *uhc.Connection, clusterId string) (interface{}, error) {
 	resource := fmt.Sprintf("clusters/%s", clusterId)
-	resp, err := doRequest("", resource, nil, nil)
+	resp, err := doRequest(conn, "", resource, nil, nil)
 	if err != nil {
 		return nil, fmt.Errorf("couldn't retrieve cluster '%s': %v", clusterId, err)
 	}
@@ -32,9 +32,9 @@ func getClusterReq(clusterId string) (interface{}, error) {
 	return cluster, err
 }
 
-func deleteClusterReq(clusterId string) error {
+func deleteClusterReq(conn *uhc.Connection, clusterId string) error {
 	resource := fmt.Sprintf("clusters/%s", clusterId)
-	resp, err := doRequest("DELETE", resource, nil, nil)
+	resp, err := doRequest(conn, "DELETE", resource, nil, nil)
 	if err != nil {
 		return fmt.Errorf("couldn't delete cluster '%s': %v", clusterId, err)
 	}
@@ -45,9 +45,9 @@ func deleteClusterReq(clusterId string) error {
 	return nil
 }
 
-func getCredentialsReq(clusterId string) (map[string]interface{}, error) {
+func getCredentialsReq(conn *uhc.Connection, clusterId string) (map[string]interface{}, error) {
 	resource := fmt.Sprintf("clusters/%s/credentials", clusterId)
-	resp, err := doRequest("", resource, nil, nil)
+	resp, err := doRequest(conn, "", resource, nil, nil)
 	if err != nil {
 		return nil, fmt.Errorf("couldn't retrieve credentials for cluster '%s': %v", clusterId, err)
 	}
@@ -57,7 +57,7 @@ func getCredentialsReq(clusterId string) (map[string]interface{}, error) {
 	return creds, err
 }
 
-func doRequest(method, resource string, param map[string]interface{}, msg interface{}) (resp *uhc.Response, err error) {
+func doRequest(conn *uhc.Connection, method, resource string, param map[string]interface{}, msg interface{}) (resp *uhc.Response, err error) {
 	var data []byte
 	if msg != nil {
 		// marshal body unless bytes
@@ -76,11 +76,11 @@ func doRequest(method, resource string, param map[string]interface{}, msg interf
 	var req *uhc.Request
 	switch method {
 	case "POST":
-		req = UHCConn.Post()
+		req = conn.Post()
 	case "DELETE":
-		req = UHCConn.Delete()
+		req = conn.Delete()
 	default:
-		req = UHCConn.Get()
+		req = conn.Get()
 	}
 
 	// set path and payload

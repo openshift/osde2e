@@ -1,6 +1,7 @@
-.PHONY: build-image
+.PHONY: build-image push-image push-latest test
 
 PKG := github.com/openshift/osde2e
+DIR := $(dir $(realpath $(firstword $(MAKEFILE_LIST))))
 
 IMAGE_NAME := quay.io/app-sre/osde2e
 IMAGE_TAG := $(shell git rev-parse --short=7 HEAD)
@@ -15,8 +16,23 @@ push-latest:
 	docker tag "$(IMAGE_NAME):$(IMAGE_TAG)" "$(IMAGE_NAME):latest"
 	@docker --config=$(DOCKER_CONF) push "$(IMAGE_NAME):latest"
 
+test: out/osde2e
+	$< -test.timeout 2h
+
+docker-test:
+	docker run \
+		-t \
+		-e REPORT_DIR=/out \
+		-e UHC_TOKEN=${UHC_REFRESH_TOKEN} \
+		-e AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID} \
+		-e AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY} \
+		-e TESTGRID_BUCKET=${TESTGRID_BUCKET} \
+		-e TESTGRID_SERVICE_ACCOUNT=${TESTGRID_SERVICE_ACCOUNT} \
+		-v $(DIR)/out:/out \
+		$(IMAGE_NAME):$(IMAGE_TAG)
+
 out/osde2e: out
-	go build -v -o $@ $(PKG)/cmd/osde2e
+	CGO_ENABLED=0 go test -v -c -o $@ $(PKG)
 
 out:
 	mkdir -p $@
