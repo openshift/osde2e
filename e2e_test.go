@@ -8,5 +8,6 @@ import (
 )
 
 func TestE2E(t *testing.T) {
+	Cfg.LoadFromEnv()
 	RunE2ETests(t, Cfg)
 }

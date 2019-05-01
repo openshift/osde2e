@@ -18,8 +18,6 @@ func init() {
 
 // Setup cluster before testing begins.
 var _ = ginkgo.SynchronizedBeforeSuite(func() []byte {
-	setupCfgFromEnv()
-
 	if Cfg.Prefix == "" {
 		Cfg.Prefix = randomStr(5)
 	}

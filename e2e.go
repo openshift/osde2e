@@ -12,7 +12,7 @@ import (
 	"github.com/onsi/gomega"
 )
 
-func RunE2ETests(t *testing.T, cfg Config) {
+func RunE2ETests(t *testing.T, cfg *Config) {
 	gomega.RegisterFailHandler(ginkgo.Fail)
 
 	// setup reporter
