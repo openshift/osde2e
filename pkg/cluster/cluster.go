@@ -80,7 +80,7 @@ func (u *UHC) DeleteCluster(clusterId string) error {
 }
 
 func (u *UHC) WaitForClusterReady(clusterId string) error {
-	times, wait := 45, 45*time.Second
+	times, wait := 145, 45*time.Second
 	log.Printf("Waiting %v for cluster '%s' to be ready...\n", time.Duration(times)*wait, clusterId)
 
 	for i := 0; i < times; i++ {
