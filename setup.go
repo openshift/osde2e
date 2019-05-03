@@ -2,8 +2,10 @@ package osde2e
 
 import (
 	"fmt"
+	"io/ioutil"
 	"math/rand"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/onsi/ginkgo"
@@ -16,14 +18,29 @@ func init() {
 	rand.Seed(time.Now().Unix())
 }
 
+const (
+	DefaultVersion = "openshift-v4.0-beta4"
+)
+
 // Setup cluster before testing begins.
 var _ = ginkgo.SynchronizedBeforeSuite(func() []byte {
-	if Cfg.Prefix == "" {
-		Cfg.Prefix = randomStr(5)
+	if Cfg.ClusterVersion == "" {
+		Cfg.ClusterVersion = DefaultVersion
+	}
+
+	if Cfg.Suffix == "" {
+		Cfg.Suffix = randomStr(5)
 	}
 
 	if Cfg.ClusterName == "" {
-		Cfg.ClusterName = Cfg.Prefix + "-test-cluster"
+		safeVersion := strings.Replace(Cfg.ClusterVersion, ".", "-", -1)
+		Cfg.ClusterName = "ci-cluster-" + safeVersion + "-" + Cfg.Suffix
+	}
+
+	if Cfg.ReportDir == "" {
+		if dir, err := ioutil.TempDir("", "osde2e"); err == nil {
+			Cfg.ReportDir = dir
+		}
 	}
 
 	if err := setupCluster(); err != nil {
@@ -39,30 +56,30 @@ var _ = ginkgo.SynchronizedBeforeSuite(func() []byte {
 var _ = ginkgo.SynchronizedAfterSuite(func() {
 	// only run on one
 }, func() {
-	if err := Cfg.uhc.DeleteCluster(Cfg.clusterId); err != nil {
+	if err := UHC.DeleteCluster(ClusterId); err != nil {
 		ginkgo.Fail("failed to destroy cluster")
 	}
 })
 
 // setupCluster brings up a cluster, waits for it to be ready, then returns it's name.
 func setupCluster() (err error) {
-	if Cfg.uhc, err = cluster.NewUHC(Cfg.UHCToken, !Cfg.UseProd); err != nil {
+	if UHC, err = cluster.NewUHC(Cfg.UHCToken, !Cfg.UseProd); err != nil {
 		return fmt.Errorf("could not setup UHC: %v", err)
 	}
 
-	if Cfg.clusterId, err = Cfg.uhc.LaunchCluster(Cfg.ClusterName, Cfg.AWSKeyId, Cfg.AWSAccessKey); err != nil {
+	if ClusterId, err = UHC.LaunchCluster(Cfg.ClusterName, Cfg.ClusterVersion, Cfg.AWSKeyId, Cfg.AWSAccessKey); err != nil {
 		return fmt.Errorf("could not launch cluster: %v", err)
 	}
 
-	if err = Cfg.uhc.WaitForClusterReady(Cfg.clusterId); err != nil {
+	if err = UHC.WaitForClusterReady(ClusterId); err != nil {
 		return fmt.Errorf("failed waiting for cluster ready: %v", err)
 	}
 
-	if Cfg.kubeconfig, err = Cfg.uhc.ClusterKubeconfig(Cfg.clusterId); err != nil {
+	if Kubeconfig, err = UHC.ClusterKubeconfig(ClusterId); err != nil {
 		return fmt.Errorf("could not get kubeconfig for cluster: %v", err)
 	}
 
-	if err = os.Setenv(verify.TestKubeconfigEnv, string(Cfg.kubeconfig)); err != nil {
+	if err = os.Setenv(verify.TestKubeconfigEnv, string(Kubeconfig)); err != nil {
 		return fmt.Errorf("could not set kubeconfig: %v", err)
 	}
 	return nil

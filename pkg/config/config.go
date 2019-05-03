@@ -1,22 +1,17 @@
-package osde2e
+package config
 
 import (
 	"os"
 	"reflect"
-
-	"github.com/openshift/osde2e/pkg/cluster"
 )
-
-// Cfg is the configuration being used for end to end testing.
-var Cfg = new(Config)
 
 // Config dictates the behavior of cluster tests.
 type Config struct {
 	// ReportDir is the location JUnit XML results are written.
 	ReportDir string `env:"REPORT_DIR"`
 
-	// Prefix is used at the beginning of tests to identify them.
-	Prefix string
+	// Suffix is used at the end of test names to identify them.
+	Suffix string
 
 	// UHCToken is used to authenticate with UHC.
 	UHCToken string `env:"UHC_TOKEN"`
@@ -24,19 +19,26 @@ type Config struct {
 	// ClusterName is the name of the cluster being created.
 	ClusterName string
 
+	// ClusterVersion is the version of the cluster being deployed.
+	ClusterVersion string `env:"CLUSTER_VERSION"`
+
 	// AWSKeyId is used by UHC.
 	AWSKeyId string `env:"AWS_ACCESS_KEY_ID"`
 
 	// AWSAccessKey is used by UHC.
 	AWSAccessKey string `env:"AWS_SECRET_ACCESS_KEY"`
 
+	// TestGridBucket is the GCS bucket used to report results to TestGrid.
+	TestGridBucket string `env:"TESTGRID_BUCKET"`
+
+	// TestGridPrefix is used to namespace reports.
+	TestGridPrefix string `env:"TESTGRID_PREFIX"`
+
+	// TestGridServiceAccount is a Base64 encoded Google Cloud Service Account used to access the TestGridBucket.
+	TestGridServiceAccount []byte `env:"TESTGRID_SERVICE_ACCOUNT"`
+
 	// UseProd sends requests to production UHC.
 	UseProd bool
-
-	// runtime vars
-	clusterId  string
-	uhc        *cluster.UHC
-	kubeconfig []byte
 }
 
 func (c *Config) LoadFromEnv() {
@@ -45,11 +47,14 @@ func (c *Config) LoadFromEnv() {
 		f := v.Type().Field(i)
 		if env, ok := f.Tag.Lookup("env"); ok {
 			if envVal, envOk := os.LookupEnv(env); envOk {
+				field := v.Field(i)
 				switch f.Type.Kind() {
 				case reflect.String:
-					v.Field(i).SetString(envVal)
+					field.SetString(envVal)
 				case reflect.Bool:
-					v.Field(i).SetBool(true)
+					field.SetBool(true)
+				case reflect.Slice:
+					field.SetBytes([]byte(envVal))
 				}
 			}
 		}

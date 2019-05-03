@@ -15,7 +15,7 @@ const (
 )
 
 // LaunchCluster setups an new cluster using the UHC API and returns it's ID.
-func (u *UHC) LaunchCluster(name, awsId, awsKey string) (string, error) {
+func (u *UHC) LaunchCluster(name, version, awsId, awsKey string) (string, error) {
 	log.Printf("Creating cluster '%s'...", name)
 	cluster := map[string]interface{}{
 		"name": name,
@@ -33,7 +33,7 @@ func (u *UHC) LaunchCluster(name, awsId, awsKey string) (string, error) {
 			"id": "us-east-1",
 		},
 		"version": map[string]interface{}{
-			"id": "openshift-v4.0-beta4",
+			"id": version,
 		},
 	}
 

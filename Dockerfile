@@ -10,7 +10,7 @@ ADD glide.yaml glide.lock ${PKG}
 RUN glide install --strip-vendor
 
 # compile test binary
-ADD . /go/src/github.com/openshift/osde2e/
+ADD . ${PKG}
 RUN make out/osde2e
 
 # run tests
