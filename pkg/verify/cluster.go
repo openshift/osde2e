@@ -12,9 +12,8 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 
 	projectv1 "github.com/openshift/api/project/v1"
-	project "github.com/openshift/client-go/project/clientset/versioned"
-
 	image "github.com/openshift/client-go/image/clientset/versioned"
+	project "github.com/openshift/client-go/project/clientset/versioned"
 )
 
 const TestKubeconfigEnv = "TEST_KUBECONFIG"

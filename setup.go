@@ -79,6 +79,7 @@ func setupCluster() (err error) {
 		return fmt.Errorf("could not get kubeconfig for cluster: %v", err)
 	}
 
+	verify.Kubeconfig = Kubeconfig
 	if err = os.Setenv(verify.TestKubeconfigEnv, string(Kubeconfig)); err != nil {
 		return fmt.Errorf("could not set kubeconfig: %v", err)
 	}

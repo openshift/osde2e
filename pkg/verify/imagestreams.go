@@ -8,10 +8,12 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+var Kubeconfig []byte
+
 var _ = ginkgo.Describe("ImageStreams", func() {
 	defer ginkgo.GinkgoRecover()
 
-	cluster, err := NewCluster(nil)
+	cluster, err := NewCluster(Kubeconfig)
 	if err != nil {
 		ginkgo.Fail("couldn't configure cluster client: " + err.Error())
 	}
