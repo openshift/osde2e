@@ -69,7 +69,7 @@ func getCredentialsReq(conn *uhc.Connection, clusterId string) (map[string]inter
 	}
 
 	creds := map[string]interface{}{}
-	err = json.Unmarshal(resp.Bytes(), creds)
+	err = json.Unmarshal(resp.Bytes(), &creds)
 	return creds, err
 }
 

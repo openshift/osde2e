@@ -66,7 +66,7 @@ func (u *UHC) ClusterKubeconfig(clusterId string) (kubeconfig []byte, err error)
 	}
 
 	kubeconfigStr, err := getStr(creds, "kubeconfig")
-	if err != nil {
+	if err == nil {
 		kubeconfig = []byte(kubeconfigStr)
 	}
 	return kubeconfig, err

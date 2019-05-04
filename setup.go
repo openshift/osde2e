@@ -46,6 +46,7 @@ var _ = ginkgo.SynchronizedBeforeSuite(func() []byte {
 
 	if err := setupCluster(cfg); err != nil {
 		msg := fmt.Sprintf("Failed to setup cluster for testing: %v", err)
+		log.Println(msg)
 		ginkgo.Fail(msg)
 	}
 	return []byte{}
@@ -54,9 +55,8 @@ var _ = ginkgo.SynchronizedBeforeSuite(func() []byte {
 })
 
 // Destroy cluster after testing.
-var _ = ginkgo.SynchronizedAfterSuite(func() {
-	// only run on one
-}, func() {
+var _ = ginkgo.AfterSuite(func() {
+	defer ginkgo.GinkgoRecover()
 	cfg := config.Cfg
 	if cfg.NoDestroy {
 		log.Println("NO_DESTROY is set, skipping deleting cluster.")
@@ -64,13 +64,15 @@ var _ = ginkgo.SynchronizedAfterSuite(func() {
 	}
 
 	if err := UHC.DeleteCluster(cfg.ClusterId); err != nil {
-		ginkgo.Fail("failed to destroy cluster")
+		msg := fmt.Sprintf("Failed to destroy cluster: %v", err)
+		log.Println(msg)
+		ginkgo.Fail(msg)
 	}
 })
 
 // setupCluster brings up a cluster, waits for it to be ready, then returns it's name.
 func setupCluster(cfg *config.Config) (err error) {
-	if UHC, err = cluster.NewUHC(cfg.UHCToken, !cfg.UseProd); err != nil {
+	if UHC, err = cluster.NewUHC(cfg.UHCToken, !cfg.UseProd, cfg.DebugUHC); err != nil {
 		return fmt.Errorf("could not setup UHC: %v", err)
 	}
 

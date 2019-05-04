@@ -58,6 +58,9 @@ type Config struct {
 
 	// Kubeconfig is used to access a cluster.
 	Kubeconfig []byte `env:"TEST_KUBECONFIG"`
+
+	// DebugUHC shows debug level messages when enabled.
+	DebugUHC bool `env:"DEBUG_UHC"`
 }
 
 func (c *Config) LoadFromEnv() {

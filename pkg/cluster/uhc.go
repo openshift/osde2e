@@ -13,9 +13,9 @@ const (
 )
 
 // NewUHC setups a client to connect to UHC.
-func NewUHC(token string, staging bool) (*UHC, error) {
+func NewUHC(token string, staging, debug bool) (*UHC, error) {
 	logger, err := uhc.NewGoLoggerBuilder().
-		Debug(true).
+		Debug(debug).
 		Build()
 	if err != nil {
 		return nil, fmt.Errorf("couldn't build logger: %v", err)

@@ -13,8 +13,6 @@ import (
 	projectv1 "github.com/openshift/api/project/v1"
 	image "github.com/openshift/client-go/image/clientset/versioned"
 	project "github.com/openshift/client-go/project/clientset/versioned"
-
-	"github.com/openshift/osde2e/pkg/config"
 )
 
 func init() {
@@ -22,11 +20,6 @@ func init() {
 }
 
 func NewCluster(kubeconfig []byte) (*Cluster, error) {
-	cfg := config.Cfg
-	if kubeconfig == nil || len(kubeconfig) == 0 {
-		kubeconfig = cfg.Kubeconfig
-	}
-
 	restConfig, err := clientcmd.RESTConfigFromKubeConfig(kubeconfig)
 	if err != nil {
 		return nil, err
@@ -35,9 +28,6 @@ func NewCluster(kubeconfig []byte) (*Cluster, error) {
 	cluster := &Cluster{
 		restConfig: restConfig,
 	}
-
-	ginkgo.BeforeEach(cluster.BeforeEach)
-	ginkgo.AfterEach(cluster.AfterEach)
 	return cluster, nil
 }
 
@@ -46,7 +36,7 @@ type Cluster struct {
 	proj       string
 }
 
-func (c *Cluster) BeforeEach() {
+func (c *Cluster) Setup() {
 	// setup project to run tests
 	prefix := randomStr(5)
 	proj, err := c.createProject(prefix)
@@ -61,7 +51,7 @@ func (c *Cluster) BeforeEach() {
 	c.proj = proj.Name
 }
 
-func (c *Cluster) AfterEach() {
+func (c *Cluster) Cleanup() {
 	err := c.cleanup(c.proj)
 	if err != nil {
 		msg := fmt.Sprintf("could not delete project '%s': %v", c.proj, err)
@@ -97,10 +87,10 @@ func randomStr(length int) (str string) {
 	return
 }
 
-func (c *Cluster) createProject(prefix string) (*projectv1.Project, error) {
+func (c *Cluster) createProject(suffix string) (*projectv1.Project, error) {
 	proj := &projectv1.Project{
 		ObjectMeta: metav1.ObjectMeta{
-			GenerateName: prefix,
+			Name: "osde2e-" + suffix,
 		},
 	}
 	return c.Project().ProjectV1().Projects().Create(proj)
