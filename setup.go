@@ -5,7 +5,6 @@ import (
 	"io/ioutil"
 	"log"
 	"math/rand"
-	"strings"
 	"time"
 
 	"github.com/onsi/ginkgo"
@@ -25,25 +24,6 @@ const (
 // Setup cluster before testing begins.
 var _ = ginkgo.SynchronizedBeforeSuite(func() []byte {
 	cfg := config.Cfg
-	if cfg.ClusterVersion == "" {
-		cfg.ClusterVersion = DefaultVersion
-	}
-
-	if cfg.Suffix == "" {
-		cfg.Suffix = randomStr(5)
-	}
-
-	if cfg.ClusterName == "" {
-		safeVersion := strings.Replace(cfg.ClusterVersion, ".", "-", -1)
-		cfg.ClusterName = "ci-cluster-" + safeVersion + "-" + cfg.Suffix
-	}
-
-	if cfg.ReportDir == "" {
-		if dir, err := ioutil.TempDir("", "osde2e"); err == nil {
-			cfg.ReportDir = dir
-		}
-	}
-
 	if err := setupCluster(cfg); err != nil {
 		msg := fmt.Sprintf("Failed to setup cluster for testing: %v", err)
 		log.Println(msg)
