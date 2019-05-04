@@ -49,6 +49,9 @@ type Config struct {
 	// NoDestroy leaves the cluster running after testing.
 	NoDestroy bool `env:"NO_DESTROY"`
 
+	// NoTestGrid disables reporting to TestGrid.
+	NoTestGrid bool `env:"NO_TESTGRID"`
+
 	// Kubeconfig is used to access a cluster.
 	Kubeconfig []byte `env:"TEST_KUBECONFIG"`
 }

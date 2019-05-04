@@ -32,16 +32,18 @@ func RunE2ETests(t *testing.T, cfg *config.Config) {
 
 	// setup testgrid
 	var buildNum int
-	ctx := context.Background()
-	tg, err := testgrid.NewTestGrid(cfg.TestGridBucket, cfg.TestGridPrefix, cfg.TestGridServiceAccount)
-	if err != nil {
-		log.Printf("Failed to setup TestGrid support: %v", err)
-	} else {
-		start := time.Now().UTC().Unix()
-		if buildNum, err = tg.StartBuild(ctx, start); err != nil {
-			log.Printf("Failed to start TestGrid build: %v", err)
+	if !cfg.NoTestGrid {
+		ctx := context.Background()
+		tg, err := testgrid.NewTestGrid(cfg.TestGridBucket, cfg.TestGridPrefix, cfg.TestGridServiceAccount)
+		if err != nil {
+			log.Printf("Failed to setup TestGrid support: %v", err)
 		} else {
-			log.Printf("Started TestGrid build '%d'", buildNum)
+			start := time.Now().UTC().Unix()
+			if buildNum, err = tg.StartBuild(ctx, start); err != nil {
+				log.Printf("Failed to start TestGrid build: %v", err)
+			} else {
+				log.Printf("Started TestGrid build '%d'", buildNum)
+			}
 		}
 	}
 	defer reportToTestGrid(t, tg, buildNum, cfg.ReportDir)
@@ -51,6 +53,12 @@ func RunE2ETests(t *testing.T, cfg *config.Config) {
 }
 
 func reportToTestGrid(t *testing.T, tg *testgrid.TestGrid, buildNum int, reportDir string) {
+	cfg := config.Cfg
+	if cfg.NoTestGrid {
+		log.Print("NO_TESTGRID has disabled submitting to TestGrid, skipping...")
+		return
+	}
+
 	if tg != nil {
 		end := time.Now().UTC().Unix()
 		passed := !t.Failed()
