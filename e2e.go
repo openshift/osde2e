@@ -55,7 +55,7 @@ func RunE2ETests(t *testing.T, cfg *config.Config) {
 	if !cfg.NoTestGrid {
 		var buildNum int
 		ctx := context.Background()
-		tg, err := testgrid.NewTestGrid(cfg.TestGridBucket, cfg.TestGridPrefix, cfg.TestGridServiceAccount)
+		tg, err := testgrid.NewTestGrid(cfg.TestGridPrefix, cfg.TestGridServiceAccount)
 		if err != nil {
 			log.Printf("Failed to setup TestGrid support: %v", err)
 		} else {
@@ -94,7 +94,7 @@ func reportToTestGrid(t *testing.T, tg *testgrid.TestGrid, buildNum int, reportD
 		if err := tg.FinishBuild(ctx, buildNum, finished, reportDir); err != nil {
 			log.Printf("Failed to report results to TestGrid for build '%d': %v", buildNum, err)
 		} else {
-			log.Printf("Sucessfully reported results to TestGrid for build '%d'", buildNum)
+			log.Printf("Successfully reported results to TestGrid for build '%d'", buildNum)
 		}
 	} else {
 		log.Print("Skipping reporting to TestGrid...")

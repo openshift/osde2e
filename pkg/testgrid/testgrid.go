@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"strings"
 
 	"cloud.google.com/go/storage"
 	"google.golang.org/api/option"
@@ -12,9 +13,9 @@ import (
 )
 
 // NewTestGrid configures a new TestGrid.
-func NewTestGrid(bucket, prefix string, b64ServiceAccount []byte) (*TestGrid, error) {
-	if bucket == "" {
-		return nil, errors.New("bucket for TestGrid is not set")
+func NewTestGrid(prefix string, b64ServiceAccount []byte) (*TestGrid, error) {
+	if prefix == "" {
+		return nil, errors.New("prefix for TestGrid is not set")
 	} else if b64ServiceAccount == nil || len(b64ServiceAccount) == 0 {
 		return nil, errors.New("a Service Account for TestGrid is not set")
 	}
@@ -24,15 +25,21 @@ func NewTestGrid(bucket, prefix string, b64ServiceAccount []byte) (*TestGrid, er
 		return nil, fmt.Errorf("could not base64 decode Service Account JSON: %v", err)
 	}
 
+	parts := strings.SplitN(prefix, "/", 2)
 	ctx := context.Background()
 	gcsClient, err := storage.NewClient(ctx, option.WithCredentialsJSON(serviceAccount))
 	if err != nil {
 		return nil, err
 	}
 
+	var bucketPrefix string
+	if len(parts) > 1 {
+		bucketPrefix = parts[1]
+	}
+
 	return &TestGrid{
-		bucket: gcsClient.Bucket(bucket),
-		prefix: prefix,
+		bucket: gcsClient.Bucket(parts[0]),
+		prefix: bucketPrefix,
 	}, nil
 }
 
