@@ -6,13 +6,14 @@ import (
 	"time"
 
 	"github.com/onsi/ginkgo"
+	projectv1 "github.com/openshift/api/project/v1"
+	image "github.com/openshift/client-go/image/clientset/versioned"
+	project "github.com/openshift/client-go/project/clientset/versioned"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 
-	projectv1 "github.com/openshift/api/project/v1"
-	image "github.com/openshift/client-go/image/clientset/versioned"
-	project "github.com/openshift/client-go/project/clientset/versioned"
+	"github.com/openshift/osde2e/pkg/config"
 )
 
 func init() {
@@ -29,6 +30,14 @@ func NewCluster(kubeconfig []byte) (*Cluster, error) {
 		restConfig: restConfig,
 	}
 	return cluster, nil
+}
+
+func newCluster(kubeconfig []byte) *Cluster {
+	cluster, err := NewCluster(config.Cfg.Kubeconfig)
+	if err != nil {
+		ginkgo.Fail("couldn't configure cluster client: " + err.Error())
+	}
+	return cluster
 }
 
 type Cluster struct {

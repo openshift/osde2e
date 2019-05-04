@@ -13,13 +13,9 @@ import (
 var _ = ginkgo.Describe("ImageStreams", func() {
 	defer ginkgo.GinkgoRecover()
 
-	var err error
 	var cluster *Cluster
 	ginkgo.BeforeEach(func() {
-		cluster, err = NewCluster(config.Cfg.Kubeconfig)
-		if err != nil {
-			ginkgo.Fail("couldn't configure cluster client: " + err.Error())
-		}
+		cluster = newCluster(config.Cfg.Kubeconfig)
 		cluster.Setup()
 	})
 
@@ -28,6 +24,7 @@ var _ = ginkgo.Describe("ImageStreams", func() {
 	})
 
 	ginkgo.It("ImageStreams should exist in the cluster", func() {
+		ginkgo.Skip("ImageStreams not being loaded yet")
 		list, err := cluster.Image().ImageV1().ImageStreams(cluster.proj).List(metav1.ListOptions{})
 		if err != nil {
 			ginkgo.Fail("Couldn't list clusters: " + err.Error())
