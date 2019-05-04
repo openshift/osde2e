@@ -5,6 +5,9 @@ import (
 	"reflect"
 )
 
+// Cfg is the configuration used for end to end testing.
+var Cfg = new(Config)
+
 // Config dictates the behavior of cluster tests.
 type Config struct {
 	// ReportDir is the location JUnit XML results are written.
@@ -15,6 +18,9 @@ type Config struct {
 
 	// UHCToken is used to authenticate with UHC.
 	UHCToken string `env:"UHC_TOKEN"`
+
+	// ClusterId identifies the cluster. If set at start, an existing cluster is tested.
+	ClusterId string `env:"CLUSTER_ID"`
 
 	// ClusterName is the name of the cluster being created.
 	ClusterName string
@@ -39,6 +45,12 @@ type Config struct {
 
 	// UseProd sends requests to production UHC.
 	UseProd bool
+
+	// NoDestroy leaves the cluster running after testing.
+	NoDestroy bool `env:"NO_DESTROY"`
+
+	// Kubeconfig is used to access a cluster.
+	Kubeconfig []byte `env:"TEST_KUBECONFIG"`
 }
 
 func (c *Config) LoadFromEnv() {

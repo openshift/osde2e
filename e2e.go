@@ -19,26 +19,15 @@ import (
 	"github.com/openshift/osde2e/pkg/testgrid"
 )
 
-var (
-	// Cfg is the configuration being used for end to end testing.
-	Cfg = new(config.Config)
-
-	// UHC is used to deploy and manage clusters.
-	UHC *cluster.UHC
-
-	// ClusterId is used to identify a cluster.
-	ClusterId string
-
-	// Kubeconfig is used to access a cluster.
-	Kubeconfig []byte
-)
+// UHC is used to deploy and manage clusters.
+var UHC *cluster.UHC
 
 func RunE2ETests(t *testing.T, cfg *config.Config) {
 	gomega.RegisterFailHandler(ginkgo.Fail)
 
 	// setup reporter
-	os.Mkdir(Cfg.ReportDir, os.ModePerm)
-	reportPath := path.Join(cfg.ReportDir, fmt.Sprintf("junit_%v.xml", Cfg.Suffix))
+	os.Mkdir(cfg.ReportDir, os.ModePerm)
+	reportPath := path.Join(cfg.ReportDir, fmt.Sprintf("junit_%v.xml", cfg.Suffix))
 	reporter := reporters.NewJUnitReporter(reportPath)
 
 	// setup testgrid

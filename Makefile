@@ -22,6 +22,7 @@ test: out/osde2e
 docker-test:
 	docker run \
 		-t \
+		-e NO_DESTROY=true \
 		-e UHC_TOKEN=$(UHC_REFRESH_TOKEN) \
 		-e AWS_ACCESS_KEY_ID=$(AWS_ACCESS_KEY_ID) \
 		-e AWS_SECRET_ACCESS_KEY=$(AWS_SECRET_ACCESS_KEY) \

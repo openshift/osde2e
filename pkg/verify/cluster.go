@@ -2,11 +2,10 @@ package verify
 
 import (
 	"fmt"
-	"github.com/onsi/ginkgo"
 	"math/rand"
-	"os"
 	"time"
 
+	"github.com/onsi/ginkgo"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
@@ -14,30 +13,27 @@ import (
 	projectv1 "github.com/openshift/api/project/v1"
 	image "github.com/openshift/client-go/image/clientset/versioned"
 	project "github.com/openshift/client-go/project/clientset/versioned"
-)
 
-const TestKubeconfigEnv = "TEST_KUBECONFIG"
+	"github.com/openshift/osde2e/pkg/config"
+)
 
 func init() {
 	rand.Seed(time.Now().Unix())
 }
 
 func NewCluster(kubeconfig []byte) (*Cluster, error) {
-	if kubeconfig == nil {
-		kubeconfigStr, ok := os.LookupEnv(TestKubeconfigEnv)
-		if !ok {
-			return nil, fmt.Errorf("kubeconfig not provided and couldn't be loaded from '%s'", TestKubeconfigEnv)
-		}
-		kubeconfig = []byte(kubeconfigStr)
+	cfg := config.Cfg
+	if kubeconfig == nil || len(kubeconfig) == 0 {
+		kubeconfig = cfg.Kubeconfig
 	}
 
-	cfg, err := clientcmd.RESTConfigFromKubeConfig(kubeconfig)
+	restConfig, err := clientcmd.RESTConfigFromKubeConfig(kubeconfig)
 	if err != nil {
 		return nil, err
 	}
 
 	cluster := &Cluster{
-		cfg: cfg,
+		restConfig: restConfig,
 	}
 
 	ginkgo.BeforeEach(cluster.BeforeEach)
@@ -46,8 +42,8 @@ func NewCluster(kubeconfig []byte) (*Cluster, error) {
 }
 
 type Cluster struct {
-	cfg  *rest.Config
-	proj string
+	restConfig *rest.Config
+	proj       string
 }
 
 func (c *Cluster) BeforeEach() {
@@ -77,7 +73,7 @@ func (c *Cluster) AfterEach() {
 }
 
 func (c *Cluster) Image() image.Interface {
-	client, err := image.NewForConfig(c.cfg)
+	client, err := image.NewForConfig(c.restConfig)
 	if err != nil {
 		ginkgo.Fail("failed to create Image clientset: " + err.Error())
 	}
@@ -85,7 +81,7 @@ func (c *Cluster) Image() image.Interface {
 }
 
 func (c *Cluster) Project() project.Interface {
-	client, err := project.NewForConfig(c.cfg)
+	client, err := project.NewForConfig(c.restConfig)
 	if err != nil {
 		ginkgo.Fail("failed to create Project clientset: " + err.Error())
 	}
