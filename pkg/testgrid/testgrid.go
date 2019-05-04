@@ -43,6 +43,7 @@ type TestGrid struct {
 	prefix string
 }
 
+// StartBuild uploads a `testgrid.Started` record and updates the latest build to point to it.
 func (t *TestGrid) StartBuild(ctx context.Context, timestamp int64) (buildNum int, err error) {
 	curBuildNum, err := t.getLatestBuild(ctx)
 	if err != nil {
@@ -62,6 +63,7 @@ func (t *TestGrid) StartBuild(ctx context.Context, timestamp int64) (buildNum in
 	return buildNum, nil
 }
 
+// FinishBuild uploads build artifacts and a `testgrid.Finished` record.
 func (t *TestGrid) FinishBuild(ctx context.Context, buildNum int, result testgrid.Finished, dir string) error {
 	err := t.writeReportDir(ctx, buildNum, dir)
 	if err != nil {

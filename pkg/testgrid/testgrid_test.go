@@ -96,8 +96,7 @@ func TestStartTestGridBuild(t *testing.T) {
 }
 
 func setupTestGrid(t *testing.T) *TestGrid {
-	cfg := new(config.Config)
-	cfg.LoadFromEnv()
+	cfg := config.Cfg
 	checkTestGridEnv(t, cfg)
 
 	tg, err := NewTestGrid(cfg.TestGridBucket, cfg.TestGridPrefix, []byte(cfg.TestGridServiceAccount))

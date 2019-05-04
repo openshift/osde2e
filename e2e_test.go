@@ -11,6 +11,5 @@ import (
 
 func TestE2E(t *testing.T) {
 	cfg := config.Cfg
-	cfg.LoadFromEnv()
 	RunE2ETests(t, cfg)
 }

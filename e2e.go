@@ -51,7 +51,7 @@ func RunE2ETests(t *testing.T, cfg *config.Config) {
 	}
 
 	log.Println("Running e2e tests...")
-	ginkgo.RunSpecsWithCustomReporters(t, "OSD e2e suite", []ginkgo.Reporter{reporter})
+	ginkgo.RunSpecsWithDefaultAndCustomReporters(t, "OSD e2e suite", []ginkgo.Reporter{reporter})
 }
 
 func reportToTestGrid(t *testing.T, tg *testgrid.TestGrid, buildNum int, reportDir string) {

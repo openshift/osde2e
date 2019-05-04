@@ -8,6 +8,10 @@ import (
 // Cfg is the configuration used for end to end testing.
 var Cfg = new(Config)
 
+func init() {
+	Cfg.LoadFromEnv()
+}
+
 // Config dictates the behavior of cluster tests.
 type Config struct {
 	// ReportDir is the location JUnit XML results are written.

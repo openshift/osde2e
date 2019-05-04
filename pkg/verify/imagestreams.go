@@ -6,14 +6,15 @@ import (
 	"github.com/onsi/ginkgo"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-)
 
-var Kubeconfig []byte
+	"github.com/openshift/osde2e/pkg/config"
+)
 
 var _ = ginkgo.Describe("ImageStreams", func() {
 	defer ginkgo.GinkgoRecover()
+	cfg := config.Cfg
 
-	cluster, err := NewCluster(Kubeconfig)
+	cluster, err := NewCluster(cfg.Kubeconfig)
 	if err != nil {
 		ginkgo.Fail("couldn't configure cluster client: " + err.Error())
 	}
