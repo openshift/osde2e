@@ -1,6 +1,7 @@
 package cluster
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"time"
@@ -37,16 +38,32 @@ func (u *UHC) LaunchCluster(name, version, awsId, awsKey string) (string, error)
 		},
 	}
 
-	newCluster, err := createClusterReq(u.conn, cluster)
+	params := map[string]interface{}{"provision": true}
+	resp, err := doRequest(u.conn, "POST", "clusters", params, cluster)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("couldn't create cluster: %v", err)
 	}
+
+	var newCluster interface{}
+	err = json.Unmarshal(resp.Bytes(), &newCluster)
 
 	return getStr(newCluster, "id")
 }
 
+func (u *UHC) GetCluster(clusterId string) (interface{}, error) {
+	resource := fmt.Sprintf("clusters/%s", clusterId)
+	resp, err := doRequest(u.conn, "", resource, nil, nil)
+	if err != nil {
+		return nil, fmt.Errorf("couldn't retrieve cluster '%s': %v", clusterId, err)
+	}
+
+	var cluster interface{}
+	err = json.Unmarshal(resp.Bytes(), &cluster)
+	return cluster, err
+}
+
 func (u *UHC) ClusterState(clusterId string) (string, error) {
-	cluster, err := getClusterReq(u.conn, clusterId)
+	cluster, err := u.GetCluster(clusterId)
 	if err != nil {
 		return "", fmt.Errorf("couldn't get cluster '%s': %v", clusterId, err)
 	}
@@ -60,10 +77,14 @@ func (u *UHC) ClusterState(clusterId string) (string, error) {
 }
 
 func (u *UHC) ClusterKubeconfig(clusterId string) (kubeconfig []byte, err error) {
-	creds, err := getCredentialsReq(u.conn, clusterId)
+	resource := fmt.Sprintf("clusters/%s/credentials", clusterId)
+	resp, err := doRequest(u.conn, "", resource, nil, nil)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("couldn't retrieve credentials for cluster '%s': %v", clusterId, err)
 	}
+
+	creds := map[string]interface{}{}
+	err = json.Unmarshal(resp.Bytes(), &creds)
 
 	kubeconfigStr, err := getStr(creds, "kubeconfig")
 	if err == nil {
@@ -73,8 +94,10 @@ func (u *UHC) ClusterKubeconfig(clusterId string) (kubeconfig []byte, err error)
 }
 
 func (u *UHC) DeleteCluster(clusterId string) error {
-	if err := deleteClusterReq(u.conn, clusterId); err != nil {
-		return fmt.Errorf("failed to destroy cluster '%s': %v", clusterId, err)
+	resource := fmt.Sprintf("clusters/%s", clusterId)
+	_, err := doRequest(u.conn, "DELETE", resource, nil, nil)
+	if err != nil {
+		return fmt.Errorf("couldn't delete cluster '%s': %v", clusterId, err)
 	}
 	return nil
 }
@@ -99,23 +122,4 @@ func (u *UHC) WaitForClusterReady(clusterId string) error {
 
 	time.Sleep(time.Second)
 	return fmt.Errorf("timed out waiting for cluster '%s' to be ready", clusterId)
-}
-
-func getStr(d interface{}, k string) (string, error) {
-	m, ok := d.(map[string]interface{})
-	if !ok {
-		return "", fmt.Errorf("expected a map: %+v", d)
-	}
-
-	v, ok := m[k]
-	if !ok || v == nil {
-		return "", fmt.Errorf("key '%s' is not set", k)
-	}
-
-	str, ok := v.(string)
-	if !ok {
-		return "", fmt.Errorf("value for key '%s' was not a string", k)
-	}
-
-	return str, nil
 }

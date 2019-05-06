@@ -5,6 +5,8 @@ import (
 	"io/ioutil"
 	"log"
 	"math/rand"
+	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/onsi/ginkgo"
@@ -38,6 +40,20 @@ var _ = ginkgo.SynchronizedBeforeSuite(func() []byte {
 var _ = ginkgo.AfterSuite(func() {
 	defer ginkgo.GinkgoRecover()
 	cfg := config.Cfg
+
+	if UHC != nil {
+		log.Printf("Getting logs for cluster '%s'...", cfg.ClusterId)
+
+		logs, err := UHC.Logs(cfg.ClusterId)
+		if err != nil {
+			msg := fmt.Sprintf("Failed to collect cluster logs: %v", err)
+			log.Println(msg)
+			ginkgo.Fail(msg)
+		} else {
+			writeLogs(cfg, logs)
+		}
+	}
+
 	if cfg.NoDestroy {
 		log.Println("NO_DESTROY is set, skipping deleting cluster.")
 		return
@@ -91,4 +107,16 @@ func randomStr(length int) (str string) {
 		str += c
 	}
 	return
+}
+
+func writeLogs(cfg *config.Config, m map[string][]byte) {
+	for k, v := range m {
+		name := k + "-log.txt"
+		filePath := filepath.Join(cfg.ReportDir, name)
+		if err := ioutil.WriteFile(filePath, v, os.ModePerm); err != nil {
+			msg := fmt.Sprintf("Failed to write log '%s': %v", filePath, err)
+			log.Println(msg)
+			ginkgo.Fail(msg)
+		}
+	}
 }
