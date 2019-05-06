@@ -27,11 +27,7 @@ var UHC *cluster.UHC
 func RunE2ETests(t *testing.T, cfg *config.Config) {
 	gomega.RegisterFailHandler(ginkgo.Fail)
 
-	// setup reporter
-	os.Mkdir(cfg.ReportDir, os.ModePerm)
-	reportPath := path.Join(cfg.ReportDir, fmt.Sprintf("junit_%v.xml", cfg.Suffix))
-	reporter := reporters.NewJUnitReporter(reportPath)
-
+	// set defaults
 	if cfg.ClusterVersion == "" {
 		cfg.ClusterVersion = DefaultVersion
 	}
@@ -50,6 +46,11 @@ func RunE2ETests(t *testing.T, cfg *config.Config) {
 			cfg.ReportDir = dir
 		}
 	}
+
+	// setup reporter
+	os.Mkdir(cfg.ReportDir, os.ModePerm)
+	reportPath := path.Join(cfg.ReportDir, fmt.Sprintf("junit_%v.xml", cfg.Suffix))
+	reporter := reporters.NewJUnitReporter(reportPath)
 
 	// setup testgrid
 	if !cfg.NoTestGrid {
