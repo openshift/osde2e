@@ -55,7 +55,7 @@ func RunE2ETests(t *testing.T, cfg *config.Config) {
 	if !cfg.NoTestGrid {
 		var buildNum int
 		ctx := context.Background()
-		tg, err := testgrid.NewTestGrid(cfg.TestGridPrefix, cfg.TestGridServiceAccount)
+		tg, err := testgrid.NewTestGrid(cfg.TestGridBucket, cfg.TestGridPrefix, cfg.TestGridServiceAccount)
 		if err != nil {
 			log.Printf("Failed to setup TestGrid support: %v", err)
 		} else {

@@ -38,6 +38,9 @@ type Config struct {
 	// AWSAccessKey is used by UHC.
 	AWSAccessKey string `env:"AWS_SECRET_ACCESS_KEY"`
 
+	// TestGridBucket is the Google Cloud Storage bucket where results are reported for TestGrid.
+	TestGridBucket string `env:"TESTGRID_BUCKET"`
+
 	// TestGridPrefix is used to namespace reports.
 	TestGridPrefix string `env:"TESTGRID_PREFIX"`
 
