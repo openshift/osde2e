@@ -10,6 +10,7 @@ import (
 	projectv1 "github.com/openshift/api/project/v1"
 	image "github.com/openshift/client-go/image/clientset/versioned"
 	project "github.com/openshift/client-go/project/clientset/versioned"
+	route "github.com/openshift/client-go/route/clientset/versioned"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -79,6 +80,14 @@ func (c *Cluster) Kube() kubernetes.Interface {
 
 func (c *Cluster) Image() image.Interface {
 	client, err := image.NewForConfig(c.restConfig)
+	if err != nil {
+		ginkgo.Fail("failed to create Image clientset: " + err.Error())
+	}
+	return client
+}
+
+func (c *Cluster) Route() route.Interface {
+	client, err := route.NewForConfig(c.restConfig)
 	if err != nil {
 		ginkgo.Fail("failed to create Image clientset: " + err.Error())
 	}
