@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"net/http"
 	"time"
 )
 
@@ -39,7 +40,7 @@ func (u *UHC) LaunchCluster(name, version, awsId, awsKey string) (string, error)
 	}
 
 	params := map[string]interface{}{"provision": true}
-	resp, err := doRequest(u.conn, "POST", "clusters", params, cluster)
+	resp, err := doRequest(u.conn, http.MethodPost, "clusters", params, cluster)
 	if err != nil {
 		return "", fmt.Errorf("couldn't create cluster: %v", err)
 	}
@@ -99,7 +100,7 @@ func (u *UHC) ClusterKubeconfig(clusterId string) (kubeconfig []byte, err error)
 // DeleteCluster requests the deletion of clusterID.
 func (u *UHC) DeleteCluster(clusterId string) error {
 	resource := fmt.Sprintf("clusters/%s", clusterId)
-	_, err := doRequest(u.conn, "DELETE", resource, nil, nil)
+	_, err := doRequest(u.conn, http.MethodDelete, resource, nil, nil)
 	if err != nil {
 		return fmt.Errorf("couldn't delete cluster '%s': %v", clusterId, err)
 	}

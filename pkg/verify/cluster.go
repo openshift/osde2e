@@ -20,24 +20,14 @@ func init() {
 	rand.Seed(time.Now().Unix())
 }
 
-func NewCluster(kubeconfig []byte) (*Cluster, error) {
-	restConfig, err := clientcmd.RESTConfigFromKubeConfig(kubeconfig)
-	if err != nil {
-		return nil, err
-	}
+func NewCluster() (*config.Config, *Cluster) {
+	cfg, cluster := config.Cfg, new(Cluster)
+	ginkgo.BeforeEach(func() {
+		cluster.Setup(cfg.Kubeconfig)
+	})
 
-	cluster := &Cluster{
-		restConfig: restConfig,
-	}
-	return cluster, nil
-}
-
-func newCluster(kubeconfig []byte) *Cluster {
-	cluster, err := NewCluster(config.Cfg.Kubeconfig)
-	if err != nil {
-		ginkgo.Fail("couldn't configure cluster client: " + err.Error())
-	}
-	return cluster
+	ginkgo.AfterEach(cluster.Cleanup)
+	return cfg, cluster
 }
 
 type Cluster struct {
@@ -45,7 +35,13 @@ type Cluster struct {
 	proj       string
 }
 
-func (c *Cluster) Setup() {
+func (c *Cluster) Setup(kubeconfig []byte) {
+	var err error
+	c.restConfig, err = clientcmd.RESTConfigFromKubeConfig(kubeconfig)
+	if err != nil {
+		ginkgo.Fail("could not create project: " + err.Error())
+	}
+
 	// setup project to run tests
 	prefix := randomStr(5)
 	proj, err := c.createProject(prefix)
