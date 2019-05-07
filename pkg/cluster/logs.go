@@ -5,12 +5,8 @@ import (
 	"fmt"
 )
 
-const (
-	linesRequested = 100000000
-)
-
 // Logs provides all logs available for a cluster, ids can be optionally provided for only specific logs.
-func (u *UHC) Logs(clusterId string, ids ...string) (logs map[string][]byte, err error) {
+func (u *UHC) Logs(clusterId string, length int, ids ...string) (logs map[string][]byte, err error) {
 	if ids == nil || len(ids) == 0 {
 		if ids, err = u.getLogList(clusterId); err != nil {
 			return logs, fmt.Errorf("couldn't get log list: %v", err)
@@ -19,7 +15,7 @@ func (u *UHC) Logs(clusterId string, ids ...string) (logs map[string][]byte, err
 
 	logs = make(map[string][]byte, len(ids))
 	for _, logId := range ids {
-		params := map[string]interface{}{"tail": linesRequested}
+		params := map[string]interface{}{"tail": length}
 		resource := fmt.Sprintf("clusters/%s/logs/%s", clusterId, logId)
 		resp, err := doRequest(u.conn, "", resource, params, nil)
 		if err != nil {

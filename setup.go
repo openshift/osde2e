@@ -44,7 +44,7 @@ var _ = ginkgo.AfterSuite(func() {
 	if UHC != nil {
 		log.Printf("Getting logs for cluster '%s'...", cfg.ClusterId)
 
-		logs, err := UHC.Logs(cfg.ClusterId)
+		logs, err := UHC.Logs(cfg.ClusterId, 200)
 		if err != nil {
 			msg := fmt.Sprintf("Failed to collect cluster logs: %v", err)
 			log.Println(msg)
