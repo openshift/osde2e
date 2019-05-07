@@ -20,6 +20,7 @@ import:
   subpackages:
   - rest
   - tools/clientcmd
+  - kubernetes
 - package: github.com/onsi/ginkgo
   version: ~1.8.0
 - package: github.com/onsi/gomega

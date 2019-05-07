@@ -1,5 +1,5 @@
-hash: 7c74b0d4b11297dc8f47bcc9fd1b07d2e774ccbf6de4508c9254bd2eda8a50bd
-updated: 2019-05-03T09:36:34.943164464-07:00
+hash: 6c2a6f30d6c98e26c7a01f018ef95b21eb867ad39f75f88ab8be65c7f4beb70f
+updated: 2019-05-07T15:00:00.711800798-07:00
 imports:
 - name: cloud.google.com/go
   version: 8c41231e01b2085512d98153bcffb847ff9b4b9f
@@ -62,10 +62,6 @@ imports:
   version: 9316a62528ac99aaecb4e47eadd6dc8aa6533d58
 - name: github.com/json-iterator/go
   version: ab8a2e0c74be9d3be70b3184d9acc634935ded82
-- name: github.com/kubernetes/test-infra
-  version: 2b73a65db2f1d263f6cab75b3037e9e455edb00f
-  subpackages:
-  - testgrid/util/gcs
 - name: github.com/modern-go/concurrent
   version: bacd9c7ef1dd9b15be4a9909b8ac7a4e313eec94
 - name: github.com/modern-go/reflect2
@@ -116,7 +112,7 @@ imports:
   - pkg/client/helpers
   - pkg/client/internal
 - name: github.com/openshift/api
-  version: e8b4038cdb379e8633cb09de2e4119f059890c1e
+  version: d111834310a57dbb9a14140149477f91e055ba45
   subpackages:
   - image/docker10
   - image/dockerpre012
@@ -171,7 +167,6 @@ imports:
   - internal/timeseries
   - lex/httplex
   - trace
-  - websocket
 - name: golang.org/x/oauth2
   version: 9f3314589c9a9136388751d9adae6b0ed400978a
   subpackages:
@@ -321,9 +316,11 @@ imports:
   version: 86fb29eff6288413d76bd8506874fddd9fccdff0
   subpackages:
   - pkg/api/errors
+  - pkg/api/meta
   - pkg/api/resource
   - pkg/apis/meta/v1
   - pkg/apis/meta/v1/unstructured
+  - pkg/apis/meta/v1beta1
   - pkg/conversion
   - pkg/conversion/queryparams
   - pkg/fields
@@ -357,7 +354,40 @@ imports:
   version: b40b2a5939e43f7ffe0028ad67586b7ce50bb675
   subpackages:
   - discovery
+  - kubernetes
   - kubernetes/scheme
+  - kubernetes/typed/admissionregistration/v1alpha1
+  - kubernetes/typed/admissionregistration/v1beta1
+  - kubernetes/typed/apps/v1
+  - kubernetes/typed/apps/v1beta1
+  - kubernetes/typed/apps/v1beta2
+  - kubernetes/typed/auditregistration/v1alpha1
+  - kubernetes/typed/authentication/v1
+  - kubernetes/typed/authentication/v1beta1
+  - kubernetes/typed/authorization/v1
+  - kubernetes/typed/authorization/v1beta1
+  - kubernetes/typed/autoscaling/v1
+  - kubernetes/typed/autoscaling/v2beta1
+  - kubernetes/typed/autoscaling/v2beta2
+  - kubernetes/typed/batch/v1
+  - kubernetes/typed/batch/v1beta1
+  - kubernetes/typed/batch/v2alpha1
+  - kubernetes/typed/certificates/v1beta1
+  - kubernetes/typed/coordination/v1beta1
+  - kubernetes/typed/core/v1
+  - kubernetes/typed/events/v1beta1
+  - kubernetes/typed/extensions/v1beta1
+  - kubernetes/typed/networking/v1
+  - kubernetes/typed/policy/v1beta1
+  - kubernetes/typed/rbac/v1
+  - kubernetes/typed/rbac/v1alpha1
+  - kubernetes/typed/rbac/v1beta1
+  - kubernetes/typed/scheduling/v1alpha1
+  - kubernetes/typed/scheduling/v1beta1
+  - kubernetes/typed/settings/v1alpha1
+  - kubernetes/typed/storage/v1
+  - kubernetes/typed/storage/v1alpha1
+  - kubernetes/typed/storage/v1beta1
   - pkg/apis/clientauthentication
   - pkg/apis/clientauthentication/v1alpha1
   - pkg/apis/clientauthentication/v1beta1
@@ -371,6 +401,7 @@ imports:
   - tools/clientcmd/api/latest
   - tools/clientcmd/api/v1
   - tools/metrics
+  - tools/reference
   - transport
   - util/cert
   - util/connrotation
@@ -383,11 +414,6 @@ imports:
   version: 2b73a65db2f1d263f6cab75b3037e9e455edb00f
   subpackages:
   - testgrid/metadata
-  - testgrid/metadata/junit
 - name: sigs.k8s.io/yaml
   version: fd68e9863619f6ec2fdd8625fe1f02e7c877e480
-- name: vbom.ml/util
-  version: efcd4e0f97874370259c7d93e12aad57911dea81
-  subpackages:
-  - sortorder
 testImports: []

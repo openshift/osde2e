@@ -6,10 +6,12 @@ import (
 	"time"
 
 	"github.com/onsi/ginkgo"
+
 	projectv1 "github.com/openshift/api/project/v1"
 	image "github.com/openshift/client-go/image/clientset/versioned"
 	project "github.com/openshift/client-go/project/clientset/versioned"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 
@@ -65,6 +67,14 @@ func (c *Cluster) Cleanup() {
 	}
 
 	c.proj = ""
+}
+
+func (c *Cluster) Kube() kubernetes.Interface {
+	client, err := kubernetes.NewForConfig(c.restConfig)
+	if err != nil {
+		ginkgo.Fail("failed to create Image clientset: " + err.Error())
+	}
+	return client
 }
 
 func (c *Cluster) Image() image.Interface {
