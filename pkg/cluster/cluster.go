@@ -50,6 +50,7 @@ func (u *UHC) LaunchCluster(name, version, awsId, awsKey string) (string, error)
 	return getStr(newCluster, "id")
 }
 
+// GetCluster returns the information about clusterId.
 func (u *UHC) GetCluster(clusterId string) (interface{}, error) {
 	resource := fmt.Sprintf("clusters/%s", clusterId)
 	resp, err := doRequest(u.conn, "", resource, nil, nil)
@@ -62,6 +63,7 @@ func (u *UHC) GetCluster(clusterId string) (interface{}, error) {
 	return cluster, err
 }
 
+// ClusterState retrieves the state of clusterId.
 func (u *UHC) ClusterState(clusterId string) (string, error) {
 	cluster, err := u.GetCluster(clusterId)
 	if err != nil {
@@ -76,6 +78,7 @@ func (u *UHC) ClusterState(clusterId string) (string, error) {
 	return state, nil
 }
 
+// ClusterKubeconfig retrieves the kubeconfig of clusterId.
 func (u *UHC) ClusterKubeconfig(clusterId string) (kubeconfig []byte, err error) {
 	resource := fmt.Sprintf("clusters/%s/credentials", clusterId)
 	resp, err := doRequest(u.conn, "", resource, nil, nil)
@@ -93,6 +96,7 @@ func (u *UHC) ClusterKubeconfig(clusterId string) (kubeconfig []byte, err error)
 	return kubeconfig, err
 }
 
+// DeleteCluster requests the deletion of clusterID.
 func (u *UHC) DeleteCluster(clusterId string) error {
 	resource := fmt.Sprintf("clusters/%s", clusterId)
 	_, err := doRequest(u.conn, "DELETE", resource, nil, nil)
@@ -102,6 +106,7 @@ func (u *UHC) DeleteCluster(clusterId string) error {
 	return nil
 }
 
+// WaitForClusterReady blocks until clusterId is ready or a number of retries has been attempted.
 func (u *UHC) WaitForClusterReady(clusterId string) error {
 	times, wait := 145, 45*time.Second
 	log.Printf("Waiting %v for cluster '%s' to be ready...\n", time.Duration(times)*wait, clusterId)
