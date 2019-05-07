@@ -16,13 +16,13 @@ import (
 	"github.com/onsi/gomega"
 	"k8s.io/test-infra/testgrid/metadata"
 
-	"github.com/openshift/osde2e/pkg/cluster"
 	"github.com/openshift/osde2e/pkg/config"
+	"github.com/openshift/osde2e/pkg/osd"
 	"github.com/openshift/osde2e/pkg/testgrid"
 )
 
 // UHC is used to deploy and manage clusters.
-var UHC *cluster.UHC
+var UHC *osd.UHC
 
 func RunE2ETests(t *testing.T, cfg *config.Config) {
 	gomega.RegisterFailHandler(ginkgo.Fail)

@@ -1,4 +1,4 @@
-package cluster
+package osd
 
 import (
 	"encoding/json"
@@ -6,7 +6,7 @@ import (
 )
 
 // Logs provides all logs available for a cluster, ids can be optionally provided for only specific logs.
-func (u *UHC) Logs(clusterId string, length int, ids ...string) (logs map[string][]byte, err error) {
+func (u *OSD) Logs(clusterId string, length int, ids ...string) (logs map[string][]byte, err error) {
 	if ids == nil || len(ids) == 0 {
 		if ids, err = u.getLogList(clusterId); err != nil {
 			return logs, fmt.Errorf("couldn't get log list: %v", err)
@@ -36,7 +36,7 @@ func (u *UHC) Logs(clusterId string, length int, ids ...string) (logs map[string
 	return
 }
 
-func (u *UHC) getLogList(clusterId string) ([]string, error) {
+func (u *OSD) getLogList(clusterId string) ([]string, error) {
 	resource := fmt.Sprintf("clusters/%s/logs", clusterId)
 	resp, err := doRequest(u.conn, "", resource, nil, nil)
 	if err != nil {

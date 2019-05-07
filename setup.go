@@ -11,8 +11,8 @@ import (
 
 	"github.com/onsi/ginkgo"
 
-	"github.com/openshift/osde2e/pkg/cluster"
 	"github.com/openshift/osde2e/pkg/config"
+	"github.com/openshift/osde2e/pkg/osd"
 )
 
 func init() {
@@ -68,7 +68,7 @@ var _ = ginkgo.AfterSuite(func() {
 
 // setupCluster brings up a cluster, waits for it to be ready, then returns it's name.
 func setupCluster(cfg *config.Config) (err error) {
-	if UHC, err = cluster.NewUHC(cfg.UHCToken, !cfg.UseProd, cfg.DebugUHC); err != nil {
+	if UHC, err = osd.NewUHC(cfg.UHCToken, !cfg.UseProd, cfg.DebugUHC); err != nil {
 		return fmt.Errorf("could not setup UHC: %v", err)
 	}
 

@@ -1,4 +1,4 @@
-package cluster
+package osd
 
 import (
 	"fmt"
@@ -12,8 +12,8 @@ const (
 	APIVersion = "v1"
 )
 
-// NewUHC setups a client to connect to UHC.
-func NewUHC(token string, staging, debug bool) (*UHC, error) {
+// New setups a client to connect to OSD.
+func New(token string, staging, debug bool) (*OSD, error) {
 	logger, err := uhc.NewGoLoggerBuilder().
 		Debug(debug).
 		Build()
@@ -34,12 +34,12 @@ func NewUHC(token string, staging, debug bool) (*UHC, error) {
 		return nil, fmt.Errorf("couldn't setup connection: %v", err)
 	}
 
-	return &UHC{
+	return &OSD{
 		conn: conn,
 	}, nil
 }
 
-// UHC acts as a client to manage an instance.
-type UHC struct {
+// OSD acts as a client to manage an instance.
+type OSD struct {
 	conn *uhc.Connection
 }

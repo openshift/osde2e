@@ -1,4 +1,4 @@
-package cluster
+package osd
 
 import (
 	"encoding/json"

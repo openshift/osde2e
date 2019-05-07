@@ -1,4 +1,4 @@
-package cluster
+package osd
 
 import (
 	"encoding/json"
@@ -9,15 +9,15 @@ import (
 )
 
 const (
-	// ClusterStateReady is returned by UHC when a cluster is ready for operations.
+	// ClusterStateReady is returned by OSD when a cluster is ready for operations.
 	ClusterStateReady = "ready"
 
-	// ClusterStateError is returned by UHC when there is an unrecoverable problem.
+	// ClusterStateError is returned by OSD when there is an unrecoverable problem.
 	ClusterStateError = "error"
 )
 
-// LaunchCluster setups an new cluster using the UHC API and returns it's ID.
-func (u *UHC) LaunchCluster(name, version, awsId, awsKey string) (string, error) {
+// LaunchCluster setups an new cluster using the OSD API and returns it's ID.
+func (u *OSD) LaunchCluster(name, version, awsId, awsKey string) (string, error) {
 	log.Printf("Creating cluster '%s'...", name)
 	cluster := map[string]interface{}{
 		"name": name,
@@ -52,7 +52,7 @@ func (u *UHC) LaunchCluster(name, version, awsId, awsKey string) (string, error)
 }
 
 // GetCluster returns the information about clusterId.
-func (u *UHC) GetCluster(clusterId string) (interface{}, error) {
+func (u *OSD) GetCluster(clusterId string) (interface{}, error) {
 	resource := fmt.Sprintf("clusters/%s", clusterId)
 	resp, err := doRequest(u.conn, "", resource, nil, nil)
 	if err != nil {
@@ -65,7 +65,7 @@ func (u *UHC) GetCluster(clusterId string) (interface{}, error) {
 }
 
 // ClusterState retrieves the state of clusterId.
-func (u *UHC) ClusterState(clusterId string) (string, error) {
+func (u *OSD) ClusterState(clusterId string) (string, error) {
 	cluster, err := u.GetCluster(clusterId)
 	if err != nil {
 		return "", fmt.Errorf("couldn't get cluster '%s': %v", clusterId, err)
@@ -80,7 +80,7 @@ func (u *UHC) ClusterState(clusterId string) (string, error) {
 }
 
 // ClusterKubeconfig retrieves the kubeconfig of clusterId.
-func (u *UHC) ClusterKubeconfig(clusterId string) (kubeconfig []byte, err error) {
+func (u *OSD) ClusterKubeconfig(clusterId string) (kubeconfig []byte, err error) {
 	resource := fmt.Sprintf("clusters/%s/credentials", clusterId)
 	resp, err := doRequest(u.conn, "", resource, nil, nil)
 	if err != nil {
@@ -98,7 +98,7 @@ func (u *UHC) ClusterKubeconfig(clusterId string) (kubeconfig []byte, err error)
 }
 
 // DeleteCluster requests the deletion of clusterID.
-func (u *UHC) DeleteCluster(clusterId string) error {
+func (u *OSD) DeleteCluster(clusterId string) error {
 	resource := fmt.Sprintf("clusters/%s", clusterId)
 	_, err := doRequest(u.conn, http.MethodDelete, resource, nil, nil)
 	if err != nil {
@@ -108,7 +108,7 @@ func (u *UHC) DeleteCluster(clusterId string) error {
 }
 
 // WaitForClusterReady blocks until clusterId is ready or a number of retries has been attempted.
-func (u *UHC) WaitForClusterReady(clusterId string) error {
+func (u *OSD) WaitForClusterReady(clusterId string) error {
 	times, wait := 145, 45*time.Second
 	log.Printf("Waiting %v for cluster '%s' to be ready...\n", time.Duration(times)*wait, clusterId)
 
