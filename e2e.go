@@ -21,8 +21,8 @@ import (
 	"github.com/openshift/osde2e/pkg/testgrid"
 )
 
-// UHC is used to deploy and manage clusters.
-var UHC *osd.UHC
+// OSD is used to deploy and manage clusters.
+var OSD *osd.OSD
 
 func RunE2ETests(t *testing.T, cfg *config.Config) {
 	gomega.RegisterFailHandler(ginkgo.Fail)

@@ -41,10 +41,10 @@ var _ = ginkgo.AfterSuite(func() {
 	defer ginkgo.GinkgoRecover()
 	cfg := config.Cfg
 
-	if UHC != nil {
+	if OSD != nil {
 		log.Printf("Getting logs for cluster '%s'...", cfg.ClusterId)
 
-		logs, err := UHC.Logs(cfg.ClusterId, 200)
+		logs, err := OSD.Logs(cfg.ClusterId, 200)
 		if err != nil {
 			msg := fmt.Sprintf("Failed to collect cluster logs: %v", err)
 			log.Println(msg)
@@ -59,7 +59,7 @@ var _ = ginkgo.AfterSuite(func() {
 		return
 	}
 
-	if err := UHC.DeleteCluster(cfg.ClusterId); err != nil {
+	if err := OSD.DeleteCluster(cfg.ClusterId); err != nil {
 		msg := fmt.Sprintf("Failed to destroy cluster: %v", err)
 		log.Println(msg)
 		ginkgo.Fail(msg)
@@ -68,25 +68,25 @@ var _ = ginkgo.AfterSuite(func() {
 
 // setupCluster brings up a cluster, waits for it to be ready, then returns it's name.
 func setupCluster(cfg *config.Config) (err error) {
-	if UHC, err = osd.NewUHC(cfg.UHCToken, !cfg.UseProd, cfg.DebugUHC); err != nil {
-		return fmt.Errorf("could not setup UHC: %v", err)
+	if OSD, err = osd.New(cfg.UHCToken, !cfg.UseProd, cfg.DebugOSD); err != nil {
+		return fmt.Errorf("could not setup OSD: %v", err)
 	}
 
 	// create a new cluster if no ID is specified
 	if cfg.ClusterId == "" {
-		if cfg.ClusterId, err = UHC.LaunchCluster(cfg.ClusterName, cfg.ClusterVersion, cfg.AWSKeyId, cfg.AWSAccessKey); err != nil {
+		if cfg.ClusterId, err = OSD.LaunchCluster(cfg.ClusterName, cfg.ClusterVersion, cfg.AWSKeyId, cfg.AWSAccessKey); err != nil {
 			return fmt.Errorf("could not launch cluster: %v", err)
 		}
 	} else {
 		log.Printf("CLUSTER_ID of '%s' was provided, skipping cluster creation and using it instead", cfg.ClusterId)
 	}
 
-	if err = UHC.WaitForClusterReady(cfg.ClusterId); err != nil {
+	if err = OSD.WaitForClusterReady(cfg.ClusterId); err != nil {
 		return fmt.Errorf("failed waiting for cluster ready: %v", err)
 	}
 
 	if len(cfg.Kubeconfig) == 0 {
-		if cfg.Kubeconfig, err = UHC.ClusterKubeconfig(cfg.ClusterId); err != nil {
+		if cfg.Kubeconfig, err = OSD.ClusterKubeconfig(cfg.ClusterId); err != nil {
 			return fmt.Errorf("could not get kubeconfig for cluster: %v", err)
 		}
 	} else {

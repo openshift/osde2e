@@ -32,10 +32,10 @@ type Config struct {
 	// ClusterVersion is the version of the cluster being deployed.
 	ClusterVersion string `env:"CLUSTER_VERSION"`
 
-	// AWSKeyId is used by UHC.
+	// AWSKeyId is used by OSD.
 	AWSKeyId string `env:"AWS_ACCESS_KEY_ID"`
 
-	// AWSAccessKey is used by UHC.
+	// AWSAccessKey is used by OSD.
 	AWSAccessKey string `env:"AWS_SECRET_ACCESS_KEY"`
 
 	// TestGridBucket is the Google Cloud Storage bucket where results are reported for TestGrid.
@@ -47,7 +47,7 @@ type Config struct {
 	// TestGridServiceAccount is a Base64 encoded Google Cloud Service Account used to access the TestGridBucket.
 	TestGridServiceAccount []byte `env:"TESTGRID_SERVICE_ACCOUNT"`
 
-	// UseProd sends requests to production UHC.
+	// UseProd sends requests to production OSD.
 	UseProd bool
 
 	// NoDestroy leaves the cluster running after testing.
@@ -59,8 +59,8 @@ type Config struct {
 	// Kubeconfig is used to access a cluster.
 	Kubeconfig []byte `env:"TEST_KUBECONFIG"`
 
-	// DebugUHC shows debug level messages when enabled.
-	DebugUHC bool `env:"DEBUG_UHC"`
+	// DebugOSD shows debug level messages when enabled.
+	DebugOSD bool `env:"DEBUG_OSD"`
 }
 
 func (c *Config) LoadFromEnv() {
