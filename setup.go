@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
 
 	"github.com/openshift/osde2e/pkg/config"
 	"github.com/openshift/osde2e/pkg/osd"
@@ -25,12 +26,11 @@ const (
 
 // Setup cluster before testing begins.
 var _ = ginkgo.SynchronizedBeforeSuite(func() []byte {
+	defer ginkgo.GinkgoRecover()
 	cfg := config.Cfg
-	if err := setupCluster(cfg); err != nil {
-		msg := fmt.Sprintf("Failed to setup cluster for testing: %v", err)
-		log.Println(msg)
-		ginkgo.Fail(msg)
-	}
+
+	err := setupCluster(cfg)
+	Expect(err).ShouldNot(HaveOccurred(), "failed to setup cluster for testing")
 	return []byte{}
 }, func(data []byte) {
 	// only needs to run once
@@ -45,13 +45,8 @@ var _ = ginkgo.AfterSuite(func() {
 		log.Printf("Getting logs for cluster '%s'...", cfg.ClusterId)
 
 		logs, err := OSD.Logs(cfg.ClusterId, 200)
-		if err != nil {
-			msg := fmt.Sprintf("Failed to collect cluster logs: %v", err)
-			log.Println(msg)
-			ginkgo.Fail(msg)
-		} else {
-			writeLogs(cfg, logs)
-		}
+		Expect(err).NotTo(HaveOccurred(), "failed to collect cluster logs")
+		writeLogs(cfg, logs)
 	}
 
 	if cfg.NoDestroy {
@@ -59,11 +54,8 @@ var _ = ginkgo.AfterSuite(func() {
 		return
 	}
 
-	if err := OSD.DeleteCluster(cfg.ClusterId); err != nil {
-		msg := fmt.Sprintf("Failed to destroy cluster: %v", err)
-		log.Println(msg)
-		ginkgo.Fail(msg)
-	}
+	err := OSD.DeleteCluster(cfg.ClusterId)
+	Expect(err).NotTo(HaveOccurred(), "failed to destroy cluster")
 })
 
 // setupCluster brings up a cluster, waits for it to be ready, then returns it's name.
@@ -113,10 +105,7 @@ func writeLogs(cfg *config.Config, m map[string][]byte) {
 	for k, v := range m {
 		name := k + "-log.txt"
 		filePath := filepath.Join(cfg.ReportDir, name)
-		if err := ioutil.WriteFile(filePath, v, os.ModePerm); err != nil {
-			msg := fmt.Sprintf("Failed to write log '%s': %v", filePath, err)
-			log.Println(msg)
-			ginkgo.Fail(msg)
-		}
+		err := ioutil.WriteFile(filePath, v, os.ModePerm)
+		Expect(err).NotTo(HaveOccurred(), "failed to write log '%s'", filePath)
 	}
 }

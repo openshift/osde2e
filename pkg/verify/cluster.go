@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
 
 	projectv1 "github.com/openshift/api/project/v1"
 	image "github.com/openshift/client-go/image/clientset/versioned"
@@ -28,7 +29,6 @@ func NewCluster() (*config.Config, *Cluster) {
 	ginkgo.BeforeEach(func() {
 		cluster.Setup(cfg.Kubeconfig)
 	})
-
 	ginkgo.AfterEach(cluster.Cleanup)
 	return cfg, cluster
 }
@@ -41,64 +41,45 @@ type Cluster struct {
 func (c *Cluster) Setup(kubeconfig []byte) {
 	var err error
 	c.restConfig, err = clientcmd.RESTConfigFromKubeConfig(kubeconfig)
-	if err != nil {
-		ginkgo.Fail("could not create project: " + err.Error())
-	}
+	Expect(err).ShouldNot(HaveOccurred(), "failed to configure client")
 
 	// setup project to run tests
 	prefix := randomStr(5)
 	proj, err := c.createProject(prefix)
-	if err != nil {
-		ginkgo.Fail("could not create project: " + err.Error())
-		return
-	} else if proj == nil {
-		ginkgo.Fail("could not create project")
-		return
-	}
+	Expect(err).ShouldNot(HaveOccurred(), "failed to create project")
+	Expect(proj).ShouldNot(BeNil())
 
 	c.proj = proj.Name
 }
 
 func (c *Cluster) Cleanup() {
 	err := c.cleanup(c.proj)
-	if err != nil {
-		msg := fmt.Sprintf("could not delete project '%s': %v", c.proj, err)
-		ginkgo.Fail(msg)
-		return
-	}
+	Expect(err).ShouldNot(HaveOccurred(), "could not delete project '%s'", c.proj)
 
 	c.proj = ""
 }
 
 func (c *Cluster) Kube() kubernetes.Interface {
 	client, err := kubernetes.NewForConfig(c.restConfig)
-	if err != nil {
-		ginkgo.Fail("failed to create Image clientset: " + err.Error())
-	}
+	Expect(err).ShouldNot(HaveOccurred(), "failed to configure Kubernetes clientset")
 	return client
 }
 
 func (c *Cluster) Image() image.Interface {
 	client, err := image.NewForConfig(c.restConfig)
-	if err != nil {
-		ginkgo.Fail("failed to create Image clientset: " + err.Error())
-	}
+	Expect(err).ShouldNot(HaveOccurred(), "failed to configure Image clientset")
 	return client
 }
 
 func (c *Cluster) Route() route.Interface {
 	client, err := route.NewForConfig(c.restConfig)
-	if err != nil {
-		ginkgo.Fail("failed to create Image clientset: " + err.Error())
-	}
+	Expect(err).ShouldNot(HaveOccurred(), "failed to configure Route clientset")
 	return client
 }
 
 func (c *Cluster) Project() project.Interface {
 	client, err := project.NewForConfig(c.restConfig)
-	if err != nil {
-		ginkgo.Fail("failed to create Project clientset: " + err.Error())
-	}
+	Expect(err).ShouldNot(HaveOccurred(), "failed to configure Project clientset")
 	return client
 }
 
@@ -121,5 +102,9 @@ func (c *Cluster) createProject(suffix string) (*projectv1.Project, error) {
 }
 
 func (c *Cluster) cleanup(projectName string) error {
+	err := c.Project().ProjectV1().Projects().Delete(projectName, &metav1.DeleteOptions{})
+	if err != nil {
+		return fmt.Errorf("failed to cleanup project '%s': %v", projectName, err)
+	}
 	return nil
 }

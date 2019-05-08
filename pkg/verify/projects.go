@@ -1,9 +1,8 @@
 package verify
 
 import (
-	"fmt"
-
 	"github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -13,9 +12,7 @@ var _ = ginkgo.Describe("Projects", func() {
 	_, cluster := NewCluster()
 
 	ginkgo.It("Empty Project should be created", func() {
-		if _, err := cluster.Project().ProjectV1().Projects().Get(cluster.proj, metav1.GetOptions{}); err != nil {
-			msg := fmt.Sprintf("project should have been created: %v", err)
-			ginkgo.Fail(msg)
-		}
+		_, err := cluster.Project().ProjectV1().Projects().Get(cluster.proj, metav1.GetOptions{})
+		Expect(err).ShouldNot(HaveOccurred(), "project should have been created")
 	})
 })
