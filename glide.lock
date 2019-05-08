@@ -1,5 +1,5 @@
-hash: 6c2a6f30d6c98e26c7a01f018ef95b21eb867ad39f75f88ab8be65c7f4beb70f
-updated: 2019-05-07T15:00:00.711800798-07:00
+hash: 661810e1817ecbc197d0cc9cbe6b384614545cede77fe2c6a3fa1462f8c9675e
+updated: 2019-05-08T11:45:25.163046314-07:00
 imports:
 - name: cloud.google.com/go
   version: 8c41231e01b2085512d98153bcffb847ff9b4b9f
@@ -101,7 +101,7 @@ imports:
   - matchers/support/goraph/util
   - types
 - name: github.com/openshift-online/uhc-sdk-go
-  version: f0312ffde0d90e7f427cda6a18a75333996db946
+  version: 7be443c20df031c5abc5244716375489e525133e
   subpackages:
   - pkg/client
   - pkg/client/accountsmgmt
@@ -118,6 +118,7 @@ imports:
   - image/dockerpre012
   - image/v1
   - project/v1
+  - route/v1
 - name: github.com/openshift/client-go
   version: be319837212db97ca55549af6d0e44acc12db7fc
   subpackages:
@@ -127,6 +128,9 @@ imports:
   - project/clientset/versioned
   - project/clientset/versioned/scheme
   - project/clientset/versioned/typed/project/v1
+  - route/clientset/versioned
+  - route/clientset/versioned/scheme
+  - route/clientset/versioned/typed/route/v1
 - name: github.com/peterbourgon/diskv
   version: 5f041e8faa004a95c88a202771f4cc3e991971e6
 - name: github.com/spf13/pflag

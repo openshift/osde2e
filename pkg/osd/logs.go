@@ -1,8 +1,9 @@
 package osd
 
 import (
-	"encoding/json"
 	"fmt"
+
+	"github.com/openshift-online/uhc-sdk-go/pkg/client/clustersmgmt/v1"
 )
 
 // Logs provides all logs available for a cluster, ids can be optionally provided for only specific logs.
@@ -15,38 +16,42 @@ func (u *OSD) Logs(clusterId string, length int, ids ...string) (logs map[string
 
 	logs = make(map[string][]byte, len(ids))
 	for _, logId := range ids {
-		params := map[string]interface{}{"tail": length}
-		resource := fmt.Sprintf("clusters/%s/logs/%s", clusterId, logId)
-		resp, err := doRequest(u.conn, "", resource, params, nil)
-		if err != nil {
-			return logs, fmt.Errorf("couldn't retrieve log list for cluster '%s': %v", clusterId, err)
+		resp, err := u.cluster(clusterId).
+			Logs().
+			Log(logId).
+			Get().Parameter("tail", length).
+			Send()
+
+		if resp != nil {
+			err = errResp(resp.Error())
 		}
 
-		body := map[string]interface{}{}
-		if err = json.Unmarshal(resp.Bytes(), &body); err != nil {
-			return logs, fmt.Errorf("couldn't unmarshal response: %v", err)
-		}
-
-		contentStr, err := getStr(body, "content")
 		if err != nil {
-			return logs, fmt.Errorf("the cotents of log '%s' couldn't be retrieved: %v", logId, err)
+			return logs, fmt.Errorf("the contents of log '%s' couldn't be retrieved: %v", logId, err)
 		}
-		logs[logId] = []byte(contentStr)
+		logs[logId] = []byte(resp.Body().Content())
 	}
 	return
 }
 
 func (u *OSD) getLogList(clusterId string) ([]string, error) {
-	resource := fmt.Sprintf("clusters/%s/logs", clusterId)
-	resp, err := doRequest(u.conn, "", resource, nil, nil)
+	resp, err := u.cluster(clusterId).
+		Logs().
+		List().
+		Send()
+
+	if resp != nil {
+		err = errResp(resp.Error())
+	}
+
 	if err != nil {
 		return nil, fmt.Errorf("couldn't retrieve log list for cluster '%s': %v", clusterId, err)
 	}
 
-	body := map[string]interface{}{}
-	if err = json.Unmarshal(resp.Bytes(), &body); err != nil {
-		return []string{}, fmt.Errorf("couldn't unmarshal response: %v", err)
-	}
-
-	return getListOfField(body, "items", "id")
+	var logs []string
+	resp.Items().Each(func(l *v1.Log) bool {
+		logs = append(logs, l.ID())
+		return true
+	})
+	return logs, nil
 }
