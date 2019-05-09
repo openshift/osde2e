@@ -24,8 +24,8 @@ type Config struct {
 	// UHCToken is used to authenticate with UHC.
 	UHCToken string `env:"UHC_TOKEN"`
 
-	// ClusterId identifies the cluster. If set at start, an existing cluster is tested.
-	ClusterId string `env:"CLUSTER_ID"`
+	// ClusterID identifies the cluster. If set at start, an existing cluster is tested.
+	ClusterID string `env:"CLUSTER_ID"`
 
 	// ClusterName is the name of the cluster being created.
 	ClusterName string
@@ -33,8 +33,8 @@ type Config struct {
 	// ClusterVersion is the version of the cluster being deployed.
 	ClusterVersion string `env:"CLUSTER_VERSION"`
 
-	// AWSKeyId is used by OSD.
-	AWSKeyId string `env:"AWS_ACCESS_KEY_ID"`
+	// AWSKeyID is used by OSD.
+	AWSKeyID string `env:"AWS_ACCESS_KEY_ID"`
 
 	// AWSAccessKey is used by OSD.
 	AWSAccessKey string `env:"AWS_SECRET_ACCESS_KEY"`
@@ -64,6 +64,7 @@ type Config struct {
 	DebugOSD bool `env:"DEBUG_OSD"`
 }
 
+// LoadFromEnv sets values from environment variables specified in `env` tags.
 func (c *Config) LoadFromEnv() {
 	v := reflect.ValueOf(c).Elem()
 	for i := 0; i < v.Type().NumField(); i++ {

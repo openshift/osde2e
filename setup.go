@@ -21,6 +21,7 @@ func init() {
 }
 
 const (
+	// DefaultVersion is the version of OSD that launched clusters run.
 	DefaultVersion = "openshift-v4.0-beta4"
 )
 
@@ -42,9 +43,9 @@ var _ = ginkgo.AfterSuite(func() {
 	cfg := config.Cfg
 
 	if OSD != nil {
-		log.Printf("Getting logs for cluster '%s'...", cfg.ClusterId)
+		log.Printf("Getting logs for cluster '%s'...", cfg.ClusterID)
 
-		logs, err := OSD.Logs(cfg.ClusterId, 200)
+		logs, err := OSD.Logs(cfg.ClusterID, 200)
 		Expect(err).NotTo(HaveOccurred(), "failed to collect cluster logs")
 		writeLogs(cfg, logs)
 
@@ -53,8 +54,8 @@ var _ = ginkgo.AfterSuite(func() {
 			return
 		}
 
-		log.Printf("Destroying cluster '%s'...", cfg.ClusterId)
-		err = OSD.DeleteCluster(cfg.ClusterId)
+		log.Printf("Destroying cluster '%s'...", cfg.ClusterID)
+		err = OSD.DeleteCluster(cfg.ClusterID)
 		Expect(err).NotTo(HaveOccurred(), "failed to destroy cluster")
 	}
 })
@@ -66,20 +67,20 @@ func setupCluster(cfg *config.Config) (err error) {
 	}
 
 	// create a new cluster if no ID is specified
-	if cfg.ClusterId == "" {
-		if cfg.ClusterId, err = OSD.LaunchCluster(cfg); err != nil {
+	if cfg.ClusterID == "" {
+		if cfg.ClusterID, err = OSD.LaunchCluster(cfg); err != nil {
 			return fmt.Errorf("could not launch cluster: %v", err)
 		}
 	} else {
-		log.Printf("CLUSTER_ID of '%s' was provided, skipping cluster creation and using it instead", cfg.ClusterId)
+		log.Printf("CLUSTER_ID of '%s' was provided, skipping cluster creation and using it instead", cfg.ClusterID)
 	}
 
-	if err = OSD.WaitForClusterReady(cfg.ClusterId); err != nil {
+	if err = OSD.WaitForClusterReady(cfg.ClusterID); err != nil {
 		return fmt.Errorf("failed waiting for cluster ready: %v", err)
 	}
 
 	if len(cfg.Kubeconfig) == 0 {
-		if cfg.Kubeconfig, err = OSD.ClusterKubeconfig(cfg.ClusterId); err != nil {
+		if cfg.Kubeconfig, err = OSD.ClusterKubeconfig(cfg.ClusterID); err != nil {
 			return fmt.Errorf("could not get kubeconfig for cluster: %v", err)
 		}
 	} else {

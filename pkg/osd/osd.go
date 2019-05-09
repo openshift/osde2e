@@ -10,7 +10,10 @@ import (
 )
 
 const (
+	// StagingURL is the API endpoint for the OSD staging environment.
 	StagingURL = "https://api.stage.openshift.com"
+
+	// APIVersion is the version of the OSD API to use.
 	APIVersion = "v1"
 )
 
@@ -52,8 +55,8 @@ func (u *OSD) clusters() *v1.ClustersClient {
 }
 
 // cluster returns the client for a specific cluster
-func (u *OSD) cluster(clusterId string) *v1.ClusterClient {
-	return u.clusters().Cluster(clusterId)
+func (u *OSD) cluster(clusterID string) *v1.ClusterClient {
+	return u.clusters().Cluster(clusterID)
 }
 
 func errResp(resp *errors.Error) error {

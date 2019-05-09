@@ -6,19 +6,19 @@ import (
 	"github.com/openshift-online/uhc-sdk-go/pkg/client/clustersmgmt/v1"
 )
 
-// Logs provides all logs available for a cluster, ids can be optionally provided for only specific logs.
-func (u *OSD) Logs(clusterId string, length int, ids ...string) (logs map[string][]byte, err error) {
+// Logs provides all logs available for clusterID, ids can be optionally provided for only specific logs.
+func (u *OSD) Logs(clusterID string, length int, ids ...string) (logs map[string][]byte, err error) {
 	if ids == nil || len(ids) == 0 {
-		if ids, err = u.getLogList(clusterId); err != nil {
+		if ids, err = u.getLogList(clusterID); err != nil {
 			return logs, fmt.Errorf("couldn't get log list: %v", err)
 		}
 	}
 
 	logs = make(map[string][]byte, len(ids))
-	for _, logId := range ids {
-		resp, err := u.cluster(clusterId).
+	for _, logID := range ids {
+		resp, err := u.cluster(clusterID).
 			Logs().
-			Log(logId).
+			Log(logID).
 			Get().Parameter("tail", length).
 			Send()
 
@@ -27,15 +27,15 @@ func (u *OSD) Logs(clusterId string, length int, ids ...string) (logs map[string
 		}
 
 		if err != nil {
-			return logs, fmt.Errorf("the contents of log '%s' couldn't be retrieved: %v", logId, err)
+			return logs, fmt.Errorf("the contents of log '%s' couldn't be retrieved: %v", logID, err)
 		}
-		logs[logId] = []byte(resp.Body().Content())
+		logs[logID] = []byte(resp.Body().Content())
 	}
 	return
 }
 
-func (u *OSD) getLogList(clusterId string) ([]string, error) {
-	resp, err := u.cluster(clusterId).
+func (u *OSD) getLogList(clusterID string) ([]string, error) {
+	resp, err := u.cluster(clusterID).
 		Logs().
 		List().
 		Send()
@@ -45,7 +45,7 @@ func (u *OSD) getLogList(clusterId string) ([]string, error) {
 	}
 
 	if err != nil {
-		return nil, fmt.Errorf("couldn't retrieve log list for cluster '%s': %v", clusterId, err)
+		return nil, fmt.Errorf("couldn't retrieve log list for cluster '%s': %v", clusterID, err)
 	}
 
 	var logs []string

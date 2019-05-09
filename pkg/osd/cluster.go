@@ -23,7 +23,7 @@ func (u *OSD) LaunchCluster(cfg *config.Config) (string, error) {
 		DNS(v1.NewDNS().
 			BaseDomain("devcluster.openshift.com")).
 		AWS(v1.NewAWS().
-			AccessKeyID(cfg.AWSKeyId).
+			AccessKeyID(cfg.AWSKeyID).
 			SecretAccessKey(cfg.AWSAccessKey)).
 		Version(v1.NewVersion().
 			ID(cfg.ClusterVersion)).
@@ -46,9 +46,9 @@ func (u *OSD) LaunchCluster(cfg *config.Config) (string, error) {
 	return resp.Body().ID(), nil
 }
 
-// GetCluster returns the information about clusterId.
-func (u *OSD) GetCluster(clusterId string) (*v1.Cluster, error) {
-	resp, err := u.cluster(clusterId).
+// GetCluster returns the information about clusterID.
+func (u *OSD) GetCluster(clusterID string) (*v1.Cluster, error) {
+	resp, err := u.cluster(clusterID).
 		Get().
 		Send()
 
@@ -57,23 +57,23 @@ func (u *OSD) GetCluster(clusterId string) (*v1.Cluster, error) {
 	}
 
 	if err != nil {
-		return nil, fmt.Errorf("couldn't retrieve cluster '%s': %v", clusterId, err)
+		return nil, fmt.Errorf("couldn't retrieve cluster '%s': %v", clusterID, err)
 	}
 	return resp.Body(), err
 }
 
-// ClusterState retrieves the state of clusterId.
-func (u *OSD) ClusterState(clusterId string) (v1.ClusterState, error) {
-	cluster, err := u.GetCluster(clusterId)
+// ClusterState retrieves the state of clusterID.
+func (u *OSD) ClusterState(clusterID string) (v1.ClusterState, error) {
+	cluster, err := u.GetCluster(clusterID)
 	if err != nil {
-		return "", fmt.Errorf("couldn't get cluster '%s': %v", clusterId, err)
+		return "", fmt.Errorf("couldn't get cluster '%s': %v", clusterID, err)
 	}
 	return cluster.State(), nil
 }
 
-// ClusterKubeconfig retrieves the kubeconfig of clusterId.
-func (u *OSD) ClusterKubeconfig(clusterId string) (kubeconfig []byte, err error) {
-	resp, err := u.cluster(clusterId).
+// ClusterKubeconfig retrieves the kubeconfig of clusterID.
+func (u *OSD) ClusterKubeconfig(clusterID string) (kubeconfig []byte, err error) {
+	resp, err := u.cluster(clusterID).
 		Credentials().
 		Get().
 		Send()
@@ -83,14 +83,14 @@ func (u *OSD) ClusterKubeconfig(clusterId string) (kubeconfig []byte, err error)
 	}
 
 	if err != nil {
-		return nil, fmt.Errorf("couldn't retrieve credentials for cluster '%s': %v", clusterId, err)
+		return nil, fmt.Errorf("couldn't retrieve credentials for cluster '%s': %v", clusterID, err)
 	}
 	return []byte(resp.Body().Kubeconfig()), nil
 }
 
 // DeleteCluster requests the deletion of clusterID.
-func (u *OSD) DeleteCluster(clusterId string) error {
-	resp, err := u.cluster(clusterId).
+func (u *OSD) DeleteCluster(clusterID string) error {
+	resp, err := u.cluster(clusterID).
 		Delete().
 		Send()
 
@@ -99,23 +99,23 @@ func (u *OSD) DeleteCluster(clusterId string) error {
 	}
 
 	if err != nil {
-		return fmt.Errorf("couldn't delete cluster '%s': %v", clusterId, err)
+		return fmt.Errorf("couldn't delete cluster '%s': %v", clusterID, err)
 	}
 	return nil
 }
 
-// WaitForClusterReady blocks until clusterId is ready or a number of retries has been attempted.
-func (u *OSD) WaitForClusterReady(clusterId string) error {
+// WaitForClusterReady blocks until clusterID is ready or a number of retries has been attempted.
+func (u *OSD) WaitForClusterReady(clusterID string) error {
 	times, wait := 145, 45*time.Second
-	log.Printf("Waiting %v for cluster '%s' to be ready...\n", time.Duration(times)*wait, clusterId)
+	log.Printf("Waiting %v for cluster '%s' to be ready...\n", time.Duration(times)*wait, clusterID)
 
 	for i := 0; i < times; i++ {
-		if state, err := u.ClusterState(clusterId); state == v1.ClusterStateReady {
+		if state, err := u.ClusterState(clusterID); state == v1.ClusterStateReady {
 			return nil
 		} else if err != nil {
 			log.Print("Encountered error waiting for cluster:", err)
 		} else if state == v1.ClusterStateError {
-			return fmt.Errorf("the installation of cluster '%s' has errored", clusterId)
+			return fmt.Errorf("the installation of cluster '%s' has errored", clusterID)
 		} else {
 			log.Printf("Cluster is not ready, current status '%s'.", state)
 		}
@@ -124,5 +124,5 @@ func (u *OSD) WaitForClusterReady(clusterId string) error {
 	}
 
 	time.Sleep(time.Second)
-	return fmt.Errorf("timed out waiting for cluster '%s' to be ready", clusterId)
+	return fmt.Errorf("timed out waiting for cluster '%s' to be ready", clusterID)
 }
