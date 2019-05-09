@@ -1,3 +1,4 @@
+// Package helper provides utilities to assist with osde2e testing.
 package helper
 
 import (

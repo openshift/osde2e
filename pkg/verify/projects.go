@@ -1,3 +1,4 @@
+// Package verify provides tests that validate the operation of an OSD cluster.
 package verify
 
 import (

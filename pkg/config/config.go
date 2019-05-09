@@ -1,3 +1,4 @@
+// Package config provides the configuration for tests run as part of the osde2e suite.
 package config
 
 import (

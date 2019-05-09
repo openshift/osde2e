@@ -1,3 +1,4 @@
+// Package testgrid provides a client for reporting build results to a TestGrid instance.
 package testgrid
 
 import (

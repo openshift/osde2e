@@ -1,3 +1,4 @@
+// Package osde2e launches an OSD cluster, performs tests on it, destroys it, and reports results to TestGrid.
 package osde2e
 
 import (

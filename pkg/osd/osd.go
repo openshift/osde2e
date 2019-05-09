@@ -1,3 +1,4 @@
+// Package osd allows for the creation and management of OSD clusters.
 package osd
 
 import (
