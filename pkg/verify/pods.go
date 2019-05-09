@@ -19,7 +19,7 @@ var _ = ginkgo.Describe("Pods", func() {
 		requiredRatio := float64(95)
 
 		list, err := h.Kube().CoreV1().Pods(metav1.NamespaceAll).List(metav1.ListOptions{})
-		Expect(err).NotTo(HaveOccurred(), "couldn't list clusters")
+		Expect(err).NotTo(HaveOccurred(), "couldn't list Pods")
 		Expect(list).NotTo(BeNil())
 
 		var running float64

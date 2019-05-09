@@ -12,7 +12,11 @@ import (
 	testgrid "k8s.io/test-infra/testgrid/metadata"
 )
 
-// NewTestGrid configures a new TestGrid.
+// NewTestGrid for bucket and prefix using b64ServiceAccount (base64 encoded GCloud Service Account JSON key) for auth.
+// Google Cloud Service Account related to b64ServiceAccount must have read/write access to bucket.
+//
+// A b64ServiceAccount can be obtained through multiple methods documented here:
+// https://cloud.google.com/iam/docs/creating-managing-service-account-keys#creating_service_account_keys
 func NewTestGrid(bucket, prefix string, b64ServiceAccount []byte) (*TestGrid, error) {
 	if bucket == "" {
 		return nil, errors.New("bucket for TestGrid is not set")
