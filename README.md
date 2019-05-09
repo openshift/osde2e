@@ -52,3 +52,6 @@ make test
 ```
 make docker-test 
 ```
+
+## Writing tests
+Documentation on writing tests can be found [here](./docs/Writing-Tests.md).
