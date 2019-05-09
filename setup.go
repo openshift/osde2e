@@ -47,15 +47,16 @@ var _ = ginkgo.AfterSuite(func() {
 		logs, err := OSD.Logs(cfg.ClusterId, 200)
 		Expect(err).NotTo(HaveOccurred(), "failed to collect cluster logs")
 		writeLogs(cfg, logs)
-	}
 
-	if cfg.NoDestroy {
-		log.Println("NO_DESTROY is set, skipping deleting cluster.")
-		return
-	}
+		if cfg.NoDestroy {
+			log.Println("NO_DESTROY is set, skipping deleting cluster.")
+			return
+		}
 
-	err := OSD.DeleteCluster(cfg.ClusterId)
-	Expect(err).NotTo(HaveOccurred(), "failed to destroy cluster")
+		log.Printf("Destroying cluster '%s'...", cfg.ClusterId)
+		err = OSD.DeleteCluster(cfg.ClusterId)
+		Expect(err).NotTo(HaveOccurred(), "failed to destroy cluster")
+	}
 })
 
 // setupCluster brings up a cluster, waits for it to be ready, then returns it's name.
@@ -66,7 +67,7 @@ func setupCluster(cfg *config.Config) (err error) {
 
 	// create a new cluster if no ID is specified
 	if cfg.ClusterId == "" {
-		if cfg.ClusterId, err = OSD.LaunchCluster(cfg.ClusterName, cfg.ClusterVersion, cfg.AWSKeyId, cfg.AWSAccessKey); err != nil {
+		if cfg.ClusterId, err = OSD.LaunchCluster(cfg); err != nil {
 			return fmt.Errorf("could not launch cluster: %v", err)
 		}
 	} else {

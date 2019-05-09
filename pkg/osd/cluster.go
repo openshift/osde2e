@@ -6,14 +6,16 @@ import (
 	"time"
 
 	"github.com/openshift-online/uhc-sdk-go/pkg/client/clustersmgmt/v1"
+
+	"github.com/openshift/osde2e/pkg/config"
 )
 
 // LaunchCluster setups an new cluster using the OSD API and returns it's ID.
-func (u *OSD) LaunchCluster(name, version, awsId, awsKey string) (string, error) {
-	log.Printf("Creating cluster '%s'...", name)
+func (u *OSD) LaunchCluster(cfg *config.Config) (string, error) {
+	log.Printf("Creating cluster '%s'...", cfg.ClusterName)
 
 	cluster, err := v1.NewCluster().
-		Name(name).
+		Name(cfg.ClusterName).
 		Flavour(v1.NewFlavour().
 			ID("4")).
 		Region(v1.NewCloudRegion().
@@ -21,10 +23,10 @@ func (u *OSD) LaunchCluster(name, version, awsId, awsKey string) (string, error)
 		DNS(v1.NewDNS().
 			BaseDomain("devcluster.openshift.com")).
 		AWS(v1.NewAWS().
-			AccessKeyID(awsId).
-			SecretAccessKey(awsKey)).
+			AccessKeyID(cfg.AWSKeyId).
+			SecretAccessKey(cfg.AWSAccessKey)).
 		Version(v1.NewVersion().
-			ID(version)).
+			ID(cfg.ClusterVersion)).
 		Build()
 	if err != nil {
 		return "", fmt.Errorf("couldn't build cluster description: %v", err)
