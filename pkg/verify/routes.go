@@ -10,6 +10,8 @@ import (
 
 	"github.com/openshift/api/route/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/openshift/osde2e/pkg/helper"
 )
 
 const (
@@ -18,23 +20,22 @@ const (
 )
 
 var _ = ginkgo.Describe("Routes", func() {
-	defer ginkgo.GinkgoRecover()
-	_, cluster := NewCluster()
+	h := helper.New()
 
 	ginkgo.It("should be created for Console", func() {
-		consoleRoutes(cluster)
+		consoleRoutes(h)
 	})
 
 	ginkgo.It("should be functioning for Console", func() {
-		for _, route := range consoleRoutes(cluster) {
+		for _, route := range consoleRoutes(h) {
 			testRouteIngresses(route)
 		}
 	})
 })
 
-func consoleRoutes(cluster *Cluster) []v1.Route {
+func consoleRoutes(h *helper.H) []v1.Route {
 	labelSelector := fmt.Sprintf("app=%s", consoleLabel)
-	list, err := cluster.Route().RouteV1().Routes(consoleNamespace).List(metav1.ListOptions{
+	list, err := h.Route().RouteV1().Routes(consoleNamespace).List(metav1.ListOptions{
 		LabelSelector: labelSelector,
 	})
 	if err != nil || list == nil {

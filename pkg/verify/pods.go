@@ -8,16 +8,17 @@ import (
 
 	"k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/openshift/osde2e/pkg/helper"
 )
 
 var _ = ginkgo.Describe("Pods", func() {
-	defer ginkgo.GinkgoRecover()
-	_, cluster := NewCluster()
+	h := helper.New()
 
 	ginkgo.It("should be mostly running", func() {
 		requiredRatio := float64(95)
 
-		list, err := cluster.Kube().CoreV1().Pods(metav1.NamespaceAll).List(metav1.ListOptions{})
+		list, err := h.Kube().CoreV1().Pods(metav1.NamespaceAll).List(metav1.ListOptions{})
 		Expect(err).NotTo(HaveOccurred(), "couldn't list clusters")
 		Expect(list).NotTo(BeNil())
 
@@ -35,7 +36,7 @@ var _ = ginkgo.Describe("Pods", func() {
 	})
 
 	ginkgo.It("should not be Failed", func() {
-		list, err := cluster.Kube().CoreV1().Pods(metav1.NamespaceAll).List(metav1.ListOptions{
+		list, err := h.Kube().CoreV1().Pods(metav1.NamespaceAll).List(metav1.ListOptions{
 			FieldSelector: fmt.Sprintf("status.phase=%s", v1.PodFailed),
 		})
 		Expect(err).NotTo(HaveOccurred(), "couldn't list Pods")

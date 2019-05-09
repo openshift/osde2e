@@ -5,14 +5,15 @@ import (
 	. "github.com/onsi/gomega"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/openshift/osde2e/pkg/helper"
 )
 
 var _ = ginkgo.Describe("Projects", func() {
-	defer ginkgo.GinkgoRecover()
-	_, cluster := NewCluster()
+	h := helper.New()
 
 	ginkgo.It("Empty Project should be created", func() {
-		_, err := cluster.Project().ProjectV1().Projects().Get(cluster.proj, metav1.GetOptions{})
+		_, err := h.Project().ProjectV1().Projects().Get(h.CurrentProject(), metav1.GetOptions{})
 		Expect(err).ShouldNot(HaveOccurred(), "project should have been created")
 	})
 })
