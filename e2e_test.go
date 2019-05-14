@@ -6,7 +6,7 @@ import (
 	"github.com/openshift/osde2e/pkg/config"
 
 	// import suites to be tested
-	_ "github.com/openshift/osde2e/pkg/verify"
+	_ "github.com/openshift/osde2e/test/verify"
 )
 
 func TestE2E(t *testing.T) {
