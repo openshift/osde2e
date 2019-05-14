@@ -31,15 +31,15 @@ TestGrid is configured through [`config.Config`](https://godoc.org/github.com/op
 ### Adding a new package of tests
 All Ginkgo tests that are imported in **[e2e_test.go](../e2e_test.go)** are ran as part of the osde2e suite.
 
-For example, to add tests from `github.com/openshift/osde2e/pkg/verify` to the suite add the following to **[e2e_test.go](../e2e_test.go)**:
+For example, to add tests from `github.com/openshift/osde2e/test/verify` to the suite add the following to **[e2e_test.go](../e2e_test.go)**:
 ```go
 import (
-	_ "github.com/openshift/osde2e/pkg/verify"
+	_ "github.com/openshift/osde2e/test/verify"
 )
 ```
 
 ### Adding a test to an existing package
-This test from **[./pkg/verify/imagestreams.go](../pkg/verify/imagestreams.go)** provides a good example of setting up new ones:
+This test from **[./test/verify/imagestreams.go](../test/verify/imagestreams.go)** provides a good example of setting up new ones:
 
 - Create new file in a package that is imported by **[e2e_test.go](../e2e_test.go)** as discussed [above](#adding-a-new-package-of-tests). For this example, we will call the file **imagestreams.go**.
 
