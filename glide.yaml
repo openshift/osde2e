@@ -1,10 +1,12 @@
 package: github.com/openshift/osde2e
 import:
 - package: github.com/openshift-online/uhc-sdk-go
-  version: v0.1.10
+  version: v0.1.11
   subpackages:
   - pkg/client
   - pkg/client/clustersmgmt/v1
+- package: github.com/dgrijalva/jwt-go
+  version: 06ea1031745cb8b3dab3f6a236daf2b0aa468b7e
 - package: github.com/openshift/api
   subpackages:
   - project/v1

@@ -20,11 +20,6 @@ func (u *OSD) LaunchCluster(cfg *config.Config) (string, error) {
 			ID("4")).
 		Region(v1.NewCloudRegion().
 			ID("us-east-1")).
-		DNS(v1.NewDNS().
-			BaseDomain("devcluster.openshift.com")).
-		AWS(v1.NewAWS().
-			AccessKeyID(cfg.AWSKeyID).
-			SecretAccessKey(cfg.AWSAccessKey)).
 		Version(v1.NewVersion().
 			ID(cfg.ClusterVersion)).
 		Build()
