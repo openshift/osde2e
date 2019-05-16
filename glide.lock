@@ -1,5 +1,5 @@
-hash: 661810e1817ecbc197d0cc9cbe6b384614545cede77fe2c6a3fa1462f8c9675e
-updated: 2019-05-08T11:45:25.163046314-07:00
+hash: 7f3381052e94f79d42ffed22078730d7839c36d2d02d51c429549a04a3d863aa
+updated: 2019-05-15T17:28:46.933970132-07:00
 imports:
 - name: cloud.google.com/go
   version: 8c41231e01b2085512d98153bcffb847ff9b4b9f
@@ -12,7 +12,7 @@ imports:
   - internal/version
   - storage
 - name: github.com/dgrijalva/jwt-go
-  version: 3af4c746e1c248ee8491a3e0c6f7a9cd831e95f8
+  version: 06ea1031745cb8b3dab3f6a236daf2b0aa468b7e
 - name: github.com/gogo/protobuf
   version: 342cbe0a04158f6dcb03ca0079991a51a4248c02
   subpackages:
@@ -101,7 +101,7 @@ imports:
   - matchers/support/goraph/util
   - types
 - name: github.com/openshift-online/uhc-sdk-go
-  version: 7be443c20df031c5abc5244716375489e525133e
+  version: 722cf7c05ce9e442a11a3008aad490c1c075fac5
   subpackages:
   - pkg/client
   - pkg/client/accountsmgmt
@@ -112,7 +112,7 @@ imports:
   - pkg/client/helpers
   - pkg/client/internal
 - name: github.com/openshift/api
-  version: d111834310a57dbb9a14140149477f91e055ba45
+  version: 81d064c11ff2d62705dbb09ed9ac200ef9557716
   subpackages:
   - image/docker10
   - image/dockerpre012
@@ -171,6 +171,7 @@ imports:
   - internal/timeseries
   - lex/httplex
   - trace
+  - websocket
 - name: golang.org/x/oauth2
   version: 9f3314589c9a9136388751d9adae6b0ed400978a
   subpackages:
