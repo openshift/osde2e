@@ -42,7 +42,11 @@ var _ = ginkgo.AfterSuite(func() {
 	defer ginkgo.GinkgoRecover()
 	cfg := config.Cfg
 
-	if OSD != nil {
+	if OSD == nil {
+		log.Println("OSD was not configured. Skipping AfterSuite...")
+	} else if cfg.ClusterID == "" {
+		log.Println("CLUSTER_ID is not set, likely due to a setup failure. Skipping AfterSuite...")
+	} else {
 		log.Printf("Getting logs for cluster '%s'...", cfg.ClusterID)
 
 		logs, err := OSD.Logs(cfg.ClusterID, 200)
