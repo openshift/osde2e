@@ -15,8 +15,8 @@ import (
 var _ = ginkgo.Describe("Pods", func() {
 	h := helper.New()
 
-	ginkgo.It("should be mostly running", func() {
-		requiredRatio := float64(95)
+	ginkgo.It("should be Running or Succeeded", func() {
+		requiredRatio := float64(100)
 
 		list, err := h.Kube().CoreV1().Pods(metav1.NamespaceAll).List(metav1.ListOptions{})
 		Expect(err).NotTo(HaveOccurred(), "couldn't list Pods")
