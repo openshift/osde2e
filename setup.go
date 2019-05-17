@@ -7,6 +7,7 @@ import (
 	"math/rand"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/onsi/ginkgo"
@@ -19,11 +20,6 @@ import (
 func init() {
 	rand.Seed(time.Now().Unix())
 }
-
-const (
-	// DefaultVersion is the version of OSD that launched clusters run.
-	DefaultVersion = "openshift-v4.0-beta4"
-)
 
 // Setup cluster before testing begins.
 var _ = ginkgo.SynchronizedBeforeSuite(func() []byte {
@@ -72,6 +68,19 @@ func setupCluster(cfg *config.Config) (err error) {
 
 	// create a new cluster if no ID is specified
 	if cfg.ClusterID == "" {
+		// use latest nightly if no version specified
+		if cfg.ClusterVersion == "" {
+			if cfg.ClusterVersion, err = OSD.LatestNightly(-1, -1); err != nil {
+				return fmt.Errorf("CLUSTER_VERSION not set and failed to get latest nightly: %v", err)
+			}
+			log.Printf("Using latest nightly '%s' as CLUSTER_VERSION", cfg.ClusterVersion)
+		}
+
+		if cfg.ClusterName == "" {
+			safeVersion := strings.Replace(cfg.ClusterVersion, ".", "-", -1)
+			cfg.ClusterName = "ci-cluster-" + safeVersion + "-" + cfg.Suffix
+		}
+
 		if cfg.ClusterID, err = OSD.LaunchCluster(cfg); err != nil {
 			return fmt.Errorf("could not launch cluster: %v", err)
 		}
