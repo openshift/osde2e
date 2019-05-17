@@ -8,7 +8,6 @@ import (
 	"log"
 	"os"
 	"path"
-	"strings"
 	"testing"
 	"time"
 
@@ -30,17 +29,8 @@ func RunE2ETests(t *testing.T, cfg *config.Config) {
 	gomega.RegisterFailHandler(ginkgo.Fail)
 
 	// set defaults
-	if cfg.ClusterVersion == "" {
-		cfg.ClusterVersion = DefaultVersion
-	}
-
 	if cfg.Suffix == "" {
 		cfg.Suffix = randomStr(5)
-	}
-
-	if cfg.ClusterName == "" {
-		safeVersion := strings.Replace(cfg.ClusterVersion, ".", "-", -1)
-		cfg.ClusterName = "ci-cluster-" + safeVersion + "-" + cfg.Suffix
 	}
 
 	if cfg.ReportDir == "" {

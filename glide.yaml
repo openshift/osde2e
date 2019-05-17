@@ -45,3 +45,5 @@ import:
 - package: k8s.io/test-infra
   subpackages:
   - testgrid/metadata
+- package: github.com/Masterminds/semver
+  version: ~1.4.2

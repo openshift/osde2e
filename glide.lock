@@ -1,5 +1,5 @@
-hash: 7f3381052e94f79d42ffed22078730d7839c36d2d02d51c429549a04a3d863aa
-updated: 2019-05-15T17:28:46.933970132-07:00
+hash: d6cf7abfcd9508d3cb687ca0accee5419d62a6511bf827f2412879ebfa4b7d10
+updated: 2019-05-17T12:24:10.991406828-07:00
 imports:
 - name: cloud.google.com/go
   version: 8c41231e01b2085512d98153bcffb847ff9b4b9f
@@ -62,6 +62,8 @@ imports:
   version: 9316a62528ac99aaecb4e47eadd6dc8aa6533d58
 - name: github.com/json-iterator/go
   version: ab8a2e0c74be9d3be70b3184d9acc634935ded82
+- name: github.com/Masterminds/semver
+  version: c7af12943936e8c39859482e61f0574c2fd7fc75
 - name: github.com/modern-go/concurrent
   version: bacd9c7ef1dd9b15be4a9909b8ac7a4e313eec94
 - name: github.com/modern-go/reflect2
@@ -112,7 +114,7 @@ imports:
   - pkg/client/helpers
   - pkg/client/internal
 - name: github.com/openshift/api
-  version: 81d064c11ff2d62705dbb09ed9ac200ef9557716
+  version: d5b34b957e91dbf64013a866951c3ed5770db0b5
   subpackages:
   - image/docker10
   - image/dockerpre012
