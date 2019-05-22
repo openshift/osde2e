@@ -31,7 +31,7 @@ var _ = ginkgo.Describe("Pods", func() {
 		}
 
 		ratio := (running / float64(len(list.Items))) * 100
-		Expect(ratio).Should(BeNumerically(">", requiredRatio),
+		Expect(ratio).Should(Equal(requiredRatio),
 			"only %f%% of clusters ready, need %f%%", ratio, requiredRatio)
 	})
 

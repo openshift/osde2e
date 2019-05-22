@@ -24,6 +24,7 @@ docker-test:
 		-t \
 		-e NO_DESTROY=true \
 		-e CLUSTER_ID=$(CLUSTER_ID) \
+		-e CLUSTER_VERSION=openshift-v4.1.0-rc.5 \
 		-e UHC_TOKEN=$(UHC_REFRESH_TOKEN) \
 		-e AWS_ACCESS_KEY_ID=$(AWS_ACCESS_KEY_ID) \
 		-e AWS_SECRET_ACCESS_KEY=$(AWS_SECRET_ACCESS_KEY) \
