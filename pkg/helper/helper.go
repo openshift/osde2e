@@ -8,6 +8,7 @@ import (
 	"github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
+	projectv1 "github.com/openshift/api/project/v1"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 
@@ -35,7 +36,7 @@ type H struct {
 
 	// internal
 	restConfig *rest.Config
-	proj       string
+	proj       *projectv1.Project
 }
 
 // Setup configures a *rest.Config using the embedded kubeconfig then sets up a Project for tests to run in.
@@ -50,19 +51,20 @@ func (h *H) Setup() {
 	Expect(err).ShouldNot(HaveOccurred(), "failed to create project")
 	Expect(proj).ShouldNot(BeNil())
 
-	h.proj = proj.Name
+	h.proj = proj
 }
 
 // Cleanup deletes a Project after tests have been ran.
 func (h *H) Cleanup() {
-	err := h.cleanup(h.proj)
+	err := h.cleanup(h.proj.Name)
 	Expect(err).ShouldNot(HaveOccurred(), "could not delete project '%s'", h.proj)
 
 	h.restConfig = nil
-	h.proj = ""
+	h.proj = nil
 }
 
 // CurrentProject returns the project being used for testing.
 func (h *H) CurrentProject() string {
-	return h.proj
+	Expect(h.proj).NotTo(BeNil(), "no project is currently set")
+	return h.proj.Name
 }

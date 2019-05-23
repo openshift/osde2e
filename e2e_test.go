@@ -6,6 +6,7 @@ import (
 	"github.com/openshift/osde2e/pkg/config"
 
 	// import suites to be tested
+	_ "github.com/openshift/osde2e/test/openshift"
 	_ "github.com/openshift/osde2e/test/verify"
 )
 

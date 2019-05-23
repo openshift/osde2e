@@ -7,6 +7,7 @@ import (
 	project "github.com/openshift/client-go/project/clientset/versioned"
 	route "github.com/openshift/client-go/route/clientset/versioned"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 )
 
 // Kube returns the clientset for Kubernetes upstream.
@@ -34,5 +35,12 @@ func (h *H) Route() route.Interface {
 func (h *H) Project() project.Interface {
 	client, err := project.NewForConfig(h.restConfig)
 	Expect(err).ShouldNot(HaveOccurred(), "failed to configure Project clientset")
+	return client
+}
+
+// REST returns a client for generic operations.
+func (h *H) REST() *rest.RESTClient {
+	client, err := rest.RESTClientFor(h.restConfig)
+	Expect(err).ShouldNot(HaveOccurred(), "failed to configure REST client")
 	return client
 }
