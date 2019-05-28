@@ -23,8 +23,8 @@ oc config set-context {{.Name}} --cluster={{.Name}} --user={{.Name}}
 oc config use-context {{.Name}}
 
 mkdir ./results
-#openshift-tests run openshift/conformance --dry-run --loglevel=10 --include-success --junit-dir=./results
-cd results && touch helo && echo "Starting server" && python -m SimpleHTTPServer
+openshift-tests run openshift/conformance --dry-run --loglevel=10 --include-success --junit-dir=./results
+cd results && echo "Starting server" && python -m SimpleHTTPServer
 `
 )
 
@@ -86,6 +86,6 @@ func createOpenShiftTestsPod(h *helper.H, testImageName string) (*kubev1.Pod, er
 	})
 
 	phase := h.WaitForPodPhase(pod, kubev1.PodRunning, 25, 6*time.Second)
-	Expect(phase).To(Equal(kubev1.PodSucceeded))
+	Expect(phase).To(Equal(kubev1.PodRunning))
 	return pod, err
 }
