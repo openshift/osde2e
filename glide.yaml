@@ -23,6 +23,7 @@ import:
   version: release-4.3
   subpackages:
   - project/clientset/versioned
+  - image/clientset/versioned/fake
 - package: github.com/openshift-online/uhc-sdk-go
   version: v0.1.13
   subpackages:

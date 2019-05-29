@@ -1,5 +1,5 @@
-hash: d63e8e4750bc3e6c33ee87ade3ca700b9f44eb50075f7876d2044195f57671c8
-updated: 2019-05-29T17:25:36.513002581-07:00
+hash: 20a9df5ca669aac004d6fcdb44d6ebbbcc46e408b77846739d03d2cf382c8733
+updated: 2019-05-30T14:47:12.709839856-07:00
 imports:
 - name: cloud.google.com/go
   version: 8c41231e01b2085512d98153bcffb847ff9b4b9f
@@ -21,6 +21,8 @@ imports:
   - spew
 - name: github.com/dgrijalva/jwt-go
   version: 06ea1031745cb8b3dab3f6a236daf2b0aa468b7e
+- name: github.com/evanphx/json-patch
+  version: 5858425f75500d40c52783dce87d085a483ce135
 - name: github.com/gogo/protobuf
   version: 342cbe0a04158f6dcb03ca0079991a51a4248c02
   subpackages:
@@ -120,7 +122,7 @@ imports:
   - pkg/client/helpers
   - pkg/client/internal
 - name: github.com/openshift/api
-  version: 2963b4d8c99701a12f3a18c2d53c28b40408d213
+  version: dafd2647cb03b7e8b3ccec0eba3f7af85df898d6
   subpackages:
   - image/docker10
   - image/dockerpre012
@@ -131,8 +133,10 @@ imports:
   version: f4b242dfe08529a11803996e325ab6dc127d4e1d
   subpackages:
   - image/clientset/versioned
+  - image/clientset/versioned/fake
   - image/clientset/versioned/scheme
   - image/clientset/versioned/typed/image/v1
+  - image/clientset/versioned/typed/image/v1/fake
   - project/clientset/versioned
   - project/clientset/versioned/scheme
   - project/clientset/versioned/typed/project/v1
@@ -373,20 +377,25 @@ imports:
   - pkg/util/framer
   - pkg/util/intstr
   - pkg/util/json
+  - pkg/util/mergepatch
   - pkg/util/naming
   - pkg/util/net
   - pkg/util/runtime
   - pkg/util/sets
+  - pkg/util/strategicpatch
   - pkg/util/validation
   - pkg/util/validation/field
+  - pkg/util/wait
   - pkg/util/yaml
   - pkg/version
   - pkg/watch
+  - third_party/forked/golang/json
   - third_party/forked/golang/reflect
 - name: k8s.io/client-go
   version: 6ee68ca5fd8355d024d02f9db0b3b667e8357a0f
   subpackages:
   - discovery
+  - discovery/fake
   - kubernetes
   - kubernetes/scheme
   - kubernetes/typed/admissionregistration/v1beta1
@@ -432,6 +441,7 @@ imports:
   - plugin/pkg/client/auth/exec
   - rest
   - rest/watch
+  - testing
   - tools/auth
   - tools/clientcmd
   - tools/clientcmd/api
@@ -447,6 +457,10 @@ imports:
   - util/keyutil
 - name: k8s.io/klog
   version: 8e90cee79f823779174776412c13478955131846
+- name: k8s.io/kube-openapi
+  version: b3a7cee44a305be0a69e1b9ac03018307287e1b0
+  subpackages:
+  - pkg/util/proto
 - name: k8s.io/test-infra
   version: 31df46e6f68bfbc12894d299bc92e13316584543
   subpackages:
