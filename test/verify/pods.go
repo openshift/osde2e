@@ -2,12 +2,15 @@ package verify
 
 import (
 	"fmt"
+	"log"
+	"time"
 
 	"github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
 	"k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/wait"
 
 	"github.com/openshift/osde2e/pkg/helper"
 )
@@ -16,25 +19,44 @@ var _ = ginkgo.Describe("Pods", func() {
 	h := helper.New()
 
 	ginkgo.It("should be Running or Succeeded", func() {
-		requiredRatio := float64(100)
+		var (
+			interval = 30 * time.Second
+			timeout  = 10 * time.Minute
 
-		list, err := h.Kube().CoreV1().Pods(metav1.NamespaceAll).List(metav1.ListOptions{})
-		Expect(err).NotTo(HaveOccurred(), "couldn't list Pods")
-		Expect(list).NotTo(BeNil())
+			requiredRatio float64 = 100
+			curRatio      float64
+			notReady      []v1.Pod
+		)
 
-		var notReady []v1.Pod
-		for _, pod := range list.Items {
-			phase := pod.Status.Phase
-			if phase != v1.PodRunning && phase != v1.PodSucceeded {
-				notReady = append(notReady, pod)
+		err := wait.Poll(interval, timeout, func() (done bool, err error) {
+			if curRatio != 0 {
+				log.Printf("Checking that all Pods are running or completed (currently %f%%)...", curRatio)
 			}
-		}
 
-		total := float64(len(list.Items))
-		ready := total - float64(len(notReady))
-		ratio := (ready / total) * 100
-		Expect(ratio).Should(Equal(requiredRatio),
-			"only %f%% of Pods ready, need %f%%. Not ready: %s", ratio, requiredRatio, listPodPhases(notReady))
+			list, err := h.Kube().CoreV1().Pods(metav1.NamespaceAll).List(metav1.ListOptions{})
+			if err != nil {
+				return false, err
+			}
+			Expect(list).NotTo(BeNil())
+
+			notReady = nil
+			for _, pod := range list.Items {
+				phase := pod.Status.Phase
+				if phase != v1.PodRunning && phase != v1.PodSucceeded {
+					notReady = append(notReady, pod)
+				}
+			}
+
+			total := len(list.Items)
+			ready := float64(total - len(notReady))
+			curRatio = (ready / float64(total)) * 100
+
+			return len(notReady) == 0, nil
+		})
+
+		msg := "only %f%% of Pods ready, need %f%%. Not ready: %s"
+		Expect(err).NotTo(HaveOccurred(), msg, curRatio, requiredRatio, listPodPhases(notReady))
+		Expect(curRatio).Should(Equal(requiredRatio), msg, curRatio, requiredRatio, listPodPhases(notReady))
 	})
 
 	ginkgo.It("should not be Failed", func() {
