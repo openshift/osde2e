@@ -1,49 +1,53 @@
 package: github.com/openshift/osde2e
 import:
-- package: github.com/openshift-online/uhc-sdk-go
-  version: v0.1.11
+- package: cloud.google.com/go
+  version: v0.38.0
   subpackages:
-  - pkg/client
-  - pkg/client/clustersmgmt/v1
+  - iam
+  - internal/optional
+  - internal/trace
+  - internal/version
+  - storage
 - package: github.com/dgrijalva/jwt-go
   version: 06ea1031745cb8b3dab3f6a236daf2b0aa468b7e
-- package: github.com/openshift/api
-  subpackages:
-  - project/v1
-- package: github.com/openshift/client-go
-  version: be319837212db97ca55549af6d0e44acc12db7fc
-  subpackages:
-  - project/clientset/versioned
-- package: k8s.io/apimachinery
-  version: kubernetes-1.13.4
-  subpackages:
-  - pkg/apis/meta/v1
-- package: k8s.io/client-go
-  version: kubernetes-1.13.4
-  subpackages:
-  - rest
-  - tools/clientcmd
-  - kubernetes
+- package: github.com/Masterminds/semver
+  version: ~1.4.2
 - package: github.com/onsi/ginkgo
   version: ~1.8.0
 - package: github.com/onsi/gomega
   version: ~1.5.0
-- package: cloud.google.com/go
-  version: v0.38.0
+- package: github.com/openshift/api
   subpackages:
-  - storage
+  - project/v1
+- package: github.com/openshift/client-go
+  version: release-4.3
+  subpackages:
+  - project/clientset/versioned
+- package: github.com/openshift-online/uhc-sdk-go
+  version: v0.1.13
+  subpackages:
+  - pkg/client
+  - pkg/client/clustersmgmt/v1
+- package: golang.org/x/oauth2
+  version: 529b322ea34655aa15fb32e063f3d4d3cf803cac
+  subpackages:
+  - google
 - package: golang.org/x/sys
   version: d89cdac9e8725f2aefce25fcbfef41134c9ad412
   subpackages:
   - unix
-- package: google.golang.org/grpc
-  version: ~1.19.1
 - package: google.golang.org/api
-  version: ~0.4.0
-- package: golang.org/x/oauth2
-  version: 9f3314589c9a9136388751d9adae6b0ed400978a
+  version: ~0.5.0
+- package: google.golang.org/grpc
+  version: ~1.19.0
+- package: k8s.io/apimachinery
+  subpackages:
+  - pkg/apis/meta/v1
+- package: k8s.io/client-go
+  subpackages:
+  - rest
+  - tools/clientcmd
+  - kubernetes
 - package: k8s.io/test-infra
   subpackages:
   - testgrid/metadata
-- package: github.com/Masterminds/semver
-  version: ~1.4.2
