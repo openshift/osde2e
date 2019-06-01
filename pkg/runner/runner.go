@@ -24,7 +24,7 @@ var DefaultRunner = &Runner{
 	ImageStreamName:      testImageStreamName,
 	ImageStreamNamespace: testImageStreamNamespace,
 	Type:                 RegularTest,
-	Suite:                "openshift/conformance",
+	Suite:                "kubernetes/conformance",
 	Flags: []string{
 		"--loglevel=10",
 		"--include-success",
