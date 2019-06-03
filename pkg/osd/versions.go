@@ -13,8 +13,8 @@ import (
 	"github.com/openshift-online/uhc-sdk-go/pkg/client/errors"
 )
 
-// LatestNightly returns the latest nightly for given major and minor versions. Negative versions match all.
-func (u *OSD) LatestNightly(major, minor int64) (string, error) {
+// LatestPrerelease gets latest prerelease containing str for major and minor versions. Negative versions match all.
+func (u *OSD) LatestPrerelease(major, minor int64, str string) (string, error) {
 	resp, err := u.getVersionList()
 	if err != nil {
 		return "", fmt.Errorf("failed getting list of OSD versions: %v", err)
@@ -36,14 +36,14 @@ func (u *OSD) LatestNightly(major, minor int64) (string, error) {
 			return true
 		} else if version.Minor() != minor && minor >= 0 {
 			return true
-		} else if strings.Contains(version.Prerelease(), "nightly") {
+		} else if strings.Contains(version.Prerelease(), str) {
 			versions = append(versions, version)
 		}
 		return true
 	})
 
 	if len(versions) == 0 {
-		return "", fmt.Errorf("no nightlies available for '%d.%d'", major, minor)
+		return "", fmt.Errorf("no versions available with prerelease '%s' for '%d.%d'", str, major, minor)
 	}
 
 	// return latest nightly

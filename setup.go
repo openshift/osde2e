@@ -75,10 +75,10 @@ func setupCluster(cfg *config.Config) (err error) {
 	if cfg.ClusterID == "" {
 		// use latest nightly if no version specified
 		if cfg.ClusterVersion == "" {
-			if cfg.ClusterVersion, err = OSD.LatestNightly(-1, -1); err != nil {
+			if cfg.ClusterVersion, err = OSD.LatestPrerelease(-1, -1, "rc"); err != nil {
 				return fmt.Errorf("CLUSTER_VERSION not set and failed to get latest nightly: %v", err)
 			}
-			log.Printf("Using latest nightly '%s' as CLUSTER_VERSION", cfg.ClusterVersion)
+			log.Printf("Using latest rc '%s' as CLUSTER_VERSION", cfg.ClusterVersion)
 		}
 
 		if cfg.ClusterName == "" {
