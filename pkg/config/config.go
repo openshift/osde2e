@@ -49,7 +49,7 @@ type Config struct {
 	TestGridServiceAccount []byte `env:"TESTGRID_SERVICE_ACCOUNT"`
 
 	// UseProd sends requests to production OSD.
-	UseProd bool
+	UseProd bool `env:"USE_PROD"`
 
 	// NoDestroy leaves the cluster running after testing.
 	NoDestroy bool `env:"NO_DESTROY"`
