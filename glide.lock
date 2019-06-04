@@ -1,5 +1,5 @@
-hash: 20a9df5ca669aac004d6fcdb44d6ebbbcc46e408b77846739d03d2cf382c8733
-updated: 2019-06-04T08:26:02.602182573-07:00
+hash: 67bb53361cd2b533e41f622e29a527b1b9b1f910e44f2c52b062a5f4d3e4bd4a
+updated: 2019-06-04T08:30:35.096712117-07:00
 imports:
 - name: cloud.google.com/go
   version: 8c41231e01b2085512d98153bcffb847ff9b4b9f
@@ -111,7 +111,7 @@ imports:
   - matchers/support/goraph/util
   - types
 - name: github.com/openshift-online/uhc-sdk-go
-  version: 130f8128265e819b0da46bb7dc5a59c5cb3ec4a5
+  version: 37573992120af5ba25126ff4c4991e56690eec62
   subpackages:
   - pkg/client
   - pkg/client/accountsmgmt
