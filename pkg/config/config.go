@@ -70,7 +70,7 @@ func (c *Config) LoadFromEnv() {
 	for i := 0; i < v.Type().NumField(); i++ {
 		f := v.Type().Field(i)
 		if env, ok := f.Tag.Lookup("env"); ok {
-			if envVal, envOk := os.LookupEnv(env); envOk {
+			if envVal := os.Getenv(env); len(envVal) > 0 {
 				field := v.Field(i)
 				switch f.Type.Kind() {
 				case reflect.String:
