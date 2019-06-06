@@ -35,7 +35,7 @@ func (r *Runner) waitForEndpoints() error {
 	endpointsReadyCondition := func() (done bool, err error) {
 		endpoints, err = r.Kube.CoreV1().Endpoints(r.svc.Namespace).Get(r.svc.Name, metav1.GetOptions{})
 		if err != nil && !kerror.IsNotFound(err) {
-			return
+			r.Printf("Encountered error getting endpoint '%s/%s': %v", r.svc.Namespace, r.svc.Name, err)
 		} else if endpoints != nil {
 			for _, subset := range endpoints.Subsets {
 				if len(subset.Addresses) > 0 {
