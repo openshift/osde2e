@@ -15,6 +15,12 @@ const (
 
 	// APIVersion is the version of the OSD API to use.
 	APIVersion = "v1"
+
+	// TokenURL specifies the endpoint used to create access tokens.
+	TokenURL = "https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token"
+
+	// ClientID is used to identify the client to OSD.
+	ClientID = "cloud-services"
 )
 
 // New setups a client to connect to OSD.
@@ -27,6 +33,8 @@ func New(token string, staging, debug bool) (*OSD, error) {
 	}
 
 	builder := uhc.NewConnectionBuilder().
+		TokenURL(TokenURL).
+		Client(ClientID, "").
 		Logger(logger).
 		Tokens(token)
 
