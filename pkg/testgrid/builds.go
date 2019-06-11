@@ -10,6 +10,9 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
+
+	"cloud.google.com/go/storage"
 
 	testgrid "k8s.io/test-infra/testgrid/metadata"
 )
@@ -92,13 +95,37 @@ func (t *TestGrid) writeReportDir(ctx context.Context, buildNum int, dir string)
 
 			name := filepath.Join(artifactsDir, fInfo.Name())
 			key := t.buildFileKey(buildNum, name)
-			w := t.bucket.Object(key).NewWriter(ctx)
+
+			// check if data is compressed
+			gzipped := false
+			if strings.HasSuffix(key, ".gzip") {
+				gzipped = true
+				key = strings.TrimSuffix(key, ".gzip")
+			}
+
+			obj := t.bucket.Object(key)
+			w := obj.NewWriter(ctx)
 			if _, err = io.Copy(w, f); err != nil {
 				return fmt.Errorf("error uploading '%s' as '%s': %v", fileName, key, err)
 			} else if err = w.Close(); err != nil {
 				return fmt.Errorf("error finishing upload of '%s' as '%s': %v", fileName, key, err)
 			} else if err = f.Close(); err != nil {
 				log.Printf("Error closing file '%s': %v", fileName, err)
+			}
+
+			// update metadata if data is compressed
+			if gzipped {
+				attrs := storage.ObjectAttrsToUpdate{
+					ContentEncoding: "gzip",
+				}
+
+				if strings.HasSuffix(key, ".json") {
+					attrs.ContentType = "application/json"
+				}
+
+				if _, err = obj.Update(ctx, attrs); err != nil {
+					return fmt.Errorf("couldn't update metadata with gzip info: %v", err)
+				}
 			}
 		}
 	}

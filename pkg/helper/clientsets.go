@@ -6,9 +6,17 @@ import (
 	image "github.com/openshift/client-go/image/clientset/versioned"
 	project "github.com/openshift/client-go/project/clientset/versioned"
 	route "github.com/openshift/client-go/route/clientset/versioned"
+	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 )
+
+// Dynamic returns a client that works on arbitrary types.
+func (h *H) Dynamic() dynamic.Interface {
+	client, err := dynamic.NewForConfig(h.restConfig)
+	Expect(err).ShouldNot(HaveOccurred(), "failed to configure Dynamic client")
+	return client
+}
 
 // Kube returns the clientset for Kubernetes upstream.
 func (h *H) Kube() kubernetes.Interface {
