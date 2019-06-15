@@ -3,7 +3,6 @@ package runner
 import (
 	"bytes"
 	"fmt"
-	"strings"
 	"text/template"
 )
 
@@ -14,19 +13,19 @@ oc config set-credentials {{.Name}} --token=$(cat {{.TokenFile}})
 oc config set-context {{.Name}} --cluster={{.Name}} --user={{.Name}}
 oc config use-context {{.Name}}
 
-mkdir ./results
-{{printTests .TestNames}} | openshift-tests {{testType .Type}} {{selectTests .Suite .TestNames}} {{unwrap .Flags}}
-cd results && echo "Starting server" && python -m SimpleHTTPServer
+mkdir -p {{.OutputDir}}
+{{.Cmd}}
+{{$outDir := .OutputDir}}
+{{if .Tarball}}
+	{{$outDir = "/tmp/out"}}
+        mkdir -p {{$outDir}}
+	tar cvfz {{$outDir}}/out.tgz {{.OutputDir}}
+{{end}}
+cd {{$outDir}} && echo "Starting server" && python -m SimpleHTTPServer
 `
 
 var (
-	cmdTemplate = template.Must(template.New("testCmd").
-		Funcs(template.FuncMap{
-			"printTests":  printTests,
-			"testType":    testType,
-			"selectTests": selectTests,
-			"unwrap":      unwrap,
-		}).Parse(testCmd))
+	cmdTemplate = template.Must(template.New("testCmd").Parse(testCmd))
 )
 
 func (r *Runner) Command() (string, error) {
@@ -35,30 +34,4 @@ func (r *Runner) Command() (string, error) {
 		return "", fmt.Errorf("failed templating command: %v", err)
 	}
 	return cmd.String(), nil
-}
-
-func printTests(strs []string) string {
-	testList := strings.Join(strs, "\"\n\"")
-	return fmt.Sprintf("printf '\"%s\"'", testList)
-}
-
-func testType(t TestType) string {
-	switch t {
-	case UpgradeTest:
-		return "run-upgrade"
-	default:
-		return "run"
-	}
-}
-
-// runs a suite unless tests are specified
-func selectTests(suite string, tests []string) string {
-	if len(tests) == 0 {
-		return suite
-	}
-	return "--file=-"
-}
-
-func unwrap(flags []string) string {
-	return strings.Join(flags, " ")
 }
