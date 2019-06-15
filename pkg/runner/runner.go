@@ -23,13 +23,7 @@ const (
 var DefaultRunner = &Runner{
 	ImageStreamName:      testImageStreamName,
 	ImageStreamNamespace: testImageStreamNamespace,
-	Type:                 RegularTest,
-	Suite:                "kubernetes/conformance",
-	Flags: []string{
-		"--loglevel=10",
-		"--include-success",
-		"--junit-dir=./results",
-	},
+	OutputDir:            "./results",
 	AuthConfig: AuthConfig{
 		Name:      "osde2e",
 		Server:    "https://kubernetes.default",
@@ -56,17 +50,14 @@ type Runner struct {
 	// ImageStreamNamespace is the namespace of the ImageStream containing the suite.
 	ImageStreamNamespace string
 
-	// TestType determines which suite the runner executes.
-	Type TestType
+	// Cmd is run within the test pod.
+	Cmd string
 
-	// Suite to be run inside the runner.
-	Suite string
+	// OutputDir is the directory that is copied from the Pod to the local host.
+	OutputDir string
 
-	// TestNames explicitly specify which tests to run as part of the suite. No other tests will be run.
-	TestNames []string
-
-	// Flags to run the suite with.
-	Flags []string
+	// Tarball will create a single .tgz file for the entire OutputDir.
+	Tarball bool
 
 	// Auth defines how to connect to a cluster.
 	AuthConfig
@@ -124,14 +115,6 @@ func (r *Runner) meta() metav1.ObjectMeta {
 		},
 	}
 }
-
-// TestType determines which suite is run.
-type TestType string
-
-var (
-	RegularTest TestType = "regular"
-	UpgradeTest TestType = "upgrade"
-)
 
 // AuthConfig defines how the test Pod connects to the cluster.
 type AuthConfig struct {

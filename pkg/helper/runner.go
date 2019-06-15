@@ -10,8 +10,8 @@ import (
 	"github.com/openshift/osde2e/pkg/runner"
 )
 
-// Runner creates an extended test suite runner and configure RBAC for it.
-func (h *H) Runner() *runner.Runner {
+// Runner creates an extended test suite runner and configure RBAC for it and runs cmd in it.
+func (h *H) Runner(cmd string) *runner.Runner {
 	h.GiveCurrentProjectClusterAdmin()
 	r := *runner.DefaultRunner
 
@@ -21,6 +21,7 @@ func (h *H) Runner() *runner.Runner {
 
 	// setup tests
 	r.Namespace = h.CurrentProject()
+	r.Cmd = cmd
 	return &r
 }
 
