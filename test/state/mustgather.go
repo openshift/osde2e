@@ -20,6 +20,7 @@ var _ = ginkgo.Describe("Cluster state", func() {
 	ginkgo.It("should be captured with must-gather", func() {
 		// setup runner
 		r := h.Runner(mustGatherCmd)
+		r.Name = "must-gather"
 		r.Tarball = true
 
 		// run tests
