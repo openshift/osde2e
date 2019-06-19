@@ -19,7 +19,7 @@ mkdir -p {{.OutputDir}}
 {{if .Tarball}}
 	{{$outDir = "/tmp/out"}}
         mkdir -p {{$outDir}}
-	tar cvfz {{$outDir}}/out.tgz {{.OutputDir}}
+	tar cvfz {{$outDir}}/{{.Name}}.tgz {{.OutputDir}}
 {{end}}
 cd {{$outDir}} && echo "Starting server" && python -m SimpleHTTPServer
 `

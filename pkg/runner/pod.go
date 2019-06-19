@@ -55,7 +55,7 @@ func (r *Runner) waitForPodRunning(pod *kubev1.Pod) error {
 func (r *Runner) containers(testCmd string) []kubev1.Container {
 	return []kubev1.Container{
 		{
-			Name:  name,
+			Name:  r.Name,
 			Image: r.testImage,
 			Env: []kubev1.EnvVar{
 				{

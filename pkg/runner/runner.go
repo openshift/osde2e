@@ -13,7 +13,7 @@ import (
 
 const (
 	// name used in Runner resources
-	name = "openshift-tests"
+	defaultName = "openshift-tests"
 
 	// directory containing service account credentials
 	serviceAccountDir = "/var/run/secrets/kubernetes.io/serviceaccount"
@@ -21,6 +21,7 @@ const (
 
 // DefaultRunner is a runner with the most commonly desired settings.
 var DefaultRunner = &Runner{
+	Name:                 defaultName,
 	ImageStreamName:      testImageStreamName,
 	ImageStreamNamespace: testImageStreamNamespace,
 	OutputDir:            "./results",
@@ -40,6 +41,9 @@ type Runner struct {
 
 	// Image client used to gather ImageStream information.
 	Image image.Interface
+
+	// Name of the operation being performed.
+	Name string
 
 	// Namespace runner resources should be created in.
 	Namespace string
@@ -109,9 +113,9 @@ func (r *Runner) Status() Status {
 // meta returns the ObjectMeta used for Runner resources.
 func (r *Runner) meta() metav1.ObjectMeta {
 	return metav1.ObjectMeta{
-		GenerateName: name + "-",
+		GenerateName: r.Name + "-",
 		Labels: map[string]string{
-			"app": name,
+			"app": r.Name,
 		},
 	}
 }
