@@ -67,6 +67,11 @@ func (u *OSD) cluster(clusterID string) *v1.ClusterClient {
 	return u.clusters().Cluster(clusterID)
 }
 
+// versions returns a client used to retrieve versions currently offered by OSD.
+func (u *OSD) versions() *v1.VersionsClient {
+	return u.conn.ClustersMgmt().V1().Versions()
+}
+
 func errResp(resp *errors.Error) error {
 	if resp != nil {
 		return fmt.Errorf("api error: %s", resp.Reason())
