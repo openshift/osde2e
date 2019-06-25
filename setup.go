@@ -73,12 +73,12 @@ func setupCluster(cfg *config.Config) (err error) {
 
 	// create a new cluster if no ID is specified
 	if cfg.ClusterID == "" {
-		// use latest nightly if no version specified
+		// use default if no version specified
 		if cfg.ClusterVersion == "" {
-			if cfg.ClusterVersion, err = OSD.LatestPrerelease(-1, -1, "rc"); err != nil {
-				return fmt.Errorf("CLUSTER_VERSION not set and failed to get latest nightly: %v", err)
+			if cfg.ClusterVersion, err = OSD.DefaultVersion(); err != nil {
+				return fmt.Errorf("CLUSTER_VERSION not set and failed to get default version: %v", err)
 			}
-			log.Printf("Using latest rc '%s' as CLUSTER_VERSION", cfg.ClusterVersion)
+			log.Printf("Using current default '%s' as CLUSTER_VERSION", cfg.ClusterVersion)
 		}
 
 		if cfg.ClusterName == "" {
