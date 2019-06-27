@@ -3,6 +3,7 @@ package helper
 import (
 	. "github.com/onsi/gomega"
 
+	config "github.com/openshift/client-go/config/clientset/versioned"
 	image "github.com/openshift/client-go/image/clientset/versioned"
 	project "github.com/openshift/client-go/project/clientset/versioned"
 	route "github.com/openshift/client-go/route/clientset/versioned"
@@ -10,6 +11,13 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 )
+
+// Cfg return a client for the Config API.
+func (h *H) Cfg() config.Interface {
+	client, err := config.NewForConfig(h.restConfig)
+	Expect(err).ShouldNot(HaveOccurred(), "failed to configure Config client")
+	return client
+}
 
 // Dynamic returns a client that works on arbitrary types.
 func (h *H) Dynamic() dynamic.Interface {

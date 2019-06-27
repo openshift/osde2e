@@ -53,4 +53,10 @@ type Config struct {
 
 	// DebugOSD shows debug level messages when enabled.
 	DebugOSD bool `env:"DEBUG_OSD"`
+
+	// UpgradeReleaseStream used to retrieve latest release images. If set, it will be used to perform an upgrade.
+	UpgradeReleaseStream string `env:"UPGRADE_RELEASE_STREAM"`
+
+	// UpgradeImage is the release image a cluster is upgraded to. If set, it overrides the release stream and upgrades.
+	UpgradeImage string `env:"UPGRADE_IMAGE"`
 }

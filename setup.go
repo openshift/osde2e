@@ -15,6 +15,7 @@ import (
 
 	"github.com/openshift/osde2e/pkg/config"
 	"github.com/openshift/osde2e/pkg/osd"
+	"github.com/openshift/osde2e/pkg/upgrade"
 )
 
 func init() {
@@ -28,6 +29,13 @@ var _ = ginkgo.SynchronizedBeforeSuite(func() []byte {
 
 	err := setupCluster(cfg)
 	Expect(err).ShouldNot(HaveOccurred(), "failed to setup cluster for testing")
+
+	// upgrade cluster if requested
+	if cfg.UpgradeImage != "" || cfg.UpgradeReleaseStream != "" {
+		err = upgrade.RunUpgrade(cfg)
+		Expect(err).ShouldNot(HaveOccurred(), "failed performing upgrade")
+	}
+
 	return []byte{}
 }, func(data []byte) {
 	// only needs to run once
@@ -71,16 +79,13 @@ func setupCluster(cfg *config.Config) (err error) {
 		return fmt.Errorf("could not setup OSD: %v", err)
 	}
 
+	// configure cluster and upgrade versions
+	if err = ChooseVersions(cfg, OSD); err != nil {
+		return fmt.Errorf("failed to configure versions: %v", err)
+	}
+
 	// create a new cluster if no ID is specified
 	if cfg.ClusterID == "" {
-		// use default if no version specified
-		if cfg.ClusterVersion == "" {
-			if cfg.ClusterVersion, err = OSD.DefaultVersion(); err != nil {
-				return fmt.Errorf("CLUSTER_VERSION not set and failed to get default version: %v", err)
-			}
-			log.Printf("Using current default '%s' as CLUSTER_VERSION", cfg.ClusterVersion)
-		}
-
 		if cfg.ClusterName == "" {
 			safeVersion := strings.Replace(cfg.ClusterVersion, ".", "-", -1)
 			cfg.ClusterName = "ci-cluster-" + safeVersion + "-" + cfg.Suffix
