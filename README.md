@@ -27,9 +27,7 @@ make build-image
 Configuration must be defined before running osde2e. The complete set of options can be found in [`pkg/config`](./pkg/config/config.go).
 
 The following environment variables are required:
-- `UHC_TOKEN`: The token used to authenticate with the OSD environment.
-- `AWS_ACCESS_KEY_ID`: AWS key ID used by OSD to install clusters.
-- `AWS_SECRET_ACCESS_KEY`: AWS access key used by OSD to install clusters.
+- `UHC_TOKEN`: The token used to authenticate with the OSD environment. This token can be retrieved [here](https://cloud.redhat.com/openshift/token).
 
 The following environment variables are required for TestGrid reporting:
 - `TESTGRID_BUCKET`: The Google Storage bucket storing TestGrid builds.
