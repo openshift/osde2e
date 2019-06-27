@@ -14,6 +14,9 @@ import (
 const (
 	// query used to retrieve the current default version.
 	defaultVersionSearch = "default = 't'"
+
+	// prefix before semver
+	versionPrefix = "openshift-"
 )
 
 // DefaultVersion returns the default version currently offered by OSD.
@@ -38,23 +41,61 @@ func (u *OSD) DefaultVersion() (string, error) {
 	return version.ID(), nil
 }
 
+// PreviousVersion returns the first available previous version for the given version.
+func (u *OSD) PreviousVersion(verStr string) (string, error) {
+	verStr = strings.TrimPrefix(verStr, versionPrefix)
+	vers, err := semver.NewVersion(verStr)
+	if err != nil {
+		return "", fmt.Errorf("couldn't  parse given verStr '%s': %v", verStr, err)
+	}
+
+	versions, err := u.getSemverList(-1, -1, "")
+	if err != nil {
+		return "", fmt.Errorf("couldn't created sorted version list: %v", err)
+	}
+
+	for i := len(versions) - 1; i >= 0; i-- {
+		v := versions[i]
+		if v.LessThan(vers) {
+			return versionPrefix + v.Original(), nil
+		}
+	}
+	return "", fmt.Errorf("no versions available before '%s'", verStr)
+}
+
 // LatestPrerelease gets latest prerelease containing str for major and minor versions. Negative versions match all.
 func (u *OSD) LatestPrerelease(major, minor int64, str string) (string, error) {
-	resp, err := u.versions().List().Send()
+	versions, err := u.getSemverList(major, minor, str)
 	if err != nil {
-		return "", fmt.Errorf("failed getting list of OSD versions: %v", err)
+		return "", fmt.Errorf("couldn't created sorted version list: %v", err)
+	}
+
+	if len(versions) == 0 {
+		return "", fmt.Errorf("no versions available with prerelease '%s' for '%d.%d'", str, major, minor)
+	}
+
+	// return latest nightly
+	latest := versions[len(versions)-1]
+	return versionPrefix + latest.Original(), nil
+}
+
+// getSemverList as sorted semvers containing str for major and minor versions. Negative versions match all.
+func (u *OSD) getSemverList(major, minor int64, str string) (versions []*semver.Version, err error) {
+	var resp *v1.VersionsListResponse
+	resp, err = u.versions().List().Send()
+	if err != nil {
+		err = fmt.Errorf("failed getting list of OSD versions: %v", err)
 	} else if resp != nil {
 		err = errResp(resp.Error())
 	}
 
 	if err != nil {
-		return "", fmt.Errorf("couldn't retrieve available versions: %v", err)
+		return versions, fmt.Errorf("couldn't retrieve available versions: %v", err)
 	}
 
 	// parse versions, filter for major+minor nightlies, then sort
-	var versions []*semver.Version
 	resp.Items().Each(func(v *v1.Version) bool {
-		name := strings.TrimPrefix(v.ID(), "openshift-")
+		name := strings.TrimPrefix(v.ID(), versionPrefix)
 		if version, err := semver.NewVersion(name); err != nil {
 			log.Printf("could not parse version '%s': %v", v.ID(), err)
 		} else if version.Major() != major && major >= 0 {
@@ -67,12 +108,6 @@ func (u *OSD) LatestPrerelease(major, minor int64, str string) (string, error) {
 		return true
 	})
 
-	if len(versions) == 0 {
-		return "", fmt.Errorf("no versions available with prerelease '%s' for '%d.%d'", str, major, minor)
-	}
-
-	// return latest nightly
 	sort.Sort(semver.Collection(versions))
-	latest := versions[len(versions)-1]
-	return "openshift-" + latest.Original(), nil
+	return versions, nil
 }
