@@ -22,6 +22,7 @@ test: out/osde2e
 docker-test:
 	docker run \
 		-t \
+		--rm \
 		-e CLUSTER_ID=$(CLUSTER_ID) \
 		-e DEBUG_OSD=1 \
 		-e USE_PROD=$(USE_PROD) \
