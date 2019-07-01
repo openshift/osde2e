@@ -17,7 +17,7 @@ push-latest:
 	@docker --config=$(DOCKER_CONF) push "$(IMAGE_NAME):latest"
 
 test: out/osde2e
-	$< -test.v -test.timeout 2h
+	$< -test.v -test.timeout 3h
 
 docker-test:
 	docker run \
