@@ -3,7 +3,6 @@ package testgrid
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -29,8 +28,11 @@ func TestStartTestGridBuild(t *testing.T) {
 
 	// initiate a new build
 	start := time.Now().UTC().Unix()
+	started := testgrid.Started{
+		Timestamp: start,
+	}
 	ctx := context.Background()
-	buildNum, err := tg.StartBuild(ctx, start)
+	buildNum, err := tg.StartBuild(ctx, &started)
 	if err != nil {
 		t.Fatalf("Could not start build: %v", err)
 	}
@@ -43,11 +45,8 @@ func TestStartTestGridBuild(t *testing.T) {
 	}
 
 	// confirm started file
-	startedFile := new(testgrid.Started)
-	if data, err := tg.getBuildFile(ctx, buildNum, startedFileName); err != nil {
-		t.Errorf("Failed to get started file: %v", err)
-	} else if err = json.Unmarshal(data, startedFile); err != nil {
-		t.Errorf("Failed to decode started file: %v", err)
+	if startedFile, err := tg.LatestStarted(ctx); err != nil {
+		t.Errorf("Failed to get started record: %v", err)
 	} else if startedFile.Timestamp == 0 {
 		t.Error("Timestamp was not set")
 	}
@@ -70,7 +69,7 @@ func TestStartTestGridBuild(t *testing.T) {
 		Passed:    &passed,
 		Result:    "PASSED",
 	}
-	if err = tg.FinishBuild(ctx, buildNum, finishedFile, dir); err != nil {
+	if err = tg.FinishBuild(ctx, buildNum, &finishedFile, dir); err != nil {
 		t.Fatalf("Failed to report results: %v", err)
 	}
 
@@ -83,11 +82,8 @@ func TestStartTestGridBuild(t *testing.T) {
 	}
 
 	// check finished file has been written
-	actualFinished := new(testgrid.Finished)
-	if data, err := tg.getBuildFile(ctx, buildNum, finishedFileName); err != nil {
+	if actualFinished, err := tg.Finished(ctx, buildNum); err != nil {
 		t.Errorf("Failed to get finished file: %v", err)
-	} else if err = json.Unmarshal(data, actualFinished); err != nil {
-		t.Errorf("Failed to decode finished file: %v", err)
 	} else if actualFinished.Timestamp == nil {
 		t.Error("Finished timestamp was nil")
 	} else if *actualFinished.Timestamp != *finishedFile.Timestamp {

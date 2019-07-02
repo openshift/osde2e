@@ -8,11 +8,31 @@ import (
 	"strconv"
 
 	"cloud.google.com/go/storage"
+
+	testgrid "k8s.io/test-infra/testgrid/metadata"
 )
 
 const (
 	latestBuildFileName = "latest-build.txt"
 )
+
+// LatestStarted returns the started record for the latest build.
+func (t *TestGrid) LatestStarted(ctx context.Context) (testgrid.Started, error) {
+	buildNum, err := t.getLatestBuild(ctx)
+	if err != nil {
+		return testgrid.Started{}, fmt.Errorf("couldn't get latest build: %v", err)
+	}
+	return t.Started(ctx, buildNum)
+}
+
+// LatestFinished returns the started record for the latest build.
+func (t *TestGrid) LatestFinished(ctx context.Context) (testgrid.Finished, error) {
+	buildNum, err := t.getLatestBuild(ctx)
+	if err != nil {
+		return testgrid.Finished{}, fmt.Errorf("couldn't get latest build: %v", err)
+	}
+	return t.Finished(ctx, buildNum)
+}
 
 func (t *TestGrid) getLatestBuild(ctx context.Context) (int, error) {
 	key := t.latestBuildKey()

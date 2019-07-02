@@ -4,15 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"io/ioutil"
-	"log"
-	"os"
 	"path/filepath"
 	"strconv"
-	"strings"
-
-	"cloud.google.com/go/storage"
 
 	testgrid "k8s.io/test-infra/testgrid/metadata"
 )
@@ -23,26 +17,30 @@ const (
 	artifactsDir     = "artifacts"
 )
 
-func (t *TestGrid) writeStarted(ctx context.Context, buildNum int, timestamp int64) error {
-	started := &testgrid.Started{
-		Timestamp: timestamp,
-	}
-
-	data, err := json.Marshal(started)
+// Started retrieves information for buildNum that was created when it started.
+func (t *TestGrid) Started(ctx context.Context, buildNum int) (started testgrid.Started, err error) {
+	data, err := t.getBuildFile(ctx, buildNum, startedFileName)
 	if err != nil {
-		return fmt.Errorf("failed encoding started file: %v", err)
+		return started, fmt.Errorf("failed retrieving started record for build %d: %v", buildNum, err)
 	}
 
-	return t.writeBuildFile(ctx, buildNum, startedFileName, data)
+	if err = json.Unmarshal(data, &started); err != nil {
+		err = fmt.Errorf("failed decoding started record for build %d: %v", buildNum, err)
+	}
+	return
 }
 
-func (t *TestGrid) writeFinished(ctx context.Context, buildNum int, finished testgrid.Finished) error {
-	data, err := json.Marshal(&finished)
+// Finished retrieves results for buildNum that were created when it finished running.
+func (t *TestGrid) Finished(ctx context.Context, buildNum int) (finished testgrid.Finished, err error) {
+	data, err := t.getBuildFile(ctx, buildNum, finishedFileName)
 	if err != nil {
-		return fmt.Errorf("failed encoding finished file: %v", err)
+		return finished, fmt.Errorf("failed retrieving started record for build %d: %v", buildNum, err)
 	}
 
-	return t.writeBuildFile(ctx, buildNum, finishedFileName, data)
+	if err = json.Unmarshal(data, &finished); err != nil {
+		err = fmt.Errorf("failed decoding started record for build %d: %v", buildNum, err)
+	}
+	return
 }
 
 func (t *TestGrid) getBuildFile(ctx context.Context, buildNum int, filename string) ([]byte, error) {
@@ -60,8 +58,21 @@ func (t *TestGrid) getBuildFile(ctx context.Context, buildNum int, filename stri
 	return data, nil
 }
 
-func (t *TestGrid) writeBuildFile(ctx context.Context, buildNum int, filename string, data []byte) error {
+func (t *TestGrid) writeBuildFile(ctx context.Context, buildNum int, filename string, out interface{}) (err error) {
 	key := t.buildFileKey(buildNum, filename)
+	var data []byte
+
+	// marshal out if necessary
+	switch typedOut := out.(type) {
+	case []byte:
+		data = typedOut
+	default:
+		if data, err = json.Marshal(out); err != nil {
+			return fmt.Errorf("failed encoding file '%s' for build %d: %v", filename, buildNum, err)
+		}
+	}
+
+	// write file to gcs
 	w := t.bucket.Object(key).NewWriter(ctx)
 	if _, err := w.Write(data); err != nil {
 		return fmt.Errorf("failed while writing file '%s' for build %d: %v", key, buildNum, err)
@@ -75,59 +86,4 @@ func (t *TestGrid) writeBuildFile(ctx context.Context, buildNum int, filename st
 
 func (t *TestGrid) buildFileKey(buildNum int, filename string) string {
 	return filepath.Join(t.prefix, strconv.Itoa(buildNum), filename)
-}
-
-func (t *TestGrid) writeReportDir(ctx context.Context, buildNum int, dir string) error {
-	dirInfo, err := ioutil.ReadDir(dir)
-	if err != nil {
-		return err
-	}
-
-	for _, fInfo := range dirInfo {
-		// only upload files
-		if !fInfo.IsDir() {
-			fileName := filepath.Join(dir, fInfo.Name())
-
-			f, err := os.Open(fileName)
-			if err != nil {
-				return fmt.Errorf("error opening '%s': %v", fileName, err)
-			}
-
-			name := filepath.Join(artifactsDir, fInfo.Name())
-			key := t.buildFileKey(buildNum, name)
-
-			// check if data is compressed
-			gzipped := false
-			if strings.HasSuffix(key, ".gzip") {
-				gzipped = true
-				key = strings.TrimSuffix(key, ".gzip")
-			}
-
-			obj := t.bucket.Object(key)
-			w := obj.NewWriter(ctx)
-			if _, err = io.Copy(w, f); err != nil {
-				return fmt.Errorf("error uploading '%s' as '%s': %v", fileName, key, err)
-			} else if err = w.Close(); err != nil {
-				return fmt.Errorf("error finishing upload of '%s' as '%s': %v", fileName, key, err)
-			} else if err = f.Close(); err != nil {
-				log.Printf("Error closing file '%s': %v", fileName, err)
-			}
-
-			// update metadata if data is compressed
-			if gzipped {
-				attrs := storage.ObjectAttrsToUpdate{
-					ContentEncoding: "gzip",
-				}
-
-				if strings.HasSuffix(key, ".json") {
-					attrs.ContentType = "application/json"
-				}
-
-				if _, err = obj.Update(ctx, attrs); err != nil {
-					return fmt.Errorf("couldn't update metadata with gzip info: %v", err)
-				}
-			}
-		}
-	}
-	return nil
 }
