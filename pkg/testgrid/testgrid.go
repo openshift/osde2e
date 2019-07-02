@@ -9,6 +9,7 @@ import (
 
 	"cloud.google.com/go/storage"
 	"google.golang.org/api/option"
+
 	testgrid "k8s.io/test-infra/testgrid/metadata"
 )
 
@@ -50,8 +51,8 @@ type TestGrid struct {
 	prefix string
 }
 
-// StartBuild uploads a `testgrid.Started` record and updates the latest build to point to it.
-func (t *TestGrid) StartBuild(ctx context.Context, timestamp int64) (buildNum int, err error) {
+// StartBuild uploads started and updates the latest build to point to it.
+func (t *TestGrid) StartBuild(ctx context.Context, started *testgrid.Started) (buildNum int, err error) {
 	curBuildNum, err := t.getLatestBuild(ctx)
 	if err != nil {
 		return 0, fmt.Errorf("couldn't get latest build number: %v", err)
@@ -64,20 +65,22 @@ func (t *TestGrid) StartBuild(ctx context.Context, timestamp int64) (buildNum in
 	}
 
 	// upload started file
-	if err = t.writeStarted(ctx, buildNum, timestamp); err != nil {
+	if err = t.writeBuildFile(ctx, buildNum, startedFileName, started); err != nil {
 		return buildNum, fmt.Errorf("failed to write started: %v", err)
 	}
 	return buildNum, nil
 }
 
-// FinishBuild uploads build artifacts and a `testgrid.Finished` record.
-func (t *TestGrid) FinishBuild(ctx context.Context, buildNum int, result testgrid.Finished, dir string) error {
-	err := t.writeReportDir(ctx, buildNum, dir)
+// FinishBuild uploads build artifacts and a finished record.
+func (t *TestGrid) FinishBuild(ctx context.Context, buildNum int, finished *testgrid.Finished, dir string) error {
+	// archive test artifacts
+	err := t.writeArtifactDir(ctx, buildNum, dir)
 	if err != nil {
 		return fmt.Errorf("couldn't write report results: %v", err)
 	}
 
-	if err = t.writeFinished(ctx, buildNum, result); err != nil {
+	// record finished information
+	if err = t.writeBuildFile(ctx, buildNum, finishedFileName, finished); err != nil {
 		return fmt.Errorf("failed to write finished: %v", err)
 	}
 	return nil
