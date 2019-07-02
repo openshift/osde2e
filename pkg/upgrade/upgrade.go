@@ -77,7 +77,7 @@ func TriggerUpgrade(h *helper.H, cfg *config.Config) (*configv1.ClusterVersion, 
 	// split image into name and tag
 	imageParts := strings.Split(cfg.UpgradeImage, ":")
 	if len(imageParts) != 2 {
-		return cVersion, fmt.Errorf("an UPGRADE_IMAGE should have a name and an a tag, got %v", imageParts)
+		return cVersion, fmt.Errorf("an UPGRADE_IMAGE should have a name and an a tag, got '%s'", cfg.UpgradeImage)
 	}
 
 	// set requested upgrade targets
@@ -99,7 +99,7 @@ func TriggerUpgrade(h *helper.H, cfg *config.Config) (*configv1.ClusterVersion, 
 		}
 		return cVersion.Status.ObservedGeneration >= updateGeneration, nil
 	}); err != nil {
-		return updatedCV, fmt.Errorf("cluster did to acknowledge update in a timely manner: %v", err)
+		return updatedCV, fmt.Errorf("cluster did not acknowledge update in a timely manner: %v", err)
 	}
 
 	return updatedCV, nil
