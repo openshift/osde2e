@@ -1,3 +1,1 @@
-#!/bin/bash -e
-
-make build-image
+./ci/pr_check.sh

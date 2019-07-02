@@ -1,3 +1,1 @@
-#!/bin/bash -e
-
-make docker-test
+./ci/run_tests.sh
