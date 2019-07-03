@@ -14,7 +14,6 @@ import (
 	. "github.com/onsi/gomega"
 
 	"github.com/openshift/osde2e/pkg/config"
-	"github.com/openshift/osde2e/pkg/osd"
 	"github.com/openshift/osde2e/pkg/upgrade"
 )
 
@@ -73,15 +72,6 @@ func setupCluster(cfg *config.Config) (err error) {
 	// if TEST_KUBECONFIG has been set, skip configuring UHC
 	if len(cfg.Kubeconfig) > 0 {
 		return useKubeconfig(cfg)
-	}
-
-	if OSD, err = osd.New(cfg.UHCToken, !cfg.UseProd, cfg.DebugOSD); err != nil {
-		return fmt.Errorf("could not setup OSD: %v", err)
-	}
-
-	// configure cluster and upgrade versions
-	if err = ChooseVersions(cfg, OSD); err != nil {
-		return fmt.Errorf("failed to configure versions: %v", err)
 	}
 
 	// create a new cluster if no ID is specified

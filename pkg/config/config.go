@@ -54,8 +54,14 @@ type Config struct {
 	// DebugOSD shows debug level messages when enabled.
 	DebugOSD bool `env:"DEBUG_OSD"`
 
+	// NewOnly only runs if the build-version is different than the last run.
+	NewOnly bool `env:"NEW_ONLY"`
+
 	// UpgradeReleaseStream used to retrieve latest release images. If set, it will be used to perform an upgrade.
 	UpgradeReleaseStream string `env:"UPGRADE_RELEASE_STREAM"`
+
+	// UpgradeReleaseName is the name of the release in a release stream. UpgradeReleaseStream must be set.
+	UpgradeReleaseName string `env:"UPGRADE_RELEASE_NAME"`
 
 	// UpgradeImage is the release image a cluster is upgraded to. If set, it overrides the release stream and upgrades.
 	UpgradeImage string `env:"UPGRADE_IMAGE"`

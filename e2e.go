@@ -24,6 +24,11 @@ import (
 // OSD is used to deploy and manage clusters.
 var OSD *osd.OSD
 
+const (
+	// metadata key holding build-version
+	buildVersionKey = "build-version"
+)
+
 // RunE2ETests runs the osde2e test suite using the given cfg.
 func RunE2ETests(t *testing.T, cfg *config.Config) {
 	gomega.RegisterFailHandler(ginkgo.Fail)
@@ -39,6 +44,17 @@ func RunE2ETests(t *testing.T, cfg *config.Config) {
 		}
 	}
 
+	// setup OSD client
+	var err error
+	if OSD, err = osd.New(cfg.UHCToken, !cfg.UseProd, cfg.DebugOSD); err != nil {
+		t.Fatalf("could not setup OSD: %v", err)
+	}
+
+	// configure cluster and upgrade versions
+	if err = ChooseVersions(cfg, OSD); err != nil {
+		t.Fatalf("failed to configure versions: %v", err)
+	}
+
 	// setup reporter
 	os.Mkdir(cfg.ReportDir, os.ModePerm)
 	reportPath := path.Join(cfg.ReportDir, fmt.Sprintf("junit_%v.xml", cfg.Suffix))
@@ -52,14 +68,29 @@ func RunE2ETests(t *testing.T, cfg *config.Config) {
 		if err != nil {
 			log.Printf("Failed to setup TestGrid support: %v", err)
 		} else {
-			start := time.Now().UTC().Unix()
-			if buildNum, err = tg.StartBuild(ctx, start); err != nil {
+			// check if new run or quit if NEW_ONLY is set
+			if cfg.NewOnly {
+				if finished, err := tg.LatestFinished(ctx); err == nil {
+					if bVersion, ok := finished.Metadata.String(buildVersionKey); ok {
+						if *bVersion == buildVersion(cfg) {
+							log.Printf("Skipping test run, NEW_ONLY is set and '%s' is same as last", *bVersion)
+							return
+						}
+					}
+				}
+			}
+
+			now := time.Now().UTC().Unix()
+			started := metadata.Started{
+				Timestamp: now,
+			}
+			if buildNum, err = tg.StartBuild(ctx, &started); err != nil {
 				log.Printf("Failed to start TestGrid build: %v", err)
 			} else {
 				log.Printf("Started TestGrid build '%d'", buildNum)
 			}
 		}
-		defer reportToTestGrid(t, tg, buildNum, cfg.ReportDir)
+		defer reportToTestGrid(t, cfg, tg, buildNum)
 	} else {
 		log.Print("NO_TESTGRID is set, skipping submitting to TestGrid...")
 	}
@@ -68,7 +99,7 @@ func RunE2ETests(t *testing.T, cfg *config.Config) {
 	ginkgo.RunSpecsWithDefaultAndCustomReporters(t, "OSD e2e suite", []ginkgo.Reporter{reporter})
 }
 
-func reportToTestGrid(t *testing.T, tg *testgrid.TestGrid, buildNum int, reportDir string) {
+func reportToTestGrid(t *testing.T, cfg *config.Config, tg *testgrid.TestGrid, buildNum int) {
 	if tg != nil {
 		end := time.Now().UTC().Unix()
 		passed := !t.Failed()
@@ -81,10 +112,13 @@ func reportToTestGrid(t *testing.T, tg *testgrid.TestGrid, buildNum int, reportD
 			Timestamp: &end,
 			Passed:    &passed,
 			Result:    result,
+			Metadata: metadata.Metadata{
+				buildVersionKey: buildVersion(cfg),
+			},
 		}
 
 		ctx := context.Background()
-		if err := tg.FinishBuild(ctx, buildNum, finished, reportDir); err != nil {
+		if err := tg.FinishBuild(ctx, buildNum, &finished, cfg.ReportDir); err != nil {
 			log.Printf("Failed to report results to TestGrid for build '%d': %v", buildNum, err)
 		} else {
 			log.Printf("Successfully reported results to TestGrid for build '%d'", buildNum)
