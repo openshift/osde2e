@@ -24,6 +24,7 @@ docker-test:
 		-t \
 		--rm \
 		-e CLUSTER_ID=$(CLUSTER_ID) \
+		-e NEW_ONLY=$(NEW_ONLY) \
 		-e DEBUG_OSD=1 \
 		-e USE_PROD=$(USE_PROD) \
 		-e UHC_TOKEN=$(UHC_REFRESH_TOKEN) \

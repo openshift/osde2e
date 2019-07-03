@@ -1,5 +1,3 @@
 #!/bin/bash -e
 
-echo "Running upgrade events"
-
-exit 0
+NEW_ONLY=1 make docker-test
