@@ -14,6 +14,10 @@ import (
 func (u *OSD) LaunchCluster(cfg *config.Config) (string, error) {
 	log.Printf("Creating cluster '%s'...", cfg.ClusterName)
 
+	// Calculate an expiration date for the cluster so that it will be automatically deleted if
+	// we happen to forget to do it:
+	expiration := time.Now().Add(8 * time.Hour)
+
 	cluster, err := v1.NewCluster().
 		Name(cfg.ClusterName).
 		Flavour(v1.NewFlavour().
@@ -22,6 +26,7 @@ func (u *OSD) LaunchCluster(cfg *config.Config) (string, error) {
 			ID("us-east-1")).
 		Version(v1.NewVersion().
 			ID(cfg.ClusterVersion)).
+		ExpirationTimestamp(expiration).
 		Build()
 	if err != nil {
 		return "", fmt.Errorf("couldn't build cluster description: %v", err)
