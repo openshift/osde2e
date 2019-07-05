@@ -7,6 +7,7 @@ import (
 
 	// import suites to be tested
 	_ "github.com/openshift/osde2e/test/openshift"
+	_ "github.com/openshift/osde2e/test/scale"
 	_ "github.com/openshift/osde2e/test/state"
 	_ "github.com/openshift/osde2e/test/verify"
 )

@@ -5,6 +5,8 @@ import (
 	"github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
+	kubev1 "k8s.io/api/core/v1"
+
 	"github.com/openshift/osde2e/pkg/helper"
 )
 
@@ -19,6 +21,12 @@ var _ = ginkgo.Describe("Scaling", func() {
 			PlaybookPath: "workloads/nodevertical.yml",
 		}
 		r := scaleCfg.Runner(h)
+
+		// only test on 3 nodes
+		r.PodSpec.Containers[0].Env = append(r.PodSpec.Containers[0].Env, kubev1.EnvVar{
+			Name: "NODEVERTICAL_NODE_COUNT",
+			Value: "3",
+		})
 
 		// run tests
 		stopCh := make(chan struct{})
