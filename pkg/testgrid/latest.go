@@ -17,21 +17,23 @@ const (
 )
 
 // LatestStarted returns the started record for the latest build.
-func (t *TestGrid) LatestStarted(ctx context.Context) (testgrid.Started, error) {
-	buildNum, err := t.getLatestBuild(ctx)
+func (t *TestGrid) LatestStarted(ctx context.Context) (started testgrid.Started, buildNum int, err error) {
+	buildNum, err = t.getLatestBuild(ctx)
 	if err != nil {
-		return testgrid.Started{}, fmt.Errorf("couldn't get latest build: %v", err)
+		return started, buildNum, fmt.Errorf("couldn't get latest build: %v", err)
 	}
-	return t.Started(ctx, buildNum)
+	started, err = t.Started(ctx, buildNum)
+	return
 }
 
 // LatestFinished returns the started record for the latest build.
-func (t *TestGrid) LatestFinished(ctx context.Context) (testgrid.Finished, error) {
-	buildNum, err := t.getLatestBuild(ctx)
+func (t *TestGrid) LatestFinished(ctx context.Context) (finished testgrid.Finished, buildNum int, err error) {
+	buildNum, err = t.getLatestBuild(ctx)
 	if err != nil {
-		return testgrid.Finished{}, fmt.Errorf("couldn't get latest build: %v", err)
+		return finished, buildNum, fmt.Errorf("couldn't get latest build: %v", err)
 	}
-	return t.Finished(ctx, buildNum)
+	finished, err = t.Finished(ctx, buildNum)
+	return
 }
 
 func (t *TestGrid) getLatestBuild(ctx context.Context) (int, error) {

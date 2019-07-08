@@ -1,3 +1,4 @@
 #!/bin/bash -e
 
-NEW_ONLY=1 make docker-test
+# Requires 3 successful passing builds before skipping
+CLEAN_RUNS=3 make docker-test

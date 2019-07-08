@@ -3,6 +3,7 @@ package config
 import (
 	"os"
 	"reflect"
+	"strconv"
 )
 
 func init() {
@@ -24,6 +25,10 @@ func (c *Config) LoadFromEnv() {
 					field.SetBool(true)
 				case reflect.Slice:
 					field.SetBytes([]byte(envVal))
+				case reflect.Int:
+					if num, err := strconv.ParseInt(envVal, 10, 0); err == nil {
+						field.SetInt(num)
+					}
 				}
 			}
 		}

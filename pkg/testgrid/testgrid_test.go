@@ -37,16 +37,11 @@ func TestStartTestGridBuild(t *testing.T) {
 		t.Fatalf("Could not start build: %v", err)
 	}
 
-	// check latest build has updated
-	if curBuildNum, err := tg.getLatestBuild(ctx); err != nil {
-		t.Errorf("Failed to get build number: %v", err)
+	// confirm started file
+	if startedFile, curBuildNum, err := tg.LatestStarted(ctx); err != nil {
+		t.Errorf("Failed to get started record: %v", err)
 	} else if curBuildNum != buildNum {
 		t.Errorf("Current build (%d) does not match created build (%d)", curBuildNum, buildNum)
-	}
-
-	// confirm started file
-	if startedFile, err := tg.LatestStarted(ctx); err != nil {
-		t.Errorf("Failed to get started record: %v", err)
 	} else if startedFile.Timestamp == 0 {
 		t.Error("Timestamp was not set")
 	}
@@ -97,7 +92,7 @@ func setupTestGrid(t *testing.T) *TestGrid {
 
 	tg, err := NewTestGrid(cfg.TestGridBucket, cfg.TestGridPrefix, []byte(cfg.TestGridServiceAccount))
 	if err != nil {
-		t.Fatalf("Failed setting up TestGrid: %v", err)
+		t.Fatalf("Failed setting up TestGrid: %v ", err)
 	}
 	return tg
 }

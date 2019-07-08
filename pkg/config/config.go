@@ -54,8 +54,8 @@ type Config struct {
 	// DebugOSD shows debug level messages when enabled.
 	DebugOSD bool `env:"DEBUG_OSD"`
 
-	// NewOnly only runs if the build-version is different than the last run.
-	NewOnly bool `env:"NEW_ONLY"`
+	// CleanRuns is the number of times the test-version is run before skipping.
+	CleanRuns int `env:"CLEAN_RUNS"`
 
 	// UpgradeReleaseStream used to retrieve latest release images. If set, it will be used to perform an upgrade.
 	UpgradeReleaseStream string `env:"UPGRADE_RELEASE_STREAM"`
