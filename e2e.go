@@ -68,16 +68,9 @@ func RunE2ETests(t *testing.T, cfg *config.Config) {
 		if err != nil {
 			log.Printf("Failed to setup TestGrid support: %v", err)
 		} else {
-			// check if new run or quit if NEW_ONLY is set
-			if cfg.NewOnly {
-				if finished, err := tg.LatestFinished(ctx); err == nil {
-					if bVersion, ok := finished.Metadata.String(buildVersionKey); ok {
-						if *bVersion == buildVersion(cfg) {
-							log.Printf("Skipping test run, NEW_ONLY is set and '%s' is same as last", *bVersion)
-							return
-						}
-					}
-				}
+			// check if new run should be performed
+			if !doBuild(ctx, cfg, tg) {
+				t.SkipNow()
 			}
 
 			now := time.Now().UTC().Unix()
@@ -126,4 +119,38 @@ func reportToTestGrid(t *testing.T, cfg *config.Config, tg *testgrid.TestGrid, b
 	} else {
 		log.Print("Skipping reporting to TestGrid...")
 	}
+}
+
+// doBuild checks if this run should be performed.
+func doBuild(ctx context.Context, cfg *config.Config, tg *testgrid.TestGrid) bool {
+	if cfg.CleanRuns > 0 {
+		if finished, buildNum, err := tg.LatestFinished(ctx); err == nil && finished.Metadata != nil {
+			// record build-version of current suite
+			curVersion := buildVersion(cfg)
+
+			// check if enough clean runs have been performed
+			for i := 0; i < cfg.CleanRuns; i++ {
+				if i != 0 {
+					if finished, err = tg.Finished(ctx, buildNum-i); err != nil || finished.Metadata == nil {
+						log.Printf("Could not get finished for build '%d', running build", buildNum)
+						return true
+					}
+				}
+
+				if finished.Passed == nil || !*finished.Passed {
+					return true
+				} else if bVersion, ok := finished.Metadata.String(buildVersionKey); ok {
+					if *bVersion != curVersion {
+						log.Printf("CLEAN_RUNS set, need %d more clean runs before skipping.", cfg.CleanRuns-i)
+						return true
+					}
+				}
+			}
+			log.Printf("Skipping, CLEAN_RUNS set and build-version '%s' same for %d builds", curVersion, cfg.CleanRuns)
+			return false
+		} else if err != nil {
+			log.Println("Error getting latest finished, running tests")
+		}
+	}
+	return true
 }
