@@ -24,7 +24,7 @@ docker-test:
 		-t \
 		--rm \
 		-e CLUSTER_ID=$(CLUSTER_ID) \
-		-e NEW_ONLY=$(NEW_ONLY) \
+		-e CLEAN_RUNS=$(CLEAN_RUNS) \
 		-e UPGRADE_RELEASE_STREAM=$(UPGRADE_RELEASE_STREAM) \
 		-e DEBUG_OSD=1 \
 		-e USE_PROD=$(USE_PROD) \
