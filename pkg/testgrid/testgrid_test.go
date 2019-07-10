@@ -3,7 +3,6 @@ package testgrid
 import (
 	"bytes"
 	"context"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -14,28 +13,13 @@ import (
 	"github.com/openshift/osde2e/pkg/config"
 )
 
-const (
-	junitReport = `
-<testsuite failures="0" tests="2" time="2378.33176853">
-<testcase classname="e2e.go" name="Extract" time="17.897214866"/>
-<testcase classname="e2e.go" name="TearDown Previous" time="33.737494067"/>
-</testsuite>`
-	junitFileName = "junit_runner.xml"
-)
-
 func TestStartTestGridBuild(t *testing.T) {
 	tg := setupTestGrid(t)
 
 	// initiate a new build
-	start := time.Now().UTC().Unix()
-	started := testgrid.Started{
-		Timestamp: start,
-	}
+	now := time.Now().UTC()
 	ctx := context.Background()
-	buildNum, err := tg.StartBuild(ctx, &started)
-	if err != nil {
-		t.Fatalf("Could not start build: %v", err)
-	}
+	buildNum := startBuild(t, ctx, tg, now)
 
 	// confirm started file
 	if startedFile, curBuildNum, err := tg.LatestStarted(ctx); err != nil {
@@ -47,16 +31,8 @@ func TestStartTestGridBuild(t *testing.T) {
 	}
 
 	// write test results
-	dir, err := ioutil.TempDir("", "osde2e-test")
-	if err != nil {
-		t.Fatalf("Failed to create result dir")
-	}
+	dir, junitFileName, suiteData := writeTestSuite(t, "")
 	defer os.RemoveAll(dir)
-
-	junitPath := filepath.Join(dir, junitFileName)
-	if err = ioutil.WriteFile(junitPath, []byte(junitReport), os.ModePerm); err != nil {
-		t.Fatalf("failed to write junit report: %v", err)
-	}
 
 	finish, passed := time.Now().UTC().Unix(), true
 	finishedFile := testgrid.Finished{
@@ -64,7 +40,7 @@ func TestStartTestGridBuild(t *testing.T) {
 		Passed:    &passed,
 		Result:    "PASSED",
 	}
-	if err = tg.FinishBuild(ctx, buildNum, &finishedFile, dir); err != nil {
+	if err := tg.FinishBuild(ctx, buildNum, &finishedFile, dir); err != nil {
 		t.Fatalf("Failed to report results: %v", err)
 	}
 
@@ -72,7 +48,7 @@ func TestStartTestGridBuild(t *testing.T) {
 	name := filepath.Join(artifactsDir, junitFileName)
 	if data, err := tg.getBuildFile(ctx, buildNum, name); err != nil {
 		t.Errorf("Failed to get JUnit Report: %v", err)
-	} else if !bytes.Equal([]byte(junitReport), data) {
+	} else if !bytes.Equal(suiteData, data) {
 		t.Error("Retrieved report does not match what was submitted")
 	}
 
@@ -95,6 +71,17 @@ func setupTestGrid(t *testing.T) *TestGrid {
 		t.Fatalf("Failed setting up TestGrid: %v ", err)
 	}
 	return tg
+}
+
+func startBuild(t *testing.T, ctx context.Context, tg *TestGrid, when time.Time) (buildNum int) {
+	started := testgrid.Started{
+		Timestamp: when.Unix(),
+	}
+	buildNum, err := tg.StartBuild(ctx, &started)
+	if err != nil {
+		t.Fatalf("Could not start build: %v", err)
+	}
+	return buildNum
 }
 
 func checkTestGridEnv(t *testing.T, cfg *config.Config) {
