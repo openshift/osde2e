@@ -5,10 +5,7 @@ import (
 	"fmt"
 	"log"
 	"path/filepath"
-	"strings"
 
-	"cloud.google.com/go/storage"
-	"google.golang.org/api/iterator"
 	"k8s.io/test-infra/testgrid/metadata/junit"
 )
 
@@ -33,26 +30,16 @@ func (t *TestGrid) Suites(ctx context.Context, buildNum int) (suites junit.Suite
 
 func (t *TestGrid) listSuites(ctx context.Context, buildNum int) (suites []junit.Suites, err error) {
 	// list all JUnit xml files for build
-	suitePrefix := t.buildFileKey(buildNum, artifactsDir, junitPrefix)
-	suiteIt := t.bucket.Objects(ctx, &storage.Query{
-		Prefix:    suitePrefix,
-		Delimiter: "/",
-	})
+	prefix := fmt.Sprintf("%s/%s", ArtifactsDir, junitPrefix)
+	junitPaths, err := t.ListFiles(ctx, buildNum, prefix, ".xml")
+	if err != nil {
+		return suites, fmt.Errorf("couldn't list JUnit Reports: %v", err)
+	}
 
-	for {
-		obj, err := suiteIt.Next()
-		// stop when done, return errs, and skip non-XML
-		if err == iterator.Done {
-			break
-		} else if err != nil {
-			return suites, err
-		} else if !strings.HasSuffix(obj.Name, ".xml") {
-			continue
-		}
-
+	for _, path := range junitPaths {
 		// download suite data
-		baseName := filepath.Base(obj.Name)
-		data, err := t.getBuildFile(ctx, buildNum, artifactsDir, baseName)
+		baseName := filepath.Base(path)
+		data, err := t.getBuildFile(ctx, buildNum, ArtifactsDir, baseName)
 		if err != nil {
 			return suites, fmt.Errorf("failed getting suite data: %v", err)
 		}
@@ -60,7 +47,7 @@ func (t *TestGrid) listSuites(ctx context.Context, buildNum int) (suites []junit
 		// decode suites
 		suite, err := junit.Parse(data)
 		if err != nil {
-			log.Printf("Failed to decode suite in '%s': %v", obj.Name, err)
+			log.Printf("Failed to decode suite in '%s': %v", path, err)
 			continue
 		}
 
