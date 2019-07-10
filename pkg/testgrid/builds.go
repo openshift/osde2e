@@ -7,14 +7,20 @@ import (
 	"io/ioutil"
 	"path/filepath"
 	"strconv"
+	"strings"
+
+	"cloud.google.com/go/storage"
+	"google.golang.org/api/iterator"
 
 	testgrid "k8s.io/test-infra/testgrid/metadata"
 )
 
 const (
+	// ArtifactsDir contains the persisted artifacts from a build.
+	ArtifactsDir = "artifacts"
+
 	startedFileName  = "started.json"
 	finishedFileName = "finished.json"
-	artifactsDir     = "artifacts"
 )
 
 // Started retrieves information for buildNum that was created when it started.
@@ -41,6 +47,35 @@ func (t *TestGrid) Finished(ctx context.Context, buildNum int) (finished testgri
 		err = fmt.Errorf("failed decoding started record for build %d: %v", buildNum, err)
 	}
 	return
+}
+
+// ListFiles returns paths of available files for buildNum that have prefix and suffix.
+func (t *TestGrid) ListFiles(ctx context.Context, buildNum int, prefix, suffix string) (paths []string, err error) {
+	listPrefix := t.buildFileKey(buildNum, prefix)
+	listIt := t.bucket.Objects(ctx, &storage.Query{
+		Prefix:    listPrefix,
+		Delimiter: "/",
+	})
+
+	for {
+		obj, err := listIt.Next()
+		// stop when done, return errs, and skip without suffix
+		if err == iterator.Done {
+			break
+		} else if err != nil {
+			return paths, err
+		} else if !strings.HasSuffix(obj.Name, suffix) {
+			continue
+		}
+
+		paths = append(paths, obj.Name)
+	}
+	return
+}
+
+func (t *TestGrid) buildFileKey(buildNum int, filenames ...string) string {
+	buildPath := append([]string{t.prefix, strconv.Itoa(buildNum)}, filenames...)
+	return filepath.Join(buildPath...)
 }
 
 func (t *TestGrid) getBuildFile(ctx context.Context, buildNum int, filename ...string) ([]byte, error) {
@@ -82,9 +117,4 @@ func (t *TestGrid) writeBuildFile(ctx context.Context, buildNum int, filename st
 		return fmt.Errorf("failed to finish writing file '%s' for build %d: %v", key, buildNum, err)
 	}
 	return nil
-}
-
-func (t *TestGrid) buildFileKey(buildNum int, filenames ...string) string {
-	buildPath := append([]string{t.prefix, strconv.Itoa(buildNum)}, filenames...)
-	return filepath.Join(buildPath...)
 }

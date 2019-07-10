@@ -29,7 +29,7 @@ func (t *TestGrid) writeArtifactDir(ctx context.Context, buildNum int, dir strin
 				return fmt.Errorf("error opening '%s': %v", fileName, err)
 			}
 
-			name := filepath.Join(artifactsDir, fInfo.Name())
+			name := filepath.Join(ArtifactsDir, fInfo.Name())
 			key := t.buildFileKey(buildNum, name)
 
 			// check if data is compressed

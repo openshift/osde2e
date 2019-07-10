@@ -45,7 +45,7 @@ func TestStartTestGridBuild(t *testing.T) {
 	}
 
 	// check for junit report
-	name := filepath.Join(artifactsDir, junitFileName)
+	name := filepath.Join(ArtifactsDir, junitFileName)
 	if data, err := tg.getBuildFile(ctx, buildNum, name); err != nil {
 		t.Errorf("Failed to get JUnit Report: %v", err)
 	} else if !bytes.Equal(suiteData, data) {
