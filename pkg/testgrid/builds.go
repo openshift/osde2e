@@ -43,8 +43,8 @@ func (t *TestGrid) Finished(ctx context.Context, buildNum int) (finished testgri
 	return
 }
 
-func (t *TestGrid) getBuildFile(ctx context.Context, buildNum int, filename string) ([]byte, error) {
-	key := t.buildFileKey(buildNum, filename)
+func (t *TestGrid) getBuildFile(ctx context.Context, buildNum int, filename ...string) ([]byte, error) {
+	key := t.buildFileKey(buildNum, filename...)
 	rdr, err := t.bucket.Object(key).NewReader(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to request file '%s' for build %d: %v", key, buildNum, err)
@@ -84,6 +84,7 @@ func (t *TestGrid) writeBuildFile(ctx context.Context, buildNum int, filename st
 	return nil
 }
 
-func (t *TestGrid) buildFileKey(buildNum int, filename string) string {
-	return filepath.Join(t.prefix, strconv.Itoa(buildNum), filename)
+func (t *TestGrid) buildFileKey(buildNum int, filenames ...string) string {
+	buildPath := append([]string{t.prefix, strconv.Itoa(buildNum)}, filenames...)
+	return filepath.Join(buildPath...)
 }
