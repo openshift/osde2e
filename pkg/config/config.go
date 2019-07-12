@@ -40,6 +40,8 @@ type Config struct {
 	TestGridServiceAccount []byte `env:"TESTGRID_SERVICE_ACCOUNT"`
 
 	// UseProd sends requests to production OSD.
+	//
+	// Deprecated: Use OSD_ENV=prod instead.
 	UseProd bool `env:"USE_PROD"`
 
 	// NoDestroy leaves the cluster running after testing.
@@ -50,6 +52,9 @@ type Config struct {
 
 	// Kubeconfig is used to access a cluster.
 	Kubeconfig []byte `env:"TEST_KUBECONFIG"`
+
+	// OSDEnv is the OpenShift Dedicated environment used to provision clusters.
+	OSDEnv string `env:"OSD_ENV"`
 
 	// DebugOSD shows debug level messages when enabled.
 	DebugOSD bool `env:"DEBUG_OSD"`

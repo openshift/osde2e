@@ -10,9 +10,6 @@ import (
 )
 
 const (
-	// StagingURL is the API endpoint for the OSD staging environment.
-	StagingURL = "https://api.stage.openshift.com"
-
 	// APIVersion is the version of the OSD API to use.
 	APIVersion = "v1"
 
@@ -24,7 +21,7 @@ const (
 )
 
 // New setups a client to connect to OSD.
-func New(token string, staging, debug bool) (*OSD, error) {
+func New(token, env string, debug bool) (*OSD, error) {
 	logger, err := uhc.NewGoLoggerBuilder().
 		Debug(debug).
 		Build()
@@ -32,15 +29,15 @@ func New(token string, staging, debug bool) (*OSD, error) {
 		return nil, fmt.Errorf("couldn't build logger: %v", err)
 	}
 
+	// select correct environment
+	url := Environments.Choose(env)
+
 	builder := uhc.NewConnectionBuilder().
+		URL(url).
 		TokenURL(TokenURL).
 		Client(ClientID, "").
 		Logger(logger).
 		Tokens(token)
-
-	if staging {
-		builder.URL(StagingURL)
-	}
 
 	conn, err := builder.Build()
 	if err != nil {
