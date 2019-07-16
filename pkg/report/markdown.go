@@ -46,6 +46,7 @@ var (
 		}).Parse(markdownTmplText))
 )
 
+// Markdown formatted version of the report is written to w.
 func (r *Report) Markdown(w io.Writer) error {
 	err := reportTmpl.Execute(w, r)
 	if err != nil {
