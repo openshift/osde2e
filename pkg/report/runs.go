@@ -15,10 +15,11 @@ const (
 	artifactURLTmpl = "https://storage.googleapis.com/%s/%s/%d/%s/%s"
 )
 
+// GetRuns returns TestGrid build runs starting with prefix that are after earliest.
 func (r Report) GetRuns(prefix string, earliest time.Time, cfg *config.Config) (runs []Run) {
 	tg, err := testgrid.NewTestGrid(cfg.TestGridBucket, prefix, cfg.TestGridServiceAccount)
 	if err != nil {
-		log.Printf("Failed to setup TestGrid support: %v", err)
+		log.Fatalf("Failed to setup TestGrid support: %v", err)
 	}
 
 	ctx := context.Background()
@@ -31,7 +32,7 @@ func (r Report) GetRuns(prefix string, earliest time.Time, cfg *config.Config) (
 	for i := latestBuildNum; i > 0; i-- {
 		if i != latestBuildNum {
 			if started, err = tg.Started(ctx, i); err != nil {
-				log.Printf("Error getting started for %d: %v", i, err)
+				log.Printf("Error getting started for build %d: %v", i, err)
 				continue
 			}
 		}
@@ -46,7 +47,7 @@ func (r Report) GetRuns(prefix string, earliest time.Time, cfg *config.Config) (
 
 		finished, err := tg.Finished(ctx, i)
 		if err != nil {
-			log.Printf("Error getting finished for %d: %v", i, err)
+			log.Printf("Error getting finished for build %d: %v", i, err)
 		}
 
 		suites, err := tg.Suites(ctx, i)

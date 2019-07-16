@@ -11,6 +11,7 @@ import (
 	"github.com/openshift/osde2e/pkg/config"
 )
 
+// Report shows the results of jobs across multiple environments.
 type Report struct {
 	Config Config
 	Title  string
@@ -18,6 +19,7 @@ type Report struct {
 	Envs   []Env
 }
 
+// Update refreshes the data of a report within rng. It
 func (r *Report) Update(cfg *config.Config, rng TimeRange) error {
 	if rng.Start.Before(r.Range.Start) {
 		return fmt.Errorf("requested range %v is before report range %v", rng, r.Range)
@@ -72,6 +74,7 @@ func (r *Report) Update(cfg *config.Config, rng TimeRange) error {
 	return nil
 }
 
+// EnvPos returns the position in a report for the given envName. Returns -1 if not found.
 func (r Report) EnvPos(envName string) int {
 	for i, env := range r.Envs {
 		if env.Name == envName {
@@ -81,16 +84,19 @@ func (r Report) EnvPos(envName string) int {
 	return -1
 }
 
+// TimeRange is a period being reported on.
 type TimeRange struct {
 	Start time.Time
 	End   time.Time
 }
 
+// Env contains the results for a specific environment.
 type Env struct {
 	Name string
 	Jobs []Job
 }
 
+// JobPos returns the position in an environment for the given jobName. Returns -1 if not found.
 func (e Env) JobPos(jobName string) int {
 	for i, job := range e.Jobs {
 		if job.Name == jobName {
@@ -100,12 +106,14 @@ func (e Env) JobPos(jobName string) int {
 	return -1
 }
 
+// Job contains the results for a specific job.
 type Job struct {
 	Name   string
 	Prefix string
 	Runs   []Run
 }
 
+// Run contains the results for a run within a specific job.
 type Run struct {
 	BuildNum   int
 	HiveLogURL string
@@ -116,6 +124,7 @@ type Run struct {
 	Failures []Failure
 }
 
+// Failure contains an individual failing test.
 type Failure struct {
 	junit.Result
 }
