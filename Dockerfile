@@ -12,6 +12,7 @@ RUN glide install --strip-vendor
 # compile test binary
 ADD . ${PKG}
 RUN make out/osde2e
+RUN make out/osde2e-report
 
 # run tests
 CMD ["make", "test"]

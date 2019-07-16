@@ -40,5 +40,8 @@ docker-test:
 out/osde2e: out
 	CGO_ENABLED=0 go test -v -c -o $@ $(PKG)
 
+out/osde2e-report: out
+	CGO_ENABLED=0 go build -v -o $@ $(PKG)/cmd/osde2e-report
+
 out:
 	mkdir -p $@
