@@ -24,7 +24,13 @@ var DefaultRunner = &Runner{
 	Name:                 defaultName,
 	ImageStreamName:      testImageStreamName,
 	ImageStreamNamespace: testImageStreamNamespace,
-	OutputDir:            "./results",
+	PodSpec: kubev1.PodSpec{
+		Containers: []kubev1.Container{
+			DefaultContainer,
+		},
+		RestartPolicy: kubev1.RestartPolicyNever,
+	},
+	OutputDir: "./results",
 	AuthConfig: AuthConfig{
 		Name:      "osde2e",
 		Server:    "https://kubernetes.default",
@@ -54,14 +60,23 @@ type Runner struct {
 	// ImageStreamNamespace is the namespace of the ImageStream containing the suite.
 	ImageStreamNamespace string
 
-	// Cmd is run within the test pod.
+	// ImageName is a container image used for the runner.
+	ImageName string
+
+	// Cmd is run within the test pod. If PodSpec is also set it overrides the container of the same name.
 	Cmd string
+
+	// PodSpec defines the Pod used by the runner.
+	PodSpec kubev1.PodSpec
 
 	// OutputDir is the directory that is copied from the Pod to the local host.
 	OutputDir string
 
 	// Tarball will create a single .tgz file for the entire OutputDir.
 	Tarball bool
+
+	// Repos are cloned and mounted into the test Pod.
+	Repos
 
 	// Auth defines how to connect to a cluster.
 	AuthConfig
@@ -70,37 +85,47 @@ type Runner struct {
 	*log.Logger
 
 	// internal
-	stopCh    <-chan struct{}
-	testImage string
-	svc       *kubev1.Service
-	status    Status
+	stopCh <-chan struct{}
+	svc    *kubev1.Service
+	status Status
 }
 
 // Run deploys the suite into a cluster, waits for it to finish, and gathers the results.
 func (r *Runner) Run(stopCh <-chan struct{}) (err error) {
 	r.stopCh = stopCh
 	r.status = StatusSetup
-	if r.testImage, err = r.getLatestImageStreamTag(); err != nil {
-		return
-	}
 
+	// set image if imagestream is set
+	if r.ImageName == "" {
+		if r.ImageName, err = r.getLatestImageStreamTag(); err != nil {
+			return
+		}
+	}
+	log.Printf("Using '%s' as image for runner", r.ImageName)
+
+	log.Printf("Creating %s runner Pod...", r.Name)
 	var pod *kubev1.Pod
 	if pod, err = r.createPod(); err != nil {
 		return
 	}
 
+	log.Printf("Waiting for %s runner Pod to start...", r.Name)
 	if err = r.waitForPodRunning(pod); err != nil {
 		return
 	}
 	r.status = StatusRunning
 
+	log.Printf("Creating service for %s runner Pod...", r.Name)
 	if r.svc, err = r.createService(pod); err != nil {
 		return
 	}
 
+	log.Printf("Waiting for endpoints of %s runner Pod...", r.Name)
 	if err = r.waitForEndpoints(); err != nil {
 		return
 	}
+
+	log.Printf("%s runner is done", r.Name)
 	r.status = StatusDone
 	return nil
 }
@@ -108,6 +133,18 @@ func (r *Runner) Run(stopCh <-chan struct{}) (err error) {
 // Status returns the current state of the runner.
 func (r *Runner) Status() Status {
 	return r.status
+}
+
+// DeepCopy returns a deep copy of a runner.
+func (r *Runner) DeepCopy() *Runner {
+	newRunner := *DefaultRunner
+
+	// copy repos & PodSpec
+	newRunner.Repos = make(Repos, len(r.Repos))
+	copy(newRunner.Repos, r.Repos)
+	newRunner.PodSpec = *r.PodSpec.DeepCopy()
+
+	return &newRunner
 }
 
 // meta returns the ObjectMeta used for Runner resources.

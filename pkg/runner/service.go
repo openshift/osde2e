@@ -46,5 +46,5 @@ func (r *Runner) waitForEndpoints() error {
 		r.Printf("Waiting for test results using Endpoint '%s/%s'...", endpoints.Namespace, endpoints.Name)
 		return false, nil
 	}
-	return wait.PollImmediateUntil(30*time.Second, endpointsReadyCondition, r.stopCh)
+	return wait.PollImmediateUntil(15*time.Second, endpointsReadyCondition, r.stopCh)
 }

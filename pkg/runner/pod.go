@@ -3,6 +3,7 @@ package runner
 import (
 	"errors"
 	"fmt"
+	"log"
 	"time"
 
 	kubev1 "k8s.io/api/core/v1"
@@ -19,26 +20,74 @@ const (
 	resultsPortName = "results"
 )
 
+// DefaultContainer is used by the DefaultRunner to run workloads
+var DefaultContainer = kubev1.Container{
+	Env: []kubev1.EnvVar{
+		{
+			Name:  "KUBECONFIG",
+			Value: "~/.kube/config",
+		},
+	},
+	Ports: []kubev1.ContainerPort{
+		{
+			Name:          resultsPortName,
+			ContainerPort: resultsPort,
+			Protocol:      kubev1.ProtocolTCP,
+		},
+	},
+	ImagePullPolicy: kubev1.PullAlways,
+	ReadinessProbe: &kubev1.Probe{
+		Handler: kubev1.Handler{
+			HTTPGet: &kubev1.HTTPGetAction{
+				Path: "/",
+				Port: intstr.FromInt(resultsPort),
+			},
+		},
+		PeriodSeconds: 7,
+	},
+}
+
 // createPod for openshift-tests
 func (r *Runner) createPod() (pod *kubev1.Pod, err error) {
-	var cmd string
-	cmd, err = r.Command()
-	if err != nil {
-		return nil, fmt.Errorf("couldn't create runner Pod: %v", err)
+	// configure pod to run workload
+	pod = &kubev1.Pod{
+		ObjectMeta: r.meta(),
+		Spec:       r.PodSpec,
 	}
 
+	for i, container := range pod.Spec.Containers {
+		if container.Name == "" || container.Name == r.Name {
+			pod.Spec.Containers[i].Name = r.Name
+			pod.Spec.Containers[i].Image = r.ImageName
+
+			// run command in pod if, present
+			if len(r.Cmd) != 0 {
+				cmd, err := r.Command()
+				if err != nil {
+					return nil, fmt.Errorf("couldn't template Cmd: %v", err)
+				}
+
+				pod.Spec.Containers[i].Args = []string{
+					"/bin/bash",
+					"-c",
+					cmd,
+				}
+			}
+		}
+	}
+
+	// setup git repos to be cloned in init containers
+	r.Repos.ConfigurePod(&pod.Spec)
+
 	// retry until Pod can be created or timeout occurs
+	var createdPod *kubev1.Pod
 	err = wait.PollImmediate(5*time.Second, podCreateTimeout, func() (done bool, err error) {
-		pod, err = r.Kube.CoreV1().Pods(r.Namespace).Create(&kubev1.Pod{
-			ObjectMeta: r.meta(),
-			Spec: kubev1.PodSpec{
-				Containers:    r.containers(cmd),
-				RestartPolicy: kubev1.RestartPolicyNever,
-			},
-		})
+		if createdPod, err = r.Kube.CoreV1().Pods(r.Namespace).Create(pod); err != nil {
+			log.Printf("Error creating %s runner Pod: %v", r.Name, err)
+		}
 		return err == nil, nil
 	})
-	return pod, err
+	return createdPod, err
 }
 
 func (r *Runner) waitForPodRunning(pod *kubev1.Pod) error {
@@ -58,41 +107,4 @@ func (r *Runner) waitForPodRunning(pod *kubev1.Pod) error {
 		return
 	}
 	return wait.PollImmediateUntil(10*time.Second, runningCondition, r.stopCh)
-}
-
-func (r *Runner) containers(testCmd string) []kubev1.Container {
-	return []kubev1.Container{
-		{
-			Name:  r.Name,
-			Image: r.testImage,
-			Env: []kubev1.EnvVar{
-				{
-					Name:  "KUBECONFIG",
-					Value: "/kubeconfig",
-				},
-			},
-			Args: []string{
-				"/bin/bash",
-				"-c",
-				testCmd,
-			},
-			Ports: []kubev1.ContainerPort{
-				{
-					Name:          resultsPortName,
-					ContainerPort: resultsPort,
-					Protocol:      kubev1.ProtocolTCP,
-				},
-			},
-			ImagePullPolicy: kubev1.PullAlways,
-			ReadinessProbe: &kubev1.Probe{
-				Handler: kubev1.Handler{
-					HTTPGet: &kubev1.HTTPGetAction{
-						Path: "/",
-						Port: intstr.FromInt(resultsPort),
-					},
-				},
-				PeriodSeconds: 7,
-			},
-		},
-	}
 }
