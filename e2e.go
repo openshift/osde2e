@@ -44,6 +44,12 @@ func RunE2ETests(t *testing.T, cfg *config.Config) {
 		}
 	}
 
+	// ensure to wait longer than infra alerting rules thresholds
+	// otherwise startup failures won't trigger alerts
+	if cfg.ClusterUpTimeout == 0 {
+		cfg.ClusterUpTimeout = 135 * time.Minute
+	}
+
 	// support deprecated USE_PROD option
 	if cfg.UseProd {
 		cfg.OSDEnv = "prod"
