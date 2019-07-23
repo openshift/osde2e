@@ -13,7 +13,7 @@ import (
 // Runner creates an extended test suite runner and configure RBAC for it and runs cmd in it.
 func (h *H) Runner(cmd string) *runner.Runner {
 	h.GiveCurrentProjectClusterAdmin()
-	r := *runner.DefaultRunner
+	r := runner.DefaultRunner.DeepCopy()
 
 	// setup clients
 	r.Kube = h.Kube()
@@ -22,7 +22,7 @@ func (h *H) Runner(cmd string) *runner.Runner {
 	// setup tests
 	r.Namespace = h.CurrentProject()
 	r.Cmd = cmd
-	return &r
+	return r
 }
 
 // WriteResults dumps runner results into the ReportDir.
