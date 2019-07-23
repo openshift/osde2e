@@ -1,6 +1,10 @@
 // Package config provides the configuration for tests run as part of the osde2e suite.
 package config
 
+import (
+	"time"
+)
+
 // Cfg is the configuration used for end to end testing.
 var Cfg = new(Config)
 
@@ -23,6 +27,9 @@ type Config struct {
 
 	// ClusterVersion is the version of the cluster being deployed.
 	ClusterVersion string `env:"CLUSTER_VERSION"`
+
+	// ClusterUpTimeout is how long to wait before failing a cluster launch.
+	ClusterUpTimeout time.Duration
 
 	// TestGridBucket is the Google Cloud Storage bucket where results are reported for TestGrid.
 	TestGridBucket string `env:"TESTGRID_BUCKET"`
