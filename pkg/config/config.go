@@ -19,16 +19,10 @@ type Config struct {
 	ClusterID string `env:"CLUSTER_ID"`
 
 	// ClusterName is the name of the cluster being created.
-	ClusterName string
+	ClusterName string `env:"CLUSTER_NAME"`
 
 	// ClusterVersion is the version of the cluster being deployed.
 	ClusterVersion string `env:"CLUSTER_VERSION"`
-
-	// AWSKeyID is used by OSD.
-	AWSKeyID string `env:"AWS_ACCESS_KEY_ID"`
-
-	// AWSAccessKey is used by OSD.
-	AWSAccessKey string `env:"AWS_SECRET_ACCESS_KEY"`
 
 	// TestGridBucket is the Google Cloud Storage bucket where results are reported for TestGrid.
 	TestGridBucket string `env:"TESTGRID_BUCKET"`
