@@ -52,7 +52,7 @@ var _ = ginkgo.AfterSuite(func() {
 	} else {
 		log.Printf("Getting logs for cluster '%s'...", cfg.ClusterID)
 
-		logs, err := OSD.Logs(cfg.ClusterID, 200)
+		logs, err := OSD.FullLogs(cfg.ClusterID)
 		Expect(err).NotTo(HaveOccurred(), "failed to collect cluster logs")
 		writeLogs(cfg, logs)
 

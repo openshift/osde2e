@@ -2,6 +2,7 @@ package osd
 
 import (
 	"fmt"
+	"math"
 
 	"github.com/openshift-online/uhc-sdk-go/pkg/client/clustersmgmt/v1"
 )
@@ -32,6 +33,11 @@ func (u *OSD) Logs(clusterID string, length int, ids ...string) (logs map[string
 		logs[logID] = []byte(resp.Body().Content())
 	}
 	return
+}
+
+// FullLogs returns as much Logs as it can.
+func (u *OSD) FullLogs(clusterID string, ids ...string) (map[string][]byte, error) {
+	return u.Logs(clusterID, math.MaxInt32-1, ids...)
 }
 
 func (u *OSD) getLogList(clusterID string) ([]string, error) {
