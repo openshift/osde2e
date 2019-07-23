@@ -27,9 +27,6 @@ var OSD *osd.OSD
 const (
 	// metadata key holding build-version
 	buildVersionKey = "build-version"
-
-	// id given by osd
-	clusterIDKey = "cluster-id"
 )
 
 // RunE2ETests runs the osde2e test suite using the given cfg.
@@ -109,14 +106,15 @@ func reportToTestGrid(t *testing.T, cfg *config.Config, tg *testgrid.TestGrid, b
 			result = "SUCCESS"
 		}
 
+		// create metadata from config and set build version
+		meta := cfg.TestGrid()
+		meta[buildVersionKey] = buildVersion(cfg)
+
 		finished := metadata.Finished{
 			Timestamp: &end,
 			Passed:    &passed,
 			Result:    result,
-			Metadata: metadata.Metadata{
-				buildVersionKey: buildVersion(cfg),
-				clusterIDKey:    cfg.ClusterID,
-			},
+			Metadata:  meta,
 		}
 
 		ctx := context.Background()
