@@ -1,5 +1,5 @@
-hash: 01fe5dfe1e50d03085658d96d55f61da9da5066b284c8d6dfa0d421d949dde31
-updated: 2019-06-27T10:35:46.983073708-07:00
+hash: 21d9fd04f37290e9d27fe462463bb6d9ed149e60bea1ed33de8a29c6829a61d6
+updated: 2019-07-24T09:29:40.295722705-07:00
 imports:
 - name: cloud.google.com/go
   version: 8c41231e01b2085512d98153bcffb847ff9b4b9f
@@ -111,7 +111,7 @@ imports:
   - matchers/support/goraph/util
   - types
 - name: github.com/openshift-online/uhc-sdk-go
-  version: 22fe296e1f1d57bad08ad9db1ed280c05bbe1e55
+  version: a3b78ca878b88ed68595bea724168eed5c4beb7c
   subpackages:
   - pkg/client
   - pkg/client/accountsmgmt
@@ -124,14 +124,18 @@ imports:
 - name: github.com/openshift/api
   version: dafd2647cb03b7e8b3ccec0eba3f7af85df898d6
   subpackages:
+  - config/v1
   - image/docker10
   - image/dockerpre012
   - image/v1
   - project/v1
   - route/v1
 - name: github.com/openshift/client-go
-  version: 8892c0adc000741c33af70e05f4ede47725d0773
+  version: a85ea6a6b3a5d2dbe41582ee35695dd4683e1f02
   subpackages:
+  - config/clientset/versioned
+  - config/clientset/versioned/scheme
+  - config/clientset/versioned/typed/config/v1
   - image/clientset/versioned
   - image/clientset/versioned/fake
   - image/clientset/versioned/scheme
@@ -503,6 +507,7 @@ imports:
   version: 31df46e6f68bfbc12894d299bc92e13316584543
   subpackages:
   - testgrid/metadata
+  - testgrid/metadata/junit
 - name: k8s.io/utils
   version: c2654d5206da6b7b6ace12841e8f359bb89b443c
   subpackages:

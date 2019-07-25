@@ -11,9 +11,17 @@ import (
 	"github.com/openshift/osde2e/pkg/config"
 )
 
+const (
+	// DefaultFlavour is used when no specialized configuration exists.
+	DefaultFlavour = "4"
+)
+
 // LaunchCluster setups an new cluster using the OSD API and returns it's ID.
 func (u *OSD) LaunchCluster(cfg *config.Config) (string, error) {
 	log.Printf("Creating cluster '%s'...", cfg.ClusterName)
+
+	// choose flavour based on config
+	flavourID := u.Flavour(cfg)
 
 	// Calculate an expiration date for the cluster so that it will be automatically deleted if
 	// we happen to forget to do it:
@@ -22,9 +30,10 @@ func (u *OSD) LaunchCluster(cfg *config.Config) (string, error) {
 	cluster, err := v1.NewCluster().
 		Name(cfg.ClusterName).
 		Flavour(v1.NewFlavour().
-			ID("4")).
+			ID(flavourID)).
 		Region(v1.NewCloudRegion().
 			ID("us-east-1")).
+		MultiAZ(cfg.MultiAZ).
 		Version(v1.NewVersion().
 			ID(cfg.ClusterVersion)).
 		ExpirationTimestamp(expiration).
@@ -61,6 +70,11 @@ func (u *OSD) GetCluster(clusterID string) (*v1.Cluster, error) {
 		return nil, fmt.Errorf("couldn't retrieve cluster '%s': %v", clusterID, err)
 	}
 	return resp.Body(), err
+}
+
+// Flavour returns the default flavour for cfg.
+func (u *OSD) Flavour(cfg *config.Config) string {
+	return DefaultFlavour
 }
 
 // ClusterState retrieves the state of clusterID.
