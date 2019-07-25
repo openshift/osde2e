@@ -2,11 +2,12 @@
 package osd
 
 import (
+	"errors"
 	"fmt"
-
 	uhc "github.com/openshift-online/uhc-sdk-go/pkg/client"
-	"github.com/openshift-online/uhc-sdk-go/pkg/client/clustersmgmt/v1"
-	"github.com/openshift-online/uhc-sdk-go/pkg/client/errors"
+	accounts "github.com/openshift-online/uhc-sdk-go/pkg/client/accountsmgmt/v1"
+	clusters "github.com/openshift-online/uhc-sdk-go/pkg/client/clustersmgmt/v1"
+	uhcerr "github.com/openshift-online/uhc-sdk-go/pkg/client/errors"
 )
 
 const (
@@ -54,22 +55,33 @@ type OSD struct {
 	conn *uhc.Connection
 }
 
+// CurrentAccount returns the current account being used.
+func (u *OSD) CurrentAccount() (*accounts.Account, error) {
+	act, err := u.conn.AccountsMgmt().V1().CurrentAccount().Get().Send()
+	if err == nil && act != nil {
+		err = errResp(act.Error())
+	} else if act == nil {
+		return nil, errors.New("account can't be nil")
+	}
+	return act.Body(), err
+}
+
 // clusters returns a client used to perform cluster operations.
-func (u *OSD) clusters() *v1.ClustersClient {
+func (u *OSD) clusters() *clusters.ClustersClient {
 	return u.conn.ClustersMgmt().V1().Clusters()
 }
 
 // cluster returns the client for a specific cluster
-func (u *OSD) cluster(clusterID string) *v1.ClusterClient {
+func (u *OSD) cluster(clusterID string) *clusters.ClusterClient {
 	return u.clusters().Cluster(clusterID)
 }
 
 // versions returns a client used to retrieve versions currently offered by OSD.
-func (u *OSD) versions() *v1.VersionsClient {
+func (u *OSD) versions() *clusters.VersionsClient {
 	return u.conn.ClustersMgmt().V1().Versions()
 }
 
-func errResp(resp *errors.Error) error {
+func errResp(resp *uhcerr.Error) error {
 	if resp != nil {
 		return fmt.Errorf("api error: %s", resp.Reason())
 	}

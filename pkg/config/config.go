@@ -45,6 +45,9 @@ type Config struct {
 	// Deprecated: Use OSD_ENV=prod instead.
 	UseProd bool `env:"USE_PROD"`
 
+	// MultiAZ deploys a cluster across multiple availability zones.
+	MultiAZ bool `env:"MULTI_AZ"`
+
 	// NoDestroy leaves the cluster running after testing.
 	NoDestroy bool `env:"NO_DESTROY"`
 
