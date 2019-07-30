@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"path"
 
@@ -31,7 +32,7 @@ func (u *OSD) CheckQuota(cfg *config.Config) (bool, error) {
 	flavour := flavourReq.Body()
 
 	// get quota
-	quota, err := u.CurrentAccountQuota()
+	quotaList, err := u.CurrentAccountQuota()
 	if err != nil {
 		return false, fmt.Errorf("could not get quota: %v", err)
 	}
@@ -40,7 +41,16 @@ func (u *OSD) CheckQuota(cfg *config.Config) (bool, error) {
 	_ = flavour.Nodes()
 	machineType := ""
 
-	return IsQuotaFor(quota, ResourceAWSCluster, machineType, cfg.MultiAZ), nil
+	quotaFound := false
+	quotaList.Each(func(q *accounts.ResourceQuota) bool {
+		if quotaFound = HasQuotaFor(q, cfg, ResourceAWSCluster, machineType); quotaFound {
+			log.Printf("Quota for test config (%s/%s/multiAZ=%t) found: total=%d, remaining: %d",
+				ResourceAWSCluster, machineType, cfg.MultiAZ, q.Allowed(), q.Allowed()-q.Reserved())
+		}
+		return !quotaFound
+	})
+
+	return quotaFound, nil
 }
 
 // CurrentAccountQuota returns quota available for the current account's organization in the environment.
@@ -62,24 +72,21 @@ func (u *OSD) CurrentAccountQuota() (*accounts.ResourceQuotaList, error) {
 	return quotaList.Items(), err
 }
 
-// IsQuotaFor the desired configuration available. If mac is empty a default will try to be selected.
-func IsQuotaFor(quota *accounts.ResourceQuotaList, resourceType, machineType string, multiAz bool) (quotaExists bool) {
+// HasQuotaFor the desired configuration. If machineT is empty a default will try to be selected.
+func HasQuotaFor(q *accounts.ResourceQuota, cfg *config.Config, resourceType, machineType string) bool {
 	azType := "single"
-	if multiAz {
+	if cfg.MultiAZ {
 		azType = "multi"
 	}
 
-	quota.Each(func(q *accounts.ResourceQuota) bool {
-		if q.ResourceType() == resourceType && q.ResourceName() == machineType || machineType == "" {
-			if q.AvailabilityZoneType() == azType {
-				if q.Reserved() < q.Allowed() {
-					quotaExists = true
-				}
+	if q.ResourceType() == resourceType && q.ResourceName() == machineType || machineType == "" {
+		if q.AvailabilityZoneType() == azType {
+			if q.Reserved() < q.Allowed() {
+				return true
 			}
 		}
-		return !quotaExists
-	})
-	return
+	}
+	return false
 }
 
 // TODO: use uhc-sdk-go resource_summary method once available
