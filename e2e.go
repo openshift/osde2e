@@ -61,12 +61,14 @@ func RunE2ETests(t *testing.T, cfg *config.Config) {
 		t.Fatalf("could not setup OSD: %v", err)
 	}
 
-	// check that enough quota exists for this test
-	if enoughQuota, err := OSD.CheckQuota(cfg); err != nil {
-		log.Printf("Failed to check if enough quota is available: %v", err)
-	} else if !enoughQuota {
-		log.Println("Currently not enough quota exists to run this test, skipping...")
-		t.SkipNow()
+	// check that enough quota exists for this test if creating cluster
+	if len(cfg.ClusterID) == 0 {
+		if enoughQuota, err := OSD.CheckQuota(cfg); err != nil {
+			log.Printf("Failed to check if enough quota is available: %v", err)
+		} else if !enoughQuota {
+			log.Println("Currently not enough quota exists to run this test, skipping...")
+			t.SkipNow()
+		}
 	}
 
 	// configure cluster and upgrade versions
