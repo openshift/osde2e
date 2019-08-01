@@ -1,7 +1,6 @@
 package config
 
 import (
-	"fmt"
 	"reflect"
 
 	testgrid "k8s.io/test-infra/testgrid/metadata"
@@ -18,7 +17,6 @@ var (
 
 // TestGrid returns a version of c suitable for reporting with any secrets removed.
 func (c *Config) TestGrid() testgrid.Metadata {
-	fmt.Print(c)
 	v := reflect.ValueOf(c).Elem()
 	metadata := make(testgrid.Metadata, v.Type().NumField())
 	for i := 0; i < v.Type().NumField(); i++ {
