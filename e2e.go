@@ -35,7 +35,7 @@ func RunE2ETests(t *testing.T, cfg *config.Config) {
 
 	// set defaults
 	if cfg.Suffix == "" {
-		cfg.Suffix = randomStr(5)
+		cfg.Suffix = randomStr(3)
 	}
 
 	if cfg.ReportDir == "" {

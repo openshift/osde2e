@@ -28,6 +28,12 @@ type Config struct {
 	// ClusterVersion is the version of the cluster being deployed.
 	ClusterVersion string `env:"CLUSTER_VERSION"`
 
+	// TargetMajor is the major version to target. If specified, it is used in version selection.
+	TargetMajor int64 `env:"TARGET_MAJOR"`
+
+	// TargetMinor is the minor version to target. If specified, it is used in version selection.
+	TargetMinor int64 `env:"TARGET_MINOR"`
+
 	// ClusterUpTimeout is how long to wait before failing a cluster launch.
 	ClusterUpTimeout time.Duration
 

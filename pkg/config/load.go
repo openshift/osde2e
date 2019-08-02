@@ -26,6 +26,8 @@ func (c *Config) LoadFromEnv() {
 				case reflect.Slice:
 					field.SetBytes([]byte(envVal))
 				case reflect.Int:
+					fallthrough
+				case reflect.Int64:
 					if num, err := strconv.ParseInt(envVal, 10, 0); err == nil {
 						field.SetInt(num)
 					}
