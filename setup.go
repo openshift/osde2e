@@ -14,6 +14,7 @@ import (
 	. "github.com/onsi/gomega"
 
 	"github.com/openshift/osde2e/pkg/config"
+	"github.com/openshift/osde2e/pkg/osd"
 	"github.com/openshift/osde2e/pkg/upgrade"
 )
 
@@ -77,8 +78,7 @@ func setupCluster(cfg *config.Config) (err error) {
 	// create a new cluster if no ID is specified
 	if cfg.ClusterID == "" {
 		if cfg.ClusterName == "" {
-			safeVersion := strings.Replace(cfg.ClusterVersion, ".", "-", -1)
-			cfg.ClusterName = "ci-cluster-" + safeVersion + "-" + cfg.Suffix
+			cfg.ClusterName = clusterName(cfg)
 		}
 
 		if cfg.ClusterID, err = OSD.LaunchCluster(cfg); err != nil {
@@ -107,6 +107,13 @@ func useKubeconfig(cfg *config.Config) (err error) {
 	}
 	log.Printf("Using a set TEST_KUBECONFIG of '%s' for Origin API calls.", filename)
 	return nil
+}
+
+// cluster name format must be short enough to support all versions
+func clusterName(cfg *config.Config) string {
+	vers := strings.TrimPrefix(cfg.ClusterVersion, osd.VersionPrefix)
+	safeVersion := strings.Replace(vers, ".", "-", -1)
+	return "ci-cluster-" + safeVersion + "-" + cfg.Suffix
 }
 
 func randomStr(length int) (str string) {
