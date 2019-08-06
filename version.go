@@ -27,18 +27,18 @@ func ChooseVersions(cfg *config.Config, osd *osd.OSD) (err error) {
 
 // chooses between default version and nightly based on target versions.
 func setupVersion(cfg *config.Config, osd *osd.OSD) (err error) {
-	if cfg.TargetMajor == 0 && cfg.TargetMinor == 0 {
+	if cfg.MajorTarget == 0 && cfg.MinorTarget == 0 {
 		// use defaults if no version targets
 		if cfg.ClusterVersion, err = OSD.DefaultVersion(); err == nil {
 			log.Printf("CLUSTER_VERSION not set, using the current default '%s'", cfg.ClusterVersion)
 		}
 	} else {
 		// don't require major to be set
-		if cfg.TargetMajor == 0 {
-			cfg.TargetMajor = -1
+		if cfg.MajorTarget == 0 {
+			cfg.MajorTarget = -1
 		}
 
-		if cfg.ClusterVersion, err = osd.LatestPrerelease(cfg.TargetMajor, cfg.TargetMinor, "nightly"); err == nil {
+		if cfg.ClusterVersion, err = osd.LatestPrerelease(cfg.MajorTarget, cfg.MinorTarget, "nightly"); err == nil {
 			log.Printf("CLUSTER_VERSION not set but a TARGET is, running nightly '%s'", cfg.ClusterVersion)
 		}
 	}
