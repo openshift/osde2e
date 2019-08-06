@@ -1,0 +1,20 @@
+# {{ .Title }}
+
+## Table of Contents
+
+{{- range $sk, $s := .Sections }}
+- [{{ $s.Name }}](#{{ $s.Name }})
+{{- end }}
+
+{{ range $sk, $s := .Sections }}
+
+## {{ $s.Name }}
+{{ $s.Description }}
+    {{- range $ok, $o := $s.Options }}
+
+### `{{ $o.Variable }}`
+
+- {{ $o.Description }}
+- Type: `{{ $o.Type }}`
+    {{- end }}
+{{- end }}
