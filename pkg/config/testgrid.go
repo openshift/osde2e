@@ -21,7 +21,7 @@ func (c *Config) TestGrid() testgrid.Metadata {
 	metadata := make(testgrid.Metadata, v.Type().NumField())
 	for i := 0; i < v.Type().NumField(); i++ {
 		f := v.Type().Field(i)
-		if env, ok := f.Tag.Lookup("env"); ok {
+		if env, ok := f.Tag.Lookup(EnvVarTag); ok {
 			if isSensitive(env) {
 				continue
 			}
