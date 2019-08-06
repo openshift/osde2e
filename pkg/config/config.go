@@ -5,6 +5,14 @@ import (
 	"time"
 )
 
+const (
+	// EnvVarTag is the Go struct tag containing the environment variable that sets the option.
+	EnvVarTag = "env"
+
+	// SectionTag is the Go struct tag containing the documentation section of the option.
+	SectionTag = "sect"
+)
+
 // Cfg is the configuration used for end to end testing.
 var Cfg = new(Config)
 
