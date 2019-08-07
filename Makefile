@@ -8,6 +8,7 @@ IMAGE_TAG := $(shell git rev-parse --short=7 HEAD)
 
 check: cmd/osde2e-docs
 	go run $(PKG)/$< --check
+	CGO_ENABLED=0 go test -v ./cmd/... ./pkg/...
 
 generate: docs/Options.md
 
