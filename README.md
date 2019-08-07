@@ -1,55 +1,35 @@
 # osde2e
 
-This project verifies OSD releases by:
-- Starting an OSD cluster
-- Verifying operation through testing
-- Reporting test results to TestGrid
+This project checks OSD releases by starting an OSD cluster, verifying operation through testing, and reporting test 
+results to TestGrid.
 
-## Build
-These steps will build the osde2e test suite.
+## Running
+These steps run the osde2e test suite. All commands should be run from the root of this repo.
 
-### Local
-A properly setup [Go workspace](https://golang.org/doc/code.html#GOPATH), Make, and [Glide](https://github.com/Masterminds/glide#install) are required to build osde2e.
+A properly setup [Go workspace](https://golang.org/doc/code.html#GOPATH) and [Glide](https://github.com/Masterminds/glide#install) are required.
 
-```bash
-glide install --strip-vendor
-make out/osde2e
-```
+1. Get token to launch OSD clusters [here](https://cloud.redhat.com/openshift/token).
 
-### Docker
-The built image contains the test binary which is executed by default on run.
+1. Install dependencies:
+    ```bash
+    glide install --strip-vendor
+    ```
+1. Set `UHC_TOKEN` environment variable:
+    ```bash
+    export UHC_TOKEN=<token from step 1>
+    ```
+1. Run tests:
+    ```bash
+    go test -v . -test.timeout 2h
+    ```
 
-```
-make build-image
-```
+## Configuring
+osde2e is configured using a set of environment variables.
+The options available are found [here](./docs/Options.md).
 
-## Test
-Configuration must be defined before running osde2e. The complete set of options can be found in [`pkg/config`](./pkg/config/config.go).
-
-The following environment variables are required:
-- `UHC_TOKEN`: The token used to authenticate with the OSD environment. This token can be retrieved [here](https://cloud.redhat.com/openshift/token).
-
-The following environment variables are required for TestGrid reporting:
-- `TESTGRID_BUCKET`: The Google Storage bucket storing TestGrid builds.
-- `TESTGRID_PREFIX`: The prefix for builds in the bucket.
-- `TESTGRID_SERVICE_ACCOUNT`: The Base64 encoded JSON Service Account used to access the bucket.
-
-The following environment variables disable certain functionality:
-- `NO_DESTROY`: Cluster is not destroyed after testing.
-- `NO_TESTGRID`: Results are not uploaded to TestGrid after build
-
-The following environment variable allows an existing cluster to be test:
-- `CLUSTER_ID`: The ID of the cluster provided by OSD.
-
-### Local
-```
-make test
-```
-
-### Docker
-```
-make docker-test 
-```
+Common ones are:
+- [`NO_DESTROY`](./docs/Options.md#cluster_id): don't delete clusters after testing
+- [`CLUSTER_ID`](./docs/Options.md#no_destroy): test an existing cluster specified by ID
 
 ## Writing tests
 Documentation on writing tests can be found [here](./docs/Writing-Tests.md).
