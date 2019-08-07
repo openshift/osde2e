@@ -14,7 +14,6 @@ var DefaultE2EConfig = E2EConfig{
 	TestCmd: "run",
 	Suite:   "kubernetes/conformance",
 	Flags: []string{
-		"--loglevel=10",
 		"--include-success",
 		"--junit-dir=" + runner.DefaultRunner.OutputDir,
 	},
