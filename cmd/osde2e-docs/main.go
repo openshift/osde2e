@@ -2,18 +2,18 @@ package main
 
 import (
 	"bytes"
+	"flag"
 	"go/build"
 	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
 	"text/template"
-
-	flag "github.com/spf13/pflag"
 )
 
 const (
-	pkg = "github.com/openshift/osde2e"
+	pkg    = "github.com/openshift/osde2e"
+	genCmd = "make generate"
 )
 
 var (
@@ -93,7 +93,7 @@ func main() {
 
 func checkDocs(rendered []byte) {
 	if !bytes.Equal(rendered, original) {
-		log.Fatalf("Documentation file '%s' needs to be updated.", outputFile)
+		log.Fatalf("Documentation file '%s' needs update. To regenerate run '%s'.", outputFile, genCmd)
 	}
 }
 

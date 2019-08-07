@@ -1,10 +1,15 @@
-.PHONY: build-image push-image push-latest test
+.PHONY: check generate build-image push-image push-latest test
 
 PKG := github.com/openshift/osde2e
 DIR := $(dir $(realpath $(firstword $(MAKEFILE_LIST))))
 
 IMAGE_NAME := quay.io/app-sre/osde2e
 IMAGE_TAG := $(shell git rev-parse --short=7 HEAD)
+
+check: cmd/osde2e-docs
+	go run $(PKG)/$< --check
+
+generate: docs/Options.md
 
 build-image:
 	docker build -t "$(IMAGE_NAME):$(IMAGE_TAG)" .
@@ -47,3 +52,6 @@ out/osde2e-report: out
 
 out:
 	mkdir -p $@
+
+docs/Options.md: cmd/osde2e-docs pkg/config/config.go
+	go run $(PKG)/$<
