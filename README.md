@@ -28,8 +28,8 @@ osde2e is configured using a set of environment variables.
 The options available are found [here](./docs/Options.md).
 
 Common ones are:
-- [`NO_DESTROY`](./docs/Options.md#cluster_id): don't delete clusters after testing
-- [`CLUSTER_ID`](./docs/Options.md#no_destroy): test an existing cluster specified by ID
+- [`NO_DESTROY`](./docs/Options.md#no_destroy): don't delete clusters after testing
+- [`CLUSTER_ID`](./docs/Options.md#cluster_id): test an existing cluster specified by ID
 
 ## Writing tests
 Documentation on writing tests can be found [here](./docs/Writing-Tests.md).
