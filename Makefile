@@ -29,6 +29,7 @@ docker-test:
 	docker run \
 		-t \
 		--rm \
+		-e NO_DESTROY=$(NO_DESTROY) \
 		-e CLUSTER_ID=$(CLUSTER_ID) \
 		-e CLEAN_RUNS=$(CLEAN_RUNS) \
 		-e MAJOR_TARGET=$(MAJOR_TARGET) \
