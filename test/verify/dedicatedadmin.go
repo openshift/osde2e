@@ -141,8 +141,12 @@ var _ = ginkgo.Describe("The Operator Controller", func() {
 })
 
 func getRoleBindingByName(name, nameSpace string) error {
-	// Helper function to strip return results from GET for RoleBindings
-	// Return only err so Gomega's 'Eventually()' can be used for polling
+	// getRoleBindingByName makes the call to OpenShift to get a roleBinding
+	// and returns the error value
+	//
+	// This is a helper function to strip return results
+	// so Gomega's 'Eventually()' can be used for polling
+	//
 	// TODO: How can we pass the helper from above to this function?
 	// It doesn't like the pointer (nil pointer panics) if I pass *helper.H
 	// And this instantiation bombs out with "you may only call BeforeEach in a context..." etc
