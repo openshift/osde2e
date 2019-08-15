@@ -1,17 +1,15 @@
 package verify
 
-// What to test?
-//
+// This is a test of the Dedicated Admin Operator
+// This test checks:
 // Operator Namespace exists
 // Operator Deployment exists
-// Replicas counts match, pods are running
+// Replicas counts match, & pods are running
 // ServiceAccount exists
 // ConfigMaps exist
-// SyncSets exist
-//
-// Part 2
 // Created Namespace exists
-// Try to setup DA ... instance, and validate, then tear down
+// When a new project is created; that the roleBindings are created in the project
+// TODO: any SyncSets exist
 
 import (
 	"fmt"
@@ -116,10 +114,12 @@ var _ = ginkgo.Describe("The Operator Controller", func() {
 			objectMeta.Name = genSuffix(testProjectPrefix)
 			projectRequest.ObjectMeta = objectMeta
 
+			// Create a project; defer deletion of project
 			project, err := h.Project().ProjectV1().ProjectRequests().Create(&projectRequest)
 			defer h.Project().ProjectV1().Projects().Delete(project.Name, &metav1.DeleteOptions{})
 			Expect(err).NotTo(HaveOccurred())
 
+			// Each Dedicated Admin roleBinding should be added to a newly created project
 			for _, roleBindingName := range roleBindings {
 				// TODO: Figure out how to use Eventually() for this poller
 				// Eventually(getRoleBindingByName(roleBindingName, project.Name), 15, 1).Should(Succeed(), "roleBindings should eventually exist")
