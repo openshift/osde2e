@@ -139,7 +139,7 @@ var _ = ginkgo.Describe("The Operator Controller", func() {
 				// Eventually(pollRoleBinding(h, roleBindingName), 5, 1).Should(Succeed(), "roleBindings should eventually exist")
 				// TODO: This would be better with a BeAssignableToTypeOf("whatever a rolebinding type is; not sure how to reference that")
 
-				err := pollRoleBinding(h, roleBindingName)
+				err := pollRoleBinding(h, project.Name, roleBindingName)
 				Expect(err).NotTo(HaveOccurred())
 			}
 		})
@@ -147,7 +147,7 @@ var _ = ginkgo.Describe("The Operator Controller", func() {
 })
 
 
-func pollRoleBinding(h *helper.H, roleBindingName string) error {
+func pollRoleBinding(h *helper.H, projectName string, roleBindingName string) error {
 	// pollRoleBinding will check for the existence of a roleBinding
 	// in the specified project, and wait for it to exist, until a timeout
 
@@ -156,7 +156,7 @@ func pollRoleBinding(h *helper.H, roleBindingName string) error {
 	// interval is the duration in seconds between polls
 	// values here for humans
 
-	timeout := 1
+	timeout := 10
 	interval := 1
 
 	// convert time.Duration type
@@ -167,7 +167,7 @@ func pollRoleBinding(h *helper.H, roleBindingName string) error {
 
 	Loop:
 		for {
-			_, err = h.Kube().RbacV1().RoleBindings(operatorNamespace).Get(roleBindingName, metav1.GetOptions{})
+			_, err = h.Kube().RbacV1().RoleBindings(projectName).Get(roleBindingName, metav1.GetOptions{})
 			elapsed := time.Now().Sub(start)
 
 			switch {
