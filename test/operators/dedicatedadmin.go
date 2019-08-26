@@ -161,7 +161,7 @@ func pollRoleBinding(h *helper.H, projectName string, roleBindingName string) er
 
 	// convert time.Duration type
 	timeoutDuration := time.Duration(timeout) * time.Minute
-    intervalDuration := time.Duration(interval) * time.Second
+	intervalDuration := time.Duration(interval) * time.Second
 
 	start := time.Now()
 
@@ -204,7 +204,7 @@ func pollLockFile(h *helper.H) (error) {
 
 	// convert time.Duration type
 	timeoutDuration := time.Duration(timeout) * time.Minute
-    intervalDuration := time.Duration(interval) * time.Second
+	intervalDuration := time.Duration(interval) * time.Second
 
 	start := time.Now()
 
@@ -249,7 +249,7 @@ func pollDeploymentList(h *helper.H) (*appsv1.DeploymentList, error) {
 
 	// convert time.Duration type
 	timeoutDuration := time.Duration(timeout) * time.Minute
-    intervalDuration := time.Duration(interval) * time.Second
+	intervalDuration := time.Duration(interval) * time.Second
 
 	start := time.Now()
 
