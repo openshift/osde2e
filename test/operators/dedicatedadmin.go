@@ -1,4 +1,4 @@
-package verify
+package operators
 
 // This is a test of the Dedicated Admin Operator
 // This test checks:
@@ -20,8 +20,8 @@ import (
 	"github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	"github.com/openshift/osde2e/pkg/helper"
 	v1 "github.com/openshift/api/project/v1"
+	"github.com/openshift/osde2e/pkg/helper"
 
 	appsv1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -58,7 +58,7 @@ var _ = ginkgo.Describe("The Dedicated Admin Operator", func() {
 			err := pollLockFile(h)
 			Expect(err).ToNot(HaveOccurred(), "failed fetching the configMap lockfile")
 
-            deployments, err := pollDeploymentList(h)
+			deployments, err := pollDeploymentList(h)
 
 			Expect(err).ToNot(HaveOccurred(), "failed fetching deployments")
 			Expect(deployments).NotTo(BeNil())
@@ -69,7 +69,7 @@ var _ = ginkgo.Describe("The Dedicated Admin Operator", func() {
 			Expect(err).ToNot(HaveOccurred(), "failed fetching the configMap lockfile")
 
 			expectedDeployments := 1
-            deployments, err := pollDeploymentList(h)
+			deployments, err := pollDeploymentList(h)
 			Expect(err).ToNot(HaveOccurred(), "failed fetching deployments")
 			Expect(len(deployments.Items)).To(BeNumerically("==", expectedDeployments), "There should be 1 deployment.")
 		})
@@ -78,7 +78,7 @@ var _ = ginkgo.Describe("The Dedicated Admin Operator", func() {
 			err := pollLockFile(h)
 			Expect(err).ToNot(HaveOccurred(), "failed fetching the configMap lockfile")
 
-            deployments, err := pollDeploymentList(h)
+			deployments, err := pollDeploymentList(h)
 			Expect(err).ToNot(HaveOccurred(), "failed fetching deployments")
 
 			for _, deployment := range deployments.Items {
@@ -108,7 +108,6 @@ var _ = ginkgo.Describe("The Dedicated Admin Operator", func() {
 		})
 	})
 })
-
 
 // Test the controller; make sure new rolebindings are created for new project
 var _ = ginkgo.Describe("The Operator Controller", func() {
@@ -146,7 +145,6 @@ var _ = ginkgo.Describe("The Operator Controller", func() {
 	})
 })
 
-
 func pollRoleBinding(h *helper.H, projectName string, roleBindingName string) error {
 	// pollRoleBinding will check for the existence of a roleBinding
 	// in the specified project, and wait for it to exist, until a timeout
@@ -165,31 +163,30 @@ func pollRoleBinding(h *helper.H, projectName string, roleBindingName string) er
 
 	start := time.Now()
 
-	Loop:
-		for {
-			_, err = h.Kube().RbacV1().RoleBindings(projectName).Get(roleBindingName, metav1.GetOptions{})
-			elapsed := time.Now().Sub(start)
+Loop:
+	for {
+		_, err = h.Kube().RbacV1().RoleBindings(projectName).Get(roleBindingName, metav1.GetOptions{})
+		elapsed := time.Now().Sub(start)
 
-			switch {
-			case err == nil:
-				log.Printf("Found rolebinding %v", roleBindingName)
+		switch {
+		case err == nil:
+			log.Printf("Found rolebinding %v", roleBindingName)
+			break Loop
+		default:
+			if elapsed < timeoutDuration {
+				timeTilTimeout := timeoutDuration - elapsed
+				log.Printf("Failed to get rolebinding %v, will retry (timeout in: %v)", roleBindingName, timeTilTimeout)
+				time.Sleep(intervalDuration)
+			} else {
+				log.Printf("Failed to get rolebinding %v before timeout, failing", roleBindingName)
 				break Loop
-			default:
-				if elapsed < timeoutDuration {
-					timeTilTimeout := timeoutDuration - elapsed
-					log.Printf("Failed to get rolebinding %v, will retry (timeout in: %v)", roleBindingName, timeTilTimeout)
-					time.Sleep(intervalDuration)
-				} else {
-					log.Printf("Failed to get rolebinding %v before timeout, failing", roleBindingName)
-					break Loop
-				}
 			}
 		}
+	}
 	return err
 }
 
-
-func pollLockFile(h *helper.H) (error) {
+func pollLockFile(h *helper.H) error {
 	// GetConfigMap polls for a configMap with a timeout
 	// to handle the case when a new cluster is up but the OLM has not yet
 	// finished deploying the operator
@@ -208,30 +205,29 @@ func pollLockFile(h *helper.H) (error) {
 
 	start := time.Now()
 
-	Loop:
-		for {
-			_, err = h.Kube().CoreV1().ConfigMaps(operatorNamespace).Get(operatorLockFile, metav1.GetOptions{})
-			elapsed := time.Now().Sub(start)
+Loop:
+	for {
+		_, err = h.Kube().CoreV1().ConfigMaps(operatorNamespace).Get(operatorLockFile, metav1.GetOptions{})
+		elapsed := time.Now().Sub(start)
 
-			switch {
-			case err == nil:
-				// Success
+		switch {
+		case err == nil:
+			// Success
+			break Loop
+		default:
+			if elapsed < timeoutDuration {
+				timeTilTimeout := timeoutDuration - elapsed
+				log.Printf("Failed to get configmap, will retry (timeout in: %v", timeTilTimeout)
+				time.Sleep(intervalDuration)
+			} else {
+				log.Printf("Failed to get configmap before timeout, failing")
 				break Loop
-			default:
-				if elapsed < timeoutDuration {
-					timeTilTimeout := timeoutDuration - elapsed
-					log.Printf("Failed to get configmap, will retry (timeout in: %v", timeTilTimeout)
-					time.Sleep(intervalDuration)
-				} else {
-					log.Printf("Failed to get configmap before timeout, failing")
-					break Loop
-				}
 			}
 		}
+	}
 
 	return err
 }
-
 
 func pollDeploymentList(h *helper.H) (*appsv1.DeploymentList, error) {
 	// pollDeploymentList polls for deployments with a timeout
@@ -253,30 +249,29 @@ func pollDeploymentList(h *helper.H) (*appsv1.DeploymentList, error) {
 
 	start := time.Now()
 
-	Loop:
-		for {
-			deploymentList, err = h.Kube().AppsV1().Deployments(operatorNamespace).List(metav1.ListOptions{})
-			elapsed := time.Now().Sub(start)
+Loop:
+	for {
+		deploymentList, err = h.Kube().AppsV1().Deployments(operatorNamespace).List(metav1.ListOptions{})
+		elapsed := time.Now().Sub(start)
 
-			switch {
-			case err == nil:
-				// Success
+		switch {
+		case err == nil:
+			// Success
+			break Loop
+		default:
+			if elapsed < timeoutDuration {
+				timeTilTimeout := timeoutDuration - elapsed
+				log.Printf("Failed to get Deployments, will retry (timeout in: %v", timeTilTimeout)
+				time.Sleep(intervalDuration)
+			} else {
+				log.Printf("Failed to get Deployments before timeout, failing")
 				break Loop
-			default:
-				if elapsed < timeoutDuration {
-					timeTilTimeout := timeoutDuration - elapsed
-					log.Printf("Failed to get Deployments, will retry (timeout in: %v", timeTilTimeout)
-					time.Sleep(intervalDuration)
-				} else {
-					log.Printf("Failed to get Deployments before timeout, failing")
-					break Loop
-				}
 			}
 		}
+	}
 
 	return deploymentList, err
 }
-
 
 func genSuffix(prefix string) string {
 	// genSuffix creates a random 8 character string to append to object
