@@ -1,4 +1,4 @@
-package verify
+package operators
 
 // This is a test of the Dedicated Admin Operator
 // This test checks:
