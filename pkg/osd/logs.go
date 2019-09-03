@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"math"
 
-	"github.com/openshift-online/uhc-sdk-go/pkg/client/clustersmgmt/v1"
+	"github.com/openshift-online/ocm-sdk-go/pkg/client/clustersmgmt/v1"
 )
 
 // Logs provides all logs available for clusterID, ids can be optionally provided for only specific logs.

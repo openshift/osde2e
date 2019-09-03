@@ -24,8 +24,8 @@ type Config struct {
 	// Suffix is used at the end of test names to identify them.
 	Suffix string `env:"SUFFIX" sect:"tests"`
 
-	// UHCToken is used to authenticate with UHC.
-	UHCToken string `env:"UHC_TOKEN" sect:"required"`
+	// OCMToken is used to authenticate with OCM.
+	OCMToken string `env:"OCM_TOKEN" sect:"required"`
 
 	// ClusterID identifies the cluster. If set at start, an existing cluster is tested.
 	ClusterID string `env:"CLUSTER_ID" sect:"cluster"`

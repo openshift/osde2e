@@ -9,7 +9,7 @@ import (
 var (
 	// sensitiveFields removed from output
 	sensitiveFields = []string{
-		"UHC_TOKEN",
+		"OCM_TOKEN",
 		"TESTGRID_SERVICE_ACCOUNT",
 		"TEST_KUBECONFIG",
 	}

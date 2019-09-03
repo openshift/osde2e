@@ -70,7 +70,7 @@ var _ = ginkgo.AfterSuite(func() {
 
 // setupCluster brings up a cluster, waits for it to be ready, then returns it's name.
 func setupCluster(cfg *config.Config) (err error) {
-	// if TEST_KUBECONFIG has been set, skip configuring UHC
+	// if TEST_KUBECONFIG has been set, skip configuring OCM
 	if len(cfg.Kubeconfig) > 0 {
 		return useKubeconfig(cfg)
 	}

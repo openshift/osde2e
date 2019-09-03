@@ -1,5 +1,5 @@
-hash: 21d9fd04f37290e9d27fe462463bb6d9ed149e60bea1ed33de8a29c6829a61d6
-updated: 2019-07-24T09:29:40.295722705-07:00
+hash: cc59e7aa8906accf654e370ae8a10f5cdecd9634caf5ccd68f8efd2193d2d503
+updated: 2019-09-03T09:18:43.059536215-04:00
 imports:
 - name: cloud.google.com/go
   version: 8c41231e01b2085512d98153bcffb847ff9b4b9f
@@ -110,10 +110,16 @@ imports:
   - matchers/support/goraph/node
   - matchers/support/goraph/util
   - types
+- name: github.com/openshift-online/ocm-sdk-go
+  version: 743491d4a657f4942eb8a8764795fd7f06582c0e
+  subpackages:
+  - pkg/client
+  - pkg/client/accountsmgmt/v1
+  - pkg/client/clustersmgmt/v1
+  - pkg/client/errors
 - name: github.com/openshift-online/uhc-sdk-go
   version: a3b78ca878b88ed68595bea724168eed5c4beb7c
   subpackages:
-  - pkg/client
   - pkg/client/accountsmgmt
   - pkg/client/accountsmgmt/v1
   - pkg/client/clustersmgmt
@@ -131,7 +137,7 @@ imports:
   - project/v1
   - route/v1
 - name: github.com/openshift/client-go
-  version: a85ea6a6b3a5d2dbe41582ee35695dd4683e1f02
+  version: e9678e3b850da36470c5554609c6cd110aace47e
   subpackages:
   - config/clientset/versioned
   - config/clientset/versioned/scheme

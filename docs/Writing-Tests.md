@@ -127,7 +127,7 @@ Ginkgo has been configured to bring a cluster up in it's [`BeforeSuite`](https:/
 **Cluster configuration**
 - Launched clusters are setup with the [`osd`](../pkg/osd) package
 	- Changes to the way test clusters are launched should be made there
-- [uhc-sdk-go](https://github.com/openshift-online/uhc-sdk-go) is used to launch clusters
+- [ocm-sdk-go](https://github.com/openshift-online/ocm-sdk-go) is used to launch clusters
 - Configuration for launching clusters is loaded from a [`config.Config`](https://godoc.org/github.com/openshift/osde2e/pkg/config#Config) instance
 
 ## Helper

@@ -57,7 +57,7 @@ func RunE2ETests(t *testing.T, cfg *config.Config) {
 
 	// setup OSD client
 	var err error
-	if OSD, err = osd.New(cfg.UHCToken, cfg.OSDEnv, cfg.DebugOSD); err != nil {
+	if OSD, err = osd.New(cfg.OCMToken, cfg.OSDEnv, cfg.DebugOSD); err != nil {
 		t.Fatalf("could not setup OSD: %v", err)
 	}
 

@@ -5,7 +5,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/openshift-online/uhc-sdk-go/pkg/client/clustersmgmt/v1"
+	"github.com/openshift-online/ocm-sdk-go/pkg/client/clustersmgmt/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 
 	"github.com/openshift/osde2e/pkg/config"
