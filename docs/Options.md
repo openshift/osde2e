@@ -15,9 +15,9 @@
 ## required
 These options are required to run osde2e.
 
-### `OCM`
+### `OCM_TOKEN`
 
-- OCM is used to authenticate with 
+- OCMToken is used to authenticate with OCM.
 
 - Type: `string`
 
