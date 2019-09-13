@@ -47,7 +47,7 @@ func setupVersion(cfg *config.Config, osd *osd.OSD) (err error) {
 
 // chooses version based on optimal upgrade path
 func setupUpgradeVersion(cfg *config.Config, osd *osd.OSD) (err error) {
-	cfg.UpgradeReleaseName, cfg.UpgradeImage, err = upgrade.LatestRelease(cfg.UpgradeReleaseStream)
+	cfg.UpgradeReleaseName, cfg.UpgradeImage, err = upgrade.LatestRelease(cfg)
 	if err != nil {
 		return fmt.Errorf("couldn't get latest release from release-controller: %v", err)
 	}
