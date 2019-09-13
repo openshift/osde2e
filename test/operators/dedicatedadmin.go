@@ -20,8 +20,8 @@ import (
 	"github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	"github.com/openshift/osde2e/pkg/helper"
 	v1 "github.com/openshift/api/project/v1"
+	"github.com/openshift/osde2e/pkg/helper"
 
 	appsv1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -34,7 +34,7 @@ const defaultDesiredReplicas int32 = 1
 const operatorLockFile string = "dedicated-admin-operator-lock"
 const testProjectPrefix string = "da-test-project"
 
-var clusterRoles = [6]string{
+var clusterRoles = []string{
 	"dedicated-admin-operator",
 	"dedicated-admin-operator-admin",
 	"dedicated-admin-operator-edit",
@@ -43,7 +43,11 @@ var clusterRoles = [6]string{
 	"dedicated-admins-project",
 }
 
-var roleBindings = [2]string{
+var clusterRoleBindings = []string{
+	"dedicated-admin-operator-admin",
+}
+
+var roleBindings = []string{
 	"dedicated-admins-project-0",
 	"dedicated-admins-project-1",
 }
@@ -58,7 +62,7 @@ var _ = ginkgo.Describe("The Dedicated Admin Operator", func() {
 			err := pollLockFile(h)
 			Expect(err).ToNot(HaveOccurred(), "failed fetching the configMap lockfile")
 
-            deployments, err := pollDeploymentList(h)
+			deployments, err := pollDeploymentList(h)
 
 			Expect(err).ToNot(HaveOccurred(), "failed fetching deployments")
 			Expect(deployments).NotTo(BeNil())
@@ -69,7 +73,7 @@ var _ = ginkgo.Describe("The Dedicated Admin Operator", func() {
 			Expect(err).ToNot(HaveOccurred(), "failed fetching the configMap lockfile")
 
 			expectedDeployments := 1
-            deployments, err := pollDeploymentList(h)
+			deployments, err := pollDeploymentList(h)
 			Expect(err).ToNot(HaveOccurred(), "failed fetching deployments")
 			Expect(len(deployments.Items)).To(BeNumerically("==", expectedDeployments), "There should be 1 deployment.")
 		})
@@ -78,7 +82,7 @@ var _ = ginkgo.Describe("The Dedicated Admin Operator", func() {
 			err := pollLockFile(h)
 			Expect(err).ToNot(HaveOccurred(), "failed fetching the configMap lockfile")
 
-            deployments, err := pollDeploymentList(h)
+			deployments, err := pollDeploymentList(h)
 			Expect(err).ToNot(HaveOccurred(), "failed fetching deployments")
 
 			for _, deployment := range deployments.Items {
@@ -93,22 +97,36 @@ var _ = ginkgo.Describe("The Dedicated Admin Operator", func() {
 			}
 		})
 	})
+
 	// Check that the clusterRoles exist
-	// TODO Should check clusterRoleBindings as well, but not sure what should be there
 	ginkgo.Context("clusterRoles", func() {
 		ginkgo.It("should exist", func() {
 			// Wait for lockfile to signal operator is active
-			err := pollLockFile(h)
-			Expect(err).ToNot(HaveOccurred(), "lockfile never became ready; is operator working?")
+			pollErr := pollLockFile(h)
+			Expect(pollErr).ToNot(HaveOccurred(), "failed fetching the configMap lockfile")
+
 			for _, clusterRoleName := range clusterRoles {
 				_, err := h.Kube().RbacV1().ClusterRoles().Get(clusterRoleName, metav1.GetOptions{})
 				Expect(err).ToNot(HaveOccurred(), "failed to get cluster role %v\n", clusterRoleName)
 			}
-
 		})
 	})
-})
 
+	// Check that the clusterRoleBindings exist
+	ginkgo.Context("clusterRoleBindings", func() {
+		ginkgo.It("should exist", func() {
+			// Wait for lockfile to signal operator is active
+			pollErr := pollLockFile(h)
+			Expect(pollErr).ToNot(HaveOccurred(), "failed fetching the configMap lockfile")
+
+			for _, clusterRoleBindingName := range clusterRoleBindings {
+				_, err := h.Kube().RbacV1().ClusterRoleBindings().Get(clusterRoleBindingName, metav1.GetOptions{})
+				Expect(err).ToNot(HaveOccurred(), "failed to get cluster role binding %v\n", clusterRoleBindingName)
+			}
+		})
+	})
+
+})
 
 // Test the controller; make sure new rolebindings are created for new project
 var _ = ginkgo.Describe("The Operator Controller", func() {
@@ -145,7 +163,6 @@ var _ = ginkgo.Describe("The Operator Controller", func() {
 		})
 	})
 })
-
 
 func pollRoleBinding(h *helper.H, projectName string, roleBindingName string) error {
 	// pollRoleBinding will check for the existence of a roleBinding
@@ -185,11 +202,11 @@ func pollRoleBinding(h *helper.H, projectName string, roleBindingName string) er
 				}
 			}
 		}
+
 	return err
 }
 
-
-func pollLockFile(h *helper.H) (error) {
+func pollLockFile(h *helper.H) error {
 	// GetConfigMap polls for a configMap with a timeout
 	// to handle the case when a new cluster is up but the OLM has not yet
 	// finished deploying the operator
@@ -231,7 +248,6 @@ func pollLockFile(h *helper.H) (error) {
 
 	return err
 }
-
 
 func pollDeploymentList(h *helper.H) (*appsv1.DeploymentList, error) {
 	// pollDeploymentList polls for deployments with a timeout
@@ -276,7 +292,6 @@ func pollDeploymentList(h *helper.H) (*appsv1.DeploymentList, error) {
 
 	return deploymentList, err
 }
-
 
 func genSuffix(prefix string) string {
 	// genSuffix creates a random 8 character string to append to object
