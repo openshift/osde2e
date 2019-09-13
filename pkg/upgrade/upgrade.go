@@ -4,7 +4,6 @@ package upgrade
 import (
 	"fmt"
 	"log"
-	"strings"
 	"time"
 
 	configv1 "github.com/openshift/api/config/v1"
@@ -74,15 +73,9 @@ func TriggerUpgrade(h *helper.H, cfg *config.Config) (*configv1.ClusterVersion, 
 		return cVersion, fmt.Errorf("couldn't get current ClusterVersion '%s': %v", ClusterVersionName, err)
 	}
 
-	// split image into name and tag
-	imageParts := strings.Split(cfg.UpgradeImage, ":")
-	if len(imageParts) != 2 {
-		return cVersion, fmt.Errorf("an UPGRADE_IMAGE should have a name and an a tag, got '%s'", cfg.UpgradeImage)
-	}
-
 	// set requested upgrade targets
 	cVersion.Spec.DesiredUpdate = &configv1.Update{
-		Version: imageParts[1],
+		Version: cfg.UpgradeReleaseName,
 		Image:   cfg.UpgradeImage,
 		Force:   true,
 	}

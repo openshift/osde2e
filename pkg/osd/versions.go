@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/Masterminds/semver"
-	"github.com/openshift-online/uhc-sdk-go/pkg/client/clustersmgmt/v1"
+	v1 "github.com/openshift-online/uhc-sdk-go/pkg/client/clustersmgmt/v1"
 )
 
 const (
@@ -46,7 +46,7 @@ func (u *OSD) PreviousVersion(verStr string) (string, error) {
 	verStr = strings.TrimPrefix(verStr, VersionPrefix)
 	vers, err := semver.NewVersion(verStr)
 	if err != nil {
-		return "", fmt.Errorf("couldn't  parse given verStr '%s': %v", verStr, err)
+		return "", fmt.Errorf("couldn't parse given verStr '%s': %v", verStr, err)
 	}
 
 	versions, err := u.getSemverList(-1, -1, "")
