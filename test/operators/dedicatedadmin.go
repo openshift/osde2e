@@ -52,7 +52,7 @@ var roleBindings = []string{
 	"dedicated-admins-project-1",
 }
 
-var _ = ginkgo.Describe("The Dedicated Admin Operator", func() {
+var _ = ginkgo.Describe("[OSD] Dedicated Admin Operator", func() {
 	h := helper.New()
 
 	// Check that the operator deployment exists in the operator namespace
@@ -126,12 +126,8 @@ var _ = ginkgo.Describe("The Dedicated Admin Operator", func() {
 		})
 	})
 
-})
-
-// Test the controller; make sure new rolebindings are created for new project
-var _ = ginkgo.Describe("The Operator Controller", func() {
-	h := helper.New()
-	ginkgo.Context("when a new project is created", func() {
+    // Test the controller; make sure new rolebindings are created for new project
+	ginkgo.Context("controller", func() {
 		ginkgo.It("should create the expected roleBindings", func() {
 			projectRequest := v1.ProjectRequest{}
 			projectRequest.Kind = "ProjectRequest"
