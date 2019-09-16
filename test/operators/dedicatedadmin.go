@@ -27,6 +27,9 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+// timeout is the duration in minutes that the polling should last
+const globalPollingTimeout int = 60
+
 const operatorNamespace string = "openshift-dedicated-admin"
 const createdNamespace string = "dedicated-admin"
 const operatorServiceAccount string = "dedicated-admin-operator"
@@ -165,15 +168,13 @@ func pollRoleBinding(h *helper.H, projectName string, roleBindingName string) er
 	// in the specified project, and wait for it to exist, until a timeout
 
 	var err error
-	// timeout is the duration in minutes that the polling should last
 	// interval is the duration in seconds between polls
 	// values here for humans
 
-	timeout := 10
 	interval := 1
 
 	// convert time.Duration type
-	timeoutDuration := time.Duration(timeout) * time.Minute
+	timeoutDuration := time.Duration(globalPollingTimeout) * time.Minute
 	intervalDuration := time.Duration(interval) * time.Second
 
 	start := time.Now()
@@ -209,14 +210,12 @@ func pollLockFile(h *helper.H) error {
 
 	var err error
 
-	// timeout is the duration in minutes that the polling should last
 	// interval is the duration in seconds between polls
 	// values here for humans
-	timeout := 20
 	interval := 5
 
 	// convert time.Duration type
-	timeoutDuration := time.Duration(timeout) * time.Minute
+	timeoutDuration := time.Duration(globalPollingTimeout) * time.Minute
 	intervalDuration := time.Duration(interval) * time.Second
 
 	start := time.Now()
@@ -253,14 +252,12 @@ func pollDeploymentList(h *helper.H) (*appsv1.DeploymentList, error) {
 	var err error
 	var deploymentList *appsv1.DeploymentList
 
-	// timeout is the duration in minutes that the polling should last
 	// interval is the duration in seconds between polls
 	// values here for humans
-	timeout := 20
 	interval := 5
 
 	// convert time.Duration type
-	timeoutDuration := time.Duration(timeout) * time.Minute
+	timeoutDuration := time.Duration(globalPollingTimeout) * time.Minute
 	intervalDuration := time.Duration(interval) * time.Second
 
 	start := time.Now()
