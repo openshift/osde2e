@@ -14,6 +14,8 @@ out/
 
 # Editor metadata
 .idea
+*.swp
+*.code-workspace
 
 # Go dependencies
 vendor/
