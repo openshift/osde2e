@@ -42,6 +42,9 @@ type Config struct {
 	// MinorTarget is the minor version to target. If specified, it is used in version selection.
 	MinorTarget int64 `env:"MINOR_TARGET" sect:"version"`
 
+	// AfterTestClusterWait is how long to keep a cluster around after tests have run.
+	AfterTestClusterWait time.Duration
+
 	// ClusterUpTimeout is how long to wait before failing a cluster launch.
 	ClusterUpTimeout time.Duration
 

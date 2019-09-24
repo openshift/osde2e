@@ -62,6 +62,19 @@ var _ = ginkgo.AfterSuite(func() {
 			return
 		}
 
+		// Default to 1 hour wait before terminating a cluster
+		if cfg.AfterTestClusterWait == 0 {
+			cfg.AfterTestClusterWait = 60 * time.Minute
+		}
+
+		log.Printf("Sleeping for %d minutes before destroying cluster '%s'", cfg.AfterTestClusterWait/time.Minute, cfg.ClusterID)
+		startTime := time.Now()
+		for time.Now().Sub(startTime) < cfg.AfterTestClusterWait {
+			time.Sleep(1 * time.Minute)
+			log.Print(".")
+		}
+		log.Printf("Done")
+
 		log.Printf("Destroying cluster '%s'...", cfg.ClusterID)
 		err = OSD.DeleteCluster(cfg.ClusterID)
 		Expect(err).NotTo(HaveOccurred(), "failed to destroy cluster")
