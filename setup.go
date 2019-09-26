@@ -67,13 +67,17 @@ var _ = ginkgo.AfterSuite(func() {
 			cfg.AfterTestClusterWait = 60 * time.Minute
 		}
 
-		log.Printf("Sleeping for %d minutes before destroying cluster '%s'", cfg.AfterTestClusterWait/time.Minute, cfg.ClusterID)
-		startTime := time.Now()
-		for time.Now().Sub(startTime) < cfg.AfterTestClusterWait {
-			time.Sleep(1 * time.Minute)
-			log.Print(".")
+		if cfg.NoDestroyDelay {
+			log.Printf("Skipping sleep for cluster debugging")
+		} else {
+			log.Printf("Sleeping for %d minutes before destroying cluster '%s'", cfg.AfterTestClusterWait/time.Minute, cfg.ClusterID)
+			startTime := time.Now()
+			for time.Now().Sub(startTime) < cfg.AfterTestClusterWait {
+				time.Sleep(1 * time.Minute)
+				log.Print(".")
+			}
+			log.Printf("Done")
 		}
-		log.Printf("Done")
 
 		log.Printf("Destroying cluster '%s'...", cfg.ClusterID)
 		err = OSD.DeleteCluster(cfg.ClusterID)
