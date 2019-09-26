@@ -23,7 +23,7 @@ push-latest:
 	@docker --config=$(DOCKER_CONF) push "$(IMAGE_NAME):latest"
 
 test: out/osde2e
-	$< -test.v -ginkgo.skip=$(GINKGO_SKIP) -test.timeout 4h
+	$< -test.v -ginkgo.skip="$(GINKGO_SKIP)" -test.timeout 4h
 
 docker-test:
 	docker run \
