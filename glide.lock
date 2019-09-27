@@ -1,5 +1,5 @@
-hash: 21d9fd04f37290e9d27fe462463bb6d9ed149e60bea1ed33de8a29c6829a61d6
-updated: 2019-07-24T09:29:40.295722705-07:00
+hash: 05c6e2e8750516b77e58b9124ddb38e85e31d19d6c3ecca20d8875cc0a46a281
+updated: 2019-09-26T15:07:22.632866752-04:00
 imports:
 - name: cloud.google.com/go
   version: 8c41231e01b2085512d98153bcffb847ff9b4b9f
@@ -15,6 +15,8 @@ imports:
   version: 4b2b341e8d7715fae06375aa633dbb6e91b3fb46
   subpackages:
   - quantile
+- name: github.com/blang/semver
+  version: 1a9109f8c4a1d669a78442f567dfe8eedf982793
 - name: github.com/davecgh/go-spew
   version: 782f4967f2dc4564575ca782fe2d04090b5faca8
   subpackages:
@@ -30,6 +32,10 @@ imports:
   - sortkeys
 - name: github.com/golang/glog
   version: 23def4e6c14b4da8ac2ed8007337bc5eb5007998
+- name: github.com/golang/groupcache
+  version: 02826c3e79038b59d737d3b1c0a1d937f71a4433
+  subpackages:
+  - lru
 - name: github.com/golang/protobuf
   version: b4deda0973fb4c70b50d226b1af49f3da59f5265
   subpackages:
@@ -111,7 +117,7 @@ imports:
   - matchers/support/goraph/util
   - types
 - name: github.com/openshift-online/uhc-sdk-go
-  version: a3b78ca878b88ed68595bea724168eed5c4beb7c
+  version: 743491d4a657f4942eb8a8764795fd7f06582c0e
   subpackages:
   - pkg/client
   - pkg/client/accountsmgmt
@@ -131,7 +137,7 @@ imports:
   - project/v1
   - route/v1
 - name: github.com/openshift/client-go
-  version: a85ea6a6b3a5d2dbe41582ee35695dd4683e1f02
+  version: e9678e3b850da36470c5554609c6cd110aace47e
   subpackages:
   - config/clientset/versioned
   - config/clientset/versioned/scheme
@@ -147,6 +153,17 @@ imports:
   - route/clientset/versioned
   - route/clientset/versioned/scheme
   - route/clientset/versioned/typed/route/v1
+- name: github.com/operator-framework/operator-lifecycle-manager
+  version: a611449366805935939777d0182a86ba43b26cbd
+  subpackages:
+  - pkg/api/apis/operators
+  - pkg/api/apis/operators/v1
+  - pkg/api/apis/operators/v1alpha1
+  - pkg/api/client/clientset/versioned
+  - pkg/api/client/clientset/versioned/scheme
+  - pkg/api/client/clientset/versioned/typed/operators/v1
+  - pkg/api/client/clientset/versioned/typed/operators/v1alpha1
+  - pkg/lib/version
 - name: github.com/prometheus/client_golang
   version: f0a455664ecb0634bfb64d58b0c8226c2dab0804
   subpackages:
@@ -490,6 +507,8 @@ imports:
   - tools/clientcmd/api/latest
   - tools/clientcmd/api/v1
   - tools/metrics
+  - tools/record
+  - tools/record/util
   - tools/reference
   - transport
   - util/cert

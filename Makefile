@@ -23,7 +23,7 @@ push-latest:
 	@docker --config=$(DOCKER_CONF) push "$(IMAGE_NAME):latest"
 
 test: out/osde2e
-	$< -test.v -test.timeout 4h
+	$< -test.v -ginkgo.skip="$(GINKGO_SKIP)" -test.timeout 8h
 
 docker-test:
 	docker run \
@@ -35,6 +35,9 @@ docker-test:
 		-e MAJOR_TARGET=$(MAJOR_TARGET) \
 		-e MINOR_TARGET=$(MINOR_TARGET) \
 		-e CLUSTER_VERSION=$(CLUSTER_VERSION) \
+		-e TARGET_STREAM=$(TARGET_STREAM) \
+		-e NO_DESTROY_DELAY=$(NO_DESTROY_DELAY) \
+		-e GINKGO_SKIP=$(GINKGO_SKIP) \
 		-e UPGRADE_RELEASE_STREAM=$(UPGRADE_RELEASE_STREAM) \
 		-e DEBUG_OSD=1 \
 		-e OSD_ENV=$(OSD_ENV) \
