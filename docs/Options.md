@@ -30,6 +30,12 @@ These options are required to run osde2e.
 
 - Type: `int`
 
+### `GINKGO_SKIP`
+
+- GinkgoSkip is a regex passed to Ginkgo that skips any test suites matching the regex. ex. "Operator"
+
+- Type: `string`
+
 ### `REPORT_DIR`
 
 - ReportDir is the location JUnit XML results are written.
@@ -48,6 +54,13 @@ These options are required to run osde2e.
 ### `DEBUG_OSD`
 
 - DebugOSD shows debug level messages when enabled.
+
+- Type: `bool`
+
+### `NO_DESTROY_DELAY`
+
+- NoDestroyDelay circumvents the 60min delay before a cluster is deleted
+This is highly useful when trying to debug things locally. :)
 
 - Type: `bool`
 
