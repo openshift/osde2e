@@ -19,9 +19,7 @@ const (
 )
 
 // LatestRelease retrieves latest release information for given releaseStream. Will use Cincinnati for stage/prod.
-func LatestRelease(cfg *config.Config) (name, pullSpec string, err error) {
-	releaseStream := cfg.UpgradeReleaseStream
-
+func LatestRelease(cfg *config.Config, releaseStream string) (name, pullSpec string, err error) {
 	var resp *http.Response
 	var data []byte
 	if cfg.OSDEnv == "int" {

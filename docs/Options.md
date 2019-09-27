@@ -124,6 +124,12 @@ This is highly useful when trying to debug things locally. :)
 
 - Type: `int64`
 
+### `TARGET_STREAM`
+
+- TargetStream lets you select a specific release stream from Cincinnati or the Release Controller to install.
+
+- Type: `string`
+
 ## upgrade
 
 
