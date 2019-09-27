@@ -27,7 +27,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// timeout is the duration in minutes that the polling should last
+// timeout is the duration in seconds that the polling should last
 const globalPollingTimeout int = 30 * 60 
 
 const operatorNamespace string = "openshift-dedicated-admin"
