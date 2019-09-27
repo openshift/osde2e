@@ -83,6 +83,13 @@ type Config struct {
 	// DebugOSD shows debug level messages when enabled.
 	DebugOSD bool `env:"DEBUG_OSD" sect:"environment"`
 
+	// NoDestroyDelay circumvents the 60min delay before a cluster is deleted
+	// This is highly useful when trying to debug things locally. :)
+	NoDestroyDelay bool `env:"NO_DESTROY_DELAY" sect:"environment"`
+
+	// GinkgoSkip is a regex passed to Ginkgo that skips any test suites matching the regex. ex. "Operator"
+	GinkgoSkip string `env:"GINKGO_SKIP" sect:"tests"`
+
 	// CleanRuns is the number of times the test-version is run before skipping.
 	CleanRuns int `env:"CLEAN_RUNS" sect:"tests"`
 
