@@ -12,7 +12,7 @@ package operators
 // TODO: any SyncSets exist
 
 import (
-	"log"
+	"errors"
 	"math/rand"
 	"strings"
 	"time"
@@ -63,7 +63,7 @@ var _ = ginkgo.FDescribe("[OSD] Dedicated Admin Operator", func() {
 	// Check that the operator clusterServiceVersion exists
 	ginkgo.Context("clusterServiceVersion", func() {
 		ginkgo.It("should exist", func() {
-			csvs, err := h.Operator().OperatorsV1alpha1().ClusterServiceVersions(operatorNamespace).List(metav1.ListOptions{})
+			csvs, err := pollCsvList(h)
 			Expect(err).ToNot(HaveOccurred(), "failed fetching the clusterServiceVersions")
 			Expect(csvs).NotTo(BeNil())
 			Expect(csvDisplayNameMatch(operatorName, csvs)).Should(BeTrue(),
@@ -183,18 +183,16 @@ Loop:
 
 		switch {
 		case err == nil:
-			log.Printf("Found rolebinding %v", roleBindingName)
+			// Success
 			break Loop
-		default:
-			if elapsed < timeoutDuration {
-				timeTilTimeout := timeoutDuration - elapsed
-				log.Printf("Failed to get rolebinding %v, will retry (timeout in: %v)", roleBindingName, timeTilTimeout)
-				time.Sleep(intervalDuration)
-			} else {
-				log.Printf("Failed to get rolebinding %v before timeout, failing", roleBindingName)
-				break Loop
-			}
-		}
+        default:
+            if elapsed < timeoutDuration {
+                time.Sleep(intervalDuration)
+            } else {
+                err = errors.New("Failed to get rolebinding %v before timeout, roleBindingName")
+                break Loop
+            }
+        }
 	}
 
 	return err
@@ -228,11 +226,9 @@ Loop:
 			break Loop
 		default:
 			if elapsed < timeoutDuration {
-				timeTilTimeout := timeoutDuration - elapsed
-				log.Printf("Failed to get configmap, will retry (timeout in: %v", timeTilTimeout)
 				time.Sleep(intervalDuration)
 			} else {
-				log.Printf("Failed to get configmap before timeout, failing")
+				err = errors.New("Failed to get configmap before timeout")
 				break Loop
 			}
 		}
@@ -254,7 +250,7 @@ func pollDeploymentList(h *helper.H) (*appsv1.DeploymentList, error) {
 	interval := 5
 
 	// convert time.Duration type
-	timeoutDuration := time.Duration(globalPollingTimeout * 60) * time.Minute
+	timeoutDuration := time.Duration(globalPollingTimeout) * time.Minute
 	intervalDuration := time.Duration(interval) * time.Second
 
 	start := time.Now()
@@ -270,11 +266,10 @@ Loop:
 			break Loop
 		default:
 			if elapsed < timeoutDuration {
-				timeTilTimeout := timeoutDuration - elapsed
-				log.Printf("Failed to get Deployments, will retry (timeout in: %v", timeTilTimeout)
 				time.Sleep(intervalDuration)
 			} else {
-				log.Printf("Failed to get Deployments before timeout, failing")
+				deploymentList = nil
+				err = errors.New("Failed to get Deployments before timeout")
 				break Loop
 			}
 		}
@@ -282,6 +277,48 @@ Loop:
 
 	return deploymentList, err
 }
+
+func pollCsvList(h *helper.H) (*operatorv1.ClusterServiceVersionList, error) {
+	// pollCsvList polls for clusterServiceVersions with a timeout
+	// to handle the case when a new cluster is up but the OLM has not yet
+	// finished deploying the operator
+
+	var err error
+	var csvList *operatorv1.ClusterServiceVersionList
+
+	// interval is the duration in seconds between polls
+	// values here for humans
+	interval := 5
+
+	// convert time.Duration type
+	timeoutDuration := time.Duration(globalPollingTimeout) * time.Minute
+	intervalDuration := time.Duration(interval) * time.Second
+
+	start := time.Now()
+
+Loop:
+	for {
+		csvList, err = h.Operator().OperatorsV1alpha1().ClusterServiceVersions(operatorNamespace).List(metav1.ListOptions{})
+		elapsed := time.Now().Sub(start)
+
+		switch {
+		case err == nil:
+			// Success
+			break Loop
+		default:
+			if elapsed < timeoutDuration {
+				time.Sleep(intervalDuration)
+			} else {
+				csvList = nil
+				err = errors.New("Failed to get clusterServiceVersions before timeout")
+				break Loop
+			}
+		}
+	}
+
+	return csvList, err
+}
+
 
 func csvDisplayNameMatch(expected string, csvs *operatorv1.ClusterServiceVersionList) bool {
 	// csvDisplayNameMatch iterates a ClusterServiceVersionList
