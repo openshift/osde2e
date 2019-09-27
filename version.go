@@ -63,7 +63,7 @@ func setupUpgradeVersion(cfg *config.Config, osd *osd.OSD) (err error) {
 		}
 	} else {
 		// get earlier available version from OSD
-		if cfg.ClusterVersion, err = osd.PreviousVersion(cfg.UpgradeReleaseName); err != nil {
+		if cfg.ClusterVersion, err = osd.DefaultVersion(); err != nil {
 			return fmt.Errorf("failed retrieving previous version to '%s': %v", cfg.UpgradeReleaseName, err)
 		}
 	}
