@@ -23,13 +23,16 @@ import (
 	v1 "github.com/openshift/api/project/v1"
 	"github.com/openshift/osde2e/pkg/helper"
 
+	operatorv1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
+
 	appsv1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // timeout is the duration in minutes that the polling should last
-const globalPollingTimeout int = 60
+const globalPollingTimeout int = 1 
 
+const operatorName = "dedicated-admin-operator"
 const operatorNamespace string = "openshift-dedicated-admin"
 const createdNamespace string = "dedicated-admin"
 const operatorServiceAccount string = "dedicated-admin-operator"
@@ -55,20 +58,27 @@ var roleBindings = []string{
 	"dedicated-admins-project-1",
 }
 
-var _ = ginkgo.Describe("[OSD] Dedicated Admin Operator", func() {
+var _ = ginkgo.FDescribe("[OSD] Dedicated Admin Operator", func() {
 	h := helper.New()
+	// Check that the operator clusterServiceVersion exists
+	ginkgo.Context("clusterServiceVersion", func() {
+		ginkgo.It("should exist", func() {
+			csvs, err := h.Operator().OperatorsV1alpha1().ClusterServiceVersions(operatorNamespace).List(metav1.ListOptions{})
+			Expect(err).ToNot(HaveOccurred(), "failed fetching the clusterServiceVersions")
+			Expect(csvs).NotTo(BeNil())
+			Expect(csvDisplayNameMatch(operatorName, csvs)).Should(BeTrue(),
+				"no clusterServiceVersions with .spec.displayName '%v'", operatorName)
+		})
+	})
 
 	// Check that the operator deployment exists in the operator namespace
 	ginkgo.Context("deployments", func() {
 		ginkgo.It("should exist", func() {
-			// Wait for lockfile to signal operator is active
-			err := pollLockFile(h)
-			Expect(err).ToNot(HaveOccurred(), "failed fetching the configMap lockfile")
-
 			deployments, err := pollDeploymentList(h)
-
 			Expect(err).ToNot(HaveOccurred(), "failed fetching deployments")
 			Expect(deployments).NotTo(BeNil())
+			Expect(deploymentNameMatch(operatorName, deployments)).Should(BeTrue(),
+				"no deployments with name '%v'", operatorName)
 		})
 		ginkgo.It("should only be 1", func() {
 			// Wait for lockfile to signal operator is active
@@ -284,6 +294,30 @@ func pollDeploymentList(h *helper.H) (*appsv1.DeploymentList, error) {
 		}
 
 	return deploymentList, err
+}
+
+func csvDisplayNameMatch(expected string, csvs *operatorv1.ClusterServiceVersionList) bool {
+	// csvDisplayNameMatch iterates a ClusterServiceVersionList
+	// and looks for an expected string in the .spec.displayName
+
+	for _, csv := range csvs.Items {
+		if expected == csv.Spec.DisplayName {
+			return true
+		}
+	}
+	return false
+}
+
+func deploymentNameMatch(expected string, deployments *appsv1.DeploymentList) bool {
+	// deploymentNameMatch iterates a DeploymentList
+	// and looks for an expected string in the .metadata.name
+
+	for _, deployment := range deployments.Items {
+		if expected == deployment.GetName() {
+			return true
+		}
+	}
+	return false
 }
 
 func genSuffix(prefix string) string {
