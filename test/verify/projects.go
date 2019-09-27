@@ -16,5 +16,5 @@ var _ = ginkgo.Describe("Projects", func() {
 	ginkgo.It("Empty Project should be created", func() {
 		_, err := h.Project().ProjectV1().Projects().Get(h.CurrentProject(), metav1.GetOptions{})
 		Expect(err).ShouldNot(HaveOccurred(), "project should have been created")
-	})
+	}, 300)
 })

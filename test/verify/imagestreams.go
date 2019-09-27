@@ -20,5 +20,5 @@ var _ = ginkgo.Describe("ImageStreams", func() {
 		numImages := len(list.Items)
 		minImages := 50
 		Expect(numImages).Should(BeNumerically(">", minImages), "need more images")
-	})
+	}, 300)
 })

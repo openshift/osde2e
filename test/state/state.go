@@ -39,5 +39,5 @@ var _ = ginkgo.Describe("Cluster state", func() {
 
 		// write results to disk
 		h.WriteResults(results)
-	})
+	}, 900)
 })
