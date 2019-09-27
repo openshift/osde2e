@@ -30,7 +30,7 @@ import (
 )
 
 // timeout is the duration in seconds that the polling should last
-const globalPollingTimeout int = 30 * 60 
+const globalPollingTimeout int = 30 * 60
 
 const operatorName = "dedicated-admin-operator"
 const operatorNamespace string = "openshift-dedicated-admin"
@@ -58,7 +58,7 @@ var roleBindings = []string{
 	"dedicated-admins-project-1",
 }
 
-var _ = ginkgo.FDescribe("[OSD] Dedicated Admin Operator", func() {
+var _ = ginkgo.Describe("[OSD] Dedicated Admin Operator", func() {
 	h := helper.New()
 	// Check that the operator clusterServiceVersion exists
 	ginkgo.Context("clusterServiceVersion", func() {
@@ -171,7 +171,7 @@ func pollRoleBinding(h *helper.H, projectName string, roleBindingName string) er
 	interval := 5
 
 	// convert time.Duration type
-	timeoutDuration := time.Duration(globalPollingTimeout * 60) * time.Minute
+	timeoutDuration := time.Duration(globalPollingTimeout*60) * time.Minute
 	intervalDuration := time.Duration(interval) * time.Second
 
 	start := time.Now()
@@ -185,14 +185,14 @@ Loop:
 		case err == nil:
 			// Success
 			break Loop
-        default:
-            if elapsed < timeoutDuration {
-                time.Sleep(intervalDuration)
-            } else {
-                err = errors.New("Failed to get rolebinding %v before timeout, roleBindingName")
-                break Loop
-            }
-        }
+		default:
+			if elapsed < timeoutDuration {
+				time.Sleep(intervalDuration)
+			} else {
+				err = errors.New("Failed to get rolebinding %v before timeout, roleBindingName")
+				break Loop
+			}
+		}
 	}
 
 	return err
@@ -318,7 +318,6 @@ Loop:
 
 	return csvList, err
 }
-
 
 func csvDisplayNameMatch(expected string, csvs *operatorv1.ClusterServiceVersionList) bool {
 	// csvDisplayNameMatch iterates a ClusterServiceVersionList
