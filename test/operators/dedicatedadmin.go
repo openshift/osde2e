@@ -28,7 +28,7 @@ import (
 )
 
 // timeout is the duration in minutes that the polling should last
-const globalPollingTimeout int = 30
+const globalPollingTimeout int = 30 * 60 
 
 const operatorNamespace string = "openshift-dedicated-admin"
 const createdNamespace string = "dedicated-admin"
@@ -64,7 +64,7 @@ var _ = ginkgo.Describe("[OSD] Dedicated Admin Operator", func() {
 			// If this fails, all other tests will fail.
 			err := pollLockFile(h)
 			Expect(err).ToNot(HaveOccurred(), "failed fetching the configMap lockfile")
-		}, float64(globalPollingTimeout * 60)
+		}, float64(globalPollingTimeout)
 	})
 
 	// Check that the operator deployment exists in the operator namespace
@@ -74,13 +74,13 @@ var _ = ginkgo.Describe("[OSD] Dedicated Admin Operator", func() {
 
 			Expect(err).ToNot(HaveOccurred(), "failed fetching deployments")
 			Expect(deployments).NotTo(BeNil())
-		}, float64(globalPollingTimeout * 60)
+		}, float64(globalPollingTimeout)
 		ginkgo.It("should only be 1", func() {
 			expectedDeployments := 1
 			deployments, err := pollDeploymentList(h)
 			Expect(err).ToNot(HaveOccurred(), "failed fetching deployments")
 			Expect(len(deployments.Items)).To(BeNumerically("==", expectedDeployments), "There should be 1 deployment.")
-		}, float64(globalPollingTimeout * 60)
+		}, float64(globalPollingTimeout)
 		ginkgo.It("should have all desired replicas ready", func() {
 			deployments, err := pollDeploymentList(h)
 			Expect(err).ToNot(HaveOccurred(), "failed fetching deployments")
@@ -95,7 +95,7 @@ var _ = ginkgo.Describe("[OSD] Dedicated Admin Operator", func() {
 				// Desired replica count should match ready replica count
 				Expect(readyReplicas).To(BeNumerically("==", desiredReplicas), "All desired replicas should be ready.")
 			}
-		}, float64(globalPollingTimeout * 60)
+		}, float64(globalPollingTimeout)
 	})
 
 	// Check that the clusterRoles exist
@@ -105,7 +105,7 @@ var _ = ginkgo.Describe("[OSD] Dedicated Admin Operator", func() {
 				_, err := h.Kube().RbacV1().ClusterRoles().Get(clusterRoleName, metav1.GetOptions{})
 				Expect(err).ToNot(HaveOccurred(), "failed to get cluster role %v\n", clusterRoleName)
 			}
-		}, float64(globalPollingTimeout * 60)
+		}, float64(globalPollingTimeout)
 	})
 
 	// Check that the clusterRoleBindings exist
@@ -115,7 +115,7 @@ var _ = ginkgo.Describe("[OSD] Dedicated Admin Operator", func() {
 				_, err := h.Kube().RbacV1().ClusterRoleBindings().Get(clusterRoleBindingName, metav1.GetOptions{})
 				Expect(err).ToNot(HaveOccurred(), "failed to get cluster role binding %v\n", clusterRoleBindingName)
 			}
-		}, float64(globalPollingTimeout * 60)
+		}, float64(globalPollingTimeout)
 	})
 
 	// Test the controller; make sure new rolebindings are created for new project
@@ -142,7 +142,7 @@ var _ = ginkgo.Describe("[OSD] Dedicated Admin Operator", func() {
 				err := pollRoleBinding(h, project.Name, roleBindingName)
 				Expect(err).NotTo(HaveOccurred())
 			}
-		}, float64(globalPollingTimeout * 60)
+		}, float64(globalPollingTimeout)
 	})
 })
 
@@ -198,7 +198,7 @@ func pollLockFile(h *helper.H) error {
 	interval := 30
 
 	// convert time.Duration type
-	timeoutDuration := time.Duration(globalPollingTimeout * 60) * time.Minute
+	timeoutDuration := time.Duration(globalPollingTimeout) * time.Minute
 	intervalDuration := time.Duration(interval) * time.Second
 
 	start := time.Now()
