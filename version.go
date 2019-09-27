@@ -58,7 +58,7 @@ func setupUpgradeVersion(cfg *config.Config, osd *osd.OSD) (err error) {
 			log.Printf("CLUSTER_VERSION not set, using the current default '%s'", cfg.ClusterVersion)
 		}
 	} else if len(cfg.TargetStream) != 0 {
-		if cfg.ClusterVersion, _, err = upgrade.LatestRelease(cfg, cfg.TargetStream) err == nil {
+		if cfg.ClusterVersion, _, err = upgrade.LatestRelease(cfg, cfg.TargetStream); err == nil {
 			log.Printf("Target Release Stream set, using version  '%s'", cfg.ClusterVersion)
 		}
 	} else {
