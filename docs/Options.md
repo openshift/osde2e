@@ -111,6 +111,12 @@ These options are required to run osde2e.
 
 - Type: `int64`
 
+### `TARGET_STREAM`
+
+- TargetStream lets you select a specific release stream from Cincinnati or the Release Controller to install.
+
+- Type: `string`
+
 ## upgrade
 
 
