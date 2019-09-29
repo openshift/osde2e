@@ -28,8 +28,12 @@ func ChooseVersions(cfg *config.Config, osd *osd.OSD) (err error) {
 // chooses between default version and nightly based on target versions.
 func setupVersion(cfg *config.Config, osd *osd.OSD) (err error) {
 	if cfg.MajorTarget == 0 && cfg.MinorTarget == 0 {
-		// use defaults if no version targets
-		if cfg.ClusterVersion, err = osd.DefaultVersion(); err == nil {
+		// check to see if a target stream is set.
+		// a target stream and a major/minor target should not be set at the same time.
+		if cfg.ClusterVersion, _, err = upgrade.LatestRelease(cfg, cfg.TargetStream); err == nil {
+			log.Printf("Target Release Stream set, using version  '%s'", cfg.ClusterVersion)
+			// use defaults if no version targets
+		} else if cfg.ClusterVersion, err = osd.DefaultVersion(); err == nil {
 			log.Printf("CLUSTER_VERSION not set, using the current default '%s'", cfg.ClusterVersion)
 		}
 	} else {
@@ -37,7 +41,7 @@ func setupVersion(cfg *config.Config, osd *osd.OSD) (err error) {
 		if cfg.MajorTarget == 0 {
 			cfg.MajorTarget = -1
 		}
-
+		// look for the default release and install it for this OSD cluster.
 		if cfg.ClusterVersion, err = osd.LatestPrerelease(cfg.MajorTarget, cfg.MinorTarget, "nightly"); err == nil {
 			log.Printf("CLUSTER_VERSION not set but a TARGET is, running nightly '%s'", cfg.ClusterVersion)
 		}
@@ -52,9 +56,14 @@ func setupUpgradeVersion(cfg *config.Config, osd *osd.OSD) (err error) {
 		return fmt.Errorf("couldn't get latest release from release-controller: %v", err)
 	}
 
+	log.Printf("Target stream: '%s', Upgrade stream: '%s'", cfg.TargetStream, cfg.UpgradeReleaseStream)
+
 	if len(cfg.TargetStream) != 0 {
+		log.Printf("Looking for a release on target stream %s", cfg.TargetStream)
 		if cfg.ClusterVersion, _, err = upgrade.LatestRelease(cfg, cfg.TargetStream); err == nil {
 			log.Printf("Target Release Stream set, using version  '%s'", cfg.ClusterVersion)
+		} else {
+			return fmt.Errorf("failed retrieving latest release to '%s': %v", cfg.TargetStream, err)
 		}
 	} else if cfg.MajorTarget == 0 && cfg.MinorTarget == 0 {
 		// use defaults if no version targets
