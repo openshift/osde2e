@@ -282,7 +282,6 @@ Loop:
 				break
 			default:
 				err = fmt.Errorf("No matching clusterServiceVersion in CSV List")
-				fmt.Printf("NO MATCH %v - %v", csvDisplayName, csv.Spec.DisplayName)
 			}
 		}
 		elapsed := time.Now().Sub(start)
