@@ -20,7 +20,7 @@ A properly setup [Go workspace](https://golang.org/doc/code.html#GOPATH) and [Gl
     ```
 1. Run tests:
     ```bash
-    go test -v . -test.timeout 2h
+    go test -v . -test.timeout 4h
     ```
 
 ## Configuring

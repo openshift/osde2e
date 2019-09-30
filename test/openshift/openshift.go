@@ -42,5 +42,5 @@ var _ = ginkgo.Describe("OpenShift E2E", func() {
 
 		// write results
 		h.WriteResults(results)
-	})
+	}, 3600)
 })

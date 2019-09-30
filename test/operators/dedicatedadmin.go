@@ -12,7 +12,7 @@ package operators
 // TODO: any SyncSets exist
 
 import (
-	"log"
+	"errors"
 	"math/rand"
 	"strings"
 	"time"
@@ -23,13 +23,16 @@ import (
 	v1 "github.com/openshift/api/project/v1"
 	"github.com/openshift/osde2e/pkg/helper"
 
+	operatorv1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
+
 	appsv1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// timeout is the duration in minutes that the polling should last
-const globalPollingTimeout int = 60
+// timeout is the duration in seconds that the polling should last
+const globalPollingTimeout int = 30 * 60
 
+const operatorName = "dedicated-admin-operator"
 const operatorNamespace string = "openshift-dedicated-admin"
 const createdNamespace string = "dedicated-admin"
 const operatorServiceAccount string = "dedicated-admin-operator"
@@ -57,34 +60,42 @@ var roleBindings = []string{
 
 var _ = ginkgo.Describe("[OSD] Dedicated Admin Operator", func() {
 	h := helper.New()
+	// Check that the operator clusterServiceVersion exists
+	ginkgo.Context("clusterServiceVersion", func() {
+		ginkgo.It("should exist", func() {
+			csvs, err := pollCsvList(h)
+			Expect(err).ToNot(HaveOccurred(), "failed fetching the clusterServiceVersions")
+			Expect(csvs).NotTo(BeNil())
+			Expect(csvDisplayNameMatch(operatorName, csvs)).Should(BeTrue(),
+				"no clusterServiceVersions with .spec.displayName '%v'", operatorName)
+		}, float64(globalPollingTimeout))
+	})
 
-	// Check that the operator deployment exists in the operator namespace
-	ginkgo.Context("deployments", func() {
+	// Check that the operator configmap has been deployed
+	ginkgo.Context("configmaps", func() {
 		ginkgo.It("should exist", func() {
 			// Wait for lockfile to signal operator is active
 			err := pollLockFile(h)
 			Expect(err).ToNot(HaveOccurred(), "failed fetching the configMap lockfile")
+		}, float64(globalPollingTimeout))
+	})
 
+	// Check that the operator deployment exists in the operator namespace
+	ginkgo.Context("deployments", func() {
+		ginkgo.It("should exist", func() {
 			deployments, err := pollDeploymentList(h)
-
 			Expect(err).ToNot(HaveOccurred(), "failed fetching deployments")
-			Expect(deployments).NotTo(BeNil())
-		})
+			Expect(deployments).NotTo(BeNil(), "deployment list is nil")
+			Expect(deploymentNameMatch(operatorName, deployments)).Should(BeTrue(),
+				"no deployments with name '%v'", operatorName)
+		}, float64(globalPollingTimeout))
 		ginkgo.It("should only be 1", func() {
-			// Wait for lockfile to signal operator is active
-			err := pollLockFile(h)
-			Expect(err).ToNot(HaveOccurred(), "failed fetching the configMap lockfile")
-
 			expectedDeployments := 1
 			deployments, err := pollDeploymentList(h)
 			Expect(err).ToNot(HaveOccurred(), "failed fetching deployments")
 			Expect(len(deployments.Items)).To(BeNumerically("==", expectedDeployments), "There should be 1 deployment.")
-		})
+		}, float64(globalPollingTimeout))
 		ginkgo.It("should have all desired replicas ready", func() {
-			// Wait for lockfile to signal operator is active
-			err := pollLockFile(h)
-			Expect(err).ToNot(HaveOccurred(), "failed fetching the configMap lockfile")
-
 			deployments, err := pollDeploymentList(h)
 			Expect(err).ToNot(HaveOccurred(), "failed fetching deployments")
 
@@ -98,38 +109,30 @@ var _ = ginkgo.Describe("[OSD] Dedicated Admin Operator", func() {
 				// Desired replica count should match ready replica count
 				Expect(readyReplicas).To(BeNumerically("==", desiredReplicas), "All desired replicas should be ready.")
 			}
-		})
+		}, float64(globalPollingTimeout))
 	})
 
 	// Check that the clusterRoles exist
 	ginkgo.Context("clusterRoles", func() {
 		ginkgo.It("should exist", func() {
-			// Wait for lockfile to signal operator is active
-			pollErr := pollLockFile(h)
-			Expect(pollErr).ToNot(HaveOccurred(), "failed fetching the configMap lockfile")
-
 			for _, clusterRoleName := range clusterRoles {
 				_, err := h.Kube().RbacV1().ClusterRoles().Get(clusterRoleName, metav1.GetOptions{})
 				Expect(err).ToNot(HaveOccurred(), "failed to get cluster role %v\n", clusterRoleName)
 			}
-		})
+		}, float64(globalPollingTimeout))
 	})
 
 	// Check that the clusterRoleBindings exist
 	ginkgo.Context("clusterRoleBindings", func() {
 		ginkgo.It("should exist", func() {
-			// Wait for lockfile to signal operator is active
-			pollErr := pollLockFile(h)
-			Expect(pollErr).ToNot(HaveOccurred(), "failed fetching the configMap lockfile")
-
 			for _, clusterRoleBindingName := range clusterRoleBindings {
 				_, err := h.Kube().RbacV1().ClusterRoleBindings().Get(clusterRoleBindingName, metav1.GetOptions{})
 				Expect(err).ToNot(HaveOccurred(), "failed to get cluster role binding %v\n", clusterRoleBindingName)
 			}
-		})
+		}, float64(globalPollingTimeout))
 	})
 
-    // Test the controller; make sure new rolebindings are created for new project
+	// Test the controller; make sure new rolebindings are created for new project
 	ginkgo.Context("controller", func() {
 		ginkgo.It("should create the expected roleBindings", func() {
 			projectRequest := v1.ProjectRequest{}
@@ -138,12 +141,6 @@ var _ = ginkgo.Describe("[OSD] Dedicated Admin Operator", func() {
 			objectMeta := metav1.ObjectMeta{}
 			objectMeta.Name = genSuffix(testProjectPrefix)
 			projectRequest.ObjectMeta = objectMeta
-
-			// Wait for lockfile; deployments to signal operator is active
-			err := pollLockFile(h)
-			Expect(err).NotTo(HaveOccurred())
-			_, err = pollDeploymentList(h)
-			Expect(err).NotTo(HaveOccurred())
 
 			// Create a project; defer deletion of project
 			project, err := h.Project().ProjectV1().ProjectRequests().Create(&projectRequest)
@@ -159,7 +156,7 @@ var _ = ginkgo.Describe("[OSD] Dedicated Admin Operator", func() {
 				err := pollRoleBinding(h, project.Name, roleBindingName)
 				Expect(err).NotTo(HaveOccurred())
 			}
-		})
+		}, float64(globalPollingTimeout))
 	})
 })
 
@@ -171,34 +168,32 @@ func pollRoleBinding(h *helper.H, projectName string, roleBindingName string) er
 	// interval is the duration in seconds between polls
 	// values here for humans
 
-	interval := 1
+	interval := 5
 
 	// convert time.Duration type
-	timeoutDuration := time.Duration(globalPollingTimeout) * time.Minute
+	timeoutDuration := time.Duration(globalPollingTimeout*60) * time.Minute
 	intervalDuration := time.Duration(interval) * time.Second
 
 	start := time.Now()
 
-	Loop:
-		for {
-			_, err = h.Kube().RbacV1().RoleBindings(projectName).Get(roleBindingName, metav1.GetOptions{})
-			elapsed := time.Now().Sub(start)
+Loop:
+	for {
+		_, err = h.Kube().RbacV1().RoleBindings(projectName).Get(roleBindingName, metav1.GetOptions{})
+		elapsed := time.Now().Sub(start)
 
-			switch {
-			case err == nil:
-				log.Printf("Found rolebinding %v", roleBindingName)
+		switch {
+		case err == nil:
+			// Success
+			break Loop
+		default:
+			if elapsed < timeoutDuration {
+				time.Sleep(intervalDuration)
+			} else {
+				err = errors.New("Failed to get rolebinding %v before timeout, roleBindingName")
 				break Loop
-			default:
-				if elapsed < timeoutDuration {
-					timeTilTimeout := timeoutDuration - elapsed
-					log.Printf("Failed to get rolebinding %v, will retry (timeout in: %v)", roleBindingName, timeTilTimeout)
-					time.Sleep(intervalDuration)
-				} else {
-					log.Printf("Failed to get rolebinding %v before timeout, failing", roleBindingName)
-					break Loop
-				}
 			}
 		}
+	}
 
 	return err
 }
@@ -212,7 +207,7 @@ func pollLockFile(h *helper.H) error {
 
 	// interval is the duration in seconds between polls
 	// values here for humans
-	interval := 5
+	interval := 30
 
 	// convert time.Duration type
 	timeoutDuration := time.Duration(globalPollingTimeout) * time.Minute
@@ -220,26 +215,24 @@ func pollLockFile(h *helper.H) error {
 
 	start := time.Now()
 
-	Loop:
-		for {
-			_, err = h.Kube().CoreV1().ConfigMaps(operatorNamespace).Get(operatorLockFile, metav1.GetOptions{})
-			elapsed := time.Now().Sub(start)
+Loop:
+	for {
+		_, err = h.Kube().CoreV1().ConfigMaps(operatorNamespace).Get(operatorLockFile, metav1.GetOptions{})
+		elapsed := time.Now().Sub(start)
 
-			switch {
-			case err == nil:
-				// Success
+		switch {
+		case err == nil:
+			// Success
+			break Loop
+		default:
+			if elapsed < timeoutDuration {
+				time.Sleep(intervalDuration)
+			} else {
+				err = errors.New("Failed to get configmap before timeout")
 				break Loop
-			default:
-				if elapsed < timeoutDuration {
-					timeTilTimeout := timeoutDuration - elapsed
-					log.Printf("Failed to get configmap, will retry (timeout in: %v", timeTilTimeout)
-					time.Sleep(intervalDuration)
-				} else {
-					log.Printf("Failed to get configmap before timeout, failing")
-					break Loop
-				}
 			}
 		}
+	}
 
 	return err
 }
@@ -262,28 +255,92 @@ func pollDeploymentList(h *helper.H) (*appsv1.DeploymentList, error) {
 
 	start := time.Now()
 
-	Loop:
-		for {
-			deploymentList, err = h.Kube().AppsV1().Deployments(operatorNamespace).List(metav1.ListOptions{})
-			elapsed := time.Now().Sub(start)
+Loop:
+	for {
+		deploymentList, err = h.Kube().AppsV1().Deployments(operatorNamespace).List(metav1.ListOptions{})
+		elapsed := time.Now().Sub(start)
 
-			switch {
-			case err == nil:
-				// Success
+		switch {
+		case err == nil:
+			// Success
+			break Loop
+		default:
+			if elapsed < timeoutDuration {
+				time.Sleep(intervalDuration)
+			} else {
+				deploymentList = nil
+				err = errors.New("Failed to get Deployments before timeout")
 				break Loop
-			default:
-				if elapsed < timeoutDuration {
-					timeTilTimeout := timeoutDuration - elapsed
-					log.Printf("Failed to get Deployments, will retry (timeout in: %v", timeTilTimeout)
-					time.Sleep(intervalDuration)
-				} else {
-					log.Printf("Failed to get Deployments before timeout, failing")
-					break Loop
-				}
 			}
 		}
+	}
 
 	return deploymentList, err
+}
+
+func pollCsvList(h *helper.H) (*operatorv1.ClusterServiceVersionList, error) {
+	// pollCsvList polls for clusterServiceVersions with a timeout
+	// to handle the case when a new cluster is up but the OLM has not yet
+	// finished deploying the operator
+
+	var err error
+	var csvList *operatorv1.ClusterServiceVersionList
+
+	// interval is the duration in seconds between polls
+	// values here for humans
+	interval := 5
+
+	// convert time.Duration type
+	timeoutDuration := time.Duration(globalPollingTimeout) * time.Minute
+	intervalDuration := time.Duration(interval) * time.Second
+
+	start := time.Now()
+
+Loop:
+	for {
+		csvList, err = h.Operator().OperatorsV1alpha1().ClusterServiceVersions(operatorNamespace).List(metav1.ListOptions{})
+		elapsed := time.Now().Sub(start)
+
+		switch {
+		case err == nil:
+			// Success
+			break Loop
+		default:
+			if elapsed < timeoutDuration {
+				time.Sleep(intervalDuration)
+			} else {
+				csvList = nil
+				err = errors.New("Failed to get clusterServiceVersions before timeout")
+				break Loop
+			}
+		}
+	}
+
+	return csvList, err
+}
+
+func csvDisplayNameMatch(expected string, csvs *operatorv1.ClusterServiceVersionList) bool {
+	// csvDisplayNameMatch iterates a ClusterServiceVersionList
+	// and looks for an expected string in the .spec.displayName
+
+	for _, csv := range csvs.Items {
+		if expected == csv.Spec.DisplayName {
+			return true
+		}
+	}
+	return false
+}
+
+func deploymentNameMatch(expected string, deployments *appsv1.DeploymentList) bool {
+	// deploymentNameMatch iterates a DeploymentList
+	// and looks for an expected string in the .metadata.name
+
+	for _, deployment := range deployments.Items {
+		if expected == deployment.GetName() {
+			return true
+		}
+	}
+	return false
 }
 
 func genSuffix(prefix string) string {

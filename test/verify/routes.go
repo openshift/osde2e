@@ -24,13 +24,13 @@ var _ = ginkgo.Describe("Routes", func() {
 
 	ginkgo.It("should be created for Console", func() {
 		consoleRoutes(h)
-	})
+	}, 300)
 
 	ginkgo.It("should be functioning for Console", func() {
 		for _, route := range consoleRoutes(h) {
 			testRouteIngresses(route)
 		}
-	})
+	}, 300)
 })
 
 func consoleRoutes(h *helper.H) []v1.Route {

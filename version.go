@@ -29,7 +29,7 @@ func ChooseVersions(cfg *config.Config, osd *osd.OSD) (err error) {
 func setupVersion(cfg *config.Config, osd *osd.OSD) (err error) {
 	if cfg.MajorTarget == 0 && cfg.MinorTarget == 0 {
 		// use defaults if no version targets
-		if cfg.ClusterVersion, err = OSD.DefaultVersion(); err == nil {
+		if cfg.ClusterVersion, err = osd.DefaultVersion(); err == nil {
 			log.Printf("CLUSTER_VERSION not set, using the current default '%s'", cfg.ClusterVersion)
 		}
 	} else {
@@ -47,14 +47,25 @@ func setupVersion(cfg *config.Config, osd *osd.OSD) (err error) {
 
 // chooses version based on optimal upgrade path
 func setupUpgradeVersion(cfg *config.Config, osd *osd.OSD) (err error) {
-	cfg.UpgradeReleaseName, cfg.UpgradeImage, err = upgrade.LatestRelease(cfg)
+	cfg.UpgradeReleaseName, cfg.UpgradeImage, err = upgrade.LatestRelease(cfg, cfg.UpgradeReleaseStream)
 	if err != nil {
 		return fmt.Errorf("couldn't get latest release from release-controller: %v", err)
 	}
 
-	// get earlier available version from OSD
-	if cfg.ClusterVersion, err = osd.PreviousVersion(cfg.UpgradeReleaseName); err != nil {
-		return fmt.Errorf("failed retrieving previous version to '%s': %v", cfg.UpgradeReleaseName, err)
+	if len(cfg.TargetStream) != 0 {
+		if cfg.ClusterVersion, _, err = upgrade.LatestRelease(cfg, cfg.TargetStream); err == nil {
+			log.Printf("Target Release Stream set, using version  '%s'", cfg.ClusterVersion)
+		}
+	} else if cfg.MajorTarget == 0 && cfg.MinorTarget == 0 {
+		// use defaults if no version targets
+		if cfg.ClusterVersion, err = osd.DefaultVersion(); err == nil {
+			log.Printf("CLUSTER_VERSION not set, using the current default '%s'", cfg.ClusterVersion)
+		}
+	} else {
+		// get earlier available version from OSD
+		if cfg.ClusterVersion, err = osd.DefaultVersion(); err != nil {
+			return fmt.Errorf("failed retrieving previous version to '%s': %v", cfg.UpgradeReleaseName, err)
+		}
 	}
 
 	// set upgrade image

@@ -66,8 +66,8 @@ func RunE2ETests(t *testing.T, cfg *config.Config) {
 		if enoughQuota, err := OSD.CheckQuota(cfg); err != nil {
 			log.Printf("Failed to check if enough quota is available: %v", err)
 		} else if !enoughQuota {
-			log.Println("Currently not enough quota exists to run this test, skipping...")
-			t.SkipNow()
+			log.Println("Currently not enough quota exists to run this test, failing...")
+			t.FailNow()
 		}
 	}
 

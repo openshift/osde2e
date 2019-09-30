@@ -52,3 +52,7 @@ import:
 - package: k8s.io/test-infra
   subpackages:
   - testgrid/metadata
+- package: github.com/operator-framework/operator-lifecycle-manager
+  version: v3.11.0
+  subpackages:
+  - pkg/api/client/clientset/versioned
