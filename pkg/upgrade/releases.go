@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"strings"
 
 	"github.com/Masterminds/semver"
 	"github.com/openshift/osde2e/pkg/config"
@@ -41,7 +42,7 @@ func LatestRelease(cfg *config.Config, releaseStream string) (name, pullSpec str
 			err = fmt.Errorf("error decoding body of '%s': %v", data, err)
 		}
 
-		return latest.Name, latest.PullSpec, nil
+		return ensureReleasePrefix(latest.Name), latest.PullSpec, nil
 	}
 
 	// If stage or prod, use Cincinnati instead of the release controller
@@ -101,7 +102,15 @@ func LatestRelease(cfg *config.Config, releaseStream string) (name, pullSpec str
 		}
 	}
 
-	return latestCincinnatiRelease.Version, latestCincinnatiRelease.Payload, nil
+	return ensureReleasePrefix(latestCincinnatiRelease.Version), latestCincinnatiRelease.Payload, nil
+}
+
+func ensureReleasePrefix(release string) string {
+	if !strings.Contains(release, "openshift-v") {
+		log.Printf("Version %s didn't have prefix. Adding....", release)
+		release = "openshift-v" + release
+	}
+	return release
 }
 
 // latestAccepted information from release controller.
