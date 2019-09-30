@@ -6,10 +6,10 @@ import (
 )
 
 var _ = ginkgo.Describe("[OSD] Configure AlertManager Operator", func() {
-	const operatorName = "configure-alertmanager-operator"
-	const operatorNamespace string = "openshift-monitoring"
-	const operatorLockFile string = "configure-alertmanager-operator-lock"
-	const defaultDesiredReplicas int32 = 1
+	var operatorName = "configure-alertmanager-operator"
+	var operatorNamespace string = "openshift-monitoring"
+	var operatorLockFile string = "configure-alertmanager-operator-lock"
+	var defaultDesiredReplicas int32 = 1
 
 	var clusterRoles = []string{}
 

@@ -11,14 +11,14 @@ import (
 )
 
 var _ = ginkgo.Describe("[OSD] Dedicated Admin Operator", func() {
-	const operatorName = "dedicated-admin-operator"
-	const operatorNamespace string = "openshift-dedicated-admin"
-	const operatorLockFile string = "dedicated-admin-operator-lock"
-	const defaultDesiredReplicas int32 = 1
-	const operatorServiceAccount string = "dedicated-admin-operator"
+	var operatorName = "dedicated-admin-operator"
+	var operatorNamespace string = "openshift-dedicated-admin"
+	var operatorLockFile string = "dedicated-admin-operator-lock"
+	var defaultDesiredReplicas int32 = 1
+	// var operatorServiceAccount string = "dedicated-admin-operator"
 
-	const createdNamespace string = "dedicated-admin"
-	const testProjectPrefix string = "da-test-project"
+	// var createdNamespace string = "dedicated-admin"
+	var testProjectPrefix string = "da-test-project"
 
 	var clusterRoles = []string{
 		"dedicated-admin-operator",

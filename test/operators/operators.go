@@ -24,11 +24,9 @@ func checkClusterServiceVersion(h *helper.H, operatorNamespace, operatorName str
 	// Check that the operator clusterServiceVersion exists
 	ginkgo.Context("clusterServiceVersion", func() {
 		ginkgo.It("should exist", func() {
-			csvs, err := pollCsvList(h, operatorNamespace)
+			csvs, err := pollCsvList(h, operatorNamespace, operatorName)
 			Expect(err).ToNot(HaveOccurred(), "failed fetching the clusterServiceVersions")
 			Expect(csvs).NotTo(BeNil())
-			Expect(csvDisplayNameMatch(operatorName, csvs)).Should(BeTrue(),
-				"no clusterServiceVersions with .spec.displayName '%v'", operatorName)
 		}, float64(globalPollingTimeout))
 	})
 }
@@ -255,7 +253,7 @@ Loop:
 	return deploymentList, err
 }
 
-func pollCsvList(h *helper.H, operatorNamespace string) (*operatorv1.ClusterServiceVersionList, error) {
+func pollCsvList(h *helper.H, operatorNamespace, csvDisplayName string) (*operatorv1.ClusterServiceVersionList, error) {
 	// pollCsvList polls for clusterServiceVersions with a timeout
 	// to handle the case when a new cluster is up but the OLM has not yet
 	// finished deploying the operator
@@ -276,6 +274,17 @@ func pollCsvList(h *helper.H, operatorNamespace string) (*operatorv1.ClusterServ
 Loop:
 	for {
 		csvList, err = h.Operator().OperatorsV1alpha1().ClusterServiceVersions(operatorNamespace).List(metav1.ListOptions{})
+		for _, csv := range csvList.Items {
+			switch {
+			case csvDisplayName == csv.Spec.DisplayName:
+				// Success
+				err = nil
+				break
+			default:
+				err = fmt.Errorf("No matching clusterServiceVersion in CSV List")
+				fmt.Printf("NO MATCH %v - %v", csvDisplayName, csv.Spec.DisplayName)
+			}
+		}
 		elapsed := time.Now().Sub(start)
 
 		switch {
@@ -284,29 +293,17 @@ Loop:
 			break Loop
 		default:
 			if elapsed < timeoutDuration {
-				log.Printf("Waiting %v for %s clusterServiceVersions to exist", (timeoutDuration - elapsed), operatorNamespace)
+				log.Printf("Waiting %v for %s clusterServiceVersion to exist", (timeoutDuration - elapsed), csvDisplayName)
 				time.Sleep(intervalDuration)
 			} else {
 				csvList = nil
-				err = fmt.Errorf("Failed to get %s clusterServiceVersions before timeout", operatorNamespace)
+				err = fmt.Errorf("Failed to get %s clusterServiceVersion before timeout", csvDisplayName)
 				break Loop
 			}
 		}
 	}
 
 	return csvList, err
-}
-
-func csvDisplayNameMatch(expected string, csvs *operatorv1.ClusterServiceVersionList) bool {
-	// csvDisplayNameMatch iterates a ClusterServiceVersionList
-	// and looks for an expected string in the .spec.displayName
-
-	for _, csv := range csvs.Items {
-		if expected == csv.Spec.DisplayName {
-			return true
-		}
-	}
-	return false
 }
 
 func deploymentNameMatch(expected string, deployments *appsv1.DeploymentList) bool {
