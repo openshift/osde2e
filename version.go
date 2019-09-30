@@ -61,6 +61,13 @@ func setupUpgradeVersion(cfg *config.Config, osd *osd.OSD) (err error) {
 		if cfg.ClusterVersion, err = osd.DefaultVersion(); err == nil {
 			log.Printf("CLUSTER_VERSION not set, using the current default '%s'", cfg.ClusterVersion)
 		}
+
+		if cfg.ClusterVersion == cfg.UpgradeReleaseName {
+			log.Printf("Cluster version and target version are the same. Looking up previous version...")
+			if cfg.ClusterVersion, err = osd.PreviousVersion(cfg.ClusterVersion); err != nil {
+				return fmt.Errorf("failed retrieving previous version to '%s': %v", cfg.UpgradeReleaseName, err)
+			}
+		}
 	} else {
 		// get earlier available version from OSD
 		if cfg.ClusterVersion, err = osd.DefaultVersion(); err != nil {
