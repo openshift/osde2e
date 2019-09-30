@@ -10,7 +10,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-var _ = ginkgo.FDescribe("[OSD] Dedicated Admin Operator", func() {
+var _ = ginkgo.Describe("[OSD] Dedicated Admin Operator", func() {
 	const operatorName = "dedicated-admin-operator"
 	const operatorNamespace string = "openshift-dedicated-admin"
 	const operatorLockFile string = "dedicated-admin-operator-lock"
@@ -41,7 +41,7 @@ var _ = ginkgo.FDescribe("[OSD] Dedicated Admin Operator", func() {
 	h := helper.New()
 	checkClusterServiceVersion(h, operatorNamespace, operatorName)
 	checkConfigMapLockfile(h, operatorNamespace, operatorLockFile)
-	checkDeployment(h, operatorNamespace, operatorName,  defaultDesiredReplicas)
+	checkDeployment(h, operatorNamespace, operatorName, defaultDesiredReplicas)
 	checkClusterRoles(h, clusterRoles)
 	checkClusterRoleBindings(h, clusterRoleBindings)
 

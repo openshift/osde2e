@@ -3,9 +3,9 @@ package operators
 import (
 	"fmt"
 	"log"
-	"time"
 	"math/rand"
 	"strings"
+	"time"
 
 	"github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -55,13 +55,13 @@ func checkDeployment(h *helper.H, operatorNamespace string, operatorName string,
 		ginkgo.It("should have all desired replicas ready", func() {
 			deployment, err := pollDeployment(h, operatorNamespace, operatorName)
 			Expect(err).ToNot(HaveOccurred(), "failed fetching deployment")
-	
+
 			readyReplicas := deployment.Status.ReadyReplicas
 			desiredReplicas := deployment.Status.Replicas
-	
+
 			// The desired replicas should match the default installed replica count
 			Expect(desiredReplicas).To(BeNumerically("==", defaultDesiredReplicas), "The deployment desired replicas should not drift from the default 1.")
-	
+
 			// Desired replica count should match ready replica count
 			Expect(readyReplicas).To(BeNumerically("==", desiredReplicas), "All desired replicas should be ready.")
 		}, float64(globalPollingTimeout))
@@ -119,7 +119,7 @@ Loop:
 			break Loop
 		default:
 			if elapsed < timeoutDuration {
-				log.Printf("Waiting %v for %s roleBinding to exist", (timeoutDuration - elapsed), roleBindingName )
+				log.Printf("Waiting %v for %s roleBinding to exist", (timeoutDuration - elapsed), roleBindingName)
 				time.Sleep(intervalDuration)
 			} else {
 				err = fmt.Errorf("Failed to get rolebinding %s before timeout", roleBindingName)
@@ -159,7 +159,7 @@ Loop:
 			break Loop
 		default:
 			if elapsed < timeoutDuration {
-				log.Printf("Waiting %v for %s configMap to exist", (timeoutDuration - elapsed), operatorLockFile )
+				log.Printf("Waiting %v for %s configMap to exist", (timeoutDuration - elapsed), operatorLockFile)
 				time.Sleep(intervalDuration)
 			} else {
 				err = fmt.Errorf("Failed to get configMap %s before timeout", operatorLockFile)
@@ -203,7 +203,7 @@ Loop:
 				log.Printf("Waiting %v for %s deployment to exist", (timeoutDuration - elapsed), deploymentName)
 				time.Sleep(intervalDuration)
 			} else {
-				deployment= nil
+				deployment = nil
 				err = fmt.Errorf("Failed to get %s Deployment before timeout", deploymentName)
 				break Loop
 			}
@@ -242,7 +242,7 @@ Loop:
 			break Loop
 		default:
 			if elapsed < timeoutDuration {
-				log.Printf("Waiting %v for %s deployments to exist", (timeoutDuration - elapsed), operatorNamespace )
+				log.Printf("Waiting %v for %s deployments to exist", (timeoutDuration - elapsed), operatorNamespace)
 				time.Sleep(intervalDuration)
 			} else {
 				deploymentList = nil
@@ -284,7 +284,7 @@ Loop:
 			break Loop
 		default:
 			if elapsed < timeoutDuration {
-				log.Printf("Waiting %v for %s clusterServiceVersions to exist", (timeoutDuration - elapsed), operatorNamespace )
+				log.Printf("Waiting %v for %s clusterServiceVersions to exist", (timeoutDuration - elapsed), operatorNamespace)
 				time.Sleep(intervalDuration)
 			} else {
 				csvList = nil
