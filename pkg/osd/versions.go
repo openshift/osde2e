@@ -102,7 +102,7 @@ func (u *OSD) getSemverList(major, minor int64, str string) (versions []*semver.
 			return true
 		} else if version.Minor() != minor && minor >= 0 {
 			return true
-		} else if strings.Contains(version.Prerelease(), str) {
+		} else if strings.Contains(version.Prerelease(), str) && v.Enabled() {
 			versions = append(versions, version)
 		}
 		return true
