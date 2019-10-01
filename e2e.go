@@ -109,8 +109,10 @@ func RunE2ETests(t *testing.T, cfg *config.Config) {
 		log.Print("NO_TESTGRID is set, skipping submitting to TestGrid...")
 	}
 
-	log.Println("Running e2e tests...")
-	ginkgo.RunSpecsWithDefaultAndCustomReporters(t, "OSD e2e suite", []ginkgo.Reporter{reporter})
+	if !cfg.DryRun {
+		log.Println("Running e2e tests...")
+		ginkgo.RunSpecsWithDefaultAndCustomReporters(t, "OSD e2e suite", []ginkgo.Reporter{reporter})
+	}
 }
 
 func reportToTestGrid(t *testing.T, cfg *config.Config, tg *testgrid.TestGrid, buildNum int) {

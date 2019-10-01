@@ -106,7 +106,7 @@ func LatestRelease(cfg *config.Config, releaseStream string) (name, pullSpec str
 }
 
 func ensureReleasePrefix(release string) string {
-	if !strings.Contains(release, "openshift-v") {
+	if len(release) > 0 && !strings.Contains(release, "openshift-v") {
 		log.Printf("Version %s didn't have prefix. Adding....", release)
 		release = "openshift-v" + release
 	}
