@@ -30,6 +30,12 @@ These options are required to run osde2e.
 
 - Type: `int`
 
+### `DRY_RUN`
+
+- DryRun lets you run osde2e all the way up to the e2e tests then skips them.
+
+- Type: `bool`
+
 ### `GINKGO_SKIP`
 
 - GinkgoSkip is a regex passed to Ginkgo that skips any test suites matching the regex. ex. "Operator"

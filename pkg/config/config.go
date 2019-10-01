@@ -24,6 +24,9 @@ type Config struct {
 	// Suffix is used at the end of test names to identify them.
 	Suffix string `env:"SUFFIX" sect:"tests"`
 
+	// DryRun lets you run osde2e all the way up to the e2e tests then skips them.
+	DryRun bool `env:"DRY_RUN" sect:"tests"`
+
 	// UHCToken is used to authenticate with UHC.
 	UHCToken string `env:"UHC_TOKEN" sect:"required"`
 
