@@ -8,7 +8,6 @@
 - [version](#version)
 - [upgrade](#upgrade)
 - [testgrid](#testgrid)
-- [other](#other)
 
 
 
@@ -183,14 +182,3 @@ These options configure reporting test results to TestGrid.
 - TestGridServiceAccount is a Base64 encoded Google Cloud Service Account used to access the TestGridBucket.
 
 - Type: `[]byte`
-
-## other
-Various additional options for configuring osde2e.
-
-### `USE_PROD`
-
-- UseProd sends requests to production OSD.
-
-Deprecated: Use OSD_ENV=prod instead.
-
-- Type: `bool`

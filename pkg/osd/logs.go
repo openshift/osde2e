@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"math"
 
-	"github.com/openshift-online/uhc-sdk-go/pkg/client/clustersmgmt/v1"
+	v1 "github.com/openshift-online/uhc-sdk-go/pkg/client/clustersmgmt/v1"
 )
 
 // Logs provides all logs available for clusterID, ids can be optionally provided for only specific logs.
 func (u *OSD) Logs(clusterID string, length int, ids ...string) (logs map[string][]byte, err error) {
-	if ids == nil || len(ids) == 0 {
+	if len(ids) == 0 {
 		if ids, err = u.getLogList(clusterID); err != nil {
 			return logs, fmt.Errorf("couldn't get log list: %v", err)
 		}

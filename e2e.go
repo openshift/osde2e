@@ -50,11 +50,6 @@ func RunE2ETests(t *testing.T, cfg *config.Config) {
 		cfg.ClusterUpTimeout = 135 * time.Minute
 	}
 
-	// support deprecated USE_PROD option
-	if cfg.UseProd {
-		cfg.OSDEnv = "prod"
-	}
-
 	// setup OSD client
 	var err error
 	if OSD, err = osd.New(cfg.UHCToken, cfg.OSDEnv, cfg.DebugOSD); err != nil {
@@ -66,8 +61,7 @@ func RunE2ETests(t *testing.T, cfg *config.Config) {
 		if enoughQuota, err := OSD.CheckQuota(cfg); err != nil {
 			log.Printf("Failed to check if enough quota is available: %v", err)
 		} else if !enoughQuota {
-			log.Println("Currently not enough quota exists to run this test, failing...")
-			t.FailNow()
+			t.Fatal("Currently not enough quota exists to run this test, failing...")
 		}
 	}
 
@@ -77,7 +71,10 @@ func RunE2ETests(t *testing.T, cfg *config.Config) {
 	}
 
 	// setup reporter
-	os.Mkdir(cfg.ReportDir, os.ModePerm)
+	err = os.Mkdir(cfg.ReportDir, os.ModePerm)
+	if err != nil {
+		log.Printf("Could not create reporter directory: %v", err)
+	}
 	reportPath := path.Join(cfg.ReportDir, fmt.Sprintf("junit_%v.xml", cfg.Suffix))
 	reporter := reporters.NewJUnitReporter(reportPath)
 

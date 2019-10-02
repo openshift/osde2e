@@ -1,6 +1,7 @@
 package runner
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
@@ -27,12 +28,14 @@ func TestResultsService(t *testing.T) {
 
 	// start waiting for endpoint Ready
 	done := make(chan struct{})
+	errs := make(chan error, 1)
 	go func() {
 		err := r.waitForEndpoints()
 		if err != nil {
-			t.Fatalf("Failed waiting for endpoints: %v", err)
+			errs <- fmt.Errorf("Failed waiting for endpoints: %v", err)
+		} else {
+			done <- struct{}{}
 		}
-		done <- struct{}{}
 	}()
 
 	// create endpoint
@@ -56,12 +59,14 @@ func TestResultsService(t *testing.T) {
 			Addresses: []kubev1.EndpointAddress{address},
 		},
 	}
-	endpoints, err = r.Kube.CoreV1().Endpoints(r.Namespace).Update(endpoints)
+	_, err = r.Kube.CoreV1().Endpoints(r.Namespace).Update(endpoints)
 	if err != nil {
 		t.Fatalf("Failed to update endpoint: %v", err)
 	}
 
 	select {
+	case err := <-errs:
+		t.Fatalf("Failed waiting for endpoint: %v", err)
 	case <-done:
 		// test passes
 	case <-time.After(21 * time.Second):

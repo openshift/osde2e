@@ -39,7 +39,7 @@ func LatestRelease(cfg *config.Config, releaseStream string) (name, pullSpec str
 
 		latest := latestAccepted{}
 		if err = json.Unmarshal(data, &latest); err != nil {
-			err = fmt.Errorf("error decoding body of '%s': %v", data, err)
+			return "", "", fmt.Errorf("error decoding body of '%s': %v", data, err)
 		}
 
 		return ensureReleasePrefix(latest.Name), latest.PullSpec, nil
@@ -62,15 +62,13 @@ func LatestRelease(cfg *config.Config, releaseStream string) (name, pullSpec str
 	req.Header.Set("Accept", "application/json")
 
 	if err != nil {
-		err = fmt.Errorf("failed to create Cincinnati request for URL '%s': %v", cincinnatiFormattedURL, err)
-		return
+		return "", "", fmt.Errorf("failed to create Cincinnati request for URL '%s': %v", cincinnatiFormattedURL, err)
 	}
 
 	resp, err = (&http.Client{}).Do(req)
 
 	if err != nil {
-		err = fmt.Errorf("Request failed for URL '%s': %v", cincinnatiFormattedURL, err)
-		return
+		return "", "", fmt.Errorf("Request failed for URL '%s': %v", cincinnatiFormattedURL, err)
 	}
 
 	data, err = ioutil.ReadAll(resp.Body)
@@ -85,7 +83,7 @@ func LatestRelease(cfg *config.Config, releaseStream string) (name, pullSpec str
 	var latestCincinnatiRelease cincinnatiRelease
 
 	if err = json.Unmarshal(data, &cincinnatiReleases); err != nil {
-		err = fmt.Errorf("error decoding body of '%s': %v", data, err)
+		return "", "", fmt.Errorf("error decoding body of '%s': %v", data, err)
 	}
 
 	for _, release := range cincinnatiReleases.Nodes {
