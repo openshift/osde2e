@@ -23,7 +23,7 @@ func NewTestGrid(bucket, prefix string, b64ServiceAccount []byte) (*TestGrid, er
 		return nil, errors.New("bucket for TestGrid is not set")
 	} else if prefix == "" {
 		return nil, errors.New("prefix for TestGrid is not set")
-	} else if b64ServiceAccount == nil || len(b64ServiceAccount) == 0 {
+	} else if len(b64ServiceAccount) == 0 {
 		return nil, errors.New("a Service Account for TestGrid is not set")
 	}
 

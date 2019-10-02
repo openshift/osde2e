@@ -8,7 +8,9 @@ IMAGE_TAG := $(shell git rev-parse --short=7 HEAD)
 
 check: cmd/osde2e-docs
 	go run $(PKG)/$< --check
-	CGO_ENABLED=0 go test -v ./cmd/... ./pkg/...
+	CGO_ENABLED=0 go test -v ./cmd/... ./pkg/... 
+	go get -u github.com/golangci/golangci-lint/cmd/golangci-lint && \
+    golangci-lint run ./... 
 
 generate: docs/Options.md
 
@@ -42,7 +44,6 @@ docker-test:
 		-e UPGRADE_RELEASE_STREAM=$(UPGRADE_RELEASE_STREAM) \
 		-e DEBUG_OSD=1 \
 		-e OSD_ENV=$(OSD_ENV) \
-		-e USE_PROD=$(USE_PROD) \
 		-e UHC_TOKEN=$(UHC_REFRESH_TOKEN) \
 		-e AWS_ACCESS_KEY_ID=$(AWS_ACCESS_KEY_ID) \
 		-e AWS_SECRET_ACCESS_KEY=$(AWS_SECRET_ACCESS_KEY) \
@@ -55,7 +56,7 @@ out/osde2e: out
 	CGO_ENABLED=0 go test -v -c -o $@ $(PKG)
 
 out/osde2e-report: out
-	CGO_ENABLED=0 go build -v -o $@ $(PKG)/cmd/osde2e-report
+	CGO_ENABLED=0 go build -v -o $@ $(PKG)
 
 out:
 	mkdir -p $@

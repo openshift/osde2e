@@ -76,7 +76,7 @@ var _ = ginkgo.AfterSuite(func() {
 		} else {
 			log.Printf("Sleeping for %d minutes before destroying cluster '%s'", cfg.AfterTestClusterWait/time.Minute, cfg.ClusterID)
 			startTime := time.Now()
-			for time.Now().Sub(startTime) < cfg.AfterTestClusterWait {
+			for time.Since(startTime) < cfg.AfterTestClusterWait {
 				time.Sleep(1 * time.Minute)
 				log.Print(".")
 			}

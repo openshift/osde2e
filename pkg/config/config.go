@@ -63,11 +63,6 @@ type Config struct {
 	// TestGridServiceAccount is a Base64 encoded Google Cloud Service Account used to access the TestGridBucket.
 	TestGridServiceAccount []byte `env:"TESTGRID_SERVICE_ACCOUNT" sect:"testgrid"`
 
-	// UseProd sends requests to production OSD.
-	//
-	// Deprecated: Use OSD_ENV=prod instead.
-	UseProd bool `env:"USE_PROD"`
-
 	// MultiAZ deploys a cluster across multiple availability zones.
 	MultiAZ bool `env:"MULTI_AZ" sect:"cluster"`
 

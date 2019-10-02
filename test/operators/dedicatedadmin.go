@@ -34,8 +34,10 @@ const globalPollingTimeout int = 30 * 60
 
 const operatorName = "dedicated-admin-operator"
 const operatorNamespace string = "openshift-dedicated-admin"
-const createdNamespace string = "dedicated-admin"
-const operatorServiceAccount string = "dedicated-admin-operator"
+
+// These variables are not used yet.
+// const createdNamespace string = "dedicated-admin"
+// const operatorServiceAccount string = "dedicated-admin-operator"
 const defaultDesiredReplicas int32 = 1
 const operatorLockFile string = "dedicated-admin-operator-lock"
 const testProjectPrefix string = "da-test-project"
@@ -144,7 +146,10 @@ var _ = ginkgo.Describe("[OSD] Dedicated Admin Operator", func() {
 
 			// Create a project; defer deletion of project
 			project, err := h.Project().ProjectV1().ProjectRequests().Create(&projectRequest)
-			defer h.Project().ProjectV1().Projects().Delete(project.Name, &metav1.DeleteOptions{})
+			defer func() {
+				err := h.Project().ProjectV1().Projects().Delete(project.Name, &metav1.DeleteOptions{})
+				Expect(err).NotTo(HaveOccurred())
+			}()
 			Expect(err).NotTo(HaveOccurred())
 
 			// Each Dedicated Admin roleBinding should be added to a newly created project
@@ -179,7 +184,7 @@ func pollRoleBinding(h *helper.H, projectName string, roleBindingName string) er
 Loop:
 	for {
 		_, err = h.Kube().RbacV1().RoleBindings(projectName).Get(roleBindingName, metav1.GetOptions{})
-		elapsed := time.Now().Sub(start)
+		elapsed := time.Since(start)
 
 		switch {
 		case err == nil:
@@ -218,7 +223,7 @@ func pollLockFile(h *helper.H) error {
 Loop:
 	for {
 		_, err = h.Kube().CoreV1().ConfigMaps(operatorNamespace).Get(operatorLockFile, metav1.GetOptions{})
-		elapsed := time.Now().Sub(start)
+		elapsed := time.Since(start)
 
 		switch {
 		case err == nil:
@@ -258,7 +263,7 @@ func pollDeploymentList(h *helper.H) (*appsv1.DeploymentList, error) {
 Loop:
 	for {
 		deploymentList, err = h.Kube().AppsV1().Deployments(operatorNamespace).List(metav1.ListOptions{})
-		elapsed := time.Now().Sub(start)
+		elapsed := time.Since(start)
 
 		switch {
 		case err == nil:
@@ -299,7 +304,7 @@ func pollCsvList(h *helper.H) (*operatorv1.ClusterServiceVersionList, error) {
 Loop:
 	for {
 		csvList, err = h.Operator().OperatorsV1alpha1().ClusterServiceVersions(operatorNamespace).List(metav1.ListOptions{})
-		elapsed := time.Now().Sub(start)
+		elapsed := time.Since(start)
 
 		switch {
 		case err == nil:
