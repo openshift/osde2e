@@ -63,7 +63,7 @@ func TestListSuites(t *testing.T) {
 	testCount := map[string]int{}
 	for _, s := range suites.Suites {
 		for _, r := range s.Results {
-			curCount, _ := testCount[r.Name]
+			curCount := testCount[r.Name]
 			testCount[r.Name] = curCount + 1
 		}
 	}

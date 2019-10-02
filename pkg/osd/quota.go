@@ -26,6 +26,9 @@ func (u *OSD) CheckQuota(cfg *config.Config) (bool, error) {
 	flavourReq, err := u.conn.ClustersMgmt().V1().Flavours().Flavour(flavourId).Get().Send()
 	if err == nil && flavourReq != nil {
 		err = errResp(flavourReq.Error())
+		if err != nil {
+			return false, err
+		}
 	} else if flavourReq == nil || flavourReq.Body().Empty() {
 		return false, errors.New("returned flavour can't be empty")
 	}

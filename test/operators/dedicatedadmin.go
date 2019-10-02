@@ -57,7 +57,10 @@ var _ = ginkgo.Describe("[OSD] Dedicated Admin Operator", func() {
 
 			// Create a project; defer deletion of project
 			project, err := h.Project().ProjectV1().ProjectRequests().Create(&projectRequest)
-			defer h.Project().ProjectV1().Projects().Delete(project.Name, &metav1.DeleteOptions{})
+			defer func() {
+				err := h.Project().ProjectV1().Projects().Delete(project.Name, &metav1.DeleteOptions{})
+				Expect(err).NotTo(HaveOccurred())
+			}()
 			Expect(err).NotTo(HaveOccurred())
 
 			// Each Dedicated Admin roleBinding should be added to a newly created project
