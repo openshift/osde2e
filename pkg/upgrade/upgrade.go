@@ -87,7 +87,7 @@ func TriggerUpgrade(h *helper.H, cfg *config.Config) (*configv1.ClusterVersion, 
 
 	// wait for update acknowledgement
 	updateGeneration := updatedCV.Generation
-	if err = wait.PollImmediate(5*time.Second, 2*time.Minute, func() (bool, error) {
+	if err = wait.PollImmediate(15*time.Second, 5*time.Minute, func() (bool, error) {
 		if cVersion, err = cfgClient.ConfigV1().ClusterVersions().Get(ClusterVersionName, getOpts); err != nil {
 			return false, err
 		}
