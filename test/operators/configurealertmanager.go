@@ -11,9 +11,15 @@ var _ = ginkgo.Describe("[OSD] Configure AlertManager Operator", func() {
 	var operatorLockFile string = "configure-alertmanager-operator-lock"
 	var defaultDesiredReplicas int32 = 1
 
-	var clusterRoles = []string{}
+	var clusterRoles = []string{
+		"configure-alertmanager-operator",
+	}
 
 	var clusterRoleBindings = []string{}
+
+	var roleBindings = []string{
+		"configure-alertmanager-operator",
+	}
 
 	h := helper.New()
 	checkClusterServiceVersion(h, operatorNamespace, operatorName)
@@ -21,4 +27,5 @@ var _ = ginkgo.Describe("[OSD] Configure AlertManager Operator", func() {
 	checkDeployment(h, operatorNamespace, operatorName, defaultDesiredReplicas)
 	checkClusterRoles(h, clusterRoles)
 	checkClusterRoleBindings(h, clusterRoleBindings)
+	checkRoleBindings(h, operatorNamespace, roleBindings)
 })

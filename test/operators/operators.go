@@ -90,6 +90,19 @@ func checkClusterRoleBindings(h *helper.H, clusterRoleBindings []string) {
 	})
 }
 
+func checkRoleBindings(h *helper.H, operatorNamespace string, roleBindings []string) {
+	// Check that deployed rolebindings exist
+	ginkgo.Context("roleBindings", func() {
+		ginkgo.It("should exist", func() {
+			for _, roleBindingName := range roleBindings {
+				err := pollRoleBinding(h, operatorNamespace, roleBindingName)
+				Expect(err).NotTo(HaveOccurred(), "failed to get roleBinding %v\n", roleBindingName)
+			}
+		}, float64(globalPollingTimeout))
+	})
+
+}
+
 func pollRoleBinding(h *helper.H, projectName string, roleBindingName string) error {
 	// pollRoleBinding will check for the existence of a roleBinding
 	// in the specified project, and wait for it to exist, until a timeout
