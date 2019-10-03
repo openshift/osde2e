@@ -18,7 +18,7 @@ import (
 	operatorv1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
 )
 
-const globalPollingTimeout = 30 * 60
+const globalPollingTimeout = 30
 
 func checkClusterServiceVersion(h *helper.H, operatorNamespace, operatorName string) {
 	// Check that the operator clusterServiceVersion exists
