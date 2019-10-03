@@ -132,6 +132,8 @@ This is highly useful when trying to debug things locally. :)
 ### `TARGET_STREAM`
 
 - TargetStream lets you select a specific release stream from Cincinnati or the Release Controller to install.
+For stage and prod, this will always refer to Cincinnati. For int, this will refer to Cincinnati for upgrades and
+release controller for regular installs.
 
 - Type: `string`
 

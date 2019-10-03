@@ -10,20 +10,22 @@ import (
 
 	"github.com/Masterminds/semver"
 	"github.com/openshift/osde2e/pkg/config"
+	"github.com/openshift/osde2e/pkg/osd"
 )
 
 const (
 	// format string for release stream latest from release controller
 	latestReleaseControllerURLFmt = "https://openshift-release.svc.ci.openshift.org/api/v1/releasestream/%s/latest"
 	// format string for Cincinnati releases
-	cincinnatiURLFmt = "https://api%s.openshift.com/api/upgrades_info/v1/graph?channel=%s"
+	cincinnatiURLFmt = "%s/api/upgrades_info/v1/graph?channel=%s"
 )
 
 // LatestRelease retrieves latest release information for given releaseStream. Will use Cincinnati for stage/prod.
-func LatestRelease(cfg *config.Config, releaseStream string) (name, pullSpec string, err error) {
+func LatestRelease(cfg *config.Config, releaseStream string, use_release_controller_for_int bool) (name, pullSpec string, err error) {
 	var resp *http.Response
 	var data []byte
-	if cfg.OSDEnv == "int" {
+	if cfg.OSDEnv == "int" && use_release_controller_for_int {
+		log.Printf("Using the release controller.")
 		latestURL := fmt.Sprintf(latestReleaseControllerURLFmt, releaseStream)
 		resp, err = http.Get(latestURL)
 		if err != nil {
@@ -45,15 +47,10 @@ func LatestRelease(cfg *config.Config, releaseStream string) (name, pullSpec str
 		return ensureReleasePrefix(latest.Name), latest.PullSpec, nil
 	}
 
+	log.Printf("Using Cincinnati.")
+
 	// If stage or prod, use Cincinnati instead of the release controller
-	stage := ""
-
-	// Add in stage to the URL if necessary
-	if cfg.OSDEnv == "stage" {
-		stage = ".stage"
-	}
-
-	cincinnatiFormattedURL := fmt.Sprintf(cincinnatiURLFmt, stage, releaseStream)
+	cincinnatiFormattedURL := fmt.Sprintf(cincinnatiURLFmt, osd.Environments.Choose(cfg.OSDEnv), releaseStream)
 
 	var req *http.Request
 
