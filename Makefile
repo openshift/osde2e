@@ -6,6 +6,8 @@ DIR := $(dir $(realpath $(firstword $(MAKEFILE_LIST))))
 IMAGE_NAME := quay.io/app-sre/osde2e
 IMAGE_TAG := $(shell git rev-parse --short=7 HEAD)
 
+CONTAINER_ENGINE ?= docker
+
 check: cmd/osde2e-docs
 	go run $(PKG)/$< --check
 	CGO_ENABLED=0 go test -v ./cmd/... ./pkg/... 
@@ -15,20 +17,20 @@ check: cmd/osde2e-docs
 generate: docs/Options.md
 
 build-image:
-	docker build -t "$(IMAGE_NAME):$(IMAGE_TAG)" .
+	$(CONTAINER_ENGINE) build -t "$(IMAGE_NAME):$(IMAGE_TAG)" .
 
 push-image:
-	@docker --config=$(DOCKER_CONF) push "$(IMAGE_NAME):$(IMAGE_TAG)"
+	@$(CONTAINER_ENGINE) --config=$(DOCKER_CONF) push "$(IMAGE_NAME):$(IMAGE_TAG)"
 
 push-latest:
-	docker tag "$(IMAGE_NAME):$(IMAGE_TAG)" "$(IMAGE_NAME):latest"
-	@docker --config=$(DOCKER_CONF) push "$(IMAGE_NAME):latest"
+	$(CONTAINER_ENGINE) tag "$(IMAGE_NAME):$(IMAGE_TAG)" "$(IMAGE_NAME):latest"
+	@$(CONTAINER_ENGINE)docker --config=$(DOCKER_CONF) push "$(IMAGE_NAME):latest"
 
 test: out/osde2e
 	$< -test.v -ginkgo.skip="$(GINKGO_SKIP)" -test.timeout 8h
 
 docker-test:
-	docker run \
+	$(CONTAINER_ENGINE) run \
 		-t \
 		--rm \
 		-e NO_DESTROY=$(NO_DESTROY) \
