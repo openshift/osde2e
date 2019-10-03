@@ -24,7 +24,7 @@ push-image:
 
 push-latest:
 	$(CONTAINER_ENGINE) tag "$(IMAGE_NAME):$(IMAGE_TAG)" "$(IMAGE_NAME):latest"
-	@$(CONTAINER_ENGINE)docker --config=$(DOCKER_CONF) push "$(IMAGE_NAME):latest"
+	@$(CONTAINER_ENGINE) --config=$(DOCKER_CONF) push "$(IMAGE_NAME):latest"
 
 test: out/osde2e
 	$< -test.v -ginkgo.skip="$(GINKGO_SKIP)" -test.timeout 8h
