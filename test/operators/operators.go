@@ -122,7 +122,7 @@ func pollRoleBinding(h *helper.H, projectName string, roleBindingName string) er
 Loop:
 	for {
 		_, err = h.Kube().RbacV1().RoleBindings(projectName).Get(roleBindingName, metav1.GetOptions{})
-		elapsed := time.Now().Sub(start)
+		elapsed := time.Since(start)
 
 		switch {
 		case err == nil:
@@ -162,7 +162,7 @@ func pollLockFile(h *helper.H, operatorNamespace, operatorLockFile string) error
 Loop:
 	for {
 		_, err = h.Kube().CoreV1().ConfigMaps(operatorNamespace).Get(operatorLockFile, metav1.GetOptions{})
-		elapsed := time.Now().Sub(start)
+		elapsed := time.Since(start)
 
 		switch {
 		case err == nil:
@@ -203,7 +203,7 @@ func pollDeployment(h *helper.H, operatorNamespace, deploymentName string) (*app
 Loop:
 	for {
 		deployment, err = h.Kube().AppsV1().Deployments(operatorNamespace).Get(deploymentName, metav1.GetOptions{})
-		elapsed := time.Now().Sub(start)
+		elapsed := time.Since(start)
 
 		switch {
 		case err == nil:
@@ -222,48 +222,6 @@ Loop:
 	}
 
 	return deployment, err
-}
-
-func pollDeploymentList(h *helper.H, operatorNamespace string) (*appsv1.DeploymentList, error) {
-	// pollDeploymentList polls for deployments with a timeout
-	// to handle the case when a new cluster is up but the OLM has not yet
-	// finished deploying the operator
-
-	var err error
-	var deploymentList *appsv1.DeploymentList
-
-	// interval is the duration in seconds between polls
-	// values here for humans
-	interval := 5
-
-	// convert time.Duration type
-	timeoutDuration := time.Duration(globalPollingTimeout) * time.Minute
-	intervalDuration := time.Duration(interval) * time.Second
-
-	start := time.Now()
-
-Loop:
-	for {
-		deploymentList, err = h.Kube().AppsV1().Deployments(operatorNamespace).List(metav1.ListOptions{})
-		elapsed := time.Now().Sub(start)
-
-		switch {
-		case err == nil:
-			// Success
-			break Loop
-		default:
-			if elapsed < timeoutDuration {
-				log.Printf("Waiting %v for %s deployments to exist", (timeoutDuration - elapsed), operatorNamespace)
-				time.Sleep(intervalDuration)
-			} else {
-				deploymentList = nil
-				err = fmt.Errorf("Failed to get %s Deployments before timeout", operatorNamespace)
-				break Loop
-			}
-		}
-	}
-
-	return deploymentList, err
 }
 
 func pollCsvList(h *helper.H, operatorNamespace, csvDisplayName string) (*operatorv1.ClusterServiceVersionList, error) {
@@ -292,12 +250,11 @@ Loop:
 			case csvDisplayName == csv.Spec.DisplayName:
 				// Success
 				err = nil
-				break
 			default:
 				err = fmt.Errorf("No matching clusterServiceVersion in CSV List")
 			}
 		}
-		elapsed := time.Now().Sub(start)
+		elapsed := time.Since(start)
 
 		switch {
 		case err == nil:
@@ -316,18 +273,6 @@ Loop:
 	}
 
 	return csvList, err
-}
-
-func deploymentNameMatch(expected string, deployments *appsv1.DeploymentList) bool {
-	// deploymentNameMatch iterates a DeploymentList
-	// and looks for an expected string in the .metadata.name
-
-	for _, deployment := range deployments.Items {
-		if expected == deployment.GetName() {
-			return true
-		}
-	}
-	return false
 }
 
 func genSuffix(prefix string) string {
