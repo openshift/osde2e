@@ -21,12 +21,12 @@ func ChooseVersions(cfg *config.Config, osd *osd.OSD) (err error) {
 	} else if cfg.UpgradeImage == "" && cfg.UpgradeReleaseStream != "" {
 		return setupUpgradeVersion(cfg, osd)
 	} else {
-		return setupVersion(cfg, osd)
+		return setupVersion(cfg, osd, false)
 	}
 }
 
 // chooses between default version and nightly based on target versions.
-func setupVersion(cfg *config.Config, osd *osd.OSD) (err error) {
+func setupVersion(cfg *config.Config, osd *osd.OSD, isUpgrade bool) (err error) {
 	if len(cfg.ClusterVersion) > 0 {
 		return
 	}
@@ -34,7 +34,7 @@ func setupVersion(cfg *config.Config, osd *osd.OSD) (err error) {
 		// check to see if a target stream is set.
 		// a target stream and a major/minor target should not be set at the same time.
 		if len(cfg.TargetStream) > 0 {
-			if cfg.ClusterVersion, _, err = upgrade.LatestRelease(cfg, cfg.TargetStream); err == nil {
+			if cfg.ClusterVersion, _, err = upgrade.LatestRelease(cfg, cfg.TargetStream, !isUpgrade); err == nil {
 				log.Printf("Target Release Stream set, using version  '%s'", cfg.ClusterVersion)
 				// use defaults if no version targets
 			} else {
@@ -65,12 +65,12 @@ func setupVersion(cfg *config.Config, osd *osd.OSD) (err error) {
 // chooses version based on optimal upgrade path
 func setupUpgradeVersion(cfg *config.Config, osd *osd.OSD) (err error) {
 	// Decide the version to install
-	err = setupVersion(cfg, osd)
+	err = setupVersion(cfg, osd, true)
 	if err != nil {
 		return err
 	}
 
-	cfg.UpgradeReleaseName, cfg.UpgradeImage, err = upgrade.LatestRelease(cfg, cfg.UpgradeReleaseStream)
+	cfg.UpgradeReleaseName, cfg.UpgradeImage, err = upgrade.LatestRelease(cfg, cfg.UpgradeReleaseStream, true)
 	if err != nil {
 		return fmt.Errorf("couldn't get latest release from release-controller: %v", err)
 	}
