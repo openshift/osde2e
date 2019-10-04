@@ -91,7 +91,7 @@ func (r *Runner) createPod() (pod *kubev1.Pod, err error) {
 }
 
 func (r *Runner) waitForPodRunning(pod *kubev1.Pod) error {
-	runningCondition := func() (done bool, err error) {
+	return wait.PollImmediate(10*time.Second, 3*time.Minute, func() (done bool, err error) {
 		pod, err = r.Kube.CoreV1().Pods(pod.Namespace).Get(pod.Name, metav1.GetOptions{})
 		if err != nil && !kerror.IsNotFound(err) {
 			return
@@ -105,6 +105,5 @@ func (r *Runner) waitForPodRunning(pod *kubev1.Pod) error {
 			r.Printf("Waiting for Pod '%s/%s' to start Running...", pod.Namespace, pod.Name)
 		}
 		return
-	}
-	return wait.PollImmediateUntil(10*time.Second, runningCondition, r.stopCh)
+	})
 }
