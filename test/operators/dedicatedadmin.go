@@ -29,7 +29,10 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// timeout is the duration in seconds that the polling should last
+// Timeout is the duration in seconds that the polling should last
+// Because ginkgo requires a float64 in seconds, we do the math
+// up here. Below, for the time.Durations, we use seconds because
+// we've calculated 30min in seconds up here already.
 const globalPollingTimeout int = 30 * 60
 
 const operatorName = "dedicated-admin-operator"
@@ -176,7 +179,7 @@ func pollRoleBinding(h *helper.H, projectName string, roleBindingName string) er
 	interval := 5
 
 	// convert time.Duration type
-	timeoutDuration := time.Duration(globalPollingTimeout*60) * time.Minute
+	timeoutDuration := time.Duration(globalPollingTimeout) * time.Second
 	intervalDuration := time.Duration(interval) * time.Second
 
 	start := time.Now()
@@ -215,7 +218,7 @@ func pollLockFile(h *helper.H) error {
 	interval := 30
 
 	// convert time.Duration type
-	timeoutDuration := time.Duration(globalPollingTimeout) * time.Minute
+	timeoutDuration := time.Duration(globalPollingTimeout) * time.Second
 	intervalDuration := time.Duration(interval) * time.Second
 
 	start := time.Now()
@@ -255,7 +258,7 @@ func pollDeploymentList(h *helper.H) (*appsv1.DeploymentList, error) {
 	interval := 5
 
 	// convert time.Duration type
-	timeoutDuration := time.Duration(globalPollingTimeout) * time.Minute
+	timeoutDuration := time.Duration(globalPollingTimeout) * time.Second
 	intervalDuration := time.Duration(interval) * time.Second
 
 	start := time.Now()
@@ -296,7 +299,7 @@ func pollCsvList(h *helper.H) (*operatorv1.ClusterServiceVersionList, error) {
 	interval := 5
 
 	// convert time.Duration type
-	timeoutDuration := time.Duration(globalPollingTimeout) * time.Minute
+	timeoutDuration := time.Duration(globalPollingTimeout) * time.Second
 	intervalDuration := time.Duration(interval) * time.Second
 
 	start := time.Now()
