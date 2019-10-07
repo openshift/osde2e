@@ -32,7 +32,7 @@ var _ = ginkgo.SynchronizedBeforeSuite(func() []byte {
 
 	// Give the cluster some breathing room.
 	log.Println("OSD cluster installed. Sleeping for 300s.")
-	time.Sleep(300 * time.Second)
+	time.Sleep(600 * time.Second)
 
 	// upgrade cluster if requested
 	if cfg.UpgradeImage != "" || cfg.UpgradeReleaseStream != "" {
