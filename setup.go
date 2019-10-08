@@ -31,7 +31,7 @@ var _ = ginkgo.SynchronizedBeforeSuite(func() []byte {
 	Expect(err).ShouldNot(HaveOccurred(), "failed to setup cluster for testing")
 
 	// Give the cluster some breathing room.
-	log.Println("OSD cluster installed. Sleeping for 300s.")
+	log.Println("OSD cluster installed. Sleeping for 600s.")
 	time.Sleep(600 * time.Second)
 
 	// upgrade cluster if requested
