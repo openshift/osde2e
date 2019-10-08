@@ -17,7 +17,7 @@ var _ = ginkgo.Describe("[OSD] Configure AlertManager Operator", func() {
 	// Test need to incorporate a regex-like test?
 	//
 	// var clusterRoles = []string{
-	// 	"configure-alertmanager-operator,
+	// 	"configure-alertmanager-operator",
 	// }
 
 	var clusterRoleBindings = []string{}
