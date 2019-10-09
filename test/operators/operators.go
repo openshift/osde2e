@@ -125,7 +125,7 @@ func pollClusterRoleBinding(h *helper.H, clusterRoleBindingName string) error {
 	interval := 5
 
 	// convert time.Duration type
-	timeoutDuration := time.Duration(globalPollingTimeout*60) * time.Minute
+	timeoutDuration := time.Duration(globalPollingTimeout) * time.Minute
 	intervalDuration := time.Duration(interval) * time.Second
 
 	start := time.Now()
@@ -164,7 +164,7 @@ func pollRoleBinding(h *helper.H, projectName string, roleBindingName string) er
 	interval := 5
 
 	// convert time.Duration type
-	timeoutDuration := time.Duration(globalPollingTimeout*60) * time.Minute
+	timeoutDuration := time.Duration(globalPollingTimeout) * time.Minute
 	intervalDuration := time.Duration(interval) * time.Second
 
 	start := time.Now()
