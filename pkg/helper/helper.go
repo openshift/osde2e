@@ -19,6 +19,19 @@ func init() {
 	rand.Seed(time.Now().Unix())
 }
 
+// NewSolo creates H, a helper used to expose common testing
+// functions outside of ginkgo blocks
+func NewSolo() *H {
+	var err error
+
+	h := &H{
+		Config: config.Cfg,
+	}
+	h.restConfig, err = clientcmd.RESTConfigFromKubeConfig(h.Kubeconfig)
+	Expect(err).ShouldNot(HaveOccurred(), "failed to configure client")
+	return h
+}
+
 // New creates H, a helper used to expose common testing functions.
 func New() *H {
 	helper := &H{

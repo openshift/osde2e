@@ -14,6 +14,7 @@ import (
 	. "github.com/onsi/gomega"
 
 	"github.com/openshift/osde2e/pkg/config"
+	"github.com/openshift/osde2e/pkg/helper"
 	"github.com/openshift/osde2e/pkg/osd"
 	"github.com/openshift/osde2e/pkg/upgrade"
 )
@@ -30,9 +31,18 @@ var _ = ginkgo.SynchronizedBeforeSuite(func() []byte {
 	err := setupCluster(cfg)
 	Expect(err).ShouldNot(HaveOccurred(), "failed to setup cluster for testing")
 
+	h := helper.NewSolo()
+
 	// Give the cluster some breathing room.
-	log.Println("OSD cluster installed. Sleeping for 600s.")
-	time.Sleep(600 * time.Second)
+	log.Println("OSD cluster installed. Sleeping for 60s.")
+	time.Sleep(60 * time.Second)
+
+	err = h.PollForHealthyPods(60, 30)
+	Expect(err).ShouldNot(HaveOccurred(), "pods failed to come up in a timely manner")
+
+	// Give the cluster some breathing room.
+	log.Println("OSD cluster ready. Sleeping for 60s.")
+	time.Sleep(60 * time.Second)
 
 	// upgrade cluster if requested
 	if cfg.UpgradeImage != "" || cfg.UpgradeReleaseStream != "" {

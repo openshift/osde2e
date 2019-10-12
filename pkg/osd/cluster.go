@@ -5,7 +5,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/openshift-online/uhc-sdk-go/pkg/client/clustersmgmt/v1"
+	v1 "github.com/openshift-online/uhc-sdk-go/pkg/client/clustersmgmt/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 
 	"github.com/openshift/osde2e/pkg/config"
@@ -117,6 +117,24 @@ func (u *OSD) DeleteCluster(clusterID string) error {
 		return fmt.Errorf("couldn't delete cluster '%s': %v", clusterID, err)
 	}
 	return nil
+}
+
+// WaitForClusterInstall blocks until clusterID is ready or a number of retries has been attempted.
+func (u *OSD) WaitForClusterInstall(clusterID string, timeout time.Duration) error {
+	log.Printf("Waiting %v for cluster '%s' to be ready...\n", timeout, clusterID)
+
+	return wait.PollImmediate(45*time.Second, timeout, func() (bool, error) {
+		if state, err := u.ClusterState(clusterID); state == v1.ClusterStateReady {
+			return true, nil
+		} else if err != nil {
+			log.Print("Encountered error waiting for cluster:", err)
+		} else if state == v1.ClusterStateError {
+			return false, fmt.Errorf("the installation of cluster '%s' has errored", clusterID)
+		} else {
+			log.Printf("Cluster is not ready, current status '%s'.", state)
+		}
+		return false, nil
+	})
 }
 
 // WaitForClusterReady blocks until clusterID is ready or a number of retries has been attempted.
