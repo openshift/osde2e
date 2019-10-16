@@ -47,8 +47,8 @@ func setupVersion(cfg *config.Config, osd *osd.OSD, isUpgrade bool) (err error) 
 			cfg.MajorTarget = -1
 		}
 		// look for the default release and install it for this OSD cluster.
-		if cfg.ClusterVersion, err = osd.LatestPrerelease(cfg.MajorTarget, cfg.MinorTarget, "nightly"); err == nil {
-			log.Printf("CLUSTER_VERSION not set but a TARGET is, running nightly '%s'", cfg.ClusterVersion)
+		if cfg.ClusterVersion, err = osd.LatestVersion(cfg.MajorTarget, cfg.MinorTarget); err == nil {
+			log.Printf("CLUSTER_VERSION not set but a TARGET is, running '%s'", cfg.ClusterVersion)
 		}
 	}
 
