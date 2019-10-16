@@ -63,15 +63,15 @@ func (u *OSD) PreviousVersion(verStr string) (string, error) {
 	return "", fmt.Errorf("no versions available before '%s'", verStr)
 }
 
-// LatestPrerelease gets latest prerelease containing str for major and minor versions. Negative versions match all.
-func (u *OSD) LatestPrerelease(major, minor int64, str string) (string, error) {
-	versions, err := u.getSemverList(major, minor, str)
+// LatestVersion gets latest release for major and minor versions. Negative versions match all.
+func (u *OSD) LatestVersion(major, minor int64) (string, error) {
+	versions, err := u.getSemverList(major, minor, "")
 	if err != nil {
 		return "", fmt.Errorf("couldn't created sorted version list: %v", err)
 	}
 
 	if len(versions) == 0 {
-		return "", fmt.Errorf("no versions available with prerelease '%s' for '%d.%d'", str, major, minor)
+		return "", fmt.Errorf("no versions available for '%d.%d'", major, minor)
 	}
 
 	// return latest nightly
@@ -96,7 +96,9 @@ func (u *OSD) getSemverList(major, minor int64, str string) (versions []*semver.
 	// parse versions, filter for major+minor nightlies, then sort
 	resp.Items().Each(func(v *v1.Version) bool {
 		name := strings.TrimPrefix(v.ID(), VersionPrefix)
-		if version, err := semver.NewVersion(name); err != nil {
+		if !v.Enabled() {
+			return true
+		} else if version, err := semver.NewVersion(name); err != nil {
 			log.Printf("could not parse version '%s': %v", v.ID(), err)
 		} else if version.Major() != major && major >= 0 {
 			return true
