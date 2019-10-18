@@ -9,6 +9,7 @@ import (
 
 	"github.com/Masterminds/semver"
 	v1 "github.com/openshift-online/uhc-sdk-go/pkg/client/clustersmgmt/v1"
+	"github.com/openshift/osde2e/pkg/config"
 )
 
 const (
@@ -65,7 +66,13 @@ func (u *OSD) PreviousVersion(verStr string) (string, error) {
 
 // LatestVersion gets latest release for major and minor versions. Negative versions match all.
 func (u *OSD) LatestVersion(major, minor int64) (string, error) {
-	versions, err := u.getSemverList(major, minor, "")
+	suffix := ""
+
+	if config.Cfg.OSDEnv == "int" {
+		suffix = "nightly"
+	}
+
+	versions, err := u.getSemverList(major, minor, suffix)
 	if err != nil {
 		return "", fmt.Errorf("couldn't created sorted version list: %v", err)
 	}
@@ -96,9 +103,7 @@ func (u *OSD) getSemverList(major, minor int64, str string) (versions []*semver.
 	// parse versions, filter for major+minor nightlies, then sort
 	resp.Items().Each(func(v *v1.Version) bool {
 		name := strings.TrimPrefix(v.ID(), VersionPrefix)
-		if !v.Enabled() {
-			return true
-		} else if version, err := semver.NewVersion(name); err != nil {
+		if version, err := semver.NewVersion(name); err != nil {
 			log.Printf("could not parse version '%s': %v", v.ID(), err)
 		} else if version.Major() != major && major >= 0 {
 			return true
