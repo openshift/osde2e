@@ -91,7 +91,7 @@ type Runner struct {
 }
 
 // Run deploys the suite into a cluster, waits for it to finish, and gathers the results.
-func (r *Runner) Run(stopCh <-chan struct{}) (err error) {
+func (r *Runner) Run(timeoutInSeconds int, stopCh <-chan struct{}) (err error) {
 	r.stopCh = stopCh
 	r.status = StatusSetup
 
@@ -120,8 +120,8 @@ func (r *Runner) Run(stopCh <-chan struct{}) (err error) {
 		return
 	}
 
-	log.Printf("Waiting for endpoints of %s runner Pod...", r.Name)
-	if err = r.waitForEndpoints(); err != nil {
+	log.Printf("Waiting for endpoints of %s runner Pod with a timeout of %d seconds...", r.Name, timeoutInSeconds)
+	if err = r.waitForEndpoints(timeoutInSeconds); err != nil {
 		return
 	}
 
