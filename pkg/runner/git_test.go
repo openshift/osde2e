@@ -35,7 +35,7 @@ func TestRunnerGit(t *testing.T) {
 
 	// execute runner
 	stopCh := make(chan struct{})
-	err := runner.Run(stopCh)
+	err := runner.Run(1800, stopCh)
 	g.Expect(err).NotTo(HaveOccurred())
 
 	// get results

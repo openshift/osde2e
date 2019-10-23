@@ -17,6 +17,7 @@ var _ = ginkgo.Describe("Cluster state", func() {
 	defer ginkgo.GinkgoRecover()
 	h := helper.New()
 
+	prometheusTimeoutInSeconds := 900
 	ginkgo.It("should include Prometheus data", func() {
 		// setup runner
 		cmd := promCollectCmd + " >" + runner.DefaultRunner.OutputDir + "/prometheus.tar.gz"
@@ -25,7 +26,7 @@ var _ = ginkgo.Describe("Cluster state", func() {
 
 		// run tests
 		stopCh := make(chan struct{})
-		err := r.Run(stopCh)
+		err := r.Run(prometheusTimeoutInSeconds, stopCh)
 		Expect(err).NotTo(HaveOccurred())
 
 		// get results
@@ -34,5 +35,5 @@ var _ = ginkgo.Describe("Cluster state", func() {
 
 		// write results
 		h.WriteResults(results)
-	}, 900)
+	}, float64(prometheusTimeoutInSeconds+30))
 })

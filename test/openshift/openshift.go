@@ -23,6 +23,7 @@ var _ = ginkgo.Describe("OpenShift E2E", func() {
 	defer ginkgo.GinkgoRecover()
 	h := helper.New()
 
+	e2eTimeoutInSeconds := 3600
 	ginkgo.It("should run until completion", func() {
 		// configure tests
 		cfg := DefaultE2EConfig
@@ -33,7 +34,7 @@ var _ = ginkgo.Describe("OpenShift E2E", func() {
 
 		// run tests
 		stopCh := make(chan struct{})
-		err := r.Run(stopCh)
+		err := r.Run(e2eTimeoutInSeconds, stopCh)
 		Expect(err).NotTo(HaveOccurred())
 
 		// get results
@@ -42,5 +43,5 @@ var _ = ginkgo.Describe("OpenShift E2E", func() {
 
 		// write results
 		h.WriteResults(results)
-	}, 3600)
+	}, float64(e2eTimeoutInSeconds+30))
 })
