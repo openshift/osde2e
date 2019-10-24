@@ -89,7 +89,7 @@ var _ = ginkgo.Describe("ImageStreams", func() {
 
 All together this is a working and complete addition to the osde2e suite.
 
-The "ImageStreams should exist in the cluster" test will run as part of the suite and have its results uploaded to TestGrid:
+The "ImageStreams should exist in the cluster" test will run as part of the suite:
 
 **imagestreams.go**
 ```go
@@ -137,8 +137,3 @@ The helper:
 - Configures Ginkgo to create a Project before each test and delete it after
 - Provides access to OpenShift and Kubernetes clients configured for the test cluster
 - Provides commonly used test functions
-
-## TestGrid
-Results of tests are uploaded to an instance of [TestGrid](https://testgrid.k8s.io/redhat-openshift-release-blocking) to allow analysis. All logs provided through the OSD API are additionally uploaded.
-
-TestGrid is configured through [`config.Config`](https://godoc.org/github.com/openshift/osde2e/pkg/config#Config).

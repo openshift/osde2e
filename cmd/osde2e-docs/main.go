@@ -46,10 +46,6 @@ var (
 			{
 				Name: "upgrade",
 			},
-			{
-				Name:        "testgrid",
-				Description: "These options configure reporting test results to TestGrid.",
-			},
 		},
 	}
 )

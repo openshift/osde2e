@@ -56,23 +56,11 @@ type Config struct {
 	// ClusterUpTimeout is how long to wait before failing a cluster launch.
 	ClusterUpTimeout time.Duration
 
-	// TestGridBucket is the Google Cloud Storage bucket where results are reported for TestGrid.
-	TestGridBucket string `env:"TESTGRID_BUCKET" sect:"testgrid"`
-
-	// TestGridPrefix is used to namespace reports.
-	TestGridPrefix string `env:"TESTGRID_PREFIX" sect:"testgrid"`
-
-	// TestGridServiceAccount is a Base64 encoded Google Cloud Service Account used to access the TestGridBucket.
-	TestGridServiceAccount []byte `env:"TESTGRID_SERVICE_ACCOUNT" sect:"testgrid"`
-
 	// MultiAZ deploys a cluster across multiple availability zones.
 	MultiAZ bool `env:"MULTI_AZ" sect:"cluster"`
 
 	// NoDestroy leaves the cluster running after testing.
 	NoDestroy bool `env:"NO_DESTROY" sect:"cluster"`
-
-	// NoTestGrid disables reporting to TestGrid.
-	NoTestGrid bool `env:"NO_TESTGRID" sect:"testgrid"`
 
 	// Kubeconfig is used to access a cluster.
 	Kubeconfig []byte `env:"TEST_KUBECONFIG" sect:"cluster"`
