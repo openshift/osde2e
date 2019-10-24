@@ -121,7 +121,7 @@ func (r *Runner) Run(timeoutInSeconds int, stopCh <-chan struct{}) (err error) {
 	}
 
 	log.Printf("Waiting for endpoints of %s runner Pod with a timeout of %d seconds...", r.Name, timeoutInSeconds)
-	if err = r.waitForEndpoints(timeoutInSeconds); err != nil {
+	if err = r.waitForCompletion(timeoutInSeconds); err != nil {
 		return
 	}
 

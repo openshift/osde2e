@@ -1,6 +1,7 @@
 package runner
 
 import (
+	"fmt"
 	"time"
 
 	kubev1 "k8s.io/api/core/v1"
@@ -30,7 +31,7 @@ func (r *Runner) createService(pod *kubev1.Pod) (svc *kubev1.Service, err error)
 	})
 }
 
-func (r *Runner) waitForEndpoints(timeoutInSeconds int) error {
+func (r *Runner) waitForCompletion(timeoutInSeconds int) error {
 	var endpoints *kubev1.Endpoints
 	return wait.PollImmediate(15*time.Second, time.Duration(timeoutInSeconds)*time.Second, func() (done bool, err error) {
 		endpoints, err = r.Kube.CoreV1().Endpoints(r.svc.Namespace).Get(r.svc.Name, metav1.GetOptions{})
@@ -41,6 +42,19 @@ func (r *Runner) waitForEndpoints(timeoutInSeconds int) error {
 				if len(subset.Addresses) > 0 {
 					return true, nil
 				}
+			}
+		}
+		pods, err := r.Kube.CoreV1().Pods(r.svc.Namespace).List(metav1.ListOptions{})
+		if err != nil {
+			r.Printf("Encountered error getting pods: %v", err)
+			return false, err
+		}
+		for _, pod := range pods.Items {
+			if pod.Status.Phase == kubev1.PodFailed {
+				r.Printf("Pod entered error state while waiting for endpoint: %+v", pod.Status)
+				return false, fmt.Errorf("pod failed while waiting for endpoints")
+			} else if pod.Status.Phase == kubev1.PodSucceeded {
+				return true, nil
 			}
 		}
 		r.Printf("Waiting for test results using Endpoint '%s/%s'...", endpoints.Namespace, endpoints.Name)
