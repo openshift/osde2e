@@ -31,8 +31,8 @@ var _ = ginkgo.SynchronizedBeforeSuite(func() []byte {
 	Expect(err).ShouldNot(HaveOccurred(), "failed to setup cluster for testing")
 
 	// Give the cluster some breathing room.
-	log.Println("OSD cluster installed. Sleeping for 600s.")
-	time.Sleep(600 * time.Second)
+	log.Println("OSD cluster installed. Sleeping for 10s.")
+	time.Sleep(10 * time.Second)
 
 	// upgrade cluster if requested
 	if cfg.UpgradeImage != "" || cfg.UpgradeReleaseStream != "" {
@@ -109,13 +109,10 @@ func setupCluster(cfg *config.Config) (err error) {
 		log.Printf("CLUSTER_ID of '%s' was provided, skipping cluster creation and using it instead", cfg.ClusterID)
 	}
 
-	if err = OSD.WaitForClusterReady(cfg.ClusterID, cfg.ClusterUpTimeout); err != nil {
+	if err = OSD.WaitForClusterReady(cfg); err != nil {
 		return fmt.Errorf("failed waiting for cluster ready: %v", err)
 	}
 
-	if cfg.Kubeconfig, err = OSD.ClusterKubeconfig(cfg.ClusterID); err != nil {
-		return fmt.Errorf("could not get kubeconfig for cluster: %v", err)
-	}
 	return nil
 }
 
