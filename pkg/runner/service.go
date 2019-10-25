@@ -30,9 +30,9 @@ func (r *Runner) createService(pod *kubev1.Pod) (svc *kubev1.Service, err error)
 	})
 }
 
-func (r *Runner) waitForEndpoints() error {
+func (r *Runner) waitForEndpoints(timeoutInSeconds int) error {
 	var endpoints *kubev1.Endpoints
-	return wait.PollImmediate(15*time.Second, 30*time.Minute, func() (done bool, err error) {
+	return wait.PollImmediate(15*time.Second, time.Duration(timeoutInSeconds)*time.Second, func() (done bool, err error) {
 		endpoints, err = r.Kube.CoreV1().Endpoints(r.svc.Namespace).Get(r.svc.Name, metav1.GetOptions{})
 		if err != nil && !kerror.IsNotFound(err) {
 			r.Printf("Encountered error getting endpoint '%s/%s': %v", r.svc.Namespace, r.svc.Name, err)

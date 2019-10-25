@@ -18,6 +18,9 @@ const (
 
 	// VersionPrefix is the string that every OSD version begins with.
 	VersionPrefix = "openshift-"
+
+	// PageSize is the number of results to get per page from the cluster versions endpoint
+	PageSize = 100
 )
 
 // DefaultVersion returns the default version currently offered by OSD.
@@ -88,32 +91,44 @@ func (u *OSD) LatestVersion(major, minor int64) (string, error) {
 
 // getSemverList as sorted semvers containing str for major and minor versions. Negative versions match all.
 func (u *OSD) getSemverList(major, minor int64, str string) (versions []*semver.Version, err error) {
-	var resp *v1.VersionsListResponse
-	resp, err = u.versions().List().Send()
-	if err != nil {
-		err = fmt.Errorf("failed getting list of OSD versions: %v", err)
-	} else if resp != nil {
-		err = errResp(resp.Error())
-	}
+	page := 1
 
-	if err != nil {
-		return versions, fmt.Errorf("couldn't retrieve available versions: %v", err)
-	}
+	log.Printf("Querying cluster versions endpoint.")
+	for {
+		log.Printf("Getting page %d from the versions endpoint.", page)
+		resp, err := u.versions().List().Page(page).Size(PageSize).Send()
 
-	// parse versions, filter for major+minor nightlies, then sort
-	resp.Items().Each(func(v *v1.Version) bool {
-		name := strings.TrimPrefix(v.ID(), VersionPrefix)
-		if version, err := semver.NewVersion(name); err != nil {
-			log.Printf("could not parse version '%s': %v", v.ID(), err)
-		} else if version.Major() != major && major >= 0 {
-			return true
-		} else if version.Minor() != minor && minor >= 0 {
-			return true
-		} else if strings.Contains(version.Prerelease(), str) && v.Enabled() {
-			versions = append(versions, version)
+		if err != nil {
+			err = fmt.Errorf("failed getting list of OSD versions: %v", err)
+		} else if resp != nil {
+			err = errResp(resp.Error())
 		}
-		return true
-	})
+
+		if err != nil {
+			return versions, fmt.Errorf("couldn't retrieve available versions: %v", err)
+		}
+
+		// parse versions, filter for major+minor nightlies, then sort
+		resp.Items().Each(func(v *v1.Version) bool {
+			name := strings.TrimPrefix(v.ID(), VersionPrefix)
+			if version, err := semver.NewVersion(name); err != nil {
+				log.Printf("could not parse version '%s': %v", v.ID(), err)
+			} else if version.Major() != major && major >= 0 {
+				return true
+			} else if version.Minor() != minor && minor >= 0 {
+				return true
+			} else if strings.Contains(version.Prerelease(), str) && v.Enabled() {
+				versions = append(versions, version)
+			}
+			return true
+		})
+
+		// If we've looked at all the results, stop collecting them.
+		if page*PageSize >= resp.Total() {
+			break
+		}
+		page++
+	}
 
 	sort.Sort(semver.Collection(versions))
 	return versions, nil

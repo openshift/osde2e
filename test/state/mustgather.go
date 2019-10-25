@@ -17,6 +17,7 @@ var _ = ginkgo.Describe("Cluster state", func() {
 	defer ginkgo.GinkgoRecover()
 	h := helper.New()
 
+	mustGatherTimeoutInSeconds := 900
 	ginkgo.It("should be captured with must-gather", func() {
 		// setup runner
 		r := h.Runner(mustGatherCmd)
@@ -25,7 +26,7 @@ var _ = ginkgo.Describe("Cluster state", func() {
 
 		// run tests
 		stopCh := make(chan struct{})
-		err := r.Run(stopCh)
+		err := r.Run(mustGatherTimeoutInSeconds, stopCh)
 		Expect(err).NotTo(HaveOccurred())
 
 		// get results
@@ -34,5 +35,5 @@ var _ = ginkgo.Describe("Cluster state", func() {
 
 		// write results
 		h.WriteResults(results)
-	}, 900)
+	}, float64(mustGatherTimeoutInSeconds+30))
 })
