@@ -109,7 +109,7 @@ func setupCluster(cfg *config.Config) (err error) {
 		log.Printf("CLUSTER_ID of '%s' was provided, skipping cluster creation and using it instead", cfg.ClusterID)
 	}
 
-	if err = OSD.WaitForClusterReady(cfg.ClusterID, cfg.ClusterUpTimeout); err != nil {
+	if err = OSD.WaitForClusterReady(cfg); err != nil {
 		return fmt.Errorf("failed waiting for cluster ready: %v", err)
 	}
 

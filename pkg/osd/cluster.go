@@ -124,16 +124,29 @@ func (u *OSD) DeleteCluster(clusterID string) error {
 }
 
 // WaitForClusterReady blocks until clusterID is ready or a number of retries has been attempted.
-func (u *OSD) WaitForClusterReady(clusterID string, timeout time.Duration) error {
-	log.Printf("Waiting %v for cluster '%s' to be ready...\n", timeout, clusterID)
+func (u *OSD) WaitForClusterReady(cfg *config.Config) error {
+	log.Printf("Waiting %v for cluster '%s' to be ready...\n", cfg.ClusterUpTimeout, cfg.ClusterID)
+	cleanRuns := 0
 
-	return wait.PollImmediate(45*time.Second, timeout, func() (bool, error) {
-		if state, err := u.ClusterState(clusterID); state == v1.ClusterStateReady {
+	return wait.PollImmediate(30*time.Second, cfg.ClusterUpTimeout, func() (bool, error) {
+		if state, err := u.ClusterState(cfg.ClusterID); state == v1.ClusterStateReady {
+			if success, err := u.PollClusterHealth(cfg); success == true {
+				cleanRuns++
+				if cleanRuns == 5 {
+					return true, nil
+				}
+				return false, nil
+			} else {
+				if err != nil {
+					log.Printf("Error in PollClusterHealth: %v", err)
+				}
+				return false, nil
+			}
 			return true, nil
 		} else if err != nil {
 			log.Print("Encountered error waiting for cluster:", err)
 		} else if state == v1.ClusterStateError {
-			return false, fmt.Errorf("the installation of cluster '%s' has errored", clusterID)
+			return false, fmt.Errorf("the installation of cluster '%s' has errored", cfg.ClusterID)
 		} else {
 			log.Printf("Cluster is not ready, current status '%s'.", state)
 		}
