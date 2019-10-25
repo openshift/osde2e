@@ -20,7 +20,7 @@ func CheckCVOReadiness(configClient configclient.ConfigV1Interface) (bool, error
 	}
 
 	for _, v := range cvInfo.Status.Conditions {
-		if (v.Type != "Available" && v.Status != "False") && v.Type != "Upgradeable" {
+		if (v.Type != "Available" && v.Status != "False") && v.Type != "Upgradeable" && v.Type != "RetrievedUpdates" {
 			log.Printf("CVO State not complete: %v: %v %v", v.Type, v.Status, v.Message)
 			success = false
 		}

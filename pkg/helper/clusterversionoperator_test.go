@@ -40,6 +40,12 @@ func clusterVersion() *configv1.ClusterVersion {
 					Reason:  "Available",
 					Message: "Available",
 				},
+				{
+					Type:    configv1.RetrievedUpdates,
+					Status:  configv1.ConditionTrue,
+					Reason:  "Available",
+					Message: "Available",
+				},
 			},
 		},
 	}
