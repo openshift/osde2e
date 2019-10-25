@@ -45,11 +45,6 @@ type Config struct {
 	// MinorTarget is the minor version to target. If specified, it is used in version selection.
 	MinorTarget int64 `env:"MINOR_TARGET" sect:"version"`
 
-	// TargetStream lets you select a specific release stream from Cincinnati or the Release Controller to install.
-	// For stage and prod, this will always refer to Cincinnati. For int, this will refer to Cincinnati for upgrades and
-	// release controller for regular installs.
-	TargetStream string `env:"TARGET_STREAM" sect:"version"`
-
 	// AfterTestClusterWait is how long to keep a cluster around after tests have run.
 	AfterTestClusterWait time.Duration
 
