@@ -31,6 +31,7 @@ const (
 
 // RunE2ETests runs the osde2e test suite using the given cfg.
 func RunE2ETests(t *testing.T, cfg *config.Config) {
+	var err error
 	gomega.RegisterFailHandler(ginkgo.Fail)
 
 	// set defaults
@@ -50,24 +51,27 @@ func RunE2ETests(t *testing.T, cfg *config.Config) {
 		cfg.ClusterUpTimeout = 135 * time.Minute
 	}
 
-	// setup OSD client
-	var err error
-	if OSD, err = osd.New(cfg.UHCToken, cfg.OSDEnv, cfg.DebugOSD); err != nil {
-		t.Fatalf("could not setup OSD: %v", err)
-	}
-
-	// check that enough quota exists for this test if creating cluster
-	if len(cfg.ClusterID) == 0 {
-		if enoughQuota, err := OSD.CheckQuota(cfg); err != nil {
-			log.Printf("Failed to check if enough quota is available: %v", err)
-		} else if !enoughQuota {
-			t.Fatal("Currently not enough quota exists to run this test, failing...")
+	// setup OSD unless Kubeconfig is present
+	if len(cfg.Kubeconfig) > 0 {
+		log.Print("Found an existing Kubeconfig!")
+	} else {
+		if OSD, err = osd.New(cfg.UHCToken, cfg.OSDEnv, cfg.DebugOSD); err != nil {
+			t.Fatalf("could not setup OSD: %v", err)
 		}
-	}
 
-	// configure cluster and upgrade versions
-	if err = ChooseVersions(cfg, OSD); err != nil {
-		t.Fatalf("failed to configure versions: %v", err)
+		// check that enough quota exists for this test if creating cluster
+		if len(cfg.ClusterID) == 0 {
+			if enoughQuota, err := OSD.CheckQuota(cfg); err != nil {
+				log.Printf("Failed to check if enough quota is available: %v", err)
+			} else if !enoughQuota {
+				t.Fatal("Currently not enough quota exists to run this test, failing...")
+			}
+		}
+
+		// configure cluster and upgrade versions
+		if err = ChooseVersions(cfg, OSD); err != nil {
+			t.Fatalf("failed to configure versions: %v", err)
+		}
 	}
 
 	// setup reporter

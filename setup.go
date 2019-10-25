@@ -30,9 +30,11 @@ var _ = ginkgo.SynchronizedBeforeSuite(func() []byte {
 	err := setupCluster(cfg)
 	Expect(err).ShouldNot(HaveOccurred(), "failed to setup cluster for testing")
 
-	// Give the cluster some breathing room.
-	log.Println("OSD cluster installed. Sleeping for 600s.")
-	time.Sleep(600 * time.Second)
+	if len(cfg.Kubeconfig) == 0 {
+		// Give the cluster some breathing room.
+		log.Println("OSD cluster installed. Sleeping for 600s.")
+		time.Sleep(600 * time.Second)
+	}
 
 	// upgrade cluster if requested
 	if cfg.UpgradeImage != "" || cfg.UpgradeReleaseStream != "" {
