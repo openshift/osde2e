@@ -5,10 +5,14 @@ import (
 	"log"
 	"time"
 
-	"github.com/openshift-online/uhc-sdk-go/pkg/client/clustersmgmt/v1"
+	v1 "github.com/openshift-online/uhc-sdk-go/pkg/client/clustersmgmt/v1"
+	osconfig "github.com/openshift/client-go/config/clientset/versioned"
 	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/tools/clientcmd"
 
 	"github.com/openshift/osde2e/pkg/config"
+	"github.com/openshift/osde2e/pkg/helper"
 )
 
 const (
@@ -120,19 +124,78 @@ func (u *OSD) DeleteCluster(clusterID string) error {
 }
 
 // WaitForClusterReady blocks until clusterID is ready or a number of retries has been attempted.
-func (u *OSD) WaitForClusterReady(clusterID string, timeout time.Duration) error {
-	log.Printf("Waiting %v for cluster '%s' to be ready...\n", timeout, clusterID)
+func (u *OSD) WaitForClusterReady(cfg *config.Config) error {
+	log.Printf("Waiting %v for cluster '%s' to be ready...\n", cfg.ClusterUpTimeout, cfg.ClusterID)
+	cleanRuns := 0
 
-	return wait.PollImmediate(45*time.Second, timeout, func() (bool, error) {
-		if state, err := u.ClusterState(clusterID); state == v1.ClusterStateReady {
-			return true, nil
+	return wait.PollImmediate(30*time.Second, cfg.ClusterUpTimeout, func() (bool, error) {
+		if state, err := u.ClusterState(cfg.ClusterID); state == v1.ClusterStateReady {
+			if success, err := u.PollClusterHealth(cfg); success {
+				cleanRuns++
+				if cleanRuns == 5 {
+					return true, nil
+				}
+				return false, nil
+			} else {
+				if err != nil {
+					log.Printf("Error in PollClusterHealth: %v", err)
+				}
+				cleanRuns = 0
+				return false, nil
+			}
 		} else if err != nil {
-			log.Print("Encountered error waiting for cluster:", err)
+			return false, fmt.Errorf("Encountered error waiting for cluster: %v", err)
 		} else if state == v1.ClusterStateError {
-			return false, fmt.Errorf("the installation of cluster '%s' has errored", clusterID)
+			return false, fmt.Errorf("the installation of cluster '%s' has errored", cfg.ClusterID)
 		} else {
 			log.Printf("Cluster is not ready, current status '%s'.", state)
 		}
 		return false, nil
 	})
+}
+
+// PollClusterHealth looks at CVO data to determine if a cluster is alive/healthy or not
+func (u *OSD) PollClusterHealth(cfg *config.Config) (status bool, err error) {
+	log.Print("Polling Cluster Health...\n")
+	if cfg.Kubeconfig == nil {
+		if cfg.Kubeconfig, err = u.ClusterKubeconfig(cfg.ClusterID); err != nil {
+			log.Printf("could not get kubeconfig for cluster: %v\n", err)
+			return false, nil
+		}
+	}
+	restConfig, err := clientcmd.RESTConfigFromKubeConfig(cfg.Kubeconfig)
+	if err != nil {
+		log.Printf("Error generating Rest Config: %v\n", err)
+		return false, nil
+	}
+
+	kubeClient, err := kubernetes.NewForConfig(restConfig)
+	if err != nil {
+		log.Printf("Error generating Kube Clientset: %v\n", err)
+		return false, nil
+	}
+
+	oscfg, err := osconfig.NewForConfig(restConfig)
+	if err != nil {
+		log.Printf("Error generating OpenShift Clientset: %v\n", err)
+		return false, nil
+	}
+
+	if check, err := helper.CheckCVOReadiness(oscfg.ConfigV1()); !check || err != nil {
+		return false, nil
+	}
+
+	if check, err := helper.CheckNodeHealth(kubeClient.CoreV1()); !check || err != nil {
+		return false, nil
+	}
+
+	if check, err := helper.CheckOperatorReadiness(oscfg.ConfigV1()); !check || err != nil {
+		return false, nil
+	}
+
+	if check, err := helper.CheckPodHealth(kubeClient.CoreV1()); !check || err != nil {
+		return false, nil
+	}
+
+	return true, nil
 }
