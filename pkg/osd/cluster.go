@@ -130,7 +130,7 @@ func (u *OSD) WaitForClusterReady(cfg *config.Config) error {
 
 	return wait.PollImmediate(30*time.Second, cfg.ClusterUpTimeout, func() (bool, error) {
 		if state, err := u.ClusterState(cfg.ClusterID); state == v1.ClusterStateReady {
-			if success, err := u.PollClusterHealth(cfg); success == true {
+			if success, err := u.PollClusterHealth(cfg); success {
 				cleanRuns++
 				if cleanRuns == 5 {
 					return true, nil
@@ -140,11 +140,11 @@ func (u *OSD) WaitForClusterReady(cfg *config.Config) error {
 				if err != nil {
 					log.Printf("Error in PollClusterHealth: %v", err)
 				}
+				cleanRuns = 0
 				return false, nil
 			}
-			return true, nil
 		} else if err != nil {
-			log.Print("Encountered error waiting for cluster:", err)
+			return false, fmt.Errorf("Encountered error waiting for cluster: %v", err)
 		} else if state == v1.ClusterStateError {
 			return false, fmt.Errorf("the installation of cluster '%s' has errored", cfg.ClusterID)
 		} else {
