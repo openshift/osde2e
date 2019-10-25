@@ -4,18 +4,23 @@ import (
 	"log"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes"
+	v1 "k8s.io/client-go/kubernetes/typed/core/v1"
 )
 
 // CheckNodeHealth attempts to look at the state of all operator and returns true if things are healthy.
-func CheckNodeHealth(kubeclient kubernetes.Interface) (bool, error) {
-	fail := false
+func CheckNodeHealth(nodeClient v1.CoreV1Interface) (bool, error) {
+	success := true
 	log.Print("Checking that all Nodes are running or completed...")
 
-	nodeClient, getOpts := kubeclient.CoreV1(), metav1.ListOptions{}
-	list, err := nodeClient.Nodes().List(getOpts)
+	listOpts := metav1.ListOptions{}
+	list, err := nodeClient.Nodes().List(listOpts)
 	if err != nil {
 		log.Printf("Error getting CVS: %v\n", err)
+		return false, nil
+	}
+
+	if len(list.Items) == 0 {
+		log.Printf("Zero nodes found...?")
 		return false, nil
 	}
 
@@ -23,13 +28,13 @@ func CheckNodeHealth(kubeclient kubernetes.Interface) (bool, error) {
 		for _, ns := range node.Status.Conditions {
 			if ns.Type != "Ready" && ns.Status == "True" {
 				log.Printf("Node (%v) issue: %v=%v %v\n", node.ObjectMeta.Name, ns.Type, ns.Status, ns.Message)
-				fail = true
+				success = false
 			} else if ns.Type == "Ready" && ns.Status != "True" {
 				log.Printf("Node (%v) not ready: %v=%v %v\n", node.ObjectMeta.Name, ns.Type, ns.Status, ns.Message)
-				fail = true
+				success = false
 			}
 		}
 	}
 
-	return fail, nil
+	return success, nil
 }

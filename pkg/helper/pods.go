@@ -8,7 +8,7 @@ import (
 
 	kubev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes"
+	v1 "k8s.io/client-go/kubernetes/typed/core/v1"
 )
 
 // WaitForPodPhase until in target, checking n times and sleeping dur between them. Last known phase is returned.
@@ -35,16 +35,20 @@ func (h *H) WaitForPodPhase(pod *kubev1.Pod, target kubev1.PodPhase, n int, dur 
 }
 
 // CheckPodHealth attempts to look at the state of all pods and returns true if things are healthy.
-func CheckPodHealth(kubeclient kubernetes.Interface) (bool, error) {
+func CheckPodHealth(podClient v1.CoreV1Interface) (bool, error) {
 	var notReady []kubev1.Pod
 
 	log.Print("Checking that all Pods are running or completed...")
 
-	list, err := kubeclient.CoreV1().Pods(metav1.NamespaceAll).List(metav1.ListOptions{})
+	listOpts := metav1.ListOptions{}
+	list, err := podClient.Pods(metav1.NamespaceAll).List(listOpts)
 	if err != nil {
 		return false, err
 	}
-	Expect(list).NotTo(BeNil())
+
+	if len(list.Items) == 0 {
+		return false, err
+	}
 
 	for _, pod := range list.Items {
 		phase := pod.Status.Phase

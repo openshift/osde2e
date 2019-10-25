@@ -203,7 +203,7 @@ func (u *OSD) PollClusterHealth(cfg *config.Config) (status bool, err error) {
 		}
 	}
 
-	if check, err := helper.CheckNodeHealth(kubeClient); !check || err != nil {
+	if check, err := helper.CheckNodeHealth(kubeClient.CoreV1()); !check || err != nil {
 		return false, nil
 	}
 
@@ -211,7 +211,7 @@ func (u *OSD) PollClusterHealth(cfg *config.Config) (status bool, err error) {
 		return false, nil
 	}
 
-	if check, err := helper.CheckPodHealth(kubeClient); !check || err != nil {
+	if check, err := helper.CheckPodHealth(kubeClient.CoreV1()); !check || err != nil {
 		return false, nil
 	}
 
