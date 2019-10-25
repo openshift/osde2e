@@ -20,16 +20,8 @@ func CheckCVOReadiness(configClient configclient.ConfigV1Interface) (bool, error
 	}
 
 	for _, v := range cvInfo.Status.Conditions {
-		if v.Type == "Available" && v.Status != "True" {
-			log.Printf("API Server troubles: %v\n", v.Message)
-			success = false
-		}
-		if v.Type == "Progressing" && v.Status != "False" {
-			log.Printf("Installation or upgrade in progress: %v\n", v.Message)
-			success = false
-		}
-		if v.Type == "Failing" && v.Status != "False" {
-			log.Printf("Cluster is in a failed state: %v\n", v.Message)
+		if (v.Type != "Available" && v.Status != "False") && v.Type != "Upgradable" {
+			log.Printf("CVO State not complete: %v: %v %v", v.Type, v.Status, v.Message)
 			success = false
 		}
 	}
