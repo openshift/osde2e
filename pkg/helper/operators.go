@@ -26,7 +26,7 @@ func CheckOperatorReadiness(configClient configclient.ConfigV1Interface) (bool, 
 
 	for _, co := range list.Items {
 		for _, cos := range co.Status.Conditions {
-			if (cos.Type != "Available" && cos.Status != "False") && cos.Type != "Upgradable" {
+			if (cos.Type != "Available" && cos.Status != "False") && cos.Type != "Upgradeable" {
 				log.Printf("Operator %v type %v is %v: %v", co.ObjectMeta.Name, cos.Type, cos.Status, cos.Message)
 				success = false
 			}
