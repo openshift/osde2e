@@ -22,7 +22,7 @@ func TestCheckNodeHealth(t *testing.T) {
 		expected    bool
 		objs        []runtime.Object
 	}{
-		{"no pods", false, nil},
+		{"no nodes", false, nil},
 		{"node ready false", false, []runtime.Object{
 			node("node-ready-false", []v1.NodeCondition{
 				{
