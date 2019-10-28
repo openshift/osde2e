@@ -50,16 +50,10 @@ docker-test:
 		-e UHC_TOKEN=$(UHC_REFRESH_TOKEN) \
 		-e AWS_ACCESS_KEY_ID=$(AWS_ACCESS_KEY_ID) \
 		-e AWS_SECRET_ACCESS_KEY=$(AWS_SECRET_ACCESS_KEY) \
-		-e TESTGRID_BUCKET=$(TESTGRID_BUCKET) \
-		-e TESTGRID_PREFIX=$(TESTGRID_PREFIX) \
-		-e TESTGRID_SERVICE_ACCOUNT=$(TESTGRID_SERVICE_ACCOUNT) \
 		$(IMAGE_NAME):$(IMAGE_TAG)
 
 out/osde2e: out
 	CGO_ENABLED=0 go test -v -c -o $@ $(PKG)
-
-out/osde2e-report: out
-	CGO_ENABLED=0 go build -v -o $@ $(PKG)
 
 out:
 	mkdir -p $@

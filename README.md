@@ -1,7 +1,6 @@
 # osde2e
 
-This project checks OSD releases by starting an OSD cluster, verifying operation through testing, and reporting test 
-results to TestGrid.
+This project checks OSD releases by starting an OSD cluster and verifying operation through testing
 
 ## Running
 These steps run the osde2e test suite. All commands should be run from the root of this repo.

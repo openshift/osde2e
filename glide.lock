@@ -522,11 +522,6 @@ imports:
   version: b3a7cee44a305be0a69e1b9ac03018307287e1b0
   subpackages:
   - pkg/util/proto
-- name: k8s.io/test-infra
-  version: 31df46e6f68bfbc12894d299bc92e13316584543
-  subpackages:
-  - testgrid/metadata
-  - testgrid/metadata/junit
 - name: k8s.io/utils
   version: c2654d5206da6b7b6ace12841e8f359bb89b443c
   subpackages:

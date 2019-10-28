@@ -15,10 +15,8 @@ ADD . ${PKG}
 RUN make check
 
 RUN make out/osde2e
-RUN make out/osde2e-report
 
 FROM gcr.io/distroless/base
 COPY --from=0 /go/src/github.com/openshift/osde2e/out/osde2e .
-COPY --from=0 /go/src/github.com/openshift/osde2e/out/osde2e-report .
 
 ENTRYPOINT [ "/osde2e" ]

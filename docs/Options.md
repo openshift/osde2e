@@ -7,7 +7,6 @@
 - [cluster](#cluster)
 - [version](#version)
 - [upgrade](#upgrade)
-- [testgrid](#testgrid)
 
 
 
@@ -157,30 +156,3 @@ release controller for regular installs.
 - UpgradeReleaseStream used to retrieve latest release images. If set, it will be used to perform an upgrade.
 
 - Type: `string`
-
-## testgrid
-These options configure reporting test results to TestGrid.
-
-### `NO_TESTGRID`
-
-- NoTestGrid disables reporting to TestGrid.
-
-- Type: `bool`
-
-### `TESTGRID_BUCKET`
-
-- TestGridBucket is the Google Cloud Storage bucket where results are reported for TestGrid.
-
-- Type: `string`
-
-### `TESTGRID_PREFIX`
-
-- TestGridPrefix is used to namespace reports.
-
-- Type: `string`
-
-### `TESTGRID_SERVICE_ACCOUNT`
-
-- TestGridServiceAccount is a Base64 encoded Google Cloud Service Account used to access the TestGridBucket.
-
-- Type: `[]byte`
