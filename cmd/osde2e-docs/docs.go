@@ -60,4 +60,5 @@ type Option struct {
 	Variable    string
 	Description string
 	Type        string
+	DefaultValue string
 }

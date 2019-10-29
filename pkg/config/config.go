@@ -11,6 +11,9 @@ const (
 
 	// SectionTag is the Go struct tag containing the documentation section of the option.
 	SectionTag = "sect"
+
+	// DefaultTag is the Go struct tag containing the default value of the option.
+	DefaultTag = "default"
 )
 
 // Cfg is the configuration used for end to end testing.
