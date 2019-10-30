@@ -54,6 +54,7 @@ func CheckPodHealth(podClient v1.CoreV1Interface) (bool, error) {
 		phase := pod.Status.Phase
 		if phase != kubev1.PodRunning && phase != kubev1.PodSucceeded {
 			notReady = append(notReady, pod)
+			log.Printf("%s is not ready. Phase: %s, Message: %s, Reason: %s", pod.Name, pod.Status.Phase, pod.Status.Message, pod.Status.Reason)
 		}
 	}
 

@@ -20,7 +20,9 @@ func pod(name, namespace string, phase v1.PodPhase) *v1.Pod {
 			},
 		},
 		Status: v1.PodStatus{
-			Phase: phase,
+			Phase:   phase,
+			Message: "pod message",
+			Reason:  "pod reason",
 		},
 	}
 }
