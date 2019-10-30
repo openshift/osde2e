@@ -40,6 +40,14 @@ These options are required to run osde2e.
 
 - Type: `string`
 
+### `POLLING_TIMEOUT`
+
+- PollingTimeout is how long (in mimutes) to wait for an object to be created
+before failing the test.
+
+- Type: `int64`
+- Default: `30`
+
 ### `REPORT_DIR`
 
 - ReportDir is the location JUnit XML results are written.

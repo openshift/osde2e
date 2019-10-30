@@ -59,11 +59,13 @@ func parseOpts(dir string) (opts map[string]Options) {
 								tag := reflect.StructTag(tagStr)
 								if env, hasEnvTag := tag.Lookup(config.EnvVarTag); hasEnvTag {
 									section := tag.Get(config.SectionTag)
+									defaultValue, _ := tag.Lookup(config.DefaultTag)
 
 									opts[section] = append(opts[section], Option{
 										Variable:    env,
 										Description: field.Doc.Text(),
 										Type:        getFieldType(field.Type),
+										DefaultValue: defaultValue,
 									})
 								}
 							}

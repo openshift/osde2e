@@ -11,6 +11,9 @@ const (
 
 	// SectionTag is the Go struct tag containing the documentation section of the option.
 	SectionTag = "sect"
+
+	// DefaultTag is the Go struct tag containing the default value of the option.
+	DefaultTag = "default"
 )
 
 // Cfg is the configuration used for end to end testing.
@@ -55,6 +58,10 @@ type Config struct {
 
 	// ClusterUpTimeout is how long to wait before failing a cluster launch.
 	ClusterUpTimeout time.Duration
+
+	// PollingTimeout is how long (in mimutes) to wait for an object to be created
+	// before failing the test.
+	PollingTimeout int64 `env:"POLLING_TIMEOUT" sect:"tests" default:"30"`
 
 	// MultiAZ deploys a cluster across multiple availability zones.
 	MultiAZ bool `env:"MULTI_AZ" sect:"cluster"`

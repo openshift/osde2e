@@ -16,5 +16,8 @@
 
 - {{ $o.Description }}
 - Type: `{{ $o.Type }}`
-    {{- end }}
+{{- if $o.DefaultValue }}
+- Default: `{{ $o.DefaultValue }}`
+{{- end }}
+{{- end }}
 {{- end }}
