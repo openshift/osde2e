@@ -68,17 +68,12 @@ var _ = ginkgo.AfterSuite(func() {
 			return
 		}
 
-		// Default to 1 hour wait before terminating a cluster
-		if cfg.AfterTestClusterWait == 0 {
-			cfg.AfterTestClusterWait = 60 * time.Minute
-		}
-
 		if cfg.NoDestroyDelay {
 			log.Printf("Skipping sleep for cluster debugging")
 		} else {
-			log.Printf("Sleeping for %d minutes before destroying cluster '%s'", cfg.AfterTestClusterWait/time.Minute, cfg.ClusterID)
+			log.Printf("Sleeping for %d minutes before destroying cluster '%s'", cfg.AfterTestClusterWait, cfg.ClusterID)
 			startTime := time.Now()
-			for time.Since(startTime) < cfg.AfterTestClusterWait {
+			for time.Since(startTime) < time.Duration(cfg.AfterTestClusterWait)*time.Minute {
 				time.Sleep(1 * time.Minute)
 				log.Print(".")
 			}

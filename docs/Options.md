@@ -63,11 +63,26 @@ before failing the test.
 ## environment
 
 
+### `AFTER_TEST_CLUSTER_WAIT`
+
+- AfterTestClusterWait is how long to keep a cluster around after tests have run.
+
+- Type: `int64`
+- Default: `60`
+
+### `CLUSTER_UP_TIMEOUT`
+
+- ClusterUpTimeout is how long to wait before failing a cluster launch.
+
+- Type: `int64`
+- Default: `135`
+
 ### `DEBUG_OSD`
 
 - DebugOSD shows debug level messages when enabled.
 
 - Type: `bool`
+- Default: `false`
 
 ### `NO_DESTROY_DELAY`
 
@@ -75,12 +90,14 @@ before failing the test.
 This is highly useful when trying to debug things locally. :)
 
 - Type: `bool`
+- Default: `false`
 
 ### `OSD_ENV`
 
 - OSDEnv is the OpenShift Dedicated environment used to provision clusters.
 
 - Type: `string`
+- Default: `prod`
 
 ## cluster
 
@@ -102,12 +119,14 @@ This is highly useful when trying to debug things locally. :)
 - MultiAZ deploys a cluster across multiple availability zones.
 
 - Type: `bool`
+- Default: `false`
 
 ### `NO_DESTROY`
 
 - NoDestroy leaves the cluster running after testing.
 
 - Type: `bool`
+- Default: `false`
 
 ### `TEST_KUBECONFIG`
 
