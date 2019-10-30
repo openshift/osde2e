@@ -30,18 +30,7 @@ func setupVersion(cfg *config.Config, osd *osd.OSD, isUpgrade bool) (err error) 
 	if len(cfg.ClusterVersion) > 0 {
 		return
 	}
-	if cfg.MajorTarget == 0 && cfg.MinorTarget == 0 {
-		// check to see if a target stream is set.
-		// a target stream and a major/minor target should not be set at the same time.
-		if len(cfg.TargetStream) > 0 {
-			if cfg.ClusterVersion, _, err = upgrade.LatestRelease(cfg, cfg.TargetStream, !isUpgrade); err == nil {
-				log.Printf("Target Release Stream set, using version  '%s'", cfg.ClusterVersion)
-				// use defaults if no version targets
-			} else {
-				return fmt.Errorf("Couldn't get a valid release from stream %v", err)
-			}
-		}
-	} else {
+	if cfg.MajorTarget != 0 || cfg.MinorTarget != 0 {
 		// don't require major to be set
 		if cfg.MajorTarget == 0 {
 			cfg.MajorTarget = -1
@@ -74,8 +63,6 @@ func setupUpgradeVersion(cfg *config.Config, osd *osd.OSD) (err error) {
 	if err != nil {
 		return fmt.Errorf("couldn't get latest release from release-controller: %v", err)
 	}
-
-	log.Printf("Target stream: '%s', Upgrade stream: '%s'", cfg.TargetStream, cfg.UpgradeReleaseStream)
 
 	if cfg.ClusterVersion == cfg.UpgradeReleaseName {
 		log.Printf("Cluster version and target version are the same. Looking up previous version...")
