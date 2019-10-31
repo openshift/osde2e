@@ -21,10 +21,8 @@ func (c *Config) LoadFromEnv() {
 			case reflect.String:
 				field.SetString(defaultValue)
 			case reflect.Bool:
-				if defaultValue == "true" {
-					field.SetBool(true)
-				} else {
-					field.SetBool(false)
+				if newBool, err := strconv.ParseBool(defaultValue); err == nil {
+					field.SetBool(newBool)
 				}
 			case reflect.Slice:
 				field.SetBytes([]byte(defaultValue))
