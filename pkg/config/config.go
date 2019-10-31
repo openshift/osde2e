@@ -1,10 +1,6 @@
 // Package config provides the configuration for tests run as part of the osde2e suite.
 package config
 
-import (
-	"time"
-)
-
 const (
 	// EnvVarTag is the Go struct tag containing the environment variable that sets the option.
 	EnvVarTag = "env"
@@ -48,34 +44,34 @@ type Config struct {
 	// MinorTarget is the minor version to target. If specified, it is used in version selection.
 	MinorTarget int64 `env:"MINOR_TARGET" sect:"version"`
 
-	// AfterTestClusterWait is how long to keep a cluster around after tests have run.
-	AfterTestClusterWait time.Duration
-
-	// ClusterUpTimeout is how long to wait before failing a cluster launch.
-	ClusterUpTimeout time.Duration
-
 	// PollingTimeout is how long (in mimutes) to wait for an object to be created
 	// before failing the test.
 	PollingTimeout int64 `env:"POLLING_TIMEOUT" sect:"tests" default:"30"`
 
 	// MultiAZ deploys a cluster across multiple availability zones.
-	MultiAZ bool `env:"MULTI_AZ" sect:"cluster"`
+	MultiAZ bool `env:"MULTI_AZ" sect:"cluster" default:"false"`
 
 	// NoDestroy leaves the cluster running after testing.
-	NoDestroy bool `env:"NO_DESTROY" sect:"cluster"`
+	NoDestroy bool `env:"NO_DESTROY" sect:"cluster" default:"false"`
 
 	// Kubeconfig is used to access a cluster.
 	Kubeconfig []byte `env:"TEST_KUBECONFIG" sect:"cluster"`
 
+	// AfterTestClusterWait is how long to keep a cluster around after tests have run.
+	AfterTestClusterWait int64 `env:"AFTER_TEST_CLUSTER_WAIT" sect:"environment" default:"60"`
+
+	// ClusterUpTimeout is how long to wait before failing a cluster launch.
+	ClusterUpTimeout int64 `env:"CLUSTER_UP_TIMEOUT" sect:"environment" default:"135"`
+
 	// OSDEnv is the OpenShift Dedicated environment used to provision clusters.
-	OSDEnv string `env:"OSD_ENV" sect:"environment"`
+	OSDEnv string `env:"OSD_ENV" sect:"environment" default:"prod"`
 
 	// DebugOSD shows debug level messages when enabled.
-	DebugOSD bool `env:"DEBUG_OSD" sect:"environment"`
+	DebugOSD bool `env:"DEBUG_OSD" sect:"environment" default:"false"`
 
 	// NoDestroyDelay circumvents the 60min delay before a cluster is deleted
 	// This is highly useful when trying to debug things locally. :)
-	NoDestroyDelay bool `env:"NO_DESTROY_DELAY" sect:"environment"`
+	NoDestroyDelay bool `env:"NO_DESTROY_DELAY" sect:"environment" default:"false"`
 
 	// GinkgoSkip is a regex passed to Ginkgo that skips any test suites matching the regex. ex. "Operator"
 	GinkgoSkip string `env:"GINKGO_SKIP" sect:"tests"`

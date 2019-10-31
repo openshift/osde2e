@@ -8,7 +8,6 @@ import (
 	"os"
 	"path"
 	"testing"
-	"time"
 
 	"github.com/onsi/ginkgo"
 	"github.com/onsi/ginkgo/reporters"
@@ -20,11 +19,6 @@ import (
 
 // OSD is used to deploy and manage clusters.
 var OSD *osd.OSD
-
-const (
-	// metadata key holding build-version
-	buildVersionKey = "build-version"
-)
 
 // RunE2ETests runs the osde2e test suite using the given cfg.
 func RunE2ETests(t *testing.T, cfg *config.Config) {
@@ -40,12 +34,6 @@ func RunE2ETests(t *testing.T, cfg *config.Config) {
 		if dir, err := ioutil.TempDir("", "osde2e"); err == nil {
 			cfg.ReportDir = dir
 		}
-	}
-
-	// ensure to wait longer than infra alerting rules thresholds
-	// otherwise startup failures won't trigger alerts
-	if cfg.ClusterUpTimeout == 0 {
-		cfg.ClusterUpTimeout = time.Duration(135) * time.Minute
 	}
 
 	// setup OSD unless Kubeconfig is present

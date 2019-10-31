@@ -125,10 +125,10 @@ func (u *OSD) DeleteCluster(clusterID string) error {
 
 // WaitForClusterReady blocks until clusterID is ready or a number of retries has been attempted.
 func (u *OSD) WaitForClusterReady(cfg *config.Config) error {
-	log.Printf("Waiting %v for cluster '%s' to be ready...\n", cfg.ClusterUpTimeout, cfg.ClusterID)
+	log.Printf("Waiting %v minutes for cluster '%s' to be ready...\n", cfg.ClusterUpTimeout, cfg.ClusterID)
 	cleanRuns := 0
 
-	return wait.PollImmediate(30*time.Second, cfg.ClusterUpTimeout, func() (bool, error) {
+	return wait.PollImmediate(30*time.Second, time.Duration(cfg.ClusterUpTimeout)*time.Minute, func() (bool, error) {
 		if state, err := u.ClusterState(cfg.ClusterID); state == v1.ClusterStateReady {
 			if success, err := u.PollClusterHealth(cfg); success {
 				cleanRuns++

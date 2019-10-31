@@ -76,12 +76,3 @@ func setupUpgradeVersion(cfg *config.Config, osd *osd.OSD) (err error) {
 		cfg.ClusterVersion, cfg.UpgradeReleaseName, cfg.UpgradeReleaseStream)
 	return
 }
-
-func buildVersion(cfg *config.Config) string {
-	// use just version if not upgrading
-	if cfg.UpgradeReleaseStream == "" && cfg.UpgradeImage == "" {
-		return cfg.ClusterVersion
-	}
-
-	return fmt.Sprintf("%s-%s", cfg.ClusterVersion, cfg.UpgradeReleaseName)
-}
