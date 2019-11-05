@@ -4,10 +4,11 @@ package osd
 import (
 	"errors"
 	"fmt"
-	uhc "github.com/openshift-online/uhc-sdk-go/pkg/client"
-	accounts "github.com/openshift-online/uhc-sdk-go/pkg/client/accountsmgmt/v1"
-	clusters "github.com/openshift-online/uhc-sdk-go/pkg/client/clustersmgmt/v1"
-	uhcerr "github.com/openshift-online/uhc-sdk-go/pkg/client/errors"
+
+	ocm "github.com/openshift-online/ocm-sdk-go"
+	accounts "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"
+	clusters "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
+	ocmerr "github.com/openshift-online/ocm-sdk-go/errors"
 )
 
 const (
@@ -23,7 +24,7 @@ const (
 
 // New setups a client to connect to OSD.
 func New(token, env string, debug bool) (*OSD, error) {
-	logger, err := uhc.NewGoLoggerBuilder().
+	logger, err := ocm.NewGoLoggerBuilder().
 		Debug(debug).
 		Build()
 	if err != nil {
@@ -33,7 +34,7 @@ func New(token, env string, debug bool) (*OSD, error) {
 	// select correct environment
 	url := Environments.Choose(env)
 
-	builder := uhc.NewConnectionBuilder().
+	builder := ocm.NewConnectionBuilder().
 		URL(url).
 		TokenURL(TokenURL).
 		Client(ClientID, "").
@@ -52,7 +53,7 @@ func New(token, env string, debug bool) (*OSD, error) {
 
 // OSD acts as a client to manage an instance.
 type OSD struct {
-	conn *uhc.Connection
+	conn *ocm.Connection
 }
 
 // CurrentAccount returns the current account being used.
@@ -81,7 +82,7 @@ func (u *OSD) versions() *clusters.VersionsClient {
 	return u.conn.ClustersMgmt().V1().Versions()
 }
 
-func errResp(resp *uhcerr.Error) error {
+func errResp(resp *ocmerr.Error) error {
 	if resp != nil {
 		return fmt.Errorf("api error: %s", resp.Reason())
 	}

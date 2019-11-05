@@ -63,26 +63,13 @@ var _ = ginkgo.AfterSuite(func() {
 		Expect(err).NotTo(HaveOccurred(), "failed to collect cluster logs")
 		writeLogs(cfg, logs)
 
-		if cfg.NoDestroy {
-			log.Println("NO_DESTROY is set, skipping deleting cluster.")
-			return
-		}
-
-		if cfg.NoDestroyDelay {
-			log.Printf("Skipping sleep for cluster debugging")
+		if cfg.DestroyClusterAfterTest {
+			log.Printf("Destroying cluster '%s'...", cfg.ClusterID)
+			err = OSD.DeleteCluster(cfg.ClusterID)
+			Expect(err).NotTo(HaveOccurred(), "failed to destroy cluster")
 		} else {
-			log.Printf("Sleeping for %d minutes before destroying cluster '%s'", cfg.AfterTestClusterWait, cfg.ClusterID)
-			startTime := time.Now()
-			for time.Since(startTime) < time.Duration(cfg.AfterTestClusterWait)*time.Minute {
-				time.Sleep(1 * time.Minute)
-				log.Print(".")
-			}
-			log.Printf("Done")
+			log.Printf("For debugging, please look for cluster ID %s in environment %s", cfg.ClusterID, cfg.OSDEnv)
 		}
-
-		log.Printf("Destroying cluster '%s'...", cfg.ClusterID)
-		err = OSD.DeleteCluster(cfg.ClusterID)
-		Expect(err).NotTo(HaveOccurred(), "failed to destroy cluster")
 	}
 })
 

@@ -84,14 +84,6 @@ before failing the test.
 - Type: `bool`
 - Default: `false`
 
-### `NO_DESTROY_DELAY`
-
-- NoDestroyDelay circumvents the 60min delay before a cluster is deleted
-This is highly useful when trying to debug things locally. :)
-
-- Type: `bool`
-- Default: `false`
-
 ### `OSD_ENV`
 
 - OSDEnv is the OpenShift Dedicated environment used to provision clusters.
@@ -101,6 +93,13 @@ This is highly useful when trying to debug things locally. :)
 
 ## cluster
 
+
+### `CLUSTER_EXPIRY_IN_MINUTES`
+
+- ClusterExpiryInMinutes is how long before a cluster expires and is deleted by OSD.
+
+- Type: `int64`
+- Default: `210`
 
 ### `CLUSTER_ID`
 
@@ -114,16 +113,16 @@ This is highly useful when trying to debug things locally. :)
 
 - Type: `string`
 
+### `DESTROY_CLUSTER`
+
+- DestroyClusterAfterTest set to false if you want OCM to clean up the cluster itself after the test completes.
+
+- Type: `bool`
+- Default: `true`
+
 ### `MULTI_AZ`
 
 - MultiAZ deploys a cluster across multiple availability zones.
-
-- Type: `bool`
-- Default: `false`
-
-### `NO_DESTROY`
-
-- NoDestroy leaves the cluster running after testing.
 
 - Type: `bool`
 - Default: `false`

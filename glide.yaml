@@ -24,8 +24,8 @@ import:
   subpackages:
   - project/clientset/versioned
   - image/clientset/versioned/fake
-- package: github.com/openshift-online/uhc-sdk-go
-  version: v0.1.25
+- package: github.com/openshift-online/ocm-sdk-go
+  version: v0.1.50
   subpackages:
   - pkg/client
   - pkg/client/clustersmgmt/v1
