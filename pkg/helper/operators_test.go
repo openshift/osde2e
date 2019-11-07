@@ -5,6 +5,7 @@ import (
 
 	configv1 "github.com/openshift/api/config/v1"
 	fakeConfig "github.com/openshift/client-go/config/clientset/versioned/fake"
+	"github.com/openshift/osde2e/pkg/config"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 )
@@ -63,19 +64,35 @@ func TestCheckOperatorReadiness(t *testing.T) {
 		description string
 		expected    bool
 		objs        []runtime.Object
+		skip        string
 	}{
-		{"no operators", false, nil},
-		{"single operator success", true, []runtime.Object{clusterOperator("a")}},
-		{"single operator failure", false, []runtime.Object{unavailableClusterOperator("a")}},
-		{"single operator progressing", false, []runtime.Object{progressingClusterOperator("a")}},
-		{"multi operator success", true, []runtime.Object{clusterOperator("a"), clusterOperator("b")}},
-		{"multi operator one progressing", false, []runtime.Object{clusterOperator("a"), progressingClusterOperator("b")}},
-		{"multi operator one failure", false, []runtime.Object{clusterOperator("a"), unavailableClusterOperator("b")}},
+		{"no operators", false, nil, ""},
+		{"single operator success", true, []runtime.Object{clusterOperator("a")}, ""},
+		{"single operator failure", false, []runtime.Object{unavailableClusterOperator("a")}, ""},
+		{"single operator progressing", false, []runtime.Object{progressingClusterOperator("a")}, ""},
+		{"multi operator success", true, []runtime.Object{clusterOperator("a"), clusterOperator("b")}, ""},
+		{"multi operator one progressing", false, []runtime.Object{clusterOperator("a"), progressingClusterOperator("b")}, ""},
+		{"multi operator one failure", false, []runtime.Object{clusterOperator("a"), unavailableClusterOperator("b")}, ""},
+		{"multi operator, skip success", true, []runtime.Object{
+			clusterOperator("a"),
+			unavailableClusterOperator("b"),
+			unavailableClusterOperator("c"),
+			unavailableClusterOperator("d"),
+			clusterOperator("e"),
+		}, "b,c,d"},
+		{"multi operator, skip failure", false, []runtime.Object{
+			clusterOperator("a"),
+			unavailableClusterOperator("b"),
+			unavailableClusterOperator("c"),
+			unavailableClusterOperator("d"),
+		}, "b,c"},
 	}
 
 	for _, test := range tests {
 		cfgClient := fakeConfig.NewSimpleClientset(test.objs...)
-		state, err := CheckOperatorReadiness(cfgClient.ConfigV1())
+		c := config.Config{}
+		c.OperatorSkip = test.skip
+		state, err := CheckOperatorReadiness(&c, cfgClient.ConfigV1())
 
 		if err != nil {
 			t.Errorf("Unexpected error: %s", err)

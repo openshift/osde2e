@@ -189,7 +189,7 @@ func (u *OSD) PollClusterHealth(cfg *config.Config) (status bool, err error) {
 		return false, nil
 	}
 
-	if check, err := helper.CheckOperatorReadiness(oscfg.ConfigV1()); !check || err != nil {
+	if check, err := helper.CheckOperatorReadiness(cfg, oscfg.ConfigV1()); !check || err != nil {
 		return false, nil
 	}
 
