@@ -26,8 +26,16 @@ func CheckOperatorReadiness(cfg *config.Config, configClient configclient.Config
 		return false, nil
 	}
 
+	operatorSkipList := make(map[string]string)
+	if len(cfg.OperatorSkip) > 0 {
+		operatorSkipVals := strings.Split(cfg.OperatorSkip, ",")
+		for _, val := range operatorSkipVals {
+			operatorSkipList[val] = ""
+		}
+	}
+
 	for _, co := range list.Items {
-		if !strings.Contains(cfg.OperatorSkip, co.GetName()) {
+		if _, ok := operatorSkipList[co.GetName()]; !ok {
 			for _, cos := range co.Status.Conditions {
 				if (cos.Type != "Available" && cos.Status != "False") && cos.Type != "Upgradeable" {
 					log.Printf("Operator %v type %v is %v: %v", co.ObjectMeta.Name, cos.Type, cos.Status, cos.Message)
