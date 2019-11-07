@@ -5,7 +5,7 @@ import (
 	"log"
 	"time"
 
-	v1 "github.com/openshift-online/uhc-sdk-go/pkg/client/clustersmgmt/v1"
+	v1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 	osconfig "github.com/openshift/client-go/config/clientset/versioned"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
@@ -29,7 +29,7 @@ func (u *OSD) LaunchCluster(cfg *config.Config) (string, error) {
 
 	// Calculate an expiration date for the cluster so that it will be automatically deleted if
 	// we happen to forget to do it:
-	expiration := time.Now().Add(8 * time.Hour)
+	expiration := time.Now().Add(time.Duration(cfg.ClusterExpiryInMinutes) * time.Minute).UTC() // UTC() to workaround SDA-1567
 
 	cluster, err := v1.NewCluster().
 		Name(cfg.ClusterName).
