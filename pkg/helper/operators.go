@@ -2,13 +2,15 @@ package helper
 
 import (
 	"log"
+	"strings"
 
 	configclient "github.com/openshift/client-go/config/clientset/versioned/typed/config/v1"
+	"github.com/openshift/osde2e/pkg/config"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // CheckOperatorReadiness attempts to look at the state of all operator and returns true if things are healthy.
-func CheckOperatorReadiness(configClient configclient.ConfigV1Interface) (bool, error) {
+func CheckOperatorReadiness(cfg *config.Config, configClient configclient.ConfigV1Interface) (bool, error) {
 	success := true
 	log.Print("Checking that all Operators are running or completed...")
 
@@ -25,10 +27,12 @@ func CheckOperatorReadiness(configClient configclient.ConfigV1Interface) (bool, 
 	}
 
 	for _, co := range list.Items {
-		for _, cos := range co.Status.Conditions {
-			if (cos.Type != "Available" && cos.Status != "False") && cos.Type != "Upgradeable" {
-				log.Printf("Operator %v type %v is %v: %v", co.ObjectMeta.Name, cos.Type, cos.Status, cos.Message)
-				success = false
+		if !strings.Contains(cfg.OperatorSkip, co.GetName()) {
+			for _, cos := range co.Status.Conditions {
+				if (cos.Type != "Available" && cos.Status != "False") && cos.Type != "Upgradeable" {
+					log.Printf("Operator %v type %v is %v: %v", co.ObjectMeta.Name, cos.Type, cos.Status, cos.Message)
+					success = false
+				}
 			}
 		}
 	}

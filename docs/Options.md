@@ -40,6 +40,13 @@ These options are required to run osde2e.
 
 - Type: `string`
 
+### `OPERATOR_SKIP`
+
+- OperatorSkip is a comma-delimited list of operator names to ignore health checks from. ex. "insights,telemetry"
+
+- Type: `string`
+- Default: `insights`
+
 ### `POLLING_TIMEOUT`
 
 - PollingTimeout is how long (in mimutes) to wait for an object to be created

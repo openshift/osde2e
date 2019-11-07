@@ -87,4 +87,7 @@ type Config struct {
 
 	// UpgradeImage is the release image a cluster is upgraded to. If set, it overrides the release stream and upgrades.
 	UpgradeImage string `env:"UPGRADE_IMAGE" sect:"upgrade"`
+
+	// OperatorSkip is a comma-delimited list of operator names to ignore health checks from. ex. "insights,telemetry"
+	OperatorSkip string `env:"OPERATOR_SKIP" sect:"tests" default:"insights"`
 }
