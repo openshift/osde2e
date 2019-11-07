@@ -13,6 +13,7 @@ import (
 
 	"github.com/openshift/osde2e/pkg/config"
 	"github.com/openshift/osde2e/pkg/helper"
+	"github.com/openshift/osde2e/pkg/osd"
 )
 
 const (
@@ -33,7 +34,7 @@ var (
 )
 
 // RunUpgrade uses the OpenShift extended suite to upgrade a cluster to the image provided in cfg.
-func RunUpgrade(cfg *config.Config) error {
+func RunUpgrade(cfg *config.Config, OSD *osd.OSD) error {
 	// setup helper
 	h := &helper.H{
 		Config: cfg,
@@ -58,6 +59,11 @@ func RunUpgrade(cfg *config.Config) error {
 	}); err != nil {
 		return fmt.Errorf("failed to upgrade cluster: %v", err)
 	}
+
+	if err = OSD.WaitForClusterReady(cfg); err != nil {
+		return fmt.Errorf("failed waiting for cluster ready: %v", err)
+	}
+
 	log.Println("Upgrade complete!")
 	return nil
 }
