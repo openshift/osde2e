@@ -38,7 +38,7 @@ var _ = ginkgo.SynchronizedBeforeSuite(func() []byte {
 
 	// upgrade cluster if requested
 	if cfg.UpgradeImage != "" || cfg.UpgradeReleaseStream != "" {
-		err = upgrade.RunUpgrade(cfg)
+		err = upgrade.RunUpgrade(cfg, OSD)
 		Expect(err).ShouldNot(HaveOccurred(), "failed performing upgrade")
 	}
 
