@@ -8,8 +8,8 @@ import (
 	"net/http"
 	"path"
 
-	accounts "github.com/openshift-online/uhc-sdk-go/pkg/client/accountsmgmt/v1"
-	osderrors "github.com/openshift-online/uhc-sdk-go/pkg/client/errors"
+	accounts "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"
+	osderrors "github.com/openshift-online/ocm-sdk-go/errors"
 
 	"github.com/openshift/osde2e/pkg/config"
 )
@@ -40,7 +40,7 @@ func (u *OSD) CheckQuota(cfg *config.Config) (bool, error) {
 		return false, fmt.Errorf("could not get quota: %v", err)
 	}
 
-	// TODO: use compute_machine_type when available in UHC SDK
+	// TODO: use compute_machine_type when available in OCM SDK
 	_ = flavour.Nodes()
 	machineType := ""
 
@@ -92,7 +92,7 @@ func HasQuotaFor(q *accounts.ResourceQuota, cfg *config.Config, resourceType, ma
 	return false
 }
 
-// TODO: use uhc-sdk-go resource_summary method once available
+// TODO: use ocm-sdk-go resource_summary method once available
 func (u *OSD) getQuotaSummary(orgId string) (*resourceSummaryListResponse, error) {
 	resp := new(resourceSummaryListResponse)
 	summaryPath := path.Join("/api/accounts_mgmt", APIVersion, "organizations", orgId, "quota_summary")

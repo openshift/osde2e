@@ -116,8 +116,8 @@ imports:
   - matchers/support/goraph/node
   - matchers/support/goraph/util
   - types
-- name: github.com/openshift-online/uhc-sdk-go
-  version: 743491d4a657f4942eb8a8764795fd7f06582c0e
+- name: github.com/openshift-online/ocm-sdk-go
+  version: 3f971b7e42daf1e96c8d0c44d334497d092b5f71
   subpackages:
   - pkg/client
   - pkg/client/accountsmgmt

@@ -51,11 +51,14 @@ type Config struct {
 	// MultiAZ deploys a cluster across multiple availability zones.
 	MultiAZ bool `env:"MULTI_AZ" sect:"cluster" default:"false"`
 
-	// NoDestroy leaves the cluster running after testing.
-	NoDestroy bool `env:"NO_DESTROY" sect:"cluster" default:"false"`
+	// DestroyClusterAfterTest set to false if you want OCM to clean up the cluster itself after the test completes.
+	DestroyClusterAfterTest bool `env:"DESTROY_CLUSTER" sect:"cluster" default:"true"`
 
 	// Kubeconfig is used to access a cluster.
 	Kubeconfig []byte `env:"TEST_KUBECONFIG" sect:"cluster"`
+
+	// ClusterExpiryInMinutes is how long before a cluster expires and is deleted by OSD.
+	ClusterExpiryInMinutes int64 `env:"CLUSTER_EXPIRY_IN_MINUTES" sect:"cluster" default:"210"`
 
 	// AfterTestClusterWait is how long to keep a cluster around after tests have run.
 	AfterTestClusterWait int64 `env:"AFTER_TEST_CLUSTER_WAIT" sect:"environment" default:"60"`
@@ -68,10 +71,6 @@ type Config struct {
 
 	// DebugOSD shows debug level messages when enabled.
 	DebugOSD bool `env:"DEBUG_OSD" sect:"environment" default:"false"`
-
-	// NoDestroyDelay circumvents the 60min delay before a cluster is deleted
-	// This is highly useful when trying to debug things locally. :)
-	NoDestroyDelay bool `env:"NO_DESTROY_DELAY" sect:"environment" default:"false"`
 
 	// GinkgoSkip is a regex passed to Ginkgo that skips any test suites matching the regex. ex. "Operator"
 	GinkgoSkip string `env:"GINKGO_SKIP" sect:"tests"`
@@ -87,4 +86,7 @@ type Config struct {
 
 	// UpgradeImage is the release image a cluster is upgraded to. If set, it overrides the release stream and upgrades.
 	UpgradeImage string `env:"UPGRADE_IMAGE" sect:"upgrade"`
+
+	// OperatorSkip is a comma-delimited list of operator names to ignore health checks from. ex. "insights,telemetry"
+	OperatorSkip string `env:"OPERATOR_SKIP" sect:"tests" default:"insights"`
 }
