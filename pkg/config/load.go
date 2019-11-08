@@ -1,17 +1,21 @@
 package config
 
 import (
+	"fmt"
+	"log"
 	"os"
 	"reflect"
 	"strconv"
 )
 
 func init() {
-	Cfg.LoadFromEnv()
+	if err := Cfg.LoadFromEnv(); err != nil {
+		log.Fatal("error loading config from environment: ", err)
+	}
 }
 
 // LoadFromEnv sets values from environment variables specified in `env` tags.
-func (c *Config) LoadFromEnv() {
+func (c *Config) LoadFromEnv() error {
 	v := reflect.ValueOf(c).Elem()
 	for i := 0; i < v.Type().NumField(); i++ {
 		f := v.Type().Field(i)
@@ -23,6 +27,8 @@ func (c *Config) LoadFromEnv() {
 			case reflect.Bool:
 				if newBool, err := strconv.ParseBool(defaultValue); err == nil {
 					field.SetBool(newBool)
+				} else {
+					return fmt.Errorf("error parsing bool value for field %s: %v", f.Name, err)
 				}
 			case reflect.Slice:
 				field.SetBytes([]byte(defaultValue))
@@ -31,6 +37,8 @@ func (c *Config) LoadFromEnv() {
 			case reflect.Int64:
 				if num, err := strconv.ParseInt(defaultValue, 10, 0); err == nil {
 					field.SetInt(num)
+				} else {
+					return fmt.Errorf("error parsing int value for field %s: %v", f.Name, err)
 				}
 			}
 		}
@@ -41,7 +49,11 @@ func (c *Config) LoadFromEnv() {
 				case reflect.String:
 					field.SetString(envVal)
 				case reflect.Bool:
-					field.SetBool(true)
+					if newBool, err := strconv.ParseBool(envVal); err == nil {
+						field.SetBool(newBool)
+					} else {
+						return fmt.Errorf("error parsing bool value for field %s: %v", f.Name, err)
+					}
 				case reflect.Slice:
 					field.SetBytes([]byte(envVal))
 				case reflect.Int:
@@ -49,9 +61,13 @@ func (c *Config) LoadFromEnv() {
 				case reflect.Int64:
 					if num, err := strconv.ParseInt(envVal, 10, 0); err == nil {
 						field.SetInt(num)
+					} else {
+						return fmt.Errorf("error parsing int value for field %s: %v", f.Name, err)
 					}
 				}
 			}
 		}
 	}
+
+	return nil
 }
