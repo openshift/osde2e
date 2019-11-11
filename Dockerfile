@@ -6,17 +6,19 @@ WORKDIR ${PKG}
 RUN apt-get update && apt-get install -y make golang-glide git
 
 # resolve and install imports
-ADD glide.yaml glide.lock ${PKG}
+COPY glide.yaml glide.lock ${PKG}
 RUN glide install --strip-vendor
 
 # compile test binary
-ADD . ${PKG}
+COPY . ${PKG}
 
 RUN make check
 
 RUN make out/osde2e
 
 FROM gcr.io/distroless/base
+
+COPY artifacts artifacts
 COPY --from=0 /go/src/github.com/openshift/osde2e/out/osde2e .
 
 ENTRYPOINT [ "/osde2e" ]

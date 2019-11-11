@@ -24,6 +24,7 @@ func New() *H {
 	helper := &H{
 		Config: config.Cfg,
 	}
+	helper.installedWorkloads = make(map[string]bool)
 	ginkgo.BeforeEach(helper.Setup)
 	ginkgo.AfterEach(helper.Cleanup)
 	return helper
@@ -35,8 +36,9 @@ type H struct {
 	*config.Config
 
 	// internal
-	restConfig *rest.Config
-	proj       *projectv1.Project
+	restConfig         *rest.Config
+	proj               *projectv1.Project
+	installedWorkloads map[string]bool
 }
 
 // Setup configures a *rest.Config using the embedded kubeconfig then sets up a Project for tests to run in.
@@ -67,4 +69,20 @@ func (h *H) Cleanup() {
 func (h *H) CurrentProject() string {
 	Expect(h.proj).NotTo(BeNil(), "no project is currently set")
 	return h.proj.Name
+}
+
+// GetWorkloads returns a list of workloads this osde2e run has installed
+func (h *H) GetWorkloads() map[string]bool {
+	return h.installedWorkloads
+}
+
+// GetWorkload takes a workload name and returns true or false depending on if it's installed
+func (h *H) GetWorkload(name string) bool {
+	_, ok := h.installedWorkloads[name]
+	return ok
+}
+
+// AddWorkload uniquely appends a workload to the workloads list
+func (h *H) AddWorkload(name string) {
+	h.installedWorkloads[name] = true
 }

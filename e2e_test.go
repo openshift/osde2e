@@ -10,6 +10,7 @@ import (
 	_ "github.com/openshift/osde2e/test/operators"
 	_ "github.com/openshift/osde2e/test/state"
 	_ "github.com/openshift/osde2e/test/verify"
+	_ "github.com/openshift/osde2e/test/workloads/guestbook"
 )
 
 func TestE2E(t *testing.T) {
