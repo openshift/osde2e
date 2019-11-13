@@ -1,8 +1,9 @@
-package osde2e
+package osde2e_test
 
 import (
 	"testing"
 
+	"github.com/openshift/osde2e/common"
 	"github.com/openshift/osde2e/pkg/config"
 
 	// import suites to be tested
@@ -14,5 +15,5 @@ import (
 
 func TestE2E(t *testing.T) {
 	cfg := config.Cfg
-	RunE2ETests(t, cfg)
+	common.RunE2ETests(t, cfg)
 }
