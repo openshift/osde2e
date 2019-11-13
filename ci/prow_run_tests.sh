@@ -14,12 +14,17 @@ set -o pipefail
     }
 
     # One argument, pointing to a secrets directory, is expected
-    if [ "$#" -ne "1" ]; then
-        echo "1 argument expected."
+    if [ "$#" -lt "1" ] || [ "$#" -gt "2" ]; then
+        echo "1 or 2 arguments expected."
         exit 1
     fi
 
     SECRETS=$1
+    TEST="test"
+
+    if [ ! -z "$2" ]; then
+        TEST="$TEST-$2"
+    fi
 
     if [ ! -d "$SECRETS" ]; then
         echo "Secrets directory ($SECRETS) does not exist."
@@ -39,5 +44,5 @@ set -o pipefail
     export AWS_ACCESS_KEY_ID=$(cat $AWS_ACCESS_KEY_FILE)
     export AWS_SECRET_ACCESS_KEY=$(cat $AWS_SECRET_ACCESS_KEY_FILE)
 
-    make test
+    make $TEST
 } 2>&1 | tee -a $REPORT_DIR/test_output.log
