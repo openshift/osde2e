@@ -39,6 +39,13 @@ type H struct {
 	proj       *projectv1.Project
 }
 
+// SetupNoProj configures a *rest.Config using the embedded kubeconfig
+func (h *H) SetupNoProj() {
+	var err error
+	h.restConfig, err = clientcmd.RESTConfigFromKubeConfig(h.Kubeconfig)
+	Expect(err).ShouldNot(HaveOccurred(), "failed to configure client")
+}
+
 // Setup configures a *rest.Config using the embedded kubeconfig then sets up a Project for tests to run in.
 func (h *H) Setup() {
 	var err error
@@ -56,8 +63,10 @@ func (h *H) Setup() {
 
 // Cleanup deletes a Project after tests have been ran.
 func (h *H) Cleanup() {
-	err := h.cleanup(h.proj.Name)
-	Expect(err).ShouldNot(HaveOccurred(), "could not delete project '%s'", h.proj)
+	if h.proj != nil {
+		err := h.cleanup(h.proj.Name)
+		Expect(err).ShouldNot(HaveOccurred(), "could not delete project '%s'", h.proj)
+	}
 
 	h.restConfig = nil
 	h.proj = nil
