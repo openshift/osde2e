@@ -39,7 +39,7 @@ func RunUpgrade(cfg *config.Config, OSD *osd.OSD) error {
 	h := &helper.H{
 		Config: cfg,
 	}
-	h.Setup()
+	h.SetupNoProj()
 	defer h.Cleanup()
 
 	log.Printf("Upgrading cluster to UPGRADE_IMAGE '%s'", cfg.UpgradeImage)

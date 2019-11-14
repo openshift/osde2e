@@ -12,10 +12,10 @@ import (
 
 	"github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"k8s.io/client-go/tools/clientcmd"
 
 	"github.com/openshift/osde2e/pkg/config"
 	"github.com/openshift/osde2e/pkg/osd"
-	"github.com/openshift/osde2e/pkg/upgrade"
 )
 
 func init() {
@@ -34,12 +34,6 @@ var _ = ginkgo.SynchronizedBeforeSuite(func() []byte {
 		// Give the cluster some breathing room.
 		log.Println("OSD cluster installed. Sleeping for 600s.")
 		time.Sleep(600 * time.Second)
-	}
-
-	// upgrade cluster if requested
-	if cfg.UpgradeImage != "" || cfg.UpgradeReleaseStream != "" {
-		err = upgrade.RunUpgrade(cfg, OSD)
-		Expect(err).ShouldNot(HaveOccurred(), "failed performing upgrade")
 	}
 
 	return []byte{}
@@ -62,14 +56,6 @@ var _ = ginkgo.AfterSuite(func() {
 		logs, err := OSD.FullLogs(cfg.ClusterID)
 		Expect(err).NotTo(HaveOccurred(), "failed to collect cluster logs")
 		writeLogs(cfg, logs)
-
-		if cfg.DestroyClusterAfterTest {
-			log.Printf("Destroying cluster '%s'...", cfg.ClusterID)
-			err = OSD.DeleteCluster(cfg.ClusterID)
-			Expect(err).NotTo(HaveOccurred(), "failed to destroy cluster")
-		} else {
-			log.Printf("For debugging, please look for cluster ID %s in environment %s", cfg.ClusterID, cfg.OSDEnv)
-		}
 	}
 })
 
@@ -106,6 +92,15 @@ func setupCluster(cfg *config.Config) (err error) {
 // useKubeconfig reads the path provided for a TEST_KUBECONFIG and uses it for testing.
 func useKubeconfig(cfg *config.Config) (err error) {
 	filename := string(cfg.Kubeconfig)
+
+	_, err = clientcmd.RESTConfigFromKubeConfig(cfg.Kubeconfig)
+	if err != nil {
+		log.Println("Not an existing Kubeconfig, attempting to read file instead...")
+	} else {
+		log.Println("Existing valid kubeconfig!")
+		return nil
+	}
+
 	cfg.Kubeconfig, err = ioutil.ReadFile(filename)
 	if err != nil {
 		return fmt.Errorf("failed reading '%s' which has been set as the TEST_KUBECONFIG: %v", filename, err)
