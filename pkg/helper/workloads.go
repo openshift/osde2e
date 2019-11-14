@@ -26,7 +26,7 @@ func ApplyYamlInFolder(folder, namespace string, kube kubernetes.Interface) ([]r
 		err     error
 	)
 	pwd, _ := os.Getwd()
-	err = filepath.Walk(pwd+folder, func(path string, info os.FileInfo, err error) error {
+	err = filepath.Walk(filepath.Join(pwd, folder), func(path string, info os.FileInfo, err error) error {
 		if strings.Contains(path, ".yaml") || strings.Contains(path, ".yml") {
 			files = append(files, path)
 		}
@@ -112,6 +112,7 @@ func CreateRuntimeObject(obj runtime.Object, ns string, kube kubernetes.Interfac
 		})
 	}
 
+	// TODO: As new object types need to be created, add support for them here
 	switch obj.GetObjectKind().GroupVersionKind().Kind {
 	case "Pod":
 		if _, ok = obj.(*corev1.Pod); !ok {

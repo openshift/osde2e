@@ -2,6 +2,7 @@ package helper
 
 import (
 	"os"
+	"path/filepath"
 	"testing"
 
 	kubernetes "k8s.io/client-go/kubernetes/fake"
@@ -14,9 +15,9 @@ func TestCreateWorkload(t *testing.T) {
 		description string
 		file        string
 	}{
-		{"pod", pwd + "/../../artifacts/workloads/tests/pod.yaml"},
-		{"pods", pwd + "/../../artifacts/workloads/tests/pods.yaml"},
-		{"service", pwd + "/../../artifacts/workloads/tests/service.yaml"},
+		{"pod", filepath.Join(pwd, "/../../artifacts/workloads/tests/pod.yaml")},
+		{"pods", filepath.Join(pwd, "/../../artifacts/workloads/tests/pods.yaml")},
+		{"service", filepath.Join(pwd, "/../../artifacts/workloads/tests/service.yaml")},
 	}
 
 	for _, test := range tests {
