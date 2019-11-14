@@ -27,7 +27,7 @@ func ApplyYamlInFolder(folder, namespace string, kube kubernetes.Interface) ([]r
 	)
 	pwd, _ := os.Getwd()
 	err = filepath.Walk(filepath.Join(pwd, folder), func(path string, info os.FileInfo, err error) error {
-		if strings.Contains(info.Name(), ".yaml") || strings.Contains(info.Name(), ".yml") {
+		if strings.HasSuffix(info.Name(), ".yaml") || strings.HasSuffix(info.Name(), ".yml") {
 			files = append(files, path)
 		}
 		return nil
