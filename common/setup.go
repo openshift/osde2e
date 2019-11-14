@@ -1,4 +1,4 @@
-package osde2e
+package common
 
 import (
 	"fmt"

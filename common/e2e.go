@@ -1,5 +1,5 @@
-// Package osde2e launches an OSD cluster, performs tests on it, and destroys it.
-package osde2e
+// Package common launches an OSD cluster, performs tests on it, and destroys it.
+package common
 
 import (
 	"fmt"
