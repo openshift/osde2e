@@ -30,7 +30,7 @@ func TestResultsService(t *testing.T) {
 	done := make(chan struct{})
 	errs := make(chan error, 1)
 	go func() {
-		err := r.waitForEndpoints(1800)
+		err := r.waitForCompletion(1800)
 		if err != nil {
 			errs <- fmt.Errorf("Failed waiting for endpoints: %v", err)
 		} else {

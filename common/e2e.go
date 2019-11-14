@@ -1,5 +1,5 @@
-// Package osde2e launches an OSD cluster, performs tests on it, and destroys it.
-package osde2e
+// Package common launches an OSD cluster, performs tests on it, and destroys it.
+package common
 
 import (
 	"fmt"
@@ -15,6 +15,7 @@ import (
 
 	"github.com/openshift/osde2e/pkg/config"
 	"github.com/openshift/osde2e/pkg/osd"
+	"github.com/openshift/osde2e/pkg/upgrade"
 )
 
 // OSD is used to deploy and manage clusters.
@@ -60,8 +61,7 @@ func RunE2ETests(t *testing.T, cfg *config.Config) {
 	}
 
 	// setup reporter
-	err = os.Mkdir(cfg.ReportDir, os.ModePerm)
-	if err != nil {
+	if err = os.Mkdir(cfg.ReportDir, os.ModePerm); err != nil {
 		log.Printf("Could not create reporter directory: %v", err)
 	}
 	reportPath := path.Join(cfg.ReportDir, fmt.Sprintf("junit_%v.xml", cfg.Suffix))
@@ -70,5 +70,24 @@ func RunE2ETests(t *testing.T, cfg *config.Config) {
 	if !cfg.DryRun {
 		log.Println("Running e2e tests...")
 		ginkgo.RunSpecsWithDefaultAndCustomReporters(t, "OSD e2e suite", []ginkgo.Reporter{reporter})
+		// upgrade cluster if requested
+		if cfg.UpgradeImage != "" || cfg.UpgradeReleaseStream != "" {
+			if err = upgrade.RunUpgrade(cfg, OSD); err != nil {
+				t.Errorf("Error performing upgrade: %s", err.Error())
+			}
+
+			log.Println("Running e2e tests POST-UPGRADE...")
+			ginkgo.RunSpecsWithDefaultAndCustomReporters(t, "OSD e2e suite post-upgrade", []ginkgo.Reporter{reporter})
+		}
+
+		if cfg.DestroyClusterAfterTest {
+			log.Printf("Destroying cluster '%s'...", cfg.ClusterID)
+			if err = OSD.DeleteCluster(cfg.ClusterID); err != nil {
+				t.Errorf("Error deleting cluster: %s", err.Error())
+			}
+		} else {
+			log.Printf("For debugging, please look for cluster ID %s in environment %s", cfg.ClusterID, cfg.OSDEnv)
+		}
+
 	}
 }

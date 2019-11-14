@@ -1,6 +1,9 @@
 .PHONY: check generate build-image push-image push-latest test
 
 PKG := github.com/openshift/osde2e
+E2E_PKG := $(PKG)/suites/e2e
+SCALE_PKG := $(PKG)/suites/scale
+
 DIR := $(dir $(realpath $(firstword $(MAKEFILE_LIST))))
 
 IMAGE_NAME := quay.io/app-sre/osde2e
@@ -10,7 +13,7 @@ CONTAINER_ENGINE ?= docker
 
 check: cmd/osde2e-docs
 	go run $(PKG)/$< --check
-	CGO_ENABLED=0 go test -v ./cmd/... ./pkg/... 
+	CGO_ENABLED=0 go test -v ./cmd/... ./pkg/...
 	go get -u github.com/golangci/golangci-lint/cmd/golangci-lint && \
     golangci-lint run -c .golang-ci.yml ./... 
 
@@ -26,10 +29,13 @@ push-latest:
 	$(CONTAINER_ENGINE) tag "$(IMAGE_NAME):$(IMAGE_TAG)" "$(IMAGE_NAME):latest"
 	@$(CONTAINER_ENGINE) --config=$(DOCKER_CONF) push "$(IMAGE_NAME):latest"
 
-test: out/osde2e
-	$< -test.v -ginkgo.skip="$(GINKGO_SKIP)" -test.timeout 8h
+test:
+	go test $(E2E_PKG) -test.v -ginkgo.skip="$(GINKGO_SKIP)" -test.timeout 8h
 
-docker-test:
+test-scale:
+	go test $(SCALE_PKG) -test.v -ginkgo.skip="$(GINKGO_SKIP)" -test.timeout 8h -test.run TestScale
+
+test-docker:
 	$(CONTAINER_ENGINE) run \
 		-t \
 		--rm \
@@ -50,12 +56,6 @@ docker-test:
 		-e AWS_ACCESS_KEY_ID=$(AWS_ACCESS_KEY_ID) \
 		-e AWS_SECRET_ACCESS_KEY=$(AWS_SECRET_ACCESS_KEY) \
 		$(IMAGE_NAME):$(IMAGE_TAG)
-
-out/osde2e: out
-	CGO_ENABLED=0 go test -v -c -o $@ $(PKG)
-
-out:
-	mkdir -p $@
 
 docs/Options.md: cmd/osde2e-docs pkg/config/config.go
 	go run $(PKG)/$<
