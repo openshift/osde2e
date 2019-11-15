@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"path"
+	"path/filepath"
 	"testing"
 
 	"github.com/onsi/ginkgo"
@@ -14,8 +15,13 @@ import (
 	"github.com/onsi/gomega"
 
 	"github.com/openshift/osde2e/pkg/config"
+	"github.com/openshift/osde2e/pkg/metadata"
 	"github.com/openshift/osde2e/pkg/osd"
 	"github.com/openshift/osde2e/pkg/upgrade"
+)
+
+const (
+	customMetadataFile string = "custom-prow-metadata.json"
 )
 
 // OSD is used to deploy and manage clusters.
@@ -44,6 +50,8 @@ func RunE2ETests(t *testing.T, cfg *config.Config) {
 		if OSD, err = osd.New(cfg.UHCToken, cfg.OSDEnv, cfg.DebugOSD); err != nil {
 			t.Fatalf("could not setup OSD: %v", err)
 		}
+
+		metadata.Instance.Environment = cfg.OSDEnv
 
 		// check that enough quota exists for this test if creating cluster
 		if len(cfg.ClusterID) == 0 {
@@ -78,6 +86,12 @@ func RunE2ETests(t *testing.T, cfg *config.Config) {
 
 			log.Println("Running e2e tests POST-UPGRADE...")
 			ginkgo.RunSpecsWithDefaultAndCustomReporters(t, "OSD e2e suite post-upgrade", []ginkgo.Reporter{reporter})
+		}
+
+		if cfg.ReportDir != "" {
+			if err = metadata.Instance.WriteToJSON(filepath.Join(cfg.ReportDir, customMetadataFile)); err != nil {
+				t.Errorf("Error while writing metadata: %s", err.Error())
+			}
 		}
 
 		if cfg.DestroyClusterAfterTest {

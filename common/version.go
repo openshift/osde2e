@@ -6,6 +6,7 @@ import (
 	"log"
 
 	"github.com/openshift/osde2e/pkg/config"
+	"github.com/openshift/osde2e/pkg/metadata"
 	"github.com/openshift/osde2e/pkg/osd"
 	"github.com/openshift/osde2e/pkg/upgrade"
 )
@@ -48,6 +49,9 @@ func setupVersion(cfg *config.Config, osd *osd.OSD, isUpgrade bool) (err error) 
 			return fmt.Errorf("Error finding default cluster version: %v", err)
 		}
 	}
+
+	metadata.Instance.ClusterVersion = cfg.ClusterVersion
+
 	return
 }
 
@@ -70,6 +74,8 @@ func setupUpgradeVersion(cfg *config.Config, osd *osd.OSD) (err error) {
 			return fmt.Errorf("failed retrieving previous version to '%s': %v", cfg.UpgradeReleaseName, err)
 		}
 	}
+
+	metadata.Instance.UpgradeVersion = cfg.UpgradeReleaseName
 
 	// set upgrade image
 	log.Printf("Selecting version '%s' to be able to upgrade to '%s' on release stream '%s'",
