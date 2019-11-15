@@ -15,6 +15,7 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 
 	"github.com/openshift/osde2e/pkg/config"
+	"github.com/openshift/osde2e/pkg/metadata"
 	"github.com/openshift/osde2e/pkg/osd"
 )
 
@@ -78,6 +79,8 @@ func setupCluster(cfg *config.Config) (err error) {
 	} else {
 		log.Printf("CLUSTER_ID of '%s' was provided, skipping cluster creation and using it instead", cfg.ClusterID)
 	}
+
+	metadata.Instance.ClusterID = cfg.ClusterID
 
 	if err = OSD.WaitForClusterReady(cfg); err != nil {
 		return fmt.Errorf("failed waiting for cluster ready: %v", err)

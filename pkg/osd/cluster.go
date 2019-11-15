@@ -13,6 +13,7 @@ import (
 
 	"github.com/openshift/osde2e/pkg/config"
 	"github.com/openshift/osde2e/pkg/helper"
+	"github.com/openshift/osde2e/pkg/metadata"
 )
 
 const (
@@ -128,11 +129,21 @@ func (u *OSD) WaitForClusterReady(cfg *config.Config) error {
 	log.Printf("Waiting %v minutes for cluster '%s' to be ready...\n", cfg.ClusterUpTimeout, cfg.ClusterID)
 	cleanRuns := 0
 
+	clusterStarted := time.Now()
+	var readinessStarted time.Time
+	ocmReady := false
 	return wait.PollImmediate(30*time.Second, time.Duration(cfg.ClusterUpTimeout)*time.Minute, func() (bool, error) {
 		if state, err := u.ClusterState(cfg.ClusterID); state == v1.ClusterStateReady {
+			// This is the first time that we've entered this section, so we'll consider this the time until OCM has said the cluster is ready
+			if !ocmReady {
+				ocmReady = true
+				metadata.Instance.TimeToOCMReportingInstalled = time.Since(clusterStarted).Seconds()
+				readinessStarted = time.Now()
+			}
 			if success, err := u.PollClusterHealth(cfg); success {
 				cleanRuns++
 				if cleanRuns == 5 {
+					metadata.Instance.TimeToClusterReady = time.Since(readinessStarted).Seconds()
 					return true, nil
 				}
 				return false, nil
