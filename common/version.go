@@ -16,14 +16,20 @@ import (
 func ChooseVersions(cfg *config.Config, osd *osd.OSD) (err error) {
 	// when defined, use set version
 	if len(cfg.ClusterVersion) != 0 {
-		return nil
+		err = nil
 	} else if osd == nil {
-		return errors.New("osd must be setup when upgrading with release stream")
+		err = errors.New("osd must be setup when upgrading with release stream")
 	} else if cfg.UpgradeImage == "" && cfg.UpgradeReleaseStream != "" {
-		return setupUpgradeVersion(cfg, osd)
+		err = setupUpgradeVersion(cfg, osd)
 	} else {
-		return setupVersion(cfg, osd, false)
+		err = setupVersion(cfg, osd, false)
 	}
+
+	// Set the versions in metadata. If upgrade hasn't been chosen, it should still be omitted from the end result.
+	metadata.Instance.ClusterVersion = cfg.ClusterVersion
+	metadata.Instance.UpgradeVersion = cfg.UpgradeReleaseName
+
+	return err
 }
 
 // chooses between default version and nightly based on target versions.
@@ -49,8 +55,6 @@ func setupVersion(cfg *config.Config, osd *osd.OSD, isUpgrade bool) (err error) 
 			return fmt.Errorf("Error finding default cluster version: %v", err)
 		}
 	}
-
-	metadata.Instance.ClusterVersion = cfg.ClusterVersion
 
 	return
 }
@@ -84,8 +88,6 @@ func setupUpgradeVersion(cfg *config.Config, osd *osd.OSD) (err error) {
 			return fmt.Errorf("failed retrieving previous version to '%s': %v", cfg.UpgradeReleaseName, err)
 		}
 	}
-
-	metadata.Instance.UpgradeVersion = cfg.UpgradeReleaseName
 
 	// set upgrade image
 	log.Printf("Selecting version '%s' to be able to upgrade to '%s' on release stream '%s'",
