@@ -80,12 +80,16 @@ func RunE2ETests(t *testing.T, cfg *config.Config) {
 		ginkgo.RunSpecsWithDefaultAndCustomReporters(t, "OSD e2e suite", []ginkgo.Reporter{reporter})
 		// upgrade cluster if requested
 		if cfg.UpgradeImage != "" || cfg.UpgradeReleaseStream != "" {
-			if err = upgrade.RunUpgrade(cfg, OSD); err != nil {
-				t.Errorf("Error performing upgrade: %s", err.Error())
-			}
+			if cfg.Kubeconfig != nil {
+				if err = upgrade.RunUpgrade(cfg, OSD); err != nil {
+					t.Errorf("Error performing upgrade: %s", err.Error())
+				}
 
-			log.Println("Running e2e tests POST-UPGRADE...")
-			ginkgo.RunSpecsWithDefaultAndCustomReporters(t, "OSD e2e suite post-upgrade", []ginkgo.Reporter{reporter})
+				log.Println("Running e2e tests POST-UPGRADE...")
+				ginkgo.RunSpecsWithDefaultAndCustomReporters(t, "OSD e2e suite post-upgrade", []ginkgo.Reporter{reporter})
+			} else {
+				log.Println("No Kubeconfig found from initial cluster setup. Unable to run upgrade.")
+			}
 		}
 
 		if cfg.ReportDir != "" {
