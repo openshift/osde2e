@@ -68,9 +68,19 @@ func setupUpgradeVersion(cfg *config.Config, osd *osd.OSD) (err error) {
 		return fmt.Errorf("couldn't get latest release from release-controller: %v", err)
 	}
 
-	if cfg.ClusterVersion == cfg.UpgradeReleaseName {
-		log.Printf("Cluster version and target version are the same. Looking up previous version...")
-		if cfg.ClusterVersion, err = osd.PreviousVersion(cfg.ClusterVersion); err != nil {
+	clusterVersion, err := osd.OpenshiftVersionToSemver(cfg.ClusterVersion)
+	if err != nil {
+		return err
+	}
+
+	upgradeVersion, err := osd.OpenshiftVersionToSemver(cfg.UpgradeReleaseName)
+	if err != nil {
+		return err
+	}
+
+	if !clusterVersion.LessThan(upgradeVersion) {
+		log.Printf("Cluster version is equal to or newer than the upgrade version. Looking up previous version...")
+		if cfg.ClusterVersion, err = osd.PreviousVersion(cfg.UpgradeReleaseName); err != nil {
 			return fmt.Errorf("failed retrieving previous version to '%s': %v", cfg.UpgradeReleaseName, err)
 		}
 	}

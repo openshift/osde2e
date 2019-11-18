@@ -110,8 +110,7 @@ func (u *OSD) getSemverList(major, minor int64, str string) (versions []*semver.
 
 		// parse versions, filter for major+minor nightlies, then sort
 		resp.Items().Each(func(v *v1.Version) bool {
-			name := strings.TrimPrefix(v.ID(), VersionPrefix)
-			if version, err := semver.NewVersion(name); err != nil {
+			if version, err := u.OpenshiftVersionToSemver(v.ID()); err != nil {
 				log.Printf("could not parse version '%s': %v", v.ID(), err)
 			} else if version.Major() != major && major >= 0 {
 				return true
@@ -132,4 +131,10 @@ func (u *OSD) getSemverList(major, minor int64, str string) (versions []*semver.
 
 	sort.Sort(semver.Collection(versions))
 	return versions, nil
+}
+
+// OpenshiftVersionToSemver converts an OpenShift version to a semver string which can then be used for comparisons.
+func (u *OSD) OpenshiftVersionToSemver(openshiftVersion string) (*semver.Version, error) {
+	name := strings.TrimPrefix(openshiftVersion, VersionPrefix)
+	return semver.NewVersion(name)
 }
