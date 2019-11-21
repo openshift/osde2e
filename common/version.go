@@ -74,11 +74,13 @@ func setupUpgradeVersion(cfg *config.Config, osd *osd.OSD) (err error) {
 
 	clusterVersion, err := osd.OpenshiftVersionToSemver(cfg.ClusterVersion)
 	if err != nil {
+		log.Printf("error while parsing cluster version %s: %v", cfg.ClusterVersion, err)
 		return err
 	}
 
 	upgradeVersion, err := osd.OpenshiftVersionToSemver(cfg.UpgradeReleaseName)
 	if err != nil {
+		log.Printf("error while parsing upgrade version %s: %v", cfg.UpgradeReleaseName, err)
 		return err
 	}
 

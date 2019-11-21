@@ -17,7 +17,7 @@ const (
 	// format string for release stream latest from release controller
 	latestReleaseControllerURLFmt = "https://openshift-release.svc.ci.openshift.org/api/v1/releasestream/%s/latest"
 	// format string for Cincinnati releases
-	cincinnatiURLFmt = "%s/api/upgrades_info/v1/graph?channel=%s"
+	cincinnatiURLFmt = "%s/api/upgrades_info/v1/graph?channel=%s&arch=amd64"
 )
 
 // LatestRelease retrieves latest release information for given releaseStream. Will use Cincinnati for stage/prod.
