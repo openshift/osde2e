@@ -13,9 +13,9 @@
 ## required
 These options are required to run osde2e.
 
-### `UHC_TOKEN`
+### `OCM_TOKEN`
 
-- UHCToken is used to authenticate with UHC.
+- OCMToken is used to authenticate with OCM.
 
 - Type: `string`
 
