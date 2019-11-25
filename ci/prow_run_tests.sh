@@ -32,15 +32,15 @@ set -o pipefail
     fi
 
     # Test the existence of each expected file
-    UHC_TOKEN_FILE=$SECRETS/uhc-refresh-token
+    OCM_TOKEN_FILE=$SECRETS/ocm-refresh-token
     AWS_ACCESS_KEY_FILE=$SECRETS/aws-access-key
     AWS_SECRET_ACCESS_KEY_FILE=$SECRETS/aws-secret-access-key
 
-    exit_if_file_missing "UHC token file" $UHC_TOKEN_FILE
+    exit_if_file_missing "OCM token file" $OCM_TOKEN_FILE
     exit_if_file_missing "AWS access key file" $AWS_ACCESS_KEY_FILE
     exit_if_file_missing "AWS secret access key file" $AWS_SECRET_ACCESS_KEY_FILE
 
-    export UHC_TOKEN=$(cat $UHC_TOKEN_FILE)
+    export OCM_TOKEN=$(cat $OCM_TOKEN_FILE)
     export AWS_ACCESS_KEY_ID=$(cat $AWS_ACCESS_KEY_FILE)
     export AWS_SECRET_ACCESS_KEY=$(cat $AWS_SECRET_ACCESS_KEY_FILE)
 
