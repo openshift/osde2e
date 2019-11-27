@@ -98,14 +98,15 @@ func RunE2ETests(t *testing.T, cfg *config.Config) {
 			}
 		}
 
-		if cfg.DestroyClusterAfterTest {
-			log.Printf("Destroying cluster '%s'...", cfg.ClusterID)
-			if err = OSD.DeleteCluster(cfg.ClusterID); err != nil {
-				t.Errorf("Error deleting cluster: %s", err.Error())
+		if OSD != nil {
+			if cfg.DestroyClusterAfterTest {
+				log.Printf("Destroying cluster '%s'...", cfg.ClusterID)
+				if err = OSD.DeleteCluster(cfg.ClusterID); err != nil {
+					t.Errorf("Error deleting cluster: %s", err.Error())
+				}
+			} else {
+				log.Printf("For debugging, please look for cluster ID %s in environment %s", cfg.ClusterID, cfg.OSDEnv)
 			}
-		} else {
-			log.Printf("For debugging, please look for cluster ID %s in environment %s", cfg.ClusterID, cfg.OSDEnv)
 		}
-
 	}
 }

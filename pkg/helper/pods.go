@@ -1,6 +1,7 @@
 package helper
 
 import (
+	"fmt"
 	"log"
 	"time"
 
@@ -52,7 +53,11 @@ func CheckPodHealth(podClient v1.CoreV1Interface) (bool, error) {
 
 	for _, pod := range list.Items {
 		phase := pod.Status.Phase
+
 		if phase != kubev1.PodRunning && phase != kubev1.PodSucceeded {
+			if phase != kubev1.PodPending {
+				return false, fmt.Errorf("Pod %s errored: %s - %s", pod.GetName(), pod.Status.Reason, pod.Status.Message)
+			}
 			notReady = append(notReady, pod)
 			log.Printf("%s is not ready. Phase: %s, Message: %s, Reason: %s", pod.Name, pod.Status.Phase, pod.Status.Message, pod.Status.Reason)
 		}
