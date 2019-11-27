@@ -128,6 +128,7 @@ func (u *OSD) DeleteCluster(clusterID string) error {
 func (u *OSD) WaitForClusterReady(cfg *config.Config) error {
 	log.Printf("Waiting %v minutes for cluster '%s' to be ready...\n", cfg.ClusterUpTimeout, cfg.ClusterID)
 	cleanRuns := 0
+	errRuns := 0
 
 	clusterStarted := time.Now()
 	var readinessStarted time.Time
@@ -142,6 +143,7 @@ func (u *OSD) WaitForClusterReady(cfg *config.Config) error {
 			}
 			if success, err := u.PollClusterHealth(cfg); success {
 				cleanRuns++
+				errRuns = 0
 				if cleanRuns == 5 {
 					metadata.Instance.TimeToClusterReady = time.Since(readinessStarted).Seconds()
 					return true, nil
@@ -149,7 +151,11 @@ func (u *OSD) WaitForClusterReady(cfg *config.Config) error {
 				return false, nil
 			} else {
 				if err != nil {
+					errRuns++
 					log.Printf("Error in PollClusterHealth: %v", err)
+					if errRuns >= 5 {
+						return false, fmt.Errorf("PollClusterHealth has returned an error 5 times in a row. Failing osde2e")
+					}
 				}
 				cleanRuns = 0
 				return false, nil
