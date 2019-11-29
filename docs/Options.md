@@ -34,6 +34,12 @@ These options are required to run osde2e.
 
 - Type: `bool`
 
+### `GINKGO_FOCUS`
+
+- GinkgoFocus is a regex passed to Ginkgo that focus on any test suites matching the regex. ex. "Operator"
+
+- Type: `string`
+
 ### `GINKGO_SKIP`
 
 - GinkgoSkip is a regex passed to Ginkgo that skips any test suites matching the regex. ex. "Operator"

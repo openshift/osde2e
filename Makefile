@@ -30,10 +30,10 @@ push-latest:
 	@$(CONTAINER_ENGINE) --config=$(DOCKER_CONF) push "$(IMAGE_NAME):latest"
 
 test:
-	go test $(E2E_PKG) -test.v -ginkgo.skip="$(GINKGO_SKIP)" -test.timeout 8h
+	go test $(E2E_PKG) -test.v -ginkgo.skip="$(GINKGO_SKIP)" -ginkgo.focus="$(GINKGO_FOCUS)" -test.timeout 8h
 
 test-scale:
-	go test $(SCALE_PKG) -test.v -ginkgo.skip="$(GINKGO_SKIP)" -test.timeout 8h -test.run TestScale
+	go test $(SCALE_PKG) -test.v -ginkgo.skip="$(GINKGO_SKIP)" -ginkgo.focus="$(GINKGO_FOCUS)"  -test.timeout 8h -test.run TestScale
 
 test-docker:
 	$(CONTAINER_ENGINE) run \
@@ -49,6 +49,7 @@ test-docker:
 		-e CLUSTER_VERSION=$(CLUSTER_VERSION) \
 		-e NO_DESTROY_DELAY=$(NO_DESTROY_DELAY) \
 		-e GINKGO_SKIP="$(GINKGO_SKIP)" \
+		-e GINKGO_FOCUS="$(GINKGO_FOCUS)" \
 		-e UPGRADE_RELEASE_STREAM=$(UPGRADE_RELEASE_STREAM) \
 		-e DEBUG_OSD=1 \
 		-e OSD_ENV=$(OSD_ENV) \
