@@ -75,6 +75,9 @@ type Config struct {
 	// GinkgoSkip is a regex passed to Ginkgo that skips any test suites matching the regex. ex. "Operator"
 	GinkgoSkip string `env:"GINKGO_SKIP" sect:"tests"`
 
+	// GinkgoFocus is a regex passed to Ginkgo that focus on any test suites matching the regex. ex. "Operator"
+	GinkgoFocus string `env:"GINKGO_FOCUS" sect:"tests"`
+
 	// CleanRuns is the number of times the test-version is run before skipping.
 	CleanRuns int `env:"CLEAN_RUNS" sect:"tests"`
 
