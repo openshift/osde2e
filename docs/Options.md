@@ -46,6 +46,12 @@ These options are required to run osde2e.
 
 - Type: `string`
 
+### `JOB_NAME`
+
+- JobName is the name of the job that is running osde2e.
+
+- Type: `string`
+
 ### `OPERATOR_SKIP`
 
 - OperatorSkip is a comma-delimited list of operator names to ignore health checks from. ex. "insights,telemetry"

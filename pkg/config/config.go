@@ -29,6 +29,9 @@ type Config struct {
 	// OCMToken is used to authenticate with OCM.
 	OCMToken string `env:"OCM_TOKEN" sect:"required"`
 
+	// JobName is the name of the job that is running osde2e.
+	JobName string `env:"JOB_NAME" sect:"tests"`
+
 	// ClusterID identifies the cluster. If set at start, an existing cluster is tested.
 	ClusterID string `env:"CLUSTER_ID" sect:"cluster"`
 
@@ -95,4 +98,7 @@ type Config struct {
 
 	// InstalledWorkloads is an internal variable used to track currently installed workloads in this test run.
 	InstalledWorkloads map[string]string
+
+	// Phase is an internal variable used to track the current set of tests being run (install, upgrade).
+	Phase string
 }

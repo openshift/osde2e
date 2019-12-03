@@ -6,7 +6,6 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
-	"path"
 	"path/filepath"
 	"testing"
 
@@ -24,7 +23,8 @@ import (
 )
 
 const (
-	customMetadataFile string = "custom-prow-metadata.json"
+	// CustomMetadataFile is the name of the custom metadata file generated for spyglass visualization.
+	CustomMetadataFile string = "custom-prow-metadata.json"
 )
 
 // OSD is used to deploy and manage clusters.
@@ -75,37 +75,43 @@ func RunE2ETests(t *testing.T, cfg *config.Config) {
 	if err = os.Mkdir(cfg.ReportDir, os.ModePerm); err != nil {
 		log.Printf("Could not create reporter directory: %v", err)
 	}
-	reportPath := path.Join(cfg.ReportDir, fmt.Sprintf("junit_%v.xml", cfg.Suffix))
-	reporter := reporters.NewJUnitReporter(reportPath)
 
 	if !cfg.DryRun {
 		log.Println("Running e2e tests...")
-		ginkgo.RunSpecsWithDefaultAndCustomReporters(t, "OSD e2e suite", []ginkgo.Reporter{reporter})
+
+		runTestsInPhase(t, cfg, "install", "OSD e2e suite")
+
 		// upgrade cluster if requested
 		if cfg.UpgradeImage != "" || cfg.UpgradeReleaseStream != "" {
 			if cfg.Kubeconfig != nil {
 				if err = upgrade.RunUpgrade(cfg, OSD); err != nil {
-					t.Errorf("Error performing upgrade: %s", err.Error())
+					t.Errorf("error performing upgrade: %v", err)
 				}
 
 				log.Println("Running e2e tests POST-UPGRADE...")
-				ginkgo.RunSpecsWithDefaultAndCustomReporters(t, "OSD e2e suite post-upgrade", []ginkgo.Reporter{reporter})
+				runTestsInPhase(t, cfg, "upgrade", "OSD e2e suite post-upgrade")
 			} else {
 				log.Println("No Kubeconfig found from initial cluster setup. Unable to run upgrade.")
 			}
 		}
 
 		if cfg.ReportDir != "" {
-			if err = metadata.Instance.WriteToJSON(filepath.Join(cfg.ReportDir, customMetadataFile)); err != nil {
-				t.Errorf("Error while writing metadata: %s", err.Error())
+			if err = metadata.Instance.WriteToJSON(filepath.Join(cfg.ReportDir, CustomMetadataFile)); err != nil {
+				t.Errorf("error while writing metadata: %v", err)
 			}
+
+			if _, err = NewMetrics(cfg).WritePrometheusFile(cfg.ReportDir); err != nil {
+				t.Errorf("error while writing prometheus metrics: %v", err)
+			}
+
+			// TODO: Upload prometheus file to S3
 		}
 
 		if OSD != nil {
 			if cfg.DestroyClusterAfterTest {
 				log.Printf("Destroying cluster '%s'...", cfg.ClusterID)
 				if err = OSD.DeleteCluster(cfg.ClusterID); err != nil {
-					t.Errorf("Error deleting cluster: %s", err.Error())
+					t.Errorf("error deleting cluster: %v", err)
 				}
 			} else {
 				log.Printf("For debugging, please look for cluster ID %s in environment %s", cfg.ClusterID, cfg.OSDEnv)
@@ -127,4 +133,17 @@ func RunE2ETests(t *testing.T, cfg *config.Config) {
 			}
 		}
 	}
+}
+
+func runTestsInPhase(t *testing.T, cfg *config.Config, phase string, description string) {
+	cfg.Phase = phase
+	phaseDirectory := filepath.Join(cfg.ReportDir, phase)
+	if _, err := os.Stat(phaseDirectory); os.IsNotExist(err) {
+		if err := os.Mkdir(phaseDirectory, os.FileMode(0755)); err != nil {
+			t.Fatalf("error while creating phase directory %s", phaseDirectory)
+		}
+	}
+	phaseReportPath := filepath.Join(phaseDirectory, fmt.Sprintf("junit_%v.xml", cfg.Suffix))
+	phaseReporter := reporters.NewJUnitReporter(phaseReportPath)
+	ginkgo.RunSpecsWithDefaultAndCustomReporters(t, description, []ginkgo.Reporter{phaseReporter})
 }
