@@ -1,13 +1,15 @@
-FROM golang:1.11.9
+FROM golang:1.12.6
 ENV PKG=/go/src/github.com/openshift/osde2e/
 WORKDIR ${PKG}
 
 # install build prerequisites
-RUN apt-get update && apt-get install -y make golang-glide git
+RUN apt-get update && apt-get install -y make git
 
 # resolve and install imports
-COPY glide.yaml glide.lock ${PKG}
-RUN glide install --strip-vendor
+COPY go.mod go.sum ${PKG}
+RUN export GO111MODULE=on && \
+    go mod tidy && \
+    go mod vendor
 
 # compile test binary
 COPY . ${PKG}
