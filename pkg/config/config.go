@@ -89,4 +89,7 @@ type Config struct {
 
 	// OperatorSkip is a comma-delimited list of operator names to ignore health checks from. ex. "insights,telemetry"
 	OperatorSkip string `env:"OPERATOR_SKIP" sect:"tests" default:"insights"`
+
+	// InstalledWorkloads is an internal variable used to track currently installed workloads in this test run.
+	InstalledWorkloads map[string]string
 }
