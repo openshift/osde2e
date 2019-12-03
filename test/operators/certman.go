@@ -11,7 +11,7 @@ import (
 var _ = ginkgo.Describe("[OSD] Certman Operator", func() {
 	h := helper.New()
 	secretName := h.ClusterName + "-" + "primary-cert-bundle-secret"
-	ginkgo.Context("certificate secret  should be applied when cluster installed", func() {
+	ginkgo.Context("certificate secret should be applied when cluster installed", func() {
 
 		ginkgo.It("certificate secret exist under openshift-config namespace", func() {
 			getOpts := metav1.GetOptions{}
