@@ -15,9 +15,12 @@ import (
 	"github.com/onsi/gomega"
 
 	"github.com/openshift/osde2e/pkg/config"
+	"github.com/openshift/osde2e/pkg/helper"
 	"github.com/openshift/osde2e/pkg/metadata"
 	"github.com/openshift/osde2e/pkg/osd"
 	"github.com/openshift/osde2e/pkg/upgrade"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 const (
@@ -106,6 +109,21 @@ func RunE2ETests(t *testing.T, cfg *config.Config) {
 				}
 			} else {
 				log.Printf("For debugging, please look for cluster ID %s in environment %s", cfg.ClusterID, cfg.OSDEnv)
+			}
+		} else {
+			// If we run against an arbitrary cluster and not a ci-specific cluster
+			// we need to clean up our workload tests manually.
+			h := &helper.H{
+				Config: cfg,
+			}
+			h.SetupNoProj()
+
+			log.Printf("Cleaning up workloads tests")
+			workloads := h.GetWorkloads()
+			for _, project := range workloads {
+				log.Printf("Deleting Project: %s", project)
+				h.SetProjectByName(project)
+				h.Project().ProjectV1().Projects().Delete(project, &metav1.DeleteOptions{})
 			}
 		}
 	}
