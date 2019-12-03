@@ -11,11 +11,17 @@ IMAGE_TAG := $(shell git rev-parse --short=7 HEAD)
 
 CONTAINER_ENGINE ?= docker
 
+ifndef $(GOPATH)
+    GOPATH=$(shell go env GOPATH)
+    export GOPATH
+endif
+
 check: cmd/osde2e-docs
 	go run $(PKG)/$< --check
 	CGO_ENABLED=0 go test -v ./cmd/... ./pkg/...
-	go get -u github.com/golangci/golangci-lint/cmd/golangci-lint && \
-    golangci-lint run -c .golang-ci.yml ./... 
+	
+	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(shell go env GOPATH)/bin v1.21.0
+	golangci-lint run -c .golang-ci.yml ./... 
 
 generate: docs/Options.md
 
