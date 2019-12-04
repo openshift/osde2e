@@ -13,9 +13,9 @@ A properly setup [Go workspace](https://golang.org/doc/code.html#GOPATH) and [Gl
     ```bash
     glide install --strip-vendor
     ```
-1. Set `UHC_TOKEN` environment variable:
+1. Set `OCM_TOKEN` environment variable:
     ```bash
-    export UHC_TOKEN=<token from step 1>
+    export OCM_TOKEN=<token from step 1>
     ```
 1. Run tests:
     ```bash
