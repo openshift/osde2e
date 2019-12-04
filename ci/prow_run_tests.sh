@@ -2,6 +2,8 @@
 
 set -o pipefail
 
+"$(dirname "$0")/prow_setup.sh"
+
 {
     function exit_if_file_missing {
         FILE_DESCRIPTION="$1"

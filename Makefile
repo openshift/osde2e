@@ -3,6 +3,7 @@
 PKG := github.com/openshift/osde2e
 E2E_PKG := $(PKG)/suites/e2e
 SCALE_PKG := $(PKG)/suites/scale
+DOC_PKG := $(PKG)/cmd/osde2e-docs
 
 DIR := $(dir $(realpath $(firstword $(MAKEFILE_LIST))))
 
@@ -11,13 +12,13 @@ IMAGE_TAG := $(shell git rev-parse --short=7 HEAD)
 
 CONTAINER_ENGINE ?= docker
 
-check: cmd/osde2e-docs
-	go run $(PKG)/$< --check
-	CGO_ENABLED=0 go test -v ./cmd/... ./pkg/...
+check: $(DIR)/cmd/osde2e-docs
+	go run $(DOC_PKG) --check
+	CGO_ENABLED=0 go test -v $(PKG)/cmd/... $(PKG)/pkg/...
 	go get -u github.com/golangci/golangci-lint/cmd/golangci-lint && \
-    golangci-lint run -c .golang-ci.yml ./... 
+	(cd "$(DIR)"; golangci-lint run -c .golang-ci.yml ./...)
 
-generate: docs/Options.md
+generate: $(DIR)/docs/Options.md
 
 build-image:
 	$(CONTAINER_ENGINE) build -t "$(IMAGE_NAME):$(IMAGE_TAG)" .
@@ -58,5 +59,5 @@ test-docker:
 		-e AWS_SECRET_ACCESS_KEY=$(AWS_SECRET_ACCESS_KEY) \
 		$(IMAGE_NAME):$(IMAGE_TAG)
 
-docs/Options.md: cmd/osde2e-docs pkg/config/config.go
-	go run $(PKG)/$<
+$(DIR)/docs/Options.md: $(DIR)/cmd/osde2e-docs $(DIR)/pkg/config/config.go
+	go run $(DOC_PKG)
