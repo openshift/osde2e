@@ -4,20 +4,21 @@ import (
 	"github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/openshift/osde2e/pkg/helper"
-
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 var _ = ginkgo.Describe("[OSD] Certman Operator", func() {
 	h := helper.New()
-	secretName := h.ClusterName + "-" + "primary-cert-bundle-secret"
 	ginkgo.Context("certificate secret should be applied when cluster installed", func() {
-
+		var secretName string
 		ginkgo.It("certificate secret exist under openshift-config namespace", func() {
-			getOpts := metav1.GetOptions{}
-			secret, err := h.Kube().CoreV1().Secrets("openshift-config").Get(secretName, getOpts)
+			listOpts := metav1.ListOptions{
+				LabelSelector: "certificate_request",
+			}
+			secrets, err := h.Kube().CoreV1().Secrets("openshift-config").List(listOpts)
 			Expect(err).NotTo(HaveOccurred())
-			Expect(secret).ShouldNot(Equal(nil))
+			Expect(len(secrets.Items)).Should(Equal(1))
+			secretName = secrets.Items[0].Name
 		}, float64(h.PollingTimeout))
 
 		ginkgo.It("certificate secret should be applied to apiserver object", func() {
