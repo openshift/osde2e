@@ -16,7 +16,7 @@ check: $(DIR)/cmd/osde2e-docs
 	go run $(DOC_PKG) --check
 	CGO_ENABLED=0 go test -v $(PKG)/cmd/... $(PKG)/pkg/...
 	go get -u github.com/golangci/golangci-lint/cmd/golangci-lint && \
-	golangci-lint run -c "$(DIR)/.golang-ci.yml" "$(DIR)/..."
+	(cd "$(DIR)"; golangci-lint run -c .golang-ci.yml ./...)
 
 generate: $(DIR)/docs/Options.md
 
