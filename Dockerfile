@@ -1,4 +1,4 @@
-FROM golang:1.12.6
+FROM golang:1.13.4
 ENV PKG=/go/src/github.com/openshift/osde2e/
 WORKDIR ${PKG}
 
@@ -7,8 +7,7 @@ RUN apt-get update && apt-get install -y make git
 
 # resolve and install imports
 COPY go.mod go.sum ${PKG}
-RUN export GO111MODULE=on && \
-    go mod tidy && \
+RUN export go mod tidy && \
     go mod vendor
 
 # compile test binary

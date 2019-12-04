@@ -1,6 +1,6 @@
 module github.com/openshift/osde2e
 
-go 1.12
+go 1.13
 
 require (
 	github.com/Masterminds/semver v1.4.2
@@ -20,7 +20,6 @@ require (
 	golang.org/x/net v0.0.0-20191004110552-13f9640d40b9
 	golang.org/x/oauth2 v0.0.0-20190604053449-0f29369cfe45 // indirect
 	golang.org/x/sys v0.0.0-20190826190057-c7b8b68b1456 // indirect
-	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/yaml.v2 v2.2.4 // indirect
 	k8s.io/api v0.0.0-20191004102349-159aefb8556b
 	k8s.io/apimachinery v0.0.0-20191004074956-c5d2f014d689
