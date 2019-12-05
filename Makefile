@@ -12,10 +12,16 @@ IMAGE_TAG := $(shell git rev-parse --short=7 HEAD)
 
 CONTAINER_ENGINE ?= docker
 
-check: $(DIR)/cmd/osde2e-docs
+ifndef $(GOPATH)
+    GOPATH=$(shell go env GOPATH)
+    export GOPATH
+endif
+
+check: cmd/osde2e-docs
 	go run $(DOC_PKG) --check
 	CGO_ENABLED=0 go test -v $(PKG)/cmd/... $(PKG)/pkg/...
-	go get -u github.com/golangci/golangci-lint/cmd/golangci-lint && \
+	
+	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(shell go env GOPATH)/bin v1.21.0
 	(cd "$(DIR)"; golangci-lint run -c .golang-ci.yml ./...)
 
 generate: $(DIR)/docs/Options.md
@@ -29,6 +35,10 @@ push-image:
 push-latest:
 	$(CONTAINER_ENGINE) tag "$(IMAGE_NAME):$(IMAGE_TAG)" "$(IMAGE_NAME):latest"
 	@$(CONTAINER_ENGINE) --config=$(DOCKER_CONF) push "$(IMAGE_NAME):latest"
+
+build:
+	CGO_ENABLED=0 go test ./suites/e2e -v -c -o ./out/osde2e
+	CGO_ENABLED=0 go test ./suites/scale -v -c -o ./out/osde2e-scale
 
 test:
 	go test $(E2E_PKG) -test.v -ginkgo.skip="$(GINKGO_SKIP)" -ginkgo.focus="$(GINKGO_FOCUS)" -test.timeout 8h
