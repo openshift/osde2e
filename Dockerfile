@@ -1,7 +1,6 @@
 FROM registry.svc.ci.openshift.org/openshift/release:golang-1.13
 
 ENV PKG=/go/src/github.com/openshift/osde2e/
-ENV GOMODULE111=on
 WORKDIR ${PKG}
 
 # resolve and install imports
