@@ -35,6 +35,10 @@ push-latest:
 	$(CONTAINER_ENGINE) tag "$(IMAGE_NAME):$(IMAGE_TAG)" "$(IMAGE_NAME):latest"
 	@$(CONTAINER_ENGINE) --config=$(DOCKER_CONF) push "$(IMAGE_NAME):latest"
 
+build:
+	CGO_ENABLED=0 go test ./suites/e2e -v -c -o ./out/osde2e
+	CGO_ENABLED=0 go test ./suites/scale -v -c -o ./out/osde2e-scale
+
 test:
 	go test $(E2E_PKG) -test.v -ginkgo.skip="$(GINKGO_SKIP)" -ginkgo.focus="$(GINKGO_FOCUS)" -test.timeout 8h
 

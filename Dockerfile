@@ -1,26 +1,24 @@
-FROM golang:1.12.6
+FROM registry.svc.ci.openshift.org/openshift/release:golang-1.13
+
 ENV PKG=/go/src/github.com/openshift/osde2e/
+ENV GOMODULE111=on
 WORKDIR ${PKG}
 
-# install build prerequisites
-RUN apt-get update && apt-get install -y make git
-
 # resolve and install imports
-COPY go.mod go.sum ${PKG}
-RUN export GO111MODULE=on && \
-    go mod tidy && \
-    go mod vendor
+COPY go.mod ./
+COPY go.sum ./
+
+RUN go mod download
 
 # compile test binary
-COPY . ${PKG}
-
+COPY . .
 RUN make check
+RUN make build
 
-RUN make out/osde2e
-
-FROM gcr.io/distroless/base
+FROM registry.access.redhat.com/ubi7/ubi-minimal:latest
 
 COPY artifacts artifacts
 COPY --from=0 /go/src/github.com/openshift/osde2e/out/osde2e .
+COPY --from=0 /go/src/github.com/openshift/osde2e/out/osde2e-scale .
 
 ENTRYPOINT [ "/osde2e" ]
