@@ -3,6 +3,7 @@
 PKG := github.com/openshift/osde2e
 E2E_PKG := $(PKG)/suites/e2e
 SCALE_PKG := $(PKG)/suites/scale
+DOC_PKG := $(PKG)/cmd/osde2e-docs
 
 DIR := $(dir $(realpath $(firstword $(MAKEFILE_LIST))))
 
@@ -17,13 +18,13 @@ ifndef $(GOPATH)
 endif
 
 check: cmd/osde2e-docs
-	go run $(PKG)/$< --check
-	CGO_ENABLED=0 go test -v ./cmd/... ./pkg/...
+	go run $(DOC_PKG) --check
+	CGO_ENABLED=0 go test -v $(PKG)/cmd/... $(PKG)/pkg/...
 	
 	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(shell go env GOPATH)/bin v1.21.0
-	golangci-lint run -c .golang-ci.yml ./... 
+	(cd "$(DIR)"; golangci-lint run -c .golang-ci.yml ./...)
 
-generate: docs/Options.md
+generate: $(DIR)/docs/Options.md
 
 build-image:
 	$(CONTAINER_ENGINE) build -t "$(IMAGE_NAME):$(IMAGE_TAG)" .
@@ -63,10 +64,10 @@ test-docker:
 		-e UPGRADE_RELEASE_STREAM=$(UPGRADE_RELEASE_STREAM) \
 		-e DEBUG_OSD=1 \
 		-e OSD_ENV=$(OSD_ENV) \
-		-e UHC_TOKEN=$(UHC_REFRESH_TOKEN) \
+		-e OCM_TOKEN=$(OCM_REFRESH_TOKEN) \
 		-e AWS_ACCESS_KEY_ID=$(AWS_ACCESS_KEY_ID) \
 		-e AWS_SECRET_ACCESS_KEY=$(AWS_SECRET_ACCESS_KEY) \
 		$(IMAGE_NAME):$(IMAGE_TAG)
 
-docs/Options.md: cmd/osde2e-docs pkg/config/config.go
-	go run $(PKG)/$<
+$(DIR)/docs/Options.md: $(DIR)/cmd/osde2e-docs $(DIR)/pkg/config/config.go
+	go run $(DOC_PKG)

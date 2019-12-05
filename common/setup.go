@@ -62,7 +62,7 @@ var _ = ginkgo.AfterSuite(func() {
 
 // setupCluster brings up a cluster, waits for it to be ready, then returns it's name.
 func setupCluster(cfg *config.Config) (err error) {
-	// if TEST_KUBECONFIG has been set, skip configuring UHC
+	// if TEST_KUBECONFIG has been set, skip configuring OCM
 	if len(cfg.Kubeconfig) > 0 {
 		return useKubeconfig(cfg)
 	}
@@ -78,8 +78,23 @@ func setupCluster(cfg *config.Config) (err error) {
 		}
 	} else {
 		log.Printf("CLUSTER_ID of '%s' was provided, skipping cluster creation and using it instead", cfg.ClusterID)
+
+		if cfg.ClusterName == "" {
+			cluster, err := OSD.GetCluster(cfg.ClusterID)
+			if err != nil {
+				return fmt.Errorf("could not retrieve cluster information from OCM: %v", err)
+			}
+
+			if cluster.Name() == "" {
+				return fmt.Errorf("cluster name from OCM is empty, and this shouldn't be possible")
+			}
+
+			cfg.ClusterName = cluster.Name()
+			log.Printf("CLUSTER_NAME not provided, retrieved %s from OCM.", cfg.ClusterName)
+		}
 	}
 
+	metadata.Instance.ClusterName = cfg.ClusterName
 	metadata.Instance.ClusterID = cfg.ClusterID
 
 	if err = OSD.WaitForClusterReady(cfg); err != nil {
