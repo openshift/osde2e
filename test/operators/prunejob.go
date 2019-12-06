@@ -34,7 +34,7 @@ var _ = ginkgo.Describe("[OSD] Prune jobs", func() {
 				Expect(err).NotTo(HaveOccurred())
 				err = waitJobComplete(h, namespace, job.Name)
 				Expect(err).NotTo(HaveOccurred())
-			})
+			}, float64(h.PollingTimeout))
 		}
 
 	})
