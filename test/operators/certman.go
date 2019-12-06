@@ -25,6 +25,7 @@ var _ = ginkgo.Describe("[OSD] Certman Operator", func() {
 			getOpts := metav1.GetOptions{}
 			apiserver, err := h.Cfg().ConfigV1().APIServers().Get("cluster", getOpts)
 			Expect(err).NotTo(HaveOccurred())
+			Expect(len(apiserver.Spec.ServingCerts.NamedCertificates)).Should(Equal(1))
 			Expect(apiserver.Spec.ServingCerts.NamedCertificates[0].ServingCertificate.Name).Should(Equal(secretName))
 		}, float64(h.PollingTimeout))
 	})
