@@ -4,6 +4,10 @@ METRICS_BUCKET=osde2e-metrics
 INCOMING=incoming
 PROCESSED=processed
 VENV="$(mktemp -d)"
+METRICS_DIR="$(mktemp -d)"
+
+# Cleanup the temporary directories
+trap 'rm -rf "$VENV" "$METRICS_DIR"' EXIT
 
 virtualenv "$VENV"
 . "$VENV/bin/activate"
@@ -18,7 +22,6 @@ fi
 # We're going to iterate over each file as opposed to trying to grab things by wildcard.
 # This way, we're guaranteed to process a fixed set of files.
 METRICS_FILES=$(aws s3 ls "s3://$METRICS_BUCKET/$INCOMING/" | awk '{print $4}')
-METRICS_DIR="$(mktemp -d)"
 
 for file in $METRICS_FILES; do
 	INCOMING_FILE="$METRICS_BUCKET/$INCOMING/$file"
