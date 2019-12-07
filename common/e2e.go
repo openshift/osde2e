@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"path"
 	"path/filepath"
 	"testing"
 
@@ -19,6 +20,9 @@ import (
 	"github.com/openshift/osde2e/pkg/osd"
 	"github.com/openshift/osde2e/pkg/upgrade"
 
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -100,11 +104,16 @@ func RunE2ETests(t *testing.T, cfg *config.Config) {
 				t.Errorf("error while writing metadata: %v", err)
 			}
 
-			if _, err = NewMetrics(cfg).WritePrometheusFile(cfg.ReportDir); err != nil {
+			prometheusFilename, err := NewMetrics(cfg).WritePrometheusFile(cfg.ReportDir)
+			if err != nil {
 				t.Errorf("error while writing prometheus metrics: %v", err)
 			}
 
-			// TODO: Upload prometheus file to S3
+			if cfg.UploadMetrics {
+				if err := uploadFileToMetricsBucket(cfg, filepath.Join(cfg.ReportDir, prometheusFilename)); err != nil {
+					t.Errorf("error while uploading prometheus metrics: %v", err)
+				}
+			}
 		}
 
 		if OSD != nil {
@@ -146,4 +155,32 @@ func runTestsInPhase(t *testing.T, cfg *config.Config, phase string, description
 	phaseReportPath := filepath.Join(phaseDirectory, fmt.Sprintf("junit_%v.xml", cfg.Suffix))
 	phaseReporter := reporters.NewJUnitReporter(phaseReportPath)
 	ginkgo.RunSpecsWithDefaultAndCustomReporters(t, description, []ginkgo.Reporter{phaseReporter})
+}
+
+// uploadFileToMetricsBucket uploads the given file (with absolute path) to the metrics S3 bucket "incoming" directory.
+func uploadFileToMetricsBucket(cfg *config.Config, filename string) error {
+	// We're very intentionally using the shared configs here.
+	// This allows us to configure the AWS client at a system level and this should behave as expected.
+	// This is particularly useful if we want to, at some point in the future, run this on an AWS host with an instance profile
+	// that doesn't need explicit credentials.
+	session, err := session.NewSessionWithOptions(session.Options{SharedConfigState: session.SharedConfigEnable})
+	if err != nil {
+		return err
+	}
+
+	file, err := os.Open(filename)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	uploader := s3manager.NewUploader(session)
+
+	_, err = uploader.Upload(&s3manager.UploadInput{
+		Bucket: aws.String(cfg.MetricsBucket),
+		Key:    aws.String(path.Join("incoming", filepath.Base(filename))),
+		Body:   file,
+	})
+
+	return err
 }

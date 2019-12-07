@@ -96,6 +96,12 @@ type Config struct {
 	// OperatorSkip is a comma-delimited list of operator names to ignore health checks from. ex. "insights,telemetry"
 	OperatorSkip string `env:"OPERATOR_SKIP" sect:"tests" default:"insights"`
 
+	// UploadMetrics tells osde2e whether to try to upload to the S3 metrics bucket.
+	UploadMetrics bool `env:"UPLOAD_METRICS" sect:"metrics" default:"false"`
+
+	// MetricsBucket is the bucket that metrics data will be uploaded to.
+	MetricsBucket string `env:"METRICS_BUCKET" sect:"metrics" default:"osde2e-metrics"`
+
 	// InstalledWorkloads is an internal variable used to track currently installed workloads in this test run.
 	InstalledWorkloads map[string]string
 

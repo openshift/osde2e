@@ -7,6 +7,7 @@
 - [cluster](#cluster)
 - [version](#version)
 - [upgrade](#upgrade)
+- [metrics](#metrics)
 
 
 
@@ -193,3 +194,20 @@ before failing the test.
 - UpgradeReleaseStream used to retrieve latest release images. If set, it will be used to perform an upgrade.
 
 - Type: `string`
+
+## metrics
+
+
+### `METRICS_BUCKET`
+
+- MetricsBucket is the bucket that metrics data will be uploaded to.
+
+- Type: `string`
+- Default: `osde2e-metrics`
+
+### `UPLOAD_METRICS`
+
+- UploadMetrics tells osde2e whether to try to upload to the S3 metrics bucket.
+
+- Type: `bool`
+- Default: `false`
