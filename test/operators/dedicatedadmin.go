@@ -1,5 +1,8 @@
 package operators
 
+/*
+Dedicated admin tests are disabled until RBAC tests are in place.
+
 import (
 	"github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -75,3 +78,4 @@ var _ = ginkgo.Describe("[OSD] Dedicated Admin Operator", func() {
 		}, float64(h.Tests.PollingTimeout))
 	})
 })
+*/
