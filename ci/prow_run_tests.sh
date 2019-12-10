@@ -42,7 +42,7 @@ set -o pipefail
     exit_if_file_missing "OCM token file" $OCM_TOKEN_FILE
     exit_if_file_missing "AWS access key file" $AWS_ACCESS_KEY_FILE
     exit_if_file_missing "AWS secret access key file" $AWS_SECRET_ACCESS_KEY_FILE
-    exit_if_file_missing "AWS region file" $AWS_REGION
+    exit_if_file_missing "AWS region file" $AWS_REGION_FILE
 
     export OCM_TOKEN=$(cat $OCM_TOKEN_FILE)
     export AWS_ACCESS_KEY_ID=$(cat $AWS_ACCESS_KEY_FILE)
