@@ -27,6 +27,8 @@ type Config struct {
 
 	OCM OCMConfig `yaml:"ocm"`
 
+	Addon AddonConfig `yaml:"addon"`
+
 	// Name lets you name the current e2e job run
 	JobName string `json:"job_name" env:"JOB_NAME" sect:"tests" yaml:"jobName"`
 
@@ -112,6 +114,12 @@ type ClusterConfig struct {
 	InstallTimeout int64 `env:"CLUSTER_UP_TIMEOUT" sect:"environment" default:"135" yaml:"installTimeout"`
 }
 
+// AddonConfig options for addon testing
+type AddonConfig struct {
+	// AddonTestHarness is the image that will be run on the cluster and will exercise various addons that are installed.
+	TestHarness string `env:"ADDON_TEST_HARNESS" sect:"addons" yaml:"testHarness"`
+}
+
 // TestConfig changes the behavior of how and what tests are run.
 type TestConfig struct {
 	// PollingTimeout is how long (in mimutes) to wait for an object to be created
@@ -129,6 +137,9 @@ type TestConfig struct {
 
 	// OperatorSkip is a comma-delimited list of operator names to ignore health checks from. ex. "insights,telemetry"
 	OperatorSkip string `env:"OPERATOR_SKIP" sect:"tests" default:"insights" yaml:"ginkgoFocus"`
+
+	// SkipClusterHealthChecks skips the cluster health checks. Useful when developing against a running cluster.
+	SkipClusterHealthChecks bool `env:"SKIP_CLUSTER_HEALTH_CHECKS" sect:"tests" default:"false" yaml:"skipClusterHealthChecks"`
 
 	// UploadMetrics tells osde2e whether to try to upload to the S3 metrics bucket.
 	UploadMetrics bool `env:"UPLOAD_METRICS" sect:"metrics" default:"false" yaml:"uploadMetrics"`

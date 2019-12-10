@@ -40,7 +40,7 @@ func TestGetLatestImageStreamTag(t *testing.T) {
 	r.Image = streamClient
 
 	// confirm tag From name
-	if fromName, err := r.getLatestImageStreamTag(); err != nil {
+	if fromName, err := r.GetLatestImageStreamTag(); err != nil {
 		t.Fatalf("encountered error getting tag From name: %v", err)
 	} else if fromName != expectedFromName {
 		t.Fatalf("expected '%s' not '%s'", expectedFromName, fromName)
