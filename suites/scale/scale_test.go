@@ -12,14 +12,15 @@ import (
 )
 
 func init() {
+	var filename string
 	testing.Init()
 
 	cfg := config.Cfg
 
-	flag.StringVar(&cfg.File, "e2e-config", ".osde2e.yaml", "Config file for osde2e")
+	flag.StringVar(&filename, "e2e-config", ".osde2e.yaml", "Config file for osde2e")
 	flag.Parse()
 
-	cfg.LoadFromYAML(cfg.File)
+	cfg.LoadFromYAML(filename)
 
 }
 
