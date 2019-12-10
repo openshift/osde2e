@@ -50,7 +50,7 @@ set -o pipefail
     export AWS_REGION=$(cat $AWS_REGION_FILE)
 
     # We explicitly want to make sure we're always uploading metrics from prow jobs.
-    export METRICS_UPLOAD=true
+    export UPLOAD_METRICS=true
 
     make $TEST
 } 2>&1 | tee -a $REPORT_DIR/test_output.log
