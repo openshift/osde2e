@@ -3,8 +3,6 @@ package operators
 import (
 	"fmt"
 	"log"
-	"math/rand"
-	"strings"
 	"time"
 
 	"github.com/onsi/ginkgo"
@@ -323,6 +321,7 @@ Loop:
 	return csvList, err
 }
 
+/*
 func genSuffix(prefix string) string {
 	// genSuffix creates a random 8 character string to append to object
 	// names when creating Kubernetes objects so there aren't any
@@ -338,3 +337,4 @@ func genSuffix(prefix string) string {
 	}
 	return prefix + "-" + strings.ToLower(string(bytes))
 }
+*/
