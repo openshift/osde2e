@@ -31,7 +31,7 @@ var _ = ginkgo.SynchronizedBeforeSuite(func() []byte {
 	err := setupCluster(cfg)
 	Expect(err).ShouldNot(HaveOccurred(), "failed to setup cluster for testing")
 
-	if len(cfg.Kubeconfig) == 0 {
+	if len(cfg.Kubeconfig.Contents) == 0 {
 		// Give the cluster some breathing room.
 		log.Println("OSD cluster installed. Sleeping for 600s.")
 		time.Sleep(600 * time.Second)
@@ -49,12 +49,12 @@ var _ = ginkgo.AfterSuite(func() {
 
 	if OSD == nil {
 		log.Println("OSD was not configured. Skipping AfterSuite...")
-	} else if cfg.ClusterID == "" {
+	} else if cfg.Cluster.ID == "" {
 		log.Println("CLUSTER_ID is not set, likely due to a setup failure. Skipping AfterSuite...")
 	} else {
-		log.Printf("Getting logs for cluster '%s'...", cfg.ClusterID)
+		log.Printf("Getting logs for cluster '%s'...", cfg.Cluster.ID)
 
-		logs, err := OSD.FullLogs(cfg.ClusterID)
+		logs, err := OSD.FullLogs(cfg.Cluster.ID)
 		Expect(err).NotTo(HaveOccurred(), "failed to collect cluster logs")
 		writeLogs(cfg, logs)
 	}
@@ -63,24 +63,24 @@ var _ = ginkgo.AfterSuite(func() {
 // setupCluster brings up a cluster, waits for it to be ready, then returns it's name.
 func setupCluster(cfg *config.Config) (err error) {
 	// if TEST_KUBECONFIG has been set, skip configuring OCM
-	if len(cfg.Kubeconfig) > 0 {
+	if len(cfg.Kubeconfig.Contents) > 0 || len(cfg.Kubeconfig.Path) > 0 {
 		return useKubeconfig(cfg)
 	}
 
 	// create a new cluster if no ID is specified
-	if cfg.ClusterID == "" {
-		if cfg.ClusterName == "" {
-			cfg.ClusterName = clusterName(cfg)
+	if cfg.Cluster.ID == "" {
+		if cfg.Cluster.Name == "" {
+			cfg.Cluster.Name = clusterName(cfg)
 		}
 
-		if cfg.ClusterID, err = OSD.LaunchCluster(cfg); err != nil {
+		if cfg.Cluster.ID, err = OSD.LaunchCluster(cfg); err != nil {
 			return fmt.Errorf("could not launch cluster: %v", err)
 		}
 	} else {
-		log.Printf("CLUSTER_ID of '%s' was provided, skipping cluster creation and using it instead", cfg.ClusterID)
+		log.Printf("CLUSTER_ID of '%s' was provided, skipping cluster creation and using it instead", cfg.Cluster.ID)
 
-		if cfg.ClusterName == "" {
-			cluster, err := OSD.GetCluster(cfg.ClusterID)
+		if cfg.Cluster.Name == "" {
+			cluster, err := OSD.GetCluster(cfg.Cluster.ID)
 			if err != nil {
 				return fmt.Errorf("could not retrieve cluster information from OCM: %v", err)
 			}
@@ -89,19 +89,19 @@ func setupCluster(cfg *config.Config) (err error) {
 				return fmt.Errorf("cluster name from OCM is empty, and this shouldn't be possible")
 			}
 
-			cfg.ClusterName = cluster.Name()
-			log.Printf("CLUSTER_NAME not provided, retrieved %s from OCM.", cfg.ClusterName)
+			cfg.Cluster.Name = cluster.Name()
+			log.Printf("CLUSTER_NAME not provided, retrieved %s from OCM.", cfg.Cluster.Name)
 		}
 	}
 
-	metadata.Instance.ClusterName = cfg.ClusterName
-	metadata.Instance.ClusterID = cfg.ClusterID
+	metadata.Instance.ClusterName = cfg.Cluster.Name
+	metadata.Instance.ClusterID = cfg.Cluster.ID
 
 	if err = OSD.WaitForClusterReady(cfg); err != nil {
 		return fmt.Errorf("failed waiting for cluster ready: %v", err)
 	}
 
-	if cfg.Kubeconfig, err = OSD.ClusterKubeconfig(cfg.ClusterID); err != nil {
+	if cfg.Kubeconfig.Contents, err = OSD.ClusterKubeconfig(cfg.Cluster.ID); err != nil {
 		return fmt.Errorf("could not get kubeconfig for cluster: %v", err)
 	}
 	return nil
@@ -109,9 +109,7 @@ func setupCluster(cfg *config.Config) (err error) {
 
 // useKubeconfig reads the path provided for a TEST_KUBECONFIG and uses it for testing.
 func useKubeconfig(cfg *config.Config) (err error) {
-	filename := string(cfg.Kubeconfig)
-
-	_, err = clientcmd.RESTConfigFromKubeConfig(cfg.Kubeconfig)
+	_, err = clientcmd.RESTConfigFromKubeConfig(cfg.Kubeconfig.Contents)
 	if err != nil {
 		log.Println("Not an existing Kubeconfig, attempting to read file instead...")
 	} else {
@@ -119,17 +117,17 @@ func useKubeconfig(cfg *config.Config) (err error) {
 		return nil
 	}
 
-	cfg.Kubeconfig, err = ioutil.ReadFile(filename)
+	cfg.Kubeconfig.Contents, err = ioutil.ReadFile(cfg.Kubeconfig.Path)
 	if err != nil {
-		return fmt.Errorf("failed reading '%s' which has been set as the TEST_KUBECONFIG: %v", filename, err)
+		return fmt.Errorf("failed reading '%s' which has been set as the TEST_KUBECONFIG: %v", cfg.Kubeconfig.Path, err)
 	}
-	log.Printf("Using a set TEST_KUBECONFIG of '%s' for Origin API calls.", filename)
+	log.Printf("Using a set TEST_KUBECONFIG of '%s' for Origin API calls.", cfg.Kubeconfig.Path)
 	return nil
 }
 
 // cluster name format must be short enough to support all versions
 func clusterName(cfg *config.Config) string {
-	vers := strings.TrimPrefix(cfg.ClusterVersion, osd.VersionPrefix)
+	vers := strings.TrimPrefix(cfg.Cluster.Version, osd.VersionPrefix)
 	safeVersion := strings.Replace(vers, ".", "-", -1)
 	return "ci-cluster-" + safeVersion + "-" + cfg.Suffix
 }

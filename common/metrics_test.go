@@ -13,8 +13,8 @@ import (
 )
 
 func TestProcessJUnitXMLFile(t *testing.T) {
-	config.Cfg.ClusterVersion = "install-version"
-	config.Cfg.UpgradeReleaseName = "upgrade-version"
+	config.Cfg.Cluster.Version = "install-version"
+	config.Cfg.Upgrade.ReleaseName = "upgrade-version"
 	tests := []struct {
 		testName       string
 		phase          string
@@ -101,8 +101,8 @@ cicd_jUnitResult{environment="prod",install_version="install-version",phase="ins
 }
 
 func TestProcessJSONFile(t *testing.T) {
-	config.Cfg.ClusterVersion = "install-version"
-	config.Cfg.UpgradeReleaseName = "upgrade-version"
+	config.Cfg.Cluster.Version = "install-version"
+	config.Cfg.Upgrade.ReleaseName = "upgrade-version"
 
 	tests := []struct {
 		testName         string
@@ -198,9 +198,9 @@ cicd_addon_metadata{environment="prod",install_version="install-version",metadat
 }
 
 func TestWritePrometheusFile(t *testing.T) {
-	config.Cfg.ClusterID = "full-test"
-	config.Cfg.ClusterVersion = "install-version"
-	config.Cfg.UpgradeReleaseName = "upgrade-version"
+	config.Cfg.Cluster.ID = "full-test"
+	config.Cfg.Cluster.Version = "install-version"
+	config.Cfg.Upgrade.ReleaseName = "upgrade-version"
 	config.Cfg.JobName = "test-job"
 
 	type jUnitFile struct {
@@ -354,7 +354,7 @@ cicd_addon_metadata{environment="prod",install_version="install-version",metadat
 			t.Errorf("error while processing report directory: %v", err)
 		}
 
-		if prometheusFile != fmt.Sprintf("%s.%s.metrics.prom", config.Cfg.ClusterID, config.Cfg.JobName) {
+		if prometheusFile != fmt.Sprintf("%s.%s.metrics.prom", config.Cfg.Cluster.ID, config.Cfg.JobName) {
 			t.Errorf("unexpected prometheus filename: %s", prometheusFile)
 		}
 

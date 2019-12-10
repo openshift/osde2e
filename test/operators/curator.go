@@ -32,7 +32,7 @@ var _ = ginkgo.Describe("[OSD] Curator Operator", func() {
 				Expect(ok).Should(Equal(true))
 				Expect(registryNamespace).Should(HavePrefix("curated"))
 			}
-		}, float64(h.PollingTimeout))
+		}, float64(h.Tests.PollingTimeout))
 
 	})
 })

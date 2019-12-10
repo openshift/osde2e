@@ -17,8 +17,7 @@ ifndef $(GOPATH)
     export GOPATH
 endif
 
-check: cmd/osde2e-docs
-	go run $(DOC_PKG) --check
+check:
 	CGO_ENABLED=0 go test -v $(PKG)/cmd/... $(PKG)/pkg/...
 	
 	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(shell go env GOPATH)/bin v1.21.0
@@ -41,7 +40,7 @@ build:
 	CGO_ENABLED=0 go test ./suites/scale -v -c -o ./out/osde2e-scale
 
 test:
-	go test $(E2E_PKG) -test.v -ginkgo.skip="$(GINKGO_SKIP)" -ginkgo.focus="$(GINKGO_FOCUS)" -test.timeout 8h
+	go test $(E2E_PKG) -test.v -ginkgo.skip="$(GINKGO_SKIP)" -ginkgo.focus="$(GINKGO_FOCUS)" -test.timeout 8h 
 
 test-scale:
 	go test $(SCALE_PKG) -test.v -ginkgo.skip="$(GINKGO_SKIP)" -ginkgo.focus="$(GINKGO_FOCUS)"  -test.timeout 8h -test.run TestScale

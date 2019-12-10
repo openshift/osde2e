@@ -113,7 +113,7 @@ func (m *Metrics) WritePrometheusFile(reportDir string) (string, error) {
 		}
 	}
 
-	prometheusFileName := fmt.Sprintf(prometheusFileNamePattern, m.cfg.ClusterID, m.cfg.JobName)
+	prometheusFileName := fmt.Sprintf(prometheusFileNamePattern, m.cfg.Cluster.ID, m.cfg.JobName)
 	output, err := m.registryToExpositionFormat()
 
 	if err != nil {
@@ -157,7 +157,7 @@ func (m *Metrics) processJUnitXMLFile(phase string, junitFile string) (err error
 			result = "passed"
 		}
 
-		m.jUnitGatherer.WithLabelValues(m.cfg.ClusterVersion, m.cfg.UpgradeReleaseName, m.cfg.OSDEnv, phase, testSuite.Name, testcase.Name, result).Add(testcase.Time)
+		m.jUnitGatherer.WithLabelValues(m.cfg.Cluster.Version, m.cfg.Upgrade.ReleaseName, m.cfg.OCM.Env, phase, testSuite.Name, testcase.Name, result).Add(testcase.Time)
 	}
 
 	return nil
@@ -209,7 +209,7 @@ func (m *Metrics) jsonToPrometheusOutput(gatherer *prometheus.GaugeVec, jsonOutp
 
 			// We're only concerned with tracking float values in Prometheus as they're the only thing we can measure
 			if floatValue, err := strconv.ParseFloat(stringValue, 64); err == nil {
-				gatherer.WithLabelValues(m.cfg.ClusterVersion, m.cfg.UpgradeReleaseName, m.cfg.OSDEnv, metadataName).Add(floatValue)
+				gatherer.WithLabelValues(m.cfg.Cluster.Version, m.cfg.Upgrade.ReleaseName, m.cfg.OCM.Env, metadataName).Add(floatValue)
 			}
 		}
 	}

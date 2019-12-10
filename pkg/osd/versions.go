@@ -71,7 +71,7 @@ func (u *OSD) PreviousVersion(verStr string) (string, error) {
 func (u *OSD) LatestVersion(major, minor int64) (string, error) {
 	suffix := ""
 
-	if config.Cfg.OSDEnv == "int" {
+	if config.Cfg.OCM.Env == "int" {
 		suffix = "nightly"
 	}
 

@@ -19,7 +19,7 @@ var _ = ginkgo.Describe("[OSD] Certman Operator", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(len(secrets.Items)).Should(Equal(1))
 			secretName = secrets.Items[0].Name
-		}, float64(h.PollingTimeout))
+		}, float64(h.Tests.PollingTimeout))
 
 		ginkgo.It("certificate secret should be applied to apiserver object", func() {
 			getOpts := metav1.GetOptions{}
@@ -27,6 +27,6 @@ var _ = ginkgo.Describe("[OSD] Certman Operator", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(len(apiserver.Spec.ServingCerts.NamedCertificates)).Should(Equal(1))
 			Expect(apiserver.Spec.ServingCerts.NamedCertificates[0].ServingCertificate.Name).Should(Equal(secretName))
-		}, float64(h.PollingTimeout))
+		}, float64(h.Tests.PollingTimeout))
 	})
 })

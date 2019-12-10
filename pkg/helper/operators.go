@@ -27,8 +27,8 @@ func CheckOperatorReadiness(cfg *config.Config, configClient configclient.Config
 	}
 
 	operatorSkipList := make(map[string]string)
-	if len(cfg.OperatorSkip) > 0 {
-		operatorSkipVals := strings.Split(cfg.OperatorSkip, ",")
+	if len(cfg.Tests.OperatorSkip) > 0 {
+		operatorSkipVals := strings.Split(cfg.Tests.OperatorSkip, ",")
 		for _, val := range operatorSkipVals {
 			operatorSkipList[val] = ""
 		}
