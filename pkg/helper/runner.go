@@ -28,7 +28,7 @@ func (h *H) Runner(cmd string) *runner.Runner {
 // WriteResults dumps runner results into the ReportDir.
 func (h *H) WriteResults(results map[string][]byte) {
 	for filename, data := range results {
-		dst := filepath.Join(h.ReportDir, filename)
+		dst := filepath.Join(h.ReportDir, h.Phase, filename)
 		err := ioutil.WriteFile(dst, data, os.ModePerm)
 		Expect(err).NotTo(HaveOccurred())
 	}

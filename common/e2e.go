@@ -21,11 +21,15 @@ import (
 	"github.com/openshift/osde2e/pkg/osd"
 	"github.com/openshift/osde2e/pkg/upgrade"
 
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 const (
-	customMetadataFile string = "custom-prow-metadata.json"
+	// CustomMetadataFile is the name of the custom metadata file generated for spyglass visualization.
+	CustomMetadataFile string = "custom-prow-metadata.json"
 )
 
 // OSD is used to deploy and manage clusters.
@@ -78,29 +82,40 @@ func RunE2ETests(t *testing.T, cfg *config.Config) {
 	if err = os.Mkdir(cfg.ReportDir, os.ModePerm); err != nil {
 		log.Printf("Could not create reporter directory: %v", err)
 	}
-	reportPath := path.Join(cfg.ReportDir, fmt.Sprintf("junit_%v.xml", cfg.Suffix))
-	reporter := reporters.NewJUnitReporter(reportPath)
 
 	if !cfg.DryRun {
 		log.Println("Running e2e tests...")
-		ginkgo.RunSpecsWithDefaultAndCustomReporters(t, "OSD e2e suite", []ginkgo.Reporter{reporter})
+
+		runTestsInPhase(t, cfg, "install", "OSD e2e suite")
+
 		// upgrade cluster if requested
 		if cfg.Upgrade.Image != "" || cfg.Upgrade.ReleaseStream != "" {
 			if cfg.Kubeconfig.Contents != nil {
 				if err = upgrade.RunUpgrade(cfg, OSD); err != nil {
-					t.Errorf("Error performing upgrade: %s", err.Error())
+					t.Errorf("error performing upgrade: %v", err)
 				}
 
 				log.Println("Running e2e tests POST-UPGRADE...")
-				ginkgo.RunSpecsWithDefaultAndCustomReporters(t, "OSD e2e suite post-upgrade", []ginkgo.Reporter{reporter})
+				runTestsInPhase(t, cfg, "upgrade", "OSD e2e suite post-upgrade")
 			} else {
 				log.Println("No Kubeconfig found from initial cluster setup. Unable to run upgrade.")
 			}
 		}
 
 		if cfg.ReportDir != "" {
-			if err = metadata.Instance.WriteToJSON(filepath.Join(cfg.ReportDir, customMetadataFile)); err != nil {
-				t.Errorf("Error while writing metadata: %s", err.Error())
+			if err = metadata.Instance.WriteToJSON(filepath.Join(cfg.ReportDir, CustomMetadataFile)); err != nil {
+				t.Errorf("error while writing metadata: %v", err)
+			}
+
+			prometheusFilename, err := NewMetrics(cfg).WritePrometheusFile(cfg.ReportDir)
+			if err != nil {
+				t.Errorf("error while writing prometheus metrics: %v", err)
+			}
+
+			if cfg.Tests.UploadMetrics {
+				if err := uploadFileToMetricsBucket(cfg, filepath.Join(cfg.ReportDir, prometheusFilename)); err != nil {
+					t.Errorf("error while uploading prometheus metrics: %v", err)
+				}
 			}
 		}
 
@@ -108,7 +123,7 @@ func RunE2ETests(t *testing.T, cfg *config.Config) {
 			if cfg.Cluster.DestroyAfterTest {
 				log.Printf("Destroying cluster '%s'...", cfg.Cluster.ID)
 				if err = OSD.DeleteCluster(cfg.Cluster.ID); err != nil {
-					t.Errorf("Error deleting cluster: %s", err.Error())
+					t.Errorf("error deleting cluster: %s", err.Error())
 				}
 			} else {
 				log.Printf("For debugging, please look for cluster ID %s in environment %s", cfg.Cluster.ID, cfg.OCM.Env)
@@ -130,4 +145,45 @@ func RunE2ETests(t *testing.T, cfg *config.Config) {
 			}
 		}
 	}
+}
+
+func runTestsInPhase(t *testing.T, cfg *config.Config, phase string, description string) {
+	cfg.Phase = phase
+	phaseDirectory := filepath.Join(cfg.ReportDir, phase)
+	if _, err := os.Stat(phaseDirectory); os.IsNotExist(err) {
+		if err := os.Mkdir(phaseDirectory, os.FileMode(0755)); err != nil {
+			t.Fatalf("error while creating phase directory %s", phaseDirectory)
+		}
+	}
+	phaseReportPath := filepath.Join(phaseDirectory, fmt.Sprintf("junit_%v.xml", cfg.Suffix))
+	phaseReporter := reporters.NewJUnitReporter(phaseReportPath)
+	ginkgo.RunSpecsWithDefaultAndCustomReporters(t, description, []ginkgo.Reporter{phaseReporter})
+}
+
+// uploadFileToMetricsBucket uploads the given file (with absolute path) to the metrics S3 bucket "incoming" directory.
+func uploadFileToMetricsBucket(cfg *config.Config, filename string) error {
+	// We're very intentionally using the shared configs here.
+	// This allows us to configure the AWS client at a system level and this should behave as expected.
+	// This is particularly useful if we want to, at some point in the future, run this on an AWS host with an instance profile
+	// that doesn't need explicit credentials.
+	session, err := session.NewSessionWithOptions(session.Options{SharedConfigState: session.SharedConfigEnable})
+	if err != nil {
+		return err
+	}
+
+	file, err := os.Open(filename)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	uploader := s3manager.NewUploader(session)
+
+	_, err = uploader.Upload(&s3manager.UploadInput{
+		Bucket: aws.String(cfg.Tests.MetricsBucket),
+		Key:    aws.String(path.Join("incoming", filepath.Base(filename))),
+		Body:   file,
+	})
+
+	return err
 }

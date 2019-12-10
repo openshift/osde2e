@@ -37,14 +37,20 @@ set -o pipefail
     OCM_TOKEN_FILE=$SECRETS/ocm-refresh-token
     AWS_ACCESS_KEY_FILE=$SECRETS/aws-access-key
     AWS_SECRET_ACCESS_KEY_FILE=$SECRETS/aws-secret-access-key
+    AWS_REGION_FILE=$SECRETS/aws-region
 
     exit_if_file_missing "OCM token file" $OCM_TOKEN_FILE
     exit_if_file_missing "AWS access key file" $AWS_ACCESS_KEY_FILE
     exit_if_file_missing "AWS secret access key file" $AWS_SECRET_ACCESS_KEY_FILE
+    exit_if_file_missing "AWS region file" $AWS_REGION_FILE
 
     export OCM_TOKEN=$(cat $OCM_TOKEN_FILE)
     export AWS_ACCESS_KEY_ID=$(cat $AWS_ACCESS_KEY_FILE)
     export AWS_SECRET_ACCESS_KEY=$(cat $AWS_SECRET_ACCESS_KEY_FILE)
+    export AWS_REGION=$(cat $AWS_REGION_FILE)
+
+    # We explicitly want to make sure we're always uploading metrics from prow jobs.
+    export METRICS_UPLOAD=true
 
     make $TEST
 } 2>&1 | tee -a $REPORT_DIR/test_output.log

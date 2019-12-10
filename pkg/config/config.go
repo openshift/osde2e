@@ -27,6 +27,9 @@ type Config struct {
 
 	OCM OCMConfig `yaml:"ocm"`
 
+	// Name lets you name the current e2e job run
+	JobName string `json:"job_name" env:"JOB_NAME" sect:"tests" yaml:"jobName"`
+
 	// ReportDir is the location JUnit XML results are written.
 	ReportDir string `json:"report_dir,omitempty" env:"REPORT_DIR" sect:"tests" yaml:"reportDir"`
 
@@ -38,6 +41,9 @@ type Config struct {
 
 	// InstalledWorkloads is an internal variable used to track currently installed workloads in this test run.
 	InstalledWorkloads map[string]string
+
+	// Phase is an internal variable used to track the current set of tests being run (install, upgrade).
+	Phase string
 }
 
 // KubeConfig stores information required to talk to the Kube API
@@ -123,4 +129,10 @@ type TestConfig struct {
 
 	// OperatorSkip is a comma-delimited list of operator names to ignore health checks from. ex. "insights,telemetry"
 	OperatorSkip string `env:"OPERATOR_SKIP" sect:"tests" default:"insights" yaml:"ginkgoFocus"`
+
+	// UploadMetrics tells osde2e whether to try to upload to the S3 metrics bucket.
+	UploadMetrics bool `env:"UPLOAD_METRICS" sect:"metrics" default:"false" yaml:"uploadMetrics"`
+
+	// MetricsBucket is the bucket that metrics data will be uploaded to.
+	MetricsBucket string `env:"METRICS_BUCKET" sect:"metrics" default:"osde2e-metrics" yaml:"metricsBucket"`
 }
