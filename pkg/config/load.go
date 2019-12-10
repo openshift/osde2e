@@ -1,7 +1,6 @@
 package config
 
 import (
-	"flag"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -14,20 +13,9 @@ import (
 )
 
 func init() {
-	var name string
-
-	flag.StringVar(&name, "e2e-config", ".osde2e.yaml", "Config file for osde2e")
-
-	if flag.Parsed() {
-		log.Fatal("Flag has been parsed.")
-	}
-
-	if err := Cfg.LoadFromYAML(name); err != nil {
-		log.Printf("Could not load YAML config: %s", err.Error())
-		log.Print("Defaulting to environment variables for config")
-		if err := Cfg.LoadFromEnv(); err != nil {
-			log.Fatal("error loading config values: ", err)
-		}
+	log.Print("Defaulting to environment variables for config")
+	if err := Cfg.LoadFromEnv(); err != nil {
+		log.Fatal("error loading config values: ", err)
 	}
 }
 
