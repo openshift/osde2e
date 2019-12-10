@@ -33,11 +33,20 @@ for file in $METRICS_FILES; do
 		exit 2
 	fi
 
-	# TODO: push this file to the datahub pushgateway, exit 3 is for errors in during this process
+	JOB_NAME=$(echo $file | sed 's/^[^\.]*\.\(.*\)\.metrics\.prom$/\1/')
+	if ! curl -X DELETE "$PUSHGATEWAY_URL/metrics/job/$JOB_NAME"; then
+		echo "Error deleting old results for $JOB_NAME."
+		exit 3
+	fi
+
+	if ! curl -T "$METRICS_DIR/$file" "$PUSHGATEWAY_URL/metrics/job/$JOB_NAME"; then
+		echo "Error pushing new results for $JOB_NAME."
+		exit 4
+	fi
 
 	if ! aws s3 mv "s3://$INCOMING_FILE" "s3://$PROCESSED_FILE"; then
 		echo "Error moving $INCOMING_FILE to $PROCESSED_FILE in S3."
-		exit 4
+		exit 5
 	fi
 	echo "File has been processed and moved into the processed drectory."
 done

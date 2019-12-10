@@ -46,6 +46,9 @@ var (
 			{
 				Name: "upgrade",
 			},
+			{
+				Name: "metrics",
+			},
 		},
 	}
 )
