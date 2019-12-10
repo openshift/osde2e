@@ -1,0 +1,317 @@
+= Changes
+
+This document describes the relevant changes between releases of the OCM API
+SDK.
+
+== 0.1.50 Nov 4 2019
+
+- Update to metamodel 0.0.12:
+** Add _OpenAPI_ specification generator.
+
+== 0.1.49 Oct 28 2019
+
+- Update to model 0.0.17:
+** Added `Disconnected`, `DisplayName` and `ExternalClusterID` attributes to the
+   cluster authorization request type.
+
+== 0.1.48 Oct 27 2019
+
+- Update to model 0.0.16:
+** Added `ResourceReview` resource to the authorizations service.
+
+- Update to metamodel 0.0.11:
+** Improve parsing of initialisms.
+** Fix the method not allowed code.
+** Send not found when server returns `nil` target.
+** Generate service and version servers.
+** Don't generate files with execution permission.
+
+== 0.1.47 Oct 25 2019
+
+- Update to metamodel 0.0.10:
+** Make HTTP adapters stateless.
+
+== 0.1.46 Oct 24 2019
+
+- Update to model 0.0.15:
+** Added `search` parameter to the accounts `List` method.
+
+== 0.1.45 Oct 24 2019
+
+- Update to model 0.0.14:
+** Added `SKU` type.
+** Improved organizations.
+** Improved roles.
+
+== 0.1.44 Oct 15 2019
+
+- Upate to model 0.0.13:
+** Added `AccessTokenAuth` type.
+** Added `auths` attribute to `AccessToken` type.
+
+- Update to metamodel 0.0.9:
+** Generate shorter adapter names.
+** Use constants from the `http` package.
+** Shorter _read_ and _write_ names.
+** Rename `SetStatusCode` to `Status`.
+** Improve naming of variables.
+** Set default status.
+** Move errors and helpers generators to separate files.
+
+== 0.1.43 Oct 10 2019
+
+- Update to model 0.0.12:
+** Add `access_review` resource.
+
+== 0.1.41 Oct 10 2019
+
+- Update to model 0.0.11:
+** Add `export_control_review` resource.
+
+== 0.1.40 Oct 7 2019
+
+- Update to model 0.0.10:
+** Add `cpu_total_by_node_roles_os` metric query.
+
+== 0.1.39 Oct 7 2019
+
+- Update to model 0.0.9:
+** Add `type` attribute to the `ResourceQuota` type.
+** Add `config_managed` attribute to the `RoleBinding` type.
+
+== 0.1.38 Sep 17 2019
+
+- Update to model 0.0.8:
+** Update methods don't return body.
+
+== 0.1.37 Sep 16 2019
+
+- Update to model 0.0.7:
+** Add `search` parameter to the `List` method of the subscriptions resource.
+
+== 0.1.36 Sep 16 2019
+
+- Update to model 0.0.6:
+** Remove the `creator` attribute of the `Cluster` type.
+
+- Update to metamodel 0.0.7:
+** Add `Copy` method to builders.
+
+== 0.1.35 Sep 12 2019
+
+- Update to model 0.0.5:
+** Add `order` parameter to the methods to list accounts and subscriptions.
+
+== 0.1.34 Sep 11 2019
+
+- Use access token that is about to expire if there is no other mechanism to
+  obtain a new one.
+
+- Update to model 0.0.3:
+** Add `order` parameter to the collections that suport it.
+** Add cloud providers collection.
+
+== 0.1.33 Sep 10 2019
+
+- Update to model 0.0.2:
+** Add `DisplayName` attribute to `Subscription` type.
+
+- Update to metamodel 0.0.5:
+** Fix generation of field names for query parameters.
+** Remove `query` and `path` fields from request objects.
+** Remove unused imports.
+
+== 0.1.32 Sep 03 2019
+
+- Makefile generates code using the ocm-api-metamodel v0.0.4.
+
+- Generated servers parse request query parameters.
+
+== 0.1.31 Aug 28 2019
+
+- Generated servers enforce no trailing slashes as well send 'Content-Type` header.
+
+== 0.1.30 Aug 27 2019
+
+- Renamed package to `github.com/openshift-online/ocm-sdk-go`.
+
+== 0.1.29 Aug 26 2019
+
+- Generated servers can handle routes with and without trailing slashes.
+
+- Clone metamodel for code generation
+
+- Clone model for code generation
+
+- Rename main package
+
+== 0.1.28 Aug 22 2019
+
+- Add Context parameter to Server methods.
+
+== 0.1.27 Aug 22 2019
+
+- Add generated servers.
+
+- Changes ClusterRegistration response type from long to string .
+
+== 0.1.26 Aug 13 2019
+
+- Add support for the `compute_nodes_cpu` and `compute_nodes_memory` metrics.
+
+== 0.1.25 Aug 11 2019
+
+- Add support for quota summary.
+
+- Fix the data type of the cluster registration expiration date.
+
+== 0.1.24 Jun 28 2019
+
+- Automatically select the deprecated _OpenID_ server when authenticating with
+  user name and password.
+
+== 0.1.23 Jun 27 2019
+
+- Don't show cluster admin credentials in the debug log.
+
+== 0.1.22 Jun 27 2019
+
+- Don't send warnings about toke issuer when no tokens are used.
+
+- Fix the names of the methods used to set the V values of the `glog` logger.
+
+== 0.1.21 Jun 26 2019
+
+- Added methods to get connection attributes like token URL, client identifier,
+  etc.
+
+== 0.1.20 Jun 26 2019
+
+- Switch from `developers.redhat.com` to `sso.redhat.com`.
+
+== 0.1.19 Jun 25 2019
+
+- Added `GetMethod` and `GetPath` methods to HTTP requests.
+
+- Added `Header` method to HTTP responses.
+
+== 0.1.18 Jun 21 2019
+
+- Added support for the `expiration_timestamp` attribute of the `Cluster` type.
+
+== 0.1.17 Jun 20 2019
+
+- Added support for the `name` attribute of the `Dashboard` type.
+
+- Added to lists a new `Get` method to get elements by index.
+
+== 0.1.16 Jun 19 2019
+
+- Added to response types getter methods that return the value of the parameter
+  and a boolean flag that indicates if there is actually a value.
+
+== 0.1.15 Jun 19 2019
+
+- Add support for the `versions` collection.
+
+== 0.1.14 Jun 4 2019
+
+- Redact sensitive fields in debug logs.
+
+- Don't crash when there is no response.
+
+== 0.1.13 May 22 2019
+
+- Added support for building objects with attributes that are lists of structs.
+
+== 0.1.12 May 20 2019
+
+- Added support for deleting subscriptions.
+
+- Added Prometheus metrics.
+
+== 0.1.11 May 15 2019
+
+- Increase token slack to one minute.
+
+== 0.1.10 May 8 2019
+
+- Improved support for contexts, adding the `BuildContext`, `TokensContext` and
+  `SendContext` methods.
+
+IMPORTANT: This version breaks backwards compatibility in the `Logger`
+interface, as all the methods require now a first `ctx` parameter.
+
+== 0.1.9 May 3 2019
+
+- Added cluster credentials resource.
+
+== 0.1.8 May 2 2019
+
+- Moved basic cluster metrics to the `metrics` attribute.
+
+- Added `Empty` method to lists and struct typess.
+
+== 0.1.7 May 1 2019
+
+- Always close connections used to request access tokens.
+
+== 0.1.6 Apr 23 2019
+
+- Add typed interface.
+
+== 0.1.5 Apr 17 2019
+
+- Changed package path to `github.com/openshift-online/uhc-sdk-go`.
+
+== 0.1.4 Apr 3 2019
+
+- Don't panic when no refresh token is provided.
+
+== 0.1.3 Mar 27 2019
+
+- Don't close body in round tripper.
+
+== 0.1.2 Mar 23 2019
+
+- Add support for offline access tokens.
+
+== 0.1.1 Jan 25 2019
+
+- Change the `glog` logger so that it uses `--v=0` for errors, warnings and
+  information messages and `--v=1` for debug messages.
+
+== 0.1.0 Jan 24 2019
+
+- Renamed the project from `api-client` to `uhc-sdk`.
+
+- Moved the command line tool to a new `uhc-cli` project.
+
+== 0.0.13 Jan 24 2019
+
+- Add `context` and `timeout` parameters to all requests.
+
+- Scrub password from debug log.
+
+== 0.0.12 Dec 19 2018
+
+- Add `TrustedCAs` parameter to the connection builder.
+
+== 0.0.11 Dec 17 2018
+
+- Check that `T` is passed to the testing logger.
+
+== 0.0.10 Nov 27 2018
+
+- Implement terminal check correctly for _macOS_.
+
+== 0.0.9 Nov 22 2018
+
+- Don't include the testing logger in the binary.
+
+- Added support for printing refresh tokens.
+
+- Added support for setting the _OpenID_ scopes.
+
+- Added a new `StdLogger` that sends log messages to the standard output and
+  error streams.
