@@ -14,7 +14,15 @@ import (
 )
 
 func init() {
-	if err := Cfg.LoadFromYAML(); err != nil {
+	var name string
+
+	flag.StringVar(&name, "e2e-config", ".osde2e.yaml", "Config file for osde2e")
+
+	if flag.Parsed() {
+		log.Fatal("Flag has been parsed.")
+	}
+
+	if err := Cfg.LoadFromYAML(name); err != nil {
 		log.Printf("Could not load YAML config: %s", err.Error())
 		log.Print("Defaulting to environment variables for config")
 		if err := Cfg.LoadFromEnv(); err != nil {
@@ -65,14 +73,10 @@ func (c *Config) LoadDefaults() error {
 
 // LoadFromYAML accepts file info and attempts to unmarshal the file into the
 // config.
-func (c *Config) LoadFromYAML() error {
+func (c *Config) LoadFromYAML(name string) error {
 	var data []byte
 	var err error
-	var dir, path, name string
-
-	flag.StringVar(&name, "e2e-config", ".osde2e.yaml", "Config file for osde2e")
-
-	flag.Parse()
+	var dir, path string
 
 	if err := c.LoadDefaults(); err != nil {
 		return err
