@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/onsi/ginkgo"
+	ginkgoConfig "github.com/onsi/ginkgo/config"
 	"github.com/onsi/ginkgo/reporters"
 	"github.com/onsi/gomega"
 
@@ -34,6 +35,8 @@ var OSD *osd.OSD
 func RunE2ETests(t *testing.T, cfg *config.Config) {
 	var err error
 	gomega.RegisterFailHandler(ginkgo.Fail)
+	ginkgoConfig.GinkgoConfig.SkipString = cfg.Tests.GinkgoSkip
+	ginkgoConfig.GinkgoConfig.FocusString = cfg.Tests.GinkgoFocus
 
 	// set defaults
 	if cfg.Suffix == "" {
@@ -47,17 +50,17 @@ func RunE2ETests(t *testing.T, cfg *config.Config) {
 	}
 
 	// setup OSD unless Kubeconfig is present
-	if len(cfg.Kubeconfig) > 0 {
+	if len(cfg.Kubeconfig.Path) > 0 {
 		log.Print("Found an existing Kubeconfig!")
 	} else {
-		if OSD, err = osd.New(cfg.OCMToken, cfg.OSDEnv, cfg.DebugOSD); err != nil {
+		if OSD, err = osd.New(cfg.OCM.Token, cfg.OCM.Env, cfg.OCM.Debug); err != nil {
 			t.Fatalf("could not setup OSD: %v", err)
 		}
 
-		metadata.Instance.Environment = cfg.OSDEnv
+		metadata.Instance.Environment = cfg.OCM.Env
 
 		// check that enough quota exists for this test if creating cluster
-		if len(cfg.ClusterID) == 0 {
+		if len(cfg.Cluster.ID) == 0 {
 			if enoughQuota, err := OSD.CheckQuota(cfg); err != nil {
 				log.Printf("Failed to check if enough quota is available: %v", err)
 			} else if !enoughQuota {
@@ -82,8 +85,8 @@ func RunE2ETests(t *testing.T, cfg *config.Config) {
 		log.Println("Running e2e tests...")
 		ginkgo.RunSpecsWithDefaultAndCustomReporters(t, "OSD e2e suite", []ginkgo.Reporter{reporter})
 		// upgrade cluster if requested
-		if cfg.UpgradeImage != "" || cfg.UpgradeReleaseStream != "" {
-			if cfg.Kubeconfig != nil {
+		if cfg.Upgrade.Image != "" || cfg.Upgrade.ReleaseStream != "" {
+			if cfg.Kubeconfig.Contents != nil {
 				if err = upgrade.RunUpgrade(cfg, OSD); err != nil {
 					t.Errorf("Error performing upgrade: %s", err.Error())
 				}
@@ -102,13 +105,13 @@ func RunE2ETests(t *testing.T, cfg *config.Config) {
 		}
 
 		if OSD != nil {
-			if cfg.DestroyClusterAfterTest {
-				log.Printf("Destroying cluster '%s'...", cfg.ClusterID)
-				if err = OSD.DeleteCluster(cfg.ClusterID); err != nil {
+			if cfg.Cluster.DestroyAfterTest {
+				log.Printf("Destroying cluster '%s'...", cfg.Cluster.ID)
+				if err = OSD.DeleteCluster(cfg.Cluster.ID); err != nil {
 					t.Errorf("Error deleting cluster: %s", err.Error())
 				}
 			} else {
-				log.Printf("For debugging, please look for cluster ID %s in environment %s", cfg.ClusterID, cfg.OSDEnv)
+				log.Printf("For debugging, please look for cluster ID %s in environment %s", cfg.Cluster.ID, cfg.OCM.Env)
 			}
 		} else {
 			// If we run against an arbitrary cluster and not a ci-specific cluster

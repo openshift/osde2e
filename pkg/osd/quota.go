@@ -48,7 +48,7 @@ func (u *OSD) CheckQuota(cfg *config.Config) (bool, error) {
 	quotaList.Each(func(q *accounts.ResourceQuota) bool {
 		if quotaFound = HasQuotaFor(q, cfg, ResourceAWSCluster, machineType); quotaFound {
 			log.Printf("Quota for test config (%s/%s/multiAZ=%t) found: total=%d, remaining: %d",
-				ResourceAWSCluster, machineType, cfg.MultiAZ, q.Allowed(), q.Allowed()-q.Reserved())
+				ResourceAWSCluster, machineType, cfg.Cluster.MultiAZ, q.Allowed(), q.Allowed()-q.Reserved())
 		}
 		return !quotaFound
 	})
@@ -78,7 +78,7 @@ func (u *OSD) CurrentAccountQuota() (*accounts.ResourceQuotaList, error) {
 // HasQuotaFor the desired configuration. If machineT is empty a default will try to be selected.
 func HasQuotaFor(q *accounts.ResourceQuota, cfg *config.Config, resourceType, machineType string) bool {
 	azType := "single"
-	if cfg.MultiAZ {
+	if cfg.Cluster.MultiAZ {
 		azType = "multi"
 	}
 

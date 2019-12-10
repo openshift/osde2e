@@ -42,7 +42,7 @@ func RunUpgrade(cfg *config.Config, OSD *osd.OSD) error {
 	h.SetupNoProj()
 	defer h.Cleanup()
 
-	log.Printf("Upgrading cluster to UPGRADE_IMAGE '%s'", cfg.UpgradeImage)
+	log.Printf("Upgrading cluster to UPGRADE_IMAGE '%s'", cfg.Upgrade.Image)
 	desired, err := TriggerUpgrade(h, cfg)
 	if err != nil {
 		return fmt.Errorf("failed triggering upgrade: %v", err)
@@ -82,8 +82,8 @@ func TriggerUpgrade(h *helper.H, cfg *config.Config) (*configv1.ClusterVersion, 
 
 	// set requested upgrade targets
 	cVersion.Spec.DesiredUpdate = &configv1.Update{
-		Version: strings.Replace(cfg.UpgradeReleaseName, "openshift-v", "", -1),
-		Image:   cfg.UpgradeImage,
+		Version: strings.Replace(cfg.Upgrade.ReleaseName, "openshift-v", "", -1),
+		Image:   cfg.Upgrade.Image,
 		Force:   true,
 	}
 	updatedCV, err := cfgClient.ConfigV1().ClusterVersions().Update(cVersion)

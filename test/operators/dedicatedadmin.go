@@ -72,6 +72,6 @@ var _ = ginkgo.Describe("[OSD] Dedicated Admin Operator", func() {
 				err := pollRoleBinding(h, project.Name, roleBindingName)
 				Expect(err).NotTo(HaveOccurred())
 			}
-		}, float64(h.PollingTimeout))
+		}, float64(h.Tests.PollingTimeout))
 	})
 })

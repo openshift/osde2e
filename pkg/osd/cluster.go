@@ -23,24 +23,24 @@ const (
 
 // LaunchCluster setups an new cluster using the OSD API and returns it's ID.
 func (u *OSD) LaunchCluster(cfg *config.Config) (string, error) {
-	log.Printf("Creating cluster '%s'...", cfg.ClusterName)
+	log.Printf("Creating cluster '%s'...", cfg.Cluster.Name)
 
 	// choose flavour based on config
 	flavourID := u.Flavour(cfg)
 
 	// Calculate an expiration date for the cluster so that it will be automatically deleted if
 	// we happen to forget to do it:
-	expiration := time.Now().Add(time.Duration(cfg.ClusterExpiryInMinutes) * time.Minute).UTC() // UTC() to workaround SDA-1567
+	expiration := time.Now().Add(time.Duration(cfg.Cluster.ExpiryInMinutes) * time.Minute).UTC() // UTC() to workaround SDA-1567
 
 	cluster, err := v1.NewCluster().
-		Name(cfg.ClusterName).
+		Name(cfg.Cluster.Name).
 		Flavour(v1.NewFlavour().
 			ID(flavourID)).
 		Region(v1.NewCloudRegion().
 			ID("us-east-1")).
-		MultiAZ(cfg.MultiAZ).
+		MultiAZ(cfg.Cluster.MultiAZ).
 		Version(v1.NewVersion().
-			ID(cfg.ClusterVersion)).
+			ID(cfg.Cluster.Version)).
 		ExpirationTimestamp(expiration).
 		Build()
 	if err != nil {
@@ -126,15 +126,15 @@ func (u *OSD) DeleteCluster(clusterID string) error {
 
 // WaitForClusterReady blocks until clusterID is ready or a number of retries has been attempted.
 func (u *OSD) WaitForClusterReady(cfg *config.Config) error {
-	log.Printf("Waiting %v minutes for cluster '%s' to be ready...\n", cfg.ClusterUpTimeout, cfg.ClusterID)
+	log.Printf("Waiting %v minutes for cluster '%s' to be ready...\n", cfg.Cluster.InstallTimeout, cfg.Cluster.ID)
 	cleanRuns := 0
 	errRuns := 0
 
 	clusterStarted := time.Now()
 	var readinessStarted time.Time
 	ocmReady := false
-	return wait.PollImmediate(30*time.Second, time.Duration(cfg.ClusterUpTimeout)*time.Minute, func() (bool, error) {
-		if state, err := u.ClusterState(cfg.ClusterID); state == v1.ClusterStateReady {
+	return wait.PollImmediate(30*time.Second, time.Duration(cfg.Cluster.InstallTimeout)*time.Minute, func() (bool, error) {
+		if state, err := u.ClusterState(cfg.Cluster.ID); state == v1.ClusterStateReady {
 			// This is the first time that we've entered this section, so we'll consider this the time until OCM has said the cluster is ready
 			if !ocmReady {
 				ocmReady = true
@@ -163,7 +163,7 @@ func (u *OSD) WaitForClusterReady(cfg *config.Config) error {
 		} else if err != nil {
 			return false, fmt.Errorf("Encountered error waiting for cluster: %v", err)
 		} else if state == v1.ClusterStateError {
-			return false, fmt.Errorf("the installation of cluster '%s' has errored", cfg.ClusterID)
+			return false, fmt.Errorf("the installation of cluster '%s' has errored", cfg.Cluster.ID)
 		} else {
 			log.Printf("Cluster is not ready, current status '%s'.", state)
 		}
@@ -174,13 +174,14 @@ func (u *OSD) WaitForClusterReady(cfg *config.Config) error {
 // PollClusterHealth looks at CVO data to determine if a cluster is alive/healthy or not
 func (u *OSD) PollClusterHealth(cfg *config.Config) (status bool, err error) {
 	log.Print("Polling Cluster Health...\n")
-	if cfg.Kubeconfig == nil {
-		if cfg.Kubeconfig, err = u.ClusterKubeconfig(cfg.ClusterID); err != nil {
+	if len(cfg.Kubeconfig.Contents) == 0 {
+		if cfg.Kubeconfig.Contents, err = u.ClusterKubeconfig(cfg.Cluster.ID); err != nil {
 			log.Printf("could not get kubeconfig for cluster: %v\n", err)
 			return false, nil
 		}
 	}
-	restConfig, err := clientcmd.RESTConfigFromKubeConfig(cfg.Kubeconfig)
+
+	restConfig, err := clientcmd.RESTConfigFromKubeConfig(cfg.Kubeconfig.Contents)
 	if err != nil {
 		log.Printf("Error generating Rest Config: %v\n", err)
 		return false, nil

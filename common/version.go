@@ -15,42 +15,42 @@ import (
 // If a release stream is set for an upgrade the previous available version is used and it's image is used for upgrade.
 func ChooseVersions(cfg *config.Config, osd *osd.OSD) (err error) {
 	// when defined, use set version
-	if len(cfg.ClusterVersion) != 0 {
+	if len(cfg.Cluster.Version) != 0 {
 		err = nil
 	} else if osd == nil {
 		err = errors.New("osd must be setup when upgrading with release stream")
-	} else if cfg.UpgradeImage == "" && cfg.UpgradeReleaseStream != "" {
+	} else if cfg.Upgrade.Image == "" && cfg.Upgrade.ReleaseStream != "" {
 		err = setupUpgradeVersion(cfg, osd)
 	} else {
 		err = setupVersion(cfg, osd, false)
 	}
 
 	// Set the versions in metadata. If upgrade hasn't been chosen, it should still be omitted from the end result.
-	metadata.Instance.ClusterVersion = cfg.ClusterVersion
-	metadata.Instance.UpgradeVersion = cfg.UpgradeReleaseName
+	metadata.Instance.ClusterVersion = cfg.Cluster.Version
+	metadata.Instance.UpgradeVersion = cfg.Upgrade.ReleaseName
 
 	return err
 }
 
 // chooses between default version and nightly based on target versions.
 func setupVersion(cfg *config.Config, osd *osd.OSD, isUpgrade bool) (err error) {
-	if len(cfg.ClusterVersion) > 0 {
+	if len(cfg.Cluster.Version) > 0 {
 		return
 	}
-	if cfg.MajorTarget != 0 || cfg.MinorTarget != 0 {
+	if cfg.Upgrade.MajorTarget != 0 || cfg.Upgrade.MinorTarget != 0 {
 		// don't require major to be set
-		if cfg.MajorTarget == 0 {
-			cfg.MajorTarget = -1
+		if cfg.Upgrade.MajorTarget == 0 {
+			cfg.Upgrade.MajorTarget = -1
 		}
 		// look for the default release and install it for this OSD cluster.
-		if cfg.ClusterVersion, err = osd.LatestVersion(cfg.MajorTarget, cfg.MinorTarget); err == nil {
-			log.Printf("CLUSTER_VERSION not set but a TARGET is, running '%s'", cfg.ClusterVersion)
+		if cfg.Cluster.Version, err = osd.LatestVersion(cfg.Upgrade.MajorTarget, cfg.Upgrade.MinorTarget); err == nil {
+			log.Printf("CLUSTER_VERSION not set but a TARGET is, running '%s'", cfg.Cluster.Version)
 		}
 	}
 
-	if len(cfg.ClusterVersion) == 0 {
-		if cfg.ClusterVersion, err = osd.DefaultVersion(); err == nil {
-			log.Printf("CLUSTER_VERSION not set, using the current default '%s'", cfg.ClusterVersion)
+	if len(cfg.Cluster.Version) == 0 {
+		if cfg.Cluster.Version, err = osd.DefaultVersion(); err == nil {
+			log.Printf("CLUSTER_VERSION not set, using the current default '%s'", cfg.Cluster.Version)
 		} else {
 			return fmt.Errorf("Error finding default cluster version: %v", err)
 		}
@@ -67,32 +67,32 @@ func setupUpgradeVersion(cfg *config.Config, osd *osd.OSD) (err error) {
 		return err
 	}
 
-	cfg.UpgradeReleaseName, cfg.UpgradeImage, err = upgrade.LatestRelease(cfg, cfg.UpgradeReleaseStream, true)
+	cfg.Upgrade.ReleaseName, cfg.Upgrade.Image, err = upgrade.LatestRelease(cfg, cfg.Upgrade.ReleaseStream, true)
 	if err != nil {
 		return fmt.Errorf("couldn't get latest release from release-controller: %v", err)
 	}
 
-	clusterVersion, err := osd.OpenshiftVersionToSemver(cfg.ClusterVersion)
+	clusterVersion, err := osd.OpenshiftVersionToSemver(cfg.Cluster.Version)
 	if err != nil {
-		log.Printf("error while parsing cluster version %s: %v", cfg.ClusterVersion, err)
+		log.Printf("error while parsing cluster version %s: %v", cfg.Cluster.Version, err)
 		return err
 	}
 
-	upgradeVersion, err := osd.OpenshiftVersionToSemver(cfg.UpgradeReleaseName)
+	upgradeVersion, err := osd.OpenshiftVersionToSemver(cfg.Upgrade.ReleaseName)
 	if err != nil {
-		log.Printf("error while parsing upgrade version %s: %v", cfg.UpgradeReleaseName, err)
+		log.Printf("error while parsing upgrade version %s: %v", cfg.Upgrade.ReleaseName, err)
 		return err
 	}
 
 	if !clusterVersion.LessThan(upgradeVersion) {
 		log.Printf("Cluster version is equal to or newer than the upgrade version. Looking up previous version...")
-		if cfg.ClusterVersion, err = osd.PreviousVersion(cfg.UpgradeReleaseName); err != nil {
-			return fmt.Errorf("failed retrieving previous version to '%s': %v", cfg.UpgradeReleaseName, err)
+		if cfg.Cluster.Version, err = osd.PreviousVersion(cfg.Upgrade.ReleaseName); err != nil {
+			return fmt.Errorf("failed retrieving previous version to '%s': %v", cfg.Upgrade.ReleaseName, err)
 		}
 	}
 
 	// set upgrade image
 	log.Printf("Selecting version '%s' to be able to upgrade to '%s' on release stream '%s'",
-		cfg.ClusterVersion, cfg.UpgradeReleaseName, cfg.UpgradeReleaseStream)
+		cfg.Cluster.Version, cfg.Upgrade.ReleaseName, cfg.Upgrade.ReleaseStream)
 	return
 }

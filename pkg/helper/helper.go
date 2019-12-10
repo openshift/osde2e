@@ -26,7 +26,7 @@ func New() *H {
 	helper := &H{
 		Config: config.Cfg,
 	}
-	
+
 	ginkgo.BeforeEach(helper.Setup)
 	ginkgo.AfterEach(helper.Cleanup)
 	return helper
@@ -45,25 +45,24 @@ type H struct {
 // SetupNoProj configures a *rest.Config using the embedded kubeconfig
 func (h *H) SetupNoProj() {
 	var err error
-	
+
 	if len(h.InstalledWorkloads) < 1 {
 		h.InstalledWorkloads = make(map[string]string)
 	}
 
-	h.restConfig, err = clientcmd.RESTConfigFromKubeConfig(h.Kubeconfig)
+	h.restConfig, err = clientcmd.RESTConfigFromKubeConfig(h.Kubeconfig.Contents)
 	Expect(err).ShouldNot(HaveOccurred(), "failed to configure client")
 }
 
 // Setup configures a *rest.Config using the embedded kubeconfig then sets up a Project for tests to run in.
 func (h *H) Setup() {
 	var err error
-	h.restConfig, err = clientcmd.RESTConfigFromKubeConfig(h.Kubeconfig)
+	h.restConfig, err = clientcmd.RESTConfigFromKubeConfig(h.Kubeconfig.Contents)
 	Expect(err).ShouldNot(HaveOccurred(), "failed to configure client")
 
 	if len(h.InstalledWorkloads) < 1 {
 		h.InstalledWorkloads = make(map[string]string)
 	}
-
 
 	// setup project to run tests
 	suffix := randomStr(5)

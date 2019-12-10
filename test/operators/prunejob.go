@@ -34,7 +34,7 @@ var _ = ginkgo.Describe("[OSD] Prune jobs", func() {
 				Expect(err).NotTo(HaveOccurred())
 				err = waitJobComplete(h, namespace, job.Name)
 				Expect(err).NotTo(HaveOccurred())
-			}, float64(h.PollingTimeout))
+			}, float64(h.Tests.PollingTimeout))
 		}
 
 	})
@@ -67,7 +67,7 @@ func waitJobComplete(h *helper.H, namespace, jobName string) error {
 	interval := 5
 
 	// convert time.Duration type
-	timeoutDuration := time.Duration(h.PollingTimeout) * time.Minute
+	timeoutDuration := time.Duration(h.Tests.PollingTimeout) * time.Minute
 	intervalDuration := time.Duration(interval) * time.Second
 
 	start := time.Now()

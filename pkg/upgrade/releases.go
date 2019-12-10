@@ -24,7 +24,7 @@ const (
 func LatestRelease(cfg *config.Config, releaseStream string, use_release_controller_for_int bool) (name, pullSpec string, err error) {
 	var resp *http.Response
 	var data []byte
-	if cfg.OSDEnv == "int" && use_release_controller_for_int {
+	if cfg.OCM.Env == "int" && use_release_controller_for_int {
 		log.Printf("Using the release controller.")
 		latestURL := fmt.Sprintf(latestReleaseControllerURLFmt, releaseStream)
 		resp, err = http.Get(latestURL)
@@ -50,7 +50,7 @@ func LatestRelease(cfg *config.Config, releaseStream string, use_release_control
 	log.Printf("Using Cincinnati.")
 
 	// If stage or prod, use Cincinnati instead of the release controller
-	cincinnatiFormattedURL := fmt.Sprintf(cincinnatiURLFmt, osd.Environments.Choose(cfg.OSDEnv), releaseStream)
+	cincinnatiFormattedURL := fmt.Sprintf(cincinnatiURLFmt, osd.Environments.Choose(cfg.OCM.Env), releaseStream)
 
 	var req *http.Request
 
