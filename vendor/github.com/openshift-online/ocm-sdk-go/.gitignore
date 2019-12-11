@@ -1,0 +1,7 @@
+/.gobin/
+/examples/*
+/metamodel/
+/model/
+/vendor/
+openapi.yaml
+!/examples/*.go
