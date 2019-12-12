@@ -1,0 +1,406 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "version": "v1",
+    "title": "authorizations",
+    "license": {
+      "name": "Apache 2.0",
+      "url": "http://www.apache.org/licenses/LICENSE-2.0"
+    },
+    "contact": {
+      "name": "OCM Feedback",
+      "email": "ocm-feedback@redhat.com"
+    }
+  },
+  "servers": [
+    {
+      "description": "Production",
+      "url": "https://api.openshift.com"
+    }
+  ],
+  "paths": {
+    "/api/authorizations/v1/access_review": {
+      "post": {
+        "description": "Reviews a user's access to a resource",
+        "parameters": [
+          
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AccessReviewRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Success.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessReviewResponse"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/authorizations/v1/export_control_review": {
+      "post": {
+        "description": "Screens a user by account user name.",
+        "parameters": [
+          
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExportControlReviewRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Success.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExportControlReviewResponse"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/authorizations/v1/resource_review": {
+      "post": {
+        "description": "Returns the list of identifiers of the resources that an account can\nperform the specified action upon.",
+        "parameters": [
+          
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResourceReviewRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Success.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResourceReview"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/authorizations/v1/self_access_review": {
+      "post": {
+        "description": "Reviews a user's access to a resource",
+        "parameters": [
+          
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SelfAccessReviewRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Success.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SelfAccessReviewResponse"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AccessReviewRequest": {
+        "description": "Representation of an access review",
+        "properties": {
+          "account_username": {
+            "description": "Defines the username of the account of which access is being reviewed",
+            "type": "string"
+          },
+          "action": {
+            "description": "Indicates the action, one of: [get,list,create,delete,update]",
+            "type": "string"
+          },
+          "cluster_id": {
+            "description": "Indicates which Cluster the resource type belongs to",
+            "type": "string"
+          },
+          "organization_id": {
+            "description": "Indicates which Organization the resource type belongs to",
+            "type": "string"
+          },
+          "resource_type": {
+            "description": "Indicates the type of the resource an action would be taken on.\nSee uhc-account-manager/openapi/openapi.yaml for a list of possible values",
+            "type": "string"
+          },
+          "subscription_id": {
+            "description": "Indicates which Subscription the resource type belongs to",
+            "type": "string"
+          }
+        }
+      },
+      "AccessReviewResponse": {
+        "description": "Representation of an access review response",
+        "properties": {
+          "account_username": {
+            "description": "Defines the username of the account of which access is being reviewed",
+            "type": "string"
+          },
+          "action": {
+            "description": "Indicates the action, one of: [get,list,create,delete,update]",
+            "type": "string"
+          },
+          "allowed": {
+            "description": "Defines whether the action on the specified resource type is allowed",
+            "type": "boolean"
+          },
+          "cluster_id": {
+            "description": "Indicates which Cluster the resource type belongs to",
+            "type": "string"
+          },
+          "organization_id": {
+            "description": "Indicates which Organization the resource type belongs to",
+            "type": "string"
+          },
+          "resource_type": {
+            "description": "Indicates the type of the resource an action would be taken on.\nSee uhc-account-manager/openapi/openapi.yaml for a list of possible values",
+            "type": "string"
+          },
+          "subscription_id": {
+            "description": "Indicates which Subscription the resource type belongs to",
+            "type": "string"
+          }
+        }
+      },
+      "ExportControlReviewRequest": {
+        "properties": {
+          "account_username": {
+            "type": "string"
+          }
+        }
+      },
+      "ExportControlReviewResponse": {
+        "properties": {
+          "restricted": {
+            "type": "boolean"
+          }
+        }
+      },
+      "ResourceReview": {
+        "description": "Contains the result of performing a resource access review.",
+        "properties": {
+          "account_username": {
+            "description": "Name of the account that is trying to perform the access.",
+            "type": "string"
+          },
+          "action": {
+            "description": "Action that will the user is trying to perform.",
+            "type": "string"
+          },
+          "cluster_ids": {
+            "description": "Identifiers of the clusters that the user has permission to perform the action upon.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "organization_ids": {
+            "description": "Identifiers of the organizations that the user has permissions to perform the action\nupon.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "resource_type": {
+            "description": "Type of resource.",
+            "type": "string"
+          },
+          "subscription_ids": {
+            "description": "Identifiers of the subscriptions that the user has permission to perform the action upon.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "ResourceReviewRequest": {
+        "description": "Request to perform a resource access review.",
+        "properties": {
+          "account_username": {
+            "description": "Name of the account that is trying to access the resource.",
+            "type": "string"
+          },
+          "action": {
+            "description": "Action that will be performed on the resource.",
+            "type": "string"
+          },
+          "resource_type": {
+            "description": "Type of resource.",
+            "type": "string"
+          }
+        }
+      },
+      "SelfAccessReviewRequest": {
+        "description": "Representation of an access review performed against oneself",
+        "properties": {
+          "action": {
+            "description": "Indicates the action, one of: [get,list,create,delete,update]",
+            "type": "string"
+          },
+          "cluster_id": {
+            "description": "Indicates which Cluster the resource type belongs to",
+            "type": "string"
+          },
+          "organization_id": {
+            "description": "Indicates which Organization the resource type belongs to",
+            "type": "string"
+          },
+          "resource_type": {
+            "description": "Indicates the type of the resource an action would be taken on.\nSee uhc-account-manager/openapi/openapi.yaml for a list of possible values",
+            "type": "string"
+          },
+          "subscription_id": {
+            "description": "Indicates which Subscription the resource type belongs to",
+            "type": "string"
+          }
+        }
+      },
+      "SelfAccessReviewResponse": {
+        "description": "Representation of an access review response, performed against oneself",
+        "properties": {
+          "action": {
+            "description": "Indicates the action, one of: [get,list,create,delete,update]",
+            "type": "string"
+          },
+          "allowed": {
+            "description": "Defines whether the action on the specified resource type is allowed",
+            "type": "boolean"
+          },
+          "cluster_id": {
+            "description": "Indicates which Cluster the resource type belongs to",
+            "type": "string"
+          },
+          "organization_id": {
+            "description": "Indicates which Organization the resource type belongs to",
+            "type": "string"
+          },
+          "resource_type": {
+            "description": "Indicates the type of the resource an action would be taken on.\nSee uhc-account-manager/openapi/openapi.yaml for a list of possible values",
+            "type": "string"
+          },
+          "subscription_id": {
+            "description": "Indicates which Subscription the resource type belongs to",
+            "type": "string"
+          }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "description": "Indicates the type of this object. Will always be 'Error'",
+            "type": "string"
+          },
+          "id": {
+            "description": "Numeric identifier of the error.",
+            "type": "integer",
+            "format": "int32"
+          },
+          "href": {
+            "description": "Self link.",
+            "type": "string"
+          },
+          "code": {
+            "description": "Globally unique code of the error, composed of the unique identifier of the API and the numeric identifier of the error. For example, for if the numeric identifier of the error is `93` and the identifier of the API is `clusters_mgmt` then the code will be `CLUSTERS-MGMT-93`.",
+            "type": "string"
+          },
+          "reason": {
+            "description": "Human readable description of the error.",
+            "type": "string"
+          },
+          "details": {
+            "description": "Extra information about the error.",
+            "type": "object",
+            "additionalProperties": "true"
+          }
+        }
+      }
+    }
+  },
+  "security": [
+    {
+      "bearer": [
+        
+      ]
+    }
+  ]
+}

@@ -15,8 +15,8 @@ const (
 	testImageStreamNamespace = "openshift"
 )
 
-// getLatestImageStreamTag returns the From name of the latest ImageStream tag.
-func (r *Runner) getLatestImageStreamTag() (string, error) {
+// GetLatestImageStreamTag returns the From name of the latest ImageStream tag.
+func (r *Runner) GetLatestImageStreamTag() (string, error) {
 	return r.getImageStreamTag("latest")
 }
 

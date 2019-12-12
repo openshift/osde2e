@@ -66,10 +66,6 @@ func (c *Config) LoadFromYAML(name string) error {
 	var err error
 	var dir, path string
 
-	if err := c.LoadDefaults(); err != nil {
-		return err
-	}
-
 	if dir, err = os.Getwd(); err != nil {
 		log.Fatalf("Unable to get CWD: %s", err.Error())
 	}

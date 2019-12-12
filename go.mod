@@ -28,6 +28,7 @@ require (
 	k8s.io/client-go v11.0.1-0.20191029005444-8e4128053008+incompatible
 	k8s.io/klog v1.0.0 // indirect
 	k8s.io/kube-openapi v0.0.0-20191107075043-30be4d16710a // indirect
+	k8s.io/utils v0.0.0-20190712204705-3dccf664f023
 )
 
 replace (

@@ -1,0 +1,42 @@
+cat << 'WORKLOAD' > workload.yaml
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: addon-tests
+spec:
+  parallelism: 1
+  completions: 1
+  activeDeadlineSeconds: {{.Timeout}}
+  backoffLimit: 0
+  template:
+    metadata:
+      name: addon-test
+    spec:
+      containers:
+      - name: addon-tests
+        image: quay.io/miwilson/addons-osde2e-testing
+        args: [--output-dir, {{.OutputDir}}]
+        volumeMounts:
+        - mountPath: /test-run-results
+          name: test-output
+      - name: push-results
+        image: {{.PushResultsContainer}}
+        command: [/bin/sh, -c]
+        args:
+        - while ! oc get pod $POD_NAME -o jsonpath='{.status.containerStatuses[?(@.name=="addon-tests")].state}' | grep -q terminated; do sleep 1; done; oc rsync {{.OutputDir}}/. addon-tests:{{.OutputDir}}
+        env:
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        volumeMounts:
+        - mountPath: {{.OutputDir}}
+          name: test-output
+      volumes:
+      - name: test-output
+        emptyDir: {}
+      restartPolicy: Never
+WORKLOAD
+
+oc apply -f workload.yaml
+while oc get job/addon-tests -o=jsonpath='{.status}' | grep -q active; do sleep 1; done

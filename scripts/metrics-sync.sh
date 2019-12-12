@@ -6,6 +6,8 @@ PROCESSED=processed
 VENV="$(mktemp -d)"
 METRICS_DIR="$(mktemp -d)"
 
+PUSHGATEWAY_URL=${PUSHGATEWAY_URL%/}
+
 # Cleanup the temporary directories
 trap 'rm -rf "$VENV" "$METRICS_DIR"' EXIT
 

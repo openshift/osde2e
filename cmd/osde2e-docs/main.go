@@ -49,6 +49,9 @@ var (
 			{
 				Name: "metrics",
 			},
+			{
+				Name: "addons",
+			},
 		},
 	}
 )

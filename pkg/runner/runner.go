@@ -13,7 +13,7 @@ import (
 
 const (
 	// name used in Runner resources
-	defaultName = "openshift-tests"
+	defaultName = "osde2e-runner"
 
 	// directory containing service account credentials
 	serviceAccountDir = "/var/run/secrets/kubernetes.io/serviceaccount"
@@ -30,7 +30,7 @@ var DefaultRunner = &Runner{
 		},
 		RestartPolicy: kubev1.RestartPolicyNever,
 	},
-	OutputDir: "./results",
+	OutputDir: "/test-run-results",
 	AuthConfig: AuthConfig{
 		Name:      "osde2e",
 		Server:    "https://kubernetes.default",
@@ -97,7 +97,7 @@ func (r *Runner) Run(timeoutInSeconds int, stopCh <-chan struct{}) (err error) {
 
 	// set image if imagestream is set
 	if r.ImageName == "" {
-		if r.ImageName, err = r.getLatestImageStreamTag(); err != nil {
+		if r.ImageName, err = r.GetLatestImageStreamTag(); err != nil {
 			return
 		}
 	}
@@ -150,7 +150,7 @@ func (r *Runner) DeepCopy() *Runner {
 // meta returns the ObjectMeta used for Runner resources.
 func (r *Runner) meta() metav1.ObjectMeta {
 	return metav1.ObjectMeta{
-		GenerateName: r.Name + "-",
+		Name: r.Name,
 		Labels: map[string]string{
 			"app": r.Name,
 		},

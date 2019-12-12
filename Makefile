@@ -1,6 +1,7 @@
 .PHONY: check generate build-image push-image push-latest test
 
 PKG := github.com/openshift/osde2e
+ADDONS_PKG := $(PKG)/suites/addons
 E2E_PKG := $(PKG)/suites/e2e
 SCALE_PKG := $(PKG)/suites/scale
 DOC_PKG := $(PKG)/cmd/osde2e-docs
@@ -44,6 +45,9 @@ test:
 
 test-scale:
 	go test $(SCALE_PKG) -test.v -ginkgo.skip="$(GINKGO_SKIP)" -ginkgo.focus="$(GINKGO_FOCUS)"  -test.timeout 8h -test.run TestScale
+
+test-addons:
+	go test $(ADDONS_PKG) -test.v -ginkgo.skip="$(GINKGO_SKIP)" -ginkgo.focus="$(GINKGO_FOCUS)"  -test.timeout 8h -test.run TestAddons
 
 test-docker:
 	$(CONTAINER_ENGINE) run \

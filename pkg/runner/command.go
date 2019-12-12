@@ -7,7 +7,7 @@ import (
 )
 
 // testCmd configures default Service Account as a kubeconfig, runs openshift-tests, and serves results over HTTP
-const testCmd = `
+const testCmd = `#!/bin/bash
 # setup cluster credentials
 oc config set-cluster {{.Name}} --server={{.Server}} --certificate-authority={{.CA}}
 oc config set-credentials {{.Name}} --token=$(cat {{.TokenFile}})
@@ -18,7 +18,9 @@ oc config use-context {{.Name}}
 mkdir -p {{.OutputDir}}
 
 # run Cmd and preserve it's stdout and stderr
-{{.Cmd}} > >(tee -a {{.OutputDir}}/{{.Name}}-out.txt) 2> >(tee -a {{.OutputDir}}/{{.Name}}-err.txt >&2)
+{
+{{.Cmd}}
+} > >(tee -a {{.OutputDir}}/{{.Name}}-out.txt) 2> >(tee -a {{.OutputDir}}/{{.Name}}-err.txt >&2)
 
 # create a Tarball of OutputDir if requested
 {{$outDir := .OutputDir}}
@@ -36,10 +38,11 @@ var (
 	cmdTemplate = template.Must(template.New("testCmd").Parse(testCmd))
 )
 
-func (r *Runner) Command() (string, error) {
+// Command generates the templated command.
+func (r *Runner) Command() ([]byte, error) {
 	var cmd bytes.Buffer
 	if err := cmdTemplate.Execute(&cmd, r); err != nil {
-		return "", fmt.Errorf("failed templating command: %v", err)
+		return []byte{}, fmt.Errorf("failed templating command: %v", err)
 	}
-	return cmd.String(), nil
+	return cmd.Bytes(), nil
 }

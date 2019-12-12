@@ -2,8 +2,10 @@
 package helper
 
 import (
+	"bytes"
 	"fmt"
 	"math/rand"
+	"text/template"
 	"time"
 
 	"github.com/onsi/ginkgo"
@@ -126,4 +128,13 @@ func (h *H) GetWorkload(name string) (string, bool) {
 // AddWorkload uniquely appends a workload to the workloads list
 func (h *H) AddWorkload(name, project string) {
 	h.InstalledWorkloads[name] = project
+}
+
+// ConvertTemplateToString takes a template and uses the provided data interface to construct a command string
+func (h *H) ConvertTemplateToString(template *template.Template, data interface{}) (string, error) {
+	var cmd bytes.Buffer
+	if err := template.Execute(&cmd, data); err != nil {
+		return "", fmt.Errorf("failed templating command: %v", err)
+	}
+	return cmd.String(), nil
 }

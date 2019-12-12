@@ -16,6 +16,3 @@ out/
 .idea
 *.swp
 *.code-workspace
-
-# Go dependencies
-vendor/
