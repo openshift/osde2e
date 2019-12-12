@@ -50,7 +50,6 @@ type DashboardsListServerRequest struct {
 	page   *int
 	search *string
 	size   *int
-	total  *int
 }
 
 // Order returns the value of the 'order' parameter.
@@ -104,8 +103,6 @@ func (r *DashboardsListServerRequest) GetOrder() (value string, ok bool) {
 // Page returns the value of the 'page' parameter.
 //
 // Index of the requested page, where one corresponds to the first page.
-//
-// Default value is `1`.
 func (r *DashboardsListServerRequest) Page() int {
 	if r != nil && r.page != nil {
 		return *r.page
@@ -117,8 +114,6 @@ func (r *DashboardsListServerRequest) Page() int {
 // a flag indicating if the parameter has a value.
 //
 // Index of the requested page, where one corresponds to the first page.
-//
-// Default value is `1`.
 func (r *DashboardsListServerRequest) GetPage() (value int, ok bool) {
 	ok = r != nil && r.page != nil
 	if ok {
@@ -178,8 +173,6 @@ func (r *DashboardsListServerRequest) GetSearch() (value string, ok bool) {
 // Size returns the value of the 'size' parameter.
 //
 // Maximum number of items that will be contained in the returned page.
-//
-// Default value is `100`.
 func (r *DashboardsListServerRequest) Size() int {
 	if r != nil && r.size != nil {
 		return *r.size
@@ -191,36 +184,10 @@ func (r *DashboardsListServerRequest) Size() int {
 // a flag indicating if the parameter has a value.
 //
 // Maximum number of items that will be contained in the returned page.
-//
-// Default value is `100`.
 func (r *DashboardsListServerRequest) GetSize() (value int, ok bool) {
 	ok = r != nil && r.size != nil
 	if ok {
 		value = *r.size
-	}
-	return
-}
-
-// Total returns the value of the 'total' parameter.
-//
-// Total number of items of the collection that match the search criteria,
-// regardless of the size of the page.
-func (r *DashboardsListServerRequest) Total() int {
-	if r != nil && r.total != nil {
-		return *r.total
-	}
-	return 0
-}
-
-// GetTotal returns the value of the 'total' parameter and
-// a flag indicating if the parameter has a value.
-//
-// Total number of items of the collection that match the search criteria,
-// regardless of the size of the page.
-func (r *DashboardsListServerRequest) GetTotal() (value int, ok bool) {
-	ok = r != nil && r.total != nil
-	if ok {
-		value = *r.total
 	}
 	return
 }
@@ -246,8 +213,6 @@ func (r *DashboardsListServerResponse) Items(value *DashboardList) *DashboardsLi
 // Page sets the value of the 'page' parameter.
 //
 // Index of the requested page, where one corresponds to the first page.
-//
-// Default value is `1`.
 func (r *DashboardsListServerResponse) Page(value int) *DashboardsListServerResponse {
 	r.page = &value
 	return r
@@ -256,8 +221,6 @@ func (r *DashboardsListServerResponse) Page(value int) *DashboardsListServerResp
 // Size sets the value of the 'size' parameter.
 //
 // Maximum number of items that will be contained in the returned page.
-//
-// Default value is `100`.
 func (r *DashboardsListServerResponse) Size(value int) *DashboardsListServerResponse {
 	r.size = &value
 	return r
@@ -343,6 +306,9 @@ func readDashboardsListRequest(r *http.Request) (*DashboardsListServerRequest, e
 	if err != nil {
 		return nil, err
 	}
+	if result.page == nil {
+		result.page = helpers.NewInteger(1)
+	}
 	result.search, err = helpers.ParseString(query, "search")
 	if err != nil {
 		return nil, err
@@ -351,9 +317,8 @@ func readDashboardsListRequest(r *http.Request) (*DashboardsListServerRequest, e
 	if err != nil {
 		return nil, err
 	}
-	result.total, err = helpers.ParseInteger(query, "total")
-	if err != nil {
-		return nil, err
+	if result.size == nil {
+		result.size = helpers.NewInteger(100)
 	}
 	return result, err
 }

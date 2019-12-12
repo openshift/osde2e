@@ -20,8 +20,6 @@ limitations under the License.
 package v1 // github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1
 
 import (
-	"fmt"
-
 	"github.com/openshift-online/ocm-sdk-go/helpers"
 )
 
@@ -103,20 +101,7 @@ func (d *clusterCredentialsData) unwrap() (object *ClusterCredentials, err error
 	object.id = d.ID
 	object.href = d.HREF
 	if d.Kind != nil {
-		switch *d.Kind {
-		case ClusterCredentialsKind:
-			object.link = false
-		case ClusterCredentialsLinkKind:
-			object.link = true
-		default:
-			err = fmt.Errorf(
-				"expected kind '%s' or '%s' but got '%s'",
-				ClusterCredentialsKind,
-				ClusterCredentialsLinkKind,
-				*d.Kind,
-			)
-			return
-		}
+		object.link = *d.Kind == ClusterCredentialsLinkKind
 	}
 	object.ssh, err = d.SSH.unwrap()
 	if err != nil {

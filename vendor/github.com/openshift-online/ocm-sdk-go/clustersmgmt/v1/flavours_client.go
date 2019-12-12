@@ -192,16 +192,25 @@ type FlavoursAddResponse struct {
 
 // Status returns the response status code.
 func (r *FlavoursAddResponse) Status() int {
+	if r == nil {
+		return 0
+	}
 	return r.status
 }
 
 // Header returns header of the response.
 func (r *FlavoursAddResponse) Header() http.Header {
+	if r == nil {
+		return nil
+	}
 	return r.header
 }
 
 // Error returns the response error.
 func (r *FlavoursAddResponse) Error() *errors.Error {
+	if r == nil {
+		return nil
+	}
 	return r.err
 }
 
@@ -255,7 +264,6 @@ type FlavoursListRequest struct {
 	page      *int
 	search    *string
 	size      *int
-	total     *int
 }
 
 // Parameter adds a query parameter.
@@ -294,8 +302,6 @@ func (r *FlavoursListRequest) Order(value string) *FlavoursListRequest {
 // Page sets the value of the 'page' parameter.
 //
 // Index of the requested page, where one corresponds to the first page.
-//
-// Default value is `1`.
 func (r *FlavoursListRequest) Page(value int) *FlavoursListRequest {
 	r.page = &value
 	return r
@@ -325,19 +331,8 @@ func (r *FlavoursListRequest) Search(value string) *FlavoursListRequest {
 // Size sets the value of the 'size' parameter.
 //
 // Maximum number of items that will be contained in the returned page.
-//
-// Default value is `100`.
 func (r *FlavoursListRequest) Size(value int) *FlavoursListRequest {
 	r.size = &value
-	return r
-}
-
-// Total sets the value of the 'total' parameter.
-//
-// Total number of items of the collection that match the search criteria,
-// regardless of the size of the page.
-func (r *FlavoursListRequest) Total(value int) *FlavoursListRequest {
-	r.total = &value
 	return r
 }
 
@@ -363,9 +358,6 @@ func (r *FlavoursListRequest) SendContext(ctx context.Context) (result *Flavours
 	}
 	if r.size != nil {
 		helpers.AddValue(&query, "size", *r.size)
-	}
-	if r.total != nil {
-		helpers.AddValue(&query, "total", *r.total)
 	}
 	header := helpers.SetHeader(r.header, r.metric)
 	uri := &url.URL{
@@ -416,16 +408,25 @@ type FlavoursListResponse struct {
 
 // Status returns the response status code.
 func (r *FlavoursListResponse) Status() int {
+	if r == nil {
+		return 0
+	}
 	return r.status
 }
 
 // Header returns header of the response.
 func (r *FlavoursListResponse) Header() http.Header {
+	if r == nil {
+		return nil
+	}
 	return r.header
 }
 
 // Error returns the response error.
 func (r *FlavoursListResponse) Error() *errors.Error {
+	if r == nil {
+		return nil
+	}
 	return r.err
 }
 
@@ -454,8 +455,6 @@ func (r *FlavoursListResponse) GetItems() (value *FlavourList, ok bool) {
 // Page returns the value of the 'page' parameter.
 //
 // Index of the requested page, where one corresponds to the first page.
-//
-// Default value is `1`.
 func (r *FlavoursListResponse) Page() int {
 	if r != nil && r.page != nil {
 		return *r.page
@@ -467,8 +466,6 @@ func (r *FlavoursListResponse) Page() int {
 // a flag indicating if the parameter has a value.
 //
 // Index of the requested page, where one corresponds to the first page.
-//
-// Default value is `1`.
 func (r *FlavoursListResponse) GetPage() (value int, ok bool) {
 	ok = r != nil && r.page != nil
 	if ok {
@@ -480,8 +477,6 @@ func (r *FlavoursListResponse) GetPage() (value int, ok bool) {
 // Size returns the value of the 'size' parameter.
 //
 // Maximum number of items that will be contained in the returned page.
-//
-// Default value is `100`.
 func (r *FlavoursListResponse) Size() int {
 	if r != nil && r.size != nil {
 		return *r.size
@@ -493,8 +488,6 @@ func (r *FlavoursListResponse) Size() int {
 // a flag indicating if the parameter has a value.
 //
 // Maximum number of items that will be contained in the returned page.
-//
-// Default value is `100`.
 func (r *FlavoursListResponse) GetSize() (value int, ok bool) {
 	ok = r != nil && r.size != nil
 	if ok {

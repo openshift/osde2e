@@ -27,6 +27,7 @@ import (
 
 	"github.com/golang/glog"
 	"github.com/openshift-online/ocm-sdk-go/errors"
+	"github.com/openshift-online/ocm-sdk-go/helpers"
 )
 
 // CloudRegionsServer represents the interface the manages the 'cloud_regions' resource.
@@ -49,6 +50,58 @@ type CloudRegionsServer interface {
 
 // CloudRegionsListServerRequest is the request for the 'list' method.
 type CloudRegionsListServerRequest struct {
+	page *int
+	size *int
+}
+
+// Page returns the value of the 'page' parameter.
+//
+// Index of the returned page, where one corresponds to the first page. As this
+// collection doesn't support paging the result will always be `1`.
+func (r *CloudRegionsListServerRequest) Page() int {
+	if r != nil && r.page != nil {
+		return *r.page
+	}
+	return 0
+}
+
+// GetPage returns the value of the 'page' parameter and
+// a flag indicating if the parameter has a value.
+//
+// Index of the returned page, where one corresponds to the first page. As this
+// collection doesn't support paging the result will always be `1`.
+func (r *CloudRegionsListServerRequest) GetPage() (value int, ok bool) {
+	ok = r != nil && r.page != nil
+	if ok {
+		value = *r.page
+	}
+	return
+}
+
+// Size returns the value of the 'size' parameter.
+//
+// Number of items that will be contained in the returned page. As this collection
+// doesn't support paging or searching the result will always be the total number of
+// regions of the provider.
+func (r *CloudRegionsListServerRequest) Size() int {
+	if r != nil && r.size != nil {
+		return *r.size
+	}
+	return 0
+}
+
+// GetSize returns the value of the 'size' parameter and
+// a flag indicating if the parameter has a value.
+//
+// Number of items that will be contained in the returned page. As this collection
+// doesn't support paging or searching the result will always be the total number of
+// regions of the provider.
+func (r *CloudRegionsListServerRequest) GetSize() (value int, ok bool) {
+	ok = r != nil && r.size != nil
+	if ok {
+		value = *r.size
+	}
+	return
 }
 
 // CloudRegionsListServerResponse is the response for the 'list' method.
@@ -160,6 +213,21 @@ func dispatchCloudRegions(w http.ResponseWriter, r *http.Request, server CloudRe
 func readCloudRegionsListRequest(r *http.Request) (*CloudRegionsListServerRequest, error) {
 	var err error
 	result := new(CloudRegionsListServerRequest)
+	query := r.URL.Query()
+	result.page, err = helpers.ParseInteger(query, "page")
+	if err != nil {
+		return nil, err
+	}
+	if result.page == nil {
+		result.page = helpers.NewInteger(1)
+	}
+	result.size, err = helpers.ParseInteger(query, "size")
+	if err != nil {
+		return nil, err
+	}
+	if result.size == nil {
+		result.size = helpers.NewInteger(100)
+	}
 	return result, err
 }
 

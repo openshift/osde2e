@@ -20,8 +20,6 @@ limitations under the License.
 package v1 // github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1
 
 import (
-	"fmt"
-
 	"github.com/openshift-online/ocm-sdk-go/helpers"
 )
 
@@ -110,20 +108,7 @@ func (d *accountData) unwrap() (object *Account, err error) {
 	object.id = d.ID
 	object.href = d.HREF
 	if d.Kind != nil {
-		switch *d.Kind {
-		case AccountKind:
-			object.link = false
-		case AccountLinkKind:
-			object.link = true
-		default:
-			err = fmt.Errorf(
-				"expected kind '%s' or '%s' but got '%s'",
-				AccountKind,
-				AccountLinkKind,
-				*d.Kind,
-			)
-			return
-		}
+		object.link = *d.Kind == AccountLinkKind
 	}
 	object.banDescription = d.BanDescription
 	object.banned = d.Banned

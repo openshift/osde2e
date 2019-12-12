@@ -41,6 +41,11 @@ type RoleBindingServer interface {
 	//
 	// Retrieves the details of the role binding.
 	Get(ctx context.Context, request *RoleBindingGetServerRequest, response *RoleBindingGetServerResponse) error
+
+	// Update handles a request for the 'update' method.
+	//
+	// Updates the account.
+	Update(ctx context.Context, request *RoleBindingUpdateServerRequest, response *RoleBindingUpdateServerResponse) error
 }
 
 // RoleBindingDeleteServerRequest is the request for the 'delete' method.
@@ -97,6 +102,84 @@ func (r *RoleBindingGetServerResponse) marshal(writer io.Writer) error {
 	return err
 }
 
+// RoleBindingUpdateServerRequest is the request for the 'update' method.
+type RoleBindingUpdateServerRequest struct {
+	body *RoleBinding
+}
+
+// Body returns the value of the 'body' parameter.
+//
+//
+func (r *RoleBindingUpdateServerRequest) Body() *RoleBinding {
+	if r == nil {
+		return nil
+	}
+	return r.body
+}
+
+// GetBody returns the value of the 'body' parameter and
+// a flag indicating if the parameter has a value.
+//
+//
+func (r *RoleBindingUpdateServerRequest) GetBody() (value *RoleBinding, ok bool) {
+	ok = r != nil && r.body != nil
+	if ok {
+		value = r.body
+	}
+	return
+}
+
+// unmarshal is the method used internally to unmarshal request to the
+// 'update' method.
+func (r *RoleBindingUpdateServerRequest) unmarshal(reader io.Reader) error {
+	var err error
+	decoder := json.NewDecoder(reader)
+	data := new(roleBindingData)
+	err = decoder.Decode(data)
+	if err != nil {
+		return err
+	}
+	r.body, err = data.unwrap()
+	if err != nil {
+		return err
+	}
+	return err
+}
+
+// RoleBindingUpdateServerResponse is the response for the 'update' method.
+type RoleBindingUpdateServerResponse struct {
+	status int
+	err    *errors.Error
+	body   *RoleBinding
+}
+
+// Body sets the value of the 'body' parameter.
+//
+//
+func (r *RoleBindingUpdateServerResponse) Body(value *RoleBinding) *RoleBindingUpdateServerResponse {
+	r.body = value
+	return r
+}
+
+// Status sets the status code.
+func (r *RoleBindingUpdateServerResponse) Status(value int) *RoleBindingUpdateServerResponse {
+	r.status = value
+	return r
+}
+
+// marshall is the method used internally to marshal responses for the
+// 'update' method.
+func (r *RoleBindingUpdateServerResponse) marshal(writer io.Writer) error {
+	var err error
+	encoder := json.NewEncoder(writer)
+	data, err := r.body.wrap()
+	if err != nil {
+		return err
+	}
+	err = encoder.Encode(data)
+	return err
+}
+
 // dispatchRoleBinding navigates the servers tree rooted at the given server
 // till it finds one that matches the given set of path segments, and then invokes
 // the corresponding server.
@@ -107,6 +190,8 @@ func dispatchRoleBinding(w http.ResponseWriter, r *http.Request, server RoleBind
 			adaptRoleBindingDeleteRequest(w, r, server)
 		case "GET":
 			adaptRoleBindingGetRequest(w, r, server)
+		case "PATCH":
+			adaptRoleBindingUpdateRequest(w, r, server)
 		default:
 			errors.SendMethodNotAllowed(w, r)
 			return
@@ -215,6 +300,64 @@ func adaptRoleBindingGetRequest(w http.ResponseWriter, r *http.Request, server R
 		return
 	}
 	err = writeRoleBindingGetResponse(w, response)
+	if err != nil {
+		glog.Errorf(
+			"Can't write response for method '%s' and path '%s': %v",
+			r.Method, r.URL.Path, err,
+		)
+		return
+	}
+}
+
+// readRoleBindingUpdateRequest reads the given HTTP requests and translates it
+// into an object of type RoleBindingUpdateServerRequest.
+func readRoleBindingUpdateRequest(r *http.Request) (*RoleBindingUpdateServerRequest, error) {
+	var err error
+	result := new(RoleBindingUpdateServerRequest)
+	err = result.unmarshal(r.Body)
+	if err != nil {
+		return nil, err
+	}
+	return result, err
+}
+
+// writeRoleBindingUpdateResponse translates the given request object into an
+// HTTP response.
+func writeRoleBindingUpdateResponse(w http.ResponseWriter, r *RoleBindingUpdateServerResponse) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(r.status)
+	err := r.marshal(w)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// adaptRoleBindingUpdateRequest translates the given HTTP request into a call to
+// the corresponding method of the given server. Then it translates the
+// results returned by that method into an HTTP response.
+func adaptRoleBindingUpdateRequest(w http.ResponseWriter, r *http.Request, server RoleBindingServer) {
+	request, err := readRoleBindingUpdateRequest(r)
+	if err != nil {
+		glog.Errorf(
+			"Can't read request for method '%s' and path '%s': %v",
+			r.Method, r.URL.Path, err,
+		)
+		errors.SendInternalServerError(w, r)
+		return
+	}
+	response := new(RoleBindingUpdateServerResponse)
+	response.status = 204
+	err = server.Update(r.Context(), request, response)
+	if err != nil {
+		glog.Errorf(
+			"Can't process request for method '%s' and path '%s': %v",
+			r.Method, r.URL.Path, err,
+		)
+		errors.SendInternalServerError(w, r)
+		return
+	}
+	err = writeRoleBindingUpdateResponse(w, response)
 	if err != nil {
 		glog.Errorf(
 			"Can't write response for method '%s' and path '%s': %v",

@@ -129,16 +129,13 @@ func (r *PermissionsAddServerResponse) marshal(writer io.Writer) error {
 
 // PermissionsListServerRequest is the request for the 'list' method.
 type PermissionsListServerRequest struct {
-	page  *int
-	size  *int
-	total *int
+	page *int
+	size *int
 }
 
 // Page returns the value of the 'page' parameter.
 //
 // Index of the requested page, where one corresponds to the first page.
-//
-// Default value is `1`.
 func (r *PermissionsListServerRequest) Page() int {
 	if r != nil && r.page != nil {
 		return *r.page
@@ -150,8 +147,6 @@ func (r *PermissionsListServerRequest) Page() int {
 // a flag indicating if the parameter has a value.
 //
 // Index of the requested page, where one corresponds to the first page.
-//
-// Default value is `1`.
 func (r *PermissionsListServerRequest) GetPage() (value int, ok bool) {
 	ok = r != nil && r.page != nil
 	if ok {
@@ -163,8 +158,6 @@ func (r *PermissionsListServerRequest) GetPage() (value int, ok bool) {
 // Size returns the value of the 'size' parameter.
 //
 // Maximum number of items that will be contained in the returned page.
-//
-// Default value is `100`.
 func (r *PermissionsListServerRequest) Size() int {
 	if r != nil && r.size != nil {
 		return *r.size
@@ -176,36 +169,10 @@ func (r *PermissionsListServerRequest) Size() int {
 // a flag indicating if the parameter has a value.
 //
 // Maximum number of items that will be contained in the returned page.
-//
-// Default value is `100`.
 func (r *PermissionsListServerRequest) GetSize() (value int, ok bool) {
 	ok = r != nil && r.size != nil
 	if ok {
 		value = *r.size
-	}
-	return
-}
-
-// Total returns the value of the 'total' parameter.
-//
-// Total number of items of the collection that match the search criteria,
-// regardless of the size of the page.
-func (r *PermissionsListServerRequest) Total() int {
-	if r != nil && r.total != nil {
-		return *r.total
-	}
-	return 0
-}
-
-// GetTotal returns the value of the 'total' parameter and
-// a flag indicating if the parameter has a value.
-//
-// Total number of items of the collection that match the search criteria,
-// regardless of the size of the page.
-func (r *PermissionsListServerRequest) GetTotal() (value int, ok bool) {
-	ok = r != nil && r.total != nil
-	if ok {
-		value = *r.total
 	}
 	return
 }
@@ -231,8 +198,6 @@ func (r *PermissionsListServerResponse) Items(value *PermissionList) *Permission
 // Page sets the value of the 'page' parameter.
 //
 // Index of the requested page, where one corresponds to the first page.
-//
-// Default value is `1`.
 func (r *PermissionsListServerResponse) Page(value int) *PermissionsListServerResponse {
 	r.page = &value
 	return r
@@ -241,8 +206,6 @@ func (r *PermissionsListServerResponse) Page(value int) *PermissionsListServerRe
 // Size sets the value of the 'size' parameter.
 //
 // Maximum number of items that will be contained in the returned page.
-//
-// Default value is `100`.
 func (r *PermissionsListServerResponse) Size(value int) *PermissionsListServerResponse {
 	r.size = &value
 	return r
@@ -384,13 +347,15 @@ func readPermissionsListRequest(r *http.Request) (*PermissionsListServerRequest,
 	if err != nil {
 		return nil, err
 	}
+	if result.page == nil {
+		result.page = helpers.NewInteger(1)
+	}
 	result.size, err = helpers.ParseInteger(query, "size")
 	if err != nil {
 		return nil, err
 	}
-	result.total, err = helpers.ParseInteger(query, "total")
-	if err != nil {
-		return nil, err
+	if result.size == nil {
+		result.size = helpers.NewInteger(100)
 	}
 	return result, err
 }

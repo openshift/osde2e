@@ -3,6 +3,115 @@
 This document describes the relevant changes between releases of the OCM API
 SDK.
 
+== 0.1.68 Dec 12 2019
+
+- Update to metamodel 0.0.19:
+** Don't fail on wrong kind.
+
+== 0.1.67 Dec 12 2019
+
+- Don't check kinds of add-ons installations.
+
+== 0.1.66 Dec 12 2019
+
+- Update to model 0.0.29:
+** Allow subscription identifier on role binding.
+
+== 0.1.65 Dec 10 2019
+
+- Update to model 0.0.28:
+** Add `AddOnInstallation` type.
+
+== 0.1.64 Dec 4 2019
+
+- Update to model 0.0.27:
+** Add `resource_name` and `resource_cost` attributes to the add-on type.
+
+== 0.1.63 Dec 2 2019
+
+- Update to model 0.0.26:
+** Remove obsolete `aws` and `version` fields from the `Flavour` type.
+** Add instance type fields to the `Flavour` type.
+** Add `AWSVolume` and `AWSFlavour` types.
+** Add attributes required for _BYOC_.
+** Fix direction of `Body` parameters of updates.
+
+== 0.1.62 Nov 28 2019
+
+- Update to model 0.0.25:
+** Allow patching role binding.
+
+== 0.1.61 Nov 25 2019
+
+- Update to metamodel 0.0.18:
+** Add stage URL and `securitySchemes` to the generated _OpenAPI_
+   specifications.
+
+== 0.1.60 Nov 23 2019
+
+- Update to model 0.0.24:
+** Fix directions of paging parameters.
+** Fix direction of `Body` parameter of `Update`.
+** Add default values to paging parameters.
+** Update to metamodel 0.0.17.
+
+- Update to metamodel 0.0.17:
+** Add semantic checks.
+** Add support for default values.
+** Check default values of paging parameters.
+
+== 0.1.59 Nov 20 2019
+
+- Update to model 0.0.23:
+** Add infra nodes to `FlavourNodes`.
+** Refactor flavour nodes.
+
+== 0.1.58 Nov 19 2019
+
+- Update to metamodel 0.0.16:
+** Add simple conversion from AsciiDoc to Markdown.
+
+== 0.1.57 Nov 19 2019
+
+- Update to metamodel 0.0.15:
+** Add support for the version metadata resource.
+
+== 0.1.56 Nov 19 2019
+
+- Update to model 0.0.22:
+** Add `socket_total_by_node_roles_os` metric query.
+
+== 0.1.55 Nov 17 2019
+
+- Update to model 0.0.21:
+** Added add-on resources and types.
+** Added subscription reserved resources collection.
+
+== 0.1.54 Nov 17 2019
+
+- Drop support for _developers.redhat.com_.
+
+- Update to metamodel 0.0.14:
+** Add `Poll` method to clients that have a `Get` method.
+
+== 0.1.53 Nov 14 2019
+
+- Update to model 0.0.20:
+** Query resource quota from root and delete by identifier.
+
+- Update to metamodel 0.0.13:
+** Fix imports of `helpers` and `errors` packages.
+
+== 0.1.52 Nov 8 2019
+
+- Update to model 0.0.19:
+** Added identifiers to role binding type.
+
+== 0.1.51 Nov 7 2019
+
+- Update to model 0.0.18:
+** Added support to search role bindings and resource quota.
+
 == 0.1.50 Nov 4 2019
 
 - Update to metamodel 0.0.12:

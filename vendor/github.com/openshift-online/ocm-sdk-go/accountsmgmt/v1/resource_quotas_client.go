@@ -192,16 +192,25 @@ type ResourceQuotasAddResponse struct {
 
 // Status returns the response status code.
 func (r *ResourceQuotasAddResponse) Status() int {
+	if r == nil {
+		return 0
+	}
 	return r.status
 }
 
 // Header returns header of the response.
 func (r *ResourceQuotasAddResponse) Header() http.Header {
+	if r == nil {
+		return nil
+	}
 	return r.header
 }
 
 // Error returns the response error.
 func (r *ResourceQuotasAddResponse) Error() *errors.Error {
+	if r == nil {
+		return nil
+	}
 	return r.err
 }
 
@@ -252,8 +261,8 @@ type ResourceQuotasListRequest struct {
 	query     url.Values
 	header    http.Header
 	page      *int
+	search    *string
 	size      *int
-	total     *int
 }
 
 // Parameter adds a query parameter.
@@ -271,29 +280,37 @@ func (r *ResourceQuotasListRequest) Header(name string, value interface{}) *Reso
 // Page sets the value of the 'page' parameter.
 //
 // Index of the requested page, where one corresponds to the first page.
-//
-// Default value is `1`.
 func (r *ResourceQuotasListRequest) Page(value int) *ResourceQuotasListRequest {
 	r.page = &value
+	return r
+}
+
+// Search sets the value of the 'search' parameter.
+//
+// Search criteria.
+//
+// The syntax of this parameter is similar to the syntax of the _where_ clause
+// of an SQL statement, but using the names of the attributes of the account
+// instead of the names of the columns of a table. For example, in order to
+// retrieve resource quota with resource_type cluster.aws:
+//
+// [source,sql]
+// ----
+// resource_type = 'cluster.aws'
+// ----
+//
+// If the parameter isn't provided, or if the value is empty, then all the
+// items that the user has permission to see will be returned.
+func (r *ResourceQuotasListRequest) Search(value string) *ResourceQuotasListRequest {
+	r.search = &value
 	return r
 }
 
 // Size sets the value of the 'size' parameter.
 //
 // Maximum number of items that will be contained in the returned page.
-//
-// Default value is `100`.
 func (r *ResourceQuotasListRequest) Size(value int) *ResourceQuotasListRequest {
 	r.size = &value
-	return r
-}
-
-// Total sets the value of the 'total' parameter.
-//
-// Total number of items of the collection that match the search criteria,
-// regardless of the size of the page.
-func (r *ResourceQuotasListRequest) Total(value int) *ResourceQuotasListRequest {
-	r.total = &value
 	return r
 }
 
@@ -311,11 +328,11 @@ func (r *ResourceQuotasListRequest) SendContext(ctx context.Context) (result *Re
 	if r.page != nil {
 		helpers.AddValue(&query, "page", *r.page)
 	}
+	if r.search != nil {
+		helpers.AddValue(&query, "search", *r.search)
+	}
 	if r.size != nil {
 		helpers.AddValue(&query, "size", *r.size)
-	}
-	if r.total != nil {
-		helpers.AddValue(&query, "total", *r.total)
 	}
 	header := helpers.SetHeader(r.header, r.metric)
 	uri := &url.URL{
@@ -366,16 +383,25 @@ type ResourceQuotasListResponse struct {
 
 // Status returns the response status code.
 func (r *ResourceQuotasListResponse) Status() int {
+	if r == nil {
+		return 0
+	}
 	return r.status
 }
 
 // Header returns header of the response.
 func (r *ResourceQuotasListResponse) Header() http.Header {
+	if r == nil {
+		return nil
+	}
 	return r.header
 }
 
 // Error returns the response error.
 func (r *ResourceQuotasListResponse) Error() *errors.Error {
+	if r == nil {
+		return nil
+	}
 	return r.err
 }
 
@@ -404,8 +430,6 @@ func (r *ResourceQuotasListResponse) GetItems() (value *ResourceQuotaList, ok bo
 // Page returns the value of the 'page' parameter.
 //
 // Index of the requested page, where one corresponds to the first page.
-//
-// Default value is `1`.
 func (r *ResourceQuotasListResponse) Page() int {
 	if r != nil && r.page != nil {
 		return *r.page
@@ -417,8 +441,6 @@ func (r *ResourceQuotasListResponse) Page() int {
 // a flag indicating if the parameter has a value.
 //
 // Index of the requested page, where one corresponds to the first page.
-//
-// Default value is `1`.
 func (r *ResourceQuotasListResponse) GetPage() (value int, ok bool) {
 	ok = r != nil && r.page != nil
 	if ok {
@@ -430,8 +452,6 @@ func (r *ResourceQuotasListResponse) GetPage() (value int, ok bool) {
 // Size returns the value of the 'size' parameter.
 //
 // Maximum number of items that will be contained in the returned page.
-//
-// Default value is `100`.
 func (r *ResourceQuotasListResponse) Size() int {
 	if r != nil && r.size != nil {
 		return *r.size
@@ -443,8 +463,6 @@ func (r *ResourceQuotasListResponse) Size() int {
 // a flag indicating if the parameter has a value.
 //
 // Maximum number of items that will be contained in the returned page.
-//
-// Default value is `100`.
 func (r *ResourceQuotasListResponse) GetSize() (value int, ok bool) {
 	ok = r != nil && r.size != nil
 	if ok {

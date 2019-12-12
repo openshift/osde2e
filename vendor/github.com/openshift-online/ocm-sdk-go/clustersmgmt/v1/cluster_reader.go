@@ -20,7 +20,6 @@ limitations under the License.
 package v1 // github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1
 
 import (
-	"fmt"
 	time "time"
 
 	"github.com/openshift-online/ocm-sdk-go/helpers"
@@ -29,33 +28,37 @@ import (
 // clusterData is the data structure used internally to marshal and unmarshal
 // objects of type 'cluster'.
 type clusterData struct {
-	Kind                *string                       "json:\"kind,omitempty\""
-	ID                  *string                       "json:\"id,omitempty\""
-	HREF                *string                       "json:\"href,omitempty\""
-	API                 *clusterAPIData               "json:\"api,omitempty\""
-	AWS                 *awsData                      "json:\"aws,omitempty\""
-	DNS                 *dnsData                      "json:\"dns,omitempty\""
-	CloudProvider       *cloudProviderData            "json:\"cloud_provider,omitempty\""
-	Console             *clusterConsoleData           "json:\"console,omitempty\""
-	CreationTimestamp   *time.Time                    "json:\"creation_timestamp,omitempty\""
-	DisplayName         *string                       "json:\"display_name,omitempty\""
-	ExpirationTimestamp *time.Time                    "json:\"expiration_timestamp,omitempty\""
-	ExternalID          *string                       "json:\"external_id,omitempty\""
-	Flavour             *flavourData                  "json:\"flavour,omitempty\""
-	Groups              *groupListLinkData            "json:\"groups,omitempty\""
-	IdentityProviders   *identityProviderListLinkData "json:\"identity_providers,omitempty\""
-	Managed             *bool                         "json:\"managed,omitempty\""
-	Metrics             *clusterMetricsData           "json:\"metrics,omitempty\""
-	MultiAZ             *bool                         "json:\"multi_az,omitempty\""
-	Name                *string                       "json:\"name,omitempty\""
-	Network             *networkData                  "json:\"network,omitempty\""
-	Nodes               *clusterNodesData             "json:\"nodes,omitempty\""
-	OpenshiftVersion    *string                       "json:\"openshift_version,omitempty\""
-	Properties          map[string]string             "json:\"properties,omitempty\""
-	Region              *cloudRegionData              "json:\"region,omitempty\""
-	State               *ClusterState                 "json:\"state,omitempty\""
-	Subscription        *subscriptionData             "json:\"subscription,omitempty\""
-	Version             *versionData                  "json:\"version,omitempty\""
+	Kind                *string                        "json:\"kind,omitempty\""
+	ID                  *string                        "json:\"id,omitempty\""
+	HREF                *string                        "json:\"href,omitempty\""
+	API                 *clusterAPIData                "json:\"api,omitempty\""
+	AWS                 *awsData                       "json:\"aws,omitempty\""
+	BYOC                *bool                          "json:\"byoc,omitempty\""
+	DNS                 *dnsData                       "json:\"dns,omitempty\""
+	Addons              *addOnInstallationListLinkData "json:\"addons,omitempty\""
+	CloudProvider       *cloudProviderData             "json:\"cloud_provider,omitempty\""
+	Console             *clusterConsoleData            "json:\"console,omitempty\""
+	CreationTimestamp   *time.Time                     "json:\"creation_timestamp,omitempty\""
+	DisplayName         *string                        "json:\"display_name,omitempty\""
+	ExpirationTimestamp *time.Time                     "json:\"expiration_timestamp,omitempty\""
+	ExternalID          *string                        "json:\"external_id,omitempty\""
+	Flavour             *flavourData                   "json:\"flavour,omitempty\""
+	Groups              *groupListLinkData             "json:\"groups,omitempty\""
+	IdentityProviders   *identityProviderListLinkData  "json:\"identity_providers,omitempty\""
+	LoadBalancerQuota   *int                           "json:\"load_balancer_quota,omitempty\""
+	Managed             *bool                          "json:\"managed,omitempty\""
+	Metrics             *clusterMetricsData            "json:\"metrics,omitempty\""
+	MultiAZ             *bool                          "json:\"multi_az,omitempty\""
+	Name                *string                        "json:\"name,omitempty\""
+	Network             *networkData                   "json:\"network,omitempty\""
+	Nodes               *clusterNodesData              "json:\"nodes,omitempty\""
+	OpenshiftVersion    *string                        "json:\"openshift_version,omitempty\""
+	Properties          map[string]string              "json:\"properties,omitempty\""
+	Region              *cloudRegionData               "json:\"region,omitempty\""
+	State               *ClusterState                  "json:\"state,omitempty\""
+	StorageQuota        *valueData                     "json:\"storage_quota,omitempty\""
+	Subscription        *subscriptionData              "json:\"subscription,omitempty\""
+	Version             *versionData                   "json:\"version,omitempty\""
 }
 
 // MarshalCluster writes a value of the 'cluster' to the given target,
@@ -95,7 +98,12 @@ func (o *Cluster) wrap() (data *clusterData, err error) {
 	if err != nil {
 		return
 	}
+	data.BYOC = o.byoc
 	data.DNS, err = o.dns.wrap()
+	if err != nil {
+		return
+	}
+	data.Addons, err = o.addons.wrapLink()
 	if err != nil {
 		return
 	}
@@ -123,6 +131,7 @@ func (o *Cluster) wrap() (data *clusterData, err error) {
 	if err != nil {
 		return
 	}
+	data.LoadBalancerQuota = o.loadBalancerQuota
 	data.Managed = o.managed
 	data.Metrics, err = o.metrics.wrap()
 	if err != nil {
@@ -145,6 +154,10 @@ func (o *Cluster) wrap() (data *clusterData, err error) {
 		return
 	}
 	data.State = o.state
+	data.StorageQuota, err = o.storageQuota.wrap()
+	if err != nil {
+		return
+	}
 	data.Subscription, err = o.subscription.wrap()
 	if err != nil {
 		return
@@ -182,20 +195,7 @@ func (d *clusterData) unwrap() (object *Cluster, err error) {
 	object.id = d.ID
 	object.href = d.HREF
 	if d.Kind != nil {
-		switch *d.Kind {
-		case ClusterKind:
-			object.link = false
-		case ClusterLinkKind:
-			object.link = true
-		default:
-			err = fmt.Errorf(
-				"expected kind '%s' or '%s' but got '%s'",
-				ClusterKind,
-				ClusterLinkKind,
-				*d.Kind,
-			)
-			return
-		}
+		object.link = *d.Kind == ClusterLinkKind
 	}
 	object.api, err = d.API.unwrap()
 	if err != nil {
@@ -205,7 +205,12 @@ func (d *clusterData) unwrap() (object *Cluster, err error) {
 	if err != nil {
 		return
 	}
+	object.byoc = d.BYOC
 	object.dns, err = d.DNS.unwrap()
+	if err != nil {
+		return
+	}
+	object.addons, err = d.Addons.unwrapLink()
 	if err != nil {
 		return
 	}
@@ -233,6 +238,7 @@ func (d *clusterData) unwrap() (object *Cluster, err error) {
 	if err != nil {
 		return
 	}
+	object.loadBalancerQuota = d.LoadBalancerQuota
 	object.managed = d.Managed
 	object.metrics, err = d.Metrics.unwrap()
 	if err != nil {
@@ -255,6 +261,10 @@ func (d *clusterData) unwrap() (object *Cluster, err error) {
 		return
 	}
 	object.state = d.State
+	object.storageQuota, err = d.StorageQuota.unwrap()
+	if err != nil {
+		return
+	}
 	object.subscription, err = d.Subscription.unwrap()
 	if err != nil {
 		return

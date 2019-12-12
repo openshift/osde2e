@@ -26,6 +26,7 @@ import (
 	"net/http"
 	"net/url"
 	"path"
+	"time"
 
 	"github.com/openshift-online/ocm-sdk-go/errors"
 	"github.com/openshift-online/ocm-sdk-go/helpers"
@@ -72,6 +73,127 @@ func (c *CloudProviderClient) Regions() *CloudRegionsClient {
 		path.Join(c.path, "regions"),
 		path.Join(c.metric, "regions"),
 	)
+}
+
+// CloudProviderPollRequest is the request for the Poll method.
+type CloudProviderPollRequest struct {
+	request    *CloudProviderGetRequest
+	interval   time.Duration
+	statuses   []int
+	predicates []func(interface{}) bool
+}
+
+// Parameter adds a query parameter to all the requests that will be used to retrieve the object.
+func (r *CloudProviderPollRequest) Parameter(name string, value interface{}) *CloudProviderPollRequest {
+	r.request.Parameter(name, value)
+	return r
+}
+
+// Header adds a request header to all the requests that will be used to retrieve the object.
+func (r *CloudProviderPollRequest) Header(name string, value interface{}) *CloudProviderPollRequest {
+	r.request.Header(name, value)
+	return r
+}
+
+// Interval sets the polling interval. This parameter is mandatory and must be greater than zero.
+func (r *CloudProviderPollRequest) Interval(value time.Duration) *CloudProviderPollRequest {
+	r.interval = value
+	return r
+}
+
+// Status set the expected status of the response. Multiple values can be set calling this method
+// multiple times. The response will be considered successful if the status is any of those values.
+func (r *CloudProviderPollRequest) Status(value int) *CloudProviderPollRequest {
+	r.statuses = append(r.statuses, value)
+	return r
+}
+
+// Predicate adds a predicate that the response should satisfy be considered successful. Multiple
+// predicates can be set calling this method multiple times. The response will be considered successful
+// if all the predicates are satisfied.
+func (r *CloudProviderPollRequest) Predicate(value func(*CloudProviderGetResponse) bool) *CloudProviderPollRequest {
+	r.predicates = append(r.predicates, func(response interface{}) bool {
+		return value(response.(*CloudProviderGetResponse))
+	})
+	return r
+}
+
+// StartContext starts the polling loop. Responses will be considered successful if the status is one of
+// the values specified with the Status method and if all the predicates specified with the Predicate
+// method return nil.
+//
+// The context must have a timeout or deadline, otherwise this method will immediately return an error.
+func (r *CloudProviderPollRequest) StartContext(ctx context.Context) (response *CloudProviderPollResponse, err error) {
+	result, err := helpers.PollContext(ctx, r.interval, r.statuses, r.predicates, r.task)
+	if result != nil {
+		response = &CloudProviderPollResponse{
+			response: result.(*CloudProviderGetResponse),
+		}
+	}
+	return
+}
+
+// task adapts the types of the request/response types so that they can be used with the generic
+// polling function from the helpers package.
+func (r *CloudProviderPollRequest) task(ctx context.Context) (status int, result interface{}, err error) {
+	response, err := r.request.SendContext(ctx)
+	if response != nil {
+		status = response.Status()
+		result = response
+	}
+	return
+}
+
+// CloudProviderPollResponse is the response for the Poll method.
+type CloudProviderPollResponse struct {
+	response *CloudProviderGetResponse
+}
+
+// Status returns the response status code.
+func (r *CloudProviderPollResponse) Status() int {
+	if r == nil {
+		return 0
+	}
+	return r.response.Status()
+}
+
+// Header returns header of the response.
+func (r *CloudProviderPollResponse) Header() http.Header {
+	if r == nil {
+		return nil
+	}
+	return r.response.Header()
+}
+
+// Error returns the response error.
+func (r *CloudProviderPollResponse) Error() *errors.Error {
+	if r == nil {
+		return nil
+	}
+	return r.response.Error()
+}
+
+// Body returns the value of the 'body' parameter.
+//
+//
+func (r *CloudProviderPollResponse) Body() *CloudProvider {
+	return r.response.Body()
+}
+
+// GetBody returns the value of the 'body' parameter and
+// a flag indicating if the parameter has a value.
+//
+//
+func (r *CloudProviderPollResponse) GetBody() (value *CloudProvider, ok bool) {
+	return r.response.GetBody()
+}
+
+// Poll creates a request to repeatedly retrieve the object till the response has one of a given set
+// of states and satisfies a set of predicates.
+func (c *CloudProviderClient) Poll() *CloudProviderPollRequest {
+	return &CloudProviderPollRequest{
+		request: c.Get(),
+	}
 }
 
 // CloudProviderGetRequest is the request for the 'get' method.
@@ -152,16 +274,25 @@ type CloudProviderGetResponse struct {
 
 // Status returns the response status code.
 func (r *CloudProviderGetResponse) Status() int {
+	if r == nil {
+		return 0
+	}
 	return r.status
 }
 
 // Header returns header of the response.
 func (r *CloudProviderGetResponse) Header() http.Header {
+	if r == nil {
+		return nil
+	}
 	return r.header
 }
 
 // Error returns the response error.
 func (r *CloudProviderGetResponse) Error() *errors.Error {
+	if r == nil {
+		return nil
+	}
 	return r.err
 }
 

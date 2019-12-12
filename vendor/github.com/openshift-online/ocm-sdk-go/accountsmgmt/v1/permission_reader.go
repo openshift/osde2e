@@ -20,8 +20,6 @@ limitations under the License.
 package v1 // github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1
 
 import (
-	"fmt"
-
 	"github.com/openshift-online/ocm-sdk-go/helpers"
 )
 
@@ -97,20 +95,7 @@ func (d *permissionData) unwrap() (object *Permission, err error) {
 	object.id = d.ID
 	object.href = d.HREF
 	if d.Kind != nil {
-		switch *d.Kind {
-		case PermissionKind:
-			object.link = false
-		case PermissionLinkKind:
-			object.link = true
-		default:
-			err = fmt.Errorf(
-				"expected kind '%s' or '%s' but got '%s'",
-				PermissionKind,
-				PermissionLinkKind,
-				*d.Kind,
-			)
-			return
-		}
+		object.link = *d.Kind == PermissionLinkKind
 	}
 	object.action = d.Action
 	object.resourceType = d.ResourceType

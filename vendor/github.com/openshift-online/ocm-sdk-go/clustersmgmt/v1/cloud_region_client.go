@@ -25,6 +25,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"time"
 
 	"github.com/openshift-online/ocm-sdk-go/errors"
 	"github.com/openshift-online/ocm-sdk-go/helpers"
@@ -59,6 +60,127 @@ func (c *CloudRegionClient) Get() *CloudRegionGetRequest {
 	request.path = c.path
 	request.metric = c.metric
 	return request
+}
+
+// CloudRegionPollRequest is the request for the Poll method.
+type CloudRegionPollRequest struct {
+	request    *CloudRegionGetRequest
+	interval   time.Duration
+	statuses   []int
+	predicates []func(interface{}) bool
+}
+
+// Parameter adds a query parameter to all the requests that will be used to retrieve the object.
+func (r *CloudRegionPollRequest) Parameter(name string, value interface{}) *CloudRegionPollRequest {
+	r.request.Parameter(name, value)
+	return r
+}
+
+// Header adds a request header to all the requests that will be used to retrieve the object.
+func (r *CloudRegionPollRequest) Header(name string, value interface{}) *CloudRegionPollRequest {
+	r.request.Header(name, value)
+	return r
+}
+
+// Interval sets the polling interval. This parameter is mandatory and must be greater than zero.
+func (r *CloudRegionPollRequest) Interval(value time.Duration) *CloudRegionPollRequest {
+	r.interval = value
+	return r
+}
+
+// Status set the expected status of the response. Multiple values can be set calling this method
+// multiple times. The response will be considered successful if the status is any of those values.
+func (r *CloudRegionPollRequest) Status(value int) *CloudRegionPollRequest {
+	r.statuses = append(r.statuses, value)
+	return r
+}
+
+// Predicate adds a predicate that the response should satisfy be considered successful. Multiple
+// predicates can be set calling this method multiple times. The response will be considered successful
+// if all the predicates are satisfied.
+func (r *CloudRegionPollRequest) Predicate(value func(*CloudRegionGetResponse) bool) *CloudRegionPollRequest {
+	r.predicates = append(r.predicates, func(response interface{}) bool {
+		return value(response.(*CloudRegionGetResponse))
+	})
+	return r
+}
+
+// StartContext starts the polling loop. Responses will be considered successful if the status is one of
+// the values specified with the Status method and if all the predicates specified with the Predicate
+// method return nil.
+//
+// The context must have a timeout or deadline, otherwise this method will immediately return an error.
+func (r *CloudRegionPollRequest) StartContext(ctx context.Context) (response *CloudRegionPollResponse, err error) {
+	result, err := helpers.PollContext(ctx, r.interval, r.statuses, r.predicates, r.task)
+	if result != nil {
+		response = &CloudRegionPollResponse{
+			response: result.(*CloudRegionGetResponse),
+		}
+	}
+	return
+}
+
+// task adapts the types of the request/response types so that they can be used with the generic
+// polling function from the helpers package.
+func (r *CloudRegionPollRequest) task(ctx context.Context) (status int, result interface{}, err error) {
+	response, err := r.request.SendContext(ctx)
+	if response != nil {
+		status = response.Status()
+		result = response
+	}
+	return
+}
+
+// CloudRegionPollResponse is the response for the Poll method.
+type CloudRegionPollResponse struct {
+	response *CloudRegionGetResponse
+}
+
+// Status returns the response status code.
+func (r *CloudRegionPollResponse) Status() int {
+	if r == nil {
+		return 0
+	}
+	return r.response.Status()
+}
+
+// Header returns header of the response.
+func (r *CloudRegionPollResponse) Header() http.Header {
+	if r == nil {
+		return nil
+	}
+	return r.response.Header()
+}
+
+// Error returns the response error.
+func (r *CloudRegionPollResponse) Error() *errors.Error {
+	if r == nil {
+		return nil
+	}
+	return r.response.Error()
+}
+
+// Body returns the value of the 'body' parameter.
+//
+//
+func (r *CloudRegionPollResponse) Body() *CloudRegion {
+	return r.response.Body()
+}
+
+// GetBody returns the value of the 'body' parameter and
+// a flag indicating if the parameter has a value.
+//
+//
+func (r *CloudRegionPollResponse) GetBody() (value *CloudRegion, ok bool) {
+	return r.response.GetBody()
+}
+
+// Poll creates a request to repeatedly retrieve the object till the response has one of a given set
+// of states and satisfies a set of predicates.
+func (c *CloudRegionClient) Poll() *CloudRegionPollRequest {
+	return &CloudRegionPollRequest{
+		request: c.Get(),
+	}
 }
 
 // CloudRegionGetRequest is the request for the 'get' method.
@@ -139,16 +261,25 @@ type CloudRegionGetResponse struct {
 
 // Status returns the response status code.
 func (r *CloudRegionGetResponse) Status() int {
+	if r == nil {
+		return 0
+	}
 	return r.status
 }
 
 // Header returns header of the response.
 func (r *CloudRegionGetResponse) Header() http.Header {
+	if r == nil {
+		return nil
+	}
 	return r.header
 }
 
 // Error returns the response error.
 func (r *CloudRegionGetResponse) Error() *errors.Error {
+	if r == nil {
+		return nil
+	}
 	return r.err
 }
 

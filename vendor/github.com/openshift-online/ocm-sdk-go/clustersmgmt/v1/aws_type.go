@@ -24,12 +24,14 @@ package v1 // github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1
 // _Amazon Web Services_ specific settings of a cluster.
 type AWS struct {
 	accessKeyID     *string
+	accountID       *string
 	secretAccessKey *string
 }
 
 // Empty returns true if the object is empty, i.e. no attribute has a value.
 func (o *AWS) Empty() bool {
 	return o == nil || (o.accessKeyID == nil &&
+		o.accountID == nil &&
 		o.secretAccessKey == nil &&
 		true)
 }
@@ -53,6 +55,29 @@ func (o *AWS) GetAccessKeyID() (value string, ok bool) {
 	ok = o != nil && o.accessKeyID != nil
 	if ok {
 		value = *o.accessKeyID
+	}
+	return
+}
+
+// AccountID returns the value of the 'account_ID' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+// AWS account identifier.
+func (o *AWS) AccountID() string {
+	if o != nil && o.accountID != nil {
+		return *o.accountID
+	}
+	return ""
+}
+
+// GetAccountID returns the value of the 'account_ID' attribute and
+// a flag indicating if the attribute has a value.
+//
+// AWS account identifier.
+func (o *AWS) GetAccountID() (value string, ok bool) {
+	ok = o != nil && o.accountID != nil
+	if ok {
+		value = *o.accountID
 	}
 	return
 }

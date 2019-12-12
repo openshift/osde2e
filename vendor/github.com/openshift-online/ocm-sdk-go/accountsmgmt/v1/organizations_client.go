@@ -192,16 +192,25 @@ type OrganizationsAddResponse struct {
 
 // Status returns the response status code.
 func (r *OrganizationsAddResponse) Status() int {
+	if r == nil {
+		return 0
+	}
 	return r.status
 }
 
 // Header returns header of the response.
 func (r *OrganizationsAddResponse) Header() http.Header {
+	if r == nil {
+		return nil
+	}
 	return r.header
 }
 
 // Error returns the response error.
 func (r *OrganizationsAddResponse) Error() *errors.Error {
+	if r == nil {
+		return nil
+	}
 	return r.err
 }
 
@@ -254,7 +263,6 @@ type OrganizationsListRequest struct {
 	page      *int
 	search    *string
 	size      *int
-	total     *int
 }
 
 // Parameter adds a query parameter.
@@ -272,8 +280,6 @@ func (r *OrganizationsListRequest) Header(name string, value interface{}) *Organ
 // Page sets the value of the 'page' parameter.
 //
 // Index of the requested page, where one corresponds to the first page.
-//
-// Default value is `1`.
 func (r *OrganizationsListRequest) Page(value int) *OrganizationsListRequest {
 	r.page = &value
 	return r
@@ -303,19 +309,8 @@ func (r *OrganizationsListRequest) Search(value string) *OrganizationsListReques
 // Size sets the value of the 'size' parameter.
 //
 // Maximum number of items that will be contained in the returned page.
-//
-// Default value is `100`.
 func (r *OrganizationsListRequest) Size(value int) *OrganizationsListRequest {
 	r.size = &value
-	return r
-}
-
-// Total sets the value of the 'total' parameter.
-//
-// Total number of items of the collection that match the search criteria,
-// regardless of the size of the page.
-func (r *OrganizationsListRequest) Total(value int) *OrganizationsListRequest {
-	r.total = &value
 	return r
 }
 
@@ -338,9 +333,6 @@ func (r *OrganizationsListRequest) SendContext(ctx context.Context) (result *Org
 	}
 	if r.size != nil {
 		helpers.AddValue(&query, "size", *r.size)
-	}
-	if r.total != nil {
-		helpers.AddValue(&query, "total", *r.total)
 	}
 	header := helpers.SetHeader(r.header, r.metric)
 	uri := &url.URL{
@@ -391,16 +383,25 @@ type OrganizationsListResponse struct {
 
 // Status returns the response status code.
 func (r *OrganizationsListResponse) Status() int {
+	if r == nil {
+		return 0
+	}
 	return r.status
 }
 
 // Header returns header of the response.
 func (r *OrganizationsListResponse) Header() http.Header {
+	if r == nil {
+		return nil
+	}
 	return r.header
 }
 
 // Error returns the response error.
 func (r *OrganizationsListResponse) Error() *errors.Error {
+	if r == nil {
+		return nil
+	}
 	return r.err
 }
 
@@ -429,8 +430,6 @@ func (r *OrganizationsListResponse) GetItems() (value *OrganizationList, ok bool
 // Page returns the value of the 'page' parameter.
 //
 // Index of the requested page, where one corresponds to the first page.
-//
-// Default value is `1`.
 func (r *OrganizationsListResponse) Page() int {
 	if r != nil && r.page != nil {
 		return *r.page
@@ -442,8 +441,6 @@ func (r *OrganizationsListResponse) Page() int {
 // a flag indicating if the parameter has a value.
 //
 // Index of the requested page, where one corresponds to the first page.
-//
-// Default value is `1`.
 func (r *OrganizationsListResponse) GetPage() (value int, ok bool) {
 	ok = r != nil && r.page != nil
 	if ok {
@@ -455,8 +452,6 @@ func (r *OrganizationsListResponse) GetPage() (value int, ok bool) {
 // Size returns the value of the 'size' parameter.
 //
 // Maximum number of items that will be contained in the returned page.
-//
-// Default value is `100`.
 func (r *OrganizationsListResponse) Size() int {
 	if r != nil && r.size != nil {
 		return *r.size
@@ -468,8 +463,6 @@ func (r *OrganizationsListResponse) Size() int {
 // a flag indicating if the parameter has a value.
 //
 // Maximum number of items that will be contained in the returned page.
-//
-// Default value is `100`.
 func (r *OrganizationsListResponse) GetSize() (value int, ok bool) {
 	ok = r != nil && r.size != nil
 	if ok {

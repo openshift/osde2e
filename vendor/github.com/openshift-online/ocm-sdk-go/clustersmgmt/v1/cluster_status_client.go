@@ -25,6 +25,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"time"
 
 	"github.com/openshift-online/ocm-sdk-go/errors"
 	"github.com/openshift-online/ocm-sdk-go/helpers"
@@ -59,6 +60,127 @@ func (c *ClusterStatusClient) Get() *ClusterStatusGetRequest {
 	request.path = c.path
 	request.metric = c.metric
 	return request
+}
+
+// ClusterStatusPollRequest is the request for the Poll method.
+type ClusterStatusPollRequest struct {
+	request    *ClusterStatusGetRequest
+	interval   time.Duration
+	statuses   []int
+	predicates []func(interface{}) bool
+}
+
+// Parameter adds a query parameter to all the requests that will be used to retrieve the object.
+func (r *ClusterStatusPollRequest) Parameter(name string, value interface{}) *ClusterStatusPollRequest {
+	r.request.Parameter(name, value)
+	return r
+}
+
+// Header adds a request header to all the requests that will be used to retrieve the object.
+func (r *ClusterStatusPollRequest) Header(name string, value interface{}) *ClusterStatusPollRequest {
+	r.request.Header(name, value)
+	return r
+}
+
+// Interval sets the polling interval. This parameter is mandatory and must be greater than zero.
+func (r *ClusterStatusPollRequest) Interval(value time.Duration) *ClusterStatusPollRequest {
+	r.interval = value
+	return r
+}
+
+// Status set the expected status of the response. Multiple values can be set calling this method
+// multiple times. The response will be considered successful if the status is any of those values.
+func (r *ClusterStatusPollRequest) Status(value int) *ClusterStatusPollRequest {
+	r.statuses = append(r.statuses, value)
+	return r
+}
+
+// Predicate adds a predicate that the response should satisfy be considered successful. Multiple
+// predicates can be set calling this method multiple times. The response will be considered successful
+// if all the predicates are satisfied.
+func (r *ClusterStatusPollRequest) Predicate(value func(*ClusterStatusGetResponse) bool) *ClusterStatusPollRequest {
+	r.predicates = append(r.predicates, func(response interface{}) bool {
+		return value(response.(*ClusterStatusGetResponse))
+	})
+	return r
+}
+
+// StartContext starts the polling loop. Responses will be considered successful if the status is one of
+// the values specified with the Status method and if all the predicates specified with the Predicate
+// method return nil.
+//
+// The context must have a timeout or deadline, otherwise this method will immediately return an error.
+func (r *ClusterStatusPollRequest) StartContext(ctx context.Context) (response *ClusterStatusPollResponse, err error) {
+	result, err := helpers.PollContext(ctx, r.interval, r.statuses, r.predicates, r.task)
+	if result != nil {
+		response = &ClusterStatusPollResponse{
+			response: result.(*ClusterStatusGetResponse),
+		}
+	}
+	return
+}
+
+// task adapts the types of the request/response types so that they can be used with the generic
+// polling function from the helpers package.
+func (r *ClusterStatusPollRequest) task(ctx context.Context) (status int, result interface{}, err error) {
+	response, err := r.request.SendContext(ctx)
+	if response != nil {
+		status = response.Status()
+		result = response
+	}
+	return
+}
+
+// ClusterStatusPollResponse is the response for the Poll method.
+type ClusterStatusPollResponse struct {
+	response *ClusterStatusGetResponse
+}
+
+// Status returns the response status code.
+func (r *ClusterStatusPollResponse) Status() int {
+	if r == nil {
+		return 0
+	}
+	return r.response.Status()
+}
+
+// Header returns header of the response.
+func (r *ClusterStatusPollResponse) Header() http.Header {
+	if r == nil {
+		return nil
+	}
+	return r.response.Header()
+}
+
+// Error returns the response error.
+func (r *ClusterStatusPollResponse) Error() *errors.Error {
+	if r == nil {
+		return nil
+	}
+	return r.response.Error()
+}
+
+// Body returns the value of the 'body' parameter.
+//
+//
+func (r *ClusterStatusPollResponse) Body() *ClusterStatus {
+	return r.response.Body()
+}
+
+// GetBody returns the value of the 'body' parameter and
+// a flag indicating if the parameter has a value.
+//
+//
+func (r *ClusterStatusPollResponse) GetBody() (value *ClusterStatus, ok bool) {
+	return r.response.GetBody()
+}
+
+// Poll creates a request to repeatedly retrieve the object till the response has one of a given set
+// of states and satisfies a set of predicates.
+func (c *ClusterStatusClient) Poll() *ClusterStatusPollRequest {
+	return &ClusterStatusPollRequest{
+		request: c.Get(),
+	}
 }
 
 // ClusterStatusGetRequest is the request for the 'get' method.
@@ -131,45 +253,54 @@ func (r *ClusterStatusGetRequest) SendContext(ctx context.Context) (result *Clus
 
 // ClusterStatusGetResponse is the response for the 'get' method.
 type ClusterStatusGetResponse struct {
-	status  int
-	header  http.Header
-	err     *errors.Error
-	status_ *ClusterStatus
+	status int
+	header http.Header
+	err    *errors.Error
+	body   *ClusterStatus
 }
 
 // Status returns the response status code.
 func (r *ClusterStatusGetResponse) Status() int {
+	if r == nil {
+		return 0
+	}
 	return r.status
 }
 
 // Header returns header of the response.
 func (r *ClusterStatusGetResponse) Header() http.Header {
+	if r == nil {
+		return nil
+	}
 	return r.header
 }
 
 // Error returns the response error.
 func (r *ClusterStatusGetResponse) Error() *errors.Error {
-	return r.err
-}
-
-// Status_ returns the value of the 'status' parameter.
-//
-//
-func (r *ClusterStatusGetResponse) Status_() *ClusterStatus {
 	if r == nil {
 		return nil
 	}
-	return r.status_
+	return r.err
 }
 
-// GetStatus_ returns the value of the 'status' parameter and
+// Body returns the value of the 'body' parameter.
+//
+//
+func (r *ClusterStatusGetResponse) Body() *ClusterStatus {
+	if r == nil {
+		return nil
+	}
+	return r.body
+}
+
+// GetBody returns the value of the 'body' parameter and
 // a flag indicating if the parameter has a value.
 //
 //
-func (r *ClusterStatusGetResponse) GetStatus_() (value *ClusterStatus, ok bool) {
-	ok = r != nil && r.status_ != nil
+func (r *ClusterStatusGetResponse) GetBody() (value *ClusterStatus, ok bool) {
+	ok = r != nil && r.body != nil
 	if ok {
-		value = r.status_
+		value = r.body
 	}
 	return
 }
@@ -184,7 +315,7 @@ func (r *ClusterStatusGetResponse) unmarshal(reader io.Reader) error {
 	if err != nil {
 		return err
 	}
-	r.status_, err = data.unwrap()
+	r.body, err = data.unwrap()
 	if err != nil {
 		return err
 	}

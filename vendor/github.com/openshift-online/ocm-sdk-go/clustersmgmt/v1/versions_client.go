@@ -84,7 +84,6 @@ type VersionsListRequest struct {
 	page      *int
 	search    *string
 	size      *int
-	total     *int
 }
 
 // Parameter adds a query parameter.
@@ -123,8 +122,6 @@ func (r *VersionsListRequest) Order(value string) *VersionsListRequest {
 // Page sets the value of the 'page' parameter.
 //
 // Index of the requested page, where one corresponds to the first page.
-//
-// Default value is `1`.
 func (r *VersionsListRequest) Page(value int) *VersionsListRequest {
 	r.page = &value
 	return r
@@ -161,15 +158,6 @@ func (r *VersionsListRequest) Size(value int) *VersionsListRequest {
 	return r
 }
 
-// Total sets the value of the 'total' parameter.
-//
-// Total number of items of the collection that match the search criteria,
-// regardless of the size of the page.
-func (r *VersionsListRequest) Total(value int) *VersionsListRequest {
-	r.total = &value
-	return r
-}
-
 // Send sends this request, waits for the response, and returns it.
 //
 // This is a potentially lengthy operation, as it requires network communication.
@@ -192,9 +180,6 @@ func (r *VersionsListRequest) SendContext(ctx context.Context) (result *Versions
 	}
 	if r.size != nil {
 		helpers.AddValue(&query, "size", *r.size)
-	}
-	if r.total != nil {
-		helpers.AddValue(&query, "total", *r.total)
 	}
 	header := helpers.SetHeader(r.header, r.metric)
 	uri := &url.URL{
@@ -245,16 +230,25 @@ type VersionsListResponse struct {
 
 // Status returns the response status code.
 func (r *VersionsListResponse) Status() int {
+	if r == nil {
+		return 0
+	}
 	return r.status
 }
 
 // Header returns header of the response.
 func (r *VersionsListResponse) Header() http.Header {
+	if r == nil {
+		return nil
+	}
 	return r.header
 }
 
 // Error returns the response error.
 func (r *VersionsListResponse) Error() *errors.Error {
+	if r == nil {
+		return nil
+	}
 	return r.err
 }
 
@@ -283,8 +277,6 @@ func (r *VersionsListResponse) GetItems() (value *VersionList, ok bool) {
 // Page returns the value of the 'page' parameter.
 //
 // Index of the requested page, where one corresponds to the first page.
-//
-// Default value is `1`.
 func (r *VersionsListResponse) Page() int {
 	if r != nil && r.page != nil {
 		return *r.page
@@ -296,8 +288,6 @@ func (r *VersionsListResponse) Page() int {
 // a flag indicating if the parameter has a value.
 //
 // Index of the requested page, where one corresponds to the first page.
-//
-// Default value is `1`.
 func (r *VersionsListResponse) GetPage() (value int, ok bool) {
 	ok = r != nil && r.page != nil
 	if ok {

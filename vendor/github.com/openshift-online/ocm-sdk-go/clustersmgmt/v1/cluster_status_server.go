@@ -44,16 +44,16 @@ type ClusterStatusGetServerRequest struct {
 
 // ClusterStatusGetServerResponse is the response for the 'get' method.
 type ClusterStatusGetServerResponse struct {
-	status  int
-	err     *errors.Error
-	status_ *ClusterStatus
+	status int
+	err    *errors.Error
+	body   *ClusterStatus
 }
 
-// Status_ sets the value of the 'status' parameter.
+// Body sets the value of the 'body' parameter.
 //
 //
-func (r *ClusterStatusGetServerResponse) Status_(value *ClusterStatus) *ClusterStatusGetServerResponse {
-	r.status_ = value
+func (r *ClusterStatusGetServerResponse) Body(value *ClusterStatus) *ClusterStatusGetServerResponse {
+	r.body = value
 	return r
 }
 
@@ -68,7 +68,7 @@ func (r *ClusterStatusGetServerResponse) Status(value int) *ClusterStatusGetServ
 func (r *ClusterStatusGetServerResponse) marshal(writer io.Writer) error {
 	var err error
 	encoder := json.NewEncoder(writer)
-	data, err := r.status_.wrap()
+	data, err := r.body.wrap()
 	if err != nil {
 		return err
 	}

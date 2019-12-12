@@ -192,16 +192,25 @@ type RoleBindingsAddResponse struct {
 
 // Status returns the response status code.
 func (r *RoleBindingsAddResponse) Status() int {
+	if r == nil {
+		return 0
+	}
 	return r.status
 }
 
 // Header returns header of the response.
 func (r *RoleBindingsAddResponse) Header() http.Header {
+	if r == nil {
+		return nil
+	}
 	return r.header
 }
 
 // Error returns the response error.
 func (r *RoleBindingsAddResponse) Error() *errors.Error {
+	if r == nil {
+		return nil
+	}
 	return r.err
 }
 
@@ -252,8 +261,8 @@ type RoleBindingsListRequest struct {
 	query     url.Values
 	header    http.Header
 	page      *int
+	search    *string
 	size      *int
-	total     *int
 }
 
 // Parameter adds a query parameter.
@@ -271,29 +280,37 @@ func (r *RoleBindingsListRequest) Header(name string, value interface{}) *RoleBi
 // Page sets the value of the 'page' parameter.
 //
 // Index of the requested page, where one corresponds to the first page.
-//
-// Default value is `1`.
 func (r *RoleBindingsListRequest) Page(value int) *RoleBindingsListRequest {
 	r.page = &value
+	return r
+}
+
+// Search sets the value of the 'search' parameter.
+//
+// Search criteria.
+//
+// The syntax of this parameter is similar to the syntax of the _where_ clause
+// of an SQL statement, but using the names of the attributes of the role binding
+// instead of the names of the columns of a table. For example, in order to
+// retrieve role bindings with role_id AuthenticatedUser:
+//
+// [source,sql]
+// ----
+// role_id = 'AuthenticatedUser'
+// ----
+//
+// If the parameter isn't provided, or if the value is empty, then all the
+// items that the user has permission to see will be returned.
+func (r *RoleBindingsListRequest) Search(value string) *RoleBindingsListRequest {
+	r.search = &value
 	return r
 }
 
 // Size sets the value of the 'size' parameter.
 //
 // Maximum number of items that will be contained in the returned page.
-//
-// Default value is `100`.
 func (r *RoleBindingsListRequest) Size(value int) *RoleBindingsListRequest {
 	r.size = &value
-	return r
-}
-
-// Total sets the value of the 'total' parameter.
-//
-// Total number of items of the collection that match the search criteria,
-// regardless of the size of the page.
-func (r *RoleBindingsListRequest) Total(value int) *RoleBindingsListRequest {
-	r.total = &value
 	return r
 }
 
@@ -311,11 +328,11 @@ func (r *RoleBindingsListRequest) SendContext(ctx context.Context) (result *Role
 	if r.page != nil {
 		helpers.AddValue(&query, "page", *r.page)
 	}
+	if r.search != nil {
+		helpers.AddValue(&query, "search", *r.search)
+	}
 	if r.size != nil {
 		helpers.AddValue(&query, "size", *r.size)
-	}
-	if r.total != nil {
-		helpers.AddValue(&query, "total", *r.total)
 	}
 	header := helpers.SetHeader(r.header, r.metric)
 	uri := &url.URL{
@@ -366,16 +383,25 @@ type RoleBindingsListResponse struct {
 
 // Status returns the response status code.
 func (r *RoleBindingsListResponse) Status() int {
+	if r == nil {
+		return 0
+	}
 	return r.status
 }
 
 // Header returns header of the response.
 func (r *RoleBindingsListResponse) Header() http.Header {
+	if r == nil {
+		return nil
+	}
 	return r.header
 }
 
 // Error returns the response error.
 func (r *RoleBindingsListResponse) Error() *errors.Error {
+	if r == nil {
+		return nil
+	}
 	return r.err
 }
 
@@ -404,8 +430,6 @@ func (r *RoleBindingsListResponse) GetItems() (value *RoleBindingList, ok bool) 
 // Page returns the value of the 'page' parameter.
 //
 // Index of the requested page, where one corresponds to the first page.
-//
-// Default value is `1`.
 func (r *RoleBindingsListResponse) Page() int {
 	if r != nil && r.page != nil {
 		return *r.page
@@ -417,8 +441,6 @@ func (r *RoleBindingsListResponse) Page() int {
 // a flag indicating if the parameter has a value.
 //
 // Index of the requested page, where one corresponds to the first page.
-//
-// Default value is `1`.
 func (r *RoleBindingsListResponse) GetPage() (value int, ok bool) {
 	ok = r != nil && r.page != nil
 	if ok {
@@ -430,8 +452,6 @@ func (r *RoleBindingsListResponse) GetPage() (value int, ok bool) {
 // Size returns the value of the 'size' parameter.
 //
 // Maximum number of items that will be contained in the returned page.
-//
-// Default value is `100`.
 func (r *RoleBindingsListResponse) Size() int {
 	if r != nil && r.size != nil {
 		return *r.size
@@ -443,8 +463,6 @@ func (r *RoleBindingsListResponse) Size() int {
 // a flag indicating if the parameter has a value.
 //
 // Maximum number of items that will be contained in the returned page.
-//
-// Default value is `100`.
 func (r *RoleBindingsListResponse) GetSize() (value int, ok bool) {
 	ok = r != nil && r.size != nil
 	if ok {

@@ -27,7 +27,7 @@ type Config struct {
 
 	OCM OCMConfig `yaml:"ocm"`
 
-	Addon AddonConfig `yaml:"addon"`
+	Addons []AddonConfig `yaml:"addon"`
 
 	// Name lets you name the current e2e job run
 	JobName string `json:"job_name" env:"JOB_NAME" sect:"tests" yaml:"jobName"`
@@ -98,9 +98,6 @@ type ClusterConfig struct {
 	// Version is the version of the cluster being deployed.
 	Version string `json:"cluster_version,omitempty" env:"CLUSTER_VERSION" sect:"version"  yaml:"version"`
 
-	// AddOns
-	AddOns []string `json:"addons,omitempty"  yaml:"addons"`
-
 	// MultiAZ deploys a cluster across multiple availability zones.
 	MultiAZ bool `env:"MULTI_AZ" sect:"cluster" default:"false" yaml:"multiAZ"`
 
@@ -119,6 +116,8 @@ type ClusterConfig struct {
 
 // AddonConfig options for addon testing
 type AddonConfig struct {
+	// AddonID is the ID within an environment to install to the cluster
+	ID string `env:"ADDON_ID" sect:"addons" yaml:"id"`
 	// AddonTestHarness is the image that will be run on the cluster and will exercise various addons that are installed.
 	TestHarness string `env:"ADDON_TEST_HARNESS" sect:"addons" yaml:"testHarness"`
 }

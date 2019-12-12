@@ -20,8 +20,6 @@ limitations under the License.
 package v1 // github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1
 
 import (
-	"fmt"
-
 	"github.com/openshift-online/ocm-sdk-go/helpers"
 )
 
@@ -130,20 +128,7 @@ func (d *skuListLinkData) unwrapLink() (list *SKUList, err error) {
 	list.items = items
 	list.href = d.HREF
 	if d.Kind != nil {
-		switch *d.Kind {
-		case SKUListKind:
-			list.link = false
-		case SKUListLinkKind:
-			list.link = true
-		default:
-			err = fmt.Errorf(
-				"expected kind '%s' or '%s' but got '%s'",
-				SKUListKind,
-				SKUListLinkKind,
-				*d.Kind,
-			)
-			return
-		}
+		list.link = *d.Kind == SKUListLinkKind
 	}
 	return
 }

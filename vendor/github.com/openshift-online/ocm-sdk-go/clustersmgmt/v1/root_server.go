@@ -28,6 +28,11 @@ import (
 // Server represents the interface the manages the 'root' resource.
 type Server interface {
 
+	// Addons returns the target 'add_ons' resource.
+	//
+	// Reference to the resource that manages the collection of add-ons.
+	Addons() AddOnsServer
+
 	// CloudProviders returns the target 'cloud_providers' resource.
 	//
 	// Reference to the resource that manages the collection of cloud providers.
@@ -66,6 +71,13 @@ func Dispatch(w http.ResponseWriter, r *http.Request, server Server, segments []
 		}
 	} else {
 		switch segments[0] {
+		case "addons":
+			target := server.Addons()
+			if target == nil {
+				errors.SendNotFound(w, r)
+				return
+			}
+			dispatchAddOns(w, r, target, segments[1:])
 		case "cloud_providers":
 			target := server.CloudProviders()
 			if target == nil {

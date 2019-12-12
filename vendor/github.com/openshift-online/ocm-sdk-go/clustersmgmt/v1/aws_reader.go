@@ -27,6 +27,7 @@ import (
 // objects of type 'AWS'.
 type awsData struct {
 	AccessKeyID     *string "json:\"access_key_id,omitempty\""
+	AccountID       *string "json:\"account_id,omitempty\""
 	SecretAccessKey *string "json:\"secret_access_key,omitempty\""
 }
 
@@ -52,6 +53,7 @@ func (o *AWS) wrap() (data *awsData, err error) {
 	}
 	data = new(awsData)
 	data.AccessKeyID = o.accessKeyID
+	data.AccountID = o.accountID
 	data.SecretAccessKey = o.secretAccessKey
 	return
 }
@@ -80,6 +82,7 @@ func (d *awsData) unwrap() (object *AWS, err error) {
 	}
 	object = new(AWS)
 	object.accessKeyID = d.AccessKeyID
+	object.accountID = d.AccountID
 	object.secretAccessKey = d.SecretAccessKey
 	return
 }

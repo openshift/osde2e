@@ -129,12 +129,34 @@ func (r *AccountUpdateServerRequest) unmarshal(reader io.Reader) error {
 type AccountUpdateServerResponse struct {
 	status int
 	err    *errors.Error
+	body   *Account
+}
+
+// Body sets the value of the 'body' parameter.
+//
+//
+func (r *AccountUpdateServerResponse) Body(value *Account) *AccountUpdateServerResponse {
+	r.body = value
+	return r
 }
 
 // Status sets the status code.
 func (r *AccountUpdateServerResponse) Status(value int) *AccountUpdateServerResponse {
 	r.status = value
 	return r
+}
+
+// marshall is the method used internally to marshal responses for the
+// 'update' method.
+func (r *AccountUpdateServerResponse) marshal(writer io.Writer) error {
+	var err error
+	encoder := json.NewEncoder(writer)
+	data, err := r.body.wrap()
+	if err != nil {
+		return err
+	}
+	err = encoder.Encode(data)
+	return err
 }
 
 // dispatchAccount navigates the servers tree rooted at the given server
@@ -231,6 +253,10 @@ func readAccountUpdateRequest(r *http.Request) (*AccountUpdateServerRequest, err
 func writeAccountUpdateResponse(w http.ResponseWriter, r *AccountUpdateServerResponse) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(r.status)
+	err := r.marshal(w)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 

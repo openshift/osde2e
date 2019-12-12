@@ -44,6 +44,15 @@ func NewClient(transport http.RoundTripper, path string, metric string) *Client 
 	return client
 }
 
+// Creates a new request for the method that retrieves the metadata.
+func (c *Client) Get() *MetadataRequest {
+	return &MetadataRequest{
+		transport: c.transport,
+		path:      c.path,
+		metric:    c.metric,
+	}
+}
+
 // AccessReview returns the target 'access_review' resource.
 //
 // Reference to the resource that is used to submit access review requests.

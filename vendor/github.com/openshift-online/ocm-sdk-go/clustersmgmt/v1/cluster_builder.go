@@ -68,7 +68,9 @@ type ClusterBuilder struct {
 	link                bool
 	api                 *ClusterAPIBuilder
 	aws                 *AWSBuilder
+	byoc                *bool
 	dns                 *DNSBuilder
+	addons              []*AddOnInstallationBuilder
 	cloudProvider       *CloudProviderBuilder
 	console             *ClusterConsoleBuilder
 	creationTimestamp   *time.Time
@@ -78,6 +80,7 @@ type ClusterBuilder struct {
 	flavour             *FlavourBuilder
 	groups              []*GroupBuilder
 	identityProviders   []*IdentityProviderBuilder
+	loadBalancerQuota   *int
 	managed             *bool
 	metrics             *ClusterMetricsBuilder
 	multiAZ             *bool
@@ -88,6 +91,7 @@ type ClusterBuilder struct {
 	properties          map[string]string
 	region              *CloudRegionBuilder
 	state               *ClusterState
+	storageQuota        *ValueBuilder
 	subscription        *SubscriptionBuilder
 	version             *VersionBuilder
 }
@@ -133,12 +137,31 @@ func (b *ClusterBuilder) AWS(value *AWSBuilder) *ClusterBuilder {
 	return b
 }
 
+// BYOC sets the value of the 'BYOC' attribute
+// to the given value.
+//
+//
+func (b *ClusterBuilder) BYOC(value bool) *ClusterBuilder {
+	b.byoc = &value
+	return b
+}
+
 // DNS sets the value of the 'DNS' attribute
 // to the given value.
 //
 // DNS settings of the cluster.
 func (b *ClusterBuilder) DNS(value *DNSBuilder) *ClusterBuilder {
 	b.dns = value
+	return b
+}
+
+// Addons sets the value of the 'addons' attribute
+// to the given values.
+//
+//
+func (b *ClusterBuilder) Addons(values ...*AddOnInstallationBuilder) *ClusterBuilder {
+	b.addons = make([]*AddOnInstallationBuilder, len(values))
+	copy(b.addons, values)
 	return b
 }
 
@@ -223,6 +246,15 @@ func (b *ClusterBuilder) Groups(values ...*GroupBuilder) *ClusterBuilder {
 func (b *ClusterBuilder) IdentityProviders(values ...*IdentityProviderBuilder) *ClusterBuilder {
 	b.identityProviders = make([]*IdentityProviderBuilder, len(values))
 	copy(b.identityProviders, values)
+	return b
+}
+
+// LoadBalancerQuota sets the value of the 'load_balancer_quota' attribute
+// to the given value.
+//
+//
+func (b *ClusterBuilder) LoadBalancerQuota(value int) *ClusterBuilder {
+	b.loadBalancerQuota = &value
 	return b
 }
 
@@ -316,6 +348,32 @@ func (b *ClusterBuilder) State(value ClusterState) *ClusterBuilder {
 	return b
 }
 
+// StorageQuota sets the value of the 'storage_quota' attribute
+// to the given value.
+//
+// Numeric value and the unit used to measure it.
+//
+// Units are not mandatory, and they're not specified for some resources. For
+// resources that use bytes, the accepted units are:
+//
+// - 1 B = 1 byte
+// - 1 KB = 10^3 bytes
+// - 1 MB = 10^6 bytes
+// - 1 GB = 10^9 bytes
+// - 1 TB = 10^12 bytes
+// - 1 PB = 10^15 bytes
+//
+// - 1 B = 1 byte
+// - 1 KiB = 2^10 bytes
+// - 1 MiB = 2^20 bytes
+// - 1 GiB = 2^30 bytes
+// - 1 TiB = 2^40 bytes
+// - 1 PiB = 2^50 bytes
+func (b *ClusterBuilder) StorageQuota(value *ValueBuilder) *ClusterBuilder {
+	b.storageQuota = value
+	return b
+}
+
 // Subscription sets the value of the 'subscription' attribute
 // to the given value.
 //
@@ -352,10 +410,19 @@ func (b *ClusterBuilder) Copy(object *Cluster) *ClusterBuilder {
 	} else {
 		b.aws = nil
 	}
+	b.byoc = object.byoc
 	if object.dns != nil {
 		b.dns = NewDNS().Copy(object.dns)
 	} else {
 		b.dns = nil
+	}
+	if object.addons != nil && len(object.addons.items) > 0 {
+		b.addons = make([]*AddOnInstallationBuilder, len(object.addons.items))
+		for i, item := range object.addons.items {
+			b.addons[i] = NewAddOnInstallation().Copy(item)
+		}
+	} else {
+		b.addons = nil
 	}
 	if object.cloudProvider != nil {
 		b.cloudProvider = NewCloudProvider().Copy(object.cloudProvider)
@@ -392,6 +459,7 @@ func (b *ClusterBuilder) Copy(object *Cluster) *ClusterBuilder {
 	} else {
 		b.identityProviders = nil
 	}
+	b.loadBalancerQuota = object.loadBalancerQuota
 	b.managed = object.managed
 	if object.metrics != nil {
 		b.metrics = NewClusterMetrics().Copy(object.metrics)
@@ -425,6 +493,11 @@ func (b *ClusterBuilder) Copy(object *Cluster) *ClusterBuilder {
 		b.region = nil
 	}
 	b.state = object.state
+	if object.storageQuota != nil {
+		b.storageQuota = NewValue().Copy(object.storageQuota)
+	} else {
+		b.storageQuota = nil
+	}
 	if object.subscription != nil {
 		b.subscription = NewSubscription().Copy(object.subscription)
 	} else {
@@ -456,10 +529,23 @@ func (b *ClusterBuilder) Build() (object *Cluster, err error) {
 			return
 		}
 	}
+	if b.byoc != nil {
+		object.byoc = b.byoc
+	}
 	if b.dns != nil {
 		object.dns, err = b.dns.Build()
 		if err != nil {
 			return
+		}
+	}
+	if b.addons != nil {
+		object.addons = new(AddOnInstallationList)
+		object.addons.items = make([]*AddOnInstallation, len(b.addons))
+		for i, item := range b.addons {
+			object.addons.items[i], err = item.Build()
+			if err != nil {
+				return
+			}
 		}
 	}
 	if b.cloudProvider != nil {
@@ -512,6 +598,9 @@ func (b *ClusterBuilder) Build() (object *Cluster, err error) {
 			}
 		}
 	}
+	if b.loadBalancerQuota != nil {
+		object.loadBalancerQuota = b.loadBalancerQuota
+	}
 	if b.managed != nil {
 		object.managed = b.managed
 	}
@@ -556,6 +645,12 @@ func (b *ClusterBuilder) Build() (object *Cluster, err error) {
 	}
 	if b.state != nil {
 		object.state = b.state
+	}
+	if b.storageQuota != nil {
+		object.storageQuota, err = b.storageQuota.Build()
+		if err != nil {
+			return
+		}
 	}
 	if b.subscription != nil {
 		object.subscription, err = b.subscription.Build()

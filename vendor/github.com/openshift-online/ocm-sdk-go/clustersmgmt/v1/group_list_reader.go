@@ -20,8 +20,6 @@ limitations under the License.
 package v1 // github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1
 
 import (
-	"fmt"
-
 	"github.com/openshift-online/ocm-sdk-go/helpers"
 )
 
@@ -130,20 +128,7 @@ func (d *groupListLinkData) unwrapLink() (list *GroupList, err error) {
 	list.items = items
 	list.href = d.HREF
 	if d.Kind != nil {
-		switch *d.Kind {
-		case GroupListKind:
-			list.link = false
-		case GroupListLinkKind:
-			list.link = true
-		default:
-			err = fmt.Errorf(
-				"expected kind '%s' or '%s' but got '%s'",
-				GroupListKind,
-				GroupListLinkKind,
-				*d.Kind,
-			)
-			return
-		}
+		list.link = *d.Kind == GroupListLinkKind
 	}
 	return
 }

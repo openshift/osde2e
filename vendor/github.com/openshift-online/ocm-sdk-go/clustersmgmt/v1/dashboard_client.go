@@ -25,6 +25,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"time"
 
 	"github.com/openshift-online/ocm-sdk-go/errors"
 	"github.com/openshift-online/ocm-sdk-go/helpers"
@@ -59,6 +60,127 @@ func (c *DashboardClient) Get() *DashboardGetRequest {
 	request.path = c.path
 	request.metric = c.metric
 	return request
+}
+
+// DashboardPollRequest is the request for the Poll method.
+type DashboardPollRequest struct {
+	request    *DashboardGetRequest
+	interval   time.Duration
+	statuses   []int
+	predicates []func(interface{}) bool
+}
+
+// Parameter adds a query parameter to all the requests that will be used to retrieve the object.
+func (r *DashboardPollRequest) Parameter(name string, value interface{}) *DashboardPollRequest {
+	r.request.Parameter(name, value)
+	return r
+}
+
+// Header adds a request header to all the requests that will be used to retrieve the object.
+func (r *DashboardPollRequest) Header(name string, value interface{}) *DashboardPollRequest {
+	r.request.Header(name, value)
+	return r
+}
+
+// Interval sets the polling interval. This parameter is mandatory and must be greater than zero.
+func (r *DashboardPollRequest) Interval(value time.Duration) *DashboardPollRequest {
+	r.interval = value
+	return r
+}
+
+// Status set the expected status of the response. Multiple values can be set calling this method
+// multiple times. The response will be considered successful if the status is any of those values.
+func (r *DashboardPollRequest) Status(value int) *DashboardPollRequest {
+	r.statuses = append(r.statuses, value)
+	return r
+}
+
+// Predicate adds a predicate that the response should satisfy be considered successful. Multiple
+// predicates can be set calling this method multiple times. The response will be considered successful
+// if all the predicates are satisfied.
+func (r *DashboardPollRequest) Predicate(value func(*DashboardGetResponse) bool) *DashboardPollRequest {
+	r.predicates = append(r.predicates, func(response interface{}) bool {
+		return value(response.(*DashboardGetResponse))
+	})
+	return r
+}
+
+// StartContext starts the polling loop. Responses will be considered successful if the status is one of
+// the values specified with the Status method and if all the predicates specified with the Predicate
+// method return nil.
+//
+// The context must have a timeout or deadline, otherwise this method will immediately return an error.
+func (r *DashboardPollRequest) StartContext(ctx context.Context) (response *DashboardPollResponse, err error) {
+	result, err := helpers.PollContext(ctx, r.interval, r.statuses, r.predicates, r.task)
+	if result != nil {
+		response = &DashboardPollResponse{
+			response: result.(*DashboardGetResponse),
+		}
+	}
+	return
+}
+
+// task adapts the types of the request/response types so that they can be used with the generic
+// polling function from the helpers package.
+func (r *DashboardPollRequest) task(ctx context.Context) (status int, result interface{}, err error) {
+	response, err := r.request.SendContext(ctx)
+	if response != nil {
+		status = response.Status()
+		result = response
+	}
+	return
+}
+
+// DashboardPollResponse is the response for the Poll method.
+type DashboardPollResponse struct {
+	response *DashboardGetResponse
+}
+
+// Status returns the response status code.
+func (r *DashboardPollResponse) Status() int {
+	if r == nil {
+		return 0
+	}
+	return r.response.Status()
+}
+
+// Header returns header of the response.
+func (r *DashboardPollResponse) Header() http.Header {
+	if r == nil {
+		return nil
+	}
+	return r.response.Header()
+}
+
+// Error returns the response error.
+func (r *DashboardPollResponse) Error() *errors.Error {
+	if r == nil {
+		return nil
+	}
+	return r.response.Error()
+}
+
+// Body returns the value of the 'body' parameter.
+//
+//
+func (r *DashboardPollResponse) Body() *Dashboard {
+	return r.response.Body()
+}
+
+// GetBody returns the value of the 'body' parameter and
+// a flag indicating if the parameter has a value.
+//
+//
+func (r *DashboardPollResponse) GetBody() (value *Dashboard, ok bool) {
+	return r.response.GetBody()
+}
+
+// Poll creates a request to repeatedly retrieve the object till the response has one of a given set
+// of states and satisfies a set of predicates.
+func (c *DashboardClient) Poll() *DashboardPollRequest {
+	return &DashboardPollRequest{
+		request: c.Get(),
+	}
 }
 
 // DashboardGetRequest is the request for the 'get' method.
@@ -139,16 +261,25 @@ type DashboardGetResponse struct {
 
 // Status returns the response status code.
 func (r *DashboardGetResponse) Status() int {
+	if r == nil {
+		return 0
+	}
 	return r.status
 }
 
 // Header returns header of the response.
 func (r *DashboardGetResponse) Header() http.Header {
+	if r == nil {
+		return nil
+	}
 	return r.header
 }
 
 // Error returns the response error.
 func (r *DashboardGetResponse) Error() *errors.Error {
+	if r == nil {
+		return nil
+	}
 	return r.err
 }
 

@@ -80,7 +80,9 @@ type Cluster struct {
 	link                bool
 	api                 *ClusterAPI
 	aws                 *AWS
+	byoc                *bool
 	dns                 *DNS
+	addons              *AddOnInstallationList
 	cloudProvider       *CloudProvider
 	console             *ClusterConsole
 	creationTimestamp   *time.Time
@@ -90,6 +92,7 @@ type Cluster struct {
 	flavour             *Flavour
 	groups              *GroupList
 	identityProviders   *IdentityProviderList
+	loadBalancerQuota   *int
 	managed             *bool
 	metrics             *ClusterMetrics
 	multiAZ             *bool
@@ -100,6 +103,7 @@ type Cluster struct {
 	properties          map[string]string
 	region              *CloudRegion
 	state               *ClusterState
+	storageQuota        *Value
 	subscription        *Subscription
 	version             *Version
 }
@@ -161,7 +165,9 @@ func (o *Cluster) Empty() bool {
 	return o == nil || (o.id == nil &&
 		o.api == nil &&
 		o.aws == nil &&
+		o.byoc == nil &&
 		o.dns == nil &&
+		o.addons.Empty() &&
 		o.cloudProvider == nil &&
 		o.console == nil &&
 		o.creationTimestamp == nil &&
@@ -171,6 +177,7 @@ func (o *Cluster) Empty() bool {
 		o.flavour == nil &&
 		o.groups.Empty() &&
 		o.identityProviders.Empty() &&
+		o.loadBalancerQuota == nil &&
 		o.managed == nil &&
 		o.metrics == nil &&
 		o.multiAZ == nil &&
@@ -181,6 +188,7 @@ func (o *Cluster) Empty() bool {
 		len(o.properties) == 0 &&
 		o.region == nil &&
 		o.state == nil &&
+		o.storageQuota == nil &&
 		o.subscription == nil &&
 		o.version == nil &&
 		true)
@@ -232,6 +240,29 @@ func (o *Cluster) GetAWS() (value *AWS, ok bool) {
 	return
 }
 
+// BYOC returns the value of the 'BYOC' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+// Flag indicating if the cluster is BYOC (customer cloud subscription).
+func (o *Cluster) BYOC() bool {
+	if o != nil && o.byoc != nil {
+		return *o.byoc
+	}
+	return false
+}
+
+// GetBYOC returns the value of the 'BYOC' attribute and
+// a flag indicating if the attribute has a value.
+//
+// Flag indicating if the cluster is BYOC (customer cloud subscription).
+func (o *Cluster) GetBYOC() (value bool, ok bool) {
+	ok = o != nil && o.byoc != nil
+	if ok {
+		value = *o.byoc
+	}
+	return
+}
+
 // DNS returns the value of the 'DNS' attribute, or
 // the zero value of the type if the attribute doesn't have a value.
 //
@@ -251,6 +282,29 @@ func (o *Cluster) GetDNS() (value *DNS, ok bool) {
 	ok = o != nil && o.dns != nil
 	if ok {
 		value = o.dns
+	}
+	return
+}
+
+// Addons returns the value of the 'addons' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+// List of add-ons on this cluster.
+func (o *Cluster) Addons() *AddOnInstallationList {
+	if o == nil {
+		return nil
+	}
+	return o.addons
+}
+
+// GetAddons returns the value of the 'addons' attribute and
+// a flag indicating if the attribute has a value.
+//
+// List of add-ons on this cluster.
+func (o *Cluster) GetAddons() (value *AddOnInstallationList, ok bool) {
+	ok = o != nil && o.addons != nil
+	if ok {
+		value = o.addons
 	}
 	return
 }
@@ -466,6 +520,29 @@ func (o *Cluster) GetIdentityProviders() (value *IdentityProviderList, ok bool) 
 	ok = o != nil && o.identityProviders != nil
 	if ok {
 		value = o.identityProviders
+	}
+	return
+}
+
+// LoadBalancerQuota returns the value of the 'load_balancer_quota' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+// Load Balancer quota to be assigned to the cluster.
+func (o *Cluster) LoadBalancerQuota() int {
+	if o != nil && o.loadBalancerQuota != nil {
+		return *o.loadBalancerQuota
+	}
+	return 0
+}
+
+// GetLoadBalancerQuota returns the value of the 'load_balancer_quota' attribute and
+// a flag indicating if the attribute has a value.
+//
+// Load Balancer quota to be assigned to the cluster.
+func (o *Cluster) GetLoadBalancerQuota() (value int, ok bool) {
+	ok = o != nil && o.loadBalancerQuota != nil
+	if ok {
+		value = *o.loadBalancerQuota
 	}
 	return
 }
@@ -718,6 +795,29 @@ func (o *Cluster) GetState() (value ClusterState, ok bool) {
 	ok = o != nil && o.state != nil
 	if ok {
 		value = *o.state
+	}
+	return
+}
+
+// StorageQuota returns the value of the 'storage_quota' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+// Storage quota to be assigned to the cluster.
+func (o *Cluster) StorageQuota() *Value {
+	if o == nil {
+		return nil
+	}
+	return o.storageQuota
+}
+
+// GetStorageQuota returns the value of the 'storage_quota' attribute and
+// a flag indicating if the attribute has a value.
+//
+// Storage quota to be assigned to the cluster.
+func (o *Cluster) GetStorageQuota() (value *Value, ok bool) {
+	ok = o != nil && o.storageQuota != nil
+	if ok {
+		value = o.storageQuota
 	}
 	return
 }

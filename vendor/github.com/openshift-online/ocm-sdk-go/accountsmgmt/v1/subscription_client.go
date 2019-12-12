@@ -25,6 +25,8 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"path"
+	"time"
 
 	"github.com/openshift-online/ocm-sdk-go/errors"
 	"github.com/openshift-online/ocm-sdk-go/helpers"
@@ -70,6 +72,139 @@ func (c *SubscriptionClient) Get() *SubscriptionGetRequest {
 	request.path = c.path
 	request.metric = c.metric
 	return request
+}
+
+// ReservedResources returns the target 'subscription_reserved_resources' resource.
+//
+// Reference to the resource that manages the collection of resources reserved by the
+// subscription.
+func (c *SubscriptionClient) ReservedResources() *SubscriptionReservedResourcesClient {
+	return NewSubscriptionReservedResourcesClient(
+		c.transport,
+		path.Join(c.path, "reserved_resources"),
+		path.Join(c.metric, "reserved_resources"),
+	)
+}
+
+// SubscriptionPollRequest is the request for the Poll method.
+type SubscriptionPollRequest struct {
+	request    *SubscriptionGetRequest
+	interval   time.Duration
+	statuses   []int
+	predicates []func(interface{}) bool
+}
+
+// Parameter adds a query parameter to all the requests that will be used to retrieve the object.
+func (r *SubscriptionPollRequest) Parameter(name string, value interface{}) *SubscriptionPollRequest {
+	r.request.Parameter(name, value)
+	return r
+}
+
+// Header adds a request header to all the requests that will be used to retrieve the object.
+func (r *SubscriptionPollRequest) Header(name string, value interface{}) *SubscriptionPollRequest {
+	r.request.Header(name, value)
+	return r
+}
+
+// Interval sets the polling interval. This parameter is mandatory and must be greater than zero.
+func (r *SubscriptionPollRequest) Interval(value time.Duration) *SubscriptionPollRequest {
+	r.interval = value
+	return r
+}
+
+// Status set the expected status of the response. Multiple values can be set calling this method
+// multiple times. The response will be considered successful if the status is any of those values.
+func (r *SubscriptionPollRequest) Status(value int) *SubscriptionPollRequest {
+	r.statuses = append(r.statuses, value)
+	return r
+}
+
+// Predicate adds a predicate that the response should satisfy be considered successful. Multiple
+// predicates can be set calling this method multiple times. The response will be considered successful
+// if all the predicates are satisfied.
+func (r *SubscriptionPollRequest) Predicate(value func(*SubscriptionGetResponse) bool) *SubscriptionPollRequest {
+	r.predicates = append(r.predicates, func(response interface{}) bool {
+		return value(response.(*SubscriptionGetResponse))
+	})
+	return r
+}
+
+// StartContext starts the polling loop. Responses will be considered successful if the status is one of
+// the values specified with the Status method and if all the predicates specified with the Predicate
+// method return nil.
+//
+// The context must have a timeout or deadline, otherwise this method will immediately return an error.
+func (r *SubscriptionPollRequest) StartContext(ctx context.Context) (response *SubscriptionPollResponse, err error) {
+	result, err := helpers.PollContext(ctx, r.interval, r.statuses, r.predicates, r.task)
+	if result != nil {
+		response = &SubscriptionPollResponse{
+			response: result.(*SubscriptionGetResponse),
+		}
+	}
+	return
+}
+
+// task adapts the types of the request/response types so that they can be used with the generic
+// polling function from the helpers package.
+func (r *SubscriptionPollRequest) task(ctx context.Context) (status int, result interface{}, err error) {
+	response, err := r.request.SendContext(ctx)
+	if response != nil {
+		status = response.Status()
+		result = response
+	}
+	return
+}
+
+// SubscriptionPollResponse is the response for the Poll method.
+type SubscriptionPollResponse struct {
+	response *SubscriptionGetResponse
+}
+
+// Status returns the response status code.
+func (r *SubscriptionPollResponse) Status() int {
+	if r == nil {
+		return 0
+	}
+	return r.response.Status()
+}
+
+// Header returns header of the response.
+func (r *SubscriptionPollResponse) Header() http.Header {
+	if r == nil {
+		return nil
+	}
+	return r.response.Header()
+}
+
+// Error returns the response error.
+func (r *SubscriptionPollResponse) Error() *errors.Error {
+	if r == nil {
+		return nil
+	}
+	return r.response.Error()
+}
+
+// Body returns the value of the 'body' parameter.
+//
+//
+func (r *SubscriptionPollResponse) Body() *Subscription {
+	return r.response.Body()
+}
+
+// GetBody returns the value of the 'body' parameter and
+// a flag indicating if the parameter has a value.
+//
+//
+func (r *SubscriptionPollResponse) GetBody() (value *Subscription, ok bool) {
+	return r.response.GetBody()
+}
+
+// Poll creates a request to repeatedly retrieve the object till the response has one of a given set
+// of states and satisfies a set of predicates.
+func (c *SubscriptionClient) Poll() *SubscriptionPollRequest {
+	return &SubscriptionPollRequest{
+		request: c.Get(),
+	}
 }
 
 // SubscriptionDeleteRequest is the request for the 'delete' method.
@@ -145,16 +280,25 @@ type SubscriptionDeleteResponse struct {
 
 // Status returns the response status code.
 func (r *SubscriptionDeleteResponse) Status() int {
+	if r == nil {
+		return 0
+	}
 	return r.status
 }
 
 // Header returns header of the response.
 func (r *SubscriptionDeleteResponse) Header() http.Header {
+	if r == nil {
+		return nil
+	}
 	return r.header
 }
 
 // Error returns the response error.
 func (r *SubscriptionDeleteResponse) Error() *errors.Error {
+	if r == nil {
+		return nil
+	}
 	return r.err
 }
 
@@ -236,16 +380,25 @@ type SubscriptionGetResponse struct {
 
 // Status returns the response status code.
 func (r *SubscriptionGetResponse) Status() int {
+	if r == nil {
+		return 0
+	}
 	return r.status
 }
 
 // Header returns header of the response.
 func (r *SubscriptionGetResponse) Header() http.Header {
+	if r == nil {
+		return nil
+	}
 	return r.header
 }
 
 // Error returns the response error.
 func (r *SubscriptionGetResponse) Error() *errors.Error {
+	if r == nil {
+		return nil
+	}
 	return r.err
 }
 
