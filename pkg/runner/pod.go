@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"path/filepath"
 	"time"
 
 	kubev1 "k8s.io/api/core/v1"
@@ -11,14 +12,26 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/utils/pointer"
 )
 
 const (
-	podCreateTimeout = 90 * time.Second
+	configMapCreateTimeout = 30 * time.Second
+	podCreateTimeout       = 90 * time.Second
 
 	resultsPort     = 8000
 	resultsPortName = "results"
+
+	osde2ePayload          = "osde2e-payload"
+	osde2ePayloadMountPath = "/osde2e-payload"
+	osde2ePayloadScript    = "payload.sh"
 )
+
+var fullPayloadScriptPath string
+
+func init() {
+	fullPayloadScriptPath = filepath.Join(osde2ePayloadMountPath, osde2ePayloadScript)
+}
 
 // DefaultContainer is used by the DefaultRunner to run workloads
 var DefaultContainer = kubev1.Container{
@@ -47,12 +60,64 @@ var DefaultContainer = kubev1.Container{
 	},
 }
 
-// createPod for openshift-tests
+var payloadVolumeMounts = []kubev1.VolumeMount{
+	{
+		Name:      osde2ePayload,
+		MountPath: osde2ePayloadMountPath,
+	},
+}
+
+var payloadVolumes = []kubev1.Volume{
+	{
+		Name: osde2ePayload,
+		VolumeSource: kubev1.VolumeSource{
+			ConfigMap: &kubev1.ConfigMapVolumeSource{
+				LocalObjectReference: kubev1.LocalObjectReference{
+					Name: osde2ePayload,
+				},
+				DefaultMode: pointer.Int32Ptr(0755),
+			},
+		},
+	},
+}
+
+// createPod for running commands
 func (r *Runner) createPod() (pod *kubev1.Pod, err error) {
 	// configure pod to run workload
 	pod = &kubev1.Pod{
 		ObjectMeta: r.meta(),
 		Spec:       r.PodSpec,
+	}
+
+	if len(r.Cmd) != 0 {
+		cmd, err := r.Command()
+		if err != nil {
+			return nil, fmt.Errorf("couldn't template cmd: %v", err)
+		}
+
+		configMap, err := r.Kube.CoreV1().ConfigMaps(r.Namespace).Create(&kubev1.ConfigMap{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: osde2ePayload,
+			},
+			BinaryData: map[string][]byte{
+				osde2ePayloadScript: cmd,
+			},
+		})
+
+		if err != nil {
+			return nil, fmt.Errorf("error creating ConfigMap: %v", err)
+		}
+
+		err = wait.PollImmediate(5*time.Second, configMapCreateTimeout, func() (done bool, err error) {
+			if configMap, err = r.Kube.CoreV1().ConfigMaps(r.Namespace).Get(configMap.Name, metav1.GetOptions{}); err != nil {
+				log.Printf("Error creating %s config map: %v", configMap.Name, err)
+			}
+			return err == nil, nil
+		})
+
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	for i, container := range pod.Spec.Containers {
@@ -62,17 +127,12 @@ func (r *Runner) createPod() (pod *kubev1.Pod, err error) {
 
 			// run command in pod if, present
 			if len(r.Cmd) != 0 {
-				cmd, err := r.Command()
-				if err != nil {
-					return nil, fmt.Errorf("couldn't template Cmd: %v", err)
+				pod.Spec.Containers[i].Command = []string{
+					fullPayloadScriptPath,
 				}
-
-				pod.Spec.Containers[i].Args = []string{
-					"/bin/bash",
-					"-c",
-					cmd,
-				}
+				pod.Spec.Containers[i].VolumeMounts = payloadVolumeMounts
 			}
+			pod.Spec.Volumes = payloadVolumes
 		}
 	}
 

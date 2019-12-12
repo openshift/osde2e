@@ -32,6 +32,8 @@ var _ = ginkgo.Describe("OpenShift E2E", func() {
 		// setup runner
 		r := h.Runner(cmd)
 
+		r.Name = "openshift-tests"
+
 		// run tests
 		stopCh := make(chan struct{})
 		err := r.Run(e2eTimeoutInSeconds, stopCh)

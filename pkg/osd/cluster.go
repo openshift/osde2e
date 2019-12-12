@@ -133,42 +133,45 @@ func (u *OSD) WaitForClusterReady(cfg *config.Config) error {
 	clusterStarted := time.Now()
 	var readinessStarted time.Time
 	ocmReady := false
-	return wait.PollImmediate(30*time.Second, time.Duration(cfg.Cluster.InstallTimeout)*time.Minute, func() (bool, error) {
-		if state, err := u.ClusterState(cfg.Cluster.ID); state == v1.ClusterStateReady {
-			// This is the first time that we've entered this section, so we'll consider this the time until OCM has said the cluster is ready
-			if !ocmReady {
-				ocmReady = true
-				metadata.Instance.TimeToOCMReportingInstalled = time.Since(clusterStarted).Seconds()
-				readinessStarted = time.Now()
-			}
-			if success, err := u.PollClusterHealth(cfg); success {
-				cleanRuns++
-				errRuns = 0
-				if cleanRuns == 5 {
-					metadata.Instance.TimeToClusterReady = time.Since(readinessStarted).Seconds()
-					return true, nil
+	if !cfg.Tests.SkipClusterHealthChecks {
+		return wait.PollImmediate(30*time.Second, time.Duration(cfg.Cluster.InstallTimeout)*time.Minute, func() (bool, error) {
+			if state, err := u.ClusterState(cfg.Cluster.ID); state == v1.ClusterStateReady {
+				// This is the first time that we've entered this section, so we'll consider this the time until OCM has said the cluster is ready
+				if !ocmReady {
+					ocmReady = true
+					metadata.Instance.TimeToOCMReportingInstalled = time.Since(clusterStarted).Seconds()
+					readinessStarted = time.Now()
 				}
-				return false, nil
-			} else {
-				if err != nil {
-					errRuns++
-					log.Printf("Error in PollClusterHealth: %v", err)
-					if errRuns >= 5 {
-						return false, fmt.Errorf("PollClusterHealth has returned an error 5 times in a row. Failing osde2e")
+				if success, err := u.PollClusterHealth(cfg); success {
+					cleanRuns++
+					errRuns = 0
+					if cleanRuns == 5 {
+						metadata.Instance.TimeToClusterReady = time.Since(readinessStarted).Seconds()
+						return true, nil
 					}
+					return false, nil
+				} else {
+					if err != nil {
+						errRuns++
+						log.Printf("Error in PollClusterHealth: %v", err)
+						if errRuns >= 5 {
+							return false, fmt.Errorf("PollClusterHealth has returned an error 5 times in a row. Failing osde2e")
+						}
+					}
+					cleanRuns = 0
+					return false, nil
 				}
-				cleanRuns = 0
-				return false, nil
+			} else if err != nil {
+				return false, fmt.Errorf("Encountered error waiting for cluster: %v", err)
+			} else if state == v1.ClusterStateError {
+				return false, fmt.Errorf("the installation of cluster '%s' has errored", cfg.Cluster.ID)
+			} else {
+				log.Printf("Cluster is not ready, current status '%s'.", state)
 			}
-		} else if err != nil {
-			return false, fmt.Errorf("Encountered error waiting for cluster: %v", err)
-		} else if state == v1.ClusterStateError {
-			return false, fmt.Errorf("the installation of cluster '%s' has errored", cfg.Cluster.ID)
-		} else {
-			log.Printf("Cluster is not ready, current status '%s'.", state)
-		}
-		return false, nil
-	})
+			return false, nil
+		})
+	}
+	return nil
 }
 
 // PollClusterHealth looks at CVO data to determine if a cluster is alive/healthy or not
