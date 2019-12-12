@@ -18,7 +18,9 @@ oc config use-context {{.Name}}
 mkdir -p {{.OutputDir}}
 
 # run Cmd and preserve it's stdout and stderr
-{ {{.Cmd}} } > >(tee -a {{.OutputDir}}/{{.Name}}-out.txt) 2> >(tee -a {{.OutputDir}}/{{.Name}}-err.txt >&2)
+{
+{{.Cmd}}
+} > >(tee -a {{.OutputDir}}/{{.Name}}-out.txt) 2> >(tee -a {{.OutputDir}}/{{.Name}}-err.txt >&2)
 
 # create a Tarball of OutputDir if requested
 {{$outDir := .OutputDir}}
