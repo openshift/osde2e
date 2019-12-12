@@ -91,6 +91,32 @@ func (u *OSD) ClusterState(clusterID string) (v1.ClusterState, error) {
 	return cluster.State(), nil
 }
 
+// InstallAddons loops through the addons list in the config
+// and performs the CRUD operation to trigger addon installation
+func (u *OSD) InstallAddons(cfg *config.Config) error {
+	clusterClient := u.cluster(cfg.Cluster.ID)
+	for _, id := range cfg.Cluster.AddOns {
+		addonResp, err := clusterClient.Addons().Addon(id).Get().Send()
+		if err != nil {
+			return err
+		}
+		addon := addonResp.Body()
+
+		if addon.Enabled() {
+			aoar, err := clusterClient.Addons().Add().Body(addon).Send()
+			if err != nil {
+				return err
+			}
+
+			if aoar.Error() != nil {
+				return fmt.Errorf("Error (%v) sending request: %v", aoar.Status(), aoar.Error())
+			}
+		}
+	}
+
+	return nil
+}
+
 // ClusterKubeconfig retrieves the kubeconfig of clusterID.
 func (u *OSD) ClusterKubeconfig(clusterID string) (kubeconfig []byte, err error) {
 	resp, err := u.cluster(clusterID).

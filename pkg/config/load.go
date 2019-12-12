@@ -115,7 +115,9 @@ func processValueFromString(f reflect.StructField, field reflect.Value, value st
 			return fmt.Errorf("error parsing bool value for field %s: %v", f.Name, err)
 		}
 	case reflect.Slice:
-		field.SetBytes([]byte(value))
+		// We shouldn't be setting any slices with string vars
+		// Specifically, Addons and Kubeconfig Contents
+		fallthrough
 	case reflect.Int:
 		fallthrough
 	case reflect.Int64:

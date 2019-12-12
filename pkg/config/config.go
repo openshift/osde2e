@@ -96,6 +96,9 @@ type ClusterConfig struct {
 	// Version is the version of the cluster being deployed.
 	Version string `json:"cluster_version,omitempty" env:"CLUSTER_VERSION" sect:"version"  yaml:"version"`
 
+	// AddOns
+	AddOns []string `json:"addons,omitempty"  yaml:"addons"`
+
 	// MultiAZ deploys a cluster across multiple availability zones.
 	MultiAZ bool `env:"MULTI_AZ" sect:"cluster" default:"false" yaml:"multiAZ"`
 

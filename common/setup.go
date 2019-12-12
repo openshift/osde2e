@@ -104,6 +104,15 @@ func setupCluster(cfg *config.Config) (err error) {
 	if cfg.Kubeconfig.Contents, err = OSD.ClusterKubeconfig(cfg.Cluster.ID); err != nil {
 		return fmt.Errorf("could not get kubeconfig for cluster: %v", err)
 	}
+
+	if err := OSD.InstallAddons(cfg); err != nil {
+		return fmt.Errorf("could not install addons: %s", err.Error())
+	}
+
+	if err = OSD.WaitForClusterReady(cfg); err != nil {
+		return fmt.Errorf("failed waiting for cluster ready: %v", err)
+	}
+
 	return nil
 }
 
