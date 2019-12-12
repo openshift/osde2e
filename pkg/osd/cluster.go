@@ -67,13 +67,14 @@ func (u *OSD) GetCluster(clusterID string) (*v1.Cluster, error) {
 		Get().
 		Send()
 
-	if resp != nil {
-		err = errResp(resp.Error())
-	}
-
 	if err != nil {
 		return nil, fmt.Errorf("couldn't retrieve cluster '%s': %v", clusterID, err)
 	}
+
+	if resp.Error() != nil {
+		return resp.Body(), resp.Error()
+	}
+
 	return resp.Body(), err
 }
 
