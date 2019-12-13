@@ -97,8 +97,8 @@ func (u *OSD) ClusterState(clusterID string) (v1.ClusterState, error) {
 func (u *OSD) InstallAddons(cfg *config.Config) (num int, err error) {
 	num = 0
 	clusterClient := u.cluster(cfg.Cluster.ID)
-	for _, addonCfg := range cfg.Addons {
-		addonResp, err := clusterClient.Addons().Addon(addonCfg.ID).Get().Send()
+	for _, addon := range cfg.Addons.IDs {
+		addonResp, err := clusterClient.Addons().Addon(addon).Get().Send()
 		if err != nil {
 			return 0, err
 		}

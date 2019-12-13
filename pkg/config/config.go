@@ -27,7 +27,7 @@ type Config struct {
 
 	OCM OCMConfig `yaml:"ocm"`
 
-	Addons []AddonConfig `yaml:"addon"`
+	Addons AddonConfig `yaml:"addons"`
 
 	// Name lets you name the current e2e job run
 	JobName string `json:"job_name" env:"JOB_NAME" sect:"tests" yaml:"jobName"`
@@ -116,10 +116,10 @@ type ClusterConfig struct {
 
 // AddonConfig options for addon testing
 type AddonConfig struct {
-	// AddonID is the ID within an environment to install to the cluster
-	ID string `env:"ADDON_ID" sect:"addons" yaml:"id"`
-	// AddonTestHarness is the image that will be run on the cluster and will exercise various addons that are installed.
-	TestHarness string `env:"ADDON_TEST_HARNESS" sect:"addons" yaml:"testHarness"`
+	// IDs is an array of Addon IDs to install
+	IDs []string `env:"ADDON_IDS" sect:"addons" yaml:"ids"`
+	// TestHarnesses is an array of container images that will test the addon
+	TestHarnesses []string `env:"ADDON_TEST_HARNESSES" sect:"addons" yaml:"testHarnesses"`
 }
 
 // TestConfig changes the behavior of how and what tests are run.

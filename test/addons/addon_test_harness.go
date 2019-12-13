@@ -28,8 +28,8 @@ var _ = ginkgo.Describe("Addon Test Harness", func() {
 	defer ginkgo.GinkgoRecover()
 	h := helper.New()
 
-	for _, addon := range h.Addons {
-		if addon.TestHarness != "" {
+	for _, harness := range h.Addons.TestHarnesses {
+		if harness != "" {
 			addonTimeoutInSeconds := 3600
 			ginkgo.It("should run until completion", func() {
 				// configure tests
@@ -45,7 +45,7 @@ var _ = ginkgo.Describe("Addon Test Harness", func() {
 					PushResultsContainer string
 				}{
 					Timeout:              addonTimeoutInSeconds,
-					Image:                addon.TestHarness,
+					Image:                harness,
 					OutputDir:            runner.DefaultRunner.OutputDir,
 					PushResultsContainer: latestImageStream,
 				})
