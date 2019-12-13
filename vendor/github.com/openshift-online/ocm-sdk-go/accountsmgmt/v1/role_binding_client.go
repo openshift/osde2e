@@ -20,11 +20,14 @@ limitations under the License.
 package v1 // github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"net/url"
+	"time"
 
 	"github.com/openshift-online/ocm-sdk-go/errors"
 	"github.com/openshift-online/ocm-sdk-go/helpers"
@@ -70,6 +73,138 @@ func (c *RoleBindingClient) Get() *RoleBindingGetRequest {
 	request.path = c.path
 	request.metric = c.metric
 	return request
+}
+
+// Update creates a request for the 'update' method.
+//
+// Updates the account.
+func (c *RoleBindingClient) Update() *RoleBindingUpdateRequest {
+	request := new(RoleBindingUpdateRequest)
+	request.transport = c.transport
+	request.path = c.path
+	request.metric = c.metric
+	return request
+}
+
+// RoleBindingPollRequest is the request for the Poll method.
+type RoleBindingPollRequest struct {
+	request    *RoleBindingGetRequest
+	interval   time.Duration
+	statuses   []int
+	predicates []func(interface{}) bool
+}
+
+// Parameter adds a query parameter to all the requests that will be used to retrieve the object.
+func (r *RoleBindingPollRequest) Parameter(name string, value interface{}) *RoleBindingPollRequest {
+	r.request.Parameter(name, value)
+	return r
+}
+
+// Header adds a request header to all the requests that will be used to retrieve the object.
+func (r *RoleBindingPollRequest) Header(name string, value interface{}) *RoleBindingPollRequest {
+	r.request.Header(name, value)
+	return r
+}
+
+// Interval sets the polling interval. This parameter is mandatory and must be greater than zero.
+func (r *RoleBindingPollRequest) Interval(value time.Duration) *RoleBindingPollRequest {
+	r.interval = value
+	return r
+}
+
+// Status set the expected status of the response. Multiple values can be set calling this method
+// multiple times. The response will be considered successful if the status is any of those values.
+func (r *RoleBindingPollRequest) Status(value int) *RoleBindingPollRequest {
+	r.statuses = append(r.statuses, value)
+	return r
+}
+
+// Predicate adds a predicate that the response should satisfy be considered successful. Multiple
+// predicates can be set calling this method multiple times. The response will be considered successful
+// if all the predicates are satisfied.
+func (r *RoleBindingPollRequest) Predicate(value func(*RoleBindingGetResponse) bool) *RoleBindingPollRequest {
+	r.predicates = append(r.predicates, func(response interface{}) bool {
+		return value(response.(*RoleBindingGetResponse))
+	})
+	return r
+}
+
+// StartContext starts the polling loop. Responses will be considered successful if the status is one of
+// the values specified with the Status method and if all the predicates specified with the Predicate
+// method return nil.
+//
+// The context must have a timeout or deadline, otherwise this method will immediately return an error.
+func (r *RoleBindingPollRequest) StartContext(ctx context.Context) (response *RoleBindingPollResponse, err error) {
+	result, err := helpers.PollContext(ctx, r.interval, r.statuses, r.predicates, r.task)
+	if result != nil {
+		response = &RoleBindingPollResponse{
+			response: result.(*RoleBindingGetResponse),
+		}
+	}
+	return
+}
+
+// task adapts the types of the request/response types so that they can be used with the generic
+// polling function from the helpers package.
+func (r *RoleBindingPollRequest) task(ctx context.Context) (status int, result interface{}, err error) {
+	response, err := r.request.SendContext(ctx)
+	if response != nil {
+		status = response.Status()
+		result = response
+	}
+	return
+}
+
+// RoleBindingPollResponse is the response for the Poll method.
+type RoleBindingPollResponse struct {
+	response *RoleBindingGetResponse
+}
+
+// Status returns the response status code.
+func (r *RoleBindingPollResponse) Status() int {
+	if r == nil {
+		return 0
+	}
+	return r.response.Status()
+}
+
+// Header returns header of the response.
+func (r *RoleBindingPollResponse) Header() http.Header {
+	if r == nil {
+		return nil
+	}
+	return r.response.Header()
+}
+
+// Error returns the response error.
+func (r *RoleBindingPollResponse) Error() *errors.Error {
+	if r == nil {
+		return nil
+	}
+	return r.response.Error()
+}
+
+// Body returns the value of the 'body' parameter.
+//
+//
+func (r *RoleBindingPollResponse) Body() *RoleBinding {
+	return r.response.Body()
+}
+
+// GetBody returns the value of the 'body' parameter and
+// a flag indicating if the parameter has a value.
+//
+//
+func (r *RoleBindingPollResponse) GetBody() (value *RoleBinding, ok bool) {
+	return r.response.GetBody()
+}
+
+// Poll creates a request to repeatedly retrieve the object till the response has one of a given set
+// of states and satisfies a set of predicates.
+func (c *RoleBindingClient) Poll() *RoleBindingPollRequest {
+	return &RoleBindingPollRequest{
+		request: c.Get(),
+	}
 }
 
 // RoleBindingDeleteRequest is the request for the 'delete' method.
@@ -145,16 +280,25 @@ type RoleBindingDeleteResponse struct {
 
 // Status returns the response status code.
 func (r *RoleBindingDeleteResponse) Status() int {
+	if r == nil {
+		return 0
+	}
 	return r.status
 }
 
 // Header returns header of the response.
 func (r *RoleBindingDeleteResponse) Header() http.Header {
+	if r == nil {
+		return nil
+	}
 	return r.header
 }
 
 // Error returns the response error.
 func (r *RoleBindingDeleteResponse) Error() *errors.Error {
+	if r == nil {
+		return nil
+	}
 	return r.err
 }
 
@@ -236,16 +380,25 @@ type RoleBindingGetResponse struct {
 
 // Status returns the response status code.
 func (r *RoleBindingGetResponse) Status() int {
+	if r == nil {
+		return 0
+	}
 	return r.status
 }
 
 // Header returns header of the response.
 func (r *RoleBindingGetResponse) Header() http.Header {
+	if r == nil {
+		return nil
+	}
 	return r.header
 }
 
 // Error returns the response error.
 func (r *RoleBindingGetResponse) Error() *errors.Error {
+	if r == nil {
+		return nil
+	}
 	return r.err
 }
 
@@ -274,6 +427,173 @@ func (r *RoleBindingGetResponse) GetBody() (value *RoleBinding, ok bool) {
 // unmarshal is the method used internally to unmarshal responses to the
 // 'get' method.
 func (r *RoleBindingGetResponse) unmarshal(reader io.Reader) error {
+	var err error
+	decoder := json.NewDecoder(reader)
+	data := new(roleBindingData)
+	err = decoder.Decode(data)
+	if err != nil {
+		return err
+	}
+	r.body, err = data.unwrap()
+	if err != nil {
+		return err
+	}
+	return err
+}
+
+// RoleBindingUpdateRequest is the request for the 'update' method.
+type RoleBindingUpdateRequest struct {
+	transport http.RoundTripper
+	path      string
+	metric    string
+	query     url.Values
+	header    http.Header
+	body      *RoleBinding
+}
+
+// Parameter adds a query parameter.
+func (r *RoleBindingUpdateRequest) Parameter(name string, value interface{}) *RoleBindingUpdateRequest {
+	helpers.AddValue(&r.query, name, value)
+	return r
+}
+
+// Header adds a request header.
+func (r *RoleBindingUpdateRequest) Header(name string, value interface{}) *RoleBindingUpdateRequest {
+	helpers.AddHeader(&r.header, name, value)
+	return r
+}
+
+// Body sets the value of the 'body' parameter.
+//
+//
+func (r *RoleBindingUpdateRequest) Body(value *RoleBinding) *RoleBindingUpdateRequest {
+	r.body = value
+	return r
+}
+
+// Send sends this request, waits for the response, and returns it.
+//
+// This is a potentially lengthy operation, as it requires network communication.
+// Consider using a context and the SendContext method.
+func (r *RoleBindingUpdateRequest) Send() (result *RoleBindingUpdateResponse, err error) {
+	return r.SendContext(context.Background())
+}
+
+// SendContext sends this request, waits for the response, and returns it.
+func (r *RoleBindingUpdateRequest) SendContext(ctx context.Context) (result *RoleBindingUpdateResponse, err error) {
+	query := helpers.CopyQuery(r.query)
+	header := helpers.SetHeader(r.header, r.metric)
+	buffer := new(bytes.Buffer)
+	err = r.marshal(buffer)
+	if err != nil {
+		return
+	}
+	uri := &url.URL{
+		Path:     r.path,
+		RawQuery: query.Encode(),
+	}
+	request := &http.Request{
+		Method: "PATCH",
+		URL:    uri,
+		Header: header,
+		Body:   ioutil.NopCloser(buffer),
+	}
+	if ctx != nil {
+		request = request.WithContext(ctx)
+	}
+	response, err := r.transport.RoundTrip(request)
+	if err != nil {
+		return
+	}
+	defer response.Body.Close()
+	result = new(RoleBindingUpdateResponse)
+	result.status = response.StatusCode
+	result.header = response.Header
+	if result.status >= 400 {
+		result.err, err = errors.UnmarshalError(response.Body)
+		if err != nil {
+			return
+		}
+		err = result.err
+		return
+	}
+	err = result.unmarshal(response.Body)
+	if err != nil {
+		return
+	}
+	return
+}
+
+// marshall is the method used internally to marshal requests for the
+// 'update' method.
+func (r *RoleBindingUpdateRequest) marshal(writer io.Writer) error {
+	var err error
+	encoder := json.NewEncoder(writer)
+	data, err := r.body.wrap()
+	if err != nil {
+		return err
+	}
+	err = encoder.Encode(data)
+	return err
+}
+
+// RoleBindingUpdateResponse is the response for the 'update' method.
+type RoleBindingUpdateResponse struct {
+	status int
+	header http.Header
+	err    *errors.Error
+	body   *RoleBinding
+}
+
+// Status returns the response status code.
+func (r *RoleBindingUpdateResponse) Status() int {
+	if r == nil {
+		return 0
+	}
+	return r.status
+}
+
+// Header returns header of the response.
+func (r *RoleBindingUpdateResponse) Header() http.Header {
+	if r == nil {
+		return nil
+	}
+	return r.header
+}
+
+// Error returns the response error.
+func (r *RoleBindingUpdateResponse) Error() *errors.Error {
+	if r == nil {
+		return nil
+	}
+	return r.err
+}
+
+// Body returns the value of the 'body' parameter.
+//
+//
+func (r *RoleBindingUpdateResponse) Body() *RoleBinding {
+	if r == nil {
+		return nil
+	}
+	return r.body
+}
+
+// GetBody returns the value of the 'body' parameter and
+// a flag indicating if the parameter has a value.
+//
+//
+func (r *RoleBindingUpdateResponse) GetBody() (value *RoleBinding, ok bool) {
+	ok = r != nil && r.body != nil
+	if ok {
+		value = r.body
+	}
+	return
+}
+
+// unmarshal is the method used internally to unmarshal responses to the
+// 'update' method.
+func (r *RoleBindingUpdateResponse) unmarshal(reader io.Reader) error {
 	var err error
 	decoder := json.NewDecoder(reader)
 	data := new(roleBindingData)

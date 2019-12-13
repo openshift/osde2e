@@ -67,13 +67,14 @@ func (u *OSD) GetCluster(clusterID string) (*v1.Cluster, error) {
 		Get().
 		Send()
 
-	if resp != nil {
-		err = errResp(resp.Error())
-	}
-
 	if err != nil {
 		return nil, fmt.Errorf("couldn't retrieve cluster '%s': %v", clusterID, err)
 	}
+
+	if resp.Error() != nil {
+		return resp.Body(), resp.Error()
+	}
+
 	return resp.Body(), err
 }
 
@@ -89,6 +90,35 @@ func (u *OSD) ClusterState(clusterID string) (v1.ClusterState, error) {
 		return "", fmt.Errorf("couldn't get cluster '%s': %v", clusterID, err)
 	}
 	return cluster.State(), nil
+}
+
+// InstallAddons loops through the addons list in the config
+// and performs the CRUD operation to trigger addon installation
+func (u *OSD) InstallAddons(cfg *config.Config) (num int, err error) {
+	num = 0
+	clusterClient := u.cluster(cfg.Cluster.ID)
+	for _, addon := range cfg.Addons.IDs {
+		addonResp, err := clusterClient.Addons().Addon(addon).Get().Send()
+		if err != nil {
+			return 0, err
+		}
+		addon := addonResp.Body()
+
+		if addon.Enabled() {
+			aoar, err := clusterClient.Addons().Add().Body(addon).Send()
+			if err != nil {
+				return 0, err
+			}
+
+			if aoar.Error() != nil {
+				return 0, fmt.Errorf("Error (%v) sending request: %v", aoar.Status(), aoar.Error())
+			}
+
+			num++
+		}
+	}
+
+	return num, nil
 }
 
 // ClusterKubeconfig retrieves the kubeconfig of clusterID.

@@ -41,6 +41,12 @@ type SubscriptionServer interface {
 	//
 	// Retrieves the details of the subscription.
 	Get(ctx context.Context, request *SubscriptionGetServerRequest, response *SubscriptionGetServerResponse) error
+
+	// ReservedResources returns the target 'subscription_reserved_resources' resource.
+	//
+	// Reference to the resource that manages the collection of resources reserved by the
+	// subscription.
+	ReservedResources() SubscriptionReservedResourcesServer
 }
 
 // SubscriptionDeleteServerRequest is the request for the 'delete' method.
@@ -113,6 +119,13 @@ func dispatchSubscription(w http.ResponseWriter, r *http.Request, server Subscri
 		}
 	} else {
 		switch segments[0] {
+		case "reserved_resources":
+			target := server.ReservedResources()
+			if target == nil {
+				errors.SendNotFound(w, r)
+				return
+			}
+			dispatchSubscriptionReservedResources(w, r, target, segments[1:])
 		default:
 			errors.SendNotFound(w, r)
 			return

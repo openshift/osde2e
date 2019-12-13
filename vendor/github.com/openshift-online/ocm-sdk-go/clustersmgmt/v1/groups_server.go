@@ -27,6 +27,7 @@ import (
 
 	"github.com/golang/glog"
 	"github.com/openshift-online/ocm-sdk-go/errors"
+	"github.com/openshift-online/ocm-sdk-go/helpers"
 )
 
 // GroupsServer represents the interface the manages the 'groups' resource.
@@ -45,6 +46,52 @@ type GroupsServer interface {
 
 // GroupsListServerRequest is the request for the 'list' method.
 type GroupsListServerRequest struct {
+	page *int
+	size *int
+}
+
+// Page returns the value of the 'page' parameter.
+//
+// Index of the requested page, where one corresponds to the first page.
+func (r *GroupsListServerRequest) Page() int {
+	if r != nil && r.page != nil {
+		return *r.page
+	}
+	return 0
+}
+
+// GetPage returns the value of the 'page' parameter and
+// a flag indicating if the parameter has a value.
+//
+// Index of the requested page, where one corresponds to the first page.
+func (r *GroupsListServerRequest) GetPage() (value int, ok bool) {
+	ok = r != nil && r.page != nil
+	if ok {
+		value = *r.page
+	}
+	return
+}
+
+// Size returns the value of the 'size' parameter.
+//
+// Number of items contained in the returned page.
+func (r *GroupsListServerRequest) Size() int {
+	if r != nil && r.size != nil {
+		return *r.size
+	}
+	return 0
+}
+
+// GetSize returns the value of the 'size' parameter and
+// a flag indicating if the parameter has a value.
+//
+// Number of items contained in the returned page.
+func (r *GroupsListServerRequest) GetSize() (value int, ok bool) {
+	ok = r != nil && r.size != nil
+	if ok {
+		value = *r.size
+	}
+	return
 }
 
 // GroupsListServerResponse is the response for the 'list' method.
@@ -151,6 +198,21 @@ func dispatchGroups(w http.ResponseWriter, r *http.Request, server GroupsServer,
 func readGroupsListRequest(r *http.Request) (*GroupsListServerRequest, error) {
 	var err error
 	result := new(GroupsListServerRequest)
+	query := r.URL.Query()
+	result.page, err = helpers.ParseInteger(query, "page")
+	if err != nil {
+		return nil, err
+	}
+	if result.page == nil {
+		result.page = helpers.NewInteger(1)
+	}
+	result.size, err = helpers.ParseInteger(query, "size")
+	if err != nil {
+		return nil, err
+	}
+	if result.size == nil {
+		result.size = helpers.NewInteger(100)
+	}
 	return result, err
 }
 

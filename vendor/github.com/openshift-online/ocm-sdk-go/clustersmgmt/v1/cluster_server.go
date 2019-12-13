@@ -47,6 +47,11 @@ type ClusterServer interface {
 	// Updates the cluster.
 	Update(ctx context.Context, request *ClusterUpdateServerRequest, response *ClusterUpdateServerResponse) error
 
+	// Addons returns the target 'add_ons' resource.
+	//
+	// Refrence to the resource that manages the collection of add-ons installed on this cluster.
+	Addons() AddOnsServer
+
 	// Credentials returns the target 'credentials' resource.
 	//
 	// Reference to the resource that manages the credentials of the cluster.
@@ -180,12 +185,34 @@ func (r *ClusterUpdateServerRequest) unmarshal(reader io.Reader) error {
 type ClusterUpdateServerResponse struct {
 	status int
 	err    *errors.Error
+	body   *Cluster
+}
+
+// Body sets the value of the 'body' parameter.
+//
+//
+func (r *ClusterUpdateServerResponse) Body(value *Cluster) *ClusterUpdateServerResponse {
+	r.body = value
+	return r
 }
 
 // Status sets the status code.
 func (r *ClusterUpdateServerResponse) Status(value int) *ClusterUpdateServerResponse {
 	r.status = value
 	return r
+}
+
+// marshall is the method used internally to marshal responses for the
+// 'update' method.
+func (r *ClusterUpdateServerResponse) marshal(writer io.Writer) error {
+	var err error
+	encoder := json.NewEncoder(writer)
+	data, err := r.body.wrap()
+	if err != nil {
+		return err
+	}
+	err = encoder.Encode(data)
+	return err
 }
 
 // dispatchCluster navigates the servers tree rooted at the given server
@@ -206,6 +233,13 @@ func dispatchCluster(w http.ResponseWriter, r *http.Request, server ClusterServe
 		}
 	} else {
 		switch segments[0] {
+		case "addons":
+			target := server.Addons()
+			if target == nil {
+				errors.SendNotFound(w, r)
+				return
+			}
+			dispatchAddOns(w, r, target, segments[1:])
 		case "credentials":
 			target := server.Credentials()
 			if target == nil {
@@ -376,6 +410,10 @@ func readClusterUpdateRequest(r *http.Request) (*ClusterUpdateServerRequest, err
 func writeClusterUpdateResponse(w http.ResponseWriter, r *ClusterUpdateServerResponse) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(r.status)
+	err := r.marshal(w)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 

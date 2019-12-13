@@ -192,16 +192,25 @@ type PermissionsAddResponse struct {
 
 // Status returns the response status code.
 func (r *PermissionsAddResponse) Status() int {
+	if r == nil {
+		return 0
+	}
 	return r.status
 }
 
 // Header returns header of the response.
 func (r *PermissionsAddResponse) Header() http.Header {
+	if r == nil {
+		return nil
+	}
 	return r.header
 }
 
 // Error returns the response error.
 func (r *PermissionsAddResponse) Error() *errors.Error {
+	if r == nil {
+		return nil
+	}
 	return r.err
 }
 
@@ -253,7 +262,6 @@ type PermissionsListRequest struct {
 	header    http.Header
 	page      *int
 	size      *int
-	total     *int
 }
 
 // Parameter adds a query parameter.
@@ -271,8 +279,6 @@ func (r *PermissionsListRequest) Header(name string, value interface{}) *Permiss
 // Page sets the value of the 'page' parameter.
 //
 // Index of the requested page, where one corresponds to the first page.
-//
-// Default value is `1`.
 func (r *PermissionsListRequest) Page(value int) *PermissionsListRequest {
 	r.page = &value
 	return r
@@ -281,19 +287,8 @@ func (r *PermissionsListRequest) Page(value int) *PermissionsListRequest {
 // Size sets the value of the 'size' parameter.
 //
 // Maximum number of items that will be contained in the returned page.
-//
-// Default value is `100`.
 func (r *PermissionsListRequest) Size(value int) *PermissionsListRequest {
 	r.size = &value
-	return r
-}
-
-// Total sets the value of the 'total' parameter.
-//
-// Total number of items of the collection that match the search criteria,
-// regardless of the size of the page.
-func (r *PermissionsListRequest) Total(value int) *PermissionsListRequest {
-	r.total = &value
 	return r
 }
 
@@ -313,9 +308,6 @@ func (r *PermissionsListRequest) SendContext(ctx context.Context) (result *Permi
 	}
 	if r.size != nil {
 		helpers.AddValue(&query, "size", *r.size)
-	}
-	if r.total != nil {
-		helpers.AddValue(&query, "total", *r.total)
 	}
 	header := helpers.SetHeader(r.header, r.metric)
 	uri := &url.URL{
@@ -366,16 +358,25 @@ type PermissionsListResponse struct {
 
 // Status returns the response status code.
 func (r *PermissionsListResponse) Status() int {
+	if r == nil {
+		return 0
+	}
 	return r.status
 }
 
 // Header returns header of the response.
 func (r *PermissionsListResponse) Header() http.Header {
+	if r == nil {
+		return nil
+	}
 	return r.header
 }
 
 // Error returns the response error.
 func (r *PermissionsListResponse) Error() *errors.Error {
+	if r == nil {
+		return nil
+	}
 	return r.err
 }
 
@@ -404,8 +405,6 @@ func (r *PermissionsListResponse) GetItems() (value *PermissionList, ok bool) {
 // Page returns the value of the 'page' parameter.
 //
 // Index of the requested page, where one corresponds to the first page.
-//
-// Default value is `1`.
 func (r *PermissionsListResponse) Page() int {
 	if r != nil && r.page != nil {
 		return *r.page
@@ -417,8 +416,6 @@ func (r *PermissionsListResponse) Page() int {
 // a flag indicating if the parameter has a value.
 //
 // Index of the requested page, where one corresponds to the first page.
-//
-// Default value is `1`.
 func (r *PermissionsListResponse) GetPage() (value int, ok bool) {
 	ok = r != nil && r.page != nil
 	if ok {
@@ -430,8 +427,6 @@ func (r *PermissionsListResponse) GetPage() (value int, ok bool) {
 // Size returns the value of the 'size' parameter.
 //
 // Maximum number of items that will be contained in the returned page.
-//
-// Default value is `100`.
 func (r *PermissionsListResponse) Size() int {
 	if r != nil && r.size != nil {
 		return *r.size
@@ -443,8 +438,6 @@ func (r *PermissionsListResponse) Size() int {
 // a flag indicating if the parameter has a value.
 //
 // Maximum number of items that will be contained in the returned page.
-//
-// Default value is `100`.
 func (r *PermissionsListResponse) GetSize() (value int, ok bool) {
 	ok = r != nil && r.size != nil
 	if ok {

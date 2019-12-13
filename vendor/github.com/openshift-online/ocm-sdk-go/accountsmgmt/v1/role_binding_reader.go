@@ -20,23 +20,25 @@ limitations under the License.
 package v1 // github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1
 
 import (
-	"fmt"
-
 	"github.com/openshift-online/ocm-sdk-go/helpers"
 )
 
 // roleBindingData is the data structure used internally to marshal and unmarshal
 // objects of type 'role_binding'.
 type roleBindingData struct {
-	Kind          *string           "json:\"kind,omitempty\""
-	ID            *string           "json:\"id,omitempty\""
-	HREF          *string           "json:\"href,omitempty\""
-	Account       *accountData      "json:\"account,omitempty\""
-	ConfigManaged *bool             "json:\"config_managed,omitempty\""
-	Organization  *organizationData "json:\"organization,omitempty\""
-	Role          *roleData         "json:\"role,omitempty\""
-	Subscription  *subscriptionData "json:\"subscription,omitempty\""
-	Type          *string           "json:\"type,omitempty\""
+	Kind           *string           "json:\"kind,omitempty\""
+	ID             *string           "json:\"id,omitempty\""
+	HREF           *string           "json:\"href,omitempty\""
+	Account        *accountData      "json:\"account,omitempty\""
+	AccountID      *string           "json:\"account_id,omitempty\""
+	ConfigManaged  *bool             "json:\"config_managed,omitempty\""
+	Organization   *organizationData "json:\"organization,omitempty\""
+	OrganizationID *string           "json:\"organization_id,omitempty\""
+	Role           *roleData         "json:\"role,omitempty\""
+	RoleID         *string           "json:\"role_id,omitempty\""
+	Subscription   *subscriptionData "json:\"subscription,omitempty\""
+	SubscriptionID *string           "json:\"subscription_id,omitempty\""
+	Type           *string           "json:\"type,omitempty\""
 }
 
 // MarshalRoleBinding writes a value of the 'role_binding' to the given target,
@@ -72,19 +74,23 @@ func (o *RoleBinding) wrap() (data *roleBindingData, err error) {
 	if err != nil {
 		return
 	}
+	data.AccountID = o.accountID
 	data.ConfigManaged = o.configManaged
 	data.Organization, err = o.organization.wrap()
 	if err != nil {
 		return
 	}
+	data.OrganizationID = o.organizationID
 	data.Role, err = o.role.wrap()
 	if err != nil {
 		return
 	}
+	data.RoleID = o.roleID
 	data.Subscription, err = o.subscription.wrap()
 	if err != nil {
 		return
 	}
+	data.SubscriptionID = o.subscriptionID
 	data.Type = o.type_
 	return
 }
@@ -115,38 +121,29 @@ func (d *roleBindingData) unwrap() (object *RoleBinding, err error) {
 	object.id = d.ID
 	object.href = d.HREF
 	if d.Kind != nil {
-		switch *d.Kind {
-		case RoleBindingKind:
-			object.link = false
-		case RoleBindingLinkKind:
-			object.link = true
-		default:
-			err = fmt.Errorf(
-				"expected kind '%s' or '%s' but got '%s'",
-				RoleBindingKind,
-				RoleBindingLinkKind,
-				*d.Kind,
-			)
-			return
-		}
+		object.link = *d.Kind == RoleBindingLinkKind
 	}
 	object.account, err = d.Account.unwrap()
 	if err != nil {
 		return
 	}
+	object.accountID = d.AccountID
 	object.configManaged = d.ConfigManaged
 	object.organization, err = d.Organization.unwrap()
 	if err != nil {
 		return
 	}
+	object.organizationID = d.OrganizationID
 	object.role, err = d.Role.unwrap()
 	if err != nil {
 		return
 	}
+	object.roleID = d.RoleID
 	object.subscription, err = d.Subscription.unwrap()
 	if err != nil {
 		return
 	}
+	object.subscriptionID = d.SubscriptionID
 	object.type_ = d.Type
 	return
 }

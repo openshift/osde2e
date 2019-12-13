@@ -25,6 +25,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"time"
 
 	"github.com/openshift-online/ocm-sdk-go/errors"
 	"github.com/openshift-online/ocm-sdk-go/helpers"
@@ -70,6 +71,127 @@ func (c *IdentityProviderClient) Get() *IdentityProviderGetRequest {
 	request.path = c.path
 	request.metric = c.metric
 	return request
+}
+
+// IdentityProviderPollRequest is the request for the Poll method.
+type IdentityProviderPollRequest struct {
+	request    *IdentityProviderGetRequest
+	interval   time.Duration
+	statuses   []int
+	predicates []func(interface{}) bool
+}
+
+// Parameter adds a query parameter to all the requests that will be used to retrieve the object.
+func (r *IdentityProviderPollRequest) Parameter(name string, value interface{}) *IdentityProviderPollRequest {
+	r.request.Parameter(name, value)
+	return r
+}
+
+// Header adds a request header to all the requests that will be used to retrieve the object.
+func (r *IdentityProviderPollRequest) Header(name string, value interface{}) *IdentityProviderPollRequest {
+	r.request.Header(name, value)
+	return r
+}
+
+// Interval sets the polling interval. This parameter is mandatory and must be greater than zero.
+func (r *IdentityProviderPollRequest) Interval(value time.Duration) *IdentityProviderPollRequest {
+	r.interval = value
+	return r
+}
+
+// Status set the expected status of the response. Multiple values can be set calling this method
+// multiple times. The response will be considered successful if the status is any of those values.
+func (r *IdentityProviderPollRequest) Status(value int) *IdentityProviderPollRequest {
+	r.statuses = append(r.statuses, value)
+	return r
+}
+
+// Predicate adds a predicate that the response should satisfy be considered successful. Multiple
+// predicates can be set calling this method multiple times. The response will be considered successful
+// if all the predicates are satisfied.
+func (r *IdentityProviderPollRequest) Predicate(value func(*IdentityProviderGetResponse) bool) *IdentityProviderPollRequest {
+	r.predicates = append(r.predicates, func(response interface{}) bool {
+		return value(response.(*IdentityProviderGetResponse))
+	})
+	return r
+}
+
+// StartContext starts the polling loop. Responses will be considered successful if the status is one of
+// the values specified with the Status method and if all the predicates specified with the Predicate
+// method return nil.
+//
+// The context must have a timeout or deadline, otherwise this method will immediately return an error.
+func (r *IdentityProviderPollRequest) StartContext(ctx context.Context) (response *IdentityProviderPollResponse, err error) {
+	result, err := helpers.PollContext(ctx, r.interval, r.statuses, r.predicates, r.task)
+	if result != nil {
+		response = &IdentityProviderPollResponse{
+			response: result.(*IdentityProviderGetResponse),
+		}
+	}
+	return
+}
+
+// task adapts the types of the request/response types so that they can be used with the generic
+// polling function from the helpers package.
+func (r *IdentityProviderPollRequest) task(ctx context.Context) (status int, result interface{}, err error) {
+	response, err := r.request.SendContext(ctx)
+	if response != nil {
+		status = response.Status()
+		result = response
+	}
+	return
+}
+
+// IdentityProviderPollResponse is the response for the Poll method.
+type IdentityProviderPollResponse struct {
+	response *IdentityProviderGetResponse
+}
+
+// Status returns the response status code.
+func (r *IdentityProviderPollResponse) Status() int {
+	if r == nil {
+		return 0
+	}
+	return r.response.Status()
+}
+
+// Header returns header of the response.
+func (r *IdentityProviderPollResponse) Header() http.Header {
+	if r == nil {
+		return nil
+	}
+	return r.response.Header()
+}
+
+// Error returns the response error.
+func (r *IdentityProviderPollResponse) Error() *errors.Error {
+	if r == nil {
+		return nil
+	}
+	return r.response.Error()
+}
+
+// Body returns the value of the 'body' parameter.
+//
+//
+func (r *IdentityProviderPollResponse) Body() *IdentityProvider {
+	return r.response.Body()
+}
+
+// GetBody returns the value of the 'body' parameter and
+// a flag indicating if the parameter has a value.
+//
+//
+func (r *IdentityProviderPollResponse) GetBody() (value *IdentityProvider, ok bool) {
+	return r.response.GetBody()
+}
+
+// Poll creates a request to repeatedly retrieve the object till the response has one of a given set
+// of states and satisfies a set of predicates.
+func (c *IdentityProviderClient) Poll() *IdentityProviderPollRequest {
+	return &IdentityProviderPollRequest{
+		request: c.Get(),
+	}
 }
 
 // IdentityProviderDeleteRequest is the request for the 'delete' method.
@@ -145,16 +267,25 @@ type IdentityProviderDeleteResponse struct {
 
 // Status returns the response status code.
 func (r *IdentityProviderDeleteResponse) Status() int {
+	if r == nil {
+		return 0
+	}
 	return r.status
 }
 
 // Header returns header of the response.
 func (r *IdentityProviderDeleteResponse) Header() http.Header {
+	if r == nil {
+		return nil
+	}
 	return r.header
 }
 
 // Error returns the response error.
 func (r *IdentityProviderDeleteResponse) Error() *errors.Error {
+	if r == nil {
+		return nil
+	}
 	return r.err
 }
 
@@ -236,16 +367,25 @@ type IdentityProviderGetResponse struct {
 
 // Status returns the response status code.
 func (r *IdentityProviderGetResponse) Status() int {
+	if r == nil {
+		return 0
+	}
 	return r.status
 }
 
 // Header returns header of the response.
 func (r *IdentityProviderGetResponse) Header() http.Header {
+	if r == nil {
+		return nil
+	}
 	return r.header
 }
 
 // Error returns the response error.
 func (r *IdentityProviderGetResponse) Error() *errors.Error {
+	if r == nil {
+		return nil
+	}
 	return r.err
 }
 

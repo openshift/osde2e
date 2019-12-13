@@ -54,8 +54,6 @@ type SKUSListServerRequest struct {
 // Page returns the value of the 'page' parameter.
 //
 // Index of the requested page, where one corresponds to the first page.
-//
-// Default value is `1`.
 func (r *SKUSListServerRequest) Page() int {
 	if r != nil && r.page != nil {
 		return *r.page
@@ -67,8 +65,6 @@ func (r *SKUSListServerRequest) Page() int {
 // a flag indicating if the parameter has a value.
 //
 // Index of the requested page, where one corresponds to the first page.
-//
-// Default value is `1`.
 func (r *SKUSListServerRequest) GetPage() (value int, ok bool) {
 	ok = r != nil && r.page != nil
 	if ok {
@@ -128,8 +124,6 @@ func (r *SKUSListServerRequest) GetSearch() (value string, ok bool) {
 // Size returns the value of the 'size' parameter.
 //
 // Maximum number of items that will be contained in the returned page.
-//
-// Default value is `100`.
 func (r *SKUSListServerRequest) Size() int {
 	if r != nil && r.size != nil {
 		return *r.size
@@ -141,8 +135,6 @@ func (r *SKUSListServerRequest) Size() int {
 // a flag indicating if the parameter has a value.
 //
 // Maximum number of items that will be contained in the returned page.
-//
-// Default value is `100`.
 func (r *SKUSListServerRequest) GetSize() (value int, ok bool) {
 	ok = r != nil && r.size != nil
 	if ok {
@@ -172,8 +164,6 @@ func (r *SKUSListServerResponse) Items(value *SKUList) *SKUSListServerResponse {
 // Page sets the value of the 'page' parameter.
 //
 // Index of the requested page, where one corresponds to the first page.
-//
-// Default value is `1`.
 func (r *SKUSListServerResponse) Page(value int) *SKUSListServerResponse {
 	r.page = &value
 	return r
@@ -182,8 +172,6 @@ func (r *SKUSListServerResponse) Page(value int) *SKUSListServerResponse {
 // Size sets the value of the 'size' parameter.
 //
 // Maximum number of items that will be contained in the returned page.
-//
-// Default value is `100`.
 func (r *SKUSListServerResponse) Size(value int) *SKUSListServerResponse {
 	r.size = &value
 	return r
@@ -265,6 +253,9 @@ func readSKUSListRequest(r *http.Request) (*SKUSListServerRequest, error) {
 	if err != nil {
 		return nil, err
 	}
+	if result.page == nil {
+		result.page = helpers.NewInteger(1)
+	}
 	result.search, err = helpers.ParseString(query, "search")
 	if err != nil {
 		return nil, err
@@ -272,6 +263,9 @@ func readSKUSListRequest(r *http.Request) (*SKUSListServerRequest, error) {
 	result.size, err = helpers.ParseInteger(query, "size")
 	if err != nil {
 		return nil, err
+	}
+	if result.size == nil {
+		result.size = helpers.NewInteger(100)
 	}
 	return result, err
 }

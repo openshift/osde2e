@@ -67,6 +67,32 @@ func NewDecoder(source interface{}) (decoder *json.Decoder, err error) {
 	return
 }
 
+// NewBoolean allocates a new bool in the heap and returns a pointer to it.
+func NewBoolean(value bool) *bool {
+	return &value
+}
+
+// NewInteger allocates a new integer in the heap and returns a pointer to it.
+func NewInteger(value int) *int {
+	return &value
+}
+
+// NewFloat allocates a new floating point value in the heap and returns an pointer
+// to it.
+func NewFloat(value float64) *float64 {
+	return &value
+}
+
+// NewString allocates a new string in the heap and returns a pointer to it.
+func NewString(value string) *string {
+	return &value
+}
+
+// NewDate allocates a new date in the heap and returns a pointer to it.
+func NewDate(value time.Time) *time.Time {
+	return &value
+}
+
 // ParseInteger reads a string and parses it to integer,
 // if an error occurred it returns a non-nil error.
 func ParseInteger(query url.Values, parameterName string) (*int, error) {

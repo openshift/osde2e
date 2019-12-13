@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"reflect"
 	"strconv"
+	"strings"
 
 	"gopkg.in/yaml.v2"
 )
@@ -27,6 +28,7 @@ func (c *Config) Load(v reflect.Value, source string) error {
 		f := v.Type().Field(i)
 
 		if f.Type.Kind() == reflect.Struct {
+			// Specific to supporting AddOns via ENV
 			c.Load(v.FieldByIndex(f.Index), source)
 		} else {
 			if source == "default" {
@@ -111,7 +113,17 @@ func processValueFromString(f reflect.StructField, field reflect.Value, value st
 			return fmt.Errorf("error parsing bool value for field %s: %v", f.Name, err)
 		}
 	case reflect.Slice:
-		field.SetBytes([]byte(value))
+		fallthrough
+	case reflect.Array:
+		if value != "" {
+			value := string(value)
+			a := strings.Split(value, ",")
+			for i := range a {
+				field.Set(reflect.Append(field, reflect.ValueOf(a[i])))
+			}
+		}
+		// We shouldn't be setting any slices with string vars
+		// Specifically, Addons and Kubeconfig Contents
 	case reflect.Int:
 		fallthrough
 	case reflect.Int64:

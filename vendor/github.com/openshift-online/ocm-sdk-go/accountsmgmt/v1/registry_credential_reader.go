@@ -20,8 +20,6 @@ limitations under the License.
 package v1 // github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1
 
 import (
-	"fmt"
-
 	"github.com/openshift-online/ocm-sdk-go/helpers"
 )
 
@@ -105,20 +103,7 @@ func (d *registryCredentialData) unwrap() (object *RegistryCredential, err error
 	object.id = d.ID
 	object.href = d.HREF
 	if d.Kind != nil {
-		switch *d.Kind {
-		case RegistryCredentialKind:
-			object.link = false
-		case RegistryCredentialLinkKind:
-			object.link = true
-		default:
-			err = fmt.Errorf(
-				"expected kind '%s' or '%s' but got '%s'",
-				RegistryCredentialKind,
-				RegistryCredentialLinkKind,
-				*d.Kind,
-			)
-			return
-		}
+		object.link = *d.Kind == RegistryCredentialLinkKind
 	}
 	object.account, err = d.Account.unwrap()
 	if err != nil {

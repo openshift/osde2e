@@ -194,16 +194,25 @@ type ClustersAddResponse struct {
 
 // Status returns the response status code.
 func (r *ClustersAddResponse) Status() int {
+	if r == nil {
+		return 0
+	}
 	return r.status
 }
 
 // Header returns header of the response.
 func (r *ClustersAddResponse) Header() http.Header {
+	if r == nil {
+		return nil
+	}
 	return r.header
 }
 
 // Error returns the response error.
 func (r *ClustersAddResponse) Error() *errors.Error {
+	if r == nil {
+		return nil
+	}
 	return r.err
 }
 
@@ -257,7 +266,6 @@ type ClustersListRequest struct {
 	page      *int
 	search    *string
 	size      *int
-	total     *int
 }
 
 // Parameter adds a query parameter.
@@ -296,8 +304,6 @@ func (r *ClustersListRequest) Order(value string) *ClustersListRequest {
 // Page sets the value of the 'page' parameter.
 //
 // Index of the requested page, where one corresponds to the first page.
-//
-// Default value is `1`.
 func (r *ClustersListRequest) Page(value int) *ClustersListRequest {
 	r.page = &value
 	return r
@@ -328,19 +334,8 @@ func (r *ClustersListRequest) Search(value string) *ClustersListRequest {
 // Size sets the value of the 'size' parameter.
 //
 // Maximum number of items that will be contained in the returned page.
-//
-// Default value is `100`.
 func (r *ClustersListRequest) Size(value int) *ClustersListRequest {
 	r.size = &value
-	return r
-}
-
-// Total sets the value of the 'total' parameter.
-//
-// Total number of items of the collection that match the search criteria,
-// regardless of the size of the page.
-func (r *ClustersListRequest) Total(value int) *ClustersListRequest {
-	r.total = &value
 	return r
 }
 
@@ -366,9 +361,6 @@ func (r *ClustersListRequest) SendContext(ctx context.Context) (result *Clusters
 	}
 	if r.size != nil {
 		helpers.AddValue(&query, "size", *r.size)
-	}
-	if r.total != nil {
-		helpers.AddValue(&query, "total", *r.total)
 	}
 	header := helpers.SetHeader(r.header, r.metric)
 	uri := &url.URL{
@@ -419,16 +411,25 @@ type ClustersListResponse struct {
 
 // Status returns the response status code.
 func (r *ClustersListResponse) Status() int {
+	if r == nil {
+		return 0
+	}
 	return r.status
 }
 
 // Header returns header of the response.
 func (r *ClustersListResponse) Header() http.Header {
+	if r == nil {
+		return nil
+	}
 	return r.header
 }
 
 // Error returns the response error.
 func (r *ClustersListResponse) Error() *errors.Error {
+	if r == nil {
+		return nil
+	}
 	return r.err
 }
 
@@ -457,8 +458,6 @@ func (r *ClustersListResponse) GetItems() (value *ClusterList, ok bool) {
 // Page returns the value of the 'page' parameter.
 //
 // Index of the requested page, where one corresponds to the first page.
-//
-// Default value is `1`.
 func (r *ClustersListResponse) Page() int {
 	if r != nil && r.page != nil {
 		return *r.page
@@ -470,8 +469,6 @@ func (r *ClustersListResponse) Page() int {
 // a flag indicating if the parameter has a value.
 //
 // Index of the requested page, where one corresponds to the first page.
-//
-// Default value is `1`.
 func (r *ClustersListResponse) GetPage() (value int, ok bool) {
 	ok = r != nil && r.page != nil
 	if ok {
@@ -483,8 +480,6 @@ func (r *ClustersListResponse) GetPage() (value int, ok bool) {
 // Size returns the value of the 'size' parameter.
 //
 // Maximum number of items that will be contained in the returned page.
-//
-// Default value is `100`.
 func (r *ClustersListResponse) Size() int {
 	if r != nil && r.size != nil {
 		return *r.size
@@ -496,8 +491,6 @@ func (r *ClustersListResponse) Size() int {
 // a flag indicating if the parameter has a value.
 //
 // Maximum number of items that will be contained in the returned page.
-//
-// Default value is `100`.
 func (r *ClustersListResponse) GetSize() (value int, ok bool) {
 	ok = r != nil && r.size != nil
 	if ok {

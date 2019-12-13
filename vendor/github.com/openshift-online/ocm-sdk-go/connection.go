@@ -46,15 +46,6 @@ const (
 	DefaultAgent        = "OCM/" + Version
 )
 
-// Alternative default values used in combination with the now deprecated `developers.redhat.com`:
-const (
-	// #nosec G101
-	deprecatedTokenURL     = "https://developers.redhat.com/auth/realms/rhd/protocol/openid-connect/token"
-	deprecatedClientID     = "uhc"
-	deprecatedClientSecret = ""
-	deprecatedIssuer       = "developers.redhat.com"
-)
-
 // DefaultScopes is the ser of scopes used by default:
 var DefaultScopes = []string{
 	"openid",
@@ -144,22 +135,17 @@ func (b *ConnectionBuilder) Logger(logger Logger) *ConnectionBuilder {
 }
 
 // TokenURL sets the URL that will be used to request OpenID access tokens. The default is
-// `https://sso.redhat.com/auth/realms/cloud-services/protocol/openid-connect/token` except when
-// authentication is performed with user name and password or with a token issued by
-// _developers.redhat.com_. In that case the default will be the deprecated
-// `https://developers.redhat.com/auth/realms/uhc/protocol/openid-connect/token`.
+// `https://sso.redhat.com/auth/realms/cloud-services/protocol/openid-connect/token`.
 func (b *ConnectionBuilder) TokenURL(url string) *ConnectionBuilder {
 	b.tokenURL = url
 	return b
 }
 
 // Client sets OpenID client identifier and secret that will be used to request OpenID tokens. The
-// default identifier is `cloud-services` except when authentication is performed with user name and
-// password or with token issued by _developers.redhat.com_. In that case the default will be the
-// deprecated `uhc`. The default secret is the empty string. When these two values are provided and
-// no user name and password is provided, the connection will use the client credentials grant to
-// obtain the token. For example, to create a connection using the client credentials grant do the
-// following:
+// default identifier is `cloud-services`. The default secret is the empty string. When these two
+// values are provided and no user name and password is provided, the connection will use the client
+// credentials grant to obtain the token. For example, to create a connection using the client
+// credentials grant do the following:
 //
 //	// Use the client credentials grant:
 //	connection, err := client.NewConnectionBuilder().
@@ -403,39 +389,10 @@ func (b *ConnectionBuilder) BuildContext(ctx context.Context) (connection *Conne
 		logger.Debug(ctx, "Logger wasn't provided, will use Go log")
 	}
 
-	// Use the default OpenID server unless authentication is performed with user name and
-	// password or with a token issued by the deprecated OpenID server:
-	defaultTokenURL := DefaultTokenURL
-	defaultClientID := DefaultClientID
-	defaultClientSecret := DefaultClientSecret
-	if havePassword {
-		defaultTokenURL = deprecatedTokenURL
-		defaultClientID = deprecatedClientID
-		defaultClientSecret = deprecatedClientSecret
-	} else if haveTokens {
-		var issuerURL *url.URL
-		if accessToken != nil {
-			issuerURL, err = tokenIssuer(accessToken)
-			if err != nil {
-				return
-			}
-		} else if refreshToken != nil {
-			issuerURL, err = tokenIssuer(refreshToken)
-			if err != nil {
-				return
-			}
-		}
-		if issuerURL != nil && strings.EqualFold(issuerURL.Hostname(), deprecatedIssuer) {
-			defaultTokenURL = deprecatedTokenURL
-			defaultClientID = deprecatedClientID
-			defaultClientSecret = deprecatedClientSecret
-		}
-	}
-
 	// Set the default authentication details, if needed:
 	rawTokenURL := b.tokenURL
 	if rawTokenURL == "" {
-		rawTokenURL = defaultTokenURL
+		rawTokenURL = DefaultTokenURL
 		logger.Debug(
 			ctx,
 			"OpenID token URL wasn't provided, will use '%s'",
@@ -449,7 +406,7 @@ func (b *ConnectionBuilder) BuildContext(ctx context.Context) (connection *Conne
 	}
 	clientID := b.clientID
 	if clientID == "" {
-		clientID = defaultClientID
+		clientID = DefaultClientID
 		logger.Debug(
 			ctx,
 			"OpenID client identifier wasn't provided, will use '%s'",
@@ -458,7 +415,7 @@ func (b *ConnectionBuilder) BuildContext(ctx context.Context) (connection *Conne
 	}
 	clientSecret := b.clientSecret
 	if clientSecret == "" {
-		clientSecret = defaultClientSecret
+		clientSecret = DefaultClientSecret
 		logger.Debug(
 			ctx,
 			"OpenID client secret wasn't provided, will use '%s'",

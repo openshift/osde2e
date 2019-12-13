@@ -384,24 +384,3 @@ func tokenExpiry(token *jwt.Token, now time.Time) (expires bool,
 	}
 	return
 }
-
-// tokenIssuer extracts the URL of the issuer of the token from the `iss` claim. Returns nil if
-// there is no such claim.
-func tokenIssuer(token *jwt.Token) (issuer *url.URL, err error) {
-	claims, ok := token.Claims.(jwt.MapClaims)
-	if !ok {
-		err = fmt.Errorf("expected map claims bug got %T", claims)
-		return
-	}
-	claim, ok := claims["iss"]
-	if !ok {
-		return
-	}
-	value, ok := claim.(string)
-	if !ok {
-		err = fmt.Errorf("expected string 'iss' but got %T", claim)
-		return
-	}
-	issuer, err = url.Parse(value)
-	return
-}

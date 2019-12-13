@@ -80,6 +80,8 @@ type GroupsListRequest struct {
 	metric    string
 	query     url.Values
 	header    http.Header
+	page      *int
+	size      *int
 }
 
 // Parameter adds a query parameter.
@@ -94,6 +96,22 @@ func (r *GroupsListRequest) Header(name string, value interface{}) *GroupsListRe
 	return r
 }
 
+// Page sets the value of the 'page' parameter.
+//
+// Index of the requested page, where one corresponds to the first page.
+func (r *GroupsListRequest) Page(value int) *GroupsListRequest {
+	r.page = &value
+	return r
+}
+
+// Size sets the value of the 'size' parameter.
+//
+// Number of items contained in the returned page.
+func (r *GroupsListRequest) Size(value int) *GroupsListRequest {
+	r.size = &value
+	return r
+}
+
 // Send sends this request, waits for the response, and returns it.
 //
 // This is a potentially lengthy operation, as it requires network communication.
@@ -105,6 +123,12 @@ func (r *GroupsListRequest) Send() (result *GroupsListResponse, err error) {
 // SendContext sends this request, waits for the response, and returns it.
 func (r *GroupsListRequest) SendContext(ctx context.Context) (result *GroupsListResponse, err error) {
 	query := helpers.CopyQuery(r.query)
+	if r.page != nil {
+		helpers.AddValue(&query, "page", *r.page)
+	}
+	if r.size != nil {
+		helpers.AddValue(&query, "size", *r.size)
+	}
 	header := helpers.SetHeader(r.header, r.metric)
 	uri := &url.URL{
 		Path:     r.path,
@@ -154,16 +178,25 @@ type GroupsListResponse struct {
 
 // Status returns the response status code.
 func (r *GroupsListResponse) Status() int {
+	if r == nil {
+		return 0
+	}
 	return r.status
 }
 
 // Header returns header of the response.
 func (r *GroupsListResponse) Header() http.Header {
+	if r == nil {
+		return nil
+	}
 	return r.header
 }
 
 // Error returns the response error.
 func (r *GroupsListResponse) Error() *errors.Error {
+	if r == nil {
+		return nil
+	}
 	return r.err
 }
 

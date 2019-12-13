@@ -27,6 +27,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"time"
 
 	"github.com/openshift-online/ocm-sdk-go/errors"
 	"github.com/openshift-online/ocm-sdk-go/helpers"
@@ -72,6 +73,127 @@ func (c *AccountClient) Update() *AccountUpdateRequest {
 	request.path = c.path
 	request.metric = c.metric
 	return request
+}
+
+// AccountPollRequest is the request for the Poll method.
+type AccountPollRequest struct {
+	request    *AccountGetRequest
+	interval   time.Duration
+	statuses   []int
+	predicates []func(interface{}) bool
+}
+
+// Parameter adds a query parameter to all the requests that will be used to retrieve the object.
+func (r *AccountPollRequest) Parameter(name string, value interface{}) *AccountPollRequest {
+	r.request.Parameter(name, value)
+	return r
+}
+
+// Header adds a request header to all the requests that will be used to retrieve the object.
+func (r *AccountPollRequest) Header(name string, value interface{}) *AccountPollRequest {
+	r.request.Header(name, value)
+	return r
+}
+
+// Interval sets the polling interval. This parameter is mandatory and must be greater than zero.
+func (r *AccountPollRequest) Interval(value time.Duration) *AccountPollRequest {
+	r.interval = value
+	return r
+}
+
+// Status set the expected status of the response. Multiple values can be set calling this method
+// multiple times. The response will be considered successful if the status is any of those values.
+func (r *AccountPollRequest) Status(value int) *AccountPollRequest {
+	r.statuses = append(r.statuses, value)
+	return r
+}
+
+// Predicate adds a predicate that the response should satisfy be considered successful. Multiple
+// predicates can be set calling this method multiple times. The response will be considered successful
+// if all the predicates are satisfied.
+func (r *AccountPollRequest) Predicate(value func(*AccountGetResponse) bool) *AccountPollRequest {
+	r.predicates = append(r.predicates, func(response interface{}) bool {
+		return value(response.(*AccountGetResponse))
+	})
+	return r
+}
+
+// StartContext starts the polling loop. Responses will be considered successful if the status is one of
+// the values specified with the Status method and if all the predicates specified with the Predicate
+// method return nil.
+//
+// The context must have a timeout or deadline, otherwise this method will immediately return an error.
+func (r *AccountPollRequest) StartContext(ctx context.Context) (response *AccountPollResponse, err error) {
+	result, err := helpers.PollContext(ctx, r.interval, r.statuses, r.predicates, r.task)
+	if result != nil {
+		response = &AccountPollResponse{
+			response: result.(*AccountGetResponse),
+		}
+	}
+	return
+}
+
+// task adapts the types of the request/response types so that they can be used with the generic
+// polling function from the helpers package.
+func (r *AccountPollRequest) task(ctx context.Context) (status int, result interface{}, err error) {
+	response, err := r.request.SendContext(ctx)
+	if response != nil {
+		status = response.Status()
+		result = response
+	}
+	return
+}
+
+// AccountPollResponse is the response for the Poll method.
+type AccountPollResponse struct {
+	response *AccountGetResponse
+}
+
+// Status returns the response status code.
+func (r *AccountPollResponse) Status() int {
+	if r == nil {
+		return 0
+	}
+	return r.response.Status()
+}
+
+// Header returns header of the response.
+func (r *AccountPollResponse) Header() http.Header {
+	if r == nil {
+		return nil
+	}
+	return r.response.Header()
+}
+
+// Error returns the response error.
+func (r *AccountPollResponse) Error() *errors.Error {
+	if r == nil {
+		return nil
+	}
+	return r.response.Error()
+}
+
+// Body returns the value of the 'body' parameter.
+//
+//
+func (r *AccountPollResponse) Body() *Account {
+	return r.response.Body()
+}
+
+// GetBody returns the value of the 'body' parameter and
+// a flag indicating if the parameter has a value.
+//
+//
+func (r *AccountPollResponse) GetBody() (value *Account, ok bool) {
+	return r.response.GetBody()
+}
+
+// Poll creates a request to repeatedly retrieve the object till the response has one of a given set
+// of states and satisfies a set of predicates.
+func (c *AccountClient) Poll() *AccountPollRequest {
+	return &AccountPollRequest{
+		request: c.Get(),
+	}
 }
 
 // AccountGetRequest is the request for the 'get' method.
@@ -152,16 +274,25 @@ type AccountGetResponse struct {
 
 // Status returns the response status code.
 func (r *AccountGetResponse) Status() int {
+	if r == nil {
+		return 0
+	}
 	return r.status
 }
 
 // Header returns header of the response.
 func (r *AccountGetResponse) Header() http.Header {
+	if r == nil {
+		return nil
+	}
 	return r.header
 }
 
 // Error returns the response error.
 func (r *AccountGetResponse) Error() *errors.Error {
+	if r == nil {
+		return nil
+	}
 	return r.err
 }
 
@@ -280,6 +411,10 @@ func (r *AccountUpdateRequest) SendContext(ctx context.Context) (result *Account
 		err = result.err
 		return
 	}
+	err = result.unmarshal(response.Body)
+	if err != nil {
+		return
+	}
 	return
 }
 
@@ -301,19 +436,68 @@ type AccountUpdateResponse struct {
 	status int
 	header http.Header
 	err    *errors.Error
+	body   *Account
 }
 
 // Status returns the response status code.
 func (r *AccountUpdateResponse) Status() int {
+	if r == nil {
+		return 0
+	}
 	return r.status
 }
 
 // Header returns header of the response.
 func (r *AccountUpdateResponse) Header() http.Header {
+	if r == nil {
+		return nil
+	}
 	return r.header
 }
 
 // Error returns the response error.
 func (r *AccountUpdateResponse) Error() *errors.Error {
+	if r == nil {
+		return nil
+	}
 	return r.err
+}
+
+// Body returns the value of the 'body' parameter.
+//
+//
+func (r *AccountUpdateResponse) Body() *Account {
+	if r == nil {
+		return nil
+	}
+	return r.body
+}
+
+// GetBody returns the value of the 'body' parameter and
+// a flag indicating if the parameter has a value.
+//
+//
+func (r *AccountUpdateResponse) GetBody() (value *Account, ok bool) {
+	ok = r != nil && r.body != nil
+	if ok {
+		value = r.body
+	}
+	return
+}
+
+// unmarshal is the method used internally to unmarshal responses to the
+// 'update' method.
+func (r *AccountUpdateResponse) unmarshal(reader io.Reader) error {
+	var err error
+	decoder := json.NewDecoder(reader)
+	data := new(accountData)
+	err = decoder.Decode(data)
+	if err != nil {
+		return err
+	}
+	r.body, err = data.unwrap()
+	if err != nil {
+		return err
+	}
+	return err
 }

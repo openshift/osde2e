@@ -169,16 +169,25 @@ type ExportControlReviewPostResponse struct {
 
 // Status returns the response status code.
 func (r *ExportControlReviewPostResponse) Status() int {
+	if r == nil {
+		return 0
+	}
 	return r.status
 }
 
 // Header returns header of the response.
 func (r *ExportControlReviewPostResponse) Header() http.Header {
+	if r == nil {
+		return nil
+	}
 	return r.header
 }
 
 // Error returns the response error.
 func (r *ExportControlReviewPostResponse) Error() *errors.Error {
+	if r == nil {
+		return nil
+	}
 	return r.err
 }
 

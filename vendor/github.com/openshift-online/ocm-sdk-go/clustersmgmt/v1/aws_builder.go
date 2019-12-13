@@ -24,6 +24,7 @@ package v1 // github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1
 // _Amazon Web Services_ specific settings of a cluster.
 type AWSBuilder struct {
 	accessKeyID     *string
+	accountID       *string
 	secretAccessKey *string
 }
 
@@ -38,6 +39,15 @@ func NewAWS() *AWSBuilder {
 //
 func (b *AWSBuilder) AccessKeyID(value string) *AWSBuilder {
 	b.accessKeyID = &value
+	return b
+}
+
+// AccountID sets the value of the 'account_ID' attribute
+// to the given value.
+//
+//
+func (b *AWSBuilder) AccountID(value string) *AWSBuilder {
+	b.accountID = &value
 	return b
 }
 
@@ -56,6 +66,7 @@ func (b *AWSBuilder) Copy(object *AWS) *AWSBuilder {
 		return b
 	}
 	b.accessKeyID = object.accessKeyID
+	b.accountID = object.accountID
 	b.secretAccessKey = object.secretAccessKey
 	return b
 }
@@ -65,6 +76,9 @@ func (b *AWSBuilder) Build() (object *AWS, err error) {
 	object = new(AWS)
 	if b.accessKeyID != nil {
 		object.accessKeyID = b.accessKeyID
+	}
+	if b.accountID != nil {
+		object.accountID = b.accountID
 	}
 	if b.secretAccessKey != nil {
 		object.secretAccessKey = b.secretAccessKey

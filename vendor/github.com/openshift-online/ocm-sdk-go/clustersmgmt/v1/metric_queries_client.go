@@ -46,12 +46,24 @@ func NewMetricQueriesClient(transport http.RoundTripper, path string, metric str
 
 // CPUTotalByNodeRolesOS returns the target 'CPU_total_by_node_roles_OS_metric_query' resource.
 //
-// Reference to the resource that retrieves 24 hour history of the amount of total cpu
+// Reference to the resource that retrieves the total cpu
 // capacity in the cluster by node role and operating system.
 func (c *MetricQueriesClient) CPUTotalByNodeRolesOS() *CPUTotalByNodeRolesOSMetricQueryClient {
 	return NewCPUTotalByNodeRolesOSMetricQueryClient(
 		c.transport,
 		path.Join(c.path, "cpu_total_by_node_roles_os"),
 		path.Join(c.metric, "cpu_total_by_node_roles_os"),
+	)
+}
+
+// SocketTotalByNodeRolesOS returns the target 'socket_total_by_node_roles_OS_metric_query' resource.
+//
+// Reference to the resource that retrieves the total socket
+// capacity in the cluster by node role and operating system.
+func (c *MetricQueriesClient) SocketTotalByNodeRolesOS() *SocketTotalByNodeRolesOSMetricQueryClient {
+	return NewSocketTotalByNodeRolesOSMetricQueryClient(
+		c.transport,
+		path.Join(c.path, "socket_total_by_node_roles_os"),
+		path.Join(c.metric, "socket_total_by_node_roles_os"),
 	)
 }

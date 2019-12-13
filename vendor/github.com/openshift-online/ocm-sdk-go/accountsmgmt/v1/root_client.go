@@ -44,6 +44,15 @@ func NewClient(transport http.RoundTripper, path string, metric string) *Client 
 	return client
 }
 
+// Creates a new request for the method that retrieves the metadata.
+func (c *Client) Get() *MetadataRequest {
+	return &MetadataRequest{
+		transport: c.transport,
+		path:      c.path,
+		metric:    c.metric,
+	}
+}
+
 // SKUS returns the target 'SKUS' resource.
 //
 // Reference to the resource that manages the collection of
@@ -155,6 +164,18 @@ func (c *Client) RegistryCredentials() *RegistryCredentialsClient {
 		c.transport,
 		path.Join(c.path, "registry_credentials"),
 		path.Join(c.metric, "registry_credentials"),
+	)
+}
+
+// ResourceQuota returns the target 'resource_quotas' resource.
+//
+// Reference to the resource that manages the collection of resource
+// quota.
+func (c *Client) ResourceQuota() *ResourceQuotasClient {
+	return NewResourceQuotasClient(
+		c.transport,
+		path.Join(c.path, "resource_quota"),
+		path.Join(c.metric, "resource_quota"),
 	)
 }
 

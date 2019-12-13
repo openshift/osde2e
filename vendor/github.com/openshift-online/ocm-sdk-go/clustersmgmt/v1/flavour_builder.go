@@ -24,14 +24,16 @@ package v1 // github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1
 // Set of predefined properties of a cluster. For example, a _huge_ flavour can be a cluster
 // with 10 infra nodes and 1000 compute nodes.
 type FlavourBuilder struct {
-	id      *string
-	href    *string
-	link    bool
-	aws     *AWSBuilder
-	name    *string
-	network *NetworkBuilder
-	nodes   *ClusterNodesBuilder
-	version *string
+	id                  *string
+	href                *string
+	link                bool
+	aws                 *AWSFlavourBuilder
+	computeInstanceType *string
+	infraInstanceType   *string
+	masterInstanceType  *string
+	name                *string
+	network             *NetworkBuilder
+	nodes               *FlavourNodesBuilder
 }
 
 // NewFlavour creates a new builder of 'flavour' objects.
@@ -60,9 +62,36 @@ func (b *FlavourBuilder) Link(value bool) *FlavourBuilder {
 // AWS sets the value of the 'AWS' attribute
 // to the given value.
 //
-// _Amazon Web Services_ specific settings of a cluster.
-func (b *FlavourBuilder) AWS(value *AWSBuilder) *FlavourBuilder {
+// Volume specification for different classes of nodes inside a flavour.
+func (b *FlavourBuilder) AWS(value *AWSFlavourBuilder) *FlavourBuilder {
 	b.aws = value
+	return b
+}
+
+// ComputeInstanceType sets the value of the 'compute_instance_type' attribute
+// to the given value.
+//
+//
+func (b *FlavourBuilder) ComputeInstanceType(value string) *FlavourBuilder {
+	b.computeInstanceType = &value
+	return b
+}
+
+// InfraInstanceType sets the value of the 'infra_instance_type' attribute
+// to the given value.
+//
+//
+func (b *FlavourBuilder) InfraInstanceType(value string) *FlavourBuilder {
+	b.infraInstanceType = &value
+	return b
+}
+
+// MasterInstanceType sets the value of the 'master_instance_type' attribute
+// to the given value.
+//
+//
+func (b *FlavourBuilder) MasterInstanceType(value string) *FlavourBuilder {
+	b.masterInstanceType = &value
 	return b
 }
 
@@ -87,18 +116,9 @@ func (b *FlavourBuilder) Network(value *NetworkBuilder) *FlavourBuilder {
 // Nodes sets the value of the 'nodes' attribute
 // to the given value.
 //
-// Counts of different classes of nodes inside a cluster.
-func (b *FlavourBuilder) Nodes(value *ClusterNodesBuilder) *FlavourBuilder {
+// Counts of different classes of nodes inside a flavour.
+func (b *FlavourBuilder) Nodes(value *FlavourNodesBuilder) *FlavourBuilder {
 	b.nodes = value
-	return b
-}
-
-// Version sets the value of the 'version' attribute
-// to the given value.
-//
-//
-func (b *FlavourBuilder) Version(value string) *FlavourBuilder {
-	b.version = &value
 	return b
 }
 
@@ -111,10 +131,13 @@ func (b *FlavourBuilder) Copy(object *Flavour) *FlavourBuilder {
 	b.href = object.href
 	b.link = object.link
 	if object.aws != nil {
-		b.aws = NewAWS().Copy(object.aws)
+		b.aws = NewAWSFlavour().Copy(object.aws)
 	} else {
 		b.aws = nil
 	}
+	b.computeInstanceType = object.computeInstanceType
+	b.infraInstanceType = object.infraInstanceType
+	b.masterInstanceType = object.masterInstanceType
 	b.name = object.name
 	if object.network != nil {
 		b.network = NewNetwork().Copy(object.network)
@@ -122,11 +145,10 @@ func (b *FlavourBuilder) Copy(object *Flavour) *FlavourBuilder {
 		b.network = nil
 	}
 	if object.nodes != nil {
-		b.nodes = NewClusterNodes().Copy(object.nodes)
+		b.nodes = NewFlavourNodes().Copy(object.nodes)
 	} else {
 		b.nodes = nil
 	}
-	b.version = object.version
 	return b
 }
 
@@ -142,6 +164,15 @@ func (b *FlavourBuilder) Build() (object *Flavour, err error) {
 			return
 		}
 	}
+	if b.computeInstanceType != nil {
+		object.computeInstanceType = b.computeInstanceType
+	}
+	if b.infraInstanceType != nil {
+		object.infraInstanceType = b.infraInstanceType
+	}
+	if b.masterInstanceType != nil {
+		object.masterInstanceType = b.masterInstanceType
+	}
 	if b.name != nil {
 		object.name = b.name
 	}
@@ -156,9 +187,6 @@ func (b *FlavourBuilder) Build() (object *Flavour, err error) {
 		if err != nil {
 			return
 		}
-	}
-	if b.version != nil {
-		object.version = b.version
 	}
 	return
 }

@@ -18,19 +18,22 @@
 export GO111MODULE=on
 export GOPROXY=https://proxy.golang.org
 
+# Disable CGO so that we always generate static binaries:
+export CGO_ENABLED=0
+
 # Details of the model to use:
-model_version:=v0.0.17
+model_version:=v0.0.29
 model_url:=https://github.com/openshift-online/ocm-api-model.git
 
 # Details of the metamodel to use:
-metamodel_version:=v0.0.12
+metamodel_version:=v0.0.19
 metamodel_url:=https://github.com/openshift-online/ocm-api-metamodel.git
 
 .PHONY: examples
 examples:
 	cd examples && \
 	for i in *.go; do \
-		go build -mod=readonly $${i} || exit 1; \
+		go build $${i} || exit 1; \
 	done
 
 .PHONY: test
@@ -61,13 +64,15 @@ generate: model metamodel
 
 .PHONY: model
 model:
-	[ -d "$@" ] || git clone "$(model_url)" "$@"
+	rm -rf "$@"
+	git clone "$(model_url)" "$@"
 	cd "$@" && git fetch --tags origin
 	cd "$@" && git checkout -B build "$(model_version)"
 
 .PHONY: metamodel
 metamodel:
-	[ -d "$@" ] || git clone "$(metamodel_url)" "$@"
+	rm -rf "$@"
+	git clone "$(metamodel_url)" "$@"
 	cd "$@" && git fetch --tags origin
 	cd "$@" && git checkout -B build "$(metamodel_version)"
 	make -C "$@"

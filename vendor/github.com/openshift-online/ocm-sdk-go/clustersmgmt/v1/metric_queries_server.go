@@ -30,9 +30,15 @@ type MetricQueriesServer interface {
 
 	// CPUTotalByNodeRolesOS returns the target 'CPU_total_by_node_roles_OS_metric_query' resource.
 	//
-	// Reference to the resource that retrieves 24 hour history of the amount of total cpu
+	// Reference to the resource that retrieves the total cpu
 	// capacity in the cluster by node role and operating system.
 	CPUTotalByNodeRolesOS() CPUTotalByNodeRolesOSMetricQueryServer
+
+	// SocketTotalByNodeRolesOS returns the target 'socket_total_by_node_roles_OS_metric_query' resource.
+	//
+	// Reference to the resource that retrieves the total socket
+	// capacity in the cluster by node role and operating system.
+	SocketTotalByNodeRolesOS() SocketTotalByNodeRolesOSMetricQueryServer
 }
 
 // dispatchMetricQueries navigates the servers tree rooted at the given server
@@ -54,6 +60,13 @@ func dispatchMetricQueries(w http.ResponseWriter, r *http.Request, server Metric
 				return
 			}
 			dispatchCPUTotalByNodeRolesOSMetricQuery(w, r, target, segments[1:])
+		case "socket_total_by_node_roles_os":
+			target := server.SocketTotalByNodeRolesOS()
+			if target == nil {
+				errors.SendNotFound(w, r)
+				return
+			}
+			dispatchSocketTotalByNodeRolesOSMetricQuery(w, r, target, segments[1:])
 		default:
 			errors.SendNotFound(w, r)
 			return

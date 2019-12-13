@@ -80,6 +80,8 @@ type LogsListRequest struct {
 	metric    string
 	query     url.Values
 	header    http.Header
+	page      *int
+	size      *int
 }
 
 // Parameter adds a query parameter.
@@ -94,6 +96,22 @@ func (r *LogsListRequest) Header(name string, value interface{}) *LogsListReques
 	return r
 }
 
+// Page sets the value of the 'page' parameter.
+//
+// Index of the requested page, where one corresponds to the first page.
+func (r *LogsListRequest) Page(value int) *LogsListRequest {
+	r.page = &value
+	return r
+}
+
+// Size sets the value of the 'size' parameter.
+//
+// Number of items contained in the returned page.
+func (r *LogsListRequest) Size(value int) *LogsListRequest {
+	r.size = &value
+	return r
+}
+
 // Send sends this request, waits for the response, and returns it.
 //
 // This is a potentially lengthy operation, as it requires network communication.
@@ -105,6 +123,12 @@ func (r *LogsListRequest) Send() (result *LogsListResponse, err error) {
 // SendContext sends this request, waits for the response, and returns it.
 func (r *LogsListRequest) SendContext(ctx context.Context) (result *LogsListResponse, err error) {
 	query := helpers.CopyQuery(r.query)
+	if r.page != nil {
+		helpers.AddValue(&query, "page", *r.page)
+	}
+	if r.size != nil {
+		helpers.AddValue(&query, "size", *r.size)
+	}
 	header := helpers.SetHeader(r.header, r.metric)
 	uri := &url.URL{
 		Path:     r.path,
@@ -154,16 +178,25 @@ type LogsListResponse struct {
 
 // Status returns the response status code.
 func (r *LogsListResponse) Status() int {
+	if r == nil {
+		return 0
+	}
 	return r.status
 }
 
 // Header returns header of the response.
 func (r *LogsListResponse) Header() http.Header {
+	if r == nil {
+		return nil
+	}
 	return r.header
 }
 
 // Error returns the response error.
 func (r *LogsListResponse) Error() *errors.Error {
+	if r == nil {
+		return nil
+	}
 	return r.err
 }
 

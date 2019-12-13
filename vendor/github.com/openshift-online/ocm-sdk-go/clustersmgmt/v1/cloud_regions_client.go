@@ -84,6 +84,8 @@ type CloudRegionsListRequest struct {
 	metric    string
 	query     url.Values
 	header    http.Header
+	page      *int
+	size      *int
 }
 
 // Parameter adds a query parameter.
@@ -98,6 +100,25 @@ func (r *CloudRegionsListRequest) Header(name string, value interface{}) *CloudR
 	return r
 }
 
+// Page sets the value of the 'page' parameter.
+//
+// Index of the returned page, where one corresponds to the first page. As this
+// collection doesn't support paging the result will always be `1`.
+func (r *CloudRegionsListRequest) Page(value int) *CloudRegionsListRequest {
+	r.page = &value
+	return r
+}
+
+// Size sets the value of the 'size' parameter.
+//
+// Number of items that will be contained in the returned page. As this collection
+// doesn't support paging or searching the result will always be the total number of
+// regions of the provider.
+func (r *CloudRegionsListRequest) Size(value int) *CloudRegionsListRequest {
+	r.size = &value
+	return r
+}
+
 // Send sends this request, waits for the response, and returns it.
 //
 // This is a potentially lengthy operation, as it requires network communication.
@@ -109,6 +130,12 @@ func (r *CloudRegionsListRequest) Send() (result *CloudRegionsListResponse, err 
 // SendContext sends this request, waits for the response, and returns it.
 func (r *CloudRegionsListRequest) SendContext(ctx context.Context) (result *CloudRegionsListResponse, err error) {
 	query := helpers.CopyQuery(r.query)
+	if r.page != nil {
+		helpers.AddValue(&query, "page", *r.page)
+	}
+	if r.size != nil {
+		helpers.AddValue(&query, "size", *r.size)
+	}
 	header := helpers.SetHeader(r.header, r.metric)
 	uri := &url.URL{
 		Path:     r.path,
@@ -158,16 +185,25 @@ type CloudRegionsListResponse struct {
 
 // Status returns the response status code.
 func (r *CloudRegionsListResponse) Status() int {
+	if r == nil {
+		return 0
+	}
 	return r.status
 }
 
 // Header returns header of the response.
 func (r *CloudRegionsListResponse) Header() http.Header {
+	if r == nil {
+		return nil
+	}
 	return r.header
 }
 
 // Error returns the response error.
 func (r *CloudRegionsListResponse) Error() *errors.Error {
+	if r == nil {
+		return nil
+	}
 	return r.err
 }
 

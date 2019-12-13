@@ -28,6 +28,7 @@ import (
 	"net/http"
 	"net/url"
 	"path"
+	"time"
 
 	"github.com/openshift-online/ocm-sdk-go/errors"
 	"github.com/openshift-online/ocm-sdk-go/helpers"
@@ -84,6 +85,17 @@ func (c *ClusterClient) Update() *ClusterUpdateRequest {
 	request.path = c.path
 	request.metric = c.metric
 	return request
+}
+
+// Addons returns the target 'add_ons' resource.
+//
+// Refrence to the resource that manages the collection of add-ons installed on this cluster.
+func (c *ClusterClient) Addons() *AddOnsClient {
+	return NewAddOnsClient(
+		c.transport,
+		path.Join(c.path, "addons"),
+		path.Join(c.metric, "addons"),
+	)
 }
 
 // Credentials returns the target 'credentials' resource.
@@ -150,6 +162,127 @@ func (c *ClusterClient) Status() *ClusterStatusClient {
 		path.Join(c.path, "status"),
 		path.Join(c.metric, "status"),
 	)
+}
+
+// ClusterPollRequest is the request for the Poll method.
+type ClusterPollRequest struct {
+	request    *ClusterGetRequest
+	interval   time.Duration
+	statuses   []int
+	predicates []func(interface{}) bool
+}
+
+// Parameter adds a query parameter to all the requests that will be used to retrieve the object.
+func (r *ClusterPollRequest) Parameter(name string, value interface{}) *ClusterPollRequest {
+	r.request.Parameter(name, value)
+	return r
+}
+
+// Header adds a request header to all the requests that will be used to retrieve the object.
+func (r *ClusterPollRequest) Header(name string, value interface{}) *ClusterPollRequest {
+	r.request.Header(name, value)
+	return r
+}
+
+// Interval sets the polling interval. This parameter is mandatory and must be greater than zero.
+func (r *ClusterPollRequest) Interval(value time.Duration) *ClusterPollRequest {
+	r.interval = value
+	return r
+}
+
+// Status set the expected status of the response. Multiple values can be set calling this method
+// multiple times. The response will be considered successful if the status is any of those values.
+func (r *ClusterPollRequest) Status(value int) *ClusterPollRequest {
+	r.statuses = append(r.statuses, value)
+	return r
+}
+
+// Predicate adds a predicate that the response should satisfy be considered successful. Multiple
+// predicates can be set calling this method multiple times. The response will be considered successful
+// if all the predicates are satisfied.
+func (r *ClusterPollRequest) Predicate(value func(*ClusterGetResponse) bool) *ClusterPollRequest {
+	r.predicates = append(r.predicates, func(response interface{}) bool {
+		return value(response.(*ClusterGetResponse))
+	})
+	return r
+}
+
+// StartContext starts the polling loop. Responses will be considered successful if the status is one of
+// the values specified with the Status method and if all the predicates specified with the Predicate
+// method return nil.
+//
+// The context must have a timeout or deadline, otherwise this method will immediately return an error.
+func (r *ClusterPollRequest) StartContext(ctx context.Context) (response *ClusterPollResponse, err error) {
+	result, err := helpers.PollContext(ctx, r.interval, r.statuses, r.predicates, r.task)
+	if result != nil {
+		response = &ClusterPollResponse{
+			response: result.(*ClusterGetResponse),
+		}
+	}
+	return
+}
+
+// task adapts the types of the request/response types so that they can be used with the generic
+// polling function from the helpers package.
+func (r *ClusterPollRequest) task(ctx context.Context) (status int, result interface{}, err error) {
+	response, err := r.request.SendContext(ctx)
+	if response != nil {
+		status = response.Status()
+		result = response
+	}
+	return
+}
+
+// ClusterPollResponse is the response for the Poll method.
+type ClusterPollResponse struct {
+	response *ClusterGetResponse
+}
+
+// Status returns the response status code.
+func (r *ClusterPollResponse) Status() int {
+	if r == nil {
+		return 0
+	}
+	return r.response.Status()
+}
+
+// Header returns header of the response.
+func (r *ClusterPollResponse) Header() http.Header {
+	if r == nil {
+		return nil
+	}
+	return r.response.Header()
+}
+
+// Error returns the response error.
+func (r *ClusterPollResponse) Error() *errors.Error {
+	if r == nil {
+		return nil
+	}
+	return r.response.Error()
+}
+
+// Body returns the value of the 'body' parameter.
+//
+//
+func (r *ClusterPollResponse) Body() *Cluster {
+	return r.response.Body()
+}
+
+// GetBody returns the value of the 'body' parameter and
+// a flag indicating if the parameter has a value.
+//
+//
+func (r *ClusterPollResponse) GetBody() (value *Cluster, ok bool) {
+	return r.response.GetBody()
+}
+
+// Poll creates a request to repeatedly retrieve the object till the response has one of a given set
+// of states and satisfies a set of predicates.
+func (c *ClusterClient) Poll() *ClusterPollRequest {
+	return &ClusterPollRequest{
+		request: c.Get(),
+	}
 }
 
 // ClusterDeleteRequest is the request for the 'delete' method.
@@ -225,16 +358,25 @@ type ClusterDeleteResponse struct {
 
 // Status returns the response status code.
 func (r *ClusterDeleteResponse) Status() int {
+	if r == nil {
+		return 0
+	}
 	return r.status
 }
 
 // Header returns header of the response.
 func (r *ClusterDeleteResponse) Header() http.Header {
+	if r == nil {
+		return nil
+	}
 	return r.header
 }
 
 // Error returns the response error.
 func (r *ClusterDeleteResponse) Error() *errors.Error {
+	if r == nil {
+		return nil
+	}
 	return r.err
 }
 
@@ -316,16 +458,25 @@ type ClusterGetResponse struct {
 
 // Status returns the response status code.
 func (r *ClusterGetResponse) Status() int {
+	if r == nil {
+		return 0
+	}
 	return r.status
 }
 
 // Header returns header of the response.
 func (r *ClusterGetResponse) Header() http.Header {
+	if r == nil {
+		return nil
+	}
 	return r.header
 }
 
 // Error returns the response error.
 func (r *ClusterGetResponse) Error() *errors.Error {
+	if r == nil {
+		return nil
+	}
 	return r.err
 }
 
@@ -444,6 +595,10 @@ func (r *ClusterUpdateRequest) SendContext(ctx context.Context) (result *Cluster
 		err = result.err
 		return
 	}
+	err = result.unmarshal(response.Body)
+	if err != nil {
+		return
+	}
 	return
 }
 
@@ -465,19 +620,68 @@ type ClusterUpdateResponse struct {
 	status int
 	header http.Header
 	err    *errors.Error
+	body   *Cluster
 }
 
 // Status returns the response status code.
 func (r *ClusterUpdateResponse) Status() int {
+	if r == nil {
+		return 0
+	}
 	return r.status
 }
 
 // Header returns header of the response.
 func (r *ClusterUpdateResponse) Header() http.Header {
+	if r == nil {
+		return nil
+	}
 	return r.header
 }
 
 // Error returns the response error.
 func (r *ClusterUpdateResponse) Error() *errors.Error {
+	if r == nil {
+		return nil
+	}
 	return r.err
+}
+
+// Body returns the value of the 'body' parameter.
+//
+//
+func (r *ClusterUpdateResponse) Body() *Cluster {
+	if r == nil {
+		return nil
+	}
+	return r.body
+}
+
+// GetBody returns the value of the 'body' parameter and
+// a flag indicating if the parameter has a value.
+//
+//
+func (r *ClusterUpdateResponse) GetBody() (value *Cluster, ok bool) {
+	ok = r != nil && r.body != nil
+	if ok {
+		value = r.body
+	}
+	return
+}
+
+// unmarshal is the method used internally to unmarshal responses to the
+// 'update' method.
+func (r *ClusterUpdateResponse) unmarshal(reader io.Reader) error {
+	var err error
+	decoder := json.NewDecoder(reader)
+	data := new(clusterData)
+	err = decoder.Decode(data)
+	if err != nil {
+		return err
+	}
+	r.body, err = data.unwrap()
+	if err != nil {
+		return err
+	}
+	return err
 }

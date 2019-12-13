@@ -82,6 +82,12 @@ type Server interface {
 	// credentials.
 	RegistryCredentials() RegistryCredentialsServer
 
+	// ResourceQuota returns the target 'resource_quotas' resource.
+	//
+	// Reference to the resource that manages the collection of resource
+	// quota.
+	ResourceQuota() ResourceQuotasServer
+
 	// RoleBindings returns the target 'role_bindings' resource.
 	//
 	// Reference to the resource that manages the collection of role
@@ -182,6 +188,13 @@ func Dispatch(w http.ResponseWriter, r *http.Request, server Server, segments []
 				return
 			}
 			dispatchRegistryCredentials(w, r, target, segments[1:])
+		case "resource_quota":
+			target := server.ResourceQuota()
+			if target == nil {
+				errors.SendNotFound(w, r)
+				return
+			}
+			dispatchResourceQuotas(w, r, target, segments[1:])
 		case "role_bindings":
 			target := server.RoleBindings()
 			if target == nil {

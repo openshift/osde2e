@@ -141,12 +141,34 @@ func (r *OrganizationUpdateServerRequest) unmarshal(reader io.Reader) error {
 type OrganizationUpdateServerResponse struct {
 	status int
 	err    *errors.Error
+	body   *Organization
+}
+
+// Body sets the value of the 'body' parameter.
+//
+//
+func (r *OrganizationUpdateServerResponse) Body(value *Organization) *OrganizationUpdateServerResponse {
+	r.body = value
+	return r
 }
 
 // Status sets the status code.
 func (r *OrganizationUpdateServerResponse) Status(value int) *OrganizationUpdateServerResponse {
 	r.status = value
 	return r
+}
+
+// marshall is the method used internally to marshal responses for the
+// 'update' method.
+func (r *OrganizationUpdateServerResponse) marshal(writer io.Writer) error {
+	var err error
+	encoder := json.NewEncoder(writer)
+	data, err := r.body.wrap()
+	if err != nil {
+		return err
+	}
+	err = encoder.Encode(data)
+	return err
 }
 
 // dispatchOrganization navigates the servers tree rooted at the given server
@@ -257,6 +279,10 @@ func readOrganizationUpdateRequest(r *http.Request) (*OrganizationUpdateServerRe
 func writeOrganizationUpdateResponse(w http.ResponseWriter, r *OrganizationUpdateServerResponse) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(r.status)
+	err := r.marshal(w)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 

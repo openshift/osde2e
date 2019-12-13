@@ -1,4 +1,5 @@
 /.gobin/
+/.idea/
 /examples/*
 /metamodel/
 /model/
