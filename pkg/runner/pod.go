@@ -58,6 +58,9 @@ var DefaultContainer = kubev1.Container{
 		},
 		PeriodSeconds: 7,
 	},
+	SecurityContext: &kubev1.SecurityContext{
+		RunAsUser: pointer.Int64Ptr(0),
+	},
 }
 
 var payloadVolumeMounts = []kubev1.VolumeMount{
