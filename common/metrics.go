@@ -14,6 +14,7 @@ import (
 
 	"github.com/onsi/ginkgo/reporters"
 	"github.com/openshift/osde2e/pkg/config"
+	"github.com/openshift/osde2e/pkg/events"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/common/expfmt"
 )
@@ -27,6 +28,7 @@ const (
 	jUnitMetricName    string = cicdPrefix + "jUnitResult"
 	metadataMetricName string = cicdPrefix + "metadata"
 	addonMetricName    string = cicdPrefix + "addon_metadata"
+	eventMetricName    string = cicdPrefix + "event"
 )
 
 var junitFileRegex *regexp.Regexp
@@ -37,6 +39,7 @@ type Metrics struct {
 	jUnitGatherer    *prometheus.GaugeVec
 	metadataGatherer *prometheus.GaugeVec
 	addonGatherer    *prometheus.GaugeVec
+	eventGatherer    *prometheus.CounterVec
 	cfg              *config.Config
 }
 
@@ -62,15 +65,23 @@ func NewMetrics(cfg *config.Config) *Metrics {
 		},
 		[]string{"install_version", "upgrade_version", "environment", "metadata_name"},
 	)
+	eventGatherer := prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: eventMetricName,
+		},
+		[]string{"install_version", "upgrade_version", "environment", "event"},
+	)
 	metricRegistry.MustRegister(jUnitGatherer)
 	metricRegistry.MustRegister(metadataGatherer)
 	metricRegistry.MustRegister(addonGatherer)
+	metricRegistry.MustRegister(eventGatherer)
 
 	return &Metrics{
 		metricRegistry:   metricRegistry,
 		jUnitGatherer:    jUnitGatherer,
 		metadataGatherer: metadataGatherer,
 		addonGatherer:    addonGatherer,
+		eventGatherer:    eventGatherer,
 		cfg:              cfg,
 	}
 }
@@ -112,6 +123,8 @@ func (m *Metrics) WritePrometheusFile(reportDir string) (string, error) {
 			}
 		}
 	}
+
+	m.processEvents(m.eventGatherer)
 
 	prometheusFileName := fmt.Sprintf(prometheusFileNamePattern, m.cfg.Cluster.ID, m.cfg.JobName)
 	output, err := m.registryToExpositionFormat()
@@ -212,6 +225,16 @@ func (m *Metrics) jsonToPrometheusOutput(gatherer *prometheus.GaugeVec, jsonOutp
 				gatherer.WithLabelValues(m.cfg.Cluster.Version, m.cfg.Upgrade.ReleaseName, m.cfg.OCM.Env, metadataName).Add(floatValue)
 			}
 		}
+	}
+}
+
+// Event processing
+
+// processEvents will search the events list for events that have occurred over the osde2e run
+// and output them in the Prometheus metrics.
+func (m *Metrics) processEvents(gatherer *prometheus.CounterVec) {
+	for _, event := range events.GetListOfEvents() {
+		gatherer.WithLabelValues(m.cfg.Cluster.Version, m.cfg.Upgrade.ReleaseName, m.cfg.OCM.Env, event).Inc()
 	}
 }
 
