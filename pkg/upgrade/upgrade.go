@@ -35,6 +35,9 @@ var (
 
 // RunUpgrade uses the OpenShift extended suite to upgrade a cluster to the image provided in cfg.
 func RunUpgrade(cfg *config.Config, OSD *osd.OSD) error {
+	var done bool
+	var msg string
+	var err error
 	// setup helper
 	h := &helper.H{
 		Config: cfg,
@@ -50,14 +53,19 @@ func RunUpgrade(cfg *config.Config, OSD *osd.OSD) error {
 	log.Println("Cluster acknowledged update request.")
 
 	log.Println("Upgrading...")
+	done = false
 	if err = wait.PollImmediate(10*time.Second, MaxDuration, func() (bool, error) {
-		done, msg, err := IsUpgradeDone(h, desired.Spec.DesiredUpdate)
+		done, msg, err = IsUpgradeDone(h, desired.Spec.DesiredUpdate)
 		if !done {
 			log.Printf("Upgrade in progress: %s", msg)
 		}
 		return done, err
 	}); err != nil {
 		return fmt.Errorf("failed to upgrade cluster: %v", err)
+	}
+
+	if !done {
+		return fmt.Errorf("failed to upgrade cluster: timed out after %d min waiting for upgrade", MaxDuration)
 	}
 
 	if err = OSD.WaitForClusterReady(cfg); err != nil {
