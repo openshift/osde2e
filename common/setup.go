@@ -15,6 +15,7 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 
 	"github.com/openshift/osde2e/pkg/config"
+	"github.com/openshift/osde2e/pkg/events"
 	"github.com/openshift/osde2e/pkg/metadata"
 	"github.com/openshift/osde2e/pkg/osd"
 )
@@ -29,7 +30,12 @@ var _ = ginkgo.SynchronizedBeforeSuite(func() []byte {
 	cfg := config.Cfg
 
 	err := setupCluster(cfg)
-	Expect(err).ShouldNot(HaveOccurred(), "failed to setup cluster for testing")
+	events.HandleErrorWithEvents(err, events.InstallSuccessful, events.InstallFailed).ShouldNot(HaveOccurred(), "failed to setup cluster for testing")
+
+	if len(cfg.Addons.IDs) > 0 {
+		err = installAddons(cfg)
+		events.HandleErrorWithEvents(err, events.InstallAddonsSuccessful, events.InstallAddonsFailed).ShouldNot(HaveOccurred(), "failed while installing addons")
+	}
 
 	if len(cfg.Kubeconfig.Contents) == 0 {
 		// Give the cluster some breathing room.
@@ -105,6 +111,11 @@ func setupCluster(cfg *config.Config) (err error) {
 		return fmt.Errorf("could not get kubeconfig for cluster: %v", err)
 	}
 
+	return nil
+}
+
+// installAddons installs addons onto the cluster
+func installAddons(cfg *config.Config) (err error) {
 	num, err := OSD.InstallAddons(cfg)
 	if err != nil {
 		return fmt.Errorf("could not install addons: %s", err.Error())

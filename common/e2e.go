@@ -16,6 +16,7 @@ import (
 	"github.com/onsi/gomega"
 
 	"github.com/openshift/osde2e/pkg/config"
+	"github.com/openshift/osde2e/pkg/events"
 	"github.com/openshift/osde2e/pkg/helper"
 	"github.com/openshift/osde2e/pkg/metadata"
 	"github.com/openshift/osde2e/pkg/osd"
@@ -30,6 +31,9 @@ import (
 const (
 	// CustomMetadataFile is the name of the custom metadata file generated for spyglass visualization.
 	CustomMetadataFile string = "custom-prow-metadata.json"
+
+	// hiveLog is the name of the hive log file.
+	hiveLog string = "hive-log.txt"
 )
 
 // OSD is used to deploy and manage clusters.
@@ -92,8 +96,10 @@ func RunE2ETests(t *testing.T, cfg *config.Config) {
 		if cfg.Upgrade.Image != "" || cfg.Upgrade.ReleaseStream != "" {
 			if cfg.Kubeconfig.Contents != nil {
 				if err = upgrade.RunUpgrade(cfg, OSD); err != nil {
+					events.RecordEvent(events.UpgradeFailed)
 					t.Errorf("error performing upgrade: %v", err)
 				}
+				events.RecordEvent(events.UpgradeSuccessful)
 
 				log.Println("Running e2e tests POST-UPGRADE...")
 				runTestsInPhase(t, cfg, "upgrade", "OSD e2e suite post-upgrade")
@@ -106,6 +112,8 @@ func RunE2ETests(t *testing.T, cfg *config.Config) {
 			if err = metadata.Instance.WriteToJSON(filepath.Join(cfg.ReportDir, CustomMetadataFile)); err != nil {
 				t.Errorf("error while writing metadata: %v", err)
 			}
+
+			checkBeforeMetricsGeneration(cfg)
 
 			prometheusFilename, err := NewMetrics(cfg).WritePrometheusFile(cfg.ReportDir)
 			if err != nil {
@@ -158,6 +166,16 @@ func runTestsInPhase(t *testing.T, cfg *config.Config, phase string, description
 	phaseReportPath := filepath.Join(phaseDirectory, fmt.Sprintf("junit_%v.xml", cfg.Suffix))
 	phaseReporter := reporters.NewJUnitReporter(phaseReportPath)
 	ginkgo.RunSpecsWithDefaultAndCustomReporters(t, description, []ginkgo.Reporter{phaseReporter})
+}
+
+// checkBeforeMetricsGeneration runs a variety of checks before generating metrics.
+func checkBeforeMetricsGeneration(cfg *config.Config) error {
+	// Check for hive-log.txt
+	if _, err := os.Stat(filepath.Join(cfg.ReportDir, hiveLog)); os.IsNotExist(err) {
+		events.RecordEvent(events.NoHiveLogs)
+	}
+
+	return nil
 }
 
 // uploadFileToMetricsBucket uploads the given file (with absolute path) to the metrics S3 bucket "incoming" directory.
