@@ -48,23 +48,27 @@ var _ = ginkgo.SynchronizedBeforeSuite(func() []byte {
 	// only needs to run once
 })
 
-// Destroy cluster after testing.
+// Collect logs after each test
 var _ = ginkgo.AfterSuite(func() {
+	log.Printf("Getting logs for cluster '%s'...", config.Cfg.Cluster.ID)
+	getLogs()
+})
+var _ = ginkgo.JustAfterEach(getLogs)
+
+func getLogs() {
 	defer ginkgo.GinkgoRecover()
 	cfg := config.Cfg
 
 	if OSD == nil {
-		log.Println("OSD was not configured. Skipping AfterSuite...")
+		log.Println("OSD was not configured. Skipping log collection...")
 	} else if cfg.Cluster.ID == "" {
-		log.Println("CLUSTER_ID is not set, likely due to a setup failure. Skipping AfterSuite...")
+		log.Println("CLUSTER_ID is not set, likely due to a setup failure. Skipping log collection...")
 	} else {
-		log.Printf("Getting logs for cluster '%s'...", cfg.Cluster.ID)
-
 		logs, err := OSD.FullLogs(cfg.Cluster.ID)
 		Expect(err).NotTo(HaveOccurred(), "failed to collect cluster logs")
 		writeLogs(cfg, logs)
 	}
-})
+}
 
 // setupCluster brings up a cluster, waits for it to be ready, then returns it's name.
 func setupCluster(cfg *config.Config) (err error) {
