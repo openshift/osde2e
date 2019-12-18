@@ -18,7 +18,7 @@ import (
 
 const (
 	// DefaultFlavour is used when no specialized configuration exists.
-	DefaultFlavour = "4"
+	DefaultFlavour = "osd-4"
 )
 
 // LaunchCluster setups an new cluster using the OSD API and returns it's ID.
