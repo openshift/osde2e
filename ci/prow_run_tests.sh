@@ -2,22 +2,12 @@
 
 set -o pipefail
 
-"$(dirname "$0")/prow_setup.sh"
+. "$(dirname "$0")/prow_setup.sh"
 
 {
-    function exit_if_file_missing {
-        FILE_DESCRIPTION="$1"
-        FILE="$2"
-
-        if [ ! -f "$FILE" ]; then
-            echo "$FILE_DESCRIPTION ($FILE) does not exist."
-            exit 3
-        fi
-    }
-
-    # One argument, pointing to a secrets directory, is expected
+    # Usage
     if [ "$#" -lt "1" ] || [ "$#" -gt "2" ]; then
-        echo "1 or 2 arguments expected."
+        echo "Usage: $0 <comma-separated-secrets-directories> [type-of-test]"
         exit 1
     fi
 
@@ -28,26 +18,21 @@ set -o pipefail
         TEST="$TEST-$2"
     fi
 
-    if [ ! -d "$SECRETS" ]; then
-        echo "Secrets directory ($SECRETS) does not exist."
+    if [ -z "$SECRETS" ]; then
+        echo "Secrets directories were not provided."
         exit 2
     fi
 
-    # Test the existence of each expected file
-    OCM_TOKEN_FILE=$SECRETS/ocm-refresh-token
-    AWS_ACCESS_KEY_FILE=$SECRETS/aws-access-key
-    AWS_SECRET_ACCESS_KEY_FILE=$SECRETS/aws-secret-access-key
-    AWS_REGION_FILE=$SECRETS/aws-region
+    # Extract the secrets
+    extract_secret_from_dirs OCM_TOKEN "$SECRETS" ocm-refresh-token "OCM token file"
+    extract_secret_from_dirs AWS_ACCESS_KEY_ID "$SECRETS" aws-access-key "AWS access key file"
+    extract_secret_from_dirs AWS_SECRET_ACCESS_KEY "$SECRETS" aws-secret-access-key "AWS secret access key file"
+    extract_secret_from_dirs AWS_REGION "$SECRETS" aws-region "AWS region file"
 
-    exit_if_file_missing "OCM token file" $OCM_TOKEN_FILE
-    exit_if_file_missing "AWS access key file" $AWS_ACCESS_KEY_FILE
-    exit_if_file_missing "AWS secret access key file" $AWS_SECRET_ACCESS_KEY_FILE
-    exit_if_file_missing "AWS region file" $AWS_REGION_FILE
-
-    export OCM_TOKEN=$(cat $OCM_TOKEN_FILE)
-    export AWS_ACCESS_KEY_ID=$(cat $AWS_ACCESS_KEY_FILE)
-    export AWS_SECRET_ACCESS_KEY=$(cat $AWS_SECRET_ACCESS_KEY_FILE)
-    export AWS_REGION=$(cat $AWS_REGION_FILE)
+    if [ "$TEST" = "test-addon" ]; then
+        extract_secret_from_dirs ADDON_IDS "$SECRETS" addon-ids "Addon IDs file"
+        extract_secret_from_dirs ADDON_TEST_HARNESSES "$SECRETS" addon-test-harnesses "Addon test harnesses file"
+    fi
 
     # We explicitly want to make sure we're always uploading metrics from prow jobs.
     export UPLOAD_METRICS=true
