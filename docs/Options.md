@@ -135,7 +135,7 @@ before failing the test.
 
 ### `DESTROY_CLUSTER`
 
-- DestroyClusterAfterTest set to false if you want OCM to clean up the cluster itself after the test completes.
+- DestroyClusterAfterTest set to false if you want to keep the cluster after the test completes.
 
 - Type: `bool`
 - Default: `true`
