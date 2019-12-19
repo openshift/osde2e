@@ -101,7 +101,7 @@ type ClusterConfig struct {
 	// MultiAZ deploys a cluster across multiple availability zones.
 	MultiAZ bool `env:"MULTI_AZ" sect:"cluster" default:"false" yaml:"multiAZ"`
 
-	// DestroyAfterTest set to false if you want OCM to clean up the cluster itself after the test completes.
+	// DestroyClusterAfterTest set to false if you want to keep the cluster after the test completes.
 	DestroyAfterTest bool `env:"DESTROY_CLUSTER" sect:"cluster" default:"true" yaml:"destroyAfterTest"`
 
 	// ExpiryInMinutes is how long before a cluster expires and is deleted by OSD.
