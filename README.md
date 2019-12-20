@@ -4,8 +4,7 @@ Comprehensive testing solution for Service Delivery
 ## Purpose
 Provide a standard for testing every aspect of the Openshift Dedicated product. Use data derived from tests to inform release and product decisions.
 
-## Execution 
-These steps run the OSDe2e test suite. All commands should be run from the root of this repo.
+## Setup 
 
 A properly setup Go workspace using **Go 1.13+ is required**.
 
@@ -25,14 +24,8 @@ Set OCM_TOKEN environment variable:
 $ export OCM_TOKEN=<token from step 1>
 ```
 
-Run tests:
-```
-make test
-```
-
-
-## Test Examples
-Below are some common examples when running OSDe2e. There is a large number of config options that may change or help, so please view the config package for more information.
+## Running Tests / Examples
+All commands should be run from the root of this repo. The simplest way to start a test run is to run `make test`. Below are some common examples when running OSDe2e. There is a large number of config options that may change or help, so please view the config package for more information.
 
 Using ENV Config
 Testing against an existing cluster (with your kubeconfig pointing at it)

@@ -41,13 +41,13 @@ build:
 	CGO_ENABLED=0 go test ./suites/scale -v -c -o ./out/osde2e-scale
 
 test:
-	go test $(E2E_PKG) -test.v -ginkgo.skip="$(GINKGO_SKIP)" -ginkgo.focus="$(GINKGO_FOCUS)" -test.timeout 8h -e2e-config $(E2ECONFIG)
+	go test $(E2E_PKG) -test.v -ginkgo.skip="$(GINKGO_SKIP)" -ginkgo.focus="$(GINKGO_FOCUS)" -test.timeout 8h -e2e-config=$(E2ECONFIG)
 
 test-scale:
-	go test $(SCALE_PKG) -test.v -ginkgo.skip="$(GINKGO_SKIP)" -ginkgo.focus="$(GINKGO_FOCUS)"  -test.timeout 8h -test.run TestScale -e2e-config $(E2ECONFIG)
+	go test $(SCALE_PKG) -test.v -ginkgo.skip="$(GINKGO_SKIP)" -ginkgo.focus="$(GINKGO_FOCUS)"  -test.timeout 8h -test.run TestScale -e2e-config=$(E2ECONFIG)
 
 test-addons:
-	go test $(ADDONS_PKG) -test.v -ginkgo.skip="$(GINKGO_SKIP)" -ginkgo.focus="$(GINKGO_FOCUS)"  -test.timeout 8h -test.run TestAddons -e2e-config $(E2ECONFIG)
+	go test $(ADDONS_PKG) -test.v -ginkgo.skip="$(GINKGO_SKIP)" -ginkgo.focus="$(GINKGO_FOCUS)"  -test.timeout 8h -test.run TestAddons -e2e-config=$(E2ECONFIG)
 
 test-docker:
 	$(CONTAINER_ENGINE) run \
