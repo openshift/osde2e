@@ -2,7 +2,7 @@
 
 set -o pipefail
 
-"$(dirname "$0")/prow_setup.sh"
+. "$(dirname "$0")/prow_setup.sh"
 
 {
     make check
