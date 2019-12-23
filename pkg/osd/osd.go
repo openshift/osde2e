@@ -67,6 +67,11 @@ func (u *OSD) CurrentAccount() (*accounts.Account, error) {
 	return act.Body(), err
 }
 
+// TODO: Uncomment when SDA-1757 is resolved.
+//func (u *OSD) addons() *clusters.AddOnsClient {
+//	return u.conn.ClustersMgmt().V1().Addons()
+//}
+
 // clusters returns a client used to perform cluster operations.
 func (u *OSD) clusters() *clusters.ClustersClient {
 	return u.conn.ClustersMgmt().V1().Clusters()
