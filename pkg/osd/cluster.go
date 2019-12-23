@@ -96,27 +96,30 @@ func (u *OSD) ClusterState(clusterID string) (v1.ClusterState, error) {
 // and performs the CRUD operation to trigger addon installation
 func (u *OSD) InstallAddons(cfg *config.Config) (num int, err error) {
 	num = 0
-	clusterClient := u.cluster(cfg.Cluster.ID)
-	for _, addon := range cfg.Addons.IDs {
-		addonResp, err := clusterClient.Addons().Addon(addon).Get().Send()
-		if err != nil {
-			return 0, err
-		}
-		addon := addonResp.Body()
+	// TODO: Uncomment when addon installation is fixed in COM (https://issues.redhat.com/browse/SDA-1757)
+	//addonsClient := u.addons()
+	//clusterClient := u.cluster(cfg.Cluster.ID)
+	//for _, addonID := range cfg.Addons.IDs {
+	//	addonResp, err := addonsClient.Addon(addonID).Get().Send()
+	//	if err != nil {
+	//		return 0, err
+	//	}
+	//	addon := addonResp.Body()
 
-		if addon.Enabled() {
-			aoar, err := clusterClient.Addons().Add().Body(addon).Send()
-			if err != nil {
-				return 0, err
-			}
+	//	if addon.Enabled() {
+	//		addonInstallation, err := v1.NewAddOnInstallation().Addon(v1.NewAddOn().Copy(addon)).Build()
+	//		aoar, err := clusterClient.Addons().Add().Body(addonInstallation).Send()
+	//		if err != nil {
+	//			return 0, err
+	//		}
 
-			if aoar.Error() != nil {
-				return 0, fmt.Errorf("Error (%v) sending request: %v", aoar.Status(), aoar.Error())
-			}
+	//		if aoar.Error() != nil {
+	//			return 0, fmt.Errorf("Error (%v) sending request: %v", aoar.Status(), aoar.Error())
+	//		}
 
-			num++
-		}
-	}
+	//		num++
+	//	}
+	//}
 
 	return num, nil
 }
