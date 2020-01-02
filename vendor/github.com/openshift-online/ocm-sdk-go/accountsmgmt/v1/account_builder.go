@@ -26,6 +26,7 @@ type AccountBuilder struct {
 	id             *string
 	href           *string
 	link           bool
+	banCode        *string
 	banDescription *string
 	banned         *bool
 	email          *string
@@ -56,6 +57,15 @@ func (b *AccountBuilder) HREF(value string) *AccountBuilder {
 // Link sets the flag that indicates if this is a link.
 func (b *AccountBuilder) Link(value bool) *AccountBuilder {
 	b.link = value
+	return b
+}
+
+// BanCode sets the value of the 'ban_code' attribute
+// to the given value.
+//
+//
+func (b *AccountBuilder) BanCode(value string) *AccountBuilder {
+	b.banCode = &value
 	return b
 }
 
@@ -139,6 +149,7 @@ func (b *AccountBuilder) Copy(object *Account) *AccountBuilder {
 	b.id = object.id
 	b.href = object.href
 	b.link = object.link
+	b.banCode = object.banCode
 	b.banDescription = object.banDescription
 	b.banned = object.banned
 	b.email = object.email
@@ -160,6 +171,9 @@ func (b *AccountBuilder) Build() (object *Account, err error) {
 	object.id = b.id
 	object.href = b.href
 	object.link = b.link
+	if b.banCode != nil {
+		object.banCode = b.banCode
+	}
 	if b.banDescription != nil {
 		object.banDescription = b.banDescription
 	}

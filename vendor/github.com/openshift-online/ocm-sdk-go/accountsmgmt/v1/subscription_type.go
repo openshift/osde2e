@@ -43,6 +43,7 @@ type Subscription struct {
 	href               *string
 	link               bool
 	clusterID          *string
+	createdAt          *time.Time
 	creator            *Account
 	displayName        *string
 	externalClusterID  *string
@@ -50,6 +51,7 @@ type Subscription struct {
 	organizationID     *string
 	plan               *Plan
 	registryCredential *RegistryCredential
+	updatedAt          *time.Time
 }
 
 // Kind returns the name of the type of the object.
@@ -108,6 +110,7 @@ func (o *Subscription) GetHREF() (value string, ok bool) {
 func (o *Subscription) Empty() bool {
 	return o == nil || (o.id == nil &&
 		o.clusterID == nil &&
+		o.createdAt == nil &&
 		o.creator == nil &&
 		o.displayName == nil &&
 		o.externalClusterID == nil &&
@@ -115,6 +118,7 @@ func (o *Subscription) Empty() bool {
 		o.organizationID == nil &&
 		o.plan == nil &&
 		o.registryCredential == nil &&
+		o.updatedAt == nil &&
 		true)
 }
 
@@ -137,6 +141,29 @@ func (o *Subscription) GetClusterID() (value string, ok bool) {
 	ok = o != nil && o.clusterID != nil
 	if ok {
 		value = *o.clusterID
+	}
+	return
+}
+
+// CreatedAt returns the value of the 'created_at' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+//
+func (o *Subscription) CreatedAt() time.Time {
+	if o != nil && o.createdAt != nil {
+		return *o.createdAt
+	}
+	return time.Time{}
+}
+
+// GetCreatedAt returns the value of the 'created_at' attribute and
+// a flag indicating if the attribute has a value.
+//
+//
+func (o *Subscription) GetCreatedAt() (value time.Time, ok bool) {
+	ok = o != nil && o.createdAt != nil
+	if ok {
+		value = *o.createdAt
 	}
 	return
 }
@@ -298,6 +325,29 @@ func (o *Subscription) GetRegistryCredential() (value *RegistryCredential, ok bo
 	ok = o != nil && o.registryCredential != nil
 	if ok {
 		value = o.registryCredential
+	}
+	return
+}
+
+// UpdatedAt returns the value of the 'updated_at' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+//
+func (o *Subscription) UpdatedAt() time.Time {
+	if o != nil && o.updatedAt != nil {
+		return *o.updatedAt
+	}
+	return time.Time{}
+}
+
+// GetUpdatedAt returns the value of the 'updated_at' attribute and
+// a flag indicating if the attribute has a value.
+//
+//
+func (o *Subscription) GetUpdatedAt() (value time.Time, ok bool) {
+	ok = o != nil && o.updatedAt != nil
+	if ok {
+		value = *o.updatedAt
 	}
 	return
 }

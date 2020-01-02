@@ -27,6 +27,7 @@ type AccessReviewResponseBuilder struct {
 	action          *string
 	allowed         *bool
 	clusterID       *string
+	clusterUUID     *string
 	organizationID  *string
 	resourceType    *string
 	subscriptionID  *string
@@ -73,6 +74,15 @@ func (b *AccessReviewResponseBuilder) ClusterID(value string) *AccessReviewRespo
 	return b
 }
 
+// ClusterUUID sets the value of the 'cluster_UUID' attribute
+// to the given value.
+//
+//
+func (b *AccessReviewResponseBuilder) ClusterUUID(value string) *AccessReviewResponseBuilder {
+	b.clusterUUID = &value
+	return b
+}
+
 // OrganizationID sets the value of the 'organization_ID' attribute
 // to the given value.
 //
@@ -109,6 +119,7 @@ func (b *AccessReviewResponseBuilder) Copy(object *AccessReviewResponse) *Access
 	b.action = object.action
 	b.allowed = object.allowed
 	b.clusterID = object.clusterID
+	b.clusterUUID = object.clusterUUID
 	b.organizationID = object.organizationID
 	b.resourceType = object.resourceType
 	b.subscriptionID = object.subscriptionID
@@ -129,6 +140,9 @@ func (b *AccessReviewResponseBuilder) Build() (object *AccessReviewResponse, err
 	}
 	if b.clusterID != nil {
 		object.clusterID = b.clusterID
+	}
+	if b.clusterUUID != nil {
+		object.clusterUUID = b.clusterUUID
 	}
 	if b.organizationID != nil {
 		object.organizationID = b.organizationID

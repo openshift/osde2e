@@ -38,6 +38,7 @@ type Account struct {
 	id             *string
 	href           *string
 	link           bool
+	banCode        *string
 	banDescription *string
 	banned         *bool
 	email          *string
@@ -103,6 +104,7 @@ func (o *Account) GetHREF() (value string, ok bool) {
 // Empty returns true if the object is empty, i.e. no attribute has a value.
 func (o *Account) Empty() bool {
 	return o == nil || (o.id == nil &&
+		o.banCode == nil &&
 		o.banDescription == nil &&
 		o.banned == nil &&
 		o.email == nil &&
@@ -112,6 +114,29 @@ func (o *Account) Empty() bool {
 		o.organization == nil &&
 		o.username == nil &&
 		true)
+}
+
+// BanCode returns the value of the 'ban_code' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+//
+func (o *Account) BanCode() string {
+	if o != nil && o.banCode != nil {
+		return *o.banCode
+	}
+	return ""
+}
+
+// GetBanCode returns the value of the 'ban_code' attribute and
+// a flag indicating if the attribute has a value.
+//
+//
+func (o *Account) GetBanCode() (value string, ok bool) {
+	ok = o != nil && o.banCode != nil
+	if ok {
+		value = *o.banCode
+	}
+	return
 }
 
 // BanDescription returns the value of the 'ban_description' attribute, or

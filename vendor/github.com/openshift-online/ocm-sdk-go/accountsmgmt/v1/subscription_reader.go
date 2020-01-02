@@ -32,6 +32,7 @@ type subscriptionData struct {
 	ID                 *string                 "json:\"id,omitempty\""
 	HREF               *string                 "json:\"href,omitempty\""
 	ClusterID          *string                 "json:\"cluster_id,omitempty\""
+	CreatedAt          *time.Time              "json:\"created_at,omitempty\""
 	Creator            *accountData            "json:\"creator,omitempty\""
 	DisplayName        *string                 "json:\"display_name,omitempty\""
 	ExternalClusterID  *string                 "json:\"external_cluster_id,omitempty\""
@@ -39,6 +40,7 @@ type subscriptionData struct {
 	OrganizationID     *string                 "json:\"organization_id,omitempty\""
 	Plan               *planData               "json:\"plan,omitempty\""
 	RegistryCredential *registryCredentialData "json:\"registry_credential,omitempty\""
+	UpdatedAt          *time.Time              "json:\"updated_at,omitempty\""
 }
 
 // MarshalSubscription writes a value of the 'subscription' to the given target,
@@ -71,6 +73,7 @@ func (o *Subscription) wrap() (data *subscriptionData, err error) {
 		*data.Kind = SubscriptionKind
 	}
 	data.ClusterID = o.clusterID
+	data.CreatedAt = o.createdAt
 	data.Creator, err = o.creator.wrap()
 	if err != nil {
 		return
@@ -87,6 +90,7 @@ func (o *Subscription) wrap() (data *subscriptionData, err error) {
 	if err != nil {
 		return
 	}
+	data.UpdatedAt = o.updatedAt
 	return
 }
 
@@ -119,6 +123,7 @@ func (d *subscriptionData) unwrap() (object *Subscription, err error) {
 		object.link = *d.Kind == SubscriptionLinkKind
 	}
 	object.clusterID = d.ClusterID
+	object.createdAt = d.CreatedAt
 	object.creator, err = d.Creator.unwrap()
 	if err != nil {
 		return
@@ -135,5 +140,6 @@ func (d *subscriptionData) unwrap() (object *Subscription, err error) {
 	if err != nil {
 		return
 	}
+	object.updatedAt = d.UpdatedAt
 	return
 }

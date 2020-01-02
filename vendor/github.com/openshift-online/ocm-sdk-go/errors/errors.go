@@ -201,20 +201,16 @@ func UnmarshalError(source interface{}) (object *Error, err error) {
 
 // MarshalError writes an error to the given destination which can be an slice of bytes, a
 // string, a reader or a JSON decoder.
-func (e *Error) MarshalError(destination interface{}) error {
-	encoder, err := helpers.NewEncoder(destination)
+func MarshalError(object *Error, target interface{}) error {
+	encoder, err := helpers.NewEncoder(target)
 	if err != nil {
 		return err
 	}
-	object, err := e.wrap()
+	data, err := object.wrap()
 	if err != nil {
 		return err
 	}
-	err = encoder.Encode(object)
-	if err != nil {
-		return err
-	}
-	return nil
+	return encoder.Encode(data)
 }
 
 // errorData is the data structure used internally to marshal and unmarshal errors.
@@ -233,13 +229,6 @@ func (d *errorData) unwrap() (object *Error, err error) {
 		return
 	}
 	object = new(Error)
-	if d.Kind != nil && *d.Kind != ErrorKind {
-		err = fmt.Errorf(
-			"expected kind '%s' but got '%s'",
-			ErrorKind, *d.Kind,
-		)
-		return
-	}
 	object.id = d.ID
 	object.href = d.HREF
 	object.code = d.Code
@@ -249,22 +238,17 @@ func (d *errorData) unwrap() (object *Error, err error) {
 
 // wrap is the method used internally to convert the JSON unmarshalled data to an
 // error.
-func (d *Error) wrap() (object *errorData, err error) {
-	if d == nil {
+func (e *Error) wrap() (data *errorData, err error) {
+	if e == nil {
 		return
 	}
-	object = new(errorData)
-	if d.Kind() != "" && d.Kind() != ErrorKind {
-		err = fmt.Errorf(
-			"expected kind '%s' but got '%s'",
-			ErrorKind, d.Kind(),
-		)
-		return
-	}
-	object.ID = d.id
-	object.HREF = d.href
-	object.Code = d.code
-	object.Reason = d.reason
+	data = new(errorData)
+	data.ID = e.id
+	data.HREF = e.href
+	data.Kind = new(string)
+	*data.Kind = ErrorKind
+	data.Code = e.code
+	data.Reason = e.reason
 	return
 }
 
@@ -278,15 +262,15 @@ var panicError, _ = NewError().
 // SendError writes a given error and status code to a response writer.
 // if an error occurred it will log the error and exit.
 // This methods is used internaly and no backwards compatibily is guaranteed.
-func SendError(w http.ResponseWriter, r *http.Request, error *Error) {
-	status, err := strconv.Atoi(error.ID())
+func SendError(w http.ResponseWriter, r *http.Request, object *Error) {
+	status, err := strconv.Atoi(object.ID())
 	if err != nil {
 		SendPanic(w, r)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
-	err = error.MarshalError(w)
+	err = MarshalError(object, w)
 	if err != nil {
 		glog.Errorf("Can't send response body for request '%s'", r.URL.Path)
 		return
@@ -297,7 +281,7 @@ func SendError(w http.ResponseWriter, r *http.Request, error *Error) {
 // This methods is used internaly and no backwards compatibily is guaranteed.
 func SendPanic(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	err := panicError.MarshalError(w)
+	err := MarshalError(panicError, w)
 	if err != nil {
 		glog.Errorf(
 			"Can't send panic response for request '%s': %s",

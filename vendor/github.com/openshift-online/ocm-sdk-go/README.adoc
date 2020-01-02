@@ -2,7 +2,7 @@
 
 ifdef::env-github[]
 image:https://godoc.org/github.com/openshift-online/ocm-sdk-go?status.svg[GoDoc,
-link=https://godoc.org/github.com/openshift-online/ocm-sdk-go/pkg/client]
+link=https://godoc.org/github.com/openshift-online/ocm-sdk-go]
 image:https://img.shields.io/badge/License-Apache%202.0-blue.svg[License,
 link=https://opensource.org/licenses/Apache-2.0]
 endif::[]

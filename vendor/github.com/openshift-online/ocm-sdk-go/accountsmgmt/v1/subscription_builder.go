@@ -31,6 +31,7 @@ type SubscriptionBuilder struct {
 	href               *string
 	link               bool
 	clusterID          *string
+	createdAt          *time.Time
 	creator            *AccountBuilder
 	displayName        *string
 	externalClusterID  *string
@@ -38,6 +39,7 @@ type SubscriptionBuilder struct {
 	organizationID     *string
 	plan               *PlanBuilder
 	registryCredential *RegistryCredentialBuilder
+	updatedAt          *time.Time
 }
 
 // NewSubscription creates a new builder of 'subscription' objects.
@@ -69,6 +71,15 @@ func (b *SubscriptionBuilder) Link(value bool) *SubscriptionBuilder {
 //
 func (b *SubscriptionBuilder) ClusterID(value string) *SubscriptionBuilder {
 	b.clusterID = &value
+	return b
+}
+
+// CreatedAt sets the value of the 'created_at' attribute
+// to the given value.
+//
+//
+func (b *SubscriptionBuilder) CreatedAt(value time.Time) *SubscriptionBuilder {
+	b.createdAt = &value
 	return b
 }
 
@@ -135,6 +146,15 @@ func (b *SubscriptionBuilder) RegistryCredential(value *RegistryCredentialBuilde
 	return b
 }
 
+// UpdatedAt sets the value of the 'updated_at' attribute
+// to the given value.
+//
+//
+func (b *SubscriptionBuilder) UpdatedAt(value time.Time) *SubscriptionBuilder {
+	b.updatedAt = &value
+	return b
+}
+
 // Copy copies the attributes of the given object into this builder, discarding any previous values.
 func (b *SubscriptionBuilder) Copy(object *Subscription) *SubscriptionBuilder {
 	if object == nil {
@@ -144,6 +164,7 @@ func (b *SubscriptionBuilder) Copy(object *Subscription) *SubscriptionBuilder {
 	b.href = object.href
 	b.link = object.link
 	b.clusterID = object.clusterID
+	b.createdAt = object.createdAt
 	if object.creator != nil {
 		b.creator = NewAccount().Copy(object.creator)
 	} else {
@@ -163,6 +184,7 @@ func (b *SubscriptionBuilder) Copy(object *Subscription) *SubscriptionBuilder {
 	} else {
 		b.registryCredential = nil
 	}
+	b.updatedAt = object.updatedAt
 	return b
 }
 
@@ -174,6 +196,9 @@ func (b *SubscriptionBuilder) Build() (object *Subscription, err error) {
 	object.link = b.link
 	if b.clusterID != nil {
 		object.clusterID = b.clusterID
+	}
+	if b.createdAt != nil {
+		object.createdAt = b.createdAt
 	}
 	if b.creator != nil {
 		object.creator, err = b.creator.Build()
@@ -204,6 +229,9 @@ func (b *SubscriptionBuilder) Build() (object *Subscription, err error) {
 		if err != nil {
 			return
 		}
+	}
+	if b.updatedAt != nil {
+		object.updatedAt = b.updatedAt
 	}
 	return
 }

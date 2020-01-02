@@ -3,6 +3,45 @@
 This document describes the relevant changes between releases of the OCM API
 SDK.
 
+== 0.1.75 Jan 01 2020
+
+- Update to model 0.0.35:
+** Added CurrentAccess Support
+
+== 0.1.74 Dec 31 2019
+
+- Update to model 0.0.33:
+** Adding the CreatedAt and UpdatedAt fields to the Subscription type.
+
+== 0.1.73 Dec 24 2019
+
+- Update to model 0.0.32:
+** Replace `AddOns` with `AddOnInstallations`.
+
+== 0.1.72 Dec 19 2019
+
+- Update to model 0.0.31:
+** Add `ban_code` attribute to `Account` type.
+
+== 0.1.71 Dec 19 2019
+
+- Authentication handler sends 401 instead of 511.
+- Authentication handler sends the `WWW-Authenticate` response header.
+- Authentication handler doesn't send authentication failures to the log.
+
+== 0.1.70 Dec 18 2019
+
+- Update to metamodel 0.0.20:
+** Fix conversion of errors to JSON so that the `kind` attribute is generated
+   correctly.
+
+- Add authentication handler.
+
+== 0.1.69 Dec 17 2019
+
+- Update to model 0.0.30:
+** Add support for `ClusterUUID` field.
+
 == 0.1.68 Dec 12 2019
 
 - Update to metamodel 0.0.19:

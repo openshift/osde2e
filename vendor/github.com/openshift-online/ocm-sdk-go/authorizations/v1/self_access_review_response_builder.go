@@ -26,6 +26,7 @@ type SelfAccessReviewResponseBuilder struct {
 	action         *string
 	allowed        *bool
 	clusterID      *string
+	clusterUUID    *string
 	organizationID *string
 	resourceType   *string
 	subscriptionID *string
@@ -60,6 +61,15 @@ func (b *SelfAccessReviewResponseBuilder) Allowed(value bool) *SelfAccessReviewR
 //
 func (b *SelfAccessReviewResponseBuilder) ClusterID(value string) *SelfAccessReviewResponseBuilder {
 	b.clusterID = &value
+	return b
+}
+
+// ClusterUUID sets the value of the 'cluster_UUID' attribute
+// to the given value.
+//
+//
+func (b *SelfAccessReviewResponseBuilder) ClusterUUID(value string) *SelfAccessReviewResponseBuilder {
+	b.clusterUUID = &value
 	return b
 }
 
@@ -98,6 +108,7 @@ func (b *SelfAccessReviewResponseBuilder) Copy(object *SelfAccessReviewResponse)
 	b.action = object.action
 	b.allowed = object.allowed
 	b.clusterID = object.clusterID
+	b.clusterUUID = object.clusterUUID
 	b.organizationID = object.organizationID
 	b.resourceType = object.resourceType
 	b.subscriptionID = object.subscriptionID
@@ -115,6 +126,9 @@ func (b *SelfAccessReviewResponseBuilder) Build() (object *SelfAccessReviewRespo
 	}
 	if b.clusterID != nil {
 		object.clusterID = b.clusterID
+	}
+	if b.clusterUUID != nil {
+		object.clusterUUID = b.clusterUUID
 	}
 	if b.organizationID != nil {
 		object.organizationID = b.organizationID

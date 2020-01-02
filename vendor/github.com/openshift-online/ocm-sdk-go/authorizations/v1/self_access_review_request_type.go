@@ -25,6 +25,7 @@ package v1 // github.com/openshift-online/ocm-sdk-go/authorizations/v1
 type SelfAccessReviewRequest struct {
 	action         *string
 	clusterID      *string
+	clusterUUID    *string
 	organizationID *string
 	resourceType   *string
 	subscriptionID *string
@@ -34,6 +35,7 @@ type SelfAccessReviewRequest struct {
 func (o *SelfAccessReviewRequest) Empty() bool {
 	return o == nil || (o.action == nil &&
 		o.clusterID == nil &&
+		o.clusterUUID == nil &&
 		o.organizationID == nil &&
 		o.resourceType == nil &&
 		o.subscriptionID == nil &&
@@ -66,7 +68,7 @@ func (o *SelfAccessReviewRequest) GetAction() (value string, ok bool) {
 // ClusterID returns the value of the 'cluster_ID' attribute, or
 // the zero value of the type if the attribute doesn't have a value.
 //
-// Indicates which Cluster the resource type belongs to
+// Indicates which Cluster (internal id) the resource type belongs to
 func (o *SelfAccessReviewRequest) ClusterID() string {
 	if o != nil && o.clusterID != nil {
 		return *o.clusterID
@@ -77,11 +79,34 @@ func (o *SelfAccessReviewRequest) ClusterID() string {
 // GetClusterID returns the value of the 'cluster_ID' attribute and
 // a flag indicating if the attribute has a value.
 //
-// Indicates which Cluster the resource type belongs to
+// Indicates which Cluster (internal id) the resource type belongs to
 func (o *SelfAccessReviewRequest) GetClusterID() (value string, ok bool) {
 	ok = o != nil && o.clusterID != nil
 	if ok {
 		value = *o.clusterID
+	}
+	return
+}
+
+// ClusterUUID returns the value of the 'cluster_UUID' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+// Indicates which Cluster (external id) the resource type belongs to
+func (o *SelfAccessReviewRequest) ClusterUUID() string {
+	if o != nil && o.clusterUUID != nil {
+		return *o.clusterUUID
+	}
+	return ""
+}
+
+// GetClusterUUID returns the value of the 'cluster_UUID' attribute and
+// a flag indicating if the attribute has a value.
+//
+// Indicates which Cluster (external id) the resource type belongs to
+func (o *SelfAccessReviewRequest) GetClusterUUID() (value string, ok bool) {
+	ok = o != nil && o.clusterUUID != nil
+	if ok {
+		value = *o.clusterUUID
 	}
 	return
 }

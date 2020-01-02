@@ -25,6 +25,7 @@ package v1 // github.com/openshift-online/ocm-sdk-go/authorizations/v1
 type SelfAccessReviewRequestBuilder struct {
 	action         *string
 	clusterID      *string
+	clusterUUID    *string
 	organizationID *string
 	resourceType   *string
 	subscriptionID *string
@@ -50,6 +51,15 @@ func (b *SelfAccessReviewRequestBuilder) Action(value string) *SelfAccessReviewR
 //
 func (b *SelfAccessReviewRequestBuilder) ClusterID(value string) *SelfAccessReviewRequestBuilder {
 	b.clusterID = &value
+	return b
+}
+
+// ClusterUUID sets the value of the 'cluster_UUID' attribute
+// to the given value.
+//
+//
+func (b *SelfAccessReviewRequestBuilder) ClusterUUID(value string) *SelfAccessReviewRequestBuilder {
+	b.clusterUUID = &value
 	return b
 }
 
@@ -87,6 +97,7 @@ func (b *SelfAccessReviewRequestBuilder) Copy(object *SelfAccessReviewRequest) *
 	}
 	b.action = object.action
 	b.clusterID = object.clusterID
+	b.clusterUUID = object.clusterUUID
 	b.organizationID = object.organizationID
 	b.resourceType = object.resourceType
 	b.subscriptionID = object.subscriptionID
@@ -101,6 +112,9 @@ func (b *SelfAccessReviewRequestBuilder) Build() (object *SelfAccessReviewReques
 	}
 	if b.clusterID != nil {
 		object.clusterID = b.clusterID
+	}
+	if b.clusterUUID != nil {
+		object.clusterUUID = b.clusterUUID
 	}
 	if b.organizationID != nil {
 		object.organizationID = b.organizationID

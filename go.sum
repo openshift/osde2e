@@ -148,7 +148,6 @@ github.com/googleapis/gnostic v0.0.0-20170729233727-0c5108395e2d/go.mod h1:sJBsC
 github.com/googleapis/gnostic v0.2.0/go.mod h1:sJBsCZ4ayReDTBIg8b9dl28c5xFWyhBTVRp3pOg5EKY=
 github.com/googleapis/gnostic v0.3.0 h1:CcQijm0XKekKjP/YCz28LXVSpgguuB+nCxaSjCe09y0=
 github.com/googleapis/gnostic v0.3.0/go.mod h1:sJBsCZ4ayReDTBIg8b9dl28c5xFWyhBTVRp3pOg5EKY=
-github.com/gorilla/mux v1.7.3/go.mod h1:1lud6UwP+6orDFRuTfBEV8e9/aOM/c4fVVCaMa2zaAs=
 github.com/gorilla/websocket v1.4.0/go.mod h1:E7qHFY5m1UJ88s3WnNqhKjPHQ0heANvMoAMk2YaljkQ=
 github.com/gregjones/httpcache v0.0.0-20180305231024-9cad4c3443a7/go.mod h1:FecbI9+v66THATjSRHfNgh1IVFe/9kFxbXtjV0ctIMA=
 github.com/gregjones/httpcache v0.0.0-20181110185634-c63ab54fda8f/go.mod h1:FecbI9+v66THATjSRHfNgh1IVFe/9kFxbXtjV0ctIMA=
@@ -230,8 +229,8 @@ github.com/onsi/gomega v1.5.0/go.mod h1:ex+gbHU/CVuBBDIJjb2X0qEXbFg53c61hWP/1Cpa
 github.com/onsi/gomega v1.7.0 h1:XPnZz8VVBHjVsy1vzJmRwIcSwiUO+JFfrv/xGiigmME=
 github.com/onsi/gomega v1.7.0/go.mod h1:ex+gbHU/CVuBBDIJjb2X0qEXbFg53c61hWP/1CpauHY=
 github.com/opencontainers/go-digest v1.0.0-rc1/go.mod h1:cMLVZDEM3+U2I4VmLI6N8jQYUd2OVphdqWwCJHrFt2s=
-github.com/openshift-online/ocm-sdk-go v0.1.68 h1:IwlbWxsYMTJ0CipwlTEiwei+3C9xXMcDC+ahKPhfK2E=
-github.com/openshift-online/ocm-sdk-go v0.1.68/go.mod h1:tHvMmXB8PeTs/RpdqJ8Y5Tnx30HnPqBkpMFB5ztcLdE=
+github.com/openshift-online/ocm-sdk-go v0.1.75 h1:p8KNRpWxkkRVZ2qGLnyRzksVTZk3a5DsDytVK6TftQM=
+github.com/openshift-online/ocm-sdk-go v0.1.75/go.mod h1:DRIIz5/6AlTP8sFPI1gUvYZY/YoCskeLznIt5JYzBnE=
 github.com/openshift/api v0.0.0-20190530131937-dafd2647cb03 h1:GSP/6RQjfIIIxNlYA0Y0e+/eNehZCphUT7ReUf22Ehs=
 github.com/openshift/api v0.0.0-20190530131937-dafd2647cb03/go.mod h1:dh9o4Fs58gpFXGSYfnVxGR9PnV53I8TW84pQaJDdGiY=
 github.com/openshift/client-go v0.0.0-20190806162413-e9678e3b850d h1:vCnTWNhkwqIGlBRWGkyeVDDkog/j11VlctGqkbtz/gM=
