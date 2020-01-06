@@ -109,10 +109,22 @@ func (c *Client) ClusterRegistrations() *ClusterRegistrationsClient {
 	)
 }
 
+// CurrentAccess returns the target 'roles' resource.
+//
+// Reference to the resource that manages the current authenticated
+// account.
+func (c *Client) CurrentAccess() *RolesClient {
+	return NewRolesClient(
+		c.transport,
+		path.Join(c.path, "current_access"),
+		path.Join(c.metric, "current_access"),
+	)
+}
+
 // CurrentAccount returns the target 'current_account' resource.
 //
 // Reference to the resource that manages the current authenticated
-// acount.
+// account.
 func (c *Client) CurrentAccount() *CurrentAccountClient {
 	return NewCurrentAccountClient(
 		c.transport,

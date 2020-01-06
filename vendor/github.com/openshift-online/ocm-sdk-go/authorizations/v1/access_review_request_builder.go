@@ -26,6 +26,7 @@ type AccessReviewRequestBuilder struct {
 	accountUsername *string
 	action          *string
 	clusterID       *string
+	clusterUUID     *string
 	organizationID  *string
 	resourceType    *string
 	subscriptionID  *string
@@ -60,6 +61,15 @@ func (b *AccessReviewRequestBuilder) Action(value string) *AccessReviewRequestBu
 //
 func (b *AccessReviewRequestBuilder) ClusterID(value string) *AccessReviewRequestBuilder {
 	b.clusterID = &value
+	return b
+}
+
+// ClusterUUID sets the value of the 'cluster_UUID' attribute
+// to the given value.
+//
+//
+func (b *AccessReviewRequestBuilder) ClusterUUID(value string) *AccessReviewRequestBuilder {
+	b.clusterUUID = &value
 	return b
 }
 
@@ -98,6 +108,7 @@ func (b *AccessReviewRequestBuilder) Copy(object *AccessReviewRequest) *AccessRe
 	b.accountUsername = object.accountUsername
 	b.action = object.action
 	b.clusterID = object.clusterID
+	b.clusterUUID = object.clusterUUID
 	b.organizationID = object.organizationID
 	b.resourceType = object.resourceType
 	b.subscriptionID = object.subscriptionID
@@ -115,6 +126,9 @@ func (b *AccessReviewRequestBuilder) Build() (object *AccessReviewRequest, err e
 	}
 	if b.clusterID != nil {
 		object.clusterID = b.clusterID
+	}
+	if b.clusterUUID != nil {
+		object.clusterUUID = b.clusterUUID
 	}
 	if b.organizationID != nil {
 		object.organizationID = b.organizationID

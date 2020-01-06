@@ -87,11 +87,11 @@ func (c *ClusterClient) Update() *ClusterUpdateRequest {
 	return request
 }
 
-// Addons returns the target 'add_ons' resource.
+// Addons returns the target 'add_on_installations' resource.
 //
 // Refrence to the resource that manages the collection of add-ons installed on this cluster.
-func (c *ClusterClient) Addons() *AddOnsClient {
-	return NewAddOnsClient(
+func (c *ClusterClient) Addons() *AddOnInstallationsClient {
+	return NewAddOnInstallationsClient(
 		c.transport,
 		path.Join(c.path, "addons"),
 		path.Join(c.metric, "addons"),

@@ -29,6 +29,7 @@ type accountData struct {
 	Kind           *string           "json:\"kind,omitempty\""
 	ID             *string           "json:\"id,omitempty\""
 	HREF           *string           "json:\"href,omitempty\""
+	BanCode        *string           "json:\"ban_code,omitempty\""
 	BanDescription *string           "json:\"ban_description,omitempty\""
 	Banned         *bool             "json:\"banned,omitempty\""
 	Email          *string           "json:\"email,omitempty\""
@@ -68,6 +69,7 @@ func (o *Account) wrap() (data *accountData, err error) {
 	} else {
 		*data.Kind = AccountKind
 	}
+	data.BanCode = o.banCode
 	data.BanDescription = o.banDescription
 	data.Banned = o.banned
 	data.Email = o.email
@@ -110,6 +112,7 @@ func (d *accountData) unwrap() (object *Account, err error) {
 	if d.Kind != nil {
 		object.link = *d.Kind == AccountLinkKind
 	}
+	object.banCode = d.BanCode
 	object.banDescription = d.BanDescription
 	object.banned = d.Banned
 	object.email = d.Email

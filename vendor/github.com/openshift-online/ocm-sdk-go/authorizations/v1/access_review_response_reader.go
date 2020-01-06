@@ -30,6 +30,7 @@ type accessReviewResponseData struct {
 	Action          *string "json:\"action,omitempty\""
 	Allowed         *bool   "json:\"allowed,omitempty\""
 	ClusterID       *string "json:\"cluster_id,omitempty\""
+	ClusterUUID     *string "json:\"cluster_uuid,omitempty\""
 	OrganizationID  *string "json:\"organization_id,omitempty\""
 	ResourceType    *string "json:\"resource_type,omitempty\""
 	SubscriptionID  *string "json:\"subscription_id,omitempty\""
@@ -60,6 +61,7 @@ func (o *AccessReviewResponse) wrap() (data *accessReviewResponseData, err error
 	data.Action = o.action
 	data.Allowed = o.allowed
 	data.ClusterID = o.clusterID
+	data.ClusterUUID = o.clusterUUID
 	data.OrganizationID = o.organizationID
 	data.ResourceType = o.resourceType
 	data.SubscriptionID = o.subscriptionID
@@ -93,6 +95,7 @@ func (d *accessReviewResponseData) unwrap() (object *AccessReviewResponse, err e
 	object.action = d.Action
 	object.allowed = d.Allowed
 	object.clusterID = d.ClusterID
+	object.clusterUUID = d.ClusterUUID
 	object.organizationID = d.OrganizationID
 	object.resourceType = d.ResourceType
 	object.subscriptionID = d.SubscriptionID

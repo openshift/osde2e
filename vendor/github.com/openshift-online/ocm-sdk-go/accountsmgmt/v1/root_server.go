@@ -54,10 +54,16 @@ type Server interface {
 	// Reference to the resource that manages cluster registrations.
 	ClusterRegistrations() ClusterRegistrationsServer
 
+	// CurrentAccess returns the target 'roles' resource.
+	//
+	// Reference to the resource that manages the current authenticated
+	// account.
+	CurrentAccess() RolesServer
+
 	// CurrentAccount returns the target 'current_account' resource.
 	//
 	// Reference to the resource that manages the current authenticated
-	// acount.
+	// account.
 	CurrentAccount() CurrentAccountServer
 
 	// Organizations returns the target 'organizations' resource.
@@ -153,6 +159,13 @@ func Dispatch(w http.ResponseWriter, r *http.Request, server Server, segments []
 				return
 			}
 			dispatchClusterRegistrations(w, r, target, segments[1:])
+		case "current_access":
+			target := server.CurrentAccess()
+			if target == nil {
+				errors.SendNotFound(w, r)
+				return
+			}
+			dispatchRoles(w, r, target, segments[1:])
 		case "current_account":
 			target := server.CurrentAccount()
 			if target == nil {

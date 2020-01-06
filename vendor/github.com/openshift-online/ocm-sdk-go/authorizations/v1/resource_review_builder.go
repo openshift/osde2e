@@ -26,6 +26,7 @@ type ResourceReviewBuilder struct {
 	accountUsername *string
 	action          *string
 	clusterIDs      []string
+	clusterUUIDs    []string
 	organizationIDs []string
 	resourceType    *string
 	subscriptionIDs []string
@@ -61,6 +62,16 @@ func (b *ResourceReviewBuilder) Action(value string) *ResourceReviewBuilder {
 func (b *ResourceReviewBuilder) ClusterIDs(values ...string) *ResourceReviewBuilder {
 	b.clusterIDs = make([]string, len(values))
 	copy(b.clusterIDs, values)
+	return b
+}
+
+// ClusterUUIDs sets the value of the 'cluster_UUIDs' attribute
+// to the given values.
+//
+//
+func (b *ResourceReviewBuilder) ClusterUUIDs(values ...string) *ResourceReviewBuilder {
+	b.clusterUUIDs = make([]string, len(values))
+	copy(b.clusterUUIDs, values)
 	return b
 }
 
@@ -106,6 +117,12 @@ func (b *ResourceReviewBuilder) Copy(object *ResourceReview) *ResourceReviewBuil
 	} else {
 		b.clusterIDs = nil
 	}
+	if len(object.clusterUUIDs) > 0 {
+		b.clusterUUIDs = make([]string, len(object.clusterUUIDs))
+		copy(b.clusterUUIDs, object.clusterUUIDs)
+	} else {
+		b.clusterUUIDs = nil
+	}
 	if len(object.organizationIDs) > 0 {
 		b.organizationIDs = make([]string, len(object.organizationIDs))
 		copy(b.organizationIDs, object.organizationIDs)
@@ -134,6 +151,10 @@ func (b *ResourceReviewBuilder) Build() (object *ResourceReview, err error) {
 	if b.clusterIDs != nil {
 		object.clusterIDs = make([]string, len(b.clusterIDs))
 		copy(object.clusterIDs, b.clusterIDs)
+	}
+	if b.clusterUUIDs != nil {
+		object.clusterUUIDs = make([]string, len(b.clusterUUIDs))
+		copy(object.clusterUUIDs, b.clusterUUIDs)
 	}
 	if b.organizationIDs != nil {
 		object.organizationIDs = make([]string, len(b.organizationIDs))

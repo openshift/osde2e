@@ -29,6 +29,7 @@ type resourceReviewData struct {
 	AccountUsername *string  "json:\"account_username,omitempty\""
 	Action          *string  "json:\"action,omitempty\""
 	ClusterIDs      []string "json:\"cluster_ids,omitempty\""
+	ClusterUUIDs    []string "json:\"cluster_uuids,omitempty\""
 	OrganizationIDs []string "json:\"organization_ids,omitempty\""
 	ResourceType    *string  "json:\"resource_type,omitempty\""
 	SubscriptionIDs []string "json:\"subscription_ids,omitempty\""
@@ -58,6 +59,7 @@ func (o *ResourceReview) wrap() (data *resourceReviewData, err error) {
 	data.AccountUsername = o.accountUsername
 	data.Action = o.action
 	data.ClusterIDs = o.clusterIDs
+	data.ClusterUUIDs = o.clusterUUIDs
 	data.OrganizationIDs = o.organizationIDs
 	data.ResourceType = o.resourceType
 	data.SubscriptionIDs = o.subscriptionIDs
@@ -90,6 +92,7 @@ func (d *resourceReviewData) unwrap() (object *ResourceReview, err error) {
 	object.accountUsername = d.AccountUsername
 	object.action = d.Action
 	object.clusterIDs = d.ClusterIDs
+	object.clusterUUIDs = d.ClusterUUIDs
 	object.organizationIDs = d.OrganizationIDs
 	object.resourceType = d.ResourceType
 	object.subscriptionIDs = d.SubscriptionIDs

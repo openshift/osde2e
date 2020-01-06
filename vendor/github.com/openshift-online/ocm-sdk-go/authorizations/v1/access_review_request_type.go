@@ -26,6 +26,7 @@ type AccessReviewRequest struct {
 	accountUsername *string
 	action          *string
 	clusterID       *string
+	clusterUUID     *string
 	organizationID  *string
 	resourceType    *string
 	subscriptionID  *string
@@ -36,6 +37,7 @@ func (o *AccessReviewRequest) Empty() bool {
 	return o == nil || (o.accountUsername == nil &&
 		o.action == nil &&
 		o.clusterID == nil &&
+		o.clusterUUID == nil &&
 		o.organizationID == nil &&
 		o.resourceType == nil &&
 		o.subscriptionID == nil &&
@@ -91,7 +93,7 @@ func (o *AccessReviewRequest) GetAction() (value string, ok bool) {
 // ClusterID returns the value of the 'cluster_ID' attribute, or
 // the zero value of the type if the attribute doesn't have a value.
 //
-// Indicates which Cluster the resource type belongs to
+// Indicates which Cluster (internal id) the resource type belongs to
 func (o *AccessReviewRequest) ClusterID() string {
 	if o != nil && o.clusterID != nil {
 		return *o.clusterID
@@ -102,11 +104,34 @@ func (o *AccessReviewRequest) ClusterID() string {
 // GetClusterID returns the value of the 'cluster_ID' attribute and
 // a flag indicating if the attribute has a value.
 //
-// Indicates which Cluster the resource type belongs to
+// Indicates which Cluster (internal id) the resource type belongs to
 func (o *AccessReviewRequest) GetClusterID() (value string, ok bool) {
 	ok = o != nil && o.clusterID != nil
 	if ok {
 		value = *o.clusterID
+	}
+	return
+}
+
+// ClusterUUID returns the value of the 'cluster_UUID' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+// Indicates which Cluster (external id) the resource type belongs to
+func (o *AccessReviewRequest) ClusterUUID() string {
+	if o != nil && o.clusterUUID != nil {
+		return *o.clusterUUID
+	}
+	return ""
+}
+
+// GetClusterUUID returns the value of the 'cluster_UUID' attribute and
+// a flag indicating if the attribute has a value.
+//
+// Indicates which Cluster (external id) the resource type belongs to
+func (o *AccessReviewRequest) GetClusterUUID() (value string, ok bool) {
+	ok = o != nil && o.clusterUUID != nil
+	if ok {
+		value = *o.clusterUUID
 	}
 	return
 }

@@ -26,6 +26,7 @@ type ResourceReview struct {
 	accountUsername *string
 	action          *string
 	clusterIDs      []string
+	clusterUUIDs    []string
 	organizationIDs []string
 	resourceType    *string
 	subscriptionIDs []string
@@ -36,6 +37,7 @@ func (o *ResourceReview) Empty() bool {
 	return o == nil || (o.accountUsername == nil &&
 		o.action == nil &&
 		len(o.clusterIDs) == 0 &&
+		len(o.clusterUUIDs) == 0 &&
 		len(o.organizationIDs) == 0 &&
 		o.resourceType == nil &&
 		len(o.subscriptionIDs) == 0 &&
@@ -91,7 +93,7 @@ func (o *ResourceReview) GetAction() (value string, ok bool) {
 // ClusterIDs returns the value of the 'cluster_IDs' attribute, or
 // the zero value of the type if the attribute doesn't have a value.
 //
-// Identifiers of the clusters that the user has permission to perform the action upon.
+// Identifiers of the Clusters (internal ids) that the user has permission to perform the action upon.
 func (o *ResourceReview) ClusterIDs() []string {
 	if o == nil {
 		return nil
@@ -102,11 +104,34 @@ func (o *ResourceReview) ClusterIDs() []string {
 // GetClusterIDs returns the value of the 'cluster_IDs' attribute and
 // a flag indicating if the attribute has a value.
 //
-// Identifiers of the clusters that the user has permission to perform the action upon.
+// Identifiers of the Clusters (internal ids) that the user has permission to perform the action upon.
 func (o *ResourceReview) GetClusterIDs() (value []string, ok bool) {
 	ok = o != nil && o.clusterIDs != nil
 	if ok {
 		value = o.clusterIDs
+	}
+	return
+}
+
+// ClusterUUIDs returns the value of the 'cluster_UUIDs' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+// Identifiers which Clusters (external ids) that the user has permission to perform the action upon.
+func (o *ResourceReview) ClusterUUIDs() []string {
+	if o == nil {
+		return nil
+	}
+	return o.clusterUUIDs
+}
+
+// GetClusterUUIDs returns the value of the 'cluster_UUIDs' attribute and
+// a flag indicating if the attribute has a value.
+//
+// Identifiers which Clusters (external ids) that the user has permission to perform the action upon.
+func (o *ResourceReview) GetClusterUUIDs() (value []string, ok bool) {
+	ok = o != nil && o.clusterUUIDs != nil
+	if ok {
+		value = o.clusterUUIDs
 	}
 	return
 }

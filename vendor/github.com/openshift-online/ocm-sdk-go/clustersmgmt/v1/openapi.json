@@ -756,7 +756,7 @@
     },
     "/api/clusters_mgmt/v1/clusters/{cluster_id}/addons": {
       "post": {
-        "description": "Create a new add-on and add it to the collection of add-ons.\n",
+        "description": "Create a new add-on installation and add it to the collection of add-on installations on the cluster.\n",
         "parameters": [
           {
             "name": "cluster_id",
@@ -770,7 +770,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/AddOn"
+                "$ref": "#/components/schemas/AddOnInstallation"
               }
             }
           }
@@ -781,7 +781,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AddOn"
+                  "$ref": "#/components/schemas/AddOnInstallation"
                 }
               }
             }
@@ -799,7 +799,7 @@
         }
       },
       "get": {
-        "description": "Retrieves the list of add-ons.\n",
+        "description": "Retrieves the list of add-on installations.\n",
         "parameters": [
           {
             "name": "cluster_id",
@@ -810,7 +810,7 @@
           },
           {
             "name": "order",
-            "description": "Order criteria.\n\nThe syntax of this parameter is similar to the syntax of the _order by_ clause of\na SQL statement, but using the names of the attributes of the add-on instead of\nthe names of the columns of a table. For example, in order to sort the add-ons\ndescending by name the value should be:\n\n\n```\nname desc\n```\n\nIf the parameter isn't provided, or if the value is empty, then the order of the\nresults is undefined.\n",
+            "description": "Order criteria.\n\nThe syntax of this parameter is similar to the syntax of the _order by_ clause of\na SQL statement, but using the names of the attributes of the add-on installation\ninstead of the names of the columns of a table. For example, in order to sort the\nadd-on installations descending by name the value should be:\n\n\n```\nname desc\n```\n\nIf the parameter isn't provided, or if the value is empty, then the order of the\nresults is undefined.\n",
             "in": "query",
             "schema": {
               "type": "string"
@@ -827,7 +827,7 @@
           },
           {
             "name": "search",
-            "description": "Search criteria.\n\nThe syntax of this parameter is similar to the syntax of the _where_ clause of an\nSQL statement, but using the names of the attributes of the add-on instead of\nthe names of the columns of a table. For example, in order to retrieve all the\nadd-ons with a name starting with `my` the value should be:\n\n\n```\nname like 'my%'\n```\n\nIf the parameter isn't provided, or if the value is empty, then all the add-ons\nthat the user has permission to see will be returned.\n",
+            "description": "Search criteria.\n\nThe syntax of this parameter is similar to the syntax of the _where_ clause of an\nSQL statement, but using the names of the attributes of the add-on installation\ninstead of the names of the columns of a table. For example, in order to retrieve\nall the add-on installations with a name starting with `my` the value should be:\n\n\n```\nname like 'my%'\n```\n\nIf the parameter isn't provided, or if the value is empty, then all the add-on\ninstallations that the user has permission to see will be returned.\n",
             "in": "query",
             "schema": {
               "type": "string"
@@ -852,10 +852,10 @@
                   "type": "object",
                   "properties": {
                     "items": {
-                      "description": "Retrieved list of add-ons.\n",
+                      "description": "Retrieved list of add-on installations.\n",
                       "type": "array",
                       "items": {
-                        "$ref": "#/components/schemas/AddOn"
+                        "$ref": "#/components/schemas/AddOnInstallation"
                       }
                     },
                     "page": {
@@ -891,9 +891,9 @@
         }
       }
     },
-    "/api/clusters_mgmt/v1/clusters/{cluster_id}/addons/{addon_id}": {
+    "/api/clusters_mgmt/v1/clusters/{cluster_id}/addons/{addoninstallation_id}": {
       "delete": {
-        "description": "Deletes the add-on.\n",
+        "description": "Deletes the add-on installation.\n",
         "parameters": [
           {
             "name": "cluster_id",
@@ -903,7 +903,7 @@
             }
           },
           {
-            "name": "addon_id",
+            "name": "addoninstallation_id",
             "in": "path",
             "schema": {
               "type": "string"
@@ -927,7 +927,7 @@
         }
       },
       "get": {
-        "description": "Retrieves the details of the add-on.\n",
+        "description": "Retrieves the details of the add-on installation.\n",
         "parameters": [
           {
             "name": "cluster_id",
@@ -937,7 +937,7 @@
             }
           },
           {
-            "name": "addon_id",
+            "name": "addoninstallation_id",
             "in": "path",
             "schema": {
               "type": "string"
@@ -950,57 +950,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AddOn"
-                }
-              }
-            }
-          },
-          "default": {
-            "description": "Error.\n",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          }
-        }
-      },
-      "patch": {
-        "description": "Updates the add-on.\n",
-        "parameters": [
-          {
-            "name": "cluster_id",
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "addon_id",
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/AddOn"
-              }
-            }
-          }
-        },
-        "responses": {
-          "204": {
-            "description": "Success.\n",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AddOn"
+                  "$ref": "#/components/schemas/AddOnInstallation"
                 }
               }
             }

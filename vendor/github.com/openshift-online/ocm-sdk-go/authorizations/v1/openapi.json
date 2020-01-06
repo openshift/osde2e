@@ -230,7 +230,11 @@
             "type": "string"
           },
           "cluster_id": {
-            "description": "Indicates which Cluster the resource type belongs to\n",
+            "description": "Indicates which Cluster (internal id) the resource type belongs to\n",
+            "type": "string"
+          },
+          "cluster_uuid": {
+            "description": "Indicates which Cluster (external id) the resource type belongs to\n",
             "type": "string"
           },
           "organization_id": {
@@ -263,7 +267,11 @@
             "type": "boolean"
           },
           "cluster_id": {
-            "description": "Indicates which Cluster the resource type belongs to\n",
+            "description": "Indicates which Cluster (internal id) the resource type belongs to\n",
+            "type": "string"
+          },
+          "cluster_uuid": {
+            "description": "Indicates which Cluster (external id) the resource type belongs to\n",
             "type": "string"
           },
           "organization_id": {
@@ -306,7 +314,14 @@
             "type": "string"
           },
           "cluster_ids": {
-            "description": "Identifiers of the clusters that the user has permission to perform the action upon.\n",
+            "description": "Identifiers of the Clusters (internal ids) that the user has permission to perform the action upon.\n",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "cluster_uuids": {
+            "description": "Identifiers which Clusters (external ids) that the user has permission to perform the action upon.\n",
             "type": "array",
             "items": {
               "type": "string"
@@ -357,7 +372,11 @@
             "type": "string"
           },
           "cluster_id": {
-            "description": "Indicates which Cluster the resource type belongs to\n",
+            "description": "Indicates which Cluster (internal id) the resource type belongs to\n",
+            "type": "string"
+          },
+          "cluster_uuid": {
+            "description": "Indicates which Cluster (external id) the resource type belongs to\n",
             "type": "string"
           },
           "organization_id": {
@@ -386,7 +405,11 @@
             "type": "boolean"
           },
           "cluster_id": {
-            "description": "Indicates which Cluster the resource type belongs to\n",
+            "description": "Indicates which Cluster (internal id) the resource type belongs to\n",
+            "type": "string"
+          },
+          "cluster_uuid": {
+            "description": "Indicates which Cluster (external id) the resource type belongs to\n",
             "type": "string"
           },
           "organization_id": {
