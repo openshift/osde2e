@@ -22,7 +22,7 @@ func ChooseVersions(cfg *config.Config, osd *osd.OSD) (err error) {
 	} else if cfg.Upgrade.Image == "" && cfg.Upgrade.ReleaseStream != "" {
 		err = setupUpgradeVersion(cfg, osd)
 	} else {
-		err = setupVersion(cfg, osd, false)
+		err = setupVersion(cfg, osd)
 	}
 
 	// Set the versions in metadata. If upgrade hasn't been chosen, it should still be omitted from the end result.
@@ -33,7 +33,7 @@ func ChooseVersions(cfg *config.Config, osd *osd.OSD) (err error) {
 }
 
 // chooses between default version and nightly based on target versions.
-func setupVersion(cfg *config.Config, osd *osd.OSD, isUpgrade bool) (err error) {
+func setupVersion(cfg *config.Config, osd *osd.OSD) (err error) {
 	if len(cfg.Cluster.Version) > 0 {
 		return
 	}
@@ -42,7 +42,7 @@ func setupVersion(cfg *config.Config, osd *osd.OSD, isUpgrade bool) (err error) 
 		if cfg.Upgrade.MajorTarget == 0 {
 			cfg.Upgrade.MajorTarget = -1
 		}
-		// look for the default release and install it for this OSD cluster.
+		// look for the latest release and install it for this OSD cluster.
 		if cfg.Cluster.Version, err = osd.LatestVersion(cfg.Upgrade.MajorTarget, cfg.Upgrade.MinorTarget); err == nil {
 			log.Printf("CLUSTER_VERSION not set but a TARGET is, running '%s'", cfg.Cluster.Version)
 		}
@@ -62,20 +62,47 @@ func setupVersion(cfg *config.Config, osd *osd.OSD, isUpgrade bool) (err error) 
 // chooses version based on optimal upgrade path
 func setupUpgradeVersion(cfg *config.Config, osd *osd.OSD) (err error) {
 	// Decide the version to install
-	err = setupVersion(cfg, osd, true)
+	err = setupVersion(cfg, osd)
 	if err != nil {
 		return err
-	}
-
-	cfg.Upgrade.ReleaseName, cfg.Upgrade.Image, err = upgrade.LatestRelease(cfg, cfg.Upgrade.ReleaseStream, true)
-	if err != nil {
-		return fmt.Errorf("couldn't get latest release from release-controller: %v", err)
 	}
 
 	clusterVersion, err := osd.OpenshiftVersionToSemver(cfg.Cluster.Version)
 	if err != nil {
 		log.Printf("error while parsing cluster version %s: %v", cfg.Cluster.Version, err)
 		return err
+	}
+
+	if cfg.Upgrade.UpgradeToCISIfPossible {
+		cisUpgradeVersionString, err := osd.LatestVersion(-1, -1)
+
+		if err != nil {
+			log.Printf("unable to get the most recent version of openshift from OSD: %v", err)
+			return err
+		}
+
+		cisUpgradeVersion, err := osd.OpenshiftVersionToSemver(cisUpgradeVersionString)
+
+		if err != nil {
+			log.Printf("unable to parse most recent version of openshift from OSD: %v", err)
+			return err
+		}
+
+		// If the available cluster image set makes sense, then we'll just use that
+		if cisUpgradeVersion.GreaterThan(clusterVersion) {
+			log.Printf("Using cluster image set.")
+			cfg.Upgrade.ReleaseName = cisUpgradeVersionString
+			metadata.Instance.UpgradeVersionSource = "cluster image set"
+			log.Printf("Selecting version '%s' to be able to upgrade to '%s'", cfg.Cluster.Version, cfg.Upgrade.ReleaseName)
+			return nil
+		}
+
+		log.Printf("The most recent cluster image set is equal to the default. Falling back to upgrading with Cincinnati.")
+	}
+
+	cfg.Upgrade.ReleaseName, cfg.Upgrade.Image, err = upgrade.LatestRelease(cfg, cfg.Upgrade.ReleaseStream, true)
+	if err != nil {
+		return fmt.Errorf("couldn't get latest release from release-controller: %v", err)
 	}
 
 	upgradeVersion, err := osd.OpenshiftVersionToSemver(cfg.Upgrade.ReleaseName)
