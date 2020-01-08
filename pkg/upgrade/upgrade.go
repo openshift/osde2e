@@ -45,7 +45,12 @@ func RunUpgrade(cfg *config.Config, OSD *osd.OSD) error {
 	h.SetupNoProj()
 	defer h.Cleanup()
 
-	log.Printf("Upgrading cluster to UPGRADE_IMAGE '%s'", cfg.Upgrade.Image)
+	if cfg.Upgrade.Image != "" {
+		log.Printf("Upgrading cluster to UPGRADE_IMAGE '%s'", cfg.Upgrade.Image)
+	} else {
+		log.Printf("Upgrading cluster to cluster image set with version %s", cfg.Upgrade.ReleaseName)
+	}
+
 	desired, err := TriggerUpgrade(h, cfg)
 	if err != nil {
 		return fmt.Errorf("failed triggering upgrade: %v", err)
@@ -92,7 +97,7 @@ func TriggerUpgrade(h *helper.H, cfg *config.Config) (*configv1.ClusterVersion, 
 	cVersion.Spec.DesiredUpdate = &configv1.Update{
 		Version: strings.Replace(cfg.Upgrade.ReleaseName, "openshift-v", "", -1),
 		Image:   cfg.Upgrade.Image,
-		Force:   true,
+		Force:   cfg.Upgrade.Image != "", // Force if we have an image specified
 	}
 	updatedCV, err := cfgClient.ConfigV1().ClusterVersions().Update(cVersion)
 	if err != nil {
@@ -124,8 +129,8 @@ func IsUpgradeDone(h *helper.H, desired *configv1.Update) (done bool, msg string
 
 	// ensure working towards correct desired
 	curDesired := cVersion.Status.Desired
-	if curDesired.Image != desired.Image || curDesired.Version != desired.Version {
-		return false, fmt.Sprintf("desired not yet updated; desired: %v, cur: %v", desired, curDesired), nil
+	if curDesired.Version != desired.Version {
+		return false, fmt.Sprintf("desired not yet updated; desired: %v, cur: %v", desired.Version, curDesired.Version), nil
 	}
 
 	// check if any ActiveConditions indicate an upgrade is ongoing
@@ -142,7 +147,7 @@ func IsUpgradeDone(h *helper.H, desired *configv1.Update) (done bool, msg string
 		latest := &cVersion.Status.History[0]
 		if latest == nil || latest.State != configv1.CompletedUpdate {
 			return false, "history doesn't have a completed update", nil
-		} else if latest.Image != desired.Image || latest.Version != desired.Version {
+		} else if latest.Version != desired.Version {
 			return false, fmt.Sprintf("latest in history doesn't match desired; desired: %v, cur: %v", desired, latest), nil
 		}
 	}

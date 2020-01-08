@@ -10,6 +10,7 @@ import (
 
 	"github.com/Masterminds/semver"
 	"github.com/openshift/osde2e/pkg/config"
+	"github.com/openshift/osde2e/pkg/metadata"
 	"github.com/openshift/osde2e/pkg/osd"
 )
 
@@ -21,10 +22,10 @@ const (
 )
 
 // LatestRelease retrieves latest release information for given releaseStream. Will use Cincinnati for stage/prod.
-func LatestRelease(cfg *config.Config, releaseStream string, use_release_controller_for_int bool) (name, pullSpec string, err error) {
+func LatestRelease(cfg *config.Config, releaseStream string, useReleaseControllerForInt bool) (name, pullSpec string, err error) {
 	var resp *http.Response
 	var data []byte
-	if cfg.OCM.Env == "int" && use_release_controller_for_int {
+	if cfg.OCM.Env == "int" && useReleaseControllerForInt {
 		log.Printf("Using the release controller.")
 		latestURL := fmt.Sprintf(latestReleaseControllerURLFmt, releaseStream)
 		resp, err = http.Get(latestURL)
@@ -44,10 +45,13 @@ func LatestRelease(cfg *config.Config, releaseStream string, use_release_control
 			return "", "", fmt.Errorf("error decoding body of '%s': %v", data, err)
 		}
 
+		metadata.Instance.UpgradeVersionSource = "release controller"
+
 		return ensureReleasePrefix(latest.Name), latest.PullSpec, nil
 	}
 
 	log.Printf("Using Cincinnati.")
+	metadata.Instance.UpgradeVersionSource = "cincinnati"
 
 	// If stage or prod, use Cincinnati instead of the release controller
 	cincinnatiFormattedURL := fmt.Sprintf(cincinnatiURLFmt, osd.Environments.Choose(cfg.OCM.Env), releaseStream)

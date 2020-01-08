@@ -6,14 +6,15 @@ import (
 	"os"
 )
 
-// metadata houses the metadata that will be written to the report directory after
+// Metadata houses the metadata that will be written to the report directory after
 type Metadata struct {
 	// Cluster information
-	ClusterID      string `json:"cluster-id"`
-	ClusterName    string `json:"cluster-name"`
-	ClusterVersion string `json:"cluster-version"`
-	Environment    string `json:"environment"`
-	UpgradeVersion string `json:"upgrade-version,omitempty"`
+	ClusterID            string `json:"cluster-id"`
+	ClusterName          string `json:"cluster-name"`
+	ClusterVersion       string `json:"cluster-version"`
+	Environment          string `json:"environment"`
+	UpgradeVersion       string `json:"upgrade-version,omitempty"`
+	UpgradeVersionSource string `json:"upgrade-version-source,omitempty"`
 
 	// Metrics
 	TimeToOCMReportingInstalled float64 `json:"time-to-ocm-reporting-installed,string"`
