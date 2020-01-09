@@ -96,3 +96,25 @@ func setupUpgradeVersion(cfg *config.Config, osd *osd.OSD) (err error) {
 		cfg.Cluster.Version, cfg.Upgrade.ReleaseName, cfg.Upgrade.ReleaseStream)
 	return
 }
+
+// GetNewestAndOldestVersions returns a list which contains the newest and the oldest non-default versions.
+func GetNewestAndOldestVersions(cfg *config.Config) ([]string, error) {
+	OSD, err := osd.New(cfg.OCM.Token, cfg.OCM.Env, cfg.OCM.Debug)
+	if err != nil {
+		return nil, fmt.Errorf("could not setup OSD: %v", err)
+	}
+
+	versionList, err := OSD.EnabledNoDefaultVersionList()
+	if err != nil {
+		return nil, err
+	}
+
+	if len(versionList) < 2 {
+		return versionList, nil
+	}
+
+	return []string{
+		versionList[0],
+		versionList[len(versionList)-1],
+	}, nil
+}
