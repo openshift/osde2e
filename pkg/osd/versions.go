@@ -16,9 +16,6 @@ const (
 	// query used to retrieve the current default version.
 	defaultVersionSearch = "default = 't'"
 
-	// query used to retrieve the current enabled version.
-	enabledVersionSearch = "enabled = 't'"
-
 	// VersionPrefix is the string that every OSD version begins with.
 	VersionPrefix = "openshift-"
 
