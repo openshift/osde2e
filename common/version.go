@@ -34,6 +34,8 @@ func ChooseVersions(cfg *config.Config, osd *osd.OSD) (err error) {
 
 // chooses between default version and nightly based on target versions.
 func setupVersion(cfg *config.Config, osd *osd.OSD) (err error) {
+	suffix := ""
+
 	if len(cfg.Cluster.Version) > 0 {
 		return
 	}
@@ -42,8 +44,13 @@ func setupVersion(cfg *config.Config, osd *osd.OSD) (err error) {
 		if cfg.Upgrade.MajorTarget == 0 {
 			cfg.Upgrade.MajorTarget = -1
 		}
+
+		if config.Cfg.OCM.Env == "int" && config.Cfg.Upgrade.ReleaseStream == "" {
+			suffix = "nightly"
+		}
+
 		// look for the latest release and install it for this OSD cluster.
-		if cfg.Cluster.Version, err = osd.LatestVersion(cfg.Upgrade.MajorTarget, cfg.Upgrade.MinorTarget); err == nil {
+		if cfg.Cluster.Version, err = osd.LatestVersion(cfg.Upgrade.MajorTarget, cfg.Upgrade.MinorTarget, suffix); err == nil {
 			log.Printf("CLUSTER_VERSION not set but a TARGET is, running '%s'", cfg.Cluster.Version)
 		}
 	}
@@ -74,7 +81,11 @@ func setupUpgradeVersion(cfg *config.Config, osd *osd.OSD) (err error) {
 	}
 
 	if cfg.Upgrade.UpgradeToCISIfPossible {
-		cisUpgradeVersionString, err := osd.LatestVersion(-1, -1)
+		suffix := ""
+		if config.Cfg.OCM.Env == "int" {
+			suffix = "nightly"
+		}
+		cisUpgradeVersionString, err := osd.LatestVersion(-1, -1, suffix)
 
 		if err != nil {
 			log.Printf("unable to get the most recent version of openshift from OSD: %v", err)

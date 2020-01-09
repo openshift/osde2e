@@ -9,7 +9,6 @@ import (
 
 	"github.com/Masterminds/semver"
 	v1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
-	"github.com/openshift/osde2e/pkg/config"
 )
 
 const (
@@ -68,13 +67,7 @@ func (u *OSD) PreviousVersion(verStr string) (string, error) {
 }
 
 // LatestVersion gets latest release for major and minor versions. Negative versions match all.
-func (u *OSD) LatestVersion(major, minor int64) (string, error) {
-	suffix := ""
-
-	if config.Cfg.OCM.Env == "int" {
-		suffix = "nightly"
-	}
-
+func (u *OSD) LatestVersion(major, minor int64, suffix string) (string, error) {
 	versions, err := u.getSemverList(major, minor, suffix)
 	if err != nil {
 		return "", fmt.Errorf("couldn't created sorted version list: %v", err)
