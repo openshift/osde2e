@@ -19,6 +19,12 @@ import (
 const (
 	// DefaultFlavour is used when no specialized configuration exists.
 	DefaultFlavour = "osd-4"
+
+	// cleanRunWindow is the number of checks made to determine if a cluster is ready.
+	cleanRunWindow = 10
+
+	// errorWindow is the number of checks made to determine if a cluster has truly failed.
+	errorWindow = 5
 )
 
 // LaunchCluster setups an new cluster using the OSD API and returns it's ID.
@@ -180,8 +186,9 @@ func (u *OSD) WaitForClusterReady(cfg *config.Config) error {
 				}
 				if success, err := u.PollClusterHealth(cfg); success {
 					cleanRuns++
+					log.Printf("Clean run %d/%d...", cleanRuns, cleanRunWindow)
 					errRuns = 0
-					if cleanRuns == 5 {
+					if cleanRuns == cleanRunWindow {
 						metadata.Instance.TimeToClusterReady = time.Since(readinessStarted).Seconds()
 						return true, nil
 					}
@@ -190,8 +197,8 @@ func (u *OSD) WaitForClusterReady(cfg *config.Config) error {
 					if err != nil {
 						errRuns++
 						log.Printf("Error in PollClusterHealth: %v", err)
-						if errRuns >= 5 {
-							return false, fmt.Errorf("PollClusterHealth has returned an error 5 times in a row. Failing osde2e")
+						if errRuns >= errorWindow {
+							return false, fmt.Errorf("PollClusterHealth has returned an error %d times in a row. Failing osde2e", errorWindow)
 						}
 					}
 					cleanRuns = 0
