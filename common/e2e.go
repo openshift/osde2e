@@ -111,10 +111,10 @@ func RunE2ETests(t *testing.T, cfg *config.Config) {
 
 		if cfg.ReportDir != "" {
 			if err = metadata.Instance.WriteToJSON(filepath.Join(cfg.ReportDir, CustomMetadataFile)); err != nil {
-				t.Errorf("error while writing custom metadata: %v", err)
+				t.Errorf("error while writing the custom metadata: %v", err)
 			}
 			if err = metadata.Instance.WriteToJSON(filepath.Join(cfg.ReportDir, MetadataFile)); err != nil {
-				t.Errorf("error while writing metadata: %v", err)
+				t.Errorf("error while writing the metadata: %v", err)
 			}
 
 			checkBeforeMetricsGeneration(cfg)
