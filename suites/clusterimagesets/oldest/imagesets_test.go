@@ -31,7 +31,6 @@ func TestE2E(t *testing.T) {
 	cfg.Cluster.DestroyAfterTest = true
 
 	versionList, err := common.GetEnabledNoDefaultVersions(cfg)
-	versionList = []string{}
 	if err != nil {
 		log.Printf("Failed to do clusterImageSets testing: %+v\n", err)
 	} else {
