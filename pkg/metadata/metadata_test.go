@@ -73,13 +73,12 @@ func writeAndTestMetadata(m *Metadata, expected map[string]interface{}) (err err
 
 	defer os.RemoveAll(tempDir)
 
-	outputFilename := filepath.Join(tempDir, "test.json")
-	if err = m.WriteToJSON(outputFilename); err != nil {
+	if err = m.WriteToJSON(tempDir); err != nil {
 		return err
 	}
 
 	var data []byte
-	if data, err = ioutil.ReadFile(outputFilename); err != nil {
+	if data, err = ioutil.ReadFile(filepath.Join(tempDir, MetadataFile)); err != nil {
 		return err
 	}
 

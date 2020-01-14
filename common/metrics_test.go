@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/openshift/osde2e/pkg/config"
+	"github.com/openshift/osde2e/pkg/metadata"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -109,6 +110,7 @@ func TestProcessJSONFile(t *testing.T) {
 		useAddonGatherer bool
 		fileContents     string
 		expectedOutput   string
+		phase            string
 	}{
 		{
 			testName:         "regular parsing with custom metadata",
@@ -130,6 +132,7 @@ func TestProcessJSONFile(t *testing.T) {
 			expectedOutput: `cicd_metadata{environment="prod",install_version="install-version",metadata_name="test2",upgrade_version="upgrade-version"} 6
 cicd_metadata{environment="prod",install_version="install-version",metadata_name="another-nested field.another-level.test4",upgrade_version="upgrade-version"} 7
 `,
+			phase: "",
 		},
 		{
 			testName:         "regular parsing with addon metadata",
@@ -148,9 +151,10 @@ cicd_metadata{environment="prod",install_version="install-version",metadata_name
 		}
 	}
 }`,
-			expectedOutput: `cicd_addon_metadata{environment="prod",install_version="install-version",metadata_name="test2",upgrade_version="upgrade-version"} 6
-cicd_addon_metadata{environment="prod",install_version="install-version",metadata_name="another-nested field.another-level.test4",upgrade_version="upgrade-version"} 7
+			expectedOutput: `cicd_addon_metadata{environment="prod",install_version="install-version",metadata_name="test2",phase="install",upgrade_version="upgrade-version"} 6
+cicd_addon_metadata{environment="prod",install_version="install-version",metadata_name="another-nested field.another-level.test4",phase="install",upgrade_version="upgrade-version"} 7
 `,
+			phase: "install",
 		},
 	}
 
@@ -179,7 +183,7 @@ cicd_addon_metadata{environment="prod",install_version="install-version",metadat
 		} else {
 			gatherer = m.metadataGatherer
 		}
-		err = m.processJSONFile(gatherer, tmpFile.Name())
+		err = m.processJSONFile(gatherer, tmpFile.Name(), test.phase)
 
 		if err != nil {
 			t.Errorf("error while processing JSON file: %v", err)
@@ -267,7 +271,7 @@ cicd_jUnitResult{environment="prod",install_version="install-version",phase="upg
 			metadataFileContents:      metadataFileContents,
 			addonMetadataFileContents: addonMetadataFileContents,
 			expectedOutput: jUnitExpectedOutput + `cicd_metadata{environment="prod",install_version="install-version",metadata_name="test2",upgrade_version="upgrade-version"} 6
-cicd_addon_metadata{environment="prod",install_version="install-version",metadata_name="test2",upgrade_version="upgrade-version"} 6
+cicd_addon_metadata{environment="prod",install_version="install-version",metadata_name="test2",phase="install",upgrade_version="upgrade-version"} 6
 `,
 		},
 		{
@@ -335,14 +339,14 @@ cicd_addon_metadata{environment="prod",install_version="install-version",metadat
 		}
 
 		if test.metadataFileContents != "" {
-			err = ioutil.WriteFile(filepath.Join(tmpDir, CustomMetadataFile), []byte(test.metadataFileContents), os.FileMode(0644))
+			err = ioutil.WriteFile(filepath.Join(tmpDir, metadata.CustomMetadataFile), []byte(test.metadataFileContents), os.FileMode(0644))
 			if err != nil {
 				t.Errorf("error writing metadata file: %v", err)
 			}
 		}
 
 		if test.addonMetadataFileContents != "" {
-			err = ioutil.WriteFile(filepath.Join(tmpDir, addonMetadataFile), []byte(test.addonMetadataFileContents), os.FileMode(0644))
+			err = ioutil.WriteFile(filepath.Join(tmpDir, "install", metadata.AddonMetadataFile), []byte(test.addonMetadataFileContents), os.FileMode(0644))
 			if err != nil {
 				t.Errorf("error writing metadata file: %v", err)
 			}

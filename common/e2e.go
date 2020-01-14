@@ -29,10 +29,6 @@ import (
 )
 
 const (
-	// CustomMetadataFile is the name of the custom metadata file generated for spyglass visualization.
-	CustomMetadataFile string = "custom-prow-metadata.json"
-	MetadataFile       string = "metadata.json"
-
 	// hiveLog is the name of the hive log file.
 	hiveLog string = "hive-log.txt"
 )
@@ -110,11 +106,8 @@ func RunE2ETests(t *testing.T, cfg *config.Config) {
 		}
 
 		if cfg.ReportDir != "" {
-			if err = metadata.Instance.WriteToJSON(filepath.Join(cfg.ReportDir, CustomMetadataFile)); err != nil {
+			if err = metadata.Instance.WriteToJSON(cfg.ReportDir); err != nil {
 				t.Errorf("error while writing the custom metadata: %v", err)
-			}
-			if err = metadata.Instance.WriteToJSON(filepath.Join(cfg.ReportDir, MetadataFile)); err != nil {
-				t.Errorf("error while writing the metadata: %v", err)
 			}
 
 			checkBeforeMetricsGeneration(cfg)

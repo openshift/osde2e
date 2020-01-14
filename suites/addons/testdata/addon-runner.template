@@ -14,8 +14,7 @@ spec:
     spec:
       containers:
       - name: addon-tests
-        image: quay.io/miwilson/addons-osde2e-testing
-        args: [--output-dir, {{.OutputDir}}]
+        image: {{.Image}}
         volumeMounts:
         - mountPath: /test-run-results
           name: test-output

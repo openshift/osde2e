@@ -15,12 +15,12 @@ import (
 	"github.com/onsi/ginkgo/reporters"
 	"github.com/openshift/osde2e/pkg/config"
 	"github.com/openshift/osde2e/pkg/events"
+	"github.com/openshift/osde2e/pkg/metadata"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/common/expfmt"
 )
 
 const (
-	addonMetadataFile         string = "addon-metrics.json"
 	prometheusFileNamePattern string = "%s.%s.metrics.prom"
 
 	cicdPrefix string = "cicd_"
@@ -63,7 +63,7 @@ func NewMetrics(cfg *config.Config) *Metrics {
 		prometheus.GaugeOpts{
 			Name: addonMetricName,
 		},
-		[]string{"install_version", "upgrade_version", "environment", "metadata_name"},
+		[]string{"install_version", "upgrade_version", "environment", "metadata_name", "phase"},
 	)
 	eventGatherer := prometheus.NewCounterVec(
 		prometheus.CounterOpts{
@@ -114,12 +114,13 @@ func (m *Metrics) WritePrometheusFile(reportDir string) (string, error) {
 					if junitFileRegex.MatchString(phaseFile.Name()) {
 						// TODO: The addon metric prefix should reference the addon job being run to further avoid collision
 						m.processJUnitXMLFile(phase, filepath.Join(phaseDir, phaseFile.Name()))
+					} else if phaseFile.Name() == metadata.AddonMetadataFile {
+						m.processJSONFile(m.addonGatherer, filepath.Join(phaseDir, phaseFile.Name()), phase)
 					}
+
 				}
-			} else if file.Name() == CustomMetadataFile {
-				m.processJSONFile(m.metadataGatherer, filepath.Join(reportDir, file.Name()))
-			} else if file.Name() == addonMetadataFile {
-				m.processJSONFile(m.addonGatherer, filepath.Join(reportDir, file.Name()))
+			} else if file.Name() == metadata.CustomMetadataFile {
+				m.processJSONFile(m.metadataGatherer, filepath.Join(reportDir, file.Name()), "")
 			}
 		}
 	}
@@ -181,12 +182,13 @@ func (m *Metrics) processJUnitXMLFile(phase string, junitFile string) (err error
 // processJSONFile takes a JSON file and converts it into prometheus metrics of the general format:
 //
 // cicd_[addon_]metadata{environment="prod", install_version="install-version",
-//                       metadata_name="full.path.to.field.separated.by.periiod", upgrade_version="upgrade-version"} userAssignedValue
+//                       metadata_name="full.path.to.field.separated.by.periiod",
+//                       upgrade_version="upgrade-version"[, phase="install"]} userAssignedValue
 //
 // Notes: Only numerical values or strings that look like numerical values will be captured. This is because
 //        Prometheus can only have numerical metric values and capturing strings through the use of labels is
 //        of questionable value.
-func (m *Metrics) processJSONFile(gatherer *prometheus.GaugeVec, jsonFile string) (err error) {
+func (m *Metrics) processJSONFile(gatherer *prometheus.GaugeVec, jsonFile string, phase string) (err error) {
 	data, err := ioutil.ReadFile(jsonFile)
 	if err != nil {
 		return err
@@ -198,18 +200,18 @@ func (m *Metrics) processJSONFile(gatherer *prometheus.GaugeVec, jsonFile string
 		return err
 	}
 
-	m.jsonToPrometheusOutput(gatherer, jsonOutput.(map[string]interface{}), []string{})
+	m.jsonToPrometheusOutput(gatherer, phase, jsonOutput.(map[string]interface{}), []string{})
 
 	return nil
 }
 
 // jsonToPrometheusOutput will take the JSON and write it into the gauge vector.
-func (m *Metrics) jsonToPrometheusOutput(gatherer *prometheus.GaugeVec, jsonOutput map[string]interface{}, context []string) {
+func (m *Metrics) jsonToPrometheusOutput(gatherer *prometheus.GaugeVec, phase string, jsonOutput map[string]interface{}, context []string) {
 	for k, v := range jsonOutput {
 		fullContext := append(context, k)
 		switch jsonObject := v.(type) {
 		case map[string]interface{}:
-			m.jsonToPrometheusOutput(gatherer, jsonObject, fullContext)
+			m.jsonToPrometheusOutput(gatherer, phase, jsonObject, fullContext)
 		default:
 			metadataName := strings.Join(fullContext, ".")
 
@@ -222,7 +224,11 @@ func (m *Metrics) jsonToPrometheusOutput(gatherer *prometheus.GaugeVec, jsonOutp
 
 			// We're only concerned with tracking float values in Prometheus as they're the only thing we can measure
 			if floatValue, err := strconv.ParseFloat(stringValue, 64); err == nil {
-				gatherer.WithLabelValues(m.cfg.Cluster.Version, m.cfg.Upgrade.ReleaseName, m.cfg.OCM.Env, metadataName).Add(floatValue)
+				if phase != "" {
+					gatherer.WithLabelValues(m.cfg.Cluster.Version, m.cfg.Upgrade.ReleaseName, m.cfg.OCM.Env, metadataName, phase).Add(floatValue)
+				} else {
+					gatherer.WithLabelValues(m.cfg.Cluster.Version, m.cfg.Upgrade.ReleaseName, m.cfg.OCM.Env, metadataName).Add(floatValue)
+				}
 			}
 		}
 	}
