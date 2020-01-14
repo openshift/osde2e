@@ -23,13 +23,15 @@ func init() {
 
 }
 func TestE2E(t *testing.T) {
-	// force overwriting the attributes to make sure the cluster with the specified cluster will be created.
+	// force overwriting the attributes to make sure the cluster with the specified version will be created.
 	cfg := config.Cfg
 	cfg.Kubeconfig.Path = ""
 	cfg.Cluster.ID = ""
+	cfg.Cluster.Version = ""
 	cfg.Cluster.DestroyAfterTest = true
 
-	versionList, err := common.GetNewestAndOldestVersions(cfg)
+	versionList, err := common.GetEnabledNoDefaultVersions(cfg)
+	versionList = []string{}
 	if err != nil {
 		log.Printf("Failed to do clusterImageSets testing: %+v\n", err)
 	} else {

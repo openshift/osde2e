@@ -1,4 +1,4 @@
-package latest
+package middle
 
 import (
 	"flag"
@@ -23,24 +23,24 @@ func init() {
 
 }
 func TestE2E(t *testing.T) {
-	// force overwriting the attributes to make sure the cluster with the specified cluster will be created.
+	// force overwriting the attributes to make sure the cluster with the specified version will be created.
 	cfg := config.Cfg
 	cfg.Kubeconfig.Path = ""
 	cfg.Cluster.ID = ""
 	cfg.Cluster.Version = ""
 	cfg.Cluster.DestroyAfterTest = true
 
-	versionList, err := common.GetNewestAndOldestVersions(cfg)
+	versionList, err := common.GetEnabledNoDefaultVersions(cfg)
 	if err != nil {
-		log.Printf("Failed to do clusterImageSets testing: %+v\n", err)
+		log.Printf("Abort doing clusterImageSets testing: %+v\n", err)
 	} else {
 		if len(versionList) == 0 {
 			log.Printf("Skip doing clusterImageSets testing: Default version is covered by the regular testing\n")
 		} else if len(versionList) == 1 {
 			log.Printf("Skip doing clusterImageSets testing: The version %s is covered by the oldest version testing\n", versionList[0])
 		} else {
-			log.Printf("Start doing clusterImageSets testing with the specified version %+v\n", versionList[1])
-			cfg.Cluster.Version = versionList[1]
+			log.Printf("Start doing clusterImageSets testing with the specified version %+v\n", versionList[len(versionList)/2])
+			cfg.Cluster.Version = versionList[len(versionList)/2]
 			common.RunE2ETests(t, cfg)
 		}
 	}
