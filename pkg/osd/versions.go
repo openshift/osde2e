@@ -82,6 +82,30 @@ func (u *OSD) LatestVersion(major, minor int64, suffix string) (string, error) {
 	return VersionPrefix + latest.Original(), nil
 }
 
+// EnabledNoDefaultVersionList returns a sorted list of the enabled but not default versions currently offered by OSD.
+func (u *OSD) EnabledNoDefaultVersionList() ([]string, error) {
+	semverVersions, err := u.getSemverList(-1, -1, "")
+	if err != nil {
+		return nil, fmt.Errorf("couldn't created sorted version list: %v", err)
+	}
+
+	defaultVersion, err := u.DefaultVersion()
+	if err != nil {
+		return nil, fmt.Errorf("couldn't retrieve the default version: %v", err)
+	}
+
+	var versionList []string
+	for _, sv := range semverVersions {
+		version := VersionPrefix + sv.Original()
+		if strings.Compare(version, defaultVersion) == 0 {
+			continue
+		}
+		versionList = append(versionList, version)
+	}
+
+	return versionList, nil
+}
+
 // getSemverList as sorted semvers containing str for major and minor versions. Negative versions match all.
 func (u *OSD) getSemverList(major, minor int64, str string) (versions []*semver.Version, err error) {
 	page := 1

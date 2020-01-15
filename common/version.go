@@ -134,3 +134,13 @@ func setupUpgradeVersion(cfg *config.Config, osd *osd.OSD) (err error) {
 		cfg.Cluster.Version, cfg.Upgrade.ReleaseName, cfg.Upgrade.ReleaseStream)
 	return
 }
+
+// GetEnabledNoDefaultVersions returns a sorted list of the enabled but not default versions currently offered by OSD
+func GetEnabledNoDefaultVersions(cfg *config.Config) ([]string, error) {
+	OSD, err := osd.New(cfg.OCM.Token, cfg.OCM.Env, cfg.OCM.Debug)
+	if err != nil {
+		return nil, fmt.Errorf("could not setup OSD: %v", err)
+	}
+
+	return OSD.EnabledNoDefaultVersionList()
+}
