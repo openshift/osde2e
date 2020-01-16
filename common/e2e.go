@@ -8,6 +8,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/onsi/ginkgo"
@@ -118,8 +119,12 @@ func RunE2ETests(t *testing.T, cfg *config.Config) {
 			}
 
 			if cfg.Tests.UploadMetrics {
-				if err := uploadFileToMetricsBucket(cfg, filepath.Join(cfg.ReportDir, prometheusFilename)); err != nil {
-					t.Errorf("error while uploading prometheus metrics: %v", err)
+				if strings.HasPrefix(cfg.JobName, "rehearse-") {
+					log.Printf("Job %s is a rehearsal, so metrics upload is being skipped.", cfg.JobName)
+				} else {
+					if err := uploadFileToMetricsBucket(cfg, filepath.Join(cfg.ReportDir, prometheusFilename)); err != nil {
+						t.Errorf("error while uploading prometheus metrics: %v", err)
+					}
 				}
 			}
 		}
