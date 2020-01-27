@@ -98,9 +98,7 @@ Core tests and Operator tests reside within the OSDe2e repo and are maintained b
 
 Third-party (Addon) tests are built as containers that spin up and report back results to OSDe2e. These containers are built and maintained by external groups looking to get CI signal for their product within OSD. The definition of a third-party test is maintained within the `managed-tenants` repo and is returned via the Add-Ons API.
 
-Third-party testing, unlike the previous test types, occurs within the `ci-int` Jenkins instance so non-SD groups have a single pane of glass for managing things within Service Delivery.
- * Third Party Tests
-   * ClusterLogging
+For more information please see the [Addon Testing Guide](docs/Addons.md)
 
 ## Operator Testing
 Much like the different phases of operators laid out on OperatorHub, Operator tests using OSDe2e falls under one of a few categories:
