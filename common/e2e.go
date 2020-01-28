@@ -2,6 +2,7 @@
 package common
 
 import (
+	"encoding/xml"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -168,6 +169,40 @@ func runTestsInPhase(t *testing.T, cfg *config.Config, phase string, description
 	phaseReportPath := filepath.Join(phaseDirectory, fmt.Sprintf("junit_%v.xml", cfg.Suffix))
 	phaseReporter := reporters.NewJUnitReporter(phaseReportPath)
 	ginkgo.RunSpecsWithDefaultAndCustomReporters(t, description, []ginkgo.Reporter{phaseReporter})
+
+	files, err := ioutil.ReadDir(phaseDirectory)
+	if err != nil {
+		t.Fatalf("error reading phase directory: %s", err.Error())
+	}
+
+	for _, file := range files {
+		if file != nil {
+			// Process the jUnit XML result files
+			if junitFileRegex.MatchString(file.Name()) {
+				data, err := ioutil.ReadFile(filepath.Join(phaseDirectory, file.Name()))
+				if err != nil {
+					t.Fatalf("error opening junit file %s: %s", file.Name(), err.Error())
+				}
+				// Use Ginkgo's JUnitTestSuite to unmarshal the JUnit XML file
+				var testSuite reporters.JUnitTestSuite
+
+				if err = xml.Unmarshal(data, &testSuite); err != nil {
+					t.Fatalf("error unmarshalling junit xml: %s", err.Error())
+				}
+
+				for i, testcase := range testSuite.TestCases {
+					testSuite.TestCases[i].Name = fmt.Sprintf("[%s] %s", phase, testcase.Name)
+				}
+
+				data, err = xml.Marshal(&testSuite)
+
+				err = ioutil.WriteFile(filepath.Join(phaseDirectory, file.Name()), data, 0644)
+				if err != nil {
+					t.Fatalf("error writing to junit file: %s", err.Error())
+				}
+			}
+		}
+	}
 }
 
 // checkBeforeMetricsGeneration runs a variety of checks before generating metrics.
