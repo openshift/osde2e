@@ -179,7 +179,7 @@ func runTestsInPhase(t *testing.T, cfg *config.Config, phase string, description
 		if file != nil {
 			// Process the jUnit XML result files
 			if junitFileRegex.MatchString(file.Name()) {
-				data, err := ioutil.ReadFile(file.Name())
+				data, err := ioutil.ReadFile(filepath.Join(phaseDirectory, file.Name()))
 				if err != nil {
 					t.Fatalf("error opening junit file %s: %s", file.Name(), err.Error())
 				}
@@ -196,7 +196,7 @@ func runTestsInPhase(t *testing.T, cfg *config.Config, phase string, description
 
 				data, err = xml.Marshal(&testSuite)
 
-				err = ioutil.WriteFile(file.Name(), data, 0644)
+				err = ioutil.WriteFile(filepath.Join(phaseDirectory, file.Name()), data, 0644)
 				if err != nil {
 					t.Fatalf("error writing to junit file: %s", err.Error())
 				}
