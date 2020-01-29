@@ -18,6 +18,9 @@ import (
 const (
 	configMapCreateTimeout = 30 * time.Second
 	podCreateTimeout       = 90 * time.Second
+	podPendingTimeout      = 20 // 20 Iterations
+	fastPoll               = 5 * time.Second
+	slowPoll               = 15 * time.Second
 
 	resultsPort     = 8000
 	resultsPortName = "results"
@@ -111,7 +114,7 @@ func (r *Runner) createPod() (pod *kubev1.Pod, err error) {
 			return nil, fmt.Errorf("error creating ConfigMap: %v", err)
 		}
 
-		err = wait.PollImmediate(5*time.Second, configMapCreateTimeout, func() (done bool, err error) {
+		err = wait.PollImmediate(fastPoll, configMapCreateTimeout, func() (done bool, err error) {
 			if configMap, err = r.Kube.CoreV1().ConfigMaps(r.Namespace).Get(configMap.Name, metav1.GetOptions{}); err != nil {
 				log.Printf("Error creating %s config map: %v", configMap.Name, err)
 			}
@@ -144,7 +147,7 @@ func (r *Runner) createPod() (pod *kubev1.Pod, err error) {
 
 	// retry until Pod can be created or timeout occurs
 	var createdPod *kubev1.Pod
-	err = wait.PollImmediate(5*time.Second, podCreateTimeout, func() (done bool, err error) {
+	err = wait.PollImmediate(fastPoll, podCreateTimeout, func() (done bool, err error) {
 		if createdPod, err = r.Kube.CoreV1().Pods(r.Namespace).Create(pod); err != nil {
 			log.Printf("Error creating %s runner Pod: %v", r.Name, err)
 		}
@@ -155,7 +158,7 @@ func (r *Runner) createPod() (pod *kubev1.Pod, err error) {
 
 func (r *Runner) waitForPodRunning(pod *kubev1.Pod) error {
 	var pendingCount int = 0
-	return wait.PollImmediate(10*time.Second, 3*time.Minute, func() (done bool, err error) {
+	return wait.PollImmediate(fastPoll, 3*time.Minute, func() (done bool, err error) {
 		pod, err = r.Kube.CoreV1().Pods(pod.Namespace).Get(pod.Name, metav1.GetOptions{})
 		if err != nil && !kerror.IsNotFound(err) {
 			return
@@ -167,7 +170,7 @@ func (r *Runner) waitForPodRunning(pod *kubev1.Pod) error {
 			done = true
 		} else {
 			pendingCount++
-			if pendingCount > 20 {
+			if pendingCount > podPendingTimeout {
 				err = errors.New("timed out waiting for pod to start")
 			}
 			r.Printf("Waiting for Pod '%s/%s' to start Running...", pod.Namespace, pod.Name)

@@ -34,7 +34,7 @@ func (r *Runner) createService(pod *kubev1.Pod) (svc *kubev1.Service, err error)
 func (r *Runner) waitForCompletion(timeoutInSeconds int) error {
 	var endpoints *kubev1.Endpoints
 	var pendingCount int = 0
-	return wait.PollImmediate(15*time.Second, time.Duration(timeoutInSeconds)*time.Second, func() (done bool, err error) {
+	return wait.PollImmediate(slowPoll, time.Duration(timeoutInSeconds)*time.Second, func() (done bool, err error) {
 		endpoints, err = r.Kube.CoreV1().Endpoints(r.svc.Namespace).Get(r.svc.Name, metav1.GetOptions{})
 		if err != nil && !kerror.IsNotFound(err) {
 			r.Printf("Encountered error getting endpoint '%s/%s': %v", r.svc.Namespace, r.svc.Name, err)
@@ -58,7 +58,7 @@ func (r *Runner) waitForCompletion(timeoutInSeconds int) error {
 				return true, nil
 			} else if pod.Status.Phase == kubev1.PodPending {
 				pendingCount++
-				if pendingCount > 20 {
+				if pendingCount > podPendingTimeout {
 					return false, fmt.Errorf("timed out waiting for pod to start")
 				}
 			}
