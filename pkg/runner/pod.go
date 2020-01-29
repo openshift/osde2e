@@ -154,17 +154,22 @@ func (r *Runner) createPod() (pod *kubev1.Pod, err error) {
 }
 
 func (r *Runner) waitForPodRunning(pod *kubev1.Pod) error {
+	var pendingCount int = 0
 	return wait.PollImmediate(10*time.Second, 3*time.Minute, func() (done bool, err error) {
 		pod, err = r.Kube.CoreV1().Pods(pod.Namespace).Get(pod.Name, metav1.GetOptions{})
 		if err != nil && !kerror.IsNotFound(err) {
 			return
 		} else if pod == nil {
 			err = errors.New("pod can't be nil")
-		} else if pod.Status.Phase == kubev1.PodFailed {
+		} else if pod.Status.Phase == kubev1.PodFailed || pod.Status.Phase == kubev1.PodUnknown {
 			err = errors.New("failed waiting for Pod: the Pod has failed")
 		} else if pod.Status.Phase == kubev1.PodRunning {
 			done = true
 		} else {
+			pendingCount++
+			if pendingCount > 20 {
+				err = errors.New("timed out waiting for pod to start")
+			}
 			r.Printf("Waiting for Pod '%s/%s' to start Running...", pod.Namespace, pod.Name)
 		}
 		return
