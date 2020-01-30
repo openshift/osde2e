@@ -8,6 +8,7 @@ import (
 	"github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
+	"github.com/openshift/osde2e/pkg/config"
 	"github.com/openshift/osde2e/pkg/helper"
 
 	appsv1 "k8s.io/api/apps/v1"
@@ -23,7 +24,7 @@ func checkClusterServiceVersion(h *helper.H, namespace, name string) {
 			csvs, err := pollCsvList(h, namespace, name)
 			Expect(err).ToNot(HaveOccurred(), "failed fetching the clusterServiceVersions")
 			Expect(csvs).NotTo(BeNil())
-		}, float64(h.Tests.PollingTimeout))
+		}, float64(config.Instance.Tests.PollingTimeout))
 	})
 }
 
@@ -34,7 +35,7 @@ func checkConfigMapLockfile(h *helper.H, namespace, operatorLockFile string) {
 			// Wait for lockfile to signal operator is active
 			err := pollLockFile(h, namespace, operatorLockFile)
 			Expect(err).ToNot(HaveOccurred(), "failed fetching the configMap lockfile")
-		}, float64(h.Tests.PollingTimeout))
+		}, float64(config.Instance.Tests.PollingTimeout))
 	})
 }
 
@@ -45,7 +46,7 @@ func checkDeployment(h *helper.H, namespace string, name string, defaultDesiredR
 			deployment, err := pollDeployment(h, namespace, name)
 			Expect(err).ToNot(HaveOccurred(), "failed fetching deployment")
 			Expect(deployment).NotTo(BeNil(), "deployment is nil")
-		}, float64(h.Tests.PollingTimeout))
+		}, float64(config.Instance.Tests.PollingTimeout))
 		ginkgo.It("should have all desired replicas ready", func() {
 			deployment, err := pollDeployment(h, namespace, name)
 			Expect(err).ToNot(HaveOccurred(), "failed fetching deployment")
@@ -58,7 +59,7 @@ func checkDeployment(h *helper.H, namespace string, name string, defaultDesiredR
 
 			// Desired replica count should match ready replica count
 			Expect(readyReplicas).To(BeNumerically("==", desiredReplicas), "All desired replicas should be ready.")
-		}, float64(h.Tests.PollingTimeout))
+		}, float64(config.Instance.Tests.PollingTimeout))
 	})
 }
 
@@ -70,7 +71,7 @@ func checkClusterRoles(h *helper.H, clusterRoles []string) {
 				_, err := h.Kube().RbacV1().ClusterRoles().Get(clusterRoleName, metav1.GetOptions{})
 				Expect(err).ToNot(HaveOccurred(), "failed to get clusterRole %v\n", clusterRoleName)
 			}
-		}, float64(h.Tests.PollingTimeout))
+		}, float64(config.Instance.Tests.PollingTimeout))
 	})
 }
 
@@ -82,7 +83,7 @@ func checkClusterRoleBindings(h *helper.H, clusterRoleBindings []string) {
 				err := pollClusterRoleBinding(h, clusterRoleBindingName)
 				Expect(err).ToNot(HaveOccurred(), "failed to get clusterRoleBinding %v\n", clusterRoleBindingName)
 			}
-		}, float64(h.Tests.PollingTimeout))
+		}, float64(config.Instance.Tests.PollingTimeout))
 	})
 }
 
@@ -94,7 +95,7 @@ func checkRole(h *helper.H, namespace string, roles []string) {
 				_, err := h.Kube().RbacV1().Roles(namespace).Get(roleName, metav1.GetOptions{})
 				Expect(err).NotTo(HaveOccurred(), "failed to get role %v\n", roleName)
 			}
-		}, float64(h.Tests.PollingTimeout))
+		}, float64(config.Instance.Tests.PollingTimeout))
 	})
 
 }
@@ -107,7 +108,7 @@ func checkRoleBindings(h *helper.H, namespace string, roleBindings []string) {
 				err := pollRoleBinding(h, namespace, roleBindingName)
 				Expect(err).NotTo(HaveOccurred(), "failed to get roleBinding %v\n", roleBindingName)
 			}
-		}, float64(h.Tests.PollingTimeout))
+		}, float64(config.Instance.Tests.PollingTimeout))
 	})
 }
 func pollClusterRoleBinding(h *helper.H, clusterRoleBindingName string) error {
@@ -121,7 +122,7 @@ func pollClusterRoleBinding(h *helper.H, clusterRoleBindingName string) error {
 	interval := 5
 
 	// convert time.Duration type
-	timeoutDuration := time.Duration(h.Tests.PollingTimeout) * time.Minute
+	timeoutDuration := time.Duration(config.Instance.Tests.PollingTimeout) * time.Minute
 	intervalDuration := time.Duration(interval) * time.Second
 
 	start := time.Now()
@@ -160,7 +161,7 @@ func pollRoleBinding(h *helper.H, projectName string, roleBindingName string) er
 	interval := 5
 
 	// convert time.Duration type
-	timeoutDuration := time.Duration(h.Tests.PollingTimeout) * time.Minute
+	timeoutDuration := time.Duration(config.Instance.Tests.PollingTimeout) * time.Minute
 	intervalDuration := time.Duration(interval) * time.Second
 
 	start := time.Now()
@@ -200,7 +201,7 @@ func pollLockFile(h *helper.H, namespace, operatorLockFile string) error {
 	interval := 30
 
 	// convert time.Duration type
-	timeoutDuration := time.Duration(h.Tests.PollingTimeout) * time.Minute
+	timeoutDuration := time.Duration(config.Instance.Tests.PollingTimeout) * time.Minute
 	intervalDuration := time.Duration(interval) * time.Second
 
 	start := time.Now()
@@ -241,7 +242,7 @@ func pollDeployment(h *helper.H, namespace, deploymentName string) (*appsv1.Depl
 	interval := 5
 
 	// convert time.Duration type
-	timeoutDuration := time.Duration(h.Tests.PollingTimeout) * time.Minute
+	timeoutDuration := time.Duration(config.Instance.Tests.PollingTimeout) * time.Minute
 	intervalDuration := time.Duration(interval) * time.Second
 
 	start := time.Now()
@@ -283,7 +284,7 @@ func pollCsvList(h *helper.H, namespace, csvDisplayName string) (*operatorv1.Clu
 	interval := 5
 
 	// convert time.Duration type
-	timeoutDuration := time.Duration(h.Tests.PollingTimeout) * time.Minute
+	timeoutDuration := time.Duration(config.Instance.Tests.PollingTimeout) * time.Minute
 	intervalDuration := time.Duration(interval) * time.Second
 
 	start := time.Now()

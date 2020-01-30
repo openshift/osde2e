@@ -8,6 +8,7 @@ import (
 	"github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
+	"github.com/openshift/osde2e/pkg/config"
 	"github.com/openshift/osde2e/pkg/helper"
 	"github.com/openshift/osde2e/pkg/runner"
 )
@@ -28,7 +29,7 @@ var _ = ginkgo.Describe("Addon Test Harness", func() {
 	defer ginkgo.GinkgoRecover()
 	h := helper.New()
 
-	for _, harness := range h.Addons.TestHarnesses {
+	for _, harness := range config.Instance.Addons.TestHarnesses {
 		if harness != "" {
 			addonTimeoutInSeconds := 3600
 			ginkgo.It("should run until completion", func() {

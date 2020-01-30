@@ -1,36 +1,26 @@
 package middle
 
 import (
-	"flag"
 	"log"
 	"testing"
 
 	"github.com/openshift/osde2e/common"
 	"github.com/openshift/osde2e/pkg/config"
+	"github.com/openshift/osde2e/pkg/state"
 	// import suites to be tested
 )
 
-func init() {
-	var filename string
-	testing.Init()
-
-	cfg := config.Cfg
-
-	flag.StringVar(&filename, "e2e-config", ".osde2e.yaml", "Config file for osde2e")
-	flag.Parse()
-
-	cfg.LoadFromYAML(filename)
-
-}
 func TestMiddleImageSet(t *testing.T) {
 	// force overwriting the attributes to make sure the cluster with the specified version will be created.
-	cfg := config.Cfg
-	cfg.Kubeconfig.Path = ""
-	cfg.Cluster.ID = ""
-	cfg.Cluster.Version = ""
-	cfg.Cluster.DestroyAfterTest = true
+	cfg := config.Instance
+	state := state.Instance
 
-	versionList, err := common.GetEnabledNoDefaultVersions(cfg)
+	cfg.Kubeconfig.Path = ""
+	cfg.Cluster.DestroyAfterTest = true
+	state.Cluster.ID = ""
+	state.Cluster.Version = ""
+
+	versionList, err := common.GetEnabledNoDefaultVersions()
 	if err != nil {
 		log.Printf("Abort doing clusterImageSets testing: %+v\n", err)
 	} else {
@@ -40,21 +30,23 @@ func TestMiddleImageSet(t *testing.T) {
 			log.Printf("Skip doing clusterImageSets testing: The version %s is covered by the oldest version testing\n", versionList[0])
 		} else {
 			log.Printf("Start doing clusterImageSets testing with the specified version %+v\n", versionList[len(versionList)/2])
-			cfg.Cluster.Version = versionList[len(versionList)/2]
-			common.RunE2ETests(t, cfg)
+			state.Cluster.Version = versionList[len(versionList)/2]
+			common.RunE2ETests(t)
 		}
 	}
 }
 
 func TestOldestImageSet(t *testing.T) {
 	// force overwriting the attributes to make sure the cluster with the specified version will be created.
-	cfg := config.Cfg
-	cfg.Kubeconfig.Path = ""
-	cfg.Cluster.ID = ""
-	cfg.Cluster.Version = ""
-	cfg.Cluster.DestroyAfterTest = true
+	cfg := config.Instance
+	state := state.Instance
 
-	versionList, err := common.GetEnabledNoDefaultVersions(cfg)
+	cfg.Kubeconfig.Path = ""
+	cfg.Cluster.DestroyAfterTest = true
+	state.Cluster.ID = ""
+	state.Cluster.Version = ""
+
+	versionList, err := common.GetEnabledNoDefaultVersions()
 	if err != nil {
 		log.Printf("Failed to do clusterImageSets testing: %+v\n", err)
 	} else {
@@ -62,8 +54,8 @@ func TestOldestImageSet(t *testing.T) {
 			log.Printf("Skip doing clusterImageSets testing: Default version is covered by the regular testing\n")
 		} else {
 			log.Printf("Start doing clusterImageSets testing with the specified version %+v\n", versionList[0])
-			cfg.Cluster.Version = versionList[0]
-			common.RunE2ETests(t, cfg)
+			state.Cluster.Version = versionList[0]
+			common.RunE2ETests(t)
 		}
 	}
 }

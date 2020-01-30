@@ -3,6 +3,7 @@ package operators
 import (
 	"github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"github.com/openshift/osde2e/pkg/config"
 	"github.com/openshift/osde2e/pkg/helper"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -32,7 +33,7 @@ var _ = ginkgo.Describe("[OSD] Curator Operator", func() {
 				Expect(ok).Should(Equal(true))
 				Expect(registryNamespace).Should(HavePrefix("curated"))
 			}
-		}, float64(h.Tests.PollingTimeout))
+		}, float64(config.Instance.Tests.PollingTimeout))
 
 	})
 })

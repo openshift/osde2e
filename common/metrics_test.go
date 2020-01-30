@@ -10,12 +10,13 @@ import (
 
 	"github.com/openshift/osde2e/pkg/config"
 	"github.com/openshift/osde2e/pkg/metadata"
+	"github.com/openshift/osde2e/pkg/state"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
 func TestProcessJUnitXMLFile(t *testing.T) {
-	config.Cfg.Cluster.Version = "install-version"
-	config.Cfg.Upgrade.ReleaseName = "upgrade-version"
+	state.Instance.Cluster.Version = "install-version"
+	state.Instance.Upgrade.ReleaseName = "upgrade-version"
 	tests := []struct {
 		testName       string
 		phase          string
@@ -74,7 +75,7 @@ cicd_jUnitResult{environment="prod",install_version="install-version",phase="ins
 	defer os.RemoveAll(tmpDir)
 
 	for _, test := range tests {
-		m := NewMetrics(config.Cfg)
+		m := NewMetrics()
 		tmpFile, err := ioutil.TempFile(tmpDir, "*")
 
 		if err != nil {
@@ -102,8 +103,8 @@ cicd_jUnitResult{environment="prod",install_version="install-version",phase="ins
 }
 
 func TestProcessJSONFile(t *testing.T) {
-	config.Cfg.Cluster.Version = "install-version"
-	config.Cfg.Upgrade.ReleaseName = "upgrade-version"
+	state.Instance.Cluster.Version = "install-version"
+	state.Instance.Upgrade.ReleaseName = "upgrade-version"
 
 	tests := []struct {
 		testName         string
@@ -167,7 +168,7 @@ cicd_addon_metadata{environment="prod",install_version="install-version",metadat
 	defer os.RemoveAll(tmpDir)
 
 	for _, test := range tests {
-		m := NewMetrics(config.Cfg)
+		m := NewMetrics()
 		tmpFile, err := ioutil.TempFile(tmpDir, "*")
 
 		if err != nil {
@@ -202,10 +203,10 @@ cicd_addon_metadata{environment="prod",install_version="install-version",metadat
 }
 
 func TestWritePrometheusFile(t *testing.T) {
-	config.Cfg.Cluster.ID = "full-test"
-	config.Cfg.Cluster.Version = "install-version"
-	config.Cfg.Upgrade.ReleaseName = "upgrade-version"
-	config.Cfg.JobName = "test-job"
+	state.Instance.Cluster.ID = "full-test"
+	state.Instance.Cluster.Version = "install-version"
+	state.Instance.Upgrade.ReleaseName = "upgrade-version"
+	config.Instance.JobName = "test-job"
 
 	type jUnitFile struct {
 		fileContents string
@@ -310,7 +311,7 @@ cicd_addon_metadata{environment="prod",install_version="install-version",metadat
 	}
 
 	for _, test := range tests {
-		m := NewMetrics(config.Cfg)
+		m := NewMetrics()
 		tmpDir, err := ioutil.TempDir("", "")
 
 		if err != nil {
@@ -358,7 +359,7 @@ cicd_addon_metadata{environment="prod",install_version="install-version",metadat
 			t.Errorf("error while processing report directory: %v", err)
 		}
 
-		if prometheusFile != fmt.Sprintf("%s.%s.metrics.prom", config.Cfg.Cluster.ID, config.Cfg.JobName) {
+		if prometheusFile != fmt.Sprintf("%s.%s.metrics.prom", state.Instance.Cluster.ID, config.Instance.JobName) {
 			t.Errorf("unexpected prometheus filename: %s", prometheusFile)
 		}
 

@@ -8,8 +8,8 @@ import (
 	"github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	"github.com/openshift/osde2e/pkg/config"
 	"github.com/openshift/osde2e/pkg/helper"
+	"github.com/openshift/osde2e/pkg/state"
 	"k8s.io/apimachinery/pkg/util/wait"
 )
 
@@ -23,7 +23,7 @@ var _ = ginkgo.Describe("Workload ("+workloadName+")", func() {
 	defer ginkgo.GinkgoRecover()
 	// setup helper
 	h := &helper.H{
-		Config: config.Cfg,
+		State: state.Instance,
 	}
 
 	ginkgo.It("should get created in the cluster", func() {

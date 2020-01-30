@@ -10,7 +10,7 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/openshift/osde2e/pkg/config"
+	"github.com/openshift/osde2e/pkg/load"
 )
 
 const (
@@ -57,14 +57,14 @@ func parseOpts(dir string) (opts map[string]Options) {
 								// only document options exposed with tags as Environment Variables
 								tagStr := strings.Trim(field.Tag.Value, "`")
 								tag := reflect.StructTag(tagStr)
-								if env, hasEnvTag := tag.Lookup(config.EnvVarTag); hasEnvTag {
-									section := tag.Get(config.SectionTag)
-									defaultValue, _ := tag.Lookup(config.DefaultTag)
+								if env, hasEnvTag := tag.Lookup(load.EnvVarTag); hasEnvTag {
+									section := tag.Get(load.SectionTag)
+									defaultValue, _ := tag.Lookup(load.DefaultTag)
 
 									opts[section] = append(opts[section], Option{
-										Variable:    env,
-										Description: field.Doc.Text(),
-										Type:        getFieldType(field.Type),
+										Variable:     env,
+										Description:  field.Doc.Text(),
+										Type:         getFieldType(field.Type),
 										DefaultValue: defaultValue,
 									})
 								}

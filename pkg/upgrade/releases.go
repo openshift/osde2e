@@ -22,10 +22,12 @@ const (
 )
 
 // LatestRelease retrieves latest release information for given releaseStream. Will use Cincinnati for stage/prod.
-func LatestRelease(cfg *config.Config, releaseStream string, useReleaseControllerForInt bool) (name, pullSpec string, err error) {
+func LatestRelease(releaseStream string, useReleaseControllerForInt bool) (name, pullSpec string, err error) {
 	var resp *http.Response
 	var data []byte
-	if cfg.OCM.Env == "int" && useReleaseControllerForInt {
+	env := config.Instance.OCM.Env
+
+	if env == "int" && useReleaseControllerForInt {
 		log.Printf("Using the release controller.")
 		latestURL := fmt.Sprintf(latestReleaseControllerURLFmt, releaseStream)
 		resp, err = http.Get(latestURL)
@@ -54,7 +56,7 @@ func LatestRelease(cfg *config.Config, releaseStream string, useReleaseControlle
 	metadata.Instance.UpgradeVersionSource = "cincinnati"
 
 	// If stage or prod, use Cincinnati instead of the release controller
-	cincinnatiFormattedURL := fmt.Sprintf(cincinnatiURLFmt, osd.Environments.Choose(cfg.OCM.Env), releaseStream)
+	cincinnatiFormattedURL := fmt.Sprintf(cincinnatiURLFmt, osd.Environments.Choose(env), releaseStream)
 
 	var req *http.Request
 

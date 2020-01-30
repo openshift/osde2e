@@ -10,7 +10,7 @@ import (
 )
 
 // CheckOperatorReadiness attempts to look at the state of all operator and returns true if things are healthy.
-func CheckOperatorReadiness(cfg *config.Config, configClient configclient.ConfigV1Interface) (bool, error) {
+func CheckOperatorReadiness(configClient configclient.ConfigV1Interface) (bool, error) {
 	success := true
 	log.Print("Checking that all Operators are running or completed...")
 
@@ -27,8 +27,8 @@ func CheckOperatorReadiness(cfg *config.Config, configClient configclient.Config
 	}
 
 	operatorSkipList := make(map[string]string)
-	if len(cfg.Tests.OperatorSkip) > 0 {
-		operatorSkipVals := strings.Split(cfg.Tests.OperatorSkip, ",")
+	if len(config.Instance.Tests.OperatorSkip) > 0 {
+		operatorSkipVals := strings.Split(config.Instance.Tests.OperatorSkip, ",")
 		for _, val := range operatorSkipVals {
 			operatorSkipList[val] = ""
 		}
