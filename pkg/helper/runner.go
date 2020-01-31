@@ -7,6 +7,7 @@ import (
 
 	. "github.com/onsi/gomega"
 
+	"github.com/openshift/osde2e/pkg/config"
 	"github.com/openshift/osde2e/pkg/runner"
 )
 
@@ -34,7 +35,7 @@ func (h *H) Runner(cmd string) *runner.Runner {
 // WriteResults dumps runner results into the ReportDir.
 func (h *H) WriteResults(results map[string][]byte) {
 	for filename, data := range results {
-		dst := filepath.Join(h.ReportDir, h.Phase, filename)
+		dst := filepath.Join(config.Instance.ReportDir, h.Phase, filename)
 		err := ioutil.WriteFile(dst, data, os.ModePerm)
 		Expect(err).NotTo(HaveOccurred())
 	}

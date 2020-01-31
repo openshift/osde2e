@@ -16,6 +16,7 @@ import (
 	"github.com/openshift/osde2e/pkg/config"
 	"github.com/openshift/osde2e/pkg/events"
 	"github.com/openshift/osde2e/pkg/metadata"
+	"github.com/openshift/osde2e/pkg/state"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/common/expfmt"
 )
@@ -40,11 +41,10 @@ type Metrics struct {
 	metadataGatherer *prometheus.GaugeVec
 	addonGatherer    *prometheus.GaugeVec
 	eventGatherer    *prometheus.CounterVec
-	cfg              *config.Config
 }
 
 // NewMetrics creates a new metrics object using the given config object.
-func NewMetrics(cfg *config.Config) *Metrics {
+func NewMetrics() *Metrics {
 	// Set up Prometheus metrics registry and gatherers
 	metricRegistry := prometheus.NewRegistry()
 	jUnitGatherer := prometheus.NewGaugeVec(
@@ -82,7 +82,6 @@ func NewMetrics(cfg *config.Config) *Metrics {
 		metadataGatherer: metadataGatherer,
 		addonGatherer:    addonGatherer,
 		eventGatherer:    eventGatherer,
-		cfg:              cfg,
 	}
 }
 
@@ -127,7 +126,7 @@ func (m *Metrics) WritePrometheusFile(reportDir string) (string, error) {
 
 	m.processEvents(m.eventGatherer)
 
-	prometheusFileName := fmt.Sprintf(prometheusFileNamePattern, m.cfg.Cluster.ID, m.cfg.JobName)
+	prometheusFileName := fmt.Sprintf(prometheusFileNamePattern, state.Instance.Cluster.ID, config.Instance.JobName)
 	output, err := m.registryToExpositionFormat()
 
 	if err != nil {
@@ -149,6 +148,9 @@ func (m *Metrics) WritePrometheusFile(reportDir string) (string, error) {
 // cicd_jUnitResult {environment="prod", install_version="install-version", result="passed|failed|skipped", phase="currentphase", suite="suitename",
 //                   testname="testname", upgrade_version="upgrade-version"} testLength
 func (m *Metrics) processJUnitXMLFile(phase string, junitFile string) (err error) {
+	cfg := config.Instance
+	state := state.Instance
+
 	data, err := ioutil.ReadFile(junitFile)
 	if err != nil {
 		return err
@@ -171,7 +173,7 @@ func (m *Metrics) processJUnitXMLFile(phase string, junitFile string) (err error
 			result = "passed"
 		}
 
-		m.jUnitGatherer.WithLabelValues(m.cfg.Cluster.Version, m.cfg.Upgrade.ReleaseName, m.cfg.OCM.Env, phase, testSuite.Name, testcase.Name, result).Add(testcase.Time)
+		m.jUnitGatherer.WithLabelValues(state.Cluster.Version, state.Upgrade.ReleaseName, cfg.OCM.Env, phase, testSuite.Name, testcase.Name, result).Add(testcase.Time)
 	}
 
 	return nil
@@ -207,6 +209,9 @@ func (m *Metrics) processJSONFile(gatherer *prometheus.GaugeVec, jsonFile string
 
 // jsonToPrometheusOutput will take the JSON and write it into the gauge vector.
 func (m *Metrics) jsonToPrometheusOutput(gatherer *prometheus.GaugeVec, phase string, jsonOutput map[string]interface{}, context []string) {
+	cfg := config.Instance
+	state := state.Instance
+
 	for k, v := range jsonOutput {
 		fullContext := append(context, k)
 		switch jsonObject := v.(type) {
@@ -225,9 +230,9 @@ func (m *Metrics) jsonToPrometheusOutput(gatherer *prometheus.GaugeVec, phase st
 			// We're only concerned with tracking float values in Prometheus as they're the only thing we can measure
 			if floatValue, err := strconv.ParseFloat(stringValue, 64); err == nil {
 				if phase != "" {
-					gatherer.WithLabelValues(m.cfg.Cluster.Version, m.cfg.Upgrade.ReleaseName, m.cfg.OCM.Env, metadataName, phase).Add(floatValue)
+					gatherer.WithLabelValues(state.Cluster.Version, state.Upgrade.ReleaseName, cfg.OCM.Env, metadataName, phase).Add(floatValue)
 				} else {
-					gatherer.WithLabelValues(m.cfg.Cluster.Version, m.cfg.Upgrade.ReleaseName, m.cfg.OCM.Env, metadataName).Add(floatValue)
+					gatherer.WithLabelValues(state.Cluster.Version, state.Upgrade.ReleaseName, cfg.OCM.Env, metadataName).Add(floatValue)
 				}
 			}
 		}
@@ -239,8 +244,11 @@ func (m *Metrics) jsonToPrometheusOutput(gatherer *prometheus.GaugeVec, phase st
 // processEvents will search the events list for events that have occurred over the osde2e run
 // and output them in the Prometheus metrics.
 func (m *Metrics) processEvents(gatherer *prometheus.CounterVec) {
+	cfg := config.Instance
+	state := state.Instance
+
 	for _, event := range events.GetListOfEvents() {
-		gatherer.WithLabelValues(m.cfg.Cluster.Version, m.cfg.Upgrade.ReleaseName, m.cfg.OCM.Env, event).Inc()
+		gatherer.WithLabelValues(state.Cluster.Version, state.Upgrade.ReleaseName, cfg.OCM.Env, event).Inc()
 	}
 }
 

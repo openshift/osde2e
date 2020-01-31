@@ -1,19 +1,8 @@
 // Package config provides the configuration for tests run as part of the osde2e suite.
 package config
 
-const (
-	// EnvVarTag is the Go struct tag containing the environment variable that sets the option.
-	EnvVarTag = "env"
-
-	// SectionTag is the Go struct tag containing the documentation section of the option.
-	SectionTag = "sect"
-
-	// DefaultTag is the Go struct tag containing the default value of the option.
-	DefaultTag = "default"
-)
-
-// Cfg is the configuration used for end to end testing.
-var Cfg = new(Config)
+// Instance is the configuration used for end to end testing.
+var Instance = new(Config)
 
 // Config dictates the behavior of cluster tests.
 type Config struct {
@@ -33,26 +22,17 @@ type Config struct {
 	JobName string `json:"job_name" env:"JOB_NAME" sect:"tests" yaml:"jobName"`
 
 	// ReportDir is the location JUnit XML results are written.
-	ReportDir string `json:"report_dir,omitempty" env:"REPORT_DIR" sect:"tests" yaml:"reportDir"`
+	ReportDir string `json:"report_dir,omitempty" env:"REPORT_DIR" sect:"tests" default:"__TMP_DIR__" yaml:"reportDir"`
 
 	// Suffix is used at the end of test names to identify them.
-	Suffix string `json:"suffix,omitempty" env:"SUFFIX" sect:"tests" yaml:"suffix"`
+	Suffix string `json:"suffix,omitempty" env:"SUFFIX" sect:"tests" default:"__RND_3__" yaml:"suffix"`
 
 	// DryRun lets you run osde2e all the way up to the e2e tests then skips them.
 	DryRun bool `json:"dry_run,omitempty" env:"DRY_RUN" sect:"tests"  yaml:"dryRun"`
-
-	// InstalledWorkloads is an internal variable used to track currently installed workloads in this test run.
-	InstalledWorkloads map[string]string
-
-	// Phase is an internal variable used to track the current set of tests being run (install, upgrade).
-	Phase string
 }
 
 // KubeConfig stores information required to talk to the Kube API
 type KubeConfig struct {
-	// Contents is the actual contents of a valid Kubeconfig
-	Contents []byte `yaml:"contents"`
-
 	// Path is the filepath of an existing Kubeconfig
 	Path string `env:"TEST_KUBECONFIG" sect:"cluster" yaml:"path"`
 }
@@ -82,25 +62,10 @@ type UpgradeConfig struct {
 
 	// ReleaseStream used to retrieve latest release images. If set, it will be used to perform an upgrade.
 	ReleaseStream string `env:"UPGRADE_RELEASE_STREAM" sect:"upgrade" yaml:"releaseStream"`
-
-	// ReleaseName is the name of the release in a release stream. UpgradeReleaseStream must be set.
-	ReleaseName string `env:"UPGRADE_RELEASE_NAME" sect:"upgrade" yaml:"releaseName"`
-
-	// Image is the release image a cluster is upgraded to. If set, it overrides the release stream and upgrades.
-	Image string `env:"UPGRADE_IMAGE" sect:"upgrade" yaml:"image"`
 }
 
 // ClusterConfig contains config information pertaining to an OSD cluster
 type ClusterConfig struct {
-	// ID identifies the cluster. If set at start, an existing cluster is tested.
-	ID string `json:"cluster_id,omitempty" env:"CLUSTER_ID" sect:"cluster" yaml:"id"`
-
-	// Name is the name of the cluster being created.
-	Name string `json:"cluster_name,omitempty" env:"CLUSTER_NAME" sect:"cluster" yaml:"name"`
-
-	// Version is the version of the cluster being deployed.
-	Version string `json:"cluster_version,omitempty" env:"CLUSTER_VERSION" sect:"version"  yaml:"version"`
-
 	// MultiAZ deploys a cluster across multiple availability zones.
 	MultiAZ bool `env:"MULTI_AZ" sect:"cluster" default:"false" yaml:"multiAZ"`
 

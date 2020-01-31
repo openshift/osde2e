@@ -7,6 +7,7 @@ import (
 
 	"github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"github.com/openshift/osde2e/pkg/config"
 	"github.com/openshift/osde2e/pkg/helper"
 
 	batchv1 "k8s.io/api/batch/v1"
@@ -34,7 +35,7 @@ var _ = ginkgo.Describe("[OSD] Prune jobs", func() {
 				Expect(err).NotTo(HaveOccurred())
 				err = waitJobComplete(h, namespace, job.Name)
 				Expect(err).NotTo(HaveOccurred())
-			}, float64(h.Tests.PollingTimeout))
+			}, float64(config.Instance.Tests.PollingTimeout))
 		}
 
 	})
@@ -67,7 +68,7 @@ func waitJobComplete(h *helper.H, namespace, jobName string) error {
 	interval := 5
 
 	// convert time.Duration type
-	timeoutDuration := time.Duration(h.Tests.PollingTimeout) * time.Minute
+	timeoutDuration := time.Duration(config.Instance.Tests.PollingTimeout) * time.Minute
 	intervalDuration := time.Duration(interval) * time.Second
 
 	start := time.Now()

@@ -11,9 +11,9 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 
-	"github.com/openshift/osde2e/pkg/config"
 	"github.com/openshift/osde2e/pkg/helper"
 	"github.com/openshift/osde2e/pkg/osd"
+	"github.com/openshift/osde2e/pkg/state"
 )
 
 const (
@@ -34,24 +34,24 @@ var (
 )
 
 // RunUpgrade uses the OpenShift extended suite to upgrade a cluster to the image provided in cfg.
-func RunUpgrade(cfg *config.Config, OSD *osd.OSD) error {
+func RunUpgrade(OSD *osd.OSD) error {
 	var done bool
 	var msg string
 	var err error
 	// setup helper
 	h := &helper.H{
-		Config: cfg,
+		State: state.Instance,
 	}
 	h.SetupNoProj()
 	defer h.Cleanup()
 
-	if cfg.Upgrade.Image != "" {
-		log.Printf("Upgrading cluster to UPGRADE_IMAGE '%s'", cfg.Upgrade.Image)
+	if h.Upgrade.Image != "" {
+		log.Printf("Upgrading cluster to UPGRADE_IMAGE '%s'", h.Upgrade.Image)
 	} else {
-		log.Printf("Upgrading cluster to cluster image set with version %s", cfg.Upgrade.ReleaseName)
+		log.Printf("Upgrading cluster to cluster image set with version %s", h.Upgrade.ReleaseName)
 	}
 
-	desired, err := TriggerUpgrade(h, cfg)
+	desired, err := TriggerUpgrade(h)
 	if err != nil {
 		return fmt.Errorf("failed triggering upgrade: %v", err)
 	}
@@ -73,7 +73,7 @@ func RunUpgrade(cfg *config.Config, OSD *osd.OSD) error {
 		return fmt.Errorf("failed to upgrade cluster: timed out after %d min waiting for upgrade", MaxDuration)
 	}
 
-	if err = OSD.WaitForClusterReady(cfg); err != nil {
+	if err = OSD.WaitForClusterReady(); err != nil {
 		return fmt.Errorf("failed waiting for cluster ready: %v", err)
 	}
 
@@ -82,7 +82,7 @@ func RunUpgrade(cfg *config.Config, OSD *osd.OSD) error {
 }
 
 // TriggerUpgrade uses a helper to perform an upgrade.
-func TriggerUpgrade(h *helper.H, cfg *config.Config) (*configv1.ClusterVersion, error) {
+func TriggerUpgrade(h *helper.H) (*configv1.ClusterVersion, error) {
 	// setup Config client
 	cfgClient := h.Cfg()
 
@@ -95,9 +95,9 @@ func TriggerUpgrade(h *helper.H, cfg *config.Config) (*configv1.ClusterVersion, 
 
 	// set requested upgrade targets
 	cVersion.Spec.DesiredUpdate = &configv1.Update{
-		Version: strings.Replace(cfg.Upgrade.ReleaseName, "openshift-v", "", -1),
-		Image:   cfg.Upgrade.Image,
-		Force:   cfg.Upgrade.Image != "", // Force if we have an image specified
+		Version: strings.Replace(h.Upgrade.ReleaseName, "openshift-v", "", -1),
+		Image:   h.Upgrade.Image,
+		Force:   h.Upgrade.Image != "", // Force if we have an image specified
 	}
 	updatedCV, err := cfgClient.ConfigV1().ClusterVersions().Update(cVersion)
 	if err != nil {

@@ -22,6 +22,7 @@ import (
 	"github.com/openshift/osde2e/pkg/helper"
 	"github.com/openshift/osde2e/pkg/metadata"
 	"github.com/openshift/osde2e/pkg/osd"
+	"github.com/openshift/osde2e/pkg/state"
 	"github.com/openshift/osde2e/pkg/upgrade"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -38,23 +39,17 @@ const (
 // OSD is used to deploy and manage clusters.
 var OSD *osd.OSD
 
-// RunE2ETests runs the osde2e test suite using the given cfg.
-func RunE2ETests(t *testing.T, cfg *config.Config) {
+// RunE2ETests runs the osde2e test suite using.
+func RunE2ETests(t *testing.T) {
 	var err error
 	gomega.RegisterFailHandler(ginkgo.Fail)
+
+	cfg := config.Instance
+
 	ginkgoConfig.GinkgoConfig.SkipString = cfg.Tests.GinkgoSkip
 	ginkgoConfig.GinkgoConfig.FocusString = cfg.Tests.GinkgoFocus
 
-	// set defaults
-	if cfg.Suffix == "" {
-		cfg.Suffix = randomStr(3)
-	}
-
-	if cfg.ReportDir == "" {
-		if dir, err := ioutil.TempDir("", "osde2e"); err == nil {
-			cfg.ReportDir = dir
-		}
-	}
+	state := state.Instance
 
 	// setup OSD unless Kubeconfig is present
 	if len(cfg.Kubeconfig.Path) > 0 {
@@ -67,8 +62,8 @@ func RunE2ETests(t *testing.T, cfg *config.Config) {
 		metadata.Instance.Environment = cfg.OCM.Env
 
 		// check that enough quota exists for this test if creating cluster
-		if len(cfg.Cluster.ID) == 0 {
-			if enoughQuota, err := OSD.CheckQuota(cfg); err != nil {
+		if len(state.Cluster.ID) == 0 {
+			if enoughQuota, err := OSD.CheckQuota(); err != nil {
 				log.Printf("Failed to check if enough quota is available: %v", err)
 			} else if !enoughQuota {
 				t.Fatal("Currently not enough quota exists to run this test, failing...")
@@ -76,7 +71,7 @@ func RunE2ETests(t *testing.T, cfg *config.Config) {
 		}
 
 		// configure cluster and upgrade versions
-		if err = ChooseVersions(cfg, OSD); err != nil {
+		if err = ChooseVersions(OSD); err != nil {
 			t.Fatalf("failed to configure versions: %v", err)
 		}
 	}
@@ -89,19 +84,19 @@ func RunE2ETests(t *testing.T, cfg *config.Config) {
 	if !cfg.DryRun {
 		log.Println("Running e2e tests...")
 
-		runTestsInPhase(t, cfg, "install", "OSD e2e suite")
+		runTestsInPhase(t, "install", "OSD e2e suite")
 
 		// upgrade cluster if requested
-		if cfg.Upgrade.Image != "" || cfg.Upgrade.ReleaseStream != "" {
-			if cfg.Kubeconfig.Contents != nil {
-				if err = upgrade.RunUpgrade(cfg, OSD); err != nil {
+		if state.Upgrade.Image != "" || cfg.Upgrade.ReleaseStream != "" {
+			if state.Kubeconfig.Contents != nil {
+				if err = upgrade.RunUpgrade(OSD); err != nil {
 					events.RecordEvent(events.UpgradeFailed)
 					t.Errorf("error performing upgrade: %v", err)
 				}
 				events.RecordEvent(events.UpgradeSuccessful)
 
 				log.Println("Running e2e tests POST-UPGRADE...")
-				runTestsInPhase(t, cfg, "upgrade", "OSD e2e suite post-upgrade")
+				runTestsInPhase(t, "upgrade", "OSD e2e suite post-upgrade")
 			} else {
 				log.Println("No Kubeconfig found from initial cluster setup. Unable to run upgrade.")
 			}
@@ -112,9 +107,9 @@ func RunE2ETests(t *testing.T, cfg *config.Config) {
 				t.Errorf("error while writing the custom metadata: %v", err)
 			}
 
-			checkBeforeMetricsGeneration(cfg)
+			checkBeforeMetricsGeneration()
 
-			prometheusFilename, err := NewMetrics(cfg).WritePrometheusFile(cfg.ReportDir)
+			prometheusFilename, err := NewMetrics().WritePrometheusFile(cfg.ReportDir)
 			if err != nil {
 				t.Errorf("error while writing prometheus metrics: %v", err)
 			}
@@ -123,7 +118,7 @@ func RunE2ETests(t *testing.T, cfg *config.Config) {
 				if strings.HasPrefix(cfg.JobName, "rehearse-") {
 					log.Printf("Job %s is a rehearsal, so metrics upload is being skipped.", cfg.JobName)
 				} else {
-					if err := uploadFileToMetricsBucket(cfg, filepath.Join(cfg.ReportDir, prometheusFilename)); err != nil {
+					if err := uploadFileToMetricsBucket(filepath.Join(cfg.ReportDir, prometheusFilename)); err != nil {
 						t.Errorf("error while uploading prometheus metrics: %v", err)
 					}
 				}
@@ -132,18 +127,18 @@ func RunE2ETests(t *testing.T, cfg *config.Config) {
 
 		if OSD != nil {
 			if cfg.Cluster.DestroyAfterTest {
-				log.Printf("Destroying cluster '%s'...", cfg.Cluster.ID)
-				if err = OSD.DeleteCluster(cfg.Cluster.ID); err != nil {
+				log.Printf("Destroying cluster '%s'...", state.Cluster.ID)
+				if err = OSD.DeleteCluster(state.Cluster.ID); err != nil {
 					t.Errorf("error deleting cluster: %s", err.Error())
 				}
 			} else {
-				log.Printf("For debugging, please look for cluster ID %s in environment %s", cfg.Cluster.ID, cfg.OCM.Env)
+				log.Printf("For debugging, please look for cluster ID %s in environment %s", state.Cluster.ID, cfg.OCM.Env)
 			}
 		} else {
 			// If we run against an arbitrary cluster and not a ci-specific cluster
 			// we need to clean up our workload tests manually.
 			h := &helper.H{
-				Config: cfg,
+				State: state,
 			}
 			h.SetupNoProj()
 
@@ -158,8 +153,11 @@ func RunE2ETests(t *testing.T, cfg *config.Config) {
 	}
 }
 
-func runTestsInPhase(t *testing.T, cfg *config.Config, phase string, description string) {
-	cfg.Phase = phase
+func runTestsInPhase(t *testing.T, phase string, description string) {
+	cfg := config.Instance
+	state := state.Instance
+
+	state.Phase = phase
 	phaseDirectory := filepath.Join(cfg.ReportDir, phase)
 	if _, err := os.Stat(phaseDirectory); os.IsNotExist(err) {
 		if err := os.Mkdir(phaseDirectory, os.FileMode(0755)); err != nil {
@@ -206,9 +204,9 @@ func runTestsInPhase(t *testing.T, cfg *config.Config, phase string, description
 }
 
 // checkBeforeMetricsGeneration runs a variety of checks before generating metrics.
-func checkBeforeMetricsGeneration(cfg *config.Config) error {
+func checkBeforeMetricsGeneration() error {
 	// Check for hive-log.txt
-	if _, err := os.Stat(filepath.Join(cfg.ReportDir, hiveLog)); os.IsNotExist(err) {
+	if _, err := os.Stat(filepath.Join(config.Instance.ReportDir, hiveLog)); os.IsNotExist(err) {
 		events.RecordEvent(events.NoHiveLogs)
 	}
 
@@ -216,7 +214,7 @@ func checkBeforeMetricsGeneration(cfg *config.Config) error {
 }
 
 // uploadFileToMetricsBucket uploads the given file (with absolute path) to the metrics S3 bucket "incoming" directory.
-func uploadFileToMetricsBucket(cfg *config.Config, filename string) error {
+func uploadFileToMetricsBucket(filename string) error {
 	// We're very intentionally using the shared configs here.
 	// This allows us to configure the AWS client at a system level and this should behave as expected.
 	// This is particularly useful if we want to, at some point in the future, run this on an AWS host with an instance profile
@@ -235,7 +233,7 @@ func uploadFileToMetricsBucket(cfg *config.Config, filename string) error {
 	uploader := s3manager.NewUploader(session)
 
 	_, err = uploader.Upload(&s3manager.UploadInput{
-		Bucket: aws.String(cfg.Tests.MetricsBucket),
+		Bucket: aws.String(config.Instance.Tests.MetricsBucket),
 		Key:    aws.String(path.Join("incoming", filepath.Base(filename))),
 		Body:   file,
 	})

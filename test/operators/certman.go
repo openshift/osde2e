@@ -3,6 +3,7 @@ package operators
 import (
 	"github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"github.com/openshift/osde2e/pkg/config"
 	"github.com/openshift/osde2e/pkg/helper"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -19,7 +20,7 @@ var _ = ginkgo.Describe("[OSD] Certman Operator", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(len(secrets.Items)).Should(Equal(1))
 			secretName = secrets.Items[0].Name
-		}, float64(h.Tests.PollingTimeout))
+		}, float64(config.Instance.Tests.PollingTimeout))
 
 		ginkgo.It("certificate secret should be applied to apiserver object", func() {
 			getOpts := metav1.GetOptions{}
@@ -27,6 +28,6 @@ var _ = ginkgo.Describe("[OSD] Certman Operator", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(len(apiserver.Spec.ServingCerts.NamedCertificates)).Should(Equal(1))
 			Expect(apiserver.Spec.ServingCerts.NamedCertificates[0].ServingCertificate.Name).Should(Equal(secretName))
-		}, float64(h.Tests.PollingTimeout))
+		}, float64(config.Instance.Tests.PollingTimeout))
 	})
 })

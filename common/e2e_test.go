@@ -23,10 +23,9 @@ func TestNoHiveLogs(t *testing.T) {
 		t.Errorf("list of events is not empty on start: %v", err)
 	}
 
-	cfg := config.Cfg
-	cfg.ReportDir = tmpDir
+	config.Instance.ReportDir = tmpDir
 
-	checkBeforeMetricsGeneration(cfg)
+	checkBeforeMetricsGeneration()
 	if !reflect.DeepEqual(events.GetListOfEvents(), []string{string(events.NoHiveLogs)}) {
 		t.Errorf("the NoHiveLogs event was not detected")
 	}
@@ -41,7 +40,7 @@ func TestNoHiveLogs(t *testing.T) {
 		t.Errorf("error creating dummy hive log: %v", err)
 	}
 
-	checkBeforeMetricsGeneration(cfg)
+	checkBeforeMetricsGeneration()
 
 	if !reflect.DeepEqual(events.GetListOfEvents(), []string{}) {
 		t.Errorf("the NoHiveLogs event should not have been detected")

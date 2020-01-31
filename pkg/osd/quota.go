@@ -20,10 +20,10 @@ const (
 )
 
 // CheckQuota determines if enough quota is available to launch with cfg.
-func (u *OSD) CheckQuota(cfg *config.Config) (bool, error) {
+func (u *OSD) CheckQuota() (bool, error) {
 	// get flavour being deployed
-	flavourId := u.Flavour(cfg)
-	flavourReq, err := u.conn.ClustersMgmt().V1().Flavours().Flavour(flavourId).Get().Send()
+	flavourID := u.Flavour()
+	flavourReq, err := u.conn.ClustersMgmt().V1().Flavours().Flavour(flavourID).Get().Send()
 	if err == nil && flavourReq != nil {
 		err = errResp(flavourReq.Error())
 		if err != nil {
@@ -46,9 +46,9 @@ func (u *OSD) CheckQuota(cfg *config.Config) (bool, error) {
 
 	quotaFound := false
 	quotaList.Each(func(q *accounts.ResourceQuota) bool {
-		if quotaFound = HasQuotaFor(q, cfg, ResourceAWSCluster, machineType); quotaFound {
+		if quotaFound = HasQuotaFor(q, ResourceAWSCluster, machineType); quotaFound {
 			log.Printf("Quota for test config (%s/%s/multiAZ=%t) found: total=%d, remaining: %d",
-				ResourceAWSCluster, machineType, cfg.Cluster.MultiAZ, q.Allowed(), q.Allowed()-q.Reserved())
+				ResourceAWSCluster, machineType, config.Instance.Cluster.MultiAZ, q.Allowed(), q.Allowed()-q.Reserved())
 		}
 		return !quotaFound
 	})
@@ -65,8 +65,8 @@ func (u *OSD) CurrentAccountQuota() (*accounts.ResourceQuotaList, error) {
 		return nil, fmt.Errorf("organization for account '%s' must be set to get quota", acc.ID())
 	}
 
-	orgId := acc.Organization().ID()
-	quotaList, err := u.getQuotaSummary(orgId)
+	orgID := acc.Organization().ID()
+	quotaList, err := u.getQuotaSummary(orgID)
 	if err == nil && quotaList != nil {
 		err = errResp(quotaList.Error())
 	} else if quotaList == nil {
@@ -76,9 +76,9 @@ func (u *OSD) CurrentAccountQuota() (*accounts.ResourceQuotaList, error) {
 }
 
 // HasQuotaFor the desired configuration. If machineT is empty a default will try to be selected.
-func HasQuotaFor(q *accounts.ResourceQuota, cfg *config.Config, resourceType, machineType string) bool {
+func HasQuotaFor(q *accounts.ResourceQuota, resourceType, machineType string) bool {
 	azType := "single"
-	if cfg.Cluster.MultiAZ {
+	if config.Instance.Cluster.MultiAZ {
 		azType = "multi"
 	}
 
@@ -93,9 +93,9 @@ func HasQuotaFor(q *accounts.ResourceQuota, cfg *config.Config, resourceType, ma
 }
 
 // TODO: use ocm-sdk-go resource_summary method once available
-func (u *OSD) getQuotaSummary(orgId string) (*resourceSummaryListResponse, error) {
+func (u *OSD) getQuotaSummary(orgID string) (*resourceSummaryListResponse, error) {
 	resp := new(resourceSummaryListResponse)
-	summaryPath := path.Join("/api/accounts_mgmt", APIVersion, "organizations", orgId, "quota_summary")
+	summaryPath := path.Join("/api/accounts_mgmt", APIVersion, "organizations", orgID, "quota_summary")
 	rawResp, err := u.conn.Get().Path(summaryPath).Send()
 	if err == nil && rawResp.Status() != http.StatusOK {
 		resp.err, err = osderrors.UnmarshalError(rawResp.Bytes())

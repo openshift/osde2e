@@ -16,7 +16,7 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 
-	"github.com/openshift/osde2e/pkg/config"
+	"github.com/openshift/osde2e/pkg/state"
 )
 
 func init() {
@@ -26,7 +26,7 @@ func init() {
 // New creates H, a helper used to expose common testing functions.
 func New() *H {
 	helper := &H{
-		Config: config.Cfg,
+		State: state.Instance,
 	}
 
 	ginkgo.BeforeEach(helper.Setup)
@@ -36,8 +36,8 @@ func New() *H {
 
 // H configures clients and sets up and destroys Projects for test isolation.
 type H struct {
-	// embed test configuration
-	*config.Config
+	// embed state
+	*state.State
 
 	// internal
 	restConfig *rest.Config

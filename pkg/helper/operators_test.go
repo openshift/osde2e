@@ -90,9 +90,8 @@ func TestCheckOperatorReadiness(t *testing.T) {
 
 	for _, test := range tests {
 		cfgClient := fakeConfig.NewSimpleClientset(test.objs...)
-		c := config.Config{}
-		c.Tests.OperatorSkip = test.skip
-		state, err := CheckOperatorReadiness(&c, cfgClient.ConfigV1())
+		config.Instance.Tests.OperatorSkip = test.skip
+		state, err := CheckOperatorReadiness(cfgClient.ConfigV1())
 
 		if err != nil {
 			t.Errorf("Unexpected error: %s", err)
