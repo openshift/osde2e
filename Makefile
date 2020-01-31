@@ -49,6 +49,12 @@ test-scale:
 test-addons:
 	go test $(ADDONS_PKG) -test.v -ginkgo.skip="$(GINKGO_SKIP)" -ginkgo.focus="$(GINKGO_FOCUS)"  -test.timeout 8h -test.run TestAddons -e2e-config=$(E2ECONFIG)
 
+test-middle-imageset:
+	go test $(ADDONS_PKG) -test.v -ginkgo.skip="$(GINKGO_SKIP)" -ginkgo.focus="$(GINKGO_FOCUS)"  -test.timeout 8h -test.run TestMiddleImageSet -e2e-config=$(E2ECONFIG)
+
+test-oldest-imageset:
+	go test $(ADDONS_PKG) -test.v -ginkgo.skip="$(GINKGO_SKIP)" -ginkgo.focus="$(GINKGO_FOCUS)"  -test.timeout 8h -test.run TestOldestImageSet -e2e-config=$(E2ECONFIG)
+
 test-docker:
 	$(CONTAINER_ENGINE) run \
 		-t \
