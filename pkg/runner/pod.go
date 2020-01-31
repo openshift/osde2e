@@ -165,7 +165,7 @@ func (r *Runner) waitForPodRunning(pod *kubev1.Pod) error {
 		} else if pod == nil {
 			err = errors.New("pod can't be nil")
 		} else if pod.Status.Phase == kubev1.PodFailed || pod.Status.Phase == kubev1.PodUnknown {
-			err = errors.New("failed waiting for Pod: the Pod has failed")
+			err = fmt.Errorf("failed waiting for Pod: the Pod has a phase of %s", pod.Status.Phase)
 		} else if pod.Status.Phase == kubev1.PodRunning {
 			done = true
 		} else {
