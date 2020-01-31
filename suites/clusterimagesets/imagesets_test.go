@@ -22,7 +22,7 @@ func init() {
 	cfg.LoadFromYAML(filename)
 
 }
-func TestE2E(t *testing.T) {
+func TestMiddleImageSet(t *testing.T) {
 	// force overwriting the attributes to make sure the cluster with the specified version will be created.
 	cfg := config.Cfg
 	cfg.Kubeconfig.Path = ""
@@ -41,6 +41,28 @@ func TestE2E(t *testing.T) {
 		} else {
 			log.Printf("Start doing clusterImageSets testing with the specified version %+v\n", versionList[len(versionList)/2])
 			cfg.Cluster.Version = versionList[len(versionList)/2]
+			common.RunE2ETests(t, cfg)
+		}
+	}
+}
+
+func TestOldestImageSet(t *testing.T) {
+	// force overwriting the attributes to make sure the cluster with the specified version will be created.
+	cfg := config.Cfg
+	cfg.Kubeconfig.Path = ""
+	cfg.Cluster.ID = ""
+	cfg.Cluster.Version = ""
+	cfg.Cluster.DestroyAfterTest = true
+
+	versionList, err := common.GetEnabledNoDefaultVersions(cfg)
+	if err != nil {
+		log.Printf("Failed to do clusterImageSets testing: %+v\n", err)
+	} else {
+		if len(versionList) == 0 {
+			log.Printf("Skip doing clusterImageSets testing: Default version is covered by the regular testing\n")
+		} else {
+			log.Printf("Start doing clusterImageSets testing with the specified version %+v\n", versionList[0])
+			cfg.Cluster.Version = versionList[0]
 			common.RunE2ETests(t, cfg)
 		}
 	}
