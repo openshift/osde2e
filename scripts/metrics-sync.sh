@@ -5,11 +5,27 @@ INCOMING=incoming
 PROCESSED=processed
 VENV="$(mktemp -d)"
 METRICS_DIR="$(mktemp -d)"
+METRIC_TIMEOUT_IN_SECONDS=172800 # 48h in seconds
 
 PUSHGATEWAY_URL=${PUSHGATEWAY_URL%/}
 
 # Cleanup the temporary directories
 trap 'rm -rf "$VENV" "$METRICS_DIR"' EXIT
+
+# First, we should detect any stale metrics and purge them if needed
+METRICS_LAST_UPDATED=$(curl "$PUSHGATEWAY_URL/metrics" | grep "^push_time_seconds{.*" | grep osde2e | sed 's/^.*job="\([[:alnum:]_.-]*\)".*\}\s*\(.*\)$/\1,\2/' | sort | uniq)
+CURRENT_TIMESTAMP=$(date +%s)
+for metric_and_timestamp in $METRICS_LAST_UPDATED; do
+	JOB_NAME=$(echo -e $metric_and_timestamp | cut -f 1 -d,)
+	TIMESTAMP=$(echo -e $metric_and_timestamp | cut -f 2 -d, | xargs -d '\n' printf "%.f")
+	if (( (($TIMESTAMP + $METRIC_TIMEOUT_IN_SECONDS)) < $CURRENT_TIMESTAMP )); then
+		echo "Metrics for job $JOB_NAME are greater than $METRIC_TIMEOUT_IN_SECONDS seconds old. Removing them from the pushgateway."
+		if ! curl -X DELETE "$PUSHGATEWAY_URL/metrics/job/$JOB_NAME"; then
+			echo "Error deleting old results for $JOB_NAME."
+			exit 3
+		fi
+	fi
+done
 
 virtualenv "$VENV"
 . "$VENV/bin/activate"
