@@ -119,8 +119,8 @@ func setupCluster() (err error) {
 		}
 	}
 
-	metadata.Instance.ClusterName = state.Cluster.Name
-	metadata.Instance.ClusterID = state.Cluster.ID
+	metadata.Instance.SetClusterName(state.Cluster.Name)
+	metadata.Instance.SetClusterID(state.Cluster.ID)
 
 	if err = OSD.WaitForClusterReady(); err != nil {
 		return fmt.Errorf("failed waiting for cluster ready: %v", err)

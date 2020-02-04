@@ -30,8 +30,8 @@ func ChooseVersions(osd *osd.OSD) (err error) {
 	}
 
 	// Set the versions in metadata. If upgrade hasn't been chosen, it should still be omitted from the end result.
-	metadata.Instance.ClusterVersion = state.Cluster.Name
-	metadata.Instance.UpgradeVersion = state.Upgrade.ReleaseName
+	metadata.Instance.SetClusterVersion(state.Cluster.Version)
+	metadata.Instance.SetUpgradeVersion(state.Upgrade.ReleaseName)
 
 	return err
 }
@@ -110,7 +110,7 @@ func setupUpgradeVersion(osd *osd.OSD) (err error) {
 		if cisUpgradeVersion.GreaterThan(clusterVersion) {
 			log.Printf("Using cluster image set.")
 			state.Upgrade.ReleaseName = cisUpgradeVersionString
-			metadata.Instance.UpgradeVersionSource = "cluster image set"
+			metadata.Instance.SetUpgradeVersionSource("cluster image set")
 			log.Printf("Selecting version '%s' to be able to upgrade to '%s'", state.Cluster.Version, state.Upgrade.ReleaseName)
 			return nil
 		}

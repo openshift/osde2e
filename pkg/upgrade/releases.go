@@ -47,13 +47,13 @@ func LatestRelease(releaseStream string, useReleaseControllerForInt bool) (name,
 			return "", "", fmt.Errorf("error decoding body of '%s': %v", data, err)
 		}
 
-		metadata.Instance.UpgradeVersionSource = "release controller"
+		metadata.Instance.SetUpgradeVersionSource("release controller")
 
 		return ensureReleasePrefix(latest.Name), latest.PullSpec, nil
 	}
 
 	log.Printf("Using Cincinnati.")
-	metadata.Instance.UpgradeVersionSource = "cincinnati"
+	metadata.Instance.SetUpgradeVersionSource("cincinnati")
 
 	// If stage or prod, use Cincinnati instead of the release controller
 	cincinnatiFormattedURL := fmt.Sprintf(cincinnatiURLFmt, osd.Environments.Choose(env), releaseStream)
