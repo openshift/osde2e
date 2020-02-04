@@ -29,7 +29,4 @@ var _ = ginkgo.Describe("[OSD] Managed Velero Operator", func() {
 	checkRoleBindings(h,
 		operatorNamespace,
 		[]string{"managed-velero-operator"})
-	checkRoleBindings(h,
-		"kube-system",
-		[]string{"managed-velero-operator-cluster-config-v1-reader"})
 })
