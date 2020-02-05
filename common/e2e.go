@@ -59,7 +59,7 @@ func RunE2ETests(t *testing.T) {
 			t.Fatalf("could not setup OSD: %v", err)
 		}
 
-		metadata.Instance.Environment = cfg.OCM.Env
+		metadata.Instance.SetEnvironment(cfg.OCM.Env)
 
 		// check that enough quota exists for this test if creating cluster
 		if len(state.Cluster.ID) == 0 {

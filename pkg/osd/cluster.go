@@ -188,7 +188,7 @@ func (u *OSD) WaitForClusterReady() error {
 				// This is the first time that we've entered this section, so we'll consider this the time until OCM has said the cluster is ready
 				if !ocmReady {
 					ocmReady = true
-					metadata.Instance.TimeToOCMReportingInstalled = time.Since(clusterStarted).Seconds()
+					metadata.Instance.SetTimeToOCMReportingInstalled(time.Since(clusterStarted).Seconds())
 					readinessStarted = time.Now()
 				}
 				if success, err := u.PollClusterHealth(); success {
@@ -196,7 +196,7 @@ func (u *OSD) WaitForClusterReady() error {
 					log.Printf("Clean run %d/%d...", cleanRuns, cleanRunWindow)
 					errRuns = 0
 					if cleanRuns == cleanRunWindow {
-						metadata.Instance.TimeToClusterReady = time.Since(readinessStarted).Seconds()
+						metadata.Instance.SetTimeToClusterReady(time.Since(readinessStarted).Seconds())
 						return true, nil
 					}
 					return false, nil

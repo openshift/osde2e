@@ -5,6 +5,8 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+
+	"github.com/openshift/osde2e/pkg/config"
 )
 
 const (
@@ -38,6 +40,58 @@ var Instance *Metadata
 
 func init() {
 	Instance = &Metadata{}
+}
+
+// Next are a bunch of setter functions that allow us
+// to track/trap changes to metadata and then flush
+// the changes to a file.
+
+// SetClusterID sets the cluster id
+func (m *Metadata) SetClusterID(id string) {
+	m.ClusterID = id
+	m.WriteToJSON(config.Instance.ReportDir)
+}
+
+// SetClusterName sets the cluster name
+func (m *Metadata) SetClusterName(name string) {
+	m.ClusterName = name
+	m.WriteToJSON(config.Instance.ReportDir)
+}
+
+// SetClusterVersion sets the cluster version
+func (m *Metadata) SetClusterVersion(version string) {
+	m.ClusterVersion = version
+	m.WriteToJSON(config.Instance.ReportDir)
+}
+
+// SetEnvironment sets the cluster environment
+func (m *Metadata) SetEnvironment(env string) {
+	m.Environment = env
+	m.WriteToJSON(config.Instance.ReportDir)
+}
+
+// SetUpgradeVersion sets the cluster upgrade version
+func (m *Metadata) SetUpgradeVersion(ver string) {
+	m.UpgradeVersion = ver
+	m.WriteToJSON(config.Instance.ReportDir)
+}
+
+// SetUpgradeVersionSource sets the cluster upgrade version source
+func (m *Metadata) SetUpgradeVersionSource(src string) {
+	m.UpgradeVersionSource = src
+	m.WriteToJSON(config.Instance.ReportDir)
+}
+
+// SetTimeToOCMReportingInstalled sets the time it took for OCM to report a cluster provisioned
+func (m *Metadata) SetTimeToOCMReportingInstalled(timeToOCMReportingInstalled float64) {
+	m.TimeToOCMReportingInstalled = timeToOCMReportingInstalled
+	m.WriteToJSON(config.Instance.ReportDir)
+}
+
+// SetTimeToClusterReady sets the time it took for OCM to report a cluster ready
+func (m *Metadata) SetTimeToClusterReady(timeToClusterReady float64) {
+	m.TimeToClusterReady = timeToClusterReady
+	m.WriteToJSON(config.Instance.ReportDir)
 }
 
 // WriteToJSON will marshall the metadata struct and write it into the given file.
