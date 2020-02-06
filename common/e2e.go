@@ -74,6 +74,11 @@ func RunE2ETests(t *testing.T) {
 		if err = ChooseVersions(OSD); err != nil {
 			t.Fatalf("failed to configure versions: %v", err)
 		}
+
+		if state.Upgrade.UpgradeVersionEqualToInstallVersion {
+			log.Printf("Install version and upgrade version are the same. Skipping tests.")
+			return
+		}
 	}
 
 	// setup reporter

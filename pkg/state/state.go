@@ -44,4 +44,7 @@ type UpgradeState struct {
 
 	// Image is the release image a cluster is upgraded to. If set, it overrides the release stream and upgrades.
 	Image string `env:"UPGRADE_IMAGE" sect:"upgrade" yaml:"image"`
+
+	// UpgradeVersionEqualToInstallVersion is true if the install version and upgrade versions are the same.
+	UpgradeVersionEqualToInstallVersion bool
 }
