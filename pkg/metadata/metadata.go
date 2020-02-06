@@ -31,8 +31,9 @@ type Metadata struct {
 	UpgradeVersionSource string `json:"upgrade-version-source,omitempty"`
 
 	// Metrics
-	TimeToOCMReportingInstalled float64 `json:"time-to-ocm-reporting-installed,string"`
-	TimeToClusterReady          float64 `json:"time-to-cluster-ready,string"`
+	TimeToOCMReportingInstalled float64        `json:"time-to-ocm-reporting-installed,string"`
+	TimeToClusterReady          float64        `json:"time-to-cluster-ready,string"`
+	LogMetrics                  map[string]int `json:"log-metrics"`
 }
 
 // Instance is the global metadata instance
@@ -40,6 +41,7 @@ var Instance *Metadata
 
 func init() {
 	Instance = &Metadata{}
+	Instance.LogMetrics = make(map[string]int)
 }
 
 // Next are a bunch of setter functions that allow us
@@ -91,6 +93,17 @@ func (m *Metadata) SetTimeToOCMReportingInstalled(timeToOCMReportingInstalled fl
 // SetTimeToClusterReady sets the time it took for OCM to report a cluster ready
 func (m *Metadata) SetTimeToClusterReady(timeToClusterReady float64) {
 	m.TimeToClusterReady = timeToClusterReady
+	m.WriteToJSON(config.Instance.ReportDir)
+}
+
+// IncrementLogMetric adds a supplied number to a log metric or sets the metric to
+// the value if it doesn't exist already
+func (m *Metadata) IncrementLogMetric(metric string, value int) {
+	if _, ok := m.LogMetrics[metric]; ok {
+		m.LogMetrics[metric] += value
+	} else {
+		m.LogMetrics[metric] = value
+	}
 	m.WriteToJSON(config.Instance.ReportDir)
 }
 
