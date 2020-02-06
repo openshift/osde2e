@@ -32,7 +32,7 @@ const (
 	eventMetricName    string = cicdPrefix + "event"
 )
 
-var junitFileRegex *regexp.Regexp
+var junitFileRegex, logFileRegex *regexp.Regexp
 
 // Metrics is the metrics object which can parse jUnit and JSON metadata and produce Prometheus metrics.
 type Metrics struct {
@@ -87,6 +87,7 @@ func NewMetrics() *Metrics {
 
 func init() {
 	junitFileRegex = regexp.MustCompile("^junit.*\\.xml$")
+	logFileRegex = regexp.MustCompile("^.*\\.(log|txt)$")
 }
 
 // WritePrometheusFile collects data and writes it out in the prometheus export file format (https://github.com/prometheus/docs/blob/master/content/docs/instrumenting/exposition_formats.md)

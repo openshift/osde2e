@@ -10,11 +10,31 @@ import (
 	"testing"
 )
 
+// generateExpected marshals/unmarshals a supplied metadata object.
+// Rather than hand-curating our own expected data, this functionally
+// achieves the same test result but it's cleaner.
+func generateExpected(m *Metadata) map[string]interface{} {
+	tmp, err := json.Marshal(m)
+	if err != nil {
+		fmt.Printf("%s", err.Error())
+		return nil
+	}
+
+	data := make(map[string]interface{})
+
+	err = json.Unmarshal(tmp, &data)
+	if err != nil {
+		fmt.Printf("%s\n", err.Error())
+		return nil
+	}
+
+	return data
+}
+
 func TestMetadata(t *testing.T) {
 	tests := []struct {
-		name     string
-		m        *Metadata
-		expected map[string]interface{}
+		name string
+		m    *Metadata
 	}{
 		{
 			name: "test all fields",
@@ -27,15 +47,6 @@ func TestMetadata(t *testing.T) {
 				TimeToOCMReportingInstalled: 123.45,
 				TimeToClusterReady:          456.78,
 			},
-			expected: map[string]interface{}{
-				"cluster-id":                      "test-id",
-				"cluster-name":                    "test-name",
-				"cluster-version":                 "test-version",
-				"environment":                     "test-environment",
-				"upgrade-version":                 "test-upgrade",
-				"time-to-ocm-reporting-installed": "123.45",
-				"time-to-cluster-ready":           "456.78",
-			},
 		},
 		{
 			name: "omit upgrade version",
@@ -47,25 +58,32 @@ func TestMetadata(t *testing.T) {
 				TimeToOCMReportingInstalled: 123.45,
 				TimeToClusterReady:          456.78,
 			},
-			expected: map[string]interface{}{
-				"cluster-id":                      "test-id",
-				"cluster-name":                    "test-name",
-				"cluster-version":                 "test-version",
-				"environment":                     "test-environment",
-				"time-to-ocm-reporting-installed": "123.45",
-				"time-to-cluster-ready":           "456.78",
+		},
+		{
+			name: "log metrics exists",
+			m: &Metadata{
+				ClusterID:                   "test-id",
+				ClusterName:                 "test-name",
+				ClusterVersion:              "test-version",
+				Environment:                 "test-environment",
+				UpgradeVersion:              "test-upgrade",
+				TimeToOCMReportingInstalled: 123.45,
+				TimeToClusterReady:          456.78,
+				LogMetrics: map[string]int{
+					"some-metric": 5,
+				},
 			},
 		},
 	}
 
 	for _, test := range tests {
-		if err := writeAndTestMetadata(test.m, test.expected); err != nil {
+		if err := writeAndTestMetadata(test.m); err != nil {
 			t.Errorf("%s: error while testing metadata: %v", test.name, err)
 		}
 	}
 }
 
-func writeAndTestMetadata(m *Metadata, expected map[string]interface{}) (err error) {
+func writeAndTestMetadata(m *Metadata) (err error) {
 	var tempDir string
 	if tempDir, err = ioutil.TempDir("", ""); err != nil {
 		return err
@@ -87,7 +105,7 @@ func writeAndTestMetadata(m *Metadata, expected map[string]interface{}) (err err
 		return err
 	}
 
-	if !reflect.DeepEqual(expected, readData) {
+	if !reflect.DeepEqual(generateExpected(m), readData) {
 		return fmt.Errorf("expected and generated JSON do not match")
 	}
 

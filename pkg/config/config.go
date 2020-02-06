@@ -29,6 +29,10 @@ type Config struct {
 
 	// DryRun lets you run osde2e all the way up to the e2e tests then skips them.
 	DryRun bool `json:"dry_run,omitempty" env:"DRY_RUN" sect:"tests"  yaml:"dryRun"`
+
+	// LogMetrics lets you define a metric name and a regex to apply on the build log
+	// For every match in the build log, the metric with that name will increment
+	LogMetrics map[string]string `json:"log-metrics" yaml:"logMetrics"`
 }
 
 // KubeConfig stores information required to talk to the Kube API

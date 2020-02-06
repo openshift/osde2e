@@ -9,6 +9,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -203,6 +204,29 @@ func runTestsInPhase(t *testing.T, phase string, description string) {
 				if err != nil {
 					t.Fatalf("error writing to junit file: %s", err.Error())
 				}
+			}
+		}
+	}
+
+	logMetricsRegexs := make(map[string]*regexp.Regexp)
+	for name, match := range cfg.LogMetrics {
+		logMetricsRegexs[name] = regexp.MustCompile(match)
+	}
+
+	files, err = ioutil.ReadDir(cfg.ReportDir)
+	if err != nil {
+		t.Fatalf("error reading phase directory: %s", err.Error())
+	}
+
+	for _, file := range files {
+		if logFileRegex.MatchString(file.Name()) {
+			data, err := ioutil.ReadFile(filepath.Join(cfg.ReportDir, file.Name()))
+			if err != nil {
+				t.Fatalf("error opening log file %s: %s", file.Name(), err.Error())
+			}
+			for name, matchRegex := range logMetricsRegexs {
+				matches := matchRegex.Find(data)
+				metadata.Instance.IncrementLogMetric(name, len(matches))
 			}
 		}
 	}
