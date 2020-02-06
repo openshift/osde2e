@@ -22,7 +22,7 @@ const (
 	DefaultFlavour = "osd-4"
 
 	// cleanRunWindow is the number of checks made to determine if a cluster is ready.
-	cleanRunWindow = 10
+	cleanRunWindow = 20
 
 	// errorWindow is the number of checks made to determine if a cluster has truly failed.
 	errorWindow = 5
