@@ -23,7 +23,7 @@ func ChooseVersions(osd *osd.OSD) (err error) {
 		err = nil
 	} else if osd == nil {
 		err = errors.New("osd must be setup when upgrading with release stream")
-	} else if state.Upgrade.Image == "" && cfg.Upgrade.ReleaseStream != "" {
+	} else if state.Upgrade.Image == "" && (cfg.Upgrade.ReleaseStream != "" || cfg.Upgrade.UpgradeToCISIfPossible) {
 		err = setupUpgradeVersion(osd)
 	} else {
 		err = setupVersion(osd)
@@ -60,8 +60,18 @@ func setupVersion(osd *osd.OSD) (err error) {
 	}
 
 	if len(state.Cluster.Version) == 0 {
-		if state.Cluster.Version, err = osd.DefaultVersion(); err == nil {
-			log.Printf("CLUSTER_VERSION not set, using the current default '%s'", state.Cluster.Version)
+		var err error
+		var versionType string
+		if cfg.Upgrade.UseLatestVersionForInstall {
+			state.Cluster.Version, err = osd.LatestVersion(-1, -1, "")
+			versionType = "latest version"
+		} else {
+			state.Cluster.Version, err = osd.DefaultVersion()
+			versionType = "current default"
+		}
+
+		if err == nil {
+			log.Printf("CLUSTER_VERSION not set, using the %s '%s'", versionType, state.Cluster.Version)
 		} else {
 			return fmt.Errorf("Error finding default cluster version: %v", err)
 		}
@@ -114,8 +124,11 @@ func setupUpgradeVersion(osd *osd.OSD) (err error) {
 			log.Printf("Selecting version '%s' to be able to upgrade to '%s'", state.Cluster.Version, state.Upgrade.ReleaseName)
 			return nil
 		}
-
-		log.Printf("The most recent cluster image set is equal to the default. Falling back to upgrading with Cincinnati.")
+		if state.Upgrade.ReleaseName != "" {
+			log.Printf("The most recent cluster image set is equal to the default. Falling back to upgrading with Cincinnati.")
+		} else {
+			return fmt.Errorf("couldn't get latest cluster image set release and no Cincinnati fallback")
+		}
 	}
 
 	state.Upgrade.ReleaseName, state.Upgrade.Image, err = upgrade.LatestRelease(cfg.Upgrade.ReleaseStream, true)

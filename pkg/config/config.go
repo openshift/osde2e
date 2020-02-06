@@ -54,6 +54,9 @@ type UpgradeConfig struct {
 	// UpgradeToCISIfPossible will upgrade to the most recent cluster image set if it's newer than the install version
 	UpgradeToCISIfPossible bool `env:"UPGRADE_TO_CIS_IF_POSSIBLE" sect:"version" default:"false" yaml:"upgradeToCISIfPossible"`
 
+	// UseLatestVersionForInstall will select the latest cluster image set available for a fresh install.
+	UseLatestVersionForInstall bool `env:"USE_LATEST_VERSION_FOR_INSTALL" sect:"version" default:"false" yaml:"useLatestVersionForInstall"`
+
 	// MajorTarget is the major version to target. If specified, it is used in version selection.
 	MajorTarget int64 `env:"MAJOR_TARGET" sect:"version" yaml:"majorTarget"`
 
