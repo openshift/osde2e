@@ -117,13 +117,15 @@ func setupUpgradeVersion(osd *osd.OSD) (err error) {
 		}
 
 		// If the available cluster image set makes sense, then we'll just use that
-		if cisUpgradeVersion.GreaterThan(clusterVersion) {
+		if !cisUpgradeVersion.LessThan(clusterVersion) {
 			log.Printf("Using cluster image set.")
 			state.Upgrade.ReleaseName = cisUpgradeVersionString
 			metadata.Instance.SetUpgradeVersionSource("cluster image set")
+			state.Upgrade.UpgradeVersionEqualToInstallVersion = cisUpgradeVersion.Equal(clusterVersion)
 			log.Printf("Selecting version '%s' to be able to upgrade to '%s'", state.Cluster.Version, state.Upgrade.ReleaseName)
 			return nil
 		}
+
 		if state.Upgrade.ReleaseName != "" {
 			log.Printf("The most recent cluster image set is equal to the default. Falling back to upgrading with Cincinnati.")
 		} else {
