@@ -7,6 +7,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Masterminds/semver"
+
 	configv1 "github.com/openshift/api/config/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -94,11 +96,37 @@ func TriggerUpgrade(h *helper.H) (*configv1.ClusterVersion, error) {
 	}
 
 	// set requested upgrade targets
-	cVersion.Spec.DesiredUpdate = &configv1.Update{
-		Version: strings.Replace(h.Upgrade.ReleaseName, "openshift-v", "", -1),
-		Image:   h.Upgrade.Image,
-		Force:   h.Upgrade.Image != "", // Force if we have an image specified
+	if h.Upgrade.Image != "" {
+		cVersion.Spec.DesiredUpdate = &configv1.Update{
+			Version: strings.Replace(h.Upgrade.ReleaseName, "openshift-v", "", -1),
+			Image:   h.Upgrade.Image,
+			Force:   true, // Force if we have an image specified
+		}
+	} else {
+		upgradeVersion := strings.Replace(h.Upgrade.ReleaseName, "openshift-v", "", -1)
+		installVersion := strings.Replace(state.Instance.Cluster.Version, "openshift-v", "", -1)
+
+		upgradeVersionParsed := semver.MustParse(upgradeVersion)
+		installVersionParsed := semver.MustParse(installVersion)
+
+		if upgradeVersionParsed.Minor() > installVersionParsed.Minor() {
+			// Upgrade the channel
+			cVersion.Spec.Channel = fmt.Sprintf("fast-%d.%d", upgradeVersionParsed.Major(), upgradeVersionParsed.Minor())
+			updatedCV, err := cfgClient.ConfigV1().ClusterVersions().Update(cVersion)
+			if err != nil {
+				return updatedCV, fmt.Errorf("couldn't update desired release channel: %v", err)
+			}
+
+			// https://github.com/openshift/managed-cluster-config/blob/master/scripts/cluster-upgrade.sh#L258
+			time.Sleep(15 * time.Second)
+		}
+
+		// Assume CIS has all the information required. Just pass version info.
+		cVersion.Spec.DesiredUpdate = &configv1.Update{
+			Version: strings.Replace(h.Upgrade.ReleaseName, "openshift-v", "", -1),
+		}
 	}
+
 	updatedCV, err := cfgClient.ConfigV1().ClusterVersions().Update(cVersion)
 	if err != nil {
 		return updatedCV, fmt.Errorf("couldn't update desired ClusterVersion: %v", err)
