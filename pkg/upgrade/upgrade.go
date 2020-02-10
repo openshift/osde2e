@@ -7,6 +7,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Masterminds/semver"
+
 	configv1 "github.com/openshift/api/config/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -83,22 +85,51 @@ func RunUpgrade(OSD *osd.OSD) error {
 
 // TriggerUpgrade uses a helper to perform an upgrade.
 func TriggerUpgrade(h *helper.H) (*configv1.ClusterVersion, error) {
+	var cVersion *configv1.ClusterVersion
+	var err error
 	// setup Config client
 	cfgClient := h.Cfg()
 
 	// get current Version
 	getOpts := metav1.GetOptions{}
-	cVersion, err := cfgClient.ConfigV1().ClusterVersions().Get(ClusterVersionName, getOpts)
+	cVersion, err = cfgClient.ConfigV1().ClusterVersions().Get(ClusterVersionName, getOpts)
 	if err != nil {
 		return cVersion, fmt.Errorf("couldn't get current ClusterVersion '%s': %v", ClusterVersionName, err)
 	}
 
 	// set requested upgrade targets
-	cVersion.Spec.DesiredUpdate = &configv1.Update{
-		Version: strings.Replace(h.Upgrade.ReleaseName, "openshift-v", "", -1),
-		Image:   h.Upgrade.Image,
-		Force:   h.Upgrade.Image != "", // Force if we have an image specified
+	if h.Upgrade.Image != "" {
+		cVersion.Spec.DesiredUpdate = &configv1.Update{
+			Version: strings.Replace(h.Upgrade.ReleaseName, "openshift-v", "", -1),
+			Image:   h.Upgrade.Image,
+			Force:   true, // Force if we have an image specified
+		}
+	} else {
+		upgradeVersion := strings.Replace(h.Upgrade.ReleaseName, "openshift-v", "", -1)
+		installVersion := strings.Replace(state.Instance.Cluster.Version, "openshift-v", "", -1)
+
+		upgradeVersionParsed := semver.MustParse(upgradeVersion)
+		installVersionParsed := semver.MustParse(installVersion)
+
+		// TODO: Address Major versions eventually when 5.x looms on the horizon.
+		if upgradeVersionParsed.Minor() > installVersionParsed.Minor() {
+			// Upgrade the channel
+			cVersion.Spec.Channel = fmt.Sprintf("fast-%d.%d", upgradeVersionParsed.Major(), upgradeVersionParsed.Minor())
+			cVersion, err = cfgClient.ConfigV1().ClusterVersions().Update(cVersion)
+			if err != nil {
+				return cVersion, fmt.Errorf("couldn't update desired release channel: %v", err)
+			}
+
+			// https://github.com/openshift/managed-cluster-config/blob/master/scripts/cluster-upgrade.sh#L258
+			time.Sleep(15 * time.Second)
+		}
+
+		// Assume CIS has all the information required. Just pass version info.
+		cVersion.Spec.DesiredUpdate = &configv1.Update{
+			Version: strings.Replace(h.Upgrade.ReleaseName, "openshift-v", "", -1),
+		}
 	}
+
 	updatedCV, err := cfgClient.ConfigV1().ClusterVersions().Update(cVersion)
 	if err != nil {
 		return updatedCV, fmt.Errorf("couldn't update desired ClusterVersion: %v", err)
