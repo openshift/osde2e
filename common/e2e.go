@@ -93,7 +93,7 @@ func RunE2ETests(t *testing.T) {
 		runTestsInPhase(t, "install", "OSD e2e suite")
 
 		// upgrade cluster if requested
-		if state.Upgrade.Image != "" || cfg.Upgrade.ReleaseStream != "" {
+		if state.Upgrade.Image != "" || state.Upgrade.ReleaseName != "" {
 			if state.Kubeconfig.Contents != nil {
 				if err = upgrade.RunUpgrade(OSD); err != nil {
 					events.RecordEvent(events.UpgradeFailed)
