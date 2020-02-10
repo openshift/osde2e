@@ -85,12 +85,14 @@ func RunUpgrade(OSD *osd.OSD) error {
 
 // TriggerUpgrade uses a helper to perform an upgrade.
 func TriggerUpgrade(h *helper.H) (*configv1.ClusterVersion, error) {
+	var cVersion *configv1.ClusterVersion
+	var err error
 	// setup Config client
 	cfgClient := h.Cfg()
 
 	// get current Version
 	getOpts := metav1.GetOptions{}
-	cVersion, err := cfgClient.ConfigV1().ClusterVersions().Get(ClusterVersionName, getOpts)
+	cVersion, err = cfgClient.ConfigV1().ClusterVersions().Get(ClusterVersionName, getOpts)
 	if err != nil {
 		return cVersion, fmt.Errorf("couldn't get current ClusterVersion '%s': %v", ClusterVersionName, err)
 	}
@@ -112,9 +114,9 @@ func TriggerUpgrade(h *helper.H) (*configv1.ClusterVersion, error) {
 		if upgradeVersionParsed.Minor() > installVersionParsed.Minor() {
 			// Upgrade the channel
 			cVersion.Spec.Channel = fmt.Sprintf("fast-%d.%d", upgradeVersionParsed.Major(), upgradeVersionParsed.Minor())
-			updatedCV, err := cfgClient.ConfigV1().ClusterVersions().Update(cVersion)
+			cVersion, err = cfgClient.ConfigV1().ClusterVersions().Update(cVersion)
 			if err != nil {
-				return updatedCV, fmt.Errorf("couldn't update desired release channel: %v", err)
+				return cVersion, fmt.Errorf("couldn't update desired release channel: %v", err)
 			}
 
 			// https://github.com/openshift/managed-cluster-config/blob/master/scripts/cluster-upgrade.sh#L258
