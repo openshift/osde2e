@@ -122,6 +122,11 @@ func TriggerUpgrade(h *helper.H) (*configv1.ClusterVersion, error) {
 
 			// https://github.com/openshift/managed-cluster-config/blob/master/scripts/cluster-upgrade.sh#L258
 			time.Sleep(15 * time.Second)
+
+			cVersion, err = cfgClient.ConfigV1().ClusterVersions().Get(ClusterVersionName, getOpts)
+			if err != nil {
+				return cVersion, fmt.Errorf("couldn't get current ClusterVersion '%s' after updating release channel: %v", ClusterVersionName, err)
+			}
 		}
 
 		// Assume CIS has all the information required. Just pass version info.
