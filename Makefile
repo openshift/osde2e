@@ -5,6 +5,8 @@ ADDONS_PKG := $(PKG)/suites/addons
 E2E_PKG := $(PKG)/suites/e2e
 SCALE_PKG := $(PKG)/suites/scale
 DOC_PKG := $(PKG)/cmd/osde2e-docs
+MIDDLE_IMAGESETS_PKG := $(PKG)/suites/clusterimagesets/middle
+OLDEST_IMAGESETS_PKG := $(PKG)/suites/clusterimagesets/oldest
 
 DIR := $(dir $(realpath $(firstword $(MAKEFILE_LIST))))
 
@@ -50,10 +52,10 @@ test-addons:
 	go test $(ADDONS_PKG) -test.v -ginkgo.skip="$(GINKGO_SKIP)" -ginkgo.focus="$(GINKGO_FOCUS)"  -test.timeout 8h -test.run TestAddons -e2e-config=$(E2ECONFIG)
 
 test-middle-imageset:
-	go test $(ADDONS_PKG) -test.v -ginkgo.skip="$(GINKGO_SKIP)" -ginkgo.focus="$(GINKGO_FOCUS)"  -test.timeout 8h -test.run TestMiddleImageSet -e2e-config=$(E2ECONFIG)
+	go test $(MIDDLE_IMAGESETS_PKG) -test.v -ginkgo.skip="$(GINKGO_SKIP)" -ginkgo.focus="$(GINKGO_FOCUS)" -test.timeout 8h -test.run TestMiddleImageSet -e2e-config=$(E2ECONFIG)
 
 test-oldest-imageset:
-	go test $(ADDONS_PKG) -test.v -ginkgo.skip="$(GINKGO_SKIP)" -ginkgo.focus="$(GINKGO_FOCUS)"  -test.timeout 8h -test.run TestOldestImageSet -e2e-config=$(E2ECONFIG)
+	go test $(OLDEST_IMAGESETS_PKG) -test.v -ginkgo.skip="$(GINKGO_SKIP)" -ginkgo.focus="$(GINKGO_FOCUS)"  -test.timeout 8h -test.run TestOldestImageSet -e2e-config=$(E2ECONFIG)
 
 test-docker:
 	$(CONTAINER_ENGINE) run \

@@ -7,10 +7,16 @@ import (
 	"github.com/openshift/osde2e/common"
 	"github.com/openshift/osde2e/pkg/config"
 	"github.com/openshift/osde2e/pkg/state"
+
 	// import suites to be tested
+	_ "github.com/openshift/osde2e/test/openshift"
+	_ "github.com/openshift/osde2e/test/operators"
+	_ "github.com/openshift/osde2e/test/state"
+	_ "github.com/openshift/osde2e/test/verify"
+	_ "github.com/openshift/osde2e/test/workloads/guestbook"
 )
 
-func TestE2E(t *testing.T) {
+func TestOldestImageSet(t *testing.T) {
 	// force overwriting the attributes to make sure the cluster with the specified version will be created.
 	cfg := config.Instance
 	state := state.Instance
