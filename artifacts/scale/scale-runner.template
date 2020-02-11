@@ -1,0 +1,20 @@
+set -o pipefail
+set -eux
+
+cd "{{ .WorkloadsPath }}"
+
+# setup inventory
+cp workloads/inventory.example inventory
+echo "localhost ansible_connection=local" >> inventory
+mkdir ~/.ssh
+echo -e "{{ .PbenchPrivateKey }}\n" > ~/.ssh/id_rsa
+echo -e "{{ .PbenchPublicKey }}\n" > ~/.ssh/id_rsa.pub
+chmod 600 ~/.ssh/*
+
+time ansible-playbook -vv -i inventory workloads/tooling.yml
+time ansible-playbook -vv -i inventory {{ .PlaybookPath }}
+
+SUCCESS=$?
+
+echo "Success value of {{ .Name }}: $SUCCESS"
+exit $SUCCESS

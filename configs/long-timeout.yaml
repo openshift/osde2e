@@ -1,0 +1,2 @@
+cluster:
+  expiryInMinutes: 480 # 8 hours

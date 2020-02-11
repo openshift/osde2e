@@ -18,6 +18,8 @@ type Config struct {
 
 	Addons AddonConfig `yaml:"addons"`
 
+	Scale ScaleConfig `yaml:"scale"`
+
 	// Name lets you name the current e2e job run
 	JobName string `json:"job_name" env:"JOB_NAME" sect:"tests" yaml:"jobName"`
 
@@ -101,6 +103,19 @@ type AddonConfig struct {
 	IDs []string `env:"ADDON_IDS" sect:"addons" yaml:"ids"`
 	// TestHarnesses is an array of container images that will test the addon
 	TestHarnesses []string `env:"ADDON_TEST_HARNESSES" sect:"addons" yaml:"testHarnesses"`
+}
+
+// ScaleConfig options for scale testing
+type ScaleConfig struct {
+	WorkloadsRepository string `env:"WORKLOADS_REPO" sect:"scale" default:"https://github.com/openshift-scale/workloads.git" yaml:"workloadsRepository"`
+
+	WorkloadsRepositoryBranch string `env:"WORKLOADS_REPO_BRANCH" sect:"scale" default:"master" yaml:"workloadsRepositoryBranch"`
+
+	PbenchServer string `env:"PBENCH_SERVER" sect:"scale" default:"pbench.dev.openshift.com" yaml:"pbenchServer"`
+
+	PbenchSSHPrivateKey string `env:"PBENCH_SSH_PRIVATE_KEY" sect:"scale" yaml:"pbenchSSHPrivateKey"`
+
+	PbenchSSHPublicKey string `env:"PBENCH_SSH_PUBLIC_KEY" sect:"scale" yaml:"pbenchSSHPublicKey"`
 }
 
 // TestConfig changes the behavior of how and what tests are run.
