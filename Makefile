@@ -5,8 +5,8 @@ ADDONS_PKG := $(PKG)/suites/addons
 E2E_PKG := $(PKG)/suites/e2e
 SCALE_PKG := $(PKG)/suites/scale
 DOC_PKG := $(PKG)/cmd/osde2e-docs
-MIDDLE_IMAGESETS_PKG := $(PKG)/suites/clusterimagesets/middle
-OLDEST_IMAGESETS_PKG := $(PKG)/suites/clusterimagesets/oldest
+MIDDLE_IMAGESETS_PKG := $(PKG)/suites/middleclusterimageset
+OLDEST_IMAGESETS_PKG := $(PKG)/suites/oldestclusterimageset
 
 DIR := $(dir $(realpath $(firstword $(MAKEFILE_LIST))))
 
