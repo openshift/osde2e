@@ -14,7 +14,7 @@ import (
 )
 
 // Specify where the YAML definitions are for the workloads.
-var testDir = "../../artifacts/workloads/e2e/guestbook"
+var testDir = "/artifacts/workloads/e2e/guestbook"
 
 // Use the base folder name for the workload name. Make it easy!
 var workloadName = filepath.Base(testDir)

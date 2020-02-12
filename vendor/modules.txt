@@ -52,6 +52,8 @@ github.com/davecgh/go-spew/spew
 github.com/dgrijalva/jwt-go
 # github.com/evanphx/json-patch v4.5.0+incompatible
 github.com/evanphx/json-patch
+# github.com/gobuffalo/here v0.6.0
+github.com/gobuffalo/here
 # github.com/gogo/protobuf v1.2.2-0.20190723190241-65acae22fc9d
 github.com/gogo/protobuf/proto
 github.com/gogo/protobuf/sortkeys
@@ -83,6 +85,15 @@ github.com/imdario/mergo
 github.com/jmespath/go-jmespath
 # github.com/json-iterator/go v1.1.8
 github.com/json-iterator/go
+# github.com/markbates/pkger v0.14.0
+github.com/markbates/pkger
+github.com/markbates/pkger/internal/maps
+github.com/markbates/pkger/internal/takeon/github.com/markbates/hepa
+github.com/markbates/pkger/internal/takeon/github.com/markbates/hepa/filters
+github.com/markbates/pkger/pkging
+github.com/markbates/pkger/pkging/embed
+github.com/markbates/pkger/pkging/mem
+github.com/markbates/pkger/pkging/stdos
 # github.com/matttproud/golang_protobuf_extensions v1.0.1
 github.com/matttproud/golang_protobuf_extensions/pbutil
 # github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd
@@ -236,7 +247,7 @@ gopkg.in/fsnotify.v1
 gopkg.in/inf.v0
 # gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7
 gopkg.in/tomb.v1
-# gopkg.in/yaml.v2 v2.2.4
+# gopkg.in/yaml.v2 v2.2.7
 gopkg.in/yaml.v2
 # k8s.io/api v0.0.0-20191004102349-159aefb8556b
 k8s.io/api/admissionregistration/v1beta1

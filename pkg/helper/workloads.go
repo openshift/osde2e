@@ -3,11 +3,12 @@ package helper
 import (
 	"fmt"
 	"io/ioutil"
+	"net/http"
 	"os"
-	"path/filepath"
 	"strings"
 	"time"
 
+	"github.com/markbates/pkger"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -25,8 +26,7 @@ func ApplyYamlInFolder(folder, namespace string, kube kubernetes.Interface) ([]r
 		files   []string
 		err     error
 	)
-	pwd, _ := os.Getwd()
-	err = filepath.Walk(filepath.Join(pwd, folder), func(path string, info os.FileInfo, err error) error {
+	err = pkger.Walk(folder, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
@@ -55,15 +55,15 @@ func ApplyYamlInFolder(folder, namespace string, kube kubernetes.Interface) ([]r
 // ReadK8sYaml reads a file at the specified path and attempts to decode it into a runtime.Object
 func ReadK8sYaml(file string) (runtime.Object, error) {
 	var (
-		absfile string
-		err     error
+		fileReader http.File
+		err        error
 	)
 
-	if absfile, err = filepath.Abs(file); err != nil {
+	if fileReader, err = pkger.Open(file); err != nil {
 		return nil, err
 	}
 
-	f, err := ioutil.ReadFile(absfile)
+	f, err := ioutil.ReadAll(fileReader)
 	if err != nil {
 		return nil, err
 	}
