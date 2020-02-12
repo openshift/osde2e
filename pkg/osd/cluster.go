@@ -202,7 +202,7 @@ func (u *OSD) WaitForClusterReady() error {
 						if metadata.Instance.TimeToClusterReady == 0 {
 							metadata.Instance.SetTimeToClusterReady(time.Since(readinessStarted).Seconds())
 						} else {
-							metadata.Instance.SetTimeToClusterUpgraded(time.Since(readinessStarted).Seconds())
+							metadata.Instance.SetTimeToUpgradedClusterReady(time.Since(readinessStarted).Seconds())
 						}
 
 						return true, nil
