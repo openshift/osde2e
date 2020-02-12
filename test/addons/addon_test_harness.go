@@ -3,8 +3,10 @@ package addons
 import (
 	"fmt"
 	"io/ioutil"
+	"net/http"
 	"text/template"
 
+	"github.com/markbates/pkger"
 	"github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
@@ -16,8 +18,17 @@ import (
 var addonTestTemplate *template.Template
 
 func init() {
-	data, err := ioutil.ReadFile("testdata/addon-runner.template")
-	if err != nil {
+	var (
+		fileReader http.File
+		data       []byte
+		err        error
+	)
+
+	if fileReader, err = pkger.Open("/artifacts/addons/addon-runner.template"); err != nil {
+		panic(fmt.Sprintf("unable to open addon runner template: %v", err))
+	}
+
+	if data, err = ioutil.ReadAll(fileReader); err != nil {
 		panic(fmt.Sprintf("unable to read addon runner template: %v", err))
 	}
 
