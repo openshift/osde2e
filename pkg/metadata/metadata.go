@@ -33,6 +33,8 @@ type Metadata struct {
 	// Metrics
 	TimeToOCMReportingInstalled float64        `json:"time-to-ocm-reporting-installed,string"`
 	TimeToClusterReady          float64        `json:"time-to-cluster-ready,string"`
+	TimeToUpgradedCluster       float64        `json:"time-to-upgraded-cluster,string"`
+	TimeToUpgradedClusterReady  float64        `json:"time-to-upgraded-cluster-ready,string"`
 	LogMetrics                  map[string]int `json:"log-metrics"`
 }
 
@@ -90,9 +92,21 @@ func (m *Metadata) SetTimeToOCMReportingInstalled(timeToOCMReportingInstalled fl
 	m.WriteToJSON(config.Instance.ReportDir)
 }
 
-// SetTimeToClusterReady sets the time it took for OCM to report a cluster ready
+// SetTimeToClusterReady sets the time it took for the cluster to appear healthy on install
 func (m *Metadata) SetTimeToClusterReady(timeToClusterReady float64) {
 	m.TimeToClusterReady = timeToClusterReady
+	m.WriteToJSON(config.Instance.ReportDir)
+}
+
+// SetTimeToUpgradedCluster sets the time it took for the cluster to install an upgrade
+func (m *Metadata) SetTimeToUpgradedCluster(timeToUpgradedCluster float64) {
+	m.TimeToUpgradedCluster = timeToUpgradedCluster
+	m.WriteToJSON(config.Instance.ReportDir)
+}
+
+// SetTimeToUpgradedClusterReady sets the time it took for the cluster to appear healthy on upgrade
+func (m *Metadata) SetTimeToUpgradedClusterReady(timeToUpgradedClusterReady float64) {
+	m.TimeToUpgradedClusterReady = timeToUpgradedClusterReady
 	m.WriteToJSON(config.Instance.ReportDir)
 }
 

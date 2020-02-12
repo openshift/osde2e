@@ -14,6 +14,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 
 	"github.com/openshift/osde2e/pkg/helper"
+	"github.com/openshift/osde2e/pkg/metadata"
 	"github.com/openshift/osde2e/pkg/osd"
 	"github.com/openshift/osde2e/pkg/state"
 )
@@ -40,6 +41,8 @@ func RunUpgrade(OSD *osd.OSD) error {
 	var done bool
 	var msg string
 	var err error
+	var upgradeStarted time.Time
+
 	// setup helper
 	h := &helper.H{
 		State: state.Instance,
@@ -52,6 +55,8 @@ func RunUpgrade(OSD *osd.OSD) error {
 	} else {
 		log.Printf("Upgrading cluster to cluster image set with version %s", h.Upgrade.ReleaseName)
 	}
+
+	upgradeStarted = time.Now()
 
 	desired, err := TriggerUpgrade(h)
 	if err != nil {
@@ -74,6 +79,8 @@ func RunUpgrade(OSD *osd.OSD) error {
 	if !done {
 		return fmt.Errorf("failed to upgrade cluster: timed out after %d min waiting for upgrade", MaxDuration)
 	}
+
+	metadata.Instance.SetTimeToUpgradedCluster(time.Since(upgradeStarted).Seconds())
 
 	if err = OSD.WaitForClusterReady(); err != nil {
 		return fmt.Errorf("failed waiting for cluster ready: %v", err)
