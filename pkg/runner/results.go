@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"golang.org/x/net/html"
+	"k8s.io/apimachinery/pkg/util/wait"
 	restclient "k8s.io/client-go/rest"
 )
 
@@ -21,7 +22,6 @@ var (
 // RetrieveResults gathers the results from the test Pod. Should only be called after tests are finished.
 func (r *Runner) RetrieveResults() (map[string][]byte, error) {
 	var rdr io.ReadCloser
-	var i int
 	var resp restclient.ResponseWrapper
 	var err error
 	if r.svc == nil {
@@ -31,16 +31,16 @@ func (r *Runner) RetrieveResults() (map[string][]byte, error) {
 	// request result list
 	// sometimes it is possible for the service/endpoint to not be ready before the results are finished.
 	// we loop through here five times with a sleep statement to check.
-	for i := 0; i < 5; i++ {
+	wait.PollImmediate(5*time.Second, 1*time.Minute, func() (bool, error) {
 		resp = r.Kube.CoreV1().Services(r.Namespace).ProxyGet("http", r.svc.Name, resultsPortStr, "/", nil)
 		rdr, err = resp.Stream()
 		if err != nil {
-			time.Sleep(1 * time.Second)
-		} else {
-			continue
+			return false, nil
 		}
-	}
-	if i >= 5 {
+		return true, nil
+	})
+
+	if err != nil {
 		return nil, fmt.Errorf("could not retrieve result file listing: %v", err)
 	}
 
