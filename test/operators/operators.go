@@ -111,6 +111,20 @@ func checkRoleBindings(h *helper.H, namespace string, roleBindings []string) {
 		}, float64(config.Instance.Tests.PollingTimeout))
 	})
 }
+
+//nolint
+func checkSecrets(h *helper.H, namespace string, secrets []string) {
+	// Check that deployed secrets exist
+	ginkgo.Context("secrets", func() {
+		ginkgo.It("should exist", func() {
+			for _, secretName := range secrets {
+				_, err := h.Kube().CoreV1().Secrets(namespace).Get(secretName, metav1.GetOptions{})
+				Expect(err).NotTo(HaveOccurred(), "failed to get secret %v\n", secretName)
+			}
+		}, float64(config.Instance.Tests.PollingTimeout))
+	})
+}
+
 func pollClusterRoleBinding(h *helper.H, clusterRoleBindingName string) error {
 	// pollRoleBinding will check for the existence of a clusterRole
 	// in the specified project, and wait for it to exist, until a timeout
