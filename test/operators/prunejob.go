@@ -16,7 +16,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/rand"
 )
 
-var _ = ginkgo.Describe("[OSD] Prune jobs", func() {
+var _ = ginkgo.Describe("[Suite: operators] [OSD] Prune jobs", func() {
 	h := helper.New()
 	ginkgo.Context("pruner jobs should works", func() {
 		namespace := "openshift-sre-pruning"

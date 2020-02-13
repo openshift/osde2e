@@ -5,7 +5,7 @@ import (
 	"github.com/openshift/osde2e/pkg/helper"
 )
 
-var _ = ginkgo.Describe("[OSD] Configure AlertManager Operator", func() {
+var _ = ginkgo.Describe("[Suite: operators] [OSD] Configure AlertManager Operator", func() {
 	var operatorName = "configure-alertmanager-operator"
 	var operatorNamespace string = "openshift-monitoring"
 	var operatorLockFile string = "configure-alertmanager-operator-lock"

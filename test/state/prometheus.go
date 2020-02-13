@@ -13,7 +13,7 @@ const (
 	promCollectCmd = "oc exec -n openshift-monitoring prometheus-k8s-0 -c prometheus -- tar cvzO -C /prometheus ."
 )
 
-var _ = ginkgo.Describe("Cluster state", func() {
+var _ = ginkgo.Describe("[Suite: e2e] Cluster state", func() {
 	defer ginkgo.GinkgoRecover()
 	h := helper.New()
 

@@ -13,7 +13,7 @@ var (
 	mustGatherCmd = "oc adm must-gather --dest-dir=" + runner.DefaultRunner.OutputDir
 )
 
-var _ = ginkgo.Describe("Cluster state", func() {
+var _ = ginkgo.Describe("[Suite: e2e] Cluster state", func() {
 	defer ginkgo.GinkgoRecover()
 	h := helper.New()
 

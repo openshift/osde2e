@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/onsi/ginkgo"
+	ginkgoconfig "github.com/onsi/ginkgo/config"
 	. "github.com/onsi/gomega"
 	"k8s.io/client-go/tools/clientcmd"
 
@@ -32,6 +33,27 @@ func init() {
 
 	if err := load.IntoObject(state.Instance); err != nil {
 		panic(fmt.Errorf("error loading initial state: %v", err))
+	}
+
+	ginkgoconfig.DefaultReporterConfig.NoisySkippings = !config.Instance.Tests.SuppressSkipNotifications
+
+	if len(config.Instance.Tests.TestsToRun) > 0 {
+		ginkgo.BeforeEach(func() {
+			testText := ginkgo.CurrentGinkgoTestDescription().TestText
+			testContext := strings.TrimSpace(strings.TrimSuffix(ginkgo.CurrentGinkgoTestDescription().FullTestText, testText))
+
+			shouldRun := false
+			for _, testToRun := range config.Instance.Tests.TestsToRun {
+				if strings.HasPrefix(testContext, testToRun) {
+					shouldRun = true
+					break
+				}
+			}
+
+			if !shouldRun {
+				ginkgo.Skip(fmt.Sprintf("test %s will not be run as its context (%s) is not specified as part of the tests to run", ginkgo.CurrentGinkgoTestDescription().FullTestText, testContext))
+			}
+		})
 	}
 }
 

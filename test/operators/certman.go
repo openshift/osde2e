@@ -13,7 +13,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 )
 
-var _ = ginkgo.Describe("[OSD] Certman Operator", func() {
+var _ = ginkgo.Describe("[Suite: operators] [OSD] Certman Operator", func() {
 	h := helper.New()
 	ginkgo.Context("certificate secret should be applied when cluster installed", func() {
 		var secretName string
