@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"strings"
 
 	"github.com/openshift/osde2e/pkg/config"
 	"github.com/openshift/osde2e/pkg/metadata"
@@ -144,7 +145,7 @@ func setupUpgradeVersion(osd *osd.OSD) (err error) {
 		return err
 	}
 
-	if !clusterVersion.LessThan(upgradeVersion) {
+	if !clusterVersion.LessThan(upgradeVersion) && !strings.Contains(state.Upgrade.ReleaseName, "nightly") {
 		log.Printf("Cluster version is equal to or newer than the upgrade version. Looking up previous version...")
 		if state.Cluster.Version, err = osd.PreviousVersion(state.Upgrade.ReleaseName); err != nil {
 			return fmt.Errorf("failed retrieving previous version to '%s': %v", state.Upgrade.ReleaseName, err)
