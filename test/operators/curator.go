@@ -11,7 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
-var _ = ginkgo.Describe("[OSD] Curator Operator", func() {
+var _ = ginkgo.Describe("[Suite: operators] [OSD] Curator Operator", func() {
 	h := helper.New()
 	ginkgo.Context("operator source should be curated", func() {
 

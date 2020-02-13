@@ -9,7 +9,7 @@ import (
 	"github.com/openshift/osde2e/pkg/helper"
 )
 
-var _ = ginkgo.Describe("Storage", func() {
+var _ = ginkgo.Describe("[Suite: e2e] Storage", func() {
 	h := helper.New()
 
 	ginkgo.It("should be able to be expanded", func() {

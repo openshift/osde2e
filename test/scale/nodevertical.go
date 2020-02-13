@@ -10,7 +10,7 @@ import (
 	"github.com/openshift/osde2e/pkg/helper"
 )
 
-var _ = ginkgo.Describe("Scaling", func() {
+var _ = ginkgo.Describe("[Suite: scale] Scaling", func() {
 	defer ginkgo.GinkgoRecover()
 	h := helper.New()
 

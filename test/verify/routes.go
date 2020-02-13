@@ -8,7 +8,7 @@ import (
 	"github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	"github.com/openshift/api/route/v1"
+	v1 "github.com/openshift/api/route/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/openshift/osde2e/pkg/helper"
@@ -19,7 +19,7 @@ const (
 	consoleLabel     = "console"
 )
 
-var _ = ginkgo.Describe("Routes", func() {
+var _ = ginkgo.Describe("[Suite: e2e] Routes", func() {
 	h := helper.New()
 
 	ginkgo.It("should be created for Console", func() {

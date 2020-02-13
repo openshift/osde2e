@@ -19,7 +19,7 @@ var DefaultE2EConfig = E2EConfig{
 	},
 }
 
-var _ = ginkgo.Describe("OpenShift E2E", func() {
+var _ = ginkgo.Describe("[Suite: conformance] OpenShift E2E", func() {
 	defer ginkgo.GinkgoRecover()
 	h := helper.New()
 

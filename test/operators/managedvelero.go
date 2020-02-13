@@ -5,7 +5,7 @@ import (
 	"github.com/openshift/osde2e/pkg/helper"
 )
 
-var _ = ginkgo.Describe("[OSD] Managed Velero Operator", func() {
+var _ = ginkgo.Describe("[Suite: operators] [OSD] Managed Velero Operator", func() {
 	var operatorName = "managed-velero-operator"
 	var operatorNamespace string = "openshift-velero"
 	var operatorLockFile string = "managed-velero-operator-lock"

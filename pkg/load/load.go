@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"log"
 	"math/rand"
+	"net/http"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -15,6 +16,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/markbates/pkger"
 	"gopkg.in/yaml.v2"
 )
 
@@ -30,7 +32,8 @@ const (
 )
 
 var rndStringRegex = regexp.MustCompile("__RND_(\\d+)__")
-var osde2eConfig = ""
+var customConfig = ""
+var configs []string
 var once sync.Once
 
 func init() {
@@ -41,8 +44,16 @@ func init() {
 func IntoObject(object interface{}) error {
 	// Parse out the osde2e config filename if once was provided.
 	once.Do(func() {
-		flag.StringVar(&osde2eConfig, "e2e-config", ".osde2e.yaml", "Config file for osde2e")
+		var configString string
+		flag.StringVar(&configString, "configs", "", "A comma separated list of built in configs to use")
+		flag.StringVar(&customConfig, "custom-config", ".osde2e.yaml", "Custom config file for osde2e")
 		flag.Parse()
+
+		configs = strings.Split(configString, ",")
+
+		for _, config := range configs {
+			log.Printf("Will load config %s", config)
+		}
 	})
 
 	if objectType := reflect.TypeOf(object); objectType.Kind() != reflect.Ptr {
@@ -54,10 +65,16 @@ func IntoObject(object interface{}) error {
 		return fmt.Errorf("error loading config defaults: %v", err)
 	}
 
-	if osde2eConfig != "" {
-		log.Printf("YAML config provided, loading from %s", osde2eConfig)
-		if err := loadFromYAML(object, osde2eConfig); err != nil {
+	for _, config := range configs {
+		if err := loadYAMLFromConfigs(object, config); err != nil {
 			return fmt.Errorf("error loading config from YAML: %v", err)
+		}
+	}
+
+	if customConfig != "" {
+		log.Printf("Custom YAML config provided, loading from %s", customConfig)
+		if err := loadYAMLFromFile(object, customConfig); err != nil {
+			return fmt.Errorf("error loading custom config from YAML: %v", err)
 		}
 	}
 
@@ -110,9 +127,29 @@ func loadDefaults(object interface{}) error {
 	return nil
 }
 
-// loadFromYAML accepts file info and attempts to unmarshal the file into the
-// config.
-func loadFromYAML(object interface{}, name string) error {
+// loadYAMLFromConfigs accepts a config name and attempts to unmarshal the config from the /configs directory.
+func loadYAMLFromConfigs(object interface{}, name string) error {
+	var file http.File
+	var data []byte
+	var err error
+
+	if file, err = pkger.Open(filepath.Join("/configs", name+".yaml")); err != nil {
+		return err
+	}
+
+	if data, err = ioutil.ReadAll(file); err != nil {
+		return err
+	}
+
+	if err = yaml.Unmarshal(data, object); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// loadYAMLFromFile accepts file info and attempts to unmarshal the file into the // config.
+func loadYAMLFromFile(object interface{}, name string) error {
 	var data []byte
 	var err error
 	var dir, path string
@@ -122,7 +159,7 @@ func loadFromYAML(object interface{}, name string) error {
 	}
 	// TODO: This needs to change once we stop branching out execution the way we do it currently
 	// It's fragile
-	if path, err = filepath.Abs(filepath.Join(dir, "../../", name)); err != nil {
+	if path, err = filepath.Abs(filepath.Join(dir, name)); err != nil {
 		return err
 	}
 

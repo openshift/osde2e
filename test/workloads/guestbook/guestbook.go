@@ -19,7 +19,7 @@ var testDir = "/artifacts/workloads/e2e/guestbook"
 // Use the base folder name for the workload name. Make it easy!
 var workloadName = filepath.Base(testDir)
 
-var _ = ginkgo.Describe("Workload ("+workloadName+")", func() {
+var _ = ginkgo.Describe("[Suite: e2e] Workload ("+workloadName+")", func() {
 	defer ginkgo.GinkgoRecover()
 	// setup helper
 	h := &helper.H{

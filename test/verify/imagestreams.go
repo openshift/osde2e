@@ -9,7 +9,7 @@ import (
 	"github.com/openshift/osde2e/pkg/helper"
 )
 
-var _ = ginkgo.Describe("ImageStreams", func() {
+var _ = ginkgo.Describe("[Suite: e2e] ImageStreams", func() {
 	h := helper.New()
 
 	ginkgo.It("should exist in the cluster", func() {

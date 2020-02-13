@@ -8,14 +8,14 @@ import (
 	"github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 
 	"github.com/openshift/osde2e/pkg/helper"
 )
 
-var _ = ginkgo.Describe("Pods", func() {
+var _ = ginkgo.Describe("[Suite: e2e] Pods", func() {
 	h := helper.New()
 
 	ginkgo.It("should be Running or Succeeded", func() {

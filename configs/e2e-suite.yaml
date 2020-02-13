@@ -1,0 +1,4 @@
+tests:
+  testsToRun:
+  - '[Suite: e2e]'
+  - '[Suite: operators]'

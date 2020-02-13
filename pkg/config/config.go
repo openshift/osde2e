@@ -58,15 +58,6 @@ type UpgradeConfig struct {
 	// UpgradeToCISIfPossible will upgrade to the most recent cluster image set if it's newer than the install version
 	UpgradeToCISIfPossible bool `env:"UPGRADE_TO_CIS_IF_POSSIBLE" sect:"version" default:"false" yaml:"upgradeToCISIfPossible"`
 
-	// UseLatestVersionForInstall will select the latest cluster image set available for a fresh install.
-	UseLatestVersionForInstall bool `env:"USE_LATEST_VERSION_FOR_INSTALL" sect:"version" default:"false" yaml:"useLatestVersionForInstall"`
-
-	// MajorTarget is the major version to target. If specified, it is used in version selection.
-	MajorTarget int64 `env:"MAJOR_TARGET" sect:"version" yaml:"majorTarget"`
-
-	// MinorTarget is the minor version to target. If specified, it is used in version selection.
-	MinorTarget int64 `env:"MINOR_TARGET" sect:"version" yaml:"minorTarget"`
-
 	// ReleaseStream used to retrieve latest release images. If set, it will be used to perform an upgrade.
 	ReleaseStream string `env:"UPGRADE_RELEASE_STREAM" sect:"upgrade" yaml:"releaseStream"`
 }
@@ -76,8 +67,8 @@ type ClusterConfig struct {
 	// MultiAZ deploys a cluster across multiple availability zones.
 	MultiAZ bool `env:"MULTI_AZ" sect:"cluster" default:"false" yaml:"multiAZ"`
 
-	// DestroyClusterAfterTest set to false if you want to keep the cluster after the test completes.
-	DestroyAfterTest bool `env:"DESTROY_CLUSTER" sect:"cluster" default:"true" yaml:"destroyAfterTest"`
+	// DestroyClusterAfterTest set to true if you want to the cluster to be explicitly deleted after the test.
+	DestroyAfterTest bool `env:"DESTROY_CLUSTER" sect:"cluster" default:"false" yaml:"destroyAfterTest"`
 
 	// ExpiryInMinutes is how long before a cluster expires and is deleted by OSD.
 	ExpiryInMinutes int64 `env:"CLUSTER_EXPIRY_IN_MINUTES" sect:"cluster" default:"210" yaml:"expiryInMinutes"`
@@ -87,6 +78,21 @@ type ClusterConfig struct {
 
 	// InstallTimeout is how long to wait before failing a cluster launch.
 	InstallTimeout int64 `env:"CLUSTER_UP_TIMEOUT" sect:"environment" default:"135" yaml:"installTimeout"`
+
+	// UseLatestVersionForInstall will select the latest cluster image set available for a fresh install.
+	UseLatestVersionForInstall bool `env:"USE_LATEST_VERSION_FOR_INSTALL" sect:"version" default:"false" yaml:"useLatestVersionForInstall"`
+
+	// UseMiddleClusterImageSetForInstall will select the cluster image set that is in the middle of the list of ordered cluster versions known to OCM.
+	UseMiddleClusterImageSetForInstall bool `env:"USE_MIDDLE_CLUSTER_IMAGE_SET_FOR_INSTALL" sect:"version" default:"false" yaml:"useMiddleClusterVersionForInstall"`
+
+	// UseOldestClusterImageSetForInstall will select the cluster image set that is in the end of the list of ordered cluster versions known to OCM.
+	UseOldestClusterImageSetForInstall bool `env:"USE_OLDEST_CLUSTER_IMAGE_SET_FOR_INSTALL" sect:"version" default:"false" yaml:"useOldestClusterVersionForInstall"`
+
+	// MajorTarget is the major version to target. If specified, it is used in version selection.
+	MajorTarget int64 `env:"MAJOR_TARGET" sect:"version" yaml:"majorTarget"`
+
+	// MinorTarget is the minor version to target. If specified, it is used in version selection.
+	MinorTarget int64 `env:"MINOR_TARGET" sect:"version" yaml:"minorTarget"`
 }
 
 // AddonConfig options for addon testing
@@ -108,6 +114,12 @@ type TestConfig struct {
 
 	// GinkgoFocus is a regex passed to Ginkgo that focus on any test suites matching the regex. ex. "Operator"
 	GinkgoFocus string `env:"GINKGO_FOCUS" sect:"tests" yaml:"focus"`
+
+	// TestsToRun is a list of files which should be executed as part of a test suite
+	TestsToRun []string `env:"TESTS_TO_RUN" sect:"tests" yaml:"testsToRun"`
+
+	// SuppressSkipNotifications suppresses the notifications of skipped tests
+	SuppressSkipNotifications bool `env:"SUPPRESS_SKIP_NOTIFICATIONS" sect:"tests" default:"true" yaml:"suppressSkipNotifications"`
 
 	// CleanRuns is the number of times the test-version is run before skipping.
 	CleanRuns int `env:"CLEAN_RUNS" sect:"tests" yaml:"cleanRuns"`

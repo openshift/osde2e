@@ -36,14 +36,14 @@ func init() {
 
 }
 
-var _ = ginkgo.Describe("Addon Test Harness", func() {
+var _ = ginkgo.Describe("[Suite: addons] Addon Test Harness", func() {
 	defer ginkgo.GinkgoRecover()
 	h := helper.New()
 
 	for _, harness := range config.Instance.Addons.TestHarnesses {
 		if harness != "" {
 			addonTimeoutInSeconds := 3600
-			ginkgo.It("should run until completion", func() {
+			ginkgo.It(harness+" should run until completion", func() {
 				// configure tests
 				// setup runner
 				r := h.RunnerWithNoCommand()

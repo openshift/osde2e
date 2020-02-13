@@ -42,8 +42,8 @@ func setupVersion(osd *osd.OSD) (err error) {
 	state := state.Instance
 	suffix := ""
 
-	if len(state.Cluster.Version) == 0 && (cfg.Upgrade.MajorTarget != 0 || cfg.Upgrade.MinorTarget != 0) {
-		majorTarget := cfg.Upgrade.MajorTarget
+	if len(state.Cluster.Version) == 0 && (cfg.Cluster.MajorTarget != 0 || cfg.Cluster.MinorTarget != 0) {
+		majorTarget := cfg.Cluster.MajorTarget
 		// don't require major to be set
 		if majorTarget == 0 {
 			majorTarget = -1
@@ -54,7 +54,7 @@ func setupVersion(osd *osd.OSD) (err error) {
 		}
 
 		// look for the latest release and install it for this OSD cluster.
-		if state.Cluster.Version, err = osd.LatestVersion(majorTarget, cfg.Upgrade.MinorTarget, suffix); err == nil {
+		if state.Cluster.Version, err = osd.LatestVersion(majorTarget, cfg.Cluster.MinorTarget, suffix); err == nil {
 			log.Printf("CLUSTER_VERSION not set but a TARGET is, running '%s'", state.Cluster.Version)
 		}
 	}
@@ -62,9 +62,15 @@ func setupVersion(osd *osd.OSD) (err error) {
 	if len(state.Cluster.Version) == 0 {
 		var err error
 		var versionType string
-		if cfg.Upgrade.UseLatestVersionForInstall {
+		if cfg.Cluster.UseLatestVersionForInstall {
 			state.Cluster.Version, err = osd.LatestVersion(-1, -1, "")
 			versionType = "latest version"
+		} else if cfg.Cluster.UseMiddleClusterImageSetForInstall {
+			state.Cluster.Version, err = osd.MiddleVersion()
+			versionType = "middle version"
+		} else if cfg.Cluster.UseOldestClusterImageSetForInstall {
+			state.Cluster.Version, err = osd.OldestVersion()
+			versionType = "oldest version"
 		} else {
 			state.Cluster.Version, err = osd.DefaultVersion()
 			versionType = "current default"

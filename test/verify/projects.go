@@ -10,7 +10,7 @@ import (
 	"github.com/openshift/osde2e/pkg/helper"
 )
 
-var _ = ginkgo.Describe("Projects", func() {
+var _ = ginkgo.Describe("[Suite: e2e] Projects", func() {
 	h := helper.New()
 
 	ginkgo.It("Empty Project should be created", func() {
