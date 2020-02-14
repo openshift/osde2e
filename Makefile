@@ -2,6 +2,7 @@
 
 PKG := github.com/openshift/osde2e
 DOC_PKG := $(PKG)/cmd/osde2e-docs
+RUNNER_PKG := $(PKG)/runner
 
 DIR := $(dir $(realpath $(firstword $(MAKEFILE_LIST))))
 
@@ -38,19 +39,19 @@ build:
 	CGO_ENABLED=0 go test ./suites/scale -v -c -o ./out/osde2e-scale
 
 test:
-	go test -test.v -ginkgo.skip="$(GINKGO_SKIP)" -ginkgo.focus="$(GINKGO_FOCUS)" -test.timeout 8h -configs=e2e-suite -custom-config=$(CUSTOM_CONFIG)
+	go test $(RUNNER_PKG) -test.v -ginkgo.skip="$(GINKGO_SKIP)" -ginkgo.focus="$(GINKGO_FOCUS)" -test.timeout 8h -configs=e2e-suite -custom-config=$(CUSTOM_CONFIG)
 
 test-scale:
-	go test -test.v -ginkgo.skip="$(GINKGO_SKIP)" -ginkgo.focus="$(GINKGO_FOCUS)" -test.timeout 8h -configs=scale-suite -custom-config=$(CUSTOM_CONFIG)
+	go test $(RUNNER_PKG) -test.v -ginkgo.skip="$(GINKGO_SKIP)" -ginkgo.focus="$(GINKGO_FOCUS)" -test.timeout 8h -configs=scale-suite -custom-config=$(CUSTOM_CONFIG)
 
 test-addons:
-	go test -test.v -ginkgo.skip="$(GINKGO_SKIP)" -ginkgo.focus="$(GINKGO_FOCUS)" -test.timeout 8h -configs=addon-suite -custom-config=$(CUSTOM_CONFIG)
+	go test $(RUNNER_PKG) -test.v -ginkgo.skip="$(GINKGO_SKIP)" -ginkgo.focus="$(GINKGO_FOCUS)" -test.timeout 8h -configs=addon-suite -custom-config=$(CUSTOM_CONFIG)
 
 test-middle-imageset:
-	go test -test.v -ginkgo.skip="$(GINKGO_SKIP)" -ginkgo.focus="$(GINKGO_FOCUS)" -test.timeout 8h -configs=e2e-suite,use-middle-version -custom-config=$(CUSTOM_CONFIG)
+	go test $(RUNNER_PKG) -test.v -ginkgo.skip="$(GINKGO_SKIP)" -ginkgo.focus="$(GINKGO_FOCUS)" -test.timeout 8h -configs=e2e-suite,use-middle-version -custom-config=$(CUSTOM_CONFIG)
 
 test-oldest-imageset:
-	go test -test.v -ginkgo.skip="$(GINKGO_SKIP)" -ginkgo.focus="$(GINKGO_FOCUS)" -test.timeout 8h -configs=e2e-suite,use-oldest-version -custom-config=$(CUSTOM_CONFIG)
+	go test $(RUNNER_PKG) -test.v -ginkgo.skip="$(GINKGO_SKIP)" -ginkgo.focus="$(GINKGO_FOCUS)" -test.timeout 8h -configs=e2e-suite,use-oldest-version -custom-config=$(CUSTOM_CONFIG)
 
 test-docker:
 	$(CONTAINER_ENGINE) run \

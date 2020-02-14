@@ -1,4 +1,4 @@
-package osde2e
+package runner
 
 import (
 	"testing"
@@ -15,6 +15,6 @@ import (
 	_ "github.com/openshift/osde2e/test/workloads/guestbook"
 )
 
-func TestE2E(t *testing.T) {
+func TestRunner(t *testing.T) {
 	common.RunE2ETests(t)
 }
