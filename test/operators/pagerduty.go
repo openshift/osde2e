@@ -5,7 +5,7 @@ import (
 	"github.com/openshift/osde2e/pkg/helper"
 )
 
-var _ = ginkgo.Describe("[OSD] Pagerduty Operator", func() {
+var _ = ginkgo.Describe("[Suite: operators] [OSD] Pagerduty Operator", func() {
 	h := helper.New()
 	var secrets = []string{
 		"pd-secret",
