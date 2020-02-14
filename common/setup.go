@@ -65,16 +65,24 @@ var _ = ginkgo.SynchronizedBeforeSuite(func() []byte {
 
 	err := setupCluster()
 	events.HandleErrorWithEvents(err, events.InstallSuccessful, events.InstallFailed).ShouldNot(HaveOccurred(), "failed to setup cluster for testing")
+	if err != nil {
+		return []byte{}
+	}
 
 	if len(cfg.Addons.IDs) > 0 {
 		err = installAddons()
 		events.HandleErrorWithEvents(err, events.InstallAddonsSuccessful, events.InstallAddonsFailed).ShouldNot(HaveOccurred(), "failed while installing addons")
+		if err != nil {
+			return []byte{}
+		}
 	}
 
 	if len(state.Kubeconfig.Contents) == 0 {
 		// Give the cluster some breathing room.
 		log.Println("OSD cluster installed. Sleeping for 600s.")
 		time.Sleep(600 * time.Second)
+	} else {
+		log.Printf("No kubeconfig contents found, but there should be some by now.")
 	}
 
 	return []byte{}

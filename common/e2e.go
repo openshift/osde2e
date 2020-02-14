@@ -90,22 +90,26 @@ func RunE2ETests(t *testing.T) {
 	if !cfg.DryRun {
 		log.Println("Running e2e tests...")
 
-		runTestsInPhase(t, "install", "OSD e2e suite")
+		testsPassed := runTestsInPhase(t, "install", "OSD e2e suite")
 
-		// upgrade cluster if requested
-		if state.Upgrade.Image != "" || state.Upgrade.ReleaseName != "" {
-			if state.Kubeconfig.Contents != nil {
-				if err = upgrade.RunUpgrade(OSD); err != nil {
-					events.RecordEvent(events.UpgradeFailed)
-					t.Errorf("error performing upgrade: %v", err)
+		if testsPassed {
+			// upgrade cluster if requested
+			if state.Upgrade.Image != "" || state.Upgrade.ReleaseName != "" {
+				if state.Kubeconfig.Contents != nil {
+					if err = upgrade.RunUpgrade(OSD); err != nil {
+						events.RecordEvent(events.UpgradeFailed)
+						t.Errorf("error performing upgrade: %v", err)
+					}
+					events.RecordEvent(events.UpgradeSuccessful)
+
+					log.Println("Running e2e tests POST-UPGRADE...")
+					runTestsInPhase(t, "upgrade", "OSD e2e suite post-upgrade")
+				} else {
+					log.Println("No Kubeconfig found from initial cluster setup. Unable to run upgrade.")
 				}
-				events.RecordEvent(events.UpgradeSuccessful)
-
-				log.Println("Running e2e tests POST-UPGRADE...")
-				runTestsInPhase(t, "upgrade", "OSD e2e suite post-upgrade")
-			} else {
-				log.Println("No Kubeconfig found from initial cluster setup. Unable to run upgrade.")
 			}
+		} else {
+			log.Print("Install tests did not pass. Skipping upgrade tests.")
 		}
 
 		if cfg.ReportDir != "" {
@@ -159,7 +163,7 @@ func RunE2ETests(t *testing.T) {
 	}
 }
 
-func runTestsInPhase(t *testing.T, phase string, description string) {
+func runTestsInPhase(t *testing.T, phase string, description string) bool {
 	cfg := config.Instance
 	state := state.Instance
 
@@ -172,7 +176,7 @@ func runTestsInPhase(t *testing.T, phase string, description string) {
 	}
 	phaseReportPath := filepath.Join(phaseDirectory, fmt.Sprintf("junit_%v.xml", cfg.Suffix))
 	phaseReporter := reporters.NewJUnitReporter(phaseReportPath)
-	ginkgo.RunSpecsWithDefaultAndCustomReporters(t, description, []ginkgo.Reporter{phaseReporter})
+	ginkgoPassed := ginkgo.RunSpecsWithDefaultAndCustomReporters(t, description, []ginkgo.Reporter{phaseReporter})
 
 	files, err := ioutil.ReadDir(phaseDirectory)
 	if err != nil {
@@ -230,6 +234,8 @@ func runTestsInPhase(t *testing.T, phase string, description string) {
 			}
 		}
 	}
+
+	return ginkgoPassed
 }
 
 // checkBeforeMetricsGeneration runs a variety of checks before generating metrics.
