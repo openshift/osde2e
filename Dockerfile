@@ -11,6 +11,7 @@ RUN go mod download
 
 # compile test binary
 COPY . .
+RUN go mod vendor
 RUN make check
 RUN make build
 
