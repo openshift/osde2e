@@ -10,7 +10,7 @@ import (
 
 const (
 	// cmd to collect prometheus data
-	promCollectCmd = "oc exec -n openshift-monitoring prometheus-k8s-0 -c prometheus -- tar cvzO -C /prometheus ."
+	promCollectCmd = "oc exec -n openshift-monitoring prometheus-k8s-0 -c prometheus -- /bin/sh -c \"cp -ruf /prometheus /tmp/prometheus && tar cvzO -C /tmp/prometheus . "
 )
 
 var _ = ginkgo.Describe("[Suite: e2e] Cluster state", func() {
@@ -23,7 +23,7 @@ var _ = ginkgo.Describe("[Suite: e2e] Cluster state", func() {
 		// this command is has specific code to capture and suppress an exit code of
 		// 1 as tar 1.26 will exit 1 if files change while the tar is running, as is
 		// common for a running prometheus instance
-		cmd := promCollectCmd + " >" + runner.DefaultRunner.OutputDir + "/prometheus.tar.gz ; err=$? ; if (( $err != 1 )) ; then exit $err ; fi"
+		cmd := promCollectCmd + " >" + runner.DefaultRunner.OutputDir + "/prometheus.tar.gz\" ; err=$? ; if (( $err != 1 )) ; then exit $err ; fi"
 		r := h.Runner(cmd)
 		r.Name = "collect-prometheus"
 
