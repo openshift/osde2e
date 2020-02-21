@@ -43,7 +43,7 @@ var _ = ginkgo.Describe("ImageStreams", func() {
 **imagestreams.go**
 ```go
 import (
-	"github.com/openshift/osde2e/pkg/helper"
+	"github.com/openshift/osde2e/pkg/common/helper"
 )
 
 var _ = ginkgo.Describe("ImageStreams", func() {
@@ -101,7 +101,7 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/openshift/osde2e/pkg/helper"
+	"github.com/openshift/osde2e/pkg/common/helper"
 )
 
 var _ = ginkgo.Describe("ImageStreams", func() {
@@ -125,13 +125,13 @@ var _ = ginkgo.Describe("ImageStreams", func() {
 Ginkgo has been configured to bring a cluster up in it's [`BeforeSuite`](https://onsi.github.io/ginkgo/#global-setup-and-teardown-beforesuite-and-aftersuite) and destroy it in it's [`AfterSuite`](https://onsi.github.io/ginkgo/#global-setup-and-teardown-beforesuite-and-aftersuite).
 
 **Cluster configuration**
-- Launched clusters are setup with the [`osd`](../pkg/osd) package
+- Launched clusters are setup with the [`osd`](../pkg/common/osd) package
 	- Changes to the way test clusters are launched should be made there
 - [ocm-sdk-go](https://github.com/openshift-online/ocm-sdk-go) is used to launch clusters
-- Configuration for launching clusters is loaded from a [`config.Config`](https://godoc.org/github.com/openshift/osde2e/pkg/config#Config) instance
+- Configuration for launching clusters is loaded from a [`config.Config`](https://godoc.org/github.com/openshift/osde2e/common/pkg/config#Config) instance
 
 ## Helper
-A helper can be created in tests using [`helper.New()`](https://godoc.org/github.com/openshift/osde2e/pkg/helper#New).
+A helper can be created in tests using [`helper.New()`](https://godoc.org/github.com/openshift/osde2e/pkg/common/helper#New).
 
 The helper:
 - Configures Ginkgo to create a Project before each test and delete it after

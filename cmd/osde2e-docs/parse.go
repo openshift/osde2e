@@ -10,7 +10,7 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/openshift/osde2e/pkg/load"
+	"github.com/openshift/osde2e/pkg/common/load"
 )
 
 const (

@@ -76,5 +76,5 @@ test-docker:
 		-e AWS_SECRET_ACCESS_KEY=$(AWS_SECRET_ACCESS_KEY) \
 		$(IMAGE_NAME):$(IMAGE_TAG)
 
-$(DIR)/docs/Options.md: $(DIR)/cmd/osde2e-docs $(DIR)/pkg/config/config.go
+$(DIR)/docs/Options.md: $(DIR)/cmd/osde2e-docs $(DIR)/pkg/common/config/config.go
 	go run $(DOC_PKG)
