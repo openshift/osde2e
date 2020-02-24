@@ -223,13 +223,15 @@ func runTestsInPhase(t *testing.T, phase string, description string) bool {
 	}
 
 	for _, file := range files {
+		//log.Printf("Parsing log metrics in %s", filepath.Join(cfg.ReportDir, file.Name()))
 		if logFileRegex.MatchString(file.Name()) {
 			data, err := ioutil.ReadFile(filepath.Join(cfg.ReportDir, file.Name()))
 			if err != nil {
 				t.Fatalf("error opening log file %s: %s", file.Name(), err.Error())
 			}
 			for name, matchRegex := range logMetricsRegexs {
-				matches := matchRegex.Find(data)
+				matches := matchRegex.FindAll(data, -1)
+				//log.Printf("-- Found %d matches for %s", len(matches), name)
 				metadata.Instance.IncrementLogMetric(name, len(matches))
 			}
 		}
