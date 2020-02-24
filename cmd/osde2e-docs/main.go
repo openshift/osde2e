@@ -59,7 +59,7 @@ var (
 func init() {
 	flag.StringVar(&docsTmplFile, "in", filepath.Join(base, "cmd/osde2e-docs/Options.md.tmpl"), "docs template file")
 	flag.StringVar(&outputFile, "out", filepath.Join(base, "docs/Options.md"), "rendered docs file")
-	flag.StringVar(&configPkgDir, "pkg-dir", filepath.Join(base, "pkg/config"), "Go package with struct named Config")
+	flag.StringVar(&configPkgDir, "pkg-dir", filepath.Join(base, "pkg/common/config"), "Go package with struct named Config")
 	flag.BoolVar(&check, "check", false, "check docs are updated (doesn't modify out)")
 	flag.Parse()
 

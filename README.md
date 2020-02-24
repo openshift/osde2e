@@ -77,7 +77,7 @@ tests:
  ginkgoSkip: OpenShift E2E|Cluster state|Managed Velero Operator|Dedicated Admin Operator|Configure AlertManager Operator
 ```
 
-*This is a recent change and is not widely used yet. Please refer to pkg/config for more info on YAML config options.*
+*This is a recent change and is not widely used yet. Please refer to pkg/common/config for more info on YAML config options.*
 
 Config options are currently parsed by loading defaults, attempting to load environment variables, and finally attempting to load config data from a YAML file. There are instances where you may want to have most of your config in a YAML file while keeping one or two sensitive config options as environment variables (OCM Token)
 
