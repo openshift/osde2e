@@ -1,0 +1,6 @@
+logMetrics:
+  cluster-mgmt-500: "CLUSTERS-MGMT-500"
+  access-token-500: "can't get access token: token response status is: 500 Internal Server Error"
+  eof: "EOF"
+  cluster-pending: "Cluster is not ready, current status 'pending'"
+  host-dns-lookup: "dial tcp: lookup api\\.ci-cluster.* no such host occurred"
