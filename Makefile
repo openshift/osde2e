@@ -37,6 +37,7 @@ push-latest:
 	@$(CONTAINER_ENGINE) --config=$(DOCKER_CONF) push "$(IMAGE_NAME):latest"
 
 build:
+	mkdir -p "$(OUT_DIR)"
 	go build -o "$(OUT_DIR)" "$(DIR)cmd/..."
 
 test: build
