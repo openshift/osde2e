@@ -17,6 +17,8 @@ import (
 func TestProcessJUnitXMLFile(t *testing.T) {
 	state.Instance.Cluster.Version = "install-version"
 	state.Instance.Upgrade.ReleaseName = "upgrade-version"
+	config.Instance.OCM.Env = "prod"
+
 	tests := []struct {
 		testName       string
 		phase          string
@@ -105,6 +107,7 @@ cicd_jUnitResult{environment="prod",install_version="install-version",phase="ins
 func TestProcessJSONFile(t *testing.T) {
 	state.Instance.Cluster.Version = "install-version"
 	state.Instance.Upgrade.ReleaseName = "upgrade-version"
+	config.Instance.OCM.Env = "prod"
 
 	tests := []struct {
 		testName         string
@@ -207,6 +210,7 @@ func TestWritePrometheusFile(t *testing.T) {
 	state.Instance.Cluster.Version = "install-version"
 	state.Instance.Upgrade.ReleaseName = "upgrade-version"
 	config.Instance.JobName = "test-job"
+	config.Instance.OCM.Env = "prod"
 
 	type jUnitFile struct {
 		fileContents string

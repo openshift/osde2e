@@ -2,9 +2,11 @@
 
 PKG := github.com/openshift/osde2e
 DOC_PKG := $(PKG)/cmd/osde2e-docs
-RUNNER_PKG := $(PKG)/runner
 
 DIR := $(dir $(realpath $(firstword $(MAKEFILE_LIST))))
+
+OUT_DIR := $(DIR)out
+OSDE2E := $(DIR)out/osde2e
 
 IMAGE_NAME := quay.io/app-sre/osde2e
 IMAGE_TAG := $(shell git rev-parse --short=7 HEAD)
@@ -35,23 +37,22 @@ push-latest:
 	@$(CONTAINER_ENGINE) --config=$(DOCKER_CONF) push "$(IMAGE_NAME):latest"
 
 build:
-	CGO_ENABLED=0 go test ./suites/e2e -v -c -o ./out/osde2e
-	CGO_ENABLED=0 go test ./suites/scale -v -c -o ./out/osde2e-scale
+	go build -o "$(OUT_DIR)" "$(DIR)cmd/..."
 
-test:
-	go test $(RUNNER_PKG) -test.v -ginkgo.skip="$(GINKGO_SKIP)" -ginkgo.focus="$(GINKGO_FOCUS)" -test.timeout 8h -configs=e2e-suite,log-metrics -custom-config=$(CUSTOM_CONFIG)
+test: build
+	"$(OSDE2E)" test -configs=e2e-suite,log-metrics -custom-config=$(CUSTOM_CONFIG)
 
-test-scale:
-	go test $(RUNNER_PKG) -test.v -ginkgo.skip="$(GINKGO_SKIP)" -ginkgo.focus="$(GINKGO_FOCUS)" -test.timeout 8h -configs=scale-suite,log-metrics -custom-config=$(CUSTOM_CONFIG)
+test-scale: build
+	"$(OSDE2E)" test -configs=scale-suite,log-metrics -custom-config=$(CUSTOM_CONFIG)
 
-test-addons:
-	go test $(RUNNER_PKG) -test.v -ginkgo.skip="$(GINKGO_SKIP)" -ginkgo.focus="$(GINKGO_FOCUS)" -test.timeout 8h -configs=addon-suite,log-metrics -custom-config=$(CUSTOM_CONFIG)
+test-addons: build
+	"$(OSDE2E)" test -configs=addon-suite,log-metrics -custom-config=$(CUSTOM_CONFIG)
 
-test-middle-imageset:
-	go test $(RUNNER_PKG) -test.v -ginkgo.skip="$(GINKGO_SKIP)" -ginkgo.focus="$(GINKGO_FOCUS)" -test.timeout 8h -configs=e2e-suite,use-middle-version,log-metrics -custom-config=$(CUSTOM_CONFIG)
+test-middle-imageset: build
+	"$(OSDE2E)" test -configs=e2e-suite,use-middle-version,log-metrics -custom-config=$(CUSTOM_CONFIG)
 
-test-oldest-imageset:
-	go test $(RUNNER_PKG) -test.v -ginkgo.skip="$(GINKGO_SKIP)" -ginkgo.focus="$(GINKGO_FOCUS)" -test.timeout 8h -configs=e2e-suite,use-oldest-version,log-metrics -custom-config=$(CUSTOM_CONFIG)
+test-oldest-imageset: build
+	"$(OSDE2E)" test -configs=e2e-suite,use-oldest-version,log-metrics -custom-config=$(CUSTOM_CONFIG)
 
 test-docker:
 	$(CONTAINER_ENGINE) run \
@@ -75,6 +76,3 @@ test-docker:
 		-e AWS_ACCESS_KEY_ID=$(AWS_ACCESS_KEY_ID) \
 		-e AWS_SECRET_ACCESS_KEY=$(AWS_SECRET_ACCESS_KEY) \
 		$(IMAGE_NAME):$(IMAGE_TAG)
-
-$(DIR)/docs/Options.md: $(DIR)/cmd/osde2e-docs $(DIR)/pkg/common/config/config.go
-	go run $(DOC_PKG)

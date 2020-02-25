@@ -1,7 +1,6 @@
 package load
 
 import (
-	"flag"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -13,7 +12,6 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/markbates/pkger"
@@ -32,32 +30,13 @@ const (
 )
 
 var rndStringRegex = regexp.MustCompile("__RND_(\\d+)__")
-var customConfig = ""
-var configs []string
-var once sync.Once
 
 func init() {
 	rand.Seed(time.Now().Unix())
 }
 
 // IntoObject populates an object based on the tags specified in the object.
-func IntoObject(object interface{}) error {
-	// Parse out the osde2e config filename if once was provided.
-	once.Do(func() {
-		var configString string
-		flag.StringVar(&configString, "configs", "", "A comma separated list of built in configs to use")
-		flag.StringVar(&customConfig, "custom-config", "", "Custom config file for osde2e")
-		flag.Parse()
-
-		if configString != "" {
-			configs = strings.Split(configString, ",")
-		}
-
-		for _, config := range configs {
-			log.Printf("Will load config %s", config)
-		}
-	})
-
+func IntoObject(object interface{}, configs []string, customConfig string) error {
 	if objectType := reflect.TypeOf(object); objectType.Kind() != reflect.Ptr {
 		return fmt.Errorf("the supplied object must be a pointer")
 	}
