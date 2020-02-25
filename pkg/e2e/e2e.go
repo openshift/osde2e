@@ -40,13 +40,25 @@ const (
 // OSD is used to deploy and manage clusters.
 var OSD *osd.OSD
 
-// RunTests runs the osde2e test suite using.
-func RunTests(t *testing.T) {
+// RunTests initializes Ginkgo and runs the osde2e test suite.
+func RunTests() bool {
+	defer ginkgo.GinkgoRecover()
+	testing.Init()
+	t := ginkgo.GinkgoT()
+
+	runGinkgoTests(t)
+
+	return !t.Failed()
+}
+
+// runGinkgoTests runs the osde2e test suite using Ginkgo.
+func runGinkgoTests(t ginkgo.GinkgoTInterface) {
 	var err error
 	gomega.RegisterFailHandler(ginkgo.Fail)
 
 	cfg := config.Instance
 
+	ginkgoConfig.DefaultReporterConfig.NoisySkippings = !config.Instance.Tests.SuppressSkipNotifications
 	ginkgoConfig.GinkgoConfig.SkipString = cfg.Tests.GinkgoSkip
 	ginkgoConfig.GinkgoConfig.FocusString = cfg.Tests.GinkgoFocus
 
@@ -163,7 +175,7 @@ func RunTests(t *testing.T) {
 	}
 }
 
-func runTestsInPhase(t *testing.T, phase string, description string) bool {
+func runTestsInPhase(t ginkgo.GinkgoTInterface, phase string, description string) bool {
 	cfg := config.Instance
 	state := state.Instance
 

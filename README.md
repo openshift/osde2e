@@ -1,4 +1,7 @@
 # OSDe2e
+
+[![GoDoc](https://godoc.org/github.com/openshift/osde2e?status.svg)](https://godoc.org/github.com/openshift/osde2e)
+
 Comprehensive testing solution for Service Delivery
 
 ## Purpose
@@ -24,44 +27,57 @@ Set OCM_TOKEN environment variable:
 $ export OCM_TOKEN=<token from step 1>
 ```
 
-## Running Tests / Examples
-All commands should be run from the root of this repo. The simplest way to start a test run is to run `make test`. Below are some common examples when running OSDe2e. There is a large number of config options that may change or help, so please view the config package for more information.
+## The `osde2e` command
 
-Using ENV Config
-Testing against an existing cluster (with your kubeconfig pointing at it)
+The `osde2e` command is the root command that executes all functionality within the osde2e repo through a number of subcommands.
+
+### `osde2e test`
+
+The `test` subcommand is the way to run tests against an OpenShift cluster on OSD or otherwise. Below are some common examples when running OSDe2e. There are a large number of config options that may change or help, so please view the config package for more information.
+
+### Composable configs
+
+OSDe2e comes with a number of [configs](configs) that can be passed to the `osde2e test` command using the -configs argument. These can be strung together in a comma separated list to create a more complex scenario for testing.
+
 ```
-TEST_KUBECONFIG=~/.kube/config \
-make test
+$ osde2e test -configs prod,e2e-suite,conformance-suite
 ```
-*Note: You must skip certain Operator tests that only exist in a hosted OSD instance:*
-```
- -ginkgo.skip="Managed Velero Operator|Dedicated Admin Operator|Configure AlertManager Operator"
-```
+
+This will create a cluster on production (using the default version) that will run both the end to end suite and the Kubernetes conformance tests.
+
+#### Using environment variables
+
+Any config option can be passed in using environment variables. Please refer to the config package for exact environment variable names.
 
 Spinning up a hosted-OSD instance and testing against it
+
 ```
 OCM_TOKEN=$(cat ~/.ocm-token) \
 OSD_ENV=prod \
 CLUSTER_NAME=my-name-osd-test \
 MAJOR_TARGET=4 \
 MINOR_TARGET=2 \
-make test
+osde2e test
 ``` 
 
-Using YAML Config
+These can be combined with the composable configs mentioned in the previous section as well.
+
 ```
-E2ECONFIG=./osde2e.yaml \
-make test
+OCM_TOKEN=$(cat ~/.ocm-token) \
+MAJOR_TARGET=4 \
+MINOR_TARGET=2 \
+osde2e test -configs prod,e2e-suite
+``` 
+
+#### Using a custom YAML config
+
+The composable configs consist of a number of small YAML files that can all be loaded together. Rather than use these built in configs, you can also elect to build your own custom YAML file and provide that using the `-custom-config` parameter.
+
+```
+osde2e test -custom-config ./osde2e.yaml
 ```
 
-Dry Run example
-```
-dryRun: true
-kubeconfig:
- path: /path/to/your/.kube/config
-```
-
-Full Test example
+##### Full custom YAML config example
 ```
 dryRun: false
 cluster:
@@ -74,12 +90,23 @@ ocm:
  token: [Redacted]
  env: stage
 tests:
- ginkgoSkip: OpenShift E2E|Cluster state|Managed Velero Operator|Dedicated Admin Operator|Configure AlertManager Operator
+ testsToRun:
+ - '[Suite: e2e]'
 ```
 
-*This is a recent change and is not widely used yet. Please refer to pkg/common/config for more info on YAML config options.*
+#### Order of precedence
 
-Config options are currently parsed by loading defaults, attempting to load environment variables, and finally attempting to load config data from a YAML file. There are instances where you may want to have most of your config in a YAML file while keeping one or two sensitive config options as environment variables (OCM Token)
+Config options are currently parsed by loading defaults, attempting to load environment variables, attempting to load composable configs, and finally attempting to load config data from the custom YAML file. There are instances where you may want to have most of your config in a custom YAML file while keeping one or two sensitive config options as environment variables (OCM Token)l
+
+### Testing against non OSD clusers
+
+It is possible to test against non-OSD clusters by specifying a kubeconfig to test against.
+
+```
+TEST_KUBECONFIG=~/.kube/config \
+osde2e test -configs prod -custom-config .osde2e.yaml
+```
+*Note: You must skip certain Operator tests that only exist in a hosted OSD instance. This can be skipped by skipping the operators test suite.*
 
 ## Different Test Types
 Core tests and Operator tests reside within the OSDe2e repo and are maintained by the CICD team. The tests are written and compiled as part of the OSDe2e project. 

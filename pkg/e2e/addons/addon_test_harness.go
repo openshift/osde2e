@@ -40,44 +40,42 @@ var _ = ginkgo.Describe("[Suite: addons] Addon Test Harness", func() {
 	defer ginkgo.GinkgoRecover()
 	h := helper.New()
 
-	for _, harness := range config.Instance.Addons.TestHarnesses {
-		if harness != "" {
-			addonTimeoutInSeconds := 3600
-			ginkgo.It(harness+" should run until completion", func() {
-				// configure tests
-				// setup runner
-				r := h.RunnerWithNoCommand()
+	addonTimeoutInSeconds := 3600
+	ginkgo.It("should run until completion", func() {
+		for _, harness := range config.Instance.Addons.TestHarnesses {
+			// configure tests
+			// setup runner
+			r := h.RunnerWithNoCommand()
 
-				latestImageStream, err := r.GetLatestImageStreamTag()
-				Expect(err).NotTo(HaveOccurred())
-				addonTestCommand, err := h.ConvertTemplateToString(addonTestTemplate, struct {
-					Timeout              int
-					Image                string
-					OutputDir            string
-					PushResultsContainer string
-				}{
-					Timeout:              addonTimeoutInSeconds,
-					Image:                harness,
-					OutputDir:            runner.DefaultRunner.OutputDir,
-					PushResultsContainer: latestImageStream,
-				})
-				Expect(err).NotTo(HaveOccurred())
+			latestImageStream, err := r.GetLatestImageStreamTag()
+			Expect(err).NotTo(HaveOccurred())
+			addonTestCommand, err := h.ConvertTemplateToString(addonTestTemplate, struct {
+				Timeout              int
+				Image                string
+				OutputDir            string
+				PushResultsContainer string
+			}{
+				Timeout:              addonTimeoutInSeconds,
+				Image:                harness,
+				OutputDir:            runner.DefaultRunner.OutputDir,
+				PushResultsContainer: latestImageStream,
+			})
+			Expect(err).NotTo(HaveOccurred())
 
-				r.Name = "addon-tests"
-				r.Cmd = addonTestCommand
+			r.Name = "addon-tests"
+			r.Cmd = addonTestCommand
 
-				// run tests
-				stopCh := make(chan struct{})
-				err = r.Run(addonTimeoutInSeconds, stopCh)
-				Expect(err).NotTo(HaveOccurred())
+			// run tests
+			stopCh := make(chan struct{})
+			err = r.Run(addonTimeoutInSeconds, stopCh)
+			Expect(err).NotTo(HaveOccurred())
 
-				// get results
-				results, err := r.RetrieveResults()
-				Expect(err).NotTo(HaveOccurred())
+			// get results
+			results, err := r.RetrieveResults()
+			Expect(err).NotTo(HaveOccurred())
 
-				// write results
-				h.WriteResults(results)
-			}, float64(addonTimeoutInSeconds+30))
+			// write results
+			h.WriteResults(results)
 		}
-	}
+	}, float64(addonTimeoutInSeconds+30))
 })
