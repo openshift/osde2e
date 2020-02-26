@@ -207,8 +207,22 @@ func (o *ResourceReview) GetSubscriptionIDs() (value []string, ok bool) {
 	return
 }
 
+// ResourceReviewListKind is the name of the type used to represent list of objects of
+// type 'resource_review'.
+const ResourceReviewListKind = "ResourceReviewList"
+
+// ResourceReviewListLinkKind is the name of the type used to represent links to list
+// of objects of type 'resource_review'.
+const ResourceReviewListLinkKind = "ResourceReviewListLink"
+
+// ResourceReviewNilKind is the name of the type used to nil lists of objects of
+// type 'resource_review'.
+const ResourceReviewListNilKind = "ResourceReviewListNil"
+
 // ResourceReviewList is a list of values of the 'resource_review' type.
 type ResourceReviewList struct {
+	href  *string
+	link  bool
 	items []*ResourceReview
 }
 

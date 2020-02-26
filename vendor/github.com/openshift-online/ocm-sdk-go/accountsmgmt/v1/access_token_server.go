@@ -21,8 +21,6 @@ package v1 // github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1
 
 import (
 	"context"
-	"encoding/json"
-	"io"
 	"net/http"
 
 	"github.com/golang/glog"
@@ -63,19 +61,6 @@ func (r *AccessTokenPostServerResponse) Status(value int) *AccessTokenPostServer
 	return r
 }
 
-// marshall is the method used internally to marshal responses for the
-// 'post' method.
-func (r *AccessTokenPostServerResponse) marshal(writer io.Writer) error {
-	var err error
-	encoder := json.NewEncoder(writer)
-	data, err := r.body.wrap()
-	if err != nil {
-		return err
-	}
-	err = encoder.Encode(data)
-	return err
-}
-
 // dispatchAccessToken navigates the servers tree rooted at the given server
 // till it finds one that matches the given set of path segments, and then invokes
 // the corresponding server.
@@ -84,44 +69,25 @@ func dispatchAccessToken(w http.ResponseWriter, r *http.Request, server AccessTo
 		switch r.Method {
 		case "POST":
 			adaptAccessTokenPostRequest(w, r, server)
+			return
 		default:
 			errors.SendMethodNotAllowed(w, r)
 			return
 		}
-	} else {
-		switch segments[0] {
-		default:
-			errors.SendNotFound(w, r)
-			return
-		}
 	}
-}
-
-// readAccessTokenPostRequest reads the given HTTP requests and translates it
-// into an object of type AccessTokenPostServerRequest.
-func readAccessTokenPostRequest(r *http.Request) (*AccessTokenPostServerRequest, error) {
-	var err error
-	result := new(AccessTokenPostServerRequest)
-	return result, err
-}
-
-// writeAccessTokenPostResponse translates the given request object into an
-// HTTP response.
-func writeAccessTokenPostResponse(w http.ResponseWriter, r *AccessTokenPostServerResponse) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(r.status)
-	err := r.marshal(w)
-	if err != nil {
-		return err
+	switch segments[0] {
+	default:
+		errors.SendNotFound(w, r)
+		return
 	}
-	return nil
 }
 
 // adaptAccessTokenPostRequest translates the given HTTP request into a call to
 // the corresponding method of the given server. Then it translates the
 // results returned by that method into an HTTP response.
 func adaptAccessTokenPostRequest(w http.ResponseWriter, r *http.Request, server AccessTokenServer) {
-	request, err := readAccessTokenPostRequest(r)
+	request := &AccessTokenPostServerRequest{}
+	err := readAccessTokenPostRequest(request, r)
 	if err != nil {
 		glog.Errorf(
 			"Can't read request for method '%s' and path '%s': %v",
@@ -130,7 +96,7 @@ func adaptAccessTokenPostRequest(w http.ResponseWriter, r *http.Request, server 
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	response := new(AccessTokenPostServerResponse)
+	response := &AccessTokenPostServerResponse{}
 	response.status = 201
 	err = server.Post(r.Context(), request, response)
 	if err != nil {
@@ -141,7 +107,7 @@ func adaptAccessTokenPostRequest(w http.ResponseWriter, r *http.Request, server 
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	err = writeAccessTokenPostResponse(w, response)
+	err = writeAccessTokenPostResponse(response, w)
 	if err != nil {
 		glog.Errorf(
 			"Can't write response for method '%s' and path '%s': %v",

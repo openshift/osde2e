@@ -31,8 +31,7 @@ func NewAccessToken() *AccessTokenBuilder {
 	return new(AccessTokenBuilder)
 }
 
-// Auths sets the value of the 'auths' attribute
-// to the given value.
+// Auths sets the value of the 'auths' attribute to the given value.
 //
 //
 func (b *AccessTokenBuilder) Auths(value map[string]*AccessTokenAuthBuilder) *AccessTokenBuilder {
@@ -47,8 +46,8 @@ func (b *AccessTokenBuilder) Copy(object *AccessToken) *AccessTokenBuilder {
 	}
 	if len(object.auths) > 0 {
 		b.auths = make(map[string]*AccessTokenAuthBuilder)
-		for key, value := range object.auths {
-			b.auths[key] = NewAccessTokenAuth().Copy(value)
+		for k, v := range object.auths {
+			b.auths[k] = NewAccessTokenAuth().Copy(v)
 		}
 	} else {
 		b.auths = nil
@@ -61,8 +60,8 @@ func (b *AccessTokenBuilder) Build() (object *AccessToken, err error) {
 	object = new(AccessToken)
 	if b.auths != nil {
 		object.auths = make(map[string]*AccessTokenAuth)
-		for key, value := range b.auths {
-			object.auths[key], err = value.Build()
+		for k, v := range b.auths {
+			object.auths[k], err = v.Build()
 			if err != nil {
 				return
 			}

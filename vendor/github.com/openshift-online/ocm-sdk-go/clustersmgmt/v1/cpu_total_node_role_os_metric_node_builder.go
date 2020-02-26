@@ -38,8 +38,7 @@ func NewCPUTotalNodeRoleOSMetricNode() *CPUTotalNodeRoleOSMetricNodeBuilder {
 	return new(CPUTotalNodeRoleOSMetricNodeBuilder)
 }
 
-// CPUTotal sets the value of the 'CPU_total' attribute
-// to the given value.
+// CPUTotal sets the value of the 'CPU_total' attribute to the given value.
 //
 //
 func (b *CPUTotalNodeRoleOSMetricNodeBuilder) CPUTotal(value float64) *CPUTotalNodeRoleOSMetricNodeBuilder {
@@ -47,8 +46,7 @@ func (b *CPUTotalNodeRoleOSMetricNodeBuilder) CPUTotal(value float64) *CPUTotalN
 	return b
 }
 
-// NodeRoles sets the value of the 'node_roles' attribute
-// to the given values.
+// NodeRoles sets the value of the 'node_roles' attribute to the given values.
 //
 //
 func (b *CPUTotalNodeRoleOSMetricNodeBuilder) NodeRoles(values ...string) *CPUTotalNodeRoleOSMetricNodeBuilder {
@@ -57,8 +55,7 @@ func (b *CPUTotalNodeRoleOSMetricNodeBuilder) NodeRoles(values ...string) *CPUTo
 	return b
 }
 
-// OperatingSystem sets the value of the 'operating_system' attribute
-// to the given value.
+// OperatingSystem sets the value of the 'operating_system' attribute to the given value.
 //
 //
 func (b *CPUTotalNodeRoleOSMetricNodeBuilder) OperatingSystem(value string) *CPUTotalNodeRoleOSMetricNodeBuilder {
@@ -66,8 +63,7 @@ func (b *CPUTotalNodeRoleOSMetricNodeBuilder) OperatingSystem(value string) *CPU
 	return b
 }
 
-// Time sets the value of the 'time' attribute
-// to the given value.
+// Time sets the value of the 'time' attribute to the given value.
 //
 //
 func (b *CPUTotalNodeRoleOSMetricNodeBuilder) Time(value time.Time) *CPUTotalNodeRoleOSMetricNodeBuilder {
@@ -81,7 +77,7 @@ func (b *CPUTotalNodeRoleOSMetricNodeBuilder) Copy(object *CPUTotalNodeRoleOSMet
 		return b
 	}
 	b.cpuTotal = object.cpuTotal
-	if len(object.nodeRoles) > 0 {
+	if object.nodeRoles != nil {
 		b.nodeRoles = make([]string, len(object.nodeRoles))
 		copy(b.nodeRoles, object.nodeRoles)
 	} else {
@@ -95,18 +91,12 @@ func (b *CPUTotalNodeRoleOSMetricNodeBuilder) Copy(object *CPUTotalNodeRoleOSMet
 // Build creates a 'CPU_total_node_role_OS_metric_node' object using the configuration stored in the builder.
 func (b *CPUTotalNodeRoleOSMetricNodeBuilder) Build() (object *CPUTotalNodeRoleOSMetricNode, err error) {
 	object = new(CPUTotalNodeRoleOSMetricNode)
-	if b.cpuTotal != nil {
-		object.cpuTotal = b.cpuTotal
-	}
+	object.cpuTotal = b.cpuTotal
 	if b.nodeRoles != nil {
 		object.nodeRoles = make([]string, len(b.nodeRoles))
 		copy(object.nodeRoles, b.nodeRoles)
 	}
-	if b.operatingSystem != nil {
-		object.operatingSystem = b.operatingSystem
-	}
-	if b.time != nil {
-		object.time = b.time
-	}
+	object.operatingSystem = b.operatingSystem
+	object.time = b.time
 	return
 }

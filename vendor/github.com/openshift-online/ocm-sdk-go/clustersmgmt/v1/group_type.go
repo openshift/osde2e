@@ -96,7 +96,7 @@ func (o *Group) GetHREF() (value string, ok bool) {
 // Empty returns true if the object is empty, i.e. no attribute has a value.
 func (o *Group) Empty() bool {
 	return o == nil || (o.id == nil &&
-		o.users.Empty() &&
+		o.users.Len() == 0 &&
 		true)
 }
 
@@ -123,16 +123,16 @@ func (o *Group) GetUsers() (value *UserList, ok bool) {
 	return
 }
 
-// GroupListKind is the name of the type used to represent list of
-// objects of type 'group'.
+// GroupListKind is the name of the type used to represent list of objects of
+// type 'group'.
 const GroupListKind = "GroupList"
 
-// GroupListLinkKind is the name of the type used to represent links
-// to list of objects of type 'group'.
+// GroupListLinkKind is the name of the type used to represent links to list
+// of objects of type 'group'.
 const GroupListLinkKind = "GroupListLink"
 
-// GroupNilKind is the name of the type used to nil lists of
-// objects of type 'group'.
+// GroupNilKind is the name of the type used to nil lists of objects of
+// type 'group'.
 const GroupListNilKind = "GroupListNil"
 
 // GroupList is a list of values of the 'group' type.

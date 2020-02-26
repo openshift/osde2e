@@ -21,8 +21,6 @@ package v1 // github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1
 
 import (
 	"context"
-	"encoding/json"
-	"io"
 	"net/http"
 	"net/url"
 	"time"
@@ -41,25 +39,25 @@ type CloudRegionClient struct {
 }
 
 // NewCloudRegionClient creates a new client for the 'cloud_region'
-// resource using the given transport to sned the requests and receive the
+// resource using the given transport to send the requests and receive the
 // responses.
 func NewCloudRegionClient(transport http.RoundTripper, path string, metric string) *CloudRegionClient {
-	client := new(CloudRegionClient)
-	client.transport = transport
-	client.path = path
-	client.metric = metric
-	return client
+	return &CloudRegionClient{
+		transport: transport,
+		path:      path,
+		metric:    metric,
+	}
 }
 
 // Get creates a request for the 'get' method.
 //
 // Retrieves the details of the region.
 func (c *CloudRegionClient) Get() *CloudRegionGetRequest {
-	request := new(CloudRegionGetRequest)
-	request.transport = c.transport
-	request.path = c.path
-	request.metric = c.metric
-	return request
+	return &CloudRegionGetRequest{
+		transport: c.transport,
+		path:      c.path,
+		metric:    c.metric,
+	}
 }
 
 // CloudRegionPollRequest is the request for the Poll method.
@@ -233,7 +231,7 @@ func (r *CloudRegionGetRequest) SendContext(ctx context.Context) (result *CloudR
 		return
 	}
 	defer response.Body.Close()
-	result = new(CloudRegionGetResponse)
+	result = &CloudRegionGetResponse{}
 	result.status = response.StatusCode
 	result.header = response.Header
 	if result.status >= 400 {
@@ -244,7 +242,7 @@ func (r *CloudRegionGetRequest) SendContext(ctx context.Context) (result *CloudR
 		err = result.err
 		return
 	}
-	err = result.unmarshal(response.Body)
+	err = readCloudRegionGetResponse(result, response.Body)
 	if err != nil {
 		return
 	}
@@ -303,21 +301,4 @@ func (r *CloudRegionGetResponse) GetBody() (value *CloudRegion, ok bool) {
 		value = r.body
 	}
 	return
-}
-
-// unmarshal is the method used internally to unmarshal responses to the
-// 'get' method.
-func (r *CloudRegionGetResponse) unmarshal(reader io.Reader) error {
-	var err error
-	decoder := json.NewDecoder(reader)
-	data := new(cloudRegionData)
-	err = decoder.Decode(data)
-	if err != nil {
-		return err
-	}
-	r.body, err = data.unwrap()
-	if err != nil {
-		return err
-	}
-	return err
 }

@@ -148,16 +148,16 @@ func (o *ClusterStatus) GetState() (value ClusterState, ok bool) {
 	return
 }
 
-// ClusterStatusListKind is the name of the type used to represent list of
-// objects of type 'cluster_status'.
+// ClusterStatusListKind is the name of the type used to represent list of objects of
+// type 'cluster_status'.
 const ClusterStatusListKind = "ClusterStatusList"
 
-// ClusterStatusListLinkKind is the name of the type used to represent links
-// to list of objects of type 'cluster_status'.
+// ClusterStatusListLinkKind is the name of the type used to represent links to list
+// of objects of type 'cluster_status'.
 const ClusterStatusListLinkKind = "ClusterStatusListLink"
 
-// ClusterStatusNilKind is the name of the type used to nil lists of
-// objects of type 'cluster_status'.
+// ClusterStatusNilKind is the name of the type used to nil lists of objects of
+// type 'cluster_status'.
 const ClusterStatusListNilKind = "ClusterStatusListNil"
 
 // ClusterStatusList is a list of values of the 'cluster_status' type.

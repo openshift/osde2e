@@ -21,13 +21,10 @@ package v1 // github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1
 
 import (
 	"context"
-	"encoding/json"
-	"io"
 	"net/http"
 
 	"github.com/golang/glog"
 	"github.com/openshift-online/ocm-sdk-go/errors"
-	"github.com/openshift-online/ocm-sdk-go/helpers"
 )
 
 // RolesServer represents the interface the manages the 'roles' resource.
@@ -76,23 +73,6 @@ func (r *RolesAddServerRequest) GetBody() (value *Role, ok bool) {
 	return
 }
 
-// unmarshal is the method used internally to unmarshal request to the
-// 'add' method.
-func (r *RolesAddServerRequest) unmarshal(reader io.Reader) error {
-	var err error
-	decoder := json.NewDecoder(reader)
-	data := new(roleData)
-	err = decoder.Decode(data)
-	if err != nil {
-		return err
-	}
-	r.body, err = data.unwrap()
-	if err != nil {
-		return err
-	}
-	return err
-}
-
 // RolesAddServerResponse is the response for the 'add' method.
 type RolesAddServerResponse struct {
 	status int
@@ -112,19 +92,6 @@ func (r *RolesAddServerResponse) Body(value *Role) *RolesAddServerResponse {
 func (r *RolesAddServerResponse) Status(value int) *RolesAddServerResponse {
 	r.status = value
 	return r
-}
-
-// marshall is the method used internally to marshal responses for the
-// 'add' method.
-func (r *RolesAddServerResponse) marshal(writer io.Writer) error {
-	var err error
-	encoder := json.NewEncoder(writer)
-	data, err := r.body.wrap()
-	if err != nil {
-		return err
-	}
-	err = encoder.Encode(data)
-	return err
 }
 
 // RolesListServerRequest is the request for the 'list' method.
@@ -275,32 +242,6 @@ func (r *RolesListServerResponse) Status(value int) *RolesListServerResponse {
 	return r
 }
 
-// marshall is the method used internally to marshal responses for the
-// 'list' method.
-func (r *RolesListServerResponse) marshal(writer io.Writer) error {
-	var err error
-	encoder := json.NewEncoder(writer)
-	data := new(rolesListServerResponseData)
-	data.Items, err = r.items.wrap()
-	if err != nil {
-		return err
-	}
-	data.Page = r.page
-	data.Size = r.size
-	data.Total = r.total
-	err = encoder.Encode(data)
-	return err
-}
-
-// rolesListServerResponseData is the structure used internally to write the request of the
-// 'list' method.
-type rolesListServerResponseData struct {
-	Items roleListData "json:\"items,omitempty\""
-	Page  *int         "json:\"page,omitempty\""
-	Size  *int         "json:\"size,omitempty\""
-	Total *int         "json:\"total,omitempty\""
-}
-
 // dispatchRoles navigates the servers tree rooted at the given server
 // till it finds one that matches the given set of path segments, and then invokes
 // the corresponding server.
@@ -309,54 +250,32 @@ func dispatchRoles(w http.ResponseWriter, r *http.Request, server RolesServer, s
 		switch r.Method {
 		case "POST":
 			adaptRolesAddRequest(w, r, server)
+			return
 		case "GET":
 			adaptRolesListRequest(w, r, server)
+			return
 		default:
 			errors.SendMethodNotAllowed(w, r)
 			return
 		}
-	} else {
-		switch segments[0] {
-		default:
-			target := server.Role(segments[0])
-			if target == nil {
-				errors.SendNotFound(w, r)
-				return
-			}
-			dispatchRole(w, r, target, segments[1:])
+	}
+	switch segments[0] {
+	default:
+		target := server.Role(segments[0])
+		if target == nil {
+			errors.SendNotFound(w, r)
+			return
 		}
+		dispatchRole(w, r, target, segments[1:])
 	}
-}
-
-// readRolesAddRequest reads the given HTTP requests and translates it
-// into an object of type RolesAddServerRequest.
-func readRolesAddRequest(r *http.Request) (*RolesAddServerRequest, error) {
-	var err error
-	result := new(RolesAddServerRequest)
-	err = result.unmarshal(r.Body)
-	if err != nil {
-		return nil, err
-	}
-	return result, err
-}
-
-// writeRolesAddResponse translates the given request object into an
-// HTTP response.
-func writeRolesAddResponse(w http.ResponseWriter, r *RolesAddServerResponse) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(r.status)
-	err := r.marshal(w)
-	if err != nil {
-		return err
-	}
-	return nil
 }
 
 // adaptRolesAddRequest translates the given HTTP request into a call to
 // the corresponding method of the given server. Then it translates the
 // results returned by that method into an HTTP response.
 func adaptRolesAddRequest(w http.ResponseWriter, r *http.Request, server RolesServer) {
-	request, err := readRolesAddRequest(r)
+	request := &RolesAddServerRequest{}
+	err := readRolesAddRequest(request, r)
 	if err != nil {
 		glog.Errorf(
 			"Can't read request for method '%s' and path '%s': %v",
@@ -365,7 +284,7 @@ func adaptRolesAddRequest(w http.ResponseWriter, r *http.Request, server RolesSe
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	response := new(RolesAddServerResponse)
+	response := &RolesAddServerResponse{}
 	response.status = 201
 	err = server.Add(r.Context(), request, response)
 	if err != nil {
@@ -376,7 +295,7 @@ func adaptRolesAddRequest(w http.ResponseWriter, r *http.Request, server RolesSe
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	err = writeRolesAddResponse(w, response)
+	err = writeRolesAddResponse(response, w)
 	if err != nil {
 		glog.Errorf(
 			"Can't write response for method '%s' and path '%s': %v",
@@ -386,50 +305,12 @@ func adaptRolesAddRequest(w http.ResponseWriter, r *http.Request, server RolesSe
 	}
 }
 
-// readRolesListRequest reads the given HTTP requests and translates it
-// into an object of type RolesListServerRequest.
-func readRolesListRequest(r *http.Request) (*RolesListServerRequest, error) {
-	var err error
-	result := new(RolesListServerRequest)
-	query := r.URL.Query()
-	result.page, err = helpers.ParseInteger(query, "page")
-	if err != nil {
-		return nil, err
-	}
-	if result.page == nil {
-		result.page = helpers.NewInteger(1)
-	}
-	result.search, err = helpers.ParseString(query, "search")
-	if err != nil {
-		return nil, err
-	}
-	result.size, err = helpers.ParseInteger(query, "size")
-	if err != nil {
-		return nil, err
-	}
-	if result.size == nil {
-		result.size = helpers.NewInteger(100)
-	}
-	return result, err
-}
-
-// writeRolesListResponse translates the given request object into an
-// HTTP response.
-func writeRolesListResponse(w http.ResponseWriter, r *RolesListServerResponse) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(r.status)
-	err := r.marshal(w)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
 // adaptRolesListRequest translates the given HTTP request into a call to
 // the corresponding method of the given server. Then it translates the
 // results returned by that method into an HTTP response.
 func adaptRolesListRequest(w http.ResponseWriter, r *http.Request, server RolesServer) {
-	request, err := readRolesListRequest(r)
+	request := &RolesListServerRequest{}
+	err := readRolesListRequest(request, r)
 	if err != nil {
 		glog.Errorf(
 			"Can't read request for method '%s' and path '%s': %v",
@@ -438,7 +319,7 @@ func adaptRolesListRequest(w http.ResponseWriter, r *http.Request, server RolesS
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	response := new(RolesListServerResponse)
+	response := &RolesListServerResponse{}
 	response.status = 200
 	err = server.List(r.Context(), request, response)
 	if err != nil {
@@ -449,7 +330,7 @@ func adaptRolesListRequest(w http.ResponseWriter, r *http.Request, server RolesS
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	err = writeRolesListResponse(w, response)
+	err = writeRolesListResponse(response, w)
 	if err != nil {
 		glog.Errorf(
 			"Can't write response for method '%s' and path '%s': %v",

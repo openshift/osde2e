@@ -24,15 +24,14 @@ package v1 // github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1
 //
 type ClusterAuthorizationResponse struct {
 	allowed         *bool
-	excessResources *ReservedResourceList
+	excessResources []*ReservedResource
 	subscription    *Subscription
 }
 
 // Empty returns true if the object is empty, i.e. no attribute has a value.
 func (o *ClusterAuthorizationResponse) Empty() bool {
 	return o == nil || (o.allowed == nil &&
-		o.excessResources.Empty() &&
-		o.subscription == nil &&
+		len(o.excessResources) == 0 &&
 		true)
 }
 
@@ -63,7 +62,7 @@ func (o *ClusterAuthorizationResponse) GetAllowed() (value bool, ok bool) {
 // the zero value of the type if the attribute doesn't have a value.
 //
 //
-func (o *ClusterAuthorizationResponse) ExcessResources() *ReservedResourceList {
+func (o *ClusterAuthorizationResponse) ExcessResources() []*ReservedResource {
 	if o == nil {
 		return nil
 	}
@@ -74,7 +73,7 @@ func (o *ClusterAuthorizationResponse) ExcessResources() *ReservedResourceList {
 // a flag indicating if the attribute has a value.
 //
 //
-func (o *ClusterAuthorizationResponse) GetExcessResources() (value *ReservedResourceList, ok bool) {
+func (o *ClusterAuthorizationResponse) GetExcessResources() (value []*ReservedResource, ok bool) {
 	ok = o != nil && o.excessResources != nil
 	if ok {
 		value = o.excessResources
@@ -105,8 +104,22 @@ func (o *ClusterAuthorizationResponse) GetSubscription() (value *Subscription, o
 	return
 }
 
+// ClusterAuthorizationResponseListKind is the name of the type used to represent list of objects of
+// type 'cluster_authorization_response'.
+const ClusterAuthorizationResponseListKind = "ClusterAuthorizationResponseList"
+
+// ClusterAuthorizationResponseListLinkKind is the name of the type used to represent links to list
+// of objects of type 'cluster_authorization_response'.
+const ClusterAuthorizationResponseListLinkKind = "ClusterAuthorizationResponseListLink"
+
+// ClusterAuthorizationResponseNilKind is the name of the type used to nil lists of objects of
+// type 'cluster_authorization_response'.
+const ClusterAuthorizationResponseListNilKind = "ClusterAuthorizationResponseListNil"
+
 // ClusterAuthorizationResponseList is a list of values of the 'cluster_authorization_response' type.
 type ClusterAuthorizationResponseList struct {
+	href  *string
+	link  bool
 	items []*ClusterAuthorizationResponse
 }
 

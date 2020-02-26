@@ -98,16 +98,16 @@ func (o *Subscription) Empty() bool {
 		true)
 }
 
-// SubscriptionListKind is the name of the type used to represent list of
-// objects of type 'subscription'.
+// SubscriptionListKind is the name of the type used to represent list of objects of
+// type 'subscription'.
 const SubscriptionListKind = "SubscriptionList"
 
-// SubscriptionListLinkKind is the name of the type used to represent links
-// to list of objects of type 'subscription'.
+// SubscriptionListLinkKind is the name of the type used to represent links to list
+// of objects of type 'subscription'.
 const SubscriptionListLinkKind = "SubscriptionListLink"
 
-// SubscriptionNilKind is the name of the type used to nil lists of
-// objects of type 'subscription'.
+// SubscriptionNilKind is the name of the type used to nil lists of objects of
+// type 'subscription'.
 const SubscriptionListNilKind = "SubscriptionListNil"
 
 // SubscriptionList is a list of values of the 'subscription' type.

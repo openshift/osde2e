@@ -34,8 +34,7 @@ func NewGitlabIdentityProvider() *GitlabIdentityProviderBuilder {
 	return new(GitlabIdentityProviderBuilder)
 }
 
-// CA sets the value of the 'CA' attribute
-// to the given value.
+// CA sets the value of the 'CA' attribute to the given value.
 //
 //
 func (b *GitlabIdentityProviderBuilder) CA(value string) *GitlabIdentityProviderBuilder {
@@ -43,8 +42,7 @@ func (b *GitlabIdentityProviderBuilder) CA(value string) *GitlabIdentityProvider
 	return b
 }
 
-// URL sets the value of the 'URL' attribute
-// to the given value.
+// URL sets the value of the 'URL' attribute to the given value.
 //
 //
 func (b *GitlabIdentityProviderBuilder) URL(value string) *GitlabIdentityProviderBuilder {
@@ -52,8 +50,7 @@ func (b *GitlabIdentityProviderBuilder) URL(value string) *GitlabIdentityProvide
 	return b
 }
 
-// ClientID sets the value of the 'client_ID' attribute
-// to the given value.
+// ClientID sets the value of the 'client_ID' attribute to the given value.
 //
 //
 func (b *GitlabIdentityProviderBuilder) ClientID(value string) *GitlabIdentityProviderBuilder {
@@ -61,8 +58,7 @@ func (b *GitlabIdentityProviderBuilder) ClientID(value string) *GitlabIdentityPr
 	return b
 }
 
-// ClientSecret sets the value of the 'client_secret' attribute
-// to the given value.
+// ClientSecret sets the value of the 'client_secret' attribute to the given value.
 //
 //
 func (b *GitlabIdentityProviderBuilder) ClientSecret(value string) *GitlabIdentityProviderBuilder {
@@ -85,17 +81,9 @@ func (b *GitlabIdentityProviderBuilder) Copy(object *GitlabIdentityProvider) *Gi
 // Build creates a 'gitlab_identity_provider' object using the configuration stored in the builder.
 func (b *GitlabIdentityProviderBuilder) Build() (object *GitlabIdentityProvider, err error) {
 	object = new(GitlabIdentityProvider)
-	if b.ca != nil {
-		object.ca = b.ca
-	}
-	if b.url != nil {
-		object.url = b.url
-	}
-	if b.clientID != nil {
-		object.clientID = b.clientID
-	}
-	if b.clientSecret != nil {
-		object.clientSecret = b.clientSecret
-	}
+	object.ca = b.ca
+	object.url = b.url
+	object.clientID = b.clientID
+	object.clientSecret = b.clientSecret
 	return
 }

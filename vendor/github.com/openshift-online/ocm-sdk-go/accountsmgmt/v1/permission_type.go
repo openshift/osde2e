@@ -173,16 +173,16 @@ func (o *Permission) GetRoleID() (value string, ok bool) {
 	return
 }
 
-// PermissionListKind is the name of the type used to represent list of
-// objects of type 'permission'.
+// PermissionListKind is the name of the type used to represent list of objects of
+// type 'permission'.
 const PermissionListKind = "PermissionList"
 
-// PermissionListLinkKind is the name of the type used to represent links
-// to list of objects of type 'permission'.
+// PermissionListLinkKind is the name of the type used to represent links to list
+// of objects of type 'permission'.
 const PermissionListLinkKind = "PermissionListLink"
 
-// PermissionNilKind is the name of the type used to nil lists of
-// objects of type 'permission'.
+// PermissionNilKind is the name of the type used to nil lists of objects of
+// type 'permission'.
 const PermissionListNilKind = "PermissionListNil"
 
 // PermissionList is a list of values of the 'permission' type.

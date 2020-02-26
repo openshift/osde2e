@@ -37,6 +37,19 @@ func (b *ResourceQuotaListBuilder) Items(values ...*ResourceQuotaBuilder) *Resou
 	return b
 }
 
+// Copy copies the items of the given list into this builder, discarding any previous items.
+func (b *ResourceQuotaListBuilder) Copy(list *ResourceQuotaList) *ResourceQuotaListBuilder {
+	if list == nil || list.items == nil {
+		b.items = nil
+	} else {
+		b.items = make([]*ResourceQuotaBuilder, len(list.items))
+		for i, v := range list.items {
+			b.items[i] = NewResourceQuota().Copy(v)
+		}
+	}
+	return b
+}
+
 // Build creates a list of 'resource_quota' objects using the
 // configuration stored in the builder.
 func (b *ResourceQuotaListBuilder) Build() (list *ResourceQuotaList, err error) {

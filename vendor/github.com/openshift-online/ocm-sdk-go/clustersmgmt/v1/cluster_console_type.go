@@ -55,8 +55,22 @@ func (o *ClusterConsole) GetURL() (value string, ok bool) {
 	return
 }
 
+// ClusterConsoleListKind is the name of the type used to represent list of objects of
+// type 'cluster_console'.
+const ClusterConsoleListKind = "ClusterConsoleList"
+
+// ClusterConsoleListLinkKind is the name of the type used to represent links to list
+// of objects of type 'cluster_console'.
+const ClusterConsoleListLinkKind = "ClusterConsoleListLink"
+
+// ClusterConsoleNilKind is the name of the type used to nil lists of objects of
+// type 'cluster_console'.
+const ClusterConsoleListNilKind = "ClusterConsoleListNil"
+
 // ClusterConsoleList is a list of values of the 'cluster_console' type.
 type ClusterConsoleList struct {
+	href  *string
+	link  bool
 	items []*ClusterConsole
 }
 

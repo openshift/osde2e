@@ -21,8 +21,6 @@ package v1 // github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1
 
 import (
 	"context"
-	"encoding/json"
-	"io"
 	"net/http"
 
 	"github.com/golang/glog"
@@ -84,19 +82,6 @@ func (r *IdentityProviderGetServerResponse) Status(value int) *IdentityProviderG
 	return r
 }
 
-// marshall is the method used internally to marshal responses for the
-// 'get' method.
-func (r *IdentityProviderGetServerResponse) marshal(writer io.Writer) error {
-	var err error
-	encoder := json.NewEncoder(writer)
-	data, err := r.body.wrap()
-	if err != nil {
-		return err
-	}
-	err = encoder.Encode(data)
-	return err
-}
-
 // dispatchIdentityProvider navigates the servers tree rooted at the given server
 // till it finds one that matches the given set of path segments, and then invokes
 // the corresponding server.
@@ -105,42 +90,28 @@ func dispatchIdentityProvider(w http.ResponseWriter, r *http.Request, server Ide
 		switch r.Method {
 		case "DELETE":
 			adaptIdentityProviderDeleteRequest(w, r, server)
+			return
 		case "GET":
 			adaptIdentityProviderGetRequest(w, r, server)
+			return
 		default:
 			errors.SendMethodNotAllowed(w, r)
 			return
 		}
-	} else {
-		switch segments[0] {
-		default:
-			errors.SendNotFound(w, r)
-			return
-		}
 	}
-}
-
-// readIdentityProviderDeleteRequest reads the given HTTP requests and translates it
-// into an object of type IdentityProviderDeleteServerRequest.
-func readIdentityProviderDeleteRequest(r *http.Request) (*IdentityProviderDeleteServerRequest, error) {
-	var err error
-	result := new(IdentityProviderDeleteServerRequest)
-	return result, err
-}
-
-// writeIdentityProviderDeleteResponse translates the given request object into an
-// HTTP response.
-func writeIdentityProviderDeleteResponse(w http.ResponseWriter, r *IdentityProviderDeleteServerResponse) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(r.status)
-	return nil
+	switch segments[0] {
+	default:
+		errors.SendNotFound(w, r)
+		return
+	}
 }
 
 // adaptIdentityProviderDeleteRequest translates the given HTTP request into a call to
 // the corresponding method of the given server. Then it translates the
 // results returned by that method into an HTTP response.
 func adaptIdentityProviderDeleteRequest(w http.ResponseWriter, r *http.Request, server IdentityProviderServer) {
-	request, err := readIdentityProviderDeleteRequest(r)
+	request := &IdentityProviderDeleteServerRequest{}
+	err := readIdentityProviderDeleteRequest(request, r)
 	if err != nil {
 		glog.Errorf(
 			"Can't read request for method '%s' and path '%s': %v",
@@ -149,7 +120,7 @@ func adaptIdentityProviderDeleteRequest(w http.ResponseWriter, r *http.Request, 
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	response := new(IdentityProviderDeleteServerResponse)
+	response := &IdentityProviderDeleteServerResponse{}
 	response.status = 204
 	err = server.Delete(r.Context(), request, response)
 	if err != nil {
@@ -160,7 +131,7 @@ func adaptIdentityProviderDeleteRequest(w http.ResponseWriter, r *http.Request, 
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	err = writeIdentityProviderDeleteResponse(w, response)
+	err = writeIdentityProviderDeleteResponse(response, w)
 	if err != nil {
 		glog.Errorf(
 			"Can't write response for method '%s' and path '%s': %v",
@@ -170,31 +141,12 @@ func adaptIdentityProviderDeleteRequest(w http.ResponseWriter, r *http.Request, 
 	}
 }
 
-// readIdentityProviderGetRequest reads the given HTTP requests and translates it
-// into an object of type IdentityProviderGetServerRequest.
-func readIdentityProviderGetRequest(r *http.Request) (*IdentityProviderGetServerRequest, error) {
-	var err error
-	result := new(IdentityProviderGetServerRequest)
-	return result, err
-}
-
-// writeIdentityProviderGetResponse translates the given request object into an
-// HTTP response.
-func writeIdentityProviderGetResponse(w http.ResponseWriter, r *IdentityProviderGetServerResponse) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(r.status)
-	err := r.marshal(w)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
 // adaptIdentityProviderGetRequest translates the given HTTP request into a call to
 // the corresponding method of the given server. Then it translates the
 // results returned by that method into an HTTP response.
 func adaptIdentityProviderGetRequest(w http.ResponseWriter, r *http.Request, server IdentityProviderServer) {
-	request, err := readIdentityProviderGetRequest(r)
+	request := &IdentityProviderGetServerRequest{}
+	err := readIdentityProviderGetRequest(request, r)
 	if err != nil {
 		glog.Errorf(
 			"Can't read request for method '%s' and path '%s': %v",
@@ -203,7 +155,7 @@ func adaptIdentityProviderGetRequest(w http.ResponseWriter, r *http.Request, ser
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	response := new(IdentityProviderGetServerResponse)
+	response := &IdentityProviderGetServerResponse{}
 	response.status = 200
 	err = server.Get(r.Context(), request, response)
 	if err != nil {
@@ -214,7 +166,7 @@ func adaptIdentityProviderGetRequest(w http.ResponseWriter, r *http.Request, ser
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	err = writeIdentityProviderGetResponse(w, response)
+	err = writeIdentityProviderGetResponse(response, w)
 	if err != nil {
 		glog.Errorf(
 			"Can't write response for method '%s' and path '%s': %v",

@@ -37,6 +37,19 @@ func (b *DNSListBuilder) Items(values ...*DNSBuilder) *DNSListBuilder {
 	return b
 }
 
+// Copy copies the items of the given list into this builder, discarding any previous items.
+func (b *DNSListBuilder) Copy(list *DNSList) *DNSListBuilder {
+	if list == nil || list.items == nil {
+		b.items = nil
+	} else {
+		b.items = make([]*DNSBuilder, len(list.items))
+		for i, v := range list.items {
+			b.items[i] = NewDNS().Copy(v)
+		}
+	}
+	return b
+}
+
 // Build creates a list of 'DNS' objects using the
 // configuration stored in the builder.
 func (b *DNSListBuilder) Build() (list *DNSList, err error) {

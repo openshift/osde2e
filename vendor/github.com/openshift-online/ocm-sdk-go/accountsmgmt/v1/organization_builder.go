@@ -53,8 +53,7 @@ func (b *OrganizationBuilder) Link(value bool) *OrganizationBuilder {
 	return b
 }
 
-// ExternalID sets the value of the 'external_ID' attribute
-// to the given value.
+// ExternalID sets the value of the 'external_ID' attribute to the given value.
 //
 //
 func (b *OrganizationBuilder) ExternalID(value string) *OrganizationBuilder {
@@ -62,8 +61,7 @@ func (b *OrganizationBuilder) ExternalID(value string) *OrganizationBuilder {
 	return b
 }
 
-// Name sets the value of the 'name' attribute
-// to the given value.
+// Name sets the value of the 'name' attribute to the given value.
 //
 //
 func (b *OrganizationBuilder) Name(value string) *OrganizationBuilder {
@@ -90,11 +88,7 @@ func (b *OrganizationBuilder) Build() (object *Organization, err error) {
 	object.id = b.id
 	object.href = b.href
 	object.link = b.link
-	if b.externalID != nil {
-		object.externalID = b.externalID
-	}
-	if b.name != nil {
-		object.name = b.name
-	}
+	object.externalID = b.externalID
+	object.name = b.name
 	return
 }

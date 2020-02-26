@@ -57,8 +57,7 @@ func (b *RegistryBuilder) Link(value bool) *RegistryBuilder {
 	return b
 }
 
-// URL sets the value of the 'URL' attribute
-// to the given value.
+// URL sets the value of the 'URL' attribute to the given value.
 //
 //
 func (b *RegistryBuilder) URL(value string) *RegistryBuilder {
@@ -66,8 +65,7 @@ func (b *RegistryBuilder) URL(value string) *RegistryBuilder {
 	return b
 }
 
-// CloudAlias sets the value of the 'cloud_alias' attribute
-// to the given value.
+// CloudAlias sets the value of the 'cloud_alias' attribute to the given value.
 //
 //
 func (b *RegistryBuilder) CloudAlias(value bool) *RegistryBuilder {
@@ -75,8 +73,7 @@ func (b *RegistryBuilder) CloudAlias(value bool) *RegistryBuilder {
 	return b
 }
 
-// Name sets the value of the 'name' attribute
-// to the given value.
+// Name sets the value of the 'name' attribute to the given value.
 //
 //
 func (b *RegistryBuilder) Name(value string) *RegistryBuilder {
@@ -84,8 +81,7 @@ func (b *RegistryBuilder) Name(value string) *RegistryBuilder {
 	return b
 }
 
-// OrgName sets the value of the 'org_name' attribute
-// to the given value.
+// OrgName sets the value of the 'org_name' attribute to the given value.
 //
 //
 func (b *RegistryBuilder) OrgName(value string) *RegistryBuilder {
@@ -93,8 +89,7 @@ func (b *RegistryBuilder) OrgName(value string) *RegistryBuilder {
 	return b
 }
 
-// TeamName sets the value of the 'team_name' attribute
-// to the given value.
+// TeamName sets the value of the 'team_name' attribute to the given value.
 //
 //
 func (b *RegistryBuilder) TeamName(value string) *RegistryBuilder {
@@ -102,8 +97,7 @@ func (b *RegistryBuilder) TeamName(value string) *RegistryBuilder {
 	return b
 }
 
-// Type sets the value of the 'type' attribute
-// to the given value.
+// Type sets the value of the 'type' attribute to the given value.
 //
 //
 func (b *RegistryBuilder) Type(value string) *RegistryBuilder {
@@ -134,23 +128,11 @@ func (b *RegistryBuilder) Build() (object *Registry, err error) {
 	object.id = b.id
 	object.href = b.href
 	object.link = b.link
-	if b.url != nil {
-		object.url = b.url
-	}
-	if b.cloudAlias != nil {
-		object.cloudAlias = b.cloudAlias
-	}
-	if b.name != nil {
-		object.name = b.name
-	}
-	if b.orgName != nil {
-		object.orgName = b.orgName
-	}
-	if b.teamName != nil {
-		object.teamName = b.teamName
-	}
-	if b.type_ != nil {
-		object.type_ = b.type_
-	}
+	object.url = b.url
+	object.cloudAlias = b.cloudAlias
+	object.name = b.name
+	object.orgName = b.orgName
+	object.teamName = b.teamName
+	object.type_ = b.type_
 	return
 }

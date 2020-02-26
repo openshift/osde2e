@@ -21,13 +21,10 @@ package v1 // github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1
 
 import (
 	"context"
-	"encoding/json"
-	"io"
 	"net/http"
 
 	"github.com/golang/glog"
 	"github.com/openshift-online/ocm-sdk-go/errors"
-	"github.com/openshift-online/ocm-sdk-go/helpers"
 )
 
 // AddOnsServer represents the interface the manages the 'add_ons' resource.
@@ -76,23 +73,6 @@ func (r *AddOnsAddServerRequest) GetBody() (value *AddOn, ok bool) {
 	return
 }
 
-// unmarshal is the method used internally to unmarshal request to the
-// 'add' method.
-func (r *AddOnsAddServerRequest) unmarshal(reader io.Reader) error {
-	var err error
-	decoder := json.NewDecoder(reader)
-	data := new(addOnData)
-	err = decoder.Decode(data)
-	if err != nil {
-		return err
-	}
-	r.body, err = data.unwrap()
-	if err != nil {
-		return err
-	}
-	return err
-}
-
 // AddOnsAddServerResponse is the response for the 'add' method.
 type AddOnsAddServerResponse struct {
 	status int
@@ -112,19 +92,6 @@ func (r *AddOnsAddServerResponse) Body(value *AddOn) *AddOnsAddServerResponse {
 func (r *AddOnsAddServerResponse) Status(value int) *AddOnsAddServerResponse {
 	r.status = value
 	return r
-}
-
-// marshall is the method used internally to marshal responses for the
-// 'add' method.
-func (r *AddOnsAddServerResponse) marshal(writer io.Writer) error {
-	var err error
-	encoder := json.NewEncoder(writer)
-	data, err := r.body.wrap()
-	if err != nil {
-		return err
-	}
-	err = encoder.Encode(data)
-	return err
 }
 
 // AddOnsListServerRequest is the request for the 'list' method.
@@ -324,32 +291,6 @@ func (r *AddOnsListServerResponse) Status(value int) *AddOnsListServerResponse {
 	return r
 }
 
-// marshall is the method used internally to marshal responses for the
-// 'list' method.
-func (r *AddOnsListServerResponse) marshal(writer io.Writer) error {
-	var err error
-	encoder := json.NewEncoder(writer)
-	data := new(addOnsListServerResponseData)
-	data.Items, err = r.items.wrap()
-	if err != nil {
-		return err
-	}
-	data.Page = r.page
-	data.Size = r.size
-	data.Total = r.total
-	err = encoder.Encode(data)
-	return err
-}
-
-// addOnsListServerResponseData is the structure used internally to write the request of the
-// 'list' method.
-type addOnsListServerResponseData struct {
-	Items addOnListData "json:\"items,omitempty\""
-	Page  *int          "json:\"page,omitempty\""
-	Size  *int          "json:\"size,omitempty\""
-	Total *int          "json:\"total,omitempty\""
-}
-
 // dispatchAddOns navigates the servers tree rooted at the given server
 // till it finds one that matches the given set of path segments, and then invokes
 // the corresponding server.
@@ -358,54 +299,32 @@ func dispatchAddOns(w http.ResponseWriter, r *http.Request, server AddOnsServer,
 		switch r.Method {
 		case "POST":
 			adaptAddOnsAddRequest(w, r, server)
+			return
 		case "GET":
 			adaptAddOnsListRequest(w, r, server)
+			return
 		default:
 			errors.SendMethodNotAllowed(w, r)
 			return
 		}
-	} else {
-		switch segments[0] {
-		default:
-			target := server.Addon(segments[0])
-			if target == nil {
-				errors.SendNotFound(w, r)
-				return
-			}
-			dispatchAddOn(w, r, target, segments[1:])
+	}
+	switch segments[0] {
+	default:
+		target := server.Addon(segments[0])
+		if target == nil {
+			errors.SendNotFound(w, r)
+			return
 		}
+		dispatchAddOn(w, r, target, segments[1:])
 	}
-}
-
-// readAddOnsAddRequest reads the given HTTP requests and translates it
-// into an object of type AddOnsAddServerRequest.
-func readAddOnsAddRequest(r *http.Request) (*AddOnsAddServerRequest, error) {
-	var err error
-	result := new(AddOnsAddServerRequest)
-	err = result.unmarshal(r.Body)
-	if err != nil {
-		return nil, err
-	}
-	return result, err
-}
-
-// writeAddOnsAddResponse translates the given request object into an
-// HTTP response.
-func writeAddOnsAddResponse(w http.ResponseWriter, r *AddOnsAddServerResponse) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(r.status)
-	err := r.marshal(w)
-	if err != nil {
-		return err
-	}
-	return nil
 }
 
 // adaptAddOnsAddRequest translates the given HTTP request into a call to
 // the corresponding method of the given server. Then it translates the
 // results returned by that method into an HTTP response.
 func adaptAddOnsAddRequest(w http.ResponseWriter, r *http.Request, server AddOnsServer) {
-	request, err := readAddOnsAddRequest(r)
+	request := &AddOnsAddServerRequest{}
+	err := readAddOnsAddRequest(request, r)
 	if err != nil {
 		glog.Errorf(
 			"Can't read request for method '%s' and path '%s': %v",
@@ -414,7 +333,7 @@ func adaptAddOnsAddRequest(w http.ResponseWriter, r *http.Request, server AddOns
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	response := new(AddOnsAddServerResponse)
+	response := &AddOnsAddServerResponse{}
 	response.status = 201
 	err = server.Add(r.Context(), request, response)
 	if err != nil {
@@ -425,7 +344,7 @@ func adaptAddOnsAddRequest(w http.ResponseWriter, r *http.Request, server AddOns
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	err = writeAddOnsAddResponse(w, response)
+	err = writeAddOnsAddResponse(response, w)
 	if err != nil {
 		glog.Errorf(
 			"Can't write response for method '%s' and path '%s': %v",
@@ -435,54 +354,12 @@ func adaptAddOnsAddRequest(w http.ResponseWriter, r *http.Request, server AddOns
 	}
 }
 
-// readAddOnsListRequest reads the given HTTP requests and translates it
-// into an object of type AddOnsListServerRequest.
-func readAddOnsListRequest(r *http.Request) (*AddOnsListServerRequest, error) {
-	var err error
-	result := new(AddOnsListServerRequest)
-	query := r.URL.Query()
-	result.order, err = helpers.ParseString(query, "order")
-	if err != nil {
-		return nil, err
-	}
-	result.page, err = helpers.ParseInteger(query, "page")
-	if err != nil {
-		return nil, err
-	}
-	if result.page == nil {
-		result.page = helpers.NewInteger(1)
-	}
-	result.search, err = helpers.ParseString(query, "search")
-	if err != nil {
-		return nil, err
-	}
-	result.size, err = helpers.ParseInteger(query, "size")
-	if err != nil {
-		return nil, err
-	}
-	if result.size == nil {
-		result.size = helpers.NewInteger(100)
-	}
-	return result, err
-}
-
-// writeAddOnsListResponse translates the given request object into an
-// HTTP response.
-func writeAddOnsListResponse(w http.ResponseWriter, r *AddOnsListServerResponse) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(r.status)
-	err := r.marshal(w)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
 // adaptAddOnsListRequest translates the given HTTP request into a call to
 // the corresponding method of the given server. Then it translates the
 // results returned by that method into an HTTP response.
 func adaptAddOnsListRequest(w http.ResponseWriter, r *http.Request, server AddOnsServer) {
-	request, err := readAddOnsListRequest(r)
+	request := &AddOnsListServerRequest{}
+	err := readAddOnsListRequest(request, r)
 	if err != nil {
 		glog.Errorf(
 			"Can't read request for method '%s' and path '%s': %v",
@@ -491,7 +368,7 @@ func adaptAddOnsListRequest(w http.ResponseWriter, r *http.Request, server AddOn
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	response := new(AddOnsListServerResponse)
+	response := &AddOnsListServerResponse{}
 	response.status = 200
 	err = server.List(r.Context(), request, response)
 	if err != nil {
@@ -502,7 +379,7 @@ func adaptAddOnsListRequest(w http.ResponseWriter, r *http.Request, server AddOn
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	err = writeAddOnsListResponse(w, response)
+	err = writeAddOnsListResponse(response, w)
 	if err != nil {
 		glog.Errorf(
 			"Can't write response for method '%s' and path '%s': %v",

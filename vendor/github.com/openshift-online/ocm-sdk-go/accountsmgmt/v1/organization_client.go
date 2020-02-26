@@ -22,7 +22,6 @@ package v1 // github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -30,6 +29,7 @@ import (
 	"path"
 	"time"
 
+	jsoniter "github.com/json-iterator/go"
 	"github.com/openshift-online/ocm-sdk-go/errors"
 	"github.com/openshift-online/ocm-sdk-go/helpers"
 )
@@ -44,36 +44,36 @@ type OrganizationClient struct {
 }
 
 // NewOrganizationClient creates a new client for the 'organization'
-// resource using the given transport to sned the requests and receive the
+// resource using the given transport to send the requests and receive the
 // responses.
 func NewOrganizationClient(transport http.RoundTripper, path string, metric string) *OrganizationClient {
-	client := new(OrganizationClient)
-	client.transport = transport
-	client.path = path
-	client.metric = metric
-	return client
+	return &OrganizationClient{
+		transport: transport,
+		path:      path,
+		metric:    metric,
+	}
 }
 
 // Get creates a request for the 'get' method.
 //
 // Retrieves the details of the organization.
 func (c *OrganizationClient) Get() *OrganizationGetRequest {
-	request := new(OrganizationGetRequest)
-	request.transport = c.transport
-	request.path = c.path
-	request.metric = c.metric
-	return request
+	return &OrganizationGetRequest{
+		transport: c.transport,
+		path:      c.path,
+		metric:    c.metric,
+	}
 }
 
 // Update creates a request for the 'update' method.
 //
 // Updates the organization.
 func (c *OrganizationClient) Update() *OrganizationUpdateRequest {
-	request := new(OrganizationUpdateRequest)
-	request.transport = c.transport
-	request.path = c.path
-	request.metric = c.metric
-	return request
+	return &OrganizationUpdateRequest{
+		transport: c.transport,
+		path:      c.path,
+		metric:    c.metric,
+	}
 }
 
 // QuotaSummary returns the target 'quota_summary' resource.
@@ -271,7 +271,7 @@ func (r *OrganizationGetRequest) SendContext(ctx context.Context) (result *Organ
 		return
 	}
 	defer response.Body.Close()
-	result = new(OrganizationGetResponse)
+	result = &OrganizationGetResponse{}
 	result.status = response.StatusCode
 	result.header = response.Header
 	if result.status >= 400 {
@@ -282,7 +282,7 @@ func (r *OrganizationGetRequest) SendContext(ctx context.Context) (result *Organ
 		err = result.err
 		return
 	}
-	err = result.unmarshal(response.Body)
+	err = readOrganizationGetResponse(result, response.Body)
 	if err != nil {
 		return
 	}
@@ -343,23 +343,6 @@ func (r *OrganizationGetResponse) GetBody() (value *Organization, ok bool) {
 	return
 }
 
-// unmarshal is the method used internally to unmarshal responses to the
-// 'get' method.
-func (r *OrganizationGetResponse) unmarshal(reader io.Reader) error {
-	var err error
-	decoder := json.NewDecoder(reader)
-	data := new(organizationData)
-	err = decoder.Decode(data)
-	if err != nil {
-		return err
-	}
-	r.body, err = data.unwrap()
-	if err != nil {
-		return err
-	}
-	return err
-}
-
 // OrganizationUpdateRequest is the request for the 'update' method.
 type OrganizationUpdateRequest struct {
 	transport http.RoundTripper
@@ -402,8 +385,8 @@ func (r *OrganizationUpdateRequest) Send() (result *OrganizationUpdateResponse, 
 func (r *OrganizationUpdateRequest) SendContext(ctx context.Context) (result *OrganizationUpdateResponse, err error) {
 	query := helpers.CopyQuery(r.query)
 	header := helpers.SetHeader(r.header, r.metric)
-	buffer := new(bytes.Buffer)
-	err = r.marshal(buffer)
+	buffer := &bytes.Buffer{}
+	err = writeOrganizationUpdateRequest(r, buffer)
 	if err != nil {
 		return
 	}
@@ -425,7 +408,7 @@ func (r *OrganizationUpdateRequest) SendContext(ctx context.Context) (result *Or
 		return
 	}
 	defer response.Body.Close()
-	result = new(OrganizationUpdateResponse)
+	result = &OrganizationUpdateResponse{}
 	result.status = response.StatusCode
 	result.header = response.Header
 	if result.status >= 400 {
@@ -436,7 +419,7 @@ func (r *OrganizationUpdateRequest) SendContext(ctx context.Context) (result *Or
 		err = result.err
 		return
 	}
-	err = result.unmarshal(response.Body)
+	err = readOrganizationUpdateResponse(result, response.Body)
 	if err != nil {
 		return
 	}
@@ -446,14 +429,11 @@ func (r *OrganizationUpdateRequest) SendContext(ctx context.Context) (result *Or
 // marshall is the method used internally to marshal requests for the
 // 'update' method.
 func (r *OrganizationUpdateRequest) marshal(writer io.Writer) error {
-	var err error
-	encoder := json.NewEncoder(writer)
-	data, err := r.body.wrap()
-	if err != nil {
-		return err
-	}
-	err = encoder.Encode(data)
-	return err
+	stream := helpers.NewStream(writer)
+	r.stream(stream)
+	return stream.Error
+}
+func (r *OrganizationUpdateRequest) stream(stream *jsoniter.Stream) {
 }
 
 // OrganizationUpdateResponse is the response for the 'update' method.
@@ -508,21 +488,4 @@ func (r *OrganizationUpdateResponse) GetBody() (value *Organization, ok bool) {
 		value = r.body
 	}
 	return
-}
-
-// unmarshal is the method used internally to unmarshal responses to the
-// 'update' method.
-func (r *OrganizationUpdateResponse) unmarshal(reader io.Reader) error {
-	var err error
-	decoder := json.NewDecoder(reader)
-	data := new(organizationData)
-	err = decoder.Decode(data)
-	if err != nil {
-		return err
-	}
-	r.body, err = data.unwrap()
-	if err != nil {
-		return err
-	}
-	return err
 }

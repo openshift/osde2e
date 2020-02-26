@@ -98,8 +98,6 @@ func (o *ClusterCredentials) GetHREF() (value string, ok bool) {
 // Empty returns true if the object is empty, i.e. no attribute has a value.
 func (o *ClusterCredentials) Empty() bool {
 	return o == nil || (o.id == nil &&
-		o.ssh == nil &&
-		o.admin == nil &&
 		o.kubeconfig == nil &&
 		true)
 }
@@ -175,16 +173,16 @@ func (o *ClusterCredentials) GetKubeconfig() (value string, ok bool) {
 	return
 }
 
-// ClusterCredentialsListKind is the name of the type used to represent list of
-// objects of type 'cluster_credentials'.
+// ClusterCredentialsListKind is the name of the type used to represent list of objects of
+// type 'cluster_credentials'.
 const ClusterCredentialsListKind = "ClusterCredentialsList"
 
-// ClusterCredentialsListLinkKind is the name of the type used to represent links
-// to list of objects of type 'cluster_credentials'.
+// ClusterCredentialsListLinkKind is the name of the type used to represent links to list
+// of objects of type 'cluster_credentials'.
 const ClusterCredentialsListLinkKind = "ClusterCredentialsListLink"
 
-// ClusterCredentialsNilKind is the name of the type used to nil lists of
-// objects of type 'cluster_credentials'.
+// ClusterCredentialsNilKind is the name of the type used to nil lists of objects of
+// type 'cluster_credentials'.
 const ClusterCredentialsListNilKind = "ClusterCredentialsListNil"
 
 // ClusterCredentialsList is a list of values of the 'cluster_credentials' type.

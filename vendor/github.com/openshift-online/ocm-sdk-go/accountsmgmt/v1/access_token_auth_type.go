@@ -80,8 +80,22 @@ func (o *AccessTokenAuth) GetEmail() (value string, ok bool) {
 	return
 }
 
+// AccessTokenAuthListKind is the name of the type used to represent list of objects of
+// type 'access_token_auth'.
+const AccessTokenAuthListKind = "AccessTokenAuthList"
+
+// AccessTokenAuthListLinkKind is the name of the type used to represent links to list
+// of objects of type 'access_token_auth'.
+const AccessTokenAuthListLinkKind = "AccessTokenAuthListLink"
+
+// AccessTokenAuthNilKind is the name of the type used to nil lists of objects of
+// type 'access_token_auth'.
+const AccessTokenAuthListNilKind = "AccessTokenAuthListNil"
+
 // AccessTokenAuthList is a list of values of the 'access_token_auth' type.
 type AccessTokenAuthList struct {
+	href  *string
+	link  bool
 	items []*AccessTokenAuth
 }
 

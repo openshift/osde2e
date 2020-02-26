@@ -21,8 +21,6 @@ package v1 // github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1
 
 import (
 	"context"
-	"encoding/json"
-	"io"
 	"net/http"
 	"net/url"
 	"path"
@@ -41,14 +39,14 @@ type CloudRegionsClient struct {
 }
 
 // NewCloudRegionsClient creates a new client for the 'cloud_regions'
-// resource using the given transport to sned the requests and receive the
+// resource using the given transport to send the requests and receive the
 // responses.
 func NewCloudRegionsClient(transport http.RoundTripper, path string, metric string) *CloudRegionsClient {
-	client := new(CloudRegionsClient)
-	client.transport = transport
-	client.path = path
-	client.metric = metric
-	return client
+	return &CloudRegionsClient{
+		transport: transport,
+		path:      path,
+		metric:    metric,
+	}
 }
 
 // List creates a request for the 'list' method.
@@ -59,11 +57,11 @@ func NewCloudRegionsClient(transport http.RoundTripper, path string, metric stri
 // `page` will always be 1 and `size` and `total` will always be the total number of regions
 // of the provider.
 func (c *CloudRegionsClient) List() *CloudRegionsListRequest {
-	request := new(CloudRegionsListRequest)
-	request.transport = c.transport
-	request.path = c.path
-	request.metric = c.metric
-	return request
+	return &CloudRegionsListRequest{
+		transport: c.transport,
+		path:      c.path,
+		metric:    c.metric,
+	}
 }
 
 // Region returns the target 'cloud_region' resource for the given identifier.
@@ -154,7 +152,7 @@ func (r *CloudRegionsListRequest) SendContext(ctx context.Context) (result *Clou
 		return
 	}
 	defer response.Body.Close()
-	result = new(CloudRegionsListResponse)
+	result = &CloudRegionsListResponse{}
 	result.status = response.StatusCode
 	result.header = response.Header
 	if result.status >= 400 {
@@ -165,7 +163,7 @@ func (r *CloudRegionsListRequest) SendContext(ctx context.Context) (result *Clou
 		err = result.err
 		return
 	}
-	err = result.unmarshal(response.Body)
+	err = readCloudRegionsListResponse(result, response.Body)
 	if err != nil {
 		return
 	}
@@ -303,33 +301,4 @@ func (r *CloudRegionsListResponse) GetTotal() (value int, ok bool) {
 		value = *r.total
 	}
 	return
-}
-
-// unmarshal is the method used internally to unmarshal responses to the
-// 'list' method.
-func (r *CloudRegionsListResponse) unmarshal(reader io.Reader) error {
-	var err error
-	decoder := json.NewDecoder(reader)
-	data := new(cloudRegionsListResponseData)
-	err = decoder.Decode(data)
-	if err != nil {
-		return err
-	}
-	r.items, err = data.Items.unwrap()
-	if err != nil {
-		return err
-	}
-	r.page = data.Page
-	r.size = data.Size
-	r.total = data.Total
-	return err
-}
-
-// cloudRegionsListResponseData is the structure used internally to unmarshal
-// the response of the 'list' method.
-type cloudRegionsListResponseData struct {
-	Items cloudRegionListData "json:\"items,omitempty\""
-	Page  *int                "json:\"page,omitempty\""
-	Size  *int                "json:\"size,omitempty\""
-	Total *int                "json:\"total,omitempty\""
 }

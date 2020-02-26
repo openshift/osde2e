@@ -122,116 +122,115 @@ func Dispatch(w http.ResponseWriter, r *http.Request, server Server, segments []
 			errors.SendMethodNotAllowed(w, r)
 			return
 		}
-	} else {
-		switch segments[0] {
-		case "skus":
-			target := server.SKUS()
-			if target == nil {
-				errors.SendNotFound(w, r)
-				return
-			}
-			dispatchSKUS(w, r, target, segments[1:])
-		case "access_token":
-			target := server.AccessToken()
-			if target == nil {
-				errors.SendNotFound(w, r)
-				return
-			}
-			dispatchAccessToken(w, r, target, segments[1:])
-		case "accounts":
-			target := server.Accounts()
-			if target == nil {
-				errors.SendNotFound(w, r)
-				return
-			}
-			dispatchAccounts(w, r, target, segments[1:])
-		case "cluster_authorizations":
-			target := server.ClusterAuthorizations()
-			if target == nil {
-				errors.SendNotFound(w, r)
-				return
-			}
-			dispatchClusterAuthorizations(w, r, target, segments[1:])
-		case "cluster_registrations":
-			target := server.ClusterRegistrations()
-			if target == nil {
-				errors.SendNotFound(w, r)
-				return
-			}
-			dispatchClusterRegistrations(w, r, target, segments[1:])
-		case "current_access":
-			target := server.CurrentAccess()
-			if target == nil {
-				errors.SendNotFound(w, r)
-				return
-			}
-			dispatchRoles(w, r, target, segments[1:])
-		case "current_account":
-			target := server.CurrentAccount()
-			if target == nil {
-				errors.SendNotFound(w, r)
-				return
-			}
-			dispatchCurrentAccount(w, r, target, segments[1:])
-		case "organizations":
-			target := server.Organizations()
-			if target == nil {
-				errors.SendNotFound(w, r)
-				return
-			}
-			dispatchOrganizations(w, r, target, segments[1:])
-		case "permissions":
-			target := server.Permissions()
-			if target == nil {
-				errors.SendNotFound(w, r)
-				return
-			}
-			dispatchPermissions(w, r, target, segments[1:])
-		case "registries":
-			target := server.Registries()
-			if target == nil {
-				errors.SendNotFound(w, r)
-				return
-			}
-			dispatchRegistries(w, r, target, segments[1:])
-		case "registry_credentials":
-			target := server.RegistryCredentials()
-			if target == nil {
-				errors.SendNotFound(w, r)
-				return
-			}
-			dispatchRegistryCredentials(w, r, target, segments[1:])
-		case "resource_quota":
-			target := server.ResourceQuota()
-			if target == nil {
-				errors.SendNotFound(w, r)
-				return
-			}
-			dispatchResourceQuotas(w, r, target, segments[1:])
-		case "role_bindings":
-			target := server.RoleBindings()
-			if target == nil {
-				errors.SendNotFound(w, r)
-				return
-			}
-			dispatchRoleBindings(w, r, target, segments[1:])
-		case "roles":
-			target := server.Roles()
-			if target == nil {
-				errors.SendNotFound(w, r)
-				return
-			}
-			dispatchRoles(w, r, target, segments[1:])
-		case "subscriptions":
-			target := server.Subscriptions()
-			if target == nil {
-				errors.SendNotFound(w, r)
-				return
-			}
-			dispatchSubscriptions(w, r, target, segments[1:])
-		default:
+	}
+	switch segments[0] {
+	case "skus":
+		target := server.SKUS()
+		if target == nil {
 			errors.SendNotFound(w, r)
 			return
 		}
+		dispatchSKUS(w, r, target, segments[1:])
+	case "access_token":
+		target := server.AccessToken()
+		if target == nil {
+			errors.SendNotFound(w, r)
+			return
+		}
+		dispatchAccessToken(w, r, target, segments[1:])
+	case "accounts":
+		target := server.Accounts()
+		if target == nil {
+			errors.SendNotFound(w, r)
+			return
+		}
+		dispatchAccounts(w, r, target, segments[1:])
+	case "cluster_authorizations":
+		target := server.ClusterAuthorizations()
+		if target == nil {
+			errors.SendNotFound(w, r)
+			return
+		}
+		dispatchClusterAuthorizations(w, r, target, segments[1:])
+	case "cluster_registrations":
+		target := server.ClusterRegistrations()
+		if target == nil {
+			errors.SendNotFound(w, r)
+			return
+		}
+		dispatchClusterRegistrations(w, r, target, segments[1:])
+	case "current_access":
+		target := server.CurrentAccess()
+		if target == nil {
+			errors.SendNotFound(w, r)
+			return
+		}
+		dispatchRoles(w, r, target, segments[1:])
+	case "current_account":
+		target := server.CurrentAccount()
+		if target == nil {
+			errors.SendNotFound(w, r)
+			return
+		}
+		dispatchCurrentAccount(w, r, target, segments[1:])
+	case "organizations":
+		target := server.Organizations()
+		if target == nil {
+			errors.SendNotFound(w, r)
+			return
+		}
+		dispatchOrganizations(w, r, target, segments[1:])
+	case "permissions":
+		target := server.Permissions()
+		if target == nil {
+			errors.SendNotFound(w, r)
+			return
+		}
+		dispatchPermissions(w, r, target, segments[1:])
+	case "registries":
+		target := server.Registries()
+		if target == nil {
+			errors.SendNotFound(w, r)
+			return
+		}
+		dispatchRegistries(w, r, target, segments[1:])
+	case "registry_credentials":
+		target := server.RegistryCredentials()
+		if target == nil {
+			errors.SendNotFound(w, r)
+			return
+		}
+		dispatchRegistryCredentials(w, r, target, segments[1:])
+	case "resource_quota":
+		target := server.ResourceQuota()
+		if target == nil {
+			errors.SendNotFound(w, r)
+			return
+		}
+		dispatchResourceQuotas(w, r, target, segments[1:])
+	case "role_bindings":
+		target := server.RoleBindings()
+		if target == nil {
+			errors.SendNotFound(w, r)
+			return
+		}
+		dispatchRoleBindings(w, r, target, segments[1:])
+	case "roles":
+		target := server.Roles()
+		if target == nil {
+			errors.SendNotFound(w, r)
+			return
+		}
+		dispatchRoles(w, r, target, segments[1:])
+	case "subscriptions":
+		target := server.Subscriptions()
+		if target == nil {
+			errors.SendNotFound(w, r)
+			return
+		}
+		dispatchSubscriptions(w, r, target, segments[1:])
+	default:
+		errors.SendNotFound(w, r)
+		return
 	}
 }

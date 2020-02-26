@@ -24,13 +24,13 @@ package v1 // github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1
 // Metric included in a dashboard.
 type Metric struct {
 	name   *string
-	vector *SampleList
+	vector []*Sample
 }
 
 // Empty returns true if the object is empty, i.e. no attribute has a value.
 func (o *Metric) Empty() bool {
 	return o == nil || (o.name == nil &&
-		o.vector.Empty() &&
+		len(o.vector) == 0 &&
 		true)
 }
 
@@ -61,7 +61,7 @@ func (o *Metric) GetName() (value string, ok bool) {
 // the zero value of the type if the attribute doesn't have a value.
 //
 // Samples of the metric.
-func (o *Metric) Vector() *SampleList {
+func (o *Metric) Vector() []*Sample {
 	if o == nil {
 		return nil
 	}
@@ -72,7 +72,7 @@ func (o *Metric) Vector() *SampleList {
 // a flag indicating if the attribute has a value.
 //
 // Samples of the metric.
-func (o *Metric) GetVector() (value *SampleList, ok bool) {
+func (o *Metric) GetVector() (value []*Sample, ok bool) {
 	ok = o != nil && o.vector != nil
 	if ok {
 		value = o.vector
@@ -80,8 +80,22 @@ func (o *Metric) GetVector() (value *SampleList, ok bool) {
 	return
 }
 
+// MetricListKind is the name of the type used to represent list of objects of
+// type 'metric'.
+const MetricListKind = "MetricList"
+
+// MetricListLinkKind is the name of the type used to represent links to list
+// of objects of type 'metric'.
+const MetricListLinkKind = "MetricListLink"
+
+// MetricNilKind is the name of the type used to nil lists of objects of
+// type 'metric'.
+const MetricListNilKind = "MetricListNil"
+
 // MetricList is a list of values of the 'metric' type.
 type MetricList struct {
+	href  *string
+	link  bool
 	items []*Metric
 }
 

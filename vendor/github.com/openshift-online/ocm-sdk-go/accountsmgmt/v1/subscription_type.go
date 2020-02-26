@@ -111,13 +111,10 @@ func (o *Subscription) Empty() bool {
 	return o == nil || (o.id == nil &&
 		o.clusterID == nil &&
 		o.createdAt == nil &&
-		o.creator == nil &&
 		o.displayName == nil &&
 		o.externalClusterID == nil &&
 		o.lastTelemetryDate == nil &&
 		o.organizationID == nil &&
-		o.plan == nil &&
-		o.registryCredential == nil &&
 		o.updatedAt == nil &&
 		true)
 }
@@ -352,16 +349,16 @@ func (o *Subscription) GetUpdatedAt() (value time.Time, ok bool) {
 	return
 }
 
-// SubscriptionListKind is the name of the type used to represent list of
-// objects of type 'subscription'.
+// SubscriptionListKind is the name of the type used to represent list of objects of
+// type 'subscription'.
 const SubscriptionListKind = "SubscriptionList"
 
-// SubscriptionListLinkKind is the name of the type used to represent links
-// to list of objects of type 'subscription'.
+// SubscriptionListLinkKind is the name of the type used to represent links to list
+// of objects of type 'subscription'.
 const SubscriptionListLinkKind = "SubscriptionListLink"
 
-// SubscriptionNilKind is the name of the type used to nil lists of
-// objects of type 'subscription'.
+// SubscriptionNilKind is the name of the type used to nil lists of objects of
+// type 'subscription'.
 const SubscriptionListNilKind = "SubscriptionListNil"
 
 // SubscriptionList is a list of values of the 'subscription' type.

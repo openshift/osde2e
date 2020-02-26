@@ -34,8 +34,7 @@ func NewClusterNodes() *ClusterNodesBuilder {
 	return new(ClusterNodesBuilder)
 }
 
-// Compute sets the value of the 'compute' attribute
-// to the given value.
+// Compute sets the value of the 'compute' attribute to the given value.
 //
 //
 func (b *ClusterNodesBuilder) Compute(value int) *ClusterNodesBuilder {
@@ -43,8 +42,7 @@ func (b *ClusterNodesBuilder) Compute(value int) *ClusterNodesBuilder {
 	return b
 }
 
-// Infra sets the value of the 'infra' attribute
-// to the given value.
+// Infra sets the value of the 'infra' attribute to the given value.
 //
 //
 func (b *ClusterNodesBuilder) Infra(value int) *ClusterNodesBuilder {
@@ -52,8 +50,7 @@ func (b *ClusterNodesBuilder) Infra(value int) *ClusterNodesBuilder {
 	return b
 }
 
-// Master sets the value of the 'master' attribute
-// to the given value.
+// Master sets the value of the 'master' attribute to the given value.
 //
 //
 func (b *ClusterNodesBuilder) Master(value int) *ClusterNodesBuilder {
@@ -61,8 +58,7 @@ func (b *ClusterNodesBuilder) Master(value int) *ClusterNodesBuilder {
 	return b
 }
 
-// Total sets the value of the 'total' attribute
-// to the given value.
+// Total sets the value of the 'total' attribute to the given value.
 //
 //
 func (b *ClusterNodesBuilder) Total(value int) *ClusterNodesBuilder {
@@ -85,17 +81,9 @@ func (b *ClusterNodesBuilder) Copy(object *ClusterNodes) *ClusterNodesBuilder {
 // Build creates a 'cluster_nodes' object using the configuration stored in the builder.
 func (b *ClusterNodesBuilder) Build() (object *ClusterNodes, err error) {
 	object = new(ClusterNodes)
-	if b.compute != nil {
-		object.compute = b.compute
-	}
-	if b.infra != nil {
-		object.infra = b.infra
-	}
-	if b.master != nil {
-		object.master = b.master
-	}
-	if b.total != nil {
-		object.total = b.total
-	}
+	object.compute = b.compute
+	object.infra = b.infra
+	object.master = b.master
+	object.total = b.total
 	return
 }

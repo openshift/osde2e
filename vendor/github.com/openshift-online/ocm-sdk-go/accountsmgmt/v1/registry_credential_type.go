@@ -99,8 +99,6 @@ func (o *RegistryCredential) GetHREF() (value string, ok bool) {
 // Empty returns true if the object is empty, i.e. no attribute has a value.
 func (o *RegistryCredential) Empty() bool {
 	return o == nil || (o.id == nil &&
-		o.account == nil &&
-		o.registry == nil &&
 		o.token == nil &&
 		o.username == nil &&
 		true)
@@ -198,16 +196,16 @@ func (o *RegistryCredential) GetUsername() (value string, ok bool) {
 	return
 }
 
-// RegistryCredentialListKind is the name of the type used to represent list of
-// objects of type 'registry_credential'.
+// RegistryCredentialListKind is the name of the type used to represent list of objects of
+// type 'registry_credential'.
 const RegistryCredentialListKind = "RegistryCredentialList"
 
-// RegistryCredentialListLinkKind is the name of the type used to represent links
-// to list of objects of type 'registry_credential'.
+// RegistryCredentialListLinkKind is the name of the type used to represent links to list
+// of objects of type 'registry_credential'.
 const RegistryCredentialListLinkKind = "RegistryCredentialListLink"
 
-// RegistryCredentialNilKind is the name of the type used to nil lists of
-// objects of type 'registry_credential'.
+// RegistryCredentialNilKind is the name of the type used to nil lists of objects of
+// type 'registry_credential'.
 const RegistryCredentialListNilKind = "RegistryCredentialListNil"
 
 // RegistryCredentialList is a list of values of the 'registry_credential' type.

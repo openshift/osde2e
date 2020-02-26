@@ -45,19 +45,18 @@ func (u *OSD) CheckQuota() (bool, error) {
 	machineType := ""
 
 	quotaFound := false
-	quotaList.Each(func(q *accounts.ResourceQuota) bool {
+	for _, q := range quotaList {
 		if quotaFound = HasQuotaFor(q, ResourceAWSCluster, machineType); quotaFound {
 			log.Printf("Quota for test config (%s/%s/multiAZ=%t) found: total=%d, remaining: %d",
 				ResourceAWSCluster, machineType, config.Instance.Cluster.MultiAZ, q.Allowed(), q.Allowed()-q.Reserved())
 		}
-		return !quotaFound
-	})
+	}
 
 	return quotaFound, nil
 }
 
 // CurrentAccountQuota returns quota available for the current account's organization in the environment.
-func (u *OSD) CurrentAccountQuota() (*accounts.ResourceQuotaList, error) {
+func (u *OSD) CurrentAccountQuota() ([]*accounts.ResourceQuota, error) {
 	acc, err := u.CurrentAccount()
 	if err != nil || acc == nil {
 		return nil, fmt.Errorf("couldn't get current account: %v", err)
@@ -127,11 +126,11 @@ type resourceSummaryListResponse struct {
 	Total int                      `json:"total"`
 	List  []map[string]interface{} `json:"items"`
 
-	list *accounts.ResourceQuotaList
+	list []*accounts.ResourceQuota
 	err  *osderrors.Error
 }
 
-func (r *resourceSummaryListResponse) Items() *accounts.ResourceQuotaList {
+func (r *resourceSummaryListResponse) Items() []*accounts.ResourceQuota {
 	return r.list
 }
 func (r *resourceSummaryListResponse) Error() *osderrors.Error {

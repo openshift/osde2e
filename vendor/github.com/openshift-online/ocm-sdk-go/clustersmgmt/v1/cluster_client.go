@@ -22,7 +22,6 @@ package v1 // github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -30,6 +29,7 @@ import (
 	"path"
 	"time"
 
+	jsoniter "github.com/json-iterator/go"
 	"github.com/openshift-online/ocm-sdk-go/errors"
 	"github.com/openshift-online/ocm-sdk-go/helpers"
 )
@@ -44,47 +44,59 @@ type ClusterClient struct {
 }
 
 // NewClusterClient creates a new client for the 'cluster'
-// resource using the given transport to sned the requests and receive the
+// resource using the given transport to send the requests and receive the
 // responses.
 func NewClusterClient(transport http.RoundTripper, path string, metric string) *ClusterClient {
-	client := new(ClusterClient)
-	client.transport = transport
-	client.path = path
-	client.metric = metric
-	return client
+	return &ClusterClient{
+		transport: transport,
+		path:      path,
+		metric:    metric,
+	}
 }
 
 // Delete creates a request for the 'delete' method.
 //
 // Deletes the cluster.
 func (c *ClusterClient) Delete() *ClusterDeleteRequest {
-	request := new(ClusterDeleteRequest)
-	request.transport = c.transport
-	request.path = c.path
-	request.metric = c.metric
-	return request
+	return &ClusterDeleteRequest{
+		transport: c.transport,
+		path:      c.path,
+		metric:    c.metric,
+	}
 }
 
 // Get creates a request for the 'get' method.
 //
 // Retrieves the details of the cluster.
 func (c *ClusterClient) Get() *ClusterGetRequest {
-	request := new(ClusterGetRequest)
-	request.transport = c.transport
-	request.path = c.path
-	request.metric = c.metric
-	return request
+	return &ClusterGetRequest{
+		transport: c.transport,
+		path:      c.path,
+		metric:    c.metric,
+	}
 }
 
 // Update creates a request for the 'update' method.
 //
 // Updates the cluster.
 func (c *ClusterClient) Update() *ClusterUpdateRequest {
-	request := new(ClusterUpdateRequest)
-	request.transport = c.transport
-	request.path = c.path
-	request.metric = c.metric
-	return request
+	return &ClusterUpdateRequest{
+		transport: c.transport,
+		path:      c.path,
+		metric:    c.metric,
+	}
+}
+
+// AWSInfrastructureAccessRoleGrants returns the target 'AWS_infrastructure_access_role_grants' resource.
+//
+// Refrence to the resource that manages the collection of AWS infrastructure
+// access role grants on this cluster.
+func (c *ClusterClient) AWSInfrastructureAccessRoleGrants() *AWSInfrastructureAccessRoleGrantsClient {
+	return NewAWSInfrastructureAccessRoleGrantsClient(
+		c.transport,
+		path.Join(c.path, "aws_infrastructure_access_role_grants"),
+		path.Join(c.metric, "aws_infrastructure_access_role_grants"),
+	)
 }
 
 // Addons returns the target 'add_on_installations' resource.
@@ -335,7 +347,7 @@ func (r *ClusterDeleteRequest) SendContext(ctx context.Context) (result *Cluster
 		return
 	}
 	defer response.Body.Close()
-	result = new(ClusterDeleteResponse)
+	result = &ClusterDeleteResponse{}
 	result.status = response.StatusCode
 	result.header = response.Header
 	if result.status >= 400 {
@@ -430,7 +442,7 @@ func (r *ClusterGetRequest) SendContext(ctx context.Context) (result *ClusterGet
 		return
 	}
 	defer response.Body.Close()
-	result = new(ClusterGetResponse)
+	result = &ClusterGetResponse{}
 	result.status = response.StatusCode
 	result.header = response.Header
 	if result.status >= 400 {
@@ -441,7 +453,7 @@ func (r *ClusterGetRequest) SendContext(ctx context.Context) (result *ClusterGet
 		err = result.err
 		return
 	}
-	err = result.unmarshal(response.Body)
+	err = readClusterGetResponse(result, response.Body)
 	if err != nil {
 		return
 	}
@@ -502,23 +514,6 @@ func (r *ClusterGetResponse) GetBody() (value *Cluster, ok bool) {
 	return
 }
 
-// unmarshal is the method used internally to unmarshal responses to the
-// 'get' method.
-func (r *ClusterGetResponse) unmarshal(reader io.Reader) error {
-	var err error
-	decoder := json.NewDecoder(reader)
-	data := new(clusterData)
-	err = decoder.Decode(data)
-	if err != nil {
-		return err
-	}
-	r.body, err = data.unwrap()
-	if err != nil {
-		return err
-	}
-	return err
-}
-
 // ClusterUpdateRequest is the request for the 'update' method.
 type ClusterUpdateRequest struct {
 	transport http.RoundTripper
@@ -561,8 +556,8 @@ func (r *ClusterUpdateRequest) Send() (result *ClusterUpdateResponse, err error)
 func (r *ClusterUpdateRequest) SendContext(ctx context.Context) (result *ClusterUpdateResponse, err error) {
 	query := helpers.CopyQuery(r.query)
 	header := helpers.SetHeader(r.header, r.metric)
-	buffer := new(bytes.Buffer)
-	err = r.marshal(buffer)
+	buffer := &bytes.Buffer{}
+	err = writeClusterUpdateRequest(r, buffer)
 	if err != nil {
 		return
 	}
@@ -584,7 +579,7 @@ func (r *ClusterUpdateRequest) SendContext(ctx context.Context) (result *Cluster
 		return
 	}
 	defer response.Body.Close()
-	result = new(ClusterUpdateResponse)
+	result = &ClusterUpdateResponse{}
 	result.status = response.StatusCode
 	result.header = response.Header
 	if result.status >= 400 {
@@ -595,7 +590,7 @@ func (r *ClusterUpdateRequest) SendContext(ctx context.Context) (result *Cluster
 		err = result.err
 		return
 	}
-	err = result.unmarshal(response.Body)
+	err = readClusterUpdateResponse(result, response.Body)
 	if err != nil {
 		return
 	}
@@ -605,14 +600,11 @@ func (r *ClusterUpdateRequest) SendContext(ctx context.Context) (result *Cluster
 // marshall is the method used internally to marshal requests for the
 // 'update' method.
 func (r *ClusterUpdateRequest) marshal(writer io.Writer) error {
-	var err error
-	encoder := json.NewEncoder(writer)
-	data, err := r.body.wrap()
-	if err != nil {
-		return err
-	}
-	err = encoder.Encode(data)
-	return err
+	stream := helpers.NewStream(writer)
+	r.stream(stream)
+	return stream.Error
+}
+func (r *ClusterUpdateRequest) stream(stream *jsoniter.Stream) {
 }
 
 // ClusterUpdateResponse is the response for the 'update' method.
@@ -667,21 +659,4 @@ func (r *ClusterUpdateResponse) GetBody() (value *Cluster, ok bool) {
 		value = r.body
 	}
 	return
-}
-
-// unmarshal is the method used internally to unmarshal responses to the
-// 'update' method.
-func (r *ClusterUpdateResponse) unmarshal(reader io.Reader) error {
-	var err error
-	decoder := json.NewDecoder(reader)
-	data := new(clusterData)
-	err = decoder.Decode(data)
-	if err != nil {
-		return err
-	}
-	r.body, err = data.unwrap()
-	if err != nil {
-		return err
-	}
-	return err
 }

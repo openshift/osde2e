@@ -53,8 +53,7 @@ func (b *RoleBuilder) Link(value bool) *RoleBuilder {
 	return b
 }
 
-// Name sets the value of the 'name' attribute
-// to the given value.
+// Name sets the value of the 'name' attribute to the given value.
 //
 //
 func (b *RoleBuilder) Name(value string) *RoleBuilder {
@@ -62,8 +61,7 @@ func (b *RoleBuilder) Name(value string) *RoleBuilder {
 	return b
 }
 
-// Permissions sets the value of the 'permissions' attribute
-// to the given values.
+// Permissions sets the value of the 'permissions' attribute to the given values.
 //
 //
 func (b *RoleBuilder) Permissions(values ...*PermissionBuilder) *RoleBuilder {
@@ -81,10 +79,10 @@ func (b *RoleBuilder) Copy(object *Role) *RoleBuilder {
 	b.href = object.href
 	b.link = object.link
 	b.name = object.name
-	if object.permissions != nil && len(object.permissions.items) > 0 {
-		b.permissions = make([]*PermissionBuilder, len(object.permissions.items))
-		for i, item := range object.permissions.items {
-			b.permissions[i] = NewPermission().Copy(item)
+	if object.permissions != nil {
+		b.permissions = make([]*PermissionBuilder, len(object.permissions))
+		for i, v := range object.permissions {
+			b.permissions[i] = NewPermission().Copy(v)
 		}
 	} else {
 		b.permissions = nil
@@ -98,14 +96,11 @@ func (b *RoleBuilder) Build() (object *Role, err error) {
 	object.id = b.id
 	object.href = b.href
 	object.link = b.link
-	if b.name != nil {
-		object.name = b.name
-	}
+	object.name = b.name
 	if b.permissions != nil {
-		object.permissions = new(PermissionList)
-		object.permissions.items = make([]*Permission, len(b.permissions))
-		for i, item := range b.permissions {
-			object.permissions.items[i], err = item.Build()
+		object.permissions = make([]*Permission, len(b.permissions))
+		for i, v := range b.permissions {
+			object.permissions[i], err = v.Build()
 			if err != nil {
 				return
 			}

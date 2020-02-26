@@ -37,6 +37,19 @@ func (b *UserListBuilder) Items(values ...*UserBuilder) *UserListBuilder {
 	return b
 }
 
+// Copy copies the items of the given list into this builder, discarding any previous items.
+func (b *UserListBuilder) Copy(list *UserList) *UserListBuilder {
+	if list == nil || list.items == nil {
+		b.items = nil
+	} else {
+		b.items = make([]*UserBuilder, len(list.items))
+		for i, v := range list.items {
+			b.items[i] = NewUser().Copy(v)
+		}
+	}
+	return b
+}
+
 // Build creates a list of 'user' objects using the
 // configuration stored in the builder.
 func (b *UserListBuilder) Build() (list *UserList, err error) {

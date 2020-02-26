@@ -37,6 +37,19 @@ func (b *GoogleIdentityProviderListBuilder) Items(values ...*GoogleIdentityProvi
 	return b
 }
 
+// Copy copies the items of the given list into this builder, discarding any previous items.
+func (b *GoogleIdentityProviderListBuilder) Copy(list *GoogleIdentityProviderList) *GoogleIdentityProviderListBuilder {
+	if list == nil || list.items == nil {
+		b.items = nil
+	} else {
+		b.items = make([]*GoogleIdentityProviderBuilder, len(list.items))
+		for i, v := range list.items {
+			b.items[i] = NewGoogleIdentityProvider().Copy(v)
+		}
+	}
+	return b
+}
+
 // Build creates a list of 'google_identity_provider' objects using the
 // configuration stored in the builder.
 func (b *GoogleIdentityProviderListBuilder) Build() (list *GoogleIdentityProviderList, err error) {
