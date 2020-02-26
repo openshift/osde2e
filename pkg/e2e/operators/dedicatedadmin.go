@@ -1,5 +1,12 @@
 package operators
 
+import (
+	"github.com/onsi/ginkgo"
+	"github.com/openshift/osde2e/pkg/common/helper"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	operatorv1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
+)
+
 /*
 Dedicated admin tests are disabled until RBAC tests are in place.
 
@@ -79,3 +86,18 @@ var _ = ginkgo.Describe("[OSD] Dedicated Admin Operator", func() {
 	})
 })
 */
+
+var _ = ginkgo.Describe("[Suite: operators] [OSD] Upgrade RBAC Permissions Operator", func() {
+	checkUpgrade(helper.New(), &operatorv1.Subscription{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "rbac-permissions-operator",
+			Namespace: "openshift-rbac-permissions",
+		},
+		Spec: &operatorv1.SubscriptionSpec{
+			Package: "rbac-permissions-operator",
+			Channel: getChannel(),
+			CatalogSourceNamespace: "openshift-rbac-permissions",
+			CatalogSource: "openshift-rbac-permissions",
+		},
+	})
+})
