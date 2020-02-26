@@ -179,12 +179,8 @@ func ensureCSVIsInstalled(h *helper.H, csvName string, namespace string) error {
 }
 
 func getChannel() string {
-	if config.Instance.OCM.Env == "stage" {
+	if config.Instance.OCM.Env == "stage" || config.Instance.OCM.Env == "int" {
 		return "staging"
-	}
-
-	if config.Instance.OCM.Env == "int" {
-		return "int"
 	}
 
 	return "production"
