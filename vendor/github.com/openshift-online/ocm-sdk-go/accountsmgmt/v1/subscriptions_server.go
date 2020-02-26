@@ -21,13 +21,10 @@ package v1 // github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1
 
 import (
 	"context"
-	"encoding/json"
-	"io"
 	"net/http"
 
 	"github.com/golang/glog"
 	"github.com/openshift-online/ocm-sdk-go/errors"
-	"github.com/openshift-online/ocm-sdk-go/helpers"
 )
 
 // SubscriptionsServer represents the interface the manages the 'subscriptions' resource.
@@ -46,10 +43,45 @@ type SubscriptionsServer interface {
 
 // SubscriptionsListServerRequest is the request for the 'list' method.
 type SubscriptionsListServerRequest struct {
+	labels *string
 	order  *string
 	page   *int
 	search *string
 	size   *int
+}
+
+// Labels returns the value of the 'labels' parameter.
+//
+// Filter subscriptions by a comma separated list of labels:
+//
+// [source]
+// ----
+// env=staging,department=sales
+// ----
+//
+func (r *SubscriptionsListServerRequest) Labels() string {
+	if r != nil && r.labels != nil {
+		return *r.labels
+	}
+	return ""
+}
+
+// GetLabels returns the value of the 'labels' parameter and
+// a flag indicating if the parameter has a value.
+//
+// Filter subscriptions by a comma separated list of labels:
+//
+// [source]
+// ----
+// env=staging,department=sales
+// ----
+//
+func (r *SubscriptionsListServerRequest) GetLabels() (value string, ok bool) {
+	ok = r != nil && r.labels != nil
+	if ok {
+		value = *r.labels
+	}
+	return
 }
 
 // Order returns the value of the 'order' parameter.
@@ -239,32 +271,6 @@ func (r *SubscriptionsListServerResponse) Status(value int) *SubscriptionsListSe
 	return r
 }
 
-// marshall is the method used internally to marshal responses for the
-// 'list' method.
-func (r *SubscriptionsListServerResponse) marshal(writer io.Writer) error {
-	var err error
-	encoder := json.NewEncoder(writer)
-	data := new(subscriptionsListServerResponseData)
-	data.Items, err = r.items.wrap()
-	if err != nil {
-		return err
-	}
-	data.Page = r.page
-	data.Size = r.size
-	data.Total = r.total
-	err = encoder.Encode(data)
-	return err
-}
-
-// subscriptionsListServerResponseData is the structure used internally to write the request of the
-// 'list' method.
-type subscriptionsListServerResponseData struct {
-	Items subscriptionListData "json:\"items,omitempty\""
-	Page  *int                 "json:\"page,omitempty\""
-	Size  *int                 "json:\"size,omitempty\""
-	Total *int                 "json:\"total,omitempty\""
-}
-
 // dispatchSubscriptions navigates the servers tree rooted at the given server
 // till it finds one that matches the given set of path segments, and then invokes
 // the corresponding server.
@@ -273,71 +279,29 @@ func dispatchSubscriptions(w http.ResponseWriter, r *http.Request, server Subscr
 		switch r.Method {
 		case "GET":
 			adaptSubscriptionsListRequest(w, r, server)
+			return
 		default:
 			errors.SendMethodNotAllowed(w, r)
 			return
 		}
-	} else {
-		switch segments[0] {
-		default:
-			target := server.Subscription(segments[0])
-			if target == nil {
-				errors.SendNotFound(w, r)
-				return
-			}
-			dispatchSubscription(w, r, target, segments[1:])
+	}
+	switch segments[0] {
+	default:
+		target := server.Subscription(segments[0])
+		if target == nil {
+			errors.SendNotFound(w, r)
+			return
 		}
+		dispatchSubscription(w, r, target, segments[1:])
 	}
-}
-
-// readSubscriptionsListRequest reads the given HTTP requests and translates it
-// into an object of type SubscriptionsListServerRequest.
-func readSubscriptionsListRequest(r *http.Request) (*SubscriptionsListServerRequest, error) {
-	var err error
-	result := new(SubscriptionsListServerRequest)
-	query := r.URL.Query()
-	result.order, err = helpers.ParseString(query, "order")
-	if err != nil {
-		return nil, err
-	}
-	result.page, err = helpers.ParseInteger(query, "page")
-	if err != nil {
-		return nil, err
-	}
-	if result.page == nil {
-		result.page = helpers.NewInteger(1)
-	}
-	result.search, err = helpers.ParseString(query, "search")
-	if err != nil {
-		return nil, err
-	}
-	result.size, err = helpers.ParseInteger(query, "size")
-	if err != nil {
-		return nil, err
-	}
-	if result.size == nil {
-		result.size = helpers.NewInteger(100)
-	}
-	return result, err
-}
-
-// writeSubscriptionsListResponse translates the given request object into an
-// HTTP response.
-func writeSubscriptionsListResponse(w http.ResponseWriter, r *SubscriptionsListServerResponse) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(r.status)
-	err := r.marshal(w)
-	if err != nil {
-		return err
-	}
-	return nil
 }
 
 // adaptSubscriptionsListRequest translates the given HTTP request into a call to
 // the corresponding method of the given server. Then it translates the
 // results returned by that method into an HTTP response.
 func adaptSubscriptionsListRequest(w http.ResponseWriter, r *http.Request, server SubscriptionsServer) {
-	request, err := readSubscriptionsListRequest(r)
+	request := &SubscriptionsListServerRequest{}
+	err := readSubscriptionsListRequest(request, r)
 	if err != nil {
 		glog.Errorf(
 			"Can't read request for method '%s' and path '%s': %v",
@@ -346,7 +310,7 @@ func adaptSubscriptionsListRequest(w http.ResponseWriter, r *http.Request, serve
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	response := new(SubscriptionsListServerResponse)
+	response := &SubscriptionsListServerResponse{}
 	response.status = 200
 	err = server.List(r.Context(), request, response)
 	if err != nil {
@@ -357,7 +321,7 @@ func adaptSubscriptionsListRequest(w http.ResponseWriter, r *http.Request, serve
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	err = writeSubscriptionsListResponse(w, response)
+	err = writeSubscriptionsListResponse(response, w)
 	if err != nil {
 		glog.Errorf(
 			"Can't write response for method '%s' and path '%s': %v",

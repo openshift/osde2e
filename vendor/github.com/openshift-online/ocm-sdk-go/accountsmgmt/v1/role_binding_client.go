@@ -22,13 +22,13 @@ package v1 // github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"time"
 
+	jsoniter "github.com/json-iterator/go"
 	"github.com/openshift-online/ocm-sdk-go/errors"
 	"github.com/openshift-online/ocm-sdk-go/helpers"
 )
@@ -43,47 +43,47 @@ type RoleBindingClient struct {
 }
 
 // NewRoleBindingClient creates a new client for the 'role_binding'
-// resource using the given transport to sned the requests and receive the
+// resource using the given transport to send the requests and receive the
 // responses.
 func NewRoleBindingClient(transport http.RoundTripper, path string, metric string) *RoleBindingClient {
-	client := new(RoleBindingClient)
-	client.transport = transport
-	client.path = path
-	client.metric = metric
-	return client
+	return &RoleBindingClient{
+		transport: transport,
+		path:      path,
+		metric:    metric,
+	}
 }
 
 // Delete creates a request for the 'delete' method.
 //
 // Deletes the role binding.
 func (c *RoleBindingClient) Delete() *RoleBindingDeleteRequest {
-	request := new(RoleBindingDeleteRequest)
-	request.transport = c.transport
-	request.path = c.path
-	request.metric = c.metric
-	return request
+	return &RoleBindingDeleteRequest{
+		transport: c.transport,
+		path:      c.path,
+		metric:    c.metric,
+	}
 }
 
 // Get creates a request for the 'get' method.
 //
 // Retrieves the details of the role binding.
 func (c *RoleBindingClient) Get() *RoleBindingGetRequest {
-	request := new(RoleBindingGetRequest)
-	request.transport = c.transport
-	request.path = c.path
-	request.metric = c.metric
-	return request
+	return &RoleBindingGetRequest{
+		transport: c.transport,
+		path:      c.path,
+		metric:    c.metric,
+	}
 }
 
 // Update creates a request for the 'update' method.
 //
 // Updates the account.
 func (c *RoleBindingClient) Update() *RoleBindingUpdateRequest {
-	request := new(RoleBindingUpdateRequest)
-	request.transport = c.transport
-	request.path = c.path
-	request.metric = c.metric
-	return request
+	return &RoleBindingUpdateRequest{
+		transport: c.transport,
+		path:      c.path,
+		metric:    c.metric,
+	}
 }
 
 // RoleBindingPollRequest is the request for the Poll method.
@@ -257,7 +257,7 @@ func (r *RoleBindingDeleteRequest) SendContext(ctx context.Context) (result *Rol
 		return
 	}
 	defer response.Body.Close()
-	result = new(RoleBindingDeleteResponse)
+	result = &RoleBindingDeleteResponse{}
 	result.status = response.StatusCode
 	result.header = response.Header
 	if result.status >= 400 {
@@ -352,7 +352,7 @@ func (r *RoleBindingGetRequest) SendContext(ctx context.Context) (result *RoleBi
 		return
 	}
 	defer response.Body.Close()
-	result = new(RoleBindingGetResponse)
+	result = &RoleBindingGetResponse{}
 	result.status = response.StatusCode
 	result.header = response.Header
 	if result.status >= 400 {
@@ -363,7 +363,7 @@ func (r *RoleBindingGetRequest) SendContext(ctx context.Context) (result *RoleBi
 		err = result.err
 		return
 	}
-	err = result.unmarshal(response.Body)
+	err = readRoleBindingGetResponse(result, response.Body)
 	if err != nil {
 		return
 	}
@@ -424,23 +424,6 @@ func (r *RoleBindingGetResponse) GetBody() (value *RoleBinding, ok bool) {
 	return
 }
 
-// unmarshal is the method used internally to unmarshal responses to the
-// 'get' method.
-func (r *RoleBindingGetResponse) unmarshal(reader io.Reader) error {
-	var err error
-	decoder := json.NewDecoder(reader)
-	data := new(roleBindingData)
-	err = decoder.Decode(data)
-	if err != nil {
-		return err
-	}
-	r.body, err = data.unwrap()
-	if err != nil {
-		return err
-	}
-	return err
-}
-
 // RoleBindingUpdateRequest is the request for the 'update' method.
 type RoleBindingUpdateRequest struct {
 	transport http.RoundTripper
@@ -483,8 +466,8 @@ func (r *RoleBindingUpdateRequest) Send() (result *RoleBindingUpdateResponse, er
 func (r *RoleBindingUpdateRequest) SendContext(ctx context.Context) (result *RoleBindingUpdateResponse, err error) {
 	query := helpers.CopyQuery(r.query)
 	header := helpers.SetHeader(r.header, r.metric)
-	buffer := new(bytes.Buffer)
-	err = r.marshal(buffer)
+	buffer := &bytes.Buffer{}
+	err = writeRoleBindingUpdateRequest(r, buffer)
 	if err != nil {
 		return
 	}
@@ -506,7 +489,7 @@ func (r *RoleBindingUpdateRequest) SendContext(ctx context.Context) (result *Rol
 		return
 	}
 	defer response.Body.Close()
-	result = new(RoleBindingUpdateResponse)
+	result = &RoleBindingUpdateResponse{}
 	result.status = response.StatusCode
 	result.header = response.Header
 	if result.status >= 400 {
@@ -517,7 +500,7 @@ func (r *RoleBindingUpdateRequest) SendContext(ctx context.Context) (result *Rol
 		err = result.err
 		return
 	}
-	err = result.unmarshal(response.Body)
+	err = readRoleBindingUpdateResponse(result, response.Body)
 	if err != nil {
 		return
 	}
@@ -527,14 +510,11 @@ func (r *RoleBindingUpdateRequest) SendContext(ctx context.Context) (result *Rol
 // marshall is the method used internally to marshal requests for the
 // 'update' method.
 func (r *RoleBindingUpdateRequest) marshal(writer io.Writer) error {
-	var err error
-	encoder := json.NewEncoder(writer)
-	data, err := r.body.wrap()
-	if err != nil {
-		return err
-	}
-	err = encoder.Encode(data)
-	return err
+	stream := helpers.NewStream(writer)
+	r.stream(stream)
+	return stream.Error
+}
+func (r *RoleBindingUpdateRequest) stream(stream *jsoniter.Stream) {
 }
 
 // RoleBindingUpdateResponse is the response for the 'update' method.
@@ -589,21 +569,4 @@ func (r *RoleBindingUpdateResponse) GetBody() (value *RoleBinding, ok bool) {
 		value = r.body
 	}
 	return
-}
-
-// unmarshal is the method used internally to unmarshal responses to the
-// 'update' method.
-func (r *RoleBindingUpdateResponse) unmarshal(reader io.Reader) error {
-	var err error
-	decoder := json.NewDecoder(reader)
-	data := new(roleBindingData)
-	err = decoder.Decode(data)
-	if err != nil {
-		return err
-	}
-	r.body, err = data.unwrap()
-	if err != nil {
-		return err
-	}
-	return err
 }

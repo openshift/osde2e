@@ -105,8 +105,22 @@ func (o *OpenIDURLs) GetUserInfo() (value string, ok bool) {
 	return
 }
 
+// OpenIDURLsListKind is the name of the type used to represent list of objects of
+// type 'open_IDURLs'.
+const OpenIDURLsListKind = "OpenIDURLsList"
+
+// OpenIDURLsListLinkKind is the name of the type used to represent links to list
+// of objects of type 'open_IDURLs'.
+const OpenIDURLsListLinkKind = "OpenIDURLsListLink"
+
+// OpenIDURLsNilKind is the name of the type used to nil lists of objects of
+// type 'open_IDURLs'.
+const OpenIDURLsListNilKind = "OpenIDURLsListNil"
+
 // OpenIDURLsList is a list of values of the 'open_IDURLs' type.
 type OpenIDURLsList struct {
+	href  *string
+	link  bool
 	items []*OpenIDURLs
 }
 

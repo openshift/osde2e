@@ -21,8 +21,6 @@ package v1 // github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1
 
 import (
 	"context"
-	"encoding/json"
-	"io"
 	"net/http"
 
 	"github.com/golang/glog"
@@ -63,19 +61,6 @@ func (r *CPUTotalByNodeRolesOSMetricQueryGetServerResponse) Status(value int) *C
 	return r
 }
 
-// marshall is the method used internally to marshal responses for the
-// 'get' method.
-func (r *CPUTotalByNodeRolesOSMetricQueryGetServerResponse) marshal(writer io.Writer) error {
-	var err error
-	encoder := json.NewEncoder(writer)
-	data, err := r.body.wrap()
-	if err != nil {
-		return err
-	}
-	err = encoder.Encode(data)
-	return err
-}
-
 // dispatchCPUTotalByNodeRolesOSMetricQuery navigates the servers tree rooted at the given server
 // till it finds one that matches the given set of path segments, and then invokes
 // the corresponding server.
@@ -84,44 +69,25 @@ func dispatchCPUTotalByNodeRolesOSMetricQuery(w http.ResponseWriter, r *http.Req
 		switch r.Method {
 		case "GET":
 			adaptCPUTotalByNodeRolesOSMetricQueryGetRequest(w, r, server)
+			return
 		default:
 			errors.SendMethodNotAllowed(w, r)
 			return
 		}
-	} else {
-		switch segments[0] {
-		default:
-			errors.SendNotFound(w, r)
-			return
-		}
 	}
-}
-
-// readCPUTotalByNodeRolesOSMetricQueryGetRequest reads the given HTTP requests and translates it
-// into an object of type CPUTotalByNodeRolesOSMetricQueryGetServerRequest.
-func readCPUTotalByNodeRolesOSMetricQueryGetRequest(r *http.Request) (*CPUTotalByNodeRolesOSMetricQueryGetServerRequest, error) {
-	var err error
-	result := new(CPUTotalByNodeRolesOSMetricQueryGetServerRequest)
-	return result, err
-}
-
-// writeCPUTotalByNodeRolesOSMetricQueryGetResponse translates the given request object into an
-// HTTP response.
-func writeCPUTotalByNodeRolesOSMetricQueryGetResponse(w http.ResponseWriter, r *CPUTotalByNodeRolesOSMetricQueryGetServerResponse) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(r.status)
-	err := r.marshal(w)
-	if err != nil {
-		return err
+	switch segments[0] {
+	default:
+		errors.SendNotFound(w, r)
+		return
 	}
-	return nil
 }
 
 // adaptCPUTotalByNodeRolesOSMetricQueryGetRequest translates the given HTTP request into a call to
 // the corresponding method of the given server. Then it translates the
 // results returned by that method into an HTTP response.
 func adaptCPUTotalByNodeRolesOSMetricQueryGetRequest(w http.ResponseWriter, r *http.Request, server CPUTotalByNodeRolesOSMetricQueryServer) {
-	request, err := readCPUTotalByNodeRolesOSMetricQueryGetRequest(r)
+	request := &CPUTotalByNodeRolesOSMetricQueryGetServerRequest{}
+	err := readCPUTotalByNodeRolesOSMetricQueryGetRequest(request, r)
 	if err != nil {
 		glog.Errorf(
 			"Can't read request for method '%s' and path '%s': %v",
@@ -130,7 +96,7 @@ func adaptCPUTotalByNodeRolesOSMetricQueryGetRequest(w http.ResponseWriter, r *h
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	response := new(CPUTotalByNodeRolesOSMetricQueryGetServerResponse)
+	response := &CPUTotalByNodeRolesOSMetricQueryGetServerResponse{}
 	response.status = 200
 	err = server.Get(r.Context(), request, response)
 	if err != nil {
@@ -141,7 +107,7 @@ func adaptCPUTotalByNodeRolesOSMetricQueryGetRequest(w http.ResponseWriter, r *h
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	err = writeCPUTotalByNodeRolesOSMetricQueryGetResponse(w, response)
+	err = writeCPUTotalByNodeRolesOSMetricQueryGetResponse(response, w)
 	if err != nil {
 		glog.Errorf(
 			"Can't write response for method '%s' and path '%s': %v",

@@ -21,8 +21,6 @@ package v1 // github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1
 
 import (
 	"context"
-	"encoding/json"
-	"io"
 	"net/http"
 
 	"github.com/golang/glog"
@@ -84,19 +82,6 @@ func (r *PermissionGetServerResponse) Status(value int) *PermissionGetServerResp
 	return r
 }
 
-// marshall is the method used internally to marshal responses for the
-// 'get' method.
-func (r *PermissionGetServerResponse) marshal(writer io.Writer) error {
-	var err error
-	encoder := json.NewEncoder(writer)
-	data, err := r.body.wrap()
-	if err != nil {
-		return err
-	}
-	err = encoder.Encode(data)
-	return err
-}
-
 // dispatchPermission navigates the servers tree rooted at the given server
 // till it finds one that matches the given set of path segments, and then invokes
 // the corresponding server.
@@ -105,42 +90,28 @@ func dispatchPermission(w http.ResponseWriter, r *http.Request, server Permissio
 		switch r.Method {
 		case "DELETE":
 			adaptPermissionDeleteRequest(w, r, server)
+			return
 		case "GET":
 			adaptPermissionGetRequest(w, r, server)
+			return
 		default:
 			errors.SendMethodNotAllowed(w, r)
 			return
 		}
-	} else {
-		switch segments[0] {
-		default:
-			errors.SendNotFound(w, r)
-			return
-		}
 	}
-}
-
-// readPermissionDeleteRequest reads the given HTTP requests and translates it
-// into an object of type PermissionDeleteServerRequest.
-func readPermissionDeleteRequest(r *http.Request) (*PermissionDeleteServerRequest, error) {
-	var err error
-	result := new(PermissionDeleteServerRequest)
-	return result, err
-}
-
-// writePermissionDeleteResponse translates the given request object into an
-// HTTP response.
-func writePermissionDeleteResponse(w http.ResponseWriter, r *PermissionDeleteServerResponse) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(r.status)
-	return nil
+	switch segments[0] {
+	default:
+		errors.SendNotFound(w, r)
+		return
+	}
 }
 
 // adaptPermissionDeleteRequest translates the given HTTP request into a call to
 // the corresponding method of the given server. Then it translates the
 // results returned by that method into an HTTP response.
 func adaptPermissionDeleteRequest(w http.ResponseWriter, r *http.Request, server PermissionServer) {
-	request, err := readPermissionDeleteRequest(r)
+	request := &PermissionDeleteServerRequest{}
+	err := readPermissionDeleteRequest(request, r)
 	if err != nil {
 		glog.Errorf(
 			"Can't read request for method '%s' and path '%s': %v",
@@ -149,7 +120,7 @@ func adaptPermissionDeleteRequest(w http.ResponseWriter, r *http.Request, server
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	response := new(PermissionDeleteServerResponse)
+	response := &PermissionDeleteServerResponse{}
 	response.status = 204
 	err = server.Delete(r.Context(), request, response)
 	if err != nil {
@@ -160,7 +131,7 @@ func adaptPermissionDeleteRequest(w http.ResponseWriter, r *http.Request, server
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	err = writePermissionDeleteResponse(w, response)
+	err = writePermissionDeleteResponse(response, w)
 	if err != nil {
 		glog.Errorf(
 			"Can't write response for method '%s' and path '%s': %v",
@@ -170,31 +141,12 @@ func adaptPermissionDeleteRequest(w http.ResponseWriter, r *http.Request, server
 	}
 }
 
-// readPermissionGetRequest reads the given HTTP requests and translates it
-// into an object of type PermissionGetServerRequest.
-func readPermissionGetRequest(r *http.Request) (*PermissionGetServerRequest, error) {
-	var err error
-	result := new(PermissionGetServerRequest)
-	return result, err
-}
-
-// writePermissionGetResponse translates the given request object into an
-// HTTP response.
-func writePermissionGetResponse(w http.ResponseWriter, r *PermissionGetServerResponse) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(r.status)
-	err := r.marshal(w)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
 // adaptPermissionGetRequest translates the given HTTP request into a call to
 // the corresponding method of the given server. Then it translates the
 // results returned by that method into an HTTP response.
 func adaptPermissionGetRequest(w http.ResponseWriter, r *http.Request, server PermissionServer) {
-	request, err := readPermissionGetRequest(r)
+	request := &PermissionGetServerRequest{}
+	err := readPermissionGetRequest(request, r)
 	if err != nil {
 		glog.Errorf(
 			"Can't read request for method '%s' and path '%s': %v",
@@ -203,7 +155,7 @@ func adaptPermissionGetRequest(w http.ResponseWriter, r *http.Request, server Pe
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	response := new(PermissionGetServerResponse)
+	response := &PermissionGetServerResponse{}
 	response.status = 200
 	err = server.Get(r.Context(), request, response)
 	if err != nil {
@@ -214,7 +166,7 @@ func adaptPermissionGetRequest(w http.ResponseWriter, r *http.Request, server Pe
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	err = writePermissionGetResponse(w, response)
+	err = writePermissionGetResponse(response, w)
 	if err != nil {
 		glog.Errorf(
 			"Can't write response for method '%s' and path '%s': %v",

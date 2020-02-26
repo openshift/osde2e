@@ -21,13 +21,10 @@ package v1 // github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1
 
 import (
 	"context"
-	"encoding/json"
-	"io"
 	"net/http"
 
 	"github.com/golang/glog"
 	"github.com/openshift-online/ocm-sdk-go/errors"
-	"github.com/openshift-online/ocm-sdk-go/helpers"
 )
 
 // UsersServer represents the interface the manages the 'users' resource.
@@ -76,23 +73,6 @@ func (r *UsersAddServerRequest) GetBody() (value *User, ok bool) {
 	return
 }
 
-// unmarshal is the method used internally to unmarshal request to the
-// 'add' method.
-func (r *UsersAddServerRequest) unmarshal(reader io.Reader) error {
-	var err error
-	decoder := json.NewDecoder(reader)
-	data := new(userData)
-	err = decoder.Decode(data)
-	if err != nil {
-		return err
-	}
-	r.body, err = data.unwrap()
-	if err != nil {
-		return err
-	}
-	return err
-}
-
 // UsersAddServerResponse is the response for the 'add' method.
 type UsersAddServerResponse struct {
 	status int
@@ -112,19 +92,6 @@ func (r *UsersAddServerResponse) Body(value *User) *UsersAddServerResponse {
 func (r *UsersAddServerResponse) Status(value int) *UsersAddServerResponse {
 	r.status = value
 	return r
-}
-
-// marshall is the method used internally to marshal responses for the
-// 'add' method.
-func (r *UsersAddServerResponse) marshal(writer io.Writer) error {
-	var err error
-	encoder := json.NewEncoder(writer)
-	data, err := r.body.wrap()
-	if err != nil {
-		return err
-	}
-	err = encoder.Encode(data)
-	return err
 }
 
 // UsersListServerRequest is the request for the 'list' method.
@@ -225,32 +192,6 @@ func (r *UsersListServerResponse) Status(value int) *UsersListServerResponse {
 	return r
 }
 
-// marshall is the method used internally to marshal responses for the
-// 'list' method.
-func (r *UsersListServerResponse) marshal(writer io.Writer) error {
-	var err error
-	encoder := json.NewEncoder(writer)
-	data := new(usersListServerResponseData)
-	data.Items, err = r.items.wrap()
-	if err != nil {
-		return err
-	}
-	data.Page = r.page
-	data.Size = r.size
-	data.Total = r.total
-	err = encoder.Encode(data)
-	return err
-}
-
-// usersListServerResponseData is the structure used internally to write the request of the
-// 'list' method.
-type usersListServerResponseData struct {
-	Items userListData "json:\"items,omitempty\""
-	Page  *int         "json:\"page,omitempty\""
-	Size  *int         "json:\"size,omitempty\""
-	Total *int         "json:\"total,omitempty\""
-}
-
 // dispatchUsers navigates the servers tree rooted at the given server
 // till it finds one that matches the given set of path segments, and then invokes
 // the corresponding server.
@@ -259,54 +200,32 @@ func dispatchUsers(w http.ResponseWriter, r *http.Request, server UsersServer, s
 		switch r.Method {
 		case "POST":
 			adaptUsersAddRequest(w, r, server)
+			return
 		case "GET":
 			adaptUsersListRequest(w, r, server)
+			return
 		default:
 			errors.SendMethodNotAllowed(w, r)
 			return
 		}
-	} else {
-		switch segments[0] {
-		default:
-			target := server.User(segments[0])
-			if target == nil {
-				errors.SendNotFound(w, r)
-				return
-			}
-			dispatchUser(w, r, target, segments[1:])
+	}
+	switch segments[0] {
+	default:
+		target := server.User(segments[0])
+		if target == nil {
+			errors.SendNotFound(w, r)
+			return
 		}
+		dispatchUser(w, r, target, segments[1:])
 	}
-}
-
-// readUsersAddRequest reads the given HTTP requests and translates it
-// into an object of type UsersAddServerRequest.
-func readUsersAddRequest(r *http.Request) (*UsersAddServerRequest, error) {
-	var err error
-	result := new(UsersAddServerRequest)
-	err = result.unmarshal(r.Body)
-	if err != nil {
-		return nil, err
-	}
-	return result, err
-}
-
-// writeUsersAddResponse translates the given request object into an
-// HTTP response.
-func writeUsersAddResponse(w http.ResponseWriter, r *UsersAddServerResponse) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(r.status)
-	err := r.marshal(w)
-	if err != nil {
-		return err
-	}
-	return nil
 }
 
 // adaptUsersAddRequest translates the given HTTP request into a call to
 // the corresponding method of the given server. Then it translates the
 // results returned by that method into an HTTP response.
 func adaptUsersAddRequest(w http.ResponseWriter, r *http.Request, server UsersServer) {
-	request, err := readUsersAddRequest(r)
+	request := &UsersAddServerRequest{}
+	err := readUsersAddRequest(request, r)
 	if err != nil {
 		glog.Errorf(
 			"Can't read request for method '%s' and path '%s': %v",
@@ -315,7 +234,7 @@ func adaptUsersAddRequest(w http.ResponseWriter, r *http.Request, server UsersSe
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	response := new(UsersAddServerResponse)
+	response := &UsersAddServerResponse{}
 	response.status = 201
 	err = server.Add(r.Context(), request, response)
 	if err != nil {
@@ -326,7 +245,7 @@ func adaptUsersAddRequest(w http.ResponseWriter, r *http.Request, server UsersSe
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	err = writeUsersAddResponse(w, response)
+	err = writeUsersAddResponse(response, w)
 	if err != nil {
 		glog.Errorf(
 			"Can't write response for method '%s' and path '%s': %v",
@@ -336,46 +255,12 @@ func adaptUsersAddRequest(w http.ResponseWriter, r *http.Request, server UsersSe
 	}
 }
 
-// readUsersListRequest reads the given HTTP requests and translates it
-// into an object of type UsersListServerRequest.
-func readUsersListRequest(r *http.Request) (*UsersListServerRequest, error) {
-	var err error
-	result := new(UsersListServerRequest)
-	query := r.URL.Query()
-	result.page, err = helpers.ParseInteger(query, "page")
-	if err != nil {
-		return nil, err
-	}
-	if result.page == nil {
-		result.page = helpers.NewInteger(1)
-	}
-	result.size, err = helpers.ParseInteger(query, "size")
-	if err != nil {
-		return nil, err
-	}
-	if result.size == nil {
-		result.size = helpers.NewInteger(100)
-	}
-	return result, err
-}
-
-// writeUsersListResponse translates the given request object into an
-// HTTP response.
-func writeUsersListResponse(w http.ResponseWriter, r *UsersListServerResponse) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(r.status)
-	err := r.marshal(w)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
 // adaptUsersListRequest translates the given HTTP request into a call to
 // the corresponding method of the given server. Then it translates the
 // results returned by that method into an HTTP response.
 func adaptUsersListRequest(w http.ResponseWriter, r *http.Request, server UsersServer) {
-	request, err := readUsersListRequest(r)
+	request := &UsersListServerRequest{}
+	err := readUsersListRequest(request, r)
 	if err != nil {
 		glog.Errorf(
 			"Can't read request for method '%s' and path '%s': %v",
@@ -384,7 +269,7 @@ func adaptUsersListRequest(w http.ResponseWriter, r *http.Request, server UsersS
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	response := new(UsersListServerResponse)
+	response := &UsersListServerResponse{}
 	response.status = 200
 	err = server.List(r.Context(), request, response)
 	if err != nil {
@@ -395,7 +280,7 @@ func adaptUsersListRequest(w http.ResponseWriter, r *http.Request, server UsersS
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	err = writeUsersListResponse(w, response)
+	err = writeUsersListResponse(response, w)
 	if err != nil {
 		glog.Errorf(
 			"Can't write response for method '%s' and path '%s': %v",

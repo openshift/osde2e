@@ -130,8 +130,22 @@ func (o *ClusterNodes) GetTotal() (value int, ok bool) {
 	return
 }
 
+// ClusterNodesListKind is the name of the type used to represent list of objects of
+// type 'cluster_nodes'.
+const ClusterNodesListKind = "ClusterNodesList"
+
+// ClusterNodesListLinkKind is the name of the type used to represent links to list
+// of objects of type 'cluster_nodes'.
+const ClusterNodesListLinkKind = "ClusterNodesListLink"
+
+// ClusterNodesNilKind is the name of the type used to nil lists of objects of
+// type 'cluster_nodes'.
+const ClusterNodesListNilKind = "ClusterNodesListNil"
+
 // ClusterNodesList is a list of values of the 'cluster_nodes' type.
 type ClusterNodesList struct {
+	href  *string
+	link  bool
 	items []*ClusterNodes
 }
 

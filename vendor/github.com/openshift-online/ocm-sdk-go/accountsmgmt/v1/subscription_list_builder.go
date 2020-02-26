@@ -37,6 +37,19 @@ func (b *SubscriptionListBuilder) Items(values ...*SubscriptionBuilder) *Subscri
 	return b
 }
 
+// Copy copies the items of the given list into this builder, discarding any previous items.
+func (b *SubscriptionListBuilder) Copy(list *SubscriptionList) *SubscriptionListBuilder {
+	if list == nil || list.items == nil {
+		b.items = nil
+	} else {
+		b.items = make([]*SubscriptionBuilder, len(list.items))
+		for i, v := range list.items {
+			b.items[i] = NewSubscription().Copy(v)
+		}
+	}
+	return b
+}
+
 // Build creates a list of 'subscription' objects using the
 // configuration stored in the builder.
 func (b *SubscriptionListBuilder) Build() (list *SubscriptionList, err error) {

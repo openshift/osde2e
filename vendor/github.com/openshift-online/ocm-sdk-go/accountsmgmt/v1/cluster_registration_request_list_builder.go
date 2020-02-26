@@ -37,6 +37,19 @@ func (b *ClusterRegistrationRequestListBuilder) Items(values ...*ClusterRegistra
 	return b
 }
 
+// Copy copies the items of the given list into this builder, discarding any previous items.
+func (b *ClusterRegistrationRequestListBuilder) Copy(list *ClusterRegistrationRequestList) *ClusterRegistrationRequestListBuilder {
+	if list == nil || list.items == nil {
+		b.items = nil
+	} else {
+		b.items = make([]*ClusterRegistrationRequestBuilder, len(list.items))
+		for i, v := range list.items {
+			b.items[i] = NewClusterRegistrationRequest().Copy(v)
+		}
+	}
+	return b
+}
+
 // Build creates a list of 'cluster_registration_request' objects using the
 // configuration stored in the builder.
 func (b *ClusterRegistrationRequestListBuilder) Build() (list *ClusterRegistrationRequestList, err error) {

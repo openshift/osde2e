@@ -21,13 +21,10 @@ package v1 // github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1
 
 import (
 	"context"
-	"encoding/json"
-	"io"
 	"net/http"
 
 	"github.com/golang/glog"
 	"github.com/openshift-online/ocm-sdk-go/errors"
-	"github.com/openshift-online/ocm-sdk-go/helpers"
 )
 
 // PermissionsServer represents the interface the manages the 'permissions' resource.
@@ -76,23 +73,6 @@ func (r *PermissionsAddServerRequest) GetBody() (value *Permission, ok bool) {
 	return
 }
 
-// unmarshal is the method used internally to unmarshal request to the
-// 'add' method.
-func (r *PermissionsAddServerRequest) unmarshal(reader io.Reader) error {
-	var err error
-	decoder := json.NewDecoder(reader)
-	data := new(permissionData)
-	err = decoder.Decode(data)
-	if err != nil {
-		return err
-	}
-	r.body, err = data.unwrap()
-	if err != nil {
-		return err
-	}
-	return err
-}
-
 // PermissionsAddServerResponse is the response for the 'add' method.
 type PermissionsAddServerResponse struct {
 	status int
@@ -112,19 +92,6 @@ func (r *PermissionsAddServerResponse) Body(value *Permission) *PermissionsAddSe
 func (r *PermissionsAddServerResponse) Status(value int) *PermissionsAddServerResponse {
 	r.status = value
 	return r
-}
-
-// marshall is the method used internally to marshal responses for the
-// 'add' method.
-func (r *PermissionsAddServerResponse) marshal(writer io.Writer) error {
-	var err error
-	encoder := json.NewEncoder(writer)
-	data, err := r.body.wrap()
-	if err != nil {
-		return err
-	}
-	err = encoder.Encode(data)
-	return err
 }
 
 // PermissionsListServerRequest is the request for the 'list' method.
@@ -226,32 +193,6 @@ func (r *PermissionsListServerResponse) Status(value int) *PermissionsListServer
 	return r
 }
 
-// marshall is the method used internally to marshal responses for the
-// 'list' method.
-func (r *PermissionsListServerResponse) marshal(writer io.Writer) error {
-	var err error
-	encoder := json.NewEncoder(writer)
-	data := new(permissionsListServerResponseData)
-	data.Items, err = r.items.wrap()
-	if err != nil {
-		return err
-	}
-	data.Page = r.page
-	data.Size = r.size
-	data.Total = r.total
-	err = encoder.Encode(data)
-	return err
-}
-
-// permissionsListServerResponseData is the structure used internally to write the request of the
-// 'list' method.
-type permissionsListServerResponseData struct {
-	Items permissionListData "json:\"items,omitempty\""
-	Page  *int               "json:\"page,omitempty\""
-	Size  *int               "json:\"size,omitempty\""
-	Total *int               "json:\"total,omitempty\""
-}
-
 // dispatchPermissions navigates the servers tree rooted at the given server
 // till it finds one that matches the given set of path segments, and then invokes
 // the corresponding server.
@@ -260,54 +201,32 @@ func dispatchPermissions(w http.ResponseWriter, r *http.Request, server Permissi
 		switch r.Method {
 		case "POST":
 			adaptPermissionsAddRequest(w, r, server)
+			return
 		case "GET":
 			adaptPermissionsListRequest(w, r, server)
+			return
 		default:
 			errors.SendMethodNotAllowed(w, r)
 			return
 		}
-	} else {
-		switch segments[0] {
-		default:
-			target := server.Permission(segments[0])
-			if target == nil {
-				errors.SendNotFound(w, r)
-				return
-			}
-			dispatchPermission(w, r, target, segments[1:])
+	}
+	switch segments[0] {
+	default:
+		target := server.Permission(segments[0])
+		if target == nil {
+			errors.SendNotFound(w, r)
+			return
 		}
+		dispatchPermission(w, r, target, segments[1:])
 	}
-}
-
-// readPermissionsAddRequest reads the given HTTP requests and translates it
-// into an object of type PermissionsAddServerRequest.
-func readPermissionsAddRequest(r *http.Request) (*PermissionsAddServerRequest, error) {
-	var err error
-	result := new(PermissionsAddServerRequest)
-	err = result.unmarshal(r.Body)
-	if err != nil {
-		return nil, err
-	}
-	return result, err
-}
-
-// writePermissionsAddResponse translates the given request object into an
-// HTTP response.
-func writePermissionsAddResponse(w http.ResponseWriter, r *PermissionsAddServerResponse) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(r.status)
-	err := r.marshal(w)
-	if err != nil {
-		return err
-	}
-	return nil
 }
 
 // adaptPermissionsAddRequest translates the given HTTP request into a call to
 // the corresponding method of the given server. Then it translates the
 // results returned by that method into an HTTP response.
 func adaptPermissionsAddRequest(w http.ResponseWriter, r *http.Request, server PermissionsServer) {
-	request, err := readPermissionsAddRequest(r)
+	request := &PermissionsAddServerRequest{}
+	err := readPermissionsAddRequest(request, r)
 	if err != nil {
 		glog.Errorf(
 			"Can't read request for method '%s' and path '%s': %v",
@@ -316,7 +235,7 @@ func adaptPermissionsAddRequest(w http.ResponseWriter, r *http.Request, server P
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	response := new(PermissionsAddServerResponse)
+	response := &PermissionsAddServerResponse{}
 	response.status = 201
 	err = server.Add(r.Context(), request, response)
 	if err != nil {
@@ -327,7 +246,7 @@ func adaptPermissionsAddRequest(w http.ResponseWriter, r *http.Request, server P
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	err = writePermissionsAddResponse(w, response)
+	err = writePermissionsAddResponse(response, w)
 	if err != nil {
 		glog.Errorf(
 			"Can't write response for method '%s' and path '%s': %v",
@@ -337,46 +256,12 @@ func adaptPermissionsAddRequest(w http.ResponseWriter, r *http.Request, server P
 	}
 }
 
-// readPermissionsListRequest reads the given HTTP requests and translates it
-// into an object of type PermissionsListServerRequest.
-func readPermissionsListRequest(r *http.Request) (*PermissionsListServerRequest, error) {
-	var err error
-	result := new(PermissionsListServerRequest)
-	query := r.URL.Query()
-	result.page, err = helpers.ParseInteger(query, "page")
-	if err != nil {
-		return nil, err
-	}
-	if result.page == nil {
-		result.page = helpers.NewInteger(1)
-	}
-	result.size, err = helpers.ParseInteger(query, "size")
-	if err != nil {
-		return nil, err
-	}
-	if result.size == nil {
-		result.size = helpers.NewInteger(100)
-	}
-	return result, err
-}
-
-// writePermissionsListResponse translates the given request object into an
-// HTTP response.
-func writePermissionsListResponse(w http.ResponseWriter, r *PermissionsListServerResponse) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(r.status)
-	err := r.marshal(w)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
 // adaptPermissionsListRequest translates the given HTTP request into a call to
 // the corresponding method of the given server. Then it translates the
 // results returned by that method into an HTTP response.
 func adaptPermissionsListRequest(w http.ResponseWriter, r *http.Request, server PermissionsServer) {
-	request, err := readPermissionsListRequest(r)
+	request := &PermissionsListServerRequest{}
+	err := readPermissionsListRequest(request, r)
 	if err != nil {
 		glog.Errorf(
 			"Can't read request for method '%s' and path '%s': %v",
@@ -385,7 +270,7 @@ func adaptPermissionsListRequest(w http.ResponseWriter, r *http.Request, server 
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	response := new(PermissionsListServerResponse)
+	response := &PermissionsListServerResponse{}
 	response.status = 200
 	err = server.List(r.Context(), request, response)
 	if err != nil {
@@ -396,7 +281,7 @@ func adaptPermissionsListRequest(w http.ResponseWriter, r *http.Request, server 
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	err = writePermissionsListResponse(w, response)
+	err = writePermissionsListResponse(response, w)
 	if err != nil {
 		glog.Errorf(
 			"Can't write response for method '%s' and path '%s': %v",

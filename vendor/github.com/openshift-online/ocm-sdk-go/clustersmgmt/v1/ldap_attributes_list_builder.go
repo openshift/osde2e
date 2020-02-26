@@ -37,6 +37,19 @@ func (b *LDAPAttributesListBuilder) Items(values ...*LDAPAttributesBuilder) *LDA
 	return b
 }
 
+// Copy copies the items of the given list into this builder, discarding any previous items.
+func (b *LDAPAttributesListBuilder) Copy(list *LDAPAttributesList) *LDAPAttributesListBuilder {
+	if list == nil || list.items == nil {
+		b.items = nil
+	} else {
+		b.items = make([]*LDAPAttributesBuilder, len(list.items))
+		for i, v := range list.items {
+			b.items[i] = NewLDAPAttributes().Copy(v)
+		}
+	}
+	return b
+}
+
 // Build creates a list of 'LDAP_attributes' objects using the
 // configuration stored in the builder.
 func (b *LDAPAttributesListBuilder) Build() (list *LDAPAttributesList, err error) {

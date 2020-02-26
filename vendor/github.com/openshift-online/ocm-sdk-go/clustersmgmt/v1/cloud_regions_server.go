@@ -21,13 +21,10 @@ package v1 // github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1
 
 import (
 	"context"
-	"encoding/json"
-	"io"
 	"net/http"
 
 	"github.com/golang/glog"
 	"github.com/openshift-online/ocm-sdk-go/errors"
-	"github.com/openshift-online/ocm-sdk-go/helpers"
 )
 
 // CloudRegionsServer represents the interface the manages the 'cloud_regions' resource.
@@ -157,32 +154,6 @@ func (r *CloudRegionsListServerResponse) Status(value int) *CloudRegionsListServ
 	return r
 }
 
-// marshall is the method used internally to marshal responses for the
-// 'list' method.
-func (r *CloudRegionsListServerResponse) marshal(writer io.Writer) error {
-	var err error
-	encoder := json.NewEncoder(writer)
-	data := new(cloudRegionsListServerResponseData)
-	data.Items, err = r.items.wrap()
-	if err != nil {
-		return err
-	}
-	data.Page = r.page
-	data.Size = r.size
-	data.Total = r.total
-	err = encoder.Encode(data)
-	return err
-}
-
-// cloudRegionsListServerResponseData is the structure used internally to write the request of the
-// 'list' method.
-type cloudRegionsListServerResponseData struct {
-	Items cloudRegionListData "json:\"items,omitempty\""
-	Page  *int                "json:\"page,omitempty\""
-	Size  *int                "json:\"size,omitempty\""
-	Total *int                "json:\"total,omitempty\""
-}
-
 // dispatchCloudRegions navigates the servers tree rooted at the given server
 // till it finds one that matches the given set of path segments, and then invokes
 // the corresponding server.
@@ -191,63 +162,29 @@ func dispatchCloudRegions(w http.ResponseWriter, r *http.Request, server CloudRe
 		switch r.Method {
 		case "GET":
 			adaptCloudRegionsListRequest(w, r, server)
+			return
 		default:
 			errors.SendMethodNotAllowed(w, r)
 			return
 		}
-	} else {
-		switch segments[0] {
-		default:
-			target := server.Region(segments[0])
-			if target == nil {
-				errors.SendNotFound(w, r)
-				return
-			}
-			dispatchCloudRegion(w, r, target, segments[1:])
+	}
+	switch segments[0] {
+	default:
+		target := server.Region(segments[0])
+		if target == nil {
+			errors.SendNotFound(w, r)
+			return
 		}
+		dispatchCloudRegion(w, r, target, segments[1:])
 	}
-}
-
-// readCloudRegionsListRequest reads the given HTTP requests and translates it
-// into an object of type CloudRegionsListServerRequest.
-func readCloudRegionsListRequest(r *http.Request) (*CloudRegionsListServerRequest, error) {
-	var err error
-	result := new(CloudRegionsListServerRequest)
-	query := r.URL.Query()
-	result.page, err = helpers.ParseInteger(query, "page")
-	if err != nil {
-		return nil, err
-	}
-	if result.page == nil {
-		result.page = helpers.NewInteger(1)
-	}
-	result.size, err = helpers.ParseInteger(query, "size")
-	if err != nil {
-		return nil, err
-	}
-	if result.size == nil {
-		result.size = helpers.NewInteger(100)
-	}
-	return result, err
-}
-
-// writeCloudRegionsListResponse translates the given request object into an
-// HTTP response.
-func writeCloudRegionsListResponse(w http.ResponseWriter, r *CloudRegionsListServerResponse) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(r.status)
-	err := r.marshal(w)
-	if err != nil {
-		return err
-	}
-	return nil
 }
 
 // adaptCloudRegionsListRequest translates the given HTTP request into a call to
 // the corresponding method of the given server. Then it translates the
 // results returned by that method into an HTTP response.
 func adaptCloudRegionsListRequest(w http.ResponseWriter, r *http.Request, server CloudRegionsServer) {
-	request, err := readCloudRegionsListRequest(r)
+	request := &CloudRegionsListServerRequest{}
+	err := readCloudRegionsListRequest(request, r)
 	if err != nil {
 		glog.Errorf(
 			"Can't read request for method '%s' and path '%s': %v",
@@ -256,7 +193,7 @@ func adaptCloudRegionsListRequest(w http.ResponseWriter, r *http.Request, server
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	response := new(CloudRegionsListServerResponse)
+	response := &CloudRegionsListServerResponse{}
 	response.status = 200
 	err = server.List(r.Context(), request, response)
 	if err != nil {
@@ -267,7 +204,7 @@ func adaptCloudRegionsListRequest(w http.ResponseWriter, r *http.Request, server
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	err = writeCloudRegionsListResponse(w, response)
+	err = writeCloudRegionsListResponse(response, w)
 	if err != nil {
 		glog.Errorf(
 			"Can't write response for method '%s' and path '%s': %v",

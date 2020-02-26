@@ -21,8 +21,6 @@ package v1 // github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1
 
 import (
 	"context"
-	"encoding/json"
-	"io"
 	"net/http"
 	"net/url"
 	"path"
@@ -42,36 +40,36 @@ type SubscriptionClient struct {
 }
 
 // NewSubscriptionClient creates a new client for the 'subscription'
-// resource using the given transport to sned the requests and receive the
+// resource using the given transport to send the requests and receive the
 // responses.
 func NewSubscriptionClient(transport http.RoundTripper, path string, metric string) *SubscriptionClient {
-	client := new(SubscriptionClient)
-	client.transport = transport
-	client.path = path
-	client.metric = metric
-	return client
+	return &SubscriptionClient{
+		transport: transport,
+		path:      path,
+		metric:    metric,
+	}
 }
 
 // Delete creates a request for the 'delete' method.
 //
 // Deletes the subscription.
 func (c *SubscriptionClient) Delete() *SubscriptionDeleteRequest {
-	request := new(SubscriptionDeleteRequest)
-	request.transport = c.transport
-	request.path = c.path
-	request.metric = c.metric
-	return request
+	return &SubscriptionDeleteRequest{
+		transport: c.transport,
+		path:      c.path,
+		metric:    c.metric,
+	}
 }
 
 // Get creates a request for the 'get' method.
 //
 // Retrieves the details of the subscription.
 func (c *SubscriptionClient) Get() *SubscriptionGetRequest {
-	request := new(SubscriptionGetRequest)
-	request.transport = c.transport
-	request.path = c.path
-	request.metric = c.metric
-	return request
+	return &SubscriptionGetRequest{
+		transport: c.transport,
+		path:      c.path,
+		metric:    c.metric,
+	}
 }
 
 // ReservedResources returns the target 'subscription_reserved_resources' resource.
@@ -257,7 +255,7 @@ func (r *SubscriptionDeleteRequest) SendContext(ctx context.Context) (result *Su
 		return
 	}
 	defer response.Body.Close()
-	result = new(SubscriptionDeleteResponse)
+	result = &SubscriptionDeleteResponse{}
 	result.status = response.StatusCode
 	result.header = response.Header
 	if result.status >= 400 {
@@ -352,7 +350,7 @@ func (r *SubscriptionGetRequest) SendContext(ctx context.Context) (result *Subsc
 		return
 	}
 	defer response.Body.Close()
-	result = new(SubscriptionGetResponse)
+	result = &SubscriptionGetResponse{}
 	result.status = response.StatusCode
 	result.header = response.Header
 	if result.status >= 400 {
@@ -363,7 +361,7 @@ func (r *SubscriptionGetRequest) SendContext(ctx context.Context) (result *Subsc
 		err = result.err
 		return
 	}
-	err = result.unmarshal(response.Body)
+	err = readSubscriptionGetResponse(result, response.Body)
 	if err != nil {
 		return
 	}
@@ -422,21 +420,4 @@ func (r *SubscriptionGetResponse) GetBody() (value *Subscription, ok bool) {
 		value = r.body
 	}
 	return
-}
-
-// unmarshal is the method used internally to unmarshal responses to the
-// 'get' method.
-func (r *SubscriptionGetResponse) unmarshal(reader io.Reader) error {
-	var err error
-	decoder := json.NewDecoder(reader)
-	data := new(subscriptionData)
-	err = decoder.Decode(data)
-	if err != nil {
-		return err
-	}
-	r.body, err = data.unwrap()
-	if err != nil {
-		return err
-	}
-	return err
 }

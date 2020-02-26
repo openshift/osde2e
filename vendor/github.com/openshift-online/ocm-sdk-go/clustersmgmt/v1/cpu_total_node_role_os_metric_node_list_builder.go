@@ -37,6 +37,19 @@ func (b *CPUTotalNodeRoleOSMetricNodeListBuilder) Items(values ...*CPUTotalNodeR
 	return b
 }
 
+// Copy copies the items of the given list into this builder, discarding any previous items.
+func (b *CPUTotalNodeRoleOSMetricNodeListBuilder) Copy(list *CPUTotalNodeRoleOSMetricNodeList) *CPUTotalNodeRoleOSMetricNodeListBuilder {
+	if list == nil || list.items == nil {
+		b.items = nil
+	} else {
+		b.items = make([]*CPUTotalNodeRoleOSMetricNodeBuilder, len(list.items))
+		for i, v := range list.items {
+			b.items[i] = NewCPUTotalNodeRoleOSMetricNode().Copy(v)
+		}
+	}
+	return b
+}
+
 // Build creates a list of 'CPU_total_node_role_OS_metric_node' objects using the
 // configuration stored in the builder.
 func (b *CPUTotalNodeRoleOSMetricNodeListBuilder) Build() (list *CPUTotalNodeRoleOSMetricNodeList, err error) {

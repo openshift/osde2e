@@ -56,8 +56,7 @@ func (b *SKUBuilder) Link(value bool) *SKUBuilder {
 	return b
 }
 
-// BYOC sets the value of the 'BYOC' attribute
-// to the given value.
+// BYOC sets the value of the 'BYOC' attribute to the given value.
 //
 //
 func (b *SKUBuilder) BYOC(value bool) *SKUBuilder {
@@ -65,8 +64,7 @@ func (b *SKUBuilder) BYOC(value bool) *SKUBuilder {
 	return b
 }
 
-// AvailabilityZoneType sets the value of the 'availability_zone_type' attribute
-// to the given value.
+// AvailabilityZoneType sets the value of the 'availability_zone_type' attribute to the given value.
 //
 //
 func (b *SKUBuilder) AvailabilityZoneType(value string) *SKUBuilder {
@@ -74,8 +72,7 @@ func (b *SKUBuilder) AvailabilityZoneType(value string) *SKUBuilder {
 	return b
 }
 
-// ResourceName sets the value of the 'resource_name' attribute
-// to the given value.
+// ResourceName sets the value of the 'resource_name' attribute to the given value.
 //
 //
 func (b *SKUBuilder) ResourceName(value string) *SKUBuilder {
@@ -83,8 +80,7 @@ func (b *SKUBuilder) ResourceName(value string) *SKUBuilder {
 	return b
 }
 
-// ResourceType sets the value of the 'resource_type' attribute
-// to the given value.
+// ResourceType sets the value of the 'resource_type' attribute to the given value.
 //
 //
 func (b *SKUBuilder) ResourceType(value string) *SKUBuilder {
@@ -92,8 +88,7 @@ func (b *SKUBuilder) ResourceType(value string) *SKUBuilder {
 	return b
 }
 
-// Resources sets the value of the 'resources' attribute
-// to the given values.
+// Resources sets the value of the 'resources' attribute to the given values.
 //
 //
 func (b *SKUBuilder) Resources(values ...*ResourceBuilder) *SKUBuilder {
@@ -114,10 +109,10 @@ func (b *SKUBuilder) Copy(object *SKU) *SKUBuilder {
 	b.availabilityZoneType = object.availabilityZoneType
 	b.resourceName = object.resourceName
 	b.resourceType = object.resourceType
-	if object.resources != nil && len(object.resources.items) > 0 {
-		b.resources = make([]*ResourceBuilder, len(object.resources.items))
-		for i, item := range object.resources.items {
-			b.resources[i] = NewResource().Copy(item)
+	if object.resources != nil {
+		b.resources = make([]*ResourceBuilder, len(object.resources))
+		for i, v := range object.resources {
+			b.resources[i] = NewResource().Copy(v)
 		}
 	} else {
 		b.resources = nil
@@ -131,23 +126,14 @@ func (b *SKUBuilder) Build() (object *SKU, err error) {
 	object.id = b.id
 	object.href = b.href
 	object.link = b.link
-	if b.byoc != nil {
-		object.byoc = b.byoc
-	}
-	if b.availabilityZoneType != nil {
-		object.availabilityZoneType = b.availabilityZoneType
-	}
-	if b.resourceName != nil {
-		object.resourceName = b.resourceName
-	}
-	if b.resourceType != nil {
-		object.resourceType = b.resourceType
-	}
+	object.byoc = b.byoc
+	object.availabilityZoneType = b.availabilityZoneType
+	object.resourceName = b.resourceName
+	object.resourceType = b.resourceType
 	if b.resources != nil {
-		object.resources = new(ResourceList)
-		object.resources.items = make([]*Resource, len(b.resources))
-		for i, item := range b.resources {
-			object.resources.items[i], err = item.Build()
+		object.resources = make([]*Resource, len(b.resources))
+		for i, v := range b.resources {
+			object.resources[i], err = v.Build()
 			if err != nil {
 				return
 			}

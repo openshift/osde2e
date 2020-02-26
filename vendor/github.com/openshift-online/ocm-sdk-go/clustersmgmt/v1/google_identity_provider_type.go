@@ -105,8 +105,22 @@ func (o *GoogleIdentityProvider) GetHostedDomain() (value string, ok bool) {
 	return
 }
 
+// GoogleIdentityProviderListKind is the name of the type used to represent list of objects of
+// type 'google_identity_provider'.
+const GoogleIdentityProviderListKind = "GoogleIdentityProviderList"
+
+// GoogleIdentityProviderListLinkKind is the name of the type used to represent links to list
+// of objects of type 'google_identity_provider'.
+const GoogleIdentityProviderListLinkKind = "GoogleIdentityProviderListLink"
+
+// GoogleIdentityProviderNilKind is the name of the type used to nil lists of objects of
+// type 'google_identity_provider'.
+const GoogleIdentityProviderListNilKind = "GoogleIdentityProviderListNil"
+
 // GoogleIdentityProviderList is a list of values of the 'google_identity_provider' type.
 type GoogleIdentityProviderList struct {
+	href  *string
+	link  bool
 	items []*GoogleIdentityProvider
 }
 

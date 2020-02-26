@@ -22,13 +22,13 @@ package v1 // github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"path"
 
+	jsoniter "github.com/json-iterator/go"
 	"github.com/openshift-online/ocm-sdk-go/errors"
 	"github.com/openshift-online/ocm-sdk-go/helpers"
 )
@@ -43,36 +43,36 @@ type PermissionsClient struct {
 }
 
 // NewPermissionsClient creates a new client for the 'permissions'
-// resource using the given transport to sned the requests and receive the
+// resource using the given transport to send the requests and receive the
 // responses.
 func NewPermissionsClient(transport http.RoundTripper, path string, metric string) *PermissionsClient {
-	client := new(PermissionsClient)
-	client.transport = transport
-	client.path = path
-	client.metric = metric
-	return client
+	return &PermissionsClient{
+		transport: transport,
+		path:      path,
+		metric:    metric,
+	}
 }
 
 // Add creates a request for the 'add' method.
 //
 // Creates a new permission.
 func (c *PermissionsClient) Add() *PermissionsAddRequest {
-	request := new(PermissionsAddRequest)
-	request.transport = c.transport
-	request.path = c.path
-	request.metric = c.metric
-	return request
+	return &PermissionsAddRequest{
+		transport: c.transport,
+		path:      c.path,
+		metric:    c.metric,
+	}
 }
 
 // List creates a request for the 'list' method.
 //
 // Retrieves a list of permissions.
 func (c *PermissionsClient) List() *PermissionsListRequest {
-	request := new(PermissionsListRequest)
-	request.transport = c.transport
-	request.path = c.path
-	request.metric = c.metric
-	return request
+	return &PermissionsListRequest{
+		transport: c.transport,
+		path:      c.path,
+		metric:    c.metric,
+	}
 }
 
 // Permission returns the target 'permission' resource for the given identifier.
@@ -128,8 +128,8 @@ func (r *PermissionsAddRequest) Send() (result *PermissionsAddResponse, err erro
 func (r *PermissionsAddRequest) SendContext(ctx context.Context) (result *PermissionsAddResponse, err error) {
 	query := helpers.CopyQuery(r.query)
 	header := helpers.SetHeader(r.header, r.metric)
-	buffer := new(bytes.Buffer)
-	err = r.marshal(buffer)
+	buffer := &bytes.Buffer{}
+	err = writePermissionsAddRequest(r, buffer)
 	if err != nil {
 		return
 	}
@@ -151,7 +151,7 @@ func (r *PermissionsAddRequest) SendContext(ctx context.Context) (result *Permis
 		return
 	}
 	defer response.Body.Close()
-	result = new(PermissionsAddResponse)
+	result = &PermissionsAddResponse{}
 	result.status = response.StatusCode
 	result.header = response.Header
 	if result.status >= 400 {
@@ -162,7 +162,7 @@ func (r *PermissionsAddRequest) SendContext(ctx context.Context) (result *Permis
 		err = result.err
 		return
 	}
-	err = result.unmarshal(response.Body)
+	err = readPermissionsAddResponse(result, response.Body)
 	if err != nil {
 		return
 	}
@@ -172,14 +172,11 @@ func (r *PermissionsAddRequest) SendContext(ctx context.Context) (result *Permis
 // marshall is the method used internally to marshal requests for the
 // 'add' method.
 func (r *PermissionsAddRequest) marshal(writer io.Writer) error {
-	var err error
-	encoder := json.NewEncoder(writer)
-	data, err := r.body.wrap()
-	if err != nil {
-		return err
-	}
-	err = encoder.Encode(data)
-	return err
+	stream := helpers.NewStream(writer)
+	r.stream(stream)
+	return stream.Error
+}
+func (r *PermissionsAddRequest) stream(stream *jsoniter.Stream) {
 }
 
 // PermissionsAddResponse is the response for the 'add' method.
@@ -234,23 +231,6 @@ func (r *PermissionsAddResponse) GetBody() (value *Permission, ok bool) {
 		value = r.body
 	}
 	return
-}
-
-// unmarshal is the method used internally to unmarshal responses to the
-// 'add' method.
-func (r *PermissionsAddResponse) unmarshal(reader io.Reader) error {
-	var err error
-	decoder := json.NewDecoder(reader)
-	data := new(permissionData)
-	err = decoder.Decode(data)
-	if err != nil {
-		return err
-	}
-	r.body, err = data.unwrap()
-	if err != nil {
-		return err
-	}
-	return err
 }
 
 // PermissionsListRequest is the request for the 'list' method.
@@ -327,7 +307,7 @@ func (r *PermissionsListRequest) SendContext(ctx context.Context) (result *Permi
 		return
 	}
 	defer response.Body.Close()
-	result = new(PermissionsListResponse)
+	result = &PermissionsListResponse{}
 	result.status = response.StatusCode
 	result.header = response.Header
 	if result.status >= 400 {
@@ -338,7 +318,7 @@ func (r *PermissionsListRequest) SendContext(ctx context.Context) (result *Permi
 		err = result.err
 		return
 	}
-	err = result.unmarshal(response.Body)
+	err = readPermissionsListResponse(result, response.Body)
 	if err != nil {
 		return
 	}
@@ -468,33 +448,4 @@ func (r *PermissionsListResponse) GetTotal() (value int, ok bool) {
 		value = *r.total
 	}
 	return
-}
-
-// unmarshal is the method used internally to unmarshal responses to the
-// 'list' method.
-func (r *PermissionsListResponse) unmarshal(reader io.Reader) error {
-	var err error
-	decoder := json.NewDecoder(reader)
-	data := new(permissionsListResponseData)
-	err = decoder.Decode(data)
-	if err != nil {
-		return err
-	}
-	r.items, err = data.Items.unwrap()
-	if err != nil {
-		return err
-	}
-	r.page = data.Page
-	r.size = data.Size
-	r.total = data.Total
-	return err
-}
-
-// permissionsListResponseData is the structure used internally to unmarshal
-// the response of the 'list' method.
-type permissionsListResponseData struct {
-	Items permissionListData "json:\"items,omitempty\""
-	Page  *int               "json:\"page,omitempty\""
-	Size  *int               "json:\"size,omitempty\""
-	Total *int               "json:\"total,omitempty\""
 }

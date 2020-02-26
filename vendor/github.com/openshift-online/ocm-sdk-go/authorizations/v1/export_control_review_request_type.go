@@ -55,8 +55,22 @@ func (o *ExportControlReviewRequest) GetAccountUsername() (value string, ok bool
 	return
 }
 
+// ExportControlReviewRequestListKind is the name of the type used to represent list of objects of
+// type 'export_control_review_request'.
+const ExportControlReviewRequestListKind = "ExportControlReviewRequestList"
+
+// ExportControlReviewRequestListLinkKind is the name of the type used to represent links to list
+// of objects of type 'export_control_review_request'.
+const ExportControlReviewRequestListLinkKind = "ExportControlReviewRequestListLink"
+
+// ExportControlReviewRequestNilKind is the name of the type used to nil lists of objects of
+// type 'export_control_review_request'.
+const ExportControlReviewRequestListNilKind = "ExportControlReviewRequestListNil"
+
 // ExportControlReviewRequestList is a list of values of the 'export_control_review_request' type.
 type ExportControlReviewRequestList struct {
+	href  *string
+	link  bool
 	items []*ExportControlReviewRequest
 }
 

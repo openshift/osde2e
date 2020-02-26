@@ -32,8 +32,7 @@ func NewClusterRegistrationRequest() *ClusterRegistrationRequestBuilder {
 	return new(ClusterRegistrationRequestBuilder)
 }
 
-// AuthorizationToken sets the value of the 'authorization_token' attribute
-// to the given value.
+// AuthorizationToken sets the value of the 'authorization_token' attribute to the given value.
 //
 //
 func (b *ClusterRegistrationRequestBuilder) AuthorizationToken(value string) *ClusterRegistrationRequestBuilder {
@@ -41,8 +40,7 @@ func (b *ClusterRegistrationRequestBuilder) AuthorizationToken(value string) *Cl
 	return b
 }
 
-// ClusterID sets the value of the 'cluster_ID' attribute
-// to the given value.
+// ClusterID sets the value of the 'cluster_ID' attribute to the given value.
 //
 //
 func (b *ClusterRegistrationRequestBuilder) ClusterID(value string) *ClusterRegistrationRequestBuilder {
@@ -63,11 +61,7 @@ func (b *ClusterRegistrationRequestBuilder) Copy(object *ClusterRegistrationRequ
 // Build creates a 'cluster_registration_request' object using the configuration stored in the builder.
 func (b *ClusterRegistrationRequestBuilder) Build() (object *ClusterRegistrationRequest, err error) {
 	object = new(ClusterRegistrationRequest)
-	if b.authorizationToken != nil {
-		object.authorizationToken = b.authorizationToken
-	}
-	if b.clusterID != nil {
-		object.clusterID = b.clusterID
-	}
+	object.authorizationToken = b.authorizationToken
+	object.clusterID = b.clusterID
 	return
 }

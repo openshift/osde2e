@@ -34,14 +34,14 @@ type Client struct {
 }
 
 // NewClient creates a new client for the 'root'
-// resource using the given transport to sned the requests and receive the
+// resource using the given transport to send the requests and receive the
 // responses.
 func NewClient(transport http.RoundTripper, path string, metric string) *Client {
-	client := new(Client)
-	client.transport = transport
-	client.path = path
-	client.metric = metric
-	return client
+	return &Client{
+		transport: transport,
+		path:      path,
+		metric:    metric,
+	}
 }
 
 // Creates a new request for the method that retrieves the metadata.

@@ -37,6 +37,19 @@ func (b *GitlabIdentityProviderListBuilder) Items(values ...*GitlabIdentityProvi
 	return b
 }
 
+// Copy copies the items of the given list into this builder, discarding any previous items.
+func (b *GitlabIdentityProviderListBuilder) Copy(list *GitlabIdentityProviderList) *GitlabIdentityProviderListBuilder {
+	if list == nil || list.items == nil {
+		b.items = nil
+	} else {
+		b.items = make([]*GitlabIdentityProviderBuilder, len(list.items))
+		for i, v := range list.items {
+			b.items[i] = NewGitlabIdentityProvider().Copy(v)
+		}
+	}
+	return b
+}
+
 // Build creates a list of 'gitlab_identity_provider' objects using the
 // configuration stored in the builder.
 func (b *GitlabIdentityProviderListBuilder) Build() (list *GitlabIdentityProviderList, err error) {

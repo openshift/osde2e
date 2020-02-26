@@ -24,12 +24,12 @@ package v1 // github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1
 // Representation of information from telemetry about the socket capacity by node
 // role and OS of a cluster.
 type SocketTotalsNodeRoleOSMetricNode struct {
-	socketTotals *SocketTotalNodeRoleOSMetricNodeList
+	socketTotals []*SocketTotalNodeRoleOSMetricNode
 }
 
 // Empty returns true if the object is empty, i.e. no attribute has a value.
 func (o *SocketTotalsNodeRoleOSMetricNode) Empty() bool {
-	return o == nil || (o.socketTotals.Empty() &&
+	return o == nil || (len(o.socketTotals) == 0 &&
 		true)
 }
 
@@ -37,7 +37,7 @@ func (o *SocketTotalsNodeRoleOSMetricNode) Empty() bool {
 // the zero value of the type if the attribute doesn't have a value.
 //
 //
-func (o *SocketTotalsNodeRoleOSMetricNode) SocketTotals() *SocketTotalNodeRoleOSMetricNodeList {
+func (o *SocketTotalsNodeRoleOSMetricNode) SocketTotals() []*SocketTotalNodeRoleOSMetricNode {
 	if o == nil {
 		return nil
 	}
@@ -48,7 +48,7 @@ func (o *SocketTotalsNodeRoleOSMetricNode) SocketTotals() *SocketTotalNodeRoleOS
 // a flag indicating if the attribute has a value.
 //
 //
-func (o *SocketTotalsNodeRoleOSMetricNode) GetSocketTotals() (value *SocketTotalNodeRoleOSMetricNodeList, ok bool) {
+func (o *SocketTotalsNodeRoleOSMetricNode) GetSocketTotals() (value []*SocketTotalNodeRoleOSMetricNode, ok bool) {
 	ok = o != nil && o.socketTotals != nil
 	if ok {
 		value = o.socketTotals
@@ -56,8 +56,22 @@ func (o *SocketTotalsNodeRoleOSMetricNode) GetSocketTotals() (value *SocketTotal
 	return
 }
 
+// SocketTotalsNodeRoleOSMetricNodeListKind is the name of the type used to represent list of objects of
+// type 'socket_totals_node_role_OS_metric_node'.
+const SocketTotalsNodeRoleOSMetricNodeListKind = "SocketTotalsNodeRoleOSMetricNodeList"
+
+// SocketTotalsNodeRoleOSMetricNodeListLinkKind is the name of the type used to represent links to list
+// of objects of type 'socket_totals_node_role_OS_metric_node'.
+const SocketTotalsNodeRoleOSMetricNodeListLinkKind = "SocketTotalsNodeRoleOSMetricNodeListLink"
+
+// SocketTotalsNodeRoleOSMetricNodeNilKind is the name of the type used to nil lists of objects of
+// type 'socket_totals_node_role_OS_metric_node'.
+const SocketTotalsNodeRoleOSMetricNodeListNilKind = "SocketTotalsNodeRoleOSMetricNodeListNil"
+
 // SocketTotalsNodeRoleOSMetricNodeList is a list of values of the 'socket_totals_node_role_OS_metric_node' type.
 type SocketTotalsNodeRoleOSMetricNodeList struct {
+	href  *string
+	link  bool
 	items []*SocketTotalsNodeRoleOSMetricNode
 }
 

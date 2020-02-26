@@ -20,65 +20,59 @@ limitations under the License.
 package v1 // github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1
 
 import (
+	"io"
+
+	jsoniter "github.com/json-iterator/go"
 	"github.com/openshift-online/ocm-sdk-go/helpers"
 )
 
-// metadataData is the data structure used internally to marshal and unmarshal
-// metadata.
-type metadataData struct {
-	ServerVersion *string "json:\"server_version,omitempty\""
-}
-
 // MarshalMetadata writes a value of the metadata type to the given target, which
 // can be a writer or a JSON encoder.
-func MarshalMetadata(object *Metadata, target interface{}) error {
-	encoder, err := helpers.NewEncoder(target)
-	if err != nil {
-		return err
-	}
-	data, err := object.wrap()
-	if err != nil {
-		return err
-	}
-	return encoder.Encode(data)
+func MarshalMetadata(object *Metadata, writer io.Writer) error {
+	stream := helpers.NewStream(writer)
+	writeMetadata(object, stream)
+	stream.Flush()
+	return stream.Error
 }
-
-// wrap is the method used internally to convert a metadata object to a JSON
-// document.
-func (m *Metadata) wrap() (data *metadataData, err error) {
-	if m == nil {
-		return
+func writeMetadata(object *Metadata, stream *jsoniter.Stream) {
+	count := 0
+	stream.WriteObjectStart()
+	if object.serverVersion != nil {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("server_version")
+		stream.WriteString(*object.serverVersion)
+		count++
 	}
-	data = &metadataData{
-		ServerVersion: m.serverVersion,
-	}
-	return
+	stream.WriteObjectEnd()
 }
 
 // UnmarshalMetadata reads a value of the metadata type from the given source, which
-// which can be an slice of bytes, a string, a reader or a JSON decoder.
+// which can be a reader, a slice of byte or a string.
 func UnmarshalMetadata(source interface{}) (object *Metadata, err error) {
-	decoder, err := helpers.NewDecoder(source)
+	iterator, err := helpers.NewIterator(source)
 	if err != nil {
 		return
 	}
-	data := &metadataData{}
-	err = decoder.Decode(data)
-	if err != nil {
-		return
-	}
-	object, err = data.unwrap()
+	object = readMetadata(iterator)
+	err = iterator.Error
 	return
 }
-
-// unwrap is the function used internally to convert the JSON unmarshalled data to a
-// value of the metadata type.
-func (d *metadataData) unwrap() (object *Metadata, err error) {
-	if d == nil {
-		return
+func readMetadata(iterator *jsoniter.Iterator) *Metadata {
+	object := &Metadata{}
+	for {
+		field := iterator.ReadObject()
+		if field == "" {
+			break
+		}
+		switch field {
+		case "server_version":
+			value := iterator.ReadString()
+			object.serverVersion = &value
+		default:
+			iterator.ReadAny()
+		}
 	}
-	object = &Metadata{
-		serverVersion: d.ServerVersion,
-	}
-	return
+	return object
 }

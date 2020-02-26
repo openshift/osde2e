@@ -22,13 +22,13 @@ package v1 // github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"path"
 
+	jsoniter "github.com/json-iterator/go"
 	"github.com/openshift-online/ocm-sdk-go/errors"
 	"github.com/openshift-online/ocm-sdk-go/helpers"
 )
@@ -43,36 +43,36 @@ type OrganizationsClient struct {
 }
 
 // NewOrganizationsClient creates a new client for the 'organizations'
-// resource using the given transport to sned the requests and receive the
+// resource using the given transport to send the requests and receive the
 // responses.
 func NewOrganizationsClient(transport http.RoundTripper, path string, metric string) *OrganizationsClient {
-	client := new(OrganizationsClient)
-	client.transport = transport
-	client.path = path
-	client.metric = metric
-	return client
+	return &OrganizationsClient{
+		transport: transport,
+		path:      path,
+		metric:    metric,
+	}
 }
 
 // Add creates a request for the 'add' method.
 //
 // Creates a new organization.
 func (c *OrganizationsClient) Add() *OrganizationsAddRequest {
-	request := new(OrganizationsAddRequest)
-	request.transport = c.transport
-	request.path = c.path
-	request.metric = c.metric
-	return request
+	return &OrganizationsAddRequest{
+		transport: c.transport,
+		path:      c.path,
+		metric:    c.metric,
+	}
 }
 
 // List creates a request for the 'list' method.
 //
 // Retrieves a list of organizations.
 func (c *OrganizationsClient) List() *OrganizationsListRequest {
-	request := new(OrganizationsListRequest)
-	request.transport = c.transport
-	request.path = c.path
-	request.metric = c.metric
-	return request
+	return &OrganizationsListRequest{
+		transport: c.transport,
+		path:      c.path,
+		metric:    c.metric,
+	}
 }
 
 // Organization returns the target 'organization' resource for the given identifier.
@@ -128,8 +128,8 @@ func (r *OrganizationsAddRequest) Send() (result *OrganizationsAddResponse, err 
 func (r *OrganizationsAddRequest) SendContext(ctx context.Context) (result *OrganizationsAddResponse, err error) {
 	query := helpers.CopyQuery(r.query)
 	header := helpers.SetHeader(r.header, r.metric)
-	buffer := new(bytes.Buffer)
-	err = r.marshal(buffer)
+	buffer := &bytes.Buffer{}
+	err = writeOrganizationsAddRequest(r, buffer)
 	if err != nil {
 		return
 	}
@@ -151,7 +151,7 @@ func (r *OrganizationsAddRequest) SendContext(ctx context.Context) (result *Orga
 		return
 	}
 	defer response.Body.Close()
-	result = new(OrganizationsAddResponse)
+	result = &OrganizationsAddResponse{}
 	result.status = response.StatusCode
 	result.header = response.Header
 	if result.status >= 400 {
@@ -162,7 +162,7 @@ func (r *OrganizationsAddRequest) SendContext(ctx context.Context) (result *Orga
 		err = result.err
 		return
 	}
-	err = result.unmarshal(response.Body)
+	err = readOrganizationsAddResponse(result, response.Body)
 	if err != nil {
 		return
 	}
@@ -172,14 +172,11 @@ func (r *OrganizationsAddRequest) SendContext(ctx context.Context) (result *Orga
 // marshall is the method used internally to marshal requests for the
 // 'add' method.
 func (r *OrganizationsAddRequest) marshal(writer io.Writer) error {
-	var err error
-	encoder := json.NewEncoder(writer)
-	data, err := r.body.wrap()
-	if err != nil {
-		return err
-	}
-	err = encoder.Encode(data)
-	return err
+	stream := helpers.NewStream(writer)
+	r.stream(stream)
+	return stream.Error
+}
+func (r *OrganizationsAddRequest) stream(stream *jsoniter.Stream) {
 }
 
 // OrganizationsAddResponse is the response for the 'add' method.
@@ -234,23 +231,6 @@ func (r *OrganizationsAddResponse) GetBody() (value *Organization, ok bool) {
 		value = r.body
 	}
 	return
-}
-
-// unmarshal is the method used internally to unmarshal responses to the
-// 'add' method.
-func (r *OrganizationsAddResponse) unmarshal(reader io.Reader) error {
-	var err error
-	decoder := json.NewDecoder(reader)
-	data := new(organizationData)
-	err = decoder.Decode(data)
-	if err != nil {
-		return err
-	}
-	r.body, err = data.unwrap()
-	if err != nil {
-		return err
-	}
-	return err
 }
 
 // OrganizationsListRequest is the request for the 'list' method.
@@ -352,7 +332,7 @@ func (r *OrganizationsListRequest) SendContext(ctx context.Context) (result *Org
 		return
 	}
 	defer response.Body.Close()
-	result = new(OrganizationsListResponse)
+	result = &OrganizationsListResponse{}
 	result.status = response.StatusCode
 	result.header = response.Header
 	if result.status >= 400 {
@@ -363,7 +343,7 @@ func (r *OrganizationsListRequest) SendContext(ctx context.Context) (result *Org
 		err = result.err
 		return
 	}
-	err = result.unmarshal(response.Body)
+	err = readOrganizationsListResponse(result, response.Body)
 	if err != nil {
 		return
 	}
@@ -493,33 +473,4 @@ func (r *OrganizationsListResponse) GetTotal() (value int, ok bool) {
 		value = *r.total
 	}
 	return
-}
-
-// unmarshal is the method used internally to unmarshal responses to the
-// 'list' method.
-func (r *OrganizationsListResponse) unmarshal(reader io.Reader) error {
-	var err error
-	decoder := json.NewDecoder(reader)
-	data := new(organizationsListResponseData)
-	err = decoder.Decode(data)
-	if err != nil {
-		return err
-	}
-	r.items, err = data.Items.unwrap()
-	if err != nil {
-		return err
-	}
-	r.page = data.Page
-	r.size = data.Size
-	r.total = data.Total
-	return err
-}
-
-// organizationsListResponseData is the structure used internally to unmarshal
-// the response of the 'list' method.
-type organizationsListResponseData struct {
-	Items organizationListData "json:\"items,omitempty\""
-	Page  *int                 "json:\"page,omitempty\""
-	Size  *int                 "json:\"size,omitempty\""
-	Total *int                 "json:\"total,omitempty\""
 }

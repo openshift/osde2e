@@ -37,6 +37,19 @@ func (b *MetricListBuilder) Items(values ...*MetricBuilder) *MetricListBuilder {
 	return b
 }
 
+// Copy copies the items of the given list into this builder, discarding any previous items.
+func (b *MetricListBuilder) Copy(list *MetricList) *MetricListBuilder {
+	if list == nil || list.items == nil {
+		b.items = nil
+	} else {
+		b.items = make([]*MetricBuilder, len(list.items))
+		for i, v := range list.items {
+			b.items[i] = NewMetric().Copy(v)
+		}
+	}
+	return b
+}
+
 // Build creates a list of 'metric' objects using the
 // configuration stored in the builder.
 func (b *MetricListBuilder) Build() (list *MetricList, err error) {

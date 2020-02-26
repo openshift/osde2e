@@ -37,6 +37,19 @@ func (b *SampleListBuilder) Items(values ...*SampleBuilder) *SampleListBuilder {
 	return b
 }
 
+// Copy copies the items of the given list into this builder, discarding any previous items.
+func (b *SampleListBuilder) Copy(list *SampleList) *SampleListBuilder {
+	if list == nil || list.items == nil {
+		b.items = nil
+	} else {
+		b.items = make([]*SampleBuilder, len(list.items))
+		for i, v := range list.items {
+			b.items[i] = NewSample().Copy(v)
+		}
+	}
+	return b
+}
+
 // Build creates a list of 'sample' objects using the
 // configuration stored in the builder.
 func (b *SampleListBuilder) Build() (list *SampleList, err error) {

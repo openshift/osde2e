@@ -141,8 +141,22 @@ func (o *DNS) GetBaseDomain() (value string, ok bool) {
 	return
 }
 
+// DNSListKind is the name of the type used to represent list of objects of
+// type 'DNS'.
+const DNSListKind = "DNSList"
+
+// DNSListLinkKind is the name of the type used to represent links to list
+// of objects of type 'DNS'.
+const DNSListLinkKind = "DNSListLink"
+
+// DNSNilKind is the name of the type used to nil lists of objects of
+// type 'DNS'.
+const DNSListNilKind = "DNSListNil"
+
 // DNSList is a list of values of the 'DNS' type.
 type DNSList struct {
+	href  *string
+	link  bool
 	items []*DNS
 }
 

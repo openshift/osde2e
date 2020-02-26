@@ -33,8 +33,7 @@ func NewClusterAuthorizationResponse() *ClusterAuthorizationResponseBuilder {
 	return new(ClusterAuthorizationResponseBuilder)
 }
 
-// Allowed sets the value of the 'allowed' attribute
-// to the given value.
+// Allowed sets the value of the 'allowed' attribute to the given value.
 //
 //
 func (b *ClusterAuthorizationResponseBuilder) Allowed(value bool) *ClusterAuthorizationResponseBuilder {
@@ -42,8 +41,7 @@ func (b *ClusterAuthorizationResponseBuilder) Allowed(value bool) *ClusterAuthor
 	return b
 }
 
-// ExcessResources sets the value of the 'excess_resources' attribute
-// to the given values.
+// ExcessResources sets the value of the 'excess_resources' attribute to the given values.
 //
 //
 func (b *ClusterAuthorizationResponseBuilder) ExcessResources(values ...*ReservedResourceBuilder) *ClusterAuthorizationResponseBuilder {
@@ -52,8 +50,7 @@ func (b *ClusterAuthorizationResponseBuilder) ExcessResources(values ...*Reserve
 	return b
 }
 
-// Subscription sets the value of the 'subscription' attribute
-// to the given value.
+// Subscription sets the value of the 'subscription' attribute to the given value.
 //
 //
 func (b *ClusterAuthorizationResponseBuilder) Subscription(value *SubscriptionBuilder) *ClusterAuthorizationResponseBuilder {
@@ -67,10 +64,10 @@ func (b *ClusterAuthorizationResponseBuilder) Copy(object *ClusterAuthorizationR
 		return b
 	}
 	b.allowed = object.allowed
-	if object.excessResources != nil && len(object.excessResources.items) > 0 {
-		b.excessResources = make([]*ReservedResourceBuilder, len(object.excessResources.items))
-		for i, item := range object.excessResources.items {
-			b.excessResources[i] = NewReservedResource().Copy(item)
+	if object.excessResources != nil {
+		b.excessResources = make([]*ReservedResourceBuilder, len(object.excessResources))
+		for i, v := range object.excessResources {
+			b.excessResources[i] = NewReservedResource().Copy(v)
 		}
 	} else {
 		b.excessResources = nil
@@ -86,14 +83,11 @@ func (b *ClusterAuthorizationResponseBuilder) Copy(object *ClusterAuthorizationR
 // Build creates a 'cluster_authorization_response' object using the configuration stored in the builder.
 func (b *ClusterAuthorizationResponseBuilder) Build() (object *ClusterAuthorizationResponse, err error) {
 	object = new(ClusterAuthorizationResponse)
-	if b.allowed != nil {
-		object.allowed = b.allowed
-	}
+	object.allowed = b.allowed
 	if b.excessResources != nil {
-		object.excessResources = new(ReservedResourceList)
-		object.excessResources.items = make([]*ReservedResource, len(b.excessResources))
-		for i, item := range b.excessResources {
-			object.excessResources.items[i], err = item.Build()
+		object.excessResources = make([]*ReservedResource, len(b.excessResources))
+		for i, v := range b.excessResources {
+			object.excessResources[i], err = v.Build()
 			if err != nil {
 				return
 			}

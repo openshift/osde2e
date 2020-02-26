@@ -31,8 +31,7 @@ func NewClusterConsole() *ClusterConsoleBuilder {
 	return new(ClusterConsoleBuilder)
 }
 
-// URL sets the value of the 'URL' attribute
-// to the given value.
+// URL sets the value of the 'URL' attribute to the given value.
 //
 //
 func (b *ClusterConsoleBuilder) URL(value string) *ClusterConsoleBuilder {
@@ -52,8 +51,6 @@ func (b *ClusterConsoleBuilder) Copy(object *ClusterConsole) *ClusterConsoleBuil
 // Build creates a 'cluster_console' object using the configuration stored in the builder.
 func (b *ClusterConsoleBuilder) Build() (object *ClusterConsole, err error) {
 	object = new(ClusterConsole)
-	if b.url != nil {
-		object.url = b.url
-	}
+	object.url = b.url
 	return
 }

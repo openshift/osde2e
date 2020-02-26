@@ -37,8 +37,7 @@ func NewSelfAccessReviewResponse() *SelfAccessReviewResponseBuilder {
 	return new(SelfAccessReviewResponseBuilder)
 }
 
-// Action sets the value of the 'action' attribute
-// to the given value.
+// Action sets the value of the 'action' attribute to the given value.
 //
 //
 func (b *SelfAccessReviewResponseBuilder) Action(value string) *SelfAccessReviewResponseBuilder {
@@ -46,8 +45,7 @@ func (b *SelfAccessReviewResponseBuilder) Action(value string) *SelfAccessReview
 	return b
 }
 
-// Allowed sets the value of the 'allowed' attribute
-// to the given value.
+// Allowed sets the value of the 'allowed' attribute to the given value.
 //
 //
 func (b *SelfAccessReviewResponseBuilder) Allowed(value bool) *SelfAccessReviewResponseBuilder {
@@ -55,8 +53,7 @@ func (b *SelfAccessReviewResponseBuilder) Allowed(value bool) *SelfAccessReviewR
 	return b
 }
 
-// ClusterID sets the value of the 'cluster_ID' attribute
-// to the given value.
+// ClusterID sets the value of the 'cluster_ID' attribute to the given value.
 //
 //
 func (b *SelfAccessReviewResponseBuilder) ClusterID(value string) *SelfAccessReviewResponseBuilder {
@@ -64,8 +61,7 @@ func (b *SelfAccessReviewResponseBuilder) ClusterID(value string) *SelfAccessRev
 	return b
 }
 
-// ClusterUUID sets the value of the 'cluster_UUID' attribute
-// to the given value.
+// ClusterUUID sets the value of the 'cluster_UUID' attribute to the given value.
 //
 //
 func (b *SelfAccessReviewResponseBuilder) ClusterUUID(value string) *SelfAccessReviewResponseBuilder {
@@ -73,8 +69,7 @@ func (b *SelfAccessReviewResponseBuilder) ClusterUUID(value string) *SelfAccessR
 	return b
 }
 
-// OrganizationID sets the value of the 'organization_ID' attribute
-// to the given value.
+// OrganizationID sets the value of the 'organization_ID' attribute to the given value.
 //
 //
 func (b *SelfAccessReviewResponseBuilder) OrganizationID(value string) *SelfAccessReviewResponseBuilder {
@@ -82,8 +77,7 @@ func (b *SelfAccessReviewResponseBuilder) OrganizationID(value string) *SelfAcce
 	return b
 }
 
-// ResourceType sets the value of the 'resource_type' attribute
-// to the given value.
+// ResourceType sets the value of the 'resource_type' attribute to the given value.
 //
 //
 func (b *SelfAccessReviewResponseBuilder) ResourceType(value string) *SelfAccessReviewResponseBuilder {
@@ -91,8 +85,7 @@ func (b *SelfAccessReviewResponseBuilder) ResourceType(value string) *SelfAccess
 	return b
 }
 
-// SubscriptionID sets the value of the 'subscription_ID' attribute
-// to the given value.
+// SubscriptionID sets the value of the 'subscription_ID' attribute to the given value.
 //
 //
 func (b *SelfAccessReviewResponseBuilder) SubscriptionID(value string) *SelfAccessReviewResponseBuilder {
@@ -118,26 +111,12 @@ func (b *SelfAccessReviewResponseBuilder) Copy(object *SelfAccessReviewResponse)
 // Build creates a 'self_access_review_response' object using the configuration stored in the builder.
 func (b *SelfAccessReviewResponseBuilder) Build() (object *SelfAccessReviewResponse, err error) {
 	object = new(SelfAccessReviewResponse)
-	if b.action != nil {
-		object.action = b.action
-	}
-	if b.allowed != nil {
-		object.allowed = b.allowed
-	}
-	if b.clusterID != nil {
-		object.clusterID = b.clusterID
-	}
-	if b.clusterUUID != nil {
-		object.clusterUUID = b.clusterUUID
-	}
-	if b.organizationID != nil {
-		object.organizationID = b.organizationID
-	}
-	if b.resourceType != nil {
-		object.resourceType = b.resourceType
-	}
-	if b.subscriptionID != nil {
-		object.subscriptionID = b.subscriptionID
-	}
+	object.action = b.action
+	object.allowed = b.allowed
+	object.clusterID = b.clusterID
+	object.clusterUUID = b.clusterUUID
+	object.organizationID = b.organizationID
+	object.resourceType = b.resourceType
+	object.subscriptionID = b.subscriptionID
 	return
 }

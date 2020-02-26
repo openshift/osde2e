@@ -61,8 +61,7 @@ func (b *RoleBindingBuilder) Link(value bool) *RoleBindingBuilder {
 	return b
 }
 
-// Account sets the value of the 'account' attribute
-// to the given value.
+// Account sets the value of the 'account' attribute to the given value.
 //
 //
 func (b *RoleBindingBuilder) Account(value *AccountBuilder) *RoleBindingBuilder {
@@ -70,8 +69,7 @@ func (b *RoleBindingBuilder) Account(value *AccountBuilder) *RoleBindingBuilder 
 	return b
 }
 
-// AccountID sets the value of the 'account_ID' attribute
-// to the given value.
+// AccountID sets the value of the 'account_ID' attribute to the given value.
 //
 //
 func (b *RoleBindingBuilder) AccountID(value string) *RoleBindingBuilder {
@@ -79,8 +77,7 @@ func (b *RoleBindingBuilder) AccountID(value string) *RoleBindingBuilder {
 	return b
 }
 
-// ConfigManaged sets the value of the 'config_managed' attribute
-// to the given value.
+// ConfigManaged sets the value of the 'config_managed' attribute to the given value.
 //
 //
 func (b *RoleBindingBuilder) ConfigManaged(value bool) *RoleBindingBuilder {
@@ -88,8 +85,7 @@ func (b *RoleBindingBuilder) ConfigManaged(value bool) *RoleBindingBuilder {
 	return b
 }
 
-// Organization sets the value of the 'organization' attribute
-// to the given value.
+// Organization sets the value of the 'organization' attribute to the given value.
 //
 //
 func (b *RoleBindingBuilder) Organization(value *OrganizationBuilder) *RoleBindingBuilder {
@@ -97,8 +93,7 @@ func (b *RoleBindingBuilder) Organization(value *OrganizationBuilder) *RoleBindi
 	return b
 }
 
-// OrganizationID sets the value of the 'organization_ID' attribute
-// to the given value.
+// OrganizationID sets the value of the 'organization_ID' attribute to the given value.
 //
 //
 func (b *RoleBindingBuilder) OrganizationID(value string) *RoleBindingBuilder {
@@ -106,8 +101,7 @@ func (b *RoleBindingBuilder) OrganizationID(value string) *RoleBindingBuilder {
 	return b
 }
 
-// Role sets the value of the 'role' attribute
-// to the given value.
+// Role sets the value of the 'role' attribute to the given value.
 //
 //
 func (b *RoleBindingBuilder) Role(value *RoleBuilder) *RoleBindingBuilder {
@@ -115,8 +109,7 @@ func (b *RoleBindingBuilder) Role(value *RoleBuilder) *RoleBindingBuilder {
 	return b
 }
 
-// RoleID sets the value of the 'role_ID' attribute
-// to the given value.
+// RoleID sets the value of the 'role_ID' attribute to the given value.
 //
 //
 func (b *RoleBindingBuilder) RoleID(value string) *RoleBindingBuilder {
@@ -124,8 +117,7 @@ func (b *RoleBindingBuilder) RoleID(value string) *RoleBindingBuilder {
 	return b
 }
 
-// Subscription sets the value of the 'subscription' attribute
-// to the given value.
+// Subscription sets the value of the 'subscription' attribute to the given value.
 //
 //
 func (b *RoleBindingBuilder) Subscription(value *SubscriptionBuilder) *RoleBindingBuilder {
@@ -133,8 +125,7 @@ func (b *RoleBindingBuilder) Subscription(value *SubscriptionBuilder) *RoleBindi
 	return b
 }
 
-// SubscriptionID sets the value of the 'subscription_ID' attribute
-// to the given value.
+// SubscriptionID sets the value of the 'subscription_ID' attribute to the given value.
 //
 //
 func (b *RoleBindingBuilder) SubscriptionID(value string) *RoleBindingBuilder {
@@ -142,8 +133,7 @@ func (b *RoleBindingBuilder) SubscriptionID(value string) *RoleBindingBuilder {
 	return b
 }
 
-// Type sets the value of the 'type' attribute
-// to the given value.
+// Type sets the value of the 'type' attribute to the given value.
 //
 //
 func (b *RoleBindingBuilder) Type(value string) *RoleBindingBuilder {
@@ -200,41 +190,29 @@ func (b *RoleBindingBuilder) Build() (object *RoleBinding, err error) {
 			return
 		}
 	}
-	if b.accountID != nil {
-		object.accountID = b.accountID
-	}
-	if b.configManaged != nil {
-		object.configManaged = b.configManaged
-	}
+	object.accountID = b.accountID
+	object.configManaged = b.configManaged
 	if b.organization != nil {
 		object.organization, err = b.organization.Build()
 		if err != nil {
 			return
 		}
 	}
-	if b.organizationID != nil {
-		object.organizationID = b.organizationID
-	}
+	object.organizationID = b.organizationID
 	if b.role != nil {
 		object.role, err = b.role.Build()
 		if err != nil {
 			return
 		}
 	}
-	if b.roleID != nil {
-		object.roleID = b.roleID
-	}
+	object.roleID = b.roleID
 	if b.subscription != nil {
 		object.subscription, err = b.subscription.Build()
 		if err != nil {
 			return
 		}
 	}
-	if b.subscriptionID != nil {
-		object.subscriptionID = b.subscriptionID
-	}
-	if b.type_ != nil {
-		object.type_ = b.type_
-	}
+	object.subscriptionID = b.subscriptionID
+	object.type_ = b.type_
 	return
 }
