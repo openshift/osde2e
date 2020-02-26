@@ -458,21 +458,3 @@ Loop:
 
 	return csvList, err
 }
-
-/*
-func genSuffix(prefix string) string {
-	// genSuffix creates a random 8 character string to append to object
-	// names when creating Kubernetes objects so there aren't any
-	// accidental name collisions
-
-	// Seed rand so there's actual randomness
-	// otherwise the string is always the same
-	rand.Seed(time.Now().UnixNano())
-
-	bytes := make([]byte, 8)
-	for i := 0; i < 8; i++ {
-		bytes[i] = byte(65 + rand.Intn(25))
-	}
-	return prefix + "-" + strings.ToLower(string(bytes))
-}
-*/
