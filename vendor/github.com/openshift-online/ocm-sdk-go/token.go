@@ -96,7 +96,7 @@ func (c *Connection) TokensContext(ctx context.Context) (access, refresh string,
 		return
 	}
 
-	// Now we know that both the access and refresh tokens are unavailable, expired or about to
+	// Now we know that both the access and refresh tokens are unavaiable, expired or about to
 	// expire. So we need to check if we have other credentials that can be used to request a
 	// new token, and use them.
 	havePassword := c.user != "" && c.password != ""
@@ -112,7 +112,7 @@ func (c *Connection) TokensContext(ctx context.Context) (access, refresh string,
 
 	// Here we know that the access and refresh tokens are unavailable, expired or about to
 	// expire. We also know that we don't have credentials to request new ones. But we could
-	// still use the refresh token if it isn't completely expired.
+	// still use the refresh token if it isn't completely exired.
 	if c.refreshToken != nil && refreshLeft > 0 {
 		c.logger.Warn(
 			ctx,
@@ -257,7 +257,7 @@ func (c *Connection) sendTokenFormTimed(ctx context.Context, form url.Values) (c
 				}
 				censoredBody.WriteString(url.QueryEscape(name) + "=") // #nosec G104
 
-				if redactFields[name] {
+				if isRedactField(name) {
 					censoredBody.WriteString(redactionStr) // #nosec G104
 				} else {
 					censoredBody.WriteString(url.QueryEscape(value)) // #nosec G104
@@ -284,6 +284,11 @@ func (c *Connection) sendTokenFormTimed(ctx context.Context, form url.Values) (c
 	}
 
 	// Check the response status and content type:
+	code = response.StatusCode
+	if response.StatusCode != http.StatusOK {
+		err = fmt.Errorf("token response status is: %s", response.Status)
+		return
+	}
 	header = response.Header
 	content := header.Get("Content-Type")
 	if content != "application/json" {
@@ -304,10 +309,6 @@ func (c *Connection) sendTokenFormTimed(ctx context.Context, form url.Values) (c
 			return
 		}
 		err = fmt.Errorf("%s", *msg.Error)
-		return
-	}
-	if response.StatusCode != http.StatusOK {
-		err = fmt.Errorf("token response status is: %s", response.Status)
 		return
 	}
 	if msg.TokenType != nil && *msg.TokenType != "bearer" {

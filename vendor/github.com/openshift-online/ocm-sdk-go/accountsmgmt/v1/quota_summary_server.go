@@ -21,10 +21,13 @@ package v1 // github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1
 
 import (
 	"context"
+	"encoding/json"
+	"io"
 	"net/http"
 
 	"github.com/golang/glog"
 	"github.com/openshift-online/ocm-sdk-go/errors"
+	"github.com/openshift-online/ocm-sdk-go/helpers"
 )
 
 // QuotaSummaryServer represents the interface the manages the 'quota_summary' resource.
@@ -186,6 +189,32 @@ func (r *QuotaSummaryListServerResponse) Status(value int) *QuotaSummaryListServ
 	return r
 }
 
+// marshall is the method used internally to marshal responses for the
+// 'list' method.
+func (r *QuotaSummaryListServerResponse) marshal(writer io.Writer) error {
+	var err error
+	encoder := json.NewEncoder(writer)
+	data := new(quotaSummaryListServerResponseData)
+	data.Items, err = r.items.wrap()
+	if err != nil {
+		return err
+	}
+	data.Page = r.page
+	data.Size = r.size
+	data.Total = r.total
+	err = encoder.Encode(data)
+	return err
+}
+
+// quotaSummaryListServerResponseData is the structure used internally to write the request of the
+// 'list' method.
+type quotaSummaryListServerResponseData struct {
+	Items quotaSummaryListData "json:\"items,omitempty\""
+	Page  *int                 "json:\"page,omitempty\""
+	Size  *int                 "json:\"size,omitempty\""
+	Total *int                 "json:\"total,omitempty\""
+}
+
 // dispatchQuotaSummary navigates the servers tree rooted at the given server
 // till it finds one that matches the given set of path segments, and then invokes
 // the corresponding server.
@@ -194,25 +223,63 @@ func dispatchQuotaSummary(w http.ResponseWriter, r *http.Request, server QuotaSu
 		switch r.Method {
 		case "GET":
 			adaptQuotaSummaryListRequest(w, r, server)
-			return
 		default:
 			errors.SendMethodNotAllowed(w, r)
 			return
 		}
+	} else {
+		switch segments[0] {
+		default:
+			errors.SendNotFound(w, r)
+			return
+		}
 	}
-	switch segments[0] {
-	default:
-		errors.SendNotFound(w, r)
-		return
+}
+
+// readQuotaSummaryListRequest reads the given HTTP requests and translates it
+// into an object of type QuotaSummaryListServerRequest.
+func readQuotaSummaryListRequest(r *http.Request) (*QuotaSummaryListServerRequest, error) {
+	var err error
+	result := new(QuotaSummaryListServerRequest)
+	query := r.URL.Query()
+	result.page, err = helpers.ParseInteger(query, "page")
+	if err != nil {
+		return nil, err
 	}
+	if result.page == nil {
+		result.page = helpers.NewInteger(1)
+	}
+	result.search, err = helpers.ParseString(query, "search")
+	if err != nil {
+		return nil, err
+	}
+	result.size, err = helpers.ParseInteger(query, "size")
+	if err != nil {
+		return nil, err
+	}
+	if result.size == nil {
+		result.size = helpers.NewInteger(100)
+	}
+	return result, err
+}
+
+// writeQuotaSummaryListResponse translates the given request object into an
+// HTTP response.
+func writeQuotaSummaryListResponse(w http.ResponseWriter, r *QuotaSummaryListServerResponse) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(r.status)
+	err := r.marshal(w)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // adaptQuotaSummaryListRequest translates the given HTTP request into a call to
 // the corresponding method of the given server. Then it translates the
 // results returned by that method into an HTTP response.
 func adaptQuotaSummaryListRequest(w http.ResponseWriter, r *http.Request, server QuotaSummaryServer) {
-	request := &QuotaSummaryListServerRequest{}
-	err := readQuotaSummaryListRequest(request, r)
+	request, err := readQuotaSummaryListRequest(r)
 	if err != nil {
 		glog.Errorf(
 			"Can't read request for method '%s' and path '%s': %v",
@@ -221,7 +288,7 @@ func adaptQuotaSummaryListRequest(w http.ResponseWriter, r *http.Request, server
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	response := &QuotaSummaryListServerResponse{}
+	response := new(QuotaSummaryListServerResponse)
 	response.status = 200
 	err = server.List(r.Context(), request, response)
 	if err != nil {
@@ -232,7 +299,7 @@ func adaptQuotaSummaryListRequest(w http.ResponseWriter, r *http.Request, server
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	err = writeQuotaSummaryListResponse(response, w)
+	err = writeQuotaSummaryListResponse(w, response)
 	if err != nil {
 		glog.Errorf(
 			"Can't write response for method '%s' and path '%s': %v",

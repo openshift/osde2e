@@ -53,7 +53,8 @@ func (b *ClusterStatusBuilder) Link(value bool) *ClusterStatusBuilder {
 	return b
 }
 
-// Description sets the value of the 'description' attribute to the given value.
+// Description sets the value of the 'description' attribute
+// to the given value.
 //
 //
 func (b *ClusterStatusBuilder) Description(value string) *ClusterStatusBuilder {
@@ -61,7 +62,8 @@ func (b *ClusterStatusBuilder) Description(value string) *ClusterStatusBuilder {
 	return b
 }
 
-// State sets the value of the 'state' attribute to the given value.
+// State sets the value of the 'state' attribute
+// to the given value.
 //
 // Overall state of a cluster.
 func (b *ClusterStatusBuilder) State(value ClusterState) *ClusterStatusBuilder {
@@ -88,7 +90,11 @@ func (b *ClusterStatusBuilder) Build() (object *ClusterStatus, err error) {
 	object.id = b.id
 	object.href = b.href
 	object.link = b.link
-	object.description = b.description
-	object.state = b.state
+	if b.description != nil {
+		object.description = b.description
+	}
+	if b.state != nil {
+		object.state = b.state
+	}
 	return
 }

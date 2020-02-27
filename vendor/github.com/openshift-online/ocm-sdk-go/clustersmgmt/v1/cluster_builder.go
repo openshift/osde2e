@@ -63,38 +63,37 @@ import (
 // attributes are mandatory when creation a cluster with your own Amazon Web
 // Services account.
 type ClusterBuilder struct {
-	id                                *string
-	href                              *string
-	link                              bool
-	api                               *ClusterAPIBuilder
-	aws                               *AWSBuilder
-	awsInfrastructureAccessRoleGrants *AWSInfrastructureAccessRoleGrantListBuilder
-	byoc                              *bool
-	dns                               *DNSBuilder
-	addons                            *AddOnInstallationListBuilder
-	cloudProvider                     *CloudProviderBuilder
-	console                           *ClusterConsoleBuilder
-	creationTimestamp                 *time.Time
-	displayName                       *string
-	expirationTimestamp               *time.Time
-	externalID                        *string
-	flavour                           *FlavourBuilder
-	groups                            *GroupListBuilder
-	identityProviders                 *IdentityProviderListBuilder
-	loadBalancerQuota                 *int
-	managed                           *bool
-	metrics                           *ClusterMetricsBuilder
-	multiAZ                           *bool
-	name                              *string
-	network                           *NetworkBuilder
-	nodes                             *ClusterNodesBuilder
-	openshiftVersion                  *string
-	properties                        map[string]string
-	region                            *CloudRegionBuilder
-	state                             *ClusterState
-	storageQuota                      *ValueBuilder
-	subscription                      *SubscriptionBuilder
-	version                           *VersionBuilder
+	id                  *string
+	href                *string
+	link                bool
+	api                 *ClusterAPIBuilder
+	aws                 *AWSBuilder
+	byoc                *bool
+	dns                 *DNSBuilder
+	addons              []*AddOnInstallationBuilder
+	cloudProvider       *CloudProviderBuilder
+	console             *ClusterConsoleBuilder
+	creationTimestamp   *time.Time
+	displayName         *string
+	expirationTimestamp *time.Time
+	externalID          *string
+	flavour             *FlavourBuilder
+	groups              []*GroupBuilder
+	identityProviders   []*IdentityProviderBuilder
+	loadBalancerQuota   *int
+	managed             *bool
+	metrics             *ClusterMetricsBuilder
+	multiAZ             *bool
+	name                *string
+	network             *NetworkBuilder
+	nodes               *ClusterNodesBuilder
+	openshiftVersion    *string
+	properties          map[string]string
+	region              *CloudRegionBuilder
+	state               *ClusterState
+	storageQuota        *ValueBuilder
+	subscription        *SubscriptionBuilder
+	version             *VersionBuilder
 }
 
 // NewCluster creates a new builder of 'cluster' objects.
@@ -120,7 +119,8 @@ func (b *ClusterBuilder) Link(value bool) *ClusterBuilder {
 	return b
 }
 
-// API sets the value of the 'API' attribute to the given value.
+// API sets the value of the 'API' attribute
+// to the given value.
 //
 // Information about the API of a cluster.
 func (b *ClusterBuilder) API(value *ClusterAPIBuilder) *ClusterBuilder {
@@ -128,7 +128,8 @@ func (b *ClusterBuilder) API(value *ClusterAPIBuilder) *ClusterBuilder {
 	return b
 }
 
-// AWS sets the value of the 'AWS' attribute to the given value.
+// AWS sets the value of the 'AWS' attribute
+// to the given value.
 //
 // _Amazon Web Services_ specific settings of a cluster.
 func (b *ClusterBuilder) AWS(value *AWSBuilder) *ClusterBuilder {
@@ -136,15 +137,8 @@ func (b *ClusterBuilder) AWS(value *AWSBuilder) *ClusterBuilder {
 	return b
 }
 
-// AWSInfrastructureAccessRoleGrants sets the value of the 'AWS_infrastructure_access_role_grants' attribute to the given values.
-//
-//
-func (b *ClusterBuilder) AWSInfrastructureAccessRoleGrants(value *AWSInfrastructureAccessRoleGrantListBuilder) *ClusterBuilder {
-	b.awsInfrastructureAccessRoleGrants = value
-	return b
-}
-
-// BYOC sets the value of the 'BYOC' attribute to the given value.
+// BYOC sets the value of the 'BYOC' attribute
+// to the given value.
 //
 //
 func (b *ClusterBuilder) BYOC(value bool) *ClusterBuilder {
@@ -152,7 +146,8 @@ func (b *ClusterBuilder) BYOC(value bool) *ClusterBuilder {
 	return b
 }
 
-// DNS sets the value of the 'DNS' attribute to the given value.
+// DNS sets the value of the 'DNS' attribute
+// to the given value.
 //
 // DNS settings of the cluster.
 func (b *ClusterBuilder) DNS(value *DNSBuilder) *ClusterBuilder {
@@ -160,15 +155,18 @@ func (b *ClusterBuilder) DNS(value *DNSBuilder) *ClusterBuilder {
 	return b
 }
 
-// Addons sets the value of the 'addons' attribute to the given values.
+// Addons sets the value of the 'addons' attribute
+// to the given values.
 //
 //
-func (b *ClusterBuilder) Addons(value *AddOnInstallationListBuilder) *ClusterBuilder {
-	b.addons = value
+func (b *ClusterBuilder) Addons(values ...*AddOnInstallationBuilder) *ClusterBuilder {
+	b.addons = make([]*AddOnInstallationBuilder, len(values))
+	copy(b.addons, values)
 	return b
 }
 
-// CloudProvider sets the value of the 'cloud_provider' attribute to the given value.
+// CloudProvider sets the value of the 'cloud_provider' attribute
+// to the given value.
 //
 // Cloud provider.
 func (b *ClusterBuilder) CloudProvider(value *CloudProviderBuilder) *ClusterBuilder {
@@ -176,7 +174,8 @@ func (b *ClusterBuilder) CloudProvider(value *CloudProviderBuilder) *ClusterBuil
 	return b
 }
 
-// Console sets the value of the 'console' attribute to the given value.
+// Console sets the value of the 'console' attribute
+// to the given value.
 //
 // Information about the console of a cluster.
 func (b *ClusterBuilder) Console(value *ClusterConsoleBuilder) *ClusterBuilder {
@@ -184,7 +183,8 @@ func (b *ClusterBuilder) Console(value *ClusterConsoleBuilder) *ClusterBuilder {
 	return b
 }
 
-// CreationTimestamp sets the value of the 'creation_timestamp' attribute to the given value.
+// CreationTimestamp sets the value of the 'creation_timestamp' attribute
+// to the given value.
 //
 //
 func (b *ClusterBuilder) CreationTimestamp(value time.Time) *ClusterBuilder {
@@ -192,7 +192,8 @@ func (b *ClusterBuilder) CreationTimestamp(value time.Time) *ClusterBuilder {
 	return b
 }
 
-// DisplayName sets the value of the 'display_name' attribute to the given value.
+// DisplayName sets the value of the 'display_name' attribute
+// to the given value.
 //
 //
 func (b *ClusterBuilder) DisplayName(value string) *ClusterBuilder {
@@ -200,7 +201,8 @@ func (b *ClusterBuilder) DisplayName(value string) *ClusterBuilder {
 	return b
 }
 
-// ExpirationTimestamp sets the value of the 'expiration_timestamp' attribute to the given value.
+// ExpirationTimestamp sets the value of the 'expiration_timestamp' attribute
+// to the given value.
 //
 //
 func (b *ClusterBuilder) ExpirationTimestamp(value time.Time) *ClusterBuilder {
@@ -208,7 +210,8 @@ func (b *ClusterBuilder) ExpirationTimestamp(value time.Time) *ClusterBuilder {
 	return b
 }
 
-// ExternalID sets the value of the 'external_ID' attribute to the given value.
+// ExternalID sets the value of the 'external_ID' attribute
+// to the given value.
 //
 //
 func (b *ClusterBuilder) ExternalID(value string) *ClusterBuilder {
@@ -216,7 +219,8 @@ func (b *ClusterBuilder) ExternalID(value string) *ClusterBuilder {
 	return b
 }
 
-// Flavour sets the value of the 'flavour' attribute to the given value.
+// Flavour sets the value of the 'flavour' attribute
+// to the given value.
 //
 // Set of predefined properties of a cluster. For example, a _huge_ flavour can be a cluster
 // with 10 infra nodes and 1000 compute nodes.
@@ -225,23 +229,28 @@ func (b *ClusterBuilder) Flavour(value *FlavourBuilder) *ClusterBuilder {
 	return b
 }
 
-// Groups sets the value of the 'groups' attribute to the given values.
+// Groups sets the value of the 'groups' attribute
+// to the given values.
 //
 //
-func (b *ClusterBuilder) Groups(value *GroupListBuilder) *ClusterBuilder {
-	b.groups = value
+func (b *ClusterBuilder) Groups(values ...*GroupBuilder) *ClusterBuilder {
+	b.groups = make([]*GroupBuilder, len(values))
+	copy(b.groups, values)
 	return b
 }
 
-// IdentityProviders sets the value of the 'identity_providers' attribute to the given values.
+// IdentityProviders sets the value of the 'identity_providers' attribute
+// to the given values.
 //
 //
-func (b *ClusterBuilder) IdentityProviders(value *IdentityProviderListBuilder) *ClusterBuilder {
-	b.identityProviders = value
+func (b *ClusterBuilder) IdentityProviders(values ...*IdentityProviderBuilder) *ClusterBuilder {
+	b.identityProviders = make([]*IdentityProviderBuilder, len(values))
+	copy(b.identityProviders, values)
 	return b
 }
 
-// LoadBalancerQuota sets the value of the 'load_balancer_quota' attribute to the given value.
+// LoadBalancerQuota sets the value of the 'load_balancer_quota' attribute
+// to the given value.
 //
 //
 func (b *ClusterBuilder) LoadBalancerQuota(value int) *ClusterBuilder {
@@ -249,7 +258,8 @@ func (b *ClusterBuilder) LoadBalancerQuota(value int) *ClusterBuilder {
 	return b
 }
 
-// Managed sets the value of the 'managed' attribute to the given value.
+// Managed sets the value of the 'managed' attribute
+// to the given value.
 //
 //
 func (b *ClusterBuilder) Managed(value bool) *ClusterBuilder {
@@ -257,7 +267,8 @@ func (b *ClusterBuilder) Managed(value bool) *ClusterBuilder {
 	return b
 }
 
-// Metrics sets the value of the 'metrics' attribute to the given value.
+// Metrics sets the value of the 'metrics' attribute
+// to the given value.
 //
 // Cluster metrics received via telemetry.
 func (b *ClusterBuilder) Metrics(value *ClusterMetricsBuilder) *ClusterBuilder {
@@ -265,7 +276,8 @@ func (b *ClusterBuilder) Metrics(value *ClusterMetricsBuilder) *ClusterBuilder {
 	return b
 }
 
-// MultiAZ sets the value of the 'multi_AZ' attribute to the given value.
+// MultiAZ sets the value of the 'multi_AZ' attribute
+// to the given value.
 //
 //
 func (b *ClusterBuilder) MultiAZ(value bool) *ClusterBuilder {
@@ -273,7 +285,8 @@ func (b *ClusterBuilder) MultiAZ(value bool) *ClusterBuilder {
 	return b
 }
 
-// Name sets the value of the 'name' attribute to the given value.
+// Name sets the value of the 'name' attribute
+// to the given value.
 //
 //
 func (b *ClusterBuilder) Name(value string) *ClusterBuilder {
@@ -281,7 +294,8 @@ func (b *ClusterBuilder) Name(value string) *ClusterBuilder {
 	return b
 }
 
-// Network sets the value of the 'network' attribute to the given value.
+// Network sets the value of the 'network' attribute
+// to the given value.
 //
 // Network configuration of a cluster.
 func (b *ClusterBuilder) Network(value *NetworkBuilder) *ClusterBuilder {
@@ -289,7 +303,8 @@ func (b *ClusterBuilder) Network(value *NetworkBuilder) *ClusterBuilder {
 	return b
 }
 
-// Nodes sets the value of the 'nodes' attribute to the given value.
+// Nodes sets the value of the 'nodes' attribute
+// to the given value.
 //
 // Counts of different classes of nodes inside a cluster.
 func (b *ClusterBuilder) Nodes(value *ClusterNodesBuilder) *ClusterBuilder {
@@ -297,7 +312,8 @@ func (b *ClusterBuilder) Nodes(value *ClusterNodesBuilder) *ClusterBuilder {
 	return b
 }
 
-// OpenshiftVersion sets the value of the 'openshift_version' attribute to the given value.
+// OpenshiftVersion sets the value of the 'openshift_version' attribute
+// to the given value.
 //
 //
 func (b *ClusterBuilder) OpenshiftVersion(value string) *ClusterBuilder {
@@ -305,7 +321,8 @@ func (b *ClusterBuilder) OpenshiftVersion(value string) *ClusterBuilder {
 	return b
 }
 
-// Properties sets the value of the 'properties' attribute to the given value.
+// Properties sets the value of the 'properties' attribute
+// to the given value.
 //
 //
 func (b *ClusterBuilder) Properties(value map[string]string) *ClusterBuilder {
@@ -313,7 +330,8 @@ func (b *ClusterBuilder) Properties(value map[string]string) *ClusterBuilder {
 	return b
 }
 
-// Region sets the value of the 'region' attribute to the given value.
+// Region sets the value of the 'region' attribute
+// to the given value.
 //
 // Description of a region of a cloud provider.
 func (b *ClusterBuilder) Region(value *CloudRegionBuilder) *ClusterBuilder {
@@ -321,7 +339,8 @@ func (b *ClusterBuilder) Region(value *CloudRegionBuilder) *ClusterBuilder {
 	return b
 }
 
-// State sets the value of the 'state' attribute to the given value.
+// State sets the value of the 'state' attribute
+// to the given value.
 //
 // Overall state of a cluster.
 func (b *ClusterBuilder) State(value ClusterState) *ClusterBuilder {
@@ -329,7 +348,8 @@ func (b *ClusterBuilder) State(value ClusterState) *ClusterBuilder {
 	return b
 }
 
-// StorageQuota sets the value of the 'storage_quota' attribute to the given value.
+// StorageQuota sets the value of the 'storage_quota' attribute
+// to the given value.
 //
 // Numeric value and the unit used to measure it.
 //
@@ -354,7 +374,8 @@ func (b *ClusterBuilder) StorageQuota(value *ValueBuilder) *ClusterBuilder {
 	return b
 }
 
-// Subscription sets the value of the 'subscription' attribute to the given value.
+// Subscription sets the value of the 'subscription' attribute
+// to the given value.
 //
 // Definition of a subscription.
 func (b *ClusterBuilder) Subscription(value *SubscriptionBuilder) *ClusterBuilder {
@@ -362,7 +383,8 @@ func (b *ClusterBuilder) Subscription(value *SubscriptionBuilder) *ClusterBuilde
 	return b
 }
 
-// Version sets the value of the 'version' attribute to the given value.
+// Version sets the value of the 'version' attribute
+// to the given value.
 //
 // Representation of an _OpenShift_ version.
 func (b *ClusterBuilder) Version(value *VersionBuilder) *ClusterBuilder {
@@ -388,19 +410,17 @@ func (b *ClusterBuilder) Copy(object *Cluster) *ClusterBuilder {
 	} else {
 		b.aws = nil
 	}
-	if object.awsInfrastructureAccessRoleGrants != nil {
-		b.awsInfrastructureAccessRoleGrants = NewAWSInfrastructureAccessRoleGrantList().Copy(object.awsInfrastructureAccessRoleGrants)
-	} else {
-		b.awsInfrastructureAccessRoleGrants = nil
-	}
 	b.byoc = object.byoc
 	if object.dns != nil {
 		b.dns = NewDNS().Copy(object.dns)
 	} else {
 		b.dns = nil
 	}
-	if object.addons != nil {
-		b.addons = NewAddOnInstallationList().Copy(object.addons)
+	if object.addons != nil && len(object.addons.items) > 0 {
+		b.addons = make([]*AddOnInstallationBuilder, len(object.addons.items))
+		for i, item := range object.addons.items {
+			b.addons[i] = NewAddOnInstallation().Copy(item)
+		}
 	} else {
 		b.addons = nil
 	}
@@ -423,13 +443,19 @@ func (b *ClusterBuilder) Copy(object *Cluster) *ClusterBuilder {
 	} else {
 		b.flavour = nil
 	}
-	if object.groups != nil {
-		b.groups = NewGroupList().Copy(object.groups)
+	if object.groups != nil && len(object.groups.items) > 0 {
+		b.groups = make([]*GroupBuilder, len(object.groups.items))
+		for i, item := range object.groups.items {
+			b.groups[i] = NewGroup().Copy(item)
+		}
 	} else {
 		b.groups = nil
 	}
-	if object.identityProviders != nil {
-		b.identityProviders = NewIdentityProviderList().Copy(object.identityProviders)
+	if object.identityProviders != nil && len(object.identityProviders.items) > 0 {
+		b.identityProviders = make([]*IdentityProviderBuilder, len(object.identityProviders.items))
+		for i, item := range object.identityProviders.items {
+			b.identityProviders[i] = NewIdentityProvider().Copy(item)
+		}
 	} else {
 		b.identityProviders = nil
 	}
@@ -455,8 +481,8 @@ func (b *ClusterBuilder) Copy(object *Cluster) *ClusterBuilder {
 	b.openshiftVersion = object.openshiftVersion
 	if len(object.properties) > 0 {
 		b.properties = make(map[string]string)
-		for k, v := range object.properties {
-			b.properties[k] = v
+		for key, value := range object.properties {
+			b.properties[key] = value
 		}
 	} else {
 		b.properties = nil
@@ -503,13 +529,9 @@ func (b *ClusterBuilder) Build() (object *Cluster, err error) {
 			return
 		}
 	}
-	if b.awsInfrastructureAccessRoleGrants != nil {
-		object.awsInfrastructureAccessRoleGrants, err = b.awsInfrastructureAccessRoleGrants.Build()
-		if err != nil {
-			return
-		}
+	if b.byoc != nil {
+		object.byoc = b.byoc
 	}
-	object.byoc = b.byoc
 	if b.dns != nil {
 		object.dns, err = b.dns.Build()
 		if err != nil {
@@ -517,9 +539,13 @@ func (b *ClusterBuilder) Build() (object *Cluster, err error) {
 		}
 	}
 	if b.addons != nil {
-		object.addons, err = b.addons.Build()
-		if err != nil {
-			return
+		object.addons = new(AddOnInstallationList)
+		object.addons.items = make([]*AddOnInstallation, len(b.addons))
+		for i, item := range b.addons {
+			object.addons.items[i], err = item.Build()
+			if err != nil {
+				return
+			}
 		}
 	}
 	if b.cloudProvider != nil {
@@ -534,10 +560,18 @@ func (b *ClusterBuilder) Build() (object *Cluster, err error) {
 			return
 		}
 	}
-	object.creationTimestamp = b.creationTimestamp
-	object.displayName = b.displayName
-	object.expirationTimestamp = b.expirationTimestamp
-	object.externalID = b.externalID
+	if b.creationTimestamp != nil {
+		object.creationTimestamp = b.creationTimestamp
+	}
+	if b.displayName != nil {
+		object.displayName = b.displayName
+	}
+	if b.expirationTimestamp != nil {
+		object.expirationTimestamp = b.expirationTimestamp
+	}
+	if b.externalID != nil {
+		object.externalID = b.externalID
+	}
 	if b.flavour != nil {
 		object.flavour, err = b.flavour.Build()
 		if err != nil {
@@ -545,27 +579,43 @@ func (b *ClusterBuilder) Build() (object *Cluster, err error) {
 		}
 	}
 	if b.groups != nil {
-		object.groups, err = b.groups.Build()
-		if err != nil {
-			return
+		object.groups = new(GroupList)
+		object.groups.items = make([]*Group, len(b.groups))
+		for i, item := range b.groups {
+			object.groups.items[i], err = item.Build()
+			if err != nil {
+				return
+			}
 		}
 	}
 	if b.identityProviders != nil {
-		object.identityProviders, err = b.identityProviders.Build()
-		if err != nil {
-			return
+		object.identityProviders = new(IdentityProviderList)
+		object.identityProviders.items = make([]*IdentityProvider, len(b.identityProviders))
+		for i, item := range b.identityProviders {
+			object.identityProviders.items[i], err = item.Build()
+			if err != nil {
+				return
+			}
 		}
 	}
-	object.loadBalancerQuota = b.loadBalancerQuota
-	object.managed = b.managed
+	if b.loadBalancerQuota != nil {
+		object.loadBalancerQuota = b.loadBalancerQuota
+	}
+	if b.managed != nil {
+		object.managed = b.managed
+	}
 	if b.metrics != nil {
 		object.metrics, err = b.metrics.Build()
 		if err != nil {
 			return
 		}
 	}
-	object.multiAZ = b.multiAZ
-	object.name = b.name
+	if b.multiAZ != nil {
+		object.multiAZ = b.multiAZ
+	}
+	if b.name != nil {
+		object.name = b.name
+	}
 	if b.network != nil {
 		object.network, err = b.network.Build()
 		if err != nil {
@@ -578,11 +628,13 @@ func (b *ClusterBuilder) Build() (object *Cluster, err error) {
 			return
 		}
 	}
-	object.openshiftVersion = b.openshiftVersion
+	if b.openshiftVersion != nil {
+		object.openshiftVersion = b.openshiftVersion
+	}
 	if b.properties != nil {
 		object.properties = make(map[string]string)
-		for k, v := range b.properties {
-			object.properties[k] = v
+		for key, value := range b.properties {
+			object.properties[key] = value
 		}
 	}
 	if b.region != nil {
@@ -591,7 +643,9 @@ func (b *ClusterBuilder) Build() (object *Cluster, err error) {
 			return
 		}
 	}
-	object.state = b.state
+	if b.state != nil {
+		object.state = b.state
+	}
 	if b.storageQuota != nil {
 		object.storageQuota, err = b.storageQuota.Build()
 		if err != nil {

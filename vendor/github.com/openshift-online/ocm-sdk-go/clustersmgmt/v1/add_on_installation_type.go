@@ -97,6 +97,8 @@ func (o *AddOnInstallation) GetHREF() (value string, ok bool) {
 // Empty returns true if the object is empty, i.e. no attribute has a value.
 func (o *AddOnInstallation) Empty() bool {
 	return o == nil || (o.id == nil &&
+		o.addon == nil &&
+		o.cluster == nil &&
 		true)
 }
 
@@ -146,16 +148,16 @@ func (o *AddOnInstallation) GetCluster() (value *Cluster, ok bool) {
 	return
 }
 
-// AddOnInstallationListKind is the name of the type used to represent list of objects of
-// type 'add_on_installation'.
+// AddOnInstallationListKind is the name of the type used to represent list of
+// objects of type 'add_on_installation'.
 const AddOnInstallationListKind = "AddOnInstallationList"
 
-// AddOnInstallationListLinkKind is the name of the type used to represent links to list
-// of objects of type 'add_on_installation'.
+// AddOnInstallationListLinkKind is the name of the type used to represent links
+// to list of objects of type 'add_on_installation'.
 const AddOnInstallationListLinkKind = "AddOnInstallationListLink"
 
-// AddOnInstallationNilKind is the name of the type used to nil lists of objects of
-// type 'add_on_installation'.
+// AddOnInstallationNilKind is the name of the type used to nil lists of
+// objects of type 'add_on_installation'.
 const AddOnInstallationListNilKind = "AddOnInstallationListNil"
 
 // AddOnInstallationList is a list of values of the 'add_on_installation' type.

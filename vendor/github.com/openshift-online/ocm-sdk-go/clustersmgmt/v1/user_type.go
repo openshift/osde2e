@@ -98,16 +98,16 @@ func (o *User) Empty() bool {
 		true)
 }
 
-// UserListKind is the name of the type used to represent list of objects of
-// type 'user'.
+// UserListKind is the name of the type used to represent list of
+// objects of type 'user'.
 const UserListKind = "UserList"
 
-// UserListLinkKind is the name of the type used to represent links to list
-// of objects of type 'user'.
+// UserListLinkKind is the name of the type used to represent links
+// to list of objects of type 'user'.
 const UserListLinkKind = "UserListLink"
 
-// UserNilKind is the name of the type used to nil lists of objects of
-// type 'user'.
+// UserNilKind is the name of the type used to nil lists of
+// objects of type 'user'.
 const UserListNilKind = "UserListNil"
 
 // UserList is a list of values of the 'user' type.

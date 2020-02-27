@@ -37,7 +37,8 @@ func NewAccessReviewRequest() *AccessReviewRequestBuilder {
 	return new(AccessReviewRequestBuilder)
 }
 
-// AccountUsername sets the value of the 'account_username' attribute to the given value.
+// AccountUsername sets the value of the 'account_username' attribute
+// to the given value.
 //
 //
 func (b *AccessReviewRequestBuilder) AccountUsername(value string) *AccessReviewRequestBuilder {
@@ -45,7 +46,8 @@ func (b *AccessReviewRequestBuilder) AccountUsername(value string) *AccessReview
 	return b
 }
 
-// Action sets the value of the 'action' attribute to the given value.
+// Action sets the value of the 'action' attribute
+// to the given value.
 //
 //
 func (b *AccessReviewRequestBuilder) Action(value string) *AccessReviewRequestBuilder {
@@ -53,7 +55,8 @@ func (b *AccessReviewRequestBuilder) Action(value string) *AccessReviewRequestBu
 	return b
 }
 
-// ClusterID sets the value of the 'cluster_ID' attribute to the given value.
+// ClusterID sets the value of the 'cluster_ID' attribute
+// to the given value.
 //
 //
 func (b *AccessReviewRequestBuilder) ClusterID(value string) *AccessReviewRequestBuilder {
@@ -61,7 +64,8 @@ func (b *AccessReviewRequestBuilder) ClusterID(value string) *AccessReviewReques
 	return b
 }
 
-// ClusterUUID sets the value of the 'cluster_UUID' attribute to the given value.
+// ClusterUUID sets the value of the 'cluster_UUID' attribute
+// to the given value.
 //
 //
 func (b *AccessReviewRequestBuilder) ClusterUUID(value string) *AccessReviewRequestBuilder {
@@ -69,7 +73,8 @@ func (b *AccessReviewRequestBuilder) ClusterUUID(value string) *AccessReviewRequ
 	return b
 }
 
-// OrganizationID sets the value of the 'organization_ID' attribute to the given value.
+// OrganizationID sets the value of the 'organization_ID' attribute
+// to the given value.
 //
 //
 func (b *AccessReviewRequestBuilder) OrganizationID(value string) *AccessReviewRequestBuilder {
@@ -77,7 +82,8 @@ func (b *AccessReviewRequestBuilder) OrganizationID(value string) *AccessReviewR
 	return b
 }
 
-// ResourceType sets the value of the 'resource_type' attribute to the given value.
+// ResourceType sets the value of the 'resource_type' attribute
+// to the given value.
 //
 //
 func (b *AccessReviewRequestBuilder) ResourceType(value string) *AccessReviewRequestBuilder {
@@ -85,7 +91,8 @@ func (b *AccessReviewRequestBuilder) ResourceType(value string) *AccessReviewReq
 	return b
 }
 
-// SubscriptionID sets the value of the 'subscription_ID' attribute to the given value.
+// SubscriptionID sets the value of the 'subscription_ID' attribute
+// to the given value.
 //
 //
 func (b *AccessReviewRequestBuilder) SubscriptionID(value string) *AccessReviewRequestBuilder {
@@ -111,12 +118,26 @@ func (b *AccessReviewRequestBuilder) Copy(object *AccessReviewRequest) *AccessRe
 // Build creates a 'access_review_request' object using the configuration stored in the builder.
 func (b *AccessReviewRequestBuilder) Build() (object *AccessReviewRequest, err error) {
 	object = new(AccessReviewRequest)
-	object.accountUsername = b.accountUsername
-	object.action = b.action
-	object.clusterID = b.clusterID
-	object.clusterUUID = b.clusterUUID
-	object.organizationID = b.organizationID
-	object.resourceType = b.resourceType
-	object.subscriptionID = b.subscriptionID
+	if b.accountUsername != nil {
+		object.accountUsername = b.accountUsername
+	}
+	if b.action != nil {
+		object.action = b.action
+	}
+	if b.clusterID != nil {
+		object.clusterID = b.clusterID
+	}
+	if b.clusterUUID != nil {
+		object.clusterUUID = b.clusterUUID
+	}
+	if b.organizationID != nil {
+		object.organizationID = b.organizationID
+	}
+	if b.resourceType != nil {
+		object.resourceType = b.resourceType
+	}
+	if b.subscriptionID != nil {
+		object.subscriptionID = b.subscriptionID
+	}
 	return
 }

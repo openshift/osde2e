@@ -32,7 +32,7 @@ type ClusterAuthorizationRequest struct {
 	externalClusterID *string
 	managed           *bool
 	reserve           *bool
-	resources         []*ReservedResource
+	resources         *ReservedResourceList
 }
 
 // Empty returns true if the object is empty, i.e. no attribute has a value.
@@ -46,7 +46,7 @@ func (o *ClusterAuthorizationRequest) Empty() bool {
 		o.externalClusterID == nil &&
 		o.managed == nil &&
 		o.reserve == nil &&
-		len(o.resources) == 0 &&
+		o.resources.Empty() &&
 		true)
 }
 
@@ -261,7 +261,7 @@ func (o *ClusterAuthorizationRequest) GetReserve() (value bool, ok bool) {
 // the zero value of the type if the attribute doesn't have a value.
 //
 //
-func (o *ClusterAuthorizationRequest) Resources() []*ReservedResource {
+func (o *ClusterAuthorizationRequest) Resources() *ReservedResourceList {
 	if o == nil {
 		return nil
 	}
@@ -272,7 +272,7 @@ func (o *ClusterAuthorizationRequest) Resources() []*ReservedResource {
 // a flag indicating if the attribute has a value.
 //
 //
-func (o *ClusterAuthorizationRequest) GetResources() (value []*ReservedResource, ok bool) {
+func (o *ClusterAuthorizationRequest) GetResources() (value *ReservedResourceList, ok bool) {
 	ok = o != nil && o.resources != nil
 	if ok {
 		value = o.resources
@@ -280,22 +280,8 @@ func (o *ClusterAuthorizationRequest) GetResources() (value []*ReservedResource,
 	return
 }
 
-// ClusterAuthorizationRequestListKind is the name of the type used to represent list of objects of
-// type 'cluster_authorization_request'.
-const ClusterAuthorizationRequestListKind = "ClusterAuthorizationRequestList"
-
-// ClusterAuthorizationRequestListLinkKind is the name of the type used to represent links to list
-// of objects of type 'cluster_authorization_request'.
-const ClusterAuthorizationRequestListLinkKind = "ClusterAuthorizationRequestListLink"
-
-// ClusterAuthorizationRequestNilKind is the name of the type used to nil lists of objects of
-// type 'cluster_authorization_request'.
-const ClusterAuthorizationRequestListNilKind = "ClusterAuthorizationRequestListNil"
-
 // ClusterAuthorizationRequestList is a list of values of the 'cluster_authorization_request' type.
 type ClusterAuthorizationRequestList struct {
-	href  *string
-	link  bool
 	items []*ClusterAuthorizationRequest
 }
 

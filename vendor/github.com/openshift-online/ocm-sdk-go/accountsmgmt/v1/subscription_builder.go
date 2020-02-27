@@ -65,7 +65,8 @@ func (b *SubscriptionBuilder) Link(value bool) *SubscriptionBuilder {
 	return b
 }
 
-// ClusterID sets the value of the 'cluster_ID' attribute to the given value.
+// ClusterID sets the value of the 'cluster_ID' attribute
+// to the given value.
 //
 //
 func (b *SubscriptionBuilder) ClusterID(value string) *SubscriptionBuilder {
@@ -73,7 +74,8 @@ func (b *SubscriptionBuilder) ClusterID(value string) *SubscriptionBuilder {
 	return b
 }
 
-// CreatedAt sets the value of the 'created_at' attribute to the given value.
+// CreatedAt sets the value of the 'created_at' attribute
+// to the given value.
 //
 //
 func (b *SubscriptionBuilder) CreatedAt(value time.Time) *SubscriptionBuilder {
@@ -81,7 +83,8 @@ func (b *SubscriptionBuilder) CreatedAt(value time.Time) *SubscriptionBuilder {
 	return b
 }
 
-// Creator sets the value of the 'creator' attribute to the given value.
+// Creator sets the value of the 'creator' attribute
+// to the given value.
 //
 //
 func (b *SubscriptionBuilder) Creator(value *AccountBuilder) *SubscriptionBuilder {
@@ -89,7 +92,8 @@ func (b *SubscriptionBuilder) Creator(value *AccountBuilder) *SubscriptionBuilde
 	return b
 }
 
-// DisplayName sets the value of the 'display_name' attribute to the given value.
+// DisplayName sets the value of the 'display_name' attribute
+// to the given value.
 //
 //
 func (b *SubscriptionBuilder) DisplayName(value string) *SubscriptionBuilder {
@@ -97,7 +101,8 @@ func (b *SubscriptionBuilder) DisplayName(value string) *SubscriptionBuilder {
 	return b
 }
 
-// ExternalClusterID sets the value of the 'external_cluster_ID' attribute to the given value.
+// ExternalClusterID sets the value of the 'external_cluster_ID' attribute
+// to the given value.
 //
 //
 func (b *SubscriptionBuilder) ExternalClusterID(value string) *SubscriptionBuilder {
@@ -105,7 +110,8 @@ func (b *SubscriptionBuilder) ExternalClusterID(value string) *SubscriptionBuild
 	return b
 }
 
-// LastTelemetryDate sets the value of the 'last_telemetry_date' attribute to the given value.
+// LastTelemetryDate sets the value of the 'last_telemetry_date' attribute
+// to the given value.
 //
 //
 func (b *SubscriptionBuilder) LastTelemetryDate(value time.Time) *SubscriptionBuilder {
@@ -113,7 +119,8 @@ func (b *SubscriptionBuilder) LastTelemetryDate(value time.Time) *SubscriptionBu
 	return b
 }
 
-// OrganizationID sets the value of the 'organization_ID' attribute to the given value.
+// OrganizationID sets the value of the 'organization_ID' attribute
+// to the given value.
 //
 //
 func (b *SubscriptionBuilder) OrganizationID(value string) *SubscriptionBuilder {
@@ -121,7 +128,8 @@ func (b *SubscriptionBuilder) OrganizationID(value string) *SubscriptionBuilder 
 	return b
 }
 
-// Plan sets the value of the 'plan' attribute to the given value.
+// Plan sets the value of the 'plan' attribute
+// to the given value.
 //
 //
 func (b *SubscriptionBuilder) Plan(value *PlanBuilder) *SubscriptionBuilder {
@@ -129,7 +137,8 @@ func (b *SubscriptionBuilder) Plan(value *PlanBuilder) *SubscriptionBuilder {
 	return b
 }
 
-// RegistryCredential sets the value of the 'registry_credential' attribute to the given value.
+// RegistryCredential sets the value of the 'registry_credential' attribute
+// to the given value.
 //
 //
 func (b *SubscriptionBuilder) RegistryCredential(value *RegistryCredentialBuilder) *SubscriptionBuilder {
@@ -137,7 +146,8 @@ func (b *SubscriptionBuilder) RegistryCredential(value *RegistryCredentialBuilde
 	return b
 }
 
-// UpdatedAt sets the value of the 'updated_at' attribute to the given value.
+// UpdatedAt sets the value of the 'updated_at' attribute
+// to the given value.
 //
 //
 func (b *SubscriptionBuilder) UpdatedAt(value time.Time) *SubscriptionBuilder {
@@ -184,18 +194,30 @@ func (b *SubscriptionBuilder) Build() (object *Subscription, err error) {
 	object.id = b.id
 	object.href = b.href
 	object.link = b.link
-	object.clusterID = b.clusterID
-	object.createdAt = b.createdAt
+	if b.clusterID != nil {
+		object.clusterID = b.clusterID
+	}
+	if b.createdAt != nil {
+		object.createdAt = b.createdAt
+	}
 	if b.creator != nil {
 		object.creator, err = b.creator.Build()
 		if err != nil {
 			return
 		}
 	}
-	object.displayName = b.displayName
-	object.externalClusterID = b.externalClusterID
-	object.lastTelemetryDate = b.lastTelemetryDate
-	object.organizationID = b.organizationID
+	if b.displayName != nil {
+		object.displayName = b.displayName
+	}
+	if b.externalClusterID != nil {
+		object.externalClusterID = b.externalClusterID
+	}
+	if b.lastTelemetryDate != nil {
+		object.lastTelemetryDate = b.lastTelemetryDate
+	}
+	if b.organizationID != nil {
+		object.organizationID = b.organizationID
+	}
 	if b.plan != nil {
 		object.plan, err = b.plan.Build()
 		if err != nil {
@@ -208,6 +230,8 @@ func (b *SubscriptionBuilder) Build() (object *Subscription, err error) {
 			return
 		}
 	}
-	object.updatedAt = b.updatedAt
+	if b.updatedAt != nil {
+		object.updatedAt = b.updatedAt
+	}
 	return
 }

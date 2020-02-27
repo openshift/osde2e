@@ -23,18 +23,16 @@ package v1 // github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1
 //
 // Representation of an add-on that can be installed in a cluster.
 type AddOnBuilder struct {
-	id              *string
-	href            *string
-	link            bool
-	description     *string
-	enabled         *bool
-	icon            *string
-	installMode     *AddOnInstallMode
-	label           *string
-	name            *string
-	resourceCost    *float64
-	resourceName    *string
-	targetNamespace *string
+	id           *string
+	href         *string
+	link         bool
+	description  *string
+	enabled      *bool
+	icon         *string
+	label        *string
+	name         *string
+	resourceCost *float64
+	resourceName *string
 }
 
 // NewAddOn creates a new builder of 'add_on' objects.
@@ -60,7 +58,8 @@ func (b *AddOnBuilder) Link(value bool) *AddOnBuilder {
 	return b
 }
 
-// Description sets the value of the 'description' attribute to the given value.
+// Description sets the value of the 'description' attribute
+// to the given value.
 //
 //
 func (b *AddOnBuilder) Description(value string) *AddOnBuilder {
@@ -68,7 +67,8 @@ func (b *AddOnBuilder) Description(value string) *AddOnBuilder {
 	return b
 }
 
-// Enabled sets the value of the 'enabled' attribute to the given value.
+// Enabled sets the value of the 'enabled' attribute
+// to the given value.
 //
 //
 func (b *AddOnBuilder) Enabled(value bool) *AddOnBuilder {
@@ -76,7 +76,8 @@ func (b *AddOnBuilder) Enabled(value bool) *AddOnBuilder {
 	return b
 }
 
-// Icon sets the value of the 'icon' attribute to the given value.
+// Icon sets the value of the 'icon' attribute
+// to the given value.
 //
 //
 func (b *AddOnBuilder) Icon(value string) *AddOnBuilder {
@@ -84,15 +85,8 @@ func (b *AddOnBuilder) Icon(value string) *AddOnBuilder {
 	return b
 }
 
-// InstallMode sets the value of the 'install_mode' attribute to the given value.
-//
-// Representation of an add-on InstallMode field.
-func (b *AddOnBuilder) InstallMode(value AddOnInstallMode) *AddOnBuilder {
-	b.installMode = &value
-	return b
-}
-
-// Label sets the value of the 'label' attribute to the given value.
+// Label sets the value of the 'label' attribute
+// to the given value.
 //
 //
 func (b *AddOnBuilder) Label(value string) *AddOnBuilder {
@@ -100,7 +94,8 @@ func (b *AddOnBuilder) Label(value string) *AddOnBuilder {
 	return b
 }
 
-// Name sets the value of the 'name' attribute to the given value.
+// Name sets the value of the 'name' attribute
+// to the given value.
 //
 //
 func (b *AddOnBuilder) Name(value string) *AddOnBuilder {
@@ -108,7 +103,8 @@ func (b *AddOnBuilder) Name(value string) *AddOnBuilder {
 	return b
 }
 
-// ResourceCost sets the value of the 'resource_cost' attribute to the given value.
+// ResourceCost sets the value of the 'resource_cost' attribute
+// to the given value.
 //
 //
 func (b *AddOnBuilder) ResourceCost(value float64) *AddOnBuilder {
@@ -116,19 +112,12 @@ func (b *AddOnBuilder) ResourceCost(value float64) *AddOnBuilder {
 	return b
 }
 
-// ResourceName sets the value of the 'resource_name' attribute to the given value.
+// ResourceName sets the value of the 'resource_name' attribute
+// to the given value.
 //
 //
 func (b *AddOnBuilder) ResourceName(value string) *AddOnBuilder {
 	b.resourceName = &value
-	return b
-}
-
-// TargetNamespace sets the value of the 'target_namespace' attribute to the given value.
-//
-//
-func (b *AddOnBuilder) TargetNamespace(value string) *AddOnBuilder {
-	b.targetNamespace = &value
 	return b
 }
 
@@ -143,12 +132,10 @@ func (b *AddOnBuilder) Copy(object *AddOn) *AddOnBuilder {
 	b.description = object.description
 	b.enabled = object.enabled
 	b.icon = object.icon
-	b.installMode = object.installMode
 	b.label = object.label
 	b.name = object.name
 	b.resourceCost = object.resourceCost
 	b.resourceName = object.resourceName
-	b.targetNamespace = object.targetNamespace
 	return b
 }
 
@@ -158,14 +145,26 @@ func (b *AddOnBuilder) Build() (object *AddOn, err error) {
 	object.id = b.id
 	object.href = b.href
 	object.link = b.link
-	object.description = b.description
-	object.enabled = b.enabled
-	object.icon = b.icon
-	object.installMode = b.installMode
-	object.label = b.label
-	object.name = b.name
-	object.resourceCost = b.resourceCost
-	object.resourceName = b.resourceName
-	object.targetNamespace = b.targetNamespace
+	if b.description != nil {
+		object.description = b.description
+	}
+	if b.enabled != nil {
+		object.enabled = b.enabled
+	}
+	if b.icon != nil {
+		object.icon = b.icon
+	}
+	if b.label != nil {
+		object.label = b.label
+	}
+	if b.name != nil {
+		object.name = b.name
+	}
+	if b.resourceCost != nil {
+		object.resourceCost = b.resourceCost
+	}
+	if b.resourceName != nil {
+		object.resourceName = b.resourceName
+	}
 	return
 }

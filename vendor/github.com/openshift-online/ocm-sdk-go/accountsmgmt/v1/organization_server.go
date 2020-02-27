@@ -21,6 +21,8 @@ package v1 // github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1
 
 import (
 	"context"
+	"encoding/json"
+	"io"
 	"net/http"
 
 	"github.com/golang/glog"
@@ -78,6 +80,19 @@ func (r *OrganizationGetServerResponse) Status(value int) *OrganizationGetServer
 	return r
 }
 
+// marshall is the method used internally to marshal responses for the
+// 'get' method.
+func (r *OrganizationGetServerResponse) marshal(writer io.Writer) error {
+	var err error
+	encoder := json.NewEncoder(writer)
+	data, err := r.body.wrap()
+	if err != nil {
+		return err
+	}
+	err = encoder.Encode(data)
+	return err
+}
+
 // OrganizationUpdateServerRequest is the request for the 'update' method.
 type OrganizationUpdateServerRequest struct {
 	body *Organization
@@ -105,6 +120,23 @@ func (r *OrganizationUpdateServerRequest) GetBody() (value *Organization, ok boo
 	return
 }
 
+// unmarshal is the method used internally to unmarshal request to the
+// 'update' method.
+func (r *OrganizationUpdateServerRequest) unmarshal(reader io.Reader) error {
+	var err error
+	decoder := json.NewDecoder(reader)
+	data := new(organizationData)
+	err = decoder.Decode(data)
+	if err != nil {
+		return err
+	}
+	r.body, err = data.unwrap()
+	if err != nil {
+		return err
+	}
+	return err
+}
+
 // OrganizationUpdateServerResponse is the response for the 'update' method.
 type OrganizationUpdateServerResponse struct {
 	status int
@@ -126,6 +158,19 @@ func (r *OrganizationUpdateServerResponse) Status(value int) *OrganizationUpdate
 	return r
 }
 
+// marshall is the method used internally to marshal responses for the
+// 'update' method.
+func (r *OrganizationUpdateServerResponse) marshal(writer io.Writer) error {
+	var err error
+	encoder := json.NewEncoder(writer)
+	data, err := r.body.wrap()
+	if err != nil {
+		return err
+	}
+	err = encoder.Encode(data)
+	return err
+}
+
 // dispatchOrganization navigates the servers tree rooted at the given server
 // till it finds one that matches the given set of path segments, and then invokes
 // the corresponding server.
@@ -134,42 +179,60 @@ func dispatchOrganization(w http.ResponseWriter, r *http.Request, server Organiz
 		switch r.Method {
 		case "GET":
 			adaptOrganizationGetRequest(w, r, server)
-			return
 		case "PATCH":
 			adaptOrganizationUpdateRequest(w, r, server)
-			return
 		default:
 			errors.SendMethodNotAllowed(w, r)
 			return
 		}
-	}
-	switch segments[0] {
-	case "quota_summary":
-		target := server.QuotaSummary()
-		if target == nil {
+	} else {
+		switch segments[0] {
+		case "quota_summary":
+			target := server.QuotaSummary()
+			if target == nil {
+				errors.SendNotFound(w, r)
+				return
+			}
+			dispatchQuotaSummary(w, r, target, segments[1:])
+		case "resource_quota":
+			target := server.ResourceQuota()
+			if target == nil {
+				errors.SendNotFound(w, r)
+				return
+			}
+			dispatchResourceQuotas(w, r, target, segments[1:])
+		default:
 			errors.SendNotFound(w, r)
 			return
 		}
-		dispatchQuotaSummary(w, r, target, segments[1:])
-	case "resource_quota":
-		target := server.ResourceQuota()
-		if target == nil {
-			errors.SendNotFound(w, r)
-			return
-		}
-		dispatchResourceQuotas(w, r, target, segments[1:])
-	default:
-		errors.SendNotFound(w, r)
-		return
 	}
+}
+
+// readOrganizationGetRequest reads the given HTTP requests and translates it
+// into an object of type OrganizationGetServerRequest.
+func readOrganizationGetRequest(r *http.Request) (*OrganizationGetServerRequest, error) {
+	var err error
+	result := new(OrganizationGetServerRequest)
+	return result, err
+}
+
+// writeOrganizationGetResponse translates the given request object into an
+// HTTP response.
+func writeOrganizationGetResponse(w http.ResponseWriter, r *OrganizationGetServerResponse) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(r.status)
+	err := r.marshal(w)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // adaptOrganizationGetRequest translates the given HTTP request into a call to
 // the corresponding method of the given server. Then it translates the
 // results returned by that method into an HTTP response.
 func adaptOrganizationGetRequest(w http.ResponseWriter, r *http.Request, server OrganizationServer) {
-	request := &OrganizationGetServerRequest{}
-	err := readOrganizationGetRequest(request, r)
+	request, err := readOrganizationGetRequest(r)
 	if err != nil {
 		glog.Errorf(
 			"Can't read request for method '%s' and path '%s': %v",
@@ -178,7 +241,7 @@ func adaptOrganizationGetRequest(w http.ResponseWriter, r *http.Request, server 
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	response := &OrganizationGetServerResponse{}
+	response := new(OrganizationGetServerResponse)
 	response.status = 200
 	err = server.Get(r.Context(), request, response)
 	if err != nil {
@@ -189,7 +252,7 @@ func adaptOrganizationGetRequest(w http.ResponseWriter, r *http.Request, server 
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	err = writeOrganizationGetResponse(response, w)
+	err = writeOrganizationGetResponse(w, response)
 	if err != nil {
 		glog.Errorf(
 			"Can't write response for method '%s' and path '%s': %v",
@@ -199,12 +262,35 @@ func adaptOrganizationGetRequest(w http.ResponseWriter, r *http.Request, server 
 	}
 }
 
+// readOrganizationUpdateRequest reads the given HTTP requests and translates it
+// into an object of type OrganizationUpdateServerRequest.
+func readOrganizationUpdateRequest(r *http.Request) (*OrganizationUpdateServerRequest, error) {
+	var err error
+	result := new(OrganizationUpdateServerRequest)
+	err = result.unmarshal(r.Body)
+	if err != nil {
+		return nil, err
+	}
+	return result, err
+}
+
+// writeOrganizationUpdateResponse translates the given request object into an
+// HTTP response.
+func writeOrganizationUpdateResponse(w http.ResponseWriter, r *OrganizationUpdateServerResponse) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(r.status)
+	err := r.marshal(w)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 // adaptOrganizationUpdateRequest translates the given HTTP request into a call to
 // the corresponding method of the given server. Then it translates the
 // results returned by that method into an HTTP response.
 func adaptOrganizationUpdateRequest(w http.ResponseWriter, r *http.Request, server OrganizationServer) {
-	request := &OrganizationUpdateServerRequest{}
-	err := readOrganizationUpdateRequest(request, r)
+	request, err := readOrganizationUpdateRequest(r)
 	if err != nil {
 		glog.Errorf(
 			"Can't read request for method '%s' and path '%s': %v",
@@ -213,7 +299,7 @@ func adaptOrganizationUpdateRequest(w http.ResponseWriter, r *http.Request, serv
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	response := &OrganizationUpdateServerResponse{}
+	response := new(OrganizationUpdateServerResponse)
 	response.status = 204
 	err = server.Update(r.Context(), request, response)
 	if err != nil {
@@ -224,7 +310,7 @@ func adaptOrganizationUpdateRequest(w http.ResponseWriter, r *http.Request, serv
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	err = writeOrganizationUpdateResponse(response, w)
+	err = writeOrganizationUpdateResponse(w, response)
 	if err != nil {
 		glog.Errorf(
 			"Can't write response for method '%s' and path '%s': %v",

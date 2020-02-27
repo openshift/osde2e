@@ -24,12 +24,12 @@ package v1 // github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1
 // Representation of information from telemetry about the CPU capacity by node
 // role and OS of a cluster.
 type CPUTotalsNodeRoleOSMetricNode struct {
-	cpuTotals []*CPUTotalNodeRoleOSMetricNode
+	cpuTotals *CPUTotalNodeRoleOSMetricNodeList
 }
 
 // Empty returns true if the object is empty, i.e. no attribute has a value.
 func (o *CPUTotalsNodeRoleOSMetricNode) Empty() bool {
-	return o == nil || (len(o.cpuTotals) == 0 &&
+	return o == nil || (o.cpuTotals.Empty() &&
 		true)
 }
 
@@ -37,7 +37,7 @@ func (o *CPUTotalsNodeRoleOSMetricNode) Empty() bool {
 // the zero value of the type if the attribute doesn't have a value.
 //
 //
-func (o *CPUTotalsNodeRoleOSMetricNode) CPUTotals() []*CPUTotalNodeRoleOSMetricNode {
+func (o *CPUTotalsNodeRoleOSMetricNode) CPUTotals() *CPUTotalNodeRoleOSMetricNodeList {
 	if o == nil {
 		return nil
 	}
@@ -48,7 +48,7 @@ func (o *CPUTotalsNodeRoleOSMetricNode) CPUTotals() []*CPUTotalNodeRoleOSMetricN
 // a flag indicating if the attribute has a value.
 //
 //
-func (o *CPUTotalsNodeRoleOSMetricNode) GetCPUTotals() (value []*CPUTotalNodeRoleOSMetricNode, ok bool) {
+func (o *CPUTotalsNodeRoleOSMetricNode) GetCPUTotals() (value *CPUTotalNodeRoleOSMetricNodeList, ok bool) {
 	ok = o != nil && o.cpuTotals != nil
 	if ok {
 		value = o.cpuTotals
@@ -56,22 +56,8 @@ func (o *CPUTotalsNodeRoleOSMetricNode) GetCPUTotals() (value []*CPUTotalNodeRol
 	return
 }
 
-// CPUTotalsNodeRoleOSMetricNodeListKind is the name of the type used to represent list of objects of
-// type 'CPU_totals_node_role_OS_metric_node'.
-const CPUTotalsNodeRoleOSMetricNodeListKind = "CPUTotalsNodeRoleOSMetricNodeList"
-
-// CPUTotalsNodeRoleOSMetricNodeListLinkKind is the name of the type used to represent links to list
-// of objects of type 'CPU_totals_node_role_OS_metric_node'.
-const CPUTotalsNodeRoleOSMetricNodeListLinkKind = "CPUTotalsNodeRoleOSMetricNodeListLink"
-
-// CPUTotalsNodeRoleOSMetricNodeNilKind is the name of the type used to nil lists of objects of
-// type 'CPU_totals_node_role_OS_metric_node'.
-const CPUTotalsNodeRoleOSMetricNodeListNilKind = "CPUTotalsNodeRoleOSMetricNodeListNil"
-
 // CPUTotalsNodeRoleOSMetricNodeList is a list of values of the 'CPU_totals_node_role_OS_metric_node' type.
 type CPUTotalsNodeRoleOSMetricNodeList struct {
-	href  *string
-	link  bool
 	items []*CPUTotalsNodeRoleOSMetricNode
 }
 

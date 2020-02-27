@@ -37,19 +37,6 @@ func (b *ClusterConsoleListBuilder) Items(values ...*ClusterConsoleBuilder) *Clu
 	return b
 }
 
-// Copy copies the items of the given list into this builder, discarding any previous items.
-func (b *ClusterConsoleListBuilder) Copy(list *ClusterConsoleList) *ClusterConsoleListBuilder {
-	if list == nil || list.items == nil {
-		b.items = nil
-	} else {
-		b.items = make([]*ClusterConsoleBuilder, len(list.items))
-		for i, v := range list.items {
-			b.items[i] = NewClusterConsole().Copy(v)
-		}
-	}
-	return b
-}
-
 // Build creates a list of 'cluster_console' objects using the
 // configuration stored in the builder.
 func (b *ClusterConsoleListBuilder) Build() (list *ClusterConsoleList, err error) {

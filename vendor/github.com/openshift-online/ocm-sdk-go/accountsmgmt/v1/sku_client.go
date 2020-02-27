@@ -21,6 +21,8 @@ package v1 // github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1
 
 import (
 	"context"
+	"encoding/json"
+	"io"
 	"net/http"
 	"net/url"
 	"time"
@@ -39,25 +41,25 @@ type SKUClient struct {
 }
 
 // NewSKUClient creates a new client for the 'SKU'
-// resource using the given transport to send the requests and receive the
+// resource using the given transport to sned the requests and receive the
 // responses.
 func NewSKUClient(transport http.RoundTripper, path string, metric string) *SKUClient {
-	return &SKUClient{
-		transport: transport,
-		path:      path,
-		metric:    metric,
-	}
+	client := new(SKUClient)
+	client.transport = transport
+	client.path = path
+	client.metric = metric
+	return client
 }
 
 // Get creates a request for the 'get' method.
 //
 // Retrieves the details of the SKU.
 func (c *SKUClient) Get() *SKUGetRequest {
-	return &SKUGetRequest{
-		transport: c.transport,
-		path:      c.path,
-		metric:    c.metric,
-	}
+	request := new(SKUGetRequest)
+	request.transport = c.transport
+	request.path = c.path
+	request.metric = c.metric
+	return request
 }
 
 // SKUPollRequest is the request for the Poll method.
@@ -231,7 +233,7 @@ func (r *SKUGetRequest) SendContext(ctx context.Context) (result *SKUGetResponse
 		return
 	}
 	defer response.Body.Close()
-	result = &SKUGetResponse{}
+	result = new(SKUGetResponse)
 	result.status = response.StatusCode
 	result.header = response.Header
 	if result.status >= 400 {
@@ -242,7 +244,7 @@ func (r *SKUGetRequest) SendContext(ctx context.Context) (result *SKUGetResponse
 		err = result.err
 		return
 	}
-	err = readSKUGetResponse(result, response.Body)
+	err = result.unmarshal(response.Body)
 	if err != nil {
 		return
 	}
@@ -301,4 +303,21 @@ func (r *SKUGetResponse) GetBody() (value *SKU, ok bool) {
 		value = r.body
 	}
 	return
+}
+
+// unmarshal is the method used internally to unmarshal responses to the
+// 'get' method.
+func (r *SKUGetResponse) unmarshal(reader io.Reader) error {
+	var err error
+	decoder := json.NewDecoder(reader)
+	data := new(skuData)
+	err = decoder.Decode(data)
+	if err != nil {
+		return err
+	}
+	r.body, err = data.unwrap()
+	if err != nil {
+		return err
+	}
+	return err
 }

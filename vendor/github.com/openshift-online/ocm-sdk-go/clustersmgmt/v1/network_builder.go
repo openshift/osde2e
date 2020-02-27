@@ -33,7 +33,8 @@ func NewNetwork() *NetworkBuilder {
 	return new(NetworkBuilder)
 }
 
-// MachineCIDR sets the value of the 'machine_CIDR' attribute to the given value.
+// MachineCIDR sets the value of the 'machine_CIDR' attribute
+// to the given value.
 //
 //
 func (b *NetworkBuilder) MachineCIDR(value string) *NetworkBuilder {
@@ -41,7 +42,8 @@ func (b *NetworkBuilder) MachineCIDR(value string) *NetworkBuilder {
 	return b
 }
 
-// PodCIDR sets the value of the 'pod_CIDR' attribute to the given value.
+// PodCIDR sets the value of the 'pod_CIDR' attribute
+// to the given value.
 //
 //
 func (b *NetworkBuilder) PodCIDR(value string) *NetworkBuilder {
@@ -49,7 +51,8 @@ func (b *NetworkBuilder) PodCIDR(value string) *NetworkBuilder {
 	return b
 }
 
-// ServiceCIDR sets the value of the 'service_CIDR' attribute to the given value.
+// ServiceCIDR sets the value of the 'service_CIDR' attribute
+// to the given value.
 //
 //
 func (b *NetworkBuilder) ServiceCIDR(value string) *NetworkBuilder {
@@ -71,8 +74,14 @@ func (b *NetworkBuilder) Copy(object *Network) *NetworkBuilder {
 // Build creates a 'network' object using the configuration stored in the builder.
 func (b *NetworkBuilder) Build() (object *Network, err error) {
 	object = new(Network)
-	object.machineCIDR = b.machineCIDR
-	object.podCIDR = b.podCIDR
-	object.serviceCIDR = b.serviceCIDR
+	if b.machineCIDR != nil {
+		object.machineCIDR = b.machineCIDR
+	}
+	if b.podCIDR != nil {
+		object.podCIDR = b.podCIDR
+	}
+	if b.serviceCIDR != nil {
+		object.serviceCIDR = b.serviceCIDR
+	}
 	return
 }

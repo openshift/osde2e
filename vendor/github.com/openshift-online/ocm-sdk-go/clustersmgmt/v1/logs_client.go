@@ -21,6 +21,8 @@ package v1 // github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1
 
 import (
 	"context"
+	"encoding/json"
+	"io"
 	"net/http"
 	"net/url"
 	"path"
@@ -39,25 +41,25 @@ type LogsClient struct {
 }
 
 // NewLogsClient creates a new client for the 'logs'
-// resource using the given transport to send the requests and receive the
+// resource using the given transport to sned the requests and receive the
 // responses.
 func NewLogsClient(transport http.RoundTripper, path string, metric string) *LogsClient {
-	return &LogsClient{
-		transport: transport,
-		path:      path,
-		metric:    metric,
-	}
+	client := new(LogsClient)
+	client.transport = transport
+	client.path = path
+	client.metric = metric
+	return client
 }
 
 // List creates a request for the 'list' method.
 //
 // Retrieves the list of clusters.
 func (c *LogsClient) List() *LogsListRequest {
-	return &LogsListRequest{
-		transport: c.transport,
-		path:      c.path,
-		metric:    c.metric,
-	}
+	request := new(LogsListRequest)
+	request.transport = c.transport
+	request.path = c.path
+	request.metric = c.metric
+	return request
 }
 
 // Log returns the target 'log' resource for the given identifier.
@@ -145,7 +147,7 @@ func (r *LogsListRequest) SendContext(ctx context.Context) (result *LogsListResp
 		return
 	}
 	defer response.Body.Close()
-	result = &LogsListResponse{}
+	result = new(LogsListResponse)
 	result.status = response.StatusCode
 	result.header = response.Header
 	if result.status >= 400 {
@@ -156,7 +158,7 @@ func (r *LogsListRequest) SendContext(ctx context.Context) (result *LogsListResp
 		err = result.err
 		return
 	}
-	err = readLogsListResponse(result, response.Body)
+	err = result.unmarshal(response.Body)
 	if err != nil {
 		return
 	}
@@ -284,4 +286,33 @@ func (r *LogsListResponse) GetTotal() (value int, ok bool) {
 		value = *r.total
 	}
 	return
+}
+
+// unmarshal is the method used internally to unmarshal responses to the
+// 'list' method.
+func (r *LogsListResponse) unmarshal(reader io.Reader) error {
+	var err error
+	decoder := json.NewDecoder(reader)
+	data := new(logsListResponseData)
+	err = decoder.Decode(data)
+	if err != nil {
+		return err
+	}
+	r.items, err = data.Items.unwrap()
+	if err != nil {
+		return err
+	}
+	r.page = data.Page
+	r.size = data.Size
+	r.total = data.Total
+	return err
+}
+
+// logsListResponseData is the structure used internally to unmarshal
+// the response of the 'list' method.
+type logsListResponseData struct {
+	Items logListData "json:\"items,omitempty\""
+	Page  *int        "json:\"page,omitempty\""
+	Size  *int        "json:\"size,omitempty\""
+	Total *int        "json:\"total,omitempty\""
 }

@@ -21,6 +21,8 @@ package v1 // github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1
 
 import (
 	"context"
+	"encoding/json"
+	"io"
 	"net/http"
 	"net/url"
 	"time"
@@ -39,25 +41,25 @@ type VersionClient struct {
 }
 
 // NewVersionClient creates a new client for the 'version'
-// resource using the given transport to send the requests and receive the
+// resource using the given transport to sned the requests and receive the
 // responses.
 func NewVersionClient(transport http.RoundTripper, path string, metric string) *VersionClient {
-	return &VersionClient{
-		transport: transport,
-		path:      path,
-		metric:    metric,
-	}
+	client := new(VersionClient)
+	client.transport = transport
+	client.path = path
+	client.metric = metric
+	return client
 }
 
 // Get creates a request for the 'get' method.
 //
 // Retrieves the details of the version.
 func (c *VersionClient) Get() *VersionGetRequest {
-	return &VersionGetRequest{
-		transport: c.transport,
-		path:      c.path,
-		metric:    c.metric,
-	}
+	request := new(VersionGetRequest)
+	request.transport = c.transport
+	request.path = c.path
+	request.metric = c.metric
+	return request
 }
 
 // VersionPollRequest is the request for the Poll method.
@@ -231,7 +233,7 @@ func (r *VersionGetRequest) SendContext(ctx context.Context) (result *VersionGet
 		return
 	}
 	defer response.Body.Close()
-	result = &VersionGetResponse{}
+	result = new(VersionGetResponse)
 	result.status = response.StatusCode
 	result.header = response.Header
 	if result.status >= 400 {
@@ -242,7 +244,7 @@ func (r *VersionGetRequest) SendContext(ctx context.Context) (result *VersionGet
 		err = result.err
 		return
 	}
-	err = readVersionGetResponse(result, response.Body)
+	err = result.unmarshal(response.Body)
 	if err != nil {
 		return
 	}
@@ -301,4 +303,21 @@ func (r *VersionGetResponse) GetBody() (value *Version, ok bool) {
 		value = r.body
 	}
 	return
+}
+
+// unmarshal is the method used internally to unmarshal responses to the
+// 'get' method.
+func (r *VersionGetResponse) unmarshal(reader io.Reader) error {
+	var err error
+	decoder := json.NewDecoder(reader)
+	data := new(versionData)
+	err = decoder.Decode(data)
+	if err != nil {
+		return err
+	}
+	r.body, err = data.unwrap()
+	if err != nil {
+		return err
+	}
+	return err
 }

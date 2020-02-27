@@ -53,7 +53,8 @@ func (b *VersionBuilder) Link(value bool) *VersionBuilder {
 	return b
 }
 
-// Default sets the value of the 'default' attribute to the given value.
+// Default sets the value of the 'default' attribute
+// to the given value.
 //
 //
 func (b *VersionBuilder) Default(value bool) *VersionBuilder {
@@ -61,7 +62,8 @@ func (b *VersionBuilder) Default(value bool) *VersionBuilder {
 	return b
 }
 
-// Enabled sets the value of the 'enabled' attribute to the given value.
+// Enabled sets the value of the 'enabled' attribute
+// to the given value.
 //
 //
 func (b *VersionBuilder) Enabled(value bool) *VersionBuilder {
@@ -88,7 +90,11 @@ func (b *VersionBuilder) Build() (object *Version, err error) {
 	object.id = b.id
 	object.href = b.href
 	object.link = b.link
-	object.default_ = b.default_
-	object.enabled = b.enabled
+	if b.default_ != nil {
+		object.default_ = b.default_
+	}
+	if b.enabled != nil {
+		object.enabled = b.enabled
+	}
 	return
 }

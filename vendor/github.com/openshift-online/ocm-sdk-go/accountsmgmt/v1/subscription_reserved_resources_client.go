@@ -21,6 +21,8 @@ package v1 // github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1
 
 import (
 	"context"
+	"encoding/json"
+	"io"
 	"net/http"
 	"net/url"
 	"path"
@@ -39,25 +41,25 @@ type SubscriptionReservedResourcesClient struct {
 }
 
 // NewSubscriptionReservedResourcesClient creates a new client for the 'subscription_reserved_resources'
-// resource using the given transport to send the requests and receive the
+// resource using the given transport to sned the requests and receive the
 // responses.
 func NewSubscriptionReservedResourcesClient(transport http.RoundTripper, path string, metric string) *SubscriptionReservedResourcesClient {
-	return &SubscriptionReservedResourcesClient{
-		transport: transport,
-		path:      path,
-		metric:    metric,
-	}
+	client := new(SubscriptionReservedResourcesClient)
+	client.transport = transport
+	client.path = path
+	client.metric = metric
+	return client
 }
 
 // List creates a request for the 'list' method.
 //
 // Retrieves items of the collection of reserved resources by the subscription.
 func (c *SubscriptionReservedResourcesClient) List() *SubscriptionReservedResourcesListRequest {
-	return &SubscriptionReservedResourcesListRequest{
-		transport: c.transport,
-		path:      c.path,
-		metric:    c.metric,
-	}
+	request := new(SubscriptionReservedResourcesListRequest)
+	request.transport = c.transport
+	request.path = c.path
+	request.metric = c.metric
+	return request
 }
 
 // ReservedResource returns the target 'subscription_reserved_resource' resource for the given identifier.
@@ -146,7 +148,7 @@ func (r *SubscriptionReservedResourcesListRequest) SendContext(ctx context.Conte
 		return
 	}
 	defer response.Body.Close()
-	result = &SubscriptionReservedResourcesListResponse{}
+	result = new(SubscriptionReservedResourcesListResponse)
 	result.status = response.StatusCode
 	result.header = response.Header
 	if result.status >= 400 {
@@ -157,7 +159,7 @@ func (r *SubscriptionReservedResourcesListRequest) SendContext(ctx context.Conte
 		err = result.err
 		return
 	}
-	err = readSubscriptionReservedResourcesListResponse(result, response.Body)
+	err = result.unmarshal(response.Body)
 	if err != nil {
 		return
 	}
@@ -287,4 +289,33 @@ func (r *SubscriptionReservedResourcesListResponse) GetTotal() (value int, ok bo
 		value = *r.total
 	}
 	return
+}
+
+// unmarshal is the method used internally to unmarshal responses to the
+// 'list' method.
+func (r *SubscriptionReservedResourcesListResponse) unmarshal(reader io.Reader) error {
+	var err error
+	decoder := json.NewDecoder(reader)
+	data := new(subscriptionReservedResourcesListResponseData)
+	err = decoder.Decode(data)
+	if err != nil {
+		return err
+	}
+	r.items, err = data.Items.unwrap()
+	if err != nil {
+		return err
+	}
+	r.page = data.Page
+	r.size = data.Size
+	r.total = data.Total
+	return err
+}
+
+// subscriptionReservedResourcesListResponseData is the structure used internally to unmarshal
+// the response of the 'list' method.
+type subscriptionReservedResourcesListResponseData struct {
+	Items reservedResourceListData "json:\"items,omitempty\""
+	Page  *int                     "json:\"page,omitempty\""
+	Size  *int                     "json:\"size,omitempty\""
+	Total *int                     "json:\"total,omitempty\""
 }

@@ -21,6 +21,8 @@ package v1 // github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1
 
 import (
 	"context"
+	"encoding/json"
+	"io"
 	"net/http"
 
 	"github.com/golang/glog"
@@ -61,6 +63,19 @@ func (r *SubscriptionReservedResourceGetServerResponse) Status(value int) *Subsc
 	return r
 }
 
+// marshall is the method used internally to marshal responses for the
+// 'get' method.
+func (r *SubscriptionReservedResourceGetServerResponse) marshal(writer io.Writer) error {
+	var err error
+	encoder := json.NewEncoder(writer)
+	data, err := r.body.wrap()
+	if err != nil {
+		return err
+	}
+	err = encoder.Encode(data)
+	return err
+}
+
 // dispatchSubscriptionReservedResource navigates the servers tree rooted at the given server
 // till it finds one that matches the given set of path segments, and then invokes
 // the corresponding server.
@@ -69,25 +84,44 @@ func dispatchSubscriptionReservedResource(w http.ResponseWriter, r *http.Request
 		switch r.Method {
 		case "GET":
 			adaptSubscriptionReservedResourceGetRequest(w, r, server)
-			return
 		default:
 			errors.SendMethodNotAllowed(w, r)
 			return
 		}
+	} else {
+		switch segments[0] {
+		default:
+			errors.SendNotFound(w, r)
+			return
+		}
 	}
-	switch segments[0] {
-	default:
-		errors.SendNotFound(w, r)
-		return
+}
+
+// readSubscriptionReservedResourceGetRequest reads the given HTTP requests and translates it
+// into an object of type SubscriptionReservedResourceGetServerRequest.
+func readSubscriptionReservedResourceGetRequest(r *http.Request) (*SubscriptionReservedResourceGetServerRequest, error) {
+	var err error
+	result := new(SubscriptionReservedResourceGetServerRequest)
+	return result, err
+}
+
+// writeSubscriptionReservedResourceGetResponse translates the given request object into an
+// HTTP response.
+func writeSubscriptionReservedResourceGetResponse(w http.ResponseWriter, r *SubscriptionReservedResourceGetServerResponse) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(r.status)
+	err := r.marshal(w)
+	if err != nil {
+		return err
 	}
+	return nil
 }
 
 // adaptSubscriptionReservedResourceGetRequest translates the given HTTP request into a call to
 // the corresponding method of the given server. Then it translates the
 // results returned by that method into an HTTP response.
 func adaptSubscriptionReservedResourceGetRequest(w http.ResponseWriter, r *http.Request, server SubscriptionReservedResourceServer) {
-	request := &SubscriptionReservedResourceGetServerRequest{}
-	err := readSubscriptionReservedResourceGetRequest(request, r)
+	request, err := readSubscriptionReservedResourceGetRequest(r)
 	if err != nil {
 		glog.Errorf(
 			"Can't read request for method '%s' and path '%s': %v",
@@ -96,7 +130,7 @@ func adaptSubscriptionReservedResourceGetRequest(w http.ResponseWriter, r *http.
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	response := &SubscriptionReservedResourceGetServerResponse{}
+	response := new(SubscriptionReservedResourceGetServerResponse)
 	response.status = 200
 	err = server.Get(r.Context(), request, response)
 	if err != nil {
@@ -107,7 +141,7 @@ func adaptSubscriptionReservedResourceGetRequest(w http.ResponseWriter, r *http.
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	err = writeSubscriptionReservedResourceGetResponse(response, w)
+	err = writeSubscriptionReservedResourceGetResponse(w, response)
 	if err != nil {
 		glog.Errorf(
 			"Can't write response for method '%s' and path '%s': %v",

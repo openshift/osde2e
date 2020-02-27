@@ -21,6 +21,8 @@ package v1 // github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1
 
 import (
 	"context"
+	"encoding/json"
+	"io"
 	"net/http"
 	"net/url"
 	"path"
@@ -39,25 +41,25 @@ type VersionsClient struct {
 }
 
 // NewVersionsClient creates a new client for the 'versions'
-// resource using the given transport to send the requests and receive the
+// resource using the given transport to sned the requests and receive the
 // responses.
 func NewVersionsClient(transport http.RoundTripper, path string, metric string) *VersionsClient {
-	return &VersionsClient{
-		transport: transport,
-		path:      path,
-		metric:    metric,
-	}
+	client := new(VersionsClient)
+	client.transport = transport
+	client.path = path
+	client.metric = metric
+	return client
 }
 
 // List creates a request for the 'list' method.
 //
 // Retrieves a list of versions.
 func (c *VersionsClient) List() *VersionsListRequest {
-	return &VersionsListRequest{
-		transport: c.transport,
-		path:      c.path,
-		metric:    c.metric,
-	}
+	request := new(VersionsListRequest)
+	request.transport = c.transport
+	request.path = c.path
+	request.metric = c.metric
+	return request
 }
 
 // Version returns the target 'version' resource for the given identifier.
@@ -197,7 +199,7 @@ func (r *VersionsListRequest) SendContext(ctx context.Context) (result *Versions
 		return
 	}
 	defer response.Body.Close()
-	result = &VersionsListResponse{}
+	result = new(VersionsListResponse)
 	result.status = response.StatusCode
 	result.header = response.Header
 	if result.status >= 400 {
@@ -208,7 +210,7 @@ func (r *VersionsListRequest) SendContext(ctx context.Context) (result *Versions
 		err = result.err
 		return
 	}
-	err = readVersionsListResponse(result, response.Body)
+	err = result.unmarshal(response.Body)
 	if err != nil {
 		return
 	}
@@ -342,4 +344,33 @@ func (r *VersionsListResponse) GetTotal() (value int, ok bool) {
 		value = *r.total
 	}
 	return
+}
+
+// unmarshal is the method used internally to unmarshal responses to the
+// 'list' method.
+func (r *VersionsListResponse) unmarshal(reader io.Reader) error {
+	var err error
+	decoder := json.NewDecoder(reader)
+	data := new(versionsListResponseData)
+	err = decoder.Decode(data)
+	if err != nil {
+		return err
+	}
+	r.items, err = data.Items.unwrap()
+	if err != nil {
+		return err
+	}
+	r.page = data.Page
+	r.size = data.Size
+	r.total = data.Total
+	return err
+}
+
+// versionsListResponseData is the structure used internally to unmarshal
+// the response of the 'list' method.
+type versionsListResponseData struct {
+	Items versionListData "json:\"items,omitempty\""
+	Page  *int            "json:\"page,omitempty\""
+	Size  *int            "json:\"size,omitempty\""
+	Total *int            "json:\"total,omitempty\""
 }

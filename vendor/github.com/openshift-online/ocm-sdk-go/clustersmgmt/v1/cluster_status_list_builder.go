@@ -37,19 +37,6 @@ func (b *ClusterStatusListBuilder) Items(values ...*ClusterStatusBuilder) *Clust
 	return b
 }
 
-// Copy copies the items of the given list into this builder, discarding any previous items.
-func (b *ClusterStatusListBuilder) Copy(list *ClusterStatusList) *ClusterStatusListBuilder {
-	if list == nil || list.items == nil {
-		b.items = nil
-	} else {
-		b.items = make([]*ClusterStatusBuilder, len(list.items))
-		for i, v := range list.items {
-			b.items[i] = NewClusterStatus().Copy(v)
-		}
-	}
-	return b
-}
-
 // Build creates a list of 'cluster_status' objects using the
 // configuration stored in the builder.
 func (b *ClusterStatusListBuilder) Build() (list *ClusterStatusList, err error) {

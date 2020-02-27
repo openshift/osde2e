@@ -37,19 +37,6 @@ func (b *ExportControlReviewRequestListBuilder) Items(values ...*ExportControlRe
 	return b
 }
 
-// Copy copies the items of the given list into this builder, discarding any previous items.
-func (b *ExportControlReviewRequestListBuilder) Copy(list *ExportControlReviewRequestList) *ExportControlReviewRequestListBuilder {
-	if list == nil || list.items == nil {
-		b.items = nil
-	} else {
-		b.items = make([]*ExportControlReviewRequestBuilder, len(list.items))
-		for i, v := range list.items {
-			b.items[i] = NewExportControlReviewRequest().Copy(v)
-		}
-	}
-	return b
-}
-
 // Build creates a list of 'export_control_review_request' objects using the
 // configuration stored in the builder.
 func (b *ExportControlReviewRequestListBuilder) Build() (list *ExportControlReviewRequestList, err error) {

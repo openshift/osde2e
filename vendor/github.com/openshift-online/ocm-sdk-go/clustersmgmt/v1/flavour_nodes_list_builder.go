@@ -37,19 +37,6 @@ func (b *FlavourNodesListBuilder) Items(values ...*FlavourNodesBuilder) *Flavour
 	return b
 }
 
-// Copy copies the items of the given list into this builder, discarding any previous items.
-func (b *FlavourNodesListBuilder) Copy(list *FlavourNodesList) *FlavourNodesListBuilder {
-	if list == nil || list.items == nil {
-		b.items = nil
-	} else {
-		b.items = make([]*FlavourNodesBuilder, len(list.items))
-		for i, v := range list.items {
-			b.items[i] = NewFlavourNodes().Copy(v)
-		}
-	}
-	return b
-}
-
 // Build creates a list of 'flavour_nodes' objects using the
 // configuration stored in the builder.
 func (b *FlavourNodesListBuilder) Build() (list *FlavourNodesList, err error) {

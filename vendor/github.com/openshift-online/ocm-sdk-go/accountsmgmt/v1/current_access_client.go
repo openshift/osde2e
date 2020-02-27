@@ -21,6 +21,8 @@ package v1 // github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1
 
 import (
 	"context"
+	"encoding/json"
+	"io"
 	"net/http"
 	"net/url"
 
@@ -38,25 +40,25 @@ type CurrentAccessClient struct {
 }
 
 // NewCurrentAccessClient creates a new client for the 'current_access'
-// resource using the given transport to send the requests and receive the
+// resource using the given transport to sned the requests and receive the
 // responses.
 func NewCurrentAccessClient(transport http.RoundTripper, path string, metric string) *CurrentAccessClient {
-	return &CurrentAccessClient{
-		transport: transport,
-		path:      path,
-		metric:    metric,
-	}
+	client := new(CurrentAccessClient)
+	client.transport = transport
+	client.path = path
+	client.metric = metric
+	return client
 }
 
 // List creates a request for the 'list' method.
 //
 // Retrieves the details of the account.
 func (c *CurrentAccessClient) List() *CurrentAccessListRequest {
-	return &CurrentAccessListRequest{
-		transport: c.transport,
-		path:      c.path,
-		metric:    c.metric,
-	}
+	request := new(CurrentAccessListRequest)
+	request.transport = c.transport
+	request.path = c.path
+	request.metric = c.metric
+	return request
 }
 
 // CurrentAccessListRequest is the request for the 'list' method.
@@ -133,7 +135,7 @@ func (r *CurrentAccessListRequest) SendContext(ctx context.Context) (result *Cur
 		return
 	}
 	defer response.Body.Close()
-	result = &CurrentAccessListResponse{}
+	result = new(CurrentAccessListResponse)
 	result.status = response.StatusCode
 	result.header = response.Header
 	if result.status >= 400 {
@@ -144,7 +146,7 @@ func (r *CurrentAccessListRequest) SendContext(ctx context.Context) (result *Cur
 		err = result.err
 		return
 	}
-	err = readCurrentAccessListResponse(result, response.Body)
+	err = result.unmarshal(response.Body)
 	if err != nil {
 		return
 	}
@@ -274,4 +276,33 @@ func (r *CurrentAccessListResponse) GetTotal() (value int, ok bool) {
 		value = *r.total
 	}
 	return
+}
+
+// unmarshal is the method used internally to unmarshal responses to the
+// 'list' method.
+func (r *CurrentAccessListResponse) unmarshal(reader io.Reader) error {
+	var err error
+	decoder := json.NewDecoder(reader)
+	data := new(currentAccessListResponseData)
+	err = decoder.Decode(data)
+	if err != nil {
+		return err
+	}
+	r.items, err = data.Items.unwrap()
+	if err != nil {
+		return err
+	}
+	r.page = data.Page
+	r.size = data.Size
+	r.total = data.Total
+	return err
+}
+
+// currentAccessListResponseData is the structure used internally to unmarshal
+// the response of the 'list' method.
+type currentAccessListResponseData struct {
+	Items roleListData "json:\"items,omitempty\""
+	Page  *int         "json:\"page,omitempty\""
+	Size  *int         "json:\"size,omitempty\""
+	Total *int         "json:\"total,omitempty\""
 }

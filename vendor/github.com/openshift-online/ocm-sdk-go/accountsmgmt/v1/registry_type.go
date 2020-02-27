@@ -248,16 +248,16 @@ func (o *Registry) GetType() (value string, ok bool) {
 	return
 }
 
-// RegistryListKind is the name of the type used to represent list of objects of
-// type 'registry'.
+// RegistryListKind is the name of the type used to represent list of
+// objects of type 'registry'.
 const RegistryListKind = "RegistryList"
 
-// RegistryListLinkKind is the name of the type used to represent links to list
-// of objects of type 'registry'.
+// RegistryListLinkKind is the name of the type used to represent links
+// to list of objects of type 'registry'.
 const RegistryListLinkKind = "RegistryListLink"
 
-// RegistryNilKind is the name of the type used to nil lists of objects of
-// type 'registry'.
+// RegistryNilKind is the name of the type used to nil lists of
+// objects of type 'registry'.
 const RegistryListNilKind = "RegistryListNil"
 
 // RegistryList is a list of values of the 'registry' type.

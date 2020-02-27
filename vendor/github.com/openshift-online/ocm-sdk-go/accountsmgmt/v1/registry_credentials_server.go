@@ -21,10 +21,13 @@ package v1 // github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1
 
 import (
 	"context"
+	"encoding/json"
+	"io"
 	"net/http"
 
 	"github.com/golang/glog"
 	"github.com/openshift-online/ocm-sdk-go/errors"
+	"github.com/openshift-online/ocm-sdk-go/helpers"
 )
 
 // RegistryCredentialsServer represents the interface the manages the 'registry_credentials' resource.
@@ -73,6 +76,23 @@ func (r *RegistryCredentialsAddServerRequest) GetBody() (value *RegistryCredenti
 	return
 }
 
+// unmarshal is the method used internally to unmarshal request to the
+// 'add' method.
+func (r *RegistryCredentialsAddServerRequest) unmarshal(reader io.Reader) error {
+	var err error
+	decoder := json.NewDecoder(reader)
+	data := new(registryCredentialData)
+	err = decoder.Decode(data)
+	if err != nil {
+		return err
+	}
+	r.body, err = data.unwrap()
+	if err != nil {
+		return err
+	}
+	return err
+}
+
 // RegistryCredentialsAddServerResponse is the response for the 'add' method.
 type RegistryCredentialsAddServerResponse struct {
 	status int
@@ -94,58 +114,23 @@ func (r *RegistryCredentialsAddServerResponse) Status(value int) *RegistryCreden
 	return r
 }
 
+// marshall is the method used internally to marshal responses for the
+// 'add' method.
+func (r *RegistryCredentialsAddServerResponse) marshal(writer io.Writer) error {
+	var err error
+	encoder := json.NewEncoder(writer)
+	data, err := r.body.wrap()
+	if err != nil {
+		return err
+	}
+	err = encoder.Encode(data)
+	return err
+}
+
 // RegistryCredentialsListServerRequest is the request for the 'list' method.
 type RegistryCredentialsListServerRequest struct {
-	order  *string
-	page   *int
-	search *string
-	size   *int
-}
-
-// Order returns the value of the 'order' parameter.
-//
-// Order criteria.
-//
-// The syntax of this parameter is similar to the syntax of the _order by_ clause of
-// a SQL statement. For example, in order to sort the
-// RegistryCredentials descending by username the value should be:
-//
-// [source,sql]
-// ----
-// username desc
-// ----
-//
-// If the parameter isn't provided, or if the value is empty, then the order of the
-// results is undefined.
-func (r *RegistryCredentialsListServerRequest) Order() string {
-	if r != nil && r.order != nil {
-		return *r.order
-	}
-	return ""
-}
-
-// GetOrder returns the value of the 'order' parameter and
-// a flag indicating if the parameter has a value.
-//
-// Order criteria.
-//
-// The syntax of this parameter is similar to the syntax of the _order by_ clause of
-// a SQL statement. For example, in order to sort the
-// RegistryCredentials descending by username the value should be:
-//
-// [source,sql]
-// ----
-// username desc
-// ----
-//
-// If the parameter isn't provided, or if the value is empty, then the order of the
-// results is undefined.
-func (r *RegistryCredentialsListServerRequest) GetOrder() (value string, ok bool) {
-	ok = r != nil && r.order != nil
-	if ok {
-		value = *r.order
-	}
-	return
+	page *int
+	size *int
 }
 
 // Page returns the value of the 'page' parameter.
@@ -166,54 +151,6 @@ func (r *RegistryCredentialsListServerRequest) GetPage() (value int, ok bool) {
 	ok = r != nil && r.page != nil
 	if ok {
 		value = *r.page
-	}
-	return
-}
-
-// Search returns the value of the 'search' parameter.
-//
-// Search criteria.
-//
-// The syntax of this parameter is similar to the syntax of the _where_ clause of a
-// SQL statement, but using the names of the attributes of the RegistryCredentials instead
-// of the names of the columns of a table. For example, in order to retrieve all the
-// RegistryCredentials for a user the value should be:
-//
-// [source,sql]
-// ----
-// username = 'abcxyz...'
-// ----
-//
-// If the parameter isn't provided, or if the value is empty, then all the
-// RegistryCredentials that the user has permission to see will be returned.
-func (r *RegistryCredentialsListServerRequest) Search() string {
-	if r != nil && r.search != nil {
-		return *r.search
-	}
-	return ""
-}
-
-// GetSearch returns the value of the 'search' parameter and
-// a flag indicating if the parameter has a value.
-//
-// Search criteria.
-//
-// The syntax of this parameter is similar to the syntax of the _where_ clause of a
-// SQL statement, but using the names of the attributes of the RegistryCredentials instead
-// of the names of the columns of a table. For example, in order to retrieve all the
-// RegistryCredentials for a user the value should be:
-//
-// [source,sql]
-// ----
-// username = 'abcxyz...'
-// ----
-//
-// If the parameter isn't provided, or if the value is empty, then all the
-// RegistryCredentials that the user has permission to see will be returned.
-func (r *RegistryCredentialsListServerRequest) GetSearch() (value string, ok bool) {
-	ok = r != nil && r.search != nil
-	if ok {
-		value = *r.search
 	}
 	return
 }
@@ -289,6 +226,32 @@ func (r *RegistryCredentialsListServerResponse) Status(value int) *RegistryCrede
 	return r
 }
 
+// marshall is the method used internally to marshal responses for the
+// 'list' method.
+func (r *RegistryCredentialsListServerResponse) marshal(writer io.Writer) error {
+	var err error
+	encoder := json.NewEncoder(writer)
+	data := new(registryCredentialsListServerResponseData)
+	data.Items, err = r.items.wrap()
+	if err != nil {
+		return err
+	}
+	data.Page = r.page
+	data.Size = r.size
+	data.Total = r.total
+	err = encoder.Encode(data)
+	return err
+}
+
+// registryCredentialsListServerResponseData is the structure used internally to write the request of the
+// 'list' method.
+type registryCredentialsListServerResponseData struct {
+	Items registryCredentialListData "json:\"items,omitempty\""
+	Page  *int                       "json:\"page,omitempty\""
+	Size  *int                       "json:\"size,omitempty\""
+	Total *int                       "json:\"total,omitempty\""
+}
+
 // dispatchRegistryCredentials navigates the servers tree rooted at the given server
 // till it finds one that matches the given set of path segments, and then invokes
 // the corresponding server.
@@ -297,32 +260,54 @@ func dispatchRegistryCredentials(w http.ResponseWriter, r *http.Request, server 
 		switch r.Method {
 		case "POST":
 			adaptRegistryCredentialsAddRequest(w, r, server)
-			return
 		case "GET":
 			adaptRegistryCredentialsListRequest(w, r, server)
-			return
 		default:
 			errors.SendMethodNotAllowed(w, r)
 			return
 		}
-	}
-	switch segments[0] {
-	default:
-		target := server.RegistryCredential(segments[0])
-		if target == nil {
-			errors.SendNotFound(w, r)
-			return
+	} else {
+		switch segments[0] {
+		default:
+			target := server.RegistryCredential(segments[0])
+			if target == nil {
+				errors.SendNotFound(w, r)
+				return
+			}
+			dispatchRegistryCredential(w, r, target, segments[1:])
 		}
-		dispatchRegistryCredential(w, r, target, segments[1:])
 	}
+}
+
+// readRegistryCredentialsAddRequest reads the given HTTP requests and translates it
+// into an object of type RegistryCredentialsAddServerRequest.
+func readRegistryCredentialsAddRequest(r *http.Request) (*RegistryCredentialsAddServerRequest, error) {
+	var err error
+	result := new(RegistryCredentialsAddServerRequest)
+	err = result.unmarshal(r.Body)
+	if err != nil {
+		return nil, err
+	}
+	return result, err
+}
+
+// writeRegistryCredentialsAddResponse translates the given request object into an
+// HTTP response.
+func writeRegistryCredentialsAddResponse(w http.ResponseWriter, r *RegistryCredentialsAddServerResponse) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(r.status)
+	err := r.marshal(w)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // adaptRegistryCredentialsAddRequest translates the given HTTP request into a call to
 // the corresponding method of the given server. Then it translates the
 // results returned by that method into an HTTP response.
 func adaptRegistryCredentialsAddRequest(w http.ResponseWriter, r *http.Request, server RegistryCredentialsServer) {
-	request := &RegistryCredentialsAddServerRequest{}
-	err := readRegistryCredentialsAddRequest(request, r)
+	request, err := readRegistryCredentialsAddRequest(r)
 	if err != nil {
 		glog.Errorf(
 			"Can't read request for method '%s' and path '%s': %v",
@@ -331,7 +316,7 @@ func adaptRegistryCredentialsAddRequest(w http.ResponseWriter, r *http.Request, 
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	response := &RegistryCredentialsAddServerResponse{}
+	response := new(RegistryCredentialsAddServerResponse)
 	response.status = 201
 	err = server.Add(r.Context(), request, response)
 	if err != nil {
@@ -342,7 +327,7 @@ func adaptRegistryCredentialsAddRequest(w http.ResponseWriter, r *http.Request, 
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	err = writeRegistryCredentialsAddResponse(response, w)
+	err = writeRegistryCredentialsAddResponse(w, response)
 	if err != nil {
 		glog.Errorf(
 			"Can't write response for method '%s' and path '%s': %v",
@@ -352,12 +337,46 @@ func adaptRegistryCredentialsAddRequest(w http.ResponseWriter, r *http.Request, 
 	}
 }
 
+// readRegistryCredentialsListRequest reads the given HTTP requests and translates it
+// into an object of type RegistryCredentialsListServerRequest.
+func readRegistryCredentialsListRequest(r *http.Request) (*RegistryCredentialsListServerRequest, error) {
+	var err error
+	result := new(RegistryCredentialsListServerRequest)
+	query := r.URL.Query()
+	result.page, err = helpers.ParseInteger(query, "page")
+	if err != nil {
+		return nil, err
+	}
+	if result.page == nil {
+		result.page = helpers.NewInteger(1)
+	}
+	result.size, err = helpers.ParseInteger(query, "size")
+	if err != nil {
+		return nil, err
+	}
+	if result.size == nil {
+		result.size = helpers.NewInteger(100)
+	}
+	return result, err
+}
+
+// writeRegistryCredentialsListResponse translates the given request object into an
+// HTTP response.
+func writeRegistryCredentialsListResponse(w http.ResponseWriter, r *RegistryCredentialsListServerResponse) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(r.status)
+	err := r.marshal(w)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 // adaptRegistryCredentialsListRequest translates the given HTTP request into a call to
 // the corresponding method of the given server. Then it translates the
 // results returned by that method into an HTTP response.
 func adaptRegistryCredentialsListRequest(w http.ResponseWriter, r *http.Request, server RegistryCredentialsServer) {
-	request := &RegistryCredentialsListServerRequest{}
-	err := readRegistryCredentialsListRequest(request, r)
+	request, err := readRegistryCredentialsListRequest(r)
 	if err != nil {
 		glog.Errorf(
 			"Can't read request for method '%s' and path '%s': %v",
@@ -366,7 +385,7 @@ func adaptRegistryCredentialsListRequest(w http.ResponseWriter, r *http.Request,
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	response := &RegistryCredentialsListServerResponse{}
+	response := new(RegistryCredentialsListServerResponse)
 	response.status = 200
 	err = server.List(r.Context(), request, response)
 	if err != nil {
@@ -377,7 +396,7 @@ func adaptRegistryCredentialsListRequest(w http.ResponseWriter, r *http.Request,
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	err = writeRegistryCredentialsListResponse(response, w)
+	err = writeRegistryCredentialsListResponse(w, response)
 	if err != nil {
 		glog.Errorf(
 			"Can't write response for method '%s' and path '%s': %v",

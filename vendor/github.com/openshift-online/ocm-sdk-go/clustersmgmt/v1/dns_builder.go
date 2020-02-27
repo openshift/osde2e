@@ -31,7 +31,8 @@ func NewDNS() *DNSBuilder {
 	return new(DNSBuilder)
 }
 
-// BaseDomain sets the value of the 'base_domain' attribute to the given value.
+// BaseDomain sets the value of the 'base_domain' attribute
+// to the given value.
 //
 //
 func (b *DNSBuilder) BaseDomain(value string) *DNSBuilder {
@@ -51,6 +52,8 @@ func (b *DNSBuilder) Copy(object *DNS) *DNSBuilder {
 // Build creates a 'DNS' object using the configuration stored in the builder.
 func (b *DNSBuilder) Build() (object *DNS, err error) {
 	object = new(DNS)
-	object.baseDomain = b.baseDomain
+	if b.baseDomain != nil {
+		object.baseDomain = b.baseDomain
+	}
 	return
 }

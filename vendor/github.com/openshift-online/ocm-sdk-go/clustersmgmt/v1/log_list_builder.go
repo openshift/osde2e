@@ -37,19 +37,6 @@ func (b *LogListBuilder) Items(values ...*LogBuilder) *LogListBuilder {
 	return b
 }
 
-// Copy copies the items of the given list into this builder, discarding any previous items.
-func (b *LogListBuilder) Copy(list *LogList) *LogListBuilder {
-	if list == nil || list.items == nil {
-		b.items = nil
-	} else {
-		b.items = make([]*LogBuilder, len(list.items))
-		for i, v := range list.items {
-			b.items[i] = NewLog().Copy(v)
-		}
-	}
-	return b
-}
-
 // Build creates a list of 'log' objects using the
 // configuration stored in the builder.
 func (b *LogListBuilder) Build() (list *LogList, err error) {

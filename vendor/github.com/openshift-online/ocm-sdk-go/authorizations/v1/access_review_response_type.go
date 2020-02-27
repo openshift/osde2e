@@ -232,22 +232,8 @@ func (o *AccessReviewResponse) GetSubscriptionID() (value string, ok bool) {
 	return
 }
 
-// AccessReviewResponseListKind is the name of the type used to represent list of objects of
-// type 'access_review_response'.
-const AccessReviewResponseListKind = "AccessReviewResponseList"
-
-// AccessReviewResponseListLinkKind is the name of the type used to represent links to list
-// of objects of type 'access_review_response'.
-const AccessReviewResponseListLinkKind = "AccessReviewResponseListLink"
-
-// AccessReviewResponseNilKind is the name of the type used to nil lists of objects of
-// type 'access_review_response'.
-const AccessReviewResponseListNilKind = "AccessReviewResponseListNil"
-
 // AccessReviewResponseList is a list of values of the 'access_review_response' type.
 type AccessReviewResponseList struct {
-	href  *string
-	link  bool
 	items []*AccessReviewResponse
 }
 

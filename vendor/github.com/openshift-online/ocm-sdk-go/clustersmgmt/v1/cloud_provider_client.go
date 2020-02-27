@@ -21,6 +21,8 @@ package v1 // github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1
 
 import (
 	"context"
+	"encoding/json"
+	"io"
 	"net/http"
 	"net/url"
 	"path"
@@ -40,25 +42,25 @@ type CloudProviderClient struct {
 }
 
 // NewCloudProviderClient creates a new client for the 'cloud_provider'
-// resource using the given transport to send the requests and receive the
+// resource using the given transport to sned the requests and receive the
 // responses.
 func NewCloudProviderClient(transport http.RoundTripper, path string, metric string) *CloudProviderClient {
-	return &CloudProviderClient{
-		transport: transport,
-		path:      path,
-		metric:    metric,
-	}
+	client := new(CloudProviderClient)
+	client.transport = transport
+	client.path = path
+	client.metric = metric
+	return client
 }
 
 // Get creates a request for the 'get' method.
 //
 // Retrieves the details of the cloud provider.
 func (c *CloudProviderClient) Get() *CloudProviderGetRequest {
-	return &CloudProviderGetRequest{
-		transport: c.transport,
-		path:      c.path,
-		metric:    c.metric,
-	}
+	request := new(CloudProviderGetRequest)
+	request.transport = c.transport
+	request.path = c.path
+	request.metric = c.metric
+	return request
 }
 
 // Regions returns the target 'cloud_regions' resource.
@@ -244,7 +246,7 @@ func (r *CloudProviderGetRequest) SendContext(ctx context.Context) (result *Clou
 		return
 	}
 	defer response.Body.Close()
-	result = &CloudProviderGetResponse{}
+	result = new(CloudProviderGetResponse)
 	result.status = response.StatusCode
 	result.header = response.Header
 	if result.status >= 400 {
@@ -255,7 +257,7 @@ func (r *CloudProviderGetRequest) SendContext(ctx context.Context) (result *Clou
 		err = result.err
 		return
 	}
-	err = readCloudProviderGetResponse(result, response.Body)
+	err = result.unmarshal(response.Body)
 	if err != nil {
 		return
 	}
@@ -314,4 +316,21 @@ func (r *CloudProviderGetResponse) GetBody() (value *CloudProvider, ok bool) {
 		value = r.body
 	}
 	return
+}
+
+// unmarshal is the method used internally to unmarshal responses to the
+// 'get' method.
+func (r *CloudProviderGetResponse) unmarshal(reader io.Reader) error {
+	var err error
+	decoder := json.NewDecoder(reader)
+	data := new(cloudProviderData)
+	err = decoder.Decode(data)
+	if err != nil {
+		return err
+	}
+	r.body, err = data.unwrap()
+	if err != nil {
+		return err
+	}
+	return err
 }

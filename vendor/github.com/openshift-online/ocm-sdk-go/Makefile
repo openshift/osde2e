@@ -22,11 +22,11 @@ export GOPROXY=https://proxy.golang.org
 export CGO_ENABLED=0
 
 # Details of the model to use:
-model_version:=v0.0.41
+model_version:=v0.0.35
 model_url:=https://github.com/openshift-online/ocm-api-model.git
 
 # Details of the metamodel to use:
-metamodel_version:=v0.0.26
+metamodel_version:=v0.0.20
 metamodel_url:=https://github.com/openshift-online/ocm-api-metamodel.git
 
 .PHONY: examples
@@ -54,17 +54,13 @@ generate: model metamodel
 		accountsmgmt \
 		authorizations \
 		clustersmgmt \
-		servicelogs \
 		errors \
-		helpers \
-		openapi
-	metamodel/metamodel generate go \
+		helpers
+	metamodel/ocm-metamodel-tool \
+		generate \
 		--model=model/model \
 		--base=github.com/openshift-online/ocm-sdk-go \
 		--output=.
-	metamodel/metamodel generate openapi \
-		--model=model/model \
-		--output=openapi
 
 .PHONY: model
 model:

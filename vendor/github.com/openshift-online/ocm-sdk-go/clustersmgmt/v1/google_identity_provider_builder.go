@@ -33,7 +33,8 @@ func NewGoogleIdentityProvider() *GoogleIdentityProviderBuilder {
 	return new(GoogleIdentityProviderBuilder)
 }
 
-// ClientID sets the value of the 'client_ID' attribute to the given value.
+// ClientID sets the value of the 'client_ID' attribute
+// to the given value.
 //
 //
 func (b *GoogleIdentityProviderBuilder) ClientID(value string) *GoogleIdentityProviderBuilder {
@@ -41,7 +42,8 @@ func (b *GoogleIdentityProviderBuilder) ClientID(value string) *GoogleIdentityPr
 	return b
 }
 
-// ClientSecret sets the value of the 'client_secret' attribute to the given value.
+// ClientSecret sets the value of the 'client_secret' attribute
+// to the given value.
 //
 //
 func (b *GoogleIdentityProviderBuilder) ClientSecret(value string) *GoogleIdentityProviderBuilder {
@@ -49,7 +51,8 @@ func (b *GoogleIdentityProviderBuilder) ClientSecret(value string) *GoogleIdenti
 	return b
 }
 
-// HostedDomain sets the value of the 'hosted_domain' attribute to the given value.
+// HostedDomain sets the value of the 'hosted_domain' attribute
+// to the given value.
 //
 //
 func (b *GoogleIdentityProviderBuilder) HostedDomain(value string) *GoogleIdentityProviderBuilder {
@@ -71,8 +74,14 @@ func (b *GoogleIdentityProviderBuilder) Copy(object *GoogleIdentityProvider) *Go
 // Build creates a 'google_identity_provider' object using the configuration stored in the builder.
 func (b *GoogleIdentityProviderBuilder) Build() (object *GoogleIdentityProvider, err error) {
 	object = new(GoogleIdentityProvider)
-	object.clientID = b.clientID
-	object.clientSecret = b.clientSecret
-	object.hostedDomain = b.hostedDomain
+	if b.clientID != nil {
+		object.clientID = b.clientID
+	}
+	if b.clientSecret != nil {
+		object.clientSecret = b.clientSecret
+	}
+	if b.hostedDomain != nil {
+		object.hostedDomain = b.hostedDomain
+	}
 	return
 }

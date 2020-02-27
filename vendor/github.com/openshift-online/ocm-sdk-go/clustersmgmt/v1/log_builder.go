@@ -52,7 +52,8 @@ func (b *LogBuilder) Link(value bool) *LogBuilder {
 	return b
 }
 
-// Content sets the value of the 'content' attribute to the given value.
+// Content sets the value of the 'content' attribute
+// to the given value.
 //
 //
 func (b *LogBuilder) Content(value string) *LogBuilder {
@@ -78,6 +79,8 @@ func (b *LogBuilder) Build() (object *Log, err error) {
 	object.id = b.id
 	object.href = b.href
 	object.link = b.link
-	object.content = b.content
+	if b.content != nil {
+		object.content = b.content
+	}
 	return
 }

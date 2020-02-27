@@ -21,10 +21,13 @@ package v1 // github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1
 
 import (
 	"context"
+	"encoding/json"
+	"io"
 	"net/http"
 
 	"github.com/golang/glog"
 	"github.com/openshift-online/ocm-sdk-go/errors"
+	"github.com/openshift-online/ocm-sdk-go/helpers"
 )
 
 // AccountsServer represents the interface the manages the 'accounts' resource.
@@ -73,6 +76,23 @@ func (r *AccountsAddServerRequest) GetBody() (value *Account, ok bool) {
 	return
 }
 
+// unmarshal is the method used internally to unmarshal request to the
+// 'add' method.
+func (r *AccountsAddServerRequest) unmarshal(reader io.Reader) error {
+	var err error
+	decoder := json.NewDecoder(reader)
+	data := new(accountData)
+	err = decoder.Decode(data)
+	if err != nil {
+		return err
+	}
+	r.body, err = data.unwrap()
+	if err != nil {
+		return err
+	}
+	return err
+}
+
 // AccountsAddServerResponse is the response for the 'add' method.
 type AccountsAddServerResponse struct {
 	status int
@@ -92,6 +112,19 @@ func (r *AccountsAddServerResponse) Body(value *Account) *AccountsAddServerRespo
 func (r *AccountsAddServerResponse) Status(value int) *AccountsAddServerResponse {
 	r.status = value
 	return r
+}
+
+// marshall is the method used internally to marshal responses for the
+// 'add' method.
+func (r *AccountsAddServerResponse) marshal(writer io.Writer) error {
+	var err error
+	encoder := json.NewEncoder(writer)
+	data, err := r.body.wrap()
+	if err != nil {
+		return err
+	}
+	err = encoder.Encode(data)
+	return err
 }
 
 // AccountsListServerRequest is the request for the 'list' method.
@@ -289,6 +322,32 @@ func (r *AccountsListServerResponse) Status(value int) *AccountsListServerRespon
 	return r
 }
 
+// marshall is the method used internally to marshal responses for the
+// 'list' method.
+func (r *AccountsListServerResponse) marshal(writer io.Writer) error {
+	var err error
+	encoder := json.NewEncoder(writer)
+	data := new(accountsListServerResponseData)
+	data.Items, err = r.items.wrap()
+	if err != nil {
+		return err
+	}
+	data.Page = r.page
+	data.Size = r.size
+	data.Total = r.total
+	err = encoder.Encode(data)
+	return err
+}
+
+// accountsListServerResponseData is the structure used internally to write the request of the
+// 'list' method.
+type accountsListServerResponseData struct {
+	Items accountListData "json:\"items,omitempty\""
+	Page  *int            "json:\"page,omitempty\""
+	Size  *int            "json:\"size,omitempty\""
+	Total *int            "json:\"total,omitempty\""
+}
+
 // dispatchAccounts navigates the servers tree rooted at the given server
 // till it finds one that matches the given set of path segments, and then invokes
 // the corresponding server.
@@ -297,32 +356,54 @@ func dispatchAccounts(w http.ResponseWriter, r *http.Request, server AccountsSer
 		switch r.Method {
 		case "POST":
 			adaptAccountsAddRequest(w, r, server)
-			return
 		case "GET":
 			adaptAccountsListRequest(w, r, server)
-			return
 		default:
 			errors.SendMethodNotAllowed(w, r)
 			return
 		}
-	}
-	switch segments[0] {
-	default:
-		target := server.Account(segments[0])
-		if target == nil {
-			errors.SendNotFound(w, r)
-			return
+	} else {
+		switch segments[0] {
+		default:
+			target := server.Account(segments[0])
+			if target == nil {
+				errors.SendNotFound(w, r)
+				return
+			}
+			dispatchAccount(w, r, target, segments[1:])
 		}
-		dispatchAccount(w, r, target, segments[1:])
 	}
+}
+
+// readAccountsAddRequest reads the given HTTP requests and translates it
+// into an object of type AccountsAddServerRequest.
+func readAccountsAddRequest(r *http.Request) (*AccountsAddServerRequest, error) {
+	var err error
+	result := new(AccountsAddServerRequest)
+	err = result.unmarshal(r.Body)
+	if err != nil {
+		return nil, err
+	}
+	return result, err
+}
+
+// writeAccountsAddResponse translates the given request object into an
+// HTTP response.
+func writeAccountsAddResponse(w http.ResponseWriter, r *AccountsAddServerResponse) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(r.status)
+	err := r.marshal(w)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // adaptAccountsAddRequest translates the given HTTP request into a call to
 // the corresponding method of the given server. Then it translates the
 // results returned by that method into an HTTP response.
 func adaptAccountsAddRequest(w http.ResponseWriter, r *http.Request, server AccountsServer) {
-	request := &AccountsAddServerRequest{}
-	err := readAccountsAddRequest(request, r)
+	request, err := readAccountsAddRequest(r)
 	if err != nil {
 		glog.Errorf(
 			"Can't read request for method '%s' and path '%s': %v",
@@ -331,7 +412,7 @@ func adaptAccountsAddRequest(w http.ResponseWriter, r *http.Request, server Acco
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	response := &AccountsAddServerResponse{}
+	response := new(AccountsAddServerResponse)
 	response.status = 201
 	err = server.Add(r.Context(), request, response)
 	if err != nil {
@@ -342,7 +423,7 @@ func adaptAccountsAddRequest(w http.ResponseWriter, r *http.Request, server Acco
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	err = writeAccountsAddResponse(response, w)
+	err = writeAccountsAddResponse(w, response)
 	if err != nil {
 		glog.Errorf(
 			"Can't write response for method '%s' and path '%s': %v",
@@ -352,12 +433,54 @@ func adaptAccountsAddRequest(w http.ResponseWriter, r *http.Request, server Acco
 	}
 }
 
+// readAccountsListRequest reads the given HTTP requests and translates it
+// into an object of type AccountsListServerRequest.
+func readAccountsListRequest(r *http.Request) (*AccountsListServerRequest, error) {
+	var err error
+	result := new(AccountsListServerRequest)
+	query := r.URL.Query()
+	result.order, err = helpers.ParseString(query, "order")
+	if err != nil {
+		return nil, err
+	}
+	result.page, err = helpers.ParseInteger(query, "page")
+	if err != nil {
+		return nil, err
+	}
+	if result.page == nil {
+		result.page = helpers.NewInteger(1)
+	}
+	result.search, err = helpers.ParseString(query, "search")
+	if err != nil {
+		return nil, err
+	}
+	result.size, err = helpers.ParseInteger(query, "size")
+	if err != nil {
+		return nil, err
+	}
+	if result.size == nil {
+		result.size = helpers.NewInteger(100)
+	}
+	return result, err
+}
+
+// writeAccountsListResponse translates the given request object into an
+// HTTP response.
+func writeAccountsListResponse(w http.ResponseWriter, r *AccountsListServerResponse) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(r.status)
+	err := r.marshal(w)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 // adaptAccountsListRequest translates the given HTTP request into a call to
 // the corresponding method of the given server. Then it translates the
 // results returned by that method into an HTTP response.
 func adaptAccountsListRequest(w http.ResponseWriter, r *http.Request, server AccountsServer) {
-	request := &AccountsListServerRequest{}
-	err := readAccountsListRequest(request, r)
+	request, err := readAccountsListRequest(r)
 	if err != nil {
 		glog.Errorf(
 			"Can't read request for method '%s' and path '%s': %v",
@@ -366,7 +489,7 @@ func adaptAccountsListRequest(w http.ResponseWriter, r *http.Request, server Acc
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	response := &AccountsListServerResponse{}
+	response := new(AccountsListServerResponse)
 	response.status = 200
 	err = server.List(r.Context(), request, response)
 	if err != nil {
@@ -377,7 +500,7 @@ func adaptAccountsListRequest(w http.ResponseWriter, r *http.Request, server Acc
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	err = writeAccountsListResponse(response, w)
+	err = writeAccountsListResponse(w, response)
 	if err != nil {
 		glog.Errorf(
 			"Can't write response for method '%s' and path '%s': %v",

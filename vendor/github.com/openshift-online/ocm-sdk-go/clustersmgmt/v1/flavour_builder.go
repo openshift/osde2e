@@ -24,14 +24,16 @@ package v1 // github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1
 // Set of predefined properties of a cluster. For example, a _huge_ flavour can be a cluster
 // with 10 infra nodes and 1000 compute nodes.
 type FlavourBuilder struct {
-	id      *string
-	href    *string
-	link    bool
-	aws     *AWSFlavourBuilder
-	gcp     *GCPFlavourBuilder
-	name    *string
-	network *NetworkBuilder
-	nodes   *FlavourNodesBuilder
+	id                  *string
+	href                *string
+	link                bool
+	aws                 *AWSFlavourBuilder
+	computeInstanceType *string
+	infraInstanceType   *string
+	masterInstanceType  *string
+	name                *string
+	network             *NetworkBuilder
+	nodes               *FlavourNodesBuilder
 }
 
 // NewFlavour creates a new builder of 'flavour' objects.
@@ -57,23 +59,44 @@ func (b *FlavourBuilder) Link(value bool) *FlavourBuilder {
 	return b
 }
 
-// AWS sets the value of the 'AWS' attribute to the given value.
+// AWS sets the value of the 'AWS' attribute
+// to the given value.
 //
-// Specification for different classes of nodes inside a flavour.
+// Volume specification for different classes of nodes inside a flavour.
 func (b *FlavourBuilder) AWS(value *AWSFlavourBuilder) *FlavourBuilder {
 	b.aws = value
 	return b
 }
 
-// GCP sets the value of the 'GCP' attribute to the given value.
+// ComputeInstanceType sets the value of the 'compute_instance_type' attribute
+// to the given value.
 //
-// Specification for different classes of nodes inside a flavour.
-func (b *FlavourBuilder) GCP(value *GCPFlavourBuilder) *FlavourBuilder {
-	b.gcp = value
+//
+func (b *FlavourBuilder) ComputeInstanceType(value string) *FlavourBuilder {
+	b.computeInstanceType = &value
 	return b
 }
 
-// Name sets the value of the 'name' attribute to the given value.
+// InfraInstanceType sets the value of the 'infra_instance_type' attribute
+// to the given value.
+//
+//
+func (b *FlavourBuilder) InfraInstanceType(value string) *FlavourBuilder {
+	b.infraInstanceType = &value
+	return b
+}
+
+// MasterInstanceType sets the value of the 'master_instance_type' attribute
+// to the given value.
+//
+//
+func (b *FlavourBuilder) MasterInstanceType(value string) *FlavourBuilder {
+	b.masterInstanceType = &value
+	return b
+}
+
+// Name sets the value of the 'name' attribute
+// to the given value.
 //
 //
 func (b *FlavourBuilder) Name(value string) *FlavourBuilder {
@@ -81,7 +104,8 @@ func (b *FlavourBuilder) Name(value string) *FlavourBuilder {
 	return b
 }
 
-// Network sets the value of the 'network' attribute to the given value.
+// Network sets the value of the 'network' attribute
+// to the given value.
 //
 // Network configuration of a cluster.
 func (b *FlavourBuilder) Network(value *NetworkBuilder) *FlavourBuilder {
@@ -89,7 +113,8 @@ func (b *FlavourBuilder) Network(value *NetworkBuilder) *FlavourBuilder {
 	return b
 }
 
-// Nodes sets the value of the 'nodes' attribute to the given value.
+// Nodes sets the value of the 'nodes' attribute
+// to the given value.
 //
 // Counts of different classes of nodes inside a flavour.
 func (b *FlavourBuilder) Nodes(value *FlavourNodesBuilder) *FlavourBuilder {
@@ -110,11 +135,9 @@ func (b *FlavourBuilder) Copy(object *Flavour) *FlavourBuilder {
 	} else {
 		b.aws = nil
 	}
-	if object.gcp != nil {
-		b.gcp = NewGCPFlavour().Copy(object.gcp)
-	} else {
-		b.gcp = nil
-	}
+	b.computeInstanceType = object.computeInstanceType
+	b.infraInstanceType = object.infraInstanceType
+	b.masterInstanceType = object.masterInstanceType
 	b.name = object.name
 	if object.network != nil {
 		b.network = NewNetwork().Copy(object.network)
@@ -141,13 +164,18 @@ func (b *FlavourBuilder) Build() (object *Flavour, err error) {
 			return
 		}
 	}
-	if b.gcp != nil {
-		object.gcp, err = b.gcp.Build()
-		if err != nil {
-			return
-		}
+	if b.computeInstanceType != nil {
+		object.computeInstanceType = b.computeInstanceType
 	}
-	object.name = b.name
+	if b.infraInstanceType != nil {
+		object.infraInstanceType = b.infraInstanceType
+	}
+	if b.masterInstanceType != nil {
+		object.masterInstanceType = b.masterInstanceType
+	}
+	if b.name != nil {
+		object.name = b.name
+	}
 	if b.network != nil {
 		object.network, err = b.network.Build()
 		if err != nil {

@@ -21,10 +21,13 @@ package v1 // github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1
 
 import (
 	"context"
+	"encoding/json"
+	"io"
 	"net/http"
 
 	"github.com/golang/glog"
 	"github.com/openshift-online/ocm-sdk-go/errors"
+	"github.com/openshift-online/ocm-sdk-go/helpers"
 )
 
 // FlavoursServer represents the interface the manages the 'flavours' resource.
@@ -73,6 +76,23 @@ func (r *FlavoursAddServerRequest) GetBody() (value *Flavour, ok bool) {
 	return
 }
 
+// unmarshal is the method used internally to unmarshal request to the
+// 'add' method.
+func (r *FlavoursAddServerRequest) unmarshal(reader io.Reader) error {
+	var err error
+	decoder := json.NewDecoder(reader)
+	data := new(flavourData)
+	err = decoder.Decode(data)
+	if err != nil {
+		return err
+	}
+	r.body, err = data.unwrap()
+	if err != nil {
+		return err
+	}
+	return err
+}
+
 // FlavoursAddServerResponse is the response for the 'add' method.
 type FlavoursAddServerResponse struct {
 	status int
@@ -92,6 +112,19 @@ func (r *FlavoursAddServerResponse) Body(value *Flavour) *FlavoursAddServerRespo
 func (r *FlavoursAddServerResponse) Status(value int) *FlavoursAddServerResponse {
 	r.status = value
 	return r
+}
+
+// marshall is the method used internally to marshal responses for the
+// 'add' method.
+func (r *FlavoursAddServerResponse) marshal(writer io.Writer) error {
+	var err error
+	encoder := json.NewEncoder(writer)
+	data, err := r.body.wrap()
+	if err != nil {
+		return err
+	}
+	err = encoder.Encode(data)
+	return err
 }
 
 // FlavoursListServerRequest is the request for the 'list' method.
@@ -291,6 +324,32 @@ func (r *FlavoursListServerResponse) Status(value int) *FlavoursListServerRespon
 	return r
 }
 
+// marshall is the method used internally to marshal responses for the
+// 'list' method.
+func (r *FlavoursListServerResponse) marshal(writer io.Writer) error {
+	var err error
+	encoder := json.NewEncoder(writer)
+	data := new(flavoursListServerResponseData)
+	data.Items, err = r.items.wrap()
+	if err != nil {
+		return err
+	}
+	data.Page = r.page
+	data.Size = r.size
+	data.Total = r.total
+	err = encoder.Encode(data)
+	return err
+}
+
+// flavoursListServerResponseData is the structure used internally to write the request of the
+// 'list' method.
+type flavoursListServerResponseData struct {
+	Items flavourListData "json:\"items,omitempty\""
+	Page  *int            "json:\"page,omitempty\""
+	Size  *int            "json:\"size,omitempty\""
+	Total *int            "json:\"total,omitempty\""
+}
+
 // dispatchFlavours navigates the servers tree rooted at the given server
 // till it finds one that matches the given set of path segments, and then invokes
 // the corresponding server.
@@ -299,32 +358,54 @@ func dispatchFlavours(w http.ResponseWriter, r *http.Request, server FlavoursSer
 		switch r.Method {
 		case "POST":
 			adaptFlavoursAddRequest(w, r, server)
-			return
 		case "GET":
 			adaptFlavoursListRequest(w, r, server)
-			return
 		default:
 			errors.SendMethodNotAllowed(w, r)
 			return
 		}
-	}
-	switch segments[0] {
-	default:
-		target := server.Flavour(segments[0])
-		if target == nil {
-			errors.SendNotFound(w, r)
-			return
+	} else {
+		switch segments[0] {
+		default:
+			target := server.Flavour(segments[0])
+			if target == nil {
+				errors.SendNotFound(w, r)
+				return
+			}
+			dispatchFlavour(w, r, target, segments[1:])
 		}
-		dispatchFlavour(w, r, target, segments[1:])
 	}
+}
+
+// readFlavoursAddRequest reads the given HTTP requests and translates it
+// into an object of type FlavoursAddServerRequest.
+func readFlavoursAddRequest(r *http.Request) (*FlavoursAddServerRequest, error) {
+	var err error
+	result := new(FlavoursAddServerRequest)
+	err = result.unmarshal(r.Body)
+	if err != nil {
+		return nil, err
+	}
+	return result, err
+}
+
+// writeFlavoursAddResponse translates the given request object into an
+// HTTP response.
+func writeFlavoursAddResponse(w http.ResponseWriter, r *FlavoursAddServerResponse) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(r.status)
+	err := r.marshal(w)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // adaptFlavoursAddRequest translates the given HTTP request into a call to
 // the corresponding method of the given server. Then it translates the
 // results returned by that method into an HTTP response.
 func adaptFlavoursAddRequest(w http.ResponseWriter, r *http.Request, server FlavoursServer) {
-	request := &FlavoursAddServerRequest{}
-	err := readFlavoursAddRequest(request, r)
+	request, err := readFlavoursAddRequest(r)
 	if err != nil {
 		glog.Errorf(
 			"Can't read request for method '%s' and path '%s': %v",
@@ -333,7 +414,7 @@ func adaptFlavoursAddRequest(w http.ResponseWriter, r *http.Request, server Flav
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	response := &FlavoursAddServerResponse{}
+	response := new(FlavoursAddServerResponse)
 	response.status = 201
 	err = server.Add(r.Context(), request, response)
 	if err != nil {
@@ -344,7 +425,7 @@ func adaptFlavoursAddRequest(w http.ResponseWriter, r *http.Request, server Flav
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	err = writeFlavoursAddResponse(response, w)
+	err = writeFlavoursAddResponse(w, response)
 	if err != nil {
 		glog.Errorf(
 			"Can't write response for method '%s' and path '%s': %v",
@@ -354,12 +435,54 @@ func adaptFlavoursAddRequest(w http.ResponseWriter, r *http.Request, server Flav
 	}
 }
 
+// readFlavoursListRequest reads the given HTTP requests and translates it
+// into an object of type FlavoursListServerRequest.
+func readFlavoursListRequest(r *http.Request) (*FlavoursListServerRequest, error) {
+	var err error
+	result := new(FlavoursListServerRequest)
+	query := r.URL.Query()
+	result.order, err = helpers.ParseString(query, "order")
+	if err != nil {
+		return nil, err
+	}
+	result.page, err = helpers.ParseInteger(query, "page")
+	if err != nil {
+		return nil, err
+	}
+	if result.page == nil {
+		result.page = helpers.NewInteger(1)
+	}
+	result.search, err = helpers.ParseString(query, "search")
+	if err != nil {
+		return nil, err
+	}
+	result.size, err = helpers.ParseInteger(query, "size")
+	if err != nil {
+		return nil, err
+	}
+	if result.size == nil {
+		result.size = helpers.NewInteger(100)
+	}
+	return result, err
+}
+
+// writeFlavoursListResponse translates the given request object into an
+// HTTP response.
+func writeFlavoursListResponse(w http.ResponseWriter, r *FlavoursListServerResponse) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(r.status)
+	err := r.marshal(w)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 // adaptFlavoursListRequest translates the given HTTP request into a call to
 // the corresponding method of the given server. Then it translates the
 // results returned by that method into an HTTP response.
 func adaptFlavoursListRequest(w http.ResponseWriter, r *http.Request, server FlavoursServer) {
-	request := &FlavoursListServerRequest{}
-	err := readFlavoursListRequest(request, r)
+	request, err := readFlavoursListRequest(r)
 	if err != nil {
 		glog.Errorf(
 			"Can't read request for method '%s' and path '%s': %v",
@@ -368,7 +491,7 @@ func adaptFlavoursListRequest(w http.ResponseWriter, r *http.Request, server Fla
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	response := &FlavoursListServerResponse{}
+	response := new(FlavoursListServerResponse)
 	response.status = 200
 	err = server.List(r.Context(), request, response)
 	if err != nil {
@@ -379,7 +502,7 @@ func adaptFlavoursListRequest(w http.ResponseWriter, r *http.Request, server Fla
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	err = writeFlavoursListResponse(response, w)
+	err = writeFlavoursListResponse(w, response)
 	if err != nil {
 		glog.Errorf(
 			"Can't write response for method '%s' and path '%s': %v",

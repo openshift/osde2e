@@ -21,6 +21,8 @@ package v1 // github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1
 
 import (
 	"context"
+	"encoding/json"
+	"io"
 	"net/http"
 
 	"github.com/golang/glog"
@@ -87,6 +89,19 @@ func (r *AddOnGetServerResponse) Status(value int) *AddOnGetServerResponse {
 	return r
 }
 
+// marshall is the method used internally to marshal responses for the
+// 'get' method.
+func (r *AddOnGetServerResponse) marshal(writer io.Writer) error {
+	var err error
+	encoder := json.NewEncoder(writer)
+	data, err := r.body.wrap()
+	if err != nil {
+		return err
+	}
+	err = encoder.Encode(data)
+	return err
+}
+
 // AddOnUpdateServerRequest is the request for the 'update' method.
 type AddOnUpdateServerRequest struct {
 	body *AddOn
@@ -114,6 +129,23 @@ func (r *AddOnUpdateServerRequest) GetBody() (value *AddOn, ok bool) {
 	return
 }
 
+// unmarshal is the method used internally to unmarshal request to the
+// 'update' method.
+func (r *AddOnUpdateServerRequest) unmarshal(reader io.Reader) error {
+	var err error
+	decoder := json.NewDecoder(reader)
+	data := new(addOnData)
+	err = decoder.Decode(data)
+	if err != nil {
+		return err
+	}
+	r.body, err = data.unwrap()
+	if err != nil {
+		return err
+	}
+	return err
+}
+
 // AddOnUpdateServerResponse is the response for the 'update' method.
 type AddOnUpdateServerResponse struct {
 	status int
@@ -135,6 +167,19 @@ func (r *AddOnUpdateServerResponse) Status(value int) *AddOnUpdateServerResponse
 	return r
 }
 
+// marshall is the method used internally to marshal responses for the
+// 'update' method.
+func (r *AddOnUpdateServerResponse) marshal(writer io.Writer) error {
+	var err error
+	encoder := json.NewEncoder(writer)
+	data, err := r.body.wrap()
+	if err != nil {
+		return err
+	}
+	err = encoder.Encode(data)
+	return err
+}
+
 // dispatchAddOn navigates the servers tree rooted at the given server
 // till it finds one that matches the given set of path segments, and then invokes
 // the corresponding server.
@@ -143,31 +188,44 @@ func dispatchAddOn(w http.ResponseWriter, r *http.Request, server AddOnServer, s
 		switch r.Method {
 		case "DELETE":
 			adaptAddOnDeleteRequest(w, r, server)
-			return
 		case "GET":
 			adaptAddOnGetRequest(w, r, server)
-			return
 		case "PATCH":
 			adaptAddOnUpdateRequest(w, r, server)
-			return
 		default:
 			errors.SendMethodNotAllowed(w, r)
 			return
 		}
+	} else {
+		switch segments[0] {
+		default:
+			errors.SendNotFound(w, r)
+			return
+		}
 	}
-	switch segments[0] {
-	default:
-		errors.SendNotFound(w, r)
-		return
-	}
+}
+
+// readAddOnDeleteRequest reads the given HTTP requests and translates it
+// into an object of type AddOnDeleteServerRequest.
+func readAddOnDeleteRequest(r *http.Request) (*AddOnDeleteServerRequest, error) {
+	var err error
+	result := new(AddOnDeleteServerRequest)
+	return result, err
+}
+
+// writeAddOnDeleteResponse translates the given request object into an
+// HTTP response.
+func writeAddOnDeleteResponse(w http.ResponseWriter, r *AddOnDeleteServerResponse) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(r.status)
+	return nil
 }
 
 // adaptAddOnDeleteRequest translates the given HTTP request into a call to
 // the corresponding method of the given server. Then it translates the
 // results returned by that method into an HTTP response.
 func adaptAddOnDeleteRequest(w http.ResponseWriter, r *http.Request, server AddOnServer) {
-	request := &AddOnDeleteServerRequest{}
-	err := readAddOnDeleteRequest(request, r)
+	request, err := readAddOnDeleteRequest(r)
 	if err != nil {
 		glog.Errorf(
 			"Can't read request for method '%s' and path '%s': %v",
@@ -176,7 +234,7 @@ func adaptAddOnDeleteRequest(w http.ResponseWriter, r *http.Request, server AddO
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	response := &AddOnDeleteServerResponse{}
+	response := new(AddOnDeleteServerResponse)
 	response.status = 204
 	err = server.Delete(r.Context(), request, response)
 	if err != nil {
@@ -187,7 +245,7 @@ func adaptAddOnDeleteRequest(w http.ResponseWriter, r *http.Request, server AddO
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	err = writeAddOnDeleteResponse(response, w)
+	err = writeAddOnDeleteResponse(w, response)
 	if err != nil {
 		glog.Errorf(
 			"Can't write response for method '%s' and path '%s': %v",
@@ -197,12 +255,31 @@ func adaptAddOnDeleteRequest(w http.ResponseWriter, r *http.Request, server AddO
 	}
 }
 
+// readAddOnGetRequest reads the given HTTP requests and translates it
+// into an object of type AddOnGetServerRequest.
+func readAddOnGetRequest(r *http.Request) (*AddOnGetServerRequest, error) {
+	var err error
+	result := new(AddOnGetServerRequest)
+	return result, err
+}
+
+// writeAddOnGetResponse translates the given request object into an
+// HTTP response.
+func writeAddOnGetResponse(w http.ResponseWriter, r *AddOnGetServerResponse) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(r.status)
+	err := r.marshal(w)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 // adaptAddOnGetRequest translates the given HTTP request into a call to
 // the corresponding method of the given server. Then it translates the
 // results returned by that method into an HTTP response.
 func adaptAddOnGetRequest(w http.ResponseWriter, r *http.Request, server AddOnServer) {
-	request := &AddOnGetServerRequest{}
-	err := readAddOnGetRequest(request, r)
+	request, err := readAddOnGetRequest(r)
 	if err != nil {
 		glog.Errorf(
 			"Can't read request for method '%s' and path '%s': %v",
@@ -211,7 +288,7 @@ func adaptAddOnGetRequest(w http.ResponseWriter, r *http.Request, server AddOnSe
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	response := &AddOnGetServerResponse{}
+	response := new(AddOnGetServerResponse)
 	response.status = 200
 	err = server.Get(r.Context(), request, response)
 	if err != nil {
@@ -222,7 +299,7 @@ func adaptAddOnGetRequest(w http.ResponseWriter, r *http.Request, server AddOnSe
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	err = writeAddOnGetResponse(response, w)
+	err = writeAddOnGetResponse(w, response)
 	if err != nil {
 		glog.Errorf(
 			"Can't write response for method '%s' and path '%s': %v",
@@ -232,12 +309,35 @@ func adaptAddOnGetRequest(w http.ResponseWriter, r *http.Request, server AddOnSe
 	}
 }
 
+// readAddOnUpdateRequest reads the given HTTP requests and translates it
+// into an object of type AddOnUpdateServerRequest.
+func readAddOnUpdateRequest(r *http.Request) (*AddOnUpdateServerRequest, error) {
+	var err error
+	result := new(AddOnUpdateServerRequest)
+	err = result.unmarshal(r.Body)
+	if err != nil {
+		return nil, err
+	}
+	return result, err
+}
+
+// writeAddOnUpdateResponse translates the given request object into an
+// HTTP response.
+func writeAddOnUpdateResponse(w http.ResponseWriter, r *AddOnUpdateServerResponse) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(r.status)
+	err := r.marshal(w)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 // adaptAddOnUpdateRequest translates the given HTTP request into a call to
 // the corresponding method of the given server. Then it translates the
 // results returned by that method into an HTTP response.
 func adaptAddOnUpdateRequest(w http.ResponseWriter, r *http.Request, server AddOnServer) {
-	request := &AddOnUpdateServerRequest{}
-	err := readAddOnUpdateRequest(request, r)
+	request, err := readAddOnUpdateRequest(r)
 	if err != nil {
 		glog.Errorf(
 			"Can't read request for method '%s' and path '%s': %v",
@@ -246,7 +346,7 @@ func adaptAddOnUpdateRequest(w http.ResponseWriter, r *http.Request, server AddO
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	response := &AddOnUpdateServerResponse{}
+	response := new(AddOnUpdateServerResponse)
 	response.status = 204
 	err = server.Update(r.Context(), request, response)
 	if err != nil {
@@ -257,7 +357,7 @@ func adaptAddOnUpdateRequest(w http.ResponseWriter, r *http.Request, server AddO
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	err = writeAddOnUpdateResponse(response, w)
+	err = writeAddOnUpdateResponse(w, response)
 	if err != nil {
 		glog.Errorf(
 			"Can't write response for method '%s' and path '%s': %v",

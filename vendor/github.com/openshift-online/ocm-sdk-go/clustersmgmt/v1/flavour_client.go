@@ -20,15 +20,13 @@ limitations under the License.
 package v1 // github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1
 
 import (
-	"bytes"
 	"context"
+	"encoding/json"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"time"
 
-	jsoniter "github.com/json-iterator/go"
 	"github.com/openshift-online/ocm-sdk-go/errors"
 	"github.com/openshift-online/ocm-sdk-go/helpers"
 )
@@ -43,43 +41,25 @@ type FlavourClient struct {
 }
 
 // NewFlavourClient creates a new client for the 'flavour'
-// resource using the given transport to send the requests and receive the
+// resource using the given transport to sned the requests and receive the
 // responses.
 func NewFlavourClient(transport http.RoundTripper, path string, metric string) *FlavourClient {
-	return &FlavourClient{
-		transport: transport,
-		path:      path,
-		metric:    metric,
-	}
+	client := new(FlavourClient)
+	client.transport = transport
+	client.path = path
+	client.metric = metric
+	return client
 }
 
 // Get creates a request for the 'get' method.
 //
 // Retrieves the details of the cluster flavour.
 func (c *FlavourClient) Get() *FlavourGetRequest {
-	return &FlavourGetRequest{
-		transport: c.transport,
-		path:      c.path,
-		metric:    c.metric,
-	}
-}
-
-// Update creates a request for the 'update' method.
-//
-// Updates the flavour.
-//
-// Attributes that can be updated are:
-//
-// - `nodes.infra`
-// - `aws.infra_volume`
-// - `aws.infra_instance_type`
-// - `gcp.infra_instance_type`
-func (c *FlavourClient) Update() *FlavourUpdateRequest {
-	return &FlavourUpdateRequest{
-		transport: c.transport,
-		path:      c.path,
-		metric:    c.metric,
-	}
+	request := new(FlavourGetRequest)
+	request.transport = c.transport
+	request.path = c.path
+	request.metric = c.metric
+	return request
 }
 
 // FlavourPollRequest is the request for the Poll method.
@@ -253,7 +233,7 @@ func (r *FlavourGetRequest) SendContext(ctx context.Context) (result *FlavourGet
 		return
 	}
 	defer response.Body.Close()
-	result = &FlavourGetResponse{}
+	result = new(FlavourGetResponse)
 	result.status = response.StatusCode
 	result.header = response.Header
 	if result.status >= 400 {
@@ -264,7 +244,7 @@ func (r *FlavourGetRequest) SendContext(ctx context.Context) (result *FlavourGet
 		err = result.err
 		return
 	}
-	err = readFlavourGetResponse(result, response.Body)
+	err = result.unmarshal(response.Body)
 	if err != nil {
 		return
 	}
@@ -325,149 +305,19 @@ func (r *FlavourGetResponse) GetBody() (value *Flavour, ok bool) {
 	return
 }
 
-// FlavourUpdateRequest is the request for the 'update' method.
-type FlavourUpdateRequest struct {
-	transport http.RoundTripper
-	path      string
-	metric    string
-	query     url.Values
-	header    http.Header
-	body      *Flavour
-}
-
-// Parameter adds a query parameter.
-func (r *FlavourUpdateRequest) Parameter(name string, value interface{}) *FlavourUpdateRequest {
-	helpers.AddValue(&r.query, name, value)
-	return r
-}
-
-// Header adds a request header.
-func (r *FlavourUpdateRequest) Header(name string, value interface{}) *FlavourUpdateRequest {
-	helpers.AddHeader(&r.header, name, value)
-	return r
-}
-
-// Body sets the value of the 'body' parameter.
-//
-//
-func (r *FlavourUpdateRequest) Body(value *Flavour) *FlavourUpdateRequest {
-	r.body = value
-	return r
-}
-
-// Send sends this request, waits for the response, and returns it.
-//
-// This is a potentially lengthy operation, as it requires network communication.
-// Consider using a context and the SendContext method.
-func (r *FlavourUpdateRequest) Send() (result *FlavourUpdateResponse, err error) {
-	return r.SendContext(context.Background())
-}
-
-// SendContext sends this request, waits for the response, and returns it.
-func (r *FlavourUpdateRequest) SendContext(ctx context.Context) (result *FlavourUpdateResponse, err error) {
-	query := helpers.CopyQuery(r.query)
-	header := helpers.SetHeader(r.header, r.metric)
-	buffer := &bytes.Buffer{}
-	err = writeFlavourUpdateRequest(r, buffer)
+// unmarshal is the method used internally to unmarshal responses to the
+// 'get' method.
+func (r *FlavourGetResponse) unmarshal(reader io.Reader) error {
+	var err error
+	decoder := json.NewDecoder(reader)
+	data := new(flavourData)
+	err = decoder.Decode(data)
 	if err != nil {
-		return
+		return err
 	}
-	uri := &url.URL{
-		Path:     r.path,
-		RawQuery: query.Encode(),
-	}
-	request := &http.Request{
-		Method: "PATCH",
-		URL:    uri,
-		Header: header,
-		Body:   ioutil.NopCloser(buffer),
-	}
-	if ctx != nil {
-		request = request.WithContext(ctx)
-	}
-	response, err := r.transport.RoundTrip(request)
+	r.body, err = data.unwrap()
 	if err != nil {
-		return
+		return err
 	}
-	defer response.Body.Close()
-	result = &FlavourUpdateResponse{}
-	result.status = response.StatusCode
-	result.header = response.Header
-	if result.status >= 400 {
-		result.err, err = errors.UnmarshalError(response.Body)
-		if err != nil {
-			return
-		}
-		err = result.err
-		return
-	}
-	err = readFlavourUpdateResponse(result, response.Body)
-	if err != nil {
-		return
-	}
-	return
-}
-
-// marshall is the method used internally to marshal requests for the
-// 'update' method.
-func (r *FlavourUpdateRequest) marshal(writer io.Writer) error {
-	stream := helpers.NewStream(writer)
-	r.stream(stream)
-	return stream.Error
-}
-func (r *FlavourUpdateRequest) stream(stream *jsoniter.Stream) {
-}
-
-// FlavourUpdateResponse is the response for the 'update' method.
-type FlavourUpdateResponse struct {
-	status int
-	header http.Header
-	err    *errors.Error
-	body   *Flavour
-}
-
-// Status returns the response status code.
-func (r *FlavourUpdateResponse) Status() int {
-	if r == nil {
-		return 0
-	}
-	return r.status
-}
-
-// Header returns header of the response.
-func (r *FlavourUpdateResponse) Header() http.Header {
-	if r == nil {
-		return nil
-	}
-	return r.header
-}
-
-// Error returns the response error.
-func (r *FlavourUpdateResponse) Error() *errors.Error {
-	if r == nil {
-		return nil
-	}
-	return r.err
-}
-
-// Body returns the value of the 'body' parameter.
-//
-//
-func (r *FlavourUpdateResponse) Body() *Flavour {
-	if r == nil {
-		return nil
-	}
-	return r.body
-}
-
-// GetBody returns the value of the 'body' parameter and
-// a flag indicating if the parameter has a value.
-//
-//
-func (r *FlavourUpdateResponse) GetBody() (value *Flavour, ok bool) {
-	ok = r != nil && r.body != nil
-	if ok {
-		value = r.body
-	}
-	return
+	return err
 }

@@ -37,19 +37,6 @@ func (b *PlanListBuilder) Items(values ...*PlanBuilder) *PlanListBuilder {
 	return b
 }
 
-// Copy copies the items of the given list into this builder, discarding any previous items.
-func (b *PlanListBuilder) Copy(list *PlanList) *PlanListBuilder {
-	if list == nil || list.items == nil {
-		b.items = nil
-	} else {
-		b.items = make([]*PlanBuilder, len(list.items))
-		for i, v := range list.items {
-			b.items[i] = NewPlan().Copy(v)
-		}
-	}
-	return b
-}
-
 // Build creates a list of 'plan' objects using the
 // configuration stored in the builder.
 func (b *PlanListBuilder) Build() (list *PlanList, err error) {

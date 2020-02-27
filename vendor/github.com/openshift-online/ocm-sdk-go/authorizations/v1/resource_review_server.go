@@ -21,6 +21,8 @@ package v1 // github.com/openshift-online/ocm-sdk-go/authorizations/v1
 
 import (
 	"context"
+	"encoding/json"
+	"io"
 	"net/http"
 
 	"github.com/golang/glog"
@@ -64,6 +66,23 @@ func (r *ResourceReviewPostServerRequest) GetRequest() (value *ResourceReviewReq
 	return
 }
 
+// unmarshal is the method used internally to unmarshal request to the
+// 'post' method.
+func (r *ResourceReviewPostServerRequest) unmarshal(reader io.Reader) error {
+	var err error
+	decoder := json.NewDecoder(reader)
+	data := new(resourceReviewRequestData)
+	err = decoder.Decode(data)
+	if err != nil {
+		return err
+	}
+	r.request, err = data.unwrap()
+	if err != nil {
+		return err
+	}
+	return err
+}
+
 // ResourceReviewPostServerResponse is the response for the 'post' method.
 type ResourceReviewPostServerResponse struct {
 	status int
@@ -85,6 +104,19 @@ func (r *ResourceReviewPostServerResponse) Status(value int) *ResourceReviewPost
 	return r
 }
 
+// marshall is the method used internally to marshal responses for the
+// 'post' method.
+func (r *ResourceReviewPostServerResponse) marshal(writer io.Writer) error {
+	var err error
+	encoder := json.NewEncoder(writer)
+	data, err := r.review.wrap()
+	if err != nil {
+		return err
+	}
+	err = encoder.Encode(data)
+	return err
+}
+
 // dispatchResourceReview navigates the servers tree rooted at the given server
 // till it finds one that matches the given set of path segments, and then invokes
 // the corresponding server.
@@ -93,25 +125,48 @@ func dispatchResourceReview(w http.ResponseWriter, r *http.Request, server Resou
 		switch r.Method {
 		case "POST":
 			adaptResourceReviewPostRequest(w, r, server)
-			return
 		default:
 			errors.SendMethodNotAllowed(w, r)
 			return
 		}
+	} else {
+		switch segments[0] {
+		default:
+			errors.SendNotFound(w, r)
+			return
+		}
 	}
-	switch segments[0] {
-	default:
-		errors.SendNotFound(w, r)
-		return
+}
+
+// readResourceReviewPostRequest reads the given HTTP requests and translates it
+// into an object of type ResourceReviewPostServerRequest.
+func readResourceReviewPostRequest(r *http.Request) (*ResourceReviewPostServerRequest, error) {
+	var err error
+	result := new(ResourceReviewPostServerRequest)
+	err = result.unmarshal(r.Body)
+	if err != nil {
+		return nil, err
 	}
+	return result, err
+}
+
+// writeResourceReviewPostResponse translates the given request object into an
+// HTTP response.
+func writeResourceReviewPostResponse(w http.ResponseWriter, r *ResourceReviewPostServerResponse) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(r.status)
+	err := r.marshal(w)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // adaptResourceReviewPostRequest translates the given HTTP request into a call to
 // the corresponding method of the given server. Then it translates the
 // results returned by that method into an HTTP response.
 func adaptResourceReviewPostRequest(w http.ResponseWriter, r *http.Request, server ResourceReviewServer) {
-	request := &ResourceReviewPostServerRequest{}
-	err := readResourceReviewPostRequest(request, r)
+	request, err := readResourceReviewPostRequest(r)
 	if err != nil {
 		glog.Errorf(
 			"Can't read request for method '%s' and path '%s': %v",
@@ -120,7 +175,7 @@ func adaptResourceReviewPostRequest(w http.ResponseWriter, r *http.Request, serv
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	response := &ResourceReviewPostServerResponse{}
+	response := new(ResourceReviewPostServerResponse)
 	response.status = 201
 	err = server.Post(r.Context(), request, response)
 	if err != nil {
@@ -131,7 +186,7 @@ func adaptResourceReviewPostRequest(w http.ResponseWriter, r *http.Request, serv
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	err = writeResourceReviewPostResponse(response, w)
+	err = writeResourceReviewPostResponse(w, response)
 	if err != nil {
 		glog.Errorf(
 			"Can't write response for method '%s' and path '%s': %v",

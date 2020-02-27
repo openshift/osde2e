@@ -21,6 +21,8 @@ package v1 // github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1
 
 import (
 	"context"
+	"encoding/json"
+	"io"
 	"net/http"
 
 	"github.com/golang/glog"
@@ -88,6 +90,19 @@ func (r *SubscriptionGetServerResponse) Status(value int) *SubscriptionGetServer
 	return r
 }
 
+// marshall is the method used internally to marshal responses for the
+// 'get' method.
+func (r *SubscriptionGetServerResponse) marshal(writer io.Writer) error {
+	var err error
+	encoder := json.NewEncoder(writer)
+	data, err := r.body.wrap()
+	if err != nil {
+		return err
+	}
+	err = encoder.Encode(data)
+	return err
+}
+
 // dispatchSubscription navigates the servers tree rooted at the given server
 // till it finds one that matches the given set of path segments, and then invokes
 // the corresponding server.
@@ -96,35 +111,49 @@ func dispatchSubscription(w http.ResponseWriter, r *http.Request, server Subscri
 		switch r.Method {
 		case "DELETE":
 			adaptSubscriptionDeleteRequest(w, r, server)
-			return
 		case "GET":
 			adaptSubscriptionGetRequest(w, r, server)
-			return
 		default:
 			errors.SendMethodNotAllowed(w, r)
 			return
 		}
-	}
-	switch segments[0] {
-	case "reserved_resources":
-		target := server.ReservedResources()
-		if target == nil {
+	} else {
+		switch segments[0] {
+		case "reserved_resources":
+			target := server.ReservedResources()
+			if target == nil {
+				errors.SendNotFound(w, r)
+				return
+			}
+			dispatchSubscriptionReservedResources(w, r, target, segments[1:])
+		default:
 			errors.SendNotFound(w, r)
 			return
 		}
-		dispatchSubscriptionReservedResources(w, r, target, segments[1:])
-	default:
-		errors.SendNotFound(w, r)
-		return
 	}
+}
+
+// readSubscriptionDeleteRequest reads the given HTTP requests and translates it
+// into an object of type SubscriptionDeleteServerRequest.
+func readSubscriptionDeleteRequest(r *http.Request) (*SubscriptionDeleteServerRequest, error) {
+	var err error
+	result := new(SubscriptionDeleteServerRequest)
+	return result, err
+}
+
+// writeSubscriptionDeleteResponse translates the given request object into an
+// HTTP response.
+func writeSubscriptionDeleteResponse(w http.ResponseWriter, r *SubscriptionDeleteServerResponse) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(r.status)
+	return nil
 }
 
 // adaptSubscriptionDeleteRequest translates the given HTTP request into a call to
 // the corresponding method of the given server. Then it translates the
 // results returned by that method into an HTTP response.
 func adaptSubscriptionDeleteRequest(w http.ResponseWriter, r *http.Request, server SubscriptionServer) {
-	request := &SubscriptionDeleteServerRequest{}
-	err := readSubscriptionDeleteRequest(request, r)
+	request, err := readSubscriptionDeleteRequest(r)
 	if err != nil {
 		glog.Errorf(
 			"Can't read request for method '%s' and path '%s': %v",
@@ -133,7 +162,7 @@ func adaptSubscriptionDeleteRequest(w http.ResponseWriter, r *http.Request, serv
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	response := &SubscriptionDeleteServerResponse{}
+	response := new(SubscriptionDeleteServerResponse)
 	response.status = 204
 	err = server.Delete(r.Context(), request, response)
 	if err != nil {
@@ -144,7 +173,7 @@ func adaptSubscriptionDeleteRequest(w http.ResponseWriter, r *http.Request, serv
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	err = writeSubscriptionDeleteResponse(response, w)
+	err = writeSubscriptionDeleteResponse(w, response)
 	if err != nil {
 		glog.Errorf(
 			"Can't write response for method '%s' and path '%s': %v",
@@ -154,12 +183,31 @@ func adaptSubscriptionDeleteRequest(w http.ResponseWriter, r *http.Request, serv
 	}
 }
 
+// readSubscriptionGetRequest reads the given HTTP requests and translates it
+// into an object of type SubscriptionGetServerRequest.
+func readSubscriptionGetRequest(r *http.Request) (*SubscriptionGetServerRequest, error) {
+	var err error
+	result := new(SubscriptionGetServerRequest)
+	return result, err
+}
+
+// writeSubscriptionGetResponse translates the given request object into an
+// HTTP response.
+func writeSubscriptionGetResponse(w http.ResponseWriter, r *SubscriptionGetServerResponse) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(r.status)
+	err := r.marshal(w)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 // adaptSubscriptionGetRequest translates the given HTTP request into a call to
 // the corresponding method of the given server. Then it translates the
 // results returned by that method into an HTTP response.
 func adaptSubscriptionGetRequest(w http.ResponseWriter, r *http.Request, server SubscriptionServer) {
-	request := &SubscriptionGetServerRequest{}
-	err := readSubscriptionGetRequest(request, r)
+	request, err := readSubscriptionGetRequest(r)
 	if err != nil {
 		glog.Errorf(
 			"Can't read request for method '%s' and path '%s': %v",
@@ -168,7 +216,7 @@ func adaptSubscriptionGetRequest(w http.ResponseWriter, r *http.Request, server 
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	response := &SubscriptionGetServerResponse{}
+	response := new(SubscriptionGetServerResponse)
 	response.status = 200
 	err = server.Get(r.Context(), request, response)
 	if err != nil {
@@ -179,7 +227,7 @@ func adaptSubscriptionGetRequest(w http.ResponseWriter, r *http.Request, server 
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	err = writeSubscriptionGetResponse(response, w)
+	err = writeSubscriptionGetResponse(w, response)
 	if err != nil {
 		glog.Errorf(
 			"Can't write response for method '%s' and path '%s': %v",

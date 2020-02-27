@@ -173,16 +173,16 @@ func (o *Resource) GetResourceType() (value string, ok bool) {
 	return
 }
 
-// ResourceListKind is the name of the type used to represent list of objects of
-// type 'resource'.
+// ResourceListKind is the name of the type used to represent list of
+// objects of type 'resource'.
 const ResourceListKind = "ResourceList"
 
-// ResourceListLinkKind is the name of the type used to represent links to list
-// of objects of type 'resource'.
+// ResourceListLinkKind is the name of the type used to represent links
+// to list of objects of type 'resource'.
 const ResourceListLinkKind = "ResourceListLink"
 
-// ResourceNilKind is the name of the type used to nil lists of objects of
-// type 'resource'.
+// ResourceNilKind is the name of the type used to nil lists of
+// objects of type 'resource'.
 const ResourceListNilKind = "ResourceListNil"
 
 // ResourceList is a list of values of the 'resource' type.

@@ -39,7 +39,7 @@ type Role struct {
 	href        *string
 	link        bool
 	name        *string
-	permissions []*Permission
+	permissions *PermissionList
 }
 
 // Kind returns the name of the type of the object.
@@ -98,7 +98,7 @@ func (o *Role) GetHREF() (value string, ok bool) {
 func (o *Role) Empty() bool {
 	return o == nil || (o.id == nil &&
 		o.name == nil &&
-		len(o.permissions) == 0 &&
+		o.permissions.Empty() &&
 		true)
 }
 
@@ -129,7 +129,7 @@ func (o *Role) GetName() (value string, ok bool) {
 // the zero value of the type if the attribute doesn't have a value.
 //
 //
-func (o *Role) Permissions() []*Permission {
+func (o *Role) Permissions() *PermissionList {
 	if o == nil {
 		return nil
 	}
@@ -140,7 +140,7 @@ func (o *Role) Permissions() []*Permission {
 // a flag indicating if the attribute has a value.
 //
 //
-func (o *Role) GetPermissions() (value []*Permission, ok bool) {
+func (o *Role) GetPermissions() (value *PermissionList, ok bool) {
 	ok = o != nil && o.permissions != nil
 	if ok {
 		value = o.permissions
@@ -148,16 +148,16 @@ func (o *Role) GetPermissions() (value []*Permission, ok bool) {
 	return
 }
 
-// RoleListKind is the name of the type used to represent list of objects of
-// type 'role'.
+// RoleListKind is the name of the type used to represent list of
+// objects of type 'role'.
 const RoleListKind = "RoleList"
 
-// RoleListLinkKind is the name of the type used to represent links to list
-// of objects of type 'role'.
+// RoleListLinkKind is the name of the type used to represent links
+// to list of objects of type 'role'.
 const RoleListLinkKind = "RoleListLink"
 
-// RoleNilKind is the name of the type used to nil lists of objects of
-// type 'role'.
+// RoleNilKind is the name of the type used to nil lists of
+// objects of type 'role'.
 const RoleListNilKind = "RoleListNil"
 
 // RoleList is a list of values of the 'role' type.

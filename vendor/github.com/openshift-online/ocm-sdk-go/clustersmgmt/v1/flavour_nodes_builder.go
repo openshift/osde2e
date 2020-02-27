@@ -33,7 +33,8 @@ func NewFlavourNodes() *FlavourNodesBuilder {
 	return new(FlavourNodesBuilder)
 }
 
-// Compute sets the value of the 'compute' attribute to the given value.
+// Compute sets the value of the 'compute' attribute
+// to the given value.
 //
 //
 func (b *FlavourNodesBuilder) Compute(value int) *FlavourNodesBuilder {
@@ -41,7 +42,8 @@ func (b *FlavourNodesBuilder) Compute(value int) *FlavourNodesBuilder {
 	return b
 }
 
-// Infra sets the value of the 'infra' attribute to the given value.
+// Infra sets the value of the 'infra' attribute
+// to the given value.
 //
 //
 func (b *FlavourNodesBuilder) Infra(value int) *FlavourNodesBuilder {
@@ -49,7 +51,8 @@ func (b *FlavourNodesBuilder) Infra(value int) *FlavourNodesBuilder {
 	return b
 }
 
-// Master sets the value of the 'master' attribute to the given value.
+// Master sets the value of the 'master' attribute
+// to the given value.
 //
 //
 func (b *FlavourNodesBuilder) Master(value int) *FlavourNodesBuilder {
@@ -71,8 +74,14 @@ func (b *FlavourNodesBuilder) Copy(object *FlavourNodes) *FlavourNodesBuilder {
 // Build creates a 'flavour_nodes' object using the configuration stored in the builder.
 func (b *FlavourNodesBuilder) Build() (object *FlavourNodes, err error) {
 	object = new(FlavourNodes)
-	object.compute = b.compute
-	object.infra = b.infra
-	object.master = b.master
+	if b.compute != nil {
+		object.compute = b.compute
+	}
+	if b.infra != nil {
+		object.infra = b.infra
+	}
+	if b.master != nil {
+		object.master = b.master
+	}
 	return
 }

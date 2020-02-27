@@ -37,19 +37,6 @@ func (b *AccessReviewRequestListBuilder) Items(values ...*AccessReviewRequestBui
 	return b
 }
 
-// Copy copies the items of the given list into this builder, discarding any previous items.
-func (b *AccessReviewRequestListBuilder) Copy(list *AccessReviewRequestList) *AccessReviewRequestListBuilder {
-	if list == nil || list.items == nil {
-		b.items = nil
-	} else {
-		b.items = make([]*AccessReviewRequestBuilder, len(list.items))
-		for i, v := range list.items {
-			b.items[i] = NewAccessReviewRequest().Copy(v)
-		}
-	}
-	return b
-}
-
 // Build creates a list of 'access_review_request' objects using the
 // configuration stored in the builder.
 func (b *AccessReviewRequestListBuilder) Build() (list *AccessReviewRequestList, err error) {

@@ -105,22 +105,8 @@ func (o *AWS) GetSecretAccessKey() (value string, ok bool) {
 	return
 }
 
-// AWSListKind is the name of the type used to represent list of objects of
-// type 'AWS'.
-const AWSListKind = "AWSList"
-
-// AWSListLinkKind is the name of the type used to represent links to list
-// of objects of type 'AWS'.
-const AWSListLinkKind = "AWSListLink"
-
-// AWSNilKind is the name of the type used to nil lists of objects of
-// type 'AWS'.
-const AWSListNilKind = "AWSListNil"
-
 // AWSList is a list of values of the 'AWS' type.
 type AWSList struct {
-	href  *string
-	link  bool
 	items []*AWS
 }
 

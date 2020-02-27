@@ -21,10 +21,13 @@ package v1 // github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1
 
 import (
 	"context"
+	"encoding/json"
+	"io"
 	"net/http"
 
 	"github.com/golang/glog"
 	"github.com/openshift-online/ocm-sdk-go/errors"
+	"github.com/openshift-online/ocm-sdk-go/helpers"
 )
 
 // RegistriesServer represents the interface the manages the 'registries' resource.
@@ -140,6 +143,32 @@ func (r *RegistriesListServerResponse) Status(value int) *RegistriesListServerRe
 	return r
 }
 
+// marshall is the method used internally to marshal responses for the
+// 'list' method.
+func (r *RegistriesListServerResponse) marshal(writer io.Writer) error {
+	var err error
+	encoder := json.NewEncoder(writer)
+	data := new(registriesListServerResponseData)
+	data.Items, err = r.items.wrap()
+	if err != nil {
+		return err
+	}
+	data.Page = r.page
+	data.Size = r.size
+	data.Total = r.total
+	err = encoder.Encode(data)
+	return err
+}
+
+// registriesListServerResponseData is the structure used internally to write the request of the
+// 'list' method.
+type registriesListServerResponseData struct {
+	Items registryListData "json:\"items,omitempty\""
+	Page  *int             "json:\"page,omitempty\""
+	Size  *int             "json:\"size,omitempty\""
+	Total *int             "json:\"total,omitempty\""
+}
+
 // dispatchRegistries navigates the servers tree rooted at the given server
 // till it finds one that matches the given set of path segments, and then invokes
 // the corresponding server.
@@ -148,29 +177,63 @@ func dispatchRegistries(w http.ResponseWriter, r *http.Request, server Registrie
 		switch r.Method {
 		case "GET":
 			adaptRegistriesListRequest(w, r, server)
-			return
 		default:
 			errors.SendMethodNotAllowed(w, r)
 			return
 		}
-	}
-	switch segments[0] {
-	default:
-		target := server.Registry(segments[0])
-		if target == nil {
-			errors.SendNotFound(w, r)
-			return
+	} else {
+		switch segments[0] {
+		default:
+			target := server.Registry(segments[0])
+			if target == nil {
+				errors.SendNotFound(w, r)
+				return
+			}
+			dispatchRegistry(w, r, target, segments[1:])
 		}
-		dispatchRegistry(w, r, target, segments[1:])
 	}
+}
+
+// readRegistriesListRequest reads the given HTTP requests and translates it
+// into an object of type RegistriesListServerRequest.
+func readRegistriesListRequest(r *http.Request) (*RegistriesListServerRequest, error) {
+	var err error
+	result := new(RegistriesListServerRequest)
+	query := r.URL.Query()
+	result.page, err = helpers.ParseInteger(query, "page")
+	if err != nil {
+		return nil, err
+	}
+	if result.page == nil {
+		result.page = helpers.NewInteger(1)
+	}
+	result.size, err = helpers.ParseInteger(query, "size")
+	if err != nil {
+		return nil, err
+	}
+	if result.size == nil {
+		result.size = helpers.NewInteger(100)
+	}
+	return result, err
+}
+
+// writeRegistriesListResponse translates the given request object into an
+// HTTP response.
+func writeRegistriesListResponse(w http.ResponseWriter, r *RegistriesListServerResponse) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(r.status)
+	err := r.marshal(w)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // adaptRegistriesListRequest translates the given HTTP request into a call to
 // the corresponding method of the given server. Then it translates the
 // results returned by that method into an HTTP response.
 func adaptRegistriesListRequest(w http.ResponseWriter, r *http.Request, server RegistriesServer) {
-	request := &RegistriesListServerRequest{}
-	err := readRegistriesListRequest(request, r)
+	request, err := readRegistriesListRequest(r)
 	if err != nil {
 		glog.Errorf(
 			"Can't read request for method '%s' and path '%s': %v",
@@ -179,7 +242,7 @@ func adaptRegistriesListRequest(w http.ResponseWriter, r *http.Request, server R
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	response := &RegistriesListServerResponse{}
+	response := new(RegistriesListServerResponse)
 	response.status = 200
 	err = server.List(r.Context(), request, response)
 	if err != nil {
@@ -190,7 +253,7 @@ func adaptRegistriesListRequest(w http.ResponseWriter, r *http.Request, server R
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	err = writeRegistriesListResponse(response, w)
+	err = writeRegistriesListResponse(w, response)
 	if err != nil {
 		glog.Errorf(
 			"Can't write response for method '%s' and path '%s': %v",

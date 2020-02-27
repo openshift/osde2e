@@ -36,14 +36,16 @@ const FlavourNilKind = "FlavourNil"
 // Set of predefined properties of a cluster. For example, a _huge_ flavour can be a cluster
 // with 10 infra nodes and 1000 compute nodes.
 type Flavour struct {
-	id      *string
-	href    *string
-	link    bool
-	aws     *AWSFlavour
-	gcp     *GCPFlavour
-	name    *string
-	network *Network
-	nodes   *FlavourNodes
+	id                  *string
+	href                *string
+	link                bool
+	aws                 *AWSFlavour
+	computeInstanceType *string
+	infraInstanceType   *string
+	masterInstanceType  *string
+	name                *string
+	network             *Network
+	nodes               *FlavourNodes
 }
 
 // Kind returns the name of the type of the object.
@@ -101,7 +103,13 @@ func (o *Flavour) GetHREF() (value string, ok bool) {
 // Empty returns true if the object is empty, i.e. no attribute has a value.
 func (o *Flavour) Empty() bool {
 	return o == nil || (o.id == nil &&
+		o.aws == nil &&
+		o.computeInstanceType == nil &&
+		o.infraInstanceType == nil &&
+		o.masterInstanceType == nil &&
 		o.name == nil &&
+		o.network == nil &&
+		o.nodes == nil &&
 		true)
 }
 
@@ -109,6 +117,8 @@ func (o *Flavour) Empty() bool {
 // the zero value of the type if the attribute doesn't have a value.
 //
 // Default _Amazon Web Services_ settings of the cluster.
+//
+// These can be overriden specifying in the clsuter itself a different set of settings.
 func (o *Flavour) AWS() *AWSFlavour {
 	if o == nil {
 		return nil
@@ -120,6 +130,8 @@ func (o *Flavour) AWS() *AWSFlavour {
 // a flag indicating if the attribute has a value.
 //
 // Default _Amazon Web Services_ settings of the cluster.
+//
+// These can be overriden specifying in the clsuter itself a different set of settings.
 func (o *Flavour) GetAWS() (value *AWSFlavour, ok bool) {
 	ok = o != nil && o.aws != nil
 	if ok {
@@ -128,25 +140,75 @@ func (o *Flavour) GetAWS() (value *AWSFlavour, ok bool) {
 	return
 }
 
-// GCP returns the value of the 'GCP' attribute, or
+// ComputeInstanceType returns the value of the 'compute_instance_type' attribute, or
 // the zero value of the type if the attribute doesn't have a value.
 //
-// Default _Google Cloud Platform_ settings of the cluster.
-func (o *Flavour) GCP() *GCPFlavour {
-	if o == nil {
-		return nil
+// AWS default instance type for the worker volume.
+//
+// Tins can be overriden specifying in the cluster itself a type for compute node.
+func (o *Flavour) ComputeInstanceType() string {
+	if o != nil && o.computeInstanceType != nil {
+		return *o.computeInstanceType
 	}
-	return o.gcp
+	return ""
 }
 
-// GetGCP returns the value of the 'GCP' attribute and
+// GetComputeInstanceType returns the value of the 'compute_instance_type' attribute and
 // a flag indicating if the attribute has a value.
 //
-// Default _Google Cloud Platform_ settings of the cluster.
-func (o *Flavour) GetGCP() (value *GCPFlavour, ok bool) {
-	ok = o != nil && o.gcp != nil
+// AWS default instance type for the worker volume.
+//
+// Tins can be overriden specifying in the cluster itself a type for compute node.
+func (o *Flavour) GetComputeInstanceType() (value string, ok bool) {
+	ok = o != nil && o.computeInstanceType != nil
 	if ok {
-		value = o.gcp
+		value = *o.computeInstanceType
+	}
+	return
+}
+
+// InfraInstanceType returns the value of the 'infra_instance_type' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+// AWS default instance type for the infra volume.
+func (o *Flavour) InfraInstanceType() string {
+	if o != nil && o.infraInstanceType != nil {
+		return *o.infraInstanceType
+	}
+	return ""
+}
+
+// GetInfraInstanceType returns the value of the 'infra_instance_type' attribute and
+// a flag indicating if the attribute has a value.
+//
+// AWS default instance type for the infra volume.
+func (o *Flavour) GetInfraInstanceType() (value string, ok bool) {
+	ok = o != nil && o.infraInstanceType != nil
+	if ok {
+		value = *o.infraInstanceType
+	}
+	return
+}
+
+// MasterInstanceType returns the value of the 'master_instance_type' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+// AWS default instance type for the master volume.
+func (o *Flavour) MasterInstanceType() string {
+	if o != nil && o.masterInstanceType != nil {
+		return *o.masterInstanceType
+	}
+	return ""
+}
+
+// GetMasterInstanceType returns the value of the 'master_instance_type' attribute and
+// a flag indicating if the attribute has a value.
+//
+// AWS default instance type for the master volume.
+func (o *Flavour) GetMasterInstanceType() (value string, ok bool) {
+	ok = o != nil && o.masterInstanceType != nil
+	if ok {
+		value = *o.masterInstanceType
 	}
 	return
 }
@@ -185,7 +247,7 @@ func (o *Flavour) GetName() (value string, ok bool) {
 //
 // Default network settings of the cluster.
 //
-// These can be overridden specifying in the cluster itself a different set of settings.
+// These can be overriden specifying in the cluster itself a different set of settings.
 func (o *Flavour) Network() *Network {
 	if o == nil {
 		return nil
@@ -198,7 +260,7 @@ func (o *Flavour) Network() *Network {
 //
 // Default network settings of the cluster.
 //
-// These can be overridden specifying in the cluster itself a different set of settings.
+// These can be overriden specifying in the cluster itself a different set of settings.
 func (o *Flavour) GetNetwork() (value *Network, ok bool) {
 	ok = o != nil && o.network != nil
 	if ok {
@@ -213,7 +275,7 @@ func (o *Flavour) GetNetwork() (value *Network, ok bool) {
 // Number of nodes that will be used by default when creating a cluster that uses
 // this flavour.
 //
-// These can be overridden specifying in the cluster itself a different number of nodes.
+// These can be overriden specifying in the cluster itself a different number of nodes.
 func (o *Flavour) Nodes() *FlavourNodes {
 	if o == nil {
 		return nil
@@ -227,7 +289,7 @@ func (o *Flavour) Nodes() *FlavourNodes {
 // Number of nodes that will be used by default when creating a cluster that uses
 // this flavour.
 //
-// These can be overridden specifying in the cluster itself a different number of nodes.
+// These can be overriden specifying in the cluster itself a different number of nodes.
 func (o *Flavour) GetNodes() (value *FlavourNodes, ok bool) {
 	ok = o != nil && o.nodes != nil
 	if ok {
@@ -236,16 +298,16 @@ func (o *Flavour) GetNodes() (value *FlavourNodes, ok bool) {
 	return
 }
 
-// FlavourListKind is the name of the type used to represent list of objects of
-// type 'flavour'.
+// FlavourListKind is the name of the type used to represent list of
+// objects of type 'flavour'.
 const FlavourListKind = "FlavourList"
 
-// FlavourListLinkKind is the name of the type used to represent links to list
-// of objects of type 'flavour'.
+// FlavourListLinkKind is the name of the type used to represent links
+// to list of objects of type 'flavour'.
 const FlavourListLinkKind = "FlavourListLink"
 
-// FlavourNilKind is the name of the type used to nil lists of objects of
-// type 'flavour'.
+// FlavourNilKind is the name of the type used to nil lists of
+// objects of type 'flavour'.
 const FlavourListNilKind = "FlavourListNil"
 
 // FlavourList is a list of values of the 'flavour' type.

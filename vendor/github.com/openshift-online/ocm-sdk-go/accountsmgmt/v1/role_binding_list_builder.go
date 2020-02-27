@@ -37,19 +37,6 @@ func (b *RoleBindingListBuilder) Items(values ...*RoleBindingBuilder) *RoleBindi
 	return b
 }
 
-// Copy copies the items of the given list into this builder, discarding any previous items.
-func (b *RoleBindingListBuilder) Copy(list *RoleBindingList) *RoleBindingListBuilder {
-	if list == nil || list.items == nil {
-		b.items = nil
-	} else {
-		b.items = make([]*RoleBindingBuilder, len(list.items))
-		for i, v := range list.items {
-			b.items[i] = NewRoleBinding().Copy(v)
-		}
-	}
-	return b
-}
-
 // Build creates a list of 'role_binding' objects using the
 // configuration stored in the builder.
 func (b *RoleBindingListBuilder) Build() (list *RoleBindingList, err error) {

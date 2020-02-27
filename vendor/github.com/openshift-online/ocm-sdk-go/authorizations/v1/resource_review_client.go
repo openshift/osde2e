@@ -22,12 +22,12 @@ package v1 // github.com/openshift-online/ocm-sdk-go/authorizations/v1
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 
-	jsoniter "github.com/json-iterator/go"
 	"github.com/openshift-online/ocm-sdk-go/errors"
 	"github.com/openshift-online/ocm-sdk-go/helpers"
 )
@@ -42,14 +42,14 @@ type ResourceReviewClient struct {
 }
 
 // NewResourceReviewClient creates a new client for the 'resource_review'
-// resource using the given transport to send the requests and receive the
+// resource using the given transport to sned the requests and receive the
 // responses.
 func NewResourceReviewClient(transport http.RoundTripper, path string, metric string) *ResourceReviewClient {
-	return &ResourceReviewClient{
-		transport: transport,
-		path:      path,
-		metric:    metric,
-	}
+	client := new(ResourceReviewClient)
+	client.transport = transport
+	client.path = path
+	client.metric = metric
+	return client
 }
 
 // Post creates a request for the 'post' method.
@@ -57,11 +57,11 @@ func NewResourceReviewClient(transport http.RoundTripper, path string, metric st
 // Returns the list of identifiers of the resources that an account can
 // perform the specified action upon.
 func (c *ResourceReviewClient) Post() *ResourceReviewPostRequest {
-	return &ResourceReviewPostRequest{
-		transport: c.transport,
-		path:      c.path,
-		metric:    c.metric,
-	}
+	request := new(ResourceReviewPostRequest)
+	request.transport = c.transport
+	request.path = c.path
+	request.metric = c.metric
+	return request
 }
 
 // ResourceReviewPostRequest is the request for the 'post' method.
@@ -106,8 +106,8 @@ func (r *ResourceReviewPostRequest) Send() (result *ResourceReviewPostResponse, 
 func (r *ResourceReviewPostRequest) SendContext(ctx context.Context) (result *ResourceReviewPostResponse, err error) {
 	query := helpers.CopyQuery(r.query)
 	header := helpers.SetHeader(r.header, r.metric)
-	buffer := &bytes.Buffer{}
-	err = writeResourceReviewPostRequest(r, buffer)
+	buffer := new(bytes.Buffer)
+	err = r.marshal(buffer)
 	if err != nil {
 		return
 	}
@@ -129,7 +129,7 @@ func (r *ResourceReviewPostRequest) SendContext(ctx context.Context) (result *Re
 		return
 	}
 	defer response.Body.Close()
-	result = &ResourceReviewPostResponse{}
+	result = new(ResourceReviewPostResponse)
 	result.status = response.StatusCode
 	result.header = response.Header
 	if result.status >= 400 {
@@ -140,7 +140,7 @@ func (r *ResourceReviewPostRequest) SendContext(ctx context.Context) (result *Re
 		err = result.err
 		return
 	}
-	err = readResourceReviewPostResponse(result, response.Body)
+	err = result.unmarshal(response.Body)
 	if err != nil {
 		return
 	}
@@ -150,11 +150,14 @@ func (r *ResourceReviewPostRequest) SendContext(ctx context.Context) (result *Re
 // marshall is the method used internally to marshal requests for the
 // 'post' method.
 func (r *ResourceReviewPostRequest) marshal(writer io.Writer) error {
-	stream := helpers.NewStream(writer)
-	r.stream(stream)
-	return stream.Error
-}
-func (r *ResourceReviewPostRequest) stream(stream *jsoniter.Stream) {
+	var err error
+	encoder := json.NewEncoder(writer)
+	data, err := r.request.wrap()
+	if err != nil {
+		return err
+	}
+	err = encoder.Encode(data)
+	return err
 }
 
 // ResourceReviewPostResponse is the response for the 'post' method.
@@ -209,4 +212,21 @@ func (r *ResourceReviewPostResponse) GetReview() (value *ResourceReview, ok bool
 		value = r.review
 	}
 	return
+}
+
+// unmarshal is the method used internally to unmarshal responses to the
+// 'post' method.
+func (r *ResourceReviewPostResponse) unmarshal(reader io.Reader) error {
+	var err error
+	decoder := json.NewDecoder(reader)
+	data := new(resourceReviewData)
+	err = decoder.Decode(data)
+	if err != nil {
+		return err
+	}
+	r.review, err = data.unwrap()
+	if err != nil {
+		return err
+	}
+	return err
 }

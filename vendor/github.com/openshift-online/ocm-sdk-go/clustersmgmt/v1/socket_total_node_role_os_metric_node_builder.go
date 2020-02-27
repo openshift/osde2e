@@ -39,7 +39,8 @@ func NewSocketTotalNodeRoleOSMetricNode() *SocketTotalNodeRoleOSMetricNodeBuilde
 	return new(SocketTotalNodeRoleOSMetricNodeBuilder)
 }
 
-// NodeRoles sets the value of the 'node_roles' attribute to the given values.
+// NodeRoles sets the value of the 'node_roles' attribute
+// to the given values.
 //
 //
 func (b *SocketTotalNodeRoleOSMetricNodeBuilder) NodeRoles(values ...string) *SocketTotalNodeRoleOSMetricNodeBuilder {
@@ -48,7 +49,8 @@ func (b *SocketTotalNodeRoleOSMetricNodeBuilder) NodeRoles(values ...string) *So
 	return b
 }
 
-// OperatingSystem sets the value of the 'operating_system' attribute to the given value.
+// OperatingSystem sets the value of the 'operating_system' attribute
+// to the given value.
 //
 //
 func (b *SocketTotalNodeRoleOSMetricNodeBuilder) OperatingSystem(value string) *SocketTotalNodeRoleOSMetricNodeBuilder {
@@ -56,7 +58,8 @@ func (b *SocketTotalNodeRoleOSMetricNodeBuilder) OperatingSystem(value string) *
 	return b
 }
 
-// SocketTotal sets the value of the 'socket_total' attribute to the given value.
+// SocketTotal sets the value of the 'socket_total' attribute
+// to the given value.
 //
 //
 func (b *SocketTotalNodeRoleOSMetricNodeBuilder) SocketTotal(value float64) *SocketTotalNodeRoleOSMetricNodeBuilder {
@@ -64,7 +67,8 @@ func (b *SocketTotalNodeRoleOSMetricNodeBuilder) SocketTotal(value float64) *Soc
 	return b
 }
 
-// Time sets the value of the 'time' attribute to the given value.
+// Time sets the value of the 'time' attribute
+// to the given value.
 //
 //
 func (b *SocketTotalNodeRoleOSMetricNodeBuilder) Time(value time.Time) *SocketTotalNodeRoleOSMetricNodeBuilder {
@@ -77,7 +81,7 @@ func (b *SocketTotalNodeRoleOSMetricNodeBuilder) Copy(object *SocketTotalNodeRol
 	if object == nil {
 		return b
 	}
-	if object.nodeRoles != nil {
+	if len(object.nodeRoles) > 0 {
 		b.nodeRoles = make([]string, len(object.nodeRoles))
 		copy(b.nodeRoles, object.nodeRoles)
 	} else {
@@ -96,8 +100,14 @@ func (b *SocketTotalNodeRoleOSMetricNodeBuilder) Build() (object *SocketTotalNod
 		object.nodeRoles = make([]string, len(b.nodeRoles))
 		copy(object.nodeRoles, b.nodeRoles)
 	}
-	object.operatingSystem = b.operatingSystem
-	object.socketTotal = b.socketTotal
-	object.time = b.time
+	if b.operatingSystem != nil {
+		object.operatingSystem = b.operatingSystem
+	}
+	if b.socketTotal != nil {
+		object.socketTotal = b.socketTotal
+	}
+	if b.time != nil {
+		object.time = b.time
+	}
 	return
 }

@@ -32,7 +32,8 @@ func NewAccessTokenAuth() *AccessTokenAuthBuilder {
 	return new(AccessTokenAuthBuilder)
 }
 
-// Auth sets the value of the 'auth' attribute to the given value.
+// Auth sets the value of the 'auth' attribute
+// to the given value.
 //
 //
 func (b *AccessTokenAuthBuilder) Auth(value string) *AccessTokenAuthBuilder {
@@ -40,7 +41,8 @@ func (b *AccessTokenAuthBuilder) Auth(value string) *AccessTokenAuthBuilder {
 	return b
 }
 
-// Email sets the value of the 'email' attribute to the given value.
+// Email sets the value of the 'email' attribute
+// to the given value.
 //
 //
 func (b *AccessTokenAuthBuilder) Email(value string) *AccessTokenAuthBuilder {
@@ -61,7 +63,11 @@ func (b *AccessTokenAuthBuilder) Copy(object *AccessTokenAuth) *AccessTokenAuthB
 // Build creates a 'access_token_auth' object using the configuration stored in the builder.
 func (b *AccessTokenAuthBuilder) Build() (object *AccessTokenAuth, err error) {
 	object = new(AccessTokenAuth)
-	object.auth = b.auth
-	object.email = b.email
+	if b.auth != nil {
+		object.auth = b.auth
+	}
+	if b.email != nil {
+		object.email = b.email
+	}
 	return
 }

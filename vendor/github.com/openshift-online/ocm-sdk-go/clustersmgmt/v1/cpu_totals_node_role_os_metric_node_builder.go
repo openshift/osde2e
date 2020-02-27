@@ -32,7 +32,8 @@ func NewCPUTotalsNodeRoleOSMetricNode() *CPUTotalsNodeRoleOSMetricNodeBuilder {
 	return new(CPUTotalsNodeRoleOSMetricNodeBuilder)
 }
 
-// CPUTotals sets the value of the 'CPU_totals' attribute to the given values.
+// CPUTotals sets the value of the 'CPU_totals' attribute
+// to the given values.
 //
 //
 func (b *CPUTotalsNodeRoleOSMetricNodeBuilder) CPUTotals(values ...*CPUTotalNodeRoleOSMetricNodeBuilder) *CPUTotalsNodeRoleOSMetricNodeBuilder {
@@ -46,10 +47,10 @@ func (b *CPUTotalsNodeRoleOSMetricNodeBuilder) Copy(object *CPUTotalsNodeRoleOSM
 	if object == nil {
 		return b
 	}
-	if object.cpuTotals != nil {
-		b.cpuTotals = make([]*CPUTotalNodeRoleOSMetricNodeBuilder, len(object.cpuTotals))
-		for i, v := range object.cpuTotals {
-			b.cpuTotals[i] = NewCPUTotalNodeRoleOSMetricNode().Copy(v)
+	if object.cpuTotals != nil && len(object.cpuTotals.items) > 0 {
+		b.cpuTotals = make([]*CPUTotalNodeRoleOSMetricNodeBuilder, len(object.cpuTotals.items))
+		for i, item := range object.cpuTotals.items {
+			b.cpuTotals[i] = NewCPUTotalNodeRoleOSMetricNode().Copy(item)
 		}
 	} else {
 		b.cpuTotals = nil
@@ -61,9 +62,10 @@ func (b *CPUTotalsNodeRoleOSMetricNodeBuilder) Copy(object *CPUTotalsNodeRoleOSM
 func (b *CPUTotalsNodeRoleOSMetricNodeBuilder) Build() (object *CPUTotalsNodeRoleOSMetricNode, err error) {
 	object = new(CPUTotalsNodeRoleOSMetricNode)
 	if b.cpuTotals != nil {
-		object.cpuTotals = make([]*CPUTotalNodeRoleOSMetricNode, len(b.cpuTotals))
-		for i, v := range b.cpuTotals {
-			object.cpuTotals[i], err = v.Build()
+		object.cpuTotals = new(CPUTotalNodeRoleOSMetricNodeList)
+		object.cpuTotals.items = make([]*CPUTotalNodeRoleOSMetricNode, len(b.cpuTotals))
+		for i, item := range b.cpuTotals {
+			object.cpuTotals.items[i], err = item.Build()
 			if err != nil {
 				return
 			}

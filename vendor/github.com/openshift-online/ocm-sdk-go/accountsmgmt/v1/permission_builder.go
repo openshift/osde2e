@@ -54,7 +54,8 @@ func (b *PermissionBuilder) Link(value bool) *PermissionBuilder {
 	return b
 }
 
-// Action sets the value of the 'action' attribute to the given value.
+// Action sets the value of the 'action' attribute
+// to the given value.
 //
 // Possible actions for a permission.
 func (b *PermissionBuilder) Action(value Action) *PermissionBuilder {
@@ -62,7 +63,8 @@ func (b *PermissionBuilder) Action(value Action) *PermissionBuilder {
 	return b
 }
 
-// ResourceType sets the value of the 'resource_type' attribute to the given value.
+// ResourceType sets the value of the 'resource_type' attribute
+// to the given value.
 //
 //
 func (b *PermissionBuilder) ResourceType(value string) *PermissionBuilder {
@@ -70,7 +72,8 @@ func (b *PermissionBuilder) ResourceType(value string) *PermissionBuilder {
 	return b
 }
 
-// RoleID sets the value of the 'role_ID' attribute to the given value.
+// RoleID sets the value of the 'role_ID' attribute
+// to the given value.
 //
 //
 func (b *PermissionBuilder) RoleID(value string) *PermissionBuilder {
@@ -98,8 +101,14 @@ func (b *PermissionBuilder) Build() (object *Permission, err error) {
 	object.id = b.id
 	object.href = b.href
 	object.link = b.link
-	object.action = b.action
-	object.resourceType = b.resourceType
-	object.roleID = b.roleID
+	if b.action != nil {
+		object.action = b.action
+	}
+	if b.resourceType != nil {
+		object.resourceType = b.resourceType
+	}
+	if b.roleID != nil {
+		object.roleID = b.roleID
+	}
 	return
 }

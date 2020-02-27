@@ -22,13 +22,13 @@ package v1 // github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"path"
 
-	jsoniter "github.com/json-iterator/go"
 	"github.com/openshift-online/ocm-sdk-go/errors"
 	"github.com/openshift-online/ocm-sdk-go/helpers"
 )
@@ -43,36 +43,36 @@ type AccountsClient struct {
 }
 
 // NewAccountsClient creates a new client for the 'accounts'
-// resource using the given transport to send the requests and receive the
+// resource using the given transport to sned the requests and receive the
 // responses.
 func NewAccountsClient(transport http.RoundTripper, path string, metric string) *AccountsClient {
-	return &AccountsClient{
-		transport: transport,
-		path:      path,
-		metric:    metric,
-	}
+	client := new(AccountsClient)
+	client.transport = transport
+	client.path = path
+	client.metric = metric
+	return client
 }
 
 // Add creates a request for the 'add' method.
 //
 // Creates a new account.
 func (c *AccountsClient) Add() *AccountsAddRequest {
-	return &AccountsAddRequest{
-		transport: c.transport,
-		path:      c.path,
-		metric:    c.metric,
-	}
+	request := new(AccountsAddRequest)
+	request.transport = c.transport
+	request.path = c.path
+	request.metric = c.metric
+	return request
 }
 
 // List creates a request for the 'list' method.
 //
 // Retrieves the list of accounts.
 func (c *AccountsClient) List() *AccountsListRequest {
-	return &AccountsListRequest{
-		transport: c.transport,
-		path:      c.path,
-		metric:    c.metric,
-	}
+	request := new(AccountsListRequest)
+	request.transport = c.transport
+	request.path = c.path
+	request.metric = c.metric
+	return request
 }
 
 // Account returns the target 'account' resource for the given identifier.
@@ -128,8 +128,8 @@ func (r *AccountsAddRequest) Send() (result *AccountsAddResponse, err error) {
 func (r *AccountsAddRequest) SendContext(ctx context.Context) (result *AccountsAddResponse, err error) {
 	query := helpers.CopyQuery(r.query)
 	header := helpers.SetHeader(r.header, r.metric)
-	buffer := &bytes.Buffer{}
-	err = writeAccountsAddRequest(r, buffer)
+	buffer := new(bytes.Buffer)
+	err = r.marshal(buffer)
 	if err != nil {
 		return
 	}
@@ -151,7 +151,7 @@ func (r *AccountsAddRequest) SendContext(ctx context.Context) (result *AccountsA
 		return
 	}
 	defer response.Body.Close()
-	result = &AccountsAddResponse{}
+	result = new(AccountsAddResponse)
 	result.status = response.StatusCode
 	result.header = response.Header
 	if result.status >= 400 {
@@ -162,7 +162,7 @@ func (r *AccountsAddRequest) SendContext(ctx context.Context) (result *AccountsA
 		err = result.err
 		return
 	}
-	err = readAccountsAddResponse(result, response.Body)
+	err = result.unmarshal(response.Body)
 	if err != nil {
 		return
 	}
@@ -172,11 +172,14 @@ func (r *AccountsAddRequest) SendContext(ctx context.Context) (result *AccountsA
 // marshall is the method used internally to marshal requests for the
 // 'add' method.
 func (r *AccountsAddRequest) marshal(writer io.Writer) error {
-	stream := helpers.NewStream(writer)
-	r.stream(stream)
-	return stream.Error
-}
-func (r *AccountsAddRequest) stream(stream *jsoniter.Stream) {
+	var err error
+	encoder := json.NewEncoder(writer)
+	data, err := r.body.wrap()
+	if err != nil {
+		return err
+	}
+	err = encoder.Encode(data)
+	return err
 }
 
 // AccountsAddResponse is the response for the 'add' method.
@@ -231,6 +234,23 @@ func (r *AccountsAddResponse) GetBody() (value *Account, ok bool) {
 		value = r.body
 	}
 	return
+}
+
+// unmarshal is the method used internally to unmarshal responses to the
+// 'add' method.
+func (r *AccountsAddResponse) unmarshal(reader io.Reader) error {
+	var err error
+	decoder := json.NewDecoder(reader)
+	data := new(accountData)
+	err = decoder.Decode(data)
+	if err != nil {
+		return err
+	}
+	r.body, err = data.unwrap()
+	if err != nil {
+		return err
+	}
+	return err
 }
 
 // AccountsListRequest is the request for the 'list' method.
@@ -356,7 +376,7 @@ func (r *AccountsListRequest) SendContext(ctx context.Context) (result *Accounts
 		return
 	}
 	defer response.Body.Close()
-	result = &AccountsListResponse{}
+	result = new(AccountsListResponse)
 	result.status = response.StatusCode
 	result.header = response.Header
 	if result.status >= 400 {
@@ -367,7 +387,7 @@ func (r *AccountsListRequest) SendContext(ctx context.Context) (result *Accounts
 		err = result.err
 		return
 	}
-	err = readAccountsListResponse(result, response.Body)
+	err = result.unmarshal(response.Body)
 	if err != nil {
 		return
 	}
@@ -497,4 +517,33 @@ func (r *AccountsListResponse) GetTotal() (value int, ok bool) {
 		value = *r.total
 	}
 	return
+}
+
+// unmarshal is the method used internally to unmarshal responses to the
+// 'list' method.
+func (r *AccountsListResponse) unmarshal(reader io.Reader) error {
+	var err error
+	decoder := json.NewDecoder(reader)
+	data := new(accountsListResponseData)
+	err = decoder.Decode(data)
+	if err != nil {
+		return err
+	}
+	r.items, err = data.Items.unwrap()
+	if err != nil {
+		return err
+	}
+	r.page = data.Page
+	r.size = data.Size
+	r.total = data.Total
+	return err
+}
+
+// accountsListResponseData is the structure used internally to unmarshal
+// the response of the 'list' method.
+type accountsListResponseData struct {
+	Items accountListData "json:\"items,omitempty\""
+	Page  *int            "json:\"page,omitempty\""
+	Size  *int            "json:\"size,omitempty\""
+	Total *int            "json:\"total,omitempty\""
 }

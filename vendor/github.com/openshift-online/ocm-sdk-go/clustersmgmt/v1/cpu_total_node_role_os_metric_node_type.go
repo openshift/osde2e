@@ -134,22 +134,8 @@ func (o *CPUTotalNodeRoleOSMetricNode) GetTime() (value time.Time, ok bool) {
 	return
 }
 
-// CPUTotalNodeRoleOSMetricNodeListKind is the name of the type used to represent list of objects of
-// type 'CPU_total_node_role_OS_metric_node'.
-const CPUTotalNodeRoleOSMetricNodeListKind = "CPUTotalNodeRoleOSMetricNodeList"
-
-// CPUTotalNodeRoleOSMetricNodeListLinkKind is the name of the type used to represent links to list
-// of objects of type 'CPU_total_node_role_OS_metric_node'.
-const CPUTotalNodeRoleOSMetricNodeListLinkKind = "CPUTotalNodeRoleOSMetricNodeListLink"
-
-// CPUTotalNodeRoleOSMetricNodeNilKind is the name of the type used to nil lists of objects of
-// type 'CPU_total_node_role_OS_metric_node'.
-const CPUTotalNodeRoleOSMetricNodeListNilKind = "CPUTotalNodeRoleOSMetricNodeListNil"
-
 // CPUTotalNodeRoleOSMetricNodeList is a list of values of the 'CPU_total_node_role_OS_metric_node' type.
 type CPUTotalNodeRoleOSMetricNodeList struct {
-	href  *string
-	link  bool
 	items []*CPUTotalNodeRoleOSMetricNode
 }
 

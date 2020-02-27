@@ -49,7 +49,8 @@ func NewValue() *ValueBuilder {
 	return new(ValueBuilder)
 }
 
-// Unit sets the value of the 'unit' attribute to the given value.
+// Unit sets the value of the 'unit' attribute
+// to the given value.
 //
 //
 func (b *ValueBuilder) Unit(value string) *ValueBuilder {
@@ -57,7 +58,8 @@ func (b *ValueBuilder) Unit(value string) *ValueBuilder {
 	return b
 }
 
-// Value sets the value of the 'value' attribute to the given value.
+// Value sets the value of the 'value' attribute
+// to the given value.
 //
 //
 func (b *ValueBuilder) Value(value float64) *ValueBuilder {
@@ -78,7 +80,11 @@ func (b *ValueBuilder) Copy(object *Value) *ValueBuilder {
 // Build creates a 'value' object using the configuration stored in the builder.
 func (b *ValueBuilder) Build() (object *Value, err error) {
 	object = new(Value)
-	object.unit = b.unit
-	object.value = b.value
+	if b.unit != nil {
+		object.unit = b.unit
+	}
+	if b.value != nil {
+		object.value = b.value
+	}
 	return
 }

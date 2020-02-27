@@ -42,7 +42,7 @@ type SKU struct {
 	availabilityZoneType *string
 	resourceName         *string
 	resourceType         *string
-	resources            []*Resource
+	resources            *ResourceList
 }
 
 // Kind returns the name of the type of the object.
@@ -104,7 +104,7 @@ func (o *SKU) Empty() bool {
 		o.availabilityZoneType == nil &&
 		o.resourceName == nil &&
 		o.resourceType == nil &&
-		len(o.resources) == 0 &&
+		o.resources.Empty() &&
 		true)
 }
 
@@ -204,7 +204,7 @@ func (o *SKU) GetResourceType() (value string, ok bool) {
 // the zero value of the type if the attribute doesn't have a value.
 //
 //
-func (o *SKU) Resources() []*Resource {
+func (o *SKU) Resources() *ResourceList {
 	if o == nil {
 		return nil
 	}
@@ -215,7 +215,7 @@ func (o *SKU) Resources() []*Resource {
 // a flag indicating if the attribute has a value.
 //
 //
-func (o *SKU) GetResources() (value []*Resource, ok bool) {
+func (o *SKU) GetResources() (value *ResourceList, ok bool) {
 	ok = o != nil && o.resources != nil
 	if ok {
 		value = o.resources
@@ -223,16 +223,16 @@ func (o *SKU) GetResources() (value []*Resource, ok bool) {
 	return
 }
 
-// SKUListKind is the name of the type used to represent list of objects of
-// type 'SKU'.
+// SKUListKind is the name of the type used to represent list of
+// objects of type 'SKU'.
 const SKUListKind = "SKUList"
 
-// SKUListLinkKind is the name of the type used to represent links to list
-// of objects of type 'SKU'.
+// SKUListLinkKind is the name of the type used to represent links
+// to list of objects of type 'SKU'.
 const SKUListLinkKind = "SKUListLink"
 
-// SKUNilKind is the name of the type used to nil lists of objects of
-// type 'SKU'.
+// SKUNilKind is the name of the type used to nil lists of
+// objects of type 'SKU'.
 const SKUListNilKind = "SKUListNil"
 
 // SKUList is a list of values of the 'SKU' type.

@@ -33,7 +33,8 @@ func NewOpenIDURLs() *OpenIDURLsBuilder {
 	return new(OpenIDURLsBuilder)
 }
 
-// Authorize sets the value of the 'authorize' attribute to the given value.
+// Authorize sets the value of the 'authorize' attribute
+// to the given value.
 //
 //
 func (b *OpenIDURLsBuilder) Authorize(value string) *OpenIDURLsBuilder {
@@ -41,7 +42,8 @@ func (b *OpenIDURLsBuilder) Authorize(value string) *OpenIDURLsBuilder {
 	return b
 }
 
-// Token sets the value of the 'token' attribute to the given value.
+// Token sets the value of the 'token' attribute
+// to the given value.
 //
 //
 func (b *OpenIDURLsBuilder) Token(value string) *OpenIDURLsBuilder {
@@ -49,7 +51,8 @@ func (b *OpenIDURLsBuilder) Token(value string) *OpenIDURLsBuilder {
 	return b
 }
 
-// UserInfo sets the value of the 'user_info' attribute to the given value.
+// UserInfo sets the value of the 'user_info' attribute
+// to the given value.
 //
 //
 func (b *OpenIDURLsBuilder) UserInfo(value string) *OpenIDURLsBuilder {
@@ -71,8 +74,14 @@ func (b *OpenIDURLsBuilder) Copy(object *OpenIDURLs) *OpenIDURLsBuilder {
 // Build creates a 'open_IDURLs' object using the configuration stored in the builder.
 func (b *OpenIDURLsBuilder) Build() (object *OpenIDURLs, err error) {
 	object = new(OpenIDURLs)
-	object.authorize = b.authorize
-	object.token = b.token
-	object.userInfo = b.userInfo
+	if b.authorize != nil {
+		object.authorize = b.authorize
+	}
+	if b.token != nil {
+		object.token = b.token
+	}
+	if b.userInfo != nil {
+		object.userInfo = b.userInfo
+	}
 	return
 }

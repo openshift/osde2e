@@ -36,7 +36,8 @@ func NewSelfAccessReviewRequest() *SelfAccessReviewRequestBuilder {
 	return new(SelfAccessReviewRequestBuilder)
 }
 
-// Action sets the value of the 'action' attribute to the given value.
+// Action sets the value of the 'action' attribute
+// to the given value.
 //
 //
 func (b *SelfAccessReviewRequestBuilder) Action(value string) *SelfAccessReviewRequestBuilder {
@@ -44,7 +45,8 @@ func (b *SelfAccessReviewRequestBuilder) Action(value string) *SelfAccessReviewR
 	return b
 }
 
-// ClusterID sets the value of the 'cluster_ID' attribute to the given value.
+// ClusterID sets the value of the 'cluster_ID' attribute
+// to the given value.
 //
 //
 func (b *SelfAccessReviewRequestBuilder) ClusterID(value string) *SelfAccessReviewRequestBuilder {
@@ -52,7 +54,8 @@ func (b *SelfAccessReviewRequestBuilder) ClusterID(value string) *SelfAccessRevi
 	return b
 }
 
-// ClusterUUID sets the value of the 'cluster_UUID' attribute to the given value.
+// ClusterUUID sets the value of the 'cluster_UUID' attribute
+// to the given value.
 //
 //
 func (b *SelfAccessReviewRequestBuilder) ClusterUUID(value string) *SelfAccessReviewRequestBuilder {
@@ -60,7 +63,8 @@ func (b *SelfAccessReviewRequestBuilder) ClusterUUID(value string) *SelfAccessRe
 	return b
 }
 
-// OrganizationID sets the value of the 'organization_ID' attribute to the given value.
+// OrganizationID sets the value of the 'organization_ID' attribute
+// to the given value.
 //
 //
 func (b *SelfAccessReviewRequestBuilder) OrganizationID(value string) *SelfAccessReviewRequestBuilder {
@@ -68,7 +72,8 @@ func (b *SelfAccessReviewRequestBuilder) OrganizationID(value string) *SelfAcces
 	return b
 }
 
-// ResourceType sets the value of the 'resource_type' attribute to the given value.
+// ResourceType sets the value of the 'resource_type' attribute
+// to the given value.
 //
 //
 func (b *SelfAccessReviewRequestBuilder) ResourceType(value string) *SelfAccessReviewRequestBuilder {
@@ -76,7 +81,8 @@ func (b *SelfAccessReviewRequestBuilder) ResourceType(value string) *SelfAccessR
 	return b
 }
 
-// SubscriptionID sets the value of the 'subscription_ID' attribute to the given value.
+// SubscriptionID sets the value of the 'subscription_ID' attribute
+// to the given value.
 //
 //
 func (b *SelfAccessReviewRequestBuilder) SubscriptionID(value string) *SelfAccessReviewRequestBuilder {
@@ -101,11 +107,23 @@ func (b *SelfAccessReviewRequestBuilder) Copy(object *SelfAccessReviewRequest) *
 // Build creates a 'self_access_review_request' object using the configuration stored in the builder.
 func (b *SelfAccessReviewRequestBuilder) Build() (object *SelfAccessReviewRequest, err error) {
 	object = new(SelfAccessReviewRequest)
-	object.action = b.action
-	object.clusterID = b.clusterID
-	object.clusterUUID = b.clusterUUID
-	object.organizationID = b.organizationID
-	object.resourceType = b.resourceType
-	object.subscriptionID = b.subscriptionID
+	if b.action != nil {
+		object.action = b.action
+	}
+	if b.clusterID != nil {
+		object.clusterID = b.clusterID
+	}
+	if b.clusterUUID != nil {
+		object.clusterUUID = b.clusterUUID
+	}
+	if b.organizationID != nil {
+		object.organizationID = b.organizationID
+	}
+	if b.resourceType != nil {
+		object.resourceType = b.resourceType
+	}
+	if b.subscriptionID != nil {
+		object.subscriptionID = b.subscriptionID
+	}
 	return
 }

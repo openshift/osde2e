@@ -105,22 +105,8 @@ func (o *ResourceReviewRequest) GetResourceType() (value string, ok bool) {
 	return
 }
 
-// ResourceReviewRequestListKind is the name of the type used to represent list of objects of
-// type 'resource_review_request'.
-const ResourceReviewRequestListKind = "ResourceReviewRequestList"
-
-// ResourceReviewRequestListLinkKind is the name of the type used to represent links to list
-// of objects of type 'resource_review_request'.
-const ResourceReviewRequestListLinkKind = "ResourceReviewRequestListLink"
-
-// ResourceReviewRequestNilKind is the name of the type used to nil lists of objects of
-// type 'resource_review_request'.
-const ResourceReviewRequestListNilKind = "ResourceReviewRequestListNil"
-
 // ResourceReviewRequestList is a list of values of the 'resource_review_request' type.
 type ResourceReviewRequestList struct {
-	href  *string
-	link  bool
 	items []*ResourceReviewRequest
 }
 

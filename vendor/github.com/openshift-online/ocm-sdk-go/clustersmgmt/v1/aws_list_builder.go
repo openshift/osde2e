@@ -37,19 +37,6 @@ func (b *AWSListBuilder) Items(values ...*AWSBuilder) *AWSListBuilder {
 	return b
 }
 
-// Copy copies the items of the given list into this builder, discarding any previous items.
-func (b *AWSListBuilder) Copy(list *AWSList) *AWSListBuilder {
-	if list == nil || list.items == nil {
-		b.items = nil
-	} else {
-		b.items = make([]*AWSBuilder, len(list.items))
-		for i, v := range list.items {
-			b.items[i] = NewAWS().Copy(v)
-		}
-	}
-	return b
-}
-
 // Build creates a list of 'AWS' objects using the
 // configuration stored in the builder.
 func (b *AWSListBuilder) Build() (list *AWSList, err error) {

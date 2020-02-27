@@ -34,7 +34,8 @@ func NewLDAPAttributes() *LDAPAttributesBuilder {
 	return new(LDAPAttributesBuilder)
 }
 
-// ID sets the value of the 'ID' attribute to the given values.
+// ID sets the value of the 'ID' attribute
+// to the given values.
 //
 //
 func (b *LDAPAttributesBuilder) ID(values ...string) *LDAPAttributesBuilder {
@@ -43,7 +44,8 @@ func (b *LDAPAttributesBuilder) ID(values ...string) *LDAPAttributesBuilder {
 	return b
 }
 
-// Email sets the value of the 'email' attribute to the given values.
+// Email sets the value of the 'email' attribute
+// to the given values.
 //
 //
 func (b *LDAPAttributesBuilder) Email(values ...string) *LDAPAttributesBuilder {
@@ -52,7 +54,8 @@ func (b *LDAPAttributesBuilder) Email(values ...string) *LDAPAttributesBuilder {
 	return b
 }
 
-// Name sets the value of the 'name' attribute to the given values.
+// Name sets the value of the 'name' attribute
+// to the given values.
 //
 //
 func (b *LDAPAttributesBuilder) Name(values ...string) *LDAPAttributesBuilder {
@@ -61,7 +64,8 @@ func (b *LDAPAttributesBuilder) Name(values ...string) *LDAPAttributesBuilder {
 	return b
 }
 
-// PreferredUsername sets the value of the 'preferred_username' attribute to the given values.
+// PreferredUsername sets the value of the 'preferred_username' attribute
+// to the given values.
 //
 //
 func (b *LDAPAttributesBuilder) PreferredUsername(values ...string) *LDAPAttributesBuilder {
@@ -75,25 +79,25 @@ func (b *LDAPAttributesBuilder) Copy(object *LDAPAttributes) *LDAPAttributesBuil
 	if object == nil {
 		return b
 	}
-	if object.id != nil {
+	if len(object.id) > 0 {
 		b.id = make([]string, len(object.id))
 		copy(b.id, object.id)
 	} else {
 		b.id = nil
 	}
-	if object.email != nil {
+	if len(object.email) > 0 {
 		b.email = make([]string, len(object.email))
 		copy(b.email, object.email)
 	} else {
 		b.email = nil
 	}
-	if object.name != nil {
+	if len(object.name) > 0 {
 		b.name = make([]string, len(object.name))
 		copy(b.name, object.name)
 	} else {
 		b.name = nil
 	}
-	if object.preferredUsername != nil {
+	if len(object.preferredUsername) > 0 {
 		b.preferredUsername = make([]string, len(object.preferredUsername))
 		copy(b.preferredUsername, object.preferredUsername)
 	} else {

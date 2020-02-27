@@ -21,72 +21,19 @@ package v1 // github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1
 
 // AWSFlavour represents the values of the 'AWS_flavour' type.
 //
-// Specification for different classes of nodes inside a flavour.
+// Volume specification for different classes of nodes inside a flavour.
 type AWSFlavour struct {
-	computeInstanceType *string
-	infraInstanceType   *string
-	infraVolume         *AWSVolume
-	masterInstanceType  *string
-	masterVolume        *AWSVolume
-	workerVolume        *AWSVolume
+	infraVolume  *AWSVolume
+	masterVolume *AWSVolume
+	workerVolume *AWSVolume
 }
 
 // Empty returns true if the object is empty, i.e. no attribute has a value.
 func (o *AWSFlavour) Empty() bool {
-	return o == nil || (o.computeInstanceType == nil &&
-		o.infraInstanceType == nil &&
-		o.masterInstanceType == nil &&
+	return o == nil || (o.infraVolume == nil &&
+		o.masterVolume == nil &&
+		o.workerVolume == nil &&
 		true)
-}
-
-// ComputeInstanceType returns the value of the 'compute_instance_type' attribute, or
-// the zero value of the type if the attribute doesn't have a value.
-//
-// AWS default instance type for the worker volume.
-//
-// User can be overridden specifying in the cluster itself a type for compute node.
-func (o *AWSFlavour) ComputeInstanceType() string {
-	if o != nil && o.computeInstanceType != nil {
-		return *o.computeInstanceType
-	}
-	return ""
-}
-
-// GetComputeInstanceType returns the value of the 'compute_instance_type' attribute and
-// a flag indicating if the attribute has a value.
-//
-// AWS default instance type for the worker volume.
-//
-// User can be overridden specifying in the cluster itself a type for compute node.
-func (o *AWSFlavour) GetComputeInstanceType() (value string, ok bool) {
-	ok = o != nil && o.computeInstanceType != nil
-	if ok {
-		value = *o.computeInstanceType
-	}
-	return
-}
-
-// InfraInstanceType returns the value of the 'infra_instance_type' attribute, or
-// the zero value of the type if the attribute doesn't have a value.
-//
-// AWS default instance type for the infra volume.
-func (o *AWSFlavour) InfraInstanceType() string {
-	if o != nil && o.infraInstanceType != nil {
-		return *o.infraInstanceType
-	}
-	return ""
-}
-
-// GetInfraInstanceType returns the value of the 'infra_instance_type' attribute and
-// a flag indicating if the attribute has a value.
-//
-// AWS default instance type for the infra volume.
-func (o *AWSFlavour) GetInfraInstanceType() (value string, ok bool) {
-	ok = o != nil && o.infraInstanceType != nil
-	if ok {
-		value = *o.infraInstanceType
-	}
-	return
 }
 
 // InfraVolume returns the value of the 'infra_volume' attribute, or
@@ -108,29 +55,6 @@ func (o *AWSFlavour) GetInfraVolume() (value *AWSVolume, ok bool) {
 	ok = o != nil && o.infraVolume != nil
 	if ok {
 		value = o.infraVolume
-	}
-	return
-}
-
-// MasterInstanceType returns the value of the 'master_instance_type' attribute, or
-// the zero value of the type if the attribute doesn't have a value.
-//
-// AWS default instance type for the master volume.
-func (o *AWSFlavour) MasterInstanceType() string {
-	if o != nil && o.masterInstanceType != nil {
-		return *o.masterInstanceType
-	}
-	return ""
-}
-
-// GetMasterInstanceType returns the value of the 'master_instance_type' attribute and
-// a flag indicating if the attribute has a value.
-//
-// AWS default instance type for the master volume.
-func (o *AWSFlavour) GetMasterInstanceType() (value string, ok bool) {
-	ok = o != nil && o.masterInstanceType != nil
-	if ok {
-		value = *o.masterInstanceType
 	}
 	return
 }
@@ -181,22 +105,8 @@ func (o *AWSFlavour) GetWorkerVolume() (value *AWSVolume, ok bool) {
 	return
 }
 
-// AWSFlavourListKind is the name of the type used to represent list of objects of
-// type 'AWS_flavour'.
-const AWSFlavourListKind = "AWSFlavourList"
-
-// AWSFlavourListLinkKind is the name of the type used to represent links to list
-// of objects of type 'AWS_flavour'.
-const AWSFlavourListLinkKind = "AWSFlavourListLink"
-
-// AWSFlavourNilKind is the name of the type used to nil lists of objects of
-// type 'AWS_flavour'.
-const AWSFlavourListNilKind = "AWSFlavourListNil"
-
 // AWSFlavourList is a list of values of the 'AWS_flavour' type.
 type AWSFlavourList struct {
-	href  *string
-	link  bool
 	items []*AWSFlavour
 }
 

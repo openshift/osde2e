@@ -37,19 +37,6 @@ func (b *DashboardListBuilder) Items(values ...*DashboardBuilder) *DashboardList
 	return b
 }
 
-// Copy copies the items of the given list into this builder, discarding any previous items.
-func (b *DashboardListBuilder) Copy(list *DashboardList) *DashboardListBuilder {
-	if list == nil || list.items == nil {
-		b.items = nil
-	} else {
-		b.items = make([]*DashboardBuilder, len(list.items))
-		for i, v := range list.items {
-			b.items[i] = NewDashboard().Copy(v)
-		}
-	}
-	return b
-}
-
 // Build creates a list of 'dashboard' objects using the
 // configuration stored in the builder.
 func (b *DashboardListBuilder) Build() (list *DashboardList, err error) {

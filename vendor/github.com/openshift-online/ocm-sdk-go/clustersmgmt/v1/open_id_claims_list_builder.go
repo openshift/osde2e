@@ -37,19 +37,6 @@ func (b *OpenIDClaimsListBuilder) Items(values ...*OpenIDClaimsBuilder) *OpenIDC
 	return b
 }
 
-// Copy copies the items of the given list into this builder, discarding any previous items.
-func (b *OpenIDClaimsListBuilder) Copy(list *OpenIDClaimsList) *OpenIDClaimsListBuilder {
-	if list == nil || list.items == nil {
-		b.items = nil
-	} else {
-		b.items = make([]*OpenIDClaimsBuilder, len(list.items))
-		for i, v := range list.items {
-			b.items[i] = NewOpenIDClaims().Copy(v)
-		}
-	}
-	return b
-}
-
 // Build creates a list of 'open_ID_claims' objects using the
 // configuration stored in the builder.
 func (b *OpenIDClaimsListBuilder) Build() (list *OpenIDClaimsList, err error) {

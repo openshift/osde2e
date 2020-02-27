@@ -34,7 +34,8 @@ func NewGithubIdentityProvider() *GithubIdentityProviderBuilder {
 	return new(GithubIdentityProviderBuilder)
 }
 
-// CA sets the value of the 'CA' attribute to the given value.
+// CA sets the value of the 'CA' attribute
+// to the given value.
 //
 //
 func (b *GithubIdentityProviderBuilder) CA(value string) *GithubIdentityProviderBuilder {
@@ -42,7 +43,8 @@ func (b *GithubIdentityProviderBuilder) CA(value string) *GithubIdentityProvider
 	return b
 }
 
-// ClientID sets the value of the 'client_ID' attribute to the given value.
+// ClientID sets the value of the 'client_ID' attribute
+// to the given value.
 //
 //
 func (b *GithubIdentityProviderBuilder) ClientID(value string) *GithubIdentityProviderBuilder {
@@ -50,7 +52,8 @@ func (b *GithubIdentityProviderBuilder) ClientID(value string) *GithubIdentityPr
 	return b
 }
 
-// Hostname sets the value of the 'hostname' attribute to the given value.
+// Hostname sets the value of the 'hostname' attribute
+// to the given value.
 //
 //
 func (b *GithubIdentityProviderBuilder) Hostname(value string) *GithubIdentityProviderBuilder {
@@ -58,7 +61,8 @@ func (b *GithubIdentityProviderBuilder) Hostname(value string) *GithubIdentityPr
 	return b
 }
 
-// Teams sets the value of the 'teams' attribute to the given values.
+// Teams sets the value of the 'teams' attribute
+// to the given values.
 //
 //
 func (b *GithubIdentityProviderBuilder) Teams(values ...string) *GithubIdentityProviderBuilder {
@@ -75,7 +79,7 @@ func (b *GithubIdentityProviderBuilder) Copy(object *GithubIdentityProvider) *Gi
 	b.ca = object.ca
 	b.clientID = object.clientID
 	b.hostname = object.hostname
-	if object.teams != nil {
+	if len(object.teams) > 0 {
 		b.teams = make([]string, len(object.teams))
 		copy(b.teams, object.teams)
 	} else {
@@ -87,9 +91,15 @@ func (b *GithubIdentityProviderBuilder) Copy(object *GithubIdentityProvider) *Gi
 // Build creates a 'github_identity_provider' object using the configuration stored in the builder.
 func (b *GithubIdentityProviderBuilder) Build() (object *GithubIdentityProvider, err error) {
 	object = new(GithubIdentityProvider)
-	object.ca = b.ca
-	object.clientID = b.clientID
-	object.hostname = b.hostname
+	if b.ca != nil {
+		object.ca = b.ca
+	}
+	if b.clientID != nil {
+		object.clientID = b.clientID
+	}
+	if b.hostname != nil {
+		object.hostname = b.hostname
+	}
 	if b.teams != nil {
 		object.teams = make([]string, len(b.teams))
 		copy(object.teams, b.teams)

@@ -21,6 +21,8 @@ package v1 // github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1
 
 import (
 	"context"
+	"encoding/json"
+	"io"
 	"net/http"
 	"net/url"
 	"path"
@@ -39,25 +41,25 @@ type SubscriptionsClient struct {
 }
 
 // NewSubscriptionsClient creates a new client for the 'subscriptions'
-// resource using the given transport to send the requests and receive the
+// resource using the given transport to sned the requests and receive the
 // responses.
 func NewSubscriptionsClient(transport http.RoundTripper, path string, metric string) *SubscriptionsClient {
-	return &SubscriptionsClient{
-		transport: transport,
-		path:      path,
-		metric:    metric,
-	}
+	client := new(SubscriptionsClient)
+	client.transport = transport
+	client.path = path
+	client.metric = metric
+	return client
 }
 
 // List creates a request for the 'list' method.
 //
 // Retrieves a list of subscriptions.
 func (c *SubscriptionsClient) List() *SubscriptionsListRequest {
-	return &SubscriptionsListRequest{
-		transport: c.transport,
-		path:      c.path,
-		metric:    c.metric,
-	}
+	request := new(SubscriptionsListRequest)
+	request.transport = c.transport
+	request.path = c.path
+	request.metric = c.metric
+	return request
 }
 
 // Subscription returns the target 'subscription' resource for the given identifier.
@@ -78,7 +80,6 @@ type SubscriptionsListRequest struct {
 	metric    string
 	query     url.Values
 	header    http.Header
-	labels    *string
 	order     *string
 	page      *int
 	search    *string
@@ -94,20 +95,6 @@ func (r *SubscriptionsListRequest) Parameter(name string, value interface{}) *Su
 // Header adds a request header.
 func (r *SubscriptionsListRequest) Header(name string, value interface{}) *SubscriptionsListRequest {
 	helpers.AddHeader(&r.header, name, value)
-	return r
-}
-
-// Labels sets the value of the 'labels' parameter.
-//
-// Filter subscriptions by a comma separated list of labels:
-//
-// [source]
-// ----
-// env=staging,department=sales
-// ----
-//
-func (r *SubscriptionsListRequest) Labels(value string) *SubscriptionsListRequest {
-	r.labels = &value
 	return r
 }
 
@@ -179,9 +166,6 @@ func (r *SubscriptionsListRequest) Send() (result *SubscriptionsListResponse, er
 // SendContext sends this request, waits for the response, and returns it.
 func (r *SubscriptionsListRequest) SendContext(ctx context.Context) (result *SubscriptionsListResponse, err error) {
 	query := helpers.CopyQuery(r.query)
-	if r.labels != nil {
-		helpers.AddValue(&query, "labels", *r.labels)
-	}
 	if r.order != nil {
 		helpers.AddValue(&query, "order", *r.order)
 	}
@@ -212,7 +196,7 @@ func (r *SubscriptionsListRequest) SendContext(ctx context.Context) (result *Sub
 		return
 	}
 	defer response.Body.Close()
-	result = &SubscriptionsListResponse{}
+	result = new(SubscriptionsListResponse)
 	result.status = response.StatusCode
 	result.header = response.Header
 	if result.status >= 400 {
@@ -223,7 +207,7 @@ func (r *SubscriptionsListRequest) SendContext(ctx context.Context) (result *Sub
 		err = result.err
 		return
 	}
-	err = readSubscriptionsListResponse(result, response.Body)
+	err = result.unmarshal(response.Body)
 	if err != nil {
 		return
 	}
@@ -353,4 +337,33 @@ func (r *SubscriptionsListResponse) GetTotal() (value int, ok bool) {
 		value = *r.total
 	}
 	return
+}
+
+// unmarshal is the method used internally to unmarshal responses to the
+// 'list' method.
+func (r *SubscriptionsListResponse) unmarshal(reader io.Reader) error {
+	var err error
+	decoder := json.NewDecoder(reader)
+	data := new(subscriptionsListResponseData)
+	err = decoder.Decode(data)
+	if err != nil {
+		return err
+	}
+	r.items, err = data.Items.unwrap()
+	if err != nil {
+		return err
+	}
+	r.page = data.Page
+	r.size = data.Size
+	r.total = data.Total
+	return err
+}
+
+// subscriptionsListResponseData is the structure used internally to unmarshal
+// the response of the 'list' method.
+type subscriptionsListResponseData struct {
+	Items subscriptionListData "json:\"items,omitempty\""
+	Page  *int                 "json:\"page,omitempty\""
+	Size  *int                 "json:\"size,omitempty\""
+	Total *int                 "json:\"total,omitempty\""
 }

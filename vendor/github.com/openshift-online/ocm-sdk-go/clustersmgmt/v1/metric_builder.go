@@ -32,7 +32,8 @@ func NewMetric() *MetricBuilder {
 	return new(MetricBuilder)
 }
 
-// Name sets the value of the 'name' attribute to the given value.
+// Name sets the value of the 'name' attribute
+// to the given value.
 //
 //
 func (b *MetricBuilder) Name(value string) *MetricBuilder {
@@ -40,7 +41,8 @@ func (b *MetricBuilder) Name(value string) *MetricBuilder {
 	return b
 }
 
-// Vector sets the value of the 'vector' attribute to the given values.
+// Vector sets the value of the 'vector' attribute
+// to the given values.
 //
 //
 func (b *MetricBuilder) Vector(values ...*SampleBuilder) *MetricBuilder {
@@ -55,10 +57,10 @@ func (b *MetricBuilder) Copy(object *Metric) *MetricBuilder {
 		return b
 	}
 	b.name = object.name
-	if object.vector != nil {
-		b.vector = make([]*SampleBuilder, len(object.vector))
-		for i, v := range object.vector {
-			b.vector[i] = NewSample().Copy(v)
+	if object.vector != nil && len(object.vector.items) > 0 {
+		b.vector = make([]*SampleBuilder, len(object.vector.items))
+		for i, item := range object.vector.items {
+			b.vector[i] = NewSample().Copy(item)
 		}
 	} else {
 		b.vector = nil
@@ -69,11 +71,14 @@ func (b *MetricBuilder) Copy(object *Metric) *MetricBuilder {
 // Build creates a 'metric' object using the configuration stored in the builder.
 func (b *MetricBuilder) Build() (object *Metric, err error) {
 	object = new(Metric)
-	object.name = b.name
+	if b.name != nil {
+		object.name = b.name
+	}
 	if b.vector != nil {
-		object.vector = make([]*Sample, len(b.vector))
-		for i, v := range b.vector {
-			object.vector[i], err = v.Build()
+		object.vector = new(SampleList)
+		object.vector.items = make([]*Sample, len(b.vector))
+		for i, item := range b.vector {
+			object.vector.items[i], err = item.Build()
 			if err != nil {
 				return
 			}

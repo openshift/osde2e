@@ -26,7 +26,7 @@ type GroupBuilder struct {
 	id    *string
 	href  *string
 	link  bool
-	users *UserListBuilder
+	users []*UserBuilder
 }
 
 // NewGroup creates a new builder of 'group' objects.
@@ -52,11 +52,13 @@ func (b *GroupBuilder) Link(value bool) *GroupBuilder {
 	return b
 }
 
-// Users sets the value of the 'users' attribute to the given values.
+// Users sets the value of the 'users' attribute
+// to the given values.
 //
 //
-func (b *GroupBuilder) Users(value *UserListBuilder) *GroupBuilder {
-	b.users = value
+func (b *GroupBuilder) Users(values ...*UserBuilder) *GroupBuilder {
+	b.users = make([]*UserBuilder, len(values))
+	copy(b.users, values)
 	return b
 }
 
@@ -68,8 +70,11 @@ func (b *GroupBuilder) Copy(object *Group) *GroupBuilder {
 	b.id = object.id
 	b.href = object.href
 	b.link = object.link
-	if object.users != nil {
-		b.users = NewUserList().Copy(object.users)
+	if object.users != nil && len(object.users.items) > 0 {
+		b.users = make([]*UserBuilder, len(object.users.items))
+		for i, item := range object.users.items {
+			b.users[i] = NewUser().Copy(item)
+		}
 	} else {
 		b.users = nil
 	}
@@ -83,9 +88,13 @@ func (b *GroupBuilder) Build() (object *Group, err error) {
 	object.href = b.href
 	object.link = b.link
 	if b.users != nil {
-		object.users, err = b.users.Build()
-		if err != nil {
-			return
+		object.users = new(UserList)
+		object.users.items = make([]*User, len(b.users))
+		for i, item := range b.users {
+			object.users.items[i], err = item.Build()
+			if err != nil {
+				return
+			}
 		}
 	}
 	return

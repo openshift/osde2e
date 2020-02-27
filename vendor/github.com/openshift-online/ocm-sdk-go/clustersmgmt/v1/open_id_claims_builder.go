@@ -33,7 +33,8 @@ func NewOpenIDClaims() *OpenIDClaimsBuilder {
 	return new(OpenIDClaimsBuilder)
 }
 
-// Email sets the value of the 'email' attribute to the given values.
+// Email sets the value of the 'email' attribute
+// to the given values.
 //
 //
 func (b *OpenIDClaimsBuilder) Email(values ...string) *OpenIDClaimsBuilder {
@@ -42,7 +43,8 @@ func (b *OpenIDClaimsBuilder) Email(values ...string) *OpenIDClaimsBuilder {
 	return b
 }
 
-// Name sets the value of the 'name' attribute to the given values.
+// Name sets the value of the 'name' attribute
+// to the given values.
 //
 //
 func (b *OpenIDClaimsBuilder) Name(values ...string) *OpenIDClaimsBuilder {
@@ -51,7 +53,8 @@ func (b *OpenIDClaimsBuilder) Name(values ...string) *OpenIDClaimsBuilder {
 	return b
 }
 
-// PreferredUsername sets the value of the 'preferred_username' attribute to the given values.
+// PreferredUsername sets the value of the 'preferred_username' attribute
+// to the given values.
 //
 //
 func (b *OpenIDClaimsBuilder) PreferredUsername(values ...string) *OpenIDClaimsBuilder {
@@ -65,19 +68,19 @@ func (b *OpenIDClaimsBuilder) Copy(object *OpenIDClaims) *OpenIDClaimsBuilder {
 	if object == nil {
 		return b
 	}
-	if object.email != nil {
+	if len(object.email) > 0 {
 		b.email = make([]string, len(object.email))
 		copy(b.email, object.email)
 	} else {
 		b.email = nil
 	}
-	if object.name != nil {
+	if len(object.name) > 0 {
 		b.name = make([]string, len(object.name))
 		copy(b.name, object.name)
 	} else {
 		b.name = nil
 	}
-	if object.preferredUsername != nil {
+	if len(object.preferredUsername) > 0 {
 		b.preferredUsername = make([]string, len(object.preferredUsername))
 		copy(b.preferredUsername, object.preferredUsername)
 	} else {

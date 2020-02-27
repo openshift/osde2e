@@ -37,19 +37,6 @@ func (b *AddOnListBuilder) Items(values ...*AddOnBuilder) *AddOnListBuilder {
 	return b
 }
 
-// Copy copies the items of the given list into this builder, discarding any previous items.
-func (b *AddOnListBuilder) Copy(list *AddOnList) *AddOnListBuilder {
-	if list == nil || list.items == nil {
-		b.items = nil
-	} else {
-		b.items = make([]*AddOnBuilder, len(list.items))
-		for i, v := range list.items {
-			b.items[i] = NewAddOn().Copy(v)
-		}
-	}
-	return b
-}
-
 // Build creates a list of 'add_on' objects using the
 // configuration stored in the builder.
 func (b *AddOnListBuilder) Build() (list *AddOnList, err error) {

@@ -22,12 +22,12 @@ package v1 // github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 
-	jsoniter "github.com/json-iterator/go"
 	"github.com/openshift-online/ocm-sdk-go/errors"
 	"github.com/openshift-online/ocm-sdk-go/helpers"
 )
@@ -42,25 +42,25 @@ type ClusterAuthorizationsClient struct {
 }
 
 // NewClusterAuthorizationsClient creates a new client for the 'cluster_authorizations'
-// resource using the given transport to send the requests and receive the
+// resource using the given transport to sned the requests and receive the
 // responses.
 func NewClusterAuthorizationsClient(transport http.RoundTripper, path string, metric string) *ClusterAuthorizationsClient {
-	return &ClusterAuthorizationsClient{
-		transport: transport,
-		path:      path,
-		metric:    metric,
-	}
+	client := new(ClusterAuthorizationsClient)
+	client.transport = transport
+	client.path = path
+	client.metric = metric
+	return client
 }
 
 // Post creates a request for the 'post' method.
 //
 // Authorizes new cluster creation against an existing subscription.
 func (c *ClusterAuthorizationsClient) Post() *ClusterAuthorizationsPostRequest {
-	return &ClusterAuthorizationsPostRequest{
-		transport: c.transport,
-		path:      c.path,
-		metric:    c.metric,
-	}
+	request := new(ClusterAuthorizationsPostRequest)
+	request.transport = c.transport
+	request.path = c.path
+	request.metric = c.metric
+	return request
 }
 
 // ClusterAuthorizationsPostRequest is the request for the 'post' method.
@@ -105,8 +105,8 @@ func (r *ClusterAuthorizationsPostRequest) Send() (result *ClusterAuthorizations
 func (r *ClusterAuthorizationsPostRequest) SendContext(ctx context.Context) (result *ClusterAuthorizationsPostResponse, err error) {
 	query := helpers.CopyQuery(r.query)
 	header := helpers.SetHeader(r.header, r.metric)
-	buffer := &bytes.Buffer{}
-	err = writeClusterAuthorizationsPostRequest(r, buffer)
+	buffer := new(bytes.Buffer)
+	err = r.marshal(buffer)
 	if err != nil {
 		return
 	}
@@ -128,7 +128,7 @@ func (r *ClusterAuthorizationsPostRequest) SendContext(ctx context.Context) (res
 		return
 	}
 	defer response.Body.Close()
-	result = &ClusterAuthorizationsPostResponse{}
+	result = new(ClusterAuthorizationsPostResponse)
 	result.status = response.StatusCode
 	result.header = response.Header
 	if result.status >= 400 {
@@ -139,7 +139,7 @@ func (r *ClusterAuthorizationsPostRequest) SendContext(ctx context.Context) (res
 		err = result.err
 		return
 	}
-	err = readClusterAuthorizationsPostResponse(result, response.Body)
+	err = result.unmarshal(response.Body)
 	if err != nil {
 		return
 	}
@@ -149,11 +149,14 @@ func (r *ClusterAuthorizationsPostRequest) SendContext(ctx context.Context) (res
 // marshall is the method used internally to marshal requests for the
 // 'post' method.
 func (r *ClusterAuthorizationsPostRequest) marshal(writer io.Writer) error {
-	stream := helpers.NewStream(writer)
-	r.stream(stream)
-	return stream.Error
-}
-func (r *ClusterAuthorizationsPostRequest) stream(stream *jsoniter.Stream) {
+	var err error
+	encoder := json.NewEncoder(writer)
+	data, err := r.request.wrap()
+	if err != nil {
+		return err
+	}
+	err = encoder.Encode(data)
+	return err
 }
 
 // ClusterAuthorizationsPostResponse is the response for the 'post' method.
@@ -208,4 +211,21 @@ func (r *ClusterAuthorizationsPostResponse) GetResponse() (value *ClusterAuthori
 		value = r.response
 	}
 	return
+}
+
+// unmarshal is the method used internally to unmarshal responses to the
+// 'post' method.
+func (r *ClusterAuthorizationsPostResponse) unmarshal(reader io.Reader) error {
+	var err error
+	decoder := json.NewDecoder(reader)
+	data := new(clusterAuthorizationResponseData)
+	err = decoder.Decode(data)
+	if err != nil {
+		return err
+	}
+	r.response, err = data.unwrap()
+	if err != nil {
+		return err
+	}
+	return err
 }

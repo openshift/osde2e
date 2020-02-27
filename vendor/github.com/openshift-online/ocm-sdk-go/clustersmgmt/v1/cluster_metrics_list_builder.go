@@ -37,19 +37,6 @@ func (b *ClusterMetricsListBuilder) Items(values ...*ClusterMetricsBuilder) *Clu
 	return b
 }
 
-// Copy copies the items of the given list into this builder, discarding any previous items.
-func (b *ClusterMetricsListBuilder) Copy(list *ClusterMetricsList) *ClusterMetricsListBuilder {
-	if list == nil || list.items == nil {
-		b.items = nil
-	} else {
-		b.items = make([]*ClusterMetricsBuilder, len(list.items))
-		for i, v := range list.items {
-			b.items[i] = NewClusterMetrics().Copy(v)
-		}
-	}
-	return b
-}
-
 // Build creates a list of 'cluster_metrics' objects using the
 // configuration stored in the builder.
 func (b *ClusterMetricsListBuilder) Build() (list *ClusterMetricsList, err error) {

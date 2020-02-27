@@ -1,0 +1,3353 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "version": "v1",
+    "title": "clusters_mgmt",
+    "license": {
+      "name": "Apache 2.0",
+      "url": "http://www.apache.org/licenses/LICENSE-2.0"
+    },
+    "contact": {
+      "name": "OCM Feedback",
+      "email": "ocm-feedback@redhat.com"
+    }
+  },
+  "servers": [
+    {
+      "description": "Production",
+      "url": "https://api.openshift.com"
+    },
+    {
+      "description": "Stage",
+      "url": "https://api.stage.openshift.com"
+    }
+  ],
+  "paths": {
+    "/api/clusters_mgmt/v1": {
+      "get": {
+        "description": "Retrieves the version metadata.\n",
+        "responses": {
+          "200": {
+            "description": "Success.\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Metadata"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error.\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/clusters_mgmt/v1/addons": {
+      "post": {
+        "description": "Create a new add-on and add it to the collection of add-ons.\n",
+        "parameters": [
+          
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddOn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Success.\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AddOn"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error.\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "description": "Retrieves the list of add-ons.\n",
+        "parameters": [
+          {
+            "name": "order",
+            "description": "Order criteria.\n\nThe syntax of this parameter is similar to the syntax of the _order by_ clause of\na SQL statement, but using the names of the attributes of the add-on instead of\nthe names of the columns of a table. For example, in order to sort the add-ons\ndescending by name the value should be:\n\n\n```\nname desc\n```\n\nIf the parameter isn't provided, or if the value is empty, then the order of the\nresults is undefined.\n",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "description": "Index of the requested page, where one corresponds to the first page.\n",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "search",
+            "description": "Search criteria.\n\nThe syntax of this parameter is similar to the syntax of the _where_ clause of an\nSQL statement, but using the names of the attributes of the add-on instead of\nthe names of the columns of a table. For example, in order to retrieve all the\nadd-ons with a name starting with `my` the value should be:\n\n\n```\nname like 'my%'\n```\n\nIf the parameter isn't provided, or if the value is empty, then all the add-ons\nthat the user has permission to see will be returned.\n",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "size",
+            "description": "Maximum number of items that will be contained in the returned page.\n",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success.\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "description": "Retrieved list of add-ons.\n",
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/AddOn"
+                      }
+                    },
+                    "page": {
+                      "description": "Index of the requested page, where one corresponds to the first page.\n",
+                      "type": "integer",
+                      "format": "int32"
+                    },
+                    "size": {
+                      "description": "Maximum number of items that will be contained in the returned page.\n",
+                      "type": "integer",
+                      "format": "int32"
+                    },
+                    "total": {
+                      "description": "Total number of items of the collection that match the search criteria,\nregardless of the size of the page.\n",
+                      "type": "integer",
+                      "format": "int32"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error.\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/clusters_mgmt/v1/addons/{addon_id}": {
+      "delete": {
+        "description": "Deletes the add-on.\n",
+        "parameters": [
+          {
+            "name": "addon_id",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Success.\n"
+          },
+          "default": {
+            "description": "Error.\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "description": "Retrieves the details of the add-on.\n",
+        "parameters": [
+          {
+            "name": "addon_id",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success.\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AddOn"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error.\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "description": "Updates the add-on.\n",
+        "parameters": [
+          {
+            "name": "addon_id",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddOn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Success.\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AddOn"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error.\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/clusters_mgmt/v1/cloud_providers": {
+      "get": {
+        "description": "Retrieves the list of cloud providers.\n",
+        "parameters": [
+          {
+            "name": "order",
+            "description": "Order criteria.\n\nThe syntax of this parameter is similar to the syntax of the _order by_ clause of\na SQL statement, but using the names of the attributes of the cloud provider\ninstead of the names of the columns of a table. For example, in order to sort the\nclusters descending by name identifier the value should be:\n\n\n```\nname desc\n```\n\nIf the parameter isn't provided, or if the value is empty, then the order of the\nresults is undefined.\n",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "description": "Index of the requested page, where one corresponds to the first page.\n",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "search",
+            "description": "Search criteria.\n\nThe syntax of this parameter is similar to the syntax of the _where_ clause of a\nSQL statement, but using the names of the attributes of the cloud provider\ninstead of the names of the columns of a table. For example, in order to retrieve\nall the cloud providers with a name starting with `A` the value should be:\n\n\n```\nname like 'A%'\n```\n\nIf the parameter isn't provided, or if the value is empty, then all the clusters\nthat the user has permission to see will be returned.\n",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "size",
+            "description": "Maximum number of items that will be contained in the returned page.\n",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success.\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "description": "Retrieved list of cloud providers.\n",
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/CloudProvider"
+                      }
+                    },
+                    "page": {
+                      "description": "Index of the requested page, where one corresponds to the first page.\n",
+                      "type": "integer",
+                      "format": "int32"
+                    },
+                    "size": {
+                      "description": "Maximum number of items that will be contained in the returned page.\n",
+                      "type": "integer",
+                      "format": "int32"
+                    },
+                    "total": {
+                      "description": "Total number of items of the collection that match the search criteria,\nregardless of the size of the page.\n",
+                      "type": "integer",
+                      "format": "int32"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error.\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/clusters_mgmt/v1/cloud_providers/{cloud_provider_id}": {
+      "get": {
+        "description": "Retrieves the details of the cloud provider.\n",
+        "parameters": [
+          {
+            "name": "cloud_provider_id",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success.\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CloudProvider"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error.\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/clusters_mgmt/v1/cloud_providers/{cloud_provider_id}/regions": {
+      "get": {
+        "description": "Retrieves the list of regions of the cloud provider.\n\nIMPORTANT: This collection doesn't currently support paging or searching, so the returned\n`page` will always be 1 and `size` and `total` will always be the total number of regions\nof the provider.\n",
+        "parameters": [
+          {
+            "name": "cloud_provider_id",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "description": "Index of the returned page, where one corresponds to the first page. As this\ncollection doesn't support paging the result will always be `1`.\n",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "size",
+            "description": "Number of items that will be contained in the returned page. As this collection\ndoesn't support paging or searching the result will always be the total number of\nregions of the provider.\n",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success.\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "description": "Retrieved list of cloud providers.\n",
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/CloudRegion"
+                      }
+                    },
+                    "page": {
+                      "description": "Index of the returned page, where one corresponds to the first page. As this\ncollection doesn't support paging the result will always be `1`.\n",
+                      "type": "integer",
+                      "format": "int32"
+                    },
+                    "size": {
+                      "description": "Number of items that will be contained in the returned page. As this collection\ndoesn't support paging or searching the result will always be the total number of\nregions of the provider.\n",
+                      "type": "integer",
+                      "format": "int32"
+                    },
+                    "total": {
+                      "description": "Total number of items of the collection that match the search criteria,\nregardless of the size of the page. As this collection doesn't support paging or\nsearching the result will always be the total number of regions of the provider.\n",
+                      "type": "integer",
+                      "format": "int32"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error.\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/clusters_mgmt/v1/cloud_providers/{cloud_provider_id}/regions/{region_id}": {
+      "get": {
+        "description": "Retrieves the details of the region.\n",
+        "parameters": [
+          {
+            "name": "cloud_provider_id",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "region_id",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success.\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CloudRegion"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error.\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/clusters_mgmt/v1/clusters": {
+      "post": {
+        "description": "Provision a new cluster and add it to the collection of clusters.\n\nSee the `register_cluster` method for adding an existing cluster.\n",
+        "parameters": [
+          
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Cluster"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Success.\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Cluster"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error.\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "description": "Retrieves the list of clusters.\n",
+        "parameters": [
+          {
+            "name": "order",
+            "description": "Order criteria.\n\nThe syntax of this parameter is similar to the syntax of the _order by_ clause of\na SQL statement, but using the names of the attributes of the cluster instead of\nthe names of the columns of a table. For example, in order to sort the clusters\ndescending by region identifier the value should be:\n\n\n```\nregion.id desc\n```\n\nIf the parameter isn't provided, or if the value is empty, then the order of the\nresults is undefined.\n",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "description": "Index of the requested page, where one corresponds to the first page.\n",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "search",
+            "description": "Search criteria.\n\nThe syntax of this parameter is similar to the syntax of the _where_ clause of a\nSQL statement, but using the names of the attributes of the cluster instead of\nthe names of the columns of a table. For example, in order to retrieve all the\nclusters with a name starting with `my` in the `us-east-1` region the value\nshould be:\n\n\n```\nname like 'my%' and region.id = 'us-east-1'\n```\n\nIf the parameter isn't provided, or if the value is empty, then all the\nclusters that the user has permission to see will be returned.\n",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "size",
+            "description": "Maximum number of items that will be contained in the returned page.\n",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success.\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "description": "Retrieved list of clusters.\n",
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Cluster"
+                      }
+                    },
+                    "page": {
+                      "description": "Index of the requested page, where one corresponds to the first page.\n",
+                      "type": "integer",
+                      "format": "int32"
+                    },
+                    "size": {
+                      "description": "Maximum number of items that will be contained in the returned page.\n",
+                      "type": "integer",
+                      "format": "int32"
+                    },
+                    "total": {
+                      "description": "Total number of items of the collection that match the search criteria,\nregardless of the size of the page.\n",
+                      "type": "integer",
+                      "format": "int32"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error.\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/clusters_mgmt/v1/clusters/{cluster_id}": {
+      "delete": {
+        "description": "Deletes the cluster.\n",
+        "parameters": [
+          {
+            "name": "cluster_id",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Success.\n"
+          },
+          "default": {
+            "description": "Error.\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "description": "Retrieves the details of the cluster.\n",
+        "parameters": [
+          {
+            "name": "cluster_id",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success.\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Cluster"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error.\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "description": "Updates the cluster.\n",
+        "parameters": [
+          {
+            "name": "cluster_id",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Cluster"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Success.\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Cluster"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error.\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/clusters_mgmt/v1/clusters/{cluster_id}/addons": {
+      "post": {
+        "description": "Create a new add-on installation and add it to the collection of add-on installations on the cluster.\n",
+        "parameters": [
+          {
+            "name": "cluster_id",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddOnInstallation"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Success.\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AddOnInstallation"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error.\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "description": "Retrieves the list of add-on installations.\n",
+        "parameters": [
+          {
+            "name": "cluster_id",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "order",
+            "description": "Order criteria.\n\nThe syntax of this parameter is similar to the syntax of the _order by_ clause of\na SQL statement, but using the names of the attributes of the add-on installation\ninstead of the names of the columns of a table. For example, in order to sort the\nadd-on installations descending by name the value should be:\n\n\n```\nname desc\n```\n\nIf the parameter isn't provided, or if the value is empty, then the order of the\nresults is undefined.\n",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "description": "Index of the requested page, where one corresponds to the first page.\n",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "search",
+            "description": "Search criteria.\n\nThe syntax of this parameter is similar to the syntax of the _where_ clause of an\nSQL statement, but using the names of the attributes of the add-on installation\ninstead of the names of the columns of a table. For example, in order to retrieve\nall the add-on installations with a name starting with `my` the value should be:\n\n\n```\nname like 'my%'\n```\n\nIf the parameter isn't provided, or if the value is empty, then all the add-on\ninstallations that the user has permission to see will be returned.\n",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "size",
+            "description": "Maximum number of items that will be contained in the returned page.\n",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success.\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "description": "Retrieved list of add-on installations.\n",
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/AddOnInstallation"
+                      }
+                    },
+                    "page": {
+                      "description": "Index of the requested page, where one corresponds to the first page.\n",
+                      "type": "integer",
+                      "format": "int32"
+                    },
+                    "size": {
+                      "description": "Maximum number of items that will be contained in the returned page.\n",
+                      "type": "integer",
+                      "format": "int32"
+                    },
+                    "total": {
+                      "description": "Total number of items of the collection that match the search criteria,\nregardless of the size of the page.\n",
+                      "type": "integer",
+                      "format": "int32"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error.\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/clusters_mgmt/v1/clusters/{cluster_id}/addons/{addoninstallation_id}": {
+      "delete": {
+        "description": "Deletes the add-on installation.\n",
+        "parameters": [
+          {
+            "name": "cluster_id",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "addoninstallation_id",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Success.\n"
+          },
+          "default": {
+            "description": "Error.\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "description": "Retrieves the details of the add-on installation.\n",
+        "parameters": [
+          {
+            "name": "cluster_id",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "addoninstallation_id",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success.\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AddOnInstallation"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error.\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/clusters_mgmt/v1/clusters/{cluster_id}/credentials": {
+      "get": {
+        "description": "Retrieves the details of the credentials of a cluster.\n",
+        "parameters": [
+          {
+            "name": "cluster_id",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success.\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClusterCredentials"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error.\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/clusters_mgmt/v1/clusters/{cluster_id}/groups": {
+      "get": {
+        "description": "Retrieves the list of groups.\n",
+        "parameters": [
+          {
+            "name": "cluster_id",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "description": "Index of the requested page, where one corresponds to the first page.\n",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "size",
+            "description": "Number of items contained in the returned page.\n",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success.\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "description": "Retrieved list of groups.\n",
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Group"
+                      }
+                    },
+                    "page": {
+                      "description": "Index of the requested page, where one corresponds to the first page.\n",
+                      "type": "integer",
+                      "format": "int32"
+                    },
+                    "size": {
+                      "description": "Number of items contained in the returned page.\n",
+                      "type": "integer",
+                      "format": "int32"
+                    },
+                    "total": {
+                      "description": "Total number of items of the collection.\n",
+                      "type": "integer",
+                      "format": "int32"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error.\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/clusters_mgmt/v1/clusters/{cluster_id}/groups/{group_id}": {
+      "get": {
+        "description": "Retrieves the details of the group.\n",
+        "parameters": [
+          {
+            "name": "cluster_id",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "group_id",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success.\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Group"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error.\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/clusters_mgmt/v1/clusters/{cluster_id}/groups/{group_id}/users": {
+      "post": {
+        "description": "Adds a new user to the group.\n",
+        "parameters": [
+          {
+            "name": "cluster_id",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "group_id",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/User"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Success.\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error.\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "description": "Retrieves the list of users.\n",
+        "parameters": [
+          {
+            "name": "cluster_id",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "group_id",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "description": "Index of the requested page, where one corresponds to the first page.\n",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "size",
+            "description": "Number of items contained in the returned page.\n",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success.\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "description": "Retrieved list of users.\n",
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/User"
+                      }
+                    },
+                    "page": {
+                      "description": "Index of the requested page, where one corresponds to the first page.\n",
+                      "type": "integer",
+                      "format": "int32"
+                    },
+                    "size": {
+                      "description": "Number of items contained in the returned page.\n",
+                      "type": "integer",
+                      "format": "int32"
+                    },
+                    "total": {
+                      "description": "Total number of items of the collection.\n",
+                      "type": "integer",
+                      "format": "int32"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error.\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/clusters_mgmt/v1/clusters/{cluster_id}/groups/{group_id}/users/{user_id}": {
+      "delete": {
+        "description": "Deletes the user.\n",
+        "parameters": [
+          {
+            "name": "cluster_id",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "group_id",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "user_id",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Success.\n"
+          },
+          "default": {
+            "description": "Error.\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "description": "Retrieves the details of the user.\n",
+        "parameters": [
+          {
+            "name": "cluster_id",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "group_id",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "user_id",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success.\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error.\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/clusters_mgmt/v1/clusters/{cluster_id}/identity_providers": {
+      "post": {
+        "description": "Adds a new identity provider to the cluster.\n",
+        "parameters": [
+          {
+            "name": "cluster_id",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IdentityProvider"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Success.\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IdentityProvider"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error.\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "description": "Retrieves the list of identity providers.\n",
+        "parameters": [
+          {
+            "name": "cluster_id",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "description": "Index of the requested page, where one corresponds to the first page.\n",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "size",
+            "description": "Number of items contained in the returned page.\n",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success.\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "description": "Retrieved list of identity providers.\n",
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/IdentityProvider"
+                      }
+                    },
+                    "page": {
+                      "description": "Index of the requested page, where one corresponds to the first page.\n",
+                      "type": "integer",
+                      "format": "int32"
+                    },
+                    "size": {
+                      "description": "Number of items contained in the returned page.\n",
+                      "type": "integer",
+                      "format": "int32"
+                    },
+                    "total": {
+                      "description": "Total number of items of the collection.\n",
+                      "type": "integer",
+                      "format": "int32"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error.\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/clusters_mgmt/v1/clusters/{cluster_id}/identity_providers/{identity_provider_id}": {
+      "delete": {
+        "description": "Deletes the identity provider.\n",
+        "parameters": [
+          {
+            "name": "cluster_id",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "identity_provider_id",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Success.\n"
+          },
+          "default": {
+            "description": "Error.\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "description": "Retrieves the details of the identity provider.\n",
+        "parameters": [
+          {
+            "name": "cluster_id",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "identity_provider_id",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success.\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IdentityProvider"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error.\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/clusters_mgmt/v1/clusters/{cluster_id}/logs": {
+      "get": {
+        "description": "Retrieves the list of clusters.\n",
+        "parameters": [
+          {
+            "name": "cluster_id",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "description": "Index of the requested page, where one corresponds to the first page.\n",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "size",
+            "description": "Number of items contained in the returned page.\n",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success.\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "description": "Retrieved list of logs.\n",
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Log"
+                      }
+                    },
+                    "page": {
+                      "description": "Index of the requested page, where one corresponds to the first page.\n",
+                      "type": "integer",
+                      "format": "int32"
+                    },
+                    "size": {
+                      "description": "Number of items contained in the returned page.\n",
+                      "type": "integer",
+                      "format": "int32"
+                    },
+                    "total": {
+                      "description": "Total number of items of the collection.\n",
+                      "type": "integer",
+                      "format": "int32"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error.\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/clusters_mgmt/v1/clusters/{cluster_id}/logs/{log_id}": {
+      "get": {
+        "description": "Retrieves the details of the log.\n",
+        "parameters": [
+          {
+            "name": "cluster_id",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "log_id",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success.\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Log"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error.\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/clusters_mgmt/v1/clusters/{cluster_id}/metric_queries": {
+      
+    },
+    "/api/clusters_mgmt/v1/clusters/{cluster_id}/metric_queries/socket_total_by_node_roles_OS": {
+      "get": {
+        "description": "Retrieves the metrics.\n",
+        "parameters": [
+          {
+            "name": "cluster_id",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success.\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SocketTotalsNodeRoleOSMetricNode"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error.\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/clusters_mgmt/v1/clusters/{cluster_id}/status": {
+      "get": {
+        "parameters": [
+          {
+            "name": "cluster_id",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success.\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClusterStatus"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error.\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/clusters_mgmt/v1/dashboards": {
+      "get": {
+        "description": "Retrieves a list of dashboards.\n",
+        "parameters": [
+          {
+            "name": "order",
+            "description": "Order criteria.\n\nThe syntax of this parameter is similar to the syntax of the _order by_ clause of\na SQL statement, but using the names of the attributes of the dashboard instead of\nthe names of the columns of a table. For example, in order to sort the dashboards\ndescending by name the value should be:\n\n\n```\nname desc\n```\n\nIf the parameter isn't provided, or if the value is empty, then the order of the\nresults is undefined.\n",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "description": "Index of the requested page, where one corresponds to the first page.\n",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "search",
+            "description": "Search criteria.\n\nThe syntax of this parameter is similar to the syntax of the _where_ clause of a\nSQL statement, but using the names of the attributes of the dashboard instead of\nthe names of the columns of a table. For example, in order to retrieve all the\ndashboards with a name starting with `my` the value should be:\n\n\n```\nname like 'my%'\n```\n\nIf the parameter isn't provided, or if the value is empty, then all the\ndashboards that the user has permission to see will be returned.\n",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "size",
+            "description": "Maximum number of items that will be contained in the returned page.\n",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success.\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "description": "Retrieved list of dashboards.\n",
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Dashboard"
+                      }
+                    },
+                    "page": {
+                      "description": "Index of the requested page, where one corresponds to the first page.\n",
+                      "type": "integer",
+                      "format": "int32"
+                    },
+                    "size": {
+                      "description": "Maximum number of items that will be contained in the returned page.\n",
+                      "type": "integer",
+                      "format": "int32"
+                    },
+                    "total": {
+                      "description": "Total number of items of the collection that match the search criteria,\nregardless of the size of the page.\n",
+                      "type": "integer",
+                      "format": "int32"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error.\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/clusters_mgmt/v1/dashboards/{dashboard_id}": {
+      "get": {
+        "description": "Retrieves the details of the dashboard.\n",
+        "parameters": [
+          {
+            "name": "dashboard_id",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success.\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Dashboard"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error.\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/clusters_mgmt/v1/flavours": {
+      "post": {
+        "description": "Adds a new cluster flavour.\n",
+        "parameters": [
+          
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Flavour"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Success.\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Flavour"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error.\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "parameters": [
+          {
+            "name": "order",
+            "description": "Order criteria.\n\nThe syntax of this parameter is similar to the syntax of the _order by_ clause of\na SQL statement, but using the names of the attributes of the flavour instead of\nthe names of the columns of a table. For example, in order to sort the flavours\ndescending by name the value should be:\n\n\n```\nname desc\n```\n\nIf the parameter isn't provided, or if the value is empty, then the order of the\nresults is undefined.\n",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "description": "Index of the requested page, where one corresponds to the first page.\n",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "search",
+            "description": "Search criteria.\n\nThe syntax of this parameter is similar to the syntax of the _where_ clause of an\nSQL statement, but using the names of the attributes of the flavour instead of\nthe names of the columns of a table. For example, in order to retrieve all the\nflavours with a name starting with `my`the value should be:\n\n\n```\nname like 'my%'\n```\n\nIf the parameter isn't provided, or if the value is empty, then all the flavours\nthat the user has permission to see will be returned.\n",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "size",
+            "description": "Maximum number of items that will be contained in the returned page.\n",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success.\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "description": "Retrieved list of flavours.\n",
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Flavour"
+                      }
+                    },
+                    "page": {
+                      "description": "Index of the requested page, where one corresponds to the first page.\n",
+                      "type": "integer",
+                      "format": "int32"
+                    },
+                    "size": {
+                      "description": "Maximum number of items that will be contained in the returned page.\n",
+                      "type": "integer",
+                      "format": "int32"
+                    },
+                    "total": {
+                      "description": "Total number of items of the collection that match the search criteria,\nregardless of the size of the page.\n",
+                      "type": "integer",
+                      "format": "int32"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error.\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/clusters_mgmt/v1/flavours/{flavour_id}": {
+      "get": {
+        "description": "Retrieves the details of the cluster flavour.\n",
+        "parameters": [
+          {
+            "name": "flavour_id",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success.\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Flavour"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error.\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/clusters_mgmt/v1/versions": {
+      "get": {
+        "description": "Retrieves a list of versions.\n",
+        "parameters": [
+          {
+            "name": "order",
+            "description": "Order criteria.\n\nThe syntax of this parameter is similar to the syntax of the _order by_ clause of\na SQL statement, but using the names of the attributes of the version instead of\nthe names of the columns of a table. For example, in order to sort the versions\ndescending by identifier the value should be:\n\n\n```\nid desc\n```\n\nIf the parameter isn't provided, or if the value is empty, then the order of the\nresults is undefined.\n",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "description": "Index of the requested page, where one corresponds to the first page.\n",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "search",
+            "description": "Search criteria.\n\nThe syntax of this parameter is similar to the syntax of the _where_ clause of a\nSQL statement, but using the names of the attributes of the version instead of\nthe names of the columns of a table. For example, in order to retrieve all the\nversions that are enabled:\n\n\n```\nenabled = 't'\n```\n\nIf the parameter isn't provided, or if the value is empty, then all the versions\nthat the user has permission to see will be returned.\n",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "size",
+            "description": "Maximum number of items that will be contained in the returned page.\n\nDefault value is `100`.\n",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success.\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "description": "Retrieved list of versions.\n",
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Version"
+                      }
+                    },
+                    "page": {
+                      "description": "Index of the requested page, where one corresponds to the first page.\n",
+                      "type": "integer",
+                      "format": "int32"
+                    },
+                    "size": {
+                      "description": "Maximum number of items that will be contained in the returned page.\n\nDefault value is `100`.\n",
+                      "type": "integer",
+                      "format": "int32"
+                    },
+                    "total": {
+                      "description": "Total number of items of the collection that match the search criteria,\nregardless of the size of the page.\n",
+                      "type": "integer",
+                      "format": "int32"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error.\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/clusters_mgmt/v1/versions/{version_id}": {
+      "get": {
+        "description": "Retrieves the details of the version.\n",
+        "parameters": [
+          {
+            "name": "version_id",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success.\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Version"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error.\n",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Metadata": {
+        "description": "Version metadata.\n",
+        "properties": {
+          "server_version": {
+            "description": "Version of the server.\n",
+            "type": "string"
+          }
+        }
+      },
+      "AWS": {
+        "description": "_Amazon Web Services_ specific settings of a cluster.\n",
+        "properties": {
+          "access_key_id": {
+            "description": "AWS access key identifier.\n",
+            "type": "string"
+          },
+          "account_id": {
+            "description": "AWS account identifier.\n",
+            "type": "string"
+          },
+          "secret_access_key": {
+            "description": "AWS secret access key.\n",
+            "type": "string"
+          }
+        }
+      },
+      "AWSFlavour": {
+        "description": "Volume specification for different classes of nodes inside a flavour.\n",
+        "properties": {
+          "infra_volume": {
+            "description": "Infra volume specification.\n",
+            "$ref": "#/components/schemas/AWSVolume"
+          },
+          "master_volume": {
+            "description": "Master volume specification.\n",
+            "$ref": "#/components/schemas/AWSVolume"
+          },
+          "worker_volume": {
+            "description": "Worker volume specification.\n",
+            "$ref": "#/components/schemas/AWSVolume"
+          }
+        }
+      },
+      "AWSVolume": {
+        "description": "Holds settings for an AWS storage volume.\n",
+        "properties": {
+          "iops": {
+            "description": "Volume provisioned IOPS.\n",
+            "type": "integer",
+            "format": "int32"
+          },
+          "size": {
+            "description": "Volume size in Gib.\n",
+            "type": "integer",
+            "format": "int32"
+          },
+          "type": {
+            "description": "Volume Type\n\nPossible values are: 'io1', 'gp2', 'st1', 'sc1', 'standard'\n",
+            "type": "string"
+          }
+        }
+      },
+      "CPUTotalNodeRoleOSMetricNode": {
+        "description": "Representation of information from telemetry about a the CPU capacity by node role and OS.\n",
+        "properties": {
+          "cpu_total": {
+            "description": "The total CPU capacity of nodes with this set of roles and operating system.\n",
+            "type": "number",
+            "format": "float"
+          },
+          "node_roles": {
+            "description": "Representation of the node role for a cluster.\n",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "operating_system": {
+            "description": "The operating system.\n",
+            "type": "string"
+          },
+          "time": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "CPUTotalsNodeRoleOSMetricNode": {
+        "description": "Representation of information from telemetry about the CPU capacity by node\nrole and OS of a cluster.\n",
+        "properties": {
+          "cpu_totals": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CPUTotalNodeRoleOSMetricNode"
+            }
+          }
+        }
+      },
+      "DNS": {
+        "description": "DNS settings of the cluster.\n",
+        "properties": {
+          "base_domain": {
+            "description": "Base DNS domain of the cluster.\n\nDuring the installation of the cluster it is necessary to create multiple DNS records.\nThey will be created as sub-domains of this domain. For example, if the name of the\ncluster is `mycluster` and the base domain is `example.com` then the following DNS\nrecords will be created:\n\n```\nmycluster-api.example.com\nmycluster-etcd-0.example.com\nmycluster-etcd-1.example.com\nmycluster-etcd-3.example.com\n```\n\nThe exact number, type and names of the created DNS record depends on the characteristics\nof the cluster, and may be different for different versions of _OpenShift_. Please don't\nrely on them. For example, to find what is the URL of the Kubernetes API server of the\ncluster don't assume that it will be `mycluster-api.example.com`. Instead of that use\nthis API to retrieve the description of the cluster, and get it from the `api.url`\nattribute. For example, if the identifier of the cluster is `123` send a request like\nthis:\n\n\n```\nGET /api/clusters_mgmt/v1/clusters/123 HTTP/1.1\n```\n\nThat will return a response like this, including the `api.url` attribute:\n\n\n```\n{\n    \"kind\": \"Cluster\",\n    \"id\": \"123\",\n    \"href\": \"/api/clusters_mgmt/v1/clusters/123\",\n        \"api\": {\n        \"url\": \"https://mycluster-api.example.com:6443\"\n    },\n    ...\n}\n```\n\nWhen the cluster is created in Amazon Web Services it is necessary to create this base\nDNS domain in advance, using AWS Route53 (https://console.aws.amazon.com/route53).\n",
+            "type": "string"
+          }
+        }
+      },
+      "LDAPAttributes": {
+        "description": "LDAP attributes used to configure the LDAP identity provider.\n",
+        "properties": {
+          "id": {
+            "description": "List of attributes to use as the identity.\n",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "email": {
+            "description": "List of attributes to use as the mail address.\n",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "name": {
+            "description": "List of attributes to use as the display name.\n",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "preferred_username": {
+            "description": "List of attributes to use as the preferred user name when provisioning a user.\n",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "LDAPIdentityProvider": {
+        "description": "Details for `ldap` identity providers.\n",
+        "properties": {
+          "ca": {
+            "description": "Certificate bundle to use to validate server certificates for the configured URL.\n",
+            "type": "string"
+          },
+          "ldap_attributes": {
+            "description": "LDAP attributes used to configure the provider.\n",
+            "$ref": "#/components/schemas/LDAPAttributes"
+          },
+          "url": {
+            "description": "An https://tools.ietf.org/html/rfc2255[RFC 2255] URL which specifies the LDAP host and\nsearch parameters to use.\n",
+            "type": "string"
+          },
+          "bind_dn": {
+            "description": "Optional distinguished name to use to bind during the search phase.\n",
+            "type": "string"
+          },
+          "bind_password": {
+            "description": "Optional password to use to bind during the search phase.\n",
+            "type": "string"
+          },
+          "insecure": {
+            "description": "When `true` no TLS connection is made to the server. When `false` `ldaps://...` URLs\nconnect using TLS and `ldap://...` are upgraded to TLS.\n",
+            "type": "boolean"
+          }
+        }
+      },
+      "SSHCredentials": {
+        "description": "SSH key pair of a cluster.\n",
+        "properties": {
+          "private_key": {
+            "description": "SSH private key of the cluster.\n",
+            "type": "string"
+          },
+          "public_key": {
+            "description": "SSH public key of the cluster.\n",
+            "type": "string"
+          }
+        }
+      },
+      "AddOn": {
+        "description": "Representation of an add-on that can be installed in a cluster.\n",
+        "properties": {
+          "kind": {
+            "description": "Indicates the type of this object. Will be 'AddOn' if this is a complete object or 'AddOnLink' if it is just a link.\n",
+            "type": "string"
+          },
+          "id": {
+            "description": "Unique identifier of the object.\n",
+            "type": "string"
+          },
+          "href": {
+            "description": "Self link.\n",
+            "type": "string"
+          },
+          "description": {
+            "description": "Description of the add-on.\n",
+            "type": "string"
+          },
+          "enabled": {
+            "description": "Indicates if this add-on can be added to clusters.\n",
+            "type": "boolean"
+          },
+          "icon": {
+            "description": "Base64-encoded icon representing an add-on. The icon should be in PNG format.\n",
+            "type": "string"
+          },
+          "label": {
+            "description": "Label used to attach to a cluster deployment when add-on is installed.\n",
+            "type": "string"
+          },
+          "name": {
+            "description": "Name of the add-on.\n",
+            "type": "string"
+          },
+          "resource_cost": {
+            "description": "Used to determine how many units of quota an add-on consumes per resource name.\n",
+            "type": "number",
+            "format": "float"
+          },
+          "resource_name": {
+            "description": "Used to determine from where to reserve quota for this add-on.\n",
+            "type": "string"
+          }
+        }
+      },
+      "AddOnInstallation": {
+        "description": "Representation of an add-on installation in a cluster.\n",
+        "properties": {
+          "kind": {
+            "description": "Indicates the type of this object. Will be 'AddOnInstallation' if this is a complete object or 'AddOnInstallationLink' if it is just a link.\n",
+            "type": "string"
+          },
+          "id": {
+            "description": "Unique identifier of the object.\n",
+            "type": "string"
+          },
+          "href": {
+            "description": "Self link.\n",
+            "type": "string"
+          },
+          "addon": {
+            "description": "Link to add-on attached to this cluster.\n",
+            "$ref": "#/components/schemas/AddOn"
+          },
+          "cluster": {
+            "description": "ID used to identify the cluster that this add-on is attached to.\n",
+            "$ref": "#/components/schemas/Cluster"
+          }
+        }
+      },
+      "AdminCredentials": {
+        "description": "Temporary administrator credentials generated during the installation of the\ncluster.\n",
+        "properties": {
+          "password": {
+            "description": "Cluster administrator password.\n",
+            "type": "string"
+          },
+          "user": {
+            "description": "Cluster administrator user name.\n",
+            "type": "string"
+          }
+        }
+      },
+      "CloudProvider": {
+        "description": "Cloud provider.\n",
+        "properties": {
+          "kind": {
+            "description": "Indicates the type of this object. Will be 'CloudProvider' if this is a complete object or 'CloudProviderLink' if it is just a link.\n",
+            "type": "string"
+          },
+          "id": {
+            "description": "Unique identifier of the object.\n",
+            "type": "string"
+          },
+          "href": {
+            "description": "Self link.\n",
+            "type": "string"
+          },
+          "display_name": {
+            "description": "Name of the cloud provider for display purposes. It can contain any characters,\nincluding spaces.\n",
+            "type": "string"
+          },
+          "name": {
+            "description": "Human friendly identifier of the cloud provider, for example `aws`.\n",
+            "type": "string"
+          }
+        }
+      },
+      "CloudRegion": {
+        "description": "Description of a region of a cloud provider.\n",
+        "properties": {
+          "kind": {
+            "description": "Indicates the type of this object. Will be 'CloudRegion' if this is a complete object or 'CloudRegionLink' if it is just a link.\n",
+            "type": "string"
+          },
+          "id": {
+            "description": "Unique identifier of the object.\n",
+            "type": "string"
+          },
+          "href": {
+            "description": "Self link.\n",
+            "type": "string"
+          },
+          "cloud_provider": {
+            "description": "Link to the cloud provider that the region belongs to.\n",
+            "$ref": "#/components/schemas/CloudProvider"
+          },
+          "display_name": {
+            "description": "Name of the region for display purposes, for example `N. Virginia`.\n",
+            "type": "string"
+          },
+          "name": {
+            "description": "Human friendly identifier of the region, for example `us-east-1`.\n\nNOTE: Currently for all cloud provideers and all regions `id` and `name` have exactly\nthe same values.\n",
+            "type": "string"
+          }
+        }
+      },
+      "Cluster": {
+        "description": "Definition of an _OpenShift_ cluster.\n\nThe `cloud_provider` attribute is a reference to the cloud provider. When a\ncluster is retrieved it will be a link to the cloud provider, containing only\nthe kind, id and href attributes:\n\n\n```\n{\n  \"cloud_provider\": {\n    \"kind\": \"CloudProviderLink\",\n    \"id\": \"123\",\n    \"href\": \"/api/clusters_mgmt/v1/cloud_providers/123\"\n  }\n}\n```\n\nWhen a cluster is created this is optional, and if used it should contain the\nidentifier of the cloud provider to use:\n\n\n```\n{\n  \"cloud_provider\": {\n    \"id\": \"123\",\n  }\n}\n```\n\nIf not included, then the cluster will be created using the default cloud\nprovider, which is currently Amazon Web Services.\n\nThe region attribute is mandatory when a cluster is created.\n\nThe `aws.access_key_id`, `aws.secret_access_key` and `dns.base_domain`\nattributes are mandatory when creation a cluster with your own Amazon Web\nServices account.\n",
+        "properties": {
+          "kind": {
+            "description": "Indicates the type of this object. Will be 'Cluster' if this is a complete object or 'ClusterLink' if it is just a link.\n",
+            "type": "string"
+          },
+          "id": {
+            "description": "Unique identifier of the object.\n",
+            "type": "string"
+          },
+          "href": {
+            "description": "Self link.\n",
+            "type": "string"
+          },
+          "api": {
+            "description": "Information about the API of the cluster.\n",
+            "$ref": "#/components/schemas/ClusterAPI"
+          },
+          "aws": {
+            "description": "Amazon Web Services settings of the cluster.\n",
+            "$ref": "#/components/schemas/AWS"
+          },
+          "byoc": {
+            "description": "Flag indicating if the cluster is BYOC (customer cloud subscription).\n",
+            "type": "boolean"
+          },
+          "dns": {
+            "description": "DNS settings of the cluster.\n",
+            "$ref": "#/components/schemas/DNS"
+          },
+          "addons": {
+            "description": "List of add-ons on this cluster.\n",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AddOnInstallation"
+            }
+          },
+          "cloud_provider": {
+            "description": "Link to the cloud provider where the cluster is installed.\n",
+            "$ref": "#/components/schemas/CloudProvider"
+          },
+          "console": {
+            "description": "Information about the console of the cluster.\n",
+            "$ref": "#/components/schemas/ClusterConsole"
+          },
+          "creation_timestamp": {
+            "description": "Date and time when the cluster was initially created, using the\nformat defined in https://www.ietf.org/rfc/rfc3339.txt[RC3339].\n",
+            "type": "string",
+            "format": "date-time"
+          },
+          "display_name": {
+            "description": "Name of the cluster for display purposes. It can contain any\ncharacters, including spaces.\n",
+            "type": "string"
+          },
+          "expiration_timestamp": {
+            "description": "Date and time when the cluster will be automatically deleted, using the format defined in\nhttps://www.ietf.org/rfc/rfc3339.txt[RFC3339]. If no timestamp is provided, the cluster\nwill never expire.\n",
+            "type": "string",
+            "format": "date-time"
+          },
+          "external_id": {
+            "description": "External identifier of the cluster, generated by the installer.\n",
+            "type": "string"
+          },
+          "flavour": {
+            "description": "Link to the _flavour_ that was used to create the cluster.\n",
+            "$ref": "#/components/schemas/Flavour"
+          },
+          "groups": {
+            "description": "Link to the collection of groups of user of the cluster.\n",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Group"
+            }
+          },
+          "identity_providers": {
+            "description": "Link to the collection of identity providers of the cluster.\n",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/IdentityProvider"
+            }
+          },
+          "load_balancer_quota": {
+            "description": "Load Balancer quota to be assigned to the cluster.\n",
+            "type": "integer",
+            "format": "int32"
+          },
+          "managed": {
+            "description": "Flag indicating if the cluster is managed (by Red Hat) or\nself-managed by the user.\n",
+            "type": "boolean"
+          },
+          "metrics": {
+            "description": "Cluster metrics received from telemetry.\n\nWhen provisioning a cluster this will be ignored.\n",
+            "$ref": "#/components/schemas/ClusterMetrics"
+          },
+          "multi_az": {
+            "description": "Flag indicating if the cluster should be created with nodes in\ndifferent availability zones or all the nodes in a single one\nrandomly selected.\n",
+            "type": "boolean"
+          },
+          "name": {
+            "description": "Name of the cluster. This name is assigned by the user when the\ncluster is created.\n",
+            "type": "string"
+          },
+          "network": {
+            "description": "Network settings of the cluster.\n",
+            "$ref": "#/components/schemas/Network"
+          },
+          "nodes": {
+            "description": "Information about the nodes of the cluster.\n",
+            "$ref": "#/components/schemas/ClusterNodes"
+          },
+          "openshift_version": {
+            "description": "Version of _OpenShift_ installed in the cluster, for example `4.0.0-0.2`.\n\nWhen retrieving a cluster this will always be reported.\n\nWhen provisioning a cluster this will be ignored, as the version to\ndeploy will be determined internally.\n",
+            "type": "string"
+          },
+          "properties": {
+            "description": "User defined properties for tagging and querying.\n",
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "region": {
+            "description": "Link to the cloud provider region where the cluster is installed.\n",
+            "$ref": "#/components/schemas/CloudRegion"
+          },
+          "state": {
+            "description": "Overall state of the cluster.\n",
+            "$ref": "#/components/schemas/ClusterState"
+          },
+          "storage_quota": {
+            "description": "Storage quota to be assigned to the cluster.\n",
+            "$ref": "#/components/schemas/Value"
+          },
+          "subscription": {
+            "description": "Link to the subscription that comes from the account management service when the cluster\nis registered.\n",
+            "$ref": "#/components/schemas/Subscription"
+          },
+          "version": {
+            "description": "Link to the version of _OpenShift_ that will be used to install the cluster.\n",
+            "$ref": "#/components/schemas/Version"
+          }
+        }
+      },
+      "ClusterAPI": {
+        "description": "Information about the API of a cluster.\n",
+        "properties": {
+          "url": {
+            "description": "The URL of the API server of the cluster.\n",
+            "type": "string"
+          }
+        }
+      },
+      "ClusterConsole": {
+        "description": "Information about the console of a cluster.\n",
+        "properties": {
+          "url": {
+            "description": "The URL of the console of the cluster.\n",
+            "type": "string"
+          }
+        }
+      },
+      "ClusterCredentials": {
+        "description": "Credentials of the a cluster.\n",
+        "properties": {
+          "kind": {
+            "description": "Indicates the type of this object. Will be 'ClusterCredentials' if this is a complete object or 'ClusterCredentialsLink' if it is just a link.\n",
+            "type": "string"
+          },
+          "id": {
+            "description": "Unique identifier of the object.\n",
+            "type": "string"
+          },
+          "href": {
+            "description": "Self link.\n",
+            "type": "string"
+          },
+          "ssh": {
+            "description": "SSH key pair of the cluster.\n",
+            "$ref": "#/components/schemas/SSHCredentials"
+          },
+          "admin": {
+            "description": "Temporary administrator credentials generated during the installation\nof the cluster.\n",
+            "$ref": "#/components/schemas/AdminCredentials"
+          },
+          "kubeconfig": {
+            "description": "Administrator _kubeconfig_ file for the cluster.\n",
+            "type": "string"
+          }
+        }
+      },
+      "ClusterMetric": {
+        "description": "Metric describing the total and used amount of some resource (like RAM, CPU and storage) in\na cluster.\n",
+        "properties": {
+          "total": {
+            "description": "Total amount of the resource that exists in the cluster. For example the total amount\nof RAM.\n",
+            "$ref": "#/components/schemas/Value"
+          },
+          "updated_timestamp": {
+            "description": "Collection timestamp of the metric.\n",
+            "type": "string",
+            "format": "date-time"
+          },
+          "used": {
+            "description": "Amount of the resource that is currently in use in the cluster. Fore example the amount\nof RAM in use.\n",
+            "$ref": "#/components/schemas/Value"
+          }
+        }
+      },
+      "ClusterMetrics": {
+        "description": "Cluster metrics received via telemetry.\n",
+        "properties": {
+          "cpu": {
+            "description": "The amount of CPU provisioned and used in the cluster.\n",
+            "$ref": "#/components/schemas/ClusterMetric"
+          },
+          "compute_nodes_cpu": {
+            "description": "The amount of CPU provisioned and used in the cluster by compute nodes.\n",
+            "$ref": "#/components/schemas/ClusterMetric"
+          },
+          "compute_nodes_memory": {
+            "description": "The amount of memory provisioned and used in the cluster by compute nodes.\n",
+            "$ref": "#/components/schemas/ClusterMetric"
+          },
+          "memory": {
+            "description": "The amount of memory provisioned and used in the cluster.\n",
+            "$ref": "#/components/schemas/ClusterMetric"
+          },
+          "nodes": {
+            "description": "The number of nodes provisioned for the cluster.\n",
+            "$ref": "#/components/schemas/ClusterNodes"
+          },
+          "storage": {
+            "description": "The amount of storage provisioned and used in the cluster.\n\nWARNING: This isn't currently populated. \n",
+            "$ref": "#/components/schemas/ClusterMetric"
+          }
+        }
+      },
+      "ClusterNodes": {
+        "description": "Counts of different classes of nodes inside a cluster.\n",
+        "properties": {
+          "compute": {
+            "description": "Number of compute nodes of the cluster.\n",
+            "type": "integer",
+            "format": "int32"
+          },
+          "infra": {
+            "description": "Number of infrastructure nodes of the cluster.\n",
+            "type": "integer",
+            "format": "int32"
+          },
+          "master": {
+            "description": "Number of master nodes of the cluster.\n",
+            "type": "integer",
+            "format": "int32"
+          },
+          "total": {
+            "description": "Total number of nodes of the cluster.\n",
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "ClusterRegistration": {
+        "description": "Registration of a new cluster to the service.\n",
+        "properties": {
+          "external_id": {
+            "description": "Identifier of the cluster generated by the installer.\n\nFor example, to register a cluster that has been provisioned outside\nof this service, send a a request like this:\n\n\n```\nPOST /api/clusters_mgmt/v1/register_cluster HTTP/1.1\n```\n\nWith a request body like this:\n\n\n```\n{\n  \"external_id\": \"d656aecf-11a6-4782-ad86-8f72638449ba\"\n}\n```\n",
+            "type": "string"
+          },
+          "subscription_id": {
+            "description": "Subscription identifier of the cluster generated by the account\nmanager.\n",
+            "type": "string"
+          }
+        }
+      },
+      "ClusterState": {
+        "description": "Overall state of a cluster.\n",
+        "type": "string",
+        "enum": [
+          "error",
+          "installing",
+          "pending",
+          "pending_account",
+          "ready",
+          "uninstalling",
+          "unknown"
+        ]
+      },
+      "ClusterStatus": {
+        "description": "Detailed status of a cluster.\n",
+        "properties": {
+          "kind": {
+            "description": "Indicates the type of this object. Will be 'ClusterStatus' if this is a complete object or 'ClusterStatusLink' if it is just a link.\n",
+            "type": "string"
+          },
+          "id": {
+            "description": "Unique identifier of the object.\n",
+            "type": "string"
+          },
+          "href": {
+            "description": "Self link.\n",
+            "type": "string"
+          },
+          "description": {
+            "description": "Detailed description of the cluster status.\n",
+            "type": "string"
+          },
+          "state": {
+            "description": "The overall state of the cluster.\n",
+            "$ref": "#/components/schemas/ClusterState"
+          }
+        }
+      },
+      "Dashboard": {
+        "description": "Collection of metrics intended to render a graphical dashboard.\n",
+        "properties": {
+          "kind": {
+            "description": "Indicates the type of this object. Will be 'Dashboard' if this is a complete object or 'DashboardLink' if it is just a link.\n",
+            "type": "string"
+          },
+          "id": {
+            "description": "Unique identifier of the object.\n",
+            "type": "string"
+          },
+          "href": {
+            "description": "Self link.\n",
+            "type": "string"
+          },
+          "metrics": {
+            "description": "Metrics included in the dashboard.\n",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Metric"
+            }
+          },
+          "name": {
+            "description": "Name of the dashboard.\n",
+            "type": "string"
+          }
+        }
+      },
+      "Flavour": {
+        "description": "Set of predefined properties of a cluster. For example, a _huge_ flavour can be a cluster\nwith 10 infra nodes and 1000 compute nodes.\n",
+        "properties": {
+          "kind": {
+            "description": "Indicates the type of this object. Will be 'Flavour' if this is a complete object or 'FlavourLink' if it is just a link.\n",
+            "type": "string"
+          },
+          "id": {
+            "description": "Unique identifier of the object.\n",
+            "type": "string"
+          },
+          "href": {
+            "description": "Self link.\n",
+            "type": "string"
+          },
+          "aws": {
+            "description": "Default _Amazon Web Services_ settings of the cluster.\n\nThese can be overriden specifying in the clsuter itself a different set of settings.\n",
+            "$ref": "#/components/schemas/AWSFlavour"
+          },
+          "compute_instance_type": {
+            "description": "AWS default instance type for the worker volume.\n\nTins can be overriden specifying in the cluster itself a type for compute node.\n",
+            "type": "string"
+          },
+          "infra_instance_type": {
+            "description": "AWS default instance type for the infra volume.\n",
+            "type": "string"
+          },
+          "master_instance_type": {
+            "description": "AWS default instance type for the master volume.\n",
+            "type": "string"
+          },
+          "name": {
+            "description": "Human friendly identifier of the cluster, for example `4`.\n\nNOTE: Currently for all flavours the `id` and `name` attributes have exactly the\nsame values.\n",
+            "type": "string"
+          },
+          "network": {
+            "description": "Default network settings of the cluster.\n\nThese can be overriden specifying in the cluster itself a different set of settings.\n",
+            "$ref": "#/components/schemas/Network"
+          },
+          "nodes": {
+            "description": "Number of nodes that will be used by default when creating a cluster that uses\nthis flavour.\n\nThese can be overriden specifying in the cluster itself a different number of nodes.\n",
+            "$ref": "#/components/schemas/FlavourNodes"
+          }
+        }
+      },
+      "FlavourNodes": {
+        "description": "Counts of different classes of nodes inside a flavour.\n",
+        "properties": {
+          "compute": {
+            "description": "Number of compute nodes of the cluster.\n",
+            "type": "integer",
+            "format": "int32"
+          },
+          "infra": {
+            "description": "Number of infra nodes of the cluster.\n",
+            "type": "integer",
+            "format": "int32"
+          },
+          "master": {
+            "description": "Number of master nodes of the cluster.\n",
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "GithubIdentityProvider": {
+        "description": "Details for `github` identity providers.\n",
+        "properties": {
+          "ca": {
+            "description": "Optional trusted certificate authority bundle to use when making requests tot he server.\n",
+            "type": "string"
+          },
+          "client_id": {
+            "description": "Client identifier of a registered _GitHub_ OAuth application.\n",
+            "type": "string"
+          },
+          "hostname": {
+            "description": "For _GitHub Enterprise_ you must provide the host name of your instance, such as\n`example.com`. This value must match the _GitHub Enterprise_ host name value in the\n`/setup/settings` file and cannot include a port number.\n\nFor plain _GitHub_ omit this parameter.\n",
+            "type": "string"
+          },
+          "teams": {
+            "description": "Optional list of temas. Cannot be used in combination with the organizations field.\n",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "GitlabIdentityProvider": {
+        "description": "Details for `gitlab` identity providers.\n",
+        "properties": {
+          "ca": {
+            "description": "Optional trusted certificate authority bundle to use when making requests tot he server.\n",
+            "type": "string"
+          },
+          "url": {
+            "description": "URL of the _GitLab_ instance.\n",
+            "type": "string"
+          },
+          "client_id": {
+            "description": "Client identifier of a registered _GitLab_ OAuth application.\n",
+            "type": "string"
+          },
+          "client_secret": {
+            "description": "Client secret issued by _GitLab_.\n",
+            "type": "string"
+          }
+        }
+      },
+      "GoogleIdentityProvider": {
+        "description": "Details for `google` identity providers.\n",
+        "properties": {
+          "client_id": {
+            "description": "Client identifier of a registered _Google_ project.\n",
+            "type": "string"
+          },
+          "client_secret": {
+            "description": "Client secret issued by _Google.\n",
+            "type": "string"
+          },
+          "hosted_domain": {
+            "description": "Optional hosted domain to restrict sign-in accounts to.\n",
+            "type": "string"
+          }
+        }
+      },
+      "Group": {
+        "description": "Representation of a group of users.\n",
+        "properties": {
+          "kind": {
+            "description": "Indicates the type of this object. Will be 'Group' if this is a complete object or 'GroupLink' if it is just a link.\n",
+            "type": "string"
+          },
+          "id": {
+            "description": "Unique identifier of the object.\n",
+            "type": "string"
+          },
+          "href": {
+            "description": "Self link.\n",
+            "type": "string"
+          },
+          "users": {
+            "description": "List of users of the group.\n",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/User"
+            }
+          }
+        }
+      },
+      "IdentityProvider": {
+        "description": "Representation of an identity provider.\n",
+        "properties": {
+          "kind": {
+            "description": "Indicates the type of this object. Will be 'IdentityProvider' if this is a complete object or 'IdentityProviderLink' if it is just a link.\n",
+            "type": "string"
+          },
+          "id": {
+            "description": "Unique identifier of the object.\n",
+            "type": "string"
+          },
+          "href": {
+            "description": "Self link.\n",
+            "type": "string"
+          },
+          "ldap": {
+            "description": "Details for `ldap` identity providers.\n",
+            "$ref": "#/components/schemas/LDAPIdentityProvider"
+          },
+          "challenge": {
+            "description": "When `true` unauthenticated token requests from non-web clients (like the CLI) are sent a\n`WWW-Authenticate` challenge header for this provider.\n",
+            "type": "boolean"
+          },
+          "github": {
+            "description": "Details for `github` identity providers.\n",
+            "$ref": "#/components/schemas/GithubIdentityProvider"
+          },
+          "gitlab": {
+            "description": "Details for `gitlab` identity providers.\n",
+            "$ref": "#/components/schemas/GitlabIdentityProvider"
+          },
+          "google": {
+            "description": "Details for `google` identity providers.\n",
+            "$ref": "#/components/schemas/GoogleIdentityProvider"
+          },
+          "login": {
+            "description": "When `true` unauthenticated token requests from web clients (like the web console) are\nredirected to the authorize URL to log in.\n",
+            "type": "boolean"
+          },
+          "mapping_method": {
+            "description": "Controls how mappings are established between this provider's identities and user\nobjects.\n",
+            "$ref": "#/components/schemas/IdentityProviderMappingMethod"
+          },
+          "name": {
+            "description": "The name of the identity provider.\n",
+            "type": "string"
+          },
+          "open_id": {
+            "description": "Details for `openid` identity providers.\n",
+            "$ref": "#/components/schemas/OpenIDIdentityProvider"
+          },
+          "type": {
+            "description": "Type of identity provider. The rest of the attributes will be populated according to this\nvalue. For example, if the type is `github` then only the `github` attribute will be\npopulated.\n",
+            "$ref": "#/components/schemas/IdentityProviderType"
+          }
+        }
+      },
+      "IdentityProviderMappingMethod": {
+        "description": "Controls how mappings are established between provider identities and user objects.\n",
+        "type": "string",
+        "enum": [
+          "add",
+          "claim",
+          "generate",
+          "lookup"
+        ]
+      },
+      "IdentityProviderType": {
+        "description": "Type of identity provider.\n",
+        "type": "string",
+        "enum": [
+          "ldap",
+          "github",
+          "gitlab",
+          "google",
+          "open_id"
+        ]
+      },
+      "Log": {
+        "description": "Log of the cluster.\n",
+        "properties": {
+          "kind": {
+            "description": "Indicates the type of this object. Will be 'Log' if this is a complete object or 'LogLink' if it is just a link.\n",
+            "type": "string"
+          },
+          "id": {
+            "description": "Unique identifier of the object.\n",
+            "type": "string"
+          },
+          "href": {
+            "description": "Self link.\n",
+            "type": "string"
+          },
+          "content": {
+            "description": "Content of the log.\n",
+            "type": "string"
+          }
+        }
+      },
+      "Metric": {
+        "description": "Metric included in a dashboard.\n",
+        "properties": {
+          "name": {
+            "description": "Name of the metric.\n",
+            "type": "string"
+          },
+          "vector": {
+            "description": "Samples of the metric.\n",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Sample"
+            }
+          }
+        }
+      },
+      "Network": {
+        "description": "Network configuration of a cluster.\n",
+        "properties": {
+          "machine_cidr": {
+            "description": "IP address block from which to assign machine IP addresses, for example `10.0.0.0/16`.\n",
+            "type": "string"
+          },
+          "pod_cidr": {
+            "description": "IP address block from which to assign pod IP addresses, for example `10.128.0.0/14`.\n",
+            "type": "string"
+          },
+          "service_cidr": {
+            "description": "IP address block from which to assign service IP addresses, for example `172.30.0.0/16`.\n",
+            "type": "string"
+          }
+        }
+      },
+      "OpenIDClaims": {
+        "description": "_OpenID_ identity provider claims.\n",
+        "properties": {
+          "email": {
+            "description": "List of claims to use as the mail address.\n",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "name": {
+            "description": "List of claims to use as the display name.\n",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "preferred_username": {
+            "description": "List of claims to use as the preferred user name when provisioning a user.\n",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "OpenIDIdentityProvider": {
+        "description": "Details for `openid` identity providers.\n",
+        "properties": {
+          "ca": {
+            "description": "Certificate bunde to use to validate server certificates for the configured URL.\n",
+            "type": "string"
+          },
+          "urls": {
+            "description": "URLs of the provider.\n",
+            "$ref": "#/components/schemas/OpenIDURLs"
+          },
+          "claims": {
+            "description": "Claims used to configure the provider.\n",
+            "$ref": "#/components/schemas/OpenIDClaims"
+          },
+          "client_id": {
+            "description": "Identifier of a client registered with the _OpenID_ provider.\n",
+            "type": "string"
+          },
+          "client_secret": {
+            "description": "Client secret.\n",
+            "type": "string"
+          },
+          "extra_authorize_parameters": {
+            "description": "Optional map of extra parameters to add to the authorization token request.\n",
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "extra_scopes": {
+            "description": "Optional list of scopes to request, in addition to the `openid` scope, during the\nauthorization token request.\n",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "OpenIDURLs": {
+        "description": "_OpenID_ identity provider URLs.\n",
+        "properties": {
+          "authorize": {
+            "description": "Authorization endpoint described in the _OpenID_ specification. Must use HTTPS.\n",
+            "type": "string"
+          },
+          "token": {
+            "description": "Token endpoint described in the _OpenID_ specification. Must use HTTPS.\n",
+            "type": "string"
+          },
+          "user_info": {
+            "description": "User information endpoint described in the _OpenID_ specification. Must use HTTPS.\n",
+            "type": "string"
+          }
+        }
+      },
+      "Sample": {
+        "description": "Sample of a metric.\n",
+        "properties": {
+          "time": {
+            "description": "Time when the sample was obtained.\n",
+            "type": "string",
+            "format": "date-time"
+          },
+          "value": {
+            "description": "Numeric value of the sample.\n",
+            "type": "number",
+            "format": "float"
+          }
+        }
+      },
+      "SocketTotalNodeRoleOSMetricNode": {
+        "description": "Representation of information from telemetry about a the socket capacity\nby node role and OS.\n",
+        "properties": {
+          "node_roles": {
+            "description": "Representation of the node role for a cluster.\n",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "operating_system": {
+            "description": "The operating system.\n",
+            "type": "string"
+          },
+          "socket_total": {
+            "description": "The total socket capacity of nodes with this set of roles and operating system.\n",
+            "type": "number",
+            "format": "float"
+          },
+          "time": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "SocketTotalsNodeRoleOSMetricNode": {
+        "description": "Representation of information from telemetry about the socket capacity by node\nrole and OS of a cluster.\n",
+        "properties": {
+          "socket_totals": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SocketTotalNodeRoleOSMetricNode"
+            }
+          }
+        }
+      },
+      "Subscription": {
+        "description": "Definition of a subscription.\n",
+        "properties": {
+          "kind": {
+            "description": "Indicates the type of this object. Will be 'Subscription' if this is a complete object or 'SubscriptionLink' if it is just a link.\n",
+            "type": "string"
+          },
+          "id": {
+            "description": "Unique identifier of the object.\n",
+            "type": "string"
+          },
+          "href": {
+            "description": "Self link.\n",
+            "type": "string"
+          }
+        }
+      },
+      "User": {
+        "description": "Representation of a user.\n",
+        "properties": {
+          "kind": {
+            "description": "Indicates the type of this object. Will be 'User' if this is a complete object or 'UserLink' if it is just a link.\n",
+            "type": "string"
+          },
+          "id": {
+            "description": "Unique identifier of the object.\n",
+            "type": "string"
+          },
+          "href": {
+            "description": "Self link.\n",
+            "type": "string"
+          }
+        }
+      },
+      "Value": {
+        "description": "Numeric value and the unit used to measure it.\n\nUnits are not mandatory, and they're not specified for some resources. For\nresources that use bytes, the accepted units are:\n\n- 1 B = 1 byte\n- 1 KB = 10^3 bytes\n- 1 MB = 10^6 bytes\n- 1 GB = 10^9 bytes\n- 1 TB = 10^12 bytes\n- 1 PB = 10^15 bytes\n\n- 1 B = 1 byte\n- 1 KiB = 2^10 bytes\n- 1 MiB = 2^20 bytes\n- 1 GiB = 2^30 bytes\n- 1 TiB = 2^40 bytes\n- 1 PiB = 2^50 bytes\n",
+        "properties": {
+          "unit": {
+            "description": "Name of the unit used to measure the value.\n",
+            "type": "string"
+          },
+          "value": {
+            "description": "Numeric value.\n",
+            "type": "number",
+            "format": "float"
+          }
+        }
+      },
+      "Version": {
+        "description": "Representation of an _OpenShift_ version.\n",
+        "properties": {
+          "kind": {
+            "description": "Indicates the type of this object. Will be 'Version' if this is a complete object or 'VersionLink' if it is just a link.\n",
+            "type": "string"
+          },
+          "id": {
+            "description": "Unique identifier of the object.\n",
+            "type": "string"
+          },
+          "href": {
+            "description": "Self link.\n",
+            "type": "string"
+          },
+          "default": {
+            "description": "Indicates if this should be selected as the default version when a cluster is created\nwithout specifying explicitly the version.\n",
+            "type": "boolean"
+          },
+          "enabled": {
+            "description": "Indicates if this version can be used to create clusters.\n",
+            "type": "boolean"
+          }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "description": "Indicates the type of this object. Will always be 'Error'\n",
+            "type": "string"
+          },
+          "id": {
+            "description": "Numeric identifier of the error.\n",
+            "type": "integer",
+            "format": "int32"
+          },
+          "href": {
+            "description": "Self link.\n",
+            "type": "string"
+          },
+          "code": {
+            "description": "Globally unique code of the error, composed of the unique identifier of the API and the numeric identifier of the error. For example, for if the numeric identifier of the error is `93` and the identifier of the API is `clusters_mgmt` then the code will be `CLUSTERS-MGMT-93`.\n",
+            "type": "string"
+          },
+          "reason": {
+            "description": "Human readable description of the error.\n",
+            "type": "string"
+          },
+          "details": {
+            "description": "Extra information about the error.\n",
+            "type": "object",
+            "additionalProperties": "true"
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "bearer": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  },
+  "security": [
+    {
+      "bearer": [
+        
+      ]
+    }
+  ]
+}

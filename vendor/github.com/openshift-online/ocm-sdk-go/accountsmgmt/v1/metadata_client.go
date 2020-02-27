@@ -21,6 +21,8 @@ package v1 // github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1
 
 import (
 	"context"
+	"encoding/json"
+	"io"
 	"net/http"
 	"net/url"
 
@@ -98,7 +100,7 @@ func (r *MetadataRequest) SendContext(ctx context.Context) (result *MetadataResp
 		err = result.err
 		return
 	}
-	result.body, err = UnmarshalMetadata(response.Body)
+	err = result.unmarshal(response.Body)
 	if err != nil {
 		return
 	}
@@ -132,4 +134,19 @@ func (r *MetadataResponse) Error() *errors.Error {
 // Body returns the response body.
 func (r *MetadataResponse) Body() *Metadata {
 	return r.body
+}
+
+// unmarshal is the method used internally to unmarshal metadata responses.
+func (r *MetadataResponse) unmarshal(reader io.Reader) error {
+	decoder := json.NewDecoder(reader)
+	data := &metadataData{}
+	err := decoder.Decode(data)
+	if err != nil {
+		return err
+	}
+	r.body, err = data.unwrap()
+	if err != nil {
+		return err
+	}
+	return nil
 }

@@ -21,6 +21,8 @@ package v1 // github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1
 
 import (
 	"context"
+	"encoding/json"
+	"io"
 	"net/http"
 
 	"github.com/golang/glog"
@@ -82,6 +84,19 @@ func (r *UserGetServerResponse) Status(value int) *UserGetServerResponse {
 	return r
 }
 
+// marshall is the method used internally to marshal responses for the
+// 'get' method.
+func (r *UserGetServerResponse) marshal(writer io.Writer) error {
+	var err error
+	encoder := json.NewEncoder(writer)
+	data, err := r.body.wrap()
+	if err != nil {
+		return err
+	}
+	err = encoder.Encode(data)
+	return err
+}
+
 // dispatchUser navigates the servers tree rooted at the given server
 // till it finds one that matches the given set of path segments, and then invokes
 // the corresponding server.
@@ -90,28 +105,42 @@ func dispatchUser(w http.ResponseWriter, r *http.Request, server UserServer, seg
 		switch r.Method {
 		case "DELETE":
 			adaptUserDeleteRequest(w, r, server)
-			return
 		case "GET":
 			adaptUserGetRequest(w, r, server)
-			return
 		default:
 			errors.SendMethodNotAllowed(w, r)
 			return
 		}
+	} else {
+		switch segments[0] {
+		default:
+			errors.SendNotFound(w, r)
+			return
+		}
 	}
-	switch segments[0] {
-	default:
-		errors.SendNotFound(w, r)
-		return
-	}
+}
+
+// readUserDeleteRequest reads the given HTTP requests and translates it
+// into an object of type UserDeleteServerRequest.
+func readUserDeleteRequest(r *http.Request) (*UserDeleteServerRequest, error) {
+	var err error
+	result := new(UserDeleteServerRequest)
+	return result, err
+}
+
+// writeUserDeleteResponse translates the given request object into an
+// HTTP response.
+func writeUserDeleteResponse(w http.ResponseWriter, r *UserDeleteServerResponse) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(r.status)
+	return nil
 }
 
 // adaptUserDeleteRequest translates the given HTTP request into a call to
 // the corresponding method of the given server. Then it translates the
 // results returned by that method into an HTTP response.
 func adaptUserDeleteRequest(w http.ResponseWriter, r *http.Request, server UserServer) {
-	request := &UserDeleteServerRequest{}
-	err := readUserDeleteRequest(request, r)
+	request, err := readUserDeleteRequest(r)
 	if err != nil {
 		glog.Errorf(
 			"Can't read request for method '%s' and path '%s': %v",
@@ -120,7 +149,7 @@ func adaptUserDeleteRequest(w http.ResponseWriter, r *http.Request, server UserS
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	response := &UserDeleteServerResponse{}
+	response := new(UserDeleteServerResponse)
 	response.status = 204
 	err = server.Delete(r.Context(), request, response)
 	if err != nil {
@@ -131,7 +160,7 @@ func adaptUserDeleteRequest(w http.ResponseWriter, r *http.Request, server UserS
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	err = writeUserDeleteResponse(response, w)
+	err = writeUserDeleteResponse(w, response)
 	if err != nil {
 		glog.Errorf(
 			"Can't write response for method '%s' and path '%s': %v",
@@ -141,12 +170,31 @@ func adaptUserDeleteRequest(w http.ResponseWriter, r *http.Request, server UserS
 	}
 }
 
+// readUserGetRequest reads the given HTTP requests and translates it
+// into an object of type UserGetServerRequest.
+func readUserGetRequest(r *http.Request) (*UserGetServerRequest, error) {
+	var err error
+	result := new(UserGetServerRequest)
+	return result, err
+}
+
+// writeUserGetResponse translates the given request object into an
+// HTTP response.
+func writeUserGetResponse(w http.ResponseWriter, r *UserGetServerResponse) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(r.status)
+	err := r.marshal(w)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 // adaptUserGetRequest translates the given HTTP request into a call to
 // the corresponding method of the given server. Then it translates the
 // results returned by that method into an HTTP response.
 func adaptUserGetRequest(w http.ResponseWriter, r *http.Request, server UserServer) {
-	request := &UserGetServerRequest{}
-	err := readUserGetRequest(request, r)
+	request, err := readUserGetRequest(r)
 	if err != nil {
 		glog.Errorf(
 			"Can't read request for method '%s' and path '%s': %v",
@@ -155,7 +203,7 @@ func adaptUserGetRequest(w http.ResponseWriter, r *http.Request, server UserServ
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	response := &UserGetServerResponse{}
+	response := new(UserGetServerResponse)
 	response.status = 200
 	err = server.Get(r.Context(), request, response)
 	if err != nil {
@@ -166,7 +214,7 @@ func adaptUserGetRequest(w http.ResponseWriter, r *http.Request, server UserServ
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	err = writeUserGetResponse(response, w)
+	err = writeUserGetResponse(w, response)
 	if err != nil {
 		glog.Errorf(
 			"Can't write response for method '%s' and path '%s': %v",

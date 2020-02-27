@@ -31,7 +31,8 @@ func NewExportControlReviewRequest() *ExportControlReviewRequestBuilder {
 	return new(ExportControlReviewRequestBuilder)
 }
 
-// AccountUsername sets the value of the 'account_username' attribute to the given value.
+// AccountUsername sets the value of the 'account_username' attribute
+// to the given value.
 //
 //
 func (b *ExportControlReviewRequestBuilder) AccountUsername(value string) *ExportControlReviewRequestBuilder {
@@ -51,6 +52,8 @@ func (b *ExportControlReviewRequestBuilder) Copy(object *ExportControlReviewRequ
 // Build creates a 'export_control_review_request' object using the configuration stored in the builder.
 func (b *ExportControlReviewRequestBuilder) Build() (object *ExportControlReviewRequest, err error) {
 	object = new(ExportControlReviewRequest)
-	object.accountUsername = b.accountUsername
+	if b.accountUsername != nil {
+		object.accountUsername = b.accountUsername
+	}
 	return
 }

@@ -116,22 +116,8 @@ func (o *ClusterRegistration) GetSubscriptionID() (value string, ok bool) {
 	return
 }
 
-// ClusterRegistrationListKind is the name of the type used to represent list of objects of
-// type 'cluster_registration'.
-const ClusterRegistrationListKind = "ClusterRegistrationList"
-
-// ClusterRegistrationListLinkKind is the name of the type used to represent links to list
-// of objects of type 'cluster_registration'.
-const ClusterRegistrationListLinkKind = "ClusterRegistrationListLink"
-
-// ClusterRegistrationNilKind is the name of the type used to nil lists of objects of
-// type 'cluster_registration'.
-const ClusterRegistrationListNilKind = "ClusterRegistrationListNil"
-
 // ClusterRegistrationList is a list of values of the 'cluster_registration' type.
 type ClusterRegistrationList struct {
-	href  *string
-	link  bool
 	items []*ClusterRegistration
 }
 

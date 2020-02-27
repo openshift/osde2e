@@ -38,7 +38,7 @@ type Dashboard struct {
 	id      *string
 	href    *string
 	link    bool
-	metrics []*Metric
+	metrics *MetricList
 	name    *string
 }
 
@@ -97,7 +97,7 @@ func (o *Dashboard) GetHREF() (value string, ok bool) {
 // Empty returns true if the object is empty, i.e. no attribute has a value.
 func (o *Dashboard) Empty() bool {
 	return o == nil || (o.id == nil &&
-		len(o.metrics) == 0 &&
+		o.metrics.Empty() &&
 		o.name == nil &&
 		true)
 }
@@ -106,7 +106,7 @@ func (o *Dashboard) Empty() bool {
 // the zero value of the type if the attribute doesn't have a value.
 //
 // Metrics included in the dashboard.
-func (o *Dashboard) Metrics() []*Metric {
+func (o *Dashboard) Metrics() *MetricList {
 	if o == nil {
 		return nil
 	}
@@ -117,7 +117,7 @@ func (o *Dashboard) Metrics() []*Metric {
 // a flag indicating if the attribute has a value.
 //
 // Metrics included in the dashboard.
-func (o *Dashboard) GetMetrics() (value []*Metric, ok bool) {
+func (o *Dashboard) GetMetrics() (value *MetricList, ok bool) {
 	ok = o != nil && o.metrics != nil
 	if ok {
 		value = o.metrics
@@ -148,16 +148,16 @@ func (o *Dashboard) GetName() (value string, ok bool) {
 	return
 }
 
-// DashboardListKind is the name of the type used to represent list of objects of
-// type 'dashboard'.
+// DashboardListKind is the name of the type used to represent list of
+// objects of type 'dashboard'.
 const DashboardListKind = "DashboardList"
 
-// DashboardListLinkKind is the name of the type used to represent links to list
-// of objects of type 'dashboard'.
+// DashboardListLinkKind is the name of the type used to represent links
+// to list of objects of type 'dashboard'.
 const DashboardListLinkKind = "DashboardListLink"
 
-// DashboardNilKind is the name of the type used to nil lists of objects of
-// type 'dashboard'.
+// DashboardNilKind is the name of the type used to nil lists of
+// objects of type 'dashboard'.
 const DashboardListNilKind = "DashboardListNil"
 
 // DashboardList is a list of values of the 'dashboard' type.

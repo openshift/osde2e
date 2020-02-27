@@ -207,22 +207,8 @@ func (o *SelfAccessReviewResponse) GetSubscriptionID() (value string, ok bool) {
 	return
 }
 
-// SelfAccessReviewResponseListKind is the name of the type used to represent list of objects of
-// type 'self_access_review_response'.
-const SelfAccessReviewResponseListKind = "SelfAccessReviewResponseList"
-
-// SelfAccessReviewResponseListLinkKind is the name of the type used to represent links to list
-// of objects of type 'self_access_review_response'.
-const SelfAccessReviewResponseListLinkKind = "SelfAccessReviewResponseListLink"
-
-// SelfAccessReviewResponseNilKind is the name of the type used to nil lists of objects of
-// type 'self_access_review_response'.
-const SelfAccessReviewResponseListNilKind = "SelfAccessReviewResponseListNil"
-
 // SelfAccessReviewResponseList is a list of values of the 'self_access_review_response' type.
 type SelfAccessReviewResponseList struct {
-	href  *string
-	link  bool
 	items []*SelfAccessReviewResponse
 }
 

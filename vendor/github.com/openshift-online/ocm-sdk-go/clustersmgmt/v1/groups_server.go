@@ -21,10 +21,13 @@ package v1 // github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1
 
 import (
 	"context"
+	"encoding/json"
+	"io"
 	"net/http"
 
 	"github.com/golang/glog"
 	"github.com/openshift-online/ocm-sdk-go/errors"
+	"github.com/openshift-online/ocm-sdk-go/helpers"
 )
 
 // GroupsServer represents the interface the manages the 'groups' resource.
@@ -139,6 +142,32 @@ func (r *GroupsListServerResponse) Status(value int) *GroupsListServerResponse {
 	return r
 }
 
+// marshall is the method used internally to marshal responses for the
+// 'list' method.
+func (r *GroupsListServerResponse) marshal(writer io.Writer) error {
+	var err error
+	encoder := json.NewEncoder(writer)
+	data := new(groupsListServerResponseData)
+	data.Items, err = r.items.wrap()
+	if err != nil {
+		return err
+	}
+	data.Page = r.page
+	data.Size = r.size
+	data.Total = r.total
+	err = encoder.Encode(data)
+	return err
+}
+
+// groupsListServerResponseData is the structure used internally to write the request of the
+// 'list' method.
+type groupsListServerResponseData struct {
+	Items groupListData "json:\"items,omitempty\""
+	Page  *int          "json:\"page,omitempty\""
+	Size  *int          "json:\"size,omitempty\""
+	Total *int          "json:\"total,omitempty\""
+}
+
 // dispatchGroups navigates the servers tree rooted at the given server
 // till it finds one that matches the given set of path segments, and then invokes
 // the corresponding server.
@@ -147,29 +176,63 @@ func dispatchGroups(w http.ResponseWriter, r *http.Request, server GroupsServer,
 		switch r.Method {
 		case "GET":
 			adaptGroupsListRequest(w, r, server)
-			return
 		default:
 			errors.SendMethodNotAllowed(w, r)
 			return
 		}
-	}
-	switch segments[0] {
-	default:
-		target := server.Group(segments[0])
-		if target == nil {
-			errors.SendNotFound(w, r)
-			return
+	} else {
+		switch segments[0] {
+		default:
+			target := server.Group(segments[0])
+			if target == nil {
+				errors.SendNotFound(w, r)
+				return
+			}
+			dispatchGroup(w, r, target, segments[1:])
 		}
-		dispatchGroup(w, r, target, segments[1:])
 	}
+}
+
+// readGroupsListRequest reads the given HTTP requests and translates it
+// into an object of type GroupsListServerRequest.
+func readGroupsListRequest(r *http.Request) (*GroupsListServerRequest, error) {
+	var err error
+	result := new(GroupsListServerRequest)
+	query := r.URL.Query()
+	result.page, err = helpers.ParseInteger(query, "page")
+	if err != nil {
+		return nil, err
+	}
+	if result.page == nil {
+		result.page = helpers.NewInteger(1)
+	}
+	result.size, err = helpers.ParseInteger(query, "size")
+	if err != nil {
+		return nil, err
+	}
+	if result.size == nil {
+		result.size = helpers.NewInteger(100)
+	}
+	return result, err
+}
+
+// writeGroupsListResponse translates the given request object into an
+// HTTP response.
+func writeGroupsListResponse(w http.ResponseWriter, r *GroupsListServerResponse) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(r.status)
+	err := r.marshal(w)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // adaptGroupsListRequest translates the given HTTP request into a call to
 // the corresponding method of the given server. Then it translates the
 // results returned by that method into an HTTP response.
 func adaptGroupsListRequest(w http.ResponseWriter, r *http.Request, server GroupsServer) {
-	request := &GroupsListServerRequest{}
-	err := readGroupsListRequest(request, r)
+	request, err := readGroupsListRequest(r)
 	if err != nil {
 		glog.Errorf(
 			"Can't read request for method '%s' and path '%s': %v",
@@ -178,7 +241,7 @@ func adaptGroupsListRequest(w http.ResponseWriter, r *http.Request, server Group
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	response := &GroupsListServerResponse{}
+	response := new(GroupsListServerResponse)
 	response.status = 200
 	err = server.List(r.Context(), request, response)
 	if err != nil {
@@ -189,7 +252,7 @@ func adaptGroupsListRequest(w http.ResponseWriter, r *http.Request, server Group
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	err = writeGroupsListResponse(response, w)
+	err = writeGroupsListResponse(w, response)
 	if err != nil {
 		glog.Errorf(
 			"Can't write response for method '%s' and path '%s': %v",

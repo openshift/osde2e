@@ -37,19 +37,6 @@ func (b *GithubIdentityProviderListBuilder) Items(values ...*GithubIdentityProvi
 	return b
 }
 
-// Copy copies the items of the given list into this builder, discarding any previous items.
-func (b *GithubIdentityProviderListBuilder) Copy(list *GithubIdentityProviderList) *GithubIdentityProviderListBuilder {
-	if list == nil || list.items == nil {
-		b.items = nil
-	} else {
-		b.items = make([]*GithubIdentityProviderBuilder, len(list.items))
-		for i, v := range list.items {
-			b.items[i] = NewGithubIdentityProvider().Copy(v)
-		}
-	}
-	return b
-}
-
 // Build creates a list of 'github_identity_provider' objects using the
 // configuration stored in the builder.
 func (b *GithubIdentityProviderListBuilder) Build() (list *GithubIdentityProviderList, err error) {

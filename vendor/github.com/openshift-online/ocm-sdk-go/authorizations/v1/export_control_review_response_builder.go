@@ -31,7 +31,8 @@ func NewExportControlReviewResponse() *ExportControlReviewResponseBuilder {
 	return new(ExportControlReviewResponseBuilder)
 }
 
-// Restricted sets the value of the 'restricted' attribute to the given value.
+// Restricted sets the value of the 'restricted' attribute
+// to the given value.
 //
 //
 func (b *ExportControlReviewResponseBuilder) Restricted(value bool) *ExportControlReviewResponseBuilder {
@@ -51,6 +52,8 @@ func (b *ExportControlReviewResponseBuilder) Copy(object *ExportControlReviewRes
 // Build creates a 'export_control_review_response' object using the configuration stored in the builder.
 func (b *ExportControlReviewResponseBuilder) Build() (object *ExportControlReviewResponse, err error) {
 	object = new(ExportControlReviewResponse)
-	object.restricted = b.restricted
+	if b.restricted != nil {
+		object.restricted = b.restricted
+	}
 	return
 }

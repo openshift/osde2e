@@ -109,22 +109,8 @@ func (o *AWSVolume) GetType() (value string, ok bool) {
 	return
 }
 
-// AWSVolumeListKind is the name of the type used to represent list of objects of
-// type 'AWS_volume'.
-const AWSVolumeListKind = "AWSVolumeList"
-
-// AWSVolumeListLinkKind is the name of the type used to represent links to list
-// of objects of type 'AWS_volume'.
-const AWSVolumeListLinkKind = "AWSVolumeListLink"
-
-// AWSVolumeNilKind is the name of the type used to nil lists of objects of
-// type 'AWS_volume'.
-const AWSVolumeListNilKind = "AWSVolumeListNil"
-
 // AWSVolumeList is a list of values of the 'AWS_volume' type.
 type AWSVolumeList struct {
-	href  *string
-	link  bool
 	items []*AWSVolume
 }
 

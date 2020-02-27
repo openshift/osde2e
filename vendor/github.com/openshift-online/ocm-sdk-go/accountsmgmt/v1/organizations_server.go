@@ -21,10 +21,13 @@ package v1 // github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1
 
 import (
 	"context"
+	"encoding/json"
+	"io"
 	"net/http"
 
 	"github.com/golang/glog"
 	"github.com/openshift-online/ocm-sdk-go/errors"
+	"github.com/openshift-online/ocm-sdk-go/helpers"
 )
 
 // OrganizationsServer represents the interface the manages the 'organizations' resource.
@@ -73,6 +76,23 @@ func (r *OrganizationsAddServerRequest) GetBody() (value *Organization, ok bool)
 	return
 }
 
+// unmarshal is the method used internally to unmarshal request to the
+// 'add' method.
+func (r *OrganizationsAddServerRequest) unmarshal(reader io.Reader) error {
+	var err error
+	decoder := json.NewDecoder(reader)
+	data := new(organizationData)
+	err = decoder.Decode(data)
+	if err != nil {
+		return err
+	}
+	r.body, err = data.unwrap()
+	if err != nil {
+		return err
+	}
+	return err
+}
+
 // OrganizationsAddServerResponse is the response for the 'add' method.
 type OrganizationsAddServerResponse struct {
 	status int
@@ -92,6 +112,19 @@ func (r *OrganizationsAddServerResponse) Body(value *Organization) *Organization
 func (r *OrganizationsAddServerResponse) Status(value int) *OrganizationsAddServerResponse {
 	r.status = value
 	return r
+}
+
+// marshall is the method used internally to marshal responses for the
+// 'add' method.
+func (r *OrganizationsAddServerResponse) marshal(writer io.Writer) error {
+	var err error
+	encoder := json.NewEncoder(writer)
+	data, err := r.body.wrap()
+	if err != nil {
+		return err
+	}
+	err = encoder.Encode(data)
+	return err
 }
 
 // OrganizationsListServerRequest is the request for the 'list' method.
@@ -242,6 +275,32 @@ func (r *OrganizationsListServerResponse) Status(value int) *OrganizationsListSe
 	return r
 }
 
+// marshall is the method used internally to marshal responses for the
+// 'list' method.
+func (r *OrganizationsListServerResponse) marshal(writer io.Writer) error {
+	var err error
+	encoder := json.NewEncoder(writer)
+	data := new(organizationsListServerResponseData)
+	data.Items, err = r.items.wrap()
+	if err != nil {
+		return err
+	}
+	data.Page = r.page
+	data.Size = r.size
+	data.Total = r.total
+	err = encoder.Encode(data)
+	return err
+}
+
+// organizationsListServerResponseData is the structure used internally to write the request of the
+// 'list' method.
+type organizationsListServerResponseData struct {
+	Items organizationListData "json:\"items,omitempty\""
+	Page  *int                 "json:\"page,omitempty\""
+	Size  *int                 "json:\"size,omitempty\""
+	Total *int                 "json:\"total,omitempty\""
+}
+
 // dispatchOrganizations navigates the servers tree rooted at the given server
 // till it finds one that matches the given set of path segments, and then invokes
 // the corresponding server.
@@ -250,32 +309,54 @@ func dispatchOrganizations(w http.ResponseWriter, r *http.Request, server Organi
 		switch r.Method {
 		case "POST":
 			adaptOrganizationsAddRequest(w, r, server)
-			return
 		case "GET":
 			adaptOrganizationsListRequest(w, r, server)
-			return
 		default:
 			errors.SendMethodNotAllowed(w, r)
 			return
 		}
-	}
-	switch segments[0] {
-	default:
-		target := server.Organization(segments[0])
-		if target == nil {
-			errors.SendNotFound(w, r)
-			return
+	} else {
+		switch segments[0] {
+		default:
+			target := server.Organization(segments[0])
+			if target == nil {
+				errors.SendNotFound(w, r)
+				return
+			}
+			dispatchOrganization(w, r, target, segments[1:])
 		}
-		dispatchOrganization(w, r, target, segments[1:])
 	}
+}
+
+// readOrganizationsAddRequest reads the given HTTP requests and translates it
+// into an object of type OrganizationsAddServerRequest.
+func readOrganizationsAddRequest(r *http.Request) (*OrganizationsAddServerRequest, error) {
+	var err error
+	result := new(OrganizationsAddServerRequest)
+	err = result.unmarshal(r.Body)
+	if err != nil {
+		return nil, err
+	}
+	return result, err
+}
+
+// writeOrganizationsAddResponse translates the given request object into an
+// HTTP response.
+func writeOrganizationsAddResponse(w http.ResponseWriter, r *OrganizationsAddServerResponse) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(r.status)
+	err := r.marshal(w)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // adaptOrganizationsAddRequest translates the given HTTP request into a call to
 // the corresponding method of the given server. Then it translates the
 // results returned by that method into an HTTP response.
 func adaptOrganizationsAddRequest(w http.ResponseWriter, r *http.Request, server OrganizationsServer) {
-	request := &OrganizationsAddServerRequest{}
-	err := readOrganizationsAddRequest(request, r)
+	request, err := readOrganizationsAddRequest(r)
 	if err != nil {
 		glog.Errorf(
 			"Can't read request for method '%s' and path '%s': %v",
@@ -284,7 +365,7 @@ func adaptOrganizationsAddRequest(w http.ResponseWriter, r *http.Request, server
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	response := &OrganizationsAddServerResponse{}
+	response := new(OrganizationsAddServerResponse)
 	response.status = 201
 	err = server.Add(r.Context(), request, response)
 	if err != nil {
@@ -295,7 +376,7 @@ func adaptOrganizationsAddRequest(w http.ResponseWriter, r *http.Request, server
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	err = writeOrganizationsAddResponse(response, w)
+	err = writeOrganizationsAddResponse(w, response)
 	if err != nil {
 		glog.Errorf(
 			"Can't write response for method '%s' and path '%s': %v",
@@ -305,12 +386,50 @@ func adaptOrganizationsAddRequest(w http.ResponseWriter, r *http.Request, server
 	}
 }
 
+// readOrganizationsListRequest reads the given HTTP requests and translates it
+// into an object of type OrganizationsListServerRequest.
+func readOrganizationsListRequest(r *http.Request) (*OrganizationsListServerRequest, error) {
+	var err error
+	result := new(OrganizationsListServerRequest)
+	query := r.URL.Query()
+	result.page, err = helpers.ParseInteger(query, "page")
+	if err != nil {
+		return nil, err
+	}
+	if result.page == nil {
+		result.page = helpers.NewInteger(1)
+	}
+	result.search, err = helpers.ParseString(query, "search")
+	if err != nil {
+		return nil, err
+	}
+	result.size, err = helpers.ParseInteger(query, "size")
+	if err != nil {
+		return nil, err
+	}
+	if result.size == nil {
+		result.size = helpers.NewInteger(100)
+	}
+	return result, err
+}
+
+// writeOrganizationsListResponse translates the given request object into an
+// HTTP response.
+func writeOrganizationsListResponse(w http.ResponseWriter, r *OrganizationsListServerResponse) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(r.status)
+	err := r.marshal(w)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 // adaptOrganizationsListRequest translates the given HTTP request into a call to
 // the corresponding method of the given server. Then it translates the
 // results returned by that method into an HTTP response.
 func adaptOrganizationsListRequest(w http.ResponseWriter, r *http.Request, server OrganizationsServer) {
-	request := &OrganizationsListServerRequest{}
-	err := readOrganizationsListRequest(request, r)
+	request, err := readOrganizationsListRequest(r)
 	if err != nil {
 		glog.Errorf(
 			"Can't read request for method '%s' and path '%s': %v",
@@ -319,7 +438,7 @@ func adaptOrganizationsListRequest(w http.ResponseWriter, r *http.Request, serve
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	response := &OrganizationsListServerResponse{}
+	response := new(OrganizationsListServerResponse)
 	response.status = 200
 	err = server.List(r.Context(), request, response)
 	if err != nil {
@@ -330,7 +449,7 @@ func adaptOrganizationsListRequest(w http.ResponseWriter, r *http.Request, serve
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	err = writeOrganizationsListResponse(response, w)
+	err = writeOrganizationsListResponse(w, response)
 	if err != nil {
 		glog.Errorf(
 			"Can't write response for method '%s' and path '%s': %v",

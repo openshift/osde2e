@@ -97,22 +97,8 @@ func (o *Value) GetValue() (value float64, ok bool) {
 	return
 }
 
-// ValueListKind is the name of the type used to represent list of objects of
-// type 'value'.
-const ValueListKind = "ValueList"
-
-// ValueListLinkKind is the name of the type used to represent links to list
-// of objects of type 'value'.
-const ValueListLinkKind = "ValueListLink"
-
-// ValueNilKind is the name of the type used to nil lists of objects of
-// type 'value'.
-const ValueListNilKind = "ValueListNil"
-
 // ValueList is a list of values of the 'value' type.
 type ValueList struct {
-	href  *string
-	link  bool
 	items []*Value
 }
 

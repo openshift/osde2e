@@ -36,7 +36,8 @@ func NewLDAPIdentityProvider() *LDAPIdentityProviderBuilder {
 	return new(LDAPIdentityProviderBuilder)
 }
 
-// CA sets the value of the 'CA' attribute to the given value.
+// CA sets the value of the 'CA' attribute
+// to the given value.
 //
 //
 func (b *LDAPIdentityProviderBuilder) CA(value string) *LDAPIdentityProviderBuilder {
@@ -44,7 +45,8 @@ func (b *LDAPIdentityProviderBuilder) CA(value string) *LDAPIdentityProviderBuil
 	return b
 }
 
-// LDAPAttributes sets the value of the 'LDAP_attributes' attribute to the given value.
+// LDAPAttributes sets the value of the 'LDAP_attributes' attribute
+// to the given value.
 //
 // LDAP attributes used to configure the LDAP identity provider.
 func (b *LDAPIdentityProviderBuilder) LDAPAttributes(value *LDAPAttributesBuilder) *LDAPIdentityProviderBuilder {
@@ -52,7 +54,8 @@ func (b *LDAPIdentityProviderBuilder) LDAPAttributes(value *LDAPAttributesBuilde
 	return b
 }
 
-// URL sets the value of the 'URL' attribute to the given value.
+// URL sets the value of the 'URL' attribute
+// to the given value.
 //
 //
 func (b *LDAPIdentityProviderBuilder) URL(value string) *LDAPIdentityProviderBuilder {
@@ -60,7 +63,8 @@ func (b *LDAPIdentityProviderBuilder) URL(value string) *LDAPIdentityProviderBui
 	return b
 }
 
-// BindDN sets the value of the 'bind_DN' attribute to the given value.
+// BindDN sets the value of the 'bind_DN' attribute
+// to the given value.
 //
 //
 func (b *LDAPIdentityProviderBuilder) BindDN(value string) *LDAPIdentityProviderBuilder {
@@ -68,7 +72,8 @@ func (b *LDAPIdentityProviderBuilder) BindDN(value string) *LDAPIdentityProvider
 	return b
 }
 
-// BindPassword sets the value of the 'bind_password' attribute to the given value.
+// BindPassword sets the value of the 'bind_password' attribute
+// to the given value.
 //
 //
 func (b *LDAPIdentityProviderBuilder) BindPassword(value string) *LDAPIdentityProviderBuilder {
@@ -76,7 +81,8 @@ func (b *LDAPIdentityProviderBuilder) BindPassword(value string) *LDAPIdentityPr
 	return b
 }
 
-// Insecure sets the value of the 'insecure' attribute to the given value.
+// Insecure sets the value of the 'insecure' attribute
+// to the given value.
 //
 //
 func (b *LDAPIdentityProviderBuilder) Insecure(value bool) *LDAPIdentityProviderBuilder {
@@ -105,16 +111,26 @@ func (b *LDAPIdentityProviderBuilder) Copy(object *LDAPIdentityProvider) *LDAPId
 // Build creates a 'LDAP_identity_provider' object using the configuration stored in the builder.
 func (b *LDAPIdentityProviderBuilder) Build() (object *LDAPIdentityProvider, err error) {
 	object = new(LDAPIdentityProvider)
-	object.ca = b.ca
+	if b.ca != nil {
+		object.ca = b.ca
+	}
 	if b.ldapAttributes != nil {
 		object.ldapAttributes, err = b.ldapAttributes.Build()
 		if err != nil {
 			return
 		}
 	}
-	object.url = b.url
-	object.bindDN = b.bindDN
-	object.bindPassword = b.bindPassword
-	object.insecure = b.insecure
+	if b.url != nil {
+		object.url = b.url
+	}
+	if b.bindDN != nil {
+		object.bindDN = b.bindDN
+	}
+	if b.bindPassword != nil {
+		object.bindPassword = b.bindPassword
+	}
+	if b.insecure != nil {
+		object.insecure = b.insecure
+	}
 	return
 }

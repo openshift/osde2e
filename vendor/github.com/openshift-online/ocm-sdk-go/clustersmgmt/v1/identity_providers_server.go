@@ -21,10 +21,13 @@ package v1 // github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1
 
 import (
 	"context"
+	"encoding/json"
+	"io"
 	"net/http"
 
 	"github.com/golang/glog"
 	"github.com/openshift-online/ocm-sdk-go/errors"
+	"github.com/openshift-online/ocm-sdk-go/helpers"
 )
 
 // IdentityProvidersServer represents the interface the manages the 'identity_providers' resource.
@@ -73,6 +76,23 @@ func (r *IdentityProvidersAddServerRequest) GetBody() (value *IdentityProvider, 
 	return
 }
 
+// unmarshal is the method used internally to unmarshal request to the
+// 'add' method.
+func (r *IdentityProvidersAddServerRequest) unmarshal(reader io.Reader) error {
+	var err error
+	decoder := json.NewDecoder(reader)
+	data := new(identityProviderData)
+	err = decoder.Decode(data)
+	if err != nil {
+		return err
+	}
+	r.body, err = data.unwrap()
+	if err != nil {
+		return err
+	}
+	return err
+}
+
 // IdentityProvidersAddServerResponse is the response for the 'add' method.
 type IdentityProvidersAddServerResponse struct {
 	status int
@@ -92,6 +112,19 @@ func (r *IdentityProvidersAddServerResponse) Body(value *IdentityProvider) *Iden
 func (r *IdentityProvidersAddServerResponse) Status(value int) *IdentityProvidersAddServerResponse {
 	r.status = value
 	return r
+}
+
+// marshall is the method used internally to marshal responses for the
+// 'add' method.
+func (r *IdentityProvidersAddServerResponse) marshal(writer io.Writer) error {
+	var err error
+	encoder := json.NewEncoder(writer)
+	data, err := r.body.wrap()
+	if err != nil {
+		return err
+	}
+	err = encoder.Encode(data)
+	return err
 }
 
 // IdentityProvidersListServerRequest is the request for the 'list' method.
@@ -192,6 +225,32 @@ func (r *IdentityProvidersListServerResponse) Status(value int) *IdentityProvide
 	return r
 }
 
+// marshall is the method used internally to marshal responses for the
+// 'list' method.
+func (r *IdentityProvidersListServerResponse) marshal(writer io.Writer) error {
+	var err error
+	encoder := json.NewEncoder(writer)
+	data := new(identityProvidersListServerResponseData)
+	data.Items, err = r.items.wrap()
+	if err != nil {
+		return err
+	}
+	data.Page = r.page
+	data.Size = r.size
+	data.Total = r.total
+	err = encoder.Encode(data)
+	return err
+}
+
+// identityProvidersListServerResponseData is the structure used internally to write the request of the
+// 'list' method.
+type identityProvidersListServerResponseData struct {
+	Items identityProviderListData "json:\"items,omitempty\""
+	Page  *int                     "json:\"page,omitempty\""
+	Size  *int                     "json:\"size,omitempty\""
+	Total *int                     "json:\"total,omitempty\""
+}
+
 // dispatchIdentityProviders navigates the servers tree rooted at the given server
 // till it finds one that matches the given set of path segments, and then invokes
 // the corresponding server.
@@ -200,32 +259,54 @@ func dispatchIdentityProviders(w http.ResponseWriter, r *http.Request, server Id
 		switch r.Method {
 		case "POST":
 			adaptIdentityProvidersAddRequest(w, r, server)
-			return
 		case "GET":
 			adaptIdentityProvidersListRequest(w, r, server)
-			return
 		default:
 			errors.SendMethodNotAllowed(w, r)
 			return
 		}
-	}
-	switch segments[0] {
-	default:
-		target := server.IdentityProvider(segments[0])
-		if target == nil {
-			errors.SendNotFound(w, r)
-			return
+	} else {
+		switch segments[0] {
+		default:
+			target := server.IdentityProvider(segments[0])
+			if target == nil {
+				errors.SendNotFound(w, r)
+				return
+			}
+			dispatchIdentityProvider(w, r, target, segments[1:])
 		}
-		dispatchIdentityProvider(w, r, target, segments[1:])
 	}
+}
+
+// readIdentityProvidersAddRequest reads the given HTTP requests and translates it
+// into an object of type IdentityProvidersAddServerRequest.
+func readIdentityProvidersAddRequest(r *http.Request) (*IdentityProvidersAddServerRequest, error) {
+	var err error
+	result := new(IdentityProvidersAddServerRequest)
+	err = result.unmarshal(r.Body)
+	if err != nil {
+		return nil, err
+	}
+	return result, err
+}
+
+// writeIdentityProvidersAddResponse translates the given request object into an
+// HTTP response.
+func writeIdentityProvidersAddResponse(w http.ResponseWriter, r *IdentityProvidersAddServerResponse) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(r.status)
+	err := r.marshal(w)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // adaptIdentityProvidersAddRequest translates the given HTTP request into a call to
 // the corresponding method of the given server. Then it translates the
 // results returned by that method into an HTTP response.
 func adaptIdentityProvidersAddRequest(w http.ResponseWriter, r *http.Request, server IdentityProvidersServer) {
-	request := &IdentityProvidersAddServerRequest{}
-	err := readIdentityProvidersAddRequest(request, r)
+	request, err := readIdentityProvidersAddRequest(r)
 	if err != nil {
 		glog.Errorf(
 			"Can't read request for method '%s' and path '%s': %v",
@@ -234,7 +315,7 @@ func adaptIdentityProvidersAddRequest(w http.ResponseWriter, r *http.Request, se
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	response := &IdentityProvidersAddServerResponse{}
+	response := new(IdentityProvidersAddServerResponse)
 	response.status = 201
 	err = server.Add(r.Context(), request, response)
 	if err != nil {
@@ -245,7 +326,7 @@ func adaptIdentityProvidersAddRequest(w http.ResponseWriter, r *http.Request, se
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	err = writeIdentityProvidersAddResponse(response, w)
+	err = writeIdentityProvidersAddResponse(w, response)
 	if err != nil {
 		glog.Errorf(
 			"Can't write response for method '%s' and path '%s': %v",
@@ -255,12 +336,46 @@ func adaptIdentityProvidersAddRequest(w http.ResponseWriter, r *http.Request, se
 	}
 }
 
+// readIdentityProvidersListRequest reads the given HTTP requests and translates it
+// into an object of type IdentityProvidersListServerRequest.
+func readIdentityProvidersListRequest(r *http.Request) (*IdentityProvidersListServerRequest, error) {
+	var err error
+	result := new(IdentityProvidersListServerRequest)
+	query := r.URL.Query()
+	result.page, err = helpers.ParseInteger(query, "page")
+	if err != nil {
+		return nil, err
+	}
+	if result.page == nil {
+		result.page = helpers.NewInteger(1)
+	}
+	result.size, err = helpers.ParseInteger(query, "size")
+	if err != nil {
+		return nil, err
+	}
+	if result.size == nil {
+		result.size = helpers.NewInteger(100)
+	}
+	return result, err
+}
+
+// writeIdentityProvidersListResponse translates the given request object into an
+// HTTP response.
+func writeIdentityProvidersListResponse(w http.ResponseWriter, r *IdentityProvidersListServerResponse) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(r.status)
+	err := r.marshal(w)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 // adaptIdentityProvidersListRequest translates the given HTTP request into a call to
 // the corresponding method of the given server. Then it translates the
 // results returned by that method into an HTTP response.
 func adaptIdentityProvidersListRequest(w http.ResponseWriter, r *http.Request, server IdentityProvidersServer) {
-	request := &IdentityProvidersListServerRequest{}
-	err := readIdentityProvidersListRequest(request, r)
+	request, err := readIdentityProvidersListRequest(r)
 	if err != nil {
 		glog.Errorf(
 			"Can't read request for method '%s' and path '%s': %v",
@@ -269,7 +384,7 @@ func adaptIdentityProvidersListRequest(w http.ResponseWriter, r *http.Request, s
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	response := &IdentityProvidersListServerResponse{}
+	response := new(IdentityProvidersListServerResponse)
 	response.status = 200
 	err = server.List(r.Context(), request, response)
 	if err != nil {
@@ -280,7 +395,7 @@ func adaptIdentityProvidersListRequest(w http.ResponseWriter, r *http.Request, s
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	err = writeIdentityProvidersListResponse(response, w)
+	err = writeIdentityProvidersListResponse(w, response)
 	if err != nil {
 		glog.Errorf(
 			"Can't write response for method '%s' and path '%s': %v",

@@ -80,22 +80,8 @@ func (o *SSHCredentials) GetPublicKey() (value string, ok bool) {
 	return
 }
 
-// SSHCredentialsListKind is the name of the type used to represent list of objects of
-// type 'SSH_credentials'.
-const SSHCredentialsListKind = "SSHCredentialsList"
-
-// SSHCredentialsListLinkKind is the name of the type used to represent links to list
-// of objects of type 'SSH_credentials'.
-const SSHCredentialsListLinkKind = "SSHCredentialsListLink"
-
-// SSHCredentialsNilKind is the name of the type used to nil lists of objects of
-// type 'SSH_credentials'.
-const SSHCredentialsListNilKind = "SSHCredentialsListNil"
-
 // SSHCredentialsList is a list of values of the 'SSH_credentials' type.
 type SSHCredentialsList struct {
-	href  *string
-	link  bool
 	items []*SSHCredentials
 }
 

@@ -21,6 +21,8 @@ package v1 // github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1
 
 import (
 	"context"
+	"encoding/json"
+	"io"
 	"net/http"
 
 	"github.com/golang/glog"
@@ -61,6 +63,19 @@ func (r *RegistryGetServerResponse) Status(value int) *RegistryGetServerResponse
 	return r
 }
 
+// marshall is the method used internally to marshal responses for the
+// 'get' method.
+func (r *RegistryGetServerResponse) marshal(writer io.Writer) error {
+	var err error
+	encoder := json.NewEncoder(writer)
+	data, err := r.body.wrap()
+	if err != nil {
+		return err
+	}
+	err = encoder.Encode(data)
+	return err
+}
+
 // dispatchRegistry navigates the servers tree rooted at the given server
 // till it finds one that matches the given set of path segments, and then invokes
 // the corresponding server.
@@ -69,25 +84,44 @@ func dispatchRegistry(w http.ResponseWriter, r *http.Request, server RegistrySer
 		switch r.Method {
 		case "GET":
 			adaptRegistryGetRequest(w, r, server)
-			return
 		default:
 			errors.SendMethodNotAllowed(w, r)
 			return
 		}
+	} else {
+		switch segments[0] {
+		default:
+			errors.SendNotFound(w, r)
+			return
+		}
 	}
-	switch segments[0] {
-	default:
-		errors.SendNotFound(w, r)
-		return
+}
+
+// readRegistryGetRequest reads the given HTTP requests and translates it
+// into an object of type RegistryGetServerRequest.
+func readRegistryGetRequest(r *http.Request) (*RegistryGetServerRequest, error) {
+	var err error
+	result := new(RegistryGetServerRequest)
+	return result, err
+}
+
+// writeRegistryGetResponse translates the given request object into an
+// HTTP response.
+func writeRegistryGetResponse(w http.ResponseWriter, r *RegistryGetServerResponse) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(r.status)
+	err := r.marshal(w)
+	if err != nil {
+		return err
 	}
+	return nil
 }
 
 // adaptRegistryGetRequest translates the given HTTP request into a call to
 // the corresponding method of the given server. Then it translates the
 // results returned by that method into an HTTP response.
 func adaptRegistryGetRequest(w http.ResponseWriter, r *http.Request, server RegistryServer) {
-	request := &RegistryGetServerRequest{}
-	err := readRegistryGetRequest(request, r)
+	request, err := readRegistryGetRequest(r)
 	if err != nil {
 		glog.Errorf(
 			"Can't read request for method '%s' and path '%s': %v",
@@ -96,7 +130,7 @@ func adaptRegistryGetRequest(w http.ResponseWriter, r *http.Request, server Regi
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	response := &RegistryGetServerResponse{}
+	response := new(RegistryGetServerResponse)
 	response.status = 200
 	err = server.Get(r.Context(), request, response)
 	if err != nil {
@@ -107,7 +141,7 @@ func adaptRegistryGetRequest(w http.ResponseWriter, r *http.Request, server Regi
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	err = writeRegistryGetResponse(response, w)
+	err = writeRegistryGetResponse(w, response)
 	if err != nil {
 		glog.Errorf(
 			"Can't write response for method '%s' and path '%s': %v",

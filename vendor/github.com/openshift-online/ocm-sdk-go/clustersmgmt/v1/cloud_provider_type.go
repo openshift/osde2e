@@ -150,16 +150,16 @@ func (o *CloudProvider) GetName() (value string, ok bool) {
 	return
 }
 
-// CloudProviderListKind is the name of the type used to represent list of objects of
-// type 'cloud_provider'.
+// CloudProviderListKind is the name of the type used to represent list of
+// objects of type 'cloud_provider'.
 const CloudProviderListKind = "CloudProviderList"
 
-// CloudProviderListLinkKind is the name of the type used to represent links to list
-// of objects of type 'cloud_provider'.
+// CloudProviderListLinkKind is the name of the type used to represent links
+// to list of objects of type 'cloud_provider'.
 const CloudProviderListLinkKind = "CloudProviderListLink"
 
-// CloudProviderNilKind is the name of the type used to nil lists of objects of
-// type 'cloud_provider'.
+// CloudProviderNilKind is the name of the type used to nil lists of
+// objects of type 'cloud_provider'.
 const CloudProviderListNilKind = "CloudProviderListNil"
 
 // CloudProviderList is a list of values of the 'cloud_provider' type.

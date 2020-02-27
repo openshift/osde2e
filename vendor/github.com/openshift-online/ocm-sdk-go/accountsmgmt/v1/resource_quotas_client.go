@@ -22,13 +22,13 @@ package v1 // github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"path"
 
-	jsoniter "github.com/json-iterator/go"
 	"github.com/openshift-online/ocm-sdk-go/errors"
 	"github.com/openshift-online/ocm-sdk-go/helpers"
 )
@@ -43,36 +43,36 @@ type ResourceQuotasClient struct {
 }
 
 // NewResourceQuotasClient creates a new client for the 'resource_quotas'
-// resource using the given transport to send the requests and receive the
+// resource using the given transport to sned the requests and receive the
 // responses.
 func NewResourceQuotasClient(transport http.RoundTripper, path string, metric string) *ResourceQuotasClient {
-	return &ResourceQuotasClient{
-		transport: transport,
-		path:      path,
-		metric:    metric,
-	}
+	client := new(ResourceQuotasClient)
+	client.transport = transport
+	client.path = path
+	client.metric = metric
+	return client
 }
 
 // Add creates a request for the 'add' method.
 //
 // Creates a new resource quota.
 func (c *ResourceQuotasClient) Add() *ResourceQuotasAddRequest {
-	return &ResourceQuotasAddRequest{
-		transport: c.transport,
-		path:      c.path,
-		metric:    c.metric,
-	}
+	request := new(ResourceQuotasAddRequest)
+	request.transport = c.transport
+	request.path = c.path
+	request.metric = c.metric
+	return request
 }
 
 // List creates a request for the 'list' method.
 //
 // Retrieves the list of resource quotas.
 func (c *ResourceQuotasClient) List() *ResourceQuotasListRequest {
-	return &ResourceQuotasListRequest{
-		transport: c.transport,
-		path:      c.path,
-		metric:    c.metric,
-	}
+	request := new(ResourceQuotasListRequest)
+	request.transport = c.transport
+	request.path = c.path
+	request.metric = c.metric
+	return request
 }
 
 // ResourceQuota returns the target 'resource_quota' resource for the given identifier.
@@ -128,8 +128,8 @@ func (r *ResourceQuotasAddRequest) Send() (result *ResourceQuotasAddResponse, er
 func (r *ResourceQuotasAddRequest) SendContext(ctx context.Context) (result *ResourceQuotasAddResponse, err error) {
 	query := helpers.CopyQuery(r.query)
 	header := helpers.SetHeader(r.header, r.metric)
-	buffer := &bytes.Buffer{}
-	err = writeResourceQuotasAddRequest(r, buffer)
+	buffer := new(bytes.Buffer)
+	err = r.marshal(buffer)
 	if err != nil {
 		return
 	}
@@ -151,7 +151,7 @@ func (r *ResourceQuotasAddRequest) SendContext(ctx context.Context) (result *Res
 		return
 	}
 	defer response.Body.Close()
-	result = &ResourceQuotasAddResponse{}
+	result = new(ResourceQuotasAddResponse)
 	result.status = response.StatusCode
 	result.header = response.Header
 	if result.status >= 400 {
@@ -162,7 +162,7 @@ func (r *ResourceQuotasAddRequest) SendContext(ctx context.Context) (result *Res
 		err = result.err
 		return
 	}
-	err = readResourceQuotasAddResponse(result, response.Body)
+	err = result.unmarshal(response.Body)
 	if err != nil {
 		return
 	}
@@ -172,11 +172,14 @@ func (r *ResourceQuotasAddRequest) SendContext(ctx context.Context) (result *Res
 // marshall is the method used internally to marshal requests for the
 // 'add' method.
 func (r *ResourceQuotasAddRequest) marshal(writer io.Writer) error {
-	stream := helpers.NewStream(writer)
-	r.stream(stream)
-	return stream.Error
-}
-func (r *ResourceQuotasAddRequest) stream(stream *jsoniter.Stream) {
+	var err error
+	encoder := json.NewEncoder(writer)
+	data, err := r.body.wrap()
+	if err != nil {
+		return err
+	}
+	err = encoder.Encode(data)
+	return err
 }
 
 // ResourceQuotasAddResponse is the response for the 'add' method.
@@ -231,6 +234,23 @@ func (r *ResourceQuotasAddResponse) GetBody() (value *ResourceQuota, ok bool) {
 		value = r.body
 	}
 	return
+}
+
+// unmarshal is the method used internally to unmarshal responses to the
+// 'add' method.
+func (r *ResourceQuotasAddResponse) unmarshal(reader io.Reader) error {
+	var err error
+	decoder := json.NewDecoder(reader)
+	data := new(resourceQuotaData)
+	err = decoder.Decode(data)
+	if err != nil {
+		return err
+	}
+	r.body, err = data.unwrap()
+	if err != nil {
+		return err
+	}
+	return err
 }
 
 // ResourceQuotasListRequest is the request for the 'list' method.
@@ -332,7 +352,7 @@ func (r *ResourceQuotasListRequest) SendContext(ctx context.Context) (result *Re
 		return
 	}
 	defer response.Body.Close()
-	result = &ResourceQuotasListResponse{}
+	result = new(ResourceQuotasListResponse)
 	result.status = response.StatusCode
 	result.header = response.Header
 	if result.status >= 400 {
@@ -343,7 +363,7 @@ func (r *ResourceQuotasListRequest) SendContext(ctx context.Context) (result *Re
 		err = result.err
 		return
 	}
-	err = readResourceQuotasListResponse(result, response.Body)
+	err = result.unmarshal(response.Body)
 	if err != nil {
 		return
 	}
@@ -473,4 +493,33 @@ func (r *ResourceQuotasListResponse) GetTotal() (value int, ok bool) {
 		value = *r.total
 	}
 	return
+}
+
+// unmarshal is the method used internally to unmarshal responses to the
+// 'list' method.
+func (r *ResourceQuotasListResponse) unmarshal(reader io.Reader) error {
+	var err error
+	decoder := json.NewDecoder(reader)
+	data := new(resourceQuotasListResponseData)
+	err = decoder.Decode(data)
+	if err != nil {
+		return err
+	}
+	r.items, err = data.Items.unwrap()
+	if err != nil {
+		return err
+	}
+	r.page = data.Page
+	r.size = data.Size
+	r.total = data.Total
+	return err
+}
+
+// resourceQuotasListResponseData is the structure used internally to unmarshal
+// the response of the 'list' method.
+type resourceQuotasListResponseData struct {
+	Items resourceQuotaListData "json:\"items,omitempty\""
+	Page  *int                  "json:\"page,omitempty\""
+	Size  *int                  "json:\"size,omitempty\""
+	Total *int                  "json:\"total,omitempty\""
 }

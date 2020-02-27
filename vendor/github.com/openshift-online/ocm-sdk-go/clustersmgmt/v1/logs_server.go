@@ -21,10 +21,13 @@ package v1 // github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1
 
 import (
 	"context"
+	"encoding/json"
+	"io"
 	"net/http"
 
 	"github.com/golang/glog"
 	"github.com/openshift-online/ocm-sdk-go/errors"
+	"github.com/openshift-online/ocm-sdk-go/helpers"
 )
 
 // LogsServer represents the interface the manages the 'logs' resource.
@@ -139,6 +142,32 @@ func (r *LogsListServerResponse) Status(value int) *LogsListServerResponse {
 	return r
 }
 
+// marshall is the method used internally to marshal responses for the
+// 'list' method.
+func (r *LogsListServerResponse) marshal(writer io.Writer) error {
+	var err error
+	encoder := json.NewEncoder(writer)
+	data := new(logsListServerResponseData)
+	data.Items, err = r.items.wrap()
+	if err != nil {
+		return err
+	}
+	data.Page = r.page
+	data.Size = r.size
+	data.Total = r.total
+	err = encoder.Encode(data)
+	return err
+}
+
+// logsListServerResponseData is the structure used internally to write the request of the
+// 'list' method.
+type logsListServerResponseData struct {
+	Items logListData "json:\"items,omitempty\""
+	Page  *int        "json:\"page,omitempty\""
+	Size  *int        "json:\"size,omitempty\""
+	Total *int        "json:\"total,omitempty\""
+}
+
 // dispatchLogs navigates the servers tree rooted at the given server
 // till it finds one that matches the given set of path segments, and then invokes
 // the corresponding server.
@@ -147,29 +176,63 @@ func dispatchLogs(w http.ResponseWriter, r *http.Request, server LogsServer, seg
 		switch r.Method {
 		case "GET":
 			adaptLogsListRequest(w, r, server)
-			return
 		default:
 			errors.SendMethodNotAllowed(w, r)
 			return
 		}
-	}
-	switch segments[0] {
-	default:
-		target := server.Log(segments[0])
-		if target == nil {
-			errors.SendNotFound(w, r)
-			return
+	} else {
+		switch segments[0] {
+		default:
+			target := server.Log(segments[0])
+			if target == nil {
+				errors.SendNotFound(w, r)
+				return
+			}
+			dispatchLog(w, r, target, segments[1:])
 		}
-		dispatchLog(w, r, target, segments[1:])
 	}
+}
+
+// readLogsListRequest reads the given HTTP requests and translates it
+// into an object of type LogsListServerRequest.
+func readLogsListRequest(r *http.Request) (*LogsListServerRequest, error) {
+	var err error
+	result := new(LogsListServerRequest)
+	query := r.URL.Query()
+	result.page, err = helpers.ParseInteger(query, "page")
+	if err != nil {
+		return nil, err
+	}
+	if result.page == nil {
+		result.page = helpers.NewInteger(1)
+	}
+	result.size, err = helpers.ParseInteger(query, "size")
+	if err != nil {
+		return nil, err
+	}
+	if result.size == nil {
+		result.size = helpers.NewInteger(100)
+	}
+	return result, err
+}
+
+// writeLogsListResponse translates the given request object into an
+// HTTP response.
+func writeLogsListResponse(w http.ResponseWriter, r *LogsListServerResponse) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(r.status)
+	err := r.marshal(w)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // adaptLogsListRequest translates the given HTTP request into a call to
 // the corresponding method of the given server. Then it translates the
 // results returned by that method into an HTTP response.
 func adaptLogsListRequest(w http.ResponseWriter, r *http.Request, server LogsServer) {
-	request := &LogsListServerRequest{}
-	err := readLogsListRequest(request, r)
+	request, err := readLogsListRequest(r)
 	if err != nil {
 		glog.Errorf(
 			"Can't read request for method '%s' and path '%s': %v",
@@ -178,7 +241,7 @@ func adaptLogsListRequest(w http.ResponseWriter, r *http.Request, server LogsSer
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	response := &LogsListServerResponse{}
+	response := new(LogsListServerResponse)
 	response.status = 200
 	err = server.List(r.Context(), request, response)
 	if err != nil {
@@ -189,7 +252,7 @@ func adaptLogsListRequest(w http.ResponseWriter, r *http.Request, server LogsSer
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	err = writeLogsListResponse(response, w)
+	err = writeLogsListResponse(w, response)
 	if err != nil {
 		glog.Errorf(
 			"Can't write response for method '%s' and path '%s': %v",

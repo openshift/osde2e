@@ -54,7 +54,8 @@ func (b *ResourceBuilder) Link(value bool) *ResourceBuilder {
 	return b
 }
 
-// Allowed sets the value of the 'allowed' attribute to the given value.
+// Allowed sets the value of the 'allowed' attribute
+// to the given value.
 //
 //
 func (b *ResourceBuilder) Allowed(value int) *ResourceBuilder {
@@ -62,7 +63,8 @@ func (b *ResourceBuilder) Allowed(value int) *ResourceBuilder {
 	return b
 }
 
-// ResourceName sets the value of the 'resource_name' attribute to the given value.
+// ResourceName sets the value of the 'resource_name' attribute
+// to the given value.
 //
 //
 func (b *ResourceBuilder) ResourceName(value string) *ResourceBuilder {
@@ -70,7 +72,8 @@ func (b *ResourceBuilder) ResourceName(value string) *ResourceBuilder {
 	return b
 }
 
-// ResourceType sets the value of the 'resource_type' attribute to the given value.
+// ResourceType sets the value of the 'resource_type' attribute
+// to the given value.
 //
 //
 func (b *ResourceBuilder) ResourceType(value string) *ResourceBuilder {
@@ -98,8 +101,14 @@ func (b *ResourceBuilder) Build() (object *Resource, err error) {
 	object.id = b.id
 	object.href = b.href
 	object.link = b.link
-	object.allowed = b.allowed
-	object.resourceName = b.resourceName
-	object.resourceType = b.resourceType
+	if b.allowed != nil {
+		object.allowed = b.allowed
+	}
+	if b.resourceName != nil {
+		object.resourceName = b.resourceName
+	}
+	if b.resourceType != nil {
+		object.resourceType = b.resourceType
+	}
 	return
 }

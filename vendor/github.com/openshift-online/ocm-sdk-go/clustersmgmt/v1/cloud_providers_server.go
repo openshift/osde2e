@@ -21,10 +21,13 @@ package v1 // github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1
 
 import (
 	"context"
+	"encoding/json"
+	"io"
 	"net/http"
 
 	"github.com/golang/glog"
 	"github.com/openshift-online/ocm-sdk-go/errors"
+	"github.com/openshift-online/ocm-sdk-go/helpers"
 )
 
 // CloudProvidersServer represents the interface the manages the 'cloud_providers' resource.
@@ -238,6 +241,32 @@ func (r *CloudProvidersListServerResponse) Status(value int) *CloudProvidersList
 	return r
 }
 
+// marshall is the method used internally to marshal responses for the
+// 'list' method.
+func (r *CloudProvidersListServerResponse) marshal(writer io.Writer) error {
+	var err error
+	encoder := json.NewEncoder(writer)
+	data := new(cloudProvidersListServerResponseData)
+	data.Items, err = r.items.wrap()
+	if err != nil {
+		return err
+	}
+	data.Page = r.page
+	data.Size = r.size
+	data.Total = r.total
+	err = encoder.Encode(data)
+	return err
+}
+
+// cloudProvidersListServerResponseData is the structure used internally to write the request of the
+// 'list' method.
+type cloudProvidersListServerResponseData struct {
+	Items cloudProviderListData "json:\"items,omitempty\""
+	Page  *int                  "json:\"page,omitempty\""
+	Size  *int                  "json:\"size,omitempty\""
+	Total *int                  "json:\"total,omitempty\""
+}
+
 // dispatchCloudProviders navigates the servers tree rooted at the given server
 // till it finds one that matches the given set of path segments, and then invokes
 // the corresponding server.
@@ -246,29 +275,71 @@ func dispatchCloudProviders(w http.ResponseWriter, r *http.Request, server Cloud
 		switch r.Method {
 		case "GET":
 			adaptCloudProvidersListRequest(w, r, server)
-			return
 		default:
 			errors.SendMethodNotAllowed(w, r)
 			return
 		}
-	}
-	switch segments[0] {
-	default:
-		target := server.CloudProvider(segments[0])
-		if target == nil {
-			errors.SendNotFound(w, r)
-			return
+	} else {
+		switch segments[0] {
+		default:
+			target := server.CloudProvider(segments[0])
+			if target == nil {
+				errors.SendNotFound(w, r)
+				return
+			}
+			dispatchCloudProvider(w, r, target, segments[1:])
 		}
-		dispatchCloudProvider(w, r, target, segments[1:])
 	}
+}
+
+// readCloudProvidersListRequest reads the given HTTP requests and translates it
+// into an object of type CloudProvidersListServerRequest.
+func readCloudProvidersListRequest(r *http.Request) (*CloudProvidersListServerRequest, error) {
+	var err error
+	result := new(CloudProvidersListServerRequest)
+	query := r.URL.Query()
+	result.order, err = helpers.ParseString(query, "order")
+	if err != nil {
+		return nil, err
+	}
+	result.page, err = helpers.ParseInteger(query, "page")
+	if err != nil {
+		return nil, err
+	}
+	if result.page == nil {
+		result.page = helpers.NewInteger(1)
+	}
+	result.search, err = helpers.ParseString(query, "search")
+	if err != nil {
+		return nil, err
+	}
+	result.size, err = helpers.ParseInteger(query, "size")
+	if err != nil {
+		return nil, err
+	}
+	if result.size == nil {
+		result.size = helpers.NewInteger(100)
+	}
+	return result, err
+}
+
+// writeCloudProvidersListResponse translates the given request object into an
+// HTTP response.
+func writeCloudProvidersListResponse(w http.ResponseWriter, r *CloudProvidersListServerResponse) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(r.status)
+	err := r.marshal(w)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // adaptCloudProvidersListRequest translates the given HTTP request into a call to
 // the corresponding method of the given server. Then it translates the
 // results returned by that method into an HTTP response.
 func adaptCloudProvidersListRequest(w http.ResponseWriter, r *http.Request, server CloudProvidersServer) {
-	request := &CloudProvidersListServerRequest{}
-	err := readCloudProvidersListRequest(request, r)
+	request, err := readCloudProvidersListRequest(r)
 	if err != nil {
 		glog.Errorf(
 			"Can't read request for method '%s' and path '%s': %v",
@@ -277,7 +348,7 @@ func adaptCloudProvidersListRequest(w http.ResponseWriter, r *http.Request, serv
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	response := &CloudProvidersListServerResponse{}
+	response := new(CloudProvidersListServerResponse)
 	response.status = 200
 	err = server.List(r.Context(), request, response)
 	if err != nil {
@@ -288,7 +359,7 @@ func adaptCloudProvidersListRequest(w http.ResponseWriter, r *http.Request, serv
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	err = writeCloudProvidersListResponse(response, w)
+	err = writeCloudProvidersListResponse(w, response)
 	if err != nil {
 		glog.Errorf(
 			"Can't write response for method '%s' and path '%s': %v",

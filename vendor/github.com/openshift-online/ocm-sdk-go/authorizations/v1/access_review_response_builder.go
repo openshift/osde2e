@@ -38,7 +38,8 @@ func NewAccessReviewResponse() *AccessReviewResponseBuilder {
 	return new(AccessReviewResponseBuilder)
 }
 
-// AccountUsername sets the value of the 'account_username' attribute to the given value.
+// AccountUsername sets the value of the 'account_username' attribute
+// to the given value.
 //
 //
 func (b *AccessReviewResponseBuilder) AccountUsername(value string) *AccessReviewResponseBuilder {
@@ -46,7 +47,8 @@ func (b *AccessReviewResponseBuilder) AccountUsername(value string) *AccessRevie
 	return b
 }
 
-// Action sets the value of the 'action' attribute to the given value.
+// Action sets the value of the 'action' attribute
+// to the given value.
 //
 //
 func (b *AccessReviewResponseBuilder) Action(value string) *AccessReviewResponseBuilder {
@@ -54,7 +56,8 @@ func (b *AccessReviewResponseBuilder) Action(value string) *AccessReviewResponse
 	return b
 }
 
-// Allowed sets the value of the 'allowed' attribute to the given value.
+// Allowed sets the value of the 'allowed' attribute
+// to the given value.
 //
 //
 func (b *AccessReviewResponseBuilder) Allowed(value bool) *AccessReviewResponseBuilder {
@@ -62,7 +65,8 @@ func (b *AccessReviewResponseBuilder) Allowed(value bool) *AccessReviewResponseB
 	return b
 }
 
-// ClusterID sets the value of the 'cluster_ID' attribute to the given value.
+// ClusterID sets the value of the 'cluster_ID' attribute
+// to the given value.
 //
 //
 func (b *AccessReviewResponseBuilder) ClusterID(value string) *AccessReviewResponseBuilder {
@@ -70,7 +74,8 @@ func (b *AccessReviewResponseBuilder) ClusterID(value string) *AccessReviewRespo
 	return b
 }
 
-// ClusterUUID sets the value of the 'cluster_UUID' attribute to the given value.
+// ClusterUUID sets the value of the 'cluster_UUID' attribute
+// to the given value.
 //
 //
 func (b *AccessReviewResponseBuilder) ClusterUUID(value string) *AccessReviewResponseBuilder {
@@ -78,7 +83,8 @@ func (b *AccessReviewResponseBuilder) ClusterUUID(value string) *AccessReviewRes
 	return b
 }
 
-// OrganizationID sets the value of the 'organization_ID' attribute to the given value.
+// OrganizationID sets the value of the 'organization_ID' attribute
+// to the given value.
 //
 //
 func (b *AccessReviewResponseBuilder) OrganizationID(value string) *AccessReviewResponseBuilder {
@@ -86,7 +92,8 @@ func (b *AccessReviewResponseBuilder) OrganizationID(value string) *AccessReview
 	return b
 }
 
-// ResourceType sets the value of the 'resource_type' attribute to the given value.
+// ResourceType sets the value of the 'resource_type' attribute
+// to the given value.
 //
 //
 func (b *AccessReviewResponseBuilder) ResourceType(value string) *AccessReviewResponseBuilder {
@@ -94,7 +101,8 @@ func (b *AccessReviewResponseBuilder) ResourceType(value string) *AccessReviewRe
 	return b
 }
 
-// SubscriptionID sets the value of the 'subscription_ID' attribute to the given value.
+// SubscriptionID sets the value of the 'subscription_ID' attribute
+// to the given value.
 //
 //
 func (b *AccessReviewResponseBuilder) SubscriptionID(value string) *AccessReviewResponseBuilder {
@@ -121,13 +129,29 @@ func (b *AccessReviewResponseBuilder) Copy(object *AccessReviewResponse) *Access
 // Build creates a 'access_review_response' object using the configuration stored in the builder.
 func (b *AccessReviewResponseBuilder) Build() (object *AccessReviewResponse, err error) {
 	object = new(AccessReviewResponse)
-	object.accountUsername = b.accountUsername
-	object.action = b.action
-	object.allowed = b.allowed
-	object.clusterID = b.clusterID
-	object.clusterUUID = b.clusterUUID
-	object.organizationID = b.organizationID
-	object.resourceType = b.resourceType
-	object.subscriptionID = b.subscriptionID
+	if b.accountUsername != nil {
+		object.accountUsername = b.accountUsername
+	}
+	if b.action != nil {
+		object.action = b.action
+	}
+	if b.allowed != nil {
+		object.allowed = b.allowed
+	}
+	if b.clusterID != nil {
+		object.clusterID = b.clusterID
+	}
+	if b.clusterUUID != nil {
+		object.clusterUUID = b.clusterUUID
+	}
+	if b.organizationID != nil {
+		object.organizationID = b.organizationID
+	}
+	if b.resourceType != nil {
+		object.resourceType = b.resourceType
+	}
+	if b.subscriptionID != nil {
+		object.subscriptionID = b.subscriptionID
+	}
 	return
 }

@@ -37,19 +37,6 @@ func (b *RegistryListBuilder) Items(values ...*RegistryBuilder) *RegistryListBui
 	return b
 }
 
-// Copy copies the items of the given list into this builder, discarding any previous items.
-func (b *RegistryListBuilder) Copy(list *RegistryList) *RegistryListBuilder {
-	if list == nil || list.items == nil {
-		b.items = nil
-	} else {
-		b.items = make([]*RegistryBuilder, len(list.items))
-		for i, v := range list.items {
-			b.items[i] = NewRegistry().Copy(v)
-		}
-	}
-	return b
-}
-
 // Build creates a list of 'registry' objects using the
 // configuration stored in the builder.
 func (b *RegistryListBuilder) Build() (list *RegistryList, err error) {

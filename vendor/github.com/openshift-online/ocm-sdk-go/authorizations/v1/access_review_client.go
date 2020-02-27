@@ -22,12 +22,12 @@ package v1 // github.com/openshift-online/ocm-sdk-go/authorizations/v1
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 
-	jsoniter "github.com/json-iterator/go"
 	"github.com/openshift-online/ocm-sdk-go/errors"
 	"github.com/openshift-online/ocm-sdk-go/helpers"
 )
@@ -42,25 +42,25 @@ type AccessReviewClient struct {
 }
 
 // NewAccessReviewClient creates a new client for the 'access_review'
-// resource using the given transport to send the requests and receive the
+// resource using the given transport to sned the requests and receive the
 // responses.
 func NewAccessReviewClient(transport http.RoundTripper, path string, metric string) *AccessReviewClient {
-	return &AccessReviewClient{
-		transport: transport,
-		path:      path,
-		metric:    metric,
-	}
+	client := new(AccessReviewClient)
+	client.transport = transport
+	client.path = path
+	client.metric = metric
+	return client
 }
 
 // Post creates a request for the 'post' method.
 //
 // Reviews a user's access to a resource
 func (c *AccessReviewClient) Post() *AccessReviewPostRequest {
-	return &AccessReviewPostRequest{
-		transport: c.transport,
-		path:      c.path,
-		metric:    c.metric,
-	}
+	request := new(AccessReviewPostRequest)
+	request.transport = c.transport
+	request.path = c.path
+	request.metric = c.metric
+	return request
 }
 
 // AccessReviewPostRequest is the request for the 'post' method.
@@ -105,8 +105,8 @@ func (r *AccessReviewPostRequest) Send() (result *AccessReviewPostResponse, err 
 func (r *AccessReviewPostRequest) SendContext(ctx context.Context) (result *AccessReviewPostResponse, err error) {
 	query := helpers.CopyQuery(r.query)
 	header := helpers.SetHeader(r.header, r.metric)
-	buffer := &bytes.Buffer{}
-	err = writeAccessReviewPostRequest(r, buffer)
+	buffer := new(bytes.Buffer)
+	err = r.marshal(buffer)
 	if err != nil {
 		return
 	}
@@ -128,7 +128,7 @@ func (r *AccessReviewPostRequest) SendContext(ctx context.Context) (result *Acce
 		return
 	}
 	defer response.Body.Close()
-	result = &AccessReviewPostResponse{}
+	result = new(AccessReviewPostResponse)
 	result.status = response.StatusCode
 	result.header = response.Header
 	if result.status >= 400 {
@@ -139,7 +139,7 @@ func (r *AccessReviewPostRequest) SendContext(ctx context.Context) (result *Acce
 		err = result.err
 		return
 	}
-	err = readAccessReviewPostResponse(result, response.Body)
+	err = result.unmarshal(response.Body)
 	if err != nil {
 		return
 	}
@@ -149,11 +149,14 @@ func (r *AccessReviewPostRequest) SendContext(ctx context.Context) (result *Acce
 // marshall is the method used internally to marshal requests for the
 // 'post' method.
 func (r *AccessReviewPostRequest) marshal(writer io.Writer) error {
-	stream := helpers.NewStream(writer)
-	r.stream(stream)
-	return stream.Error
-}
-func (r *AccessReviewPostRequest) stream(stream *jsoniter.Stream) {
+	var err error
+	encoder := json.NewEncoder(writer)
+	data, err := r.request.wrap()
+	if err != nil {
+		return err
+	}
+	err = encoder.Encode(data)
+	return err
 }
 
 // AccessReviewPostResponse is the response for the 'post' method.
@@ -208,4 +211,21 @@ func (r *AccessReviewPostResponse) GetResponse() (value *AccessReviewResponse, o
 		value = r.response
 	}
 	return
+}
+
+// unmarshal is the method used internally to unmarshal responses to the
+// 'post' method.
+func (r *AccessReviewPostResponse) unmarshal(reader io.Reader) error {
+	var err error
+	decoder := json.NewDecoder(reader)
+	data := new(accessReviewResponseData)
+	err = decoder.Decode(data)
+	if err != nil {
+		return err
+	}
+	r.response, err = data.unwrap()
+	if err != nil {
+		return err
+	}
+	return err
 }

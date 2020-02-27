@@ -37,19 +37,6 @@ func (b *AWSVolumeListBuilder) Items(values ...*AWSVolumeBuilder) *AWSVolumeList
 	return b
 }
 
-// Copy copies the items of the given list into this builder, discarding any previous items.
-func (b *AWSVolumeListBuilder) Copy(list *AWSVolumeList) *AWSVolumeListBuilder {
-	if list == nil || list.items == nil {
-		b.items = nil
-	} else {
-		b.items = make([]*AWSVolumeBuilder, len(list.items))
-		for i, v := range list.items {
-			b.items[i] = NewAWSVolume().Copy(v)
-		}
-	}
-	return b
-}
-
 // Build creates a list of 'AWS_volume' objects using the
 // configuration stored in the builder.
 func (b *AWSVolumeListBuilder) Build() (list *AWSVolumeList, err error) {

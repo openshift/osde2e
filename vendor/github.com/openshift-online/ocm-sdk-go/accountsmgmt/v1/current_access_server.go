@@ -21,10 +21,13 @@ package v1 // github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1
 
 import (
 	"context"
+	"encoding/json"
+	"io"
 	"net/http"
 
 	"github.com/golang/glog"
 	"github.com/openshift-online/ocm-sdk-go/errors"
+	"github.com/openshift-online/ocm-sdk-go/helpers"
 )
 
 // CurrentAccessServer represents the interface the manages the 'current_access' resource.
@@ -135,6 +138,32 @@ func (r *CurrentAccessListServerResponse) Status(value int) *CurrentAccessListSe
 	return r
 }
 
+// marshall is the method used internally to marshal responses for the
+// 'list' method.
+func (r *CurrentAccessListServerResponse) marshal(writer io.Writer) error {
+	var err error
+	encoder := json.NewEncoder(writer)
+	data := new(currentAccessListServerResponseData)
+	data.Items, err = r.items.wrap()
+	if err != nil {
+		return err
+	}
+	data.Page = r.page
+	data.Size = r.size
+	data.Total = r.total
+	err = encoder.Encode(data)
+	return err
+}
+
+// currentAccessListServerResponseData is the structure used internally to write the request of the
+// 'list' method.
+type currentAccessListServerResponseData struct {
+	Items roleListData "json:\"items,omitempty\""
+	Page  *int         "json:\"page,omitempty\""
+	Size  *int         "json:\"size,omitempty\""
+	Total *int         "json:\"total,omitempty\""
+}
+
 // dispatchCurrentAccess navigates the servers tree rooted at the given server
 // till it finds one that matches the given set of path segments, and then invokes
 // the corresponding server.
@@ -143,25 +172,59 @@ func dispatchCurrentAccess(w http.ResponseWriter, r *http.Request, server Curren
 		switch r.Method {
 		case "GET":
 			adaptCurrentAccessListRequest(w, r, server)
-			return
 		default:
 			errors.SendMethodNotAllowed(w, r)
 			return
 		}
+	} else {
+		switch segments[0] {
+		default:
+			errors.SendNotFound(w, r)
+			return
+		}
 	}
-	switch segments[0] {
-	default:
-		errors.SendNotFound(w, r)
-		return
+}
+
+// readCurrentAccessListRequest reads the given HTTP requests and translates it
+// into an object of type CurrentAccessListServerRequest.
+func readCurrentAccessListRequest(r *http.Request) (*CurrentAccessListServerRequest, error) {
+	var err error
+	result := new(CurrentAccessListServerRequest)
+	query := r.URL.Query()
+	result.page, err = helpers.ParseInteger(query, "page")
+	if err != nil {
+		return nil, err
 	}
+	if result.page == nil {
+		result.page = helpers.NewInteger(1)
+	}
+	result.size, err = helpers.ParseInteger(query, "size")
+	if err != nil {
+		return nil, err
+	}
+	if result.size == nil {
+		result.size = helpers.NewInteger(100)
+	}
+	return result, err
+}
+
+// writeCurrentAccessListResponse translates the given request object into an
+// HTTP response.
+func writeCurrentAccessListResponse(w http.ResponseWriter, r *CurrentAccessListServerResponse) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(r.status)
+	err := r.marshal(w)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // adaptCurrentAccessListRequest translates the given HTTP request into a call to
 // the corresponding method of the given server. Then it translates the
 // results returned by that method into an HTTP response.
 func adaptCurrentAccessListRequest(w http.ResponseWriter, r *http.Request, server CurrentAccessServer) {
-	request := &CurrentAccessListServerRequest{}
-	err := readCurrentAccessListRequest(request, r)
+	request, err := readCurrentAccessListRequest(r)
 	if err != nil {
 		glog.Errorf(
 			"Can't read request for method '%s' and path '%s': %v",
@@ -170,7 +233,7 @@ func adaptCurrentAccessListRequest(w http.ResponseWriter, r *http.Request, serve
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	response := &CurrentAccessListServerResponse{}
+	response := new(CurrentAccessListServerResponse)
 	response.status = 200
 	err = server.List(r.Context(), request, response)
 	if err != nil {
@@ -181,7 +244,7 @@ func adaptCurrentAccessListRequest(w http.ResponseWriter, r *http.Request, serve
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	err = writeCurrentAccessListResponse(response, w)
+	err = writeCurrentAccessListResponse(w, response)
 	if err != nil {
 		glog.Errorf(
 			"Can't write response for method '%s' and path '%s': %v",

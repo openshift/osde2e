@@ -34,14 +34,14 @@ type MetricQueriesClient struct {
 }
 
 // NewMetricQueriesClient creates a new client for the 'metric_queries'
-// resource using the given transport to send the requests and receive the
+// resource using the given transport to sned the requests and receive the
 // responses.
 func NewMetricQueriesClient(transport http.RoundTripper, path string, metric string) *MetricQueriesClient {
-	return &MetricQueriesClient{
-		transport: transport,
-		path:      path,
-		metric:    metric,
-	}
+	client := new(MetricQueriesClient)
+	client.transport = transport
+	client.path = path
+	client.metric = metric
+	return client
 }
 
 // CPUTotalByNodeRolesOS returns the target 'CPU_total_by_node_roles_OS_metric_query' resource.
@@ -53,17 +53,6 @@ func (c *MetricQueriesClient) CPUTotalByNodeRolesOS() *CPUTotalByNodeRolesOSMetr
 		c.transport,
 		path.Join(c.path, "cpu_total_by_node_roles_os"),
 		path.Join(c.metric, "cpu_total_by_node_roles_os"),
-	)
-}
-
-// ClusterOperators returns the target 'cluster_operators_metric_query' resource.
-//
-// Reference to the resource that retrieves the cluster operator status metrics.
-func (c *MetricQueriesClient) ClusterOperators() *ClusterOperatorsMetricQueryClient {
-	return NewClusterOperatorsMetricQueryClient(
-		c.transport,
-		path.Join(c.path, "cluster_operators"),
-		path.Join(c.metric, "cluster_operators"),
 	)
 }
 

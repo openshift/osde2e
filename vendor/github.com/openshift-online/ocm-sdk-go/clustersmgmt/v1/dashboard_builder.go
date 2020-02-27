@@ -53,7 +53,8 @@ func (b *DashboardBuilder) Link(value bool) *DashboardBuilder {
 	return b
 }
 
-// Metrics sets the value of the 'metrics' attribute to the given values.
+// Metrics sets the value of the 'metrics' attribute
+// to the given values.
 //
 //
 func (b *DashboardBuilder) Metrics(values ...*MetricBuilder) *DashboardBuilder {
@@ -62,7 +63,8 @@ func (b *DashboardBuilder) Metrics(values ...*MetricBuilder) *DashboardBuilder {
 	return b
 }
 
-// Name sets the value of the 'name' attribute to the given value.
+// Name sets the value of the 'name' attribute
+// to the given value.
 //
 //
 func (b *DashboardBuilder) Name(value string) *DashboardBuilder {
@@ -78,10 +80,10 @@ func (b *DashboardBuilder) Copy(object *Dashboard) *DashboardBuilder {
 	b.id = object.id
 	b.href = object.href
 	b.link = object.link
-	if object.metrics != nil {
-		b.metrics = make([]*MetricBuilder, len(object.metrics))
-		for i, v := range object.metrics {
-			b.metrics[i] = NewMetric().Copy(v)
+	if object.metrics != nil && len(object.metrics.items) > 0 {
+		b.metrics = make([]*MetricBuilder, len(object.metrics.items))
+		for i, item := range object.metrics.items {
+			b.metrics[i] = NewMetric().Copy(item)
 		}
 	} else {
 		b.metrics = nil
@@ -97,14 +99,17 @@ func (b *DashboardBuilder) Build() (object *Dashboard, err error) {
 	object.href = b.href
 	object.link = b.link
 	if b.metrics != nil {
-		object.metrics = make([]*Metric, len(b.metrics))
-		for i, v := range b.metrics {
-			object.metrics[i], err = v.Build()
+		object.metrics = new(MetricList)
+		object.metrics.items = make([]*Metric, len(b.metrics))
+		for i, item := range b.metrics {
+			object.metrics.items[i], err = item.Build()
 			if err != nil {
 				return
 			}
 		}
 	}
-	object.name = b.name
+	if b.name != nil {
+		object.name = b.name
+	}
 	return
 }

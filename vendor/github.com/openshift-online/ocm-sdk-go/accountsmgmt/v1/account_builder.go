@@ -60,7 +60,8 @@ func (b *AccountBuilder) Link(value bool) *AccountBuilder {
 	return b
 }
 
-// BanCode sets the value of the 'ban_code' attribute to the given value.
+// BanCode sets the value of the 'ban_code' attribute
+// to the given value.
 //
 //
 func (b *AccountBuilder) BanCode(value string) *AccountBuilder {
@@ -68,7 +69,8 @@ func (b *AccountBuilder) BanCode(value string) *AccountBuilder {
 	return b
 }
 
-// BanDescription sets the value of the 'ban_description' attribute to the given value.
+// BanDescription sets the value of the 'ban_description' attribute
+// to the given value.
 //
 //
 func (b *AccountBuilder) BanDescription(value string) *AccountBuilder {
@@ -76,7 +78,8 @@ func (b *AccountBuilder) BanDescription(value string) *AccountBuilder {
 	return b
 }
 
-// Banned sets the value of the 'banned' attribute to the given value.
+// Banned sets the value of the 'banned' attribute
+// to the given value.
 //
 //
 func (b *AccountBuilder) Banned(value bool) *AccountBuilder {
@@ -84,7 +87,8 @@ func (b *AccountBuilder) Banned(value bool) *AccountBuilder {
 	return b
 }
 
-// Email sets the value of the 'email' attribute to the given value.
+// Email sets the value of the 'email' attribute
+// to the given value.
 //
 //
 func (b *AccountBuilder) Email(value string) *AccountBuilder {
@@ -92,7 +96,8 @@ func (b *AccountBuilder) Email(value string) *AccountBuilder {
 	return b
 }
 
-// FirstName sets the value of the 'first_name' attribute to the given value.
+// FirstName sets the value of the 'first_name' attribute
+// to the given value.
 //
 //
 func (b *AccountBuilder) FirstName(value string) *AccountBuilder {
@@ -100,7 +105,8 @@ func (b *AccountBuilder) FirstName(value string) *AccountBuilder {
 	return b
 }
 
-// LastName sets the value of the 'last_name' attribute to the given value.
+// LastName sets the value of the 'last_name' attribute
+// to the given value.
 //
 //
 func (b *AccountBuilder) LastName(value string) *AccountBuilder {
@@ -108,7 +114,8 @@ func (b *AccountBuilder) LastName(value string) *AccountBuilder {
 	return b
 }
 
-// Name sets the value of the 'name' attribute to the given value.
+// Name sets the value of the 'name' attribute
+// to the given value.
 //
 //
 func (b *AccountBuilder) Name(value string) *AccountBuilder {
@@ -116,7 +123,8 @@ func (b *AccountBuilder) Name(value string) *AccountBuilder {
 	return b
 }
 
-// Organization sets the value of the 'organization' attribute to the given value.
+// Organization sets the value of the 'organization' attribute
+// to the given value.
 //
 //
 func (b *AccountBuilder) Organization(value *OrganizationBuilder) *AccountBuilder {
@@ -124,7 +132,8 @@ func (b *AccountBuilder) Organization(value *OrganizationBuilder) *AccountBuilde
 	return b
 }
 
-// Username sets the value of the 'username' attribute to the given value.
+// Username sets the value of the 'username' attribute
+// to the given value.
 //
 //
 func (b *AccountBuilder) Username(value string) *AccountBuilder {
@@ -162,19 +171,35 @@ func (b *AccountBuilder) Build() (object *Account, err error) {
 	object.id = b.id
 	object.href = b.href
 	object.link = b.link
-	object.banCode = b.banCode
-	object.banDescription = b.banDescription
-	object.banned = b.banned
-	object.email = b.email
-	object.firstName = b.firstName
-	object.lastName = b.lastName
-	object.name = b.name
+	if b.banCode != nil {
+		object.banCode = b.banCode
+	}
+	if b.banDescription != nil {
+		object.banDescription = b.banDescription
+	}
+	if b.banned != nil {
+		object.banned = b.banned
+	}
+	if b.email != nil {
+		object.email = b.email
+	}
+	if b.firstName != nil {
+		object.firstName = b.firstName
+	}
+	if b.lastName != nil {
+		object.lastName = b.lastName
+	}
+	if b.name != nil {
+		object.name = b.name
+	}
 	if b.organization != nil {
 		object.organization, err = b.organization.Build()
 		if err != nil {
 			return
 		}
 	}
-	object.username = b.username
+	if b.username != nil {
+		object.username = b.username
+	}
 	return
 }

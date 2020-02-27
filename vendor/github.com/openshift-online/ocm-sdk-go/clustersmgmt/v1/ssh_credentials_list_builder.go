@@ -37,19 +37,6 @@ func (b *SSHCredentialsListBuilder) Items(values ...*SSHCredentialsBuilder) *SSH
 	return b
 }
 
-// Copy copies the items of the given list into this builder, discarding any previous items.
-func (b *SSHCredentialsListBuilder) Copy(list *SSHCredentialsList) *SSHCredentialsListBuilder {
-	if list == nil || list.items == nil {
-		b.items = nil
-	} else {
-		b.items = make([]*SSHCredentialsBuilder, len(list.items))
-		for i, v := range list.items {
-			b.items[i] = NewSSHCredentials().Copy(v)
-		}
-	}
-	return b
-}
-
 // Build creates a list of 'SSH_credentials' objects using the
 // configuration stored in the builder.
 func (b *SSHCredentialsListBuilder) Build() (list *SSHCredentialsList, err error) {

@@ -32,7 +32,8 @@ func NewSocketTotalsNodeRoleOSMetricNode() *SocketTotalsNodeRoleOSMetricNodeBuil
 	return new(SocketTotalsNodeRoleOSMetricNodeBuilder)
 }
 
-// SocketTotals sets the value of the 'socket_totals' attribute to the given values.
+// SocketTotals sets the value of the 'socket_totals' attribute
+// to the given values.
 //
 //
 func (b *SocketTotalsNodeRoleOSMetricNodeBuilder) SocketTotals(values ...*SocketTotalNodeRoleOSMetricNodeBuilder) *SocketTotalsNodeRoleOSMetricNodeBuilder {
@@ -46,10 +47,10 @@ func (b *SocketTotalsNodeRoleOSMetricNodeBuilder) Copy(object *SocketTotalsNodeR
 	if object == nil {
 		return b
 	}
-	if object.socketTotals != nil {
-		b.socketTotals = make([]*SocketTotalNodeRoleOSMetricNodeBuilder, len(object.socketTotals))
-		for i, v := range object.socketTotals {
-			b.socketTotals[i] = NewSocketTotalNodeRoleOSMetricNode().Copy(v)
+	if object.socketTotals != nil && len(object.socketTotals.items) > 0 {
+		b.socketTotals = make([]*SocketTotalNodeRoleOSMetricNodeBuilder, len(object.socketTotals.items))
+		for i, item := range object.socketTotals.items {
+			b.socketTotals[i] = NewSocketTotalNodeRoleOSMetricNode().Copy(item)
 		}
 	} else {
 		b.socketTotals = nil
@@ -61,9 +62,10 @@ func (b *SocketTotalsNodeRoleOSMetricNodeBuilder) Copy(object *SocketTotalsNodeR
 func (b *SocketTotalsNodeRoleOSMetricNodeBuilder) Build() (object *SocketTotalsNodeRoleOSMetricNode, err error) {
 	object = new(SocketTotalsNodeRoleOSMetricNode)
 	if b.socketTotals != nil {
-		object.socketTotals = make([]*SocketTotalNodeRoleOSMetricNode, len(b.socketTotals))
-		for i, v := range b.socketTotals {
-			object.socketTotals[i], err = v.Build()
+		object.socketTotals = new(SocketTotalNodeRoleOSMetricNodeList)
+		object.socketTotals.items = make([]*SocketTotalNodeRoleOSMetricNode, len(b.socketTotals))
+		for i, item := range b.socketTotals {
+			object.socketTotals.items[i], err = item.Build()
 			if err != nil {
 				return
 			}

@@ -55,22 +55,8 @@ func (o *ExportControlReviewResponse) GetRestricted() (value bool, ok bool) {
 	return
 }
 
-// ExportControlReviewResponseListKind is the name of the type used to represent list of objects of
-// type 'export_control_review_response'.
-const ExportControlReviewResponseListKind = "ExportControlReviewResponseList"
-
-// ExportControlReviewResponseListLinkKind is the name of the type used to represent links to list
-// of objects of type 'export_control_review_response'.
-const ExportControlReviewResponseListLinkKind = "ExportControlReviewResponseListLink"
-
-// ExportControlReviewResponseNilKind is the name of the type used to nil lists of objects of
-// type 'export_control_review_response'.
-const ExportControlReviewResponseListNilKind = "ExportControlReviewResponseListNil"
-
 // ExportControlReviewResponseList is a list of values of the 'export_control_review_response' type.
 type ExportControlReviewResponseList struct {
-	href  *string
-	link  bool
 	items []*ExportControlReviewResponse
 }
 

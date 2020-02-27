@@ -37,19 +37,6 @@ func (b *AccessTokenAuthListBuilder) Items(values ...*AccessTokenAuthBuilder) *A
 	return b
 }
 
-// Copy copies the items of the given list into this builder, discarding any previous items.
-func (b *AccessTokenAuthListBuilder) Copy(list *AccessTokenAuthList) *AccessTokenAuthListBuilder {
-	if list == nil || list.items == nil {
-		b.items = nil
-	} else {
-		b.items = make([]*AccessTokenAuthBuilder, len(list.items))
-		for i, v := range list.items {
-			b.items[i] = NewAccessTokenAuth().Copy(v)
-		}
-	}
-	return b
-}
-
 // Build creates a list of 'access_token_auth' objects using the
 // configuration stored in the builder.
 func (b *AccessTokenAuthListBuilder) Build() (list *AccessTokenAuthList, err error) {

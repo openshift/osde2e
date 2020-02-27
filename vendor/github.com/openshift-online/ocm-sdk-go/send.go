@@ -27,7 +27,6 @@ import (
 	"net/http"
 	"path"
 	"strconv"
-	"strings"
 	"time"
 )
 
@@ -190,41 +189,5 @@ func (c *Connection) send(ctx context.Context, request *http.Request) (response 
 		}
 	}
 
-	// check if json
-	if !strings.EqualFold(response.Header.Get("Content-Type"), "application/json") {
-		err = fmt.Errorf("expected JSON content type but received '%s'; %s",
-			response.Header.Get("Content-Type"),
-			getResponseInfo(response))
-		return
-	}
-
 	return
-}
-
-func getResponseInfo(response *http.Response) string {
-	info := fmt.Sprintf("request: %s %s; response status: %d %s",
-		response.Request.Method,
-		response.Request.URL,
-		response.StatusCode,
-		response.Status,
-	)
-
-	body, err := ioutil.ReadAll(response.Body)
-	if err != nil {
-		info = fmt.Sprintf("%s; can't read response body: %v", info, err)
-		return info
-	}
-	err = response.Body.Close()
-	if err != nil {
-		info = fmt.Sprintf("%s; can't close response body: %v", info, err)
-		return info
-	}
-	response.Body = ioutil.NopCloser(bytes.NewBuffer(body))
-
-	bodyStr := []rune(string(body))
-	if len(bodyStr) > 200 {
-		bodyStr = bodyStr[:200]
-	}
-	info = fmt.Sprintf("%s; response body: %s", info, string(bodyStr))
-	return info
 }

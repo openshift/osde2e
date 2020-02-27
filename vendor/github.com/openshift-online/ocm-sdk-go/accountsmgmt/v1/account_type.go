@@ -111,6 +111,7 @@ func (o *Account) Empty() bool {
 		o.firstName == nil &&
 		o.lastName == nil &&
 		o.name == nil &&
+		o.organization == nil &&
 		o.username == nil &&
 		true)
 }
@@ -322,16 +323,16 @@ func (o *Account) GetUsername() (value string, ok bool) {
 	return
 }
 
-// AccountListKind is the name of the type used to represent list of objects of
-// type 'account'.
+// AccountListKind is the name of the type used to represent list of
+// objects of type 'account'.
 const AccountListKind = "AccountList"
 
-// AccountListLinkKind is the name of the type used to represent links to list
-// of objects of type 'account'.
+// AccountListLinkKind is the name of the type used to represent links
+// to list of objects of type 'account'.
 const AccountListLinkKind = "AccountListLink"
 
-// AccountNilKind is the name of the type used to nil lists of objects of
-// type 'account'.
+// AccountNilKind is the name of the type used to nil lists of
+// objects of type 'account'.
 const AccountListNilKind = "AccountListNil"
 
 // AccountList is a list of values of the 'account' type.

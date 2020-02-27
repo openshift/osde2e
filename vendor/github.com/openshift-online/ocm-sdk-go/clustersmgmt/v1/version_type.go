@@ -150,16 +150,16 @@ func (o *Version) GetEnabled() (value bool, ok bool) {
 	return
 }
 
-// VersionListKind is the name of the type used to represent list of objects of
-// type 'version'.
+// VersionListKind is the name of the type used to represent list of
+// objects of type 'version'.
 const VersionListKind = "VersionList"
 
-// VersionListLinkKind is the name of the type used to represent links to list
-// of objects of type 'version'.
+// VersionListLinkKind is the name of the type used to represent links
+// to list of objects of type 'version'.
 const VersionListLinkKind = "VersionListLink"
 
-// VersionNilKind is the name of the type used to nil lists of objects of
-// type 'version'.
+// VersionNilKind is the name of the type used to nil lists of
+// objects of type 'version'.
 const VersionListNilKind = "VersionListNil"
 
 // VersionList is a list of values of the 'version' type.

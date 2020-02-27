@@ -22,13 +22,13 @@ package v1 // github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"path"
 
-	jsoniter "github.com/json-iterator/go"
 	"github.com/openshift-online/ocm-sdk-go/errors"
 	"github.com/openshift-online/ocm-sdk-go/helpers"
 )
@@ -43,36 +43,36 @@ type FlavoursClient struct {
 }
 
 // NewFlavoursClient creates a new client for the 'flavours'
-// resource using the given transport to send the requests and receive the
+// resource using the given transport to sned the requests and receive the
 // responses.
 func NewFlavoursClient(transport http.RoundTripper, path string, metric string) *FlavoursClient {
-	return &FlavoursClient{
-		transport: transport,
-		path:      path,
-		metric:    metric,
-	}
+	client := new(FlavoursClient)
+	client.transport = transport
+	client.path = path
+	client.metric = metric
+	return client
 }
 
 // Add creates a request for the 'add' method.
 //
 // Adds a new cluster flavour.
 func (c *FlavoursClient) Add() *FlavoursAddRequest {
-	return &FlavoursAddRequest{
-		transport: c.transport,
-		path:      c.path,
-		metric:    c.metric,
-	}
+	request := new(FlavoursAddRequest)
+	request.transport = c.transport
+	request.path = c.path
+	request.metric = c.metric
+	return request
 }
 
 // List creates a request for the 'list' method.
 //
 //
 func (c *FlavoursClient) List() *FlavoursListRequest {
-	return &FlavoursListRequest{
-		transport: c.transport,
-		path:      c.path,
-		metric:    c.metric,
-	}
+	request := new(FlavoursListRequest)
+	request.transport = c.transport
+	request.path = c.path
+	request.metric = c.metric
+	return request
 }
 
 // Flavour returns the target 'flavour' resource for the given identifier.
@@ -128,8 +128,8 @@ func (r *FlavoursAddRequest) Send() (result *FlavoursAddResponse, err error) {
 func (r *FlavoursAddRequest) SendContext(ctx context.Context) (result *FlavoursAddResponse, err error) {
 	query := helpers.CopyQuery(r.query)
 	header := helpers.SetHeader(r.header, r.metric)
-	buffer := &bytes.Buffer{}
-	err = writeFlavoursAddRequest(r, buffer)
+	buffer := new(bytes.Buffer)
+	err = r.marshal(buffer)
 	if err != nil {
 		return
 	}
@@ -151,7 +151,7 @@ func (r *FlavoursAddRequest) SendContext(ctx context.Context) (result *FlavoursA
 		return
 	}
 	defer response.Body.Close()
-	result = &FlavoursAddResponse{}
+	result = new(FlavoursAddResponse)
 	result.status = response.StatusCode
 	result.header = response.Header
 	if result.status >= 400 {
@@ -162,7 +162,7 @@ func (r *FlavoursAddRequest) SendContext(ctx context.Context) (result *FlavoursA
 		err = result.err
 		return
 	}
-	err = readFlavoursAddResponse(result, response.Body)
+	err = result.unmarshal(response.Body)
 	if err != nil {
 		return
 	}
@@ -172,11 +172,14 @@ func (r *FlavoursAddRequest) SendContext(ctx context.Context) (result *FlavoursA
 // marshall is the method used internally to marshal requests for the
 // 'add' method.
 func (r *FlavoursAddRequest) marshal(writer io.Writer) error {
-	stream := helpers.NewStream(writer)
-	r.stream(stream)
-	return stream.Error
-}
-func (r *FlavoursAddRequest) stream(stream *jsoniter.Stream) {
+	var err error
+	encoder := json.NewEncoder(writer)
+	data, err := r.body.wrap()
+	if err != nil {
+		return err
+	}
+	err = encoder.Encode(data)
+	return err
 }
 
 // FlavoursAddResponse is the response for the 'add' method.
@@ -231,6 +234,23 @@ func (r *FlavoursAddResponse) GetBody() (value *Flavour, ok bool) {
 		value = r.body
 	}
 	return
+}
+
+// unmarshal is the method used internally to unmarshal responses to the
+// 'add' method.
+func (r *FlavoursAddResponse) unmarshal(reader io.Reader) error {
+	var err error
+	decoder := json.NewDecoder(reader)
+	data := new(flavourData)
+	err = decoder.Decode(data)
+	if err != nil {
+		return err
+	}
+	r.body, err = data.unwrap()
+	if err != nil {
+		return err
+	}
+	return err
 }
 
 // FlavoursListRequest is the request for the 'list' method.
@@ -357,7 +377,7 @@ func (r *FlavoursListRequest) SendContext(ctx context.Context) (result *Flavours
 		return
 	}
 	defer response.Body.Close()
-	result = &FlavoursListResponse{}
+	result = new(FlavoursListResponse)
 	result.status = response.StatusCode
 	result.header = response.Header
 	if result.status >= 400 {
@@ -368,7 +388,7 @@ func (r *FlavoursListRequest) SendContext(ctx context.Context) (result *Flavours
 		err = result.err
 		return
 	}
-	err = readFlavoursListResponse(result, response.Body)
+	err = result.unmarshal(response.Body)
 	if err != nil {
 		return
 	}
@@ -498,4 +518,33 @@ func (r *FlavoursListResponse) GetTotal() (value int, ok bool) {
 		value = *r.total
 	}
 	return
+}
+
+// unmarshal is the method used internally to unmarshal responses to the
+// 'list' method.
+func (r *FlavoursListResponse) unmarshal(reader io.Reader) error {
+	var err error
+	decoder := json.NewDecoder(reader)
+	data := new(flavoursListResponseData)
+	err = decoder.Decode(data)
+	if err != nil {
+		return err
+	}
+	r.items, err = data.Items.unwrap()
+	if err != nil {
+		return err
+	}
+	r.page = data.Page
+	r.size = data.Size
+	r.total = data.Total
+	return err
+}
+
+// flavoursListResponseData is the structure used internally to unmarshal
+// the response of the 'list' method.
+type flavoursListResponseData struct {
+	Items flavourListData "json:\"items,omitempty\""
+	Page  *int            "json:\"page,omitempty\""
+	Size  *int            "json:\"size,omitempty\""
+	Total *int            "json:\"total,omitempty\""
 }

@@ -37,19 +37,6 @@ func (b *VersionListBuilder) Items(values ...*VersionBuilder) *VersionListBuilde
 	return b
 }
 
-// Copy copies the items of the given list into this builder, discarding any previous items.
-func (b *VersionListBuilder) Copy(list *VersionList) *VersionListBuilder {
-	if list == nil || list.items == nil {
-		b.items = nil
-	} else {
-		b.items = make([]*VersionBuilder, len(list.items))
-		for i, v := range list.items {
-			b.items[i] = NewVersion().Copy(v)
-		}
-	}
-	return b
-}
-
 // Build creates a list of 'version' objects using the
 // configuration stored in the builder.
 func (b *VersionListBuilder) Build() (list *VersionList, err error) {

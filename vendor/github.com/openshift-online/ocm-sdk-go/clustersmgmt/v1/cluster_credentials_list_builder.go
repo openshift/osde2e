@@ -37,19 +37,6 @@ func (b *ClusterCredentialsListBuilder) Items(values ...*ClusterCredentialsBuild
 	return b
 }
 
-// Copy copies the items of the given list into this builder, discarding any previous items.
-func (b *ClusterCredentialsListBuilder) Copy(list *ClusterCredentialsList) *ClusterCredentialsListBuilder {
-	if list == nil || list.items == nil {
-		b.items = nil
-	} else {
-		b.items = make([]*ClusterCredentialsBuilder, len(list.items))
-		for i, v := range list.items {
-			b.items[i] = NewClusterCredentials().Copy(v)
-		}
-	}
-	return b
-}
-
 // Build creates a list of 'cluster_credentials' objects using the
 // configuration stored in the builder.
 func (b *ClusterCredentialsListBuilder) Build() (list *ClusterCredentialsList, err error) {

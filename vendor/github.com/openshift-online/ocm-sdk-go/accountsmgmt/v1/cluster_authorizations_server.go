@@ -21,6 +21,8 @@ package v1 // github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1
 
 import (
 	"context"
+	"encoding/json"
+	"io"
 	"net/http"
 
 	"github.com/golang/glog"
@@ -63,6 +65,23 @@ func (r *ClusterAuthorizationsPostServerRequest) GetRequest() (value *ClusterAut
 	return
 }
 
+// unmarshal is the method used internally to unmarshal request to the
+// 'post' method.
+func (r *ClusterAuthorizationsPostServerRequest) unmarshal(reader io.Reader) error {
+	var err error
+	decoder := json.NewDecoder(reader)
+	data := new(clusterAuthorizationRequestData)
+	err = decoder.Decode(data)
+	if err != nil {
+		return err
+	}
+	r.request, err = data.unwrap()
+	if err != nil {
+		return err
+	}
+	return err
+}
+
 // ClusterAuthorizationsPostServerResponse is the response for the 'post' method.
 type ClusterAuthorizationsPostServerResponse struct {
 	status   int
@@ -84,6 +103,19 @@ func (r *ClusterAuthorizationsPostServerResponse) Status(value int) *ClusterAuth
 	return r
 }
 
+// marshall is the method used internally to marshal responses for the
+// 'post' method.
+func (r *ClusterAuthorizationsPostServerResponse) marshal(writer io.Writer) error {
+	var err error
+	encoder := json.NewEncoder(writer)
+	data, err := r.response.wrap()
+	if err != nil {
+		return err
+	}
+	err = encoder.Encode(data)
+	return err
+}
+
 // dispatchClusterAuthorizations navigates the servers tree rooted at the given server
 // till it finds one that matches the given set of path segments, and then invokes
 // the corresponding server.
@@ -92,25 +124,48 @@ func dispatchClusterAuthorizations(w http.ResponseWriter, r *http.Request, serve
 		switch r.Method {
 		case "POST":
 			adaptClusterAuthorizationsPostRequest(w, r, server)
-			return
 		default:
 			errors.SendMethodNotAllowed(w, r)
 			return
 		}
+	} else {
+		switch segments[0] {
+		default:
+			errors.SendNotFound(w, r)
+			return
+		}
 	}
-	switch segments[0] {
-	default:
-		errors.SendNotFound(w, r)
-		return
+}
+
+// readClusterAuthorizationsPostRequest reads the given HTTP requests and translates it
+// into an object of type ClusterAuthorizationsPostServerRequest.
+func readClusterAuthorizationsPostRequest(r *http.Request) (*ClusterAuthorizationsPostServerRequest, error) {
+	var err error
+	result := new(ClusterAuthorizationsPostServerRequest)
+	err = result.unmarshal(r.Body)
+	if err != nil {
+		return nil, err
 	}
+	return result, err
+}
+
+// writeClusterAuthorizationsPostResponse translates the given request object into an
+// HTTP response.
+func writeClusterAuthorizationsPostResponse(w http.ResponseWriter, r *ClusterAuthorizationsPostServerResponse) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(r.status)
+	err := r.marshal(w)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // adaptClusterAuthorizationsPostRequest translates the given HTTP request into a call to
 // the corresponding method of the given server. Then it translates the
 // results returned by that method into an HTTP response.
 func adaptClusterAuthorizationsPostRequest(w http.ResponseWriter, r *http.Request, server ClusterAuthorizationsServer) {
-	request := &ClusterAuthorizationsPostServerRequest{}
-	err := readClusterAuthorizationsPostRequest(request, r)
+	request, err := readClusterAuthorizationsPostRequest(r)
 	if err != nil {
 		glog.Errorf(
 			"Can't read request for method '%s' and path '%s': %v",
@@ -119,7 +174,7 @@ func adaptClusterAuthorizationsPostRequest(w http.ResponseWriter, r *http.Reques
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	response := &ClusterAuthorizationsPostServerResponse{}
+	response := new(ClusterAuthorizationsPostServerResponse)
 	response.status = 201
 	err = server.Post(r.Context(), request, response)
 	if err != nil {
@@ -130,7 +185,7 @@ func adaptClusterAuthorizationsPostRequest(w http.ResponseWriter, r *http.Reques
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	err = writeClusterAuthorizationsPostResponse(response, w)
+	err = writeClusterAuthorizationsPostResponse(w, response)
 	if err != nil {
 		glog.Errorf(
 			"Can't write response for method '%s' and path '%s': %v",

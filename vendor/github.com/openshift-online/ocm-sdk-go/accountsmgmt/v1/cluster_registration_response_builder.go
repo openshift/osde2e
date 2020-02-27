@@ -34,7 +34,8 @@ func NewClusterRegistrationResponse() *ClusterRegistrationResponseBuilder {
 	return new(ClusterRegistrationResponseBuilder)
 }
 
-// AccountID sets the value of the 'account_ID' attribute to the given value.
+// AccountID sets the value of the 'account_ID' attribute
+// to the given value.
 //
 //
 func (b *ClusterRegistrationResponseBuilder) AccountID(value string) *ClusterRegistrationResponseBuilder {
@@ -42,7 +43,8 @@ func (b *ClusterRegistrationResponseBuilder) AccountID(value string) *ClusterReg
 	return b
 }
 
-// AuthorizationToken sets the value of the 'authorization_token' attribute to the given value.
+// AuthorizationToken sets the value of the 'authorization_token' attribute
+// to the given value.
 //
 //
 func (b *ClusterRegistrationResponseBuilder) AuthorizationToken(value string) *ClusterRegistrationResponseBuilder {
@@ -50,7 +52,8 @@ func (b *ClusterRegistrationResponseBuilder) AuthorizationToken(value string) *C
 	return b
 }
 
-// ClusterID sets the value of the 'cluster_ID' attribute to the given value.
+// ClusterID sets the value of the 'cluster_ID' attribute
+// to the given value.
 //
 //
 func (b *ClusterRegistrationResponseBuilder) ClusterID(value string) *ClusterRegistrationResponseBuilder {
@@ -58,7 +61,8 @@ func (b *ClusterRegistrationResponseBuilder) ClusterID(value string) *ClusterReg
 	return b
 }
 
-// ExpiresAt sets the value of the 'expires_at' attribute to the given value.
+// ExpiresAt sets the value of the 'expires_at' attribute
+// to the given value.
 //
 //
 func (b *ClusterRegistrationResponseBuilder) ExpiresAt(value string) *ClusterRegistrationResponseBuilder {
@@ -81,9 +85,17 @@ func (b *ClusterRegistrationResponseBuilder) Copy(object *ClusterRegistrationRes
 // Build creates a 'cluster_registration_response' object using the configuration stored in the builder.
 func (b *ClusterRegistrationResponseBuilder) Build() (object *ClusterRegistrationResponse, err error) {
 	object = new(ClusterRegistrationResponse)
-	object.accountID = b.accountID
-	object.authorizationToken = b.authorizationToken
-	object.clusterID = b.clusterID
-	object.expiresAt = b.expiresAt
+	if b.accountID != nil {
+		object.accountID = b.accountID
+	}
+	if b.authorizationToken != nil {
+		object.authorizationToken = b.authorizationToken
+	}
+	if b.clusterID != nil {
+		object.clusterID = b.clusterID
+	}
+	if b.expiresAt != nil {
+		object.expiresAt = b.expiresAt
+	}
 	return
 }

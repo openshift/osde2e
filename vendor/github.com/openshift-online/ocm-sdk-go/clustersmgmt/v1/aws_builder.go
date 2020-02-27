@@ -33,7 +33,8 @@ func NewAWS() *AWSBuilder {
 	return new(AWSBuilder)
 }
 
-// AccessKeyID sets the value of the 'access_key_ID' attribute to the given value.
+// AccessKeyID sets the value of the 'access_key_ID' attribute
+// to the given value.
 //
 //
 func (b *AWSBuilder) AccessKeyID(value string) *AWSBuilder {
@@ -41,7 +42,8 @@ func (b *AWSBuilder) AccessKeyID(value string) *AWSBuilder {
 	return b
 }
 
-// AccountID sets the value of the 'account_ID' attribute to the given value.
+// AccountID sets the value of the 'account_ID' attribute
+// to the given value.
 //
 //
 func (b *AWSBuilder) AccountID(value string) *AWSBuilder {
@@ -49,7 +51,8 @@ func (b *AWSBuilder) AccountID(value string) *AWSBuilder {
 	return b
 }
 
-// SecretAccessKey sets the value of the 'secret_access_key' attribute to the given value.
+// SecretAccessKey sets the value of the 'secret_access_key' attribute
+// to the given value.
 //
 //
 func (b *AWSBuilder) SecretAccessKey(value string) *AWSBuilder {
@@ -71,8 +74,14 @@ func (b *AWSBuilder) Copy(object *AWS) *AWSBuilder {
 // Build creates a 'AWS' object using the configuration stored in the builder.
 func (b *AWSBuilder) Build() (object *AWS, err error) {
 	object = new(AWS)
-	object.accessKeyID = b.accessKeyID
-	object.accountID = b.accountID
-	object.secretAccessKey = b.secretAccessKey
+	if b.accessKeyID != nil {
+		object.accessKeyID = b.accessKeyID
+	}
+	if b.accountID != nil {
+		object.accountID = b.accountID
+	}
+	if b.secretAccessKey != nil {
+		object.secretAccessKey = b.secretAccessKey
+	}
 	return
 }

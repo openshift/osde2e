@@ -34,14 +34,14 @@ type Client struct {
 }
 
 // NewClient creates a new client for the 'root'
-// resource using the given transport to send the requests and receive the
+// resource using the given transport to sned the requests and receive the
 // responses.
 func NewClient(transport http.RoundTripper, path string, metric string) *Client {
-	return &Client{
-		transport: transport,
-		path:      path,
-		metric:    metric,
-	}
+	client := new(Client)
+	client.transport = transport
+	client.path = path
+	client.metric = metric
+	return client
 }
 
 // Creates a new request for the method that retrieves the metadata.
@@ -51,18 +51,6 @@ func (c *Client) Get() *MetadataRequest {
 		path:      c.path,
 		metric:    c.metric,
 	}
-}
-
-// AWSInfrastructureAccessRoles returns the target 'AWS_infrastructure_access_roles' resource.
-//
-// Reference to the resource that manages the collection of AWS
-// infrastructure access roles.
-func (c *Client) AWSInfrastructureAccessRoles() *AWSInfrastructureAccessRolesClient {
-	return NewAWSInfrastructureAccessRolesClient(
-		c.transport,
-		path.Join(c.path, "aws_infrastructure_access_roles"),
-		path.Join(c.metric, "aws_infrastructure_access_roles"),
-	)
 }
 
 // Addons returns the target 'add_ons' resource.
@@ -117,17 +105,6 @@ func (c *Client) Flavours() *FlavoursClient {
 		c.transport,
 		path.Join(c.path, "flavours"),
 		path.Join(c.metric, "flavours"),
-	)
-}
-
-// MachineTypes returns the target 'machine_types' resource.
-//
-// Reference to the resource that manage the collection of machine types.
-func (c *Client) MachineTypes() *MachineTypesClient {
-	return NewMachineTypesClient(
-		c.transport,
-		path.Join(c.path, "machine_types"),
-		path.Join(c.metric, "machine_types"),
 	)
 }
 

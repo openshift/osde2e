@@ -41,7 +41,8 @@ func NewReservedResource() *ReservedResourceBuilder {
 	return new(ReservedResourceBuilder)
 }
 
-// BYOC sets the value of the 'BYOC' attribute to the given value.
+// BYOC sets the value of the 'BYOC' attribute
+// to the given value.
 //
 //
 func (b *ReservedResourceBuilder) BYOC(value bool) *ReservedResourceBuilder {
@@ -49,7 +50,8 @@ func (b *ReservedResourceBuilder) BYOC(value bool) *ReservedResourceBuilder {
 	return b
 }
 
-// AvailabilityZoneType sets the value of the 'availability_zone_type' attribute to the given value.
+// AvailabilityZoneType sets the value of the 'availability_zone_type' attribute
+// to the given value.
 //
 //
 func (b *ReservedResourceBuilder) AvailabilityZoneType(value string) *ReservedResourceBuilder {
@@ -57,7 +59,8 @@ func (b *ReservedResourceBuilder) AvailabilityZoneType(value string) *ReservedRe
 	return b
 }
 
-// Count sets the value of the 'count' attribute to the given value.
+// Count sets the value of the 'count' attribute
+// to the given value.
 //
 //
 func (b *ReservedResourceBuilder) Count(value int) *ReservedResourceBuilder {
@@ -65,7 +68,8 @@ func (b *ReservedResourceBuilder) Count(value int) *ReservedResourceBuilder {
 	return b
 }
 
-// CreatedAt sets the value of the 'created_at' attribute to the given value.
+// CreatedAt sets the value of the 'created_at' attribute
+// to the given value.
 //
 //
 func (b *ReservedResourceBuilder) CreatedAt(value time.Time) *ReservedResourceBuilder {
@@ -73,7 +77,8 @@ func (b *ReservedResourceBuilder) CreatedAt(value time.Time) *ReservedResourceBu
 	return b
 }
 
-// ResourceName sets the value of the 'resource_name' attribute to the given value.
+// ResourceName sets the value of the 'resource_name' attribute
+// to the given value.
 //
 //
 func (b *ReservedResourceBuilder) ResourceName(value string) *ReservedResourceBuilder {
@@ -81,7 +86,8 @@ func (b *ReservedResourceBuilder) ResourceName(value string) *ReservedResourceBu
 	return b
 }
 
-// ResourceType sets the value of the 'resource_type' attribute to the given value.
+// ResourceType sets the value of the 'resource_type' attribute
+// to the given value.
 //
 //
 func (b *ReservedResourceBuilder) ResourceType(value string) *ReservedResourceBuilder {
@@ -89,7 +95,8 @@ func (b *ReservedResourceBuilder) ResourceType(value string) *ReservedResourceBu
 	return b
 }
 
-// UpdatedAt sets the value of the 'updated_at' attribute to the given value.
+// UpdatedAt sets the value of the 'updated_at' attribute
+// to the given value.
 //
 //
 func (b *ReservedResourceBuilder) UpdatedAt(value time.Time) *ReservedResourceBuilder {
@@ -115,12 +122,26 @@ func (b *ReservedResourceBuilder) Copy(object *ReservedResource) *ReservedResour
 // Build creates a 'reserved_resource' object using the configuration stored in the builder.
 func (b *ReservedResourceBuilder) Build() (object *ReservedResource, err error) {
 	object = new(ReservedResource)
-	object.byoc = b.byoc
-	object.availabilityZoneType = b.availabilityZoneType
-	object.count = b.count
-	object.createdAt = b.createdAt
-	object.resourceName = b.resourceName
-	object.resourceType = b.resourceType
-	object.updatedAt = b.updatedAt
+	if b.byoc != nil {
+		object.byoc = b.byoc
+	}
+	if b.availabilityZoneType != nil {
+		object.availabilityZoneType = b.availabilityZoneType
+	}
+	if b.count != nil {
+		object.count = b.count
+	}
+	if b.createdAt != nil {
+		object.createdAt = b.createdAt
+	}
+	if b.resourceName != nil {
+		object.resourceName = b.resourceName
+	}
+	if b.resourceType != nil {
+		object.resourceType = b.resourceType
+	}
+	if b.updatedAt != nil {
+		object.updatedAt = b.updatedAt
+	}
 	return
 }

@@ -37,19 +37,6 @@ func (b *SKUListBuilder) Items(values ...*SKUBuilder) *SKUListBuilder {
 	return b
 }
 
-// Copy copies the items of the given list into this builder, discarding any previous items.
-func (b *SKUListBuilder) Copy(list *SKUList) *SKUListBuilder {
-	if list == nil || list.items == nil {
-		b.items = nil
-	} else {
-		b.items = make([]*SKUBuilder, len(list.items))
-		for i, v := range list.items {
-			b.items[i] = NewSKU().Copy(v)
-		}
-	}
-	return b
-}
-
 // Build creates a list of 'SKU' objects using the
 // configuration stored in the builder.
 func (b *SKUListBuilder) Build() (list *SKUList, err error) {

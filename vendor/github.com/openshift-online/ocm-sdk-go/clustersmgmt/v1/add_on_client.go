@@ -22,13 +22,13 @@ package v1 // github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"time"
 
-	jsoniter "github.com/json-iterator/go"
 	"github.com/openshift-online/ocm-sdk-go/errors"
 	"github.com/openshift-online/ocm-sdk-go/helpers"
 )
@@ -43,47 +43,47 @@ type AddOnClient struct {
 }
 
 // NewAddOnClient creates a new client for the 'add_on'
-// resource using the given transport to send the requests and receive the
+// resource using the given transport to sned the requests and receive the
 // responses.
 func NewAddOnClient(transport http.RoundTripper, path string, metric string) *AddOnClient {
-	return &AddOnClient{
-		transport: transport,
-		path:      path,
-		metric:    metric,
-	}
+	client := new(AddOnClient)
+	client.transport = transport
+	client.path = path
+	client.metric = metric
+	return client
 }
 
 // Delete creates a request for the 'delete' method.
 //
 // Deletes the add-on.
 func (c *AddOnClient) Delete() *AddOnDeleteRequest {
-	return &AddOnDeleteRequest{
-		transport: c.transport,
-		path:      c.path,
-		metric:    c.metric,
-	}
+	request := new(AddOnDeleteRequest)
+	request.transport = c.transport
+	request.path = c.path
+	request.metric = c.metric
+	return request
 }
 
 // Get creates a request for the 'get' method.
 //
 // Retrieves the details of the add-on.
 func (c *AddOnClient) Get() *AddOnGetRequest {
-	return &AddOnGetRequest{
-		transport: c.transport,
-		path:      c.path,
-		metric:    c.metric,
-	}
+	request := new(AddOnGetRequest)
+	request.transport = c.transport
+	request.path = c.path
+	request.metric = c.metric
+	return request
 }
 
 // Update creates a request for the 'update' method.
 //
 // Updates the add-on.
 func (c *AddOnClient) Update() *AddOnUpdateRequest {
-	return &AddOnUpdateRequest{
-		transport: c.transport,
-		path:      c.path,
-		metric:    c.metric,
-	}
+	request := new(AddOnUpdateRequest)
+	request.transport = c.transport
+	request.path = c.path
+	request.metric = c.metric
+	return request
 }
 
 // AddOnPollRequest is the request for the Poll method.
@@ -257,7 +257,7 @@ func (r *AddOnDeleteRequest) SendContext(ctx context.Context) (result *AddOnDele
 		return
 	}
 	defer response.Body.Close()
-	result = &AddOnDeleteResponse{}
+	result = new(AddOnDeleteResponse)
 	result.status = response.StatusCode
 	result.header = response.Header
 	if result.status >= 400 {
@@ -352,7 +352,7 @@ func (r *AddOnGetRequest) SendContext(ctx context.Context) (result *AddOnGetResp
 		return
 	}
 	defer response.Body.Close()
-	result = &AddOnGetResponse{}
+	result = new(AddOnGetResponse)
 	result.status = response.StatusCode
 	result.header = response.Header
 	if result.status >= 400 {
@@ -363,7 +363,7 @@ func (r *AddOnGetRequest) SendContext(ctx context.Context) (result *AddOnGetResp
 		err = result.err
 		return
 	}
-	err = readAddOnGetResponse(result, response.Body)
+	err = result.unmarshal(response.Body)
 	if err != nil {
 		return
 	}
@@ -424,6 +424,23 @@ func (r *AddOnGetResponse) GetBody() (value *AddOn, ok bool) {
 	return
 }
 
+// unmarshal is the method used internally to unmarshal responses to the
+// 'get' method.
+func (r *AddOnGetResponse) unmarshal(reader io.Reader) error {
+	var err error
+	decoder := json.NewDecoder(reader)
+	data := new(addOnData)
+	err = decoder.Decode(data)
+	if err != nil {
+		return err
+	}
+	r.body, err = data.unwrap()
+	if err != nil {
+		return err
+	}
+	return err
+}
+
 // AddOnUpdateRequest is the request for the 'update' method.
 type AddOnUpdateRequest struct {
 	transport http.RoundTripper
@@ -466,8 +483,8 @@ func (r *AddOnUpdateRequest) Send() (result *AddOnUpdateResponse, err error) {
 func (r *AddOnUpdateRequest) SendContext(ctx context.Context) (result *AddOnUpdateResponse, err error) {
 	query := helpers.CopyQuery(r.query)
 	header := helpers.SetHeader(r.header, r.metric)
-	buffer := &bytes.Buffer{}
-	err = writeAddOnUpdateRequest(r, buffer)
+	buffer := new(bytes.Buffer)
+	err = r.marshal(buffer)
 	if err != nil {
 		return
 	}
@@ -489,7 +506,7 @@ func (r *AddOnUpdateRequest) SendContext(ctx context.Context) (result *AddOnUpda
 		return
 	}
 	defer response.Body.Close()
-	result = &AddOnUpdateResponse{}
+	result = new(AddOnUpdateResponse)
 	result.status = response.StatusCode
 	result.header = response.Header
 	if result.status >= 400 {
@@ -500,7 +517,7 @@ func (r *AddOnUpdateRequest) SendContext(ctx context.Context) (result *AddOnUpda
 		err = result.err
 		return
 	}
-	err = readAddOnUpdateResponse(result, response.Body)
+	err = result.unmarshal(response.Body)
 	if err != nil {
 		return
 	}
@@ -510,11 +527,14 @@ func (r *AddOnUpdateRequest) SendContext(ctx context.Context) (result *AddOnUpda
 // marshall is the method used internally to marshal requests for the
 // 'update' method.
 func (r *AddOnUpdateRequest) marshal(writer io.Writer) error {
-	stream := helpers.NewStream(writer)
-	r.stream(stream)
-	return stream.Error
-}
-func (r *AddOnUpdateRequest) stream(stream *jsoniter.Stream) {
+	var err error
+	encoder := json.NewEncoder(writer)
+	data, err := r.body.wrap()
+	if err != nil {
+		return err
+	}
+	err = encoder.Encode(data)
+	return err
 }
 
 // AddOnUpdateResponse is the response for the 'update' method.
@@ -569,4 +589,21 @@ func (r *AddOnUpdateResponse) GetBody() (value *AddOn, ok bool) {
 		value = r.body
 	}
 	return
+}
+
+// unmarshal is the method used internally to unmarshal responses to the
+// 'update' method.
+func (r *AddOnUpdateResponse) unmarshal(reader io.Reader) error {
+	var err error
+	decoder := json.NewDecoder(reader)
+	data := new(addOnData)
+	err = decoder.Decode(data)
+	if err != nil {
+		return err
+	}
+	r.body, err = data.unwrap()
+	if err != nil {
+		return err
+	}
+	return err
 }

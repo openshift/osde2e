@@ -37,19 +37,6 @@ func (b *ReservedResourceListBuilder) Items(values ...*ReservedResourceBuilder) 
 	return b
 }
 
-// Copy copies the items of the given list into this builder, discarding any previous items.
-func (b *ReservedResourceListBuilder) Copy(list *ReservedResourceList) *ReservedResourceListBuilder {
-	if list == nil || list.items == nil {
-		b.items = nil
-	} else {
-		b.items = make([]*ReservedResourceBuilder, len(list.items))
-		for i, v := range list.items {
-			b.items[i] = NewReservedResource().Copy(v)
-		}
-	}
-	return b
-}
-
 // Build creates a list of 'reserved_resource' objects using the
 // configuration stored in the builder.
 func (b *ReservedResourceListBuilder) Build() (list *ReservedResourceList, err error) {

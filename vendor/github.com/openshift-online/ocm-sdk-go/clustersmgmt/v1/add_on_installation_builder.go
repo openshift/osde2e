@@ -53,7 +53,8 @@ func (b *AddOnInstallationBuilder) Link(value bool) *AddOnInstallationBuilder {
 	return b
 }
 
-// Addon sets the value of the 'addon' attribute to the given value.
+// Addon sets the value of the 'addon' attribute
+// to the given value.
 //
 // Representation of an add-on that can be installed in a cluster.
 func (b *AddOnInstallationBuilder) Addon(value *AddOnBuilder) *AddOnInstallationBuilder {
@@ -61,7 +62,8 @@ func (b *AddOnInstallationBuilder) Addon(value *AddOnBuilder) *AddOnInstallation
 	return b
 }
 
-// Cluster sets the value of the 'cluster' attribute to the given value.
+// Cluster sets the value of the 'cluster' attribute
+// to the given value.
 //
 // Definition of an _OpenShift_ cluster.
 //

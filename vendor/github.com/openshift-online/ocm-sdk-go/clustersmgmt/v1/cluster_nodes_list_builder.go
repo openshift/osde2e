@@ -37,19 +37,6 @@ func (b *ClusterNodesListBuilder) Items(values ...*ClusterNodesBuilder) *Cluster
 	return b
 }
 
-// Copy copies the items of the given list into this builder, discarding any previous items.
-func (b *ClusterNodesListBuilder) Copy(list *ClusterNodesList) *ClusterNodesListBuilder {
-	if list == nil || list.items == nil {
-		b.items = nil
-	} else {
-		b.items = make([]*ClusterNodesBuilder, len(list.items))
-		for i, v := range list.items {
-			b.items[i] = NewClusterNodes().Copy(v)
-		}
-	}
-	return b
-}
-
 // Build creates a list of 'cluster_nodes' objects using the
 // configuration stored in the builder.
 func (b *ClusterNodesListBuilder) Build() (list *ClusterNodesList, err error) {

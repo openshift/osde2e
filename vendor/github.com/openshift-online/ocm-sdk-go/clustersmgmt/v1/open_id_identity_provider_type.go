@@ -35,6 +35,8 @@ type OpenIDIdentityProvider struct {
 // Empty returns true if the object is empty, i.e. no attribute has a value.
 func (o *OpenIDIdentityProvider) Empty() bool {
 	return o == nil || (o.ca == nil &&
+		o.urls == nil &&
+		o.claims == nil &&
 		o.clientID == nil &&
 		o.clientSecret == nil &&
 		len(o.extraAuthorizeParameters) == 0 &&
@@ -205,22 +207,8 @@ func (o *OpenIDIdentityProvider) GetExtraScopes() (value []string, ok bool) {
 	return
 }
 
-// OpenIDIdentityProviderListKind is the name of the type used to represent list of objects of
-// type 'open_ID_identity_provider'.
-const OpenIDIdentityProviderListKind = "OpenIDIdentityProviderList"
-
-// OpenIDIdentityProviderListLinkKind is the name of the type used to represent links to list
-// of objects of type 'open_ID_identity_provider'.
-const OpenIDIdentityProviderListLinkKind = "OpenIDIdentityProviderListLink"
-
-// OpenIDIdentityProviderNilKind is the name of the type used to nil lists of objects of
-// type 'open_ID_identity_provider'.
-const OpenIDIdentityProviderListNilKind = "OpenIDIdentityProviderListNil"
-
 // OpenIDIdentityProviderList is a list of values of the 'open_ID_identity_provider' type.
 type OpenIDIdentityProviderList struct {
-	href  *string
-	link  bool
 	items []*OpenIDIdentityProvider
 }
 

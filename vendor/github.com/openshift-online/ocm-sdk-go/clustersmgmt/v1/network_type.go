@@ -105,22 +105,8 @@ func (o *Network) GetServiceCIDR() (value string, ok bool) {
 	return
 }
 
-// NetworkListKind is the name of the type used to represent list of objects of
-// type 'network'.
-const NetworkListKind = "NetworkList"
-
-// NetworkListLinkKind is the name of the type used to represent links to list
-// of objects of type 'network'.
-const NetworkListLinkKind = "NetworkListLink"
-
-// NetworkNilKind is the name of the type used to nil lists of objects of
-// type 'network'.
-const NetworkListNilKind = "NetworkListNil"
-
 // NetworkList is a list of values of the 'network' type.
 type NetworkList struct {
-	href  *string
-	link  bool
 	items []*Network
 }
 

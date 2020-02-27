@@ -138,22 +138,8 @@ func (o *GithubIdentityProvider) GetTeams() (value []string, ok bool) {
 	return
 }
 
-// GithubIdentityProviderListKind is the name of the type used to represent list of objects of
-// type 'github_identity_provider'.
-const GithubIdentityProviderListKind = "GithubIdentityProviderList"
-
-// GithubIdentityProviderListLinkKind is the name of the type used to represent links to list
-// of objects of type 'github_identity_provider'.
-const GithubIdentityProviderListLinkKind = "GithubIdentityProviderListLink"
-
-// GithubIdentityProviderNilKind is the name of the type used to nil lists of objects of
-// type 'github_identity_provider'.
-const GithubIdentityProviderListNilKind = "GithubIdentityProviderListNil"
-
 // GithubIdentityProviderList is a list of values of the 'github_identity_provider' type.
 type GithubIdentityProviderList struct {
-	href  *string
-	link  bool
 	items []*GithubIdentityProvider
 }
 

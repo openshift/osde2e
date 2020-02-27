@@ -37,7 +37,8 @@ func NewResourceReview() *ResourceReviewBuilder {
 	return new(ResourceReviewBuilder)
 }
 
-// AccountUsername sets the value of the 'account_username' attribute to the given value.
+// AccountUsername sets the value of the 'account_username' attribute
+// to the given value.
 //
 //
 func (b *ResourceReviewBuilder) AccountUsername(value string) *ResourceReviewBuilder {
@@ -45,7 +46,8 @@ func (b *ResourceReviewBuilder) AccountUsername(value string) *ResourceReviewBui
 	return b
 }
 
-// Action sets the value of the 'action' attribute to the given value.
+// Action sets the value of the 'action' attribute
+// to the given value.
 //
 //
 func (b *ResourceReviewBuilder) Action(value string) *ResourceReviewBuilder {
@@ -53,7 +55,8 @@ func (b *ResourceReviewBuilder) Action(value string) *ResourceReviewBuilder {
 	return b
 }
 
-// ClusterIDs sets the value of the 'cluster_IDs' attribute to the given values.
+// ClusterIDs sets the value of the 'cluster_IDs' attribute
+// to the given values.
 //
 //
 func (b *ResourceReviewBuilder) ClusterIDs(values ...string) *ResourceReviewBuilder {
@@ -62,7 +65,8 @@ func (b *ResourceReviewBuilder) ClusterIDs(values ...string) *ResourceReviewBuil
 	return b
 }
 
-// ClusterUUIDs sets the value of the 'cluster_UUIDs' attribute to the given values.
+// ClusterUUIDs sets the value of the 'cluster_UUIDs' attribute
+// to the given values.
 //
 //
 func (b *ResourceReviewBuilder) ClusterUUIDs(values ...string) *ResourceReviewBuilder {
@@ -71,7 +75,8 @@ func (b *ResourceReviewBuilder) ClusterUUIDs(values ...string) *ResourceReviewBu
 	return b
 }
 
-// OrganizationIDs sets the value of the 'organization_IDs' attribute to the given values.
+// OrganizationIDs sets the value of the 'organization_IDs' attribute
+// to the given values.
 //
 //
 func (b *ResourceReviewBuilder) OrganizationIDs(values ...string) *ResourceReviewBuilder {
@@ -80,7 +85,8 @@ func (b *ResourceReviewBuilder) OrganizationIDs(values ...string) *ResourceRevie
 	return b
 }
 
-// ResourceType sets the value of the 'resource_type' attribute to the given value.
+// ResourceType sets the value of the 'resource_type' attribute
+// to the given value.
 //
 //
 func (b *ResourceReviewBuilder) ResourceType(value string) *ResourceReviewBuilder {
@@ -88,7 +94,8 @@ func (b *ResourceReviewBuilder) ResourceType(value string) *ResourceReviewBuilde
 	return b
 }
 
-// SubscriptionIDs sets the value of the 'subscription_IDs' attribute to the given values.
+// SubscriptionIDs sets the value of the 'subscription_IDs' attribute
+// to the given values.
 //
 //
 func (b *ResourceReviewBuilder) SubscriptionIDs(values ...string) *ResourceReviewBuilder {
@@ -104,26 +111,26 @@ func (b *ResourceReviewBuilder) Copy(object *ResourceReview) *ResourceReviewBuil
 	}
 	b.accountUsername = object.accountUsername
 	b.action = object.action
-	if object.clusterIDs != nil {
+	if len(object.clusterIDs) > 0 {
 		b.clusterIDs = make([]string, len(object.clusterIDs))
 		copy(b.clusterIDs, object.clusterIDs)
 	} else {
 		b.clusterIDs = nil
 	}
-	if object.clusterUUIDs != nil {
+	if len(object.clusterUUIDs) > 0 {
 		b.clusterUUIDs = make([]string, len(object.clusterUUIDs))
 		copy(b.clusterUUIDs, object.clusterUUIDs)
 	} else {
 		b.clusterUUIDs = nil
 	}
-	if object.organizationIDs != nil {
+	if len(object.organizationIDs) > 0 {
 		b.organizationIDs = make([]string, len(object.organizationIDs))
 		copy(b.organizationIDs, object.organizationIDs)
 	} else {
 		b.organizationIDs = nil
 	}
 	b.resourceType = object.resourceType
-	if object.subscriptionIDs != nil {
+	if len(object.subscriptionIDs) > 0 {
 		b.subscriptionIDs = make([]string, len(object.subscriptionIDs))
 		copy(b.subscriptionIDs, object.subscriptionIDs)
 	} else {
@@ -135,8 +142,12 @@ func (b *ResourceReviewBuilder) Copy(object *ResourceReview) *ResourceReviewBuil
 // Build creates a 'resource_review' object using the configuration stored in the builder.
 func (b *ResourceReviewBuilder) Build() (object *ResourceReview, err error) {
 	object = new(ResourceReview)
-	object.accountUsername = b.accountUsername
-	object.action = b.action
+	if b.accountUsername != nil {
+		object.accountUsername = b.accountUsername
+	}
+	if b.action != nil {
+		object.action = b.action
+	}
 	if b.clusterIDs != nil {
 		object.clusterIDs = make([]string, len(b.clusterIDs))
 		copy(object.clusterIDs, b.clusterIDs)
@@ -149,7 +160,9 @@ func (b *ResourceReviewBuilder) Build() (object *ResourceReview, err error) {
 		object.organizationIDs = make([]string, len(b.organizationIDs))
 		copy(object.organizationIDs, b.organizationIDs)
 	}
-	object.resourceType = b.resourceType
+	if b.resourceType != nil {
+		object.resourceType = b.resourceType
+	}
 	if b.subscriptionIDs != nil {
 		object.subscriptionIDs = make([]string, len(b.subscriptionIDs))
 		copy(object.subscriptionIDs, b.subscriptionIDs)

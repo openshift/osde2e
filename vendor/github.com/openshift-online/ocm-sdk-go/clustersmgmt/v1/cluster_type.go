@@ -75,38 +75,37 @@ const ClusterNilKind = "ClusterNil"
 // attributes are mandatory when creation a cluster with your own Amazon Web
 // Services account.
 type Cluster struct {
-	id                                *string
-	href                              *string
-	link                              bool
-	api                               *ClusterAPI
-	aws                               *AWS
-	awsInfrastructureAccessRoleGrants *AWSInfrastructureAccessRoleGrantList
-	byoc                              *bool
-	dns                               *DNS
-	addons                            *AddOnInstallationList
-	cloudProvider                     *CloudProvider
-	console                           *ClusterConsole
-	creationTimestamp                 *time.Time
-	displayName                       *string
-	expirationTimestamp               *time.Time
-	externalID                        *string
-	flavour                           *Flavour
-	groups                            *GroupList
-	identityProviders                 *IdentityProviderList
-	loadBalancerQuota                 *int
-	managed                           *bool
-	metrics                           *ClusterMetrics
-	multiAZ                           *bool
-	name                              *string
-	network                           *Network
-	nodes                             *ClusterNodes
-	openshiftVersion                  *string
-	properties                        map[string]string
-	region                            *CloudRegion
-	state                             *ClusterState
-	storageQuota                      *Value
-	subscription                      *Subscription
-	version                           *Version
+	id                  *string
+	href                *string
+	link                bool
+	api                 *ClusterAPI
+	aws                 *AWS
+	byoc                *bool
+	dns                 *DNS
+	addons              *AddOnInstallationList
+	cloudProvider       *CloudProvider
+	console             *ClusterConsole
+	creationTimestamp   *time.Time
+	displayName         *string
+	expirationTimestamp *time.Time
+	externalID          *string
+	flavour             *Flavour
+	groups              *GroupList
+	identityProviders   *IdentityProviderList
+	loadBalancerQuota   *int
+	managed             *bool
+	metrics             *ClusterMetrics
+	multiAZ             *bool
+	name                *string
+	network             *Network
+	nodes               *ClusterNodes
+	openshiftVersion    *string
+	properties          map[string]string
+	region              *CloudRegion
+	state               *ClusterState
+	storageQuota        *Value
+	subscription        *Subscription
+	version             *Version
 }
 
 // Kind returns the name of the type of the object.
@@ -164,22 +163,34 @@ func (o *Cluster) GetHREF() (value string, ok bool) {
 // Empty returns true if the object is empty, i.e. no attribute has a value.
 func (o *Cluster) Empty() bool {
 	return o == nil || (o.id == nil &&
-		o.awsInfrastructureAccessRoleGrants.Len() == 0 &&
+		o.api == nil &&
+		o.aws == nil &&
 		o.byoc == nil &&
-		o.addons.Len() == 0 &&
+		o.dns == nil &&
+		o.addons.Empty() &&
+		o.cloudProvider == nil &&
+		o.console == nil &&
 		o.creationTimestamp == nil &&
 		o.displayName == nil &&
 		o.expirationTimestamp == nil &&
 		o.externalID == nil &&
-		o.groups.Len() == 0 &&
-		o.identityProviders.Len() == 0 &&
+		o.flavour == nil &&
+		o.groups.Empty() &&
+		o.identityProviders.Empty() &&
 		o.loadBalancerQuota == nil &&
 		o.managed == nil &&
+		o.metrics == nil &&
 		o.multiAZ == nil &&
 		o.name == nil &&
+		o.network == nil &&
+		o.nodes == nil &&
 		o.openshiftVersion == nil &&
 		len(o.properties) == 0 &&
+		o.region == nil &&
 		o.state == nil &&
+		o.storageQuota == nil &&
+		o.subscription == nil &&
+		o.version == nil &&
 		true)
 }
 
@@ -225,29 +236,6 @@ func (o *Cluster) GetAWS() (value *AWS, ok bool) {
 	ok = o != nil && o.aws != nil
 	if ok {
 		value = o.aws
-	}
-	return
-}
-
-// AWSInfrastructureAccessRoleGrants returns the value of the 'AWS_infrastructure_access_role_grants' attribute, or
-// the zero value of the type if the attribute doesn't have a value.
-//
-// List of AWS infrastructure access role grants on this cluster.
-func (o *Cluster) AWSInfrastructureAccessRoleGrants() *AWSInfrastructureAccessRoleGrantList {
-	if o == nil {
-		return nil
-	}
-	return o.awsInfrastructureAccessRoleGrants
-}
-
-// GetAWSInfrastructureAccessRoleGrants returns the value of the 'AWS_infrastructure_access_role_grants' attribute and
-// a flag indicating if the attribute has a value.
-//
-// List of AWS infrastructure access role grants on this cluster.
-func (o *Cluster) GetAWSInfrastructureAccessRoleGrants() (value *AWSInfrastructureAccessRoleGrantList, ok bool) {
-	ok = o != nil && o.awsInfrastructureAccessRoleGrants != nil
-	if ok {
-		value = o.awsInfrastructureAccessRoleGrants
 	}
 	return
 }
@@ -882,16 +870,16 @@ func (o *Cluster) GetVersion() (value *Version, ok bool) {
 	return
 }
 
-// ClusterListKind is the name of the type used to represent list of objects of
-// type 'cluster'.
+// ClusterListKind is the name of the type used to represent list of
+// objects of type 'cluster'.
 const ClusterListKind = "ClusterList"
 
-// ClusterListLinkKind is the name of the type used to represent links to list
-// of objects of type 'cluster'.
+// ClusterListLinkKind is the name of the type used to represent links
+// to list of objects of type 'cluster'.
 const ClusterListLinkKind = "ClusterListLink"
 
-// ClusterNilKind is the name of the type used to nil lists of objects of
-// type 'cluster'.
+// ClusterNilKind is the name of the type used to nil lists of
+// objects of type 'cluster'.
 const ClusterListNilKind = "ClusterListNil"
 
 // ClusterList is a list of values of the 'cluster' type.

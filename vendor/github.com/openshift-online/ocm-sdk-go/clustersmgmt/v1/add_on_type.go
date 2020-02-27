@@ -35,18 +35,16 @@ const AddOnNilKind = "AddOnNil"
 //
 // Representation of an add-on that can be installed in a cluster.
 type AddOn struct {
-	id              *string
-	href            *string
-	link            bool
-	description     *string
-	enabled         *bool
-	icon            *string
-	installMode     *AddOnInstallMode
-	label           *string
-	name            *string
-	resourceCost    *float64
-	resourceName    *string
-	targetNamespace *string
+	id           *string
+	href         *string
+	link         bool
+	description  *string
+	enabled      *bool
+	icon         *string
+	label        *string
+	name         *string
+	resourceCost *float64
+	resourceName *string
 }
 
 // Kind returns the name of the type of the object.
@@ -107,12 +105,10 @@ func (o *AddOn) Empty() bool {
 		o.description == nil &&
 		o.enabled == nil &&
 		o.icon == nil &&
-		o.installMode == nil &&
 		o.label == nil &&
 		o.name == nil &&
 		o.resourceCost == nil &&
 		o.resourceName == nil &&
-		o.targetNamespace == nil &&
 		true)
 }
 
@@ -181,29 +177,6 @@ func (o *AddOn) GetIcon() (value string, ok bool) {
 	ok = o != nil && o.icon != nil
 	if ok {
 		value = *o.icon
-	}
-	return
-}
-
-// InstallMode returns the value of the 'install_mode' attribute, or
-// the zero value of the type if the attribute doesn't have a value.
-//
-// The mode in which the addon is deployed.
-func (o *AddOn) InstallMode() AddOnInstallMode {
-	if o != nil && o.installMode != nil {
-		return *o.installMode
-	}
-	return AddOnInstallMode("")
-}
-
-// GetInstallMode returns the value of the 'install_mode' attribute and
-// a flag indicating if the attribute has a value.
-//
-// The mode in which the addon is deployed.
-func (o *AddOn) GetInstallMode() (value AddOnInstallMode, ok bool) {
-	ok = o != nil && o.installMode != nil
-	if ok {
-		value = *o.installMode
 	}
 	return
 }
@@ -300,39 +273,16 @@ func (o *AddOn) GetResourceName() (value string, ok bool) {
 	return
 }
 
-// TargetNamespace returns the value of the 'target_namespace' attribute, or
-// the zero value of the type if the attribute doesn't have a value.
-//
-// The namespace in which the addon CRD exists.
-func (o *AddOn) TargetNamespace() string {
-	if o != nil && o.targetNamespace != nil {
-		return *o.targetNamespace
-	}
-	return ""
-}
-
-// GetTargetNamespace returns the value of the 'target_namespace' attribute and
-// a flag indicating if the attribute has a value.
-//
-// The namespace in which the addon CRD exists.
-func (o *AddOn) GetTargetNamespace() (value string, ok bool) {
-	ok = o != nil && o.targetNamespace != nil
-	if ok {
-		value = *o.targetNamespace
-	}
-	return
-}
-
-// AddOnListKind is the name of the type used to represent list of objects of
-// type 'add_on'.
+// AddOnListKind is the name of the type used to represent list of
+// objects of type 'add_on'.
 const AddOnListKind = "AddOnList"
 
-// AddOnListLinkKind is the name of the type used to represent links to list
-// of objects of type 'add_on'.
+// AddOnListLinkKind is the name of the type used to represent links
+// to list of objects of type 'add_on'.
 const AddOnListLinkKind = "AddOnListLink"
 
-// AddOnNilKind is the name of the type used to nil lists of objects of
-// type 'add_on'.
+// AddOnNilKind is the name of the type used to nil lists of
+// objects of type 'add_on'.
 const AddOnListNilKind = "AddOnListNil"
 
 // AddOnList is a list of values of the 'add_on' type.

@@ -31,7 +31,8 @@ func NewClusterAPI() *ClusterAPIBuilder {
 	return new(ClusterAPIBuilder)
 }
 
-// URL sets the value of the 'URL' attribute to the given value.
+// URL sets the value of the 'URL' attribute
+// to the given value.
 //
 //
 func (b *ClusterAPIBuilder) URL(value string) *ClusterAPIBuilder {
@@ -51,6 +52,8 @@ func (b *ClusterAPIBuilder) Copy(object *ClusterAPI) *ClusterAPIBuilder {
 // Build creates a 'cluster_API' object using the configuration stored in the builder.
 func (b *ClusterAPIBuilder) Build() (object *ClusterAPI, err error) {
 	object = new(ClusterAPI)
-	object.url = b.url
+	if b.url != nil {
+		object.url = b.url
+	}
 	return
 }

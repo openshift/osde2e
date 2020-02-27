@@ -37,19 +37,6 @@ func (b *AWSFlavourListBuilder) Items(values ...*AWSFlavourBuilder) *AWSFlavourL
 	return b
 }
 
-// Copy copies the items of the given list into this builder, discarding any previous items.
-func (b *AWSFlavourListBuilder) Copy(list *AWSFlavourList) *AWSFlavourListBuilder {
-	if list == nil || list.items == nil {
-		b.items = nil
-	} else {
-		b.items = make([]*AWSFlavourBuilder, len(list.items))
-		for i, v := range list.items {
-			b.items[i] = NewAWSFlavour().Copy(v)
-		}
-	}
-	return b
-}
-
 // Build creates a list of 'AWS_flavour' objects using the
 // configuration stored in the builder.
 func (b *AWSFlavourListBuilder) Build() (list *AWSFlavourList, err error) {

@@ -80,22 +80,8 @@ func (o *ClusterRegistrationRequest) GetClusterID() (value string, ok bool) {
 	return
 }
 
-// ClusterRegistrationRequestListKind is the name of the type used to represent list of objects of
-// type 'cluster_registration_request'.
-const ClusterRegistrationRequestListKind = "ClusterRegistrationRequestList"
-
-// ClusterRegistrationRequestListLinkKind is the name of the type used to represent links to list
-// of objects of type 'cluster_registration_request'.
-const ClusterRegistrationRequestListLinkKind = "ClusterRegistrationRequestListLink"
-
-// ClusterRegistrationRequestNilKind is the name of the type used to nil lists of objects of
-// type 'cluster_registration_request'.
-const ClusterRegistrationRequestListNilKind = "ClusterRegistrationRequestListNil"
-
 // ClusterRegistrationRequestList is a list of values of the 'cluster_registration_request' type.
 type ClusterRegistrationRequestList struct {
-	href  *string
-	link  bool
 	items []*ClusterRegistrationRequest
 }
 

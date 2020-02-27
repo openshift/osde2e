@@ -37,19 +37,6 @@ func (b *ClusterAPIListBuilder) Items(values ...*ClusterAPIBuilder) *ClusterAPIL
 	return b
 }
 
-// Copy copies the items of the given list into this builder, discarding any previous items.
-func (b *ClusterAPIListBuilder) Copy(list *ClusterAPIList) *ClusterAPIListBuilder {
-	if list == nil || list.items == nil {
-		b.items = nil
-	} else {
-		b.items = make([]*ClusterAPIBuilder, len(list.items))
-		for i, v := range list.items {
-			b.items[i] = NewClusterAPI().Copy(v)
-		}
-	}
-	return b
-}
-
 // Build creates a list of 'cluster_API' objects using the
 // configuration stored in the builder.
 func (b *ClusterAPIListBuilder) Build() (list *ClusterAPIList, err error) {

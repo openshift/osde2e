@@ -37,19 +37,6 @@ func (b *SelfAccessReviewRequestListBuilder) Items(values ...*SelfAccessReviewRe
 	return b
 }
 
-// Copy copies the items of the given list into this builder, discarding any previous items.
-func (b *SelfAccessReviewRequestListBuilder) Copy(list *SelfAccessReviewRequestList) *SelfAccessReviewRequestListBuilder {
-	if list == nil || list.items == nil {
-		b.items = nil
-	} else {
-		b.items = make([]*SelfAccessReviewRequestBuilder, len(list.items))
-		for i, v := range list.items {
-			b.items[i] = NewSelfAccessReviewRequest().Copy(v)
-		}
-	}
-	return b
-}
-
 // Build creates a list of 'self_access_review_request' objects using the
 // configuration stored in the builder.
 func (b *SelfAccessReviewRequestListBuilder) Build() (list *SelfAccessReviewRequestList, err error) {

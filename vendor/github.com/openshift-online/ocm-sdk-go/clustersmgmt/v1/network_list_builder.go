@@ -37,19 +37,6 @@ func (b *NetworkListBuilder) Items(values ...*NetworkBuilder) *NetworkListBuilde
 	return b
 }
 
-// Copy copies the items of the given list into this builder, discarding any previous items.
-func (b *NetworkListBuilder) Copy(list *NetworkList) *NetworkListBuilder {
-	if list == nil || list.items == nil {
-		b.items = nil
-	} else {
-		b.items = make([]*NetworkBuilder, len(list.items))
-		for i, v := range list.items {
-			b.items[i] = NewNetwork().Copy(v)
-		}
-	}
-	return b
-}
-
 // Build creates a list of 'network' objects using the
 // configuration stored in the builder.
 func (b *NetworkListBuilder) Build() (list *NetworkList, err error) {

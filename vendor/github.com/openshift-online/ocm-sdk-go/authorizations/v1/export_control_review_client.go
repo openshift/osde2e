@@ -22,12 +22,12 @@ package v1 // github.com/openshift-online/ocm-sdk-go/authorizations/v1
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 
-	jsoniter "github.com/json-iterator/go"
 	"github.com/openshift-online/ocm-sdk-go/errors"
 	"github.com/openshift-online/ocm-sdk-go/helpers"
 )
@@ -42,25 +42,25 @@ type ExportControlReviewClient struct {
 }
 
 // NewExportControlReviewClient creates a new client for the 'export_control_review'
-// resource using the given transport to send the requests and receive the
+// resource using the given transport to sned the requests and receive the
 // responses.
 func NewExportControlReviewClient(transport http.RoundTripper, path string, metric string) *ExportControlReviewClient {
-	return &ExportControlReviewClient{
-		transport: transport,
-		path:      path,
-		metric:    metric,
-	}
+	client := new(ExportControlReviewClient)
+	client.transport = transport
+	client.path = path
+	client.metric = metric
+	return client
 }
 
 // Post creates a request for the 'post' method.
 //
 // Screens a user by account user name.
 func (c *ExportControlReviewClient) Post() *ExportControlReviewPostRequest {
-	return &ExportControlReviewPostRequest{
-		transport: c.transport,
-		path:      c.path,
-		metric:    c.metric,
-	}
+	request := new(ExportControlReviewPostRequest)
+	request.transport = c.transport
+	request.path = c.path
+	request.metric = c.metric
+	return request
 }
 
 // ExportControlReviewPostRequest is the request for the 'post' method.
@@ -105,8 +105,8 @@ func (r *ExportControlReviewPostRequest) Send() (result *ExportControlReviewPost
 func (r *ExportControlReviewPostRequest) SendContext(ctx context.Context) (result *ExportControlReviewPostResponse, err error) {
 	query := helpers.CopyQuery(r.query)
 	header := helpers.SetHeader(r.header, r.metric)
-	buffer := &bytes.Buffer{}
-	err = writeExportControlReviewPostRequest(r, buffer)
+	buffer := new(bytes.Buffer)
+	err = r.marshal(buffer)
 	if err != nil {
 		return
 	}
@@ -128,7 +128,7 @@ func (r *ExportControlReviewPostRequest) SendContext(ctx context.Context) (resul
 		return
 	}
 	defer response.Body.Close()
-	result = &ExportControlReviewPostResponse{}
+	result = new(ExportControlReviewPostResponse)
 	result.status = response.StatusCode
 	result.header = response.Header
 	if result.status >= 400 {
@@ -139,7 +139,7 @@ func (r *ExportControlReviewPostRequest) SendContext(ctx context.Context) (resul
 		err = result.err
 		return
 	}
-	err = readExportControlReviewPostResponse(result, response.Body)
+	err = result.unmarshal(response.Body)
 	if err != nil {
 		return
 	}
@@ -149,11 +149,14 @@ func (r *ExportControlReviewPostRequest) SendContext(ctx context.Context) (resul
 // marshall is the method used internally to marshal requests for the
 // 'post' method.
 func (r *ExportControlReviewPostRequest) marshal(writer io.Writer) error {
-	stream := helpers.NewStream(writer)
-	r.stream(stream)
-	return stream.Error
-}
-func (r *ExportControlReviewPostRequest) stream(stream *jsoniter.Stream) {
+	var err error
+	encoder := json.NewEncoder(writer)
+	data, err := r.request.wrap()
+	if err != nil {
+		return err
+	}
+	err = encoder.Encode(data)
+	return err
 }
 
 // ExportControlReviewPostResponse is the response for the 'post' method.
@@ -208,4 +211,21 @@ func (r *ExportControlReviewPostResponse) GetResponse() (value *ExportControlRev
 		value = r.response
 	}
 	return
+}
+
+// unmarshal is the method used internally to unmarshal responses to the
+// 'post' method.
+func (r *ExportControlReviewPostResponse) unmarshal(reader io.Reader) error {
+	var err error
+	decoder := json.NewDecoder(reader)
+	data := new(exportControlReviewResponseData)
+	err = decoder.Decode(data)
+	if err != nil {
+		return err
+	}
+	r.response, err = data.unwrap()
+	if err != nil {
+		return err
+	}
+	return err
 }

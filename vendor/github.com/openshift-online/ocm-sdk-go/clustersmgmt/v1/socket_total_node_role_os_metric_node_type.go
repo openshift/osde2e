@@ -135,22 +135,8 @@ func (o *SocketTotalNodeRoleOSMetricNode) GetTime() (value time.Time, ok bool) {
 	return
 }
 
-// SocketTotalNodeRoleOSMetricNodeListKind is the name of the type used to represent list of objects of
-// type 'socket_total_node_role_OS_metric_node'.
-const SocketTotalNodeRoleOSMetricNodeListKind = "SocketTotalNodeRoleOSMetricNodeList"
-
-// SocketTotalNodeRoleOSMetricNodeListLinkKind is the name of the type used to represent links to list
-// of objects of type 'socket_total_node_role_OS_metric_node'.
-const SocketTotalNodeRoleOSMetricNodeListLinkKind = "SocketTotalNodeRoleOSMetricNodeListLink"
-
-// SocketTotalNodeRoleOSMetricNodeNilKind is the name of the type used to nil lists of objects of
-// type 'socket_total_node_role_OS_metric_node'.
-const SocketTotalNodeRoleOSMetricNodeListNilKind = "SocketTotalNodeRoleOSMetricNodeListNil"
-
 // SocketTotalNodeRoleOSMetricNodeList is a list of values of the 'socket_total_node_role_OS_metric_node' type.
 type SocketTotalNodeRoleOSMetricNodeList struct {
-	href  *string
-	link  bool
 	items []*SocketTotalNodeRoleOSMetricNode
 }
 

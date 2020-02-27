@@ -21,6 +21,8 @@ package v1 // github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1
 
 import (
 	"context"
+	"encoding/json"
+	"io"
 	"net/http"
 
 	"github.com/golang/glog"
@@ -82,6 +84,19 @@ func (r *AddOnInstallationGetServerResponse) Status(value int) *AddOnInstallatio
 	return r
 }
 
+// marshall is the method used internally to marshal responses for the
+// 'get' method.
+func (r *AddOnInstallationGetServerResponse) marshal(writer io.Writer) error {
+	var err error
+	encoder := json.NewEncoder(writer)
+	data, err := r.body.wrap()
+	if err != nil {
+		return err
+	}
+	err = encoder.Encode(data)
+	return err
+}
+
 // dispatchAddOnInstallation navigates the servers tree rooted at the given server
 // till it finds one that matches the given set of path segments, and then invokes
 // the corresponding server.
@@ -90,28 +105,42 @@ func dispatchAddOnInstallation(w http.ResponseWriter, r *http.Request, server Ad
 		switch r.Method {
 		case "DELETE":
 			adaptAddOnInstallationDeleteRequest(w, r, server)
-			return
 		case "GET":
 			adaptAddOnInstallationGetRequest(w, r, server)
-			return
 		default:
 			errors.SendMethodNotAllowed(w, r)
 			return
 		}
+	} else {
+		switch segments[0] {
+		default:
+			errors.SendNotFound(w, r)
+			return
+		}
 	}
-	switch segments[0] {
-	default:
-		errors.SendNotFound(w, r)
-		return
-	}
+}
+
+// readAddOnInstallationDeleteRequest reads the given HTTP requests and translates it
+// into an object of type AddOnInstallationDeleteServerRequest.
+func readAddOnInstallationDeleteRequest(r *http.Request) (*AddOnInstallationDeleteServerRequest, error) {
+	var err error
+	result := new(AddOnInstallationDeleteServerRequest)
+	return result, err
+}
+
+// writeAddOnInstallationDeleteResponse translates the given request object into an
+// HTTP response.
+func writeAddOnInstallationDeleteResponse(w http.ResponseWriter, r *AddOnInstallationDeleteServerResponse) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(r.status)
+	return nil
 }
 
 // adaptAddOnInstallationDeleteRequest translates the given HTTP request into a call to
 // the corresponding method of the given server. Then it translates the
 // results returned by that method into an HTTP response.
 func adaptAddOnInstallationDeleteRequest(w http.ResponseWriter, r *http.Request, server AddOnInstallationServer) {
-	request := &AddOnInstallationDeleteServerRequest{}
-	err := readAddOnInstallationDeleteRequest(request, r)
+	request, err := readAddOnInstallationDeleteRequest(r)
 	if err != nil {
 		glog.Errorf(
 			"Can't read request for method '%s' and path '%s': %v",
@@ -120,7 +149,7 @@ func adaptAddOnInstallationDeleteRequest(w http.ResponseWriter, r *http.Request,
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	response := &AddOnInstallationDeleteServerResponse{}
+	response := new(AddOnInstallationDeleteServerResponse)
 	response.status = 204
 	err = server.Delete(r.Context(), request, response)
 	if err != nil {
@@ -131,7 +160,7 @@ func adaptAddOnInstallationDeleteRequest(w http.ResponseWriter, r *http.Request,
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	err = writeAddOnInstallationDeleteResponse(response, w)
+	err = writeAddOnInstallationDeleteResponse(w, response)
 	if err != nil {
 		glog.Errorf(
 			"Can't write response for method '%s' and path '%s': %v",
@@ -141,12 +170,31 @@ func adaptAddOnInstallationDeleteRequest(w http.ResponseWriter, r *http.Request,
 	}
 }
 
+// readAddOnInstallationGetRequest reads the given HTTP requests and translates it
+// into an object of type AddOnInstallationGetServerRequest.
+func readAddOnInstallationGetRequest(r *http.Request) (*AddOnInstallationGetServerRequest, error) {
+	var err error
+	result := new(AddOnInstallationGetServerRequest)
+	return result, err
+}
+
+// writeAddOnInstallationGetResponse translates the given request object into an
+// HTTP response.
+func writeAddOnInstallationGetResponse(w http.ResponseWriter, r *AddOnInstallationGetServerResponse) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(r.status)
+	err := r.marshal(w)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 // adaptAddOnInstallationGetRequest translates the given HTTP request into a call to
 // the corresponding method of the given server. Then it translates the
 // results returned by that method into an HTTP response.
 func adaptAddOnInstallationGetRequest(w http.ResponseWriter, r *http.Request, server AddOnInstallationServer) {
-	request := &AddOnInstallationGetServerRequest{}
-	err := readAddOnInstallationGetRequest(request, r)
+	request, err := readAddOnInstallationGetRequest(r)
 	if err != nil {
 		glog.Errorf(
 			"Can't read request for method '%s' and path '%s': %v",
@@ -155,7 +203,7 @@ func adaptAddOnInstallationGetRequest(w http.ResponseWriter, r *http.Request, se
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	response := &AddOnInstallationGetServerResponse{}
+	response := new(AddOnInstallationGetServerResponse)
 	response.status = 200
 	err = server.Get(r.Context(), request, response)
 	if err != nil {
@@ -166,7 +214,7 @@ func adaptAddOnInstallationGetRequest(w http.ResponseWriter, r *http.Request, se
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	err = writeAddOnInstallationGetResponse(response, w)
+	err = writeAddOnInstallationGetResponse(w, response)
 	if err != nil {
 		glog.Errorf(
 			"Can't write response for method '%s' and path '%s': %v",

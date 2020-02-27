@@ -54,7 +54,8 @@ func (b *ClusterCredentialsBuilder) Link(value bool) *ClusterCredentialsBuilder 
 	return b
 }
 
-// SSH sets the value of the 'SSH' attribute to the given value.
+// SSH sets the value of the 'SSH' attribute
+// to the given value.
 //
 // SSH key pair of a cluster.
 func (b *ClusterCredentialsBuilder) SSH(value *SSHCredentialsBuilder) *ClusterCredentialsBuilder {
@@ -62,7 +63,8 @@ func (b *ClusterCredentialsBuilder) SSH(value *SSHCredentialsBuilder) *ClusterCr
 	return b
 }
 
-// Admin sets the value of the 'admin' attribute to the given value.
+// Admin sets the value of the 'admin' attribute
+// to the given value.
 //
 // Temporary administrator credentials generated during the installation of the
 // cluster.
@@ -71,7 +73,8 @@ func (b *ClusterCredentialsBuilder) Admin(value *AdminCredentialsBuilder) *Clust
 	return b
 }
 
-// Kubeconfig sets the value of the 'kubeconfig' attribute to the given value.
+// Kubeconfig sets the value of the 'kubeconfig' attribute
+// to the given value.
 //
 //
 func (b *ClusterCredentialsBuilder) Kubeconfig(value string) *ClusterCredentialsBuilder {
@@ -119,6 +122,8 @@ func (b *ClusterCredentialsBuilder) Build() (object *ClusterCredentials, err err
 			return
 		}
 	}
-	object.kubeconfig = b.kubeconfig
+	if b.kubeconfig != nil {
+		object.kubeconfig = b.kubeconfig
+	}
 	return
 }

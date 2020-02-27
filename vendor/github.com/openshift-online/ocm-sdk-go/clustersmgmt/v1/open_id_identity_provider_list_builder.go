@@ -37,19 +37,6 @@ func (b *OpenIDIdentityProviderListBuilder) Items(values ...*OpenIDIdentityProvi
 	return b
 }
 
-// Copy copies the items of the given list into this builder, discarding any previous items.
-func (b *OpenIDIdentityProviderListBuilder) Copy(list *OpenIDIdentityProviderList) *OpenIDIdentityProviderListBuilder {
-	if list == nil || list.items == nil {
-		b.items = nil
-	} else {
-		b.items = make([]*OpenIDIdentityProviderBuilder, len(list.items))
-		for i, v := range list.items {
-			b.items[i] = NewOpenIDIdentityProvider().Copy(v)
-		}
-	}
-	return b
-}
-
 // Build creates a list of 'open_ID_identity_provider' objects using the
 // configuration stored in the builder.
 func (b *OpenIDIdentityProviderListBuilder) Build() (list *OpenIDIdentityProviderList, err error) {

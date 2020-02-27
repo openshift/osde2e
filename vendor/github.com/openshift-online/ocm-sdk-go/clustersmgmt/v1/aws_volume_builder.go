@@ -33,7 +33,8 @@ func NewAWSVolume() *AWSVolumeBuilder {
 	return new(AWSVolumeBuilder)
 }
 
-// IOPS sets the value of the 'IOPS' attribute to the given value.
+// IOPS sets the value of the 'IOPS' attribute
+// to the given value.
 //
 //
 func (b *AWSVolumeBuilder) IOPS(value int) *AWSVolumeBuilder {
@@ -41,7 +42,8 @@ func (b *AWSVolumeBuilder) IOPS(value int) *AWSVolumeBuilder {
 	return b
 }
 
-// Size sets the value of the 'size' attribute to the given value.
+// Size sets the value of the 'size' attribute
+// to the given value.
 //
 //
 func (b *AWSVolumeBuilder) Size(value int) *AWSVolumeBuilder {
@@ -49,7 +51,8 @@ func (b *AWSVolumeBuilder) Size(value int) *AWSVolumeBuilder {
 	return b
 }
 
-// Type sets the value of the 'type' attribute to the given value.
+// Type sets the value of the 'type' attribute
+// to the given value.
 //
 //
 func (b *AWSVolumeBuilder) Type(value string) *AWSVolumeBuilder {
@@ -71,8 +74,14 @@ func (b *AWSVolumeBuilder) Copy(object *AWSVolume) *AWSVolumeBuilder {
 // Build creates a 'AWS_volume' object using the configuration stored in the builder.
 func (b *AWSVolumeBuilder) Build() (object *AWSVolume, err error) {
 	object = new(AWSVolume)
-	object.iops = b.iops
-	object.size = b.size
-	object.type_ = b.type_
+	if b.iops != nil {
+		object.iops = b.iops
+	}
+	if b.size != nil {
+		object.size = b.size
+	}
+	if b.type_ != nil {
+		object.type_ = b.type_
+	}
 	return
 }

@@ -22,13 +22,13 @@ package v1 // github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"path"
 
-	jsoniter "github.com/json-iterator/go"
 	"github.com/openshift-online/ocm-sdk-go/errors"
 	"github.com/openshift-online/ocm-sdk-go/helpers"
 )
@@ -43,36 +43,36 @@ type RegistryCredentialsClient struct {
 }
 
 // NewRegistryCredentialsClient creates a new client for the 'registry_credentials'
-// resource using the given transport to send the requests and receive the
+// resource using the given transport to sned the requests and receive the
 // responses.
 func NewRegistryCredentialsClient(transport http.RoundTripper, path string, metric string) *RegistryCredentialsClient {
-	return &RegistryCredentialsClient{
-		transport: transport,
-		path:      path,
-		metric:    metric,
-	}
+	client := new(RegistryCredentialsClient)
+	client.transport = transport
+	client.path = path
+	client.metric = metric
+	return client
 }
 
 // Add creates a request for the 'add' method.
 //
 // Creates a new registry credential.
 func (c *RegistryCredentialsClient) Add() *RegistryCredentialsAddRequest {
-	return &RegistryCredentialsAddRequest{
-		transport: c.transport,
-		path:      c.path,
-		metric:    c.metric,
-	}
+	request := new(RegistryCredentialsAddRequest)
+	request.transport = c.transport
+	request.path = c.path
+	request.metric = c.metric
+	return request
 }
 
 // List creates a request for the 'list' method.
 //
 // Retrieves the list of accounts.
 func (c *RegistryCredentialsClient) List() *RegistryCredentialsListRequest {
-	return &RegistryCredentialsListRequest{
-		transport: c.transport,
-		path:      c.path,
-		metric:    c.metric,
-	}
+	request := new(RegistryCredentialsListRequest)
+	request.transport = c.transport
+	request.path = c.path
+	request.metric = c.metric
+	return request
 }
 
 // RegistryCredential returns the target 'registry_credential' resource for the given identifier.
@@ -128,8 +128,8 @@ func (r *RegistryCredentialsAddRequest) Send() (result *RegistryCredentialsAddRe
 func (r *RegistryCredentialsAddRequest) SendContext(ctx context.Context) (result *RegistryCredentialsAddResponse, err error) {
 	query := helpers.CopyQuery(r.query)
 	header := helpers.SetHeader(r.header, r.metric)
-	buffer := &bytes.Buffer{}
-	err = writeRegistryCredentialsAddRequest(r, buffer)
+	buffer := new(bytes.Buffer)
+	err = r.marshal(buffer)
 	if err != nil {
 		return
 	}
@@ -151,7 +151,7 @@ func (r *RegistryCredentialsAddRequest) SendContext(ctx context.Context) (result
 		return
 	}
 	defer response.Body.Close()
-	result = &RegistryCredentialsAddResponse{}
+	result = new(RegistryCredentialsAddResponse)
 	result.status = response.StatusCode
 	result.header = response.Header
 	if result.status >= 400 {
@@ -162,7 +162,7 @@ func (r *RegistryCredentialsAddRequest) SendContext(ctx context.Context) (result
 		err = result.err
 		return
 	}
-	err = readRegistryCredentialsAddResponse(result, response.Body)
+	err = result.unmarshal(response.Body)
 	if err != nil {
 		return
 	}
@@ -172,11 +172,14 @@ func (r *RegistryCredentialsAddRequest) SendContext(ctx context.Context) (result
 // marshall is the method used internally to marshal requests for the
 // 'add' method.
 func (r *RegistryCredentialsAddRequest) marshal(writer io.Writer) error {
-	stream := helpers.NewStream(writer)
-	r.stream(stream)
-	return stream.Error
-}
-func (r *RegistryCredentialsAddRequest) stream(stream *jsoniter.Stream) {
+	var err error
+	encoder := json.NewEncoder(writer)
+	data, err := r.body.wrap()
+	if err != nil {
+		return err
+	}
+	err = encoder.Encode(data)
+	return err
 }
 
 // RegistryCredentialsAddResponse is the response for the 'add' method.
@@ -233,6 +236,23 @@ func (r *RegistryCredentialsAddResponse) GetBody() (value *RegistryCredential, o
 	return
 }
 
+// unmarshal is the method used internally to unmarshal responses to the
+// 'add' method.
+func (r *RegistryCredentialsAddResponse) unmarshal(reader io.Reader) error {
+	var err error
+	decoder := json.NewDecoder(reader)
+	data := new(registryCredentialData)
+	err = decoder.Decode(data)
+	if err != nil {
+		return err
+	}
+	r.body, err = data.unwrap()
+	if err != nil {
+		return err
+	}
+	return err
+}
+
 // RegistryCredentialsListRequest is the request for the 'list' method.
 type RegistryCredentialsListRequest struct {
 	transport http.RoundTripper
@@ -240,9 +260,7 @@ type RegistryCredentialsListRequest struct {
 	metric    string
 	query     url.Values
 	header    http.Header
-	order     *string
 	page      *int
-	search    *string
 	size      *int
 }
 
@@ -258,52 +276,11 @@ func (r *RegistryCredentialsListRequest) Header(name string, value interface{}) 
 	return r
 }
 
-// Order sets the value of the 'order' parameter.
-//
-// Order criteria.
-//
-// The syntax of this parameter is similar to the syntax of the _order by_ clause of
-// a SQL statement. For example, in order to sort the
-// RegistryCredentials descending by username the value should be:
-//
-// [source,sql]
-// ----
-// username desc
-// ----
-//
-// If the parameter isn't provided, or if the value is empty, then the order of the
-// results is undefined.
-func (r *RegistryCredentialsListRequest) Order(value string) *RegistryCredentialsListRequest {
-	r.order = &value
-	return r
-}
-
 // Page sets the value of the 'page' parameter.
 //
 // Index of the requested page, where one corresponds to the first page.
 func (r *RegistryCredentialsListRequest) Page(value int) *RegistryCredentialsListRequest {
 	r.page = &value
-	return r
-}
-
-// Search sets the value of the 'search' parameter.
-//
-// Search criteria.
-//
-// The syntax of this parameter is similar to the syntax of the _where_ clause of a
-// SQL statement, but using the names of the attributes of the RegistryCredentials instead
-// of the names of the columns of a table. For example, in order to retrieve all the
-// RegistryCredentials for a user the value should be:
-//
-// [source,sql]
-// ----
-// username = 'abcxyz...'
-// ----
-//
-// If the parameter isn't provided, or if the value is empty, then all the
-// RegistryCredentials that the user has permission to see will be returned.
-func (r *RegistryCredentialsListRequest) Search(value string) *RegistryCredentialsListRequest {
-	r.search = &value
 	return r
 }
 
@@ -326,14 +303,8 @@ func (r *RegistryCredentialsListRequest) Send() (result *RegistryCredentialsList
 // SendContext sends this request, waits for the response, and returns it.
 func (r *RegistryCredentialsListRequest) SendContext(ctx context.Context) (result *RegistryCredentialsListResponse, err error) {
 	query := helpers.CopyQuery(r.query)
-	if r.order != nil {
-		helpers.AddValue(&query, "order", *r.order)
-	}
 	if r.page != nil {
 		helpers.AddValue(&query, "page", *r.page)
-	}
-	if r.search != nil {
-		helpers.AddValue(&query, "search", *r.search)
 	}
 	if r.size != nil {
 		helpers.AddValue(&query, "size", *r.size)
@@ -356,7 +327,7 @@ func (r *RegistryCredentialsListRequest) SendContext(ctx context.Context) (resul
 		return
 	}
 	defer response.Body.Close()
-	result = &RegistryCredentialsListResponse{}
+	result = new(RegistryCredentialsListResponse)
 	result.status = response.StatusCode
 	result.header = response.Header
 	if result.status >= 400 {
@@ -367,7 +338,7 @@ func (r *RegistryCredentialsListRequest) SendContext(ctx context.Context) (resul
 		err = result.err
 		return
 	}
-	err = readRegistryCredentialsListResponse(result, response.Body)
+	err = result.unmarshal(response.Body)
 	if err != nil {
 		return
 	}
@@ -497,4 +468,33 @@ func (r *RegistryCredentialsListResponse) GetTotal() (value int, ok bool) {
 		value = *r.total
 	}
 	return
+}
+
+// unmarshal is the method used internally to unmarshal responses to the
+// 'list' method.
+func (r *RegistryCredentialsListResponse) unmarshal(reader io.Reader) error {
+	var err error
+	decoder := json.NewDecoder(reader)
+	data := new(registryCredentialsListResponseData)
+	err = decoder.Decode(data)
+	if err != nil {
+		return err
+	}
+	r.items, err = data.Items.unwrap()
+	if err != nil {
+		return err
+	}
+	r.page = data.Page
+	r.size = data.Size
+	r.total = data.Total
+	return err
+}
+
+// registryCredentialsListResponseData is the structure used internally to unmarshal
+// the response of the 'list' method.
+type registryCredentialsListResponseData struct {
+	Items registryCredentialListData "json:\"items,omitempty\""
+	Page  *int                       "json:\"page,omitempty\""
+	Size  *int                       "json:\"size,omitempty\""
+	Total *int                       "json:\"total,omitempty\""
 }

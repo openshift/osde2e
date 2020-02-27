@@ -40,7 +40,8 @@ func NewClusterAuthorizationRequest() *ClusterAuthorizationRequestBuilder {
 	return new(ClusterAuthorizationRequestBuilder)
 }
 
-// BYOC sets the value of the 'BYOC' attribute to the given value.
+// BYOC sets the value of the 'BYOC' attribute
+// to the given value.
 //
 //
 func (b *ClusterAuthorizationRequestBuilder) BYOC(value bool) *ClusterAuthorizationRequestBuilder {
@@ -48,7 +49,8 @@ func (b *ClusterAuthorizationRequestBuilder) BYOC(value bool) *ClusterAuthorizat
 	return b
 }
 
-// AccountUsername sets the value of the 'account_username' attribute to the given value.
+// AccountUsername sets the value of the 'account_username' attribute
+// to the given value.
 //
 //
 func (b *ClusterAuthorizationRequestBuilder) AccountUsername(value string) *ClusterAuthorizationRequestBuilder {
@@ -56,7 +58,8 @@ func (b *ClusterAuthorizationRequestBuilder) AccountUsername(value string) *Clus
 	return b
 }
 
-// AvailabilityZone sets the value of the 'availability_zone' attribute to the given value.
+// AvailabilityZone sets the value of the 'availability_zone' attribute
+// to the given value.
 //
 //
 func (b *ClusterAuthorizationRequestBuilder) AvailabilityZone(value string) *ClusterAuthorizationRequestBuilder {
@@ -64,7 +67,8 @@ func (b *ClusterAuthorizationRequestBuilder) AvailabilityZone(value string) *Clu
 	return b
 }
 
-// ClusterID sets the value of the 'cluster_ID' attribute to the given value.
+// ClusterID sets the value of the 'cluster_ID' attribute
+// to the given value.
 //
 //
 func (b *ClusterAuthorizationRequestBuilder) ClusterID(value string) *ClusterAuthorizationRequestBuilder {
@@ -72,7 +76,8 @@ func (b *ClusterAuthorizationRequestBuilder) ClusterID(value string) *ClusterAut
 	return b
 }
 
-// Disconnected sets the value of the 'disconnected' attribute to the given value.
+// Disconnected sets the value of the 'disconnected' attribute
+// to the given value.
 //
 //
 func (b *ClusterAuthorizationRequestBuilder) Disconnected(value bool) *ClusterAuthorizationRequestBuilder {
@@ -80,7 +85,8 @@ func (b *ClusterAuthorizationRequestBuilder) Disconnected(value bool) *ClusterAu
 	return b
 }
 
-// DisplayName sets the value of the 'display_name' attribute to the given value.
+// DisplayName sets the value of the 'display_name' attribute
+// to the given value.
 //
 //
 func (b *ClusterAuthorizationRequestBuilder) DisplayName(value string) *ClusterAuthorizationRequestBuilder {
@@ -88,7 +94,8 @@ func (b *ClusterAuthorizationRequestBuilder) DisplayName(value string) *ClusterA
 	return b
 }
 
-// ExternalClusterID sets the value of the 'external_cluster_ID' attribute to the given value.
+// ExternalClusterID sets the value of the 'external_cluster_ID' attribute
+// to the given value.
 //
 //
 func (b *ClusterAuthorizationRequestBuilder) ExternalClusterID(value string) *ClusterAuthorizationRequestBuilder {
@@ -96,7 +103,8 @@ func (b *ClusterAuthorizationRequestBuilder) ExternalClusterID(value string) *Cl
 	return b
 }
 
-// Managed sets the value of the 'managed' attribute to the given value.
+// Managed sets the value of the 'managed' attribute
+// to the given value.
 //
 //
 func (b *ClusterAuthorizationRequestBuilder) Managed(value bool) *ClusterAuthorizationRequestBuilder {
@@ -104,7 +112,8 @@ func (b *ClusterAuthorizationRequestBuilder) Managed(value bool) *ClusterAuthori
 	return b
 }
 
-// Reserve sets the value of the 'reserve' attribute to the given value.
+// Reserve sets the value of the 'reserve' attribute
+// to the given value.
 //
 //
 func (b *ClusterAuthorizationRequestBuilder) Reserve(value bool) *ClusterAuthorizationRequestBuilder {
@@ -112,7 +121,8 @@ func (b *ClusterAuthorizationRequestBuilder) Reserve(value bool) *ClusterAuthori
 	return b
 }
 
-// Resources sets the value of the 'resources' attribute to the given values.
+// Resources sets the value of the 'resources' attribute
+// to the given values.
 //
 //
 func (b *ClusterAuthorizationRequestBuilder) Resources(values ...*ReservedResourceBuilder) *ClusterAuthorizationRequestBuilder {
@@ -135,10 +145,10 @@ func (b *ClusterAuthorizationRequestBuilder) Copy(object *ClusterAuthorizationRe
 	b.externalClusterID = object.externalClusterID
 	b.managed = object.managed
 	b.reserve = object.reserve
-	if object.resources != nil {
-		b.resources = make([]*ReservedResourceBuilder, len(object.resources))
-		for i, v := range object.resources {
-			b.resources[i] = NewReservedResource().Copy(v)
+	if object.resources != nil && len(object.resources.items) > 0 {
+		b.resources = make([]*ReservedResourceBuilder, len(object.resources.items))
+		for i, item := range object.resources.items {
+			b.resources[i] = NewReservedResource().Copy(item)
 		}
 	} else {
 		b.resources = nil
@@ -149,19 +159,38 @@ func (b *ClusterAuthorizationRequestBuilder) Copy(object *ClusterAuthorizationRe
 // Build creates a 'cluster_authorization_request' object using the configuration stored in the builder.
 func (b *ClusterAuthorizationRequestBuilder) Build() (object *ClusterAuthorizationRequest, err error) {
 	object = new(ClusterAuthorizationRequest)
-	object.byoc = b.byoc
-	object.accountUsername = b.accountUsername
-	object.availabilityZone = b.availabilityZone
-	object.clusterID = b.clusterID
-	object.disconnected = b.disconnected
-	object.displayName = b.displayName
-	object.externalClusterID = b.externalClusterID
-	object.managed = b.managed
-	object.reserve = b.reserve
+	if b.byoc != nil {
+		object.byoc = b.byoc
+	}
+	if b.accountUsername != nil {
+		object.accountUsername = b.accountUsername
+	}
+	if b.availabilityZone != nil {
+		object.availabilityZone = b.availabilityZone
+	}
+	if b.clusterID != nil {
+		object.clusterID = b.clusterID
+	}
+	if b.disconnected != nil {
+		object.disconnected = b.disconnected
+	}
+	if b.displayName != nil {
+		object.displayName = b.displayName
+	}
+	if b.externalClusterID != nil {
+		object.externalClusterID = b.externalClusterID
+	}
+	if b.managed != nil {
+		object.managed = b.managed
+	}
+	if b.reserve != nil {
+		object.reserve = b.reserve
+	}
 	if b.resources != nil {
-		object.resources = make([]*ReservedResource, len(b.resources))
-		for i, v := range b.resources {
-			object.resources[i], err = v.Build()
+		object.resources = new(ReservedResourceList)
+		object.resources.items = make([]*ReservedResource, len(b.resources))
+		for i, item := range b.resources {
+			object.resources.items[i], err = item.Build()
 			if err != nil {
 				return
 			}
