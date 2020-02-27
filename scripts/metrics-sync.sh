@@ -67,6 +67,7 @@ for file in $METRICS_FILES; do
 			echo "Error moving $INCOMING_FILE to $PROCESSED_FILE in S3."
 			exit 5
 		fi
+		echo "File has been processed and moved into the processed drectory."
 	else
 		echo "$file is a test file. Deleting it from S3."
 
@@ -75,5 +76,4 @@ for file in $METRICS_FILES; do
 			exit 6
 		fi
 	fi
-	echo "File has been processed and moved into the processed drectory."
 done
