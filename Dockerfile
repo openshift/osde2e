@@ -18,6 +18,5 @@ FROM registry.access.redhat.com/ubi7/ubi-minimal:latest
 
 COPY artifacts artifacts
 COPY --from=0 /go/src/github.com/openshift/osde2e/out/osde2e .
-COPY --from=0 /go/src/github.com/openshift/osde2e/out/osde2e-scale .
 
 ENTRYPOINT [ "/osde2e" ]
