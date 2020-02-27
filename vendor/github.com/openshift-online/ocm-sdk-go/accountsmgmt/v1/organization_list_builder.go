@@ -37,6 +37,19 @@ func (b *OrganizationListBuilder) Items(values ...*OrganizationBuilder) *Organiz
 	return b
 }
 
+// Copy copies the items of the given list into this builder, discarding any previous items.
+func (b *OrganizationListBuilder) Copy(list *OrganizationList) *OrganizationListBuilder {
+	if list == nil || list.items == nil {
+		b.items = nil
+	} else {
+		b.items = make([]*OrganizationBuilder, len(list.items))
+		for i, v := range list.items {
+			b.items[i] = NewOrganization().Copy(v)
+		}
+	}
+	return b
+}
+
 // Build creates a list of 'organization' objects using the
 // configuration stored in the builder.
 func (b *OrganizationListBuilder) Build() (list *OrganizationList, err error) {

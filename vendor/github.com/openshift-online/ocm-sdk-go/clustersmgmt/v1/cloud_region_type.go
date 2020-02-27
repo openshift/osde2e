@@ -98,7 +98,6 @@ func (o *CloudRegion) GetHREF() (value string, ok bool) {
 // Empty returns true if the object is empty, i.e. no attribute has a value.
 func (o *CloudRegion) Empty() bool {
 	return o == nil || (o.id == nil &&
-		o.cloudProvider == nil &&
 		o.displayName == nil &&
 		o.name == nil &&
 		true)
@@ -179,16 +178,16 @@ func (o *CloudRegion) GetName() (value string, ok bool) {
 	return
 }
 
-// CloudRegionListKind is the name of the type used to represent list of
-// objects of type 'cloud_region'.
+// CloudRegionListKind is the name of the type used to represent list of objects of
+// type 'cloud_region'.
 const CloudRegionListKind = "CloudRegionList"
 
-// CloudRegionListLinkKind is the name of the type used to represent links
-// to list of objects of type 'cloud_region'.
+// CloudRegionListLinkKind is the name of the type used to represent links to list
+// of objects of type 'cloud_region'.
 const CloudRegionListLinkKind = "CloudRegionListLink"
 
-// CloudRegionNilKind is the name of the type used to nil lists of
-// objects of type 'cloud_region'.
+// CloudRegionNilKind is the name of the type used to nil lists of objects of
+// type 'cloud_region'.
 const CloudRegionListNilKind = "CloudRegionListNil"
 
 // CloudRegionList is a list of values of the 'cloud_region' type.

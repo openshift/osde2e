@@ -35,9 +35,7 @@ type ClusterMetric struct {
 
 // Empty returns true if the object is empty, i.e. no attribute has a value.
 func (o *ClusterMetric) Empty() bool {
-	return o == nil || (o.total == nil &&
-		o.updatedTimestamp == nil &&
-		o.used == nil &&
+	return o == nil || (o.updatedTimestamp == nil &&
 		true)
 }
 
@@ -114,8 +112,22 @@ func (o *ClusterMetric) GetUsed() (value *Value, ok bool) {
 	return
 }
 
+// ClusterMetricListKind is the name of the type used to represent list of objects of
+// type 'cluster_metric'.
+const ClusterMetricListKind = "ClusterMetricList"
+
+// ClusterMetricListLinkKind is the name of the type used to represent links to list
+// of objects of type 'cluster_metric'.
+const ClusterMetricListLinkKind = "ClusterMetricListLink"
+
+// ClusterMetricNilKind is the name of the type used to nil lists of objects of
+// type 'cluster_metric'.
+const ClusterMetricListNilKind = "ClusterMetricListNil"
+
 // ClusterMetricList is a list of values of the 'cluster_metric' type.
 type ClusterMetricList struct {
+	href  *string
+	link  bool
 	items []*ClusterMetric
 }
 

@@ -33,8 +33,7 @@ func NewAdminCredentials() *AdminCredentialsBuilder {
 	return new(AdminCredentialsBuilder)
 }
 
-// Password sets the value of the 'password' attribute
-// to the given value.
+// Password sets the value of the 'password' attribute to the given value.
 //
 //
 func (b *AdminCredentialsBuilder) Password(value string) *AdminCredentialsBuilder {
@@ -42,8 +41,7 @@ func (b *AdminCredentialsBuilder) Password(value string) *AdminCredentialsBuilde
 	return b
 }
 
-// User sets the value of the 'user' attribute
-// to the given value.
+// User sets the value of the 'user' attribute to the given value.
 //
 //
 func (b *AdminCredentialsBuilder) User(value string) *AdminCredentialsBuilder {
@@ -64,11 +62,7 @@ func (b *AdminCredentialsBuilder) Copy(object *AdminCredentials) *AdminCredentia
 // Build creates a 'admin_credentials' object using the configuration stored in the builder.
 func (b *AdminCredentialsBuilder) Build() (object *AdminCredentials, err error) {
 	object = new(AdminCredentials)
-	if b.password != nil {
-		object.password = b.password
-	}
-	if b.user != nil {
-		object.user = b.user
-	}
+	object.password = b.password
+	object.user = b.user
 	return
 }

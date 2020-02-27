@@ -21,8 +21,6 @@ package v1 // github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1
 
 import (
 	"context"
-	"encoding/json"
-	"io"
 	"net/http"
 	"net/url"
 
@@ -40,25 +38,25 @@ type QuotaSummaryClient struct {
 }
 
 // NewQuotaSummaryClient creates a new client for the 'quota_summary'
-// resource using the given transport to sned the requests and receive the
+// resource using the given transport to send the requests and receive the
 // responses.
 func NewQuotaSummaryClient(transport http.RoundTripper, path string, metric string) *QuotaSummaryClient {
-	client := new(QuotaSummaryClient)
-	client.transport = transport
-	client.path = path
-	client.metric = metric
-	return client
+	return &QuotaSummaryClient{
+		transport: transport,
+		path:      path,
+		metric:    metric,
+	}
 }
 
 // List creates a request for the 'list' method.
 //
 // Retrieves the Quota summary.
 func (c *QuotaSummaryClient) List() *QuotaSummaryListRequest {
-	request := new(QuotaSummaryListRequest)
-	request.transport = c.transport
-	request.path = c.path
-	request.metric = c.metric
-	return request
+	return &QuotaSummaryListRequest{
+		transport: c.transport,
+		path:      c.path,
+		metric:    c.metric,
+	}
 }
 
 // QuotaSummaryListRequest is the request for the 'list' method.
@@ -161,7 +159,7 @@ func (r *QuotaSummaryListRequest) SendContext(ctx context.Context) (result *Quot
 		return
 	}
 	defer response.Body.Close()
-	result = new(QuotaSummaryListResponse)
+	result = &QuotaSummaryListResponse{}
 	result.status = response.StatusCode
 	result.header = response.Header
 	if result.status >= 400 {
@@ -172,7 +170,7 @@ func (r *QuotaSummaryListRequest) SendContext(ctx context.Context) (result *Quot
 		err = result.err
 		return
 	}
-	err = result.unmarshal(response.Body)
+	err = readQuotaSummaryListResponse(result, response.Body)
 	if err != nil {
 		return
 	}
@@ -302,33 +300,4 @@ func (r *QuotaSummaryListResponse) GetTotal() (value int, ok bool) {
 		value = *r.total
 	}
 	return
-}
-
-// unmarshal is the method used internally to unmarshal responses to the
-// 'list' method.
-func (r *QuotaSummaryListResponse) unmarshal(reader io.Reader) error {
-	var err error
-	decoder := json.NewDecoder(reader)
-	data := new(quotaSummaryListResponseData)
-	err = decoder.Decode(data)
-	if err != nil {
-		return err
-	}
-	r.items, err = data.Items.unwrap()
-	if err != nil {
-		return err
-	}
-	r.page = data.Page
-	r.size = data.Size
-	r.total = data.Total
-	return err
-}
-
-// quotaSummaryListResponseData is the structure used internally to unmarshal
-// the response of the 'list' method.
-type quotaSummaryListResponseData struct {
-	Items quotaSummaryListData "json:\"items,omitempty\""
-	Page  *int                 "json:\"page,omitempty\""
-	Size  *int                 "json:\"size,omitempty\""
-	Total *int                 "json:\"total,omitempty\""
 }

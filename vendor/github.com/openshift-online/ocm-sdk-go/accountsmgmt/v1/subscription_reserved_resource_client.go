@@ -21,8 +21,6 @@ package v1 // github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1
 
 import (
 	"context"
-	"encoding/json"
-	"io"
 	"net/http"
 	"net/url"
 	"time"
@@ -41,25 +39,25 @@ type SubscriptionReservedResourceClient struct {
 }
 
 // NewSubscriptionReservedResourceClient creates a new client for the 'subscription_reserved_resource'
-// resource using the given transport to sned the requests and receive the
+// resource using the given transport to send the requests and receive the
 // responses.
 func NewSubscriptionReservedResourceClient(transport http.RoundTripper, path string, metric string) *SubscriptionReservedResourceClient {
-	client := new(SubscriptionReservedResourceClient)
-	client.transport = transport
-	client.path = path
-	client.metric = metric
-	return client
+	return &SubscriptionReservedResourceClient{
+		transport: transport,
+		path:      path,
+		metric:    metric,
+	}
 }
 
 // Get creates a request for the 'get' method.
 //
 // Retrieves the reserved resource.
 func (c *SubscriptionReservedResourceClient) Get() *SubscriptionReservedResourceGetRequest {
-	request := new(SubscriptionReservedResourceGetRequest)
-	request.transport = c.transport
-	request.path = c.path
-	request.metric = c.metric
-	return request
+	return &SubscriptionReservedResourceGetRequest{
+		transport: c.transport,
+		path:      c.path,
+		metric:    c.metric,
+	}
 }
 
 // SubscriptionReservedResourcePollRequest is the request for the Poll method.
@@ -233,7 +231,7 @@ func (r *SubscriptionReservedResourceGetRequest) SendContext(ctx context.Context
 		return
 	}
 	defer response.Body.Close()
-	result = new(SubscriptionReservedResourceGetResponse)
+	result = &SubscriptionReservedResourceGetResponse{}
 	result.status = response.StatusCode
 	result.header = response.Header
 	if result.status >= 400 {
@@ -244,7 +242,7 @@ func (r *SubscriptionReservedResourceGetRequest) SendContext(ctx context.Context
 		err = result.err
 		return
 	}
-	err = result.unmarshal(response.Body)
+	err = readSubscriptionReservedResourceGetResponse(result, response.Body)
 	if err != nil {
 		return
 	}
@@ -303,21 +301,4 @@ func (r *SubscriptionReservedResourceGetResponse) GetBody() (value *ReservedReso
 		value = r.body
 	}
 	return
-}
-
-// unmarshal is the method used internally to unmarshal responses to the
-// 'get' method.
-func (r *SubscriptionReservedResourceGetResponse) unmarshal(reader io.Reader) error {
-	var err error
-	decoder := json.NewDecoder(reader)
-	data := new(reservedResourceData)
-	err = decoder.Decode(data)
-	if err != nil {
-		return err
-	}
-	r.body, err = data.unwrap()
-	if err != nil {
-		return err
-	}
-	return err
 }

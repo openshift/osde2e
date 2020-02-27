@@ -105,15 +105,10 @@ func (o *IdentityProvider) GetHREF() (value string, ok bool) {
 // Empty returns true if the object is empty, i.e. no attribute has a value.
 func (o *IdentityProvider) Empty() bool {
 	return o == nil || (o.id == nil &&
-		o.ldap == nil &&
 		o.challenge == nil &&
-		o.github == nil &&
-		o.gitlab == nil &&
-		o.google == nil &&
 		o.login == nil &&
 		o.mappingMethod == nil &&
 		o.name == nil &&
-		o.openID == nil &&
 		o.type_ == nil &&
 		true)
 }
@@ -358,16 +353,16 @@ func (o *IdentityProvider) GetType() (value IdentityProviderType, ok bool) {
 	return
 }
 
-// IdentityProviderListKind is the name of the type used to represent list of
-// objects of type 'identity_provider'.
+// IdentityProviderListKind is the name of the type used to represent list of objects of
+// type 'identity_provider'.
 const IdentityProviderListKind = "IdentityProviderList"
 
-// IdentityProviderListLinkKind is the name of the type used to represent links
-// to list of objects of type 'identity_provider'.
+// IdentityProviderListLinkKind is the name of the type used to represent links to list
+// of objects of type 'identity_provider'.
 const IdentityProviderListLinkKind = "IdentityProviderListLink"
 
-// IdentityProviderNilKind is the name of the type used to nil lists of
-// objects of type 'identity_provider'.
+// IdentityProviderNilKind is the name of the type used to nil lists of objects of
+// type 'identity_provider'.
 const IdentityProviderListNilKind = "IdentityProviderListNil"
 
 // IdentityProviderList is a list of values of the 'identity_provider' type.

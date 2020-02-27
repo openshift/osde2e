@@ -84,8 +84,22 @@ func (o *Sample) GetValue() (value float64, ok bool) {
 	return
 }
 
+// SampleListKind is the name of the type used to represent list of objects of
+// type 'sample'.
+const SampleListKind = "SampleList"
+
+// SampleListLinkKind is the name of the type used to represent links to list
+// of objects of type 'sample'.
+const SampleListLinkKind = "SampleListLink"
+
+// SampleNilKind is the name of the type used to nil lists of objects of
+// type 'sample'.
+const SampleListNilKind = "SampleListNil"
+
 // SampleList is a list of values of the 'sample' type.
 type SampleList struct {
+	href  *string
+	link  bool
 	items []*Sample
 }
 

@@ -55,8 +55,22 @@ func (o *AccessToken) GetAuths() (value map[string]*AccessTokenAuth, ok bool) {
 	return
 }
 
+// AccessTokenListKind is the name of the type used to represent list of objects of
+// type 'access_token'.
+const AccessTokenListKind = "AccessTokenList"
+
+// AccessTokenListLinkKind is the name of the type used to represent links to list
+// of objects of type 'access_token'.
+const AccessTokenListLinkKind = "AccessTokenListLink"
+
+// AccessTokenNilKind is the name of the type used to nil lists of objects of
+// type 'access_token'.
+const AccessTokenListNilKind = "AccessTokenListNil"
+
 // AccessTokenList is a list of values of the 'access_token' type.
 type AccessTokenList struct {
+	href  *string
+	link  bool
 	items []*AccessToken
 }
 

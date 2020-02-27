@@ -130,8 +130,22 @@ func (o *GitlabIdentityProvider) GetClientSecret() (value string, ok bool) {
 	return
 }
 
+// GitlabIdentityProviderListKind is the name of the type used to represent list of objects of
+// type 'gitlab_identity_provider'.
+const GitlabIdentityProviderListKind = "GitlabIdentityProviderList"
+
+// GitlabIdentityProviderListLinkKind is the name of the type used to represent links to list
+// of objects of type 'gitlab_identity_provider'.
+const GitlabIdentityProviderListLinkKind = "GitlabIdentityProviderListLink"
+
+// GitlabIdentityProviderNilKind is the name of the type used to nil lists of objects of
+// type 'gitlab_identity_provider'.
+const GitlabIdentityProviderListNilKind = "GitlabIdentityProviderListNil"
+
 // GitlabIdentityProviderList is a list of values of the 'gitlab_identity_provider' type.
 type GitlabIdentityProviderList struct {
+	href  *string
+	link  bool
 	items []*GitlabIdentityProvider
 }
 

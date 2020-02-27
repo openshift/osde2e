@@ -21,8 +21,6 @@ package v1 // github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1
 
 import (
 	"context"
-	"encoding/json"
-	"io"
 	"net/http"
 
 	"github.com/golang/glog"
@@ -89,19 +87,6 @@ func (r *RoleGetServerResponse) Status(value int) *RoleGetServerResponse {
 	return r
 }
 
-// marshall is the method used internally to marshal responses for the
-// 'get' method.
-func (r *RoleGetServerResponse) marshal(writer io.Writer) error {
-	var err error
-	encoder := json.NewEncoder(writer)
-	data, err := r.body.wrap()
-	if err != nil {
-		return err
-	}
-	err = encoder.Encode(data)
-	return err
-}
-
 // RoleUpdateServerRequest is the request for the 'update' method.
 type RoleUpdateServerRequest struct {
 	body *Role
@@ -129,23 +114,6 @@ func (r *RoleUpdateServerRequest) GetBody() (value *Role, ok bool) {
 	return
 }
 
-// unmarshal is the method used internally to unmarshal request to the
-// 'update' method.
-func (r *RoleUpdateServerRequest) unmarshal(reader io.Reader) error {
-	var err error
-	decoder := json.NewDecoder(reader)
-	data := new(roleData)
-	err = decoder.Decode(data)
-	if err != nil {
-		return err
-	}
-	r.body, err = data.unwrap()
-	if err != nil {
-		return err
-	}
-	return err
-}
-
 // RoleUpdateServerResponse is the response for the 'update' method.
 type RoleUpdateServerResponse struct {
 	status int
@@ -167,19 +135,6 @@ func (r *RoleUpdateServerResponse) Status(value int) *RoleUpdateServerResponse {
 	return r
 }
 
-// marshall is the method used internally to marshal responses for the
-// 'update' method.
-func (r *RoleUpdateServerResponse) marshal(writer io.Writer) error {
-	var err error
-	encoder := json.NewEncoder(writer)
-	data, err := r.body.wrap()
-	if err != nil {
-		return err
-	}
-	err = encoder.Encode(data)
-	return err
-}
-
 // dispatchRole navigates the servers tree rooted at the given server
 // till it finds one that matches the given set of path segments, and then invokes
 // the corresponding server.
@@ -188,44 +143,31 @@ func dispatchRole(w http.ResponseWriter, r *http.Request, server RoleServer, seg
 		switch r.Method {
 		case "DELETE":
 			adaptRoleDeleteRequest(w, r, server)
+			return
 		case "GET":
 			adaptRoleGetRequest(w, r, server)
+			return
 		case "PATCH":
 			adaptRoleUpdateRequest(w, r, server)
+			return
 		default:
 			errors.SendMethodNotAllowed(w, r)
 			return
 		}
-	} else {
-		switch segments[0] {
-		default:
-			errors.SendNotFound(w, r)
-			return
-		}
 	}
-}
-
-// readRoleDeleteRequest reads the given HTTP requests and translates it
-// into an object of type RoleDeleteServerRequest.
-func readRoleDeleteRequest(r *http.Request) (*RoleDeleteServerRequest, error) {
-	var err error
-	result := new(RoleDeleteServerRequest)
-	return result, err
-}
-
-// writeRoleDeleteResponse translates the given request object into an
-// HTTP response.
-func writeRoleDeleteResponse(w http.ResponseWriter, r *RoleDeleteServerResponse) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(r.status)
-	return nil
+	switch segments[0] {
+	default:
+		errors.SendNotFound(w, r)
+		return
+	}
 }
 
 // adaptRoleDeleteRequest translates the given HTTP request into a call to
 // the corresponding method of the given server. Then it translates the
 // results returned by that method into an HTTP response.
 func adaptRoleDeleteRequest(w http.ResponseWriter, r *http.Request, server RoleServer) {
-	request, err := readRoleDeleteRequest(r)
+	request := &RoleDeleteServerRequest{}
+	err := readRoleDeleteRequest(request, r)
 	if err != nil {
 		glog.Errorf(
 			"Can't read request for method '%s' and path '%s': %v",
@@ -234,7 +176,7 @@ func adaptRoleDeleteRequest(w http.ResponseWriter, r *http.Request, server RoleS
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	response := new(RoleDeleteServerResponse)
+	response := &RoleDeleteServerResponse{}
 	response.status = 204
 	err = server.Delete(r.Context(), request, response)
 	if err != nil {
@@ -245,7 +187,7 @@ func adaptRoleDeleteRequest(w http.ResponseWriter, r *http.Request, server RoleS
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	err = writeRoleDeleteResponse(w, response)
+	err = writeRoleDeleteResponse(response, w)
 	if err != nil {
 		glog.Errorf(
 			"Can't write response for method '%s' and path '%s': %v",
@@ -255,31 +197,12 @@ func adaptRoleDeleteRequest(w http.ResponseWriter, r *http.Request, server RoleS
 	}
 }
 
-// readRoleGetRequest reads the given HTTP requests and translates it
-// into an object of type RoleGetServerRequest.
-func readRoleGetRequest(r *http.Request) (*RoleGetServerRequest, error) {
-	var err error
-	result := new(RoleGetServerRequest)
-	return result, err
-}
-
-// writeRoleGetResponse translates the given request object into an
-// HTTP response.
-func writeRoleGetResponse(w http.ResponseWriter, r *RoleGetServerResponse) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(r.status)
-	err := r.marshal(w)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
 // adaptRoleGetRequest translates the given HTTP request into a call to
 // the corresponding method of the given server. Then it translates the
 // results returned by that method into an HTTP response.
 func adaptRoleGetRequest(w http.ResponseWriter, r *http.Request, server RoleServer) {
-	request, err := readRoleGetRequest(r)
+	request := &RoleGetServerRequest{}
+	err := readRoleGetRequest(request, r)
 	if err != nil {
 		glog.Errorf(
 			"Can't read request for method '%s' and path '%s': %v",
@@ -288,7 +211,7 @@ func adaptRoleGetRequest(w http.ResponseWriter, r *http.Request, server RoleServ
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	response := new(RoleGetServerResponse)
+	response := &RoleGetServerResponse{}
 	response.status = 200
 	err = server.Get(r.Context(), request, response)
 	if err != nil {
@@ -299,7 +222,7 @@ func adaptRoleGetRequest(w http.ResponseWriter, r *http.Request, server RoleServ
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	err = writeRoleGetResponse(w, response)
+	err = writeRoleGetResponse(response, w)
 	if err != nil {
 		glog.Errorf(
 			"Can't write response for method '%s' and path '%s': %v",
@@ -309,35 +232,12 @@ func adaptRoleGetRequest(w http.ResponseWriter, r *http.Request, server RoleServ
 	}
 }
 
-// readRoleUpdateRequest reads the given HTTP requests and translates it
-// into an object of type RoleUpdateServerRequest.
-func readRoleUpdateRequest(r *http.Request) (*RoleUpdateServerRequest, error) {
-	var err error
-	result := new(RoleUpdateServerRequest)
-	err = result.unmarshal(r.Body)
-	if err != nil {
-		return nil, err
-	}
-	return result, err
-}
-
-// writeRoleUpdateResponse translates the given request object into an
-// HTTP response.
-func writeRoleUpdateResponse(w http.ResponseWriter, r *RoleUpdateServerResponse) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(r.status)
-	err := r.marshal(w)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
 // adaptRoleUpdateRequest translates the given HTTP request into a call to
 // the corresponding method of the given server. Then it translates the
 // results returned by that method into an HTTP response.
 func adaptRoleUpdateRequest(w http.ResponseWriter, r *http.Request, server RoleServer) {
-	request, err := readRoleUpdateRequest(r)
+	request := &RoleUpdateServerRequest{}
+	err := readRoleUpdateRequest(request, r)
 	if err != nil {
 		glog.Errorf(
 			"Can't read request for method '%s' and path '%s': %v",
@@ -346,7 +246,7 @@ func adaptRoleUpdateRequest(w http.ResponseWriter, r *http.Request, server RoleS
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	response := new(RoleUpdateServerResponse)
+	response := &RoleUpdateServerResponse{}
 	response.status = 204
 	err = server.Update(r.Context(), request, response)
 	if err != nil {
@@ -357,7 +257,7 @@ func adaptRoleUpdateRequest(w http.ResponseWriter, r *http.Request, server RoleS
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	err = writeRoleUpdateResponse(w, response)
+	err = writeRoleUpdateResponse(response, w)
 	if err != nil {
 		glog.Errorf(
 			"Can't write response for method '%s' and path '%s': %v",

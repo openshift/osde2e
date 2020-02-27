@@ -37,8 +37,7 @@ func NewQuotaSummary() *QuotaSummaryBuilder {
 	return new(QuotaSummaryBuilder)
 }
 
-// BYOC sets the value of the 'BYOC' attribute
-// to the given value.
+// BYOC sets the value of the 'BYOC' attribute to the given value.
 //
 //
 func (b *QuotaSummaryBuilder) BYOC(value bool) *QuotaSummaryBuilder {
@@ -46,8 +45,7 @@ func (b *QuotaSummaryBuilder) BYOC(value bool) *QuotaSummaryBuilder {
 	return b
 }
 
-// Allowed sets the value of the 'allowed' attribute
-// to the given value.
+// Allowed sets the value of the 'allowed' attribute to the given value.
 //
 //
 func (b *QuotaSummaryBuilder) Allowed(value int) *QuotaSummaryBuilder {
@@ -55,8 +53,7 @@ func (b *QuotaSummaryBuilder) Allowed(value int) *QuotaSummaryBuilder {
 	return b
 }
 
-// AvailabilityZoneType sets the value of the 'availability_zone_type' attribute
-// to the given value.
+// AvailabilityZoneType sets the value of the 'availability_zone_type' attribute to the given value.
 //
 //
 func (b *QuotaSummaryBuilder) AvailabilityZoneType(value string) *QuotaSummaryBuilder {
@@ -64,8 +61,7 @@ func (b *QuotaSummaryBuilder) AvailabilityZoneType(value string) *QuotaSummaryBu
 	return b
 }
 
-// OrganizationID sets the value of the 'organization_ID' attribute
-// to the given value.
+// OrganizationID sets the value of the 'organization_ID' attribute to the given value.
 //
 //
 func (b *QuotaSummaryBuilder) OrganizationID(value string) *QuotaSummaryBuilder {
@@ -73,8 +69,7 @@ func (b *QuotaSummaryBuilder) OrganizationID(value string) *QuotaSummaryBuilder 
 	return b
 }
 
-// Reserved sets the value of the 'reserved' attribute
-// to the given value.
+// Reserved sets the value of the 'reserved' attribute to the given value.
 //
 //
 func (b *QuotaSummaryBuilder) Reserved(value int) *QuotaSummaryBuilder {
@@ -82,8 +77,7 @@ func (b *QuotaSummaryBuilder) Reserved(value int) *QuotaSummaryBuilder {
 	return b
 }
 
-// ResourceName sets the value of the 'resource_name' attribute
-// to the given value.
+// ResourceName sets the value of the 'resource_name' attribute to the given value.
 //
 //
 func (b *QuotaSummaryBuilder) ResourceName(value string) *QuotaSummaryBuilder {
@@ -91,8 +85,7 @@ func (b *QuotaSummaryBuilder) ResourceName(value string) *QuotaSummaryBuilder {
 	return b
 }
 
-// ResourceType sets the value of the 'resource_type' attribute
-// to the given value.
+// ResourceType sets the value of the 'resource_type' attribute to the given value.
 //
 //
 func (b *QuotaSummaryBuilder) ResourceType(value string) *QuotaSummaryBuilder {
@@ -118,26 +111,12 @@ func (b *QuotaSummaryBuilder) Copy(object *QuotaSummary) *QuotaSummaryBuilder {
 // Build creates a 'quota_summary' object using the configuration stored in the builder.
 func (b *QuotaSummaryBuilder) Build() (object *QuotaSummary, err error) {
 	object = new(QuotaSummary)
-	if b.byoc != nil {
-		object.byoc = b.byoc
-	}
-	if b.allowed != nil {
-		object.allowed = b.allowed
-	}
-	if b.availabilityZoneType != nil {
-		object.availabilityZoneType = b.availabilityZoneType
-	}
-	if b.organizationID != nil {
-		object.organizationID = b.organizationID
-	}
-	if b.reserved != nil {
-		object.reserved = b.reserved
-	}
-	if b.resourceName != nil {
-		object.resourceName = b.resourceName
-	}
-	if b.resourceType != nil {
-		object.resourceType = b.resourceType
-	}
+	object.byoc = b.byoc
+	object.allowed = b.allowed
+	object.availabilityZoneType = b.availabilityZoneType
+	object.organizationID = b.organizationID
+	object.reserved = b.reserved
+	object.resourceName = b.resourceName
+	object.resourceType = b.resourceType
 	return
 }

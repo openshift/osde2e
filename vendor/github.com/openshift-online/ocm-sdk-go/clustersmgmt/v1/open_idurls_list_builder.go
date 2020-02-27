@@ -37,6 +37,19 @@ func (b *OpenIDURLsListBuilder) Items(values ...*OpenIDURLsBuilder) *OpenIDURLsL
 	return b
 }
 
+// Copy copies the items of the given list into this builder, discarding any previous items.
+func (b *OpenIDURLsListBuilder) Copy(list *OpenIDURLsList) *OpenIDURLsListBuilder {
+	if list == nil || list.items == nil {
+		b.items = nil
+	} else {
+		b.items = make([]*OpenIDURLsBuilder, len(list.items))
+		for i, v := range list.items {
+			b.items[i] = NewOpenIDURLs().Copy(v)
+		}
+	}
+	return b
+}
+
 // Build creates a list of 'open_IDURLs' objects using the
 // configuration stored in the builder.
 func (b *OpenIDURLsListBuilder) Build() (list *OpenIDURLsList, err error) {

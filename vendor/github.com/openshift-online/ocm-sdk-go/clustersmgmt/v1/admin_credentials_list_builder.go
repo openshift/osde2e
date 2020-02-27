@@ -37,6 +37,19 @@ func (b *AdminCredentialsListBuilder) Items(values ...*AdminCredentialsBuilder) 
 	return b
 }
 
+// Copy copies the items of the given list into this builder, discarding any previous items.
+func (b *AdminCredentialsListBuilder) Copy(list *AdminCredentialsList) *AdminCredentialsListBuilder {
+	if list == nil || list.items == nil {
+		b.items = nil
+	} else {
+		b.items = make([]*AdminCredentialsBuilder, len(list.items))
+		for i, v := range list.items {
+			b.items[i] = NewAdminCredentials().Copy(v)
+		}
+	}
+	return b
+}
+
 // Build creates a list of 'admin_credentials' objects using the
 // configuration stored in the builder.
 func (b *AdminCredentialsListBuilder) Build() (list *AdminCredentialsList, err error) {

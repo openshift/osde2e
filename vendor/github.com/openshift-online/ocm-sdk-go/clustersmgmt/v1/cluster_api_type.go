@@ -55,8 +55,22 @@ func (o *ClusterAPI) GetURL() (value string, ok bool) {
 	return
 }
 
+// ClusterAPIListKind is the name of the type used to represent list of objects of
+// type 'cluster_API'.
+const ClusterAPIListKind = "ClusterAPIList"
+
+// ClusterAPIListLinkKind is the name of the type used to represent links to list
+// of objects of type 'cluster_API'.
+const ClusterAPIListLinkKind = "ClusterAPIListLink"
+
+// ClusterAPINilKind is the name of the type used to nil lists of objects of
+// type 'cluster_API'.
+const ClusterAPIListNilKind = "ClusterAPIListNil"
+
 // ClusterAPIList is a list of values of the 'cluster_API' type.
 type ClusterAPIList struct {
+	href  *string
+	link  bool
 	items []*ClusterAPI
 }
 

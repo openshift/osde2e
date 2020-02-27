@@ -37,6 +37,19 @@ func (b *RoleListBuilder) Items(values ...*RoleBuilder) *RoleListBuilder {
 	return b
 }
 
+// Copy copies the items of the given list into this builder, discarding any previous items.
+func (b *RoleListBuilder) Copy(list *RoleList) *RoleListBuilder {
+	if list == nil || list.items == nil {
+		b.items = nil
+	} else {
+		b.items = make([]*RoleBuilder, len(list.items))
+		for i, v := range list.items {
+			b.items[i] = NewRole().Copy(v)
+		}
+	}
+	return b
+}
+
 // Build creates a list of 'role' objects using the
 // configuration stored in the builder.
 func (b *RoleListBuilder) Build() (list *RoleList, err error) {

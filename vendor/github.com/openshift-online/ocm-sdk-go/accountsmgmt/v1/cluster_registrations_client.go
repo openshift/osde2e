@@ -22,12 +22,12 @@ package v1 // github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 
+	jsoniter "github.com/json-iterator/go"
 	"github.com/openshift-online/ocm-sdk-go/errors"
 	"github.com/openshift-online/ocm-sdk-go/helpers"
 )
@@ -42,14 +42,14 @@ type ClusterRegistrationsClient struct {
 }
 
 // NewClusterRegistrationsClient creates a new client for the 'cluster_registrations'
-// resource using the given transport to sned the requests and receive the
+// resource using the given transport to send the requests and receive the
 // responses.
 func NewClusterRegistrationsClient(transport http.RoundTripper, path string, metric string) *ClusterRegistrationsClient {
-	client := new(ClusterRegistrationsClient)
-	client.transport = transport
-	client.path = path
-	client.metric = metric
-	return client
+	return &ClusterRegistrationsClient{
+		transport: transport,
+		path:      path,
+		metric:    metric,
+	}
 }
 
 // Post creates a request for the 'post' method.
@@ -57,11 +57,11 @@ func NewClusterRegistrationsClient(transport http.RoundTripper, path string, met
 // Finds or creates a cluster registration with a registry credential
 // token and cluster identifier.
 func (c *ClusterRegistrationsClient) Post() *ClusterRegistrationsPostRequest {
-	request := new(ClusterRegistrationsPostRequest)
-	request.transport = c.transport
-	request.path = c.path
-	request.metric = c.metric
-	return request
+	return &ClusterRegistrationsPostRequest{
+		transport: c.transport,
+		path:      c.path,
+		metric:    c.metric,
+	}
 }
 
 // ClusterRegistrationsPostRequest is the request for the 'post' method.
@@ -106,8 +106,8 @@ func (r *ClusterRegistrationsPostRequest) Send() (result *ClusterRegistrationsPo
 func (r *ClusterRegistrationsPostRequest) SendContext(ctx context.Context) (result *ClusterRegistrationsPostResponse, err error) {
 	query := helpers.CopyQuery(r.query)
 	header := helpers.SetHeader(r.header, r.metric)
-	buffer := new(bytes.Buffer)
-	err = r.marshal(buffer)
+	buffer := &bytes.Buffer{}
+	err = writeClusterRegistrationsPostRequest(r, buffer)
 	if err != nil {
 		return
 	}
@@ -129,7 +129,7 @@ func (r *ClusterRegistrationsPostRequest) SendContext(ctx context.Context) (resu
 		return
 	}
 	defer response.Body.Close()
-	result = new(ClusterRegistrationsPostResponse)
+	result = &ClusterRegistrationsPostResponse{}
 	result.status = response.StatusCode
 	result.header = response.Header
 	if result.status >= 400 {
@@ -140,7 +140,7 @@ func (r *ClusterRegistrationsPostRequest) SendContext(ctx context.Context) (resu
 		err = result.err
 		return
 	}
-	err = result.unmarshal(response.Body)
+	err = readClusterRegistrationsPostResponse(result, response.Body)
 	if err != nil {
 		return
 	}
@@ -150,14 +150,11 @@ func (r *ClusterRegistrationsPostRequest) SendContext(ctx context.Context) (resu
 // marshall is the method used internally to marshal requests for the
 // 'post' method.
 func (r *ClusterRegistrationsPostRequest) marshal(writer io.Writer) error {
-	var err error
-	encoder := json.NewEncoder(writer)
-	data, err := r.request.wrap()
-	if err != nil {
-		return err
-	}
-	err = encoder.Encode(data)
-	return err
+	stream := helpers.NewStream(writer)
+	r.stream(stream)
+	return stream.Error
+}
+func (r *ClusterRegistrationsPostRequest) stream(stream *jsoniter.Stream) {
 }
 
 // ClusterRegistrationsPostResponse is the response for the 'post' method.
@@ -212,21 +209,4 @@ func (r *ClusterRegistrationsPostResponse) GetResponse() (value *ClusterRegistra
 		value = r.response
 	}
 	return
-}
-
-// unmarshal is the method used internally to unmarshal responses to the
-// 'post' method.
-func (r *ClusterRegistrationsPostResponse) unmarshal(reader io.Reader) error {
-	var err error
-	decoder := json.NewDecoder(reader)
-	data := new(clusterRegistrationResponseData)
-	err = decoder.Decode(data)
-	if err != nil {
-		return err
-	}
-	r.response, err = data.unwrap()
-	if err != nil {
-		return err
-	}
-	return err
 }

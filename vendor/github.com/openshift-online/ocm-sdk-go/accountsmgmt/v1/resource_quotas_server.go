@@ -21,13 +21,10 @@ package v1 // github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1
 
 import (
 	"context"
-	"encoding/json"
-	"io"
 	"net/http"
 
 	"github.com/golang/glog"
 	"github.com/openshift-online/ocm-sdk-go/errors"
-	"github.com/openshift-online/ocm-sdk-go/helpers"
 )
 
 // ResourceQuotasServer represents the interface the manages the 'resource_quotas' resource.
@@ -76,23 +73,6 @@ func (r *ResourceQuotasAddServerRequest) GetBody() (value *ResourceQuota, ok boo
 	return
 }
 
-// unmarshal is the method used internally to unmarshal request to the
-// 'add' method.
-func (r *ResourceQuotasAddServerRequest) unmarshal(reader io.Reader) error {
-	var err error
-	decoder := json.NewDecoder(reader)
-	data := new(resourceQuotaData)
-	err = decoder.Decode(data)
-	if err != nil {
-		return err
-	}
-	r.body, err = data.unwrap()
-	if err != nil {
-		return err
-	}
-	return err
-}
-
 // ResourceQuotasAddServerResponse is the response for the 'add' method.
 type ResourceQuotasAddServerResponse struct {
 	status int
@@ -112,19 +92,6 @@ func (r *ResourceQuotasAddServerResponse) Body(value *ResourceQuota) *ResourceQu
 func (r *ResourceQuotasAddServerResponse) Status(value int) *ResourceQuotasAddServerResponse {
 	r.status = value
 	return r
-}
-
-// marshall is the method used internally to marshal responses for the
-// 'add' method.
-func (r *ResourceQuotasAddServerResponse) marshal(writer io.Writer) error {
-	var err error
-	encoder := json.NewEncoder(writer)
-	data, err := r.body.wrap()
-	if err != nil {
-		return err
-	}
-	err = encoder.Encode(data)
-	return err
 }
 
 // ResourceQuotasListServerRequest is the request for the 'list' method.
@@ -275,32 +242,6 @@ func (r *ResourceQuotasListServerResponse) Status(value int) *ResourceQuotasList
 	return r
 }
 
-// marshall is the method used internally to marshal responses for the
-// 'list' method.
-func (r *ResourceQuotasListServerResponse) marshal(writer io.Writer) error {
-	var err error
-	encoder := json.NewEncoder(writer)
-	data := new(resourceQuotasListServerResponseData)
-	data.Items, err = r.items.wrap()
-	if err != nil {
-		return err
-	}
-	data.Page = r.page
-	data.Size = r.size
-	data.Total = r.total
-	err = encoder.Encode(data)
-	return err
-}
-
-// resourceQuotasListServerResponseData is the structure used internally to write the request of the
-// 'list' method.
-type resourceQuotasListServerResponseData struct {
-	Items resourceQuotaListData "json:\"items,omitempty\""
-	Page  *int                  "json:\"page,omitempty\""
-	Size  *int                  "json:\"size,omitempty\""
-	Total *int                  "json:\"total,omitempty\""
-}
-
 // dispatchResourceQuotas navigates the servers tree rooted at the given server
 // till it finds one that matches the given set of path segments, and then invokes
 // the corresponding server.
@@ -309,54 +250,32 @@ func dispatchResourceQuotas(w http.ResponseWriter, r *http.Request, server Resou
 		switch r.Method {
 		case "POST":
 			adaptResourceQuotasAddRequest(w, r, server)
+			return
 		case "GET":
 			adaptResourceQuotasListRequest(w, r, server)
+			return
 		default:
 			errors.SendMethodNotAllowed(w, r)
 			return
 		}
-	} else {
-		switch segments[0] {
-		default:
-			target := server.ResourceQuota(segments[0])
-			if target == nil {
-				errors.SendNotFound(w, r)
-				return
-			}
-			dispatchResourceQuota(w, r, target, segments[1:])
+	}
+	switch segments[0] {
+	default:
+		target := server.ResourceQuota(segments[0])
+		if target == nil {
+			errors.SendNotFound(w, r)
+			return
 		}
+		dispatchResourceQuota(w, r, target, segments[1:])
 	}
-}
-
-// readResourceQuotasAddRequest reads the given HTTP requests and translates it
-// into an object of type ResourceQuotasAddServerRequest.
-func readResourceQuotasAddRequest(r *http.Request) (*ResourceQuotasAddServerRequest, error) {
-	var err error
-	result := new(ResourceQuotasAddServerRequest)
-	err = result.unmarshal(r.Body)
-	if err != nil {
-		return nil, err
-	}
-	return result, err
-}
-
-// writeResourceQuotasAddResponse translates the given request object into an
-// HTTP response.
-func writeResourceQuotasAddResponse(w http.ResponseWriter, r *ResourceQuotasAddServerResponse) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(r.status)
-	err := r.marshal(w)
-	if err != nil {
-		return err
-	}
-	return nil
 }
 
 // adaptResourceQuotasAddRequest translates the given HTTP request into a call to
 // the corresponding method of the given server. Then it translates the
 // results returned by that method into an HTTP response.
 func adaptResourceQuotasAddRequest(w http.ResponseWriter, r *http.Request, server ResourceQuotasServer) {
-	request, err := readResourceQuotasAddRequest(r)
+	request := &ResourceQuotasAddServerRequest{}
+	err := readResourceQuotasAddRequest(request, r)
 	if err != nil {
 		glog.Errorf(
 			"Can't read request for method '%s' and path '%s': %v",
@@ -365,7 +284,7 @@ func adaptResourceQuotasAddRequest(w http.ResponseWriter, r *http.Request, serve
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	response := new(ResourceQuotasAddServerResponse)
+	response := &ResourceQuotasAddServerResponse{}
 	response.status = 201
 	err = server.Add(r.Context(), request, response)
 	if err != nil {
@@ -376,7 +295,7 @@ func adaptResourceQuotasAddRequest(w http.ResponseWriter, r *http.Request, serve
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	err = writeResourceQuotasAddResponse(w, response)
+	err = writeResourceQuotasAddResponse(response, w)
 	if err != nil {
 		glog.Errorf(
 			"Can't write response for method '%s' and path '%s': %v",
@@ -386,50 +305,12 @@ func adaptResourceQuotasAddRequest(w http.ResponseWriter, r *http.Request, serve
 	}
 }
 
-// readResourceQuotasListRequest reads the given HTTP requests and translates it
-// into an object of type ResourceQuotasListServerRequest.
-func readResourceQuotasListRequest(r *http.Request) (*ResourceQuotasListServerRequest, error) {
-	var err error
-	result := new(ResourceQuotasListServerRequest)
-	query := r.URL.Query()
-	result.page, err = helpers.ParseInteger(query, "page")
-	if err != nil {
-		return nil, err
-	}
-	if result.page == nil {
-		result.page = helpers.NewInteger(1)
-	}
-	result.search, err = helpers.ParseString(query, "search")
-	if err != nil {
-		return nil, err
-	}
-	result.size, err = helpers.ParseInteger(query, "size")
-	if err != nil {
-		return nil, err
-	}
-	if result.size == nil {
-		result.size = helpers.NewInteger(100)
-	}
-	return result, err
-}
-
-// writeResourceQuotasListResponse translates the given request object into an
-// HTTP response.
-func writeResourceQuotasListResponse(w http.ResponseWriter, r *ResourceQuotasListServerResponse) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(r.status)
-	err := r.marshal(w)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
 // adaptResourceQuotasListRequest translates the given HTTP request into a call to
 // the corresponding method of the given server. Then it translates the
 // results returned by that method into an HTTP response.
 func adaptResourceQuotasListRequest(w http.ResponseWriter, r *http.Request, server ResourceQuotasServer) {
-	request, err := readResourceQuotasListRequest(r)
+	request := &ResourceQuotasListServerRequest{}
+	err := readResourceQuotasListRequest(request, r)
 	if err != nil {
 		glog.Errorf(
 			"Can't read request for method '%s' and path '%s': %v",
@@ -438,7 +319,7 @@ func adaptResourceQuotasListRequest(w http.ResponseWriter, r *http.Request, serv
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	response := new(ResourceQuotasListServerResponse)
+	response := &ResourceQuotasListServerResponse{}
 	response.status = 200
 	err = server.List(r.Context(), request, response)
 	if err != nil {
@@ -449,7 +330,7 @@ func adaptResourceQuotasListRequest(w http.ResponseWriter, r *http.Request, serv
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	err = writeResourceQuotasListResponse(w, response)
+	err = writeResourceQuotasListResponse(response, w)
 	if err != nil {
 		glog.Errorf(
 			"Can't write response for method '%s' and path '%s': %v",

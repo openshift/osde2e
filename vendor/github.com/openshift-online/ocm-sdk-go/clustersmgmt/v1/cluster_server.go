@@ -21,8 +21,6 @@ package v1 // github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1
 
 import (
 	"context"
-	"encoding/json"
-	"io"
 	"net/http"
 
 	"github.com/golang/glog"
@@ -46,6 +44,12 @@ type ClusterServer interface {
 	//
 	// Updates the cluster.
 	Update(ctx context.Context, request *ClusterUpdateServerRequest, response *ClusterUpdateServerResponse) error
+
+	// AWSInfrastructureAccessRoleGrants returns the target 'AWS_infrastructure_access_role_grants' resource.
+	//
+	// Refrence to the resource that manages the collection of AWS infrastructure
+	// access role grants on this cluster.
+	AWSInfrastructureAccessRoleGrants() AWSInfrastructureAccessRoleGrantsServer
 
 	// Addons returns the target 'add_on_installations' resource.
 	//
@@ -124,19 +128,6 @@ func (r *ClusterGetServerResponse) Status(value int) *ClusterGetServerResponse {
 	return r
 }
 
-// marshall is the method used internally to marshal responses for the
-// 'get' method.
-func (r *ClusterGetServerResponse) marshal(writer io.Writer) error {
-	var err error
-	encoder := json.NewEncoder(writer)
-	data, err := r.body.wrap()
-	if err != nil {
-		return err
-	}
-	err = encoder.Encode(data)
-	return err
-}
-
 // ClusterUpdateServerRequest is the request for the 'update' method.
 type ClusterUpdateServerRequest struct {
 	body *Cluster
@@ -164,23 +155,6 @@ func (r *ClusterUpdateServerRequest) GetBody() (value *Cluster, ok bool) {
 	return
 }
 
-// unmarshal is the method used internally to unmarshal request to the
-// 'update' method.
-func (r *ClusterUpdateServerRequest) unmarshal(reader io.Reader) error {
-	var err error
-	decoder := json.NewDecoder(reader)
-	data := new(clusterData)
-	err = decoder.Decode(data)
-	if err != nil {
-		return err
-	}
-	r.body, err = data.unwrap()
-	if err != nil {
-		return err
-	}
-	return err
-}
-
 // ClusterUpdateServerResponse is the response for the 'update' method.
 type ClusterUpdateServerResponse struct {
 	status int
@@ -202,19 +176,6 @@ func (r *ClusterUpdateServerResponse) Status(value int) *ClusterUpdateServerResp
 	return r
 }
 
-// marshall is the method used internally to marshal responses for the
-// 'update' method.
-func (r *ClusterUpdateServerResponse) marshal(writer io.Writer) error {
-	var err error
-	encoder := json.NewEncoder(writer)
-	data, err := r.body.wrap()
-	if err != nil {
-		return err
-	}
-	err = encoder.Encode(data)
-	return err
-}
-
 // dispatchCluster navigates the servers tree rooted at the given server
 // till it finds one that matches the given set of path segments, and then invokes
 // the corresponding server.
@@ -223,93 +184,87 @@ func dispatchCluster(w http.ResponseWriter, r *http.Request, server ClusterServe
 		switch r.Method {
 		case "DELETE":
 			adaptClusterDeleteRequest(w, r, server)
+			return
 		case "GET":
 			adaptClusterGetRequest(w, r, server)
+			return
 		case "PATCH":
 			adaptClusterUpdateRequest(w, r, server)
+			return
 		default:
 			errors.SendMethodNotAllowed(w, r)
 			return
 		}
-	} else {
-		switch segments[0] {
-		case "addons":
-			target := server.Addons()
-			if target == nil {
-				errors.SendNotFound(w, r)
-				return
-			}
-			dispatchAddOnInstallations(w, r, target, segments[1:])
-		case "credentials":
-			target := server.Credentials()
-			if target == nil {
-				errors.SendNotFound(w, r)
-				return
-			}
-			dispatchCredentials(w, r, target, segments[1:])
-		case "groups":
-			target := server.Groups()
-			if target == nil {
-				errors.SendNotFound(w, r)
-				return
-			}
-			dispatchGroups(w, r, target, segments[1:])
-		case "identity_providers":
-			target := server.IdentityProviders()
-			if target == nil {
-				errors.SendNotFound(w, r)
-				return
-			}
-			dispatchIdentityProviders(w, r, target, segments[1:])
-		case "logs":
-			target := server.Logs()
-			if target == nil {
-				errors.SendNotFound(w, r)
-				return
-			}
-			dispatchLogs(w, r, target, segments[1:])
-		case "metric_queries":
-			target := server.MetricQueries()
-			if target == nil {
-				errors.SendNotFound(w, r)
-				return
-			}
-			dispatchMetricQueries(w, r, target, segments[1:])
-		case "status":
-			target := server.Status()
-			if target == nil {
-				errors.SendNotFound(w, r)
-				return
-			}
-			dispatchClusterStatus(w, r, target, segments[1:])
-		default:
+	}
+	switch segments[0] {
+	case "aws_infrastructure_access_role_grants":
+		target := server.AWSInfrastructureAccessRoleGrants()
+		if target == nil {
 			errors.SendNotFound(w, r)
 			return
 		}
+		dispatchAWSInfrastructureAccessRoleGrants(w, r, target, segments[1:])
+	case "addons":
+		target := server.Addons()
+		if target == nil {
+			errors.SendNotFound(w, r)
+			return
+		}
+		dispatchAddOnInstallations(w, r, target, segments[1:])
+	case "credentials":
+		target := server.Credentials()
+		if target == nil {
+			errors.SendNotFound(w, r)
+			return
+		}
+		dispatchCredentials(w, r, target, segments[1:])
+	case "groups":
+		target := server.Groups()
+		if target == nil {
+			errors.SendNotFound(w, r)
+			return
+		}
+		dispatchGroups(w, r, target, segments[1:])
+	case "identity_providers":
+		target := server.IdentityProviders()
+		if target == nil {
+			errors.SendNotFound(w, r)
+			return
+		}
+		dispatchIdentityProviders(w, r, target, segments[1:])
+	case "logs":
+		target := server.Logs()
+		if target == nil {
+			errors.SendNotFound(w, r)
+			return
+		}
+		dispatchLogs(w, r, target, segments[1:])
+	case "metric_queries":
+		target := server.MetricQueries()
+		if target == nil {
+			errors.SendNotFound(w, r)
+			return
+		}
+		dispatchMetricQueries(w, r, target, segments[1:])
+	case "status":
+		target := server.Status()
+		if target == nil {
+			errors.SendNotFound(w, r)
+			return
+		}
+		dispatchClusterStatus(w, r, target, segments[1:])
+	default:
+		errors.SendNotFound(w, r)
+		return
 	}
-}
-
-// readClusterDeleteRequest reads the given HTTP requests and translates it
-// into an object of type ClusterDeleteServerRequest.
-func readClusterDeleteRequest(r *http.Request) (*ClusterDeleteServerRequest, error) {
-	var err error
-	result := new(ClusterDeleteServerRequest)
-	return result, err
-}
-
-// writeClusterDeleteResponse translates the given request object into an
-// HTTP response.
-func writeClusterDeleteResponse(w http.ResponseWriter, r *ClusterDeleteServerResponse) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(r.status)
-	return nil
 }
 
 // adaptClusterDeleteRequest translates the given HTTP request into a call to
 // the corresponding method of the given server. Then it translates the
 // results returned by that method into an HTTP response.
 func adaptClusterDeleteRequest(w http.ResponseWriter, r *http.Request, server ClusterServer) {
-	request, err := readClusterDeleteRequest(r)
+	request := &ClusterDeleteServerRequest{}
+	err := readClusterDeleteRequest(request, r)
 	if err != nil {
 		glog.Errorf(
 			"Can't read request for method '%s' and path '%s': %v",
@@ -318,7 +273,7 @@ func adaptClusterDeleteRequest(w http.ResponseWriter, r *http.Request, server Cl
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	response := new(ClusterDeleteServerResponse)
+	response := &ClusterDeleteServerResponse{}
 	response.status = 204
 	err = server.Delete(r.Context(), request, response)
 	if err != nil {
@@ -329,7 +284,7 @@ func adaptClusterDeleteRequest(w http.ResponseWriter, r *http.Request, server Cl
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	err = writeClusterDeleteResponse(w, response)
+	err = writeClusterDeleteResponse(response, w)
 	if err != nil {
 		glog.Errorf(
 			"Can't write response for method '%s' and path '%s': %v",
@@ -339,31 +294,12 @@ func adaptClusterDeleteRequest(w http.ResponseWriter, r *http.Request, server Cl
 	}
 }
 
-// readClusterGetRequest reads the given HTTP requests and translates it
-// into an object of type ClusterGetServerRequest.
-func readClusterGetRequest(r *http.Request) (*ClusterGetServerRequest, error) {
-	var err error
-	result := new(ClusterGetServerRequest)
-	return result, err
-}
-
-// writeClusterGetResponse translates the given request object into an
-// HTTP response.
-func writeClusterGetResponse(w http.ResponseWriter, r *ClusterGetServerResponse) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(r.status)
-	err := r.marshal(w)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
 // adaptClusterGetRequest translates the given HTTP request into a call to
 // the corresponding method of the given server. Then it translates the
 // results returned by that method into an HTTP response.
 func adaptClusterGetRequest(w http.ResponseWriter, r *http.Request, server ClusterServer) {
-	request, err := readClusterGetRequest(r)
+	request := &ClusterGetServerRequest{}
+	err := readClusterGetRequest(request, r)
 	if err != nil {
 		glog.Errorf(
 			"Can't read request for method '%s' and path '%s': %v",
@@ -372,7 +308,7 @@ func adaptClusterGetRequest(w http.ResponseWriter, r *http.Request, server Clust
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	response := new(ClusterGetServerResponse)
+	response := &ClusterGetServerResponse{}
 	response.status = 200
 	err = server.Get(r.Context(), request, response)
 	if err != nil {
@@ -383,7 +319,7 @@ func adaptClusterGetRequest(w http.ResponseWriter, r *http.Request, server Clust
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	err = writeClusterGetResponse(w, response)
+	err = writeClusterGetResponse(response, w)
 	if err != nil {
 		glog.Errorf(
 			"Can't write response for method '%s' and path '%s': %v",
@@ -393,35 +329,12 @@ func adaptClusterGetRequest(w http.ResponseWriter, r *http.Request, server Clust
 	}
 }
 
-// readClusterUpdateRequest reads the given HTTP requests and translates it
-// into an object of type ClusterUpdateServerRequest.
-func readClusterUpdateRequest(r *http.Request) (*ClusterUpdateServerRequest, error) {
-	var err error
-	result := new(ClusterUpdateServerRequest)
-	err = result.unmarshal(r.Body)
-	if err != nil {
-		return nil, err
-	}
-	return result, err
-}
-
-// writeClusterUpdateResponse translates the given request object into an
-// HTTP response.
-func writeClusterUpdateResponse(w http.ResponseWriter, r *ClusterUpdateServerResponse) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(r.status)
-	err := r.marshal(w)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
 // adaptClusterUpdateRequest translates the given HTTP request into a call to
 // the corresponding method of the given server. Then it translates the
 // results returned by that method into an HTTP response.
 func adaptClusterUpdateRequest(w http.ResponseWriter, r *http.Request, server ClusterServer) {
-	request, err := readClusterUpdateRequest(r)
+	request := &ClusterUpdateServerRequest{}
+	err := readClusterUpdateRequest(request, r)
 	if err != nil {
 		glog.Errorf(
 			"Can't read request for method '%s' and path '%s': %v",
@@ -430,7 +343,7 @@ func adaptClusterUpdateRequest(w http.ResponseWriter, r *http.Request, server Cl
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	response := new(ClusterUpdateServerResponse)
+	response := &ClusterUpdateServerResponse{}
 	response.status = 204
 	err = server.Update(r.Context(), request, response)
 	if err != nil {
@@ -441,7 +354,7 @@ func adaptClusterUpdateRequest(w http.ResponseWriter, r *http.Request, server Cl
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	err = writeClusterUpdateResponse(w, response)
+	err = writeClusterUpdateResponse(response, w)
 	if err != nil {
 		glog.Errorf(
 			"Can't write response for method '%s' and path '%s': %v",

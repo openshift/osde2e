@@ -53,8 +53,7 @@ func (b *CloudProviderBuilder) Link(value bool) *CloudProviderBuilder {
 	return b
 }
 
-// DisplayName sets the value of the 'display_name' attribute
-// to the given value.
+// DisplayName sets the value of the 'display_name' attribute to the given value.
 //
 //
 func (b *CloudProviderBuilder) DisplayName(value string) *CloudProviderBuilder {
@@ -62,8 +61,7 @@ func (b *CloudProviderBuilder) DisplayName(value string) *CloudProviderBuilder {
 	return b
 }
 
-// Name sets the value of the 'name' attribute
-// to the given value.
+// Name sets the value of the 'name' attribute to the given value.
 //
 //
 func (b *CloudProviderBuilder) Name(value string) *CloudProviderBuilder {
@@ -90,11 +88,7 @@ func (b *CloudProviderBuilder) Build() (object *CloudProvider, err error) {
 	object.id = b.id
 	object.href = b.href
 	object.link = b.link
-	if b.displayName != nil {
-		object.displayName = b.displayName
-	}
-	if b.name != nil {
-		object.name = b.name
-	}
+	object.displayName = b.displayName
+	object.name = b.name
 	return
 }

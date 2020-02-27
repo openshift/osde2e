@@ -21,8 +21,6 @@ package v1 // github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1
 
 import (
 	"context"
-	"encoding/json"
-	"io"
 	"net/http"
 
 	"github.com/golang/glog"
@@ -63,19 +61,6 @@ func (r *DashboardGetServerResponse) Status(value int) *DashboardGetServerRespon
 	return r
 }
 
-// marshall is the method used internally to marshal responses for the
-// 'get' method.
-func (r *DashboardGetServerResponse) marshal(writer io.Writer) error {
-	var err error
-	encoder := json.NewEncoder(writer)
-	data, err := r.body.wrap()
-	if err != nil {
-		return err
-	}
-	err = encoder.Encode(data)
-	return err
-}
-
 // dispatchDashboard navigates the servers tree rooted at the given server
 // till it finds one that matches the given set of path segments, and then invokes
 // the corresponding server.
@@ -84,44 +69,25 @@ func dispatchDashboard(w http.ResponseWriter, r *http.Request, server DashboardS
 		switch r.Method {
 		case "GET":
 			adaptDashboardGetRequest(w, r, server)
+			return
 		default:
 			errors.SendMethodNotAllowed(w, r)
 			return
 		}
-	} else {
-		switch segments[0] {
-		default:
-			errors.SendNotFound(w, r)
-			return
-		}
 	}
-}
-
-// readDashboardGetRequest reads the given HTTP requests and translates it
-// into an object of type DashboardGetServerRequest.
-func readDashboardGetRequest(r *http.Request) (*DashboardGetServerRequest, error) {
-	var err error
-	result := new(DashboardGetServerRequest)
-	return result, err
-}
-
-// writeDashboardGetResponse translates the given request object into an
-// HTTP response.
-func writeDashboardGetResponse(w http.ResponseWriter, r *DashboardGetServerResponse) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(r.status)
-	err := r.marshal(w)
-	if err != nil {
-		return err
+	switch segments[0] {
+	default:
+		errors.SendNotFound(w, r)
+		return
 	}
-	return nil
 }
 
 // adaptDashboardGetRequest translates the given HTTP request into a call to
 // the corresponding method of the given server. Then it translates the
 // results returned by that method into an HTTP response.
 func adaptDashboardGetRequest(w http.ResponseWriter, r *http.Request, server DashboardServer) {
-	request, err := readDashboardGetRequest(r)
+	request := &DashboardGetServerRequest{}
+	err := readDashboardGetRequest(request, r)
 	if err != nil {
 		glog.Errorf(
 			"Can't read request for method '%s' and path '%s': %v",
@@ -130,7 +96,7 @@ func adaptDashboardGetRequest(w http.ResponseWriter, r *http.Request, server Das
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	response := new(DashboardGetServerResponse)
+	response := &DashboardGetServerResponse{}
 	response.status = 200
 	err = server.Get(r.Context(), request, response)
 	if err != nil {
@@ -141,7 +107,7 @@ func adaptDashboardGetRequest(w http.ResponseWriter, r *http.Request, server Das
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	err = writeDashboardGetResponse(w, response)
+	err = writeDashboardGetResponse(response, w)
 	if err != nil {
 		glog.Errorf(
 			"Can't write response for method '%s' and path '%s': %v",

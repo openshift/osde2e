@@ -130,8 +130,22 @@ func (o *LDAPAttributes) GetPreferredUsername() (value []string, ok bool) {
 	return
 }
 
+// LDAPAttributesListKind is the name of the type used to represent list of objects of
+// type 'LDAP_attributes'.
+const LDAPAttributesListKind = "LDAPAttributesList"
+
+// LDAPAttributesListLinkKind is the name of the type used to represent links to list
+// of objects of type 'LDAP_attributes'.
+const LDAPAttributesListLinkKind = "LDAPAttributesListLink"
+
+// LDAPAttributesNilKind is the name of the type used to nil lists of objects of
+// type 'LDAP_attributes'.
+const LDAPAttributesListNilKind = "LDAPAttributesListNil"
+
 // LDAPAttributesList is a list of values of the 'LDAP_attributes' type.
 type LDAPAttributesList struct {
+	href  *string
+	link  bool
 	items []*LDAPAttributes
 }
 

@@ -105,8 +105,22 @@ func (o *OpenIDClaims) GetPreferredUsername() (value []string, ok bool) {
 	return
 }
 
+// OpenIDClaimsListKind is the name of the type used to represent list of objects of
+// type 'open_ID_claims'.
+const OpenIDClaimsListKind = "OpenIDClaimsList"
+
+// OpenIDClaimsListLinkKind is the name of the type used to represent links to list
+// of objects of type 'open_ID_claims'.
+const OpenIDClaimsListLinkKind = "OpenIDClaimsListLink"
+
+// OpenIDClaimsNilKind is the name of the type used to nil lists of objects of
+// type 'open_ID_claims'.
+const OpenIDClaimsListNilKind = "OpenIDClaimsListNil"
+
 // OpenIDClaimsList is a list of values of the 'open_ID_claims' type.
 type OpenIDClaimsList struct {
+	href  *string
+	link  bool
 	items []*OpenIDClaims
 }
 

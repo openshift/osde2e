@@ -22,13 +22,13 @@ package v1 // github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"path"
 
+	jsoniter "github.com/json-iterator/go"
 	"github.com/openshift-online/ocm-sdk-go/errors"
 	"github.com/openshift-online/ocm-sdk-go/helpers"
 )
@@ -43,36 +43,36 @@ type IdentityProvidersClient struct {
 }
 
 // NewIdentityProvidersClient creates a new client for the 'identity_providers'
-// resource using the given transport to sned the requests and receive the
+// resource using the given transport to send the requests and receive the
 // responses.
 func NewIdentityProvidersClient(transport http.RoundTripper, path string, metric string) *IdentityProvidersClient {
-	client := new(IdentityProvidersClient)
-	client.transport = transport
-	client.path = path
-	client.metric = metric
-	return client
+	return &IdentityProvidersClient{
+		transport: transport,
+		path:      path,
+		metric:    metric,
+	}
 }
 
 // Add creates a request for the 'add' method.
 //
 // Adds a new identity provider to the cluster.
 func (c *IdentityProvidersClient) Add() *IdentityProvidersAddRequest {
-	request := new(IdentityProvidersAddRequest)
-	request.transport = c.transport
-	request.path = c.path
-	request.metric = c.metric
-	return request
+	return &IdentityProvidersAddRequest{
+		transport: c.transport,
+		path:      c.path,
+		metric:    c.metric,
+	}
 }
 
 // List creates a request for the 'list' method.
 //
 // Retrieves the list of identity providers.
 func (c *IdentityProvidersClient) List() *IdentityProvidersListRequest {
-	request := new(IdentityProvidersListRequest)
-	request.transport = c.transport
-	request.path = c.path
-	request.metric = c.metric
-	return request
+	return &IdentityProvidersListRequest{
+		transport: c.transport,
+		path:      c.path,
+		metric:    c.metric,
+	}
 }
 
 // IdentityProvider returns the target 'identity_provider' resource for the given identifier.
@@ -128,8 +128,8 @@ func (r *IdentityProvidersAddRequest) Send() (result *IdentityProvidersAddRespon
 func (r *IdentityProvidersAddRequest) SendContext(ctx context.Context) (result *IdentityProvidersAddResponse, err error) {
 	query := helpers.CopyQuery(r.query)
 	header := helpers.SetHeader(r.header, r.metric)
-	buffer := new(bytes.Buffer)
-	err = r.marshal(buffer)
+	buffer := &bytes.Buffer{}
+	err = writeIdentityProvidersAddRequest(r, buffer)
 	if err != nil {
 		return
 	}
@@ -151,7 +151,7 @@ func (r *IdentityProvidersAddRequest) SendContext(ctx context.Context) (result *
 		return
 	}
 	defer response.Body.Close()
-	result = new(IdentityProvidersAddResponse)
+	result = &IdentityProvidersAddResponse{}
 	result.status = response.StatusCode
 	result.header = response.Header
 	if result.status >= 400 {
@@ -162,7 +162,7 @@ func (r *IdentityProvidersAddRequest) SendContext(ctx context.Context) (result *
 		err = result.err
 		return
 	}
-	err = result.unmarshal(response.Body)
+	err = readIdentityProvidersAddResponse(result, response.Body)
 	if err != nil {
 		return
 	}
@@ -172,14 +172,11 @@ func (r *IdentityProvidersAddRequest) SendContext(ctx context.Context) (result *
 // marshall is the method used internally to marshal requests for the
 // 'add' method.
 func (r *IdentityProvidersAddRequest) marshal(writer io.Writer) error {
-	var err error
-	encoder := json.NewEncoder(writer)
-	data, err := r.body.wrap()
-	if err != nil {
-		return err
-	}
-	err = encoder.Encode(data)
-	return err
+	stream := helpers.NewStream(writer)
+	r.stream(stream)
+	return stream.Error
+}
+func (r *IdentityProvidersAddRequest) stream(stream *jsoniter.Stream) {
 }
 
 // IdentityProvidersAddResponse is the response for the 'add' method.
@@ -234,23 +231,6 @@ func (r *IdentityProvidersAddResponse) GetBody() (value *IdentityProvider, ok bo
 		value = r.body
 	}
 	return
-}
-
-// unmarshal is the method used internally to unmarshal responses to the
-// 'add' method.
-func (r *IdentityProvidersAddResponse) unmarshal(reader io.Reader) error {
-	var err error
-	decoder := json.NewDecoder(reader)
-	data := new(identityProviderData)
-	err = decoder.Decode(data)
-	if err != nil {
-		return err
-	}
-	r.body, err = data.unwrap()
-	if err != nil {
-		return err
-	}
-	return err
 }
 
 // IdentityProvidersListRequest is the request for the 'list' method.
@@ -327,7 +307,7 @@ func (r *IdentityProvidersListRequest) SendContext(ctx context.Context) (result 
 		return
 	}
 	defer response.Body.Close()
-	result = new(IdentityProvidersListResponse)
+	result = &IdentityProvidersListResponse{}
 	result.status = response.StatusCode
 	result.header = response.Header
 	if result.status >= 400 {
@@ -338,7 +318,7 @@ func (r *IdentityProvidersListRequest) SendContext(ctx context.Context) (result 
 		err = result.err
 		return
 	}
-	err = result.unmarshal(response.Body)
+	err = readIdentityProvidersListResponse(result, response.Body)
 	if err != nil {
 		return
 	}
@@ -466,33 +446,4 @@ func (r *IdentityProvidersListResponse) GetTotal() (value int, ok bool) {
 		value = *r.total
 	}
 	return
-}
-
-// unmarshal is the method used internally to unmarshal responses to the
-// 'list' method.
-func (r *IdentityProvidersListResponse) unmarshal(reader io.Reader) error {
-	var err error
-	decoder := json.NewDecoder(reader)
-	data := new(identityProvidersListResponseData)
-	err = decoder.Decode(data)
-	if err != nil {
-		return err
-	}
-	r.items, err = data.Items.unwrap()
-	if err != nil {
-		return err
-	}
-	r.page = data.Page
-	r.size = data.Size
-	r.total = data.Total
-	return err
-}
-
-// identityProvidersListResponseData is the structure used internally to unmarshal
-// the response of the 'list' method.
-type identityProvidersListResponseData struct {
-	Items identityProviderListData "json:\"items,omitempty\""
-	Page  *int                     "json:\"page,omitempty\""
-	Size  *int                     "json:\"size,omitempty\""
-	Total *int                     "json:\"total,omitempty\""
 }

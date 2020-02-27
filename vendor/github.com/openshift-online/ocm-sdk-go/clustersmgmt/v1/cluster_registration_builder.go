@@ -32,8 +32,7 @@ func NewClusterRegistration() *ClusterRegistrationBuilder {
 	return new(ClusterRegistrationBuilder)
 }
 
-// ExternalID sets the value of the 'external_ID' attribute
-// to the given value.
+// ExternalID sets the value of the 'external_ID' attribute to the given value.
 //
 //
 func (b *ClusterRegistrationBuilder) ExternalID(value string) *ClusterRegistrationBuilder {
@@ -41,8 +40,7 @@ func (b *ClusterRegistrationBuilder) ExternalID(value string) *ClusterRegistrati
 	return b
 }
 
-// SubscriptionID sets the value of the 'subscription_ID' attribute
-// to the given value.
+// SubscriptionID sets the value of the 'subscription_ID' attribute to the given value.
 //
 //
 func (b *ClusterRegistrationBuilder) SubscriptionID(value string) *ClusterRegistrationBuilder {
@@ -63,11 +61,7 @@ func (b *ClusterRegistrationBuilder) Copy(object *ClusterRegistration) *ClusterR
 // Build creates a 'cluster_registration' object using the configuration stored in the builder.
 func (b *ClusterRegistrationBuilder) Build() (object *ClusterRegistration, err error) {
 	object = new(ClusterRegistration)
-	if b.externalID != nil {
-		object.externalID = b.externalID
-	}
-	if b.subscriptionID != nil {
-		object.subscriptionID = b.subscriptionID
-	}
+	object.externalID = b.externalID
+	object.subscriptionID = b.subscriptionID
 	return
 }

@@ -21,8 +21,6 @@ package v1 // github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1
 
 import (
 	"context"
-	"encoding/json"
-	"io"
 	"net/http"
 	"net/url"
 	"time"
@@ -41,25 +39,25 @@ type ClusterStatusClient struct {
 }
 
 // NewClusterStatusClient creates a new client for the 'cluster_status'
-// resource using the given transport to sned the requests and receive the
+// resource using the given transport to send the requests and receive the
 // responses.
 func NewClusterStatusClient(transport http.RoundTripper, path string, metric string) *ClusterStatusClient {
-	client := new(ClusterStatusClient)
-	client.transport = transport
-	client.path = path
-	client.metric = metric
-	return client
+	return &ClusterStatusClient{
+		transport: transport,
+		path:      path,
+		metric:    metric,
+	}
 }
 
 // Get creates a request for the 'get' method.
 //
 //
 func (c *ClusterStatusClient) Get() *ClusterStatusGetRequest {
-	request := new(ClusterStatusGetRequest)
-	request.transport = c.transport
-	request.path = c.path
-	request.metric = c.metric
-	return request
+	return &ClusterStatusGetRequest{
+		transport: c.transport,
+		path:      c.path,
+		metric:    c.metric,
+	}
 }
 
 // ClusterStatusPollRequest is the request for the Poll method.
@@ -233,7 +231,7 @@ func (r *ClusterStatusGetRequest) SendContext(ctx context.Context) (result *Clus
 		return
 	}
 	defer response.Body.Close()
-	result = new(ClusterStatusGetResponse)
+	result = &ClusterStatusGetResponse{}
 	result.status = response.StatusCode
 	result.header = response.Header
 	if result.status >= 400 {
@@ -244,7 +242,7 @@ func (r *ClusterStatusGetRequest) SendContext(ctx context.Context) (result *Clus
 		err = result.err
 		return
 	}
-	err = result.unmarshal(response.Body)
+	err = readClusterStatusGetResponse(result, response.Body)
 	if err != nil {
 		return
 	}
@@ -303,21 +301,4 @@ func (r *ClusterStatusGetResponse) GetBody() (value *ClusterStatus, ok bool) {
 		value = r.body
 	}
 	return
-}
-
-// unmarshal is the method used internally to unmarshal responses to the
-// 'get' method.
-func (r *ClusterStatusGetResponse) unmarshal(reader io.Reader) error {
-	var err error
-	decoder := json.NewDecoder(reader)
-	data := new(clusterStatusData)
-	err = decoder.Decode(data)
-	if err != nil {
-		return err
-	}
-	r.body, err = data.unwrap()
-	if err != nil {
-		return err
-	}
-	return err
 }

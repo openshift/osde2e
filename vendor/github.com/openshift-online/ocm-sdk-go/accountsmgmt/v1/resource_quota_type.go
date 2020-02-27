@@ -323,16 +323,16 @@ func (o *ResourceQuota) GetType() (value string, ok bool) {
 	return
 }
 
-// ResourceQuotaListKind is the name of the type used to represent list of
-// objects of type 'resource_quota'.
+// ResourceQuotaListKind is the name of the type used to represent list of objects of
+// type 'resource_quota'.
 const ResourceQuotaListKind = "ResourceQuotaList"
 
-// ResourceQuotaListLinkKind is the name of the type used to represent links
-// to list of objects of type 'resource_quota'.
+// ResourceQuotaListLinkKind is the name of the type used to represent links to list
+// of objects of type 'resource_quota'.
 const ResourceQuotaListLinkKind = "ResourceQuotaListLink"
 
-// ResourceQuotaNilKind is the name of the type used to nil lists of
-// objects of type 'resource_quota'.
+// ResourceQuotaNilKind is the name of the type used to nil lists of objects of
+// type 'resource_quota'.
 const ResourceQuotaListNilKind = "ResourceQuotaListNil"
 
 // ResourceQuotaList is a list of values of the 'resource_quota' type.

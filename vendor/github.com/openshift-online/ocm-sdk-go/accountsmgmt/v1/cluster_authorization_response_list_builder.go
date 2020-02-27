@@ -37,6 +37,19 @@ func (b *ClusterAuthorizationResponseListBuilder) Items(values ...*ClusterAuthor
 	return b
 }
 
+// Copy copies the items of the given list into this builder, discarding any previous items.
+func (b *ClusterAuthorizationResponseListBuilder) Copy(list *ClusterAuthorizationResponseList) *ClusterAuthorizationResponseListBuilder {
+	if list == nil || list.items == nil {
+		b.items = nil
+	} else {
+		b.items = make([]*ClusterAuthorizationResponseBuilder, len(list.items))
+		for i, v := range list.items {
+			b.items[i] = NewClusterAuthorizationResponse().Copy(v)
+		}
+	}
+	return b
+}
+
 // Build creates a list of 'cluster_authorization_response' objects using the
 // configuration stored in the builder.
 func (b *ClusterAuthorizationResponseListBuilder) Build() (list *ClusterAuthorizationResponseList, err error) {

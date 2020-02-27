@@ -22,13 +22,13 @@ package v1 // github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"path"
 
+	jsoniter "github.com/json-iterator/go"
 	"github.com/openshift-online/ocm-sdk-go/errors"
 	"github.com/openshift-online/ocm-sdk-go/helpers"
 )
@@ -43,36 +43,36 @@ type AddOnInstallationsClient struct {
 }
 
 // NewAddOnInstallationsClient creates a new client for the 'add_on_installations'
-// resource using the given transport to sned the requests and receive the
+// resource using the given transport to send the requests and receive the
 // responses.
 func NewAddOnInstallationsClient(transport http.RoundTripper, path string, metric string) *AddOnInstallationsClient {
-	client := new(AddOnInstallationsClient)
-	client.transport = transport
-	client.path = path
-	client.metric = metric
-	return client
+	return &AddOnInstallationsClient{
+		transport: transport,
+		path:      path,
+		metric:    metric,
+	}
 }
 
 // Add creates a request for the 'add' method.
 //
 // Create a new add-on installation and add it to the collection of add-on installations on the cluster.
 func (c *AddOnInstallationsClient) Add() *AddOnInstallationsAddRequest {
-	request := new(AddOnInstallationsAddRequest)
-	request.transport = c.transport
-	request.path = c.path
-	request.metric = c.metric
-	return request
+	return &AddOnInstallationsAddRequest{
+		transport: c.transport,
+		path:      c.path,
+		metric:    c.metric,
+	}
 }
 
 // List creates a request for the 'list' method.
 //
 // Retrieves the list of add-on installations.
 func (c *AddOnInstallationsClient) List() *AddOnInstallationsListRequest {
-	request := new(AddOnInstallationsListRequest)
-	request.transport = c.transport
-	request.path = c.path
-	request.metric = c.metric
-	return request
+	return &AddOnInstallationsListRequest{
+		transport: c.transport,
+		path:      c.path,
+		metric:    c.metric,
+	}
 }
 
 // Addoninstallation returns the target 'add_on_installation' resource for the given identifier.
@@ -128,8 +128,8 @@ func (r *AddOnInstallationsAddRequest) Send() (result *AddOnInstallationsAddResp
 func (r *AddOnInstallationsAddRequest) SendContext(ctx context.Context) (result *AddOnInstallationsAddResponse, err error) {
 	query := helpers.CopyQuery(r.query)
 	header := helpers.SetHeader(r.header, r.metric)
-	buffer := new(bytes.Buffer)
-	err = r.marshal(buffer)
+	buffer := &bytes.Buffer{}
+	err = writeAddOnInstallationsAddRequest(r, buffer)
 	if err != nil {
 		return
 	}
@@ -151,7 +151,7 @@ func (r *AddOnInstallationsAddRequest) SendContext(ctx context.Context) (result 
 		return
 	}
 	defer response.Body.Close()
-	result = new(AddOnInstallationsAddResponse)
+	result = &AddOnInstallationsAddResponse{}
 	result.status = response.StatusCode
 	result.header = response.Header
 	if result.status >= 400 {
@@ -162,7 +162,7 @@ func (r *AddOnInstallationsAddRequest) SendContext(ctx context.Context) (result 
 		err = result.err
 		return
 	}
-	err = result.unmarshal(response.Body)
+	err = readAddOnInstallationsAddResponse(result, response.Body)
 	if err != nil {
 		return
 	}
@@ -172,14 +172,11 @@ func (r *AddOnInstallationsAddRequest) SendContext(ctx context.Context) (result 
 // marshall is the method used internally to marshal requests for the
 // 'add' method.
 func (r *AddOnInstallationsAddRequest) marshal(writer io.Writer) error {
-	var err error
-	encoder := json.NewEncoder(writer)
-	data, err := r.body.wrap()
-	if err != nil {
-		return err
-	}
-	err = encoder.Encode(data)
-	return err
+	stream := helpers.NewStream(writer)
+	r.stream(stream)
+	return stream.Error
+}
+func (r *AddOnInstallationsAddRequest) stream(stream *jsoniter.Stream) {
 }
 
 // AddOnInstallationsAddResponse is the response for the 'add' method.
@@ -234,23 +231,6 @@ func (r *AddOnInstallationsAddResponse) GetBody() (value *AddOnInstallation, ok 
 		value = r.body
 	}
 	return
-}
-
-// unmarshal is the method used internally to unmarshal responses to the
-// 'add' method.
-func (r *AddOnInstallationsAddResponse) unmarshal(reader io.Reader) error {
-	var err error
-	decoder := json.NewDecoder(reader)
-	data := new(addOnInstallationData)
-	err = decoder.Decode(data)
-	if err != nil {
-		return err
-	}
-	r.body, err = data.unwrap()
-	if err != nil {
-		return err
-	}
-	return err
 }
 
 // AddOnInstallationsListRequest is the request for the 'list' method.
@@ -377,7 +357,7 @@ func (r *AddOnInstallationsListRequest) SendContext(ctx context.Context) (result
 		return
 	}
 	defer response.Body.Close()
-	result = new(AddOnInstallationsListResponse)
+	result = &AddOnInstallationsListResponse{}
 	result.status = response.StatusCode
 	result.header = response.Header
 	if result.status >= 400 {
@@ -388,7 +368,7 @@ func (r *AddOnInstallationsListRequest) SendContext(ctx context.Context) (result
 		err = result.err
 		return
 	}
-	err = result.unmarshal(response.Body)
+	err = readAddOnInstallationsListResponse(result, response.Body)
 	if err != nil {
 		return
 	}
@@ -518,33 +498,4 @@ func (r *AddOnInstallationsListResponse) GetTotal() (value int, ok bool) {
 		value = *r.total
 	}
 	return
-}
-
-// unmarshal is the method used internally to unmarshal responses to the
-// 'list' method.
-func (r *AddOnInstallationsListResponse) unmarshal(reader io.Reader) error {
-	var err error
-	decoder := json.NewDecoder(reader)
-	data := new(addOnInstallationsListResponseData)
-	err = decoder.Decode(data)
-	if err != nil {
-		return err
-	}
-	r.items, err = data.Items.unwrap()
-	if err != nil {
-		return err
-	}
-	r.page = data.Page
-	r.size = data.Size
-	r.total = data.Total
-	return err
-}
-
-// addOnInstallationsListResponseData is the structure used internally to unmarshal
-// the response of the 'list' method.
-type addOnInstallationsListResponseData struct {
-	Items addOnInstallationListData "json:\"items,omitempty\""
-	Page  *int                      "json:\"page,omitempty\""
-	Size  *int                      "json:\"size,omitempty\""
-	Total *int                      "json:\"total,omitempty\""
 }

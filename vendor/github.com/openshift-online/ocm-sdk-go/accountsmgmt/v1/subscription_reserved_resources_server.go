@@ -21,13 +21,10 @@ package v1 // github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1
 
 import (
 	"context"
-	"encoding/json"
-	"io"
 	"net/http"
 
 	"github.com/golang/glog"
 	"github.com/openshift-online/ocm-sdk-go/errors"
-	"github.com/openshift-online/ocm-sdk-go/helpers"
 )
 
 // SubscriptionReservedResourcesServer represents the interface the manages the 'subscription_reserved_resources' resource.
@@ -144,32 +141,6 @@ func (r *SubscriptionReservedResourcesListServerResponse) Status(value int) *Sub
 	return r
 }
 
-// marshall is the method used internally to marshal responses for the
-// 'list' method.
-func (r *SubscriptionReservedResourcesListServerResponse) marshal(writer io.Writer) error {
-	var err error
-	encoder := json.NewEncoder(writer)
-	data := new(subscriptionReservedResourcesListServerResponseData)
-	data.Items, err = r.items.wrap()
-	if err != nil {
-		return err
-	}
-	data.Page = r.page
-	data.Size = r.size
-	data.Total = r.total
-	err = encoder.Encode(data)
-	return err
-}
-
-// subscriptionReservedResourcesListServerResponseData is the structure used internally to write the request of the
-// 'list' method.
-type subscriptionReservedResourcesListServerResponseData struct {
-	Items reservedResourceListData "json:\"items,omitempty\""
-	Page  *int                     "json:\"page,omitempty\""
-	Size  *int                     "json:\"size,omitempty\""
-	Total *int                     "json:\"total,omitempty\""
-}
-
 // dispatchSubscriptionReservedResources navigates the servers tree rooted at the given server
 // till it finds one that matches the given set of path segments, and then invokes
 // the corresponding server.
@@ -178,63 +149,29 @@ func dispatchSubscriptionReservedResources(w http.ResponseWriter, r *http.Reques
 		switch r.Method {
 		case "GET":
 			adaptSubscriptionReservedResourcesListRequest(w, r, server)
+			return
 		default:
 			errors.SendMethodNotAllowed(w, r)
 			return
 		}
-	} else {
-		switch segments[0] {
-		default:
-			target := server.ReservedResource(segments[0])
-			if target == nil {
-				errors.SendNotFound(w, r)
-				return
-			}
-			dispatchSubscriptionReservedResource(w, r, target, segments[1:])
+	}
+	switch segments[0] {
+	default:
+		target := server.ReservedResource(segments[0])
+		if target == nil {
+			errors.SendNotFound(w, r)
+			return
 		}
+		dispatchSubscriptionReservedResource(w, r, target, segments[1:])
 	}
-}
-
-// readSubscriptionReservedResourcesListRequest reads the given HTTP requests and translates it
-// into an object of type SubscriptionReservedResourcesListServerRequest.
-func readSubscriptionReservedResourcesListRequest(r *http.Request) (*SubscriptionReservedResourcesListServerRequest, error) {
-	var err error
-	result := new(SubscriptionReservedResourcesListServerRequest)
-	query := r.URL.Query()
-	result.page, err = helpers.ParseInteger(query, "page")
-	if err != nil {
-		return nil, err
-	}
-	if result.page == nil {
-		result.page = helpers.NewInteger(1)
-	}
-	result.size, err = helpers.ParseInteger(query, "size")
-	if err != nil {
-		return nil, err
-	}
-	if result.size == nil {
-		result.size = helpers.NewInteger(100)
-	}
-	return result, err
-}
-
-// writeSubscriptionReservedResourcesListResponse translates the given request object into an
-// HTTP response.
-func writeSubscriptionReservedResourcesListResponse(w http.ResponseWriter, r *SubscriptionReservedResourcesListServerResponse) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(r.status)
-	err := r.marshal(w)
-	if err != nil {
-		return err
-	}
-	return nil
 }
 
 // adaptSubscriptionReservedResourcesListRequest translates the given HTTP request into a call to
 // the corresponding method of the given server. Then it translates the
 // results returned by that method into an HTTP response.
 func adaptSubscriptionReservedResourcesListRequest(w http.ResponseWriter, r *http.Request, server SubscriptionReservedResourcesServer) {
-	request, err := readSubscriptionReservedResourcesListRequest(r)
+	request := &SubscriptionReservedResourcesListServerRequest{}
+	err := readSubscriptionReservedResourcesListRequest(request, r)
 	if err != nil {
 		glog.Errorf(
 			"Can't read request for method '%s' and path '%s': %v",
@@ -243,7 +180,7 @@ func adaptSubscriptionReservedResourcesListRequest(w http.ResponseWriter, r *htt
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	response := new(SubscriptionReservedResourcesListServerResponse)
+	response := &SubscriptionReservedResourcesListServerResponse{}
 	response.status = 200
 	err = server.List(r.Context(), request, response)
 	if err != nil {
@@ -254,7 +191,7 @@ func adaptSubscriptionReservedResourcesListRequest(w http.ResponseWriter, r *htt
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	err = writeSubscriptionReservedResourcesListResponse(w, response)
+	err = writeSubscriptionReservedResourcesListResponse(response, w)
 	if err != nil {
 		glog.Errorf(
 			"Can't write response for method '%s' and path '%s': %v",

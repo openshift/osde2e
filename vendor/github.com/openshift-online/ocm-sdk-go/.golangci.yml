@@ -19,6 +19,7 @@ run:
   - accountsmgmt
   - authorizations
   - clustersmgmt
+  - servicelogs
   - errors
   - helpers
   - metamodel

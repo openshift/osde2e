@@ -105,14 +105,10 @@ func (o *RoleBinding) GetHREF() (value string, ok bool) {
 // Empty returns true if the object is empty, i.e. no attribute has a value.
 func (o *RoleBinding) Empty() bool {
 	return o == nil || (o.id == nil &&
-		o.account == nil &&
 		o.accountID == nil &&
 		o.configManaged == nil &&
-		o.organization == nil &&
 		o.organizationID == nil &&
-		o.role == nil &&
 		o.roleID == nil &&
-		o.subscription == nil &&
 		o.subscriptionID == nil &&
 		o.type_ == nil &&
 		true)
@@ -348,16 +344,16 @@ func (o *RoleBinding) GetType() (value string, ok bool) {
 	return
 }
 
-// RoleBindingListKind is the name of the type used to represent list of
-// objects of type 'role_binding'.
+// RoleBindingListKind is the name of the type used to represent list of objects of
+// type 'role_binding'.
 const RoleBindingListKind = "RoleBindingList"
 
-// RoleBindingListLinkKind is the name of the type used to represent links
-// to list of objects of type 'role_binding'.
+// RoleBindingListLinkKind is the name of the type used to represent links to list
+// of objects of type 'role_binding'.
 const RoleBindingListLinkKind = "RoleBindingListLink"
 
-// RoleBindingNilKind is the name of the type used to nil lists of
-// objects of type 'role_binding'.
+// RoleBindingNilKind is the name of the type used to nil lists of objects of
+// type 'role_binding'.
 const RoleBindingListNilKind = "RoleBindingListNil"
 
 // RoleBindingList is a list of values of the 'role_binding' type.

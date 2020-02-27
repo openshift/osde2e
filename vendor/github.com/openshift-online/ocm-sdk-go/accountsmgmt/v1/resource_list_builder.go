@@ -37,6 +37,19 @@ func (b *ResourceListBuilder) Items(values ...*ResourceBuilder) *ResourceListBui
 	return b
 }
 
+// Copy copies the items of the given list into this builder, discarding any previous items.
+func (b *ResourceListBuilder) Copy(list *ResourceList) *ResourceListBuilder {
+	if list == nil || list.items == nil {
+		b.items = nil
+	} else {
+		b.items = make([]*ResourceBuilder, len(list.items))
+		for i, v := range list.items {
+			b.items[i] = NewResource().Copy(v)
+		}
+	}
+	return b
+}
+
 // Build creates a list of 'resource' objects using the
 // configuration stored in the builder.
 func (b *ResourceListBuilder) Build() (list *ResourceList, err error) {

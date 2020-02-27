@@ -33,13 +33,7 @@ type ClusterMetrics struct {
 
 // Empty returns true if the object is empty, i.e. no attribute has a value.
 func (o *ClusterMetrics) Empty() bool {
-	return o == nil || (o.cpu == nil &&
-		o.computeNodesCPU == nil &&
-		o.computeNodesMemory == nil &&
-		o.memory == nil &&
-		o.nodes == nil &&
-		o.storage == nil &&
-		true)
+	return o == nil || (true)
 }
 
 // CPU returns the value of the 'CPU' attribute, or
@@ -184,8 +178,22 @@ func (o *ClusterMetrics) GetStorage() (value *ClusterMetric, ok bool) {
 	return
 }
 
+// ClusterMetricsListKind is the name of the type used to represent list of objects of
+// type 'cluster_metrics'.
+const ClusterMetricsListKind = "ClusterMetricsList"
+
+// ClusterMetricsListLinkKind is the name of the type used to represent links to list
+// of objects of type 'cluster_metrics'.
+const ClusterMetricsListLinkKind = "ClusterMetricsListLink"
+
+// ClusterMetricsNilKind is the name of the type used to nil lists of objects of
+// type 'cluster_metrics'.
+const ClusterMetricsListNilKind = "ClusterMetricsListNil"
+
 // ClusterMetricsList is a list of values of the 'cluster_metrics' type.
 type ClusterMetricsList struct {
+	href  *string
+	link  bool
 	items []*ClusterMetrics
 }
 

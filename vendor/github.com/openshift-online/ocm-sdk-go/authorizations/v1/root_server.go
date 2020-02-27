@@ -59,39 +59,38 @@ func Dispatch(w http.ResponseWriter, r *http.Request, server Server, segments []
 			errors.SendMethodNotAllowed(w, r)
 			return
 		}
-	} else {
-		switch segments[0] {
-		case "access_review":
-			target := server.AccessReview()
-			if target == nil {
-				errors.SendNotFound(w, r)
-				return
-			}
-			dispatchAccessReview(w, r, target, segments[1:])
-		case "export_control_review":
-			target := server.ExportControlReview()
-			if target == nil {
-				errors.SendNotFound(w, r)
-				return
-			}
-			dispatchExportControlReview(w, r, target, segments[1:])
-		case "resource_review":
-			target := server.ResourceReview()
-			if target == nil {
-				errors.SendNotFound(w, r)
-				return
-			}
-			dispatchResourceReview(w, r, target, segments[1:])
-		case "self_access_review":
-			target := server.SelfAccessReview()
-			if target == nil {
-				errors.SendNotFound(w, r)
-				return
-			}
-			dispatchSelfAccessReview(w, r, target, segments[1:])
-		default:
+	}
+	switch segments[0] {
+	case "access_review":
+		target := server.AccessReview()
+		if target == nil {
 			errors.SendNotFound(w, r)
 			return
 		}
+		dispatchAccessReview(w, r, target, segments[1:])
+	case "export_control_review":
+		target := server.ExportControlReview()
+		if target == nil {
+			errors.SendNotFound(w, r)
+			return
+		}
+		dispatchExportControlReview(w, r, target, segments[1:])
+	case "resource_review":
+		target := server.ResourceReview()
+		if target == nil {
+			errors.SendNotFound(w, r)
+			return
+		}
+		dispatchResourceReview(w, r, target, segments[1:])
+	case "self_access_review":
+		target := server.SelfAccessReview()
+		if target == nil {
+			errors.SendNotFound(w, r)
+			return
+		}
+		dispatchSelfAccessReview(w, r, target, segments[1:])
+	default:
+		errors.SendNotFound(w, r)
+		return
 	}
 }

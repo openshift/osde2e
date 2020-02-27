@@ -21,13 +21,10 @@ package v1 // github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1
 
 import (
 	"context"
-	"encoding/json"
-	"io"
 	"net/http"
 
 	"github.com/golang/glog"
 	"github.com/openshift-online/ocm-sdk-go/errors"
-	"github.com/openshift-online/ocm-sdk-go/helpers"
 )
 
 // AddOnInstallationsServer represents the interface the manages the 'add_on_installations' resource.
@@ -76,23 +73,6 @@ func (r *AddOnInstallationsAddServerRequest) GetBody() (value *AddOnInstallation
 	return
 }
 
-// unmarshal is the method used internally to unmarshal request to the
-// 'add' method.
-func (r *AddOnInstallationsAddServerRequest) unmarshal(reader io.Reader) error {
-	var err error
-	decoder := json.NewDecoder(reader)
-	data := new(addOnInstallationData)
-	err = decoder.Decode(data)
-	if err != nil {
-		return err
-	}
-	r.body, err = data.unwrap()
-	if err != nil {
-		return err
-	}
-	return err
-}
-
 // AddOnInstallationsAddServerResponse is the response for the 'add' method.
 type AddOnInstallationsAddServerResponse struct {
 	status int
@@ -112,19 +92,6 @@ func (r *AddOnInstallationsAddServerResponse) Body(value *AddOnInstallation) *Ad
 func (r *AddOnInstallationsAddServerResponse) Status(value int) *AddOnInstallationsAddServerResponse {
 	r.status = value
 	return r
-}
-
-// marshall is the method used internally to marshal responses for the
-// 'add' method.
-func (r *AddOnInstallationsAddServerResponse) marshal(writer io.Writer) error {
-	var err error
-	encoder := json.NewEncoder(writer)
-	data, err := r.body.wrap()
-	if err != nil {
-		return err
-	}
-	err = encoder.Encode(data)
-	return err
 }
 
 // AddOnInstallationsListServerRequest is the request for the 'list' method.
@@ -324,32 +291,6 @@ func (r *AddOnInstallationsListServerResponse) Status(value int) *AddOnInstallat
 	return r
 }
 
-// marshall is the method used internally to marshal responses for the
-// 'list' method.
-func (r *AddOnInstallationsListServerResponse) marshal(writer io.Writer) error {
-	var err error
-	encoder := json.NewEncoder(writer)
-	data := new(addOnInstallationsListServerResponseData)
-	data.Items, err = r.items.wrap()
-	if err != nil {
-		return err
-	}
-	data.Page = r.page
-	data.Size = r.size
-	data.Total = r.total
-	err = encoder.Encode(data)
-	return err
-}
-
-// addOnInstallationsListServerResponseData is the structure used internally to write the request of the
-// 'list' method.
-type addOnInstallationsListServerResponseData struct {
-	Items addOnInstallationListData "json:\"items,omitempty\""
-	Page  *int                      "json:\"page,omitempty\""
-	Size  *int                      "json:\"size,omitempty\""
-	Total *int                      "json:\"total,omitempty\""
-}
-
 // dispatchAddOnInstallations navigates the servers tree rooted at the given server
 // till it finds one that matches the given set of path segments, and then invokes
 // the corresponding server.
@@ -358,54 +299,32 @@ func dispatchAddOnInstallations(w http.ResponseWriter, r *http.Request, server A
 		switch r.Method {
 		case "POST":
 			adaptAddOnInstallationsAddRequest(w, r, server)
+			return
 		case "GET":
 			adaptAddOnInstallationsListRequest(w, r, server)
+			return
 		default:
 			errors.SendMethodNotAllowed(w, r)
 			return
 		}
-	} else {
-		switch segments[0] {
-		default:
-			target := server.Addoninstallation(segments[0])
-			if target == nil {
-				errors.SendNotFound(w, r)
-				return
-			}
-			dispatchAddOnInstallation(w, r, target, segments[1:])
+	}
+	switch segments[0] {
+	default:
+		target := server.Addoninstallation(segments[0])
+		if target == nil {
+			errors.SendNotFound(w, r)
+			return
 		}
+		dispatchAddOnInstallation(w, r, target, segments[1:])
 	}
-}
-
-// readAddOnInstallationsAddRequest reads the given HTTP requests and translates it
-// into an object of type AddOnInstallationsAddServerRequest.
-func readAddOnInstallationsAddRequest(r *http.Request) (*AddOnInstallationsAddServerRequest, error) {
-	var err error
-	result := new(AddOnInstallationsAddServerRequest)
-	err = result.unmarshal(r.Body)
-	if err != nil {
-		return nil, err
-	}
-	return result, err
-}
-
-// writeAddOnInstallationsAddResponse translates the given request object into an
-// HTTP response.
-func writeAddOnInstallationsAddResponse(w http.ResponseWriter, r *AddOnInstallationsAddServerResponse) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(r.status)
-	err := r.marshal(w)
-	if err != nil {
-		return err
-	}
-	return nil
 }
 
 // adaptAddOnInstallationsAddRequest translates the given HTTP request into a call to
 // the corresponding method of the given server. Then it translates the
 // results returned by that method into an HTTP response.
 func adaptAddOnInstallationsAddRequest(w http.ResponseWriter, r *http.Request, server AddOnInstallationsServer) {
-	request, err := readAddOnInstallationsAddRequest(r)
+	request := &AddOnInstallationsAddServerRequest{}
+	err := readAddOnInstallationsAddRequest(request, r)
 	if err != nil {
 		glog.Errorf(
 			"Can't read request for method '%s' and path '%s': %v",
@@ -414,7 +333,7 @@ func adaptAddOnInstallationsAddRequest(w http.ResponseWriter, r *http.Request, s
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	response := new(AddOnInstallationsAddServerResponse)
+	response := &AddOnInstallationsAddServerResponse{}
 	response.status = 201
 	err = server.Add(r.Context(), request, response)
 	if err != nil {
@@ -425,7 +344,7 @@ func adaptAddOnInstallationsAddRequest(w http.ResponseWriter, r *http.Request, s
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	err = writeAddOnInstallationsAddResponse(w, response)
+	err = writeAddOnInstallationsAddResponse(response, w)
 	if err != nil {
 		glog.Errorf(
 			"Can't write response for method '%s' and path '%s': %v",
@@ -435,54 +354,12 @@ func adaptAddOnInstallationsAddRequest(w http.ResponseWriter, r *http.Request, s
 	}
 }
 
-// readAddOnInstallationsListRequest reads the given HTTP requests and translates it
-// into an object of type AddOnInstallationsListServerRequest.
-func readAddOnInstallationsListRequest(r *http.Request) (*AddOnInstallationsListServerRequest, error) {
-	var err error
-	result := new(AddOnInstallationsListServerRequest)
-	query := r.URL.Query()
-	result.order, err = helpers.ParseString(query, "order")
-	if err != nil {
-		return nil, err
-	}
-	result.page, err = helpers.ParseInteger(query, "page")
-	if err != nil {
-		return nil, err
-	}
-	if result.page == nil {
-		result.page = helpers.NewInteger(1)
-	}
-	result.search, err = helpers.ParseString(query, "search")
-	if err != nil {
-		return nil, err
-	}
-	result.size, err = helpers.ParseInteger(query, "size")
-	if err != nil {
-		return nil, err
-	}
-	if result.size == nil {
-		result.size = helpers.NewInteger(100)
-	}
-	return result, err
-}
-
-// writeAddOnInstallationsListResponse translates the given request object into an
-// HTTP response.
-func writeAddOnInstallationsListResponse(w http.ResponseWriter, r *AddOnInstallationsListServerResponse) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(r.status)
-	err := r.marshal(w)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
 // adaptAddOnInstallationsListRequest translates the given HTTP request into a call to
 // the corresponding method of the given server. Then it translates the
 // results returned by that method into an HTTP response.
 func adaptAddOnInstallationsListRequest(w http.ResponseWriter, r *http.Request, server AddOnInstallationsServer) {
-	request, err := readAddOnInstallationsListRequest(r)
+	request := &AddOnInstallationsListServerRequest{}
+	err := readAddOnInstallationsListRequest(request, r)
 	if err != nil {
 		glog.Errorf(
 			"Can't read request for method '%s' and path '%s': %v",
@@ -491,7 +368,7 @@ func adaptAddOnInstallationsListRequest(w http.ResponseWriter, r *http.Request, 
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	response := new(AddOnInstallationsListServerResponse)
+	response := &AddOnInstallationsListServerResponse{}
 	response.status = 200
 	err = server.List(r.Context(), request, response)
 	if err != nil {
@@ -502,7 +379,7 @@ func adaptAddOnInstallationsListRequest(w http.ResponseWriter, r *http.Request, 
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	err = writeAddOnInstallationsListResponse(w, response)
+	err = writeAddOnInstallationsListResponse(response, w)
 	if err != nil {
 		glog.Errorf(
 			"Can't write response for method '%s' and path '%s': %v",

@@ -61,8 +61,7 @@ func (b *IdentityProviderBuilder) Link(value bool) *IdentityProviderBuilder {
 	return b
 }
 
-// LDAP sets the value of the 'LDAP' attribute
-// to the given value.
+// LDAP sets the value of the 'LDAP' attribute to the given value.
 //
 // Details for `ldap` identity providers.
 func (b *IdentityProviderBuilder) LDAP(value *LDAPIdentityProviderBuilder) *IdentityProviderBuilder {
@@ -70,8 +69,7 @@ func (b *IdentityProviderBuilder) LDAP(value *LDAPIdentityProviderBuilder) *Iden
 	return b
 }
 
-// Challenge sets the value of the 'challenge' attribute
-// to the given value.
+// Challenge sets the value of the 'challenge' attribute to the given value.
 //
 //
 func (b *IdentityProviderBuilder) Challenge(value bool) *IdentityProviderBuilder {
@@ -79,8 +77,7 @@ func (b *IdentityProviderBuilder) Challenge(value bool) *IdentityProviderBuilder
 	return b
 }
 
-// Github sets the value of the 'github' attribute
-// to the given value.
+// Github sets the value of the 'github' attribute to the given value.
 //
 // Details for `github` identity providers.
 func (b *IdentityProviderBuilder) Github(value *GithubIdentityProviderBuilder) *IdentityProviderBuilder {
@@ -88,8 +85,7 @@ func (b *IdentityProviderBuilder) Github(value *GithubIdentityProviderBuilder) *
 	return b
 }
 
-// Gitlab sets the value of the 'gitlab' attribute
-// to the given value.
+// Gitlab sets the value of the 'gitlab' attribute to the given value.
 //
 // Details for `gitlab` identity providers.
 func (b *IdentityProviderBuilder) Gitlab(value *GitlabIdentityProviderBuilder) *IdentityProviderBuilder {
@@ -97,8 +93,7 @@ func (b *IdentityProviderBuilder) Gitlab(value *GitlabIdentityProviderBuilder) *
 	return b
 }
 
-// Google sets the value of the 'google' attribute
-// to the given value.
+// Google sets the value of the 'google' attribute to the given value.
 //
 // Details for `google` identity providers.
 func (b *IdentityProviderBuilder) Google(value *GoogleIdentityProviderBuilder) *IdentityProviderBuilder {
@@ -106,8 +101,7 @@ func (b *IdentityProviderBuilder) Google(value *GoogleIdentityProviderBuilder) *
 	return b
 }
 
-// Login sets the value of the 'login' attribute
-// to the given value.
+// Login sets the value of the 'login' attribute to the given value.
 //
 //
 func (b *IdentityProviderBuilder) Login(value bool) *IdentityProviderBuilder {
@@ -115,8 +109,7 @@ func (b *IdentityProviderBuilder) Login(value bool) *IdentityProviderBuilder {
 	return b
 }
 
-// MappingMethod sets the value of the 'mapping_method' attribute
-// to the given value.
+// MappingMethod sets the value of the 'mapping_method' attribute to the given value.
 //
 // Controls how mappings are established between provider identities and user objects.
 func (b *IdentityProviderBuilder) MappingMethod(value IdentityProviderMappingMethod) *IdentityProviderBuilder {
@@ -124,8 +117,7 @@ func (b *IdentityProviderBuilder) MappingMethod(value IdentityProviderMappingMet
 	return b
 }
 
-// Name sets the value of the 'name' attribute
-// to the given value.
+// Name sets the value of the 'name' attribute to the given value.
 //
 //
 func (b *IdentityProviderBuilder) Name(value string) *IdentityProviderBuilder {
@@ -133,8 +125,7 @@ func (b *IdentityProviderBuilder) Name(value string) *IdentityProviderBuilder {
 	return b
 }
 
-// OpenID sets the value of the 'open_ID' attribute
-// to the given value.
+// OpenID sets the value of the 'open_ID' attribute to the given value.
 //
 // Details for `openid` identity providers.
 func (b *IdentityProviderBuilder) OpenID(value *OpenIDIdentityProviderBuilder) *IdentityProviderBuilder {
@@ -142,8 +133,7 @@ func (b *IdentityProviderBuilder) OpenID(value *OpenIDIdentityProviderBuilder) *
 	return b
 }
 
-// Type sets the value of the 'type' attribute
-// to the given value.
+// Type sets the value of the 'type' attribute to the given value.
 //
 // Type of identity provider.
 func (b *IdentityProviderBuilder) Type(value IdentityProviderType) *IdentityProviderBuilder {
@@ -204,9 +194,7 @@ func (b *IdentityProviderBuilder) Build() (object *IdentityProvider, err error) 
 			return
 		}
 	}
-	if b.challenge != nil {
-		object.challenge = b.challenge
-	}
+	object.challenge = b.challenge
 	if b.github != nil {
 		object.github, err = b.github.Build()
 		if err != nil {
@@ -225,23 +213,15 @@ func (b *IdentityProviderBuilder) Build() (object *IdentityProvider, err error) 
 			return
 		}
 	}
-	if b.login != nil {
-		object.login = b.login
-	}
-	if b.mappingMethod != nil {
-		object.mappingMethod = b.mappingMethod
-	}
-	if b.name != nil {
-		object.name = b.name
-	}
+	object.login = b.login
+	object.mappingMethod = b.mappingMethod
+	object.name = b.name
 	if b.openID != nil {
 		object.openID, err = b.openID.Build()
 		if err != nil {
 			return
 		}
 	}
-	if b.type_ != nil {
-		object.type_ = b.type_
-	}
+	object.type_ = b.type_
 	return
 }

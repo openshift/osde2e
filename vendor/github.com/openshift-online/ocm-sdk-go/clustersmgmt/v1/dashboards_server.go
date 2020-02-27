@@ -21,13 +21,10 @@ package v1 // github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1
 
 import (
 	"context"
-	"encoding/json"
-	"io"
 	"net/http"
 
 	"github.com/golang/glog"
 	"github.com/openshift-online/ocm-sdk-go/errors"
-	"github.com/openshift-online/ocm-sdk-go/helpers"
 )
 
 // DashboardsServer represents the interface the manages the 'dashboards' resource.
@@ -241,32 +238,6 @@ func (r *DashboardsListServerResponse) Status(value int) *DashboardsListServerRe
 	return r
 }
 
-// marshall is the method used internally to marshal responses for the
-// 'list' method.
-func (r *DashboardsListServerResponse) marshal(writer io.Writer) error {
-	var err error
-	encoder := json.NewEncoder(writer)
-	data := new(dashboardsListServerResponseData)
-	data.Items, err = r.items.wrap()
-	if err != nil {
-		return err
-	}
-	data.Page = r.page
-	data.Size = r.size
-	data.Total = r.total
-	err = encoder.Encode(data)
-	return err
-}
-
-// dashboardsListServerResponseData is the structure used internally to write the request of the
-// 'list' method.
-type dashboardsListServerResponseData struct {
-	Items dashboardListData "json:\"items,omitempty\""
-	Page  *int              "json:\"page,omitempty\""
-	Size  *int              "json:\"size,omitempty\""
-	Total *int              "json:\"total,omitempty\""
-}
-
 // dispatchDashboards navigates the servers tree rooted at the given server
 // till it finds one that matches the given set of path segments, and then invokes
 // the corresponding server.
@@ -275,71 +246,29 @@ func dispatchDashboards(w http.ResponseWriter, r *http.Request, server Dashboard
 		switch r.Method {
 		case "GET":
 			adaptDashboardsListRequest(w, r, server)
+			return
 		default:
 			errors.SendMethodNotAllowed(w, r)
 			return
 		}
-	} else {
-		switch segments[0] {
-		default:
-			target := server.Dashboard(segments[0])
-			if target == nil {
-				errors.SendNotFound(w, r)
-				return
-			}
-			dispatchDashboard(w, r, target, segments[1:])
+	}
+	switch segments[0] {
+	default:
+		target := server.Dashboard(segments[0])
+		if target == nil {
+			errors.SendNotFound(w, r)
+			return
 		}
+		dispatchDashboard(w, r, target, segments[1:])
 	}
-}
-
-// readDashboardsListRequest reads the given HTTP requests and translates it
-// into an object of type DashboardsListServerRequest.
-func readDashboardsListRequest(r *http.Request) (*DashboardsListServerRequest, error) {
-	var err error
-	result := new(DashboardsListServerRequest)
-	query := r.URL.Query()
-	result.order, err = helpers.ParseString(query, "order")
-	if err != nil {
-		return nil, err
-	}
-	result.page, err = helpers.ParseInteger(query, "page")
-	if err != nil {
-		return nil, err
-	}
-	if result.page == nil {
-		result.page = helpers.NewInteger(1)
-	}
-	result.search, err = helpers.ParseString(query, "search")
-	if err != nil {
-		return nil, err
-	}
-	result.size, err = helpers.ParseInteger(query, "size")
-	if err != nil {
-		return nil, err
-	}
-	if result.size == nil {
-		result.size = helpers.NewInteger(100)
-	}
-	return result, err
-}
-
-// writeDashboardsListResponse translates the given request object into an
-// HTTP response.
-func writeDashboardsListResponse(w http.ResponseWriter, r *DashboardsListServerResponse) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(r.status)
-	err := r.marshal(w)
-	if err != nil {
-		return err
-	}
-	return nil
 }
 
 // adaptDashboardsListRequest translates the given HTTP request into a call to
 // the corresponding method of the given server. Then it translates the
 // results returned by that method into an HTTP response.
 func adaptDashboardsListRequest(w http.ResponseWriter, r *http.Request, server DashboardsServer) {
-	request, err := readDashboardsListRequest(r)
+	request := &DashboardsListServerRequest{}
+	err := readDashboardsListRequest(request, r)
 	if err != nil {
 		glog.Errorf(
 			"Can't read request for method '%s' and path '%s': %v",
@@ -348,7 +277,7 @@ func adaptDashboardsListRequest(w http.ResponseWriter, r *http.Request, server D
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	response := new(DashboardsListServerResponse)
+	response := &DashboardsListServerResponse{}
 	response.status = 200
 	err = server.List(r.Context(), request, response)
 	if err != nil {
@@ -359,7 +288,7 @@ func adaptDashboardsListRequest(w http.ResponseWriter, r *http.Request, server D
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	err = writeDashboardsListResponse(w, response)
+	err = writeDashboardsListResponse(response, w)
 	if err != nil {
 		glog.Errorf(
 			"Can't write response for method '%s' and path '%s': %v",
