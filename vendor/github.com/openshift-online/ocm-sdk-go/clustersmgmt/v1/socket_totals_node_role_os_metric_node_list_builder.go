@@ -37,6 +37,19 @@ func (b *SocketTotalsNodeRoleOSMetricNodeListBuilder) Items(values ...*SocketTot
 	return b
 }
 
+// Copy copies the items of the given list into this builder, discarding any previous items.
+func (b *SocketTotalsNodeRoleOSMetricNodeListBuilder) Copy(list *SocketTotalsNodeRoleOSMetricNodeList) *SocketTotalsNodeRoleOSMetricNodeListBuilder {
+	if list == nil || list.items == nil {
+		b.items = nil
+	} else {
+		b.items = make([]*SocketTotalsNodeRoleOSMetricNodeBuilder, len(list.items))
+		for i, v := range list.items {
+			b.items[i] = NewSocketTotalsNodeRoleOSMetricNode().Copy(v)
+		}
+	}
+	return b
+}
+
 // Build creates a list of 'socket_totals_node_role_OS_metric_node' objects using the
 // configuration stored in the builder.
 func (b *SocketTotalsNodeRoleOSMetricNodeListBuilder) Build() (list *SocketTotalsNodeRoleOSMetricNodeList, err error) {

@@ -38,8 +38,7 @@ func NewClusterMetric() *ClusterMetricBuilder {
 	return new(ClusterMetricBuilder)
 }
 
-// Total sets the value of the 'total' attribute
-// to the given value.
+// Total sets the value of the 'total' attribute to the given value.
 //
 // Numeric value and the unit used to measure it.
 //
@@ -64,8 +63,7 @@ func (b *ClusterMetricBuilder) Total(value *ValueBuilder) *ClusterMetricBuilder 
 	return b
 }
 
-// UpdatedTimestamp sets the value of the 'updated_timestamp' attribute
-// to the given value.
+// UpdatedTimestamp sets the value of the 'updated_timestamp' attribute to the given value.
 //
 //
 func (b *ClusterMetricBuilder) UpdatedTimestamp(value time.Time) *ClusterMetricBuilder {
@@ -73,8 +71,7 @@ func (b *ClusterMetricBuilder) UpdatedTimestamp(value time.Time) *ClusterMetricB
 	return b
 }
 
-// Used sets the value of the 'used' attribute
-// to the given value.
+// Used sets the value of the 'used' attribute to the given value.
 //
 // Numeric value and the unit used to measure it.
 //
@@ -127,9 +124,7 @@ func (b *ClusterMetricBuilder) Build() (object *ClusterMetric, err error) {
 			return
 		}
 	}
-	if b.updatedTimestamp != nil {
-		object.updatedTimestamp = b.updatedTimestamp
-	}
+	object.updatedTimestamp = b.updatedTimestamp
 	if b.used != nil {
 		object.used, err = b.used.Build()
 		if err != nil {

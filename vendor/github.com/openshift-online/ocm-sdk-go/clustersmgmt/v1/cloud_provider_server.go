@@ -21,8 +21,6 @@ package v1 // github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1
 
 import (
 	"context"
-	"encoding/json"
-	"io"
 	"net/http"
 
 	"github.com/golang/glog"
@@ -69,19 +67,6 @@ func (r *CloudProviderGetServerResponse) Status(value int) *CloudProviderGetServ
 	return r
 }
 
-// marshall is the method used internally to marshal responses for the
-// 'get' method.
-func (r *CloudProviderGetServerResponse) marshal(writer io.Writer) error {
-	var err error
-	encoder := json.NewEncoder(writer)
-	data, err := r.body.wrap()
-	if err != nil {
-		return err
-	}
-	err = encoder.Encode(data)
-	return err
-}
-
 // dispatchCloudProvider navigates the servers tree rooted at the given server
 // till it finds one that matches the given set of path segments, and then invokes
 // the corresponding server.
@@ -90,51 +75,32 @@ func dispatchCloudProvider(w http.ResponseWriter, r *http.Request, server CloudP
 		switch r.Method {
 		case "GET":
 			adaptCloudProviderGetRequest(w, r, server)
+			return
 		default:
 			errors.SendMethodNotAllowed(w, r)
 			return
 		}
-	} else {
-		switch segments[0] {
-		case "regions":
-			target := server.Regions()
-			if target == nil {
-				errors.SendNotFound(w, r)
-				return
-			}
-			dispatchCloudRegions(w, r, target, segments[1:])
-		default:
+	}
+	switch segments[0] {
+	case "regions":
+		target := server.Regions()
+		if target == nil {
 			errors.SendNotFound(w, r)
 			return
 		}
+		dispatchCloudRegions(w, r, target, segments[1:])
+	default:
+		errors.SendNotFound(w, r)
+		return
 	}
-}
-
-// readCloudProviderGetRequest reads the given HTTP requests and translates it
-// into an object of type CloudProviderGetServerRequest.
-func readCloudProviderGetRequest(r *http.Request) (*CloudProviderGetServerRequest, error) {
-	var err error
-	result := new(CloudProviderGetServerRequest)
-	return result, err
-}
-
-// writeCloudProviderGetResponse translates the given request object into an
-// HTTP response.
-func writeCloudProviderGetResponse(w http.ResponseWriter, r *CloudProviderGetServerResponse) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(r.status)
-	err := r.marshal(w)
-	if err != nil {
-		return err
-	}
-	return nil
 }
 
 // adaptCloudProviderGetRequest translates the given HTTP request into a call to
 // the corresponding method of the given server. Then it translates the
 // results returned by that method into an HTTP response.
 func adaptCloudProviderGetRequest(w http.ResponseWriter, r *http.Request, server CloudProviderServer) {
-	request, err := readCloudProviderGetRequest(r)
+	request := &CloudProviderGetServerRequest{}
+	err := readCloudProviderGetRequest(request, r)
 	if err != nil {
 		glog.Errorf(
 			"Can't read request for method '%s' and path '%s': %v",
@@ -143,7 +109,7 @@ func adaptCloudProviderGetRequest(w http.ResponseWriter, r *http.Request, server
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	response := new(CloudProviderGetServerResponse)
+	response := &CloudProviderGetServerResponse{}
 	response.status = 200
 	err = server.Get(r.Context(), request, response)
 	if err != nil {
@@ -154,7 +120,7 @@ func adaptCloudProviderGetRequest(w http.ResponseWriter, r *http.Request, server
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	err = writeCloudProviderGetResponse(w, response)
+	err = writeCloudProviderGetResponse(response, w)
 	if err != nil {
 		glog.Errorf(
 			"Can't write response for method '%s' and path '%s': %v",

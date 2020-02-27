@@ -105,8 +105,22 @@ func (o *FlavourNodes) GetMaster() (value int, ok bool) {
 	return
 }
 
+// FlavourNodesListKind is the name of the type used to represent list of objects of
+// type 'flavour_nodes'.
+const FlavourNodesListKind = "FlavourNodesList"
+
+// FlavourNodesListLinkKind is the name of the type used to represent links to list
+// of objects of type 'flavour_nodes'.
+const FlavourNodesListLinkKind = "FlavourNodesListLink"
+
+// FlavourNodesNilKind is the name of the type used to nil lists of objects of
+// type 'flavour_nodes'.
+const FlavourNodesListNilKind = "FlavourNodesListNil"
+
 // FlavourNodesList is a list of values of the 'flavour_nodes' type.
 type FlavourNodesList struct {
+	href  *string
+	link  bool
 	items []*FlavourNodes
 }
 

@@ -21,8 +21,6 @@ package v1 // github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1
 
 import (
 	"context"
-	"encoding/json"
-	"io"
 	"net/http"
 	"net/url"
 	"time"
@@ -41,36 +39,36 @@ type UserClient struct {
 }
 
 // NewUserClient creates a new client for the 'user'
-// resource using the given transport to sned the requests and receive the
+// resource using the given transport to send the requests and receive the
 // responses.
 func NewUserClient(transport http.RoundTripper, path string, metric string) *UserClient {
-	client := new(UserClient)
-	client.transport = transport
-	client.path = path
-	client.metric = metric
-	return client
+	return &UserClient{
+		transport: transport,
+		path:      path,
+		metric:    metric,
+	}
 }
 
 // Delete creates a request for the 'delete' method.
 //
 // Deletes the user.
 func (c *UserClient) Delete() *UserDeleteRequest {
-	request := new(UserDeleteRequest)
-	request.transport = c.transport
-	request.path = c.path
-	request.metric = c.metric
-	return request
+	return &UserDeleteRequest{
+		transport: c.transport,
+		path:      c.path,
+		metric:    c.metric,
+	}
 }
 
 // Get creates a request for the 'get' method.
 //
 // Retrieves the details of the user.
 func (c *UserClient) Get() *UserGetRequest {
-	request := new(UserGetRequest)
-	request.transport = c.transport
-	request.path = c.path
-	request.metric = c.metric
-	return request
+	return &UserGetRequest{
+		transport: c.transport,
+		path:      c.path,
+		metric:    c.metric,
+	}
 }
 
 // UserPollRequest is the request for the Poll method.
@@ -244,7 +242,7 @@ func (r *UserDeleteRequest) SendContext(ctx context.Context) (result *UserDelete
 		return
 	}
 	defer response.Body.Close()
-	result = new(UserDeleteResponse)
+	result = &UserDeleteResponse{}
 	result.status = response.StatusCode
 	result.header = response.Header
 	if result.status >= 400 {
@@ -339,7 +337,7 @@ func (r *UserGetRequest) SendContext(ctx context.Context) (result *UserGetRespon
 		return
 	}
 	defer response.Body.Close()
-	result = new(UserGetResponse)
+	result = &UserGetResponse{}
 	result.status = response.StatusCode
 	result.header = response.Header
 	if result.status >= 400 {
@@ -350,7 +348,7 @@ func (r *UserGetRequest) SendContext(ctx context.Context) (result *UserGetRespon
 		err = result.err
 		return
 	}
-	err = result.unmarshal(response.Body)
+	err = readUserGetResponse(result, response.Body)
 	if err != nil {
 		return
 	}
@@ -409,21 +407,4 @@ func (r *UserGetResponse) GetBody() (value *User, ok bool) {
 		value = r.body
 	}
 	return
-}
-
-// unmarshal is the method used internally to unmarshal responses to the
-// 'get' method.
-func (r *UserGetResponse) unmarshal(reader io.Reader) error {
-	var err error
-	decoder := json.NewDecoder(reader)
-	data := new(userData)
-	err = decoder.Decode(data)
-	if err != nil {
-		return err
-	}
-	r.body, err = data.unwrap()
-	if err != nil {
-		return err
-	}
-	return err
 }

@@ -37,6 +37,19 @@ func (b *FlavourListBuilder) Items(values ...*FlavourBuilder) *FlavourListBuilde
 	return b
 }
 
+// Copy copies the items of the given list into this builder, discarding any previous items.
+func (b *FlavourListBuilder) Copy(list *FlavourList) *FlavourListBuilder {
+	if list == nil || list.items == nil {
+		b.items = nil
+	} else {
+		b.items = make([]*FlavourBuilder, len(list.items))
+		for i, v := range list.items {
+			b.items[i] = NewFlavour().Copy(v)
+		}
+	}
+	return b
+}
+
 // Build creates a list of 'flavour' objects using the
 // configuration stored in the builder.
 func (b *FlavourListBuilder) Build() (list *FlavourList, err error) {

@@ -21,8 +21,6 @@ package v1 // github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1
 
 import (
 	"context"
-	"encoding/json"
-	"io"
 	"net/http"
 
 	"github.com/golang/glog"
@@ -63,19 +61,6 @@ func (r *SKUGetServerResponse) Status(value int) *SKUGetServerResponse {
 	return r
 }
 
-// marshall is the method used internally to marshal responses for the
-// 'get' method.
-func (r *SKUGetServerResponse) marshal(writer io.Writer) error {
-	var err error
-	encoder := json.NewEncoder(writer)
-	data, err := r.body.wrap()
-	if err != nil {
-		return err
-	}
-	err = encoder.Encode(data)
-	return err
-}
-
 // dispatchSKU navigates the servers tree rooted at the given server
 // till it finds one that matches the given set of path segments, and then invokes
 // the corresponding server.
@@ -84,44 +69,25 @@ func dispatchSKU(w http.ResponseWriter, r *http.Request, server SKUServer, segme
 		switch r.Method {
 		case "GET":
 			adaptSKUGetRequest(w, r, server)
+			return
 		default:
 			errors.SendMethodNotAllowed(w, r)
 			return
 		}
-	} else {
-		switch segments[0] {
-		default:
-			errors.SendNotFound(w, r)
-			return
-		}
 	}
-}
-
-// readSKUGetRequest reads the given HTTP requests and translates it
-// into an object of type SKUGetServerRequest.
-func readSKUGetRequest(r *http.Request) (*SKUGetServerRequest, error) {
-	var err error
-	result := new(SKUGetServerRequest)
-	return result, err
-}
-
-// writeSKUGetResponse translates the given request object into an
-// HTTP response.
-func writeSKUGetResponse(w http.ResponseWriter, r *SKUGetServerResponse) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(r.status)
-	err := r.marshal(w)
-	if err != nil {
-		return err
+	switch segments[0] {
+	default:
+		errors.SendNotFound(w, r)
+		return
 	}
-	return nil
 }
 
 // adaptSKUGetRequest translates the given HTTP request into a call to
 // the corresponding method of the given server. Then it translates the
 // results returned by that method into an HTTP response.
 func adaptSKUGetRequest(w http.ResponseWriter, r *http.Request, server SKUServer) {
-	request, err := readSKUGetRequest(r)
+	request := &SKUGetServerRequest{}
+	err := readSKUGetRequest(request, r)
 	if err != nil {
 		glog.Errorf(
 			"Can't read request for method '%s' and path '%s': %v",
@@ -130,7 +96,7 @@ func adaptSKUGetRequest(w http.ResponseWriter, r *http.Request, server SKUServer
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	response := new(SKUGetServerResponse)
+	response := &SKUGetServerResponse{}
 	response.status = 200
 	err = server.Get(r.Context(), request, response)
 	if err != nil {
@@ -141,7 +107,7 @@ func adaptSKUGetRequest(w http.ResponseWriter, r *http.Request, server SKUServer
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	err = writeSKUGetResponse(w, response)
+	err = writeSKUGetResponse(response, w)
 	if err != nil {
 		glog.Errorf(
 			"Can't write response for method '%s' and path '%s': %v",

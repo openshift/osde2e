@@ -42,17 +42,19 @@ var OSD *osd.OSD
 
 // RunTests initializes Ginkgo and runs the osde2e test suite.
 func RunTests() bool {
-	defer ginkgo.GinkgoRecover()
 	testing.Init()
-	t := ginkgo.GinkgoT()
 
-	runGinkgoTests(t)
+	if err := runGinkgoTests(); err != nil {
+		log.Printf("Tests failed: %v", err)
+		return false
+	}
 
-	return !t.Failed()
+	return true
 }
 
 // runGinkgoTests runs the osde2e test suite using Ginkgo.
-func runGinkgoTests(t ginkgo.GinkgoTInterface) {
+func runGinkgoTests() error {
+	defer ginkgo.GinkgoRecover()
 	var err error
 	gomega.RegisterFailHandler(ginkgo.Fail)
 
@@ -69,7 +71,7 @@ func runGinkgoTests(t ginkgo.GinkgoTInterface) {
 		log.Print("Found an existing Kubeconfig!")
 	} else {
 		if OSD, err = osd.New(cfg.OCM.Token, cfg.OCM.Env, cfg.OCM.Debug); err != nil {
-			t.Fatalf("could not setup OSD: %v", err)
+			return fmt.Errorf("could not setup OSD: %v", err)
 		}
 
 		metadata.Instance.SetEnvironment(cfg.OCM.Env)
@@ -79,18 +81,18 @@ func runGinkgoTests(t ginkgo.GinkgoTInterface) {
 			if enoughQuota, err := OSD.CheckQuota(); err != nil {
 				log.Printf("Failed to check if enough quota is available: %v", err)
 			} else if !enoughQuota {
-				t.Fatal("Currently not enough quota exists to run this test, failing...")
+				return fmt.Errorf("currently not enough quota exists to run this test")
 			}
 		}
 
 		// configure cluster and upgrade versions
 		if err = ChooseVersions(OSD); err != nil {
-			t.Fatalf("failed to configure versions: %v", err)
+			return fmt.Errorf("failed to configure versions: %v", err)
 		}
 
 		if state.Upgrade.UpgradeVersionEqualToInstallVersion {
 			log.Printf("Install version and upgrade version are the same. Skipping tests.")
-			return
+			return nil
 		}
 	}
 
@@ -102,7 +104,7 @@ func runGinkgoTests(t ginkgo.GinkgoTInterface) {
 	if !cfg.DryRun {
 		log.Println("Running e2e tests...")
 
-		testsPassed := runTestsInPhase(t, "install", "OSD e2e suite")
+		testsPassed := runTestsInPhase("install", "OSD e2e suite")
 
 		if testsPassed {
 			// upgrade cluster if requested
@@ -110,12 +112,12 @@ func runGinkgoTests(t ginkgo.GinkgoTInterface) {
 				if state.Kubeconfig.Contents != nil {
 					if err = upgrade.RunUpgrade(OSD); err != nil {
 						events.RecordEvent(events.UpgradeFailed)
-						t.Errorf("error performing upgrade: %v", err)
+						return fmt.Errorf("error performing upgrade: %v", err)
 					}
 					events.RecordEvent(events.UpgradeSuccessful)
 
 					log.Println("Running e2e tests POST-UPGRADE...")
-					runTestsInPhase(t, "upgrade", "OSD e2e suite post-upgrade")
+					runTestsInPhase("upgrade", "OSD e2e suite post-upgrade")
 				} else {
 					log.Println("No Kubeconfig found from initial cluster setup. Unable to run upgrade.")
 				}
@@ -126,14 +128,14 @@ func runGinkgoTests(t ginkgo.GinkgoTInterface) {
 
 		if cfg.ReportDir != "" {
 			if err = metadata.Instance.WriteToJSON(cfg.ReportDir); err != nil {
-				t.Errorf("error while writing the custom metadata: %v", err)
+				return fmt.Errorf("error while writing the custom metadata: %v", err)
 			}
 
 			checkBeforeMetricsGeneration()
 
 			prometheusFilename, err := NewMetrics().WritePrometheusFile(cfg.ReportDir)
 			if err != nil {
-				t.Errorf("error while writing prometheus metrics: %v", err)
+				return fmt.Errorf("error while writing prometheus metrics: %v", err)
 			}
 
 			if cfg.Tests.UploadMetrics {
@@ -141,7 +143,7 @@ func runGinkgoTests(t ginkgo.GinkgoTInterface) {
 					log.Printf("Job %s is a rehearsal, so metrics upload is being skipped.", cfg.JobName)
 				} else {
 					if err := uploadFileToMetricsBucket(filepath.Join(cfg.ReportDir, prometheusFilename)); err != nil {
-						t.Errorf("error while uploading prometheus metrics: %v", err)
+						return fmt.Errorf("error while uploading prometheus metrics: %v", err)
 					}
 				}
 			}
@@ -151,7 +153,7 @@ func runGinkgoTests(t ginkgo.GinkgoTInterface) {
 			if cfg.Cluster.DestroyAfterTest {
 				log.Printf("Destroying cluster '%s'...", state.Cluster.ID)
 				if err = OSD.DeleteCluster(state.Cluster.ID); err != nil {
-					t.Errorf("error deleting cluster: %s", err.Error())
+					return fmt.Errorf("error deleting cluster: %s", err.Error())
 				}
 			} else {
 				log.Printf("For debugging, please look for cluster ID %s in environment %s", state.Cluster.ID, cfg.OCM.Env)
@@ -173,9 +175,11 @@ func runGinkgoTests(t ginkgo.GinkgoTInterface) {
 			}
 		}
 	}
+
+	return nil
 }
 
-func runTestsInPhase(t ginkgo.GinkgoTInterface, phase string, description string) bool {
+func runTestsInPhase(phase string, description string) bool {
 	cfg := config.Instance
 	state := state.Instance
 
@@ -183,16 +187,18 @@ func runTestsInPhase(t ginkgo.GinkgoTInterface, phase string, description string
 	phaseDirectory := filepath.Join(cfg.ReportDir, phase)
 	if _, err := os.Stat(phaseDirectory); os.IsNotExist(err) {
 		if err := os.Mkdir(phaseDirectory, os.FileMode(0755)); err != nil {
-			t.Fatalf("error while creating phase directory %s", phaseDirectory)
+			log.Printf("error while creating phase directory %s", phaseDirectory)
+			return false
 		}
 	}
 	phaseReportPath := filepath.Join(phaseDirectory, fmt.Sprintf("junit_%v.xml", cfg.Suffix))
 	phaseReporter := reporters.NewJUnitReporter(phaseReportPath)
-	ginkgoPassed := ginkgo.RunSpecsWithDefaultAndCustomReporters(t, description, []ginkgo.Reporter{phaseReporter})
+	ginkgoPassed := ginkgo.RunSpecsWithDefaultAndCustomReporters(ginkgo.GinkgoT(), description, []ginkgo.Reporter{phaseReporter})
 
 	files, err := ioutil.ReadDir(phaseDirectory)
 	if err != nil {
-		t.Fatalf("error reading phase directory: %s", err.Error())
+		log.Printf("error reading phase directory: %s", err.Error())
+		return false
 	}
 
 	for _, file := range files {
@@ -201,13 +207,15 @@ func runTestsInPhase(t ginkgo.GinkgoTInterface, phase string, description string
 			if junitFileRegex.MatchString(file.Name()) {
 				data, err := ioutil.ReadFile(filepath.Join(phaseDirectory, file.Name()))
 				if err != nil {
-					t.Fatalf("error opening junit file %s: %s", file.Name(), err.Error())
+					log.Printf("error opening junit file %s: %s", file.Name(), err.Error())
+					return false
 				}
 				// Use Ginkgo's JUnitTestSuite to unmarshal the JUnit XML file
 				var testSuite reporters.JUnitTestSuite
 
 				if err = xml.Unmarshal(data, &testSuite); err != nil {
-					t.Fatalf("error unmarshalling junit xml: %s", err.Error())
+					log.Printf("error unmarshalling junit xml: %s", err.Error())
+					return false
 				}
 
 				for i, testcase := range testSuite.TestCases {
@@ -218,7 +226,8 @@ func runTestsInPhase(t ginkgo.GinkgoTInterface, phase string, description string
 
 				err = ioutil.WriteFile(filepath.Join(phaseDirectory, file.Name()), data, 0644)
 				if err != nil {
-					t.Fatalf("error writing to junit file: %s", err.Error())
+					log.Printf("error writing to junit file: %s", err.Error())
+					return false
 				}
 			}
 		}
@@ -231,7 +240,8 @@ func runTestsInPhase(t ginkgo.GinkgoTInterface, phase string, description string
 
 	files, err = ioutil.ReadDir(cfg.ReportDir)
 	if err != nil {
-		t.Fatalf("error reading phase directory: %s", err.Error())
+		log.Printf("error reading phase directory: %s", err.Error())
+		return false
 	}
 
 	for _, file := range files {
@@ -239,7 +249,8 @@ func runTestsInPhase(t ginkgo.GinkgoTInterface, phase string, description string
 		if logFileRegex.MatchString(file.Name()) {
 			data, err := ioutil.ReadFile(filepath.Join(cfg.ReportDir, file.Name()))
 			if err != nil {
-				t.Fatalf("error opening log file %s: %s", file.Name(), err.Error())
+				log.Printf("error opening log file %s: %s", file.Name(), err.Error())
+				return false
 			}
 			for name, matchRegex := range logMetricsRegexs {
 				matches := matchRegex.FindAll(data, -1)

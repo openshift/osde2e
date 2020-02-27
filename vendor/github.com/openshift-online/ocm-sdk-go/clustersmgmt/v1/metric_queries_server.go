@@ -34,6 +34,11 @@ type MetricQueriesServer interface {
 	// capacity in the cluster by node role and operating system.
 	CPUTotalByNodeRolesOS() CPUTotalByNodeRolesOSMetricQueryServer
 
+	// ClusterOperators returns the target 'cluster_operators_metric_query' resource.
+	//
+	// Reference to the resource that retrieves the cluster operator status metrics.
+	ClusterOperators() ClusterOperatorsMetricQueryServer
+
 	// SocketTotalByNodeRolesOS returns the target 'socket_total_by_node_roles_OS_metric_query' resource.
 	//
 	// Reference to the resource that retrieves the total socket
@@ -51,25 +56,31 @@ func dispatchMetricQueries(w http.ResponseWriter, r *http.Request, server Metric
 			errors.SendMethodNotAllowed(w, r)
 			return
 		}
-	} else {
-		switch segments[0] {
-		case "cpu_total_by_node_roles_os":
-			target := server.CPUTotalByNodeRolesOS()
-			if target == nil {
-				errors.SendNotFound(w, r)
-				return
-			}
-			dispatchCPUTotalByNodeRolesOSMetricQuery(w, r, target, segments[1:])
-		case "socket_total_by_node_roles_os":
-			target := server.SocketTotalByNodeRolesOS()
-			if target == nil {
-				errors.SendNotFound(w, r)
-				return
-			}
-			dispatchSocketTotalByNodeRolesOSMetricQuery(w, r, target, segments[1:])
-		default:
+	}
+	switch segments[0] {
+	case "cpu_total_by_node_roles_os":
+		target := server.CPUTotalByNodeRolesOS()
+		if target == nil {
 			errors.SendNotFound(w, r)
 			return
 		}
+		dispatchCPUTotalByNodeRolesOSMetricQuery(w, r, target, segments[1:])
+	case "cluster_operators":
+		target := server.ClusterOperators()
+		if target == nil {
+			errors.SendNotFound(w, r)
+			return
+		}
+		dispatchClusterOperatorsMetricQuery(w, r, target, segments[1:])
+	case "socket_total_by_node_roles_os":
+		target := server.SocketTotalByNodeRolesOS()
+		if target == nil {
+			errors.SendNotFound(w, r)
+			return
+		}
+		dispatchSocketTotalByNodeRolesOSMetricQuery(w, r, target, segments[1:])
+	default:
+		errors.SendNotFound(w, r)
+		return
 	}
 }

@@ -81,8 +81,22 @@ func (o *AdminCredentials) GetUser() (value string, ok bool) {
 	return
 }
 
+// AdminCredentialsListKind is the name of the type used to represent list of objects of
+// type 'admin_credentials'.
+const AdminCredentialsListKind = "AdminCredentialsList"
+
+// AdminCredentialsListLinkKind is the name of the type used to represent links to list
+// of objects of type 'admin_credentials'.
+const AdminCredentialsListLinkKind = "AdminCredentialsListLink"
+
+// AdminCredentialsNilKind is the name of the type used to nil lists of objects of
+// type 'admin_credentials'.
+const AdminCredentialsListNilKind = "AdminCredentialsListNil"
+
 // AdminCredentialsList is a list of values of the 'admin_credentials' type.
 type AdminCredentialsList struct {
+	href  *string
+	link  bool
 	items []*AdminCredentials
 }
 

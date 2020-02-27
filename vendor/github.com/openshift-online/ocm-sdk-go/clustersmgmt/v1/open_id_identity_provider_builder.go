@@ -37,8 +37,7 @@ func NewOpenIDIdentityProvider() *OpenIDIdentityProviderBuilder {
 	return new(OpenIDIdentityProviderBuilder)
 }
 
-// CA sets the value of the 'CA' attribute
-// to the given value.
+// CA sets the value of the 'CA' attribute to the given value.
 //
 //
 func (b *OpenIDIdentityProviderBuilder) CA(value string) *OpenIDIdentityProviderBuilder {
@@ -46,8 +45,7 @@ func (b *OpenIDIdentityProviderBuilder) CA(value string) *OpenIDIdentityProvider
 	return b
 }
 
-// URLS sets the value of the 'URLS' attribute
-// to the given value.
+// URLS sets the value of the 'URLS' attribute to the given value.
 //
 // _OpenID_ identity provider URLs.
 func (b *OpenIDIdentityProviderBuilder) URLS(value *OpenIDURLsBuilder) *OpenIDIdentityProviderBuilder {
@@ -55,8 +53,7 @@ func (b *OpenIDIdentityProviderBuilder) URLS(value *OpenIDURLsBuilder) *OpenIDId
 	return b
 }
 
-// Claims sets the value of the 'claims' attribute
-// to the given value.
+// Claims sets the value of the 'claims' attribute to the given value.
 //
 // _OpenID_ identity provider claims.
 func (b *OpenIDIdentityProviderBuilder) Claims(value *OpenIDClaimsBuilder) *OpenIDIdentityProviderBuilder {
@@ -64,8 +61,7 @@ func (b *OpenIDIdentityProviderBuilder) Claims(value *OpenIDClaimsBuilder) *Open
 	return b
 }
 
-// ClientID sets the value of the 'client_ID' attribute
-// to the given value.
+// ClientID sets the value of the 'client_ID' attribute to the given value.
 //
 //
 func (b *OpenIDIdentityProviderBuilder) ClientID(value string) *OpenIDIdentityProviderBuilder {
@@ -73,8 +69,7 @@ func (b *OpenIDIdentityProviderBuilder) ClientID(value string) *OpenIDIdentityPr
 	return b
 }
 
-// ClientSecret sets the value of the 'client_secret' attribute
-// to the given value.
+// ClientSecret sets the value of the 'client_secret' attribute to the given value.
 //
 //
 func (b *OpenIDIdentityProviderBuilder) ClientSecret(value string) *OpenIDIdentityProviderBuilder {
@@ -82,8 +77,7 @@ func (b *OpenIDIdentityProviderBuilder) ClientSecret(value string) *OpenIDIdenti
 	return b
 }
 
-// ExtraAuthorizeParameters sets the value of the 'extra_authorize_parameters' attribute
-// to the given value.
+// ExtraAuthorizeParameters sets the value of the 'extra_authorize_parameters' attribute to the given value.
 //
 //
 func (b *OpenIDIdentityProviderBuilder) ExtraAuthorizeParameters(value map[string]string) *OpenIDIdentityProviderBuilder {
@@ -91,8 +85,7 @@ func (b *OpenIDIdentityProviderBuilder) ExtraAuthorizeParameters(value map[strin
 	return b
 }
 
-// ExtraScopes sets the value of the 'extra_scopes' attribute
-// to the given values.
+// ExtraScopes sets the value of the 'extra_scopes' attribute to the given values.
 //
 //
 func (b *OpenIDIdentityProviderBuilder) ExtraScopes(values ...string) *OpenIDIdentityProviderBuilder {
@@ -121,13 +114,13 @@ func (b *OpenIDIdentityProviderBuilder) Copy(object *OpenIDIdentityProvider) *Op
 	b.clientSecret = object.clientSecret
 	if len(object.extraAuthorizeParameters) > 0 {
 		b.extraAuthorizeParameters = make(map[string]string)
-		for key, value := range object.extraAuthorizeParameters {
-			b.extraAuthorizeParameters[key] = value
+		for k, v := range object.extraAuthorizeParameters {
+			b.extraAuthorizeParameters[k] = v
 		}
 	} else {
 		b.extraAuthorizeParameters = nil
 	}
-	if len(object.extraScopes) > 0 {
+	if object.extraScopes != nil {
 		b.extraScopes = make([]string, len(object.extraScopes))
 		copy(b.extraScopes, object.extraScopes)
 	} else {
@@ -139,9 +132,7 @@ func (b *OpenIDIdentityProviderBuilder) Copy(object *OpenIDIdentityProvider) *Op
 // Build creates a 'open_ID_identity_provider' object using the configuration stored in the builder.
 func (b *OpenIDIdentityProviderBuilder) Build() (object *OpenIDIdentityProvider, err error) {
 	object = new(OpenIDIdentityProvider)
-	if b.ca != nil {
-		object.ca = b.ca
-	}
+	object.ca = b.ca
 	if b.urls != nil {
 		object.urls, err = b.urls.Build()
 		if err != nil {
@@ -154,16 +145,12 @@ func (b *OpenIDIdentityProviderBuilder) Build() (object *OpenIDIdentityProvider,
 			return
 		}
 	}
-	if b.clientID != nil {
-		object.clientID = b.clientID
-	}
-	if b.clientSecret != nil {
-		object.clientSecret = b.clientSecret
-	}
+	object.clientID = b.clientID
+	object.clientSecret = b.clientSecret
 	if b.extraAuthorizeParameters != nil {
 		object.extraAuthorizeParameters = make(map[string]string)
-		for key, value := range b.extraAuthorizeParameters {
-			object.extraAuthorizeParameters[key] = value
+		for k, v := range b.extraAuthorizeParameters {
+			object.extraAuthorizeParameters[k] = v
 		}
 	}
 	if b.extraScopes != nil {

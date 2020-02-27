@@ -209,8 +209,22 @@ func (o *ReservedResource) GetUpdatedAt() (value time.Time, ok bool) {
 	return
 }
 
+// ReservedResourceListKind is the name of the type used to represent list of objects of
+// type 'reserved_resource'.
+const ReservedResourceListKind = "ReservedResourceList"
+
+// ReservedResourceListLinkKind is the name of the type used to represent links to list
+// of objects of type 'reserved_resource'.
+const ReservedResourceListLinkKind = "ReservedResourceListLink"
+
+// ReservedResourceNilKind is the name of the type used to nil lists of objects of
+// type 'reserved_resource'.
+const ReservedResourceListNilKind = "ReservedResourceListNil"
+
 // ReservedResourceList is a list of values of the 'reserved_resource' type.
 type ReservedResourceList struct {
+	href  *string
+	link  bool
 	items []*ReservedResource
 }
 

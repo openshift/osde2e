@@ -36,8 +36,7 @@ func NewClusterMetrics() *ClusterMetricsBuilder {
 	return new(ClusterMetricsBuilder)
 }
 
-// CPU sets the value of the 'CPU' attribute
-// to the given value.
+// CPU sets the value of the 'CPU' attribute to the given value.
 //
 // Metric describing the total and used amount of some resource (like RAM, CPU and storage) in
 // a cluster.
@@ -46,8 +45,7 @@ func (b *ClusterMetricsBuilder) CPU(value *ClusterMetricBuilder) *ClusterMetrics
 	return b
 }
 
-// ComputeNodesCPU sets the value of the 'compute_nodes_CPU' attribute
-// to the given value.
+// ComputeNodesCPU sets the value of the 'compute_nodes_CPU' attribute to the given value.
 //
 // Metric describing the total and used amount of some resource (like RAM, CPU and storage) in
 // a cluster.
@@ -56,8 +54,7 @@ func (b *ClusterMetricsBuilder) ComputeNodesCPU(value *ClusterMetricBuilder) *Cl
 	return b
 }
 
-// ComputeNodesMemory sets the value of the 'compute_nodes_memory' attribute
-// to the given value.
+// ComputeNodesMemory sets the value of the 'compute_nodes_memory' attribute to the given value.
 //
 // Metric describing the total and used amount of some resource (like RAM, CPU and storage) in
 // a cluster.
@@ -66,8 +63,7 @@ func (b *ClusterMetricsBuilder) ComputeNodesMemory(value *ClusterMetricBuilder) 
 	return b
 }
 
-// Memory sets the value of the 'memory' attribute
-// to the given value.
+// Memory sets the value of the 'memory' attribute to the given value.
 //
 // Metric describing the total and used amount of some resource (like RAM, CPU and storage) in
 // a cluster.
@@ -76,8 +72,7 @@ func (b *ClusterMetricsBuilder) Memory(value *ClusterMetricBuilder) *ClusterMetr
 	return b
 }
 
-// Nodes sets the value of the 'nodes' attribute
-// to the given value.
+// Nodes sets the value of the 'nodes' attribute to the given value.
 //
 // Counts of different classes of nodes inside a cluster.
 func (b *ClusterMetricsBuilder) Nodes(value *ClusterNodesBuilder) *ClusterMetricsBuilder {
@@ -85,8 +80,7 @@ func (b *ClusterMetricsBuilder) Nodes(value *ClusterNodesBuilder) *ClusterMetric
 	return b
 }
 
-// Storage sets the value of the 'storage' attribute
-// to the given value.
+// Storage sets the value of the 'storage' attribute to the given value.
 //
 // Metric describing the total and used amount of some resource (like RAM, CPU and storage) in
 // a cluster.

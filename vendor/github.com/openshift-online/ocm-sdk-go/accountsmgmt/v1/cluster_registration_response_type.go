@@ -130,8 +130,22 @@ func (o *ClusterRegistrationResponse) GetExpiresAt() (value string, ok bool) {
 	return
 }
 
+// ClusterRegistrationResponseListKind is the name of the type used to represent list of objects of
+// type 'cluster_registration_response'.
+const ClusterRegistrationResponseListKind = "ClusterRegistrationResponseList"
+
+// ClusterRegistrationResponseListLinkKind is the name of the type used to represent links to list
+// of objects of type 'cluster_registration_response'.
+const ClusterRegistrationResponseListLinkKind = "ClusterRegistrationResponseListLink"
+
+// ClusterRegistrationResponseNilKind is the name of the type used to nil lists of objects of
+// type 'cluster_registration_response'.
+const ClusterRegistrationResponseListNilKind = "ClusterRegistrationResponseListNil"
+
 // ClusterRegistrationResponseList is a list of values of the 'cluster_registration_response' type.
 type ClusterRegistrationResponseList struct {
+	href  *string
+	link  bool
 	items []*ClusterRegistrationResponse
 }
 

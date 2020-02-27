@@ -37,6 +37,19 @@ func (b *AddOnInstallationListBuilder) Items(values ...*AddOnInstallationBuilder
 	return b
 }
 
+// Copy copies the items of the given list into this builder, discarding any previous items.
+func (b *AddOnInstallationListBuilder) Copy(list *AddOnInstallationList) *AddOnInstallationListBuilder {
+	if list == nil || list.items == nil {
+		b.items = nil
+	} else {
+		b.items = make([]*AddOnInstallationBuilder, len(list.items))
+		for i, v := range list.items {
+			b.items[i] = NewAddOnInstallation().Copy(v)
+		}
+	}
+	return b
+}
+
 // Build creates a list of 'add_on_installation' objects using the
 // configuration stored in the builder.
 func (b *AddOnInstallationListBuilder) Build() (list *AddOnInstallationList, err error) {

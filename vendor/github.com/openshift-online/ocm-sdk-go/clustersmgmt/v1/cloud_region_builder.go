@@ -54,8 +54,7 @@ func (b *CloudRegionBuilder) Link(value bool) *CloudRegionBuilder {
 	return b
 }
 
-// CloudProvider sets the value of the 'cloud_provider' attribute
-// to the given value.
+// CloudProvider sets the value of the 'cloud_provider' attribute to the given value.
 //
 // Cloud provider.
 func (b *CloudRegionBuilder) CloudProvider(value *CloudProviderBuilder) *CloudRegionBuilder {
@@ -63,8 +62,7 @@ func (b *CloudRegionBuilder) CloudProvider(value *CloudProviderBuilder) *CloudRe
 	return b
 }
 
-// DisplayName sets the value of the 'display_name' attribute
-// to the given value.
+// DisplayName sets the value of the 'display_name' attribute to the given value.
 //
 //
 func (b *CloudRegionBuilder) DisplayName(value string) *CloudRegionBuilder {
@@ -72,8 +70,7 @@ func (b *CloudRegionBuilder) DisplayName(value string) *CloudRegionBuilder {
 	return b
 }
 
-// Name sets the value of the 'name' attribute
-// to the given value.
+// Name sets the value of the 'name' attribute to the given value.
 //
 //
 func (b *CloudRegionBuilder) Name(value string) *CloudRegionBuilder {
@@ -111,11 +108,7 @@ func (b *CloudRegionBuilder) Build() (object *CloudRegion, err error) {
 			return
 		}
 	}
-	if b.displayName != nil {
-		object.displayName = b.displayName
-	}
-	if b.name != nil {
-		object.name = b.name
-	}
+	object.displayName = b.displayName
+	object.name = b.name
 	return
 }

@@ -34,6 +34,7 @@ import (
 	"github.com/openshift-online/ocm-sdk-go/accountsmgmt"
 	"github.com/openshift-online/ocm-sdk-go/authorizations"
 	"github.com/openshift-online/ocm-sdk-go/clustersmgmt"
+	"github.com/openshift-online/ocm-sdk-go/servicelogs"
 )
 
 // Default values:
@@ -56,22 +57,28 @@ var DefaultScopes = []string{
 // function instead.
 type ConnectionBuilder struct {
 	// Basic attributes:
-	logger       Logger
-	trustedCAs   *x509.CertPool
-	insecure     bool
-	tokenURL     string
-	clientID     string
-	clientSecret string
-	apiURL       string
-	agent        string
-	user         string
-	password     string
-	tokens       []string
-	scopes       []string
+	logger           Logger
+	trustedCAs       *x509.CertPool
+	insecure         bool
+	tokenURL         string
+	clientID         string
+	clientSecret     string
+	apiURL           string
+	agent            string
+	user             string
+	password         string
+	tokens           []string
+	scopes           []string
+	transportWrapper TransportWrapper
 
 	// Metrics:
 	subsystem string
 }
+
+// TransportWrapper is a wrapper for a transport of type http.RoundTripper.
+// Creating a transport wrapper, enables to preform actions and manipulations on the transport
+// request and response.
+type TransportWrapper func(http.RoundTripper) http.RoundTripper
 
 // Connection contains the data needed to connect to the `api.openshift.com`. Don't create instances
 // of this type directly, use the builder instead.
@@ -254,6 +261,13 @@ func (b *ConnectionBuilder) Insecure(flag bool) *ConnectionBuilder {
 	return b
 }
 
+// TransportWrapper allows setting a transportWrapper layer into the connection for capturing and
+// manipulating the request or response.
+func (b *ConnectionBuilder) TransportWrapper(transportWrapper TransportWrapper) *ConnectionBuilder {
+	b.transportWrapper = transportWrapper
+	return b
+}
+
 // Metrics sets the name of the subsystem that will be used by the connection to register metrics
 // with Prometheus. If this isn't explicitly specified, or if it is an empty string, then no metrics
 // will be registered. For example, if the value is `api_outbound` then the following metrics will
@@ -301,7 +315,7 @@ func (b *ConnectionBuilder) Insecure(flag bool) *ConnectionBuilder {
 // code, for example if it wasn't possible to open the connection, or if there was a timeout waiting
 // for the response.
 //
-// Note that setting this attribute is not enougth to have metrics published, you also need to
+// Note that setting this attribute is not enough to have metrics published, you also need to
 // create and start a metrics server, as described in the documentation of the Prometheus library.
 func (b *ConnectionBuilder) Metrics(value string) *ConnectionBuilder {
 	b.subsystem = value
@@ -453,15 +467,7 @@ func (b *ConnectionBuilder) BuildContext(ctx context.Context) (connection *Conne
 	}
 
 	// Create the HTTP client:
-	// #nosec 402
-	client := &http.Client{
-		Transport: &http.Transport{
-			TLSClientConfig: &tls.Config{
-				InsecureSkipVerify: b.insecure,
-				RootCAs:            b.trustedCAs,
-			},
-		},
-	}
+	client := &http.Client{Transport: b.createTransport()}
 
 	// Allocate and populate the connection object:
 	connection = &Connection{
@@ -497,12 +503,26 @@ func (b *ConnectionBuilder) BuildContext(ctx context.Context) (connection *Conne
 	return
 }
 
+func (b *ConnectionBuilder) createTransport() http.RoundTripper {
+	var transport http.RoundTripper
+	// #nosec 402
+	transport = &http.Transport{
+		TLSClientConfig: &tls.Config{
+			InsecureSkipVerify: b.insecure,
+			RootCAs:            b.trustedCAs,
+		}}
+	if b.transportWrapper != nil {
+		transport = b.transportWrapper(transport)
+	}
+	return transport
+}
+
 // Logger returns the logger that is used by the connection.
 func (c *Connection) Logger() Logger {
 	return c.logger
 }
 
-// TokenURL returns the URL that the connectionis using request OpenID access tokens.
+// TokenURL returns the URL that the connection is using request OpenID access tokens.
 func (c *Connection) TokenURL() string {
 	return c.tokenURL.String()
 }
@@ -561,7 +581,12 @@ func (c *Connection) Authorizations() *authorizations.Client {
 	return authorizations.NewClient(c, "/api/authorizations", "/api/authorizations")
 }
 
-// Close releases all the resources used by the connection. It is very important to allways close it
+// ServiceLogs returns the client for the logs service.
+func (c *Connection) ServiceLogs() *servicelogs.Client {
+	return servicelogs.NewClient(c, "/api/service_logs", "/api/service_logs")
+}
+
+// Close releases all the resources used by the connection. It is very important to always close it
 // once it is no longer needed, as otherwise those resources may be leaked. Trying to use a
 // connection that has been closed will result in a error.
 func (c *Connection) Close() error {

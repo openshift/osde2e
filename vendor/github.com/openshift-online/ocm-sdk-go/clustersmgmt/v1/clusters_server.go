@@ -21,13 +21,10 @@ package v1 // github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1
 
 import (
 	"context"
-	"encoding/json"
-	"io"
 	"net/http"
 
 	"github.com/golang/glog"
 	"github.com/openshift-online/ocm-sdk-go/errors"
-	"github.com/openshift-online/ocm-sdk-go/helpers"
 )
 
 // ClustersServer represents the interface the manages the 'clusters' resource.
@@ -78,23 +75,6 @@ func (r *ClustersAddServerRequest) GetBody() (value *Cluster, ok bool) {
 	return
 }
 
-// unmarshal is the method used internally to unmarshal request to the
-// 'add' method.
-func (r *ClustersAddServerRequest) unmarshal(reader io.Reader) error {
-	var err error
-	decoder := json.NewDecoder(reader)
-	data := new(clusterData)
-	err = decoder.Decode(data)
-	if err != nil {
-		return err
-	}
-	r.body, err = data.unwrap()
-	if err != nil {
-		return err
-	}
-	return err
-}
-
 // ClustersAddServerResponse is the response for the 'add' method.
 type ClustersAddServerResponse struct {
 	status int
@@ -114,19 +94,6 @@ func (r *ClustersAddServerResponse) Body(value *Cluster) *ClustersAddServerRespo
 func (r *ClustersAddServerResponse) Status(value int) *ClustersAddServerResponse {
 	r.status = value
 	return r
-}
-
-// marshall is the method used internally to marshal responses for the
-// 'add' method.
-func (r *ClustersAddServerResponse) marshal(writer io.Writer) error {
-	var err error
-	encoder := json.NewEncoder(writer)
-	data, err := r.body.wrap()
-	if err != nil {
-		return err
-	}
-	err = encoder.Encode(data)
-	return err
 }
 
 // ClustersListServerRequest is the request for the 'list' method.
@@ -328,32 +295,6 @@ func (r *ClustersListServerResponse) Status(value int) *ClustersListServerRespon
 	return r
 }
 
-// marshall is the method used internally to marshal responses for the
-// 'list' method.
-func (r *ClustersListServerResponse) marshal(writer io.Writer) error {
-	var err error
-	encoder := json.NewEncoder(writer)
-	data := new(clustersListServerResponseData)
-	data.Items, err = r.items.wrap()
-	if err != nil {
-		return err
-	}
-	data.Page = r.page
-	data.Size = r.size
-	data.Total = r.total
-	err = encoder.Encode(data)
-	return err
-}
-
-// clustersListServerResponseData is the structure used internally to write the request of the
-// 'list' method.
-type clustersListServerResponseData struct {
-	Items clusterListData "json:\"items,omitempty\""
-	Page  *int            "json:\"page,omitempty\""
-	Size  *int            "json:\"size,omitempty\""
-	Total *int            "json:\"total,omitempty\""
-}
-
 // dispatchClusters navigates the servers tree rooted at the given server
 // till it finds one that matches the given set of path segments, and then invokes
 // the corresponding server.
@@ -362,54 +303,32 @@ func dispatchClusters(w http.ResponseWriter, r *http.Request, server ClustersSer
 		switch r.Method {
 		case "POST":
 			adaptClustersAddRequest(w, r, server)
+			return
 		case "GET":
 			adaptClustersListRequest(w, r, server)
+			return
 		default:
 			errors.SendMethodNotAllowed(w, r)
 			return
 		}
-	} else {
-		switch segments[0] {
-		default:
-			target := server.Cluster(segments[0])
-			if target == nil {
-				errors.SendNotFound(w, r)
-				return
-			}
-			dispatchCluster(w, r, target, segments[1:])
+	}
+	switch segments[0] {
+	default:
+		target := server.Cluster(segments[0])
+		if target == nil {
+			errors.SendNotFound(w, r)
+			return
 		}
+		dispatchCluster(w, r, target, segments[1:])
 	}
-}
-
-// readClustersAddRequest reads the given HTTP requests and translates it
-// into an object of type ClustersAddServerRequest.
-func readClustersAddRequest(r *http.Request) (*ClustersAddServerRequest, error) {
-	var err error
-	result := new(ClustersAddServerRequest)
-	err = result.unmarshal(r.Body)
-	if err != nil {
-		return nil, err
-	}
-	return result, err
-}
-
-// writeClustersAddResponse translates the given request object into an
-// HTTP response.
-func writeClustersAddResponse(w http.ResponseWriter, r *ClustersAddServerResponse) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(r.status)
-	err := r.marshal(w)
-	if err != nil {
-		return err
-	}
-	return nil
 }
 
 // adaptClustersAddRequest translates the given HTTP request into a call to
 // the corresponding method of the given server. Then it translates the
 // results returned by that method into an HTTP response.
 func adaptClustersAddRequest(w http.ResponseWriter, r *http.Request, server ClustersServer) {
-	request, err := readClustersAddRequest(r)
+	request := &ClustersAddServerRequest{}
+	err := readClustersAddRequest(request, r)
 	if err != nil {
 		glog.Errorf(
 			"Can't read request for method '%s' and path '%s': %v",
@@ -418,7 +337,7 @@ func adaptClustersAddRequest(w http.ResponseWriter, r *http.Request, server Clus
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	response := new(ClustersAddServerResponse)
+	response := &ClustersAddServerResponse{}
 	response.status = 201
 	err = server.Add(r.Context(), request, response)
 	if err != nil {
@@ -429,7 +348,7 @@ func adaptClustersAddRequest(w http.ResponseWriter, r *http.Request, server Clus
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	err = writeClustersAddResponse(w, response)
+	err = writeClustersAddResponse(response, w)
 	if err != nil {
 		glog.Errorf(
 			"Can't write response for method '%s' and path '%s': %v",
@@ -439,54 +358,12 @@ func adaptClustersAddRequest(w http.ResponseWriter, r *http.Request, server Clus
 	}
 }
 
-// readClustersListRequest reads the given HTTP requests and translates it
-// into an object of type ClustersListServerRequest.
-func readClustersListRequest(r *http.Request) (*ClustersListServerRequest, error) {
-	var err error
-	result := new(ClustersListServerRequest)
-	query := r.URL.Query()
-	result.order, err = helpers.ParseString(query, "order")
-	if err != nil {
-		return nil, err
-	}
-	result.page, err = helpers.ParseInteger(query, "page")
-	if err != nil {
-		return nil, err
-	}
-	if result.page == nil {
-		result.page = helpers.NewInteger(1)
-	}
-	result.search, err = helpers.ParseString(query, "search")
-	if err != nil {
-		return nil, err
-	}
-	result.size, err = helpers.ParseInteger(query, "size")
-	if err != nil {
-		return nil, err
-	}
-	if result.size == nil {
-		result.size = helpers.NewInteger(100)
-	}
-	return result, err
-}
-
-// writeClustersListResponse translates the given request object into an
-// HTTP response.
-func writeClustersListResponse(w http.ResponseWriter, r *ClustersListServerResponse) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(r.status)
-	err := r.marshal(w)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
 // adaptClustersListRequest translates the given HTTP request into a call to
 // the corresponding method of the given server. Then it translates the
 // results returned by that method into an HTTP response.
 func adaptClustersListRequest(w http.ResponseWriter, r *http.Request, server ClustersServer) {
-	request, err := readClustersListRequest(r)
+	request := &ClustersListServerRequest{}
+	err := readClustersListRequest(request, r)
 	if err != nil {
 		glog.Errorf(
 			"Can't read request for method '%s' and path '%s': %v",
@@ -495,7 +372,7 @@ func adaptClustersListRequest(w http.ResponseWriter, r *http.Request, server Clu
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	response := new(ClustersListServerResponse)
+	response := &ClustersListServerResponse{}
 	response.status = 200
 	err = server.List(r.Context(), request, response)
 	if err != nil {
@@ -506,7 +383,7 @@ func adaptClustersListRequest(w http.ResponseWriter, r *http.Request, server Clu
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	err = writeClustersListResponse(w, response)
+	err = writeClustersListResponse(response, w)
 	if err != nil {
 		glog.Errorf(
 			"Can't write response for method '%s' and path '%s': %v",

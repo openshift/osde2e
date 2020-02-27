@@ -33,8 +33,7 @@ func NewResourceReviewRequest() *ResourceReviewRequestBuilder {
 	return new(ResourceReviewRequestBuilder)
 }
 
-// AccountUsername sets the value of the 'account_username' attribute
-// to the given value.
+// AccountUsername sets the value of the 'account_username' attribute to the given value.
 //
 //
 func (b *ResourceReviewRequestBuilder) AccountUsername(value string) *ResourceReviewRequestBuilder {
@@ -42,8 +41,7 @@ func (b *ResourceReviewRequestBuilder) AccountUsername(value string) *ResourceRe
 	return b
 }
 
-// Action sets the value of the 'action' attribute
-// to the given value.
+// Action sets the value of the 'action' attribute to the given value.
 //
 //
 func (b *ResourceReviewRequestBuilder) Action(value string) *ResourceReviewRequestBuilder {
@@ -51,8 +49,7 @@ func (b *ResourceReviewRequestBuilder) Action(value string) *ResourceReviewReque
 	return b
 }
 
-// ResourceType sets the value of the 'resource_type' attribute
-// to the given value.
+// ResourceType sets the value of the 'resource_type' attribute to the given value.
 //
 //
 func (b *ResourceReviewRequestBuilder) ResourceType(value string) *ResourceReviewRequestBuilder {
@@ -74,14 +71,8 @@ func (b *ResourceReviewRequestBuilder) Copy(object *ResourceReviewRequest) *Reso
 // Build creates a 'resource_review_request' object using the configuration stored in the builder.
 func (b *ResourceReviewRequestBuilder) Build() (object *ResourceReviewRequest, err error) {
 	object = new(ResourceReviewRequest)
-	if b.accountUsername != nil {
-		object.accountUsername = b.accountUsername
-	}
-	if b.action != nil {
-		object.action = b.action
-	}
-	if b.resourceType != nil {
-		object.resourceType = b.resourceType
-	}
+	object.accountUsername = b.accountUsername
+	object.action = b.action
+	object.resourceType = b.resourceType
 	return
 }

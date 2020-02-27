@@ -36,8 +36,7 @@ func NewSample() *SampleBuilder {
 	return new(SampleBuilder)
 }
 
-// Time sets the value of the 'time' attribute
-// to the given value.
+// Time sets the value of the 'time' attribute to the given value.
 //
 //
 func (b *SampleBuilder) Time(value time.Time) *SampleBuilder {
@@ -45,8 +44,7 @@ func (b *SampleBuilder) Time(value time.Time) *SampleBuilder {
 	return b
 }
 
-// Value sets the value of the 'value' attribute
-// to the given value.
+// Value sets the value of the 'value' attribute to the given value.
 //
 //
 func (b *SampleBuilder) Value(value float64) *SampleBuilder {
@@ -67,11 +65,7 @@ func (b *SampleBuilder) Copy(object *Sample) *SampleBuilder {
 // Build creates a 'sample' object using the configuration stored in the builder.
 func (b *SampleBuilder) Build() (object *Sample, err error) {
 	object = new(Sample)
-	if b.time != nil {
-		object.time = b.time
-	}
-	if b.value != nil {
-		object.value = b.value
-	}
+	object.time = b.time
+	object.value = b.value
 	return
 }

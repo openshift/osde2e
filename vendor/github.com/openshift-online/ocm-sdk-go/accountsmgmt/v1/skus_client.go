@@ -21,8 +21,6 @@ package v1 // github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1
 
 import (
 	"context"
-	"encoding/json"
-	"io"
 	"net/http"
 	"net/url"
 	"path"
@@ -41,25 +39,25 @@ type SKUSClient struct {
 }
 
 // NewSKUSClient creates a new client for the 'SKUS'
-// resource using the given transport to sned the requests and receive the
+// resource using the given transport to send the requests and receive the
 // responses.
 func NewSKUSClient(transport http.RoundTripper, path string, metric string) *SKUSClient {
-	client := new(SKUSClient)
-	client.transport = transport
-	client.path = path
-	client.metric = metric
-	return client
+	return &SKUSClient{
+		transport: transport,
+		path:      path,
+		metric:    metric,
+	}
 }
 
 // List creates a request for the 'list' method.
 //
 // Retrieves a list of SKUS.
 func (c *SKUSClient) List() *SKUSListRequest {
-	request := new(SKUSListRequest)
-	request.transport = c.transport
-	request.path = c.path
-	request.metric = c.metric
-	return request
+	return &SKUSListRequest{
+		transport: c.transport,
+		path:      c.path,
+		metric:    c.metric,
+	}
 }
 
 // SKU returns the target 'SKU' resource for the given identifier.
@@ -172,7 +170,7 @@ func (r *SKUSListRequest) SendContext(ctx context.Context) (result *SKUSListResp
 		return
 	}
 	defer response.Body.Close()
-	result = new(SKUSListResponse)
+	result = &SKUSListResponse{}
 	result.status = response.StatusCode
 	result.header = response.Header
 	if result.status >= 400 {
@@ -183,7 +181,7 @@ func (r *SKUSListRequest) SendContext(ctx context.Context) (result *SKUSListResp
 		err = result.err
 		return
 	}
-	err = result.unmarshal(response.Body)
+	err = readSKUSListResponse(result, response.Body)
 	if err != nil {
 		return
 	}
@@ -313,33 +311,4 @@ func (r *SKUSListResponse) GetTotal() (value int, ok bool) {
 		value = *r.total
 	}
 	return
-}
-
-// unmarshal is the method used internally to unmarshal responses to the
-// 'list' method.
-func (r *SKUSListResponse) unmarshal(reader io.Reader) error {
-	var err error
-	decoder := json.NewDecoder(reader)
-	data := new(skusListResponseData)
-	err = decoder.Decode(data)
-	if err != nil {
-		return err
-	}
-	r.items, err = data.Items.unwrap()
-	if err != nil {
-		return err
-	}
-	r.page = data.Page
-	r.size = data.Size
-	r.total = data.Total
-	return err
-}
-
-// skusListResponseData is the structure used internally to unmarshal
-// the response of the 'list' method.
-type skusListResponseData struct {
-	Items skuListData "json:\"items,omitempty\""
-	Page  *int        "json:\"page,omitempty\""
-	Size  *int        "json:\"size,omitempty\""
-	Total *int        "json:\"total,omitempty\""
 }

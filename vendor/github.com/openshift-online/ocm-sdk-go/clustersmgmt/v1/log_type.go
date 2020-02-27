@@ -123,16 +123,16 @@ func (o *Log) GetContent() (value string, ok bool) {
 	return
 }
 
-// LogListKind is the name of the type used to represent list of
-// objects of type 'log'.
+// LogListKind is the name of the type used to represent list of objects of
+// type 'log'.
 const LogListKind = "LogList"
 
-// LogListLinkKind is the name of the type used to represent links
-// to list of objects of type 'log'.
+// LogListLinkKind is the name of the type used to represent links to list
+// of objects of type 'log'.
 const LogListLinkKind = "LogListLink"
 
-// LogNilKind is the name of the type used to nil lists of
-// objects of type 'log'.
+// LogNilKind is the name of the type used to nil lists of objects of
+// type 'log'.
 const LogListNilKind = "LogListNil"
 
 // LogList is a list of values of the 'log' type.

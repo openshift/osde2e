@@ -21,8 +21,6 @@ package v1 // github.com/openshift-online/ocm-sdk-go/authorizations/v1
 
 import (
 	"context"
-	"encoding/json"
-	"io"
 	"net/http"
 
 	"github.com/golang/glog"
@@ -65,23 +63,6 @@ func (r *SelfAccessReviewPostServerRequest) GetRequest() (value *SelfAccessRevie
 	return
 }
 
-// unmarshal is the method used internally to unmarshal request to the
-// 'post' method.
-func (r *SelfAccessReviewPostServerRequest) unmarshal(reader io.Reader) error {
-	var err error
-	decoder := json.NewDecoder(reader)
-	data := new(selfAccessReviewRequestData)
-	err = decoder.Decode(data)
-	if err != nil {
-		return err
-	}
-	r.request, err = data.unwrap()
-	if err != nil {
-		return err
-	}
-	return err
-}
-
 // SelfAccessReviewPostServerResponse is the response for the 'post' method.
 type SelfAccessReviewPostServerResponse struct {
 	status   int
@@ -103,19 +84,6 @@ func (r *SelfAccessReviewPostServerResponse) Status(value int) *SelfAccessReview
 	return r
 }
 
-// marshall is the method used internally to marshal responses for the
-// 'post' method.
-func (r *SelfAccessReviewPostServerResponse) marshal(writer io.Writer) error {
-	var err error
-	encoder := json.NewEncoder(writer)
-	data, err := r.response.wrap()
-	if err != nil {
-		return err
-	}
-	err = encoder.Encode(data)
-	return err
-}
-
 // dispatchSelfAccessReview navigates the servers tree rooted at the given server
 // till it finds one that matches the given set of path segments, and then invokes
 // the corresponding server.
@@ -124,48 +92,25 @@ func dispatchSelfAccessReview(w http.ResponseWriter, r *http.Request, server Sel
 		switch r.Method {
 		case "POST":
 			adaptSelfAccessReviewPostRequest(w, r, server)
+			return
 		default:
 			errors.SendMethodNotAllowed(w, r)
 			return
 		}
-	} else {
-		switch segments[0] {
-		default:
-			errors.SendNotFound(w, r)
-			return
-		}
 	}
-}
-
-// readSelfAccessReviewPostRequest reads the given HTTP requests and translates it
-// into an object of type SelfAccessReviewPostServerRequest.
-func readSelfAccessReviewPostRequest(r *http.Request) (*SelfAccessReviewPostServerRequest, error) {
-	var err error
-	result := new(SelfAccessReviewPostServerRequest)
-	err = result.unmarshal(r.Body)
-	if err != nil {
-		return nil, err
+	switch segments[0] {
+	default:
+		errors.SendNotFound(w, r)
+		return
 	}
-	return result, err
-}
-
-// writeSelfAccessReviewPostResponse translates the given request object into an
-// HTTP response.
-func writeSelfAccessReviewPostResponse(w http.ResponseWriter, r *SelfAccessReviewPostServerResponse) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(r.status)
-	err := r.marshal(w)
-	if err != nil {
-		return err
-	}
-	return nil
 }
 
 // adaptSelfAccessReviewPostRequest translates the given HTTP request into a call to
 // the corresponding method of the given server. Then it translates the
 // results returned by that method into an HTTP response.
 func adaptSelfAccessReviewPostRequest(w http.ResponseWriter, r *http.Request, server SelfAccessReviewServer) {
-	request, err := readSelfAccessReviewPostRequest(r)
+	request := &SelfAccessReviewPostServerRequest{}
+	err := readSelfAccessReviewPostRequest(request, r)
 	if err != nil {
 		glog.Errorf(
 			"Can't read request for method '%s' and path '%s': %v",
@@ -174,7 +119,7 @@ func adaptSelfAccessReviewPostRequest(w http.ResponseWriter, r *http.Request, se
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	response := new(SelfAccessReviewPostServerResponse)
+	response := &SelfAccessReviewPostServerResponse{}
 	response.status = 201
 	err = server.Post(r.Context(), request, response)
 	if err != nil {
@@ -185,7 +130,7 @@ func adaptSelfAccessReviewPostRequest(w http.ResponseWriter, r *http.Request, se
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	err = writeSelfAccessReviewPostResponse(w, response)
+	err = writeSelfAccessReviewPostResponse(response, w)
 	if err != nil {
 		glog.Errorf(
 			"Can't write response for method '%s' and path '%s': %v",

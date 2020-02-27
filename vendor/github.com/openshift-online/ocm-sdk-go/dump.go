@@ -25,6 +25,8 @@ import (
 	"net/http"
 	"sort"
 	"strings"
+
+	"gitlab.com/c0b/go-ordered-json"
 )
 
 const (
@@ -33,15 +35,15 @@ const (
 )
 
 // redactFields are removed from log output when dumped.
-var redactFields = []string{
-	"access_token",
-	"admin",
-	"id_token",
-	"refresh_token",
-	"password",
-	"client_secret",
-	"kubeconfig",
-	"ssh",
+var redactFields = map[string]bool{
+	"access_token":  true,
+	"admin":         true,
+	"id_token":      true,
+	"refresh_token": true,
+	"password":      true,
+	"client_secret": true,
+	"kubeconfig":    true,
+	"ssh":           true,
 }
 
 // dumpRequest dumps to the log, in debug level, the details of the given HTTP request.
@@ -110,8 +112,8 @@ func (c *Connection) dumpBody(ctx context.Context, header http.Header, body []by
 // dumpJSON tries to parse the given data as a JSON document. If that works, then it dumps it
 // indented, otherwise dumps it as is.
 func (c *Connection) dumpJSON(ctx context.Context, data []byte) {
-	var parsed map[string]interface{}
-	err := json.Unmarshal(data, &parsed)
+	parsed := ordered.NewOrderedMap()
+	err := json.Unmarshal(data, parsed)
 	if err != nil {
 		c.logger.Debug(ctx, "%s", data)
 	} else {
@@ -133,20 +135,15 @@ func (c *Connection) dumpBytes(ctx context.Context, data []byte) {
 }
 
 // redactSensitive replaces sensitive fields within a response with redactionStr.
-func (c *Connection) redactSensitive(body map[string]interface{}) {
-	for _, field := range redactFields {
-		if _, ok := body[field]; ok {
-			body[field] = redactionStr
+func (c *Connection) redactSensitive(body *ordered.OrderedMap) {
+	iterator := body.EntriesIter()
+	for {
+		pair, ok := iterator()
+		if !ok {
+			break
+		}
+		if redactFields[pair.Key] {
+			body.Set(pair.Key, redactionStr)
 		}
 	}
-}
-
-// isRedactField checks if f is a field that should be redacted.
-func isRedactField(f string) bool {
-	for _, redactField := range redactFields {
-		if f == redactField {
-			return true
-		}
-	}
-	return false
 }

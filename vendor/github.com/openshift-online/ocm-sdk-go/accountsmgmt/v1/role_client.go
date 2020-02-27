@@ -22,13 +22,13 @@ package v1 // github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"time"
 
+	jsoniter "github.com/json-iterator/go"
 	"github.com/openshift-online/ocm-sdk-go/errors"
 	"github.com/openshift-online/ocm-sdk-go/helpers"
 )
@@ -43,47 +43,47 @@ type RoleClient struct {
 }
 
 // NewRoleClient creates a new client for the 'role'
-// resource using the given transport to sned the requests and receive the
+// resource using the given transport to send the requests and receive the
 // responses.
 func NewRoleClient(transport http.RoundTripper, path string, metric string) *RoleClient {
-	client := new(RoleClient)
-	client.transport = transport
-	client.path = path
-	client.metric = metric
-	return client
+	return &RoleClient{
+		transport: transport,
+		path:      path,
+		metric:    metric,
+	}
 }
 
 // Delete creates a request for the 'delete' method.
 //
 // Deletes the role.
 func (c *RoleClient) Delete() *RoleDeleteRequest {
-	request := new(RoleDeleteRequest)
-	request.transport = c.transport
-	request.path = c.path
-	request.metric = c.metric
-	return request
+	return &RoleDeleteRequest{
+		transport: c.transport,
+		path:      c.path,
+		metric:    c.metric,
+	}
 }
 
 // Get creates a request for the 'get' method.
 //
 // Retrieves the details of the role.
 func (c *RoleClient) Get() *RoleGetRequest {
-	request := new(RoleGetRequest)
-	request.transport = c.transport
-	request.path = c.path
-	request.metric = c.metric
-	return request
+	return &RoleGetRequest{
+		transport: c.transport,
+		path:      c.path,
+		metric:    c.metric,
+	}
 }
 
 // Update creates a request for the 'update' method.
 //
 // Updates the role.
 func (c *RoleClient) Update() *RoleUpdateRequest {
-	request := new(RoleUpdateRequest)
-	request.transport = c.transport
-	request.path = c.path
-	request.metric = c.metric
-	return request
+	return &RoleUpdateRequest{
+		transport: c.transport,
+		path:      c.path,
+		metric:    c.metric,
+	}
 }
 
 // RolePollRequest is the request for the Poll method.
@@ -257,7 +257,7 @@ func (r *RoleDeleteRequest) SendContext(ctx context.Context) (result *RoleDelete
 		return
 	}
 	defer response.Body.Close()
-	result = new(RoleDeleteResponse)
+	result = &RoleDeleteResponse{}
 	result.status = response.StatusCode
 	result.header = response.Header
 	if result.status >= 400 {
@@ -352,7 +352,7 @@ func (r *RoleGetRequest) SendContext(ctx context.Context) (result *RoleGetRespon
 		return
 	}
 	defer response.Body.Close()
-	result = new(RoleGetResponse)
+	result = &RoleGetResponse{}
 	result.status = response.StatusCode
 	result.header = response.Header
 	if result.status >= 400 {
@@ -363,7 +363,7 @@ func (r *RoleGetRequest) SendContext(ctx context.Context) (result *RoleGetRespon
 		err = result.err
 		return
 	}
-	err = result.unmarshal(response.Body)
+	err = readRoleGetResponse(result, response.Body)
 	if err != nil {
 		return
 	}
@@ -424,23 +424,6 @@ func (r *RoleGetResponse) GetBody() (value *Role, ok bool) {
 	return
 }
 
-// unmarshal is the method used internally to unmarshal responses to the
-// 'get' method.
-func (r *RoleGetResponse) unmarshal(reader io.Reader) error {
-	var err error
-	decoder := json.NewDecoder(reader)
-	data := new(roleData)
-	err = decoder.Decode(data)
-	if err != nil {
-		return err
-	}
-	r.body, err = data.unwrap()
-	if err != nil {
-		return err
-	}
-	return err
-}
-
 // RoleUpdateRequest is the request for the 'update' method.
 type RoleUpdateRequest struct {
 	transport http.RoundTripper
@@ -483,8 +466,8 @@ func (r *RoleUpdateRequest) Send() (result *RoleUpdateResponse, err error) {
 func (r *RoleUpdateRequest) SendContext(ctx context.Context) (result *RoleUpdateResponse, err error) {
 	query := helpers.CopyQuery(r.query)
 	header := helpers.SetHeader(r.header, r.metric)
-	buffer := new(bytes.Buffer)
-	err = r.marshal(buffer)
+	buffer := &bytes.Buffer{}
+	err = writeRoleUpdateRequest(r, buffer)
 	if err != nil {
 		return
 	}
@@ -506,7 +489,7 @@ func (r *RoleUpdateRequest) SendContext(ctx context.Context) (result *RoleUpdate
 		return
 	}
 	defer response.Body.Close()
-	result = new(RoleUpdateResponse)
+	result = &RoleUpdateResponse{}
 	result.status = response.StatusCode
 	result.header = response.Header
 	if result.status >= 400 {
@@ -517,7 +500,7 @@ func (r *RoleUpdateRequest) SendContext(ctx context.Context) (result *RoleUpdate
 		err = result.err
 		return
 	}
-	err = result.unmarshal(response.Body)
+	err = readRoleUpdateResponse(result, response.Body)
 	if err != nil {
 		return
 	}
@@ -527,14 +510,11 @@ func (r *RoleUpdateRequest) SendContext(ctx context.Context) (result *RoleUpdate
 // marshall is the method used internally to marshal requests for the
 // 'update' method.
 func (r *RoleUpdateRequest) marshal(writer io.Writer) error {
-	var err error
-	encoder := json.NewEncoder(writer)
-	data, err := r.body.wrap()
-	if err != nil {
-		return err
-	}
-	err = encoder.Encode(data)
-	return err
+	stream := helpers.NewStream(writer)
+	r.stream(stream)
+	return stream.Error
+}
+func (r *RoleUpdateRequest) stream(stream *jsoniter.Stream) {
 }
 
 // RoleUpdateResponse is the response for the 'update' method.
@@ -589,21 +569,4 @@ func (r *RoleUpdateResponse) GetBody() (value *Role, ok bool) {
 		value = r.body
 	}
 	return
-}
-
-// unmarshal is the method used internally to unmarshal responses to the
-// 'update' method.
-func (r *RoleUpdateResponse) unmarshal(reader io.Reader) error {
-	var err error
-	decoder := json.NewDecoder(reader)
-	data := new(roleData)
-	err = decoder.Decode(data)
-	if err != nil {
-		return err
-	}
-	r.body, err = data.unwrap()
-	if err != nil {
-		return err
-	}
-	return err
 }

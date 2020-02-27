@@ -21,8 +21,6 @@ package v1 // github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1
 
 import (
 	"context"
-	"encoding/json"
-	"io"
 	"net/http"
 	"net/url"
 
@@ -40,25 +38,25 @@ type AccessTokenClient struct {
 }
 
 // NewAccessTokenClient creates a new client for the 'access_token'
-// resource using the given transport to sned the requests and receive the
+// resource using the given transport to send the requests and receive the
 // responses.
 func NewAccessTokenClient(transport http.RoundTripper, path string, metric string) *AccessTokenClient {
-	client := new(AccessTokenClient)
-	client.transport = transport
-	client.path = path
-	client.metric = metric
-	return client
+	return &AccessTokenClient{
+		transport: transport,
+		path:      path,
+		metric:    metric,
+	}
 }
 
 // Post creates a request for the 'post' method.
 //
 // Returns access token generated from registries in docker format.
 func (c *AccessTokenClient) Post() *AccessTokenPostRequest {
-	request := new(AccessTokenPostRequest)
-	request.transport = c.transport
-	request.path = c.path
-	request.metric = c.metric
-	return request
+	return &AccessTokenPostRequest{
+		transport: c.transport,
+		path:      c.path,
+		metric:    c.metric,
+	}
 }
 
 // AccessTokenPostRequest is the request for the 'post' method.
@@ -111,7 +109,7 @@ func (r *AccessTokenPostRequest) SendContext(ctx context.Context) (result *Acces
 		return
 	}
 	defer response.Body.Close()
-	result = new(AccessTokenPostResponse)
+	result = &AccessTokenPostResponse{}
 	result.status = response.StatusCode
 	result.header = response.Header
 	if result.status >= 400 {
@@ -122,7 +120,7 @@ func (r *AccessTokenPostRequest) SendContext(ctx context.Context) (result *Acces
 		err = result.err
 		return
 	}
-	err = result.unmarshal(response.Body)
+	err = readAccessTokenPostResponse(result, response.Body)
 	if err != nil {
 		return
 	}
@@ -181,21 +179,4 @@ func (r *AccessTokenPostResponse) GetBody() (value *AccessToken, ok bool) {
 		value = r.body
 	}
 	return
-}
-
-// unmarshal is the method used internally to unmarshal responses to the
-// 'post' method.
-func (r *AccessTokenPostResponse) unmarshal(reader io.Reader) error {
-	var err error
-	decoder := json.NewDecoder(reader)
-	data := new(accessTokenData)
-	err = decoder.Decode(data)
-	if err != nil {
-		return err
-	}
-	r.body, err = data.unwrap()
-	if err != nil {
-		return err
-	}
-	return err
 }

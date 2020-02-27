@@ -55,8 +55,7 @@ func (b *RegistryCredentialBuilder) Link(value bool) *RegistryCredentialBuilder 
 	return b
 }
 
-// Account sets the value of the 'account' attribute
-// to the given value.
+// Account sets the value of the 'account' attribute to the given value.
 //
 //
 func (b *RegistryCredentialBuilder) Account(value *AccountBuilder) *RegistryCredentialBuilder {
@@ -64,8 +63,7 @@ func (b *RegistryCredentialBuilder) Account(value *AccountBuilder) *RegistryCred
 	return b
 }
 
-// Registry sets the value of the 'registry' attribute
-// to the given value.
+// Registry sets the value of the 'registry' attribute to the given value.
 //
 //
 func (b *RegistryCredentialBuilder) Registry(value *RegistryBuilder) *RegistryCredentialBuilder {
@@ -73,8 +71,7 @@ func (b *RegistryCredentialBuilder) Registry(value *RegistryBuilder) *RegistryCr
 	return b
 }
 
-// Token sets the value of the 'token' attribute
-// to the given value.
+// Token sets the value of the 'token' attribute to the given value.
 //
 //
 func (b *RegistryCredentialBuilder) Token(value string) *RegistryCredentialBuilder {
@@ -82,8 +79,7 @@ func (b *RegistryCredentialBuilder) Token(value string) *RegistryCredentialBuild
 	return b
 }
 
-// Username sets the value of the 'username' attribute
-// to the given value.
+// Username sets the value of the 'username' attribute to the given value.
 //
 //
 func (b *RegistryCredentialBuilder) Username(value string) *RegistryCredentialBuilder {
@@ -132,11 +128,7 @@ func (b *RegistryCredentialBuilder) Build() (object *RegistryCredential, err err
 			return
 		}
 	}
-	if b.token != nil {
-		object.token = b.token
-	}
-	if b.username != nil {
-		object.username = b.username
-	}
+	object.token = b.token
+	object.username = b.username
 	return
 }

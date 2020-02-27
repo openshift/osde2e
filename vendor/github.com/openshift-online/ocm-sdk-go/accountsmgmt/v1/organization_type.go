@@ -148,16 +148,16 @@ func (o *Organization) GetName() (value string, ok bool) {
 	return
 }
 
-// OrganizationListKind is the name of the type used to represent list of
-// objects of type 'organization'.
+// OrganizationListKind is the name of the type used to represent list of objects of
+// type 'organization'.
 const OrganizationListKind = "OrganizationList"
 
-// OrganizationListLinkKind is the name of the type used to represent links
-// to list of objects of type 'organization'.
+// OrganizationListLinkKind is the name of the type used to represent links to list
+// of objects of type 'organization'.
 const OrganizationListLinkKind = "OrganizationListLink"
 
-// OrganizationNilKind is the name of the type used to nil lists of
-// objects of type 'organization'.
+// OrganizationNilKind is the name of the type used to nil lists of objects of
+// type 'organization'.
 const OrganizationListNilKind = "OrganizationListNil"
 
 // OrganizationList is a list of values of the 'organization' type.

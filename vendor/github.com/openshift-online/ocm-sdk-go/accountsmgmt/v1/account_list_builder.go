@@ -37,6 +37,19 @@ func (b *AccountListBuilder) Items(values ...*AccountBuilder) *AccountListBuilde
 	return b
 }
 
+// Copy copies the items of the given list into this builder, discarding any previous items.
+func (b *AccountListBuilder) Copy(list *AccountList) *AccountListBuilder {
+	if list == nil || list.items == nil {
+		b.items = nil
+	} else {
+		b.items = make([]*AccountBuilder, len(list.items))
+		for i, v := range list.items {
+			b.items[i] = NewAccount().Copy(v)
+		}
+	}
+	return b
+}
+
 // Build creates a list of 'account' objects using the
 // configuration stored in the builder.
 func (b *AccountListBuilder) Build() (list *AccountList, err error) {

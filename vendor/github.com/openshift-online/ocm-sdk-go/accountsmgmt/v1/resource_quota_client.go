@@ -22,13 +22,13 @@ package v1 // github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"time"
 
+	jsoniter "github.com/json-iterator/go"
 	"github.com/openshift-online/ocm-sdk-go/errors"
 	"github.com/openshift-online/ocm-sdk-go/helpers"
 )
@@ -43,47 +43,47 @@ type ResourceQuotaClient struct {
 }
 
 // NewResourceQuotaClient creates a new client for the 'resource_quota'
-// resource using the given transport to sned the requests and receive the
+// resource using the given transport to send the requests and receive the
 // responses.
 func NewResourceQuotaClient(transport http.RoundTripper, path string, metric string) *ResourceQuotaClient {
-	client := new(ResourceQuotaClient)
-	client.transport = transport
-	client.path = path
-	client.metric = metric
-	return client
+	return &ResourceQuotaClient{
+		transport: transport,
+		path:      path,
+		metric:    metric,
+	}
 }
 
 // Delete creates a request for the 'delete' method.
 //
 // Deletes the resource quota.
 func (c *ResourceQuotaClient) Delete() *ResourceQuotaDeleteRequest {
-	request := new(ResourceQuotaDeleteRequest)
-	request.transport = c.transport
-	request.path = c.path
-	request.metric = c.metric
-	return request
+	return &ResourceQuotaDeleteRequest{
+		transport: c.transport,
+		path:      c.path,
+		metric:    c.metric,
+	}
 }
 
 // Get creates a request for the 'get' method.
 //
 // Retrieves the details of the resource quota.
 func (c *ResourceQuotaClient) Get() *ResourceQuotaGetRequest {
-	request := new(ResourceQuotaGetRequest)
-	request.transport = c.transport
-	request.path = c.path
-	request.metric = c.metric
-	return request
+	return &ResourceQuotaGetRequest{
+		transport: c.transport,
+		path:      c.path,
+		metric:    c.metric,
+	}
 }
 
 // Update creates a request for the 'update' method.
 //
 // Updates the resource quota.
 func (c *ResourceQuotaClient) Update() *ResourceQuotaUpdateRequest {
-	request := new(ResourceQuotaUpdateRequest)
-	request.transport = c.transport
-	request.path = c.path
-	request.metric = c.metric
-	return request
+	return &ResourceQuotaUpdateRequest{
+		transport: c.transport,
+		path:      c.path,
+		metric:    c.metric,
+	}
 }
 
 // ResourceQuotaPollRequest is the request for the Poll method.
@@ -257,7 +257,7 @@ func (r *ResourceQuotaDeleteRequest) SendContext(ctx context.Context) (result *R
 		return
 	}
 	defer response.Body.Close()
-	result = new(ResourceQuotaDeleteResponse)
+	result = &ResourceQuotaDeleteResponse{}
 	result.status = response.StatusCode
 	result.header = response.Header
 	if result.status >= 400 {
@@ -352,7 +352,7 @@ func (r *ResourceQuotaGetRequest) SendContext(ctx context.Context) (result *Reso
 		return
 	}
 	defer response.Body.Close()
-	result = new(ResourceQuotaGetResponse)
+	result = &ResourceQuotaGetResponse{}
 	result.status = response.StatusCode
 	result.header = response.Header
 	if result.status >= 400 {
@@ -363,7 +363,7 @@ func (r *ResourceQuotaGetRequest) SendContext(ctx context.Context) (result *Reso
 		err = result.err
 		return
 	}
-	err = result.unmarshal(response.Body)
+	err = readResourceQuotaGetResponse(result, response.Body)
 	if err != nil {
 		return
 	}
@@ -424,23 +424,6 @@ func (r *ResourceQuotaGetResponse) GetBody() (value *ResourceQuota, ok bool) {
 	return
 }
 
-// unmarshal is the method used internally to unmarshal responses to the
-// 'get' method.
-func (r *ResourceQuotaGetResponse) unmarshal(reader io.Reader) error {
-	var err error
-	decoder := json.NewDecoder(reader)
-	data := new(resourceQuotaData)
-	err = decoder.Decode(data)
-	if err != nil {
-		return err
-	}
-	r.body, err = data.unwrap()
-	if err != nil {
-		return err
-	}
-	return err
-}
-
 // ResourceQuotaUpdateRequest is the request for the 'update' method.
 type ResourceQuotaUpdateRequest struct {
 	transport http.RoundTripper
@@ -483,8 +466,8 @@ func (r *ResourceQuotaUpdateRequest) Send() (result *ResourceQuotaUpdateResponse
 func (r *ResourceQuotaUpdateRequest) SendContext(ctx context.Context) (result *ResourceQuotaUpdateResponse, err error) {
 	query := helpers.CopyQuery(r.query)
 	header := helpers.SetHeader(r.header, r.metric)
-	buffer := new(bytes.Buffer)
-	err = r.marshal(buffer)
+	buffer := &bytes.Buffer{}
+	err = writeResourceQuotaUpdateRequest(r, buffer)
 	if err != nil {
 		return
 	}
@@ -506,7 +489,7 @@ func (r *ResourceQuotaUpdateRequest) SendContext(ctx context.Context) (result *R
 		return
 	}
 	defer response.Body.Close()
-	result = new(ResourceQuotaUpdateResponse)
+	result = &ResourceQuotaUpdateResponse{}
 	result.status = response.StatusCode
 	result.header = response.Header
 	if result.status >= 400 {
@@ -517,7 +500,7 @@ func (r *ResourceQuotaUpdateRequest) SendContext(ctx context.Context) (result *R
 		err = result.err
 		return
 	}
-	err = result.unmarshal(response.Body)
+	err = readResourceQuotaUpdateResponse(result, response.Body)
 	if err != nil {
 		return
 	}
@@ -527,14 +510,11 @@ func (r *ResourceQuotaUpdateRequest) SendContext(ctx context.Context) (result *R
 // marshall is the method used internally to marshal requests for the
 // 'update' method.
 func (r *ResourceQuotaUpdateRequest) marshal(writer io.Writer) error {
-	var err error
-	encoder := json.NewEncoder(writer)
-	data, err := r.body.wrap()
-	if err != nil {
-		return err
-	}
-	err = encoder.Encode(data)
-	return err
+	stream := helpers.NewStream(writer)
+	r.stream(stream)
+	return stream.Error
+}
+func (r *ResourceQuotaUpdateRequest) stream(stream *jsoniter.Stream) {
 }
 
 // ResourceQuotaUpdateResponse is the response for the 'update' method.
@@ -589,21 +569,4 @@ func (r *ResourceQuotaUpdateResponse) GetBody() (value *ResourceQuota, ok bool) 
 		value = r.body
 	}
 	return
-}
-
-// unmarshal is the method used internally to unmarshal responses to the
-// 'update' method.
-func (r *ResourceQuotaUpdateResponse) unmarshal(reader io.Reader) error {
-	var err error
-	decoder := json.NewDecoder(reader)
-	data := new(resourceQuotaData)
-	err = decoder.Decode(data)
-	if err != nil {
-		return err
-	}
-	r.body, err = data.unwrap()
-	if err != nil {
-		return err
-	}
-	return err
 }

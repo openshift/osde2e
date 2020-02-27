@@ -34,7 +34,6 @@ type LDAPIdentityProvider struct {
 // Empty returns true if the object is empty, i.e. no attribute has a value.
 func (o *LDAPIdentityProvider) Empty() bool {
 	return o == nil || (o.ca == nil &&
-		o.ldapAttributes == nil &&
 		o.url == nil &&
 		o.bindDN == nil &&
 		o.bindPassword == nil &&
@@ -184,8 +183,22 @@ func (o *LDAPIdentityProvider) GetInsecure() (value bool, ok bool) {
 	return
 }
 
+// LDAPIdentityProviderListKind is the name of the type used to represent list of objects of
+// type 'LDAP_identity_provider'.
+const LDAPIdentityProviderListKind = "LDAPIdentityProviderList"
+
+// LDAPIdentityProviderListLinkKind is the name of the type used to represent links to list
+// of objects of type 'LDAP_identity_provider'.
+const LDAPIdentityProviderListLinkKind = "LDAPIdentityProviderListLink"
+
+// LDAPIdentityProviderNilKind is the name of the type used to nil lists of objects of
+// type 'LDAP_identity_provider'.
+const LDAPIdentityProviderListNilKind = "LDAPIdentityProviderListNil"
+
 // LDAPIdentityProviderList is a list of values of the 'LDAP_identity_provider' type.
 type LDAPIdentityProviderList struct {
+	href  *string
+	link  bool
 	items []*LDAPIdentityProvider
 }
 

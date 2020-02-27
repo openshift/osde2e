@@ -32,8 +32,7 @@ func NewSSHCredentials() *SSHCredentialsBuilder {
 	return new(SSHCredentialsBuilder)
 }
 
-// PrivateKey sets the value of the 'private_key' attribute
-// to the given value.
+// PrivateKey sets the value of the 'private_key' attribute to the given value.
 //
 //
 func (b *SSHCredentialsBuilder) PrivateKey(value string) *SSHCredentialsBuilder {
@@ -41,8 +40,7 @@ func (b *SSHCredentialsBuilder) PrivateKey(value string) *SSHCredentialsBuilder 
 	return b
 }
 
-// PublicKey sets the value of the 'public_key' attribute
-// to the given value.
+// PublicKey sets the value of the 'public_key' attribute to the given value.
 //
 //
 func (b *SSHCredentialsBuilder) PublicKey(value string) *SSHCredentialsBuilder {
@@ -63,11 +61,7 @@ func (b *SSHCredentialsBuilder) Copy(object *SSHCredentials) *SSHCredentialsBuil
 // Build creates a 'SSH_credentials' object using the configuration stored in the builder.
 func (b *SSHCredentialsBuilder) Build() (object *SSHCredentials, err error) {
 	object = new(SSHCredentials)
-	if b.privateKey != nil {
-		object.privateKey = b.privateKey
-	}
-	if b.publicKey != nil {
-		object.publicKey = b.publicKey
-	}
+	object.privateKey = b.privateKey
+	object.publicKey = b.publicKey
 	return
 }

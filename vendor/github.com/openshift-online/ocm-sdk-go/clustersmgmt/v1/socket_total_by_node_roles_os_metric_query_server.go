@@ -21,8 +21,6 @@ package v1 // github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1
 
 import (
 	"context"
-	"encoding/json"
-	"io"
 	"net/http"
 
 	"github.com/golang/glog"
@@ -63,19 +61,6 @@ func (r *SocketTotalByNodeRolesOSMetricQueryGetServerResponse) Status(value int)
 	return r
 }
 
-// marshall is the method used internally to marshal responses for the
-// 'get' method.
-func (r *SocketTotalByNodeRolesOSMetricQueryGetServerResponse) marshal(writer io.Writer) error {
-	var err error
-	encoder := json.NewEncoder(writer)
-	data, err := r.body.wrap()
-	if err != nil {
-		return err
-	}
-	err = encoder.Encode(data)
-	return err
-}
-
 // dispatchSocketTotalByNodeRolesOSMetricQuery navigates the servers tree rooted at the given server
 // till it finds one that matches the given set of path segments, and then invokes
 // the corresponding server.
@@ -84,44 +69,25 @@ func dispatchSocketTotalByNodeRolesOSMetricQuery(w http.ResponseWriter, r *http.
 		switch r.Method {
 		case "GET":
 			adaptSocketTotalByNodeRolesOSMetricQueryGetRequest(w, r, server)
+			return
 		default:
 			errors.SendMethodNotAllowed(w, r)
 			return
 		}
-	} else {
-		switch segments[0] {
-		default:
-			errors.SendNotFound(w, r)
-			return
-		}
 	}
-}
-
-// readSocketTotalByNodeRolesOSMetricQueryGetRequest reads the given HTTP requests and translates it
-// into an object of type SocketTotalByNodeRolesOSMetricQueryGetServerRequest.
-func readSocketTotalByNodeRolesOSMetricQueryGetRequest(r *http.Request) (*SocketTotalByNodeRolesOSMetricQueryGetServerRequest, error) {
-	var err error
-	result := new(SocketTotalByNodeRolesOSMetricQueryGetServerRequest)
-	return result, err
-}
-
-// writeSocketTotalByNodeRolesOSMetricQueryGetResponse translates the given request object into an
-// HTTP response.
-func writeSocketTotalByNodeRolesOSMetricQueryGetResponse(w http.ResponseWriter, r *SocketTotalByNodeRolesOSMetricQueryGetServerResponse) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(r.status)
-	err := r.marshal(w)
-	if err != nil {
-		return err
+	switch segments[0] {
+	default:
+		errors.SendNotFound(w, r)
+		return
 	}
-	return nil
 }
 
 // adaptSocketTotalByNodeRolesOSMetricQueryGetRequest translates the given HTTP request into a call to
 // the corresponding method of the given server. Then it translates the
 // results returned by that method into an HTTP response.
 func adaptSocketTotalByNodeRolesOSMetricQueryGetRequest(w http.ResponseWriter, r *http.Request, server SocketTotalByNodeRolesOSMetricQueryServer) {
-	request, err := readSocketTotalByNodeRolesOSMetricQueryGetRequest(r)
+	request := &SocketTotalByNodeRolesOSMetricQueryGetServerRequest{}
+	err := readSocketTotalByNodeRolesOSMetricQueryGetRequest(request, r)
 	if err != nil {
 		glog.Errorf(
 			"Can't read request for method '%s' and path '%s': %v",
@@ -130,7 +96,7 @@ func adaptSocketTotalByNodeRolesOSMetricQueryGetRequest(w http.ResponseWriter, r
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	response := new(SocketTotalByNodeRolesOSMetricQueryGetServerResponse)
+	response := &SocketTotalByNodeRolesOSMetricQueryGetServerResponse{}
 	response.status = 200
 	err = server.Get(r.Context(), request, response)
 	if err != nil {
@@ -141,7 +107,7 @@ func adaptSocketTotalByNodeRolesOSMetricQueryGetRequest(w http.ResponseWriter, r
 		errors.SendInternalServerError(w, r)
 		return
 	}
-	err = writeSocketTotalByNodeRolesOSMetricQueryGetResponse(w, response)
+	err = writeSocketTotalByNodeRolesOSMetricQueryGetResponse(response, w)
 	if err != nil {
 		glog.Errorf(
 			"Can't write response for method '%s' and path '%s': %v",

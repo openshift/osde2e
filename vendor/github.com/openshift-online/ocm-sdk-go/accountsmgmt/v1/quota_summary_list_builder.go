@@ -37,6 +37,19 @@ func (b *QuotaSummaryListBuilder) Items(values ...*QuotaSummaryBuilder) *QuotaSu
 	return b
 }
 
+// Copy copies the items of the given list into this builder, discarding any previous items.
+func (b *QuotaSummaryListBuilder) Copy(list *QuotaSummaryList) *QuotaSummaryListBuilder {
+	if list == nil || list.items == nil {
+		b.items = nil
+	} else {
+		b.items = make([]*QuotaSummaryBuilder, len(list.items))
+		for i, v := range list.items {
+			b.items[i] = NewQuotaSummary().Copy(v)
+		}
+	}
+	return b
+}
+
 // Build creates a list of 'quota_summary' objects using the
 // configuration stored in the builder.
 func (b *QuotaSummaryListBuilder) Build() (list *QuotaSummaryList, err error) {

@@ -37,6 +37,19 @@ func (b *LDAPIdentityProviderListBuilder) Items(values ...*LDAPIdentityProviderB
 	return b
 }
 
+// Copy copies the items of the given list into this builder, discarding any previous items.
+func (b *LDAPIdentityProviderListBuilder) Copy(list *LDAPIdentityProviderList) *LDAPIdentityProviderListBuilder {
+	if list == nil || list.items == nil {
+		b.items = nil
+	} else {
+		b.items = make([]*LDAPIdentityProviderBuilder, len(list.items))
+		for i, v := range list.items {
+			b.items[i] = NewLDAPIdentityProvider().Copy(v)
+		}
+	}
+	return b
+}
+
 // Build creates a list of 'LDAP_identity_provider' objects using the
 // configuration stored in the builder.
 func (b *LDAPIdentityProviderListBuilder) Build() (list *LDAPIdentityProviderList, err error) {

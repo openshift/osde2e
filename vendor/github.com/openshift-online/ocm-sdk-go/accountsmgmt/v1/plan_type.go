@@ -98,16 +98,16 @@ func (o *Plan) Empty() bool {
 		true)
 }
 
-// PlanListKind is the name of the type used to represent list of
-// objects of type 'plan'.
+// PlanListKind is the name of the type used to represent list of objects of
+// type 'plan'.
 const PlanListKind = "PlanList"
 
-// PlanListLinkKind is the name of the type used to represent links
-// to list of objects of type 'plan'.
+// PlanListLinkKind is the name of the type used to represent links to list
+// of objects of type 'plan'.
 const PlanListLinkKind = "PlanListLink"
 
-// PlanNilKind is the name of the type used to nil lists of
-// objects of type 'plan'.
+// PlanNilKind is the name of the type used to nil lists of objects of
+// type 'plan'.
 const PlanListNilKind = "PlanListNil"
 
 // PlanList is a list of values of the 'plan' type.
