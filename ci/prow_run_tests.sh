@@ -34,6 +34,11 @@ set -o pipefail
         extract_secret_from_dirs ADDON_TEST_HARNESSES "$SECRETS" addon-test-harnesses "Addon test harnesses file"
     fi
 
+    if [[ "$TEST" == test-scale* ]]; then
+        extract_secret_from_dirs PBENCH_SSH_PRIVATE_KEY "$SECRETS" pbench-ssh-private-key "pbench private key file"
+        extract_secret_from_dirs PBENCH_SSH_PUBLIC_KEY "$SECRETS" pbench-ssh-public-key "pbench public key file"
+    fi
+
     # We explicitly want to make sure we're always uploading metrics from prow jobs.
     export UPLOAD_METRICS=true
 

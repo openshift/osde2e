@@ -45,6 +45,9 @@ type GitRepo struct {
 
 	// MountPath is the path where the cloned repository should be mounted.
 	MountPath string
+
+	// Branch is the branch to mount
+	Branch string
 }
 
 // VolumeMount configured to mount the cloned repository in the primary container.
@@ -57,10 +60,19 @@ func (r GitRepo) VolumeMount() kubev1.VolumeMount {
 
 // Container configured to clone the specified repository. Typically used as an init container.
 func (r GitRepo) Container() kubev1.Container {
+	var args []string
+
+	// Clone a specific branch if specified
+	if r.Branch != "" {
+		args = []string{"clone", "--single-branch", "-b", r.Branch, r.URL, tmpClonePath}
+	} else {
+		args = []string{"clone", r.URL, tmpClonePath}
+	}
+
 	return kubev1.Container{
 		Name:  r.Name,
 		Image: GitImage,
-		Args:  []string{"clone", r.URL, tmpClonePath},
+		Args:  args,
 		VolumeMounts: []kubev1.VolumeMount{
 			{
 				Name:      r.Name,
