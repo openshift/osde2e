@@ -1,6 +1,8 @@
 // Package config provides the configuration for tests run as part of the osde2e suite.
 package config
 
+import "time"
+
 // Instance is the configuration used for end to end testing.
 var Instance = new(Config)
 
@@ -19,6 +21,8 @@ type Config struct {
 	Addons AddonConfig `yaml:"addons"`
 
 	Scale ScaleConfig `yaml:"scale"`
+
+	Gate GateConfig `yaml:"gate"`
 
 	// Name lets you name the current e2e job run
 	JobName string `json:"job_name" env:"JOB_NAME" sect:"tests" yaml:"jobName"`
@@ -150,4 +154,19 @@ type TestConfig struct {
 
 	// MetricsBucket is the bucket that metrics data will be uploaded to.
 	MetricsBucket string `env:"METRICS_BUCKET" sect:"metrics" default:"osde2e-metrics" yaml:"metricsBucket"`
+}
+
+// GateConfig describes various config options for gating.
+type GateConfig struct {
+	// PrometheusAddress is the address of the Prometheus instance to connect to.
+	PrometheusAddress string `env:"PROMETHEUS_ADDRESS" sect:"gate" yaml:"address"`
+
+	// PrometheusBearerToken is the token needed for communicating with Prometheus.
+	PrometheusBearerToken string `env:"PROMETHEUS_BEARER_TOKEN" sect:"gate" yaml:"bearerToken"`
+
+	// StartOfTimeWindowInHours is how many hours to look back through results.
+	StartOfTimeWindowInHours time.Duration `env:"START_OF_TIME_WINDOW_IN_HOURS" sect:"gate" default:"12" yaml:"startOfTimeWindowInHours"`
+
+	// NumberOfSamplesNecessary is how many samples are necessary for generating a report.
+	NumberOfSamplesNecessary int `env:"NUMBER_OF_SAMPLES_NECESSARY" sect:"gate" default:"3" yaml:"numberOfSamplesNecessary"`
 }

@@ -4,13 +4,10 @@ import (
 	"context"
 	"flag"
 	"log"
-	"strings"
 
 	"github.com/google/subcommands"
 
-	"github.com/openshift/osde2e/pkg/common/config"
-	"github.com/openshift/osde2e/pkg/common/load"
-	"github.com/openshift/osde2e/pkg/common/state"
+	"github.com/openshift/osde2e/cmd/osde2e/common"
 	"github.com/openshift/osde2e/pkg/e2e"
 
 	// import suites to be tested
@@ -54,22 +51,7 @@ func (t *TestCommand) SetFlags(f *flag.FlagSet) {
 
 // Execute actually executes the tests
 func (t *TestCommand) Execute(_ context.Context, f *flag.FlagSet, _ ...interface{}) subcommands.ExitStatus {
-	var configs []string
-	if t.configString != "" {
-		configs = strings.Split(t.configString, ",")
-	}
-
-	for _, config := range configs {
-		log.Printf("Will load config %s", config)
-	}
-
-	// Load config and initial state
-	if err := load.IntoObject(config.Instance, configs, t.customConfig); err != nil {
-		log.Printf("error loading config: %v", err)
-		return subcommands.ExitFailure
-	}
-
-	if err := load.IntoObject(state.Instance, configs, t.customConfig); err != nil {
+	if err := common.LoadConfigs(t.configString, t.customConfig); err != nil {
 		log.Printf("error loading initial state: %v", err)
 		return subcommands.ExitFailure
 	}
