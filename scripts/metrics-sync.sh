@@ -13,7 +13,7 @@ PUSHGATEWAY_URL=${PUSHGATEWAY_URL%/}
 trap 'rm -rf "$VENV" "$METRICS_DIR"' EXIT
 
 # First, we should detect any stale metrics and purge them if needed
-METRICS_LAST_UPDATED=$(curl "$PUSHGATEWAY_URL/metrics" | grep "^push_time_seconds{.*" | grep osde2e | sed 's/^.*job="\([[:alnum:]_.-]*\)".*\}\s*\(.*\)$/\1,\2/' | sort | uniq)
+METRICS_LAST_UPDATED=$(curl "$PUSHGATEWAY_URL/metrics" | grep "^push_time_seconds{.*" | grep -E 'osde2e|ocm-api-test' | sed 's/^.*job="\([[:alnum:]_.-]*\)".*\}\s*\(.*\)$/\1,\2/' | sort | uniq)
 CURRENT_TIMESTAMP=$(date +%s)
 for metric_and_timestamp in $METRICS_LAST_UPDATED; do
 	JOB_NAME=$(echo -e $metric_and_timestamp | cut -f 1 -d,)
@@ -52,19 +52,28 @@ for file in $METRICS_FILES; do
 	fi
 
 	JOB_NAME=$(echo $file | sed 's/^[^\.]*\.\(.*\)\.metrics\.prom$/\1/')
-	if ! curl -X DELETE "$PUSHGATEWAY_URL/metrics/job/$JOB_NAME"; then
-		echo "Error deleting old results for $JOB_NAME."
-		exit 3
-	fi
+	if [[ ! $JOB_NAME = delete_* ]]; then
+		if ! curl -X DELETE "$PUSHGATEWAY_URL/metrics/job/$JOB_NAME"; then
+			echo "Error deleting old results for $JOB_NAME."
+			exit 3
+		fi
 
-	if ! curl -T "$METRICS_DIR/$file" "$PUSHGATEWAY_URL/metrics/job/$JOB_NAME"; then
-		echo "Error pushing new results for $JOB_NAME."
-		exit 4
-	fi
+		if ! curl -T "$METRICS_DIR/$file" "$PUSHGATEWAY_URL/metrics/job/$JOB_NAME"; then
+			echo "Error pushing new results for $JOB_NAME."
+			exit 4
+		fi
 
-	if ! aws s3 mv "s3://$INCOMING_FILE" "s3://$PROCESSED_FILE"; then
-		echo "Error moving $INCOMING_FILE to $PROCESSED_FILE in S3."
-		exit 5
+		if ! aws s3 mv "s3://$INCOMING_FILE" "s3://$PROCESSED_FILE"; then
+			echo "Error moving $INCOMING_FILE to $PROCESSED_FILE in S3."
+			exit 5
+		fi
+	else
+		echo "$file is a test file. Deleting it from S3."
+
+		if ! aws s3 rm "s3://$INCOMING_FILE"; then
+			echo "Error removing test file from S3."
+			exit 6
+		fi
 	fi
 	echo "File has been processed and moved into the processed drectory."
 done
