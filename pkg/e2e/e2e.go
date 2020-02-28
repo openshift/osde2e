@@ -54,7 +54,6 @@ func RunTests() bool {
 
 // runGinkgoTests runs the osde2e test suite using Ginkgo.
 func runGinkgoTests() error {
-	defer ginkgo.GinkgoRecover()
 	var err error
 	gomega.RegisterFailHandler(ginkgo.Fail)
 
@@ -105,6 +104,7 @@ func runGinkgoTests() error {
 		log.Println("Running e2e tests...")
 
 		testsPassed := runTestsInPhase("install", "OSD e2e suite")
+		upgradeTestsPassed := true
 
 		if testsPassed {
 			// upgrade cluster if requested
@@ -117,7 +117,7 @@ func runGinkgoTests() error {
 					events.RecordEvent(events.UpgradeSuccessful)
 
 					log.Println("Running e2e tests POST-UPGRADE...")
-					runTestsInPhase("upgrade", "OSD e2e suite post-upgrade")
+					upgradeTestsPassed = runTestsInPhase("upgrade", "OSD e2e suite post-upgrade")
 				} else {
 					log.Println("No Kubeconfig found from initial cluster setup. Unable to run upgrade.")
 				}
@@ -174,6 +174,10 @@ func runGinkgoTests() error {
 				h.Project().ProjectV1().Projects().Delete(project, &metav1.DeleteOptions{})
 			}
 		}
+
+		if !testsPassed || !upgradeTestsPassed {
+			return fmt.Errorf("please inspect logs for more details")
+		}
 	}
 
 	return nil
@@ -193,7 +197,14 @@ func runTestsInPhase(phase string, description string) bool {
 	}
 	phaseReportPath := filepath.Join(phaseDirectory, fmt.Sprintf("junit_%v.xml", cfg.Suffix))
 	phaseReporter := reporters.NewJUnitReporter(phaseReportPath)
-	ginkgoPassed := ginkgo.RunSpecsWithDefaultAndCustomReporters(ginkgo.GinkgoT(), description, []ginkgo.Reporter{phaseReporter})
+	ginkgoPassed := false
+
+	// We need this anonymous function to make sure GinkgoRecover runs where we want it to
+	// and will still execute the rest of the function regardless whether the tests pass or fail.
+	func() {
+		defer ginkgo.GinkgoRecover()
+		ginkgoPassed = ginkgo.RunSpecsWithDefaultAndCustomReporters(ginkgo.GinkgoT(), description, []ginkgo.Reporter{phaseReporter})
+	}()
 
 	files, err := ioutil.ReadDir(phaseDirectory)
 	if err != nil {
