@@ -107,7 +107,7 @@ type AddonConfig struct {
 
 // ScaleConfig options for scale testing
 type ScaleConfig struct {
-	WorkloadsRepository string `env:"WORKLOADS_REPO" sect:"scale" default:"https://github.com/openshift-scale/workloads.git" yaml:"workloadsRepository"`
+	WorkloadsRepository string `env:"WORKLOADS_REPO" sect:"scale" default:"https://github.com/openshift-scale/workloads" yaml:"workloadsRepository"`
 
 	WorkloadsRepositoryBranch string `env:"WORKLOADS_REPO_BRANCH" sect:"scale" default:"master" yaml:"workloadsRepositoryBranch"`
 
