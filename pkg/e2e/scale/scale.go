@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"sync"
 	"text/template"
 
 	"github.com/markbates/pkger"
@@ -25,18 +26,11 @@ const (
 )
 
 var (
-	// scaleRepos are the default repos cloned with scale tests.
-	scaleRepos = runner.Repos{
-		{
-			Name:      "workloads",
-			URL:       config.Instance.Scale.WorkloadsRepository,
-			MountPath: WorkloadsPath,
-			Branch:    config.Instance.Scale.WorkloadsRepositoryBranch,
-		},
-	}
-
 	scaleRunnerCmdTpl *template.Template
 )
+
+var once sync.Once = sync.Once{}
+var scaleRepos runner.Repos
 
 type scaleRunnerConfig struct {
 	Name             string
@@ -66,6 +60,18 @@ func init() {
 
 // Runner returns a runner with a base config for scale tests.
 func (sCfg scaleRunnerConfig) Runner(h *helper.H) *runner.Runner {
+	once.Do(func() {
+		// scaleRepos are the default repos cloned with scale tests.
+		scaleRepos = runner.Repos{
+			{
+				Name:      "workloads",
+				URL:       config.Instance.Scale.WorkloadsRepository,
+				MountPath: WorkloadsPath,
+				Branch:    config.Instance.Scale.WorkloadsRepositoryBranch,
+			},
+		}
+	})
+
 	// template command from config
 	sCfg.Name = "scale-" + sCfg.Name
 	sCfg.WorkloadsPath = WorkloadsPath
