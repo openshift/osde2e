@@ -32,9 +32,10 @@ set -o pipefail
     if [ "$TEST" = "test-addon" ]; then
         extract_secret_from_dirs ADDON_IDS "$SECRETS" addon-ids "Addon IDs file"
         extract_secret_from_dirs ADDON_TEST_HARNESSES "$SECRETS" addon-test-harnesses "Addon test harnesses file"
-    fi
-
-    if [[ "$TEST" == test-scale* ]]; then
+    else
+	# Addon tests don't need pbench secrets. Otherwise, we can be reasonable sure that we're using
+	# a standard osde2e job maintained by the CI/CD team, so we should extract the pbench secrets in case
+	# we're scale testing.
         extract_secret_from_dirs PBENCH_SSH_PRIVATE_KEY "$SECRETS" pbench-ssh-private-key "pbench private key file"
         extract_secret_from_dirs PBENCH_SSH_PUBLIC_KEY "$SECRETS" pbench-ssh-public-key "pbench public key file"
     fi
