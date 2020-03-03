@@ -9,6 +9,7 @@ import (
 	"os/exec"
 	"syscall"
 
+	"github.com/openshift/osde2e/cmd/osde2e/gate"
 	"github.com/openshift/osde2e/cmd/osde2e/test"
 
 	"github.com/google/subcommands"
@@ -18,6 +19,7 @@ func main() {
 	subcommands.Register(subcommands.HelpCommand(), "")
 	subcommands.Register(subcommands.FlagsCommand(), "")
 	subcommands.Register(subcommands.CommandsCommand(), "")
+	subcommands.Register(&gate.GateCommand{}, "")
 	subcommands.Register(&test.TestCommand{}, "")
 
 	update := flag.Bool("update", true, "Whether to update the binary before running.")
