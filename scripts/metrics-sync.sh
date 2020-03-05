@@ -1,4 +1,7 @@
 #!/bin/bash
+#
+# Metrics sync will takes metrics from the osde2e metrics bucket and sync them with the datahub Prometheus pushgateway.
+#
 
 METRICS_BUCKET=osde2e-metrics
 INCOMING=incoming
