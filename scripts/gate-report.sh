@@ -36,7 +36,7 @@ fi
 REPORT_FILE="$ENVIRONMENT-$VERSION-report.json"
 
 set +e
-osde2e gate-report -output "$REPORT_DIR/$REPORT_FILE" "$ENVIRONMENT" "$VERSION"
+osde2e gate -output "$REPORT_DIR/$REPORT_FILE" "$ENVIRONMENT" "$VERSION"
 set -e
 
 aws s3 cp "$REPORT_DIR/$REPORT_FILE" "s3://$METRICS_BUCKET/$GATE_REPORT/$REPORT_FILE"
