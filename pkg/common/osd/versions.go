@@ -82,32 +82,32 @@ func (u *OSD) LatestVersion(major, minor int64, suffix string) (string, error) {
 	return VersionPrefix + latest.Original(), nil
 }
 
-// MiddleVersion gets the middle version in the ordered list of cluster image sets known to OCM.
-func (u *OSD) MiddleVersion() (string, error) {
+// MiddleVersion gets the middle version in the ordered list of cluster image sets known to OCM. It will also return true if there were enough versions to select from.
+func (u *OSD) MiddleVersion() (string, bool, error) {
 	versionList, err := u.EnabledNoDefaultVersionList()
 	if err != nil {
-		return "", err
+		return "", false, err
 	}
 
 	if len(versionList) <= 1 {
-		return "", fmt.Errorf("there are not enough versions known to OCM to select a middle version")
+		return "", false, nil
 	}
 
-	return versionList[len(versionList)/2], nil
+	return versionList[len(versionList)/2], true, nil
 }
 
-// OldestVersion gets the middle version in the ordered list of cluster image sets known to OCM.
-func (u *OSD) OldestVersion() (string, error) {
+// OldestVersion gets the middle version in the ordered list of cluster image sets known to OCM. It will also return true if there were enough versions to select from.
+func (u *OSD) OldestVersion() (string, bool, error) {
 	versionList, err := u.EnabledNoDefaultVersionList()
 	if err != nil {
-		return "", err
+		return "", false, err
 	}
 
 	if len(versionList) <= 1 {
-		return "", fmt.Errorf("there are not enough versions known to OCM to select an oldest version")
+		return "", false, nil
 	}
 
-	return versionList[0], nil
+	return versionList[0], true, nil
 }
 
 // EnabledNoDefaultVersionList returns a sorted list of the enabled but not default versions currently offered by OSD.

@@ -29,6 +29,9 @@ type ClusterState struct {
 
 	// Version is the version of the cluster being deployed.
 	Version string `json:"cluster_version,omitempty" env:"CLUSTER_VERSION" sect:"version"  yaml:"version"`
+
+	// EnoughVersionsForOldestOrMiddleTest is true if there were enough versions for an older/middle test.
+	EnoughVersionsForOldestOrMiddleTest bool `default:"true"`
 }
 
 // KubeconfigState stores information required to talk to the Kube API
