@@ -4,7 +4,8 @@ ENV PKG=/go/src/github.com/openshift/osde2e/
 WORKDIR ${PKG}
 
 COPY . .
-RUN make check && make build
+RUN make check
+RUN make build
 
 FROM registry.access.redhat.com/ubi7/ubi-minimal:latest
 
