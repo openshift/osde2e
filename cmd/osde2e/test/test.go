@@ -20,8 +20,8 @@ import (
 	_ "github.com/openshift/osde2e/pkg/e2e/workloads/guestbook"
 )
 
-// TestCommand is the command for running end to end tests on OSD clusters
-type TestCommand struct {
+// Command is the command for running end to end tests on OSD clusters
+type Command struct {
 	configString string
 	customConfig string
 
@@ -29,28 +29,28 @@ type TestCommand struct {
 }
 
 // Name is the name of the test command
-func (*TestCommand) Name() string {
+func (*Command) Name() string {
 	return "test"
 }
 
 // Synopsis is a short summary of the test command
-func (*TestCommand) Synopsis() string {
+func (*Command) Synopsis() string {
 	return "Runs end to end tests on a cluster using the provided arguments."
 }
 
 // Usage describes how the test command is used
-func (*TestCommand) Usage() string {
+func (*Command) Usage() string {
 	return "test [-configs config1,config2] [-customConfig osde2e-custom-config.yaml]"
 }
 
 // SetFlags describes the arguments used by the test command
-func (t *TestCommand) SetFlags(f *flag.FlagSet) {
+func (t *Command) SetFlags(f *flag.FlagSet) {
 	f.StringVar(&t.configString, "configs", "", "A comma separated list of built in configs to use")
 	f.StringVar(&t.customConfig, "custom-config", "", "Custom config file for osde2e")
 }
 
 // Execute actually executes the tests
-func (t *TestCommand) Execute(_ context.Context, f *flag.FlagSet, _ ...interface{}) subcommands.ExitStatus {
+func (t *Command) Execute(_ context.Context, f *flag.FlagSet, _ ...interface{}) subcommands.ExitStatus {
 	if err := common.LoadConfigs(t.configString, t.customConfig); err != nil {
 		log.Printf("error loading initial state: %v", err)
 		return subcommands.ExitFailure
