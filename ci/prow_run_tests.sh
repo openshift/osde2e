@@ -29,10 +29,7 @@ set -o pipefail
     extract_secret_from_dirs AWS_SECRET_ACCESS_KEY "$SECRETS" aws-secret-access-key "AWS secret access key file"
     extract_secret_from_dirs AWS_REGION "$SECRETS" aws-region "AWS region file"
 
-    if [ "$TEST" = "test-addon" ]; then
-        extract_secret_from_dirs ADDON_IDS "$SECRETS" addon-ids "Addon IDs file"
-        extract_secret_from_dirs ADDON_TEST_HARNESSES "$SECRETS" addon-test-harnesses "Addon test harnesses file"
-    else
+    if [ "$TEST" != "test-addons" ]; then
 	# Addon tests don't need pbench secrets. Otherwise, we can be reasonable sure that we're using
 	# a standard osde2e job maintained by the CI/CD team, so we should extract the pbench secrets in case
 	# we're scale testing.
