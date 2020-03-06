@@ -33,8 +33,10 @@ if ! aws s3 ls s3://$METRICS_BUCKET 2>&1 > /dev/null ; then
 	exit 1
 fi
 
-REPORT_FILE="$REPORT_DIR/$ENVIRONMENT-$VERSION-report.json"
+REPORT_FILE="$ENVIRONMENT-$VERSION-report.json"
 
-osde2e gate -output "$REPORT_FILE" "$ENVIRONMENT" "$VERSION"
+set +e
+osde2e gate-report -output "$REPORT_DIR/$REPORT_FILE" "$ENVIRONMENT" "$VERSION"
+set -e
 
-aws s3 cp "$REPORT_FILE" "s3://$METRICS_BUCKET/$GATE_REPORT/$REPORT_FILE"
+aws s3 cp "$REPORT_DIR/$REPORT_FILE" "s3://$METRICS_BUCKET/$GATE_REPORT/$REPORT_FILE"
