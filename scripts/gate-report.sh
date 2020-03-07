@@ -21,8 +21,6 @@ fi
 ENVIRONMENT="$1"
 VERSION="$2"
 
-make build -f "$SRC_DIR/Makefile"
-
 virtualenv "$VENV"
 . "$VENV/bin/activate"
 
@@ -36,7 +34,7 @@ fi
 REPORT_FILE="$ENVIRONMENT-$VERSION-report.json"
 
 set +e
-osde2e gate -output "$REPORT_DIR/$REPORT_FILE" "$ENVIRONMENT" "$VERSION"
+docker run -e PROMETHEUS_ADDRESS -e PROMETHEUS_BEARER_TOKEN -v "$REPORT_DIR:/report-output" quay.io/app-sre/osde2e gate -output "/report-output/$REPORT_FILE" "$ENVIRONMENT" "$VERSION"
 set -e
 
 aws s3 cp "$REPORT_DIR/$REPORT_FILE" "s3://$METRICS_BUCKET/$GATE_REPORT/$REPORT_FILE"
