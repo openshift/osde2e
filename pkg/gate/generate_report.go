@@ -89,7 +89,11 @@ func generateReport(context context.Context, promAPI v1.API, environment string,
 	}
 
 	if matrixResults, ok := results.(model.Matrix); ok {
-		versions, failures := generateVersionsAndFailures(matrixResults)
+		versions, failures, err := generateVersionsAndFailures(matrixResults)
+
+		if err != nil {
+			return report.GateReport{Viable: false}, err
+		}
 
 		report := report.GateReport{
 			Viable:       len(failures) == 0,
@@ -104,7 +108,7 @@ func generateReport(context context.Context, promAPI v1.API, environment string,
 	return report.GateReport{Viable: false}, nil
 }
 
-func generateVersionsAndFailures(matrixResults model.Matrix) ([]string, []string) {
+func generateVersionsAndFailures(matrixResults model.Matrix) ([]string, []string, error) {
 	versions := map[string]bool{}
 	failures := map[string]int{}
 
@@ -127,6 +131,10 @@ func generateVersionsAndFailures(matrixResults model.Matrix) ([]string, []string
 		versionArray = append(versionArray, version)
 	}
 
+	if len(versionArray) == 0 {
+		return nil, nil, fmt.Errorf("no versions of OpenShift matching the specified version exist in the test results")
+	}
+
 	failureArray := []string{}
 	for testname, failureCount := range failures {
 		if failureCount > (config.Instance.Gate.NumberOfSamplesNecessary - 1) {
@@ -134,5 +142,5 @@ func generateVersionsAndFailures(matrixResults model.Matrix) ([]string, []string
 		}
 	}
 
-	return versionArray, failureArray
+	return versionArray, failureArray, nil
 }
