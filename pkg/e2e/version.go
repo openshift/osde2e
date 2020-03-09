@@ -67,10 +67,10 @@ func setupVersion(osd *osd.OSD) (err error) {
 			state.Cluster.Version, err = osd.LatestVersion(-1, -1, "")
 			versionType = "latest version"
 		} else if cfg.Cluster.UseMiddleClusterImageSetForInstall {
-			state.Cluster.Version, err = osd.MiddleVersion()
+			state.Cluster.Version, state.Cluster.EnoughVersionsForOldestOrMiddleTest, err = osd.MiddleVersion()
 			versionType = "middle version"
 		} else if cfg.Cluster.UseOldestClusterImageSetForInstall {
-			state.Cluster.Version, err = osd.OldestVersion()
+			state.Cluster.Version, state.Cluster.EnoughVersionsForOldestOrMiddleTest, err = osd.OldestVersion()
 			versionType = "oldest version"
 		} else {
 			state.Cluster.Version, err = osd.DefaultVersion()
@@ -78,7 +78,11 @@ func setupVersion(osd *osd.OSD) (err error) {
 		}
 
 		if err == nil {
-			log.Printf("CLUSTER_VERSION not set, using the %s '%s'", versionType, state.Cluster.Version)
+			if state.Cluster.EnoughVersionsForOldestOrMiddleTest {
+				log.Printf("CLUSTER_VERSION not set, using the %s '%s'", versionType, state.Cluster.Version)
+			} else {
+				log.Printf("Unable to get the %s.", versionType)
+			}
 		} else {
 			return fmt.Errorf("Error finding default cluster version: %v", err)
 		}

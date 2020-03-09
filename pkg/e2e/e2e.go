@@ -89,6 +89,11 @@ func runGinkgoTests() error {
 			return fmt.Errorf("failed to configure versions: %v", err)
 		}
 
+		if !state.Cluster.EnoughVersionsForOldestOrMiddleTest {
+			log.Printf("There were not enough available cluster image sets to choose and oldest or middle cluster image set to test against. Skipping tests.")
+			return nil
+		}
+
 		if state.Upgrade.UpgradeVersionEqualToInstallVersion {
 			log.Printf("Install version and upgrade version are the same. Skipping tests.")
 			return nil
