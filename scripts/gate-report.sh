@@ -33,6 +33,7 @@ fi
 
 REPORT_FILE="$ENVIRONMENT-$VERSION-report.json"
 
+docker pull quay.io/app-sre/osde2e
 docker run -e PROMETHEUS_ADDRESS -e PROMETHEUS_BEARER_TOKEN -v "$REPORT_DIR:/report-output" quay.io/app-sre/osde2e gate-report -output "/report-output/$REPORT_FILE" "$ENVIRONMENT" "$VERSION"
 
 aws s3 cp "$REPORT_DIR/$REPORT_FILE" "s3://$METRICS_BUCKET/$GATE_REPORT/$REPORT_FILE"

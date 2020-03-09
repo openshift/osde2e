@@ -36,4 +36,5 @@ REPORT_FILE="$ENVIRONMENT-$VERSION-report.json"
 
 aws s3 cp "s3://$METRICS_BUCKET/$GATE_REPORT/$REPORT_FILE" "$REPORT_DIR/$REPORT_FILE"
 
+docker pull quay.io/app-sre/osde2e
 docker run -v "$REPORT_DIR:/report-input" quay.io/app-sre/osde2e gate-report-analysis "/report-input/$REPORT_FILE"
