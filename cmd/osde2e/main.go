@@ -19,8 +19,9 @@ func main() {
 	subcommands.Register(subcommands.HelpCommand(), "")
 	subcommands.Register(subcommands.FlagsCommand(), "")
 	subcommands.Register(subcommands.CommandsCommand(), "")
-	subcommands.Register(&gate.GateCommand{}, "")
-	subcommands.Register(&test.TestCommand{}, "")
+	subcommands.Register(&gate.ReportAnalysisCommand{}, "")
+	subcommands.Register(&gate.ReportCommand{}, "")
+	subcommands.Register(&test.Command{}, "")
 
 	update := flag.Bool("update", true, "Whether to update the binary before running.")
 	flag.Parse()

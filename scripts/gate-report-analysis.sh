@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# gate-report will run the gate report command against the provided arguments and upload the resulting report to the osde2e-metrics bucket.
+# gate-report-analysis will run the gate report analysis command against the provided arguments and exit successfully if the report indicates a viable release.
 #
 
 set -e
@@ -31,8 +31,9 @@ if ! aws s3 ls s3://$METRICS_BUCKET 2>&1 > /dev/null ; then
 	exit 1
 fi
 
+
 REPORT_FILE="$ENVIRONMENT-$VERSION-report.json"
 
-docker run -e PROMETHEUS_ADDRESS -e PROMETHEUS_BEARER_TOKEN -v "$REPORT_DIR:/report-output" quay.io/app-sre/osde2e gate-report -output "/report-output/$REPORT_FILE" "$ENVIRONMENT" "$VERSION"
+aws s3 cp "s3://$METRICS_BUCKET/$GATE_REPORT/$REPORT_FILE" "$REPORT_DIR/$REPORT_FILE"
 
-aws s3 cp "$REPORT_DIR/$REPORT_FILE" "s3://$METRICS_BUCKET/$GATE_REPORT/$REPORT_FILE"
+docker run -v "$REPORT_DIR:/report-input" quay.io/app-sre/osde2e gate-report-analysis "/report-input/$REPORT_FILE"
