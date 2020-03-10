@@ -8,10 +8,9 @@ set -e
 SRC_DIR="$(cd $(dirname $0)/..; pwd)"
 METRICS_BUCKET=osde2e-metrics
 GATE_REPORT=gate-report
-VENV="$(mktemp -d)"
 REPORT_DIR="$(mktemp -d)"
 
-trap 'rm -rf "$VENV" "$REPORT_DIR"' EXIT
+trap 'rm -rf "$REPORT_DIR"' EXIT
 
 if [[ $# -ne 2 ]]; then
 	echo "Usage: $0 <environment> <version>"
@@ -21,10 +20,7 @@ fi
 ENVIRONMENT="$1"
 VERSION="$2"
 
-virtualenv "$VENV"
-. "$VENV/bin/activate"
-
-pip install awscli
+AWS="docker run -e AWS_ACCESS_KEY_ID="${AWS_ACCESS_KEY_ID}" -e AWS_SECRET_ACCESS_KEY -v "$REPORT_DIR:/report-input" quay.io/app-sre/mesosphere-aws-cli"
 
 if ! aws s3 ls s3://$METRICS_BUCKET 2>&1 > /dev/null ; then
 	echo "AWS CLI not configured properly."
@@ -34,7 +30,7 @@ fi
 
 REPORT_FILE="$ENVIRONMENT-$VERSION-report.json"
 
-aws s3 cp "s3://$METRICS_BUCKET/$GATE_REPORT/$REPORT_FILE" "$REPORT_DIR/$REPORT_FILE"
+$AWS s3 cp "s3://$METRICS_BUCKET/$GATE_REPORT/$REPORT_FILE" "/report-input/$REPORT_FILE"
 
 docker pull quay.io/app-sre/osde2e
 docker run -v "$REPORT_DIR:/report-input" quay.io/app-sre/osde2e gate-report-analysis "/report-input/$REPORT_FILE"
