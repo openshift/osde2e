@@ -22,7 +22,7 @@ VERSION="$2"
 
 AWS="docker run -e AWS_ACCESS_KEY_ID="${AWS_ACCESS_KEY_ID}" -e AWS_SECRET_ACCESS_KEY -v "$REPORT_DIR:/report-input" quay.io/app-sre/mesosphere-aws-cli"
 
-if ! aws s3 ls s3://$METRICS_BUCKET 2>&1 > /dev/null ; then
+if ! $AWS s3 ls s3://$METRICS_BUCKET 2>&1 > /dev/null ; then
 	echo "AWS CLI not configured properly."
 	exit 1
 fi
