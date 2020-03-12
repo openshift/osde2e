@@ -105,9 +105,11 @@ cicd_jUnitResult{environment="prod",install_version="install-version",phase="ins
 }
 
 func TestProcessJSONFile(t *testing.T) {
+	state.Instance.Cluster.ID = "1a2b3c"
 	state.Instance.Cluster.Version = "install-version"
 	state.Instance.Upgrade.ReleaseName = "upgrade-version"
 	config.Instance.OCM.Env = "prod"
+	config.Instance.JobID = "123"
 
 	tests := []struct {
 		testName         string
@@ -133,8 +135,8 @@ func TestProcessJSONFile(t *testing.T) {
 		}
 	}
 }`,
-			expectedOutput: `cicd_metadata{environment="prod",install_version="install-version",metadata_name="test2",upgrade_version="upgrade-version"} 6
-cicd_metadata{environment="prod",install_version="install-version",metadata_name="another-nested field.another-level.test4",upgrade_version="upgrade-version"} 7
+			expectedOutput: `cicd_metadata{cluster_id="1a2b3c",environment="prod",install_version="install-version",job_id="123",metadata_name="test2",phase="",upgrade_version="upgrade-version"} 6
+cicd_metadata{cluster_id="1a2b3c",environment="prod",install_version="install-version",job_id="123",metadata_name="another-nested field.another-level.test4",phase="",upgrade_version="upgrade-version"} 7
 `,
 			phase: "",
 		},
@@ -155,8 +157,8 @@ cicd_metadata{environment="prod",install_version="install-version",metadata_name
 		}
 	}
 }`,
-			expectedOutput: `cicd_addon_metadata{environment="prod",install_version="install-version",metadata_name="test2",phase="install",upgrade_version="upgrade-version"} 6
-cicd_addon_metadata{environment="prod",install_version="install-version",metadata_name="another-nested field.another-level.test4",phase="install",upgrade_version="upgrade-version"} 7
+			expectedOutput: `cicd_addon_metadata{cluster_id="1a2b3c",environment="prod",install_version="install-version",job_id="123",metadata_name="test2",phase="install",upgrade_version="upgrade-version"} 6
+cicd_addon_metadata{cluster_id="1a2b3c",environment="prod",install_version="install-version",job_id="123",metadata_name="another-nested field.another-level.test4",phase="install",upgrade_version="upgrade-version"} 7
 `,
 			phase: "install",
 		},
@@ -206,9 +208,10 @@ cicd_addon_metadata{environment="prod",install_version="install-version",metadat
 }
 
 func TestWritePrometheusFile(t *testing.T) {
-	state.Instance.Cluster.ID = "full-test"
+	state.Instance.Cluster.ID = "1a2b3c"
 	state.Instance.Cluster.Version = "install-version"
 	state.Instance.Upgrade.ReleaseName = "upgrade-version"
+	config.Instance.JobID = "123"
 	config.Instance.JobName = "test-job"
 	config.Instance.OCM.Env = "prod"
 
@@ -275,8 +278,8 @@ cicd_jUnitResult{environment="prod",install_version="install-version",phase="upg
 			},
 			metadataFileContents:      metadataFileContents,
 			addonMetadataFileContents: addonMetadataFileContents,
-			expectedOutput: jUnitExpectedOutput + `cicd_metadata{environment="prod",install_version="install-version",metadata_name="test2",upgrade_version="upgrade-version"} 6
-cicd_addon_metadata{environment="prod",install_version="install-version",metadata_name="test2",phase="install",upgrade_version="upgrade-version"} 6
+			expectedOutput: jUnitExpectedOutput + `cicd_metadata{cluster_id="1a2b3c",environment="prod",install_version="install-version",job_id="123",metadata_name="test2",phase="",upgrade_version="upgrade-version"} 6
+cicd_addon_metadata{cluster_id="1a2b3c",environment="prod",install_version="install-version",job_id="123",metadata_name="test2",phase="install",upgrade_version="upgrade-version"} 6
 `,
 		},
 		{
@@ -293,7 +296,7 @@ cicd_addon_metadata{environment="prod",install_version="install-version",metadat
 			},
 			metadataFileContents:      metadataFileContents,
 			addonMetadataFileContents: "",
-			expectedOutput: jUnitExpectedOutput + `cicd_metadata{environment="prod",install_version="install-version",metadata_name="test2",upgrade_version="upgrade-version"} 6
+			expectedOutput: jUnitExpectedOutput + `cicd_metadata{cluster_id="1a2b3c",environment="prod",install_version="install-version",job_id="123",metadata_name="test2",phase="",upgrade_version="upgrade-version"} 6
 `,
 		},
 		{

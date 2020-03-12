@@ -24,8 +24,11 @@ type Config struct {
 
 	Gate GateConfig `yaml:"gate"`
 
-	// Name lets you name the current e2e job run
+	// JobName lets you name the current e2e job run
 	JobName string `json:"job_name" env:"JOB_NAME" sect:"tests" yaml:"jobName"`
+
+	// JobID is the ID designated by prow for this run
+	JobID string `json:"job_id" env:"BUILD_NUMBER" sect:"tests" yaml:"jobID"`
 
 	// ReportDir is the location JUnit XML results are written.
 	ReportDir string `json:"report_dir,omitempty" env:"REPORT_DIR" sect:"tests" default:"__TMP_DIR__" yaml:"reportDir"`
