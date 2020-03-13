@@ -19,18 +19,7 @@ fi
 
 ENVIRONMENT="$1"
 VERSION="$2"
-
-AWS="docker run -e AWS_ACCESS_KEY_ID="${AWS_ACCESS_KEY_ID}" -e AWS_SECRET_ACCESS_KEY -v "$REPORT_DIR:/report-input" quay.io/app-sre/mesosphere-aws-cli"
-
-if ! $AWS s3 ls s3://$METRICS_BUCKET 2>&1 > /dev/null ; then
-	echo "AWS CLI not configured properly."
-	exit 1
-fi
-
-
 REPORT_FILE="$ENVIRONMENT-$VERSION-report.json"
 
-$AWS s3 cp "s3://$METRICS_BUCKET/$GATE_REPORT/$REPORT_FILE" "/report-input/$REPORT_FILE"
-
 docker pull quay.io/app-sre/osde2e
-docker run -v "$REPORT_DIR:/report-input" quay.io/app-sre/osde2e gate-report-analysis "/report-input/$REPORT_FILE"
+docker run -e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY -e AWS_REGION quay.io/app-sre/osde2e gate-report-analysis ""s3://$METRICS_BUCKET/$GATE_REPORT/$REPORT_FILE""

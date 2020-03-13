@@ -6,7 +6,7 @@ import (
 	"os"
 )
 
-// writer is a writer for report output. We're doing this so that we can avoid closing stdout
+// writer is a writer for local report output. We're doing this so that we can avoid closing stdout
 // if we're writing to that instead of an actual file.
 type writer struct {
 	file *os.File
