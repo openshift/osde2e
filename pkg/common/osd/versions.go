@@ -22,6 +22,11 @@ const (
 	PageSize = 100
 )
 
+// Use for the semver list filter to include all results.
+func noFilter(_ *semver.Version) bool {
+	return true
+}
+
 // DefaultVersion returns the default version currently offered by OSD.
 func (u *OSD) DefaultVersion() (string, error) {
 	resp, err := u.versions().List().
@@ -52,7 +57,7 @@ func (u *OSD) PreviousVersion(verStr string) (string, error) {
 		return "", fmt.Errorf("couldn't parse given verStr '%s': %v", verStr, err)
 	}
 
-	versions, err := u.getSemverList(-1, -1, "")
+	versions, err := u.getSemverList(-1, -1, "", noFilter)
 	if err != nil {
 		return "", fmt.Errorf("couldn't created sorted version list: %v", err)
 	}
@@ -66,9 +71,29 @@ func (u *OSD) PreviousVersion(verStr string) (string, error) {
 	return "", fmt.Errorf("no versions available before '%s'", verStr)
 }
 
-// LatestVersion gets latest release for major and minor versions. Negative versions match all.
-func (u *OSD) LatestVersion(major, minor int64, suffix string) (string, error) {
-	versions, err := u.getSemverList(major, minor, suffix)
+// LatestVersion gets latest release on OSD.
+func (u *OSD) LatestVersion() (string, error) {
+	return u.LatestVersionWithTarget(-1, -1, "")
+}
+
+// LatestVersionWithFilter gets latest release on OSD and applies the given filter to it.
+func (u *OSD) LatestVersionWithFilter(filter func(*semver.Version) bool) (string, error) {
+	versions, err := u.getSemverList(-1, -1, "", filter)
+	if err != nil {
+		return "", fmt.Errorf("couldn't created sorted version list: %v", err)
+	}
+
+	if len(versions) == 0 {
+		return "", fmt.Errorf("no versions available after applying filter")
+	}
+
+	latest := versions[len(versions)-1]
+	return VersionPrefix + latest.Original(), nil
+}
+
+// LatestVersionWithTarget gets latest release for major and minor versions. Negative versions match all.
+func (u *OSD) LatestVersionWithTarget(major, minor int64, suffix string) (string, error) {
+	versions, err := u.getSemverList(major, minor, suffix, noFilter)
 	if err != nil {
 		return "", fmt.Errorf("couldn't created sorted version list: %v", err)
 	}
@@ -112,7 +137,7 @@ func (u *OSD) OldestVersion() (string, bool, error) {
 
 // EnabledNoDefaultVersionList returns a sorted list of the enabled but not default versions currently offered by OSD.
 func (u *OSD) EnabledNoDefaultVersionList() ([]string, error) {
-	semverVersions, err := u.getSemverList(-1, -1, "")
+	semverVersions, err := u.getSemverList(-1, -1, "", noFilter)
 	if err != nil {
 		return nil, fmt.Errorf("couldn't created sorted version list: %v", err)
 	}
@@ -135,7 +160,7 @@ func (u *OSD) EnabledNoDefaultVersionList() ([]string, error) {
 }
 
 // getSemverList as sorted semvers containing str for major and minor versions. Negative versions match all.
-func (u *OSD) getSemverList(major, minor int64, str string) (versions []*semver.Version, err error) {
+func (u *OSD) getSemverList(major, minor int64, str string, filter func(*semver.Version) bool) (versions []*semver.Version, err error) {
 	page := 1
 
 	log.Printf("Querying cluster versions endpoint.")
@@ -161,7 +186,7 @@ func (u *OSD) getSemverList(major, minor int64, str string) (versions []*semver.
 				return true
 			} else if version.Minor() != minor && minor >= 0 {
 				return true
-			} else if strings.Contains(version.Prerelease(), str) && v.Enabled() {
+			} else if strings.Contains(version.Prerelease(), str) && filter(version) && v.Enabled() {
 				versions = append(versions, version)
 			}
 			return true

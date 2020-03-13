@@ -6,12 +6,24 @@ import (
 	"log"
 	"strings"
 
+	"github.com/Masterminds/semver"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/metadata"
 	"github.com/openshift/osde2e/pkg/common/osd"
 	"github.com/openshift/osde2e/pkg/common/state"
 	"github.com/openshift/osde2e/pkg/common/upgrade"
 )
+
+func filterOnCincinnati(version *semver.Version) bool {
+	versionInCincinnati, err := upgrade.IsVersionInCincinnati(version)
+
+	if err != nil {
+		log.Printf("error while trying to filter on version in Cincinnati: %v", err)
+		return false
+	}
+
+	return versionInCincinnati
+}
 
 // ChooseVersions sets versions in cfg if not set based on defaults and upgrade options.
 // If a release stream is set for an upgrade the previous available version is used and it's image is used for upgrade.
@@ -55,7 +67,7 @@ func setupVersion(osd *osd.OSD) (err error) {
 		}
 
 		// look for the latest release and install it for this OSD cluster.
-		if state.Cluster.Version, err = osd.LatestVersion(majorTarget, cfg.Cluster.MinorTarget, suffix); err == nil {
+		if state.Cluster.Version, err = osd.LatestVersionWithTarget(majorTarget, cfg.Cluster.MinorTarget, suffix); err == nil {
 			log.Printf("CLUSTER_VERSION not set but a TARGET is, running '%s'", state.Cluster.Version)
 		}
 	}
@@ -64,7 +76,7 @@ func setupVersion(osd *osd.OSD) (err error) {
 		var err error
 		var versionType string
 		if cfg.Cluster.UseLatestVersionForInstall {
-			state.Cluster.Version, err = osd.LatestVersion(-1, -1, "")
+			state.Cluster.Version, err = osd.LatestVersion()
 			versionType = "latest version"
 		} else if cfg.Cluster.UseMiddleClusterImageSetForInstall {
 			state.Cluster.Version, state.Cluster.EnoughVersionsForOldestOrMiddleTest, err = osd.MiddleVersion()
@@ -108,12 +120,8 @@ func setupUpgradeVersion(osd *osd.OSD) (err error) {
 		return err
 	}
 
-	if cfg.Upgrade.UpgradeToCISIfPossible {
-		suffix := ""
-		if cfg.OCM.Env == "int" {
-			suffix = "nightly"
-		}
-		cisUpgradeVersionString, err := osd.LatestVersion(-1, -1, suffix)
+	if cfg.OCM.Env != "int" {
+		cisUpgradeVersionString, err := osd.LatestVersionWithFilter(filterOnCincinnati)
 
 		if err != nil {
 			log.Printf("unable to get the most recent version of openshift from OSD: %v", err)
@@ -144,7 +152,7 @@ func setupUpgradeVersion(osd *osd.OSD) (err error) {
 		}
 	}
 
-	state.Upgrade.ReleaseName, state.Upgrade.Image, err = upgrade.LatestRelease(cfg.Upgrade.ReleaseStream, true)
+	state.Upgrade.ReleaseName, state.Upgrade.Image, err = upgrade.LatestReleaseFromReleaseController(cfg.Upgrade.ReleaseStream, true)
 	if err != nil {
 		return fmt.Errorf("couldn't get latest release from release-controller: %v", err)
 	}
