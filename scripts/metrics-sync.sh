@@ -44,8 +44,6 @@ for metric_and_timestamp in $METRICS_LAST_UPDATED; do
 	fi
 done
 
-exit 0
-
 virtualenv "$VENV"
 
 # shellcheck source=/dev/null
