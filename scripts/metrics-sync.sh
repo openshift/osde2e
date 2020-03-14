@@ -8,7 +8,10 @@ INCOMING=incoming
 PROCESSED=processed
 VENV="$(mktemp -d)"
 METRICS_DIR="$(mktemp -d)"
-METRIC_TIMEOUT_IN_SECONDS=172800 # 48h in seconds
+METRIC_TIMEOUT_IN_SECONDS=21600 # 6h in seconds
+METRIC_ADDON_TIMEOUT_IN_SECONDS=46800 # 13h in seconds
+METRIC_SCALE_TIMEOUT_IN_SECONDS=93600 # 26h in seconds
+METRIC_IMAGESET_TIMEOUT_IN_SECONDS=93600 # 26h in seconds
 
 PUSHGATEWAY_URL=${PUSHGATEWAY_URL%/}
 
@@ -21,14 +24,27 @@ CURRENT_TIMESTAMP=$(date +%s)
 for metric_and_timestamp in $METRICS_LAST_UPDATED; do
 	JOB_NAME=$(echo -e "$metric_and_timestamp" | cut -f 1 -d,)
 	TIMESTAMP=$(echo -e "$metric_and_timestamp" | cut -f 2 -d, | xargs -d '\n' printf "%.f")
-	if (( ((TIMESTAMP + METRIC_TIMEOUT_IN_SECONDS)) < CURRENT_TIMESTAMP )); then
-		echo "Metrics for job $JOB_NAME are greater than $METRIC_TIMEOUT_IN_SECONDS seconds old. Removing them from the pushgateway."
+
+	if echo "$JOB_NAME" | grep -qE ".*osde2e.*addon.*"; then
+		TIMESTAMP_PLUS_TIMEOUT=$((TIMESTAMP + METRIC_ADDON_TIMEOUT_IN_SECONDS))
+	elif echo "$JOB_NAME" | grep -qE ".*osde2e.*scale.*"; then
+		TIMESTAMP_PLUS_TIMEOUT=$((TIMESTAMP + METRIC_SCALE_TIMEOUT_IN_SECONDS))
+	elif echo "$JOB_NAME" | grep -qE ".*osde2e.*imageset.*"; then
+		TIMESTAMP_PLUS_TIMEOUT=$((TIMESTAMP + METRIC_IMAGESET_TIMEOUT_IN_SECONDS))
+	else
+		TIMESTAMP_PLUS_TIMEOUT=$((TIMESTAMP + METRIC_TIMEOUT_IN_SECONDS))
+	fi
+
+	if (( TIMESTAMP_PLUS_TIMEOUT < CURRENT_TIMESTAMP )); then
+		echo "Metrics for job $JOB_NAME have expired. Removing them from the pushgateway."
 		if ! curl -X DELETE "$PUSHGATEWAY_URL/metrics/job/$JOB_NAME"; then
 			echo "Error deleting old results for $JOB_NAME."
 			exit 3
 		fi
 	fi
 done
+
+exit 0
 
 virtualenv "$VENV"
 
