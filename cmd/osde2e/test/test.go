@@ -14,6 +14,7 @@ import (
 	_ "github.com/openshift/osde2e/pkg/e2e/addons"
 	_ "github.com/openshift/osde2e/pkg/e2e/openshift"
 	_ "github.com/openshift/osde2e/pkg/e2e/operators"
+	_ "github.com/openshift/osde2e/pkg/e2e/osd"
 	_ "github.com/openshift/osde2e/pkg/e2e/scale"
 	_ "github.com/openshift/osde2e/pkg/e2e/state"
 	_ "github.com/openshift/osde2e/pkg/e2e/verify"
