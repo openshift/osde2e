@@ -5,7 +5,6 @@
 
 set -e
 
-SRC_DIR="$(cd $(dirname $0)/..; pwd)"
 METRICS_BUCKET=osde2e-metrics
 GATE_REPORT=gate-report
 REPORT_DIR="$(mktemp -d)"
@@ -22,4 +21,4 @@ VERSION="$2"
 REPORT_FILE="$ENVIRONMENT-$VERSION-report.json"
 
 docker pull quay.io/app-sre/osde2e
-docker run -e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY -e AWS_REGION quay.io/app-sre/osde2e gate-report-analysis ""s3://$METRICS_BUCKET/$GATE_REPORT/$REPORT_FILE""
+docker run -e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY -e AWS_REGION quay.io/app-sre/osde2e gate-report-analysis "s3://$METRICS_BUCKET/$GATE_REPORT/$REPORT_FILE"

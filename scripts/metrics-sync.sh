@@ -19,9 +19,9 @@ trap 'rm -rf "$VENV" "$METRICS_DIR"' EXIT
 METRICS_LAST_UPDATED=$(curl "$PUSHGATEWAY_URL/metrics" | grep "^push_time_seconds{.*" | grep -E 'osde2e|ocm-api-test' | sed 's/^.*job="\([[:alnum:]_.-]*\)".*\}\s*\(.*\)$/\1,\2/' | sort | uniq)
 CURRENT_TIMESTAMP=$(date +%s)
 for metric_and_timestamp in $METRICS_LAST_UPDATED; do
-	JOB_NAME=$(echo -e $metric_and_timestamp | cut -f 1 -d,)
-	TIMESTAMP=$(echo -e $metric_and_timestamp | cut -f 2 -d, | xargs -d '\n' printf "%.f")
-	if (( (($TIMESTAMP + $METRIC_TIMEOUT_IN_SECONDS)) < $CURRENT_TIMESTAMP )); then
+	JOB_NAME=$(echo -e "$metric_and_timestamp" | cut -f 1 -d,)
+	TIMESTAMP=$(echo -e "$metric_and_timestamp" | cut -f 2 -d, | xargs -d '\n' printf "%.f")
+	if (( ((TIMESTAMP + METRIC_TIMEOUT_IN_SECONDS)) < CURRENT_TIMESTAMP )); then
 		echo "Metrics for job $JOB_NAME are greater than $METRIC_TIMEOUT_IN_SECONDS seconds old. Removing them from the pushgateway."
 		if ! curl -X DELETE "$PUSHGATEWAY_URL/metrics/job/$JOB_NAME"; then
 			echo "Error deleting old results for $JOB_NAME."
@@ -31,11 +31,13 @@ for metric_and_timestamp in $METRICS_LAST_UPDATED; do
 done
 
 virtualenv "$VENV"
+
+# shellcheck source=/dev/null
 . "$VENV/bin/activate"
 
 pip install awscli
 
-if ! aws s3 ls s3://$METRICS_BUCKET 2>&1 > /dev/null ; then
+if ! aws s3 ls s3://$METRICS_BUCKET > /dev/null 2>&1 ; then
 	echo "AWS CLI not configured properly."
 	exit 1
 fi
@@ -54,7 +56,8 @@ for file in $METRICS_FILES; do
 		exit 2
 	fi
 
-	JOB_NAME=$(echo $file | sed 's/^[^\.]*\.\(.*\)\.metrics\.prom$/\1/')
+	# shellcheck disable=SC2001
+	JOB_NAME=$(echo "$file" | sed 's/^[^\.]*\.\(.*\)\.metrics\.prom$/\1/')
 	if [[ ! $JOB_NAME = delete_* ]]; then
 		if ! curl -X DELETE "$PUSHGATEWAY_URL/metrics/job/$JOB_NAME"; then
 			echo "Error deleting old results for $JOB_NAME."
