@@ -137,7 +137,7 @@ func generateVersionsAndFailures(matrixResults model.Matrix) ([]string, []string
 
 	failureArray := []string{}
 	for testname, failureCount := range failures {
-		if failureCount > (config.Instance.Gate.NumberOfSamplesNecessary - 1) {
+		if failureCount >= (config.Instance.Gate.NumberOfSamplesNecessary - 1) {
 			failureArray = append(failureArray, testname)
 		}
 	}
