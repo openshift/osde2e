@@ -50,7 +50,7 @@ cicd_event{environment="int",event="InstallSuccessful",install_version="openshif
 
 cicd_jUnitResult{environment="int",install_version="openshift-v4.2.0-0.nightly-2020-01-15-224532",job="periodic-ci-openshift-osde2e-master-e2e-int-4.2-4.2",monitor="datahub",phase="install",result="failed",suite="OSD e2e suite",testname="[OSD] Managed Velero Operator deployment should have all desired replicas ready",upgrade_version="openshift-v4.2.0-0.nightly-2020-01-15-231532"}
 
-cicd_metadata{environment="int",install_version="openshift-v4.2.0-0.nightly-2020-01-15-224532",job="periodic-ci-openshift-osde2e-master-e2e-int-4.2-4.2",metadata_name="time-to-cluster-ready",monitor="datahub",upgrade_version="openshift-v4.2.0-0.nightly-2020-01-15-231532"}
+cicd_metadata{cluster_id="1a2bc3",environment="int",install_version="openshift-v4.2.0-0.nightly-2020-01-15-224532",job="periodic-ci-openshift-osde2e-master-e2e-int-4.2-4.2",job_id="123",metadata_name="time-to-cluster-ready",monitor="datahub",phase="",upgrade_version="openshift-v4.2.0-0.nightly-2020-01-15-231532"}
 ```
 
 In addition to programmatically gating your addon releases, you can also use the [Grafana instance](https://grafana.datahub.redhat.com/) hosted by DataHub to build out a dashboard and alerting to monitor the health of the addon as versions change.

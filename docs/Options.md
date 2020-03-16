@@ -22,6 +22,11 @@ These options are required to run osde2e.
 
 ## tests
 
+### `BUILD_NUMBER`
+  
+  - JobID is the build ID of the job designated by prow. Internally it's referred to as "JobID" however the environment variables in various CI systems populate it as "BUILD_NUMBER"
+
+  - Type: `string`
 
 ### `CLEAN_RUNS`
 
@@ -112,7 +117,6 @@ before failing the test.
 - Default: `prod`
 
 ## cluster
-
 
 ### `CLUSTER_EXPIRY_IN_MINUTES`
 

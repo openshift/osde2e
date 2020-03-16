@@ -57,13 +57,13 @@ func NewMetrics() *Metrics {
 		prometheus.GaugeOpts{
 			Name: metadataMetricName,
 		},
-		[]string{"install_version", "upgrade_version", "environment", "metadata_name"},
+		[]string{"install_version", "upgrade_version", "environment", "metadata_name", "cluster_id", "job_id"},
 	)
 	addonGatherer := prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
 			Name: addonMetricName,
 		},
-		[]string{"install_version", "upgrade_version", "environment", "metadata_name", "phase"},
+		[]string{"install_version", "upgrade_version", "environment", "metadata_name", "cluster_id", "job_id", "phase"},
 	)
 	eventGatherer := prometheus.NewCounterVec(
 		prometheus.CounterOpts{
@@ -231,9 +231,9 @@ func (m *Metrics) jsonToPrometheusOutput(gatherer *prometheus.GaugeVec, phase st
 			// We're only concerned with tracking float values in Prometheus as they're the only thing we can measure
 			if floatValue, err := strconv.ParseFloat(stringValue, 64); err == nil {
 				if phase != "" {
-					gatherer.WithLabelValues(state.Cluster.Version, state.Upgrade.ReleaseName, cfg.OCM.Env, metadataName, phase).Add(floatValue)
+					gatherer.WithLabelValues(state.Cluster.Version, state.Upgrade.ReleaseName, cfg.OCM.Env, metadataName, state.Cluster.ID, cfg.JobID, phase).Add(floatValue)
 				} else {
-					gatherer.WithLabelValues(state.Cluster.Version, state.Upgrade.ReleaseName, cfg.OCM.Env, metadataName).Add(floatValue)
+					gatherer.WithLabelValues(state.Cluster.Version, state.Upgrade.ReleaseName, cfg.OCM.Env, metadataName, state.Cluster.ID, cfg.JobID).Add(floatValue)
 				}
 			}
 		}
