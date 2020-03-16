@@ -2,10 +2,11 @@ package operators
 
 import (
 	"fmt"
-	kerror "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/util/wait"
 	"log"
 	"time"
+
+	kerror "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/util/wait"
 
 	"github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -141,7 +142,7 @@ func getInstallPlan(h *helper.H, sub *operatorv1.Subscription) (*operatorv1.Inst
 		}
 
 		return false, nil
-	});
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -170,7 +171,7 @@ func ensureCSVIsInstalled(h *helper.H, csvName string, namespace string) error {
 			return true, nil
 		}
 		return false, nil
-	});
+	})
 	if err != nil {
 		return err
 	}
@@ -186,7 +187,7 @@ func getChannel() string {
 	return "production"
 }
 
-func checkUpgrade(h *helper.H, sub *operatorv1.Subscription) {
+func checkUpgrade(h *helper.H, sub *operatorv1.Subscription, previousCSV string) {
 	ginkgo.Context("Operator Upgrade", func() {
 		ginkgo.It("should upgrade from the replaced version", func() {
 
@@ -202,8 +203,6 @@ func checkUpgrade(h *helper.H, sub *operatorv1.Subscription) {
 			Expect(err).NotTo(HaveOccurred(), "Error getting CSV %s", startingCSV)
 			Expect(csv.Spec.Replaces).NotTo(BeEmpty(), fmt.Sprintf("There is no previous CSV for subscription %s in the catalog. Can not test upgrade", subName))
 
-			previousCSV := csv.Spec.Replaces
-
 			// Delete current Operator installation
 			err = h.Operator().OperatorsV1alpha1().Subscriptions(subNamespace).Delete(subName, metav1.NewDeleteOptions(0))
 			Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("failed trying to delete Subscription %s", subName))
@@ -213,16 +212,16 @@ func checkUpgrade(h *helper.H, sub *operatorv1.Subscription) {
 			// Create subscription to the previous version
 			sub, err = h.Operator().OperatorsV1alpha1().Subscriptions(subNamespace).Create(&operatorv1.Subscription{
 				ObjectMeta: metav1.ObjectMeta{
-					Name: subName,
+					Name:      subName,
 					Namespace: subNamespace,
 				},
 				Spec: &operatorv1.SubscriptionSpec{
-					Package: sub.Spec.Package,
-					Channel: sub.Spec.Channel,
+					Package:                sub.Spec.Package,
+					Channel:                sub.Spec.Channel,
 					CatalogSourceNamespace: sub.Spec.CatalogSourceNamespace,
-					CatalogSource: sub.Spec.CatalogSource,
-					InstallPlanApproval: operatorv1.ApprovalManual,
-					StartingCSV: previousCSV,
+					CatalogSource:          sub.Spec.CatalogSource,
+					InstallPlanApproval:    operatorv1.ApprovalManual,
+					StartingCSV:            previousCSV,
 				},
 			})
 			Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("failed trying to create Subscription %s", subName))
