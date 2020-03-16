@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	. "github.com/onsi/gomega"
+	"github.com/openshift/osde2e/pkg/common/util"
 
 	kubev1 "k8s.io/api/core/v1"
 )
@@ -82,9 +83,9 @@ func TestGitConfiguresPod(t *testing.T) {
 func randRepos(count int) (repos Repos) {
 	for i := 0; i < count; i++ {
 		repos = append(repos, GitRepo{
-			Name:      randomStr(5),
-			URL:       fmt.Sprintf("https://%s.com/%s/%s", randomStr(5), randomStr(3), randomStr(3)),
-			MountPath: fmt.Sprintf("/mnt/%s", randomStr(4)),
+			Name:      util.RandomStr(5),
+			URL:       fmt.Sprintf("https://%s.com/%s/%s", util.RandomStr(5), util.RandomStr(3), util.RandomStr(3)),
+			MountPath: fmt.Sprintf("/mnt/%s", util.RandomStr(4)),
 		})
 	}
 	return

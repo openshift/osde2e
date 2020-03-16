@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/markbates/pkger"
+	"github.com/openshift/osde2e/pkg/common/util"
 	"gopkg.in/yaml.v2"
 )
 
@@ -179,7 +180,7 @@ func processValueFromString(f reflect.StructField, field reflect.Value, value st
 			}
 		} else if rndStringRegex.MatchString(value) {
 			if rndStringLen, err := strconv.Atoi(rndStringRegex.FindStringSubmatch(value)[1]); err == nil {
-				rndString := randomStr(rndStringLen)
+				rndString := util.RandomStr(rndStringLen)
 				log.Printf("Generated random string %s for field %s", rndString, f.Name)
 				field.SetString(rndString)
 			} else {
@@ -216,13 +217,4 @@ func processValueFromString(f reflect.StructField, field reflect.Value, value st
 		}
 	}
 	return nil
-}
-
-func randomStr(length int) (str string) {
-	chars := "0123456789abcdefghijklmnopqrstuvwxyz"
-	for i := 0; i < length; i++ {
-		c := string(chars[rand.Intn(len(chars))])
-		str += c
-	}
-	return
 }

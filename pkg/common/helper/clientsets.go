@@ -13,6 +13,12 @@ import (
 	"k8s.io/client-go/rest"
 )
 
+// Impersonate sets impersonate user headers
+func (h *H) Impersonate(user rest.ImpersonationConfig) *H {
+	h.restConfig.Impersonate = user
+	return h
+}
+
 // Cfg return a client for the Config API.
 func (h *H) Cfg() config.Interface {
 	client, err := config.NewForConfig(h.restConfig)

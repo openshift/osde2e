@@ -17,6 +17,7 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 
 	"github.com/openshift/osde2e/pkg/common/state"
+	"github.com/openshift/osde2e/pkg/common/util"
 )
 
 func init() {
@@ -67,7 +68,7 @@ func (h *H) Setup() {
 	}
 
 	// setup project to run tests
-	suffix := randomStr(5)
+	suffix := util.RandomStr(5)
 	proj, err := h.createProject(suffix)
 	Expect(err).ShouldNot(HaveOccurred(), "failed to create project")
 	Expect(proj).ShouldNot(BeNil())
@@ -86,7 +87,11 @@ func (h *H) Cleanup() {
 	h.proj = nil
 }
 
-// SetRestConfig
+// SetProject manually sets the project
+func (h *H) SetProject(proj *projectv1.Project) *H {
+	h.proj = proj
+	return h
+}
 
 // CreateProject returns the project being used for testing.
 func (h *H) CreateProject(name string) {

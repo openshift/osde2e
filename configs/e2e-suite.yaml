@@ -2,3 +2,4 @@ tests:
   testsToRun:
   - '[Suite: e2e]'
   - '[Suite: operators]'
+  - '[Suite: service-definition]'
