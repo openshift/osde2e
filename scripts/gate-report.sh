@@ -5,7 +5,6 @@
 
 set -e
 
-SRC_DIR="$(cd $(dirname $0)/..; pwd)"
 METRICS_BUCKET=osde2e-metrics
 GATE_REPORT=gate-report
 REPORT_DIR="$(mktemp -d)"
