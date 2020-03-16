@@ -135,8 +135,8 @@ func TestProcessJSONFile(t *testing.T) {
 		}
 	}
 }`,
-			expectedOutput: `cicd_metadata{cluster_id="1a2b3c",environment="prod",install_version="install-version",job_id="123",metadata_name="test2",phase="",upgrade_version="upgrade-version"} 6
-cicd_metadata{cluster_id="1a2b3c",environment="prod",install_version="install-version",job_id="123",metadata_name="another-nested field.another-level.test4",phase="",upgrade_version="upgrade-version"} 7
+			expectedOutput: `cicd_metadata{cluster_id="1a2b3c",environment="prod",install_version="install-version",job_id="123",metadata_name="test2",upgrade_version="upgrade-version"} 6
+cicd_metadata{cluster_id="1a2b3c",environment="prod",install_version="install-version",job_id="123",metadata_name="another-nested field.another-level.test4",upgrade_version="upgrade-version"} 7
 `,
 			phase: "",
 		},
@@ -278,7 +278,7 @@ cicd_jUnitResult{environment="prod",install_version="install-version",phase="upg
 			},
 			metadataFileContents:      metadataFileContents,
 			addonMetadataFileContents: addonMetadataFileContents,
-			expectedOutput: jUnitExpectedOutput + `cicd_metadata{cluster_id="1a2b3c",environment="prod",install_version="install-version",job_id="123",metadata_name="test2",phase="",upgrade_version="upgrade-version"} 6
+			expectedOutput: jUnitExpectedOutput + `cicd_metadata{cluster_id="1a2b3c",environment="prod",install_version="install-version",job_id="123",metadata_name="test2",upgrade_version="upgrade-version"} 6
 cicd_addon_metadata{cluster_id="1a2b3c",environment="prod",install_version="install-version",job_id="123",metadata_name="test2",phase="install",upgrade_version="upgrade-version"} 6
 `,
 		},
@@ -296,7 +296,7 @@ cicd_addon_metadata{cluster_id="1a2b3c",environment="prod",install_version="inst
 			},
 			metadataFileContents:      metadataFileContents,
 			addonMetadataFileContents: "",
-			expectedOutput: jUnitExpectedOutput + `cicd_metadata{cluster_id="1a2b3c",environment="prod",install_version="install-version",job_id="123",metadata_name="test2",phase="",upgrade_version="upgrade-version"} 6
+			expectedOutput: jUnitExpectedOutput + `cicd_metadata{cluster_id="1a2b3c",environment="prod",install_version="install-version",job_id="123",metadata_name="test2",upgrade_version="upgrade-version"} 6
 `,
 		},
 		{
