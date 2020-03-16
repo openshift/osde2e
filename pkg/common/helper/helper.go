@@ -17,6 +17,7 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 
 	"github.com/openshift/osde2e/pkg/common/state"
+	"github.com/openshift/osde2e/pkg/common/util"
 )
 
 func init() {
@@ -67,7 +68,7 @@ func (h *H) Setup() {
 	}
 
 	// setup project to run tests
-	suffix := RandomStr(5)
+	suffix := util.RandomStr(5)
 	proj, err := h.createProject(suffix)
 	Expect(err).ShouldNot(HaveOccurred(), "failed to create project")
 	Expect(proj).ShouldNot(BeNil())

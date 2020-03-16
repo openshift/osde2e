@@ -2,7 +2,6 @@ package helper
 
 import (
 	"fmt"
-	"math/rand"
 
 	. "github.com/onsi/gomega"
 
@@ -58,13 +57,4 @@ func (h *H) cleanup(projectName string) error {
 		return fmt.Errorf("failed to cleanup project '%s': %v", projectName, err)
 	}
 	return nil
-}
-
-func RandomStr(length int) (str string) {
-	chars := "0123456789abcdefghijklmnopqrstuvwxyz"
-	for i := 0; i < length; i++ {
-		c := string(chars[rand.Intn(len(chars))])
-		str += c
-	}
-	return
 }
