@@ -21,7 +21,7 @@ endif
 check:
 	CGO_ENABLED=0 go test -v $(PKG)/cmd/... $(PKG)/pkg/...
 	
-	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(shell go env GOPATH)/bin v1.21.0
+	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(shell go env GOPATH)/bin v1.23.8
 	(cd "$(DIR)"; golangci-lint run -c .golang-ci.yml ./...)
 
 generate: $(DIR)/docs/Options.md

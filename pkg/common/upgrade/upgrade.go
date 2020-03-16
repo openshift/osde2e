@@ -118,10 +118,14 @@ func TriggerUpgrade(h *helper.H) (*configv1.ClusterVersion, error) {
 		upgradeVersionParsed := semver.MustParse(upgradeVersion)
 		installVersionParsed := semver.MustParse(installVersion)
 
-		// TODO: Address Major versions eventually when 5.x looms on the horizon.
-		if upgradeVersionParsed.Minor() > installVersionParsed.Minor() {
+		if upgradeVersionParsed.GreaterThan(installVersionParsed) {
+			cVersion.Spec.Channel = VersionToChannel(upgradeVersionParsed)
 			// Upgrade the channel
-			cVersion.Spec.Channel = fmt.Sprintf("fast-%d.%d", upgradeVersionParsed.Major(), upgradeVersionParsed.Minor())
+			if strings.HasPrefix(upgradeVersionParsed.Prerelease(), "rc") {
+				cVersion.Spec.Channel = fmt.Sprintf("candidate-%d.%d", upgradeVersionParsed.Major(), upgradeVersionParsed.Minor())
+			} else {
+				cVersion.Spec.Channel = fmt.Sprintf("fast-%d.%d", upgradeVersionParsed.Major(), upgradeVersionParsed.Minor())
+			}
 			cVersion, err = cfgClient.ConfigV1().ClusterVersions().Update(cVersion)
 			if err != nil {
 				return cVersion, fmt.Errorf("couldn't update desired release channel: %v", err)

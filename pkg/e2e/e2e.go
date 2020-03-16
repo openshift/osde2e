@@ -7,7 +7,6 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
-	"path"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -18,6 +17,7 @@ import (
 	"github.com/onsi/ginkgo/reporters"
 	"github.com/onsi/gomega"
 
+	"github.com/openshift/osde2e/pkg/common/aws"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/events"
 	"github.com/openshift/osde2e/pkg/common/helper"
@@ -26,9 +26,6 @@ import (
 	"github.com/openshift/osde2e/pkg/common/state"
 	"github.com/openshift/osde2e/pkg/common/upgrade"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -291,28 +288,11 @@ func checkBeforeMetricsGeneration() error {
 
 // uploadFileToMetricsBucket uploads the given file (with absolute path) to the metrics S3 bucket "incoming" directory.
 func uploadFileToMetricsBucket(filename string) error {
-	// We're very intentionally using the shared configs here.
-	// This allows us to configure the AWS client at a system level and this should behave as expected.
-	// This is particularly useful if we want to, at some point in the future, run this on an AWS host with an instance profile
-	// that doesn't need explicit credentials.
-	session, err := session.NewSessionWithOptions(session.Options{SharedConfigState: session.SharedConfigEnable})
+	data, err := ioutil.ReadFile(filename)
 	if err != nil {
 		return err
 	}
 
-	file, err := os.Open(filename)
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-
-	uploader := s3manager.NewUploader(session)
-
-	_, err = uploader.Upload(&s3manager.UploadInput{
-		Bucket: aws.String(config.Instance.Tests.MetricsBucket),
-		Key:    aws.String(path.Join("incoming", filepath.Base(filename))),
-		Body:   file,
-	})
-
+	aws.WriteToS3(aws.CreateS3URL(config.Instance.Tests.MetricsBucket, "incoming", filepath.Base(filename)), data)
 	return err
 }
