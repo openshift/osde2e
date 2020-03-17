@@ -3,8 +3,8 @@ package operators
 import (
 	"github.com/onsi/ginkgo"
 	"github.com/openshift/osde2e/pkg/common/helper"
-	operatorv1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	operatorv1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
 )
 
 var _ = ginkgo.Describe("[Suite: operators] [OSD] Configure AlertManager Operator", func() {
@@ -42,19 +42,16 @@ var _ = ginkgo.Describe("[Suite: operators] [OSD] Configure AlertManager Operato
 })
 
 var _ = ginkgo.Describe("[Suite: operators] [OSD] Upgrade Configure AlertManager Operator", func() {
-	checkUpgrade(helper.New(),
-		&operatorv1.Subscription{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "configure-alertmanager-operator",
-				Namespace: "openshift-monitoring",
-			},
-			Spec: &operatorv1.SubscriptionSpec{
-				Package:                "configure-alertmanager-operator",
-				Channel:                getChannel(),
-				CatalogSourceNamespace: "openshift-monitoring",
-				CatalogSource:          "configure-alertmanager-operator-registry",
-			},
+	checkUpgrade(helper.New(), &operatorv1.Subscription{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "configure-alertmanager-operator",
+			Namespace: "openshift-monitoring",
 		},
-		"configure-alertmanager-operator.v0.1.116-0b1cafc",
-	)
+		Spec: &operatorv1.SubscriptionSpec{
+			Package: "configure-alertmanager-operator",
+			Channel: getChannel(),
+			CatalogSourceNamespace: "openshift-monitoring",
+			CatalogSource: "configure-alertmanager-operator-registry",
+		},
+	})
 })

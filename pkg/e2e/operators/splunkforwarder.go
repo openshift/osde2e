@@ -33,19 +33,16 @@ var _ = ginkgo.Describe("[Suite: operators] [OSD] Splunk Forwarder Operator", fu
 })
 
 var _ = ginkgo.Describe("[Suite: operators] [OSD] Upgrade Splunk Forwarder Operator", func() {
-	checkUpgrade(helper.New(),
-		&operatorv1.Subscription{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "openshift-splunk-forwarder-operator",
-				Namespace: "openshift-splunk-forwarder-operator",
-			},
-			Spec: &operatorv1.SubscriptionSpec{
-				Package:                "openshift-splunk-forwarder-operator",
-				Channel:                getChannel(),
-				CatalogSourceNamespace: "openshift-splunk-forwarder-operator",
-				CatalogSource:          "splunk-forwarder-operator-catalog",
-			},
+	checkUpgrade(helper.New(), &operatorv1.Subscription{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "openshift-splunk-forwarder-operator",
+			Namespace: "openshift-splunk-forwarder-operator",
 		},
-		"splunk-forwarder-operator.v0.1.95-1d7f20a",
-	)
+		Spec: &operatorv1.SubscriptionSpec{
+			Package: "openshift-splunk-forwarder-operator",
+			Channel: getChannel(),
+			CatalogSourceNamespace: "openshift-splunk-forwarder-operator",
+			CatalogSource: "splunk-forwarder-operator-catalog",
+		},
+	})
 })
