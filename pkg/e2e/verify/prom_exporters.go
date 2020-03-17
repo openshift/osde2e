@@ -7,6 +7,8 @@ import (
 	. "github.com/onsi/gomega"
 
 	"github.com/openshift/osde2e/pkg/common/helper"
+	"github.com/openshift/osde2e/pkg/common/osd"
+	"github.com/openshift/osde2e/pkg/common/state"
 )
 
 var _ = ginkgo.Describe("[Suite: e2e] [OSD] Prometheus Exporters", func() {
@@ -70,11 +72,22 @@ var _ = ginkgo.Describe("[Suite: e2e] [OSD] Prometheus Exporters", func() {
 		}
 
 		// Ensure daemonsets are present and satisfied
+		currentClusterVersion, err := osd.OpenshiftVersionToSemver(state.Instance.Cluster.Version)
+		Expect(err).NotTo(HaveOccurred(), "error parsing cluster version %s", state.Instance.Cluster.Version)
+
 		for _, daemonSetName := range daemonSets {
-			daemonSet, err := h.Kube().ExtensionsV1beta1().DaemonSets(namespace).Get(daemonSetName, metav1.GetOptions{})
-			Expect(err).NotTo(HaveOccurred(), "failed to get daemonset %v\n", daemonSetName)
-			Expect(daemonSet.Status.DesiredNumberScheduled).Should(Equal(daemonSet.Status.CurrentNumberScheduled),
-				"daemonset desired count should match currently running")
+			// Use appv1 for clusters 4.4.0 or later
+			if !currentClusterVersion.LessThan(osd.Version440) {
+				daemonSet, err := h.Kube().AppsV1().DaemonSets(namespace).Get(daemonSetName, metav1.GetOptions{})
+				Expect(err).NotTo(HaveOccurred(), "failed to get daemonset %v\n", daemonSetName)
+				Expect(daemonSet.Status.DesiredNumberScheduled).Should(Equal(daemonSet.Status.CurrentNumberScheduled),
+					"daemonset desired count should match currently running")
+			} else {
+				daemonSet, err := h.Kube().ExtensionsV1beta1().DaemonSets(namespace).Get(daemonSetName, metav1.GetOptions{})
+				Expect(err).NotTo(HaveOccurred(), "failed to get daemonset %v\n", daemonSetName)
+				Expect(daemonSet.Status.DesiredNumberScheduled).Should(Equal(daemonSet.Status.CurrentNumberScheduled),
+					"daemonset desired count should match currently running")
+			}
 		}
 
 		// Ensure services are present
@@ -82,9 +95,9 @@ var _ = ginkgo.Describe("[Suite: e2e] [OSD] Prometheus Exporters", func() {
 			service, err := h.Kube().CoreV1().Services(namespace).Get(serviceName, metav1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred(), "failed to get service %v\n", serviceName)
 			Expect(service.Spec.ClusterIP).Should(Not(BeNil()),
-				"failed to get service cluster ip for %v\n",serviceName)
+				"failed to get service cluster ip for %v\n", serviceName)
 			Expect(service.Spec.Ports).Should(Not(BeEmpty()),
-				"failed to get service cluster ports for %v\n",serviceName)
+				"failed to get service cluster ports for %v\n", serviceName)
 		}
 	}, 300)
 

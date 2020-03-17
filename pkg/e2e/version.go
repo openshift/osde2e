@@ -27,19 +27,19 @@ func filterOnCincinnati(version *semver.Version) bool {
 
 // ChooseVersions sets versions in cfg if not set based on defaults and upgrade options.
 // If a release stream is set for an upgrade the previous available version is used and it's image is used for upgrade.
-func ChooseVersions(osd *osd.OSD) (err error) {
+func ChooseVersions(osdClient *osd.OSD) (err error) {
 	cfg := config.Instance
 	state := state.Instance
 
 	// when defined, use set version
 	if len(state.Cluster.Version) != 0 {
 		err = nil
-	} else if osd == nil {
+	} else if osdClient == nil {
 		err = errors.New("osd must be setup when upgrading with release stream")
 	} else if state.Upgrade.Image == "" && (cfg.Upgrade.ReleaseStream != "" || cfg.Upgrade.UpgradeToCISIfPossible) {
-		err = setupUpgradeVersion(osd)
+		err = setupUpgradeVersion(osdClient)
 	} else {
-		err = setupVersion(osd)
+		err = setupVersion(osdClient)
 	}
 
 	// Set the versions in metadata. If upgrade hasn't been chosen, it should still be omitted from the end result.
@@ -50,7 +50,7 @@ func ChooseVersions(osd *osd.OSD) (err error) {
 }
 
 // chooses between default version and nightly based on target versions.
-func setupVersion(osd *osd.OSD) (err error) {
+func setupVersion(osdClient *osd.OSD) (err error) {
 	cfg := config.Instance
 	state := state.Instance
 	suffix := ""
@@ -67,7 +67,7 @@ func setupVersion(osd *osd.OSD) (err error) {
 		}
 
 		// look for the latest release and install it for this OSD cluster.
-		if state.Cluster.Version, err = osd.LatestVersionWithTarget(majorTarget, cfg.Cluster.MinorTarget, suffix); err == nil {
+		if state.Cluster.Version, err = osdClient.LatestVersionWithTarget(majorTarget, cfg.Cluster.MinorTarget, suffix); err == nil {
 			log.Printf("CLUSTER_VERSION not set but a TARGET is, running '%s'", state.Cluster.Version)
 		}
 	}
@@ -76,16 +76,16 @@ func setupVersion(osd *osd.OSD) (err error) {
 		var err error
 		var versionType string
 		if cfg.Cluster.UseLatestVersionForInstall {
-			state.Cluster.Version, err = osd.LatestVersion()
+			state.Cluster.Version, err = osdClient.LatestVersion()
 			versionType = "latest version"
 		} else if cfg.Cluster.UseMiddleClusterImageSetForInstall {
-			state.Cluster.Version, state.Cluster.EnoughVersionsForOldestOrMiddleTest, err = osd.MiddleVersion()
+			state.Cluster.Version, state.Cluster.EnoughVersionsForOldestOrMiddleTest, err = osdClient.MiddleVersion()
 			versionType = "middle version"
 		} else if cfg.Cluster.UseOldestClusterImageSetForInstall {
-			state.Cluster.Version, state.Cluster.EnoughVersionsForOldestOrMiddleTest, err = osd.OldestVersion()
+			state.Cluster.Version, state.Cluster.EnoughVersionsForOldestOrMiddleTest, err = osdClient.OldestVersion()
 			versionType = "oldest version"
 		} else {
-			state.Cluster.Version, err = osd.DefaultVersion()
+			state.Cluster.Version, err = osdClient.DefaultVersion()
 			versionType = "current default"
 		}
 
@@ -104,12 +104,12 @@ func setupVersion(osd *osd.OSD) (err error) {
 }
 
 // chooses version based on optimal upgrade path
-func setupUpgradeVersion(osd *osd.OSD) (err error) {
+func setupUpgradeVersion(osdClient *osd.OSD) (err error) {
 	cfg := config.Instance
 	state := state.Instance
 
 	// Decide the version to install
-	err = setupVersion(osd)
+	err = setupVersion(osdClient)
 	if err != nil {
 		return err
 	}
@@ -121,7 +121,7 @@ func setupUpgradeVersion(osd *osd.OSD) (err error) {
 	}
 
 	if cfg.OCM.Env != "int" {
-		cisUpgradeVersionString, err := osd.LatestVersionWithFilter(filterOnCincinnati)
+		cisUpgradeVersionString, err := osdClient.LatestVersionWithFilter(filterOnCincinnati)
 
 		if err != nil {
 			log.Printf("unable to get the most recent version of openshift from OSD: %v", err)
@@ -165,7 +165,7 @@ func setupUpgradeVersion(osd *osd.OSD) (err error) {
 
 	if !clusterVersion.LessThan(upgradeVersion) && !strings.Contains(state.Upgrade.ReleaseName, "nightly") {
 		log.Printf("Cluster version is equal to or newer than the upgrade version. Looking up previous version...")
-		if state.Cluster.Version, err = osd.PreviousVersion(state.Upgrade.ReleaseName); err != nil {
+		if state.Cluster.Version, err = osdClient.PreviousVersion(state.Upgrade.ReleaseName); err != nil {
 			return fmt.Errorf("failed retrieving previous version to '%s': %v", state.Upgrade.ReleaseName, err)
 		}
 	}

@@ -115,19 +115,16 @@ func setupCluster() (err error) {
 	} else {
 		log.Printf("CLUSTER_ID of '%s' was provided, skipping cluster creation and using it instead", state.Cluster.ID)
 
-		if state.Cluster.Name == "" {
-			cluster, err := OSD.GetCluster(state.Cluster.ID)
-			if err != nil {
-				return fmt.Errorf("could not retrieve cluster information from OCM: %v", err)
-			}
-
-			if cluster.Name() == "" {
-				return fmt.Errorf("cluster name from OCM is empty, and this shouldn't be possible")
-			}
-
-			state.Cluster.Name = cluster.Name()
-			log.Printf("CLUSTER_NAME not provided, retrieved %s from OCM.", state.Cluster.Name)
+		cluster, err := OSD.GetCluster(state.Cluster.ID)
+		if err != nil {
+			return fmt.Errorf("could not retrieve cluster information from OCM: %v", err)
 		}
+
+		state.Cluster.Name = cluster.Name()
+		log.Printf("CLUSTER_NAME set to %s from OCM.", state.Cluster.Name)
+
+		state.Cluster.Version = cluster.Version().ID()
+		log.Printf("CLUSTER_VERSION set to %s from OCM.", state.Cluster.Version)
 	}
 
 	metadata.Instance.SetClusterName(state.Cluster.Name)
