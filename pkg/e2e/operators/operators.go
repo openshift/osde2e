@@ -187,7 +187,7 @@ func getChannel() string {
 	return "production"
 }
 
-func checkUpgrade(h *helper.H, sub *operatorv1.Subscription, previousCSV string) {
+func checkUpgrade(h *helper.H, sub *operatorv1.Subscription) {
 	ginkgo.Context("Operator Upgrade", func() {
 		ginkgo.It("should upgrade from the replaced version", func() {
 
@@ -202,6 +202,8 @@ func checkUpgrade(h *helper.H, sub *operatorv1.Subscription, previousCSV string)
 			csv, err := h.Operator().OperatorsV1alpha1().ClusterServiceVersions(subNamespace).Get(startingCSV, metav1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred(), "Error getting CSV %s", startingCSV)
 			Expect(csv.Spec.Replaces).NotTo(BeEmpty(), fmt.Sprintf("There is no previous CSV for subscription %s in the catalog. Can not test upgrade", subName))
+
+			previousCSV := csv.Spec.Replaces
 
 			// Delete current Operator installation
 			err = h.Operator().OperatorsV1alpha1().Subscriptions(subNamespace).Delete(subName, metav1.NewDeleteOptions(0))

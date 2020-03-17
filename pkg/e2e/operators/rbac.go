@@ -2,7 +2,6 @@ package operators
 
 import (
 	"fmt"
-
 	"github.com/onsi/ginkgo"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -41,21 +40,18 @@ var _ = ginkgo.Describe("[Suite: operators] [OSD] Dedicated Admins SubjectPermis
 })
 
 var _ = ginkgo.Describe("[Suite: operators] [OSD] Upgrade RBAC Permissions Operator", func() {
-	checkUpgrade(helper.New(),
-		&operatorv1.Subscription{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "rbac-permissions-operator",
-				Namespace: "openshift-rbac-permissions",
-			},
-			Spec: &operatorv1.SubscriptionSpec{
-				Package:                "rbac-permissions-operator",
-				Channel:                getChannel(),
-				CatalogSourceNamespace: "openshift-rbac-permissions",
-				CatalogSource:          "openshift-rbac-permissions",
-			},
+	checkUpgrade(helper.New(), &operatorv1.Subscription{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "rbac-permissions-operator",
+			Namespace: "openshift-rbac-permissions",
 		},
-		"rbac-permissions-operator.v0.1.95-0d5723c",
-	)
+		Spec: &operatorv1.SubscriptionSpec{
+			Package:                "rbac-permissions-operator",
+			Channel:                getChannel(),
+			CatalogSourceNamespace: "openshift-rbac-permissions",
+			CatalogSource:          "openshift-rbac-permissions",
+		},
+	})
 })
 
 func checkSubjectPermissions(h *helper.H, spName string) {
