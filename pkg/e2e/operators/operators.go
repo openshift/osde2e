@@ -198,11 +198,6 @@ func checkUpgrade(h *helper.H, sub *operatorv1.Subscription, previousCSV string)
 			Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("failed trying to get Subscription %s in %s namespace", subName, subNamespace))
 			startingCSV := sub.Status.CurrentCSV
 
-			// Replaces defines the previous version of this operator. If there is no previous version to revert to, abort test
-			csv, err := h.Operator().OperatorsV1alpha1().ClusterServiceVersions(subNamespace).Get(startingCSV, metav1.GetOptions{})
-			Expect(err).NotTo(HaveOccurred(), "Error getting CSV %s", startingCSV)
-			Expect(csv.Spec.Replaces).NotTo(BeEmpty(), fmt.Sprintf("There is no previous CSV for subscription %s in the catalog. Can not test upgrade", subName))
-
 			// Delete current Operator installation
 			err = h.Operator().OperatorsV1alpha1().Subscriptions(subNamespace).Delete(subName, metav1.NewDeleteOptions(0))
 			Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("failed trying to delete Subscription %s", subName))
