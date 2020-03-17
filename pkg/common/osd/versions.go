@@ -22,6 +22,11 @@ const (
 	PageSize = 100
 )
 
+var (
+	// Version440 represents Openshift version 4.4.0 and above
+	Version440 = semver.MustParse("4.4.0-rc.0")
+)
+
 // Use for the semver list filter to include all results.
 func noFilter(_ *semver.Version) bool {
 	return true
@@ -180,7 +185,7 @@ func (u *OSD) getSemverList(major, minor int64, str string, filter func(*semver.
 
 		// parse versions, filter for major+minor nightlies, then sort
 		resp.Items().Each(func(v *v1.Version) bool {
-			if version, err := u.OpenshiftVersionToSemver(v.ID()); err != nil {
+			if version, err := OpenshiftVersionToSemver(v.ID()); err != nil {
 				log.Printf("could not parse version '%s': %v", v.ID(), err)
 			} else if version.Major() != major && major >= 0 {
 				return true
@@ -204,7 +209,7 @@ func (u *OSD) getSemverList(major, minor int64, str string, filter func(*semver.
 }
 
 // OpenshiftVersionToSemver converts an OpenShift version to a semver string which can then be used for comparisons.
-func (u *OSD) OpenshiftVersionToSemver(openshiftVersion string) (*semver.Version, error) {
+func OpenshiftVersionToSemver(openshiftVersion string) (*semver.Version, error) {
 	name := strings.TrimPrefix(openshiftVersion, VersionPrefix)
 	return semver.NewVersion(name)
 }
