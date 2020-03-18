@@ -18,7 +18,6 @@ var _ = ginkgo.Describe("[Suite: e2e] [OSD] Prometheus Exporters", func() {
 	var services = []string{
 		"sre-ebs-iops-reporter",
 		"sre-dns-latency-exporter",
-		"sre-machine-api-status-exporter",
 		"sre-stuck-ebs-vols",
 	}
 
@@ -26,7 +25,6 @@ var _ = ginkgo.Describe("[Suite: e2e] [OSD] Prometheus Exporters", func() {
 		"sre-dns-latency-exporter-code",
 		"sre-stuck-ebs-vols-code",
 		"sre-ebs-iops-reporter-code",
-		"sre-machine-api-status-exporter-code",
 	}
 
 	var secrets = []string{
@@ -38,7 +36,6 @@ var _ = ginkgo.Describe("[Suite: e2e] [OSD] Prometheus Exporters", func() {
 		"sre-dns-latency-exporter",
 		"sre-ebs-iops-reporter",
 		"sre-stuck-ebs-vols",
-		"sre-machine-api-status-exporter",
 	}
 
 	var daemonSets = []string{
