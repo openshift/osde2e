@@ -221,13 +221,20 @@ func checkUpgrade(h *helper.H, sub *operatorv1.Subscription, previousCSV string)
 			})
 			Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("failed trying to create Subscription %s", subName))
 
-			// Approve and verify install to previousCSV
+			// Approve and manually verify the first installation to previousCSV
 			ip, err := getInstallPlan(h, sub)
 			Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("Failed getting InstallPlan for CSV %s", previousCSV))
 			err = approveInstallPlan(h, ip)
 			Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("Failed approving InstallPlan for CSV %s", previousCSV))
 			err = ensureCSVIsInstalled(h, previousCSV, subNamespace)
 			Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("CSV %s did not install successfully", previousCSV))
+
+			// Update the Subscription to apply Automatic updates from now on in order to reach currentCSV
+			sub, err = h.Operator().OperatorsV1alpha1().Subscriptions(subNamespace).Get(subName, metav1.GetOptions{})
+			Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("Failed retrieving updated subscription for %s", subName))
+			sub.Spec.InstallPlanApproval = operatorv1.ApprovalAutomatic
+			sub, err = h.Operator().OperatorsV1alpha1().Subscriptions(subNamespace).Update(sub)
+			Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("Failed updating subscription to Automatic for CSV %s", previousCSV))
 
 			// The previous CSV is now installed and a new InstallPlan is also created ready for approval to upgrade to startingCSV
 			// Approve and verify install to startingCSV

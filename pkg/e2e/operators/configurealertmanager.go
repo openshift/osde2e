@@ -41,7 +41,7 @@ var _ = ginkgo.Describe("[Suite: operators] [OSD] Configure AlertManager Operato
 	checkRoleBindings(h, operatorNamespace, roleBindings)
 })
 
-var _ = ginkgo.PDescribe("[Suite: operators] [OSD] Upgrade Configure AlertManager Operator", func() {
+var _ = ginkgo.Describe("[Suite: operators] [OSD] Upgrade Configure AlertManager Operator", func() {
 	checkUpgrade(helper.New(),
 		&operatorv1.Subscription{
 			ObjectMeta: metav1.ObjectMeta{
@@ -55,6 +55,6 @@ var _ = ginkgo.PDescribe("[Suite: operators] [OSD] Upgrade Configure AlertManage
 				CatalogSource:          "configure-alertmanager-operator-registry",
 			},
 		},
-		"configure-alertmanager-operator.v0.1.116-0b1cafc",
+		"configure-alertmanager-operator.v0.1.121-361b817",
 	)
 })
