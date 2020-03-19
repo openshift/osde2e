@@ -3,3 +3,4 @@ tests:
   - '[Suite: e2e]'
   - '[Suite: operators]'
   - '[Suite: service-definition]'
+  - '[Suite: app-builds]'
