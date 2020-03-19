@@ -10,7 +10,7 @@ import (
 )
 
 const testCmd = `
-{{printTests .TestNames}} | openshift-tests {{.TestCmd}} {{selectTests .Suite .TestNames}} {{unwrap .Flags}}
+{{printTests .TestNames}} | {{unwrap .Env}} openshift-tests {{.TestCmd}} {{selectTests .Suite .TestNames}} {{unwrap .Flags}}
 `
 
 var (
@@ -24,6 +24,10 @@ var (
 
 // E2EConfig defines the behavior of the extended test suite.
 type E2EConfig struct {
+
+	// Env defines any environment variable settings in name=value pairs to control the test process
+	Env []string
+
 	// TestCmd determines which suite the runner executes.
 	TestCmd string
 
