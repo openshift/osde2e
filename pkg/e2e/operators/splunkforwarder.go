@@ -46,6 +46,6 @@ var _ = ginkgo.Describe("[Suite: operators] [OSD] Upgrade Splunk Forwarder Opera
 				CatalogSource:          "splunk-forwarder-operator-catalog",
 			},
 		},
-		"splunk-forwarder-operator.v0.1.95-1d7f20a",
+		"splunk-forwarder-operator.v0.1.91-aaa0027",
 	)
 })

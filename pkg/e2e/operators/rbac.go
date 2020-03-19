@@ -54,7 +54,7 @@ var _ = ginkgo.Describe("[Suite: operators] [OSD] Upgrade RBAC Permissions Opera
 				CatalogSource:          "openshift-rbac-permissions",
 			},
 		},
-		"rbac-permissions-operator.v0.1.95-0d5723c",
+		"rbac-permissions-operator.v0.1.81-ce6731c",
 	)
 })
 
