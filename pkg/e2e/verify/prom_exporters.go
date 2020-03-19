@@ -74,7 +74,7 @@ var _ = ginkgo.Describe("[Suite: e2e] [OSD] Prometheus Exporters", func() {
 
 		for _, daemonSetName := range daemonSets {
 			// Use appv1 for clusters 4.4.0 or later
-			if !currentClusterVersion.LessThan(osd.Version440) {
+			if osd.Version440.Check(currentClusterVersion) {
 				daemonSet, err := h.Kube().AppsV1().DaemonSets(namespace).Get(daemonSetName, metav1.GetOptions{})
 				Expect(err).NotTo(HaveOccurred(), "failed to get daemonset %v\n", daemonSetName)
 				Expect(daemonSet.Status.DesiredNumberScheduled).Should(Equal(daemonSet.Status.CurrentNumberScheduled),

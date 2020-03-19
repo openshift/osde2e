@@ -24,8 +24,17 @@ const (
 
 var (
 	// Version440 represents Openshift version 4.4.0 and above
-	Version440 = semver.MustParse("4.4.0-rc.0")
+	Version440 *semver.Constraints
 )
+
+func init() {
+	var err error
+	Version440, err = semver.NewConstraint(">= 4.4.0-0")
+
+	if err != nil {
+		panic(err)
+	}
+}
 
 // Use for the semver list filter to include all results.
 func noFilter(_ *semver.Version) bool {
