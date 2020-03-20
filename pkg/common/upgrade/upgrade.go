@@ -44,10 +44,7 @@ func RunUpgrade(OSD *osd.OSD) error {
 	var upgradeStarted time.Time
 
 	// setup helper
-	h := &helper.H{
-		State: state.Instance,
-	}
-	h.SetupNoProj()
+	h := helper.New()
 	defer h.Cleanup()
 
 	if h.Upgrade.Image != "" {

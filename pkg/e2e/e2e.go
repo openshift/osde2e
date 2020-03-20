@@ -25,8 +25,6 @@ import (
 	"github.com/openshift/osde2e/pkg/common/osd"
 	"github.com/openshift/osde2e/pkg/common/state"
 	"github.com/openshift/osde2e/pkg/common/upgrade"
-
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 const (
@@ -59,6 +57,7 @@ func runGinkgoTests() error {
 	ginkgoConfig.DefaultReporterConfig.NoisySkippings = !config.Instance.Tests.SuppressSkipNotifications
 	ginkgoConfig.GinkgoConfig.SkipString = cfg.Tests.GinkgoSkip
 	ginkgoConfig.GinkgoConfig.FocusString = cfg.Tests.GinkgoFocus
+	ginkgoConfig.GinkgoConfig.DryRun = cfg.DryRun
 
 	state := state.Instance
 
@@ -102,84 +101,73 @@ func runGinkgoTests() error {
 		log.Printf("Could not create reporter directory: %v", err)
 	}
 
-	if !cfg.DryRun {
-		log.Println("Running e2e tests...")
+	log.Println("Running e2e tests...")
 
-		testsPassed := runTestsInPhase("install", "OSD e2e suite")
-		upgradeTestsPassed := true
+	testsPassed := runTestsInPhase("install", "OSD e2e suite")
+	upgradeTestsPassed := true
 
-		if testsPassed {
-			// upgrade cluster if requested
-			if state.Upgrade.Image != "" || state.Upgrade.ReleaseName != "" {
-				if state.Kubeconfig.Contents != nil {
-					if err = upgrade.RunUpgrade(OSD); err != nil {
-						events.RecordEvent(events.UpgradeFailed)
-						return fmt.Errorf("error performing upgrade: %v", err)
-					}
-					events.RecordEvent(events.UpgradeSuccessful)
-
-					log.Println("Running e2e tests POST-UPGRADE...")
-					upgradeTestsPassed = runTestsInPhase("upgrade", "OSD e2e suite post-upgrade")
-				} else {
-					log.Println("No Kubeconfig found from initial cluster setup. Unable to run upgrade.")
+	if testsPassed {
+		// upgrade cluster if requested
+		if state.Upgrade.Image != "" || state.Upgrade.ReleaseName != "" {
+			if state.Kubeconfig.Contents != nil {
+				if err = upgrade.RunUpgrade(OSD); err != nil {
+					events.RecordEvent(events.UpgradeFailed)
+					return fmt.Errorf("error performing upgrade: %v", err)
 				}
-			}
-		} else {
-			log.Print("Install tests did not pass. Skipping upgrade tests.")
-		}
+				events.RecordEvent(events.UpgradeSuccessful)
 
-		if cfg.ReportDir != "" {
-			if err = metadata.Instance.WriteToJSON(cfg.ReportDir); err != nil {
-				return fmt.Errorf("error while writing the custom metadata: %v", err)
-			}
-
-			checkBeforeMetricsGeneration()
-
-			prometheusFilename, err := NewMetrics().WritePrometheusFile(cfg.ReportDir)
-			if err != nil {
-				return fmt.Errorf("error while writing prometheus metrics: %v", err)
-			}
-
-			if cfg.Tests.UploadMetrics {
-				if strings.HasPrefix(cfg.JobName, "rehearse-") {
-					log.Printf("Job %s is a rehearsal, so metrics upload is being skipped.", cfg.JobName)
-				} else {
-					if err := uploadFileToMetricsBucket(filepath.Join(cfg.ReportDir, prometheusFilename)); err != nil {
-						return fmt.Errorf("error while uploading prometheus metrics: %v", err)
-					}
-				}
-			}
-		}
-
-		if OSD != nil {
-			if cfg.Cluster.DestroyAfterTest {
-				log.Printf("Destroying cluster '%s'...", state.Cluster.ID)
-				if err = OSD.DeleteCluster(state.Cluster.ID); err != nil {
-					return fmt.Errorf("error deleting cluster: %s", err.Error())
-				}
+				log.Println("Running e2e tests POST-UPGRADE...")
+				upgradeTestsPassed = runTestsInPhase("upgrade", "OSD e2e suite post-upgrade")
 			} else {
-				log.Printf("For debugging, please look for cluster ID %s in environment %s", state.Cluster.ID, cfg.OCM.Env)
+				log.Println("No Kubeconfig found from initial cluster setup. Unable to run upgrade.")
+			}
+		}
+	} else {
+		log.Print("Install tests did not pass. Skipping upgrade tests.")
+	}
+
+	if cfg.ReportDir != "" {
+		if err = metadata.Instance.WriteToJSON(cfg.ReportDir); err != nil {
+			return fmt.Errorf("error while writing the custom metadata: %v", err)
+		}
+
+		checkBeforeMetricsGeneration()
+
+		prometheusFilename, err := NewMetrics().WritePrometheusFile(cfg.ReportDir)
+		if err != nil {
+			return fmt.Errorf("error while writing prometheus metrics: %v", err)
+		}
+
+		if cfg.Tests.UploadMetrics {
+			if strings.HasPrefix(cfg.JobName, "rehearse-") {
+				log.Printf("Job %s is a rehearsal, so metrics upload is being skipped.", cfg.JobName)
+			} else {
+				if err := uploadFileToMetricsBucket(filepath.Join(cfg.ReportDir, prometheusFilename)); err != nil {
+					return fmt.Errorf("error while uploading prometheus metrics: %v", err)
+				}
+			}
+		}
+	}
+
+	if OSD != nil {
+		if cfg.Cluster.DestroyAfterTest {
+			log.Printf("Destroying cluster '%s'...", state.Cluster.ID)
+			if err = OSD.DeleteCluster(state.Cluster.ID); err != nil {
+				return fmt.Errorf("error deleting cluster: %s", err.Error())
 			}
 		} else {
-			// If we run against an arbitrary cluster and not a ci-specific cluster
-			// we need to clean up our workload tests manually.
-			h := &helper.H{
-				State: state,
-			}
-			h.SetupNoProj()
-
-			log.Printf("Cleaning up workloads tests")
-			workloads := h.GetWorkloads()
-			for _, project := range workloads {
-				log.Printf("Deleting Project: %s", project)
-				h.SetProjectByName(project)
-				h.Project().ProjectV1().Projects().Delete(project, &metav1.DeleteOptions{})
-			}
+			log.Printf("For debugging, please look for cluster ID %s in environment %s", state.Cluster.ID, cfg.OCM.Env)
 		}
+	}
 
-		if !testsPassed || !upgradeTestsPassed {
-			return fmt.Errorf("please inspect logs for more details")
-		}
+	// We need to clean up our helper tests manually.
+	h := &helper.H{
+		State: state,
+	}
+	h.Cleanup()
+
+	if !testsPassed || !upgradeTestsPassed {
+		return fmt.Errorf("please inspect logs for more details")
 	}
 
 	return nil

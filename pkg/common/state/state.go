@@ -17,6 +17,9 @@ type State struct {
 
 	// Phase is an internal variable used to track the current set of tests being run (install, upgrade).
 	Phase string
+
+	// Project is both the project and SA automatically created to house all objects created during an osde2e-run
+	Project string
 }
 
 // ClusterState contains state information about the active cluster.

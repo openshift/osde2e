@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/openshift/osde2e/pkg/common/util"
 	kubev1 "k8s.io/api/core/v1"
 	kerror "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -66,30 +67,35 @@ var DefaultContainer = kubev1.Container{
 	},
 }
 
-var payloadVolumeMounts = []kubev1.VolumeMount{
-	{
-		Name:      osde2ePayload,
-		MountPath: osde2ePayloadMountPath,
-	},
+func volumeMounts(name string) []kubev1.VolumeMount {
+	return []kubev1.VolumeMount{
+		{
+			Name:      name,
+			MountPath: osde2ePayloadMountPath,
+		},
+	}
 }
 
-var payloadVolumes = []kubev1.Volume{
-	{
-		Name: osde2ePayload,
-		VolumeSource: kubev1.VolumeSource{
-			ConfigMap: &kubev1.ConfigMapVolumeSource{
-				LocalObjectReference: kubev1.LocalObjectReference{
-					Name: osde2ePayload,
+func volumes(name string) []kubev1.Volume {
+	return []kubev1.Volume{
+		{
+			Name: name,
+			VolumeSource: kubev1.VolumeSource{
+				ConfigMap: &kubev1.ConfigMapVolumeSource{
+					LocalObjectReference: kubev1.LocalObjectReference{
+						Name: name,
+					},
+					DefaultMode: pointer.Int32Ptr(0755),
 				},
-				DefaultMode: pointer.Int32Ptr(0755),
 			},
 		},
-	},
+	}
 }
 
 // createPod for running commands
 func (r *Runner) createPod() (pod *kubev1.Pod, err error) {
 	// configure pod to run workload
+	cmName := fmt.Sprintf("%s-%s", osde2ePayload, util.RandomStr(5))
 	pod = &kubev1.Pod{
 		ObjectMeta: r.meta(),
 		Spec:       r.PodSpec,
@@ -103,7 +109,7 @@ func (r *Runner) createPod() (pod *kubev1.Pod, err error) {
 
 		configMap, err := r.Kube.CoreV1().ConfigMaps(r.Namespace).Create(&kubev1.ConfigMap{
 			ObjectMeta: metav1.ObjectMeta{
-				Name: osde2ePayload,
+				Name: cmName,
 			},
 			BinaryData: map[string][]byte{
 				osde2ePayloadScript: cmd,
@@ -136,9 +142,9 @@ func (r *Runner) createPod() (pod *kubev1.Pod, err error) {
 				pod.Spec.Containers[i].Command = []string{
 					fullPayloadScriptPath,
 				}
-				pod.Spec.Containers[i].VolumeMounts = payloadVolumeMounts
+				pod.Spec.Containers[i].VolumeMounts = volumeMounts(cmName)
 			}
-			pod.Spec.Volumes = payloadVolumes
+			pod.Spec.Volumes = volumes(cmName)
 		}
 	}
 

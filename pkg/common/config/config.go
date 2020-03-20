@@ -1,7 +1,9 @@
 // Package config provides the configuration for tests run as part of the osde2e suite.
 package config
 
-import "time"
+import (
+	"time"
+)
 
 // Instance is the configuration used for end to end testing.
 var Instance = new(Config)
@@ -102,6 +104,9 @@ type ClusterConfig struct {
 
 	// MinorTarget is the minor version to target. If specified, it is used in version selection.
 	MinorTarget int64 `env:"MINOR_TARGET" sect:"version" yaml:"minorTarget"`
+
+	// CleanCheckRuns lets us set the number of osd-verify checks we want to run before deeming a cluster "healthy"
+	CleanCheckRuns int `env:"CLEAN_CHECK_RUNS" sect:"environment" default:"20" yaml:"cleanCheckRuns"`
 }
 
 // AddonConfig options for addon testing
@@ -157,6 +162,10 @@ type TestConfig struct {
 
 	// MetricsBucket is the bucket that metrics data will be uploaded to.
 	MetricsBucket string `env:"METRICS_BUCKET" sect:"metrics" default:"osde2e-metrics" yaml:"metricsBucket"`
+
+	// Persona defines what user the tests should run as. By default, osde2e uses system:admin
+	// The only other supported option is "dedicated-admin"
+	Persona string `env:"PERSONA" sect:"tests" default:"" yaml:"persona"`
 }
 
 // GateConfig describes various config options for gating.

@@ -9,7 +9,6 @@ import (
 	. "github.com/onsi/gomega"
 
 	"github.com/openshift/osde2e/pkg/common/helper"
-	"github.com/openshift/osde2e/pkg/common/state"
 	"k8s.io/apimachinery/pkg/util/wait"
 )
 
@@ -22,24 +21,17 @@ var workloadName = filepath.Base(testDir)
 var _ = ginkgo.Describe("[Suite: e2e] Workload ("+workloadName+")", func() {
 	defer ginkgo.GinkgoRecover()
 	// setup helper
-	h := &helper.H{
-		State: state.Instance,
-	}
+	h := helper.New()
 
 	ginkgo.It("should get created in the cluster", func() {
 		// Does this workload exist? If so, this must be a repeat run.
 		// In this case we should assume the workload has had a valid run once already
 		// And simply run another test validating the workload.
-		if proj, ok := h.GetWorkload(workloadName); ok {
-			// Previous workload exists. Set project context.
-			h.SetProjectByName(proj)
-
+		if _, ok := h.GetWorkload(workloadName); ok {
 			// Run the workload test
 			doTest(h)
 
 		} else {
-			h.SetupNoProj()
-			h.CreateProject(workloadName)
 			// Create all K8s objects that are within the testDir
 			objects, err := helper.ApplyYamlInFolder(testDir, h.CurrentProject(), h.Kube())
 			Expect(err).NotTo(HaveOccurred(), "couldn't apply k8s yaml")

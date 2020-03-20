@@ -8,8 +8,8 @@ require (
 	github.com/gogo/protobuf v1.2.2-0.20190723190241-65acae22fc9d // indirect
 	github.com/google/subcommands v1.2.0
 	github.com/markbates/pkger v0.14.0
-	github.com/onsi/ginkgo v1.10.1
-	github.com/onsi/gomega v1.7.0
+	github.com/onsi/ginkgo v1.12.0
+	github.com/onsi/gomega v1.7.1
 	github.com/openshift-online/ocm-sdk-go v0.1.89
 	github.com/openshift/api v0.0.0-20190530131937-dafd2647cb03
 	github.com/openshift/client-go v0.0.0-20190806162413-e9678e3b850d

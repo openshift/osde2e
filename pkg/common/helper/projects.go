@@ -56,5 +56,13 @@ func (h *H) cleanup(projectName string) error {
 	if err != nil {
 		return fmt.Errorf("failed to cleanup project '%s': %v", projectName, err)
 	}
+
+	if h.Persona != "" {
+		// Clean up the SA we created.
+		err := h.Kube().CoreV1().ServiceAccounts("dedicated-admin").Delete(h.CurrentProject(), &metav1.DeleteOptions{})
+		if err != nil {
+			return fmt.Errorf("failed to cleanup sa '%s': %v", projectName, err)
+		}
+	}
 	return nil
 }
