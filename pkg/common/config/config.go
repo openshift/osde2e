@@ -165,7 +165,7 @@ type TestConfig struct {
 
 	// Persona defines what user the tests should run as. By default, osde2e uses system:admin
 	// The only other supported option is "dedicated-admin"
-	Persona string `env:"PERSONA" sect:"tests" default:"" yaml:"persona"`
+	Persona string `env:"PERSONA" sect:"tests" yaml:"persona"`
 }
 
 // GateConfig describes various config options for gating.

@@ -75,20 +75,17 @@ func (h *H) Setup() {
 		Expect(err).NotTo(HaveOccurred())
 		log.Printf("Created SA: %v", sa.GetName())
 
-		proj, err := h.createProject(suffix)
+		h.proj, err = h.createProject(suffix)
 		Expect(err).ShouldNot(HaveOccurred(), "failed to create project")
-		Expect(proj).ShouldNot(BeNil())
+		Expect(h.proj).ShouldNot(BeNil())
 
-		h.proj = proj
 		time.Sleep(60 * time.Second)
 
 	} else {
 		log.Printf("Setting project name to %s", h.State.Project)
-		proj, err := h.Project().ProjectV1().Projects().Get(h.State.Project, metav1.GetOptions{})
-		if err != nil {
-			log.Printf("failed to get project '%s': %v", h.State.Project, err)
-		}
-		h.proj = proj
+		h.proj, err = h.Project().ProjectV1().Projects().Get(h.State.Project, metav1.GetOptions{})
+		Expect(err).ShouldNot(HaveOccurred(), "failed to retrieve project")
+		Expect(h.proj).ShouldNot(BeNil())
 	}
 
 	h.SetPersona(h.Persona)
@@ -111,11 +108,9 @@ func (h *H) Cleanup() {
 
 	if h.proj == nil && h.State.Project != "" {
 		log.Printf("Setting project name to %s", h.State.Project)
-		proj, err := h.Project().ProjectV1().Projects().Get(h.State.Project, metav1.GetOptions{})
-		if err != nil {
-			log.Printf("failed to get project '%s': %v", h.State.Project, err)
-		}
-		h.proj = proj
+		h.proj, err = h.Project().ProjectV1().Projects().Get(h.State.Project, metav1.GetOptions{})
+		Expect(err).ShouldNot(HaveOccurred(), "failed to retrieve project")
+		Expect(h.proj).ShouldNot(BeNil())
 
 		err = h.Kube().CoreV1().ServiceAccounts("dedicated-admin").Delete(h.CurrentProject(), &metav1.DeleteOptions{})
 		Expect(err).ShouldNot(HaveOccurred(), "could not delete sa '%s'", h.CurrentProject)
@@ -159,9 +154,9 @@ func (h *H) SetProject(proj *projectv1.Project) *H {
 
 // CreateProject returns the project being used for testing.
 func (h *H) CreateProject(name string) {
-	proj, err := h.createProject(name)
+	var err error
+	h.proj, err = h.createProject(name)
 	Expect(err).To(BeNil(), "error creating project")
-	h.proj = proj
 }
 
 // CurrentProject returns the project being used for testing.
@@ -172,11 +167,9 @@ func (h *H) CurrentProject() string {
 
 // SetProjectByName gets a project by name and sets it for the h.proj attribute
 func (h *H) SetProjectByName(projectName string) (*H, error) {
-	proj, err := h.Project().ProjectV1().Projects().Get(projectName, metav1.GetOptions{})
-	if err != nil {
-		return nil, fmt.Errorf("failed to get project '%s': %v", projectName, err)
-	}
-	h.proj = proj
+	var err error
+	h.proj, err = h.Project().ProjectV1().Projects().Get(projectName, metav1.GetOptions{})
+	Expect(err).To(BeNil(), "error retrieving project")
 	return h, nil
 }
 
