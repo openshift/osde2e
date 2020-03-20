@@ -29,10 +29,11 @@ var BuildE2EConfig = E2EConfig{
 }
 
 var testApplications = []string{
-	"cakephp-mysql",
-	"nodejs-mongodb",
 	"django-psql",
 	"rails-postgresql",
+	// The following applications rely on an imagestream not present until at least v4.3.5
+	// "cakephp-mysql",
+	// "nodejs-mongodb",
 }
 
 var _ = ginkgo.Describe("[Suite: app-builds] OpenShift Application Build E2E", func() {
