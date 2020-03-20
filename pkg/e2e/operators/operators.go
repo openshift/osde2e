@@ -161,7 +161,7 @@ func approveInstallPlan(h *helper.H, ip *operatorv1.InstallPlan) error {
 }
 
 func ensureCSVIsInstalled(h *helper.H, csvName string, namespace string) error {
-	err := wait.PollImmediate(5*time.Second, 5*time.Minute, func() (bool, error) {
+	err := wait.PollImmediate(5*time.Second, 15*time.Minute, func() (bool, error) {
 		csv, err := h.Operator().OperatorsV1alpha1().ClusterServiceVersions(namespace).Get(csvName, metav1.GetOptions{})
 		if err != nil && !kerror.IsNotFound(err) {
 			return false, err
