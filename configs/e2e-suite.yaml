@@ -1,6 +1,7 @@
 tests:
   testsToRun:
   - '[Suite: e2e]'
+  - '[Suite: openshift]'
   - '[Suite: operators]'
   - '[Suite: service-definition]'
   - '[Suite: app-builds]'

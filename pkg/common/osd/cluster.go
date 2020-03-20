@@ -21,9 +21,6 @@ const (
 	// DefaultFlavour is used when no specialized configuration exists.
 	DefaultFlavour = "osd-4"
 
-	// cleanRunWindow is the number of checks made to determine if a cluster is ready.
-	cleanRunWindow = 20
-
 	// errorWindow is the number of checks made to determine if a cluster has truly failed.
 	errorWindow = 5
 )
@@ -196,9 +193,9 @@ func (u *OSD) WaitForClusterReady() error {
 				}
 				if success, err := u.PollClusterHealth(); success {
 					cleanRuns++
-					log.Printf("Clean run %d/%d...", cleanRuns, cleanRunWindow)
+					log.Printf("Clean run %d/%d...", cleanRuns, config.Instance.Cluster.CleanCheckRuns)
 					errRuns = 0
-					if cleanRuns == cleanRunWindow {
+					if cleanRuns == config.Instance.Cluster.CleanCheckRuns {
 						if metadata.Instance.TimeToClusterReady == 0 {
 							metadata.Instance.SetTimeToClusterReady(time.Since(readinessStarted).Seconds())
 						} else {

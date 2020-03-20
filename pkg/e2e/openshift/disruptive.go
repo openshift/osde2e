@@ -6,20 +6,9 @@ import (
 	. "github.com/onsi/gomega"
 
 	"github.com/openshift/osde2e/pkg/common/helper"
-	"github.com/openshift/osde2e/pkg/common/runner"
 )
 
-// DefaultE2EConfig is the base configuration for E2E runs.
-var DefaultE2EConfig = E2EConfig{
-	TestCmd: "run",
-	Suite:   "kubernetes/conformance",
-	Flags: []string{
-		"--include-success",
-		"--junit-dir=" + runner.DefaultRunner.OutputDir,
-	},
-}
-
-var _ = ginkgo.Describe("[Suite: conformance] OpenShift E2E", func() {
+var _ = ginkgo.Describe("[Suite: openshift][disruptive]", func() {
 	defer ginkgo.GinkgoRecover()
 	h := helper.New()
 
@@ -27,12 +16,13 @@ var _ = ginkgo.Describe("[Suite: conformance] OpenShift E2E", func() {
 	ginkgo.It("should run until completion", func() {
 		// configure tests
 		cfg := DefaultE2EConfig
+		cfg.Suite = "openshift/disruptive"
 		cmd := cfg.Cmd()
 
 		// setup runner
 		r := h.Runner(cmd)
 
-		r.Name = "openshift-tests"
+		r.Name = "openshift-disruptive"
 
 		// run tests
 		stopCh := make(chan struct{})
