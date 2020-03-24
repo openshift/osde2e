@@ -24,7 +24,7 @@ func init() {
 		err        error
 	)
 
-	if fileReader, err = pkger.Open("/artifacts/addons/addon-runner.template"); err != nil {
+	if fileReader, err = pkger.Open("/assets/addons/addon-runner.template"); err != nil {
 		panic(fmt.Sprintf("unable to open addon runner template: %v", err))
 	}
 
