@@ -47,7 +47,7 @@ func init() {
 		err        error
 	)
 
-	if fileReader, err = pkger.Open("/artifacts/scale/scale-runner.template"); err != nil {
+	if fileReader, err = pkger.Open("/assets/scale/scale-runner.template"); err != nil {
 		panic(fmt.Sprintf("unable to open scale runner template: %v", err))
 	}
 
