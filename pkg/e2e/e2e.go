@@ -61,6 +61,10 @@ func runGinkgoTests() error {
 
 	state := state.Instance
 
+	for _, test := range config.Instance.Tests.TestsToRun {
+		log.Printf("Will run tests with the following regex: %s", test)
+	}
+
 	// setup OSD unless Kubeconfig is present
 	if len(cfg.Kubeconfig.Path) > 0 {
 		log.Print("Found an existing Kubeconfig!")
@@ -164,7 +168,10 @@ func runGinkgoTests() error {
 	h := &helper.H{
 		State: state,
 	}
-	h.Cleanup()
+
+	if !cfg.DryRun {
+		h.Cleanup()
+	}
 
 	if !testsPassed || !upgradeTestsPassed {
 		return fmt.Errorf("please inspect logs for more details")

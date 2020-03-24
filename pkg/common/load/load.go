@@ -28,6 +28,9 @@ const (
 
 	// DefaultTag is the Go struct tag containing the default value of the option.
 	DefaultTag = "default"
+
+	// AppendYamlArrayTag is the Go struct tag that instructs the config loader to append arrays instead of overwriting them when loading YAML.
+	AppendYamlArrayTag = "appendYamlArray"
 )
 
 var rndStringRegex = regexp.MustCompile("__RND_(\\d+)__")
@@ -123,7 +126,7 @@ func loadYAMLFromConfigs(object interface{}, name string) error {
 		return err
 	}
 
-	if err = yaml.Unmarshal(data, object); err != nil {
+	if err = loadYAMLFromData(object, data); err != nil {
 		return err
 	}
 
@@ -151,8 +154,83 @@ func loadYAMLFromFile(object interface{}, name string) error {
 		return err
 	}
 
-	if err = yaml.Unmarshal(data, object); err != nil {
+	if err = loadYAMLFromData(object, data); err != nil {
 		return err
+	}
+
+	return nil
+}
+
+// loadYAMLFromData will take a byte array and load YAML into the given object
+func loadYAMLFromData(object interface{}, data []byte) (err error) {
+	objectType := reflect.Indirect(reflect.ValueOf(object)).Type()
+	tempObject := reflect.New(objectType).Interface()
+
+	if err = yaml.Unmarshal(data, tempObject); err != nil {
+		return err
+	}
+
+	if err = copyFromTempObject(tempObject, object); err != nil {
+		return fmt.Errorf("error copying from temp object to actual object: %v", err)
+	}
+
+	return nil
+}
+
+// copyFromTempObject copies from a temporary object into the actual object.
+// The temp object is expected to not have any defaults loaded into it, as any "zero" valued
+// fields in the temp object will not be assigned to the object. This will prevent values from
+// being inadvertently overwritten in the actual object.
+func copyFromTempObject(tempObject, object interface{}) error {
+	// We need a variety of reflections to start. These are for detecting the object type underneath any
+	// pointers and to get and set the eventual values of the fields.
+	tempObjectValue := reflect.Indirect(reflect.ValueOf(tempObject))
+	objectValue := reflect.Indirect(reflect.ValueOf(object))
+	tempObjectType := tempObjectValue.Type()
+	objectType := objectValue.Type()
+
+	if tempObjectType != objectType && tempObjectType.Kind() != reflect.Struct {
+		return fmt.Errorf("temp object and destination object types must be the same (src: %v, dst: %v) and must be structs", tempObjectType, objectType)
+	}
+
+	for i := 0; i < tempObjectType.NumField(); i++ {
+		// Getting the StructField value from (temp)ObjectType here will allow us to retrieve tag values.
+		tempObjectStructField := tempObjectType.Field(i)
+		objectStructField := objectType.Field(i)
+		// Getting the Values from the (temp)ObjectValues will allow us to get and set the field values.
+		tempObjectField := tempObjectValue.Field(i)
+		objectField := objectValue.Field(i)
+
+		if !objectField.CanSet() {
+			continue
+		}
+
+		if tempObjectStructField.Name != objectStructField.Name {
+			return fmt.Errorf("source and destination fields do not match during copy (src: %v, dst: %v)", tempObjectField, objectField)
+		}
+
+		// Here we're looking for a special tag that tells us not to overwrite an array value with the YAML value in the
+		// temp object, but to append it onto the value currently on the actual object. This will allow us to do things like
+		// have multiple test suites specified simultaneously that will not overwrite one another.
+		if append, _ := strconv.ParseBool(tempObjectStructField.Tag.Get(AppendYamlArrayTag)); append {
+			objectField.Set(reflect.AppendSlice(objectField, tempObjectField))
+		} else if tempObjectStructField.Type.Kind() == reflect.Struct {
+			// Recursively call this function on member structs.
+			if err := copyFromTempObject(tempObjectField.Addr().Interface(), objectField.Addr().Interface()); err != nil {
+				return fmt.Errorf("error loading struct %s: %v", tempObjectField.Type().Name(), err)
+			}
+		} else {
+			// If the temp object field is equal to the zero value for the corresponding type, we will not set the corresponding
+			// field in the actual object. Since we're able to compose multiple YAML files together, small YAML files with
+			// a few directives will contain a lot of zero values (empty strings, integers == 0, etc.). If we allow zero
+			// values to clobber the fields in the actual object, each small YAML config file that we use will potentially "unset"
+			// the values intentionally set by other YAML files.
+			//
+			// In other words, if the user hasn't set a field in a YAML config, don't try to set it in the actual object.
+			if !reflect.DeepEqual(tempObjectField.Interface(), reflect.Zero(tempObjectField.Type()).Interface()) {
+				objectField.Set(tempObjectField)
+			}
+		}
 	}
 
 	return nil

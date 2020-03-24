@@ -143,7 +143,7 @@ type TestConfig struct {
 	GinkgoFocus string `env:"GINKGO_FOCUS" sect:"tests" yaml:"focus"`
 
 	// TestsToRun is a list of files which should be executed as part of a test suite
-	TestsToRun []string `env:"TESTS_TO_RUN" sect:"tests" yaml:"testsToRun"`
+	TestsToRun []string `env:"TESTS_TO_RUN" sect:"tests" yaml:"testsToRun" appendYamlArray:"true"`
 
 	// SuppressSkipNotifications suppresses the notifications of skipped tests
 	SuppressSkipNotifications bool `env:"SUPPRESS_SKIP_NOTIFICATIONS" sect:"tests" default:"true" yaml:"suppressSkipNotifications"`

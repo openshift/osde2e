@@ -42,7 +42,7 @@ build:
 	go build -o "$(OUT_DIR)" "$(DIR)cmd/..."
 
 test: build
-	"$(OSDE2E)" test -configs=e2e-suite,log-metrics -custom-config=$(CUSTOM_CONFIG)
+	"$(OSDE2E)" test -configs=e2e-suite,app-builds-suite,log-metrics -custom-config=$(CUSTOM_CONFIG)
 
 test-scale: build
 	"$(OSDE2E)" test -configs=scale-nodes-and-pods-suite,log-metrics -custom-config=$(CUSTOM_CONFIG)
