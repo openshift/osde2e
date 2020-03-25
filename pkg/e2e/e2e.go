@@ -160,11 +160,16 @@ func runGinkgoTests() error {
 		}
 	}
 
-	// We need to clean up our helper tests manually.
-	h := &helper.H{
-		State: state,
-	}
-	h.Cleanup()
+	func() {
+		defer ginkgo.GinkgoRecover()
+		// We need to clean up our helper tests manually.
+		if !cfg.DryRun {
+			h := &helper.H{
+				State: state,
+			}
+			h.Cleanup()
+		}
+	}()
 
 	if !testsPassed || !upgradeTestsPassed {
 		return fmt.Errorf("please inspect logs for more details")
