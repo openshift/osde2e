@@ -150,6 +150,35 @@ func CreateRuntimeObject(obj runtime.Object, ns string, kube kubernetes.Interfac
 			return nil, err
 		}
 		return newObj, nil
+	case "PersistentVolume":
+		if _, ok = obj.(*corev1.PersistentVolume); !ok {
+			return nil, fmt.Errorf("Error casting object to PersistentVolume")
+		}
+
+		if newObj, err = kube.CoreV1().PersistentVolumes().Create(obj.(*corev1.PersistentVolume)); err != nil {
+			return nil, err
+		}
+		return newObj, nil
+	case "PersistentVolumeClaim":
+		if _, ok = obj.(*corev1.PersistentVolumeClaim); !ok {
+			return nil, fmt.Errorf("Error casting object to PersistentVolumeClaim")
+		}
+
+		if newObj, err = kube.CoreV1().PersistentVolumeClaims(ns).Create(obj.(*corev1.PersistentVolumeClaim)); err != nil {
+			return nil, err
+		}
+		return newObj, nil
+
+	case "Secret":
+		if _, ok = obj.(*corev1.Secret); !ok {
+			return nil, fmt.Errorf("Error casting object to Secret")
+		}
+
+		if newObj, err = kube.CoreV1().Secrets(ns).Create(obj.(*corev1.Secret)); err != nil {
+			return nil, err
+		}
+		return newObj, nil
+
 	default:
 		return nil, fmt.Errorf("Unable to handle object type %s", obj.GetObjectKind().GroupVersionKind().Kind)
 	}
