@@ -42,6 +42,7 @@ func init() {
 var _ = ginkgo.Describe("[Suite: e2e] Cluster state", func() {
 	defer ginkgo.GinkgoRecover()
 	h := helper.New()
+	h.SetServiceAccount("system:serviceaccount:%s:cluster-admin")
 
 	alertsTimeoutInSeconds := 900
 	ginkgo.It("should have no alerts", func() {
