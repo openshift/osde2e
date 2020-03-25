@@ -3,44 +3,11 @@ package helper
 import (
 	"fmt"
 
-	. "github.com/onsi/gomega"
+	//	. "github.com/onsi/gomega"
 
 	projectv1 "github.com/openshift/api/project/v1"
-	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 )
-
-// GiveCurrentProjectClusterAdmin to default service account and ensure its removed after project deletion.
-func (h *H) GiveCurrentProjectClusterAdmin() {
-	// use OwnerReference of project to ensure deletion
-	Expect(h.proj).NotTo(BeNil())
-	gvk := schema.FromAPIVersionAndKind("project.openshift.io/v1", "Project")
-	projRef := *metav1.NewControllerRef(h.proj, gvk)
-
-	// create binding with OwnerReference
-	_, err := h.Kube().RbacV1().ClusterRoleBindings().Create(&rbacv1.ClusterRoleBinding{
-		ObjectMeta: metav1.ObjectMeta{
-			GenerateName: "osde2e-test-access-",
-			OwnerReferences: []metav1.OwnerReference{
-				projRef,
-			},
-		},
-		Subjects: []rbacv1.Subject{
-			{
-				Kind:      rbacv1.ServiceAccountKind,
-				Name:      "default",
-				Namespace: h.CurrentProject(),
-			},
-		},
-		RoleRef: rbacv1.RoleRef{
-			APIGroup: rbacv1.GroupName,
-			Kind:     "ClusterRole",
-			Name:     "cluster-admin",
-		},
-	})
-	Expect(err).NotTo(HaveOccurred(), "couldn't set correct permissions for OpenShift E2E")
-}
 
 func (h *H) createProject(suffix string) (*projectv1.Project, error) {
 	proj := &projectv1.Project{
@@ -57,12 +24,10 @@ func (h *H) cleanup(projectName string) error {
 		return fmt.Errorf("failed to cleanup project '%s': %v", projectName, err)
 	}
 
-	if h.Persona != "" {
-		// Clean up the SA we created.
-		err := h.Kube().CoreV1().ServiceAccounts("dedicated-admin").Delete(h.CurrentProject(), &metav1.DeleteOptions{})
-		if err != nil {
-			return fmt.Errorf("failed to cleanup sa '%s': %v", projectName, err)
-		}
+	err = h.Kube().CoreV1().ServiceAccounts("dedicated-admin").Delete(h.CurrentProject(), &metav1.DeleteOptions{})
+	if err != nil {
+		return fmt.Errorf("failed to cleanup sa '%s': %v", projectName, err)
 	}
+
 	return nil
 }

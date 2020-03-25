@@ -163,9 +163,8 @@ type TestConfig struct {
 	// MetricsBucket is the bucket that metrics data will be uploaded to.
 	MetricsBucket string `env:"METRICS_BUCKET" sect:"metrics" default:"osde2e-metrics" yaml:"metricsBucket"`
 
-	// Persona defines what user the tests should run as. By default, osde2e uses system:admin
-	// The only other supported option is "dedicated-admin"
-	Persona string `env:"PERSONA" sect:"tests" yaml:"persona"`
+	// ServiceAccount defines what user the tests should run as. By default, osde2e uses system:admin
+	ServiceAccount string `env:"SERVICE_ACCOUNT" sect:"tests" yaml:"serviceAccount"`
 }
 
 // GateConfig describes various config options for gating.

@@ -9,12 +9,13 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func makePod(name string, privileged bool) v1.Pod {
+func makePod(name, sa string, privileged bool) v1.Pod {
 	return v1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: name,
 		},
 		Spec: v1.PodSpec{
+			ServiceAccountName: sa,
 			Containers: []v1.Container{
 				{
 					Name:  "test",
@@ -31,19 +32,20 @@ func makePod(name string, privileged bool) v1.Pod {
 var _ = ginkgo.Describe("[Suite: service-definition] [OSD] Privileged Containers", func() {
 	ginkgo.Context("Privileged containers are not allowed", func() {
 		// setup helper
-		// set persona to dedicated-admin sa for project
 		h := helper.New()
 
 		ginkgo.It("privileged container should not get created", func() {
-			h = h.SetPersona("dedicated-admin")
+			// Set it to a wildcard dedicated-admin
+			h = h.SetServiceAccount("system:serviceaccount:%s:dedicated-admin-project")
 
 			// Test creating a privileged pod and expect a failure
-			pod := makePod("privileged-pod", true)
+			pod := makePod("privileged-pod", h.GetNamespacedServiceAccount(), true)
+
 			_, err := h.Kube().CoreV1().Pods(h.CurrentProject()).Create(&pod)
 			Expect(err).To(HaveOccurred())
 
 			// Test creating an unprivileged pod and expect success
-			pod = makePod("unprivileged-pod", false)
+			pod = makePod("unprivileged-pod", h.GetNamespacedServiceAccount(), false)
 			_, err = h.Kube().CoreV1().Pods(h.CurrentProject()).Create(&pod)
 			Expect(err).NotTo(HaveOccurred())
 

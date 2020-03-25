@@ -20,7 +20,6 @@ import (
 	"github.com/openshift/osde2e/pkg/common/aws"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/events"
-	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/metadata"
 	"github.com/openshift/osde2e/pkg/common/osd"
 	"github.com/openshift/osde2e/pkg/common/state"
@@ -159,12 +158,6 @@ func runGinkgoTests() error {
 			log.Printf("For debugging, please look for cluster ID %s in environment %s", state.Cluster.ID, cfg.OCM.Env)
 		}
 	}
-
-	// We need to clean up our helper tests manually.
-	h := &helper.H{
-		State: state,
-	}
-	h.Cleanup()
 
 	if !testsPassed || !upgradeTestsPassed {
 		return fmt.Errorf("please inspect logs for more details")
