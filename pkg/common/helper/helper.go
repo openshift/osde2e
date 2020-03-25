@@ -207,15 +207,6 @@ func (h *H) SetServiceAccount(sa string) *H {
 	return h
 }
 
-// GetServiceAccount gets the current-set ServiceAccount
-/*func (h *H) GetServiceAccount() string {
-	if strings.Contains(h.ServiceAccount, "%s") {
-		h.ServiceAccount = fmt.Sprintf(h.ServiceAccount, h.CurrentProject())
-	}
-
-	return h.ServiceAccount
-}*/
-
 // GetNamespacedServiceAccount just gets the name, not the "full name"
 func (h *H) GetNamespacedServiceAccount() string {
 	sa := ""

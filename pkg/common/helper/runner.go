@@ -13,7 +13,6 @@ import (
 
 // RunnerWithNoCommand creates an extended test suite runner and configure RBAC for it.
 func (h *H) RunnerWithNoCommand() *runner.Runner {
-	//h.GiveCurrentProjectClusterAdmin()
 	r := runner.DefaultRunner.DeepCopy()
 
 	// setup clients

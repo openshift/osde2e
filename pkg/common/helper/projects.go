@@ -3,8 +3,6 @@ package helper
 import (
 	"fmt"
 
-	//	. "github.com/onsi/gomega"
-
 	projectv1 "github.com/openshift/api/project/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
