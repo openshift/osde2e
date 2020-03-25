@@ -20,6 +20,7 @@ var _ = ginkgo.Describe("[Suite: e2e] Cluster state", func() {
 	mustGatherTimeoutInSeconds := 900
 	ginkgo.It("should be captured with must-gather", func() {
 		// setup runner
+		h.SetServiceAccount("system:serviceaccount:%s:cluster-admin")
 		r := h.Runner(mustGatherCmd)
 		r.Name = "must-gather"
 		r.Tarball = true

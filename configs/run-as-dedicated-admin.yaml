@@ -1,2 +1,2 @@
 tests:
-  persona: dedicated-admin
+  serviceAccount: "system:serviceaccount:%s:dedicated-admin-cluster"

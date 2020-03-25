@@ -18,6 +18,7 @@ var _ = ginkgo.Describe("[Suite: e2e] Cluster state", func() {
 	h := helper.New()
 
 	ginkgo.It("should be gathered", func() {
+		h.SetServiceAccount("system:serviceaccount:%s:cluster-admin")
 		state := h.GetClusterState()
 		results := make(map[string][]byte, len(state))
 		for resource, list := range state {

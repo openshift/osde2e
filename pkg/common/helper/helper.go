@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"math/rand"
+	"strings"
 	"text/template"
 	"time"
 
@@ -14,7 +15,9 @@ import (
 
 	projectv1 "github.com/openshift/api/project/v1"
 	v1 "k8s.io/api/core/v1"
+	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 
@@ -41,7 +44,7 @@ func New() *H {
 type H struct {
 	// embed state
 	*state.State
-	Persona string
+	ServiceAccount string
 
 	// internal
 	restConfig *rest.Config
@@ -55,10 +58,6 @@ func (h *H) Setup() {
 	h.restConfig, err = clientcmd.RESTConfigFromKubeConfig(h.Kubeconfig.Contents)
 	Expect(err).ShouldNot(HaveOccurred(), "failed to configure client")
 
-	if config.Instance.Tests.Persona != "" {
-		h.Persona = config.Instance.Tests.Persona
-	}
-
 	if h.State.Project == "" {
 		// setup project and dedicated-admin account to run tests
 		// the service account is provisioned but only used when specified
@@ -67,17 +66,11 @@ func (h *H) Setup() {
 
 		log.Printf("Setup called for %s", h.State.Project)
 
-		sa, err := h.Kube().CoreV1().ServiceAccounts("dedicated-admin").Create(&v1.ServiceAccount{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: h.State.Project,
-			},
-		})
-		Expect(err).NotTo(HaveOccurred())
-		log.Printf("Created SA: %v", sa.GetName())
-
 		h.proj, err = h.createProject(suffix)
 		Expect(err).ShouldNot(HaveOccurred(), "failed to create project")
 		Expect(h.proj).ShouldNot(BeNil())
+
+		h.CreateServiceAccounts()
 
 		time.Sleep(60 * time.Second)
 
@@ -88,7 +81,7 @@ func (h *H) Setup() {
 		Expect(h.proj).ShouldNot(BeNil())
 	}
 
-	h.SetPersona(h.Persona)
+	h.SetServiceAccount(config.Instance.Tests.ServiceAccount)
 
 	if len(h.InstalledWorkloads) < 1 {
 		h.InstalledWorkloads = make(map[string]string)
@@ -99,12 +92,11 @@ func (h *H) Setup() {
 // Cleanup deletes a Project after tests have been ran.
 func (h *H) Cleanup() {
 	var err error
+
 	h.restConfig, err = clientcmd.RESTConfigFromKubeConfig(h.Kubeconfig.Contents)
 	Expect(err).ShouldNot(HaveOccurred(), "failed to configure client")
 
-	h.restConfig.Impersonate = rest.ImpersonationConfig{
-		UserName: "",
-	}
+	h.SetServiceAccount(config.Instance.Tests.ServiceAccount)
 
 	if h.proj == nil && h.State.Project != "" {
 		log.Printf("Setting project name to %s", h.State.Project)
@@ -112,38 +104,118 @@ func (h *H) Cleanup() {
 		Expect(err).ShouldNot(HaveOccurred(), "failed to retrieve project")
 		Expect(h.proj).ShouldNot(BeNil())
 
-		err = h.Kube().CoreV1().ServiceAccounts("dedicated-admin").Delete(h.CurrentProject(), &metav1.DeleteOptions{})
-		Expect(err).ShouldNot(HaveOccurred(), "could not delete sa '%s'", h.CurrentProject)
-
-		err = h.cleanup(h.proj.Name)
+		err = h.cleanup(h.CurrentProject())
 		Expect(err).ShouldNot(HaveOccurred(), "could not delete project '%s'", h.proj)
 	}
 
-	h.Persona = config.Instance.Tests.Persona
 	h.restConfig = nil
 	h.proj = nil
 }
 
-// SetPersona sets a persona for helper-based tests to run as
-func (h *H) SetPersona(persona string) *H {
+// CreateServiceAccounts creates a set of serviceaccounts for test usage
+func (h *H) CreateServiceAccounts() *H {
+	Expect(h.proj).NotTo(BeNil(), "no project is currently set")
+
+	// Create project-specific dedicated-admin account
+	sa, err := h.Kube().CoreV1().ServiceAccounts(h.CurrentProject()).Create(&v1.ServiceAccount{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "dedicated-admin-project",
+		},
+	})
+	Expect(err).NotTo(HaveOccurred())
+	h.CreateClusterRoleBinding(sa, "dedicated-admins-project")
+	log.Printf("Created SA: %v", sa.GetName())
+
+	// Create cluster dedicated-admin account
+	sa, err = h.Kube().CoreV1().ServiceAccounts(h.CurrentProject()).Create(&v1.ServiceAccount{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "dedicated-admin-cluster",
+		},
+	})
+	Expect(err).NotTo(HaveOccurred())
+	h.CreateClusterRoleBinding(sa, "dedicated-admins-cluster")
+	log.Printf("Created SA: %v", sa.GetName())
+
+	// Create cluster-admin account
+	sa, err = h.Kube().CoreV1().ServiceAccounts(h.CurrentProject()).Create(&v1.ServiceAccount{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "cluster-admin",
+		},
+	})
+	Expect(err).NotTo(HaveOccurred())
+	h.CreateClusterRoleBinding(sa, "cluster-admin")
+	log.Printf("Created SA: %v", sa.GetName())
+
+	return h
+}
+
+// CreateClusterRoleBinding takes an sa (presumably created by us) and applies a clusterRole to it
+// The cr is bound to the project and, thus, cleaned up when the project gets removed.
+func (h *H) CreateClusterRoleBinding(sa *v1.ServiceAccount, clusterRole string) {
+	gvk := schema.FromAPIVersionAndKind("project.openshift.io/v1", "Project")
+	projRef := *metav1.NewControllerRef(h.proj, gvk)
+
+	// create binding with OwnerReference
+	_, err := h.Kube().RbacV1().ClusterRoleBindings().Create(&rbacv1.ClusterRoleBinding{
+		ObjectMeta: metav1.ObjectMeta{
+			GenerateName: "osde2e-test-access-",
+			OwnerReferences: []metav1.OwnerReference{
+				projRef,
+			},
+		},
+		Subjects: []rbacv1.Subject{
+			{
+				Kind:      rbacv1.ServiceAccountKind,
+				Name:      sa.GetName(),
+				Namespace: h.CurrentProject(),
+			},
+		},
+		RoleRef: rbacv1.RoleRef{
+			APIGroup: rbacv1.GroupName,
+			Kind:     "ClusterRole",
+			Name:     clusterRole,
+		},
+	})
+	Expect(err).NotTo(HaveOccurred(), "couldn't set correct permissions for OpenShift E2E")
+}
+
+// SetServiceAccount sets the serviceAccount you want all helper commands to run as
+func (h *H) SetServiceAccount(sa string) *H {
 	if h.restConfig == nil {
-		log.Print("No restconfig found in SetPersona")
+		log.Print("No restconfig found in SetServiceAccount")
 		return nil
 	}
-	account := fmt.Sprintf("system:serviceaccount:dedicated-admin:%s", persona)
-	if persona == "" {
-		account = ""
-	} else {
-		if persona != "dedicated-admin" {
-			log.Fatalf("Assuming an invalid persona: %s", persona)
-		}
+
+	if strings.Contains(sa, "%s") {
+		sa = fmt.Sprintf(sa, h.CurrentProject())
+	}
+
+	h.ServiceAccount = sa
+
+	if h.ServiceAccount != "" {
+		parts := strings.Split(h.ServiceAccount, ":")
+		Expect(len(parts)).Should(Equal(4), "not a valid service account name: %v", h.ServiceAccount)
+		_, err := h.Kube().CoreV1().ServiceAccounts(parts[2]).Get(parts[3], metav1.GetOptions{})
+		Expect(err).ShouldNot(HaveOccurred(), "could not get sa '%s'", h.ServiceAccount)
 	}
 
 	h.restConfig.Impersonate = rest.ImpersonationConfig{
-		UserName: account,
+		UserName: h.ServiceAccount,
 	}
+	log.Printf("ServiceAccount is now set to `%v`", h.ServiceAccount)
 
 	return h
+}
+
+// GetNamespacedServiceAccount just gets the name, not the "full name"
+func (h *H) GetNamespacedServiceAccount() string {
+	sa := ""
+	if h.ServiceAccount != "" {
+		parts := strings.Split(h.ServiceAccount, ":")
+		Expect(len(parts)).Should(Equal(4), "not a valid service account name: %v", h.ServiceAccount)
+		sa = parts[3]
+	}
+	return sa
 }
 
 // SetProject manually sets the project

@@ -14,9 +14,6 @@ import (
 const (
 	// name used in Runner resources
 	defaultName = "osde2e-runner"
-
-	// directory containing service account credentials
-	serviceAccountDir = "/var/run/secrets/kubernetes.io/serviceaccount"
 )
 
 // DefaultRunner is a runner with the most commonly desired settings.
@@ -31,13 +28,7 @@ var DefaultRunner = &Runner{
 		RestartPolicy: kubev1.RestartPolicyNever,
 	},
 	OutputDir: "/test-run-results",
-	AuthConfig: AuthConfig{
-		Name:      "osde2e",
-		Server:    "https://kubernetes.default",
-		CA:        serviceAccountDir + "/ca.crt",
-		TokenFile: serviceAccountDir + "/token",
-	},
-	Logger: log.New(os.Stderr, "", log.LstdFlags),
+	Logger:    log.New(os.Stderr, "", log.LstdFlags),
 }
 
 // Runner runs the OpenShift extended test suite within a cluster.
@@ -77,9 +68,6 @@ type Runner struct {
 
 	// Repos are cloned and mounted into the test Pod.
 	Repos
-
-	// Auth defines how to connect to a cluster.
-	AuthConfig
 
 	// Logger receives all messages.
 	*log.Logger
@@ -155,14 +143,6 @@ func (r *Runner) meta() metav1.ObjectMeta {
 			"app": r.Name,
 		},
 	}
-}
-
-// AuthConfig defines how the test Pod connects to the cluster.
-type AuthConfig struct {
-	Name      string
-	Server    string
-	CA        string
-	TokenFile string
 }
 
 // Status is the current state of the runner.

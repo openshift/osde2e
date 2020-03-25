@@ -164,9 +164,7 @@ func runGinkgoTests() error {
 		defer ginkgo.GinkgoRecover()
 		// We need to clean up our helper tests manually.
 		if !cfg.DryRun {
-			h := &helper.H{
-				State: state,
-			}
+			h := helper.New()
 			h.Cleanup()
 		}
 	}()

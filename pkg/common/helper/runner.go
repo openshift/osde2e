@@ -13,7 +13,6 @@ import (
 
 // RunnerWithNoCommand creates an extended test suite runner and configure RBAC for it.
 func (h *H) RunnerWithNoCommand() *runner.Runner {
-	h.GiveCurrentProjectClusterAdmin()
 	r := runner.DefaultRunner.DeepCopy()
 
 	// setup clients
@@ -22,12 +21,14 @@ func (h *H) RunnerWithNoCommand() *runner.Runner {
 
 	// setup tests
 	r.Namespace = h.CurrentProject()
+	r.PodSpec.ServiceAccountName = h.GetNamespacedServiceAccount()
 	return r
 }
 
 // Runner creates an extended test suite runner and configure RBAC for it and runs cmd in it.
 func (h *H) Runner(cmd string) *runner.Runner {
 	r := h.RunnerWithNoCommand()
+	r.PodSpec.ServiceAccountName = h.GetNamespacedServiceAccount()
 	r.Cmd = cmd
 	return r
 }
