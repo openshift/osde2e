@@ -115,7 +115,7 @@ func IsVersionInCincinnati(version *semver.Version) (bool, error) {
 }
 
 // LatestReleaseFromReleaseController retrieves latest release information for given releaseStream on the release controller.
-func LatestReleaseFromReleaseController(releaseStream string, useReleaseControllerForInt bool) (name, pullSpec string, err error) {
+func LatestReleaseFromReleaseController(releaseStream string) (name, pullSpec string, err error) {
 	var resp *http.Response
 	var data []byte
 
