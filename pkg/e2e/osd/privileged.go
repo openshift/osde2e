@@ -36,7 +36,7 @@ var _ = ginkgo.Describe("[Suite: service-definition] [OSD] Privileged Containers
 
 		ginkgo.It("privileged container should not get created", func() {
 			// Set it to a wildcard dedicated-admin
-			h = h.SetServiceAccount("system:serviceaccount:%s:dedicated-admin-project")
+			h.SetServiceAccount("system:serviceaccount:%s:dedicated-admin-project")
 
 			// Test creating a privileged pod and expect a failure
 			pod := makePod("privileged-pod", h.GetNamespacedServiceAccount(), true)

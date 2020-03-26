@@ -26,6 +26,8 @@ var _ = ginkgo.Describe("[Suite: conformance][k8s]", func() {
 	e2eTimeoutInSeconds := 3600
 	ginkgo.It("should run until completion", func() {
 		// configure tests
+		h.SetServiceAccount("system:serviceaccount:%s:cluster-admin")
+
 		cfg := DefaultE2EConfig
 		cmd := cfg.Cmd()
 
@@ -36,6 +38,7 @@ var _ = ginkgo.Describe("[Suite: conformance][k8s]", func() {
 
 		// run tests
 		stopCh := make(chan struct{})
+
 		err := r.Run(e2eTimeoutInSeconds, stopCh)
 		Expect(err).NotTo(HaveOccurred())
 
@@ -54,6 +57,7 @@ var _ = ginkgo.Describe("[Suite: conformance][openshift]", func() {
 
 	e2eTimeoutInSeconds := 7200
 	ginkgo.It("should run until completion", func() {
+		h.SetServiceAccount("system:serviceaccount:%s:cluster-admin")
 		// configure tests
 		cfg := DefaultE2EConfig
 		cfg.Suite = "openshift/conformance"
