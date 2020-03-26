@@ -39,12 +39,6 @@ func init() {
 
 // DefaultContainer is used by the DefaultRunner to run workloads
 var DefaultContainer = kubev1.Container{
-	Env: []kubev1.EnvVar{
-		{
-			Name:  "KUBECONFIG",
-			Value: "~/.kube/config",
-		},
-	},
 	Ports: []kubev1.ContainerPort{
 		{
 			Name:          resultsPortName,
