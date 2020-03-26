@@ -6,9 +6,11 @@ import (
 	"log"
 	"sort"
 	"strings"
+	"sync"
 
 	"github.com/Masterminds/semver"
 	v1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
+	"github.com/openshift/osde2e/pkg/common/config"
 )
 
 const (
@@ -25,6 +27,10 @@ const (
 var (
 	// Version440 represents Openshift version 4.4.0 and above
 	Version440 *semver.Constraints
+
+	prodDefaultVersion *semver.Version
+
+	once sync.Once = sync.Once{}
 )
 
 func init() {
@@ -39,6 +45,39 @@ func init() {
 // Use for the semver list filter to include all results.
 func noFilter(_ *semver.Version) bool {
 	return true
+}
+
+// DefaultVersionInProd will return the current default version in the production environment.
+func DefaultVersionInProd() (*semver.Version, error) {
+	once.Do(func() {
+		var OSD *OSD
+		var err error
+
+		if OSD, err = New(config.Instance.OCM.Token, Environments.Choose("prod"), config.Instance.OCM.Debug); err != nil {
+			log.Printf("error setting up OCM client for prod: %v", err)
+			return
+		}
+
+		prodDefaultVersionString, err := OSD.DefaultVersion()
+
+		if err != nil {
+			log.Printf("error getting default version from prod prod: %v", err)
+			return
+		}
+
+		prodDefaultVersion, err = OpenshiftVersionToSemver(prodDefaultVersionString)
+
+		if err != nil {
+			log.Printf("error parsing default version from prod: %v", err)
+			return
+		}
+	})
+
+	if prodDefaultVersion == nil {
+		return nil, fmt.Errorf("unable to get default version in prod")
+	}
+
+	return prodDefaultVersion, nil
 }
 
 // DefaultVersion returns the default version currently offered by OSD.
@@ -149,6 +188,112 @@ func (u *OSD) OldestVersion() (string, bool, error) {
 	return versionList[0], true, nil
 }
 
+// NextReleaseAfterProdDefault will return the latest version of a release after the default in production.
+// The integer "releasesFromProdDefault" is the "distance" from the current prod default to get the latest version for.
+// With a prod default of 4.3.2, a releaseFromProdDefault value of 1 would produce 4.4.0-0.nightly... on integration.
+// With a prod default of 4.3.2, a releaseFromProdDefault value of 2 would produce 4.5.0-0.nightly... on integration.
+func (u *OSD) NextReleaseAfterProdDefault(releasesFromProdDefault int) (string, error) {
+	currentProdDefault, err := DefaultVersionInProd()
+	if err != nil {
+		return "", err
+	}
+
+	versionList, err := u.EnabledNoDefaultVersionList()
+	if err != nil {
+		return "", err
+	}
+
+	return nextReleaseAfterGivenVersionFromVersionList(currentProdDefault, versionList, releasesFromProdDefault)
+}
+
+func nextReleaseAfterGivenVersionFromVersionList(givenVersion *semver.Version, versionList []string, releasesFromGivenVersion int) (string, error) {
+	versionBuckets := map[string]string{}
+
+	// Assemble a map that lists a release (x.y.0) to its latest version, with nightlies taking precedence over all else
+	for _, version := range versionList {
+		versionSemver, err := OpenshiftVersionToSemver(version)
+		if err != nil {
+			log.Printf("Unable to parse %s, skipping", version)
+			continue
+		}
+
+		majorMinor := createMajorMinorStringFromSemver(versionSemver)
+		if _, ok := versionBuckets[majorMinor]; !ok {
+			versionBuckets[majorMinor] = version
+		} else {
+			currentGreatestVersion, err := OpenshiftVersionToSemver(versionBuckets[majorMinor])
+			if err != nil {
+				return "", err
+			}
+
+			versionIsNightly := strings.Contains(versionSemver.Prerelease(), "nightly")
+			currentIsNightly := strings.Contains(currentGreatestVersion.Prerelease(), "nightly")
+
+			// Make sure nightlies take precedence over other versions
+			if versionIsNightly && !currentIsNightly {
+				versionBuckets[majorMinor] = version
+			} else if currentIsNightly && !versionIsNightly {
+				continue
+			} else if currentGreatestVersion.LessThan(versionSemver) {
+				versionBuckets[majorMinor] = version
+			}
+		}
+	}
+
+	// Parse all major minor versions (x.y.0) into semver versions and place them in an array.
+	// This is done explicitly so that we can utilize the semver library's sorting capability.
+	majorMinorList := []*semver.Version{}
+	for k := range versionBuckets {
+		parsedMajorMinor, err := semver.NewVersion(k)
+		if err != nil {
+			return "", err
+		}
+
+		majorMinorList = append(majorMinorList, parsedMajorMinor)
+	}
+
+	sort.Sort(semver.Collection(majorMinorList))
+
+	// Now that the list is sorted, we want to locate the major minor of the given version in the list.
+	givenMajorMinor, err := semver.NewVersion(createMajorMinorStringFromSemver(givenVersion))
+
+	if err != nil {
+		return "", err
+	}
+
+	indexOfGivenMajorMinor := -1
+	for i, majorMinor := range majorMinorList {
+		if majorMinor.Equal(givenMajorMinor) {
+			indexOfGivenMajorMinor = i
+			break
+		}
+	}
+
+	if indexOfGivenMajorMinor == -1 {
+		return "", fmt.Errorf("unable to find current prod default in %s environment", config.Instance.OCM.Env)
+	}
+
+	// Next, we'll go the given version distance ahead of the given version. We want to do it this way instead of guessing
+	// the next minor release so that we can handle major releases in the future, In other words, if the Openshift
+	// 4.y line stops at 4.13, we'll still be able to pick 5.0 if it's the next release after 4.13.
+	nextMajorMinorIndex := indexOfGivenMajorMinor + releasesFromGivenVersion
+
+	if len(majorMinorList) <= nextMajorMinorIndex {
+		return "", fmt.Errorf("there is no eligible next release on the %s environment", config.Instance.OCM.Env)
+	}
+	nextMajorMinor := createMajorMinorStringFromSemver(majorMinorList[nextMajorMinorIndex])
+
+	if _, ok := versionBuckets[nextMajorMinor]; !ok {
+		return "", fmt.Errorf("no major/minor version found for %s", nextMajorMinor)
+	}
+
+	return versionBuckets[nextMajorMinor], nil
+}
+
+func createMajorMinorStringFromSemver(version *semver.Version) string {
+	return fmt.Sprintf("%d.%d", version.Major(), version.Minor())
+}
+
 // EnabledNoDefaultVersionList returns a sorted list of the enabled but not default versions currently offered by OSD.
 func (u *OSD) EnabledNoDefaultVersionList() ([]string, error) {
 	semverVersions, err := u.getSemverList(-1, -1, "", noFilter)
@@ -179,7 +324,6 @@ func (u *OSD) getSemverList(major, minor int64, str string, filter func(*semver.
 
 	log.Printf("Querying cluster versions endpoint.")
 	for {
-		log.Printf("Getting page %d from the versions endpoint.", page)
 		resp, err := u.versions().List().Page(page).Size(PageSize).Send()
 
 		if err != nil {
