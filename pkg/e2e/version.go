@@ -84,6 +84,9 @@ func setupVersion(osdClient *osd.OSD) (err error) {
 		} else if cfg.Cluster.UseOldestClusterImageSetForInstall {
 			state.Cluster.Version, state.Cluster.EnoughVersionsForOldestOrMiddleTest, err = osdClient.OldestVersion()
 			versionType = "oldest version"
+		} else if cfg.Cluster.NextReleaseAfterProdDefault > 0 {
+			state.Cluster.Version, err = osdClient.NextReleaseAfterProdDefault(cfg.Cluster.NextReleaseAfterProdDefault)
+			versionType = "next y version after prod"
 		} else {
 			state.Cluster.Version, err = osdClient.DefaultVersion()
 			versionType = "current default"
