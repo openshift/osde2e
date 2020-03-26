@@ -19,6 +19,7 @@ import (
 	_ "github.com/openshift/osde2e/pkg/e2e/state"
 	_ "github.com/openshift/osde2e/pkg/e2e/verify"
 	_ "github.com/openshift/osde2e/pkg/e2e/workloads/guestbook"
+	_ "github.com/openshift/osde2e/pkg/e2e/workloads/redmine"
 )
 
 // Command is the command for running end to end tests on OSD clusters
