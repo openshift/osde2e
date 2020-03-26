@@ -65,6 +65,9 @@ var _ = ginkgo.Describe("[Suite: e2e] Workload ("+workloadName+")", func() {
 
 func doTest(h *helper.H) {
 
+	// track if error occurs
+	var err error
+
 	// duration in seconds between polls
 	interval := 5
 
@@ -73,10 +76,10 @@ func doTest(h *helper.H) {
 	intervalDuration := time.Duration(interval) * time.Second
 
 	start := time.Now()
-
+	
 Loop:
 	for {
-		_, err := h.Kube().CoreV1().Services(h.CurrentProject()).ProxyGet("http", "redmine-frontend", "3000", "/", nil).DoRaw()
+		_, err = h.Kube().CoreV1().Services(h.CurrentProject()).ProxyGet("http", "redmine-frontend", "3000", "/", nil).DoRaw()
 		elapsed := time.Since(start)
 
 		switch {
@@ -88,9 +91,11 @@ Loop:
 				log.Printf("Waiting %v for application to load", (timeoutDuration - elapsed))
 				time.Sleep(intervalDuration)
 			} else {
-				err = fmt.Errorf("Failed to check service before timeout")
+				err = fmt.Errorf("failed to check service before timeout")
 				break Loop
 			}
 		}
 	}
+
+	Expect(err).NotTo(HaveOccurred(), "unable to access front end of app")
 }
