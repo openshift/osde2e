@@ -264,6 +264,25 @@ func runTestsInPhase(phase string, description string) bool {
 		}
 	}
 
+	logMetricTestSuite := reporters.JUnitTestSuite{
+		Name: "Log Metrics",
+	}
+	for name, value := range metadata.Instance.LogMetrics {
+		logMetricTestSuite.TestCases = append(logMetricTestSuite.TestCases, reporters.JUnitTestCase{
+			ClassName: "Log Metrics",
+			Name:      fmt.Sprintf("[Log Metrics] %s", name),
+			Time:      float64(value),
+		})
+	}
+
+	data, err := xml.Marshal(&logMetricTestSuite)
+
+	err = ioutil.WriteFile(filepath.Join(phaseDirectory, "junit_logmetrics.xml"), data, 0644)
+	if err != nil {
+		log.Printf("error writing to junit file: %s", err.Error())
+		return false
+	}
+
 	return ginkgoPassed
 }
 
