@@ -14,6 +14,7 @@ var _ = ginkgo.Describe("[Suite: scale-performance] Scaling", func() {
 
 	httpTimeoutInSeconds := 7200
 	ginkgo.It("should be tested with HTTP", func() {
+		h.SetServiceAccount("system:serviceaccount:%s:cluster-admin")
 		// setup runner
 		scaleCfg := scaleRunnerConfig{
 			Name:         "http",

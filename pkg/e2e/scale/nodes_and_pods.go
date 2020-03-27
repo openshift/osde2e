@@ -20,6 +20,7 @@ var _ = ginkgo.Describe("[Suite: scale-nodes-and-pods] Scaling", func() {
 
 	nodeVerticalTimeoutInSeconds := 3600
 	ginkgo.It("should be tested with NodeVertical", func() {
+		h.SetServiceAccount("system:serviceaccount:%s:cluster-admin")
 		// setup runner
 		scaleCfg := scaleRunnerConfig{
 			Name:         "node-vertical",
@@ -52,6 +53,7 @@ var _ = ginkgo.Describe("[Suite: scale-nodes-and-pods] Scaling", func() {
 
 	podVerticalTimeoutInSeconds := 3600
 	ginkgo.It("should be tested with PodVertical", func() {
+		h.SetServiceAccount("system:serviceaccount:%s:cluster-admin")
 		// setup runner
 		scaleCfg := scaleRunnerConfig{
 			Name:         "pod-vertical",
