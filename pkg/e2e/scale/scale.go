@@ -85,8 +85,6 @@ func (sCfg scaleRunnerConfig) Runner(h *helper.H) *runner.Runner {
 	runner.ImageName = ansibleImage
 	runner.Repos = scaleRepos
 
-	// set kubeconfig within home for ansible image
-	runner.PodSpec.Containers[0].Env[0].Value = "/opt/app-root/src/.kube/config"
 	runner.PodSpec.Containers[0].Env = append(runner.PodSpec.Containers[0].Env, kubev1.EnvVar{
 		Name:  "PBENCH_SERVER",
 		Value: config.Instance.Scale.PbenchServer,
