@@ -69,6 +69,9 @@ type UpgradeConfig struct {
 	// UpgradeToCISIfPossible will upgrade to the most recent cluster image set if it's newer than the install version
 	UpgradeToCISIfPossible bool `env:"UPGRADE_TO_CIS_IF_POSSIBLE" sect:"version" default:"false" yaml:"upgradeToCISIfPossible"`
 
+	// NextReleaseAfterProdDefault will select the cluster image set that the given number of releases away from the the production default.
+	NextReleaseAfterProdDefaultForUpgrade int `env:"NEXT_RELEASE_AFTER_PROD_DEFAULT_FOR_UPGRADE" sect:"version" default:"-1" yaml:"nextReleaseAfterProdDefaultForUpgrade"`
+
 	// ReleaseStream used to retrieve latest release images. If set, it will be used to perform an upgrade.
 	ReleaseStream string `env:"UPGRADE_RELEASE_STREAM" sect:"upgrade" yaml:"releaseStream"`
 }
@@ -100,7 +103,7 @@ type ClusterConfig struct {
 	UseOldestClusterImageSetForInstall bool `env:"USE_OLDEST_CLUSTER_IMAGE_SET_FOR_INSTALL" sect:"version" default:"false" yaml:"useOldestClusterVersionForInstall"`
 
 	// NextReleaseAfterProdDefault will select the cluster image set that the given number of releases away from the the production default.
-	NextReleaseAfterProdDefault int `env:"NEXT_RELEASE_AFTER_PROD_DEFAULT" sect:"version" default:"0" yaml:"nextReleaseAfterProdDefault"`
+	NextReleaseAfterProdDefault int `env:"NEXT_RELEASE_AFTER_PROD_DEFAULT" sect:"version" default:"-1" yaml:"nextReleaseAfterProdDefault"`
 
 	// MajorTarget is the major version to target. If specified, it is used in version selection.
 	MajorTarget int64 `env:"MAJOR_TARGET" sect:"version" yaml:"majorTarget"`

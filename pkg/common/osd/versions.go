@@ -28,7 +28,7 @@ var (
 	// Version440 represents Openshift version 4.4.0 and above
 	Version440 *semver.Constraints
 
-	prodDefaultVersion *semver.Version
+	prodDefaultVersion string
 
 	once sync.Once = sync.Once{}
 )
@@ -48,7 +48,7 @@ func noFilter(_ *semver.Version) bool {
 }
 
 // DefaultVersionInProd will return the current default version in the production environment.
-func DefaultVersionInProd() (*semver.Version, error) {
+func DefaultVersionInProd() (string, error) {
 	once.Do(func() {
 		var OSD *OSD
 		var err error
@@ -58,23 +58,16 @@ func DefaultVersionInProd() (*semver.Version, error) {
 			return
 		}
 
-		prodDefaultVersionString, err := OSD.DefaultVersion()
+		prodDefaultVersion, err = OSD.DefaultVersion()
 
 		if err != nil {
 			log.Printf("error getting default version from prod prod: %v", err)
 			return
 		}
-
-		prodDefaultVersion, err = OpenshiftVersionToSemver(prodDefaultVersionString)
-
-		if err != nil {
-			log.Printf("error parsing default version from prod: %v", err)
-			return
-		}
 	})
 
-	if prodDefaultVersion == nil {
-		return nil, fmt.Errorf("unable to get default version in prod")
+	if prodDefaultVersion == "" {
+		return "", fmt.Errorf("unable to get default version in prod")
 	}
 
 	return prodDefaultVersion, nil
@@ -198,12 +191,17 @@ func (u *OSD) NextReleaseAfterProdDefault(releasesFromProdDefault int) (string, 
 		return "", err
 	}
 
+	currentProdDefaultSemver, err := OpenshiftVersionToSemver(currentProdDefault)
+	if err != nil {
+		return "", err
+	}
+
 	versionList, err := u.EnabledNoDefaultVersionList()
 	if err != nil {
 		return "", err
 	}
 
-	return nextReleaseAfterGivenVersionFromVersionList(currentProdDefault, versionList, releasesFromProdDefault)
+	return nextReleaseAfterGivenVersionFromVersionList(currentProdDefaultSemver, versionList, releasesFromProdDefault)
 }
 
 func nextReleaseAfterGivenVersionFromVersionList(givenVersion *semver.Version, versionList []string, releasesFromGivenVersion int) (string, error) {

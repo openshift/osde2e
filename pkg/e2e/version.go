@@ -28,7 +28,6 @@ func filterOnCincinnati(version *semver.Version) bool {
 // ChooseVersions sets versions in cfg if not set based on defaults and upgrade options.
 // If a release stream is set for an upgrade the previous available version is used and it's image is used for upgrade.
 func ChooseVersions(osdClient *osd.OSD) (err error) {
-	cfg := config.Instance
 	state := state.Instance
 
 	// when defined, use set version
@@ -36,7 +35,7 @@ func ChooseVersions(osdClient *osd.OSD) (err error) {
 		err = nil
 	} else if osdClient == nil {
 		err = errors.New("osd must be setup when upgrading with release stream")
-	} else if state.Upgrade.Image == "" && (cfg.Upgrade.ReleaseStream != "" || cfg.Upgrade.UpgradeToCISIfPossible) {
+	} else if shouldUpgrade() {
 		err = setupUpgradeVersion(osdClient)
 	} else {
 		err = setupVersion(osdClient)
@@ -47,6 +46,17 @@ func ChooseVersions(osdClient *osd.OSD) (err error) {
 	metadata.Instance.SetUpgradeVersion(state.Upgrade.ReleaseName)
 
 	return err
+}
+
+// shouldUpgrade determines if this test run should attempt an upgrade.
+func shouldUpgrade() bool {
+	cfg := config.Instance
+	state := state.Instance
+
+	return state.Upgrade.Image == "" &&
+		(cfg.Upgrade.ReleaseStream != "" ||
+			cfg.Upgrade.UpgradeToCISIfPossible ||
+			cfg.Upgrade.NextReleaseAfterProdDefaultForUpgrade > -1)
 }
 
 // chooses between default version and nightly based on target versions.
@@ -84,9 +94,12 @@ func setupVersion(osdClient *osd.OSD) (err error) {
 		} else if cfg.Cluster.UseOldestClusterImageSetForInstall {
 			state.Cluster.Version, state.Cluster.EnoughVersionsForOldestOrMiddleTest, err = osdClient.OldestVersion()
 			versionType = "oldest version"
-		} else if cfg.Cluster.NextReleaseAfterProdDefault > 0 {
+		} else if cfg.Cluster.NextReleaseAfterProdDefault > -1 {
 			state.Cluster.Version, err = osdClient.NextReleaseAfterProdDefault(cfg.Cluster.NextReleaseAfterProdDefault)
-			versionType = "next y version after prod"
+			versionType = fmt.Sprintf("%d release(s) from the default version in prod", cfg.Cluster.NextReleaseAfterProdDefault)
+		} else if cfg.OCM.Env == "int" {
+			state.Cluster.Version, err = osd.DefaultVersionInProd()
+			versionType = "current default in prod"
 		} else {
 			state.Cluster.Version, err = osdClient.DefaultVersion()
 			versionType = "current default"
@@ -155,7 +168,28 @@ func setupUpgradeVersion(osdClient *osd.OSD) (err error) {
 		}
 	}
 
-	state.Upgrade.ReleaseName, state.Upgrade.Image, err = upgrade.LatestReleaseFromReleaseController(cfg.Upgrade.ReleaseStream, true)
+	releaseStream := cfg.Upgrade.ReleaseStream
+
+	if releaseStream == "" {
+		if cfg.Upgrade.NextReleaseAfterProdDefaultForUpgrade > -1 {
+			nextVersion, err := osdClient.NextReleaseAfterProdDefault(cfg.Upgrade.NextReleaseAfterProdDefaultForUpgrade)
+
+			if err != nil {
+				return fmt.Errorf("error determining next version to upgrade to: %v", err)
+			}
+
+			nextVersionSemver, err := osd.OpenshiftVersionToSemver(nextVersion)
+			if err != nil {
+				return fmt.Errorf("error parsing version returned as production default: %v", err)
+			}
+
+			releaseStream = fmt.Sprintf("%d.%d.0-0.nightly", nextVersionSemver.Major(), nextVersionSemver.Minor())
+		} else {
+			return fmt.Errorf("no release stream specified and no dynamic version selection specified")
+		}
+	}
+
+	state.Upgrade.ReleaseName, state.Upgrade.Image, err = upgrade.LatestReleaseFromReleaseController(releaseStream)
 	if err != nil {
 		return fmt.Errorf("couldn't get latest release from release-controller: %v", err)
 	}
@@ -175,7 +209,7 @@ func setupUpgradeVersion(osdClient *osd.OSD) (err error) {
 
 	// set upgrade image
 	log.Printf("Selecting version '%s' to be able to upgrade to '%s' on release stream '%s'",
-		state.Cluster.Version, state.Upgrade.ReleaseName, cfg.Upgrade.ReleaseStream)
+		state.Cluster.Version, state.Upgrade.ReleaseName, releaseStream)
 	return
 }
 
