@@ -42,6 +42,8 @@ var _ = ginkgo.Describe("[Suite: addons] Addon Test Harness", func() {
 
 	addonTimeoutInSeconds := 3600
 	ginkgo.It("should run until completion", func() {
+		// We don't know what a test harness may need so let's give them everything.
+		h.SetServiceAccount("system:serviceaccount:%s:cluster-admin")
 		for _, harness := range config.Instance.Addons.TestHarnesses {
 			// configure tests
 			// setup runner
