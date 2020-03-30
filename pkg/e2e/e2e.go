@@ -71,15 +71,6 @@ func runGinkgoTests() error {
 
 		metadata.Instance.SetEnvironment(cfg.OCM.Env)
 
-		// check that enough quota exists for this test if creating cluster
-		if len(state.Cluster.ID) == 0 {
-			if enoughQuota, err := OSD.CheckQuota(); err != nil {
-				log.Printf("Failed to check if enough quota is available: %v", err)
-			} else if !enoughQuota {
-				return fmt.Errorf("currently not enough quota exists to run this test")
-			}
-		}
-
 		// configure cluster and upgrade versions
 		if err = ChooseVersions(OSD); err != nil {
 			return fmt.Errorf("failed to configure versions: %v", err)
@@ -93,6 +84,17 @@ func runGinkgoTests() error {
 		if state.Upgrade.UpgradeVersionEqualToInstallVersion {
 			log.Printf("Install version and upgrade version are the same. Skipping tests.")
 			return nil
+		}
+
+		// check that enough quota exists for this test if creating cluster
+		if len(state.Cluster.ID) == 0 {
+			if cfg.DryRun {
+				log.Printf("This is a dry run. Skipping quota check.")
+			} else if enoughQuota, err := OSD.CheckQuota(); err != nil {
+				log.Printf("Failed to check if enough quota is available: %v", err)
+			} else if !enoughQuota {
+				return fmt.Errorf("currently not enough quota exists to run this test")
+			}
 		}
 	}
 
