@@ -3,6 +3,58 @@
 This document describes the relevant changes between releases of the OCM API
 SDK.
 
+== 0.1.97 Mar 26 2020
+
+- Update to model 0.0.52
+** Add Subscription Model changes.
+
+== 0.1.96 Mar 24 2020
+
+- Update to model 0.0.50
+** Add Ingress type
+** Add sockets to cluster_metrics_type
+
+== 0.1.95 Mar 22 2020
+
+- Update to model 0.0.48:
+** Fix `OpenID` attributes.
+** Add Cluster API listening method.
+
+== 0.1.94 Mar 19 2020
+
+- Update to model 0.0.47:
+** Add ClusterAdminEnabled flag.
+** Add PullSecrets endpoint.
+** Fix `LDAPIdentityProvider` attribute name.
+
+
+== 0.1.93 Mar 18 2020
+
+- Update to model 0.0.46:
+** Add missing fields for add-on installation
+** Add operator name to add-ons
+
+== 0.1.92 Mar 11 2020
+
+- Update to model 0.0.45:
+** Add Organizations field to GitHub IDP
+
+== 0.1.91 Mar 5 2020
+
+- Update to model 0.0.42:
+** Add `client_secret` attribute to _GitHub_ identity provider.
+
+== 0.1.90 Mar 2 2020
+
+- Request new tokens when the _OpenID_ server returns error code `invalid_grant`
+during the refresh token grant.
+
+- Check that responses from the _OpenID_ server contain `application/json` in
+the `Content-Type` header, and improve the error messages generated in that
+case so that they contain a summary of the content.
+
+- Honor cookies sent by the _OpenID_ and API servers.
+
 == 0.1.89 Feb 26 2020
 
 - Update to metamodel 0.0.26.

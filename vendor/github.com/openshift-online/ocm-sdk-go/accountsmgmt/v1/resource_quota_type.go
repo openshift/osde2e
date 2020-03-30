@@ -19,6 +19,10 @@ limitations under the License.
 
 package v1 // github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1
 
+import (
+	time "time"
+)
+
 // ResourceQuotaKind is the name of the type used to represent objects
 // of type 'resource_quota'.
 const ResourceQuotaKind = "ResourceQuota"
@@ -42,11 +46,12 @@ type ResourceQuota struct {
 	sku                  *string
 	allowed              *int
 	availabilityZoneType *string
+	createdAt            *time.Time
 	organizationID       *string
-	reserved             *int
 	resourceName         *string
 	resourceType         *string
 	type_                *string
+	updatedAt            *time.Time
 }
 
 // Kind returns the name of the type of the object.
@@ -108,11 +113,12 @@ func (o *ResourceQuota) Empty() bool {
 		o.sku == nil &&
 		o.allowed == nil &&
 		o.availabilityZoneType == nil &&
+		o.createdAt == nil &&
 		o.organizationID == nil &&
-		o.reserved == nil &&
 		o.resourceName == nil &&
 		o.resourceType == nil &&
 		o.type_ == nil &&
+		o.updatedAt == nil &&
 		true)
 }
 
@@ -208,6 +214,29 @@ func (o *ResourceQuota) GetAvailabilityZoneType() (value string, ok bool) {
 	return
 }
 
+// CreatedAt returns the value of the 'created_at' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+//
+func (o *ResourceQuota) CreatedAt() time.Time {
+	if o != nil && o.createdAt != nil {
+		return *o.createdAt
+	}
+	return time.Time{}
+}
+
+// GetCreatedAt returns the value of the 'created_at' attribute and
+// a flag indicating if the attribute has a value.
+//
+//
+func (o *ResourceQuota) GetCreatedAt() (value time.Time, ok bool) {
+	ok = o != nil && o.createdAt != nil
+	if ok {
+		value = *o.createdAt
+	}
+	return
+}
+
 // OrganizationID returns the value of the 'organization_ID' attribute, or
 // the zero value of the type if the attribute doesn't have a value.
 //
@@ -227,29 +256,6 @@ func (o *ResourceQuota) GetOrganizationID() (value string, ok bool) {
 	ok = o != nil && o.organizationID != nil
 	if ok {
 		value = *o.organizationID
-	}
-	return
-}
-
-// Reserved returns the value of the 'reserved' attribute, or
-// the zero value of the type if the attribute doesn't have a value.
-//
-//
-func (o *ResourceQuota) Reserved() int {
-	if o != nil && o.reserved != nil {
-		return *o.reserved
-	}
-	return 0
-}
-
-// GetReserved returns the value of the 'reserved' attribute and
-// a flag indicating if the attribute has a value.
-//
-//
-func (o *ResourceQuota) GetReserved() (value int, ok bool) {
-	ok = o != nil && o.reserved != nil
-	if ok {
-		value = *o.reserved
 	}
 	return
 }
@@ -319,6 +325,29 @@ func (o *ResourceQuota) GetType() (value string, ok bool) {
 	ok = o != nil && o.type_ != nil
 	if ok {
 		value = *o.type_
+	}
+	return
+}
+
+// UpdatedAt returns the value of the 'updated_at' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+//
+func (o *ResourceQuota) UpdatedAt() time.Time {
+	if o != nil && o.updatedAt != nil {
+		return *o.updatedAt
+	}
+	return time.Time{}
+}
+
+// GetUpdatedAt returns the value of the 'updated_at' attribute and
+// a flag indicating if the attribute has a value.
+//
+//
+func (o *ResourceQuota) GetUpdatedAt() (value time.Time, ok bool) {
+	ok = o != nil && o.updatedAt != nil
+	if ok {
+		value = *o.updatedAt
 	}
 	return
 }

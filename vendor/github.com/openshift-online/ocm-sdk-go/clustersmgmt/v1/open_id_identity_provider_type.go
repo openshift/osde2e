@@ -24,12 +24,12 @@ package v1 // github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1
 // Details for `openid` identity providers.
 type OpenIDIdentityProvider struct {
 	ca                       *string
-	urls                     *OpenIDURLs
 	claims                   *OpenIDClaims
 	clientID                 *string
 	clientSecret             *string
 	extraAuthorizeParameters map[string]string
 	extraScopes              []string
+	issuer                   *string
 }
 
 // Empty returns true if the object is empty, i.e. no attribute has a value.
@@ -39,6 +39,7 @@ func (o *OpenIDIdentityProvider) Empty() bool {
 		o.clientSecret == nil &&
 		len(o.extraAuthorizeParameters) == 0 &&
 		len(o.extraScopes) == 0 &&
+		o.issuer == nil &&
 		true)
 }
 
@@ -61,29 +62,6 @@ func (o *OpenIDIdentityProvider) GetCA() (value string, ok bool) {
 	ok = o != nil && o.ca != nil
 	if ok {
 		value = *o.ca
-	}
-	return
-}
-
-// URLS returns the value of the 'URLS' attribute, or
-// the zero value of the type if the attribute doesn't have a value.
-//
-// URLs of the provider.
-func (o *OpenIDIdentityProvider) URLS() *OpenIDURLs {
-	if o == nil {
-		return nil
-	}
-	return o.urls
-}
-
-// GetURLS returns the value of the 'URLS' attribute and
-// a flag indicating if the attribute has a value.
-//
-// URLs of the provider.
-func (o *OpenIDIdentityProvider) GetURLS() (value *OpenIDURLs, ok bool) {
-	ok = o != nil && o.urls != nil
-	if ok {
-		value = o.urls
 	}
 	return
 }
@@ -201,6 +179,29 @@ func (o *OpenIDIdentityProvider) GetExtraScopes() (value []string, ok bool) {
 	ok = o != nil && o.extraScopes != nil
 	if ok {
 		value = o.extraScopes
+	}
+	return
+}
+
+// Issuer returns the value of the 'issuer' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+// The URL that the OpenID Provider asserts as the Issuer Identifier
+func (o *OpenIDIdentityProvider) Issuer() string {
+	if o != nil && o.issuer != nil {
+		return *o.issuer
+	}
+	return ""
+}
+
+// GetIssuer returns the value of the 'issuer' attribute and
+// a flag indicating if the attribute has a value.
+//
+// The URL that the OpenID Provider asserts as the Issuer Identifier
+func (o *OpenIDIdentityProvider) GetIssuer() (value string, ok bool) {
+	ok = o != nil && o.issuer != nil
+	if ok {
+		value = *o.issuer
 	}
 	return
 }

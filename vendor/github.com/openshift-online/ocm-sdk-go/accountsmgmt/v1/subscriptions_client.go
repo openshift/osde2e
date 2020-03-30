@@ -73,16 +73,18 @@ func (c *SubscriptionsClient) Subscription(id string) *SubscriptionClient {
 
 // SubscriptionsListRequest is the request for the 'list' method.
 type SubscriptionsListRequest struct {
-	transport http.RoundTripper
-	path      string
-	metric    string
-	query     url.Values
-	header    http.Header
-	labels    *string
-	order     *string
-	page      *int
-	search    *string
-	size      *int
+	transport             http.RoundTripper
+	path                  string
+	metric                string
+	query                 url.Values
+	header                http.Header
+	fetchaccountsAccounts *bool
+	fetchlabelsLabels     *bool
+	labels                *string
+	order                 *string
+	page                  *int
+	search                *string
+	size                  *int
 }
 
 // Parameter adds a query parameter.
@@ -94,6 +96,22 @@ func (r *SubscriptionsListRequest) Parameter(name string, value interface{}) *Su
 // Header adds a request header.
 func (r *SubscriptionsListRequest) Header(name string, value interface{}) *SubscriptionsListRequest {
 	helpers.AddHeader(&r.header, name, value)
+	return r
+}
+
+// FetchaccountsAccounts sets the value of the 'fetchaccounts_accounts' parameter.
+//
+// If true, includes the account reference information in the output. Could slow request response time.
+func (r *SubscriptionsListRequest) FetchaccountsAccounts(value bool) *SubscriptionsListRequest {
+	r.fetchaccountsAccounts = &value
+	return r
+}
+
+// FetchlabelsLabels sets the value of the 'fetchlabels_labels' parameter.
+//
+// If true, includes the labels on a subscription in the output. Could slow request response time.
+func (r *SubscriptionsListRequest) FetchlabelsLabels(value bool) *SubscriptionsListRequest {
+	r.fetchlabelsLabels = &value
 	return r
 }
 
@@ -179,6 +197,12 @@ func (r *SubscriptionsListRequest) Send() (result *SubscriptionsListResponse, er
 // SendContext sends this request, waits for the response, and returns it.
 func (r *SubscriptionsListRequest) SendContext(ctx context.Context) (result *SubscriptionsListResponse, err error) {
 	query := helpers.CopyQuery(r.query)
+	if r.fetchaccountsAccounts != nil {
+		helpers.AddValue(&query, "fetchaccounts_accounts", *r.fetchaccountsAccounts)
+	}
+	if r.fetchlabelsLabels != nil {
+		helpers.AddValue(&query, "fetchlabels_labels", *r.fetchlabelsLabels)
+	}
 	if r.labels != nil {
 		helpers.AddValue(&query, "labels", *r.labels)
 	}

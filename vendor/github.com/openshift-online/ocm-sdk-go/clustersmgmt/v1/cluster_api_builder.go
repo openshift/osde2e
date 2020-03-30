@@ -23,7 +23,8 @@ package v1 // github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1
 //
 // Information about the API of a cluster.
 type ClusterAPIBuilder struct {
-	url *string
+	url       *string
+	listening *ListeningMethod
 }
 
 // NewClusterAPI creates a new builder of 'cluster_API' objects.
@@ -39,12 +40,21 @@ func (b *ClusterAPIBuilder) URL(value string) *ClusterAPIBuilder {
 	return b
 }
 
+// Listening sets the value of the 'listening' attribute to the given value.
+//
+// Cluster components listening method.
+func (b *ClusterAPIBuilder) Listening(value ListeningMethod) *ClusterAPIBuilder {
+	b.listening = &value
+	return b
+}
+
 // Copy copies the attributes of the given object into this builder, discarding any previous values.
 func (b *ClusterAPIBuilder) Copy(object *ClusterAPI) *ClusterAPIBuilder {
 	if object == nil {
 		return b
 	}
 	b.url = object.url
+	b.listening = object.listening
 	return b
 }
 
@@ -52,5 +62,6 @@ func (b *ClusterAPIBuilder) Copy(object *ClusterAPI) *ClusterAPIBuilder {
 func (b *ClusterAPIBuilder) Build() (object *ClusterAPI, err error) {
 	object = new(ClusterAPI)
 	object.url = b.url
+	object.listening = b.listening
 	return
 }

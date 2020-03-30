@@ -23,12 +23,14 @@ package v1 // github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1
 //
 // Information about the API of a cluster.
 type ClusterAPI struct {
-	url *string
+	url       *string
+	listening *ListeningMethod
 }
 
 // Empty returns true if the object is empty, i.e. no attribute has a value.
 func (o *ClusterAPI) Empty() bool {
 	return o == nil || (o.url == nil &&
+		o.listening == nil &&
 		true)
 }
 
@@ -51,6 +53,29 @@ func (o *ClusterAPI) GetURL() (value string, ok bool) {
 	ok = o != nil && o.url != nil
 	if ok {
 		value = *o.url
+	}
+	return
+}
+
+// Listening returns the value of the 'listening' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+// The listening method of the API server.
+func (o *ClusterAPI) Listening() ListeningMethod {
+	if o != nil && o.listening != nil {
+		return *o.listening
+	}
+	return ListeningMethod("")
+}
+
+// GetListening returns the value of the 'listening' attribute and
+// a flag indicating if the attribute has a value.
+//
+// The listening method of the API server.
+func (o *ClusterAPI) GetListening() (value ListeningMethod, ok bool) {
+	ok = o != nil && o.listening != nil
+	if ok {
+		value = *o.listening
 	}
 	return
 }

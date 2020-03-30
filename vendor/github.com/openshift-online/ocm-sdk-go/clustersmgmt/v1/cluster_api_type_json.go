@@ -46,6 +46,14 @@ func writeClusterAPI(object *ClusterAPI, stream *jsoniter.Stream) {
 		stream.WriteString(*object.url)
 		count++
 	}
+	if object.listening != nil {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("listening")
+		stream.WriteString(string(*object.listening))
+		count++
+	}
 	stream.WriteObjectEnd()
 }
 
@@ -73,6 +81,10 @@ func readClusterAPI(iterator *jsoniter.Iterator) *ClusterAPI {
 		case "url":
 			value := iterator.ReadString()
 			object.url = &value
+		case "listening":
+			text := iterator.ReadString()
+			value := ListeningMethod(text)
+			object.listening = &value
 		default:
 			iterator.ReadAny()
 		}

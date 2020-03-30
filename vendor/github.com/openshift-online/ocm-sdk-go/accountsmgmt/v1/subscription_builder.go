@@ -27,19 +27,30 @@ import (
 //
 //
 type SubscriptionBuilder struct {
-	id                 *string
-	href               *string
-	link               bool
-	clusterID          *string
-	createdAt          *time.Time
-	creator            *AccountBuilder
-	displayName        *string
-	externalClusterID  *string
-	lastTelemetryDate  *time.Time
-	organizationID     *string
-	plan               *PlanBuilder
-	registryCredential *RegistryCredentialBuilder
-	updatedAt          *time.Time
+	id                *string
+	href              *string
+	link              bool
+	clusterID         *string
+	consumerUUID      *string
+	cpuTotal          *int
+	createdAt         *time.Time
+	creator           *AccountBuilder
+	displayName       *string
+	externalClusterID *string
+	labels            []*LabelBuilder
+	lastReconcileDate *time.Time
+	lastTelemetryDate *time.Time
+	managed           *bool
+	organizationID    *string
+	plan              *PlanBuilder
+	productBundle     *ProductBundleEnum
+	serviceLevel      *ServiceLevelEnum
+	socketTotal       *int
+	status            *string
+	supportLevel      *SupportLevelEnum
+	systemUnits       *SystemUnitsEnum
+	updatedAt         *time.Time
+	usage             *UsageEnum
 }
 
 // NewSubscription creates a new builder of 'subscription' objects.
@@ -70,6 +81,22 @@ func (b *SubscriptionBuilder) Link(value bool) *SubscriptionBuilder {
 //
 func (b *SubscriptionBuilder) ClusterID(value string) *SubscriptionBuilder {
 	b.clusterID = &value
+	return b
+}
+
+// ConsumerUUID sets the value of the 'consumer_UUID' attribute to the given value.
+//
+//
+func (b *SubscriptionBuilder) ConsumerUUID(value string) *SubscriptionBuilder {
+	b.consumerUUID = &value
+	return b
+}
+
+// CpuTotal sets the value of the 'cpu_total' attribute to the given value.
+//
+//
+func (b *SubscriptionBuilder) CpuTotal(value int) *SubscriptionBuilder {
+	b.cpuTotal = &value
 	return b
 }
 
@@ -105,11 +132,36 @@ func (b *SubscriptionBuilder) ExternalClusterID(value string) *SubscriptionBuild
 	return b
 }
 
+// Labels sets the value of the 'labels' attribute to the given values.
+//
+//
+func (b *SubscriptionBuilder) Labels(values ...*LabelBuilder) *SubscriptionBuilder {
+	b.labels = make([]*LabelBuilder, len(values))
+	copy(b.labels, values)
+	return b
+}
+
+// LastReconcileDate sets the value of the 'last_reconcile_date' attribute to the given value.
+//
+//
+func (b *SubscriptionBuilder) LastReconcileDate(value time.Time) *SubscriptionBuilder {
+	b.lastReconcileDate = &value
+	return b
+}
+
 // LastTelemetryDate sets the value of the 'last_telemetry_date' attribute to the given value.
 //
 //
 func (b *SubscriptionBuilder) LastTelemetryDate(value time.Time) *SubscriptionBuilder {
 	b.lastTelemetryDate = &value
+	return b
+}
+
+// Managed sets the value of the 'managed' attribute to the given value.
+//
+//
+func (b *SubscriptionBuilder) Managed(value bool) *SubscriptionBuilder {
+	b.managed = &value
 	return b
 }
 
@@ -129,11 +181,51 @@ func (b *SubscriptionBuilder) Plan(value *PlanBuilder) *SubscriptionBuilder {
 	return b
 }
 
-// RegistryCredential sets the value of the 'registry_credential' attribute to the given value.
+// ProductBundle sets the value of the 'product_bundle' attribute to the given value.
+//
+// Usage of Subscription.
+func (b *SubscriptionBuilder) ProductBundle(value ProductBundleEnum) *SubscriptionBuilder {
+	b.productBundle = &value
+	return b
+}
+
+// ServiceLevel sets the value of the 'service_level' attribute to the given value.
+//
+// Service Level of Subscription.
+func (b *SubscriptionBuilder) ServiceLevel(value ServiceLevelEnum) *SubscriptionBuilder {
+	b.serviceLevel = &value
+	return b
+}
+
+// SocketTotal sets the value of the 'socket_total' attribute to the given value.
 //
 //
-func (b *SubscriptionBuilder) RegistryCredential(value *RegistryCredentialBuilder) *SubscriptionBuilder {
-	b.registryCredential = value
+func (b *SubscriptionBuilder) SocketTotal(value int) *SubscriptionBuilder {
+	b.socketTotal = &value
+	return b
+}
+
+// Status sets the value of the 'status' attribute to the given value.
+//
+//
+func (b *SubscriptionBuilder) Status(value string) *SubscriptionBuilder {
+	b.status = &value
+	return b
+}
+
+// SupportLevel sets the value of the 'support_level' attribute to the given value.
+//
+// Support Level of Subscription.
+func (b *SubscriptionBuilder) SupportLevel(value SupportLevelEnum) *SubscriptionBuilder {
+	b.supportLevel = &value
+	return b
+}
+
+// SystemUnits sets the value of the 'system_units' attribute to the given value.
+//
+// Usage of Subscription.
+func (b *SubscriptionBuilder) SystemUnits(value SystemUnitsEnum) *SubscriptionBuilder {
+	b.systemUnits = &value
 	return b
 }
 
@@ -142,6 +234,14 @@ func (b *SubscriptionBuilder) RegistryCredential(value *RegistryCredentialBuilde
 //
 func (b *SubscriptionBuilder) UpdatedAt(value time.Time) *SubscriptionBuilder {
 	b.updatedAt = &value
+	return b
+}
+
+// Usage sets the value of the 'usage' attribute to the given value.
+//
+// Usage of Subscription.
+func (b *SubscriptionBuilder) Usage(value UsageEnum) *SubscriptionBuilder {
+	b.usage = &value
 	return b
 }
 
@@ -154,6 +254,8 @@ func (b *SubscriptionBuilder) Copy(object *Subscription) *SubscriptionBuilder {
 	b.href = object.href
 	b.link = object.link
 	b.clusterID = object.clusterID
+	b.consumerUUID = object.consumerUUID
+	b.cpuTotal = object.cpuTotal
 	b.createdAt = object.createdAt
 	if object.creator != nil {
 		b.creator = NewAccount().Copy(object.creator)
@@ -162,19 +264,31 @@ func (b *SubscriptionBuilder) Copy(object *Subscription) *SubscriptionBuilder {
 	}
 	b.displayName = object.displayName
 	b.externalClusterID = object.externalClusterID
+	if object.labels != nil {
+		b.labels = make([]*LabelBuilder, len(object.labels))
+		for i, v := range object.labels {
+			b.labels[i] = NewLabel().Copy(v)
+		}
+	} else {
+		b.labels = nil
+	}
+	b.lastReconcileDate = object.lastReconcileDate
 	b.lastTelemetryDate = object.lastTelemetryDate
+	b.managed = object.managed
 	b.organizationID = object.organizationID
 	if object.plan != nil {
 		b.plan = NewPlan().Copy(object.plan)
 	} else {
 		b.plan = nil
 	}
-	if object.registryCredential != nil {
-		b.registryCredential = NewRegistryCredential().Copy(object.registryCredential)
-	} else {
-		b.registryCredential = nil
-	}
+	b.productBundle = object.productBundle
+	b.serviceLevel = object.serviceLevel
+	b.socketTotal = object.socketTotal
+	b.status = object.status
+	b.supportLevel = object.supportLevel
+	b.systemUnits = object.systemUnits
 	b.updatedAt = object.updatedAt
+	b.usage = object.usage
 	return b
 }
 
@@ -185,6 +299,8 @@ func (b *SubscriptionBuilder) Build() (object *Subscription, err error) {
 	object.href = b.href
 	object.link = b.link
 	object.clusterID = b.clusterID
+	object.consumerUUID = b.consumerUUID
+	object.cpuTotal = b.cpuTotal
 	object.createdAt = b.createdAt
 	if b.creator != nil {
 		object.creator, err = b.creator.Build()
@@ -194,7 +310,18 @@ func (b *SubscriptionBuilder) Build() (object *Subscription, err error) {
 	}
 	object.displayName = b.displayName
 	object.externalClusterID = b.externalClusterID
+	if b.labels != nil {
+		object.labels = make([]*Label, len(b.labels))
+		for i, v := range b.labels {
+			object.labels[i], err = v.Build()
+			if err != nil {
+				return
+			}
+		}
+	}
+	object.lastReconcileDate = b.lastReconcileDate
 	object.lastTelemetryDate = b.lastTelemetryDate
+	object.managed = b.managed
 	object.organizationID = b.organizationID
 	if b.plan != nil {
 		object.plan, err = b.plan.Build()
@@ -202,12 +329,13 @@ func (b *SubscriptionBuilder) Build() (object *Subscription, err error) {
 			return
 		}
 	}
-	if b.registryCredential != nil {
-		object.registryCredential, err = b.registryCredential.Build()
-		if err != nil {
-			return
-		}
-	}
+	object.productBundle = b.productBundle
+	object.serviceLevel = b.serviceLevel
+	object.socketTotal = b.socketTotal
+	object.status = b.status
+	object.supportLevel = b.supportLevel
+	object.systemUnits = b.systemUnits
 	object.updatedAt = b.updatedAt
+	object.usage = b.usage
 	return
 }

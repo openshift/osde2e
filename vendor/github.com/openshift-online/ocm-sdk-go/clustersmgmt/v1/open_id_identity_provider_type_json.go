@@ -47,14 +47,6 @@ func writeOpenIDIdentityProvider(object *OpenIDIdentityProvider, stream *jsonite
 		stream.WriteString(*object.ca)
 		count++
 	}
-	if object.urls != nil {
-		if count > 0 {
-			stream.WriteMore()
-		}
-		stream.WriteObjectField("urls")
-		writeOpenIDURLs(object.urls, stream)
-		count++
-	}
 	if object.claims != nil {
 		if count > 0 {
 			stream.WriteMore()
@@ -111,6 +103,14 @@ func writeOpenIDIdentityProvider(object *OpenIDIdentityProvider, stream *jsonite
 		writeStringList(object.extraScopes, stream)
 		count++
 	}
+	if object.issuer != nil {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("issuer")
+		stream.WriteString(*object.issuer)
+		count++
+	}
 	stream.WriteObjectEnd()
 }
 
@@ -138,9 +138,6 @@ func readOpenIDIdentityProvider(iterator *jsoniter.Iterator) *OpenIDIdentityProv
 		case "ca":
 			value := iterator.ReadString()
 			object.ca = &value
-		case "urls":
-			value := readOpenIDURLs(iterator)
-			object.urls = value
 		case "claims":
 			value := readOpenIDClaims(iterator)
 			object.claims = value
@@ -164,6 +161,9 @@ func readOpenIDIdentityProvider(iterator *jsoniter.Iterator) *OpenIDIdentityProv
 		case "extra_scopes":
 			value := readStringList(iterator)
 			object.extraScopes = value
+		case "issuer":
+			value := iterator.ReadString()
+			object.issuer = &value
 		default:
 			iterator.ReadAny()
 		}

@@ -64,12 +64,36 @@ func writeResource(object *Resource, stream *jsoniter.Stream) {
 		stream.WriteString(*object.href)
 		count++
 	}
+	if object.byoc != nil {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("byoc")
+		stream.WriteBool(*object.byoc)
+		count++
+	}
+	if object.sku != nil {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("sku")
+		stream.WriteString(*object.sku)
+		count++
+	}
 	if object.allowed != nil {
 		if count > 0 {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("allowed")
 		stream.WriteInt(*object.allowed)
+		count++
+	}
+	if object.availabilityZoneType != nil {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("availability_zone_type")
+		stream.WriteString(*object.availabilityZoneType)
 		count++
 	}
 	if object.resourceName != nil {
@@ -121,9 +145,18 @@ func readResource(iterator *jsoniter.Iterator) *Resource {
 		case "href":
 			value := iterator.ReadString()
 			object.href = &value
+		case "byoc":
+			value := iterator.ReadBool()
+			object.byoc = &value
+		case "sku":
+			value := iterator.ReadString()
+			object.sku = &value
 		case "allowed":
 			value := iterator.ReadInt()
 			object.allowed = &value
+		case "availability_zone_type":
+			value := iterator.ReadString()
+			object.availabilityZoneType = &value
 		case "resource_name":
 			value := iterator.ReadString()
 			object.resourceName = &value

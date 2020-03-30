@@ -21,6 +21,7 @@ package v1 // github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1
 
 import (
 	"io"
+	"time"
 
 	jsoniter "github.com/json-iterator/go"
 	"github.com/openshift-online/ocm-sdk-go/helpers"
@@ -96,20 +97,20 @@ func writeResourceQuota(object *ResourceQuota, stream *jsoniter.Stream) {
 		stream.WriteString(*object.availabilityZoneType)
 		count++
 	}
+	if object.createdAt != nil {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("created_at")
+		stream.WriteString((*object.createdAt).Format(time.RFC3339))
+		count++
+	}
 	if object.organizationID != nil {
 		if count > 0 {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("organization_id")
 		stream.WriteString(*object.organizationID)
-		count++
-	}
-	if object.reserved != nil {
-		if count > 0 {
-			stream.WriteMore()
-		}
-		stream.WriteObjectField("reserved")
-		stream.WriteInt(*object.reserved)
 		count++
 	}
 	if object.resourceName != nil {
@@ -134,6 +135,14 @@ func writeResourceQuota(object *ResourceQuota, stream *jsoniter.Stream) {
 		}
 		stream.WriteObjectField("type")
 		stream.WriteString(*object.type_)
+		count++
+	}
+	if object.updatedAt != nil {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("updated_at")
+		stream.WriteString((*object.updatedAt).Format(time.RFC3339))
 		count++
 	}
 	stream.WriteObjectEnd()
@@ -181,12 +190,16 @@ func readResourceQuota(iterator *jsoniter.Iterator) *ResourceQuota {
 		case "availability_zone_type":
 			value := iterator.ReadString()
 			object.availabilityZoneType = &value
+		case "created_at":
+			text := iterator.ReadString()
+			value, err := time.Parse(time.RFC3339, text)
+			if err != nil {
+				iterator.ReportError("", err.Error())
+			}
+			object.createdAt = &value
 		case "organization_id":
 			value := iterator.ReadString()
 			object.organizationID = &value
-		case "reserved":
-			value := iterator.ReadInt()
-			object.reserved = &value
 		case "resource_name":
 			value := iterator.ReadString()
 			object.resourceName = &value
@@ -196,6 +209,13 @@ func readResourceQuota(iterator *jsoniter.Iterator) *ResourceQuota {
 		case "type":
 			value := iterator.ReadString()
 			object.type_ = &value
+		case "updated_at":
+			text := iterator.ReadString()
+			value, err := time.Parse(time.RFC3339, text)
+			if err != nil {
+				iterator.ReportError("", err.Error())
+			}
+			object.updatedAt = &value
 		default:
 			iterator.ReadAny()
 		}

@@ -21,6 +21,7 @@ package v1 // github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1
 
 import (
 	"io"
+	"time"
 
 	jsoniter "github.com/json-iterator/go"
 	"github.com/openshift-online/ocm-sdk-go/helpers"
@@ -88,6 +89,14 @@ func writeAccount(object *Account, stream *jsoniter.Stream) {
 		stream.WriteBool(*object.banned)
 		count++
 	}
+	if object.createdAt != nil {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("created_at")
+		stream.WriteString((*object.createdAt).Format(time.RFC3339))
+		count++
+	}
 	if object.email != nil {
 		if count > 0 {
 			stream.WriteMore()
@@ -112,20 +121,28 @@ func writeAccount(object *Account, stream *jsoniter.Stream) {
 		stream.WriteString(*object.lastName)
 		count++
 	}
-	if object.name != nil {
-		if count > 0 {
-			stream.WriteMore()
-		}
-		stream.WriteObjectField("name")
-		stream.WriteString(*object.name)
-		count++
-	}
 	if object.organization != nil {
 		if count > 0 {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("organization")
 		writeOrganization(object.organization, stream)
+		count++
+	}
+	if object.serviceAccount != nil {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("service_account")
+		stream.WriteBool(*object.serviceAccount)
+		count++
+	}
+	if object.updatedAt != nil {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("updated_at")
+		stream.WriteString((*object.updatedAt).Format(time.RFC3339))
 		count++
 	}
 	if object.username != nil {
@@ -178,6 +195,13 @@ func readAccount(iterator *jsoniter.Iterator) *Account {
 		case "banned":
 			value := iterator.ReadBool()
 			object.banned = &value
+		case "created_at":
+			text := iterator.ReadString()
+			value, err := time.Parse(time.RFC3339, text)
+			if err != nil {
+				iterator.ReportError("", err.Error())
+			}
+			object.createdAt = &value
 		case "email":
 			value := iterator.ReadString()
 			object.email = &value
@@ -187,12 +211,19 @@ func readAccount(iterator *jsoniter.Iterator) *Account {
 		case "last_name":
 			value := iterator.ReadString()
 			object.lastName = &value
-		case "name":
-			value := iterator.ReadString()
-			object.name = &value
 		case "organization":
 			value := readOrganization(iterator)
 			object.organization = value
+		case "service_account":
+			value := iterator.ReadBool()
+			object.serviceAccount = &value
+		case "updated_at":
+			text := iterator.ReadString()
+			value, err := time.Parse(time.RFC3339, text)
+			if err != nil {
+				iterator.ReportError("", err.Error())
+			}
+			object.updatedAt = &value
 		case "username":
 			value := iterator.ReadString()
 			object.username = &value

@@ -26,7 +26,7 @@ import (
 
 // MetricQueriesClient is the client of the 'metric_queries' resource.
 //
-// Manages metric queries for a cluster.
+// Manages telemetry queries for a cluster.
 type MetricQueriesClient struct {
 	transport http.RoundTripper
 	path      string
@@ -53,6 +53,17 @@ func (c *MetricQueriesClient) CPUTotalByNodeRolesOS() *CPUTotalByNodeRolesOSMetr
 		c.transport,
 		path.Join(c.path, "cpu_total_by_node_roles_os"),
 		path.Join(c.metric, "cpu_total_by_node_roles_os"),
+	)
+}
+
+// Alerts returns the target 'alerts_metric_query' resource.
+//
+// Reference to the resource that retrieves the firing alerts in the cluster.
+func (c *MetricQueriesClient) Alerts() *AlertsMetricQueryClient {
+	return NewAlertsMetricQueryClient(
+		c.transport,
+		path.Join(c.path, "alerts"),
+		path.Join(c.metric, "alerts"),
 	)
 }
 

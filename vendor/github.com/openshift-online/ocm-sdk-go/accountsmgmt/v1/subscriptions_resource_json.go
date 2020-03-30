@@ -29,6 +29,14 @@ import (
 func readSubscriptionsListRequest(request *SubscriptionsListServerRequest, r *http.Request) error {
 	var err error
 	query := r.URL.Query()
+	request.fetchaccountsAccounts, err = helpers.ParseBoolean(query, "fetchaccounts_accounts")
+	if err != nil {
+		return err
+	}
+	request.fetchlabelsLabels, err = helpers.ParseBoolean(query, "fetchlabels_labels")
+	if err != nil {
+		return err
+	}
 	request.labels, err = helpers.ParseString(query, "labels")
 	if err != nil {
 		return err

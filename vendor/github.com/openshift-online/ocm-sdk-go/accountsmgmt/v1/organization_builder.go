@@ -19,15 +19,22 @@ limitations under the License.
 
 package v1 // github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1
 
+import (
+	time "time"
+)
+
 // OrganizationBuilder contains the data and logic needed to build 'organization' objects.
 //
 //
 type OrganizationBuilder struct {
-	id         *string
-	href       *string
-	link       bool
-	externalID *string
-	name       *string
+	id           *string
+	href         *string
+	link         bool
+	createdAt    *time.Time
+	ebsAccountID *string
+	externalID   *string
+	name         *string
+	updatedAt    *time.Time
 }
 
 // NewOrganization creates a new builder of 'organization' objects.
@@ -53,6 +60,22 @@ func (b *OrganizationBuilder) Link(value bool) *OrganizationBuilder {
 	return b
 }
 
+// CreatedAt sets the value of the 'created_at' attribute to the given value.
+//
+//
+func (b *OrganizationBuilder) CreatedAt(value time.Time) *OrganizationBuilder {
+	b.createdAt = &value
+	return b
+}
+
+// EbsAccountID sets the value of the 'ebs_account_ID' attribute to the given value.
+//
+//
+func (b *OrganizationBuilder) EbsAccountID(value string) *OrganizationBuilder {
+	b.ebsAccountID = &value
+	return b
+}
+
 // ExternalID sets the value of the 'external_ID' attribute to the given value.
 //
 //
@@ -69,6 +92,14 @@ func (b *OrganizationBuilder) Name(value string) *OrganizationBuilder {
 	return b
 }
 
+// UpdatedAt sets the value of the 'updated_at' attribute to the given value.
+//
+//
+func (b *OrganizationBuilder) UpdatedAt(value time.Time) *OrganizationBuilder {
+	b.updatedAt = &value
+	return b
+}
+
 // Copy copies the attributes of the given object into this builder, discarding any previous values.
 func (b *OrganizationBuilder) Copy(object *Organization) *OrganizationBuilder {
 	if object == nil {
@@ -77,8 +108,11 @@ func (b *OrganizationBuilder) Copy(object *Organization) *OrganizationBuilder {
 	b.id = object.id
 	b.href = object.href
 	b.link = object.link
+	b.createdAt = object.createdAt
+	b.ebsAccountID = object.ebsAccountID
 	b.externalID = object.externalID
 	b.name = object.name
+	b.updatedAt = object.updatedAt
 	return b
 }
 
@@ -88,7 +122,10 @@ func (b *OrganizationBuilder) Build() (object *Organization, err error) {
 	object.id = b.id
 	object.href = b.href
 	object.link = b.link
+	object.createdAt = b.createdAt
+	object.ebsAccountID = b.ebsAccountID
 	object.externalID = b.externalID
 	object.name = b.name
+	object.updatedAt = b.updatedAt
 	return
 }

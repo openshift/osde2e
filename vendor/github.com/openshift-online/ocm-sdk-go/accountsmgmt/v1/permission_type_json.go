@@ -80,14 +80,6 @@ func writePermission(object *Permission, stream *jsoniter.Stream) {
 		stream.WriteString(*object.resourceType)
 		count++
 	}
-	if object.roleID != nil {
-		if count > 0 {
-			stream.WriteMore()
-		}
-		stream.WriteObjectField("role_id")
-		stream.WriteString(*object.roleID)
-		count++
-	}
 	stream.WriteObjectEnd()
 }
 
@@ -128,9 +120,6 @@ func readPermission(iterator *jsoniter.Iterator) *Permission {
 		case "resource_type":
 			value := iterator.ReadString()
 			object.resourceType = &value
-		case "role_id":
-			value := iterator.ReadString()
-			object.roleID = &value
 		default:
 			iterator.ReadAny()
 		}

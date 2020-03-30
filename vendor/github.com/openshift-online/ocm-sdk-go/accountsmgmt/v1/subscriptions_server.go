@@ -43,11 +43,57 @@ type SubscriptionsServer interface {
 
 // SubscriptionsListServerRequest is the request for the 'list' method.
 type SubscriptionsListServerRequest struct {
-	labels *string
-	order  *string
-	page   *int
-	search *string
-	size   *int
+	fetchaccountsAccounts *bool
+	fetchlabelsLabels     *bool
+	labels                *string
+	order                 *string
+	page                  *int
+	search                *string
+	size                  *int
+}
+
+// FetchaccountsAccounts returns the value of the 'fetchaccounts_accounts' parameter.
+//
+// If true, includes the account reference information in the output. Could slow request response time.
+func (r *SubscriptionsListServerRequest) FetchaccountsAccounts() bool {
+	if r != nil && r.fetchaccountsAccounts != nil {
+		return *r.fetchaccountsAccounts
+	}
+	return false
+}
+
+// GetFetchaccountsAccounts returns the value of the 'fetchaccounts_accounts' parameter and
+// a flag indicating if the parameter has a value.
+//
+// If true, includes the account reference information in the output. Could slow request response time.
+func (r *SubscriptionsListServerRequest) GetFetchaccountsAccounts() (value bool, ok bool) {
+	ok = r != nil && r.fetchaccountsAccounts != nil
+	if ok {
+		value = *r.fetchaccountsAccounts
+	}
+	return
+}
+
+// FetchlabelsLabels returns the value of the 'fetchlabels_labels' parameter.
+//
+// If true, includes the labels on a subscription in the output. Could slow request response time.
+func (r *SubscriptionsListServerRequest) FetchlabelsLabels() bool {
+	if r != nil && r.fetchlabelsLabels != nil {
+		return *r.fetchlabelsLabels
+	}
+	return false
+}
+
+// GetFetchlabelsLabels returns the value of the 'fetchlabels_labels' parameter and
+// a flag indicating if the parameter has a value.
+//
+// If true, includes the labels on a subscription in the output. Could slow request response time.
+func (r *SubscriptionsListServerRequest) GetFetchlabelsLabels() (value bool, ok bool) {
+	ok = r != nil && r.fetchlabelsLabels != nil
+	if ok {
+		value = *r.fetchlabelsLabels
+	}
+	return
 }
 
 // Labels returns the value of the 'labels' parameter.

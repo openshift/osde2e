@@ -23,12 +23,15 @@ package v1 // github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1
 //
 // Identifies computing resources
 type ResourceBuilder struct {
-	id           *string
-	href         *string
-	link         bool
-	allowed      *int
-	resourceName *string
-	resourceType *string
+	id                   *string
+	href                 *string
+	link                 bool
+	byoc                 *bool
+	sku                  *string
+	allowed              *int
+	availabilityZoneType *string
+	resourceName         *string
+	resourceType         *string
 }
 
 // NewResource creates a new builder of 'resource' objects.
@@ -54,11 +57,35 @@ func (b *ResourceBuilder) Link(value bool) *ResourceBuilder {
 	return b
 }
 
+// BYOC sets the value of the 'BYOC' attribute to the given value.
+//
+//
+func (b *ResourceBuilder) BYOC(value bool) *ResourceBuilder {
+	b.byoc = &value
+	return b
+}
+
+// SKU sets the value of the 'SKU' attribute to the given value.
+//
+//
+func (b *ResourceBuilder) SKU(value string) *ResourceBuilder {
+	b.sku = &value
+	return b
+}
+
 // Allowed sets the value of the 'allowed' attribute to the given value.
 //
 //
 func (b *ResourceBuilder) Allowed(value int) *ResourceBuilder {
 	b.allowed = &value
+	return b
+}
+
+// AvailabilityZoneType sets the value of the 'availability_zone_type' attribute to the given value.
+//
+//
+func (b *ResourceBuilder) AvailabilityZoneType(value string) *ResourceBuilder {
+	b.availabilityZoneType = &value
 	return b
 }
 
@@ -86,7 +113,10 @@ func (b *ResourceBuilder) Copy(object *Resource) *ResourceBuilder {
 	b.id = object.id
 	b.href = object.href
 	b.link = object.link
+	b.byoc = object.byoc
+	b.sku = object.sku
 	b.allowed = object.allowed
+	b.availabilityZoneType = object.availabilityZoneType
 	b.resourceName = object.resourceName
 	b.resourceType = object.resourceType
 	return b
@@ -98,7 +128,10 @@ func (b *ResourceBuilder) Build() (object *Resource, err error) {
 	object.id = b.id
 	object.href = b.href
 	object.link = b.link
+	object.byoc = b.byoc
+	object.sku = b.sku
 	object.allowed = b.allowed
+	object.availabilityZoneType = b.availabilityZoneType
 	object.resourceName = b.resourceName
 	object.resourceType = b.resourceType
 	return

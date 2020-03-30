@@ -28,6 +28,7 @@ type ClusterMetricsBuilder struct {
 	computeNodesMemory *ClusterMetricBuilder
 	memory             *ClusterMetricBuilder
 	nodes              *ClusterNodesBuilder
+	sockets            *ClusterMetricBuilder
 	storage            *ClusterMetricBuilder
 }
 
@@ -80,6 +81,15 @@ func (b *ClusterMetricsBuilder) Nodes(value *ClusterNodesBuilder) *ClusterMetric
 	return b
 }
 
+// Sockets sets the value of the 'sockets' attribute to the given value.
+//
+// Metric describing the total and used amount of some resource (like RAM, CPU and storage) in
+// a cluster.
+func (b *ClusterMetricsBuilder) Sockets(value *ClusterMetricBuilder) *ClusterMetricsBuilder {
+	b.sockets = value
+	return b
+}
+
 // Storage sets the value of the 'storage' attribute to the given value.
 //
 // Metric describing the total and used amount of some resource (like RAM, CPU and storage) in
@@ -119,6 +129,11 @@ func (b *ClusterMetricsBuilder) Copy(object *ClusterMetrics) *ClusterMetricsBuil
 	} else {
 		b.nodes = nil
 	}
+	if object.sockets != nil {
+		b.sockets = NewClusterMetric().Copy(object.sockets)
+	} else {
+		b.sockets = nil
+	}
 	if object.storage != nil {
 		b.storage = NewClusterMetric().Copy(object.storage)
 	} else {
@@ -156,6 +171,12 @@ func (b *ClusterMetricsBuilder) Build() (object *ClusterMetrics, err error) {
 	}
 	if b.nodes != nil {
 		object.nodes, err = b.nodes.Build()
+		if err != nil {
+			return
+		}
+	}
+	if b.sockets != nil {
+		object.sockets, err = b.sockets.Build()
 		if err != nil {
 			return
 		}

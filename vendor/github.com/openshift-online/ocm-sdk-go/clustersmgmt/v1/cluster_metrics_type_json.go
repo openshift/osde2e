@@ -78,6 +78,14 @@ func writeClusterMetrics(object *ClusterMetrics, stream *jsoniter.Stream) {
 		writeClusterNodes(object.nodes, stream)
 		count++
 	}
+	if object.sockets != nil {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("sockets")
+		writeClusterMetric(object.sockets, stream)
+		count++
+	}
 	if object.storage != nil {
 		if count > 0 {
 			stream.WriteMore()
@@ -125,6 +133,9 @@ func readClusterMetrics(iterator *jsoniter.Iterator) *ClusterMetrics {
 		case "nodes":
 			value := readClusterNodes(iterator)
 			object.nodes = value
+		case "sockets":
+			value := readClusterMetric(iterator)
+			object.sockets = value
 		case "storage":
 			value := readClusterMetric(iterator)
 			object.storage = value

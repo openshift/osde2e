@@ -156,6 +156,17 @@ func (c *Client) Permissions() *PermissionsClient {
 	)
 }
 
+// PullSecrets returns the target 'pull_secrets' resource.
+//
+// Reference to the resource that manages generates access tokens.
+func (c *Client) PullSecrets() *PullSecretsClient {
+	return NewPullSecretsClient(
+		c.transport,
+		path.Join(c.path, "pull_secrets"),
+		path.Join(c.metric, "pull_secrets"),
+	)
+}
+
 // Registries returns the target 'registries' resource.
 //
 // Reference to the resource that manages the collection of registries.

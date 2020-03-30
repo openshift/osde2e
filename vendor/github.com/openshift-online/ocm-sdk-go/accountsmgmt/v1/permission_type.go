@@ -40,7 +40,6 @@ type Permission struct {
 	link         bool
 	action       *Action
 	resourceType *string
-	roleID       *string
 }
 
 // Kind returns the name of the type of the object.
@@ -100,7 +99,6 @@ func (o *Permission) Empty() bool {
 	return o == nil || (o.id == nil &&
 		o.action == nil &&
 		o.resourceType == nil &&
-		o.roleID == nil &&
 		true)
 }
 
@@ -146,29 +144,6 @@ func (o *Permission) GetResourceType() (value string, ok bool) {
 	ok = o != nil && o.resourceType != nil
 	if ok {
 		value = *o.resourceType
-	}
-	return
-}
-
-// RoleID returns the value of the 'role_ID' attribute, or
-// the zero value of the type if the attribute doesn't have a value.
-//
-//
-func (o *Permission) RoleID() string {
-	if o != nil && o.roleID != nil {
-		return *o.roleID
-	}
-	return ""
-}
-
-// GetRoleID returns the value of the 'role_ID' attribute and
-// a flag indicating if the attribute has a value.
-//
-//
-func (o *Permission) GetRoleID() (value string, ok bool) {
-	ok = o != nil && o.roleID != nil
-	if ok {
-		value = *o.roleID
 	}
 	return
 }

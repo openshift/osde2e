@@ -64,6 +64,22 @@ func writePlan(object *Plan, stream *jsoniter.Stream) {
 		stream.WriteString(*object.href)
 		count++
 	}
+	if object.name != nil {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("name")
+		stream.WriteString(*object.name)
+		count++
+	}
+	if object.type_ != nil {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("type")
+		stream.WriteString(*object.type_)
+		count++
+	}
 	stream.WriteObjectEnd()
 }
 
@@ -97,6 +113,12 @@ func readPlan(iterator *jsoniter.Iterator) *Plan {
 		case "href":
 			value := iterator.ReadString()
 			object.href = &value
+		case "name":
+			value := iterator.ReadString()
+			object.name = &value
+		case "type":
+			value := iterator.ReadString()
+			object.type_ = &value
 		default:
 			iterator.ReadAny()
 		}

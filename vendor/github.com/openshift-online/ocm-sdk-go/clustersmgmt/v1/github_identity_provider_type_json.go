@@ -54,12 +54,28 @@ func writeGithubIdentityProvider(object *GithubIdentityProvider, stream *jsonite
 		stream.WriteString(*object.clientID)
 		count++
 	}
+	if object.clientSecret != nil {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("client_secret")
+		stream.WriteString(*object.clientSecret)
+		count++
+	}
 	if object.hostname != nil {
 		if count > 0 {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("hostname")
 		stream.WriteString(*object.hostname)
+		count++
+	}
+	if object.organizations != nil {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("organizations")
+		writeStringList(object.organizations, stream)
 		count++
 	}
 	if object.teams != nil {
@@ -100,9 +116,15 @@ func readGithubIdentityProvider(iterator *jsoniter.Iterator) *GithubIdentityProv
 		case "client_id":
 			value := iterator.ReadString()
 			object.clientID = &value
+		case "client_secret":
+			value := iterator.ReadString()
+			object.clientSecret = &value
 		case "hostname":
 			value := iterator.ReadString()
 			object.hostname = &value
+		case "organizations":
+			value := readStringList(iterator)
+			object.organizations = value
 		case "teams":
 			value := readStringList(iterator)
 			object.teams = value

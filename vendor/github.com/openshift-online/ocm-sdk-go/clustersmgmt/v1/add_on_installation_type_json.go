@@ -21,6 +21,7 @@ package v1 // github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1
 
 import (
 	"io"
+	"time"
 
 	jsoniter "github.com/json-iterator/go"
 	"github.com/openshift-online/ocm-sdk-go/helpers"
@@ -80,6 +81,46 @@ func writeAddOnInstallation(object *AddOnInstallation, stream *jsoniter.Stream) 
 		writeCluster(object.cluster, stream)
 		count++
 	}
+	if object.creationTimestamp != nil {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("creation_timestamp")
+		stream.WriteString((*object.creationTimestamp).Format(time.RFC3339))
+		count++
+	}
+	if object.operatorVersion != nil {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("operator_version")
+		stream.WriteString(*object.operatorVersion)
+		count++
+	}
+	if object.state != nil {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("state")
+		stream.WriteString(string(*object.state))
+		count++
+	}
+	if object.stateDescription != nil {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("state_description")
+		stream.WriteString(*object.stateDescription)
+		count++
+	}
+	if object.updatedTimestamp != nil {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("updated_timestamp")
+		stream.WriteString((*object.updatedTimestamp).Format(time.RFC3339))
+		count++
+	}
 	stream.WriteObjectEnd()
 }
 
@@ -119,6 +160,30 @@ func readAddOnInstallation(iterator *jsoniter.Iterator) *AddOnInstallation {
 		case "cluster":
 			value := readCluster(iterator)
 			object.cluster = value
+		case "creation_timestamp":
+			text := iterator.ReadString()
+			value, err := time.Parse(time.RFC3339, text)
+			if err != nil {
+				iterator.ReportError("", err.Error())
+			}
+			object.creationTimestamp = &value
+		case "operator_version":
+			value := iterator.ReadString()
+			object.operatorVersion = &value
+		case "state":
+			text := iterator.ReadString()
+			value := AddOnInstallationState(text)
+			object.state = &value
+		case "state_description":
+			value := iterator.ReadString()
+			object.stateDescription = &value
+		case "updated_timestamp":
+			text := iterator.ReadString()
+			value, err := time.Parse(time.RFC3339, text)
+			if err != nil {
+				iterator.ReportError("", err.Error())
+			}
+			object.updatedTimestamp = &value
 		default:
 			iterator.ReadAny()
 		}

@@ -23,10 +23,12 @@ package v1 // github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1
 //
 // Details for `github` identity providers.
 type GithubIdentityProviderBuilder struct {
-	ca       *string
-	clientID *string
-	hostname *string
-	teams    []string
+	ca            *string
+	clientID      *string
+	clientSecret  *string
+	hostname      *string
+	organizations []string
+	teams         []string
 }
 
 // NewGithubIdentityProvider creates a new builder of 'github_identity_provider' objects.
@@ -50,11 +52,28 @@ func (b *GithubIdentityProviderBuilder) ClientID(value string) *GithubIdentityPr
 	return b
 }
 
+// ClientSecret sets the value of the 'client_secret' attribute to the given value.
+//
+//
+func (b *GithubIdentityProviderBuilder) ClientSecret(value string) *GithubIdentityProviderBuilder {
+	b.clientSecret = &value
+	return b
+}
+
 // Hostname sets the value of the 'hostname' attribute to the given value.
 //
 //
 func (b *GithubIdentityProviderBuilder) Hostname(value string) *GithubIdentityProviderBuilder {
 	b.hostname = &value
+	return b
+}
+
+// Organizations sets the value of the 'organizations' attribute to the given values.
+//
+//
+func (b *GithubIdentityProviderBuilder) Organizations(values ...string) *GithubIdentityProviderBuilder {
+	b.organizations = make([]string, len(values))
+	copy(b.organizations, values)
 	return b
 }
 
@@ -74,7 +93,14 @@ func (b *GithubIdentityProviderBuilder) Copy(object *GithubIdentityProvider) *Gi
 	}
 	b.ca = object.ca
 	b.clientID = object.clientID
+	b.clientSecret = object.clientSecret
 	b.hostname = object.hostname
+	if object.organizations != nil {
+		b.organizations = make([]string, len(object.organizations))
+		copy(b.organizations, object.organizations)
+	} else {
+		b.organizations = nil
+	}
 	if object.teams != nil {
 		b.teams = make([]string, len(object.teams))
 		copy(b.teams, object.teams)
@@ -89,7 +115,12 @@ func (b *GithubIdentityProviderBuilder) Build() (object *GithubIdentityProvider,
 	object = new(GithubIdentityProvider)
 	object.ca = b.ca
 	object.clientID = b.clientID
+	object.clientSecret = b.clientSecret
 	object.hostname = b.hostname
+	if b.organizations != nil {
+		object.organizations = make([]string, len(b.organizations))
+		copy(object.organizations, b.organizations)
+	}
 	if b.teams != nil {
 		object.teams = make([]string, len(b.teams))
 		copy(object.teams, b.teams)
