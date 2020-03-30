@@ -11,6 +11,9 @@ echo -e "{{ .PbenchPrivateKey }}\n" > ~/.ssh/id_rsa
 echo -e "{{ .PbenchPublicKey }}\n" > ~/.ssh/id_rsa.pub
 chmod 600 ~/.ssh/*
 
+mkdir ~/.kube
+echo -e "{{ .Kubeconfig }}\n" > ~/.kube/config
+
 time ansible-playbook -vv -i inventory workloads/tooling.yml
 time ansible-playbook -vv -i inventory {{ .PlaybookPath }}
 
