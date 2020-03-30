@@ -15,6 +15,7 @@ import (
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/runner"
+	"github.com/openshift/osde2e/pkg/common/state"
 )
 
 const (
@@ -36,6 +37,7 @@ type scaleRunnerConfig struct {
 	Name             string
 	PlaybookPath     string
 	WorkloadsPath    string
+	Kubeconfig       string
 	PbenchPrivateKey string
 	PbenchPublicKey  string
 }
@@ -75,6 +77,7 @@ func (sCfg scaleRunnerConfig) Runner(h *helper.H) *runner.Runner {
 	// template command from config
 	sCfg.Name = "scale-" + sCfg.Name
 	sCfg.WorkloadsPath = WorkloadsPath
+	sCfg.Kubeconfig = string(state.Instance.Kubeconfig.Contents)
 	sCfg.PbenchPrivateKey = config.Instance.Scale.PbenchSSHPrivateKey
 	sCfg.PbenchPublicKey = config.Instance.Scale.PbenchSSHPublicKey
 	cmd := sCfg.cmd()
