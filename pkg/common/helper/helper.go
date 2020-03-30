@@ -37,6 +37,17 @@ func New() *H {
 	}
 
 	ginkgo.BeforeEach(h.Setup)
+
+	return h
+}
+
+func NewOutsideGinkgo() *H {
+	h := &H{
+		State: state.Instance,
+	}
+
+	h.Setup()
+
 	return h
 }
 
