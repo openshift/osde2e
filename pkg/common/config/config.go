@@ -67,9 +67,9 @@ type LogMetric struct {
 	Name string `json:"name" yaml:"name"`
 	// Regex (in string form) to parse out
 	RegEx string `json:"regex" yaml:"regex"`
-	// Highest number of instances before failing. Default is super high
+	// High threshold before failing
 	HighThreshold int `json:"highThreshold" yaml:"highThreshold" default:"9999"`
-	// Lowest number of instances before failing. Default is zero
+	// Low threshold before failing
 	LowThreshold int `json:"lowThreshold" yaml:"lowThreshold" default:"-1"`
 }
 
