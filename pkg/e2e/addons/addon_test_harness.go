@@ -55,11 +55,13 @@ var _ = ginkgo.Describe("[Suite: addons] Addon Test Harness", func() {
 				Timeout              int
 				Image                string
 				OutputDir            string
+				ServiceAccount       string
 				PushResultsContainer string
 			}{
 				Timeout:              addonTimeoutInSeconds,
 				Image:                harness,
 				OutputDir:            runner.DefaultRunner.OutputDir,
+				ServiceAccount:       h.GetNamespacedServiceAccount(),
 				PushResultsContainer: latestImageStream,
 			})
 			Expect(err).NotTo(HaveOccurred())
