@@ -30,13 +30,27 @@ func init() {
 	rand.Seed(time.Now().Unix())
 }
 
-// New creates H, a helper used to expose common testing functions.
-func New() *H {
+// Init is a common helper function to import the run state into Helper
+func Init() *H {
 	h := &H{
 		State: state.Instance,
 	}
+	return h
+}
 
+// New instantiates a helper function to be used within a Ginkgo Test block
+func New() *H {
+	h := Init()
 	ginkgo.BeforeEach(h.Setup)
+
+	return h
+}
+
+// NewOutsideGinkgo instantiates a helper function while not within a Ginkgo Test Block
+func NewOutsideGinkgo() *H {
+	h := Init()
+	h.Setup()
+
 	return h
 }
 
