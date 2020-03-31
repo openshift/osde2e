@@ -84,6 +84,12 @@ func (u *OSD) DefaultVersion() (string, error) {
 	}
 
 	if err != nil {
+		log.Print("error getting cluster versions from DefaultVersion.Response")
+		log.Printf("Response Headers: %v", resp.Header())
+		log.Printf("Response Error(s): %v", resp.Error())
+		log.Printf("HTTP Code: %d", resp.Status())
+		log.Printf("Size of response: %d", resp.Size())
+
 		return "", fmt.Errorf("couldn't retrieve available versions: %v", err)
 	}
 
@@ -331,6 +337,12 @@ func (u *OSD) getSemverList(major, minor int64, str string, filter func(*semver.
 		}
 
 		if err != nil {
+			log.Print("error getting cluster versions from getSemverList.Response")
+			log.Printf("Response Headers: %v", resp.Header())
+			log.Printf("Response Error(s): %v", resp.Error())
+			log.Printf("HTTP Code: %d", resp.Status())
+			log.Printf("Size of response: %d", resp.Size())
+
 			return versions, fmt.Errorf("couldn't retrieve available versions: %v", err)
 		}
 
