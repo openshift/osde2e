@@ -12,6 +12,7 @@ spec:
     metadata:
       name: addon-test
     spec:
+      serviceAccount: {{.ServiceAccount}}
       containers:
       - name: addon-tests
         image: {{.Image}}
