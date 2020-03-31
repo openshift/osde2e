@@ -2,11 +2,13 @@ package metadata
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 
 	"github.com/openshift/osde2e/pkg/common/config"
+	"github.com/openshift/osde2e/pkg/common/phase"
 )
 
 const (
@@ -35,6 +37,8 @@ type Metadata struct {
 	TimeToClusterReady          float64        `json:"time-to-cluster-ready,string"`
 	TimeToUpgradedCluster       float64        `json:"time-to-upgraded-cluster,string"`
 	TimeToUpgradedClusterReady  float64        `json:"time-to-upgraded-cluster-ready,string"`
+	InstallPhasePassRate        float64        `json:"install-phase-pass-rate,string"`
+	UpgradePhasePassRate        float64        `json:"upgrade-phase-pass-rate,string"`
 	LogMetrics                  map[string]int `json:"log-metrics"`
 }
 
@@ -108,6 +112,18 @@ func (m *Metadata) SetTimeToUpgradedCluster(timeToUpgradedCluster float64) {
 func (m *Metadata) SetTimeToUpgradedClusterReady(timeToUpgradedClusterReady float64) {
 	m.TimeToUpgradedClusterReady = timeToUpgradedClusterReady
 	m.WriteToJSON(config.Instance.ReportDir)
+}
+
+// SetPassRate sets the passrate metadata metric for the given phase
+func (m *Metadata) SetPassRate(currentPhase string, passRate float64) {
+	if currentPhase == phase.InstallPhase {
+		m.InstallPhasePassRate = passRate
+	} else if currentPhase == phase.UpgradePhase {
+		m.UpgradePhasePassRate = passRate
+	} else {
+		// This is a developer issue, so this should fail ungracefully.
+		panic(fmt.Sprintf("Invalid phase: %s, couldn't set pass rate.", currentPhase))
+	}
 }
 
 // IncrementLogMetric adds a supplied number to a log metric or sets the metric to

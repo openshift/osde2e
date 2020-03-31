@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"math"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -23,6 +24,7 @@ import (
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/metadata"
 	"github.com/openshift/osde2e/pkg/common/osd"
+	"github.com/openshift/osde2e/pkg/common/phase"
 	"github.com/openshift/osde2e/pkg/common/state"
 	"github.com/openshift/osde2e/pkg/common/upgrade"
 )
@@ -105,7 +107,7 @@ func runGinkgoTests() error {
 
 	log.Println("Running e2e tests...")
 
-	testsPassed := runTestsInPhase("install", "OSD e2e suite")
+	testsPassed := runTestsInPhase(phase.InstallPhase, "OSD e2e suite")
 	upgradeTestsPassed := true
 
 	if testsPassed {
@@ -119,7 +121,7 @@ func runGinkgoTests() error {
 				events.RecordEvent(events.UpgradeSuccessful)
 
 				log.Println("Running e2e tests POST-UPGRADE...")
-				upgradeTestsPassed = runTestsInPhase("upgrade", "OSD e2e suite post-upgrade")
+				upgradeTestsPassed = runTestsInPhase(phase.UpgradePhase, "OSD e2e suite post-upgrade")
 			} else {
 				log.Println("No Kubeconfig found from initial cluster setup. Unable to run upgrade.")
 			}
@@ -207,6 +209,9 @@ func runTestsInPhase(phase string, description string) bool {
 		return false
 	}
 
+	numTests := 0
+	numPassingTests := 0
+
 	for _, file := range files {
 		if file != nil {
 			// Process the jUnit XML result files
@@ -225,6 +230,16 @@ func runTestsInPhase(phase string, description string) bool {
 				}
 
 				for i, testcase := range testSuite.TestCases {
+					isSkipped := testcase.Skipped != nil
+					isFail := testcase.FailureMessage != nil
+
+					if !isSkipped {
+						numTests++
+					}
+					if !isFail && !isSkipped {
+						numPassingTests++
+					}
+
 					testSuite.TestCases[i].Name = fmt.Sprintf("[%s] %s", phase, testcase.Name)
 				}
 
@@ -239,6 +254,14 @@ func runTestsInPhase(phase string, description string) bool {
 		}
 	}
 
+	passRate := float64(numPassingTests) / float64(numTests)
+
+	if math.IsNaN(passRate) {
+		log.Printf("Pass rate is NaN: numPassingTests = %d, numTests = %d", numPassingTests, numTests)
+	} else {
+		metadata.Instance.SetPassRate(phase, passRate)
+	}
+
 	logMetricsRegexs := make(map[string]*regexp.Regexp)
 	for name, match := range cfg.LogMetrics {
 		logMetricsRegexs[name] = regexp.MustCompile(match)
@@ -251,7 +274,6 @@ func runTestsInPhase(phase string, description string) bool {
 	}
 
 	for _, file := range files {
-		//log.Printf("Parsing log metrics in %s", filepath.Join(cfg.ReportDir, file.Name()))
 		if logFileRegex.MatchString(file.Name()) {
 			data, err := ioutil.ReadFile(filepath.Join(cfg.ReportDir, file.Name()))
 			if err != nil {
@@ -260,7 +282,6 @@ func runTestsInPhase(phase string, description string) bool {
 			}
 			for name, matchRegex := range logMetricsRegexs {
 				matches := matchRegex.FindAll(data, -1)
-				//log.Printf("-- Found %d matches for %s", len(matches), name)
 				metadata.Instance.IncrementLogMetric(name, len(matches))
 			}
 		}
