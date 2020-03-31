@@ -8,7 +8,6 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strings"
 	"testing"
 
@@ -239,11 +238,6 @@ func runTestsInPhase(phase string, description string) bool {
 		}
 	}
 
-	logMetricsRegexs := make(map[string]*regexp.Regexp)
-	for name, match := range cfg.LogMetrics {
-		logMetricsRegexs[name] = regexp.MustCompile(match)
-	}
-
 	files, err = ioutil.ReadDir(cfg.ReportDir)
 	if err != nil {
 		log.Printf("error reading phase directory: %s", err.Error())
@@ -258,10 +252,9 @@ func runTestsInPhase(phase string, description string) bool {
 				log.Printf("error opening log file %s: %s", file.Name(), err.Error())
 				return false
 			}
-			for name, matchRegex := range logMetricsRegexs {
-				matches := matchRegex.FindAll(data, -1)
-				//log.Printf("-- Found %d matches for %s", len(matches), name)
-				metadata.Instance.IncrementLogMetric(name, len(matches))
+
+			for _, metric := range cfg.LogMetrics {
+				metadata.Instance.IncrementLogMetric(metric.Name, metric.HasMatches(data))
 			}
 		}
 	}
@@ -270,11 +263,25 @@ func runTestsInPhase(phase string, description string) bool {
 		Name: "Log Metrics",
 	}
 	for name, value := range metadata.Instance.LogMetrics {
-		logMetricTestSuite.TestCases = append(logMetricTestSuite.TestCases, reporters.JUnitTestCase{
+		testCase := reporters.JUnitTestCase{
 			ClassName: "Log Metrics",
 			Name:      fmt.Sprintf("[Log Metrics] %s", name),
 			Time:      float64(value),
-		})
+		}
+
+		if cfg.LogMetrics.GetMetricByName(name).IsPassing(value) {
+			testCase.PassedMessage = &reporters.JUnitPassedMessage{
+				Message: fmt.Sprintf("Passed with %d matches", value),
+			}
+		} else {
+			testCase.FailureMessage = &reporters.JUnitFailureMessage{
+				Message: fmt.Sprintf("Failed with %d matches", value),
+			}
+			logMetricTestSuite.Failures++
+		}
+		logMetricTestSuite.Tests++
+
+		logMetricTestSuite.TestCases = append(logMetricTestSuite.TestCases, testCase)
 	}
 
 	data, err := xml.Marshal(&logMetricTestSuite)

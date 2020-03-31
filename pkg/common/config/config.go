@@ -2,6 +2,7 @@
 package config
 
 import (
+	"regexp"
 	"time"
 )
 
@@ -41,9 +42,46 @@ type Config struct {
 	// DryRun lets you run osde2e all the way up to the e2e tests then skips them.
 	DryRun bool `json:"dry_run,omitempty" env:"DRY_RUN" sect:"tests"  yaml:"dryRun"`
 
-	// LogMetrics lets you define a metric name and a regex to apply on the build log
-	// For every match in the build log, the metric with that name will increment
-	LogMetrics map[string]string `json:"log-metrics" yaml:"logMetrics"`
+	// LogMetrics is a collection of LogMetric structs used to crudely analyze test logs
+	LogMetrics LogMetrics `json:"log-metrics" yaml:"logMetrics"`
+}
+
+// LogMetrics is an array of LogMetric types with an easier lookup method
+type LogMetrics []LogMetric
+
+// GetMetricByName returns a pointer to a LogMetric from the array based on the name
+func (metrics LogMetrics) GetMetricByName(name string) *LogMetric {
+	for k := range metrics {
+		if name == metrics[k].Name {
+			return &metrics[k]
+		}
+	}
+
+	return &LogMetric{}
+}
+
+// LogMetric lets you define a metric name and a regex to apply on the build log
+// For every match in the build log, the metric with that name will increment
+type LogMetric struct {
+	// Name of the metric to look for
+	Name string `json:"name" yaml:"name"`
+	// Regex (in string form) to parse out
+	RegEx string `json:"regex" yaml:"regex"`
+	// Highest number of instances before failing. Default is super high
+	HighThreshold int `json:"highThreshold" yaml:"highThreshold" default:"9999"`
+	// Lowest number of instances before failing. Default is zero
+	LowThreshold int `json:"lowThreshold" yaml:"lowThreshold" default:"-1"`
+}
+
+// HasMatches attempts to match the regex provided a bytearray and returns the number of matches
+func (metric LogMetric) HasMatches(data []byte) int {
+	return len(regexp.MustCompile(metric.RegEx).FindAll(data, -1))
+}
+
+// IsPassing checks the current counter against the thresholds to see if this
+// metric should be passing or failing via JUnit
+func (metric LogMetric) IsPassing(value int) bool {
+	return metric.HighThreshold > value && metric.LowThreshold < value
 }
 
 // KubeConfig stores information required to talk to the Kube API
