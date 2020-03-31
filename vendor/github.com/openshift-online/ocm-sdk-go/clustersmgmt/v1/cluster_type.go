@@ -85,6 +85,7 @@ type Cluster struct {
 	dns                               *DNS
 	addons                            *AddOnInstallationList
 	cloudProvider                     *CloudProvider
+	clusterAdminEnabled               *bool
 	console                           *ClusterConsole
 	creationTimestamp                 *time.Time
 	displayName                       *string
@@ -93,6 +94,7 @@ type Cluster struct {
 	flavour                           *Flavour
 	groups                            *GroupList
 	identityProviders                 *IdentityProviderList
+	ingresses                         *IngressList
 	loadBalancerQuota                 *int
 	managed                           *bool
 	metrics                           *ClusterMetrics
@@ -167,12 +169,14 @@ func (o *Cluster) Empty() bool {
 		o.awsInfrastructureAccessRoleGrants.Len() == 0 &&
 		o.byoc == nil &&
 		o.addons.Len() == 0 &&
+		o.clusterAdminEnabled == nil &&
 		o.creationTimestamp == nil &&
 		o.displayName == nil &&
 		o.expirationTimestamp == nil &&
 		o.externalID == nil &&
 		o.groups.Len() == 0 &&
 		o.identityProviders.Len() == 0 &&
+		o.ingresses.Len() == 0 &&
 		o.loadBalancerQuota == nil &&
 		o.managed == nil &&
 		o.multiAZ == nil &&
@@ -340,6 +344,29 @@ func (o *Cluster) GetCloudProvider() (value *CloudProvider, ok bool) {
 	ok = o != nil && o.cloudProvider != nil
 	if ok {
 		value = o.cloudProvider
+	}
+	return
+}
+
+// ClusterAdminEnabled returns the value of the 'cluster_admin_enabled' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+// Flag indicating if cluster-admin access is enabled.
+func (o *Cluster) ClusterAdminEnabled() bool {
+	if o != nil && o.clusterAdminEnabled != nil {
+		return *o.clusterAdminEnabled
+	}
+	return false
+}
+
+// GetClusterAdminEnabled returns the value of the 'cluster_admin_enabled' attribute and
+// a flag indicating if the attribute has a value.
+//
+// Flag indicating if cluster-admin access is enabled.
+func (o *Cluster) GetClusterAdminEnabled() (value bool, ok bool) {
+	ok = o != nil && o.clusterAdminEnabled != nil
+	if ok {
+		value = *o.clusterAdminEnabled
 	}
 	return
 }
@@ -532,6 +559,29 @@ func (o *Cluster) GetIdentityProviders() (value *IdentityProviderList, ok bool) 
 	ok = o != nil && o.identityProviders != nil
 	if ok {
 		value = o.identityProviders
+	}
+	return
+}
+
+// Ingresses returns the value of the 'ingresses' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+// List of ingresses on this cluster.
+func (o *Cluster) Ingresses() *IngressList {
+	if o == nil {
+		return nil
+	}
+	return o.ingresses
+}
+
+// GetIngresses returns the value of the 'ingresses' attribute and
+// a flag indicating if the attribute has a value.
+//
+// List of ingresses on this cluster.
+func (o *Cluster) GetIngresses() (value *IngressList, ok bool) {
+	ok = o != nil && o.ingresses != nil
+	if ok {
+		value = o.ingresses
 	}
 	return
 }

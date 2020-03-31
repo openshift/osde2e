@@ -32,13 +32,18 @@ type SubscriptionServer interface {
 
 	// Delete handles a request for the 'delete' method.
 	//
-	// Deletes the subscription.
+	// Deletes the subscription by ID.
 	Delete(ctx context.Context, request *SubscriptionDeleteServerRequest, response *SubscriptionDeleteServerResponse) error
 
 	// Get handles a request for the 'get' method.
 	//
-	// Retrieves the details of the subscription.
+	// Retrieves the details of the subscription by ID.
 	Get(ctx context.Context, request *SubscriptionGetServerRequest, response *SubscriptionGetServerResponse) error
+
+	// Update handles a request for the 'update' method.
+	//
+	// Update a subscription
+	Update(ctx context.Context, request *SubscriptionUpdateServerRequest, response *SubscriptionUpdateServerResponse) error
 
 	// ReservedResources returns the target 'subscription_reserved_resources' resource.
 	//
@@ -88,6 +93,54 @@ func (r *SubscriptionGetServerResponse) Status(value int) *SubscriptionGetServer
 	return r
 }
 
+// SubscriptionUpdateServerRequest is the request for the 'update' method.
+type SubscriptionUpdateServerRequest struct {
+	body *Subscription
+}
+
+// Body returns the value of the 'body' parameter.
+//
+// Updated subscription data
+func (r *SubscriptionUpdateServerRequest) Body() *Subscription {
+	if r == nil {
+		return nil
+	}
+	return r.body
+}
+
+// GetBody returns the value of the 'body' parameter and
+// a flag indicating if the parameter has a value.
+//
+// Updated subscription data
+func (r *SubscriptionUpdateServerRequest) GetBody() (value *Subscription, ok bool) {
+	ok = r != nil && r.body != nil
+	if ok {
+		value = r.body
+	}
+	return
+}
+
+// SubscriptionUpdateServerResponse is the response for the 'update' method.
+type SubscriptionUpdateServerResponse struct {
+	status int
+	err    *errors.Error
+	body   *Subscription
+}
+
+// Body sets the value of the 'body' parameter.
+//
+// Updated subscription data
+func (r *SubscriptionUpdateServerResponse) Body(value *Subscription) *SubscriptionUpdateServerResponse {
+	r.body = value
+	return r
+}
+
+// Status sets the status code.
+func (r *SubscriptionUpdateServerResponse) Status(value int) *SubscriptionUpdateServerResponse {
+	r.status = value
+	return r
+}
+
 // dispatchSubscription navigates the servers tree rooted at the given server
 // till it finds one that matches the given set of path segments, and then invokes
 // the corresponding server.
@@ -99,6 +152,9 @@ func dispatchSubscription(w http.ResponseWriter, r *http.Request, server Subscri
 			return
 		case "GET":
 			adaptSubscriptionGetRequest(w, r, server)
+			return
+		case "PATCH":
+			adaptSubscriptionUpdateRequest(w, r, server)
 			return
 		default:
 			errors.SendMethodNotAllowed(w, r)
@@ -180,6 +236,41 @@ func adaptSubscriptionGetRequest(w http.ResponseWriter, r *http.Request, server 
 		return
 	}
 	err = writeSubscriptionGetResponse(response, w)
+	if err != nil {
+		glog.Errorf(
+			"Can't write response for method '%s' and path '%s': %v",
+			r.Method, r.URL.Path, err,
+		)
+		return
+	}
+}
+
+// adaptSubscriptionUpdateRequest translates the given HTTP request into a call to
+// the corresponding method of the given server. Then it translates the
+// results returned by that method into an HTTP response.
+func adaptSubscriptionUpdateRequest(w http.ResponseWriter, r *http.Request, server SubscriptionServer) {
+	request := &SubscriptionUpdateServerRequest{}
+	err := readSubscriptionUpdateRequest(request, r)
+	if err != nil {
+		glog.Errorf(
+			"Can't read request for method '%s' and path '%s': %v",
+			r.Method, r.URL.Path, err,
+		)
+		errors.SendInternalServerError(w, r)
+		return
+	}
+	response := &SubscriptionUpdateServerResponse{}
+	response.status = 204
+	err = server.Update(r.Context(), request, response)
+	if err != nil {
+		glog.Errorf(
+			"Can't process request for method '%s' and path '%s': %v",
+			r.Method, r.URL.Path, err,
+		)
+		errors.SendInternalServerError(w, r)
+		return
+	}
+	err = writeSubscriptionUpdateResponse(response, w)
 	if err != nil {
 		glog.Errorf(
 			"Can't write response for method '%s' and path '%s': %v",

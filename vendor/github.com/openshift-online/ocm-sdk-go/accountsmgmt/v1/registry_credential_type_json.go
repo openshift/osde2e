@@ -21,6 +21,7 @@ package v1 // github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1
 
 import (
 	"io"
+	"time"
 
 	jsoniter "github.com/json-iterator/go"
 	"github.com/openshift-online/ocm-sdk-go/helpers"
@@ -72,6 +73,22 @@ func writeRegistryCredential(object *RegistryCredential, stream *jsoniter.Stream
 		writeAccount(object.account, stream)
 		count++
 	}
+	if object.createdAt != nil {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("created_at")
+		stream.WriteString((*object.createdAt).Format(time.RFC3339))
+		count++
+	}
+	if object.externalResourceID != nil {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("external_resource_id")
+		stream.WriteString(*object.externalResourceID)
+		count++
+	}
 	if object.registry != nil {
 		if count > 0 {
 			stream.WriteMore()
@@ -86,6 +103,14 @@ func writeRegistryCredential(object *RegistryCredential, stream *jsoniter.Stream
 		}
 		stream.WriteObjectField("token")
 		stream.WriteString(*object.token)
+		count++
+	}
+	if object.updatedAt != nil {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("updated_at")
+		stream.WriteString((*object.updatedAt).Format(time.RFC3339))
 		count++
 	}
 	if object.username != nil {
@@ -132,12 +157,29 @@ func readRegistryCredential(iterator *jsoniter.Iterator) *RegistryCredential {
 		case "account":
 			value := readAccount(iterator)
 			object.account = value
+		case "created_at":
+			text := iterator.ReadString()
+			value, err := time.Parse(time.RFC3339, text)
+			if err != nil {
+				iterator.ReportError("", err.Error())
+			}
+			object.createdAt = &value
+		case "external_resource_id":
+			value := iterator.ReadString()
+			object.externalResourceID = &value
 		case "registry":
 			value := readRegistry(iterator)
 			object.registry = value
 		case "token":
 			value := iterator.ReadString()
 			object.token = &value
+		case "updated_at":
+			text := iterator.ReadString()
+			value, err := time.Parse(time.RFC3339, text)
+			if err != nil {
+				iterator.ReportError("", err.Error())
+			}
+			object.updatedAt = &value
 		case "username":
 			value := iterator.ReadString()
 			object.username = &value

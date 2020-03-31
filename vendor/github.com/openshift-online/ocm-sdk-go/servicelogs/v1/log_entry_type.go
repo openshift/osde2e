@@ -119,7 +119,7 @@ func (o *LogEntry) Empty() bool {
 // ClusterUUID returns the value of the 'cluster_UUID' attribute, or
 // the zero value of the type if the attribute doesn't have a value.
 //
-//
+// External cluster ID.
 func (o *LogEntry) ClusterUUID() string {
 	if o != nil && o.clusterUUID != nil {
 		return *o.clusterUUID
@@ -130,7 +130,7 @@ func (o *LogEntry) ClusterUUID() string {
 // GetClusterUUID returns the value of the 'cluster_UUID' attribute and
 // a flag indicating if the attribute has a value.
 //
-//
+// External cluster ID.
 func (o *LogEntry) GetClusterUUID() (value string, ok bool) {
 	ok = o != nil && o.clusterUUID != nil
 	if ok {
@@ -142,7 +142,7 @@ func (o *LogEntry) GetClusterUUID() (value string, ok bool) {
 // Description returns the value of the 'description' attribute, or
 // the zero value of the type if the attribute doesn't have a value.
 //
-//
+// Full description of the log entry content (supports Markdown format as well).
 func (o *LogEntry) Description() string {
 	if o != nil && o.description != nil {
 		return *o.description
@@ -153,7 +153,7 @@ func (o *LogEntry) Description() string {
 // GetDescription returns the value of the 'description' attribute and
 // a flag indicating if the attribute has a value.
 //
-//
+// Full description of the log entry content (supports Markdown format as well).
 func (o *LogEntry) GetDescription() (value string, ok bool) {
 	ok = o != nil && o.description != nil
 	if ok {
@@ -165,7 +165,7 @@ func (o *LogEntry) GetDescription() (value string, ok bool) {
 // InternalOnly returns the value of the 'internal_only' attribute, or
 // the zero value of the type if the attribute doesn't have a value.
 //
-// A flag that indicates whether the log entry should be internal/private only
+// A flag that indicates whether the log entry should be internal/private only.
 func (o *LogEntry) InternalOnly() bool {
 	if o != nil && o.internalOnly != nil {
 		return *o.internalOnly
@@ -176,7 +176,7 @@ func (o *LogEntry) InternalOnly() bool {
 // GetInternalOnly returns the value of the 'internal_only' attribute and
 // a flag indicating if the attribute has a value.
 //
-// A flag that indicates whether the log entry should be internal/private only
+// A flag that indicates whether the log entry should be internal/private only.
 func (o *LogEntry) GetInternalOnly() (value bool, ok bool) {
 	ok = o != nil && o.internalOnly != nil
 	if ok {
@@ -188,7 +188,7 @@ func (o *LogEntry) GetInternalOnly() (value bool, ok bool) {
 // ServiceName returns the value of the 'service_name' attribute, or
 // the zero value of the type if the attribute doesn't have a value.
 //
-// The name of the service who created the log
+// The name of the service who created the log.
 func (o *LogEntry) ServiceName() string {
 	if o != nil && o.serviceName != nil {
 		return *o.serviceName
@@ -199,7 +199,7 @@ func (o *LogEntry) ServiceName() string {
 // GetServiceName returns the value of the 'service_name' attribute and
 // a flag indicating if the attribute has a value.
 //
-// The name of the service who created the log
+// The name of the service who created the log.
 func (o *LogEntry) GetServiceName() (value string, ok bool) {
 	ok = o != nil && o.serviceName != nil
 	if ok {
@@ -211,7 +211,7 @@ func (o *LogEntry) GetServiceName() (value string, ok bool) {
 // Severity returns the value of the 'severity' attribute, or
 // the zero value of the type if the attribute doesn't have a value.
 //
-// Log severity for the specific log entry
+// Log severity for the specific log entry.
 func (o *LogEntry) Severity() Severity {
 	if o != nil && o.severity != nil {
 		return *o.severity
@@ -222,7 +222,7 @@ func (o *LogEntry) Severity() Severity {
 // GetSeverity returns the value of the 'severity' attribute and
 // a flag indicating if the attribute has a value.
 //
-// Log severity for the specific log entry
+// Log severity for the specific log entry.
 func (o *LogEntry) GetSeverity() (value Severity, ok bool) {
 	ok = o != nil && o.severity != nil
 	if ok {
@@ -234,7 +234,7 @@ func (o *LogEntry) GetSeverity() (value Severity, ok bool) {
 // Summary returns the value of the 'summary' attribute, or
 // the zero value of the type if the attribute doesn't have a value.
 //
-//
+// Title of the log entry.
 func (o *LogEntry) Summary() string {
 	if o != nil && o.summary != nil {
 		return *o.summary
@@ -245,7 +245,7 @@ func (o *LogEntry) Summary() string {
 // GetSummary returns the value of the 'summary' attribute and
 // a flag indicating if the attribute has a value.
 //
-//
+// Title of the log entry.
 func (o *LogEntry) GetSummary() (value string, ok bool) {
 	ok = o != nil && o.summary != nil
 	if ok {

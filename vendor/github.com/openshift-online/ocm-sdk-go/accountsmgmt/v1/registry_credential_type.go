@@ -19,6 +19,10 @@ limitations under the License.
 
 package v1 // github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1
 
+import (
+	time "time"
+)
+
 // RegistryCredentialKind is the name of the type used to represent objects
 // of type 'registry_credential'.
 const RegistryCredentialKind = "RegistryCredential"
@@ -35,13 +39,16 @@ const RegistryCredentialNilKind = "RegistryCredentialNil"
 //
 //
 type RegistryCredential struct {
-	id       *string
-	href     *string
-	link     bool
-	account  *Account
-	registry *Registry
-	token    *string
-	username *string
+	id                 *string
+	href               *string
+	link               bool
+	account            *Account
+	createdAt          *time.Time
+	externalResourceID *string
+	registry           *Registry
+	token              *string
+	updatedAt          *time.Time
+	username           *string
 }
 
 // Kind returns the name of the type of the object.
@@ -99,7 +106,10 @@ func (o *RegistryCredential) GetHREF() (value string, ok bool) {
 // Empty returns true if the object is empty, i.e. no attribute has a value.
 func (o *RegistryCredential) Empty() bool {
 	return o == nil || (o.id == nil &&
+		o.createdAt == nil &&
+		o.externalResourceID == nil &&
 		o.token == nil &&
+		o.updatedAt == nil &&
 		o.username == nil &&
 		true)
 }
@@ -123,6 +133,52 @@ func (o *RegistryCredential) GetAccount() (value *Account, ok bool) {
 	ok = o != nil && o.account != nil
 	if ok {
 		value = o.account
+	}
+	return
+}
+
+// CreatedAt returns the value of the 'created_at' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+//
+func (o *RegistryCredential) CreatedAt() time.Time {
+	if o != nil && o.createdAt != nil {
+		return *o.createdAt
+	}
+	return time.Time{}
+}
+
+// GetCreatedAt returns the value of the 'created_at' attribute and
+// a flag indicating if the attribute has a value.
+//
+//
+func (o *RegistryCredential) GetCreatedAt() (value time.Time, ok bool) {
+	ok = o != nil && o.createdAt != nil
+	if ok {
+		value = *o.createdAt
+	}
+	return
+}
+
+// ExternalResourceID returns the value of the 'external_resource_ID' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+//
+func (o *RegistryCredential) ExternalResourceID() string {
+	if o != nil && o.externalResourceID != nil {
+		return *o.externalResourceID
+	}
+	return ""
+}
+
+// GetExternalResourceID returns the value of the 'external_resource_ID' attribute and
+// a flag indicating if the attribute has a value.
+//
+//
+func (o *RegistryCredential) GetExternalResourceID() (value string, ok bool) {
+	ok = o != nil && o.externalResourceID != nil
+	if ok {
+		value = *o.externalResourceID
 	}
 	return
 }
@@ -169,6 +225,29 @@ func (o *RegistryCredential) GetToken() (value string, ok bool) {
 	ok = o != nil && o.token != nil
 	if ok {
 		value = *o.token
+	}
+	return
+}
+
+// UpdatedAt returns the value of the 'updated_at' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+//
+func (o *RegistryCredential) UpdatedAt() time.Time {
+	if o != nil && o.updatedAt != nil {
+		return *o.updatedAt
+	}
+	return time.Time{}
+}
+
+// GetUpdatedAt returns the value of the 'updated_at' attribute and
+// a flag indicating if the attribute has a value.
+//
+//
+func (o *RegistryCredential) GetUpdatedAt() (value time.Time, ok bool) {
+	ok = o != nil && o.updatedAt != nil
+	if ok {
+		value = *o.updatedAt
 	}
 	return
 }

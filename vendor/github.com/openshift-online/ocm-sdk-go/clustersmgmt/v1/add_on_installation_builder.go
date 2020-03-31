@@ -19,15 +19,24 @@ limitations under the License.
 
 package v1 // github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1
 
+import (
+	time "time"
+)
+
 // AddOnInstallationBuilder contains the data and logic needed to build 'add_on_installation' objects.
 //
 // Representation of an add-on installation in a cluster.
 type AddOnInstallationBuilder struct {
-	id      *string
-	href    *string
-	link    bool
-	addon   *AddOnBuilder
-	cluster *ClusterBuilder
+	id                *string
+	href              *string
+	link              bool
+	addon             *AddOnBuilder
+	cluster           *ClusterBuilder
+	creationTimestamp *time.Time
+	operatorVersion   *string
+	state             *AddOnInstallationState
+	stateDescription  *string
+	updatedTimestamp  *time.Time
 }
 
 // NewAddOnInstallation creates a new builder of 'add_on_installation' objects.
@@ -105,6 +114,46 @@ func (b *AddOnInstallationBuilder) Cluster(value *ClusterBuilder) *AddOnInstalla
 	return b
 }
 
+// CreationTimestamp sets the value of the 'creation_timestamp' attribute to the given value.
+//
+//
+func (b *AddOnInstallationBuilder) CreationTimestamp(value time.Time) *AddOnInstallationBuilder {
+	b.creationTimestamp = &value
+	return b
+}
+
+// OperatorVersion sets the value of the 'operator_version' attribute to the given value.
+//
+//
+func (b *AddOnInstallationBuilder) OperatorVersion(value string) *AddOnInstallationBuilder {
+	b.operatorVersion = &value
+	return b
+}
+
+// State sets the value of the 'state' attribute to the given value.
+//
+// Representation of an add-on installation State field.
+func (b *AddOnInstallationBuilder) State(value AddOnInstallationState) *AddOnInstallationBuilder {
+	b.state = &value
+	return b
+}
+
+// StateDescription sets the value of the 'state_description' attribute to the given value.
+//
+//
+func (b *AddOnInstallationBuilder) StateDescription(value string) *AddOnInstallationBuilder {
+	b.stateDescription = &value
+	return b
+}
+
+// UpdatedTimestamp sets the value of the 'updated_timestamp' attribute to the given value.
+//
+//
+func (b *AddOnInstallationBuilder) UpdatedTimestamp(value time.Time) *AddOnInstallationBuilder {
+	b.updatedTimestamp = &value
+	return b
+}
+
 // Copy copies the attributes of the given object into this builder, discarding any previous values.
 func (b *AddOnInstallationBuilder) Copy(object *AddOnInstallation) *AddOnInstallationBuilder {
 	if object == nil {
@@ -123,6 +172,11 @@ func (b *AddOnInstallationBuilder) Copy(object *AddOnInstallation) *AddOnInstall
 	} else {
 		b.cluster = nil
 	}
+	b.creationTimestamp = object.creationTimestamp
+	b.operatorVersion = object.operatorVersion
+	b.state = object.state
+	b.stateDescription = object.stateDescription
+	b.updatedTimestamp = object.updatedTimestamp
 	return b
 }
 
@@ -144,5 +198,10 @@ func (b *AddOnInstallationBuilder) Build() (object *AddOnInstallation, err error
 			return
 		}
 	}
+	object.creationTimestamp = b.creationTimestamp
+	object.operatorVersion = b.operatorVersion
+	object.state = b.state
+	object.stateDescription = b.stateDescription
+	object.updatedTimestamp = b.updatedTimestamp
 	return
 }

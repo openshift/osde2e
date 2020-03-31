@@ -28,6 +28,7 @@ type ClusterMetrics struct {
 	computeNodesMemory *ClusterMetric
 	memory             *ClusterMetric
 	nodes              *ClusterNodes
+	sockets            *ClusterMetric
 	storage            *ClusterMetric
 }
 
@@ -147,6 +148,29 @@ func (o *ClusterMetrics) GetNodes() (value *ClusterNodes, ok bool) {
 	ok = o != nil && o.nodes != nil
 	if ok {
 		value = o.nodes
+	}
+	return
+}
+
+// Sockets returns the value of the 'sockets' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+// The amount of sockets provisioned and used in the cluster.
+func (o *ClusterMetrics) Sockets() *ClusterMetric {
+	if o == nil {
+		return nil
+	}
+	return o.sockets
+}
+
+// GetSockets returns the value of the 'sockets' attribute and
+// a flag indicating if the attribute has a value.
+//
+// The amount of sockets provisioned and used in the cluster.
+func (o *ClusterMetrics) GetSockets() (value *ClusterMetric, ok bool) {
+	ok = o != nil && o.sockets != nil
+	if ok {
+		value = o.sockets
 	}
 	return
 }

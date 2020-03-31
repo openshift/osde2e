@@ -73,6 +73,7 @@ type ClusterBuilder struct {
 	dns                               *DNSBuilder
 	addons                            *AddOnInstallationListBuilder
 	cloudProvider                     *CloudProviderBuilder
+	clusterAdminEnabled               *bool
 	console                           *ClusterConsoleBuilder
 	creationTimestamp                 *time.Time
 	displayName                       *string
@@ -81,6 +82,7 @@ type ClusterBuilder struct {
 	flavour                           *FlavourBuilder
 	groups                            *GroupListBuilder
 	identityProviders                 *IdentityProviderListBuilder
+	ingresses                         *IngressListBuilder
 	loadBalancerQuota                 *int
 	managed                           *bool
 	metrics                           *ClusterMetricsBuilder
@@ -176,6 +178,14 @@ func (b *ClusterBuilder) CloudProvider(value *CloudProviderBuilder) *ClusterBuil
 	return b
 }
 
+// ClusterAdminEnabled sets the value of the 'cluster_admin_enabled' attribute to the given value.
+//
+//
+func (b *ClusterBuilder) ClusterAdminEnabled(value bool) *ClusterBuilder {
+	b.clusterAdminEnabled = &value
+	return b
+}
+
 // Console sets the value of the 'console' attribute to the given value.
 //
 // Information about the console of a cluster.
@@ -238,6 +248,14 @@ func (b *ClusterBuilder) Groups(value *GroupListBuilder) *ClusterBuilder {
 //
 func (b *ClusterBuilder) IdentityProviders(value *IdentityProviderListBuilder) *ClusterBuilder {
 	b.identityProviders = value
+	return b
+}
+
+// Ingresses sets the value of the 'ingresses' attribute to the given values.
+//
+//
+func (b *ClusterBuilder) Ingresses(value *IngressListBuilder) *ClusterBuilder {
+	b.ingresses = value
 	return b
 }
 
@@ -409,6 +427,7 @@ func (b *ClusterBuilder) Copy(object *Cluster) *ClusterBuilder {
 	} else {
 		b.cloudProvider = nil
 	}
+	b.clusterAdminEnabled = object.clusterAdminEnabled
 	if object.console != nil {
 		b.console = NewClusterConsole().Copy(object.console)
 	} else {
@@ -432,6 +451,11 @@ func (b *ClusterBuilder) Copy(object *Cluster) *ClusterBuilder {
 		b.identityProviders = NewIdentityProviderList().Copy(object.identityProviders)
 	} else {
 		b.identityProviders = nil
+	}
+	if object.ingresses != nil {
+		b.ingresses = NewIngressList().Copy(object.ingresses)
+	} else {
+		b.ingresses = nil
 	}
 	b.loadBalancerQuota = object.loadBalancerQuota
 	b.managed = object.managed
@@ -528,6 +552,7 @@ func (b *ClusterBuilder) Build() (object *Cluster, err error) {
 			return
 		}
 	}
+	object.clusterAdminEnabled = b.clusterAdminEnabled
 	if b.console != nil {
 		object.console, err = b.console.Build()
 		if err != nil {
@@ -552,6 +577,12 @@ func (b *ClusterBuilder) Build() (object *Cluster, err error) {
 	}
 	if b.identityProviders != nil {
 		object.identityProviders, err = b.identityProviders.Build()
+		if err != nil {
+			return
+		}
+	}
+	if b.ingresses != nil {
+		object.ingresses, err = b.ingresses.Build()
 		if err != nil {
 			return
 		}

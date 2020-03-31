@@ -88,7 +88,7 @@ func (c *Connection) TokensContext(ctx context.Context) (access, refresh string,
 	// At this point we know that the access token is unavailable, expired or about to expire.
 	// So we need to check if we can use the refresh token to request a new one.
 	if c.refreshToken != nil && (!refreshExpires || refreshLeft >= 1*time.Minute) {
-		err = c.sendRefreshTokenForm(ctx)
+		_, _, err = c.sendRefreshTokenForm(ctx)
 		if err != nil {
 			return
 		}
@@ -99,10 +99,8 @@ func (c *Connection) TokensContext(ctx context.Context) (access, refresh string,
 	// Now we know that both the access and refresh tokens are unavailable, expired or about to
 	// expire. So we need to check if we have other credentials that can be used to request a
 	// new token, and use them.
-	havePassword := c.user != "" && c.password != ""
-	haveSecret := c.clientID != "" && c.clientSecret != ""
-	if havePassword || haveSecret {
-		err = c.sendRequestTokenForm(ctx)
+	if c.haveCredentials() {
+		_, _, err = c.sendRequestTokenForm(ctx)
 		if err != nil {
 			return
 		}
@@ -120,7 +118,7 @@ func (c *Connection) TokensContext(ctx context.Context) (access, refresh string,
 				"obtain a new token, so will try to use it anyhow",
 			refreshLeft,
 		)
-		err = c.sendRefreshTokenForm(ctx)
+		_, _, err = c.sendRefreshTokenForm(ctx)
 		if err != nil {
 			return
 		}
@@ -165,44 +163,75 @@ func (c *Connection) currentTokens() (access, refresh string) {
 	return
 }
 
-func (c *Connection) sendRequestTokenForm(ctx context.Context) error {
+func (c *Connection) sendRequestTokenForm(ctx context.Context) (code int,
+	result *internal.TokenResponse, err error) {
 	form := url.Values{}
-	havePassword := c.user != "" && c.password != ""
-	haveSecret := c.clientID != "" && c.clientSecret != ""
-	if havePassword {
+	if c.havePassword() {
 		c.logger.Debug(ctx, "Requesting new token using the password grant")
 		form.Set("grant_type", "password")
 		form.Set("client_id", c.clientID)
 		form.Set("username", c.user)
 		form.Set("password", c.password)
-	} else if haveSecret {
+	} else if c.haveSecret() {
 		c.logger.Debug(ctx, "Requesting new token using the client credentials grant")
 		form.Set("grant_type", "client_credentials")
 		form.Set("client_id", c.clientID)
 		form.Set("client_secret", c.clientSecret)
 	} else {
-		return fmt.Errorf(
+		err = fmt.Errorf(
 			"either password or client secret must be provided",
 		)
+		return
 	}
 	form.Set("scope", strings.Join(c.scopes, " "))
 	return c.sendTokenForm(ctx, form)
 }
 
-func (c *Connection) sendRefreshTokenForm(ctx context.Context) error {
+func (c *Connection) sendRefreshTokenForm(ctx context.Context) (code int,
+	result *internal.TokenResponse, err error) {
+	// Send the refresh token grant form:
 	c.logger.Debug(ctx, "Requesting new token using the refresh token grant")
 	form := url.Values{}
 	form.Set("grant_type", "refresh_token")
 	form.Set("client_id", c.clientID)
 	form.Set("client_secret", c.clientSecret)
 	form.Set("refresh_token", c.refreshToken.Raw)
-	return c.sendTokenForm(ctx, form)
+	code, result, err = c.sendTokenForm(ctx, form)
+
+	// If the server returns an 'invalid_grant' error response then it may be that the
+	// session has expired even if the tokens have not expired. This may happen when the SSO
+	// server has been restarted or its session caches have been cleared. In theory that should
+	// not happen, but in practice it happens from time to time, specially when using the client
+	// credentials grant. To handle that smoothly we request new tokens if we have credentials
+	// to do so.
+	if err != nil && result != nil {
+		var errorCode string
+		if result.Error != nil {
+			errorCode = *result.Error
+		}
+		var errorDescription string
+		if result.ErrorDescription != nil {
+			errorDescription = *result.ErrorDescription
+		}
+		if errorCode == "invalid_grant" && c.haveCredentials() {
+			c.logger.Info(
+				ctx,
+				"Server returned error code '%s' and error description '%s' "+
+					"when the refresh token isn't expired",
+				errorCode, errorDescription,
+			)
+			return c.sendRequestTokenForm(ctx)
+		}
+	}
+
+	return
 }
 
-func (c *Connection) sendTokenForm(ctx context.Context, form url.Values) error {
+func (c *Connection) sendTokenForm(ctx context.Context,
+	form url.Values) (code int, result *internal.TokenResponse, err error) {
 	// Measure the time that it takes to send the request and receive the response:
 	before := time.Now()
-	code, err := c.sendTokenFormTimed(ctx, form)
+	code, result, err = c.sendTokenFormTimed(ctx, form)
 	after := time.Now()
 	elapsed := after.Sub(before)
 
@@ -220,10 +249,11 @@ func (c *Connection) sendTokenForm(ctx context.Context, form url.Values) error {
 	}
 
 	// Return the original error:
-	return err
+	return
 }
 
-func (c *Connection) sendTokenFormTimed(ctx context.Context, form url.Values) (code int, err error) {
+func (c *Connection) sendTokenFormTimed(ctx context.Context, form url.Values) (code int,
+	result *internal.TokenResponse, err error) {
 	// Create the HTTP request:
 	body := []byte(form.Encode())
 	request, err := http.NewRequest(http.MethodPost, c.tokenURL.String(), bytes.NewReader(body))
@@ -245,27 +275,6 @@ func (c *Connection) sendTokenFormTimed(ctx context.Context, form url.Values) (c
 	}
 
 	// Send the HTTP request:
-	if c.logger.DebugEnabled() {
-		var censoredBody bytes.Buffer
-		// Unlike real url.Values.Encode(), this doesn't sort keys.
-		for name, values := range form {
-			for _, value := range values {
-				// Buffer.Write*() don't require error checking but golangci-lint v1.10.2
-				// on Jenkins flags them (maybe https://github.com/securego/gosec/issues/267).
-				if censoredBody.Len() > 0 {
-					censoredBody.WriteByte('&') // #nosec G104
-				}
-				censoredBody.WriteString(url.QueryEscape(name) + "=") // #nosec G104
-
-				if redactFields[name] {
-					censoredBody.WriteString(redactionStr) // #nosec G104
-				} else {
-					censoredBody.WriteString(url.QueryEscape(value)) // #nosec G104
-				}
-			}
-		}
-		c.dumpRequest(ctx, request, censoredBody.Bytes())
-	}
 	response, err := c.client.Do(request)
 	if err != nil {
 		err = fmt.Errorf("can't send request: %v", err)
@@ -273,60 +282,55 @@ func (c *Connection) sendTokenFormTimed(ctx context.Context, form url.Values) (c
 	}
 	defer response.Body.Close()
 
+	// Check that the response content type is JSON:
+	err = c.checkContentType(response)
+	if err != nil {
+		return
+	}
+
 	// Read the response body:
 	body, err = ioutil.ReadAll(response.Body)
 	if err != nil {
 		err = fmt.Errorf("can't read response: %v", err)
 		return
 	}
-	if c.logger.DebugEnabled() {
-		c.dumpResponse(ctx, response, body)
-	}
-
-	// Check the response status and content type:
-	header = response.Header
-	content := header.Get("Content-Type")
-	if content != "application/json" {
-		err = fmt.Errorf("expected 'application/json' but got '%s'", content)
-		return
-	}
 
 	// Parse the response body:
-	var msg internal.TokenResponse
-	err = json.Unmarshal(body, &msg)
+	result = &internal.TokenResponse{}
+	err = json.Unmarshal(body, result)
 	if err != nil {
 		err = fmt.Errorf("can't parse JSON response: %v", err)
 		return
 	}
-	if msg.Error != nil {
-		if msg.ErrorDescription != nil {
-			err = fmt.Errorf("%s: %s", *msg.Error, *msg.ErrorDescription)
+	if result.Error != nil {
+		if result.ErrorDescription != nil {
+			err = fmt.Errorf("%s: %s", *result.Error, *result.ErrorDescription)
 			return
 		}
-		err = fmt.Errorf("%s", *msg.Error)
+		err = fmt.Errorf("%s", *result.Error)
 		return
 	}
 	if response.StatusCode != http.StatusOK {
 		err = fmt.Errorf("token response status is: %s", response.Status)
 		return
 	}
-	if msg.TokenType != nil && *msg.TokenType != "bearer" {
-		err = fmt.Errorf("expected 'bearer' token type but got '%s", *msg.TokenType)
+	if result.TokenType != nil && *result.TokenType != "bearer" {
+		err = fmt.Errorf("expected 'bearer' token type but got '%s", *result.TokenType)
 		return
 	}
-	if msg.AccessToken == nil {
+	if result.AccessToken == nil {
 		err = fmt.Errorf("no access token was received")
 		return
 	}
-	accessToken, _, err := c.tokenParser.ParseUnverified(*msg.AccessToken, jwt.MapClaims{})
+	accessToken, _, err := c.tokenParser.ParseUnverified(*result.AccessToken, jwt.MapClaims{})
 	if err != nil {
 		return
 	}
-	if msg.RefreshToken == nil {
+	if result.RefreshToken == nil {
 		err = fmt.Errorf("no refresh token was received")
 		return
 	}
-	refreshToken, _, err := c.tokenParser.ParseUnverified(*msg.RefreshToken, jwt.MapClaims{})
+	refreshToken, _, err := c.tokenParser.ParseUnverified(*result.RefreshToken, jwt.MapClaims{})
 	if err != nil {
 		return
 	}
@@ -336,6 +340,20 @@ func (c *Connection) sendTokenFormTimed(ctx context.Context, form url.Values) (c
 	c.refreshToken = refreshToken
 
 	return
+}
+
+// haveCredentials returns true if the connection has credentials that can be used to request new
+// tokens.
+func (c *Connection) haveCredentials() bool {
+	return c.havePassword() || c.haveSecret()
+}
+
+func (c *Connection) havePassword() bool {
+	return c.user != "" && c.password != ""
+}
+
+func (c *Connection) haveSecret() bool {
+	return c.clientID != "" && c.clientSecret != ""
 }
 
 // debugExpiry sends to the log information about the expiration of the given token.

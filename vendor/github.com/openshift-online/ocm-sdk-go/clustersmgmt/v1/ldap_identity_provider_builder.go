@@ -23,12 +23,12 @@ package v1 // github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1
 //
 // Details for `ldap` identity providers.
 type LDAPIdentityProviderBuilder struct {
-	ca             *string
-	ldapAttributes *LDAPAttributesBuilder
-	url            *string
-	bindDN         *string
-	bindPassword   *string
-	insecure       *bool
+	ca           *string
+	url          *string
+	attributes   *LDAPAttributesBuilder
+	bindDN       *string
+	bindPassword *string
+	insecure     *bool
 }
 
 // NewLDAPIdentityProvider creates a new builder of 'LDAP_identity_provider' objects.
@@ -44,19 +44,19 @@ func (b *LDAPIdentityProviderBuilder) CA(value string) *LDAPIdentityProviderBuil
 	return b
 }
 
-// LDAPAttributes sets the value of the 'LDAP_attributes' attribute to the given value.
-//
-// LDAP attributes used to configure the LDAP identity provider.
-func (b *LDAPIdentityProviderBuilder) LDAPAttributes(value *LDAPAttributesBuilder) *LDAPIdentityProviderBuilder {
-	b.ldapAttributes = value
-	return b
-}
-
 // URL sets the value of the 'URL' attribute to the given value.
 //
 //
 func (b *LDAPIdentityProviderBuilder) URL(value string) *LDAPIdentityProviderBuilder {
 	b.url = &value
+	return b
+}
+
+// Attributes sets the value of the 'attributes' attribute to the given value.
+//
+// LDAP attributes used to configure the LDAP identity provider.
+func (b *LDAPIdentityProviderBuilder) Attributes(value *LDAPAttributesBuilder) *LDAPIdentityProviderBuilder {
+	b.attributes = value
 	return b
 }
 
@@ -90,12 +90,12 @@ func (b *LDAPIdentityProviderBuilder) Copy(object *LDAPIdentityProvider) *LDAPId
 		return b
 	}
 	b.ca = object.ca
-	if object.ldapAttributes != nil {
-		b.ldapAttributes = NewLDAPAttributes().Copy(object.ldapAttributes)
-	} else {
-		b.ldapAttributes = nil
-	}
 	b.url = object.url
+	if object.attributes != nil {
+		b.attributes = NewLDAPAttributes().Copy(object.attributes)
+	} else {
+		b.attributes = nil
+	}
 	b.bindDN = object.bindDN
 	b.bindPassword = object.bindPassword
 	b.insecure = object.insecure
@@ -106,13 +106,13 @@ func (b *LDAPIdentityProviderBuilder) Copy(object *LDAPIdentityProvider) *LDAPId
 func (b *LDAPIdentityProviderBuilder) Build() (object *LDAPIdentityProvider, err error) {
 	object = new(LDAPIdentityProvider)
 	object.ca = b.ca
-	if b.ldapAttributes != nil {
-		object.ldapAttributes, err = b.ldapAttributes.Build()
+	object.url = b.url
+	if b.attributes != nil {
+		object.attributes, err = b.attributes.Build()
 		if err != nil {
 			return
 		}
 	}
-	object.url = b.url
 	object.bindDN = b.bindDN
 	object.bindPassword = b.bindPassword
 	object.insecure = b.insecure

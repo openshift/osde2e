@@ -26,75 +26,65 @@ import (
 	"github.com/openshift-online/ocm-sdk-go/helpers"
 )
 
-// MarshalOpenIDURLs writes a value of the 'open_IDURLs' type to the given writer.
-func MarshalOpenIDURLs(object *OpenIDURLs, writer io.Writer) error {
+// MarshalAlertInfo writes a value of the 'alert_info' type to the given writer.
+func MarshalAlertInfo(object *AlertInfo, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeOpenIDURLs(object, stream)
+	writeAlertInfo(object, stream)
 	stream.Flush()
 	return stream.Error
 }
 
-// writeOpenIDURLs writes a value of the 'open_IDURLs' type to the given stream.
-func writeOpenIDURLs(object *OpenIDURLs, stream *jsoniter.Stream) {
+// writeAlertInfo writes a value of the 'alert_info' type to the given stream.
+func writeAlertInfo(object *AlertInfo, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
-	if object.authorize != nil {
+	if object.name != nil {
 		if count > 0 {
 			stream.WriteMore()
 		}
-		stream.WriteObjectField("authorize")
-		stream.WriteString(*object.authorize)
+		stream.WriteObjectField("name")
+		stream.WriteString(*object.name)
 		count++
 	}
-	if object.token != nil {
+	if object.severity != nil {
 		if count > 0 {
 			stream.WriteMore()
 		}
-		stream.WriteObjectField("token")
-		stream.WriteString(*object.token)
-		count++
-	}
-	if object.userInfo != nil {
-		if count > 0 {
-			stream.WriteMore()
-		}
-		stream.WriteObjectField("user_info")
-		stream.WriteString(*object.userInfo)
+		stream.WriteObjectField("severity")
+		stream.WriteString(string(*object.severity))
 		count++
 	}
 	stream.WriteObjectEnd()
 }
 
-// UnmarshalOpenIDURLs reads a value of the 'open_IDURLs' type from the given
+// UnmarshalAlertInfo reads a value of the 'alert_info' type from the given
 // source, which can be an slice of bytes, a string or a reader.
-func UnmarshalOpenIDURLs(source interface{}) (object *OpenIDURLs, err error) {
+func UnmarshalAlertInfo(source interface{}) (object *AlertInfo, err error) {
 	iterator, err := helpers.NewIterator(source)
 	if err != nil {
 		return
 	}
-	object = readOpenIDURLs(iterator)
+	object = readAlertInfo(iterator)
 	err = iterator.Error
 	return
 }
 
-// readOpenIDURLs reads a value of the 'open_IDURLs' type from the given iterator.
-func readOpenIDURLs(iterator *jsoniter.Iterator) *OpenIDURLs {
-	object := &OpenIDURLs{}
+// readAlertInfo reads a value of the 'alert_info' type from the given iterator.
+func readAlertInfo(iterator *jsoniter.Iterator) *AlertInfo {
+	object := &AlertInfo{}
 	for {
 		field := iterator.ReadObject()
 		if field == "" {
 			break
 		}
 		switch field {
-		case "authorize":
+		case "name":
 			value := iterator.ReadString()
-			object.authorize = &value
-		case "token":
-			value := iterator.ReadString()
-			object.token = &value
-		case "user_info":
-			value := iterator.ReadString()
-			object.userInfo = &value
+			object.name = &value
+		case "severity":
+			text := iterator.ReadString()
+			value := AlertSeverity(text)
+			object.severity = &value
 		default:
 			iterator.ReadAny()
 		}

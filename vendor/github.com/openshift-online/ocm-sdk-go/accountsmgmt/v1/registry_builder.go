@@ -19,6 +19,10 @@ limitations under the License.
 
 package v1 // github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1
 
+import (
+	time "time"
+)
+
 // RegistryBuilder contains the data and logic needed to build 'registry' objects.
 //
 //
@@ -28,10 +32,12 @@ type RegistryBuilder struct {
 	link       bool
 	url        *string
 	cloudAlias *bool
+	createdAt  *time.Time
 	name       *string
 	orgName    *string
 	teamName   *string
 	type_      *string
+	updatedAt  *time.Time
 }
 
 // NewRegistry creates a new builder of 'registry' objects.
@@ -73,6 +79,14 @@ func (b *RegistryBuilder) CloudAlias(value bool) *RegistryBuilder {
 	return b
 }
 
+// CreatedAt sets the value of the 'created_at' attribute to the given value.
+//
+//
+func (b *RegistryBuilder) CreatedAt(value time.Time) *RegistryBuilder {
+	b.createdAt = &value
+	return b
+}
+
 // Name sets the value of the 'name' attribute to the given value.
 //
 //
@@ -105,6 +119,14 @@ func (b *RegistryBuilder) Type(value string) *RegistryBuilder {
 	return b
 }
 
+// UpdatedAt sets the value of the 'updated_at' attribute to the given value.
+//
+//
+func (b *RegistryBuilder) UpdatedAt(value time.Time) *RegistryBuilder {
+	b.updatedAt = &value
+	return b
+}
+
 // Copy copies the attributes of the given object into this builder, discarding any previous values.
 func (b *RegistryBuilder) Copy(object *Registry) *RegistryBuilder {
 	if object == nil {
@@ -115,10 +137,12 @@ func (b *RegistryBuilder) Copy(object *Registry) *RegistryBuilder {
 	b.link = object.link
 	b.url = object.url
 	b.cloudAlias = object.cloudAlias
+	b.createdAt = object.createdAt
 	b.name = object.name
 	b.orgName = object.orgName
 	b.teamName = object.teamName
 	b.type_ = object.type_
+	b.updatedAt = object.updatedAt
 	return b
 }
 
@@ -130,9 +154,11 @@ func (b *RegistryBuilder) Build() (object *Registry, err error) {
 	object.link = b.link
 	object.url = b.url
 	object.cloudAlias = b.cloudAlias
+	object.createdAt = b.createdAt
 	object.name = b.name
 	object.orgName = b.orgName
 	object.teamName = b.teamName
 	object.type_ = b.type_
+	object.updatedAt = b.updatedAt
 	return
 }

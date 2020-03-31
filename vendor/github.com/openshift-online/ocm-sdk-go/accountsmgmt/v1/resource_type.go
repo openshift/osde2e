@@ -35,12 +35,15 @@ const ResourceNilKind = "ResourceNil"
 //
 // Identifies computing resources
 type Resource struct {
-	id           *string
-	href         *string
-	link         bool
-	allowed      *int
-	resourceName *string
-	resourceType *string
+	id                   *string
+	href                 *string
+	link                 bool
+	byoc                 *bool
+	sku                  *string
+	allowed              *int
+	availabilityZoneType *string
+	resourceName         *string
+	resourceType         *string
 }
 
 // Kind returns the name of the type of the object.
@@ -98,10 +101,59 @@ func (o *Resource) GetHREF() (value string, ok bool) {
 // Empty returns true if the object is empty, i.e. no attribute has a value.
 func (o *Resource) Empty() bool {
 	return o == nil || (o.id == nil &&
+		o.byoc == nil &&
+		o.sku == nil &&
 		o.allowed == nil &&
+		o.availabilityZoneType == nil &&
 		o.resourceName == nil &&
 		o.resourceType == nil &&
 		true)
+}
+
+// BYOC returns the value of the 'BYOC' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+//
+func (o *Resource) BYOC() bool {
+	if o != nil && o.byoc != nil {
+		return *o.byoc
+	}
+	return false
+}
+
+// GetBYOC returns the value of the 'BYOC' attribute and
+// a flag indicating if the attribute has a value.
+//
+//
+func (o *Resource) GetBYOC() (value bool, ok bool) {
+	ok = o != nil && o.byoc != nil
+	if ok {
+		value = *o.byoc
+	}
+	return
+}
+
+// SKU returns the value of the 'SKU' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+//
+func (o *Resource) SKU() string {
+	if o != nil && o.sku != nil {
+		return *o.sku
+	}
+	return ""
+}
+
+// GetSKU returns the value of the 'SKU' attribute and
+// a flag indicating if the attribute has a value.
+//
+//
+func (o *Resource) GetSKU() (value string, ok bool) {
+	ok = o != nil && o.sku != nil
+	if ok {
+		value = *o.sku
+	}
+	return
 }
 
 // Allowed returns the value of the 'allowed' attribute, or
@@ -123,6 +175,29 @@ func (o *Resource) GetAllowed() (value int, ok bool) {
 	ok = o != nil && o.allowed != nil
 	if ok {
 		value = *o.allowed
+	}
+	return
+}
+
+// AvailabilityZoneType returns the value of the 'availability_zone_type' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+//
+func (o *Resource) AvailabilityZoneType() string {
+	if o != nil && o.availabilityZoneType != nil {
+		return *o.availabilityZoneType
+	}
+	return ""
+}
+
+// GetAvailabilityZoneType returns the value of the 'availability_zone_type' attribute and
+// a flag indicating if the attribute has a value.
+//
+//
+func (o *Resource) GetAvailabilityZoneType() (value string, ok bool) {
+	ok = o != nil && o.availabilityZoneType != nil
+	if ok {
+		value = *o.availabilityZoneType
 	}
 	return
 }

@@ -50,3 +50,19 @@ func readSubscriptionGetResponse(response *SubscriptionGetResponse, reader io.Re
 func writeSubscriptionGetResponse(response *SubscriptionGetServerResponse, w http.ResponseWriter) error {
 	return MarshalSubscription(response.body, w)
 }
+func readSubscriptionUpdateRequest(request *SubscriptionUpdateServerRequest, r *http.Request) error {
+	var err error
+	request.body, err = UnmarshalSubscription(r.Body)
+	return err
+}
+func writeSubscriptionUpdateRequest(request *SubscriptionUpdateRequest, writer io.Writer) error {
+	return MarshalSubscription(request.body, writer)
+}
+func readSubscriptionUpdateResponse(response *SubscriptionUpdateResponse, reader io.Reader) error {
+	var err error
+	response.body, err = UnmarshalSubscription(reader)
+	return err
+}
+func writeSubscriptionUpdateResponse(response *SubscriptionUpdateServerResponse, w http.ResponseWriter) error {
+	return MarshalSubscription(response.body, w)
+}

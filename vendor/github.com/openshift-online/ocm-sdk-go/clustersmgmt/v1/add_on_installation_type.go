@@ -19,6 +19,10 @@ limitations under the License.
 
 package v1 // github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1
 
+import (
+	time "time"
+)
+
 // AddOnInstallationKind is the name of the type used to represent objects
 // of type 'add_on_installation'.
 const AddOnInstallationKind = "AddOnInstallation"
@@ -35,11 +39,16 @@ const AddOnInstallationNilKind = "AddOnInstallationNil"
 //
 // Representation of an add-on installation in a cluster.
 type AddOnInstallation struct {
-	id      *string
-	href    *string
-	link    bool
-	addon   *AddOn
-	cluster *Cluster
+	id                *string
+	href              *string
+	link              bool
+	addon             *AddOn
+	cluster           *Cluster
+	creationTimestamp *time.Time
+	operatorVersion   *string
+	state             *AddOnInstallationState
+	stateDescription  *string
+	updatedTimestamp  *time.Time
 }
 
 // Kind returns the name of the type of the object.
@@ -97,6 +106,11 @@ func (o *AddOnInstallation) GetHREF() (value string, ok bool) {
 // Empty returns true if the object is empty, i.e. no attribute has a value.
 func (o *AddOnInstallation) Empty() bool {
 	return o == nil || (o.id == nil &&
+		o.creationTimestamp == nil &&
+		o.operatorVersion == nil &&
+		o.state == nil &&
+		o.stateDescription == nil &&
+		o.updatedTimestamp == nil &&
 		true)
 }
 
@@ -142,6 +156,121 @@ func (o *AddOnInstallation) GetCluster() (value *Cluster, ok bool) {
 	ok = o != nil && o.cluster != nil
 	if ok {
 		value = o.cluster
+	}
+	return
+}
+
+// CreationTimestamp returns the value of the 'creation_timestamp' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+// Date and time when the add-on was initially installed in the cluster.
+func (o *AddOnInstallation) CreationTimestamp() time.Time {
+	if o != nil && o.creationTimestamp != nil {
+		return *o.creationTimestamp
+	}
+	return time.Time{}
+}
+
+// GetCreationTimestamp returns the value of the 'creation_timestamp' attribute and
+// a flag indicating if the attribute has a value.
+//
+// Date and time when the add-on was initially installed in the cluster.
+func (o *AddOnInstallation) GetCreationTimestamp() (value time.Time, ok bool) {
+	ok = o != nil && o.creationTimestamp != nil
+	if ok {
+		value = *o.creationTimestamp
+	}
+	return
+}
+
+// OperatorVersion returns the value of the 'operator_version' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+// Version of the operator installed by the add-on.
+func (o *AddOnInstallation) OperatorVersion() string {
+	if o != nil && o.operatorVersion != nil {
+		return *o.operatorVersion
+	}
+	return ""
+}
+
+// GetOperatorVersion returns the value of the 'operator_version' attribute and
+// a flag indicating if the attribute has a value.
+//
+// Version of the operator installed by the add-on.
+func (o *AddOnInstallation) GetOperatorVersion() (value string, ok bool) {
+	ok = o != nil && o.operatorVersion != nil
+	if ok {
+		value = *o.operatorVersion
+	}
+	return
+}
+
+// State returns the value of the 'state' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+// Overall state of the add-on installation.
+func (o *AddOnInstallation) State() AddOnInstallationState {
+	if o != nil && o.state != nil {
+		return *o.state
+	}
+	return AddOnInstallationState("")
+}
+
+// GetState returns the value of the 'state' attribute and
+// a flag indicating if the attribute has a value.
+//
+// Overall state of the add-on installation.
+func (o *AddOnInstallation) GetState() (value AddOnInstallationState, ok bool) {
+	ok = o != nil && o.state != nil
+	if ok {
+		value = *o.state
+	}
+	return
+}
+
+// StateDescription returns the value of the 'state_description' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+// Reason for the current State.
+func (o *AddOnInstallation) StateDescription() string {
+	if o != nil && o.stateDescription != nil {
+		return *o.stateDescription
+	}
+	return ""
+}
+
+// GetStateDescription returns the value of the 'state_description' attribute and
+// a flag indicating if the attribute has a value.
+//
+// Reason for the current State.
+func (o *AddOnInstallation) GetStateDescription() (value string, ok bool) {
+	ok = o != nil && o.stateDescription != nil
+	if ok {
+		value = *o.stateDescription
+	}
+	return
+}
+
+// UpdatedTimestamp returns the value of the 'updated_timestamp' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+// Date and time when the add-on installation information was last updated.
+func (o *AddOnInstallation) UpdatedTimestamp() time.Time {
+	if o != nil && o.updatedTimestamp != nil {
+		return *o.updatedTimestamp
+	}
+	return time.Time{}
+}
+
+// GetUpdatedTimestamp returns the value of the 'updated_timestamp' attribute and
+// a flag indicating if the attribute has a value.
+//
+// Date and time when the add-on installation information was last updated.
+func (o *AddOnInstallation) GetUpdatedTimestamp() (value time.Time, ok bool) {
+	ok = o != nil && o.updatedTimestamp != nil
+	if ok {
+		value = *o.updatedTimestamp
 	}
 	return
 }

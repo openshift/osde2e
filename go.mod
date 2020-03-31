@@ -10,7 +10,7 @@ require (
 	github.com/markbates/pkger v0.14.0
 	github.com/onsi/ginkgo v1.12.0
 	github.com/onsi/gomega v1.7.1
-	github.com/openshift-online/ocm-sdk-go v0.1.89
+	github.com/openshift-online/ocm-sdk-go v0.1.97
 	github.com/openshift/api v0.0.0-20190530131937-dafd2647cb03
 	github.com/openshift/client-go v0.0.0-20190806162413-e9678e3b850d
 	github.com/operator-framework/operator-lifecycle-manager v0.0.0-20190926160646-a61144936680

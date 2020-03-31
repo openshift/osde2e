@@ -46,20 +46,20 @@ func writeLDAPIdentityProvider(object *LDAPIdentityProvider, stream *jsoniter.St
 		stream.WriteString(*object.ca)
 		count++
 	}
-	if object.ldapAttributes != nil {
-		if count > 0 {
-			stream.WriteMore()
-		}
-		stream.WriteObjectField("ldap_attributes")
-		writeLDAPAttributes(object.ldapAttributes, stream)
-		count++
-	}
 	if object.url != nil {
 		if count > 0 {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("url")
 		stream.WriteString(*object.url)
+		count++
+	}
+	if object.attributes != nil {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("attributes")
+		writeLDAPAttributes(object.attributes, stream)
 		count++
 	}
 	if object.bindDN != nil {
@@ -113,12 +113,12 @@ func readLDAPIdentityProvider(iterator *jsoniter.Iterator) *LDAPIdentityProvider
 		case "ca":
 			value := iterator.ReadString()
 			object.ca = &value
-		case "ldap_attributes":
-			value := readLDAPAttributes(iterator)
-			object.ldapAttributes = value
 		case "url":
 			value := iterator.ReadString()
 			object.url = &value
+		case "attributes":
+			value := readLDAPAttributes(iterator)
+			object.attributes = value
 		case "bind_dn":
 			value := iterator.ReadString()
 			object.bindDN = &value

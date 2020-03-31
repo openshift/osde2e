@@ -19,6 +19,10 @@ limitations under the License.
 
 package v1 // github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1
 
+import (
+	time "time"
+)
+
 // RoleBindingKind is the name of the type used to represent objects
 // of type 'role_binding'.
 const RoleBindingKind = "RoleBinding"
@@ -41,6 +45,7 @@ type RoleBinding struct {
 	account        *Account
 	accountID      *string
 	configManaged  *bool
+	createdAt      *time.Time
 	organization   *Organization
 	organizationID *string
 	role           *Role
@@ -48,6 +53,7 @@ type RoleBinding struct {
 	subscription   *Subscription
 	subscriptionID *string
 	type_          *string
+	updatedAt      *time.Time
 }
 
 // Kind returns the name of the type of the object.
@@ -107,10 +113,12 @@ func (o *RoleBinding) Empty() bool {
 	return o == nil || (o.id == nil &&
 		o.accountID == nil &&
 		o.configManaged == nil &&
+		o.createdAt == nil &&
 		o.organizationID == nil &&
 		o.roleID == nil &&
 		o.subscriptionID == nil &&
 		o.type_ == nil &&
+		o.updatedAt == nil &&
 		true)
 }
 
@@ -179,6 +187,29 @@ func (o *RoleBinding) GetConfigManaged() (value bool, ok bool) {
 	ok = o != nil && o.configManaged != nil
 	if ok {
 		value = *o.configManaged
+	}
+	return
+}
+
+// CreatedAt returns the value of the 'created_at' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+//
+func (o *RoleBinding) CreatedAt() time.Time {
+	if o != nil && o.createdAt != nil {
+		return *o.createdAt
+	}
+	return time.Time{}
+}
+
+// GetCreatedAt returns the value of the 'created_at' attribute and
+// a flag indicating if the attribute has a value.
+//
+//
+func (o *RoleBinding) GetCreatedAt() (value time.Time, ok bool) {
+	ok = o != nil && o.createdAt != nil
+	if ok {
+		value = *o.createdAt
 	}
 	return
 }
@@ -340,6 +371,29 @@ func (o *RoleBinding) GetType() (value string, ok bool) {
 	ok = o != nil && o.type_ != nil
 	if ok {
 		value = *o.type_
+	}
+	return
+}
+
+// UpdatedAt returns the value of the 'updated_at' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+//
+func (o *RoleBinding) UpdatedAt() time.Time {
+	if o != nil && o.updatedAt != nil {
+		return *o.updatedAt
+	}
+	return time.Time{}
+}
+
+// GetUpdatedAt returns the value of the 'updated_at' attribute and
+// a flag indicating if the attribute has a value.
+//
+//
+func (o *RoleBinding) GetUpdatedAt() (value time.Time, ok bool) {
+	ok = o != nil && o.updatedAt != nil
+	if ok {
+		value = *o.updatedAt
 	}
 	return
 }
