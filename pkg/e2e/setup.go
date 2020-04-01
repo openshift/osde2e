@@ -1,9 +1,6 @@
 package e2e
 
 import (
-	"bytes"
-	"compress/gzip"
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -18,10 +15,8 @@ import (
 
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/events"
-	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/metadata"
 	"github.com/openshift/osde2e/pkg/common/osd"
-	"github.com/openshift/osde2e/pkg/common/runner"
 	"github.com/openshift/osde2e/pkg/common/state"
 )
 
@@ -75,87 +70,6 @@ var _ = ginkgo.SynchronizedBeforeSuite(func() []byte {
 }, func(data []byte) {
 	// only needs to run once
 })
-
-// After all tests run, clean up within the Ginkgo context
-var _ = ginkgo.SynchronizedAfterSuite(func() {
-	h := helper.NewOutsideGinkgo()
-	// Run Must Gather
-	func() {
-		defer ginkgo.GinkgoRecover()
-
-		log.Print("Running Must Gather...")
-		mustGatherTimeoutInSeconds := 900
-		h.SetServiceAccount("system:serviceaccount:%s:cluster-admin")
-		r := h.Runner(fmt.Sprintf("oc adm must-gather --dest-dir=%v", runner.DefaultRunner.OutputDir))
-		r.Name = "must-gather"
-		r.Tarball = true
-		stopCh := make(chan struct{})
-		err := r.Run(mustGatherTimeoutInSeconds, stopCh)
-		Expect(err).NotTo(HaveOccurred())
-		gatherResults, err := r.RetrieveResults()
-		Expect(err).NotTo(HaveOccurred())
-		h.WriteResults(gatherResults)
-
-	}()
-
-	// Run Cluster State
-	func() {
-		defer ginkgo.GinkgoRecover()
-
-		log.Print("Gathering Cluster State...")
-		clusterState := h.GetClusterState()
-		stateResults := make(map[string][]byte, len(clusterState))
-		for resource, list := range clusterState {
-			data, err := json.MarshalIndent(list, "", "    ")
-			Expect(err).NotTo(HaveOccurred())
-
-			var gbuf bytes.Buffer
-			zw := gzip.NewWriter(&gbuf)
-			_, err = zw.Write(data)
-			Expect(err).NotTo(HaveOccurred())
-
-			err = zw.Close()
-			Expect(err).NotTo(HaveOccurred())
-
-			// include gzip in filename to mark compressed data
-			filename := fmt.Sprintf("%s-%s-%s.json.gzip", resource.Group, resource.Version, resource.Resource)
-			stateResults[filename] = gbuf.Bytes()
-		}
-
-		// write results to disk
-		h.WriteResults(stateResults)
-	}()
-
-	// Get state from OCM
-	func() {
-		var OSD *osd.OSD
-		var err error
-		cfg := config.Instance
-		if len(state.Instance.Cluster.ID) > 0 {
-			if OSD, err = osd.New(cfg.OCM.Token, cfg.OCM.Env, cfg.OCM.Debug); err != nil {
-				log.Printf("Could not setup OSD: %v", err)
-			}
-
-			cluster, err := OSD.GetCluster(state.Instance.Cluster.ID)
-			if err != nil {
-				log.Printf("Could not query OCM for cluster %s: %s", state.Instance.Cluster.ID, err.Error())
-			} else {
-				flavorName, _ := cluster.Flavour().GetName()
-				log.Printf("Cluster addons: %v", cluster.Addons().Slice())
-				log.Printf("Cluster cloud provider: %v", cluster.CloudProvider().DisplayName())
-				log.Printf("Cluster expiration: %v", cluster.ExpirationTimestamp())
-				log.Printf("Cluster flavor: %s", flavorName)
-				log.Printf("Cluster state: %v", cluster.State())
-			}
-
-		} else {
-			log.Print("No cluster ID set. Skipping OCM Queries.")
-		}
-	}()
-
-	log.Printf("Getting logs for cluster '%s'...", state.Instance.Cluster.ID)
-	getLogs()
-}, func() {})
 
 // Collect logs after each test
 var _ = ginkgo.JustAfterEach(getLogs)
