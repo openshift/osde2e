@@ -44,8 +44,7 @@ func RunUpgrade(OSD *osd.OSD) error {
 	var upgradeStarted time.Time
 
 	// setup helper
-	h := helper.New()
-	defer h.Cleanup()
+	h := helper.NewOutsideGinkgo()
 
 	if h.Upgrade.Image != "" {
 		log.Printf("Upgrading cluster to UPGRADE_IMAGE '%s'", h.Upgrade.Image)

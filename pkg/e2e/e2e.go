@@ -2,6 +2,9 @@
 package e2e
 
 import (
+	"bytes"
+	"compress/gzip"
+	"encoding/json"
 	"encoding/xml"
 	"fmt"
 	"io/ioutil"
@@ -24,6 +27,7 @@ import (
 	"github.com/openshift/osde2e/pkg/common/metadata"
 	"github.com/openshift/osde2e/pkg/common/osd"
 	"github.com/openshift/osde2e/pkg/common/phase"
+	"github.com/openshift/osde2e/pkg/common/runner"
 	"github.com/openshift/osde2e/pkg/common/state"
 	"github.com/openshift/osde2e/pkg/common/upgrade"
 )
@@ -163,20 +167,98 @@ func runGinkgoTests() error {
 		}
 	}
 
-	func() {
-		defer ginkgo.GinkgoRecover()
-		// We need to clean up our helper tests manually.
-		if !cfg.DryRun {
-			h := helper.New()
-			h.Cleanup()
-		}
-	}()
+	h := helper.NewOutsideGinkgo()
+	cleanupAfterE2E(h)
 
 	if !testsPassed || !upgradeTestsPassed {
 		return fmt.Errorf("please inspect logs for more details")
 	}
 
 	return nil
+}
+
+func cleanupAfterE2E(h *helper.H) (errors []error) {
+	state := state.Instance
+	defer ginkgo.GinkgoRecover()
+
+	log.Print("Running Must Gather...")
+	mustGatherTimeoutInSeconds := 900
+	h.SetServiceAccount("system:serviceaccount:%s:cluster-admin")
+	r := h.Runner(fmt.Sprintf("oc adm must-gather --dest-dir=%v", runner.DefaultRunner.OutputDir))
+	r.Name = "must-gather"
+	r.Tarball = true
+	stopCh := make(chan struct{})
+	err := r.Run(mustGatherTimeoutInSeconds, stopCh)
+
+	if err != nil {
+		log.Printf("Error running must-gather: %s", err.Error())
+	} else {
+		gatherResults, err := r.RetrieveResults()
+		if err != nil {
+			log.Printf("Error retrieving must-gather results: %s", err.Error())
+		} else {
+			h.WriteResults(gatherResults)
+		}
+	}
+
+	log.Print("Gathering Cluster State...")
+	clusterState := h.GetClusterState()
+	stateResults := make(map[string][]byte, len(clusterState))
+	for resource, list := range clusterState {
+		data, err := json.MarshalIndent(list, "", "    ")
+		if err != nil {
+			log.Printf("error marshalling JSON for %s/%s/%s", resource.Group, resource.Version, resource.Resource)
+		} else {
+			var gbuf bytes.Buffer
+			zw := gzip.NewWriter(&gbuf)
+			_, err = zw.Write(data)
+			if err != nil {
+				log.Print("Error writing data to buffer")
+			}
+			err = zw.Close()
+			if err != nil {
+				log.Print("Error closing writer to buffer")
+			}
+			// include gzip in filename to mark compressed data
+			filename := fmt.Sprintf("%s-%s-%s.json.gzip", resource.Group, resource.Version, resource.Resource)
+			stateResults[filename] = gbuf.Bytes()
+		}
+	}
+
+	// write results to disk
+	h.WriteResults(stateResults)
+
+	// Get state from OCM
+	log.Print("Gathering cluster state from OCM")
+	var OSD *osd.OSD
+	cfg := config.Instance
+	if len(state.Cluster.ID) > 0 {
+		if OSD, err = osd.New(cfg.OCM.Token, cfg.OCM.Env, cfg.OCM.Debug); err != nil {
+			log.Printf("Error getting OSD client: %s", err.Error())
+		}
+
+		cluster, err := OSD.GetCluster(state.Cluster.ID)
+		if err != nil {
+			log.Printf("error getting Cluster state: %s", err.Error())
+		} else {
+			flavorName, _ := cluster.Flavour().GetName()
+			log.Printf("Cluster addons: %v", cluster.Addons().Slice())
+			log.Printf("Cluster cloud provider: %v", cluster.CloudProvider().DisplayName())
+			log.Printf("Cluster expiration: %v", cluster.ExpirationTimestamp())
+			log.Printf("Cluster flavor: %s", flavorName)
+			log.Printf("Cluster state: %v", cluster.State())
+		}
+
+	} else {
+		log.Print("No cluster ID set. Skipping OCM Queries.")
+	}
+
+	// We need to clean up our helper tests manually.
+	if !cfg.DryRun {
+		h.Cleanup()
+	}
+
+	return errors
 }
 
 func runTestsInPhase(phase string, description string) bool {
