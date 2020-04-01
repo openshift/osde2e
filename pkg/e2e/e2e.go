@@ -91,6 +91,11 @@ func runGinkgoTests() error {
 			return nil
 		}
 
+		if state.Upgrade.ReleaseName == osd.NoVersionFound {
+			log.Printf("No valid versions were found. Skipping tests.")
+			return nil
+		}
+
 		// check that enough quota exists for this test if creating cluster
 		if len(state.Cluster.ID) == 0 {
 			if cfg.DryRun {

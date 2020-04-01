@@ -13,6 +13,7 @@ import (
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/metadata"
 	"github.com/openshift/osde2e/pkg/common/osd"
+	"github.com/openshift/osde2e/pkg/common/state"
 )
 
 const (
@@ -23,12 +24,17 @@ const (
 )
 
 type smallCincinnatiCache struct {
-	Cache map[string][]*semver.Version
+	Cache map[string]smallCincinnatiCacheObject
 
 	mutex sync.Mutex
 }
 
-func (s *smallCincinnatiCache) Get(channel string) ([]*semver.Version, error) {
+type smallCincinnatiCacheObject struct {
+	Versions []*semver.Version
+	Edges    [][]int
+}
+
+func (s *smallCincinnatiCache) Get(channel string) (smallCincinnatiCacheObject, error) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
@@ -37,7 +43,7 @@ func (s *smallCincinnatiCache) Get(channel string) ([]*semver.Version, error) {
 		err := s.loadCincinnatiData(channel)
 
 		if err != nil {
-			return nil, err
+			return smallCincinnatiCacheObject{}, err
 		}
 	}
 
@@ -76,7 +82,8 @@ func (s *smallCincinnatiCache) loadCincinnatiData(channel string) error {
 		return fmt.Errorf("error decoding body of '%s': %v", data, err)
 	}
 
-	s.Cache[channel] = []*semver.Version{}
+	versions := []*semver.Version{}
+
 	for _, release := range cincinnatiReleases.Nodes {
 		currentVersion, err := semver.NewVersion(release.Version)
 
@@ -85,28 +92,58 @@ func (s *smallCincinnatiCache) loadCincinnatiData(channel string) error {
 			continue
 		}
 
-		s.Cache[channel] = append(s.Cache[channel], currentVersion)
+		versions = append(versions, currentVersion)
+	}
+
+	s.Cache[channel] = smallCincinnatiCacheObject{
+		Versions: versions,
+		Edges:    cincinnatiReleases.Edges,
 	}
 
 	return nil
 }
 
 var cache *smallCincinnatiCache = &smallCincinnatiCache{
-	Cache: map[string][]*semver.Version{},
+	Cache: map[string]smallCincinnatiCacheObject{},
 	mutex: sync.Mutex{},
 }
 
-// IsVersionInCincinnati returns true if the version can be found in Cincinnati
-func IsVersionInCincinnati(version *semver.Version) (bool, error) {
-	channel := VersionToChannel(version)
+// DoesEdgeExistInCincinnati returns true if the version can be found in Cincinnati and the edge from the install version to the upgrade version exists.
+func DoesEdgeExistInCincinnati(installVersion, upgradeVersion *semver.Version) (bool, error) {
+	channel := VersionToChannel(upgradeVersion)
 	cincinnatiVersions, err := cache.Get(channel)
 
 	if err != nil {
 		return false, fmt.Errorf("error loading Cincinnati data: %v", err)
 	}
 
-	for _, cincinnatiVersion := range cincinnatiVersions {
-		if version.Equal(cincinnatiVersion) {
+	installIndex := -1
+	upgradeIndex := -1
+	for i, cincinnatiVersion := range cincinnatiVersions.Versions {
+		if installVersion.Equal(cincinnatiVersion) {
+			installIndex = i
+		}
+		if upgradeVersion.Equal(cincinnatiVersion) {
+			upgradeIndex = i
+		}
+	}
+
+	targetEdge := []int{installIndex, upgradeIndex}
+
+	for _, edge := range cincinnatiVersions.Edges {
+		if len(edge) != len(targetEdge) {
+			continue
+		}
+
+		match := true
+		for i := range edge {
+			if edge[i] != targetEdge[i] {
+				match = false
+				break
+			}
+		}
+
+		if match {
 			return true, nil
 		}
 	}
@@ -143,12 +180,33 @@ func LatestReleaseFromReleaseController(releaseStream string) (name, pullSpec st
 }
 
 // VersionToChannel creates a Cincinnati channel version out of an OpenShift version.
+// If the config.Instance.Upgrade.OnlyUpgradeToZReleases flag is set, this will use the install version
+// in the global state object to determine the channel.
+// If production is targeted for this cluster provision, the stable channel will be used.
+// If stage is targeted for this cluster provision, the fast channel will be used.
+// Regardless of environment, if Prerelease is populated in the version object, then the candidate channel will be used.
 func VersionToChannel(version *semver.Version) string {
-	if strings.HasPrefix(version.Prerelease(), "rc") {
-		return fmt.Sprintf("candidate-%d.%d", version.Major(), version.Minor())
+	useVersion := version
+	if config.Instance.Upgrade.OnlyUpgradeToZReleases {
+		var err error
+		useVersion, err = osd.OpenshiftVersionToSemver(state.Instance.Cluster.Version)
+
+		if err != nil {
+			panic("cluster version stored in state object is invalid")
+		}
 	}
 
-	return fmt.Sprintf("fast-%d.%d", version.Major(), version.Minor())
+	if strings.HasPrefix(useVersion.Prerelease(), "rc") {
+		return fmt.Sprintf("candidate-%d.%d", useVersion.Major(), useVersion.Minor())
+	}
+
+	environment := config.Instance.OCM.Env
+
+	if environment == "stage" {
+		return fmt.Sprintf("fast-%d.%d", useVersion.Major(), useVersion.Minor())
+	}
+
+	return fmt.Sprintf("stable-%d.%d", useVersion.Major(), useVersion.Minor())
 }
 
 func ensureReleasePrefix(release string) string {
@@ -168,7 +226,9 @@ type latestAccepted struct {
 
 type cincinnatiReleaseNodes struct {
 	Nodes []cincinnatiRelease `json:"nodes"`
+	Edges [][]int             `json:"edges"`
 }
+
 type cincinnatiRelease struct {
 	Version string `json:"version"`
 	Payload string `json:"payload"`

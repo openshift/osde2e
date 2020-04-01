@@ -14,8 +14,14 @@ import (
 	"github.com/openshift/osde2e/pkg/common/upgrade"
 )
 
-func filterOnCincinnati(version *semver.Version) bool {
-	versionInCincinnati, err := upgrade.IsVersionInCincinnati(version)
+func filterOnCincinnati(upgradeVersion *semver.Version) bool {
+	installVersion, err := osd.OpenshiftVersionToSemver(state.Instance.Cluster.Version)
+
+	if err != nil {
+		panic("install version stored in state object is invalid")
+	}
+
+	versionInCincinnati, err := upgrade.DoesEdgeExistInCincinnati(installVersion, upgradeVersion)
 
 	if err != nil {
 		log.Printf("error while trying to filter on version in Cincinnati: %v", err)
@@ -142,6 +148,12 @@ func setupUpgradeVersion(osdClient *osd.OSD) (err error) {
 		if err != nil {
 			log.Printf("unable to get the most recent version of openshift from OSD: %v", err)
 			return err
+		}
+
+		if cisUpgradeVersionString == osd.NoVersionFound {
+			state.Upgrade.ReleaseName = cisUpgradeVersionString
+			metadata.Instance.SetUpgradeVersionSource("none")
+			return nil
 		}
 
 		cisUpgradeVersion, err := osd.OpenshiftVersionToSemver(cisUpgradeVersionString)
