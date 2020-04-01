@@ -136,6 +136,7 @@ func (m *Metadata) IncrementLogMetric(metric string, value int) {
 	} else {
 		m.LogMetrics[metric] = value
 	}
+
 	m.WriteToJSON(config.Instance.ReportDir)
 }
 
