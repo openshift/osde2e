@@ -47,6 +47,8 @@ var Instance *Metadata
 
 func init() {
 	Instance = &Metadata{}
+	Instance.InstallPhasePassRate = -1.0
+	Instance.UpgradePhasePassRate = -1.0
 	Instance.LogMetrics = make(map[string]int)
 }
 
