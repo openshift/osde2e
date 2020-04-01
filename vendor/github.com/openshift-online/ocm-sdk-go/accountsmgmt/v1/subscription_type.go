@@ -39,19 +39,30 @@ const SubscriptionNilKind = "SubscriptionNil"
 //
 //
 type Subscription struct {
-	id                 *string
-	href               *string
-	link               bool
-	clusterID          *string
-	createdAt          *time.Time
-	creator            *Account
-	displayName        *string
-	externalClusterID  *string
-	lastTelemetryDate  *time.Time
-	organizationID     *string
-	plan               *Plan
-	registryCredential *RegistryCredential
-	updatedAt          *time.Time
+	id                *string
+	href              *string
+	link              bool
+	clusterID         *string
+	consumerUUID      *string
+	cpuTotal          *int
+	createdAt         *time.Time
+	creator           *Account
+	displayName       *string
+	externalClusterID *string
+	labels            []*Label
+	lastReconcileDate *time.Time
+	lastTelemetryDate *time.Time
+	managed           *bool
+	organizationID    *string
+	plan              *Plan
+	productBundle     *ProductBundleEnum
+	serviceLevel      *ServiceLevelEnum
+	socketTotal       *int
+	status            *string
+	supportLevel      *SupportLevelEnum
+	systemUnits       *SystemUnitsEnum
+	updatedAt         *time.Time
+	usage             *UsageEnum
 }
 
 // Kind returns the name of the type of the object.
@@ -110,12 +121,24 @@ func (o *Subscription) GetHREF() (value string, ok bool) {
 func (o *Subscription) Empty() bool {
 	return o == nil || (o.id == nil &&
 		o.clusterID == nil &&
+		o.consumerUUID == nil &&
+		o.cpuTotal == nil &&
 		o.createdAt == nil &&
 		o.displayName == nil &&
 		o.externalClusterID == nil &&
+		len(o.labels) == 0 &&
+		o.lastReconcileDate == nil &&
 		o.lastTelemetryDate == nil &&
+		o.managed == nil &&
 		o.organizationID == nil &&
+		o.productBundle == nil &&
+		o.serviceLevel == nil &&
+		o.socketTotal == nil &&
+		o.status == nil &&
+		o.supportLevel == nil &&
+		o.systemUnits == nil &&
 		o.updatedAt == nil &&
+		o.usage == nil &&
 		true)
 }
 
@@ -138,6 +161,52 @@ func (o *Subscription) GetClusterID() (value string, ok bool) {
 	ok = o != nil && o.clusterID != nil
 	if ok {
 		value = *o.clusterID
+	}
+	return
+}
+
+// ConsumerUUID returns the value of the 'consumer_UUID' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+//
+func (o *Subscription) ConsumerUUID() string {
+	if o != nil && o.consumerUUID != nil {
+		return *o.consumerUUID
+	}
+	return ""
+}
+
+// GetConsumerUUID returns the value of the 'consumer_UUID' attribute and
+// a flag indicating if the attribute has a value.
+//
+//
+func (o *Subscription) GetConsumerUUID() (value string, ok bool) {
+	ok = o != nil && o.consumerUUID != nil
+	if ok {
+		value = *o.consumerUUID
+	}
+	return
+}
+
+// CpuTotal returns the value of the 'cpu_total' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+//
+func (o *Subscription) CpuTotal() int {
+	if o != nil && o.cpuTotal != nil {
+		return *o.cpuTotal
+	}
+	return 0
+}
+
+// GetCpuTotal returns the value of the 'cpu_total' attribute and
+// a flag indicating if the attribute has a value.
+//
+//
+func (o *Subscription) GetCpuTotal() (value int, ok bool) {
+	ok = o != nil && o.cpuTotal != nil
+	if ok {
+		value = *o.cpuTotal
 	}
 	return
 }
@@ -234,10 +303,56 @@ func (o *Subscription) GetExternalClusterID() (value string, ok bool) {
 	return
 }
 
+// Labels returns the value of the 'labels' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+//
+func (o *Subscription) Labels() []*Label {
+	if o == nil {
+		return nil
+	}
+	return o.labels
+}
+
+// GetLabels returns the value of the 'labels' attribute and
+// a flag indicating if the attribute has a value.
+//
+//
+func (o *Subscription) GetLabels() (value []*Label, ok bool) {
+	ok = o != nil && o.labels != nil
+	if ok {
+		value = o.labels
+	}
+	return
+}
+
+// LastReconcileDate returns the value of the 'last_reconcile_date' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+// Last time this subscription were reconciled about cluster usage
+func (o *Subscription) LastReconcileDate() time.Time {
+	if o != nil && o.lastReconcileDate != nil {
+		return *o.lastReconcileDate
+	}
+	return time.Time{}
+}
+
+// GetLastReconcileDate returns the value of the 'last_reconcile_date' attribute and
+// a flag indicating if the attribute has a value.
+//
+// Last time this subscription were reconciled about cluster usage
+func (o *Subscription) GetLastReconcileDate() (value time.Time, ok bool) {
+	ok = o != nil && o.lastReconcileDate != nil
+	if ok {
+		value = *o.lastReconcileDate
+	}
+	return
+}
+
 // LastTelemetryDate returns the value of the 'last_telemetry_date' attribute, or
 // the zero value of the type if the attribute doesn't have a value.
 //
-// Last telemetry authorization request for this subscription.
+// Last telemetry authorization request for this  cluster/subscription in Unix time
 func (o *Subscription) LastTelemetryDate() time.Time {
 	if o != nil && o.lastTelemetryDate != nil {
 		return *o.lastTelemetryDate
@@ -248,11 +363,34 @@ func (o *Subscription) LastTelemetryDate() time.Time {
 // GetLastTelemetryDate returns the value of the 'last_telemetry_date' attribute and
 // a flag indicating if the attribute has a value.
 //
-// Last telemetry authorization request for this subscription.
+// Last telemetry authorization request for this  cluster/subscription in Unix time
 func (o *Subscription) GetLastTelemetryDate() (value time.Time, ok bool) {
 	ok = o != nil && o.lastTelemetryDate != nil
 	if ok {
 		value = *o.lastTelemetryDate
+	}
+	return
+}
+
+// Managed returns the value of the 'managed' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+//
+func (o *Subscription) Managed() bool {
+	if o != nil && o.managed != nil {
+		return *o.managed
+	}
+	return false
+}
+
+// GetManaged returns the value of the 'managed' attribute and
+// a flag indicating if the attribute has a value.
+//
+//
+func (o *Subscription) GetManaged() (value bool, ok bool) {
+	ok = o != nil && o.managed != nil
+	if ok {
+		value = *o.managed
 	}
 	return
 }
@@ -303,25 +441,140 @@ func (o *Subscription) GetPlan() (value *Plan, ok bool) {
 	return
 }
 
-// RegistryCredential returns the value of the 'registry_credential' attribute, or
+// ProductBundle returns the value of the 'product_bundle' attribute, or
 // the zero value of the type if the attribute doesn't have a value.
 //
 //
-func (o *Subscription) RegistryCredential() *RegistryCredential {
-	if o == nil {
-		return nil
+func (o *Subscription) ProductBundle() ProductBundleEnum {
+	if o != nil && o.productBundle != nil {
+		return *o.productBundle
 	}
-	return o.registryCredential
+	return ProductBundleEnum("")
 }
 
-// GetRegistryCredential returns the value of the 'registry_credential' attribute and
+// GetProductBundle returns the value of the 'product_bundle' attribute and
 // a flag indicating if the attribute has a value.
 //
 //
-func (o *Subscription) GetRegistryCredential() (value *RegistryCredential, ok bool) {
-	ok = o != nil && o.registryCredential != nil
+func (o *Subscription) GetProductBundle() (value ProductBundleEnum, ok bool) {
+	ok = o != nil && o.productBundle != nil
 	if ok {
-		value = o.registryCredential
+		value = *o.productBundle
+	}
+	return
+}
+
+// ServiceLevel returns the value of the 'service_level' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+//
+func (o *Subscription) ServiceLevel() ServiceLevelEnum {
+	if o != nil && o.serviceLevel != nil {
+		return *o.serviceLevel
+	}
+	return ServiceLevelEnum("")
+}
+
+// GetServiceLevel returns the value of the 'service_level' attribute and
+// a flag indicating if the attribute has a value.
+//
+//
+func (o *Subscription) GetServiceLevel() (value ServiceLevelEnum, ok bool) {
+	ok = o != nil && o.serviceLevel != nil
+	if ok {
+		value = *o.serviceLevel
+	}
+	return
+}
+
+// SocketTotal returns the value of the 'socket_total' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+//
+func (o *Subscription) SocketTotal() int {
+	if o != nil && o.socketTotal != nil {
+		return *o.socketTotal
+	}
+	return 0
+}
+
+// GetSocketTotal returns the value of the 'socket_total' attribute and
+// a flag indicating if the attribute has a value.
+//
+//
+func (o *Subscription) GetSocketTotal() (value int, ok bool) {
+	ok = o != nil && o.socketTotal != nil
+	if ok {
+		value = *o.socketTotal
+	}
+	return
+}
+
+// Status returns the value of the 'status' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+//
+func (o *Subscription) Status() string {
+	if o != nil && o.status != nil {
+		return *o.status
+	}
+	return ""
+}
+
+// GetStatus returns the value of the 'status' attribute and
+// a flag indicating if the attribute has a value.
+//
+//
+func (o *Subscription) GetStatus() (value string, ok bool) {
+	ok = o != nil && o.status != nil
+	if ok {
+		value = *o.status
+	}
+	return
+}
+
+// SupportLevel returns the value of the 'support_level' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+//
+func (o *Subscription) SupportLevel() SupportLevelEnum {
+	if o != nil && o.supportLevel != nil {
+		return *o.supportLevel
+	}
+	return SupportLevelEnum("")
+}
+
+// GetSupportLevel returns the value of the 'support_level' attribute and
+// a flag indicating if the attribute has a value.
+//
+//
+func (o *Subscription) GetSupportLevel() (value SupportLevelEnum, ok bool) {
+	ok = o != nil && o.supportLevel != nil
+	if ok {
+		value = *o.supportLevel
+	}
+	return
+}
+
+// SystemUnits returns the value of the 'system_units' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+//
+func (o *Subscription) SystemUnits() SystemUnitsEnum {
+	if o != nil && o.systemUnits != nil {
+		return *o.systemUnits
+	}
+	return SystemUnitsEnum("")
+}
+
+// GetSystemUnits returns the value of the 'system_units' attribute and
+// a flag indicating if the attribute has a value.
+//
+//
+func (o *Subscription) GetSystemUnits() (value SystemUnitsEnum, ok bool) {
+	ok = o != nil && o.systemUnits != nil
+	if ok {
+		value = *o.systemUnits
 	}
 	return
 }
@@ -345,6 +598,29 @@ func (o *Subscription) GetUpdatedAt() (value time.Time, ok bool) {
 	ok = o != nil && o.updatedAt != nil
 	if ok {
 		value = *o.updatedAt
+	}
+	return
+}
+
+// Usage returns the value of the 'usage' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+//
+func (o *Subscription) Usage() UsageEnum {
+	if o != nil && o.usage != nil {
+		return *o.usage
+	}
+	return UsageEnum("")
+}
+
+// GetUsage returns the value of the 'usage' attribute and
+// a flag indicating if the attribute has a value.
+//
+//
+func (o *Subscription) GetUsage() (value UsageEnum, ok bool) {
+	ok = o != nil && o.usage != nil
+	if ok {
+		value = *o.usage
 	}
 	return
 }

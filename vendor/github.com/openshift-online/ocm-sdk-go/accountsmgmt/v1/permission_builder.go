@@ -28,7 +28,6 @@ type PermissionBuilder struct {
 	link         bool
 	action       *Action
 	resourceType *string
-	roleID       *string
 }
 
 // NewPermission creates a new builder of 'permission' objects.
@@ -70,14 +69,6 @@ func (b *PermissionBuilder) ResourceType(value string) *PermissionBuilder {
 	return b
 }
 
-// RoleID sets the value of the 'role_ID' attribute to the given value.
-//
-//
-func (b *PermissionBuilder) RoleID(value string) *PermissionBuilder {
-	b.roleID = &value
-	return b
-}
-
 // Copy copies the attributes of the given object into this builder, discarding any previous values.
 func (b *PermissionBuilder) Copy(object *Permission) *PermissionBuilder {
 	if object == nil {
@@ -88,7 +79,6 @@ func (b *PermissionBuilder) Copy(object *Permission) *PermissionBuilder {
 	b.link = object.link
 	b.action = object.action
 	b.resourceType = object.resourceType
-	b.roleID = object.roleID
 	return b
 }
 
@@ -100,6 +90,5 @@ func (b *PermissionBuilder) Build() (object *Permission, err error) {
 	object.link = b.link
 	object.action = b.action
 	object.resourceType = b.resourceType
-	object.roleID = b.roleID
 	return
 }

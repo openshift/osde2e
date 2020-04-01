@@ -19,6 +19,10 @@ limitations under the License.
 
 package v1 // github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1
 
+import (
+	time "time"
+)
+
 // AccountBuilder contains the data and logic needed to build 'account' objects.
 //
 //
@@ -29,11 +33,13 @@ type AccountBuilder struct {
 	banCode        *string
 	banDescription *string
 	banned         *bool
+	createdAt      *time.Time
 	email          *string
 	firstName      *string
 	lastName       *string
-	name           *string
 	organization   *OrganizationBuilder
+	serviceAccount *bool
+	updatedAt      *time.Time
 	username       *string
 }
 
@@ -84,6 +90,14 @@ func (b *AccountBuilder) Banned(value bool) *AccountBuilder {
 	return b
 }
 
+// CreatedAt sets the value of the 'created_at' attribute to the given value.
+//
+//
+func (b *AccountBuilder) CreatedAt(value time.Time) *AccountBuilder {
+	b.createdAt = &value
+	return b
+}
+
 // Email sets the value of the 'email' attribute to the given value.
 //
 //
@@ -108,19 +122,27 @@ func (b *AccountBuilder) LastName(value string) *AccountBuilder {
 	return b
 }
 
-// Name sets the value of the 'name' attribute to the given value.
-//
-//
-func (b *AccountBuilder) Name(value string) *AccountBuilder {
-	b.name = &value
-	return b
-}
-
 // Organization sets the value of the 'organization' attribute to the given value.
 //
 //
 func (b *AccountBuilder) Organization(value *OrganizationBuilder) *AccountBuilder {
 	b.organization = value
+	return b
+}
+
+// ServiceAccount sets the value of the 'service_account' attribute to the given value.
+//
+//
+func (b *AccountBuilder) ServiceAccount(value bool) *AccountBuilder {
+	b.serviceAccount = &value
+	return b
+}
+
+// UpdatedAt sets the value of the 'updated_at' attribute to the given value.
+//
+//
+func (b *AccountBuilder) UpdatedAt(value time.Time) *AccountBuilder {
+	b.updatedAt = &value
 	return b
 }
 
@@ -143,15 +165,17 @@ func (b *AccountBuilder) Copy(object *Account) *AccountBuilder {
 	b.banCode = object.banCode
 	b.banDescription = object.banDescription
 	b.banned = object.banned
+	b.createdAt = object.createdAt
 	b.email = object.email
 	b.firstName = object.firstName
 	b.lastName = object.lastName
-	b.name = object.name
 	if object.organization != nil {
 		b.organization = NewOrganization().Copy(object.organization)
 	} else {
 		b.organization = nil
 	}
+	b.serviceAccount = object.serviceAccount
+	b.updatedAt = object.updatedAt
 	b.username = object.username
 	return b
 }
@@ -165,16 +189,18 @@ func (b *AccountBuilder) Build() (object *Account, err error) {
 	object.banCode = b.banCode
 	object.banDescription = b.banDescription
 	object.banned = b.banned
+	object.createdAt = b.createdAt
 	object.email = b.email
 	object.firstName = b.firstName
 	object.lastName = b.lastName
-	object.name = b.name
 	if b.organization != nil {
 		object.organization, err = b.organization.Build()
 		if err != nil {
 			return
 		}
 	}
+	object.serviceAccount = b.serviceAccount
+	object.updatedAt = b.updatedAt
 	object.username = b.username
 	return
 }

@@ -112,6 +112,14 @@ func writeAddOn(object *AddOn, stream *jsoniter.Stream) {
 		stream.WriteString(*object.name)
 		count++
 	}
+	if object.operatorName != nil {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("operator_name")
+		stream.WriteString(*object.operatorName)
+		count++
+	}
 	if object.resourceCost != nil {
 		if count > 0 {
 			stream.WriteMore()
@@ -188,6 +196,9 @@ func readAddOn(iterator *jsoniter.Iterator) *AddOn {
 		case "name":
 			value := iterator.ReadString()
 			object.name = &value
+		case "operator_name":
+			value := iterator.ReadString()
+			object.operatorName = &value
 		case "resource_cost":
 			value := iterator.ReadFloat64()
 			object.resourceCost = &value

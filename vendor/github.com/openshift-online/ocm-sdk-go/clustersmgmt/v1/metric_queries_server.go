@@ -34,6 +34,11 @@ type MetricQueriesServer interface {
 	// capacity in the cluster by node role and operating system.
 	CPUTotalByNodeRolesOS() CPUTotalByNodeRolesOSMetricQueryServer
 
+	// Alerts returns the target 'alerts_metric_query' resource.
+	//
+	// Reference to the resource that retrieves the firing alerts in the cluster.
+	Alerts() AlertsMetricQueryServer
+
 	// ClusterOperators returns the target 'cluster_operators_metric_query' resource.
 	//
 	// Reference to the resource that retrieves the cluster operator status metrics.
@@ -65,6 +70,13 @@ func dispatchMetricQueries(w http.ResponseWriter, r *http.Request, server Metric
 			return
 		}
 		dispatchCPUTotalByNodeRolesOSMetricQuery(w, r, target, segments[1:])
+	case "alerts":
+		target := server.Alerts()
+		if target == nil {
+			errors.SendNotFound(w, r)
+			return
+		}
+		dispatchAlertsMetricQuery(w, r, target, segments[1:])
 	case "cluster_operators":
 		target := server.ClusterOperators()
 		if target == nil {

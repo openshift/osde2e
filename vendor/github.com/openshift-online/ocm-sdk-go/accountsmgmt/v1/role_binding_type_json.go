@@ -21,6 +21,7 @@ package v1 // github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1
 
 import (
 	"io"
+	"time"
 
 	jsoniter "github.com/json-iterator/go"
 	"github.com/openshift-online/ocm-sdk-go/helpers"
@@ -88,6 +89,14 @@ func writeRoleBinding(object *RoleBinding, stream *jsoniter.Stream) {
 		stream.WriteBool(*object.configManaged)
 		count++
 	}
+	if object.createdAt != nil {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("created_at")
+		stream.WriteString((*object.createdAt).Format(time.RFC3339))
+		count++
+	}
 	if object.organization != nil {
 		if count > 0 {
 			stream.WriteMore()
@@ -144,6 +153,14 @@ func writeRoleBinding(object *RoleBinding, stream *jsoniter.Stream) {
 		stream.WriteString(*object.type_)
 		count++
 	}
+	if object.updatedAt != nil {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("updated_at")
+		stream.WriteString((*object.updatedAt).Format(time.RFC3339))
+		count++
+	}
 	stream.WriteObjectEnd()
 }
 
@@ -186,6 +203,13 @@ func readRoleBinding(iterator *jsoniter.Iterator) *RoleBinding {
 		case "config_managed":
 			value := iterator.ReadBool()
 			object.configManaged = &value
+		case "created_at":
+			text := iterator.ReadString()
+			value, err := time.Parse(time.RFC3339, text)
+			if err != nil {
+				iterator.ReportError("", err.Error())
+			}
+			object.createdAt = &value
 		case "organization":
 			value := readOrganization(iterator)
 			object.organization = value
@@ -207,6 +231,13 @@ func readRoleBinding(iterator *jsoniter.Iterator) *RoleBinding {
 		case "type":
 			value := iterator.ReadString()
 			object.type_ = &value
+		case "updated_at":
+			text := iterator.ReadString()
+			value, err := time.Parse(time.RFC3339, text)
+			if err != nil {
+				iterator.ReportError("", err.Error())
+			}
+			object.updatedAt = &value
 		default:
 			iterator.ReadAny()
 		}

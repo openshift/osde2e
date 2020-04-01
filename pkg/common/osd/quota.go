@@ -1,22 +1,18 @@
 package osd
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
-	"net/http"
-	"path"
 
 	accounts "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"
-	osderrors "github.com/openshift-online/ocm-sdk-go/errors"
 
 	"github.com/openshift/osde2e/pkg/common/config"
 )
 
 const (
-	// ResourceAWSCluster is the quota resource type for a cluster on AWS.
-	ResourceAWSCluster = "cluster.aws"
+	// ResourceClusterFmt is the format string for a quota resource type for a cluster.
+	ResourceClusterFmt = "cluster.%s"
 )
 
 // CheckQuota determines if enough quota is available to launch with cfg.
@@ -45,10 +41,11 @@ func (u *OSD) CheckQuota() (bool, error) {
 	machineType := ""
 
 	quotaFound := false
-	for _, q := range quotaList {
-		if quotaFound = HasQuotaFor(q, ResourceAWSCluster, machineType); quotaFound {
+	resourceClusterType := fmt.Sprintf(ResourceClusterFmt, config.Instance.CloudProvider.CloudProviderID)
+	for _, q := range quotaList.Slice() {
+		if quotaFound = HasQuotaFor(q, resourceClusterType, machineType); quotaFound {
 			log.Printf("Quota for test config (%s/%s/multiAZ=%t) found: total=%d, remaining: %d",
-				ResourceAWSCluster, machineType, config.Instance.Cluster.MultiAZ, q.Allowed(), q.Allowed()-q.Reserved())
+				resourceClusterType, machineType, config.Instance.Cluster.MultiAZ, q.Allowed(), q.Allowed()-q.Reserved())
 			break
 		}
 	}
@@ -57,7 +54,7 @@ func (u *OSD) CheckQuota() (bool, error) {
 }
 
 // CurrentAccountQuota returns quota available for the current account's organization in the environment.
-func (u *OSD) CurrentAccountQuota() ([]*accounts.ResourceQuota, error) {
+func (u *OSD) CurrentAccountQuota() (*accounts.QuotaSummaryList, error) {
 	acc, err := u.CurrentAccount()
 	if err != nil || acc == nil {
 		return nil, fmt.Errorf("couldn't get current account: %v", err)
@@ -66,17 +63,18 @@ func (u *OSD) CurrentAccountQuota() ([]*accounts.ResourceQuota, error) {
 	}
 
 	orgID := acc.Organization().ID()
-	quotaList, err := u.getQuotaSummary(orgID)
+	quotaList, err := u.conn.AccountsMgmt().V1().Organizations().Organization(orgID).QuotaSummary().List().Send()
 	if err == nil && quotaList != nil {
 		err = errResp(quotaList.Error())
 	} else if quotaList == nil {
 		return nil, errors.New("QuotaList can't be nil")
 	}
+
 	return quotaList.Items(), err
 }
 
 // HasQuotaFor the desired configuration. If machineT is empty a default will try to be selected.
-func HasQuotaFor(q *accounts.ResourceQuota, resourceType, machineType string) bool {
+func HasQuotaFor(q *accounts.QuotaSummary, resourceType, machineType string) bool {
 	azType := "single"
 	if config.Instance.Cluster.MultiAZ {
 		azType = "multi"
@@ -90,50 +88,4 @@ func HasQuotaFor(q *accounts.ResourceQuota, resourceType, machineType string) bo
 		}
 	}
 	return false
-}
-
-// TODO: use ocm-sdk-go resource_summary method once available
-func (u *OSD) getQuotaSummary(orgID string) (*resourceSummaryListResponse, error) {
-	resp := new(resourceSummaryListResponse)
-	summaryPath := path.Join("/api/accounts_mgmt", APIVersion, "organizations", orgID, "quota_summary")
-	rawResp, err := u.conn.Get().Path(summaryPath).Send()
-	if err == nil && rawResp.Status() != http.StatusOK {
-		resp.err, err = osderrors.UnmarshalError(rawResp.Bytes())
-	} else if rawResp != nil {
-		err = json.Unmarshal(rawResp.Bytes(), resp)
-	}
-
-	if err != nil {
-		return resp, err
-	}
-
-	// allow reading QuotaSummary as ResourceQuota
-	for i := range resp.List {
-		resp.List[i]["kind"] = "ResourceQuota"
-	}
-
-	// convert formats by writing to bytes and unmarshalling typed
-	var listData []byte
-	if listData, err = json.Marshal(resp.List); err == nil {
-		resp.list, err = accounts.UnmarshalResourceQuotaList(listData)
-	}
-	return resp, err
-}
-
-type resourceSummaryListResponse struct {
-	Kind  string                   `json:"kind"`
-	Page  int                      `json:"page"`
-	Size  int                      `json:"size"`
-	Total int                      `json:"total"`
-	List  []map[string]interface{} `json:"items"`
-
-	list []*accounts.ResourceQuota
-	err  *osderrors.Error
-}
-
-func (r *resourceSummaryListResponse) Items() []*accounts.ResourceQuota {
-	return r.list
-}
-func (r *resourceSummaryListResponse) Error() *osderrors.Error {
-	return r.err
 }

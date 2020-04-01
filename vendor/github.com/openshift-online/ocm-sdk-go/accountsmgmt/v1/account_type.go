@@ -19,6 +19,10 @@ limitations under the License.
 
 package v1 // github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1
 
+import (
+	time "time"
+)
+
 // AccountKind is the name of the type used to represent objects
 // of type 'account'.
 const AccountKind = "Account"
@@ -41,11 +45,13 @@ type Account struct {
 	banCode        *string
 	banDescription *string
 	banned         *bool
+	createdAt      *time.Time
 	email          *string
 	firstName      *string
 	lastName       *string
-	name           *string
 	organization   *Organization
+	serviceAccount *bool
+	updatedAt      *time.Time
 	username       *string
 }
 
@@ -107,10 +113,12 @@ func (o *Account) Empty() bool {
 		o.banCode == nil &&
 		o.banDescription == nil &&
 		o.banned == nil &&
+		o.createdAt == nil &&
 		o.email == nil &&
 		o.firstName == nil &&
 		o.lastName == nil &&
-		o.name == nil &&
+		o.serviceAccount == nil &&
+		o.updatedAt == nil &&
 		o.username == nil &&
 		true)
 }
@@ -184,6 +192,29 @@ func (o *Account) GetBanned() (value bool, ok bool) {
 	return
 }
 
+// CreatedAt returns the value of the 'created_at' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+//
+func (o *Account) CreatedAt() time.Time {
+	if o != nil && o.createdAt != nil {
+		return *o.createdAt
+	}
+	return time.Time{}
+}
+
+// GetCreatedAt returns the value of the 'created_at' attribute and
+// a flag indicating if the attribute has a value.
+//
+//
+func (o *Account) GetCreatedAt() (value time.Time, ok bool) {
+	ok = o != nil && o.createdAt != nil
+	if ok {
+		value = *o.createdAt
+	}
+	return
+}
+
 // Email returns the value of the 'email' attribute, or
 // the zero value of the type if the attribute doesn't have a value.
 //
@@ -253,29 +284,6 @@ func (o *Account) GetLastName() (value string, ok bool) {
 	return
 }
 
-// Name returns the value of the 'name' attribute, or
-// the zero value of the type if the attribute doesn't have a value.
-//
-//
-func (o *Account) Name() string {
-	if o != nil && o.name != nil {
-		return *o.name
-	}
-	return ""
-}
-
-// GetName returns the value of the 'name' attribute and
-// a flag indicating if the attribute has a value.
-//
-//
-func (o *Account) GetName() (value string, ok bool) {
-	ok = o != nil && o.name != nil
-	if ok {
-		value = *o.name
-	}
-	return
-}
-
 // Organization returns the value of the 'organization' attribute, or
 // the zero value of the type if the attribute doesn't have a value.
 //
@@ -295,6 +303,52 @@ func (o *Account) GetOrganization() (value *Organization, ok bool) {
 	ok = o != nil && o.organization != nil
 	if ok {
 		value = o.organization
+	}
+	return
+}
+
+// ServiceAccount returns the value of the 'service_account' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+//
+func (o *Account) ServiceAccount() bool {
+	if o != nil && o.serviceAccount != nil {
+		return *o.serviceAccount
+	}
+	return false
+}
+
+// GetServiceAccount returns the value of the 'service_account' attribute and
+// a flag indicating if the attribute has a value.
+//
+//
+func (o *Account) GetServiceAccount() (value bool, ok bool) {
+	ok = o != nil && o.serviceAccount != nil
+	if ok {
+		value = *o.serviceAccount
+	}
+	return
+}
+
+// UpdatedAt returns the value of the 'updated_at' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+//
+func (o *Account) UpdatedAt() time.Time {
+	if o != nil && o.updatedAt != nil {
+		return *o.updatedAt
+	}
+	return time.Time{}
+}
+
+// GetUpdatedAt returns the value of the 'updated_at' attribute and
+// a flag indicating if the attribute has a value.
+//
+//
+func (o *Account) GetUpdatedAt() (value time.Time, ok bool) {
+	ok = o != nil && o.updatedAt != nil
+	if ok {
+		value = *o.updatedAt
 	}
 	return
 }

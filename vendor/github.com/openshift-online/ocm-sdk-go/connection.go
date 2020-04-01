@@ -24,6 +24,7 @@ import (
 	"crypto/x509"
 	"fmt"
 	"net/http"
+	"net/http/cookiejar"
 	"net/url"
 	"strings"
 	"sync"
@@ -388,9 +389,8 @@ func (b *ConnectionBuilder) BuildContext(ctx context.Context) (connection *Conne
 	}
 
 	// Create the default logger, if needed:
-	logger := b.logger
-	if logger == nil {
-		logger, err = NewGoLoggerBuilder().
+	if b.logger == nil {
+		b.logger, err = NewGoLoggerBuilder().
 			Debug(false).
 			Info(true).
 			Warn(true).
@@ -400,14 +400,14 @@ func (b *ConnectionBuilder) BuildContext(ctx context.Context) (connection *Conne
 			err = fmt.Errorf("can't create default logger: %v", err)
 			return
 		}
-		logger.Debug(ctx, "Logger wasn't provided, will use Go log")
+		b.logger.Debug(ctx, "Logger wasn't provided, will use Go log")
 	}
 
 	// Set the default authentication details, if needed:
 	rawTokenURL := b.tokenURL
 	if rawTokenURL == "" {
 		rawTokenURL = DefaultTokenURL
-		logger.Debug(
+		b.logger.Debug(
 			ctx,
 			"OpenID token URL wasn't provided, will use '%s'",
 			rawTokenURL,
@@ -421,7 +421,7 @@ func (b *ConnectionBuilder) BuildContext(ctx context.Context) (connection *Conne
 	clientID := b.clientID
 	if clientID == "" {
 		clientID = DefaultClientID
-		logger.Debug(
+		b.logger.Debug(
 			ctx,
 			"OpenID client identifier wasn't provided, will use '%s'",
 			clientID,
@@ -430,7 +430,7 @@ func (b *ConnectionBuilder) BuildContext(ctx context.Context) (connection *Conne
 	clientSecret := b.clientSecret
 	if clientSecret == "" {
 		clientSecret = DefaultClientSecret
-		logger.Debug(
+		b.logger.Debug(
 			ctx,
 			"OpenID client secret wasn't provided, will use '%s'",
 			clientSecret,
@@ -452,7 +452,7 @@ func (b *ConnectionBuilder) BuildContext(ctx context.Context) (connection *Conne
 	rawAPIURL := b.apiURL
 	if rawAPIURL == "" {
 		rawAPIURL = DefaultURL
-		logger.Debug(ctx, "URL wasn't provided, will use the default '%s'", rawAPIURL)
+		b.logger.Debug(ctx, "URL wasn't provided, will use the default '%s'", rawAPIURL)
 	}
 	apiURL, err := url.Parse(rawAPIURL)
 	if err != nil {
@@ -466,12 +466,27 @@ func (b *ConnectionBuilder) BuildContext(ctx context.Context) (connection *Conne
 		agent = DefaultAgent
 	}
 
+	// Create the cookie jar:
+	jar, err := b.createCookieJar()
+	if err != nil {
+		return
+	}
+
+	// Create the transport:
+	transport, err := b.createTransport()
+	if err != nil {
+		return
+	}
+
 	// Create the HTTP client:
-	client := &http.Client{Transport: b.createTransport()}
+	client := &http.Client{
+		Jar:       jar,
+		Transport: transport,
+	}
 
 	// Allocate and populate the connection object:
 	connection = &Connection{
-		logger:       logger,
+		logger:       b.logger,
 		trustedCAs:   b.trustedCAs,
 		insecure:     b.insecure,
 		client:       client,
@@ -503,18 +518,36 @@ func (b *ConnectionBuilder) BuildContext(ctx context.Context) (connection *Conne
 	return
 }
 
-func (b *ConnectionBuilder) createTransport() http.RoundTripper {
-	var transport http.RoundTripper
+func (b *ConnectionBuilder) createCookieJar() (jar http.CookieJar, err error) {
+	jar, err = cookiejar.New(nil)
+	return
+}
+
+func (b *ConnectionBuilder) createTransport() (transport http.RoundTripper, err error) {
+	// Create the raw transport:
 	// #nosec 402
 	transport = &http.Transport{
 		TLSClientConfig: &tls.Config{
 			InsecureSkipVerify: b.insecure,
 			RootCAs:            b.trustedCAs,
-		}}
+		},
+	}
+
+	// If debug is enabled then wrap the raw transport with the round tripper that sends the
+	// details of requests and responses to the log:
+	if b.logger.DebugEnabled() {
+		transport = &dumpRoundTripper{
+			logger: b.logger,
+			next:   transport,
+		}
+	}
+
+	// Wrap the transport with the round trippers provided by the user:
 	if b.transportWrapper != nil {
 		transport = b.transportWrapper(transport)
 	}
-	return transport
+
+	return
 }
 
 // Logger returns the logger that is used by the connection.

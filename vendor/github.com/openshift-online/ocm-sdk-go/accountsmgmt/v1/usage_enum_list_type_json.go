@@ -17,7 +17,7 @@ limitations under the License.
 // IMPORTANT: This file has been generated automatically, refrain from modifying it manually as all
 // your changes will be lost when the file is generated again.
 
-package v1 // github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1
+package v1 // github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1
 
 import (
 	"io"
@@ -26,46 +26,47 @@ import (
 	"github.com/openshift-online/ocm-sdk-go/helpers"
 )
 
-// MarshalOpenIDURLsList writes a list of values of the 'open_IDURLs' type to
+// MarshalUsageEnumList writes a list of values of the 'usage_enum' type to
 // the given writer.
-func MarshalOpenIDURLsList(list []*OpenIDURLs, writer io.Writer) error {
+func MarshalUsageEnumList(list []UsageEnum, writer io.Writer) error {
 	stream := helpers.NewStream(writer)
-	writeOpenIDURLsList(list, stream)
+	writeUsageEnumList(list, stream)
 	stream.Flush()
 	return stream.Error
 }
 
-// writeOpenIDURLsList writes a list of value of the 'open_IDURLs' type to
+// writeUsageEnumList writes a list of value of the 'usage_enum' type to
 // the given stream.
-func writeOpenIDURLsList(list []*OpenIDURLs, stream *jsoniter.Stream) {
+func writeUsageEnumList(list []UsageEnum, stream *jsoniter.Stream) {
 	stream.WriteArrayStart()
 	for i, value := range list {
 		if i > 0 {
 			stream.WriteMore()
 		}
-		writeOpenIDURLs(value, stream)
+		stream.WriteString(string(value))
 	}
 	stream.WriteArrayEnd()
 }
 
-// UnmarshalOpenIDURLsList reads a list of values of the 'open_IDURLs' type
+// UnmarshalUsageEnumList reads a list of values of the 'usage_enum' type
 // from the given source, which can be a slice of bytes, a string or a reader.
-func UnmarshalOpenIDURLsList(source interface{}) (items []*OpenIDURLs, err error) {
+func UnmarshalUsageEnumList(source interface{}) (items []UsageEnum, err error) {
 	iterator, err := helpers.NewIterator(source)
 	if err != nil {
 		return
 	}
-	items = readOpenIDURLsList(iterator)
+	items = readUsageEnumList(iterator)
 	err = iterator.Error
 	return
 }
 
-// readOpenIDURLsList reads list of values of the ''open_IDURLs' type from
+// readUsageEnumList reads list of values of the ''usage_enum' type from
 // the given iterator.
-func readOpenIDURLsList(iterator *jsoniter.Iterator) []*OpenIDURLs {
-	list := []*OpenIDURLs{}
+func readUsageEnumList(iterator *jsoniter.Iterator) []UsageEnum {
+	list := []UsageEnum{}
 	for iterator.ReadArray() {
-		item := readOpenIDURLs(iterator)
+		text := iterator.ReadString()
+		item := UsageEnum(text)
 		list = append(list, item)
 	}
 	return list

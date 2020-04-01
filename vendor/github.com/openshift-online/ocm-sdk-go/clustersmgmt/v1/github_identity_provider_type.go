@@ -23,17 +23,21 @@ package v1 // github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1
 //
 // Details for `github` identity providers.
 type GithubIdentityProvider struct {
-	ca       *string
-	clientID *string
-	hostname *string
-	teams    []string
+	ca            *string
+	clientID      *string
+	clientSecret  *string
+	hostname      *string
+	organizations []string
+	teams         []string
 }
 
 // Empty returns true if the object is empty, i.e. no attribute has a value.
 func (o *GithubIdentityProvider) Empty() bool {
 	return o == nil || (o.ca == nil &&
 		o.clientID == nil &&
+		o.clientSecret == nil &&
 		o.hostname == nil &&
+		len(o.organizations) == 0 &&
 		len(o.teams) == 0 &&
 		true)
 }
@@ -84,6 +88,29 @@ func (o *GithubIdentityProvider) GetClientID() (value string, ok bool) {
 	return
 }
 
+// ClientSecret returns the value of the 'client_secret' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+// Client secret of a registered _GitHub_ OAuth application.
+func (o *GithubIdentityProvider) ClientSecret() string {
+	if o != nil && o.clientSecret != nil {
+		return *o.clientSecret
+	}
+	return ""
+}
+
+// GetClientSecret returns the value of the 'client_secret' attribute and
+// a flag indicating if the attribute has a value.
+//
+// Client secret of a registered _GitHub_ OAuth application.
+func (o *GithubIdentityProvider) GetClientSecret() (value string, ok bool) {
+	ok = o != nil && o.clientSecret != nil
+	if ok {
+		value = *o.clientSecret
+	}
+	return
+}
+
 // Hostname returns the value of the 'hostname' attribute, or
 // the zero value of the type if the attribute doesn't have a value.
 //
@@ -115,10 +142,33 @@ func (o *GithubIdentityProvider) GetHostname() (value string, ok bool) {
 	return
 }
 
+// Organizations returns the value of the 'organizations' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+// Optional list of organizations. Cannot be used in combination with the Teams field.
+func (o *GithubIdentityProvider) Organizations() []string {
+	if o == nil {
+		return nil
+	}
+	return o.organizations
+}
+
+// GetOrganizations returns the value of the 'organizations' attribute and
+// a flag indicating if the attribute has a value.
+//
+// Optional list of organizations. Cannot be used in combination with the Teams field.
+func (o *GithubIdentityProvider) GetOrganizations() (value []string, ok bool) {
+	ok = o != nil && o.organizations != nil
+	if ok {
+		value = o.organizations
+	}
+	return
+}
+
 // Teams returns the value of the 'teams' attribute, or
 // the zero value of the type if the attribute doesn't have a value.
 //
-// Optional list of temas. Cannot be used in combination with the organizations field.
+// Optional list of teams. Cannot be used in combination with the Organizations field.
 func (o *GithubIdentityProvider) Teams() []string {
 	if o == nil {
 		return nil
@@ -129,7 +179,7 @@ func (o *GithubIdentityProvider) Teams() []string {
 // GetTeams returns the value of the 'teams' attribute and
 // a flag indicating if the attribute has a value.
 //
-// Optional list of temas. Cannot be used in combination with the organizations field.
+// Optional list of teams. Cannot be used in combination with the Organizations field.
 func (o *GithubIdentityProvider) GetTeams() (value []string, ok bool) {
 	ok = o != nil && o.teams != nil
 	if ok {

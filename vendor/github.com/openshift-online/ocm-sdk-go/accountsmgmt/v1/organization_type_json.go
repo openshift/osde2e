@@ -21,6 +21,7 @@ package v1 // github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1
 
 import (
 	"io"
+	"time"
 
 	jsoniter "github.com/json-iterator/go"
 	"github.com/openshift-online/ocm-sdk-go/helpers"
@@ -64,6 +65,22 @@ func writeOrganization(object *Organization, stream *jsoniter.Stream) {
 		stream.WriteString(*object.href)
 		count++
 	}
+	if object.createdAt != nil {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("created_at")
+		stream.WriteString((*object.createdAt).Format(time.RFC3339))
+		count++
+	}
+	if object.ebsAccountID != nil {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("ebs_account_id")
+		stream.WriteString(*object.ebsAccountID)
+		count++
+	}
 	if object.externalID != nil {
 		if count > 0 {
 			stream.WriteMore()
@@ -78,6 +95,14 @@ func writeOrganization(object *Organization, stream *jsoniter.Stream) {
 		}
 		stream.WriteObjectField("name")
 		stream.WriteString(*object.name)
+		count++
+	}
+	if object.updatedAt != nil {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("updated_at")
+		stream.WriteString((*object.updatedAt).Format(time.RFC3339))
 		count++
 	}
 	stream.WriteObjectEnd()
@@ -113,12 +138,29 @@ func readOrganization(iterator *jsoniter.Iterator) *Organization {
 		case "href":
 			value := iterator.ReadString()
 			object.href = &value
+		case "created_at":
+			text := iterator.ReadString()
+			value, err := time.Parse(time.RFC3339, text)
+			if err != nil {
+				iterator.ReportError("", err.Error())
+			}
+			object.createdAt = &value
+		case "ebs_account_id":
+			value := iterator.ReadString()
+			object.ebsAccountID = &value
 		case "external_id":
 			value := iterator.ReadString()
 			object.externalID = &value
 		case "name":
 			value := iterator.ReadString()
 			object.name = &value
+		case "updated_at":
+			text := iterator.ReadString()
+			value, err := time.Parse(time.RFC3339, text)
+			if err != nil {
+				iterator.ReportError("", err.Error())
+			}
+			object.updatedAt = &value
 		default:
 			iterator.ReadAny()
 		}

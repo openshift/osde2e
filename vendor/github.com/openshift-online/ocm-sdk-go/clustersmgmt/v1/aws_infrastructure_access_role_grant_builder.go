@@ -74,7 +74,7 @@ func (b *AWSInfrastructureAccessRoleGrantBuilder) Role(value *AWSInfrastructureA
 
 // State sets the value of the 'state' attribute to the given value.
 //
-// State of an AWS incfrastructure access role grant.
+// State of an AWS infrastructure access role grant.
 func (b *AWSInfrastructureAccessRoleGrantBuilder) State(value AWSInfrastructureAccessRoleGrantState) *AWSInfrastructureAccessRoleGrantBuilder {
 	b.state = &value
 	return b

@@ -35,9 +35,11 @@ const PlanNilKind = "PlanNil"
 //
 //
 type Plan struct {
-	id   *string
-	href *string
-	link bool
+	id    *string
+	href  *string
+	link  bool
+	name  *string
+	type_ *string
 }
 
 // Kind returns the name of the type of the object.
@@ -95,7 +97,55 @@ func (o *Plan) GetHREF() (value string, ok bool) {
 // Empty returns true if the object is empty, i.e. no attribute has a value.
 func (o *Plan) Empty() bool {
 	return o == nil || (o.id == nil &&
+		o.name == nil &&
+		o.type_ == nil &&
 		true)
+}
+
+// Name returns the value of the 'name' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+//
+func (o *Plan) Name() string {
+	if o != nil && o.name != nil {
+		return *o.name
+	}
+	return ""
+}
+
+// GetName returns the value of the 'name' attribute and
+// a flag indicating if the attribute has a value.
+//
+//
+func (o *Plan) GetName() (value string, ok bool) {
+	ok = o != nil && o.name != nil
+	if ok {
+		value = *o.name
+	}
+	return
+}
+
+// Type returns the value of the 'type' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+//
+func (o *Plan) Type() string {
+	if o != nil && o.type_ != nil {
+		return *o.type_
+	}
+	return ""
+}
+
+// GetType returns the value of the 'type' attribute and
+// a flag indicating if the attribute has a value.
+//
+//
+func (o *Plan) GetType() (value string, ok bool) {
+	ok = o != nil && o.type_ != nil
+	if ok {
+		value = *o.type_
+	}
+	return
 }
 
 // PlanListKind is the name of the type used to represent list of objects of

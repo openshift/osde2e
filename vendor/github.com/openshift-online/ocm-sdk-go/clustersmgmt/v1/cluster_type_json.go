@@ -128,6 +128,14 @@ func writeCluster(object *Cluster, stream *jsoniter.Stream) {
 		writeCloudProvider(object.cloudProvider, stream)
 		count++
 	}
+	if object.clusterAdminEnabled != nil {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("cluster_admin_enabled")
+		stream.WriteBool(*object.clusterAdminEnabled)
+		count++
+	}
 	if object.console != nil {
 		if count > 0 {
 			stream.WriteMore()
@@ -195,6 +203,17 @@ func writeCluster(object *Cluster, stream *jsoniter.Stream) {
 		stream.WriteObjectStart()
 		stream.WriteObjectField("items")
 		writeIdentityProviderList(object.identityProviders.items, stream)
+		stream.WriteObjectEnd()
+		count++
+	}
+	if object.ingresses != nil {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("ingresses")
+		stream.WriteObjectStart()
+		stream.WriteObjectField("items")
+		writeIngressList(object.ingresses.items, stream)
 		stream.WriteObjectEnd()
 		count++
 	}
@@ -416,6 +435,9 @@ func readCluster(iterator *jsoniter.Iterator) *Cluster {
 		case "cloud_provider":
 			value := readCloudProvider(iterator)
 			object.cloudProvider = value
+		case "cluster_admin_enabled":
+			value := iterator.ReadBool()
+			object.clusterAdminEnabled = &value
 		case "console":
 			value := readClusterConsole(iterator)
 			object.console = value
@@ -484,6 +506,27 @@ func readCluster(iterator *jsoniter.Iterator) *Cluster {
 				}
 			}
 			object.identityProviders = value
+		case "ingresses":
+			value := &IngressList{}
+			for {
+				field := iterator.ReadObject()
+				if field == "" {
+					break
+				}
+				switch field {
+				case "kind":
+					text := iterator.ReadString()
+					value.link = text == IngressListLinkKind
+				case "href":
+					text := iterator.ReadString()
+					value.href = &text
+				case "items":
+					value.items = readIngressList(iterator)
+				default:
+					iterator.ReadAny()
+				}
+			}
+			object.ingresses = value
 		case "load_balancer_quota":
 			value := iterator.ReadInt()
 			object.loadBalancerQuota = &value

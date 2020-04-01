@@ -19,6 +19,10 @@ limitations under the License.
 
 package v1 // github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1
 
+import (
+	time "time"
+)
+
 // RegistryKind is the name of the type used to represent objects
 // of type 'registry'.
 const RegistryKind = "Registry"
@@ -40,10 +44,12 @@ type Registry struct {
 	link       bool
 	url        *string
 	cloudAlias *bool
+	createdAt  *time.Time
 	name       *string
 	orgName    *string
 	teamName   *string
 	type_      *string
+	updatedAt  *time.Time
 }
 
 // Kind returns the name of the type of the object.
@@ -103,10 +109,12 @@ func (o *Registry) Empty() bool {
 	return o == nil || (o.id == nil &&
 		o.url == nil &&
 		o.cloudAlias == nil &&
+		o.createdAt == nil &&
 		o.name == nil &&
 		o.orgName == nil &&
 		o.teamName == nil &&
 		o.type_ == nil &&
+		o.updatedAt == nil &&
 		true)
 }
 
@@ -152,6 +160,29 @@ func (o *Registry) GetCloudAlias() (value bool, ok bool) {
 	ok = o != nil && o.cloudAlias != nil
 	if ok {
 		value = *o.cloudAlias
+	}
+	return
+}
+
+// CreatedAt returns the value of the 'created_at' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+//
+func (o *Registry) CreatedAt() time.Time {
+	if o != nil && o.createdAt != nil {
+		return *o.createdAt
+	}
+	return time.Time{}
+}
+
+// GetCreatedAt returns the value of the 'created_at' attribute and
+// a flag indicating if the attribute has a value.
+//
+//
+func (o *Registry) GetCreatedAt() (value time.Time, ok bool) {
+	ok = o != nil && o.createdAt != nil
+	if ok {
+		value = *o.createdAt
 	}
 	return
 }
@@ -244,6 +275,29 @@ func (o *Registry) GetType() (value string, ok bool) {
 	ok = o != nil && o.type_ != nil
 	if ok {
 		value = *o.type_
+	}
+	return
+}
+
+// UpdatedAt returns the value of the 'updated_at' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+//
+func (o *Registry) UpdatedAt() time.Time {
+	if o != nil && o.updatedAt != nil {
+		return *o.updatedAt
+	}
+	return time.Time{}
+}
+
+// GetUpdatedAt returns the value of the 'updated_at' attribute and
+// a flag indicating if the attribute has a value.
+//
+//
+func (o *Registry) GetUpdatedAt() (value time.Time, ok bool) {
+	ok = o != nil && o.updatedAt != nil
+	if ok {
+		value = *o.updatedAt
 	}
 	return
 }

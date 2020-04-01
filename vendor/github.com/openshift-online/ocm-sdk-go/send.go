@@ -20,10 +20,10 @@ limitations under the License.
 package sdk
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"io/ioutil"
+	"mime"
 	"net/http"
 	"path"
 	"strconv"
@@ -138,28 +138,6 @@ func (c *Connection) send(ctx context.Context, request *http.Request) (response 
 	}
 	request.Header.Set("Accept", "application/json")
 
-	// If debug is enabled then we need to read the complete body in memory, in order to send it
-	// to the log, and we need to replace the original with a reader that reads it from memory:
-	if c.logger.DebugEnabled() {
-		if request.Body != nil {
-			var body []byte
-			body, err = ioutil.ReadAll(request.Body)
-			if err != nil {
-				err = fmt.Errorf("can't read request body: %v", err)
-				return
-			}
-			err = request.Body.Close()
-			if err != nil {
-				err = fmt.Errorf("can't close request body: %v", err)
-				return
-			}
-			c.dumpRequest(ctx, request, body)
-			request.Body = ioutil.NopCloser(bytes.NewBuffer(body))
-		} else {
-			c.dumpRequest(ctx, request, nil)
-		}
-	}
-
 	// Send the request and get the response:
 	response, err = c.client.Do(request)
 	if err != nil {
@@ -167,64 +145,63 @@ func (c *Connection) send(ctx context.Context, request *http.Request) (response 
 		return
 	}
 
-	// If debug is enabled then we need to read the complete response body in memory, in order
-	// to send it the log, and we need to replace the original with a reader that reads it from
-	// memory:
-	if c.logger.DebugEnabled() {
-		if response.Body != nil {
-			var body []byte
-			body, err = ioutil.ReadAll(response.Body)
-			if err != nil {
-				err = fmt.Errorf("can't read response body: %v", err)
-				return
-			}
-			err = response.Body.Close()
-			if err != nil {
-				err = fmt.Errorf("can't close response body: %v", err)
-				return
-			}
-			c.dumpResponse(ctx, response, body)
-			response.Body = ioutil.NopCloser(bytes.NewBuffer(body))
-		} else {
-			c.dumpResponse(ctx, response, nil)
-		}
-	}
-
-	// check if json
-	if !strings.EqualFold(response.Header.Get("Content-Type"), "application/json") {
-		err = fmt.Errorf("expected JSON content type but received '%s'; %s",
-			response.Header.Get("Content-Type"),
-			getResponseInfo(response))
+	// Check that the response content type is JSON:
+	err = c.checkContentType(response)
+	if err != nil {
 		return
 	}
 
 	return
 }
 
-func getResponseInfo(response *http.Response) string {
-	info := fmt.Sprintf("request: %s %s; response status: %d %s",
-		response.Request.Method,
-		response.Request.URL,
-		response.StatusCode,
-		response.Status,
-	)
+// checkContentType checks that the content type of the given response is JSON. Note that if the
+// content type isn't JSON this method will consume the complete body in order to generate an error
+// message containing a summary of the content.
+func (c *Connection) checkContentType(response *http.Response) error {
+	var err error
+	var mediaType string
+	contentType := response.Header.Get("Content-Type")
+	if contentType != "" {
+		mediaType, _, err = mime.ParseMediaType(contentType)
+		if err != nil {
+			return err
+		}
+	} else {
+		mediaType = contentType
+	}
+	if !strings.EqualFold(mediaType, "application/json") {
+		var summary string
+		summary, err = c.contentSummary(response)
+		if err != nil {
+			return fmt.Errorf(
+				"expected response content type 'application/json' but received "+
+					"'%s' and couldn't obtain content summary: %v",
+				mediaType, err,
+			)
+		}
+		return fmt.Errorf(
+			"expected response content type 'application/json' but received '%s' and "+
+				"content '%s'",
+			mediaType, summary,
+		)
+	}
+	return nil
+}
 
-	body, err := ioutil.ReadAll(response.Body)
+// contentSummary reads the body of the given response and returns a summary it. The summary will
+// be the complete body if it isn't too log. If it is too long then the summary will be the
+// beginning of the content followed by ellipsis.
+func (c *Connection) contentSummary(response *http.Response) (summary string, err error) {
+	var body []byte
+	body, err = ioutil.ReadAll(response.Body)
 	if err != nil {
-		info = fmt.Sprintf("%s; can't read response body: %v", info, err)
-		return info
+		return
 	}
-	err = response.Body.Close()
-	if err != nil {
-		info = fmt.Sprintf("%s; can't close response body: %v", info, err)
-		return info
+	runes := []rune(string(body))
+	if len(runes) > 200 {
+		summary = fmt.Sprintf("%s...", string(runes[:200]))
+	} else {
+		summary = string(runes)
 	}
-	response.Body = ioutil.NopCloser(bytes.NewBuffer(body))
-
-	bodyStr := []rune(string(body))
-	if len(bodyStr) > 200 {
-		bodyStr = bodyStr[:200]
-	}
-	info = fmt.Sprintf("%s; response body: %s", info, string(bodyStr))
-	return info
+	return
 }

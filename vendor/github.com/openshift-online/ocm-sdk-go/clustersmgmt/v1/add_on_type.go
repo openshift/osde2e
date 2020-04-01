@@ -44,6 +44,7 @@ type AddOn struct {
 	installMode     *AddOnInstallMode
 	label           *string
 	name            *string
+	operatorName    *string
 	resourceCost    *float64
 	resourceName    *string
 	targetNamespace *string
@@ -110,6 +111,7 @@ func (o *AddOn) Empty() bool {
 		o.installMode == nil &&
 		o.label == nil &&
 		o.name == nil &&
+		o.operatorName == nil &&
 		o.resourceCost == nil &&
 		o.resourceName == nil &&
 		o.targetNamespace == nil &&
@@ -250,6 +252,29 @@ func (o *AddOn) GetName() (value string, ok bool) {
 	ok = o != nil && o.name != nil
 	if ok {
 		value = *o.name
+	}
+	return
+}
+
+// OperatorName returns the value of the 'operator_name' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+// The name of the operator installed by this add-on.
+func (o *AddOn) OperatorName() string {
+	if o != nil && o.operatorName != nil {
+		return *o.operatorName
+	}
+	return ""
+}
+
+// GetOperatorName returns the value of the 'operator_name' attribute and
+// a flag indicating if the attribute has a value.
+//
+// The name of the operator installed by this add-on.
+func (o *AddOn) GetOperatorName() (value string, ok bool) {
+	ok = o != nil && o.operatorName != nil
+	if ok {
+		value = *o.operatorName
 	}
 	return
 }

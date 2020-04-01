@@ -77,6 +77,11 @@ type Server interface {
 	// Reference to the resource that manages the collection of permissions.
 	Permissions() PermissionsServer
 
+	// PullSecrets returns the target 'pull_secrets' resource.
+	//
+	// Reference to the resource that manages generates access tokens.
+	PullSecrets() PullSecretsServer
+
 	// Registries returns the target 'registries' resource.
 	//
 	// Reference to the resource that manages the collection of registries.
@@ -187,6 +192,13 @@ func Dispatch(w http.ResponseWriter, r *http.Request, server Server, segments []
 			return
 		}
 		dispatchPermissions(w, r, target, segments[1:])
+	case "pull_secrets":
+		target := server.PullSecrets()
+		if target == nil {
+			errors.SendNotFound(w, r)
+			return
+		}
+		dispatchPullSecrets(w, r, target, segments[1:])
 	case "registries":
 		target := server.Registries()
 		if target == nil {

@@ -19,48 +19,48 @@ limitations under the License.
 
 package v1 // github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1
 
-// OpenIDURLsListBuilder contains the data and logic needed to build
-// 'open_IDURLs' objects.
-type OpenIDURLsListBuilder struct {
-	items []*OpenIDURLsBuilder
+// AlertInfoListBuilder contains the data and logic needed to build
+// 'alert_info' objects.
+type AlertInfoListBuilder struct {
+	items []*AlertInfoBuilder
 }
 
-// NewOpenIDURLsList creates a new builder of 'open_IDURLs' objects.
-func NewOpenIDURLsList() *OpenIDURLsListBuilder {
-	return new(OpenIDURLsListBuilder)
+// NewAlertInfoList creates a new builder of 'alert_info' objects.
+func NewAlertInfoList() *AlertInfoListBuilder {
+	return new(AlertInfoListBuilder)
 }
 
 // Items sets the items of the list.
-func (b *OpenIDURLsListBuilder) Items(values ...*OpenIDURLsBuilder) *OpenIDURLsListBuilder {
-	b.items = make([]*OpenIDURLsBuilder, len(values))
+func (b *AlertInfoListBuilder) Items(values ...*AlertInfoBuilder) *AlertInfoListBuilder {
+	b.items = make([]*AlertInfoBuilder, len(values))
 	copy(b.items, values)
 	return b
 }
 
 // Copy copies the items of the given list into this builder, discarding any previous items.
-func (b *OpenIDURLsListBuilder) Copy(list *OpenIDURLsList) *OpenIDURLsListBuilder {
+func (b *AlertInfoListBuilder) Copy(list *AlertInfoList) *AlertInfoListBuilder {
 	if list == nil || list.items == nil {
 		b.items = nil
 	} else {
-		b.items = make([]*OpenIDURLsBuilder, len(list.items))
+		b.items = make([]*AlertInfoBuilder, len(list.items))
 		for i, v := range list.items {
-			b.items[i] = NewOpenIDURLs().Copy(v)
+			b.items[i] = NewAlertInfo().Copy(v)
 		}
 	}
 	return b
 }
 
-// Build creates a list of 'open_IDURLs' objects using the
+// Build creates a list of 'alert_info' objects using the
 // configuration stored in the builder.
-func (b *OpenIDURLsListBuilder) Build() (list *OpenIDURLsList, err error) {
-	items := make([]*OpenIDURLs, len(b.items))
+func (b *AlertInfoListBuilder) Build() (list *AlertInfoList, err error) {
+	items := make([]*AlertInfo, len(b.items))
 	for i, item := range b.items {
 		items[i], err = item.Build()
 		if err != nil {
 			return
 		}
 	}
-	list = new(OpenIDURLsList)
+	list = new(AlertInfoList)
 	list.items = items
 	return
 }

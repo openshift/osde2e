@@ -19,6 +19,10 @@ limitations under the License.
 
 package v1 // github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1
 
+import (
+	time "time"
+)
+
 // ResourceQuotaBuilder contains the data and logic needed to build 'resource_quota' objects.
 //
 //
@@ -30,11 +34,12 @@ type ResourceQuotaBuilder struct {
 	sku                  *string
 	allowed              *int
 	availabilityZoneType *string
+	createdAt            *time.Time
 	organizationID       *string
-	reserved             *int
 	resourceName         *string
 	resourceType         *string
 	type_                *string
+	updatedAt            *time.Time
 }
 
 // NewResourceQuota creates a new builder of 'resource_quota' objects.
@@ -92,19 +97,19 @@ func (b *ResourceQuotaBuilder) AvailabilityZoneType(value string) *ResourceQuota
 	return b
 }
 
+// CreatedAt sets the value of the 'created_at' attribute to the given value.
+//
+//
+func (b *ResourceQuotaBuilder) CreatedAt(value time.Time) *ResourceQuotaBuilder {
+	b.createdAt = &value
+	return b
+}
+
 // OrganizationID sets the value of the 'organization_ID' attribute to the given value.
 //
 //
 func (b *ResourceQuotaBuilder) OrganizationID(value string) *ResourceQuotaBuilder {
 	b.organizationID = &value
-	return b
-}
-
-// Reserved sets the value of the 'reserved' attribute to the given value.
-//
-//
-func (b *ResourceQuotaBuilder) Reserved(value int) *ResourceQuotaBuilder {
-	b.reserved = &value
 	return b
 }
 
@@ -132,6 +137,14 @@ func (b *ResourceQuotaBuilder) Type(value string) *ResourceQuotaBuilder {
 	return b
 }
 
+// UpdatedAt sets the value of the 'updated_at' attribute to the given value.
+//
+//
+func (b *ResourceQuotaBuilder) UpdatedAt(value time.Time) *ResourceQuotaBuilder {
+	b.updatedAt = &value
+	return b
+}
+
 // Copy copies the attributes of the given object into this builder, discarding any previous values.
 func (b *ResourceQuotaBuilder) Copy(object *ResourceQuota) *ResourceQuotaBuilder {
 	if object == nil {
@@ -144,11 +157,12 @@ func (b *ResourceQuotaBuilder) Copy(object *ResourceQuota) *ResourceQuotaBuilder
 	b.sku = object.sku
 	b.allowed = object.allowed
 	b.availabilityZoneType = object.availabilityZoneType
+	b.createdAt = object.createdAt
 	b.organizationID = object.organizationID
-	b.reserved = object.reserved
 	b.resourceName = object.resourceName
 	b.resourceType = object.resourceType
 	b.type_ = object.type_
+	b.updatedAt = object.updatedAt
 	return b
 }
 
@@ -162,10 +176,11 @@ func (b *ResourceQuotaBuilder) Build() (object *ResourceQuota, err error) {
 	object.sku = b.sku
 	object.allowed = b.allowed
 	object.availabilityZoneType = b.availabilityZoneType
+	object.createdAt = b.createdAt
 	object.organizationID = b.organizationID
-	object.reserved = b.reserved
 	object.resourceName = b.resourceName
 	object.resourceType = b.resourceType
 	object.type_ = b.type_
+	object.updatedAt = b.updatedAt
 	return
 }

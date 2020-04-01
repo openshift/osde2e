@@ -32,6 +32,7 @@ type AddOnBuilder struct {
 	installMode     *AddOnInstallMode
 	label           *string
 	name            *string
+	operatorName    *string
 	resourceCost    *float64
 	resourceName    *string
 	targetNamespace *string
@@ -108,6 +109,14 @@ func (b *AddOnBuilder) Name(value string) *AddOnBuilder {
 	return b
 }
 
+// OperatorName sets the value of the 'operator_name' attribute to the given value.
+//
+//
+func (b *AddOnBuilder) OperatorName(value string) *AddOnBuilder {
+	b.operatorName = &value
+	return b
+}
+
 // ResourceCost sets the value of the 'resource_cost' attribute to the given value.
 //
 //
@@ -146,6 +155,7 @@ func (b *AddOnBuilder) Copy(object *AddOn) *AddOnBuilder {
 	b.installMode = object.installMode
 	b.label = object.label
 	b.name = object.name
+	b.operatorName = object.operatorName
 	b.resourceCost = object.resourceCost
 	b.resourceName = object.resourceName
 	b.targetNamespace = object.targetNamespace
@@ -164,6 +174,7 @@ func (b *AddOnBuilder) Build() (object *AddOn, err error) {
 	object.installMode = b.installMode
 	object.label = b.label
 	object.name = b.name
+	object.operatorName = b.operatorName
 	object.resourceCost = b.resourceCost
 	object.resourceName = b.resourceName
 	object.targetNamespace = b.targetNamespace

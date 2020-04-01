@@ -23,12 +23,12 @@ package v1 // github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1
 //
 // Details for `ldap` identity providers.
 type LDAPIdentityProvider struct {
-	ca             *string
-	ldapAttributes *LDAPAttributes
-	url            *string
-	bindDN         *string
-	bindPassword   *string
-	insecure       *bool
+	ca           *string
+	url          *string
+	attributes   *LDAPAttributes
+	bindDN       *string
+	bindPassword *string
+	insecure     *bool
 }
 
 // Empty returns true if the object is empty, i.e. no attribute has a value.
@@ -64,29 +64,6 @@ func (o *LDAPIdentityProvider) GetCA() (value string, ok bool) {
 	return
 }
 
-// LDAPAttributes returns the value of the 'LDAP_attributes' attribute, or
-// the zero value of the type if the attribute doesn't have a value.
-//
-// LDAP attributes used to configure the provider.
-func (o *LDAPIdentityProvider) LDAPAttributes() *LDAPAttributes {
-	if o == nil {
-		return nil
-	}
-	return o.ldapAttributes
-}
-
-// GetLDAPAttributes returns the value of the 'LDAP_attributes' attribute and
-// a flag indicating if the attribute has a value.
-//
-// LDAP attributes used to configure the provider.
-func (o *LDAPIdentityProvider) GetLDAPAttributes() (value *LDAPAttributes, ok bool) {
-	ok = o != nil && o.ldapAttributes != nil
-	if ok {
-		value = o.ldapAttributes
-	}
-	return
-}
-
 // URL returns the value of the 'URL' attribute, or
 // the zero value of the type if the attribute doesn't have a value.
 //
@@ -108,6 +85,29 @@ func (o *LDAPIdentityProvider) GetURL() (value string, ok bool) {
 	ok = o != nil && o.url != nil
 	if ok {
 		value = *o.url
+	}
+	return
+}
+
+// Attributes returns the value of the 'attributes' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+// LDAP attributes used to configure the provider.
+func (o *LDAPIdentityProvider) Attributes() *LDAPAttributes {
+	if o == nil {
+		return nil
+	}
+	return o.attributes
+}
+
+// GetAttributes returns the value of the 'attributes' attribute and
+// a flag indicating if the attribute has a value.
+//
+// LDAP attributes used to configure the provider.
+func (o *LDAPIdentityProvider) GetAttributes() (value *LDAPAttributes, ok bool) {
+	ok = o != nil && o.attributes != nil
+	if ok {
+		value = o.attributes
 	}
 	return
 }
