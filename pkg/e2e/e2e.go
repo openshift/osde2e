@@ -63,6 +63,7 @@ func runGinkgoTests() error {
 	ginkgoConfig.GinkgoConfig.SkipString = cfg.Tests.GinkgoSkip
 	ginkgoConfig.GinkgoConfig.FocusString = cfg.Tests.GinkgoFocus
 	ginkgoConfig.GinkgoConfig.DryRun = cfg.DryRun
+	ginkgoConfig.GinkgoConfig.FlakeAttempts = 3
 
 	state := state.Instance
 
