@@ -107,10 +107,13 @@ type OCMConfig struct {
 // UpgradeConfig stores information required to perform OSDe2e upgrade testing
 type UpgradeConfig struct {
 	// UpgradeToCISIfPossible will upgrade to the most recent cluster image set if it's newer than the install version
-	UpgradeToCISIfPossible bool `env:"UPGRADE_TO_CIS_IF_POSSIBLE" sect:"version" default:"false" yaml:"upgradeToCISIfPossible"`
+	UpgradeToCISIfPossible bool `env:"UPGRADE_TO_CIS_IF_POSSIBLE" sect:"upgrade" default:"false" yaml:"upgradeToCISIfPossible"`
+
+	// OnlyUpgradeToZReleases will restrict upgrades to selecting Z releases on stage/prod.
+	OnlyUpgradeToZReleases bool `env:"ONLY_UPGRADE_TO_Z_RELEASES" sect:"upgrade" default:"false" yaml:"onlyUpgradeToZReleases"`
 
 	// NextReleaseAfterProdDefault will select the cluster image set that the given number of releases away from the the production default.
-	NextReleaseAfterProdDefaultForUpgrade int `env:"NEXT_RELEASE_AFTER_PROD_DEFAULT_FOR_UPGRADE" sect:"version" default:"-1" yaml:"nextReleaseAfterProdDefaultForUpgrade"`
+	NextReleaseAfterProdDefaultForUpgrade int `env:"NEXT_RELEASE_AFTER_PROD_DEFAULT_FOR_UPGRADE" sect:"upgrade" default:"-1" yaml:"nextReleaseAfterProdDefaultForUpgrade"`
 
 	// ReleaseStream used to retrieve latest release images. If set, it will be used to perform an upgrade.
 	ReleaseStream string `env:"UPGRADE_RELEASE_STREAM" sect:"upgrade" yaml:"releaseStream"`

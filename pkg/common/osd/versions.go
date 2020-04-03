@@ -22,6 +22,9 @@ const (
 
 	// PageSize is the number of results to get per page from the cluster versions endpoint
 	PageSize = 100
+
+	// NoVersionFound is the value placed into a version string when no valid Cincinnati version can be selected.
+	NoVersionFound = "NoVersionFound"
 )
 
 var (
@@ -136,7 +139,7 @@ func (u *OSD) LatestVersionWithFilter(filter func(*semver.Version) bool) (string
 	}
 
 	if len(versions) == 0 {
-		return "", fmt.Errorf("no versions available after applying filter")
+		return NoVersionFound, nil
 	}
 
 	latest := versions[len(versions)-1]
