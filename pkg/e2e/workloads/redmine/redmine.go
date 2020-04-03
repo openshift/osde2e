@@ -2,10 +2,11 @@ package workloads
 
 import (
 	"fmt"
-	"github.com/openshift/osde2e/pkg/common/config"
 	"log"
 	"path/filepath"
 	"time"
+
+	"github.com/openshift/osde2e/pkg/common/config"
 
 	"github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -25,6 +26,7 @@ var _ = ginkgo.Describe("[Suite: e2e] Workload ("+workloadName+")", func() {
 	// setup helper
 	h := helper.New()
 
+	redmineTimeoutInSeconds := 900
 	ginkgo.It("should get created in the cluster", func() {
 		// Does this workload exist? If so, this must be a repeat run.
 		// In this case we should assume the workload has had a valid run once already
@@ -45,7 +47,7 @@ var _ = ginkgo.Describe("[Suite: e2e] Workload ("+workloadName+")", func() {
 			time.Sleep(3 * time.Second)
 
 			// Wait for all pods to come up healthy
-			err = wait.PollImmediate(15*time.Second, 5*time.Minute, func() (bool, error) {
+			err = wait.PollImmediate(15*time.Second, 10*time.Minute, func() (bool, error) {
 				// This is pretty basic. Are all the pods up? Cool.
 				if check, err := helper.CheckPodHealth(h.Kube().CoreV1()); !check || err != nil {
 					return false, nil
@@ -60,7 +62,7 @@ var _ = ginkgo.Describe("[Suite: e2e] Workload ("+workloadName+")", func() {
 			h.AddWorkload(workloadName, h.CurrentProject())
 		}
 
-	})
+	}, float64(redmineTimeoutInSeconds))
 })
 
 func doTest(h *helper.H) {
@@ -76,7 +78,7 @@ func doTest(h *helper.H) {
 	intervalDuration := time.Duration(interval) * time.Second
 
 	start := time.Now()
-	
+
 Loop:
 	for {
 		_, err = h.Kube().CoreV1().Services(h.CurrentProject()).ProxyGet("http", "redmine-frontend", "3000", "/", nil).DoRaw()
