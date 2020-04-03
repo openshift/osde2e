@@ -56,7 +56,7 @@ func (u *OSD) LaunchCluster() (string, error) {
 		numNodes := &v1.ClusterNodesBuilder{}
 
 		newCluster = newCluster.
-			Nodes(numNodes.Master(3).Infra(3).Compute(9)).
+			Nodes(numNodes.Compute(9)).
 			MultiAZ(cfg.Cluster.MultiAZ)
 	}
 
