@@ -17,8 +17,6 @@ type Config struct {
 
 	Tests TestConfig `yaml:"tests"`
 
-	CloudProvider CloudProviderConfig `yaml:"cloudProvider"`
-
 	Cluster ClusterConfig `yaml:"cluster"`
 
 	OCM OCMConfig `yaml:"ocm"`
@@ -117,15 +115,6 @@ type UpgradeConfig struct {
 
 	// ReleaseStream used to retrieve latest release images. If set, it will be used to perform an upgrade.
 	ReleaseStream string `env:"UPGRADE_RELEASE_STREAM" sect:"upgrade" yaml:"releaseStream"`
-}
-
-// CloudProviderConfig contains config information pertaining to which cloud provider to use for cluster provisioning.
-type CloudProviderConfig struct {
-	// CloudProviderID is the cloud provider ID to use to provision the cluster.
-	CloudProviderID string `env:"CLOUD_PROVIDER_ID" sect:"cloudProvider" default:"aws" yaml:"providerId"`
-
-	// Region is the cloud provider region to use to provision the cluster.
-	Region string `env:"CLOUD_PROVIDER_REGION" sect:"cloudProvider" default:"us-east-1" yaml:"region"`
 }
 
 // ClusterConfig contains config information pertaining to an OSD cluster

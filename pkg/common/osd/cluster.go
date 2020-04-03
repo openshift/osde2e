@@ -44,12 +44,12 @@ func (u *OSD) LaunchCluster() (string, error) {
 		Flavour(v1.NewFlavour().
 			ID(flavourID)).
 		Region(v1.NewCloudRegion().
-			ID(cfg.CloudProvider.Region)).
+			ID(state.CloudProvider.Region)).
 		MultiAZ(cfg.Cluster.MultiAZ).
 		Version(v1.NewVersion().
 			ID(state.Cluster.Version)).
 		CloudProvider(v1.NewCloudProvider().
-			ID(cfg.CloudProvider.CloudProviderID)).
+			ID(state.CloudProvider.CloudProviderID)).
 		ExpirationTimestamp(expiration)
 
 	if cfg.Cluster.MultiAZ {

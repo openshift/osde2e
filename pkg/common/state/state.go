@@ -8,6 +8,8 @@ var Instance = new(State)
 type State struct {
 	Cluster ClusterState `yaml:"cluster"`
 
+	CloudProvider CloudProviderState `yaml:"cloudProvider"`
+
 	Kubeconfig KubeconfigState `yaml:"kubeconfig"`
 
 	Upgrade UpgradeState `yaml:"upgrade"`
@@ -20,6 +22,15 @@ type State struct {
 
 	// Project is both the project and SA automatically created to house all objects created during an osde2e-run
 	Project string
+}
+
+// CloudProviderState contains state information pertaining to which cloud provider to use for cluster provisioning.
+type CloudProviderState struct {
+	// CloudProviderID is the cloud provider ID to use to provision the cluster.
+	CloudProviderID string `env:"CLOUD_PROVIDER_ID" sect:"cloudProvider" default:"aws" yaml:"providerId"`
+
+	// Region is the cloud provider region to use to provision the cluster.
+	Region string `env:"CLOUD_PROVIDER_REGION" sect:"cloudProvider" default:"us-east-1" yaml:"region"`
 }
 
 // ClusterState contains state information about the active cluster.

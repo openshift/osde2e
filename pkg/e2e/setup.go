@@ -121,6 +121,12 @@ func setupCluster() (err error) {
 
 		state.Cluster.Version = cluster.Version().ID()
 		log.Printf("CLUSTER_VERSION set to %s from OCM.", state.Cluster.Version)
+
+		state.CloudProvider.CloudProviderID = cluster.CloudProvider().ID()
+		log.Printf("CLOUD_PROVIDER_ID set to %s from OCM.", state.CloudProvider.CloudProviderID)
+
+		state.CloudProvider.Region = cluster.Region().ID()
+		log.Printf("CLOUD_PROVIDER_REGION set to %s from OCM.", state.CloudProvider.Region)
 	}
 
 	metadata.Instance.SetClusterName(state.Cluster.Name)
