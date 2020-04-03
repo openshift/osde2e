@@ -8,6 +8,7 @@ import (
 	accounts "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"
 
 	"github.com/openshift/osde2e/pkg/common/config"
+	"github.com/openshift/osde2e/pkg/common/state"
 )
 
 const (
@@ -41,7 +42,7 @@ func (u *OSD) CheckQuota() (bool, error) {
 	machineType := ""
 
 	quotaFound := false
-	resourceClusterType := fmt.Sprintf(ResourceClusterFmt, config.Instance.CloudProvider.CloudProviderID)
+	resourceClusterType := fmt.Sprintf(ResourceClusterFmt, state.Instance.CloudProvider.CloudProviderID)
 	for _, q := range quotaList.Slice() {
 		if quotaFound = HasQuotaFor(q, resourceClusterType, machineType); quotaFound {
 			log.Printf("Quota for test config (%s/%s/multiAZ=%t) found: total=%d, remaining: %d",
