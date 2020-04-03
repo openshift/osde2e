@@ -37,9 +37,9 @@ func (u *OSD) LaunchCluster() (string, error) {
 
 	// Calculate an expiration date for the cluster so that it will be automatically deleted if
 	// we happen to forget to do it:
-	expiration := time.Now().Add(time.Duration(cfg.Cluster.ExpiryInMinutes) * time.Minute).UTC() // UTC() to workaround SDA-1567
+	expiration := time.Now().Add(time.Duration(cfg.Cluster.ExpiryInMinutes) * time.Minute).UTC() // UTC() to workaround SDA-1567.
 
-	cluster, err := v1.NewCluster().
+	newCluster := v1.NewCluster().
 		Name(state.Cluster.Name).
 		Flavour(v1.NewFlavour().
 			ID(flavourID)).
@@ -50,8 +50,17 @@ func (u *OSD) LaunchCluster() (string, error) {
 			ID(state.Cluster.Version)).
 		CloudProvider(v1.NewCloudProvider().
 			ID(cfg.CloudProvider.CloudProviderID)).
-		ExpirationTimestamp(expiration).
-		Build()
+		ExpirationTimestamp(expiration)
+
+	if cfg.Cluster.MultiAZ {
+		numNodes := &v1.ClusterNodesBuilder{}
+
+		newCluster = newCluster.
+			Nodes(numNodes.Master(3).Infra(3).Compute(9)).
+			MultiAZ(cfg.Cluster.MultiAZ)
+	}
+
+	cluster, err := newCluster.Build()
 	if err != nil {
 		return "", fmt.Errorf("couldn't build cluster description: %v", err)
 	}
