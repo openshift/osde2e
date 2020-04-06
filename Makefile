@@ -44,6 +44,9 @@ build:
 test: build
 	"$(OSDE2E)" test -configs=e2e-suite,log-metrics -custom-config=$(CUSTOM_CONFIG)
 
+test-informing: build
+	"$(OSDE2E)" test -configs=informing-suite,log-metrics -custom-config=$(CUSTOM_CONFIG)
+
 test-scale: build
 	"$(OSDE2E)" test -configs=scale-nodes-and-pods-suite,log-metrics -custom-config=$(CUSTOM_CONFIG)
 
