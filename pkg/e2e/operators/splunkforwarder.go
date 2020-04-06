@@ -32,7 +32,7 @@ var _ = ginkgo.Describe("[Suite: operators] [OSD] Splunk Forwarder Operator", fu
 	checkClusterRoles(h, clusterRoles)
 })
 
-var _ = ginkgo.PDescribe("[Suite: operators] [OSD] Upgrade Splunk Forwarder Operator", func() {
+var _ = ginkgo.Describe("[Suite: informing] [OSD] Upgrade Splunk Forwarder Operator", func() {
 	checkUpgrade(helper.New(),
 		&operatorv1.Subscription{
 			ObjectMeta: metav1.ObjectMeta{

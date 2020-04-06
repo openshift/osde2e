@@ -40,7 +40,7 @@ var _ = ginkgo.Describe("[Suite: operators] [OSD] Dedicated Admins SubjectPermis
 	checkSubjectPermissions(h, "dedicated-admins")
 })
 
-var _ = ginkgo.PDescribe("[Suite: operators] [OSD] Upgrade RBAC Permissions Operator", func() {
+var _ = ginkgo.Describe("[Suite: informing] [OSD] Upgrade RBAC Permissions Operator", func() {
 	checkUpgrade(helper.New(),
 		&operatorv1.Subscription{
 			ObjectMeta: metav1.ObjectMeta{
