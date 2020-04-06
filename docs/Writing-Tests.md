@@ -4,20 +4,27 @@ OSD end-to-end testing uses the [Ginkgo](https://onsi.github.io/ginkgo/) testing
 
 ## Writing first test
 
-### Adding a new package of tests
-All Ginkgo tests that are imported in **[e2e_test.go](../e2e_test.go)** are ran as part of the osde2e suite.
+### Informing vs. Blocking
+There are different suites of tests within OSDe2e with varying meanings and purposes. However, all new tests added should fall under the "informing" test suite.
 
-For example, to add tests from the Go package `github.com/openshift/osde2e/test/verify` to the suite add the following to **[e2e_test.go](../e2e_test.go)**:
+This test suite is used as a proving ground for new tests to validate their quality and to ensure a potentially new flaky test does not impact the overall CI Signal.
+
+Once a test has run for over a week with quality results, it can then be graduated into its correct/respective suite.
+
+### Adding a new package of tests
+All Ginkgo tests that are imported in **[./cmd/osde2e/test/test.go](../cmd/osde2e/test/test.go)** are ran as part of the osde2e suite.
+
+For example, to add tests from the Go package `github.com/openshift/osde2e/test/verify` to the suite add the following to **[cmd/osde2e/test/test.go](../cmd/osde2e/test/test.go)**:
 ```go
 import (
-	_ "github.com/openshift/osde2e/test/verify"
+	_ "github.com/openshift/osde2e/pkg/e2e/verify"
 )
 ```
 
 ### Adding a test to an existing package
-This test from **[./test/verify/imagestreams.go](../test/verify/imagestreams.go)** provides a good example of setting up new ones:
+This test from **[./pkg/e2e/verify/imagestreams.go](../pkg/e2e/verify/imagestreams.go)** provides a good example of setting up new ones:
 
-- Create new file in a package that is imported by **[e2e_test.go](../e2e_test.go)** as discussed [above](#adding-a-new-package-of-tests). For this example, we will call the file **imagestreams.go**.
+- Create new file in a package that is imported by  **[./cmd/osde2e/test/test.go](../cmd/osde2e/test/test.go)** as discussed [above](#adding-a-new-package-of-tests). For this example, we will call the file **imagestreams.go**.
 
 - Import [Ginkgo](https://onsi.github.io/ginkgo/) testing framework and [Gomega](https://onsi.github.io/gomega/) matching libraries:
 
@@ -33,10 +40,11 @@ import (
 
 **imagestreams.go**
 ```go
-var _ = ginkgo.Describe("ImageStreams", func() {
+var _ = ginkgo.Describe("[Suite: informing] ImageStreams", func() {
 	// tests go here
 })
 ```
+**Note:** New tests must be initially added to the "informing" test suite. This allows existing signal to not be impacted by potentially flaky or unproven tests.
 
 - Import helper package and create new helper instance in Describe block. This will setup a Project for each test run and can be used to access the cluster.
 
@@ -46,7 +54,7 @@ import (
 	"github.com/openshift/osde2e/pkg/common/helper"
 )
 
-var _ = ginkgo.Describe("ImageStreams", func() {
+var _ = ginkgo.Describe("[Suite: informing] ImageStreams", func() {
 	h := helper.New()
 
 	// tests go here
@@ -61,7 +69,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-var _ = ginkgo.Describe("ImageStreams", func() {
+var _ = ginkgo.Describe("[Suite: informing] ImageStreams", func() {
 	h := helper.New()
 
 	list, err := h.Image().ImageV1().ImageStreams(metav1.NamespaceAll).List(metav1.ListOptions{})
@@ -72,7 +80,7 @@ var _ = ginkgo.Describe("ImageStreams", func() {
 
 **imagestreams.go**
 ```go
-var _ = ginkgo.Describe("ImageStreams", func() {
+var _ = ginkgo.Describe("[Suite: informing] ImageStreams", func() {
 	h := helper.New()
 
 	ginkgo.It("should exist in the cluster", func() {
@@ -104,7 +112,7 @@ import (
 	"github.com/openshift/osde2e/pkg/common/helper"
 )
 
-var _ = ginkgo.Describe("ImageStreams", func() {
+var _ = ginkgo.Describe("[Suite: informing] ImageStreams", func() {
 	h := helper.New()
 
 	ginkgo.It("should exist in the cluster", func() {
