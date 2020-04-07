@@ -9,6 +9,7 @@ import (
 	"os/exec"
 	"syscall"
 
+	_ "github.com/openshift/osde2e"
 	"github.com/openshift/osde2e/cmd/osde2e/gate"
 	"github.com/openshift/osde2e/cmd/osde2e/test"
 
@@ -39,7 +40,6 @@ func main() {
 // "osde2e" command while still picking up local changes.
 func selfUpdate() {
 	if os.Args[0] != "osde2e" {
-		log.Printf("osde2e was not called from the path, so skipping update.")
 		return
 	}
 
@@ -47,6 +47,7 @@ func selfUpdate() {
 	var err error
 	if binary, err = exec.LookPath("osde2e"); err != nil {
 		log.Printf("Couldn't find osde2e on the path.")
+		return
 	}
 
 	log.Printf("Updating the osde2e binary.")
