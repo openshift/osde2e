@@ -7,7 +7,7 @@ require (
 	github.com/aws/aws-sdk-go v1.25.48
 	github.com/gogo/protobuf v1.2.2-0.20190723190241-65acae22fc9d // indirect
 	github.com/google/subcommands v1.2.0
-	github.com/markbates/pkger v0.14.0
+	github.com/markbates/pkger v0.15.1
 	github.com/onsi/ginkgo v1.12.0
 	github.com/onsi/gomega v1.7.1
 	github.com/openshift-online/ocm-sdk-go v0.1.97

@@ -173,8 +173,10 @@ func runGinkgoTests() error {
 		}
 	}
 
-	h := helper.NewOutsideGinkgo()
-	cleanupAfterE2E(h)
+	if !cfg.DryRun {
+		h := helper.NewOutsideGinkgo()
+		cleanupAfterE2E(h)
+	}
 
 	if !testsPassed || !upgradeTestsPassed {
 		return fmt.Errorf("please inspect logs for more details")
