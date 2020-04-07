@@ -116,7 +116,7 @@ func loadYAMLFromConfigs(object interface{}, name string) error {
 	var err error
 
 	if file, err = pkger.Open(filepath.Join("/configs", name+".yaml")); err != nil {
-		return err
+		return fmt.Errorf("error trying to open config %s: %v", name, err)
 	}
 
 	if data, err = ioutil.ReadAll(file); err != nil {
