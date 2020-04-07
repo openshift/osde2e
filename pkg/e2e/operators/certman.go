@@ -53,7 +53,7 @@ var _ = ginkgo.Describe("[Suite: operators] [OSD] Certman Operator", func() {
 				return true, nil
 			})
 			Expect(err).NotTo(HaveOccurred())
-			Expect(len(apiserver.Spec.ServingCerts.NamedCertificates)).Should(Equal(1))
+			Expect(len(apiserver.Spec.ServingCerts.NamedCertificates)).Should(BeNumerically(">", 0))
 			Expect(apiserver.Spec.ServingCerts.NamedCertificates[0].ServingCertificate.Name).Should(Equal(secretName))
 		}, float64(config.Instance.Tests.PollingTimeout))
 	})
