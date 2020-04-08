@@ -13,7 +13,7 @@ logMetrics:
   lowThreshold: -1
 - name: cluster-pending
   regex: "Cluster is not ready, current status 'pending'"
-  highThreshold: 3
+  highThreshold: 6
   lowThreshold: -1
 - name: host-dns-lookup
   regex: "dial tcp: lookup api\\.ci-cluster.* no such host occurred"
