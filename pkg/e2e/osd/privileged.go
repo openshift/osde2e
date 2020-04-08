@@ -1,10 +1,13 @@
 package osd
 
 import (
+	"fmt"
+
 	"github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/helper"
+	"github.com/openshift/osde2e/pkg/common/util"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -12,7 +15,7 @@ import (
 func makePod(name, sa string, privileged bool) v1.Pod {
 	return v1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: name,
+			Name: fmt.Sprintf("%s-%s", name, util.RandomStr(5)),
 		},
 		Spec: v1.PodSpec{
 			ServiceAccountName: sa,
