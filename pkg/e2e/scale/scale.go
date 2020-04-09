@@ -91,6 +91,9 @@ func (sCfg scaleRunnerConfig) Runner(h *helper.H) *runner.Runner {
 	runner.PodSpec.Containers[0].Env = append(runner.PodSpec.Containers[0].Env, kubev1.EnvVar{
 		Name:  "PBENCH_SERVER",
 		Value: config.Instance.Scale.PbenchServer,
+	}, kubev1.EnvVar{
+		Name:  "WORKLOAD_JOB_PRIVILEGED",
+		Value: "true",
 	})
 
 	return runner
