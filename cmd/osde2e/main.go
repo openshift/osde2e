@@ -10,8 +10,8 @@ import (
 	"syscall"
 
 	_ "github.com/openshift/osde2e"
-	"github.com/openshift/osde2e/cmd/osde2e/gate"
 	"github.com/openshift/osde2e/cmd/osde2e/test"
+	"github.com/openshift/osde2e/cmd/osde2e/weather"
 
 	"github.com/google/subcommands"
 )
@@ -20,9 +20,9 @@ func main() {
 	subcommands.Register(subcommands.HelpCommand(), "")
 	subcommands.Register(subcommands.FlagsCommand(), "")
 	subcommands.Register(subcommands.CommandsCommand(), "")
-	subcommands.Register(&gate.ReportAnalysisCommand{}, "")
-	subcommands.Register(&gate.ReportCommand{}, "")
 	subcommands.Register(&test.Command{}, "")
+	subcommands.Register(&weather.ReportCommand{}, "")
+	subcommands.Register(&weather.ReportToSlackCommand{}, "")
 
 	update := flag.Bool("update", true, "Whether to update the binary before running.")
 	flag.Parse()

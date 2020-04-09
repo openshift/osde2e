@@ -25,7 +25,7 @@ type Config struct {
 
 	Scale ScaleConfig `yaml:"scale"`
 
-	Gate GateConfig `yaml:"gate"`
+	Weather WeatherConfig `yaml:"weather"`
 
 	// JobName lets you name the current e2e job run
 	JobName string `json:"job_name" env:"JOB_NAME" sect:"tests" yaml:"jobName"`
@@ -214,17 +214,23 @@ type TestConfig struct {
 	ServiceAccount string `env:"SERVICE_ACCOUNT" sect:"tests" yaml:"serviceAccount"`
 }
 
-// GateConfig describes various config options for gating.
-type GateConfig struct {
+// WeatherConfig describes various config options for weather reports.
+type WeatherConfig struct {
 	// PrometheusAddress is the address of the Prometheus instance to connect to.
-	PrometheusAddress string `env:"PROMETHEUS_ADDRESS" sect:"gate" yaml:"address"`
+	PrometheusAddress string `env:"PROMETHEUS_ADDRESS" sect:"weather" yaml:"address"`
 
 	// PrometheusBearerToken is the token needed for communicating with Prometheus.
-	PrometheusBearerToken string `env:"PROMETHEUS_BEARER_TOKEN" sect:"gate" yaml:"bearerToken"`
+	PrometheusBearerToken string `env:"PROMETHEUS_BEARER_TOKEN" sect:"weather" yaml:"bearerToken"`
 
 	// StartOfTimeWindowInHours is how many hours to look back through results.
-	StartOfTimeWindowInHours time.Duration `env:"START_OF_TIME_WINDOW_IN_HOURS" sect:"gate" default:"12" yaml:"startOfTimeWindowInHours"`
+	StartOfTimeWindowInHours time.Duration `env:"START_OF_TIME_WINDOW_IN_HOURS" sect:"weather" default:"24" yaml:"startOfTimeWindowInHours"`
 
 	// NumberOfSamplesNecessary is how many samples are necessary for generating a report.
-	NumberOfSamplesNecessary int `env:"NUMBER_OF_SAMPLES_NECESSARY" sect:"gate" default:"3" yaml:"numberOfSamplesNecessary"`
+	NumberOfSamplesNecessary int `env:"NUMBER_OF_SAMPLES_NECESSARY" sect:"weather" default:"3" yaml:"numberOfSamplesNecessary"`
+
+	// SlackWebhook is the webhook to use to post the weather report to slack.
+	SlackWebhook string `env:"SLACK_WEBHOOK" sect:"weather" yaml:"slackWebhook"`
+
+	// JobWhitelist is a list of job regexes to consider in the weather report.
+	JobWhitelist []string `env:"JOB_WHITELIST" sect:"weather" default:"osde2e-.*-aws-e2e-.*" yaml:"jobWhitelist"`
 }

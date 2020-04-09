@@ -16,6 +16,7 @@ require (
 	github.com/operator-framework/operator-lifecycle-manager v0.0.0-20190926160646-a61144936680
 	github.com/prometheus/client_golang v1.4.1
 	github.com/prometheus/common v0.9.1
+	github.com/slack-go/slack v0.6.3
 	github.com/spf13/pflag v1.0.5 // indirect
 	golang.org/x/crypto v0.0.0-20191011191535-87dc89f01550 // indirect
 	golang.org/x/net v0.0.0-20191004110552-13f9640d40b9

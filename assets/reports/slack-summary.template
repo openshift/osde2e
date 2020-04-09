@@ -1,0 +1,5 @@
+*Report Information*
+This report was generated on {{.ReportDate}}
+
+{{range .Jobs}}
+- *{{.Name}}* (Viable: {{.Viable}}){{end}}

@@ -1,0 +1,8 @@
+*Viability*: {{.Viable}}
+
+*Versions*: {{if .Versions}}{{.Versions}}{{else}}None found{{end}}
+
+{{if .FailingTests}}
+*Failing tests*
+{{range .FailingTests}}- {{.}}
+{{end}}{{end}}
