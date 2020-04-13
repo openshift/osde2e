@@ -3,17 +3,15 @@ package state
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
-	"net/http"
 	"text/template"
 
-	"github.com/markbates/pkger"
 	"github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/prometheus/common/log"
 
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/runner"
+	"github.com/openshift/osde2e/pkg/common/templates"
 )
 
 var (
@@ -22,21 +20,13 @@ var (
 )
 
 func init() {
-	var (
-		fileReader http.File
-		data       []byte
-		err        error
-	)
+	var err error
 
-	if fileReader, err = pkger.Open("/assets/state/alerts.template"); err != nil {
-		panic(fmt.Sprintf("unable to open alerts template: %v", err))
+	alertsCmdTpl, err = templates.LoadTemplate("/assets/state/alerts.template")
+
+	if err != nil {
+		panic(fmt.Sprintf("error while loading alerts command: %v", err))
 	}
-
-	if data, err = ioutil.ReadAll(fileReader); err != nil {
-		panic(fmt.Sprintf("unable to read alerts template: %v", err))
-	}
-
-	alertsCmdTpl = template.Must(template.New("alerts-cmd").Parse(string(data)))
 }
 
 var _ = ginkgo.Describe("[Suite: e2e] Cluster state", func() {

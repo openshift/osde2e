@@ -1,0 +1,19 @@
+# OSDe2e Weather Report {{.ReportDate}}
+
+## Summary
+
+{{range .Jobs}}
+* [{{.Name}}](#{{.Name}}) (Viable: {{.Viable}}) ([Job](https://prow.svc.ci.openshift.org/?job={{.Name}})){{end}}
+
+{{range .Jobs}}
+## {{.Name}}
+Job: [link](https://prow.svc.ci.openshift.org/?job={{.Name}})
+
+Viability: {{.Viable}}
+
+Versions: {{if .Versions}}{{.Versions}}{{else}}None found{{end}}
+
+{{if .FailingTests}}
+### Failing tests
+{{range .FailingTests}}* {{.}}
+{{end}}{{end}}{{end}}

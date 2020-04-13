@@ -2,38 +2,27 @@ package addons
 
 import (
 	"fmt"
-	"io/ioutil"
-	"net/http"
 	"text/template"
 
-	"github.com/markbates/pkger"
 	"github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/runner"
+	"github.com/openshift/osde2e/pkg/common/templates"
 )
 
 var addonTestTemplate *template.Template
 
 func init() {
-	var (
-		fileReader http.File
-		data       []byte
-		err        error
-	)
+	var err error
 
-	if fileReader, err = pkger.Open("/assets/addons/addon-runner.template"); err != nil {
-		panic(fmt.Sprintf("unable to open addon runner template: %v", err))
+	addonTestTemplate, err = templates.LoadTemplate("/assets/addons/addon-runner.template")
+
+	if err != nil {
+		panic(fmt.Sprintf("error while loading addon test runner: %v", err))
 	}
-
-	if data, err = ioutil.ReadAll(fileReader); err != nil {
-		panic(fmt.Sprintf("unable to read addon runner template: %v", err))
-	}
-
-	addonTestTemplate = template.Must(template.New("addon-test-runner").Parse(string(data)))
-
 }
 
 var _ = ginkgo.Describe("[Suite: addons] Addon Test Harness", func() {
