@@ -2,10 +2,12 @@
 package runner
 
 import (
+	"fmt"
 	"log"
 	"os"
 
 	image "github.com/openshift/client-go/image/clientset/versioned"
+	"github.com/openshift/osde2e/pkg/common/util"
 	kubev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	kube "k8s.io/client-go/kubernetes"
@@ -138,7 +140,7 @@ func (r *Runner) DeepCopy() *Runner {
 // meta returns the ObjectMeta used for Runner resources.
 func (r *Runner) meta() metav1.ObjectMeta {
 	return metav1.ObjectMeta{
-		Name: r.Name,
+		Name: fmt.Sprintf("%s-%s", r.Name, util.RandomStr(5)),
 		Labels: map[string]string{
 			"app": r.Name,
 		},
