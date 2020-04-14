@@ -128,6 +128,13 @@ func (m *Metadata) SetPassRate(currentPhase string, passRate float64) {
 	}
 }
 
+// ResetLogMetrics zeroes out old results to be used before a new run.
+func (m *Metadata) ResetLogMetrics() {
+	for metric := range m.LogMetrics {
+		m.LogMetrics[metric] = 0
+	}
+}
+
 // IncrementLogMetric adds a supplied number to a log metric or sets the metric to
 // the value if it doesn't exist already
 func (m *Metadata) IncrementLogMetric(metric string, value int) {
