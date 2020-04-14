@@ -9,10 +9,9 @@ Provide a standard for testing every aspect of the Openshift Dedicated product. 
 
 ## Setup 
 
+Log into OCM, then go here to obtain an [OpenShift Offline Token].
+
 A properly setup Go workspace using **Go 1.13+ is required**.
-
-Get token to launch OSD clusters here.
-
 
 Install dependencies:
 ```
@@ -31,13 +30,9 @@ $ export OCM_TOKEN=<token from step 1>
 
 The `osde2e` command is the root command that executes all functionality within the osde2e repo through a number of subcommands.
 
-### `osde2e test`
-
-The `test` subcommand is the way to run tests against an OpenShift cluster on OSD or otherwise. Below are some common examples when running OSDe2e. There are a large number of config options that may change or help, so please view the config package for more information.
-
 ### Composable configs
 
-OSDe2e comes with a number of [configs](configs) that can be passed to the `osde2e test` command using the -configs argument. These can be strung together in a comma separated list to create a more complex scenario for testing.
+OSDe2e comes with a number of [configs] that can be passed to the `osde2e test` command using the -configs argument. These can be strung together in a comma separated list to create a more complex scenario for testing.
 
 ```
 $ osde2e test -configs prod,e2e-suite,conformance-suite
@@ -47,9 +42,9 @@ This will create a cluster on production (using the default version) that will r
 
 #### Using environment variables
 
-Any config option can be passed in using environment variables. Please refer to the config package for exact environment variable names.
+Any config option can be passed in using environment variables. Please refer to the [config package] for exact environment variable names.
 
-Spinning up a hosted-OSD instance and testing against it
+Example of spinning up a hosted-OSD instance and testing against it
 
 ```
 OCM_TOKEN=$(cat ~/.ocm-token) \
@@ -82,9 +77,7 @@ osde2e test -custom-config ./osde2e.yaml
 dryRun: false
 cluster:
  name: jsica-test
-upgrades:
- majorTarget: 4
- minorTarget: 2
+ multiAZ: true
 ocm:
  debug: false
  token: [Redacted]
@@ -96,7 +89,18 @@ tests:
 
 #### Order of precedence
 
-Config options are currently parsed by loading defaults, attempting to load environment variables, attempting to load composable configs, and finally attempting to load config data from the custom YAML file. There are instances where you may want to have most of your config in a custom YAML file while keeping one or two sensitive config options as environment variables (OCM Token)l
+Config options are currently parsed by loading defaults, attempting to load environment variables, attempting to load composable configs, and finally attempting to load config data from the custom YAML file. There are instances where you may want to have most of your config in a custom YAML file while keeping one or two sensitive config options as environment variables (OCM Token)
+
+### Makefile
+
+The [Makefile] has several shortcuts to running osde2e locally. The simplest example is `make test` which will build the osde2e binary and run `osde2e test` using our default config settings. Of note: `OCM_TOKEN` will still need to be exported for the Makefile to work.
+
+There are several other shortcuts for building the binary and running specific test suites with default configs:
+
+* `make test-informing` - Runs tests that are flaky or waiting to be graduated to blocking
+* `make test-scale` - Runs scale/performance tests
+* `make test-conformance` - Runs the K8s and OpenShift conformance suites
+* `make test-addon` - Handles addon testing and requires additional configuration for the specific addon (see [Addon Testing Guide])
 
 ### Testing against non OSD clusers
 
@@ -112,20 +116,18 @@ osde2e test -configs prod -custom-config .osde2e.yaml
 Core tests and Operator tests reside within the OSDe2e repo and are maintained by the CICD team. The tests are written and compiled as part of the OSDe2e project. 
 * Core Tests
 * OpenShift Conformance
+* Scale testing
 * OC Must Gather
 * Verify 
   * All pods are healthy or successful
   * ImageStreams exist
   * Project creation possible
   * Ingress to console possible
-* Operator tests
-  * ConfigureAlertManager
-  * DedicatedAdmin
-  * ManagedVelero
+* [Operator tests]
 
 Third-party (Addon) tests are built as containers that spin up and report back results to OSDe2e. These containers are built and maintained by external groups looking to get CI signal for their product within OSD. The definition of a third-party test is maintained within the `managed-tenants` repo and is returned via the Add-Ons API.
 
-For more information please see the [Addon Testing Guide](docs/Addons.md)
+For more information please see the [Addon Testing Guide]
 
 ## Operator Testing
 Much like the different phases of operators laid out on OperatorHub, Operator tests using OSDe2e falls under one of a few categories:
@@ -142,25 +144,34 @@ Collecting metrics of the above tests as well as testing recovery of failures. E
 ## Anatomy Of A Test Run
 There are several conditional checks (is this an upgrade test, is this a dry-run) that may impact what stages an OSDe2e run may contain, but the most complicated is an upgrade test:
 
-
 1. Load Config
-2. Provision Cluster
+2. Provision Cluster (If Cluster ID or Kubeconfig not provided)
 3. Verify Cluster Integrity
 4. Run Tests (pre-upgrade)
-5. Capture / Upload logs to GCS
+5. Capture logs, metrics, and metadata
 6. Upgrade Cluster
 7. Verify Cluster Integrity
 8. Run Tests (post-upgrade)
-9. Capture / Upload logs to GCS
+9. Capture logs, metrics, and metadata 
+10. CI-Operator uploads artifacts to GCS
 
-With a dry-run, OSDe2e only performs the “Load Config” step and outputs the parameters the run would have used. With a vanilla-install run, the run is complete after the first “Capture/Upload” step.
+With a dry-run, OSDe2e only performs the “Load Config” step and outputs the parameters the run would have used. With a vanilla-install run (not an upgrade test) steps 6-9 are skipped and the entire upgrade phase does not occur.
 
 A failure at any step taints and fails the run. 
 
 ## Reporting / Alerting
 Every run of OSDe2e captures as much data as possible. This includes cluster and pod logs, prometheus metrics, and test info. In addition to cluster-specific info, the version of hive and OSDe2e itself is captured to identify potential flakes or environment failures. Every test suite generates a `junit.xml` file that contains test names, pass/fails, and the time the test segment took. It is expected that addon testing will follow this pattern and generate their own `junit.xml` file for their test results. 
 
-The `junit.xml` files are converted to meaningful metrics and stored in DataHub. These metrics are then published via Grafana dashboards used by Service Delivery as well as Third Parties to monitor project health and promote confidence in releases. Alerting rules are housed within the DataHub Grafana instance and addon authors can maintain their own individual dashboards.
+The `junit.xml` files are converted to meaningful metrics and stored in DataHub. These metrics are then published via [Grafana dashboards] used by Service Delivery as well as Third Parties to monitor project health and promote confidence in releases. Alerting rules are housed within the DataHub Grafana instance and addon authors can maintain their own individual dashboards.
 
 ## Writing tests
-Documentation on writing tests can be found [here](./docs/Writing-Tests.md).
+To write your own test, see [Writing Tests].
+
+[OpenShift Offline Token]:https://cloud.redhat.com/openshift/token
+[configs]:/configs/
+[config package]:/pkg/common/config/config.go
+[Makefile]:/Makefile
+[Operator tests]:/pkg/e2e/operators/
+[Addon Testing Guide]:/docs/Addons.md
+[Grafana dashboards]:https://grafana.datahub.redhat.com/dashboard/db/osd-health-metrics?orgId=1
+[Writing Tests]:/docs/Writing-Tests.md
