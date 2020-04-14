@@ -148,12 +148,11 @@ There are several conditional checks (is this an upgrade test, is this a dry-run
 2. Provision Cluster (If Cluster ID or Kubeconfig not provided)
 3. Verify Cluster Integrity
 4. Run Tests (pre-upgrade)
-5. Capture logs, metrics, and metadata
+5. Capture logs, metrics, and metadata to the `REPORT_DIR`
 6. Upgrade Cluster
 7. Verify Cluster Integrity
 8. Run Tests (post-upgrade)
-9. Capture logs, metrics, and metadata 
-10. CI-Operator uploads artifacts to GCS
+9. Capture logs, metrics, and metadata to the `REPORT_DIR`
 
 With a dry-run, OSDe2e only performs the “Load Config” step and outputs the parameters the run would have used. With a vanilla-install run (not an upgrade test) steps 6-9 are skipped and the entire upgrade phase does not occur.
 

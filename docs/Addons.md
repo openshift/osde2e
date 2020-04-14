@@ -36,7 +36,17 @@ Your account will need the following permissions:
 
 ### **Configuring your job to use your OCM refresh token**
 
-In order to run addon tests in osde2e, you will need to create a secret in Origin CI with your OCM refresh token. Please follow [these instructions] to both create a secret and a secret mapping into the ci namespace.
+In order to run addon tests in osde2e, you will need to create a secret in Origin CI with your OCM refresh token. Please follow [these instructions] to both create a secret and a secret mapping into the ci namespace. Note: The secret object must contain a key named `ocm-refresh-token` that contains the Offline Refresh Token from above.
+
+Example secret:
+```
+apiVersion: v1
+kind: Secret
+metadata:
+  name: my-addon-credentials
+data:
+  ocm-refresh-token: <token-goes-here>
+```
 
 ## **Querying results from Datahub**
 
@@ -46,6 +56,8 @@ Once your job has been running in prow, you will be able to programmatically que
 cicd_event{environment="int",event="InstallSuccessful",install_version="openshift-v4.2.0-0.nightly-2020-01-15-224532",job="periodic-ci-openshift-osde2e-master-e2e-int-4.2-4.2",monitor="datahub",upgrade_version="openshift-v4.2.0-0.nightly-2020-01-15-231532"}
 
 cicd_jUnitResult{environment="int",install_version="openshift-v4.2.0-0.nightly-2020-01-15-224532",job="periodic-ci-openshift-osde2e-master-e2e-int-4.2-4.2",monitor="datahub",phase="install",result="failed",suite="OSD e2e suite",testname="[OSD] Managed Velero Operator deployment should have all desired replicas ready",upgrade_version="openshift-v4.2.0-0.nightly-2020-01-15-231532"}
+
+cicd_metadata{cluster_id="1a2bc3",environment="int",install_version="openshift-v4.2.0-0.nightly-2020-01-15-224532",job="periodic-ci-openshift-osde2e-master-e2e-int-4.2-4.2",job_id="123",metadata_name="time-to-cluster-ready",monitor="datahub",phase="",upgrade_version="openshift-v4.2.0-0.nightly-2020-01-15-231532"}
 
 cicd_addon_metadata{cluster_id="1a2bc3",environment="int",install_version="openshift-v4.2.0-0.nightly-2020-01-15-224532",job="periodic-ci-openshift-osde2e-master-e2e-int-4.2-4.2",job_id="123",metadata_name="time-to-cluster-ready",monitor="datahub",phase="",upgrade_version="openshift-v4.2.0-0.nightly-2020-01-15-231532"}
 ```
