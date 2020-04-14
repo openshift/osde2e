@@ -12,8 +12,8 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 
 	"github.com/openshift/osde2e/pkg/common/config"
-	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/metadata"
+	"github.com/openshift/osde2e/pkg/common/osd/healthchecks"
 	"github.com/openshift/osde2e/pkg/common/state"
 )
 
@@ -270,19 +270,23 @@ func (u *OSD) PollClusterHealth() (status bool, err error) {
 		return false, nil
 	}
 
-	if check, err := helper.CheckCVOReadiness(oscfg.ConfigV1()); !check || err != nil {
+	if check, err := healthchecks.CheckCVOReadiness(oscfg.ConfigV1()); !check || err != nil {
 		return false, nil
 	}
 
-	if check, err := helper.CheckNodeHealth(kubeClient.CoreV1()); !check || err != nil {
+	if check, err := healthchecks.CheckNodeHealth(kubeClient.CoreV1()); !check || err != nil {
 		return false, nil
 	}
 
-	if check, err := helper.CheckOperatorReadiness(oscfg.ConfigV1()); !check || err != nil {
+	if check, err := healthchecks.CheckOperatorReadiness(oscfg.ConfigV1()); !check || err != nil {
 		return false, nil
 	}
 
-	if check, err := helper.CheckPodHealth(kubeClient.CoreV1()); !check || err != nil {
+	if check, err := healthchecks.CheckPodHealth(kubeClient.CoreV1()); !check || err != nil {
+		return false, nil
+	}
+
+	if check, err := healthchecks.CheckCerts(kubeClient.CoreV1()); !check || err != nil {
 		return false, nil
 	}
 
