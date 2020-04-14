@@ -1,4 +1,4 @@
-package helper
+package healthchecks
 
 import (
 	"log"

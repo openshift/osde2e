@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/openshift/osde2e/pkg/common/config"
+	"github.com/openshift/osde2e/pkg/common/osd/healthchecks"
 
 	"github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -49,7 +50,7 @@ var _ = ginkgo.Describe("[Suite: e2e] Workload ("+workloadName+")", func() {
 			// Wait for all pods to come up healthy
 			err = wait.PollImmediate(15*time.Second, 10*time.Minute, func() (bool, error) {
 				// This is pretty basic. Are all the pods up? Cool.
-				if check, err := helper.CheckPodHealth(h.Kube().CoreV1()); !check || err != nil {
+				if check, err := healthchecks.CheckPodHealth(h.Kube().CoreV1()); !check || err != nil {
 					return false, nil
 				}
 				return true, nil

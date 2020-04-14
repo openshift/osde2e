@@ -1,20 +1,21 @@
-package helper
+package healthchecks
 
 import (
 	"testing"
 
 	configv1 "github.com/openshift/api/config/v1"
 	fakeConfig "github.com/openshift/client-go/config/clientset/versioned/fake"
+	"github.com/openshift/osde2e/pkg/common/config"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
-func clusterVersion() *configv1.ClusterVersion {
-	return &configv1.ClusterVersion{
+func clusterOperator(name string) *configv1.ClusterOperator {
+	return &configv1.ClusterOperator{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: "version",
+			Name: name,
 		},
-		Status: configv1.ClusterVersionStatus{
+		Status: configv1.ClusterOperatorStatus{
 			Conditions: []configv1.ClusterOperatorStatusCondition{
 				{
 					Type:    configv1.OperatorAvailable,
@@ -34,25 +35,13 @@ func clusterVersion() *configv1.ClusterVersion {
 					Reason:  "Available",
 					Message: "Available",
 				},
-				{
-					Type:    configv1.OperatorUpgradeable,
-					Status:  configv1.ConditionTrue,
-					Reason:  "Available",
-					Message: "Available",
-				},
-				{
-					Type:    configv1.RetrievedUpdates,
-					Status:  configv1.ConditionTrue,
-					Reason:  "Available",
-					Message: "Available",
-				},
 			},
 		},
 	}
 }
 
-func unavailableClusterVersion() *configv1.ClusterVersion {
-	op := clusterVersion()
+func unavailableClusterOperator(name string) *configv1.ClusterOperator {
+	op := clusterOperator(name)
 	op.Status.Conditions[0].Status = configv1.ConditionFalse
 	op.Status.Conditions[2].Status = configv1.ConditionTrue
 	op.Status.Conditions[0].Message = "Degraded"
@@ -61,8 +50,8 @@ func unavailableClusterVersion() *configv1.ClusterVersion {
 	return op
 }
 
-func progressingClusterVersion() *configv1.ClusterVersion {
-	op := clusterVersion()
+func progressingClusterOperator(name string) *configv1.ClusterOperator {
+	op := clusterOperator(name)
 	op.Status.Conditions[0].Status = configv1.ConditionTrue
 	op.Status.Conditions[1].Status = configv1.ConditionTrue
 	op.Status.Conditions[0].Message = "Available"
@@ -70,21 +59,39 @@ func progressingClusterVersion() *configv1.ClusterVersion {
 	return op
 }
 
-func TestCheckCVOReadiness(t *testing.T) {
+func TestCheckOperatorReadiness(t *testing.T) {
 	var tests = []struct {
 		description string
 		expected    bool
 		objs        []runtime.Object
+		skip        string
 	}{
-		{"no version", false, nil},
-		{"single version success", true, []runtime.Object{clusterVersion()}},
-		{"single version failure", false, []runtime.Object{unavailableClusterVersion()}},
-		{"single version progressing", false, []runtime.Object{progressingClusterVersion()}},
+		{"no operators", false, nil, ""},
+		{"single operator success", true, []runtime.Object{clusterOperator("a")}, ""},
+		{"single operator failure", false, []runtime.Object{unavailableClusterOperator("a")}, ""},
+		{"single operator progressing", false, []runtime.Object{progressingClusterOperator("a")}, ""},
+		{"multi operator success", true, []runtime.Object{clusterOperator("a"), clusterOperator("b")}, ""},
+		{"multi operator one progressing", false, []runtime.Object{clusterOperator("a"), progressingClusterOperator("b")}, ""},
+		{"multi operator one failure", false, []runtime.Object{clusterOperator("a"), unavailableClusterOperator("b")}, ""},
+		{"multi operator, skip success", true, []runtime.Object{
+			clusterOperator("a"),
+			unavailableClusterOperator("b"),
+			unavailableClusterOperator("c"),
+			unavailableClusterOperator("d"),
+			clusterOperator("e"),
+		}, "b,c,d"},
+		{"multi operator, skip failure", false, []runtime.Object{
+			clusterOperator("a"),
+			unavailableClusterOperator("b"),
+			unavailableClusterOperator("c"),
+			unavailableClusterOperator("d"),
+		}, "b,c"},
 	}
 
 	for _, test := range tests {
 		cfgClient := fakeConfig.NewSimpleClientset(test.objs...)
-		state, err := CheckCVOReadiness(cfgClient.ConfigV1())
+		config.Instance.Tests.OperatorSkip = test.skip
+		state, err := CheckOperatorReadiness(cfgClient.ConfigV1())
 
 		if err != nil {
 			t.Errorf("Unexpected error: %s", err)

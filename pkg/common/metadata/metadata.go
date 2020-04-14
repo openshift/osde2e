@@ -37,6 +37,7 @@ type Metadata struct {
 	TimeToClusterReady          float64        `json:"time-to-cluster-ready,string"`
 	TimeToUpgradedCluster       float64        `json:"time-to-upgraded-cluster,string"`
 	TimeToUpgradedClusterReady  float64        `json:"time-to-upgraded-cluster-ready,string"`
+	TimeToCertificateIssued     float64        `json:"time-to-certificate-issued,string"`
 	InstallPhasePassRate        float64        `json:"install-phase-pass-rate,string"`
 	UpgradePhasePassRate        float64        `json:"upgrade-phase-pass-rate,string"`
 	LogMetrics                  map[string]int `json:"log-metrics"`
@@ -113,6 +114,12 @@ func (m *Metadata) SetTimeToUpgradedCluster(timeToUpgradedCluster float64) {
 // SetTimeToUpgradedClusterReady sets the time it took for the cluster to appear healthy on upgrade
 func (m *Metadata) SetTimeToUpgradedClusterReady(timeToUpgradedClusterReady float64) {
 	m.TimeToUpgradedClusterReady = timeToUpgradedClusterReady
+	m.WriteToJSON(config.Instance.ReportDir)
+}
+
+// SetTimeToCertificateIssued sets the time it took for a certificate to be issued to the cluster
+func (m *Metadata) SetTimeToCertificateIssued(timeToCertificateIssued float64) {
+	m.TimeToCertificateIssued = timeToCertificateIssued
 	m.WriteToJSON(config.Instance.ReportDir)
 }
 
