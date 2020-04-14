@@ -18,11 +18,11 @@ func CheckPodHealth(podClient v1.CoreV1Interface) (bool, error) {
 	listOpts := metav1.ListOptions{}
 	list, err := podClient.Pods(metav1.NamespaceAll).List(listOpts)
 	if err != nil {
-		return false, err
+		return false, fmt.Errorf("error getting pod list: %v", err)
 	}
 
 	if len(list.Items) == 0 {
-		return false, err
+		return false, nil
 	}
 
 	for _, pod := range list.Items {

@@ -1,6 +1,7 @@
 package healthchecks
 
 import (
+	"fmt"
 	"log"
 	"time"
 
@@ -32,8 +33,7 @@ func CheckCerts(secretClient v1.CoreV1Interface) (bool, error) {
 	}
 	secrets, err := secretClient.Secrets("openshift-config").List(listOpts)
 	if err != nil {
-		log.Printf("Error trying to find issued certificate(s): %v", err)
-		return false, err
+		return false, fmt.Errorf("error trying to find issued certificate(s): %v", err)
 	}
 	if len(secrets.Items) < 1 {
 		log.Printf("Certificate(s) not yet issued.")

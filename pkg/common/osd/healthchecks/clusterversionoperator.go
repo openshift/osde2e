@@ -15,7 +15,6 @@ func CheckCVOReadiness(configClient configclient.ConfigV1Interface) (bool, error
 	getOpts := metav1.GetOptions{}
 	cvInfo, err := configClient.ClusterVersions().Get("version", getOpts)
 	if err != nil {
-		log.Printf("Error getting CVS: %v\n", err)
 		return false, nil
 	}
 
