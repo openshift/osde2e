@@ -1,6 +1,6 @@
 # Writing Tests
 
-OSD end-to-end testing uses the [Ginkgo](https://onsi.github.io/ginkgo/) testing framework and [Gomega](https://onsi.github.io/gomega/) matching libraries.
+OSD end-to-end testing uses the [Ginkgo] testing framework and [Gomega]  matching libraries.
 
 ## Writing first test
 
@@ -12,9 +12,9 @@ This test suite is used as a proving ground for new tests to validate their qual
 Once a test has run for over a week with quality results, it can then be graduated into its correct/respective suite.
 
 ### Adding a new package of tests
-All Ginkgo tests that are imported in **[./cmd/osde2e/test/test.go](../cmd/osde2e/test/test.go)** are ran as part of the osde2e suite.
+All Ginkgo tests that are imported in **[`/cmd/osde2e/test/test.go`]** are ran as part of the osde2e suite.
 
-For example, to add tests from the Go package `github.com/openshift/osde2e/test/verify` to the suite add the following to **[cmd/osde2e/test/test.go](../cmd/osde2e/test/test.go)**:
+For example, to add the tests in the Go package `github.com/openshift/osde2e/test/verify` to the normal test suite, you would add the following to **[`/cmd/osde2e/test/test.go`]**:
 ```go
 import (
 	_ "github.com/openshift/osde2e/pkg/e2e/verify"
@@ -22,11 +22,11 @@ import (
 ```
 
 ### Adding a test to an existing package
-This test from **[./pkg/e2e/verify/imagestreams.go](../pkg/e2e/verify/imagestreams.go)** provides a good example of setting up new ones:
+This test from **[`/pkg/e2e/verify/imagestreams.go`]** provides a good example of setting up new ones:
 
-- Create new file in a package that is imported by  **[./cmd/osde2e/test/test.go](../cmd/osde2e/test/test.go)** as discussed [above](#adding-a-new-package-of-tests). For this example, we will call the file **imagestreams.go**.
+- Create new file in a package that is imported by  **[`/cmd/osde2e/test/test.go`]** as discussed [above]. For this example, we will call the file **imagestreams.go**.
 
-- Import [Ginkgo](https://onsi.github.io/ginkgo/) testing framework and [Gomega](https://onsi.github.io/gomega/) matching libraries:
+- Import [Ginkgo] testing framework and [Gomega] matching libraries:
 
 **imagestreams.go**
 ```go
@@ -44,9 +44,9 @@ var _ = ginkgo.Describe("[Suite: informing] ImageStreams", func() {
 	// tests go here
 })
 ```
-**Note:** New tests must be initially added to the "informing" test suite. This allows existing signal to not be impacted by potentially flaky or unproven tests.
+**Note:** New tests must be initially added to the ["informing" test suite]. This allows existing signal to not be impacted by potentially flaky or unproven tests.
 
-- Import helper package and create new helper instance in Describe block. This will setup a Project for each test run and can be used to access the cluster.
+- Import the [helper package] and create new helper instance in Describe block. This will setup a Project for each test run and can be used to access the cluster.
 
 **imagestreams.go**
 ```go
@@ -76,7 +76,7 @@ var _ = ginkgo.Describe("[Suite: informing] ImageStreams", func() {
 })
 ```
 
-- Using Gomega the results of the request can be validated. The following checks that the requests to the cluster completed successfully and at least 50 ImageStreams exist cluster-wide:
+- Using [Gomega] the results of the request can be validated. The following checks that the requests to the cluster completed successfully and at least 50 ImageStreams exist cluster-wide:
 
 **imagestreams.go**
 ```go
@@ -130,18 +130,32 @@ var _ = ginkgo.Describe("[Suite: informing] ImageStreams", func() {
 ## Ginkgo
 
 ### Setup & Teardown
-Ginkgo has been configured to bring a cluster up in it's [`BeforeSuite`](https://onsi.github.io/ginkgo/#global-setup-and-teardown-beforesuite-and-aftersuite) and destroy it in it's [`AfterSuite`](https://onsi.github.io/ginkgo/#global-setup-and-teardown-beforesuite-and-aftersuite).
+[Ginkgo] has been configured to bring a cluster up in it's [`BeforeSuite`] and destroy it in it's [`AfterSuite`].
 
 **Cluster configuration**
-- Launched clusters are setup with the [`osd`](../pkg/common/osd) package
+- Launched clusters are setup with the [osd package]
 	- Changes to the way test clusters are launched should be made there
-- [ocm-sdk-go](https://github.com/openshift-online/ocm-sdk-go) is used to launch clusters
-- Configuration for launching clusters is loaded from a [`config.Config`](https://godoc.org/github.com/openshift/osde2e/common/pkg/config#Config) instance
+- [ocm-sdk-go] is used to launch clusters
+- Configuration for launching clusters is loaded from a [`config.Config`] instance
 
 ## Helper
-A helper can be created in tests using [`helper.New()`](https://godoc.org/github.com/openshift/osde2e/pkg/common/helper#New).
+A helper can be created in tests using [`helper.New()`]
 
 The helper:
 - Configures Ginkgo to create a Project before each test and delete it after
 - Provides access to OpenShift and Kubernetes clients configured for the test cluster
 - Provides commonly used test functions
+
+[Ginkgo]:https://onsi.github.io/ginkgo/
+[Gomega]:https://onsi.github.io/gomega/
+[`/cmd/osde2e/test/test.go`]:/cmd/osde2e/test/test.go
+[above]:#adding-a-new-package-of-tests
+[`/pkg/e2e/verify/imagestreams.go`]:/pkg/e2e/verify/imagestreams.go
+["informing" test suite]:/configs/informing-suite.yaml
+[helper package]:/pkg/common/helper/
+[osd package]:/pkg/common/osd
+[`BeforeSuite`]:https://onsi.github.io/ginkgo/#global-setup-and-teardown-beforesuite-and-aftersuite
+[`AfterSuite`]:https://onsi.github.io/ginkgo/#global-setup-and-teardown-beforesuite-and-aftersuite
+[ocm-sdk-go]:https://github.com/openshift-online/ocm-sdk-go
+[`config.Config`]:https://godoc.org/github.com/openshift/osde2e/common/pkg/config#Config
+[`helper.New()`]:https://godoc.org/github.com/openshift/osde2e/pkg/common/helper#New

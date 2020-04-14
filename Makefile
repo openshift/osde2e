@@ -25,8 +25,6 @@ check:
 	(cd "$(DIR)"; golangci-lint run -c .golang-ci.yml ./...)
 	find "$(DIR)scripts" -name "*.sh" -exec $(DIR)scripts/shellcheck.sh {} +
 
-generate: $(DIR)/docs/Options.md
-
 build-image:
 	$(CONTAINER_ENGINE) build -t "$(IMAGE_NAME):$(IMAGE_TAG)" .
 
