@@ -369,6 +369,9 @@ func runTestsInPhase(phase string, description string) bool {
 		}
 	}
 
+	// Ensure all log metrics are zeroed out before running again
+	metadata.Instance.ResetLogMetrics()
+
 	logMetricTestSuite := reporters.JUnitTestSuite{
 		Name: "Log Metrics",
 	}
