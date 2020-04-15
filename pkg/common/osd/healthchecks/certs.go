@@ -41,6 +41,7 @@ func CheckCerts(secretClient v1.CoreV1Interface) (bool, error) {
 	}
 
 	if !certCheck.certFound {
+		certCheck.certFound = true
 		metadata.Instance.SetTimeToCertificateIssued(time.Since(certCheck.startTime).Seconds())
 	}
 
