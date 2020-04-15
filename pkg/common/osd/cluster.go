@@ -5,6 +5,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/hashicorp/go-multierror"
 	v1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 	osconfig "github.com/openshift/client-go/config/clientset/versioned"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -270,25 +271,33 @@ func (u *OSD) PollClusterHealth() (status bool, err error) {
 		return false, nil
 	}
 
+	clusterHealthy := true
+
+	var healthErr *multierror.Error
 	if check, err := healthchecks.CheckCVOReadiness(oscfg.ConfigV1()); !check || err != nil {
-		return false, nil
+		multierror.Append(healthErr, err)
+		clusterHealthy = false
 	}
 
 	if check, err := healthchecks.CheckNodeHealth(kubeClient.CoreV1()); !check || err != nil {
-		return false, nil
+		multierror.Append(healthErr, err)
+		clusterHealthy = false
 	}
 
 	if check, err := healthchecks.CheckOperatorReadiness(oscfg.ConfigV1()); !check || err != nil {
-		return false, nil
+		multierror.Append(healthErr, err)
+		clusterHealthy = false
 	}
 
 	if check, err := healthchecks.CheckPodHealth(kubeClient.CoreV1()); !check || err != nil {
-		return false, nil
+		multierror.Append(healthErr, err)
+		clusterHealthy = false
 	}
 
 	if check, err := healthchecks.CheckCerts(kubeClient.CoreV1()); !check || err != nil {
-		return false, nil
+		multierror.Append(healthErr, err)
+		clusterHealthy = false
 	}
 
-	return true, nil
+	return clusterHealthy, healthErr.ErrorOrNil()
 }

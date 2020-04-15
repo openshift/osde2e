@@ -1,6 +1,7 @@
 package healthchecks
 
 import (
+	"fmt"
 	"log"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -15,8 +16,7 @@ func CheckNodeHealth(nodeClient v1.CoreV1Interface) (bool, error) {
 	listOpts := metav1.ListOptions{}
 	list, err := nodeClient.Nodes().List(listOpts)
 	if err != nil {
-		log.Printf("Error getting CVS: %v\n", err)
-		return false, nil
+		return false, fmt.Errorf("error getting node list: %v", err)
 	}
 
 	if len(list.Items) == 0 {
