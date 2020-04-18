@@ -19,9 +19,14 @@ func TestResultsService(t *testing.T) {
 	r := &def
 	r.Kube = client
 
+	// create pod
+	pod, err := r.createPod()
+	if err != nil {
+		t.Fatalf("Failed to create example  pod: %v", err)
+	}
+
 	// create results service
-	var err error
-	r.svc, err = r.createService(new(kubev1.Pod))
+	r.svc, err = r.createService(pod)
 	if err != nil {
 		t.Fatalf("Failed to create example service: %v", err)
 	}
@@ -30,7 +35,7 @@ func TestResultsService(t *testing.T) {
 	done := make(chan struct{})
 	errs := make(chan error, 1)
 	go func() {
-		err := r.waitForCompletion(1800)
+		err := r.waitForCompletion(pod.Name, 1800)
 		if err != nil {
 			errs <- fmt.Errorf("Failed waiting for endpoints: %v", err)
 		} else {

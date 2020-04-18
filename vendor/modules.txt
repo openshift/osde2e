@@ -57,6 +57,8 @@ github.com/cespare/xxhash/v2
 github.com/davecgh/go-spew/spew
 # github.com/dgrijalva/jwt-go v3.2.0+incompatible
 github.com/dgrijalva/jwt-go
+# github.com/emicklei/go-restful v2.9.6+incompatible
+github.com/emicklei/go-restful/log
 # github.com/evanphx/json-patch v4.5.0+incompatible
 github.com/evanphx/json-patch
 # github.com/gobuffalo/here v0.6.0
