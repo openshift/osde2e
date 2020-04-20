@@ -37,6 +37,7 @@ type Metadata struct {
 	TimeToClusterReady          float64        `json:"time-to-cluster-ready,string"`
 	TimeToUpgradedCluster       float64        `json:"time-to-upgraded-cluster,string"`
 	TimeToUpgradedClusterReady  float64        `json:"time-to-upgraded-cluster-ready,string"`
+	TimeToCertificateIssued     float64        `json:"time-to-certificate-issued,string"`
 	InstallPhasePassRate        float64        `json:"install-phase-pass-rate,string"`
 	UpgradePhasePassRate        float64        `json:"upgrade-phase-pass-rate,string"`
 	LogMetrics                  map[string]int `json:"log-metrics"`
@@ -116,6 +117,12 @@ func (m *Metadata) SetTimeToUpgradedClusterReady(timeToUpgradedClusterReady floa
 	m.WriteToJSON(config.Instance.ReportDir)
 }
 
+// SetTimeToCertificateIssued sets the time it took for a certificate to be issued to the cluster
+func (m *Metadata) SetTimeToCertificateIssued(timeToCertificateIssued float64) {
+	m.TimeToCertificateIssued = timeToCertificateIssued
+	m.WriteToJSON(config.Instance.ReportDir)
+}
+
 // SetPassRate sets the passrate metadata metric for the given phase
 func (m *Metadata) SetPassRate(currentPhase string, passRate float64) {
 	if currentPhase == phase.InstallPhase {
@@ -125,6 +132,13 @@ func (m *Metadata) SetPassRate(currentPhase string, passRate float64) {
 	} else {
 		// This is a developer issue, so this should fail ungracefully.
 		panic(fmt.Sprintf("Invalid phase: %s, couldn't set pass rate.", currentPhase))
+	}
+}
+
+// ResetLogMetrics zeroes out old results to be used before a new run.
+func (m *Metadata) ResetLogMetrics() {
+	for metric := range m.LogMetrics {
+		m.LogMetrics[metric] = 0
 	}
 }
 

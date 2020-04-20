@@ -118,24 +118,20 @@ func runGinkgoTests() error {
 	testsPassed := runTestsInPhase(phase.InstallPhase, "OSD e2e suite")
 	upgradeTestsPassed := true
 
-	if testsPassed {
-		// upgrade cluster if requested
-		if state.Upgrade.Image != "" || state.Upgrade.ReleaseName != "" {
-			if state.Kubeconfig.Contents != nil {
-				if err = upgrade.RunUpgrade(OSD); err != nil {
-					events.RecordEvent(events.UpgradeFailed)
-					return fmt.Errorf("error performing upgrade: %v", err)
-				}
-				events.RecordEvent(events.UpgradeSuccessful)
-
-				log.Println("Running e2e tests POST-UPGRADE...")
-				upgradeTestsPassed = runTestsInPhase(phase.UpgradePhase, "OSD e2e suite post-upgrade")
-			} else {
-				log.Println("No Kubeconfig found from initial cluster setup. Unable to run upgrade.")
+	// upgrade cluster if requested
+	if state.Upgrade.Image != "" || state.Upgrade.ReleaseName != "" {
+		if state.Kubeconfig.Contents != nil {
+			if err = upgrade.RunUpgrade(OSD); err != nil {
+				events.RecordEvent(events.UpgradeFailed)
+				return fmt.Errorf("error performing upgrade: %v", err)
 			}
+			events.RecordEvent(events.UpgradeSuccessful)
+
+			log.Println("Running e2e tests POST-UPGRADE...")
+			upgradeTestsPassed = runTestsInPhase(phase.UpgradePhase, "OSD e2e suite post-upgrade")
+		} else {
+			log.Println("No Kubeconfig found from initial cluster setup. Unable to run upgrade.")
 		}
-	} else {
-		log.Print("Install tests did not pass. Skipping upgrade tests.")
 	}
 
 	if cfg.ReportDir != "" {
@@ -368,6 +364,9 @@ func runTestsInPhase(phase string, description string) bool {
 			}
 		}
 	}
+
+	// Ensure all log metrics are zeroed out before running again
+	metadata.Instance.ResetLogMetrics()
 
 	logMetricTestSuite := reporters.JUnitTestSuite{
 		Name: "Log Metrics",

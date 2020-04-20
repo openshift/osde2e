@@ -9,13 +9,13 @@ logMetrics:
   lowThreshold: -1
 - name: eof
   regex: "EOF"
-  highThreshold: 1
+  highThreshold: 6
   lowThreshold: -1
 - name: cluster-pending
   regex: "Cluster is not ready, current status 'pending'"
-  highThreshold: 6
+  highThreshold: 20
   lowThreshold: -1
 - name: host-dns-lookup
-  regex: "dial tcp: lookup api\\.ci-cluster.* no such host occurred"
+  regex: "no such host"
   highThreshold: 1
   lowThreshold: -1

@@ -1,6 +1,7 @@
-package helper
+package healthchecks
 
 import (
+	"fmt"
 	"log"
 	"strings"
 
@@ -17,8 +18,7 @@ func CheckOperatorReadiness(configClient configclient.ConfigV1Interface) (bool, 
 	listOpts := metav1.ListOptions{}
 	list, err := configClient.ClusterOperators().List(listOpts)
 	if err != nil {
-		log.Printf("Error getting CVS: %v\n", err)
-		return false, nil
+		return false, fmt.Errorf("error getting cluster operator list: %v", err)
 	}
 
 	if len(list.Items) == 0 {
