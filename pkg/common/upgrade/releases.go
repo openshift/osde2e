@@ -34,6 +34,7 @@ type smallCincinnatiCacheObject struct {
 	Edges    [][]int
 }
 
+// Get returns a specific channel from Cincinnati via our cache
 func (s *smallCincinnatiCache) Get(channel string) (smallCincinnatiCacheObject, error) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
@@ -50,6 +51,7 @@ func (s *smallCincinnatiCache) Get(channel string) (smallCincinnatiCacheObject, 
 	return s.Cache[channel], nil
 }
 
+// loadCincinnatiData populates our cache with a given channel's data
 func (s *smallCincinnatiCache) loadCincinnatiData(channel string) error {
 	cincinnatiFormattedURL := fmt.Sprintf(cincinnatiURLFmt, osd.Environments.Choose(config.Instance.OCM.Env), channel)
 

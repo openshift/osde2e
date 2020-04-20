@@ -32,6 +32,7 @@ func init() {
 
 // Init is a common helper function to import the run state into Helper
 func Init() *H {
+	// Load existing state into helper
 	h := &H{
 		State: state.Instance,
 	}
@@ -75,6 +76,7 @@ func (h *H) Setup() {
 	if h.State.Project == "" {
 		// setup project and dedicated-admin account to run tests
 		// the service account is provisioned but only used when specified
+		// also generates a unique name for the osde2e test run project
 		suffix := util.RandomStr(5)
 		h.State.Project = "osde2e-" + suffix
 
@@ -85,7 +87,7 @@ func (h *H) Setup() {
 		Expect(h.proj).ShouldNot(BeNil())
 
 		h.CreateServiceAccounts()
-
+		// We need a cool down period for RBAC operators to sync permissions
 		time.Sleep(60 * time.Second)
 
 	} else {
@@ -95,8 +97,10 @@ func (h *H) Setup() {
 		Expect(h.proj).ShouldNot(BeNil())
 	}
 
+	// Set the default service account for future helper-method-calls
 	h.SetServiceAccount(config.Instance.Tests.ServiceAccount)
 
+	// Initialize the Workload tracking map
 	if len(h.InstalledWorkloads) < 1 {
 		h.InstalledWorkloads = make(map[string]string)
 	}
@@ -110,6 +114,7 @@ func (h *H) Cleanup() {
 	h.restConfig, err = clientcmd.RESTConfigFromKubeConfig(h.Kubeconfig.Contents)
 	Expect(err).ShouldNot(HaveOccurred(), "failed to configure client")
 
+	// Set the SA back to the default. This is required for cleanup in case other helper calls switched SAs
 	h.SetServiceAccount(config.Instance.Tests.ServiceAccount)
 
 	if h.proj == nil && h.State.Project != "" {

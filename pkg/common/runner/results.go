@@ -60,6 +60,8 @@ func (r *Runner) RetrieveResults() (map[string][]byte, error) {
 	return results, nil
 }
 
+// downloadLinks, given an html page, will download all present links.
+// This is useful when a pod is publishing an html list of artifacts.
 func (r *Runner) downloadLinks(n *html.Node, results map[string][]byte) error {
 	if n.Type == html.ElementNode && n.Data == "a" {
 		for _, a := range n.Attr {

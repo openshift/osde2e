@@ -26,6 +26,7 @@ func CheckOperatorReadiness(configClient configclient.ConfigV1Interface) (bool, 
 		return false, nil
 	}
 
+	// Load the list of operators we want to ignore and skip.
 	operatorSkipList := make(map[string]string)
 	if len(config.Instance.Tests.OperatorSkip) > 0 {
 		operatorSkipVals := strings.Split(config.Instance.Tests.OperatorSkip, ",")
