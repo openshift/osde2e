@@ -70,7 +70,7 @@ func (r *Runner) waitForCompletion(podName string, timeoutInSeconds int) error {
 			var err *multierror.Error
 			for _, containerStatus := range pod.Status.ContainerStatuses {
 				if containerStatus.State.Terminated != nil {
-					if containerStatus.LastTerminationState.Terminated.ExitCode != 0 {
+					if containerStatus.State.Terminated.ExitCode != 0 {
 						multierror.Append(fmt.Errorf("container %s failed, please refer to artifacts for results", containerStatus.Name))
 					}
 				}
