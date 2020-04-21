@@ -53,6 +53,9 @@ func (u *OSD) LaunchCluster() (string, error) {
 			ID(state.CloudProvider.CloudProviderID)).
 		ExpirationTimestamp(expiration)
 
+	// Configure the cluster to be Multi-AZ if configured
+	// We must manually configure the number of compute nodes
+	// Currently set to 9 nodes. Whatever it is, must be divisible by 3.
 	if cfg.Cluster.MultiAZ {
 		numNodes := &v1.ClusterNodesBuilder{}
 

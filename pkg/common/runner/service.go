@@ -22,6 +22,7 @@ const (
 	containerLogs = "containerLogs"
 )
 
+// createService returns a v1.Service pointing to a given v1.Pod object
 func (r *Runner) createService(pod *kubev1.Pod) (svc *kubev1.Service, err error) {
 	var ports []kubev1.ServicePort
 	for _, c := range pod.Spec.Containers {
@@ -43,6 +44,7 @@ func (r *Runner) createService(pod *kubev1.Pod) (svc *kubev1.Service, err error)
 	})
 }
 
+// waitForCompletion will wait for a runner's pod to have a valid v1.Endpoint available
 func (r *Runner) waitForCompletion(podName string, timeoutInSeconds int) error {
 	var endpoints *kubev1.Endpoints
 	var pendingCount int = 0

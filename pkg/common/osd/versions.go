@@ -56,6 +56,7 @@ func DefaultVersionInProd() (string, error) {
 		var OSD *OSD
 		var err error
 
+		// Create a new OCM client
 		if OSD, err = New(config.Instance.OCM.Token, Environments.Choose("prod"), config.Instance.OCM.Debug); err != nil {
 			log.Printf("error setting up OCM client for prod: %v", err)
 			return
@@ -213,6 +214,10 @@ func (u *OSD) NextReleaseAfterProdDefault(releasesFromProdDefault int) (string, 
 	return nextReleaseAfterGivenVersionFromVersionList(currentProdDefaultSemver, versionList, releasesFromProdDefault)
 }
 
+// nextReleaseAfterGivenVersionFromVersionList will attempt to look for the next valid X.Y stream release, given a delta (releaseFromGivenVersion)
+// Example In/Out
+// In: 4.3.12, [4.3.13, 4.4.0, 4.5.0], 2
+// Out: 4.5.0, nil
 func nextReleaseAfterGivenVersionFromVersionList(givenVersion *semver.Version, versionList []string, releasesFromGivenVersion int) (string, error) {
 	versionBuckets := map[string]string{}
 

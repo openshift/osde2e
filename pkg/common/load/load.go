@@ -30,6 +30,7 @@ const (
 	DefaultTag = "default"
 )
 
+// Look for fields looking to have a little randomness injected
 var rndStringRegex = regexp.MustCompile("__RND_(\\d+)__")
 
 func init() {
@@ -43,16 +44,18 @@ func IntoObject(object interface{}, configs []string, customConfig string) error
 	}
 
 	// Populate the defaults first, then read the YAML, then override with the environment
+	// 1. Load defaults
 	if err := loadDefaults(object); err != nil {
 		return fmt.Errorf("error loading config defaults: %v", err)
 	}
-
+	// 2a. Pre-canned YAML configs
 	for _, config := range configs {
 		if err := loadYAMLFromConfigs(object, config); err != nil {
 			return fmt.Errorf("error loading config from YAML: %v", err)
 		}
 	}
 
+	// 2b. Custom YAML configs
 	if customConfig != "" {
 		log.Printf("Custom YAML config provided, loading from %s", customConfig)
 		if err := loadYAMLFromFile(object, customConfig); err != nil {
@@ -60,6 +63,8 @@ func IntoObject(object interface{}, configs []string, customConfig string) error
 		}
 	}
 
+	// 3. Load config from environment.
+	// Reiterating: Environment variables take precedence over YAML.
 	if err := loadFromEnv(object); err != nil {
 		return fmt.Errorf("error loading config from environment: %v", err)
 	}

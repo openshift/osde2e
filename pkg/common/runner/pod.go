@@ -61,6 +61,7 @@ var DefaultContainer = kubev1.Container{
 	},
 }
 
+// volumeMounts returns a v1.VolumeMount given a specific name and the static payloadMountPath
 func volumeMounts(name string) []kubev1.VolumeMount {
 	return []kubev1.VolumeMount{
 		{
@@ -70,6 +71,7 @@ func volumeMounts(name string) []kubev1.VolumeMount {
 	}
 }
 
+// volumes returns a v1.Volume given a specific name
 func volumes(name string) []kubev1.Volume {
 	return []kubev1.Volume{
 		{
@@ -86,7 +88,7 @@ func volumes(name string) []kubev1.Volume {
 	}
 }
 
-// createPod for running commands
+// createPod for creates a runner-based pod and typically collects generated artifacts from it.
 func (r *Runner) createPod() (pod *kubev1.Pod, err error) {
 	// configure pod to run workload
 	cmName := fmt.Sprintf("%s-%s", osde2ePayload, util.RandomStr(5))
@@ -114,6 +116,7 @@ func (r *Runner) createPod() (pod *kubev1.Pod, err error) {
 			return nil, fmt.Errorf("error creating ConfigMap: %v", err)
 		}
 
+		// Verify the configMap has been created before proceeding
 		err = wait.PollImmediate(fastPoll, configMapCreateTimeout, func() (done bool, err error) {
 			if configMap, err = r.Kube.CoreV1().ConfigMaps(r.Namespace).Get(configMap.Name, metav1.GetOptions{}); err != nil {
 				log.Printf("Error creating %s config map: %v", configMap.Name, err)
@@ -126,6 +129,7 @@ func (r *Runner) createPod() (pod *kubev1.Pod, err error) {
 		}
 	}
 
+	// A pod can have multiple containers. Create all the necessary mounts per-container.
 	for i, container := range pod.Spec.Containers {
 		if container.Name == "" || container.Name == r.Name {
 			pod.Spec.Containers[i].Name = r.Name
@@ -156,6 +160,7 @@ func (r *Runner) createPod() (pod *kubev1.Pod, err error) {
 	return createdPod, err
 }
 
+// waitForRunningPod, given a v1.Pod, will wait for 3 minutes for a pod to enter the running phase or return an error.
 func (r *Runner) waitForPodRunning(pod *kubev1.Pod) error {
 	var pendingCount int = 0
 	return wait.PollImmediate(fastPoll, 3*time.Minute, func() (done bool, err error) {
