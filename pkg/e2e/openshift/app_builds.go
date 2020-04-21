@@ -31,7 +31,7 @@ var BuildE2EConfig = E2EConfig{
 var testApplications = []string{
 	"django-psql",
 	"rails-postgresql",
-	// The following applications rely on an imagestream not present until at least v4.3.5
+	// TODO: The following applications rely on an imagestream not present until at least v4.3.5
 	// "cakephp-mysql",
 	// "nodejs-mongodb",
 }
