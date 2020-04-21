@@ -5,6 +5,7 @@ go 1.13
 require (
 	github.com/Masterminds/semver v1.4.2
 	github.com/aws/aws-sdk-go v1.25.48
+	github.com/emicklei/go-restful v2.9.6+incompatible
 	github.com/gogo/protobuf v1.2.2-0.20190723190241-65acae22fc9d // indirect
 	github.com/google/subcommands v1.2.0
 	github.com/hashicorp/go-multierror v1.1.0
