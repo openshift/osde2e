@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"path"
 	"strconv"
+	"strings"
 	"time"
 
 	"golang.org/x/net/html"
@@ -16,23 +18,27 @@ import (
 var (
 	resultsPortStr = strconv.Itoa(resultsPort)
 
-	ErrNotRun = errors.New("suite has not run yet")
+	errNotRun = errors.New("suite has not run yet")
 )
 
 // RetrieveResults gathers the results from the test Pod. Should only be called after tests are finished.
 func (r *Runner) RetrieveResults() (map[string][]byte, error) {
+	return r.retrieveResultsForDirectory("")
+}
+
+func (r *Runner) retrieveResultsForDirectory(directory string) (map[string][]byte, error) {
 	var rdr io.ReadCloser
 	var resp restclient.ResponseWrapper
 	var err error
 	if r.svc == nil {
-		return nil, ErrNotRun
+		return nil, errNotRun
 	}
 
 	// request result list
 	// sometimes it is possible for the service/endpoint to not be ready before the results are finished.
 	// we loop through here five times with a sleep statement to check.
 	wait.PollImmediate(5*time.Second, 1*time.Minute, func() (bool, error) {
-		resp = r.Kube.CoreV1().Services(r.Namespace).ProxyGet("http", r.svc.Name, resultsPortStr, "/", nil)
+		resp = r.Kube.CoreV1().Services(r.Namespace).ProxyGet("http", r.svc.Name, resultsPortStr, directory, nil)
 		rdr, err = resp.Stream()
 		if err != nil {
 			return false, nil
@@ -54,7 +60,7 @@ func (r *Runner) RetrieveResults() (map[string][]byte, error) {
 
 	// download each file
 	results := map[string][]byte{}
-	if err = r.downloadLinks(n, results); err != nil {
+	if err = r.downloadLinks(n, results, directory); err != nil {
 		return results, fmt.Errorf("encountered error downloading results: %v", err)
 	}
 	return results, nil
@@ -62,25 +68,45 @@ func (r *Runner) RetrieveResults() (map[string][]byte, error) {
 
 // downloadLinks, given an html page, will download all present links.
 // This is useful when a pod is publishing an html list of artifacts.
-func (r *Runner) downloadLinks(n *html.Node, results map[string][]byte) error {
+func (r *Runner) downloadLinks(n *html.Node, results map[string][]byte, directory string) error {
 	if n.Type == html.ElementNode && n.Data == "a" {
 		for _, a := range n.Attr {
 			if a.Key == "href" {
-				resp := r.Kube.CoreV1().Services(r.Namespace).ProxyGet("http", r.svc.Name, resultsPortStr, "/"+a.Val, nil)
-				data, err := resp.DoRaw()
-				if err != nil {
-					return err
-				}
+				if strings.HasSuffix(a.Val, "/") {
+					var newDirectory string
+					if directory != "" {
+						newDirectory = a.Val
+					} else {
+						newDirectory = path.Join(directory, a.Val)
+					}
 
-				filename := a.Val
-				log.Println("Downloading " + filename)
-				results[filename] = data
+					log.Println("Downloading directory " + newDirectory)
+					directoryResults, err := r.retrieveResultsForDirectory(newDirectory)
+
+					if err != nil {
+						return fmt.Errorf("error while getting results for directory %s: %v", newDirectory, err)
+					}
+
+					for k, v := range directoryResults {
+						results[k] = v
+					}
+				} else {
+					resp := r.Kube.CoreV1().Services(r.Namespace).ProxyGet("http", r.svc.Name, resultsPortStr, path.Join(directory, a.Val), nil)
+					data, err := resp.DoRaw()
+					if err != nil {
+						return err
+					}
+
+					filename := a.Val
+					log.Println("Downloading " + filename)
+					results[path.Join(directory, filename)] = data
+				}
 			}
 		}
 	}
 
 	for c := n.FirstChild; c != nil; c = c.NextSibling {
-		if err := r.downloadLinks(c, results); err != nil {
+		if err := r.downloadLinks(c, results, directory); err != nil {
 			return err
 		}
 	}

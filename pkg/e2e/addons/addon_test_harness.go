@@ -11,6 +11,7 @@ import (
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/runner"
 	"github.com/openshift/osde2e/pkg/common/templates"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 var addonTestTemplate *template.Template
@@ -69,6 +70,11 @@ var _ = ginkgo.Describe("[Suite: addons] Addon Test Harness", func() {
 
 			// write results
 			h.WriteResults(results)
+
+			// ensure job has not failed
+			job, err := h.Kube().BatchV1().Jobs(r.Namespace).Get("addon-tests", metav1.GetOptions{})
+			Expect(err).NotTo(HaveOccurred())
+			Expect(job.Status.Failed).Should(BeNumerically("==", 0))
 		}
 	}, float64(addonTimeoutInSeconds+30))
 })
