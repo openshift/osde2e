@@ -100,6 +100,9 @@ type OCMConfig struct {
 
 	// Debug shows debug level messages when enabled.
 	Debug bool `env:"DEBUG_OSD" sect:"environment" default:"false" yaml:"debug"`
+
+	// NumRetries is the number of times to retry each OCM call.
+	NumRetries int `env:"NUM_RETRIES" sect:"ocm" default:"3" yaml:"numRetries"`
 }
 
 // UpgradeConfig stores information required to perform OSDe2e upgrade testing

@@ -79,13 +79,25 @@ func DefaultVersionInProd() (string, error) {
 
 // DefaultVersion returns the default version currently offered by OSD.
 func (u *OSD) DefaultVersion() (string, error) {
-	resp, err := u.versions().List().
-		Search(defaultVersionSearch).
-		Size(1).
-		Send()
-	if err == nil && resp != nil {
-		err = errResp(resp.Error())
-	}
+	var resp = &v1.VersionsListResponse{}
+
+	err := retryer().Do(func() error {
+		var err error
+		resp, err = u.versions().List().
+			Search(defaultVersionSearch).
+			Size(1).
+			Send()
+
+		if err != nil {
+			return err
+		}
+
+		if resp != nil && resp.Error() != nil {
+			return errResp(resp.Error())
+		}
+
+		return nil
+	})
 
 	if err != nil {
 		log.Print("error getting cluster versions from DefaultVersion.Response")
@@ -336,7 +348,22 @@ func (u *OSD) getSemverList(major, minor int64, str string, filter func(*semver.
 
 	log.Printf("Querying cluster versions endpoint.")
 	for {
-		resp, err := u.versions().List().Page(page).Size(PageSize).Send()
+		var resp *v1.VersionsListResponse
+		err = retryer().Do(func() error {
+			var err error
+
+			resp, err = u.versions().List().Page(page).Size(PageSize).Send()
+
+			if err != nil {
+				return err
+			}
+
+			if resp != nil && resp.Error() != nil {
+				return errResp(resp.Error())
+			}
+
+			return nil
+		})
 
 		if err != nil {
 			err = fmt.Errorf("failed getting list of OSD versions: %v", err)

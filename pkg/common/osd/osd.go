@@ -2,7 +2,6 @@
 package osd
 
 import (
-	"errors"
 	"fmt"
 
 	ocm "github.com/openshift-online/ocm-sdk-go"
@@ -58,12 +57,29 @@ type OSD struct {
 
 // CurrentAccount returns the current account being used.
 func (u *OSD) CurrentAccount() (*accounts.Account, error) {
-	act, err := u.conn.AccountsMgmt().V1().CurrentAccount().Get().Send()
-	if err == nil && act != nil {
-		err = errResp(act.Error())
+	var act *accounts.CurrentAccountGetResponse
+
+	err := retryer().Do(func() error {
+		var err error
+		act, err = u.conn.AccountsMgmt().V1().CurrentAccount().Get().Send()
+
+		if err != nil {
+			return err
+		}
+
+		if act != nil && act.Error() != nil {
+			return errResp(act.Error())
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, fmt.Errorf("error getting current account: %v", err)
 	} else if act == nil {
-		return nil, errors.New("account can't be nil")
+		return nil, fmt.Errorf("account can't be nil")
 	}
+
 	return act.Body(), err
 }
 

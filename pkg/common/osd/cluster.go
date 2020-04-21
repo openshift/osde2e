@@ -69,13 +69,20 @@ func (u *OSD) LaunchCluster() (string, error) {
 		return "", fmt.Errorf("couldn't build cluster description: %v", err)
 	}
 
-	resp, err := u.clusters().Add().
-		Body(cluster).
-		Send()
+	var resp *v1.ClustersAddResponse
 
-	if resp != nil {
-		err = errResp(resp.Error())
-	}
+	err = retryer().Do(func() error {
+		var err error
+		resp, err = u.clusters().Add().
+			Body(cluster).
+			Send()
+
+		if resp != nil && resp.Error() != nil {
+			return errResp(resp.Error())
+		}
+
+		return err
+	})
 
 	if err != nil {
 		return "", fmt.Errorf("couldn't create cluster: %v", err)
@@ -85,19 +92,37 @@ func (u *OSD) LaunchCluster() (string, error) {
 
 // GetCluster returns the information about clusterID.
 func (u *OSD) GetCluster(clusterID string) (*v1.Cluster, error) {
-	resp, err := u.cluster(clusterID).
-		Get().
-		Send()
+	var resp *v1.ClusterGetResponse
+
+	err := retryer().Do(func() error {
+		var err error
+		resp, err = u.cluster(clusterID).
+			Get().
+			Send()
+
+		if err != nil {
+			err = fmt.Errorf("couldn't retrieve cluster '%s': %v", clusterID, err)
+			log.Printf("%v", err)
+			return err
+		}
+
+		if resp != nil && resp.Error() != nil {
+			log.Printf("error while trying to retrieve cluster: %v", err)
+			return errResp(resp.Error())
+		}
+
+		return nil
+	})
 
 	if err != nil {
-		return nil, fmt.Errorf("couldn't retrieve cluster '%s': %v", clusterID, err)
+		return nil, err
 	}
 
 	if resp.Error() != nil {
 		return resp.Body(), resp.Error()
 	}
 
-	return resp.Body(), err
+	return resp.Body(), nil
 }
 
 // Flavour returns the default flavour for cfg.
@@ -121,7 +146,23 @@ func (u *OSD) InstallAddons(addonIDs []string) (num int, err error) {
 	addonsClient := u.addons()
 	clusterClient := u.cluster(state.Instance.Cluster.ID)
 	for _, addonID := range addonIDs {
-		addonResp, err := addonsClient.Addon(addonID).Get().Send()
+		var addonResp *v1.AddOnGetResponse
+
+		err = retryer().Do(func() error {
+			var err error
+			addonResp, err = addonsClient.Addon(addonID).Get().Send()
+
+			if err != nil {
+				return err
+			}
+
+			if addonResp != nil && addonResp.Error() != nil {
+				return errResp(addonResp.Error())
+			}
+
+			return nil
+		})
+
 		if err != nil {
 			return 0, err
 		}
@@ -133,13 +174,27 @@ func (u *OSD) InstallAddons(addonIDs []string) (num int, err error) {
 				return 0, err
 			}
 
-			aoar, err := clusterClient.Addons().Add().Body(addonInstallation).Send()
+			var aoar *v1.AddOnInstallationsAddResponse
+
+			err = retryer().Do(func() error {
+				var err error
+				aoar, err = clusterClient.Addons().Add().Body(addonInstallation).Send()
+				if err != nil {
+					log.Printf("couldn't install addons: %v", err)
+					return err
+				}
+
+				if aoar.Error() != nil {
+					err = fmt.Errorf("error (%v) sending request: %v", aoar.Status(), aoar.Error())
+					log.Printf("%v", err)
+					return err
+				}
+
+				return nil
+			})
+
 			if err != nil {
 				return 0, err
-			}
-
-			if aoar.Error() != nil {
-				return 0, fmt.Errorf("Error (%v) sending request: %v", aoar.Status(), aoar.Error())
 			}
 
 			num++
@@ -151,14 +206,28 @@ func (u *OSD) InstallAddons(addonIDs []string) (num int, err error) {
 
 // ClusterKubeconfig retrieves the kubeconfig of clusterID.
 func (u *OSD) ClusterKubeconfig(clusterID string) (kubeconfig []byte, err error) {
-	resp, err := u.cluster(clusterID).
-		Credentials().
-		Get().
-		Send()
+	var resp *v1.CredentialsGetResponse
 
-	if resp != nil {
-		err = errResp(resp.Error())
-	}
+	err = retryer().Do(func() error {
+		var err error
+		resp, err = u.cluster(clusterID).
+			Credentials().
+			Get().
+			Send()
+
+		if err != nil {
+			log.Printf("couldn't get credentials: %v", err)
+			return err
+		}
+
+		if resp != nil && resp.Error() != nil {
+			err = errResp(resp.Error())
+			log.Printf("%v", err)
+			return err
+		}
+
+		return nil
+	})
 
 	if err != nil {
 		return nil, fmt.Errorf("couldn't retrieve credentials for cluster '%s': %v", clusterID, err)
@@ -168,13 +237,27 @@ func (u *OSD) ClusterKubeconfig(clusterID string) (kubeconfig []byte, err error)
 
 // DeleteCluster requests the deletion of clusterID.
 func (u *OSD) DeleteCluster(clusterID string) error {
-	resp, err := u.cluster(clusterID).
-		Delete().
-		Send()
+	var resp *v1.ClusterDeleteResponse
 
-	if resp != nil {
-		err = errResp(resp.Error())
-	}
+	err := retryer().Do(func() error {
+		var err error
+		resp, err = u.cluster(clusterID).
+			Delete().
+			Send()
+
+		if err != nil {
+			log.Printf("couldn't delete cluster: %v", err)
+			return err
+		}
+
+		if resp != nil && resp.Error() != nil {
+			err = errResp(resp.Error())
+			log.Printf("%v", err)
+			return err
+		}
+
+		return nil
+	})
 
 	if err != nil {
 		return fmt.Errorf("couldn't delete cluster '%s': %v", clusterID, err)

@@ -1,5 +1,7 @@
 # github.com/Masterminds/semver v1.4.2
 github.com/Masterminds/semver
+# github.com/adamliesko/retry v0.0.0-20200123222335-86c8baac277d
+github.com/adamliesko/retry
 # github.com/alecthomas/template v0.0.0-20190718012654-fb15b899a751
 github.com/alecthomas/template
 github.com/alecthomas/template/parse

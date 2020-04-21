@@ -6,6 +6,7 @@ import (
 	"log"
 
 	accounts "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"
+	v1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/state"
@@ -20,16 +21,33 @@ const (
 func (u *OSD) CheckQuota() (bool, error) {
 	// get flavour being deployed
 	flavourID := u.Flavour()
-	flavourReq, err := u.conn.ClustersMgmt().V1().Flavours().Flavour(flavourID).Get().Send()
-	if err == nil && flavourReq != nil {
-		err = errResp(flavourReq.Error())
+	var flavourResp *v1.FlavourGetResponse
+	err := retryer().Do(func() error {
+		var err error
+		flavourResp, err = u.conn.ClustersMgmt().V1().Flavours().Flavour(flavourID).Get().Send()
+
 		if err != nil {
-			return false, err
+			return err
 		}
-	} else if flavourReq == nil || flavourReq.Body().Empty() {
+
+		if flavourResp != nil && flavourResp.Error() != nil {
+			err = errResp(flavourResp.Error())
+			if err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return false, fmt.Errorf("error trying to get flavours: %v", err)
+	}
+
+	if flavourResp == nil || flavourResp.Body().Empty() {
 		return false, errors.New("returned flavour can't be empty")
 	}
-	flavour := flavourReq.Body()
+	flavour := flavourResp.Body()
 
 	// get quota
 	quotaList, err := u.CurrentAccountQuota()
@@ -64,14 +82,29 @@ func (u *OSD) CurrentAccountQuota() (*accounts.QuotaSummaryList, error) {
 	}
 
 	orgID := acc.Organization().ID()
-	quotaList, err := u.conn.AccountsMgmt().V1().Organizations().Organization(orgID).QuotaSummary().List().Send()
-	if err == nil && quotaList != nil {
-		err = errResp(quotaList.Error())
+
+	var quotaList *accounts.QuotaSummaryListResponse
+	err = retryer().Do(func() error {
+		var err error
+		quotaList, err = u.conn.AccountsMgmt().V1().Organizations().Organization(orgID).QuotaSummary().List().Send()
+
+		if err != nil {
+			return err
+		}
+
+		if quotaList != nil && quotaList.Error() != nil {
+			return errResp(quotaList.Error())
+		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, fmt.Errorf("error getting quota list: %v", err)
 	} else if quotaList == nil {
 		return nil, errors.New("QuotaList can't be nil")
 	}
 
-	return quotaList.Items(), err
+	return quotaList.Items(), nil
 }
 
 // HasQuotaFor the desired configuration. If machineT is empty a default will try to be selected.

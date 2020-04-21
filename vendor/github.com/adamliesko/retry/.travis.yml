@@ -1,0 +1,12 @@
+language: go
+go:
+  - 1.x
+  - tip
+env:
+  global:
+    - PATH=$HOME/gopath/bin:$PATH
+install:
+  - go get github.com/mattn/goveralls
+script:
+  - $GOPATH/bin/goveralls -race=true -service=travis-ci
+  - go vet .

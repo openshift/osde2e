@@ -17,15 +17,26 @@ func (u *OSD) Logs(clusterID string, length int, ids ...string) (logs map[string
 
 	logs = make(map[string][]byte, len(ids))
 	for _, logID := range ids {
-		resp, err := u.cluster(clusterID).
-			Logs().
-			Log(logID).
-			Get().Parameter("tail", length).
-			Send()
+		var resp *v1.LogGetResponse
 
-		if resp != nil {
-			err = errResp(resp.Error())
-		}
+		retryer().Do(func() error {
+			var err error
+			resp, err = u.cluster(clusterID).
+				Logs().
+				Log(logID).
+				Get().Parameter("tail", length).
+				Send()
+
+			if err != nil {
+				return err
+			}
+
+			if resp != nil && resp.Error() != nil {
+				return errResp(resp.Error())
+			}
+
+			return nil
+		})
 
 		if err != nil {
 			return logs, fmt.Errorf("the contents of log '%s' couldn't be retrieved: %v", logID, err)
@@ -41,14 +52,25 @@ func (u *OSD) FullLogs(clusterID string, ids ...string) (map[string][]byte, erro
 }
 
 func (u *OSD) getLogList(clusterID string) ([]string, error) {
-	resp, err := u.cluster(clusterID).
-		Logs().
-		List().
-		Send()
+	var resp *v1.LogsListResponse
 
-	if resp != nil {
-		err = errResp(resp.Error())
-	}
+	err := retryer().Do(func() error {
+		var err error
+		resp, err = u.cluster(clusterID).
+			Logs().
+			List().
+			Send()
+
+		if err != nil {
+			return err
+		}
+
+		if resp != nil && resp.Error() != nil {
+			return errResp(resp.Error())
+		}
+
+		return nil
+	})
 
 	if err != nil {
 		return nil, fmt.Errorf("couldn't retrieve log list for cluster '%s': %v", clusterID, err)
