@@ -10,7 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 )
 
-// createSer4vice returns a v1.Service pointing to a given v1.Pod object
+// createService returns a v1.Service pointing to a given v1.Pod object
 func (r *Runner) createService(pod *kubev1.Pod) (svc *kubev1.Service, err error) {
 	var ports []kubev1.ServicePort
 	for _, c := range pod.Spec.Containers {
