@@ -74,7 +74,7 @@ var _ = ginkgo.Describe("[Suite: addons] Addon Test Harness", func() {
 			// ensure job has not failed
 			job, err := h.Kube().BatchV1().Jobs(r.Namespace).Get("addon-tests", metav1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred())
-			Expect(job.Status.Failed).Should(Equal(0))
+			Expect(job.Status.Failed).Should(BeNumerically("==", 0))
 		}
 	}, float64(addonTimeoutInSeconds+30))
 })
