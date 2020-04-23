@@ -1,40 +1,11 @@
-package osd
+package e2e
 
 import (
 	"testing"
 
 	"github.com/Masterminds/semver"
+	"github.com/openshift/osde2e/pkg/common/spi"
 )
-
-func TestVersion440Constraint(t *testing.T) {
-	tests := []struct {
-		Name           string
-		Version        string
-		ExpectedResult bool
-	}{
-		{
-			Name:           "4.3.0 test",
-			Version:        "4.3.0",
-			ExpectedResult: false,
-		},
-		{
-			Name:           "4.4.0 test",
-			Version:        "4.4.0",
-			ExpectedResult: true,
-		},
-		{
-			Name:           "4.4.0-rc.0 test",
-			Version:        "4.4.0-rc.0",
-			ExpectedResult: true,
-		},
-	}
-
-	for _, test := range tests {
-		if Version440.Check(semver.MustParse(test.Version)) != test.ExpectedResult {
-			t.Errorf("test %s did not produce the expected result: %t", test.Name, test.ExpectedResult)
-		}
-	}
-}
 
 func TestNextReleaseAfterGivenVersionFromVersionList(t *testing.T) {
 	tests := []struct {
@@ -96,13 +67,17 @@ func TestNextReleaseAfterGivenVersionFromVersionList(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		selectedVersion, err := nextReleaseAfterGivenVersionFromVersionList(test.GivenVersion, test.VersionList, test.ReleasesFromGivenVersion)
+		versions := []spi.Version{}
+		for _, version := range test.VersionList {
+			versions = append(versions, spi.Version{Version: semver.MustParse(version)})
+		}
+		selectedVersion, err := nextReleaseAfterGivenVersionFromVersionList(test.GivenVersion, versions, test.ReleasesFromGivenVersion)
 
 		if err != nil {
 			t.Errorf("error selecting version from list: %v", err)
 		}
 
-		if selectedVersion != test.ExpectedVersion {
+		if !selectedVersion.Equal(semver.MustParse(test.ExpectedVersion)) {
 			t.Errorf("test %s did not produce the expected result: %s, got %s instead", test.Name, test.ExpectedVersion, selectedVersion)
 		}
 	}

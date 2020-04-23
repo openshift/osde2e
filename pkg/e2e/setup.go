@@ -13,11 +13,13 @@ import (
 	. "github.com/onsi/gomega"
 	"k8s.io/client-go/tools/clientcmd"
 
+	"github.com/openshift/osde2e/pkg/common/cluster"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/events"
 	"github.com/openshift/osde2e/pkg/common/metadata"
-	"github.com/openshift/osde2e/pkg/common/osd"
+	"github.com/openshift/osde2e/pkg/common/provisioners"
 	"github.com/openshift/osde2e/pkg/common/state"
+	"github.com/openshift/osde2e/pkg/common/util"
 )
 
 // Check if the test should run
@@ -78,12 +80,12 @@ func getLogs() {
 	defer ginkgo.GinkgoRecover()
 	state := state.Instance
 
-	if OSD == nil {
+	if provisioner == nil {
 		log.Println("OSD was not configured. Skipping log collection...")
 	} else if state.Cluster.ID == "" {
 		log.Println("CLUSTER_ID is not set, likely due to a setup failure. Skipping log collection...")
 	} else {
-		logs, err := OSD.FullLogs(state.Cluster.ID)
+		logs, err := provisioner.Logs(state.Cluster.ID)
 		Expect(err).NotTo(HaveOccurred(), "failed to collect cluster logs")
 		writeLogs(logs)
 	}
@@ -99,19 +101,25 @@ func setupCluster() (err error) {
 		return useKubeconfig()
 	}
 
+	provisioner, err := provisioners.ClusterProvisioner()
+
+	if err != nil {
+		return fmt.Errorf("error getting cluster provisioning client: %v", err)
+	}
+
 	// create a new cluster if no ID is specified
 	if state.Cluster.ID == "" {
 		if state.Cluster.Name == "" {
 			state.Cluster.Name = clusterName()
 		}
 
-		if state.Cluster.ID, err = OSD.LaunchCluster(); err != nil {
+		if state.Cluster.ID, err = provisioner.LaunchCluster(); err != nil {
 			return fmt.Errorf("could not launch cluster: %v", err)
 		}
 	} else {
 		log.Printf("CLUSTER_ID of '%s' was provided, skipping cluster creation and using it instead", state.Cluster.ID)
 
-		cluster, err := OSD.GetCluster(state.Cluster.ID)
+		cluster, err := provisioner.GetCluster(state.Cluster.ID)
 		if err != nil {
 			return fmt.Errorf("could not retrieve cluster information from OCM: %v", err)
 		}
@@ -119,24 +127,26 @@ func setupCluster() (err error) {
 		state.Cluster.Name = cluster.Name()
 		log.Printf("CLUSTER_NAME set to %s from OCM.", state.Cluster.Name)
 
-		state.Cluster.Version = cluster.Version().ID()
+		state.Cluster.Version = cluster.Version()
 		log.Printf("CLUSTER_VERSION set to %s from OCM.", state.Cluster.Version)
 
-		state.CloudProvider.CloudProviderID = cluster.CloudProvider().ID()
+		state.CloudProvider.CloudProviderID = cluster.CloudProvider()
 		log.Printf("CLOUD_PROVIDER_ID set to %s from OCM.", state.CloudProvider.CloudProviderID)
 
-		state.CloudProvider.Region = cluster.Region().ID()
+		state.CloudProvider.Region = cluster.Region()
 		log.Printf("CLOUD_PROVIDER_REGION set to %s from OCM.", state.CloudProvider.Region)
+
+		log.Printf("Found addons: %s", strings.Join(cluster.Addons(), ","))
 	}
 
 	metadata.Instance.SetClusterName(state.Cluster.Name)
 	metadata.Instance.SetClusterID(state.Cluster.ID)
 
-	if err = OSD.WaitForClusterReady(); err != nil {
+	if err = cluster.WaitForClusterReady(provisioner, state.Cluster.ID); err != nil {
 		return fmt.Errorf("failed waiting for cluster ready: %v", err)
 	}
 
-	if state.Kubeconfig.Contents, err = OSD.ClusterKubeconfig(state.Cluster.ID); err != nil {
+	if state.Kubeconfig.Contents, err = provisioner.ClusterKubeconfig(state.Cluster.ID); err != nil {
 		return fmt.Errorf("could not get kubeconfig for cluster: %v", err)
 	}
 
@@ -145,12 +155,13 @@ func setupCluster() (err error) {
 
 // installAddons installs addons onto the cluster
 func installAddons() (err error) {
-	num, err := OSD.InstallAddons(config.Instance.Addons.IDs)
+	clusterID := state.Instance.Cluster.ID
+	num, err := provisioner.InstallAddons(clusterID, config.Instance.Addons.IDs)
 	if err != nil {
 		return fmt.Errorf("could not install addons: %s", err.Error())
 	}
 	if num > 0 {
-		if err = OSD.WaitForClusterReady(); err != nil {
+		if err = cluster.WaitForClusterReady(provisioner, clusterID); err != nil {
 			return fmt.Errorf("failed waiting for cluster ready: %v", err)
 		}
 	}
@@ -181,7 +192,7 @@ func useKubeconfig() (err error) {
 
 // cluster name format must be short enough to support all versions
 func clusterName() string {
-	vers := strings.TrimPrefix(state.Instance.Cluster.Version, osd.VersionPrefix)
+	vers := strings.TrimPrefix(state.Instance.Cluster.Version, util.VersionPrefix)
 	safeVersion := strings.Replace(vers, ".", "-", -1)
 	return "ci-cluster-" + safeVersion + "-" + config.Instance.Suffix
 }

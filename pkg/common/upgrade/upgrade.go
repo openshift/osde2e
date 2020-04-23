@@ -13,9 +13,10 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 
+	"github.com/openshift/osde2e/pkg/common/cluster"
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/metadata"
-	"github.com/openshift/osde2e/pkg/common/osd"
+	"github.com/openshift/osde2e/pkg/common/spi"
 	"github.com/openshift/osde2e/pkg/common/state"
 )
 
@@ -37,7 +38,7 @@ var (
 )
 
 // RunUpgrade uses the OpenShift extended suite to upgrade a cluster to the image provided in cfg.
-func RunUpgrade(OSD *osd.OSD) error {
+func RunUpgrade(provisioner spi.Provisioner) error {
 	var done bool
 	var msg string
 	var err error
@@ -78,7 +79,7 @@ func RunUpgrade(OSD *osd.OSD) error {
 
 	metadata.Instance.SetTimeToUpgradedCluster(time.Since(upgradeStarted).Seconds())
 
-	if err = OSD.WaitForClusterReady(); err != nil {
+	if err = cluster.WaitForClusterReady(provisioner, state.Instance.Cluster.ID); err != nil {
 		return fmt.Errorf("failed waiting for cluster ready: %v", err)
 	}
 

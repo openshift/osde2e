@@ -7,8 +7,8 @@ import (
 	. "github.com/onsi/gomega"
 
 	"github.com/openshift/osde2e/pkg/common/helper"
-	"github.com/openshift/osde2e/pkg/common/osd"
 	"github.com/openshift/osde2e/pkg/common/state"
+	"github.com/openshift/osde2e/pkg/common/util"
 )
 
 const (
@@ -122,13 +122,13 @@ func checkRoleBindings(h *helper.H, providers ...string) {
 }
 
 func checkDaemonSets(h *helper.H, providers ...string) {
-	currentClusterVersion, err := osd.OpenshiftVersionToSemver(state.Instance.Cluster.Version)
+	currentClusterVersion, err := util.OpenshiftVersionToSemver(state.Instance.Cluster.Version)
 	Expect(err).NotTo(HaveOccurred(), "error parsing cluster version %s", state.Instance.Cluster.Version)
 
 	for _, provider := range providers {
 		for _, daemonSetName := range daemonSets[provider] {
 			// Use appv1 for clusters 4.4.0 or later
-			if osd.Version440.Check(currentClusterVersion) {
+			if util.Version440.Check(currentClusterVersion) {
 				daemonSet, err := h.Kube().AppsV1().DaemonSets(namespace).Get(daemonSetName, metav1.GetOptions{})
 				Expect(err).NotTo(HaveOccurred(), "failed to get daemonset %v\n", daemonSetName)
 				Expect(daemonSet.Status.DesiredNumberScheduled).Should(Equal(daemonSet.Status.CurrentNumberScheduled),

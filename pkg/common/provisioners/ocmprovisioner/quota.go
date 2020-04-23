@@ -1,4 +1,4 @@
-package osd
+package ocmprovisioner
 
 import (
 	"errors"
@@ -7,24 +7,22 @@ import (
 
 	accounts "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"
 	v1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
-
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/state"
 )
 
 const (
-	// ResourceClusterFmt is the format string for a quota resource type for a cluster.
-	ResourceClusterFmt = "cluster.%s"
+	// resourceClusterFmt is the format string for a quota resource type for a cluster.
+	resourceClusterFmt = "cluster.%s"
 )
 
 // CheckQuota determines if enough quota is available to launch with cfg.
-func (u *OSD) CheckQuota() (bool, error) {
+func (o *OCMProvisioner) CheckQuota() (bool, error) {
 	// get flavour being deployed
-	flavourID := u.Flavour()
 	var flavourResp *v1.FlavourGetResponse
 	err := retryer().Do(func() error {
 		var err error
-		flavourResp, err = u.conn.ClustersMgmt().V1().Flavours().Flavour(flavourID).Get().Send()
+		flavourResp, err = o.conn.ClustersMgmt().V1().Flavours().Flavour(DefaultFlavour).Get().Send()
 
 		if err != nil {
 			return err
@@ -50,7 +48,7 @@ func (u *OSD) CheckQuota() (bool, error) {
 	flavour := flavourResp.Body()
 
 	// get quota
-	quotaList, err := u.CurrentAccountQuota()
+	quotaList, err := o.currentAccountQuota()
 	if err != nil {
 		return false, fmt.Errorf("could not get quota: %v", err)
 	}
@@ -60,7 +58,7 @@ func (u *OSD) CheckQuota() (bool, error) {
 	machineType := ""
 
 	quotaFound := false
-	resourceClusterType := fmt.Sprintf(ResourceClusterFmt, state.Instance.CloudProvider.CloudProviderID)
+	resourceClusterType := fmt.Sprintf(resourceClusterFmt, state.Instance.CloudProvider.CloudProviderID)
 	for _, q := range quotaList.Slice() {
 		if quotaFound = HasQuotaFor(q, resourceClusterType, machineType); quotaFound {
 			log.Printf("Quota for test config (%s/%s/multiAZ=%t) found: total=%d, remaining: %d",
@@ -73,11 +71,15 @@ func (u *OSD) CheckQuota() (bool, error) {
 }
 
 // CurrentAccountQuota returns quota available for the current account's organization in the environment.
-func (u *OSD) CurrentAccountQuota() (*accounts.QuotaSummaryList, error) {
-	acc, err := u.CurrentAccount()
-	if err != nil || acc == nil {
+func (o *OCMProvisioner) currentAccountQuota() (*accounts.QuotaSummaryList, error) {
+	resp, err := o.conn.AccountsMgmt().V1().CurrentAccount().Get().Send()
+	if err != nil || resp == nil {
 		return nil, fmt.Errorf("couldn't get current account: %v", err)
-	} else if acc.Organization() == nil || acc.Organization().ID() == "" {
+	}
+
+	acc := resp.Body()
+
+	if acc.Organization() == nil || acc.Organization().ID() == "" {
 		return nil, fmt.Errorf("organization for account '%s' must be set to get quota", acc.ID())
 	}
 
@@ -86,7 +88,7 @@ func (u *OSD) CurrentAccountQuota() (*accounts.QuotaSummaryList, error) {
 	var quotaList *accounts.QuotaSummaryListResponse
 	err = retryer().Do(func() error {
 		var err error
-		quotaList, err = u.conn.AccountsMgmt().V1().Organizations().Organization(orgID).QuotaSummary().List().Send()
+		quotaList, err = o.conn.AccountsMgmt().V1().Organizations().Organization(orgID).QuotaSummary().List().Send()
 
 		if err != nil {
 			return err
