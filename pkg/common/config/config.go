@@ -33,6 +33,11 @@ type Config struct {
 	// JobID is the ID designated by prow for this run
 	JobID string `json:"job_id" env:"BUILD_NUMBER" sect:"tests" yaml:"jobID"`
 
+	// BaseJobURL is the root location for all job artifacts
+	// For example, https://storage.googleapis.com/origin-ci-test/logs/osde2e-prod-gcp-e2e-next/61/build-log.txt would be
+	// https://storage.googleapis.com/origin-ci-test/logs -- This is also our default
+	BaseJobURL string `jon:"baseJobURL" env:"BASE_JOB_URL" sect:"test" yaml:"baseJobURL" default:"https://storage.googleapis.com/origin-ci-test/logs"`
+
 	// ReportDir is the location JUnit XML results are written.
 	ReportDir string `json:"report_dir,omitempty" env:"REPORT_DIR" sect:"tests" default:"__TMP_DIR__" yaml:"reportDir"`
 
