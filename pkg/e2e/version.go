@@ -196,7 +196,9 @@ func setupUpgradeVersion() (err error) {
 		numFilteredVersions := len(filteredVersionList)
 
 		if numFilteredVersions == 0 {
-			return fmt.Errorf("no edges found for install version %s", state.Cluster.Version)
+			log.Printf("no edges found for install version %s", state.Cluster.Version)
+			state.Upgrade.ReleaseName = NoVersionFound
+			return nil
 		}
 
 		cisUpgradeVersionString := util.SemverToOpenshiftVersion(filteredVersionList[len(filteredVersionList)-1])
