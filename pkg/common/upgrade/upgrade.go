@@ -38,7 +38,7 @@ var (
 )
 
 // RunUpgrade uses the OpenShift extended suite to upgrade a cluster to the image provided in cfg.
-func RunUpgrade(provisioner spi.Provisioner) error {
+func RunUpgrade(provider spi.Provider) error {
 	var done bool
 	var msg string
 	var err error
@@ -79,7 +79,7 @@ func RunUpgrade(provisioner spi.Provisioner) error {
 
 	metadata.Instance.SetTimeToUpgradedCluster(time.Since(upgradeStarted).Seconds())
 
-	if err = cluster.WaitForClusterReady(provisioner, state.Instance.Cluster.ID); err != nil {
+	if err = cluster.WaitForClusterReady(provider, state.Instance.Cluster.ID); err != nil {
 		return fmt.Errorf("failed waiting for cluster ready: %v", err)
 	}
 

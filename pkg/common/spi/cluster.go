@@ -2,8 +2,6 @@ package spi
 
 import (
 	"time"
-
-	"github.com/Masterminds/semver"
 )
 
 // ClusterState is the state of the cluster.
@@ -25,12 +23,6 @@ const (
 	// ClusterStateUnknown the cluster state is unknown.
 	ClusterStateUnknown ClusterState = "unknown"
 )
-
-// Version represents an Openshift version.
-type Version struct {
-	Version *semver.Version
-	Default bool
-}
 
 // Cluster is the intermediary cluster object between a provisioner and osde2e.
 type Cluster struct {

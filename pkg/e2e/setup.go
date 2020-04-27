@@ -17,7 +17,7 @@ import (
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/events"
 	"github.com/openshift/osde2e/pkg/common/metadata"
-	"github.com/openshift/osde2e/pkg/common/provisioners"
+	"github.com/openshift/osde2e/pkg/common/providers"
 	"github.com/openshift/osde2e/pkg/common/state"
 	"github.com/openshift/osde2e/pkg/common/util"
 )
@@ -80,12 +80,12 @@ func getLogs() {
 	defer ginkgo.GinkgoRecover()
 	state := state.Instance
 
-	if provisioner == nil {
+	if provider == nil {
 		log.Println("OSD was not configured. Skipping log collection...")
 	} else if state.Cluster.ID == "" {
 		log.Println("CLUSTER_ID is not set, likely due to a setup failure. Skipping log collection...")
 	} else {
-		logs, err := provisioner.Logs(state.Cluster.ID)
+		logs, err := provider.Logs(state.Cluster.ID)
 		Expect(err).NotTo(HaveOccurred(), "failed to collect cluster logs")
 		writeLogs(logs)
 	}
@@ -101,7 +101,7 @@ func setupCluster() (err error) {
 		return useKubeconfig()
 	}
 
-	provisioner, err := provisioners.ClusterProvisioner()
+	provider, err := providers.ClusterProvider()
 
 	if err != nil {
 		return fmt.Errorf("error getting cluster provisioning client: %v", err)
@@ -113,13 +113,13 @@ func setupCluster() (err error) {
 			state.Cluster.Name = clusterName()
 		}
 
-		if state.Cluster.ID, err = provisioner.LaunchCluster(); err != nil {
+		if state.Cluster.ID, err = provider.LaunchCluster(); err != nil {
 			return fmt.Errorf("could not launch cluster: %v", err)
 		}
 	} else {
 		log.Printf("CLUSTER_ID of '%s' was provided, skipping cluster creation and using it instead", state.Cluster.ID)
 
-		cluster, err := provisioner.GetCluster(state.Cluster.ID)
+		cluster, err := provider.GetCluster(state.Cluster.ID)
 		if err != nil {
 			return fmt.Errorf("could not retrieve cluster information from OCM: %v", err)
 		}
@@ -142,11 +142,11 @@ func setupCluster() (err error) {
 	metadata.Instance.SetClusterName(state.Cluster.Name)
 	metadata.Instance.SetClusterID(state.Cluster.ID)
 
-	if err = cluster.WaitForClusterReady(provisioner, state.Cluster.ID); err != nil {
+	if err = cluster.WaitForClusterReady(provider, state.Cluster.ID); err != nil {
 		return fmt.Errorf("failed waiting for cluster ready: %v", err)
 	}
 
-	if state.Kubeconfig.Contents, err = provisioner.ClusterKubeconfig(state.Cluster.ID); err != nil {
+	if state.Kubeconfig.Contents, err = provider.ClusterKubeconfig(state.Cluster.ID); err != nil {
 		return fmt.Errorf("could not get kubeconfig for cluster: %v", err)
 	}
 
@@ -156,12 +156,12 @@ func setupCluster() (err error) {
 // installAddons installs addons onto the cluster
 func installAddons() (err error) {
 	clusterID := state.Instance.Cluster.ID
-	num, err := provisioner.InstallAddons(clusterID, config.Instance.Addons.IDs)
+	num, err := provider.InstallAddons(clusterID, config.Instance.Addons.IDs)
 	if err != nil {
 		return fmt.Errorf("could not install addons: %s", err.Error())
 	}
 	if num > 0 {
-		if err = cluster.WaitForClusterReady(provisioner, clusterID); err != nil {
+		if err = cluster.WaitForClusterReady(provider, clusterID); err != nil {
 			return fmt.Errorf("failed waiting for cluster ready: %v", err)
 		}
 	}

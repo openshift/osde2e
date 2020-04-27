@@ -67,9 +67,11 @@ func TestNextReleaseAfterGivenVersionFromVersionList(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		versions := []spi.Version{}
+		versions := []*spi.Version{}
 		for _, version := range test.VersionList {
-			versions = append(versions, spi.Version{Version: semver.MustParse(version)})
+			versions = append(versions, spi.NewVersionBuilder().
+				Version(semver.MustParse(version)).
+				Build())
 		}
 		selectedVersion, err := nextReleaseAfterGivenVersionFromVersionList(test.GivenVersion, versions, test.ReleasesFromGivenVersion)
 
