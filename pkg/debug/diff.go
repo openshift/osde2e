@@ -6,7 +6,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"sort"
-	"strconv"
 	"strings"
 
 	"github.com/google/go-github/v31/github"
@@ -17,12 +16,8 @@ import (
 )
 
 // GenerateDiff attempts to pull a dependency list from a previous job (job, jobID) and generate a diff against a provided string
-func GenerateDiff(baseURL, jobName, jobID, phase, dependencies string) (string, error) {
-	parsedJobID, err := strconv.Atoi(jobID)
-	if err != nil {
-		return "", err
-	}
-	resp, err := http.Get(fmt.Sprintf("%s/%s/%d/artifacts/%s/dependencies.txt", baseURL, jobName, parsedJobID-1, phase))
+func GenerateDiff(baseURL, phase, dependencies, jobName string, jobID int) (string, error) {
+	resp, err := http.Get(fmt.Sprintf("%s/%s/%d/artifacts/%s/dependencies.txt", baseURL, jobName, jobID-1, phase))
 	if err != nil {
 		return "", err
 	}

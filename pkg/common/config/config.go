@@ -31,7 +31,7 @@ type Config struct {
 	JobName string `json:"job_name" env:"JOB_NAME" sect:"tests" yaml:"jobName"`
 
 	// JobID is the ID designated by prow for this run
-	JobID string `json:"job_id" env:"BUILD_NUMBER" sect:"tests" yaml:"jobID"`
+	JobID int `json:"job_id" env:"BUILD_NUMBER" sect:"tests" yaml:"jobID"`
 
 	// BaseJobURL is the root location for all job artifacts
 	// For example, https://storage.googleapis.com/origin-ci-test/logs/osde2e-prod-gcp-e2e-next/61/build-log.txt would be

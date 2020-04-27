@@ -109,7 +109,7 @@ func TestProcessJSONFile(t *testing.T) {
 	state.Instance.Cluster.Version = "install-version"
 	state.Instance.Upgrade.ReleaseName = "upgrade-version"
 	config.Instance.OCM.Env = "prod"
-	config.Instance.JobID = "123"
+	config.Instance.JobID = 123
 
 	tests := []struct {
 		testName         string
@@ -211,7 +211,7 @@ func TestWritePrometheusFile(t *testing.T) {
 	state.Instance.Cluster.ID = "1a2b3c"
 	state.Instance.Cluster.Version = "install-version"
 	state.Instance.Upgrade.ReleaseName = "upgrade-version"
-	config.Instance.JobID = "123"
+	config.Instance.JobID = 123
 	config.Instance.JobName = "test-job"
 	config.Instance.OCM.Env = "prod"
 

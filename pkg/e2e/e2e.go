@@ -412,8 +412,8 @@ func runTestsInPhase(phase string, description string) bool {
 			err = ioutil.WriteFile(filepath.Join(phaseDirectory, "dependencies.txt"), []byte(dependencies), 0644)
 		}
 
-		if cfg.JobName != "" && cfg.JobID != "" {
-			diff, err := debug.GenerateDiff(cfg.BaseJobURL, cfg.JobName, cfg.JobID, dependencies, phase)
+		if cfg.JobName != "" && cfg.JobID > 0 {
+			diff, err := debug.GenerateDiff(cfg.BaseJobURL, dependencies, phase, cfg.JobName, cfg.JobID)
 			if err != nil {
 				log.Printf("Error generating diff: %s", err.Error())
 			} else {
