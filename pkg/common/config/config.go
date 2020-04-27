@@ -27,6 +27,9 @@ type Config struct {
 
 	Weather WeatherConfig `yaml:"weather"`
 
+	// Provisioner is what provider to use to create/delete clusters.
+	Provisioner string `json:"provisioner" env:"PROVISIONER" sect:"tests" default:"ocm" yaml:"provisioner"`
+
 	// JobName lets you name the current e2e job run
 	JobName string `json:"job_name" env:"JOB_NAME" sect:"tests" yaml:"jobName"`
 

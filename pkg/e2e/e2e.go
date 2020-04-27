@@ -25,9 +25,10 @@ import (
 	"github.com/openshift/osde2e/pkg/common/events"
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/metadata"
-	"github.com/openshift/osde2e/pkg/common/osd"
 	"github.com/openshift/osde2e/pkg/common/phase"
+	"github.com/openshift/osde2e/pkg/common/provisioners"
 	"github.com/openshift/osde2e/pkg/common/runner"
+	"github.com/openshift/osde2e/pkg/common/spi"
 	"github.com/openshift/osde2e/pkg/common/state"
 	"github.com/openshift/osde2e/pkg/common/upgrade"
 )
@@ -37,8 +38,8 @@ const (
 	hiveLog string = "hive-log.txt"
 )
 
-// OSD is used to deploy and manage clusters.
-var OSD *osd.OSD
+// provisioner is used to deploy and manage clusters.
+var provisioner spi.Provisioner
 
 // RunTests initializes Ginkgo and runs the osde2e test suite.
 func RunTests() bool {
@@ -70,14 +71,14 @@ func runGinkgoTests() error {
 	if len(cfg.Kubeconfig.Path) > 0 {
 		log.Print("Found an existing Kubeconfig!")
 	} else {
-		if OSD, err = osd.New(cfg.OCM.Token, cfg.OCM.Env, cfg.OCM.Debug); err != nil {
-			return fmt.Errorf("could not setup OSD: %v", err)
+		if provisioner, err = provisioners.ClusterProvisioner(); err != nil {
+			return fmt.Errorf("could not setup cluster provisioner: %v", err)
 		}
 
 		metadata.Instance.SetEnvironment(cfg.OCM.Env)
 
 		// configure cluster and upgrade versions
-		if err = ChooseVersions(OSD); err != nil {
+		if err = ChooseVersions(); err != nil {
 			return fmt.Errorf("failed to configure versions: %v", err)
 		}
 
@@ -91,7 +92,7 @@ func runGinkgoTests() error {
 			return nil
 		}
 
-		if state.Upgrade.ReleaseName == osd.NoVersionFound {
+		if state.Upgrade.ReleaseName == NoVersionFound {
 			log.Printf("No valid versions were found. Skipping tests.")
 			return nil
 		}
@@ -100,7 +101,7 @@ func runGinkgoTests() error {
 		if len(state.Cluster.ID) == 0 {
 			if cfg.DryRun {
 				log.Printf("This is a dry run. Skipping quota check.")
-			} else if enoughQuota, err := OSD.CheckQuota(); err != nil {
+			} else if enoughQuota, err := provisioner.CheckQuota(); err != nil {
 				log.Printf("Failed to check if enough quota is available: %v", err)
 			} else if !enoughQuota {
 				return fmt.Errorf("currently not enough quota exists to run this test")
@@ -121,7 +122,7 @@ func runGinkgoTests() error {
 	// upgrade cluster if requested
 	if state.Upgrade.Image != "" || state.Upgrade.ReleaseName != "" {
 		if state.Kubeconfig.Contents != nil {
-			if err = upgrade.RunUpgrade(OSD); err != nil {
+			if err = upgrade.RunUpgrade(provisioner); err != nil {
 				events.RecordEvent(events.UpgradeFailed)
 				return fmt.Errorf("error performing upgrade: %v", err)
 			}
@@ -157,15 +158,18 @@ func runGinkgoTests() error {
 		}
 	}
 
-	if OSD != nil {
-		if cfg.Cluster.DestroyAfterTest {
-			log.Printf("Destroying cluster '%s'...", state.Cluster.ID)
-			if err = OSD.DeleteCluster(state.Cluster.ID); err != nil {
-				return fmt.Errorf("error deleting cluster: %s", err.Error())
-			}
-		} else {
-			log.Printf("For debugging, please look for cluster ID %s in environment %s", state.Cluster.ID, cfg.OCM.Env)
+	if cfg.Cluster.DestroyAfterTest {
+		log.Printf("Destroying cluster '%s'...", state.Cluster.ID)
+		provisioner, err := provisioners.ClusterProvisioner()
+
+		if err != nil {
+			return fmt.Errorf("error getting cluster deletion client: %v", err)
 		}
+		if err = provisioner.DeleteCluster(state.Cluster.ID); err != nil {
+			return fmt.Errorf("error deleting cluster: %s", err.Error())
+		}
+	} else {
+		log.Printf("For debugging, please look for cluster ID %s in environment %s", state.Cluster.ID, cfg.OCM.Env)
 	}
 
 	if !cfg.DryRun {
@@ -233,22 +237,20 @@ func cleanupAfterE2E(h *helper.H) (errors []error) {
 
 	// Get state from OCM
 	log.Print("Gathering cluster state from OCM")
-	var OSD *osd.OSD
 	cfg := config.Instance
 	if len(state.Cluster.ID) > 0 {
-		if OSD, err = osd.New(cfg.OCM.Token, cfg.OCM.Env, cfg.OCM.Debug); err != nil {
+		if provisioner, err = provisioners.ClusterProvisioner(); err != nil {
 			log.Printf("Error getting OSD client: %s", err.Error())
 		}
 
-		cluster, err := OSD.GetCluster(state.Cluster.ID)
+		cluster, err := provisioner.GetCluster(state.Cluster.ID)
 		if err != nil {
 			log.Printf("error getting Cluster state: %s", err.Error())
 		} else {
-			flavorName, _ := cluster.Flavour().GetName()
-			log.Printf("Cluster addons: %v", cluster.Addons().Slice())
-			log.Printf("Cluster cloud provider: %v", cluster.CloudProvider().DisplayName())
+			log.Printf("Cluster addons: %v", cluster.Addons())
+			log.Printf("Cluster cloud provider: %v", cluster.CloudProvider())
 			log.Printf("Cluster expiration: %v", cluster.ExpirationTimestamp())
-			log.Printf("Cluster flavor: %s", flavorName)
+			log.Printf("Cluster flavor: %s", cluster.Flavour())
 			log.Printf("Cluster state: %v", cluster.State())
 		}
 

@@ -1,4 +1,4 @@
-package osd
+package ocmprovisioner
 
 import (
 	"log"
@@ -12,6 +12,7 @@ import (
 var ocmOnce = sync.Once{}
 var ocmRetryer *retry.Retryer
 
+// Retryer returns a retryer meant for OCM interactions.
 func retryer() *retry.Retryer {
 	ocmOnce.Do(func() {
 		ocmRetryer = retry.New(retry.SleepFn(func(attempts int) {

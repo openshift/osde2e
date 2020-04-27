@@ -1,4 +1,4 @@
-package osd
+package ocmprovisioner
 
 // Environments are known instance of OSD.
 var Environments = environments{

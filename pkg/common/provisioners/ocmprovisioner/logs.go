@@ -1,4 +1,4 @@
-package osd
+package ocmprovisioner
 
 import (
 	"fmt"
@@ -8,11 +8,10 @@ import (
 )
 
 // Logs provides all logs available for clusterID, ids can be optionally provided for only specific logs.
-func (u *OSD) Logs(clusterID string, length int, ids ...string) (logs map[string][]byte, err error) {
-	if len(ids) == 0 {
-		if ids, err = u.getLogList(clusterID); err != nil {
-			return logs, fmt.Errorf("couldn't get log list: %v", err)
-		}
+func (o *OCMProvisioner) Logs(clusterID string) (logs map[string][]byte, err error) {
+	var ids []string
+	if ids, err = o.getLogList(clusterID); err != nil {
+		return logs, fmt.Errorf("couldn't get log list: %v", err)
 	}
 
 	logs = make(map[string][]byte, len(ids))
@@ -21,10 +20,10 @@ func (u *OSD) Logs(clusterID string, length int, ids ...string) (logs map[string
 
 		retryer().Do(func() error {
 			var err error
-			resp, err = u.cluster(clusterID).
+			resp, err = o.conn.ClustersMgmt().V1().Clusters().Cluster(clusterID).
 				Logs().
 				Log(logID).
-				Get().Parameter("tail", length).
+				Get().Parameter("tail", math.MaxInt32-1).
 				Send()
 
 			if err != nil {
@@ -46,17 +45,12 @@ func (u *OSD) Logs(clusterID string, length int, ids ...string) (logs map[string
 	return
 }
 
-// FullLogs returns as much Logs as it can.
-func (u *OSD) FullLogs(clusterID string, ids ...string) (map[string][]byte, error) {
-	return u.Logs(clusterID, math.MaxInt32-1, ids...)
-}
-
-func (u *OSD) getLogList(clusterID string) ([]string, error) {
+func (o *OCMProvisioner) getLogList(clusterID string) ([]string, error) {
 	var resp *v1.LogsListResponse
 
 	err := retryer().Do(func() error {
 		var err error
-		resp, err = u.cluster(clusterID).
+		resp, err = o.conn.ClustersMgmt().V1().Clusters().Cluster(clusterID).
 			Logs().
 			List().
 			Send()

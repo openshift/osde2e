@@ -12,15 +12,15 @@ import (
 	"github.com/Masterminds/semver"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/metadata"
-	"github.com/openshift/osde2e/pkg/common/osd"
 	"github.com/openshift/osde2e/pkg/common/state"
+	"github.com/openshift/osde2e/pkg/common/util"
 )
 
 const (
 	// format string for release stream latest from release controller
 	latestReleaseControllerURLFmt = "https://openshift-release.svc.ci.openshift.org/api/v1/releasestream/%s/latest"
 	// format string for Cincinnati releases
-	cincinnatiURLFmt = "%s/api/upgrades_info/v1/graph?channel=%s&arch=amd64"
+	cincinnatiURLFmt = "https://api.openshift.com/api/upgrades_info/v1/graph?channel=%s&arch=amd64"
 )
 
 type smallCincinnatiCache struct {
@@ -53,7 +53,7 @@ func (s *smallCincinnatiCache) Get(channel string) (smallCincinnatiCacheObject, 
 
 // loadCincinnatiData populates our cache with a given channel's data
 func (s *smallCincinnatiCache) loadCincinnatiData(channel string) error {
-	cincinnatiFormattedURL := fmt.Sprintf(cincinnatiURLFmt, osd.Environments.Choose(config.Instance.OCM.Env), channel)
+	cincinnatiFormattedURL := fmt.Sprintf(cincinnatiURLFmt, channel)
 
 	var req *http.Request
 
@@ -191,7 +191,7 @@ func VersionToChannel(version *semver.Version) string {
 	useVersion := version
 	if config.Instance.Upgrade.OnlyUpgradeToZReleases {
 		var err error
-		useVersion, err = osd.OpenshiftVersionToSemver(state.Instance.Cluster.Version)
+		useVersion, err = util.OpenshiftVersionToSemver(state.Instance.Cluster.Version)
 
 		if err != nil {
 			panic("cluster version stored in state object is invalid")
