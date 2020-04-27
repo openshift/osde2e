@@ -231,9 +231,9 @@ func (m *Metrics) jsonToPrometheusOutput(gatherer *prometheus.GaugeVec, phase st
 			// We're only concerned with tracking float values in Prometheus as they're the only thing we can measure
 			if floatValue, err := strconv.ParseFloat(stringValue, 64); err == nil {
 				if phase != "" {
-					gatherer.WithLabelValues(state.Cluster.Version, state.Upgrade.ReleaseName, cfg.OCM.Env, metadataName, state.Cluster.ID, cfg.JobID, phase).Add(floatValue)
+					gatherer.WithLabelValues(state.Cluster.Version, state.Upgrade.ReleaseName, cfg.OCM.Env, metadataName, state.Cluster.ID, strconv.Itoa(cfg.JobID), phase).Add(floatValue)
 				} else {
-					gatherer.WithLabelValues(state.Cluster.Version, state.Upgrade.ReleaseName, cfg.OCM.Env, metadataName, state.Cluster.ID, cfg.JobID).Add(floatValue)
+					gatherer.WithLabelValues(state.Cluster.Version, state.Upgrade.ReleaseName, cfg.OCM.Env, metadataName, state.Cluster.ID, strconv.Itoa(cfg.JobID)).Add(floatValue)
 				}
 			}
 		}

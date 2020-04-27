@@ -31,6 +31,7 @@ import (
 	"github.com/openshift/osde2e/pkg/common/spi"
 	"github.com/openshift/osde2e/pkg/common/state"
 	"github.com/openshift/osde2e/pkg/common/upgrade"
+	"github.com/openshift/osde2e/pkg/debug"
 )
 
 const (
@@ -174,6 +175,7 @@ func runGinkgoTests() error {
 
 	if !cfg.DryRun {
 		h := helper.NewOutsideGinkgo()
+
 		cleanupAfterE2E(h)
 	}
 
@@ -403,6 +405,28 @@ func runTestsInPhase(phase string, description string) bool {
 		return false
 	}
 
+	h := helper.NewOutsideGinkgo()
+	dependencies, err := debug.GenerateDependencies(h.Kube())
+	if err != nil {
+		log.Printf("Error generating dependencies: %s", err.Error())
+	} else {
+		if len(dependencies) > 0 {
+			err = ioutil.WriteFile(filepath.Join(phaseDirectory, "dependencies.txt"), []byte(dependencies), 0644)
+		}
+
+		if cfg.JobName != "" && cfg.JobID > 0 {
+			diff, err := debug.GenerateDiff(cfg.BaseJobURL, dependencies, phase, cfg.JobName, cfg.JobID)
+			if err != nil {
+				log.Printf("Error generating diff: %s", err.Error())
+			} else {
+				log.Println("Dependency changes:")
+				log.Println(diff)
+			}
+		} else {
+			log.Println("Not run in prow, skipping dependency diff")
+		}
+
+	}
 	return ginkgoPassed
 }
 

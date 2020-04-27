@@ -8,8 +8,10 @@ require (
 	github.com/aws/aws-sdk-go v1.25.48
 	github.com/emicklei/go-restful v2.9.6+incompatible
 	github.com/gogo/protobuf v1.2.2-0.20190723190241-65acae22fc9d // indirect
+	github.com/google/go-github/v31 v31.0.0
 	github.com/google/subcommands v1.2.0
 	github.com/hashicorp/go-multierror v1.1.0
+	github.com/kylelemons/godebug v1.1.0
 	github.com/markbates/pkger v0.15.1
 	github.com/onsi/ginkgo v1.12.0
 	github.com/onsi/gomega v1.7.1
