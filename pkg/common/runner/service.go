@@ -77,7 +77,7 @@ func (r *Runner) waitForCompletion(podName string, timeoutInSeconds int) error {
 					}
 				}
 			}
-			return len(err.Errors) == 0, err.ErrorOrNil()
+			return err == nil, err.ErrorOrNil()
 		} else if pod.Status.Phase == kubev1.PodPending {
 			pendingCount++
 			if pendingCount > podPendingTimeout {
