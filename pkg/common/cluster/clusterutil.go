@@ -23,7 +23,7 @@ const (
 )
 
 // WaitForClusterReady blocks until the cluster is ready for testing.
-func WaitForClusterReady(provisioner spi.Provisioner, clusterID string) error {
+func WaitForClusterReady(provider spi.Provider, clusterID string) error {
 	cfg := config.Instance
 
 	log.Printf("Waiting %v minutes for cluster '%s' to be ready...\n", cfg.Cluster.InstallTimeout, clusterID)
@@ -35,7 +35,7 @@ func WaitForClusterReady(provisioner spi.Provisioner, clusterID string) error {
 	ocmReady := false
 	if !cfg.Tests.SkipClusterHealthChecks {
 		return wait.PollImmediate(30*time.Second, time.Duration(cfg.Cluster.InstallTimeout)*time.Minute, func() (bool, error) {
-			if cluster, err := provisioner.GetCluster(clusterID); err == nil && cluster.State() == spi.ClusterStateReady {
+			if cluster, err := provider.GetCluster(clusterID); err == nil && cluster.State() == spi.ClusterStateReady {
 				// This is the first time that we've entered this section, so we'll consider this the time until OCM has said the cluster is ready
 				if !ocmReady {
 					ocmReady = true
@@ -45,7 +45,7 @@ func WaitForClusterReady(provisioner spi.Provisioner, clusterID string) error {
 
 					readinessStarted = time.Now()
 				}
-				if success, err := pollClusterHealth(provisioner, clusterID); success {
+				if success, err := pollClusterHealth(provider, clusterID); success {
 					cleanRuns++
 					log.Printf("Clean run %d/%d...", cleanRuns, config.Instance.Cluster.CleanCheckRuns)
 					errRuns = 0
@@ -84,12 +84,12 @@ func WaitForClusterReady(provisioner spi.Provisioner, clusterID string) error {
 }
 
 // PollClusterHealth looks at CVO data to determine if a cluster is alive/healthy or not
-func pollClusterHealth(provisioner spi.Provisioner, clusterID string) (status bool, err error) {
+func pollClusterHealth(provider spi.Provider, clusterID string) (status bool, err error) {
 	state := state.Instance
 
 	log.Print("Polling Cluster Health...\n")
 	if len(state.Kubeconfig.Contents) == 0 {
-		if state.Kubeconfig.Contents, err = provisioner.ClusterKubeconfig(clusterID); err != nil {
+		if state.Kubeconfig.Contents, err = provider.ClusterKubeconfig(clusterID); err != nil {
 			log.Printf("could not get kubeconfig for cluster: %v\n", err)
 			return false, nil
 		}

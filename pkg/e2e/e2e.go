@@ -26,7 +26,7 @@ import (
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/metadata"
 	"github.com/openshift/osde2e/pkg/common/phase"
-	"github.com/openshift/osde2e/pkg/common/provisioners"
+	"github.com/openshift/osde2e/pkg/common/providers"
 	"github.com/openshift/osde2e/pkg/common/runner"
 	"github.com/openshift/osde2e/pkg/common/spi"
 	"github.com/openshift/osde2e/pkg/common/state"
@@ -40,7 +40,7 @@ const (
 )
 
 // provisioner is used to deploy and manage clusters.
-var provisioner spi.Provisioner
+var provider spi.Provider
 
 // RunTests initializes Ginkgo and runs the osde2e test suite.
 func RunTests() bool {
@@ -72,8 +72,8 @@ func runGinkgoTests() error {
 	if len(cfg.Kubeconfig.Path) > 0 {
 		log.Print("Found an existing Kubeconfig!")
 	} else {
-		if provisioner, err = provisioners.ClusterProvisioner(); err != nil {
-			return fmt.Errorf("could not setup cluster provisioner: %v", err)
+		if provider, err = providers.ClusterProvider(); err != nil {
+			return fmt.Errorf("could not setup cluster provider: %v", err)
 		}
 
 		metadata.Instance.SetEnvironment(cfg.OCM.Env)
@@ -94,7 +94,7 @@ func runGinkgoTests() error {
 		}
 
 		if state.Upgrade.ReleaseName == NoVersionFound {
-			log.Printf("No valid versions were found. Skipping tests.")
+			log.Printf("No valid upgrade versions were found. Skipping tests.")
 			return nil
 		}
 
@@ -102,7 +102,7 @@ func runGinkgoTests() error {
 		if len(state.Cluster.ID) == 0 {
 			if cfg.DryRun {
 				log.Printf("This is a dry run. Skipping quota check.")
-			} else if enoughQuota, err := provisioner.CheckQuota(); err != nil {
+			} else if enoughQuota, err := provider.CheckQuota(); err != nil {
 				log.Printf("Failed to check if enough quota is available: %v", err)
 			} else if !enoughQuota {
 				return fmt.Errorf("currently not enough quota exists to run this test")
@@ -123,7 +123,7 @@ func runGinkgoTests() error {
 	// upgrade cluster if requested
 	if state.Upgrade.Image != "" || state.Upgrade.ReleaseName != "" {
 		if state.Kubeconfig.Contents != nil {
-			if err = upgrade.RunUpgrade(provisioner); err != nil {
+			if err = upgrade.RunUpgrade(provider); err != nil {
 				events.RecordEvent(events.UpgradeFailed)
 				return fmt.Errorf("error performing upgrade: %v", err)
 			}
@@ -161,7 +161,7 @@ func runGinkgoTests() error {
 
 	if cfg.Cluster.DestroyAfterTest {
 		log.Printf("Destroying cluster '%s'...", state.Cluster.ID)
-		provisioner, err := provisioners.ClusterProvisioner()
+		provisioner, err := providers.ClusterProvider()
 
 		if err != nil {
 			return fmt.Errorf("error getting cluster deletion client: %v", err)
@@ -241,11 +241,11 @@ func cleanupAfterE2E(h *helper.H) (errors []error) {
 	log.Print("Gathering cluster state from OCM")
 	cfg := config.Instance
 	if len(state.Cluster.ID) > 0 {
-		if provisioner, err = provisioners.ClusterProvisioner(); err != nil {
-			log.Printf("Error getting OSD client: %s", err.Error())
+		if provider, err = providers.ClusterProvider(); err != nil {
+			log.Printf("Error getting cluster provider: %s", err.Error())
 		}
 
-		cluster, err := provisioner.GetCluster(state.Cluster.ID)
+		cluster, err := provider.GetCluster(state.Cluster.ID)
 		if err != nil {
 			log.Printf("error getting Cluster state: %s", err.Error())
 		} else {
@@ -405,27 +405,29 @@ func runTestsInPhase(phase string, description string) bool {
 		return false
 	}
 
-	h := helper.NewOutsideGinkgo()
-	dependencies, err := debug.GenerateDependencies(h.Kube())
-	if err != nil {
-		log.Printf("Error generating dependencies: %s", err.Error())
-	} else {
-		if len(dependencies) > 0 {
-			err = ioutil.WriteFile(filepath.Join(phaseDirectory, "dependencies.txt"), []byte(dependencies), 0644)
-		}
-
-		if cfg.JobName != "" && cfg.JobID > 0 {
-			diff, err := debug.GenerateDiff(cfg.BaseJobURL, dependencies, phase, cfg.JobName, cfg.JobID)
-			if err != nil {
-				log.Printf("Error generating diff: %s", err.Error())
-			} else {
-				log.Println("Dependency changes:")
-				log.Println(diff)
-			}
+	if !cfg.DryRun {
+		h := helper.NewOutsideGinkgo()
+		dependencies, err := debug.GenerateDependencies(h.Kube())
+		if err != nil {
+			log.Printf("Error generating dependencies: %s", err.Error())
 		} else {
-			log.Println("Not run in prow, skipping dependency diff")
-		}
+			if len(dependencies) > 0 {
+				err = ioutil.WriteFile(filepath.Join(phaseDirectory, "dependencies.txt"), []byte(dependencies), 0644)
+			}
 
+			if cfg.JobName != "" && cfg.JobID > 0 {
+				diff, err := debug.GenerateDiff(cfg.BaseJobURL, dependencies, phase, cfg.JobName, cfg.JobID)
+				if err != nil {
+					log.Printf("Error generating diff: %s", err.Error())
+				} else {
+					log.Println("Dependency changes:")
+					log.Println(diff)
+				}
+			} else {
+				log.Println("Not run in prow, skipping dependency diff")
+			}
+
+		}
 	}
 	return ginkgoPassed
 }

@@ -10,7 +10,6 @@ import (
 	"github.com/Masterminds/semver"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/metadata"
-	"github.com/openshift/osde2e/pkg/common/provisioners"
 	"github.com/openshift/osde2e/pkg/common/spi"
 	"github.com/openshift/osde2e/pkg/common/state"
 	"github.com/openshift/osde2e/pkg/common/upgrade"
@@ -33,11 +32,11 @@ func filterOnCincinnati(installVersion *semver.Version, upgradeVersion *semver.V
 	return versionInCincinnati
 }
 
-func removeDefaultVersion(versions []spi.Version) []spi.Version {
-	versionsWithoutDefault := []spi.Version{}
+func removeDefaultVersion(versions []*spi.Version) []*spi.Version {
+	versionsWithoutDefault := []*spi.Version{}
 
 	for _, version := range versions {
-		if !version.Default {
+		if !version.Default() {
 			versionsWithoutDefault = append(versionsWithoutDefault, version)
 		}
 	}
@@ -51,12 +50,12 @@ func ChooseVersions() (err error) {
 	state := state.Instance
 
 	// when defined, use set version
-	if provisioner == nil {
+	if provider == nil {
 		err = errors.New("osd must be setup when upgrading with release stream")
 	} else if shouldUpgrade() {
 		err = setupUpgradeVersion()
 	} else {
-		err = setupVersion()
+		_, err = setupVersion()
 	}
 
 	// Set the versions in metadata. If upgrade hasn't been chosen, it should still be omitted from the end result.
@@ -78,7 +77,9 @@ func shouldUpgrade() bool {
 }
 
 // chooses between default version and nightly based on target versions.
-func setupVersion() (err error) {
+func setupVersion() (*semver.Version, error) {
+	var selectedVersion *semver.Version
+
 	cfg := config.Instance
 	state := state.Instance
 
@@ -87,15 +88,16 @@ func setupVersion() (err error) {
 	if len(state.Cluster.Version) == 0 {
 		var err error
 
-		availableVersions, err := provisioner.AvailableVersions()
+		versionList, err := provider.Versions()
 
 		if err != nil {
-			return fmt.Errorf("error getting versions: %v", err)
+			return nil, fmt.Errorf("error getting versions: %v", err)
 		}
 
-		var selectedVersion *semver.Version
+		availableVersions := versionList.AvailableVersions()
+
 		if cfg.Cluster.UseLatestVersionForInstall {
-			selectedVersion = availableVersions[len(availableVersions)-1].Version
+			selectedVersion = availableVersions[len(availableVersions)-1].Version()
 			versionType = "latest version"
 		} else if cfg.Cluster.UseMiddleClusterImageSetForInstall {
 			versionsWithoutDefault := removeDefaultVersion(availableVersions)
@@ -103,7 +105,7 @@ func setupVersion() (err error) {
 			if numVersions < 2 {
 				state.Cluster.EnoughVersionsForOldestOrMiddleTest = false
 			} else {
-				selectedVersion = versionsWithoutDefault[numVersions/2].Version
+				selectedVersion = versionsWithoutDefault[numVersions/2].Version()
 			}
 			versionType = "middle version"
 		} else if cfg.Cluster.UseOldestClusterImageSetForInstall {
@@ -112,29 +114,18 @@ func setupVersion() (err error) {
 			if numVersions < 2 {
 				state.Cluster.EnoughVersionsForOldestOrMiddleTest = false
 			} else {
-				selectedVersion = versionsWithoutDefault[0].Version
+				selectedVersion = versionsWithoutDefault[0].Version()
 			}
 			versionType = "oldest version"
 		} else if cfg.Cluster.NextReleaseAfterProdDefault > -1 {
-			var prodDefault *semver.Version
-			prodDefault, err = getProdDefault()
+			defaultVersion := versionList.Default()
 
 			if err == nil {
-				selectedVersion, err = nextReleaseAfterGivenVersionFromVersionList(prodDefault, availableVersions, cfg.Cluster.NextReleaseAfterProdDefault)
+				selectedVersion, err = nextReleaseAfterGivenVersionFromVersionList(defaultVersion, availableVersions, cfg.Cluster.NextReleaseAfterProdDefault)
 				versionType = fmt.Sprintf("%d release(s) from the default version in prod", cfg.Cluster.NextReleaseAfterProdDefault)
 			}
-		} else if cfg.OCM.Env == "int" {
-			selectedVersion, err = getProdDefault()
-			versionType = "current default in prod"
 		} else {
-			for _, version := range availableVersions {
-				if version.Default {
-					selectedVersion = version.Version
-				}
-			}
-			if selectedVersion == nil {
-				err = fmt.Errorf("unable to find default version")
-			}
+			selectedVersion = versionList.Default()
 			versionType = "current default"
 		}
 
@@ -145,165 +136,122 @@ func setupVersion() (err error) {
 				log.Printf("Unable to get the %s.", versionType)
 			}
 		} else {
-			return fmt.Errorf("error finding default cluster version: %v", err)
+			return nil, fmt.Errorf("error finding default cluster version: %v", err)
 		}
 	} else {
 		// Make sure the cluster version is valid
 		_, err := util.OpenshiftVersionToSemver(state.Cluster.Version)
 
 		if err != nil {
-			return fmt.Errorf("supplied version %s is invalid: %v", state.Cluster.Version, err)
+			return nil, fmt.Errorf("supplied version %s is invalid: %v", state.Cluster.Version, err)
 		}
 	}
 
 	log.Printf("Using the %s '%s'", versionType, state.Cluster.Version)
 
-	return
+	return selectedVersion, nil
 }
 
 // chooses version based on optimal upgrade path
-func setupUpgradeVersion() (err error) {
-	cfg := config.Instance
+func setupUpgradeVersion() error {
 	state := state.Instance
 
 	// Decide the version to install
-	err = setupVersion()
+	clusterVersion, err := setupVersion()
 	if err != nil {
 		return err
 	}
 
-	clusterVersion, err := util.OpenshiftVersionToSemver(state.Cluster.Version)
+	versionList, err := provider.Versions()
+
 	if err != nil {
-		log.Printf("error while parsing cluster version %s: %v", state.Cluster.Version, err)
 		return err
 	}
 
-	if cfg.OCM.Env != "int" {
-		availableVersions, err := provisioner.AvailableVersions()
+	availableVersions := versionList.AvailableVersions()
 
-		if err != nil {
-			return err
-		}
+	if provider.UpgradeSource() == spi.CincinnatiSource {
+		getCincinnatiUpgradeTarget(clusterVersion, availableVersions)
+	} else {
+		getReleaseControllerUpgradeTarget(versionList)
+	}
 
-		filteredVersionList := []*semver.Version{}
+	if state.Upgrade.ReleaseName == "" {
+		return fmt.Errorf("failed to find an upgrade target")
+	}
 
-		for _, version := range availableVersions {
-			if filterOnCincinnati(clusterVersion, version.Version) {
-				filteredVersionList = append(filteredVersionList, version.Version)
-			}
-		}
+	// set upgrade image
+	log.Printf("Selecting version '%s' to be able to upgrade to '%s' using upgrade source '%s'",
+		state.Cluster.Version, state.Upgrade.ReleaseName, provider.UpgradeSource())
+	return nil
+}
 
-		numFilteredVersions := len(filteredVersionList)
+func getCincinnatiUpgradeTarget(clusterVersion *semver.Version, availableVersions []*spi.Version) error {
+	state := state.Instance
 
-		if numFilteredVersions == 0 {
-			log.Printf("no edges found for install version %s", state.Cluster.Version)
-			state.Upgrade.ReleaseName = NoVersionFound
-			return nil
-		}
-
-		cisUpgradeVersionString := util.SemverToOpenshiftVersion(filteredVersionList[len(filteredVersionList)-1])
-
-		if cisUpgradeVersionString == NoVersionFound {
-			state.Upgrade.ReleaseName = cisUpgradeVersionString
-			metadata.Instance.SetUpgradeVersionSource("none")
-			return nil
-		}
-
-		cisUpgradeVersion, err := util.OpenshiftVersionToSemver(cisUpgradeVersionString)
-
-		if err != nil {
-			log.Printf("unable to parse most recent version of openshift from OSD: %v", err)
-			return err
-		}
-
-		// If the available cluster image set makes sense, then we'll just use that
-		if !cisUpgradeVersion.LessThan(clusterVersion) {
-			log.Printf("Using cluster image set.")
-			state.Upgrade.ReleaseName = cisUpgradeVersionString
-			metadata.Instance.SetUpgradeVersionSource("cluster image set")
-			state.Upgrade.UpgradeVersionEqualToInstallVersion = cisUpgradeVersion.Equal(clusterVersion)
-			log.Printf("Selecting version '%s' to be able to upgrade to '%s'", state.Cluster.Version, state.Upgrade.ReleaseName)
-			return nil
-		}
-
-		if state.Upgrade.ReleaseName != "" {
-			log.Printf("The most recent cluster image set is equal to the default. Falling back to upgrading with Cincinnati.")
-		} else {
-			return fmt.Errorf("couldn't get latest cluster image set release and no Cincinnati fallback")
+	var filteredVersionList = []*semver.Version{}
+	for _, version := range availableVersions {
+		if filterOnCincinnati(clusterVersion, version.Version()) {
+			filteredVersionList = append(filteredVersionList, version.Version())
 		}
 	}
 
-	releaseStream := cfg.Upgrade.ReleaseStream
-
-	if releaseStream == "" {
-		if cfg.Upgrade.NextReleaseAfterProdDefaultForUpgrade > -1 {
-			availableVersions, err := provisioner.AvailableVersions()
-
-			if err != nil {
-				return fmt.Errorf("error getting available versions: %v", err)
-			}
-
-			prodDefault, err := getProdDefault()
-
-			if err != nil {
-				return fmt.Errorf("error getting production default: %v", err)
-			}
-
-			nextVersion, err := nextReleaseAfterGivenVersionFromVersionList(prodDefault, availableVersions, cfg.Upgrade.NextReleaseAfterProdDefaultForUpgrade)
-
-			if err != nil {
-				return fmt.Errorf("error determining next version to upgrade to: %v", err)
-			}
-
-			releaseStream = fmt.Sprintf("%d.%d.0-0.nightly", nextVersion.Major(), nextVersion.Minor())
-		} else {
-			return fmt.Errorf("no release stream specified and no dynamic version selection specified")
-		}
+	numResults := len(filteredVersionList)
+	if numResults == 0 {
+		state.Upgrade.ReleaseName = NoVersionFound
+		metadata.Instance.SetUpgradeVersionSource("none")
+		return nil
 	}
+
+	cisUpgradeVersion := filteredVersionList[numResults-1]
+
+	// If the available cluster image set makes sense, then we'll just use that
+	if !cisUpgradeVersion.LessThan(clusterVersion) {
+		log.Printf("Using cluster image set.")
+		state.Upgrade.ReleaseName = util.SemverToOpenshiftVersion(cisUpgradeVersion)
+		metadata.Instance.SetUpgradeVersionSource("cluster image set")
+		state.Upgrade.UpgradeVersionEqualToInstallVersion = cisUpgradeVersion.Equal(clusterVersion)
+	}
+
+	return nil
+}
+
+func getReleaseControllerUpgradeTarget(versionList *spi.VersionList) error {
+	cfg := config.Instance
+	state := state.Instance
+
+	if cfg.Upgrade.NextReleaseAfterProdDefaultForUpgrade < 0 {
+		return fmt.Errorf("anything other than relative version selection is currently unsupported")
+	}
+
+	// If we're using the release controller, we're trying to do relative version selection.
+	// We'll confirm this in case things change in the future and just proceed with that assumption.
+	nextVersion, err := nextReleaseAfterGivenVersionFromVersionList(versionList.Default(), versionList.AvailableVersions(), cfg.Upgrade.NextReleaseAfterProdDefaultForUpgrade)
+
+	if err != nil {
+		return fmt.Errorf("error determining next version to upgrade to: %v", err)
+	}
+
+	releaseStream := fmt.Sprintf("%d.%d.0-0.nightly", nextVersion.Major(), nextVersion.Minor())
 
 	state.Upgrade.ReleaseName, state.Upgrade.Image, err = upgrade.LatestReleaseFromReleaseController(releaseStream)
 	if err != nil {
 		return fmt.Errorf("couldn't get latest release from release-controller: %v", err)
 	}
 
-	// set upgrade image
-	log.Printf("Selecting version '%s' to be able to upgrade to '%s' on release stream '%s'",
-		state.Cluster.Version, state.Upgrade.ReleaseName, releaseStream)
-	return
-}
-
-func getProdDefault() (*semver.Version, error) {
-	prodProvisioner, err := provisioners.ClusterProvisionerForProduction()
-
-	if err != nil {
-		return nil, fmt.Errorf("unable to get production provisioner for getting versions from production: %v", err)
-	}
-
-	versions, err := prodProvisioner.AvailableVersions()
-
-	if err != nil {
-		return nil, fmt.Errorf("unable to get versions from production: %v", err)
-	}
-
-	for _, version := range versions {
-		if version.Default {
-			return version.Version, nil
-		}
-	}
-
-	return nil, fmt.Errorf("no default found on prod")
+	return nil
 }
 
 // nextReleaseAfterGivenVersionFromVersionList will attempt to look for the next valid X.Y stream release, given a delta (releaseFromGivenVersion)
 // Example In/Out
 // In: 4.3.12, [4.3.13, 4.4.0, 4.5.0], 2
 // Out: 4.5.0, nil
-func nextReleaseAfterGivenVersionFromVersionList(givenVersion *semver.Version, versionList []spi.Version, releasesFromGivenVersion int) (*semver.Version, error) {
+func nextReleaseAfterGivenVersionFromVersionList(givenVersion *semver.Version, versionList []*spi.Version, releasesFromGivenVersion int) (*semver.Version, error) {
 	versionBuckets := map[string]*semver.Version{}
 
 	// Assemble a map that lists a release (x.y.0) to its latest version, with nightlies taking precedence over all else
 	for _, version := range versionList {
-		versionSemver := version.Version
+		versionSemver := version.Version()
 		majorMinor := createMajorMinorStringFromSemver(versionSemver)
 
 		if _, ok := versionBuckets[majorMinor]; !ok {
@@ -354,7 +302,7 @@ func nextReleaseAfterGivenVersionFromVersionList(givenVersion *semver.Version, v
 	}
 
 	if indexOfGivenMajorMinor == -1 {
-		return nil, fmt.Errorf("unable to find current prod default in %s environment", config.Instance.OCM.Env)
+		return nil, fmt.Errorf("unable to find given version from list of available versions")
 	}
 
 	// Next, we'll go the given version distance ahead of the given version. We want to do it this way instead of guessing
@@ -363,7 +311,7 @@ func nextReleaseAfterGivenVersionFromVersionList(givenVersion *semver.Version, v
 	nextMajorMinorIndex := indexOfGivenMajorMinor + releasesFromGivenVersion
 
 	if len(majorMinorList) <= nextMajorMinorIndex {
-		return nil, fmt.Errorf("there is no eligible next release on the %s environment", config.Instance.OCM.Env)
+		return nil, fmt.Errorf("there is no eligible next release from the list of available versions")
 	}
 	nextMajorMinor := createMajorMinorStringFromSemver(majorMinorList[nextMajorMinorIndex])
 

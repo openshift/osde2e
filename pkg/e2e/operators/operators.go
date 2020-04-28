@@ -180,20 +180,9 @@ func ensureCSVIsInstalled(h *helper.H, csvName string, namespace string) error {
 	return nil
 }
 
-func getChannel() string {
-	if config.Instance.OCM.Env == "stage" || config.Instance.OCM.Env == "int" {
-		return "staging"
-	}
-
-	return "production"
-}
-
-func checkUpgrade(h *helper.H, sub *operatorv1.Subscription, previousCSV string) {
+func checkUpgrade(h *helper.H, subNamespace string, subName string, previousCSV string) {
 	ginkgo.Context("Operator Upgrade", func() {
 		ginkgo.It("should upgrade from the replaced version", func() {
-
-			subNamespace := sub.Namespace
-			subName := sub.Name
 
 			sub, err := h.Operator().OperatorsV1alpha1().Subscriptions(subNamespace).Get(subName, metav1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("failed trying to get Subscription %s in %s namespace", subName, subNamespace))

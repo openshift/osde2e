@@ -10,7 +10,6 @@ import (
 	. "github.com/onsi/gomega"
 
 	"github.com/openshift/osde2e/pkg/common/helper"
-	operatorv1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	unstruct "k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
@@ -41,19 +40,7 @@ var _ = ginkgo.Describe("[Suite: operators] [OSD] Dedicated Admins SubjectPermis
 })
 
 var _ = ginkgo.Describe("[Suite: informing] [OSD] Upgrade RBAC Permissions Operator", func() {
-	checkUpgrade(helper.New(),
-		&operatorv1.Subscription{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "rbac-permissions-operator",
-				Namespace: "openshift-rbac-permissions",
-			},
-			Spec: &operatorv1.SubscriptionSpec{
-				Package:                "rbac-permissions-operator",
-				Channel:                getChannel(),
-				CatalogSourceNamespace: "openshift-rbac-permissions",
-				CatalogSource:          "openshift-rbac-permissions",
-			},
-		},
+	checkUpgrade(helper.New(), "openshift-rbac-permissions", "rbac-permissions-operator",
 		"rbac-permissions-operator.v0.1.81-ce6731c",
 	)
 })
