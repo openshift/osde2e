@@ -35,7 +35,7 @@ func WaitForClusterReady(provisioner spi.Provisioner, clusterID string) error {
 	ocmReady := false
 	if !cfg.Tests.SkipClusterHealthChecks {
 		return wait.PollImmediate(30*time.Second, time.Duration(cfg.Cluster.InstallTimeout)*time.Minute, func() (bool, error) {
-			if cluster, err := provisioner.GetCluster(clusterID); err != nil && cluster.State() == spi.ClusterStateReady {
+			if cluster, err := provisioner.GetCluster(clusterID); err == nil && cluster.State() == spi.ClusterStateReady {
 				// This is the first time that we've entered this section, so we'll consider this the time until OCM has said the cluster is ready
 				if !ocmReady {
 					ocmReady = true
