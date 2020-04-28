@@ -416,7 +416,7 @@ func runTestsInPhase(phase string, description string) bool {
 			}
 
 			if cfg.JobName != "" && cfg.JobID > 0 {
-				diff, err := debug.GenerateDiff(cfg.BaseJobURL, dependencies, phase, cfg.JobName, cfg.JobID)
+				diff, err := debug.GenerateDiff(cfg.BaseJobURL, phase, dependencies, cfg.JobName, cfg.JobID)
 				if err != nil {
 					log.Printf("Error generating diff: %s", err.Error())
 				} else {
