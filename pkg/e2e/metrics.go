@@ -16,6 +16,8 @@ import (
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/events"
 	"github.com/openshift/osde2e/pkg/common/metadata"
+	"github.com/openshift/osde2e/pkg/common/providers"
+	"github.com/openshift/osde2e/pkg/common/spi"
 	"github.com/openshift/osde2e/pkg/common/state"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/common/expfmt"
@@ -41,6 +43,9 @@ type Metrics struct {
 	metadataGatherer *prometheus.GaugeVec
 	addonGatherer    *prometheus.GaugeVec
 	eventGatherer    *prometheus.CounterVec
+
+	// Provider for getting metrics data
+	provider spi.Provider
 }
 
 // NewMetrics creates a new metrics object using the given config object.
@@ -76,12 +81,19 @@ func NewMetrics() *Metrics {
 	metricRegistry.MustRegister(addonGatherer)
 	metricRegistry.MustRegister(eventGatherer)
 
+	provider, err := providers.ClusterProvider()
+
+	if err != nil {
+		panic(fmt.Sprintf("unable to get provider for metrics, failing: %v", err))
+	}
+
 	return &Metrics{
 		metricRegistry:   metricRegistry,
 		jUnitGatherer:    jUnitGatherer,
 		metadataGatherer: metadataGatherer,
 		addonGatherer:    addonGatherer,
 		eventGatherer:    eventGatherer,
+		provider:         provider,
 	}
 }
 
@@ -149,7 +161,6 @@ func (m *Metrics) WritePrometheusFile(reportDir string) (string, error) {
 // cicd_jUnitResult {environment="prod", install_version="install-version", result="passed|failed|skipped", phase="currentphase", suite="suitename",
 //                   testname="testname", upgrade_version="upgrade-version"} testLength
 func (m *Metrics) processJUnitXMLFile(phase string, junitFile string) (err error) {
-	cfg := config.Instance
 	state := state.Instance
 
 	data, err := ioutil.ReadFile(junitFile)
@@ -174,7 +185,13 @@ func (m *Metrics) processJUnitXMLFile(phase string, junitFile string) (err error
 			result = "passed"
 		}
 
-		m.jUnitGatherer.WithLabelValues(state.Cluster.Version, state.Upgrade.ReleaseName, cfg.OCM.Env, phase, testSuite.Name, testcase.Name, result).Add(testcase.Time)
+		m.jUnitGatherer.WithLabelValues(state.Cluster.Version,
+			state.Upgrade.ReleaseName,
+			m.provider.Environment(),
+			phase,
+			testSuite.Name,
+			testcase.Name,
+			result).Add(testcase.Time)
 	}
 
 	return nil
@@ -231,9 +248,20 @@ func (m *Metrics) jsonToPrometheusOutput(gatherer *prometheus.GaugeVec, phase st
 			// We're only concerned with tracking float values in Prometheus as they're the only thing we can measure
 			if floatValue, err := strconv.ParseFloat(stringValue, 64); err == nil {
 				if phase != "" {
-					gatherer.WithLabelValues(state.Cluster.Version, state.Upgrade.ReleaseName, cfg.OCM.Env, metadataName, state.Cluster.ID, strconv.Itoa(cfg.JobID), phase).Add(floatValue)
+					gatherer.WithLabelValues(state.Cluster.Version,
+						state.Upgrade.ReleaseName,
+						m.provider.Environment(),
+						metadataName,
+						state.Cluster.ID,
+						strconv.Itoa(cfg.JobID),
+						phase).Add(floatValue)
 				} else {
-					gatherer.WithLabelValues(state.Cluster.Version, state.Upgrade.ReleaseName, cfg.OCM.Env, metadataName, state.Cluster.ID, strconv.Itoa(cfg.JobID)).Add(floatValue)
+					gatherer.WithLabelValues(state.Cluster.Version,
+						state.Upgrade.ReleaseName,
+						m.provider.Environment(),
+						metadataName,
+						state.Cluster.ID,
+						strconv.Itoa(cfg.JobID)).Add(floatValue)
 				}
 			}
 		}
@@ -245,11 +273,10 @@ func (m *Metrics) jsonToPrometheusOutput(gatherer *prometheus.GaugeVec, phase st
 // processEvents will search the events list for events that have occurred over the osde2e run
 // and output them in the Prometheus metrics.
 func (m *Metrics) processEvents(gatherer *prometheus.CounterVec) {
-	cfg := config.Instance
 	state := state.Instance
 
 	for _, event := range events.GetListOfEvents() {
-		gatherer.WithLabelValues(state.Cluster.Version, state.Upgrade.ReleaseName, cfg.OCM.Env, event).Inc()
+		gatherer.WithLabelValues(state.Cluster.Version, state.Upgrade.ReleaseName, m.provider.Environment(), event).Inc()
 	}
 }
 

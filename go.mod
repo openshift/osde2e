@@ -10,6 +10,7 @@ require (
 	github.com/gogo/protobuf v1.2.2-0.20190723190241-65acae22fc9d // indirect
 	github.com/google/go-github/v31 v31.0.0
 	github.com/google/subcommands v1.2.0
+	github.com/google/uuid v1.1.1
 	github.com/hashicorp/go-multierror v1.1.0
 	github.com/kylelemons/godebug v1.1.0
 	github.com/markbates/pkger v0.15.1

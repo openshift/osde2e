@@ -12,6 +12,7 @@ import (
 	"github.com/Masterminds/semver"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/metadata"
+	"github.com/openshift/osde2e/pkg/common/providers"
 	"github.com/openshift/osde2e/pkg/common/state"
 	"github.com/openshift/osde2e/pkg/common/util"
 )
@@ -112,7 +113,11 @@ var cache *smallCincinnatiCache = &smallCincinnatiCache{
 
 // DoesEdgeExistInCincinnati returns true if the version can be found in Cincinnati and the edge from the install version to the upgrade version exists.
 func DoesEdgeExistInCincinnati(installVersion, upgradeVersion *semver.Version) (bool, error) {
-	channel := VersionToChannel(upgradeVersion)
+	channel, err := VersionToChannel(upgradeVersion)
+	if err != nil {
+		return false, fmt.Errorf("error getting channel from provided version: %v", err)
+	}
+
 	cincinnatiVersions, err := cache.Get(channel)
 
 	if err != nil {
@@ -184,10 +189,9 @@ func LatestReleaseFromReleaseController(releaseStream string) (name, pullSpec st
 // VersionToChannel creates a Cincinnati channel version out of an OpenShift version.
 // If the config.Instance.Upgrade.OnlyUpgradeToZReleases flag is set, this will use the install version
 // in the global state object to determine the channel.
-// If production is targeted for this cluster provision, the stable channel will be used.
-// If stage is targeted for this cluster provision, the fast channel will be used.
-// Regardless of environment, if Prerelease is populated in the version object, then the candidate channel will be used.
-func VersionToChannel(version *semver.Version) string {
+// The provider will be queried for the appropriate Cincinnati channel  to use unless a prelease version
+// is being used, in which case the candidate channel will be used.
+func VersionToChannel(version *semver.Version) (string, error) {
 	useVersion := version
 	if config.Instance.Upgrade.OnlyUpgradeToZReleases {
 		var err error
@@ -199,16 +203,16 @@ func VersionToChannel(version *semver.Version) string {
 	}
 
 	if strings.HasPrefix(useVersion.Prerelease(), "rc") {
-		return fmt.Sprintf("candidate-%d.%d", useVersion.Major(), useVersion.Minor())
+		return fmt.Sprintf("candidate-%d.%d", useVersion.Major(), useVersion.Minor()), nil
 	}
 
-	environment := config.Instance.OCM.Env
+	provider, err := providers.ClusterProvider()
 
-	if environment == "stage" {
-		return fmt.Sprintf("fast-%d.%d", useVersion.Major(), useVersion.Minor())
+	if err != nil {
+		return "", fmt.Errorf("unable to get provider: %s", err)
 	}
 
-	return fmt.Sprintf("stable-%d.%d", useVersion.Major(), useVersion.Minor())
+	return fmt.Sprintf("%s-%d.%d", provider.CincinnatiChannel(), useVersion.Major(), useVersion.Minor()), nil
 }
 
 func ensureReleasePrefix(release string) string {

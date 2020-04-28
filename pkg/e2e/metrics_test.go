@@ -10,6 +10,7 @@ import (
 
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/metadata"
+	"github.com/openshift/osde2e/pkg/common/providers"
 	"github.com/openshift/osde2e/pkg/common/state"
 	"github.com/prometheus/client_golang/prometheus"
 )
@@ -17,6 +18,7 @@ import (
 func TestProcessJUnitXMLFile(t *testing.T) {
 	state.Instance.Cluster.Version = "install-version"
 	state.Instance.Upgrade.ReleaseName = "upgrade-version"
+	config.Instance.Provider = providers.Mock
 	config.Instance.OCM.Env = "prod"
 
 	tests := []struct {
