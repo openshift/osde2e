@@ -10,6 +10,7 @@ import (
 
 	"github.com/google/go-github/v31/github"
 	"github.com/kylelemons/godebug/diff"
+	. "github.com/logrusorgru/aurora"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -27,7 +28,16 @@ func GenerateDiff(baseURL, phase, dependencies, jobName string, jobID int) (stri
 		return "", err
 	}
 
-	return diff.Diff(string(body), dependencies), nil
+	newDiff := strings.Split(diff.Diff(string(body), dependencies), "\n")
+	for i, s := range newDiff {
+		if strings.HasPrefix(s, "-") {
+			newDiff[i] = Bold(Red(s)).String()
+		}
+		if strings.HasPrefix(s, "+") {
+			newDiff[i] = Bold(Green(s)).String()
+		}
+	}
+	return strings.Join(newDiff, "\n"), nil
 }
 
 // GenerateDependencies creates a list of images and the MCC hash
