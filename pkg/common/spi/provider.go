@@ -4,29 +4,73 @@ package spi
 // Provider is the interface that must be implemented in order to provision clusters in osde2e.
 type Provider interface {
 	// LaunchCluster creates a new cluster and returns the cluster ID.
+	//
+	// This is expected to kick off the cluster provisioning process and
+	// report back an identifier without waiting. Subsequent calls within OSDe2e will
+	// use the status reported by GetCluster to determine the provision state of
+	// the cluster and wait for it to start before running tests.
 	LaunchCluster() (string, error)
 
 	// DeleteCluster deletes a cluster.
+	//
+	// Calling this will start a cluster deletion and return as soon as the process
+	// has begun. OSDe2e will not wait for the cluster to delete.
 	DeleteCluster(clusterID string) error
 
 	// GetCluster gets a cluster.
+	//
+	// This is what OSDe2e will use to gather cluster information, including whether
+	// the cluser has finished provisioning.
 	GetCluster(clusterID string) (*Cluster, error)
 
 	// ClusterKubeconfig should return the raw kubeconfig for the cluster.
+	//
+	// OSDe2e needs administrative cluster level access for a cluster, so this should
+	// return a raw kubeconfig that will allow OSDe2e to connect with administrative
+	// access.
 	ClusterKubeconfig(clusterID string) ([]byte, error)
 
 	// CheckQuota will return true if there is enough quota to provision a cluster.
+	//
+	// To prevent a provisioning attempt, OSDe2e will first check the quota first. This quota
+	// is currently expected to be configured by the global config object.
 	CheckQuota() (bool, error)
 
 	// InstallAddons will install addons onto the cluster.
+	//
+	// OpenShift dedicated has the notion of addon installation, which users can request from
+	// the OCM API. If you wish to emulate this support, the provider will need to support a similar
+	// mechanism.
 	InstallAddons(clusterID string, addonIDs []string) (int, error)
 
-	// Versions returns a sorted list of versions.
+	// Versions returns a sorted list of supported OpenShift versions.
+	//
+	// A version list of the available OpenShift versions supported by this provider. One of the
+	// versions is expected to be labeled as "default." The provider can also set a default version
+	// override, which is useful if you want to select relative versions to test against, e.g.
+	// 4.3.12 + nightly of next release == 4.4.0-0.nightly.
 	Versions() (*VersionList, error)
 
-	// Logs will get logs relevant to the cluster from the provisioner.
-	Logs(clusterID string) (logs map[string][]byte, err error)
+	// Logs will get logs relevant to the cluster from the provider.
+	//
+	// Any provider level logs that are relevant to the cluster.
+	Logs(clusterID string) (map[string][]byte, error)
+
+	// Environment retrives the environment from the provider.
+	//
+	// This is for providers that have situations like "integration," "stage," and "production"
+	// environments. There's no restriction on what values are expected to be returned here.
+	Environment() string
 
 	// UpgradeSource is what upgrade source to use when attempting an upgrade.
+	//
+	// This returns what OSDe2e should use to try to select an upgrade version. Right now only
+	// Cincinnati and the release controller are supported.
 	UpgradeSource() UpgradeSource
+
+	// CincinnatiChannel is the Cincinnati channel to use for upgrades (where applicable).
+	//
+	// If the upgrade channel uses a Cincinnati source, this will dictate what channel should be
+	// used. This is only a prefix, so "fast," "stable," etc.
+	CincinnatiChannel() CincinnatiChannel
 }

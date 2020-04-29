@@ -8,7 +8,6 @@ import (
 	"github.com/openshift/osde2e/pkg/common/spi"
 
 	ocm "github.com/openshift-online/ocm-sdk-go"
-	accounts "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"
 	ocmerr "github.com/openshift-online/ocm-sdk-go/errors"
 )
 
@@ -117,32 +116,9 @@ func New(token string, env string, debug bool) (*OCMProvider, error) {
 	}, nil
 }
 
-// CurrentAccount returns the current account being used.
-func (o *OCMProvider) CurrentAccount() (*accounts.Account, error) {
-	var act *accounts.CurrentAccountGetResponse
-
-	err := retryer().Do(func() error {
-		var err error
-		act, err = o.conn.AccountsMgmt().V1().CurrentAccount().Get().Send()
-
-		if err != nil {
-			return err
-		}
-
-		if act != nil && act.Error() != nil {
-			return errResp(act.Error())
-		}
-
-		return nil
-	})
-
-	if err != nil {
-		return nil, fmt.Errorf("error getting current account: %v", err)
-	} else if act == nil {
-		return nil, fmt.Errorf("account can't be nil")
-	}
-
-	return act.Body(), err
+// Environment simply returns the environment this OCMProvider is pointed to.
+func (o *OCMProvider) Environment() string {
+	return o.env
 }
 
 // UpgradeSource indicates that for stage/production clusters, we should use Cincinnati.
@@ -153,6 +129,17 @@ func (o *OCMProvider) UpgradeSource() spi.UpgradeSource {
 	}
 
 	return spi.ReleaseControllerSource
+}
+
+// CincinnatiChannel returns a "fast" channel for stage and a "stable" channel for prod. This
+// channel won't be used for integration since the upgrade source for integration is the release
+// controller and not Cincinnati.
+func (o *OCMProvider) CincinnatiChannel() spi.CincinnatiChannel {
+	if o.env == stage {
+		return spi.CincinnatiFastChannel
+	}
+
+	return spi.CincinnatiStableChannel
 }
 
 // ErrResp takes an OCM error and converts it into a regular Golang error.

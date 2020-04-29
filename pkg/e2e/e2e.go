@@ -76,7 +76,7 @@ func runGinkgoTests() error {
 			return fmt.Errorf("could not setup cluster provider: %v", err)
 		}
 
-		metadata.Instance.SetEnvironment(cfg.OCM.Env)
+		metadata.Instance.SetEnvironment(provider.Environment())
 
 		// configure cluster and upgrade versions
 		if err = ChooseVersions(); err != nil {
@@ -161,16 +161,12 @@ func runGinkgoTests() error {
 
 	if cfg.Cluster.DestroyAfterTest {
 		log.Printf("Destroying cluster '%s'...", state.Cluster.ID)
-		provisioner, err := providers.ClusterProvider()
 
-		if err != nil {
-			return fmt.Errorf("error getting cluster deletion client: %v", err)
-		}
-		if err = provisioner.DeleteCluster(state.Cluster.ID); err != nil {
+		if err = provider.DeleteCluster(state.Cluster.ID); err != nil {
 			return fmt.Errorf("error deleting cluster: %s", err.Error())
 		}
 	} else {
-		log.Printf("For debugging, please look for cluster ID %s in environment %s", state.Cluster.ID, cfg.OCM.Env)
+		log.Printf("For debugging, please look for cluster ID %s in environment %s", state.Cluster.ID, provider.Environment())
 	}
 
 	if !cfg.DryRun {
