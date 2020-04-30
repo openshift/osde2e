@@ -411,13 +411,11 @@ func runTestsInPhase(phase string, description string) bool {
 				err = ioutil.WriteFile(filepath.Join(phaseDirectory, "dependencies.txt"), []byte(dependencies), 0644)
 			}
 
+			log.Println("Dependency changes:")
 			if cfg.JobName != "" && cfg.JobID > 0 {
-				diff, err := debug.GenerateDiff(cfg.BaseJobURL, phase, dependencies, cfg.JobName, cfg.JobID)
+				err := debug.GenerateDiff(cfg.BaseJobURL, phase, dependencies, cfg.JobName, cfg.JobID)
 				if err != nil {
 					log.Printf("Error generating diff: %s", err.Error())
-				} else {
-					log.Println("Dependency changes:")
-					log.Println(diff)
 				}
 			} else {
 				log.Println("Not run in prow, skipping dependency diff")

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"sort"
 	"strings"
@@ -17,27 +18,28 @@ import (
 )
 
 // GenerateDiff attempts to pull a dependency list from a previous job (job, jobID) and generate a diff against a provided string
-func GenerateDiff(baseURL, phase, dependencies, jobName string, jobID int) (string, error) {
+func GenerateDiff(baseURL, phase, dependencies, jobName string, jobID int) error {
 	resp, err := http.Get(fmt.Sprintf("%s/%s/%d/artifacts/%s/dependencies.txt", baseURL, jobName, jobID-1, phase))
 	if err != nil {
-		return "", err
+		return err
 	}
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return "", err
+		return err
 	}
 
 	newDiff := strings.Split(diff.Diff(string(body), dependencies), "\n")
-	for i, s := range newDiff {
+	for _, s := range newDiff {
 		if strings.HasPrefix(s, "-") {
-			newDiff[i] = Bold(Red(s)).String()
-		}
-		if strings.HasPrefix(s, "+") {
-			newDiff[i] = Bold(Green(s)).String()
+			log.Println(Bold(Red(s)).String())
+		} else if strings.HasPrefix(s, "+") {
+			log.Println(Bold(Green(s)))
+		} else {
+			log.Println(s)
 		}
 	}
-	return strings.Join(newDiff, "\n"), nil
+	return nil
 }
 
 // GenerateDependencies creates a list of images and the MCC hash
