@@ -2,19 +2,15 @@ package report
 
 import (
 	"context"
-	"crypto/tls"
 	"fmt"
 	"log"
-	"net"
-	"net/http"
-	"net/url"
 	"regexp"
 	"sort"
 	"time"
 
 	"github.com/openshift/osde2e/pkg/common/config"
+	"github.com/openshift/osde2e/pkg/common/prometheus"
 
-	"github.com/prometheus/client_golang/api"
 	v1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/prometheus/common/model"
 )
@@ -30,23 +26,6 @@ type reportData struct {
 	Failures map[string]int
 }
 
-// weatherRoundTripper is like api.DefaultRoundTripper with an added stripping of cert verification
-// and adding the bearer token to the HTTP request
-var weatherRoundTripper http.RoundTripper = &http.Transport{
-	Proxy: func(request *http.Request) (*url.URL, error) {
-		request.Header.Add("Authorization", "Bearer "+config.Instance.Weather.PrometheusBearerToken)
-		return http.ProxyFromEnvironment(request)
-	},
-	DialContext: (&net.Dialer{
-		Timeout:   30 * time.Second,
-		KeepAlive: 30 * time.Second,
-	}).DialContext,
-	TLSClientConfig: &tls.Config{
-		InsecureSkipVerify: true,
-	},
-	TLSHandshakeTimeout: 10 * time.Second,
-}
-
 // GenerateReport generates a weather report.
 func GenerateReport() (WeatherReport, error) {
 	// Range for the queries issued to Prometheus
@@ -56,10 +35,7 @@ func GenerateReport() (WeatherReport, error) {
 		Step:  stepDurationInHours * time.Hour,
 	}
 
-	client, err := api.NewClient(api.Config{
-		Address:      config.Instance.Weather.PrometheusAddress,
-		RoundTripper: weatherRoundTripper,
-	})
+	client, err := prometheus.CreateClient()
 
 	if err != nil {
 		return WeatherReport{}, fmt.Errorf("error while creating client: %v", err)

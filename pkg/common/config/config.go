@@ -25,6 +25,8 @@ type Config struct {
 
 	Scale ScaleConfig `yaml:"scale"`
 
+	Prometheus PrometheusConfig `yaml:"prometheus"`
+
 	Weather WeatherConfig `yaml:"weather"`
 
 	// Provider is what provider to use to create/delete clusters.
@@ -225,14 +227,17 @@ type TestConfig struct {
 	ServiceAccount string `env:"SERVICE_ACCOUNT" sect:"tests" yaml:"serviceAccount"`
 }
 
+// PrometheusConfig contains configs for connecting to a Prometheus instance for querying.
+type PrometheusConfig struct {
+	// Address is the address of the Prometheus instance to connect to.
+	Address string `env:"PROMETHEUS_ADDRESS" sect:"weather" yaml:"address"`
+
+	// BearerToken is the token needed for communicating with Prometheus.
+	BearerToken string `env:"PROMETHEUS_BEARER_TOKEN" sect:"weather" yaml:"bearerToken"`
+}
+
 // WeatherConfig describes various config options for weather reports.
 type WeatherConfig struct {
-	// PrometheusAddress is the address of the Prometheus instance to connect to.
-	PrometheusAddress string `env:"PROMETHEUS_ADDRESS" sect:"weather" yaml:"address"`
-
-	// PrometheusBearerToken is the token needed for communicating with Prometheus.
-	PrometheusBearerToken string `env:"PROMETHEUS_BEARER_TOKEN" sect:"weather" yaml:"bearerToken"`
-
 	// StartOfTimeWindowInHours is how many hours to look back through results.
 	StartOfTimeWindowInHours time.Duration `env:"START_OF_TIME_WINDOW_IN_HOURS" sect:"weather" default:"24" yaml:"startOfTimeWindowInHours"`
 

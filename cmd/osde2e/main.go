@@ -10,6 +10,7 @@ import (
 	"syscall"
 
 	_ "github.com/openshift/osde2e"
+	"github.com/openshift/osde2e/cmd/osde2e/query"
 	"github.com/openshift/osde2e/cmd/osde2e/test"
 	"github.com/openshift/osde2e/cmd/osde2e/weather"
 
@@ -21,6 +22,7 @@ func main() {
 	subcommands.Register(subcommands.FlagsCommand(), "")
 	subcommands.Register(subcommands.CommandsCommand(), "")
 	subcommands.Register(&test.Command{}, "")
+	subcommands.Register(&query.Command{}, "")
 	subcommands.Register(&weather.ReportCommand{}, "")
 	subcommands.Register(&weather.ReportToSlackCommand{}, "")
 
