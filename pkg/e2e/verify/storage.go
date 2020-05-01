@@ -17,6 +17,7 @@ var _ = ginkgo.Describe("[Suite: e2e] Storage", func() {
 		Expect(scList).NotTo(BeNil())
 
 		for _, sc := range scList.Items {
+			Expect(sc.AllowVolumeExpansion).To(Not(BeNil()))
 			Expect(*sc.AllowVolumeExpansion).To(BeTrue())
 		}
 
