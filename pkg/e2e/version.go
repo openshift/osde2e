@@ -139,8 +139,9 @@ func setupVersion() (*semver.Version, error) {
 			return nil, fmt.Errorf("error finding default cluster version: %v", err)
 		}
 	} else {
+		var err error
 		// Make sure the cluster version is valid
-		_, err := util.OpenshiftVersionToSemver(state.Cluster.Version)
+		selectedVersion, err = util.OpenshiftVersionToSemver(state.Cluster.Version)
 
 		if err != nil {
 			return nil, fmt.Errorf("supplied version %s is invalid: %v", state.Cluster.Version, err)
