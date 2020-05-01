@@ -13,7 +13,6 @@ require (
 	github.com/google/uuid v1.1.1
 	github.com/hashicorp/go-multierror v1.1.0
 	github.com/kylelemons/godebug v1.1.0
-	github.com/logrusorgru/aurora v0.0.0-20200102142835-e9ef32dff381
 	github.com/markbates/pkger v0.15.1
 	github.com/onsi/ginkgo v1.12.0
 	github.com/onsi/gomega v1.7.1

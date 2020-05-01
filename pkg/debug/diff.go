@@ -11,7 +11,6 @@ import (
 
 	"github.com/google/go-github/v31/github"
 	"github.com/kylelemons/godebug/diff"
-	. "github.com/logrusorgru/aurora"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -32,9 +31,9 @@ func GenerateDiff(baseURL, phase, dependencies, jobName string, jobID int) error
 	newDiff := strings.Split(diff.Diff(string(body), dependencies), "\n")
 	for _, s := range newDiff {
 		if strings.HasPrefix(s, "-") {
-			log.Println(Bold(Red(s)).String())
+			log.Printf("\033[0;31m%s\033[0m\n", s)
 		} else if strings.HasPrefix(s, "+") {
-			log.Println(Bold(Green(s)))
+			log.Printf("\033[0;32m%s\033[0m\n", s)
 		} else {
 			log.Println(s)
 		}
