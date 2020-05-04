@@ -88,6 +88,11 @@ func runGinkgoTests() error {
 			return nil
 		}
 
+		if !state.Cluster.PreviousVersionFromDefaultFound {
+			log.Printf("No previous version from default found with the given arguments.")
+			return nil
+		}
+
 		if state.Upgrade.UpgradeVersionEqualToInstallVersion {
 			log.Printf("Install version and upgrade version are the same. Skipping tests.")
 			return nil

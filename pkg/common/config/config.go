@@ -156,6 +156,9 @@ type ClusterConfig struct {
 	// UseOldestClusterImageSetForInstall will select the cluster image set that is in the end of the list of ordered cluster versions known to OCM.
 	UseOldestClusterImageSetForInstall bool `env:"USE_OLDEST_CLUSTER_IMAGE_SET_FOR_INSTALL" sect:"version" default:"false" yaml:"useOldestClusterVersionForInstall"`
 
+	// PreviousReleaseFromDefault will select the clsuter image set that is the given number of releases before the current default.
+	PreviousReleaseFromDefault int `env:"PREVIOUS_RELEASE_FROM_DEFAULT" sect:"version" default:"0" yaml:"previousReleaseFromDefault"`
+
 	// NextReleaseAfterProdDefault will select the cluster image set that the given number of releases away from the the production default.
 	NextReleaseAfterProdDefault int `env:"NEXT_RELEASE_AFTER_PROD_DEFAULT" sect:"version" default:"-1" yaml:"nextReleaseAfterProdDefault"`
 
