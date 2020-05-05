@@ -24,6 +24,9 @@ var _ = ginkgo.Describe("[Suite: scale-mastervertical] Scaling", func() {
 
 		// only test on 3 nodes
 		r.PodSpec.Containers[0].Env = append(r.PodSpec.Containers[0].Env, kubev1.EnvVar{
+			Name:  "MASTERVERTICAL_PROJECTS",
+			Value: "100",
+		}, kubev1.EnvVar{
 			Name:  "PBENCH_INSTRUMENTATION",
 			Value: "true",
 		}, kubev1.EnvVar{
