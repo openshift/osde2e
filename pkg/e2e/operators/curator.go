@@ -1,10 +1,16 @@
 package operators
 
 import (
+	"log"
+
 	"github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"github.com/openshift/osde2e/pkg/common/cluster"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/helper"
+	"github.com/openshift/osde2e/pkg/common/providers"
+	"github.com/openshift/osde2e/pkg/common/state"
+	"github.com/openshift/osde2e/pkg/common/util"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	unstruct "k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -16,22 +22,31 @@ var _ = ginkgo.Describe("[Suite: operators] [OSD] Curator Operator", func() {
 	ginkgo.Context("operator source should be curated", func() {
 
 		ginkgo.It("we should use curated operator source", func() {
-			listOpts := metav1.ListOptions{}
-			rList, err := h.Dynamic().Resource(schema.GroupVersionResource{
-				Group:    "operators.coreos.com",
-				Version:  "v1",
-				Resource: "operatorsources",
-			}).List(listOpts)
+			provider, err := providers.ClusterProvider()
+			Expect(err).NotTo(HaveOccurred(), "error getting cluster provider")
+			currentClusterVersion, err := cluster.GetClusterVersion(provider, state.Instance.Cluster.ID)
+			Expect(err).NotTo(HaveOccurred(), "error getting cluster version %s", state.Instance.Cluster.Version)
 
-			Expect(err).NotTo(HaveOccurred())
+			if util.Version420.Check(currentClusterVersion) {
+				listOpts := metav1.ListOptions{}
+				rList, err := h.Dynamic().Resource(schema.GroupVersionResource{
+					Group:    "operators.coreos.com",
+					Version:  "v1",
+					Resource: "operatorsources",
+				}).List(listOpts)
 
-			for _, os := range rList.Items {
-				name := os.GetName()
-				Expect(name).Should(HavePrefix("osd-curated"))
-				registryNamespace, ok, err := unstruct.NestedString(os.Object, "spec", "registryNamespace")
 				Expect(err).NotTo(HaveOccurred())
-				Expect(ok).Should(Equal(true))
-				Expect(registryNamespace).Should(HavePrefix("curated"))
+
+				for _, os := range rList.Items {
+					name := os.GetName()
+					Expect(name).Should(HavePrefix("osd-curated"))
+					registryNamespace, ok, err := unstruct.NestedString(os.Object, "spec", "registryNamespace")
+					Expect(err).NotTo(HaveOccurred())
+					Expect(ok).Should(Equal(true))
+					Expect(registryNamespace).Should(HavePrefix("curated"))
+				}
+			} else {
+				log.Printf("Cluster version is less than 4.2, skipping tests")
 			}
 		}, float64(config.Instance.Tests.PollingTimeout))
 

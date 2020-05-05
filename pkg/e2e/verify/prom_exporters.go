@@ -6,7 +6,9 @@ import (
 	"github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
+	"github.com/openshift/osde2e/pkg/common/cluster"
 	"github.com/openshift/osde2e/pkg/common/helper"
+	clusterProviders "github.com/openshift/osde2e/pkg/common/providers"
 	"github.com/openshift/osde2e/pkg/common/state"
 	"github.com/openshift/osde2e/pkg/common/util"
 )
@@ -122,8 +124,10 @@ func checkRoleBindings(h *helper.H, providers ...string) {
 }
 
 func checkDaemonSets(h *helper.H, providers ...string) {
-	currentClusterVersion, err := util.OpenshiftVersionToSemver(state.Instance.Cluster.Version)
-	Expect(err).NotTo(HaveOccurred(), "error parsing cluster version %s", state.Instance.Cluster.Version)
+	provider, err := clusterProviders.ClusterProvider()
+	Expect(err).NotTo(HaveOccurred(), "error getting cluster provider")
+	currentClusterVersion, err := cluster.GetClusterVersion(provider, state.Instance.Cluster.ID)
+	Expect(err).NotTo(HaveOccurred(), "error getting cluster version %s", state.Instance.Cluster.Version)
 
 	for _, provider := range providers {
 		for _, daemonSetName := range daemonSets[provider] {
