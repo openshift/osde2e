@@ -44,6 +44,16 @@ func removeDefaultVersion(versions []*spi.Version) []*spi.Version {
 	return versionsWithoutDefault
 }
 
+func findDefaultVersionIndex(versions []*spi.Version) int {
+	for index, version := range versions {
+		if version.Default() {
+			return index
+		}
+	}
+
+	return -1
+}
+
 // ChooseVersions sets versions in cfg if not set based on defaults and upgrade options.
 // If a release stream is set for an upgrade the previous available version is used and it's image is used for upgrade.
 func ChooseVersions() (err error) {
@@ -117,20 +127,35 @@ func setupVersion() (*semver.Version, error) {
 				selectedVersion = versionsWithoutDefault[0].Version()
 			}
 			versionType = "oldest version"
+		} else if cfg.Cluster.PreviousReleaseFromDefault > 0 {
+			defaultIndex := findDefaultVersionIndex(availableVersions)
+
+			if defaultIndex < 0 {
+				log.Printf("unable to find default version in avaialable version list")
+				state.Cluster.PreviousVersionFromDefaultFound = false
+			} else {
+
+				targetIndex := defaultIndex - cfg.Cluster.PreviousReleaseFromDefault
+
+				if targetIndex < 0 {
+					log.Printf("not enough enabled versions to go back %d releases", cfg.Cluster.PreviousReleaseFromDefault)
+					state.Cluster.PreviousVersionFromDefaultFound = false
+				} else {
+					selectedVersion = availableVersions[targetIndex].Version()
+					versionType = fmt.Sprintf("version %d releases prior to the default", cfg.Cluster.PreviousReleaseFromDefault)
+				}
+			}
 		} else if cfg.Cluster.NextReleaseAfterProdDefault > -1 {
 			defaultVersion := versionList.Default()
-
-			if err == nil {
-				selectedVersion, err = nextReleaseAfterGivenVersionFromVersionList(defaultVersion, availableVersions, cfg.Cluster.NextReleaseAfterProdDefault)
-				versionType = fmt.Sprintf("%d release(s) from the default version in prod", cfg.Cluster.NextReleaseAfterProdDefault)
-			}
+			selectedVersion, err = nextReleaseAfterGivenVersionFromVersionList(defaultVersion, availableVersions, cfg.Cluster.NextReleaseAfterProdDefault)
+			versionType = fmt.Sprintf("%d release(s) from the default version in prod", cfg.Cluster.NextReleaseAfterProdDefault)
 		} else {
 			selectedVersion = versionList.Default()
 			versionType = "current default"
 		}
 
 		if err == nil {
-			if state.Cluster.EnoughVersionsForOldestOrMiddleTest {
+			if state.Cluster.EnoughVersionsForOldestOrMiddleTest && state.Cluster.PreviousVersionFromDefaultFound {
 				state.Cluster.Version = util.SemverToOpenshiftVersion(selectedVersion)
 			} else {
 				log.Printf("Unable to get the %s.", versionType)

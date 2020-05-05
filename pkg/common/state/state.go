@@ -46,6 +46,9 @@ type ClusterState struct {
 
 	// EnoughVersionsForOldestOrMiddleTest is true if there were enough versions for an older/middle test.
 	EnoughVersionsForOldestOrMiddleTest bool `default:"true"`
+
+	// PreviousVersionFromDefaultFound is true if a previous version from default was found.
+	PreviousVersionFromDefaultFound bool `default:"true"`
 }
 
 // KubeconfigState stores information required to talk to the Kube API
