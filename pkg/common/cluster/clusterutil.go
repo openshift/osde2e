@@ -5,6 +5,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/Masterminds/semver"
 	"github.com/hashicorp/go-multierror"
 	osconfig "github.com/openshift/client-go/config/clientset/versioned"
 	"github.com/openshift/osde2e/pkg/common/cluster/healthchecks"
@@ -14,6 +15,7 @@ import (
 	"github.com/openshift/osde2e/pkg/common/state"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 )
 
@@ -21,6 +23,31 @@ const (
 	// errorWindow is the number of checks made to determine if a cluster has truly failed.
 	errorWindow = 5
 )
+
+// GetClusterVersion will get the current cluster version for the cluster.
+func GetClusterVersion(provider spi.Provider, clusterID string) (*semver.Version, error) {
+	restConfig, err := getRestConfig(provider, clusterID)
+	if err != nil {
+		return nil, fmt.Errorf("error getting rest config: %v", err)
+	}
+
+	oscfg, err := osconfig.NewForConfig(restConfig)
+	if err != nil {
+		return nil, fmt.Errorf("error generating OpenShift Clientset: %v", err)
+	}
+
+	cvo, err := healthchecks.GetClusterVersionObject(oscfg.ConfigV1())
+	if err != nil {
+		return nil, fmt.Errorf("error getting cluster version object: %v", err)
+	}
+
+	version, err := semver.NewVersion(cvo.Status.Desired.Version)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing version from server: %v", err)
+	}
+
+	return version, err
+}
 
 // WaitForClusterReady blocks until the cluster is ready for testing.
 func WaitForClusterReady(provider spi.Provider, clusterID string) error {
@@ -85,17 +112,8 @@ func WaitForClusterReady(provider spi.Provider, clusterID string) error {
 
 // PollClusterHealth looks at CVO data to determine if a cluster is alive/healthy or not
 func pollClusterHealth(provider spi.Provider, clusterID string) (status bool, err error) {
-	state := state.Instance
-
 	log.Print("Polling Cluster Health...\n")
-	if len(state.Kubeconfig.Contents) == 0 {
-		if state.Kubeconfig.Contents, err = provider.ClusterKubeconfig(clusterID); err != nil {
-			log.Printf("could not get kubeconfig for cluster: %v\n", err)
-			return false, nil
-		}
-	}
-
-	restConfig, err := clientcmd.RESTConfigFromKubeConfig(state.Kubeconfig.Contents)
+	restConfig, err := getRestConfig(provider, clusterID)
 	if err != nil {
 		log.Printf("Error generating Rest Config: %v\n", err)
 		return false, nil
@@ -142,4 +160,22 @@ func pollClusterHealth(provider spi.Provider, clusterID string) (status bool, er
 	}
 
 	return clusterHealthy, healthErr.ErrorOrNil()
+}
+
+func getRestConfig(provider spi.Provider, clusterID string) (*rest.Config, error) {
+	var err error
+	state := state.Instance
+
+	if len(state.Kubeconfig.Contents) == 0 {
+		if state.Kubeconfig.Contents, err = provider.ClusterKubeconfig(clusterID); err != nil {
+			return nil, fmt.Errorf("could not get kubeconfig for cluster: %v", err)
+		}
+	}
+
+	restConfig, err := clientcmd.RESTConfigFromKubeConfig(state.Kubeconfig.Contents)
+	if err != nil {
+		return nil, fmt.Errorf("error generating rest config: %v", err)
+	}
+
+	return restConfig, nil
 }
