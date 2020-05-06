@@ -16,10 +16,13 @@ import (
 )
 
 func TestProcessJUnitXMLFile(t *testing.T) {
+	state.Instance.CloudProvider.CloudProviderID = "aws"
+	state.Instance.Cluster.ID = "1a2b3c"
 	state.Instance.Cluster.Version = "install-version"
 	state.Instance.Upgrade.ReleaseName = "upgrade-version"
 	config.Instance.Provider = providers.Mock
 	config.Instance.OCM.Env = "prod"
+	config.Instance.JobID = 123
 
 	tests := []struct {
 		testName       string
@@ -44,10 +47,10 @@ func TestProcessJUnitXMLFile(t *testing.T) {
 		</skipped>
 	</testcase>
 </testsuite>`,
-			expectedOutput: `cicd_jUnitResult{environment="prod",install_version="install-version",phase="install",result="passed",suite="test suite",testname="test 1",upgrade_version="upgrade-version"} 1
-cicd_jUnitResult{environment="prod",install_version="install-version",phase="install",result="passed",suite="test suite",testname="test 2",upgrade_version="upgrade-version"} 2
-cicd_jUnitResult{environment="prod",install_version="install-version",phase="install",result="failed",suite="test suite",testname="test 3",upgrade_version="upgrade-version"} 3
-cicd_jUnitResult{environment="prod",install_version="install-version",phase="install",result="skipped",suite="test suite",testname="test 4",upgrade_version="upgrade-version"} 4
+			expectedOutput: `cicd_jUnitResult{cloud_provider="aws",cluster_id="1a2b3c",environment="prod",install_version="install-version",job_id="123",phase="install",result="passed",suite="test suite",testname="test 1",upgrade_version="upgrade-version"} 1
+cicd_jUnitResult{cloud_provider="aws",cluster_id="1a2b3c",environment="prod",install_version="install-version",job_id="123",phase="install",result="passed",suite="test suite",testname="test 2",upgrade_version="upgrade-version"} 2
+cicd_jUnitResult{cloud_provider="aws",cluster_id="1a2b3c",environment="prod",install_version="install-version",job_id="123",phase="install",result="failed",suite="test suite",testname="test 3",upgrade_version="upgrade-version"} 3
+cicd_jUnitResult{cloud_provider="aws",cluster_id="1a2b3c",environment="prod",install_version="install-version",job_id="123",phase="install",result="skipped",suite="test suite",testname="test 4",upgrade_version="upgrade-version"} 4
 `,
 		},
 		{
@@ -63,9 +66,9 @@ newline" time="3">
 		</failure>
 	</testcase>
 </testsuite>`,
-			expectedOutput: `cicd_jUnitResult{environment="prod",install_version="install-version",phase="install",result="passed",suite="test \"suite\"",testname="test \\1",upgrade_version="upgrade-version"} 1
-cicd_jUnitResult{environment="prod",install_version="install-version",phase="install",result="passed",suite="test \"suite\"",testname="test 2",upgrade_version="upgrade-version"} 2
-cicd_jUnitResult{environment="prod",install_version="install-version",phase="install",result="failed",suite="test \"suite\"",testname="test 3\nnewline",upgrade_version="upgrade-version"} 3
+			expectedOutput: `cicd_jUnitResult{cloud_provider="aws",cluster_id="1a2b3c",environment="prod",install_version="install-version",job_id="123",phase="install",result="passed",suite="test \"suite\"",testname="test \\1",upgrade_version="upgrade-version"} 1
+cicd_jUnitResult{cloud_provider="aws",cluster_id="1a2b3c",environment="prod",install_version="install-version",job_id="123",phase="install",result="passed",suite="test \"suite\"",testname="test 2",upgrade_version="upgrade-version"} 2
+cicd_jUnitResult{cloud_provider="aws",cluster_id="1a2b3c",environment="prod",install_version="install-version",job_id="123",phase="install",result="failed",suite="test \"suite\"",testname="test 3\nnewline",upgrade_version="upgrade-version"} 3
 `,
 		},
 	}
@@ -107,6 +110,7 @@ cicd_jUnitResult{environment="prod",install_version="install-version",phase="ins
 }
 
 func TestProcessJSONFile(t *testing.T) {
+	state.Instance.CloudProvider.CloudProviderID = "aws"
 	state.Instance.Cluster.ID = "1a2b3c"
 	state.Instance.Cluster.Version = "install-version"
 	state.Instance.Upgrade.ReleaseName = "upgrade-version"
@@ -137,8 +141,8 @@ func TestProcessJSONFile(t *testing.T) {
 		}
 	}
 }`,
-			expectedOutput: `cicd_metadata{cluster_id="1a2b3c",environment="prod",install_version="install-version",job_id="123",metadata_name="test2",upgrade_version="upgrade-version"} 6
-cicd_metadata{cluster_id="1a2b3c",environment="prod",install_version="install-version",job_id="123",metadata_name="another-nested field.another-level.test4",upgrade_version="upgrade-version"} 7
+			expectedOutput: `cicd_metadata{cloud_provider="aws",cluster_id="1a2b3c",environment="prod",install_version="install-version",job_id="123",metadata_name="test2",upgrade_version="upgrade-version"} 6
+cicd_metadata{cloud_provider="aws",cluster_id="1a2b3c",environment="prod",install_version="install-version",job_id="123",metadata_name="another-nested field.another-level.test4",upgrade_version="upgrade-version"} 7
 `,
 			phase: "",
 		},
@@ -159,8 +163,8 @@ cicd_metadata{cluster_id="1a2b3c",environment="prod",install_version="install-ve
 		}
 	}
 }`,
-			expectedOutput: `cicd_addon_metadata{cluster_id="1a2b3c",environment="prod",install_version="install-version",job_id="123",metadata_name="test2",phase="install",upgrade_version="upgrade-version"} 6
-cicd_addon_metadata{cluster_id="1a2b3c",environment="prod",install_version="install-version",job_id="123",metadata_name="another-nested field.another-level.test4",phase="install",upgrade_version="upgrade-version"} 7
+			expectedOutput: `cicd_addon_metadata{cloud_provider="aws",cluster_id="1a2b3c",environment="prod",install_version="install-version",job_id="123",metadata_name="test2",phase="install",upgrade_version="upgrade-version"} 6
+cicd_addon_metadata{cloud_provider="aws",cluster_id="1a2b3c",environment="prod",install_version="install-version",job_id="123",metadata_name="another-nested field.another-level.test4",phase="install",upgrade_version="upgrade-version"} 7
 `,
 			phase: "install",
 		},
@@ -210,6 +214,7 @@ cicd_addon_metadata{cluster_id="1a2b3c",environment="prod",install_version="inst
 }
 
 func TestWritePrometheusFile(t *testing.T) {
+	state.Instance.CloudProvider.CloudProviderID = "aws"
 	state.Instance.Cluster.ID = "1a2b3c"
 	state.Instance.Cluster.Version = "install-version"
 	state.Instance.Upgrade.ReleaseName = "upgrade-version"
@@ -251,12 +256,12 @@ func TestWritePrometheusFile(t *testing.T) {
 }`
 	addonMetadataFileContents := metadataFileContents
 
-	jUnitExpectedOutput := `cicd_jUnitResult{environment="prod",install_version="install-version",phase="install",result="passed",suite="test suite 1",testname="test 1",upgrade_version="upgrade-version"} 1
-cicd_jUnitResult{environment="prod",install_version="install-version",phase="install",result="passed",suite="test suite 1",testname="test 2",upgrade_version="upgrade-version"} 2
-cicd_jUnitResult{environment="prod",install_version="install-version",phase="install",result="failed",suite="test suite 1",testname="test 3",upgrade_version="upgrade-version"} 3
-cicd_jUnitResult{environment="prod",install_version="install-version",phase="upgrade",result="passed",suite="test suite 2",testname="test 1",upgrade_version="upgrade-version"} 1
-cicd_jUnitResult{environment="prod",install_version="install-version",phase="upgrade",result="passed",suite="test suite 2",testname="test 2",upgrade_version="upgrade-version"} 2
-cicd_jUnitResult{environment="prod",install_version="install-version",phase="upgrade",result="failed",suite="test suite 2",testname="test 3",upgrade_version="upgrade-version"} 3
+	jUnitExpectedOutput := `cicd_jUnitResult{cloud_provider="aws",cluster_id="1a2b3c",environment="prod",install_version="install-version",job_id="123",phase="install",result="passed",suite="test suite 1",testname="test 1",upgrade_version="upgrade-version"} 1
+cicd_jUnitResult{cloud_provider="aws",cluster_id="1a2b3c",environment="prod",install_version="install-version",job_id="123",phase="install",result="passed",suite="test suite 1",testname="test 2",upgrade_version="upgrade-version"} 2
+cicd_jUnitResult{cloud_provider="aws",cluster_id="1a2b3c",environment="prod",install_version="install-version",job_id="123",phase="install",result="failed",suite="test suite 1",testname="test 3",upgrade_version="upgrade-version"} 3
+cicd_jUnitResult{cloud_provider="aws",cluster_id="1a2b3c",environment="prod",install_version="install-version",job_id="123",phase="upgrade",result="passed",suite="test suite 2",testname="test 1",upgrade_version="upgrade-version"} 1
+cicd_jUnitResult{cloud_provider="aws",cluster_id="1a2b3c",environment="prod",install_version="install-version",job_id="123",phase="upgrade",result="passed",suite="test suite 2",testname="test 2",upgrade_version="upgrade-version"} 2
+cicd_jUnitResult{cloud_provider="aws",cluster_id="1a2b3c",environment="prod",install_version="install-version",job_id="123",phase="upgrade",result="failed",suite="test suite 2",testname="test 3",upgrade_version="upgrade-version"} 3
 `
 
 	tests := []struct {
@@ -280,8 +285,8 @@ cicd_jUnitResult{environment="prod",install_version="install-version",phase="upg
 			},
 			metadataFileContents:      metadataFileContents,
 			addonMetadataFileContents: addonMetadataFileContents,
-			expectedOutput: jUnitExpectedOutput + `cicd_metadata{cluster_id="1a2b3c",environment="prod",install_version="install-version",job_id="123",metadata_name="test2",upgrade_version="upgrade-version"} 6
-cicd_addon_metadata{cluster_id="1a2b3c",environment="prod",install_version="install-version",job_id="123",metadata_name="test2",phase="install",upgrade_version="upgrade-version"} 6
+			expectedOutput: jUnitExpectedOutput + `cicd_metadata{cloud_provider="aws",cluster_id="1a2b3c",environment="prod",install_version="install-version",job_id="123",metadata_name="test2",upgrade_version="upgrade-version"} 6
+cicd_addon_metadata{cloud_provider="aws",cluster_id="1a2b3c",environment="prod",install_version="install-version",job_id="123",metadata_name="test2",phase="install",upgrade_version="upgrade-version"} 6
 `,
 		},
 		{
@@ -298,7 +303,7 @@ cicd_addon_metadata{cluster_id="1a2b3c",environment="prod",install_version="inst
 			},
 			metadataFileContents:      metadataFileContents,
 			addonMetadataFileContents: "",
-			expectedOutput: jUnitExpectedOutput + `cicd_metadata{cluster_id="1a2b3c",environment="prod",install_version="install-version",job_id="123",metadata_name="test2",upgrade_version="upgrade-version"} 6
+			expectedOutput: jUnitExpectedOutput + `cicd_metadata{cloud_provider="aws",cluster_id="1a2b3c",environment="prod",install_version="install-version",job_id="123",metadata_name="test2",upgrade_version="upgrade-version"} 6
 `,
 		},
 		{
