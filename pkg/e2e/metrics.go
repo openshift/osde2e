@@ -56,25 +56,25 @@ func NewMetrics() *Metrics {
 		prometheus.GaugeOpts{
 			Name: jUnitMetricName,
 		},
-		[]string{"install_version", "upgrade_version", "environment", "phase", "suite", "testname", "result"},
+		[]string{"install_version", "upgrade_version", "cloud_provider", "environment", "phase", "suite", "testname", "result", "cluster_id", "job_id"},
 	)
 	metadataGatherer := prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
 			Name: metadataMetricName,
 		},
-		[]string{"install_version", "upgrade_version", "environment", "metadata_name", "cluster_id", "job_id"},
+		[]string{"install_version", "upgrade_version", "cloud_provider", "environment", "metadata_name", "cluster_id", "job_id"},
 	)
 	addonGatherer := prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
 			Name: addonMetricName,
 		},
-		[]string{"install_version", "upgrade_version", "environment", "metadata_name", "cluster_id", "job_id", "phase"},
+		[]string{"install_version", "upgrade_version", "cloud_provider", "environment", "metadata_name", "cluster_id", "job_id", "phase"},
 	)
 	eventGatherer := prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Name: eventMetricName,
 		},
-		[]string{"install_version", "upgrade_version", "environment", "event"},
+		[]string{"install_version", "upgrade_version", "cloud_provider", "environment", "event", "cluster_id", "job_id"},
 	)
 	metricRegistry.MustRegister(jUnitGatherer)
 	metricRegistry.MustRegister(metadataGatherer)
@@ -187,11 +187,14 @@ func (m *Metrics) processJUnitXMLFile(phase string, junitFile string) (err error
 
 		m.jUnitGatherer.WithLabelValues(state.Cluster.Version,
 			state.Upgrade.ReleaseName,
+			state.CloudProvider.CloudProviderID,
 			m.provider.Environment(),
 			phase,
 			testSuite.Name,
 			testcase.Name,
-			result).Add(testcase.Time)
+			result,
+			state.Cluster.ID,
+			strconv.Itoa(config.Instance.JobID)).Add(testcase.Time)
 	}
 
 	return nil
@@ -250,6 +253,7 @@ func (m *Metrics) jsonToPrometheusOutput(gatherer *prometheus.GaugeVec, phase st
 				if phase != "" {
 					gatherer.WithLabelValues(state.Cluster.Version,
 						state.Upgrade.ReleaseName,
+						state.CloudProvider.CloudProviderID,
 						m.provider.Environment(),
 						metadataName,
 						state.Cluster.ID,
@@ -258,6 +262,7 @@ func (m *Metrics) jsonToPrometheusOutput(gatherer *prometheus.GaugeVec, phase st
 				} else {
 					gatherer.WithLabelValues(state.Cluster.Version,
 						state.Upgrade.ReleaseName,
+						state.CloudProvider.CloudProviderID,
 						m.provider.Environment(),
 						metadataName,
 						state.Cluster.ID,
@@ -276,7 +281,14 @@ func (m *Metrics) processEvents(gatherer *prometheus.CounterVec) {
 	state := state.Instance
 
 	for _, event := range events.GetListOfEvents() {
-		gatherer.WithLabelValues(state.Cluster.Version, state.Upgrade.ReleaseName, m.provider.Environment(), event).Inc()
+		gatherer.WithLabelValues(
+			state.Cluster.Version,
+			state.Upgrade.ReleaseName,
+			state.CloudProvider.CloudProviderID,
+			m.provider.Environment(),
+			event,
+			state.Cluster.ID,
+			strconv.Itoa(config.Instance.JobID)).Inc()
 	}
 }
 
