@@ -4,6 +4,7 @@ set -eux
 cd "{{ .WorkloadsPath }}"
 
 # setup inventory
+set +x
 cp workloads/inventory.example inventory
 echo "localhost ansible_connection=local" >> inventory
 mkdir ~/.ssh
@@ -13,6 +14,7 @@ chmod 600 ~/.ssh/*
 
 mkdir ~/.kube
 echo -e "{{ .Kubeconfig }}\n" > ~/.kube/config
+set -x
 
 time ansible-playbook -vv -i inventory workloads/tooling.yml
 time ansible-playbook -vv -i inventory {{ .PlaybookPath }}
