@@ -158,6 +158,11 @@ func (m *Provider) DeleteCluster(clusterID string) error {
 	return nil
 }
 
+// ScaleCluster CRCs a scale cluster operation.
+func (m *Provider) ScaleCluster(clusterID string, numComputeNodes int) error {
+	return fmt.Errorf("scaling is currently unsupported for CRC clusters")
+}
+
 // GetCluster CRCs a get cluster operation.
 func (m *Provider) GetCluster(clusterID string) (cluster *spi.Cluster, err error) {
 	var ok bool

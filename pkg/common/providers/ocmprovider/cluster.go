@@ -149,24 +149,45 @@ func (o *OCMProvider) DeleteCluster(clusterID string) error {
 	return nil
 }
 
-// GetCluster returns a cluster from OCM.
-func (o *OCMProvider) GetCluster(clusterID string) (*spi.Cluster, error) {
-	var resp *v1.ClusterGetResponse
+// ScaleCluster will grow or shink the cluster to the desired number of compute nodes.
+func (o *OCMProvider) ScaleCluster(clusterID string, numComputeNodes int) error {
+	var resp *v1.ClusterUpdateResponse
 
-	err := retryer().Do(func() error {
+	// Get the current state of the cluster
+	ocmCluster, err := o.getOCMCluster(clusterID)
+
+	if err != nil {
+		return err
+	}
+
+	if numComputeNodes == ocmCluster.Nodes().Compute() {
+		log.Printf("cluster already at desired size (%d)", numComputeNodes)
+		return nil
+	}
+
+	scaledCluster, err := v1.NewCluster().
+		Nodes(v1.NewClusterNodes().
+			Compute(numComputeNodes)).
+		Build()
+
+	if err != nil {
+		return fmt.Errorf("error while building scaled cluster object: %v", err)
+	}
+
+	err = retryer().Do(func() error {
 		var err error
-		resp, err = o.conn.ClustersMgmt().V1().Clusters().Cluster(clusterID).
-			Get().
+		resp, err = o.conn.ClustersMgmt().V1().Clusters().Cluster(clusterID).Update().
+			Body(scaledCluster).
 			Send()
 
 		if err != nil {
-			err = fmt.Errorf("couldn't retrieve cluster '%s': %v", clusterID, err)
+			err = fmt.Errorf("couldn't update cluster '%s': %v", clusterID, err)
 			log.Printf("%v", err)
 			return err
 		}
 
 		if resp != nil && resp.Error() != nil {
-			log.Printf("error while trying to retrieve cluster: %v", err)
+			log.Printf("error while trying to update cluster: %v", err)
 			return errResp(resp.Error())
 		}
 
@@ -174,14 +195,37 @@ func (o *OCMProvider) GetCluster(clusterID string) (*spi.Cluster, error) {
 	})
 
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	if resp.Error() != nil {
-		return nil, resp.Error()
+		return resp.Error()
 	}
 
-	ocmCluster := resp.Body()
+	finalCluster, err := o.GetCluster(clusterID)
+
+	if err != nil {
+		log.Printf("error attempting to retrieve cluster for verification: %v", err)
+	}
+
+	if finalCluster.NumComputeNodes() != numComputeNodes {
+		return fmt.Errorf("expected number of compute nodes (%d) not reflected in OCM (found %d)", numComputeNodes, finalCluster.NumComputeNodes())
+
+	}
+	log.Printf("Cluster successfully scaled to %d nodes", numComputeNodes)
+
+	return nil
+}
+
+// GetCluster returns a cluster from OCM.
+func (o *OCMProvider) GetCluster(clusterID string) (*spi.Cluster, error) {
+	var resp *v1.ClusterGetResponse
+
+	ocmCluster, err := o.getOCMCluster(clusterID)
+
+	if err != nil {
+		return nil, err
+	}
 
 	cluster := spi.NewClusterBuilder().
 		Name(ocmCluster.Name()).
@@ -240,7 +284,43 @@ func (o *OCMProvider) GetCluster(clusterID string) (*spi.Cluster, error) {
 		})
 	}
 
+	cluster.NumComputeNodes(ocmCluster.Nodes().Compute())
+
 	return cluster.Build(), nil
+}
+
+func (o *OCMProvider) getOCMCluster(clusterID string) (*v1.Cluster, error) {
+	var resp *v1.ClusterGetResponse
+
+	err := retryer().Do(func() error {
+		var err error
+		resp, err = o.conn.ClustersMgmt().V1().Clusters().Cluster(clusterID).
+			Get().
+			Send()
+
+		if err != nil {
+			err = fmt.Errorf("couldn't retrieve cluster '%s': %v", clusterID, err)
+			log.Printf("%v", err)
+			return err
+		}
+
+		if resp != nil && resp.Error() != nil {
+			log.Printf("error while trying to retrieve cluster: %v", err)
+			return errResp(resp.Error())
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	if resp.Error() != nil {
+		return nil, resp.Error()
+	}
+
+	return resp.Body(), nil
 }
 
 // ClusterKubeconfig returns the kubeconfig for the given cluster ID.

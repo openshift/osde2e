@@ -104,6 +104,11 @@ func (m *MockProvider) GetCluster(clusterID string) (*spi.Cluster, error) {
 	return nil, fmt.Errorf("couldn't find cluster in mock provider")
 }
 
+// ScaleCluster mocks a scale cluster operation.
+func (m *MockProvider) ScaleCluster(clusterID string, numComputeNodes int) error {
+	return fmt.Errorf("scale cluster is currently unsupported by the mock provider")
+}
+
 // ClusterKubeconfig mocks a cluster kubeconfig operation.
 func (m *MockProvider) ClusterKubeconfig(clusterID string) ([]byte, error) {
 	var (
