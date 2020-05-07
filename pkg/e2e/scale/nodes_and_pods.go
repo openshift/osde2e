@@ -38,12 +38,6 @@ var _ = ginkgo.Describe("[Suite: scale-nodes-and-pods] Scaling", func() {
 		}, kubev1.EnvVar{
 			Name:  "EXPECTED_NODEVERTICAL_DURATION",
 			Value: strconv.Itoa(nodeVerticalTimeoutInSeconds),
-		}, kubev1.EnvVar{
-			Name:  "PBENCH_INSTRUMENTATION",
-			Value: "true",
-		}, kubev1.EnvVar{
-			Name:  "ENABLE_PBENCH_COPY",
-			Value: "true",
 		})
 		// run tests
 		stopCh := make(chan struct{})
@@ -60,14 +54,6 @@ var _ = ginkgo.Describe("[Suite: scale-nodes-and-pods] Scaling", func() {
 			PlaybookPath: "workloads/podvertical.yml",
 		}
 		r := scaleCfg.Runner(h)
-
-		r.PodSpec.Containers[0].Env = append(r.PodSpec.Containers[0].Env, kubev1.EnvVar{
-			Name:  "PBENCH_INSTRUMENTATION",
-			Value: "true",
-		}, kubev1.EnvVar{
-			Name:  "ENABLE_PBENCH_COPY",
-			Value: "true",
-		})
 
 		// run tests
 		stopCh := make(chan struct{})

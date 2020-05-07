@@ -26,12 +26,6 @@ var _ = ginkgo.Describe("[Suite: scale-mastervertical] Scaling", func() {
 		r.PodSpec.Containers[0].Env = append(r.PodSpec.Containers[0].Env, kubev1.EnvVar{
 			Name:  "MASTERVERTICAL_PROJECTS",
 			Value: "100",
-		}, kubev1.EnvVar{
-			Name:  "PBENCH_INSTRUMENTATION",
-			Value: "true",
-		}, kubev1.EnvVar{
-			Name:  "ENABLE_PBENCH_COPY",
-			Value: "true",
 		})
 		// run tests
 		stopCh := make(chan struct{})

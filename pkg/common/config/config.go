@@ -185,12 +185,6 @@ type ScaleConfig struct {
 	WorkloadsRepository string `env:"WORKLOADS_REPO" sect:"scale" default:"https://github.com/openshift-scale/workloads" yaml:"workloadsRepository"`
 
 	WorkloadsRepositoryBranch string `env:"WORKLOADS_REPO_BRANCH" sect:"scale" default:"master" yaml:"workloadsRepositoryBranch"`
-
-	PbenchServer string `env:"PBENCH_SERVER" sect:"scale" default:"pbench.dev.openshift.com" yaml:"pbenchServer"`
-
-	PbenchSSHPrivateKey string `env:"PBENCH_SSH_PRIVATE_KEY" sect:"scale" yaml:"pbenchSSHPrivateKey"`
-
-	PbenchSSHPublicKey string `env:"PBENCH_SSH_PUBLIC_KEY" sect:"scale" yaml:"pbenchSSHPublicKey"`
 }
 
 // TestConfig changes the behavior of how and what tests are run.

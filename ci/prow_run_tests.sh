@@ -29,14 +29,6 @@ set -o pipefail
     extract_secret_from_dirs AWS_SECRET_ACCESS_KEY "$SECRETS" aws-secret-access-key "AWS secret access key file"
     extract_secret_from_dirs AWS_REGION "$SECRETS" aws-region "AWS region file"
 
-    if [ "$TEST" != "test-addons" ]; then
-	# Addon tests don't need pbench secrets. Otherwise, we can be reasonable sure that we're using
-	# a standard osde2e job maintained by the CI/CD team, so we should extract the pbench secrets in case
-	# we're scale testing.
-        extract_secret_from_dirs PBENCH_SSH_PRIVATE_KEY "$SECRETS" pbench-ssh-private-key "pbench private key file"
-        extract_secret_from_dirs PBENCH_SSH_PUBLIC_KEY "$SECRETS" pbench-ssh-public-key "pbench public key file"
-    fi
-
     # We explicitly want to make sure we're always uploading metrics from prow jobs.
     export UPLOAD_METRICS=true
 

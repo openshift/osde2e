@@ -34,12 +34,10 @@ var once sync.Once = sync.Once{}
 var scaleRepos runner.Repos
 
 type scaleRunnerConfig struct {
-	Name             string
-	PlaybookPath     string
-	WorkloadsPath    string
-	Kubeconfig       string
-	PbenchPrivateKey string
-	PbenchPublicKey  string
+	Name          string
+	PlaybookPath  string
+	WorkloadsPath string
+	Kubeconfig    string
 }
 
 func init() {
@@ -78,8 +76,6 @@ func (sCfg scaleRunnerConfig) Runner(h *helper.H) *runner.Runner {
 	sCfg.Name = "scale-" + sCfg.Name
 	sCfg.WorkloadsPath = WorkloadsPath
 	sCfg.Kubeconfig = string(state.Instance.Kubeconfig.Contents)
-	sCfg.PbenchPrivateKey = config.Instance.Scale.PbenchSSHPrivateKey
-	sCfg.PbenchPublicKey = config.Instance.Scale.PbenchSSHPublicKey
 	cmd := sCfg.cmd()
 
 	// configure runner for scale testing
@@ -89,9 +85,6 @@ func (sCfg scaleRunnerConfig) Runner(h *helper.H) *runner.Runner {
 	runner.Repos = scaleRepos
 
 	runner.PodSpec.Containers[0].Env = append(runner.PodSpec.Containers[0].Env, kubev1.EnvVar{
-		Name:  "PBENCH_SERVER",
-		Value: config.Instance.Scale.PbenchServer,
-	}, kubev1.EnvVar{
 		Name:  "WORKLOAD_JOB_PRIVILEGED",
 		Value: "true",
 	})
