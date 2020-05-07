@@ -52,6 +52,7 @@ func GetClusterVersion(provider spi.Provider, clusterID string) (*semver.Version
 // WaitForClusterReady blocks until the cluster is ready for testing.
 func WaitForClusterReady(provider spi.Provider, clusterID string) error {
 	cfg := config.Instance
+	state := state.Instance
 
 	log.Printf("Waiting %v minutes for cluster '%s' to be ready...\n", cfg.Cluster.InstallTimeout, clusterID)
 	cleanRuns := 0
@@ -62,7 +63,9 @@ func WaitForClusterReady(provider spi.Provider, clusterID string) error {
 	ocmReady := false
 	if !cfg.Tests.SkipClusterHealthChecks {
 		return wait.PollImmediate(30*time.Second, time.Duration(cfg.Cluster.InstallTimeout)*time.Minute, func() (bool, error) {
-			if cluster, err := provider.GetCluster(clusterID); err == nil && cluster.State() == spi.ClusterStateReady {
+			cluster, err := provider.GetCluster(clusterID)
+			state.Cluster.State = cluster.State()
+			if err == nil && cluster.State() == spi.ClusterStateReady {
 				// This is the first time that we've entered this section, so we'll consider this the time until OCM has said the cluster is ready
 				if !ocmReady {
 					ocmReady = true

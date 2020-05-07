@@ -1,6 +1,8 @@
 // Package state provides common state across osde2e
 package state
 
+import "github.com/openshift/osde2e/pkg/common/spi"
+
 // Instance is the global state for osde2e runs
 var Instance = new(State)
 
@@ -49,6 +51,9 @@ type ClusterState struct {
 
 	// PreviousVersionFromDefaultFound is true if a previous version from default was found.
 	PreviousVersionFromDefaultFound bool `default:"true"`
+
+	// State is the cluster state observed by OCM.
+	State spi.ClusterState `json:"cluster_state,omitempty" yaml:"state"`
 }
 
 // KubeconfigState stores information required to talk to the Kube API
