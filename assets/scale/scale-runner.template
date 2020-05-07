@@ -5,18 +5,19 @@ cd "{{ .WorkloadsPath }}"
 
 # setup inventory
 set +x
+mkdir ~/.kube
+echo -e "{{ .Kubeconfig }}\n" > ~/.kube/config
+
+oc get project scale-ci-tooling || oc create -f workloads/files/scale-ci-tooling-ns.yml
+oc create serviceaccount useroot -n scale-ci-tooling
+oc adm policy add-scc-to-user privileged -z useroot -n scale-ci-tooling
 cp workloads/inventory.example inventory
 echo "localhost ansible_connection=local" >> inventory
 mkdir ~/.ssh
-echo -e "{{ .PbenchPrivateKey }}\n" > ~/.ssh/id_rsa
-echo -e "{{ .PbenchPublicKey }}\n" > ~/.ssh/id_rsa.pub
+ssh-keygen -f ~/.ssh/id_rsa -q -N ""
 chmod 600 ~/.ssh/*
-
-mkdir ~/.kube
-echo -e "{{ .Kubeconfig }}\n" > ~/.kube/config
 set -x
 
-time ansible-playbook -vv -i inventory workloads/tooling.yml
 time ansible-playbook -vv -i inventory {{ .PlaybookPath }}
 
 SUCCESS=$?
