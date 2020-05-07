@@ -406,7 +406,7 @@ func runTestsInPhase(phase string, description string) bool {
 		return false
 	}
 
-	if !cfg.DryRun {
+	if !cfg.DryRun && state.Cluster.State == spi.ClusterStateReady {
 		h := helper.NewOutsideGinkgo()
 		dependencies, err := debug.GenerateDependencies(h.Kube())
 		if err != nil {
