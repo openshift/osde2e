@@ -357,6 +357,9 @@ func runTestsInPhase(phase string, description string) bool {
 		return false
 	}
 
+	// Ensure all log metrics are zeroed out before running again
+	metadata.Instance.ResetLogMetrics()
+
 	for _, file := range files {
 		if logFileRegex.MatchString(file.Name()) {
 			data, err := ioutil.ReadFile(filepath.Join(cfg.ReportDir, file.Name()))
@@ -369,9 +372,6 @@ func runTestsInPhase(phase string, description string) bool {
 			}
 		}
 	}
-
-	// Ensure all log metrics are zeroed out before running again
-	metadata.Instance.ResetLogMetrics()
 
 	logMetricTestSuite := reporters.JUnitTestSuite{
 		Name: "Log Metrics",
