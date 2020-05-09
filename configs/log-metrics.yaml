@@ -17,5 +17,8 @@ logMetrics:
   lowThreshold: -1
 - name: host-dns-lookup
   regex: "no such host"
+  ignoreIfMatchContains: [
+    "Still waiting for the Kubernetes API"
+  ]
   highThreshold: 1
   lowThreshold: -1
