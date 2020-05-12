@@ -188,26 +188,30 @@ func runGinkgoTests() error {
 }
 
 func cleanupAfterE2E(h *helper.H) (errors []error) {
+	var err error
 	state := state.Instance
+	cfg := config.Instance
 	defer ginkgo.GinkgoRecover()
 
-	log.Print("Running Must Gather...")
-	mustGatherTimeoutInSeconds := 900
-	h.SetServiceAccount("system:serviceaccount:%s:cluster-admin")
-	r := h.Runner(fmt.Sprintf("oc adm must-gather --dest-dir=%v", runner.DefaultRunner.OutputDir))
-	r.Name = "must-gather"
-	r.Tarball = true
-	stopCh := make(chan struct{})
-	err := r.Run(mustGatherTimeoutInSeconds, stopCh)
+	if cfg.MustGather {
+		log.Print("Running Must Gather...")
+		mustGatherTimeoutInSeconds := 900
+		h.SetServiceAccount("system:serviceaccount:%s:cluster-admin")
+		r := h.Runner(fmt.Sprintf("oc adm must-gather --dest-dir=%v", runner.DefaultRunner.OutputDir))
+		r.Name = "must-gather"
+		r.Tarball = true
+		stopCh := make(chan struct{})
+		err := r.Run(mustGatherTimeoutInSeconds, stopCh)
 
-	if err != nil {
-		log.Printf("Error running must-gather: %s", err.Error())
-	} else {
-		gatherResults, err := r.RetrieveResults()
 		if err != nil {
-			log.Printf("Error retrieving must-gather results: %s", err.Error())
+			log.Printf("Error running must-gather: %s", err.Error())
 		} else {
-			h.WriteResults(gatherResults)
+			gatherResults, err := r.RetrieveResults()
+			if err != nil {
+				log.Printf("Error retrieving must-gather results: %s", err.Error())
+			} else {
+				h.WriteResults(gatherResults)
+			}
 		}
 	}
 
@@ -240,7 +244,6 @@ func cleanupAfterE2E(h *helper.H) (errors []error) {
 
 	// Get state from OCM
 	log.Print("Gathering cluster state from OCM")
-	cfg := config.Instance
 	if len(state.Cluster.ID) > 0 {
 		if provider, err = providers.ClusterProvider(); err != nil {
 			log.Printf("Error getting cluster provider: %s", err.Error())
