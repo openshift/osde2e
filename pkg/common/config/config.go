@@ -53,6 +53,9 @@ type Config struct {
 
 	// LogMetrics is a collection of LogMetric structs used to crudely analyze test logs
 	LogMetrics LogMetrics `json:"log-metrics" yaml:"logMetrics"`
+
+	// MustGather will run a Must-Gather process upon completion of the tests.
+	MustGather bool `json:"must_gather,omitempty" env:"MUST_GATHER" sect:"tests" default:"true" yaml:"mustGather"`
 }
 
 // KubeConfig stores information required to talk to the Kube API
