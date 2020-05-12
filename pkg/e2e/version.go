@@ -188,6 +188,11 @@ func setupUpgradeVersion() error {
 		return err
 	}
 
+	if clusterVersion == nil {
+		log.Printf("no install version found, skipping upgrade")
+		return nil
+	}
+
 	versionList, err := provider.Versions()
 
 	if err != nil {
