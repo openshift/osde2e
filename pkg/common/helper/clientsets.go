@@ -7,6 +7,7 @@ import (
 	image "github.com/openshift/client-go/image/clientset/versioned"
 	project "github.com/openshift/client-go/project/clientset/versioned"
 	route "github.com/openshift/client-go/route/clientset/versioned"
+	user "github.com/openshift/client-go/user/clientset/versioned"
 	operator "github.com/operator-framework/operator-lifecycle-manager/pkg/api/client/clientset/versioned"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
@@ -57,6 +58,13 @@ func (h *H) Route() route.Interface {
 // Project returns the clientset for projects.
 func (h *H) Project() project.Interface {
 	client, err := project.NewForConfig(h.restConfig)
+	Expect(err).ShouldNot(HaveOccurred(), "failed to configure Project clientset")
+	return client
+}
+
+// User returns the clientset for users
+func (h *H) User() user.Interface {
+	client, err := user.NewForConfig(h.restConfig)
 	Expect(err).ShouldNot(HaveOccurred(), "failed to configure Project clientset")
 	return client
 }
