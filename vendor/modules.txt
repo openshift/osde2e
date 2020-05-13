@@ -181,6 +181,7 @@ github.com/openshift/api/image/dockerpre012
 github.com/openshift/api/image/v1
 github.com/openshift/api/project/v1
 github.com/openshift/api/route/v1
+github.com/openshift/api/user/v1
 # github.com/openshift/client-go v0.0.0-20190806162413-e9678e3b850d => github.com/openshift/client-go v0.0.0-20190806162413-e9678e3b850d
 github.com/openshift/client-go/config/clientset/versioned
 github.com/openshift/client-go/config/clientset/versioned/fake
@@ -198,6 +199,9 @@ github.com/openshift/client-go/project/clientset/versioned/typed/project/v1
 github.com/openshift/client-go/route/clientset/versioned
 github.com/openshift/client-go/route/clientset/versioned/scheme
 github.com/openshift/client-go/route/clientset/versioned/typed/route/v1
+github.com/openshift/client-go/user/clientset/versioned
+github.com/openshift/client-go/user/clientset/versioned/scheme
+github.com/openshift/client-go/user/clientset/versioned/typed/user/v1
 # github.com/operator-framework/operator-lifecycle-manager v0.0.0-20190926160646-a61144936680
 github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators
 github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1

@@ -18,7 +18,8 @@ import (
 
 // GenerateDiff attempts to pull a dependency list from a previous job (job, jobID) and generate a diff against a provided string
 func GenerateDiff(baseURL, phase, dependencies, jobName string, jobID int) error {
-	resp, err := http.Get(fmt.Sprintf("%s/%s/%d/artifacts/%s/dependencies.txt", baseURL, jobName, jobID-1, phase))
+	url := fmt.Sprintf("%s/%s/%d/artifacts/%s/dependencies.txt", baseURL, jobName, jobID-1, phase)
+	resp, err := http.Get(url)
 	if err != nil {
 		return err
 	}
@@ -26,6 +27,14 @@ func GenerateDiff(baseURL, phase, dependencies, jobName string, jobID int) error
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return err
+	}
+
+	if resp.StatusCode == 404 {
+		return fmt.Errorf("dependencies.txt not found at %s", url)
+	}
+
+	if resp.StatusCode != 200 {
+		return fmt.Errorf("expected HTTP-200 code at %s", url)
 	}
 
 	newDiff := strings.Split(diff.Diff(string(body), dependencies), "\n")

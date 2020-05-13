@@ -37,10 +37,20 @@ func (o *OCMProvider) LaunchCluster() (string, error) {
 	// we happen to forget to do it:
 	expiration := time.Now().Add(time.Duration(cfg.Cluster.ExpiryInMinutes) * time.Minute).UTC() // UTC() to workaround SDA-1567.
 
-	user, err := user.Current()
+	var username string
 
-	if err != nil {
-		return "", fmt.Errorf("unable to get current user: %v", err)
+	// If JobID is not equal to -1, then we're running on prow.
+	if cfg.JobID != -1 {
+		username = "prow"
+	} else {
+
+		user, err := user.Current()
+
+		if err != nil {
+			return "", fmt.Errorf("unable to get current user: %v", err)
+		}
+
+		username = user.Username
 	}
 
 	newCluster := v1.NewCluster().
@@ -57,7 +67,7 @@ func (o *OCMProvider) LaunchCluster() (string, error) {
 		ExpirationTimestamp(expiration).
 		Properties(map[string]string{
 			MadeByOSDe2e: "true",
-			OwnedBy:      user.Username,
+			OwnedBy:      username,
 		})
 
 	// Configure the cluster to be Multi-AZ if configured

@@ -46,9 +46,6 @@ func RunUpgrade(provider spi.Provider) error {
 
 	// setup helper
 	h := helper.NewOutsideGinkgo()
-	if h == nil {
-		return fmt.Errorf("Unable to generate helper outside ginkgo")
-	}
 
 	if h.Upgrade.Image != "" {
 		log.Printf("Upgrading cluster to UPGRADE_IMAGE '%s'", h.Upgrade.Image)
