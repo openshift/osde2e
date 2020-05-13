@@ -3,6 +3,7 @@ package ocmprovider
 import (
 	"fmt"
 	"log"
+	"os/user"
 	"time"
 
 	v1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
@@ -14,6 +15,12 @@ import (
 const (
 	// DefaultFlavour is used when no specialized configuration exists.
 	DefaultFlavour = "osd-4"
+
+	// MadeByOSDe2e property to attach to clusters.
+	MadeByOSDe2e = "MadeByOSDe2e"
+
+	// OwnedBy property which will tell who made the cluster.
+	OwnedBy = "OwnedBy"
 )
 
 // LaunchCluster setups an new cluster using the OSD API and returns it's ID.
@@ -30,6 +37,22 @@ func (o *OCMProvider) LaunchCluster() (string, error) {
 	// we happen to forget to do it:
 	expiration := time.Now().Add(time.Duration(cfg.Cluster.ExpiryInMinutes) * time.Minute).UTC() // UTC() to workaround SDA-1567.
 
+	var username string
+
+	// If JobID is not equal to -1, then we're running on prow.
+	if cfg.JobID != -1 {
+		username = "prow"
+	} else {
+
+		user, err := user.Current()
+
+		if err != nil {
+			return "", fmt.Errorf("unable to get current user: %v", err)
+		}
+
+		username = user.Username
+	}
+
 	newCluster := v1.NewCluster().
 		Name(state.Cluster.Name).
 		Flavour(v1.NewFlavour().
@@ -41,7 +64,11 @@ func (o *OCMProvider) LaunchCluster() (string, error) {
 			ID(state.Cluster.Version)).
 		CloudProvider(v1.NewCloudProvider().
 			ID(state.CloudProvider.CloudProviderID)).
-		ExpirationTimestamp(expiration)
+		ExpirationTimestamp(expiration).
+		Properties(map[string]string{
+			MadeByOSDe2e: "true",
+			OwnedBy:      username,
+		})
 
 	// Configure the cluster to be Multi-AZ if configured
 	// We must manually configure the number of compute nodes
