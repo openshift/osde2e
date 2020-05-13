@@ -83,17 +83,22 @@ func runGinkgoTests() error {
 			return fmt.Errorf("failed to configure versions: %v", err)
 		}
 
-		switch {
-		case !state.Cluster.EnoughVersionsForOldestOrMiddleTest:
+		if !state.Cluster.EnoughVersionsForOldestOrMiddleTest {
 			log.Printf("There were not enough available cluster image sets to choose and oldest or middle cluster image set to test against. Skipping tests.")
 			return nil
-		case !state.Cluster.PreviousVersionFromDefaultFound:
+		}
+
+		if !state.Cluster.PreviousVersionFromDefaultFound {
 			log.Printf("No previous version from default found with the given arguments.")
 			return nil
-		case state.Upgrade.UpgradeVersionEqualToInstallVersion:
+		}
+
+		if state.Upgrade.UpgradeVersionEqualToInstallVersion {
 			log.Printf("Install version and upgrade version are the same. Skipping tests.")
 			return nil
-		case state.Upgrade.ReleaseName == NoVersionFound:
+		}
+
+		if state.Upgrade.ReleaseName == NoVersionFound {
 			log.Printf("No valid upgrade versions were found. Skipping tests.")
 			return nil
 		}
@@ -172,12 +177,7 @@ func runGinkgoTests() error {
 	if !cfg.DryRun {
 		h := helper.NewOutsideGinkgo()
 
-		if h == nil {
-			return fmt.Errorf("Unable to generate helper object for cleanup")
-		}
-
 		cleanupAfterE2E(h)
-
 	}
 
 	if !testsPassed || !upgradeTestsPassed {
@@ -411,21 +411,22 @@ func runTestsInPhase(phase string, description string) bool {
 
 	if !cfg.DryRun && state.Cluster.State == spi.ClusterStateReady {
 		h := helper.NewOutsideGinkgo()
-		if h == nil {
-			log.Println("Unable to generate helper outside of ginkgo")
-			return ginkgoPassed
-		}
 		dependencies, err := debug.GenerateDependencies(h.Kube())
 		if err != nil {
 			log.Printf("Error generating dependencies: %s", err.Error())
 		} else {
-			if err = ioutil.WriteFile(filepath.Join(phaseDirectory, "dependencies.txt"), []byte(dependencies), 0644); err != nil {
-				log.Printf("Error writing dependencies.txt: %s", err.Error())
+			if len(dependencies) > 0 {
+				err = ioutil.WriteFile(filepath.Join(phaseDirectory, "dependencies.txt"), []byte(dependencies), 0644)
 			}
 
-			err := debug.GenerateDiff(cfg.BaseJobURL, phase, dependencies, cfg.JobName, cfg.JobID)
-			if err != nil {
-				log.Printf("Error generating diff: %s", err.Error())
+			log.Println("Dependency changes:")
+			if cfg.JobName != "" && cfg.JobID > 0 {
+				err := debug.GenerateDiff(cfg.BaseJobURL, phase, dependencies, cfg.JobName, cfg.JobID)
+				if err != nil {
+					log.Printf("Error generating diff: %s", err.Error())
+				}
+			} else {
+				log.Println("Not run in prow, skipping dependency diff")
 			}
 
 		}
