@@ -42,15 +42,21 @@ func Init() *H {
 // New instantiates a helper function to be used within a Ginkgo Test block
 func New() *H {
 	h := Init()
-	ginkgo.BeforeEach(h.Setup)
+	ginkgo.BeforeEach(h.SetupWrapper)
 
 	return h
 }
 
 // NewOutsideGinkgo instantiates a helper function while not within a Ginkgo Test Block
 func NewOutsideGinkgo() *H {
+	defer ginkgo.GinkgoRecover()
+
 	h := Init()
-	h.Setup()
+	h.OutsideGinkgo = true
+	err := h.Setup()
+	if err != nil {
+		return nil
+	}
 
 	return h
 }
@@ -60,17 +66,28 @@ type H struct {
 	// embed state
 	*state.State
 	ServiceAccount string
+	OutsideGinkgo  bool
 
 	// internal
 	restConfig *rest.Config
 	proj       *projectv1.Project
 }
 
+// SetupWrapper is a Ginkgo-Friendly setup function to pass to BeforeEach
+func (h *H) SetupWrapper() {
+	err := h.Setup()
+	Expect(err).ShouldNot(HaveOccurred(), "failed to configure helper object")
+}
+
 // Setup configures a *rest.Config using the embedded kubeconfig then sets up a Project for tests to run in.
-func (h *H) Setup() {
+func (h *H) Setup() error {
 	var err error
 
 	h.restConfig, err = clientcmd.RESTConfigFromKubeConfig(h.Kubeconfig.Contents)
+	if h.OutsideGinkgo && err != nil {
+		return fmt.Errorf("error generating restconfig: %s", err.Error())
+	}
+
 	Expect(err).ShouldNot(HaveOccurred(), "failed to configure client")
 
 	if h.State.Project == "" {
@@ -83,6 +100,9 @@ func (h *H) Setup() {
 		log.Printf("Setup called for %s", h.State.Project)
 
 		h.proj, err = h.createProject(suffix)
+		if h.OutsideGinkgo && err != nil {
+			return fmt.Errorf("failed to create project: %s", err.Error())
+		}
 		Expect(err).ShouldNot(HaveOccurred(), "failed to create project")
 		Expect(h.proj).ShouldNot(BeNil())
 
@@ -93,6 +113,9 @@ func (h *H) Setup() {
 	} else {
 		log.Printf("Setting project name to %s", h.State.Project)
 		h.proj, err = h.Project().ProjectV1().Projects().Get(h.State.Project, metav1.GetOptions{})
+		if h.OutsideGinkgo && err != nil {
+			return fmt.Errorf("error retrieving project: %s", err.Error())
+		}
 		Expect(err).ShouldNot(HaveOccurred(), "failed to retrieve project")
 		Expect(h.proj).ShouldNot(BeNil())
 	}
@@ -104,6 +127,7 @@ func (h *H) Setup() {
 	if len(h.InstalledWorkloads) < 1 {
 		h.InstalledWorkloads = make(map[string]string)
 	}
+	return nil
 
 }
 

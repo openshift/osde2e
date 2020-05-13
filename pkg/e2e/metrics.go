@@ -6,6 +6,7 @@ import (
 	"encoding/xml"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -84,7 +85,8 @@ func NewMetrics() *Metrics {
 	provider, err := providers.ClusterProvider()
 
 	if err != nil {
-		panic(fmt.Sprintf("unable to get provider for metrics, failing: %v", err))
+		log.Printf("unable to get provider for metrics, failing: %v", err)
+		return nil
 	}
 
 	return &Metrics{

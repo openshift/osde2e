@@ -83,6 +83,10 @@ cicd_jUnitResult{cloud_provider="aws",cluster_id="1a2b3c",environment="prod",ins
 
 	for _, test := range tests {
 		m := NewMetrics()
+
+		if m == nil {
+			t.Error("error creating new metrics provider")
+		}
 		tmpFile, err := ioutil.TempFile(tmpDir, "*")
 
 		if err != nil {
@@ -180,6 +184,9 @@ cicd_addon_metadata{cloud_provider="aws",cluster_id="1a2b3c",environment="prod",
 
 	for _, test := range tests {
 		m := NewMetrics()
+		if m == nil {
+			t.Error("error creating new metrics provider")
+		}
 		tmpFile, err := ioutil.TempFile(tmpDir, "*")
 
 		if err != nil {
@@ -326,6 +333,9 @@ cicd_addon_metadata{cloud_provider="aws",cluster_id="1a2b3c",environment="prod",
 
 	for _, test := range tests {
 		m := NewMetrics()
+		if m == nil {
+			t.Error("error creating new metrics provider")
+		}
 		tmpDir, err := ioutil.TempDir("", "")
 
 		if err != nil {
