@@ -17,6 +17,8 @@ import (
 const (
 	consoleNamespace = "openshift-console"
 	consoleLabel     = "console"
+	oauthNamespace   = "openshift-authentication"
+	oauthName        = "oauth-openshift"
 )
 
 var _ = ginkgo.Describe("[Suite: e2e] Routes", func() {
@@ -28,9 +30,18 @@ var _ = ginkgo.Describe("[Suite: e2e] Routes", func() {
 
 	ginkgo.It("should be functioning for Console", func() {
 		for _, route := range consoleRoutes(h) {
-			testRouteIngresses(route)
+			testRouteIngresses(route, http.StatusOK)
 		}
 	}, 300)
+
+	ginkgo.It("should be created for oauth", func() {
+		oauthRoute(h)
+	}, 300)
+
+	ginkgo.It("should be functioning for oauth", func() {
+		testRouteIngresses(oauthRoute(h),http.StatusForbidden)
+	}, 300)
+
 })
 
 func consoleRoutes(h *helper.H) []v1.Route {
@@ -48,7 +59,16 @@ func consoleRoutes(h *helper.H) []v1.Route {
 	return list.Items
 }
 
-func testRouteIngresses(route v1.Route) {
+func oauthRoute(h *helper.H) v1.Route {
+	route, err := h.Route().RouteV1().Routes(oauthNamespace).Get(oauthName, metav1.GetOptions{})
+	if err != nil || route == nil {
+		err = fmt.Errorf("failed requesting routes: %v", err)
+	}
+	Expect(err).NotTo(HaveOccurred(), "failed getting routes for oauth")
+	return *route
+}
+
+func testRouteIngresses(route v1.Route, status int) {
 	Expect(route.Status.Ingress).ShouldNot(HaveLen(0),
 		"no ingresses have been setup for the route '%s/%s'", route.Namespace, route.Name)
 
@@ -66,6 +86,8 @@ func testRouteIngresses(route v1.Route) {
 		resp, err := client.Get(consoleURL)
 		Expect(err).NotTo(HaveOccurred(), "failed retrieving Console site")
 		Expect(resp).NotTo(BeNil())
-		Expect(resp.StatusCode).To(Equal(http.StatusOK))
+		Expect(resp.StatusCode).To(Equal(status))
+		// By default all http request should be protocol HTTP/1.1, see details: https://bugzilla.redhat.com/show_bug.cgi?id=1825354
+		Expect(resp.Proto).To(Equal("HTTP/1.1"))
 	}
 }
