@@ -143,7 +143,11 @@ func runGinkgoTests() error {
 
 		checkBeforeMetricsGeneration()
 
-		prometheusFilename, err := NewMetrics().WritePrometheusFile(cfg.ReportDir)
+		newMetrics := NewMetrics()
+		if newMetrics == nil {
+			return fmt.Errorf("error getting new metrics provider")
+		}
+		prometheusFilename, err := newMetrics.WritePrometheusFile(cfg.ReportDir)
 		if err != nil {
 			return fmt.Errorf("error while writing prometheus metrics: %v", err)
 		}

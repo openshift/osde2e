@@ -42,13 +42,15 @@ func Init() *H {
 // New instantiates a helper function to be used within a Ginkgo Test block
 func New() *H {
 	h := Init()
-	ginkgo.BeforeEach(h.Setup)
+	ginkgo.BeforeEach(h.SetupWrapper)
 
 	return h
 }
 
 // NewOutsideGinkgo instantiates a helper function while not within a Ginkgo Test Block
 func NewOutsideGinkgo() *H {
+	defer ginkgo.GinkgoRecover()
+
 	h := Init()
 	h.OutsideGinkgo = true
 	err := h.Setup()
@@ -69,6 +71,12 @@ type H struct {
 	// internal
 	restConfig *rest.Config
 	proj       *projectv1.Project
+}
+
+// SetupWrapper is a Ginkgo-Friendly setup function to pass to BeforeEach
+func (h *H) SetupWrapper() {
+	err := h.Setup()
+	Expect(err).ShouldNot(HaveOccurred(), "failed to configure helper object")
 }
 
 // Setup configures a *rest.Config using the embedded kubeconfig then sets up a Project for tests to run in.
