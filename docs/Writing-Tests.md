@@ -146,6 +146,27 @@ The helper:
 - Provides access to OpenShift and Kubernetes clients configured for the test cluster
 - Provides commonly used test functions
 
+## Static files
+Static files for `OSDe2e`  such as YAML manifests are managed using a project called **[`pkger`]**. 
+
+**[`pkger`]** takes and compresses assets into a single file for easier distribution. If your test has a static asset such as a manifest, add it into the **[`/assets/`]** directory. 
+
+Once your assets are in the correct directory, do the following:
+
+1. Install **[`pkger`]** on your system
+```
+$ go get github.com/markbates/pkger/cmd/pkger
+```
+2. Have **[`pkger`]** update the asset file (`/pkged.go`)
+```
+pkger -i $(pwd)/assets
+```
+3. Verify your new files are present
+```
+pkger list
+```
+4. Ensure the updated asset file is part of your PR.
+
 [Ginkgo]:https://onsi.github.io/ginkgo/
 [Gomega]:https://onsi.github.io/gomega/
 [`/cmd/osde2e/test/test.go`]:/cmd/osde2e/test/test.go
@@ -159,3 +180,5 @@ The helper:
 [ocm-sdk-go]:https://github.com/openshift-online/ocm-sdk-go
 [`config.Config`]:https://godoc.org/github.com/openshift/osde2e/common/pkg/config#Config
 [`helper.New()`]:https://godoc.org/github.com/openshift/osde2e/pkg/common/helper#New
+[`pkger`]:https://github.com/markbates/pkger
+[`/assets/`]:/assets/
