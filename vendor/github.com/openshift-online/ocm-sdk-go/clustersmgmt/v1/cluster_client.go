@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019 Red Hat, Inc.
+Copyright (c) 2020 Red Hat, Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -143,6 +143,17 @@ func (c *ClusterClient) IdentityProviders() *IdentityProvidersClient {
 	)
 }
 
+// Ingresses returns the target 'ingresses' resource.
+//
+// Reference to the resource that manages the collection of ingress resources.
+func (c *ClusterClient) Ingresses() *IngressesClient {
+	return NewIngressesClient(
+		c.transport,
+		path.Join(c.path, "ingresses"),
+		path.Join(c.metric, "ingresses"),
+	)
+}
+
 // Logs returns the target 'logs' resource.
 //
 // Reference to the resource that manages the collection of logs of the cluster.
@@ -162,6 +173,17 @@ func (c *ClusterClient) MetricQueries() *MetricQueriesClient {
 		c.transport,
 		path.Join(c.path, "metric_queries"),
 		path.Join(c.metric, "metric_queries"),
+	)
+}
+
+// Product returns the target 'product' resource.
+//
+// Reference to the resource that manages the product type of the cluster
+func (c *ClusterClient) Product() *ProductClient {
+	return NewProductClient(
+		c.transport,
+		path.Join(c.path, "product"),
+		path.Join(c.metric, "product"),
 	)
 }
 

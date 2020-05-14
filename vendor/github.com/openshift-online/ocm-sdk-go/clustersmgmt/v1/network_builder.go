@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019 Red Hat, Inc.
+Copyright (c) 2020 Red Hat, Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ package v1 // github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1
 //
 // Network configuration of a cluster.
 type NetworkBuilder struct {
+	hostPrefix  *int
 	machineCIDR *string
 	podCIDR     *string
 	serviceCIDR *string
@@ -31,6 +32,14 @@ type NetworkBuilder struct {
 // NewNetwork creates a new builder of 'network' objects.
 func NewNetwork() *NetworkBuilder {
 	return new(NetworkBuilder)
+}
+
+// HostPrefix sets the value of the 'host_prefix' attribute to the given value.
+//
+//
+func (b *NetworkBuilder) HostPrefix(value int) *NetworkBuilder {
+	b.hostPrefix = &value
+	return b
 }
 
 // MachineCIDR sets the value of the 'machine_CIDR' attribute to the given value.
@@ -62,6 +71,7 @@ func (b *NetworkBuilder) Copy(object *Network) *NetworkBuilder {
 	if object == nil {
 		return b
 	}
+	b.hostPrefix = object.hostPrefix
 	b.machineCIDR = object.machineCIDR
 	b.podCIDR = object.podCIDR
 	b.serviceCIDR = object.serviceCIDR
@@ -71,6 +81,7 @@ func (b *NetworkBuilder) Copy(object *Network) *NetworkBuilder {
 // Build creates a 'network' object using the configuration stored in the builder.
 func (b *NetworkBuilder) Build() (object *Network, err error) {
 	object = new(Network)
+	object.hostPrefix = b.hostPrefix
 	object.machineCIDR = b.machineCIDR
 	object.podCIDR = b.podCIDR
 	object.serviceCIDR = b.serviceCIDR

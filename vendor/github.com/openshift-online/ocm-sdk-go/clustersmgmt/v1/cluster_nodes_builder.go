@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019 Red Hat, Inc.
+Copyright (c) 2020 Red Hat, Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -23,10 +23,11 @@ package v1 // github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1
 //
 // Counts of different classes of nodes inside a cluster.
 type ClusterNodesBuilder struct {
-	compute *int
-	infra   *int
-	master  *int
-	total   *int
+	compute            *int
+	computeMachineType *MachineTypeBuilder
+	infra              *int
+	master             *int
+	total              *int
 }
 
 // NewClusterNodes creates a new builder of 'cluster_nodes' objects.
@@ -39,6 +40,14 @@ func NewClusterNodes() *ClusterNodesBuilder {
 //
 func (b *ClusterNodesBuilder) Compute(value int) *ClusterNodesBuilder {
 	b.compute = &value
+	return b
+}
+
+// ComputeMachineType sets the value of the 'compute_machine_type' attribute to the given value.
+//
+// Machine type.
+func (b *ClusterNodesBuilder) ComputeMachineType(value *MachineTypeBuilder) *ClusterNodesBuilder {
+	b.computeMachineType = value
 	return b
 }
 
@@ -72,6 +81,11 @@ func (b *ClusterNodesBuilder) Copy(object *ClusterNodes) *ClusterNodesBuilder {
 		return b
 	}
 	b.compute = object.compute
+	if object.computeMachineType != nil {
+		b.computeMachineType = NewMachineType().Copy(object.computeMachineType)
+	} else {
+		b.computeMachineType = nil
+	}
 	b.infra = object.infra
 	b.master = object.master
 	b.total = object.total
@@ -82,6 +96,12 @@ func (b *ClusterNodesBuilder) Copy(object *ClusterNodes) *ClusterNodesBuilder {
 func (b *ClusterNodesBuilder) Build() (object *ClusterNodes, err error) {
 	object = new(ClusterNodes)
 	object.compute = b.compute
+	if b.computeMachineType != nil {
+		object.computeMachineType, err = b.computeMachineType.Build()
+		if err != nil {
+			return
+		}
+	}
 	object.infra = b.infra
 	object.master = b.master
 	object.total = b.total

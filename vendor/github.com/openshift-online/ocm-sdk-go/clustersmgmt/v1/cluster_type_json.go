@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019 Red Hat, Inc.
+Copyright (c) 2020 Red Hat, Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -195,6 +195,14 @@ func writeCluster(object *Cluster, stream *jsoniter.Stream) {
 		stream.WriteObjectEnd()
 		count++
 	}
+	if object.healthState != nil {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("health_state")
+		stream.WriteString(string(*object.healthState))
+		count++
+	}
 	if object.identityProviders != nil {
 		if count > 0 {
 			stream.WriteMore()
@@ -279,6 +287,14 @@ func writeCluster(object *Cluster, stream *jsoniter.Stream) {
 		}
 		stream.WriteObjectField("openshift_version")
 		stream.WriteString(*object.openshiftVersion)
+		count++
+	}
+	if object.product != nil {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("product")
+		writeProduct(object.product, stream)
 		count++
 	}
 	if object.properties != nil {
@@ -485,6 +501,10 @@ func readCluster(iterator *jsoniter.Iterator) *Cluster {
 				}
 			}
 			object.groups = value
+		case "health_state":
+			text := iterator.ReadString()
+			value := ClusterHealthState(text)
+			object.healthState = &value
 		case "identity_providers":
 			value := &IdentityProviderList{}
 			for {
@@ -551,6 +571,9 @@ func readCluster(iterator *jsoniter.Iterator) *Cluster {
 		case "openshift_version":
 			value := iterator.ReadString()
 			object.openshiftVersion = &value
+		case "product":
+			value := readProduct(iterator)
+			object.product = value
 		case "properties":
 			value := map[string]string{}
 			for {

@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019 Red Hat, Inc.
+Copyright (c) 2020 Red Hat, Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -29,8 +29,6 @@ const (
 	ClusterStateInstalling ClusterState = "installing"
 	// The cluster is waiting to be provisioned.
 	ClusterStatePending ClusterState = "pending"
-	// Creation of the cluster is waiting for the creation of an account in the cloud provider.
-	ClusterStatePendingAccount ClusterState = "pending_account"
 	// The cluster is ready to use.
 	ClusterStateReady ClusterState = "ready"
 	// The cluster is being uninstalled.

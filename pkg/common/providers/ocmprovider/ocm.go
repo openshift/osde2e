@@ -142,6 +142,11 @@ func (o *OCMProvider) CincinnatiChannel() spi.CincinnatiChannel {
 	return spi.CincinnatiStableChannel
 }
 
+// GetConnection returns the raw connection. Meant to be used by providers which have a dependency on the OCM provider.
+func (o *OCMProvider) GetConnection() *ocm.Connection {
+	return o.conn
+}
+
 // ErrResp takes an OCM error and converts it into a regular Golang error.
 func errResp(resp *ocmerr.Error) error {
 	if resp != nil {

@@ -18,6 +18,8 @@ type Config struct {
 
 	Cluster ClusterConfig `yaml:"cluster"`
 
+	MOA MOAConfig `yaml:"moa"`
+
 	OCM OCMConfig `yaml:"ocm"`
 
 	Addons AddonConfig `yaml:"addons"`
@@ -62,6 +64,27 @@ type Config struct {
 type KubeConfig struct {
 	// Path is the filepath of an existing Kubeconfig
 	Path string `env:"TEST_KUBECONFIG" sect:"cluster" yaml:"path"`
+}
+
+// MOAConfig contains connect info for provisioning MOA clusters
+type MOAConfig struct {
+	// ComputeMachineType is the machine type to use for compute nodes on MOA clusters.
+	ComputeMachineType string `json:"computeMachineType" env:"MOA_COMPUTE_MACHINE_TYPE" sect:"moa" yaml:"computeMachineType"`
+
+	// ComputeNodes is the number of compute nodes to use for MOA clusters.
+	ComputeNodes int `json:"computeNodes" env:"MOA_COMPUTE_NODES" sect:"moa" yaml:"computeNodes"`
+
+	// MachineCIDR is the CIDR to be used for machines when MOA communicates with OCM.
+	MachineCIDR string `json:"machineCIDR" env:"MOA_MACHINE_CIDR" sect:"moa" yaml:"machineCIDR"`
+
+	// ServiceCIDR is the CIDR to be used for services when MOA communicates with OCM.
+	ServiceCIDR string `json:"serviceCIDR" env:"MOA_SERVICE_CIDR" sect:"moa" yaml:"serviceCIDR"`
+
+	// PodCIDR is the CIDR to be used for pods when MOA communicates with OCM.
+	PodCIDR string `json:"podCIDR" env:"MOA_POD_CIDR" sect:"moa" yaml:"podCIDR"`
+
+	// HostPrefix is a prefix to give to each host.
+	HostPrefix int `json:"hostPrefix" env:"MOA_HOST_PREFIX" sect:"moa" yaml:"hostPrefix"`
 }
 
 // OCMConfig contains connect info for the OCM API

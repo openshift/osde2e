@@ -12,6 +12,9 @@
 *.out
 out/
 
+# Ignore moactl
+vendor/github.com/openshift/moactl
+
 # Editor metadata
 .idea
 *.swp

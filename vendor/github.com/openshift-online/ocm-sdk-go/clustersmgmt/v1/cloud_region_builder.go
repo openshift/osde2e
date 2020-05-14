@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019 Red Hat, Inc.
+Copyright (c) 2020 Red Hat, Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ type CloudRegionBuilder struct {
 	link          bool
 	cloudProvider *CloudProviderBuilder
 	displayName   *string
+	enabled       *bool
 	name          *string
 }
 
@@ -70,6 +71,14 @@ func (b *CloudRegionBuilder) DisplayName(value string) *CloudRegionBuilder {
 	return b
 }
 
+// Enabled sets the value of the 'enabled' attribute to the given value.
+//
+//
+func (b *CloudRegionBuilder) Enabled(value bool) *CloudRegionBuilder {
+	b.enabled = &value
+	return b
+}
+
 // Name sets the value of the 'name' attribute to the given value.
 //
 //
@@ -92,6 +101,7 @@ func (b *CloudRegionBuilder) Copy(object *CloudRegion) *CloudRegionBuilder {
 		b.cloudProvider = nil
 	}
 	b.displayName = object.displayName
+	b.enabled = object.enabled
 	b.name = object.name
 	return b
 }
@@ -109,6 +119,7 @@ func (b *CloudRegionBuilder) Build() (object *CloudRegion, err error) {
 		}
 	}
 	object.displayName = b.displayName
+	object.enabled = b.enabled
 	object.name = b.name
 	return
 }

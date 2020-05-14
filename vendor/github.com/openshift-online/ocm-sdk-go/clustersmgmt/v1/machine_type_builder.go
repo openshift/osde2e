@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019 Red Hat, Inc.
+Copyright (c) 2020 Red Hat, Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ type MachineTypeBuilder struct {
 	href          *string
 	link          bool
 	cpu           *ValueBuilder
+	category      *MachineTypeCategory
 	cloudProvider *CloudProviderBuilder
 	memory        *ValueBuilder
 	name          *string
@@ -77,6 +78,14 @@ func (b *MachineTypeBuilder) Link(value bool) *MachineTypeBuilder {
 // - 1 PiB = 2^50 bytes
 func (b *MachineTypeBuilder) CPU(value *ValueBuilder) *MachineTypeBuilder {
 	b.cpu = value
+	return b
+}
+
+// Category sets the value of the 'category' attribute to the given value.
+//
+// Machine type category.
+func (b *MachineTypeBuilder) Category(value MachineTypeCategory) *MachineTypeBuilder {
+	b.category = &value
 	return b
 }
 
@@ -134,6 +143,7 @@ func (b *MachineTypeBuilder) Copy(object *MachineType) *MachineTypeBuilder {
 	} else {
 		b.cpu = nil
 	}
+	b.category = object.category
 	if object.cloudProvider != nil {
 		b.cloudProvider = NewCloudProvider().Copy(object.cloudProvider)
 	} else {
@@ -160,6 +170,7 @@ func (b *MachineTypeBuilder) Build() (object *MachineType, err error) {
 			return
 		}
 	}
+	object.category = b.category
 	if b.cloudProvider != nil {
 		object.cloudProvider, err = b.cloudProvider.Build()
 		if err != nil {

@@ -19,6 +19,7 @@ ifndef $(GOPATH)
 endif
 
 check:
+	export GOPRIVATE="github.com/openshift/moactl"
 	CGO_ENABLED=0 go test -v $(PKG)/cmd/... $(PKG)/pkg/...
 	
 	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(shell go env GOPATH)/bin v1.23.8

@@ -7,7 +7,7 @@ github.com/alecthomas/template
 github.com/alecthomas/template/parse
 # github.com/alecthomas/units v0.0.0-20190717042225-c3de453c63f4
 github.com/alecthomas/units
-# github.com/aws/aws-sdk-go v1.25.48
+# github.com/aws/aws-sdk-go v1.29.17
 github.com/aws/aws-sdk-go/aws
 github.com/aws/aws-sdk-go/aws/arn
 github.com/aws/aws-sdk-go/aws/awserr
@@ -27,6 +27,7 @@ github.com/aws/aws-sdk-go/aws/endpoints
 github.com/aws/aws-sdk-go/aws/request
 github.com/aws/aws-sdk-go/aws/session
 github.com/aws/aws-sdk-go/aws/signer/v4
+github.com/aws/aws-sdk-go/internal/context
 github.com/aws/aws-sdk-go/internal/ini
 github.com/aws/aws-sdk-go/internal/s3err
 github.com/aws/aws-sdk-go/internal/sdkio
@@ -34,19 +35,30 @@ github.com/aws/aws-sdk-go/internal/sdkmath
 github.com/aws/aws-sdk-go/internal/sdkrand
 github.com/aws/aws-sdk-go/internal/sdkuri
 github.com/aws/aws-sdk-go/internal/shareddefaults
+github.com/aws/aws-sdk-go/internal/strings
+github.com/aws/aws-sdk-go/internal/sync/singleflight
 github.com/aws/aws-sdk-go/private/protocol
 github.com/aws/aws-sdk-go/private/protocol/eventstream
 github.com/aws/aws-sdk-go/private/protocol/eventstream/eventstreamapi
 github.com/aws/aws-sdk-go/private/protocol/json/jsonutil
+github.com/aws/aws-sdk-go/private/protocol/jsonrpc
 github.com/aws/aws-sdk-go/private/protocol/query
 github.com/aws/aws-sdk-go/private/protocol/query/queryutil
 github.com/aws/aws-sdk-go/private/protocol/rest
 github.com/aws/aws-sdk-go/private/protocol/restxml
 github.com/aws/aws-sdk-go/private/protocol/xml/xmlutil
+github.com/aws/aws-sdk-go/service/cloudformation
+github.com/aws/aws-sdk-go/service/cloudformation/cloudformationiface
+github.com/aws/aws-sdk-go/service/iam
+github.com/aws/aws-sdk-go/service/iam/iamiface
+github.com/aws/aws-sdk-go/service/organizations
+github.com/aws/aws-sdk-go/service/organizations/organizationsiface
 github.com/aws/aws-sdk-go/service/s3
 github.com/aws/aws-sdk-go/service/s3/internal/arn
 github.com/aws/aws-sdk-go/service/s3/s3iface
 github.com/aws/aws-sdk-go/service/s3/s3manager
+github.com/aws/aws-sdk-go/service/servicequotas
+github.com/aws/aws-sdk-go/service/servicequotas/servicequotasiface
 github.com/aws/aws-sdk-go/service/sts
 github.com/aws/aws-sdk-go/service/sts/stsiface
 # github.com/beorn7/perks v1.0.1
@@ -70,7 +82,7 @@ github.com/gogo/protobuf/proto
 github.com/gogo/protobuf/sortkeys
 # github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b
 github.com/golang/glog
-# github.com/golang/groupcache v0.0.0-20181024230925-c65c006176ff
+# github.com/golang/groupcache v0.0.0-20190129154638-5b532d6fd5ef
 github.com/golang/groupcache/lru
 # github.com/golang/protobuf v1.3.2
 github.com/golang/protobuf/proto
@@ -161,7 +173,7 @@ github.com/onsi/gomega/matchers/support/goraph/edge
 github.com/onsi/gomega/matchers/support/goraph/node
 github.com/onsi/gomega/matchers/support/goraph/util
 github.com/onsi/gomega/types
-# github.com/openshift-online/ocm-sdk-go v0.1.97
+# github.com/openshift-online/ocm-sdk-go v0.1.100
 github.com/openshift-online/ocm-sdk-go
 github.com/openshift-online/ocm-sdk-go/accountsmgmt
 github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1
@@ -202,6 +214,15 @@ github.com/openshift/client-go/route/clientset/versioned/typed/route/v1
 github.com/openshift/client-go/user/clientset/versioned
 github.com/openshift/client-go/user/clientset/versioned/scheme
 github.com/openshift/client-go/user/clientset/versioned/typed/user/v1
+# github.com/openshift/moactl v0.0.0-20200519112952-76a1c9f18013
+github.com/openshift/moactl/assets
+github.com/openshift/moactl/pkg/aws
+github.com/openshift/moactl/pkg/aws/tags
+github.com/openshift/moactl/pkg/cluster
+github.com/openshift/moactl/pkg/debug
+github.com/openshift/moactl/pkg/logging
+github.com/openshift/moactl/pkg/ocm/properties
+github.com/openshift/moactl/pkg/reporter
 # github.com/operator-framework/operator-lifecycle-manager v0.0.0-20190926160646-a61144936680
 github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators
 github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1
@@ -211,7 +232,7 @@ github.com/operator-framework/operator-lifecycle-manager/pkg/api/client/clientse
 github.com/operator-framework/operator-lifecycle-manager/pkg/api/client/clientset/versioned/typed/operators/v1
 github.com/operator-framework/operator-lifecycle-manager/pkg/api/client/clientset/versioned/typed/operators/v1alpha1
 github.com/operator-framework/operator-lifecycle-manager/pkg/lib/version
-# github.com/pkg/errors v0.8.1
+# github.com/pkg/errors v0.9.1
 github.com/pkg/errors
 # github.com/prometheus/client_golang v1.4.1
 github.com/prometheus/client_golang/api
@@ -249,7 +270,7 @@ golang.org/x/crypto/openpgp/errors
 golang.org/x/crypto/openpgp/packet
 golang.org/x/crypto/openpgp/s2k
 golang.org/x/crypto/ssh/terminal
-# golang.org/x/net v0.0.0-20191004110552-13f9640d40b9
+# golang.org/x/net v0.0.0-20200202094626-16171245cfb2
 golang.org/x/net/context
 golang.org/x/net/context/ctxhttp
 golang.org/x/net/html
@@ -345,7 +366,7 @@ k8s.io/api/settings/v1alpha1
 k8s.io/api/storage/v1
 k8s.io/api/storage/v1alpha1
 k8s.io/api/storage/v1beta1
-# k8s.io/apimachinery v0.0.0-20191004074956-c5d2f014d689
+# k8s.io/apimachinery v0.18.2 => k8s.io/apimachinery v0.0.0-20191004074956-c5d2f014d689
 k8s.io/apimachinery/pkg/api/errors
 k8s.io/apimachinery/pkg/api/meta
 k8s.io/apimachinery/pkg/api/resource

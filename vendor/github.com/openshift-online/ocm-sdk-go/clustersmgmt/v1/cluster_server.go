@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019 Red Hat, Inc.
+Copyright (c) 2020 Red Hat, Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -71,6 +71,11 @@ type ClusterServer interface {
 	// Reference to the resource that manages the collection of identity providers.
 	IdentityProviders() IdentityProvidersServer
 
+	// Ingresses returns the target 'ingresses' resource.
+	//
+	// Reference to the resource that manages the collection of ingress resources.
+	Ingresses() IngressesServer
+
 	// Logs returns the target 'logs' resource.
 	//
 	// Reference to the resource that manages the collection of logs of the cluster.
@@ -80,6 +85,11 @@ type ClusterServer interface {
 	//
 	// Reference to the resource that manages metrics queries for the cluster.
 	MetricQueries() MetricQueriesServer
+
+	// Product returns the target 'product' resource.
+	//
+	// Reference to the resource that manages the product type of the cluster
+	Product() ProductServer
 
 	// Status returns the target 'cluster_status' resource.
 	//
@@ -232,6 +242,13 @@ func dispatchCluster(w http.ResponseWriter, r *http.Request, server ClusterServe
 			return
 		}
 		dispatchIdentityProviders(w, r, target, segments[1:])
+	case "ingresses":
+		target := server.Ingresses()
+		if target == nil {
+			errors.SendNotFound(w, r)
+			return
+		}
+		dispatchIngresses(w, r, target, segments[1:])
 	case "logs":
 		target := server.Logs()
 		if target == nil {
@@ -246,6 +263,13 @@ func dispatchCluster(w http.ResponseWriter, r *http.Request, server ClusterServe
 			return
 		}
 		dispatchMetricQueries(w, r, target, segments[1:])
+	case "product":
+		target := server.Product()
+		if target == nil {
+			errors.SendNotFound(w, r)
+			return
+		}
+		dispatchProduct(w, r, target, segments[1:])
 	case "status":
 		target := server.Status()
 		if target == nil {

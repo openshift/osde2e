@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019 Red Hat, Inc.
+Copyright (c) 2020 Red Hat, Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -81,6 +81,7 @@ type ClusterBuilder struct {
 	externalID                        *string
 	flavour                           *FlavourBuilder
 	groups                            *GroupListBuilder
+	healthState                       *ClusterHealthState
 	identityProviders                 *IdentityProviderListBuilder
 	ingresses                         *IngressListBuilder
 	loadBalancerQuota                 *int
@@ -91,6 +92,7 @@ type ClusterBuilder struct {
 	network                           *NetworkBuilder
 	nodes                             *ClusterNodesBuilder
 	openshiftVersion                  *string
+	product                           *ProductBuilder
 	properties                        map[string]string
 	region                            *CloudRegionBuilder
 	state                             *ClusterState
@@ -243,6 +245,14 @@ func (b *ClusterBuilder) Groups(value *GroupListBuilder) *ClusterBuilder {
 	return b
 }
 
+// HealthState sets the value of the 'health_state' attribute to the given value.
+//
+// ClusterHealthState indicates the health of a cluster.
+func (b *ClusterBuilder) HealthState(value ClusterHealthState) *ClusterBuilder {
+	b.healthState = &value
+	return b
+}
+
 // IdentityProviders sets the value of the 'identity_providers' attribute to the given values.
 //
 //
@@ -320,6 +330,14 @@ func (b *ClusterBuilder) Nodes(value *ClusterNodesBuilder) *ClusterBuilder {
 //
 func (b *ClusterBuilder) OpenshiftVersion(value string) *ClusterBuilder {
 	b.openshiftVersion = &value
+	return b
+}
+
+// Product sets the value of the 'product' attribute to the given value.
+//
+// Representation of an product that can be selected as a cluster type.
+func (b *ClusterBuilder) Product(value *ProductBuilder) *ClusterBuilder {
+	b.product = value
 	return b
 }
 
@@ -447,6 +465,7 @@ func (b *ClusterBuilder) Copy(object *Cluster) *ClusterBuilder {
 	} else {
 		b.groups = nil
 	}
+	b.healthState = object.healthState
 	if object.identityProviders != nil {
 		b.identityProviders = NewIdentityProviderList().Copy(object.identityProviders)
 	} else {
@@ -477,6 +496,11 @@ func (b *ClusterBuilder) Copy(object *Cluster) *ClusterBuilder {
 		b.nodes = nil
 	}
 	b.openshiftVersion = object.openshiftVersion
+	if object.product != nil {
+		b.product = NewProduct().Copy(object.product)
+	} else {
+		b.product = nil
+	}
 	if len(object.properties) > 0 {
 		b.properties = make(map[string]string)
 		for k, v := range object.properties {
@@ -575,6 +599,7 @@ func (b *ClusterBuilder) Build() (object *Cluster, err error) {
 			return
 		}
 	}
+	object.healthState = b.healthState
 	if b.identityProviders != nil {
 		object.identityProviders, err = b.identityProviders.Build()
 		if err != nil {
@@ -610,6 +635,12 @@ func (b *ClusterBuilder) Build() (object *Cluster, err error) {
 		}
 	}
 	object.openshiftVersion = b.openshiftVersion
+	if b.product != nil {
+		object.product, err = b.product.Build()
+		if err != nil {
+			return
+		}
+	}
 	if b.properties != nil {
 		object.properties = make(map[string]string)
 		for k, v := range b.properties {

@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019 Red Hat, Inc.
+Copyright (c) 2020 Red Hat, Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -40,6 +40,7 @@ type CloudRegion struct {
 	link          bool
 	cloudProvider *CloudProvider
 	displayName   *string
+	enabled       *bool
 	name          *string
 }
 
@@ -99,6 +100,7 @@ func (o *CloudRegion) GetHREF() (value string, ok bool) {
 func (o *CloudRegion) Empty() bool {
 	return o == nil || (o.id == nil &&
 		o.displayName == nil &&
+		o.enabled == nil &&
 		o.name == nil &&
 		true)
 }
@@ -149,12 +151,35 @@ func (o *CloudRegion) GetDisplayName() (value string, ok bool) {
 	return
 }
 
+// Enabled returns the value of the 'enabled' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+// Whether the region is enabled for deploying an OSD cluster.
+func (o *CloudRegion) Enabled() bool {
+	if o != nil && o.enabled != nil {
+		return *o.enabled
+	}
+	return false
+}
+
+// GetEnabled returns the value of the 'enabled' attribute and
+// a flag indicating if the attribute has a value.
+//
+// Whether the region is enabled for deploying an OSD cluster.
+func (o *CloudRegion) GetEnabled() (value bool, ok bool) {
+	ok = o != nil && o.enabled != nil
+	if ok {
+		value = *o.enabled
+	}
+	return
+}
+
 // Name returns the value of the 'name' attribute, or
 // the zero value of the type if the attribute doesn't have a value.
 //
 // Human friendly identifier of the region, for example `us-east-1`.
 //
-// NOTE: Currently for all cloud provideers and all regions `id` and `name` have exactly
+// NOTE: Currently for all cloud providers and all regions `id` and `name` have exactly
 // the same values.
 func (o *CloudRegion) Name() string {
 	if o != nil && o.name != nil {
@@ -168,7 +193,7 @@ func (o *CloudRegion) Name() string {
 //
 // Human friendly identifier of the region, for example `us-east-1`.
 //
-// NOTE: Currently for all cloud provideers and all regions `id` and `name` have exactly
+// NOTE: Currently for all cloud providers and all regions `id` and `name` have exactly
 // the same values.
 func (o *CloudRegion) GetName() (value string, ok bool) {
 	ok = o != nil && o.name != nil

@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019 Red Hat, Inc.
+Copyright (c) 2020 Red Hat, Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -75,6 +75,17 @@ func (c *MetricQueriesClient) ClusterOperators() *ClusterOperatorsMetricQueryCli
 		c.transport,
 		path.Join(c.path, "cluster_operators"),
 		path.Join(c.metric, "cluster_operators"),
+	)
+}
+
+// Nodes returns the target 'nodes_metric_query' resource.
+//
+// Reference to the resource that retrieves the nodes in the cluster.
+func (c *MetricQueriesClient) Nodes() *NodesMetricQueryClient {
+	return NewNodesMetricQueryClient(
+		c.transport,
+		path.Join(c.path, "nodes"),
+		path.Join(c.metric, "nodes"),
 	)
 }
 

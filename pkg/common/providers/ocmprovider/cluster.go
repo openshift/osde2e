@@ -356,8 +356,6 @@ func ocmStateToInternalState(state v1.ClusterState) spi.ClusterState {
 		return spi.ClusterStateInstalling
 	case v1.ClusterStatePending:
 		return spi.ClusterStatePending
-	case v1.ClusterStatePendingAccount:
-		return spi.ClusterStatePendingAccount
 	case v1.ClusterStateReady:
 		return spi.ClusterStateReady
 	case v1.ClusterStateUninstalling:

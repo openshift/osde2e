@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019 Red Hat, Inc.
+Copyright (c) 2020 Red Hat, Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -39,6 +39,7 @@ type MachineType struct {
 	href          *string
 	link          bool
 	cpu           *Value
+	category      *MachineTypeCategory
 	cloudProvider *CloudProvider
 	memory        *Value
 	name          *string
@@ -99,6 +100,7 @@ func (o *MachineType) GetHREF() (value string, ok bool) {
 // Empty returns true if the object is empty, i.e. no attribute has a value.
 func (o *MachineType) Empty() bool {
 	return o == nil || (o.id == nil &&
+		o.category == nil &&
 		o.name == nil &&
 		true)
 }
@@ -122,6 +124,29 @@ func (o *MachineType) GetCPU() (value *Value, ok bool) {
 	ok = o != nil && o.cpu != nil
 	if ok {
 		value = o.cpu
+	}
+	return
+}
+
+// Category returns the value of the 'category' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+// The category which the machine type is suitable for.
+func (o *MachineType) Category() MachineTypeCategory {
+	if o != nil && o.category != nil {
+		return *o.category
+	}
+	return MachineTypeCategory("")
+}
+
+// GetCategory returns the value of the 'category' attribute and
+// a flag indicating if the attribute has a value.
+//
+// The category which the machine type is suitable for.
+func (o *MachineType) GetCategory() (value MachineTypeCategory, ok bool) {
+	ok = o != nil && o.category != nil
+	if ok {
+		value = *o.category
 	}
 	return
 }

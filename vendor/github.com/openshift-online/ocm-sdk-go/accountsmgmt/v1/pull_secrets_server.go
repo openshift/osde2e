@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019 Red Hat, Inc.
+Copyright (c) 2020 Red Hat, Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -34,6 +34,11 @@ type PullSecretsServer interface {
 	//
 	// Returns access token generated from registries in docker format.
 	Post(ctx context.Context, request *PullSecretsPostServerRequest, response *PullSecretsPostServerResponse) error
+
+	// PullSecret returns the target 'pull_secret' server for the given identifier.
+	//
+	// Reference to the service that manages a specific pull secret.
+	PullSecret(id string) PullSecretServer
 }
 
 // PullSecretsPostServerRequest is the request for the 'post' method.
@@ -100,8 +105,12 @@ func dispatchPullSecrets(w http.ResponseWriter, r *http.Request, server PullSecr
 	}
 	switch segments[0] {
 	default:
-		errors.SendNotFound(w, r)
-		return
+		target := server.PullSecret(segments[0])
+		if target == nil {
+			errors.SendNotFound(w, r)
+			return
+		}
+		dispatchPullSecret(w, r, target, segments[1:])
 	}
 }
 

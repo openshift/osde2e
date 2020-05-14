@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019 Red Hat, Inc.
+Copyright (c) 2020 Red Hat, Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ package v1 // github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1
 //
 // Network configuration of a cluster.
 type Network struct {
+	hostPrefix  *int
 	machineCIDR *string
 	podCIDR     *string
 	serviceCIDR *string
@@ -30,10 +31,34 @@ type Network struct {
 
 // Empty returns true if the object is empty, i.e. no attribute has a value.
 func (o *Network) Empty() bool {
-	return o == nil || (o.machineCIDR == nil &&
+	return o == nil || (o.hostPrefix == nil &&
+		o.machineCIDR == nil &&
 		o.podCIDR == nil &&
 		o.serviceCIDR == nil &&
 		true)
+}
+
+// HostPrefix returns the value of the 'host_prefix' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+// Network host prefix which is defaulted to `23` if not specified.
+func (o *Network) HostPrefix() int {
+	if o != nil && o.hostPrefix != nil {
+		return *o.hostPrefix
+	}
+	return 0
+}
+
+// GetHostPrefix returns the value of the 'host_prefix' attribute and
+// a flag indicating if the attribute has a value.
+//
+// Network host prefix which is defaulted to `23` if not specified.
+func (o *Network) GetHostPrefix() (value int, ok bool) {
+	ok = o != nil && o.hostPrefix != nil
+	if ok {
+		value = *o.hostPrefix
+	}
+	return
 }
 
 // MachineCIDR returns the value of the 'machine_CIDR' attribute, or
