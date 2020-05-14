@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/Masterminds/semver"
 	"github.com/google/uuid"
 	"github.com/openshift/osde2e/pkg/common/spi"
 	"github.com/openshift/osde2e/pkg/common/state"
@@ -52,12 +53,20 @@ func (m *MockProvider) LaunchCluster() (string, error) {
 
 // DeleteCluster mocks a delete cluster operation.
 func (m *MockProvider) DeleteCluster(clusterID string) error {
+	if clusterID == "fail" {
+		return fmt.Errorf("Fake error deleting cluster.")
+	}
+
 	delete(m.clusters, clusterID)
 	return nil
 }
 
 // GetCluster mocks a get cluster operation.
 func (m *MockProvider) GetCluster(clusterID string) (*spi.Cluster, error) {
+	if clusterID == "fail" {
+		return nil, fmt.Errorf("Failed to get versions: Some fake error.")
+	}
+
 	if cluster, ok := m.clusters[clusterID]; ok {
 		return cluster, nil
 	}
@@ -66,27 +75,67 @@ func (m *MockProvider) GetCluster(clusterID string) (*spi.Cluster, error) {
 
 // ClusterKubeconfig mocks a cluster kubeconfig operation.
 func (m *MockProvider) ClusterKubeconfig(clusterID string) ([]byte, error) {
+	if clusterID == "fail" {
+		return nil, fmt.Errorf("Failed to get versions: Some fake error.")
+	}
+
 	return nil, fmt.Errorf("cluster kubeconfig is currently unsupported by the mock provider")
 }
 
 // CheckQuota mocks a check quota operation.
 func (m *MockProvider) CheckQuota() (bool, error) {
+	if m.env == "fail" {
+		return false, fmt.Errorf("Failed to get versions: Some fake error.")
+	}
+
 	return false, fmt.Errorf("check quota is currently unsupported by the mock provider")
 }
 
 // InstallAddons mocks an install addons operation.
 func (m *MockProvider) InstallAddons(clusterID string, addonIDs []string) (int, error) {
+	if clusterID == "fail" {
+		return 0, fmt.Errorf("Failed to get versions: Some fake error.")
+	}
+
 	return 0, fmt.Errorf("install addons is currently unsupported by the mock provider")
 }
 
 // Versions mocks a versions operation.
 func (m *MockProvider) Versions() (*spi.VersionList, error) {
-	return nil, fmt.Errorf("versions is currently unsupported by the mock provider")
+	if m.env == "fail" {
+		return nil, fmt.Errorf("Fake error returning version list")
+	}
+	versions := []*spi.Version{
+		spi.NewVersionBuilder().
+			Version(semver.MustParse("1.2.3")).
+			Default(false).
+			Build(),
+		spi.NewVersionBuilder().
+			Version(semver.MustParse("2.3.4")).
+			Default(false).
+			Build(),
+		spi.NewVersionBuilder().
+			Version(semver.MustParse("4.5.6")).
+			Default(true).
+			Build(),
+	}
+	return spi.NewVersionListBuilder().
+		AvailableVersions(versions).
+		DefaultVersionOverride(nil).
+		Build(), nil
 }
 
 // Logs mocks a logs operation.
 func (m *MockProvider) Logs(clusterID string) (map[string][]byte, error) {
-	return map[string][]byte{}, fmt.Errorf("versions is currently unsupported by the mock provider")
+	if clusterID == "fail" {
+		return nil, fmt.Errorf("Failed to get versions: Some fake error.")
+	}
+
+	logs := make(map[string][]byte)
+	logs["logs.txt"] = []byte("Here is some lovely log content.")
+	logs["build.log"] = []byte("Additional logs with a different name.")
+
+	return logs, nil
 }
 
 // Environment mocks an environment operation.
