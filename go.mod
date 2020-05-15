@@ -3,9 +3,10 @@ module github.com/openshift/osde2e
 go 1.13
 
 require (
-	github.com/Masterminds/semver v1.4.2
+	github.com/Masterminds/semver v1.5.0
 	github.com/adamliesko/retry v0.0.0-20200123222335-86c8baac277d
 	github.com/aws/aws-sdk-go v1.25.48
+	github.com/code-ready/crc v0.0.0-20200513025153-d3c726ac59a6
 	github.com/emicklei/go-restful v2.9.6+incompatible
 	github.com/gogo/protobuf v1.2.2-0.20190723190241-65acae22fc9d // indirect
 	github.com/google/go-github/v31 v31.0.0
