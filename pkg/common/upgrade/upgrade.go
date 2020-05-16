@@ -14,10 +14,13 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 
 	"github.com/openshift/osde2e/pkg/common/cluster"
+	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/metadata"
+	"github.com/openshift/osde2e/pkg/common/providers"
 	"github.com/openshift/osde2e/pkg/common/spi"
 	"github.com/openshift/osde2e/pkg/common/state"
+	"github.com/openshift/osde2e/pkg/common/util"
 )
 
 const (
@@ -199,4 +202,33 @@ func IsUpgradeDone(h *helper.H, desired *configv1.Update) (done bool, msg string
 
 	done = true
 	return
+}
+
+// VersionToChannel creates a Cincinnati channel version out of an OpenShift version.
+// If the config.Instance.Upgrade.OnlyUpgradeToZReleases flag is set, this will use the install version
+// in the global state object to determine the channel.
+// The provider will be queried for the appropriate Cincinnati channel  to use unless a prelease version
+// is being used, in which case the candidate channel will be used.
+func VersionToChannel(version *semver.Version) (string, error) {
+	useVersion := version
+	if config.Instance.Upgrade.OnlyUpgradeToZReleases {
+		var err error
+		useVersion, err = util.OpenshiftVersionToSemver(state.Instance.Cluster.Version)
+
+		if err != nil {
+			panic("cluster version stored in state object is invalid")
+		}
+	}
+
+	if strings.HasPrefix(useVersion.Prerelease(), "rc") {
+		return fmt.Sprintf("candidate-%d.%d", useVersion.Major(), useVersion.Minor()), nil
+	}
+
+	provider, err := providers.ClusterProvider()
+
+	if err != nil {
+		return "", fmt.Errorf("unable to get provider: %s", err)
+	}
+
+	return fmt.Sprintf("%s-%d.%d", provider.CincinnatiChannel(), useVersion.Major(), useVersion.Minor()), nil
 }
