@@ -48,6 +48,9 @@ type Config struct {
 	// Suffix is used at the end of test names to identify them.
 	Suffix string `json:"suffix,omitempty" env:"SUFFIX" sect:"tests" default:"__RND_3__" yaml:"suffix"`
 
+	// Plugins is the directory where all the plugins will be housed in addition to the default plugin assets that will be baked into the osde2e binary.
+	Plugins string `json:"plugins" env:"PLUGINS" sect:"tests" yaml:"plugins"`
+
 	// DryRun lets you run osde2e all the way up to the e2e tests then skips them.
 	DryRun bool `json:"dry_run,omitempty" env:"DRY_RUN" sect:"tests"  yaml:"dryRun"`
 

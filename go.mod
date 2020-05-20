@@ -3,20 +3,17 @@ module github.com/openshift/osde2e
 go 1.13
 
 require (
-	github.com/Masterminds/semver v1.4.2
-	github.com/adamliesko/retry v0.0.0-20200123222335-86c8baac277d
+	github.com/Masterminds/semver v1.5.0
 	github.com/aws/aws-sdk-go v1.25.48
 	github.com/emicklei/go-restful v2.9.6+incompatible
 	github.com/gogo/protobuf v1.2.2-0.20190723190241-65acae22fc9d // indirect
 	github.com/google/go-github/v31 v31.0.0
 	github.com/google/subcommands v1.2.0
-	github.com/google/uuid v1.1.1
 	github.com/hashicorp/go-multierror v1.1.0
 	github.com/kylelemons/godebug v1.1.0
-	github.com/markbates/pkger v0.15.1
+	github.com/markbates/pkger v0.16.0
 	github.com/onsi/ginkgo v1.12.0
 	github.com/onsi/gomega v1.7.1
-	github.com/openshift-online/ocm-sdk-go v0.1.97
 	github.com/openshift/api v0.0.0-20190530131937-dafd2647cb03
 	github.com/openshift/client-go v0.0.0-20190806162413-e9678e3b850d
 	github.com/operator-framework/operator-lifecycle-manager v0.0.0-20190926160646-a61144936680

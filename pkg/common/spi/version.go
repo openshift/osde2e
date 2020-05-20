@@ -1,6 +1,8 @@
 package spi
 
-import "github.com/Masterminds/semver"
+import (
+	"github.com/Masterminds/semver"
+)
 
 // Version represents an Openshift version.
 type Version struct {

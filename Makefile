@@ -19,7 +19,7 @@ ifndef $(GOPATH)
 endif
 
 check:
-	CGO_ENABLED=0 go test -v $(PKG)/cmd/... $(PKG)/pkg/...
+	CGO_ENABLED=1 go test -v $(PKG)/cmd/... $(PKG)/pkg/...
 	
 	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(shell go env GOPATH)/bin v1.23.8
 	(cd "$(DIR)"; golangci-lint run -c .golang-ci.yml ./...)
@@ -38,6 +38,11 @@ push-latest:
 build:
 	mkdir -p "$(OUT_DIR)"
 	go build -o "$(OUT_DIR)" "$(DIR)cmd/..."
+
+generate-plugins:
+	ls -1 plugins | xargs -I {} sh -c "cd plugins/{}; make"
+	find plugins | grep '.*\.so$$' | xargs -I {} cp {} "$(DIR)/assets/plugins"
+	pkger
 
 test: build
 	"$(OSDE2E)" test -configs=e2e-suite,log-metrics -custom-config=$(CUSTOM_CONFIG)
