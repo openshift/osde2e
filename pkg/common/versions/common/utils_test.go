@@ -1,4 +1,4 @@
-package e2e
+package common
 
 import (
 	"testing"
@@ -73,7 +73,7 @@ func TestNextReleaseAfterGivenVersionFromVersionList(t *testing.T) {
 				Version(semver.MustParse(version)).
 				Build())
 		}
-		selectedVersion, err := nextReleaseAfterGivenVersionFromVersionList(test.GivenVersion, versions, test.ReleasesFromGivenVersion)
+		selectedVersion, err := NextReleaseAfterGivenVersionFromVersionList(test.GivenVersion, versions, test.ReleasesFromGivenVersion)
 
 		if err != nil {
 			t.Errorf("error selecting version from list: %v", err)
