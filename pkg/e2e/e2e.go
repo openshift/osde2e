@@ -31,6 +31,7 @@ import (
 	"github.com/openshift/osde2e/pkg/common/spi"
 	"github.com/openshift/osde2e/pkg/common/state"
 	"github.com/openshift/osde2e/pkg/common/upgrade"
+	"github.com/openshift/osde2e/pkg/common/util"
 	"github.com/openshift/osde2e/pkg/debug"
 )
 
@@ -93,7 +94,7 @@ func runGinkgoTests() error {
 		case state.Upgrade.UpgradeVersionEqualToInstallVersion:
 			log.Printf("Install version and upgrade version are the same. Skipping tests.")
 			return nil
-		case state.Upgrade.ReleaseName == NoVersionFound:
+		case state.Upgrade.ReleaseName == util.NoVersionFound:
 			log.Printf("No valid upgrade versions were found. Skipping tests.")
 			return nil
 		}

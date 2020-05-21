@@ -5,6 +5,9 @@ import (
 )
 
 var (
+	// NoVersionFound when no version can be found.
+	NoVersionFound = "NoVersionFound"
+
 	// Version420 represents Openshift version 4.2.0 and above
 	Version420 *semver.Constraints
 
