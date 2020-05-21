@@ -247,12 +247,13 @@ func cleanupAfterE2E(h *helper.H) (errors []error) {
 	// write results to disk
 	h.WriteResults(stateResults)
 
-	// Get state from OCM
-	log.Print("Gathering cluster state from OCM")
 	if len(state.Cluster.ID) > 0 {
 		if provider, err = providers.ClusterProvider(); err != nil {
 			log.Printf("Error getting cluster provider: %s", err.Error())
 		}
+
+		// Get state from Provisioner
+		log.Printf("Gathering cluster state from %s", provider.Type())
 
 		cluster, err := provider.GetCluster(state.Cluster.ID)
 		if err != nil {

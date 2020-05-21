@@ -149,3 +149,8 @@ func errResp(resp *ocmerr.Error) error {
 	}
 	return nil
 }
+
+// Type returns the provisioner type: ocm
+func (o *OCMProvider) Type() string {
+	return "ocm"
+}

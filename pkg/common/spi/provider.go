@@ -73,4 +73,8 @@ type Provider interface {
 	// If the upgrade channel uses a Cincinnati source, this will dictate what channel should be
 	// used. This is only a prefix, so "fast," "stable," etc.
 	CincinnatiChannel() CincinnatiChannel
+
+	// Type is the Provider type, specific to each Plugin
+	// This simply returns the name of the Provider
+	Type() string
 }

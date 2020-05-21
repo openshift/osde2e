@@ -207,3 +207,8 @@ func (m *MockProvider) CincinnatiChannel() spi.CincinnatiChannel {
 func (m *MockProvider) SetVersionList(list *spi.VersionList) {
 	m.versions = list
 }
+
+// Type returns the provisioner type: mock
+func (m *MockProvider) Type() string {
+	return "mock"
+}

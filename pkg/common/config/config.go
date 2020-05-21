@@ -20,6 +20,8 @@ type Config struct {
 
 	OCM OCMConfig `yaml:"ocm"`
 
+	CRC CRCConfig `yaml:"crc"`
+
 	Addons AddonConfig `yaml:"addons"`
 
 	Scale ScaleConfig `yaml:"scale"`
@@ -62,6 +64,14 @@ type Config struct {
 type KubeConfig struct {
 	// Path is the filepath of an existing Kubeconfig
 	Path string `env:"TEST_KUBECONFIG" sect:"cluster" yaml:"path"`
+}
+
+// CRCConfig has config options specific to the CRC provisioner
+type CRCConfig struct {
+	// PullSecretFile is a file containing your pull secret
+	PullSecretFile string `json:"pull_secret_file" env:"CRC_PULL_SECRET_FILE" yaml:"pull_secret_file"`
+	// PullSecret is a string containing your pull secret
+	PullSecret string `json:"pull_secret" env:"CRC_PULL_SECRET" yaml:"pull_secret"`
 }
 
 // OCMConfig contains connect info for the OCM API
