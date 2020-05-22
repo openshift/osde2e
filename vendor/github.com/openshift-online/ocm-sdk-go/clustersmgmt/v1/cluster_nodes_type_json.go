@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019 Red Hat, Inc.
+Copyright (c) 2020 Red Hat, Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -44,6 +44,14 @@ func writeClusterNodes(object *ClusterNodes, stream *jsoniter.Stream) {
 		}
 		stream.WriteObjectField("compute")
 		stream.WriteInt(*object.compute)
+		count++
+	}
+	if object.computeMachineType != nil {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("compute_machine_type")
+		writeMachineType(object.computeMachineType, stream)
 		count++
 	}
 	if object.infra != nil {
@@ -97,6 +105,9 @@ func readClusterNodes(iterator *jsoniter.Iterator) *ClusterNodes {
 		case "compute":
 			value := iterator.ReadInt()
 			object.compute = &value
+		case "compute_machine_type":
+			value := readMachineType(iterator)
+			object.computeMachineType = value
 		case "infra":
 			value := iterator.ReadInt()
 			object.infra = &value

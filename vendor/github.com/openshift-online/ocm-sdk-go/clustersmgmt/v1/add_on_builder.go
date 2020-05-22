@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019 Red Hat, Inc.
+Copyright (c) 2020 Red Hat, Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ type AddOnBuilder struct {
 	href            *string
 	link            bool
 	description     *string
+	docsLink        *string
 	enabled         *bool
 	icon            *string
 	installMode     *AddOnInstallMode
@@ -66,6 +67,14 @@ func (b *AddOnBuilder) Link(value bool) *AddOnBuilder {
 //
 func (b *AddOnBuilder) Description(value string) *AddOnBuilder {
 	b.description = &value
+	return b
+}
+
+// DocsLink sets the value of the 'docs_link' attribute to the given value.
+//
+//
+func (b *AddOnBuilder) DocsLink(value string) *AddOnBuilder {
+	b.docsLink = &value
 	return b
 }
 
@@ -150,6 +159,7 @@ func (b *AddOnBuilder) Copy(object *AddOn) *AddOnBuilder {
 	b.href = object.href
 	b.link = object.link
 	b.description = object.description
+	b.docsLink = object.docsLink
 	b.enabled = object.enabled
 	b.icon = object.icon
 	b.installMode = object.installMode
@@ -169,6 +179,7 @@ func (b *AddOnBuilder) Build() (object *AddOn, err error) {
 	object.href = b.href
 	object.link = b.link
 	object.description = b.description
+	object.docsLink = b.docsLink
 	object.enabled = b.enabled
 	object.icon = b.icon
 	object.installMode = b.installMode

@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019 Red Hat, Inc.
+Copyright (c) 2020 Red Hat, Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -38,6 +38,14 @@ func MarshalNetwork(object *Network, writer io.Writer) error {
 func writeNetwork(object *Network, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
+	if object.hostPrefix != nil {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("host_prefix")
+		stream.WriteInt(*object.hostPrefix)
+		count++
+	}
 	if object.machineCIDR != nil {
 		if count > 0 {
 			stream.WriteMore()
@@ -86,6 +94,9 @@ func readNetwork(iterator *jsoniter.Iterator) *Network {
 			break
 		}
 		switch field {
+		case "host_prefix":
+			value := iterator.ReadInt()
+			object.hostPrefix = &value
 		case "machine_cidr":
 			value := iterator.ReadString()
 			object.machineCIDR = &value

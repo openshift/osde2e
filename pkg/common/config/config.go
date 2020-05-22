@@ -148,8 +148,12 @@ type ClusterConfig struct {
 
 // AddonConfig options for addon testing
 type AddonConfig struct {
+	//IDsAtCreation is an array of Addon IDs to install at creation time
+	IDsAtCreation []string `env:"ADDON_IDS_AT_CREATION" sect:"addons" yaml:"idsAtCreation"`
+
 	// IDs is an array of Addon IDs to install
 	IDs []string `env:"ADDON_IDS" sect:"addons" yaml:"ids"`
+
 	// TestHarnesses is an array of container images that will test the addon
 	TestHarnesses []string `env:"ADDON_TEST_HARNESSES" sect:"addons" yaml:"testHarnesses"`
 }

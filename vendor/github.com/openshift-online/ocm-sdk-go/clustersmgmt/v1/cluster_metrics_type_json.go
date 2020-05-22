@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019 Red Hat, Inc.
+Copyright (c) 2020 Red Hat, Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -62,6 +62,22 @@ func writeClusterMetrics(object *ClusterMetrics, stream *jsoniter.Stream) {
 		writeClusterMetric(object.computeNodesMemory, stream)
 		count++
 	}
+	if object.computeNodesSockets != nil {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("compute_nodes_sockets")
+		writeClusterMetric(object.computeNodesSockets, stream)
+		count++
+	}
+	if object.criticalAlertsFiring != nil {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("critical_alerts_firing")
+		stream.WriteInt(*object.criticalAlertsFiring)
+		count++
+	}
 	if object.memory != nil {
 		if count > 0 {
 			stream.WriteMore()
@@ -76,6 +92,14 @@ func writeClusterMetrics(object *ClusterMetrics, stream *jsoniter.Stream) {
 		}
 		stream.WriteObjectField("nodes")
 		writeClusterNodes(object.nodes, stream)
+		count++
+	}
+	if object.operatorsConditionFailing != nil {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("operators_condition_failing")
+		stream.WriteInt(*object.operatorsConditionFailing)
 		count++
 	}
 	if object.sockets != nil {
@@ -127,12 +151,21 @@ func readClusterMetrics(iterator *jsoniter.Iterator) *ClusterMetrics {
 		case "compute_nodes_memory":
 			value := readClusterMetric(iterator)
 			object.computeNodesMemory = value
+		case "compute_nodes_sockets":
+			value := readClusterMetric(iterator)
+			object.computeNodesSockets = value
+		case "critical_alerts_firing":
+			value := iterator.ReadInt()
+			object.criticalAlertsFiring = &value
 		case "memory":
 			value := readClusterMetric(iterator)
 			object.memory = value
 		case "nodes":
 			value := readClusterNodes(iterator)
 			object.nodes = value
+		case "operators_condition_failing":
+			value := iterator.ReadInt()
+			object.operatorsConditionFailing = &value
 		case "sockets":
 			value := readClusterMetric(iterator)
 			object.sockets = value

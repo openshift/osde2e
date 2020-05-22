@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019 Red Hat, Inc.
+Copyright (c) 2020 Red Hat, Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -23,13 +23,16 @@ package v1 // github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1
 //
 // Cluster metrics received via telemetry.
 type ClusterMetricsBuilder struct {
-	cpu                *ClusterMetricBuilder
-	computeNodesCPU    *ClusterMetricBuilder
-	computeNodesMemory *ClusterMetricBuilder
-	memory             *ClusterMetricBuilder
-	nodes              *ClusterNodesBuilder
-	sockets            *ClusterMetricBuilder
-	storage            *ClusterMetricBuilder
+	cpu                       *ClusterMetricBuilder
+	computeNodesCPU           *ClusterMetricBuilder
+	computeNodesMemory        *ClusterMetricBuilder
+	computeNodesSockets       *ClusterMetricBuilder
+	criticalAlertsFiring      *int
+	memory                    *ClusterMetricBuilder
+	nodes                     *ClusterNodesBuilder
+	operatorsConditionFailing *int
+	sockets                   *ClusterMetricBuilder
+	storage                   *ClusterMetricBuilder
 }
 
 // NewClusterMetrics creates a new builder of 'cluster_metrics' objects.
@@ -64,6 +67,23 @@ func (b *ClusterMetricsBuilder) ComputeNodesMemory(value *ClusterMetricBuilder) 
 	return b
 }
 
+// ComputeNodesSockets sets the value of the 'compute_nodes_sockets' attribute to the given value.
+//
+// Metric describing the total and used amount of some resource (like RAM, CPU and storage) in
+// a cluster.
+func (b *ClusterMetricsBuilder) ComputeNodesSockets(value *ClusterMetricBuilder) *ClusterMetricsBuilder {
+	b.computeNodesSockets = value
+	return b
+}
+
+// CriticalAlertsFiring sets the value of the 'critical_alerts_firing' attribute to the given value.
+//
+//
+func (b *ClusterMetricsBuilder) CriticalAlertsFiring(value int) *ClusterMetricsBuilder {
+	b.criticalAlertsFiring = &value
+	return b
+}
+
 // Memory sets the value of the 'memory' attribute to the given value.
 //
 // Metric describing the total and used amount of some resource (like RAM, CPU and storage) in
@@ -78,6 +98,14 @@ func (b *ClusterMetricsBuilder) Memory(value *ClusterMetricBuilder) *ClusterMetr
 // Counts of different classes of nodes inside a cluster.
 func (b *ClusterMetricsBuilder) Nodes(value *ClusterNodesBuilder) *ClusterMetricsBuilder {
 	b.nodes = value
+	return b
+}
+
+// OperatorsConditionFailing sets the value of the 'operators_condition_failing' attribute to the given value.
+//
+//
+func (b *ClusterMetricsBuilder) OperatorsConditionFailing(value int) *ClusterMetricsBuilder {
+	b.operatorsConditionFailing = &value
 	return b
 }
 
@@ -119,6 +147,12 @@ func (b *ClusterMetricsBuilder) Copy(object *ClusterMetrics) *ClusterMetricsBuil
 	} else {
 		b.computeNodesMemory = nil
 	}
+	if object.computeNodesSockets != nil {
+		b.computeNodesSockets = NewClusterMetric().Copy(object.computeNodesSockets)
+	} else {
+		b.computeNodesSockets = nil
+	}
+	b.criticalAlertsFiring = object.criticalAlertsFiring
 	if object.memory != nil {
 		b.memory = NewClusterMetric().Copy(object.memory)
 	} else {
@@ -129,6 +163,7 @@ func (b *ClusterMetricsBuilder) Copy(object *ClusterMetrics) *ClusterMetricsBuil
 	} else {
 		b.nodes = nil
 	}
+	b.operatorsConditionFailing = object.operatorsConditionFailing
 	if object.sockets != nil {
 		b.sockets = NewClusterMetric().Copy(object.sockets)
 	} else {
@@ -163,6 +198,13 @@ func (b *ClusterMetricsBuilder) Build() (object *ClusterMetrics, err error) {
 			return
 		}
 	}
+	if b.computeNodesSockets != nil {
+		object.computeNodesSockets, err = b.computeNodesSockets.Build()
+		if err != nil {
+			return
+		}
+	}
+	object.criticalAlertsFiring = b.criticalAlertsFiring
 	if b.memory != nil {
 		object.memory, err = b.memory.Build()
 		if err != nil {
@@ -175,6 +217,7 @@ func (b *ClusterMetricsBuilder) Build() (object *ClusterMetrics, err error) {
 			return
 		}
 	}
+	object.operatorsConditionFailing = b.operatorsConditionFailing
 	if b.sockets != nil {
 		object.sockets, err = b.sockets.Build()
 		if err != nil {

@@ -3,6 +3,57 @@
 This document describes the relevant changes between releases of the OCM API
 SDK.
 
+== 0.1.104 May 15 2020
+
+- Update to model v0.0.58
+** AddOns: Add docs_link attribute
+** Update to metamodel v0.0.28
+
+== 0.1.102 May 15 2020
+
+- Update to model v0.0.57:
+** AddOnInstallations: Remove DELETE operation
+** Added Label to Account
+
+- Update to metamodel v0.0.28:
+** OpenAPI: Fix expected response
+
+== 0.1.101 May 5 2020
+
+- Update to model 0.0.56
+** Add Labels to Organization
+
+== 0.1.100 Apr 23 2020
+
+- Update to model 0.0.55
+** Add enabled field to region
+** Adding metrics.nodes to api model
+** Adding cluster ingresses endpoint
+** ClusterNodes: Add ComputeMachineType
+** Network: Added HostPrefix
+
+== 0.1.99 Apr 7 2020
+
+- Update to model 0.0.54
+** Add HealthState field to Cluster type
+** Refactor alerts and operator conditions to contain only 'CriticalAlerts' and 'OperatorsConditionFailing'
+** Adding computeNodesSockets to cluster metrics
+** Fix pull secret deletion path
+** Remove unsupported cluster state
+** Add machine type category
+
+- Update to metamodel 0.0.27
+** Update file header year to 2020
+
+== 0.1.98 Apr 6 2020
+
+- Update to model 0.0.53
+** Add pull secret deletion
+** Products: Add product attribute to cluster object
+** Products: Support for top-level cluster types
+** Add ClusterOperatorsConditions type
+** Add ClusterAlertsFiring type and field in ClusterMetrics
+
 == 0.1.97 Mar 26 2020
 
 - Update to model 0.0.52

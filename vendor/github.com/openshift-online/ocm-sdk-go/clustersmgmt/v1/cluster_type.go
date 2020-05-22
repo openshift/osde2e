@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019 Red Hat, Inc.
+Copyright (c) 2020 Red Hat, Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -93,6 +93,7 @@ type Cluster struct {
 	externalID                        *string
 	flavour                           *Flavour
 	groups                            *GroupList
+	healthState                       *ClusterHealthState
 	identityProviders                 *IdentityProviderList
 	ingresses                         *IngressList
 	loadBalancerQuota                 *int
@@ -103,6 +104,7 @@ type Cluster struct {
 	network                           *Network
 	nodes                             *ClusterNodes
 	openshiftVersion                  *string
+	product                           *Product
 	properties                        map[string]string
 	region                            *CloudRegion
 	state                             *ClusterState
@@ -175,6 +177,7 @@ func (o *Cluster) Empty() bool {
 		o.expirationTimestamp == nil &&
 		o.externalID == nil &&
 		o.groups.Len() == 0 &&
+		o.healthState == nil &&
 		o.identityProviders.Len() == 0 &&
 		o.ingresses.Len() == 0 &&
 		o.loadBalancerQuota == nil &&
@@ -540,6 +543,29 @@ func (o *Cluster) GetGroups() (value *GroupList, ok bool) {
 	return
 }
 
+// HealthState returns the value of the 'health_state' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+// HealthState indicates the overall health state of the cluster.
+func (o *Cluster) HealthState() ClusterHealthState {
+	if o != nil && o.healthState != nil {
+		return *o.healthState
+	}
+	return ClusterHealthState("")
+}
+
+// GetHealthState returns the value of the 'health_state' attribute and
+// a flag indicating if the attribute has a value.
+//
+// HealthState indicates the overall health state of the cluster.
+func (o *Cluster) GetHealthState() (value ClusterHealthState, ok bool) {
+	ok = o != nil && o.healthState != nil
+	if ok {
+		value = *o.healthState
+	}
+	return
+}
+
 // IdentityProviders returns the value of the 'identity_providers' attribute, or
 // the zero value of the type if the attribute doesn't have a value.
 //
@@ -788,6 +814,29 @@ func (o *Cluster) GetOpenshiftVersion() (value string, ok bool) {
 	ok = o != nil && o.openshiftVersion != nil
 	if ok {
 		value = *o.openshiftVersion
+	}
+	return
+}
+
+// Product returns the value of the 'product' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+// Link to the product type of this cluster.
+func (o *Cluster) Product() *Product {
+	if o == nil {
+		return nil
+	}
+	return o.product
+}
+
+// GetProduct returns the value of the 'product' attribute and
+// a flag indicating if the attribute has a value.
+//
+// Link to the product type of this cluster.
+func (o *Cluster) GetProduct() (value *Product, ok bool) {
+	ok = o != nil && o.product != nil
+	if ok {
+		value = o.product
 	}
 	return
 }

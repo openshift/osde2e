@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019 Red Hat, Inc.
+Copyright (c) 2020 Red Hat, Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -24,18 +24,6 @@ import (
 	"net/http"
 )
 
-func readAddOnInstallationDeleteRequest(request *AddOnInstallationDeleteServerRequest, r *http.Request) error {
-	return nil
-}
-func writeAddOnInstallationDeleteRequest(request *AddOnInstallationDeleteRequest, writer io.Writer) error {
-	return nil
-}
-func readAddOnInstallationDeleteResponse(response *AddOnInstallationDeleteResponse, reader io.Reader) error {
-	return nil
-}
-func writeAddOnInstallationDeleteResponse(response *AddOnInstallationDeleteServerResponse, w http.ResponseWriter) error {
-	return nil
-}
 func readAddOnInstallationGetRequest(request *AddOnInstallationGetServerRequest, r *http.Request) error {
 	return nil
 }

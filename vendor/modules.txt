@@ -1,5 +1,7 @@
-# github.com/Masterminds/semver v1.4.2
+# github.com/Masterminds/semver v1.5.0
 github.com/Masterminds/semver
+# github.com/YourFin/binappend v0.0.0-20181105185800-0add4bf0b9ad
+github.com/YourFin/binappend
 # github.com/adamliesko/retry v0.0.0-20200123222335-86c8baac277d
 github.com/adamliesko/retry
 # github.com/alecthomas/template v0.0.0-20190718012654-fb15b899a751
@@ -7,6 +9,8 @@ github.com/alecthomas/template
 github.com/alecthomas/template/parse
 # github.com/alecthomas/units v0.0.0-20190717042225-c3de453c63f4
 github.com/alecthomas/units
+# github.com/asaskevich/govalidator v0.0.0-20190424111038-f61b66f89f4a
+github.com/asaskevich/govalidator
 # github.com/aws/aws-sdk-go v1.25.48
 github.com/aws/aws-sdk-go/aws
 github.com/aws/aws-sdk-go/aws/arn
@@ -53,8 +57,66 @@ github.com/aws/aws-sdk-go/service/sts/stsiface
 github.com/beorn7/perks/quantile
 # github.com/blang/semver v3.5.1+incompatible
 github.com/blang/semver
+# github.com/cavaliercoder/grab v2.0.0+incompatible
+github.com/cavaliercoder/grab
 # github.com/cespare/xxhash/v2 v2.1.1
 github.com/cespare/xxhash/v2
+# github.com/code-ready/crc v1.10.0
+github.com/code-ready/crc/cmd/crc/cmd/config
+github.com/code-ready/crc/pkg/crc/cluster
+github.com/code-ready/crc/pkg/crc/config
+github.com/code-ready/crc/pkg/crc/constants
+github.com/code-ready/crc/pkg/crc/errors
+github.com/code-ready/crc/pkg/crc/logging
+github.com/code-ready/crc/pkg/crc/machine
+github.com/code-ready/crc/pkg/crc/machine/bundle
+github.com/code-ready/crc/pkg/crc/machine/config
+github.com/code-ready/crc/pkg/crc/machine/hyperkit
+github.com/code-ready/crc/pkg/crc/machine/hyperv
+github.com/code-ready/crc/pkg/crc/machine/libvirt
+github.com/code-ready/crc/pkg/crc/network
+github.com/code-ready/crc/pkg/crc/oc
+github.com/code-ready/crc/pkg/crc/output
+github.com/code-ready/crc/pkg/crc/podman
+github.com/code-ready/crc/pkg/crc/preflight
+github.com/code-ready/crc/pkg/crc/services
+github.com/code-ready/crc/pkg/crc/services/dns
+github.com/code-ready/crc/pkg/crc/ssh
+github.com/code-ready/crc/pkg/crc/systemd
+github.com/code-ready/crc/pkg/crc/systemd/actions
+github.com/code-ready/crc/pkg/crc/systemd/states
+github.com/code-ready/crc/pkg/crc/validation
+github.com/code-ready/crc/pkg/crc/version
+github.com/code-ready/crc/pkg/download
+github.com/code-ready/crc/pkg/embed
+github.com/code-ready/crc/pkg/extract
+github.com/code-ready/crc/pkg/os
+github.com/code-ready/crc/pkg/os/launchd
+github.com/code-ready/crc/pkg/os/windows/network
+github.com/code-ready/crc/pkg/os/windows/powershell
+github.com/code-ready/crc/pkg/os/windows/win32
+# github.com/code-ready/goodhosts v0.0.0-20190712111040-f090f3f77c26
+github.com/code-ready/goodhosts
+# github.com/code-ready/machine v0.0.0-20191115055627-b284f794e910
+github.com/code-ready/machine/drivers/errdriver
+github.com/code-ready/machine/drivers/hyperv
+github.com/code-ready/machine/drivers/none
+github.com/code-ready/machine/libmachine
+github.com/code-ready/machine/libmachine/auth
+github.com/code-ready/machine/libmachine/drivers
+github.com/code-ready/machine/libmachine/drivers/plugin/localbinary
+github.com/code-ready/machine/libmachine/drivers/rpc
+github.com/code-ready/machine/libmachine/engine
+github.com/code-ready/machine/libmachine/host
+github.com/code-ready/machine/libmachine/log
+github.com/code-ready/machine/libmachine/mcnerror
+github.com/code-ready/machine/libmachine/mcnflag
+github.com/code-ready/machine/libmachine/mcnutils
+github.com/code-ready/machine/libmachine/persist
+github.com/code-ready/machine/libmachine/ssh
+github.com/code-ready/machine/libmachine/state
+github.com/code-ready/machine/libmachine/swarm
+github.com/code-ready/machine/libmachine/version
 # github.com/davecgh/go-spew v1.1.1
 github.com/davecgh/go-spew/spew
 # github.com/dgrijalva/jwt-go v3.2.0+incompatible
@@ -63,6 +125,10 @@ github.com/dgrijalva/jwt-go
 github.com/emicklei/go-restful/log
 # github.com/evanphx/json-patch v4.5.0+incompatible
 github.com/evanphx/json-patch
+# github.com/fsnotify/fsnotify v1.4.7
+github.com/fsnotify/fsnotify
+# github.com/ghodss/yaml v1.0.0
+github.com/ghodss/yaml
 # github.com/gobuffalo/here v0.6.0
 github.com/gobuffalo/here
 # github.com/gogo/protobuf v1.2.2-0.20190723190241-65acae22fc9d
@@ -98,6 +164,20 @@ github.com/gorilla/websocket
 github.com/hashicorp/errwrap
 # github.com/hashicorp/go-multierror v1.1.0
 github.com/hashicorp/go-multierror
+# github.com/hashicorp/hcl v1.0.0
+github.com/hashicorp/hcl
+github.com/hashicorp/hcl/hcl/ast
+github.com/hashicorp/hcl/hcl/parser
+github.com/hashicorp/hcl/hcl/printer
+github.com/hashicorp/hcl/hcl/scanner
+github.com/hashicorp/hcl/hcl/strconv
+github.com/hashicorp/hcl/hcl/token
+github.com/hashicorp/hcl/json/parser
+github.com/hashicorp/hcl/json/scanner
+github.com/hashicorp/hcl/json/token
+# github.com/hectane/go-acl v0.0.0-20190604041725-da78bae5fc95
+github.com/hectane/go-acl
+github.com/hectane/go-acl/api
 # github.com/hpcloud/tail v1.0.0
 github.com/hpcloud/tail
 github.com/hpcloud/tail/ratelimiter
@@ -106,6 +186,8 @@ github.com/hpcloud/tail/watch
 github.com/hpcloud/tail/winfile
 # github.com/imdario/mergo v0.3.7
 github.com/imdario/mergo
+# github.com/inconshreveable/mousetrap v1.0.0
+github.com/inconshreveable/mousetrap
 # github.com/jmespath/go-jmespath v0.0.0-20180206201540-c2b33e8439af
 github.com/jmespath/go-jmespath
 # github.com/json-iterator/go v1.1.9
@@ -114,6 +196,8 @@ github.com/json-iterator/go
 github.com/konsorten/go-windows-terminal-sequences
 # github.com/kylelemons/godebug v1.1.0
 github.com/kylelemons/godebug/diff
+# github.com/magiconair/properties v1.8.0
+github.com/magiconair/properties
 # github.com/markbates/pkger v0.15.1
 github.com/markbates/pkger
 github.com/markbates/pkger/internal/maps
@@ -123,8 +207,14 @@ github.com/markbates/pkger/pkging
 github.com/markbates/pkger/pkging/embed
 github.com/markbates/pkger/pkging/mem
 github.com/markbates/pkger/pkging/stdos
+# github.com/mattn/go-colorable v0.0.9
+github.com/mattn/go-colorable
+# github.com/mattn/go-isatty v0.0.3
+github.com/mattn/go-isatty
 # github.com/matttproud/golang_protobuf_extensions v1.0.1
 github.com/matttproud/golang_protobuf_extensions/pbutil
+# github.com/mitchellh/mapstructure v1.1.2
+github.com/mitchellh/mapstructure
 # github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd
 github.com/modern-go/concurrent
 # github.com/modern-go/reflect2 v1.0.1
@@ -161,7 +251,7 @@ github.com/onsi/gomega/matchers/support/goraph/edge
 github.com/onsi/gomega/matchers/support/goraph/node
 github.com/onsi/gomega/matchers/support/goraph/util
 github.com/onsi/gomega/types
-# github.com/openshift-online/ocm-sdk-go v0.1.97
+# github.com/openshift-online/ocm-sdk-go v0.1.104
 github.com/openshift-online/ocm-sdk-go
 github.com/openshift-online/ocm-sdk-go/accountsmgmt
 github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1
@@ -211,6 +301,10 @@ github.com/operator-framework/operator-lifecycle-manager/pkg/api/client/clientse
 github.com/operator-framework/operator-lifecycle-manager/pkg/api/client/clientset/versioned/typed/operators/v1
 github.com/operator-framework/operator-lifecycle-manager/pkg/api/client/clientset/versioned/typed/operators/v1alpha1
 github.com/operator-framework/operator-lifecycle-manager/pkg/lib/version
+# github.com/pborman/uuid v1.2.0
+github.com/pborman/uuid
+# github.com/pelletier/go-toml v1.2.0
+github.com/pelletier/go-toml
 # github.com/pkg/errors v0.8.1
 github.com/pkg/errors
 # github.com/prometheus/client_golang v1.4.1
@@ -236,18 +330,38 @@ github.com/slack-go/slack
 github.com/slack-go/slack/internal/errorsx
 github.com/slack-go/slack/internal/timex
 github.com/slack-go/slack/slackutilsx
+# github.com/spf13/afero v1.2.2
+github.com/spf13/afero
+github.com/spf13/afero/mem
+# github.com/spf13/cast v1.3.0
+github.com/spf13/cast
+# github.com/spf13/cobra v0.0.5
+github.com/spf13/cobra
+# github.com/spf13/jwalterweatherman v1.0.0
+github.com/spf13/jwalterweatherman
 # github.com/spf13/pflag v1.0.5
 github.com/spf13/pflag
+# github.com/spf13/viper v1.3.2
+github.com/spf13/viper
+# github.com/xi2/xz v0.0.0-20171230120015-48954b6210f8
+github.com/xi2/xz
 # gitlab.com/c0b/go-ordered-json v0.0.0-20171130231205-49bbdab258c2
 gitlab.com/c0b/go-ordered-json
 # golang.org/x/crypto v0.0.0-20191011191535-87dc89f01550
 golang.org/x/crypto/cast5
+golang.org/x/crypto/curve25519
+golang.org/x/crypto/ed25519
+golang.org/x/crypto/ed25519/internal/edwards25519
+golang.org/x/crypto/internal/chacha20
+golang.org/x/crypto/internal/subtle
 golang.org/x/crypto/openpgp
 golang.org/x/crypto/openpgp/armor
 golang.org/x/crypto/openpgp/elgamal
 golang.org/x/crypto/openpgp/errors
 golang.org/x/crypto/openpgp/packet
 golang.org/x/crypto/openpgp/s2k
+golang.org/x/crypto/poly1305
+golang.org/x/crypto/ssh
 golang.org/x/crypto/ssh/terminal
 # golang.org/x/net v0.0.0-20191004110552-13f9640d40b9
 golang.org/x/net/context
@@ -263,6 +377,7 @@ golang.org/x/net/idna
 golang.org/x/oauth2
 golang.org/x/oauth2/internal
 # golang.org/x/sys v0.0.0-20200122134326-e047566fdf82
+golang.org/x/sys/cpu
 golang.org/x/sys/unix
 golang.org/x/sys/windows
 golang.org/x/sys/windows/registry
@@ -308,6 +423,8 @@ gopkg.in/inf.v0
 gopkg.in/tomb.v1
 # gopkg.in/yaml.v2 v2.2.7
 gopkg.in/yaml.v2
+# howett.net/plist v0.0.0-20181124034731-591f970eefbb
+howett.net/plist
 # k8s.io/api v0.0.0-20191004102349-159aefb8556b
 k8s.io/api/admissionregistration/v1beta1
 k8s.io/api/apps/v1

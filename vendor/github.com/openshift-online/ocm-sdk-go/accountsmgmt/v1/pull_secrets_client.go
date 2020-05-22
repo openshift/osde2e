@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019 Red Hat, Inc.
+Copyright (c) 2020 Red Hat, Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"path"
 
 	jsoniter "github.com/json-iterator/go"
 	"github.com/openshift-online/ocm-sdk-go/errors"
@@ -61,6 +62,17 @@ func (c *PullSecretsClient) Post() *PullSecretsPostRequest {
 		path:      c.path,
 		metric:    c.metric,
 	}
+}
+
+// PullSecret returns the target 'pull_secret' resource for the given identifier.
+//
+// Reference to the service that manages a specific pull secret.
+func (c *PullSecretsClient) PullSecret(id string) *PullSecretClient {
+	return NewPullSecretClient(
+		c.transport,
+		path.Join(c.path, id),
+		path.Join(c.metric, "-"),
+	)
 }
 
 // PullSecretsPostRequest is the request for the 'post' method.

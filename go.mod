@@ -18,7 +18,7 @@ require (
 	github.com/markbates/pkger v0.15.1
 	github.com/onsi/ginkgo v1.12.0
 	github.com/onsi/gomega v1.7.1
-	github.com/openshift-online/ocm-sdk-go v0.1.97
+	github.com/openshift-online/ocm-sdk-go v0.1.104
 	github.com/openshift/api v0.0.0-20190530131937-dafd2647cb03
 	github.com/openshift/client-go v0.0.0-20190806162413-e9678e3b850d
 	github.com/operator-framework/operator-lifecycle-manager v0.0.0-20190926160646-a61144936680
@@ -29,7 +29,6 @@ require (
 	golang.org/x/crypto v0.0.0-20191011191535-87dc89f01550 // indirect
 	golang.org/x/net v0.0.0-20191004110552-13f9640d40b9
 	golang.org/x/oauth2 v0.0.0-20190604053449-0f29369cfe45 // indirect
-	gopkg.in/yaml.v1 v1.0.0-20140924161607-9f9df34309c0
 	gopkg.in/yaml.v2 v2.2.7
 	k8s.io/api v0.0.0-20191004102349-159aefb8556b
 	k8s.io/apimachinery v0.0.0-20191004074956-c5d2f014d689
