@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019 Red Hat, Inc.
+Copyright (c) 2020 Red Hat, Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -36,6 +36,7 @@ type AccountBuilder struct {
 	createdAt      *time.Time
 	email          *string
 	firstName      *string
+	labels         []*LabelBuilder
 	lastName       *string
 	organization   *OrganizationBuilder
 	serviceAccount *bool
@@ -114,6 +115,15 @@ func (b *AccountBuilder) FirstName(value string) *AccountBuilder {
 	return b
 }
 
+// Labels sets the value of the 'labels' attribute to the given values.
+//
+//
+func (b *AccountBuilder) Labels(values ...*LabelBuilder) *AccountBuilder {
+	b.labels = make([]*LabelBuilder, len(values))
+	copy(b.labels, values)
+	return b
+}
+
 // LastName sets the value of the 'last_name' attribute to the given value.
 //
 //
@@ -168,6 +178,14 @@ func (b *AccountBuilder) Copy(object *Account) *AccountBuilder {
 	b.createdAt = object.createdAt
 	b.email = object.email
 	b.firstName = object.firstName
+	if object.labels != nil {
+		b.labels = make([]*LabelBuilder, len(object.labels))
+		for i, v := range object.labels {
+			b.labels[i] = NewLabel().Copy(v)
+		}
+	} else {
+		b.labels = nil
+	}
 	b.lastName = object.lastName
 	if object.organization != nil {
 		b.organization = NewOrganization().Copy(object.organization)
@@ -192,6 +210,15 @@ func (b *AccountBuilder) Build() (object *Account, err error) {
 	object.createdAt = b.createdAt
 	object.email = b.email
 	object.firstName = b.firstName
+	if b.labels != nil {
+		object.labels = make([]*Label, len(b.labels))
+		for i, v := range b.labels {
+			object.labels[i], err = v.Build()
+			if err != nil {
+				return
+			}
+		}
+	}
 	object.lastName = b.lastName
 	if b.organization != nil {
 		object.organization, err = b.organization.Build()

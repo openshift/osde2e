@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019 Red Hat, Inc.
+Copyright (c) 2020 Red Hat, Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -45,6 +45,7 @@ type Organization struct {
 	createdAt    *time.Time
 	ebsAccountID *string
 	externalID   *string
+	labels       []*Label
 	name         *string
 	updatedAt    *time.Time
 }
@@ -107,6 +108,7 @@ func (o *Organization) Empty() bool {
 		o.createdAt == nil &&
 		o.ebsAccountID == nil &&
 		o.externalID == nil &&
+		len(o.labels) == 0 &&
 		o.name == nil &&
 		o.updatedAt == nil &&
 		true)
@@ -177,6 +179,29 @@ func (o *Organization) GetExternalID() (value string, ok bool) {
 	ok = o != nil && o.externalID != nil
 	if ok {
 		value = *o.externalID
+	}
+	return
+}
+
+// Labels returns the value of the 'labels' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+//
+func (o *Organization) Labels() []*Label {
+	if o == nil {
+		return nil
+	}
+	return o.labels
+}
+
+// GetLabels returns the value of the 'labels' attribute and
+// a flag indicating if the attribute has a value.
+//
+//
+func (o *Organization) GetLabels() (value []*Label, ok bool) {
+	ok = o != nil && o.labels != nil
+	if ok {
+		value = o.labels
 	}
 	return
 }

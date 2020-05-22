@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019 Red Hat, Inc.
+Copyright (c) 2020 Red Hat, Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -247,7 +247,7 @@ func adaptAddOnUpdateRequest(w http.ResponseWriter, r *http.Request, server AddO
 		return
 	}
 	response := &AddOnUpdateServerResponse{}
-	response.status = 204
+	response.status = 200
 	err = server.Update(r.Context(), request, response)
 	if err != nil {
 		glog.Errorf(

@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019 Red Hat, Inc.
+Copyright (c) 2020 Red Hat, Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -39,6 +39,7 @@ type AddOn struct {
 	href            *string
 	link            bool
 	description     *string
+	docsLink        *string
 	enabled         *bool
 	icon            *string
 	installMode     *AddOnInstallMode
@@ -106,6 +107,7 @@ func (o *AddOn) GetHREF() (value string, ok bool) {
 func (o *AddOn) Empty() bool {
 	return o == nil || (o.id == nil &&
 		o.description == nil &&
+		o.docsLink == nil &&
 		o.enabled == nil &&
 		o.icon == nil &&
 		o.installMode == nil &&
@@ -137,6 +139,29 @@ func (o *AddOn) GetDescription() (value string, ok bool) {
 	ok = o != nil && o.description != nil
 	if ok {
 		value = *o.description
+	}
+	return
+}
+
+// DocsLink returns the value of the 'docs_link' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+// Link to documentation about the add-on.
+func (o *AddOn) DocsLink() string {
+	if o != nil && o.docsLink != nil {
+		return *o.docsLink
+	}
+	return ""
+}
+
+// GetDocsLink returns the value of the 'docs_link' attribute and
+// a flag indicating if the attribute has a value.
+//
+// Link to documentation about the add-on.
+func (o *AddOn) GetDocsLink() (value string, ok bool) {
+	ok = o != nil && o.docsLink != nil
+	if ok {
+		value = *o.docsLink
 	}
 	return
 }

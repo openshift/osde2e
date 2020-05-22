@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019 Red Hat, Inc.
+Copyright (c) 2020 Red Hat, Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -30,31 +30,10 @@ import (
 // AddOnInstallationServer represents the interface the manages the 'add_on_installation' resource.
 type AddOnInstallationServer interface {
 
-	// Delete handles a request for the 'delete' method.
-	//
-	// Deletes the add-on installation.
-	Delete(ctx context.Context, request *AddOnInstallationDeleteServerRequest, response *AddOnInstallationDeleteServerResponse) error
-
 	// Get handles a request for the 'get' method.
 	//
 	// Retrieves the details of the add-on installation.
 	Get(ctx context.Context, request *AddOnInstallationGetServerRequest, response *AddOnInstallationGetServerResponse) error
-}
-
-// AddOnInstallationDeleteServerRequest is the request for the 'delete' method.
-type AddOnInstallationDeleteServerRequest struct {
-}
-
-// AddOnInstallationDeleteServerResponse is the response for the 'delete' method.
-type AddOnInstallationDeleteServerResponse struct {
-	status int
-	err    *errors.Error
-}
-
-// Status sets the status code.
-func (r *AddOnInstallationDeleteServerResponse) Status(value int) *AddOnInstallationDeleteServerResponse {
-	r.status = value
-	return r
 }
 
 // AddOnInstallationGetServerRequest is the request for the 'get' method.
@@ -88,9 +67,6 @@ func (r *AddOnInstallationGetServerResponse) Status(value int) *AddOnInstallatio
 func dispatchAddOnInstallation(w http.ResponseWriter, r *http.Request, server AddOnInstallationServer, segments []string) {
 	if len(segments) == 0 {
 		switch r.Method {
-		case "DELETE":
-			adaptAddOnInstallationDeleteRequest(w, r, server)
-			return
 		case "GET":
 			adaptAddOnInstallationGetRequest(w, r, server)
 			return
@@ -102,41 +78,6 @@ func dispatchAddOnInstallation(w http.ResponseWriter, r *http.Request, server Ad
 	switch segments[0] {
 	default:
 		errors.SendNotFound(w, r)
-		return
-	}
-}
-
-// adaptAddOnInstallationDeleteRequest translates the given HTTP request into a call to
-// the corresponding method of the given server. Then it translates the
-// results returned by that method into an HTTP response.
-func adaptAddOnInstallationDeleteRequest(w http.ResponseWriter, r *http.Request, server AddOnInstallationServer) {
-	request := &AddOnInstallationDeleteServerRequest{}
-	err := readAddOnInstallationDeleteRequest(request, r)
-	if err != nil {
-		glog.Errorf(
-			"Can't read request for method '%s' and path '%s': %v",
-			r.Method, r.URL.Path, err,
-		)
-		errors.SendInternalServerError(w, r)
-		return
-	}
-	response := &AddOnInstallationDeleteServerResponse{}
-	response.status = 204
-	err = server.Delete(r.Context(), request, response)
-	if err != nil {
-		glog.Errorf(
-			"Can't process request for method '%s' and path '%s': %v",
-			r.Method, r.URL.Path, err,
-		)
-		errors.SendInternalServerError(w, r)
-		return
-	}
-	err = writeAddOnInstallationDeleteResponse(response, w)
-	if err != nil {
-		glog.Errorf(
-			"Can't write response for method '%s' and path '%s': %v",
-			r.Method, r.URL.Path, err,
-		)
 		return
 	}
 }

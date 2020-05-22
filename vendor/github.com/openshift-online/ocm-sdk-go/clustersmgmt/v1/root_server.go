@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019 Red Hat, Inc.
+Copyright (c) 2020 Red Hat, Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -63,6 +63,11 @@ type Server interface {
 	//
 	// Reference to the resource that manage the collection of machine types.
 	MachineTypes() MachineTypesServer
+
+	// Products returns the target 'products' resource.
+	//
+	// Reference to the resource that manages the collection of products.
+	Products() ProductsServer
 
 	// Versions returns the target 'versions' resource.
 	//
@@ -131,6 +136,13 @@ func Dispatch(w http.ResponseWriter, r *http.Request, server Server, segments []
 			return
 		}
 		dispatchMachineTypes(w, r, target, segments[1:])
+	case "products":
+		target := server.Products()
+		if target == nil {
+			errors.SendNotFound(w, r)
+			return
+		}
+		dispatchProducts(w, r, target, segments[1:])
 	case "versions":
 		target := server.Versions()
 		if target == nil {

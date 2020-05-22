@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019 Red Hat, Inc.
+Copyright (c) 2020 Red Hat, Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -70,6 +70,14 @@ func writeAddOn(object *AddOn, stream *jsoniter.Stream) {
 		}
 		stream.WriteObjectField("description")
 		stream.WriteString(*object.description)
+		count++
+	}
+	if object.docsLink != nil {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("docs_link")
+		stream.WriteString(*object.docsLink)
 		count++
 	}
 	if object.enabled != nil {
@@ -180,6 +188,9 @@ func readAddOn(iterator *jsoniter.Iterator) *AddOn {
 		case "description":
 			value := iterator.ReadString()
 			object.description = &value
+		case "docs_link":
+			value := iterator.ReadString()
+			object.docsLink = &value
 		case "enabled":
 			value := iterator.ReadBool()
 			object.enabled = &value

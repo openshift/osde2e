@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019 Red Hat, Inc.
+Copyright (c) 2020 Red Hat, Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -89,6 +89,14 @@ func writeOrganization(object *Organization, stream *jsoniter.Stream) {
 		stream.WriteString(*object.externalID)
 		count++
 	}
+	if object.labels != nil {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("labels")
+		writeLabelList(object.labels, stream)
+		count++
+	}
 	if object.name != nil {
 		if count > 0 {
 			stream.WriteMore()
@@ -151,6 +159,9 @@ func readOrganization(iterator *jsoniter.Iterator) *Organization {
 		case "external_id":
 			value := iterator.ReadString()
 			object.externalID = &value
+		case "labels":
+			value := readLabelList(iterator)
+			object.labels = value
 		case "name":
 			value := iterator.ReadString()
 			object.name = &value

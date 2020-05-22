@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019 Red Hat, Inc.
+Copyright (c) 2020 Red Hat, Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -128,6 +128,17 @@ func (c *Client) MachineTypes() *MachineTypesClient {
 		c.transport,
 		path.Join(c.path, "machine_types"),
 		path.Join(c.metric, "machine_types"),
+	)
+}
+
+// Products returns the target 'products' resource.
+//
+// Reference to the resource that manages the collection of products.
+func (c *Client) Products() *ProductsClient {
+	return NewProductsClient(
+		c.transport,
+		path.Join(c.path, "products"),
+		path.Join(c.metric, "products"),
 	)
 }
 

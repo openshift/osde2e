@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019 Red Hat, Inc.
+Copyright (c) 2020 Red Hat, Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -23,10 +23,11 @@ package v1 // github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1
 //
 // Counts of different classes of nodes inside a cluster.
 type ClusterNodes struct {
-	compute *int
-	infra   *int
-	master  *int
-	total   *int
+	compute            *int
+	computeMachineType *MachineType
+	infra              *int
+	master             *int
+	total              *int
 }
 
 // Empty returns true if the object is empty, i.e. no attribute has a value.
@@ -57,6 +58,29 @@ func (o *ClusterNodes) GetCompute() (value int, ok bool) {
 	ok = o != nil && o.compute != nil
 	if ok {
 		value = *o.compute
+	}
+	return
+}
+
+// ComputeMachineType returns the value of the 'compute_machine_type' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+// The compute machine type to use, for example `r5.xlarge`.
+func (o *ClusterNodes) ComputeMachineType() *MachineType {
+	if o == nil {
+		return nil
+	}
+	return o.computeMachineType
+}
+
+// GetComputeMachineType returns the value of the 'compute_machine_type' attribute and
+// a flag indicating if the attribute has a value.
+//
+// The compute machine type to use, for example `r5.xlarge`.
+func (o *ClusterNodes) GetComputeMachineType() (value *MachineType, ok bool) {
+	ok = o != nil && o.computeMachineType != nil
+	if ok {
+		value = o.computeMachineType
 	}
 	return
 }

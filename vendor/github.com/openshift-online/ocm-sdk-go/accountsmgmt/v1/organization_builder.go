@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019 Red Hat, Inc.
+Copyright (c) 2020 Red Hat, Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ type OrganizationBuilder struct {
 	createdAt    *time.Time
 	ebsAccountID *string
 	externalID   *string
+	labels       []*LabelBuilder
 	name         *string
 	updatedAt    *time.Time
 }
@@ -84,6 +85,15 @@ func (b *OrganizationBuilder) ExternalID(value string) *OrganizationBuilder {
 	return b
 }
 
+// Labels sets the value of the 'labels' attribute to the given values.
+//
+//
+func (b *OrganizationBuilder) Labels(values ...*LabelBuilder) *OrganizationBuilder {
+	b.labels = make([]*LabelBuilder, len(values))
+	copy(b.labels, values)
+	return b
+}
+
 // Name sets the value of the 'name' attribute to the given value.
 //
 //
@@ -111,6 +121,14 @@ func (b *OrganizationBuilder) Copy(object *Organization) *OrganizationBuilder {
 	b.createdAt = object.createdAt
 	b.ebsAccountID = object.ebsAccountID
 	b.externalID = object.externalID
+	if object.labels != nil {
+		b.labels = make([]*LabelBuilder, len(object.labels))
+		for i, v := range object.labels {
+			b.labels[i] = NewLabel().Copy(v)
+		}
+	} else {
+		b.labels = nil
+	}
 	b.name = object.name
 	b.updatedAt = object.updatedAt
 	return b
@@ -125,6 +143,15 @@ func (b *OrganizationBuilder) Build() (object *Organization, err error) {
 	object.createdAt = b.createdAt
 	object.ebsAccountID = b.ebsAccountID
 	object.externalID = b.externalID
+	if b.labels != nil {
+		object.labels = make([]*Label, len(b.labels))
+		for i, v := range b.labels {
+			object.labels[i], err = v.Build()
+			if err != nil {
+				return
+			}
+		}
+	}
 	object.name = b.name
 	object.updatedAt = b.updatedAt
 	return

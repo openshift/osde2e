@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019 Red Hat, Inc.
+Copyright (c) 2020 Red Hat, Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -72,6 +72,14 @@ func writeMachineType(object *MachineType, stream *jsoniter.Stream) {
 		writeValue(object.cpu, stream)
 		count++
 	}
+	if object.category != nil {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("category")
+		stream.WriteString(string(*object.category))
+		count++
+	}
 	if object.cloudProvider != nil {
 		if count > 0 {
 			stream.WriteMore()
@@ -132,6 +140,10 @@ func readMachineType(iterator *jsoniter.Iterator) *MachineType {
 		case "cpu":
 			value := readValue(iterator)
 			object.cpu = value
+		case "category":
+			text := iterator.ReadString()
+			value := MachineTypeCategory(text)
+			object.category = &value
 		case "cloud_provider":
 			value := readCloudProvider(iterator)
 			object.cloudProvider = value
