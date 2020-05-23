@@ -6,6 +6,7 @@ import (
 	"github.com/Masterminds/semver"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/spi"
+	"github.com/spf13/viper"
 )
 
 func init() {
@@ -16,7 +17,7 @@ func init() {
 type latestVersion struct{}
 
 func (l latestVersion) ShouldUse() bool {
-	return config.Instance.Cluster.UseLatestVersionForInstall
+	return viper.GetBool(config.Cluster.UseLatestVersionForInstall)
 }
 
 func (l latestVersion) Priority() int {

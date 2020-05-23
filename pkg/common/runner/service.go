@@ -9,7 +9,7 @@ import (
 
 	"github.com/emicklei/go-restful/log"
 	"github.com/openshift/osde2e/pkg/common/config"
-	"github.com/openshift/osde2e/pkg/common/state"
+	"github.com/spf13/viper"
 
 	"github.com/hashicorp/go-multierror"
 	kubev1 "k8s.io/api/core/v1"
@@ -119,7 +119,7 @@ func (r *Runner) getAllLogsFromPod(podName string) error {
 				return
 			}
 
-			configMapDirectory := filepath.Join(config.Instance.ReportDir, state.Instance.Phase, containerLogs)
+			configMapDirectory := filepath.Join(viper.GetString(config.ReportDir), viper.GetString(config.Phase), containerLogs)
 
 			if err := os.MkdirAll(configMapDirectory, os.FileMode(0755)); err != nil {
 				multierror.Append(allErrors, err)

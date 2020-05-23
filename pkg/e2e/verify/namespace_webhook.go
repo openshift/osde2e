@@ -2,6 +2,9 @@ package verify
 
 import (
 	"fmt"
+	"log"
+	"time"
+
 	"github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	userv1 "github.com/openshift/api/user/v1"
@@ -9,10 +12,9 @@ import (
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/rest"
-	"log"
-	"time"
 
 	"github.com/openshift/osde2e/pkg/common/helper"
+	"github.com/spf13/viper"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -132,7 +134,7 @@ var _ = ginkgo.Describe("[Suite: informing] [OSD] namespace validating webhook",
 				err := updateNamespace(namespace, DUMMY_USER, "dedicated-admins", h)
 				Expect(err).To(HaveOccurred())
 			}
-		}, float64(config.Instance.Tests.PollingTimeout))
+		}, viper.GetFloat64(config.Tests.PollingTimeout))
 
 		ginkgo.It("Non-privileged users cannot manage privileged namespaces", func() {
 			for privilegedNamespace := range PRIVILEGED_NAMESPACES {
@@ -143,7 +145,7 @@ var _ = ginkgo.Describe("[Suite: informing] [OSD] namespace validating webhook",
 				err := updateNamespace(namespace, DUMMY_USER, DUMMY_GROUP, h)
 				Expect(err).To(HaveOccurred())
 			}
-		}, float64(config.Instance.Tests.PollingTimeout))
+		}, viper.GetFloat64(config.Tests.PollingTimeout))
 
 		ginkgo.It("Members of SRE groups can manage all namespaces", func() {
 			for _, sreGroup := range SRE_GROUPS {
@@ -156,7 +158,7 @@ var _ = ginkgo.Describe("[Suite: informing] [OSD] namespace validating webhook",
 					Expect(err).NotTo(HaveOccurred())
 				}
 			}
-		}, float64(config.Instance.Tests.PollingTimeout))
+		}, viper.GetFloat64(config.Tests.PollingTimeout))
 
 		ginkgo.It("Privileged users can manage all namespaces", func() {
 			for _, privilegedUser := range PRIVILEGED_USERS {
@@ -169,7 +171,7 @@ var _ = ginkgo.Describe("[Suite: informing] [OSD] namespace validating webhook",
 					Expect(err).NotTo(HaveOccurred())
 				}
 			}
-		}, float64(config.Instance.Tests.PollingTimeout))
+		}, viper.GetFloat64(config.Tests.PollingTimeout))
 
 		ginkgo.It("Non-privileged users can manage all non-privileged namespaces", func() {
 			// Non-privileged users can manage all non-privileged namespaces
@@ -177,7 +179,7 @@ var _ = ginkgo.Describe("[Suite: informing] [OSD] namespace validating webhook",
 				err := updateNamespace(nonPrivilegedNamespace, DUMMY_USER, "dedicated-admins", h)
 				Expect(err).NotTo(HaveOccurred())
 			}
-		}, float64(config.Instance.Tests.PollingTimeout))
+		}, viper.GetFloat64(config.Tests.PollingTimeout))
 	})
 })
 

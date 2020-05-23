@@ -3,6 +3,7 @@ package verify
 import (
 	"github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"github.com/spf13/viper"
 
 	userv1 "github.com/openshift/api/user/v1"
 	"github.com/openshift/osde2e/pkg/common/config"
@@ -39,7 +40,7 @@ var _ = ginkgo.Describe("[Suite: informing] [OSD] user validating webhook", func
 			})
 			err = deleteUser(userName, h)
 			Expect(err).To(HaveOccurred())
-		}, float64(config.Instance.Tests.PollingTimeout))
+		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
 
 		ginkgo.It("dedicated admins can manage customer users", func() {
 			userName := util.RandomStr(5) + "@customdomain"
@@ -58,7 +59,7 @@ var _ = ginkgo.Describe("[Suite: informing] [OSD] user validating webhook", func
 			})
 			err = deleteUser(userName, h)
 			Expect(err).NotTo(HaveOccurred())
-		}, float64(config.Instance.Tests.PollingTimeout))
+		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
 
 		ginkgo.It("dedicated admins cannot manage redhat user identity", func() {
 			providerUsername := util.RandomStr(5)
@@ -79,7 +80,7 @@ var _ = ginkgo.Describe("[Suite: informing] [OSD] user validating webhook", func
 			})
 			err = deleteIdentity(idName, h)
 			Expect(err).To(HaveOccurred())
-		}, float64(config.Instance.Tests.PollingTimeout))
+		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
 
 		ginkgo.It("dedicated admins can manage customer user identity", func() {
 			providerUsername := util.RandomStr(5)
@@ -100,7 +101,7 @@ var _ = ginkgo.Describe("[Suite: informing] [OSD] user validating webhook", func
 			})
 			err = deleteIdentity(idName, h)
 			Expect(err).To(HaveOccurred())
-		}, float64(config.Instance.Tests.PollingTimeout))
+		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
 	})
 })
 

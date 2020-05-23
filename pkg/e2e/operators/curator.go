@@ -9,8 +9,8 @@ import (
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/providers"
-	"github.com/openshift/osde2e/pkg/common/state"
 	"github.com/openshift/osde2e/pkg/common/util"
+	"github.com/spf13/viper"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	unstruct "k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -24,8 +24,8 @@ var _ = ginkgo.Describe("[Suite: operators] [OSD] Curator Operator", func() {
 		ginkgo.It("we should use curated operator source", func() {
 			provider, err := providers.ClusterProvider()
 			Expect(err).NotTo(HaveOccurred(), "error getting cluster provider")
-			currentClusterVersion, err := cluster.GetClusterVersion(provider, state.Instance.Cluster.ID)
-			Expect(err).NotTo(HaveOccurred(), "error getting cluster version %s", state.Instance.Cluster.Version)
+			currentClusterVersion, err := cluster.GetClusterVersion(provider, viper.GetString(config.Cluster.ID))
+			Expect(err).NotTo(HaveOccurred(), "error getting cluster version %s", viper.GetString(config.Cluster.Version))
 
 			if util.Version420.Check(currentClusterVersion) {
 				listOpts := metav1.ListOptions{}
@@ -48,7 +48,7 @@ var _ = ginkgo.Describe("[Suite: operators] [OSD] Curator Operator", func() {
 			} else {
 				log.Printf("Cluster version is less than 4.2, skipping tests")
 			}
-		}, float64(config.Instance.Tests.PollingTimeout))
+		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
 
 	})
 })

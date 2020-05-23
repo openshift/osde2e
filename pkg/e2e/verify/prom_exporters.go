@@ -5,11 +5,12 @@ import (
 
 	"github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"github.com/spf13/viper"
 
 	"github.com/openshift/osde2e/pkg/common/cluster"
+	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/helper"
 	clusterProviders "github.com/openshift/osde2e/pkg/common/providers"
-	"github.com/openshift/osde2e/pkg/common/state"
 	"github.com/openshift/osde2e/pkg/common/util"
 )
 
@@ -68,12 +69,11 @@ var _ = ginkgo.Describe("[Suite: e2e] [OSD] Prometheus Exporters", func() {
 		},
 	}
 
-
 	h := helper.New()
 
 	ginkgo.It("should exist and be running in the cluster", func() {
 
-		envs := []string{allProviders, state.Instance.CloudProvider.CloudProviderID}
+		envs := []string{allProviders, viper.GetString(config.CloudProvider.CloudProviderID)}
 
 		// Expect project to exist
 		_, err := h.Project().ProjectV1().Projects().Get(promNamespace, metav1.GetOptions{})
@@ -127,8 +127,8 @@ func checkRoleBindings(namespace string, roleBindings map[string][]string, h *he
 func checkDaemonSets(namespace string, daemonSets map[string][]string, h *helper.H, providers ...string) {
 	provider, err := clusterProviders.ClusterProvider()
 	Expect(err).NotTo(HaveOccurred(), "error getting cluster provider")
-	currentClusterVersion, err := cluster.GetClusterVersion(provider, state.Instance.Cluster.ID)
-	Expect(err).NotTo(HaveOccurred(), "error getting cluster version %s", state.Instance.Cluster.Version)
+	currentClusterVersion, err := cluster.GetClusterVersion(provider, viper.GetString(config.Cluster.ID))
+	Expect(err).NotTo(HaveOccurred(), "error getting cluster version %s", viper.GetString(config.Cluster.Version))
 
 	for _, provider := range providers {
 		for _, daemonSetName := range daemonSets[provider] {

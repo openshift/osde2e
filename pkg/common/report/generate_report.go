@@ -6,10 +6,12 @@ import (
 	"log"
 	"regexp"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/prometheus"
+	"github.com/spf13/viper"
 
 	v1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/prometheus/common/model"
@@ -30,7 +32,7 @@ type reportData struct {
 func GenerateReport() (WeatherReport, error) {
 	// Range for the queries issued to Prometheus
 	queryRange := v1.Range{
-		Start: time.Now().Add(-time.Hour * config.Instance.Weather.StartOfTimeWindowInHours),
+		Start: time.Now().Add(-time.Hour * (viper.GetDuration(config.Weather.StartOfTimeWindowInHours))),
 		End:   time.Now(),
 		Step:  stepDurationInHours * time.Hour,
 	}
@@ -47,7 +49,8 @@ func GenerateReport() (WeatherReport, error) {
 
 	// Assemble the whitelist regexes. We'll only produce a report based on these regexes.
 	whitelistRegexes := []*regexp.Regexp{}
-	for _, whitelistRegex := range config.Instance.Weather.JobWhitelist {
+	jobWhitelistString := viper.GetString(config.Weather.JobWhitelist)
+	for _, whitelistRegex := range strings.Split(jobWhitelistString, ",") {
 		whitelistRegexes = append(whitelistRegexes, regexp.MustCompile(whitelistRegex))
 	}
 
@@ -151,7 +154,7 @@ func (r *reportData) addVersion(versionToAdd string) {
 func (r *reportData) filterFailureResults() {
 	filteredFailures := map[string]int{}
 	for testname, failureCount := range r.Failures {
-		if failureCount >= (config.Instance.Weather.NumberOfSamplesNecessary - 1) {
+		if failureCount >= (viper.GetInt(config.Weather.NumberOfSamplesNecessary) - 1) {
 			filteredFailures[testname] = failureCount
 		}
 	}

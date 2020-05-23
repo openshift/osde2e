@@ -6,10 +6,25 @@ import (
 	"io"
 	"regexp"
 	"strings"
+	"sync"
+
+	"github.com/spf13/viper"
 )
 
 // LogMetrics is an array of LogMetric types with an easier lookup method
 type LogMetrics []LogMetric
+
+var once = sync.Once{}
+
+var logMetrics = LogMetrics{}
+
+// GetLogMetrics will return the log metrics.
+func GetLogMetrics() LogMetrics {
+	once.Do(func() {
+		viper.UnmarshalKey("logMetrics", &logMetrics)
+	})
+	return logMetrics
+}
 
 // GetMetricByName returns a pointer to a LogMetric from the array based on the name
 func (metrics LogMetrics) GetMetricByName(name string) *LogMetric {

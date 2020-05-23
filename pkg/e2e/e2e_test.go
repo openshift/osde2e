@@ -10,6 +10,7 @@ import (
 
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/events"
+	"github.com/spf13/viper"
 )
 
 func TestNoHiveLogs(t *testing.T) {
@@ -23,7 +24,7 @@ func TestNoHiveLogs(t *testing.T) {
 		t.Errorf("list of events is not empty on start: %v", err)
 	}
 
-	config.Instance.ReportDir = tmpDir
+	viper.Set(config.ReportDir, tmpDir)
 
 	checkBeforeMetricsGeneration()
 	if !reflect.DeepEqual(events.GetListOfEvents(), []string{string(events.NoHiveLogs)}) {

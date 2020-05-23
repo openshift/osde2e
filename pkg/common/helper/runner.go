@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 
 	. "github.com/onsi/gomega"
+	"github.com/spf13/viper"
 
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/runner"
@@ -36,7 +37,7 @@ func (h *H) Runner(cmd string) *runner.Runner {
 // WriteResults dumps runner results into the ReportDir.
 func (h *H) WriteResults(results map[string][]byte) {
 	for filename, data := range results {
-		dst := filepath.Join(config.Instance.ReportDir, h.Phase, filename)
+		dst := filepath.Join(viper.GetString(config.ReportDir), viper.GetString(config.Phase), filename)
 		err := os.MkdirAll(filepath.Dir(dst), os.FileMode(0755))
 		Expect(err).NotTo(HaveOccurred())
 		err = ioutil.WriteFile(dst, data, os.ModePerm)

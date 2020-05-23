@@ -7,6 +7,7 @@ import (
 
 	configclient "github.com/openshift/client-go/config/clientset/versioned/typed/config/v1"
 	"github.com/openshift/osde2e/pkg/common/config"
+	"github.com/spf13/viper"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -27,9 +28,10 @@ func CheckOperatorReadiness(configClient configclient.ConfigV1Interface) (bool, 
 	}
 
 	// Load the list of operators we want to ignore and skip.
+	operatorSkipString := viper.GetString(config.Tests.OperatorSkip)
 	operatorSkipList := make(map[string]string)
-	if len(config.Instance.Tests.OperatorSkip) > 0 {
-		operatorSkipVals := strings.Split(config.Instance.Tests.OperatorSkip, ",")
+	if len(operatorSkipString) > 0 {
+		operatorSkipVals := strings.Split(operatorSkipString, ",")
 		for _, val := range operatorSkipVals {
 			operatorSkipList[val] = ""
 		}

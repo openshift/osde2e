@@ -7,7 +7,7 @@ import (
 	"github.com/Masterminds/semver"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/spi"
-	"github.com/openshift/osde2e/pkg/common/state"
+	"github.com/spf13/viper"
 )
 
 func init() {
@@ -18,7 +18,7 @@ func init() {
 type previousReleaseFromDefault struct{}
 
 func (p previousReleaseFromDefault) ShouldUse() bool {
-	return config.Instance.Cluster.PreviousReleaseFromDefault > 0
+	return viper.GetInt(config.Cluster.PreviousReleaseFromDefault) > 0
 }
 
 func (p previousReleaseFromDefault) Priority() int {
@@ -28,19 +28,19 @@ func (p previousReleaseFromDefault) Priority() int {
 func (p previousReleaseFromDefault) SelectVersion(versionList *spi.VersionList) (*semver.Version, string, error) {
 	availableVersions := versionList.AvailableVersions()
 	defaultIndex := findDefaultVersionIndex(availableVersions)
-	numReleasesFromDefault := config.Instance.Cluster.PreviousReleaseFromDefault
+	numReleasesFromDefault := viper.GetInt(config.Cluster.PreviousReleaseFromDefault)
 	versionType := fmt.Sprintf("version %d releases prior to the default", numReleasesFromDefault)
 
 	if defaultIndex < 0 {
 		log.Printf("unable to find default version in avaialable version list")
-		state.Instance.Cluster.PreviousVersionFromDefaultFound = false
+		viper.Set(config.Cluster.PreviousVersionFromDefaultFound, false)
 	}
 
 	targetIndex := defaultIndex - numReleasesFromDefault
 
 	if targetIndex < 0 {
 		log.Printf("not enough enabled versions to go back %d releases", numReleasesFromDefault)
-		state.Instance.Cluster.PreviousVersionFromDefaultFound = false
+		viper.Set(config.Cluster.PreviousVersionFromDefaultFound, false)
 		return nil, versionType, nil
 	}
 
