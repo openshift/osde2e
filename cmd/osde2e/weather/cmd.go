@@ -61,10 +61,6 @@ func run(cmd *cobra.Command, argv []string) error {
 		return fmt.Errorf("error loading initial state: %v", err)
 	}
 
-	if len(argv) != 0 {
-		return fmt.Errorf("Unexpected number of arguments.")
-	}
-
 	err := weather.GenerateWeatherReportForOSD(args.output, args.outputType)
 
 	if err != nil {

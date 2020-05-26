@@ -48,7 +48,7 @@ func init() {
 		&args.outputFormat,
 		"output-format",
 		"-",
-		"Custom config file for osde2e",
+		"Output format for query results (json|prom). Defaults to json.",
 	)
 
 	Cmd.RegisterFlagCompletionFunc("output-format", func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
