@@ -1,4 +1,4 @@
-package operators
+package verify
 
 import (
 	"github.com/onsi/ginkgo"
@@ -18,8 +18,9 @@ const (
 	CUSTOMER_PROVIDER_NAME = "CUSTOM"
 )
 
-var _ = ginkgo.Describe("[Suite: informing] [OSD] validating webhook", func() {
+var _ = ginkgo.Describe("[Suite: informing] [OSD] user validating webhook", func() {
 	h := helper.New()
+
 	ginkgo.Context("user validating webhook", func() {
 		ginkgo.It("dedicated admins cannot manage redhat users", func() {
 			userName := util.RandomStr(5) + "@redhat.com"
