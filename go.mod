@@ -25,7 +25,8 @@ require (
 	github.com/prometheus/client_golang v1.4.1
 	github.com/prometheus/common v0.9.1
 	github.com/slack-go/slack v0.6.3
-	github.com/spf13/pflag v1.0.5 // indirect
+	github.com/spf13/cobra v1.0.0
+	github.com/spf13/pflag v1.0.5
 	golang.org/x/crypto v0.0.0-20191011191535-87dc89f01550 // indirect
 	golang.org/x/net v0.0.0-20191004110552-13f9640d40b9
 	golang.org/x/oauth2 v0.0.0-20190604053449-0f29369cfe45 // indirect

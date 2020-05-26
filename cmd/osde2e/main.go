@@ -1,39 +1,60 @@
 package main
 
 import (
-	"context"
-	"flag"
 	"fmt"
+	"github.com/openshift/osde2e/cmd/osde2e/arguments"
+	"github.com/openshift/osde2e/cmd/osde2e/completion"
+	"github.com/openshift/osde2e/cmd/osde2e/query"
+	"github.com/openshift/osde2e/cmd/osde2e/test"
+	"github.com/openshift/osde2e/cmd/osde2e/update"
+	"github.com/openshift/osde2e/cmd/osde2e/weather"
+	"github.com/openshift/osde2e/cmd/osde2e/weather_slack"
+	"github.com/spf13/cobra"
 	"log"
 	"os"
 	"os/exec"
+	"strings"
 	"syscall"
 
 	_ "github.com/openshift/osde2e"
-	"github.com/openshift/osde2e/cmd/osde2e/query"
-	"github.com/openshift/osde2e/cmd/osde2e/test"
-	"github.com/openshift/osde2e/cmd/osde2e/weather"
-
-	"github.com/google/subcommands"
 )
 
+var root = &cobra.Command{
+	Use:  "osde2e",
+	Long: "Command line tool for osde2e.",
+	SilenceErrors: true,
+	SilenceUsage:  true,
+	PersistentPreRun: func(cmd *cobra.Command, argv []string) {
+		if update.Enabled() {
+			selfUpdate()
+		}
+	},
+}
+
+func init() {
+	// Add the command line flags:
+	pfs := root.PersistentFlags()
+	arguments.AddDebugFlag(pfs)
+	arguments.AddUpdateFlag(pfs)
+
+	root.AddCommand(weather.Cmd)
+	root.AddCommand(weather_slack.Cmd)
+	root.AddCommand(test.Cmd)
+	root.AddCommand(query.Cmd)
+	root.AddCommand(completion.Cmd)
+
+}
+
 func main() {
-	subcommands.Register(subcommands.HelpCommand(), "")
-	subcommands.Register(subcommands.FlagsCommand(), "")
-	subcommands.Register(subcommands.CommandsCommand(), "")
-	subcommands.Register(&test.Command{}, "")
-	subcommands.Register(&query.Command{}, "")
-	subcommands.Register(&weather.ReportCommand{}, "")
-	subcommands.Register(&weather.ReportToSlackCommand{}, "")
 
-	update := flag.Bool("update", true, "Whether to update the binary before running.")
-	flag.Parse()
-
-	if *update {
-		selfUpdate()
+	// Execute the root command:
+	//root.SetArgs(os.Args[1:])
+	if err := root.Execute(); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
 	}
 
-	os.Exit(int(subcommands.Execute(context.Background())))
+	os.Exit(0)
 }
 
 // selfUpdate will update the osde2e binary using go get and then re-execute it with updates disabled.
@@ -65,7 +86,13 @@ func selfUpdate() {
 	}
 
 	// Exec with update=false, which will prevent recursive updates.
-	err = syscall.Exec(binary, append([]string{os.Args[0], "-update=false"}, os.Args[1:]...), os.Environ())
+	filteredCmdArgs := make([]string, 0)
+	for _, arg := range os.Args {
+		if ! strings.Contains(arg,"-update") {
+			filteredCmdArgs = append(filteredCmdArgs, arg)
+		}
+	}
+	err = syscall.Exec(binary, filteredCmdArgs, os.Environ())
 
 	if err != nil {
 		panic(fmt.Sprintf("error while execing process: %v", err))
