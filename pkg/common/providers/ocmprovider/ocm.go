@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	"github.com/openshift/osde2e/pkg/common/spi"
+	"github.com/spf13/viper"
 
 	ocm "github.com/openshift-online/ocm-sdk-go"
 	ocmerr "github.com/openshift-online/ocm-sdk-go/errors"
@@ -88,7 +89,14 @@ func OCMConnection(token, env string, debug bool) (*ocm.Connection, error) {
 }
 
 // New returns a new OCMProvisioner.
-func New(token string, env string, debug bool) (*OCMProvider, error) {
+func New() (*OCMProvider, error) {
+	return newWithEnv(viper.GetString(Env))
+}
+
+func newWithEnv(env string) (*OCMProvider, error) {
+	token := viper.GetString(Token)
+	debug := viper.GetBool(Debug)
+
 	conn, err := OCMConnection(token, env, debug)
 
 	if err != nil {
@@ -101,7 +109,7 @@ func New(token string, env string, debug bool) (*OCMProvider, error) {
 	// able to get the default version in production. This will allow us to make relative version
 	// upgrades by measuring against the current production default.
 	if env != prod {
-		prodProvider, err = New(token, prod, debug)
+		prodProvider, err = newWithEnv(prod)
 
 		if err != nil {
 			return nil, err

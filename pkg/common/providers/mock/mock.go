@@ -9,9 +9,10 @@ import (
 	"github.com/Masterminds/semver"
 	"github.com/google/uuid"
 	"github.com/markbates/pkger"
+	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/spi"
-	"github.com/openshift/osde2e/pkg/common/state"
 	"github.com/openshift/osde2e/pkg/common/util"
+	"github.com/spf13/viper"
 )
 
 const (
@@ -30,7 +31,8 @@ type MockProvider struct {
 }
 
 // New creates a new MockProvider.
-func New(env string) (*MockProvider, error) {
+func New() (*MockProvider, error) {
+	env := viper.GetString(Env)
 	// Here we set a default
 	versions := []*spi.Version{
 		spi.NewVersionBuilder().
@@ -69,7 +71,7 @@ func (m *MockProvider) LaunchCluster() (string, error) {
 	m.clusters[clusterID] = spi.NewClusterBuilder().
 		ID(clusterID).
 		Name(util.RandomStr(5)).
-		Version(state.Instance.Cluster.Version).
+		Version(viper.GetString(config.Cluster.Version)).
 		State(spi.ClusterStateReady).
 		CloudProvider(MockCloudProvider).
 		Region(MockRegion).

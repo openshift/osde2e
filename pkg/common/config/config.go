@@ -2,226 +2,441 @@
 package config
 
 import (
-	"time"
+	"github.com/spf13/viper"
 )
 
-// Instance is the configuration used for end to end testing.
-var Instance = new(Config)
-
-// Config dictates the behavior of cluster tests.
-type Config struct {
-	Upgrade UpgradeConfig `yaml:"upgrade"`
-
-	Kubeconfig KubeConfig `yaml:"kubeconfig"`
-
-	Tests TestConfig `yaml:"tests"`
-
-	Cluster ClusterConfig `yaml:"cluster"`
-
-	OCM OCMConfig `yaml:"ocm"`
-
-	CRC CRCConfig `yaml:"crc"`
-
-	Addons AddonConfig `yaml:"addons"`
-
-	Scale ScaleConfig `yaml:"scale"`
-
-	Prometheus PrometheusConfig `yaml:"prometheus"`
-
-	Weather WeatherConfig `yaml:"weather"`
-
+const (
 	// Provider is what provider to use to create/delete clusters.
-	Provider string `json:"provider" env:"PROVIDER" sect:"tests" default:"ocm" yaml:"provider"`
+	Provider = "provider"
 
 	// JobName lets you name the current e2e job run
-	JobName string `json:"job_name" env:"JOB_NAME" sect:"tests" yaml:"jobName"`
+	JobName = "jobName"
 
 	// JobID is the ID designated by prow for this run
-	JobID int `json:"job_id" env:"BUILD_NUMBER" sect:"tests" default:"-1" yaml:"jobID"`
+	JobID = "jobID"
 
 	// BaseJobURL is the root location for all job artifacts
 	// For example, https://storage.googleapis.com/origin-ci-test/logs/osde2e-prod-gcp-e2e-next/61/build-log.txt would be
 	// https://storage.googleapis.com/origin-ci-test/logs -- This is also our default
-	BaseJobURL string `jon:"baseJobURL" env:"BASE_JOB_URL" sect:"test" yaml:"baseJobURL" default:"https://storage.googleapis.com/origin-ci-test/logs"`
+	BaseJobURL = "baseJobURL"
 
 	// ReportDir is the location JUnit XML results are written.
-	ReportDir string `json:"report_dir,omitempty" env:"REPORT_DIR" sect:"tests" default:"__TMP_DIR__" yaml:"reportDir"`
+	ReportDir = "reportDir"
 
 	// Suffix is used at the end of test names to identify them.
-	Suffix string `json:"suffix,omitempty" env:"SUFFIX" sect:"tests" default:"__RND_3__" yaml:"suffix"`
+	Suffix = "suffix"
 
 	// DryRun lets you run osde2e all the way up to the e2e tests then skips them.
-	DryRun bool `json:"dry_run,omitempty" env:"DRY_RUN" sect:"tests"  yaml:"dryRun"`
-
-	// LogMetrics is a collection of LogMetric structs used to crudely analyze test logs
-	LogMetrics LogMetrics `json:"log-metrics" yaml:"logMetrics"`
+	DryRun = "dryRun"
 
 	// MustGather will run a Must-Gather process upon completion of the tests.
-	MustGather bool `json:"must_gather,omitempty" env:"MUST_GATHER" sect:"tests" default:"true" yaml:"mustGather"`
-}
+	MustGather = "mustGather"
 
-// KubeConfig stores information required to talk to the Kube API
-type KubeConfig struct {
-	// Path is the filepath of an existing Kubeconfig
-	Path string `env:"TEST_KUBECONFIG" sect:"cluster" yaml:"path"`
-}
+	// InstalledWorkloads is an internal variable used to track currently installed workloads in this test run.
+	InstalledWorkloads = "installedWorkloads"
 
-// CRCConfig has config options specific to the CRC provisioner
-type CRCConfig struct {
-	// PullSecretFile is a file containing your pull secret
-	PullSecretFile string `json:"pull_secret_file" env:"CRC_PULL_SECRET_FILE" yaml:"pull_secret_file"`
-	// PullSecret is a string containing your pull secret
-	PullSecret string `json:"pull_secret" env:"CRC_PULL_SECRET" yaml:"pull_secret"`
-}
+	// Phase is an internal variable used to track the current set of tests being run (install, upgrade).
+	Phase = "phase"
 
-// OCMConfig contains connect info for the OCM API
-type OCMConfig struct {
-	// Token is used to authenticate with OCM.
-	Token string `json:"ocm_token" env:"OCM_TOKEN" sect:"required" yaml:"token"`
+	// Project is both the project and SA automatically created to house all objects created during an osde2e-run
+	Project = "project"
+)
 
-	// Env is the OpenShift Dedicated environment used to provision clusters.
-	Env string `env:"OSD_ENV" sect:"environment" default:"prod" yaml:"env"`
-
-	// Debug shows debug level messages when enabled.
-	Debug bool `env:"DEBUG_OSD" sect:"environment" default:"false" yaml:"debug"`
-
-	// NumRetries is the number of times to retry each OCM call.
-	NumRetries int `env:"NUM_RETRIES" sect:"ocm" default:"3" yaml:"numRetries"`
-}
-
-// UpgradeConfig stores information required to perform OSDe2e upgrade testing
-type UpgradeConfig struct {
+// Upgrade config keys.
+var Upgrade = struct {
 	// UpgradeToCISIfPossible will upgrade to the most recent cluster image set if it's newer than the install version
-	UpgradeToCISIfPossible bool `env:"UPGRADE_TO_CIS_IF_POSSIBLE" sect:"upgrade" default:"false" yaml:"upgradeToCISIfPossible"`
+	UpgradeToCISIfPossible string
 
 	// OnlyUpgradeToZReleases will restrict upgrades to selecting Z releases on stage/prod.
-	OnlyUpgradeToZReleases bool `env:"ONLY_UPGRADE_TO_Z_RELEASES" sect:"upgrade" default:"false" yaml:"onlyUpgradeToZReleases"`
+	OnlyUpgradeToZReleases string
 
-	// NextReleaseAfterProdDefault will select the cluster image set that the given number of releases away from the the production default.
-	NextReleaseAfterProdDefaultForUpgrade int `env:"NEXT_RELEASE_AFTER_PROD_DEFAULT_FOR_UPGRADE" sect:"upgrade" default:"-1" yaml:"nextReleaseAfterProdDefaultForUpgrade"`
+	// NextReleaseAfterProdDefaultForUpgrade will select the cluster image set that the given number of releases away from the the production default.
+	NextReleaseAfterProdDefaultForUpgrade string
 
 	// ReleaseStream used to retrieve latest release images. If set, it will be used to perform an upgrade.
-	ReleaseStream string `env:"UPGRADE_RELEASE_STREAM" sect:"upgrade" yaml:"releaseStream"`
+	ReleaseStream string
+
+	// ReleaseName is the name of the release in a release stream.
+	ReleaseName string
+
+	// Image is the release image a cluster is upgraded to. If set, it overrides the release stream and upgrades.
+	Image string
+
+	// UpgradeVersionEqualToInstallVersion is true if the install version and upgrade versions are the same.
+	UpgradeVersionEqualToInstallVersion string
+}{
+	UpgradeToCISIfPossible:                "upgrade.upgradeToCISIfPossible",
+	OnlyUpgradeToZReleases:                "upgrade.onlyUpgradeToZReleases",
+	NextReleaseAfterProdDefaultForUpgrade: "upgrade.nextReleaseAfterProdDefaultForUpgrade",
+	ReleaseStream:                         "upgrade.releaseStream",
+	ReleaseName:                           "upgrade.releaseName",
+	Image:                                 "upgrade.image",
+	UpgradeVersionEqualToInstallVersion:   "upgrade.upgradeVersionEqualToInstallVersion",
 }
 
-// ClusterConfig contains config information pertaining to an OSD cluster
-type ClusterConfig struct {
-	// MultiAZ deploys a cluster across multiple availability zones.
-	MultiAZ bool `env:"MULTI_AZ" sect:"cluster" default:"false" yaml:"multiAZ"`
+// Kubeconfig config keys.
+var Kubeconfig = struct {
+	// Path is the filepath of an existing Kubeconfig
+	Path string
 
-	// DestroyClusterAfterTest set to true if you want to the cluster to be explicitly deleted after the test.
-	DestroyAfterTest bool `env:"DESTROY_CLUSTER" sect:"cluster" default:"false" yaml:"destroyAfterTest"`
-
-	// ExpiryInMinutes is how long before a cluster expires and is deleted by OSD.
-	ExpiryInMinutes int64 `env:"CLUSTER_EXPIRY_IN_MINUTES" sect:"cluster" default:"210" yaml:"expiryInMinutes"`
-
-	// AfterTestWait is how long to keep a cluster around after tests have run.
-	AfterTestWait int64 `env:"AFTER_TEST_CLUSTER_WAIT" sect:"environment" default:"60" yaml:"afterTestWait"`
-
-	// InstallTimeout is how long to wait before failing a cluster launch.
-	InstallTimeout int64 `env:"CLUSTER_UP_TIMEOUT" sect:"environment" default:"135" yaml:"installTimeout"`
-
-	// UseLatestVersionForInstall will select the latest cluster image set available for a fresh install.
-	UseLatestVersionForInstall bool `env:"USE_LATEST_VERSION_FOR_INSTALL" sect:"version" default:"false" yaml:"useLatestVersionForInstall"`
-
-	// UseMiddleClusterImageSetForInstall will select the cluster image set that is in the middle of the list of ordered cluster versions known to OCM.
-	UseMiddleClusterImageSetForInstall bool `env:"USE_MIDDLE_CLUSTER_IMAGE_SET_FOR_INSTALL" sect:"version" default:"false" yaml:"useMiddleClusterVersionForInstall"`
-
-	// UseOldestClusterImageSetForInstall will select the cluster image set that is in the end of the list of ordered cluster versions known to OCM.
-	UseOldestClusterImageSetForInstall bool `env:"USE_OLDEST_CLUSTER_IMAGE_SET_FOR_INSTALL" sect:"version" default:"false" yaml:"useOldestClusterVersionForInstall"`
-
-	// PreviousReleaseFromDefault will select the clsuter image set that is the given number of releases before the current default.
-	PreviousReleaseFromDefault int `env:"PREVIOUS_RELEASE_FROM_DEFAULT" sect:"version" default:"0" yaml:"previousReleaseFromDefault"`
-
-	// NextReleaseAfterProdDefault will select the cluster image set that the given number of releases away from the the production default.
-	NextReleaseAfterProdDefault int `env:"NEXT_RELEASE_AFTER_PROD_DEFAULT" sect:"version" default:"-1" yaml:"nextReleaseAfterProdDefault"`
-
-	// MajorTarget is the major version to target. If specified, it is used in version selection.
-	MajorTarget int64 `env:"MAJOR_TARGET" sect:"version" yaml:"majorTarget"`
-
-	// MinorTarget is the minor version to target. If specified, it is used in version selection.
-	MinorTarget int64 `env:"MINOR_TARGET" sect:"version" yaml:"minorTarget"`
-
-	// CleanCheckRuns lets us set the number of osd-verify checks we want to run before deeming a cluster "healthy"
-	CleanCheckRuns int `env:"CLEAN_CHECK_RUNS" sect:"environment" default:"20" yaml:"cleanCheckRuns"`
+	// Contents is the actual contents of a valid Kubeconfig
+	Contents string
+}{
+	Path:     "kubeconfig.path",
+	Contents: "kubeconfig.contents",
 }
 
-// AddonConfig options for addon testing
-type AddonConfig struct {
-	//IDsAtCreation is an array of Addon IDs to install at creation time
-	IDsAtCreation []string `env:"ADDON_IDS_AT_CREATION" sect:"addons" yaml:"idsAtCreation"`
+// Tests config keys
 
-	// IDs is an array of Addon IDs to install
-	IDs []string `env:"ADDON_IDS" sect:"addons" yaml:"ids"`
-
-	// TestHarnesses is an array of container images that will test the addon
-	TestHarnesses []string `env:"ADDON_TEST_HARNESSES" sect:"addons" yaml:"testHarnesses"`
-}
-
-// ScaleConfig options for scale testing
-type ScaleConfig struct {
-	WorkloadsRepository string `env:"WORKLOADS_REPO" sect:"scale" default:"https://github.com/openshift-scale/workloads" yaml:"workloadsRepository"`
-
-	WorkloadsRepositoryBranch string `env:"WORKLOADS_REPO_BRANCH" sect:"scale" default:"master" yaml:"workloadsRepositoryBranch"`
-}
-
-// TestConfig changes the behavior of how and what tests are run.
-type TestConfig struct {
-	// PollingTimeout is how long (in mimutes) to wait for an object to be created
-	// before failing the test.
-	PollingTimeout int64 `env:"POLLING_TIMEOUT" sect:"tests" default:"30" yaml:"pollingTimeout"`
+// Tests config keys.
+var Tests = struct {
+	// PollingTimeout is how long (in mimutes) to wait for an object to be created before failing the test.
+	PollingTimeout string
 
 	// GinkgoSkip is a regex passed to Ginkgo that skips any test suites matching the regex. ex. "Operator"
-	GinkgoSkip string `env:"GINKGO_SKIP" sect:"tests" yaml:"ginkgoSkip"`
+	GinkgoSkip string
 
 	// GinkgoFocus is a regex passed to Ginkgo that focus on any test suites matching the regex. ex. "Operator"
-	GinkgoFocus string `env:"GINKGO_FOCUS" sect:"tests" yaml:"focus"`
+	GinkgoFocus string
 
 	// TestsToRun is a list of files which should be executed as part of a test suite
-	TestsToRun []string `env:"TESTS_TO_RUN" sect:"tests" yaml:"testsToRun"`
+	TestsToRun string
 
 	// SuppressSkipNotifications suppresses the notifications of skipped tests
-	SuppressSkipNotifications bool `env:"SUPPRESS_SKIP_NOTIFICATIONS" sect:"tests" default:"true" yaml:"suppressSkipNotifications"`
+	SuppressSkipNotifications string
 
 	// CleanRuns is the number of times the test-version is run before skipping.
-	CleanRuns int `env:"CLEAN_RUNS" sect:"tests" yaml:"cleanRuns"`
+	CleanRuns string
 
 	// OperatorSkip is a comma-delimited list of operator names to ignore health checks from. ex. "insights,telemetry"
-	OperatorSkip string `env:"OPERATOR_SKIP" sect:"tests" default:"insights" yaml:"ginkgoFocus"`
+	OperatorSkip string
 
 	// SkipClusterHealthChecks skips the cluster health checks. Useful when developing against a running cluster.
-	SkipClusterHealthChecks bool `env:"SKIP_CLUSTER_HEALTH_CHECKS" sect:"tests" default:"false" yaml:"skipClusterHealthChecks"`
+	SkipClusterHealthChecks string
 
 	// UploadMetrics tells osde2e whether to try to upload to the S3 metrics bucket.
-	UploadMetrics bool `env:"UPLOAD_METRICS" sect:"metrics" default:"false" yaml:"uploadMetrics"`
+	UploadMetrics string
 
 	// MetricsBucket is the bucket that metrics data will be uploaded to.
-	MetricsBucket string `env:"METRICS_BUCKET" sect:"metrics" default:"osde2e-metrics" yaml:"metricsBucket"`
+	MetricsBucket string
 
 	// ServiceAccount defines what user the tests should run as. By default, osde2e uses system:admin
-	ServiceAccount string `env:"SERVICE_ACCOUNT" sect:"tests" yaml:"serviceAccount"`
+	ServiceAccount string
+}{
+
+	PollingTimeout:            "tests.pollingTimeout",
+	GinkgoSkip:                "tests.ginkgoSkip",
+	GinkgoFocus:               "tests.focus",
+	TestsToRun:                "tests.testsToRun",
+	SuppressSkipNotifications: "tests.suppressSkipNotifications",
+	CleanRuns:                 "tests.cleanRuns",
+	OperatorSkip:              "tests.operatorSkip",
+	SkipClusterHealthChecks:   "tests.skipClusterHealthChecks",
+	UploadMetrics:             "tests.uploadMetrics",
+	MetricsBucket:             "tests.metricsBucket",
+	ServiceAccount:            "tests.serviceAccount",
 }
 
-// PrometheusConfig contains configs for connecting to a Prometheus instance for querying.
-type PrometheusConfig struct {
+// Cluster config keys.
+var Cluster = struct {
+	// MultiAZ deploys a cluster across multiple availability zones.
+	MultiAZ string
+
+	// DestroyClusterAfterTest set to true if you want to the cluster to be explicitly deleted after the test.
+	DestroyAfterTest string
+
+	// ExpiryInMinutes is how long before a cluster expires and is deleted by OSD.
+	ExpiryInMinutes string
+
+	// AfterTestWait is how long to keep a cluster around after tests have run.
+	AfterTestWait string
+
+	// InstallTimeout is how long to wait before failing a cluster launch.
+	InstallTimeout string
+
+	// UseLatestVersionForInstall will select the latest cluster image set available for a fresh install.
+	UseLatestVersionForInstall string
+
+	// UseMiddleClusterImageSetForInstall will select the cluster image set that is in the middle of the list of ordered cluster versions known to OCM.
+	UseMiddleClusterImageSetForInstall string
+
+	// UseOldestClusterImageSetForInstall will select the cluster image set that is in the end of the list of ordered cluster versions known to OCM.
+	UseOldestClusterImageSetForInstall string
+
+	// PreviousReleaseFromDefault will select the clsuter image set that is the given number of releases before the current default.
+	PreviousReleaseFromDefault string
+
+	// NextReleaseAfterProdDefault will select the cluster image set that the given number of releases away from the the production default.
+	NextReleaseAfterProdDefault string
+
+	// CleanCheckRuns lets us set the number of osd-verify checks we want to run before deeming a cluster "healthy"
+	CleanCheckRuns string
+
+	// ID identifies the cluster. If set at start, an existing cluster is tested.
+	ID string
+
+	// Name is the name of the cluster being created.
+	Name string
+
+	// Version is the version of the cluster being deployed.
+	Version string
+
+	// EnoughVersionsForOldestOrMiddleTest is true if there were enough versions for an older/middle test.
+	EnoughVersionsForOldestOrMiddleTest string
+
+	// PreviousVersionFromDefaultFound is true if a previous version from default was found.
+	PreviousVersionFromDefaultFound string
+
+	// State is the cluster state observed by OCM.
+	State string
+}{
+	MultiAZ:                             "cluster.multiAZ",
+	DestroyAfterTest:                    "cluster.destroyAfterTest",
+	ExpiryInMinutes:                     "cluster.expiryInMinutes",
+	AfterTestWait:                       "cluster.afterTestWait",
+	InstallTimeout:                      "cluster.installTimeout",
+	UseLatestVersionForInstall:          "cluster.useLatestVersionForInstall",
+	UseMiddleClusterImageSetForInstall:  "cluster.useMiddleClusterVersionForInstall",
+	UseOldestClusterImageSetForInstall:  "cluster.useOldestClusterVersionForInstall",
+	PreviousReleaseFromDefault:          "cluster.previousReleaseFromDefault",
+	NextReleaseAfterProdDefault:         "cluster.nextReleaseAfterProdDefault",
+	CleanCheckRuns:                      "cluster.cleanCheckRuns",
+	ID:                                  "cluster.id",
+	Name:                                "cluster.name",
+	Version:                             "cluster.version",
+	EnoughVersionsForOldestOrMiddleTest: "cluster.enoughVersionForOldestOrMiddleTest",
+	PreviousVersionFromDefaultFound:     "cluster.previousVersionFromDefaultFound",
+	State:                               "cluster.state",
+}
+
+// CloudProvider config keys.
+var CloudProvider = struct {
+	// CloudProviderID is the cloud provider ID to use to provision the cluster.
+	CloudProviderID string
+
+	// Region is the cloud provider region to use to provision the cluster.
+	Region string
+}{
+	CloudProviderID: "cloudProvider.providerId",
+	Region:          "cloudProvider.region",
+}
+
+// Addons config keys.
+var Addons = struct {
+	// IDsAtCreation is a comma separated list of IDs to create at cluster creation time.
+	IDsAtCreation string
+
+	// IDs is a comma separated list of IDs to install after a cluster is created.
+	IDs string
+
+	// TestHarnesses is a comma separated list of container images that will test the addon
+	TestHarnesses string
+}{
+	IDsAtCreation: "addons.idsAtCreation",
+	IDs:           "ids",
+	TestHarnesses: "testHarnesses",
+}
+
+// Scale config keys.
+var Scale = struct {
+	// WorkloadsRepository is the git repository where the openshift-scale workloads are located.
+	WorkloadsRepository string
+
+	// WorkloadsRepositoryBranch is the branch of the git repository to use.
+	WorkloadsRepositoryBranch string
+}{
+	WorkloadsRepository:       "scale.workloadsRepository",
+	WorkloadsRepositoryBranch: "scale.workloadsRepositoryBranch",
+}
+
+// Prometheus config keys.
+var Prometheus = struct {
 	// Address is the address of the Prometheus instance to connect to.
-	Address string `env:"PROMETHEUS_ADDRESS" sect:"weather" yaml:"address"`
+	Address string
 
 	// BearerToken is the token needed for communicating with Prometheus.
-	BearerToken string `env:"PROMETHEUS_BEARER_TOKEN" sect:"weather" yaml:"bearerToken"`
+	BearerToken string
+}{
+	Address:     "prometheus.address",
+	BearerToken: "prometheus.bearerToken",
 }
 
-// WeatherConfig describes various config options for weather reports.
-type WeatherConfig struct {
+// Weather config keys.
+var Weather = struct {
 	// StartOfTimeWindowInHours is how many hours to look back through results.
-	StartOfTimeWindowInHours time.Duration `env:"START_OF_TIME_WINDOW_IN_HOURS" sect:"weather" default:"24" yaml:"startOfTimeWindowInHours"`
+	StartOfTimeWindowInHours string
 
 	// NumberOfSamplesNecessary is how many samples are necessary for generating a report.
-	NumberOfSamplesNecessary int `env:"NUMBER_OF_SAMPLES_NECESSARY" sect:"weather" default:"3" yaml:"numberOfSamplesNecessary"`
+	NumberOfSamplesNecessary string
 
 	// SlackWebhook is the webhook to use to post the weather report to slack.
-	SlackWebhook string `env:"SLACK_WEBHOOK" sect:"weather" yaml:"slackWebhook"`
+	SlackWebhook string
 
 	// JobWhitelist is a list of job regexes to consider in the weather report.
-	JobWhitelist []string `env:"JOB_WHITELIST" sect:"weather" default:"osde2e-.*-aws-e2e-.*" yaml:"jobWhitelist"`
+	JobWhitelist string
+}{
+	StartOfTimeWindowInHours: "weather.startOfTimeWindowInHours",
+	NumberOfSamplesNecessary: "weather.numberOfSamplesNecessary",
+	SlackWebhook:             "weather.slackWebhook",
+	JobWhitelist:             "weather.jobWhitelist",
+}
+
+func init() {
+	// Here's where we bind environment variables to config options and set defaults
+
+	viper.SetConfigType("yaml") // Our configs are all in yaml.
+
+	// ----- Top Level Configs -----
+	viper.SetDefault(Provider, "ocm")
+	viper.BindEnv(Provider, "PROVIDER")
+
+	viper.BindEnv(JobName, "JOB_NAME")
+
+	viper.SetDefault(JobID, -1)
+	viper.BindEnv(JobID, "jobID")
+
+	viper.SetDefault(BaseJobURL, "https://storage.googleapis.com/origin-ci-test/logs")
+	viper.BindEnv(BaseJobURL, "BASE_JOB_URL")
+
+	viper.BindEnv(ReportDir, "REPORT_DIR")
+
+	viper.BindEnv(Suffix, "suffix")
+
+	viper.SetDefault(DryRun, false)
+	viper.BindEnv(DryRun, "DRY_RUN")
+
+	viper.SetDefault(MustGather, true)
+	viper.BindEnv(MustGather, "MUST_GATHER")
+
+	// ----- Upgrade -----
+	viper.SetDefault(Upgrade.UpgradeToCISIfPossible, false)
+	viper.BindEnv(Upgrade.UpgradeToCISIfPossible, "UPGRADE_TO_CIS_IF_POSSIBLE")
+
+	viper.SetDefault(Upgrade.OnlyUpgradeToZReleases, false)
+	viper.BindEnv(Upgrade.OnlyUpgradeToZReleases, "ONLY_UPGRADE_TO_Z_RELEASES")
+
+	viper.SetDefault(Upgrade.NextReleaseAfterProdDefaultForUpgrade, -1)
+	viper.BindEnv(Upgrade.NextReleaseAfterProdDefaultForUpgrade, "NEXT_RELEASE_AFTER_PROD_DEFAULT_FOR_UPGRADE")
+
+	viper.BindEnv(Upgrade.ReleaseStream, "UPGRADE_RELEASE_STREAM")
+
+	viper.BindEnv(Upgrade.ReleaseName, "UPGRADE_RELEASE_NAME")
+
+	viper.BindEnv(Upgrade.Image, "UPGRADE_IMAGE")
+
+	viper.SetDefault(Upgrade.UpgradeVersionEqualToInstallVersion, false)
+
+	// ----- Kubeconfig -----
+	viper.BindEnv(Kubeconfig.Path, "TEST_KUBECONFIG")
+
+	// ----- Tests -----
+	viper.SetDefault(Tests.PollingTimeout, 30)
+	viper.BindEnv(Tests.PollingTimeout, "POLLING_TIMEOUT")
+
+	viper.BindEnv(Tests.GinkgoSkip, "GINKGO_SKIP")
+
+	viper.BindEnv(Tests.GinkgoFocus, "GINKGO_FOCUS")
+
+	viper.BindEnv(Tests.TestsToRun, "TESTS_TO_RUN")
+
+	viper.SetDefault(Tests.SuppressSkipNotifications, true)
+	viper.BindEnv(Tests.SuppressSkipNotifications, "SUPPRESS_SKIP_NOTIFICATIONS")
+
+	viper.BindEnv(Tests.CleanRuns, "CLEAN_RUNS")
+
+	viper.SetDefault(Tests.OperatorSkip, "insights")
+	viper.BindEnv(Tests.OperatorSkip, "OPERATOR_SKIP")
+
+	viper.SetDefault(Tests.SkipClusterHealthChecks, false)
+	viper.BindEnv(Tests.OperatorSkip, "SKIP_CLUSTER_HEALTH_CHECKS")
+
+	viper.SetDefault(Tests.UploadMetrics, false)
+	viper.BindEnv(Tests.UploadMetrics, "UPLOAD_METRICS")
+
+	viper.SetDefault(Tests.MetricsBucket, "osde2e-metrics")
+	viper.BindEnv(Tests.UploadMetrics, "METRICS_BUCKET")
+
+	viper.BindEnv(Tests.ServiceAccount, "SERVICE_ACCOUNT")
+
+	// ----- Cluster -----
+	viper.SetDefault(Cluster.MultiAZ, false)
+	viper.BindEnv(Cluster.MultiAZ, "MULTI_AZ")
+
+	viper.SetDefault(Cluster.DestroyAfterTest, false)
+	viper.BindEnv(Cluster.DestroyAfterTest, "DESTROY_CLUSTER")
+
+	viper.SetDefault(Cluster.ExpiryInMinutes, 210)
+	viper.BindEnv(Cluster.ExpiryInMinutes, "CLUSTER_EXPIRY_IN_MINUTES")
+
+	viper.SetDefault(Cluster.AfterTestWait, 60)
+	viper.BindEnv(Cluster.AfterTestWait, "AFTER_TEST_CLUSTER_WAIT")
+
+	viper.SetDefault(Cluster.InstallTimeout, 135)
+	viper.BindEnv(Cluster.InstallTimeout, "CLUSTER_UP_TIMEOUT")
+
+	viper.SetDefault(Cluster.UseLatestVersionForInstall, false)
+	viper.BindEnv(Cluster.UseLatestVersionForInstall, "USE_LATEST_VERSION_FOR_INSTALL")
+
+	viper.SetDefault(Cluster.UseMiddleClusterImageSetForInstall, false)
+	viper.BindEnv(Cluster.UseMiddleClusterImageSetForInstall, "USE_MIDDLE_CLUSTER_IMAGE_SET_FOR_INSTALL")
+
+	viper.SetDefault(Cluster.UseOldestClusterImageSetForInstall, false)
+	viper.BindEnv(Cluster.UseOldestClusterImageSetForInstall, "USE_OLDEST_CLUSTER_IMAGE_SET_FOR_INSTALL")
+
+	viper.SetDefault(Cluster.PreviousReleaseFromDefault, 0)
+	viper.BindEnv(Cluster.PreviousReleaseFromDefault, "PREVIOUS_RELEASE_FROM_DEFAULT")
+
+	viper.SetDefault(Cluster.NextReleaseAfterProdDefault, -1)
+	viper.BindEnv(Cluster.NextReleaseAfterProdDefault, "NEXT_RELEASE_AFTER_PROD_DEFAULT")
+
+	viper.SetDefault(Cluster.CleanCheckRuns, 20)
+	viper.BindEnv(Cluster.CleanCheckRuns, "CLEAN_CHECK_RUNS")
+
+	viper.BindEnv(Cluster.ID, "CLUSTER_ID")
+
+	viper.BindEnv(Cluster.Name, "CLUSTER_NAME")
+
+	viper.BindEnv(Cluster.Version, "CLUSTER_VERSION")
+
+	viper.SetDefault(Cluster.EnoughVersionsForOldestOrMiddleTest, true)
+
+	viper.SetDefault(Cluster.PreviousVersionFromDefaultFound, true)
+
+	// ----- Cloud Provider -----
+	viper.SetDefault(CloudProvider.CloudProviderID, "aws")
+	viper.BindEnv(CloudProvider.CloudProviderID, "CLOUD_PROVIDER_ID")
+
+	viper.SetDefault(CloudProvider.Region, "us-east-1")
+	viper.BindEnv(CloudProvider.Region, "CLOUD_PROVIDER_REGION")
+
+	// ----- Addons -----
+	viper.BindEnv(Addons.IDsAtCreation, "ADDON_IDS_AT_CREATION")
+
+	viper.BindEnv(Addons.IDs, "ADDON_IDS")
+
+	viper.BindEnv(Addons.TestHarnesses, "ADDON_TEST_HARNESSES")
+
+	// ----- Scale -----
+	viper.SetDefault(Scale.WorkloadsRepository, "https://github.com/openshift-scale/workloads")
+	viper.BindEnv(Scale.WorkloadsRepository, "WORKLOADS_REPO")
+
+	viper.SetDefault(Scale.WorkloadsRepositoryBranch, "master")
+	viper.BindEnv(Scale.WorkloadsRepositoryBranch, "WORKLOADS_REPO_BRANCH")
+
+	// ----- Prometheus -----
+	viper.BindEnv(Prometheus.Address, "PROMETHEUS_ADDRESS")
+
+	viper.BindEnv(Prometheus.BearerToken, "PROMETHEUS_BEARER_TOKEN")
+
+	// ----- Weather -----
+	viper.SetDefault(Weather.StartOfTimeWindowInHours, 24)
+	viper.BindEnv(Weather.StartOfTimeWindowInHours, "START_OF_TIME_WINDOW_IN_HOURS")
+
+	viper.SetDefault(Weather.NumberOfSamplesNecessary, 3)
+	viper.BindEnv(Weather.NumberOfSamplesNecessary, "NUMBER_OF_SAMPLES_NECESSARY")
+
+	viper.BindEnv(Weather.SlackWebhook, "SLACK_WEBHOOK")
+
+	viper.SetDefault(Weather.JobWhitelist, "osde2e-.*-aws-e2e-.*")
+	viper.BindEnv(Weather.JobWhitelist, "JOB_WHITELIST")
 }

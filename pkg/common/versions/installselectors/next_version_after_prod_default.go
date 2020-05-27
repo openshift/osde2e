@@ -7,6 +7,7 @@ import (
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/spi"
 	"github.com/openshift/osde2e/pkg/common/versions/common"
+	"github.com/spf13/viper"
 )
 
 func init() {
@@ -17,7 +18,7 @@ func init() {
 type nextVersionAfterProdDefault struct{}
 
 func (n nextVersionAfterProdDefault) ShouldUse() bool {
-	return config.Instance.Cluster.NextReleaseAfterProdDefault > -1
+	return viper.GetInt(config.Cluster.NextReleaseAfterProdDefault) > -1
 }
 
 func (n nextVersionAfterProdDefault) Priority() int {
@@ -25,7 +26,7 @@ func (n nextVersionAfterProdDefault) Priority() int {
 }
 
 func (n nextVersionAfterProdDefault) SelectVersion(versionList *spi.VersionList) (*semver.Version, string, error) {
-	numReleasesAfterProdDefault := config.Instance.Cluster.NextReleaseAfterProdDefault
+	numReleasesAfterProdDefault := viper.GetInt(config.Cluster.NextReleaseAfterProdDefault)
 	defaultVersion := versionList.Default()
 	selectedVersion, err := common.NextReleaseAfterGivenVersionFromVersionList(defaultVersion, versionList.AvailableVersions(), numReleasesAfterProdDefault)
 	return selectedVersion, fmt.Sprintf("%d release(s) from the default version in prod", numReleasesAfterProdDefault), err

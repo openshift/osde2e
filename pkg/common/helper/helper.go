@@ -7,11 +7,13 @@ import (
 	"log"
 	"math/rand"
 	"strings"
+	"sync"
 	"text/template"
 	"time"
 
 	"github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"github.com/spf13/viper"
 
 	projectv1 "github.com/openshift/api/project/v1"
 	v1 "k8s.io/api/core/v1"
@@ -22,7 +24,6 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 
 	"github.com/openshift/osde2e/pkg/common/config"
-	"github.com/openshift/osde2e/pkg/common/state"
 	"github.com/openshift/osde2e/pkg/common/util"
 )
 
@@ -32,9 +33,8 @@ func init() {
 
 // Init is a common helper function to import the run state into Helper
 func Init() *H {
-	// Load existing state into helper
 	h := &H{
-		State: state.Instance,
+		mutex: sync.Mutex{},
 	}
 	return h
 }
@@ -63,14 +63,13 @@ func NewOutsideGinkgo() *H {
 
 // H configures clients and sets up and destroys Projects for test isolation.
 type H struct {
-	// embed state
-	*state.State
 	ServiceAccount string
 	OutsideGinkgo  bool
 
 	// internal
 	restConfig *rest.Config
 	proj       *projectv1.Project
+	mutex      sync.Mutex
 }
 
 // SetupWrapper is a Ginkgo-Friendly setup function to pass to BeforeEach
@@ -83,21 +82,23 @@ func (h *H) SetupWrapper() {
 func (h *H) Setup() error {
 	var err error
 
-	h.restConfig, err = clientcmd.RESTConfigFromKubeConfig(h.Kubeconfig.Contents)
+	h.restConfig, err = clientcmd.RESTConfigFromKubeConfig([]byte(viper.GetString(config.Kubeconfig.Contents)))
 	if h.OutsideGinkgo && err != nil {
 		return fmt.Errorf("error generating restconfig: %s", err.Error())
 	}
 
 	Expect(err).ShouldNot(HaveOccurred(), "failed to configure client")
 
-	if h.State.Project == "" {
+	project := viper.GetString(config.Project)
+	if project == "" {
 		// setup project and dedicated-admin account to run tests
 		// the service account is provisioned but only used when specified
 		// also generates a unique name for the osde2e test run project
 		suffix := util.RandomStr(5)
-		h.State.Project = "osde2e-" + suffix
+		project = "osde2e-" + suffix
 
-		log.Printf("Setup called for %s", h.State.Project)
+		viper.Set(config.Project, project)
+		log.Printf("Setup called for %s", project)
 
 		h.proj, err = h.createProject(suffix)
 		if h.OutsideGinkgo && err != nil {
@@ -111,8 +112,8 @@ func (h *H) Setup() error {
 		time.Sleep(60 * time.Second)
 
 	} else {
-		log.Printf("Setting project name to %s", h.State.Project)
-		h.proj, err = h.Project().ProjectV1().Projects().Get(h.State.Project, metav1.GetOptions{})
+		log.Printf("Setting project name to %s", project)
+		h.proj, err = h.Project().ProjectV1().Projects().Get(project, metav1.GetOptions{})
 		if h.OutsideGinkgo && err != nil {
 			return fmt.Errorf("error retrieving project: %s", err.Error())
 		}
@@ -121,12 +122,8 @@ func (h *H) Setup() error {
 	}
 
 	// Set the default service account for future helper-method-calls
-	h.SetServiceAccount(config.Instance.Tests.ServiceAccount)
+	h.SetServiceAccount(viper.GetString(config.Tests.ServiceAccount))
 
-	// Initialize the Workload tracking map
-	if len(h.InstalledWorkloads) < 1 {
-		h.InstalledWorkloads = make(map[string]string)
-	}
 	return nil
 
 }
@@ -135,15 +132,16 @@ func (h *H) Setup() error {
 func (h *H) Cleanup() {
 	var err error
 
-	h.restConfig, err = clientcmd.RESTConfigFromKubeConfig(h.Kubeconfig.Contents)
+	h.restConfig, err = clientcmd.RESTConfigFromKubeConfig([]byte(viper.GetString(config.Kubeconfig.Contents)))
 	Expect(err).ShouldNot(HaveOccurred(), "failed to configure client")
 
 	// Set the SA back to the default. This is required for cleanup in case other helper calls switched SAs
-	h.SetServiceAccount(config.Instance.Tests.ServiceAccount)
+	h.SetServiceAccount(viper.GetString(config.Tests.ServiceAccount))
 
-	if h.proj == nil && h.State.Project != "" {
-		log.Printf("Setting project name to %s", h.State.Project)
-		h.proj, err = h.Project().ProjectV1().Projects().Get(h.State.Project, metav1.GetOptions{})
+	project := viper.GetString(config.Project)
+	if h.proj == nil && project != "" {
+		log.Printf("Setting project name to %s", project)
+		h.proj, err = h.Project().ProjectV1().Projects().Get(project, metav1.GetOptions{})
 		Expect(err).ShouldNot(HaveOccurred(), "failed to retrieve project")
 		Expect(h.proj).ShouldNot(BeNil())
 
@@ -290,12 +288,12 @@ func (h *H) SetProjectByName(projectName string) (*H, error) {
 
 // GetWorkloads returns a list of workloads this osde2e run has installed
 func (h *H) GetWorkloads() map[string]string {
-	return h.InstalledWorkloads
+	return viper.GetStringMapString(config.InstalledWorkloads)
 }
 
 // GetWorkload takes a workload name and returns true or false depending on if it's installed
 func (h *H) GetWorkload(name string) (string, bool) {
-	if val, ok := h.InstalledWorkloads[name]; ok {
+	if val, ok := h.GetWorkloads()[name]; ok {
 		return val, true
 	}
 
@@ -304,7 +302,11 @@ func (h *H) GetWorkload(name string) (string, bool) {
 
 // AddWorkload uniquely appends a workload to the workloads list
 func (h *H) AddWorkload(name, project string) {
-	h.InstalledWorkloads[name] = project
+	h.mutex.Lock()
+	installedWorkloads := h.GetWorkloads()
+	installedWorkloads[name] = project
+	viper.Set(config.InstalledWorkloads, installedWorkloads)
+	h.mutex.Unlock()
 }
 
 // ConvertTemplateToString takes a template and uses the provided data interface to construct a command string

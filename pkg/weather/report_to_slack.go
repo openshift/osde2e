@@ -9,6 +9,7 @@ import (
 	"github.com/openshift/osde2e/pkg/common/report"
 	"github.com/openshift/osde2e/pkg/common/templates"
 	"github.com/slack-go/slack"
+	"github.com/spf13/viper"
 )
 
 var (
@@ -33,7 +34,8 @@ func init() {
 
 // SendReportToSlack will send the weather report to slack
 func SendReportToSlack() error {
-	if config.Instance.Weather.SlackWebhook == "" {
+	slackWebhook := viper.GetString(config.Weather.SlackWebhook)
+	if slackWebhook == "" {
 		return fmt.Errorf("no slack webhook configured")
 	}
 
@@ -59,7 +61,7 @@ func SendReportToSlack() error {
 		Text:        "*osde2e weather report*",
 		Attachments: append([]slack.Attachment{summaryAttachment}, jobAttachments...),
 	}
-	return slack.PostWebhook(config.Instance.Weather.SlackWebhook, msg)
+	return slack.PostWebhook(slackWebhook, msg)
 }
 
 func makeSummaryAttachment(w report.WeatherReport) (slack.Attachment, error) {

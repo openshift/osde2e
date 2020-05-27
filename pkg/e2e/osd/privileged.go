@@ -8,6 +8,7 @@ import (
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/util"
+	"github.com/spf13/viper"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -52,6 +53,6 @@ var _ = ginkgo.Describe("[Suite: service-definition] [OSD] Privileged Containers
 			_, err = h.Kube().CoreV1().Pods(h.CurrentProject()).Create(&pod)
 			Expect(err).NotTo(HaveOccurred())
 
-		}, float64(config.Instance.Tests.PollingTimeout))
+		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
 	})
 })

@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/Masterminds/semver"
+	"github.com/spf13/viper"
 
 	configv1 "github.com/openshift/api/config/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -19,7 +20,6 @@ import (
 	"github.com/openshift/osde2e/pkg/common/metadata"
 	"github.com/openshift/osde2e/pkg/common/providers"
 	"github.com/openshift/osde2e/pkg/common/spi"
-	"github.com/openshift/osde2e/pkg/common/state"
 	"github.com/openshift/osde2e/pkg/common/util"
 )
 
@@ -53,10 +53,11 @@ func RunUpgrade(provider spi.Provider) error {
 		return fmt.Errorf("Unable to generate helper outside ginkgo")
 	}
 
-	if h.Upgrade.Image != "" {
-		log.Printf("Upgrading cluster to UPGRADE_IMAGE '%s'", h.Upgrade.Image)
+	image := viper.GetString(config.Upgrade.Image)
+	if image != "" {
+		log.Printf("Upgrading cluster to UPGRADE_IMAGE '%s'", image)
 	} else {
-		log.Printf("Upgrading cluster to cluster image set with version %s", h.Upgrade.ReleaseName)
+		log.Printf("Upgrading cluster to cluster image set with version %s", viper.GetString(config.Upgrade.ReleaseName))
 	}
 
 	upgradeStarted = time.Now()
@@ -85,7 +86,7 @@ func RunUpgrade(provider spi.Provider) error {
 
 	metadata.Instance.SetTimeToUpgradedCluster(time.Since(upgradeStarted).Seconds())
 
-	if err = cluster.WaitForClusterReady(provider, state.Instance.Cluster.ID); err != nil {
+	if err = cluster.WaitForClusterReady(provider, viper.GetString(config.Cluster.ID)); err != nil {
 		return fmt.Errorf("failed waiting for cluster ready: %v", err)
 	}
 
@@ -107,16 +108,19 @@ func TriggerUpgrade(h *helper.H) (*configv1.ClusterVersion, error) {
 		return cVersion, fmt.Errorf("couldn't get current ClusterVersion '%s': %v", ClusterVersionName, err)
 	}
 
+	image := viper.GetString(config.Upgrade.Image)
+	releaseName := viper.GetString(config.Upgrade.ReleaseName)
+
 	// set requested upgrade targets
-	if h.Upgrade.Image != "" {
+	if image != "" {
 		cVersion.Spec.DesiredUpdate = &configv1.Update{
-			Version: strings.Replace(h.Upgrade.ReleaseName, "openshift-v", "", -1),
-			Image:   h.Upgrade.Image,
+			Version: strings.Replace(releaseName, "openshift-v", "", -1),
+			Image:   image,
 			Force:   true, // Force if we have an image specified
 		}
 	} else {
-		upgradeVersion := strings.Replace(h.Upgrade.ReleaseName, "openshift-v", "", -1)
-		installVersion := strings.Replace(state.Instance.Cluster.Version, "openshift-v", "", -1)
+		upgradeVersion := strings.Replace(releaseName, "openshift-v", "", -1)
+		installVersion := strings.Replace(viper.GetString(config.Cluster.Version), "openshift-v", "", -1)
 
 		upgradeVersionParsed := semver.MustParse(upgradeVersion)
 		installVersionParsed := semver.MustParse(installVersion)
@@ -143,7 +147,7 @@ func TriggerUpgrade(h *helper.H) (*configv1.ClusterVersion, error) {
 
 		// Assume CIS has all the information required. Just pass version info.
 		cVersion.Spec.DesiredUpdate = &configv1.Update{
-			Version: strings.Replace(h.Upgrade.ReleaseName, "openshift-v", "", -1),
+			Version: strings.Replace(releaseName, "openshift-v", "", -1),
 		}
 	}
 
@@ -211,9 +215,9 @@ func IsUpgradeDone(h *helper.H, desired *configv1.Update) (done bool, msg string
 // is being used, in which case the candidate channel will be used.
 func VersionToChannel(version *semver.Version) (string, error) {
 	useVersion := version
-	if config.Instance.Upgrade.OnlyUpgradeToZReleases {
+	if viper.GetBool(config.Upgrade.OnlyUpgradeToZReleases) {
 		var err error
-		useVersion, err = util.OpenshiftVersionToSemver(state.Instance.Cluster.Version)
+		useVersion, err = util.OpenshiftVersionToSemver(viper.GetString(config.Cluster.Version))
 
 		if err != nil {
 			panic("cluster version stored in state object is invalid")

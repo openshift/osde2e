@@ -14,6 +14,7 @@ import (
 	"github.com/openshift/osde2e/pkg/common/spi"
 	"github.com/openshift/osde2e/pkg/common/util"
 	"github.com/openshift/osde2e/pkg/common/versions/common"
+	"github.com/spf13/viper"
 )
 
 const (
@@ -29,7 +30,7 @@ func init() {
 type releaseControllerUpgrade struct{}
 
 func (r releaseControllerUpgrade) ShouldUse(upgradeSource spi.UpgradeSource) bool {
-	return upgradeSource == spi.ReleaseControllerSource && config.Instance.Upgrade.NextReleaseAfterProdDefaultForUpgrade > -1
+	return upgradeSource == spi.ReleaseControllerSource && viper.GetInt(config.Upgrade.NextReleaseAfterProdDefaultForUpgrade) > -1
 }
 
 func (r releaseControllerUpgrade) Priority() int {
@@ -37,11 +38,9 @@ func (r releaseControllerUpgrade) Priority() int {
 }
 
 func (r releaseControllerUpgrade) SelectVersion(installVersion *semver.Version, versionList *spi.VersionList) (string, string, error) {
-	cfg := config.Instance
-
 	// If we're using the release controller, we're trying to do relative version selection.
 	// We'll confirm this in case things change in the future and just proceed with that assumption.
-	nextVersion, err := common.NextReleaseAfterGivenVersionFromVersionList(versionList.Default(), versionList.AvailableVersions(), cfg.Upgrade.NextReleaseAfterProdDefaultForUpgrade)
+	nextVersion, err := common.NextReleaseAfterGivenVersionFromVersionList(versionList.Default(), versionList.AvailableVersions(), viper.GetInt(config.Upgrade.NextReleaseAfterProdDefaultForUpgrade))
 
 	if err != nil {
 		return "", "", fmt.Errorf("error determining next version to upgrade to: %v", err)

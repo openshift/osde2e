@@ -10,12 +10,12 @@ import (
 
 	"github.com/markbates/pkger"
 	. "github.com/onsi/gomega"
+	"github.com/spf13/viper"
 	kubev1 "k8s.io/api/core/v1"
 
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/runner"
-	"github.com/openshift/osde2e/pkg/common/state"
 )
 
 const (
@@ -65,9 +65,9 @@ func (sCfg scaleRunnerConfig) Runner(h *helper.H) *runner.Runner {
 		scaleRepos = runner.Repos{
 			{
 				Name:      "workloads",
-				URL:       config.Instance.Scale.WorkloadsRepository,
+				URL:       viper.GetString(config.Scale.WorkloadsRepository),
 				MountPath: WorkloadsPath,
-				Branch:    config.Instance.Scale.WorkloadsRepositoryBranch,
+				Branch:    viper.GetString(config.Scale.WorkloadsRepositoryBranch),
 			},
 		}
 	})
@@ -75,7 +75,7 @@ func (sCfg scaleRunnerConfig) Runner(h *helper.H) *runner.Runner {
 	// template command from config
 	sCfg.Name = "scale-" + sCfg.Name
 	sCfg.WorkloadsPath = WorkloadsPath
-	sCfg.Kubeconfig = string(state.Instance.Kubeconfig.Contents)
+	sCfg.Kubeconfig = viper.GetString(config.Kubeconfig.Contents)
 	cmd := sCfg.cmd()
 
 	// configure runner for scale testing

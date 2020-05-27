@@ -8,6 +8,7 @@ import (
 	"github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/prometheus/common/log"
+	"github.com/spf13/viper"
 
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/helper"
@@ -77,7 +78,7 @@ var _ = ginkgo.Describe("[Suite: e2e] Cluster state", func() {
 		clusterProvider, err := providers.ClusterProvider()
 		Expect(err).NotTo(HaveOccurred(), "failure to get cluster provider")
 
-		foundCritical := findCriticalAlerts(queryJSON.Data.Results, config.Instance.Provider, clusterProvider.Environment())
+		foundCritical := findCriticalAlerts(queryJSON.Data.Results, viper.GetString(config.Provider), clusterProvider.Environment())
 		Expect(foundCritical).To(BeFalse(), "found a critical alert")
 
 	}, float64(alertsTimeoutInSeconds+30))

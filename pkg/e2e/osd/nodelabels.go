@@ -5,6 +5,7 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/helper"
+	"github.com/spf13/viper"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -26,6 +27,6 @@ var _ = ginkgo.Describe("[Suite: informing] [OSD] NodeLabels", func() {
 
 			_, err = h.Kube().CoreV1().Nodes().Update(&node)
 			Expect(err).To(HaveOccurred())
-		}, float64(config.Instance.Tests.PollingTimeout))
+		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
 	})
 })

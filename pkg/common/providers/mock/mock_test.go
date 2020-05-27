@@ -6,11 +6,12 @@ import (
 
 	"github.com/Masterminds/semver"
 	"github.com/openshift/osde2e/pkg/common/spi"
+	"github.com/spf13/viper"
 	"k8s.io/client-go/tools/clientcmd"
 )
 
 func TestClusterInteraction(t *testing.T) {
-	mockProvider, _ := New("mockEnv")
+	mockProvider := makeMockProviderWithEnv("mockEnv")
 
 	if hasQuota, err := mockProvider.CheckQuota(); !hasQuota || err != nil {
 		t.Errorf("expected quota or no error, got: %v, %v", hasQuota, err.Error())
@@ -53,7 +54,7 @@ func TestIntentionalFailures(t *testing.T) {
 	// Setting the environment to fail will cause multiple common interactions to fail intentionally
 	// Creation / retrieval / deletion of a cluster should all still work though. Some baseline
 	// functionality should always work.
-	mockProvider, _ := New("fail")
+	mockProvider := makeMockProviderWithEnv("fail")
 
 	// Quota Check
 	quotaCheck, err := mockProvider.CheckQuota()
@@ -88,7 +89,7 @@ func TestIntentionalFailures(t *testing.T) {
 }
 
 func TestMockAddons(t *testing.T) {
-	mockProvider, _ := New("mockEnv")
+	mockProvider := makeMockProviderWithEnv("mockEnv")
 
 	clusterID1, _ := mockProvider.LaunchCluster()
 
@@ -120,7 +121,7 @@ func TestMockAddons(t *testing.T) {
 }
 
 func TestClusterkubeconfig(t *testing.T) {
-	mockProvider, _ := New("mockEnv")
+	mockProvider := makeMockProviderWithEnv("mockEnv")
 
 	clusterID1, _ := mockProvider.LaunchCluster()
 
@@ -135,7 +136,7 @@ func TestClusterkubeconfig(t *testing.T) {
 }
 
 func TestVersions(t *testing.T) {
-	mockProvider, _ := New("mockEnv")
+	mockProvider := makeMockProviderWithEnv("mockEnv")
 
 	versions, err := mockProvider.Versions()
 	if err != nil {
@@ -153,7 +154,7 @@ func TestVersions(t *testing.T) {
 }
 
 func TestSetVersionList(t *testing.T) {
-	mockProvider, _ := New("mockEnv")
+	mockProvider := makeMockProviderWithEnv("mockEnv")
 
 	customVersions := []*spi.Version{
 		spi.NewVersionBuilder().
@@ -186,4 +187,14 @@ func TestSetVersionList(t *testing.T) {
 	if versions.Default().String() != "4.3.13" {
 		t.Errorf("unexpected default version. Expected 4.3.13, got: %s", versions.Default().String())
 	}
+}
+
+func makeMockProviderWithEnv(env string) *MockProvider {
+	viper.Reset()
+	viper.Set(Env, env)
+	// Setting the environment to fail will cause multiple common interactions to fail intentionally
+	// Creation / retrieval / deletion of a cluster should all still work though. Some baseline
+	// functionality should always work.
+	mockProvider, _ := New()
+	return mockProvider
 }

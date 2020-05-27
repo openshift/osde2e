@@ -6,6 +6,7 @@ import (
 	configv1 "github.com/openshift/api/config/v1"
 	fakeConfig "github.com/openshift/client-go/config/clientset/versioned/fake"
 	"github.com/openshift/osde2e/pkg/common/config"
+	"github.com/spf13/viper"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 )
@@ -89,8 +90,9 @@ func TestCheckOperatorReadiness(t *testing.T) {
 	}
 
 	for _, test := range tests {
+		viper.Reset()
 		cfgClient := fakeConfig.NewSimpleClientset(test.objs...)
-		config.Instance.Tests.OperatorSkip = test.skip
+		viper.Set(config.Tests.OperatorSkip, test.skip)
 		state, err := CheckOperatorReadiness(cfgClient.ConfigV1())
 
 		if err != nil {

@@ -7,7 +7,6 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/phase"
 )
 
@@ -41,6 +40,9 @@ type Metadata struct {
 	InstallPhasePassRate        float64        `json:"install-phase-pass-rate,string"`
 	UpgradePhasePassRate        float64        `json:"upgrade-phase-pass-rate,string"`
 	LogMetrics                  map[string]int `json:"log-metrics"`
+
+	// Internal variables
+	ReportDir string `json:"-"`
 }
 
 // Instance is the global metadata instance
@@ -57,70 +59,75 @@ func init() {
 // to track/trap changes to metadata and then flush
 // the changes to a file.
 
+// SetReportDir sets the report dir for the metadata.
+func (m *Metadata) SetReportDir(reportDir string) {
+	m.ReportDir = reportDir
+}
+
 // SetClusterID sets the cluster id
 func (m *Metadata) SetClusterID(id string) {
 	m.ClusterID = id
-	m.WriteToJSON(config.Instance.ReportDir)
+	m.WriteToJSON(m.ReportDir)
 }
 
 // SetClusterName sets the cluster name
 func (m *Metadata) SetClusterName(name string) {
 	m.ClusterName = name
-	m.WriteToJSON(config.Instance.ReportDir)
+	m.WriteToJSON(m.ReportDir)
 }
 
 // SetClusterVersion sets the cluster version
 func (m *Metadata) SetClusterVersion(version string) {
 	m.ClusterVersion = version
-	m.WriteToJSON(config.Instance.ReportDir)
+	m.WriteToJSON(m.ReportDir)
 }
 
 // SetEnvironment sets the cluster environment
 func (m *Metadata) SetEnvironment(env string) {
 	m.Environment = env
-	m.WriteToJSON(config.Instance.ReportDir)
+	m.WriteToJSON(m.ReportDir)
 }
 
 // SetUpgradeVersion sets the cluster upgrade version
 func (m *Metadata) SetUpgradeVersion(ver string) {
 	m.UpgradeVersion = ver
-	m.WriteToJSON(config.Instance.ReportDir)
+	m.WriteToJSON(m.ReportDir)
 }
 
 // SetUpgradeVersionSource sets the cluster upgrade version source
 func (m *Metadata) SetUpgradeVersionSource(src string) {
 	m.UpgradeVersionSource = src
-	m.WriteToJSON(config.Instance.ReportDir)
+	m.WriteToJSON(m.ReportDir)
 }
 
 // SetTimeToOCMReportingInstalled sets the time it took for OCM to report a cluster provisioned
 func (m *Metadata) SetTimeToOCMReportingInstalled(timeToOCMReportingInstalled float64) {
 	m.TimeToOCMReportingInstalled = timeToOCMReportingInstalled
-	m.WriteToJSON(config.Instance.ReportDir)
+	m.WriteToJSON(m.ReportDir)
 }
 
 // SetTimeToClusterReady sets the time it took for the cluster to appear healthy on install
 func (m *Metadata) SetTimeToClusterReady(timeToClusterReady float64) {
 	m.TimeToClusterReady = timeToClusterReady
-	m.WriteToJSON(config.Instance.ReportDir)
+	m.WriteToJSON(m.ReportDir)
 }
 
 // SetTimeToUpgradedCluster sets the time it took for the cluster to install an upgrade
 func (m *Metadata) SetTimeToUpgradedCluster(timeToUpgradedCluster float64) {
 	m.TimeToUpgradedCluster = timeToUpgradedCluster
-	m.WriteToJSON(config.Instance.ReportDir)
+	m.WriteToJSON(m.ReportDir)
 }
 
 // SetTimeToUpgradedClusterReady sets the time it took for the cluster to appear healthy on upgrade
 func (m *Metadata) SetTimeToUpgradedClusterReady(timeToUpgradedClusterReady float64) {
 	m.TimeToUpgradedClusterReady = timeToUpgradedClusterReady
-	m.WriteToJSON(config.Instance.ReportDir)
+	m.WriteToJSON(m.ReportDir)
 }
 
 // SetTimeToCertificateIssued sets the time it took for a certificate to be issued to the cluster
 func (m *Metadata) SetTimeToCertificateIssued(timeToCertificateIssued float64) {
 	m.TimeToCertificateIssued = timeToCertificateIssued
-	m.WriteToJSON(config.Instance.ReportDir)
+	m.WriteToJSON(m.ReportDir)
 }
 
 // SetPassRate sets the passrate metadata metric for the given phase
@@ -151,7 +158,7 @@ func (m *Metadata) IncrementLogMetric(metric string, value int) {
 		m.LogMetrics[metric] = value
 	}
 
-	m.WriteToJSON(config.Instance.ReportDir)
+	m.WriteToJSON(m.ReportDir)
 }
 
 // WriteToJSON will marshall the metadata struct and write it into the given file.
