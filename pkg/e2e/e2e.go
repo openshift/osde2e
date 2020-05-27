@@ -19,6 +19,7 @@ import (
 	ginkgoConfig "github.com/onsi/ginkgo/config"
 	"github.com/onsi/ginkgo/reporters"
 	"github.com/onsi/gomega"
+	"github.com/spf13/viper"
 
 	"github.com/openshift/osde2e/pkg/common/aws"
 	"github.com/openshift/osde2e/pkg/common/config"
@@ -29,7 +30,6 @@ import (
 	"github.com/openshift/osde2e/pkg/common/providers"
 	"github.com/openshift/osde2e/pkg/common/runner"
 	"github.com/openshift/osde2e/pkg/common/spi"
-	"github.com/openshift/osde2e/pkg/common/state"
 	"github.com/openshift/osde2e/pkg/common/upgrade"
 	"github.com/openshift/osde2e/pkg/common/util"
 	"github.com/openshift/osde2e/pkg/debug"
@@ -56,21 +56,23 @@ func RunTests() bool {
 }
 
 // runGinkgoTests runs the osde2e test suite using Ginkgo.
+// nolint:gocyclo
 func runGinkgoTests() error {
 	var err error
 	gomega.RegisterFailHandler(ginkgo.Fail)
 
-	cfg := config.Instance
+	dryRun := viper.GetBool(config.DryRun)
 
-	ginkgoConfig.DefaultReporterConfig.NoisySkippings = !config.Instance.Tests.SuppressSkipNotifications
-	ginkgoConfig.GinkgoConfig.SkipString = cfg.Tests.GinkgoSkip
-	ginkgoConfig.GinkgoConfig.FocusString = cfg.Tests.GinkgoFocus
-	ginkgoConfig.GinkgoConfig.DryRun = cfg.DryRun
+	ginkgoConfig.DefaultReporterConfig.NoisySkippings = !viper.GetBool(config.Tests.SuppressSkipNotifications)
+	ginkgoConfig.GinkgoConfig.SkipString = viper.GetString(config.Tests.GinkgoSkip)
+	ginkgoConfig.GinkgoConfig.FocusString = viper.GetString(config.Tests.GinkgoFocus)
+	ginkgoConfig.GinkgoConfig.DryRun = dryRun
 
-	state := state.Instance
+	// Get the cluster ID now to test against later
+	clusterID := viper.GetString(config.Cluster.ID)
 
 	// setup OSD unless Kubeconfig is present
-	if len(cfg.Kubeconfig.Path) > 0 {
+	if len(viper.GetString(config.Kubeconfig.Path)) > 0 {
 		log.Print("Found an existing Kubeconfig!")
 	} else {
 		if provider, err = providers.ClusterProvider(); err != nil {
@@ -85,23 +87,23 @@ func runGinkgoTests() error {
 		}
 
 		switch {
-		case !state.Cluster.EnoughVersionsForOldestOrMiddleTest:
+		case !viper.GetBool(config.Cluster.EnoughVersionsForOldestOrMiddleTest):
 			log.Printf("There were not enough available cluster image sets to choose and oldest or middle cluster image set to test against. Skipping tests.")
 			return nil
-		case !state.Cluster.PreviousVersionFromDefaultFound:
+		case !viper.GetBool(config.Cluster.PreviousVersionFromDefaultFound):
 			log.Printf("No previous version from default found with the given arguments.")
 			return nil
-		case state.Upgrade.UpgradeVersionEqualToInstallVersion:
+		case viper.GetBool(config.Upgrade.UpgradeVersionEqualToInstallVersion):
 			log.Printf("Install version and upgrade version are the same. Skipping tests.")
 			return nil
-		case state.Upgrade.ReleaseName == util.NoVersionFound:
+		case viper.GetString(config.Upgrade.ReleaseName) == util.NoVersionFound:
 			log.Printf("No valid upgrade versions were found. Skipping tests.")
 			return nil
 		}
 
 		// check that enough quota exists for this test if creating cluster
-		if len(state.Cluster.ID) == 0 {
-			if cfg.DryRun {
+		if len(clusterID) == 0 {
+			if dryRun {
 				log.Printf("This is a dry run. Skipping quota check.")
 			} else if enoughQuota, err := provider.CheckQuota(); err != nil {
 				log.Printf("Failed to check if enough quota is available: %v", err)
@@ -112,18 +114,35 @@ func runGinkgoTests() error {
 	}
 
 	// setup reporter
-	if err = os.Mkdir(cfg.ReportDir, os.ModePerm); err != nil {
+	reportDir := viper.GetString(config.ReportDir)
+	if reportDir == "" {
+		reportDir, err = ioutil.TempDir("", "")
+
+		if err != nil {
+			return fmt.Errorf("error creating temporary directory: %v", err)
+		}
+
+		log.Printf("Writing files to temporary directory %s", reportDir)
+		viper.Set(config.ReportDir, reportDir)
+	} else if err = os.Mkdir(reportDir, os.ModePerm); err != nil {
 		log.Printf("Could not create reporter directory: %v", err)
 	}
 
+	// Update the metadata object to use the report directory.
+	metadata.Instance.SetReportDir(reportDir)
+
 	log.Println("Running e2e tests...")
+
+	if viper.GetString(config.Suffix) == "" {
+		viper.Set(config.Suffix, util.RandomStr(3))
+	}
 
 	testsPassed := runTestsInPhase(phase.InstallPhase, "OSD e2e suite")
 	upgradeTestsPassed := true
 
 	// upgrade cluster if requested
-	if state.Upgrade.Image != "" || state.Upgrade.ReleaseName != "" {
-		if state.Kubeconfig.Contents != nil {
+	if viper.GetString(config.Upgrade.Image) != "" || viper.GetString(config.Upgrade.ReleaseName) != "" {
+		if len(viper.GetString(config.Kubeconfig.Contents)) > 0 {
 			if err = upgrade.RunUpgrade(provider); err != nil {
 				events.RecordEvent(events.UpgradeFailed)
 				return fmt.Errorf("error performing upgrade: %v", err)
@@ -137,8 +156,8 @@ func runGinkgoTests() error {
 		}
 	}
 
-	if cfg.ReportDir != "" {
-		if err = metadata.Instance.WriteToJSON(cfg.ReportDir); err != nil {
+	if reportDir != "" {
+		if err = metadata.Instance.WriteToJSON(reportDir); err != nil {
 			return fmt.Errorf("error while writing the custom metadata: %v", err)
 		}
 
@@ -148,33 +167,34 @@ func runGinkgoTests() error {
 		if newMetrics == nil {
 			return fmt.Errorf("error getting new metrics provider")
 		}
-		prometheusFilename, err := newMetrics.WritePrometheusFile(cfg.ReportDir)
+		prometheusFilename, err := newMetrics.WritePrometheusFile(reportDir)
 		if err != nil {
 			return fmt.Errorf("error while writing prometheus metrics: %v", err)
 		}
 
-		if cfg.Tests.UploadMetrics {
-			if strings.HasPrefix(cfg.JobName, "rehearse-") {
-				log.Printf("Job %s is a rehearsal, so metrics upload is being skipped.", cfg.JobName)
+		if viper.GetBool(config.Tests.UploadMetrics) {
+			jobName := viper.GetString(config.JobName)
+			if strings.HasPrefix(jobName, "rehearse-") {
+				log.Printf("Job %s is a rehearsal, so metrics upload is being skipped.", jobName)
 			} else {
-				if err := uploadFileToMetricsBucket(filepath.Join(cfg.ReportDir, prometheusFilename)); err != nil {
+				if err := uploadFileToMetricsBucket(filepath.Join(reportDir, prometheusFilename)); err != nil {
 					return fmt.Errorf("error while uploading prometheus metrics: %v", err)
 				}
 			}
 		}
 	}
 
-	if cfg.Cluster.DestroyAfterTest {
-		log.Printf("Destroying cluster '%s'...", state.Cluster.ID)
+	if viper.GetBool(config.Cluster.DestroyAfterTest) {
+		log.Printf("Destroying cluster '%s'...", clusterID)
 
-		if err = provider.DeleteCluster(state.Cluster.ID); err != nil {
+		if err = provider.DeleteCluster(clusterID); err != nil {
 			return fmt.Errorf("error deleting cluster: %s", err.Error())
 		}
 	} else {
-		log.Printf("For debugging, please look for cluster ID %s in environment %s", state.Cluster.ID, provider.Environment())
+		log.Printf("For debugging, please look for cluster ID %s in environment %s", clusterID, provider.Environment())
 	}
 
-	if !cfg.DryRun {
+	if !dryRun {
 		h := helper.NewOutsideGinkgo()
 
 		if h == nil {
@@ -194,11 +214,9 @@ func runGinkgoTests() error {
 
 func cleanupAfterE2E(h *helper.H) (errors []error) {
 	var err error
-	state := state.Instance
-	cfg := config.Instance
 	defer ginkgo.GinkgoRecover()
 
-	if cfg.MustGather {
+	if viper.GetBool(config.MustGather) {
 		log.Print("Running Must Gather...")
 		mustGatherTimeoutInSeconds := 900
 		h.SetServiceAccount("system:serviceaccount:%s:cluster-admin")
@@ -247,7 +265,8 @@ func cleanupAfterE2E(h *helper.H) (errors []error) {
 	// write results to disk
 	h.WriteResults(stateResults)
 
-	if len(state.Cluster.ID) > 0 {
+	clusterID := viper.GetString(config.Cluster.ID)
+	if len(clusterID) > 0 {
 		if provider, err = providers.ClusterProvider(); err != nil {
 			log.Printf("Error getting cluster provider: %s", err.Error())
 		}
@@ -255,7 +274,7 @@ func cleanupAfterE2E(h *helper.H) (errors []error) {
 		// Get state from Provisioner
 		log.Printf("Gathering cluster state from %s", provider.Type())
 
-		cluster, err := provider.GetCluster(state.Cluster.ID)
+		cluster, err := provider.GetCluster(clusterID)
 		if err != nil {
 			log.Printf("error getting Cluster state: %s", err.Error())
 		} else {
@@ -271,7 +290,7 @@ func cleanupAfterE2E(h *helper.H) (errors []error) {
 	}
 
 	// We need to clean up our helper tests manually.
-	if !cfg.DryRun {
+	if !viper.GetBool(config.DryRun) {
 		h.Cleanup()
 	}
 
@@ -279,18 +298,17 @@ func cleanupAfterE2E(h *helper.H) (errors []error) {
 }
 
 func runTestsInPhase(phase string, description string) bool {
-	cfg := config.Instance
-	state := state.Instance
-
-	state.Phase = phase
-	phaseDirectory := filepath.Join(cfg.ReportDir, phase)
+	viper.Set(config.Phase, phase)
+	reportDir := viper.GetString(config.ReportDir)
+	phaseDirectory := filepath.Join(reportDir, phase)
 	if _, err := os.Stat(phaseDirectory); os.IsNotExist(err) {
 		if err := os.Mkdir(phaseDirectory, os.FileMode(0755)); err != nil {
 			log.Printf("error while creating phase directory %s", phaseDirectory)
 			return false
 		}
 	}
-	phaseReportPath := filepath.Join(phaseDirectory, fmt.Sprintf("junit_%v.xml", cfg.Suffix))
+	suffix := viper.GetString(config.Suffix)
+	phaseReportPath := filepath.Join(phaseDirectory, fmt.Sprintf("junit_%v.xml", suffix))
 	phaseReporter := reporters.NewJUnitReporter(phaseReportPath)
 	ginkgoPassed := false
 
@@ -360,7 +378,7 @@ func runTestsInPhase(phase string, description string) bool {
 		metadata.Instance.SetPassRate(phase, passRate)
 	}
 
-	files, err = ioutil.ReadDir(cfg.ReportDir)
+	files, err = ioutil.ReadDir(reportDir)
 	if err != nil {
 		log.Printf("error reading phase directory: %s", err.Error())
 		return false
@@ -371,12 +389,12 @@ func runTestsInPhase(phase string, description string) bool {
 
 	for _, file := range files {
 		if logFileRegex.MatchString(file.Name()) {
-			data, err := ioutil.ReadFile(filepath.Join(cfg.ReportDir, file.Name()))
+			data, err := ioutil.ReadFile(filepath.Join(reportDir, file.Name()))
 			if err != nil {
 				log.Printf("error opening log file %s: %s", file.Name(), err.Error())
 				return false
 			}
-			for _, metric := range cfg.LogMetrics {
+			for _, metric := range config.GetLogMetrics() {
 				metadata.Instance.IncrementLogMetric(metric.Name, metric.HasMatches(data))
 			}
 		}
@@ -392,7 +410,7 @@ func runTestsInPhase(phase string, description string) bool {
 			Time:      float64(value),
 		}
 
-		if cfg.LogMetrics.GetMetricByName(name).IsPassing(value) {
+		if config.GetLogMetrics().GetMetricByName(name).IsPassing(value) {
 			testCase.PassedMessage = &reporters.JUnitPassedMessage{
 				Message: fmt.Sprintf("Passed with %d matches", value),
 			}
@@ -415,7 +433,7 @@ func runTestsInPhase(phase string, description string) bool {
 		return false
 	}
 
-	if !cfg.DryRun && state.Cluster.State == spi.ClusterStateReady {
+	if !viper.GetBool(config.DryRun) && (spi.ClusterState)(viper.GetString(config.Cluster.State)) == spi.ClusterStateReady {
 		h := helper.NewOutsideGinkgo()
 		if h == nil {
 			log.Println("Unable to generate helper outside of ginkgo")
@@ -429,7 +447,7 @@ func runTestsInPhase(phase string, description string) bool {
 				log.Printf("Error writing dependencies.txt: %s", err.Error())
 			}
 
-			err := debug.GenerateDiff(cfg.BaseJobURL, phase, dependencies, cfg.JobName, cfg.JobID)
+			err := debug.GenerateDiff(viper.GetString(config.BaseJobURL), phase, dependencies, viper.GetString(config.JobName), viper.GetInt(config.JobID))
 			if err != nil {
 				log.Printf("Error generating diff: %s", err.Error())
 			}
@@ -442,7 +460,7 @@ func runTestsInPhase(phase string, description string) bool {
 // checkBeforeMetricsGeneration runs a variety of checks before generating metrics.
 func checkBeforeMetricsGeneration() error {
 	// Check for hive-log.txt
-	if _, err := os.Stat(filepath.Join(config.Instance.ReportDir, hiveLog)); os.IsNotExist(err) {
+	if _, err := os.Stat(filepath.Join(viper.GetString(config.ReportDir), hiveLog)); os.IsNotExist(err) {
 		events.RecordEvent(events.NoHiveLogs)
 	}
 
@@ -456,6 +474,6 @@ func uploadFileToMetricsBucket(filename string) error {
 		return err
 	}
 
-	aws.WriteToS3(aws.CreateS3URL(config.Instance.Tests.MetricsBucket, "incoming", filepath.Base(filename)), data)
+	aws.WriteToS3(aws.CreateS3URL(viper.GetString(config.Tests.MetricsBucket), "incoming", filepath.Base(filename)), data)
 	return err
 }

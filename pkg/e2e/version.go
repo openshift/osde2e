@@ -6,18 +6,17 @@ import (
 	"log"
 
 	"github.com/Masterminds/semver"
+	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/metadata"
 	"github.com/openshift/osde2e/pkg/common/spi"
-	"github.com/openshift/osde2e/pkg/common/state"
 	"github.com/openshift/osde2e/pkg/common/util"
 	"github.com/openshift/osde2e/pkg/common/versions"
+	"github.com/spf13/viper"
 )
 
 // ChooseVersions sets versions in cfg if not set based on defaults and upgrade options.
 // If a release stream is set for an upgrade the previous available version is used and it's image is used for upgrade.
 func ChooseVersions() (err error) {
-	state := state.Instance
-
 	// when defined, use set version
 	if provider == nil {
 		err = errors.New("osd must be setup when upgrading with release stream")
@@ -42,8 +41,8 @@ func ChooseVersions() (err error) {
 	}
 
 	// Set the versions in metadata. If upgrade hasn't been chosen, it should still be omitted from the end result.
-	metadata.Instance.SetClusterVersion(state.Cluster.Version)
-	metadata.Instance.SetUpgradeVersion(state.Upgrade.ReleaseName)
+	metadata.Instance.SetClusterVersion(viper.GetString(config.Cluster.Version))
+	metadata.Instance.SetUpgradeVersion(viper.GetString(config.Upgrade.ReleaseName))
 
 	return err
 }
@@ -52,17 +51,17 @@ func ChooseVersions() (err error) {
 func setupVersion(versionList *spi.VersionList) (*semver.Version, error) {
 	var selectedVersion *semver.Version
 
-	state := state.Instance
-
 	versionType := "user supplied version"
 
-	if len(state.Cluster.Version) == 0 {
+	clusterVersion := viper.GetString(config.Cluster.Version)
+	if len(clusterVersion) == 0 {
 		var err error
 
 		selectedVersion, versionType, err = versions.GetVersionForInstall(versionList)
 		if err == nil {
-			if state.Cluster.EnoughVersionsForOldestOrMiddleTest && state.Cluster.PreviousVersionFromDefaultFound {
-				state.Cluster.Version = util.SemverToOpenshiftVersion(selectedVersion)
+			if viper.GetBool(config.Cluster.EnoughVersionsForOldestOrMiddleTest) && viper.GetBool(config.Cluster.PreviousVersionFromDefaultFound) {
+				viper.Set(config.Cluster.Version, util.SemverToOpenshiftVersion(selectedVersion))
+				clusterVersion = util.SemverToOpenshiftVersion(selectedVersion)
 			} else {
 				log.Printf("Unable to get the %s.", versionType)
 			}
@@ -72,17 +71,17 @@ func setupVersion(versionList *spi.VersionList) (*semver.Version, error) {
 	} else {
 		var err error
 		// Make sure the cluster version is valid
-		selectedVersion, err = util.OpenshiftVersionToSemver(state.Cluster.Version)
+		selectedVersion, err = util.OpenshiftVersionToSemver(clusterVersion)
 
 		if err != nil {
-			return nil, fmt.Errorf("supplied version %s is invalid: %v", state.Cluster.Version, err)
+			return nil, fmt.Errorf("supplied version %s is invalid: %v", clusterVersion, err)
 		}
 	}
 
 	if selectedVersion == nil {
 		log.Printf("Unable to select a cluster version.")
 	} else {
-		log.Printf("Using the %s '%s'", versionType, state.Cluster.Version)
+		log.Printf("Using the %s '%s'", versionType, clusterVersion)
 	}
 
 	return selectedVersion, nil
@@ -91,9 +90,8 @@ func setupVersion(versionList *spi.VersionList) (*semver.Version, error) {
 // chooses version based on optimal upgrade path
 func setupUpgradeVersion(clusterVersion *semver.Version, versionList *spi.VersionList) error {
 	var err error
-	state := state.Instance
 
-	if state.Upgrade.ReleaseName != "" || state.Upgrade.Image != "" {
+	if viper.GetString(config.Upgrade.ReleaseName) != "" || viper.GetString(config.Upgrade.Image) != "" {
 		log.Printf("Using user supplied upgrade state.")
 		return nil
 	}
@@ -104,19 +102,22 @@ func setupUpgradeVersion(clusterVersion *semver.Version, versionList *spi.Versio
 	}
 
 	upgradeSource := provider.UpgradeSource()
-	state.Upgrade.ReleaseName, state.Upgrade.Image, err = versions.GetVersionForUpgrade(clusterVersion, versionList, upgradeSource)
+	releaseName, image, err := versions.GetVersionForUpgrade(clusterVersion, versionList, upgradeSource)
 
 	if err != nil {
 		return fmt.Errorf("error selecting an upgrade version: %v", err)
 	}
 
-	if state.Upgrade.ReleaseName == "" && state.Upgrade.Image == "" && err == nil {
+	if releaseName == "" && image == "" && err == nil {
 		log.Printf("No upgrade selector found. Not selecting an upgrade version.")
 		return nil
 	}
 
+	viper.Set(config.Upgrade.ReleaseName, releaseName)
+	viper.Set(config.Upgrade.Image, image)
+
 	// set upgrade image
 	log.Printf("Selecting version '%s' to be able to upgrade to '%s' using upgrade source '%s'",
-		state.Cluster.Version, state.Upgrade.ReleaseName, upgradeSource)
+		viper.GetString(config.Cluster.Version), releaseName, upgradeSource)
 	return nil
 }

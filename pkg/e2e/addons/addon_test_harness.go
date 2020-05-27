@@ -2,10 +2,12 @@ package addons
 
 import (
 	"fmt"
+	"strings"
 	"text/template"
 
 	"github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"github.com/spf13/viper"
 
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/helper"
@@ -34,7 +36,8 @@ var _ = ginkgo.Describe("[Suite: addons] Addon Test Harness", func() {
 	ginkgo.It("should run until completion", func() {
 		// We don't know what a test harness may need so let's give them everything.
 		h.SetServiceAccount("system:serviceaccount:%s:cluster-admin")
-		for _, harness := range config.Instance.Addons.TestHarnesses {
+		addonTestHarnesses := strings.Split(viper.GetString(config.Addons.TestHarnesses), ",")
+		for _, harness := range addonTestHarnesses {
 			// configure tests
 			// setup runner
 			r := h.RunnerWithNoCommand()

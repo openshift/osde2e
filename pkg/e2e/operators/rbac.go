@@ -5,6 +5,7 @@ import (
 
 	"github.com/onsi/ginkgo"
 	"github.com/openshift/osde2e/pkg/common/config"
+	"github.com/spf13/viper"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	. "github.com/onsi/gomega"
@@ -65,7 +66,7 @@ func checkSubjectPermissions(h *helper.H, spName string) {
 				Expect(err).NotTo(HaveOccurred(), "failed to get roleBinding %v\n", roleBindingName)
 			}
 
-		}, float64(float64(config.Instance.Tests.PollingTimeout)))
+		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
 	})
 }
 

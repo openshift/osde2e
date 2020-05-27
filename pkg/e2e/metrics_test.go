@@ -11,18 +11,20 @@ import (
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/metadata"
 	"github.com/openshift/osde2e/pkg/common/providers"
-	"github.com/openshift/osde2e/pkg/common/state"
+	"github.com/openshift/osde2e/pkg/common/providers/mock"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/spf13/viper"
 )
 
 func TestProcessJUnitXMLFile(t *testing.T) {
-	state.Instance.CloudProvider.CloudProviderID = "aws"
-	state.Instance.Cluster.ID = "1a2b3c"
-	state.Instance.Cluster.Version = "install-version"
-	state.Instance.Upgrade.ReleaseName = "upgrade-version"
-	config.Instance.Provider = providers.Mock
-	config.Instance.OCM.Env = "prod"
-	config.Instance.JobID = 123
+	viper.Reset()
+	viper.Set(mock.Env, "prod")
+	viper.Set(config.Provider, providers.Mock)
+	viper.Set(config.JobID, 123)
+	viper.Set(config.CloudProvider.CloudProviderID, "aws")
+	viper.Set(config.Cluster.ID, "1a2b3c")
+	viper.Set(config.Cluster.Version, "install-version")
+	viper.Set(config.Upgrade.ReleaseName, "upgrade-version")
 
 	tests := []struct {
 		testName       string
@@ -114,12 +116,14 @@ cicd_jUnitResult{cloud_provider="aws",cluster_id="1a2b3c",environment="prod",ins
 }
 
 func TestProcessJSONFile(t *testing.T) {
-	state.Instance.CloudProvider.CloudProviderID = "aws"
-	state.Instance.Cluster.ID = "1a2b3c"
-	state.Instance.Cluster.Version = "install-version"
-	state.Instance.Upgrade.ReleaseName = "upgrade-version"
-	config.Instance.OCM.Env = "prod"
-	config.Instance.JobID = 123
+	viper.Reset()
+	viper.Set(mock.Env, "prod")
+	viper.Set(config.Provider, providers.Mock)
+	viper.Set(config.JobID, 123)
+	viper.Set(config.CloudProvider.CloudProviderID, "aws")
+	viper.Set(config.Cluster.ID, "1a2b3c")
+	viper.Set(config.Cluster.Version, "install-version")
+	viper.Set(config.Upgrade.ReleaseName, "upgrade-version")
 
 	tests := []struct {
 		testName         string
@@ -221,13 +225,15 @@ cicd_addon_metadata{cloud_provider="aws",cluster_id="1a2b3c",environment="prod",
 }
 
 func TestWritePrometheusFile(t *testing.T) {
-	state.Instance.CloudProvider.CloudProviderID = "aws"
-	state.Instance.Cluster.ID = "1a2b3c"
-	state.Instance.Cluster.Version = "install-version"
-	state.Instance.Upgrade.ReleaseName = "upgrade-version"
-	config.Instance.JobID = 123
-	config.Instance.JobName = "test-job"
-	config.Instance.OCM.Env = "prod"
+	viper.Reset()
+	viper.Set(mock.Env, "prod")
+	viper.Set(config.Provider, providers.Mock)
+	viper.Set(config.JobID, 123)
+	viper.Set(config.JobName, "test-job")
+	viper.Set(config.CloudProvider.CloudProviderID, "aws")
+	viper.Set(config.Cluster.ID, "1a2b3c")
+	viper.Set(config.Cluster.Version, "install-version")
+	viper.Set(config.Upgrade.ReleaseName, "upgrade-version")
 
 	type jUnitFile struct {
 		fileContents string
@@ -383,7 +389,7 @@ cicd_addon_metadata{cloud_provider="aws",cluster_id="1a2b3c",environment="prod",
 			t.Errorf("error while processing report directory: %v", err)
 		}
 
-		if prometheusFile != fmt.Sprintf("%s.%s.metrics.prom", state.Instance.Cluster.ID, config.Instance.JobName) {
+		if prometheusFile != fmt.Sprintf("%s.%s.metrics.prom", viper.GetString(config.Cluster.ID), viper.GetString(config.JobName)) {
 			t.Errorf("unexpected prometheus filename: %s", prometheusFile)
 		}
 

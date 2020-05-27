@@ -4,7 +4,7 @@ import (
 	"github.com/Masterminds/semver"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/spi"
-	"github.com/openshift/osde2e/pkg/common/state"
+	"github.com/spf13/viper"
 )
 
 func init() {
@@ -15,7 +15,7 @@ func init() {
 type oldestClusterImageSet struct{}
 
 func (o oldestClusterImageSet) ShouldUse() bool {
-	return config.Instance.Cluster.UseOldestClusterImageSetForInstall
+	return viper.GetBool(config.Cluster.UseOldestClusterImageSetForInstall)
 }
 
 func (o oldestClusterImageSet) Priority() int {
@@ -30,7 +30,7 @@ func (o oldestClusterImageSet) SelectVersion(versionList *spi.VersionList) (*sem
 	// We don't want to fail entirely if there aren't enough versions. It's valid and perhaps even expected
 	// that we d on't have enough versions for a middle cluster image set.
 	if numVersions < 2 {
-		state.Instance.Cluster.EnoughVersionsForOldestOrMiddleTest = false
+		viper.Set(config.Cluster.EnoughVersionsForOldestOrMiddleTest, false)
 		return nil, versionType, nil
 	}
 

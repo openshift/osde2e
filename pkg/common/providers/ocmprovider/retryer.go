@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/adamliesko/retry"
-	"github.com/openshift/osde2e/pkg/common/config"
+	"github.com/spf13/viper"
 )
 
 var ocmOnce = sync.Once{}
@@ -18,7 +18,7 @@ func retryer() *retry.Retryer {
 		ocmRetryer = retry.New(retry.SleepFn(func(attempts int) {
 			time.Sleep(time.Duration(2^attempts) * time.Second)
 		}))
-		ocmRetryer.Tries = config.Instance.OCM.NumRetries
+		ocmRetryer.Tries = viper.GetInt(NumRetries)
 		ocmRetryer.AfterEachFailFn = func(err error) {
 			log.Printf("error during OCM attempt: %v", err)
 		}

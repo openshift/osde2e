@@ -12,9 +12,9 @@ import (
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/metadata"
 	"github.com/openshift/osde2e/pkg/common/spi"
-	"github.com/openshift/osde2e/pkg/common/state"
 	"github.com/openshift/osde2e/pkg/common/upgrade"
 	"github.com/openshift/osde2e/pkg/common/util"
+	"github.com/spf13/viper"
 )
 
 const (
@@ -30,7 +30,7 @@ func init() {
 type cincinnatiUpgrade struct{}
 
 func (c cincinnatiUpgrade) ShouldUse(upgradeSource spi.UpgradeSource) bool {
-	return upgradeSource == spi.CincinnatiSource && config.Instance.Upgrade.UpgradeToCISIfPossible
+	return upgradeSource == spi.CincinnatiSource && viper.GetBool(config.Upgrade.UpgradeToCISIfPossible)
 }
 
 func (c cincinnatiUpgrade) Priority() int {
@@ -38,8 +38,6 @@ func (c cincinnatiUpgrade) Priority() int {
 }
 
 func (c cincinnatiUpgrade) SelectVersion(installVersion *semver.Version, versionList *spi.VersionList) (string, string, error) {
-	state := state.Instance
-
 	var filteredVersionList = []*semver.Version{}
 	for _, version := range versionList.AvailableVersions() {
 		if filterOnCincinnati(installVersion, version.Version()) {
@@ -49,7 +47,7 @@ func (c cincinnatiUpgrade) SelectVersion(installVersion *semver.Version, version
 
 	numResults := len(filteredVersionList)
 	if numResults == 0 {
-		state.Upgrade.ReleaseName = util.NoVersionFound
+		viper.Set(config.Upgrade.ReleaseName, util.NoVersionFound)
 		metadata.Instance.SetUpgradeVersionSource("none")
 		return "", "", nil
 	}
@@ -62,7 +60,7 @@ func (c cincinnatiUpgrade) SelectVersion(installVersion *semver.Version, version
 		log.Printf("Using cluster image set.")
 		releaseName = util.SemverToOpenshiftVersion(cisUpgradeVersion)
 		metadata.Instance.SetUpgradeVersionSource("cluster image set")
-		state.Upgrade.UpgradeVersionEqualToInstallVersion = cisUpgradeVersion.Equal(installVersion)
+		viper.Set(config.Upgrade.UpgradeVersionEqualToInstallVersion, cisUpgradeVersion.Equal(installVersion))
 	}
 
 	return releaseName, "", nil

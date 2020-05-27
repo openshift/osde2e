@@ -12,7 +12,7 @@ import (
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/metadata"
 	"github.com/openshift/osde2e/pkg/common/spi"
-	"github.com/openshift/osde2e/pkg/common/state"
+	"github.com/spf13/viper"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -51,20 +51,19 @@ func GetClusterVersion(provider spi.Provider, clusterID string) (*semver.Version
 
 // WaitForClusterReady blocks until the cluster is ready for testing.
 func WaitForClusterReady(provider spi.Provider, clusterID string) error {
-	cfg := config.Instance
-	state := state.Instance
-
-	log.Printf("Waiting %v minutes for cluster '%s' to be ready...\n", cfg.Cluster.InstallTimeout, clusterID)
+	installTimeout := viper.GetInt64(config.Cluster.InstallTimeout)
+	log.Printf("Waiting %v minutes for cluster '%s' to be ready...\n", installTimeout, clusterID)
+	cleanRunsNeeded := viper.GetInt(config.Cluster.CleanCheckRuns)
 	cleanRuns := 0
 	errRuns := 0
 
 	clusterStarted := time.Now()
 	var readinessStarted time.Time
 	ocmReady := false
-	if !cfg.Tests.SkipClusterHealthChecks {
-		return wait.PollImmediate(30*time.Second, time.Duration(cfg.Cluster.InstallTimeout)*time.Minute, func() (bool, error) {
+	if !viper.GetBool(config.Tests.SkipClusterHealthChecks) {
+		return wait.PollImmediate(30*time.Second, time.Duration(installTimeout)*time.Minute, func() (bool, error) {
 			cluster, err := provider.GetCluster(clusterID)
-			state.Cluster.State = cluster.State()
+			viper.Set(config.Cluster.State, cluster.State)
 			if err == nil && cluster.State() == spi.ClusterStateReady {
 				// This is the first time that we've entered this section, so we'll consider this the time until OCM has said the cluster is ready
 				if !ocmReady {
@@ -77,9 +76,9 @@ func WaitForClusterReady(provider spi.Provider, clusterID string) error {
 				}
 				if success, err := pollClusterHealth(provider, clusterID); success {
 					cleanRuns++
-					log.Printf("Clean run %d/%d...", cleanRuns, config.Instance.Cluster.CleanCheckRuns)
+					log.Printf("Clean run %d/%d...", cleanRuns, cleanRunsNeeded)
 					errRuns = 0
-					if cleanRuns == config.Instance.Cluster.CleanCheckRuns {
+					if cleanRuns == cleanRunsNeeded {
 						if metadata.Instance.TimeToClusterReady == 0 {
 							metadata.Instance.SetTimeToClusterReady(time.Since(readinessStarted).Seconds())
 						} else {
@@ -172,15 +171,17 @@ func pollClusterHealth(provider spi.Provider, clusterID string) (status bool, er
 
 func getRestConfig(provider spi.Provider, clusterID string) (*rest.Config, error) {
 	var err error
-	state := state.Instance
 
-	if len(state.Kubeconfig.Contents) == 0 {
-		if state.Kubeconfig.Contents, err = provider.ClusterKubeconfig(clusterID); err != nil {
+	kubeconfigContents := viper.GetString(config.Kubeconfig.Contents)
+	if len(kubeconfigContents) == 0 {
+		var kubeconfigBytes []byte
+		if kubeconfigBytes, err = provider.ClusterKubeconfig(clusterID); err != nil {
 			return nil, fmt.Errorf("could not get kubeconfig for cluster: %v", err)
 		}
+		viper.Set(config.Kubeconfig.Contents, string(kubeconfigBytes))
 	}
 
-	restConfig, err := clientcmd.RESTConfigFromKubeConfig(state.Kubeconfig.Contents)
+	restConfig, err := clientcmd.RESTConfigFromKubeConfig([]byte(kubeconfigContents))
 	if err != nil {
 		return nil, fmt.Errorf("error generating rest config: %v", err)
 	}

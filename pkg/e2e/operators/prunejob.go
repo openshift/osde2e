@@ -9,6 +9,7 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/helper"
+	"github.com/spf13/viper"
 
 	batchv1 "k8s.io/api/batch/v1"
 	batchv1beta1 "k8s.io/api/batch/v1beta1"
@@ -35,7 +36,7 @@ var _ = ginkgo.Describe("[Suite: operators] [OSD] Prune jobs", func() {
 				Expect(err).NotTo(HaveOccurred())
 				err = waitJobComplete(h, namespace, job.Name)
 				Expect(err).NotTo(HaveOccurred())
-			}, float64(config.Instance.Tests.PollingTimeout))
+			}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
 		}
 
 	})
@@ -68,7 +69,7 @@ func waitJobComplete(h *helper.H, namespace, jobName string) error {
 	interval := 5
 
 	// convert time.Duration type
-	timeoutDuration := time.Duration(config.Instance.Tests.PollingTimeout) * time.Minute
+	timeoutDuration := time.Duration(viper.GetFloat64(config.Tests.PollingTimeout)) * time.Minute
 	intervalDuration := time.Duration(interval) * time.Second
 
 	start := time.Now()

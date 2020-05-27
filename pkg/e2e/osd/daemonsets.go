@@ -8,6 +8,7 @@ import (
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/util"
+	"github.com/spf13/viper"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -60,7 +61,7 @@ var _ = ginkgo.Describe("[Suite: service-definition] [OSD] DaemonSets", func() {
 			ds := makeDaemonSet("empty-node-labels", h.GetNamespacedServiceAccount(), nodeLabels)
 			_, err := h.Kube().AppsV1().DaemonSets(h.CurrentProject()).Create(&ds)
 			Expect(err).NotTo(HaveOccurred())
-		}, float64(config.Instance.Tests.PollingTimeout))
+		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
 
 		ginkgo.It("worker node daemonset should get created", func() {
 			// Set it to a wildcard dedicated-admin
@@ -71,7 +72,7 @@ var _ = ginkgo.Describe("[Suite: service-definition] [OSD] DaemonSets", func() {
 			ds := makeDaemonSet("worker-node-labels", h.GetNamespacedServiceAccount(), nodeLabels)
 			_, err := h.Kube().AppsV1().DaemonSets(h.CurrentProject()).Create(&ds)
 			Expect(err).NotTo(HaveOccurred())
-		}, float64(config.Instance.Tests.PollingTimeout))
+		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
 
 		ginkgo.It("infra node daemonset should get created", func() {
 			// Set it to a wildcard dedicated-admin
@@ -82,6 +83,6 @@ var _ = ginkgo.Describe("[Suite: service-definition] [OSD] DaemonSets", func() {
 			ds := makeDaemonSet("infra-node-labels", h.GetNamespacedServiceAccount(), nodeLabels)
 			_, err := h.Kube().AppsV1().DaemonSets(h.CurrentProject()).Create(&ds)
 			Expect(err).NotTo(HaveOccurred())
-		}, float64(config.Instance.Tests.PollingTimeout))
+		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
 	})
 })

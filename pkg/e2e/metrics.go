@@ -19,9 +19,9 @@ import (
 	"github.com/openshift/osde2e/pkg/common/metadata"
 	"github.com/openshift/osde2e/pkg/common/providers"
 	"github.com/openshift/osde2e/pkg/common/spi"
-	"github.com/openshift/osde2e/pkg/common/state"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/common/expfmt"
+	"github.com/spf13/viper"
 )
 
 const (
@@ -141,7 +141,7 @@ func (m *Metrics) WritePrometheusFile(reportDir string) (string, error) {
 
 	m.processEvents(m.eventGatherer)
 
-	prometheusFileName := fmt.Sprintf(prometheusFileNamePattern, state.Instance.Cluster.ID, config.Instance.JobName)
+	prometheusFileName := fmt.Sprintf(prometheusFileNamePattern, viper.GetString(config.Cluster.ID), viper.GetString(config.JobName))
 	output, err := m.registryToExpositionFormat()
 
 	if err != nil {
@@ -163,8 +163,6 @@ func (m *Metrics) WritePrometheusFile(reportDir string) (string, error) {
 // cicd_jUnitResult {environment="prod", install_version="install-version", result="passed|failed|skipped", phase="currentphase", suite="suitename",
 //                   testname="testname", upgrade_version="upgrade-version"} testLength
 func (m *Metrics) processJUnitXMLFile(phase string, junitFile string) (err error) {
-	state := state.Instance
-
 	data, err := ioutil.ReadFile(junitFile)
 	if err != nil {
 		return err
@@ -187,16 +185,16 @@ func (m *Metrics) processJUnitXMLFile(phase string, junitFile string) (err error
 			result = "passed"
 		}
 
-		m.jUnitGatherer.WithLabelValues(state.Cluster.Version,
-			state.Upgrade.ReleaseName,
-			state.CloudProvider.CloudProviderID,
+		m.jUnitGatherer.WithLabelValues(viper.GetString(config.Cluster.Version),
+			viper.GetString(config.Upgrade.ReleaseName),
+			viper.GetString(config.CloudProvider.CloudProviderID),
 			m.provider.Environment(),
 			phase,
 			testSuite.Name,
 			testcase.Name,
 			result,
-			state.Cluster.ID,
-			strconv.Itoa(config.Instance.JobID)).Add(testcase.Time)
+			viper.GetString(config.Cluster.ID),
+			strconv.Itoa(viper.GetInt(config.JobID))).Add(testcase.Time)
 	}
 
 	return nil
@@ -232,9 +230,6 @@ func (m *Metrics) processJSONFile(gatherer *prometheus.GaugeVec, jsonFile string
 
 // jsonToPrometheusOutput will take the JSON and write it into the gauge vector.
 func (m *Metrics) jsonToPrometheusOutput(gatherer *prometheus.GaugeVec, phase string, jsonOutput map[string]interface{}, context []string) {
-	cfg := config.Instance
-	state := state.Instance
-
 	for k, v := range jsonOutput {
 		fullContext := append(context, k)
 		switch jsonObject := v.(type) {
@@ -251,24 +246,25 @@ func (m *Metrics) jsonToPrometheusOutput(gatherer *prometheus.GaugeVec, phase st
 			stringValue := fmt.Sprintf("%v", jsonObject)
 
 			// We're only concerned with tracking float values in Prometheus as they're the only thing we can measure
+			jobID := viper.GetInt(config.JobID)
 			if floatValue, err := strconv.ParseFloat(stringValue, 64); err == nil {
 				if phase != "" {
-					gatherer.WithLabelValues(state.Cluster.Version,
-						state.Upgrade.ReleaseName,
-						state.CloudProvider.CloudProviderID,
+					gatherer.WithLabelValues(viper.GetString(config.Cluster.Version),
+						viper.GetString(config.Upgrade.ReleaseName),
+						viper.GetString(config.CloudProvider.CloudProviderID),
 						m.provider.Environment(),
 						metadataName,
-						state.Cluster.ID,
-						strconv.Itoa(cfg.JobID),
+						viper.GetString(config.Cluster.ID),
+						strconv.Itoa(jobID),
 						phase).Add(floatValue)
 				} else {
-					gatherer.WithLabelValues(state.Cluster.Version,
-						state.Upgrade.ReleaseName,
-						state.CloudProvider.CloudProviderID,
+					gatherer.WithLabelValues(viper.GetString(config.Cluster.Version),
+						viper.GetString(config.Upgrade.ReleaseName),
+						viper.GetString(config.CloudProvider.CloudProviderID),
 						m.provider.Environment(),
 						metadataName,
-						state.Cluster.ID,
-						strconv.Itoa(cfg.JobID)).Add(floatValue)
+						viper.GetString(config.Cluster.ID),
+						strconv.Itoa(jobID)).Add(floatValue)
 				}
 			}
 		}
@@ -280,17 +276,15 @@ func (m *Metrics) jsonToPrometheusOutput(gatherer *prometheus.GaugeVec, phase st
 // processEvents will search the events list for events that have occurred over the osde2e run
 // and output them in the Prometheus metrics.
 func (m *Metrics) processEvents(gatherer *prometheus.CounterVec) {
-	state := state.Instance
-
 	for _, event := range events.GetListOfEvents() {
 		gatherer.WithLabelValues(
-			state.Cluster.Version,
-			state.Upgrade.ReleaseName,
-			state.CloudProvider.CloudProviderID,
+			viper.GetString(config.Cluster.Version),
+			viper.GetString(config.Upgrade.ReleaseName),
+			viper.GetString(config.CloudProvider.CloudProviderID),
 			m.provider.Environment(),
 			event,
-			state.Cluster.ID,
-			strconv.Itoa(config.Instance.JobID)).Inc()
+			viper.GetString(config.Cluster.ID),
+			strconv.Itoa(viper.GetInt(config.JobID))).Inc()
 	}
 }
 

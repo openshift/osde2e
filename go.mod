@@ -27,10 +27,9 @@ require (
 	github.com/slack-go/slack v0.6.3
 	github.com/spf13/cobra v1.0.0
 	github.com/spf13/pflag v1.0.5
+	github.com/spf13/viper v1.7.0
 	golang.org/x/crypto v0.0.0-20191011191535-87dc89f01550 // indirect
 	golang.org/x/net v0.0.0-20191004110552-13f9640d40b9
-	golang.org/x/oauth2 v0.0.0-20190604053449-0f29369cfe45 // indirect
-	gopkg.in/yaml.v2 v2.2.7
 	k8s.io/api v0.0.0-20191004102349-159aefb8556b
 	k8s.io/apimachinery v0.0.0-20191004074956-c5d2f014d689
 	k8s.io/client-go v11.0.1-0.20191029005444-8e4128053008+incompatible

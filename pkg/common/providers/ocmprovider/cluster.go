@@ -4,12 +4,13 @@ import (
 	"fmt"
 	"log"
 	"os/user"
+	"strings"
 	"time"
 
 	v1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/spi"
-	"github.com/openshift/osde2e/pkg/common/state"
+	"github.com/spf13/viper"
 )
 
 const (
@@ -25,22 +26,20 @@ const (
 
 // LaunchCluster setups an new cluster using the OSD API and returns it's ID.
 func (o *OCMProvider) LaunchCluster() (string, error) {
-	cfg := config.Instance
-	state := state.Instance
-
-	log.Printf("Creating cluster '%s'...", state.Cluster.Name)
+	clusterName := viper.GetString(config.Cluster.Name)
+	log.Printf("Creating cluster '%s'...", clusterName)
 
 	// choose flavour based on config
 	flavourID := DefaultFlavour
 
 	// Calculate an expiration date for the cluster so that it will be automatically deleted if
 	// we happen to forget to do it:
-	expiration := time.Now().Add(time.Duration(cfg.Cluster.ExpiryInMinutes) * time.Minute).UTC() // UTC() to workaround SDA-1567.
+	expiration := time.Now().Add(time.Duration(viper.GetInt64(config.Cluster.ExpiryInMinutes)) * time.Minute).UTC() // UTC() to workaround SDA-1567.
 
 	var username string
 
 	// If JobID is not equal to -1, then we're running on prow.
-	if cfg.JobID != -1 {
+	if viper.GetInt(config.JobID) != -1 {
 		username = "prow"
 	} else {
 
@@ -53,17 +52,19 @@ func (o *OCMProvider) LaunchCluster() (string, error) {
 		username = user.Username
 	}
 
+	multiAZ := viper.GetBool(config.Cluster.MultiAZ)
+
 	newCluster := v1.NewCluster().
-		Name(state.Cluster.Name).
+		Name(clusterName).
 		Flavour(v1.NewFlavour().
 			ID(flavourID)).
 		Region(v1.NewCloudRegion().
-			ID(state.CloudProvider.Region)).
-		MultiAZ(cfg.Cluster.MultiAZ).
+			ID(viper.GetString(config.CloudProvider.Region))).
+		MultiAZ(multiAZ).
 		Version(v1.NewVersion().
-			ID(state.Cluster.Version)).
+			ID(viper.GetString(config.Cluster.Version))).
 		CloudProvider(v1.NewCloudProvider().
-			ID(state.CloudProvider.CloudProviderID)).
+			ID(viper.GetString(config.CloudProvider.CloudProviderID))).
 		ExpirationTimestamp(expiration).
 		Properties(map[string]string{
 			MadeByOSDe2e: "true",
@@ -73,17 +74,19 @@ func (o *OCMProvider) LaunchCluster() (string, error) {
 	// Configure the cluster to be Multi-AZ if configured
 	// We must manually configure the number of compute nodes
 	// Currently set to 9 nodes. Whatever it is, must be divisible by 3.
-	if cfg.Cluster.MultiAZ {
+	if multiAZ {
 		numNodes := &v1.ClusterNodesBuilder{}
 
 		newCluster = newCluster.
 			Nodes(numNodes.Compute(9)).
-			MultiAZ(cfg.Cluster.MultiAZ)
+			MultiAZ(viper.GetBool(config.Cluster.MultiAZ))
 	}
 
-	if len(cfg.Addons.IDsAtCreation) > 0 {
+	IDsAtCreationString := viper.GetString(config.Addons.IDsAtCreation)
+	if len(IDsAtCreationString) > 0 {
 		addons := []*v1.AddOnInstallationBuilder{}
-		for _, id := range cfg.Addons.IDsAtCreation {
+		IDsAtCreation := strings.Split(IDsAtCreationString, ",")
+		for _, id := range IDsAtCreation {
 			addons = append(addons, v1.NewAddOnInstallation().Addon(v1.NewAddOn().ID(id)))
 		}
 

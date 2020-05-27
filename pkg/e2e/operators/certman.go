@@ -8,6 +8,7 @@ import (
 	osv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/helper"
+	"github.com/spf13/viper"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -38,7 +39,7 @@ var _ = ginkgo.Describe("[Suite: operators] [OSD] Certman Operator", func() {
 			})
 			Expect(err).NotTo(HaveOccurred())
 			Expect(len(secrets.Items)).Should(Equal(1))
-		}, float64(config.Instance.Tests.PollingTimeout))
+		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
 
 		ginkgo.It("certificate secret should be applied to apiserver object", func() {
 			wait.PollImmediate(30*time.Second, 15*time.Minute, func() (bool, error) {
@@ -55,6 +56,6 @@ var _ = ginkgo.Describe("[Suite: operators] [OSD] Certman Operator", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(len(apiserver.Spec.ServingCerts.NamedCertificates)).Should(BeNumerically(">", 0))
 			Expect(apiserver.Spec.ServingCerts.NamedCertificates[0].ServingCertificate.Name).Should(Equal(secretName))
-		}, float64(config.Instance.Tests.PollingTimeout))
+		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
 	})
 })

@@ -8,6 +8,7 @@ import (
 
 	"github.com/openshift/osde2e/pkg/common/cluster/healthchecks"
 	"github.com/openshift/osde2e/pkg/common/config"
+	"github.com/spf13/viper"
 
 	"github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -75,7 +76,7 @@ func doTest(h *helper.H) {
 	interval := 5
 
 	// convert time.Duration type
-	timeoutDuration := time.Duration(config.Instance.Tests.PollingTimeout) * time.Minute
+	timeoutDuration := time.Duration(viper.GetFloat64(config.Tests.PollingTimeout)) * time.Minute
 	intervalDuration := time.Duration(interval) * time.Second
 
 	start := time.Now()

@@ -8,6 +8,7 @@ import (
 	"github.com/openshift/osde2e/pkg/common/providers/mock"
 	"github.com/openshift/osde2e/pkg/common/providers/ocmprovider"
 	"github.com/openshift/osde2e/pkg/common/spi"
+	"github.com/spf13/viper"
 )
 
 const (
@@ -23,26 +24,15 @@ const (
 
 // ClusterProvider returns the provisioner configured by the config object.
 func ClusterProvider() (spi.Provider, error) {
-	switch config.Instance.Provider {
+	provider := viper.GetString(config.Provider)
+	switch provider {
 	case OCM:
-		return ocmprovider.New(config.Instance.OCM.Token, config.Instance.OCM.Env, config.Instance.OCM.Debug)
+		return ocmprovider.New()
 	case Mock:
-		return mock.New(config.Instance.OCM.Env)
+		return mock.New()
 	case CRC:
-		return crc.New("crc")
+		return crc.New()
 	default:
-		return nil, fmt.Errorf("unrecognized provisioner: %s", config.Instance.Provider)
-	}
-}
-
-// ClusterProviderForProduction returns the provisioner configured by the config object using the production environment.
-func ClusterProviderForProduction() (spi.Provider, error) {
-	switch config.Instance.Provider {
-	case OCM:
-		return ocmprovider.New(config.Instance.OCM.Token, "prod", config.Instance.OCM.Debug)
-	case Mock:
-		return mock.New("prod")
-	default:
-		return nil, fmt.Errorf("unrecognized provisioner: %s", config.Instance.Provider)
+		return nil, fmt.Errorf("unrecognized provisioner: %s", provider)
 	}
 }

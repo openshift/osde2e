@@ -11,6 +11,7 @@ import (
 
 	"github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"github.com/spf13/viper"
 	"k8s.io/client-go/tools/clientcmd"
 
 	"github.com/openshift/osde2e/pkg/common/cluster"
@@ -18,7 +19,6 @@ import (
 	"github.com/openshift/osde2e/pkg/common/events"
 	"github.com/openshift/osde2e/pkg/common/metadata"
 	"github.com/openshift/osde2e/pkg/common/providers"
-	"github.com/openshift/osde2e/pkg/common/state"
 	"github.com/openshift/osde2e/pkg/common/util"
 )
 
@@ -28,7 +28,8 @@ var _ = ginkgo.BeforeEach(func() {
 	testContext := strings.TrimSpace(strings.TrimSuffix(ginkgo.CurrentGinkgoTestDescription().FullTestText, testText))
 
 	shouldRun := false
-	for _, testToRun := range config.Instance.Tests.TestsToRun {
+	testsToRun := viper.GetStringSlice(config.Tests.TestsToRun)
+	for _, testToRun := range testsToRun {
 		if strings.HasPrefix(testContext, testToRun) {
 			shouldRun = true
 			break
@@ -43,8 +44,6 @@ var _ = ginkgo.BeforeEach(func() {
 // Setup cluster before testing begins.
 var _ = ginkgo.SynchronizedBeforeSuite(func() []byte {
 	defer ginkgo.GinkgoRecover()
-	cfg := config.Instance
-	state := state.Instance
 
 	err := setupCluster()
 	events.HandleErrorWithEvents(err, events.InstallSuccessful, events.InstallFailed).ShouldNot(HaveOccurred(), "failed to setup cluster for testing")
@@ -52,7 +51,7 @@ var _ = ginkgo.SynchronizedBeforeSuite(func() []byte {
 		return []byte{}
 	}
 
-	if len(cfg.Addons.IDs) > 0 {
+	if len(viper.GetString(config.Addons.IDs)) > 0 {
 		err = installAddons()
 		events.HandleErrorWithEvents(err, events.InstallAddonsSuccessful, events.InstallAddonsFailed).ShouldNot(HaveOccurred(), "failed while installing addons")
 		if err != nil {
@@ -60,7 +59,7 @@ var _ = ginkgo.SynchronizedBeforeSuite(func() []byte {
 		}
 	}
 
-	if len(state.Kubeconfig.Contents) == 0 {
+	if len(viper.GetString(config.Kubeconfig.Contents)) == 0 {
 		// Give the cluster some breathing room.
 		log.Println("OSD cluster installed. Sleeping for 600s.")
 		time.Sleep(600 * time.Second)
@@ -78,14 +77,14 @@ var _ = ginkgo.JustAfterEach(getLogs)
 
 func getLogs() {
 	defer ginkgo.GinkgoRecover()
-	state := state.Instance
 
+	clusterID := viper.GetString(config.Cluster.ID)
 	if provider == nil {
 		log.Println("OSD was not configured. Skipping log collection...")
-	} else if state.Cluster.ID == "" {
+	} else if clusterID == "" {
 		log.Println("CLUSTER_ID is not set, likely due to a setup failure. Skipping log collection...")
 	} else {
-		logs, err := provider.Logs(state.Cluster.ID)
+		logs, err := provider.Logs(clusterID)
 		Expect(err).NotTo(HaveOccurred(), "failed to collect cluster logs")
 		writeLogs(logs)
 	}
@@ -93,11 +92,8 @@ func getLogs() {
 
 // setupCluster brings up a cluster, waits for it to be ready, then returns it's name.
 func setupCluster() (err error) {
-	cfg := config.Instance
-	state := state.Instance
-
 	// if TEST_KUBECONFIG has been set, skip configuring OCM
-	if len(state.Kubeconfig.Contents) > 0 || len(cfg.Kubeconfig.Path) > 0 {
+	if len(viper.GetString(config.Kubeconfig.Contents)) > 0 || len(viper.GetString(config.Kubeconfig.Path)) > 0 {
 		return useKubeconfig()
 	}
 
@@ -108,55 +104,59 @@ func setupCluster() (err error) {
 	}
 
 	// create a new cluster if no ID is specified
-	if state.Cluster.ID == "" {
-		if state.Cluster.Name == "" {
-			state.Cluster.Name = clusterName()
+	clusterID := viper.GetString(config.Cluster.ID)
+	if clusterID == "" {
+		if viper.GetString(config.Cluster.Name) == "" {
+			viper.Set(config.Cluster.Name, clusterName())
 		}
 
-		if state.Cluster.ID, err = provider.LaunchCluster(); err != nil {
+		if clusterID, err = provider.LaunchCluster(); err != nil {
 			return fmt.Errorf("could not launch cluster: %v", err)
 		}
+		viper.Set(config.Cluster.ID, clusterID)
 	} else {
-		log.Printf("CLUSTER_ID of '%s' was provided, skipping cluster creation and using it instead", state.Cluster.ID)
+		log.Printf("CLUSTER_ID of '%s' was provided, skipping cluster creation and using it instead", clusterID)
 
-		cluster, err := provider.GetCluster(state.Cluster.ID)
+		cluster, err := provider.GetCluster(clusterID)
 		if err != nil {
 			return fmt.Errorf("could not retrieve cluster information from OCM: %v", err)
 		}
 
-		state.Cluster.Name = cluster.Name()
-		log.Printf("CLUSTER_NAME set to %s from OCM.", state.Cluster.Name)
+		viper.Set(config.Cluster.Name, cluster.Name())
+		log.Printf("CLUSTER_NAME set to %s from OCM.", viper.GetString(config.Cluster.Name))
 
-		state.Cluster.Version = cluster.Version()
-		log.Printf("CLUSTER_VERSION set to %s from OCM.", state.Cluster.Version)
+		viper.Set(config.Cluster.Version, cluster.Version())
+		log.Printf("CLUSTER_VERSION set to %s from OCM.", viper.GetString(config.Cluster.Version))
 
-		state.CloudProvider.CloudProviderID = cluster.CloudProvider()
-		log.Printf("CLOUD_PROVIDER_ID set to %s from OCM.", state.CloudProvider.CloudProviderID)
+		viper.Set(config.CloudProvider.CloudProviderID, cluster.CloudProvider())
+		log.Printf("CLOUD_PROVIDER_ID set to %s from OCM.", viper.GetString(config.CloudProvider.CloudProviderID))
 
-		state.CloudProvider.Region = cluster.Region()
-		log.Printf("CLOUD_PROVIDER_REGION set to %s from OCM.", state.CloudProvider.Region)
+		viper.Set(config.CloudProvider.Region, cluster.Region())
+		log.Printf("CLOUD_PROVIDER_REGION set to %s from OCM.", viper.GetString(config.CloudProvider.Region))
 
 		log.Printf("Found addons: %s", strings.Join(cluster.Addons(), ","))
 	}
 
-	metadata.Instance.SetClusterName(state.Cluster.Name)
-	metadata.Instance.SetClusterID(state.Cluster.ID)
+	metadata.Instance.SetClusterName(viper.GetString(config.Cluster.Name))
+	metadata.Instance.SetClusterID(clusterID)
 
-	if err = cluster.WaitForClusterReady(provider, state.Cluster.ID); err != nil {
+	if err = cluster.WaitForClusterReady(provider, clusterID); err != nil {
 		return fmt.Errorf("failed waiting for cluster ready: %v", err)
 	}
 
-	if state.Kubeconfig.Contents, err = provider.ClusterKubeconfig(state.Cluster.ID); err != nil {
+	var kubeconfigBytes []byte
+	if kubeconfigBytes, err = provider.ClusterKubeconfig(clusterID); err != nil {
 		return fmt.Errorf("could not get kubeconfig for cluster: %v", err)
 	}
+	viper.Set(config.Kubeconfig.Contents, string(kubeconfigBytes))
 
 	return nil
 }
 
 // installAddons installs addons onto the cluster
 func installAddons() (err error) {
-	clusterID := state.Instance.Cluster.ID
-	num, err := provider.InstallAddons(clusterID, config.Instance.Addons.IDs)
+	clusterID := viper.GetString(config.Cluster.ID)
+	num, err := provider.InstallAddons(clusterID, strings.Split(viper.GetString(config.Addons.IDs), ","))
 	if err != nil {
 		return fmt.Errorf("could not install addons: %s", err.Error())
 	}
@@ -171,10 +171,7 @@ func installAddons() (err error) {
 
 // useKubeconfig reads the path provided for a TEST_KUBECONFIG and uses it for testing.
 func useKubeconfig() (err error) {
-	cfg := config.Instance
-	state := state.Instance
-
-	_, err = clientcmd.RESTConfigFromKubeConfig(state.Kubeconfig.Contents)
+	_, err = clientcmd.RESTConfigFromKubeConfig([]byte(viper.GetString(config.Kubeconfig.Contents)))
 	if err != nil {
 		log.Println("Not an existing Kubeconfig, attempting to read file instead...")
 	} else {
@@ -182,25 +179,27 @@ func useKubeconfig() (err error) {
 		return nil
 	}
 
-	state.Kubeconfig.Contents, err = ioutil.ReadFile(cfg.Kubeconfig.Path)
+	kubeconfigPath := viper.GetString(config.Kubeconfig.Path)
+	kubeconfigBytes, err := ioutil.ReadFile(kubeconfigPath)
 	if err != nil {
-		return fmt.Errorf("failed reading '%s' which has been set as the TEST_KUBECONFIG: %v", cfg.Kubeconfig.Path, err)
+		return fmt.Errorf("failed reading '%s' which has been set as the TEST_KUBECONFIG: %v", kubeconfigPath, err)
 	}
-	log.Printf("Using a set TEST_KUBECONFIG of '%s' for Origin API calls.", cfg.Kubeconfig.Path)
+	viper.Set(config.Kubeconfig.Contents, string(kubeconfigBytes))
+	log.Printf("Using a set TEST_KUBECONFIG of '%s' for Origin API calls.", kubeconfigPath)
 	return nil
 }
 
 // cluster name format must be short enough to support all versions
 func clusterName() string {
-	vers := strings.TrimPrefix(state.Instance.Cluster.Version, util.VersionPrefix)
+	vers := strings.TrimPrefix(viper.GetString(config.Cluster.Version), util.VersionPrefix)
 	safeVersion := strings.Replace(vers, ".", "-", -1)
-	return "ci-cluster-" + safeVersion + "-" + config.Instance.Suffix
+	return "ci-cluster-" + safeVersion + "-" + viper.GetString(config.Suffix)
 }
 
 func writeLogs(m map[string][]byte) {
 	for k, v := range m {
 		name := k + "-log.txt"
-		filePath := filepath.Join(config.Instance.ReportDir, name)
+		filePath := filepath.Join(viper.GetString(config.ReportDir), name)
 		err := ioutil.WriteFile(filePath, v, os.ModePerm)
 		Expect(err).NotTo(HaveOccurred(), "failed to write log '%s'", filePath)
 	}

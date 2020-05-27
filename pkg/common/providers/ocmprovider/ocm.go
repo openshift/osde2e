@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	"github.com/openshift/osde2e/pkg/common/spi"
+	"github.com/spf13/viper"
 
 	ocm "github.com/openshift-online/ocm-sdk-go"
 	ocmerr "github.com/openshift-online/ocm-sdk-go/errors"
@@ -88,7 +89,15 @@ func OCMConnection(token, env string, debug bool) (*ocm.Connection, error) {
 }
 
 // New returns a new OCMProvisioner.
-func New(token string, env string, debug bool) (*OCMProvider, error) {
+func New() (*OCMProvider, error) {
+	return NewWithEnv(viper.GetString(Env))
+}
+
+// NewWithEnv creates a new provider with a specific environment.
+func NewWithEnv(env string) (*OCMProvider, error) {
+	token := viper.GetString(Token)
+	debug := viper.GetBool(Debug)
+
 	conn, err := OCMConnection(token, env, debug)
 
 	if err != nil {
@@ -101,7 +110,7 @@ func New(token string, env string, debug bool) (*OCMProvider, error) {
 	// able to get the default version in production. This will allow us to make relative version
 	// upgrades by measuring against the current production default.
 	if env != prod {
-		prodProvider, err = New(token, prod, debug)
+		prodProvider, err = NewWithEnv(prod)
 
 		if err != nil {
 			return nil, err
@@ -140,6 +149,11 @@ func (o *OCMProvider) CincinnatiChannel() spi.CincinnatiChannel {
 	}
 
 	return spi.CincinnatiStableChannel
+}
+
+// GetConnection returns the connection used by this provider.
+func (o *OCMProvider) GetConnection() *ocm.Connection {
+	return o.conn
 }
 
 // ErrResp takes an OCM error and converts it into a regular Golang error.

@@ -8,7 +8,7 @@ import (
 	accounts "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"
 	v1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 	"github.com/openshift/osde2e/pkg/common/config"
-	"github.com/openshift/osde2e/pkg/common/state"
+	"github.com/spf13/viper"
 )
 
 const (
@@ -58,11 +58,11 @@ func (o *OCMProvider) CheckQuota() (bool, error) {
 	machineType := ""
 
 	quotaFound := false
-	resourceClusterType := fmt.Sprintf(resourceClusterFmt, state.Instance.CloudProvider.CloudProviderID)
+	resourceClusterType := fmt.Sprintf(resourceClusterFmt, viper.GetString(config.CloudProvider.CloudProviderID))
 	for _, q := range quotaList.Slice() {
 		if quotaFound = HasQuotaFor(q, resourceClusterType, machineType); quotaFound {
 			log.Printf("Quota for test config (%s/%s/multiAZ=%t) found: total=%d, remaining: %d",
-				resourceClusterType, machineType, config.Instance.Cluster.MultiAZ, q.Allowed(), q.Allowed()-q.Reserved())
+				resourceClusterType, machineType, viper.GetBool(config.Cluster.MultiAZ), q.Allowed(), q.Allowed()-q.Reserved())
 			break
 		}
 	}
@@ -112,7 +112,7 @@ func (o *OCMProvider) currentAccountQuota() (*accounts.QuotaSummaryList, error) 
 // HasQuotaFor the desired configuration. If machineT is empty a default will try to be selected.
 func HasQuotaFor(q *accounts.QuotaSummary, resourceType, machineType string) bool {
 	azType := "single"
-	if config.Instance.Cluster.MultiAZ {
+	if viper.GetBool(config.Cluster.MultiAZ) {
 		azType = "multi"
 	}
 

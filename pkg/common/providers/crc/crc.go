@@ -18,8 +18,8 @@ import (
 	"github.com/code-ready/crc/pkg/crc/preflight"
 	"github.com/code-ready/crc/pkg/crc/validation"
 	"github.com/code-ready/crc/pkg/crc/version"
-	osdConfig "github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/spi"
+	"github.com/spf13/viper"
 	"k8s.io/apimachinery/pkg/util/wait"
 
 	// Specifically using this for YAMLToJSON
@@ -68,7 +68,7 @@ func init() {
 }
 
 // New creates a new Provider.
-func New(env string) (*Provider, error) {
+func New() (*Provider, error) {
 	if err := crcConfig.InitViper(); err != nil {
 		logging.Fatal(err.Error())
 	}
@@ -76,7 +76,7 @@ func New(env string) (*Provider, error) {
 	preflight.RegisterSettings()
 	crcConfig.SetDefaults()
 
-	provider.env = env
+	provider.env = "crc"
 
 	return provider, nil
 }
@@ -88,7 +88,7 @@ func (m *Provider) LaunchCluster() (string, error) {
 		log.Fatalf("Error discerning home directory: %s", err.Error())
 	}
 
-	config.PullSecretFile.Name = osdConfig.Instance.CRC.PullSecretFile
+	config.PullSecretFile.Name = viper.GetString(CRCPullSecretFile)
 
 	preflight.SetupHost()
 
@@ -244,23 +244,25 @@ func (m *Provider) Type() string {
 }
 
 func getPullSecretFileContent() (string, error) {
-	if osdConfig.Instance.CRC.PullSecretFile != "" {
+	crcPullSecretFile := viper.GetString(CRCPullSecretFile)
+	if CRCPullSecretFile != "" {
 		// Read the file content
 		data, err := ioutil.ReadFile(config.PullSecretFile.Name)
 		if err != nil {
 			return "", errors.New(err.Error())
 		}
-		osdConfig.Instance.CRC.PullSecret = string(data)
-		config.PullSecretFile.Name = osdConfig.Instance.CRC.PullSecretFile
+		viper.Set(CRCPullSecret, string(data))
+		config.PullSecretFile.Name = crcPullSecretFile
 	} else {
 		return "", fmt.Errorf("no pull secret file set")
 	}
 
-	if osdConfig.Instance.CRC.PullSecret == "" {
+	crcPullSecret := viper.GetString(CRCPullSecret)
+	if crcPullSecret == "" {
 		return "", fmt.Errorf("no pull secret found")
 	}
-	if err := validation.ImagePullSecret(osdConfig.Instance.CRC.PullSecret); err != nil {
+	if err := validation.ImagePullSecret(crcPullSecret); err != nil {
 		return "", errors.New(err.Error())
 	}
-	return osdConfig.Instance.CRC.PullSecret, nil
+	return crcPullSecret, nil
 }
