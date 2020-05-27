@@ -293,14 +293,14 @@ func init() {
 	viper.BindEnv(JobName, "JOB_NAME")
 
 	viper.SetDefault(JobID, -1)
-	viper.BindEnv(JobID, "jobID")
+	viper.BindEnv(JobID, "BUILD_NUMBER")
 
 	viper.SetDefault(BaseJobURL, "https://storage.googleapis.com/origin-ci-test/logs")
 	viper.BindEnv(BaseJobURL, "BASE_JOB_URL")
 
 	viper.BindEnv(ReportDir, "REPORT_DIR")
 
-	viper.BindEnv(Suffix, "suffix")
+	viper.BindEnv(Suffix, "SUFFIX")
 
 	viper.SetDefault(DryRun, false)
 	viper.BindEnv(DryRun, "DRY_RUN")
