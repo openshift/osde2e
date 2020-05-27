@@ -90,10 +90,11 @@ func OCMConnection(token, env string, debug bool) (*ocm.Connection, error) {
 
 // New returns a new OCMProvisioner.
 func New() (*OCMProvider, error) {
-	return newWithEnv(viper.GetString(Env))
+	return NewWithEnv(viper.GetString(Env))
 }
 
-func newWithEnv(env string) (*OCMProvider, error) {
+// NewWithEnv creates a new provider with a specific environment.
+func NewWithEnv(env string) (*OCMProvider, error) {
 	token := viper.GetString(Token)
 	debug := viper.GetBool(Debug)
 
@@ -109,7 +110,7 @@ func newWithEnv(env string) (*OCMProvider, error) {
 	// able to get the default version in production. This will allow us to make relative version
 	// upgrades by measuring against the current production default.
 	if env != prod {
-		prodProvider, err = newWithEnv(prod)
+		prodProvider, err = NewWithEnv(prod)
 
 		if err != nil {
 			return nil, err
@@ -148,6 +149,11 @@ func (o *OCMProvider) CincinnatiChannel() spi.CincinnatiChannel {
 	}
 
 	return spi.CincinnatiStableChannel
+}
+
+// GetConnection returns the connection used by this provider.
+func (o *OCMProvider) GetConnection() *ocm.Connection {
+	return o.conn
 }
 
 // ErrResp takes an OCM error and converts it into a regular Golang error.
