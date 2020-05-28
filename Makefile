@@ -52,13 +52,13 @@ test-addons: build
 	"$(OSDE2E)" test --configs=addon-suite,log-metrics --custom-config=$(CUSTOM_CONFIG)
 
 test-conformance: build
-	"$(OSDE2E)" test--configs=conformance-suite,log-metrics --custom-config=$(CUSTOM_CONFIG)
+	"$(OSDE2E)" test --configs=conformance-suite,log-metrics --custom-config=$(CUSTOM_CONFIG)
 
 test-middle-imageset: build
-	"$(OSDE2E)" test--configs=e2e-suite,use-middle-version,log-metrics --custom-config=$(CUSTOM_CONFIG)
+	"$(OSDE2E)" test --configs=e2e-suite,use-middle-version,log-metrics --custom-config=$(CUSTOM_CONFIG)
 
 test-oldest-imageset: build
-	"$(OSDE2E)" test--configs=e2e-suite,use-oldest-version,log-metrics --custom-config=$(CUSTOM_CONFIG)
+	"$(OSDE2E)" test --configs=e2e-suite,use-oldest-version,log-metrics --custom-config=$(CUSTOM_CONFIG)
 
 test-docker:
 	$(CONTAINER_ENGINE) run \
