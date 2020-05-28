@@ -19,7 +19,7 @@ const (
 	CUSTOMER_PROVIDER_NAME = "CUSTOM"
 )
 
-var _ = ginkgo.Describe("[Suite: informing] [OSD] user validating webhook", func() {
+var _ = ginkgo.Describe("[Suite: service-definition] [OSD] user validating webhook", func() {
 	h := helper.New()
 
 	ginkgo.Context("user validating webhook", func() {

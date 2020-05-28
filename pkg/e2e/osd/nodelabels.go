@@ -9,7 +9,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-var _ = ginkgo.Describe("[Suite: informing] [OSD] NodeLabels", func() {
+var _ = ginkgo.Describe("[Suite: service-definition] [OSD] NodeLabels", func() {
 	ginkgo.Context("Modifying nodeLabels is not allowed", func() {
 		// setup helper
 		h := helper.New()
