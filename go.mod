@@ -15,7 +15,7 @@ require (
 	github.com/google/uuid v1.1.1
 	github.com/hashicorp/go-multierror v1.1.0
 	github.com/kylelemons/godebug v1.1.0
-	github.com/markbates/pkger v0.15.1
+	github.com/markbates/pkger v0.16.0
 	github.com/onsi/ginkgo v1.12.0
 	github.com/onsi/gomega v1.7.1
 	github.com/openshift-online/ocm-sdk-go v0.1.104
@@ -25,7 +25,8 @@ require (
 	github.com/prometheus/client_golang v1.4.1
 	github.com/prometheus/common v0.9.1
 	github.com/slack-go/slack v0.6.3
-	github.com/spf13/pflag v1.0.5 // indirect
+	github.com/spf13/cobra v1.0.0
+	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.7.0
 	golang.org/x/crypto v0.0.0-20191011191535-87dc89f01550 // indirect
 	golang.org/x/net v0.0.0-20191004110552-13f9640d40b9

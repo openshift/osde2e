@@ -77,14 +77,13 @@ func loadYAMLFromFile(name string) error {
 
 	path = filepath.Clean(path)
 
-	var file http.File
-	if file, err = pkger.Open(path); err != nil {
-		return fmt.Errorf("error trying to open config %s: %v", name, err)
+	fh, err := os.Open(path)
+	if err != nil {
+		return err
 	}
+	defer fh.Close()
 
-	defer file.Close()
-
-	if err = viper.MergeConfig(file); err != nil {
+	if err = viper.MergeConfig(fh); err != nil {
 		return err
 	}
 
