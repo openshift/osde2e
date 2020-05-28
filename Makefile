@@ -18,12 +18,13 @@ ifndef $(GOPATH)
     export GOPATH
 endif
 
-check:
+check: diffproviders.txt
 	CGO_ENABLED=0 go test -v $(PKG)/cmd/... $(PKG)/pkg/...
 	
 	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(shell go env GOPATH)/bin v1.23.8
 	(cd "$(DIR)"; golangci-lint run -c .golang-ci.yml ./...)
 	find "$(DIR)scripts" -name "*.sh" -exec $(DIR)scripts/shellcheck.sh {} +
+	cmp -s diffproviders.txt "$(DIR)pkg/common/providers/providers_generated.go"
 
 build-image:
 	$(CONTAINER_ENGINE) build -t "$(IMAGE_NAME):$(IMAGE_TAG)" .
@@ -34,6 +35,9 @@ push-image:
 push-latest:
 	$(CONTAINER_ENGINE) tag "$(IMAGE_NAME):$(IMAGE_TAG)" "$(IMAGE_NAME):latest"
 	@$(CONTAINER_ENGINE) --config=$(DOCKER_CONF) push "$(IMAGE_NAME):latest"
+
+generate-providers:
+	"$(DIR)scripts/generate-providers-import.sh" > "$(DIR)pkg/common/providers/providers_generated.go"
 
 build:
 	mkdir -p "$(OUT_DIR)"
@@ -82,3 +86,8 @@ test-docker:
 		-e AWS_ACCESS_KEY_ID=$(AWS_ACCESS_KEY_ID) \
 		-e AWS_SECRET_ACCESS_KEY=$(AWS_SECRET_ACCESS_KEY) \
 		$(IMAGE_NAME):$(IMAGE_TAG)
+
+diffproviders.txt:
+	"$(DIR)scripts/generate-providers-import.sh" > diffproviders.txt
+
+.INTERMEDIATE: diffproviders.txt
