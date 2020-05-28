@@ -2,13 +2,13 @@ package test
 
 import (
 	"fmt"
-	"github.com/markbates/pkger"
 	"github.com/openshift/osde2e/cmd/osde2e/common"
+	"github.com/openshift/osde2e/cmd/osde2e/helpers"
+	"github.com/openshift/osde2e/pkg/common/config"
+	"github.com/openshift/osde2e/pkg/common/providers/ocmprovider"
 	"github.com/openshift/osde2e/pkg/e2e"
 	"github.com/spf13/cobra"
-	"os"
-	"strings"
-
+	"github.com/spf13/viper"
 	// import suites to be tested
 	_ "github.com/openshift/osde2e/pkg/e2e/addons"
 	_ "github.com/openshift/osde2e/pkg/e2e/openshift"
@@ -32,45 +32,84 @@ var Cmd = &cobra.Command{
 var args struct {
 	configString string
 	customConfig string
+	clusterID string
+	environment string
+	kubeConfig string
+	destroyAfterTest bool
+	skipHealthChecks bool
+	focusTests string
+	skipTests string
 }
 
 func init() {
-	flags := Cmd.Flags()
-
-	flags.StringVar(
+	pfs := Cmd.PersistentFlags()
+	pfs.StringVar(
 		&args.configString,
 		"configs",
 		"",
 		"A comma separated list of built in configs to use",
 	)
-	flags.StringVar(
+	Cmd.RegisterFlagCompletionFunc("configs", helpers.ConfigComplete)
+	pfs.StringVar(
 		&args.customConfig,
 		"custom-config",
 		"",
 		"Custom config file for osde2e",
 	)
+	pfs.StringVarP(
+		&args.clusterID,
+		"cluster-id",
+		"i",
+		"",
+		"Existing OCM cluster ID to run tests against.",
+	)
+	pfs.StringVarP(
+		&args.environment,
+		"environment",
+		"e",
+		"",
+		"Cluster provider environment to use.",
+	)
 
-	Cmd.RegisterFlagCompletionFunc("configs", configComplete)
-}
+	pfs.StringVarP(
+		&args.kubeConfig,
+		"kube-config",
+		"k",
+		"",
+		"Path to local Kube config for running tests against.",
+	)
+	pfs.BoolVar(
+		&args.destroyAfterTest,
+		"destroy-cluster",
+		false,
+		"Destroy cluster after test completion.",
+	)
+	pfs.BoolVar(
+		&args.skipHealthChecks,
+		"skip-health-check",
+		false,
+		"Skip cluster health checks.",
+	)
+	pfs.StringVar(
+		&args.focusTests,
+		"focus-tests",
+		"",
+		"Only run any Ginkgo tests whose names matching the regular expression",
+	)
+	pfs.StringVar(
+		&args.skipTests,
+		"skip-tests",
+		"",
+		"Skip any Ginkgo tests whose names match the regular expression.",
+	)
 
-func configComplete(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
-	completeArgs := make([]string, 0)
-	err := pkger.Walk("/configs", func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-		if info != nil && (strings.HasSuffix(info.Name(), ".yaml") || strings.HasSuffix(info.Name(), ".yml")) {
-			trimmedName := strings.TrimSuffix(
-				strings.TrimSuffix(info.Name(), ".yaml"),
-				".yml")
-			completeArgs = append(completeArgs, trimmedName)
-		}
-		return nil
-	})
-	if err != nil {
-		return nil, cobra.ShellCompDirectiveDefault
-	}
-	return completeArgs, cobra.ShellCompDirectiveDefault
+	viper.BindPFlag(config.Cluster.ID, Cmd.PersistentFlags().Lookup("cluster-id"))
+	viper.BindPFlag(ocmprovider.Env, Cmd.PersistentFlags().Lookup("environment"))
+	viper.BindPFlag(config.Kubeconfig.Path, Cmd.PersistentFlags().Lookup("kube-config"))
+	viper.BindPFlag(config.Cluster.DestroyAfterTest, Cmd.PersistentFlags().Lookup("destroy-cluster"))
+	viper.BindPFlag(config.Tests.SkipClusterHealthChecks, Cmd.PersistentFlags().Lookup("skip-health-check"))
+	viper.BindPFlag(config.Tests.GinkgoFocus, Cmd.PersistentFlags().Lookup("focus-tests"))
+	viper.BindPFlag(config.Tests.GinkgoSkip, Cmd.PersistentFlags().Lookup("skip-tests"))
 }
 
 func run(cmd *cobra.Command, argv []string) error {
