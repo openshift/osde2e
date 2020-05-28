@@ -30,15 +30,16 @@ var Cmd = &cobra.Command{
 }
 
 var args struct {
-	configString string
-	customConfig string
-	clusterID string
-	environment string
-	kubeConfig string
+	configString     string
+	customConfig     string
+	clusterID        string
+	environment      string
+	kubeConfig       string
 	destroyAfterTest bool
 	skipHealthChecks bool
-	focusTests string
-	skipTests string
+	mustGather       bool
+	focusTests       string
+	skipTests        string
 }
 
 func init() {
@@ -102,6 +103,12 @@ func init() {
 		"",
 		"Skip any Ginkgo tests whose names match the regular expression.",
 	)
+	pfs.BoolVar(
+		&args.mustGather,
+		"must-gather",
+		false,
+		"Control the Must Gather process at the end of a failed testing run.",
+	)
 
 	viper.BindPFlag(config.Cluster.ID, Cmd.PersistentFlags().Lookup("cluster-id"))
 	viper.BindPFlag(ocmprovider.Env, Cmd.PersistentFlags().Lookup("environment"))
@@ -110,6 +117,7 @@ func init() {
 	viper.BindPFlag(config.Tests.SkipClusterHealthChecks, Cmd.PersistentFlags().Lookup("skip-health-check"))
 	viper.BindPFlag(config.Tests.GinkgoFocus, Cmd.PersistentFlags().Lookup("focus-tests"))
 	viper.BindPFlag(config.Tests.GinkgoSkip, Cmd.PersistentFlags().Lookup("skip-tests"))
+	viper.BindPFlag(config.MustGather, Cmd.PersistentFlags().Lookup("skip-must-gather"))
 }
 
 func run(cmd *cobra.Command, argv []string) error {
