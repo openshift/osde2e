@@ -35,7 +35,7 @@ The `osde2e` command is the root command that executes all functionality within 
 OSDe2e comes with a number of [configs] that can be passed to the `osde2e test` command using the -configs argument. These can be strung together in a comma separated list to create a more complex scenario for testing.
 
 ```
-$ osde2e test -configs prod,e2e-suite,conformance-suite
+$ osde2e test --configs prod,e2e-suite,conformance-suite
 ```
 
 This will create a cluster on production (using the default version) that will run both the end to end suite and the Kubernetes conformance tests.
@@ -61,15 +61,28 @@ These can be combined with the composable configs mentioned in the previous sect
 OCM_TOKEN=$(cat ~/.ocm-token) \
 MAJOR_TARGET=4 \
 MINOR_TARGET=2 \
-osde2e test -configs prod,e2e-suite
+osde2e test --configs prod,e2e-suite
 ``` 
 
 #### Using a custom YAML config
 
-The composable configs consist of a number of small YAML files that can all be loaded together. Rather than use these built in configs, you can also elect to build your own custom YAML file and provide that using the `-custom-config` parameter.
+The composable configs consist of a number of small YAML files that can all be loaded together. Rather than use these built in configs, you can also elect to build your own custom YAML file and provide that using the `--custom-config` parameter.
 
 ```
-osde2e test -custom-config ./osde2e.yaml
+osde2e test --custom-config ./osde2e.yaml
+```
+
+#### Via the command-line
+
+Some configuration settings are also exposed as command-line parameters. A full list can be displayed by providing `--help` after the command.
+
+An example is included below:
+
+```shell
+osde2e test --cluster-id 1ddkj9cr9j908gdlb1q5v6ld4b7ina5m \
+    --provider stage \
+    --skip-health-check \
+    --focus-tests "RBAC Operator"
 ```
 
 ##### Full custom YAML config example
@@ -108,7 +121,7 @@ It is possible to test against non-OSD clusters by specifying a kubeconfig to te
 
 ```
 TEST_KUBECONFIG=~/.kube/config \
-osde2e test -configs prod -custom-config .osde2e.yaml
+osde2e test --configs prod --custom-config .osde2e.yaml
 ```
 *Note: You must skip certain Operator tests that only exist in a hosted OSD instance. This can be skipped by skipping the operators test suite.*
 

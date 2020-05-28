@@ -191,7 +191,10 @@ func runGinkgoTests() error {
 			return fmt.Errorf("error deleting cluster: %s", err.Error())
 		}
 	} else {
-		log.Printf("For debugging, please look for cluster ID %s in environment %s", clusterID, provider.Environment())
+		// When using a local kubeconfig, provider might not be set
+		if provider != nil {
+			log.Printf("For debugging, please look for cluster ID %s in environment %s", clusterID, provider.Environment())
+		}
 	}
 
 	if !dryRun {
