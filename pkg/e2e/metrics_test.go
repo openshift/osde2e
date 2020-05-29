@@ -10,7 +10,6 @@ import (
 
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/metadata"
-	"github.com/openshift/osde2e/pkg/common/providers"
 	"github.com/openshift/osde2e/pkg/common/providers/mock"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/spf13/viper"
@@ -19,7 +18,7 @@ import (
 func TestProcessJUnitXMLFile(t *testing.T) {
 	viper.Reset()
 	viper.Set(mock.Env, "prod")
-	viper.Set(config.Provider, providers.Mock)
+	viper.Set(config.Provider, "mock")
 	viper.Set(config.JobID, 123)
 	viper.Set(config.CloudProvider.CloudProviderID, "aws")
 	viper.Set(config.Cluster.ID, "1a2b3c")
@@ -118,7 +117,7 @@ cicd_jUnitResult{cloud_provider="aws",cluster_id="1a2b3c",environment="prod",ins
 func TestProcessJSONFile(t *testing.T) {
 	viper.Reset()
 	viper.Set(mock.Env, "prod")
-	viper.Set(config.Provider, providers.Mock)
+	viper.Set(config.Provider, "mock")
 	viper.Set(config.JobID, 123)
 	viper.Set(config.CloudProvider.CloudProviderID, "aws")
 	viper.Set(config.Cluster.ID, "1a2b3c")
@@ -227,7 +226,7 @@ cicd_addon_metadata{cloud_provider="aws",cluster_id="1a2b3c",environment="prod",
 func TestWritePrometheusFile(t *testing.T) {
 	viper.Reset()
 	viper.Set(mock.Env, "prod")
-	viper.Set(config.Provider, providers.Mock)
+	viper.Set(config.Provider, "mock")
 	viper.Set(config.JobID, 123)
 	viper.Set(config.JobName, "test-job")
 	viper.Set(config.CloudProvider.CloudProviderID, "aws")

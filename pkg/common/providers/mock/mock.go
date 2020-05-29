@@ -30,6 +30,10 @@ type MockProvider struct {
 	versions *spi.VersionList
 }
 
+func init() {
+	spi.RegisterProvider("mock", func() (spi.Provider, error) { return New() })
+}
+
 // New creates a new MockProvider.
 func New() (*MockProvider, error) {
 	env := viper.GetString(Env)

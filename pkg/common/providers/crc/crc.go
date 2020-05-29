@@ -65,6 +65,8 @@ func init() {
 		clusters:    map[string]*spi.Cluster{},
 		kubeconfigs: map[string]string{},
 	}
+
+	spi.RegisterProvider("crc", func() (spi.Provider, error) { return New() })
 }
 
 // New creates a new Provider.
