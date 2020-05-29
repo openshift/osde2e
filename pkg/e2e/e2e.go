@@ -221,7 +221,7 @@ func cleanupAfterE2E(h *helper.H) (errors []error) {
 
 	if viper.GetBool(config.MustGather) {
 		log.Print("Running Must Gather...")
-		mustGatherTimeoutInSeconds := 900
+		mustGatherTimeoutInSeconds := 1800
 		h.SetServiceAccount("system:serviceaccount:%s:cluster-admin")
 		r := h.Runner(fmt.Sprintf("oc adm must-gather --dest-dir=%v", runner.DefaultRunner.OutputDir))
 		r.Name = "must-gather"

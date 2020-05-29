@@ -49,8 +49,22 @@ func GetClusterVersion(provider spi.Provider, clusterID string) (*semver.Version
 	return version, err
 }
 
+// ScaleCluster will scale the cluster up to the provided size.
+func ScaleCluster(provider spi.Provider, clusterID string, numComputeNodes int) error {
+	err := provider.ScaleCluster(clusterID, numComputeNodes)
+	if err != nil {
+		return fmt.Errorf("error trying to scale cluster: %v", err)
+	}
+
+	return waitForClusterReadyWithOverrideAndExpectedNumberOfNodes(provider, clusterID, true)
+}
+
 // WaitForClusterReady blocks until the cluster is ready for testing.
 func WaitForClusterReady(provider spi.Provider, clusterID string) error {
+	return waitForClusterReadyWithOverrideAndExpectedNumberOfNodes(provider, clusterID, false)
+}
+
+func waitForClusterReadyWithOverrideAndExpectedNumberOfNodes(provider spi.Provider, clusterID string, overrideSkipCheck bool) error {
 	installTimeout := viper.GetInt64(config.Cluster.InstallTimeout)
 	log.Printf("Waiting %v minutes for cluster '%s' to be ready...\n", installTimeout, clusterID)
 	cleanRunsNeeded := viper.GetInt(config.Cluster.CleanCheckRuns)
@@ -60,7 +74,7 @@ func WaitForClusterReady(provider spi.Provider, clusterID string) error {
 	clusterStarted := time.Now()
 	var readinessStarted time.Time
 	ocmReady := false
-	if !viper.GetBool(config.Tests.SkipClusterHealthChecks) {
+	if !viper.GetBool(config.Tests.SkipClusterHealthChecks) || overrideSkipCheck {
 		return wait.PollImmediate(30*time.Second, time.Duration(installTimeout)*time.Minute, func() (bool, error) {
 			cluster, err := provider.GetCluster(clusterID)
 			viper.Set(config.Cluster.State, cluster.State)
