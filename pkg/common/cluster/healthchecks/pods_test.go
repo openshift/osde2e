@@ -33,7 +33,7 @@ func TestCheckPodHealth(t *testing.T) {
 		expectedError bool
 		objs          []runtime.Object
 	}{
-		{"no pods", false, false, nil},
+		{"no pods", false, true, nil},
 		{"single pod failed", false, true, []runtime.Object{pod("a", "a", v1.PodFailed)}},
 		{"one pod good one pod bad same namespace", false, true, []runtime.Object{pod("a", "a", v1.PodFailed), pod("b", "a", v1.PodRunning)}},
 		{"one pod good one pod pending same namespace", false, false, []runtime.Object{pod("a", "a", v1.PodPending), pod("b", "a", v1.PodRunning)}},
