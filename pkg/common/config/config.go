@@ -354,7 +354,7 @@ func init() {
 	viper.BindEnv(Tests.UploadMetrics, "UPLOAD_METRICS")
 
 	viper.SetDefault(Tests.MetricsBucket, "osde2e-metrics")
-	viper.BindEnv(Tests.UploadMetrics, "METRICS_BUCKET")
+	viper.BindEnv(Tests.MetricsBucket, "METRICS_BUCKET")
 
 	viper.BindEnv(Tests.ServiceAccount, "SERVICE_ACCOUNT")
 
