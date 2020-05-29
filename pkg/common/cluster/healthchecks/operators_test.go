@@ -62,31 +62,32 @@ func progressingClusterOperator(name string) *configv1.ClusterOperator {
 
 func TestCheckOperatorReadiness(t *testing.T) {
 	var tests = []struct {
-		description string
-		expected    bool
-		objs        []runtime.Object
-		skip        string
+		description   string
+		expected      bool
+		objs          []runtime.Object
+		expectedError bool
+		skip          string
 	}{
-		{"no operators", false, nil, ""},
-		{"single operator success", true, []runtime.Object{clusterOperator("a")}, ""},
-		{"single operator failure", false, []runtime.Object{unavailableClusterOperator("a")}, ""},
-		{"single operator progressing", false, []runtime.Object{progressingClusterOperator("a")}, ""},
-		{"multi operator success", true, []runtime.Object{clusterOperator("a"), clusterOperator("b")}, ""},
-		{"multi operator one progressing", false, []runtime.Object{clusterOperator("a"), progressingClusterOperator("b")}, ""},
-		{"multi operator one failure", false, []runtime.Object{clusterOperator("a"), unavailableClusterOperator("b")}, ""},
+		{"no operators", false, nil, true, ""},
+		{"single operator success", true, []runtime.Object{clusterOperator("a")}, false, ""},
+		{"single operator failure", false, []runtime.Object{unavailableClusterOperator("a")}, false, ""},
+		{"single operator progressing", false, []runtime.Object{progressingClusterOperator("a")}, false, ""},
+		{"multi operator success", true, []runtime.Object{clusterOperator("a"), clusterOperator("b")}, false, ""},
+		{"multi operator one progressing", false, []runtime.Object{clusterOperator("a"), progressingClusterOperator("b")}, false, ""},
+		{"multi operator one failure", false, []runtime.Object{clusterOperator("a"), unavailableClusterOperator("b")}, false, ""},
 		{"multi operator, skip success", true, []runtime.Object{
 			clusterOperator("a"),
 			unavailableClusterOperator("b"),
 			unavailableClusterOperator("c"),
 			unavailableClusterOperator("d"),
 			clusterOperator("e"),
-		}, "b,c,d"},
+		}, false, "b,c,d"},
 		{"multi operator, skip failure", false, []runtime.Object{
 			clusterOperator("a"),
 			unavailableClusterOperator("b"),
 			unavailableClusterOperator("c"),
 			unavailableClusterOperator("d"),
-		}, "b,c"},
+		}, false, "b,c"},
 	}
 
 	for _, test := range tests {
@@ -95,7 +96,7 @@ func TestCheckOperatorReadiness(t *testing.T) {
 		viper.Set(config.Tests.OperatorSkip, test.skip)
 		state, err := CheckOperatorReadiness(cfgClient.ConfigV1())
 
-		if err != nil {
+		if err != nil && !test.expectedError {
 			t.Errorf("Unexpected error: %s", err)
 			return
 		}

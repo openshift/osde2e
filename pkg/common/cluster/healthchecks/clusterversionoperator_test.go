@@ -72,21 +72,22 @@ func progressingClusterVersion() *configv1.ClusterVersion {
 
 func TestCheckCVOReadiness(t *testing.T) {
 	var tests = []struct {
-		description string
-		expected    bool
-		objs        []runtime.Object
+		description   string
+		expected      bool
+		expectedError bool
+		objs          []runtime.Object
 	}{
-		{"no version", false, nil},
-		{"single version success", true, []runtime.Object{clusterVersion()}},
-		{"single version failure", false, []runtime.Object{unavailableClusterVersion()}},
-		{"single version progressing", false, []runtime.Object{progressingClusterVersion()}},
+		{"no version", false, true, nil},
+		{"single version success", true, false, []runtime.Object{clusterVersion()}},
+		{"single version failure", false, false, []runtime.Object{unavailableClusterVersion()}},
+		{"single version progressing", false, false, []runtime.Object{progressingClusterVersion()}},
 	}
 
 	for _, test := range tests {
 		cfgClient := fakeConfig.NewSimpleClientset(test.objs...)
 		state, err := CheckCVOReadiness(cfgClient.ConfigV1())
 
-		if err != nil {
+		if err != nil && !test.expectedError {
 			t.Errorf("Unexpected error: %s", err)
 			return
 		}
