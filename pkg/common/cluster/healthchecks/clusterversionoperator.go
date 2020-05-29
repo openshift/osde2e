@@ -21,7 +21,7 @@ func CheckCVOReadiness(configClient configclient.ConfigV1Interface) (bool, error
 
 	cvInfo, err := GetClusterVersionObject(configClient)
 	if err != nil {
-		return false, nil
+		return false, err
 	}
 
 	for _, v := range cvInfo.Status.Conditions {

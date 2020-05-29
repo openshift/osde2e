@@ -23,8 +23,7 @@ func CheckOperatorReadiness(configClient configclient.ConfigV1Interface) (bool, 
 	}
 
 	if len(list.Items) == 0 {
-		log.Printf("No operators found...?")
-		return false, nil
+		return false, fmt.Errorf("no operators were found")
 	}
 
 	// Load the list of operators we want to ignore and skip.

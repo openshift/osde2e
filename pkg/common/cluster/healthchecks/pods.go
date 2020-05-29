@@ -22,7 +22,7 @@ func CheckPodHealth(podClient v1.CoreV1Interface) (bool, error) {
 	}
 
 	if len(list.Items) == 0 {
-		return false, nil
+		return false, fmt.Errorf("pod list is empty. this should NOT happen")
 	}
 
 	for _, pod := range list.Items {

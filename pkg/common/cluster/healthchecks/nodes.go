@@ -20,8 +20,7 @@ func CheckNodeHealth(nodeClient v1.CoreV1Interface) (bool, error) {
 	}
 
 	if len(list.Items) == 0 {
-		log.Printf("Zero nodes found...?")
-		return false, nil
+		return false, fmt.Errorf("no nodes found")
 	}
 
 	for _, node := range list.Items {
