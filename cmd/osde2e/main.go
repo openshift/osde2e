@@ -2,6 +2,15 @@ package main
 
 import (
 	"fmt"
+	"log"
+	"os"
+	"os/exec"
+	"strings"
+	"syscall"
+
+	// The root import needs to happen before importing the rest of osde2e, as this is what imports the various assets.
+	_ "github.com/openshift/osde2e"
+
 	"github.com/openshift/osde2e/cmd/osde2e/arguments"
 	"github.com/openshift/osde2e/cmd/osde2e/completion"
 	"github.com/openshift/osde2e/cmd/osde2e/query"
@@ -10,13 +19,6 @@ import (
 	"github.com/openshift/osde2e/cmd/osde2e/weather"
 	"github.com/openshift/osde2e/cmd/osde2e/weather_slack"
 	"github.com/spf13/cobra"
-	"log"
-	"os"
-	"os/exec"
-	"strings"
-	"syscall"
-
-	_ "github.com/openshift/osde2e"
 )
 
 var root = &cobra.Command{
@@ -78,8 +80,8 @@ func selfUpdate() {
 	// Update the osde2e binary. Since we're developing out of $GOHOME/src, this will work against the
 	// current source repo/branch. Since osde2e is expected to take ~1 hour to run, the time it takes to
 	// compile the osde2e command is negligible.
-	update := exec.Command("go", "get", "github.com/openshift/osde2e/cmd/osde2e")
-	err = update.Run()
+	updateCmd := exec.Command("go", "get", "github.com/openshift/osde2e/cmd/osde2e")
+	err = updateCmd.Run()
 
 	if err != nil {
 		panic(fmt.Sprintf("error while trying to update command: %v", err))
@@ -92,7 +94,14 @@ func selfUpdate() {
 			filteredCmdArgs = append(filteredCmdArgs, arg)
 		}
 	}
-	err = syscall.Exec(binary, filteredCmdArgs, os.Environ())
+
+	filteredEnv := make([]string, 0)
+	for _, env := range os.Environ() {
+		if !strings.HasPrefix(env, update.UpdateOSDe2eEnv) {
+			filteredEnv = append(filteredEnv, env)
+		}
+	}
+	err = syscall.Exec(binary, filteredCmdArgs, filteredEnv)
 
 	if err != nil {
 		panic(fmt.Sprintf("error while execing process: %v", err))
