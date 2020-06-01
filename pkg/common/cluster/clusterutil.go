@@ -77,8 +77,9 @@ func waitForClusterReadyWithOverrideAndExpectedNumberOfNodes(provider spi.Provid
 	if !viper.GetBool(config.Tests.SkipClusterHealthChecks) || overrideSkipCheck {
 		return wait.PollImmediate(30*time.Second, time.Duration(installTimeout)*time.Minute, func() (bool, error) {
 			cluster, err := provider.GetCluster(clusterID)
+
 			viper.Set(config.Cluster.State, cluster.State)
-			if err == nil && cluster.State() == spi.ClusterStateReady {
+			if err == nil && cluster != nil && cluster.State() == spi.ClusterStateReady {
 				// This is the first time that we've entered this section, so we'll consider this the time until OCM has said the cluster is ready
 				if !ocmReady {
 					ocmReady = true
@@ -115,6 +116,8 @@ func waitForClusterReadyWithOverrideAndExpectedNumberOfNodes(provider spi.Provid
 				}
 			} else if err != nil {
 				return false, fmt.Errorf("Encountered error waiting for cluster: %v", err)
+			} else if cluster == nil {
+				return false, fmt.Errorf("the cluster is null despite there being no error: please check the logs")
 			} else if cluster.State() == spi.ClusterStateError {
 				return false, fmt.Errorf("the installation of cluster '%s' has errored", clusterID)
 			} else {
