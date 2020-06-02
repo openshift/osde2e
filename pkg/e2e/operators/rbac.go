@@ -42,7 +42,7 @@ var _ = ginkgo.Describe("[Suite: operators] [OSD] Dedicated Admins SubjectPermis
 
 var _ = ginkgo.Describe("[Suite: informing] [OSD] Upgrade RBAC Permissions Operator", func() {
 	checkUpgrade(helper.New(), "openshift-rbac-permissions", "rbac-permissions-operator",
-		"rbac-permissions-operator.v0.1.81-ce6731c",
+		"rbac-permissions-operator.v0.1.97-68cf185",
 	)
 })
 
