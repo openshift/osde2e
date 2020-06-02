@@ -65,6 +65,8 @@ func init() {
 		clusters:    map[string]*spi.Cluster{},
 		kubeconfigs: map[string]string{},
 	}
+
+	spi.RegisterProvider("crc", func() (spi.Provider, error) { return New() })
 }
 
 // New creates a new Provider.
@@ -156,6 +158,11 @@ func (m *Provider) DeleteCluster(clusterID string) error {
 	})
 
 	return nil
+}
+
+// ScaleCluster CRCs a scale cluster operation.
+func (m *Provider) ScaleCluster(clusterID string, numComputeNodes int) error {
+	return fmt.Errorf("scaling is currently unsupported for CRC clusters")
 }
 
 // GetCluster CRCs a get cluster operation.

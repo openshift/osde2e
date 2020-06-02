@@ -17,6 +17,15 @@ type Provider interface {
 	// has begun. OSDe2e will not wait for the cluster to delete.
 	DeleteCluster(clusterID string) error
 
+	// ScaleCluster scales a cluster.
+	//
+	// This will start a cluster scaling operation. This should grow or shrink a cluster to
+	// the desired number of compute nodes. This is expected to kick off the cluster scaling
+	// process and return without waiting. Subsequent calls within OSDe2e will use the status
+	// reported by GetCluster and status calls from the cluster itself to determine if the
+	// scaling has finished.
+	ScaleCluster(clusterID string, numComputeNodes int) error
+
 	// GetCluster gets a cluster.
 	//
 	// This is what OSDe2e will use to gather cluster information, including whether

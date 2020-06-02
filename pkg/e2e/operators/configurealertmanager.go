@@ -41,6 +41,6 @@ var _ = ginkgo.Describe("[Suite: operators] [OSD] Configure AlertManager Operato
 
 var _ = ginkgo.Describe("[Suite: informing] [OSD] Upgrade Configure AlertManager Operator", func() {
 	checkUpgrade(helper.New(), "openshift-monitoring", "configure-alertmanager-operator",
-		"configure-alertmanager-operator.v0.1.121-361b817",
+		"configure-alertmanager-operator.v0.1.171-dba3c73",
 	)
 })

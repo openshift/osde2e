@@ -32,6 +32,6 @@ var _ = ginkgo.Describe("[Suite: operators] [OSD] Splunk Forwarder Operator", fu
 
 var _ = ginkgo.Describe("[Suite: informing] [OSD] Upgrade Splunk Forwarder Operator", func() {
 	checkUpgrade(helper.New(), "openshift-splunk-forwarder-operator", "openshift-splunk-forwarder-operator",
-		"splunk-forwarder-operator.v0.1.91-aaa0027",
+		"splunk-forwarder-operator.v0.1.157-3dca592",
 	)
 })

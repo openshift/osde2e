@@ -3,9 +3,13 @@ package scale
 import (
 	"github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"github.com/spf13/viper"
 	kubev1 "k8s.io/api/core/v1"
 
+	"github.com/openshift/osde2e/pkg/common/cluster"
+	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/helper"
+	"github.com/openshift/osde2e/pkg/common/providers"
 )
 
 var _ = ginkgo.Describe("[Suite: scale-mastervertical] Scaling", func() {
@@ -14,6 +18,14 @@ var _ = ginkgo.Describe("[Suite: scale-mastervertical] Scaling", func() {
 
 	masterVerticalTimeoutInSeconds := 7200
 	ginkgo.It("should be tested with MasterVertical", func() {
+		var err error
+		// Before we do anything, scale the cluster to 25 nodes.
+		provider, err := providers.ClusterProvider()
+		Expect(err).NotTo(HaveOccurred())
+
+		err = cluster.ScaleCluster(provider, viper.GetString(config.Cluster.ID), 25)
+		Expect(err).NotTo(HaveOccurred())
+
 		h.SetServiceAccount("system:serviceaccount:%s:cluster-admin")
 		// setup runner
 		scaleCfg := scaleRunnerConfig{
@@ -29,7 +41,7 @@ var _ = ginkgo.Describe("[Suite: scale-mastervertical] Scaling", func() {
 		})
 		// run tests
 		stopCh := make(chan struct{})
-		err := r.Run(masterVerticalTimeoutInSeconds, stopCh)
+		err = r.Run(masterVerticalTimeoutInSeconds, stopCh)
 		Expect(err).NotTo(HaveOccurred())
 	}, float64(masterVerticalTimeoutInSeconds))
 })

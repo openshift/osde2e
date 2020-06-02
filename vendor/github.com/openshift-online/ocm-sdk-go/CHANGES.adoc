@@ -3,6 +3,11 @@
 This document describes the relevant changes between releases of the OCM API
 SDK.
 
+== 0.1.105 May 21 2020
+
+- Update to model 0.0.59:
+** Add feature_toggle endpoint and api model
+
 == 0.1.104 May 15 2020
 
 - Update to model v0.0.58

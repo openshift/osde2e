@@ -49,8 +49,22 @@ func GetClusterVersion(provider spi.Provider, clusterID string) (*semver.Version
 	return version, err
 }
 
+// ScaleCluster will scale the cluster up to the provided size.
+func ScaleCluster(provider spi.Provider, clusterID string, numComputeNodes int) error {
+	err := provider.ScaleCluster(clusterID, numComputeNodes)
+	if err != nil {
+		return fmt.Errorf("error trying to scale cluster: %v", err)
+	}
+
+	return waitForClusterReadyWithOverrideAndExpectedNumberOfNodes(provider, clusterID, true)
+}
+
 // WaitForClusterReady blocks until the cluster is ready for testing.
 func WaitForClusterReady(provider spi.Provider, clusterID string) error {
+	return waitForClusterReadyWithOverrideAndExpectedNumberOfNodes(provider, clusterID, false)
+}
+
+func waitForClusterReadyWithOverrideAndExpectedNumberOfNodes(provider spi.Provider, clusterID string, overrideSkipCheck bool) error {
 	installTimeout := viper.GetInt64(config.Cluster.InstallTimeout)
 	log.Printf("Waiting %v minutes for cluster '%s' to be ready...\n", installTimeout, clusterID)
 	cleanRunsNeeded := viper.GetInt(config.Cluster.CleanCheckRuns)
@@ -60,11 +74,12 @@ func WaitForClusterReady(provider spi.Provider, clusterID string) error {
 	clusterStarted := time.Now()
 	var readinessStarted time.Time
 	ocmReady := false
-	if !viper.GetBool(config.Tests.SkipClusterHealthChecks) {
+	if !viper.GetBool(config.Tests.SkipClusterHealthChecks) || overrideSkipCheck {
 		return wait.PollImmediate(30*time.Second, time.Duration(installTimeout)*time.Minute, func() (bool, error) {
 			cluster, err := provider.GetCluster(clusterID)
+
 			viper.Set(config.Cluster.State, cluster.State())
-			if err == nil && cluster.State() == spi.ClusterStateReady {
+			if err == nil && cluster != nil && cluster.State() == spi.ClusterStateReady {
 				// This is the first time that we've entered this section, so we'll consider this the time until OCM has said the cluster is ready
 				if !ocmReady {
 					ocmReady = true
@@ -101,6 +116,8 @@ func WaitForClusterReady(provider spi.Provider, clusterID string) error {
 				}
 			} else if err != nil {
 				return false, fmt.Errorf("Encountered error waiting for cluster: %v", err)
+			} else if cluster == nil {
+				return false, fmt.Errorf("the cluster is null despite there being no error: please check the logs")
 			} else if cluster.State() == spi.ClusterStateError {
 				return false, fmt.Errorf("the installation of cluster '%s' has errored", clusterID)
 			} else {

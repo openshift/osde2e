@@ -18,12 +18,13 @@ func node(name string, conditions []v1.NodeCondition) *v1.Node {
 }
 func TestCheckNodeHealth(t *testing.T) {
 	var tests = []struct {
-		description string
-		expected    bool
-		objs        []runtime.Object
+		description   string
+		expected      bool
+		expectedError bool
+		objs          []runtime.Object
 	}{
-		{"no nodes", false, nil},
-		{"node ready false", false, []runtime.Object{
+		{"no nodes", false, true, nil},
+		{"node ready false", false, false, []runtime.Object{
 			node("node-ready-false", []v1.NodeCondition{
 				{
 					Type:   "Ready",
@@ -31,7 +32,7 @@ func TestCheckNodeHealth(t *testing.T) {
 				},
 			}),
 		}},
-		{"node ready unknown", false, []runtime.Object{
+		{"node ready unknown", false, false, []runtime.Object{
 			node("node-ready-unknown", []v1.NodeCondition{
 				{
 					Type:   "Ready",
@@ -39,7 +40,7 @@ func TestCheckNodeHealth(t *testing.T) {
 				},
 			}),
 		}},
-		{"node ready true", true, []runtime.Object{
+		{"node ready true", true, false, []runtime.Object{
 			node("node-ready-true", []v1.NodeCondition{
 				{
 					Type:   "Ready",
@@ -47,7 +48,7 @@ func TestCheckNodeHealth(t *testing.T) {
 				},
 			}),
 		}},
-		{"out-of-disk", false, []runtime.Object{
+		{"out-of-disk", false, false, []runtime.Object{
 			node("correct-namespace", []v1.NodeCondition{
 				{
 					Type:   "Ready",
@@ -65,7 +66,7 @@ func TestCheckNodeHealth(t *testing.T) {
 		kubeClient := kubernetes.NewSimpleClientset(test.objs...)
 		state, err := CheckNodeHealth(kubeClient.CoreV1())
 
-		if err != nil {
+		if err != nil && !test.expectedError {
 			t.Errorf("Unexpected error: %s", err)
 			return
 		}

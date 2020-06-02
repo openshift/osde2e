@@ -35,6 +35,7 @@ type Cluster struct {
 	state               ClusterState
 	flavour             string
 	addons              []string
+	numComputeNodes     int
 }
 
 // ID returns the cluster ID.
@@ -82,6 +83,11 @@ func (c *Cluster) Addons() []string {
 	return c.addons
 }
 
+// NumComputeNodes returns the number of compute nodes.
+func (c *Cluster) NumComputeNodes() int {
+	return c.numComputeNodes
+}
+
 // ClusterBuilder is a struct that can create cluster objects.
 type ClusterBuilder struct {
 	id                  string
@@ -93,6 +99,7 @@ type ClusterBuilder struct {
 	state               ClusterState
 	flavour             string
 	addons              []string
+	numComputeNodes     int
 }
 
 // NewClusterBuilder creates a new cluster builder that can create a new cluster.
@@ -163,6 +170,12 @@ func (cb *ClusterBuilder) AddAddon(addon string) *ClusterBuilder {
 	return cb
 }
 
+// NumComputeNodes sets the number of compute nodes
+func (cb *ClusterBuilder) NumComputeNodes(numComputeNodes int) *ClusterBuilder {
+	cb.numComputeNodes = numComputeNodes
+	return cb
+}
+
 // Build will create the cluster from the cluster build.
 func (cb *ClusterBuilder) Build() *Cluster {
 	return &Cluster{
@@ -175,5 +188,6 @@ func (cb *ClusterBuilder) Build() *Cluster {
 		state:               cb.state,
 		flavour:             cb.flavour,
 		addons:              cb.addons,
+		numComputeNodes:     cb.numComputeNodes,
 	}
 }

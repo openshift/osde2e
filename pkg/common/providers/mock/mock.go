@@ -30,6 +30,10 @@ type MockProvider struct {
 	versions *spi.VersionList
 }
 
+func init() {
+	spi.RegisterProvider("mock", func() (spi.Provider, error) { return New() })
+}
+
 // New creates a new MockProvider.
 func New() (*MockProvider, error) {
 	env := viper.GetString(Env)
@@ -102,6 +106,11 @@ func (m *MockProvider) GetCluster(clusterID string) (*spi.Cluster, error) {
 		return cluster, nil
 	}
 	return nil, fmt.Errorf("couldn't find cluster in mock provider")
+}
+
+// ScaleCluster mocks a scale cluster operation.
+func (m *MockProvider) ScaleCluster(clusterID string, numComputeNodes int) error {
+	return fmt.Errorf("scale cluster is currently unsupported by the mock provider")
 }
 
 // ClusterKubeconfig mocks a cluster kubeconfig operation.
