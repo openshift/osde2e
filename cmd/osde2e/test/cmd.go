@@ -2,6 +2,7 @@ package test
 
 import (
 	"fmt"
+
 	"github.com/openshift/osde2e/cmd/osde2e/common"
 	"github.com/openshift/osde2e/cmd/osde2e/helpers"
 	"github.com/openshift/osde2e/pkg/common/config"
@@ -9,6 +10,7 @@ import (
 	"github.com/openshift/osde2e/pkg/e2e"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+
 	// import suites to be tested
 	_ "github.com/openshift/osde2e/pkg/e2e/addons"
 	_ "github.com/openshift/osde2e/pkg/e2e/openshift"
@@ -24,9 +26,9 @@ import (
 var Cmd = &cobra.Command{
 	Use:   "test",
 	Short: "Runs end to end tests.",
-	Long: "Runs end to end tests on a cluster using the provided arguments.",
+	Long:  "Runs end to end tests on a cluster using the provided arguments.",
 	Args:  cobra.OnlyValidArgs,
-	RunE: run,
+	RunE:  run,
 }
 
 var args struct {
@@ -117,7 +119,7 @@ func init() {
 	viper.BindPFlag(config.Tests.SkipClusterHealthChecks, Cmd.PersistentFlags().Lookup("skip-health-check"))
 	viper.BindPFlag(config.Tests.GinkgoFocus, Cmd.PersistentFlags().Lookup("focus-tests"))
 	viper.BindPFlag(config.Tests.GinkgoSkip, Cmd.PersistentFlags().Lookup("skip-tests"))
-	viper.BindPFlag(config.MustGather, Cmd.PersistentFlags().Lookup("skip-must-gather"))
+	viper.BindPFlag(config.MustGather, Cmd.PersistentFlags().Lookup("must-gather"))
 }
 
 func run(cmd *cobra.Command, argv []string) error {
