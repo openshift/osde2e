@@ -354,6 +354,114 @@ func (o *OCMProvider) ClusterKubeconfig(clusterID string) ([]byte, error) {
 	return []byte(resp.Body().Kubeconfig()), nil
 }
 
+// GetMetrics gathers metrics from OCM on a cluster
+func (o *OCMProvider) GetMetrics(clusterID string) (*v1.ClusterMetrics, error) {
+	clusterMetricsBuilder := v1.NewClusterMetrics()
+
+	clusterClient := o.conn.ClustersMgmt().V1().Clusters().Cluster(clusterID)
+
+	/*cluster, err := clusterClient.Get().Send()
+	if err != nil {
+		log.Printf("Error retrieving cluster: %s", err.Error())
+	}
+	*/
+
+	metricsClient := clusterClient.MetricQueries()
+	alertsMetricQuery, err := metricsClient.Alerts().Get().Send()
+	if err != nil {
+		return nil, err
+	}
+	criticalAlerts := 0
+	for _, alert := range alertsMetricQuery.Body().Alerts() {
+		if alert.Severity() == v1.AlertSeverityCritical {
+			criticalAlerts++
+		}
+	}
+	clusterMetricsBuilder.CriticalAlertsFiring(criticalAlerts)
+
+	operatorsMetricQuery, err := metricsClient.ClusterOperators().Get().Send()
+	if err != nil {
+		return nil, err
+	}
+	failingOperators := 0
+	for _, operator := range operatorsMetricQuery.Body().Operators() {
+		if operator.Condition() == v1.ClusterOperatorStateFailing {
+			failingOperators++
+		}
+	}
+	clusterMetricsBuilder.OperatorsConditionFailing(failingOperators)
+
+	nodesMetricQuery, err := metricsClient.Nodes().Get().Send()
+	if err != nil {
+		return nil, err
+	}
+
+	infraNodes := 0
+	computeNodes := 0
+	masterNodes := 0
+
+	for _, node := range nodesMetricQuery.Body().Nodes() {
+		node.Amount()
+		switch node.Type() {
+		case v1.NodeTypeCompute:
+			computeNodes = node.Amount()
+		case v1.NodeTypeInfra:
+			infraNodes = node.Amount()
+		case v1.NodeTypeMaster:
+			masterNodes = node.Amount()
+		}
+	}
+
+	clusterMetricsBuilder.Nodes(v1.NewClusterNodes().
+		Compute(computeNodes).
+		Infra(infraNodes).
+		Master(masterNodes).
+		Total(computeNodes + infraNodes + masterNodes))
+
+	socketTotalClient, err := metricsClient.SocketTotalByNodeRolesOS().Get().Send()
+	if err != nil {
+		return nil, err
+	}
+
+	for _, sockets := range socketTotalClient.Body().SocketTotals() {
+		for _, role := range sockets.NodeRoles() {
+			if role == fmt.Sprintf("%v", v1.NodeTypeCompute) {
+				metricBuilder := v1.ClusterMetricBuilder{}
+				value := v1.ValueBuilder{}
+				value.Value(sockets.SocketTotal())
+				value.Unit("sockets")
+				metricBuilder.Total(&value)
+				clusterMetricsBuilder.ComputeNodesSockets(&metricBuilder)
+			}
+		}
+	}
+
+	CPUTotalClient, err := metricsClient.CPUTotalByNodeRolesOS().Get().Send()
+	if err != nil {
+		return nil, err
+	}
+
+	for _, cpu := range CPUTotalClient.Body().CPUTotals() {
+		for _, role := range cpu.NodeRoles() {
+			if role == fmt.Sprintf("%v", v1.NodeTypeCompute) {
+				metricBuilder := v1.ClusterMetricBuilder{}
+				value := v1.ValueBuilder{}
+				value.Value(cpu.CPUTotal())
+				value.Unit("cpu")
+				metricBuilder.Total(&value)
+				clusterMetricsBuilder.ComputeNodesCPU(&metricBuilder)
+			}
+		}
+	}
+
+	clusterMetrics, err := clusterMetricsBuilder.Build()
+	if err != nil {
+		return nil, err
+	}
+
+	return clusterMetrics, nil
+}
+
 // InstallAddons loops through the addons list in the config
 // and performs the CRUD operation to trigger addon installation
 func (o *OCMProvider) InstallAddons(clusterID string, addonIDs []string) (num int, err error) {

@@ -9,6 +9,7 @@ import (
 	"github.com/Masterminds/semver"
 	"github.com/google/uuid"
 	"github.com/markbates/pkger"
+	v1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/spi"
 	"github.com/openshift/osde2e/pkg/common/util"
@@ -201,6 +202,11 @@ func (m *MockProvider) Logs(clusterID string) (map[string][]byte, error) {
 // Environment mocks an environment operation.
 func (m *MockProvider) Environment() string {
 	return m.env
+}
+
+// Metrics is a stub function for now
+func (m *MockProvider) Metrics(clusterID string) *v1.ClusterMetrics {
+	return nil
 }
 
 // UpgradeSource mocks an environment source operation.

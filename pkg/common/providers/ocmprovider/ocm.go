@@ -9,6 +9,7 @@ import (
 	"github.com/spf13/viper"
 
 	ocm "github.com/openshift-online/ocm-sdk-go"
+	v1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 	ocmerr "github.com/openshift-online/ocm-sdk-go/errors"
 )
 
@@ -132,6 +133,11 @@ func NewWithEnv(env string) (*OCMProvider, error) {
 // Environment simply returns the environment this OCMProvider is pointed to.
 func (o *OCMProvider) Environment() string {
 	return o.env
+}
+
+// Metrics returns the metrics of the cluster
+func (o *OCMProvider) Metrics(clusterID string) *v1.ClusterMetrics {
+	return nil
 }
 
 // UpgradeSource indicates that for stage/production clusters, we should use Cincinnati.
