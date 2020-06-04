@@ -78,7 +78,7 @@ func waitForClusterReadyWithOverrideAndExpectedNumberOfNodes(provider spi.Provid
 		return wait.PollImmediate(30*time.Second, time.Duration(installTimeout)*time.Minute, func() (bool, error) {
 			cluster, err := provider.GetCluster(clusterID)
 
-			viper.Set(config.Cluster.State, cluster.State)
+			viper.Set(config.Cluster.State, cluster.State())
 			if err == nil && cluster != nil && cluster.State() == spi.ClusterStateReady {
 				// This is the first time that we've entered this section, so we'll consider this the time until OCM has said the cluster is ready
 				if !ocmReady {
