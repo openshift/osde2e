@@ -6,6 +6,7 @@ function extract_secret_from_dirs {
     DIRECTORIES="$2"
     FILE_NAME="$3"
     FILE_DESCRIPTION="$4"
+    SHOULD_FAIL_IF_NOT_FOUND="${5:-true}"
 
     IFS=',' read -ra SECRET_DIR_ARRAY <<< "$DIRECTORIES"
     for SECRET_DIR in "${SECRET_DIR_ARRAY[@]}"; do
@@ -16,8 +17,12 @@ function extract_secret_from_dirs {
     done
 
     if [ -z "${!VAR_NAME}" ]; then
-        echo "Required $FILE_DESCRIPTION does not exist or has no value."
-        exit 3
+        if [ "$SHOULD_FAIL_IF_NOT_FOUND" = "true" ]; then
+            echo "Required $FILE_DESCRIPTION does not exist or has no value."
+            exit 3
+        else
+            echo "$FILE_DESCRIPTION not found, but not required."
+        fi
     fi
 }
 

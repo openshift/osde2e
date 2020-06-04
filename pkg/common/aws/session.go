@@ -4,8 +4,21 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/prometheus/common/log"
+	"github.com/spf13/viper"
+)
+
+const (
+	metricsAWSAccessKeyID     = "metrics.awsAccessKeyId"
+	metricsAWSSecretAccessKey = "metrics.awsSecretAccessKey"
+	metricsAWSRegion          = "metrics.awsRegion"
+
+	metricsAWSAccessKeyIDEnv     = "METRICS_AWS_ACCESS_KEY_ID"
+	metricsAWSSecretAccessKeyEnv = "METRICS_AWS_SECRET_ACCESS_KEY"
+	metricsAWSRegionEnv          = "METRICS_AWS_REGION"
 )
 
 type awsSession struct {
@@ -16,6 +29,12 @@ type awsSession struct {
 // AWSSession is the global AWS session for interacting with S3.
 var AWSSession awsSession
 
+func init() {
+	viper.BindEnv(metricsAWSAccessKeyID, metricsAWSAccessKeyIDEnv)
+	viper.BindEnv(metricsAWSSecretAccessKey, metricsAWSSecretAccessKeyEnv)
+	viper.BindEnv(metricsAWSRegion, metricsAWSRegionEnv)
+}
+
 func (a *awsSession) getSession() (*session.Session, error) {
 	var err error
 
@@ -23,11 +42,11 @@ func (a *awsSession) getSession() (*session.Session, error) {
 	// don't have to worry about the noise or configuring S3 properly. The cost here is that things will fail late
 	// on misconfiguration, but since we're the primary consumers of osde2e, at the moment this isn't a big deal.
 	a.once.Do(func() {
-		// We're very intentionally using the shared configs here.
-		// This allows us to configure the AWS client at a system level and this should behave as expected.
-		// This is particularly useful if we want to, at some point in the future, run this on an AWS host with an instance profile
-		// that doesn't need explicit credentials.
-		a.session, err = session.NewSessionWithOptions(session.Options{SharedConfigState: session.SharedConfigEnable})
+		// We're using static credentials here so that we can use AWS credentials for cluster providers.
+		// When we have more time, we should make this not metrics focused, as the intent of this library is to be purpose agnostic.
+		a.session, err = session.NewSession(aws.NewConfig().
+			WithCredentials(credentials.NewStaticCredentials(viper.GetString(metricsAWSAccessKeyID), viper.GetString(metricsAWSSecretAccessKey), "")).
+			WithRegion(viper.GetString(metricsAWSRegion)))
 
 		if err != nil {
 			log.Errorf("error initializing AWS session: %v", err)
