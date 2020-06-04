@@ -1,0 +1,3 @@
+cloudProvider:
+  providerId: moa
+  region: us-east-1
