@@ -53,8 +53,8 @@ func (m *MOAProvider) Environment() string {
 }
 
 // Metrics will call Metrics from the OCM provider.
-func (m *MOAProvider) Metrics() (*v1.ClusterMetrics, error) {
-	return m.ocmProvider.Metrics()
+func (m *MOAProvider) Metrics(clusterID string) (*v1.ClusterMetrics, error) {
+	return m.ocmProvider.Metrics(clusterID)
 }
 
 // UpgradeSource will call UpgradeSource from the OCM provider.
