@@ -3,6 +3,7 @@ package aws
 import (
 	"bytes"
 	"fmt"
+	"log"
 	"net/url"
 	"strings"
 
@@ -63,6 +64,8 @@ func WriteToS3(outputKey string, data []byte) error {
 		Key:    aws.String(key),
 		Body:   reader,
 	})
+
+	log.Printf("Uploaded to %s", outputKey)
 
 	return err
 }

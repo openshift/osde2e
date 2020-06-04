@@ -477,6 +477,5 @@ func uploadFileToMetricsBucket(filename string) error {
 		return err
 	}
 
-	aws.WriteToS3(aws.CreateS3URL(viper.GetString(config.Tests.MetricsBucket), "incoming", filepath.Base(filename)), data)
-	return err
+	return aws.WriteToS3(aws.CreateS3URL(viper.GetString(config.Tests.MetricsBucket), "incoming", filepath.Base(filename)), data)
 }
