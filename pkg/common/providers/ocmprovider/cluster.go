@@ -356,21 +356,27 @@ func (o *OCMProvider) ClusterKubeconfig(clusterID string) ([]byte, error) {
 
 // GetMetrics gathers metrics from OCM on a cluster
 func (o *OCMProvider) GetMetrics(clusterID string) (*v1.ClusterMetrics, error) {
+	var err error
+	var alertsMetricQuery *v1.AlertsMetricQueryGetResponse
+	var operatorsMetricQuery *v1.ClusterOperatorsMetricQueryGetResponse
+	var nodesMetricQuery *v1.NodesMetricQueryGetResponse
+	var socketTotalClient *v1.SocketTotalByNodeRolesOSMetricQueryGetResponse
+	var CPUTotalClient *v1.CPUTotalByNodeRolesOSMetricQueryGetResponse
+
 	clusterMetricsBuilder := v1.NewClusterMetrics()
 
 	clusterClient := o.conn.ClustersMgmt().V1().Clusters().Cluster(clusterID)
 
-	/*cluster, err := clusterClient.Get().Send()
-	if err != nil {
-		log.Printf("Error retrieving cluster: %s", err.Error())
-	}
-	*/
-
 	metricsClient := clusterClient.MetricQueries()
-	alertsMetricQuery, err := metricsClient.Alerts().Get().Send()
+
+	err = retryer().Do(func() error {
+		alertsMetricQuery, err = metricsClient.Alerts().Get().Send()
+		return err
+	})
 	if err != nil {
 		return nil, err
 	}
+
 	criticalAlerts := 0
 	for _, alert := range alertsMetricQuery.Body().Alerts() {
 		if alert.Severity() == v1.AlertSeverityCritical {
@@ -379,10 +385,14 @@ func (o *OCMProvider) GetMetrics(clusterID string) (*v1.ClusterMetrics, error) {
 	}
 	clusterMetricsBuilder.CriticalAlertsFiring(criticalAlerts)
 
-	operatorsMetricQuery, err := metricsClient.ClusterOperators().Get().Send()
+	err = retryer().Do(func() error {
+		operatorsMetricQuery, err = metricsClient.ClusterOperators().Get().Send()
+		return err
+	})
 	if err != nil {
 		return nil, err
 	}
+
 	failingOperators := 0
 	for _, operator := range operatorsMetricQuery.Body().Operators() {
 		if operator.Condition() == v1.ClusterOperatorStateFailing {
@@ -391,7 +401,10 @@ func (o *OCMProvider) GetMetrics(clusterID string) (*v1.ClusterMetrics, error) {
 	}
 	clusterMetricsBuilder.OperatorsConditionFailing(failingOperators)
 
-	nodesMetricQuery, err := metricsClient.Nodes().Get().Send()
+	err = retryer().Do(func() error {
+		nodesMetricQuery, err = metricsClient.Nodes().Get().Send()
+		return err
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -418,7 +431,10 @@ func (o *OCMProvider) GetMetrics(clusterID string) (*v1.ClusterMetrics, error) {
 		Master(masterNodes).
 		Total(computeNodes + infraNodes + masterNodes))
 
-	socketTotalClient, err := metricsClient.SocketTotalByNodeRolesOS().Get().Send()
+	err = retryer().Do(func() error {
+		socketTotalClient, err = metricsClient.SocketTotalByNodeRolesOS().Get().Send()
+		return err
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -436,7 +452,10 @@ func (o *OCMProvider) GetMetrics(clusterID string) (*v1.ClusterMetrics, error) {
 		}
 	}
 
-	CPUTotalClient, err := metricsClient.CPUTotalByNodeRolesOS().Get().Send()
+	err = retryer().Do(func() error {
+		CPUTotalClient, err = metricsClient.CPUTotalByNodeRolesOS().Get().Send()
+		return err
+	})
 	if err != nil {
 		return nil, err
 	}
