@@ -18,6 +18,7 @@ import (
 	"github.com/code-ready/crc/pkg/crc/preflight"
 	"github.com/code-ready/crc/pkg/crc/validation"
 	"github.com/code-ready/crc/pkg/crc/version"
+	v1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 	"github.com/openshift/osde2e/pkg/common/spi"
 	"github.com/spf13/viper"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -233,6 +234,11 @@ func (m *Provider) Logs(clusterID string) (map[string][]byte, error) {
 // Environment CRCs an environment operation.
 func (m *Provider) Environment() string {
 	return m.env
+}
+
+// Metrics is a stub function for now
+func (m *Provider) Metrics(clusterID string) (*v1.ClusterMetrics, error) {
+	return &v1.ClusterMetrics{}, nil
 }
 
 // UpgradeSource CRCs an environment source operation.
