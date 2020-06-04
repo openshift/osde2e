@@ -68,7 +68,7 @@ type Provider interface {
 	Logs(clusterID string) (map[string][]byte, error)
 
 	// Metrics will get metrics relevant to the cluster from the provider.
-	Metrics(clusterID string) *clustersmgmtv1.ClusterMetrics
+	Metrics(clusterID string) (*clustersmgmtv1.ClusterMetrics, error)
 
 	// Environment retrives the environment from the provider.
 	//

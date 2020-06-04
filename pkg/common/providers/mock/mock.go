@@ -205,8 +205,8 @@ func (m *MockProvider) Environment() string {
 }
 
 // Metrics is a stub function for now
-func (m *MockProvider) Metrics(clusterID string) *v1.ClusterMetrics {
-	return nil
+func (m *MockProvider) Metrics(clusterID string) (*v1.ClusterMetrics, error) {
+	return nil, nil
 }
 
 // UpgradeSource mocks an environment source operation.

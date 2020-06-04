@@ -136,8 +136,8 @@ func (o *OCMProvider) Environment() string {
 }
 
 // Metrics returns the metrics of the cluster
-func (o *OCMProvider) Metrics(clusterID string) *v1.ClusterMetrics {
-	return nil
+func (o *OCMProvider) Metrics(clusterID string) (*v1.ClusterMetrics, error) {
+	return o.GetMetrics(clusterID)
 }
 
 // UpgradeSource indicates that for stage/production clusters, we should use Cincinnati.

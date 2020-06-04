@@ -1,6 +1,9 @@
 package moaprovider
 
-import "github.com/openshift/osde2e/pkg/common/spi"
+import (
+	v1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
+	"github.com/openshift/osde2e/pkg/common/spi"
+)
 
 // The rest of the SPI functions will be wrapped by the OCM provider until the MOA provider can be adequately refactored.
 
@@ -47,6 +50,11 @@ func (m *MOAProvider) Logs(clusterID string) (map[string][]byte, error) {
 // Environment will call Environment from the OCM provider.
 func (m *MOAProvider) Environment() string {
 	return m.ocmProvider.Environment()
+}
+
+// Metrics will call Metrics from the OCM provider.
+func (m *MOAProvider) Metrics() (*v1.ClusterMetrics, error) {
+	return m.ocmProvider.Metrics()
 }
 
 // UpgradeSource will call UpgradeSource from the OCM provider.

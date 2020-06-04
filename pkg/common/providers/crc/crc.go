@@ -237,8 +237,8 @@ func (m *Provider) Environment() string {
 }
 
 // Metrics is a stub function for now
-func (m *Provider) Metrics(clusterID string) *v1.ClusterMetrics {
-	return nil
+func (m *Provider) Metrics(clusterID string) (*v1.ClusterMetrics, error) {
+	return &v1.ClusterMetrics{}, nil
 }
 
 // UpgradeSource CRCs an environment source operation.
