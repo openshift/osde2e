@@ -2,6 +2,8 @@ package spi
 
 import (
 	"time"
+
+	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 )
 
 // ClusterState is the state of the cluster.
@@ -36,6 +38,10 @@ type Cluster struct {
 	flavour             string
 	addons              []string
 	numComputeNodes     int
+	// We want to be provider-agnostic,  butevery cluster we interact with
+	// should provide us these metrics. The clustersmgmt metrics types handle
+	// all aspects of this extremely well, so let's not reinvent the wheel.
+	metrics clustersmgmtv1.ClusterMetrics
 }
 
 // ID returns the cluster ID.
@@ -86,6 +92,11 @@ func (c *Cluster) Addons() []string {
 // NumComputeNodes returns the number of compute nodes.
 func (c *Cluster) NumComputeNodes() int {
 	return c.numComputeNodes
+}
+
+// Metrics returns metrics related to the given cluster.
+func (c *Cluster) Metrics() clustersmgmtv1.ClusterMetrics {
+	return c.metrics
 }
 
 // ClusterBuilder is a struct that can create cluster objects.
