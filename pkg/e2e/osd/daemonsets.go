@@ -14,40 +14,19 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func makeDaemonSet(name, sa string, nodeLabels map[string]string) appsv1.DaemonSet {
-	matchLabels := make(map[string]string)
-	matchLabels["name"] = name
-	ds := appsv1.DaemonSet{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: fmt.Sprintf("%s-%s", name, util.RandomStr(5)),
-		},
-		Spec: appsv1.DaemonSetSpec{
-			Selector: &metav1.LabelSelector{
-				MatchLabels: matchLabels,
-			},
-			Template: v1.PodTemplateSpec{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:   name,
-					Labels: matchLabels,
-				},
-				Spec: v1.PodSpec{
-					NodeSelector:       nodeLabels,
-					ServiceAccountName: sa,
-					Containers: []v1.Container{
-						{
-							Name:  "test",
-							Image: "registry.access.redhat.com/ubi8/ubi-minimal",
-						},
-					},
-				},
-			},
-		},
-	}
+var alert config.MetricAlert
 
-	return ds
+func init() {
+	ma := config.GetMetricAlerts()
+	alert = config.MetricAlert{
+		Name:             "[Suite: service-definition] [OSD] DaemonSets",
+		FailureThreshold: 1,
+		SlowThreshold:    600,
+	}
+	ma.AddAlert(alert)
 }
 
-var _ = ginkgo.Describe("[Suite: service-definition] [OSD] DaemonSets", func() {
+var _ = ginkgo.Describe(alert.Name, func() {
 	ginkgo.Context("DaemonSets are not allowed", func() {
 		// setup helper
 		h := helper.New()
@@ -86,3 +65,37 @@ var _ = ginkgo.Describe("[Suite: service-definition] [OSD] DaemonSets", func() {
 		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
 	})
 })
+
+// Test Helper Functions
+func makeDaemonSet(name, sa string, nodeLabels map[string]string) appsv1.DaemonSet {
+	matchLabels := make(map[string]string)
+	matchLabels["name"] = name
+	ds := appsv1.DaemonSet{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: fmt.Sprintf("%s-%s", name, util.RandomStr(5)),
+		},
+		Spec: appsv1.DaemonSetSpec{
+			Selector: &metav1.LabelSelector{
+				MatchLabels: matchLabels,
+			},
+			Template: v1.PodTemplateSpec{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:   name,
+					Labels: matchLabels,
+				},
+				Spec: v1.PodSpec{
+					NodeSelector:       nodeLabels,
+					ServiceAccountName: sa,
+					Containers: []v1.Container{
+						{
+							Name:  "test",
+							Image: "registry.access.redhat.com/ubi8/ubi-minimal",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	return ds
+}
