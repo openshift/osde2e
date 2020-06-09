@@ -8,6 +8,7 @@ import (
 	"github.com/tsenart/vegeta/lib/plot"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"log"
+	"net/url"
 	"os"
 	"path/filepath"
 	"time"
@@ -24,10 +25,8 @@ type RouteMonitors struct {
 	Monitors          map[string]<-chan *vegeta.Result
 	Metrics           map[string]*vegeta.Metrics
 	Plots             map[string]*plot.Plot
-	consoleTargeter   vegeta.Targeter
-	oauthTargeter     vegeta.Targeter
-	apiTargeters      []vegeta.Targeter
-	workloadTargeters []vegeta.Targeter
+	urls              map[string]string
+	targeters         map[string]vegeta.Targeter
 	attackers         []*vegeta.Attacker
 }
 
@@ -39,16 +38,21 @@ const timeoutSeconds = 3 * time.Second
 func Create() (*RouteMonitors, error) {
 	h := helper.NewOutsideGinkgo()
 
+	// record all targeters created in a map, accessible via a key which is their URL
+	targeters := make(map[string]vegeta.Targeter, 0)
+
 	// Create a monitor for the web console
 	consoleRoute, err := h.Route().RouteV1().Routes(consoleNamespace).Get(consoleLabel, metav1.GetOptions{})
 	if err != nil {
 		return nil, fmt.Errorf("could not retrieve console route %s", consoleLabel)
 	}
 	consoleUrl := fmt.Sprintf("https://%s", consoleRoute.Spec.Host)
+	u, err := url.Parse(consoleUrl)
 	consoleTargeter := vegeta.NewStaticTargeter(vegeta.Target{
 		Method: "GET",
 		URL:    consoleUrl,
 	})
+	targeters[u.Host] = consoleTargeter
 
 	// Create a monitor for the oauth URL
 	oauthRoute, err := h.Route().RouteV1().Routes(oauthNamespace).Get(oauthName, metav1.GetOptions{})
@@ -56,26 +60,32 @@ func Create() (*RouteMonitors, error) {
 		return nil, fmt.Errorf("could not retrieve oauth route %s", oauthName)
 	}
 	oauthUrl := fmt.Sprintf("https://%s/healthz", oauthRoute.Spec.Host)
-	oauthTargeter := vegeta.NewStaticTargeter(vegeta.Target{
-		Method: "GET",
-		URL:    oauthUrl,
-	})
+	u, err = url.Parse(oauthUrl)
+	if err == nil {
+		oauthTargeter := vegeta.NewStaticTargeter(vegeta.Target{
+			Method: "GET",
+			URL:    oauthUrl,
+		})
+		targeters[u.Host] = oauthTargeter
+	}
 
 	// Create monitors for API Server URLs
 	apiservers, err := h.Cfg().ConfigV1().APIServers().List(metav1.ListOptions{})
 	if err != nil {
 		return nil, fmt.Errorf("could not retrieve list of API servers")
 	}
-	apiTargeters := make([]vegeta.Targeter, 0)
 	for _, apiServer := range apiservers.Items {
 		for _, servingCert := range apiServer.Spec.ServingCerts.NamedCertificates {
 			for _, name := range servingCert.Names {
 				apiUrl := fmt.Sprintf("https://%s:6443/healthz", name)
-				apiTargeters = append(apiTargeters,
-					vegeta.NewStaticTargeter(vegeta.Target{
-						Method: "GET",
-						URL:    apiUrl,
-					}))
+				apiTargeter := vegeta.NewStaticTargeter(vegeta.Target{
+					Method: "GET",
+					URL:    apiUrl,
+				})
+				u, err := url.Parse(apiUrl)
+				if err == nil {
+					targeters[u.Host] = apiTargeter
+				}
 			}
 		}
 	}
@@ -85,24 +95,23 @@ func Create() (*RouteMonitors, error) {
 	if err != nil {
 		return nil, fmt.Errorf("could not retrieve list of workload routes")
 	}
-	workloadTargeters := make([]vegeta.Targeter, 0)
 	for _, workloadRoute := range workloadRoutes.Items {
 		workloadUrl := fmt.Sprintf("https://%s", workloadRoute.Spec.Host)
-		workloadTargeters = append(workloadTargeters,
-			vegeta.NewStaticTargeter(vegeta.Target{
+		u, err := url.Parse(workloadUrl)
+		if err == nil {
+			workloadTargeter := vegeta.NewStaticTargeter(vegeta.Target{
 				Method: "GET",
 				URL:    workloadUrl,
-			}))
+			})
+			targeters[u.Host] = workloadTargeter
+		}
 	}
 
 	return &RouteMonitors{
 		Monitors:          make(map[string]<-chan *vegeta.Result, 0),
 		Metrics:           make(map[string]*vegeta.Metrics, 0),
 		Plots:             make(map[string]*plot.Plot, 0),
-		consoleTargeter:   consoleTargeter,
-		oauthTargeter:     oauthTargeter,
-		apiTargeters:      apiTargeters,
-		workloadTargeters: workloadTargeters,
+		targeters:         targeters,
 	}, nil
 }
 
@@ -110,24 +119,13 @@ func Create() (*RouteMonitors, error) {
 func (rm *RouteMonitors) Start() {
 	pollRate := vegeta.Rate{Freq: pollFrequency, Per: time.Second}
 	timeout := vegeta.Timeout(timeoutSeconds)
-	consoleAttacker := vegeta.NewAttacker(timeout)
-	oauthAttacker := vegeta.NewAttacker(timeout)
 
-	rm.Monitors["console"] = consoleAttacker.Attack(rm.consoleTargeter, pollRate, 0, "console")
-	rm.Plots["console"] = createPlot("console")
-	rm.Monitors["oauth"] = oauthAttacker.Attack(rm.oauthTargeter, pollRate, 0, "oauth")
-	rm.Plots["oauth"] = createPlot("oauth")
-	for i, apiTargeter := range rm.apiTargeters {
-		apititle := fmt.Sprintf("api-%d", i)
-		apiAttacker := vegeta.NewAttacker(timeout)
-		rm.Monitors[apititle] = apiAttacker.Attack(apiTargeter, pollRate, 0, apititle)
-		rm.Plots[apititle] = createPlot(apititle)
-	}
-	for i, workloadTargeter := range rm.workloadTargeters {
-		workloadTitle := fmt.Sprintf("workload-%d", i)
-		workloadAttacker := vegeta.NewAttacker(timeout)
-		rm.Monitors[workloadTitle] = workloadAttacker.Attack(workloadTargeter, pollRate, 0, workloadTitle)
-		rm.Plots[workloadTitle] = createPlot(workloadTitle)
+	for url, targeter := range rm.targeters {
+		log.Printf("Setting up monitor for %s\n",url)
+		attacker := vegeta.NewAttacker(timeout)
+		rm.Monitors[url] = attacker.Attack(targeter, pollRate, 0, url)
+		rm.Plots[url] = createPlot(url)
+		rm.attackers = append(rm.attackers, attacker)
 	}
 
 	for title, _ := range rm.Monitors {
