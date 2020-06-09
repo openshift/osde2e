@@ -25,7 +25,6 @@ type RouteMonitors struct {
 	Monitors          map[string]<-chan *vegeta.Result
 	Metrics           map[string]*vegeta.Metrics
 	Plots             map[string]*plot.Plot
-	urls              map[string]string
 	targeters         map[string]vegeta.Targeter
 	attackers         []*vegeta.Attacker
 }
@@ -48,12 +47,14 @@ func Create() (*RouteMonitors, error) {
 	}
 	consoleUrl := fmt.Sprintf("https://%s", consoleRoute.Spec.Host)
 	u, err := url.Parse(consoleUrl)
-	consoleTargeter := vegeta.NewStaticTargeter(vegeta.Target{
-		Method: "GET",
-		URL:    consoleUrl,
-	})
-	targeters[u.Host] = consoleTargeter
-
+	if err == nil {
+		consoleTargeter := vegeta.NewStaticTargeter(vegeta.Target{
+			Method: "GET",
+			URL:    consoleUrl,
+		})
+		targeters[u.Host] = consoleTargeter
+	}
+	
 	// Create a monitor for the oauth URL
 	oauthRoute, err := h.Route().RouteV1().Routes(oauthNamespace).Get(oauthName, metav1.GetOptions{})
 	if err != nil {
