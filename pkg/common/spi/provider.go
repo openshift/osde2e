@@ -1,6 +1,8 @@
 // Package spi defines the service provider interface for cluster providers.
 package spi
 
+import clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
+
 // Provider is the interface that must be implemented in order to provision clusters in osde2e.
 type Provider interface {
 	// LaunchCluster creates a new cluster and returns the cluster ID.
@@ -64,6 +66,9 @@ type Provider interface {
 	//
 	// Any provider level logs that are relevant to the cluster.
 	Logs(clusterID string) (map[string][]byte, error)
+
+	// Metrics will get metrics relevant to the cluster from the provider.
+	Metrics(clusterID string) (*clustersmgmtv1.ClusterMetrics, error)
 
 	// Environment retrives the environment from the provider.
 	//

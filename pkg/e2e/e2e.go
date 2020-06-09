@@ -436,7 +436,7 @@ func runTestsInPhase(phase string, description string) bool {
 		return false
 	}
 
-	if !viper.GetBool(config.DryRun) && (spi.ClusterState)(viper.GetString(config.Cluster.State)) == spi.ClusterStateReady {
+	if !viper.GetBool(config.DryRun) && fmt.Sprintf("%v", viper.Get(config.Cluster.State)) == string(spi.ClusterStateReady) {
 		h := helper.NewOutsideGinkgo()
 		if h == nil {
 			log.Println("Unable to generate helper outside of ginkgo")
@@ -477,6 +477,5 @@ func uploadFileToMetricsBucket(filename string) error {
 		return err
 	}
 
-	aws.WriteToS3(aws.CreateS3URL(viper.GetString(config.Tests.MetricsBucket), "incoming", filepath.Base(filename)), data)
-	return err
+	return aws.WriteToS3(aws.CreateS3URL(viper.GetString(config.Tests.MetricsBucket), "incoming", filepath.Base(filename)), data)
 }
