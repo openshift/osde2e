@@ -20,8 +20,10 @@ func init() {
 	ma := config.GetMetricAlerts()
 	alert = config.MetricAlert{
 		Name:             "[Suite: service-definition] [OSD] DaemonSets",
+		TeamOwner:        "SDCICD",
+		PrimaryContact:   "Jeffrey Sica",
+		Email:            "sd-cicd@redhat.com",
 		FailureThreshold: 1,
-		SlowThreshold:    600,
 	}
 	ma.AddAlert(alert)
 }
