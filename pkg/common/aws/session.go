@@ -7,6 +7,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/prometheus/common/log"
 	"github.com/spf13/viper"
 )
@@ -31,8 +32,13 @@ var AWSSession awsSession
 
 func init() {
 	viper.BindEnv(metricsAWSAccessKeyID, metricsAWSAccessKeyIDEnv)
+	config.RegisterSecret(metricsAWSAccessKeyID, "metrics-aws-access-key")
+
 	viper.BindEnv(metricsAWSSecretAccessKey, metricsAWSSecretAccessKeyEnv)
+	config.RegisterSecret(metricsAWSSecretAccessKey, "metrics-aws-secret-access-key")
+
 	viper.BindEnv(metricsAWSRegion, metricsAWSRegionEnv)
+	config.RegisterSecret(metricsAWSRegion, "metrics-aws-region")
 }
 
 func (a *awsSession) getSession() (*session.Session, error) {
