@@ -1,6 +1,7 @@
 package ocmprovider
 
 import (
+	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/spf13/viper"
 )
 
@@ -21,6 +22,7 @@ const (
 func init() {
 	// ----- OCM -----
 	viper.BindEnv(Token, "OCM_TOKEN")
+	config.RegisterSecret(Token, "ocm-refresh-token")
 
 	viper.SetDefault(Env, "prod")
 	viper.BindEnv(Env, "OSD_ENV")

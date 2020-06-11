@@ -9,10 +9,15 @@ import (
 )
 
 // LoadConfigs loads config objects given the provided list of configs and a custom config
-func LoadConfigs(configString string, customConfig string) error {
+func LoadConfigs(configString string, customConfig string, secretLocationsString string) error {
 	var configs []string
 	if configString != "" {
 		configs = strings.Split(configString, ",")
+	}
+
+	var secretLocations []string
+	if secretLocationsString != "" {
+		secretLocations = strings.Split(secretLocationsString, ",")
 	}
 
 	for _, config := range configs {
@@ -20,7 +25,7 @@ func LoadConfigs(configString string, customConfig string) error {
 	}
 
 	// Load configs
-	if err := load.Configs(configs, customConfig); err != nil {
+	if err := load.Configs(configs, customConfig, secretLocations); err != nil {
 		return fmt.Errorf("error loading config: %v", err)
 	}
 

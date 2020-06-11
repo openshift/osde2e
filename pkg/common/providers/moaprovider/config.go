@@ -1,12 +1,22 @@
 package moaprovider
 
 import (
+	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/spf13/viper"
 )
 
 const (
 	// Env is the OpenShift Dedicated environment used to provision clusters.
 	Env = "moa.env"
+
+	// AWSAccessKeyID for provisioning clusters.
+	AWSAccessKeyID = "moa.awsAccessKey"
+
+	// AWSSecretAccessKey for provisioning clusters.
+	AWSSecretAccessKey = "moa.awsSecretAccessKey"
+
+	// AWSRegion for provisioning clusters.
+	AWSRegion = "moa.awsRegion"
 
 	// MachineCIDR is the CIDR to use for machines.
 	MachineCIDR = "moa.machineCIDR"
@@ -31,6 +41,15 @@ func init() {
 	// ----- MOA -----
 	viper.SetDefault(Env, "prod")
 	viper.BindEnv(Env, "MOA_ENV")
+
+	viper.BindEnv(AWSAccessKeyID, "MOA_AWS_ACCESS_KEY_ID")
+	config.RegisterSecret(AWSAccessKeyID, "moa-aws-access-key")
+
+	viper.BindEnv(AWSSecretAccessKey, "MOA_AWS_SECRET_ACCESS_KEY")
+	config.RegisterSecret(AWSSecretAccessKey, "moa-aws-secret-access-key")
+
+	viper.BindEnv(AWSRegion, "MOA_AWS_REGION")
+	config.RegisterSecret(AWSRegion, "moa-aws-region")
 
 	viper.BindEnv(MachineCIDR, "MOA_MACHINE_CIDR")
 
