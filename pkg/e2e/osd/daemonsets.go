@@ -5,6 +5,7 @@ import (
 
 	"github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"github.com/openshift/osde2e/pkg/common/alert"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/util"
@@ -14,21 +15,22 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-var alert config.MetricAlert
+var testAlert alert.MetricAlert
 
 func init() {
-	ma := config.GetMetricAlerts()
-	alert = config.MetricAlert{
+	ma := alert.GetMetricAlerts()
+	testAlert = alert.MetricAlert{
 		Name:             "[Suite: service-definition] [OSD] DaemonSets",
 		TeamOwner:        "SDCICD",
 		PrimaryContact:   "Jeffrey Sica",
+		SlackChannel:     "sd-cicd-alerts",
 		Email:            "sd-cicd@redhat.com",
 		FailureThreshold: 1,
 	}
-	ma.AddAlert(alert)
+	ma.AddAlert(testAlert)
 }
 
-var _ = ginkgo.Describe(alert.Name, func() {
+var _ = ginkgo.Describe(testAlert.Name, func() {
 	ginkgo.Context("DaemonSets are not allowed", func() {
 		// setup helper
 		h := helper.New()

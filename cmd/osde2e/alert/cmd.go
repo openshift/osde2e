@@ -6,7 +6,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/openshift/osde2e/cmd/osde2e/common"
-	"github.com/openshift/osde2e/pkg/common/config"
+	"github.com/openshift/osde2e/pkg/common/alert"
 
 	// import suites to be alerted on
 	_ "github.com/openshift/osde2e/pkg/e2e/addons"
@@ -60,7 +60,7 @@ func run(cmd *cobra.Command, argv []string) error {
 		return fmt.Errorf("error loading initial state: %v", err)
 	}
 
-	mas := config.GetMetricAlerts()
+	mas := alert.GetMetricAlerts()
 	err := mas.Notify()
 
 	return err

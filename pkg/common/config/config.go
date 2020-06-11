@@ -281,6 +281,13 @@ var Weather = struct {
 	JobWhitelist:             "weather.jobWhitelist",
 }
 
+var Alert = struct {
+	// SlackAPIToken is a bot slack token
+	SlackAPIToken string
+}{
+	SlackAPIToken: "alert.slackAPIToken",
+}
+
 func init() {
 	// Here's where we bind environment variables to config options and set defaults
 
@@ -439,4 +446,7 @@ func init() {
 
 	viper.SetDefault(Weather.JobWhitelist, "osde2e-.*-aws-e2e-.*")
 	viper.BindEnv(Weather.JobWhitelist, "JOB_WHITELIST")
+
+	// ----- Alert ----
+	viper.BindEnv(Alert.SlackAPIToken, "SLACK_API_TOKEN")
 }

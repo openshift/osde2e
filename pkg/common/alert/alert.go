@@ -1,4 +1,4 @@
-package config
+package alert
 
 import (
 	"context"
@@ -9,20 +9,25 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"sync"
 	"time"
 
+	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/prometheus/client_golang/api"
 	v1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/prometheus/common/model"
+	"github.com/slack-go/slack"
 	"github.com/spf13/viper"
 )
 
 // MetricAlerts is an array of LogMetric types with an easier lookup method
 type MetricAlerts []MetricAlert
 
-// once is already declared in log_metrics
+var once = sync.Once{}
 
 var metricAlerts = MetricAlerts{}
+var slackChannelCache = make(map[string]slack.Channel)
+var slackUserCache = make(map[string]slack.User)
 
 // GetMetricAlerts will return the log metrics.
 func GetMetricAlerts() MetricAlerts {
@@ -40,10 +45,10 @@ func GetMetricAlerts() MetricAlerts {
 }
 
 // AddAlert adds an alert to an existing MetricAlerts object
-func (ma MetricAlerts) AddAlert(alert MetricAlert) MetricAlerts {
-	ma = append(ma, alert)
-	viper.Set("metricAlerts", ma)
-	return ma
+func (mas MetricAlerts) AddAlert(alert MetricAlert) MetricAlerts {
+	mas = append(mas, alert)
+	viper.Set("metricAlerts", mas)
+	return mas
 }
 
 // MetricAlert lets you define a test name and the criteria to alert
@@ -63,8 +68,6 @@ type MetricAlert struct {
 	// --- Description of Alert Channels ---
 	// SlackChannel is the channel in slack to message with an alert
 	SlackChannel string
-	// SlackUser is the user to @ in a slack channel with an alert
-	SlackUser string
 	// Email is the email address to send alerts to.
 	// TODO: Make this work.
 	// This does not work yet.
@@ -78,7 +81,7 @@ type MetricAlert struct {
 // Notify prepares and then iterates through MetricAlerts to generate notifications
 func (mas MetricAlerts) Notify() error {
 	client, err := api.NewClient(api.Config{
-		Address:      viper.GetString(Prometheus.Address),
+		Address:      viper.GetString(config.Prometheus.Address),
 		RoundTripper: WeatherRoundTripper,
 	})
 
@@ -119,7 +122,8 @@ func (ma MetricAlert) Check(prom v1.API) error {
 	log.Printf("%v Failures found", len(vector))
 
 	if len(vector) >= ma.FailureThreshold {
-		log.Printf("Alert triggered.")
+		log.Printf("Alert triggered for %s: %d >= %d", ma.Name, len(vector), ma.FailureThreshold)
+		sendSlackMessage(ma.SlackChannel, fmt.Sprintf("%s has seen %d failures in the last 24h", ma.Name, len(vector)))
 	}
 
 	return nil
@@ -142,7 +146,7 @@ func (ma MetricAlert) QuerySafeName() string {
 // and adding the bearer token to the HTTP request
 var WeatherRoundTripper http.RoundTripper = &http.Transport{
 	Proxy: func(request *http.Request) (*url.URL, error) {
-		request.Header.Add("Authorization", "Bearer "+viper.GetString(Prometheus.BearerToken))
+		request.Header.Add("Authorization", "Bearer "+viper.GetString(config.Prometheus.BearerToken))
 		return http.ProxyFromEnvironment(request)
 	},
 	DialContext: (&net.Dialer{
@@ -153,4 +157,30 @@ var WeatherRoundTripper http.RoundTripper = &http.Transport{
 		InsecureSkipVerify: true,
 	},
 	TLSHandshakeTimeout: 10 * time.Second,
+}
+
+func sendSlackMessage(channel, message string) error {
+	slackAPI := slack.New(viper.GetString(config.Alert.SlackAPIToken))
+	var slackChannel slack.Channel
+	var ok bool
+
+	if slackChannel, ok = slackChannelCache[channel]; !ok {
+		channels, _, err := slackAPI.GetConversations(&slack.GetConversationsParameters{})
+		if err != nil {
+			return err
+		}
+		for _, c := range channels {
+			slackChannelCache[c.Name] = c
+			if c.Name == channel {
+				slackChannel = c
+			}
+		}
+	}
+
+	if slackChannel.ID == "" {
+		return fmt.Errorf("no slack channel named `%s` found", channel)
+	}
+
+	_, _, err := slackAPI.PostMessage(slackChannel.ID, slack.MsgOptionText(message, false))
+	return err
 }
