@@ -24,7 +24,6 @@ var once = sync.Once{}
 
 var metricAlerts = MetricAlerts{}
 var slackChannelCache = make(map[string]slack.Channel)
-var slackUserCache = make(map[string]slack.User)
 
 // GetMetricAlerts will return the log metrics.
 func GetMetricAlerts() MetricAlerts {

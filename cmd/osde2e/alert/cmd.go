@@ -29,8 +29,9 @@ var Cmd = &cobra.Command{
 }
 
 var args struct {
-	configString string
-	customConfig string
+	configString    string
+	customConfig    string
+	secretLocations string
 }
 
 func init() {
@@ -48,6 +49,12 @@ func init() {
 		"",
 		"Custom config file for osde2e",
 	)
+	flags.StringVar(
+		&args.secretLocations,
+		"secret-locations",
+		"",
+		"A comma separated list of possible secret directory locations for loading secret configs.",
+	)
 
 	Cmd.RegisterFlagCompletionFunc("output-format", func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		return []string{"json", "prom"}, cobra.ShellCompDirectiveDefault
@@ -56,7 +63,7 @@ func init() {
 
 func run(cmd *cobra.Command, argv []string) error {
 
-	if err := common.LoadConfigs(args.configString, args.customConfig); err != nil {
+	if err := common.LoadConfigs(args.configString, args.customConfig, args.secretLocations); err != nil {
 		return fmt.Errorf("error loading initial state: %v", err)
 	}
 
