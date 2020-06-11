@@ -29,10 +29,9 @@ set -o pipefail
     extract_secret_from_dirs METRICS_AWS_SECRET_ACCESS_KEY "$SECRETS" metrics-aws-secret-access-key "metrics AWS secret access key file"
     extract_secret_from_dirs METRICS_AWS_REGION "$SECRETS" metrics-aws-region "metrics AWS region file"
 
-    # For the moment, MOA specific credentials must be loaded into the environment.
-    extract_secret_from_dirs AWS_ACCESS_KEY_ID "$SECRETS" moa-aws-access-key "MOA AWS access key file" false
-    extract_secret_from_dirs AWS_SECRET_ACCESS_KEY "$SECRETS" moa-aws-secret-access-key "MOA AWS secret access key file" false
-    extract_secret_from_dirs AWS_REGION "$SECRETS" moa-aws-region "MOA AWS region file" false
+    extract_secret_from_dirs MOA_AWS_ACCESS_KEY_ID "$SECRETS" moa-aws-access-key "MOA AWS access key file" false
+    extract_secret_from_dirs MOA_AWS_SECRET_ACCESS_KEY "$SECRETS" moa-aws-secret-access-key "MOA AWS secret access key file" false
+    extract_secret_from_dirs MOA_AWS_REGION "$SECRETS" moa-aws-region "MOA AWS region file" false
 
     # We explicitly want to make sure we're always uploading metrics from prow jobs.
     export UPLOAD_METRICS=true
