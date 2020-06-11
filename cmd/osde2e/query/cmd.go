@@ -4,11 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/spf13/cobra"
 	"log"
 	"os"
 	"strings"
 	"time"
+
+	"github.com/spf13/cobra"
 
 	"github.com/openshift/osde2e/cmd/osde2e/common"
 	"github.com/openshift/osde2e/pkg/common/prometheus"
@@ -24,9 +25,10 @@ var Cmd = &cobra.Command{
 }
 
 var args struct {
-	configString string
-	customConfig string
-	outputFormat string
+	configString    string
+	customConfig    string
+	secretLocations string
+	outputFormat    string
 }
 
 func init() {
@@ -45,6 +47,12 @@ func init() {
 		"Custom config file for osde2e",
 	)
 	flags.StringVar(
+		&args.secretLocations,
+		"secret-locations",
+		"",
+		"A comma separated list of possible secret directory locations for loading secret configs.",
+	)
+	flags.StringVar(
 		&args.outputFormat,
 		"output-format",
 		"-",
@@ -58,7 +66,7 @@ func init() {
 
 func run(cmd *cobra.Command, argv []string) error {
 
-	if err := common.LoadConfigs(args.configString, args.customConfig); err != nil {
+	if err := common.LoadConfigs(args.configString, args.customConfig, args.secretLocations); err != nil {
 		return fmt.Errorf("error loading initial state: %v", err)
 	}
 

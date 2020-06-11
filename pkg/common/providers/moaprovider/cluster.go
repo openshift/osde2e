@@ -5,6 +5,7 @@ import (
 	"net"
 	"time"
 
+	cmv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 	"github.com/openshift/moactl/pkg/cluster"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/spf13/viper"
@@ -49,22 +50,26 @@ func (m *MOAProvider) LaunchCluster() (string, error) {
 		}
 	}
 
-	clusterSpec := cluster.Spec{
-		Name:               viper.GetString(config.Cluster.Name),
-		Region:             viper.GetString(config.CloudProvider.Region),
-		MultiAZ:            viper.GetBool(config.Cluster.MultiAZ),
-		Version:            viper.GetString(config.Cluster.Version),
-		Expiration:         expiration,
-		ComputeMachineType: viper.GetString(ComputeMachineType),
-		ComputeNodes:       viper.GetInt(ComputeNodes),
+	var createdCluster *cmv1.Cluster
 
-		MachineCIDR: *machineCIDRParsed,
-		ServiceCIDR: *serviceCIDRParsed,
-		PodCIDR:     *podCIDRParsed,
-		HostPrefix:  viper.GetInt(HostPrefix),
-	}
+	callAndSetAWSSession(func() {
+		clusterSpec := cluster.Spec{
+			Name:               viper.GetString(config.Cluster.Name),
+			Region:             viper.GetString(config.CloudProvider.Region),
+			MultiAZ:            viper.GetBool(config.Cluster.MultiAZ),
+			Version:            viper.GetString(config.Cluster.Version),
+			Expiration:         expiration,
+			ComputeMachineType: viper.GetString(ComputeMachineType),
+			ComputeNodes:       viper.GetInt(ComputeNodes),
 
-	createdCluster, err := cluster.CreateCluster(clustersClient, clusterSpec)
+			MachineCIDR: *machineCIDRParsed,
+			ServiceCIDR: *serviceCIDRParsed,
+			PodCIDR:     *podCIDRParsed,
+			HostPrefix:  viper.GetInt(HostPrefix),
+		}
+
+		createdCluster, err = cluster.CreateCluster(clustersClient, clusterSpec)
+	})
 
 	if err != nil {
 		return "", fmt.Errorf("error while creating cluster: %v", err)

@@ -2,6 +2,8 @@
 package config
 
 import (
+	"sync"
+
 	"github.com/spf13/viper"
 )
 
@@ -41,6 +43,10 @@ const (
 	// Project is both the project and SA automatically created to house all objects created during an osde2e-run
 	Project = "project"
 )
+
+// This is a config key to secret file mapping. We will attempt to read in from secret files before loading anything else.
+var keyToSecretMapping = map[string]string{}
+var keyToSecretMappingMutex = sync.Mutex{}
 
 // Upgrade config keys.
 var Upgrade = struct {
@@ -449,4 +455,16 @@ func init() {
 
 	// ----- Alert ----
 	viper.BindEnv(Alert.SlackAPIToken, "SLACK_API_TOKEN")
+}
+
+// RegisterSecret will register the secret filename that will be used for the corresponding Viper string.
+func RegisterSecret(key string, secretFileName string) {
+	keyToSecretMappingMutex.Lock()
+	keyToSecretMapping[key] = secretFileName
+	keyToSecretMappingMutex.Unlock()
+}
+
+// GetAllSecrets will return Viper config keys and their corresponding secret filenames.
+func GetAllSecrets() map[string]string {
+	return keyToSecretMapping
 }
