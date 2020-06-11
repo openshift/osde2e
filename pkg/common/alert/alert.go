@@ -2,17 +2,14 @@ package alert
 
 import (
 	"context"
-	"crypto/tls"
 	"fmt"
 	"log"
-	"net"
-	"net/http"
-	"net/url"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/openshift/osde2e/pkg/common/config"
+	osde2eProm "github.com/openshift/osde2e/pkg/common/prometheus"
 	"github.com/prometheus/client_golang/api"
 	v1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/prometheus/common/model"
@@ -82,7 +79,7 @@ type MetricAlert struct {
 func (mas MetricAlerts) Notify() error {
 	client, err := api.NewClient(api.Config{
 		Address:      viper.GetString(config.Prometheus.Address),
-		RoundTripper: WeatherRoundTripper,
+		RoundTripper: osde2eProm.WeatherRoundTripper,
 	})
 
 	if err != nil {
@@ -140,23 +137,6 @@ func (ma MetricAlert) QuerySafeName() string {
 	tmp = strings.Replace(tmp, ":", "\\\\:", -1)
 	return tmp
 
-}
-
-// WeatherRoundTripper is like api.DefaultRoundTripper with an added stripping of cert verification
-// and adding the bearer token to the HTTP request
-var WeatherRoundTripper http.RoundTripper = &http.Transport{
-	Proxy: func(request *http.Request) (*url.URL, error) {
-		request.Header.Add("Authorization", "Bearer "+viper.GetString(config.Prometheus.BearerToken))
-		return http.ProxyFromEnvironment(request)
-	},
-	DialContext: (&net.Dialer{
-		Timeout:   30 * time.Second,
-		KeepAlive: 30 * time.Second,
-	}).DialContext,
-	TLSClientConfig: &tls.Config{
-		InsecureSkipVerify: true,
-	},
-	TLSHandshakeTimeout: 10 * time.Second,
 }
 
 func sendSlackMessage(channel, message string) error {
