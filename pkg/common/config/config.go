@@ -2,6 +2,7 @@
 package config
 
 import (
+	"log"
 	"sync"
 
 	"github.com/spf13/viper"
@@ -21,6 +22,9 @@ const (
 	// For example, https://storage.googleapis.com/origin-ci-test/logs/osde2e-prod-gcp-e2e-next/61/build-log.txt would be
 	// https://storage.googleapis.com/origin-ci-test/logs -- This is also our default
 	BaseJobURL = "baseJobURL"
+
+	// Artifacts is the artifacts location on prow. It is an alias for report dir.
+	Artifacts = "artifacts"
 
 	// ReportDir is the location JUnit XML results are written.
 	ReportDir = "reportDir"
@@ -304,6 +308,9 @@ func init() {
 	viper.SetDefault(BaseJobURL, "https://storage.googleapis.com/origin-ci-test/logs")
 	viper.BindEnv(BaseJobURL, "BASE_JOB_URL")
 
+	// ARTIFACTS and REPORT_DIR are basically the same, but ARTIFACTS is used on prow.
+	viper.BindEnv(Artifacts, "ARTIFACTS")
+
 	viper.BindEnv(ReportDir, "REPORT_DIR")
 
 	viper.BindEnv(Suffix, "SUFFIX")
@@ -445,6 +452,16 @@ func init() {
 
 	viper.SetDefault(Weather.JobWhitelist, "osde2e-.*-aws-e2e-.*")
 	viper.BindEnv(Weather.JobWhitelist, "JOB_WHITELIST")
+}
+
+// PostProcess is a variety of post-processing commands that is intended to be run after a config is loaded.
+func PostProcess() {
+	// Set REPORT_DIR to ARTIFACTS if ARTIFACTS is set.
+	artifacts := viper.GetString(Artifacts)
+	if artifacts != "" {
+		log.Printf("Found an ARTIFACTS directory, using that for the REPORT_DIR.")
+		viper.Set(ReportDir, artifacts)
+	}
 }
 
 // RegisterSecret will register the secret filename that will be used for the corresponding Viper string.
