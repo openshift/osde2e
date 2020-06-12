@@ -74,6 +74,9 @@ var Upgrade = struct {
 
 	// UpgradeVersionEqualToInstallVersion is true if the install version and upgrade versions are the same.
 	UpgradeVersionEqualToInstallVersion string
+
+	// MonitorRoutesDuringUpgrade will monitor the availability of routes whilst an upgrade takes place
+	MonitorRoutesDuringUpgrade string
 }{
 	UpgradeToCISIfPossible:                "upgrade.upgradeToCISIfPossible",
 	OnlyUpgradeToZReleases:                "upgrade.onlyUpgradeToZReleases",
@@ -82,6 +85,7 @@ var Upgrade = struct {
 	ReleaseName:                           "upgrade.releaseName",
 	Image:                                 "upgrade.image",
 	UpgradeVersionEqualToInstallVersion:   "upgrade.upgradeVersionEqualToInstallVersion",
+	MonitorRoutesDuringUpgrade:            "upgrade.monitorRoutesDuringUpgrade",
 }
 
 // Kubeconfig config keys.
@@ -338,6 +342,9 @@ func init() {
 	viper.BindEnv(Upgrade.Image, "UPGRADE_IMAGE")
 
 	viper.SetDefault(Upgrade.UpgradeVersionEqualToInstallVersion, false)
+
+	viper.BindEnv(Upgrade.MonitorRoutesDuringUpgrade, "UPGRADE_MONITOR_ROUTES")
+	viper.SetDefault(Upgrade.MonitorRoutesDuringUpgrade, true)
 
 	// ----- Kubeconfig -----
 	viper.BindEnv(Kubeconfig.Path, "TEST_KUBECONFIG")
