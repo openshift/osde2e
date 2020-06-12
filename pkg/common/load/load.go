@@ -50,6 +50,9 @@ func Configs(configs []string, customConfig string, secretLocations []string) er
 		}
 	}
 
+	// 4. Config post-processing.
+	config.PostProcess()
+
 	return nil
 }
 
