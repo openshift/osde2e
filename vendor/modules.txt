@@ -198,6 +198,8 @@ github.com/hpcloud/tail/winfile
 github.com/imdario/mergo
 # github.com/inconshreveable/mousetrap v1.0.0
 github.com/inconshreveable/mousetrap
+# github.com/influxdata/tdigest v0.0.1
+github.com/influxdata/tdigest
 # github.com/jmespath/go-jmespath v0.0.0-20180206201540-c2b33e8439af
 github.com/jmespath/go-jmespath
 # github.com/json-iterator/go v1.1.9
@@ -208,6 +210,10 @@ github.com/konsorten/go-windows-terminal-sequences
 github.com/kylelemons/godebug/diff
 # github.com/magiconair/properties v1.8.1
 github.com/magiconair/properties
+# github.com/mailru/easyjson v0.0.0-20190614124828-94de47d64c63
+github.com/mailru/easyjson/buffer
+github.com/mailru/easyjson/jlexer
+github.com/mailru/easyjson/jwriter
 # github.com/markbates/pkger v0.16.0
 github.com/markbates/pkger
 github.com/markbates/pkger/here
@@ -365,6 +371,13 @@ github.com/spf13/pflag
 github.com/spf13/viper
 # github.com/subosito/gotenv v1.2.0
 github.com/subosito/gotenv
+# github.com/tsenart/go-tsz v0.0.0-20180814235614-0bd30b3df1c3
+github.com/tsenart/go-tsz
+github.com/tsenart/go-tsz/testdata
+# github.com/tsenart/vegeta v12.7.0+incompatible
+github.com/tsenart/vegeta/lib
+github.com/tsenart/vegeta/lib/lttb
+github.com/tsenart/vegeta/lib/plot
 # github.com/xi2/xz v0.0.0-20171230120015-48954b6210f8
 github.com/xi2/xz
 # gitlab.com/c0b/go-ordered-json v0.0.0-20171130231205-49bbdab258c2
