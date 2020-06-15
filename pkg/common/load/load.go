@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/markbates/pkger"
 	"github.com/openshift/osde2e/pkg/common/config"
@@ -115,7 +116,7 @@ func loadSecretFileIntoKey(key string, filename string, secretLocations []string
 				return fmt.Errorf("error loading secret file %s from location %s", filename, secretLocation)
 			}
 			log.Printf("Found secret for key %s.", key)
-			viper.Set(key, string(data))
+			viper.Set(key, strings.TrimSpace(string(data)))
 			return nil
 		}
 	}
