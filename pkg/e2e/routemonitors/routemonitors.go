@@ -37,6 +37,10 @@ const timeoutSeconds = 3 * time.Second
 func Create() (*RouteMonitors, error) {
 	h := helper.NewOutsideGinkgo()
 
+	if h == nil {
+		return nil, fmt.Errorf("Unable to generate helper outside ginkgo")
+	}
+
 	// record all targeters created in a map, accessible via a key which is their URL
 	targeters := make(map[string]vegeta.Targeter, 0)
 
