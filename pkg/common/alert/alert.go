@@ -9,8 +9,7 @@ import (
 	"time"
 
 	"github.com/openshift/osde2e/pkg/common/config"
-	osde2eProm "github.com/openshift/osde2e/pkg/common/prometheus"
-	"github.com/prometheus/client_golang/api"
+	"github.com/openshift/osde2e/pkg/common/prometheus"
 	v1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/prometheus/common/model"
 	"github.com/slack-go/slack"
@@ -76,18 +75,13 @@ type MetricAlert struct {
 
 // Notify prepares and then iterates through MetricAlerts to generate notifications
 func (mas MetricAlerts) Notify() error {
-	client, err := api.NewClient(api.Config{
-		Address:      viper.GetString(config.Prometheus.Address),
-		RoundTripper: osde2eProm.WeatherRoundTripper,
-	})
-
+	client, err := prometheus.CreateClient()
 	if err != nil {
 		return fmt.Errorf("unable to create Prometheus client: %v", err)
 	}
 
 	promAPI := v1.NewAPI(client)
 	for _, ma := range mas {
-		log.Printf("%v", ma)
 		if err := ma.Check(promAPI); err != nil {
 			return err
 		}
