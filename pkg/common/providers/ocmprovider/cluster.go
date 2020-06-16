@@ -53,6 +53,9 @@ func (o *OCMProvider) LaunchCluster() (string, error) {
 	}
 
 	multiAZ := viper.GetBool(config.Cluster.MultiAZ)
+	computeMachineType := viper.GetString(ComputeMachineType)
+
+	nodeBuilder := &v1.ClusterNodesBuilder{}
 
 	newCluster := v1.NewCluster().
 		Name(clusterName).
@@ -75,12 +78,16 @@ func (o *OCMProvider) LaunchCluster() (string, error) {
 	// We must manually configure the number of compute nodes
 	// Currently set to 9 nodes. Whatever it is, must be divisible by 3.
 	if multiAZ {
-		numNodes := &v1.ClusterNodesBuilder{}
-
-		newCluster = newCluster.
-			Nodes(numNodes.Compute(9)).
-			MultiAZ(viper.GetBool(config.Cluster.MultiAZ))
+		nodeBuilder = nodeBuilder.Compute(9)
+		newCluster = newCluster.MultiAZ(viper.GetBool(config.Cluster.MultiAZ))
 	}
+
+	if computeMachineType != "" {
+		machineType := &v1.MachineTypeBuilder{}
+		nodeBuilder = nodeBuilder.ComputeMachineType(machineType.ID(computeMachineType))
+	}
+
+	newCluster = newCluster.Nodes(nodeBuilder)
 
 	IDsAtCreationString := viper.GetString(config.Addons.IDsAtCreation)
 	if len(IDsAtCreationString) > 0 {
