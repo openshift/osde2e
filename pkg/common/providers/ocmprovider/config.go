@@ -17,6 +17,9 @@ const (
 
 	// NumRetries is the number of times to retry each OCM call.
 	NumRetries = "ocm.numRetries"
+
+	// ComputeMachineType is the specific cloud machine type to use for compute nodes.
+	ComputeMachineType = "ocm.computeMachineType"
 )
 
 func init() {
@@ -32,4 +35,7 @@ func init() {
 
 	viper.SetDefault(NumRetries, 3)
 	viper.BindEnv(NumRetries, "NUM_RETRIES")
+
+	viper.SetDefault(ComputeMachineType, "")
+	viper.BindEnv(ComputeMachineType, "OCM_COMPUTE_MACHINE_TYPE")
 }
