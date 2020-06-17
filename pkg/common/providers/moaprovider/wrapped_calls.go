@@ -17,6 +17,11 @@ func (m *MOAProvider) ScaleCluster(clusterID string, numComputeNodes int) error 
 	return m.ocmProvider.ScaleCluster(clusterID, numComputeNodes)
 }
 
+// ListClusters will call ListClusters from the OCM provider.
+func (m *MOAProvider) ListClusters(query string) ([]*spi.Cluster, error) {
+	return m.ocmProvider.ListClusters(query)
+}
+
 // GetCluster will call GetCluster from the OCM provider.
 func (m *MOAProvider) GetCluster(clusterID string) (*spi.Cluster, error) {
 	return m.ocmProvider.GetCluster(clusterID)

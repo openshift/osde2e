@@ -28,6 +28,9 @@ type Provider interface {
 	// scaling has finished.
 	ScaleCluster(clusterID string, numComputeNodes int) error
 
+	// ListCluster lists clusters from a provider based on a SQL-like query.
+	ListClusters(query string) ([]*Cluster, error)
+
 	// GetCluster gets a cluster.
 	//
 	// This is what OSDe2e will use to gather cluster information, including whether
@@ -89,6 +92,7 @@ type Provider interface {
 	CincinnatiChannel() CincinnatiChannel
 
 	// Type is the Provider type, specific to each Plugin
+	//
 	// This simply returns the name of the Provider
 	Type() string
 }
