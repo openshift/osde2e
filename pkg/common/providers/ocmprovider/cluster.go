@@ -260,8 +260,38 @@ func (o *OCMProvider) ListClusters(query string) ([]*spi.Cluster, error) {
 		return nil, err
 	}
 
-	for _, cluster := range response.Items().Slice() {
-		spiCluster, err := o.ocmToSPICluster(cluster)
+	cluster := spi.NewClusterBuilder().
+		Name(ocmCluster.Name()).
+		Region(ocmCluster.Region().ID()).
+		Flavour(ocmCluster.Flavour().ID())
+
+	if id, ok := ocmCluster.GetID(); ok {
+		cluster.ID(id)
+	}
+
+	if version, ok := ocmCluster.GetVersion(); ok {
+		cluster.Version(version.ID())
+	}
+
+	if cloudProvider, ok := ocmCluster.GetCloudProvider(); ok {
+		cluster.CloudProvider(cloudProvider.ID())
+	}
+
+	if state, ok := ocmCluster.GetState(); ok {
+		cluster.State(ocmStateToInternalState(state))
+	}
+
+	if properties, ok := ocmCluster.GetProperties(); ok {
+		cluster.Properties(properties)
+	}
+
+	var addonsResp *v1.AddOnInstallationsListResponse
+	err = retryer().Do(func() error {
+		var err error
+		addonsResp, err = o.conn.ClustersMgmt().V1().Clusters().Cluster(clusterID).Addons().
+			List().
+			Send()
+
 		if err != nil {
 			return nil, err
 		}
