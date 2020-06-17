@@ -31,6 +31,10 @@ then
 	exit 1
 fi
 
+export AWS_ACCESS_KEY_ID
+export AWS_SECRET_ACCESS_KEY
+export AWS_REGION
+
 VELERO_BUCKETS=()
 while IFS='' read -r line; do VELERO_BUCKETS+=("$line"); done < <(aws s3 ls | grep managed-velero | awk '{print $3}')
 
