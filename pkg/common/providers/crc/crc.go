@@ -166,6 +166,12 @@ func (m *Provider) ScaleCluster(clusterID string, numComputeNodes int) error {
 	return fmt.Errorf("scaling is currently unsupported for CRC clusters")
 }
 
+// ListClusters returns a list of CRC Clusters based on a filter
+// TODO
+func (m *Provider) ListClusters(query string) ([]*spi.Cluster, error) {
+	return nil, nil
+}
+
 // GetCluster CRCs a get cluster operation.
 func (m *Provider) GetCluster(clusterID string) (cluster *spi.Cluster, err error) {
 	var ok bool
