@@ -248,6 +248,10 @@ func (o *OCMProvider) GetCluster(clusterID string) (*spi.Cluster, error) {
 		cluster.State(ocmStateToInternalState(state))
 	}
 
+	if properties, ok := ocmCluster.GetProperties(); ok {
+		cluster.Properties(properties)
+	}
+
 	var addonsResp *v1.AddOnInstallationsListResponse
 	err = retryer().Do(func() error {
 		var err error
