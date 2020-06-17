@@ -32,14 +32,17 @@ type Metadata struct {
 	UpgradeVersionSource string `json:"upgrade-version-source,omitempty"`
 
 	// Metrics
-	TimeToOCMReportingInstalled float64        `json:"time-to-ocm-reporting-installed,string"`
-	TimeToClusterReady          float64        `json:"time-to-cluster-ready,string"`
-	TimeToUpgradedCluster       float64        `json:"time-to-upgraded-cluster,string"`
-	TimeToUpgradedClusterReady  float64        `json:"time-to-upgraded-cluster-ready,string"`
-	TimeToCertificateIssued     float64        `json:"time-to-certificate-issued,string"`
-	InstallPhasePassRate        float64        `json:"install-phase-pass-rate,string"`
-	UpgradePhasePassRate        float64        `json:"upgrade-phase-pass-rate,string"`
-	LogMetrics                  map[string]int `json:"log-metrics"`
+	TimeToOCMReportingInstalled float64            `json:"time-to-ocm-reporting-installed,string"`
+	TimeToClusterReady          float64            `json:"time-to-cluster-ready,string"`
+	TimeToUpgradedCluster       float64            `json:"time-to-upgraded-cluster,string"`
+	TimeToUpgradedClusterReady  float64            `json:"time-to-upgraded-cluster-ready,string"`
+	TimeToCertificateIssued     float64            `json:"time-to-certificate-issued,string"`
+	InstallPhasePassRate        float64            `json:"install-phase-pass-rate,string"`
+	UpgradePhasePassRate        float64            `json:"upgrade-phase-pass-rate,string"`
+	LogMetrics                  map[string]int     `json:"log-metrics"`
+	RouteLatencies              map[string]float64 `json:"route-latencies"`
+	RouteThroughputs            map[string]float64 `json:"route-throughputs"`
+	RouteAvailabilities         map[string]float64 `json:"route-availabilities"`
 
 	// Internal variables
 	ReportDir string `json:"-"`
@@ -53,6 +56,9 @@ func init() {
 	Instance.InstallPhasePassRate = -1.0
 	Instance.UpgradePhasePassRate = -1.0
 	Instance.LogMetrics = make(map[string]int)
+	Instance.RouteLatencies = make(map[string]float64)
+	Instance.RouteThroughputs = make(map[string]float64)
+	Instance.RouteAvailabilities = make(map[string]float64)
 }
 
 // Next are a bunch of setter functions that allow us
@@ -158,6 +164,27 @@ func (m *Metadata) IncrementLogMetric(metric string, value int) {
 		m.LogMetrics[metric] = value
 	}
 
+	m.WriteToJSON(m.ReportDir)
+}
+
+// SetRouteLatency sets the mean latency for the given route
+// (measured in milliseconds)
+func (m *Metadata) SetRouteLatency(route string, latency float64) {
+	m.RouteLatencies[route] = latency
+	m.WriteToJSON(m.ReportDir)
+}
+
+// SetRouteThroughput sets the throughput for the given route
+// (rate of successful requests per second)
+func (m *Metadata) SetRouteThroughput(route string, throughput float64) {
+	m.RouteThroughputs[route] = throughput
+	m.WriteToJSON(m.ReportDir)
+}
+
+// SetRouteAvailability sets the availability for the given route
+// (ratio of successful requests)
+func (m *Metadata) SetRouteAvailability(route string, availability float64) {
+	m.RouteAvailabilities[route] = availability
 	m.WriteToJSON(m.ReportDir)
 }
 

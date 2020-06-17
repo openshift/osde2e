@@ -6,12 +6,14 @@ require (
 	github.com/Masterminds/semver v1.5.0
 	github.com/adamliesko/retry v0.0.0-20200123222335-86c8baac277d
 	github.com/aws/aws-sdk-go v1.29.17
+	github.com/c2h5oh/datasize v0.0.0-20200112174442-28bbd4740fee // indirect
 	github.com/code-ready/crc v1.10.0
 	github.com/emicklei/go-restful v2.9.6+incompatible
 	github.com/ghodss/yaml v1.0.0
 	github.com/google/go-github/v31 v31.0.0
 	github.com/google/uuid v1.1.1
 	github.com/hashicorp/go-multierror v1.1.0
+	github.com/influxdata/tdigest v0.0.1 // indirect
 	github.com/kylelemons/godebug v1.1.0
 	github.com/markbates/pkger v0.16.0
 	github.com/onsi/ginkgo v1.12.0
@@ -23,10 +25,12 @@ require (
 	github.com/operator-framework/operator-lifecycle-manager v0.0.0-20190926160646-a61144936680
 	github.com/prometheus/client_golang v1.4.1
 	github.com/prometheus/common v0.9.1
-	github.com/slack-go/slack v0.6.3
+	github.com/slack-go/slack v0.6.5
 	github.com/spf13/cobra v1.0.0
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.7.0
+	github.com/tsenart/go-tsz v0.0.0-20180814235614-0bd30b3df1c3 // indirect
+	github.com/tsenart/vegeta v12.7.0+incompatible
 	golang.org/x/net v0.0.0-20200226121028-0de0cce0169b
 	k8s.io/api v0.0.0-20191004102349-159aefb8556b
 	k8s.io/apimachinery v0.18.2
