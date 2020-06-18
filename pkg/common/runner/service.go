@@ -73,7 +73,7 @@ func (r *Runner) waitForCompletion(podName string, timeoutInSeconds int) error {
 			for _, containerStatus := range pod.Status.ContainerStatuses {
 				if containerStatus.State.Terminated != nil {
 					if containerStatus.State.Terminated.ExitCode != 0 {
-						multierror.Append(fmt.Errorf("container %s failed, please refer to artifacts for results", containerStatus.Name))
+						err = multierror.Append(err, fmt.Errorf("container %s failed, please refer to artifacts for results", containerStatus.Name))
 					}
 				}
 			}
@@ -106,7 +106,7 @@ func (r *Runner) getAllLogsFromPod(podName string) error {
 			logStream, err := request.Stream()
 
 			if err != nil {
-				multierror.Append(allErrors, err)
+				allErrors = multierror.Append(allErrors, err)
 				return
 			}
 
@@ -115,20 +115,20 @@ func (r *Runner) getAllLogsFromPod(podName string) error {
 			logBytes, err := ioutil.ReadAll(logStream)
 
 			if err != nil {
-				multierror.Append(allErrors, err)
+				allErrors = multierror.Append(allErrors, err)
 				return
 			}
 
 			configMapDirectory := filepath.Join(viper.GetString(config.ReportDir), viper.GetString(config.Phase), containerLogs)
 
 			if err := os.MkdirAll(configMapDirectory, os.FileMode(0755)); err != nil {
-				multierror.Append(allErrors, err)
+				allErrors = multierror.Append(allErrors, err)
 				return
 			}
 
 			logOutput := filepath.Join(configMapDirectory, fmt.Sprintf("%s-%s.log", podName, containerStatus.Name))
 
-			multierror.Append(allErrors, ioutil.WriteFile(logOutput, logBytes, os.FileMode(0644)))
+			allErrors = multierror.Append(allErrors, ioutil.WriteFile(logOutput, logBytes, os.FileMode(0644)))
 		}()
 	}
 

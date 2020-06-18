@@ -159,27 +159,27 @@ func pollClusterHealth(provider spi.Provider, clusterID string) (status bool, er
 	switch provider.Type() {
 	case "ocm":
 		if check, err := healthchecks.CheckCVOReadiness(oscfg.ConfigV1()); !check || err != nil {
-			multierror.Append(healthErr, err)
+			healthErr = multierror.Append(healthErr, err)
 			clusterHealthy = false
 		}
 
 		if check, err := healthchecks.CheckNodeHealth(kubeClient.CoreV1()); !check || err != nil {
-			multierror.Append(healthErr, err)
+			healthErr = multierror.Append(healthErr, err)
 			clusterHealthy = false
 		}
 
 		if check, err := healthchecks.CheckOperatorReadiness(oscfg.ConfigV1()); !check || err != nil {
-			multierror.Append(healthErr, err)
+			healthErr = multierror.Append(healthErr, err)
 			clusterHealthy = false
 		}
 
 		if check, err := healthchecks.CheckPodHealth(kubeClient.CoreV1()); !check || err != nil {
-			multierror.Append(healthErr, err)
+			healthErr = multierror.Append(healthErr, err)
 			clusterHealthy = false
 		}
 
 		if check, err := healthchecks.CheckCerts(kubeClient.CoreV1()); !check || err != nil {
-			multierror.Append(healthErr, err)
+			healthErr = multierror.Append(healthErr, err)
 			clusterHealthy = false
 		}
 	default:
