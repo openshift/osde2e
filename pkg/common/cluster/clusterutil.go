@@ -77,6 +77,9 @@ func waitForClusterReadyWithOverrideAndExpectedNumberOfNodes(provider spi.Provid
 	if !viper.GetBool(config.Tests.SkipClusterHealthChecks) || overrideSkipCheck {
 		return wait.PollImmediate(30*time.Second, time.Duration(installTimeout)*time.Minute, func() (bool, error) {
 			cluster, err := provider.GetCluster(clusterID)
+			if err != nil {
+				return false, fmt.Errorf("Unable to fetch cluster details from provider: %s", err)
+			}
 
 			viper.Set(config.Cluster.State, cluster.State())
 			if err == nil && cluster != nil && cluster.State() == spi.ClusterStateReady {
