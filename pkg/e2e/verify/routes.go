@@ -1,6 +1,7 @@
 package verify
 
 import (
+	"context"
 	"crypto/tls"
 	"fmt"
 	"net/http"
@@ -39,14 +40,14 @@ var _ = ginkgo.Describe("[Suite: e2e] Routes", func() {
 	}, 300)
 
 	ginkgo.It("should be functioning for oauth", func() {
-		testRouteIngresses(oauthRoute(h),http.StatusForbidden)
+		testRouteIngresses(oauthRoute(h), http.StatusForbidden)
 	}, 300)
 
 })
 
 func consoleRoutes(h *helper.H) []v1.Route {
 	labelSelector := fmt.Sprintf("app=%s", consoleLabel)
-	list, err := h.Route().RouteV1().Routes(consoleNamespace).List(metav1.ListOptions{
+	list, err := h.Route().RouteV1().Routes(consoleNamespace).List(context.TODO(), metav1.ListOptions{
 		LabelSelector: labelSelector,
 	})
 	if err != nil || list == nil {
@@ -60,7 +61,7 @@ func consoleRoutes(h *helper.H) []v1.Route {
 }
 
 func oauthRoute(h *helper.H) v1.Route {
-	route, err := h.Route().RouteV1().Routes(oauthNamespace).Get(oauthName, metav1.GetOptions{})
+	route, err := h.Route().RouteV1().Routes(oauthNamespace).Get(context.TODO(), oauthName, metav1.GetOptions{})
 	if err != nil || route == nil {
 		err = fmt.Errorf("failed requesting routes: %v", err)
 	}

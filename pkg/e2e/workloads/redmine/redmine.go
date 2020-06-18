@@ -1,12 +1,14 @@
 package workloads
 
 import (
+	"context"
 	"fmt"
-	v1 "github.com/openshift/api/route/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"log"
 	"path/filepath"
 	"time"
+
+	v1 "github.com/openshift/api/route/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/openshift/osde2e/pkg/common/cluster/healthchecks"
 	"github.com/openshift/osde2e/pkg/common/config"
@@ -89,7 +91,7 @@ func createWorkload(h *helper.H) error {
 		},
 		Status: v1.RouteStatus{},
 	}
-	_, err = h.Route().RouteV1().Routes(h.CurrentProject()).Create(appRoute)
+	_, err = h.Route().RouteV1().Routes(h.CurrentProject()).Create(context.TODO(), appRoute, metav1.CreateOptions{})
 	if err != nil {
 		return fmt.Errorf("couldn't create application route: %v", err)
 	}
@@ -113,7 +115,7 @@ func doTest(h *helper.H) {
 
 Loop:
 	for {
-		_, err = h.Kube().CoreV1().Services(h.CurrentProject()).ProxyGet("http", "redmine-frontend", "3000", "/", nil).DoRaw()
+		_, err = h.Kube().CoreV1().Services(h.CurrentProject()).ProxyGet("http", "redmine-frontend", "3000", "/", nil).DoRaw(context.TODO())
 		elapsed := time.Since(start)
 
 		switch {

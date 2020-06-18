@@ -3,6 +3,7 @@ package helper
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"log"
 	"math/rand"
@@ -113,7 +114,7 @@ func (h *H) Setup() error {
 
 	} else {
 		log.Printf("Setting project name to %s", project)
-		h.proj, err = h.Project().ProjectV1().Projects().Get(project, metav1.GetOptions{})
+		h.proj, err = h.Project().ProjectV1().Projects().Get(context.TODO(), project, metav1.GetOptions{})
 		if h.OutsideGinkgo && err != nil {
 			return fmt.Errorf("error retrieving project: %s", err.Error())
 		}
@@ -141,7 +142,7 @@ func (h *H) Cleanup() {
 	project := viper.GetString(config.Project)
 	if h.proj == nil && project != "" {
 		log.Printf("Setting project name to %s", project)
-		h.proj, err = h.Project().ProjectV1().Projects().Get(project, metav1.GetOptions{})
+		h.proj, err = h.Project().ProjectV1().Projects().Get(context.TODO(), project, metav1.GetOptions{})
 		Expect(err).ShouldNot(HaveOccurred(), "failed to retrieve project")
 		Expect(h.proj).ShouldNot(BeNil())
 
@@ -158,31 +159,31 @@ func (h *H) CreateServiceAccounts() *H {
 	Expect(h.proj).NotTo(BeNil(), "no project is currently set")
 
 	// Create project-specific dedicated-admin account
-	sa, err := h.Kube().CoreV1().ServiceAccounts(h.CurrentProject()).Create(&v1.ServiceAccount{
+	sa, err := h.Kube().CoreV1().ServiceAccounts(h.CurrentProject()).Create(context.TODO(), &v1.ServiceAccount{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "dedicated-admin-project",
 		},
-	})
+	}, metav1.CreateOptions{})
 	Expect(err).NotTo(HaveOccurred())
 	h.CreateClusterRoleBinding(sa, "dedicated-admins-project")
 	log.Printf("Created SA: %v", sa.GetName())
 
 	// Create cluster dedicated-admin account
-	sa, err = h.Kube().CoreV1().ServiceAccounts(h.CurrentProject()).Create(&v1.ServiceAccount{
+	sa, err = h.Kube().CoreV1().ServiceAccounts(h.CurrentProject()).Create(context.TODO(), &v1.ServiceAccount{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "dedicated-admin-cluster",
 		},
-	})
+	}, metav1.CreateOptions{})
 	Expect(err).NotTo(HaveOccurred())
 	h.CreateClusterRoleBinding(sa, "dedicated-admins-cluster")
 	log.Printf("Created SA: %v", sa.GetName())
 
 	// Create cluster-admin account
-	sa, err = h.Kube().CoreV1().ServiceAccounts(h.CurrentProject()).Create(&v1.ServiceAccount{
+	sa, err = h.Kube().CoreV1().ServiceAccounts(h.CurrentProject()).Create(context.TODO(), &v1.ServiceAccount{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "cluster-admin",
 		},
-	})
+	}, metav1.CreateOptions{})
 	Expect(err).NotTo(HaveOccurred())
 	h.CreateClusterRoleBinding(sa, "cluster-admin")
 	log.Printf("Created SA: %v", sa.GetName())
@@ -197,7 +198,7 @@ func (h *H) CreateClusterRoleBinding(sa *v1.ServiceAccount, clusterRole string) 
 	projRef := *metav1.NewControllerRef(h.proj, gvk)
 
 	// create binding with OwnerReference
-	_, err := h.Kube().RbacV1().ClusterRoleBindings().Create(&rbacv1.ClusterRoleBinding{
+	_, err := h.Kube().RbacV1().ClusterRoleBindings().Create(context.TODO(), &rbacv1.ClusterRoleBinding{
 		ObjectMeta: metav1.ObjectMeta{
 			GenerateName: "osde2e-test-access-",
 			OwnerReferences: []metav1.OwnerReference{
@@ -216,7 +217,7 @@ func (h *H) CreateClusterRoleBinding(sa *v1.ServiceAccount, clusterRole string) 
 			Kind:     "ClusterRole",
 			Name:     clusterRole,
 		},
-	})
+	}, metav1.CreateOptions{})
 	Expect(err).NotTo(HaveOccurred(), "couldn't set correct permissions for OpenShift E2E")
 }
 
@@ -236,7 +237,7 @@ func (h *H) SetServiceAccount(sa string) *H {
 	if h.ServiceAccount != "" {
 		parts := strings.Split(h.ServiceAccount, ":")
 		Expect(len(parts)).Should(Equal(4), "not a valid service account name: %v", h.ServiceAccount)
-		_, err := h.Kube().CoreV1().ServiceAccounts(parts[2]).Get(parts[3], metav1.GetOptions{})
+		_, err := h.Kube().CoreV1().ServiceAccounts(parts[2]).Get(context.TODO(), parts[3], metav1.GetOptions{})
 		Expect(err).ShouldNot(HaveOccurred(), "could not get sa '%s'", h.ServiceAccount)
 	}
 
@@ -281,7 +282,7 @@ func (h *H) CurrentProject() string {
 // SetProjectByName gets a project by name and sets it for the h.proj attribute
 func (h *H) SetProjectByName(projectName string) (*H, error) {
 	var err error
-	h.proj, err = h.Project().ProjectV1().Projects().Get(projectName, metav1.GetOptions{})
+	h.proj, err = h.Project().ProjectV1().Projects().Get(context.TODO(), projectName, metav1.GetOptions{})
 	Expect(err).To(BeNil(), "error retrieving project")
 	return h, nil
 }

@@ -1,6 +1,7 @@
 package runner
 
 import (
+	"context"
 	"errors"
 	"fmt"
 
@@ -26,7 +27,7 @@ func (r *Runner) getImageStreamTag(tag string) (string, error) {
 		return "", errors.New("client for Image must be set")
 	}
 
-	stream, err := r.Image.ImageV1().ImageStreams(r.ImageStreamNamespace).Get(r.ImageStreamName, metav1.GetOptions{})
+	stream, err := r.Image.ImageV1().ImageStreams(r.ImageStreamNamespace).Get(context.TODO(), r.ImageStreamName, metav1.GetOptions{})
 	if err != nil {
 		return "", fmt.Errorf("can't get ImageStream '%s/%s': %v", r.ImageStreamNamespace, r.ImageStreamName, err)
 	}

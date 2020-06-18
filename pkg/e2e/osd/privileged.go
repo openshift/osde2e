@@ -1,6 +1,7 @@
 package osd
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/onsi/ginkgo"
@@ -45,12 +46,12 @@ var _ = ginkgo.Describe("[Suite: service-definition] [OSD] Privileged Containers
 			// Test creating a privileged pod and expect a failure
 			pod := makePod("privileged-pod", h.GetNamespacedServiceAccount(), true)
 
-			_, err := h.Kube().CoreV1().Pods(h.CurrentProject()).Create(&pod)
+			_, err := h.Kube().CoreV1().Pods(h.CurrentProject()).Create(context.TODO(), &pod, metav1.CreateOptions{})
 			Expect(err).To(HaveOccurred())
 
 			// Test creating an unprivileged pod and expect success
 			pod = makePod("unprivileged-pod", h.GetNamespacedServiceAccount(), false)
-			_, err = h.Kube().CoreV1().Pods(h.CurrentProject()).Create(&pod)
+			_, err = h.Kube().CoreV1().Pods(h.CurrentProject()).Create(context.TODO(), &pod, metav1.CreateOptions{})
 			Expect(err).NotTo(HaveOccurred())
 
 		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))

@@ -1,6 +1,7 @@
 package osd
 
 import (
+	"context"
 	"github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/openshift/osde2e/pkg/common/config"
@@ -17,7 +18,7 @@ var _ = ginkgo.Describe("[Suite: service-definition] [OSD] NodeLabels", func() {
 			// Set it to a wildcard dedicated-admin
 			h.SetServiceAccount("system:serviceaccount:%s:dedicated-admin-cluster")
 
-			nodes, err := h.Kube().CoreV1().Nodes().List(metav1.ListOptions{})
+			nodes, err := h.Kube().CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{})
 			Expect(err).NotTo(HaveOccurred())
 			Expect(len(nodes.Items)).Should(BeNumerically(">", 0))
 
@@ -25,7 +26,7 @@ var _ = ginkgo.Describe("[Suite: service-definition] [OSD] NodeLabels", func() {
 
 			node.Labels["osde2e"] = "touched by osde2e"
 
-			_, err = h.Kube().CoreV1().Nodes().Update(&node)
+			_, err = h.Kube().CoreV1().Nodes().Update(context.TODO(), &node, metav1.UpdateOptions{})
 			Expect(err).To(HaveOccurred())
 		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
 	})

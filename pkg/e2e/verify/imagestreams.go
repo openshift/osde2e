@@ -1,6 +1,8 @@
 package verify
 
 import (
+	"context"
+
 	"github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
@@ -13,7 +15,7 @@ var _ = ginkgo.Describe("[Suite: e2e] ImageStreams", func() {
 	h := helper.New()
 
 	ginkgo.It("should exist in the cluster", func() {
-		list, err := h.Image().ImageV1().ImageStreams(metav1.NamespaceAll).List(metav1.ListOptions{})
+		list, err := h.Image().ImageV1().ImageStreams(metav1.NamespaceAll).List(context.TODO(), metav1.ListOptions{})
 		Expect(err).NotTo(HaveOccurred(), "couldn't list ImageStreams")
 		Expect(list).NotTo(BeNil())
 

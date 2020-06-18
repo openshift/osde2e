@@ -1,6 +1,8 @@
 package verify
 
 import (
+	"context"
+
 	"github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/spf13/viper"
@@ -112,11 +114,11 @@ func createUser(userName string, groups []string, h *helper.H) (*userv1.User, er
 		},
 		Groups: groups,
 	}
-	return h.User().UserV1().Users().Create(user)
+	return h.User().UserV1().Users().Create(context.TODO(), user, metav1.CreateOptions{})
 }
 
 func deleteUser(userName string, h *helper.H) error {
-	return h.User().UserV1().Users().Delete(userName, &metav1.DeleteOptions{})
+	return h.User().UserV1().Users().Delete(context.TODO(), userName, metav1.DeleteOptions{})
 }
 
 func createIdentity(idName string, providername string, providerUserName string, h *helper.H) (*userv1.Identity, error) {
@@ -127,9 +129,9 @@ func createIdentity(idName string, providername string, providerUserName string,
 		ProviderName:     providername,
 		ProviderUserName: providerUserName,
 	}
-	return h.User().UserV1().Identities().Create(identity)
+	return h.User().UserV1().Identities().Create(context.TODO(), identity, metav1.CreateOptions{})
 }
 
 func deleteIdentity(idName string, h *helper.H) error {
-	return h.User().UserV1().Identities().Delete(idName, &metav1.DeleteOptions{})
+	return h.User().UserV1().Identities().Delete(context.TODO(), idName, metav1.DeleteOptions{})
 }

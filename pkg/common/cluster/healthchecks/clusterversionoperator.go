@@ -1,6 +1,7 @@
 package healthchecks
 
 import (
+	"context"
 	"log"
 
 	v1 "github.com/openshift/api/config/v1"
@@ -11,7 +12,7 @@ import (
 // GetClusterVersionObject wlil get the cluster version object for the cluster.
 func GetClusterVersionObject(configClient configclient.ConfigV1Interface) (*v1.ClusterVersion, error) {
 	getOpts := metav1.GetOptions{}
-	return configClient.ClusterVersions().Get("version", getOpts)
+	return configClient.ClusterVersions().Get(context.TODO(), "version", getOpts)
 }
 
 // CheckCVOReadiness attempts to look at the state of the ClusterVersionOperator and returns true if things are healthy.

@@ -1,6 +1,7 @@
 package healthchecks
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"time"
@@ -31,7 +32,7 @@ func CheckCerts(secretClient v1.CoreV1Interface) (bool, error) {
 	listOpts := metav1.ListOptions{
 		LabelSelector: "certificate_request",
 	}
-	secrets, err := secretClient.Secrets("openshift-config").List(listOpts)
+	secrets, err := secretClient.Secrets("openshift-config").List(context.TODO(), listOpts)
 	if err != nil {
 		return false, fmt.Errorf("error trying to find issued certificate(s): %v", err)
 	}
