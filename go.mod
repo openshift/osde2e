@@ -27,12 +27,12 @@ require (
 	github.com/spf13/cobra v1.0.0
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.7.0
+	github.com/vmware-tanzu/velero v1.4.0
 	golang.org/x/net v0.0.0-20200226121028-0de0cce0169b
-	k8s.io/api v0.0.0-20191004102349-159aefb8556b
+	k8s.io/api v0.17.4
 	k8s.io/apimachinery v0.18.2
 	k8s.io/client-go v11.0.1-0.20191029005444-8e4128053008+incompatible
-	k8s.io/klog v1.0.0 // indirect
-	k8s.io/utils v0.0.0-20190712204705-3dccf664f023
+	k8s.io/utils v0.0.0-20191218082557-f07c713de883
 )
 
 replace (
