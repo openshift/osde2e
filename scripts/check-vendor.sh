@@ -26,7 +26,7 @@ cp "$MODULES_FILE" "$ORIG_MODULES"
 
 # Create a temporary commit
 git add "$ROOT_DIR" 2>&1
-if ! git commit -q --author="SD CI/CD Automation <sd-cicd@redhat.com>" -m "Temporary commit for vendor check." 2>&1
+if ! git commit -q --allow-empty --author="SD CI/CD Automation <sd-cicd@redhat.com>" -m "Temporary commit for vendor check." 2>&1
 then
 	echo "Unable to make a temporary commit."
 	exit 1
