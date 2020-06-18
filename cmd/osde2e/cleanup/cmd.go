@@ -77,7 +77,7 @@ func run(cmd *cobra.Command, argv []string) error {
 		if !cluster.ExpirationTimestamp().IsZero() && now.UTC().After(cluster.ExpirationTimestamp().UTC()) {
 			log.Printf("%s %s has expired. Deleting cluster...", cluster.ID(), cluster.Name())
 			if err := provider.DeleteCluster(cluster.ID()); err != nil {
-				return err
+				log.Printf("Error deleting cluster: %s", err.Error())
 			}
 		}
 	}
