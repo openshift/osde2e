@@ -3,6 +3,7 @@ package ocmprovider
 import (
 	"fmt"
 	"log"
+	"math/rand"
 	"os/user"
 	"strings"
 	"time"
@@ -54,6 +55,20 @@ func (o *OCMProvider) LaunchCluster() (string, error) {
 
 	multiAZ := viper.GetBool(config.Cluster.MultiAZ)
 	computeMachineType := viper.GetString(ComputeMachineType)
+	region := viper.GetString(config.CloudProvider.Region)
+	cloudProvider := viper.GetString(config.CloudProvider.CloudProviderID)
+
+	// If a region is set to "random", it will poll OCM for all the regions available
+	// It then will pull a random entry from the list of regions and set the ID to that
+	if region == "random" {
+		regionsClient := o.conn.ClustersMgmt().V1().CloudProviders().CloudProvider(cloudProvider).Regions().List()
+		regions, err := regionsClient.Send()
+		if err != nil {
+			return "", err
+		}
+
+		region = regions.Items().Slice()[rand.Intn(regions.Total())].ID()
+	}
 
 	nodeBuilder := &v1.ClusterNodesBuilder{}
 
@@ -62,12 +77,12 @@ func (o *OCMProvider) LaunchCluster() (string, error) {
 		Flavour(v1.NewFlavour().
 			ID(flavourID)).
 		Region(v1.NewCloudRegion().
-			ID(viper.GetString(config.CloudProvider.Region))).
+			ID(region)).
 		MultiAZ(multiAZ).
 		Version(v1.NewVersion().
 			ID(viper.GetString(config.Cluster.Version))).
 		CloudProvider(v1.NewCloudProvider().
-			ID(viper.GetString(config.CloudProvider.CloudProviderID))).
+			ID(cloudProvider)).
 		ExpirationTimestamp(expiration).
 		Properties(map[string]string{
 			MadeByOSDe2e: "true",
