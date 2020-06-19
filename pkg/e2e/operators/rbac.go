@@ -1,6 +1,7 @@
 package operators
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/onsi/ginkgo"
@@ -53,7 +54,7 @@ func checkSubjectPermissions(h *helper.H, spName string) {
 			Expect(err).NotTo(HaveOccurred())
 
 			for _, clusterRoleName := range clusterRoles {
-				_, err := h.Kube().RbacV1().ClusterRoles().Get(clusterRoleName, metav1.GetOptions{})
+				_, err := h.Kube().RbacV1().ClusterRoles().Get(context.TODO(), clusterRoleName, metav1.GetOptions{})
 				Expect(err).ToNot(HaveOccurred(), "failed to get clusterRole %v\n", clusterRoleName)
 			}
 
@@ -74,7 +75,7 @@ func getSubjectPermissionRBACInfo(h *helper.H, spName string) ([]string, []strin
 	us, err := h.Dynamic().Resource(schema.GroupVersionResource{
 		Group:    "managed.openshift.io",
 		Version:  "v1alpha1",
-		Resource: "subjectpermissions"}).Namespace(operatorNamespace).Get(spName, metav1.GetOptions{})
+		Resource: "subjectpermissions"}).Namespace(operatorNamespace).Get(context.TODO(), spName, metav1.GetOptions{})
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("Error getting %s SubjectPermission", spName)
 	}

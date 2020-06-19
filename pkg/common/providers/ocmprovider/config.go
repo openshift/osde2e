@@ -1,6 +1,7 @@
 package ocmprovider
 
 import (
+	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/spf13/viper"
 )
 
@@ -16,11 +17,15 @@ const (
 
 	// NumRetries is the number of times to retry each OCM call.
 	NumRetries = "ocm.numRetries"
+
+	// ComputeMachineType is the specific cloud machine type to use for compute nodes.
+	ComputeMachineType = "ocm.computeMachineType"
 )
 
 func init() {
 	// ----- OCM -----
 	viper.BindEnv(Token, "OCM_TOKEN")
+	config.RegisterSecret(Token, "ocm-refresh-token")
 
 	viper.SetDefault(Env, "prod")
 	viper.BindEnv(Env, "OSD_ENV")
@@ -30,4 +35,7 @@ func init() {
 
 	viper.SetDefault(NumRetries, 3)
 	viper.BindEnv(NumRetries, "NUM_RETRIES")
+
+	viper.SetDefault(ComputeMachineType, "")
+	viper.BindEnv(ComputeMachineType, "OCM_COMPUTE_MACHINE_TYPE")
 }

@@ -3,6 +3,7 @@ package ocmprovider
 import (
 	"fmt"
 	"log"
+	"math/rand"
 	"os/user"
 	"strings"
 	"time"
@@ -53,18 +54,35 @@ func (o *OCMProvider) LaunchCluster() (string, error) {
 	}
 
 	multiAZ := viper.GetBool(config.Cluster.MultiAZ)
+	computeMachineType := viper.GetString(ComputeMachineType)
+	region := viper.GetString(config.CloudProvider.Region)
+	cloudProvider := viper.GetString(config.CloudProvider.CloudProviderID)
+
+	// If a region is set to "random", it will poll OCM for all the regions available
+	// It then will pull a random entry from the list of regions and set the ID to that
+	if region == "random" {
+		regionsClient := o.conn.ClustersMgmt().V1().CloudProviders().CloudProvider(cloudProvider).Regions().List()
+		regions, err := regionsClient.Send()
+		if err != nil {
+			return "", err
+		}
+
+		region = regions.Items().Slice()[rand.Intn(regions.Total())].ID()
+	}
+
+	nodeBuilder := &v1.ClusterNodesBuilder{}
 
 	newCluster := v1.NewCluster().
 		Name(clusterName).
 		Flavour(v1.NewFlavour().
 			ID(flavourID)).
 		Region(v1.NewCloudRegion().
-			ID(viper.GetString(config.CloudProvider.Region))).
+			ID(region)).
 		MultiAZ(multiAZ).
 		Version(v1.NewVersion().
 			ID(viper.GetString(config.Cluster.Version))).
 		CloudProvider(v1.NewCloudProvider().
-			ID(viper.GetString(config.CloudProvider.CloudProviderID))).
+			ID(cloudProvider)).
 		ExpirationTimestamp(expiration).
 		Properties(map[string]string{
 			MadeByOSDe2e: "true",
@@ -75,12 +93,16 @@ func (o *OCMProvider) LaunchCluster() (string, error) {
 	// We must manually configure the number of compute nodes
 	// Currently set to 9 nodes. Whatever it is, must be divisible by 3.
 	if multiAZ {
-		numNodes := &v1.ClusterNodesBuilder{}
-
-		newCluster = newCluster.
-			Nodes(numNodes.Compute(9)).
-			MultiAZ(viper.GetBool(config.Cluster.MultiAZ))
+		nodeBuilder = nodeBuilder.Compute(9)
+		newCluster = newCluster.MultiAZ(viper.GetBool(config.Cluster.MultiAZ))
 	}
+
+	if computeMachineType != "" {
+		machineType := &v1.MachineTypeBuilder{}
+		nodeBuilder = nodeBuilder.ComputeMachineType(machineType.ID(computeMachineType))
+	}
+
+	newCluster = newCluster.Nodes(nodeBuilder)
 
 	IDsAtCreationString := viper.GetString(config.Addons.IDsAtCreation)
 	if len(IDsAtCreationString) > 0 {
@@ -217,76 +239,41 @@ func (o *OCMProvider) ScaleCluster(clusterID string, numComputeNodes int) error 
 	return nil
 }
 
+// ListClusters returns a list of clusters filtered on key/value pairs
+func (o *OCMProvider) ListClusters(query string) ([]*spi.Cluster, error) {
+	var clusters []*spi.Cluster
+	clusterListRequest := o.conn.ClustersMgmt().V1().Clusters().List()
+
+	response, err := clusterListRequest.Search(query).Send()
+
+	if err != nil {
+		return nil, err
+	}
+
+	for _, cluster := range response.Items().Slice() {
+		spiCluster, err := o.ocmToSPICluster(cluster)
+		if err != nil {
+			return nil, err
+		}
+		clusters = append(clusters, spiCluster)
+	}
+
+	return clusters, nil
+}
+
 // GetCluster returns a cluster from OCM.
 func (o *OCMProvider) GetCluster(clusterID string) (*spi.Cluster, error) {
-	var resp *v1.ClusterGetResponse
-
 	ocmCluster, err := o.getOCMCluster(clusterID)
-
 	if err != nil {
 		return nil, err
 	}
 
-	cluster := spi.NewClusterBuilder().
-		Name(ocmCluster.Name()).
-		Region(ocmCluster.Region().ID()).
-		Flavour(ocmCluster.Flavour().ID())
-
-	if id, ok := ocmCluster.GetID(); ok {
-		cluster.ID(id)
-	}
-
-	if version, ok := ocmCluster.GetVersion(); ok {
-		cluster.Version(version.ID())
-	}
-
-	if cloudProvider, ok := ocmCluster.GetCloudProvider(); ok {
-		cluster.CloudProvider(cloudProvider.ID())
-	}
-
-	if state, ok := ocmCluster.GetState(); ok {
-		cluster.State(ocmStateToInternalState(state))
-	}
-
-	var addonsResp *v1.AddOnInstallationsListResponse
-	err = retryer().Do(func() error {
-		var err error
-		addonsResp, err = o.conn.ClustersMgmt().V1().Clusters().Cluster(clusterID).Addons().
-			List().
-			Send()
-
-		if err != nil {
-			err = fmt.Errorf("couldn't retrieve addons for cluster '%s': %v", clusterID, err)
-			log.Printf("%v", err)
-			return err
-		}
-
-		if addonsResp != nil && addonsResp.Error() != nil {
-			log.Printf("error while trying to retrieve addons list for cluster: %v", err)
-			return errResp(resp.Error())
-		}
-
-		return nil
-	})
-
+	cluster, err := o.ocmToSPICluster(ocmCluster)
 	if err != nil {
 		return nil, err
 	}
 
-	if addonsResp.Error() != nil {
-		return nil, addonsResp.Error()
-	}
-
-	if addons, ok := addonsResp.GetItems(); ok {
-		addons.Each(func(addon *v1.AddOnInstallation) bool {
-			cluster.AddAddon(addon.ID())
-			return true
-		})
-	}
-
-	cluster.NumComputeNodes(ocmCluster.Nodes().Compute())
-
-	return cluster.Build(), nil
+	return cluster, nil
 }
 
 func (o *OCMProvider) getOCMCluster(clusterID string) (*v1.Cluster, error) {
@@ -565,6 +552,73 @@ func (o *OCMProvider) InstallAddons(clusterID string, addonIDs []string) (num in
 	}
 
 	return num, nil
+}
+
+func (o *OCMProvider) ocmToSPICluster(ocmCluster *v1.Cluster) (*spi.Cluster, error) {
+	var err error
+	var resp *v1.ClusterGetResponse
+
+	cluster := spi.NewClusterBuilder().
+		Name(ocmCluster.Name()).
+		Region(ocmCluster.Region().ID()).
+		Flavour(ocmCluster.Flavour().ID())
+
+	if id, ok := ocmCluster.GetID(); ok {
+		cluster.ID(id)
+	}
+
+	if version, ok := ocmCluster.GetVersion(); ok {
+		cluster.Version(version.ID())
+	}
+
+	if cloudProvider, ok := ocmCluster.GetCloudProvider(); ok {
+		cluster.CloudProvider(cloudProvider.ID())
+	}
+
+	if state, ok := ocmCluster.GetState(); ok {
+		cluster.State(ocmStateToInternalState(state))
+	}
+
+	var addonsResp *v1.AddOnInstallationsListResponse
+	err = retryer().Do(func() error {
+		var err error
+		addonsResp, err = o.conn.ClustersMgmt().V1().Clusters().Cluster(ocmCluster.ID()).Addons().
+			List().
+			Send()
+
+		if err != nil {
+			err = fmt.Errorf("couldn't retrieve addons for cluster '%s': %v", ocmCluster.ID(), err)
+			log.Printf("%v", err)
+			return err
+		}
+
+		if addonsResp != nil && addonsResp.Error() != nil {
+			log.Printf("error while trying to retrieve addons list for cluster: %v", err)
+			return errResp(resp.Error())
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	if addonsResp.Error() != nil {
+		return nil, addonsResp.Error()
+	}
+
+	if addons, ok := addonsResp.GetItems(); ok {
+		addons.Each(func(addon *v1.AddOnInstallation) bool {
+			cluster.AddAddon(addon.ID())
+			return true
+		})
+	}
+
+	cluster.ExpirationTimestamp(ocmCluster.ExpirationTimestamp())
+	cluster.NumComputeNodes(ocmCluster.Nodes().Compute())
+
+	return cluster.Build(), nil
 }
 
 func ocmStateToInternalState(state v1.ClusterState) spi.ClusterState {

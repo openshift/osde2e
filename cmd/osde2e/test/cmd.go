@@ -34,6 +34,7 @@ var Cmd = &cobra.Command{
 var args struct {
 	configString     string
 	customConfig     string
+	secretLocations  string
 	clusterID        string
 	environment      string
 	kubeConfig       string
@@ -58,6 +59,12 @@ func init() {
 		"custom-config",
 		"",
 		"Custom config file for osde2e",
+	)
+	pfs.StringVar(
+		&args.secretLocations,
+		"secret-locations",
+		"",
+		"A comma separated list of possible secret directory locations for loading secret configs.",
 	)
 	pfs.StringVarP(
 		&args.clusterID,
@@ -123,7 +130,7 @@ func init() {
 }
 
 func run(cmd *cobra.Command, argv []string) error {
-	if err := common.LoadConfigs(args.configString, args.customConfig); err != nil {
+	if err := common.LoadConfigs(args.configString, args.customConfig, args.secretLocations); err != nil {
 		return fmt.Errorf("error loading initial state: %v", err)
 	}
 
@@ -131,5 +138,5 @@ func run(cmd *cobra.Command, argv []string) error {
 		return nil
 	}
 
-	return fmt.Errorf("Testing failed.")
+	return fmt.Errorf("testing failed")
 }

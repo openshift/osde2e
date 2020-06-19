@@ -11,7 +11,9 @@ import (
 	// The root import needs to happen before importing the rest of osde2e, as this is what imports the various assets.
 	_ "github.com/openshift/osde2e"
 
+	"github.com/openshift/osde2e/cmd/osde2e/alert"
 	"github.com/openshift/osde2e/cmd/osde2e/arguments"
+	"github.com/openshift/osde2e/cmd/osde2e/cleanup"
 	"github.com/openshift/osde2e/cmd/osde2e/completion"
 	"github.com/openshift/osde2e/cmd/osde2e/query"
 	"github.com/openshift/osde2e/cmd/osde2e/test"
@@ -22,8 +24,8 @@ import (
 )
 
 var root = &cobra.Command{
-	Use:  "osde2e",
-	Long: "Command line tool for osde2e.",
+	Use:           "osde2e",
+	Long:          "Command line tool for osde2e.",
 	SilenceErrors: true,
 	SilenceUsage:  true,
 	PersistentPreRun: func(cmd *cobra.Command, argv []string) {
@@ -44,6 +46,8 @@ func init() {
 	root.AddCommand(test.Cmd)
 	root.AddCommand(query.Cmd)
 	root.AddCommand(completion.Cmd)
+	root.AddCommand(alert.Cmd)
+	root.AddCommand(cleanup.Cmd)
 
 }
 
@@ -90,7 +94,7 @@ func selfUpdate() {
 	// Exec with update=false, which will prevent recursive updates.
 	filteredCmdArgs := make([]string, 0)
 	for _, arg := range os.Args {
-		if ! strings.Contains(arg,"-update") {
+		if !strings.Contains(arg, "-update") {
 			filteredCmdArgs = append(filteredCmdArgs, arg)
 		}
 	}

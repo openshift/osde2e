@@ -1,6 +1,7 @@
 package runner
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -35,13 +36,13 @@ func (r *Runner) createService(pod *kubev1.Pod) (svc *kubev1.Service, err error)
 		}
 	}
 
-	return r.Kube.CoreV1().Services(r.Namespace).Create(&kubev1.Service{
+	return r.Kube.CoreV1().Services(r.Namespace).Create(context.TODO(), &kubev1.Service{
 		ObjectMeta: r.meta(),
 		Spec: kubev1.ServiceSpec{
 			Selector: pod.Labels,
 			Ports:    ports,
 		},
-	})
+	}, metav1.CreateOptions{})
 }
 
 // waitForCompletion will wait for a runner's pod to have a valid v1.Endpoint available
@@ -49,7 +50,7 @@ func (r *Runner) waitForCompletion(podName string, timeoutInSeconds int) error {
 	var endpoints *kubev1.Endpoints
 	var pendingCount int = 0
 	return wait.PollImmediate(slowPoll, time.Duration(timeoutInSeconds)*time.Second, func() (done bool, err error) {
-		endpoints, err = r.Kube.CoreV1().Endpoints(r.svc.Namespace).Get(r.svc.Name, metav1.GetOptions{})
+		endpoints, err = r.Kube.CoreV1().Endpoints(r.svc.Namespace).Get(context.TODO(), r.svc.Name, metav1.GetOptions{})
 		if err != nil && !kerror.IsNotFound(err) {
 			r.Printf("Encountered error getting endpoint '%s/%s': %v", r.svc.Namespace, r.svc.Name, err)
 		} else if endpoints != nil {
@@ -59,7 +60,7 @@ func (r *Runner) waitForCompletion(podName string, timeoutInSeconds int) error {
 				}
 			}
 		}
-		pod, err := r.Kube.CoreV1().Pods(r.svc.Namespace).Get(podName, metav1.GetOptions{})
+		pod, err := r.Kube.CoreV1().Pods(r.svc.Namespace).Get(context.TODO(), podName, metav1.GetOptions{})
 		if err != nil {
 			r.Printf("Encountered error getting pod: %v", err)
 			return false, err
@@ -73,7 +74,7 @@ func (r *Runner) waitForCompletion(podName string, timeoutInSeconds int) error {
 			for _, containerStatus := range pod.Status.ContainerStatuses {
 				if containerStatus.State.Terminated != nil {
 					if containerStatus.State.Terminated.ExitCode != 0 {
-						multierror.Append(fmt.Errorf("container %s failed, please refer to artifacts for results", containerStatus.Name))
+						err = multierror.Append(err, fmt.Errorf("container %s failed, please refer to artifacts for results", containerStatus.Name))
 					}
 				}
 			}
@@ -91,7 +92,7 @@ func (r *Runner) waitForCompletion(podName string, timeoutInSeconds int) error {
 }
 
 func (r *Runner) getAllLogsFromPod(podName string) error {
-	pod, err := r.Kube.CoreV1().Pods(r.svc.Namespace).Get(podName, metav1.GetOptions{})
+	pod, err := r.Kube.CoreV1().Pods(r.svc.Namespace).Get(context.TODO(), podName, metav1.GetOptions{})
 
 	if err != nil {
 		return err
@@ -103,10 +104,10 @@ func (r *Runner) getAllLogsFromPod(podName string) error {
 			log.Printf("Trying to get logs for %s:%s", podName, containerStatus.Name)
 			request := r.Kube.CoreV1().Pods(r.svc.Namespace).GetLogs(podName, &kubev1.PodLogOptions{Container: containerStatus.Name})
 
-			logStream, err := request.Stream()
+			logStream, err := request.Stream(context.TODO())
 
 			if err != nil {
-				multierror.Append(allErrors, err)
+				allErrors = multierror.Append(allErrors, err)
 				return
 			}
 
@@ -115,20 +116,20 @@ func (r *Runner) getAllLogsFromPod(podName string) error {
 			logBytes, err := ioutil.ReadAll(logStream)
 
 			if err != nil {
-				multierror.Append(allErrors, err)
+				allErrors = multierror.Append(allErrors, err)
 				return
 			}
 
 			configMapDirectory := filepath.Join(viper.GetString(config.ReportDir), viper.GetString(config.Phase), containerLogs)
 
 			if err := os.MkdirAll(configMapDirectory, os.FileMode(0755)); err != nil {
-				multierror.Append(allErrors, err)
+				allErrors = multierror.Append(allErrors, err)
 				return
 			}
 
 			logOutput := filepath.Join(configMapDirectory, fmt.Sprintf("%s-%s.log", podName, containerStatus.Name))
 
-			multierror.Append(allErrors, ioutil.WriteFile(logOutput, logBytes, os.FileMode(0644)))
+			allErrors = multierror.Append(allErrors, ioutil.WriteFile(logOutput, logBytes, os.FileMode(0644)))
 		}()
 	}
 

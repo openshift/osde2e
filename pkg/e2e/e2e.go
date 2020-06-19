@@ -7,6 +7,8 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
+	"github.com/openshift/osde2e/pkg/e2e/routemonitors"
+	vegeta "github.com/tsenart/vegeta/lib"
 	"io/ioutil"
 	"log"
 	"math"
@@ -140,6 +142,11 @@ func runGinkgoTests() error {
 	testsPassed := runTestsInPhase(phase.InstallPhase, "OSD e2e suite")
 	upgradeTestsPassed := true
 
+	var routeMonitorChan chan struct{}
+	if viper.GetBool(config.Upgrade.MonitorRoutesDuringUpgrade) {
+		routeMonitorChan = setupRouteMonitors()
+	}
+
 	// upgrade cluster if requested
 	if viper.GetString(config.Upgrade.Image) != "" || viper.GetString(config.Upgrade.ReleaseName) != "" {
 		if len(viper.GetString(config.Kubeconfig.Contents)) > 0 {
@@ -182,6 +189,10 @@ func runGinkgoTests() error {
 				}
 			}
 		}
+	}
+
+	if viper.GetBool(config.Upgrade.MonitorRoutesDuringUpgrade) {
+		close(routeMonitorChan)
 	}
 
 	if viper.GetBool(config.Cluster.DestroyAfterTest) {
@@ -478,4 +489,55 @@ func uploadFileToMetricsBucket(filename string) error {
 	}
 
 	return aws.WriteToS3(aws.CreateS3URL(viper.GetString(config.Tests.MetricsBucket), "incoming", filepath.Base(filename)), data)
+}
+
+// setupRouteMonitors initializes performance+availability monitoring of cluster routes,
+// returning a channel which can be used to terminate the monitoring.
+func setupRouteMonitors() chan struct{} {
+	routeMonitorChan := make(chan struct{})
+	go func() {
+		// Set up the route monitors
+		routeMonitors, err := routemonitors.Create()
+		if err != nil {
+			log.Printf("Error creating route monitors: %v\n", err)
+			return
+		}
+
+		// Set the route monitors to become active
+		routeMonitors.Start()
+
+		// Set up ongoing monitoring of metric gathering from the monitors
+		go func() {
+			// Create an aggregate channel of all individual metric channels
+			agg := make(chan *vegeta.Result)
+			for _, ch := range routeMonitors.Monitors {
+				go func(c <-chan *vegeta.Result) {
+					for msg := range c {
+						agg <- msg
+					}
+				}(ch)
+			}
+			for {
+				select {
+				// A metric is waiting for storage
+				case msg := <-agg:
+					routeMonitors.Metrics[msg.Attack].Add(msg)
+					routeMonitors.Plots[msg.Attack].Add(msg)
+				}
+			}
+		}()
+
+		// Close down route monitoring when signalled to
+		for {
+			select {
+			case <-routeMonitorChan:
+				routeMonitors.End()
+				routeMonitors.SaveReports(viper.GetString(config.ReportDir))
+				routeMonitors.SavePlots(viper.GetString(config.ReportDir))
+				routeMonitors.StoreMetadata()
+				return
+			}
+		}
+	}()
+	return routeMonitorChan
 }

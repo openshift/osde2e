@@ -1,6 +1,7 @@
 package verify
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"time"
@@ -116,7 +117,7 @@ var _ = ginkgo.Describe("[Suite: informing] [OSD] namespace validating webhook",
 
 			wait.PollImmediate(2*time.Second, 2*time.Minute, func() (bool, error) {
 				for _, ns := range namespacesToCheck {
-					namespace, _ := h.Kube().CoreV1().Namespaces().Get(ns, metav1.GetOptions{})
+					namespace, _ := h.Kube().CoreV1().Namespaces().Get(context.TODO(), ns, metav1.GetOptions{})
 					if namespace != nil && namespace.Status.Phase == "Terminating" {
 						return false, nil
 					}
@@ -184,7 +185,7 @@ var _ = ginkgo.Describe("[Suite: informing] [OSD] namespace validating webhook",
 })
 
 func createGroup(groupName string, h *helper.H) (*userv1.Group, error) {
-	group, err := h.User().UserV1().Groups().Get(groupName, metav1.GetOptions{})
+	group, err := h.User().UserV1().Groups().Get(context.TODO(), groupName, metav1.GetOptions{})
 	if group != nil && err == nil {
 		return group, err
 	}
@@ -194,12 +195,12 @@ func createGroup(groupName string, h *helper.H) (*userv1.Group, error) {
 			Name: groupName,
 		},
 	}
-	return h.User().UserV1().Groups().Create(group)
+	return h.User().UserV1().Groups().Create(context.TODO(), group, metav1.CreateOptions{})
 }
 
 func deleteGroup(groupName string, h *helper.H) error {
 	log.Printf("Deleting group for namespace validation webhook (%s)", groupName)
-	return h.User().UserV1().Groups().Delete(groupName, &metav1.DeleteOptions{})
+	return h.User().UserV1().Groups().Delete(context.TODO(), groupName, metav1.DeleteOptions{})
 }
 
 func updateNamespace(namespace string, asUser string, userGroup string, h *helper.H) error {
@@ -208,7 +209,7 @@ func updateNamespace(namespace string, asUser string, userGroup string, h *helpe
 	h.Impersonate(rest.ImpersonationConfig{})
 
 	// Verify the namespace already exists
-	ns, err := h.Kube().CoreV1().Namespaces().Get(namespace, metav1.GetOptions{})
+	ns, err := h.Kube().CoreV1().Namespaces().Get(context.TODO(), namespace, metav1.GetOptions{})
 	if err != nil {
 		return fmt.Errorf("failed to find namespace to update '%s': %v", namespace, err)
 	}
@@ -224,7 +225,7 @@ func updateNamespace(namespace string, asUser string, userGroup string, h *helpe
 		UserName: asUser,
 		Groups:   userGroups,
 	})
-	_, err = h.Kube().CoreV1().Namespaces().Update(ns)
+	_, err = h.Kube().CoreV1().Namespaces().Update(context.TODO(), ns, metav1.UpdateOptions{})
 
 	// reset impersonation
 	h.Impersonate(rest.ImpersonationConfig{})
@@ -234,7 +235,7 @@ func updateNamespace(namespace string, asUser string, userGroup string, h *helpe
 
 func deleteNamespace(namespace string, waitForDelete bool, h *helper.H) error {
 	log.Printf("Deleting namespace for namespace validation webhook (%s)", namespace)
-	err := h.Kube().CoreV1().Namespaces().Delete(namespace, &metav1.DeleteOptions{})
+	err := h.Kube().CoreV1().Namespaces().Delete(context.TODO(), namespace, metav1.DeleteOptions{})
 	if err != nil {
 		return fmt.Errorf("failed to delete namespace '%s': %v", namespace, err)
 	}
@@ -242,7 +243,7 @@ func deleteNamespace(namespace string, waitForDelete bool, h *helper.H) error {
 	// Deleting a namespace can take a while. If desired, wait for the namespace to delete before returning.
 	if waitForDelete {
 		err = wait.PollImmediate(2*time.Second, 1*time.Minute, func() (bool, error) {
-			ns, _ := h.Kube().CoreV1().Namespaces().Get(namespace, metav1.GetOptions{})
+			ns, _ := h.Kube().CoreV1().Namespaces().Get(context.TODO(), namespace, metav1.GetOptions{})
 			if ns != nil && ns.Status.Phase == "Terminating" {
 				return false, nil
 			}
@@ -256,7 +257,7 @@ func deleteNamespace(namespace string, waitForDelete bool, h *helper.H) error {
 func createNamespace(namespace string, h *helper.H) (*v1.Namespace, error) {
 
 	// If the namespace already exists, we don't need to create it. Just return.
-	ns, err := h.Kube().CoreV1().Namespaces().Get(namespace, metav1.GetOptions{})
+	ns, err := h.Kube().CoreV1().Namespaces().Get(context.TODO(), namespace, metav1.GetOptions{})
 	if ns != nil && ns.Status.Phase != "Terminating" && err == nil {
 		return ns, err
 	}
@@ -267,11 +268,11 @@ func createNamespace(namespace string, h *helper.H) (*v1.Namespace, error) {
 			Name: namespace,
 		},
 	}
-	h.Kube().CoreV1().Namespaces().Create(ns)
+	h.Kube().CoreV1().Namespaces().Create(context.TODO(), ns, metav1.CreateOptions{})
 
 	// Wait for the namespace to create. This is usually pretty quick.
 	err = wait.PollImmediate(2*time.Second, 1*time.Minute, func() (bool, error) {
-		if _, err := h.Kube().CoreV1().Namespaces().Get(namespace, metav1.GetOptions{}); err != nil {
+		if _, err := h.Kube().CoreV1().Namespaces().Get(context.TODO(), namespace, metav1.GetOptions{}); err != nil {
 			return false, nil
 		}
 		return true, nil

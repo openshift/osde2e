@@ -1,6 +1,7 @@
 package healthchecks
 
 import (
+	"context"
 	"fmt"
 	"log"
 
@@ -16,7 +17,7 @@ func CheckPodHealth(podClient v1.CoreV1Interface) (bool, error) {
 	log.Print("Checking that all Pods are running or completed...")
 
 	listOpts := metav1.ListOptions{}
-	list, err := podClient.Pods(metav1.NamespaceAll).List(listOpts)
+	list, err := podClient.Pods(metav1.NamespaceAll).List(context.TODO(), listOpts)
 	if err != nil {
 		return false, fmt.Errorf("error getting pod list: %v", err)
 	}

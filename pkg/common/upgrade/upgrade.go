@@ -2,6 +2,7 @@
 package upgrade
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"strings"
@@ -103,7 +104,7 @@ func TriggerUpgrade(h *helper.H) (*configv1.ClusterVersion, error) {
 
 	// get current Version
 	getOpts := metav1.GetOptions{}
-	cVersion, err = cfgClient.ConfigV1().ClusterVersions().Get(ClusterVersionName, getOpts)
+	cVersion, err = cfgClient.ConfigV1().ClusterVersions().Get(context.TODO(), ClusterVersionName, getOpts)
 	if err != nil {
 		return cVersion, fmt.Errorf("couldn't get current ClusterVersion '%s': %v", ClusterVersionName, err)
 	}
@@ -131,7 +132,7 @@ func TriggerUpgrade(h *helper.H) (*configv1.ClusterVersion, error) {
 				return cVersion, fmt.Errorf("unable to channel from version: %v", err)
 			}
 
-			cVersion, err = cfgClient.ConfigV1().ClusterVersions().Update(cVersion)
+			cVersion, err = cfgClient.ConfigV1().ClusterVersions().Update(context.TODO(), cVersion, metav1.UpdateOptions{})
 			if err != nil {
 				return cVersion, fmt.Errorf("couldn't update desired release channel: %v", err)
 			}
@@ -139,7 +140,7 @@ func TriggerUpgrade(h *helper.H) (*configv1.ClusterVersion, error) {
 			// https://github.com/openshift/managed-cluster-config/blob/master/scripts/cluster-upgrade.sh#L258
 			time.Sleep(15 * time.Second)
 
-			cVersion, err = cfgClient.ConfigV1().ClusterVersions().Get(ClusterVersionName, getOpts)
+			cVersion, err = cfgClient.ConfigV1().ClusterVersions().Get(context.TODO(), ClusterVersionName, getOpts)
 			if err != nil {
 				return cVersion, fmt.Errorf("couldn't get current ClusterVersion '%s' after updating release channel: %v", ClusterVersionName, err)
 			}
@@ -151,7 +152,7 @@ func TriggerUpgrade(h *helper.H) (*configv1.ClusterVersion, error) {
 		}
 	}
 
-	updatedCV, err := cfgClient.ConfigV1().ClusterVersions().Update(cVersion)
+	updatedCV, err := cfgClient.ConfigV1().ClusterVersions().Update(context.TODO(), cVersion, metav1.UpdateOptions{})
 	if err != nil {
 		return updatedCV, fmt.Errorf("couldn't update desired ClusterVersion: %v", err)
 	}
@@ -159,7 +160,7 @@ func TriggerUpgrade(h *helper.H) (*configv1.ClusterVersion, error) {
 	// wait for update acknowledgement
 	updateGeneration := updatedCV.Generation
 	if err = wait.PollImmediate(15*time.Second, 5*time.Minute, func() (bool, error) {
-		if cVersion, err = cfgClient.ConfigV1().ClusterVersions().Get(ClusterVersionName, getOpts); err != nil {
+		if cVersion, err = cfgClient.ConfigV1().ClusterVersions().Get(context.TODO(), ClusterVersionName, getOpts); err != nil {
 			return false, err
 		}
 		return cVersion.Status.ObservedGeneration >= updateGeneration, nil
@@ -174,7 +175,7 @@ func TriggerUpgrade(h *helper.H) (*configv1.ClusterVersion, error) {
 func IsUpgradeDone(h *helper.H, desired *configv1.Update) (done bool, msg string, err error) {
 	// retrieve current ClusterVersion
 	cfgClient, getOpts := h.Cfg(), metav1.GetOptions{}
-	cVersion, err := cfgClient.ConfigV1().ClusterVersions().Get(ClusterVersionName, getOpts)
+	cVersion, err := cfgClient.ConfigV1().ClusterVersions().Get(context.TODO(), ClusterVersionName, getOpts)
 	if err != nil {
 		log.Printf("error getting ClusterVersion '%s': %v", ClusterVersionName, err)
 	}

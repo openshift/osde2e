@@ -1,6 +1,7 @@
 package helper
 
 import (
+	"context"
 	"log"
 	"time"
 
@@ -14,7 +15,7 @@ import (
 func (h *H) WaitForPodPhase(pod *kubev1.Pod, target kubev1.PodPhase, n int, dur time.Duration) (phase kubev1.PodPhase) {
 	var err error
 	for i := 0; i < n; i++ {
-		if pod, err = h.Kube().CoreV1().Pods(pod.Namespace).Get(pod.Name, metav1.GetOptions{}); err != nil {
+		if pod, err = h.Kube().CoreV1().Pods(pod.Namespace).Get(context.TODO(), pod.Name, metav1.GetOptions{}); err != nil {
 			log.Println(err)
 		} else if pod != nil {
 			phase = pod.Status.Phase

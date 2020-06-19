@@ -1,9 +1,13 @@
 package workloads
 
 import (
+	"context"
 	"log"
 	"path/filepath"
 	"time"
+
+	v1 "github.com/openshift/api/route/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -40,6 +44,22 @@ var _ = ginkgo.Describe("[Suite: e2e] Workload ("+workloadName+")", func() {
 			// Log how many objects have been created
 			log.Printf("%v objects created", len(objects))
 
+			// Create an OpenShift route to go with it
+			appRoute := &v1.Route{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "guestbook",
+				},
+				Spec: v1.RouteSpec{
+					To: v1.RouteTargetReference{
+						Name: "frontend",
+					},
+					TLS: &v1.TLSConfig{Termination: "edge"},
+				},
+				Status: v1.RouteStatus{},
+			}
+			_, err = h.Route().RouteV1().Routes(h.CurrentProject()).Create(context.TODO(), appRoute, metav1.CreateOptions{})
+			Expect(err).NotTo(HaveOccurred(), "couldn't create application route")
+
 			// Give the cluster a second to churn before checking
 			time.Sleep(3 * time.Second)
 
@@ -63,6 +83,6 @@ var _ = ginkgo.Describe("[Suite: e2e] Workload ("+workloadName+")", func() {
 })
 
 func doTest(h *helper.H) {
-	_, err := h.Kube().CoreV1().Services(h.CurrentProject()).ProxyGet("http", "frontend", "3000", "/", nil).DoRaw()
+	_, err := h.Kube().CoreV1().Services(h.CurrentProject()).ProxyGet("http", "frontend", "3000", "/", nil).DoRaw(context.TODO())
 	Expect(err).NotTo(HaveOccurred(), "unable to access front end of app")
 }

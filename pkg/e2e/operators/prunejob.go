@@ -1,6 +1,7 @@
 package operators
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"time"
@@ -25,12 +26,12 @@ var _ = ginkgo.Describe("[Suite: operators] [OSD] Prune jobs", func() {
 		for _, cronJob := range cronJobs {
 			ginkgo.It(cronJob+" should run successfully", func() {
 				getOpts := metav1.GetOptions{}
-				cjob, err := h.Kube().BatchV1beta1().CronJobs(namespace).Get(cronJob, getOpts)
+				cjob, err := h.Kube().BatchV1beta1().CronJobs(namespace).Get(context.TODO(), cronJob, getOpts)
 				Expect(err).NotTo(HaveOccurred())
 				job := createJobFromCronJob(cjob)
-				job, err = h.Kube().BatchV1().Jobs(namespace).Create(job)
+				job, err = h.Kube().BatchV1().Jobs(namespace).Create(context.TODO(), job, metav1.CreateOptions{})
 				defer func() {
-					err = h.Kube().BatchV1().Jobs(namespace).Delete(job.Name, &metav1.DeleteOptions{})
+					err = h.Kube().BatchV1().Jobs(namespace).Delete(context.TODO(), job.Name, metav1.DeleteOptions{})
 					Expect(err).NotTo(HaveOccurred())
 				}()
 				Expect(err).NotTo(HaveOccurred())
@@ -76,7 +77,7 @@ func waitJobComplete(h *helper.H, namespace, jobName string) error {
 
 Loop:
 	for {
-		job, err = h.Kube().BatchV1().Jobs(namespace).Get(jobName, metav1.GetOptions{})
+		job, err = h.Kube().BatchV1().Jobs(namespace).Get(context.TODO(), jobName, metav1.GetOptions{})
 		elapsed := time.Since(start)
 
 		switch {

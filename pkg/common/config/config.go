@@ -2,6 +2,9 @@
 package config
 
 import (
+	"log"
+	"sync"
+
 	"github.com/spf13/viper"
 )
 
@@ -19,6 +22,9 @@ const (
 	// For example, https://storage.googleapis.com/origin-ci-test/logs/osde2e-prod-gcp-e2e-next/61/build-log.txt would be
 	// https://storage.googleapis.com/origin-ci-test/logs -- This is also our default
 	BaseJobURL = "baseJobURL"
+
+	// Artifacts is the artifacts location on prow. It is an alias for report dir.
+	Artifacts = "artifacts"
 
 	// ReportDir is the location JUnit XML results are written.
 	ReportDir = "reportDir"
@@ -42,6 +48,10 @@ const (
 	Project = "project"
 )
 
+// This is a config key to secret file mapping. We will attempt to read in from secret files before loading anything else.
+var keyToSecretMapping = map[string]string{}
+var keyToSecretMappingMutex = sync.Mutex{}
+
 // Upgrade config keys.
 var Upgrade = struct {
 	// UpgradeToCISIfPossible will upgrade to the most recent cluster image set if it's newer than the install version
@@ -64,6 +74,9 @@ var Upgrade = struct {
 
 	// UpgradeVersionEqualToInstallVersion is true if the install version and upgrade versions are the same.
 	UpgradeVersionEqualToInstallVersion string
+
+	// MonitorRoutesDuringUpgrade will monitor the availability of routes whilst an upgrade takes place
+	MonitorRoutesDuringUpgrade string
 }{
 	UpgradeToCISIfPossible:                "upgrade.upgradeToCISIfPossible",
 	OnlyUpgradeToZReleases:                "upgrade.onlyUpgradeToZReleases",
@@ -72,6 +85,7 @@ var Upgrade = struct {
 	ReleaseName:                           "upgrade.releaseName",
 	Image:                                 "upgrade.image",
 	UpgradeVersionEqualToInstallVersion:   "upgrade.upgradeVersionEqualToInstallVersion",
+	MonitorRoutesDuringUpgrade:            "upgrade.monitorRoutesDuringUpgrade",
 }
 
 // Kubeconfig config keys.
@@ -281,6 +295,13 @@ var Weather = struct {
 	JobWhitelist:             "weather.jobWhitelist",
 }
 
+var Alert = struct {
+	// SlackAPIToken is a bot slack token
+	SlackAPIToken string
+}{
+	SlackAPIToken: "alert.slackAPIToken",
+}
+
 func init() {
 	// Here's where we bind environment variables to config options and set defaults
 
@@ -297,6 +318,9 @@ func init() {
 
 	viper.SetDefault(BaseJobURL, "https://storage.googleapis.com/origin-ci-test/logs")
 	viper.BindEnv(BaseJobURL, "BASE_JOB_URL")
+
+	// ARTIFACTS and REPORT_DIR are basically the same, but ARTIFACTS is used on prow.
+	viper.BindEnv(Artifacts, "ARTIFACTS")
 
 	viper.BindEnv(ReportDir, "REPORT_DIR")
 
@@ -325,6 +349,9 @@ func init() {
 	viper.BindEnv(Upgrade.Image, "UPGRADE_IMAGE")
 
 	viper.SetDefault(Upgrade.UpgradeVersionEqualToInstallVersion, false)
+
+	viper.BindEnv(Upgrade.MonitorRoutesDuringUpgrade, "UPGRADE_MONITOR_ROUTES")
+	viper.SetDefault(Upgrade.MonitorRoutesDuringUpgrade, true)
 
 	// ----- Kubeconfig -----
 	viper.BindEnv(Kubeconfig.Path, "TEST_KUBECONFIG")
@@ -439,4 +466,29 @@ func init() {
 
 	viper.SetDefault(Weather.JobWhitelist, "osde2e-.*-aws-e2e-.*")
 	viper.BindEnv(Weather.JobWhitelist, "JOB_WHITELIST")
+
+	// ----- Alert ----
+	viper.BindEnv(Alert.SlackAPIToken, "SLACK_API_TOKEN")
+}
+
+// PostProcess is a variety of post-processing commands that is intended to be run after a config is loaded.
+func PostProcess() {
+	// Set REPORT_DIR to ARTIFACTS if ARTIFACTS is set.
+	artifacts := viper.GetString(Artifacts)
+	if artifacts != "" {
+		log.Printf("Found an ARTIFACTS directory, using that for the REPORT_DIR.")
+		viper.Set(ReportDir, artifacts)
+	}
+}
+
+// RegisterSecret will register the secret filename that will be used for the corresponding Viper string.
+func RegisterSecret(key string, secretFileName string) {
+	keyToSecretMappingMutex.Lock()
+	keyToSecretMapping[key] = secretFileName
+	keyToSecretMappingMutex.Unlock()
+}
+
+// GetAllSecrets will return Viper config keys and their corresponding secret filenames.
+func GetAllSecrets() map[string]string {
+	return keyToSecretMapping
 }

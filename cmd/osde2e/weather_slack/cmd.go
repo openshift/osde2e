@@ -2,6 +2,7 @@ package weather_slack
 
 import (
 	"fmt"
+
 	"github.com/openshift/osde2e/cmd/osde2e/common"
 	"github.com/openshift/osde2e/pkg/weather"
 	"github.com/spf13/cobra"
@@ -10,14 +11,15 @@ import (
 var Cmd = &cobra.Command{
 	Use:   "weather-report-to-slack",
 	Short: "Weather report to slack.",
-	Long: "Produces a report based on osde2e test runs and sends it to a Slack webhook.",
-	Args: cobra.OnlyValidArgs,
-	RunE: run,
+	Long:  "Produces a report based on osde2e test runs and sends it to a Slack webhook.",
+	Args:  cobra.OnlyValidArgs,
+	RunE:  run,
 }
 
 var args struct {
-	configString string
-	customConfig string
+	configString    string
+	customConfig    string
+	secretLocations string
 }
 
 func init() {
@@ -35,10 +37,16 @@ func init() {
 		"",
 		"Custom config file for osde2e",
 	)
+	flags.StringVar(
+		&args.secretLocations,
+		"secret-locations",
+		"",
+		"A comma separated list of possible secret directory locations for loading secret configs.",
+	)
 }
 
 func run(cmd *cobra.Command, argv []string) error {
-	if err := common.LoadConfigs(args.configString, args.customConfig); err != nil {
+	if err := common.LoadConfigs(args.configString, args.customConfig, args.secretLocations); err != nil {
 		return fmt.Errorf("error loading initial state: %v", err)
 	}
 

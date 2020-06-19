@@ -52,7 +52,7 @@ func GenerateDiff(baseURL, phase, dependencies, jobName string, jobID int) error
 
 // GenerateDependencies creates a list of images and the MCC hash
 func GenerateDependencies(kube kubernetes.Interface) (dependencies string, err error) {
-	pods, err := kube.CoreV1().Pods("").List(metav1.ListOptions{})
+	pods, err := kube.CoreV1().Pods("").List(context.TODO(), metav1.ListOptions{})
 	data := []string{}
 	if err != nil {
 		return "", err

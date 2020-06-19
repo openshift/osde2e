@@ -97,6 +97,11 @@ func (m *MockProvider) DeleteCluster(clusterID string) error {
 	return nil
 }
 
+// ListClusters mocks a list cluster operation.
+func (m *MockProvider) ListClusters(query string) ([]*spi.Cluster, error) {
+	return nil, nil
+}
+
 // GetCluster mocks a get cluster operation.
 func (m *MockProvider) GetCluster(clusterID string) (*spi.Cluster, error) {
 	if clusterID == "fail" {

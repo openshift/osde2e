@@ -2,12 +2,15 @@ package load
 
 import (
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/markbates/pkger"
+	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/spf13/viper"
 )
 
@@ -23,7 +26,7 @@ const (
 )
 
 // Configs will populate viper with specified configs.
-func Configs(configs []string, customConfig string) error {
+func Configs(configs []string, customConfig string, secretLocations []string) error {
 	// This used to be complicated, but now we just lean on Viper for everything.
 	// 1. Load pre-canned YAML configs.
 	for _, config := range configs {
@@ -39,6 +42,17 @@ func Configs(configs []string, customConfig string) error {
 			return fmt.Errorf("error loading custom config from YAML: %v", err)
 		}
 	}
+
+	// 3. Secrets. These will override all previous entries.
+	if len(secretLocations) > 0 {
+		secrets := config.GetAllSecrets()
+		for key, secretFilename := range secrets {
+			loadSecretFileIntoKey(key, secretFilename, secretLocations)
+		}
+	}
+
+	// 4. Config post-processing.
+	config.PostProcess()
 
 	return nil
 }
@@ -85,6 +99,26 @@ func loadYAMLFromFile(name string) error {
 
 	if err = viper.MergeConfig(fh); err != nil {
 		return err
+	}
+
+	return nil
+}
+
+// loadSecretFileIntoKey will attempt to load the contents of a secret file into the given key.
+// If the secret file doesn't exist, we'll skip this.
+func loadSecretFileIntoKey(key string, filename string, secretLocations []string) error {
+	for _, secretLocation := range secretLocations {
+		fullFilename := filepath.Join(secretLocation, filename)
+		stat, err := os.Stat(fullFilename)
+		if err == nil && !stat.IsDir() {
+			data, err := ioutil.ReadFile(fullFilename)
+			if err != nil {
+				return fmt.Errorf("error loading secret file %s from location %s", filename, secretLocation)
+			}
+			log.Printf("Found secret for key %s.", key)
+			viper.Set(key, strings.TrimSpace(string(data)))
+			return nil
+		}
 	}
 
 	return nil

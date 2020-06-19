@@ -77,6 +77,9 @@ func waitForClusterReadyWithOverrideAndExpectedNumberOfNodes(provider spi.Provid
 	if !viper.GetBool(config.Tests.SkipClusterHealthChecks) || overrideSkipCheck {
 		return wait.PollImmediate(30*time.Second, time.Duration(installTimeout)*time.Minute, func() (bool, error) {
 			cluster, err := provider.GetCluster(clusterID)
+			if err != nil {
+				return false, fmt.Errorf("Unable to fetch cluster details from provider: %s", err)
+			}
 
 			viper.Set(config.Cluster.State, cluster.State())
 			if err == nil && cluster != nil && cluster.State() == spi.ClusterStateReady {
@@ -156,27 +159,27 @@ func pollClusterHealth(provider spi.Provider, clusterID string) (status bool, er
 	switch provider.Type() {
 	case "ocm":
 		if check, err := healthchecks.CheckCVOReadiness(oscfg.ConfigV1()); !check || err != nil {
-			multierror.Append(healthErr, err)
+			healthErr = multierror.Append(healthErr, err)
 			clusterHealthy = false
 		}
 
 		if check, err := healthchecks.CheckNodeHealth(kubeClient.CoreV1()); !check || err != nil {
-			multierror.Append(healthErr, err)
+			healthErr = multierror.Append(healthErr, err)
 			clusterHealthy = false
 		}
 
 		if check, err := healthchecks.CheckOperatorReadiness(oscfg.ConfigV1()); !check || err != nil {
-			multierror.Append(healthErr, err)
+			healthErr = multierror.Append(healthErr, err)
 			clusterHealthy = false
 		}
 
 		if check, err := healthchecks.CheckPodHealth(kubeClient.CoreV1()); !check || err != nil {
-			multierror.Append(healthErr, err)
+			healthErr = multierror.Append(healthErr, err)
 			clusterHealthy = false
 		}
 
 		if check, err := healthchecks.CheckCerts(kubeClient.CoreV1()); !check || err != nil {
-			multierror.Append(healthErr, err)
+			healthErr = multierror.Append(healthErr, err)
 			clusterHealthy = false
 		}
 	default:

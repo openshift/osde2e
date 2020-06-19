@@ -12,9 +12,17 @@ import (
 	"github.com/spf13/viper"
 )
 
-// weatherRoundTripper is like api.DefaultRoundTripper with an added stripping of cert verification
+// CreateClient will create a Prometheus client based off of the global config.
+func CreateClient() (api.Client, error) {
+	return api.NewClient(api.Config{
+		Address:      viper.GetString(config.Prometheus.Address),
+		RoundTripper: WeatherRoundTripper,
+	})
+}
+
+// WeatherRoundTripper is like api.DefaultRoundTripper with an added stripping of cert verification
 // and adding the bearer token to the HTTP request
-var weatherRoundTripper http.RoundTripper = &http.Transport{
+var WeatherRoundTripper http.RoundTripper = &http.Transport{
 	Proxy: func(request *http.Request) (*url.URL, error) {
 		request.Header.Add("Authorization", "Bearer "+viper.GetString(config.Prometheus.BearerToken))
 		return http.ProxyFromEnvironment(request)
@@ -27,12 +35,4 @@ var weatherRoundTripper http.RoundTripper = &http.Transport{
 		InsecureSkipVerify: true,
 	},
 	TLSHandshakeTimeout: 10 * time.Second,
-}
-
-// CreateClient will create a Prometheus client based off of the global config.
-func CreateClient() (api.Client, error) {
-	return api.NewClient(api.Config{
-		Address:      viper.GetString(config.Prometheus.Address),
-		RoundTripper: weatherRoundTripper,
-	})
 }

@@ -1,6 +1,7 @@
 package operators
 
 import (
+	"context"
 	"log"
 
 	"github.com/onsi/ginkgo"
@@ -17,6 +18,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
+var blacklistedProviders = []string{"moa"}
+
 var _ = ginkgo.Describe("[Suite: operators] [OSD] Curator Operator", func() {
 	h := helper.New()
 	ginkgo.Context("operator source should be curated", func() {
@@ -24,6 +27,15 @@ var _ = ginkgo.Describe("[Suite: operators] [OSD] Curator Operator", func() {
 		ginkgo.It("we should use curated operator source", func() {
 			provider, err := providers.ClusterProvider()
 			Expect(err).NotTo(HaveOccurred(), "error getting cluster provider")
+
+			providerType := provider.Type()
+
+			for _, blacklistedType := range blacklistedProviders {
+				if providerType == blacklistedType {
+					ginkgo.Skip("MOA is not supported for the curator operator.")
+				}
+			}
+
 			currentClusterVersion, err := cluster.GetClusterVersion(provider, viper.GetString(config.Cluster.ID))
 			Expect(err).NotTo(HaveOccurred(), "error getting cluster version %s", viper.GetString(config.Cluster.Version))
 
@@ -33,7 +45,7 @@ var _ = ginkgo.Describe("[Suite: operators] [OSD] Curator Operator", func() {
 					Group:    "operators.coreos.com",
 					Version:  "v1",
 					Resource: "operatorsources",
-				}).List(listOpts)
+				}).List(context.TODO(), listOpts)
 
 				Expect(err).NotTo(HaveOccurred())
 

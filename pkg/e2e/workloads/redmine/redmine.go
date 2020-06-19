@@ -1,10 +1,14 @@
 package workloads
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"path/filepath"
 	"time"
+
+	v1 "github.com/openshift/api/route/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/openshift/osde2e/pkg/common/cluster/healthchecks"
 	"github.com/openshift/osde2e/pkg/common/config"
@@ -39,11 +43,8 @@ var _ = ginkgo.Describe("[Suite: e2e] Workload ("+workloadName+")", func() {
 
 		} else {
 			// Create all K8s objects that are within the testDir
-			objects, err := helper.ApplyYamlInFolder(testDir, h.CurrentProject(), h.Kube())
-			Expect(err).NotTo(HaveOccurred(), "couldn't apply k8s yaml")
-
-			// Log how many objects have been created
-			log.Printf("%v objects created", len(objects))
+			err := createWorkload(h)
+			Expect(err).NotTo(HaveOccurred(), "couldn't create workload")
 
 			// Give the cluster a second to churn before checking
 			time.Sleep(3 * time.Second)
@@ -67,6 +68,37 @@ var _ = ginkgo.Describe("[Suite: e2e] Workload ("+workloadName+")", func() {
 	}, float64(redmineTimeoutInSeconds))
 })
 
+func createWorkload(h *helper.H) error {
+	// Create all K8s objects that are within the testDir
+	objects, err := helper.ApplyYamlInFolder(testDir, h.CurrentProject(), h.Kube())
+	if err != nil {
+		return fmt.Errorf("couldn't apply k8s yaml")
+	}
+
+	// Log how many objects have been created from the workload yaml
+	log.Printf("%v objects created", len(objects))
+
+	// Create an OpenShift route to go with it
+	appRoute := &v1.Route{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "redmine",
+		},
+		Spec: v1.RouteSpec{
+			To: v1.RouteTargetReference{
+				Name: "redmine-frontend",
+			},
+			TLS: &v1.TLSConfig{Termination: "edge"},
+		},
+		Status: v1.RouteStatus{},
+	}
+	_, err = h.Route().RouteV1().Routes(h.CurrentProject()).Create(context.TODO(), appRoute, metav1.CreateOptions{})
+	if err != nil {
+		return fmt.Errorf("couldn't create application route: %v", err)
+	}
+
+	return nil
+}
+
 func doTest(h *helper.H) {
 
 	// track if error occurs
@@ -83,7 +115,7 @@ func doTest(h *helper.H) {
 
 Loop:
 	for {
-		_, err = h.Kube().CoreV1().Services(h.CurrentProject()).ProxyGet("http", "redmine-frontend", "3000", "/", nil).DoRaw()
+		_, err = h.Kube().CoreV1().Services(h.CurrentProject()).ProxyGet("http", "redmine-frontend", "3000", "/", nil).DoRaw(context.TODO())
 		elapsed := time.Since(start)
 
 		switch {
