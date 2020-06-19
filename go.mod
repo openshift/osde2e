@@ -6,8 +6,10 @@ require (
 	github.com/Masterminds/semver v1.5.0
 	github.com/adamliesko/retry v0.0.0-20200123222335-86c8baac277d
 	github.com/aws/aws-sdk-go v1.29.17
-	github.com/c2h5oh/datasize v0.0.0-20200112174442-28bbd4740fee // indirect
+	github.com/bmizerany/perks v0.0.0-20141205001514-d9a9656a3a4b // indirect
 	github.com/code-ready/crc v1.10.0
+	github.com/dgryski/go-gk v0.0.0-20200319235926-a69029f61654 // indirect
+	github.com/dgryski/go-lttb v0.0.0-20180810165845-318fcdf10a77 // indirect
 	github.com/emicklei/go-restful v2.9.6+incompatible
 	github.com/ghodss/yaml v1.0.0
 	github.com/google/go-github/v31 v31.0.0
@@ -29,6 +31,7 @@ require (
 	github.com/spf13/cobra v1.0.0
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.7.0
+	github.com/streadway/quantile v0.0.0-20150917103942-b0c588724d25 // indirect
 	github.com/tsenart/go-tsz v0.0.0-20180814235614-0bd30b3df1c3 // indirect
 	github.com/tsenart/vegeta v12.7.0+incompatible
 	golang.org/x/net v0.0.0-20200226121028-0de0cce0169b
