@@ -1,6 +1,7 @@
 package operators
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -45,7 +46,7 @@ func checkVeleroBackups(h *helper.H) {
 				us, err := h.Dynamic().Resource(schema.GroupVersionResource{
 					Group:    "velero.io",
 					Version:  "v1",
-					Resource: "backups"}).Namespace(operatorNamespace).List(metav1.ListOptions{})
+					Resource: "backups"}).Namespace(operatorNamespace).List(context.TODO(), metav1.ListOptions{})
 				if err != nil {
 					return false, fmt.Errorf("Error getting backups: %s", err.Error())
 				}
