@@ -25,11 +25,12 @@ var Cmd = &cobra.Command{
 }
 
 var args struct {
-	configString string
-	customConfig string
-	clusterID    string
-	environment  string
-	kubeConfig   string
+	configString    string
+	customConfig    string
+	secretLocations string
+	clusterID       string
+	environment     string
+	kubeConfig      string
 }
 
 func init() {
@@ -46,6 +47,12 @@ func init() {
 		"custom-config",
 		"",
 		"Custom config file for osde2e",
+	)
+	pfs.StringVar(
+		&args.secretLocations,
+		"secret-locations",
+		"",
+		"A comma separated list of possible secret directory locations for loading secret configs.",
 	)
 	pfs.StringVarP(
 		&args.clusterID,
@@ -78,7 +85,7 @@ func init() {
 
 func run(cmd *cobra.Command, argv []string) error {
 	fmt.Println("You've entered the create command")
-	if err := common.LoadConfigs(args.configString, args.customConfig); err != nil {
+	if err := common.LoadConfigs(args.configString, args.customConfig, args.secretLocations); err != nil {
 		return fmt.Errorf("error loading initial state: %v", err)
 	}
 

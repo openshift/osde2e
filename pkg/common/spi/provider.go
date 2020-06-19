@@ -1,7 +1,9 @@
 // Package spi defines the service provider interface for cluster providers.
 package spi
 
-import clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
+import (
+	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
+)
 
 // Provider is the interface that must be implemented in order to provision clusters in osde2e.
 type Provider interface {
@@ -95,4 +97,7 @@ type Provider interface {
 	//
 	// This simply returns the name of the Provider
 	Type() string
+
+	//ExtendExpiry extends the expiration time of an existing cluster
+	ExtendExpiry(clusterID string, hours uint64, minutes uint64, seconds uint64) error
 }
