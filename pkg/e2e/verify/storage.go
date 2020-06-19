@@ -1,6 +1,7 @@
 package verify
 
 import (
+	"context"
 	"github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
@@ -12,7 +13,7 @@ import (
 var _ = ginkgo.Describe("[Suite: e2e] Storage", func() {
 	h := helper.New()
 	ginkgo.It("should be able to be expanded", func() {
-		scList, err := h.Kube().StorageV1().StorageClasses().List(metav1.ListOptions{})
+		scList, err := h.Kube().StorageV1().StorageClasses().List(context.TODO(), metav1.ListOptions{})
 		Expect(err).NotTo(HaveOccurred(), "couldn't list StorageClasses")
 		Expect(scList).NotTo(BeNil())
 

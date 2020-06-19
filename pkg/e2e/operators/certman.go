@@ -1,6 +1,7 @@
 package operators
 
 import (
+	"context"
 	"time"
 
 	"github.com/onsi/ginkgo"
@@ -27,7 +28,7 @@ var _ = ginkgo.Describe("[Suite: operators] [OSD] Certman Operator", func() {
 				listOpts := metav1.ListOptions{
 					LabelSelector: "certificate_request",
 				}
-				secrets, err = h.Kube().CoreV1().Secrets("openshift-config").List(listOpts)
+				secrets, err = h.Kube().CoreV1().Secrets("openshift-config").List(context.TODO(), listOpts)
 				if err != nil {
 					return false, err
 				}
@@ -44,7 +45,7 @@ var _ = ginkgo.Describe("[Suite: operators] [OSD] Certman Operator", func() {
 		ginkgo.It("certificate secret should be applied to apiserver object", func() {
 			wait.PollImmediate(30*time.Second, 15*time.Minute, func() (bool, error) {
 				getOpts := metav1.GetOptions{}
-				apiserver, err = h.Cfg().ConfigV1().APIServers().Get("cluster", getOpts)
+				apiserver, err = h.Cfg().ConfigV1().APIServers().Get(context.TODO(), "cluster", getOpts)
 				if err != nil {
 					return false, err
 				}

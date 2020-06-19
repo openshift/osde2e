@@ -1,6 +1,7 @@
 package operators
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"strings"
@@ -19,7 +20,7 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	operatorv1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
+	operatorv1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 )
 
 func checkClusterServiceVersion(h *helper.H, namespace, name string) {
@@ -73,7 +74,7 @@ func checkClusterRoles(h *helper.H, clusterRoles []string) {
 	ginkgo.Context("clusterRoles", func() {
 		ginkgo.It("should exist", func() {
 			for _, clusterRoleName := range clusterRoles {
-				_, err := h.Kube().RbacV1().ClusterRoles().Get(clusterRoleName, metav1.GetOptions{})
+				_, err := h.Kube().RbacV1().ClusterRoles().Get(context.TODO(), clusterRoleName, metav1.GetOptions{})
 				Expect(err).ToNot(HaveOccurred(), "failed to get clusterRole %v\n", clusterRoleName)
 			}
 		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
@@ -97,7 +98,7 @@ func checkRole(h *helper.H, namespace string, roles []string) {
 	ginkgo.Context("roles", func() {
 		ginkgo.It("should exist", func() {
 			for _, roleName := range roles {
-				_, err := h.Kube().RbacV1().Roles(namespace).Get(roleName, metav1.GetOptions{})
+				_, err := h.Kube().RbacV1().Roles(namespace).Get(context.TODO(), roleName, metav1.GetOptions{})
 				Expect(err).NotTo(HaveOccurred(), "failed to get role %v\n", roleName)
 			}
 		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
@@ -123,7 +124,7 @@ func checkSecrets(h *helper.H, namespace string, secrets []string) {
 	ginkgo.Context("secrets", func() {
 		ginkgo.It("should exist", func() {
 			for _, secretName := range secrets {
-				_, err := h.Kube().CoreV1().Secrets(namespace).Get(secretName, metav1.GetOptions{})
+				_, err := h.Kube().CoreV1().Secrets(namespace).Get(context.TODO(), secretName, metav1.GetOptions{})
 				Expect(err).NotTo(HaveOccurred(), "failed to get secret %v\n", secretName)
 			}
 		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
@@ -134,7 +135,7 @@ func getInstallPlan(h *helper.H, sub *operatorv1.Subscription) (*operatorv1.Inst
 	subNamespace := sub.Namespace
 	subName := sub.Name
 	err := wait.PollImmediate(5*time.Second, 5*time.Minute, func() (bool, error) {
-		s, err := h.Operator().OperatorsV1alpha1().Subscriptions(subNamespace).Get(subName, metav1.GetOptions{})
+		s, err := h.Operator().OperatorsV1alpha1().Subscriptions(subNamespace).Get(context.TODO(), subName, metav1.GetOptions{})
 		if err != nil {
 			return false, nil
 		}
@@ -149,12 +150,12 @@ func getInstallPlan(h *helper.H, sub *operatorv1.Subscription) (*operatorv1.Inst
 		return nil, err
 	}
 
-	return h.Operator().OperatorsV1alpha1().InstallPlans(subNamespace).Get(sub.Status.InstallPlanRef.Name, metav1.GetOptions{})
+	return h.Operator().OperatorsV1alpha1().InstallPlans(subNamespace).Get(context.TODO(), sub.Status.InstallPlanRef.Name, metav1.GetOptions{})
 }
 
 func approveInstallPlan(h *helper.H, ip *operatorv1.InstallPlan) error {
 	ip.Spec.Approved = true
-	_, err := h.Operator().OperatorsV1alpha1().InstallPlans(ip.Namespace).Update(ip)
+	_, err := h.Operator().OperatorsV1alpha1().InstallPlans(ip.Namespace).Update(context.TODO(), ip, metav1.UpdateOptions{})
 	if err != nil {
 		return err
 	}
@@ -164,7 +165,7 @@ func approveInstallPlan(h *helper.H, ip *operatorv1.InstallPlan) error {
 
 func ensureCSVIsInstalled(h *helper.H, csvName string, namespace string) error {
 	err := wait.PollImmediate(5*time.Second, 15*time.Minute, func() (bool, error) {
-		csv, err := h.Operator().OperatorsV1alpha1().ClusterServiceVersions(namespace).Get(csvName, metav1.GetOptions{})
+		csv, err := h.Operator().OperatorsV1alpha1().ClusterServiceVersions(namespace).Get(context.TODO(), csvName, metav1.GetOptions{})
 		if err != nil && !kerror.IsNotFound(err) {
 			return false, err
 		}
@@ -185,18 +186,18 @@ func checkUpgrade(h *helper.H, subNamespace string, subName string, previousCSV 
 	ginkgo.Context("Operator Upgrade", func() {
 		ginkgo.It("should upgrade from the replaced version", func() {
 
-			sub, err := h.Operator().OperatorsV1alpha1().Subscriptions(subNamespace).Get(subName, metav1.GetOptions{})
+			sub, err := h.Operator().OperatorsV1alpha1().Subscriptions(subNamespace).Get(context.TODO(), subName, metav1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("failed trying to get Subscription %s in %s namespace", subName, subNamespace))
 			startingCSV := sub.Status.CurrentCSV
 
 			// Delete current Operator installation
-			err = h.Operator().OperatorsV1alpha1().Subscriptions(subNamespace).Delete(subName, metav1.NewDeleteOptions(0))
+			err = h.Operator().OperatorsV1alpha1().Subscriptions(subNamespace).Delete(context.TODO(), subName, metav1.DeleteOptions{})
 			Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("failed trying to delete Subscription %s", subName))
-			err = h.Operator().OperatorsV1alpha1().ClusterServiceVersions(subNamespace).Delete(startingCSV, metav1.NewDeleteOptions(0))
+			err = h.Operator().OperatorsV1alpha1().ClusterServiceVersions(subNamespace).Delete(context.TODO(), startingCSV, metav1.DeleteOptions{})
 			Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("failed trying to delete ClusterServiceVersion %s", startingCSV))
 
 			// Create subscription to the previous version
-			sub, err = h.Operator().OperatorsV1alpha1().Subscriptions(subNamespace).Create(&operatorv1.Subscription{
+			sub, err = h.Operator().OperatorsV1alpha1().Subscriptions(subNamespace).Create(context.TODO(), &operatorv1.Subscription{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      subName,
 					Namespace: subNamespace,
@@ -209,7 +210,7 @@ func checkUpgrade(h *helper.H, subNamespace string, subName string, previousCSV 
 					InstallPlanApproval:    operatorv1.ApprovalManual,
 					StartingCSV:            previousCSV,
 				},
-			})
+			}, metav1.CreateOptions{})
 			Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("failed trying to create Subscription %s", subName))
 
 			// Approve and manually verify the first installation to previousCSV
@@ -221,10 +222,10 @@ func checkUpgrade(h *helper.H, subNamespace string, subName string, previousCSV 
 			Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("CSV %s did not install successfully", previousCSV))
 
 			// Update the Subscription to apply Automatic updates from now on in order to reach currentCSV
-			sub, err = h.Operator().OperatorsV1alpha1().Subscriptions(subNamespace).Get(subName, metav1.GetOptions{})
+			sub, err = h.Operator().OperatorsV1alpha1().Subscriptions(subNamespace).Get(context.TODO(), subName, metav1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("Failed retrieving updated subscription for %s", subName))
 			sub.Spec.InstallPlanApproval = operatorv1.ApprovalAutomatic
-			sub, err = h.Operator().OperatorsV1alpha1().Subscriptions(subNamespace).Update(sub)
+			sub, err = h.Operator().OperatorsV1alpha1().Subscriptions(subNamespace).Update(context.TODO(), sub, metav1.UpdateOptions{})
 			Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("Failed updating subscription to Automatic for CSV %s", previousCSV))
 
 			// The previous CSV is now installed and a new InstallPlan is also created ready for approval to upgrade to startingCSV
@@ -258,7 +259,7 @@ func pollClusterRoleBinding(h *helper.H, clusterRoleBindingName string) error {
 
 Loop:
 	for {
-		_, err = h.Kube().RbacV1().ClusterRoleBindings().Get(clusterRoleBindingName, metav1.GetOptions{})
+		_, err = h.Kube().RbacV1().ClusterRoleBindings().Get(context.TODO(), clusterRoleBindingName, metav1.GetOptions{})
 		elapsed := time.Since(start)
 
 		switch {
@@ -299,7 +300,7 @@ func pollRoleBinding(h *helper.H, projectName string, roleBindingName string) er
 
 Loop:
 	for {
-		_, err = h.Kube().RbacV1().RoleBindings(projectName).Get(roleBindingName, metav1.GetOptions{})
+		_, err = h.Kube().RbacV1().RoleBindings(projectName).Get(context.TODO(), roleBindingName, metav1.GetOptions{})
 		elapsed := time.Since(start)
 
 		switch {
@@ -341,7 +342,7 @@ func pollLockFile(h *helper.H, namespace, operatorLockFile string) error {
 
 Loop:
 	for {
-		_, err = h.Kube().CoreV1().ConfigMaps(namespace).Get(operatorLockFile, metav1.GetOptions{})
+		_, err = h.Kube().CoreV1().ConfigMaps(namespace).Get(context.TODO(), operatorLockFile, metav1.GetOptions{})
 		elapsed := time.Since(start)
 
 		switch {
@@ -384,7 +385,7 @@ func pollDeployment(h *helper.H, namespace, deploymentName string) (*appsv1.Depl
 
 Loop:
 	for {
-		deployment, err = h.Kube().AppsV1().Deployments(namespace).Get(deploymentName, metav1.GetOptions{})
+		deployment, err = h.Kube().AppsV1().Deployments(namespace).Get(context.TODO(), deploymentName, metav1.GetOptions{})
 		elapsed := time.Since(start)
 
 		switch {
@@ -428,7 +429,7 @@ func pollCsvList(h *helper.H, namespace, csvDisplayName string) (*operatorv1.Clu
 
 Loop:
 	for {
-		csvList, err = h.Operator().OperatorsV1alpha1().ClusterServiceVersions(namespace).List(metav1.ListOptions{})
+		csvList, err = h.Operator().OperatorsV1alpha1().ClusterServiceVersions(namespace).List(context.TODO(), metav1.ListOptions{})
 		for _, csv := range csvList.Items {
 			switch {
 			case csvDisplayName == csv.Spec.DisplayName:

@@ -1,6 +1,7 @@
 package runner
 
 import (
+	"context"
 	"fmt"
 	"testing"
 	"time"
@@ -44,11 +45,11 @@ func TestResultsService(t *testing.T) {
 	}()
 
 	// create endpoint
-	endpoints, err := client.CoreV1().Endpoints(r.Namespace).Create(&kubev1.Endpoints{
+	endpoints, err := client.CoreV1().Endpoints(r.Namespace).Create(context.TODO(), &kubev1.Endpoints{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: r.svc.Name,
 		},
-	})
+	}, metav1.CreateOptions{})
 	if err != nil {
 		t.Fatalf("Failed getting created endpoint: %v", err)
 	}
@@ -64,7 +65,7 @@ func TestResultsService(t *testing.T) {
 			Addresses: []kubev1.EndpointAddress{address},
 		},
 	}
-	_, err = r.Kube.CoreV1().Endpoints(r.Namespace).Update(endpoints)
+	_, err = r.Kube.CoreV1().Endpoints(r.Namespace).Update(context.TODO(), endpoints, metav1.UpdateOptions{})
 	if err != nil {
 		t.Fatalf("Failed to update endpoint: %v", err)
 	}

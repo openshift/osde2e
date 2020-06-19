@@ -1,6 +1,7 @@
 package helper
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -89,8 +90,8 @@ func CreateRuntimeObject(obj runtime.Object, ns string, kube kubernetes.Interfac
 		return nil, fmt.Errorf("Nil object passed in")
 	}
 
-	if _, err := kube.CoreV1().Namespaces().Get(ns, metav1.GetOptions{}); err != nil {
-		_, err := kube.CoreV1().Namespaces().Create(&corev1.Namespace{
+	if _, err := kube.CoreV1().Namespaces().Get(context.TODO(), ns, metav1.GetOptions{}); err != nil {
+		_, err := kube.CoreV1().Namespaces().Create(context.TODO(), &corev1.Namespace{
 			TypeMeta: metav1.TypeMeta{
 				Kind:       "namespace",
 				APIVersion: "v1",
@@ -99,7 +100,7 @@ func CreateRuntimeObject(obj runtime.Object, ns string, kube kubernetes.Interfac
 				Name: ns,
 			},
 			Spec: corev1.NamespaceSpec{},
-		})
+		}, metav1.CreateOptions{})
 		if err != nil {
 			return nil, fmt.Errorf("Error creating namespace: %s", err.Error())
 		}
@@ -108,7 +109,7 @@ func CreateRuntimeObject(obj runtime.Object, ns string, kube kubernetes.Interfac
 		// Namespace creation is fairly swift, so these numbers are arbitrary.
 		// If this times out, there's something wrong.
 		wait.PollImmediate(2*time.Second, 1*time.Minute, func() (bool, error) {
-			if _, err := kube.CoreV1().Namespaces().Get(ns, metav1.GetOptions{}); err != nil {
+			if _, err := kube.CoreV1().Namespaces().Get(context.TODO(), ns, metav1.GetOptions{}); err != nil {
 				return false, nil
 			}
 			return true, nil
@@ -122,7 +123,7 @@ func CreateRuntimeObject(obj runtime.Object, ns string, kube kubernetes.Interfac
 			return nil, fmt.Errorf("Error casting object to pod")
 		}
 
-		if newObj, err = kube.CoreV1().Pods(ns).Create(obj.(*corev1.Pod)); err != nil {
+		if newObj, err = kube.CoreV1().Pods(ns).Create(context.TODO(), obj.(*corev1.Pod), metav1.CreateOptions{}); err != nil {
 			return nil, err
 		}
 		return newObj, nil
@@ -130,7 +131,7 @@ func CreateRuntimeObject(obj runtime.Object, ns string, kube kubernetes.Interfac
 		if _, ok = obj.(*corev1.Service); !ok {
 			return nil, fmt.Errorf("Error casting object to service")
 		}
-		if newObj, err = kube.CoreV1().Services(ns).Create(obj.(*corev1.Service)); err != nil {
+		if newObj, err = kube.CoreV1().Services(ns).Create(context.TODO(), obj.(*corev1.Service), metav1.CreateOptions{}); err != nil {
 			return nil, err
 		}
 		return newObj, nil
@@ -138,7 +139,7 @@ func CreateRuntimeObject(obj runtime.Object, ns string, kube kubernetes.Interfac
 		dep := &appsv1.Deployment{}
 		obj.(*appsv1.Deployment).DeepCopyInto(dep)
 
-		if newObj, err = kube.AppsV1().Deployments(ns).Create(dep); err != nil {
+		if newObj, err = kube.AppsV1().Deployments(ns).Create(context.TODO(), dep, metav1.CreateOptions{}); err != nil {
 			return nil, err
 		}
 		return newObj, nil
@@ -146,7 +147,7 @@ func CreateRuntimeObject(obj runtime.Object, ns string, kube kubernetes.Interfac
 		ss := &appsv1.StatefulSet{}
 		obj.(*appsv1.StatefulSet).DeepCopyInto(ss)
 
-		if newObj, err = kube.AppsV1().StatefulSets(ns).Create(ss); err != nil {
+		if newObj, err = kube.AppsV1().StatefulSets(ns).Create(context.TODO(), ss, metav1.CreateOptions{}); err != nil {
 			return nil, err
 		}
 		return newObj, nil
@@ -155,7 +156,7 @@ func CreateRuntimeObject(obj runtime.Object, ns string, kube kubernetes.Interfac
 			return nil, fmt.Errorf("Error casting object to PersistentVolume")
 		}
 
-		if newObj, err = kube.CoreV1().PersistentVolumes().Create(obj.(*corev1.PersistentVolume)); err != nil {
+		if newObj, err = kube.CoreV1().PersistentVolumes().Create(context.TODO(), obj.(*corev1.PersistentVolume), metav1.CreateOptions{}); err != nil {
 			return nil, err
 		}
 		return newObj, nil
@@ -164,7 +165,7 @@ func CreateRuntimeObject(obj runtime.Object, ns string, kube kubernetes.Interfac
 			return nil, fmt.Errorf("Error casting object to PersistentVolumeClaim")
 		}
 
-		if newObj, err = kube.CoreV1().PersistentVolumeClaims(ns).Create(obj.(*corev1.PersistentVolumeClaim)); err != nil {
+		if newObj, err = kube.CoreV1().PersistentVolumeClaims(ns).Create(context.TODO(), obj.(*corev1.PersistentVolumeClaim), metav1.CreateOptions{}); err != nil {
 			return nil, err
 		}
 		return newObj, nil
@@ -174,7 +175,7 @@ func CreateRuntimeObject(obj runtime.Object, ns string, kube kubernetes.Interfac
 			return nil, fmt.Errorf("Error casting object to Secret")
 		}
 
-		if newObj, err = kube.CoreV1().Secrets(ns).Create(obj.(*corev1.Secret)); err != nil {
+		if newObj, err = kube.CoreV1().Secrets(ns).Create(context.TODO(), obj.(*corev1.Secret), metav1.CreateOptions{}); err != nil {
 			return nil, err
 		}
 		return newObj, nil

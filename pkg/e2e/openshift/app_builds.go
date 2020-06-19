@@ -2,6 +2,7 @@
 package openshift
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"regexp"
@@ -63,7 +64,7 @@ var _ = ginkgo.Describe("[Suite: app-builds] OpenShift Application Build E2E", f
 				appNamespace, err := findAppNamespace(h, applicationName)
 				Expect(err).NotTo(HaveOccurred())
 
-				list, err := h.Kube().CoreV1().Pods(appNamespace).List(metav1.ListOptions{
+				list, err := h.Kube().CoreV1().Pods(appNamespace).List(context.TODO(), metav1.ListOptions{
 					FieldSelector: fmt.Sprintf("status.phase=%s", kubev1.PodFailed),
 				})
 				Expect(err).NotTo(HaveOccurred(), "couldn't list Pods")
@@ -107,7 +108,7 @@ var _ = ginkgo.Describe("[Suite: app-builds] OpenShift Application Build E2E", f
 func findAppNamespace(h *helper.H, appName string) (string, error) {
 
 	namespaceRegex := regexp.MustCompile("e2e-test-" + appName + "-repo-test-\\w+")
-	namespaceList, err := h.Project().ProjectV1().Projects().List(metav1.ListOptions{})
+	namespaceList, err := h.Project().ProjectV1().Projects().List(context.TODO(), metav1.ListOptions{})
 	//h.Kube().CoreV1().Namespaces().List()
 	if err != nil {
 		err = fmt.Errorf("failed to fetch namespaces")

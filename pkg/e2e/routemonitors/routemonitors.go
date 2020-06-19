@@ -1,17 +1,19 @@
 package routemonitors
 
 import (
+	"context"
 	"fmt"
-	"github.com/openshift/osde2e/pkg/common/helper"
-	"github.com/openshift/osde2e/pkg/common/metadata"
-	vegeta "github.com/tsenart/vegeta/lib"
-	"github.com/tsenart/vegeta/lib/plot"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"log"
 	"net/url"
 	"os"
 	"path/filepath"
 	"time"
+
+	"github.com/openshift/osde2e/pkg/common/helper"
+	"github.com/openshift/osde2e/pkg/common/metadata"
+	vegeta "github.com/tsenart/vegeta/lib"
+	"github.com/tsenart/vegeta/lib/plot"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 const (
@@ -22,11 +24,11 @@ const (
 )
 
 type RouteMonitors struct {
-	Monitors          map[string]<-chan *vegeta.Result
-	Metrics           map[string]*vegeta.Metrics
-	Plots             map[string]*plot.Plot
-	targeters         map[string]vegeta.Targeter
-	attackers         []*vegeta.Attacker
+	Monitors  map[string]<-chan *vegeta.Result
+	Metrics   map[string]*vegeta.Metrics
+	Plots     map[string]*plot.Plot
+	targeters map[string]vegeta.Targeter
+	attackers []*vegeta.Attacker
 }
 
 // Frequency of requests per second (per route)
@@ -45,7 +47,7 @@ func Create() (*RouteMonitors, error) {
 	targeters := make(map[string]vegeta.Targeter, 0)
 
 	// Create a monitor for the web console
-	consoleRoute, err := h.Route().RouteV1().Routes(consoleNamespace).Get(consoleLabel, metav1.GetOptions{})
+	consoleRoute, err := h.Route().RouteV1().Routes(consoleNamespace).Get(context.TODO(), consoleLabel, metav1.GetOptions{})
 	if err != nil {
 		return nil, fmt.Errorf("could not retrieve console route %s", consoleLabel)
 	}
@@ -58,9 +60,9 @@ func Create() (*RouteMonitors, error) {
 		})
 		targeters[u.Host] = consoleTargeter
 	}
-	
+
 	// Create a monitor for the oauth URL
-	oauthRoute, err := h.Route().RouteV1().Routes(oauthNamespace).Get(oauthName, metav1.GetOptions{})
+	oauthRoute, err := h.Route().RouteV1().Routes(oauthNamespace).Get(context.TODO(), oauthName, metav1.GetOptions{})
 	if err != nil {
 		return nil, fmt.Errorf("could not retrieve oauth route %s", oauthName)
 	}
@@ -75,7 +77,7 @@ func Create() (*RouteMonitors, error) {
 	}
 
 	// Create monitors for API Server URLs
-	apiservers, err := h.Cfg().ConfigV1().APIServers().List(metav1.ListOptions{})
+	apiservers, err := h.Cfg().ConfigV1().APIServers().List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		return nil, fmt.Errorf("could not retrieve list of API servers")
 	}
@@ -96,7 +98,7 @@ func Create() (*RouteMonitors, error) {
 	}
 
 	// If we created any routes during workload testing, let's add them too
-	workloadRoutes, err := h.Route().RouteV1().Routes(h.CurrentProject()).List(metav1.ListOptions{})
+	workloadRoutes, err := h.Route().RouteV1().Routes(h.CurrentProject()).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		return nil, fmt.Errorf("could not retrieve list of workload routes")
 	}
@@ -113,10 +115,10 @@ func Create() (*RouteMonitors, error) {
 	}
 
 	return &RouteMonitors{
-		Monitors:          make(map[string]<-chan *vegeta.Result, 0),
-		Metrics:           make(map[string]*vegeta.Metrics, 0),
-		Plots:             make(map[string]*plot.Plot, 0),
-		targeters:         targeters,
+		Monitors:  make(map[string]<-chan *vegeta.Result, 0),
+		Metrics:   make(map[string]*vegeta.Metrics, 0),
+		Plots:     make(map[string]*plot.Plot, 0),
+		targeters: targeters,
 	}, nil
 }
 
@@ -126,7 +128,7 @@ func (rm *RouteMonitors) Start() {
 	timeout := vegeta.Timeout(timeoutSeconds)
 
 	for url, targeter := range rm.targeters {
-		log.Printf("Setting up monitor for %s\n",url)
+		log.Printf("Setting up monitor for %s\n", url)
 		attacker := vegeta.NewAttacker(timeout)
 		rm.Monitors[url] = attacker.Attack(targeter, pollRate, 0, url)
 		rm.Plots[url] = createPlot(url)

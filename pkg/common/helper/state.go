@@ -1,6 +1,7 @@
 package helper
 
 import (
+	"context"
 	"log"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -77,7 +78,7 @@ func (h *H) GetClusterState() (resources map[schema.GroupVersionResource]*unstru
 	listOpts := metav1.ListOptions{}
 	// retrieve cluster-wide resources
 	for _, r := range desiredClusterResources {
-		if list, err := client.Resource(r).List(listOpts); err != nil {
+		if list, err := client.Resource(r).List(context.TODO(), listOpts); err != nil {
 			log.Printf("Encountered error listing getting resource '%s': %v", r, err)
 		} else {
 			resources[r] = list
@@ -86,7 +87,7 @@ func (h *H) GetClusterState() (resources map[schema.GroupVersionResource]*unstru
 
 	// retrieve namespaces resources
 	for _, r := range desiredResources {
-		if list, err := client.Resource(r).Namespace(metav1.NamespaceAll).List(listOpts); err != nil {
+		if list, err := client.Resource(r).Namespace(metav1.NamespaceAll).List(context.TODO(), listOpts); err != nil {
 			log.Printf("Encountered error listing getting resource '%s': %v", r, err)
 		} else {
 			resources[r] = list

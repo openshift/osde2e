@@ -1,6 +1,7 @@
 package operators
 
 import (
+	"context"
 	"log"
 
 	"github.com/onsi/ginkgo"
@@ -44,7 +45,7 @@ var _ = ginkgo.Describe("[Suite: operators] [OSD] Curator Operator", func() {
 					Group:    "operators.coreos.com",
 					Version:  "v1",
 					Resource: "operatorsources",
-				}).List(listOpts)
+				}).List(context.TODO(), listOpts)
 
 				Expect(err).NotTo(HaveOccurred())
 
