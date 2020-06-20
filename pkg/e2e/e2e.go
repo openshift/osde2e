@@ -179,14 +179,14 @@ func runGinkgoTests() error {
 			return fmt.Errorf("error while writing prometheus metrics: %v", err)
 		}
 
-		if viper.GetBool(config.Tests.UploadMetrics) {
-			jobName := viper.GetString(config.JobName)
-			if strings.HasPrefix(jobName, "rehearse-") {
-				log.Printf("Job %s is a rehearsal, so metrics upload is being skipped.", jobName)
-			} else {
-				if err := uploadFileToMetricsBucket(filepath.Join(reportDir, prometheusFilename)); err != nil {
-					return fmt.Errorf("error while uploading prometheus metrics: %v", err)
-				}
+		jobName := viper.GetString(config.JobName)
+		if jobName == "" {
+			log.Printf("Skipping metrics upload for local osde2e run.")
+		} else if strings.HasPrefix(jobName, "rehearse-") {
+			log.Printf("Job %s is a rehearsal, so metrics upload is being skipped.", jobName)
+		} else {
+			if err := uploadFileToMetricsBucket(filepath.Join(reportDir, prometheusFilename)); err != nil {
+				return fmt.Errorf("error while uploading prometheus metrics: %v", err)
 			}
 		}
 	}
