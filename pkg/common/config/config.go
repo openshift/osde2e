@@ -128,9 +128,6 @@ var Tests = struct {
 	// SkipClusterHealthChecks skips the cluster health checks. Useful when developing against a running cluster.
 	SkipClusterHealthChecks string
 
-	// UploadMetrics tells osde2e whether to try to upload to the S3 metrics bucket.
-	UploadMetrics string
-
 	// MetricsBucket is the bucket that metrics data will be uploaded to.
 	MetricsBucket string
 
@@ -146,7 +143,6 @@ var Tests = struct {
 	CleanRuns:                 "tests.cleanRuns",
 	OperatorSkip:              "tests.operatorSkip",
 	SkipClusterHealthChecks:   "tests.skipClusterHealthChecks",
-	UploadMetrics:             "tests.uploadMetrics",
 	MetricsBucket:             "tests.metricsBucket",
 	ServiceAccount:            "tests.serviceAccount",
 }
@@ -376,9 +372,6 @@ func init() {
 
 	viper.SetDefault(Tests.SkipClusterHealthChecks, false)
 	viper.BindEnv(Tests.OperatorSkip, "SKIP_CLUSTER_HEALTH_CHECKS")
-
-	viper.SetDefault(Tests.UploadMetrics, false)
-	viper.BindEnv(Tests.UploadMetrics, "UPLOAD_METRICS")
 
 	viper.SetDefault(Tests.MetricsBucket, "osde2e-metrics")
 	viper.BindEnv(Tests.MetricsBucket, "METRICS_BUCKET")
