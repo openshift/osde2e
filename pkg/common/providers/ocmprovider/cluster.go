@@ -37,22 +37,6 @@ func (o *OCMProvider) LaunchCluster() (string, error) {
 	// we happen to forget to do it:
 	expiration := time.Now().Add(time.Duration(viper.GetInt64(config.Cluster.ExpiryInMinutes)) * time.Minute).UTC() // UTC() to workaround SDA-1567.
 
-	var username string
-
-	// If JobID is not equal to -1, then we're running on prow.
-	if viper.GetInt(config.JobID) != -1 {
-		username = "prow"
-	} else {
-
-		user, err := user.Current()
-
-		if err != nil {
-			return "", fmt.Errorf("unable to get current user: %v", err)
-		}
-
-		username = user.Username
-	}
-
 	multiAZ := viper.GetBool(config.Cluster.MultiAZ)
 	computeMachineType := viper.GetString(ComputeMachineType)
 	region := viper.GetString(config.CloudProvider.Region)
@@ -72,6 +56,12 @@ func (o *OCMProvider) LaunchCluster() (string, error) {
 
 	nodeBuilder := &v1.ClusterNodesBuilder{}
 
+	clusterProperties, err := o.GenerateProperties()
+
+	if err != nil {
+		return "", fmt.Errorf("error generating cluster properties: %v", err)
+	}
+
 	newCluster := v1.NewCluster().
 		Name(clusterName).
 		Flavour(v1.NewFlavour().
@@ -84,10 +74,7 @@ func (o *OCMProvider) LaunchCluster() (string, error) {
 		CloudProvider(v1.NewCloudProvider().
 			ID(cloudProvider)).
 		ExpirationTimestamp(expiration).
-		Properties(map[string]string{
-			MadeByOSDe2e: "true",
-			OwnedBy:      username,
-		})
+		Properties(clusterProperties)
 
 	// Configure the cluster to be Multi-AZ if configured
 	// We must manually configure the number of compute nodes
@@ -139,6 +126,29 @@ func (o *OCMProvider) LaunchCluster() (string, error) {
 		return "", fmt.Errorf("couldn't create cluster: %v", err)
 	}
 	return resp.Body().ID(), nil
+}
+
+func (o *OCMProvider) GenerateProperties() (map[string]string, error) {
+	var username string
+
+	// If JobID is not equal to -1, then we're running on prow.
+	if viper.GetInt(config.JobID) != -1 {
+		username = "prow"
+	} else {
+
+		user, err := user.Current()
+
+		if err != nil {
+			return nil, fmt.Errorf("unable to get current user: %v", err)
+		}
+
+		username = user.Username
+	}
+
+	return map[string]string{
+		MadeByOSDe2e: "true",
+		OwnedBy:      username,
+	}, nil
 }
 
 // DeleteCluster requests the deletion of clusterID.
