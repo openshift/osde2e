@@ -1,6 +1,7 @@
 package runner
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"log"
@@ -103,14 +104,14 @@ func (r *Runner) createPod() (pod *kubev1.Pod, err error) {
 			return nil, fmt.Errorf("couldn't template cmd: %v", err)
 		}
 
-		configMap, err := r.Kube.CoreV1().ConfigMaps(r.Namespace).Create(&kubev1.ConfigMap{
+		configMap, err := r.Kube.CoreV1().ConfigMaps(r.Namespace).Create(context.TODO(), &kubev1.ConfigMap{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: cmName,
 			},
 			BinaryData: map[string][]byte{
 				osde2ePayloadScript: cmd,
 			},
-		})
+		}, metav1.CreateOptions{})
 
 		if err != nil {
 			return nil, fmt.Errorf("error creating ConfigMap: %v", err)
@@ -118,7 +119,7 @@ func (r *Runner) createPod() (pod *kubev1.Pod, err error) {
 
 		// Verify the configMap has been created before proceeding
 		err = wait.PollImmediate(fastPoll, configMapCreateTimeout, func() (done bool, err error) {
-			if configMap, err = r.Kube.CoreV1().ConfigMaps(r.Namespace).Get(configMap.Name, metav1.GetOptions{}); err != nil {
+			if configMap, err = r.Kube.CoreV1().ConfigMaps(r.Namespace).Get(context.TODO(), configMap.Name, metav1.GetOptions{}); err != nil {
 				log.Printf("Error creating %s config map: %v", configMap.Name, err)
 			}
 			return err == nil, nil
@@ -152,7 +153,7 @@ func (r *Runner) createPod() (pod *kubev1.Pod, err error) {
 	// retry until Pod can be created or timeout occurs
 	var createdPod *kubev1.Pod
 	err = wait.PollImmediate(fastPoll, podCreateTimeout, func() (done bool, err error) {
-		if createdPod, err = r.Kube.CoreV1().Pods(r.Namespace).Create(pod); err != nil {
+		if createdPod, err = r.Kube.CoreV1().Pods(r.Namespace).Create(context.TODO(), pod, metav1.CreateOptions{}); err != nil {
 			log.Printf("Error creating %s runner Pod: %v", r.Name, err)
 		}
 		return err == nil, nil
@@ -164,7 +165,7 @@ func (r *Runner) createPod() (pod *kubev1.Pod, err error) {
 func (r *Runner) waitForPodRunning(pod *kubev1.Pod) error {
 	var pendingCount int = 0
 	return wait.PollImmediate(fastPoll, 3*time.Minute, func() (done bool, err error) {
-		pod, err = r.Kube.CoreV1().Pods(pod.Namespace).Get(pod.Name, metav1.GetOptions{})
+		pod, err = r.Kube.CoreV1().Pods(pod.Namespace).Get(context.TODO(), pod.Name, metav1.GetOptions{})
 		if err != nil && !kerror.IsNotFound(err) {
 			return
 		} else if pod == nil {

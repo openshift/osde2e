@@ -57,25 +57,25 @@ func NewMetrics() *Metrics {
 		prometheus.GaugeOpts{
 			Name: jUnitMetricName,
 		},
-		[]string{"install_version", "upgrade_version", "cloud_provider", "environment", "phase", "suite", "testname", "result", "cluster_id", "job_id"},
+		[]string{"install_version", "upgrade_version", "cloud_provider", "environment", "region", "phase", "suite", "testname", "result", "cluster_id", "job_id"},
 	)
 	metadataGatherer := prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
 			Name: metadataMetricName,
 		},
-		[]string{"install_version", "upgrade_version", "cloud_provider", "environment", "metadata_name", "cluster_id", "job_id"},
+		[]string{"install_version", "upgrade_version", "cloud_provider", "environment", "region", "metadata_name", "cluster_id", "job_id"},
 	)
 	addonGatherer := prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
 			Name: addonMetricName,
 		},
-		[]string{"install_version", "upgrade_version", "cloud_provider", "environment", "metadata_name", "cluster_id", "job_id", "phase"},
+		[]string{"install_version", "upgrade_version", "cloud_provider", "environment", "region", "metadata_name", "cluster_id", "job_id", "phase"},
 	)
 	eventGatherer := prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Name: eventMetricName,
 		},
-		[]string{"install_version", "upgrade_version", "cloud_provider", "environment", "event", "cluster_id", "job_id"},
+		[]string{"install_version", "upgrade_version", "cloud_provider", "environment", "region", "event", "cluster_id", "job_id"},
 	)
 	metricRegistry.MustRegister(jUnitGatherer)
 	metricRegistry.MustRegister(metadataGatherer)
@@ -189,6 +189,7 @@ func (m *Metrics) processJUnitXMLFile(phase string, junitFile string) (err error
 			viper.GetString(config.Upgrade.ReleaseName),
 			viper.GetString(config.CloudProvider.CloudProviderID),
 			m.provider.Environment(),
+			viper.GetString(config.CloudProvider.Region),
 			phase,
 			testSuite.Name,
 			testcase.Name,
@@ -253,6 +254,7 @@ func (m *Metrics) jsonToPrometheusOutput(gatherer *prometheus.GaugeVec, phase st
 						viper.GetString(config.Upgrade.ReleaseName),
 						viper.GetString(config.CloudProvider.CloudProviderID),
 						m.provider.Environment(),
+						viper.GetString(config.CloudProvider.Region),
 						metadataName,
 						viper.GetString(config.Cluster.ID),
 						strconv.Itoa(jobID),
@@ -262,6 +264,7 @@ func (m *Metrics) jsonToPrometheusOutput(gatherer *prometheus.GaugeVec, phase st
 						viper.GetString(config.Upgrade.ReleaseName),
 						viper.GetString(config.CloudProvider.CloudProviderID),
 						m.provider.Environment(),
+						viper.GetString(config.CloudProvider.Region),
 						metadataName,
 						viper.GetString(config.Cluster.ID),
 						strconv.Itoa(jobID)).Add(floatValue)
@@ -282,6 +285,7 @@ func (m *Metrics) processEvents(gatherer *prometheus.CounterVec) {
 			viper.GetString(config.Upgrade.ReleaseName),
 			viper.GetString(config.CloudProvider.CloudProviderID),
 			m.provider.Environment(),
+			viper.GetString(config.CloudProvider.Region),
 			event,
 			viper.GetString(config.Cluster.ID),
 			strconv.Itoa(viper.GetInt(config.JobID))).Inc()

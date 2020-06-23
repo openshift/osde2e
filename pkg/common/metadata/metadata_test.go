@@ -43,6 +43,7 @@ func TestMetadata(t *testing.T) {
 				ClusterName:                 "test-name",
 				ClusterVersion:              "test-version",
 				Environment:                 "test-environment",
+				Region:                      "test-region",
 				UpgradeVersion:              "test-upgrade",
 				TimeToOCMReportingInstalled: 123.45,
 				TimeToClusterReady:          456.78,

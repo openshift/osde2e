@@ -2,6 +2,7 @@ package runner
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"io"
 	"io/ioutil"
@@ -94,13 +95,13 @@ func resultsServerReactor(action kubetest.Action) (handled bool, ret rest.Respon
 
 type response []byte
 
-func (r response) DoRaw() ([]byte, error) {
+func (r response) DoRaw(context.Context) ([]byte, error) {
 	if len(r) == 0 {
 		return nil, errors.New("file does not exist")
 	}
 	return r, nil
 }
-func (r response) Stream() (io.ReadCloser, error) {
+func (r response) Stream(context.Context) (io.ReadCloser, error) {
 	if len(r) == 0 {
 		return nil, errors.New("file does not exist")
 	}

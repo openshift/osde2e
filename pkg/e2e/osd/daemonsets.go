@@ -1,6 +1,7 @@
 package osd
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/onsi/ginkgo"
@@ -42,7 +43,7 @@ var _ = ginkgo.Describe(testAlert.Name, func() {
 
 			// Test creating a basic daemonset
 			ds := makeDaemonSet("empty-node-labels", h.GetNamespacedServiceAccount(), nodeLabels)
-			_, err := h.Kube().AppsV1().DaemonSets(h.CurrentProject()).Create(&ds)
+			_, err := h.Kube().AppsV1().DaemonSets(h.CurrentProject()).Create(context.TODO(), &ds, metav1.CreateOptions{})
 			Expect(err).NotTo(HaveOccurred())
 		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
 
@@ -53,7 +54,7 @@ var _ = ginkgo.Describe(testAlert.Name, func() {
 			// Test creating a worker daemonset
 			nodeLabels["role"] = "worker"
 			ds := makeDaemonSet("worker-node-labels", h.GetNamespacedServiceAccount(), nodeLabels)
-			_, err := h.Kube().AppsV1().DaemonSets(h.CurrentProject()).Create(&ds)
+			_, err := h.Kube().AppsV1().DaemonSets(h.CurrentProject()).Create(context.TODO(), &ds, metav1.CreateOptions{})
 			Expect(err).NotTo(HaveOccurred())
 		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
 
@@ -64,7 +65,7 @@ var _ = ginkgo.Describe(testAlert.Name, func() {
 			// Test creating an infra daemonset
 			nodeLabels["role"] = "infra"
 			ds := makeDaemonSet("infra-node-labels", h.GetNamespacedServiceAccount(), nodeLabels)
-			_, err := h.Kube().AppsV1().DaemonSets(h.CurrentProject()).Create(&ds)
+			_, err := h.Kube().AppsV1().DaemonSets(h.CurrentProject()).Create(context.TODO(), &ds, metav1.CreateOptions{})
 			Expect(err).NotTo(HaveOccurred())
 		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
 	})

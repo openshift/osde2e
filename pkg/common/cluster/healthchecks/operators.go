@@ -1,6 +1,7 @@
 package healthchecks
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"strings"
@@ -17,7 +18,7 @@ func CheckOperatorReadiness(configClient configclient.ConfigV1Interface) (bool, 
 	log.Print("Checking that all Operators are running or completed...")
 
 	listOpts := metav1.ListOptions{}
-	list, err := configClient.ClusterOperators().List(listOpts)
+	list, err := configClient.ClusterOperators().List(context.TODO(), listOpts)
 	if err != nil {
 		return false, fmt.Errorf("error getting cluster operator list: %v", err)
 	}

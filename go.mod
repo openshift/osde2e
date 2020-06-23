@@ -19,12 +19,13 @@ require (
 	github.com/kylelemons/godebug v1.1.0
 	github.com/markbates/pkger v0.16.0
 	github.com/onsi/ginkgo v1.12.0
-	github.com/onsi/gomega v1.7.1
+	github.com/onsi/gomega v1.9.0
 	github.com/openshift-online/ocm-sdk-go v0.1.105
-	github.com/openshift/api v0.0.0-20190530131937-dafd2647cb03
-	github.com/openshift/client-go v0.0.0-20190806162413-e9678e3b850d
-	github.com/openshift/moactl v0.0.2-0.20200602200416-2118cdd4cd1a
-	github.com/operator-framework/operator-lifecycle-manager v0.0.0-20190926160646-a61144936680
+	github.com/openshift/api v0.0.0-20200521101457-60c476765272
+	github.com/openshift/client-go v0.0.0-20200326155132-2a6cd50aedd0
+	github.com/openshift/moactl v0.0.3-0.20200622161904-355535b775ff
+	github.com/operator-framework/api v0.3.5
+	github.com/operator-framework/operator-lifecycle-manager v0.0.0-20200521062108-408ca95d458f
 	github.com/prometheus/client_golang v1.4.1
 	github.com/prometheus/common v0.9.1
 	github.com/slack-go/slack v0.6.5
@@ -35,17 +36,16 @@ require (
 	github.com/tsenart/go-tsz v0.0.0-20180814235614-0bd30b3df1c3 // indirect
 	github.com/tsenart/vegeta v12.7.0+incompatible
 	golang.org/x/net v0.0.0-20200226121028-0de0cce0169b
-	k8s.io/api v0.0.0-20191004102349-159aefb8556b
-	k8s.io/apimachinery v0.18.2
+	k8s.io/api v0.18.4
+	k8s.io/apimachinery v0.18.4
 	k8s.io/client-go v11.0.1-0.20191029005444-8e4128053008+incompatible
-	k8s.io/klog v1.0.0 // indirect
-	k8s.io/utils v0.0.0-20190712204705-3dccf664f023
+	k8s.io/utils v0.0.0-20200324210504-a9aa75ae1b89
 )
 
 replace (
-	github.com/openshift/api => github.com/openshift/api v0.0.0-20190530131937-dafd2647cb03
-	github.com/openshift/client-go => github.com/openshift/client-go v0.0.0-20190806162413-e9678e3b850d
-	k8s.io/apimachinery => k8s.io/apimachinery v0.0.0-20191004074956-c5d2f014d689
+	github.com/openshift/api => github.com/openshift/api v0.0.0-20200526144822-34f54f12813a
+	github.com/openshift/client-go => github.com/openshift/client-go v0.0.0-20200521150516-05eb9880269c
+	k8s.io/client-go => k8s.io/client-go v0.18.4
+	sigs.k8s.io/controller-runtime => sigs.k8s.io/controller-runtime v0.5.1-0.20200414221803-bac7e8aaf90a
 	sigs.k8s.io/structured-merge-diff => sigs.k8s.io/structured-merge-diff v1.0.1-0.20191108220359-b1b620dd3f06
-	sigs.k8s.io/yaml => sigs.k8s.io/yaml v1.1.0
 )

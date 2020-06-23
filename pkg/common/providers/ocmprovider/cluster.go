@@ -3,6 +3,7 @@ package ocmprovider
 import (
 	"fmt"
 	"log"
+	"math/rand"
 	"os/user"
 	"strings"
 	"time"
@@ -36,43 +37,44 @@ func (o *OCMProvider) LaunchCluster() (string, error) {
 	// we happen to forget to do it:
 	expiration := time.Now().Add(time.Duration(viper.GetInt64(config.Cluster.ExpiryInMinutes)) * time.Minute).UTC() // UTC() to workaround SDA-1567.
 
-	var username string
-
-	// If JobID is not equal to -1, then we're running on prow.
-	if viper.GetInt(config.JobID) != -1 {
-		username = "prow"
-	} else {
-
-		user, err := user.Current()
-
-		if err != nil {
-			return "", fmt.Errorf("unable to get current user: %v", err)
-		}
-
-		username = user.Username
-	}
-
 	multiAZ := viper.GetBool(config.Cluster.MultiAZ)
 	computeMachineType := viper.GetString(ComputeMachineType)
+	region := viper.GetString(config.CloudProvider.Region)
+	cloudProvider := viper.GetString(config.CloudProvider.CloudProviderID)
+
+	// If a region is set to "random", it will poll OCM for all the regions available
+	// It then will pull a random entry from the list of regions and set the ID to that
+	if region == "random" {
+		regionsClient := o.conn.ClustersMgmt().V1().CloudProviders().CloudProvider(cloudProvider).Regions().List()
+		regions, err := regionsClient.Send()
+		if err != nil {
+			return "", err
+		}
+
+		region = regions.Items().Slice()[rand.Intn(regions.Total())].ID()
+	}
 
 	nodeBuilder := &v1.ClusterNodesBuilder{}
+
+	clusterProperties, err := o.GenerateProperties()
+
+	if err != nil {
+		return "", fmt.Errorf("error generating cluster properties: %v", err)
+	}
 
 	newCluster := v1.NewCluster().
 		Name(clusterName).
 		Flavour(v1.NewFlavour().
 			ID(flavourID)).
 		Region(v1.NewCloudRegion().
-			ID(viper.GetString(config.CloudProvider.Region))).
+			ID(region)).
 		MultiAZ(multiAZ).
 		Version(v1.NewVersion().
 			ID(viper.GetString(config.Cluster.Version))).
 		CloudProvider(v1.NewCloudProvider().
-			ID(viper.GetString(config.CloudProvider.CloudProviderID))).
+			ID(cloudProvider)).
 		ExpirationTimestamp(expiration).
-		Properties(map[string]string{
-			MadeByOSDe2e: "true",
-			OwnedBy:      username,
-		})
+		Properties(clusterProperties)
 
 	// Configure the cluster to be Multi-AZ if configured
 	// We must manually configure the number of compute nodes
@@ -124,6 +126,29 @@ func (o *OCMProvider) LaunchCluster() (string, error) {
 		return "", fmt.Errorf("couldn't create cluster: %v", err)
 	}
 	return resp.Body().ID(), nil
+}
+
+func (o *OCMProvider) GenerateProperties() (map[string]string, error) {
+	var username string
+
+	// If JobID is not equal to -1, then we're running on prow.
+	if viper.GetInt(config.JobID) != -1 {
+		username = "prow"
+	} else {
+
+		user, err := user.Current()
+
+		if err != nil {
+			return nil, fmt.Errorf("unable to get current user: %v", err)
+		}
+
+		username = user.Username
+	}
+
+	return map[string]string{
+		MadeByOSDe2e: "true",
+		OwnedBy:      username,
+	}, nil
 }
 
 // DeleteCluster requests the deletion of clusterID.

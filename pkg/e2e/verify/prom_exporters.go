@@ -1,6 +1,8 @@
 package verify
 
 import (
+	"context"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/onsi/ginkgo"
@@ -76,7 +78,7 @@ var _ = ginkgo.Describe("[Suite: e2e] [OSD] Prometheus Exporters", func() {
 		envs := []string{allProviders, viper.GetString(config.CloudProvider.CloudProviderID)}
 
 		// Expect project to exist
-		_, err := h.Project().ProjectV1().Projects().Get(promNamespace, metav1.GetOptions{})
+		_, err := h.Project().ProjectV1().Projects().Get(context.TODO(), promNamespace, metav1.GetOptions{})
 		Expect(err).ShouldNot(HaveOccurred(), "project should have been created")
 
 		// Ensure presence of config maps
@@ -100,7 +102,7 @@ var _ = ginkgo.Describe("[Suite: e2e] [OSD] Prometheus Exporters", func() {
 func checkConfigMaps(namespace string, configMaps map[string][]string, h *helper.H, providers ...string) {
 	for _, provider := range providers {
 		for _, configMapName := range configMaps[provider] {
-			_, err := h.Kube().CoreV1().ConfigMaps(namespace).Get(configMapName, metav1.GetOptions{})
+			_, err := h.Kube().CoreV1().ConfigMaps(namespace).Get(context.TODO(), configMapName, metav1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred(), "failed to get config map %v\n", configMapName)
 		}
 	}
@@ -109,7 +111,7 @@ func checkConfigMaps(namespace string, configMaps map[string][]string, h *helper
 func checkSecrets(namespace string, secrets map[string][]string, h *helper.H, providers ...string) {
 	for _, provider := range providers {
 		for _, secretName := range secrets[provider] {
-			_, err := h.Kube().CoreV1().Secrets(namespace).Get(secretName, metav1.GetOptions{})
+			_, err := h.Kube().CoreV1().Secrets(namespace).Get(context.TODO(), secretName, metav1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred(), "failed to get secret %v\n", secretName)
 		}
 	}
@@ -118,7 +120,7 @@ func checkSecrets(namespace string, secrets map[string][]string, h *helper.H, pr
 func checkRoleBindings(namespace string, roleBindings map[string][]string, h *helper.H, providers ...string) {
 	for _, provider := range providers {
 		for _, roleBindingName := range roleBindings[provider] {
-			_, err := h.Kube().RbacV1().RoleBindings(namespace).Get(roleBindingName, metav1.GetOptions{})
+			_, err := h.Kube().RbacV1().RoleBindings(namespace).Get(context.TODO(), roleBindingName, metav1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred(), "failed to get role binding %v\n", roleBindingName)
 		}
 	}
@@ -134,12 +136,12 @@ func checkDaemonSets(namespace string, daemonSets map[string][]string, h *helper
 		for _, daemonSetName := range daemonSets[provider] {
 			// Use appv1 for clusters 4.4.0 or later
 			if util.Version440.Check(currentClusterVersion) {
-				daemonSet, err := h.Kube().AppsV1().DaemonSets(namespace).Get(daemonSetName, metav1.GetOptions{})
+				daemonSet, err := h.Kube().AppsV1().DaemonSets(namespace).Get(context.TODO(), daemonSetName, metav1.GetOptions{})
 				Expect(err).NotTo(HaveOccurred(), "failed to get daemonset %v\n", daemonSetName)
 				Expect(daemonSet.Status.DesiredNumberScheduled).Should(Equal(daemonSet.Status.CurrentNumberScheduled),
 					"daemonset desired count should match currently running")
 			} else {
-				daemonSet, err := h.Kube().ExtensionsV1beta1().DaemonSets(namespace).Get(daemonSetName, metav1.GetOptions{})
+				daemonSet, err := h.Kube().ExtensionsV1beta1().DaemonSets(namespace).Get(context.TODO(), daemonSetName, metav1.GetOptions{})
 				Expect(err).NotTo(HaveOccurred(), "failed to get daemonset %v\n", daemonSetName)
 				Expect(daemonSet.Status.DesiredNumberScheduled).Should(Equal(daemonSet.Status.CurrentNumberScheduled),
 					"daemonset desired count should match currently running")
@@ -151,7 +153,7 @@ func checkDaemonSets(namespace string, daemonSets map[string][]string, h *helper
 func checkServices(namespace string, services map[string][]string, h *helper.H, providers ...string) {
 	for _, provider := range providers {
 		for _, serviceName := range services[provider] {
-			service, err := h.Kube().CoreV1().Services(namespace).Get(serviceName, metav1.GetOptions{})
+			service, err := h.Kube().CoreV1().Services(namespace).Get(context.TODO(), serviceName, metav1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred(), "failed to get service %v\n", serviceName)
 			Expect(service.Spec.ClusterIP).Should(Not(BeNil()),
 				"failed to get service cluster ip for %v\n", serviceName)

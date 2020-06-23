@@ -1,6 +1,7 @@
 package healthchecks
 
 import (
+	"context"
 	"fmt"
 	"log"
 
@@ -14,7 +15,7 @@ func CheckNodeHealth(nodeClient v1.CoreV1Interface) (bool, error) {
 	log.Print("Checking that all Nodes are running or completed...")
 
 	listOpts := metav1.ListOptions{}
-	list, err := nodeClient.Nodes().List(listOpts)
+	list, err := nodeClient.Nodes().List(context.TODO(), listOpts)
 	if err != nil {
 		return false, fmt.Errorf("error getting node list: %v", err)
 	}

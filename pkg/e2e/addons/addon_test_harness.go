@@ -1,6 +1,7 @@
 package addons
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"text/template"
@@ -75,7 +76,7 @@ var _ = ginkgo.Describe("[Suite: addons] Addon Test Harness", func() {
 			h.WriteResults(results)
 
 			// ensure job has not failed
-			job, err := h.Kube().BatchV1().Jobs(r.Namespace).Get("addon-tests", metav1.GetOptions{})
+			job, err := h.Kube().BatchV1().Jobs(r.Namespace).Get(context.TODO(), "addon-tests", metav1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred())
 			Expect(job.Status.Failed).Should(BeNumerically("==", 0))
 		}

@@ -1,6 +1,7 @@
 package verify
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"time"
@@ -33,7 +34,7 @@ var _ = ginkgo.Describe("[Suite: e2e] Pods", func() {
 				log.Printf("Checking that all Pods are running or completed (currently %f%%)...", curRatio)
 			}
 
-			list, err := h.Kube().CoreV1().Pods(metav1.NamespaceAll).List(metav1.ListOptions{})
+			list, err := h.Kube().CoreV1().Pods(metav1.NamespaceAll).List(context.TODO(), metav1.ListOptions{})
 			if err != nil {
 				return false, err
 			}
@@ -60,7 +61,7 @@ var _ = ginkgo.Describe("[Suite: e2e] Pods", func() {
 	}, 300)
 
 	ginkgo.It("should not be Failed", func() {
-		list, err := h.Kube().CoreV1().Pods(metav1.NamespaceAll).List(metav1.ListOptions{
+		list, err := h.Kube().CoreV1().Pods(metav1.NamespaceAll).List(context.TODO(), metav1.ListOptions{
 			FieldSelector: fmt.Sprintf("status.phase=%s", v1.PodFailed),
 		})
 		Expect(err).NotTo(HaveOccurred(), "couldn't list Pods")

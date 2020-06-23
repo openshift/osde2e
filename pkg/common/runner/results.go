@@ -1,6 +1,7 @@
 package runner
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -39,7 +40,7 @@ func (r *Runner) retrieveResultsForDirectory(directory string) (map[string][]byt
 	// we loop through here five times with a sleep statement to check.
 	wait.PollImmediate(5*time.Second, 1*time.Minute, func() (bool, error) {
 		resp = r.Kube.CoreV1().Services(r.Namespace).ProxyGet("http", r.svc.Name, resultsPortStr, directory, nil)
-		rdr, err = resp.Stream()
+		rdr, err = resp.Stream(context.TODO())
 		if err != nil {
 			return false, nil
 		}
@@ -92,7 +93,7 @@ func (r *Runner) downloadLinks(n *html.Node, results map[string][]byte, director
 					}
 				} else {
 					resp := r.Kube.CoreV1().Services(r.Namespace).ProxyGet("http", r.svc.Name, resultsPortStr, path.Join(directory, a.Val), nil)
-					data, err := resp.DoRaw()
+					data, err := resp.DoRaw(context.TODO())
 					if err != nil {
 						return err
 					}
