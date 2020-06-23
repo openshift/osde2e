@@ -5,12 +5,10 @@ import (
 	"log"
 	"time"
 
-	. "github.com/onsi/gomega"
 	"github.com/openshift/osde2e/cmd/osde2e/common"
 	"github.com/openshift/osde2e/cmd/osde2e/helpers"
 	"github.com/openshift/osde2e/pkg/common/cluster"
 	"github.com/openshift/osde2e/pkg/common/config"
-	"github.com/openshift/osde2e/pkg/common/events"
 	"github.com/openshift/osde2e/pkg/common/providers/ocmprovider"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -90,7 +88,7 @@ func run(cmd *cobra.Command, argv []string) error {
 	}
 
 	err := cluster.SetupCluster()
-	events.HandleErrorWithEvents(err, events.InstallSuccessful, events.InstallFailed).ShouldNot(HaveOccurred(), "failed to setup cluster")
+
 	if err != nil {
 		return fmt.Errorf("Creation of a cluster failed.")
 	}
