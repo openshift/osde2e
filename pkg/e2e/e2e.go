@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
-	vegeta "github.com/tsenart/vegeta/lib"
 	"io/ioutil"
 	"log"
 	"math"
@@ -15,6 +14,9 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/openshift/osde2e/pkg/e2e/routemonitors"
+	vegeta "github.com/tsenart/vegeta/lib"
 
 	"github.com/onsi/ginkgo"
 	ginkgoConfig "github.com/onsi/ginkgo/config"
@@ -29,12 +31,12 @@ import (
 	"github.com/openshift/osde2e/pkg/common/metadata"
 	"github.com/openshift/osde2e/pkg/common/phase"
 	"github.com/openshift/osde2e/pkg/common/providers"
-	"github.com/openshift/osde2e/pkg/e2e/routemonitors"
 	"github.com/openshift/osde2e/pkg/common/runner"
 	"github.com/openshift/osde2e/pkg/common/spi"
 	"github.com/openshift/osde2e/pkg/common/upgrade"
 	"github.com/openshift/osde2e/pkg/common/util"
 	"github.com/openshift/osde2e/pkg/debug"
+	"github.com/openshift/osde2e/pkg/e2e/routemonitors"
 )
 
 const (
@@ -47,6 +49,7 @@ var provider spi.Provider
 
 // RunTests initializes Ginkgo and runs the osde2e test suite.
 func RunTests() bool {
+	log.Println("Entered runtests()")
 	testing.Init()
 
 	if err := runGinkgoTests(); err != nil {
@@ -60,6 +63,7 @@ func RunTests() bool {
 // runGinkgoTests runs the osde2e test suite using Ginkgo.
 // nolint:gocyclo
 func runGinkgoTests() error {
+	log.Println("Entered runGinkgoTests()")
 	var err error
 	gomega.RegisterFailHandler(ginkgo.Fail)
 
@@ -72,7 +76,7 @@ func runGinkgoTests() error {
 
 	// Get the cluster ID now to test against later
 	clusterID := viper.GetString(config.Cluster.ID)
-
+	log.Printf("Cluster ID in rungingko test - %s", clusterID)
 	// setup OSD unless Kubeconfig is present
 	if len(viper.GetString(config.Kubeconfig.Path)) > 0 {
 		log.Print("Found an existing Kubeconfig!")

@@ -36,7 +36,7 @@ func init() {
 		"cluster-id",
 		"i",
 		"",
-		"Existing OCM cluster ID to delete.",
+		"Existing OCM cluster ID to extend expiry time.",
 	)
 
 	pfs.Uint64VarP(
