@@ -318,3 +318,28 @@ func (h *H) ConvertTemplateToString(template *template.Template, data interface{
 	}
 	return cmd.String(), nil
 }
+
+// InspectState inspects the project used for testing, and saves the state to disk for later debugging
+func (h *H) InspectState() {
+	var err error
+
+	h.restConfig, err = clientcmd.RESTConfigFromKubeConfig([]byte(viper.GetString(config.Kubeconfig.Contents)))
+	Expect(err).ShouldNot(HaveOccurred(), "failed to configure client")
+
+	// Set the SA back to the default. This is required for inspection in case other helper calls switched SAs
+	h.SetServiceAccount(viper.GetString(config.Tests.ServiceAccount))
+	project := viper.GetString(config.Project)
+
+	if h.proj == nil && project != "" {
+		log.Printf("Setting project name to %s", project)
+		h.proj, err = h.Project().ProjectV1().Projects().Get(context.TODO(), project, metav1.GetOptions{})
+		Expect(err).ShouldNot(HaveOccurred(), "failed to retrieve project")
+		Expect(h.proj).ShouldNot(BeNil())
+
+	}
+	err = h.inspect(h.CurrentProject())
+	Expect(err).ShouldNot(HaveOccurred(), "could not inspect project '%s'", h.proj)
+
+	h.restConfig = nil
+	h.proj = nil
+}
