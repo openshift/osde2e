@@ -17,6 +17,7 @@ import (
 // ChooseVersions sets versions in cfg if not set based on defaults and upgrade options.
 // If a release stream is set for an upgrade the previous available version is used and it's image is used for upgrade.
 func ChooseVersions() (err error) {
+	log.Println("Entered choose version function")
 	// when defined, use set version
 	if provider == nil {
 		err = errors.New("osd must be setup when upgrading with release stream")

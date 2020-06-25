@@ -16,15 +16,10 @@ import (
 )
 
 var root = &cobra.Command{
-	Use:           "osde2ectl",
-	Long:          "Command line tool for osde2ectl.",
-	SilenceErrors: true,
-	SilenceUsage:  true,
-	// PersistentPreRun: func(cmd *cobra.Command, argv []string) {
-	// 	if update.Enabled() {
-	// 		selfUpdate()
-	// 	}
-	// },
+	Use:  "osde2ectl",
+	Long: "Command line tool for osde2ectl.",
+	// SilenceErrors: true,
+	// SilenceUsage:  true,
 }
 
 func init() {

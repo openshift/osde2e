@@ -2,6 +2,7 @@ package spi
 
 import (
 	"fmt"
+	"log"
 )
 
 // ProviderCreateFunction is a function that creates providers.
@@ -27,6 +28,7 @@ func RegisterProvider(name string, providerCreate func() (Provider, error)) {
 // GetProvider will retrieve a provider with the given name.
 func GetProvider(name string) (Provider, error) {
 	if providerCreate, ok := registry.providerCreation[name]; ok {
+		log.Println("Entered providercreate block")
 		return providerCreate()
 	}
 

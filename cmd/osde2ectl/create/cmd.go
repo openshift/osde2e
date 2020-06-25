@@ -10,6 +10,7 @@ import (
 	"github.com/openshift/osde2e/pkg/common/cluster"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/providers/ocmprovider"
+	"github.com/openshift/osde2e/pkg/e2e"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -87,10 +88,15 @@ func run(cmd *cobra.Command, argv []string) error {
 		return fmt.Errorf("error loading initial state: %v", err)
 	}
 
+	// configure cluster and upgrade versions
+	if err := e2e.ChooseVersions(); err != nil {
+		return fmt.Errorf("failed to configure versions: %v", err)
+	}
+
 	err := cluster.SetupCluster()
 
 	if err != nil {
-		return fmt.Errorf("Creation of a cluster failed.")
+		return fmt.Errorf("Creation of a cluster failed - %s", err.Error())
 	}
 
 	if len(viper.GetString(config.Kubeconfig.Contents)) == 0 {

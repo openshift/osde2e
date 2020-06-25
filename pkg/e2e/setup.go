@@ -24,6 +24,7 @@ import (
 
 // Check if the test should run
 var _ = ginkgo.BeforeEach(func() {
+	log.Println("Entered var declaration with gingko.Beforeeach()")
 	testText := ginkgo.CurrentGinkgoTestDescription().TestText
 	testContext := strings.TrimSpace(strings.TrimSuffix(ginkgo.CurrentGinkgoTestDescription().FullTestText, testText))
 
@@ -44,7 +45,7 @@ var _ = ginkgo.BeforeEach(func() {
 // Setup cluster before testing begins.
 var _ = ginkgo.SynchronizedBeforeSuite(func() []byte {
 	defer ginkgo.GinkgoRecover()
-
+	log.Println("calling setupcluster....")
 	err := setupCluster()
 	events.HandleErrorWithEvents(err, events.InstallSuccessful, events.InstallFailed).ShouldNot(HaveOccurred(), "failed to setup cluster for testing")
 	if err != nil {
@@ -92,6 +93,7 @@ func getLogs() {
 
 // setupCluster brings up a cluster, waits for it to be ready, then returns it's name.
 func setupCluster() (err error) {
+	log.Println("Entered setupCluster()")
 	// if TEST_KUBECONFIG has been set, skip configuring OCM
 	if len(viper.GetString(config.Kubeconfig.Contents)) > 0 || len(viper.GetString(config.Kubeconfig.Path)) > 0 {
 		return useKubeconfig()
@@ -193,8 +195,10 @@ func useKubeconfig() (err error) {
 
 // cluster name format must be short enough to support all versions
 func clusterName() string {
+	log.Println("Entered cluster name function")
 	vers := strings.TrimPrefix(viper.GetString(config.Cluster.Version), util.VersionPrefix)
 	safeVersion := strings.Replace(vers, ".", "-", -1)
+	log.Printf("version - %s", safeVersion)
 	return "ci-cluster-" + safeVersion + "-" + viper.GetString(config.Suffix)
 }
 
