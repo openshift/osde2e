@@ -27,6 +27,7 @@ const (
 
 // LaunchCluster setups an new cluster using the OSD API and returns it's ID.
 func (o *OCMProvider) LaunchCluster() (string, error) {
+	log.Print("Entered OCM provider launch cluster")
 	clusterName := viper.GetString(config.Cluster.Name)
 	log.Printf("Creating cluster '%s'...", clusterName)
 
