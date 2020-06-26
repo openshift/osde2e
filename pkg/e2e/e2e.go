@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
-	vegeta "github.com/tsenart/vegeta/lib"
 	"io/ioutil"
 	"log"
 	"math"
@@ -15,6 +14,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	vegeta "github.com/tsenart/vegeta/lib"
 
 	"github.com/onsi/ginkgo"
 	ginkgoConfig "github.com/onsi/ginkgo/config"
@@ -29,12 +30,12 @@ import (
 	"github.com/openshift/osde2e/pkg/common/metadata"
 	"github.com/openshift/osde2e/pkg/common/phase"
 	"github.com/openshift/osde2e/pkg/common/providers"
-	"github.com/openshift/osde2e/pkg/e2e/routemonitors"
 	"github.com/openshift/osde2e/pkg/common/runner"
 	"github.com/openshift/osde2e/pkg/common/spi"
 	"github.com/openshift/osde2e/pkg/common/upgrade"
 	"github.com/openshift/osde2e/pkg/common/util"
 	"github.com/openshift/osde2e/pkg/debug"
+	"github.com/openshift/osde2e/pkg/e2e/routemonitors"
 )
 
 const (
@@ -72,7 +73,6 @@ func runGinkgoTests() error {
 
 	// Get the cluster ID now to test against later
 	clusterID := viper.GetString(config.Cluster.ID)
-
 	// setup OSD unless Kubeconfig is present
 	if len(viper.GetString(config.Kubeconfig.Path)) > 0 {
 		log.Print("Found an existing Kubeconfig!")

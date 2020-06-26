@@ -44,7 +44,6 @@ var _ = ginkgo.BeforeEach(func() {
 // Setup cluster before testing begins.
 var _ = ginkgo.SynchronizedBeforeSuite(func() []byte {
 	defer ginkgo.GinkgoRecover()
-
 	err := setupCluster()
 	events.HandleErrorWithEvents(err, events.InstallSuccessful, events.InstallFailed).ShouldNot(HaveOccurred(), "failed to setup cluster for testing")
 	if err != nil {
