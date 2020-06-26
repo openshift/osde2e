@@ -157,6 +157,8 @@ func pollClusterHealth(provider spi.Provider, clusterID string) (status bool, er
 
 	var healthErr *multierror.Error
 	switch provider.Type() {
+	case "moa":
+		fallthrough
 	case "ocm":
 		if check, err := healthchecks.CheckCVOReadiness(oscfg.ConfigV1()); !check || err != nil {
 			healthErr = multierror.Append(healthErr, err)
