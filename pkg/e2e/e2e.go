@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
-	"github.com/openshift/osde2e/pkg/e2e/routemonitors"
 	vegeta "github.com/tsenart/vegeta/lib"
 	"io/ioutil"
 	"log"
@@ -30,6 +29,7 @@ import (
 	"github.com/openshift/osde2e/pkg/common/metadata"
 	"github.com/openshift/osde2e/pkg/common/phase"
 	"github.com/openshift/osde2e/pkg/common/providers"
+	"github.com/openshift/osde2e/pkg/e2e/routemonitors"
 	"github.com/openshift/osde2e/pkg/common/runner"
 	"github.com/openshift/osde2e/pkg/common/spi"
 	"github.com/openshift/osde2e/pkg/common/upgrade"
@@ -251,6 +251,9 @@ func cleanupAfterE2E(h *helper.H) (errors []error) {
 			}
 		}
 	}
+
+	log.Print("Gathering Test Project State...")
+	h.InspectState()
 
 	log.Print("Gathering Cluster State...")
 	clusterState := h.GetClusterState()
