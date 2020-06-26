@@ -8,6 +8,7 @@ import (
 	project "github.com/openshift/client-go/project/clientset/versioned"
 	route "github.com/openshift/client-go/route/clientset/versioned"
 	user "github.com/openshift/client-go/user/clientset/versioned"
+	machine "github.com/openshift/machine-api-operator/pkg/generated/clientset/versioned"
 	operator "github.com/operator-framework/operator-lifecycle-manager/pkg/api/client/clientset/versioned"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
@@ -72,6 +73,13 @@ func (h *H) User() user.Interface {
 // Operator returns the clientset for operator-lifecycle-manager
 func (h *H) Operator() operator.Interface {
 	client, err := operator.NewForConfig(h.restConfig)
+	Expect(err).ShouldNot(HaveOccurred(), "failed to configure Operator clientset")
+	return client
+}
+
+// Machine returns the clientset for openshift-machine-api
+func (h *H) Machine() machine.Interface {
+	client, err := machine.NewForConfig(h.restConfig)
 	Expect(err).ShouldNot(HaveOccurred(), "failed to configure Operator clientset")
 	return client
 }
