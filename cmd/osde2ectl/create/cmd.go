@@ -10,7 +10,8 @@ import (
 	"github.com/openshift/osde2e/pkg/common/cluster"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/providers/ocmprovider"
-	"github.com/openshift/osde2e/pkg/e2e"
+	"github.com/openshift/osde2e/pkg/common/util"
+	"github.com/openshift/osde2e/pkg/common/versions"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -27,7 +28,6 @@ var args struct {
 	configString    string
 	customConfig    string
 	secretLocations string
-	clusterID       string
 	environment     string
 	kubeConfig      string
 }
@@ -45,7 +45,7 @@ func init() {
 		&args.customConfig,
 		"custom-config",
 		"",
-		"Custom config file for osde2e",
+		"Custom config file for osde2ectl",
 	)
 	pfs.StringVar(
 		&args.secretLocations,
@@ -54,20 +54,12 @@ func init() {
 		"A comma separated list of possible secret directory locations for loading secret configs.",
 	)
 	pfs.StringVarP(
-		&args.clusterID,
-		"cluster-id",
-		"i",
-		"",
-		"Existing OCM cluster ID to run tests against.",
-	)
-	pfs.StringVarP(
 		&args.environment,
 		"environment",
 		"e",
 		"",
 		"Cluster provider environment to use.",
 	)
-
 	pfs.StringVarP(
 		&args.kubeConfig,
 		"kube-config",
@@ -89,8 +81,12 @@ func run(cmd *cobra.Command, argv []string) error {
 	}
 
 	// configure cluster and upgrade versions
-	if err := e2e.ChooseVersions(); err != nil {
+	if err := versions.ChooseVersions(); err != nil {
 		return fmt.Errorf("failed to configure versions: %v", err)
+	}
+
+	if viper.GetString(config.Suffix) == "" {
+		viper.Set(config.Suffix, util.RandomStr(3))
 	}
 
 	err := cluster.SetupCluster()
