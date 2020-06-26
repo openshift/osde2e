@@ -235,7 +235,7 @@ func (m *MockProvider) Type() string {
 	return "mock"
 }
 
-// ExtendExpiry extends the exipration time of an existing cluster
+// ExtendExpiry extends the expiration time of an existing cluster
 func (m *MockProvider) ExtendExpiry(clusterID string, hours uint64, minutes uint64, seconds uint64) error {
 	return nil
 }

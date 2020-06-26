@@ -36,7 +36,7 @@ func (m *MOAProvider) Type() string {
 	return "moa"
 }
 
-// ExtendExpiry extends the exipration time of an existing cluster
+// ExtendExpiry extends the expiration time of an existing cluster
 func (m *MOAProvider) ExtendExpiry(clusterID string, hours uint64, minutes uint64, seconds uint64) error {
 	return nil
 }

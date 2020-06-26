@@ -19,6 +19,9 @@ import (
 func ChooseVersions() (err error) {
 	log.Println("Entered choose version function")
 	provider, err := providers.ClusterProvider()
+	if err != nil {
+		return fmt.Errorf("error getting cluster provider: %v", err)
+	}
 	// when defined, use set version
 	if provider == nil {
 		err = errors.New("osd must be setup when upgrading with release stream")
