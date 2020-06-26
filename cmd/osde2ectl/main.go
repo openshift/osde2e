@@ -18,15 +18,9 @@ import (
 var root = &cobra.Command{
 	Use:  "osde2ectl",
 	Long: "Command line tool for osde2ectl.",
-	// SilenceErrors: true,
-	// SilenceUsage:  true,
 }
 
 func init() {
-	// Add the command line flags:
-	//pfs := root.PersistentFlags()
-	//arguments.AddDebugFlag(pfs)
-	//arguments.AddUpdateFlag(pfs)
 
 	root.AddCommand(create.Cmd)
 	root.AddCommand(delete.Cmd)
@@ -39,7 +33,6 @@ func init() {
 func main() {
 
 	// Execute the root command:
-	//root.SetArgs(os.Args[1:])
 	if err := root.Execute(); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)

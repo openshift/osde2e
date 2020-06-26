@@ -3,7 +3,6 @@ package create
 import (
 	"fmt"
 	"log"
-	"time"
 
 	"github.com/openshift/osde2e/cmd/osde2e/common"
 	"github.com/openshift/osde2e/cmd/osde2e/helpers"
@@ -92,14 +91,6 @@ func run(cmd *cobra.Command, argv []string) error {
 
 	if err != nil {
 		return fmt.Errorf("Creation of a cluster failed - %s", err.Error())
-	}
-
-	if len(viper.GetString(config.Kubeconfig.Contents)) == 0 {
-		// Give the cluster some breathing room.
-		log.Println("OSD cluster installed. Sleeping for 600s.")
-		time.Sleep(600 * time.Second)
-	} else {
-		log.Printf("No kubeconfig contents found, but there should be some by now.")
 	}
 
 	log.Printf("Cluster created....")
