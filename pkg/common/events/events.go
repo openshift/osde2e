@@ -13,6 +13,10 @@ type Events struct {
 var Instance *Events
 
 func init() {
+	initializeEvents()
+}
+
+func initializeEvents() {
 	Instance = &Events{}
 	Instance.Events = map[string]bool{}
 }
@@ -21,8 +25,9 @@ func init() {
 func HandleErrorWithEvents(err error, successEvent EventType, failEvent EventType) gomega.Assertion {
 	if err != nil {
 		RecordEvent(failEvent)
+	} else {
+		RecordEvent(successEvent)
 	}
-	RecordEvent(successEvent)
 	return gomega.Expect(err)
 }
 
