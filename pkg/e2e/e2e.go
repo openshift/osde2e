@@ -48,7 +48,6 @@ var provider spi.Provider
 
 // RunTests initializes Ginkgo and runs the osde2e test suite.
 func RunTests() bool {
-	log.Println("Entered runtests()")
 	testing.Init()
 
 	if err := runGinkgoTests(); err != nil {
@@ -62,7 +61,6 @@ func RunTests() bool {
 // runGinkgoTests runs the osde2e test suite using Ginkgo.
 // nolint:gocyclo
 func runGinkgoTests() error {
-	log.Println("Entered runGinkgoTests()")
 	var err error
 	gomega.RegisterFailHandler(ginkgo.Fail)
 
@@ -75,7 +73,6 @@ func runGinkgoTests() error {
 
 	// Get the cluster ID now to test against later
 	clusterID := viper.GetString(config.Cluster.ID)
-	log.Printf("Cluster ID in rungingko test - %s", clusterID)
 	// setup OSD unless Kubeconfig is present
 	if len(viper.GetString(config.Kubeconfig.Path)) > 0 {
 		log.Print("Found an existing Kubeconfig!")
