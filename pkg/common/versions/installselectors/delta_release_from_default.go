@@ -11,35 +11,36 @@ import (
 )
 
 func init() {
-	registerSelector(previousReleaseFromDefault{})
+	registerSelector(deltaReleaseFromDefault{})
 }
 
-// previousReleaseFromDefault is the selector which will
-type previousReleaseFromDefault struct{}
+// deltaReleaseFromDefault is the selector which will select a release that is a delta from the default. The
+// delta can be negative or positive.
+type deltaReleaseFromDefault struct{}
 
-func (p previousReleaseFromDefault) ShouldUse() bool {
-	return viper.GetInt(config.Cluster.PreviousReleaseFromDefault) > 0
+func (d deltaReleaseFromDefault) ShouldUse() bool {
+	return viper.GetInt(config.Cluster.DeltaReleaseFromDefault) != 0
 }
 
-func (p previousReleaseFromDefault) Priority() int {
+func (d deltaReleaseFromDefault) Priority() int {
 	return 50
 }
 
-func (p previousReleaseFromDefault) SelectVersion(versionList *spi.VersionList) (*semver.Version, string, error) {
+func (d deltaReleaseFromDefault) SelectVersion(versionList *spi.VersionList) (*semver.Version, string, error) {
 	availableVersions := versionList.AvailableVersions()
 	defaultIndex := findDefaultVersionIndex(availableVersions)
-	numReleasesFromDefault := viper.GetInt(config.Cluster.PreviousReleaseFromDefault)
-	versionType := fmt.Sprintf("version %d releases prior to the default", numReleasesFromDefault)
+	deltaReleasesFromDefault := viper.GetInt(config.Cluster.DeltaReleaseFromDefault)
+	versionType := fmt.Sprintf("version %d releases from the default", deltaReleasesFromDefault)
 
 	if defaultIndex < 0 {
 		log.Printf("unable to find default version in avaialable version list")
 		viper.Set(config.Cluster.PreviousVersionFromDefaultFound, false)
 	}
 
-	targetIndex := defaultIndex - numReleasesFromDefault
+	targetIndex := defaultIndex + deltaReleasesFromDefault
 
 	if targetIndex < 0 {
-		log.Printf("not enough enabled versions to go back %d releases", numReleasesFromDefault)
+		log.Printf("not enough enabled versions to go back %d releases", deltaReleasesFromDefault)
 		viper.Set(config.Cluster.PreviousVersionFromDefaultFound, false)
 		return nil, versionType, nil
 	}

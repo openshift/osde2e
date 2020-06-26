@@ -173,8 +173,8 @@ var Cluster = struct {
 	// UseOldestClusterImageSetForInstall will select the cluster image set that is in the end of the list of ordered cluster versions known to OCM.
 	UseOldestClusterImageSetForInstall string
 
-	// PreviousReleaseFromDefault will select the clsuter image set that is the given number of releases before the current default.
-	PreviousReleaseFromDefault string
+	// DeltaReleaseFromDefault will select the cluster image set that is the given number of releases from the current default in either direction.
+	DeltaReleaseFromDefault string
 
 	// NextReleaseAfterProdDefault will select the cluster image set that the given number of releases away from the the production default.
 	NextReleaseAfterProdDefault string
@@ -208,7 +208,7 @@ var Cluster = struct {
 	UseLatestVersionForInstall:          "cluster.useLatestVersionForInstall",
 	UseMiddleClusterImageSetForInstall:  "cluster.useMiddleClusterVersionForInstall",
 	UseOldestClusterImageSetForInstall:  "cluster.useOldestClusterVersionForInstall",
-	PreviousReleaseFromDefault:          "cluster.previousReleaseFromDefault",
+	DeltaReleaseFromDefault:             "cluster.deltaReleaseFromDefault",
 	NextReleaseAfterProdDefault:         "cluster.nextReleaseAfterProdDefault",
 	CleanCheckRuns:                      "cluster.cleanCheckRuns",
 	ID:                                  "cluster.id",
@@ -403,8 +403,8 @@ func init() {
 	viper.SetDefault(Cluster.UseOldestClusterImageSetForInstall, false)
 	viper.BindEnv(Cluster.UseOldestClusterImageSetForInstall, "USE_OLDEST_CLUSTER_IMAGE_SET_FOR_INSTALL")
 
-	viper.SetDefault(Cluster.PreviousReleaseFromDefault, 0)
-	viper.BindEnv(Cluster.PreviousReleaseFromDefault, "PREVIOUS_RELEASE_FROM_DEFAULT")
+	viper.SetDefault(Cluster.DeltaReleaseFromDefault, 0)
+	viper.BindEnv(Cluster.DeltaReleaseFromDefault, "DELTA_RELEASE_FROM_DEFAULT")
 
 	viper.SetDefault(Cluster.NextReleaseAfterProdDefault, -1)
 	viper.BindEnv(Cluster.NextReleaseAfterProdDefault, "NEXT_RELEASE_AFTER_PROD_DEFAULT")
