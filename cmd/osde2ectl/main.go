@@ -38,7 +38,6 @@ func init() {
 
 func main() {
 
-	fmt.Println("Executing osde2ectl main function")
 	// Execute the root command:
 	//root.SetArgs(os.Args[1:])
 	if err := root.Execute(); err != nil {

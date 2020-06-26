@@ -27,7 +27,6 @@ const (
 
 // LaunchCluster setups an new cluster using the OSD API and returns it's ID.
 func (o *OCMProvider) LaunchCluster() (string, error) {
-	log.Print("Entered OCM provider launch cluster")
 	clusterName := viper.GetString(config.Cluster.Name)
 	log.Printf("Creating cluster '%s'...", clusterName)
 
@@ -262,38 +261,8 @@ func (o *OCMProvider) ListClusters(query string) ([]*spi.Cluster, error) {
 		return nil, err
 	}
 
-	cluster := spi.NewClusterBuilder().
-		Name(ocmCluster.Name()).
-		Region(ocmCluster.Region().ID()).
-		Flavour(ocmCluster.Flavour().ID())
-
-	if id, ok := ocmCluster.GetID(); ok {
-		cluster.ID(id)
-	}
-
-	if version, ok := ocmCluster.GetVersion(); ok {
-		cluster.Version(version.ID())
-	}
-
-	if cloudProvider, ok := ocmCluster.GetCloudProvider(); ok {
-		cluster.CloudProvider(cloudProvider.ID())
-	}
-
-	if state, ok := ocmCluster.GetState(); ok {
-		cluster.State(ocmStateToInternalState(state))
-	}
-
-	if properties, ok := ocmCluster.GetProperties(); ok {
-		cluster.Properties(properties)
-	}
-
-	var addonsResp *v1.AddOnInstallationsListResponse
-	err = retryer().Do(func() error {
-		var err error
-		addonsResp, err = o.conn.ClustersMgmt().V1().Clusters().Cluster(clusterID).Addons().
-			List().
-			Send()
-
+	for _, cluster := range response.Items().Slice() {
+		spiCluster, err := o.ocmToSPICluster(cluster)
 		if err != nil {
 			return nil, err
 		}

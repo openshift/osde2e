@@ -75,7 +75,6 @@ func init() {
 }
 
 func run(cmd *cobra.Command, argv []string) error {
-	fmt.Println("You've entered the create command")
 	if err := common.LoadConfigs(args.configString, args.customConfig, args.secretLocations); err != nil {
 		return fmt.Errorf("error loading initial state: %v", err)
 	}
