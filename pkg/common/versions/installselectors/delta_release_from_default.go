@@ -39,7 +39,7 @@ func (d deltaReleaseFromDefault) SelectVersion(versionList *spi.VersionList) (*s
 
 	targetIndex := defaultIndex + deltaReleasesFromDefault
 
-	if targetIndex < 0 {
+	if targetIndex < 0 || targetIndex >= len(availableVersions) {
 		log.Printf("not enough enabled versions to go back %d releases", deltaReleasesFromDefault)
 		viper.Set(config.Cluster.PreviousVersionFromDefaultFound, false)
 		return nil, versionType, nil
