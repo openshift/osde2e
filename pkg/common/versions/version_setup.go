@@ -17,8 +17,8 @@ import (
 // ChooseVersions sets versions in cfg if not set based on defaults and upgrade options.
 // If a release stream is set for an upgrade the previous available version is used and it's image is used for upgrade.
 func ChooseVersions() (err error) {
-	provider, perr := providers.ClusterProvider()
-	if perr != nil {
+	provider, err := providers.ClusterProvider()
+	if err != nil {
 		return fmt.Errorf("error getting cluster provider: %v", err)
 	}
 	// when defined, use set version
@@ -95,6 +95,9 @@ func setupVersion(versionList *spi.VersionList) (*semver.Version, error) {
 func setupUpgradeVersion(clusterVersion *semver.Version, versionList *spi.VersionList) error {
 	var err error
 	provider, err := providers.ClusterProvider()
+	if err != nil {
+		return fmt.Errorf("error getting cluster provider: %v", err)
+	}
 	if viper.GetString(config.Upgrade.ReleaseName) != "" || viper.GetString(config.Upgrade.Image) != "" {
 		log.Printf("Using user supplied upgrade state.")
 		return nil
