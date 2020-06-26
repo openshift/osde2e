@@ -652,7 +652,7 @@ func ocmStateToInternalState(state v1.ClusterState) spi.ClusterState {
 	}
 }
 
-// ExtendExpiry extends the exipration time of an existing cluster
+// ExtendExpiry extends the expiration time of an existing cluster
 func (o *OCMProvider) ExtendExpiry(clusterID string, hours uint64, minutes uint64, seconds uint64) error {
 	var resp *v1.ClusterUpdateResponse
 

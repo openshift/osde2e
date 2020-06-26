@@ -17,9 +17,8 @@ import (
 // ChooseVersions sets versions in cfg if not set based on defaults and upgrade options.
 // If a release stream is set for an upgrade the previous available version is used and it's image is used for upgrade.
 func ChooseVersions() (err error) {
-	log.Println("Entered choose version function")
-	provider, err := providers.ClusterProvider()
-	if err != nil {
+	provider, perr := providers.ClusterProvider()
+	if perr != nil {
 		return fmt.Errorf("error getting cluster provider: %v", err)
 	}
 	// when defined, use set version
