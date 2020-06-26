@@ -15,7 +15,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/openshift/osde2e/pkg/e2e/routemonitors"
 	vegeta "github.com/tsenart/vegeta/lib"
 
 	"github.com/onsi/ginkgo"
