@@ -52,6 +52,9 @@ func (o *OCMProvider) LaunchCluster() (string, error) {
 		}
 
 		region = regions.Items().Slice()[rand.Intn(regions.Total())].ID()
+
+		// Update the Config with the selected random region
+		viper.Set(config.CloudProvider.Region, region)
 	}
 
 	nodeBuilder := &v1.ClusterNodesBuilder{}
