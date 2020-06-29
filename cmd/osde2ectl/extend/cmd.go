@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/openshift/osde2e/cmd/osde2e/common"
+	"github.com/openshift/osde2e/cmd/osde2e/helpers"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/providers"
 	"github.com/openshift/osde2e/pkg/common/spi"
@@ -22,14 +24,39 @@ var Cmd = &cobra.Command{
 var provider spi.Provider
 
 var args struct {
-	clusterID string
-	hours     uint64
-	minutes   uint64
-	seconds   uint64
+	clusterID       string
+	hours           uint64
+	minutes         uint64
+	seconds         uint64
+	configString    string
+	customConfig    string
+	secretLocations string
 }
 
 func init() {
 	pfs := Cmd.PersistentFlags()
+
+	pfs.StringVar(
+		&args.configString,
+		"configs",
+		"",
+		"A comma separated list of built in configs to use",
+	)
+
+	Cmd.RegisterFlagCompletionFunc("configs", helpers.ConfigComplete)
+	pfs.StringVar(
+		&args.customConfig,
+		"custom-config",
+		"",
+		"Custom config file for osde2e",
+	)
+
+	pfs.StringVar(
+		&args.secretLocations,
+		"secret-locations",
+		"",
+		"A comma separated list of possible secret directory locations for loading secret configs.",
+	)
 
 	pfs.StringVarP(
 		&args.clusterID,
@@ -42,7 +69,7 @@ func init() {
 	pfs.Uint64VarP(
 		&args.hours,
 		"hours",
-		"h",
+		"r",
 		0,
 		"Cluster expiration extension value in hours.",
 	)
@@ -56,7 +83,7 @@ func init() {
 	)
 
 	pfs.Uint64VarP(
-		&args.minutes,
+		&args.seconds,
 		"seconds",
 		"s",
 		0,
@@ -69,6 +96,12 @@ func init() {
 func run(cmd *cobra.Command, argv []string) error {
 
 	var err error
+
+	if err := common.LoadConfigs(args.configString, args.customConfig, args.secretLocations); err != nil {
+		return fmt.Errorf("error loading initial state: %v", err)
+	}
+
+	viper.BindPFlag(config.Cluster.ID, cmd.PersistentFlags().Lookup("cluster-id"))
 
 	clusterID := viper.GetString(config.Cluster.ID)
 
