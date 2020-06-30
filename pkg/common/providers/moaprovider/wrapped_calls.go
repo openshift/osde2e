@@ -71,3 +71,8 @@ func (m *MOAProvider) UpgradeSource() spi.UpgradeSource {
 func (m *MOAProvider) CincinnatiChannel() spi.CincinnatiChannel {
 	return m.ocmProvider.CincinnatiChannel()
 }
+
+// ExtendExpiry extends the expiration time of an existing cluster
+func (m *MOAProvider) ExtendExpiry(clusterID string, hours uint64, minutes uint64, seconds uint64) error {
+	return m.ocmProvider.ExtendExpiry(clusterID, hours, minutes, seconds)
+}

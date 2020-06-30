@@ -47,11 +47,11 @@ func GenerateReport() (WeatherReport, error) {
 	context, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	// Assemble the whitelist regexes. We'll only produce a report based on these regexes.
-	whitelistRegexes := []*regexp.Regexp{}
-	jobWhitelistString := viper.GetString(config.Weather.JobWhitelist)
-	for _, whitelistRegex := range strings.Split(jobWhitelistString, ",") {
-		whitelistRegexes = append(whitelistRegexes, regexp.MustCompile(whitelistRegex))
+	// Assemble the allowlist regexes. We'll only produce a report based on these regexes.
+	allowlistRegexes := []*regexp.Regexp{}
+	jobAllowlistString := viper.GetString(config.Weather.JobAllowlist)
+	for _, allowlistRegex := range strings.Split(jobAllowlistString, ",") {
+		allowlistRegexes = append(allowlistRegexes, regexp.MustCompile(allowlistRegex))
 	}
 
 	results, warnings, err := promAPI.QueryRange(context, gateQuery, queryRange)
@@ -75,16 +75,16 @@ func GenerateReport() (WeatherReport, error) {
 			ReportDate: time.Now().UTC(),
 		}
 		for job, reportData := range jobReportData {
-			whitelisted := false
-			// If a job matches the whitelist, include it in the weather report.
-			for _, whitelistRegex := range whitelistRegexes {
-				if whitelistRegex.MatchString(job) {
-					whitelisted = true
+			allowed := false
+			// If a job matches the allowlist, include it in the weather report.
+			for _, allowlistRegex := range allowlistRegexes {
+				if allowlistRegex.MatchString(job) {
+					allowed = true
 					break
 				}
 			}
 
-			if whitelisted {
+			if allowed {
 				weatherReport.Jobs = append(weatherReport.Jobs, JobReport{
 					Name:         job,
 					Viable:       len(reportData.Failures) == 0,

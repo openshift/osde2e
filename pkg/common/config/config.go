@@ -128,9 +128,6 @@ var Tests = struct {
 	// SkipClusterHealthChecks skips the cluster health checks. Useful when developing against a running cluster.
 	SkipClusterHealthChecks string
 
-	// UploadMetrics tells osde2e whether to try to upload to the S3 metrics bucket.
-	UploadMetrics string
-
 	// MetricsBucket is the bucket that metrics data will be uploaded to.
 	MetricsBucket string
 
@@ -146,7 +143,6 @@ var Tests = struct {
 	CleanRuns:                 "tests.cleanRuns",
 	OperatorSkip:              "tests.operatorSkip",
 	SkipClusterHealthChecks:   "tests.skipClusterHealthChecks",
-	UploadMetrics:             "tests.uploadMetrics",
 	MetricsBucket:             "tests.metricsBucket",
 	ServiceAccount:            "tests.serviceAccount",
 }
@@ -177,8 +173,8 @@ var Cluster = struct {
 	// UseOldestClusterImageSetForInstall will select the cluster image set that is in the end of the list of ordered cluster versions known to OCM.
 	UseOldestClusterImageSetForInstall string
 
-	// PreviousReleaseFromDefault will select the clsuter image set that is the given number of releases before the current default.
-	PreviousReleaseFromDefault string
+	// DeltaReleaseFromDefault will select the cluster image set that is the given number of releases from the current default in either direction.
+	DeltaReleaseFromDefault string
 
 	// NextReleaseAfterProdDefault will select the cluster image set that the given number of releases away from the the production default.
 	NextReleaseAfterProdDefault string
@@ -212,7 +208,7 @@ var Cluster = struct {
 	UseLatestVersionForInstall:          "cluster.useLatestVersionForInstall",
 	UseMiddleClusterImageSetForInstall:  "cluster.useMiddleClusterVersionForInstall",
 	UseOldestClusterImageSetForInstall:  "cluster.useOldestClusterVersionForInstall",
-	PreviousReleaseFromDefault:          "cluster.previousReleaseFromDefault",
+	DeltaReleaseFromDefault:             "cluster.deltaReleaseFromDefault",
 	NextReleaseAfterProdDefault:         "cluster.nextReleaseAfterProdDefault",
 	CleanCheckRuns:                      "cluster.cleanCheckRuns",
 	ID:                                  "cluster.id",
@@ -286,13 +282,13 @@ var Weather = struct {
 	// SlackWebhook is the webhook to use to post the weather report to slack.
 	SlackWebhook string
 
-	// JobWhitelist is a list of job regexes to consider in the weather report.
-	JobWhitelist string
+	// JobAllowlist is a list of job regexes to consider in the weather report.
+	JobAllowlist string
 }{
 	StartOfTimeWindowInHours: "weather.startOfTimeWindowInHours",
 	NumberOfSamplesNecessary: "weather.numberOfSamplesNecessary",
 	SlackWebhook:             "weather.slackWebhook",
-	JobWhitelist:             "weather.jobWhitelist",
+	JobAllowlist:             "weather.jobAllowlist",
 }
 
 var Alert = struct {
@@ -377,9 +373,6 @@ func init() {
 	viper.SetDefault(Tests.SkipClusterHealthChecks, false)
 	viper.BindEnv(Tests.OperatorSkip, "SKIP_CLUSTER_HEALTH_CHECKS")
 
-	viper.SetDefault(Tests.UploadMetrics, false)
-	viper.BindEnv(Tests.UploadMetrics, "UPLOAD_METRICS")
-
 	viper.SetDefault(Tests.MetricsBucket, "osde2e-metrics")
 	viper.BindEnv(Tests.MetricsBucket, "METRICS_BUCKET")
 
@@ -410,8 +403,8 @@ func init() {
 	viper.SetDefault(Cluster.UseOldestClusterImageSetForInstall, false)
 	viper.BindEnv(Cluster.UseOldestClusterImageSetForInstall, "USE_OLDEST_CLUSTER_IMAGE_SET_FOR_INSTALL")
 
-	viper.SetDefault(Cluster.PreviousReleaseFromDefault, 0)
-	viper.BindEnv(Cluster.PreviousReleaseFromDefault, "PREVIOUS_RELEASE_FROM_DEFAULT")
+	viper.SetDefault(Cluster.DeltaReleaseFromDefault, 0)
+	viper.BindEnv(Cluster.DeltaReleaseFromDefault, "DELTA_RELEASE_FROM_DEFAULT")
 
 	viper.SetDefault(Cluster.NextReleaseAfterProdDefault, -1)
 	viper.BindEnv(Cluster.NextReleaseAfterProdDefault, "NEXT_RELEASE_AFTER_PROD_DEFAULT")
@@ -464,8 +457,8 @@ func init() {
 
 	viper.BindEnv(Weather.SlackWebhook, "SLACK_WEBHOOK")
 
-	viper.SetDefault(Weather.JobWhitelist, "osde2e-.*-aws-e2e-.*")
-	viper.BindEnv(Weather.JobWhitelist, "JOB_WHITELIST")
+	viper.SetDefault(Weather.JobAllowlist, "osde2e-.*-aws-e2e-.*")
+	viper.BindEnv(Weather.JobAllowlist, "JOB_ALLOWLIST")
 
 	// ----- Alert ----
 	viper.BindEnv(Alert.SlackAPIToken, "SLACK_API_TOKEN")
