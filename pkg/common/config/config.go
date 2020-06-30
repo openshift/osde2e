@@ -282,13 +282,13 @@ var Weather = struct {
 	// SlackWebhook is the webhook to use to post the weather report to slack.
 	SlackWebhook string
 
-	// JobWhitelist is a list of job regexes to consider in the weather report.
-	JobWhitelist string
+	// JobAllowlist is a list of job regexes to consider in the weather report.
+	JobAllowlist string
 }{
 	StartOfTimeWindowInHours: "weather.startOfTimeWindowInHours",
 	NumberOfSamplesNecessary: "weather.numberOfSamplesNecessary",
 	SlackWebhook:             "weather.slackWebhook",
-	JobWhitelist:             "weather.jobWhitelist",
+	JobAllowlist:             "weather.jobAllowlist",
 }
 
 var Alert = struct {
@@ -457,8 +457,8 @@ func init() {
 
 	viper.BindEnv(Weather.SlackWebhook, "SLACK_WEBHOOK")
 
-	viper.SetDefault(Weather.JobWhitelist, "osde2e-.*-aws-e2e-.*")
-	viper.BindEnv(Weather.JobWhitelist, "JOB_WHITELIST")
+	viper.SetDefault(Weather.JobAllowlist, "osde2e-.*-aws-e2e-.*")
+	viper.BindEnv(Weather.JobAllowlist, "JOB_ALLOWLIST")
 
 	// ----- Alert ----
 	viper.BindEnv(Alert.SlackAPIToken, "SLACK_API_TOKEN")
