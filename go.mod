@@ -15,6 +15,7 @@ require (
 	github.com/google/go-github/v31 v31.0.0
 	github.com/google/uuid v1.1.1
 	github.com/hashicorp/go-multierror v1.1.0
+	github.com/hpcloud/tail v1.0.0
 	github.com/influxdata/tdigest v0.0.1 // indirect
 	github.com/kylelemons/godebug v1.1.0
 	github.com/markbates/pkger v0.16.0
