@@ -55,8 +55,8 @@ var _ = ginkgo.Describe("[Suite: informing] MachineHealthChecks", func() {
 		r := h.Runner("chroot /host -- systemctl stop kubelet")
 		r.Name = "stop-kubelet"
 		// i can't believe SecurityContext.Privileged is a pointer to a bool
-		thisIsSoDumb := true
-		r.PodSpec.Containers[0].SecurityContext.Privileged = &thisIsSoDumb
+		truePointer := true
+		r.PodSpec.Containers[0].SecurityContext.Privileged = &truePointer
 
 		// get original list of machines to compare against later
 		originalMachines, err := h.Machine().MachineV1beta1().Machines(OperatorNamespace).List(context.TODO(), metav1.ListOptions{})
