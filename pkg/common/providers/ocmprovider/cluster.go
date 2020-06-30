@@ -37,22 +37,6 @@ func (o *OCMProvider) LaunchCluster() (string, error) {
 	// we happen to forget to do it:
 	expiration := time.Now().Add(time.Duration(viper.GetInt64(config.Cluster.ExpiryInMinutes)) * time.Minute).UTC() // UTC() to workaround SDA-1567.
 
-	var username string
-
-	// If JobID is not equal to -1, then we're running on prow.
-	if viper.GetInt(config.JobID) != -1 {
-		username = "prow"
-	} else {
-
-		user, err := user.Current()
-
-		if err != nil {
-			return "", fmt.Errorf("unable to get current user: %v", err)
-		}
-
-		username = user.Username
-	}
-
 	multiAZ := viper.GetBool(config.Cluster.MultiAZ)
 	computeMachineType := viper.GetString(ComputeMachineType)
 	region := viper.GetString(config.CloudProvider.Region)
@@ -68,9 +52,18 @@ func (o *OCMProvider) LaunchCluster() (string, error) {
 		}
 
 		region = regions.Items().Slice()[rand.Intn(regions.Total())].ID()
+
+		// Update the Config with the selected random region
+		viper.Set(config.CloudProvider.Region, region)
 	}
 
 	nodeBuilder := &v1.ClusterNodesBuilder{}
+
+	clusterProperties, err := o.GenerateProperties()
+
+	if err != nil {
+		return "", fmt.Errorf("error generating cluster properties: %v", err)
+	}
 
 	newCluster := v1.NewCluster().
 		Name(clusterName).
@@ -84,10 +77,7 @@ func (o *OCMProvider) LaunchCluster() (string, error) {
 		CloudProvider(v1.NewCloudProvider().
 			ID(cloudProvider)).
 		ExpirationTimestamp(expiration).
-		Properties(map[string]string{
-			MadeByOSDe2e: "true",
-			OwnedBy:      username,
-		})
+		Properties(clusterProperties)
 
 	// Configure the cluster to be Multi-AZ if configured
 	// We must manually configure the number of compute nodes
@@ -139,6 +129,29 @@ func (o *OCMProvider) LaunchCluster() (string, error) {
 		return "", fmt.Errorf("couldn't create cluster: %v", err)
 	}
 	return resp.Body().ID(), nil
+}
+
+func (o *OCMProvider) GenerateProperties() (map[string]string, error) {
+	var username string
+
+	// If JobID is not equal to -1, then we're running on prow.
+	if viper.GetInt(config.JobID) != -1 {
+		username = "prow"
+	} else {
+
+		user, err := user.Current()
+
+		if err != nil {
+			return nil, fmt.Errorf("unable to get current user: %v", err)
+		}
+
+		username = user.Username
+	}
+
+	return map[string]string{
+		MadeByOSDe2e: "true",
+		OwnedBy:      username,
+	}, nil
 }
 
 // DeleteCluster requests the deletion of clusterID.
@@ -579,6 +592,10 @@ func (o *OCMProvider) ocmToSPICluster(ocmCluster *v1.Cluster) (*spi.Cluster, err
 		cluster.State(ocmStateToInternalState(state))
 	}
 
+	if properties, ok := ocmCluster.GetProperties(); ok {
+		cluster.Properties(properties)
+	}
+
 	var addonsResp *v1.AddOnInstallationsListResponse
 	err = retryer().Do(func() error {
 		var err error
@@ -636,4 +653,81 @@ func ocmStateToInternalState(state v1.ClusterState) spi.ClusterState {
 	default:
 		return spi.ClusterStateUnknown
 	}
+}
+
+// ExtendExpiry extends the expiration time of an existing cluster
+func (o *OCMProvider) ExtendExpiry(clusterID string, hours uint64, minutes uint64, seconds uint64) error {
+	var resp *v1.ClusterUpdateResponse
+
+	// Get the current state of the cluster
+	ocmCluster, err := o.getOCMCluster(clusterID)
+
+	if err != nil {
+		return err
+	}
+
+	cluster, err := o.ocmToSPICluster(ocmCluster)
+	if err != nil {
+		return err
+	}
+
+	extendexpirytime := cluster.ExpirationTimestamp()
+
+	if hours != 0 {
+		extendexpirytime = extendexpirytime.Add(time.Duration(hours) * time.Hour).UTC()
+	}
+	if minutes != 0 {
+		extendexpirytime = extendexpirytime.Add(time.Duration(minutes) * time.Minute).UTC()
+	}
+	if seconds != 0 {
+		extendexpirytime = extendexpirytime.Add(time.Duration(seconds) * time.Second).UTC()
+	}
+
+	extendexpiryCluster, err := v1.NewCluster().ExpirationTimestamp(extendexpirytime).Build()
+
+	if err != nil {
+		return fmt.Errorf("error while building updated expiration time cluster object: %v", err)
+	}
+
+	err = retryer().Do(func() error {
+		var err error
+		resp, err = o.conn.ClustersMgmt().V1().Clusters().Cluster(clusterID).Update().
+			Body(extendexpiryCluster).
+			Send()
+
+		if err != nil {
+			err = fmt.Errorf("couldn't update cluster '%s': %v", clusterID, err)
+			log.Printf("%v", err)
+			return err
+		}
+
+		if resp != nil && resp.Error() != nil {
+			log.Printf("error while trying to update cluster: %v", err)
+			return errResp(resp.Error())
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return err
+	}
+
+	if resp.Error() != nil {
+		return resp.Error()
+	}
+
+	finalCluster, err := o.GetCluster(clusterID)
+
+	if err != nil {
+		log.Printf("error attempting to retrieve cluster for verification: %v", err)
+	}
+
+	if finalCluster.ExpirationTimestamp() != extendexpirytime {
+		return fmt.Errorf("expected expiration time %s not reflected in OCM (found %s)", extendexpirytime.UTC().Format("2002-01-02 14:03:02 Monday"), finalCluster.ExpirationTimestamp().UTC().Format("2002-01-02 14:03:02 Monday"))
+
+	}
+	log.Println("Successfully extended cluster expiry time to ", extendexpirytime.UTC().Format("2002-01-02 14:03:02 Monday"))
+
+	return nil
 }

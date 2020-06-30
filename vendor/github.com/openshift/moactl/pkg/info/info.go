@@ -14,16 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// This file contains the OCM properties that are used to store additional information about crated
-// clusters.
+// This file contains information about the tool.
 
-package properties
+package info
 
-// Prefix used by all the property names:
-const prefix = "moa_"
-
-// CreatorARN is the name of the label that will contain the ARN of the user that created the
-// cluster:
-const CreatorARN = prefix + "creator_arn"
-
-const CLIVersion = prefix + "cli_version"
+const Version = "0.0.2"

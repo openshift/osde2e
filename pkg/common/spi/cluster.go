@@ -42,6 +42,8 @@ type Cluster struct {
 	// should provide us these metrics. The clustersmgmt metrics types handle
 	// all aspects of this extremely well, so let's not reinvent the wheel.
 	metrics clustersmgmtv1.ClusterMetrics
+	// Custom tags for a cluster are included in the properties field
+	properties map[string]string
 }
 
 // ID returns the cluster ID.
@@ -99,6 +101,11 @@ func (c *Cluster) Metrics() clustersmgmtv1.ClusterMetrics {
 	return c.metrics
 }
 
+//Properties returns properties related to the given cluster.
+func (c *Cluster) Properties() map[string]string {
+	return c.properties
+}
+
 // ClusterBuilder is a struct that can create cluster objects.
 type ClusterBuilder struct {
 	id                  string
@@ -111,6 +118,7 @@ type ClusterBuilder struct {
 	flavour             string
 	addons              []string
 	numComputeNodes     int
+	properties          map[string]string
 }
 
 // NewClusterBuilder creates a new cluster builder that can create a new cluster.
@@ -187,6 +195,12 @@ func (cb *ClusterBuilder) NumComputeNodes(numComputeNodes int) *ClusterBuilder {
 	return cb
 }
 
+// Properties sets the list of properties for a cluster builder.
+func (cb *ClusterBuilder) Properties(properties map[string]string) *ClusterBuilder {
+	cb.properties = properties
+	return cb
+}
+
 // Build will create the cluster from the cluster build.
 func (cb *ClusterBuilder) Build() *Cluster {
 	return &Cluster{
@@ -200,5 +214,6 @@ func (cb *ClusterBuilder) Build() *Cluster {
 		flavour:             cb.flavour,
 		addons:              cb.addons,
 		numComputeNodes:     cb.numComputeNodes,
+		properties:          cb.properties,
 	}
 }

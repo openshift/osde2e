@@ -28,6 +28,7 @@ type Metadata struct {
 	ClusterName          string `json:"cluster-name"`
 	ClusterVersion       string `json:"cluster-version"`
 	Environment          string `json:"environment"`
+	Region               string `json:"region"`
 	UpgradeVersion       string `json:"upgrade-version,omitempty"`
 	UpgradeVersionSource string `json:"upgrade-version-source,omitempty"`
 
@@ -91,6 +92,12 @@ func (m *Metadata) SetClusterVersion(version string) {
 // SetEnvironment sets the cluster environment
 func (m *Metadata) SetEnvironment(env string) {
 	m.Environment = env
+	m.WriteToJSON(m.ReportDir)
+}
+
+// SetRegion sets the cluster environment
+func (m *Metadata) SetRegion(region string) {
+	m.Region = region
 	m.WriteToJSON(m.ReportDir)
 }
 

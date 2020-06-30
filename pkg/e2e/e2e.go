@@ -7,8 +7,6 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
-	"github.com/openshift/osde2e/pkg/e2e/routemonitors"
-	vegeta "github.com/tsenart/vegeta/lib"
 	"io/ioutil"
 	"log"
 	"math"
@@ -16,6 +14,9 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/hpcloud/tail"
+	vegeta "github.com/tsenart/vegeta/lib"
 
 	"github.com/onsi/ginkgo"
 	ginkgoConfig "github.com/onsi/ginkgo/config"
@@ -35,11 +36,15 @@ import (
 	"github.com/openshift/osde2e/pkg/common/upgrade"
 	"github.com/openshift/osde2e/pkg/common/util"
 	"github.com/openshift/osde2e/pkg/debug"
+	"github.com/openshift/osde2e/pkg/e2e/routemonitors"
 )
 
 const (
 	// hiveLog is the name of the hive log file.
 	hiveLog string = "hive-log.txt"
+
+	// buildLog is the name of the build log file.
+	buildLog string = "build-log.txt"
 )
 
 // provisioner is used to deploy and manage clusters.
@@ -70,9 +75,64 @@ func runGinkgoTests() error {
 	ginkgoConfig.GinkgoConfig.FocusString = viper.GetString(config.Tests.GinkgoFocus)
 	ginkgoConfig.GinkgoConfig.DryRun = dryRun
 
+	// setup reporter
+	reportDir := viper.GetString(config.ReportDir)
+	if reportDir == "" {
+		reportDir, err = ioutil.TempDir("", "")
+
+		if err != nil {
+			return fmt.Errorf("error creating temporary directory: %v", err)
+		}
+
+		log.Printf("Writing files to temporary directory %s", reportDir)
+		viper.Set(config.ReportDir, reportDir)
+	} else if err = os.Mkdir(reportDir, os.ModePerm); err != nil {
+		log.Printf("Could not create reporter directory: %v", err)
+	}
+
+	// Redirect stdout to where we want it to go
+	buildLogPath := filepath.Join(reportDir, buildLog)
+	buildLogWriter, err := os.Create(buildLogPath)
+
+	if err != nil {
+		return fmt.Errorf("unable to create build log in report directory: %v", err)
+	}
+
+	// Save off stdout, create the build log writer.
+	stdout := os.Stdout
+	os.Stdout = buildLogWriter
+
+	// Set the logger output to the build log writer.
+	log.SetOutput(buildLogWriter)
+
+	// Restore stdout and close the build log writer at the end of this function.
+	defer func() {
+		os.Stdout = stdout
+		buildLogWriter.Close()
+	}()
+
+	// Tail the build log.
+	tail, err := tail.TailFile(buildLogPath, tail.Config{
+		Follow: true,
+		Logger: tail.DiscardingLogger,
+	})
+
+	if err != nil {
+		return fmt.Errorf("unable to tail build log: %v", err)
+	}
+
+	// Write each line from the build log to stdout.
+	go func() {
+		for line := range tail.Lines {
+			// This can return an err, but is unlikely -- we're going to skip this check intentionally for now.
+			stdout.WriteString(line.Text + "\n")
+		}
+	}()
+
+	log.Printf("Outputting log to build log at %s", buildLogPath)
+
 	// Get the cluster ID now to test against later
 	clusterID := viper.GetString(config.Cluster.ID)
-
 	// setup OSD unless Kubeconfig is present
 	if len(viper.GetString(config.Kubeconfig.Path)) > 0 {
 		log.Print("Found an existing Kubeconfig!")
@@ -115,21 +175,6 @@ func runGinkgoTests() error {
 		}
 	}
 
-	// setup reporter
-	reportDir := viper.GetString(config.ReportDir)
-	if reportDir == "" {
-		reportDir, err = ioutil.TempDir("", "")
-
-		if err != nil {
-			return fmt.Errorf("error creating temporary directory: %v", err)
-		}
-
-		log.Printf("Writing files to temporary directory %s", reportDir)
-		viper.Set(config.ReportDir, reportDir)
-	} else if err = os.Mkdir(reportDir, os.ModePerm); err != nil {
-		log.Printf("Could not create reporter directory: %v", err)
-	}
-
 	// Update the metadata object to use the report directory.
 	metadata.Instance.SetReportDir(reportDir)
 
@@ -143,7 +188,7 @@ func runGinkgoTests() error {
 	upgradeTestsPassed := true
 
 	var routeMonitorChan chan struct{}
-	if viper.GetBool(config.Upgrade.MonitorRoutesDuringUpgrade) {
+	if viper.GetBool(config.Upgrade.MonitorRoutesDuringUpgrade) && !dryRun {
 		routeMonitorChan = setupRouteMonitors()
 	}
 
@@ -179,19 +224,19 @@ func runGinkgoTests() error {
 			return fmt.Errorf("error while writing prometheus metrics: %v", err)
 		}
 
-		if viper.GetBool(config.Tests.UploadMetrics) {
-			jobName := viper.GetString(config.JobName)
-			if strings.HasPrefix(jobName, "rehearse-") {
-				log.Printf("Job %s is a rehearsal, so metrics upload is being skipped.", jobName)
-			} else {
-				if err := uploadFileToMetricsBucket(filepath.Join(reportDir, prometheusFilename)); err != nil {
-					return fmt.Errorf("error while uploading prometheus metrics: %v", err)
-				}
+		jobName := viper.GetString(config.JobName)
+		if jobName == "" {
+			log.Printf("Skipping metrics upload for local osde2e run.")
+		} else if strings.HasPrefix(jobName, "rehearse-") {
+			log.Printf("Job %s is a rehearsal, so metrics upload is being skipped.", jobName)
+		} else {
+			if err := uploadFileToMetricsBucket(filepath.Join(reportDir, prometheusFilename)); err != nil {
+				return fmt.Errorf("error while uploading prometheus metrics: %v", err)
 			}
 		}
 	}
 
-	if viper.GetBool(config.Upgrade.MonitorRoutesDuringUpgrade) {
+	if viper.GetBool(config.Upgrade.MonitorRoutesDuringUpgrade) && !dryRun {
 		close(routeMonitorChan)
 	}
 
@@ -204,7 +249,7 @@ func runGinkgoTests() error {
 	} else {
 		// When using a local kubeconfig, provider might not be set
 		if provider != nil {
-			log.Printf("For debugging, please look for cluster ID %s in environment %s", clusterID, provider.Environment())
+			log.Printf("For debugging, please look for cluster ID %s in environment %s", viper.GetString(config.Cluster.ID), provider.Environment())
 		}
 	}
 
@@ -251,6 +296,9 @@ func cleanupAfterE2E(h *helper.H) (errors []error) {
 			}
 		}
 	}
+
+	log.Print("Gathering Test Project State...")
+	h.InspectState()
 
 	log.Print("Gathering Cluster State...")
 	clusterState := h.GetClusterState()

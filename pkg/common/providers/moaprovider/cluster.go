@@ -50,6 +50,12 @@ func (m *MOAProvider) LaunchCluster() (string, error) {
 		}
 	}
 
+	clusterProperties, err := m.ocmProvider.GenerateProperties()
+
+	if err != nil {
+		return "", fmt.Errorf("error generating cluster properties: %v", clusterProperties)
+	}
+
 	var createdCluster *cmv1.Cluster
 
 	callAndSetAWSSession(func() {
@@ -62,10 +68,11 @@ func (m *MOAProvider) LaunchCluster() (string, error) {
 			ComputeMachineType: viper.GetString(ComputeMachineType),
 			ComputeNodes:       viper.GetInt(ComputeNodes),
 
-			MachineCIDR: *machineCIDRParsed,
-			ServiceCIDR: *serviceCIDRParsed,
-			PodCIDR:     *podCIDRParsed,
-			HostPrefix:  viper.GetInt(HostPrefix),
+			CustomProperties: clusterProperties,
+			MachineCIDR:      *machineCIDRParsed,
+			ServiceCIDR:      *serviceCIDRParsed,
+			PodCIDR:          *podCIDRParsed,
+			HostPrefix:       viper.GetInt(HostPrefix),
 		}
 
 		createdCluster, err = cluster.CreateCluster(clustersClient, clusterSpec)

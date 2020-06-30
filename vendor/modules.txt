@@ -309,12 +309,13 @@ github.com/openshift/client-go/route/clientset/versioned/typed/route/v1
 github.com/openshift/client-go/user/clientset/versioned
 github.com/openshift/client-go/user/clientset/versioned/scheme
 github.com/openshift/client-go/user/clientset/versioned/typed/user/v1
-# github.com/openshift/moactl v0.0.2-0.20200602200416-2118cdd4cd1a
+# github.com/openshift/moactl v0.0.3-0.20200622161904-355535b775ff
 github.com/openshift/moactl/assets
 github.com/openshift/moactl/pkg/aws
 github.com/openshift/moactl/pkg/aws/tags
 github.com/openshift/moactl/pkg/cluster
 github.com/openshift/moactl/pkg/debug
+github.com/openshift/moactl/pkg/info
 github.com/openshift/moactl/pkg/logging
 github.com/openshift/moactl/pkg/ocm/properties
 github.com/openshift/moactl/pkg/reporter
