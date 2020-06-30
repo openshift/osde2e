@@ -25,17 +25,30 @@ const (
 	DefaultTag = "default"
 )
 
+// This is a set of pre-canned configs that will always be loaded at startup.
+var defaultConfigs = []string{
+	"log-metrics",
+}
+
 // Configs will populate viper with specified configs.
 func Configs(configs []string, customConfig string, secretLocations []string) error {
 	// This used to be complicated, but now we just lean on Viper for everything.
-	// 1. Load pre-canned YAML configs.
+	// 1. Load default configs. These are configs that will always be enabled for every run.
+	for _, config := range defaultConfigs {
+		log.Printf("Loading default config %s", config)
+		if err := loadYAMLFromConfigs(config); err != nil {
+			return fmt.Errorf("error loading config from YAML: %v", err)
+		}
+	}
+
+	// 2. Load pre-canned YAML configs.
 	for _, config := range configs {
 		if err := loadYAMLFromConfigs(config); err != nil {
 			return fmt.Errorf("error loading config from YAML: %v", err)
 		}
 	}
 
-	// 2. Custom YAML configs
+	// 3. Custom YAML configs
 	if customConfig != "" {
 		log.Printf("Custom YAML config provided, loading from %s", customConfig)
 		if err := loadYAMLFromFile(customConfig); err != nil {
@@ -43,7 +56,7 @@ func Configs(configs []string, customConfig string, secretLocations []string) er
 		}
 	}
 
-	// 3. Secrets. These will override all previous entries.
+	// 4. Secrets. These will override all previous entries.
 	if len(secretLocations) > 0 {
 		secrets := config.GetAllSecrets()
 		for key, secretFilename := range secrets {

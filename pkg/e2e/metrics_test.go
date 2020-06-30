@@ -21,6 +21,7 @@ func TestProcessJUnitXMLFile(t *testing.T) {
 	viper.Set(config.Provider, "mock")
 	viper.Set(config.JobID, 123)
 	viper.Set(config.CloudProvider.CloudProviderID, "aws")
+	viper.Set(config.CloudProvider.Region, "us-east-1")
 	viper.Set(config.Cluster.ID, "1a2b3c")
 	viper.Set(config.Cluster.Version, "install-version")
 	viper.Set(config.Upgrade.ReleaseName, "upgrade-version")
@@ -48,10 +49,10 @@ func TestProcessJUnitXMLFile(t *testing.T) {
 		</skipped>
 	</testcase>
 </testsuite>`,
-			expectedOutput: `cicd_jUnitResult{cloud_provider="aws",cluster_id="1a2b3c",environment="prod",install_version="install-version",job_id="123",phase="install",result="passed",suite="test suite",testname="test 1",upgrade_version="upgrade-version"} 1
-cicd_jUnitResult{cloud_provider="aws",cluster_id="1a2b3c",environment="prod",install_version="install-version",job_id="123",phase="install",result="passed",suite="test suite",testname="test 2",upgrade_version="upgrade-version"} 2
-cicd_jUnitResult{cloud_provider="aws",cluster_id="1a2b3c",environment="prod",install_version="install-version",job_id="123",phase="install",result="failed",suite="test suite",testname="test 3",upgrade_version="upgrade-version"} 3
-cicd_jUnitResult{cloud_provider="aws",cluster_id="1a2b3c",environment="prod",install_version="install-version",job_id="123",phase="install",result="skipped",suite="test suite",testname="test 4",upgrade_version="upgrade-version"} 4
+			expectedOutput: `cicd_jUnitResult{cloud_provider="aws",cluster_id="1a2b3c",environment="prod",install_version="install-version",job_id="123",phase="install",region="us-east-1",result="passed",suite="test suite",testname="test 1",upgrade_version="upgrade-version"} 1
+cicd_jUnitResult{cloud_provider="aws",cluster_id="1a2b3c",environment="prod",install_version="install-version",job_id="123",phase="install",region="us-east-1",result="passed",suite="test suite",testname="test 2",upgrade_version="upgrade-version"} 2
+cicd_jUnitResult{cloud_provider="aws",cluster_id="1a2b3c",environment="prod",install_version="install-version",job_id="123",phase="install",region="us-east-1",result="failed",suite="test suite",testname="test 3",upgrade_version="upgrade-version"} 3
+cicd_jUnitResult{cloud_provider="aws",cluster_id="1a2b3c",environment="prod",install_version="install-version",job_id="123",phase="install",region="us-east-1",result="skipped",suite="test suite",testname="test 4",upgrade_version="upgrade-version"} 4
 `,
 		},
 		{
@@ -67,9 +68,9 @@ newline" time="3">
 		</failure>
 	</testcase>
 </testsuite>`,
-			expectedOutput: `cicd_jUnitResult{cloud_provider="aws",cluster_id="1a2b3c",environment="prod",install_version="install-version",job_id="123",phase="install",result="passed",suite="test \"suite\"",testname="test \\1",upgrade_version="upgrade-version"} 1
-cicd_jUnitResult{cloud_provider="aws",cluster_id="1a2b3c",environment="prod",install_version="install-version",job_id="123",phase="install",result="passed",suite="test \"suite\"",testname="test 2",upgrade_version="upgrade-version"} 2
-cicd_jUnitResult{cloud_provider="aws",cluster_id="1a2b3c",environment="prod",install_version="install-version",job_id="123",phase="install",result="failed",suite="test \"suite\"",testname="test 3\nnewline",upgrade_version="upgrade-version"} 3
+			expectedOutput: `cicd_jUnitResult{cloud_provider="aws",cluster_id="1a2b3c",environment="prod",install_version="install-version",job_id="123",phase="install",region="us-east-1",result="passed",suite="test \"suite\"",testname="test \\1",upgrade_version="upgrade-version"} 1
+cicd_jUnitResult{cloud_provider="aws",cluster_id="1a2b3c",environment="prod",install_version="install-version",job_id="123",phase="install",region="us-east-1",result="passed",suite="test \"suite\"",testname="test 2",upgrade_version="upgrade-version"} 2
+cicd_jUnitResult{cloud_provider="aws",cluster_id="1a2b3c",environment="prod",install_version="install-version",job_id="123",phase="install",region="us-east-1",result="failed",suite="test \"suite\"",testname="test 3\nnewline",upgrade_version="upgrade-version"} 3
 `,
 		},
 	}
@@ -120,6 +121,7 @@ func TestProcessJSONFile(t *testing.T) {
 	viper.Set(config.Provider, "mock")
 	viper.Set(config.JobID, 123)
 	viper.Set(config.CloudProvider.CloudProviderID, "aws")
+	viper.Set(config.CloudProvider.Region, "us-east-1")
 	viper.Set(config.Cluster.ID, "1a2b3c")
 	viper.Set(config.Cluster.Version, "install-version")
 	viper.Set(config.Upgrade.ReleaseName, "upgrade-version")
@@ -148,8 +150,8 @@ func TestProcessJSONFile(t *testing.T) {
 		}
 	}
 }`,
-			expectedOutput: `cicd_metadata{cloud_provider="aws",cluster_id="1a2b3c",environment="prod",install_version="install-version",job_id="123",metadata_name="test2",upgrade_version="upgrade-version"} 6
-cicd_metadata{cloud_provider="aws",cluster_id="1a2b3c",environment="prod",install_version="install-version",job_id="123",metadata_name="another-nested field.another-level.test4",upgrade_version="upgrade-version"} 7
+			expectedOutput: `cicd_metadata{cloud_provider="aws",cluster_id="1a2b3c",environment="prod",install_version="install-version",job_id="123",metadata_name="test2",region="us-east-1",upgrade_version="upgrade-version"} 6
+cicd_metadata{cloud_provider="aws",cluster_id="1a2b3c",environment="prod",install_version="install-version",job_id="123",metadata_name="another-nested field.another-level.test4",region="us-east-1",upgrade_version="upgrade-version"} 7
 `,
 			phase: "",
 		},
@@ -170,8 +172,8 @@ cicd_metadata{cloud_provider="aws",cluster_id="1a2b3c",environment="prod",instal
 		}
 	}
 }`,
-			expectedOutput: `cicd_addon_metadata{cloud_provider="aws",cluster_id="1a2b3c",environment="prod",install_version="install-version",job_id="123",metadata_name="test2",phase="install",upgrade_version="upgrade-version"} 6
-cicd_addon_metadata{cloud_provider="aws",cluster_id="1a2b3c",environment="prod",install_version="install-version",job_id="123",metadata_name="another-nested field.another-level.test4",phase="install",upgrade_version="upgrade-version"} 7
+			expectedOutput: `cicd_addon_metadata{cloud_provider="aws",cluster_id="1a2b3c",environment="prod",install_version="install-version",job_id="123",metadata_name="test2",phase="install",region="us-east-1",upgrade_version="upgrade-version"} 6
+cicd_addon_metadata{cloud_provider="aws",cluster_id="1a2b3c",environment="prod",install_version="install-version",job_id="123",metadata_name="another-nested field.another-level.test4",phase="install",region="us-east-1",upgrade_version="upgrade-version"} 7
 `,
 			phase: "install",
 		},
@@ -230,6 +232,7 @@ func TestWritePrometheusFile(t *testing.T) {
 	viper.Set(config.JobID, 123)
 	viper.Set(config.JobName, "test-job")
 	viper.Set(config.CloudProvider.CloudProviderID, "aws")
+	viper.Set(config.CloudProvider.Region, "us-east-1")
 	viper.Set(config.Cluster.ID, "1a2b3c")
 	viper.Set(config.Cluster.Version, "install-version")
 	viper.Set(config.Upgrade.ReleaseName, "upgrade-version")
@@ -268,12 +271,12 @@ func TestWritePrometheusFile(t *testing.T) {
 }`
 	addonMetadataFileContents := metadataFileContents
 
-	jUnitExpectedOutput := `cicd_jUnitResult{cloud_provider="aws",cluster_id="1a2b3c",environment="prod",install_version="install-version",job_id="123",phase="install",result="passed",suite="test suite 1",testname="test 1",upgrade_version="upgrade-version"} 1
-cicd_jUnitResult{cloud_provider="aws",cluster_id="1a2b3c",environment="prod",install_version="install-version",job_id="123",phase="install",result="passed",suite="test suite 1",testname="test 2",upgrade_version="upgrade-version"} 2
-cicd_jUnitResult{cloud_provider="aws",cluster_id="1a2b3c",environment="prod",install_version="install-version",job_id="123",phase="install",result="failed",suite="test suite 1",testname="test 3",upgrade_version="upgrade-version"} 3
-cicd_jUnitResult{cloud_provider="aws",cluster_id="1a2b3c",environment="prod",install_version="install-version",job_id="123",phase="upgrade",result="passed",suite="test suite 2",testname="test 1",upgrade_version="upgrade-version"} 1
-cicd_jUnitResult{cloud_provider="aws",cluster_id="1a2b3c",environment="prod",install_version="install-version",job_id="123",phase="upgrade",result="passed",suite="test suite 2",testname="test 2",upgrade_version="upgrade-version"} 2
-cicd_jUnitResult{cloud_provider="aws",cluster_id="1a2b3c",environment="prod",install_version="install-version",job_id="123",phase="upgrade",result="failed",suite="test suite 2",testname="test 3",upgrade_version="upgrade-version"} 3
+	jUnitExpectedOutput := `cicd_jUnitResult{cloud_provider="aws",cluster_id="1a2b3c",environment="prod",install_version="install-version",job_id="123",phase="install",region="us-east-1",result="passed",suite="test suite 1",testname="test 1",upgrade_version="upgrade-version"} 1
+cicd_jUnitResult{cloud_provider="aws",cluster_id="1a2b3c",environment="prod",install_version="install-version",job_id="123",phase="install",region="us-east-1",result="passed",suite="test suite 1",testname="test 2",upgrade_version="upgrade-version"} 2
+cicd_jUnitResult{cloud_provider="aws",cluster_id="1a2b3c",environment="prod",install_version="install-version",job_id="123",phase="install",region="us-east-1",result="failed",suite="test suite 1",testname="test 3",upgrade_version="upgrade-version"} 3
+cicd_jUnitResult{cloud_provider="aws",cluster_id="1a2b3c",environment="prod",install_version="install-version",job_id="123",phase="upgrade",region="us-east-1",result="passed",suite="test suite 2",testname="test 1",upgrade_version="upgrade-version"} 1
+cicd_jUnitResult{cloud_provider="aws",cluster_id="1a2b3c",environment="prod",install_version="install-version",job_id="123",phase="upgrade",region="us-east-1",result="passed",suite="test suite 2",testname="test 2",upgrade_version="upgrade-version"} 2
+cicd_jUnitResult{cloud_provider="aws",cluster_id="1a2b3c",environment="prod",install_version="install-version",job_id="123",phase="upgrade",region="us-east-1",result="failed",suite="test suite 2",testname="test 3",upgrade_version="upgrade-version"} 3
 `
 
 	tests := []struct {
@@ -297,8 +300,8 @@ cicd_jUnitResult{cloud_provider="aws",cluster_id="1a2b3c",environment="prod",ins
 			},
 			metadataFileContents:      metadataFileContents,
 			addonMetadataFileContents: addonMetadataFileContents,
-			expectedOutput: jUnitExpectedOutput + `cicd_metadata{cloud_provider="aws",cluster_id="1a2b3c",environment="prod",install_version="install-version",job_id="123",metadata_name="test2",upgrade_version="upgrade-version"} 6
-cicd_addon_metadata{cloud_provider="aws",cluster_id="1a2b3c",environment="prod",install_version="install-version",job_id="123",metadata_name="test2",phase="install",upgrade_version="upgrade-version"} 6
+			expectedOutput: jUnitExpectedOutput + `cicd_metadata{cloud_provider="aws",cluster_id="1a2b3c",environment="prod",install_version="install-version",job_id="123",metadata_name="test2",region="us-east-1",upgrade_version="upgrade-version"} 6
+cicd_addon_metadata{cloud_provider="aws",cluster_id="1a2b3c",environment="prod",install_version="install-version",job_id="123",metadata_name="test2",phase="install",region="us-east-1",upgrade_version="upgrade-version"} 6
 `,
 		},
 		{
@@ -315,7 +318,7 @@ cicd_addon_metadata{cloud_provider="aws",cluster_id="1a2b3c",environment="prod",
 			},
 			metadataFileContents:      metadataFileContents,
 			addonMetadataFileContents: "",
-			expectedOutput: jUnitExpectedOutput + `cicd_metadata{cloud_provider="aws",cluster_id="1a2b3c",environment="prod",install_version="install-version",job_id="123",metadata_name="test2",upgrade_version="upgrade-version"} 6
+			expectedOutput: jUnitExpectedOutput + `cicd_metadata{cloud_provider="aws",cluster_id="1a2b3c",environment="prod",install_version="install-version",job_id="123",metadata_name="test2",region="us-east-1",upgrade_version="upgrade-version"} 6
 `,
 		},
 		{

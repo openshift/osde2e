@@ -44,7 +44,6 @@ var _ = ginkgo.BeforeEach(func() {
 // Setup cluster before testing begins.
 var _ = ginkgo.SynchronizedBeforeSuite(func() []byte {
 	defer ginkgo.GinkgoRecover()
-
 	err := setupCluster()
 	events.HandleErrorWithEvents(err, events.InstallSuccessful, events.InstallFailed).ShouldNot(HaveOccurred(), "failed to setup cluster for testing")
 	if err != nil {
@@ -114,6 +113,7 @@ func setupCluster() (err error) {
 			return fmt.Errorf("could not launch cluster: %v", err)
 		}
 		viper.Set(config.Cluster.ID, clusterID)
+
 	} else {
 		log.Printf("CLUSTER_ID of '%s' was provided, skipping cluster creation and using it instead", clusterID)
 
@@ -139,6 +139,7 @@ func setupCluster() (err error) {
 
 	metadata.Instance.SetClusterName(viper.GetString(config.Cluster.Name))
 	metadata.Instance.SetClusterID(clusterID)
+	metadata.Instance.SetRegion(viper.GetString(config.CloudProvider.Region))
 
 	if err = cluster.WaitForClusterReady(provider, clusterID); err != nil {
 		return fmt.Errorf("failed waiting for cluster ready: %v", err)

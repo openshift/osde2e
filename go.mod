@@ -15,6 +15,7 @@ require (
 	github.com/google/go-github/v31 v31.0.0
 	github.com/google/uuid v1.1.1
 	github.com/hashicorp/go-multierror v1.1.0
+	github.com/hpcloud/tail v1.0.0
 	github.com/influxdata/tdigest v0.0.1 // indirect
 	github.com/kylelemons/godebug v1.1.0
 	github.com/markbates/pkger v0.16.0
@@ -23,7 +24,7 @@ require (
 	github.com/openshift-online/ocm-sdk-go v0.1.105
 	github.com/openshift/api v0.0.0-20200521101457-60c476765272
 	github.com/openshift/client-go v0.0.0-20200326155132-2a6cd50aedd0
-	github.com/openshift/moactl v0.0.2-0.20200602200416-2118cdd4cd1a
+	github.com/openshift/moactl v0.0.3-0.20200622161904-355535b775ff
 	github.com/operator-framework/api v0.3.5
 	github.com/operator-framework/operator-lifecycle-manager v0.0.0-20200521062108-408ca95d458f
 	github.com/prometheus/client_golang v1.4.1

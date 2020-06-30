@@ -562,8 +562,8 @@ github.com/openshift/api v0.0.0-20200526144822-34f54f12813a/go.mod h1:l6TGeqJ92D
 github.com/openshift/build-machinery-go v0.0.0-20200424080330-082bf86082cc/go.mod h1:1CkcsT3aVebzRBzVTSbiKSkJMsC/CASqxesfqEMfJEc=
 github.com/openshift/client-go v0.0.0-20200521150516-05eb9880269c h1:l7CmbzzkyWl4Y6qHmy6m4FvbH4iLnIXGrXqOfE5IFNA=
 github.com/openshift/client-go v0.0.0-20200521150516-05eb9880269c/go.mod h1:kCMeo6IE4o4qvnepM9lgHQ4j/ZFfvY/N/2G/jpJdwm4=
-github.com/openshift/moactl v0.0.2-0.20200602200416-2118cdd4cd1a h1:YbAc07bgvvzHISRkGlbPZOYRlFPJvGd91c77AJxvagY=
-github.com/openshift/moactl v0.0.2-0.20200602200416-2118cdd4cd1a/go.mod h1:cIjXUf+Rrh5CQIdXJB3NyxfTIvYMQ7PfYBxe0V+bKqo=
+github.com/openshift/moactl v0.0.3-0.20200622161904-355535b775ff h1:wVZuu9xe1NHYX/hR4KjlVjDP9v51p82N+Vd9OCiYf40=
+github.com/openshift/moactl v0.0.3-0.20200622161904-355535b775ff/go.mod h1:cIjXUf+Rrh5CQIdXJB3NyxfTIvYMQ7PfYBxe0V+bKqo=
 github.com/openzipkin/zipkin-go v0.1.6/go.mod h1:QgAqvLzwWbR/WpD4A3cGpPtJrZXNIiJc5AZX7/PBEpw=
 github.com/operator-framework/api v0.1.1/go.mod h1:yzNYR7qyJqRGOOp+bT6Z/iYSbSPNxeh3Si93Gx/3OBY=
 github.com/operator-framework/api v0.3.4/go.mod h1:TmRmw+8XOUaDPq6SP9gA8cIexNf/Pq8LMFY7YaKQFTs=
