@@ -44,7 +44,7 @@ const (
 	hiveLog string = "hive-log.txt"
 
 	// buildLog is the name of the build log file.
-	buildLog string = "build-log.txt"
+	buildLog string = "test_output.log"
 )
 
 // provisioner is used to deploy and manage clusters.
