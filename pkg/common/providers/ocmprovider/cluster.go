@@ -46,12 +46,20 @@ func (o *OCMProvider) LaunchCluster() (string, error) {
 	// It then will pull a random entry from the list of regions and set the ID to that
 	if region == "random" {
 		regionsClient := o.conn.ClustersMgmt().V1().CloudProviders().CloudProvider(cloudProvider).Regions().List()
+
 		regions, err := regionsClient.Send()
 		if err != nil {
 			return "", err
 		}
 
-		region = regions.Items().Slice()[rand.Intn(regions.Total())].ID()
+		for range regions.Items().Slice() {
+			regionObj := regions.Items().Slice()[rand.Intn(regions.Total())]
+			region = regionObj.ID()
+
+			if regionObj.Enabled() {
+				break
+			}
+		}
 
 		// Update the Config with the selected random region
 		viper.Set(config.CloudProvider.Region, region)
