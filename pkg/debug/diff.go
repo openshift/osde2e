@@ -7,8 +7,10 @@ import (
 	"log"
 	"net/http"
 	"sort"
+	"strconv"
 	"strings"
 
+	"github.com/PuerkitoBio/goquery"
 	"github.com/google/go-github/v31/github"
 	"github.com/kylelemons/godebug/diff"
 	v1 "k8s.io/api/core/v1"
@@ -17,8 +19,13 @@ import (
 )
 
 // GenerateDiff attempts to pull a dependency list from a previous job (job, jobID) and generate a diff against a provided string
-func GenerateDiff(baseURL, phase, dependencies, jobName string, jobID int) error {
-	url := fmt.Sprintf("%s/%s/%d/artifacts/%s/dependencies.txt", baseURL, jobName, jobID-1, phase)
+func GenerateDiff(baseURL, phase, dependencies, jobName string) error {
+	jobID, err := getLastJobID(baseURL, jobName)
+	if err != nil {
+		return err
+	}
+
+	url := fmt.Sprintf("%s/%s/%d/artifacts/%s/dependencies.txt", baseURL, jobName, jobID, phase)
 	resp, err := http.Get(url)
 	if err != nil {
 		return err
@@ -114,6 +121,29 @@ func GetCurrentMCCHash() (hash string, err error) {
 	}
 
 	return "", fmt.Errorf("No commits found for openshift/machine-cluster-config")
+}
+
+func getLastJobID(baseURL, jobName string) (int, error) {
+	// Look up the list of previous jobs with a given name
+	url := fmt.Sprintf("%s/job-history/gs/origin-ci-test/logs/%s", baseURL, jobName)
+	res, err := http.Get(url)
+	if err != nil {
+		return 0, err
+	}
+	defer res.Body.Close()
+	if res.StatusCode != 200 {
+		return 0, fmt.Errorf("status code error: %d %s", res.StatusCode, res.Status)
+	}
+
+	// Load the HTML document
+	doc, err := goquery.NewDocumentFromReader(res.Body)
+	if err != nil {
+		return 0, err
+	}
+
+	// Safe assumption that the latest job is the current-running job.
+	// Therefore we should also assume that the last job was the second row.
+	return strconv.Atoi(strings.TrimSpace(doc.Find("#history-table > tbody > tr:nth-child(2)").First().Children().First().Text()))
 }
 
 func appendUniqueContainers(name string, containers []v1.Container, images map[string]string) map[string]string {
