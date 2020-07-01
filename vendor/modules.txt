@@ -1,5 +1,7 @@
 # github.com/Masterminds/semver v1.5.0
 github.com/Masterminds/semver
+# github.com/PuerkitoBio/goquery v1.5.1
+github.com/PuerkitoBio/goquery
 # github.com/YourFin/binappend v0.0.0-20181105185800-0add4bf0b9ad
 github.com/YourFin/binappend
 # github.com/adamliesko/retry v0.0.0-20200123222335-86c8baac277d
@@ -9,6 +11,8 @@ github.com/alecthomas/template
 github.com/alecthomas/template/parse
 # github.com/alecthomas/units v0.0.0-20190717042225-c3de453c63f4
 github.com/alecthomas/units
+# github.com/andybalholm/cascadia v1.1.0
+github.com/andybalholm/cascadia
 # github.com/asaskevich/govalidator v0.0.0-20200108200545-475eaeb16496
 github.com/asaskevich/govalidator
 # github.com/aws/aws-sdk-go v1.29.17
@@ -148,7 +152,7 @@ github.com/gogo/protobuf/proto
 github.com/gogo/protobuf/sortkeys
 # github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b
 github.com/golang/glog
-# github.com/golang/groupcache v0.0.0-20190129154638-5b532d6fd5ef
+# github.com/golang/groupcache v0.0.0-20191002201903-404acd9df4cc
 github.com/golang/groupcache/lru
 # github.com/golang/protobuf v1.3.2
 github.com/golang/protobuf/proto
@@ -309,6 +313,12 @@ github.com/openshift/client-go/route/clientset/versioned/typed/route/v1
 github.com/openshift/client-go/user/clientset/versioned
 github.com/openshift/client-go/user/clientset/versioned/scheme
 github.com/openshift/client-go/user/clientset/versioned/typed/user/v1
+# github.com/openshift/machine-api-operator v0.2.1-0.20200529045911-d19e8d007f7c
+github.com/openshift/machine-api-operator/pkg/apis/machine
+github.com/openshift/machine-api-operator/pkg/apis/machine/v1beta1
+github.com/openshift/machine-api-operator/pkg/generated/clientset/versioned
+github.com/openshift/machine-api-operator/pkg/generated/clientset/versioned/scheme
+github.com/openshift/machine-api-operator/pkg/generated/clientset/versioned/typed/machine/v1beta1
 # github.com/openshift/moactl v0.0.3-0.20200622161904-355535b775ff
 github.com/openshift/moactl/assets
 github.com/openshift/moactl/pkg/aws
@@ -406,7 +416,7 @@ golang.org/x/crypto/poly1305
 golang.org/x/crypto/ssh
 golang.org/x/crypto/ssh/internal/bcrypt_pbkdf
 golang.org/x/crypto/ssh/terminal
-# golang.org/x/net v0.0.0-20200226121028-0de0cce0169b
+# golang.org/x/net v0.0.0-20200421231249-e086a090c8fd
 golang.org/x/net/context
 golang.org/x/net/context/ctxhttp
 golang.org/x/net/html
@@ -419,7 +429,7 @@ golang.org/x/net/idna
 # golang.org/x/oauth2 v0.0.0-20190604053449-0f29369cfe45
 golang.org/x/oauth2
 golang.org/x/oauth2/internal
-# golang.org/x/sys v0.0.0-20200202164722-d101bd2416d5
+# golang.org/x/sys v0.0.0-20200323222414-85ca7c5b95cd
 golang.org/x/sys/cpu
 golang.org/x/sys/unix
 golang.org/x/sys/windows
@@ -451,7 +461,7 @@ golang.org/x/time/rate
 # golang.org/x/xerrors v0.0.0-20191204190536-9bdfabe68543
 golang.org/x/xerrors
 golang.org/x/xerrors/internal
-# google.golang.org/appengine v1.6.1
+# google.golang.org/appengine v1.6.4
 google.golang.org/appengine/internal
 google.golang.org/appengine/internal/base
 google.golang.org/appengine/internal/datastore
@@ -520,6 +530,7 @@ k8s.io/apimachinery/pkg/api/meta
 k8s.io/apimachinery/pkg/api/resource
 k8s.io/apimachinery/pkg/apis/meta/v1
 k8s.io/apimachinery/pkg/apis/meta/v1/unstructured
+k8s.io/apimachinery/pkg/apis/meta/v1/validation
 k8s.io/apimachinery/pkg/conversion
 k8s.io/apimachinery/pkg/conversion/queryparams
 k8s.io/apimachinery/pkg/fields
