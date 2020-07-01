@@ -38,6 +38,7 @@ require (
 	github.com/streadway/quantile v0.0.0-20150917103942-b0c588724d25 // indirect
 	github.com/tsenart/go-tsz v0.0.0-20180814235614-0bd30b3df1c3 // indirect
 	github.com/tsenart/vegeta v12.7.0+incompatible
+	github.com/vmware-tanzu/velero v1.4.0
 	golang.org/x/net v0.0.0-20200421231249-e086a090c8fd
 	k8s.io/api v0.18.4
 	k8s.io/apimachinery v0.18.4
