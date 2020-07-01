@@ -382,6 +382,8 @@ github.com/tsenart/go-tsz/testdata
 github.com/tsenart/vegeta/lib
 github.com/tsenart/vegeta/lib/lttb
 github.com/tsenart/vegeta/lib/plot
+# github.com/vmware-tanzu/velero v1.4.0
+github.com/vmware-tanzu/velero/pkg/apis/velero/v1
 # github.com/xi2/xz v0.0.0-20171230120015-48954b6210f8
 github.com/xi2/xz
 # gitlab.com/c0b/go-ordered-json v0.0.0-20171130231205-49bbdab258c2
