@@ -26,10 +26,10 @@ var _ = ginkgo.Describe("[Suite: informing] MachineHealthChecks", func() {
 
 		for _, mhc := range machineHealthChecks.Items {
 			// verify there's an MHC for infra and worker nodes
-			Expect(mhc.Spec.Selector.MatchLabels).To(SatisfyAny(
-				Equal("machine.openshift.io/cluster-api-machine-role: infra"),
-				Equal("machine.openshift.io/cluster-api-machine-role: worker")),
-			)
+			Expect(mhc.Spec.Selector.MatchLabels["machine.openshift.io/cluster-api-machine-role"]).To(SatisfyAny(
+				Equal("infra"),
+				Equal("worker"),
+			))
 
 			// verify the unhealthy conditions are on all nodes
 			Expect(mhc.Spec.UnhealthyConditions).To(SatisfyAll(
