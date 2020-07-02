@@ -12,6 +12,10 @@ import (
 	"github.com/openshift/osde2e/pkg/common/providers"
 )
 
+const (
+	numNodesToScaleTo = 12
+)
+
 var _ = ginkgo.Describe("[Suite: scale-mastervertical] Scaling", func() {
 	defer ginkgo.GinkgoRecover()
 	h := helper.New()
@@ -19,11 +23,11 @@ var _ = ginkgo.Describe("[Suite: scale-mastervertical] Scaling", func() {
 	masterVerticalTimeoutInSeconds := 7200
 	ginkgo.It("should be tested with MasterVertical", func() {
 		var err error
-		// Before we do anything, scale the cluster to 25 nodes.
+		// Before we do anything, scale the cluster.
 		provider, err := providers.ClusterProvider()
 		Expect(err).NotTo(HaveOccurred())
 
-		err = cluster.ScaleCluster(provider, viper.GetString(config.Cluster.ID), 25)
+		err = cluster.ScaleCluster(provider, viper.GetString(config.Cluster.ID), numNodesToScaleTo)
 		Expect(err).NotTo(HaveOccurred())
 
 		h.SetServiceAccount("system:serviceaccount:%s:cluster-admin")
