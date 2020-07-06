@@ -37,14 +37,14 @@ var _ = ginkgo.Describe("[Suite: informing] MachineHealthChecks", func() {
 					machineV1beta1.UnhealthyCondition{
 						Type:    corev1.NodeReady,
 						Status:  corev1.ConditionFalse,
-						Timeout: "480",
+						Timeout: "480s",
 					},
 				),
 				ContainElement(
 					machineV1beta1.UnhealthyCondition{
 						Type:    corev1.NodeReady,
 						Status:  corev1.ConditionUnknown,
-						Timeout: "480",
+						Timeout: "480s",
 					},
 				),
 			))
