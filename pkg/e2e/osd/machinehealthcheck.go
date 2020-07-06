@@ -31,20 +31,20 @@ var _ = ginkgo.Describe("[Suite: informing] MachineHealthChecks", func() {
 				Equal("worker"),
 			))
 
-			// verify the unhealthy conditions are on all nodes
+			// verify the unhealthy conditions
 			Expect(mhc.Spec.UnhealthyConditions).To(SatisfyAll(
 				ContainElement(
 					machineV1beta1.UnhealthyCondition{
 						Type:    corev1.NodeReady,
 						Status:  corev1.ConditionFalse,
-						Timeout: "480",
+						Timeout: "480s",
 					},
 				),
 				ContainElement(
 					machineV1beta1.UnhealthyCondition{
 						Type:    corev1.NodeReady,
 						Status:  corev1.ConditionUnknown,
-						Timeout: "480",
+						Timeout: "480s",
 					},
 				),
 			))
