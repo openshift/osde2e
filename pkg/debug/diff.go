@@ -26,6 +26,7 @@ func GenerateDiff(baseURL, phase, dependencies, jobName string) error {
 	}
 
 	url := fmt.Sprintf("%s/%s/%d/artifacts/%s/dependencies.txt", baseURL, jobName, jobID, phase)
+	log.Printf("Grabbing diff from %s", url)
 	resp, err := http.Get(url)
 	if err != nil {
 		return err
