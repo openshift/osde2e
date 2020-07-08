@@ -509,7 +509,7 @@ func runTestsInPhase(phase string, description string) bool {
 				log.Printf("Error writing dependencies.txt: %s", err.Error())
 			}
 
-			err := debug.GenerateDiff(viper.GetString(config.BaseJobURL), phase, dependencies, viper.GetString(config.JobName))
+			err := debug.GenerateDiff(phase, dependencies)
 			if err != nil {
 				log.Printf("Error generating diff: %s", err.Error())
 			}

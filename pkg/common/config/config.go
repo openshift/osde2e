@@ -23,6 +23,9 @@ const (
 	// https://storage.googleapis.com/origin-ci-test/logs -- This is also our default
 	BaseJobURL = "baseJobURL"
 
+	// BaseProwURL is the root location of Prow
+	BaseProwURL = "baseProwURL"
+
 	// Artifacts is the artifacts location on prow. It is an alias for report dir.
 	Artifacts = "artifacts"
 
@@ -314,6 +317,9 @@ func init() {
 
 	viper.SetDefault(BaseJobURL, "https://storage.googleapis.com/origin-ci-test/logs")
 	viper.BindEnv(BaseJobURL, "BASE_JOB_URL")
+
+	viper.SetDefault(BaseProwURL, "https://deck-ci.apps.ci.l2s4.p1.openshiftapps.com")
+	viper.BindEnv(BaseProwURL, "BASE_PROW_URL")
 
 	// ARTIFACTS and REPORT_DIR are basically the same, but ARTIFACTS is used on prow.
 	viper.BindEnv(Artifacts, "ARTIFACTS")

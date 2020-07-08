@@ -365,128 +365,15 @@ func (o *OCMProvider) ClusterKubeconfig(clusterID string) ([]byte, error) {
 // GetMetrics gathers metrics from OCM on a cluster
 func (o *OCMProvider) GetMetrics(clusterID string) (*v1.ClusterMetrics, error) {
 	var err error
-	var alertsMetricQuery *v1.AlertsMetricQueryGetResponse
-	var operatorsMetricQuery *v1.ClusterOperatorsMetricQueryGetResponse
-	var nodesMetricQuery *v1.NodesMetricQueryGetResponse
-	var socketTotalClient *v1.SocketTotalByNodeRolesOSMetricQueryGetResponse
-	var CPUTotalClient *v1.CPUTotalByNodeRolesOSMetricQueryGetResponse
-
-	clusterMetricsBuilder := v1.NewClusterMetrics()
 
 	clusterClient := o.conn.ClustersMgmt().V1().Clusters().Cluster(clusterID)
 
-	metricsClient := clusterClient.MetricQueries()
-
-	err = retryer().Do(func() error {
-		alertsMetricQuery, err = metricsClient.Alerts().Get().Send()
-		return err
-	})
+	cluster, err := clusterClient.Get().Send()
 	if err != nil {
 		return nil, err
 	}
 
-	criticalAlerts := 0
-	for _, alert := range alertsMetricQuery.Body().Alerts() {
-		if alert.Severity() == v1.AlertSeverityCritical {
-			criticalAlerts++
-		}
-	}
-	clusterMetricsBuilder.CriticalAlertsFiring(criticalAlerts)
-
-	err = retryer().Do(func() error {
-		operatorsMetricQuery, err = metricsClient.ClusterOperators().Get().Send()
-		return err
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	failingOperators := 0
-	for _, operator := range operatorsMetricQuery.Body().Operators() {
-		if operator.Condition() == v1.ClusterOperatorStateFailing {
-			failingOperators++
-		}
-	}
-	clusterMetricsBuilder.OperatorsConditionFailing(failingOperators)
-
-	err = retryer().Do(func() error {
-		nodesMetricQuery, err = metricsClient.Nodes().Get().Send()
-		return err
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	infraNodes := 0
-	computeNodes := 0
-	masterNodes := 0
-
-	for _, node := range nodesMetricQuery.Body().Nodes() {
-		node.Amount()
-		switch node.Type() {
-		case v1.NodeTypeCompute:
-			computeNodes = node.Amount()
-		case v1.NodeTypeInfra:
-			infraNodes = node.Amount()
-		case v1.NodeTypeMaster:
-			masterNodes = node.Amount()
-		}
-	}
-
-	clusterMetricsBuilder.Nodes(v1.NewClusterNodes().
-		Compute(computeNodes).
-		Infra(infraNodes).
-		Master(masterNodes).
-		Total(computeNodes + infraNodes + masterNodes))
-
-	err = retryer().Do(func() error {
-		socketTotalClient, err = metricsClient.SocketTotalByNodeRolesOS().Get().Send()
-		return err
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	for _, sockets := range socketTotalClient.Body().SocketTotals() {
-		for _, role := range sockets.NodeRoles() {
-			if role == fmt.Sprintf("%v", v1.NodeTypeCompute) {
-				metricBuilder := v1.ClusterMetricBuilder{}
-				value := v1.ValueBuilder{}
-				value.Value(sockets.SocketTotal())
-				value.Unit("sockets")
-				metricBuilder.Total(&value)
-				clusterMetricsBuilder.ComputeNodesSockets(&metricBuilder)
-			}
-		}
-	}
-
-	err = retryer().Do(func() error {
-		CPUTotalClient, err = metricsClient.CPUTotalByNodeRolesOS().Get().Send()
-		return err
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	for _, cpu := range CPUTotalClient.Body().CPUTotals() {
-		for _, role := range cpu.NodeRoles() {
-			if role == fmt.Sprintf("%v", v1.NodeTypeCompute) {
-				metricBuilder := v1.ClusterMetricBuilder{}
-				value := v1.ValueBuilder{}
-				value.Value(cpu.CPUTotal())
-				value.Unit("cpu")
-				metricBuilder.Total(&value)
-				clusterMetricsBuilder.ComputeNodesCPU(&metricBuilder)
-			}
-		}
-	}
-
-	clusterMetrics, err := clusterMetricsBuilder.Build()
-	if err != nil {
-		return nil, err
-	}
-
-	return clusterMetrics, nil
+	return cluster.Body().Metrics(), nil
 }
 
 // InstallAddons loops through the addons list in the config

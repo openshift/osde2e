@@ -13,19 +13,26 @@ import (
 	"github.com/PuerkitoBio/goquery"
 	"github.com/google/go-github/v31/github"
 	"github.com/kylelemons/godebug/diff"
+	"github.com/openshift/osde2e/pkg/common/config"
+	"github.com/spf13/viper"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 )
 
 // GenerateDiff attempts to pull a dependency list from a previous job (job, jobID) and generate a diff against a provided string
-func GenerateDiff(baseURL, phase, dependencies, jobName string) error {
-	jobID, err := getLastJobID(baseURL, jobName)
+func GenerateDiff(phase, dependencies string) error {
+	baseJobURL := viper.GetString(config.BaseJobURL)
+	baseProwURL := viper.GetString(config.BaseProwURL)
+	jobName := viper.GetString(config.JobName)
+
+	jobID, err := getLastJobID(baseProwURL, jobName)
 	if err != nil {
 		return err
 	}
 
-	url := fmt.Sprintf("%s/%s/%d/artifacts/%s/dependencies.txt", baseURL, jobName, jobID, phase)
+	url := fmt.Sprintf("%s/%s/%d/artifacts/%s/dependencies.txt", baseJobURL, jobName, jobID, phase)
+	log.Printf("Grabbing diff from %s", url)
 	resp, err := http.Get(url)
 	if err != nil {
 		return err
@@ -123,9 +130,10 @@ func GetCurrentMCCHash() (hash string, err error) {
 	return "", fmt.Errorf("No commits found for openshift/machine-cluster-config")
 }
 
-func getLastJobID(baseURL, jobName string) (int, error) {
+func getLastJobID(baseProwURL, jobName string) (int, error) {
 	// Look up the list of previous jobs with a given name
-	url := fmt.Sprintf("%s/job-history/gs/origin-ci-test/logs/%s", baseURL, jobName)
+	url := fmt.Sprintf("%s/job-history/gs/origin-ci-test/logs/%s", baseProwURL, jobName)
+	log.Printf("Looking up job history from %s", url)
 	res, err := http.Get(url)
 	if err != nil {
 		return 0, err
