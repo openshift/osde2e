@@ -16,12 +16,13 @@ var _ = ginkgo.Describe("[Suite: informing] [OSD] OCM", func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			metrics, err := provider.Metrics(clusterID)
+
 			Expect(err).NotTo(HaveOccurred())
-			Expect(metrics.CriticalAlertsFiring).NotTo(BeNil())
-			Expect(metrics.OperatorsConditionFailing).NotTo(BeNil())
-			Expect(metrics.Nodes().Compute).NotTo(BeZero())
-			Expect(metrics.Nodes().Infra).NotTo(BeZero())
-			Expect(metrics.Nodes().Master).NotTo(BeZero())
+			Expect(metrics.CriticalAlertsFiring()).NotTo(BeNil())
+			Expect(metrics.OperatorsConditionFailing()).NotTo(BeNil())
+			Expect(metrics.Nodes().Compute()).NotTo(BeZero())
+			Expect(metrics.Nodes().Infra()).NotTo(BeZero())
+			Expect(metrics.Nodes().Master()).NotTo(BeZero())
 			Expect(metrics.ComputeNodesCPU().Total().Empty()).NotTo(BeFalse())
 			Expect(metrics.ComputeNodesSockets().Empty()).NotTo(BeFalse())
 
