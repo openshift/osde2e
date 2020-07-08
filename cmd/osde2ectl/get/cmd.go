@@ -106,7 +106,6 @@ func run(cmd *cobra.Command, argv []string) error {
 		if err != nil {
 			return fmt.Errorf("Error getting the cluster's kubeconfig - %s", err)
 		}
-		fmt.Printf("Cluster kubeconfig info - %v", config.Kubeconfig.Contents)
 	}
 
 	return nil
