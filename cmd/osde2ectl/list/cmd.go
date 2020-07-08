@@ -72,7 +72,7 @@ func run(cmd *cobra.Command, argv []string) error {
 
 	log.Println("The clusters created under osde2e are as follows....")
 	for _, cluster := range clusters {
-		log.Printf("Cluster name - %s and Cluster ID - %s", cluster.ID(), cluster.Name())
+		log.Printf("Cluster name - %s and Cluster ID - %s", cluster.Name(), cluster.ID())
 	}
 
 	return nil

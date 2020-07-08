@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/openshift/osde2e/cmd/osde2e/common"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/providers"
 	"github.com/openshift/osde2e/pkg/common/spi"
@@ -71,9 +72,22 @@ func init() {
 }
 
 func run(cmd *cobra.Command, argv []string) error {
-	fmt.Println("You've entered the delete command")
 
-	kubeconfigStatus, _ := cmd.PersistentFlags().GetBool("kube-config")
+	if err := common.LoadConfigs(args.configString, args.customConfig, args.secretLocations); err != nil {
+		return fmt.Errorf("error loading initial state: %v", err)
+	}
+
+	viper.BindPFlag(config.Cluster.ID, cmd.PersistentFlags().Lookup("cluster-id"))
+
+	kubeconfigStatus, err := cmd.PersistentFlags().GetBool("kube-config")
+
+	if err != nil {
+		return fmt.Errorf("error retrieving kube-config information: %v", err)
+	}
+
+	if provider, err = providers.ClusterProvider(); err != nil {
+		return fmt.Errorf("could not setup cluster provider: %v", err)
+	}
 
 	clusterID := viper.GetString(config.Cluster.ID)
 
