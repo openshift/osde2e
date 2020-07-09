@@ -44,25 +44,6 @@ var _ = ginkgo.Describe("[Suite: service-definition] [OSD] user validating webho
 			Expect(err).To(HaveOccurred())
 		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
 
-		ginkgo.It("dedicated admins can manage customer users", func() {
-			userName := util.RandomStr(5) + "@customdomain"
-			user, err := createUser(userName, []string{}, h)
-			defer func() {
-				h.Impersonate(rest.ImpersonationConfig{})
-				deleteUser(user.Name, h)
-			}()
-			Expect(err).NotTo(HaveOccurred())
-
-			h.Impersonate(rest.ImpersonationConfig{
-				UserName: "test@customdomain",
-				Groups: []string{
-					"dedicated-admins",
-				},
-			})
-			err = deleteUser(userName, h)
-			Expect(err).NotTo(HaveOccurred())
-		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
-
 		ginkgo.It("dedicated admins cannot manage redhat user identity", func() {
 			providerUsername := util.RandomStr(5)
 			idName := SRE_PROVIDER_NAME + ":" + util.RandomStr(5)
