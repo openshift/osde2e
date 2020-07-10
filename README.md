@@ -115,7 +115,7 @@ There are several other shortcuts for building the binary and running specific t
 * `make test-conformance` - Runs the K8s and OpenShift conformance suites
 * `make test-addon` - Handles addon testing and requires additional configuration for the specific addon (see [Addon Testing Guide])
 
-### Testing against non OSD clusers
+### Testing against non OSD clusters
 
 It is possible to test against non-OSD clusters by specifying a kubeconfig to test against.
 
