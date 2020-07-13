@@ -43,6 +43,7 @@ func TestSampleToMetadata(t *testing.T) {
 				JobName:        "test-job1",
 				JobID:          9999,
 				Value:          10,
+				Timestamp:      1,
 			},
 		},
 	}

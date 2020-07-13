@@ -2,6 +2,7 @@ package metrics
 
 import (
 	"fmt"
+	"sort"
 	"testing"
 
 	"github.com/Masterminds/semver"
@@ -25,6 +26,7 @@ func TestEventEqual(t *testing.T) {
 				ClusterID:      "1234567",
 				JobName:        "test-job1",
 				JobID:          9999,
+				Timestamp:      1,
 			},
 			event2: Event{
 				InstallVersion: semver.MustParse("4.1.0"),
@@ -35,6 +37,7 @@ func TestEventEqual(t *testing.T) {
 				ClusterID:      "1234567",
 				JobName:        "test-job1",
 				JobID:          9999,
+				Timestamp:      1,
 			},
 			shouldBeEqual: true,
 		},
@@ -49,6 +52,7 @@ func TestEventEqual(t *testing.T) {
 				ClusterID:      "1234567",
 				JobName:        "test-job1",
 				JobID:          9999,
+				Timestamp:      1,
 			},
 			event2: Event{
 				InstallVersion: semver.MustParse("4.1.1"),
@@ -59,6 +63,7 @@ func TestEventEqual(t *testing.T) {
 				ClusterID:      "1234567",
 				JobName:        "test-job1",
 				JobID:          9999,
+				Timestamp:      1,
 			},
 			shouldBeEqual: false,
 		},
@@ -73,6 +78,7 @@ func TestEventEqual(t *testing.T) {
 				ClusterID:      "1234567",
 				JobName:        "test-job1",
 				JobID:          9999,
+				Timestamp:      1,
 			},
 			event2: Event{
 				InstallVersion: semver.MustParse("4.1.0"),
@@ -83,6 +89,7 @@ func TestEventEqual(t *testing.T) {
 				ClusterID:      "1234567",
 				JobName:        "test-job1",
 				JobID:          9999,
+				Timestamp:      1,
 			},
 			shouldBeEqual: false,
 		},
@@ -97,6 +104,7 @@ func TestEventEqual(t *testing.T) {
 				ClusterID:      "1234567",
 				JobName:        "test-job1",
 				JobID:          9999,
+				Timestamp:      1,
 			},
 			event2: Event{
 				InstallVersion: semver.MustParse("4.1.0"),
@@ -107,6 +115,7 @@ func TestEventEqual(t *testing.T) {
 				ClusterID:      "1234567",
 				JobName:        "test-job1",
 				JobID:          9999,
+				Timestamp:      1,
 			},
 			shouldBeEqual: false,
 		},
@@ -121,6 +130,7 @@ func TestEventEqual(t *testing.T) {
 				ClusterID:      "1234567",
 				JobName:        "test-job1",
 				JobID:          9999,
+				Timestamp:      1,
 			},
 			event2: Event{
 				InstallVersion: semver.MustParse("4.1.0"),
@@ -131,6 +141,7 @@ func TestEventEqual(t *testing.T) {
 				ClusterID:      "1234567",
 				JobName:        "test-job1",
 				JobID:          9999,
+				Timestamp:      1,
 			},
 			shouldBeEqual: false,
 		},
@@ -145,6 +156,7 @@ func TestEventEqual(t *testing.T) {
 				ClusterID:      "1234567",
 				JobName:        "test-job1",
 				JobID:          9999,
+				Timestamp:      1,
 			},
 			event2: Event{
 				InstallVersion: semver.MustParse("4.1.0"),
@@ -155,6 +167,7 @@ func TestEventEqual(t *testing.T) {
 				ClusterID:      "1234567",
 				JobName:        "test-job1",
 				JobID:          9999,
+				Timestamp:      1,
 			},
 			shouldBeEqual: false,
 		},
@@ -169,6 +182,7 @@ func TestEventEqual(t *testing.T) {
 				ClusterID:      "1234567",
 				JobName:        "test-job1",
 				JobID:          9999,
+				Timestamp:      1,
 			},
 			event2: Event{
 				InstallVersion: semver.MustParse("4.1.0"),
@@ -179,6 +193,7 @@ func TestEventEqual(t *testing.T) {
 				ClusterID:      "2345678",
 				JobName:        "test-job1",
 				JobID:          9999,
+				Timestamp:      1,
 			},
 			shouldBeEqual: false,
 		},
@@ -193,6 +208,7 @@ func TestEventEqual(t *testing.T) {
 				ClusterID:      "1234567",
 				JobName:        "test-job1",
 				JobID:          9999,
+				Timestamp:      1,
 			},
 			event2: Event{
 				InstallVersion: semver.MustParse("4.1.0"),
@@ -203,6 +219,7 @@ func TestEventEqual(t *testing.T) {
 				ClusterID:      "2345678",
 				JobName:        "test-job2",
 				JobID:          9999,
+				Timestamp:      1,
 			},
 			shouldBeEqual: false,
 		},
@@ -217,6 +234,7 @@ func TestEventEqual(t *testing.T) {
 				ClusterID:      "1234567",
 				JobName:        "test-job1",
 				JobID:          9999,
+				Timestamp:      1,
 			},
 			event2: Event{
 				InstallVersion: semver.MustParse("4.1.0"),
@@ -227,6 +245,33 @@ func TestEventEqual(t *testing.T) {
 				ClusterID:      "2345678",
 				JobName:        "test-job1",
 				JobID:          8888,
+				Timestamp:      1,
+			},
+			shouldBeEqual: false,
+		},
+		{
+			name: "should not be equal timestamp",
+			event1: Event{
+				InstallVersion: semver.MustParse("4.1.0"),
+				UpgradeVersion: semver.MustParse("4.1.2"),
+				CloudProvider:  "test",
+				Environment:    "prod",
+				Event:          "test-event",
+				ClusterID:      "1234567",
+				JobName:        "test-job1",
+				JobID:          9999,
+				Timestamp:      1,
+			},
+			event2: Event{
+				InstallVersion: semver.MustParse("4.1.0"),
+				UpgradeVersion: semver.MustParse("4.1.3"),
+				CloudProvider:  "test",
+				Environment:    "stage",
+				Event:          "test-event",
+				ClusterID:      "2345678",
+				JobName:        "test-job1",
+				JobID:          9999,
+				Timestamp:      2,
 			},
 			shouldBeEqual: false,
 		},
@@ -235,6 +280,67 @@ func TestEventEqual(t *testing.T) {
 	for _, test := range tests {
 		if test.event1.Equal(test.event2) != test.shouldBeEqual {
 			t.Errorf("test %s failed because event1 and event2's Equal returned %t and should have been %t", test.name, !test.shouldBeEqual, test.shouldBeEqual)
+		}
+	}
+}
+
+func TestEventsSorting(t *testing.T) {
+	tests := []struct {
+		name   string
+		events []Event
+	}{
+		{
+			name: "should be sorted",
+			events: []Event{
+				{
+					InstallVersion: semver.MustParse("4.1.0"),
+					UpgradeVersion: semver.MustParse("4.1.2"),
+					CloudProvider:  "test",
+					Environment:    "prod",
+					Event:          "test-event",
+					ClusterID:      "1234567",
+					JobName:        "test-job1",
+					JobID:          9999,
+					Timestamp:      3,
+				},
+				{
+					InstallVersion: semver.MustParse("4.1.0"),
+					UpgradeVersion: semver.MustParse("4.1.2"),
+					CloudProvider:  "test",
+					Environment:    "prod",
+					Event:          "test-event",
+					ClusterID:      "1234567",
+					JobName:        "test-job1",
+					JobID:          9999,
+					Timestamp:      2,
+				},
+				{
+					InstallVersion: semver.MustParse("4.1.0"),
+					UpgradeVersion: semver.MustParse("4.1.2"),
+					CloudProvider:  "test",
+					Environment:    "prod",
+					Event:          "test-event",
+					ClusterID:      "1234567",
+					JobName:        "test-job1",
+					JobID:          9999,
+					Timestamp:      1,
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		events := test.events
+
+		sort.Sort(Events(events))
+
+		var lastTimestamp int64 = 0
+		for _, event := range events {
+			if event.Timestamp < lastTimestamp {
+				t.Errorf("list was not sorted by timestamp as expected for test %s", test.name)
+			}
+
+			lastTimestamp = event.Timestamp
 		}
 	}
 }
@@ -258,6 +364,7 @@ func TestMetadataEqual(t *testing.T) {
 				JobName:        "test-job1",
 				JobID:          9999,
 				Value:          12345,
+				Timestamp:      1,
 			},
 			metadata2: Metadata{
 				InstallVersion: semver.MustParse("4.1.0"),
@@ -269,6 +376,7 @@ func TestMetadataEqual(t *testing.T) {
 				JobName:        "test-job1",
 				JobID:          9999,
 				Value:          12345,
+				Timestamp:      1,
 			},
 			shouldBeEqual: true,
 		},
@@ -284,6 +392,7 @@ func TestMetadataEqual(t *testing.T) {
 				JobName:        "test-job1",
 				JobID:          9999,
 				Value:          12345,
+				Timestamp:      1,
 			},
 			metadata2: Metadata{
 				InstallVersion: semver.MustParse("4.1.1"),
@@ -295,6 +404,7 @@ func TestMetadataEqual(t *testing.T) {
 				JobName:        "test-job1",
 				JobID:          9999,
 				Value:          12345,
+				Timestamp:      1,
 			},
 			shouldBeEqual: false,
 		},
@@ -310,6 +420,7 @@ func TestMetadataEqual(t *testing.T) {
 				JobName:        "test-job1",
 				JobID:          9999,
 				Value:          12345,
+				Timestamp:      1,
 			},
 			metadata2: Metadata{
 				InstallVersion: semver.MustParse("4.1.0"),
@@ -321,6 +432,7 @@ func TestMetadataEqual(t *testing.T) {
 				JobName:        "test-job1",
 				JobID:          9999,
 				Value:          12345,
+				Timestamp:      1,
 			},
 			shouldBeEqual: false,
 		},
@@ -336,6 +448,7 @@ func TestMetadataEqual(t *testing.T) {
 				JobName:        "test-job1",
 				JobID:          9999,
 				Value:          12345,
+				Timestamp:      1,
 			},
 			metadata2: Metadata{
 				InstallVersion: semver.MustParse("4.1.0"),
@@ -347,6 +460,7 @@ func TestMetadataEqual(t *testing.T) {
 				JobName:        "test-job1",
 				JobID:          9999,
 				Value:          12345,
+				Timestamp:      1,
 			},
 			shouldBeEqual: false,
 		},
@@ -362,6 +476,7 @@ func TestMetadataEqual(t *testing.T) {
 				JobName:        "test-job1",
 				JobID:          9999,
 				Value:          12345,
+				Timestamp:      1,
 			},
 			metadata2: Metadata{
 				InstallVersion: semver.MustParse("4.1.0"),
@@ -373,6 +488,7 @@ func TestMetadataEqual(t *testing.T) {
 				JobName:        "test-job1",
 				JobID:          9999,
 				Value:          12345,
+				Timestamp:      1,
 			},
 			shouldBeEqual: false,
 		},
@@ -388,6 +504,7 @@ func TestMetadataEqual(t *testing.T) {
 				JobName:        "test-job1",
 				JobID:          9999,
 				Value:          12345,
+				Timestamp:      1,
 			},
 			metadata2: Metadata{
 				InstallVersion: semver.MustParse("4.1.0"),
@@ -399,6 +516,7 @@ func TestMetadataEqual(t *testing.T) {
 				JobName:        "test-job1",
 				JobID:          9999,
 				Value:          12345,
+				Timestamp:      1,
 			},
 			shouldBeEqual: false,
 		},
@@ -414,6 +532,7 @@ func TestMetadataEqual(t *testing.T) {
 				JobName:        "test-job1",
 				JobID:          9999,
 				Value:          12345,
+				Timestamp:      1,
 			},
 			metadata2: Metadata{
 				InstallVersion: semver.MustParse("4.1.0"),
@@ -425,6 +544,7 @@ func TestMetadataEqual(t *testing.T) {
 				JobName:        "test-job1",
 				JobID:          9999,
 				Value:          12345,
+				Timestamp:      1,
 			},
 			shouldBeEqual: false,
 		},
@@ -440,6 +560,7 @@ func TestMetadataEqual(t *testing.T) {
 				JobName:        "test-job1",
 				JobID:          9999,
 				Value:          12345,
+				Timestamp:      1,
 			},
 			metadata2: Metadata{
 				InstallVersion: semver.MustParse("4.1.0"),
@@ -451,6 +572,7 @@ func TestMetadataEqual(t *testing.T) {
 				JobName:        "test-job2",
 				JobID:          9999,
 				Value:          12345,
+				Timestamp:      1,
 			},
 			shouldBeEqual: false,
 		},
@@ -466,6 +588,7 @@ func TestMetadataEqual(t *testing.T) {
 				JobName:        "test-job1",
 				JobID:          9999,
 				Value:          12345,
+				Timestamp:      1,
 			},
 			metadata2: Metadata{
 				InstallVersion: semver.MustParse("4.1.0"),
@@ -477,6 +600,7 @@ func TestMetadataEqual(t *testing.T) {
 				JobName:        "test-job2",
 				JobID:          8888,
 				Value:          12345,
+				Timestamp:      1,
 			},
 			shouldBeEqual: false,
 		},
@@ -492,6 +616,7 @@ func TestMetadataEqual(t *testing.T) {
 				JobName:        "test-job1",
 				JobID:          9999,
 				Value:          12345,
+				Timestamp:      1,
 			},
 			metadata2: Metadata{
 				InstallVersion: semver.MustParse("4.1.0"),
@@ -503,6 +628,35 @@ func TestMetadataEqual(t *testing.T) {
 				JobName:        "test-job2",
 				JobID:          9999,
 				Value:          23456,
+				Timestamp:      1,
+			},
+			shouldBeEqual: false,
+		},
+		{
+			name: "should not be equal timestamp",
+			metadata1: Metadata{
+				InstallVersion: semver.MustParse("4.1.0"),
+				UpgradeVersion: semver.MustParse("4.1.2"),
+				CloudProvider:  "test",
+				Environment:    "prod",
+				MetadataName:   "test-metadata",
+				ClusterID:      "1234567",
+				JobName:        "test-job1",
+				JobID:          9999,
+				Value:          12345,
+				Timestamp:      1,
+			},
+			metadata2: Metadata{
+				InstallVersion: semver.MustParse("4.1.0"),
+				UpgradeVersion: semver.MustParse("4.1.2"),
+				CloudProvider:  "test",
+				Environment:    "prod",
+				MetadataName:   "test-metadata",
+				ClusterID:      "1234567",
+				JobName:        "test-job2",
+				JobID:          9999,
+				Value:          12345,
+				Timestamp:      2,
 			},
 			shouldBeEqual: false,
 		},
@@ -511,6 +665,70 @@ func TestMetadataEqual(t *testing.T) {
 	for _, test := range tests {
 		if test.metadata1.Equal(test.metadata2) != test.shouldBeEqual {
 			t.Errorf("test %s failed because metadata1 and metadata2's Equal returned %t and should have been %t", test.name, !test.shouldBeEqual, test.shouldBeEqual)
+		}
+	}
+}
+
+func TestMetadataSorting(t *testing.T) {
+	tests := []struct {
+		name      string
+		metadatas []Metadata
+	}{
+		{
+			name: "should be sorted",
+			metadatas: []Metadata{
+				{
+					InstallVersion: semver.MustParse("4.1.0"),
+					UpgradeVersion: semver.MustParse("4.1.2"),
+					CloudProvider:  "test",
+					Environment:    "prod",
+					MetadataName:   "test-metadata",
+					ClusterID:      "1234567",
+					JobName:        "test-job1",
+					JobID:          9999,
+					Value:          12345,
+					Timestamp:      3,
+				},
+				{
+					InstallVersion: semver.MustParse("4.1.0"),
+					UpgradeVersion: semver.MustParse("4.1.2"),
+					CloudProvider:  "test",
+					Environment:    "prod",
+					MetadataName:   "test-metadata",
+					ClusterID:      "1234567",
+					JobName:        "test-job1",
+					JobID:          9999,
+					Value:          12345,
+					Timestamp:      2,
+				},
+				{
+					InstallVersion: semver.MustParse("4.1.0"),
+					UpgradeVersion: semver.MustParse("4.1.2"),
+					CloudProvider:  "test",
+					Environment:    "prod",
+					MetadataName:   "test-metadata",
+					ClusterID:      "1234567",
+					JobName:        "test-job1",
+					JobID:          9999,
+					Value:          12345,
+					Timestamp:      1,
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		metadatas := test.metadatas
+
+		sort.Sort(Metadatas(metadatas))
+
+		var lastTimestamp int64 = 0
+		for _, metadata := range metadatas {
+			if metadata.Timestamp < lastTimestamp {
+				t.Errorf("list was not sorted by timestamp as expected for test %s", test.name)
+			}
+
+			lastTimestamp = metadata.Timestamp
 		}
 	}
 }
@@ -535,6 +753,7 @@ func TestAddonMetadataEqual(t *testing.T) {
 					JobName:        "test-job1",
 					JobID:          9999,
 					Value:          12345,
+					Timestamp:      1,
 				},
 				Phase: Install,
 			},
@@ -549,6 +768,7 @@ func TestAddonMetadataEqual(t *testing.T) {
 					JobName:        "test-job1",
 					JobID:          9999,
 					Value:          12345,
+					Timestamp:      1,
 				},
 				Phase: Install,
 			},
@@ -567,6 +787,7 @@ func TestAddonMetadataEqual(t *testing.T) {
 					JobName:        "test-job1",
 					JobID:          9999,
 					Value:          12345,
+					Timestamp:      1,
 				},
 				Phase: Install,
 			},
@@ -581,6 +802,7 @@ func TestAddonMetadataEqual(t *testing.T) {
 					JobName:        "test-job1",
 					JobID:          9999,
 					Value:          12345,
+					Timestamp:      1,
 				},
 				Phase: Install,
 			},
@@ -599,6 +821,7 @@ func TestAddonMetadataEqual(t *testing.T) {
 					JobName:        "test-job1",
 					JobID:          9999,
 					Value:          12345,
+					Timestamp:      1,
 				},
 				Phase: Install,
 			},
@@ -613,6 +836,7 @@ func TestAddonMetadataEqual(t *testing.T) {
 					JobName:        "test-job1",
 					JobID:          9999,
 					Value:          12345,
+					Timestamp:      1,
 				},
 				Phase: Upgrade,
 			},
@@ -623,6 +847,79 @@ func TestAddonMetadataEqual(t *testing.T) {
 	for _, test := range tests {
 		if test.addonMetadata1.Equal(test.addonMetadata2) != test.shouldBeEqual {
 			t.Errorf("test %s failed because addonMetadata1 and addonMetadata2's Equal returned %t and should have been %t", test.name, !test.shouldBeEqual, test.shouldBeEqual)
+		}
+	}
+}
+
+func TestAddonMetadataSorting(t *testing.T) {
+	tests := []struct {
+		name           string
+		addonMetadatas []AddonMetadata
+	}{
+		{
+			name: "should be sorted",
+			addonMetadatas: []AddonMetadata{
+				{
+					Metadata: Metadata{
+						InstallVersion: semver.MustParse("4.1.0"),
+						UpgradeVersion: semver.MustParse("4.1.2"),
+						CloudProvider:  "test",
+						Environment:    "prod",
+						MetadataName:   "test-metadata",
+						ClusterID:      "1234567",
+						JobName:        "test-job1",
+						JobID:          9999,
+						Value:          12345,
+						Timestamp:      3,
+					},
+					Phase: Install,
+				},
+				{
+					Metadata: Metadata{
+						InstallVersion: semver.MustParse("4.1.0"),
+						UpgradeVersion: semver.MustParse("4.1.2"),
+						CloudProvider:  "test",
+						Environment:    "prod",
+						MetadataName:   "test-metadata",
+						ClusterID:      "1234567",
+						JobName:        "test-job1",
+						JobID:          9999,
+						Value:          12345,
+						Timestamp:      2,
+					},
+					Phase: Install,
+				},
+				{
+					Metadata: Metadata{
+						InstallVersion: semver.MustParse("4.1.0"),
+						UpgradeVersion: semver.MustParse("4.1.2"),
+						CloudProvider:  "test",
+						Environment:    "prod",
+						MetadataName:   "test-metadata",
+						ClusterID:      "1234567",
+						JobName:        "test-job1",
+						JobID:          9999,
+						Value:          12345,
+						Timestamp:      1,
+					},
+					Phase: Install,
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		addonMetadatas := test.addonMetadatas
+
+		sort.Sort(AddonMetadatas(addonMetadatas))
+
+		var lastTimestamp int64 = 0
+		for _, addonMetadata := range addonMetadatas {
+			if addonMetadata.Timestamp < lastTimestamp {
+				t.Errorf("list was not sorted by timestamp as expected for test %s", test.name)
+			}
+
+			lastTimestamp = addonMetadata.Timestamp
 		}
 	}
 }
@@ -648,6 +945,7 @@ func TestJUnitResult(t *testing.T) {
 				JobID:          9999,
 				Phase:          Install,
 				Duration:       12345,
+				Timestamp:      1,
 			},
 			jUnitResult2: JUnitResult{
 				InstallVersion: semver.MustParse("4.1.0"),
@@ -661,6 +959,7 @@ func TestJUnitResult(t *testing.T) {
 				JobID:          9999,
 				Phase:          Install,
 				Duration:       12345,
+				Timestamp:      1,
 			},
 			shouldBeEqual: true,
 		},
@@ -678,6 +977,7 @@ func TestJUnitResult(t *testing.T) {
 				JobID:          9999,
 				Phase:          Install,
 				Duration:       12345,
+				Timestamp:      1,
 			},
 			jUnitResult2: JUnitResult{
 				InstallVersion: semver.MustParse("4.1.1"),
@@ -691,6 +991,7 @@ func TestJUnitResult(t *testing.T) {
 				JobID:          9999,
 				Phase:          Install,
 				Duration:       12345,
+				Timestamp:      1,
 			},
 			shouldBeEqual: false,
 		},
@@ -708,6 +1009,7 @@ func TestJUnitResult(t *testing.T) {
 				JobID:          9999,
 				Phase:          Install,
 				Duration:       12345,
+				Timestamp:      1,
 			},
 			jUnitResult2: JUnitResult{
 				InstallVersion: semver.MustParse("4.1.0"),
@@ -721,6 +1023,7 @@ func TestJUnitResult(t *testing.T) {
 				JobID:          9999,
 				Phase:          Install,
 				Duration:       12345,
+				Timestamp:      1,
 			},
 			shouldBeEqual: false,
 		},
@@ -738,6 +1041,7 @@ func TestJUnitResult(t *testing.T) {
 				JobID:          9999,
 				Phase:          Install,
 				Duration:       12345,
+				Timestamp:      1,
 			},
 			jUnitResult2: JUnitResult{
 				InstallVersion: semver.MustParse("4.1.0"),
@@ -751,6 +1055,7 @@ func TestJUnitResult(t *testing.T) {
 				JobID:          9999,
 				Phase:          Install,
 				Duration:       12345,
+				Timestamp:      1,
 			},
 			shouldBeEqual: false,
 		},
@@ -768,6 +1073,7 @@ func TestJUnitResult(t *testing.T) {
 				JobID:          9999,
 				Phase:          Install,
 				Duration:       12345,
+				Timestamp:      1,
 			},
 			jUnitResult2: JUnitResult{
 				InstallVersion: semver.MustParse("4.1.0"),
@@ -781,6 +1087,7 @@ func TestJUnitResult(t *testing.T) {
 				JobID:          9999,
 				Phase:          Install,
 				Duration:       12345,
+				Timestamp:      1,
 			},
 			shouldBeEqual: false,
 		},
@@ -798,6 +1105,7 @@ func TestJUnitResult(t *testing.T) {
 				JobID:          9999,
 				Phase:          Install,
 				Duration:       12345,
+				Timestamp:      1,
 			},
 			jUnitResult2: JUnitResult{
 				InstallVersion: semver.MustParse("4.1.0"),
@@ -811,6 +1119,7 @@ func TestJUnitResult(t *testing.T) {
 				JobID:          9999,
 				Phase:          Install,
 				Duration:       12345,
+				Timestamp:      1,
 			},
 			shouldBeEqual: false,
 		},
@@ -828,6 +1137,7 @@ func TestJUnitResult(t *testing.T) {
 				JobID:          9999,
 				Phase:          Install,
 				Duration:       12345,
+				Timestamp:      1,
 			},
 			jUnitResult2: JUnitResult{
 				InstallVersion: semver.MustParse("4.1.0"),
@@ -841,6 +1151,7 @@ func TestJUnitResult(t *testing.T) {
 				JobID:          9999,
 				Phase:          Install,
 				Duration:       12345,
+				Timestamp:      1,
 			},
 			shouldBeEqual: false,
 		},
@@ -858,6 +1169,7 @@ func TestJUnitResult(t *testing.T) {
 				JobID:          9999,
 				Phase:          Install,
 				Duration:       12345,
+				Timestamp:      1,
 			},
 			jUnitResult2: JUnitResult{
 				InstallVersion: semver.MustParse("4.1.0"),
@@ -871,6 +1183,7 @@ func TestJUnitResult(t *testing.T) {
 				JobID:          9999,
 				Phase:          Install,
 				Duration:       12345,
+				Timestamp:      1,
 			},
 			shouldBeEqual: false,
 		},
@@ -888,6 +1201,7 @@ func TestJUnitResult(t *testing.T) {
 				JobID:          9999,
 				Phase:          Install,
 				Duration:       12345,
+				Timestamp:      1,
 			},
 			jUnitResult2: JUnitResult{
 				InstallVersion: semver.MustParse("4.1.0"),
@@ -901,6 +1215,7 @@ func TestJUnitResult(t *testing.T) {
 				JobID:          9999,
 				Phase:          Install,
 				Duration:       12345,
+				Timestamp:      1,
 			},
 			shouldBeEqual: false,
 		},
@@ -918,6 +1233,7 @@ func TestJUnitResult(t *testing.T) {
 				JobID:          9999,
 				Phase:          Install,
 				Duration:       12345,
+				Timestamp:      1,
 			},
 			jUnitResult2: JUnitResult{
 				InstallVersion: semver.MustParse("4.1.0"),
@@ -931,6 +1247,7 @@ func TestJUnitResult(t *testing.T) {
 				JobID:          8888,
 				Phase:          Install,
 				Duration:       12345,
+				Timestamp:      1,
 			},
 			shouldBeEqual: false,
 		},
@@ -948,6 +1265,7 @@ func TestJUnitResult(t *testing.T) {
 				JobID:          9999,
 				Phase:          Install,
 				Duration:       12345,
+				Timestamp:      1,
 			},
 			jUnitResult2: JUnitResult{
 				InstallVersion: semver.MustParse("4.1.0"),
@@ -961,6 +1279,7 @@ func TestJUnitResult(t *testing.T) {
 				JobID:          9999,
 				Phase:          Upgrade,
 				Duration:       12345,
+				Timestamp:      1,
 			},
 			shouldBeEqual: false,
 		},
@@ -978,6 +1297,7 @@ func TestJUnitResult(t *testing.T) {
 				JobID:          9999,
 				Phase:          Install,
 				Duration:       12345,
+				Timestamp:      1,
 			},
 			jUnitResult2: JUnitResult{
 				InstallVersion: semver.MustParse("4.1.0"),
@@ -991,6 +1311,39 @@ func TestJUnitResult(t *testing.T) {
 				JobID:          9999,
 				Phase:          Install,
 				Duration:       23456,
+				Timestamp:      1,
+			},
+			shouldBeEqual: false,
+		},
+		{
+			name: "should not be equal timestamp",
+			jUnitResult1: JUnitResult{
+				InstallVersion: semver.MustParse("4.1.0"),
+				UpgradeVersion: semver.MustParse("4.1.2"),
+				CloudProvider:  "test",
+				Environment:    "prod",
+				Suite:          "test-suite",
+				TestName:       "test-name",
+				Result:         Passed,
+				JobName:        "test-job1",
+				JobID:          9999,
+				Phase:          Install,
+				Duration:       12345,
+				Timestamp:      1,
+			},
+			jUnitResult2: JUnitResult{
+				InstallVersion: semver.MustParse("4.1.0"),
+				UpgradeVersion: semver.MustParse("4.1.3"),
+				CloudProvider:  "test",
+				Environment:    "prod",
+				Suite:          "test-suite",
+				TestName:       "test-name",
+				Result:         Passed,
+				JobName:        "test-job1",
+				JobID:          9999,
+				Phase:          Install,
+				Duration:       12345,
+				Timestamp:      2,
 			},
 			shouldBeEqual: false,
 		},
@@ -999,6 +1352,76 @@ func TestJUnitResult(t *testing.T) {
 	for _, test := range tests {
 		if test.jUnitResult1.Equal(test.jUnitResult2) != test.shouldBeEqual {
 			t.Errorf("test %s failed because jUnitResult1 and jUnitResult2's Equal returned %t and should have been %t", test.name, !test.shouldBeEqual, test.shouldBeEqual)
+		}
+	}
+}
+
+func TestJUnitResultsSorting(t *testing.T) {
+	tests := []struct {
+		name         string
+		jUnitResults []JUnitResult
+	}{
+		{
+			name: "should be sorted",
+			jUnitResults: []JUnitResult{
+				{
+					InstallVersion: semver.MustParse("4.1.0"),
+					UpgradeVersion: semver.MustParse("4.1.2"),
+					CloudProvider:  "test",
+					Environment:    "prod",
+					Suite:          "test-suite",
+					TestName:       "test-name",
+					Result:         Passed,
+					JobName:        "test-job1",
+					JobID:          9999,
+					Phase:          Install,
+					Duration:       12345,
+					Timestamp:      3,
+				},
+				{
+					InstallVersion: semver.MustParse("4.1.0"),
+					UpgradeVersion: semver.MustParse("4.1.2"),
+					CloudProvider:  "test",
+					Environment:    "prod",
+					Suite:          "test-suite",
+					TestName:       "test-name",
+					Result:         Passed,
+					JobName:        "test-job1",
+					JobID:          9999,
+					Phase:          Install,
+					Duration:       12345,
+					Timestamp:      2,
+				},
+				{
+					InstallVersion: semver.MustParse("4.1.0"),
+					UpgradeVersion: semver.MustParse("4.1.2"),
+					CloudProvider:  "test",
+					Environment:    "prod",
+					Suite:          "test-suite",
+					TestName:       "test-name",
+					Result:         Passed,
+					JobName:        "test-job1",
+					JobID:          9999,
+					Phase:          Install,
+					Duration:       12345,
+					Timestamp:      1,
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		jUnitResults := test.jUnitResults
+
+		sort.Sort(JUnitResults(jUnitResults))
+
+		var lastTimestamp int64 = 0
+		for _, jUnitResult := range jUnitResults {
+			if jUnitResult.Timestamp < lastTimestamp {
+				t.Errorf("list was not sorted by timestamp as expected for test %s", test.name)
+			}
+
+			lastTimestamp = jUnitResult.Timestamp
 		}
 	}
 }

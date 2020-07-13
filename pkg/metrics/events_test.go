@@ -42,6 +42,7 @@ func TestSampleToEvent(t *testing.T) {
 				ClusterID:      "1234567",
 				JobName:        "test-job1",
 				JobID:          9999,
+				Timestamp:      1,
 			},
 		},
 	}

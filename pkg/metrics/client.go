@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"math"
 	"reflect"
 	"sort"
 	"strconv"
@@ -281,4 +282,22 @@ func averageValues(values []model.SamplePair) float64 {
 	}
 
 	return valueSum / float64(len(values))
+}
+
+// pickFirstTimestamp will pick the earliest timestamp from a list of sample pairs. This is because, if we have multiple values for a singular
+// sample, this is likely because the value is oversampled. This will make sure we get the earliest recorded instance of the sample. If the
+// input array is empty, then 0 is returned.
+func pickFirstTimestamp(values []model.SamplePair) int64 {
+	if len(values) == 0 {
+		return 0
+	}
+
+	var timestamp int64 = math.MaxInt64
+	for _, value := range values {
+		int64Timestamp := (int64)(value.Timestamp)
+		if int64Timestamp < timestamp {
+			timestamp = int64Timestamp
+		}
+	}
+	return timestamp
 }

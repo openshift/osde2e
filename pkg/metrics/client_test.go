@@ -303,3 +303,53 @@ func TestAverageValues(t *testing.T) {
 		}
 	}
 }
+
+func TestPickFirstTimestamp(t *testing.T) {
+	tests := []struct {
+		name           string
+		samplePairs    []model.SamplePair
+		expectedOutput int64
+	}{
+		{
+			name: "pick a single value",
+			samplePairs: []model.SamplePair{
+				{
+					Timestamp: 1,
+					Value:     16,
+				},
+			},
+			expectedOutput: 1,
+		},
+		{
+			name: "pick from multiple v alues",
+			samplePairs: []model.SamplePair{
+				{
+					Timestamp: 1,
+					Value:     16,
+				},
+				{
+					Timestamp: 2,
+					Value:     32,
+				},
+				{
+					Timestamp: 3,
+					Value:     48,
+				},
+			},
+			expectedOutput: 1,
+		},
+		{
+			name:           "pick from no values",
+			samplePairs:    []model.SamplePair{},
+			expectedOutput: 0,
+		},
+	}
+
+	for _, test := range tests {
+		timestamp := pickFirstTimestamp(test.samplePairs)
+
+		if timestamp != test.expectedOutput {
+			t.Errorf("test %s failed as the produced timestamp %d did not match the expected timestamp %d", test.name, timestamp, test.expectedOutput)
+		}
+	}
+}

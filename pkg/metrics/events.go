@@ -3,6 +3,7 @@ package metrics
 import (
 	"fmt"
 	"reflect"
+	"sort"
 	"strconv"
 	"time"
 
@@ -59,6 +60,8 @@ func (c *Client) processEventResults(results model.Value) ([]Event, error) {
 		return nil, fmt.Errorf("unrecognized result type: %v", reflect.TypeOf(results))
 	}
 
+	sort.Sort(Events(events))
+
 	return events, nil
 }
 
@@ -90,5 +93,6 @@ func sampleToEvent(sample *model.SampleStream) (Event, error) {
 		ClusterID:      extractMetricFromSample(sample, "cluster_id"),
 		JobName:        extractMetricFromSample(sample, "job"),
 		JobID:          jobID,
+		Timestamp:      pickFirstTimestamp(sample.Values),
 	}, nil
 }
