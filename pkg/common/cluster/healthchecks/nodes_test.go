@@ -64,7 +64,7 @@ func TestCheckNodeHealth(t *testing.T) {
 
 	for _, test := range tests {
 		kubeClient := kubernetes.NewSimpleClientset(test.objs...)
-		state, err := CheckNodeHealth(kubeClient.CoreV1())
+		state, err := CheckNodeHealth(kubeClient.CoreV1(), nil)
 
 		if err != nil && !test.expectedError {
 			t.Errorf("Unexpected error: %s", err)

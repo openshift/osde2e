@@ -12,7 +12,7 @@ import (
 )
 
 // LaunchCluster will provision an AWS cluster.
-func (m *MOAProvider) LaunchCluster() (string, error) {
+func (m *MOAProvider) LaunchCluster(clusterName string) (string, error) {
 	clustersClient := m.ocmProvider.GetConnection().ClustersMgmt().V1().Clusters()
 
 	// Calculate an expiration date for the cluster so that it will be automatically deleted if
@@ -60,7 +60,7 @@ func (m *MOAProvider) LaunchCluster() (string, error) {
 
 	callAndSetAWSSession(func() {
 		clusterSpec := cluster.Spec{
-			Name:               viper.GetString(config.Cluster.Name),
+			Name:               clusterName,
 			Region:             viper.GetString(config.CloudProvider.Region),
 			MultiAZ:            viper.GetBool(config.Cluster.MultiAZ),
 			Version:            viper.GetString(config.Cluster.Version),

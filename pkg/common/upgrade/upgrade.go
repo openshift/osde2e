@@ -20,7 +20,6 @@ import (
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/metadata"
 	"github.com/openshift/osde2e/pkg/common/providers"
-	"github.com/openshift/osde2e/pkg/common/spi"
 	"github.com/openshift/osde2e/pkg/common/util"
 )
 
@@ -42,7 +41,7 @@ var (
 )
 
 // RunUpgrade uses the OpenShift extended suite to upgrade a cluster to the image provided in cfg.
-func RunUpgrade(provider spi.Provider) error {
+func RunUpgrade() error {
 	var done bool
 	var msg string
 	var err error
@@ -87,7 +86,7 @@ func RunUpgrade(provider spi.Provider) error {
 
 	metadata.Instance.SetTimeToUpgradedCluster(time.Since(upgradeStarted).Seconds())
 
-	if err = cluster.WaitForClusterReady(provider, viper.GetString(config.Cluster.ID)); err != nil {
+	if err = cluster.WaitForClusterReady(viper.GetString(config.Cluster.ID), nil); err != nil {
 		return fmt.Errorf("failed waiting for cluster ready: %v", err)
 	}
 

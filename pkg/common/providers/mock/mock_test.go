@@ -17,8 +17,8 @@ func TestClusterInteraction(t *testing.T) {
 		t.Errorf("expected quota or no error, got: %v, %v", hasQuota, err.Error())
 	}
 
-	clusterID1, _ := mockProvider.LaunchCluster()
-	clusterID2, _ := mockProvider.LaunchCluster()
+	clusterID1, _ := mockProvider.LaunchCluster("cluster1")
+	clusterID2, _ := mockProvider.LaunchCluster("cluster2")
 
 	cluster1, err := mockProvider.GetCluster(clusterID1)
 
@@ -65,7 +65,7 @@ func TestIntentionalFailures(t *testing.T) {
 		t.Error("expected error to occur while checking quota")
 	}
 
-	clusterID1, _ := mockProvider.LaunchCluster()
+	clusterID1, _ := mockProvider.LaunchCluster("cluster1")
 
 	// ClusterKubeconfig
 	if kubeconfig, err := mockProvider.ClusterKubeconfig(clusterID1); kubeconfig != nil || err == nil {
@@ -91,7 +91,7 @@ func TestIntentionalFailures(t *testing.T) {
 func TestMockAddons(t *testing.T) {
 	mockProvider := makeMockProviderWithEnv("mockEnv")
 
-	clusterID1, _ := mockProvider.LaunchCluster()
+	clusterID1, _ := mockProvider.LaunchCluster("cluster1")
 
 	toInstall := []string{"addon1", "addon2"}
 
@@ -123,7 +123,7 @@ func TestMockAddons(t *testing.T) {
 func TestClusterkubeconfig(t *testing.T) {
 	mockProvider := makeMockProviderWithEnv("mockEnv")
 
-	clusterID1, _ := mockProvider.LaunchCluster()
+	clusterID1, _ := mockProvider.LaunchCluster("cluster1")
 
 	kubeconfig, err := mockProvider.ClusterKubeconfig(clusterID1)
 	if err != nil {

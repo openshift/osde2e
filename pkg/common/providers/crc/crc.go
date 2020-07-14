@@ -85,7 +85,7 @@ func New() (*Provider, error) {
 }
 
 // LaunchCluster CRCs a launch cluster operation.
-func (m *Provider) LaunchCluster() (string, error) {
+func (m *Provider) LaunchCluster(clusterName string) (string, error) {
 	home, err := os.UserHomeDir()
 	if err != nil {
 		log.Fatalf("Error discerning home directory: %s", err.Error())

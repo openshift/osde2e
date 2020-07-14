@@ -5,16 +5,19 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/openshift/osde2e/pkg/common/logging"
 	kubev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	v1 "k8s.io/client-go/kubernetes/typed/core/v1"
 )
 
 // CheckPodHealth attempts to look at the state of all pods and returns true if things are healthy.
-func CheckPodHealth(podClient v1.CoreV1Interface) (bool, error) {
+func CheckPodHealth(podClient v1.CoreV1Interface, logger *log.Logger) (bool, error) {
+	logger = logging.CreateNewStdLoggerOrUseExistingLogger(logger)
+
 	var notReady []kubev1.Pod
 
-	log.Print("Checking that all Pods are running or completed...")
+	logger.Print("Checking that all Pods are running or completed...")
 
 	listOpts := metav1.ListOptions{}
 	list, err := podClient.Pods(metav1.NamespaceAll).List(context.TODO(), listOpts)
@@ -34,7 +37,7 @@ func CheckPodHealth(podClient v1.CoreV1Interface) (bool, error) {
 				return false, fmt.Errorf("Pod %s errored: %s - %s", pod.GetName(), pod.Status.Reason, pod.Status.Message)
 			}
 			notReady = append(notReady, pod)
-			log.Printf("%s is not ready. Phase: %s, Message: %s, Reason: %s", pod.Name, pod.Status.Phase, pod.Status.Message, pod.Status.Reason)
+			logger.Printf("%s is not ready. Phase: %s, Message: %s, Reason: %s", pod.Name, pod.Status.Phase, pod.Status.Message, pod.Status.Reason)
 		}
 	}
 
@@ -42,7 +45,7 @@ func CheckPodHealth(podClient v1.CoreV1Interface) (bool, error) {
 	ready := float64(total - len(notReady))
 	curRatio := (ready / float64(total)) * 100
 
-	log.Printf("%v%% of pods are currently alive: ", curRatio)
+	logger.Printf("%v%% of pods are currently alive: ", curRatio)
 
 	return len(notReady) == 0, nil
 }
