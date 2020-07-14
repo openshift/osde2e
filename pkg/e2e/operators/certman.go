@@ -7,6 +7,7 @@ import (
 	"github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	osv1 "github.com/openshift/api/config/v1"
+	"github.com/openshift/osde2e/pkg/common/alert"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/spf13/viper"
@@ -15,7 +16,22 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 )
 
-var _ = ginkgo.Describe("[Suite: operators] [OSD] Certman Operator", func() {
+var testAlert alert.MetricAlert
+
+func init() {
+	ma := alert.GetMetricAlerts()
+	testAlert = alert.MetricAlert{
+		Name:             "[Suite: operators] [OSD] Certman Operator",
+		TeamOwner:        "SD-SREP",
+		PrimaryContact:   "Carl Brumm",
+		SlackChannel:     "sd-cicd-alerts",
+		Email:            "sd-cicd@redhat.com",
+		FailureThreshold: 1,
+	}
+	ma.AddAlert(testAlert)
+}
+
+var _ = ginkgo.Describe(testAlert.Name, func() {
 	h := helper.New()
 	ginkgo.Context("certificate secret should be applied when cluster installed", func() {
 		var secretName string

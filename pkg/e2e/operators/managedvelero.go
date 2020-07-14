@@ -7,6 +7,7 @@ import (
 
 	"github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"github.com/openshift/osde2e/pkg/common/alert"
 	"github.com/openshift/osde2e/pkg/common/helper"
 	velerov1 "github.com/vmware-tanzu/velero/pkg/apis/velero/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -15,7 +16,20 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 )
 
-var _ = ginkgo.Describe("[Suite: operators] [OSD] Managed Velero Operator", func() {
+func init() {
+	ma := alert.GetMetricAlerts()
+	testAlert = alert.MetricAlert{
+		Name:             "[Suite: operators] [OSD] Managed Velero Operator",
+		TeamOwner:        "SD-SREP",
+		PrimaryContact:   "Christoph Blecker",
+		SlackChannel:     "sd-cicd-alerts",
+		Email:            "sd-cicd@redhat.com",
+		FailureThreshold: 1,
+	}
+	ma.AddAlert(testAlert)
+}
+
+var _ = ginkgo.Describe(testAlert.Name, func() {
 	var operatorName = "managed-velero-operator"
 	var operatorNamespace string = "openshift-velero"
 	var operatorLockFile string = "managed-velero-operator-lock"

@@ -9,10 +9,24 @@ import (
 	"github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
+	"github.com/openshift/osde2e/pkg/common/alert"
 	"github.com/openshift/osde2e/pkg/common/helper"
 )
 
-var _ = ginkgo.Describe("[Suite: e2e] Validation Webhook", func() {
+func init() {
+	ma := alert.GetMetricAlerts()
+	testAlert = alert.MetricAlert{
+		Name:             "[Suite: e2e] Validation Webhook",
+		TeamOwner:        "SD-SREP",
+		PrimaryContact:   "Matt Bargenquest",
+		SlackChannel:     "sd-cicd-alerts",
+		Email:            "sd-cicd@redhat.com",
+		FailureThreshold: 1,
+	}
+	ma.AddAlert(testAlert)
+}
+
+var _ = ginkgo.Describe(testAlert.Name, func() {
 
 	var namespace = "openshift-validation-webhook"
 	var service = "validation-webhook"

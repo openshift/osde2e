@@ -22,7 +22,7 @@ func init() {
 	ma := alert.GetMetricAlerts()
 	testAlert = alert.MetricAlert{
 		Name:             "[Suite: service-definition] [OSD] DaemonSets",
-		TeamOwner:        "SDCICD",
+		TeamOwner:        "SD-CICD",
 		PrimaryContact:   "Jeffrey Sica",
 		SlackChannel:     "sd-cicd-alerts",
 		Email:            "sd-cicd@redhat.com",

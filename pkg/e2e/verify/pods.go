@@ -13,10 +13,24 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 
+	"github.com/openshift/osde2e/pkg/common/alert"
 	"github.com/openshift/osde2e/pkg/common/helper"
 )
 
-var _ = ginkgo.Describe("[Suite: e2e] Pods", func() {
+func init() {
+	ma := alert.GetMetricAlerts()
+	testAlert = alert.MetricAlert{
+		Name:             "[Suite: e2e] Pods",
+		TeamOwner:        "SD-CICD",
+		PrimaryContact:   "Jeffrey Sica",
+		SlackChannel:     "sd-cicd-alerts",
+		Email:            "sd-cicd@redhat.com",
+		FailureThreshold: 1,
+	}
+	ma.AddAlert(testAlert)
+}
+
+var _ = ginkgo.Describe(testAlert.Name, func() {
 	h := helper.New()
 
 	ginkgo.It("should be Running or Succeeded", func() {

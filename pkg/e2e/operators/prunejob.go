@@ -8,6 +8,7 @@ import (
 
 	"github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"github.com/openshift/osde2e/pkg/common/alert"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/spf13/viper"
@@ -18,7 +19,20 @@ import (
 	"k8s.io/apimachinery/pkg/util/rand"
 )
 
-var _ = ginkgo.Describe("[Suite: operators] [OSD] Prune jobs", func() {
+func init() {
+	ma := alert.GetMetricAlerts()
+	testAlert = alert.MetricAlert{
+		Name:             "[Suite: operators] [OSD] Prune jobs",
+		TeamOwner:        "SD-SREP",
+		PrimaryContact:   "Haoran Wang",
+		SlackChannel:     "sd-cicd-alerts",
+		Email:            "sd-cicd@redhat.com",
+		FailureThreshold: 1,
+	}
+	ma.AddAlert(testAlert)
+}
+
+var _ = ginkgo.Describe(testAlert.Name, func() {
 	h := helper.New()
 	ginkgo.Context("pruner jobs should works", func() {
 		namespace := "openshift-sre-pruning"

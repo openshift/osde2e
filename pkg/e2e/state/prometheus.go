@@ -4,6 +4,7 @@ import (
 	"github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
+	"github.com/openshift/osde2e/pkg/common/alert"
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/runner"
 )
@@ -13,7 +14,20 @@ const (
 	promCollectCmd = "oc exec -n openshift-monitoring prometheus-k8s-0 -c prometheus -- /bin/sh -c \"cp -ruf /prometheus /tmp/prometheus && tar cvzO -C /tmp/prometheus . "
 )
 
-var _ = ginkgo.Describe("[Suite: e2e] Cluster state", func() {
+func init() {
+	ma := alert.GetMetricAlerts()
+	testAlert = alert.MetricAlert{
+		Name:             "[Suite: e2e] Cluster state",
+		TeamOwner:        "SD-CICD",
+		PrimaryContact:   "Michael Wilson",
+		SlackChannel:     "sd-cicd-alerts",
+		Email:            "sd-cicd@redhat.com",
+		FailureThreshold: 1,
+	}
+	ma.AddAlert(testAlert)
+}
+
+var _ = ginkgo.Describe(testAlert.Name, func() {
 	defer ginkgo.GinkgoRecover()
 	h := helper.New()
 

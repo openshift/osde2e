@@ -5,10 +5,24 @@ import (
 	. "github.com/onsi/gomega"
 	kubev1 "k8s.io/api/core/v1"
 
+	"github.com/openshift/osde2e/pkg/common/alert"
 	"github.com/openshift/osde2e/pkg/common/helper"
 )
 
-var _ = ginkgo.Describe("[Suite: scale-performance] Scaling", func() {
+func init() {
+	ma := alert.GetMetricAlerts()
+	testAlert = alert.MetricAlert{
+		Name:             "[Suite: scale-performance] Scaling",
+		TeamOwner:        "SD-CICD",
+		PrimaryContact:   "Michael Wilson",
+		SlackChannel:     "sd-cicd-alerts",
+		Email:            "sd-cicd@redhat.com",
+		FailureThreshold: 1,
+	}
+	ma.AddAlert(testAlert)
+}
+
+var _ = ginkgo.Describe(testAlert.Name, func() {
 	defer ginkgo.GinkgoRecover()
 	h := helper.New()
 

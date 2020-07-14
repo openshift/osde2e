@@ -5,6 +5,7 @@ import (
 	"github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
+	"github.com/openshift/osde2e/pkg/common/alert"
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/runner"
 )
@@ -19,7 +20,20 @@ var DefaultE2EConfig = E2EConfig{
 	},
 }
 
-var _ = ginkgo.Describe("[Suite: conformance][k8s]", func() {
+func init() {
+	ma := alert.GetMetricAlerts()
+	testAlert = alert.MetricAlert{
+		Name:             "[Suite: conformance]",
+		TeamOwner:        "SD-CICD",
+		PrimaryContact:   "Jeffrey Sica",
+		SlackChannel:     "sd-cicd-alerts",
+		Email:            "sd-cicd@redhat.com",
+		FailureThreshold: 1,
+	}
+	ma.AddAlert(testAlert)
+}
+
+var _ = ginkgo.Describe(testAlert.Name+"[k8s]", func() {
 	defer ginkgo.GinkgoRecover()
 	h := helper.New()
 
@@ -51,7 +65,7 @@ var _ = ginkgo.Describe("[Suite: conformance][k8s]", func() {
 	}, float64(e2eTimeoutInSeconds+30))
 })
 
-var _ = ginkgo.Describe("[Suite: conformance][openshift]", func() {
+var _ = ginkgo.Describe(testAlert.Name+"[openshift]", func() {
 	defer ginkgo.GinkgoRecover()
 	h := helper.New()
 
