@@ -5,11 +5,15 @@ import (
 	"github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
+	"github.com/openshift/osde2e/pkg/common/alert"
 	"github.com/openshift/osde2e/pkg/common/helper"
 )
 
 var _ = ginkgo.Describe("[Suite: openshift][image-registry]", func() {
 	defer ginkgo.GinkgoRecover()
+	ginkgo.BeforeEach(func() {
+		alert.RegisterGinkgoAlert(ginkgo.CurrentGinkgoTestDescription().TestText, "SD-CICD", "Jeffrey Sica", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+	})
 	h := helper.New()
 
 	e2eTimeoutInSeconds := 3600
@@ -40,6 +44,9 @@ var _ = ginkgo.Describe("[Suite: openshift][image-registry]", func() {
 
 var _ = ginkgo.Describe("[Suite: openshift][image-ecosystem]", func() {
 	defer ginkgo.GinkgoRecover()
+	ginkgo.BeforeEach(func() {
+		alert.RegisterGinkgoAlert(ginkgo.CurrentGinkgoTestDescription().TestText, "SD-CICD", "Jeffrey Sica", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+	})
 	h := helper.New()
 
 	e2eTimeoutInSeconds := 3600

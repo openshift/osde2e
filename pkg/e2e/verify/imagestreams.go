@@ -8,10 +8,14 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/openshift/osde2e/pkg/common/alert"
 	"github.com/openshift/osde2e/pkg/common/helper"
 )
 
 var _ = ginkgo.Describe("[Suite: e2e] ImageStreams", func() {
+	ginkgo.BeforeEach(func() {
+		alert.RegisterGinkgoAlert(ginkgo.CurrentGinkgoTestDescription().TestText, "SD-CICD", "Jeffrey Sica", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+	})
 	h := helper.New()
 
 	ginkgo.It("should exist in the cluster", func() {

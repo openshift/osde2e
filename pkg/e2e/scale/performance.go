@@ -5,11 +5,15 @@ import (
 	. "github.com/onsi/gomega"
 	kubev1 "k8s.io/api/core/v1"
 
+	"github.com/openshift/osde2e/pkg/common/alert"
 	"github.com/openshift/osde2e/pkg/common/helper"
 )
 
 var _ = ginkgo.Describe("[Suite: scale-performance] Scaling", func() {
 	defer ginkgo.GinkgoRecover()
+	ginkgo.BeforeEach(func() {
+		alert.RegisterGinkgoAlert(ginkgo.CurrentGinkgoTestDescription().TestText, "SD-CICD", "Michael Wilson", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+	})
 	h := helper.New()
 
 	httpTimeoutInSeconds := 7200

@@ -5,6 +5,7 @@ import (
 	"github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
+	"github.com/openshift/osde2e/pkg/common/alert"
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/runner"
 )
@@ -21,6 +22,9 @@ var DefaultE2EConfig = E2EConfig{
 
 var _ = ginkgo.Describe("[Suite: conformance][k8s]", func() {
 	defer ginkgo.GinkgoRecover()
+	ginkgo.BeforeEach(func() {
+		alert.RegisterGinkgoAlert(ginkgo.CurrentGinkgoTestDescription().TestText, "SD-CICD", "Jeffrey Sica", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+	})
 	h := helper.New()
 
 	e2eTimeoutInSeconds := 3600
@@ -53,6 +57,9 @@ var _ = ginkgo.Describe("[Suite: conformance][k8s]", func() {
 
 var _ = ginkgo.Describe("[Suite: conformance][openshift]", func() {
 	defer ginkgo.GinkgoRecover()
+	ginkgo.BeforeEach(func() {
+		alert.RegisterGinkgoAlert(ginkgo.CurrentGinkgoTestDescription().TestText, "SD-CICD", "Jeffrey Sica", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+	})
 	h := helper.New()
 
 	e2eTimeoutInSeconds := 7200

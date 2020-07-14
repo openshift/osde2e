@@ -9,10 +9,14 @@ import (
 	"github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
+	"github.com/openshift/osde2e/pkg/common/alert"
 	"github.com/openshift/osde2e/pkg/common/helper"
 )
 
 var _ = ginkgo.Describe("[Suite: e2e] Validation Webhook", func() {
+	ginkgo.BeforeEach(func() {
+		alert.RegisterGinkgoAlert(ginkgo.CurrentGinkgoTestDescription().TestText, "SD-SREP", "Matt Bargenquast", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+	})
 
 	var namespace = "openshift-validation-webhook"
 	var service = "validation-webhook"

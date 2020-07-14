@@ -10,6 +10,7 @@ import (
 	v1 "github.com/openshift/api/route/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/openshift/osde2e/pkg/common/alert"
 	"github.com/openshift/osde2e/pkg/common/cluster/healthchecks"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/spf13/viper"
@@ -29,6 +30,9 @@ var workloadName = filepath.Base(testDir)
 
 var _ = ginkgo.Describe("[Suite: e2e] Workload ("+workloadName+")", func() {
 	defer ginkgo.GinkgoRecover()
+	ginkgo.BeforeEach(func() {
+		alert.RegisterGinkgoAlert(ginkgo.CurrentGinkgoTestDescription().TestText, "SD-SREP", "Matt Bargenquast", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+	})
 	// setup helper
 	h := helper.New()
 

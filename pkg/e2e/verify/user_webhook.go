@@ -8,6 +8,7 @@ import (
 	"github.com/spf13/viper"
 
 	userv1 "github.com/openshift/api/user/v1"
+	"github.com/openshift/osde2e/pkg/common/alert"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/util"
@@ -22,6 +23,9 @@ const (
 )
 
 var _ = ginkgo.Describe("[Suite: service-definition] [OSD] user validating webhook", func() {
+	ginkgo.BeforeEach(func() {
+		alert.RegisterGinkgoAlert(ginkgo.CurrentGinkgoTestDescription().TestText, "SD-SREP", "Haoran Wang", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+	})
 	h := helper.New()
 
 	ginkgo.Context("user validating webhook", func() {

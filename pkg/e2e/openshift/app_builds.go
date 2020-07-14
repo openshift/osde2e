@@ -10,6 +10,7 @@ import (
 
 	"github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"github.com/openshift/osde2e/pkg/common/alert"
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/runner"
 	kubev1 "k8s.io/api/core/v1"
@@ -39,6 +40,9 @@ var testApplications = []string{
 
 var _ = ginkgo.Describe("[Suite: app-builds] OpenShift Application Build E2E", func() {
 	defer ginkgo.GinkgoRecover()
+	ginkgo.BeforeEach(func() {
+		alert.RegisterGinkgoAlert(ginkgo.CurrentGinkgoTestDescription().TestText, "SD-CICD", "Jeffrey Sica", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+	})
 
 	h := helper.New()
 

@@ -6,6 +6,7 @@ import (
 
 	"github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"github.com/openshift/osde2e/pkg/common/alert"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/util"
@@ -35,6 +36,9 @@ func makePod(name, sa string, privileged bool) v1.Pod {
 }
 
 var _ = ginkgo.Describe("[Suite: service-definition] [OSD] Privileged Containers", func() {
+	ginkgo.BeforeEach(func() {
+		alert.RegisterGinkgoAlert(ginkgo.CurrentGinkgoTestDescription().TestText, "SD-CICD", "Jeffrey Sica", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+	})
 	ginkgo.Context("Privileged containers are not allowed", func() {
 		// setup helper
 		h := helper.New()
