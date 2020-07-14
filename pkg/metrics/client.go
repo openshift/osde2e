@@ -43,8 +43,11 @@ type Client struct {
 }
 
 // NewClient returns a new metrics client.
-func NewClient() (*Client, error) {
-	client, err := prometheus.CreateClient()
+// If no arguments are supplied, the global config will be used.
+// If one argument is supplied, it will be used as the address for Prometheus, but will use the global config for the bearer token.
+// If two arguments are supplied, the first will be used as the address for Prometheus and the second will be used as the bearer token.
+func NewClient(args ...string) (*Client, error) {
+	client, err := prometheus.CreateClient(args...)
 
 	if err != nil {
 		return nil, fmt.Errorf("error trying to create the metrics client: %v", err)
