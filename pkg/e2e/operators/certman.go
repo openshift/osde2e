@@ -23,7 +23,7 @@ func init() {
 	testAlert = alert.MetricAlert{
 		Name:             "[Suite: operators] [OSD] Certman Operator",
 		TeamOwner:        "SD-SREP",
-		PrimaryContact:   "Carl Brumm",
+		PrimaryContact:   "Christoph Blecker",
 		SlackChannel:     "sd-cicd-alerts",
 		Email:            "sd-cicd@redhat.com",
 		FailureThreshold: 1,
