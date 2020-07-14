@@ -3,6 +3,7 @@ package metrics
 import (
 	"fmt"
 	"reflect"
+	"sort"
 	"strconv"
 	"time"
 
@@ -59,6 +60,8 @@ func processMetadataResults(results model.Value) ([]Metadata, error) {
 		return nil, fmt.Errorf("unrecognized result type: %v", reflect.TypeOf(results))
 	}
 
+	sort.Sort(Metadatas(metadatas))
+
 	return metadatas, nil
 }
 
@@ -85,5 +88,6 @@ func sampleToMetadata(sample *model.SampleStream) (Metadata, error) {
 		JobName:        extractMetricFromSample(sample, "job"),
 		JobID:          jobID,
 		Value:          averageValues(sample.Values),
+		Timestamp:      pickFirstTimestamp(sample.Values),
 	}, nil
 }

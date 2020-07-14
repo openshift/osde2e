@@ -3,6 +3,7 @@ package metrics
 import (
 	"fmt"
 	"reflect"
+	"sort"
 	"time"
 
 	"github.com/prometheus/common/model"
@@ -57,6 +58,8 @@ func processAddonMetadataResults(results model.Value) ([]AddonMetadata, error) {
 	} else {
 		return nil, fmt.Errorf("unrecognized result type: %v", reflect.TypeOf(results))
 	}
+
+	sort.Sort(AddonMetadatas(addonMetadatas))
 
 	return addonMetadatas, nil
 }

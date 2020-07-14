@@ -65,6 +65,9 @@ type Event struct {
 
 	// JobID is the job ID number that corresponds to the job that generated this event.
 	JobID int64
+
+	// Timestamp is the time when this event was recorded.
+	Timestamp int64
 }
 
 // Equal will return true if two event objects are equal.
@@ -101,7 +104,26 @@ func (e Event) Equal(that Event) bool {
 		return false
 	}
 
+	if e.Timestamp != that.Timestamp {
+		return false
+	}
+
 	return true
+}
+
+// Events is a list of events.
+type Events []Event
+
+func (e Events) Len() int {
+	return len(e)
+}
+
+func (e Events) Swap(i, j int) {
+	e[i], e[j] = e[j], e[i]
+}
+
+func (e Events) Less(i, k int) bool {
+	return e[i].Timestamp < e[k].Timestamp
 }
 
 // Metadata objects are numerical values associated with metadata calculated by osde2e.
@@ -132,6 +154,9 @@ type Metadata struct {
 
 	// Value is the numerical value associated with this metadata.
 	Value float64
+
+	// Time is the time when this metadata was recorded.
+	Timestamp int64
 }
 
 // Equal will return true if two metadata objects are equal.
@@ -172,7 +197,26 @@ func (m Metadata) Equal(that Metadata) bool {
 		return false
 	}
 
+	if m.Timestamp != that.Timestamp {
+		return false
+	}
+
 	return true
+}
+
+// Metadatas is a list of metadata objects.
+type Metadatas []Metadata
+
+func (m Metadatas) Len() int {
+	return len(m)
+}
+
+func (m Metadatas) Swap(i, j int) {
+	m[i], m[j] = m[j], m[i]
+}
+
+func (m Metadatas) Less(i, k int) bool {
+	return m[i].Timestamp < m[k].Timestamp
 }
 
 // AddonMetadata is numerical data captured by osde2e runs, similar to Metadata. However, this is customizable and
@@ -195,6 +239,21 @@ func (a AddonMetadata) Equal(that AddonMetadata) bool {
 	}
 
 	return true
+}
+
+// AddonMetadatas is a list of addon metadata objects.
+type AddonMetadatas []AddonMetadata
+
+func (a AddonMetadatas) Len() int {
+	return len(a)
+}
+
+func (a AddonMetadatas) Swap(i, j int) {
+	a[i], a[j] = a[j], a[i]
+}
+
+func (a AddonMetadatas) Less(i, k int) bool {
+	return a[i].Timestamp < a[k].Timestamp
 }
 
 // JUnitResult represents an individual test that was run over the course of an osde2e run.
@@ -234,6 +293,9 @@ type JUnitResult struct {
 
 	// Duration is the length of time that this test took to run.
 	Duration time.Duration
+
+	// Timestamp is the timestamp when this result was recorded.
+	Timestamp int64
 }
 
 // Equal will return true if two JUnitResult objects are equal.
@@ -286,7 +348,26 @@ func (j JUnitResult) Equal(that JUnitResult) bool {
 		return false
 	}
 
+	if j.Timestamp != that.Timestamp {
+		return false
+	}
+
 	return true
+}
+
+// JUnitResults is a list of JUnitResults.
+type JUnitResults []JUnitResult
+
+func (jr JUnitResults) Len() int {
+	return len(jr)
+}
+
+func (jr JUnitResults) Swap(i, j int) {
+	jr[i], jr[j] = jr[j], jr[i]
+}
+
+func (jr JUnitResults) Less(i, k int) bool {
+	return jr[i].Timestamp < jr[k].Timestamp
 }
 
 // nil safe semver equivalency
