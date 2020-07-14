@@ -24,11 +24,12 @@ var Cmd = &cobra.Command{
 }
 
 var args struct {
-	configString    string
-	customConfig    string
-	secretLocations string
-	environment     string
-	kubeConfig      string
+	configString     string
+	customConfig     string
+	secretLocations  string
+	environment      string
+	kubeConfig       string
+	numberOfClusters int
 }
 
 func init() {
@@ -66,6 +67,13 @@ func init() {
 		"",
 		"Path to local Kube config for running tests against.",
 	)
+	pfs.IntVarP(
+		&args.numberOfClusters,
+		"number-of-clusters",
+		"n",
+		1,
+		"Specify the number of clusters to create.",
+	)
 
 	viper.BindPFlag(config.Cluster.ID, Cmd.PersistentFlags().Lookup("cluster-id"))
 	viper.BindPFlag(ocmprovider.Env, Cmd.PersistentFlags().Lookup("environment"))
@@ -87,12 +95,16 @@ func run(cmd *cobra.Command, argv []string) error {
 		viper.Set(config.Suffix, util.RandomStr(3))
 	}
 
-	err := cluster.SetupCluster()
+	for i := 0; i < args.numberOfClusters; i++ {
+		// Reset the global cluster ID so that we can provision multiple times with impunity.
+		viper.Set(config.Cluster.ID, "")
+		clusterID, err := cluster.ProvisionCluster()
 
-	if err != nil {
-		return fmt.Errorf("Creation of a cluster failed - %s", err.Error())
+		if err != nil {
+			log.Printf("Failed to create cluster: %v\n", err)
+		}
+
+		log.Printf("-- Created %s", clusterID)
 	}
-
-	log.Printf("Cluster created....")
 	return nil
 }

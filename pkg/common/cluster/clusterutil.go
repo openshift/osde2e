@@ -215,28 +215,28 @@ func getRestConfig(provider spi.Provider, clusterID string) (*rest.Config, error
 	return restConfig, nil
 }
 
-// SetupCluster brings up a cluster, waits for it to be ready, then returns it's name.
-func SetupCluster() (err error) {
+// ProvisionCluster will provision a cluster and immediately return.
+func ProvisionCluster() (string, error) {
 	// if TEST_KUBECONFIG has been set, skip configuring OCM
 	if len(viper.GetString(config.Kubeconfig.Contents)) > 0 || len(viper.GetString(config.Kubeconfig.Path)) > 0 {
-		return UseKubeconfig()
+		return "", useKubeconfig()
 	}
 
 	provider, err := providers.ClusterProvider()
 
 	if err != nil {
-		return fmt.Errorf("error getting cluster provisioning client: %v", err)
+		return "", fmt.Errorf("error getting cluster provisioning client: %v", err)
 	}
 
 	// create a new cluster if no ID is specified
 	clusterID := viper.GetString(config.Cluster.ID)
 	if clusterID == "" {
 		if viper.GetString(config.Cluster.Name) == "" {
-			viper.Set(config.Cluster.Name, ClusterName())
+			viper.Set(config.Cluster.Name, clusterName())
 		}
 
 		if clusterID, err = provider.LaunchCluster(); err != nil {
-			return fmt.Errorf("could not launch cluster: %v", err)
+			return clusterID, fmt.Errorf("could not launch cluster: %v", err)
 		}
 		viper.Set(config.Cluster.ID, clusterID)
 	} else {
@@ -244,7 +244,7 @@ func SetupCluster() (err error) {
 
 		cluster, err := provider.GetCluster(clusterID)
 		if err != nil {
-			return fmt.Errorf("could not retrieve cluster information from OCM: %v", err)
+			return clusterID, fmt.Errorf("could not retrieve cluster information from OCM: %v", err)
 		}
 
 		viper.Set(config.Cluster.Name, cluster.Name())
@@ -264,6 +264,24 @@ func SetupCluster() (err error) {
 
 	metadata.Instance.SetClusterName(viper.GetString(config.Cluster.Name))
 	metadata.Instance.SetClusterID(clusterID)
+	metadata.Instance.SetRegion(viper.GetString(config.CloudProvider.Region))
+
+	return clusterID, nil
+}
+
+// SetupCluster brings up a cluster, waits for it to be ready, then returns information about the provisioned cluster.
+func SetupCluster() error {
+	clusterID, err := ProvisionCluster()
+
+	if err != nil {
+		return fmt.Errorf("error while provisioning cluster: %v", err)
+	}
+
+	provider, err := providers.ClusterProvider()
+
+	if err != nil {
+		return fmt.Errorf("error getting cluster provisioning client: %v", err)
+	}
 
 	if err = WaitForClusterReady(provider, clusterID); err != nil {
 		return fmt.Errorf("failed waiting for cluster ready: %v", err)
@@ -279,7 +297,7 @@ func SetupCluster() (err error) {
 }
 
 // UseKubeconfig reads the path provided for a TEST_KUBECONFIG and uses it for testing.
-func UseKubeconfig() (err error) {
+func useKubeconfig() (err error) {
 	_, err = clientcmd.RESTConfigFromKubeConfig([]byte(viper.GetString(config.Kubeconfig.Contents)))
 	if err != nil {
 		log.Println("Not an existing Kubeconfig, attempting to read file instead...")
@@ -299,7 +317,7 @@ func UseKubeconfig() (err error) {
 }
 
 // ClusterName returns a cluster name with a format which must be short enough to support all versions
-func ClusterName() string {
+func clusterName() string {
 	vers := strings.TrimPrefix(viper.GetString(config.Cluster.Version), util.VersionPrefix)
 	safeVersion := strings.Replace(vers, ".", "-", -1)
 	return "ci-cluster-" + safeVersion + "-" + viper.GetString(config.Suffix)

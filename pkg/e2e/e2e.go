@@ -14,6 +14,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/hpcloud/tail"
 	vegeta "github.com/tsenart/vegeta/lib"
@@ -22,9 +23,11 @@ import (
 	ginkgoConfig "github.com/onsi/ginkgo/config"
 	"github.com/onsi/ginkgo/reporters"
 	"github.com/onsi/gomega"
+	. "github.com/onsi/gomega"
 	"github.com/spf13/viper"
 
 	"github.com/openshift/osde2e/pkg/common/aws"
+	"github.com/openshift/osde2e/pkg/common/cluster"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/events"
 	"github.com/openshift/osde2e/pkg/common/helper"
@@ -49,6 +52,101 @@ const (
 
 // provisioner is used to deploy and manage clusters.
 var provider spi.Provider
+
+// --- BEGIN Ginkgo setup
+// Check if the test should run
+var _ = ginkgo.BeforeEach(func() {
+	testText := ginkgo.CurrentGinkgoTestDescription().TestText
+	testContext := strings.TrimSpace(strings.TrimSuffix(ginkgo.CurrentGinkgoTestDescription().FullTestText, testText))
+
+	shouldRun := false
+	testsToRun := viper.GetStringSlice(config.Tests.TestsToRun)
+	for _, testToRun := range testsToRun {
+		if strings.HasPrefix(testContext, testToRun) {
+			shouldRun = true
+			break
+		}
+	}
+
+	if !shouldRun {
+		ginkgo.Skip(fmt.Sprintf("test %s will not be run as its context (%s) is not specified as part of the tests to run", ginkgo.CurrentGinkgoTestDescription().FullTestText, testContext))
+	}
+})
+
+// Setup cluster before testing begins.
+var _ = ginkgo.SynchronizedBeforeSuite(func() []byte {
+	defer ginkgo.GinkgoRecover()
+	err := cluster.SetupCluster()
+	events.HandleErrorWithEvents(err, events.InstallSuccessful, events.InstallFailed).ShouldNot(HaveOccurred(), "failed to setup cluster for testing")
+	if err != nil {
+		return []byte{}
+	}
+
+	if len(viper.GetString(config.Addons.IDs)) > 0 {
+		err = installAddons()
+		events.HandleErrorWithEvents(err, events.InstallAddonsSuccessful, events.InstallAddonsFailed).ShouldNot(HaveOccurred(), "failed while installing addons")
+		if err != nil {
+			return []byte{}
+		}
+	}
+
+	if len(viper.GetString(config.Kubeconfig.Contents)) == 0 {
+		// Give the cluster some breathing room.
+		log.Println("OSD cluster installed. Sleeping for 600s.")
+		time.Sleep(600 * time.Second)
+	} else {
+		log.Printf("No kubeconfig contents found, but there should be some by now.")
+	}
+
+	return []byte{}
+}, func(data []byte) {
+	// only needs to run once
+})
+
+// Collect logs after each test
+var _ = ginkgo.JustAfterEach(getLogs)
+
+func getLogs() {
+	defer ginkgo.GinkgoRecover()
+
+	clusterID := viper.GetString(config.Cluster.ID)
+	if provider == nil {
+		log.Println("OSD was not configured. Skipping log collection...")
+	} else if clusterID == "" {
+		log.Println("CLUSTER_ID is not set, likely due to a setup failure. Skipping log collection...")
+	} else {
+		logs, err := provider.Logs(clusterID)
+		Expect(err).NotTo(HaveOccurred(), "failed to collect cluster logs")
+		writeLogs(logs)
+	}
+}
+
+// installAddons installs addons onto the cluster
+func installAddons() (err error) {
+	clusterID := viper.GetString(config.Cluster.ID)
+	num, err := provider.InstallAddons(clusterID, strings.Split(viper.GetString(config.Addons.IDs), ","))
+	if err != nil {
+		return fmt.Errorf("could not install addons: %s", err.Error())
+	}
+	if num > 0 {
+		if err = cluster.WaitForClusterReady(provider, clusterID); err != nil {
+			return fmt.Errorf("failed waiting for cluster ready: %v", err)
+		}
+	}
+
+	return nil
+}
+
+func writeLogs(m map[string][]byte) {
+	for k, v := range m {
+		name := k + "-log.txt"
+		filePath := filepath.Join(viper.GetString(config.ReportDir), name)
+		err := ioutil.WriteFile(filePath, v, os.ModePerm)
+		Expect(err).NotTo(HaveOccurred(), "failed to write log '%s'", filePath)
+	}
+}
+
+// -- END Ginkgo setup
 
 // RunTests initializes Ginkgo and runs the osde2e test suite.
 func RunTests() bool {
