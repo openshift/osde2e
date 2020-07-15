@@ -32,10 +32,13 @@ var args struct {
 	clusterID       string
 	kubeConfig      bool
 	kubeConfigPath  string
+	hours           uint64
+	minutes         uint64
+	seconds         uint64
 }
 
 func init() {
-	pfs := Cmd.Flags()
+	pfs := Cmd.PersistentFlags()
 
 	pfs.StringVar(
 		&args.configString,
@@ -75,9 +78,32 @@ func init() {
 		false,
 		"A flag that triggers the fetching of a given cluster's kubeconfig.",
 	)
+	pfs.Uint64VarP(
+		&args.hours,
+		"hours",
+		"r",
+		0,
+		"Cluster expiration extension value in hours.",
+	)
 
-	viper.BindPFlag(config.Cluster.ID, Cmd.Flags().Lookup("cluster-id"))
-	viper.BindPFlag(config.Kubeconfig.Path, Cmd.Flags().Lookup("kube-config-path"))
+	pfs.Uint64VarP(
+		&args.minutes,
+		"minutes",
+		"m",
+		0,
+		"Cluster expiration extension value in minutes.",
+	)
+
+	pfs.Uint64VarP(
+		&args.seconds,
+		"seconds",
+		"s",
+		0,
+		"Cluster expiration extension value in seconds.",
+	)
+
+	viper.BindPFlag(config.Cluster.ID, Cmd.PersistentFlags().Lookup("cluster-id"))
+	viper.BindPFlag(config.Kubeconfig.Path, Cmd.PersistentFlags().Lookup("kube-config-path"))
 }
 
 func run(cmd *cobra.Command, argv []string) error {
@@ -86,8 +112,7 @@ func run(cmd *cobra.Command, argv []string) error {
 		return fmt.Errorf("error loading initial state: %v", err)
 	}
 
-	// viper.BindPFlag(config.Kubeconfig.Path, cmd.Flags().Lookup("kube-config-path"))
-	kubeconfigStatus, err := cmd.Flags().GetBool("kube-config")
+	kubeconfigStatus, err := cmd.PersistentFlags().GetBool("kube-config")
 
 	if err != nil {
 		return fmt.Errorf("error retrieving kube-config information: %v", err)
@@ -118,29 +143,40 @@ func run(cmd *cobra.Command, argv []string) error {
 		filename := cluster.Name() + "-kubeconfig.txt"
 
 		var filePath string
-		log.Printf("KubeConfig Path - %s", viper.GetString(config.Kubeconfig.Path))
 		if viper.GetString(config.Kubeconfig.Path) != "" {
-			log.Println("we're here")
-			_, err := os.Stat(config.Kubeconfig.Path)
+			_, err := os.Stat(viper.GetString(config.Kubeconfig.Path))
 			if err != nil {
-				return fmt.Errorf("Path directory is invalid - %v", err)
+				fmt.Println("Path directory is invalid - ", err.Error(), "Will create a new directory.")
+				err = os.Mkdir(viper.GetString(config.Kubeconfig.Path), os.ModePerm)
+				if err != nil {
+					return fmt.Errorf("Unable to create a new directory - %s", err.Error())
+				}
 			}
 			filePath = filepath.Join(viper.GetString(config.Kubeconfig.Path), filename)
 		} else {
-			log.Println("we're here.....")
 			dir, err := os.Getwd()
 			if err != nil {
 				return fmt.Errorf("Unable to get CWD: %s", err.Error())
 			}
 
-			filePath = filepath.Join(viper.GetString(dir), viper.GetString(config.Kubeconfig.Path), filename)
+			filePath = filepath.Join(viper.GetString(dir), filename)
 		}
 		err = ioutil.WriteFile(filePath, content, os.ModePerm)
 
 		if err != nil {
 			return fmt.Errorf("could not write KubeConfig into a file: %v", err)
 		}
-
+		fmt.Println("Successfully downloaded the kubeconfig into -", filePath, ". Run the command \"export TEST_KUBECONFIG=", filePath, "\"")
+		if args.hours == 0 && args.minutes == 0 && args.seconds == 0 {
+			if err = provider.ExtendExpiry(clusterID, 0, 30, 0); err != nil {
+				return fmt.Errorf("error extending cluster expiry time: %s", err.Error())
+			}
+		} else {
+			if err = provider.ExtendExpiry(clusterID, args.hours, args.minutes, args.seconds); err != nil {
+				return fmt.Errorf("error extending cluster expiry time: %s", err.Error())
+			}
+		}
+		fmt.Println("Extended cluster expiry time by :", args.hours, "h ", args.minutes, "m ", args.seconds, "s")
 	}
 
 	return nil
