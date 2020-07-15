@@ -2,7 +2,10 @@ package get
 
 import (
 	"fmt"
+	"io/ioutil"
 	"log"
+	"os"
+	"path/filepath"
 
 	"github.com/openshift/osde2e/cmd/osde2e/common"
 	"github.com/openshift/osde2e/pkg/common/config"
@@ -28,10 +31,11 @@ var args struct {
 	secretLocations string
 	clusterID       string
 	kubeConfig      bool
+	kubeConfigPath  string
 }
 
 func init() {
-	pfs := Cmd.PersistentFlags()
+	pfs := Cmd.Flags()
 
 	pfs.StringVar(
 		&args.configString,
@@ -51,6 +55,12 @@ func init() {
 		"",
 		"A comma separated list of possible secret directory locations for loading secret configs.",
 	)
+	pfs.StringVar(
+		&args.kubeConfigPath,
+		"kube-config-path",
+		"",
+		"Path to place the downloaded kubeconfig info about a cluster",
+	)
 	pfs.StringVarP(
 		&args.clusterID,
 		"cluster-id",
@@ -65,10 +75,9 @@ func init() {
 		false,
 		"A flag that triggers the fetching of a given cluster's kubeconfig.",
 	)
-	viper.BindPFlag(config.Cluster.ID, Cmd.PersistentFlags().Lookup("cluster-id"))
-	Cmd.RegisterFlagCompletionFunc("output-format", func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
-		return []string{"json", "prom"}, cobra.ShellCompDirectiveDefault
-	})
+
+	viper.BindPFlag(config.Cluster.ID, Cmd.Flags().Lookup("cluster-id"))
+	viper.BindPFlag(config.Kubeconfig.Path, Cmd.Flags().Lookup("kube-config-path"))
 }
 
 func run(cmd *cobra.Command, argv []string) error {
@@ -77,9 +86,8 @@ func run(cmd *cobra.Command, argv []string) error {
 		return fmt.Errorf("error loading initial state: %v", err)
 	}
 
-	viper.BindPFlag(config.Cluster.ID, cmd.PersistentFlags().Lookup("cluster-id"))
-
-	kubeconfigStatus, err := cmd.PersistentFlags().GetBool("kube-config")
+	// viper.BindPFlag(config.Kubeconfig.Path, cmd.Flags().Lookup("kube-config-path"))
+	kubeconfigStatus, err := cmd.Flags().GetBool("kube-config")
 
 	if err != nil {
 		return fmt.Errorf("error retrieving kube-config information: %v", err)
@@ -99,28 +107,56 @@ func run(cmd *cobra.Command, argv []string) error {
 	if properties := cluster.Properties(); properties["MadeByOSDe2e"] != "true" {
 		return fmt.Errorf("Cluster was not created by osde2e")
 	}
-	log.Printf("Cluster name - %s and Cluster ID - %s", cluster.ID(), cluster.Name())
+	log.Printf("Cluster name - %s and Cluster ID - %s", cluster.Name(), cluster.ID())
 
 	if kubeconfigStatus {
-		err := setKubeconfig(clusterID)
+		content, err := setKubeconfig(clusterID)
 		if err != nil {
 			return fmt.Errorf("Error getting the cluster's kubeconfig - %s", err)
 		}
+
+		filename := cluster.Name() + "-kubeconfig.txt"
+
+		var filePath string
+		log.Printf("KubeConfig Path - %s", viper.GetString(config.Kubeconfig.Path))
+		if viper.GetString(config.Kubeconfig.Path) != "" {
+			log.Println("we're here")
+			_, err := os.Stat(config.Kubeconfig.Path)
+			if err != nil {
+				return fmt.Errorf("Path directory is invalid - %v", err)
+			}
+			filePath = filepath.Join(viper.GetString(config.Kubeconfig.Path), filename)
+		} else {
+			log.Println("we're here.....")
+			dir, err := os.Getwd()
+			if err != nil {
+				return fmt.Errorf("Unable to get CWD: %s", err.Error())
+			}
+
+			filePath = filepath.Join(viper.GetString(dir), viper.GetString(config.Kubeconfig.Path), filename)
+		}
+		err = ioutil.WriteFile(filePath, content, os.ModePerm)
+
+		if err != nil {
+			return fmt.Errorf("could not write KubeConfig into a file: %v", err)
+		}
+
 	}
 
 	return nil
 }
 
-func setKubeconfig(clusterID string) (err error) {
-	if provider, err = providers.ClusterProvider(); err != nil {
-		return fmt.Errorf("could not setup cluster provider: %v", err)
+func setKubeconfig(clusterID string) ([]byte, error) {
+	provider, err := providers.ClusterProvider()
+	var kubeconfigBytes []byte
+	if err != nil {
+		return kubeconfigBytes, fmt.Errorf("could not setup cluster provider: %v", err)
 	}
 
-	var kubeconfigBytes []byte
 	if kubeconfigBytes, err = provider.ClusterKubeconfig(clusterID); err != nil {
-		return fmt.Errorf("could not get kubeconfig for cluster: %v", err)
+		return kubeconfigBytes, fmt.Errorf("could not get kubeconfig for cluster: %v", err)
 	}
 	viper.Set(config.Kubeconfig.Contents, string(kubeconfigBytes))
 
-	return nil
+	return kubeconfigBytes, nil
 }
