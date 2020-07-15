@@ -72,7 +72,8 @@ var _ = ginkgo.SynchronizedBeforeSuite(func() []byte {
 })
 
 // Collect logs after each test
-var _ = ginkgo.JustAfterEach(getLogs)
+// TODO: SDA-2594 Hotfix
+//var _ = ginkgo.JustAfterEach(getLogs)
 
 func getLogs() {
 	defer ginkgo.GinkgoRecover()

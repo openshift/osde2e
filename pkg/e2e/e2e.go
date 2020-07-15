@@ -213,7 +213,8 @@ func runGinkgoTests() error {
 			return fmt.Errorf("error while writing the custom metadata: %v", err)
 		}
 
-		checkBeforeMetricsGeneration()
+		// TODO: SDA-2594 Hotfix
+		//checkBeforeMetricsGeneration()
 
 		newMetrics := NewMetrics()
 		if newMetrics == nil {
