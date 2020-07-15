@@ -38,7 +38,7 @@ func init() {
 		PrimaryContact:   "Matt Bargenquest",
 		SlackChannel:     "sd-cicd-alerts",
 		Email:            "sd-cicd@redhat.com",
-		FailureThreshold: 1,
+		FailureThreshold: 4,
 	}
 	ma.AddAlert(testAlert)
 }
