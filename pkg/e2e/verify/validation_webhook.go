@@ -18,7 +18,7 @@ func init() {
 	testAlert = alert.MetricAlert{
 		Name:             "[Suite: e2e] Validation Webhook",
 		TeamOwner:        "SD-SREP",
-		PrimaryContact:   "Matt Bargenquest",
+		PrimaryContact:   "Matt Bargenquast",
 		SlackChannel:     "sd-cicd-alerts",
 		Email:            "sd-cicd@redhat.com",
 		FailureThreshold: 4,

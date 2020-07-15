@@ -20,7 +20,7 @@ func init() {
 	testAlert = alert.MetricAlert{
 		Name:             "[Suite: informing] [OSD] dedicated-admin permissions",
 		TeamOwner:        "SD-SREP",
-		PrimaryContact:   "Matt Bargenquest",
+		PrimaryContact:   "Matt Bargenquast",
 		SlackChannel:     "sd-cicd-alerts",
 		Email:            "sd-cicd@redhat.com",
 		FailureThreshold: 4,
