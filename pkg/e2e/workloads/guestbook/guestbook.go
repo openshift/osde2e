@@ -12,6 +12,7 @@ import (
 	"github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
+	"github.com/openshift/osde2e/pkg/common/alert"
 	"github.com/openshift/osde2e/pkg/common/cluster/healthchecks"
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -23,7 +24,22 @@ var testDir = "/assets/workloads/e2e/guestbook"
 // Use the base folder name for the workload name. Make it easy!
 var workloadName = filepath.Base(testDir)
 
-var _ = ginkgo.Describe("[Suite: e2e] Workload ("+workloadName+")", func() {
+var testAlert alert.MetricAlert
+
+func init() {
+	ma := alert.GetMetricAlerts()
+	testAlert = alert.MetricAlert{
+		Name:             "[Suite: e2e] Workload (" + workloadName + ")",
+		TeamOwner:        "SD-CICD",
+		PrimaryContact:   "Jeffrey Sica",
+		SlackChannel:     "sd-cicd-alerts",
+		Email:            "sd-cicd@redhat.com",
+		FailureThreshold: 4,
+	}
+	ma.AddAlert(testAlert)
+}
+
+var _ = ginkgo.Describe(testAlert.Name, func() {
 	defer ginkgo.GinkgoRecover()
 	// setup helper
 	h := helper.New()

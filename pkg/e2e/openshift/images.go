@@ -5,10 +5,24 @@ import (
 	"github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
+	"github.com/openshift/osde2e/pkg/common/alert"
 	"github.com/openshift/osde2e/pkg/common/helper"
 )
 
-var _ = ginkgo.Describe("[Suite: openshift][image-registry]", func() {
+func init() {
+	ma := alert.GetMetricAlerts()
+	testAlert = alert.MetricAlert{
+		Name:             "[Suite: openshift][image-",
+		TeamOwner:        "SD-CICD",
+		PrimaryContact:   "Jeffrey Sica",
+		SlackChannel:     "sd-cicd-alerts",
+		Email:            "sd-cicd@redhat.com",
+		FailureThreshold: 4,
+	}
+	ma.AddAlert(testAlert)
+}
+
+var _ = ginkgo.Describe(testAlert.Name+"registry", func() {
 	defer ginkgo.GinkgoRecover()
 	h := helper.New()
 
@@ -38,7 +52,7 @@ var _ = ginkgo.Describe("[Suite: openshift][image-registry]", func() {
 	}, float64(e2eTimeoutInSeconds+30))
 })
 
-var _ = ginkgo.Describe("[Suite: openshift][image-ecosystem]", func() {
+var _ = ginkgo.Describe(testAlert.Name+"ecosystem", func() {
 	defer ginkgo.GinkgoRecover()
 	h := helper.New()
 
