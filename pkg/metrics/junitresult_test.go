@@ -50,6 +50,7 @@ func TestSampleToJUnitResult(t *testing.T) {
 				JobID:          9999,
 				Phase:          Install,
 				Duration:       10 * time.Second,
+				Timestamp:      1,
 			},
 		},
 	}

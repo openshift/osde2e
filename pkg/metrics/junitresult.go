@@ -3,6 +3,7 @@ package metrics
 import (
 	"fmt"
 	"reflect"
+	"sort"
 	"strconv"
 	"time"
 
@@ -59,6 +60,8 @@ func processJUnitResults(results model.Value) ([]JUnitResult, error) {
 		return nil, fmt.Errorf("unrecognized result type: %v", reflect.TypeOf(results))
 	}
 
+	sort.Sort(JUnitResults(jUnitResults))
+
 	return jUnitResults, nil
 }
 
@@ -88,5 +91,6 @@ func sampleToJUnitResult(sample *model.SampleStream) (JUnitResult, error) {
 		JobID:          jobID,
 		Phase:          stringToPhase(extractMetricFromSample(sample, "phase")),
 		Duration:       time.Duration(averageValues(sample.Values)) * time.Second,
+		Timestamp:      pickFirstTimestamp(sample.Values),
 	}, nil
 }
