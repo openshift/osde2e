@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
-	"os"
-	"path/filepath"
 	"strings"
 	"time"
 
@@ -73,7 +71,8 @@ var _ = ginkgo.SynchronizedBeforeSuite(func() []byte {
 
 // Collect logs after each test
 // TODO: SDA-2594 Hotfix
-//var _ = ginkgo.JustAfterEach(getLogs)
+/*
+var _ = ginkgo.JustAfterEach(getLogs)
 
 func getLogs() {
 	defer ginkgo.GinkgoRecover()
@@ -89,6 +88,15 @@ func getLogs() {
 		writeLogs(logs)
 	}
 }
+func writeLogs(m map[string][]byte) {
+	for k, v := range m {
+		name := k + "-log.txt"
+		filePath := filepath.Join(viper.GetString(config.ReportDir), name)
+		err := ioutil.WriteFile(filePath, v, os.ModePerm)
+		Expect(err).NotTo(HaveOccurred(), "failed to write log '%s'", filePath)
+	}
+}
+*/
 
 // setupCluster brings up a cluster, waits for it to be ready, then returns it's name.
 func setupCluster() (err error) {
@@ -196,13 +204,4 @@ func clusterName() string {
 	vers := strings.TrimPrefix(viper.GetString(config.Cluster.Version), util.VersionPrefix)
 	safeVersion := strings.Replace(vers, ".", "-", -1)
 	return "ci-cluster-" + safeVersion + "-" + viper.GetString(config.Suffix)
-}
-
-func writeLogs(m map[string][]byte) {
-	for k, v := range m {
-		name := k + "-log.txt"
-		filePath := filepath.Join(viper.GetString(config.ReportDir), name)
-		err := ioutil.WriteFile(filePath, v, os.ModePerm)
-		Expect(err).NotTo(HaveOccurred(), "failed to write log '%s'", filePath)
-	}
 }
