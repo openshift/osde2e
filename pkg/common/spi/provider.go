@@ -13,7 +13,7 @@ type Provider interface {
 	// report back an identifier without waiting. Subsequent calls within OSDe2e will
 	// use the status reported by GetCluster to determine the provision state of
 	// the cluster and wait for it to start before running tests.
-	LaunchCluster() (string, error)
+	LaunchCluster(clusterName string) (string, error)
 
 	// DeleteCluster deletes a cluster.
 	//

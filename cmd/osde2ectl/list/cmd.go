@@ -2,11 +2,11 @@ package list
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/openshift/osde2e/cmd/osde2e/common"
 	"github.com/openshift/osde2e/pkg/common/metadata"
 	"github.com/openshift/osde2e/pkg/common/providers"
+	"github.com/openshift/osde2e/pkg/common/providers/ocmprovider"
 	"github.com/openshift/osde2e/pkg/common/spi"
 	"github.com/spf13/cobra"
 )
@@ -70,9 +70,9 @@ func run(cmd *cobra.Command, argv []string) error {
 		return err
 	}
 
-	log.Println("The clusters created under osde2e are as follows....")
+	fmt.Printf("%-25s%-35s%-15s%-20s\n", "NAME", "ID", "STATUS", "OWNER")
 	for _, cluster := range clusters {
-		log.Printf("Cluster name - %s and Cluster ID - %s", cluster.Name(), cluster.ID())
+		fmt.Printf("%-25s%-35s%-15s%-20s\n", cluster.Name(), cluster.ID(), cluster.State(), cluster.Properties()[ocmprovider.OwnedBy])
 	}
 
 	return nil

@@ -22,6 +22,12 @@ const (
 	// NoHiveLogs when no logs from Hive were collected after a cluster provisioning event
 	NoHiveLogs EventType = "NoHiveLogs"
 
+	// InstallKubeconfigRetrievalSuccess when the Kubeconfig was retrieved successfully.
+	InstallKubeconfigRetrievalSuccess EventType = "InstallKubeconfigRetrievalSuccess"
+
+	// InstallKubeconfigRetrievalFailure when the Kubeconfig was not retrieved successfully.
+	InstallKubeconfigRetrievalFailure EventType = "InstallKubeconfigRetrievalFailure"
+
 	// ------ Addon installation events
 
 	// InstallAddonsSuccessful when the addons installed successfully

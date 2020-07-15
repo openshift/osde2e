@@ -35,7 +35,6 @@ func Configs(configs []string, customConfig string, secretLocations []string) er
 	// This used to be complicated, but now we just lean on Viper for everything.
 	// 1. Load default configs. These are configs that will always be enabled for every run.
 	for _, config := range defaultConfigs {
-		log.Printf("Loading default config %s", config)
 		if err := loadYAMLFromConfigs(config); err != nil {
 			return fmt.Errorf("error loading config from YAML: %v", err)
 		}

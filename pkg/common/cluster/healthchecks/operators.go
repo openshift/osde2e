@@ -8,14 +8,17 @@ import (
 
 	configclient "github.com/openshift/client-go/config/clientset/versioned/typed/config/v1"
 	"github.com/openshift/osde2e/pkg/common/config"
+	"github.com/openshift/osde2e/pkg/common/logging"
 	"github.com/spf13/viper"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // CheckOperatorReadiness attempts to look at the state of all operator and returns true if things are healthy.
-func CheckOperatorReadiness(configClient configclient.ConfigV1Interface) (bool, error) {
+func CheckOperatorReadiness(configClient configclient.ConfigV1Interface, logger *log.Logger) (bool, error) {
+	logger = logging.CreateNewStdLoggerOrUseExistingLogger(logger)
+
 	success := true
-	log.Print("Checking that all Operators are running or completed...")
+	logger.Print("Checking that all Operators are running or completed...")
 
 	listOpts := metav1.ListOptions{}
 	list, err := configClient.ClusterOperators().List(context.TODO(), listOpts)
@@ -41,7 +44,7 @@ func CheckOperatorReadiness(configClient configclient.ConfigV1Interface) (bool, 
 		if _, ok := operatorSkipList[co.GetName()]; !ok {
 			for _, cos := range co.Status.Conditions {
 				if (cos.Type != "Available" && cos.Status != "False") && cos.Type != "Upgradeable" {
-					log.Printf("Operator %v type %v is %v: %v", co.ObjectMeta.Name, cos.Type, cos.Status, cos.Message)
+					logger.Printf("Operator %v type %v is %v: %v", co.ObjectMeta.Name, cos.Type, cos.Status, cos.Message)
 					success = false
 				}
 			}

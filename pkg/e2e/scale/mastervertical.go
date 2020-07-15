@@ -10,7 +10,6 @@ import (
 	"github.com/openshift/osde2e/pkg/common/cluster"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/helper"
-	"github.com/openshift/osde2e/pkg/common/providers"
 )
 
 const (
@@ -40,10 +39,7 @@ var _ = ginkgo.Describe(testAlert.Name, func() {
 	ginkgo.It("should be tested with MasterVertical", func() {
 		var err error
 		// Before we do anything, scale the cluster.
-		provider, err := providers.ClusterProvider()
-		Expect(err).NotTo(HaveOccurred())
-
-		err = cluster.ScaleCluster(provider, viper.GetString(config.Cluster.ID), numNodesToScaleTo)
+		err = cluster.ScaleCluster(viper.GetString(config.Cluster.ID), numNodesToScaleTo)
 		Expect(err).NotTo(HaveOccurred())
 
 		h.SetServiceAccount("system:serviceaccount:%s:cluster-admin")

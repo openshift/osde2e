@@ -82,7 +82,7 @@ var _ = ginkgo.Describe(testAlert.Name, func() {
 			// Wait for all pods to come up healthy
 			err = wait.PollImmediate(15*time.Second, 5*time.Minute, func() (bool, error) {
 				// This is pretty basic. Are all the pods up? Cool.
-				if check, err := healthchecks.CheckPodHealth(h.Kube().CoreV1()); !check || err != nil {
+				if check, err := healthchecks.CheckPodHealth(h.Kube().CoreV1(), nil); !check || err != nil {
 					return false, nil
 				}
 				return true, nil

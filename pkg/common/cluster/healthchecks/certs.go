@@ -6,6 +6,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/openshift/osde2e/pkg/common/logging"
 	"github.com/openshift/osde2e/pkg/common/metadata"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	v1 "k8s.io/client-go/kubernetes/typed/core/v1"
@@ -23,7 +24,9 @@ var certCheck = certCheckData{
 }
 
 // CheckCerts will check for the presence of a cert issued by certman
-func CheckCerts(secretClient v1.CoreV1Interface) (bool, error) {
+func CheckCerts(secretClient v1.CoreV1Interface, logger *log.Logger) (bool, error) {
+	logger = logging.CreateNewStdLoggerOrUseExistingLogger(logger)
+
 	if !certCheck.checkStarted {
 		certCheck.checkStarted = true
 		certCheck.startTime = time.Now()
@@ -37,7 +40,7 @@ func CheckCerts(secretClient v1.CoreV1Interface) (bool, error) {
 		return false, fmt.Errorf("error trying to find issued certificate(s): %v", err)
 	}
 	if len(secrets.Items) < 1 {
-		log.Printf("Certificate(s) not yet issued.")
+		logger.Printf("Certificate(s) not yet issued.")
 		return false, nil
 	}
 
@@ -46,7 +49,7 @@ func CheckCerts(secretClient v1.CoreV1Interface) (bool, error) {
 		metadata.Instance.SetTimeToCertificateIssued(time.Since(certCheck.startTime).Seconds())
 	}
 
-	log.Printf("Certificate(s) has been found.")
+	logger.Printf("Certificate(s) has been found.")
 
 	return true, nil
 }

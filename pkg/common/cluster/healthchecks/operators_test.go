@@ -94,7 +94,7 @@ func TestCheckOperatorReadiness(t *testing.T) {
 		viper.Reset()
 		cfgClient := fakeConfig.NewSimpleClientset(test.objs...)
 		viper.Set(config.Tests.OperatorSkip, test.skip)
-		state, err := CheckOperatorReadiness(cfgClient.ConfigV1())
+		state, err := CheckOperatorReadiness(cfgClient.ConfigV1(), nil)
 
 		if err != nil && !test.expectedError {
 			t.Errorf("Unexpected error: %s", err)

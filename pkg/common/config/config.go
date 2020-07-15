@@ -199,9 +199,6 @@ var Cluster = struct {
 
 	// PreviousVersionFromDefaultFound is true if a previous version from default was found.
 	PreviousVersionFromDefaultFound string
-
-	// State is the cluster state observed by OCM.
-	State string
 }{
 	MultiAZ:                             "cluster.multiAZ",
 	DestroyAfterTest:                    "cluster.destroyAfterTest",
@@ -219,7 +216,6 @@ var Cluster = struct {
 	Version:                             "cluster.version",
 	EnoughVersionsForOldestOrMiddleTest: "cluster.enoughVersionForOldestOrMiddleTest",
 	PreviousVersionFromDefaultFound:     "cluster.previousVersionFromDefaultFound",
-	State:                               "cluster.state",
 }
 
 // CloudProvider config keys.
