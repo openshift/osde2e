@@ -6,17 +6,32 @@ import (
 	"github.com/spf13/viper"
 	kubev1 "k8s.io/api/core/v1"
 
+	"github.com/openshift/osde2e/pkg/common/alert"
 	"github.com/openshift/osde2e/pkg/common/cluster"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/helper"
-	"github.com/openshift/osde2e/pkg/common/providers"
 )
 
 const (
 	numNodesToScaleTo = 12
 )
 
-var _ = ginkgo.Describe("[Suite: scale-mastervertical] Scaling", func() {
+var testAlert alert.MetricAlert
+
+func init() {
+	ma := alert.GetMetricAlerts()
+	testAlert = alert.MetricAlert{
+		Name:             "[Suite: scale-mastervertical] Scaling",
+		TeamOwner:        "SD-CICD",
+		PrimaryContact:   "Michael Wilson",
+		SlackChannel:     "sd-cicd-alerts",
+		Email:            "sd-cicd@redhat.com",
+		FailureThreshold: 4,
+	}
+	ma.AddAlert(testAlert)
+}
+
+var _ = ginkgo.Describe(testAlert.Name, func() {
 	defer ginkgo.GinkgoRecover()
 	h := helper.New()
 
@@ -24,10 +39,7 @@ var _ = ginkgo.Describe("[Suite: scale-mastervertical] Scaling", func() {
 	ginkgo.It("should be tested with MasterVertical", func() {
 		var err error
 		// Before we do anything, scale the cluster.
-		provider, err := providers.ClusterProvider()
-		Expect(err).NotTo(HaveOccurred())
-
-		err = cluster.ScaleCluster(provider, viper.GetString(config.Cluster.ID), numNodesToScaleTo)
+		err = cluster.ScaleCluster(viper.GetString(config.Cluster.ID), numNodesToScaleTo)
 		Expect(err).NotTo(HaveOccurred())
 
 		h.SetServiceAccount("system:serviceaccount:%s:cluster-admin")

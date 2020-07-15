@@ -2,11 +2,17 @@ package create
 
 import (
 	"fmt"
+	"io/ioutil"
 	"log"
+	"math"
+	"os"
+	"path/filepath"
+	"sync"
+	"time"
 
 	"github.com/openshift/osde2e/cmd/osde2e/common"
 	"github.com/openshift/osde2e/cmd/osde2e/helpers"
-	"github.com/openshift/osde2e/pkg/common/cluster"
+	clusterutil "github.com/openshift/osde2e/pkg/common/cluster"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/providers/ocmprovider"
 	"github.com/openshift/osde2e/pkg/common/util"
@@ -24,12 +30,17 @@ var Cmd = &cobra.Command{
 }
 
 var args struct {
-	configString    string
-	customConfig    string
-	secretLocations string
-	environment     string
-	kubeConfig      string
+	configString          string
+	customConfig          string
+	secretLocations       string
+	environment           string
+	kubeConfig            string
+	numberOfClusters      int
+	batchSize             int
+	secondsBetweenBatches int
 }
+
+var discardLogger *log.Logger
 
 func init() {
 	pfs := Cmd.PersistentFlags()
@@ -66,11 +77,33 @@ func init() {
 		"",
 		"Path to local Kube config for running tests against.",
 	)
+	pfs.IntVarP(
+		&args.numberOfClusters,
+		"number-of-clusters",
+		"n",
+		1,
+		"Specify the total number of clusters to create.",
+	)
+	pfs.IntVarP(
+		&args.batchSize,
+		"batch-size",
+		"b",
+		-1,
+		"The number of clusters that should be created at one time. A value of 0 or less will create all clusters at once.",
+	)
+	pfs.IntVarP(
+		&args.secondsBetweenBatches,
+		"seconds-between-batches",
+		"s",
+		120,
+		"The number of seconds between batches of cluster provisions.",
+	)
 
 	viper.BindPFlag(config.Cluster.ID, Cmd.PersistentFlags().Lookup("cluster-id"))
 	viper.BindPFlag(ocmprovider.Env, Cmd.PersistentFlags().Lookup("environment"))
 	viper.BindPFlag(config.Kubeconfig.Path, Cmd.PersistentFlags().Lookup("kube-config"))
 
+	discardLogger = log.New(ioutil.Discard, "", 0)
 }
 
 func run(cmd *cobra.Command, argv []string) error {
@@ -87,12 +120,137 @@ func run(cmd *cobra.Command, argv []string) error {
 		viper.Set(config.Suffix, util.RandomStr(3))
 	}
 
-	err := cluster.SetupCluster()
+	successfulClustersChannel := make(chan int)
 
-	if err != nil {
-		return fmt.Errorf("Creation of a cluster failed - %s", err.Error())
+	batchSize := args.batchSize
+	if batchSize <= 0 {
+		log.Printf("Provisioning %d clusters all at once.", args.numberOfClusters)
+		batchSize = args.numberOfClusters
+	} else {
+		log.Printf("Provisioning %d clusters in batches of %d, waiting %d seconds in between.", args.numberOfClusters, args.batchSize, args.secondsBetweenBatches)
 	}
 
-	log.Printf("Cluster created....")
+	clustersDir := filepath.Join(viper.GetString(config.ReportDir), "clusters")
+
+	if _, err := os.Stat(clustersDir); os.IsNotExist(err) {
+		err := os.Mkdir(clustersDir, os.FileMode(0755))
+
+		if err != nil {
+			return fmt.Errorf("unable to create clusters directory: %v", err)
+		}
+	}
+
+	createClusters(args.numberOfClusters, batchSize, args.secondsBetweenBatches, successfulClustersChannel)
+
+	numSuccessfulClusters := 0
+	for successfulCluster := range successfulClustersChannel {
+		numSuccessfulClusters = numSuccessfulClusters + successfulCluster
+	}
+
+	fmt.Printf("Successfully provisioned %d/%d clusters.\n", numSuccessfulClusters, args.numberOfClusters)
+
 	return nil
+}
+
+func createClusters(numClusters, batchSize, waitSecondsBetweenBatches int, successfulClustersChannel chan int) {
+	batchWg := &sync.WaitGroup{}
+	batchWg.Add(int(math.Ceil(float64(numClusters) / float64(batchSize))))
+
+	for batchIteration := 0; batchIteration*batchSize < numClusters; batchIteration++ {
+		offset := batchIteration * batchSize
+		remainingClusters := numClusters - offset*batchSize
+		adjustedBatchSize := batchSize
+
+		if remainingClusters < batchSize {
+			adjustedBatchSize = remainingClusters
+		}
+
+		go createBatch(adjustedBatchSize, batchWg, successfulClustersChannel)
+
+		remainingClustersAfterThisProvision := remainingClusters - adjustedBatchSize
+		if remainingClustersAfterThisProvision > batchSize {
+			log.Printf("%d clusters left to provision with batch sizes of %d, sleeping for %d seconds", remainingClustersAfterThisProvision, batchSize, waitSecondsBetweenBatches)
+			time.Sleep(time.Second * time.Duration(waitSecondsBetweenBatches))
+		} else {
+			log.Printf("Provisioned final batch of %d clusters.\n", adjustedBatchSize)
+		}
+	}
+	batchWg.Wait()
+	close(successfulClustersChannel)
+}
+
+func createBatch(numClustersInBatch int, batchWg *sync.WaitGroup, successfulClustersChannel chan int) {
+	wg := &sync.WaitGroup{}
+	wg.Add(numClustersInBatch)
+
+	for i := 0; i < numClustersInBatch; i++ {
+		go setupCluster(wg, successfulClustersChannel)
+	}
+
+	wg.Wait()
+	batchWg.Done()
+}
+
+func setupCluster(wg *sync.WaitGroup, successfulClustersChannel chan int) {
+	defer wg.Done()
+	cluster, err := clusterutil.ProvisionCluster(discardLogger)
+
+	if err != nil {
+		if cluster != nil {
+			fmt.Printf("error while trying to provision up cluster with ID %s: %v\n", cluster.ID(), err)
+		} else {
+			fmt.Printf("error while provisioning the cluster: %v\n", err)
+		}
+	} else {
+		outputFilePath := filepath.Join(viper.GetString(config.ReportDir), "clusters", cluster.ID()+".log")
+
+		outputFile, err := os.Create(outputFilePath)
+		defer outputFile.Close()
+
+		if err != nil {
+			fmt.Printf("error opening logfile for writing: %v", err)
+			return
+		}
+
+		logger := log.New(outputFile, "", log.LstdFlags)
+
+		terminate := make(chan bool)
+
+		go func() {
+			timeout := make(chan bool)
+			defer close(timeout)
+
+			for {
+
+				go func() {
+					time.Sleep(time.Minute * time.Duration(5))
+					timeout <- true
+				}()
+
+				select {
+				case <-timeout:
+					isHealthy, _ := clusterutil.PollClusterHealth(cluster.ID(), discardLogger)
+					if isHealthy {
+						fmt.Printf("Cluster %s is healthy (could be transient).\n", cluster.ID())
+					} else {
+						fmt.Printf("Cluster %s is not healthy yet.\n", cluster.ID())
+					}
+				case <-terminate:
+					return
+				}
+			}
+		}()
+
+		err = clusterutil.WaitForClusterReady(cluster.ID(), logger)
+
+		terminate <- true
+		close(terminate)
+
+		if err != nil {
+			fmt.Printf("Cluster %s never became healthy.\n", cluster.ID())
+		} else {
+			fmt.Printf("Cluster %s is healthy.\n", cluster.ID())
+			successfulClustersChannel <- 1
+		}
+	}
 }

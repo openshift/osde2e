@@ -85,7 +85,7 @@ func TestCheckCVOReadiness(t *testing.T) {
 
 	for _, test := range tests {
 		cfgClient := fakeConfig.NewSimpleClientset(test.objs...)
-		state, err := CheckCVOReadiness(cfgClient.ConfigV1())
+		state, err := CheckCVOReadiness(cfgClient.ConfigV1(), nil)
 
 		if err != nil && !test.expectedError {
 			t.Errorf("Unexpected error: %s", err)

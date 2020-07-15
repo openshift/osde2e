@@ -26,10 +26,7 @@ const (
 )
 
 // LaunchCluster setups an new cluster using the OSD API and returns it's ID.
-func (o *OCMProvider) LaunchCluster() (string, error) {
-	clusterName := viper.GetString(config.Cluster.Name)
-	log.Printf("Creating cluster '%s'...", clusterName)
-
+func (o *OCMProvider) LaunchCluster(clusterName string) (string, error) {
 	// choose flavour based on config
 	flavourID := DefaultFlavour
 
@@ -173,8 +170,7 @@ func (o *OCMProvider) DeleteCluster(clusterID string) error {
 			Send()
 
 		if err != nil {
-			log.Printf("couldn't delete cluster: %v", err)
-			return err
+			return fmt.Errorf("couldn't delete cluster '%s': %v", clusterID, err)
 		}
 
 		if resp != nil && resp.Error() != nil {

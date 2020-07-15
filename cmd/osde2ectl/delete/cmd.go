@@ -2,11 +2,10 @@ package delete
 
 import (
 	"fmt"
-	"log"
 
+	"github.com/hashicorp/go-multierror"
 	"github.com/openshift/osde2e/cmd/osde2e/common"
 	"github.com/openshift/osde2e/cmd/osde2e/helpers"
-	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/providers"
 	"github.com/openshift/osde2e/pkg/common/providers/ocmprovider"
 	"github.com/openshift/osde2e/pkg/common/spi"
@@ -26,6 +25,7 @@ var provider spi.Provider
 
 var args struct {
 	clusterID       string
+	owner           string
 	environment     string
 	configString    string
 	customConfig    string
@@ -61,7 +61,13 @@ func init() {
 		"",
 		"Existing OCM cluster ID to delete.",
 	)
-
+	pfs.StringVarP(
+		&args.owner,
+		"owner",
+		"o",
+		"",
+		"Delete all clusters belonging to this owner.",
+	)
 	pfs.StringVarP(
 		&args.environment,
 		"environment",
@@ -69,8 +75,6 @@ func init() {
 		"",
 		"Cluster provider environment to use.",
 	)
-
-	viper.BindPFlag(config.Cluster.ID, Cmd.PersistentFlags().Lookup("cluster-id"))
 	viper.BindPFlag(ocmprovider.Env, Cmd.PersistentFlags().Lookup("environment"))
 }
 
@@ -82,28 +86,55 @@ func run(cmd *cobra.Command, argv []string) error {
 		return fmt.Errorf("error loading initial state: %v", err)
 	}
 
-	viper.BindPFlag(config.Cluster.ID, cmd.PersistentFlags().Lookup("cluster-id"))
+	clusterID := args.clusterID
+	owner := args.owner
 
-	clusterID := viper.GetString(config.Cluster.ID)
-	if provider, err = providers.ClusterProvider(); err != nil {
-		return fmt.Errorf("could not setup cluster provider: %v", err)
-	}
-
-	cluster, err := provider.GetCluster(clusterID)
-
-	if err != nil {
-		return fmt.Errorf("error retrieving cluster information: %v", err)
-	}
-
-	if properties := cluster.Properties(); properties["MadeByOSDe2e"] == "true" {
-		log.Printf("Destroying cluster '%s'...", clusterID)
-		if err = provider.DeleteCluster(clusterID); err != nil {
-			return fmt.Errorf("error deleting cluster: %s", err.Error())
+	if clusterID != "" {
+		if provider, err = providers.ClusterProvider(); err != nil {
+			return fmt.Errorf("could not setup cluster provider: %v", err)
 		}
-	} else {
-		return fmt.Errorf("Cluster to be deleted was not created by osde2e")
+
+		cluster, err := provider.GetCluster(clusterID)
+
+		if err != nil {
+			return fmt.Errorf("error retrieving cluster information: %v", err)
+		}
+
+		if properties := cluster.Properties(); properties["MadeByOSDe2e"] == "true" {
+			fmt.Printf("Deleting cluster %s...", clusterID)
+			if err = provider.DeleteCluster(clusterID); err != nil {
+				fmt.Printf("Failed!\n")
+				return fmt.Errorf("error deleting cluster: %s", err.Error())
+			}
+			fmt.Printf("Success!\n")
+		} else {
+			return fmt.Errorf("Cluster to be deleted was not created by osde2e")
+		}
+	} else if owner != "" {
+		if provider, err = providers.ClusterProvider(); err != nil {
+			return fmt.Errorf("could not setup cluster provider: %v", err)
+		}
+
+		clusters, err := provider.ListClusters(fmt.Sprintf("properties.MadeByOSDe2e='true' and properties.OwnedBy='%s'", owner))
+
+		if err != nil {
+			return fmt.Errorf("error retrieving list of clusters: %v", err)
+		}
+
+		var allErrors *multierror.Error
+		for _, cluster := range clusters {
+			fmt.Printf("Deleting cluster %s... ", cluster.ID())
+			if err = provider.DeleteCluster(cluster.ID()); err != nil {
+				allErrors = multierror.Append(allErrors, fmt.Errorf("error deleting cluster: %v", err))
+				fmt.Printf("Failed!\n")
+			} else {
+				fmt.Printf("Success!\n")
+			}
+		}
+		return allErrors.ErrorOrNil()
 	}
 
-	log.Printf("Cluster deleted......")
+	fmt.Printf("Clusters may take a while to disappear from OCM.\n")
+
 	return nil
 }

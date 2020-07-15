@@ -5,14 +5,17 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/openshift/osde2e/pkg/common/logging"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	v1 "k8s.io/client-go/kubernetes/typed/core/v1"
 )
 
 // CheckNodeHealth attempts to look at the state of all operator and returns true if things are healthy.
-func CheckNodeHealth(nodeClient v1.CoreV1Interface) (bool, error) {
+func CheckNodeHealth(nodeClient v1.CoreV1Interface, logger *log.Logger) (bool, error) {
+	logger = logging.CreateNewStdLoggerOrUseExistingLogger(logger)
+
 	success := true
-	log.Print("Checking that all Nodes are running or completed...")
+	logger.Print("Checking that all Nodes are running or completed...")
 
 	listOpts := metav1.ListOptions{}
 	list, err := nodeClient.Nodes().List(context.TODO(), listOpts)
@@ -27,10 +30,10 @@ func CheckNodeHealth(nodeClient v1.CoreV1Interface) (bool, error) {
 	for _, node := range list.Items {
 		for _, ns := range node.Status.Conditions {
 			if ns.Type != "Ready" && ns.Status == "True" {
-				log.Printf("Node (%v) issue: %v=%v %v\n", node.ObjectMeta.Name, ns.Type, ns.Status, ns.Message)
+				logger.Printf("Node (%v) issue: %v=%v %v\n", node.ObjectMeta.Name, ns.Type, ns.Status, ns.Message)
 				success = false
 			} else if ns.Type == "Ready" && ns.Status != "True" {
-				log.Printf("Node (%v) not ready: %v=%v %v\n", node.ObjectMeta.Name, ns.Type, ns.Status, ns.Message)
+				logger.Printf("Node (%v) not ready: %v=%v %v\n", node.ObjectMeta.Name, ns.Type, ns.Status, ns.Message)
 				success = false
 			}
 		}

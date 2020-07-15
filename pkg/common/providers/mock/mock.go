@@ -12,7 +12,6 @@ import (
 	v1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/spi"
-	"github.com/openshift/osde2e/pkg/common/util"
 	"github.com/spf13/viper"
 )
 
@@ -67,7 +66,7 @@ func New() (*MockProvider, error) {
 }
 
 // LaunchCluster mocks a launch cluster operation.
-func (m *MockProvider) LaunchCluster() (string, error) {
+func (m *MockProvider) LaunchCluster(clusterName string) (string, error) {
 	clusterID := uuid.New().String()
 	if m.env == "fail" {
 		clusterID = m.env
@@ -75,7 +74,7 @@ func (m *MockProvider) LaunchCluster() (string, error) {
 
 	m.clusters[clusterID] = spi.NewClusterBuilder().
 		ID(clusterID).
-		Name(util.RandomStr(5)).
+		Name(clusterName).
 		Version(viper.GetString(config.Cluster.Version)).
 		State(spi.ClusterStateReady).
 		CloudProvider(MockCloudProvider).

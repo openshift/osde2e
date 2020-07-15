@@ -46,7 +46,7 @@ func TestCheckPodHealth(t *testing.T) {
 
 	for _, test := range tests {
 		kubeClient := kubernetes.NewSimpleClientset(test.objs...)
-		state, err := CheckPodHealth(kubeClient.CoreV1())
+		state, err := CheckPodHealth(kubeClient.CoreV1(), nil)
 
 		if state != test.expectedState {
 			t.Errorf("%v: Expected state doesn't match returned value (%v, %v)", test.description, test.expectedState, state)
