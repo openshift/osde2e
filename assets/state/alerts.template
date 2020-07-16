@@ -1,1 +1,24 @@
-curl -G -s -H "Authorization: Bearer $(oc whoami --show-token)" --data-urlencode 'query=ALERTS{alertstate!="pending",alertname!="Watchdog"}' "https://$(oc get route -n openshift-monitoring prometheus-k8s -o jsonpath='{.spec.host}')/api/v1/query" > "{{.OutputDir}}/alerts.json" 
+ALERTS_FILE="{{.OutputDir}}/alerts.json"
+get_alerts() {
+    curl -G -s -H "Authorization: Bearer $(oc whoami --show-token)" --data-urlencode 'query=ALERTS{alertstate!="pending",alertname!="Watchdog"}' "https://$(oc get route -n openshift-monitoring prometheus-k8s -o jsonpath='{.spec.host}')/api/v1/query" > "$ALERTS_FILE"
+}
+
+NUM_RETRIES=3
+i=0
+
+while [ "$i" -lt "$NUM_RETRIES" ]
+do
+    if ! [ -s "$ALERTS_FILE" ]
+    then
+        echo "Attempt number $i to get alert results..."
+        sleep 5
+        get_alerts
+    fi
+    i=$(($i+1))
+done
+
+if ! [ -s "$ALERTS_FILE" ]
+then
+    echo "Unable to get alerts.json file."
+    exit 1
+fi
