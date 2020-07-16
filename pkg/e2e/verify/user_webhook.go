@@ -8,7 +8,6 @@ import (
 	"github.com/spf13/viper"
 
 	userv1 "github.com/openshift/api/user/v1"
-	"github.com/openshift/osde2e/pkg/common/alert"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/util"
@@ -22,20 +21,7 @@ const (
 	CUSTOMER_PROVIDER_NAME = "CUSTOM"
 )
 
-func init() {
-	ma := alert.GetMetricAlerts()
-	testAlert = alert.MetricAlert{
-		Name:             "[Suite: service-definition] [OSD] user validating webhook",
-		TeamOwner:        "SD-SREP",
-		PrimaryContact:   "Haoran Wang",
-		SlackChannel:     "sd-cicd-alerts",
-		Email:            "sd-cicd@redhat.com",
-		FailureThreshold: 4,
-	}
-	ma.AddAlert(testAlert)
-}
-
-var _ = ginkgo.Describe(testAlert.Name, func() {
+var _ = ginkgo.Describe("[Suite: service-definition] [OSD] user validating webhook", func() {
 	h := helper.New()
 
 	ginkgo.Context("user validating webhook", func() {

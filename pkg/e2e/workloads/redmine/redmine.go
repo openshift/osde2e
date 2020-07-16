@@ -10,7 +10,6 @@ import (
 	v1 "github.com/openshift/api/route/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/openshift/osde2e/pkg/common/alert"
 	"github.com/openshift/osde2e/pkg/common/cluster/healthchecks"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/spf13/viper"
@@ -28,22 +27,7 @@ var testDir = "/assets/workloads/e2e/redmine"
 // Use the base folder name for the workload name. Make it easy!
 var workloadName = filepath.Base(testDir)
 
-var testAlert alert.MetricAlert
-
-func init() {
-	ma := alert.GetMetricAlerts()
-	testAlert = alert.MetricAlert{
-		Name:             "[Suite: e2e] Workload (" + workloadName + ")",
-		TeamOwner:        "SD-SREP",
-		PrimaryContact:   "Matt Bargenquast",
-		SlackChannel:     "sd-cicd-alerts",
-		Email:            "sd-cicd@redhat.com",
-		FailureThreshold: 4,
-	}
-	ma.AddAlert(testAlert)
-}
-
-var _ = ginkgo.Describe(testAlert.Name, func() {
+var _ = ginkgo.Describe("[Suite: e2e] Workload ("+workloadName+")", func() {
 	defer ginkgo.GinkgoRecover()
 	// setup helper
 	h := helper.New()

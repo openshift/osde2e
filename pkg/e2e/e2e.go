@@ -76,50 +76,57 @@ var _ = ginkgo.BeforeEach(func() {
 // Setup cluster before testing begins.
 var _ = ginkgo.SynchronizedBeforeSuite(func() []byte {
 	defer ginkgo.GinkgoRecover()
-	cluster, err := cluster.SetupCluster(nil)
-	events.HandleErrorWithEvents(err, events.InstallSuccessful, events.InstallFailed).ShouldNot(HaveOccurred(), "failed to setup cluster for testing")
-	if err != nil {
-		return []byte{}
-	}
 
-	if len(viper.GetString(config.Addons.IDs)) > 0 {
-		err = installAddons()
-		events.HandleErrorWithEvents(err, events.InstallAddonsSuccessful, events.InstallAddonsFailed).ShouldNot(HaveOccurred(), "failed while installing addons")
+	// Skip provisioning if we already have a kubeconfig
+	if viper.GetString(config.Kubeconfig.Contents) == "" {
+		cluster, err := cluster.SetupCluster(nil)
+		events.HandleErrorWithEvents(err, events.InstallSuccessful, events.InstallFailed).ShouldNot(HaveOccurred(), "failed to setup cluster for testing")
 		if err != nil {
 			return []byte{}
 		}
-	}
 
-	viper.Set(config.Cluster.Name, cluster.Name())
-	log.Printf("CLUSTER_NAME set to %s from OCM.", viper.GetString(config.Cluster.Name))
+		viper.Set(config.Cluster.ID, cluster.ID())
+		log.Printf("CLUSTER_ID set to %s from OCM.", viper.GetString(config.Cluster.ID))
 
-	viper.Set(config.Cluster.Version, cluster.Version())
-	log.Printf("CLUSTER_VERSION set to %s from OCM.", viper.GetString(config.Cluster.Version))
+		viper.Set(config.Cluster.Name, cluster.Name())
+		log.Printf("CLUSTER_NAME set to %s from OCM.", viper.GetString(config.Cluster.Name))
 
-	viper.Set(config.CloudProvider.CloudProviderID, cluster.CloudProvider())
-	log.Printf("CLOUD_PROVIDER_ID set to %s from OCM.", viper.GetString(config.CloudProvider.CloudProviderID))
+		viper.Set(config.Cluster.Version, cluster.Version())
+		log.Printf("CLUSTER_VERSION set to %s from OCM.", viper.GetString(config.Cluster.Version))
 
-	viper.Set(config.CloudProvider.Region, cluster.Region())
-	log.Printf("CLOUD_PROVIDER_REGION set to %s from OCM.", viper.GetString(config.CloudProvider.Region))
+		viper.Set(config.CloudProvider.CloudProviderID, cluster.CloudProvider())
+		log.Printf("CLOUD_PROVIDER_ID set to %s from OCM.", viper.GetString(config.CloudProvider.CloudProviderID))
 
-	log.Printf("Found addons: %s", strings.Join(cluster.Addons(), ","))
+		viper.Set(config.CloudProvider.Region, cluster.Region())
+		log.Printf("CLOUD_PROVIDER_REGION set to %s from OCM.", viper.GetString(config.CloudProvider.Region))
 
-	metadata.Instance.SetClusterName(cluster.Name())
-	metadata.Instance.SetClusterID(cluster.ID())
+		log.Printf("Found addons: %s", strings.Join(cluster.Addons(), ","))
 
-	var kubeconfigBytes []byte
-	if kubeconfigBytes, err = provider.ClusterKubeconfig(cluster.ID()); err != nil {
-		events.HandleErrorWithEvents(err, events.InstallKubeconfigRetrievalSuccess, events.InstallKubeconfigRetrievalFailure).ShouldNot(HaveOccurred(), "failed while retrieve kubeconfig")
-		return []byte{}
-	}
-	viper.Set(config.Kubeconfig.Contents, string(kubeconfigBytes))
+		metadata.Instance.SetClusterName(cluster.Name())
+		metadata.Instance.SetClusterID(cluster.ID())
 
-	if len(viper.GetString(config.Kubeconfig.Contents)) == 0 {
-		// Give the cluster some breathing room.
-		log.Println("OSD cluster installed. Sleeping for 600s.")
-		time.Sleep(600 * time.Second)
-	} else {
-		log.Printf("No kubeconfig contents found, but there should be some by now.")
+		if len(viper.GetString(config.Addons.IDs)) > 0 {
+			err = installAddons()
+			events.HandleErrorWithEvents(err, events.InstallAddonsSuccessful, events.InstallAddonsFailed).ShouldNot(HaveOccurred(), "failed while installing addons")
+			if err != nil {
+				return []byte{}
+			}
+		}
+
+		var kubeconfigBytes []byte
+		if kubeconfigBytes, err = provider.ClusterKubeconfig(cluster.ID()); err != nil {
+			events.HandleErrorWithEvents(err, events.InstallKubeconfigRetrievalSuccess, events.InstallKubeconfigRetrievalFailure).ShouldNot(HaveOccurred(), "failed while retrieve kubeconfig")
+			return []byte{}
+		}
+		viper.Set(config.Kubeconfig.Contents, string(kubeconfigBytes))
+
+		if len(viper.GetString(config.Kubeconfig.Contents)) == 0 {
+			// Give the cluster some breathing room.
+			log.Println("OSD cluster installed. Sleeping for 600s.")
+			time.Sleep(600 * time.Second)
+		} else {
+			log.Printf("No kubeconfig contents found, but there should be some by now.")
+		}
 	}
 
 	return []byte{}
@@ -309,7 +316,7 @@ func runGinkgoTests() error {
 		viper.Set(config.Suffix, util.RandomStr(3))
 	}
 
-	testsPassed := runTestsInPhase(clusterID, phase.InstallPhase, "OSD e2e suite")
+	testsPassed := runTestsInPhase(phase.InstallPhase, "OSD e2e suite")
 	upgradeTestsPassed := true
 
 	var routeMonitorChan chan struct{}
@@ -327,7 +334,7 @@ func runGinkgoTests() error {
 			events.RecordEvent(events.UpgradeSuccessful)
 
 			log.Println("Running e2e tests POST-UPGRADE...")
-			upgradeTestsPassed = runTestsInPhase(clusterID, phase.UpgradePhase, "OSD e2e suite post-upgrade")
+			upgradeTestsPassed = runTestsInPhase(phase.UpgradePhase, "OSD e2e suite post-upgrade")
 		} else {
 			log.Println("No Kubeconfig found from initial cluster setup. Unable to run upgrade.")
 		}
@@ -485,7 +492,8 @@ func cleanupAfterE2E(h *helper.H) (errors []error) {
 	return errors
 }
 
-func runTestsInPhase(clusterID string, phase string, description string) bool {
+// nolint:gocyclo
+func runTestsInPhase(phase string, description string) bool {
 	viper.Set(config.Phase, phase)
 	reportDir := viper.GetString(config.ReportDir)
 	phaseDirectory := filepath.Join(reportDir, phase)
@@ -621,12 +629,19 @@ func runTestsInPhase(clusterID string, phase string, description string) bool {
 		return false
 	}
 
-	cluster, err := provider.GetCluster(clusterID)
-	if err != nil {
-		log.Printf("error getting cluster state after a test run: %v", err)
-		return false
+	clusterID := viper.GetString(config.Cluster.ID)
+
+	clusterState := spi.ClusterStateUnknown
+
+	if clusterID != "" {
+		cluster, err := provider.GetCluster(clusterID)
+		if err != nil {
+			log.Printf("error getting cluster state after a test run: %v", err)
+			return false
+		}
+		clusterState = cluster.State()
 	}
-	if !viper.GetBool(config.DryRun) && cluster.State() == spi.ClusterStateReady {
+	if !viper.GetBool(config.DryRun) && clusterState == spi.ClusterStateReady {
 		h := helper.NewOutsideGinkgo()
 		if h == nil {
 			log.Println("Unable to generate helper outside of ginkgo")

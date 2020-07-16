@@ -10,7 +10,6 @@ import (
 	"github.com/prometheus/common/log"
 	"github.com/spf13/viper"
 
-	"github.com/openshift/osde2e/pkg/common/alert"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/providers"
@@ -29,7 +28,6 @@ var ignoreAlerts = map[string]map[string][]string{
 		"int": {"MetricsClientSendFailingSRE"},
 	},
 }
-var testAlert alert.MetricAlert
 
 func init() {
 	var err error
@@ -39,20 +37,9 @@ func init() {
 	if err != nil {
 		panic(fmt.Sprintf("error while loading alerts command: %v", err))
 	}
-
-	ma := alert.GetMetricAlerts()
-	testAlert = alert.MetricAlert{
-		Name:             "[Suite: e2e] Cluster state",
-		TeamOwner:        "SD-CICD",
-		PrimaryContact:   "Michael Wilson",
-		SlackChannel:     "sd-cicd-alerts",
-		Email:            "sd-cicd@redhat.com",
-		FailureThreshold: 4,
-	}
-	ma.AddAlert(testAlert)
 }
 
-var _ = ginkgo.Describe(testAlert.Name, func() {
+var _ = ginkgo.Describe("[Suite: e2e] Cluster state", func() {
 	defer ginkgo.GinkgoRecover()
 	h := helper.New()
 

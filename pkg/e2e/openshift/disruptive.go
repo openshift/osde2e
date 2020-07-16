@@ -5,25 +5,11 @@ import (
 	"github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	"github.com/openshift/osde2e/pkg/common/alert"
 	"github.com/openshift/osde2e/pkg/common/helper"
 )
 
 // Disruptive tests require SSH access to nodes.
-func init() {
-	ma := alert.GetMetricAlerts()
-	testAlert = alert.MetricAlert{
-		Name:             "[Suite: openshift][disruptive]",
-		TeamOwner:        "SD-CICD",
-		PrimaryContact:   "Jeffrey Sica",
-		SlackChannel:     "sd-cicd-alerts",
-		Email:            "sd-cicd@redhat.com",
-		FailureThreshold: 4,
-	}
-	ma.AddAlert(testAlert)
-}
-
-var _ = ginkgo.Describe(testAlert.Name, func() {
+var _ = ginkgo.Describe("[Suite: openshift][disruptive]", func() {
 	defer ginkgo.GinkgoRecover()
 	h := helper.New()
 

@@ -7,7 +7,6 @@ import (
 	. "github.com/onsi/gomega"
 	kubev1 "k8s.io/api/core/v1"
 
-	"github.com/openshift/osde2e/pkg/common/alert"
 	"github.com/openshift/osde2e/pkg/common/helper"
 )
 
@@ -15,20 +14,7 @@ const (
 	numNodesForNodeVertical = 3
 )
 
-func init() {
-	ma := alert.GetMetricAlerts()
-	testAlert = alert.MetricAlert{
-		Name:             "[Suite: scale-nodes-and-pods] Scaling",
-		TeamOwner:        "SD-CICD",
-		PrimaryContact:   "Michael Wilson",
-		SlackChannel:     "sd-cicd-alerts",
-		Email:            "sd-cicd@redhat.com",
-		FailureThreshold: 4,
-	}
-	ma.AddAlert(testAlert)
-}
-
-var _ = ginkgo.Describe(testAlert.Name, func() {
+var _ = ginkgo.Describe("[Suite: scale-nodes-and-pods] Scaling", func() {
 	defer ginkgo.GinkgoRecover()
 	h := helper.New()
 
