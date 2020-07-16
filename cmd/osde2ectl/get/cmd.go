@@ -6,13 +6,12 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/openshift/osde2e/cmd/osde2e/common"
-	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/providers"
 	"github.com/openshift/osde2e/pkg/common/spi"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 var Cmd = &cobra.Command{
@@ -34,7 +33,6 @@ var args struct {
 	kubeConfigPath  string
 	hours           uint64
 	minutes         uint64
-	seconds         uint64
 }
 
 func init() {
@@ -94,16 +92,6 @@ func init() {
 		"Cluster expiration extension value in minutes.",
 	)
 
-	pfs.Uint64VarP(
-		&args.seconds,
-		"seconds",
-		"s",
-		0,
-		"Cluster expiration extension value in seconds.",
-	)
-
-	viper.BindPFlag(config.Cluster.ID, Cmd.PersistentFlags().Lookup("cluster-id"))
-	viper.BindPFlag(config.Kubeconfig.Path, Cmd.PersistentFlags().Lookup("kube-config-path"))
 }
 
 func run(cmd *cobra.Command, argv []string) error {
@@ -122,9 +110,12 @@ func run(cmd *cobra.Command, argv []string) error {
 		return fmt.Errorf("could not setup cluster provider: %v", err)
 	}
 
-	clusterID := viper.GetString(config.Cluster.ID)
+	clusterID := args.clusterID
 
 	cluster, err := provider.GetCluster(clusterID)
+
+	timediff := cluster.ExpirationTimestamp().UTC().Sub(time.Now().UTC()).Minutes()
+
 	if err != nil {
 		return fmt.Errorf("error retrieving cluster information: %v", err)
 	}
@@ -135,7 +126,7 @@ func run(cmd *cobra.Command, argv []string) error {
 	log.Printf("Cluster name - %s and Cluster ID - %s", cluster.Name(), cluster.ID())
 
 	if kubeconfigStatus {
-		content, err := setKubeconfig(clusterID)
+		content, err := getKubeconfig(clusterID)
 		if err != nil {
 			return fmt.Errorf("Error getting the cluster's kubeconfig - %s", err)
 		}
@@ -143,23 +134,25 @@ func run(cmd *cobra.Command, argv []string) error {
 		filename := cluster.Name() + "-kubeconfig.txt"
 
 		var filePath string
-		if viper.GetString(config.Kubeconfig.Path) != "" {
-			_, err := os.Stat(viper.GetString(config.Kubeconfig.Path))
-			if err != nil {
-				fmt.Println("Path directory is invalid - ", err.Error(), "Will create a new directory.")
-				err = os.Mkdir(viper.GetString(config.Kubeconfig.Path), os.ModePerm)
+		if args.kubeConfigPath != "" {
+			_, err := os.Stat(args.kubeConfigPath)
+			if os.IsNotExist(err) {
+				fmt.Println("File directory is invalid - ", err.Error(), "Will create a new directory.")
+				err = os.Mkdir(args.kubeConfigPath, os.ModePerm)
 				if err != nil {
 					return fmt.Errorf("Unable to create a new directory - %s", err.Error())
 				}
+			} else {
+				return fmt.Errorf("Unable to stat file path: %s", err.Error())
 			}
-			filePath = filepath.Join(viper.GetString(config.Kubeconfig.Path), filename)
+			filePath = filepath.Join(args.kubeConfigPath, filename)
 		} else {
 			dir, err := os.Getwd()
 			if err != nil {
 				return fmt.Errorf("Unable to get CWD: %s", err.Error())
 			}
 
-			filePath = filepath.Join(viper.GetString(dir), filename)
+			filePath = filepath.Join(string(dir), filename)
 		}
 		err = ioutil.WriteFile(filePath, content, os.ModePerm)
 
@@ -167,22 +160,24 @@ func run(cmd *cobra.Command, argv []string) error {
 			return fmt.Errorf("could not write KubeConfig into a file: %v", err)
 		}
 		fmt.Println("Successfully downloaded the kubeconfig into -", filePath, ". Run the command \"export TEST_KUBECONFIG=", filePath, "\"")
-		if args.hours == 0 && args.minutes == 0 && args.seconds == 0 {
+		if args.hours == 0 && args.minutes == 0 && timediff <= 30 {
+			fmt.Println("Cluster expiry time is less than 30 minutes. Extending expiry time by 30 minutes.")
+			args.minutes = 30
 			if err = provider.ExtendExpiry(clusterID, 0, 30, 0); err != nil {
 				return fmt.Errorf("error extending cluster expiry time: %s", err.Error())
 			}
 		} else {
-			if err = provider.ExtendExpiry(clusterID, args.hours, args.minutes, args.seconds); err != nil {
+			if err = provider.ExtendExpiry(clusterID, args.hours, args.minutes, 0); err != nil {
 				return fmt.Errorf("error extending cluster expiry time: %s", err.Error())
 			}
 		}
-		fmt.Println("Extended cluster expiry time by :", args.hours, "h ", args.minutes, "m ", args.seconds, "s")
+		fmt.Println("Extended cluster expiry time by :", args.hours, "h ", args.minutes, "m")
 	}
 
 	return nil
 }
 
-func setKubeconfig(clusterID string) ([]byte, error) {
+func getKubeconfig(clusterID string) ([]byte, error) {
 	provider, err := providers.ClusterProvider()
 	var kubeconfigBytes []byte
 	if err != nil {
@@ -192,7 +187,5 @@ func setKubeconfig(clusterID string) ([]byte, error) {
 	if kubeconfigBytes, err = provider.ClusterKubeconfig(clusterID); err != nil {
 		return kubeconfigBytes, fmt.Errorf("could not get kubeconfig for cluster: %v", err)
 	}
-	viper.Set(config.Kubeconfig.Contents, string(kubeconfigBytes))
-
 	return kubeconfigBytes, nil
 }
