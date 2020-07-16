@@ -312,7 +312,7 @@ func runGinkgoTests() error {
 		viper.Set(config.Suffix, util.RandomStr(3))
 	}
 
-	testsPassed := runTestsInPhase(clusterID, phase.InstallPhase, "OSD e2e suite")
+	testsPassed := runTestsInPhase(phase.InstallPhase, "OSD e2e suite")
 	upgradeTestsPassed := true
 
 	var routeMonitorChan chan struct{}
@@ -330,7 +330,7 @@ func runGinkgoTests() error {
 			events.RecordEvent(events.UpgradeSuccessful)
 
 			log.Println("Running e2e tests POST-UPGRADE...")
-			upgradeTestsPassed = runTestsInPhase(clusterID, phase.UpgradePhase, "OSD e2e suite post-upgrade")
+			upgradeTestsPassed = runTestsInPhase(phase.UpgradePhase, "OSD e2e suite post-upgrade")
 		} else {
 			log.Println("No Kubeconfig found from initial cluster setup. Unable to run upgrade.")
 		}
@@ -488,7 +488,8 @@ func cleanupAfterE2E(h *helper.H) (errors []error) {
 	return errors
 }
 
-func runTestsInPhase(clusterID string, phase string, description string) bool {
+// nolint:gocyclo
+func runTestsInPhase(phase string, description string) bool {
 	viper.Set(config.Phase, phase)
 	reportDir := viper.GetString(config.ReportDir)
 	phaseDirectory := filepath.Join(reportDir, phase)
@@ -624,12 +625,19 @@ func runTestsInPhase(clusterID string, phase string, description string) bool {
 		return false
 	}
 
-	cluster, err := provider.GetCluster(clusterID)
-	if err != nil {
-		log.Printf("error getting cluster state after a test run: %v", err)
-		return false
+	clusterID := viper.GetString(config.Cluster.ID)
+
+	clusterState := spi.ClusterStateUnknown
+
+	if clusterID != "" {
+		cluster, err := provider.GetCluster(clusterID)
+		if err != nil {
+			log.Printf("error getting cluster state after a test run: %v", err)
+			return false
+		}
+		clusterState = cluster.State()
 	}
-	if !viper.GetBool(config.DryRun) && cluster.State() == spi.ClusterStateReady {
+	if !viper.GetBool(config.DryRun) && clusterState == spi.ClusterStateReady {
 		h := helper.NewOutsideGinkgo()
 		if h == nil {
 			log.Println("Unable to generate helper outside of ginkgo")
