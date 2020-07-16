@@ -7,7 +7,6 @@ import (
 	. "github.com/onsi/gomega"
 
 	machineV1beta1 "github.com/openshift/machine-api-operator/pkg/apis/machine/v1beta1"
-	"github.com/openshift/osde2e/pkg/common/alert"
 	"github.com/openshift/osde2e/pkg/common/helper"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -18,20 +17,7 @@ const (
 	OperatorNamespace = "openshift-machine-api"
 )
 
-func init() {
-	ma := alert.GetMetricAlerts()
-	testAlert = alert.MetricAlert{
-		Name:             "[Suite: informing] MachineHealthChecks",
-		TeamOwner:        "SD-SRE",
-		PrimaryContact:   "Alex Chvatal",
-		SlackChannel:     "sd-cicd-alerts",
-		Email:            "sd-cicd@redhat.com",
-		FailureThreshold: 4,
-	}
-	ma.AddAlert(testAlert)
-}
-
-var _ = ginkgo.Describe(testAlert.Name, func() {
+var _ = ginkgo.Describe("[Suite: informing] MachineHealthChecks", func() {
 	h := helper.New()
 
 	ginkgo.It("should exist", func() {

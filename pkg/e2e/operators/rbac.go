@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/onsi/ginkgo"
-	"github.com/openshift/osde2e/pkg/common/alert"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/spf13/viper"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -20,20 +19,7 @@ import (
 var operatorName = "rbac-permissions-operator"
 var operatorNamespace = "openshift-rbac-permissions"
 
-func init() {
-	ma := alert.GetMetricAlerts()
-	testAlert = alert.MetricAlert{
-		Name:             "[Suite: operators] [OSD] RBAC",
-		TeamOwner:        "SD-SREP",
-		PrimaryContact:   "Matt Bargenquast",
-		SlackChannel:     "sd-cicd-alerts",
-		Email:            "sd-cicd@redhat.com",
-		FailureThreshold: 4,
-	}
-	ma.AddAlert(testAlert)
-}
-
-var _ = ginkgo.Describe(testAlert.Name+"Operator", func() {
+var _ = ginkgo.Describe("[Suite: operators] [OSD] RBAC Operator", func() {
 	var operatorLockFile = "rbac-permissions-operator-lock"
 	var defaultDesiredReplicas int32 = 1
 
@@ -50,12 +36,12 @@ var _ = ginkgo.Describe(testAlert.Name+"Operator", func() {
 	checkClusterRoles(h, clusterRoles)
 })
 
-var _ = ginkgo.Describe(testAlert.Name+" Dedicated Admins SubjectPermission", func() {
+var _ = ginkgo.Describe("[Suite: operators] [OSD] Dedicated Admins SubjectPermission", func() {
 	h := helper.New()
 	checkSubjectPermissions(h, "dedicated-admins")
 })
 
-var _ = ginkgo.Describe(testAlert.Name+" Upgrade RBAC Permissions Operator", func() {
+var _ = ginkgo.Describe("[Suite: informing] [OSD] Upgrade RBAC Permissions Operator", func() {
 	checkUpgrade(helper.New(), "openshift-rbac-permissions", "rbac-permissions-operator",
 		"rbac-permissions-operator.v0.1.97-68cf185",
 	)

@@ -22,11 +22,11 @@ func init() {
 	ma := alert.GetMetricAlerts()
 	testAlert = alert.MetricAlert{
 		Name:             "[Suite: service-definition] [OSD] DaemonSets",
-		TeamOwner:        "SD-CICD",
+		TeamOwner:        "SDCICD",
 		PrimaryContact:   "Jeffrey Sica",
 		SlackChannel:     "sd-cicd-alerts",
 		Email:            "sd-cicd@redhat.com",
-		FailureThreshold: 4,
+		FailureThreshold: 1,
 	}
 	ma.AddAlert(testAlert)
 }

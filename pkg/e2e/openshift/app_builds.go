@@ -10,7 +10,6 @@ import (
 
 	"github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"github.com/openshift/osde2e/pkg/common/alert"
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/runner"
 	kubev1 "k8s.io/api/core/v1"
@@ -38,22 +37,7 @@ var testApplications = []string{
 	// "nodejs-mongodb",
 }
 
-var testAlert alert.MetricAlert
-
-func init() {
-	ma := alert.GetMetricAlerts()
-	testAlert = alert.MetricAlert{
-		Name:             "[Suite: app-builds] OpenShift Application Build E2E",
-		TeamOwner:        "SD-CICD",
-		PrimaryContact:   "Jeffrey Sica",
-		SlackChannel:     "sd-cicd-alerts",
-		Email:            "sd-cicd@redhat.com",
-		FailureThreshold: 4,
-	}
-	ma.AddAlert(testAlert)
-}
-
-var _ = ginkgo.Describe(testAlert.Name, func() {
+var _ = ginkgo.Describe("[Suite: app-builds] OpenShift Application Build E2E", func() {
 	defer ginkgo.GinkgoRecover()
 
 	h := helper.New()
