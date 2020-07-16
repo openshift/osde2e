@@ -82,13 +82,8 @@ var _ = ginkgo.SynchronizedBeforeSuite(func() []byte {
 		return []byte{}
 	}
 
-	if len(viper.GetString(config.Addons.IDs)) > 0 {
-		err = installAddons()
-		events.HandleErrorWithEvents(err, events.InstallAddonsSuccessful, events.InstallAddonsFailed).ShouldNot(HaveOccurred(), "failed while installing addons")
-		if err != nil {
-			return []byte{}
-		}
-	}
+	viper.Set(config.Cluster.ID, cluster.ID())
+	log.Printf("CLUSTER_ID set to %s from OCM.", viper.GetString(config.Cluster.ID))
 
 	viper.Set(config.Cluster.Name, cluster.Name())
 	log.Printf("CLUSTER_NAME set to %s from OCM.", viper.GetString(config.Cluster.Name))
@@ -106,6 +101,14 @@ var _ = ginkgo.SynchronizedBeforeSuite(func() []byte {
 
 	metadata.Instance.SetClusterName(cluster.Name())
 	metadata.Instance.SetClusterID(cluster.ID())
+
+	if len(viper.GetString(config.Addons.IDs)) > 0 {
+		err = installAddons()
+		events.HandleErrorWithEvents(err, events.InstallAddonsSuccessful, events.InstallAddonsFailed).ShouldNot(HaveOccurred(), "failed while installing addons")
+		if err != nil {
+			return []byte{}
+		}
+	}
 
 	var kubeconfigBytes []byte
 	if kubeconfigBytes, err = provider.ClusterKubeconfig(cluster.ID()); err != nil {
