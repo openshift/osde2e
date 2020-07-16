@@ -153,23 +153,23 @@ func run(cmd *cobra.Command, argv []string) error {
 }
 
 func createClusters(numClusters, batchSize, waitSecondsBetweenBatches int, successfulClustersChannel chan int) {
+	totalBatches := int(math.Ceil(float64(numClusters) / float64(batchSize)))
 	batchWg := &sync.WaitGroup{}
-	batchWg.Add(int(math.Ceil(float64(numClusters) / float64(batchSize))))
+	batchWg.Add(totalBatches)
 
-	for batchIteration := 0; batchIteration*batchSize < numClusters; batchIteration++ {
-		offset := batchIteration * batchSize
-		remainingClusters := numClusters - offset*batchSize
+	for batchIteration := 0; batchIteration < totalBatches; batchIteration++ {
+		remainingClusters := numClusters - batchIteration*batchSize
 		adjustedBatchSize := batchSize
 
 		if remainingClusters < batchSize {
 			adjustedBatchSize = remainingClusters
 		}
 
+		log.Printf("Provisioning %d clusters in batch %d", adjustedBatchSize, batchIteration)
 		go createBatch(adjustedBatchSize, batchWg, successfulClustersChannel)
 
-		remainingClustersAfterThisProvision := remainingClusters - adjustedBatchSize
-		if remainingClustersAfterThisProvision > batchSize {
-			log.Printf("%d clusters left to provision with batch sizes of %d, sleeping for %d seconds", remainingClustersAfterThisProvision, batchSize, waitSecondsBetweenBatches)
+		if remainingClusters > batchSize {
+			log.Printf("Sleeping for %d seconds before next batch", waitSecondsBetweenBatches)
 			time.Sleep(time.Second * time.Duration(waitSecondsBetweenBatches))
 		} else {
 			log.Printf("Provisioned final batch of %d clusters.\n", adjustedBatchSize)
@@ -202,6 +202,7 @@ func setupCluster(wg *sync.WaitGroup, successfulClustersChannel chan int) {
 			fmt.Printf("error while provisioning the cluster: %v\n", err)
 		}
 	} else {
+		log.Printf("Starting provisioning cluster %s.", cluster.ID())
 		outputFilePath := filepath.Join(viper.GetString(config.ReportDir), "clusters", cluster.ID()+".log")
 
 		outputFile, err := os.Create(outputFilePath)
