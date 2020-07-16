@@ -76,53 +76,57 @@ var _ = ginkgo.BeforeEach(func() {
 // Setup cluster before testing begins.
 var _ = ginkgo.SynchronizedBeforeSuite(func() []byte {
 	defer ginkgo.GinkgoRecover()
-	cluster, err := cluster.SetupCluster(nil)
-	events.HandleErrorWithEvents(err, events.InstallSuccessful, events.InstallFailed).ShouldNot(HaveOccurred(), "failed to setup cluster for testing")
-	if err != nil {
-		return []byte{}
-	}
 
-	viper.Set(config.Cluster.ID, cluster.ID())
-	log.Printf("CLUSTER_ID set to %s from OCM.", viper.GetString(config.Cluster.ID))
-
-	viper.Set(config.Cluster.Name, cluster.Name())
-	log.Printf("CLUSTER_NAME set to %s from OCM.", viper.GetString(config.Cluster.Name))
-
-	viper.Set(config.Cluster.Version, cluster.Version())
-	log.Printf("CLUSTER_VERSION set to %s from OCM.", viper.GetString(config.Cluster.Version))
-
-	viper.Set(config.CloudProvider.CloudProviderID, cluster.CloudProvider())
-	log.Printf("CLOUD_PROVIDER_ID set to %s from OCM.", viper.GetString(config.CloudProvider.CloudProviderID))
-
-	viper.Set(config.CloudProvider.Region, cluster.Region())
-	log.Printf("CLOUD_PROVIDER_REGION set to %s from OCM.", viper.GetString(config.CloudProvider.Region))
-
-	log.Printf("Found addons: %s", strings.Join(cluster.Addons(), ","))
-
-	metadata.Instance.SetClusterName(cluster.Name())
-	metadata.Instance.SetClusterID(cluster.ID())
-
-	if len(viper.GetString(config.Addons.IDs)) > 0 {
-		err = installAddons()
-		events.HandleErrorWithEvents(err, events.InstallAddonsSuccessful, events.InstallAddonsFailed).ShouldNot(HaveOccurred(), "failed while installing addons")
+	// Skip provisioning if we already have a kubeconfig
+	if viper.GetString(config.Kubeconfig.Contents) == "" {
+		cluster, err := cluster.SetupCluster(nil)
+		events.HandleErrorWithEvents(err, events.InstallSuccessful, events.InstallFailed).ShouldNot(HaveOccurred(), "failed to setup cluster for testing")
 		if err != nil {
 			return []byte{}
 		}
-	}
 
-	var kubeconfigBytes []byte
-	if kubeconfigBytes, err = provider.ClusterKubeconfig(cluster.ID()); err != nil {
-		events.HandleErrorWithEvents(err, events.InstallKubeconfigRetrievalSuccess, events.InstallKubeconfigRetrievalFailure).ShouldNot(HaveOccurred(), "failed while retrieve kubeconfig")
-		return []byte{}
-	}
-	viper.Set(config.Kubeconfig.Contents, string(kubeconfigBytes))
+		viper.Set(config.Cluster.ID, cluster.ID())
+		log.Printf("CLUSTER_ID set to %s from OCM.", viper.GetString(config.Cluster.ID))
 
-	if len(viper.GetString(config.Kubeconfig.Contents)) == 0 {
-		// Give the cluster some breathing room.
-		log.Println("OSD cluster installed. Sleeping for 600s.")
-		time.Sleep(600 * time.Second)
-	} else {
-		log.Printf("No kubeconfig contents found, but there should be some by now.")
+		viper.Set(config.Cluster.Name, cluster.Name())
+		log.Printf("CLUSTER_NAME set to %s from OCM.", viper.GetString(config.Cluster.Name))
+
+		viper.Set(config.Cluster.Version, cluster.Version())
+		log.Printf("CLUSTER_VERSION set to %s from OCM.", viper.GetString(config.Cluster.Version))
+
+		viper.Set(config.CloudProvider.CloudProviderID, cluster.CloudProvider())
+		log.Printf("CLOUD_PROVIDER_ID set to %s from OCM.", viper.GetString(config.CloudProvider.CloudProviderID))
+
+		viper.Set(config.CloudProvider.Region, cluster.Region())
+		log.Printf("CLOUD_PROVIDER_REGION set to %s from OCM.", viper.GetString(config.CloudProvider.Region))
+
+		log.Printf("Found addons: %s", strings.Join(cluster.Addons(), ","))
+
+		metadata.Instance.SetClusterName(cluster.Name())
+		metadata.Instance.SetClusterID(cluster.ID())
+
+		if len(viper.GetString(config.Addons.IDs)) > 0 {
+			err = installAddons()
+			events.HandleErrorWithEvents(err, events.InstallAddonsSuccessful, events.InstallAddonsFailed).ShouldNot(HaveOccurred(), "failed while installing addons")
+			if err != nil {
+				return []byte{}
+			}
+		}
+
+		var kubeconfigBytes []byte
+		if kubeconfigBytes, err = provider.ClusterKubeconfig(cluster.ID()); err != nil {
+			events.HandleErrorWithEvents(err, events.InstallKubeconfigRetrievalSuccess, events.InstallKubeconfigRetrievalFailure).ShouldNot(HaveOccurred(), "failed while retrieve kubeconfig")
+			return []byte{}
+		}
+		viper.Set(config.Kubeconfig.Contents, string(kubeconfigBytes))
+
+		if len(viper.GetString(config.Kubeconfig.Contents)) == 0 {
+			// Give the cluster some breathing room.
+			log.Println("OSD cluster installed. Sleeping for 600s.")
+			time.Sleep(600 * time.Second)
+		} else {
+			log.Printf("No kubeconfig contents found, but there should be some by now.")
+		}
 	}
 
 	return []byte{}
