@@ -240,6 +240,7 @@ func runGinkgoTests() error {
 	// Restore stdout and close the build log writer at the end of this function.
 	defer func() {
 		os.Stdout = stdout
+		log.SetOutput(stdout)
 		buildLogWriter.Close()
 	}()
 
