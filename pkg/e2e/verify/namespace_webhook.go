@@ -9,6 +9,7 @@ import (
 	"github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	userv1 "github.com/openshift/api/user/v1"
+	"github.com/openshift/osde2e/pkg/common/alert"
 	"github.com/openshift/osde2e/pkg/common/config"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -20,7 +21,9 @@ import (
 )
 
 var _ = ginkgo.Describe("[Suite: informing] [OSD] namespace validating webhook", func() {
-
+	ginkgo.BeforeEach(func() {
+		alert.RegisterGinkgoAlert(ginkgo.CurrentGinkgoTestDescription().TestText, "SD-SREP", "Matt Bargenquast", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+	})
 	const (
 		// Group to use for impersonation
 		DUMMY_GROUP = "random-group-name"

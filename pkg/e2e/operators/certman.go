@@ -7,6 +7,7 @@ import (
 	"github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	osv1 "github.com/openshift/api/config/v1"
+	"github.com/openshift/osde2e/pkg/common/alert"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/spf13/viper"
@@ -17,6 +18,9 @@ import (
 
 var _ = ginkgo.Describe("[Suite: operators] [OSD] Certman Operator", func() {
 	h := helper.New()
+	ginkgo.BeforeEach(func() {
+		alert.RegisterGinkgoAlert(ginkgo.CurrentGinkgoTestDescription().TestText, "SD-SREP", "Christoph Blecker", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+	})
 	ginkgo.Context("certificate secret should be applied when cluster installed", func() {
 		var secretName string
 		var secrets *v1.SecretList

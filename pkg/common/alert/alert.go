@@ -132,6 +132,21 @@ func (ma MetricAlert) QuerySafeName() string {
 
 }
 
+// RegisterGinkgoAlert will retrieve the ginkgo test info and register an alert given
+// the supplied arguments
+func RegisterGinkgoAlert(test, team, contact, slack, email string, threshold int) {
+	ma := GetMetricAlerts()
+	testAlert := MetricAlert{
+		Name:             test,
+		TeamOwner:        team,
+		PrimaryContact:   contact,
+		SlackChannel:     slack,
+		Email:            email,
+		FailureThreshold: 4,
+	}
+	ma.AddAlert(testAlert)
+}
+
 func sendSlackMessage(channel, message string) error {
 	slackAPI := slack.New(viper.GetString(config.Alert.SlackAPIToken))
 	var slackChannel slack.Channel

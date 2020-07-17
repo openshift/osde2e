@@ -10,6 +10,7 @@ import (
 	"github.com/prometheus/common/log"
 	"github.com/spf13/viper"
 
+	"github.com/openshift/osde2e/pkg/common/alert"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/providers"
@@ -41,6 +42,9 @@ func init() {
 
 var _ = ginkgo.Describe("[Suite: e2e] Cluster state", func() {
 	defer ginkgo.GinkgoRecover()
+	ginkgo.BeforeEach(func() {
+		alert.RegisterGinkgoAlert(ginkgo.CurrentGinkgoTestDescription().TestText, "SD-CICD", "Michael Wilson", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+	})
 	h := helper.New()
 
 	alertsTimeoutInSeconds := 900

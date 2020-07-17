@@ -2,10 +2,14 @@ package operators
 
 import (
 	"github.com/onsi/ginkgo"
+	"github.com/openshift/osde2e/pkg/common/alert"
 	"github.com/openshift/osde2e/pkg/common/helper"
 )
 
 var _ = ginkgo.Describe("[Suite: operators] [OSD] Configure AlertManager Operator", func() {
+	ginkgo.BeforeEach(func() {
+		alert.RegisterGinkgoAlert(ginkgo.CurrentGinkgoTestDescription().TestText, "SD-SREP", "Christopher Collins", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+	})
 	var operatorName = "configure-alertmanager-operator"
 	var operatorNamespace string = "openshift-monitoring"
 	var operatorLockFile string = "configure-alertmanager-operator-lock"
@@ -37,9 +41,7 @@ var _ = ginkgo.Describe("[Suite: operators] [OSD] Configure AlertManager Operato
 	checkClusterRoleBindings(h, clusterRoleBindings)
 	checkRole(h, operatorNamespace, roles)
 	checkRoleBindings(h, operatorNamespace, roleBindings)
-})
 
-var _ = ginkgo.Describe("[Suite: informing] [OSD] Upgrade Configure AlertManager Operator", func() {
 	checkUpgrade(helper.New(), "openshift-monitoring", "configure-alertmanager-operator",
 		"configure-alertmanager-operator.v0.1.171-dba3c73",
 	)

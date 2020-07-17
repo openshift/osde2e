@@ -5,6 +5,7 @@ import (
 
 	"github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"github.com/openshift/osde2e/pkg/common/alert"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/spf13/viper"
@@ -13,6 +14,9 @@ import (
 )
 
 var _ = ginkgo.Describe("[Suite: informing] [OSD] dedicated-admin permissions", func() {
+	ginkgo.BeforeEach(func() {
+		alert.RegisterGinkgoAlert(ginkgo.CurrentGinkgoTestDescription().TestText, "SD-SREP", "Matt Bargenquast", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+	})
 	ginkgo.Context("dedicated-admin group permissions", func() {
 
 		// setup helper

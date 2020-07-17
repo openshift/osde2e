@@ -12,6 +12,7 @@ import (
 	"github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
+	"github.com/openshift/osde2e/pkg/common/alert"
 	"github.com/openshift/osde2e/pkg/common/cluster/healthchecks"
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -25,6 +26,9 @@ var workloadName = filepath.Base(testDir)
 
 var _ = ginkgo.Describe("[Suite: e2e] Workload ("+workloadName+")", func() {
 	defer ginkgo.GinkgoRecover()
+	ginkgo.BeforeEach(func() {
+		alert.RegisterGinkgoAlert(ginkgo.CurrentGinkgoTestDescription().TestText, "SD-CICD", "Jeffrey Sica", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+	})
 	// setup helper
 	h := helper.New()
 
