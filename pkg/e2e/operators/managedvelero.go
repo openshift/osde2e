@@ -20,22 +20,21 @@ var _ = ginkgo.Describe("[Suite: operators] [OSD] Managed Velero Operator", func
 	var operatorNamespace string = "openshift-velero"
 	var operatorLockFile string = "managed-velero-operator-lock"
 	var defaultDesiredReplicas int32 = 1
-	var clusterRoles = []string{
-		"managed-velero-operator",
-	}
-	var clusterRoleBindings = []string{
-		"managed-velero-operator",
-		"velero",
-	}
 	h := helper.New()
+
+	// NOTE: As this is deployed by OLM now, RBAC objects (ClusterRoles, ClusterRoleBindings, and the primary
+	// RoleBinding) have random-ish names like:
+	// managed-velero-operator.v0.2.196-2b128e8-5df7c76948
+	//
+	// Test need to incorporate a regex-like test?
+
 	checkConfigMapLockfile(h, operatorNamespace, operatorLockFile)
 	checkDeployment(h, operatorNamespace, operatorName, defaultDesiredReplicas)
 	checkDeployment(h, operatorNamespace, "velero", defaultDesiredReplicas)
-	checkClusterRoles(h, clusterRoles)
-	checkClusterRoleBindings(h, clusterRoleBindings)
+	checkRole(h, "kube-system", []string{"cluster-config-v1-reader"})
 	checkRoleBindings(h,
-		operatorNamespace,
-		[]string{"managed-velero-operator"})
+		"kube-system",
+		[]string{"managed-velero-operator-cluster-config-v1-reader"})
 	checkVeleroBackups(h)
 })
 
