@@ -19,6 +19,7 @@ import (
 	"github.com/openshift/osde2e/pkg/common/util"
 	"github.com/spf13/viper"
 	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
@@ -179,6 +180,12 @@ func PollClusterHealth(clusterID string, logger *log.Logger) (status bool, err e
 		return false, nil
 	}
 
+	dynamicClient, err := dynamic.NewForConfig(restConfig)
+	if err != nil {
+		logger.Printf("Error generating Dynamic Clientset: %v\n", err)
+		return false, nil
+	}
+
 	clusterHealthy := true
 
 	var healthErr *multierror.Error
@@ -192,6 +199,11 @@ func PollClusterHealth(clusterID string, logger *log.Logger) (status bool, err e
 		}
 
 		if check, err := healthchecks.CheckNodeHealth(kubeClient.CoreV1(), logger); !check || err != nil {
+			healthErr = multierror.Append(healthErr, err)
+			clusterHealthy = false
+		}
+
+		if check, err := healthchecks.CheckMachinesObjectState(dynamicClient, logger); !check || err != nil {
 			healthErr = multierror.Append(healthErr, err)
 			clusterHealthy = false
 		}
