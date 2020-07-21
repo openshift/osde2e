@@ -27,7 +27,6 @@ var _ = ginkgo.Describe("[Suite: informing] [OSD] OCM", func() {
 			Expect(metrics.Nodes().Compute()).NotTo(BeZero())
 			Expect(metrics.Nodes().Infra()).NotTo(BeZero())
 			Expect(metrics.Nodes().Master()).NotTo(BeZero())
-			Expect(metrics.ComputeNodesCPU().Total().Empty()).NotTo(BeFalse())
 			Expect(metrics.ComputeNodesSockets().Empty()).NotTo(BeFalse())
 
 		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
