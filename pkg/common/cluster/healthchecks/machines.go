@@ -34,7 +34,7 @@ func CheckMachinesObjectState(dynamicClient dynamic.Interface, logger *log.Logge
 			return false, fmt.Errorf("Error casting object: %s", err.Error())
 		}
 
-		if machine.Status.Phase != nil && *machine.Status.Phase != runningPhase {
+		if machine.Status.Phase == nil || *machine.Status.Phase != runningPhase {
 			logger.Printf("machine %s not ready", machine.Name)
 			return false, nil
 		}
