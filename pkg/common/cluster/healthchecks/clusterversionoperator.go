@@ -50,8 +50,7 @@ func CheckMachinesObjectState(dynamicClient dynamic.Interface, logger *log.Logge
 	if err != nil {
 		return false, err
 	}
-	var runningPhase string
-	runningPhase = "Running"
+	var runningPhase string = "Running"
 
 	for _, item := range obj.Items {
 		var machine machineapi.Machine
