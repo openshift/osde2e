@@ -136,12 +136,15 @@ func (o *OCMProvider) LaunchCluster(clusterName string) (string, error) {
 	return resp.Body().ID(), nil
 }
 
+// GenerateProperties will generate a set of properties to assign to a cluster.
 func (o *OCMProvider) GenerateProperties() (map[string]string, error) {
 	var username string
 
 	// If JobID is not equal to -1, then we're running on prow.
 	if viper.GetInt(config.JobID) != -1 {
 		username = "prow"
+	} else if viper.GetString(UserOverride) != "" {
+		username = viper.GetString(UserOverride)
 	} else {
 
 		user, err := user.Current()
