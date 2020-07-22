@@ -20,6 +20,9 @@ const (
 
 	// ComputeMachineType is the specific cloud machine type to use for compute nodes.
 	ComputeMachineType = "ocm.computeMachineType"
+
+	// UserOverride will hard set the user assigned to the "owner" tag by the OCM provider.
+	UserOverride = "ocm.userOverride"
 )
 
 func init() {
@@ -38,4 +41,6 @@ func init() {
 
 	viper.SetDefault(ComputeMachineType, "")
 	viper.BindEnv(ComputeMachineType, "OCM_COMPUTE_MACHINE_TYPE")
+
+	viper.BindEnv(UserOverride, "OCM_USER_OVERRIDE")
 }
