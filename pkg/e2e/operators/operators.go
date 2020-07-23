@@ -18,6 +18,7 @@ import (
 	"github.com/openshift/osde2e/pkg/common/helper"
 
 	appsv1 "k8s.io/api/apps/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	operatorv1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
@@ -196,20 +197,10 @@ func checkUpgrade(h *helper.H, subNamespace string, subName string, previousCSV 
 			err = h.Operator().OperatorsV1alpha1().ClusterServiceVersions(subNamespace).Delete(context.TODO(), startingCSV, metav1.DeleteOptions{})
 			Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("failed trying to delete ClusterServiceVersion %s", startingCSV))
 
-			err = wait.PollImmediate(10*time.Second, 5*time.Minute, func() (bool, error) {
-				log.Printf("Checking to see if %s/%s has been deleted... ", subNamespace, subName)
-				oldSub, err := h.Operator().OperatorsV1alpha1().Subscriptions(subNamespace).Get(context.TODO(), subName, metav1.GetOptions{})
-				if oldSub.GetName() != "" {
-					log.Printf("Existing subscription found for %s/%s", subNamespace, subName)
-					log.Printf("%v", oldSub)
-					return false, nil
-				}
-				if err != nil {
-					return false, err
-				}
-				return true, nil
-			})
-			Expect(err.Error()).To(ContainSubstring("not found"))
+			Eventually(func() bool {
+				_, err := h.Operator().OperatorsV1alpha1().InstallPlans(subNamespace).Get(context.TODO(), sub.Status.Install.Name, metav1.GetOptions{})
+				return apierrors.IsNotFound(err)
+			}, 5*time.Minute, 10*time.Second).Should(BeTrue(), "installplan never garbage collected")
 
 			// Create subscription to the previous version
 			sub, err = h.Operator().OperatorsV1alpha1().Subscriptions(subNamespace).Create(context.TODO(), &operatorv1.Subscription{
