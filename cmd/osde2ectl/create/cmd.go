@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/openshift/osde2e/cmd/osde2e/common"
@@ -219,13 +220,21 @@ func setupCluster(wg *sync.WaitGroup, successfulClustersChannel chan int) {
 
 		go func() {
 			timeout := make(chan bool)
+			var shouldSendTimeout int32 = 1
+
+			defer func() {
+				atomic.StoreInt32(&shouldSendTimeout, 0)
+				close(timeout)
+			}()
 
 			for {
 
 				go func() {
-					defer close(timeout)
 					time.Sleep(time.Minute * time.Duration(5))
-					timeout <- true
+
+					if atomic.LoadInt32(&shouldSendTimeout) == 1 {
+						timeout <- true
+					}
 				}()
 
 				select {
