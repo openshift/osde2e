@@ -48,7 +48,7 @@ var _ = ginkgo.Describe("[Suite: operators] [OSD] RBAC Dedicated Admins SubjectP
 	checkSubjectPermissions(h, "dedicated-admins")
 })
 
-var _ = ginkgo.Describe("[Suite: operators] [OSD] RBAC Upgrade RBAC Permissions Operator", func() {
+var _ = ginkgo.Describe("[Suite: informing] [OSD] RBAC Permissions Operator", func() {
 	ginkgo.BeforeEach(func() {
 		alert.RegisterGinkgoAlert(ginkgo.CurrentGinkgoTestDescription().TestText, "SD-SREP", "Matt Bargenquast", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
 	})

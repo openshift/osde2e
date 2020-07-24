@@ -35,7 +35,7 @@ var _ = ginkgo.Describe("[Suite: operators] [OSD] Splunk Forwarder Operator", fu
 	checkClusterRoles(h, clusterRoles)
 })
 
-var _ = ginkgo.Describe("[Suite: operators] [OSD] Splunk Forwarder Operator Upgrade", func() {
+var _ = ginkgo.Describe("[Suite: informing] [OSD] Splunk Forwarder Operator", func() {
 	ginkgo.BeforeEach(func() {
 		alert.RegisterGinkgoAlert(ginkgo.CurrentGinkgoTestDescription().TestText, "SD-SREP", "Matt Bargenquast", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
 	})

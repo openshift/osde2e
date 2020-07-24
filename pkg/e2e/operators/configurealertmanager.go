@@ -41,7 +41,12 @@ var _ = ginkgo.Describe("[Suite: operators] [OSD] Configure AlertManager Operato
 	checkClusterRoleBindings(h, clusterRoleBindings)
 	checkRole(h, operatorNamespace, roles)
 	checkRoleBindings(h, operatorNamespace, roleBindings)
+})
 
+var _ = ginkgo.Describe("[Suite: informing] [OSD] Configure AlertManager Operator", func() {
+	ginkgo.BeforeEach(func() {
+		alert.RegisterGinkgoAlert(ginkgo.CurrentGinkgoTestDescription().TestText, "SD-SREP", "Matt Bargenquast", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+	})
 	checkUpgrade(helper.New(), "openshift-monitoring", "configure-alertmanager-operator",
 		"configure-alertmanager-operator.v0.1.171-dba3c73",
 	)
