@@ -219,11 +219,11 @@ func setupCluster(wg *sync.WaitGroup, successfulClustersChannel chan int) {
 
 		go func() {
 			timeout := make(chan bool)
-			defer close(timeout)
 
 			for {
 
 				go func() {
+					defer close(timeout)
 					time.Sleep(time.Minute * time.Duration(5))
 					timeout <- true
 				}()
