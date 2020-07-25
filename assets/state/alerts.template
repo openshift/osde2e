@@ -3,7 +3,7 @@ get_alerts() {
     curl -G -s -H "Authorization: Bearer $(oc whoami --show-token)" --data-urlencode 'query=ALERTS{alertstate!="pending",alertname!="Watchdog"}' "https://$(oc get route -n openshift-monitoring prometheus-k8s -o jsonpath='{.spec.host}')/api/v1/query" > "$ALERTS_FILE"
 }
 
-NUM_RETRIES=3
+NUM_RETRIES=20
 i=0
 
 while [ "$i" -lt "$NUM_RETRIES" ]
@@ -11,7 +11,7 @@ do
     if ! [ -s "$ALERTS_FILE" ]
     then
         echo "Attempt number $i to get alert results..."
-        sleep 5
+        sleep 30
         get_alerts
     fi
     i=$(($i+1))
