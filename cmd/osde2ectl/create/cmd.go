@@ -141,7 +141,7 @@ func run(cmd *cobra.Command, argv []string) error {
 		}
 	}
 
-	createClusters(args.numberOfClusters, batchSize, args.secondsBetweenBatches, successfulClustersChannel)
+	go createClusters(args.numberOfClusters, batchSize, args.secondsBetweenBatches, successfulClustersChannel)
 
 	numSuccessfulClusters := 0
 	for successfulCluster := range successfulClustersChannel {
@@ -167,7 +167,7 @@ func createClusters(numClusters, batchSize, waitSecondsBetweenBatches int, succe
 		}
 
 		log.Printf("Provisioning %d clusters in batch %d", adjustedBatchSize, batchIteration)
-		go createBatch(adjustedBatchSize, batchWg, successfulClustersChannel)
+		go createBatch(batchIteration, adjustedBatchSize, batchWg, successfulClustersChannel)
 
 		if remainingClusters > batchSize {
 			log.Printf("Sleeping for %d seconds before next batch", waitSecondsBetweenBatches)
@@ -176,11 +176,13 @@ func createClusters(numClusters, batchSize, waitSecondsBetweenBatches int, succe
 			log.Printf("Provisioned final batch of %d clusters.\n", adjustedBatchSize)
 		}
 	}
+
+	log.Printf("Waiting for all batches.")
 	batchWg.Wait()
 	close(successfulClustersChannel)
 }
 
-func createBatch(numClustersInBatch int, batchWg *sync.WaitGroup, successfulClustersChannel chan int) {
+func createBatch(batchIteration int, numClustersInBatch int, batchWg *sync.WaitGroup, successfulClustersChannel chan int) {
 	wg := &sync.WaitGroup{}
 	wg.Add(numClustersInBatch)
 
@@ -189,6 +191,7 @@ func createBatch(numClustersInBatch int, batchWg *sync.WaitGroup, successfulClus
 	}
 
 	wg.Wait()
+	log.Printf("Finished waiting for batch %d.", batchIteration)
 	batchWg.Done()
 }
 
