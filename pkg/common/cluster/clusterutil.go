@@ -232,16 +232,24 @@ func PollClusterHealth(clusterID string, logger *log.Logger) (status bool, err e
 func getRestConfig(provider spi.Provider, clusterID string) (*rest.Config, error) {
 	var err error
 
+	var kubeconfigBytes []byte
 	kubeconfigContents := viper.GetString(config.Kubeconfig.Contents)
-	if len(kubeconfigContents) == 0 {
-		var kubeconfigBytes []byte
+	kubeconfigPath := viper.GetString(config.Kubeconfig.Path)
+	if len(kubeconfigContents) == 0 && len(kubeconfigPath) == 0 {
 		if kubeconfigBytes, err = provider.ClusterKubeconfig(clusterID); err != nil {
 			return nil, fmt.Errorf("could not get kubeconfig for cluster: %v", err)
 		}
-		viper.Set(config.Kubeconfig.Contents, string(kubeconfigBytes))
+	} else if len(kubeconfigPath) != 0 {
+		kubeconfigPath := viper.GetString(config.Kubeconfig.Path)
+		kubeconfigBytes, err = ioutil.ReadFile(kubeconfigPath)
+		if err != nil {
+			return nil, fmt.Errorf("failed reading '%s' which has been set as the TEST_KUBECONFIG: %v", kubeconfigPath, err)
+		}
+	} else {
+		kubeconfigBytes = []byte(kubeconfigContents)
 	}
 
-	restConfig, err := clientcmd.RESTConfigFromKubeConfig([]byte(kubeconfigContents))
+	restConfig, err := clientcmd.RESTConfigFromKubeConfig(kubeconfigBytes)
 	if err != nil {
 		return nil, fmt.Errorf("error generating rest config: %v", err)
 	}
@@ -320,11 +328,10 @@ func useKubeconfig(logger *log.Logger) (err error) {
 	}
 
 	kubeconfigPath := viper.GetString(config.Kubeconfig.Path)
-	kubeconfigBytes, err := ioutil.ReadFile(kubeconfigPath)
+	_, err = ioutil.ReadFile(kubeconfigPath)
 	if err != nil {
 		return fmt.Errorf("failed reading '%s' which has been set as the TEST_KUBECONFIG: %v", kubeconfigPath, err)
 	}
-	viper.Set(config.Kubeconfig.Contents, string(kubeconfigBytes))
 	logger.Printf("Using a set TEST_KUBECONFIG of '%s' for Origin API calls.", kubeconfigPath)
 	return nil
 }
