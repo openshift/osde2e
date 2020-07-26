@@ -121,8 +121,6 @@ func run(cmd *cobra.Command, argv []string) error {
 		viper.Set(config.Suffix, util.RandomStr(3))
 	}
 
-	successfulClustersChannel := make(chan int)
-
 	batchSize := args.batchSize
 	if batchSize <= 0 {
 		log.Printf("Provisioning %d clusters all at once.", args.numberOfClusters)
@@ -141,19 +139,15 @@ func run(cmd *cobra.Command, argv []string) error {
 		}
 	}
 
-	go createClusters(args.numberOfClusters, batchSize, args.secondsBetweenBatches, successfulClustersChannel)
+	var successfulClustersCounter int32 = 0
+	createClusters(args.numberOfClusters, batchSize, args.secondsBetweenBatches, &successfulClustersCounter)
 
-	numSuccessfulClusters := 0
-	for successfulCluster := range successfulClustersChannel {
-		numSuccessfulClusters = numSuccessfulClusters + successfulCluster
-	}
-
-	fmt.Printf("Successfully provisioned %d/%d clusters.\n", numSuccessfulClusters, args.numberOfClusters)
+	fmt.Printf("Successfully provisioned %d/%d clusters.\n", successfulClustersCounter, args.numberOfClusters)
 
 	return nil
 }
 
-func createClusters(numClusters, batchSize, waitSecondsBetweenBatches int, successfulClustersChannel chan int) {
+func createClusters(numClusters, batchSize, waitSecondsBetweenBatches int, successfulClustersCounter *int32) {
 	totalBatches := int(math.Ceil(float64(numClusters) / float64(batchSize)))
 	batchWg := &sync.WaitGroup{}
 	batchWg.Add(totalBatches)
@@ -167,7 +161,7 @@ func createClusters(numClusters, batchSize, waitSecondsBetweenBatches int, succe
 		}
 
 		log.Printf("Provisioning %d clusters in batch %d", adjustedBatchSize, batchIteration)
-		go createBatch(batchIteration, adjustedBatchSize, batchWg, successfulClustersChannel)
+		go createBatch(batchIteration, adjustedBatchSize, batchWg, successfulClustersCounter)
 
 		if remainingClusters > batchSize {
 			log.Printf("Sleeping for %d seconds before next batch", waitSecondsBetweenBatches)
@@ -179,15 +173,14 @@ func createClusters(numClusters, batchSize, waitSecondsBetweenBatches int, succe
 
 	log.Printf("Waiting for all batches.")
 	batchWg.Wait()
-	close(successfulClustersChannel)
 }
 
-func createBatch(batchIteration int, numClustersInBatch int, batchWg *sync.WaitGroup, successfulClustersChannel chan int) {
+func createBatch(batchIteration int, numClustersInBatch int, batchWg *sync.WaitGroup, successfulClustersCounter *int32) {
 	wg := &sync.WaitGroup{}
 	wg.Add(numClustersInBatch)
 
 	for i := 0; i < numClustersInBatch; i++ {
-		go setupCluster(wg, successfulClustersChannel)
+		go setupCluster(wg, successfulClustersCounter)
 	}
 
 	wg.Wait()
@@ -195,7 +188,7 @@ func createBatch(batchIteration int, numClustersInBatch int, batchWg *sync.WaitG
 	batchWg.Done()
 }
 
-func setupCluster(wg *sync.WaitGroup, successfulClustersChannel chan int) {
+func setupCluster(wg *sync.WaitGroup, successfulClustersCounter *int32) {
 	defer wg.Done()
 	cluster, err := clusterutil.ProvisionCluster(discardLogger)
 
@@ -263,7 +256,8 @@ func setupCluster(wg *sync.WaitGroup, successfulClustersChannel chan int) {
 			fmt.Printf("Cluster %s never became healthy.\n", cluster.ID())
 		} else {
 			fmt.Printf("Cluster %s is healthy.\n", cluster.ID())
-			successfulClustersChannel <- 1
+
+			atomic.AddInt32(successfulClustersCounter, 1)
 		}
 	}
 }
