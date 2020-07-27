@@ -16,7 +16,6 @@ import (
 	clusterutil "github.com/openshift/osde2e/pkg/common/cluster"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/providers/ocmprovider"
-	"github.com/openshift/osde2e/pkg/common/util"
 	"github.com/openshift/osde2e/pkg/common/versions"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -115,10 +114,6 @@ func run(cmd *cobra.Command, argv []string) error {
 	// configure cluster and upgrade versions
 	if err := versions.ChooseVersions(); err != nil {
 		return fmt.Errorf("failed to configure versions: %v", err)
-	}
-
-	if viper.GetString(config.Suffix) == "" {
-		viper.Set(config.Suffix, util.RandomStr(3))
 	}
 
 	batchSize := args.batchSize
