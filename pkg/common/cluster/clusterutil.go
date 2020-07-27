@@ -340,5 +340,12 @@ func useKubeconfig(logger *log.Logger) (err error) {
 func clusterName() string {
 	vers := strings.TrimPrefix(viper.GetString(config.Cluster.Version), util.VersionPrefix)
 	safeVersion := strings.Replace(vers, ".", "-", -1)
-	return "ci-cluster-" + safeVersion + "-" + viper.GetString(config.Suffix)
+
+	suffix := viper.GetString(config.Suffix)
+
+	if suffix == "" {
+		suffix = util.RandomStr(3)
+	}
+
+	return "ci-cluster-" + safeVersion + "-" + suffix
 }
