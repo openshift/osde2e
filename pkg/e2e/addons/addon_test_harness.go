@@ -35,8 +35,8 @@ var _ = ginkgo.Describe("[Suite: addons] Addon Test Harness", func() {
 
 	addonTimeoutInSeconds := 3600
 	ginkgo.It("should run until completion", func() {
-		// We don't know what a test harness may need so let's give them everything.
-		h.SetServiceAccount("system:serviceaccount:%s:cluster-admin")
+		// By default, the TestUser should run as cluster-admin. However it can be overridden.
+		h.SetServiceAccount(viper.GetString(config.Addons.TestUser))
 		addonTestHarnesses := strings.Split(viper.GetString(config.Addons.TestHarnesses), ",")
 		for _, harness := range addonTestHarnesses {
 			// configure tests

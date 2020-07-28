@@ -240,10 +240,17 @@ var Addons = struct {
 
 	// TestHarnesses is a comma separated list of container images that will test the addon
 	TestHarnesses string
+
+	// TestUser is the OpenShift user that the tests will run as
+	// If "%s" is detected in the TestUser string, it will evaluate that as the project namespace
+	// Example: "system:serviceaccount:%s:dedicated-admin"
+	// Evaluated: "system:serviceaccount:osde2e-abc123:dedicated-admin"
+	TestUser string
 }{
 	IDsAtCreation: "addons.idsAtCreation",
 	IDs:           "ids",
 	TestHarnesses: "testHarnesses",
+	TestUser:      "addons.testUser",
 }
 
 // Scale config keys.
@@ -437,6 +444,9 @@ func init() {
 	viper.BindEnv(Addons.IDs, "ADDON_IDS")
 
 	viper.BindEnv(Addons.TestHarnesses, "ADDON_TEST_HARNESSES")
+
+	viper.BindEnv(Addons.TestUser, "ADDON_TEST_USER")
+	viper.SetDefault(Addons.TestUser, "system:serviceaccount:%s:cluster-admin")
 
 	// ----- Scale -----
 	viper.SetDefault(Scale.WorkloadsRepository, "https://github.com/openshift-scale/workloads")
