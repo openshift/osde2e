@@ -16,7 +16,9 @@ The [Prow Operator Test] is a good example of a [Basic operator test]. It verifi
 
 Once a test harness has been written, an OSDe2e test needs to be configured to install the desired add-on, then run the test harness against it. This is done by creating a PR ([example PR]) against the [openshift/release] repo. 
 
-Regarding addon testing, OSDe2e has two primary config options: `ADDON_IDS` and `ADDON_TEST_HARNESSES`. Both of these are comma-delimited lists when supplied by environment variables, or YAML arrays when using the YAML config. `ADDON_IDS` informs OSDe2e which addons to install once a cluster is healthy. `ADDON_TEST_HARNESSES` is a list of addon test containers to run as pods within the test cluster. 
+Regarding addon testing, OSDe2e has three primary config options: `ADDON_IDS`, `ADDON_TEST_HARNESSES`, and `ADDON_TEST_USER`. The first two of these are comma-delimited lists when supplied by environment variables, or YAML arrays when using the YAML config. `ADDON_IDS` informs OSDe2e which addons to install once a cluster is healthy. `ADDON_TEST_HARNESSES` is a list of addon test containers to run as pods within the test cluster. 
+
+`ADDON_TEST_USER` will specify the in-cluster user that the test harness containers will run as. It allows for a single wildcard (`%s`) which will automatically be evaluated as the OpenShift Project the test harness is created under.
 
 ```
 env:
@@ -24,6 +26,8 @@ env:
   value: prow-operator
 - name: ADDON_TEST_HARNESSES
   value: quay.io/miwilson/prow-operator-test-harness
+- name: ADDON_TEST_USER
+  value: system:serviceaccount:%s:cluster-admin
 ```
 
 ### **Getting an OCM refresh token for your tests**
