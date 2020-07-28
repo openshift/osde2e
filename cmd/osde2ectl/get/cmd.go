@@ -160,18 +160,21 @@ func run(cmd *cobra.Command, argv []string) error {
 			return fmt.Errorf("could not write KubeConfig into a file: %v", err)
 		}
 		fmt.Println("Successfully downloaded the kubeconfig into -", filePath, ". Run the command \"export TEST_KUBECONFIG=", filePath, "\"")
-		if args.hours == 0 && args.minutes == 0 && timediff <= 30 {
-			fmt.Println("Cluster expiry time is less than 30 minutes. Extending expiry time by 30 minutes.")
-			args.minutes = 30
-			if err = provider.ExtendExpiry(clusterID, 0, 30, 0); err != nil {
-				return fmt.Errorf("error extending cluster expiry time: %s", err.Error())
+		if args.hours == 0 && args.minutes == 0 {
+			if timediff <= 30 {
+				fmt.Println("Cluster expiry time is less than 30 minutes. Extending expiry time by 30 minutes.")
+				args.minutes = 30
+				if err = provider.ExtendExpiry(clusterID, 0, 30, 0); err != nil {
+					return fmt.Errorf("error extending cluster expiry time: %s", err.Error())
+				}
+				fmt.Println("Extended cluster expiry time by :", args.hours, "h ", args.minutes, "m")
 			}
 		} else {
 			if err = provider.ExtendExpiry(clusterID, args.hours, args.minutes, 0); err != nil {
 				return fmt.Errorf("error extending cluster expiry time: %s", err.Error())
 			}
+			fmt.Println("Extended cluster expiry time by :", args.hours, "h ", args.minutes, "m")
 		}
-		fmt.Println("Extended cluster expiry time by :", args.hours, "h ", args.minutes, "m")
 	}
 
 	return nil
