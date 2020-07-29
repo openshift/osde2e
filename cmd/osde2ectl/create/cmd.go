@@ -211,21 +211,12 @@ func setupCluster(wg *sync.WaitGroup, successfulClustersCounter *int32) {
 
 		go func() {
 			timeout := make(chan bool)
-			var shouldSendTimeout int32 = 1
-
-			defer func() {
-				atomic.StoreInt32(&shouldSendTimeout, 0)
-				close(timeout)
-			}()
 
 			for {
 
 				go func() {
 					time.Sleep(time.Minute * time.Duration(5))
-
-					if atomic.LoadInt32(&shouldSendTimeout) == 1 {
-						timeout <- true
-					}
+					timeout <- true
 				}()
 
 				select {
@@ -245,7 +236,6 @@ func setupCluster(wg *sync.WaitGroup, successfulClustersCounter *int32) {
 		err = clusterutil.WaitForClusterReady(cluster.ID(), logger)
 
 		terminate <- true
-		close(terminate)
 
 		if err != nil {
 			fmt.Printf("Cluster %s never became healthy.\n", cluster.ID())
