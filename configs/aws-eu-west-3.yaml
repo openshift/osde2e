@@ -1,0 +1,3 @@
+cloudProvider:
+  providerId: aws
+  region: eu-west-3
