@@ -459,6 +459,7 @@ func cleanupAfterE2E(h *helper.H) (errors []error) {
 	}
 
 	// write results to disk
+	log.Println("Writing cluster state results")
 	h.WriteResults(stateResults)
 
 	clusterID := viper.GetString(config.Cluster.ID)
@@ -485,10 +486,15 @@ func cleanupAfterE2E(h *helper.H) (errors []error) {
 		log.Print("No cluster ID set. Skipping OCM Queries.")
 	}
 
-	// We need to clean up our helper tests manually.
-	if !viper.GetBool(config.DryRun) {
-		h.Cleanup()
+	// Do any addon cleanup if configured
+	log.Printf("Addon cleanup: %v", viper.GetBool(config.Addons.RunCleanup))
+	if viper.GetBool(config.Addons.RunCleanup) {
+		log.Println("Running addon cleanup...")
+		h.RunAddonTests("addon-cleanup", []string{"cleanup"})
 	}
+
+	// We need to clean up our helper tests manually.
+	h.Cleanup()
 
 	return errors
 }

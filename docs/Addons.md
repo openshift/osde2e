@@ -20,6 +20,8 @@ Regarding addon testing, OSDe2e has three primary config options: `ADDON_IDS`, `
 
 `ADDON_TEST_USER` will specify the in-cluster user that the test harness containers will run as. It allows for a single wildcard (`%s`) which will automatically be evaluated as the OpenShift Project the test harness is created under.
 
+If your addon test creates or affects anything outside of the OSD cluster lifecycle, a separate cleanup action is required. If `ADDON_RUN_CLEANUP` is set to `true`, OSDe2e will run the test harness a **second time** passing the argument `cleanup` to the container.
+
 ```
 env:
 - name: ADDON_IDS
