@@ -39,6 +39,7 @@ type JobReport struct {
 	Name         string   `json:"name"`
 	Viable       bool     `json:"viable"`
 	Versions     []string `json:"versions"`
+	PassRate     float64  `json:"passRate"`
 	FailingTests []string `json:"failingTests,omitempty"`
 }
 

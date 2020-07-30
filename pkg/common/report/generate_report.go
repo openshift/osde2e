@@ -1,26 +1,15 @@
 package report
 
 import (
-	"context"
 	"fmt"
-	"log"
 	"regexp"
 	"sort"
 	"strings"
 	"time"
 
 	"github.com/openshift/osde2e/pkg/common/config"
-	"github.com/openshift/osde2e/pkg/common/prometheus"
+	"github.com/openshift/osde2e/pkg/metrics"
 	"github.com/spf13/viper"
-
-	v1 "github.com/prometheus/client_golang/api/prometheus/v1"
-	"github.com/prometheus/common/model"
-)
-
-const (
-	gateQuery = `count by (job, install_version, suite, testname, result) (cicd_jUnitResult)`
-
-	stepDurationInHours = 4
 )
 
 type reportData struct {
@@ -31,21 +20,14 @@ type reportData struct {
 // GenerateReport generates a weather report.
 func GenerateReport() (WeatherReport, error) {
 	// Range for the queries issued to Prometheus
-	queryRange := v1.Range{
-		Start: time.Now().Add(-time.Hour * (viper.GetDuration(config.Weather.StartOfTimeWindowInHours))),
-		End:   time.Now(),
-		Step:  stepDurationInHours * time.Hour,
-	}
+	end := time.Now()
+	start := end.Add(-time.Hour * (viper.GetDuration(config.Weather.StartOfTimeWindowInHours)))
 
-	client, err := prometheus.CreateClient()
+	client, err := metrics.NewClient()
 
 	if err != nil {
 		return WeatherReport{}, fmt.Errorf("error while creating client: %v", err)
 	}
-
-	promAPI := v1.NewAPI(client)
-	context, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
 
 	// Assemble the allowlist regexes. We'll only produce a report based on these regexes.
 	allowlistRegexes := []*regexp.Regexp{}
@@ -54,60 +36,58 @@ func GenerateReport() (WeatherReport, error) {
 		allowlistRegexes = append(allowlistRegexes, regexp.MustCompile(allowlistRegex))
 	}
 
-	results, warnings, err := promAPI.QueryRange(context, gateQuery, queryRange)
+	results, err := client.ListAllJUnitResults(start, end)
 	if err != nil {
 		return WeatherReport{}, fmt.Errorf("error during query: %v", err)
 	}
 
-	if len(warnings) > 0 {
-		log.Printf("Warnings: %v", warnings)
-	}
-
 	// Generate report from query results.
-	if matrixResults, ok := results.(model.Matrix); ok {
-		jobReportData, err := generateVersionsAndFailures(matrixResults)
+	jobReportData, err := generateVersionsAndFailures(results)
 
-		if err != nil {
-			return WeatherReport{}, err
-		}
-
-		weatherReport := WeatherReport{
-			ReportDate: time.Now().UTC(),
-		}
-		for job, reportData := range jobReportData {
-			allowed := false
-			// If a job matches the allowlist, include it in the weather report.
-			for _, allowlistRegex := range allowlistRegexes {
-				if allowlistRegex.MatchString(job) {
-					allowed = true
-					break
-				}
-			}
-
-			if allowed {
-				weatherReport.Jobs = append(weatherReport.Jobs, JobReport{
-					Name:         job,
-					Viable:       len(reportData.Failures) == 0,
-					Versions:     reportData.Versions,
-					FailingTests: arrayFromMapKeys(reportData.Failures),
-				})
-			}
-		}
-
-		sort.Stable(weatherReport)
-
-		return weatherReport, nil
+	if err != nil {
+		return WeatherReport{}, err
 	}
 
-	return WeatherReport{}, fmt.Errorf("results not in the expected format")
+	weatherReport := WeatherReport{
+		ReportDate: time.Now().UTC(),
+	}
+	for job, reportData := range jobReportData {
+		allowed := false
+		// If a job matches the allowlist, include it in the weather report.
+		for _, allowlistRegex := range allowlistRegexes {
+			if allowlistRegex.MatchString(job) {
+				allowed = true
+				break
+			}
+		}
+
+		if allowed {
+			passRate, err := client.GetPassRateForJob(job, start, end)
+
+			if err != nil {
+				return WeatherReport{}, err
+			}
+			weatherReport.Jobs = append(weatherReport.Jobs, JobReport{
+				Name:         job,
+				Viable:       len(reportData.Failures) == 0,
+				Versions:     reportData.Versions,
+				PassRate:     passRate,
+				FailingTests: arrayFromMapKeys(reportData.Failures),
+			})
+		}
+	}
+
+	sort.Stable(weatherReport)
+
+	return weatherReport, nil
 }
 
 // generateVersionsAndFailures generates an intermediary data structure from the results that can be used to populate
 // the weather report.
-func generateVersionsAndFailures(matrixResults model.Matrix) (map[string]*reportData, error) {
+func generateVersionsAndFailures(results []metrics.JUnitResult) (map[string]*reportData, error) {
 	jobReportData := map[string]*reportData{}
-	for _, sample := range matrixResults {
-		job := fmt.Sprintf("%s", sample.Metric["job"])
+	for _, result := range results {
+		job := result.JobName
 
 		// If there's no corresponding report data for a given job, make an empty struct.
 		if _, ok := jobReportData[job]; !ok {
@@ -117,16 +97,16 @@ func generateVersionsAndFailures(matrixResults model.Matrix) (map[string]*report
 			}
 		}
 
-		jobReportData[job].addVersion(fmt.Sprintf("%s", sample.Metric["install_version"]))
-		key := fmt.Sprintf("%s", sample.Metric["testname"])
+		jobReportData[job].addVersion(result.InstallVersion.String())
+		key := result.TestName
 
-		if sample.Metric["result"] == "failed" {
+		if result.Result == metrics.Failed {
 			// Initialize the failure count for the key if it doesn't exist
 			if _, ok := jobReportData[job].Failures[key]; !ok {
 				jobReportData[job].Failures[key] = 0
 			}
 
-			jobReportData[job].Failures[key] = jobReportData[job].Failures[key] + len(sample.Values)
+			jobReportData[job].Failures[key] = jobReportData[job].Failures[key] + 1
 		}
 	}
 
