@@ -17,7 +17,12 @@ func (m *MOAProvider) LaunchCluster(clusterName string) (string, error) {
 
 	// Calculate an expiration date for the cluster so that it will be automatically deleted if
 	// we happen to forget to do it:
-	expiration := time.Now().Add(viper.GetDuration(config.Cluster.ExpiryInMinutes) * time.Minute).UTC() // UTC() to workaround SDA-1567.
+	var expiration time.Time
+
+	expiryInMinutes := viper.GetDuration(config.Cluster.ExpiryInMinutes)
+	if expiryInMinutes > 0 {
+		expiration = time.Now().Add(expiryInMinutes * time.Minute).UTC() // UTC() to workaround SDA-1567.
+	}
 
 	var err error
 	var machineCIDRParsed = &net.IPNet{}

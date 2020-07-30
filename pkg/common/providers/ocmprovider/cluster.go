@@ -30,10 +30,6 @@ func (o *OCMProvider) LaunchCluster(clusterName string) (string, error) {
 	// choose flavour based on config
 	flavourID := DefaultFlavour
 
-	// Calculate an expiration date for the cluster so that it will be automatically deleted if
-	// we happen to forget to do it:
-	expiration := time.Now().Add(time.Duration(viper.GetInt64(config.Cluster.ExpiryInMinutes)) * time.Minute).UTC() // UTC() to workaround SDA-1567.
-
 	multiAZ := viper.GetBool(config.Cluster.MultiAZ)
 	computeMachineType := viper.GetString(ComputeMachineType)
 	region := viper.GetString(config.CloudProvider.Region)
@@ -81,8 +77,15 @@ func (o *OCMProvider) LaunchCluster(clusterName string) (string, error) {
 			ID(viper.GetString(config.Cluster.Version))).
 		CloudProvider(v1.NewCloudProvider().
 			ID(cloudProvider)).
-		ExpirationTimestamp(expiration).
 		Properties(clusterProperties)
+
+	expiryInMinutes := viper.GetDuration(config.Cluster.ExpiryInMinutes)
+	if expiryInMinutes > 0 {
+		// Calculate an expiration date for the cluster so that it will be automatically deleted if
+		// we happen to forget to do it:
+		expiration := time.Now().Add(expiryInMinutes * time.Minute).UTC() // UTC() to workaround SDA-1567.
+		newCluster = newCluster.ExpirationTimestamp(expiration)
+	}
 
 	// Configure the cluster to be Multi-AZ if configured
 	// We must manually configure the number of compute nodes
