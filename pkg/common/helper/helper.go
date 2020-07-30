@@ -339,7 +339,4 @@ func (h *H) InspectState() {
 	}
 	err = h.inspect(h.CurrentProject())
 	Expect(err).ShouldNot(HaveOccurred(), "could not inspect project '%s'", h.proj)
-
-	h.restConfig = nil
-	h.proj = nil
 }

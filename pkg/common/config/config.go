@@ -246,11 +246,16 @@ var Addons = struct {
 	// Example: "system:serviceaccount:%s:dedicated-admin"
 	// Evaluated: "system:serviceaccount:osde2e-abc123:dedicated-admin"
 	TestUser string
+
+	// RunCleanup is a boolean to specify whether the testHarnesses should have a separate
+	// cleanup phase. This phase would run at the end of all e2e testing
+	RunCleanup string
 }{
 	IDsAtCreation: "addons.idsAtCreation",
 	IDs:           "ids",
 	TestHarnesses: "testHarnesses",
 	TestUser:      "addons.testUser",
+	RunCleanup:    "addons.runCleanup",
 }
 
 // Scale config keys.
@@ -445,8 +450,11 @@ func init() {
 
 	viper.BindEnv(Addons.TestHarnesses, "ADDON_TEST_HARNESSES")
 
-	viper.BindEnv(Addons.TestUser, "ADDON_TEST_USER")
 	viper.SetDefault(Addons.TestUser, "system:serviceaccount:%s:cluster-admin")
+	viper.BindEnv(Addons.TestUser, "ADDON_TEST_USER")
+
+	viper.SetDefault(Addons.RunCleanup, false)
+	viper.BindEnv(Addons.RunCleanup, "ADDON_RUN_CLEANUP")
 
 	// ----- Scale -----
 	viper.SetDefault(Scale.WorkloadsRepository, "https://github.com/openshift-scale/workloads")

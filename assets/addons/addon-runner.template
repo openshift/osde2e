@@ -2,7 +2,7 @@ cat <<WORKLOAD > workload.yaml
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: addon-tests
+  name: {{.JobName}}
 spec:
   parallelism: 1
   completions: 1
@@ -14,6 +14,9 @@ spec:
       containers:
       - name: addon-tests
         image: {{.Image}}
+        {{ if .Arguments }}
+        args: {{.Arguments}}
+        {{ end }}
         volumeMounts:
         - mountPath: {{.OutputDir}}
           name: test-output
