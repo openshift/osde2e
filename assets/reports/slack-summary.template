@@ -2,4 +2,4 @@
 This report was generated on {{.ReportDate}}
 
 {{range .Jobs}}
-- *{{.Name}}* (Viable: {{.Viable}}){{end}}
+- *{{.Name}}* (Pass rate: *{{.Passrate}}*){{end}}

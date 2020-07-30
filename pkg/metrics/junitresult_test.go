@@ -67,3 +67,133 @@ func TestSampleToJUnitResult(t *testing.T) {
 		}
 	}
 }
+
+func TestCalculatePassRates(t *testing.T) {
+	tests := []struct {
+		name              string
+		jUnitResults      []JUnitResult
+		expectedPassRates map[string]float64
+	}{
+		{
+			name: "one job pass rate all success",
+			jUnitResults: []JUnitResult{
+				makeJUnitResult("job1", Passed),
+				makeJUnitResult("job1", Passed),
+				makeJUnitResult("job1", Passed),
+				makeJUnitResult("job1", Passed),
+			},
+			expectedPassRates: map[string]float64{
+				"job1": 1.0,
+			},
+		},
+		{
+			name: "one job pass rate all success ignore skips",
+			jUnitResults: []JUnitResult{
+				makeJUnitResult("job1", Passed),
+				makeJUnitResult("job1", Passed),
+				makeJUnitResult("job1", Passed),
+				makeJUnitResult("job1", Passed),
+				makeJUnitResult("job1", Skipped),
+				makeJUnitResult("job1", Skipped),
+				makeJUnitResult("job1", Skipped),
+			},
+			expectedPassRates: map[string]float64{
+				"job1": 1.0,
+			},
+		},
+		{
+			name: "one job pass rate partial success",
+			jUnitResults: []JUnitResult{
+				makeJUnitResult("job1", Failed),
+				makeJUnitResult("job1", Passed),
+				makeJUnitResult("job1", Passed),
+				makeJUnitResult("job1", Passed),
+			},
+			expectedPassRates: map[string]float64{
+				"job1": 0.75,
+			},
+		},
+		{
+			name: "one job pass rate all failure",
+			jUnitResults: []JUnitResult{
+				makeJUnitResult("job1", Failed),
+				makeJUnitResult("job1", Failed),
+				makeJUnitResult("job1", Failed),
+				makeJUnitResult("job1", Failed),
+			},
+			expectedPassRates: map[string]float64{
+				"job1": 0,
+			},
+		},
+		{
+			name: "multiple jobs pass rate partial success",
+			jUnitResults: []JUnitResult{
+				makeJUnitResult("job1", Failed),
+				makeJUnitResult("job1", Passed),
+				makeJUnitResult("job1", Passed),
+				makeJUnitResult("job1", Passed),
+				makeJUnitResult("job2", Failed),
+				makeJUnitResult("job2", Failed),
+				makeJUnitResult("job2", Passed),
+				makeJUnitResult("job2", Passed),
+			},
+			expectedPassRates: map[string]float64{
+				"job1": 0.75,
+				"job2": 0.5,
+			},
+		},
+		{
+			name: "all skipped results",
+			jUnitResults: []JUnitResult{
+				makeJUnitResult("job1", Skipped),
+				makeJUnitResult("job1", Skipped),
+				makeJUnitResult("job1", Skipped),
+				makeJUnitResult("job1", Skipped),
+				makeJUnitResult("job2", Skipped),
+				makeJUnitResult("job2", Skipped),
+				makeJUnitResult("job2", Skipped),
+				makeJUnitResult("job2", Skipped),
+			},
+			expectedPassRates: map[string]float64{
+				"job1": 0,
+				"job2": 0,
+			},
+		},
+		{
+			name:         "no results",
+			jUnitResults: []JUnitResult{},
+			expectedPassRates: map[string]float64{
+				"job1": 0,
+				"job2": 0,
+			},
+		},
+	}
+
+	for _, test := range tests {
+		passRates := calculatePassRates(test.jUnitResults)
+
+		for jobName, expectedPassRate := range test.expectedPassRates {
+			if passRates[jobName] != expectedPassRate {
+				t.Errorf("test %s failed because the produced pass rates %v does not match the expected output %v", test.name, passRates, test.expectedPassRates)
+			}
+		}
+	}
+}
+
+func makeJUnitResult(jobName string, result Result) JUnitResult {
+	return JUnitResult{
+		InstallVersion: semver.MustParse("4.1.0"),
+		UpgradeVersion: nil,
+		CloudProvider:  "test",
+		Environment:    "prod",
+		Suite:          "test-suite",
+		TestName:       "test-name",
+		Result:         result,
+		ClusterID:      "1234567",
+		JobName:        jobName,
+		JobID:          9999,
+		Phase:          Install,
+		Duration:       10 * time.Second,
+		Timestamp:      1,
+	}
+}
