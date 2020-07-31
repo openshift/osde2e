@@ -3,13 +3,13 @@ package get
 import (
 	"fmt"
 	"io/ioutil"
-	"log"
 	"os"
 	"path/filepath"
 	"time"
 
 	"github.com/openshift/osde2e/cmd/osde2e/common"
 	"github.com/openshift/osde2e/pkg/common/providers"
+	"github.com/openshift/osde2e/pkg/common/providers/ocmprovider"
 	"github.com/openshift/osde2e/pkg/common/spi"
 	"github.com/spf13/cobra"
 )
@@ -123,7 +123,9 @@ func run(cmd *cobra.Command, argv []string) error {
 	if properties := cluster.Properties(); properties["MadeByOSDe2e"] != "true" {
 		return fmt.Errorf("Cluster was not created by osde2e")
 	}
-	log.Printf("Cluster name - %s and Cluster ID - %s", cluster.Name(), cluster.ID())
+
+	fmt.Printf("%-25s%-35s%-15s%-20s\n", "NAME", "ID", "STATUS", "OWNER")
+	fmt.Printf("%-25s%-35s%-15s%-20s\n", cluster.Name(), cluster.ID(), cluster.State(), cluster.Properties()[ocmprovider.OwnedBy])
 
 	if kubeconfigStatus {
 		content, err := getKubeconfig(clusterID)
