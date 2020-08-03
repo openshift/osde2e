@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>text on OSDe2e Reporting</title>
+    <link>https://openshift.github.io/tags/text/</link>
+    <description>Recent content in text on OSDe2e Reporting</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <lastBuildDate>Sat, 09 Mar 2019 00:00:00 +0000</lastBuildDate>
+    
+	<atom:link href="https://openshift.github.io/tags/text/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Placeholder Text</title>
+      <link>https://openshift.github.io/post/placeholder-text/</link>
+      <pubDate>Sat, 09 Mar 2019 00:00:00 +0000</pubDate>
+      
+      <guid>https://openshift.github.io/post/placeholder-text/</guid>
+      <description>&lt;p&gt;Lorem est tota propiore conpellat pectoribus de pectora summo.&lt;/p&gt;</description>
+    </item>
+    
+  </channel>
+</rss>
