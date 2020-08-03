@@ -5,9 +5,28 @@
     <link>https://openshift.github.io/osde2e/tags/</link>
     <description>Recent content in Tags on OSDe2e Reporting</description>
     <generator>Hugo -- gohugo.io</generator>
+    <lastBuildDate>Mon, 03 Aug 2020 00:00:00 +0000</lastBuildDate>
     
 	<atom:link href="https://openshift.github.io/osde2e/tags/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>aws</title>
+      <link>https://openshift.github.io/osde2e/tags/aws/</link>
+      <pubDate>Mon, 03 Aug 2020 00:00:00 +0000</pubDate>
+      
+      <guid>https://openshift.github.io/osde2e/tags/aws/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>weather-report</title>
+      <link>https://openshift.github.io/osde2e/tags/weather-report/</link>
+      <pubDate>Mon, 03 Aug 2020 00:00:00 +0000</pubDate>
+      
+      <guid>https://openshift.github.io/osde2e/tags/weather-report/</guid>
+      <description></description>
+    </item>
     
     <item>
       <title>index</title>

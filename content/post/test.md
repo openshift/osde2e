@@ -1,3 +1,10 @@
++++
+title = "OSDe2e Weather Report 2020-08-03"
+author = "OSDe2e Automation"
+date = "2020-08-03"
+tags = ["weather-report", "aws"]
++++
+
 # OSDe2e Weather Report 2020-08-03 20:51:15.2164109 +0000 UTC
 
 ## Summary
