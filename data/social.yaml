@@ -1,9 +1,2 @@
 - item: "github"
-  url: "https://github.com/#"
-- item: "twitter"
-  url: "https://twitter.com/#"
-- item: "linkedin"
-  url: "https://www.linkedin.com/in/#"
-- item: "rss"
-  url: "index.xml"
-  internal:  true
+  url: "https://github.com/openshift/osde2e"
