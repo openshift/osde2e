@@ -2,29 +2,29 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Categories on OSDe2e Reporting</title>
-    <link>https://openshift.github.io/categories/</link>
+    <link>https://openshift.github.io/osde2e/categories/</link>
     <description>Recent content in Categories on OSDe2e Reporting</description>
     <generator>Hugo -- gohugo.io</generator>
     <lastBuildDate>Mon, 11 Mar 2019 00:00:00 +0000</lastBuildDate>
     
-	<atom:link href="https://openshift.github.io/categories/index.xml" rel="self" type="application/rss+xml" />
+	<atom:link href="https://openshift.github.io/osde2e/categories/index.xml" rel="self" type="application/rss+xml" />
     
     
     <item>
       <title>syntax</title>
-      <link>https://openshift.github.io/categories/syntax/</link>
+      <link>https://openshift.github.io/osde2e/categories/syntax/</link>
       <pubDate>Mon, 11 Mar 2019 00:00:00 +0000</pubDate>
       
-      <guid>https://openshift.github.io/categories/syntax/</guid>
+      <guid>https://openshift.github.io/osde2e/categories/syntax/</guid>
       <description></description>
     </item>
     
     <item>
       <title>themes</title>
-      <link>https://openshift.github.io/categories/themes/</link>
+      <link>https://openshift.github.io/osde2e/categories/themes/</link>
       <pubDate>Mon, 11 Mar 2019 00:00:00 +0000</pubDate>
       
-      <guid>https://openshift.github.io/categories/themes/</guid>
+      <guid>https://openshift.github.io/osde2e/categories/themes/</guid>
       <description></description>
     </item>
     
