@@ -1,0 +1,71 @@
+{{ $title := .Title }}
+<aside class="sidebar">
+  <section class="sidebar_inner">
+    {{ if .IsHome }}
+    <h2>Featured Posts</h2>
+    {{ else }}
+    <h2>{{ .Site.Params.Author }}</h2>
+    <div>
+      {{ .Site.Params.IntroDescription }}
+    </div>
+    <a href = '{{ absURL "about/" }}' class="button mt-1" role="button">Read More</a>
+    <h2 class="mt-4">Featured Posts</h2>
+    {{ end }}
+    <ul>
+    {{ range .Site.Taxonomies.tags.featured }}
+     {{- if ne $title .Title }}
+      <li>
+        <a href="{{ .Permalink }}" class="nav-link">{{ .Title }}</a>
+      </li>
+    {{- end }}
+    {{ end }}
+    </ul>
+    <h2 class="mt-4">Recent Posts</h2>
+    <ul class="flex-column">
+      {{ range first 8 (where (where .Site.RegularPages "Type" "in" site.Params.mainSections) ".Params.hidden" "!=" true) }}
+      {{- if ne $title .Title }}
+      <li>
+        <a href="{{ .Permalink }}" class="nav-link">{{ .Title }}</a>
+      </li>
+      {{- end }}
+      {{- end }}
+    </ul>
+    {{- $numberOfTagsLimit := $.Site.Params.numberOfTagsShown }} <!-- See config -->
+    {{ range $key, $value := .Site.Taxonomies }}
+    <div>
+      <h2 class="mt-4 taxonomy" id="{{ $key }}-section">{{ $key }}</h2>
+      <nav class="tags_nav">
+        {{- $onPageTags := $.Page.Params.tags }}
+        {{- $slicedTags := ($value.ByCount | first $numberOfTagsLimit) }}
+        {{- range $slicedTags }}
+        <a href='{{ absURL $key }}/{{ (replace .Name "#" "%23") | urlize }}/' class=" post_tag button button_translucent">
+          {{ upper .Name }}
+          <span class='button_tally'>{{ .Count }}</span>
+        </a>
+        {{ end }}
+        {{ if gt (len $value.ByCount) $numberOfTagsLimit }}
+        <br>
+        <div class="post_tags_toggle button">All {{ $key }}</div>
+        {{- $tagsInfo := newScratch }}
+        <div class="post_tags">
+          <div class="tags_list">
+            {{- range $value.Alphabetical }}
+            {{ $tagsInfo.Add "tagsInfo" (slice .Name .Count)}}
+            <a href='{{ absURL $key }}/{{ (replace .Name "#" "%23") | urlize }}/' class=" post_tag button button_translucent" data-position={{ .Count }}>
+              {{- upper .Name -}}
+              <span class='button_tally'>{{ .Count }}</span>
+            </a>
+            {{ end }}
+            <div class="tags_sort"><span title="sort alphabetically">[A~Z]</span><span title="sort by count">[0~9]</span>
+            </div>
+            <span class="tags_hide"><svg class="icon">
+            <use xlink:href="#closeme"></use>
+          </svg></span>
+          </div>
+        </div>
+        {{ end }}
+      </nav>
+    </div>
+    {{ end }}
+  </section>
+</aside>

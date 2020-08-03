@@ -1,0 +1,38 @@
+{{- $params := .Site.Params }}
+{{- $centerLogo := $params.centerLogo }}
+{{ $logo := $params.logo }}
+<header class = 'nav_header' >
+  <nav class = 'nav'>
+    <a href='{{ absURL "" }}' class = 'nav_brand nav_item{{ if eq $centerLogo true }} nav_hide{{ end }}'>
+      {{- with $logo }}
+      <img src="{{ absURL . }}" class="logo">
+      {{- else }}
+        {{ .Site.Title }}
+      {{- end }}
+      <div class = 'nav_close'>
+        <img src = '{{ absURL "/icons/bar.svg" }}' class="nav_close_icon">
+      </div>
+    </a>
+    <div class = 'nav_body nav_body_{{ .Site.Params.mobileNavigation }}'>
+      {{- $link := .RelPermalink }}
+      {{- range .Site.Data.menu }}
+      <div class = 'nav_parent{{ if eq .link $link }} nav_active{{ end}}'>
+        <a href = '{{ absURL .link }}' class = 'nav_item'>{{ .name }} {{ with .submenu }}<img src= {{ absURL "icons/caret-icon.svg" }} alt="icon" class="nav_icon">{{ end }}</a>
+        {{- with .submenu }}
+        <div class = 'nav_sub'>
+          {{- range . }}
+          <a href = '{{ absURL .link }}' class = 'nav_child nav_item'>{{ .name }}</a>
+          {{- end }}
+        </div>
+        {{- end }}
+      </div>
+      {{- end }}
+      {{- if eq $centerLogo true }}
+      <a href='{{ absURL "" }}' class = 'nav_brand nav_center nav_item'>
+        <img src="{{ absURL $logo }}" class="logo">
+      </a>
+      {{- end }}
+      {{- partial "follow" . }}
+    </div>
+  </nav>
+</header>
