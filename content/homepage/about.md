@@ -1,7 +1,7 @@
 ---
-title: 'Our Difference'
+title: 'About this page'
 button: 'About us'
 weight: 2
 ---
 
-Lorem ipsum dolor sit amet, et essent mediocritatem quo, choro volumus oporteat an mei. Ipsum dolor sit amet, et essent mediocritatem quo.
+Automatically generated reports generated from OSDe2e data live here.

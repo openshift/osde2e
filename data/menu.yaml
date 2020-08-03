@@ -2,13 +2,25 @@
   link: /
 - name: Archives
   link: post/rich-content/
-# - name: Mus
-#   link: /categories/music/
-- name: Links
+- name: Prow
   submenu:
-    - name: LinkedIn
-      link: https://www.linkedin.com/
-    - name: Twitter
-      link: https://twitter.com/
+    - name: OSD AWS Production
+      link: https://deck-ci.apps.ci.l2s4.p1.openshiftapps.com/?job=osde2e-prod-aws*
+    - name: OSD AWS Stage
+      link: https://deck-ci.apps.ci.l2s4.p1.openshiftapps.com/?job=osde2e-stage-aws*
+    - name: OSD AWS Integration
+      link: https://deck-ci.apps.ci.l2s4.p1.openshiftapps.com/?job=osde2e-int-aws*
+    - name: OSD GCP Production
+      link: https://deck-ci.apps.ci.l2s4.p1.openshiftapps.com/?job=osde2e-prod-gcp*
+    - name: OSD GCP Stage
+      link: https://deck-ci.apps.ci.l2s4.p1.openshiftapps.com/?job=osde2e-stage-gcp*
+    - name: OSD GCP Integration
+      link: https://deck-ci.apps.ci.l2s4.p1.openshiftapps.com/?job=osde2e-int-gcp*
+    - name: OSD MOA Production
+      link: https://deck-ci.apps.ci.l2s4.p1.openshiftapps.com/?job=osde2e-prod-moa*
+    - name: OSD MOA Stage
+      link: https://deck-ci.apps.ci.l2s4.p1.openshiftapps.com/?job=osde2e-stage-moa*
+    - name: OSD MOA Integration
+      link: https://deck-ci.apps.ci.l2s4.p1.openshiftapps.com/?job=osde2e-int-moa*
 - name: About
   link: about/
