@@ -103,11 +103,6 @@
   </url>
   
   <url>
-    <loc>https://openshift.github.io/osde2e/blah/</loc>
-    <priority>0</priority>
-  </url>
-  
-  <url>
     <loc>https://openshift.github.io/osde2e/tags/index/</loc>
   </url>
   

@@ -55,14 +55,5 @@
       <description>&lt;p&gt;Emoji can be enabled in a Hugo project in a number of ways.&lt;/p&gt;</description>
     </item>
     
-    <item>
-      <title></title>
-      <link>https://openshift.github.io/osde2e/blah/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>https://openshift.github.io/osde2e/blah/</guid>
-      <description>Test again! And more!</description>
-    </item>
-    
   </channel>
 </rss>
