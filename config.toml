@@ -19,11 +19,12 @@ publishDir = "docs"
     noClasses = false
     # style = "monokai"
     tabWidth = 2
+  [markup.goldmark.renderer]
+    unsafe = true
 
 [params]
-author = "Jane Doe"
-twitter = "@janedoe"
-introDescription = "Technologist, perpetual student, teacher, continual incremental improvement."
+author = "Red Hat"
+introDescription = "OSDe2e Automation"
 
 # Google analytics Id
 ga_analytics = "XXXXXXXXXX"

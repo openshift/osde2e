@@ -1,7 +1,13 @@
 - name: Home
   link: /osde2e/
-- name: Archives
-  link: post/rich-content/
+- name: Reports
+  submenu:
+    - name: AWS
+      link: tags/aws/
+    - name: GCP
+      link: tags/gcp/
+    - name: MOA
+      link: tags/moa/
 - name: Prow
   submenu:
     - name: OSD AWS Production
