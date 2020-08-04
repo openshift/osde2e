@@ -9,12 +9,15 @@ import (
 	"github.com/openshift/osde2e/pkg/common/helper"
 )
 
+var disruptiveTestName = "[Suite: openshift][disruptive]"
+
+func init() {
+	alert.RegisterGinkgoAlert(disruptiveTestName, "SD-CICD", "Jeffrey Sica", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+}
+
 // Disruptive tests require SSH access to nodes.
-var _ = ginkgo.Describe("[Suite: openshift][disruptive]", func() {
+var _ = ginkgo.Describe(disruptiveTestName, func() {
 	defer ginkgo.GinkgoRecover()
-	ginkgo.BeforeEach(func() {
-		alert.RegisterGinkgoAlert(ginkgo.CurrentGinkgoTestDescription().TestText, "SD-CICD", "Jeffrey Sica", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
-	})
 	h := helper.New()
 
 	e2eTimeoutInSeconds := 3600

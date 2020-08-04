@@ -17,10 +17,13 @@ import (
 	"github.com/openshift/osde2e/pkg/common/helper"
 )
 
-var _ = ginkgo.Describe("[Suite: e2e] Pods", func() {
-	ginkgo.BeforeEach(func() {
-		alert.RegisterGinkgoAlert(ginkgo.CurrentGinkgoTestDescription().TestText, "SD-CICD", "Jeffrey Sica", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
-	})
+var podsTestName string = "[Suite: e2e] Pods"
+
+func init() {
+	alert.RegisterGinkgoAlert(podsTestName, "SD-CICD", "Jeffrey Sica", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+}
+
+var _ = ginkgo.Describe(podsTestName, func() {
 	h := helper.New()
 
 	ginkgo.It("should be Running or Succeeded", func() {

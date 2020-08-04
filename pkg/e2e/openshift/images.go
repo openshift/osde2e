@@ -9,11 +9,16 @@ import (
 	"github.com/openshift/osde2e/pkg/common/helper"
 )
 
-var _ = ginkgo.Describe("[Suite: openshift][image-registry]", func() {
+var imageRegistryTestName string = "[Suite: openshift][image-registry]"
+var imageEcosystemTestName string = "[Suite: openshift][image-ecosystem]"
+
+func init() {
+	alert.RegisterGinkgoAlert(imageRegistryTestName, "SD-CICD", "Jeffrey Sica", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+	alert.RegisterGinkgoAlert(imageEcosystemTestName, "SD-CICD", "Jeffrey Sica", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+}
+
+var _ = ginkgo.Describe(imageRegistryTestName, func() {
 	defer ginkgo.GinkgoRecover()
-	ginkgo.BeforeEach(func() {
-		alert.RegisterGinkgoAlert(ginkgo.CurrentGinkgoTestDescription().TestText, "SD-CICD", "Jeffrey Sica", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
-	})
 	h := helper.New()
 
 	e2eTimeoutInSeconds := 3600
@@ -42,11 +47,8 @@ var _ = ginkgo.Describe("[Suite: openshift][image-registry]", func() {
 	}, float64(e2eTimeoutInSeconds+30))
 })
 
-var _ = ginkgo.Describe("[Suite: openshift][image-ecosystem]", func() {
+var _ = ginkgo.Describe(imageEcosystemTestName, func() {
 	defer ginkgo.GinkgoRecover()
-	ginkgo.BeforeEach(func() {
-		alert.RegisterGinkgoAlert(ginkgo.CurrentGinkgoTestDescription().TestText, "SD-CICD", "Jeffrey Sica", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
-	})
 	h := helper.New()
 
 	e2eTimeoutInSeconds := 3600

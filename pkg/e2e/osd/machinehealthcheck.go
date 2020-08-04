@@ -18,10 +18,13 @@ const (
 	OperatorNamespace = "openshift-machine-api"
 )
 
-var _ = ginkgo.Describe("[Suite: informing] MachineHealthChecks", func() {
-	ginkgo.BeforeEach(func() {
-		alert.RegisterGinkgoAlert(ginkgo.CurrentGinkgoTestDescription().TestText, "SD-SRE", "Alex Chvatal", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
-	})
+var machineHealthTestName string = "[Suite: informing] MachineHealthChecks"
+
+func init() {
+	alert.RegisterGinkgoAlert(machineHealthTestName, "SD-SRE", "Alex Chvatal", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+}
+
+var _ = ginkgo.Describe(machineHealthTestName, func() {
 	h := helper.New()
 
 	ginkgo.It("should exist", func() {

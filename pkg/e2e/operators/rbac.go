@@ -19,11 +19,17 @@ import (
 
 var operatorName = "rbac-permissions-operator"
 var operatorNamespace = "openshift-rbac-permissions"
+var rbacOperatorBlocking string = "[Suite: operators] [OSD] RBAC Operator"
+var rbacOperatorInforming string = "[Suite: informing] [OSD] RBAC Permissions Operator"
+var subjectPermissionsTestName string = "[Suite: operators] [OSD] RBAC Dedicated Admins SubjectPermission"
 
-var _ = ginkgo.Describe("[Suite: operators] [OSD] RBAC Operator", func() {
-	ginkgo.BeforeEach(func() {
-		alert.RegisterGinkgoAlert(ginkgo.CurrentGinkgoTestDescription().TestText, "SD-SREP", "Matt Bargenquast", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
-	})
+func init() {
+	alert.RegisterGinkgoAlert(rbacOperatorBlocking, "SD-SREP", "Matt Bargenquast", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+	alert.RegisterGinkgoAlert(rbacOperatorInforming, "SD-SREP", "Matt Bargenquast", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+	alert.RegisterGinkgoAlert(subjectPermissionsTestName, "SD-SREP", "Matt Bargenquast", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+}
+
+var _ = ginkgo.Describe(rbacOperatorBlocking, func() {
 	var operatorLockFile = "rbac-permissions-operator-lock"
 	var defaultDesiredReplicas int32 = 1
 
@@ -40,18 +46,12 @@ var _ = ginkgo.Describe("[Suite: operators] [OSD] RBAC Operator", func() {
 	checkClusterRoles(h, clusterRoles)
 })
 
-var _ = ginkgo.Describe("[Suite: operators] [OSD] RBAC Dedicated Admins SubjectPermission", func() {
-	ginkgo.BeforeEach(func() {
-		alert.RegisterGinkgoAlert(ginkgo.CurrentGinkgoTestDescription().TestText, "SD-SREP", "Matt Bargenquast", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
-	})
+var _ = ginkgo.Describe(subjectPermissionsTestName, func() {
 	h := helper.New()
 	checkSubjectPermissions(h, "dedicated-admins")
 })
 
-var _ = ginkgo.Describe("[Suite: informing] [OSD] RBAC Permissions Operator", func() {
-	ginkgo.BeforeEach(func() {
-		alert.RegisterGinkgoAlert(ginkgo.CurrentGinkgoTestDescription().TestText, "SD-SREP", "Matt Bargenquast", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
-	})
+var _ = ginkgo.Describe(rbacOperatorInforming, func() {
 	checkUpgrade(helper.New(), "openshift-rbac-permissions", "rbac-permissions-operator",
 		"rbac-permissions-operator.v0.1.97-68cf185",
 	)

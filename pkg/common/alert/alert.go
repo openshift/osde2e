@@ -82,6 +82,7 @@ func (mas MetricAlerts) Notify() error {
 
 	promAPI := v1.NewAPI(client)
 	for _, ma := range mas {
+		log.Printf("Checking %s", ma.Name)
 		if err := ma.Check(promAPI); err != nil {
 			return err
 		}
@@ -95,11 +96,17 @@ func (ma MetricAlert) Check(prom v1.API) error {
 	context, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
 	defer cancel()
 
-	query := fmt.Sprintf("cicd_jUnitResult{result=\"failed\", testname=~\".*%s.*\"}[1d:4h]", ma.QuerySafeName())
+	query := fmt.Sprintf("cicd_jUnitResult{result=\"failed\", testname=~\".*%s.*\"}", ma.QuerySafeName())
 
 	log.Printf("Query: %s", query)
 
-	value, warnings, err := prom.Query(context, query, time.Now())
+	timeRange := v1.Range{
+		Start: time.Now().Add(-24 * time.Hour),
+		End:   time.Now(),
+		Step:  time.Minute,
+	}
+
+	value, warnings, err := prom.QueryRange(context, query, timeRange)
 	if err != nil {
 		return fmt.Errorf("error issuing query: %v", err)
 	}
@@ -107,13 +114,13 @@ func (ma MetricAlert) Check(prom v1.API) error {
 		log.Printf("warning: %s", warning)
 	}
 
-	vector, _ := value.(model.Vector)
+	matrix, _ := value.(model.Matrix)
 
-	log.Printf("%v Failures found", len(vector))
+	log.Printf("%v Failures found", matrix.Len())
 
-	if len(vector) >= ma.FailureThreshold {
-		log.Printf("Alert triggered for %s: %d >= %d", ma.Name, len(vector), ma.FailureThreshold)
-		sendSlackMessage(ma.SlackChannel, fmt.Sprintf("%s has seen %d failures in the last 24h", ma.Name, len(vector)))
+	if matrix.Len() >= ma.FailureThreshold {
+		log.Printf("Alert triggered for %s: %d >= %d", ma.Name, matrix.Len(), ma.FailureThreshold)
+		sendSlackMessage(ma.SlackChannel, fmt.Sprintf("%s has seen %d failures in the last 24h", ma.Name, matrix.Len()))
 	}
 
 	return nil

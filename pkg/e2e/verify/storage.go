@@ -12,10 +12,13 @@ import (
 	"github.com/openshift/osde2e/pkg/common/helper"
 )
 
-var _ = ginkgo.Describe("[Suite: e2e] Storage", func() {
-	ginkgo.BeforeEach(func() {
-		alert.RegisterGinkgoAlert(ginkgo.CurrentGinkgoTestDescription().TestText, "SD-SREP", "Christoph Blecker", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
-	})
+var storageTestName string = "[Suite: e2e] Storage"
+
+func init() {
+	alert.RegisterGinkgoAlert(storageTestName, "SD-SREP", "Christoph Blecker", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+}
+
+var _ = ginkgo.Describe(storageTestName, func() {
 	h := helper.New()
 	ginkgo.It("should be able to be expanded", func() {
 		scList, err := h.Kube().StorageV1().StorageClasses().List(context.TODO(), metav1.ListOptions{})

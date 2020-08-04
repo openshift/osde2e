@@ -15,11 +15,14 @@ const (
 	numNodesForNodeVertical = 3
 )
 
-var _ = ginkgo.Describe("[Suite: scale-nodes-and-pods] Scaling", func() {
+var nodesPodsTestName string = "[Suite: scale-nodes-and-pods] Scaling"
+
+func init() {
+	alert.RegisterGinkgoAlert(nodesPodsTestName, "SD-CICD", "Michael Wilson", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+}
+
+var _ = ginkgo.Describe(nodesPodsTestName, func() {
 	defer ginkgo.GinkgoRecover()
-	ginkgo.BeforeEach(func() {
-		alert.RegisterGinkgoAlert(ginkgo.CurrentGinkgoTestDescription().TestText, "SD-CICD", "Michael Wilson", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
-	})
 	h := helper.New()
 
 	nodeVerticalTimeoutInSeconds := 3600

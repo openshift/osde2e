@@ -20,10 +20,13 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-var _ = ginkgo.Describe("[Suite: informing] [OSD] namespace validating webhook", func() {
-	ginkgo.BeforeEach(func() {
-		alert.RegisterGinkgoAlert(ginkgo.CurrentGinkgoTestDescription().TestText, "SD-SREP", "Matt Bargenquast", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
-	})
+var namespaceWebhookTestName string = "[Suite: informing] [OSD] namespace validating webhook"
+
+func init() {
+	alert.RegisterGinkgoAlert(namespaceWebhookTestName, "SD-SREP", "Matt Bargenquast", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+}
+
+var _ = ginkgo.Describe(namespaceWebhookTestName, func() {
 	const (
 		// Group to use for impersonation
 		DUMMY_GROUP = "random-group-name"

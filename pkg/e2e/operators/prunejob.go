@@ -19,10 +19,13 @@ import (
 	"k8s.io/apimachinery/pkg/util/rand"
 )
 
-var _ = ginkgo.Describe("[Suite: operators] [OSD] Prune jobs", func() {
-	ginkgo.BeforeEach(func() {
-		alert.RegisterGinkgoAlert(ginkgo.CurrentGinkgoTestDescription().TestText, "SD-SREP", "Haoran Wang", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
-	})
+var pruneJobsTestName string = "[Suite: operators] [OSD] Prune jobs"
+
+func init() {
+	alert.RegisterGinkgoAlert(pruneJobsTestName, "SD-SREP", "Haoran Wang", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+}
+
+var _ = ginkgo.Describe(pruneJobsTestName, func() {
 	h := helper.New()
 	ginkgo.Context("pruner jobs should works", func() {
 		namespace := "openshift-sre-pruning"

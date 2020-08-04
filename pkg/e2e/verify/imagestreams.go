@@ -12,10 +12,13 @@ import (
 	"github.com/openshift/osde2e/pkg/common/helper"
 )
 
-var _ = ginkgo.Describe("[Suite: e2e] ImageStreams", func() {
-	ginkgo.BeforeEach(func() {
-		alert.RegisterGinkgoAlert(ginkgo.CurrentGinkgoTestDescription().TestText, "SD-CICD", "Jeffrey Sica", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
-	})
+var imageStreamsTestName string = "[Suite: e2e] ImageStreams"
+
+func init() {
+	alert.RegisterGinkgoAlert(imageStreamsTestName, "SD-CICD", "Jeffrey Sica", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+}
+
+var _ = ginkgo.Describe(imageStreamsTestName, func() {
 	h := helper.New()
 
 	ginkgo.It("should exist in the cluster", func() {

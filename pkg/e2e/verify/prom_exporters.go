@@ -17,11 +17,13 @@ import (
 	"github.com/openshift/osde2e/pkg/common/util"
 )
 
-var _ = ginkgo.Describe("[Suite: e2e] [OSD] Prometheus Exporters", func() {
-	ginkgo.BeforeEach(func() {
-		alert.RegisterGinkgoAlert(ginkgo.CurrentGinkgoTestDescription().TestText, "SD-SREP", "Matt Bargenquast", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
-	})
+var promExportersTestname string = "[Suite: e2e] [OSD] Prometheus Exporters"
 
+func init() {
+	alert.RegisterGinkgoAlert(promExportersTestname, "SD-SREP", "Matt Bargenquast", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+}
+
+var _ = ginkgo.Describe(promExportersTestname, func() {
 	const (
 		// all represents all environments
 		allProviders = "all"

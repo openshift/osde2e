@@ -6,10 +6,15 @@ import (
 	"github.com/openshift/osde2e/pkg/common/helper"
 )
 
-var _ = ginkgo.Describe("[Suite: operators] [OSD] Splunk Forwarder Operator", func() {
-	ginkgo.BeforeEach(func() {
-		alert.RegisterGinkgoAlert(ginkgo.CurrentGinkgoTestDescription().TestText, "SD-SREP", "Matt Bargenquast", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
-	})
+var splunkForwarderBlocking string = "[Suite: operators] [OSD] Splunk Forwarder Operator"
+var splunkForwarderInforming string = "[Suite: informing] [OSD] Splunk Forwarder Operator"
+
+func init() {
+	alert.RegisterGinkgoAlert(splunkForwarderBlocking, "SD-SREP", "Matt Bargenquast", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+	alert.RegisterGinkgoAlert(splunkForwarderInforming, "SD-SREP", "Matt Bargenquast", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+}
+
+var _ = ginkgo.Describe(splunkForwarderBlocking, func() {
 
 	var operatorName = "splunk-forwarder-operator"
 	var operatorNamespace string = "openshift-splunk-forwarder-operator"
@@ -35,10 +40,7 @@ var _ = ginkgo.Describe("[Suite: operators] [OSD] Splunk Forwarder Operator", fu
 	checkClusterRoles(h, clusterRoles)
 })
 
-var _ = ginkgo.Describe("[Suite: informing] [OSD] Splunk Forwarder Operator", func() {
-	ginkgo.BeforeEach(func() {
-		alert.RegisterGinkgoAlert(ginkgo.CurrentGinkgoTestDescription().TestText, "SD-SREP", "Matt Bargenquast", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
-	})
+var _ = ginkgo.Describe(splunkForwarderInforming, func() {
 	checkUpgrade(helper.New(), "openshift-splunk-forwarder-operator", "openshift-splunk-forwarder-operator",
 		"splunk-forwarder-operator.v0.1.157-3dca592",
 	)
