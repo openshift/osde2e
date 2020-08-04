@@ -16,10 +16,13 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-var _ = ginkgo.Describe("[Suite: service-definition] [OSD] DaemonSets", func() {
-	ginkgo.BeforeEach(func() {
-		alert.RegisterGinkgoAlert(ginkgo.CurrentGinkgoTestDescription().TestText, "SD-CICD", "Jeffrey Sica", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
-	})
+var daemonSetsTestName string = "[Suite: service-definition] [OSD] DaemonSets"
+
+func init() {
+	alert.RegisterGinkgoAlert(daemonSetsTestName, "SD-CICD", "Jeffrey Sica", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+}
+
+var _ = ginkgo.Describe(daemonSetsTestName, func() {
 	ginkgo.Context("DaemonSets are not allowed", func() {
 		// setup helper
 		h := helper.New()

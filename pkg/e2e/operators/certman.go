@@ -16,11 +16,15 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 )
 
-var _ = ginkgo.Describe("[Suite: operators] [OSD] Certman Operator", func() {
+var certmanOperatorTestName string = "[Suite: operators] [OSD] Certman Operator"
+
+func init() {
+	alert.RegisterGinkgoAlert(certmanOperatorTestName, "SD-SREP", "Christoph Blecker", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+}
+
+var _ = ginkgo.Describe(certmanOperatorTestName, func() {
 	h := helper.New()
-	ginkgo.BeforeEach(func() {
-		alert.RegisterGinkgoAlert(ginkgo.CurrentGinkgoTestDescription().TestText, "SD-SREP", "Christoph Blecker", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
-	})
+
 	ginkgo.Context("certificate secret should be applied when cluster installed", func() {
 		var secretName string
 		var secrets *v1.SecretList

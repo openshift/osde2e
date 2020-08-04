@@ -1,7 +1,6 @@
 package alert
 
 import (
-	"context"
 	"fmt"
 	"log"
 	"strings"
@@ -9,9 +8,7 @@ import (
 	"time"
 
 	"github.com/openshift/osde2e/pkg/common/config"
-	"github.com/openshift/osde2e/pkg/common/prometheus"
-	v1 "github.com/prometheus/client_golang/api/prometheus/v1"
-	"github.com/prometheus/common/model"
+	"github.com/openshift/osde2e/pkg/metrics"
 	"github.com/slack-go/slack"
 	"github.com/spf13/viper"
 )
@@ -75,14 +72,14 @@ type MetricAlert struct {
 
 // Notify prepares and then iterates through MetricAlerts to generate notifications
 func (mas MetricAlerts) Notify() error {
-	client, err := prometheus.CreateClient()
+	client, err := metrics.NewClient()
 	if err != nil {
 		return fmt.Errorf("unable to create Prometheus client: %v", err)
 	}
 
-	promAPI := v1.NewAPI(client)
 	for _, ma := range mas {
-		if err := ma.Check(promAPI); err != nil {
+		log.Printf("Checking %s", ma.Name)
+		if err := ma.Check(client); err != nil {
 			return err
 		}
 	}
@@ -91,29 +88,15 @@ func (mas MetricAlerts) Notify() error {
 }
 
 // Check will query and notify depending on query results
-func (ma MetricAlert) Check(prom v1.API) error {
-	context, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
-	defer cancel()
-
-	query := fmt.Sprintf("cicd_jUnitResult{result=\"failed\", testname=~\".*%s.*\"}[1d:4h]", ma.QuerySafeName())
-
-	log.Printf("Query: %s", query)
-
-	value, warnings, err := prom.Query(context, query, time.Now())
+func (ma MetricAlert) Check(client *metrics.Client) error {
+	results, err := client.ListFailedJUnitResultsByTestName(ma.QuerySafeName(), time.Now().Add(-24*time.Hour), time.Now())
 	if err != nil {
-		return fmt.Errorf("error issuing query: %v", err)
-	}
-	for _, warning := range warnings {
-		log.Printf("warning: %s", warning)
+		return err
 	}
 
-	vector, _ := value.(model.Vector)
-
-	log.Printf("%v Failures found", len(vector))
-
-	if len(vector) >= ma.FailureThreshold {
-		log.Printf("Alert triggered for %s: %d >= %d", ma.Name, len(vector), ma.FailureThreshold)
-		sendSlackMessage(ma.SlackChannel, fmt.Sprintf("%s has seen %d failures in the last 24h", ma.Name, len(vector)))
+	if len(results) >= ma.FailureThreshold {
+		log.Printf("Alert triggered for %s: %d >= %d", ma.Name, len(results), ma.FailureThreshold)
+		sendSlackMessage(ma.SlackChannel, fmt.Sprintf("%s has seen %d failures in the last 24h", ma.Name, len(results)))
 	}
 
 	return nil

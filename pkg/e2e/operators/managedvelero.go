@@ -16,10 +16,13 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 )
 
-var _ = ginkgo.Describe("[Suite: operators] [OSD] Managed Velero Operator", func() {
-	ginkgo.BeforeEach(func() {
-		alert.RegisterGinkgoAlert(ginkgo.CurrentGinkgoTestDescription().TestText, "SD-SREP", "Christoph Blecker", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
-	})
+var veleroOperatorTestName string = "[Suite: operators] [OSD] Managed Velero Operator"
+
+func init() {
+	alert.RegisterGinkgoAlert(veleroOperatorTestName, "SD-SREP", "Christoph Blecker", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+}
+
+var _ = ginkgo.Describe(veleroOperatorTestName, func() {
 	var operatorName = "managed-velero-operator"
 	var operatorNamespace string = "openshift-velero"
 	var operatorLockFile string = "managed-velero-operator-lock"

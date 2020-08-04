@@ -23,10 +23,13 @@ const (
 	oauthName        = "oauth-openshift"
 )
 
-var _ = ginkgo.Describe("[Suite: e2e] Routes", func() {
-	ginkgo.BeforeEach(func() {
-		alert.RegisterGinkgoAlert(ginkgo.CurrentGinkgoTestDescription().TestText, "SD-CICD", "Jeffrey Sica", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
-	})
+var routesTestName string = "[Suite: e2e] Routes"
+
+func init() {
+	alert.RegisterGinkgoAlert(routesTestName, "SD-CICD", "Jeffrey Sica", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+}
+
+var _ = ginkgo.Describe(routesTestName, func() {
 	h := helper.New()
 
 	ginkgo.It("should be created for Console", func() {

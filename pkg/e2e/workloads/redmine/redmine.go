@@ -28,11 +28,14 @@ var testDir = "/assets/workloads/e2e/redmine"
 // Use the base folder name for the workload name. Make it easy!
 var workloadName = filepath.Base(testDir)
 
-var _ = ginkgo.Describe("[Suite: e2e] Workload ("+workloadName+")", func() {
+var testName string = "[Suite: e2e] Workload (" + workloadName + ")"
+
+func init() {
+	alert.RegisterGinkgoAlert(testName, "SD-SREP", "Matt Bargenquast", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+}
+
+var _ = ginkgo.Describe(testName, func() {
 	defer ginkgo.GinkgoRecover()
-	ginkgo.BeforeEach(func() {
-		alert.RegisterGinkgoAlert(ginkgo.CurrentGinkgoTestDescription().TestText, "SD-SREP", "Matt Bargenquast", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
-	})
 	// setup helper
 	h := helper.New()
 

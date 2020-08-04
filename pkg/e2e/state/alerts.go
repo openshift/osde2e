@@ -40,11 +40,14 @@ func init() {
 	}
 }
 
-var _ = ginkgo.Describe("[Suite: e2e] Cluster state", func() {
+var clusterStateTestName string = "[Suite: e2e] Cluster state"
+
+func init() {
+	alert.RegisterGinkgoAlert(clusterStateTestName, "SD-CICD", "Michael Wilson", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+}
+
+var _ = ginkgo.Describe(clusterStateTestName, func() {
 	defer ginkgo.GinkgoRecover()
-	ginkgo.BeforeEach(func() {
-		alert.RegisterGinkgoAlert(ginkgo.CurrentGinkgoTestDescription().TestText, "SD-CICD", "Michael Wilson", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
-	})
 	h := helper.New()
 
 	alertsTimeoutInSeconds := 900

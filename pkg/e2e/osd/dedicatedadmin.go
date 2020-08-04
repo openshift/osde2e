@@ -13,10 +13,13 @@ import (
 	"k8s.io/client-go/rest"
 )
 
-var _ = ginkgo.Describe("[Suite: informing] [OSD] dedicated-admin permissions", func() {
-	ginkgo.BeforeEach(func() {
-		alert.RegisterGinkgoAlert(ginkgo.CurrentGinkgoTestDescription().TestText, "SD-SREP", "Matt Bargenquast", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
-	})
+var dedicatedAdminTestName string = "[Suite: informing] [OSD] dedicated-admin permissions"
+
+func init() {
+	alert.RegisterGinkgoAlert(dedicatedAdminTestName, "SD-SREP", "Matt Bargenquast", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+}
+
+var _ = ginkgo.Describe(daemonSetsTestName, func() {
 	ginkgo.Context("dedicated-admin group permissions", func() {
 
 		// setup helper
