@@ -7,58 +7,12 @@
   </url>
   
   <url>
-    <loc>https://openshift.github.io/osde2e/</loc>
-    <lastmod>2020-08-04T05:36:59+00:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://openshift.github.io/osde2e/tags/moa/</loc>
-    <lastmod>2020-08-04T05:36:59+00:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://openshift.github.io/osde2e/post/ce9407bc48b14dd3a9f889ba1ec0a837/</loc>
-    <lastmod>2020-08-04T05:36:59+00:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://openshift.github.io/osde2e/post/</loc>
-    <lastmod>2020-08-04T05:36:59+00:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://openshift.github.io/osde2e/tags/</loc>
-    <lastmod>2020-08-04T05:36:59+00:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://openshift.github.io/osde2e/tags/weather-report/</loc>
-    <lastmod>2020-08-04T05:36:59+00:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://openshift.github.io/osde2e/tags/gcp/</loc>
-    <lastmod>2020-08-04T05:36:51+00:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://openshift.github.io/osde2e/post/6bfe9ec3e47a4038b6676eb6f0f2cfc2/</loc>
-    <lastmod>2020-08-04T05:36:51+00:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://openshift.github.io/osde2e/tags/aws/</loc>
-    <lastmod>2020-08-04T05:36:40+00:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://openshift.github.io/osde2e/post/10dd6620f7624179972ae0f93f56da47/</loc>
-    <lastmod>2020-08-04T05:36:40+00:00</lastmod>
-  </url>
-  
-  <url>
     <loc>https://openshift.github.io/osde2e/archives/</loc>
     <lastmod>2019-05-28T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://openshift.github.io/osde2e/</loc>
   </url>
   
   <url>
@@ -67,6 +21,14 @@
   
   <url>
     <loc>https://openshift.github.io/osde2e/tags/index/</loc>
+  </url>
+  
+  <url>
+    <loc>https://openshift.github.io/osde2e/post/</loc>
+  </url>
+  
+  <url>
+    <loc>https://openshift.github.io/osde2e/tags/</loc>
   </url>
   
 </urlset>
