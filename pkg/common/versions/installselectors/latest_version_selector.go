@@ -33,5 +33,7 @@ func (l latestVersion) SelectVersion(versionList *spi.VersionList) (*semver.Vers
 		return nil, versionType, fmt.Errorf("not enough versions to select the latest version")
 	}
 
+	sortVersions(availableVersions)
+
 	return availableVersions[len(availableVersions)-1].Version(), versionType, nil
 }
