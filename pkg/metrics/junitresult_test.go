@@ -102,6 +102,20 @@ func TestCalculatePassRates(t *testing.T) {
 			},
 		},
 		{
+			name: "one job pass rate all success ignore log metrics",
+			jUnitResults: []JUnitResult{
+				makeJUnitResult("job1", Passed),
+				makeJUnitResult("job1", Passed),
+				makeJUnitResult("job1", Passed),
+				makeJUnitResult("job1", Passed),
+				makeLogMetricResult("job1", Failed),
+				makeLogMetricResult("job1", Failed),
+			},
+			expectedPassRates: map[string]float64{
+				"job1": 1.0,
+			},
+		},
+		{
 			name: "one job pass rate partial success",
 			jUnitResults: []JUnitResult{
 				makeJUnitResult("job1", Failed),
@@ -196,4 +210,12 @@ func makeJUnitResult(jobName string, result Result) JUnitResult {
 		Duration:       10 * time.Second,
 		Timestamp:      1,
 	}
+}
+
+func makeLogMetricResult(jobName string, result Result) JUnitResult {
+	jUnitResult := makeJUnitResult(jobName, result)
+
+	jUnitResult.TestName = "[Log Metrics] test-name"
+
+	return jUnitResult
 }

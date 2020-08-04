@@ -5,6 +5,7 @@ import (
 	"reflect"
 	"sort"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/prometheus/common/model"
@@ -30,6 +31,33 @@ func (c *Client) ListPassRatesByJob(begin, end time.Time) (map[string]float64, e
 	}
 
 	return calculatePassRates(results), nil
+}
+
+// ListPassRatesByJobID will return a map of job IDs to their corresponding pass rates given a job name.
+func (c *Client) ListPassRatesByJobID(jobName string, begin, end time.Time) (map[int64]float64, error) {
+	results, err := c.ListJUnitResultsByJobName(jobName, begin, end)
+
+	if err != nil {
+		return nil, fmt.Errorf("error listing JUnit results while calculating pass rates: %v", err)
+	}
+
+	resultsByJobID := map[int64][]JUnitResult{}
+
+	for _, result := range results {
+		if _, ok := resultsByJobID[result.JobID]; !ok {
+			resultsByJobID[result.JobID] = []JUnitResult{}
+		}
+
+		resultsByJobID[result.JobID] = append(resultsByJobID[result.JobID], result)
+	}
+
+	passRatesByJobID := map[int64]float64{}
+
+	for jobID, jobIDResults := range resultsByJobID {
+		passRatesByJobID[jobID] = calculatePassRates(jobIDResults)[jobName]
+	}
+
+	return passRatesByJobID, nil
 }
 
 // GetPassRateForJob will return the pass rate for a given job.
@@ -86,6 +114,11 @@ func calculatePassRates(results []JUnitResult) map[string]float64 {
 	countsByJob := map[string]*counts{}
 
 	for _, result := range results {
+		// Ignore all log metrics results for calculating pass rates
+		if strings.Contains(result.TestName, "[Log Metrics]") {
+			continue
+		}
+
 		if countsByJob[result.JobName] == nil {
 			countsByJob[result.JobName] = &counts{}
 		}

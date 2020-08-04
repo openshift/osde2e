@@ -295,13 +295,18 @@ var Weather = struct {
 
 	// JobAllowlist is a list of job regexes to consider in the weather report.
 	JobAllowlist string
+
+	// Provider is the provider tag to attach to an SD weather report.
+	Provider string
 }{
 	StartOfTimeWindowInHours: "weather.startOfTimeWindowInHours",
 	NumberOfSamplesNecessary: "weather.numberOfSamplesNecessary",
 	SlackWebhook:             "weather.slackWebhook",
 	JobAllowlist:             "weather.jobAllowlist",
+	Provider:                 "weather.provider",
 }
 
+// Alert config keys.
 var Alert = struct {
 	// SlackAPIToken is a bot slack token
 	SlackAPIToken string
@@ -479,6 +484,9 @@ func init() {
 
 	viper.SetDefault(Weather.JobAllowlist, "osde2e-.*-aws-e2e-.*")
 	viper.BindEnv(Weather.JobAllowlist, "JOB_ALLOWLIST")
+
+	viper.SetDefault(Weather.Provider, "aws")
+	viper.BindEnv(Weather.Provider, "WEATHER_PROVIDER")
 
 	// ----- Alert ----
 	viper.BindEnv(Alert.SlackAPIToken, "SLACK_API_TOKEN")

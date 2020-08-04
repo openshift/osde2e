@@ -36,6 +36,8 @@ func GenerateReport() (WeatherReport, error) {
 		allowlistRegexes = append(allowlistRegexes, regexp.MustCompile(allowlistRegex))
 	}
 
+	provider := viper.GetString(config.Weather.Provider)
+
 	results, err := client.ListAllJUnitResults(start, end)
 	if err != nil {
 		return WeatherReport{}, fmt.Errorf("error during query: %v", err)
@@ -50,6 +52,7 @@ func GenerateReport() (WeatherReport, error) {
 
 	weatherReport := WeatherReport{
 		ReportDate: time.Now().UTC(),
+		Provider:   provider,
 	}
 	for job, reportData := range jobReportData {
 		allowed := false
@@ -62,16 +65,60 @@ func GenerateReport() (WeatherReport, error) {
 		}
 
 		if allowed {
-			passRate, err := client.GetPassRateForJob(job, start, end)
+			jobIDsAndPassRates, err := client.ListPassRatesByJobID(job, start, end)
 
 			if err != nil {
 				return WeatherReport{}, err
 			}
+
+			jobIDsAndPassRatesReport := []JobIDReport{}
+			passRate := 0.0
+			for jobID, jobPassRate := range jobIDsAndPassRates {
+				passRate += jobPassRate
+
+				jobIDResults, err := client.ListJUnitResultsByJobNameAndJobID(job, jobID, start, end)
+
+				if err != nil {
+					return WeatherReport{}, err
+				}
+
+				failingResults := []string{}
+
+				installVersion := ""
+				upgradeVersion := ""
+
+				for _, jobIDResult := range jobIDResults {
+					if installVersion == "" && jobIDResult.InstallVersion != nil {
+						installVersion = jobIDResult.InstallVersion.String()
+					}
+
+					if upgradeVersion == "" && jobIDResult.UpgradeVersion != nil {
+						upgradeVersion = jobIDResult.UpgradeVersion.String()
+					}
+
+					if jobIDResult.Result == metrics.Failed {
+						failingResults = append(failingResults, jobIDResult.TestName)
+					}
+				}
+
+				jobIDsAndPassRatesReport = append(jobIDsAndPassRatesReport, JobIDReport{
+					JobID:          jobID,
+					PassRate:       jobPassRate * 100,
+					JobColor:       getPassRateColor(jobPassRate),
+					FailingTests:   failingResults,
+					InstallVersion: installVersion,
+					UpgradeVersion: upgradeVersion,
+				})
+			}
+			passRate = passRate / float64(len(jobIDsAndPassRates))
+
 			weatherReport.Jobs = append(weatherReport.Jobs, JobReport{
 				Name:         job,
 				Viable:       len(reportData.Failures) == 0,
+				Color:        getPassRateColor(passRate),
+				JobIDsReport: jobIDsAndPassRatesReport,
 				Versions:     reportData.Versions,
-				PassRate:     passRate,
+				PassRate:     passRate * 100,
 				FailingTests: arrayFromMapKeys(reportData.Failures),
 			})
 		}
@@ -80,6 +127,20 @@ func GenerateReport() (WeatherReport, error) {
 	sort.Stable(weatherReport)
 
 	return weatherReport, nil
+}
+
+func getPassRateColor(passRate float64) string {
+	colorPercentage := passRate - .9
+	if colorPercentage < 0 {
+		colorPercentage = 0
+	} else {
+		colorPercentage = colorPercentage / 0.1
+	}
+
+	green := int(255 * colorPercentage)
+	red := 255 - green
+
+	return fmt.Sprintf("#%02x%02x00", red, green)
 }
 
 // generateVersionsAndFailures generates an intermediary data structure from the results that can be used to populate
