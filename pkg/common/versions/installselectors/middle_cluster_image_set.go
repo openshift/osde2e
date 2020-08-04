@@ -34,5 +34,7 @@ func (m middleClusterImageSet) SelectVersion(versionList *spi.VersionList) (*sem
 		return nil, versionType, nil
 	}
 
+	sortVersions(versionsWithoutDefault)
+
 	return versionsWithoutDefault[numVersions/2].Version(), versionType, nil
 }
