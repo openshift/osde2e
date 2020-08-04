@@ -17,8 +17,5 @@ run_osde2e moa
 
 docker run -u $(id -u) -v "$DIR:/hugo-site" $HUGO -s /hugo-site --cleanDestinationDir
 
-git remote add origin git@github.com:openshift/osde2e.git
-git push -u origin gh-pages
 git add "$DIR"
 git commit -m "Weather report generation at $(date)"
-git push
