@@ -1,23 +1,14 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>OSDe2e Reporting</title>
-    <link>https://openshift.github.io/osde2e/</link>
-    <description>Recent content on OSDe2e Reporting</description>
+    <title>weather-report on OSDe2e Reporting</title>
+    <link>https://openshift.github.io/osde2e/tags/weather-report/</link>
+    <description>Recent content in weather-report on OSDe2e Reporting</description>
     <generator>Hugo -- gohugo.io</generator>
     <lastBuildDate>Tue, 04 Aug 2020 18:56:18 +0000</lastBuildDate>
     
-	<atom:link href="https://openshift.github.io/osde2e/index.xml" rel="self" type="application/rss+xml" />
+	<atom:link href="https://openshift.github.io/osde2e/tags/weather-report/index.xml" rel="self" type="application/rss+xml" />
     
-    
-    <item>
-      <title>About this page</title>
-      <link>https://openshift.github.io/osde2e/about/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>https://openshift.github.io/osde2e/about/</guid>
-      <description>Automatically generated reports generated from OSDe2e data live here.</description>
-    </item>
     
     <item>
       <title>OSDe2e Weather moa Weather Report 2020-08-04 18:56:18.868541688 &#43;0000 UTC</title>
@@ -44,15 +35,6 @@
       
       <guid>https://openshift.github.io/osde2e/post/302a12dabc544e08b6b3f2d8fdef54c1/</guid>
       <description>aws Weather report for 2020-08-04 18:55:49.964930771 +0000 UTC</description>
-    </item>
-    
-    <item>
-      <title></title>
-      <link>https://openshift.github.io/osde2e/archives/</link>
-      <pubDate>Tue, 28 May 2019 00:00:00 +0000</pubDate>
-      
-      <guid>https://openshift.github.io/osde2e/archives/</guid>
-      <description></description>
     </item>
     
   </channel>
