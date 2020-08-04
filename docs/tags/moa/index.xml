@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>moa on OSDe2e Reporting</title>
+    <link>https://openshift.github.io/osde2e/tags/moa/</link>
+    <description>Recent content in moa on OSDe2e Reporting</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <lastBuildDate>Tue, 04 Aug 2020 05:36:59 +0000</lastBuildDate>
+    
+	<atom:link href="https://openshift.github.io/osde2e/tags/moa/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>OSDe2e Weather moa Weather Report 2020-08-04 05:36:59.9228432 &#43;0000 UTC</title>
+      <link>https://openshift.github.io/osde2e/post/ce9407bc48b14dd3a9f889ba1ec0a837/</link>
+      <pubDate>Tue, 04 Aug 2020 05:36:59 +0000</pubDate>
+      
+      <guid>https://openshift.github.io/osde2e/post/ce9407bc48b14dd3a9f889ba1ec0a837/</guid>
+      <description>Summary    Job Name Pass Rate More detail     osde2e-int-moa-e2e-osd-default-nightly 97.17% More Detail   osde2e-int-moa-e2e-osd-default-plus-one-nightly 32.70% More Detail   osde2e-int-moa-e2e-osd-default-plus-two-nightly 0.00% More Detail   osde2e-int-moa-e2e-upgrade-to-osd-default-nightly 72.22% More Detail   osde2e-int-moa-e2e-upgrade-to-osd-default-plus-one-nightly 96.30% More Detail   osde2e-prod-moa-e2e-default 73.11% More Detail   osde2e-prod-moa-e2e-next 98.58% More Detail   osde2e-stage-moa-e2e-default 33.33% More Detail   osde2e-stage-moa-e2e-next 74.53% More Detail   osde2e-stage-moa-e2e-upgrade-default-next 65.43% More Detail    osde2e-int-moa-e2e-osd-default-nightly Overall pass rate: 97.</description>
+    </item>
+    
+  </channel>
+</rss>
