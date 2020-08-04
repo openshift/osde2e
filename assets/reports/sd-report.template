@@ -1,5 +1,5 @@
 +++
-title = "OSDe2e Weather {{.Provider}} Weather Report {{.ReportDate}}"
+title = "OSDe2e {{.Provider}} Weather Report {{.ReportDate}}"
 author = "OSDe2e Automation"
 date = "{{.ReportDate}}"
 tags = ["weather-report", "{{.Provider}}"]
