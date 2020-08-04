@@ -3,6 +3,7 @@
 baseurl = "https://openshift.github.io/osde2e/"  # Include trailing slash
 title = "OSDe2e Reporting"
 author = "Red Hat"
+copyright = "Copyright © 2020, Red Hat, all rights reserved."
 # canonifyurls = true
 paginate = 10
 theme = "hugo-clarity"

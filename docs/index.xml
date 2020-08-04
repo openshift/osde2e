@@ -5,6 +5,7 @@
     <link>https://openshift.github.io/osde2e/</link>
     <description>Recent content on OSDe2e Reporting</description>
     <generator>Hugo -- gohugo.io</generator>
+    <copyright>Copyright © 2020, Red Hat, all rights reserved.</copyright>
     <lastBuildDate>Tue, 04 Aug 2020 18:56:18 +0000</lastBuildDate>
     
 	<atom:link href="https://openshift.github.io/osde2e/index.xml" rel="self" type="application/rss+xml" />
@@ -13,7 +14,7 @@
     <item>
       <title>About this page</title>
       <link>https://openshift.github.io/osde2e/about/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <pubDate>Mon, 03 Aug 2020 00:00:00 +0000</pubDate>
       
       <guid>https://openshift.github.io/osde2e/about/</guid>
       <description>Automatically generated reports generated from OSDe2e data live here.</description>
