@@ -77,6 +77,17 @@ func (c *Client) ListJUnitResultsByClusterID(cloudProvider, environment, cluster
 	return processJUnitResults(results)
 }
 
+// ListFailedJUnitResultsByTestName will return all JUnitResults in a given time range for a given test name.
+func (c *Client) ListFailedJUnitResultsByTestName(testName string, begin, end time.Time) ([]JUnitResult, error) {
+	results, err := c.issueQuery(fmt.Sprintf("cicd_jUnitResult{result=\"failed\", testname=~\".*%s.*\"}", escapeQuotes(testName)), begin, end)
+
+	if err != nil {
+		return nil, fmt.Errorf("error listing all JUnit results: %v", err)
+	}
+
+	return processJUnitResults(results)
+}
+
 func calculatePassRates(results []JUnitResult) map[string]float64 {
 	type counts struct {
 		numPasses int
