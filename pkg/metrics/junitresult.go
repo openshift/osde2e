@@ -118,15 +118,17 @@ func (c *Client) ListFailedJUnitResultsByTestName(testName string, begin, end ti
 
 func calculatePassRates(results []JUnitResult) map[string]float64 {
 	type counts struct {
-		numPasses int
-		numTests  int
+		numPasses        int
+		numTests         int
+		upgradeFailed    bool
+		upgradeTestsSeen bool
 	}
 
 	countsByJob := map[string]*counts{}
 
 	for _, result := range results {
 		// Ignore all log metrics results for calculating pass rates
-		if strings.Contains(result.TestName, "[Log Metrics]") {
+		if strings.HasPrefix(result.TestName, "[Log Metrics]") {
 			continue
 		}
 
@@ -141,6 +143,15 @@ func calculatePassRates(results []JUnitResult) map[string]float64 {
 		if result.Result != Skipped {
 			countsByJob[result.JobName].numTests++
 		}
+
+		// If the upgrade fails, we want to munge the number of total tests so that the passrate shows that installCount tests failed instead of just
+		// this singular [upgrade] BeforeSuite test.
+		if result.TestName == "[upgrade] BeforeSuite" {
+			countsByJob[result.JobName].upgradeFailed = true
+		} else if strings.HasPrefix(result.TestName, "[upgrade]") {
+			countsByJob[result.JobName].upgradeTestsSeen = true
+		}
+
 	}
 
 	passRates := map[string]float64{}
@@ -149,7 +160,14 @@ func calculatePassRates(results []JUnitResult) map[string]float64 {
 		if count.numTests == 0 {
 			passRates[jobName] = 0
 		} else {
-			passRates[jobName] = float64(count.numPasses) / float64(count.numTests)
+			numTests := count.numTests
+
+			// If an upgrade has failed, remove the upgrade BeforeSuite test failure and double the count of total tests.
+			if count.upgradeFailed && !count.upgradeTestsSeen {
+				numTests = (numTests - 1) * 2
+			}
+
+			passRates[jobName] = float64(count.numPasses) / float64(numTests)
 		}
 	}
 
