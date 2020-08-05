@@ -1,0 +1,3 @@
+table.summary tbody tr td:nth-child(1){
+	width: 50px;
+}
