@@ -38,11 +38,14 @@ var testApplications = []string{
 	// "nodejs-mongodb",
 }
 
-var _ = ginkgo.Describe("[Suite: app-builds] OpenShift Application Build E2E", func() {
+var appBuildsTestName string = "[Suite: app-builds] OpenShift Application Build E2E"
+
+func init() {
+	alert.RegisterGinkgoAlert(appBuildsTestName, "SD-CICD", "Jeffrey Sica", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+}
+
+var _ = ginkgo.Describe(appBuildsTestName, func() {
 	defer ginkgo.GinkgoRecover()
-	ginkgo.BeforeEach(func() {
-		alert.RegisterGinkgoAlert(ginkgo.CurrentGinkgoTestDescription().TestText, "SD-CICD", "Jeffrey Sica", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
-	})
 
 	h := helper.New()
 

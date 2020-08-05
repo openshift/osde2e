@@ -102,6 +102,20 @@ func TestCalculatePassRates(t *testing.T) {
 			},
 		},
 		{
+			name: "one job pass rate all success ignore log metrics",
+			jUnitResults: []JUnitResult{
+				makeJUnitResult("job1", Passed),
+				makeJUnitResult("job1", Passed),
+				makeJUnitResult("job1", Passed),
+				makeJUnitResult("job1", Passed),
+				makeLogMetricResult("job1", Failed),
+				makeLogMetricResult("job1", Failed),
+			},
+			expectedPassRates: map[string]float64{
+				"job1": 1.0,
+			},
+		},
+		{
 			name: "one job pass rate partial success",
 			jUnitResults: []JUnitResult{
 				makeJUnitResult("job1", Failed),
@@ -111,6 +125,36 @@ func TestCalculatePassRates(t *testing.T) {
 			},
 			expectedPassRates: map[string]float64{
 				"job1": 0.75,
+			},
+		},
+		{
+			name: "one job pass rate partial success with upgrade failure",
+			jUnitResults: []JUnitResult{
+				makeJUnitResult("job1", Failed),
+				makeJUnitResult("job1", Passed),
+				makeJUnitResult("job1", Passed),
+				makeJUnitResult("job1", Passed),
+				makeUpgradeFailure("job1"),
+			},
+			expectedPassRates: map[string]float64{
+				"job1": 0.375,
+			},
+		},
+		{
+			name: "one job pass rate partial success with upgrade failure but upgrade tests run anyway",
+			jUnitResults: []JUnitResult{
+				makeJUnitResult("job1", Failed),
+				makeJUnitResult("job1", Passed),
+				makeJUnitResult("job1", Passed),
+				makeJUnitResult("job1", Passed),
+				makeUpgradeFailure("job1"),
+				makeUpgradeTest("job1", Passed),
+				makeUpgradeTest("job1", Passed),
+				makeUpgradeTest("job1", Failed),
+				makeUpgradeTest("job1", Failed),
+			},
+			expectedPassRates: map[string]float64{
+				"job1": 5.0 / 9.0,
 			},
 		},
 		{
@@ -126,20 +170,22 @@ func TestCalculatePassRates(t *testing.T) {
 			},
 		},
 		{
-			name: "multiple jobs pass rate partial success",
+			name: "multiple jobs pass rate partial success with upgrade failures",
 			jUnitResults: []JUnitResult{
 				makeJUnitResult("job1", Failed),
 				makeJUnitResult("job1", Passed),
 				makeJUnitResult("job1", Passed),
 				makeJUnitResult("job1", Passed),
+				makeUpgradeFailure("job1"),
 				makeJUnitResult("job2", Failed),
 				makeJUnitResult("job2", Failed),
 				makeJUnitResult("job2", Passed),
 				makeJUnitResult("job2", Passed),
+				makeUpgradeFailure("job2"),
 			},
 			expectedPassRates: map[string]float64{
-				"job1": 0.75,
-				"job2": 0.5,
+				"job1": 0.375,
+				"job2": 0.25,
 			},
 		},
 		{
@@ -196,4 +242,28 @@ func makeJUnitResult(jobName string, result Result) JUnitResult {
 		Duration:       10 * time.Second,
 		Timestamp:      1,
 	}
+}
+
+func makeLogMetricResult(jobName string, result Result) JUnitResult {
+	jUnitResult := makeJUnitResult(jobName, result)
+
+	jUnitResult.TestName = "[Log Metrics] test-name"
+
+	return jUnitResult
+}
+
+func makeUpgradeFailure(jobName string) JUnitResult {
+	jUnitResult := makeJUnitResult(jobName, Failed)
+
+	jUnitResult.TestName = "[upgrade] BeforeSuite"
+
+	return jUnitResult
+}
+
+func makeUpgradeTest(jobName string, result Result) JUnitResult {
+	jUnitResult := makeJUnitResult(jobName, result)
+
+	jUnitResult.TestName = "[upgrade] test-name"
+
+	return jUnitResult
 }

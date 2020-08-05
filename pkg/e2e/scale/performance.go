@@ -9,11 +9,14 @@ import (
 	"github.com/openshift/osde2e/pkg/common/helper"
 )
 
-var _ = ginkgo.Describe("[Suite: scale-performance] Scaling", func() {
+var performanceTestName string = "[Suite: scale-performance] Scaling"
+
+func init() {
+	alert.RegisterGinkgoAlert(performanceTestName, "SD-CICD", "Michael Wilson", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+}
+
+var _ = ginkgo.Describe(performanceTestName, func() {
 	defer ginkgo.GinkgoRecover()
-	ginkgo.BeforeEach(func() {
-		alert.RegisterGinkgoAlert(ginkgo.CurrentGinkgoTestDescription().TestText, "SD-CICD", "Michael Wilson", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
-	})
 	h := helper.New()
 
 	httpTimeoutInSeconds := 7200

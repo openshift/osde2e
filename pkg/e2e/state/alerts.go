@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"text/template"
+	"time"
 
 	"github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -40,11 +41,14 @@ func init() {
 	}
 }
 
-var _ = ginkgo.Describe("[Suite: e2e] Cluster state", func() {
+var clusterStateTestName string = "[Suite: e2e] Cluster state"
+
+func init() {
+	alert.RegisterGinkgoAlert(clusterStateTestName, "SD-CICD", "Michael Wilson", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+}
+
+var _ = ginkgo.Describe(clusterStateTestName, func() {
 	defer ginkgo.GinkgoRecover()
-	ginkgo.BeforeEach(func() {
-		alert.RegisterGinkgoAlert(ginkgo.CurrentGinkgoTestDescription().TestText, "SD-CICD", "Michael Wilson", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
-	})
 	h := helper.New()
 
 	alertsTimeoutInSeconds := 900
@@ -63,27 +67,31 @@ var _ = ginkgo.Describe("[Suite: e2e] Cluster state", func() {
 		r.Name = "alerts"
 		r.Cmd = alertsCommand
 
-		// run tests
-		stopCh := make(chan struct{})
-		err = r.Run(alertsTimeoutInSeconds, stopCh)
-		Expect(err).NotTo(HaveOccurred(), "failure running command on pod")
+		Eventually(func() bool {
+			// run tests
+			stopCh := make(chan struct{})
+			err = r.Run(alertsTimeoutInSeconds, stopCh)
+			Expect(err).NotTo(HaveOccurred(), "failure running command on pod")
 
-		// get results
-		results, err := r.RetrieveResults()
-		Expect(err).NotTo(HaveOccurred(), "failure retrieving results from pod")
+			// get results
+			results, err := r.RetrieveResults()
+			Expect(err).NotTo(HaveOccurred(), "failure retrieving results from pod")
 
-		// write results
-		h.WriteResults(results)
+			// write results
+			h.WriteResults(results)
 
-		queryJSON := query{}
-		err = json.Unmarshal(results["alerts.json"], &queryJSON)
-		Expect(err).NotTo(HaveOccurred(), "failure parsing JSON results from alert manager")
+			queryJSON := query{}
+			err = json.Unmarshal(results["alerts.json"], &queryJSON)
+			Expect(err).NotTo(HaveOccurred(), "failure parsing JSON results from alert manager")
 
-		clusterProvider, err := providers.ClusterProvider()
-		Expect(err).NotTo(HaveOccurred(), "failure to get cluster provider")
+			clusterProvider, err := providers.ClusterProvider()
+			Expect(err).NotTo(HaveOccurred(), "failure to get cluster provider")
 
-		foundCritical := findCriticalAlerts(queryJSON.Data.Results, viper.GetString(config.Provider), clusterProvider.Environment())
-		Expect(foundCritical).To(BeFalse(), "found a critical alert")
+			foundCritical := findCriticalAlerts(queryJSON.Data.Results, viper.GetString(config.Provider), clusterProvider.Environment())
+			Expect(foundCritical).To(BeFalse(), "found a critical alert")
+
+			return err == nil && !foundCritical
+		}, 5*time.Minute, 30*time.Second).Should(BeTrue(), "never able to find zero alerts")
 
 	}, float64(alertsTimeoutInSeconds+30))
 })

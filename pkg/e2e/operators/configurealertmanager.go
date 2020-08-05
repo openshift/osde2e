@@ -6,10 +6,15 @@ import (
 	"github.com/openshift/osde2e/pkg/common/helper"
 )
 
-var _ = ginkgo.Describe("[Suite: operators] [OSD] Configure AlertManager Operator", func() {
-	ginkgo.BeforeEach(func() {
-		alert.RegisterGinkgoAlert(ginkgo.CurrentGinkgoTestDescription().TestText, "SD-SREP", "Christopher Collins", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
-	})
+var configureAlertManagerOperators string = "[Suite: operators] [OSD] Configure AlertManager Operator"
+var configureAlertManagerInforming string = "[Suite: informing] [OSD] Configure AlertManager Operator"
+
+func init() {
+	alert.RegisterGinkgoAlert(configureAlertManagerOperators, "SD-SREP", "Christopher Collins", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+	alert.RegisterGinkgoAlert(configureAlertManagerInforming, "SD-SREP", "Matt Bargenquast", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+}
+
+var _ = ginkgo.Describe(configureAlertManagerOperators, func() {
 	var operatorName = "configure-alertmanager-operator"
 	var operatorNamespace string = "openshift-monitoring"
 	var operatorLockFile string = "configure-alertmanager-operator-lock"
@@ -43,10 +48,7 @@ var _ = ginkgo.Describe("[Suite: operators] [OSD] Configure AlertManager Operato
 	checkRoleBindings(h, operatorNamespace, roleBindings)
 })
 
-var _ = ginkgo.Describe("[Suite: informing] [OSD] Configure AlertManager Operator", func() {
-	ginkgo.BeforeEach(func() {
-		alert.RegisterGinkgoAlert(ginkgo.CurrentGinkgoTestDescription().TestText, "SD-SREP", "Matt Bargenquast", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
-	})
+var _ = ginkgo.Describe(configureAlertManagerInforming, func() {
 	checkUpgrade(helper.New(), "openshift-monitoring", "configure-alertmanager-operator",
 		"configure-alertmanager-operator.v0.1.171-dba3c73",
 	)

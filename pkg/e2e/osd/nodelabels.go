@@ -12,10 +12,13 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-var _ = ginkgo.Describe("[Suite: service-definition] [OSD] NodeLabels", func() {
-	ginkgo.BeforeEach(func() {
-		alert.RegisterGinkgoAlert(ginkgo.CurrentGinkgoTestDescription().TestText, "SD-CICD", "Jeffrey Sica", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
-	})
+var nodeLabelsTestName string = "[Suite: service-definition] [OSD] NodeLabels"
+
+func init() {
+	alert.RegisterGinkgoAlert(nodeLabelsTestName, "SD-CICD", "Jeffrey Sica", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+}
+
+var _ = ginkgo.Describe(nodeLabelsTestName, func() {
 	ginkgo.Context("Modifying nodeLabels is not allowed", func() {
 		// setup helper
 		h := helper.New()

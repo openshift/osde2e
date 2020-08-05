@@ -20,11 +20,16 @@ var DefaultE2EConfig = E2EConfig{
 	},
 }
 
-var _ = ginkgo.Describe("[Suite: conformance][k8s]", func() {
+var conformanceK8sTestName string = "[Suite: conformance][k8s]"
+var conformanceOpenshiftTestName string = "[Suite: conformance][openshift]"
+
+func init() {
+	alert.RegisterGinkgoAlert(conformanceK8sTestName, "SD-CICD", "Jeffrey Sica", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+	alert.RegisterGinkgoAlert(conformanceOpenshiftTestName, "SD-CICD", "Jeffrey Sica", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+}
+
+var _ = ginkgo.Describe(conformanceK8sTestName, func() {
 	defer ginkgo.GinkgoRecover()
-	ginkgo.BeforeEach(func() {
-		alert.RegisterGinkgoAlert(ginkgo.CurrentGinkgoTestDescription().TestText, "SD-CICD", "Jeffrey Sica", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
-	})
 	h := helper.New()
 
 	e2eTimeoutInSeconds := 3600
@@ -55,11 +60,8 @@ var _ = ginkgo.Describe("[Suite: conformance][k8s]", func() {
 	}, float64(e2eTimeoutInSeconds+30))
 })
 
-var _ = ginkgo.Describe("[Suite: conformance][openshift]", func() {
+var _ = ginkgo.Describe(conformanceOpenshiftTestName, func() {
 	defer ginkgo.GinkgoRecover()
-	ginkgo.BeforeEach(func() {
-		alert.RegisterGinkgoAlert(ginkgo.CurrentGinkgoTestDescription().TestText, "SD-CICD", "Jeffrey Sica", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
-	})
 	h := helper.New()
 
 	e2eTimeoutInSeconds := 7200

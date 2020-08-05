@@ -5,6 +5,7 @@ import (
 	"reflect"
 	"sort"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/prometheus/common/model"
@@ -30,6 +31,33 @@ func (c *Client) ListPassRatesByJob(begin, end time.Time) (map[string]float64, e
 	}
 
 	return calculatePassRates(results), nil
+}
+
+// ListPassRatesByJobID will return a map of job IDs to their corresponding pass rates given a job name.
+func (c *Client) ListPassRatesByJobID(jobName string, begin, end time.Time) (map[int64]float64, error) {
+	results, err := c.ListJUnitResultsByJobName(jobName, begin, end)
+
+	if err != nil {
+		return nil, fmt.Errorf("error listing JUnit results while calculating pass rates: %v", err)
+	}
+
+	resultsByJobID := map[int64][]JUnitResult{}
+
+	for _, result := range results {
+		if _, ok := resultsByJobID[result.JobID]; !ok {
+			resultsByJobID[result.JobID] = []JUnitResult{}
+		}
+
+		resultsByJobID[result.JobID] = append(resultsByJobID[result.JobID], result)
+	}
+
+	passRatesByJobID := map[int64]float64{}
+
+	for jobID, jobIDResults := range resultsByJobID {
+		passRatesByJobID[jobID] = calculatePassRates(jobIDResults)[jobName]
+	}
+
+	return passRatesByJobID, nil
 }
 
 // GetPassRateForJob will return the pass rate for a given job.
@@ -77,15 +105,33 @@ func (c *Client) ListJUnitResultsByClusterID(cloudProvider, environment, cluster
 	return processJUnitResults(results)
 }
 
+// ListFailedJUnitResultsByTestName will return all JUnitResults in a given time range for a given test name.
+func (c *Client) ListFailedJUnitResultsByTestName(testName string, begin, end time.Time) ([]JUnitResult, error) {
+	results, err := c.issueQuery(fmt.Sprintf("cicd_jUnitResult{result=\"failed\", testname=~\".*%s.*\"}", escapeQuotes(testName)), begin, end)
+
+	if err != nil {
+		return nil, fmt.Errorf("error listing all JUnit results: %v", err)
+	}
+
+	return processJUnitResults(results)
+}
+
 func calculatePassRates(results []JUnitResult) map[string]float64 {
 	type counts struct {
-		numPasses int
-		numTests  int
+		numPasses        int
+		numTests         int
+		upgradeFailed    bool
+		upgradeTestsSeen bool
 	}
 
 	countsByJob := map[string]*counts{}
 
 	for _, result := range results {
+		// Ignore all log metrics results for calculating pass rates
+		if strings.HasPrefix(result.TestName, "[Log Metrics]") {
+			continue
+		}
+
 		if countsByJob[result.JobName] == nil {
 			countsByJob[result.JobName] = &counts{}
 		}
@@ -97,6 +143,15 @@ func calculatePassRates(results []JUnitResult) map[string]float64 {
 		if result.Result != Skipped {
 			countsByJob[result.JobName].numTests++
 		}
+
+		// If the upgrade fails, we want to munge the number of total tests so that the passrate shows that installCount tests failed instead of just
+		// this singular [upgrade] BeforeSuite test.
+		if result.TestName == "[upgrade] BeforeSuite" {
+			countsByJob[result.JobName].upgradeFailed = true
+		} else if strings.HasPrefix(result.TestName, "[upgrade]") {
+			countsByJob[result.JobName].upgradeTestsSeen = true
+		}
+
 	}
 
 	passRates := map[string]float64{}
@@ -105,7 +160,14 @@ func calculatePassRates(results []JUnitResult) map[string]float64 {
 		if count.numTests == 0 {
 			passRates[jobName] = 0
 		} else {
-			passRates[jobName] = float64(count.numPasses) / float64(count.numTests)
+			numTests := count.numTests
+
+			// If an upgrade has failed, remove the upgrade BeforeSuite test failure and double the count of total tests.
+			if count.upgradeFailed && !count.upgradeTestsSeen {
+				numTests = (numTests - 1) * 2
+			}
+
+			passRates[jobName] = float64(count.numPasses) / float64(numTests)
 		}
 	}
 

@@ -22,6 +22,8 @@ func GenerateWeatherReportForOSD(output string, outputType string) error {
 		err = report.WriteJSON(output)
 	} else if outputType == "markdown" {
 		err = report.WriteMarkdown(output)
+	} else if outputType == "sd-report" {
+		err = report.WriteSDReport(output)
 	} else {
 		err = fmt.Errorf("unrecognized output type: %s", outputType)
 	}

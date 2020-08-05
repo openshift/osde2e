@@ -35,10 +35,13 @@ func makePod(name, sa string, privileged bool) v1.Pod {
 	}
 }
 
-var _ = ginkgo.Describe("[Suite: service-definition] [OSD] Privileged Containers", func() {
-	ginkgo.BeforeEach(func() {
-		alert.RegisterGinkgoAlert(ginkgo.CurrentGinkgoTestDescription().TestText, "SD-CICD", "Jeffrey Sica", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
-	})
+var privilegedTestname string = "[Suite: service-definition] [OSD] Privileged Containers"
+
+func init() {
+	alert.RegisterGinkgoAlert(privilegedTestname, "SD-CICD", "Jeffrey Sica", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+}
+
+var _ = ginkgo.Describe(privilegedTestname, func() {
 	ginkgo.Context("Privileged containers are not allowed", func() {
 		// setup helper
 		h := helper.New()

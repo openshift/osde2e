@@ -9,10 +9,13 @@ import (
 	"github.com/spf13/viper"
 )
 
-var _ = ginkgo.Describe("[Suite: informing] [OSD] OCM", func() {
-	ginkgo.BeforeEach(func() {
-		alert.RegisterGinkgoAlert(ginkgo.CurrentGinkgoTestDescription().TestText, "SD-CICD", "Jeffrey Sica", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
-	})
+var ocmTestName string = "[Suite: informing] [OSD] OCM"
+
+func init() {
+	alert.RegisterGinkgoAlert(ocmTestName, "SD-CICD", "Jeffrey Sica", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+}
+
+var _ = ginkgo.Describe(ocmTestName, func() {
 	ginkgo.Context("Metrics", func() {
 		clusterID := viper.GetString(config.Cluster.ID)
 		ginkgo.It("do exist and are not empty", func() {

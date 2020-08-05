@@ -22,10 +22,13 @@ const (
 	CUSTOMER_PROVIDER_NAME = "CUSTOM"
 )
 
-var _ = ginkgo.Describe("[Suite: service-definition] [OSD] user validating webhook", func() {
-	ginkgo.BeforeEach(func() {
-		alert.RegisterGinkgoAlert(ginkgo.CurrentGinkgoTestDescription().TestText, "SD-SREP", "Haoran Wang", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
-	})
+var userWebhookTestName string = "[Suite: service-definition] [OSD] user validating webhook"
+
+func init() {
+	alert.RegisterGinkgoAlert(userWebhookTestName, "SD-SREP", "Haoran Wang", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+}
+
+var _ = ginkgo.Describe(userWebhookTestName, func() {
 	h := helper.New()
 
 	ginkgo.Context("user validating webhook", func() {
