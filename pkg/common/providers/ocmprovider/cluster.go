@@ -23,6 +23,12 @@ const (
 
 	// OwnedBy property which will tell who made the cluster.
 	OwnedBy = "OwnedBy"
+
+	// InstalledVersion property will tell which OSD version was installed in the cluster initially.
+	InstalledVersion = "InstalledVersion"
+
+	// UpgradeVersion property will tell which OSD version was installed in the cluster recently as an upgrade.
+	UpgradeVersion = "UpgradeVersion"
 )
 
 // LaunchCluster setups an new cluster using the OSD API and returns it's ID.
@@ -159,9 +165,13 @@ func (o *OCMProvider) GenerateProperties() (map[string]string, error) {
 		username = user.Username
 	}
 
+	installedversion := viper.GetString(config.Cluster.Version)
+
 	return map[string]string{
-		MadeByOSDe2e: "true",
-		OwnedBy:      username,
+		MadeByOSDe2e:     "true",
+		OwnedBy:          username,
+		InstalledVersion: installedversion,
+		UpgradeVersion:   "--",
 	}, nil
 }
 
@@ -626,5 +636,74 @@ func (o *OCMProvider) ExtendExpiry(clusterID string, hours uint64, minutes uint6
 	}
 	log.Println("Successfully extended cluster expiry time to ", extendexpirytime.UTC().Format("2002-01-02 14:03:02 Monday"))
 
+	return nil
+}
+
+// AddProperty adds a new property to the properties field of an existing cluster
+func (o *OCMProvider) AddProperty(clusterID string, tag string, value string) error {
+	var resp *v1.ClusterUpdateResponse
+
+	// Get the current state of the cluster
+	ocmCluster, err := o.getOCMCluster(clusterID)
+
+	if err != nil {
+		return err
+	}
+
+	cluster, err := o.ocmToSPICluster(ocmCluster)
+	if err != nil {
+		return err
+	}
+
+	clusterproperties := cluster.Properties()
+
+	clusterproperties[tag] = value
+
+	modifiedCluster, err := v1.NewCluster().Properties(clusterproperties).Build()
+
+	if err != nil {
+		return fmt.Errorf("error while building updated modified cluster object with new property: %v", err)
+	}
+
+	err = retryer().Do(func() error {
+		var err error
+		resp, err = o.conn.ClustersMgmt().V1().Clusters().Cluster(clusterID).Update().
+			Body(modifiedCluster).
+			Send()
+
+		if err != nil {
+			err = fmt.Errorf("couldn't update cluster '%s': %v", clusterID, err)
+			log.Printf("%v", err)
+			return err
+		}
+
+		if resp != nil && resp.Error() != nil {
+			log.Printf("error while trying to update cluster: %v", err)
+			return errResp(resp.Error())
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return err
+	}
+
+	if resp.Error() != nil {
+		return resp.Error()
+	}
+
+	finalCluster, err := o.GetCluster(clusterID)
+
+	if err != nil {
+		log.Printf("error attempting to retrieve cluster for verification: %v", err)
+	}
+
+	if finalCluster.Properties()[tag] != value {
+		return fmt.Errorf("added property not reflected in OCM")
+
+	}
+
+	log.Printf("Successfully added property[%s] - %s \n", tag, finalCluster.Properties()[tag])
 	return nil
 }

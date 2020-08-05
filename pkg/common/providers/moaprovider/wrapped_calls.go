@@ -72,7 +72,12 @@ func (m *MOAProvider) CincinnatiChannel() spi.CincinnatiChannel {
 	return m.ocmProvider.CincinnatiChannel()
 }
 
-// ExtendExpiry extends the expiration time of an existing cluster
+// ExtendExpiry will call ExtendExpiry from the OCM provider.
 func (m *MOAProvider) ExtendExpiry(clusterID string, hours uint64, minutes uint64, seconds uint64) error {
 	return m.ocmProvider.ExtendExpiry(clusterID, hours, minutes, seconds)
+}
+
+// AddProperty will call AddProperty from the OCM provider.
+func (m *MOAProvider) AddProperty(clusterID string, tag string, value string) error {
+	return m.ocmProvider.AddProperty(clusterID, tag, value)
 }

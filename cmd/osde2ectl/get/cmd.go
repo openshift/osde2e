@@ -124,8 +124,8 @@ func run(cmd *cobra.Command, argv []string) error {
 		return fmt.Errorf("Cluster was not created by osde2e")
 	}
 
-	fmt.Printf("%-25s%-35s%-15s%-20s\n", "NAME", "ID", "STATUS", "OWNER")
-	fmt.Printf("%-25s%-35s%-15s%-20s\n", cluster.Name(), cluster.ID(), cluster.State(), cluster.Properties()[ocmprovider.OwnedBy])
+	fmt.Printf("%-25s%-35s%-15s%-15s%-25s%25s\n", "NAME", "ID", "STATUS", "OWNER", "INSTALLED VERSION", "UPGRADE VERSION")
+	fmt.Printf("%-25s%-35s%-15s%-15s%-25s%25s\n", cluster.Name(), cluster.ID(), cluster.State(), cluster.Properties()[ocmprovider.OwnedBy], cluster.Properties()[ocmprovider.InstalledVersion], cluster.Properties()[ocmprovider.UpgradeVersion])
 
 	if kubeconfigStatus {
 		content, err := getKubeconfig(clusterID)

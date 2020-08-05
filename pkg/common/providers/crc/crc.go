@@ -286,7 +286,12 @@ func getPullSecretFileContent() (string, error) {
 	return crcPullSecret, nil
 }
 
-// ExtendExpiry extends the expiration time of an existing cluster
+// ExtendExpiry CRCs an extend cluster expiry operation.
 func (m *Provider) ExtendExpiry(clusterID string, hours uint64, minutes uint64, seconds uint64) error {
 	return fmt.Errorf("ExtendExpiry is unsupported by CRC clusters")
+}
+
+// AddProperty CRCs an add new cluster property operation.
+func (m *Provider) AddProperty(clusterID string, tag string, value string) error {
+	return fmt.Errorf("AddProperty is unsupported by CRC clusters")
 }
