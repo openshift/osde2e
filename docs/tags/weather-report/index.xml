@@ -6,10 +6,37 @@
     <description>Recent content in weather-report on OSDe2e Reporting</description>
     <generator>Hugo -- gohugo.io</generator>
     <copyright>Copyright © 2020, Red Hat, all rights reserved.</copyright>
-    <lastBuildDate>Tue, 04 Aug 2020 18:56:18 +0000</lastBuildDate>
+    <lastBuildDate>Wed, 05 Aug 2020 12:01:18 +0000</lastBuildDate>
     
 	<atom:link href="https://openshift.github.io/osde2e/tags/weather-report/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>OSDe2e moa Weather Report 2020-08-05 12:01:18.568856975 &#43;0000 UTC</title>
+      <link>https://openshift.github.io/osde2e/post/68261cf38da64e608f9baff274396d33/</link>
+      <pubDate>Wed, 05 Aug 2020 12:01:18 +0000</pubDate>
+      
+      <guid>https://openshift.github.io/osde2e/post/68261cf38da64e608f9baff274396d33/</guid>
+      <description>moa Weather report for 2020-08-05 12:01:18.568856975 +0000 UTC</description>
+    </item>
+    
+    <item>
+      <title>OSDe2e gcp Weather Report 2020-08-05 12:01:10.682372927 &#43;0000 UTC</title>
+      <link>https://openshift.github.io/osde2e/post/6454c1046ac34168a53ee2f16d58b3eb/</link>
+      <pubDate>Wed, 05 Aug 2020 12:01:10 +0000</pubDate>
+      
+      <guid>https://openshift.github.io/osde2e/post/6454c1046ac34168a53ee2f16d58b3eb/</guid>
+      <description>gcp Weather report for 2020-08-05 12:01:10.682372927 +0000 UTC</description>
+    </item>
+    
+    <item>
+      <title>OSDe2e aws Weather Report 2020-08-05 12:00:43.598673379 &#43;0000 UTC</title>
+      <link>https://openshift.github.io/osde2e/post/44fe9c105756438d93d937bc1f997a8a/</link>
+      <pubDate>Wed, 05 Aug 2020 12:00:43 +0000</pubDate>
+      
+      <guid>https://openshift.github.io/osde2e/post/44fe9c105756438d93d937bc1f997a8a/</guid>
+      <description>aws Weather report for 2020-08-05 12:00:43.598673379 +0000 UTC</description>
+    </item>
     
     <item>
       <title>OSDe2e Weather moa Weather Report 2020-08-04 18:56:18.868541688 &#43;0000 UTC</title>
