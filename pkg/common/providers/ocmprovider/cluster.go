@@ -650,12 +650,7 @@ func (o *OCMProvider) AddProperty(clusterID string, tag string, value string) er
 		return err
 	}
 
-	cluster, err := o.ocmToSPICluster(ocmCluster)
-	if err != nil {
-		return err
-	}
-
-	clusterproperties := cluster.Properties()
+	clusterproperties := ocmCluster.Properties()
 
 	clusterproperties[tag] = value
 
