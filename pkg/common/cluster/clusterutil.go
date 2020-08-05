@@ -347,5 +347,5 @@ func clusterName() string {
 		suffix = util.RandomStr(3)
 	}
 
-	return "ci-cluster-" + safeVersion + "-" + suffix
+	return "osde2e-" + safeVersion + "-" + suffix
 }
