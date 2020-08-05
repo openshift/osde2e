@@ -3,7 +3,7 @@ title = "OSDe2e {{.Provider}} Weather Report {{.ReportDate}}"
 author = "OSDe2e Automation"
 date = "{{.ReportDate}}"
 tags = ["weather-report", "{{.Provider}}"]
-summary = "{{.Provider}} Weather report for {{.ReportDate}}"
+summary = "{{.Summary}}"
 +++
 ## Summary
 

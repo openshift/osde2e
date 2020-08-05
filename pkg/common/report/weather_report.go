@@ -38,6 +38,7 @@ type WeatherReport struct {
 	ReportDate time.Time   `json:"reportDate"`
 	Provider   string      `json:"provider"`
 	Jobs       []JobReport `json:"jobs"`
+	Summary    string      `json:"summary"`
 
 	// We want the sort interface so that we can sort jobs and produce stable, comparable reports.
 	sort.Interface `json:"-"`

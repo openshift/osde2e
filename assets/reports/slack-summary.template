@@ -3,3 +3,5 @@ This report was generated on {{.ReportDate}}
 
 {{range .Jobs}}
 - *{{.Name}}* (Pass rate: *{{.PassRate}}*){{end}}
+
+Please refer to https://openshift.github.io/osde2e/ for more detailed information.
