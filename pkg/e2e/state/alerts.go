@@ -6,9 +6,10 @@ import (
 	"text/template"
 	"time"
 
+	"log"
+
 	"github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"github.com/prometheus/common/log"
 	"github.com/spf13/viper"
 
 	"github.com/openshift/osde2e/pkg/common/alert"
@@ -68,29 +69,35 @@ var _ = ginkgo.Describe(clusterStateTestName, func() {
 		r.Cmd = alertsCommand
 
 		Eventually(func() bool {
-			// run tests
 			stopCh := make(chan struct{})
-			err = r.Run(alertsTimeoutInSeconds, stopCh)
-			Expect(err).NotTo(HaveOccurred(), "failure running command on pod")
+			// run tests
+			if err = r.Run(alertsTimeoutInSeconds, stopCh); err != nil {
+				log.Printf("Error running command on pod: %s", err.Error())
+				return false
+			}
 
 			// get results
 			results, err := r.RetrieveResults()
-			Expect(err).NotTo(HaveOccurred(), "failure retrieving results from pod")
+			if err != nil {
+				log.Printf("Error retrieving results from pod: %s", err.Error())
+				return false
+			}
 
 			// write results
 			h.WriteResults(results)
 
 			queryJSON := query{}
-			err = json.Unmarshal(results["alerts.json"], &queryJSON)
-			Expect(err).NotTo(HaveOccurred(), "failure parsing JSON results from alert manager")
+			if err = json.Unmarshal(results["alerts.json"], &queryJSON); err != nil {
+				log.Printf("Error parsing JSON results from AlertManager: %s", err.Error())
+				return false
+			}
 
 			clusterProvider, err := providers.ClusterProvider()
-			Expect(err).NotTo(HaveOccurred(), "failure to get cluster provider")
+			if err != nil {
+				log.Printf("Error getting cluster provider: %s", err.Error())
+			}
 
-			foundCritical := findCriticalAlerts(queryJSON.Data.Results, viper.GetString(config.Provider), clusterProvider.Environment())
-			Expect(foundCritical).To(BeFalse(), "found a critical alert")
-
-			return err == nil && !foundCritical
+			return findCriticalAlerts(queryJSON.Data.Results, viper.GetString(config.Provider), clusterProvider.Environment())
 		}, 5*time.Minute, 30*time.Second).Should(BeTrue(), "never able to find zero alerts")
 
 	}, float64(alertsTimeoutInSeconds+30))
@@ -122,9 +129,9 @@ func findCriticalAlerts(results []result, provider, environment string) bool {
 		}
 
 		if ignoredCritical {
-			log.Infof("Active alert: %s, Severity: %s (known to be consistently critical, ignoring)", result.Metric.AlertName, result.Metric.Severity)
+			log.Printf("Active alert: %s, Severity: %s (known to be consistently critical, ignoring)", result.Metric.AlertName, result.Metric.Severity)
 		} else {
-			log.Infof("Active alert: %s, Severity: %s", result.Metric.AlertName, result.Metric.Severity)
+			log.Printf("Active alert: %s, Severity: %s", result.Metric.AlertName, result.Metric.Severity)
 		}
 	}
 
