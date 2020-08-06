@@ -334,6 +334,10 @@ func runGinkgoTests() error {
 			}
 			events.RecordEvent(events.UpgradeSuccessful)
 
+			if err = provider.AddProperty(clusterID, "UpgradeVersion", viper.GetString(config.Upgrade.ReleaseName)); err != nil {
+				log.Printf("Error while adding upgrade version property to cluster via OCM: %v", err)
+			}
+
 			log.Println("Running e2e tests POST-UPGRADE...")
 			upgradeTestsPassed = runTestsInPhase(phase.UpgradePhase, "OSD e2e suite post-upgrade")
 		} else {
