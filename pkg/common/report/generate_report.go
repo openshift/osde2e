@@ -81,6 +81,8 @@ func GenerateReport() (WeatherReport, error) {
 
 			jobIDsAndPassRatesReport := []JobIDReport{}
 			passRate := 0.0
+			environment := reportData.Environment
+
 			for jobID, jobPassRate := range jobIDsAndPassRates {
 				passRate += jobPassRate
 
@@ -109,6 +111,13 @@ func GenerateReport() (WeatherReport, error) {
 					}
 				}
 
+				if _, ok := summary[environment]; !ok {
+					summary[environment] = &summaryReportData{}
+				}
+
+				summary[environment].summedPassRates += jobPassRate
+				summary[environment].numTests++
+
 				jobIDsAndPassRatesReport = append(jobIDsAndPassRatesReport, JobIDReport{
 					JobID:          jobID,
 					PassRate:       jobPassRate * 100,
@@ -119,20 +128,6 @@ func GenerateReport() (WeatherReport, error) {
 				})
 			}
 			passRate = passRate / float64(len(jobIDsAndPassRates))
-
-			environment := reportData.Environment
-
-			// For some reason the environment label doesn't seem to be set for AWS prod jobs
-			if environment == "" {
-				environment = "prod"
-			}
-
-			if _, ok := summary[environment]; !ok {
-				summary[environment] = &summaryReportData{}
-			}
-
-			summary[environment].summedPassRates += passRate
-			summary[environment].numTests++
 
 			weatherReport.Jobs = append(weatherReport.Jobs, JobReport{
 				Name:         job,
@@ -184,13 +179,13 @@ func generateVersionsAndFailures(results []metrics.JUnitResult) (map[string]*rep
 		jobReportData[job].addVersion(result.InstallVersion.String())
 		key := result.TestName
 
+		jobReportData[job].Environment = result.Environment
 		if result.Result == metrics.Failed {
 			// Initialize the failure count for the key if it doesn't exist
 			if _, ok := jobReportData[job].Failures[key]; !ok {
 				jobReportData[job].Failures[key] = 0
 			}
 
-			jobReportData[job].Environment = result.Environment
 			jobReportData[job].Failures[key] = jobReportData[job].Failures[key] + 1
 		}
 	}
