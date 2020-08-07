@@ -105,6 +105,10 @@ var _ = ginkgo.SynchronizedBeforeSuite(func() []byte {
 		metadata.Instance.SetClusterName(cluster.Name())
 		metadata.Instance.SetClusterID(cluster.ID())
 
+		if err = provider.AddProperty(cluster.ID(), "UpgradeVersion", viper.GetString(config.Upgrade.ReleaseName)); err != nil {
+			log.Printf("Error while adding upgrade version property to cluster via OCM: %v", err)
+		}
+
 		if len(viper.GetString(config.Addons.IDs)) > 0 {
 			err = installAddons()
 			events.HandleErrorWithEvents(err, events.InstallAddonsSuccessful, events.InstallAddonsFailed).ShouldNot(HaveOccurred(), "failed while installing addons")
@@ -333,10 +337,6 @@ func runGinkgoTests() error {
 				return fmt.Errorf("error performing upgrade: %v", err)
 			}
 			events.RecordEvent(events.UpgradeSuccessful)
-
-			if err = provider.AddProperty(clusterID, "UpgradeVersion", viper.GetString(config.Upgrade.ReleaseName)); err != nil {
-				log.Printf("Error while adding upgrade version property to cluster via OCM: %v", err)
-			}
 
 			log.Println("Running e2e tests POST-UPGRADE...")
 			upgradeTestsPassed = runTestsInPhase(phase.UpgradePhase, "OSD e2e suite post-upgrade")
