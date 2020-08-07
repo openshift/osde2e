@@ -3,6 +3,7 @@ package ocmprovider
 import (
 	"fmt"
 	"log"
+	"math"
 	"math/rand"
 	"os/user"
 	"strings"
@@ -275,20 +276,37 @@ func (o *OCMProvider) ScaleCluster(clusterID string, numComputeNodes int) error 
 // ListClusters returns a list of clusters filtered on key/value pairs
 func (o *OCMProvider) ListClusters(query string) ([]*spi.Cluster, error) {
 	var clusters []*spi.Cluster
-	clusterListRequest := o.conn.ClustersMgmt().V1().Clusters().List()
 
-	response, err := clusterListRequest.Search(query).Send()
+	totalItems := math.MaxInt64
+	emptyPage := false
+	page := 1
 
-	if err != nil {
-		return nil, err
-	}
+	for len(clusters) < totalItems || emptyPage {
+		clusterListRequest := o.conn.ClustersMgmt().V1().Clusters().List()
 
-	for _, cluster := range response.Items().Slice() {
-		spiCluster, err := o.ocmToSPICluster(cluster)
+		response, err := clusterListRequest.Search(query).Page(page).Send()
+
 		if err != nil {
 			return nil, err
 		}
-		clusters = append(clusters, spiCluster)
+
+		if response.Size() == 0 {
+			emptyPage = true
+		}
+
+		if totalItems == math.MaxInt64 {
+			totalItems = response.Total()
+		}
+
+		for _, cluster := range response.Items().Slice() {
+			spiCluster, err := o.ocmToSPICluster(cluster)
+			if err != nil {
+				return nil, err
+			}
+			clusters = append(clusters, spiCluster)
+		}
+
+		page++
 	}
 
 	return clusters, nil

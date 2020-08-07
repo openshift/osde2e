@@ -14,7 +14,6 @@ import (
 
 var (
 	slackSummaryTemplate *template.Template
-	slackJobTemplate     *template.Template
 )
 
 func init() {
@@ -23,12 +22,6 @@ func init() {
 
 	if err != nil {
 		panic(fmt.Sprintf("error loading slack summary template: %v", err))
-	}
-
-	slackJobTemplate, err = templates.LoadTemplate("/assets/reports/slack-job.template")
-
-	if err != nil {
-		panic(fmt.Sprintf("error loading slack job template: %v", err))
 	}
 }
 
@@ -51,15 +44,9 @@ func SendReportToSlack() error {
 		return fmt.Errorf("error while making Slack summary attachment: %v", err)
 	}
 
-	jobAttachments, err := makeJobAttachments(report)
-
-	if err != nil {
-		return fmt.Errorf("error while making Slack job attachments: %v", err)
-	}
-
 	msg := &slack.WebhookMessage{
 		Text:        "*osde2e weather report*",
-		Attachments: append([]slack.Attachment{summaryAttachment}, jobAttachments...),
+		Attachments: append([]slack.Attachment{summaryAttachment}),
 	}
 	return slack.PostWebhook(slackWebhook, msg)
 }
@@ -75,23 +62,4 @@ func makeSummaryAttachment(w report.WeatherReport) (slack.Attachment, error) {
 		Pretext: "*Summary*",
 		Text:    string(slackSummaryBuffer.Bytes()),
 	}, nil
-}
-
-func makeJobAttachments(w report.WeatherReport) ([]slack.Attachment, error) {
-	slackJobAttachments := []slack.Attachment{}
-
-	for _, job := range w.Jobs {
-		slackJobBuffer := new(bytes.Buffer)
-
-		if err := slackJobTemplate.ExecuteTemplate(slackJobBuffer, slackJobTemplate.Name(), job); err != nil {
-			return nil, fmt.Errorf("error while creating slack job attachment: %v", err)
-		}
-
-		slackJobAttachments = append(slackJobAttachments, slack.Attachment{
-			Pretext: fmt.Sprintf("*%s*", job.Name),
-			Text:    string(slackJobBuffer.Bytes()),
-		})
-	}
-
-	return slackJobAttachments, nil
 }

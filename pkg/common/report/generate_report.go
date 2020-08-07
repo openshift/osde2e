@@ -13,8 +13,14 @@ import (
 )
 
 type reportData struct {
-	Versions []string
-	Failures map[string]int
+	Versions    []string
+	Environment string
+	Failures    map[string]int
+}
+
+type summaryReportData struct {
+	summedPassRates float64
+	numTests        int64
 }
 
 // GenerateReport generates a weather report.
@@ -50,6 +56,8 @@ func GenerateReport() (WeatherReport, error) {
 		return WeatherReport{}, err
 	}
 
+	summary := map[string]*summaryReportData{}
+
 	weatherReport := WeatherReport{
 		ReportDate: time.Now().UTC(),
 		Provider:   provider,
@@ -73,6 +81,8 @@ func GenerateReport() (WeatherReport, error) {
 
 			jobIDsAndPassRatesReport := []JobIDReport{}
 			passRate := 0.0
+			environment := reportData.Environment
+
 			for jobID, jobPassRate := range jobIDsAndPassRates {
 				passRate += jobPassRate
 
@@ -101,6 +111,13 @@ func GenerateReport() (WeatherReport, error) {
 					}
 				}
 
+				if _, ok := summary[environment]; !ok {
+					summary[environment] = &summaryReportData{}
+				}
+
+				summary[environment].summedPassRates += jobPassRate
+				summary[environment].numTests++
+
 				jobIDsAndPassRatesReport = append(jobIDsAndPassRatesReport, JobIDReport{
 					JobID:          jobID,
 					PassRate:       jobPassRate * 100,
@@ -124,6 +141,7 @@ func GenerateReport() (WeatherReport, error) {
 		}
 	}
 
+	weatherReport.Summary = generateSummaryTable(summary)
 	sort.Stable(weatherReport)
 
 	return weatherReport, nil
@@ -161,6 +179,7 @@ func generateVersionsAndFailures(results []metrics.JUnitResult) (map[string]*rep
 		jobReportData[job].addVersion(result.InstallVersion.String())
 		key := result.TestName
 
+		jobReportData[job].Environment = result.Environment
 		if result.Result == metrics.Failed {
 			// Initialize the failure count for the key if it doesn't exist
 			if _, ok := jobReportData[job].Failures[key]; !ok {
@@ -210,4 +229,33 @@ func arrayFromMapKeys(mapToExtractFrom map[string]int) []string {
 	}
 
 	return keys
+}
+
+// Generates a raw HTML summary
+func generateSummaryTable(summary map[string]*summaryReportData) string {
+
+	// Sort the keys
+	environments := []string{}
+
+	for environment := range summary {
+		environments = append(environments, environment)
+	}
+
+	sort.Sort(sort.StringSlice(environments))
+
+	summaryTable := strings.Builder{}
+
+	summaryTable.WriteString("<table class=\\\"summary\\\">")
+
+	for _, environment := range environments {
+		summaryReportData := summary[environment]
+		environmentPassRate := summaryReportData.summedPassRates / float64(summaryReportData.numTests)
+		tableColor := getPassRateColor(environmentPassRate)
+
+		summaryTable.WriteString(fmt.Sprintf("<tr><td bgcolor=\\\"%s\\\"></td><td>%s (Pass rate: %.2f)</td></tr>", tableColor, environment, environmentPassRate*100))
+	}
+
+	summaryTable.WriteString("</table>")
+
+	return summaryTable.String()
 }

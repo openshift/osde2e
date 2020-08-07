@@ -7,11 +7,9 @@ import (
 )
 
 var configureAlertManagerOperators string = "[Suite: operators] [OSD] Configure AlertManager Operator"
-var configureAlertManagerInforming string = "[Suite: informing] [OSD] Configure AlertManager Operator"
 
 func init() {
 	alert.RegisterGinkgoAlert(configureAlertManagerOperators, "SD-SREP", "Christopher Collins", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
-	alert.RegisterGinkgoAlert(configureAlertManagerInforming, "SD-SREP", "Matt Bargenquast", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
 }
 
 var _ = ginkgo.Describe(configureAlertManagerOperators, func() {
@@ -46,9 +44,6 @@ var _ = ginkgo.Describe(configureAlertManagerOperators, func() {
 	checkClusterRoleBindings(h, clusterRoleBindings)
 	checkRole(h, operatorNamespace, roles)
 	checkRoleBindings(h, operatorNamespace, roleBindings)
-})
-
-var _ = ginkgo.Describe(configureAlertManagerInforming, func() {
 	checkUpgrade(helper.New(), "openshift-monitoring", "configure-alertmanager-operator",
 		"configure-alertmanager-operator.v0.1.171-dba3c73",
 	)
