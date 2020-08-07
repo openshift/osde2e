@@ -18,7 +18,7 @@ const (
 	OperatorNamespace = "openshift-machine-api"
 )
 
-var machineHealthTestName string = "[Suite: informing] MachineHealthChecks"
+var machineHealthTestName string = "[Suite: e2e] MachineHealthChecks"
 
 func init() {
 	alert.RegisterGinkgoAlert(machineHealthTestName, "SD-SRE", "Alex Chvatal", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
