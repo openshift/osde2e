@@ -18,13 +18,15 @@ ifndef $(GOPATH)
     export GOPATH
 endif
 
-check: diffproviders.txt
+check: shellcheck diffproviders.txt
 	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(shell go env GOPATH)/bin v1.23.8
 	(cd "$(DIR)"; golangci-lint run -c .golang-ci.yml ./...)
+	cmp -s diffproviders.txt "$(DIR)pkg/common/providers/providers_generated.go"
 	
 	CGO_ENABLED=0 go test -v $(PKG)/cmd/... $(PKG)/pkg/...
+
+shellcheck:
 	find "$(DIR)scripts" -name "*.sh" -exec $(DIR)scripts/shellcheck.sh {} +
-	cmp -s diffproviders.txt "$(DIR)pkg/common/providers/providers_generated.go"
 
 build-image:
 	$(CONTAINER_ENGINE) build -t "$(IMAGE_NAME):$(IMAGE_TAG)" .
