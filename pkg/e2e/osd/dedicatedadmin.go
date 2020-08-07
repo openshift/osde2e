@@ -19,7 +19,7 @@ func init() {
 	alert.RegisterGinkgoAlert(dedicatedAdminTestName, "SD-SREP", "Matt Bargenquast", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
 }
 
-var _ = ginkgo.Describe(daemonSetsTestName, func() {
+var _ = ginkgo.Describe(dedicatedAdminTestName, func() {
 	ginkgo.Context("dedicated-admin group permissions", func() {
 
 		// setup helper
