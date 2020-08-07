@@ -70,9 +70,9 @@ func run(cmd *cobra.Command, argv []string) error {
 		return err
 	}
 
-	fmt.Printf("%-25s%-35s%-15s%-20s\n", "NAME", "ID", "STATUS", "OWNER")
+	fmt.Printf("%-25s%-35s%-15s%-20s%-25s%s\n", "NAME", "ID", "STATUS", "OWNER", "INSTALLED VERSION", "UPGRADE VERSION")
 	for _, cluster := range clusters {
-		fmt.Printf("%-25s%-35s%-15s%-20s\n", cluster.Name(), cluster.ID(), cluster.State(), cluster.Properties()[ocmprovider.OwnedBy])
+		fmt.Printf("%-25s%-35s%-15s%-20s%-25s%s\n", cluster.Name(), cluster.ID(), cluster.State(), cluster.Properties()[ocmprovider.OwnedBy], cluster.Properties()[ocmprovider.InstalledVersion], cluster.Properties()[ocmprovider.UpgradeVersion])
 	}
 
 	return nil
