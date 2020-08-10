@@ -1,17 +1,20 @@
-package report
+package weather
 
 import (
+	"encoding/json"
 	"fmt"
 	"regexp"
 	"sort"
 	"strings"
 	"time"
 
-	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/metrics"
+	"github.com/openshift/osde2e/pkg/reporting/spi"
+	"github.com/openshift/osde2e/pkg/reporting/templates"
 	"github.com/spf13/viper"
 )
 
+// Intermediary structs
 type reportData struct {
 	Versions    []string
 	Environment string
@@ -23,42 +26,113 @@ type summaryReportData struct {
 	numTests        int64
 }
 
+// weatherReport is the weather report.
+type weatherReport struct {
+	ReportDate time.Time   `json:"reportDate"`
+	Provider   string      `json:"provider"`
+	Jobs       []jobReport `json:"jobs"`
+	Summary    string      `json:"summary"`
+
+	// We want the sort interface so that we can sort jobs and produce stable, comparable reports.
+	sort.Interface `json:"-"`
+}
+
+// jobReport is a report for an individual job.
+type jobReport struct {
+	Name         string        `json:"name"`
+	Viable       bool          `json:"viable"`
+	Color        string        `json:"color"`
+	JobIDsReport []jobIDReport `json:"jobIDsReport"`
+	Versions     []string      `json:"versions"`
+	PassRate     float64       `json:"passRate"`
+	FailingTests []string      `json:"failingTests,omitempty"`
+}
+
+// jobIDReport combines the job ID, pass rate, and a color for the job run together.
+type jobIDReport struct {
+	JobID          int64    `json:"jobID"`
+	PassRate       float64  `json:"passRate"`
+	JobColor       string   `json:"jobColor"`
+	InstallVersion string   `json:"installVersion"`
+	UpgradeVersion string   `json:"upgradeVersion"`
+	FailingTests   []string `json:"failingTests,omitempty"`
+}
+
+// Len is the number of jobs in the weather report.
+func (w weatherReport) Len() int {
+	return len(w.Jobs)
+}
+
+// Less reports whether the element with index i should sort before the element with index j.
+func (w weatherReport) Less(i, j int) bool {
+	return w.Jobs[i].Name < w.Jobs[j].Name
+}
+
+// Swap swaps the elements with indexes i and j.
+func (w weatherReport) Swap(i, j int) {
+	w.Jobs[i], w.Jobs[j] = w.Jobs[j], w.Jobs[i]
+}
+
+// ToJSON will convert the weather report into a JSON object.
+func (w weatherReport) ToJSON() ([]byte, error) {
+	jsonReport, err := json.MarshalIndent(w, "", "  ")
+
+	if err != nil {
+		return nil, fmt.Errorf("error while marshaling report into JSON: %v", err)
+	}
+
+	return append(jsonReport, '\n'), nil
+}
+
+// Reporter will write out the actual weather report.
+type Reporter struct {
+}
+
+func init() {
+	spi.RegisterReporter(Reporter{})
+}
+
+// Name will return the name of the weather reporter.
+func (w Reporter) Name() string {
+	return "weather-report"
+}
+
 // GenerateReport generates a weather report.
-func GenerateReport() (WeatherReport, error) {
+func (w Reporter) GenerateReport(reportType string) ([]byte, error) {
 	// Range for the queries issued to Prometheus
 	end := time.Now()
-	start := end.Add(-time.Hour * (viper.GetDuration(config.Weather.StartOfTimeWindowInHours)))
+	start := end.Add(-time.Hour * (viper.GetDuration(StartOfTimeWindowInHours)))
 
 	client, err := metrics.NewClient()
 
 	if err != nil {
-		return WeatherReport{}, fmt.Errorf("error while creating client: %v", err)
+		return nil, fmt.Errorf("error while creating client: %v", err)
 	}
 
 	// Assemble the allowlist regexes. We'll only produce a report based on these regexes.
 	allowlistRegexes := []*regexp.Regexp{}
-	jobAllowlistString := viper.GetString(config.Weather.JobAllowlist)
+	jobAllowlistString := viper.GetString(JobAllowlist)
 	for _, allowlistRegex := range strings.Split(jobAllowlistString, ",") {
 		allowlistRegexes = append(allowlistRegexes, regexp.MustCompile(allowlistRegex))
 	}
 
-	provider := viper.GetString(config.Weather.Provider)
+	provider := viper.GetString(Provider)
 
 	results, err := client.ListAllJUnitResults(start, end)
 	if err != nil {
-		return WeatherReport{}, fmt.Errorf("error during query: %v", err)
+		return nil, fmt.Errorf("error during query: %v", err)
 	}
 
 	// Generate report from query results.
 	jobReportData, err := generateVersionsAndFailures(results)
 
 	if err != nil {
-		return WeatherReport{}, err
+		return nil, err
 	}
 
 	summary := map[string]*summaryReportData{}
 
-	weatherReport := WeatherReport{
+	weatherReport := weatherReport{
 		ReportDate: time.Now().UTC(),
 		Provider:   provider,
 	}
@@ -76,10 +150,10 @@ func GenerateReport() (WeatherReport, error) {
 			jobIDsAndPassRates, err := client.ListPassRatesByJobID(job, start, end)
 
 			if err != nil {
-				return WeatherReport{}, err
+				return nil, err
 			}
 
-			jobIDsAndPassRatesReport := []JobIDReport{}
+			jobIDsAndPassRatesReport := []jobIDReport{}
 			passRate := 0.0
 			environment := reportData.Environment
 
@@ -89,7 +163,7 @@ func GenerateReport() (WeatherReport, error) {
 				jobIDResults, err := client.ListJUnitResultsByJobNameAndJobID(job, jobID, start, end)
 
 				if err != nil {
-					return WeatherReport{}, err
+					return nil, err
 				}
 
 				failingResults := []string{}
@@ -118,7 +192,7 @@ func GenerateReport() (WeatherReport, error) {
 				summary[environment].summedPassRates += jobPassRate
 				summary[environment].numTests++
 
-				jobIDsAndPassRatesReport = append(jobIDsAndPassRatesReport, JobIDReport{
+				jobIDsAndPassRatesReport = append(jobIDsAndPassRatesReport, jobIDReport{
 					JobID:          jobID,
 					PassRate:       jobPassRate * 100,
 					JobColor:       getPassRateColor(jobPassRate),
@@ -129,7 +203,7 @@ func GenerateReport() (WeatherReport, error) {
 			}
 			passRate = passRate / float64(len(jobIDsAndPassRates))
 
-			weatherReport.Jobs = append(weatherReport.Jobs, JobReport{
+			weatherReport.Jobs = append(weatherReport.Jobs, jobReport{
 				Name:         job,
 				Viable:       len(reportData.Failures) == 0,
 				Color:        getPassRateColor(passRate),
@@ -144,7 +218,7 @@ func GenerateReport() (WeatherReport, error) {
 	weatherReport.Summary = generateSummaryTable(summary)
 	sort.Stable(weatherReport)
 
-	return weatherReport, nil
+	return templates.WriteReport(weatherReport, w.Name(), reportType)
 }
 
 func getPassRateColor(passRate float64) string {
@@ -214,7 +288,7 @@ func (r *reportData) addVersion(versionToAdd string) {
 func (r *reportData) filterFailureResults() {
 	filteredFailures := map[string]int{}
 	for testname, failureCount := range r.Failures {
-		if failureCount >= (viper.GetInt(config.Weather.NumberOfSamplesNecessary) - 1) {
+		if failureCount >= (viper.GetInt(NumberOfSamplesNecessary) - 1) {
 			filteredFailures[testname] = failureCount
 		}
 	}

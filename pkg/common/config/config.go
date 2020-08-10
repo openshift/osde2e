@@ -282,30 +282,6 @@ var Prometheus = struct {
 	BearerToken: "prometheus.bearerToken",
 }
 
-// Weather config keys.
-var Weather = struct {
-	// StartOfTimeWindowInHours is how many hours to look back through results.
-	StartOfTimeWindowInHours string
-
-	// NumberOfSamplesNecessary is how many samples are necessary for generating a report.
-	NumberOfSamplesNecessary string
-
-	// SlackWebhook is the webhook to use to post the weather report to slack.
-	SlackWebhook string
-
-	// JobAllowlist is a list of job regexes to consider in the weather report.
-	JobAllowlist string
-
-	// Provider is the provider tag to attach to an SD weather report.
-	Provider string
-}{
-	StartOfTimeWindowInHours: "weather.startOfTimeWindowInHours",
-	NumberOfSamplesNecessary: "weather.numberOfSamplesNecessary",
-	SlackWebhook:             "weather.slackWebhook",
-	JobAllowlist:             "weather.jobAllowlist",
-	Provider:                 "weather.provider",
-}
-
 // Alert config keys.
 var Alert = struct {
 	// SlackAPIToken is a bot slack token
@@ -472,21 +448,6 @@ func init() {
 	viper.BindEnv(Prometheus.Address, "PROMETHEUS_ADDRESS")
 
 	viper.BindEnv(Prometheus.BearerToken, "PROMETHEUS_BEARER_TOKEN")
-
-	// ----- Weather -----
-	viper.SetDefault(Weather.StartOfTimeWindowInHours, 24)
-	viper.BindEnv(Weather.StartOfTimeWindowInHours, "START_OF_TIME_WINDOW_IN_HOURS")
-
-	viper.SetDefault(Weather.NumberOfSamplesNecessary, 3)
-	viper.BindEnv(Weather.NumberOfSamplesNecessary, "NUMBER_OF_SAMPLES_NECESSARY")
-
-	viper.BindEnv(Weather.SlackWebhook, "SLACK_WEBHOOK")
-
-	viper.SetDefault(Weather.JobAllowlist, "osde2e-.*-aws-e2e-.*")
-	viper.BindEnv(Weather.JobAllowlist, "JOB_ALLOWLIST")
-
-	viper.SetDefault(Weather.Provider, "aws")
-	viper.BindEnv(Weather.Provider, "WEATHER_PROVIDER")
 
 	// ----- Alert ----
 	viper.BindEnv(Alert.SlackAPIToken, "SLACK_API_TOKEN")
