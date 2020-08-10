@@ -7,19 +7,25 @@ type EventType string
 const (
 	// ------ Cluster provisioning events
 
-	// InstallSuccessful when the cluster has successfully provisioned
+	// InstallSuccessful when the cluster has successfully provisioned.
 	InstallSuccessful EventType = "InstallSuccessful"
 
-	// FailedClusterProvision when the cluster has not been successfully provisioned
+	// FailedClusterProvision when the cluster has not been successfully provisioned.
 	InstallFailed EventType = "InstallFailed"
 
-	// UpgradeSuccessful when the upgrade was successful
+	// HealthCheckSuccessful when the cluster health check has succeeded.
+	HealthCheckSuccessful EventType = "HealthCheckSuccessful"
+
+	// HealthCheckFailed when the cluster health check has failed.
+	HealthCheckFailed EventType = "HealthCheckFailed"
+
+	// UpgradeSuccessful when the upgrade was successful.
 	UpgradeSuccessful EventType = "UpgradeSuccessful"
 
-	// UpgradeFailed when the upgrade failed
+	// UpgradeFailed when the upgrade failed.
 	UpgradeFailed EventType = "UpgradeFailed"
 
-	// NoHiveLogs when no logs from Hive were collected after a cluster provisioning event
+	// NoHiveLogs when no logs from Hive were collected after a cluster provisioning event.
 	NoHiveLogs EventType = "NoHiveLogs"
 
 	// InstallKubeconfigRetrievalSuccess when the Kubeconfig was retrieved successfully.
@@ -30,9 +36,9 @@ const (
 
 	// ------ Addon installation events
 
-	// InstallAddonsSuccessful when the addons installed successfully
+	// InstallAddonsSuccessful when the addons installed successfully.
 	InstallAddonsSuccessful EventType = "InstallAddonsSuccessful"
 
-	// InstallAddonsFailed when the addons failed to install
+	// InstallAddonsFailed when the addons failed to install.
 	InstallAddonsFailed EventType = "InstallAddonsFailed"
 )

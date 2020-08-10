@@ -152,6 +152,8 @@ func (o *OCMProvider) DetermineRegion(cloudProvider string) (string, error) {
 			}
 		}
 
+		log.Printf("Random region requested, selected %s region.", region)
+
 		// Update the Config with the selected random region
 		viper.Set(config.CloudProvider.Region, region)
 	}
