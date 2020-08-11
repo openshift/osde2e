@@ -39,30 +39,12 @@ func (o *OCMProvider) LaunchCluster(clusterName string) (string, error) {
 
 	multiAZ := viper.GetBool(config.Cluster.MultiAZ)
 	computeMachineType := viper.GetString(ComputeMachineType)
-	region := viper.GetString(config.CloudProvider.Region)
 	cloudProvider := viper.GetString(config.CloudProvider.CloudProviderID)
 
-	// If a region is set to "random", it will poll OCM for all the regions available
-	// It then will pull a random entry from the list of regions and set the ID to that
-	if region == "random" {
-		regionsClient := o.conn.ClustersMgmt().V1().CloudProviders().CloudProvider(cloudProvider).Regions().List()
+	region, err := o.DetermineRegion(cloudProvider)
 
-		regions, err := regionsClient.Send()
-		if err != nil {
-			return "", err
-		}
-
-		for range regions.Items().Slice() {
-			regionObj := regions.Items().Slice()[rand.Intn(regions.Total())]
-			region = regionObj.ID()
-
-			if regionObj.Enabled() {
-				break
-			}
-		}
-
-		// Update the Config with the selected random region
-		viper.Set(config.CloudProvider.Region, region)
+	if err != nil {
+		return "", fmt.Errorf("error while determining region: %v", err)
 	}
 
 	nodeBuilder := &v1.ClusterNodesBuilder{}
@@ -144,6 +126,38 @@ func (o *OCMProvider) LaunchCluster(clusterName string) (string, error) {
 		return "", fmt.Errorf("couldn't create cluster: %v", err)
 	}
 	return resp.Body().ID(), nil
+}
+
+// DetermineRegion will return the region provided by configs. This mainly wraps the random functionality for use
+// by the MOA provider.
+func (o *OCMProvider) DetermineRegion(cloudProvider string) (string, error) {
+	region := viper.GetString(config.CloudProvider.Region)
+
+	// If a region is set to "random", it will poll OCM for all the regions available
+	// It then will pull a random entry from the list of regions and set the ID to that
+	if region == "random" {
+		regionsClient := o.conn.ClustersMgmt().V1().CloudProviders().CloudProvider(cloudProvider).Regions().List()
+
+		regions, err := regionsClient.Send()
+		if err != nil {
+			return "", err
+		}
+
+		for range regions.Items().Slice() {
+			regionObj := regions.Items().Slice()[rand.Intn(regions.Total())]
+			region = regionObj.ID()
+
+			if regionObj.Enabled() {
+				break
+			}
+		}
+
+		log.Printf("Random region requested, selected %s region.", region)
+
+		// Update the Config with the selected random region
+		viper.Set(config.CloudProvider.Region, region)
+	}
+	return region, nil
 }
 
 // GenerateProperties will generate a set of properties to assign to a cluster.

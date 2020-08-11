@@ -28,6 +28,7 @@ import (
 
 	"github.com/openshift/osde2e/pkg/common/aws"
 	"github.com/openshift/osde2e/pkg/common/cluster"
+	clusterutil "github.com/openshift/osde2e/pkg/common/cluster"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/events"
 	"github.com/openshift/osde2e/pkg/common/helper"
@@ -79,7 +80,7 @@ var _ = ginkgo.SynchronizedBeforeSuite(func() []byte {
 
 	// Skip provisioning if we already have a kubeconfig
 	if viper.GetString(config.Kubeconfig.Contents) == "" {
-		cluster, err := cluster.SetupCluster(nil)
+		cluster, err := clusterutil.ProvisionCluster(nil)
 		events.HandleErrorWithEvents(err, events.InstallSuccessful, events.InstallFailed).ShouldNot(HaveOccurred(), "failed to setup cluster for testing")
 		if err != nil {
 			return []byte{}
@@ -104,6 +105,17 @@ var _ = ginkgo.SynchronizedBeforeSuite(func() []byte {
 
 		metadata.Instance.SetClusterName(cluster.Name())
 		metadata.Instance.SetClusterID(cluster.ID())
+		metadata.Instance.SetRegion(cluster.Region())
+
+		if err = provider.AddProperty(cluster.ID(), "UpgradeVersion", viper.GetString(config.Upgrade.ReleaseName)); err != nil {
+			log.Printf("Error while adding upgrade version property to cluster via OCM: %v", err)
+		}
+
+		err = clusterutil.WaitForClusterReady(cluster.ID(), nil)
+		events.HandleErrorWithEvents(err, events.HealthCheckSuccessful, events.HealthCheckFailed)
+		if err != nil {
+			return []byte{}
+		}
 
 		if len(viper.GetString(config.Addons.IDs)) > 0 {
 			err = installAddons()
@@ -333,10 +345,6 @@ func runGinkgoTests() error {
 				return fmt.Errorf("error performing upgrade: %v", err)
 			}
 			events.RecordEvent(events.UpgradeSuccessful)
-
-			if err = provider.AddProperty(clusterID, "UpgradeVersion", viper.GetString(config.Upgrade.ReleaseName)); err != nil {
-				log.Printf("Error while adding upgrade version property to cluster via OCM: %v", err)
-			}
 
 			log.Println("Running e2e tests POST-UPGRADE...")
 			upgradeTestsPassed = runTestsInPhase(phase.UpgradePhase, "OSD e2e suite post-upgrade")

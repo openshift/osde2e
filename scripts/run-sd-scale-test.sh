@@ -64,7 +64,9 @@ fi
 echo "Running $SCALE_TEST_TYPE test..."
 
 mkdir report
-docker pull quay.io/app-sre/osde2e
+
+OSDE2ECTL=quay.io/app-sre/osde2ectl
+docker pull $OSDE2ECTL
 
 NUM_BATCHES=$(( (NUMBER_OF_CLUSTERS + (SIZE_OF_BATCHES - 1)) / SIZE_OF_BATCHES ))
 ALL_CLUSTERS_PROVISIONED_SECONDS=$(( NUM_BATCHES * SECONDS_BETWEEN_BATCHES ))
@@ -81,4 +83,4 @@ END_TIMESTAMP="$(date -d "+$TIME_UNTIL_ALL_CLUSTERS_EXPIRED seconds" +%s%3N)"
 
 echo "Check for results at https://grafana.app-sre.devshift.net/d/sd-scale/service-delivery-scale?from=$START_TIMESTAMP&to=$END_TIMESTAMP"
 
-docker run -u "$(id -u)" -e OCM_TOKEN -e "REPORT_DIR=/report" -e "CLUSTER_EXPIRY_IN_MINUTES=$EXPIRY_IN_MINUTES" -e "OCM_USER_OVERRIDE=ci-ext-jenkins" -v "$(pwd)/report:/report" --entrypoint osde2ectl quay.io/app-sre/osde2e create --configs stage,aws-eu-west-3 -n "$NUMBER_OF_CLUSTERS" -b "$SIZE_OF_BATCHES" -s "$SECONDS_BETWEEN_BATCHES"
+docker run -u "$(id -u)" -e OCM_TOKEN -e "REPORT_DIR=/report" -e "CLUSTER_EXPIRY_IN_MINUTES=$EXPIRY_IN_MINUTES" -e "OCM_USER_OVERRIDE=ci-ext-jenkins" -v "$(pwd)/report:/report" "$OSDE2ECTL" create --configs stage,aws-eu-west-3 -n "$NUMBER_OF_CLUSTERS" -b "$SIZE_OF_BATCHES" -s "$SECONDS_BETWEEN_BATCHES"

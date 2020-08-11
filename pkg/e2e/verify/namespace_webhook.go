@@ -20,7 +20,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-var namespaceWebhookTestName string = "[Suite: informing] [OSD] namespace validating webhook"
+var namespaceWebhookTestName string = "[Suite: e2e] [OSD] namespace validating webhook"
 
 func init() {
 	alert.RegisterGinkgoAlert(namespaceWebhookTestName, "SD-SREP", "Matt Bargenquast", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)

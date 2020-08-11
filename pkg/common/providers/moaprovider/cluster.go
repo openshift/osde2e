@@ -58,15 +58,22 @@ func (m *MOAProvider) LaunchCluster(clusterName string) (string, error) {
 	clusterProperties, err := m.ocmProvider.GenerateProperties()
 
 	if err != nil {
-		return "", fmt.Errorf("error generating cluster properties: %v", clusterProperties)
+		return "", fmt.Errorf("error generating cluster properties: %v", err)
 	}
 
 	var createdCluster *cmv1.Cluster
 
+	// MOA uses the AWS provider in the background, so we'll determine region this way.
+	region, err := m.ocmProvider.DetermineRegion("aws")
+
+	if err != nil {
+		return "", fmt.Errorf("error determining region to use: %v", err)
+	}
+
 	callAndSetAWSSession(func() {
 		clusterSpec := cluster.Spec{
 			Name:               clusterName,
-			Region:             viper.GetString(config.CloudProvider.Region),
+			Region:             region,
 			MultiAZ:            viper.GetBool(config.Cluster.MultiAZ),
 			Version:            viper.GetString(config.Cluster.Version),
 			Expiration:         expiration,

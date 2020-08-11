@@ -300,23 +300,6 @@ func ProvisionCluster(logger *log.Logger) (*spi.Cluster, error) {
 	return cluster, nil
 }
 
-// SetupCluster brings up a cluster, waits for it to be ready, then returns it's name.
-func SetupCluster(logger *log.Logger) (*spi.Cluster, error) {
-	logger = logging.CreateNewStdLoggerOrUseExistingLogger(logger)
-
-	cluster, err := ProvisionCluster(logger)
-
-	if err != nil {
-		return cluster, fmt.Errorf("error provisioning cluster: %v", err)
-	}
-
-	if err = WaitForClusterReady(cluster.ID(), logger); err != nil {
-		return cluster, fmt.Errorf("failed waiting for cluster ready: %v", err)
-	}
-
-	return cluster, nil
-}
-
 // useKubeconfig reads the path provided for a TEST_KUBECONFIG and uses it for testing.
 func useKubeconfig(logger *log.Logger) (err error) {
 	_, err = clientcmd.RESTConfigFromKubeConfig([]byte(viper.GetString(config.Kubeconfig.Contents)))

@@ -97,7 +97,7 @@ var _ = ginkgo.Describe(clusterStateTestName, func() {
 				log.Printf("Error getting cluster provider: %s", err.Error())
 			}
 
-			return findCriticalAlerts(queryJSON.Data.Results, viper.GetString(config.Provider), clusterProvider.Environment())
+			return !findCriticalAlerts(queryJSON.Data.Results, viper.GetString(config.Provider), clusterProvider.Environment())
 		}, 5*time.Minute, 30*time.Second).Should(BeTrue(), "never able to find zero alerts")
 
 	}, float64(alertsTimeoutInSeconds+30))
