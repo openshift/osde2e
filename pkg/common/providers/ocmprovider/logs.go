@@ -3,6 +3,7 @@ package ocmprovider
 import (
 	"fmt"
 	"math"
+	"strings"
 
 	v1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 )
@@ -18,7 +19,8 @@ func (o *OCMProvider) Logs(clusterID string) (logs map[string][]byte, err error)
 	for _, logID := range ids {
 		var resp *v1.LogGetResponse
 
-		retryer().Do(func() error {
+		found := false
+		err = retryer().Do(func() error {
 			var err error
 			resp, err = o.conn.ClustersMgmt().V1().Clusters().Cluster(clusterID).
 				Logs().
@@ -27,20 +29,33 @@ func (o *OCMProvider) Logs(clusterID string) (logs map[string][]byte, err error)
 				Send()
 
 			if err != nil {
+				// Log is just not found, so skip this log
+				if strings.Contains(err.Error(), "'404'") {
+					return nil
+				}
 				return err
 			}
 
 			if resp != nil && resp.Error() != nil {
+				// Log is just not found, so skip this log
+				if resp.Error().ID() == "404" {
+					return nil
+				}
+
 				return errResp(resp.Error())
 			}
 
+			found = true
 			return nil
 		})
 
 		if err != nil {
 			return logs, fmt.Errorf("the contents of log '%s' couldn't be retrieved: %v", logID, err)
 		}
-		logs[logID] = []byte(resp.Body().Content())
+
+		if found {
+			logs[logID] = []byte(resp.Body().Content())
+		}
 	}
 	return
 }
