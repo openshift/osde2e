@@ -326,7 +326,7 @@ func runGinkgoTests() error {
 	log.Println("Running e2e tests...")
 
 	if viper.GetString(config.Suffix) == "" {
-		viper.Set(config.Suffix, util.RandomStr(3))
+		viper.Set(config.Suffix, util.RandomStr(5))
 	}
 
 	testsPassed := runTestsInPhase(phase.InstallPhase, "OSD e2e suite")
