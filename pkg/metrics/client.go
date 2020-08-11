@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"github.com/Masterminds/semver"
-	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/prometheus"
 	"github.com/openshift/osde2e/pkg/common/util"
 	"github.com/prometheus/client_golang/api"
@@ -263,8 +262,8 @@ func escapeQuotes(stringToEscape string) string {
 // makeRange will make a query range for metrics queries and bake in the 4 hour step, as it's the lowest granularity we have for any of our jobs.
 func makeRange(begin, end time.Time) v1.Range {
 	return v1.Range{
-		Start: time.Now().Add(-time.Hour * (viper.GetDuration(config.Weather.StartOfTimeWindowInHours))),
-		End:   time.Now(),
+		Start: begin,
+		End:   end,
 		Step:  viper.GetDuration(stepDurationInHours) * time.Hour,
 	}
 }
