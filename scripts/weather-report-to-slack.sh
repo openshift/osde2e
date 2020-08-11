@@ -6,4 +6,4 @@
 set -e
 
 #docker pull quay.io/app-sre/osde2e
-docker run -e REPORTING_WEATHER_JOB_ALLOWLIST -e PROMETHEUS_ADDRESS -e PROMETHEUS_BEARER_TOKEN -e SLACK_WEBHOOK quay.io/app-sre/osde2e report weather-report slack-summary --send-to-slack
+docker run -e REPORTING_WEATHER_JOB_ALLOWLIST -e PROMETHEUS_ADDRESS -e PROMETHEUS_BEARER_TOKEN -e SLACK_WEBHOOK quay.io/app-sre/osde2e report weather-report slack-summary --to-slack
