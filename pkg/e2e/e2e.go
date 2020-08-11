@@ -147,8 +147,6 @@ var _ = ginkgo.SynchronizedBeforeSuite(func() []byte {
 })
 
 // Collect logs after each test
-// TODO: SDA-2594 Hotfix
-/*
 var _ = ginkgo.JustAfterEach(getLogs)
 
 func getLogs() {
@@ -174,7 +172,6 @@ func writeLogs(m map[string][]byte) {
 		Expect(err).NotTo(HaveOccurred(), "failed to write log '%s'", filePath)
 	}
 }
-*/
 
 // installAddons installs addons onto the cluster
 func installAddons() (err error) {
