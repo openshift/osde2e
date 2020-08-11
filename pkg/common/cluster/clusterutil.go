@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
-	"strings"
 	"time"
 
 	"github.com/Masterminds/semver"
@@ -321,14 +320,11 @@ func useKubeconfig(logger *log.Logger) (err error) {
 
 // clusterName returns a cluster name with a format which must be short enough to support all versions
 func clusterName() string {
-	vers := strings.TrimPrefix(viper.GetString(config.Cluster.Version), util.VersionPrefix)
-	safeVersion := strings.Replace(vers, ".", "-", -1)
-
 	suffix := viper.GetString(config.Suffix)
 
 	if suffix == "" {
-		suffix = util.RandomStr(3)
+		suffix = util.RandomStr(5)
 	}
 
-	return "osde2e-" + safeVersion + "-" + suffix
+	return "osde2e-" + suffix
 }
