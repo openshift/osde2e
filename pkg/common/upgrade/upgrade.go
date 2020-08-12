@@ -16,6 +16,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 
 	"github.com/openshift/osde2e/pkg/common/cluster"
+	"github.com/openshift/osde2e/pkg/common/clusterproperties"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/metadata"
@@ -108,8 +109,17 @@ func TriggerUpgrade(h *helper.H) (*configv1.ClusterVersion, error) {
 		return cVersion, fmt.Errorf("couldn't get current ClusterVersion '%s': %v", ClusterVersionName, err)
 	}
 
+	clusterID := viper.GetString(config.Cluster.ID)
 	image := viper.GetString(config.Upgrade.Image)
 	releaseName := viper.GetString(config.Upgrade.ReleaseName)
+
+	provider, err := providers.ClusterProvider()
+
+	if err != nil {
+		return nil, fmt.Errorf("error getting cluster provider: %v", err)
+	}
+
+	provider.AddProperty(clusterID, clusterproperties.Status, clusterproperties.StatusUpgrading)
 
 	// set requested upgrade targets
 	if image != "" {

@@ -10,6 +10,7 @@ import (
 	"github.com/hashicorp/go-multierror"
 	osconfig "github.com/openshift/client-go/config/clientset/versioned"
 	"github.com/openshift/osde2e/pkg/common/cluster/healthchecks"
+	"github.com/openshift/osde2e/pkg/common/clusterproperties"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/logging"
 	"github.com/openshift/osde2e/pkg/common/metadata"
@@ -93,11 +94,24 @@ func waitForClusterReadyWithOverrideAndExpectedNumberOfNodes(clusterID string, l
 	clusterStarted := time.Now()
 	var readinessStarted time.Time
 	ocmReady := false
+	readinessSet := false
+
+	if err != nil {
+		return fmt.Errorf("error trying to add provisioning property to cluster %s: %v", clusterID, err)
+	}
+
 	if !viper.GetBool(config.Tests.SkipClusterHealthChecks) || overrideSkipCheck {
 		return wait.PollImmediate(30*time.Second, time.Duration(installTimeout)*time.Minute, func() (bool, error) {
 			cluster, err := provider.GetCluster(clusterID)
 			if err != nil {
 				return false, fmt.Errorf("Unable to fetch cluster details from provider: %s", err)
+			}
+
+			properties := cluster.Properties()
+			currentStatus := properties[clusterproperties.Status]
+
+			if currentStatus == clusterproperties.StatusProvisioning && !readinessSet {
+				err = provider.AddProperty(clusterID, clusterproperties.Status, clusterproperties.StatusWaitingForReady)
 			}
 
 			if err == nil && cluster != nil && cluster.State() == spi.ClusterStateReady {
@@ -106,6 +120,16 @@ func waitForClusterReadyWithOverrideAndExpectedNumberOfNodes(clusterID string, l
 					ocmReady = true
 					if metadata.Instance.TimeToOCMReportingInstalled == 0 {
 						metadata.Instance.SetTimeToOCMReportingInstalled(time.Since(clusterStarted).Seconds())
+					}
+
+					if currentStatus == clusterproperties.StatusUpgrading {
+						err = provider.AddProperty(clusterID, clusterproperties.Status, clusterproperties.StatusUpgradeHealthCheck)
+					} else {
+						err = provider.AddProperty(clusterID, clusterproperties.Status, clusterproperties.StatusHealthCheck)
+					}
+
+					if err != nil {
+						return false, fmt.Errorf("error trying to add health-check property to cluster ID %s: %v", clusterID, err)
 					}
 
 					readinessStarted = time.Now()
@@ -121,6 +145,16 @@ func waitForClusterReadyWithOverrideAndExpectedNumberOfNodes(clusterID string, l
 							metadata.Instance.SetTimeToUpgradedClusterReady(time.Since(readinessStarted).Seconds())
 						}
 
+						if currentStatus == clusterproperties.StatusUpgradeHealthCheck {
+							err = provider.AddProperty(clusterID, clusterproperties.Status, clusterproperties.StatusUpgradeHealthy)
+						} else {
+							err = provider.AddProperty(clusterID, clusterproperties.Status, clusterproperties.StatusHealthy)
+						}
+
+						if err != nil {
+							return false, fmt.Errorf("error trying to add healthy property to cluster ID %s: %v", clusterID, err)
+						}
+
 						return true, nil
 					}
 					return false, nil
@@ -129,6 +163,16 @@ func waitForClusterReadyWithOverrideAndExpectedNumberOfNodes(clusterID string, l
 						errRuns++
 						logger.Printf("Error in PollClusterHealth: %v", err)
 						if errRuns >= errorWindow {
+							if currentStatus == clusterproperties.StatusUpgradeHealthCheck {
+								err = provider.AddProperty(clusterID, clusterproperties.Status, clusterproperties.StatusUpgradeUnhealthy)
+							} else {
+								err = provider.AddProperty(clusterID, clusterproperties.Status, clusterproperties.StatusUnhealthy)
+							}
+
+							if err != nil {
+								return false, fmt.Errorf("error trying to add unhealthy property to cluster ID %s: %v", clusterID, err)
+							}
+
 							return false, fmt.Errorf("PollClusterHealth has returned an error %d times in a row. Failing osde2e", errorWindow)
 						}
 					}

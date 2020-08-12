@@ -293,5 +293,7 @@ func (m *Provider) ExtendExpiry(clusterID string, hours uint64, minutes uint64, 
 
 // AddProperty CRCs an add new cluster property operation.
 func (m *Provider) AddProperty(clusterID string, tag string, value string) error {
-	return fmt.Errorf("AddProperty is unsupported by CRC clusters")
+	// Noop for now and just note it.
+	log.Printf("AddProperty is unsupported by CRC clusters")
+	return nil
 }
