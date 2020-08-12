@@ -4,9 +4,9 @@ import (
 	"fmt"
 
 	"github.com/openshift/osde2e/cmd/osde2e/common"
+	"github.com/openshift/osde2e/pkg/common/clusterproperties"
 	"github.com/openshift/osde2e/pkg/common/metadata"
 	"github.com/openshift/osde2e/pkg/common/providers"
-	"github.com/openshift/osde2e/pkg/common/providers/ocmprovider"
 	"github.com/openshift/osde2e/pkg/common/spi"
 	"github.com/spf13/cobra"
 )
@@ -70,9 +70,10 @@ func run(cmd *cobra.Command, argv []string) error {
 		return err
 	}
 
-	fmt.Printf("%-25s%-35s%-15s%-20s%-25s%s\n", "NAME", "ID", "STATUS", "OWNER", "INSTALLED VERSION", "UPGRADE VERSION")
+	fmt.Printf("%-25s%-35s%-15s%-25s%-25s%-25s%s\n", "NAME", "ID", "STATE", "STATUS", "OWNER", "INSTALLED VERSION", "UPGRADE VERSION")
 	for _, cluster := range clusters {
-		fmt.Printf("%-25s%-35s%-15s%-20s%-25s%s\n", cluster.Name(), cluster.ID(), cluster.State(), cluster.Properties()[ocmprovider.OwnedBy], cluster.Properties()[ocmprovider.InstalledVersion], cluster.Properties()[ocmprovider.UpgradeVersion])
+		properties := cluster.Properties()
+		fmt.Printf("%-25s%-35s%-15s%-25s%-25s%-25s%s\n", cluster.Name(), cluster.ID(), cluster.State(), properties[clusterproperties.Status], properties[clusterproperties.OwnedBy], properties[clusterproperties.InstalledVersion], properties[clusterproperties.UpgradeVersion])
 	}
 
 	return nil
