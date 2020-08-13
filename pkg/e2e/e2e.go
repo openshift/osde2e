@@ -112,7 +112,7 @@ var _ = ginkgo.SynchronizedBeforeSuite(func() []byte {
 		}
 
 		err = clusterutil.WaitForClusterReady(cluster.ID(), nil)
-		events.HandleErrorWithEvents(err, events.HealthCheckSuccessful, events.HealthCheckFailed)
+		events.HandleErrorWithEvents(err, events.HealthCheckSuccessful, events.HealthCheckFailed).ShouldNot(HaveOccurred(), "cluster failed health check")
 		if err != nil {
 			return []byte{}
 		}
