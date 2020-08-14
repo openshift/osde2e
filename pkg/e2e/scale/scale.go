@@ -83,6 +83,7 @@ func (sCfg scaleRunnerConfig) Runner(h *helper.H) *runner.Runner {
 	runner.Name = sCfg.Name
 	runner.ImageName = ansibleImage
 	runner.Repos = scaleRepos
+	runner.SkipLogsFromPod = true
 
 	runner.PodSpec.Containers[0].Env = append(runner.PodSpec.Containers[0].Env, kubev1.EnvVar{
 		Name:  "WORKLOAD_JOB_PRIVILEGED",
