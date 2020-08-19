@@ -22,7 +22,7 @@ import (
 var pruneJobsTestName string = "[Suite: operators] [OSD] Prune jobs"
 
 func init() {
-	alert.RegisterGinkgoAlert(pruneJobsTestName, "SD-SREP", "Haoran Wang", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+	alert.RegisterGinkgoAlert(pruneJobsTestName, "SD-SREP", "Haoran Wang", "#sd-cicd-alerts", "sd-cicd@redhat.com", 4)
 }
 
 var _ = ginkgo.Describe(pruneJobsTestName, func() {

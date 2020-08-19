@@ -9,7 +9,7 @@ import (
 var splunkForwarderBlocking string = "[Suite: operators] [OSD] Splunk Forwarder Operator"
 
 func init() {
-	alert.RegisterGinkgoAlert(splunkForwarderBlocking, "SD-SREP", "Matt Bargenquast", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+	alert.RegisterGinkgoAlert(splunkForwarderBlocking, "SD-SREP", "Matt Bargenquast", "#sd-cicd-alerts", "sd-cicd@redhat.com", 4)
 }
 
 var _ = ginkgo.Describe(splunkForwarderBlocking, func() {

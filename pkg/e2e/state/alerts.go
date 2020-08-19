@@ -45,7 +45,7 @@ func init() {
 var clusterStateTestName string = "[Suite: e2e] Cluster state"
 
 func init() {
-	alert.RegisterGinkgoAlert(clusterStateTestName, "SD-CICD", "Michael Wilson", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+	alert.RegisterGinkgoAlert(clusterStateTestName, "SD-CICD", "Michael Wilson", "#sd-cicd-alerts", "sd-cicd@redhat.com", 4)
 }
 
 var _ = ginkgo.Describe(clusterStateTestName, func() {

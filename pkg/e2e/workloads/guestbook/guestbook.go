@@ -27,7 +27,7 @@ var workloadName = filepath.Base(testDir)
 var testName string = "[Suite: e2e] Workload (" + workloadName + ")"
 
 func init() {
-	alert.RegisterGinkgoAlert(testName, "SD-CICD", "Jeffrey Sica", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+	alert.RegisterGinkgoAlert(testName, "SD-CICD", "Jeffrey Sica", "#sd-cicd-alerts", "sd-cicd@redhat.com", 4)
 }
 
 var _ = ginkgo.Describe(testName, func() {

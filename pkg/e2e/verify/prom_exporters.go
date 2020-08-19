@@ -20,7 +20,7 @@ import (
 var promExportersTestname string = "[Suite: e2e] [OSD] Prometheus Exporters"
 
 func init() {
-	alert.RegisterGinkgoAlert(promExportersTestname, "SD-SREP", "Matt Bargenquast", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+	alert.RegisterGinkgoAlert(promExportersTestname, "SD-SREP", "Matt Bargenquast", "#sd-cicd-alerts", "sd-cicd@redhat.com", 4)
 }
 
 var _ = ginkgo.Describe(promExportersTestname, func() {
