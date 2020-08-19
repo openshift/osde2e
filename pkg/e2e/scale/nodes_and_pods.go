@@ -18,7 +18,7 @@ const (
 var nodesPodsTestName string = "[Suite: scale-nodes-and-pods] Scaling"
 
 func init() {
-	alert.RegisterGinkgoAlert(nodesPodsTestName, "SD-CICD", "Michael Wilson", "#sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+	alert.RegisterGinkgoAlert(nodesPodsTestName, "SD-CICD", "Michael Wilson", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
 }
 
 var _ = ginkgo.Describe(nodesPodsTestName, func() {

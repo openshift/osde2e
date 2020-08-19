@@ -24,8 +24,8 @@ var conformanceK8sTestName string = "[Suite: conformance][k8s]"
 var conformanceOpenshiftTestName string = "[Suite: conformance][openshift]"
 
 func init() {
-	alert.RegisterGinkgoAlert(conformanceK8sTestName, "SD-CICD", "Jeffrey Sica", "#sd-cicd-alerts", "sd-cicd@redhat.com", 4)
-	alert.RegisterGinkgoAlert(conformanceOpenshiftTestName, "SD-CICD", "Jeffrey Sica", "#sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+	alert.RegisterGinkgoAlert(conformanceK8sTestName, "SD-CICD", "Jeffrey Sica", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+	alert.RegisterGinkgoAlert(conformanceOpenshiftTestName, "SD-CICD", "Jeffrey Sica", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
 }
 
 var _ = ginkgo.Describe(conformanceK8sTestName, func() {
