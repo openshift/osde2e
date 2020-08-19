@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"math"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -156,6 +157,12 @@ func (rm *RouteMonitors) StoreMetadata() {
 		latency := float64(metric.Latencies.Mean / time.Millisecond)
 		if latency < 0 {
 			latency = 0
+		}
+		if math.IsNaN(metric.Throughput) {
+			metric.Throughput = 0
+		}
+		if math.IsNaN(metric.Success) {
+			metric.Success = 0
 		}
 		metadata.Instance.SetRouteLatency(title, latency)
 		metadata.Instance.SetRouteThroughput(title, metric.Throughput)

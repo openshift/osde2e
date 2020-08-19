@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"math"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -33,6 +34,7 @@ const (
 	metadataMetricName string = cicdPrefix + "metadata"
 	addonMetricName    string = cicdPrefix + "addon_metadata"
 	eventMetricName    string = cicdPrefix + "event"
+	routeMetricName    string = cicdPrefix + "route"
 )
 
 var junitFileRegex, logFileRegex *regexp.Regexp
@@ -44,6 +46,7 @@ type Metrics struct {
 	metadataGatherer *prometheus.GaugeVec
 	addonGatherer    *prometheus.GaugeVec
 	eventGatherer    *prometheus.CounterVec
+	routeGatherer    *prometheus.GaugeVec
 
 	// Provider for getting metrics data
 	provider spi.Provider
@@ -77,10 +80,17 @@ func NewMetrics() *Metrics {
 		},
 		[]string{"install_version", "upgrade_version", "cloud_provider", "environment", "region", "event", "cluster_id", "job_id"},
 	)
+	routeGatherer := prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: routeMetricName,
+		},
+		[]string{"install_version", "upgrade_version", "cloud_provider", "environment", "region", "cluster_id", "job_id", "type", "route"},
+	)
 	metricRegistry.MustRegister(jUnitGatherer)
 	metricRegistry.MustRegister(metadataGatherer)
 	metricRegistry.MustRegister(addonGatherer)
 	metricRegistry.MustRegister(eventGatherer)
+	metricRegistry.MustRegister(routeGatherer)
 
 	provider, err := providers.ClusterProvider()
 
@@ -95,6 +105,7 @@ func NewMetrics() *Metrics {
 		metadataGatherer: metadataGatherer,
 		addonGatherer:    addonGatherer,
 		eventGatherer:    eventGatherer,
+		routeGatherer:    routeGatherer,
 		provider:         provider,
 	}
 }
@@ -140,6 +151,7 @@ func (m *Metrics) WritePrometheusFile(reportDir string) (string, error) {
 	}
 
 	m.processEvents(m.eventGatherer)
+	m.processRoutes(m.routeGatherer)
 
 	prometheusFileName := fmt.Sprintf(prometheusFileNamePattern, viper.GetString(config.Cluster.ID), viper.GetString(config.JobName))
 	output, err := m.registryToExpositionFormat()
@@ -290,6 +302,55 @@ func (m *Metrics) processEvents(gatherer *prometheus.CounterVec) {
 			viper.GetString(config.Cluster.ID),
 			strconv.Itoa(viper.GetInt(config.JobID))).Inc()
 	}
+}
+
+// Route processing
+// processRoutes will search the events list for events that have occurred over the osde2e run
+// and output them in the Prometheus metrics.
+func (m *Metrics) processRoutes(gatherer *prometheus.GaugeVec) {
+	for route, latency := range metadata.Instance.RouteLatencies {
+		log.Printf("Gathering %s/latency: %v", route, latency)
+		if !math.IsNaN(latency) {
+			gatherer.WithLabelValues(
+				viper.GetString(config.Cluster.Version),
+				viper.GetString(config.Upgrade.ReleaseName),
+				viper.GetString(config.CloudProvider.CloudProviderID),
+				m.provider.Environment(),
+				viper.GetString(config.CloudProvider.Region),
+				viper.GetString(config.Cluster.ID),
+				strconv.Itoa(viper.GetInt(config.JobID)),
+				route, "latency").Set(latency)
+		}
+	}
+	for route, availability := range metadata.Instance.RouteAvailabilities {
+		log.Printf("Gathering %s/availability: %v", route, availability)
+		if !math.IsNaN(availability) {
+			gatherer.WithLabelValues(
+				viper.GetString(config.Cluster.Version),
+				viper.GetString(config.Upgrade.ReleaseName),
+				viper.GetString(config.CloudProvider.CloudProviderID),
+				m.provider.Environment(),
+				viper.GetString(config.CloudProvider.Region),
+				viper.GetString(config.Cluster.ID),
+				strconv.Itoa(viper.GetInt(config.JobID)),
+				route, "availability").Set(availability)
+		}
+	}
+	for route, throughput := range metadata.Instance.RouteThroughputs {
+		log.Printf("Gathering %s/throughput: %v", route, throughput)
+		if !math.IsNaN(throughput) {
+			gatherer.WithLabelValues(
+				viper.GetString(config.Cluster.Version),
+				viper.GetString(config.Upgrade.ReleaseName),
+				viper.GetString(config.CloudProvider.CloudProviderID),
+				m.provider.Environment(),
+				viper.GetString(config.CloudProvider.Region),
+				viper.GetString(config.Cluster.ID),
+				strconv.Itoa(viper.GetInt(config.JobID)),
+				route, "throughput").Set(throughput)
+		}
+	}
+
 }
 
 // Generic Prometheus export file building functions
