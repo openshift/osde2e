@@ -693,6 +693,10 @@ func (o *OCMProvider) AddProperty(clusterID string, tag string, value string) er
 
 	clusterproperties := ocmCluster.Properties()
 
+	if clusterproperties == nil {
+		return fmt.Errorf("error retrieving cluster properties: cluster is nil")
+	}
+
 	clusterproperties[tag] = value
 
 	modifiedCluster, err := v1.NewCluster().Properties(clusterproperties).Build()
