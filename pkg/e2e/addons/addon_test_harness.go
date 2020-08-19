@@ -1,6 +1,8 @@
 package addons
 
 import (
+	"strings"
+
 	"github.com/onsi/ginkgo"
 	"github.com/spf13/viper"
 
@@ -15,6 +17,6 @@ var _ = ginkgo.Describe("[Suite: addons] Addon Test Harness", func() {
 	addonTimeoutInSeconds := 3600
 	ginkgo.It("should run until completion", func() {
 		h.SetServiceAccount(viper.GetString(config.Addons.TestUser))
-		h.RunAddonTests("addon-tests", []string{})
+		h.RunAddonTests("addon-tests", strings.Split(viper.GetString(config.Addons.TestHarnesses), ","), []string{})
 	}, float64(addonTimeoutInSeconds+30))
 })

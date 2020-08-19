@@ -20,8 +20,6 @@ Regarding addon testing, OSDe2e has three primary config options: `ADDON_IDS`, `
 
 `ADDON_TEST_USER` will specify the in-cluster user that the test harness containers will run as. It allows for a single wildcard (`%s`) which will automatically be evaluated as the OpenShift Project the test harness is created under.
 
-If your addon test creates or affects anything outside of the OSD cluster lifecycle, a separate cleanup action is required. If `ADDON_RUN_CLEANUP` is set to `true`, OSDe2e will run the test harness a **second time** passing the argument `cleanup` to the container.
-
 ```
 env:
 - name: ADDON_IDS
@@ -31,6 +29,17 @@ env:
 - name: ADDON_TEST_USER
   value: system:serviceaccount:%s:cluster-admin
 ```
+
+### Addon Cleanup
+
+If your addon test creates or affects anything outside of the OSD cluster lifecycle, a separate cleanup action is required. If `ADDON_RUN_CLEANUP` is set to `true`, OSDe2e will run the test harness a **second time** passing the argument `cleanup` to the container.
+
+There may be a case where a separate cleanup container/harness is required. That may be configured using the `ADDON_CLEANUP_HARNESSES` config option. It is formatted in the same way as `ADDON_TEST_HARNESSES`. This however, may cause some confusion as to what is run when:
+
+`ADDON_RUN_CLEANUP` is true, and `ADDON_CLEANUP_HARNESSES` is not set, OSDe2e will only run `ADDON_TEST_HARNESSES` again, passing the `cleanup` argument.
+
+`ADDON_RUN_CLEANUP` is true, and `ADDON_CLEANUP_HARNESSES` is set, OSDe2e will only run the `ADDON_CLEANUP_HARNESSES`, passing no arguments.
+
 
 ### **Getting an OCM refresh token for your tests**
 

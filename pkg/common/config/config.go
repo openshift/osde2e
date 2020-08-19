@@ -250,12 +250,17 @@ var Addons = struct {
 	// RunCleanup is a boolean to specify whether the testHarnesses should have a separate
 	// cleanup phase. This phase would run at the end of all e2e testing
 	RunCleanup string
+
+	// CleanupHarnesses is a comma separated list of container images that will clean up any
+	// artifacts created after test harnesses have run
+	CleanupHarnesses string
 }{
-	IDsAtCreation: "addons.idsAtCreation",
-	IDs:           "ids",
-	TestHarnesses: "testHarnesses",
-	TestUser:      "addons.testUser",
-	RunCleanup:    "addons.runCleanup",
+	IDsAtCreation:    "addons.idsAtCreation",
+	IDs:              "addons.ids",
+	TestHarnesses:    "addons.testHarnesses",
+	TestUser:         "addons.testUser",
+	RunCleanup:       "addons.runCleanup",
+	CleanupHarnesses: "addons.cleanupHarnesses",
 }
 
 // Scale config keys.
@@ -430,6 +435,7 @@ func init() {
 	viper.BindEnv(Addons.IDs, "ADDON_IDS")
 
 	viper.BindEnv(Addons.TestHarnesses, "ADDON_TEST_HARNESSES")
+	viper.BindEnv(Addons.CleanupHarnesses, "ADDON_CLEANUP_HARNESSES")
 
 	viper.SetDefault(Addons.TestUser, "system:serviceaccount:%s:cluster-admin")
 	viper.BindEnv(Addons.TestUser, "ADDON_TEST_USER")
