@@ -10,6 +10,7 @@ import (
 	"time"
 
 	v1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
+	"github.com/openshift/osde2e/pkg/common/clusterproperties"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/spi"
 	"github.com/spf13/viper"
@@ -18,18 +19,6 @@ import (
 const (
 	// DefaultFlavour is used when no specialized configuration exists.
 	DefaultFlavour = "osd-4"
-
-	// MadeByOSDe2e property to attach to clusters.
-	MadeByOSDe2e = "MadeByOSDe2e"
-
-	// OwnedBy property which will tell who made the cluster.
-	OwnedBy = "OwnedBy"
-
-	// InstalledVersion property will tell which OSD version was installed in the cluster initially.
-	InstalledVersion = "InstalledVersion"
-
-	// UpgradeVersion property will tell which OSD version was installed in the cluster recently as an upgrade.
-	UpgradeVersion = "UpgradeVersion"
 )
 
 // LaunchCluster setups an new cluster using the OSD API and returns it's ID.
@@ -182,19 +171,39 @@ func (o *OCMProvider) GenerateProperties() (map[string]string, error) {
 
 	installedversion := viper.GetString(config.Cluster.Version)
 
-	return map[string]string{
-		MadeByOSDe2e:     "true",
-		OwnedBy:          username,
-		InstalledVersion: installedversion,
-		UpgradeVersion:   "--",
-	}, nil
+	properties := map[string]string{
+		clusterproperties.MadeByOSDe2e:     "true",
+		clusterproperties.OwnedBy:          username,
+		clusterproperties.InstalledVersion: installedversion,
+		clusterproperties.UpgradeVersion:   "--",
+		clusterproperties.Status:           clusterproperties.StatusProvisioning,
+	}
+
+	jobName := viper.GetString(config.JobName)
+	jobID := viper.GetString(config.JobID)
+
+	if jobName != "" {
+		properties[clusterproperties.JobName] = jobName
+	}
+
+	if jobID != "" {
+		properties[clusterproperties.JobID] = jobID
+	}
+
+	return properties, nil
 }
 
 // DeleteCluster requests the deletion of clusterID.
 func (o *OCMProvider) DeleteCluster(clusterID string) error {
 	var resp *v1.ClusterDeleteResponse
 
-	err := retryer().Do(func() error {
+	err := o.AddProperty(clusterID, clusterproperties.Status, clusterproperties.StatusUninstalling)
+
+	if err != nil {
+		return fmt.Errorf("error adding uninstalling status to cluster: %v", err)
+	}
+
+	err = retryer().Do(func() error {
 		var err error
 		resp, err = o.conn.ClustersMgmt().V1().Clusters().Cluster(clusterID).
 			Delete().

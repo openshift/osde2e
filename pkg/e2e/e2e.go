@@ -112,7 +112,7 @@ var _ = ginkgo.SynchronizedBeforeSuite(func() []byte {
 		}
 
 		err = clusterutil.WaitForClusterReady(cluster.ID(), nil)
-		events.HandleErrorWithEvents(err, events.HealthCheckSuccessful, events.HealthCheckFailed)
+		events.HandleErrorWithEvents(err, events.HealthCheckSuccessful, events.HealthCheckFailed).ShouldNot(HaveOccurred(), "cluster failed health check")
 		if err != nil {
 			return []byte{}
 		}
@@ -147,8 +147,6 @@ var _ = ginkgo.SynchronizedBeforeSuite(func() []byte {
 })
 
 // Collect logs after each test
-// TODO: SDA-2594 Hotfix
-/*
 var _ = ginkgo.JustAfterEach(getLogs)
 
 func getLogs() {
@@ -174,7 +172,6 @@ func writeLogs(m map[string][]byte) {
 		Expect(err).NotTo(HaveOccurred(), "failed to write log '%s'", filePath)
 	}
 }
-*/
 
 // installAddons installs addons onto the cluster
 func installAddons() (err error) {
@@ -326,7 +323,7 @@ func runGinkgoTests() error {
 	log.Println("Running e2e tests...")
 
 	if viper.GetString(config.Suffix) == "" {
-		viper.Set(config.Suffix, util.RandomStr(3))
+		viper.Set(config.Suffix, util.RandomStr(5))
 	}
 
 	testsPassed := runTestsInPhase(phase.InstallPhase, "OSD e2e suite")

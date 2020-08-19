@@ -19,10 +19,11 @@ ifndef $(GOPATH)
     export GOPATH
 endif
 
-check: shellcheck diffproviders.txt
+check: shellcheck diffproviders.txt diffreporters.txt
 	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(shell go env GOPATH)/bin v1.23.8
 	(cd "$(DIR)"; golangci-lint run -c .golang-ci.yml ./...)
 	cmp -s diffproviders.txt "$(DIR)pkg/common/providers/providers_generated.go"
+	cmp -s diffreporters.txt "$(DIR)pkg/reporting/reporters/reporters_generated.go"
 	
 	CGO_ENABLED=0 go test -v $(PKG)/cmd/... $(PKG)/pkg/...
 
@@ -46,6 +47,9 @@ push-latest:
 generate-providers:
 	"$(DIR)scripts/generate-providers-import.sh" > "$(DIR)pkg/common/providers/providers_generated.go"
 
+generate-reporters:
+	"$(DIR)scripts/generate-reporters-import.sh" > "$(DIR)pkg/reporting/reporters/reporters_generated.go"
+
 build:
 	mkdir -p "$(OUT_DIR)"
 	go build -o "$(OUT_DIR)" "$(DIR)cmd/..."
@@ -53,4 +57,7 @@ build:
 diffproviders.txt:
 	"$(DIR)scripts/generate-providers-import.sh" > diffproviders.txt
 
-.INTERMEDIATE: diffproviders.txt
+diffreporters.txt:
+	"$(DIR)scripts/generate-reporters-import.sh" > diffreporters.txt
+
+.INTERMEDIATE: diffproviders.txt diffreporters.txt

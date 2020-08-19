@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"github.com/openshift/osde2e/cmd/osde2e/common"
+	"github.com/openshift/osde2e/pkg/common/clusterproperties"
 	"github.com/openshift/osde2e/pkg/common/providers"
-	"github.com/openshift/osde2e/pkg/common/providers/ocmprovider"
 	"github.com/openshift/osde2e/pkg/common/spi"
 	"github.com/spf13/cobra"
 )
@@ -114,18 +114,36 @@ func run(cmd *cobra.Command, argv []string) error {
 
 	cluster, err := provider.GetCluster(clusterID)
 
+	if err != nil {
+		return fmt.Errorf("error getting cluster: %v", err)
+	}
+
 	timediff := cluster.ExpirationTimestamp().UTC().Sub(time.Now().UTC()).Minutes()
 
 	if err != nil {
 		return fmt.Errorf("error retrieving cluster information: %v", err)
 	}
 
-	if properties := cluster.Properties(); properties["MadeByOSDe2e"] != "true" {
+	properties := cluster.Properties()
+	if properties[clusterproperties.MadeByOSDe2e] != "true" {
 		return fmt.Errorf("Cluster was not created by osde2e")
 	}
 
-	fmt.Printf("%-25s%-35s%-15s%-15s%-25s%25s\n", "NAME", "ID", "STATUS", "OWNER", "INSTALLED VERSION", "UPGRADE VERSION")
-	fmt.Printf("%-25s%-35s%-15s%-15s%-25s%25s\n", cluster.Name(), cluster.ID(), cluster.State(), cluster.Properties()[ocmprovider.OwnedBy], cluster.Properties()[ocmprovider.InstalledVersion], cluster.Properties()[ocmprovider.UpgradeVersion])
+	fmt.Printf("%17s: %s\n", "NAME", cluster.Name())
+	fmt.Printf("%17s: %s\n", "ID", cluster.ID())
+	fmt.Printf("%17s: %s\n", "STATE", cluster.State())
+	fmt.Printf("%17s: %s\n", "STATUS", properties[clusterproperties.Status])
+	fmt.Printf("%17s: %s\n", "OWNER", properties[clusterproperties.OwnedBy])
+	fmt.Printf("%17s: %s\n", "INSTALLED VERSION", properties[clusterproperties.InstalledVersion])
+	fmt.Printf("%17s: %s\n", "UPGRADE VERSION", properties[clusterproperties.UpgradeVersion])
+
+	if jobName, ok := properties[clusterproperties.JobName]; ok {
+		fmt.Printf("%17s: %s\n", "JOB NAME", jobName)
+	}
+
+	if jobID, ok := properties[clusterproperties.JobID]; ok {
+		fmt.Printf("%17s: %s\n", "JOB ID", jobID)
+	}
 
 	if kubeconfigStatus {
 		content, err := getKubeconfig(clusterID)

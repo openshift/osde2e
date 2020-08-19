@@ -68,6 +68,9 @@ type Runner struct {
 	// Tarball will create a single .tgz file for the entire OutputDir.
 	Tarball bool
 
+	// SkipLogsFromPod should be set to true if logs should not be collected.
+	SkipLogsFromPod bool
+
 	// Repos are cloned and mounted into the test Pod.
 	Repos
 
@@ -114,9 +117,13 @@ func (r *Runner) Run(timeoutInSeconds int, stopCh <-chan struct{}) (err error) {
 	var completionErr error
 	completionErr = r.waitForCompletion(pod.Name, timeoutInSeconds)
 
-	log.Printf("Collecting logs from containers on %s runner Pod...", r.Name)
-	if err = r.getAllLogsFromPod(pod.Name); err != nil {
-		return
+	if !r.SkipLogsFromPod {
+		log.Printf("Collecting logs from containers on %s runner Pod...", r.Name)
+		if err = r.getAllLogsFromPod(pod.Name); err != nil {
+			return
+		}
+	} else {
+		log.Printf("Skipping logs from pod %s", r.Name)
 	}
 
 	if completionErr != nil {

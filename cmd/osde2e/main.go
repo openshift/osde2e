@@ -16,10 +16,9 @@ import (
 	"github.com/openshift/osde2e/cmd/osde2e/cleanup"
 	"github.com/openshift/osde2e/cmd/osde2e/completion"
 	"github.com/openshift/osde2e/cmd/osde2e/query"
+	"github.com/openshift/osde2e/cmd/osde2e/report"
 	"github.com/openshift/osde2e/cmd/osde2e/test"
 	"github.com/openshift/osde2e/cmd/osde2e/update"
-	"github.com/openshift/osde2e/cmd/osde2e/weather"
-	"github.com/openshift/osde2e/cmd/osde2e/weather_slack"
 	"github.com/spf13/cobra"
 )
 
@@ -41,8 +40,7 @@ func init() {
 	arguments.AddDebugFlag(pfs)
 	arguments.AddUpdateFlag(pfs)
 
-	root.AddCommand(weather.Cmd)
-	root.AddCommand(weather_slack.Cmd)
+	root.AddCommand(report.Cmd)
 	root.AddCommand(test.Cmd)
 	root.AddCommand(query.Cmd)
 	root.AddCommand(completion.Cmd)

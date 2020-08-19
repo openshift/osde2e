@@ -20,7 +20,7 @@ var Cmd = &cobra.Command{
 	Use:   "query",
 	Short: "Queries Prometheus results.",
 	Long:  "Queries Prometheus results.",
-	Args:  cobra.OnlyValidArgs,
+	Args:  cobra.ArbitraryArgs,
 	RunE:  run,
 }
 
