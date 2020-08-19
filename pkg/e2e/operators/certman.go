@@ -19,7 +19,7 @@ import (
 var certmanOperatorTestName string = "[Suite: operators] [OSD] Certman Operator"
 
 func init() {
-	alert.RegisterGinkgoAlert(certmanOperatorTestName, "SD-SREP", "Christoph Blecker", "#sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+	alert.RegisterGinkgoAlert(certmanOperatorTestName, "SD-SREP", "Christoph Blecker", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
 }
 
 var _ = ginkgo.Describe(certmanOperatorTestName, func() {

@@ -23,7 +23,7 @@ import (
 var namespaceWebhookTestName string = "[Suite: e2e] [OSD] namespace validating webhook"
 
 func init() {
-	alert.RegisterGinkgoAlert(namespaceWebhookTestName, "SD-SREP", "Matt Bargenquast", "#sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+	alert.RegisterGinkgoAlert(namespaceWebhookTestName, "SD-SREP", "Matt Bargenquast", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
 }
 
 var _ = ginkgo.Describe(namespaceWebhookTestName, func() {

@@ -12,7 +12,7 @@ import (
 var performanceTestName string = "[Suite: scale-performance] Scaling"
 
 func init() {
-	alert.RegisterGinkgoAlert(performanceTestName, "SD-CICD", "Michael Wilson", "#sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+	alert.RegisterGinkgoAlert(performanceTestName, "SD-CICD", "Michael Wilson", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
 }
 
 var _ = ginkgo.Describe(performanceTestName, func() {

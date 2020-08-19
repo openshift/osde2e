@@ -16,7 +16,7 @@ import (
 var validationWebhookTestName string = "[Suite: e2e] Validation Webhook"
 
 func init() {
-	alert.RegisterGinkgoAlert(validationWebhookTestName, "SD-SREP", "Matt Bargenquast", "#sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+	alert.RegisterGinkgoAlert(validationWebhookTestName, "SD-SREP", "Matt Bargenquast", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
 }
 
 var _ = ginkgo.Describe(validationWebhookTestName, func() {
