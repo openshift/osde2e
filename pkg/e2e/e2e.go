@@ -330,8 +330,10 @@ func runGinkgoTests() error {
 	upgradeTestsPassed := true
 
 	var routeMonitorChan chan struct{}
+	closeMonitorChan := make(chan struct{})
 	if viper.GetBool(config.Upgrade.MonitorRoutesDuringUpgrade) && !dryRun {
-		routeMonitorChan = setupRouteMonitors()
+		routeMonitorChan = setupRouteMonitors(closeMonitorChan)
+		log.Println("Route Monitors created.")
 	}
 
 	// upgrade cluster if requested
@@ -348,6 +350,13 @@ func runGinkgoTests() error {
 		} else {
 			log.Println("No Kubeconfig found from initial cluster setup. Unable to run upgrade.")
 		}
+	}
+
+	if viper.GetBool(config.Upgrade.MonitorRoutesDuringUpgrade) && !dryRun {
+		close(routeMonitorChan)
+		_ = <-closeMonitorChan
+		log.Println("Route monitors reconciled")
+
 	}
 
 	if reportDir != "" {
@@ -377,10 +386,6 @@ func runGinkgoTests() error {
 				return fmt.Errorf("error while uploading prometheus metrics: %v", err)
 			}
 		}
-	}
-
-	if viper.GetBool(config.Upgrade.MonitorRoutesDuringUpgrade) && !dryRun {
-		close(routeMonitorChan)
 	}
 
 	if viper.GetBool(config.Cluster.DestroyAfterTest) {
@@ -703,13 +708,14 @@ func uploadFileToMetricsBucket(filename string) error {
 
 // setupRouteMonitors initializes performance+availability monitoring of cluster routes,
 // returning a channel which can be used to terminate the monitoring.
-func setupRouteMonitors() chan struct{} {
+func setupRouteMonitors(closeChannel chan struct{}) chan struct{} {
 	routeMonitorChan := make(chan struct{})
 	go func() {
 		// Set up the route monitors
 		routeMonitors, err := routemonitors.Create()
 		if err != nil {
 			log.Printf("Error creating route monitors: %v\n", err)
+			close(closeChannel)
 			return
 		}
 
@@ -741,10 +747,12 @@ func setupRouteMonitors() chan struct{} {
 		for {
 			select {
 			case <-routeMonitorChan:
+				log.Println("Closing route monitors...")
 				routeMonitors.End()
 				routeMonitors.SaveReports(viper.GetString(config.ReportDir))
 				routeMonitors.SavePlots(viper.GetString(config.ReportDir))
 				routeMonitors.StoreMetadata()
+				close(closeChannel)
 				return
 			}
 		}
