@@ -693,8 +693,10 @@ func (o *OCMProvider) AddProperty(clusterID string, tag string, value string) er
 
 	clusterproperties := ocmCluster.Properties()
 
+	// Apparently, if cluster properties are empty in OCM, the clusterproperties are nil, In this case, we'll just make our own
+	// properties map.
 	if clusterproperties == nil {
-		return fmt.Errorf("error retrieving cluster properties: cluster is nil")
+		clusterproperties = map[string]string{}
 	}
 
 	clusterproperties[tag] = value
