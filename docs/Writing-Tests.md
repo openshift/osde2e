@@ -159,7 +159,7 @@ $ go get github.com/markbates/pkger/cmd/pkger
 ```
 2. Have **[`pkger`]** update the asset file (`/pkged.go`)
 ```
-pkger -i $(pwd)/assets
+pkger -include $(pwd)/assets
 ```
 3. Verify your new files are present
 ```
