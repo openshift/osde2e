@@ -96,7 +96,9 @@ func (ma MetricAlert) Check(client *metrics.Client) error {
 
 	if len(results) >= ma.FailureThreshold {
 		log.Printf("Alert triggered for %s: %d >= %d", ma.Name, len(results), ma.FailureThreshold)
-		sendSlackMessage(ma.SlackChannel, fmt.Sprintf("%s has seen %d failures in the last 24h", ma.Name, len(results)))
+		if err := sendSlackMessage(ma.SlackChannel, fmt.Sprintf("%s has seen %d failures in the last 24h", ma.Name, len(results))); err != nil {
+			log.Printf("Error sending slack message: %s", err.Error())
+		}
 	}
 
 	return nil
