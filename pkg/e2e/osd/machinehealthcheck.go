@@ -21,7 +21,7 @@ const (
 var machineHealthTestName string = "[Suite: e2e] MachineHealthChecks"
 
 func init() {
-	alert.RegisterGinkgoAlert(machineHealthTestName, "SD-SRE", "Alex Chvatal", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+	alert.RegisterGinkgoAlert(machineHealthTestName, "SD-SRE", "Alex Chvatal", "#sd-cicd-alerts", "sd-cicd@redhat.com", 4)
 }
 
 var _ = ginkgo.Describe(machineHealthTestName, func() {

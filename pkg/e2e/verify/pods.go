@@ -20,7 +20,7 @@ import (
 var podsTestName string = "[Suite: e2e] Pods"
 
 func init() {
-	alert.RegisterGinkgoAlert(podsTestName, "SD-CICD", "Jeffrey Sica", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+	alert.RegisterGinkgoAlert(podsTestName, "SD-CICD", "Jeffrey Sica", "#sd-cicd-alerts", "sd-cicd@redhat.com", 4)
 }
 
 var _ = ginkgo.Describe(podsTestName, func() {

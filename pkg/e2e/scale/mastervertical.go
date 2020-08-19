@@ -19,7 +19,7 @@ const (
 var masterVerticalTestName string = "[Suite: scale-mastervertical] Scaling"
 
 func init() {
-	alert.RegisterGinkgoAlert(masterVerticalTestName, "SD-CICD", "Michael Wilson", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+	alert.RegisterGinkgoAlert(masterVerticalTestName, "SD-CICD", "Michael Wilson", "#sd-cicd-alerts", "sd-cicd@redhat.com", 4)
 }
 
 var _ = ginkgo.Describe(masterVerticalTestName, func() {

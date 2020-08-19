@@ -12,7 +12,7 @@ import (
 var ocmTestName string = "[Suite: informing] [OSD] OCM"
 
 func init() {
-	alert.RegisterGinkgoAlert(ocmTestName, "SD-CICD", "Jeffrey Sica", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+	alert.RegisterGinkgoAlert(ocmTestName, "SD-CICD", "Jeffrey Sica", "#sd-cicd-alerts", "sd-cicd@redhat.com", 4)
 }
 
 var _ = ginkgo.Describe(ocmTestName, func() {

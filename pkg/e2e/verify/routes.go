@@ -26,7 +26,7 @@ const (
 var routesTestName string = "[Suite: e2e] Routes"
 
 func init() {
-	alert.RegisterGinkgoAlert(routesTestName, "SD-CICD", "Jeffrey Sica", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+	alert.RegisterGinkgoAlert(routesTestName, "SD-CICD", "Jeffrey Sica", "#sd-cicd-alerts", "sd-cicd@redhat.com", 4)
 }
 
 var _ = ginkgo.Describe(routesTestName, func() {
