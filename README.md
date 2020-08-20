@@ -30,6 +30,31 @@ $ export OCM_TOKEN=<token from step 1>
 
 The `osde2e` command is the root command that executes all functionality within the osde2e repo through a number of subcommands.
 
+### Running tests locally
+
+To run osde2e locally, first build the binary (do this after all changes) by running `make build`. The resulting binaries will be in `./out/`.
+
+Once built, you can invoke osde2e by running `./out/osde2e` and osde2ectl by running `./out/osde2ectl`.
+
+A common workflow is having a local script that combines these steps and the config. Example:
+
+```bash
+#!/usr/bin/env bash
+make build
+
+GINKGO_SKIP="" \
+CLEAN_CHECK_RUNS="3" \
+POLLING_TIMEOUT="5" \
+OCM_TOKEN="[OCM token here]" \
+./out/osde2e test --configs "prod,e2e-suite"
+```
+
+Please note: Do not commit or push any local scripts into osde2e.
+
+## Configuration
+
+There are many options to drive an osde2e run. Please refer to the [config package] for the most up to date config options. While golang, each option is well documented and includes the environment variable name for the option (where applicable.)
+
 ### Composable configs
 
 OSDe2e comes with a number of [configs] that can be passed to the `osde2e test` command using the -configs argument. These can be strung together in a comma separated list to create a more complex scenario for testing.
@@ -103,17 +128,6 @@ tests:
 #### Order of precedence
 
 Config options are currently parsed by loading defaults, attempting to load environment variables, attempting to load composable configs, and finally attempting to load config data from the custom YAML file. There are instances where you may want to have most of your config in a custom YAML file while keeping one or two sensitive config options as environment variables (OCM Token)
-
-### Makefile
-
-The [Makefile] has several shortcuts to running osde2e locally. The simplest example is `make test` which will build the osde2e binary and run `osde2e test` using our default config settings. Of note: `OCM_TOKEN` will still need to be exported for the Makefile to work.
-
-There are several other shortcuts for building the binary and running specific test suites with default configs:
-
-* `make test-informing` - Runs tests that are flaky or waiting to be graduated to blocking
-* `make test-scale` - Runs scale/performance tests
-* `make test-conformance` - Runs the K8s and OpenShift conformance suites
-* `make test-addon` - Handles addon testing and requires additional configuration for the specific addon (see [Addon Testing Guide])
 
 ### Testing against non OSD clusters
 
