@@ -79,7 +79,7 @@ func RunUpgrade() error {
 	if err = wait.PollImmediate(10*time.Second, MaxDuration, func() (bool, error) {
 		if viper.GetBool(config.Upgrade.ManagedUpgrade) && viper.GetBool(config.Upgrade.WaitForWorkersToManagedUpgrade) {
 			// If performing a managed upgrade, check if we want to wait for workers to fully upgrade too
-			done, msg, err = IsManagedUpgradeDone(h, desired.Spec.DesiredUpdate)
+			done, msg, err = isManagedUpgradeDone(h, desired.Spec.DesiredUpdate)
 		} else {
 			// Otherwise, just wait for the control plane to upgrade
 			done, msg, err = IsUpgradeDone(h, desired.Spec.DesiredUpdate)

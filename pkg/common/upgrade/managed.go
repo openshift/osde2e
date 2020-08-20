@@ -3,12 +3,12 @@ package upgrade
 import (
 	"context"
 	"fmt"
-	"github.com/Masterminds/semver"
 	"github.com/openshift/osde2e/pkg/common/cluster/healthchecks"
+	"github.com/openshift/osde2e/pkg/common/templates"
+	"github.com/openshift/osde2e/pkg/common/util"
 	"github.com/spf13/viper"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"log"
-	"strings"
 	"time"
 
 	configv1 "github.com/openshift/api/config/v1"
@@ -22,8 +22,7 @@ import (
 	"github.com/openshift/osde2e/pkg/common/helper"
 )
 
-var (
-
+const (
 	// Namespace in which the managed-upgrade-operator runs
 	muoNamespace = "openshift-managed-upgrade-operator"
 	// default pod disruption budget timeout in minutes
@@ -38,22 +37,8 @@ var (
 	// directory containing pod disruption budget workload assets
 	pdbWorkloadDir = "/assets/workloads/e2e/pdb"
 
-	// data for managed-upgrade-operator's configmap, overriding defaults
-	configOverride = `maintenance:
-  controlPlaneTime: 90
-  workerNodeTime: 8
-scale:
-  timeOut: 15
-upgradeWindow:
-  timeOut: 60
-nodeDrain:
-  timeOut: 10
-healthCheck:
-  ignoredCriticals:
-  - DNSErrors05MinSRE
-  - MetricsClientSendFailingSRE
-  - UpgradeNodeScalingFailedSRE
-`
+	// config override template asset
+	configOverrideTemplate = "/assets/upgrades/config.template"
 )
 
 // TriggerManagedUpgrade initiates an upgrade using the managed-upgrade-operator
@@ -78,16 +63,18 @@ func TriggerManagedUpgrade(h *helper.H) (*configv1.ClusterVersion, error) {
 		return cVersion, fmt.Errorf("image-based managed upgrades are unsupported")
 	}
 
-	upgradeVersion := strings.Replace(releaseName, "openshift-v", "", -1)
-	upgradeVersionParsed := semver.MustParse(upgradeVersion)
+	upgradeVersion, err := util.OpenshiftVersionToSemver(releaseName)
+	if err != nil {
+		return nil, fmt.Errorf("supplied release %s is invalid: %v", releaseName, err)
+	}
 
-	targetChannel, err := VersionToChannel(upgradeVersionParsed)
+	targetChannel, err := VersionToChannel(upgradeVersion)
 	if err != nil {
 		return cVersion, fmt.Errorf("unable to channel from version: %v", err)
 	}
 
 	// Create Pod Disruption Budget test workloads if desired
-	if 	viper.GetBool(config.Upgrade.ManagedUpgradeTestPodDisruptionBudgets) {
+	if viper.GetBool(config.Upgrade.ManagedUpgradeTestPodDisruptionBudgets) {
 		err = createPodDisruptionBudgetWorkloads(h)
 		if err != nil {
 			return cVersion, fmt.Errorf("unable to setup PDB workload for upgrade: %v", err)
@@ -102,7 +89,7 @@ func TriggerManagedUpgrade(h *helper.H) (*configv1.ClusterVersion, error) {
 	}
 
 	// Create the upgrade config and initiate the upgrade process
-	err = createUpgradeConfig(targetChannel, upgradeVersion, h)
+	err = createUpgradeConfig(targetChannel, upgradeVersion.String(), h)
 	if err != nil {
 		return cVersion, fmt.Errorf("can't initiate managed upgrade: %v", err)
 	}
@@ -110,7 +97,7 @@ func TriggerManagedUpgrade(h *helper.H) (*configv1.ClusterVersion, error) {
 	// The managed-upgrade-operator won't have updated the CVO version yet, and that's fine.
 	// But let's return what it will look like, for the later 'is it upgraded yet' tests.
 	cUpdate := configv1.Update{
-		Version: upgradeVersion,
+		Version: upgradeVersion.String(),
 	}
 	cVersion.Spec.DesiredUpdate = &cUpdate
 
@@ -120,6 +107,7 @@ func TriggerManagedUpgrade(h *helper.H) (*configv1.ClusterVersion, error) {
 // Override the managed-upgrade-operator's existing configmap with an e2e-focused one, if
 // the existing configmap contains different values
 func overrideOperatorConfig(h *helper.H) error {
+
 	// Retrieve the existing operator config data
 	cm, err := h.Kube().CoreV1().ConfigMaps(muoNamespace).Get(context.TODO(), "managed-upgrade-operator-config", metav1.GetOptions{})
 	if err != nil {
@@ -128,6 +116,15 @@ func overrideOperatorConfig(h *helper.H) error {
 	cfgData, cfgFound := cm.Data["config.yaml"]
 	if !cfgFound {
 		return fmt.Errorf("managed-upgrade-operator configmap missing mandatory key config.yaml")
+	}
+
+	configOverrideTemplate, err := templates.LoadTemplate(configOverrideTemplate)
+	if err != nil {
+		return fmt.Errorf("can't read upgrade config override template: %v", err)
+	}
+	configOverride, err := h.ConvertTemplateToString(configOverrideTemplate, nil)
+	if err != nil {
+		return fmt.Errorf("can't parse upgrade config override template: %v", err)
 	}
 
 	// only update if we observe a difference between current config and testing config
@@ -229,7 +226,7 @@ func createPodDisruptionBudgetWorkloads(h *helper.H) error {
 }
 
 // IsManagedUpgradeDone returns with done true when a managed upgrade is complete.
-func IsManagedUpgradeDone(h *helper.H, desired *configv1.Update) (done bool, msg string, err error) {
+func isManagedUpgradeDone(h *helper.H, desired *configv1.Update) (done bool, msg string, err error) {
 
 	// retrieve UpgradeConfig
 	ucObj, err := h.Dynamic().Resource(schema.GroupVersionResource{
