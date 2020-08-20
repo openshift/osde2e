@@ -27,7 +27,7 @@ require (
 	github.com/openshift/client-go v0.0.0-20200326155132-2a6cd50aedd0
 	github.com/openshift/cluster-api v0.0.0-20191129101638-b09907ac6668
 	github.com/openshift/machine-api-operator v0.2.1-0.20200529045911-d19e8d007f7c
-	github.com/openshift/managed-upgrade-operator v0.0.0-20200818010522-3372933de407
+	github.com/openshift/managed-upgrade-operator v0.0.0-20200820052802-5d57e1785b53
 	github.com/openshift/moactl v0.0.3-0.20200622161904-355535b775ff
 	github.com/operator-framework/api v0.3.6
 	github.com/operator-framework/operator-lifecycle-manager v0.0.0-20200521062108-408ca95d458f

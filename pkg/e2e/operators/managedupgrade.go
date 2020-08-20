@@ -258,11 +258,9 @@ func makeUpgradeConfig(name string, ns string, startTime string, version string,
 			Desired: upgradev1alpha1.Update{
 				Version: version,
 				Channel: channel,
-				Force:   false,
 			},
 			UpgradeAt:            startTime,
 			PDBForceDrainTimeout: 60,
-			Proceed:              true,
 			Type:                 upgradev1alpha1.OSD,
 		},
 	}

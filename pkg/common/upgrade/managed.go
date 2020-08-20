@@ -162,11 +162,9 @@ func createUpgradeConfig(channel string, version string, h *helper.H) error {
 			Desired: upgradev1alpha1.Update{
 				Version: version,
 				Channel: channel,
-				Force:   false,
 			},
 			UpgradeAt:            time.Now().UTC().Format(time.RFC3339),
 			PDBForceDrainTimeout: muoPdbDrainTimeout,
-			Proceed:              true,
 			Type:                 muoUpgradeType,
 		},
 	}
