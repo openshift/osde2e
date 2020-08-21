@@ -97,16 +97,27 @@ var Upgrade = struct {
 	// MonitorRoutesDuringUpgrade will monitor the availability of routes whilst an upgrade takes place
 	// Env: UPGRADE_MONITOR_ROUTES
 	MonitorRoutesDuringUpgrade string
-}{
 
-	UpgradeToCISIfPossible:                "upgrade.upgradeToCISIfPossible",
-	OnlyUpgradeToZReleases:                "upgrade.onlyUpgradeToZReleases",
-	NextReleaseAfterProdDefaultForUpgrade: "upgrade.nextReleaseAfterProdDefaultForUpgrade",
-	ReleaseStream:                         "upgrade.releaseStream",
-	ReleaseName:                           "upgrade.releaseName",
-	Image:                                 "upgrade.image",
-	UpgradeVersionEqualToInstallVersion:   "upgrade.upgradeVersionEqualToInstallVersion",
-	MonitorRoutesDuringUpgrade:            "upgrade.monitorRoutesDuringUpgrade",
+	// Perform an upgrade using the Managed Upgrade Operator
+	ManagedUpgrade string
+
+	// Wait for workers to upgrade before considering upgrade complete
+	WaitForWorkersToManagedUpgrade string
+
+	// Create disruptive Pod Disruption Budget workloads to test the Managed Upgrade Operator's ability to handle them.
+	ManagedUpgradeTestPodDisruptionBudgets string
+}{
+	UpgradeToCISIfPossible:                 "upgrade.upgradeToCISIfPossible",
+	OnlyUpgradeToZReleases:                 "upgrade.onlyUpgradeToZReleases",
+	NextReleaseAfterProdDefaultForUpgrade:  "upgrade.nextReleaseAfterProdDefaultForUpgrade",
+	ReleaseStream:                          "upgrade.releaseStream",
+	ReleaseName:                            "upgrade.releaseName",
+	Image:                                  "upgrade.image",
+	UpgradeVersionEqualToInstallVersion:    "upgrade.upgradeVersionEqualToInstallVersion",
+	MonitorRoutesDuringUpgrade:             "upgrade.monitorRoutesDuringUpgrade",
+	ManagedUpgrade:                         "upgrade.managedUpgrade",
+	WaitForWorkersToManagedUpgrade:         "upgrade.waitForWorkersToManagedUpgrade",
+	ManagedUpgradeTestPodDisruptionBudgets: "upgrade.managedUpgradeTestPodDisruptionBudgets",
 }
 
 // Kubeconfig config keys.
@@ -404,6 +415,15 @@ func init() {
 
 	viper.BindEnv(Upgrade.MonitorRoutesDuringUpgrade, "UPGRADE_MONITOR_ROUTES")
 	viper.SetDefault(Upgrade.MonitorRoutesDuringUpgrade, true)
+
+	viper.BindEnv(Upgrade.ManagedUpgrade, "UPGRADE_MANAGED")
+	viper.SetDefault(Upgrade.ManagedUpgrade, true)
+
+	viper.BindEnv(Upgrade.ManagedUpgradeTestPodDisruptionBudgets, "UPGRADE_MANAGED_TEST_PDBS")
+	viper.SetDefault(Upgrade.ManagedUpgradeTestPodDisruptionBudgets, false)
+
+	viper.BindEnv(Upgrade.WaitForWorkersToManagedUpgrade, "UPGRADE_WAIT_FOR_WORKERS")
+	viper.SetDefault(Upgrade.WaitForWorkersToManagedUpgrade, true)
 
 	// ----- Kubeconfig -----
 	viper.BindEnv(Kubeconfig.Path, "TEST_KUBECONFIG")

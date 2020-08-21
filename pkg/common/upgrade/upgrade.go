@@ -38,7 +38,7 @@ var (
 	}
 
 	// MaxDuration is how long an upgrade will run before failing.
-	MaxDuration = 90 * time.Minute
+	MaxDuration = 100 * time.Minute
 )
 
 // RunUpgrade uses the OpenShift extended suite to upgrade a cluster to the image provided in cfg.
@@ -63,7 +63,12 @@ func RunUpgrade() error {
 
 	upgradeStarted = time.Now()
 
-	desired, err := TriggerUpgrade(h)
+	var desired *configv1.ClusterVersion
+	if viper.GetBool(config.Upgrade.ManagedUpgrade) {
+		desired, err = TriggerManagedUpgrade(h)
+	} else {
+		desired, err = TriggerUpgrade(h)
+	}
 	if err != nil {
 		return fmt.Errorf("failed triggering upgrade: %v", err)
 	}
@@ -72,7 +77,14 @@ func RunUpgrade() error {
 	log.Println("Upgrading...")
 	done = false
 	if err = wait.PollImmediate(10*time.Second, MaxDuration, func() (bool, error) {
-		done, msg, err = IsUpgradeDone(h, desired.Spec.DesiredUpdate)
+		if viper.GetBool(config.Upgrade.ManagedUpgrade) && viper.GetBool(config.Upgrade.WaitForWorkersToManagedUpgrade) {
+			// If performing a managed upgrade, check if we want to wait for workers to fully upgrade too
+			done, msg, err = isManagedUpgradeDone(h, desired.Spec.DesiredUpdate)
+		} else {
+			// Otherwise, just wait for the control plane to upgrade
+			done, msg, err = IsUpgradeDone(h, desired.Spec.DesiredUpdate)
+		}
+
 		if !done {
 			log.Printf("Upgrade in progress: %s", msg)
 		}

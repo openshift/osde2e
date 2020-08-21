@@ -18,14 +18,9 @@ var _ = ginkgo.Describe(configureAlertManagerOperators, func() {
 	var operatorLockFile string = "configure-alertmanager-operator-lock"
 	var defaultDesiredReplicas int32 = 1
 
-	// NOTE: CAM clusterRoles have random-ish names like:
-	// configure-alertmanager-operator.v0.1.80-03136c1-l589
-	//
-	// Test need to incorporate a regex-like test?
-	//
-	// var clusterRoles = []string{
-	// 	"configure-alertmanager-operator",
-	// }
+	var clusterRoles = []string{
+		"configure-alertmanager-operator",
+	}
 
 	var clusterRoleBindings = []string{}
 
@@ -41,7 +36,8 @@ var _ = ginkgo.Describe(configureAlertManagerOperators, func() {
 	checkClusterServiceVersion(h, operatorNamespace, operatorName)
 	checkConfigMapLockfile(h, operatorNamespace, operatorLockFile)
 	checkDeployment(h, operatorNamespace, operatorName, defaultDesiredReplicas)
-	checkClusterRoleBindings(h, clusterRoleBindings)
+	checkClusterRoles(h, clusterRoles, true)
+	checkClusterRoleBindings(h, clusterRoleBindings, true)
 	checkRole(h, operatorNamespace, roles)
 	checkRoleBindings(h, operatorNamespace, roleBindings)
 	checkUpgrade(helper.New(), "openshift-monitoring", "configure-alertmanager-operator",

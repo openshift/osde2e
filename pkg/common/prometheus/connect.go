@@ -1,13 +1,19 @@
 package prometheus
 
 import (
+	"context"
 	"crypto/tls"
 	"fmt"
 	"net"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/prometheus/client_golang/api"
 	"github.com/spf13/viper"
@@ -59,4 +65,57 @@ func createRoundTripper(bearerToken string) http.RoundTripper {
 		},
 		TLSHandshakeTimeout: 10 * time.Second,
 	}
+}
+
+func CreateClusterClient(h *helper.H) (api.Client, error) {
+
+	promHost, err := getClusterPrometheusHost(h)
+	if err != nil {
+		return nil, err
+	}
+	clusterBearerToken, err := getClusterPrometheusToken(h)
+	if err != nil {
+		return nil, err
+	}
+
+	return api.NewClient(api.Config{
+		Address:      *promHost,
+		RoundTripper: createRoundTripper(*clusterBearerToken),
+	})
+}
+
+func getClusterPrometheusHost(h *helper.H) (*string, error) {
+	route, err := h.Route().RouteV1().Routes("openshift-monitoring").Get(context.TODO(), "prometheus-k8s", metav1.GetOptions{})
+	if err != nil {
+		return nil, err
+	}
+	hostUrl := "https://" + route.Spec.Host
+	return &hostUrl, nil
+}
+
+func getClusterPrometheusToken(h *helper.H) (*string, error) {
+	sa, err := h.Kube().CoreV1().ServiceAccounts("openshift-monitoring").Get(context.TODO(), "prometheus-k8s", metav1.GetOptions{})
+	if err != nil {
+		return nil, fmt.Errorf("Unable to fetch prometheus-k8s service account: %s", err)
+	}
+
+	tokenSecret := ""
+	for _, secret := range sa.Secrets {
+		if strings.HasPrefix(secret.Name, "prometheus-k8s-token") {
+			tokenSecret = secret.Name
+		}
+	}
+	if len(tokenSecret) == 0 {
+		return nil, fmt.Errorf("Failed to find token secret for prometheus-k8s SA")
+	}
+
+	secret, err := h.Kube().CoreV1().Secrets("openshift-monitoring").Get(context.TODO(), tokenSecret, metav1.GetOptions{})
+	if err != nil {
+		return nil, fmt.Errorf("Unable to fetch secret %s: %s", tokenSecret, err)
+	}
+
+	token := secret.Data[corev1.ServiceAccountTokenKey]
+	stringToken := string(token)
+
+	return &stringToken, nil
 }

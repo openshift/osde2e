@@ -13,6 +13,8 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	policyv1beta1 "k8s.io/api/policy/v1beta1"
+
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
@@ -169,13 +171,20 @@ func CreateRuntimeObject(obj runtime.Object, ns string, kube kubernetes.Interfac
 			return nil, err
 		}
 		return newObj, nil
-
 	case "Secret":
 		if _, ok = obj.(*corev1.Secret); !ok {
 			return nil, fmt.Errorf("Error casting object to Secret")
 		}
 
 		if newObj, err = kube.CoreV1().Secrets(ns).Create(context.TODO(), obj.(*corev1.Secret), metav1.CreateOptions{}); err != nil {
+			return nil, err
+		}
+		return newObj, nil
+	case "PodDisruptionBudget":
+		if _, ok = obj.(*policyv1beta1.PodDisruptionBudget); !ok {
+			return nil, fmt.Errorf("Error casting object to PodDisruptionBudget")
+		}
+		if newObj, err = kube.PolicyV1beta1().PodDisruptionBudgets(ns).Create(context.TODO(), obj.(*policyv1beta1.PodDisruptionBudget), metav1.CreateOptions{}); err != nil {
 			return nil, err
 		}
 		return newObj, nil

@@ -70,25 +70,45 @@ func checkDeployment(h *helper.H, namespace string, name string, defaultDesiredR
 	})
 }
 
-func checkClusterRoles(h *helper.H, clusterRoles []string) {
+func checkClusterRoles(h *helper.H, clusterRoles []string, matchPrefix bool) {
 	// Check that the clusterRoles exist
 	ginkgo.Context("clusterRoles", func() {
 		ginkgo.It("should exist", func() {
-			for _, clusterRoleName := range clusterRoles {
-				_, err := h.Kube().RbacV1().ClusterRoles().Get(context.TODO(), clusterRoleName, metav1.GetOptions{})
-				Expect(err).ToNot(HaveOccurred(), "failed to get clusterRole %v\n", clusterRoleName)
+			allClusterRoles, err := h.Kube().RbacV1().ClusterRoles().List(context.TODO(), metav1.ListOptions{})
+			Expect(err).ToNot(HaveOccurred(), "failed to list clusterRoles\n")
+
+			for _, clusterRoleToFind := range clusterRoles {
+				found := false
+				for _, clusterRole := range allClusterRoles.Items {
+					if (matchPrefix && strings.HasPrefix(clusterRole.Name, clusterRoleToFind)) ||
+						(!matchPrefix && clusterRole.Name == clusterRoleToFind) {
+						found = true
+						break
+					}
+				}
+				Expect(found).To(BeTrue(), "failed to find ClusterRole %s\n", clusterRoleToFind)
 			}
 		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
 	})
 }
 
-func checkClusterRoleBindings(h *helper.H, clusterRoleBindings []string) {
-	// Check that the clusterRoleBindings exist
+func checkClusterRoleBindings(h *helper.H, clusterRoleBindings []string, matchPrefix bool) {
+	// Check that the clusterRoles exist
 	ginkgo.Context("clusterRoleBindings", func() {
 		ginkgo.It("should exist", func() {
-			for _, clusterRoleBindingName := range clusterRoleBindings {
-				err := pollClusterRoleBinding(h, clusterRoleBindingName)
-				Expect(err).ToNot(HaveOccurred(), "failed to get clusterRoleBinding %v\n", clusterRoleBindingName)
+			allClusterRoleBindings, err := h.Kube().RbacV1().ClusterRoleBindings().List(context.TODO(), metav1.ListOptions{})
+			Expect(err).ToNot(HaveOccurred(), "failed to list clusterRoles\n")
+
+			for _, clusterRoleBindingToFind := range clusterRoleBindings {
+				found := false
+				for _, clusterRole := range allClusterRoleBindings.Items {
+					if (matchPrefix && strings.HasPrefix(clusterRole.Name, clusterRoleBindingToFind)) ||
+						(!matchPrefix && clusterRole.Name == clusterRoleBindingToFind) {
+						found = true
+						break
+					}
+				}
+				Expect(found).To(BeTrue(), "failed to find ClusterRoleBinding %s\n", clusterRoleBindingToFind)
 			}
 		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
 	})
