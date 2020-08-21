@@ -38,7 +38,7 @@ var (
 	}
 
 	// MaxDuration is how long an upgrade will run before failing.
-	MaxDuration = 90 * time.Minute
+	MaxDuration = 100 * time.Minute
 )
 
 // RunUpgrade uses the OpenShift extended suite to upgrade a cluster to the image provided in cfg.

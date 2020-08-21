@@ -207,7 +207,7 @@ func createPodDisruptionBudgetWorkloads(h *helper.H) error {
 	time.Sleep(3 * time.Second)
 
 	// Wait for all pods to come up healthy
-	err = wait.PollImmediate(15*time.Second, 10*time.Minute, func() (bool, error) {
+	err = wait.PollImmediate(5*time.Second, 2*time.Minute, func() (bool, error) {
 		if check, err := healthchecks.CheckPodHealth(h.Kube().CoreV1(), nil); !check || err != nil {
 			return false, nil
 		}

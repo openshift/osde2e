@@ -20,7 +20,7 @@ import (
 	"time"
 )
 
-var managedUpgradeOperatorTestName string = "[Suite: operators] [OSD] Managed Upgrade Operator"
+var managedUpgradeOperatorTestName string = "[Suite: informing] [OSD] Managed Upgrade Operator"
 
 func init() {
 	alert.RegisterGinkgoAlert(managedUpgradeOperatorTestName, "SD-SREP", "Matt Bargenquast", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
