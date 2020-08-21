@@ -798,8 +798,6 @@ github.com/openshift/machine-api-operator v0.2.1-0.20200226185612-9b0170a1ba07/g
 github.com/openshift/machine-api-operator v0.2.1-0.20200529045911-d19e8d007f7c h1:HKDaAPanhzB1w9wi9EHbRouWZ2ZbmrD4TrM7Au47Q40=
 github.com/openshift/machine-api-operator v0.2.1-0.20200529045911-d19e8d007f7c/go.mod h1:YKEQMHjXzrzm4fQGTyHBafFfQ/Yq/FrV+1YcGdPCp+0=
 github.com/openshift/machine-config-operator v4.2.0-alpha.0.0.20190917115525-033375cbe820+incompatible/go.mod h1:4IzikyGmUVQwlohScKeaAr5n2YzcWXkZvTMGGxDcU2Q=
-github.com/openshift/managed-upgrade-operator v0.0.0-20200818010522-3372933de407 h1:2tXWQqhWT1MtLKKSq91Yr6gR6hASiiITCh6pnaWvUw0=
-github.com/openshift/managed-upgrade-operator v0.0.0-20200818010522-3372933de407/go.mod h1:ds7uALiqWAx+Z0Ru/NcSUIp55jgxbkzfb6wMwG2cMhQ=
 github.com/openshift/managed-upgrade-operator v0.0.0-20200820052802-5d57e1785b53 h1:e8F2JBoojgka2S9Ij5WslGUuTzt9185Djukda4KpPDQ=
 github.com/openshift/managed-upgrade-operator v0.0.0-20200820052802-5d57e1785b53/go.mod h1:ds7uALiqWAx+Z0Ru/NcSUIp55jgxbkzfb6wMwG2cMhQ=
 github.com/openshift/moactl v0.0.3-0.20200622161904-355535b775ff h1:wVZuu9xe1NHYX/hR4KjlVjDP9v51p82N+Vd9OCiYf40=

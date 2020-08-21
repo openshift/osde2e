@@ -33,14 +33,16 @@ spec:
         emptyDir: {}
       - name: push-results
         configMap:
-          name: push-results
+          name: push-results-{{.Suffix}}
       restartPolicy: Never
 WORKLOAD
+
+set -e
 
 cat <<PUSH_RESULTS > push-results.sh
 #!/usr/bin/env bash
 
-JOB_POD=\$(oc get pods -l job-name=addon-tests -o=jsonpath='{.items[0].metadata.name}')
+JOB_POD=\$(oc get pods -l job-name={{.JobName}} -o=jsonpath='{.items[0].metadata.name}')
 echo "Found Job Pod: \$JOB_POD"
 while ! oc get pod \$JOB_POD -o jsonpath='{.status.containerStatuses[?(@.name=="addon-tests")].state}' | grep -q terminated; do sleep 1; done
 for i in {1..5}; do oc rsync {{.OutputDir}}/. $(hostname):{{.OutputDir}} && break; sleep 10; done
@@ -49,12 +51,15 @@ PUSH_RESULTS
 cat workload.yaml
 cat push-results.sh
 
-oc create configmap push-results --from-file=push-results.sh
+oc create configmap push-results-{{.Suffix}} --from-file=push-results.sh
 
 oc apply -f workload.yaml
-while oc get job/addon-tests -o=jsonpath='{.status}' | grep -q active; do sleep 1; done
+
+set +e
+
+while oc get job/{{.JobName}} -o=jsonpath='{.status}' | grep -q active; do sleep 1; done
 
 mkdir -p "{{.OutputDir}}/containerLogs"
-JOB_POD=$(oc get pods -l job-name=addon-tests -o=jsonpath='{.items[0].metadata.name}')
+JOB_POD=$(oc get pods -l job-name={{.JobName}} -o=jsonpath='{.items[0].metadata.name}')
 oc logs $JOB_POD -c addon-tests > "{{.OutputDir}}/containerLogs/${JOB_POD}-addon-tests.log"
 oc logs $JOB_POD -c push-results > "{{.OutputDir}}/containerLogs/${JOB_POD}-push-results.log"

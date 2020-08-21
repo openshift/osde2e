@@ -10,6 +10,7 @@ import (
 
 	"github.com/openshift/osde2e/pkg/common/runner"
 	"github.com/openshift/osde2e/pkg/common/templates"
+	"github.com/openshift/osde2e/pkg/common/util"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -28,13 +29,15 @@ func (h *H) RunAddonTests(name string, harnesses []string, args []string) {
 
 	// We don't know what a test harness may need so let's give them everything.
 	h.SetServiceAccount("system:serviceaccount:%s:cluster-admin")
-	for key, harness := range harnesses {
+	for _, harness := range harnesses {
 		// configure tests
 		// setup runner
 		r := h.RunnerWithNoCommand()
 
+		suffix := util.RandomStr(5)
+
 		latestImageStream, err := r.GetLatestImageStreamTag()
-		jobName := fmt.Sprintf("%s-%d", name, key)
+		jobName := fmt.Sprintf("%s-%s", name, suffix)
 		Expect(err).NotTo(HaveOccurred())
 		values := struct {
 			JobName              string
@@ -44,6 +47,7 @@ func (h *H) RunAddonTests(name string, harnesses []string, args []string) {
 			OutputDir            string
 			ServiceAccount       string
 			PushResultsContainer string
+			Suffix               string
 		}{
 			JobName:              jobName,
 			Timeout:              addonTimeoutInSeconds,
@@ -51,6 +55,7 @@ func (h *H) RunAddonTests(name string, harnesses []string, args []string) {
 			OutputDir:            runner.DefaultRunner.OutputDir,
 			ServiceAccount:       h.GetNamespacedServiceAccount(),
 			PushResultsContainer: latestImageStream,
+			Suffix:               suffix,
 		}
 
 		if len(args) > 0 {
