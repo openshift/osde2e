@@ -42,9 +42,9 @@ var _ = ginkgo.Describe(rbacOperatorBlocking, func() {
 	checkConfigMapLockfile(h, operatorNamespace, operatorLockFile)
 	checkDeployment(h, operatorNamespace, operatorName, defaultDesiredReplicas)
 	checkClusterRoles(h, clusterRoles, false)
+
 	checkUpgrade(helper.New(), "openshift-rbac-permissions", "rbac-permissions-operator",
-		"rbac-permissions-operator.v0.1.97-68cf185",
-	)
+		"rbac-permissions-operator", "rbac-permissions-operator-registry")
 })
 
 var _ = ginkgo.Describe(subjectPermissionsTestName, func() {

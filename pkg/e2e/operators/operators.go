@@ -2,7 +2,11 @@ package operators
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"github.com/openshift/osde2e/pkg/common/providers"
+	"github.com/openshift/osde2e/pkg/common/runner"
+	"github.com/openshift/osde2e/pkg/common/templates"
 	"log"
 	"strings"
 	"time"
@@ -203,10 +207,16 @@ func ensureCSVIsInstalled(h *helper.H, csvName string, namespace string) error {
 	return nil
 }
 
-func checkUpgrade(h *helper.H, subNamespace string, subName string, previousCSV string) {
+func checkUpgrade(h *helper.H, subNamespace string, subName string, packageName string, regServiceName string) {
+
 	ginkgo.Context("Operator Upgrade", func() {
 		ginkgo.It("should upgrade from the replaced version", func() {
 
+			// Get the N-1 version of the CSV to test an upgrade from
+			previousCSV, err := getReplacesCSV(h, subNamespace, packageName, regServiceName)
+			Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("failed trying to get previous CSV for Subscription %s in %s namespace", subName, subNamespace))
+
+			log.Printf("Reverting to package %v to test upgrade of %v", previousCSV, subName)
 			sub, err := h.Operator().OperatorsV1alpha1().Subscriptions(subNamespace).Get(context.TODO(), subName, metav1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("failed trying to get Subscription %s in %s namespace", subName, subNamespace))
 			startingCSV := sub.Status.CurrentCSV
@@ -486,4 +496,73 @@ Loop:
 	}
 
 	return csvList, err
+}
+
+func getReplacesCSV(h *helper.H, subscriptionNS string, csvDisplayName string, catalogSvcName string) (string, error) {
+	cmdTimeoutInSeconds := 60
+	cmdTestTemplate, err := templates.LoadTemplate("/assets/registry/replaces.template")
+
+	if err != nil {
+		panic(fmt.Sprintf("error while loading registry-replaces addon: %v", err))
+	}
+
+	// This is extremely crude, but saves making multiple grpcurl queries to know what
+	// channel the package is using
+	clusterProvider, err := providers.ClusterProvider()
+	environment := clusterProvider.Environment()
+	var packageChannel string
+	if strings.HasPrefix(environment, "prod") {
+		packageChannel = "production"
+	} else {
+		packageChannel = "staging"
+	}
+	registrySvcPort := "50051"
+
+	h.SetServiceAccount("system:serviceaccount:%s:cluster-admin")
+	r := h.RunnerWithNoCommand()
+
+	Expect(err).NotTo(HaveOccurred())
+	values := struct {
+		OutputDir      string
+		Namespace      string
+		PackageName    string
+		PackageChannel string
+		ServiceName    string
+		ServicePort    string
+	}{
+		OutputDir:      runner.DefaultRunner.OutputDir,
+		Namespace:      subscriptionNS,
+		PackageName:    csvDisplayName,
+		PackageChannel: packageChannel,
+		ServiceName:    catalogSvcName,
+		ServicePort:    registrySvcPort,
+	}
+
+	registryQueryCmd, err := h.ConvertTemplateToString(cmdTestTemplate, values)
+	Expect(err).NotTo(HaveOccurred())
+
+	r.Name = fmt.Sprintf("csvq-%s", csvDisplayName)
+	r.Cmd = registryQueryCmd
+
+	// run tests
+	stopCh := make(chan struct{})
+	err = r.Run(cmdTimeoutInSeconds, stopCh)
+	Expect(err).NotTo(HaveOccurred())
+
+	// get results
+	results, err := r.RetrieveResults()
+	Expect(err).NotTo(HaveOccurred())
+
+	var result map[string]interface{}
+	err = json.Unmarshal(results["registry.json"], &result)
+	Expect(err).NotTo(HaveOccurred(), "error unmarshalling json from registry gatherer")
+
+	var csvresult map[string]interface{}
+	err = json.Unmarshal([]byte(fmt.Sprintf("%v", result["csvJson"])), &csvresult)
+	Expect(err).NotTo(HaveOccurred(), "error unmarshalling csv json from registry gatherer")
+
+	replacesCsv, ok := csvresult["spec"].(map[string]interface{})["replaces"]
+	Expect(ok).NotTo(BeFalse(), "cannot find 'replaces' clusterversion from registry gatherer")
+
+	return fmt.Sprintf("%v", replacesCsv), nil
 }
