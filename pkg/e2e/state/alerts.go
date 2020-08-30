@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"text/template"
-	"time"
 
 	"log"
 
@@ -54,6 +53,7 @@ var _ = ginkgo.Describe(clusterStateTestName, func() {
 
 	alertsTimeoutInSeconds := 900
 	ginkgo.It("should have no alerts", func() {
+		var results map[string][]byte
 		// setup runner
 		h.SetServiceAccount("system:serviceaccount:%s:cluster-admin")
 		r := h.RunnerWithNoCommand()
@@ -68,42 +68,32 @@ var _ = ginkgo.Describe(clusterStateTestName, func() {
 		r.Name = "alerts"
 		r.Cmd = alertsCommand
 
-		Eventually(func() bool {
-			stopCh := make(chan struct{})
-			// run tests
-			if err = r.Run(alertsTimeoutInSeconds, stopCh); err != nil {
-				log.Printf("Error running command on pod: %s", err.Error())
-				return false
-			}
+		stopCh := make(chan struct{})
+		// run tests
+		err = r.Run(alertsTimeoutInSeconds, stopCh)
+		Expect(err).NotTo(HaveOccurred(), "error running alert gatherer")
 
-			// get results
-			results, err := r.RetrieveResults()
-			if err != nil {
-				log.Printf("Error retrieving results from pod: %s", err.Error())
-				return false
-			}
+		// get results
+		results, err = r.RetrieveResults()
+		Expect(err).NotTo(HaveOccurred(), "error retrieving results from alert gatherer")
 
-			// write results
-			h.WriteResults(results)
+		queryJSON := query{}
+		err = json.Unmarshal(results["alerts.json"], &queryJSON)
+		Expect(err).NotTo(HaveOccurred(), "error unmarshalling json from alert gatherer")
 
-			queryJSON := query{}
-			if err = json.Unmarshal(results["alerts.json"], &queryJSON); err != nil {
-				log.Printf("Error parsing JSON results from AlertManager: %s", err.Error())
-				return false
-			}
+		clusterProvider, err := providers.ClusterProvider()
+		Expect(err).NotTo(HaveOccurred(), "error retrieving cluster provider")
 
-			clusterProvider, err := providers.ClusterProvider()
-			if err != nil {
-				log.Printf("Error getting cluster provider: %s", err.Error())
-			}
+		// write results
+		h.WriteResults(results)
 
-			return !findCriticalAlerts(queryJSON.Data.Results, viper.GetString(config.Provider), clusterProvider.Environment())
-		}, 5*time.Minute, 30*time.Second).Should(BeTrue(), "never able to find zero alerts")
+		Expect(!findCriticalAlerts(queryJSON.Data.Results, viper.GetString(config.Provider), clusterProvider.Environment())).Should(BeTrue(), "never able to find zero alerts")
 
 	}, float64(alertsTimeoutInSeconds+30))
 })
 
 func findCriticalAlerts(results []result, provider, environment string) bool {
+	log.Printf("Alerts found: %v", results)
 	foundCritical := false
 	for _, result := range results {
 		ignoredCritical := false

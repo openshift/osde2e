@@ -96,7 +96,9 @@ func (ma MetricAlert) Check(client *metrics.Client) error {
 
 	if len(results) >= ma.FailureThreshold {
 		log.Printf("Alert triggered for %s: %d >= %d", ma.Name, len(results), ma.FailureThreshold)
-		sendSlackMessage(ma.SlackChannel, fmt.Sprintf("%s has seen %d failures in the last 24h", ma.Name, len(results)))
+		if err := sendSlackMessage(ma.SlackChannel, fmt.Sprintf("%s has seen %d failures in the last 24h", ma.Name, len(results))); err != nil {
+			log.Printf("Error sending slack message: %s", err.Error())
+		}
 	}
 
 	return nil
@@ -136,15 +138,22 @@ func sendSlackMessage(channel, message string) error {
 	var ok bool
 
 	if slackChannel, ok = slackChannelCache[channel]; !ok {
-		channels, _, err := slackAPI.GetConversations(&slack.GetConversationsParameters{})
-		if err != nil {
-			return err
-		}
-		for _, c := range channels {
-			slackChannelCache[c.Name] = c
-			if c.Name == channel {
-				slackChannel = c
+		cursor := ""
+		for {
+			channels, nextCursor, err := slackAPI.GetConversations(&slack.GetConversationsParameters{Cursor: cursor})
+			if err != nil {
+				return err
 			}
+			for _, c := range channels {
+				slackChannelCache[c.Name] = c
+				if c.Name == channel {
+					slackChannel = c
+				}
+			}
+			if nextCursor == "" {
+				break
+			}
+			cursor = nextCursor
 		}
 	}
 

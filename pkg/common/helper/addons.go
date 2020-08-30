@@ -7,11 +7,10 @@ import (
 	"text/template"
 
 	. "github.com/onsi/gomega"
-	"github.com/spf13/viper"
 
-	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/runner"
 	"github.com/openshift/osde2e/pkg/common/templates"
+	"github.com/openshift/osde2e/pkg/common/util"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -20,7 +19,7 @@ var err error
 
 // RunAddonTests will attempt to run the configured addon tests for the current job
 // It allows you to specify a job name prefix and arguments to a test harness container
-func (h *H) RunAddonTests(name string, args []string) {
+func (h *H) RunAddonTests(name string, harnesses []string, args []string) {
 	addonTimeoutInSeconds := 3600
 	addonTestTemplate, err = templates.LoadTemplate("/assets/addons/addon-runner.template")
 
@@ -30,14 +29,15 @@ func (h *H) RunAddonTests(name string, args []string) {
 
 	// We don't know what a test harness may need so let's give them everything.
 	h.SetServiceAccount("system:serviceaccount:%s:cluster-admin")
-	addonTestHarnesses := strings.Split(viper.GetString(config.Addons.TestHarnesses), ",")
-	for key, harness := range addonTestHarnesses {
+	for _, harness := range harnesses {
 		// configure tests
 		// setup runner
 		r := h.RunnerWithNoCommand()
 
+		suffix := util.RandomStr(5)
+
 		latestImageStream, err := r.GetLatestImageStreamTag()
-		jobName := fmt.Sprintf("%s-%d", name, key)
+		jobName := fmt.Sprintf("%s-%s", name, suffix)
 		Expect(err).NotTo(HaveOccurred())
 		values := struct {
 			JobName              string
@@ -47,6 +47,7 @@ func (h *H) RunAddonTests(name string, args []string) {
 			OutputDir            string
 			ServiceAccount       string
 			PushResultsContainer string
+			Suffix               string
 		}{
 			JobName:              jobName,
 			Timeout:              addonTimeoutInSeconds,
@@ -54,6 +55,7 @@ func (h *H) RunAddonTests(name string, args []string) {
 			OutputDir:            runner.DefaultRunner.OutputDir,
 			ServiceAccount:       h.GetNamespacedServiceAccount(),
 			PushResultsContainer: latestImageStream,
+			Suffix:               suffix,
 		}
 
 		if len(args) > 0 {
