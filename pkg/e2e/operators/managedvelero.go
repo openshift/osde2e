@@ -10,6 +10,7 @@ import (
 	"github.com/openshift/osde2e/pkg/common/alert"
 	"github.com/openshift/osde2e/pkg/common/helper"
 	velerov1 "github.com/vmware-tanzu/velero/pkg/apis/velero/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -44,10 +45,27 @@ var _ = ginkgo.Describe(veleroOperatorTestName, func() {
 		"kube-system",
 		[]string{"managed-velero-operator-cluster-config-v1-reader"})
 	checkVeleroBackups(h)
+	testVeleroCR(h)
 	checkClusterRoles(h, clusterRoles, true)
 	checkClusterRoleBindings(h, clusterRoleBindings, true)
 
 })
+
+func testVeleroCR(h *helper.H) {
+	ginkgo.Context("velero", func() {
+		ginkgo.It("Access should be forbidden to edit Backups", func() {
+			h.SetServiceAccount("system:serviceaccount:%s:dedicated-admin-project")
+			backup := velerov1.Backup{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "dedicated-admin-backup-test",
+				},
+			}
+			_, err := h.Velero().VeleroV1().Backups(h.CurrentProject()).Create(context.TODO(), &backup, metav1.CreateOptions{})
+			Expect(apierrors.IsForbidden(err)).To(BeTrue())
+
+		})
+	})
+}
 
 func checkVeleroBackups(h *helper.H) {
 	ginkgo.Context("velero", func() {
