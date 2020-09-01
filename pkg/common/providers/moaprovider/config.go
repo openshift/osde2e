@@ -27,7 +27,9 @@ const (
 	// PodCIDR is the CIDR to use for pods.
 	PodCIDR = "moa.podCIDR"
 
-	// ComputeMachineType is instance size of the compute nodes in a cluster.
+	// ComputeMachineType is the specific cloud machine type to use for compute nodes.
+	// This will accept a comma-delimited list. If said-list is present, it will select
+	// an entry at random and use that machine type.
 	ComputeMachineType = "moa.computeMachineType"
 
 	// ComputeNodes is number of compute nodes in a cluster.

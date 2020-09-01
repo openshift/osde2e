@@ -74,8 +74,21 @@ func (o *OCMProvider) LaunchCluster(clusterName string) (string, error) {
 	}
 
 	if computeMachineType != "" {
+		var selectedMachineType string
+		typeList := strings.Split(computeMachineType, ",")
+		typeCount := len(typeList)
+		switch typeCount {
+		case 0:
+			selectedMachineType = ""
+		case 1:
+			selectedMachineType = typeList[0]
+		default:
+			rand.Seed(time.Now().UnixNano())
+			selectedMachineType = typeList[rand.Intn(typeCount)]
+		}
+
 		machineType := &v1.MachineTypeBuilder{}
-		nodeBuilder = nodeBuilder.ComputeMachineType(machineType.ID(computeMachineType))
+		nodeBuilder = nodeBuilder.ComputeMachineType(machineType.ID(selectedMachineType))
 	}
 
 	newCluster = newCluster.Nodes(nodeBuilder)

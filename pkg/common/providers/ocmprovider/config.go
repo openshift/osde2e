@@ -19,6 +19,8 @@ const (
 	NumRetries = "ocm.numRetries"
 
 	// ComputeMachineType is the specific cloud machine type to use for compute nodes.
+	// This will accept a comma-delimited list. If said-list is present, it will select
+	// an entry at random and use that machine type.
 	ComputeMachineType = "ocm.computeMachineType"
 
 	// UserOverride will hard set the user assigned to the "owner" tag by the OCM provider.

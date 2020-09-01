@@ -2,7 +2,9 @@ package moaprovider
 
 import (
 	"fmt"
+	"math/rand"
 	"net"
+	"strings"
 	"time"
 
 	cmv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
@@ -70,6 +72,23 @@ func (m *MOAProvider) LaunchCluster(clusterName string) (string, error) {
 		return "", fmt.Errorf("error determining region to use: %v", err)
 	}
 
+	var selectedMachineType string
+	computeMachineType := viper.GetString(ComputeMachineType)
+	if computeMachineType != "" {
+
+		typeList := strings.Split(computeMachineType, ",")
+		typeCount := len(typeList)
+		switch typeCount {
+		case 0:
+			selectedMachineType = ""
+		case 1:
+			selectedMachineType = typeList[0]
+		default:
+			rand.Seed(time.Now().UnixNano())
+			selectedMachineType = typeList[rand.Intn(typeCount)]
+		}
+	}
+
 	callAndSetAWSSession(func() {
 		clusterSpec := cluster.Spec{
 			Name:               clusterName,
@@ -77,7 +96,7 @@ func (m *MOAProvider) LaunchCluster(clusterName string) (string, error) {
 			MultiAZ:            viper.GetBool(config.Cluster.MultiAZ),
 			Version:            viper.GetString(config.Cluster.Version),
 			Expiration:         expiration,
-			ComputeMachineType: viper.GetString(ComputeMachineType),
+			ComputeMachineType: selectedMachineType,
 			ComputeNodes:       viper.GetInt(ComputeNodes),
 
 			CustomProperties: clusterProperties,
