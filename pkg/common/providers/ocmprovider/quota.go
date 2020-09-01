@@ -22,7 +22,11 @@ func (o *OCMProvider) CheckQuota() (bool, error) {
 	var flavourResp *v1.FlavourGetResponse
 	err := retryer().Do(func() error {
 		var err error
-		flavourResp, err = o.conn.ClustersMgmt().V1().Flavours().Flavour(DefaultFlavour).Get().Send()
+		flavour := getFlavour()
+		if flavour == "" {
+			return fmt.Errorf("No valid flavour selected")
+		}
+		flavourResp, err = o.conn.ClustersMgmt().V1().Flavours().Flavour(flavour).Get().Send()
 
 		if err != nil {
 			return err
