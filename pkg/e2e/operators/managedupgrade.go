@@ -48,6 +48,8 @@ var _ = ginkgo.Describe(managedUpgradeOperatorTestName, func() {
 	// this operator's clusterroles have a version suffix, so only check the prefix
 	checkClusterRoles(h, clusterRoles, true)
 	checkClusterRoleBindings(h, clusterRoleBindings, true)
+	testDaCRupgradeconfig(h)
+	testCRupgradeconfig(h)
 
 	ginkgo.Context("when an upgrade config is received", func() {
 		var (
@@ -229,9 +231,45 @@ var _ = ginkgo.Describe(managedUpgradeOperatorTestName, func() {
 			Expect(err).NotTo(HaveOccurred())
 		})
 
+		// Implement test for CR customresourcedefinition.apiextensions.k8s.io/upgradeconfigs.upgrade.managed.openshift.io
+
 	})
 
 })
+
+// test for CR customresourcedefinition.apiextensions.k8s.io/upgradeconfigs.upgrade.managed.openshift.io
+// dedicated admin should not be able to create/edit this CR
+
+func testDaCRupgradeconfig(h *helper.H) {
+	ginkgo.Context("managed-upgrade-operator", func() {
+		ginkgo.It("Access should be forbidden to edit Upgradeconfigs", func() {
+			h.SetServiceAccount("system:serviceaccount:%s:dedicated-admin-project")
+			upgradeconfig := upgradev1alpha1.UpgradeConfig{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "dedicated-admin-upgradeconfig-test",
+				},
+			}
+			_, err := h.Upgrade()).UpgradeConfig().Create(context.TODO(), &upgradeconfig)
+			Expect(apierrors.IsForbidden(err)).To(BeTrue())
+
+		})
+	})
+}
+
+func testCRupgradeconfig(h *helper.H) {
+	ginkgo.Context("managed-upgrade-operator", func() {
+		ginkgo.It("Access should be allowed to edit Upgradeconfigs", func() {
+			upgradeconfig := upgradev1alpha1.UpgradeConfig{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "upgradeconfig-test",
+				},
+			}
+			_, err := h.Upgrade()).UpgradeConfig().Create(context.TODO(), &upgradeconfig)
+			Expect(err).NotTo(HaveOccurred())
+
+		})
+	})
+}
 
 func getClusterVersion(h *helper.H) (*v1.ClusterVersion, error) {
 	// get cluster version
