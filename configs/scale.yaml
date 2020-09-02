@@ -4,3 +4,4 @@ cloudProvider:
 ocm:
   env: stage
   additionalLabels: scaleTestCluster
+  flavour: osd-4,scale-test-r
