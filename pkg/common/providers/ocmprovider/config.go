@@ -23,6 +23,12 @@ const (
 
 	// UserOverride will hard set the user assigned to the "owner" tag by the OCM provider.
 	UserOverride = "ocm.userOverride"
+
+	// Flavour is an OCM cluster descriptor for cluster defaults
+	Flavour = "ocm.flavour"
+
+	// AdditionalLabels is used to add more specific labels to a cluster in OCM.
+	AdditionalLabels = "ocm.additionalLabels"
 )
 
 func init() {
@@ -43,4 +49,9 @@ func init() {
 	viper.BindEnv(ComputeMachineType, "OCM_COMPUTE_MACHINE_TYPE")
 
 	viper.BindEnv(UserOverride, "OCM_USER_OVERRIDE")
+
+	viper.SetDefault(Flavour, "osd-4")
+	viper.BindEnv(Flavour, "OCM_FLAVOUR")
+
+	viper.BindEnv(AdditionalLabels, "OCM_ADDITIONAL_LABELS")
 }
