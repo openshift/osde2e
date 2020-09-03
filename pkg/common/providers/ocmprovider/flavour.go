@@ -1,6 +1,7 @@
 package ocmprovider
 
 import (
+	"log"
 	"math/rand"
 	"strings"
 
@@ -23,7 +24,7 @@ func getFlavour() string {
 	default:
 		flavourID = flavours[rand.Intn(flavourLength)]
 	}
+	log.Printf("Using flavour: %s", flavourID)
 
-	viper.Set(Flavour, flavourID)
 	return flavourID
 }

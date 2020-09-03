@@ -23,6 +23,13 @@ func (o *OCMProvider) LaunchCluster(clusterName string) (string, error) {
 		return "", fmt.Errorf("No flavour has been selected")
 	}
 
+	// check that enough quota exists for this test if creating cluster
+	if enoughQuota, err := o.CheckQuota(flavourID); err != nil {
+		log.Printf("Failed to check if enough quota is available: %v", err)
+	} else if !enoughQuota {
+		return "", fmt.Errorf("currently not enough quota exists to run this test")
+	}
+
 	multiAZ := viper.GetBool(config.Cluster.MultiAZ)
 	computeMachineType := viper.GetString(ComputeMachineType)
 	cloudProvider := viper.GetString(config.CloudProvider.CloudProviderID)
