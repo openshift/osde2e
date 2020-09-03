@@ -13,7 +13,7 @@ import (
 func TestClusterInteraction(t *testing.T) {
 	mockProvider := makeMockProviderWithEnv("mockEnv")
 
-	if hasQuota, err := mockProvider.CheckQuota(); !hasQuota || err != nil {
+	if hasQuota, err := mockProvider.CheckQuota(""); !hasQuota || err != nil {
 		t.Errorf("expected quota or no error, got: %v, %v", hasQuota, err.Error())
 	}
 
@@ -57,7 +57,7 @@ func TestIntentionalFailures(t *testing.T) {
 	mockProvider := makeMockProviderWithEnv("fail")
 
 	// Quota Check
-	quotaCheck, err := mockProvider.CheckQuota()
+	quotaCheck, err := mockProvider.CheckQuota("")
 	if quotaCheck {
 		t.Error("expected quota to be false for fail environment")
 	}
