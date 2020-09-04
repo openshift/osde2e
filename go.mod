@@ -9,7 +9,7 @@ require (
 	github.com/aws/aws-sdk-go v1.29.17
 	github.com/bmizerany/perks v0.0.0-20141205001514-d9a9656a3a4b // indirect
 	github.com/code-ready/crc v1.10.0
-	github.com/coreos/prometheus-operator v0.38.0
+	github.com/coreos/prometheus-operator v0.38.0 // indirect
 	github.com/dgryski/go-gk v0.0.0-20200319235926-a69029f61654 // indirect
 	github.com/dgryski/go-lttb v0.0.0-20180810165845-318fcdf10a77 // indirect
 	github.com/emicklei/go-restful v2.9.6+incompatible
