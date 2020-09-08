@@ -229,7 +229,18 @@ func (o *OCMProvider) DeleteCluster(clusterID string) error {
 	if err != nil {
 		return fmt.Errorf("couldn't delete cluster '%s': %v", clusterID, err)
 	}
-	return nil
+
+	time.Sleep(300 * time.Second)
+	_, err = o.GetCluster(clusterID)
+	if err != nil {
+		if strings.Contains(err.Error(), "identifier is '404', code is 'CLUSTERS-MGMT-404'") {
+			log.Printf("Cluster %s has been cleanly removed and no longer exists", clusterID)
+			return nil
+		}
+		return fmt.Errorf("Cluster %s still exists with cluster information retrieval error: %v", clusterID, err)
+	}
+	return fmt.Errorf("Cluster %s still exists and has not uninstalled cleanly yet", clusterID)
+
 }
 
 // ScaleCluster will grow or shink the cluster to the desired number of compute nodes.
