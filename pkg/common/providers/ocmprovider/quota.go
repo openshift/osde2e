@@ -17,16 +17,15 @@ const (
 )
 
 // CheckQuota determines if enough quota is available to launch with cfg.
-func (o *OCMProvider) CheckQuota() (bool, error) {
+func (o *OCMProvider) CheckQuota(flavourID string) (bool, error) {
 	// get flavour being deployed
 	var flavourResp *v1.FlavourGetResponse
 	err := retryer().Do(func() error {
 		var err error
-		flavour := getFlavour()
-		if flavour == "" {
+		if flavourID == "" {
 			return fmt.Errorf("No valid flavour selected")
 		}
-		flavourResp, err = o.conn.ClustersMgmt().V1().Flavours().Flavour(flavour).Get().Send()
+		flavourResp, err = o.conn.ClustersMgmt().V1().Flavours().Flavour(flavourID).Get().Send()
 
 		if err != nil {
 			return err
