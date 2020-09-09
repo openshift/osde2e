@@ -96,15 +96,12 @@ func waitForClusterReadyWithOverrideAndExpectedNumberOfNodes(clusterID string, l
 	ocmReady := false
 	readinessSet := false
 
-	if err != nil {
-		return fmt.Errorf("error trying to add provisioning property to cluster %s: %v", clusterID, err)
-	}
-
 	if !viper.GetBool(config.Tests.SkipClusterHealthChecks) || overrideSkipCheck {
 		return wait.PollImmediate(30*time.Second, time.Duration(installTimeout)*time.Minute, func() (bool, error) {
 			cluster, err := provider.GetCluster(clusterID)
 			if err != nil {
-				return false, fmt.Errorf("Unable to fetch cluster details from provider: %s", err)
+				log.Printf("Error fetching cluster details from provider: %s", err)
+				return false, nil
 			}
 
 			properties := cluster.Properties()
@@ -112,9 +109,13 @@ func waitForClusterReadyWithOverrideAndExpectedNumberOfNodes(clusterID string, l
 
 			if currentStatus == clusterproperties.StatusProvisioning && !readinessSet {
 				err = provider.AddProperty(clusterID, clusterproperties.Status, clusterproperties.StatusWaitingForReady)
+				if err != nil {
+					log.Printf("Error adding property to cluster: %s", err.Error())
+					return false, nil
+				}
 			}
 
-			if err == nil && cluster != nil && cluster.State() == spi.ClusterStateReady {
+			if cluster != nil && cluster.State() == spi.ClusterStateReady {
 				// This is the first time that we've entered this section, so we'll consider this the time until OCM has said the cluster is ready
 				if !ocmReady {
 					ocmReady = true
@@ -129,7 +130,8 @@ func waitForClusterReadyWithOverrideAndExpectedNumberOfNodes(clusterID string, l
 					}
 
 					if err != nil {
-						return false, fmt.Errorf("error trying to add health-check property to cluster ID %s: %v", clusterID, err)
+						log.Printf("Error trying to add health-check property to cluster ID %s: %v", clusterID, err)
+						return false, nil
 					}
 
 					readinessStarted = time.Now()
@@ -152,7 +154,8 @@ func waitForClusterReadyWithOverrideAndExpectedNumberOfNodes(clusterID string, l
 						}
 
 						if err != nil {
-							return false, fmt.Errorf("error trying to add healthy property to cluster ID %s: %v", clusterID, err)
+							log.Printf("error trying to add healthy property to cluster ID %s: %v", clusterID, err)
+							return false, nil
 						}
 
 						return true, nil
@@ -170,7 +173,8 @@ func waitForClusterReadyWithOverrideAndExpectedNumberOfNodes(clusterID string, l
 							}
 
 							if err != nil {
-								return false, fmt.Errorf("error trying to add unhealthy property to cluster ID %s: %v", clusterID, err)
+								log.Printf("error trying to add unhealthy property to cluster ID %s: %v", clusterID, err)
+								return false, nil
 							}
 
 							return false, fmt.Errorf("PollClusterHealth has returned an error %d times in a row. Failing osde2e", errorWindow)
@@ -179,8 +183,6 @@ func waitForClusterReadyWithOverrideAndExpectedNumberOfNodes(clusterID string, l
 					cleanRuns = 0
 					return false, nil
 				}
-			} else if err != nil {
-				return false, fmt.Errorf("Encountered error waiting for cluster: %v", err)
 			} else if cluster == nil {
 				return false, fmt.Errorf("the cluster is null despite there being no error: please check the logs")
 			} else if cluster.State() == spi.ClusterStateError {
