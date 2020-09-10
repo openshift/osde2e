@@ -1,0 +1,12 @@
+REGISTRY_QUERY_FILE="{{.OutputDir}}/registry.json"
+
+oc run grpcurl-query -n {{.Namespace}} --quiet --rm=true --restart=Never --attach=true \
+    --image=quay.io/rogbas/grpcurl -- -plaintext -d \
+    '{"pkgName":"{{.PackageName}}","channelName":"{{.PackageChannel}}"}' \
+    {{.ServiceName}}:{{.ServicePort}} api.Registry/GetBundleForChannel > "$REGISTRY_QUERY_FILE"
+
+if ! [ -s "$REGISTRY_QUERY_FILE" ]
+then
+    echo "Unable to get $REGISTRY_QUERY_FILE file."
+    exit 1
+fi

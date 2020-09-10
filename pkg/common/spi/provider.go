@@ -50,7 +50,7 @@ type Provider interface {
 	//
 	// To prevent a provisioning attempt, OSDe2e will first check the quota first. This quota
 	// is currently expected to be configured by the global config object.
-	CheckQuota() (bool, error)
+	CheckQuota(flavour string) (bool, error)
 
 	// InstallAddons will install addons onto the cluster.
 	//

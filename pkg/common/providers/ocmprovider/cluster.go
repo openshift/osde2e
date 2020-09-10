@@ -16,15 +16,19 @@ import (
 	"github.com/spf13/viper"
 )
 
-const (
-	// DefaultFlavour is used when no specialized configuration exists.
-	DefaultFlavour = "osd-4"
-)
-
 // LaunchCluster setups an new cluster using the OSD API and returns it's ID.
 func (o *OCMProvider) LaunchCluster(clusterName string) (string, error) {
-	// choose flavour based on config
-	flavourID := DefaultFlavour
+	flavourID := getFlavour()
+	if flavourID == "" {
+		return "", fmt.Errorf("No flavour has been selected")
+	}
+
+	// check that enough quota exists for this test if creating cluster
+	if enoughQuota, err := o.CheckQuota(flavourID); err != nil {
+		log.Printf("Failed to check if enough quota is available: %v", err)
+	} else if !enoughQuota {
+		return "", fmt.Errorf("currently not enough quota exists to run this test")
+	}
 
 	multiAZ := viper.GetBool(config.Cluster.MultiAZ)
 	computeMachineType := viper.GetString(ComputeMachineType)
@@ -177,6 +181,13 @@ func (o *OCMProvider) GenerateProperties() (map[string]string, error) {
 		clusterproperties.InstalledVersion: installedversion,
 		clusterproperties.UpgradeVersion:   "--",
 		clusterproperties.Status:           clusterproperties.StatusProvisioning,
+	}
+
+	additionalLabels := viper.GetString(AdditionalLabels)
+	if len(additionalLabels) > 0 {
+		for _, label := range strings.Split(additionalLabels, ",") {
+			properties[label] = "true"
+		}
 	}
 
 	jobName := viper.GetString(config.JobName)

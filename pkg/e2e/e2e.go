@@ -304,17 +304,6 @@ func runGinkgoTests() error {
 			log.Printf("No valid upgrade versions were found. Skipping tests.")
 			return nil
 		}
-
-		// check that enough quota exists for this test if creating cluster
-		if len(clusterID) == 0 {
-			if dryRun {
-				log.Printf("This is a dry run. Skipping quota check.")
-			} else if enoughQuota, err := provider.CheckQuota(); err != nil {
-				log.Printf("Failed to check if enough quota is available: %v", err)
-			} else if !enoughQuota {
-				return fmt.Errorf("currently not enough quota exists to run this test")
-			}
-		}
 	}
 
 	// Update the metadata object to use the report directory.

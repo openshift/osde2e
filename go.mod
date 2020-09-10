@@ -9,6 +9,7 @@ require (
 	github.com/aws/aws-sdk-go v1.29.17
 	github.com/bmizerany/perks v0.0.0-20141205001514-d9a9656a3a4b // indirect
 	github.com/code-ready/crc v1.10.0
+	github.com/coreos/prometheus-operator v0.38.0 // indirect
 	github.com/dgryski/go-gk v0.0.0-20200319235926-a69029f61654 // indirect
 	github.com/dgryski/go-lttb v0.0.0-20180810165845-318fcdf10a77 // indirect
 	github.com/emicklei/go-restful v2.9.6+incompatible
@@ -31,8 +32,9 @@ require (
 	github.com/openshift/moactl v0.0.3-0.20200622161904-355535b775ff
 	github.com/operator-framework/api v0.3.6
 	github.com/operator-framework/operator-lifecycle-manager v0.0.0-20200521062108-408ca95d458f
-	github.com/prometheus/client_golang v1.5.1
-	github.com/prometheus/common v0.9.1
+	github.com/prometheus/alertmanager v0.21.0
+	github.com/prometheus/client_golang v1.7.1
+	github.com/prometheus/common v0.13.0
 	github.com/slack-go/slack v0.6.5
 	github.com/spf13/cobra v1.0.0
 	github.com/spf13/pflag v1.0.5
@@ -41,7 +43,8 @@ require (
 	github.com/tsenart/go-tsz v0.0.0-20180814235614-0bd30b3df1c3 // indirect
 	github.com/tsenart/vegeta v12.7.0+incompatible
 	github.com/vmware-tanzu/velero v1.5.0-beta.1.0.20200831161009-1dcaa1bf7512
-	golang.org/x/net v0.0.0-20200520004742-59133d7f0dd7
+	golang.org/x/net v0.0.0-20200625001655-4c5254603344
+	gopkg.in/yaml.v3 v3.0.0-20191120175047-4206685974f2
 	k8s.io/api v0.18.4
 	k8s.io/apimachinery v0.18.4
 	k8s.io/client-go v12.0.0+incompatible

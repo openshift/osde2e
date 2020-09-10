@@ -33,8 +33,8 @@ func (m *MOAProvider) ClusterKubeconfig(clusterID string) ([]byte, error) {
 }
 
 // CheckQuota will call CheckQuota from the OCM provider.
-func (m *MOAProvider) CheckQuota() (bool, error) {
-	return m.ocmProvider.CheckQuota()
+func (m *MOAProvider) CheckQuota(flavour string) (bool, error) {
+	return m.ocmProvider.CheckQuota(flavour)
 }
 
 // InstallAddons will call InstallAddons from the OCM provider.
