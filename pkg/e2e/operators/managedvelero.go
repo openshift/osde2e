@@ -44,7 +44,7 @@ var _ = ginkgo.Describe(veleroOperatorTestName, func() {
 	checkRoleBindings(h,
 		"kube-system",
 		[]string{"managed-velero-operator-cluster-config-v1-reader"})
-	checkBackups(h)
+	checkVeleroBackups(h)
 	testDaCRbackups(h)
 	testDaCRrestore(h)
 	testDaCRdeleteBackupRequests(h)
@@ -99,7 +99,7 @@ func testDaCRrestore(h *helper.H) {
 					Name: "dedicated-admin-restore-test",
 				},
 			}
-			_, err := h.Velero().VeleroV1().Restore(h.CurrentProject()).Create(context.TODO(), &restore, metav1.CreateOptions{})
+			_, err := h.Velero().VeleroV1().Restores(h.CurrentProject()).Create(context.TODO(), &restore, metav1.CreateOptions{})
 			Expect(apierrors.IsForbidden(err)).To(BeTrue())
 
 		})
@@ -197,7 +197,7 @@ func testDaCRvolumeSnapshotLocation(h *helper.H) {
 					Name: "dedicated-admin-volume-snapshot-locations-test",
 				},
 			}
-			_, err := h.Velero().VeleroV1().VolumeSnapshotLocation(h.CurrentProject()).Create(context.TODO(), &volumeSnapshotLocation, metav1.CreateOptions{})
+			_, err := h.Velero().VeleroV1().VolumeSnapshotLocations(h.CurrentProject()).Create(context.TODO(), &volumeSnapshotLocation, metav1.CreateOptions{})
 			Expect(apierrors.IsForbidden(err)).To(BeTrue())
 		})
 	})
@@ -208,7 +208,7 @@ func testDaCRschedules(h *helper.H) {
 		ginkgo.It("Access should be forbidden to edit Schedules", func() {
 			h.SetServiceAccount("system:serviceaccount:%s:dedicated-admin-project")
 
-			schedules := velerov1.Schedules{
+			schedules := velerov1.Schedule{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "dedicated-admin-schedules-test",
 				},
@@ -229,7 +229,7 @@ func testDaCRserverStatusRequest(h *helper.H) {
 					Name: "dedicated-admin-server-status-request-test",
 				},
 			}
-			_, err := h.Velero().VeleroV1().ServerStatusRequest(h.CurrentProject()).Create(context.TODO(), &serverStatusRequest, metav1.CreateOptions{})
+			_, err := h.Velero().VeleroV1().ServerStatusRequests(h.CurrentProject()).Create(context.TODO(), &serverStatusRequest, metav1.CreateOptions{})
 			Expect(apierrors.IsForbidden(err)).To(BeTrue())
 		})
 	})
@@ -245,7 +245,7 @@ func testDaCRrestricRepository(h *helper.H) {
 					Name: "dedicated-admin-restric-repository-test",
 				},
 			}
-			_, err := h.Velero().VeleroV1().ResticRepository(h.CurrentProject()).Create(context.TODO(), &resticRepository, metav1.CreateOptions{})
+			_, err := h.Velero().VeleroV1().ResticRepositories(h.CurrentProject()).Create(context.TODO(), &resticRepository, metav1.CreateOptions{})
 			Expect(apierrors.IsForbidden(err)).To(BeTrue())
 		})
 	})
@@ -277,7 +277,7 @@ func testCRrestore(h *helper.H) {
 					Name: "restore-test",
 				},
 			}
-			_, err := h.Velero().VeleroV1().Restore(h.CurrentProject()).Create(context.TODO(), &restore, metav1.CreateOptions{})
+			_, err := h.Velero().VeleroV1().Restores(h.CurrentProject()).Create(context.TODO(), &restore, metav1.CreateOptions{})
 			Expect(err).NotTo(HaveOccurred())
 
 		})
@@ -369,7 +369,7 @@ func testCRvolumeSnapshotLocation(h *helper.H) {
 					Name: "volume-snapshot-locations-test",
 				},
 			}
-			_, err := h.Velero().VeleroV1().VolumeSnapshotLocation(h.CurrentProject()).Create(context.TODO(), &volumeSnapshotLocation, metav1.CreateOptions{})
+			_, err := h.Velero().VeleroV1().VolumeSnapshotLocations(h.CurrentProject()).Create(context.TODO(), &volumeSnapshotLocation, metav1.CreateOptions{})
 			Expect(err).NotTo(HaveOccurred())
 		})
 	})
@@ -379,7 +379,7 @@ func testCRschedules(h *helper.H) {
 	ginkgo.Context("velero", func() {
 		ginkgo.It("Access should be allowed to edit Schedules", func() {
 
-			schedules := velerov1.Schedules{
+			schedules := velerov1.Schedule{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "schedules-test",
 				},
@@ -399,7 +399,7 @@ func testCRserverStatusRequest(h *helper.H) {
 					Name: "server-status-request-test",
 				},
 			}
-			_, err := h.Velero().VeleroV1().ServerStatusRequest(h.CurrentProject()).Create(context.TODO(), &serverStatusRequest, metav1.CreateOptions{})
+			_, err := h.Velero().VeleroV1().ServerStatusRequests(h.CurrentProject()).Create(context.TODO(), &serverStatusRequest, metav1.CreateOptions{})
 			Expect(err).NotTo(HaveOccurred())
 		})
 	})
@@ -414,7 +414,7 @@ func testCRrestricRepository(h *helper.H) {
 					Name: "restric-repository-test",
 				},
 			}
-			_, err := h.Velero().VeleroV1().ResticRepository(h.CurrentProject()).Create(context.TODO(), &resticRepository, metav1.CreateOptions{})
+			_, err := h.Velero().VeleroV1().ResticRepositories(h.CurrentProject()).Create(context.TODO(), &resticRepository, metav1.CreateOptions{})
 			Expect(err).NotTo(HaveOccurred())
 		})
 	})
