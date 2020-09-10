@@ -76,6 +76,16 @@ var _ = ginkgo.Describe(inhibitionsTestName, func() {
 				},
 				expectedPresent: true,
 			},
+			{
+				name:           "KubeNodeNotReady inhibits KubeDaemonSetRolloutStuck",
+				expectedSource: "KubeNodeNotReady",
+				expectedTarget: "KubeDaemonSetRolloutStuck",
+				expectedEqual: prometheusModel.LabelNames{
+					"namespace",
+					"instance",
+				},
+				expectedPresent: true,
+			},
 		}
 
 		for _, test := range tests {
