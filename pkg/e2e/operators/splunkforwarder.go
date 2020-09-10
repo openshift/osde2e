@@ -35,8 +35,8 @@ var _ = ginkgo.Describe(splunkForwarderBlocking, func() {
 	checkConfigMapLockfile(h, operatorNamespace, operatorLockFile)
 	checkDeployment(h, operatorNamespace, operatorName, defaultDesiredReplicas)
 	checkClusterRoleBindings(h, clusterRoleBindings, false)
-	checkClusterRoles(h, clusterRoles ,false)
-	checkUpgrade(helper.New(), "openshift-splunk-forwarder-operator", "openshift-splunk-forwarder-operator",
-		"splunk-forwarder-operator.v0.1.157-3dca592",
-	)
+	checkClusterRoles(h, clusterRoles, false)
+	checkUpgrade(helper.New(), "openshift-splunk-forwarder-operator",
+		"openshift-splunk-forwarder-operator", "splunk-forwarder-operator",
+		"splunk-forwarder-operator-catalog")
 })
