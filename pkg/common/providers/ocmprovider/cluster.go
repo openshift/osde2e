@@ -14,6 +14,7 @@ import (
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/spi"
 	"github.com/spf13/viper"
+	"k8s.io/apimachinery/pkg/util/wait"
 )
 
 // LaunchCluster setups an new cluster using the OSD API and returns it's ID.
@@ -237,16 +238,21 @@ func (o *OCMProvider) DeleteCluster(clusterID string) error {
 		return fmt.Errorf("couldn't delete cluster '%s': %v", clusterID, err)
 	}
 
-	time.Sleep(300 * time.Second)
-	_, err = o.GetCluster(clusterID)
-	if err != nil {
-		if strings.Contains(err.Error(), "identifier is '404', code is 'CLUSTERS-MGMT-404'") {
-			log.Printf("Cluster %s has been cleanly removed and no longer exists", clusterID)
-			return nil
+	err = wait.PollImmediate(15*time.Second, 5*time.Minute, func() (bool, error) {
+		if _, err = o.GetCluster(clusterID); err != nil {
+			if strings.Contains(err.Error(), "identifier is '404', code is 'CLUSTERS-MGMT-404'") {
+				return true, nil
+			}
+			return false, nil
 		}
-		return fmt.Errorf("Cluster %s still exists with cluster information retrieval error: %v", clusterID, err)
+		return false, nil
+	})
+
+	if err != nil {
+		return fmt.Errorf("Cluster still exists and has not uninstalled cleanly yet : %v", err)
 	}
-	return fmt.Errorf("Cluster %s still exists and has not uninstalled cleanly yet", clusterID)
+
+	return nil
 
 }
 
@@ -383,7 +389,6 @@ func (o *OCMProvider) getOCMCluster(clusterID string) (*v1.Cluster, error) {
 
 		if err != nil {
 			err = fmt.Errorf("couldn't retrieve cluster '%s': %v", clusterID, err)
-			log.Printf("%v", err)
 			return err
 		}
 
