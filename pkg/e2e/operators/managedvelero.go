@@ -129,7 +129,16 @@ func testDaCRbackupStorageLocations(h *helper.H) {
 
 			backupStorageLocation := velerov1.BackupStorageLocation{
 				ObjectMeta: metav1.ObjectMeta{
-					Name: "dedicated-admin-backup-storage-location-test",
+					Name: "backup-storage-location-test",
+				},
+				Spec: velerov1.BackupStorageLocationSpec{
+					Provider: "aws",
+					StorageType: velerov1.StorageType{
+						ObjectStorage: &velerov1.ObjectStorageLocation{
+							Bucket: "bucket",
+							Prefix: "prefix",
+						},
+					},
 				},
 			}
 			_, err := h.Velero().VeleroV1().BackupStorageLocations(h.CurrentProject()).Create(context.TODO(), &backupStorageLocation, metav1.CreateOptions{})
@@ -145,7 +154,13 @@ func testDaCRdownloadRequests(h *helper.H) {
 
 			downloadRequest := velerov1.DownloadRequest{
 				ObjectMeta: metav1.ObjectMeta{
-					Name: "dedicated-admin-download-request-test",
+					Name: "download-request-test",
+				},
+				Spec: velerov1.DownloadRequestSpec{
+					Target: velerov1.DownloadTarget{
+						Kind: velerov1.DownloadTargetKindBackupContents,
+						Name: "targetName",
+					},
 				},
 			}
 			_, err := h.Velero().VeleroV1().DownloadRequests(h.CurrentProject()).Create(context.TODO(), &downloadRequest, metav1.CreateOptions{})
@@ -307,9 +322,19 @@ func testCRbackupStorageLocations(h *helper.H) {
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "backup-storage-location-test",
 				},
+				Spec: velerov1.BackupStorageLocationSpec{
+					Provider: "aws",
+					StorageType: velerov1.StorageType{
+						ObjectStorage: &velerov1.ObjectStorageLocation{
+							Bucket: "bucket",
+							Prefix: "prefix",
+						},
+					},
+				},
 			}
 			_, err := h.Velero().VeleroV1().BackupStorageLocations(h.CurrentProject()).Create(context.TODO(), &backupStorageLocation, metav1.CreateOptions{})
 			Expect(err).NotTo(HaveOccurred())
+
 		})
 	})
 }
@@ -322,9 +347,17 @@ func testCRdownloadRequests(h *helper.H) {
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "download-request-test",
 				},
+				Spec: velerov1.DownloadRequestSpec{
+					Target: velerov1.DownloadTarget{
+						Kind: velerov1.DownloadTargetKindBackupContents,
+						Name: "targetName",
+					},
+				},
 			}
+
 			_, err := h.Velero().VeleroV1().DownloadRequests(h.CurrentProject()).Create(context.TODO(), &downloadRequest, metav1.CreateOptions{})
 			Expect(err).NotTo(HaveOccurred())
+
 		})
 	})
 }
