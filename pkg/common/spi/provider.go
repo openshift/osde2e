@@ -102,5 +102,5 @@ type Provider interface {
 	ExtendExpiry(clusterID string, hours uint64, minutes uint64, seconds uint64) error
 
 	// AddProperty adds a new property to the properties field of an existing cluster.
-	AddProperty(clusterID string, tag string, value string) error
+	AddProperty(cluster *Cluster, tag string, value string) error
 }

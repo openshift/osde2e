@@ -131,7 +131,12 @@ func TriggerUpgrade(h *helper.H) (*configv1.ClusterVersion, error) {
 		return nil, fmt.Errorf("error getting cluster provider: %v", err)
 	}
 
-	provider.AddProperty(clusterID, clusterproperties.Status, clusterproperties.StatusUpgrading)
+	cluster, err := provider.GetCluster(clusterID)
+	if err != nil {
+		return nil, fmt.Errorf("error retrieving cluster: %v", err)
+	}
+
+	provider.AddProperty(cluster, clusterproperties.Status, clusterproperties.StatusUpgrading)
 
 	// set requested upgrade targets
 	if image != "" {
