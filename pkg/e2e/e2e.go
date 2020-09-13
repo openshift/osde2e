@@ -107,7 +107,7 @@ var _ = ginkgo.SynchronizedBeforeSuite(func() []byte {
 		metadata.Instance.SetClusterID(cluster.ID())
 		metadata.Instance.SetRegion(cluster.Region())
 
-		if err = provider.AddProperty(cluster.ID(), "UpgradeVersion", viper.GetString(config.Upgrade.ReleaseName)); err != nil {
+		if err = provider.AddProperty(cluster, "UpgradeVersion", viper.GetString(config.Upgrade.ReleaseName)); err != nil {
 			log.Printf("Error while adding upgrade version property to cluster via OCM: %v", err)
 		}
 

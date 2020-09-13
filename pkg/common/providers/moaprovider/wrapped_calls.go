@@ -78,6 +78,6 @@ func (m *MOAProvider) ExtendExpiry(clusterID string, hours uint64, minutes uint6
 }
 
 // AddProperty will call AddProperty from the OCM provider.
-func (m *MOAProvider) AddProperty(clusterID string, tag string, value string) error {
-	return m.ocmProvider.AddProperty(clusterID, tag, value)
+func (m *MOAProvider) AddProperty(cluster *spi.Cluster, tag string, value string) error {
+	return m.ocmProvider.AddProperty(cluster, tag, value)
 }

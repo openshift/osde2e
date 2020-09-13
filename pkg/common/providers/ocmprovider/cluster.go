@@ -10,6 +10,7 @@ import (
 	"time"
 
 	v1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
+	"github.com/openshift/osde2e/pkg/common/aws"
 	"github.com/openshift/osde2e/pkg/common/clusterproperties"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/spi"
@@ -209,8 +210,12 @@ func (o *OCMProvider) GenerateProperties() (map[string]string, error) {
 func (o *OCMProvider) DeleteCluster(clusterID string) error {
 	var resp *v1.ClusterDeleteResponse
 
-	err := o.AddProperty(clusterID, clusterproperties.Status, clusterproperties.StatusUninstalling)
+	cluster, err := o.GetCluster(clusterID)
+	if err != nil {
+		return fmt.Errorf("error retrieving cluster for deletion: %v", err)
+	}
 
+	err = o.AddProperty(cluster, clusterproperties.Status, clusterproperties.StatusUninstalling)
 	if err != nil {
 		return fmt.Errorf("error adding uninstalling status to cluster: %v", err)
 	}
@@ -708,17 +713,10 @@ func (o *OCMProvider) ExtendExpiry(clusterID string, hours uint64, minutes uint6
 }
 
 // AddProperty adds a new property to the properties field of an existing cluster
-func (o *OCMProvider) AddProperty(clusterID string, tag string, value string) error {
+func (o *OCMProvider) AddProperty(cluster *spi.Cluster, tag string, value string) error {
 	var resp *v1.ClusterUpdateResponse
 
-	// Get the current state of the cluster
-	ocmCluster, err := o.getOCMCluster(clusterID)
-
-	if err != nil {
-		return err
-	}
-
-	clusterproperties := ocmCluster.Properties()
+	clusterproperties := cluster.Properties()
 
 	// Apparently, if cluster properties are empty in OCM, the clusterproperties are nil, In this case, we'll just make our own
 	// properties map.
@@ -734,14 +732,19 @@ func (o *OCMProvider) AddProperty(clusterID string, tag string, value string) er
 		return fmt.Errorf("error while building updated modified cluster object with new property: %v", err)
 	}
 
+	propertyFilename := fmt.Sprintf("%s-property-update.prom", cluster.ID())
+	data := fmt.Sprintf("cicd_cluster_properties{cluster_id=\"%s\",environment=\"%s\",version=\"%s\",job_id=\"%s\",region=\"%s\",property=\"%s\",value=\"%s\"} 0", cluster.ID(), o.Environment(), cluster.Version(), viper.GetString(config.JobID), cluster.Region(), tag, value)
+
+	aws.WriteToS3(aws.CreateS3URL(viper.GetString(config.Tests.MetricsBucket), "incoming", propertyFilename), []byte(data))
+
 	err = retryer().Do(func() error {
 		var err error
-		resp, err = o.conn.ClustersMgmt().V1().Clusters().Cluster(clusterID).Update().
+		resp, err = o.conn.ClustersMgmt().V1().Clusters().Cluster(cluster.ID()).Update().
 			Body(modifiedCluster).
 			Send()
 
 		if err != nil {
-			err = fmt.Errorf("couldn't update cluster '%s': %v", clusterID, err)
+			err = fmt.Errorf("couldn't update cluster '%s': %v", cluster.ID(), err)
 			log.Printf("%v", err)
 			return err
 		}
@@ -762,7 +765,7 @@ func (o *OCMProvider) AddProperty(clusterID string, tag string, value string) er
 		return resp.Error()
 	}
 
-	finalCluster, err := o.GetCluster(clusterID)
+	finalCluster, err := o.GetCluster(cluster.ID())
 
 	if err != nil {
 		log.Printf("error attempting to retrieve cluster for verification: %v", err)
