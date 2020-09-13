@@ -10,6 +10,7 @@ import (
 	user "github.com/openshift/client-go/user/clientset/versioned"
 	machine "github.com/openshift/machine-api-operator/pkg/generated/clientset/versioned"
 	operator "github.com/operator-framework/operator-lifecycle-manager/pkg/api/client/clientset/versioned"
+	velero "github.com/vmware-tanzu/velero/pkg/generated/clientset/versioned"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -39,6 +40,13 @@ func (h *H) Dynamic() dynamic.Interface {
 func (h *H) Kube() kubernetes.Interface {
 	client, err := kubernetes.NewForConfig(h.restConfig)
 	Expect(err).ShouldNot(HaveOccurred(), "failed to configure Kubernetes clientset")
+	return client
+}
+
+// Velero returns the clientset for Velero objects.
+func (h *H) Velero() velero.Interface {
+	client, err := velero.NewForConfig(h.restConfig)
+	Expect(err).ShouldNot(HaveOccurred(), "failed to configure Velero clientset")
 	return client
 }
 
