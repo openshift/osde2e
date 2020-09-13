@@ -80,6 +80,26 @@ var _ = ginkgo.Describe(inhibitionsTestName, func() {
 				},
 				expectedPresent: true,
 			},
+			{
+				name:           "KubePodNotReady inhibits KubeDeploymentReplicasMismatch",
+				expectedSource: "KubePodNotReady",
+				expectedTarget: "KubeDeploymentReplicasMismatch",
+				expectedEqual: prometheusModel.LabelNames{
+					"namespace",
+					"instance",
+				},
+				expectedPresent: true,
+			},
+			{
+				name:           "KubePodCrashLooping inhibits KubeDeploymentReplicasMismatch",
+				expectedSource: "KubePodNotReady",
+				expectedTarget: "KubeDeploymentReplicasMismatch",
+				expectedEqual: prometheusModel.LabelNames{
+					"namespace",
+					"instance",
+				},
+				expectedPresent: true,
+			},
 		}
 
 		for _, test := range tests {
