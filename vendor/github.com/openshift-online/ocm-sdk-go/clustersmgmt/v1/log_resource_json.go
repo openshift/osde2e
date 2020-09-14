@@ -22,9 +22,21 @@ package v1 // github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1
 import (
 	"io"
 	"net/http"
+
+	"github.com/openshift-online/ocm-sdk-go/helpers"
 )
 
 func readLogGetRequest(request *LogGetServerRequest, r *http.Request) error {
+	var err error
+	query := r.URL.Query()
+	request.offset, err = helpers.ParseInteger(query, "offset")
+	if err != nil {
+		return err
+	}
+	request.tail, err = helpers.ParseInteger(query, "tail")
+	if err != nil {
+		return err
+	}
 	return nil
 }
 func writeLogGetRequest(request *LogGetRequest, writer io.Writer) error {

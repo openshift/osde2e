@@ -43,6 +43,7 @@ type MachineType struct {
 	cloudProvider *CloudProvider
 	memory        *Value
 	name          *string
+	size          *MachineTypeSize
 }
 
 // Kind returns the name of the type of the object.
@@ -102,6 +103,7 @@ func (o *MachineType) Empty() bool {
 	return o == nil || (o.id == nil &&
 		o.category == nil &&
 		o.name == nil &&
+		o.size == nil &&
 		true)
 }
 
@@ -216,6 +218,29 @@ func (o *MachineType) GetName() (value string, ok bool) {
 	ok = o != nil && o.name != nil
 	if ok {
 		value = *o.name
+	}
+	return
+}
+
+// Size returns the value of the 'size' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+// The size of the machine type.
+func (o *MachineType) Size() MachineTypeSize {
+	if o != nil && o.size != nil {
+		return *o.size
+	}
+	return MachineTypeSize("")
+}
+
+// GetSize returns the value of the 'size' attribute and
+// a flag indicating if the attribute has a value.
+//
+// The size of the machine type.
+func (o *MachineType) GetSize() (value MachineTypeSize, ok bool) {
+	ok = o != nil && o.size != nil
+	if ok {
+		value = *o.size
 	}
 	return
 }

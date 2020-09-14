@@ -45,6 +45,14 @@ func writeAccountsAddResponse(response *AccountsAddServerResponse, w http.Respon
 func readAccountsListRequest(request *AccountsListServerRequest, r *http.Request) error {
 	var err error
 	query := r.URL.Query()
+	request.fetchlabelsLabels, err = helpers.ParseBoolean(query, "fetchlabels_labels")
+	if err != nil {
+		return err
+	}
+	request.fields, err = helpers.ParseString(query, "fields")
+	if err != nil {
+		return err
+	}
 	request.order, err = helpers.ParseString(query, "order")
 	if err != nil {
 		return err

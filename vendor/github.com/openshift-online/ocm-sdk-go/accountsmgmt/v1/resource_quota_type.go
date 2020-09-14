@@ -50,6 +50,7 @@ type ResourceQuota struct {
 	organizationID       *string
 	resourceName         *string
 	resourceType         *string
+	skuCount             *int
 	type_                *string
 	updatedAt            *time.Time
 }
@@ -117,6 +118,7 @@ func (o *ResourceQuota) Empty() bool {
 		o.organizationID == nil &&
 		o.resourceName == nil &&
 		o.resourceType == nil &&
+		o.skuCount == nil &&
 		o.type_ == nil &&
 		o.updatedAt == nil &&
 		true)
@@ -302,6 +304,29 @@ func (o *ResourceQuota) GetResourceType() (value string, ok bool) {
 	ok = o != nil && o.resourceType != nil
 	if ok {
 		value = *o.resourceType
+	}
+	return
+}
+
+// SkuCount returns the value of the 'sku_count' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+//
+func (o *ResourceQuota) SkuCount() int {
+	if o != nil && o.skuCount != nil {
+		return *o.skuCount
+	}
+	return 0
+}
+
+// GetSkuCount returns the value of the 'sku_count' attribute and
+// a flag indicating if the attribute has a value.
+//
+//
+func (o *ResourceQuota) GetSkuCount() (value int, ok bool) {
+	ok = o != nil && o.skuCount != nil
+	if ok {
+		value = *o.skuCount
 	}
 	return
 }

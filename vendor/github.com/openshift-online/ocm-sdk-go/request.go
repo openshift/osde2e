@@ -39,7 +39,7 @@ type Request struct {
 	body      []byte
 }
 
-// GetMethod returns the request method (GET/POST/PATCH/DELETE).
+// GetMethod returns the request method (GET/POST/PATCH/PUT/DELETE).
 func (r *Request) GetMethod() string {
 	return r.method
 }

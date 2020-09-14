@@ -38,6 +38,7 @@ type ResourceQuotaBuilder struct {
 	organizationID       *string
 	resourceName         *string
 	resourceType         *string
+	skuCount             *int
 	type_                *string
 	updatedAt            *time.Time
 }
@@ -129,6 +130,14 @@ func (b *ResourceQuotaBuilder) ResourceType(value string) *ResourceQuotaBuilder 
 	return b
 }
 
+// SkuCount sets the value of the 'sku_count' attribute to the given value.
+//
+//
+func (b *ResourceQuotaBuilder) SkuCount(value int) *ResourceQuotaBuilder {
+	b.skuCount = &value
+	return b
+}
+
 // Type sets the value of the 'type' attribute to the given value.
 //
 //
@@ -161,6 +170,7 @@ func (b *ResourceQuotaBuilder) Copy(object *ResourceQuota) *ResourceQuotaBuilder
 	b.organizationID = object.organizationID
 	b.resourceName = object.resourceName
 	b.resourceType = object.resourceType
+	b.skuCount = object.skuCount
 	b.type_ = object.type_
 	b.updatedAt = object.updatedAt
 	return b
@@ -180,6 +190,7 @@ func (b *ResourceQuotaBuilder) Build() (object *ResourceQuota, err error) {
 	object.organizationID = b.organizationID
 	object.resourceName = b.resourceName
 	object.resourceType = b.resourceType
+	object.skuCount = b.skuCount
 	object.type_ = b.type_
 	object.updatedAt = b.updatedAt
 	return

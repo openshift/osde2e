@@ -80,6 +80,28 @@ func (r *LogPollRequest) Header(name string, value interface{}) *LogPollRequest 
 	return r
 }
 
+// Offset sets the value of the 'offset' parameter for all the requests that
+// will be used to retrieve the object.
+//
+// Line offset to start logs from. if 0 retreive entire log.
+// If offset > #lines return an empty log.
+func (r *LogPollRequest) Offset(value int) *LogPollRequest {
+	r.request.Offset(value)
+	return r
+}
+
+// Tail sets the value of the 'tail' parameter for all the requests that
+// will be used to retrieve the object.
+//
+// Returns the number of tail lines from the end of the log.
+// If there are no line breaks or the number of lines < tail
+// return the entire log.
+// Either 'tail' or 'offset' can be set. Not both.
+func (r *LogPollRequest) Tail(value int) *LogPollRequest {
+	r.request.Tail(value)
+	return r
+}
+
 // Interval sets the polling interval. This parameter is mandatory and must be greater than zero.
 func (r *LogPollRequest) Interval(value time.Duration) *LogPollRequest {
 	r.interval = value
@@ -160,7 +182,7 @@ func (r *LogPollResponse) Error() *errors.Error {
 
 // Body returns the value of the 'body' parameter.
 //
-//
+// Retreived log.
 func (r *LogPollResponse) Body() *Log {
 	return r.response.Body()
 }
@@ -168,7 +190,7 @@ func (r *LogPollResponse) Body() *Log {
 // GetBody returns the value of the 'body' parameter and
 // a flag indicating if the parameter has a value.
 //
-//
+// Retreived log.
 func (r *LogPollResponse) GetBody() (value *Log, ok bool) {
 	return r.response.GetBody()
 }
@@ -188,6 +210,8 @@ type LogGetRequest struct {
 	metric    string
 	query     url.Values
 	header    http.Header
+	offset    *int
+	tail      *int
 }
 
 // Parameter adds a query parameter.
@@ -202,6 +226,26 @@ func (r *LogGetRequest) Header(name string, value interface{}) *LogGetRequest {
 	return r
 }
 
+// Offset sets the value of the 'offset' parameter.
+//
+// Line offset to start logs from. if 0 retreive entire log.
+// If offset > #lines return an empty log.
+func (r *LogGetRequest) Offset(value int) *LogGetRequest {
+	r.offset = &value
+	return r
+}
+
+// Tail sets the value of the 'tail' parameter.
+//
+// Returns the number of tail lines from the end of the log.
+// If there are no line breaks or the number of lines < tail
+// return the entire log.
+// Either 'tail' or 'offset' can be set. Not both.
+func (r *LogGetRequest) Tail(value int) *LogGetRequest {
+	r.tail = &value
+	return r
+}
+
 // Send sends this request, waits for the response, and returns it.
 //
 // This is a potentially lengthy operation, as it requires network communication.
@@ -213,6 +257,12 @@ func (r *LogGetRequest) Send() (result *LogGetResponse, err error) {
 // SendContext sends this request, waits for the response, and returns it.
 func (r *LogGetRequest) SendContext(ctx context.Context) (result *LogGetResponse, err error) {
 	query := helpers.CopyQuery(r.query)
+	if r.offset != nil {
+		helpers.AddValue(&query, "offset", *r.offset)
+	}
+	if r.tail != nil {
+		helpers.AddValue(&query, "tail", *r.tail)
+	}
 	header := helpers.SetHeader(r.header, r.metric)
 	uri := &url.URL{
 		Path:     r.path,
@@ -283,7 +333,7 @@ func (r *LogGetResponse) Error() *errors.Error {
 
 // Body returns the value of the 'body' parameter.
 //
-//
+// Retreived log.
 func (r *LogGetResponse) Body() *Log {
 	if r == nil {
 		return nil
@@ -294,7 +344,7 @@ func (r *LogGetResponse) Body() *Log {
 // GetBody returns the value of the 'body' parameter and
 // a flag indicating if the parameter has a value.
 //
-//
+// Retreived log.
 func (r *LogGetResponse) GetBody() (value *Log, ok bool) {
 	ok = r != nil && r.body != nil
 	if ok {

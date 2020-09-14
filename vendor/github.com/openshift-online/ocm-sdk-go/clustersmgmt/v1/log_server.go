@@ -38,6 +38,60 @@ type LogServer interface {
 
 // LogGetServerRequest is the request for the 'get' method.
 type LogGetServerRequest struct {
+	offset *int
+	tail   *int
+}
+
+// Offset returns the value of the 'offset' parameter.
+//
+// Line offset to start logs from. if 0 retreive entire log.
+// If offset > #lines return an empty log.
+func (r *LogGetServerRequest) Offset() int {
+	if r != nil && r.offset != nil {
+		return *r.offset
+	}
+	return 0
+}
+
+// GetOffset returns the value of the 'offset' parameter and
+// a flag indicating if the parameter has a value.
+//
+// Line offset to start logs from. if 0 retreive entire log.
+// If offset > #lines return an empty log.
+func (r *LogGetServerRequest) GetOffset() (value int, ok bool) {
+	ok = r != nil && r.offset != nil
+	if ok {
+		value = *r.offset
+	}
+	return
+}
+
+// Tail returns the value of the 'tail' parameter.
+//
+// Returns the number of tail lines from the end of the log.
+// If there are no line breaks or the number of lines < tail
+// return the entire log.
+// Either 'tail' or 'offset' can be set. Not both.
+func (r *LogGetServerRequest) Tail() int {
+	if r != nil && r.tail != nil {
+		return *r.tail
+	}
+	return 0
+}
+
+// GetTail returns the value of the 'tail' parameter and
+// a flag indicating if the parameter has a value.
+//
+// Returns the number of tail lines from the end of the log.
+// If there are no line breaks or the number of lines < tail
+// return the entire log.
+// Either 'tail' or 'offset' can be set. Not both.
+func (r *LogGetServerRequest) GetTail() (value int, ok bool) {
+	ok = r != nil && r.tail != nil
+	if ok {
+		value = *r.tail
+	}
+	return
 }
 
 // LogGetServerResponse is the response for the 'get' method.
@@ -49,7 +103,7 @@ type LogGetServerResponse struct {
 
 // Body sets the value of the 'body' parameter.
 //
-//
+// Retreived log.
 func (r *LogGetServerResponse) Body(value *Log) *LogGetServerResponse {
 	r.body = value
 	return r

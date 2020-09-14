@@ -64,6 +64,17 @@ func (c *Client) AccessReview() *AccessReviewClient {
 	)
 }
 
+// CapabilityReview returns the target 'capability_review' resource.
+//
+// Reference to the resource that is used to submit capability review requests.
+func (c *Client) CapabilityReview() *CapabilityReviewClient {
+	return NewCapabilityReviewClient(
+		c.transport,
+		path.Join(c.path, "capability_review"),
+		path.Join(c.metric, "capability_review"),
+	)
+}
+
 // ExportControlReview returns the target 'export_control_review' resource.
 //
 // Reference to the resource that is used to submit export control review requests.
@@ -94,5 +105,40 @@ func (c *Client) SelfAccessReview() *SelfAccessReviewClient {
 		c.transport,
 		path.Join(c.path, "self_access_review"),
 		path.Join(c.metric, "self_access_review"),
+	)
+}
+
+// SelfCapabilityReview returns the target 'self_capability_review' resource.
+//
+// Reference to the resource that is used to submit self capability review requests.
+func (c *Client) SelfCapabilityReview() *SelfCapabilityReviewClient {
+	return NewSelfCapabilityReviewClient(
+		c.transport,
+		path.Join(c.path, "self_capability_review"),
+		path.Join(c.metric, "self_capability_review"),
+	)
+}
+
+// SelfTermsReview returns the target 'self_terms_review' resource.
+//
+// Reference to the resource that is used to submit Red Hat's Terms and Conditions
+// for using OpenShift Dedicated and Amazon Red Hat OpenShift self-review requests.
+func (c *Client) SelfTermsReview() *SelfTermsReviewClient {
+	return NewSelfTermsReviewClient(
+		c.transport,
+		path.Join(c.path, "self_terms_review"),
+		path.Join(c.metric, "self_terms_review"),
+	)
+}
+
+// TermsReview returns the target 'terms_review' resource.
+//
+// Reference to the resource that is used to submit Red Hat's Terms and Conditions
+// for using OpenShift Dedicated and Amazon Red Hat OpenShift review requests.
+func (c *Client) TermsReview() *TermsReviewClient {
+	return NewTermsReviewClient(
+		c.transport,
+		path.Join(c.path, "terms_review"),
+		path.Join(c.metric, "terms_review"),
 	)
 }

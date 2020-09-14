@@ -82,7 +82,9 @@ type Cluster struct {
 	aws                               *AWS
 	awsInfrastructureAccessRoleGrants *AWSInfrastructureAccessRoleGrantList
 	byoc                              *bool
+	ccs                               *CCS
 	dns                               *DNS
+	dnsReady                          *bool
 	addons                            *AddOnInstallationList
 	cloudProvider                     *CloudProvider
 	clusterAdminEnabled               *bool
@@ -91,6 +93,7 @@ type Cluster struct {
 	displayName                       *string
 	expirationTimestamp               *time.Time
 	externalID                        *string
+	externalConfiguration             *ExternalConfiguration
 	flavour                           *Flavour
 	groups                            *GroupList
 	healthState                       *ClusterHealthState
@@ -106,6 +109,7 @@ type Cluster struct {
 	openshiftVersion                  *string
 	product                           *Product
 	properties                        map[string]string
+	provisionShard                    *ProvisionShard
 	region                            *CloudRegion
 	state                             *ClusterState
 	storageQuota                      *Value
@@ -170,6 +174,7 @@ func (o *Cluster) Empty() bool {
 	return o == nil || (o.id == nil &&
 		o.awsInfrastructureAccessRoleGrants.Len() == 0 &&
 		o.byoc == nil &&
+		o.dnsReady == nil &&
 		o.addons.Len() == 0 &&
 		o.clusterAdminEnabled == nil &&
 		o.creationTimestamp == nil &&
@@ -282,6 +287,29 @@ func (o *Cluster) GetBYOC() (value bool, ok bool) {
 	return
 }
 
+// CCS returns the value of the 'CCS' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+// Contains configuration of a Customer Cloud Subscription cluster.
+func (o *Cluster) CCS() *CCS {
+	if o == nil {
+		return nil
+	}
+	return o.ccs
+}
+
+// GetCCS returns the value of the 'CCS' attribute and
+// a flag indicating if the attribute has a value.
+//
+// Contains configuration of a Customer Cloud Subscription cluster.
+func (o *Cluster) GetCCS() (value *CCS, ok bool) {
+	ok = o != nil && o.ccs != nil
+	if ok {
+		value = o.ccs
+	}
+	return
+}
+
 // DNS returns the value of the 'DNS' attribute, or
 // the zero value of the type if the attribute doesn't have a value.
 //
@@ -301,6 +329,29 @@ func (o *Cluster) GetDNS() (value *DNS, ok bool) {
 	ok = o != nil && o.dns != nil
 	if ok {
 		value = o.dns
+	}
+	return
+}
+
+// DNSReady returns the value of the 'DNS_ready' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+// Provisioner DNS Ready Status
+func (o *Cluster) DNSReady() bool {
+	if o != nil && o.dnsReady != nil {
+		return *o.dnsReady
+	}
+	return false
+}
+
+// GetDNSReady returns the value of the 'DNS_ready' attribute and
+// a flag indicating if the attribute has a value.
+//
+// Provisioner DNS Ready Status
+func (o *Cluster) GetDNSReady() (value bool, ok bool) {
+	ok = o != nil && o.dnsReady != nil
+	if ok {
+		value = *o.dnsReady
 	}
 	return
 }
@@ -453,6 +504,8 @@ func (o *Cluster) GetDisplayName() (value string, ok bool) {
 // Date and time when the cluster will be automatically deleted, using the format defined in
 // https://www.ietf.org/rfc/rfc3339.txt[RFC3339]. If no timestamp is provided, the cluster
 // will never expire.
+//
+// This option is unsupported.
 func (o *Cluster) ExpirationTimestamp() time.Time {
 	if o != nil && o.expirationTimestamp != nil {
 		return *o.expirationTimestamp
@@ -466,6 +519,8 @@ func (o *Cluster) ExpirationTimestamp() time.Time {
 // Date and time when the cluster will be automatically deleted, using the format defined in
 // https://www.ietf.org/rfc/rfc3339.txt[RFC3339]. If no timestamp is provided, the cluster
 // will never expire.
+//
+// This option is unsupported.
 func (o *Cluster) GetExpirationTimestamp() (value time.Time, ok bool) {
 	ok = o != nil && o.expirationTimestamp != nil
 	if ok {
@@ -493,6 +548,29 @@ func (o *Cluster) GetExternalID() (value string, ok bool) {
 	ok = o != nil && o.externalID != nil
 	if ok {
 		value = *o.externalID
+	}
+	return
+}
+
+// ExternalConfiguration returns the value of the 'external_configuration' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+// ExternalConfiguration shows external configuration on the cluster.
+func (o *Cluster) ExternalConfiguration() *ExternalConfiguration {
+	if o == nil {
+		return nil
+	}
+	return o.externalConfiguration
+}
+
+// GetExternalConfiguration returns the value of the 'external_configuration' attribute and
+// a flag indicating if the attribute has a value.
+//
+// ExternalConfiguration shows external configuration on the cluster.
+func (o *Cluster) GetExternalConfiguration() (value *ExternalConfiguration, ok bool) {
+	ok = o != nil && o.externalConfiguration != nil
+	if ok {
+		value = o.externalConfiguration
 	}
 	return
 }
@@ -860,6 +938,29 @@ func (o *Cluster) GetProperties() (value map[string]string, ok bool) {
 	ok = o != nil && o.properties != nil
 	if ok {
 		value = o.properties
+	}
+	return
+}
+
+// ProvisionShard returns the value of the 'provision_shard' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+// ProvisionShard contains the properties of the provision shard, including AWS and GCP related configurations
+func (o *Cluster) ProvisionShard() *ProvisionShard {
+	if o == nil {
+		return nil
+	}
+	return o.provisionShard
+}
+
+// GetProvisionShard returns the value of the 'provision_shard' attribute and
+// a flag indicating if the attribute has a value.
+//
+// ProvisionShard contains the properties of the provision shard, including AWS and GCP related configurations
+func (o *Cluster) GetProvisionShard() (value *ProvisionShard, ok bool) {
+	ok = o != nil && o.provisionShard != nil
+	if ok {
+		value = o.provisionShard
 	}
 	return
 }

@@ -50,3 +50,19 @@ func readIdentityProviderGetResponse(response *IdentityProviderGetResponse, read
 func writeIdentityProviderGetResponse(response *IdentityProviderGetServerResponse, w http.ResponseWriter) error {
 	return MarshalIdentityProvider(response.body, w)
 }
+func readIdentityProviderUpdateRequest(request *IdentityProviderUpdateServerRequest, r *http.Request) error {
+	var err error
+	request.body, err = UnmarshalIdentityProvider(r.Body)
+	return err
+}
+func writeIdentityProviderUpdateRequest(request *IdentityProviderUpdateRequest, writer io.Writer) error {
+	return MarshalIdentityProvider(request.body, writer)
+}
+func readIdentityProviderUpdateResponse(response *IdentityProviderUpdateResponse, reader io.Reader) error {
+	var err error
+	response.body, err = UnmarshalIdentityProvider(reader)
+	return err
+}
+func writeIdentityProviderUpdateResponse(response *IdentityProviderUpdateServerResponse, w http.ResponseWriter) error {
+	return MarshalIdentityProvider(response.body, w)
+}

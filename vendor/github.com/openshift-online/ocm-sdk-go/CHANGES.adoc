@@ -3,6 +3,162 @@
 This document describes the relevant changes between releases of the OCM API
 SDK.
 
+== 0.1.128 Sep 14 2020
+
+Go mod tidy
+
+== 0.1.127 Sep 14 2020
+
+Update to model v0.0.81
+** Add key to label_type
+** Remove ID from upgrade label
+
+Also included as part of model v0.0.80
+** Add upgrade policy type and resource
+** Add terms review and self terms review
+** Add dashboards summary
+
+== 0.1.126 Sep 7 2020
+
+Update to model v0.0.79
+** Add 'available_upgrades' list to version type
+** Add CCS type and Attribute to Cluster type
+
+== 0.1.125 Sep 4 2020
+
+Update to model v0.0.78
+** Added New DNS_READY
+** version: Add moa_enabled flag
+
+== 0.1.124 Aug 28 2020
+
+- Set token expiry function public
+- Allow auth header of type AccessToken
+
+== 0.1.123 Aug 23 2020
+
+- Remove get tokens on first attempt log entry
+- Update to metamodel v0.0.32
+- Update to model v0.0.77
+** Add ChannelGroup attribute to version
+** Add avaialble AWS regions method
+
+== 0.1.122 Aug 18 2020
+
+- Better logging and metrics when retrying SSO
+- Assume expiration is 0 when missing in the token
+
+== 0.1.121 Aug 18 2020
+
+- BROKEN: DO NOT USE
+
+== 0.1.120 Aug 13 2020
+
+- Update to model v0.0.76
+** Add missing link to provision shard
+
+== 0.1.119 Aug 10 2020
+
+- Add support for retry getting access token in case of http 5xx
+
+== 0.1.118 Aug 7 2020
+
+- Update to model v0.0.75
+** Added support_case resource
+** Added token_authorization to root_resource
+
+== 0.1.117 Aug 5 2020
+
+- Update to model v0.0.73
+** [CS] Add hive_config to the provision shard
+** [CS] Improving cluster logs endpoint
+** [AMS] Added token authorization endpoint
+
+== 0.1.116 Aug 3 2020
+
+- Added support for http PUT method
+- Update to model v0.0.73
+** Add capability_review endpoint
+** Add support_cases endpoint
+
+== 0.1.115 Jul 30 2020
+
+- Update to metamodel v0.0.31
+** Adding List type to checkUpdate validator
+
+- Update to model v0.0.72
+** Fix comment
+** Expose if a region supports multi AZ
+** Add Update Identity Provider
+** removing 'deprovision' suffix from logs endpoint
+** add post method to subscription resource
+** Add labels field to external configuration type
+** Implement Batch Patch Ingresses API endpoint
+
+== 0.1.114 Jul 21 2020
+
+- Update to model v0.0.71
+** Add API for getting cluster's provision shard
+** Add API for getting provision shards
+
+== 0.1.113 Jul 14 2020
+
+- Update to model v0.0.70
+** Add API for custerdeployment labels
+** add organization_id to cluster_registration
+** label: Fix erroneous file extensions
+** MachineType: Expose instance size enum
+
+== 0.1.112 Jul 5 2020
+
+- Update to model v0.0.69
+** Added top level sku_rules endpoint to AMS
+** Change the feature toggle API to be /feature_toggles/id/query using POST with org id as context
+
+== 0.1.111 Jul 1 2020
+
+- Update to model v0.0.67
+** [AMS] Added SkuCount to ResourceQuota type
+
+== 0.1.110 Jun 30 2020
+
+- Update to model v0.0.66
+** Change feature toggle query to be POST with payload containing organization ID
+
+== 0.1.109 Jun 29 2020
+
+- Update to model v0.0.65
+** Added Uninstall Log
+** Added syncset API
+** Update to metamodel v0.0.30
+
+== 0.1.108 Jun 21 2020
+
+- Update to model v0.0.64
+** Added Notify to root_resource in AMS
+
+== 0.1.107 Jun 18 2020
+
+- Update to model v0.0.63
+** cluster: Remove support for expiration_timestamp
+** Added top-level Notify endpoint to AMS
+
+== 0.1.106 Jun 9 2020
+
+- Update to metamodel v0.0.29:
+** pr_check: Lock in dependency versions for test pipeline
+** Fix setter for Poll request params
+
+- Update to model v0.0.62:
+** Add subscription notify endpoint
+
+- Update to model v0.0.61:
+** accounts_mgmt: Add 'fields' parameter to all list-requests
+** accounts_mgmt: Support for Labels resources
+
+- Update to model v0.0.60:
+** Add parameters 'offset' and 'tail' to log resource
+
 == 0.1.105 May 21 2020
 
 - Update to model 0.0.59:

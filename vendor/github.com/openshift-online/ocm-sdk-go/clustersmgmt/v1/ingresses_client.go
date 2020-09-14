@@ -75,6 +75,17 @@ func (c *IngressesClient) List() *IngressesListRequest {
 	}
 }
 
+// Update creates a request for the 'update' method.
+//
+// Updates all ingresses
+func (c *IngressesClient) Update() *IngressesUpdateRequest {
+	return &IngressesUpdateRequest{
+		transport: c.transport,
+		path:      c.path,
+		metric:    c.metric,
+	}
+}
+
 // Ingress returns the target 'ingress' resource for the given identifier.
 //
 // Reference to the service that manages a specific ingress.
@@ -444,6 +455,153 @@ func (r *IngressesListResponse) GetTotal() (value int, ok bool) {
 	ok = r != nil && r.total != nil
 	if ok {
 		value = *r.total
+	}
+	return
+}
+
+// IngressesUpdateRequest is the request for the 'update' method.
+type IngressesUpdateRequest struct {
+	transport http.RoundTripper
+	path      string
+	metric    string
+	query     url.Values
+	header    http.Header
+	body      []*Ingress
+}
+
+// Parameter adds a query parameter.
+func (r *IngressesUpdateRequest) Parameter(name string, value interface{}) *IngressesUpdateRequest {
+	helpers.AddValue(&r.query, name, value)
+	return r
+}
+
+// Header adds a request header.
+func (r *IngressesUpdateRequest) Header(name string, value interface{}) *IngressesUpdateRequest {
+	helpers.AddHeader(&r.header, name, value)
+	return r
+}
+
+// Body sets the value of the 'body' parameter.
+//
+//
+func (r *IngressesUpdateRequest) Body(value []*Ingress) *IngressesUpdateRequest {
+	r.body = value
+	return r
+}
+
+// Send sends this request, waits for the response, and returns it.
+//
+// This is a potentially lengthy operation, as it requires network communication.
+// Consider using a context and the SendContext method.
+func (r *IngressesUpdateRequest) Send() (result *IngressesUpdateResponse, err error) {
+	return r.SendContext(context.Background())
+}
+
+// SendContext sends this request, waits for the response, and returns it.
+func (r *IngressesUpdateRequest) SendContext(ctx context.Context) (result *IngressesUpdateResponse, err error) {
+	query := helpers.CopyQuery(r.query)
+	header := helpers.SetHeader(r.header, r.metric)
+	buffer := &bytes.Buffer{}
+	err = writeIngressesUpdateRequest(r, buffer)
+	if err != nil {
+		return
+	}
+	uri := &url.URL{
+		Path:     r.path,
+		RawQuery: query.Encode(),
+	}
+	request := &http.Request{
+		Method: "PATCH",
+		URL:    uri,
+		Header: header,
+		Body:   ioutil.NopCloser(buffer),
+	}
+	if ctx != nil {
+		request = request.WithContext(ctx)
+	}
+	response, err := r.transport.RoundTrip(request)
+	if err != nil {
+		return
+	}
+	defer response.Body.Close()
+	result = &IngressesUpdateResponse{}
+	result.status = response.StatusCode
+	result.header = response.Header
+	if result.status >= 400 {
+		result.err, err = errors.UnmarshalError(response.Body)
+		if err != nil {
+			return
+		}
+		err = result.err
+		return
+	}
+	err = readIngressesUpdateResponse(result, response.Body)
+	if err != nil {
+		return
+	}
+	return
+}
+
+// marshall is the method used internally to marshal requests for the
+// 'update' method.
+func (r *IngressesUpdateRequest) marshal(writer io.Writer) error {
+	stream := helpers.NewStream(writer)
+	r.stream(stream)
+	return stream.Error
+}
+func (r *IngressesUpdateRequest) stream(stream *jsoniter.Stream) {
+}
+
+// IngressesUpdateResponse is the response for the 'update' method.
+type IngressesUpdateResponse struct {
+	status int
+	header http.Header
+	err    *errors.Error
+	body   []*Ingress
+}
+
+// Status returns the response status code.
+func (r *IngressesUpdateResponse) Status() int {
+	if r == nil {
+		return 0
+	}
+	return r.status
+}
+
+// Header returns header of the response.
+func (r *IngressesUpdateResponse) Header() http.Header {
+	if r == nil {
+		return nil
+	}
+	return r.header
+}
+
+// Error returns the response error.
+func (r *IngressesUpdateResponse) Error() *errors.Error {
+	if r == nil {
+		return nil
+	}
+	return r.err
+}
+
+// Body returns the value of the 'body' parameter.
+//
+//
+func (r *IngressesUpdateResponse) Body() []*Ingress {
+	if r == nil {
+		return nil
+	}
+	return r.body
+}
+
+// GetBody returns the value of the 'body' parameter and
+// a flag indicating if the parameter has a value.
+//
+//
+func (r *IngressesUpdateResponse) GetBody() (value []*Ingress, ok bool) {
+	ok = r != nil && r.body != nil
+	if ok {
+		value = r.body
 	}
 	return
 }

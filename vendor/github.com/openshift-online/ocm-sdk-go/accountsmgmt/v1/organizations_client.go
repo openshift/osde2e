@@ -235,14 +235,16 @@ func (r *OrganizationsAddResponse) GetBody() (value *Organization, ok bool) {
 
 // OrganizationsListRequest is the request for the 'list' method.
 type OrganizationsListRequest struct {
-	transport http.RoundTripper
-	path      string
-	metric    string
-	query     url.Values
-	header    http.Header
-	page      *int
-	search    *string
-	size      *int
+	transport         http.RoundTripper
+	path              string
+	metric            string
+	query             url.Values
+	header            http.Header
+	fetchlabelsLabels *bool
+	fields            *string
+	page              *int
+	search            *string
+	size              *int
 }
 
 // Parameter adds a query parameter.
@@ -254,6 +256,27 @@ func (r *OrganizationsListRequest) Parameter(name string, value interface{}) *Or
 // Header adds a request header.
 func (r *OrganizationsListRequest) Header(name string, value interface{}) *OrganizationsListRequest {
 	helpers.AddHeader(&r.header, name, value)
+	return r
+}
+
+// FetchlabelsLabels sets the value of the 'fetchlabels_labels' parameter.
+//
+// If true, includes the labels on an organization in the output. Could slow request response time.
+func (r *OrganizationsListRequest) FetchlabelsLabels(value bool) *OrganizationsListRequest {
+	r.fetchlabelsLabels = &value
+	return r
+}
+
+// Fields sets the value of the 'fields' parameter.
+//
+// Projection
+// This field contains a comma-separated list of fields you'd like to get in
+// a result. No new fields can be added, only existing ones can be filtered.
+// To specify a field 'id' of a structure 'plan' use 'plan.id'.
+// To specify all fields of a structure 'labels' use 'labels.*'.
+//
+func (r *OrganizationsListRequest) Fields(value string) *OrganizationsListRequest {
+	r.fields = &value
 	return r
 }
 
@@ -305,6 +328,12 @@ func (r *OrganizationsListRequest) Send() (result *OrganizationsListResponse, er
 // SendContext sends this request, waits for the response, and returns it.
 func (r *OrganizationsListRequest) SendContext(ctx context.Context) (result *OrganizationsListResponse, err error) {
 	query := helpers.CopyQuery(r.query)
+	if r.fetchlabelsLabels != nil {
+		helpers.AddValue(&query, "fetchlabels_labels", *r.fetchlabelsLabels)
+	}
+	if r.fields != nil {
+		helpers.AddValue(&query, "fields", *r.fields)
+	}
 	if r.page != nil {
 		helpers.AddValue(&query, "page", *r.page)
 	}

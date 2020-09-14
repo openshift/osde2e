@@ -49,6 +49,15 @@ func (c *Connection) Patch() *Request {
 	return request
 }
 
+// Put creates an HTTP PUT request. Note that this request won't be sent till the Send method is
+// called.
+func (c *Connection) Put() *Request {
+	request := new(Request)
+	request.transport = c
+	request.method = http.MethodPut
+	return request
+}
+
 // Delete creates an HTTP DELETE request. Note that this request won't be sent till the Send method
 // is called.
 func (c *Connection) Delete() *Request {

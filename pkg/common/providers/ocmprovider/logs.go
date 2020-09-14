@@ -23,8 +23,7 @@ func (o *OCMProvider) Logs(clusterID string) (logs map[string][]byte, err error)
 		err = retryer().Do(func() error {
 			var err error
 			resp, err = o.conn.ClustersMgmt().V1().Clusters().Cluster(clusterID).
-				Logs().
-				Log(logID).
+				Logs().Install().
 				Get().Parameter("tail", math.MaxInt32-1).
 				Send()
 

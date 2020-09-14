@@ -35,6 +35,12 @@ type CloudProviderServer interface {
 	// Retrieves the details of the cloud provider.
 	Get(ctx context.Context, request *CloudProviderGetServerRequest, response *CloudProviderGetServerResponse) error
 
+	// AvailableRegions returns the target 'available_regions' resource.
+	//
+	// Reference to the resource that manages the collection of available regions for
+	// this cloud provider.
+	AvailableRegions() AvailableRegionsServer
+
 	// Regions returns the target 'cloud_regions' resource.
 	//
 	// Reference to the resource that manages the collection of regions for
@@ -82,6 +88,13 @@ func dispatchCloudProvider(w http.ResponseWriter, r *http.Request, server CloudP
 		}
 	}
 	switch segments[0] {
+	case "available_regions":
+		target := server.AvailableRegions()
+		if target == nil {
+			errors.SendNotFound(w, r)
+			return
+		}
+		dispatchAvailableRegions(w, r, target, segments[1:])
 	case "regions":
 		target := server.Regions()
 		if target == nil {

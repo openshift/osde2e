@@ -32,13 +32,18 @@ type LogsServer interface {
 
 	// List handles a request for the 'list' method.
 	//
-	// Retrieves the list of clusters.
+	// Retrieves the list of log links.
 	List(ctx context.Context, request *LogsListServerRequest, response *LogsListServerResponse) error
 
-	// Log returns the target 'log' server for the given identifier.
+	// Install returns the target 'log' resource.
 	//
-	// Returns a reference to the service that manages an specific log.
-	Log(id string) LogServer
+	//
+	Install() LogServer
+
+	// Uninstall returns the target 'log' resource.
+	//
+	//
+	Uninstall() LogServer
 }
 
 // LogsListServerRequest is the request for the 'list' method.
@@ -103,7 +108,7 @@ type LogsListServerResponse struct {
 
 // Items sets the value of the 'items' parameter.
 //
-// Retrieved list of logs.
+// Retrieved list of log links.
 func (r *LogsListServerResponse) Items(value *LogList) *LogsListServerResponse {
 	r.items = value
 	return r
@@ -154,13 +159,23 @@ func dispatchLogs(w http.ResponseWriter, r *http.Request, server LogsServer, seg
 		}
 	}
 	switch segments[0] {
-	default:
-		target := server.Log(segments[0])
+	case "install":
+		target := server.Install()
 		if target == nil {
 			errors.SendNotFound(w, r)
 			return
 		}
 		dispatchLog(w, r, target, segments[1:])
+	case "uninstall":
+		target := server.Uninstall()
+		if target == nil {
+			errors.SendNotFound(w, r)
+			return
+		}
+		dispatchLog(w, r, target, segments[1:])
+	default:
+		errors.SendNotFound(w, r)
+		return
 	}
 }
 

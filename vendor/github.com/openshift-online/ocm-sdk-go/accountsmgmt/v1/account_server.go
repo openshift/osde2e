@@ -39,6 +39,11 @@ type AccountServer interface {
 	//
 	// Updates the account.
 	Update(ctx context.Context, request *AccountUpdateServerRequest, response *AccountUpdateServerResponse) error
+
+	// Labels returns the target 'generic_labels' resource.
+	//
+	// Reference to the list of labels of a specific account.
+	Labels() GenericLabelsServer
 }
 
 // AccountGetServerRequest is the request for the 'get' method.
@@ -132,6 +137,13 @@ func dispatchAccount(w http.ResponseWriter, r *http.Request, server AccountServe
 		}
 	}
 	switch segments[0] {
+	case "labels":
+		target := server.Labels()
+		if target == nil {
+			errors.SendNotFound(w, r)
+			return
+		}
+		dispatchGenericLabels(w, r, target, segments[1:])
 	default:
 		errors.SendNotFound(w, r)
 		return

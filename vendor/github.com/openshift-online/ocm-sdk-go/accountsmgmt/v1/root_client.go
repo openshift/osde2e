@@ -133,6 +133,39 @@ func (c *Client) CurrentAccount() *CurrentAccountClient {
 	)
 }
 
+// FeatureToggles returns the target 'feature_toggles' resource.
+//
+// Reference to the resource that manages feature toggles.
+func (c *Client) FeatureToggles() *FeatureTogglesClient {
+	return NewFeatureTogglesClient(
+		c.transport,
+		path.Join(c.path, "feature_toggles"),
+		path.Join(c.metric, "feature_toggles"),
+	)
+}
+
+// Labels returns the target 'labels' resource.
+//
+// Reference to the resource that manages the collection of labels.
+func (c *Client) Labels() *LabelsClient {
+	return NewLabelsClient(
+		c.transport,
+		path.Join(c.path, "labels"),
+		path.Join(c.metric, "labels"),
+	)
+}
+
+// Notify returns the target 'notify' resource.
+//
+// Reference to the resource that manages the notifications.
+func (c *Client) Notify() *NotifyClient {
+	return NewNotifyClient(
+		c.transport,
+		path.Join(c.path, "notify"),
+		path.Join(c.metric, "notify"),
+	)
+}
+
 // Organizations returns the target 'organizations' resource.
 //
 // Reference to the resource that manages the collection of
@@ -225,6 +258,18 @@ func (c *Client) Roles() *RolesClient {
 	)
 }
 
+// SkuRules returns the target 'sku_rules' resource.
+//
+// Reference to the resource that manages the collection of
+// Sku Rules
+func (c *Client) SkuRules() *SkuRulesClient {
+	return NewSkuRulesClient(
+		c.transport,
+		path.Join(c.path, "sku_rules"),
+		path.Join(c.metric, "sku_rules"),
+	)
+}
+
 // Subscriptions returns the target 'subscriptions' resource.
 //
 // Reference to the resource that manages the collection of
@@ -234,5 +279,27 @@ func (c *Client) Subscriptions() *SubscriptionsClient {
 		c.transport,
 		path.Join(c.path, "subscriptions"),
 		path.Join(c.metric, "subscriptions"),
+	)
+}
+
+// SupportCases returns the target 'support_cases' resource.
+//
+// Reference to the resource that manages the support cases.
+func (c *Client) SupportCases() *SupportCasesClient {
+	return NewSupportCasesClient(
+		c.transport,
+		path.Join(c.path, "support_cases"),
+		path.Join(c.metric, "support_cases"),
+	)
+}
+
+// TokenAuthorization returns the target 'token_authorization' resource.
+//
+// Reference to the resource that manages token authorization.
+func (c *Client) TokenAuthorization() *TokenAuthorizationClient {
+	return NewTokenAuthorizationClient(
+		c.transport,
+		path.Join(c.path, "token_authorization"),
+		path.Join(c.metric, "token_authorization"),
 	)
 }

@@ -40,6 +40,11 @@ type IngressesServer interface {
 	// Retrieves the list of ingresses.
 	List(ctx context.Context, request *IngressesListServerRequest, response *IngressesListServerResponse) error
 
+	// Update handles a request for the 'update' method.
+	//
+	// Updates all ingresses
+	Update(ctx context.Context, request *IngressesUpdateServerRequest, response *IngressesUpdateServerResponse) error
+
 	// Ingress returns the target 'ingress' server for the given identifier.
 	//
 	// Reference to the service that manages a specific ingress.
@@ -192,6 +197,61 @@ func (r *IngressesListServerResponse) Status(value int) *IngressesListServerResp
 	return r
 }
 
+// IngressesUpdateServerRequest is the request for the 'update' method.
+type IngressesUpdateServerRequest struct {
+	body []*Ingress
+}
+
+// Body returns the value of the 'body' parameter.
+//
+//
+func (r *IngressesUpdateServerRequest) Body() []*Ingress {
+	if r == nil {
+		return nil
+	}
+	return r.body
+}
+
+// GetBody returns the value of the 'body' parameter and
+// a flag indicating if the parameter has a value.
+//
+//
+func (r *IngressesUpdateServerRequest) GetBody() (value []*Ingress, ok bool) {
+	ok = r != nil && r.body != nil
+	if ok {
+		value = r.body
+	}
+	return
+}
+
+// IngressesUpdateServerResponse is the response for the 'update' method.
+type IngressesUpdateServerResponse struct {
+	status int
+	err    *errors.Error
+	body   []*Ingress
+}
+
+// Body sets the value of the 'body' parameter.
+//
+//
+func (r *IngressesUpdateServerResponse) Body(value []*Ingress) *IngressesUpdateServerResponse {
+	if value == nil {
+		r.body = nil
+	} else {
+		r.body = make([]*Ingress, len(value))
+		for i, v := range value {
+			r.body[i] = v
+		}
+	}
+	return r
+}
+
+// Status sets the status code.
+func (r *IngressesUpdateServerResponse) Status(value int) *IngressesUpdateServerResponse {
+	r.status = value
+	return r
+}
+
 // dispatchIngresses navigates the servers tree rooted at the given server
 // till it finds one that matches the given set of path segments, and then invokes
 // the corresponding server.
@@ -203,6 +263,9 @@ func dispatchIngresses(w http.ResponseWriter, r *http.Request, server IngressesS
 			return
 		case "GET":
 			adaptIngressesListRequest(w, r, server)
+			return
+		case "PATCH":
+			adaptIngressesUpdateRequest(w, r, server)
 			return
 		default:
 			errors.SendMethodNotAllowed(w, r)
@@ -281,6 +344,41 @@ func adaptIngressesListRequest(w http.ResponseWriter, r *http.Request, server In
 		return
 	}
 	err = writeIngressesListResponse(response, w)
+	if err != nil {
+		glog.Errorf(
+			"Can't write response for method '%s' and path '%s': %v",
+			r.Method, r.URL.Path, err,
+		)
+		return
+	}
+}
+
+// adaptIngressesUpdateRequest translates the given HTTP request into a call to
+// the corresponding method of the given server. Then it translates the
+// results returned by that method into an HTTP response.
+func adaptIngressesUpdateRequest(w http.ResponseWriter, r *http.Request, server IngressesServer) {
+	request := &IngressesUpdateServerRequest{}
+	err := readIngressesUpdateRequest(request, r)
+	if err != nil {
+		glog.Errorf(
+			"Can't read request for method '%s' and path '%s': %v",
+			r.Method, r.URL.Path, err,
+		)
+		errors.SendInternalServerError(w, r)
+		return
+	}
+	response := &IngressesUpdateServerResponse{}
+	response.status = 200
+	err = server.Update(r.Context(), request, response)
+	if err != nil {
+		glog.Errorf(
+			"Can't process request for method '%s' and path '%s': %v",
+			r.Method, r.URL.Path, err,
+		)
+		errors.SendInternalServerError(w, r)
+		return
+	}
+	err = writeIngressesUpdateResponse(response, w)
 	if err != nil {
 		glog.Errorf(
 			"Can't write response for method '%s' and path '%s': %v",

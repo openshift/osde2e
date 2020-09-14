@@ -31,6 +31,7 @@ type MachineTypeBuilder struct {
 	cloudProvider *CloudProviderBuilder
 	memory        *ValueBuilder
 	name          *string
+	size          *MachineTypeSize
 }
 
 // NewMachineType creates a new builder of 'machine_type' objects.
@@ -130,6 +131,14 @@ func (b *MachineTypeBuilder) Name(value string) *MachineTypeBuilder {
 	return b
 }
 
+// Size sets the value of the 'size' attribute to the given value.
+//
+// Machine type size.
+func (b *MachineTypeBuilder) Size(value MachineTypeSize) *MachineTypeBuilder {
+	b.size = &value
+	return b
+}
+
 // Copy copies the attributes of the given object into this builder, discarding any previous values.
 func (b *MachineTypeBuilder) Copy(object *MachineType) *MachineTypeBuilder {
 	if object == nil {
@@ -155,6 +164,7 @@ func (b *MachineTypeBuilder) Copy(object *MachineType) *MachineTypeBuilder {
 		b.memory = nil
 	}
 	b.name = object.name
+	b.size = object.size
 	return b
 }
 
@@ -184,5 +194,6 @@ func (b *MachineTypeBuilder) Build() (object *MachineType, err error) {
 		}
 	}
 	object.name = b.name
+	object.size = b.size
 	return
 }
