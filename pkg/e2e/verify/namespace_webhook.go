@@ -231,7 +231,16 @@ func updateNamespace(namespace string, asUser string, userGroup string, h *helpe
 		UserName: asUser,
 		Groups:   userGroups,
 	})
-	_, err = h.Kube().CoreV1().Namespaces().Update(context.TODO(), ns, metav1.UpdateOptions{})
+	updatedNamespace, err := h.Kube().CoreV1().Namespaces().Update(context.TODO(), ns, metav1.UpdateOptions{})
+
+	err = wait.PollImmediate(2*time.Second, 1*time.Minute, func() (bool, error) {
+		ns, err = h.Kube().CoreV1().Namespaces().Get(context.TODO(), namespace, metav1.GetOptions{})
+		if err != nil {
+			return false, fmt.Errorf("failed to find namespace to update '%s': %v", namespace, err)
+		}
+
+		return updatedNamespace.ResourceVersion == ns.ResourceVersion, nil
+	})
 
 	// reset impersonation
 	h.Impersonate(rest.ImpersonationConfig{})
