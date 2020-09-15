@@ -129,7 +129,7 @@ func testDaCRbackupStorageLocations(h *helper.H) {
 
 			backupStorageLocation := velerov1.BackupStorageLocation{
 				ObjectMeta: metav1.ObjectMeta{
-					Name: "backup-storage-location-test",
+					Name: "dedicated-admin-backup-storage-location-test",
 				},
 				Spec: velerov1.BackupStorageLocationSpec{
 					Provider: "aws",
@@ -154,7 +154,7 @@ func testDaCRdownloadRequests(h *helper.H) {
 
 			downloadRequest := velerov1.DownloadRequest{
 				ObjectMeta: metav1.ObjectMeta{
-					Name: "download-request-test",
+					Name: "dedicated-admin-download-request-test",
 				},
 				Spec: velerov1.DownloadRequestSpec{
 					Target: velerov1.DownloadTarget{
@@ -279,6 +279,9 @@ func testCRbackups(h *helper.H) {
 			_, err := h.Velero().VeleroV1().Backups(h.CurrentProject()).Create(context.TODO(), &backup, metav1.CreateOptions{})
 			Expect(err).NotTo(HaveOccurred())
 
+			h.Velero().VeleroV1().Backups(h.CurrentProject()).Delete(context.TODO(), "admin-backup-test", metav1.DeleteOptions{})
+			Expect(err).NotTo(HaveOccurred())
+
 		})
 	})
 }
@@ -295,6 +298,9 @@ func testCRrestore(h *helper.H) {
 			_, err := h.Velero().VeleroV1().Restores(h.CurrentProject()).Create(context.TODO(), &restore, metav1.CreateOptions{})
 			Expect(err).NotTo(HaveOccurred())
 
+			h.Velero().VeleroV1().Restores(h.CurrentProject()).Delete(context.TODO(), "restore-test", metav1.DeleteOptions{})
+			Expect(err).NotTo(HaveOccurred())
+
 		})
 	})
 }
@@ -309,6 +315,9 @@ func testCRdeleteBackupRequests(h *helper.H) {
 				},
 			}
 			_, err := h.Velero().VeleroV1().DeleteBackupRequests(h.CurrentProject()).Create(context.TODO(), &deleteBackupRequest, metav1.CreateOptions{})
+			Expect(err).NotTo(HaveOccurred())
+
+			h.Velero().VeleroV1().DeleteBackupRequests(h.CurrentProject()).Delete(context.TODO(), "delete-backup-request-test", metav1.DeleteOptions{})
 			Expect(err).NotTo(HaveOccurred())
 		})
 	})
@@ -335,6 +344,9 @@ func testCRbackupStorageLocations(h *helper.H) {
 			_, err := h.Velero().VeleroV1().BackupStorageLocations(h.CurrentProject()).Create(context.TODO(), &backupStorageLocation, metav1.CreateOptions{})
 			Expect(err).NotTo(HaveOccurred())
 
+			h.Velero().VeleroV1().BackupStorageLocations(h.CurrentProject()).Delete(context.TODO(), "backup-storage-location-test", metav1.DeleteOptions{})
+			Expect(err).NotTo(HaveOccurred())
+
 		})
 	})
 }
@@ -358,6 +370,9 @@ func testCRdownloadRequests(h *helper.H) {
 			_, err := h.Velero().VeleroV1().DownloadRequests(h.CurrentProject()).Create(context.TODO(), &downloadRequest, metav1.CreateOptions{})
 			Expect(err).NotTo(HaveOccurred())
 
+			h.Velero().VeleroV1().DownloadRequests(h.CurrentProject()).Delete(context.TODO(), "download-request-test", metav1.DeleteOptions{})
+			Expect(err).NotTo(HaveOccurred())
+
 		})
 	})
 }
@@ -373,6 +388,9 @@ func testCRpodVolumeBackup(h *helper.H) {
 			}
 			_, err := h.Velero().VeleroV1().PodVolumeBackups(h.CurrentProject()).Create(context.TODO(), &podVolumeBackup, metav1.CreateOptions{})
 			Expect(err).NotTo(HaveOccurred())
+
+			h.Velero().VeleroV1().PodVolumeBackups(h.CurrentProject()).Delete(context.TODO(), "pod-volume-backup-test", metav1.DeleteOptions{})
+			Expect(err).NotTo(HaveOccurred())
 		})
 	})
 }
@@ -387,6 +405,9 @@ func testCRpodVolumeRestores(h *helper.H) {
 				},
 			}
 			_, err := h.Velero().VeleroV1().PodVolumeRestores(h.CurrentProject()).Create(context.TODO(), &podVolumeRestore, metav1.CreateOptions{})
+			Expect(err).NotTo(HaveOccurred())
+
+			h.Velero().VeleroV1().PodVolumeRestores(h.CurrentProject()).Delete(context.TODO(), "pod-volume-restore-test", metav1.DeleteOptions{})
 			Expect(err).NotTo(HaveOccurred())
 		})
 
@@ -404,6 +425,9 @@ func testCRvolumeSnapshotLocation(h *helper.H) {
 			}
 			_, err := h.Velero().VeleroV1().VolumeSnapshotLocations(h.CurrentProject()).Create(context.TODO(), &volumeSnapshotLocation, metav1.CreateOptions{})
 			Expect(err).NotTo(HaveOccurred())
+
+			h.Velero().VeleroV1().VolumeSnapshotLocations(h.CurrentProject()).Delete(context.TODO(), "volume-snapshot-locations-test", metav1.DeleteOptions{})
+			Expect(err).NotTo(HaveOccurred())
 		})
 	})
 }
@@ -418,6 +442,9 @@ func testCRschedules(h *helper.H) {
 				},
 			}
 			_, err := h.Velero().VeleroV1().Schedules(h.CurrentProject()).Create(context.TODO(), &schedules, metav1.CreateOptions{})
+			Expect(err).NotTo(HaveOccurred())
+
+			h.Velero().VeleroV1().Schedules(h.CurrentProject()).Delete(context.TODO(), "schedules-test", metav1.DeleteOptions{})
 			Expect(err).NotTo(HaveOccurred())
 		})
 	})
@@ -434,6 +461,9 @@ func testCRserverStatusRequest(h *helper.H) {
 			}
 			_, err := h.Velero().VeleroV1().ServerStatusRequests(h.CurrentProject()).Create(context.TODO(), &serverStatusRequest, metav1.CreateOptions{})
 			Expect(err).NotTo(HaveOccurred())
+
+			h.Velero().VeleroV1().ServerStatusRequests(h.CurrentProject()).Delete(context.TODO(), "server-status-request-test", metav1.DeleteOptions{})
+			Expect(err).NotTo(HaveOccurred())
 		})
 	})
 }
@@ -448,6 +478,9 @@ func testCRrestricRepository(h *helper.H) {
 				},
 			}
 			_, err := h.Velero().VeleroV1().ResticRepositories(h.CurrentProject()).Create(context.TODO(), &resticRepository, metav1.CreateOptions{})
+			Expect(err).NotTo(HaveOccurred())
+
+			h.Velero().VeleroV1().ResticRepositories(h.CurrentProject()).Delete(context.TODO(), "restric-repository-test", metav1.DeleteOptions{})
 			Expect(err).NotTo(HaveOccurred())
 		})
 	})
