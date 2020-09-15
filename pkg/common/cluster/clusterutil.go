@@ -162,15 +162,6 @@ func waitForClusterReadyWithOverrideAndExpectedNumberOfNodes(clusterID string, l
 
 						return true, nil
 					}
-
-					failureString := strings.Join(failures, ",")
-					if currentStatus != failureString {
-						err = provider.AddProperty(cluster, clusterproperties.Status, failureString)
-						if err != nil {
-							return false, fmt.Errorf("error trying to add property to cluster ID %s: %v", cluster.ID(), err)
-						}
-					}
-
 					return false, nil
 				} else {
 					if err != nil {
@@ -192,6 +183,15 @@ func waitForClusterReadyWithOverrideAndExpectedNumberOfNodes(clusterID string, l
 						}
 					}
 					cleanRuns = 0
+
+					failureString := strings.Join(failures, ",")
+					if currentStatus != failureString {
+						err = provider.AddProperty(cluster, clusterproperties.Status, failureString)
+						if err != nil {
+							return false, fmt.Errorf("error trying to add property to cluster ID %s: %v", cluster.ID(), err)
+						}
+					}
+
 					return false, nil
 				}
 			} else if cluster == nil {
