@@ -210,8 +210,10 @@ func deleteGroup(groupName string, h *helper.H) error {
 }
 
 func updateNamespace(namespace string, asUser string, userGroup string, h *helper.H) error {
+	// reset impersonation upon return
+	defer h.Impersonate(rest.ImpersonationConfig{})
 
-	// reset impersonation
+	// reset impersonation at the beginning just-in-case
 	h.Impersonate(rest.ImpersonationConfig{})
 
 	// Verify the namespace already exists
@@ -232,18 +234,18 @@ func updateNamespace(namespace string, asUser string, userGroup string, h *helpe
 		Groups:   userGroups,
 	})
 	updatedNamespace, err := h.Kube().CoreV1().Namespaces().Update(context.TODO(), ns, metav1.UpdateOptions{})
+	if err != nil {
+		return err
+	}
 
 	err = wait.PollImmediate(2*time.Second, 1*time.Minute, func() (bool, error) {
 		ns, err = h.Kube().CoreV1().Namespaces().Get(context.TODO(), namespace, metav1.GetOptions{})
 		if err != nil {
-			return false, fmt.Errorf("failed to find namespace to update '%s': %v", namespace, err)
+			return false, fmt.Errorf("failed to find updated namespace '%s': %v", namespace, err)
 		}
 
 		return updatedNamespace.ResourceVersion == ns.ResourceVersion, nil
 	})
-
-	// reset impersonation
-	h.Impersonate(rest.ImpersonationConfig{})
 
 	return err
 }
