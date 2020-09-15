@@ -26,8 +26,20 @@ mkdir -p {{.OutputDir}}
 	tar cvfz {{$outDir}}/{{.Name}}.tgz {{.OutputDir}}
 {{end}}
 
+case $(python -V) in
+"Python 2"*)
+	MODULE="SimpleHTTPServer"
+	;;
+"Python 3"*)
+	MODULE="http.server"
+	;;
+*)
+	MODULE="http.server"
+	;;
+esac
+
 # make results available using HTTP
-cd {{$outDir}} && echo "Starting server" && python -m SimpleHTTPServer
+cd {{$outDir}} && echo "Starting server" && python -m "${MODULE}"
 `
 
 var (
