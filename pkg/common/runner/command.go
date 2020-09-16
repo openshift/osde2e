@@ -26,11 +26,11 @@ mkdir -p {{.OutputDir}}
 	tar cvfz {{$outDir}}/{{.Name}}.tgz {{.OutputDir}}
 {{end}}
 
-case $(python -V) in
-"Python 2"*)
+case $(rpm -qa python) in
+python-2*)
 	MODULE="SimpleHTTPServer"
 	;;
-"Python 3"*)
+python-3*)
 	MODULE="http.server"
 	;;
 *)
