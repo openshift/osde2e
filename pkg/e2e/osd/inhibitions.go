@@ -86,7 +86,7 @@ var _ = ginkgo.Describe(inhibitionsTestName, func() {
 				expectedTarget: "KubeDeploymentReplicasMismatch",
 				expectedEqual: prometheusModel.LabelNames{
 					"namespace",
-					"instance",
+					"pod",
 				},
 				expectedPresent: true,
 			},
@@ -96,7 +96,7 @@ var _ = ginkgo.Describe(inhibitionsTestName, func() {
 				expectedTarget: "KubeDeploymentReplicasMismatch",
 				expectedEqual: prometheusModel.LabelNames{
 					"namespace",
-					"instance",
+					"pod",
 				},
 				expectedPresent: true,
 			},
