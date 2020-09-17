@@ -153,12 +153,9 @@ func (o *OCMProvider) UpgradeSource() spi.UpgradeSource {
 // CincinnatiChannel returns a "fast" channel for stage and a "stable" channel for prod. This
 // channel won't be used for integration since the upgrade source for integration is the release
 // controller and not Cincinnati.
+// TODO: Switch back to Fast for all environments 09/21/20
 func (o *OCMProvider) CincinnatiChannel() spi.CincinnatiChannel {
-	if o.env == stage {
-		return spi.CincinnatiFastChannel
-	}
-
-	return spi.CincinnatiStableChannel
+	return spi.CincinnatiCandidateChannel
 }
 
 // GetConnection returns the connection used by this provider.
