@@ -98,6 +98,7 @@ func CreateCluster(client *cmv1.ClustersClient, config Spec) (*cmv1.Cluster, err
 	// Create the AWS client:
 	awsClient, err := aws.NewClient().
 		Logger(logger).
+		Region(aws.DefaultRegion).
 		Build()
 	if err != nil {
 		return nil, fmt.Errorf("Failed to create AWS client: %v", err)
@@ -226,13 +227,34 @@ func UpdateCluster(client *cmv1.ClustersClient, clusterKey string, creatorARN st
 	return nil
 }
 
-func DeleteCluster(client *cmv1.ClustersClient, clusterKey string, creatorARN string) error {
+func DeleteCluster(client *cmv1.ClustersClient, clusterKey string, creatorARN string) (*cmv1.Cluster, error) {
+	cluster, err := GetCluster(client, clusterKey, creatorARN)
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = client.Cluster(cluster.ID()).Delete().Send()
+	if err != nil {
+		return nil, err
+	}
+
+	return cluster, nil
+}
+
+func InstallAddOn(client *cmv1.ClustersClient, clusterKey string, creatorARN string, addOnID string) error {
 	cluster, err := GetCluster(client, clusterKey, creatorARN)
 	if err != nil {
 		return err
 	}
 
-	_, err = client.Cluster(cluster.ID()).Delete().Send()
+	addOnInstallation, err := cmv1.NewAddOnInstallation().
+		Addon(cmv1.NewAddOn().ID(addOnID)).
+		Build()
+	if err != nil {
+		return err
+	}
+
+	_, err = client.Cluster(cluster.ID()).Addons().Add().Body(addOnInstallation).Send()
 	if err != nil {
 		return err
 	}
@@ -271,11 +293,11 @@ func createClusterSpec(config Spec, awsClient aws.Client) (*cmv1.Cluster, error)
 
 	// Make sure we don't have a custom properties collision
 	if _, present := clusterProperties[properties.CreatorARN]; present {
-		return nil, fmt.Errorf("Custom properties key %s collides with a property needed by moactl.", properties.CreatorARN)
+		return nil, fmt.Errorf("Custom properties key %s collides with a property needed by moactl", properties.CreatorARN)
 	}
 
 	if _, present := clusterProperties[properties.CLIVersion]; present {
-		return nil, fmt.Errorf("Custom properties key %s collides with a property needed by moactl.", properties.CLIVersion)
+		return nil, fmt.Errorf("Custom properties key %s collides with a property needed by moactl", properties.CLIVersion)
 	}
 
 	clusterProperties[properties.CreatorARN] = awsCreator.ARN

@@ -252,7 +252,7 @@ github.com/markbates/pkger/pkging
 github.com/markbates/pkger/pkging/embed
 github.com/markbates/pkger/pkging/mem
 github.com/markbates/pkger/pkging/stdos
-# github.com/mattn/go-colorable v0.1.2
+# github.com/mattn/go-colorable v0.1.7
 github.com/mattn/go-colorable
 # github.com/mattn/go-isatty v0.0.12
 github.com/mattn/go-isatty
@@ -357,7 +357,7 @@ github.com/openshift/machine-api-operator/pkg/generated/clientset/versioned/sche
 github.com/openshift/machine-api-operator/pkg/generated/clientset/versioned/typed/machine/v1beta1
 # github.com/openshift/managed-upgrade-operator v0.0.0-20200820052802-5d57e1785b53
 github.com/openshift/managed-upgrade-operator/pkg/apis/upgrade/v1alpha1
-# github.com/openshift/moactl v0.0.3-0.20200622161904-355535b775ff
+# github.com/openshift/moactl v0.0.10
 github.com/openshift/moactl/assets
 github.com/openshift/moactl/pkg/aws
 github.com/openshift/moactl/pkg/aws/tags
@@ -442,7 +442,7 @@ github.com/vmware-tanzu/velero/pkg/generated/clientset/versioned/typed/velero/v1
 github.com/xi2/xz
 # gitlab.com/c0b/go-ordered-json v0.0.0-20171130231205-49bbdab258c2
 gitlab.com/c0b/go-ordered-json
-# golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
+# golang.org/x/crypto v0.0.0-20200728195943-123391ffb6de
 golang.org/x/crypto/blowfish
 golang.org/x/crypto/cast5
 golang.org/x/crypto/chacha20
@@ -475,14 +475,14 @@ golang.org/x/net/trace
 # golang.org/x/oauth2 v0.0.0-20190604053449-0f29369cfe45
 golang.org/x/oauth2
 golang.org/x/oauth2/internal
-# golang.org/x/sys v0.0.0-20200625212154-ddb9806d33ae
+# golang.org/x/sys v0.0.0-20200803210538-64077c9b5642
 golang.org/x/sys/cpu
 golang.org/x/sys/internal/unsafeheader
 golang.org/x/sys/unix
 golang.org/x/sys/windows
 golang.org/x/sys/windows/registry
 golang.org/x/sys/windows/svc/eventlog
-# golang.org/x/text v0.3.2
+# golang.org/x/text v0.3.3
 golang.org/x/text/encoding
 golang.org/x/text/encoding/charmap
 golang.org/x/text/encoding/htmlindex
@@ -517,7 +517,7 @@ google.golang.org/appengine/internal/log
 google.golang.org/appengine/internal/remote_api
 google.golang.org/appengine/internal/urlfetch
 google.golang.org/appengine/urlfetch
-# google.golang.org/protobuf v1.23.0
+# google.golang.org/protobuf v1.25.0
 google.golang.org/protobuf/encoding/prototext
 google.golang.org/protobuf/encoding/protowire
 google.golang.org/protobuf/internal/descfmt
@@ -528,12 +528,11 @@ google.golang.org/protobuf/internal/encoding/messageset
 google.golang.org/protobuf/internal/encoding/tag
 google.golang.org/protobuf/internal/encoding/text
 google.golang.org/protobuf/internal/errors
-google.golang.org/protobuf/internal/fieldnum
 google.golang.org/protobuf/internal/fieldsort
 google.golang.org/protobuf/internal/filedesc
 google.golang.org/protobuf/internal/filetype
 google.golang.org/protobuf/internal/flags
-google.golang.org/protobuf/internal/genname
+google.golang.org/protobuf/internal/genid
 google.golang.org/protobuf/internal/impl
 google.golang.org/protobuf/internal/mapsort
 google.golang.org/protobuf/internal/pragma

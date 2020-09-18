@@ -56,6 +56,7 @@ func (m *MOAProvider) LaunchCluster(clusterName string) (string, error) {
 	}
 
 	clusterProperties, err := m.ocmProvider.GenerateProperties()
+	clusterProperties["moa_use_marketplace_ami"] = "true"
 
 	if err != nil {
 		return "", fmt.Errorf("error generating cluster properties: %v", err)
