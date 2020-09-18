@@ -15,7 +15,6 @@ import (
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/spi"
 	"github.com/spf13/viper"
-	"k8s.io/apimachinery/pkg/util/wait"
 )
 
 // LaunchCluster setups an new cluster using the OSD API and returns it's ID.
@@ -243,7 +242,7 @@ func (o *OCMProvider) DeleteCluster(clusterID string) error {
 		return fmt.Errorf("couldn't delete cluster '%s': %v", clusterID, err)
 	}
 
-	err = wait.PollImmediate(15*time.Second, 5*time.Minute, func() (bool, error) {
+	/*err = wait.PollImmediate(15*time.Second, 5*time.Minute, func() (bool, error) {
 		if _, err = o.GetCluster(clusterID); err != nil {
 			if strings.Contains(err.Error(), "identifier is '404', code is 'CLUSTERS-MGMT-404'") {
 				return true, nil
@@ -255,7 +254,7 @@ func (o *OCMProvider) DeleteCluster(clusterID string) error {
 
 	if err != nil {
 		return fmt.Errorf("Cluster still exists and has not uninstalled cleanly yet : %v", err)
-	}
+	}*/
 
 	return nil
 
