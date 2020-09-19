@@ -3,13 +3,14 @@ package upgrade
 import (
 	"context"
 	"fmt"
+	"log"
+	"time"
+
 	"github.com/openshift/osde2e/pkg/common/cluster/healthchecks"
 	"github.com/openshift/osde2e/pkg/common/templates"
 	"github.com/openshift/osde2e/pkg/common/util"
 	"github.com/spf13/viper"
 	"k8s.io/apimachinery/pkg/util/wait"
-	"log"
-	"time"
 
 	configv1 "github.com/openshift/api/config/v1"
 	upgradev1alpha1 "github.com/openshift/managed-upgrade-operator/pkg/apis/upgrade/v1alpha1"
@@ -36,6 +37,12 @@ const (
 	pdbWorkloadName = "pdb"
 	// directory containing pod disruption budget workload assets
 	pdbWorkloadDir = "/assets/workloads/e2e/pdb"
+	// name of the workload for node drain tests
+	drainWorkloadName = "node-drain-test"
+	// directory containing node drain workload assets
+	drainWorkloadDir = "/assets/workloads/e2e/drain"
+	// Time to wait in seconds for workload to be created
+	workloadCreationWaitTime = 3
 
 	// config override template asset
 	configOverrideTemplate = "/assets/upgrades/config.template"
@@ -78,6 +85,14 @@ func TriggerManagedUpgrade(h *helper.H) (*configv1.ClusterVersion, error) {
 		err = createPodDisruptionBudgetWorkloads(h)
 		if err != nil {
 			return cVersion, fmt.Errorf("unable to setup PDB workload for upgrade: %v", err)
+		}
+	}
+
+	// Create Node Drain test workloads if desired
+	if viper.GetBool(config.Upgrade.ManagedUpgradeTestNodeDrain) {
+		err = createNodeDrainWorkload(h)
+		if err != nil {
+			return cVersion, fmt.Errorf("unable to setup node drain test workload for upgrade: %v", err)
 		}
 	}
 
@@ -204,7 +219,7 @@ func createPodDisruptionBudgetWorkloads(h *helper.H) error {
 	}
 
 	// Give the cluster a second to churn before checking
-	time.Sleep(3 * time.Second)
+	time.Sleep(workloadCreationWaitTime * time.Second)
 
 	// Wait for all pods to come up healthy
 	err = wait.PollImmediate(5*time.Second, 2*time.Minute, func() (bool, error) {
@@ -219,6 +234,46 @@ func createPodDisruptionBudgetWorkloads(h *helper.H) error {
 
 	// If success, add the workload to the list of installed workloads
 	h.AddWorkload(pdbWorkloadName, h.CurrentProject())
+
+	return nil
+}
+
+// createNodeDrainWorkload creates test workload to test Node Drain functionality
+// which the managed-upgrade-operator is expected to be able to handle
+func createNodeDrainWorkload(h *helper.H) error {
+	if _, ok := h.GetWorkload(drainWorkloadName); ok {
+		return nil
+	}
+
+	// Create all K8s objects that are within the testDir
+	log.Printf("Applying Node Drain workload: %s\n", drainWorkloadDir)
+	_, err := helper.ApplyYamlInFolder(drainWorkloadDir, h.CurrentProject(), h.Kube())
+	if err != nil {
+		return fmt.Errorf("can't create node drain test workload: %v", err)
+	}
+
+	// Wait for few seconds for workload to be created on the cluster (defaults 3 seconds)
+	time.Sleep(workloadCreationWaitTime * time.Second)
+
+	// Wait for all pods to come up healthy
+	err = wait.PollImmediate(5*time.Second, 2*time.Minute, func() (bool, error) {
+		if check, err := healthchecks.CheckPodHealth(h.Kube().CoreV1(), nil); !check || err != nil {
+			return false, nil
+		}
+		return true, nil
+	})
+	if err != nil {
+		return fmt.Errorf("Node Drain workload not running correctly: %v", err)
+	}
+
+	log.Println("All Pods ready")
+
+	// If success, add the workload to the list of installed workloads
+	h.AddWorkload(drainWorkloadName, h.CurrentProject())
+
+	log.Println("Deleting drain pod")
+	// Initiate the deletion of node-drain-test pod which will cause node drain to get stuck and be handled by managed-upgrade-operator
+	h.Kube().CoreV1().Pods(h.CurrentProject()).Delete(context.TODO(), drainWorkloadName, metav1.DeleteOptions{})
 
 	return nil
 }
