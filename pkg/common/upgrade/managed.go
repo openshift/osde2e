@@ -247,10 +247,13 @@ func createNodeDrainWorkload(h *helper.H) error {
 
 	// Create all K8s objects that are within the testDir
 	log.Printf("Applying Node Drain workload: %s\n", drainWorkloadDir)
-	_, err := helper.ApplyYamlInFolder(drainWorkloadDir, h.CurrentProject(), h.Kube())
+	objects, err := helper.ApplyYamlInFolder(drainWorkloadDir, h.CurrentProject(), h.Kube())
 	if err != nil {
 		return fmt.Errorf("can't create node drain test workload: %v", err)
 	}
+
+	// Log how many objects have been created
+	log.Printf("%v objects created\n", len(objects))
 
 	// Wait for few seconds for workload to be created on the cluster (defaults 3 seconds)
 	time.Sleep(workloadCreationWaitTime * time.Second)
