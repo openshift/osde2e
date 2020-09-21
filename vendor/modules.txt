@@ -366,6 +366,7 @@ github.com/openshift/moactl/pkg/debug
 github.com/openshift/moactl/pkg/info
 github.com/openshift/moactl/pkg/logging
 github.com/openshift/moactl/pkg/ocm/properties
+github.com/openshift/moactl/pkg/ocm/versions
 github.com/openshift/moactl/pkg/reporter
 # github.com/operator-framework/api v0.3.6
 github.com/operator-framework/api/pkg/lib/version

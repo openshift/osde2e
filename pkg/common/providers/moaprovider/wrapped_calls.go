@@ -42,11 +42,6 @@ func (m *MOAProvider) InstallAddons(clusterID string, addonIDs []string) (int, e
 	return m.ocmProvider.InstallAddons(clusterID, addonIDs)
 }
 
-// Versions will call Versions from the OCM provider.
-func (m *MOAProvider) Versions() (*spi.VersionList, error) {
-	return m.ocmProvider.Versions()
-}
-
 // Logs will call Logs from the OCM provider.
 func (m *MOAProvider) Logs(clusterID string) (map[string][]byte, error) {
 	return m.ocmProvider.Logs(clusterID)
