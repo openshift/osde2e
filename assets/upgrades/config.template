@@ -1,12 +1,12 @@
 maintenance:
   controlPlaneTime: 90
-  workerNodeTime: 8
 scale:
   timeOut: 15
 upgradeWindow:
   timeOut: 60
 nodeDrain:
   timeOut: 10
+  expectedNodeDrainTime: 8
 healthCheck:
   ignoredCriticals:
   - DNSErrors05MinSRE
