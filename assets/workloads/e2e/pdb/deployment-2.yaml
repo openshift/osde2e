@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pdb-case-2
+spec:
+  selector:
+    matchLabels:
+      app: pdb-case-2
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: pdb-case-2
+    spec:
+      containers:
+        - name: hello
+          image: openshift/hello-openshift
+          ports:
+            - containerPort: 8080
