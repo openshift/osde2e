@@ -269,14 +269,14 @@ func createNodeDrainWorkload(h *helper.H) error {
 		return fmt.Errorf("Node Drain workload not running correctly: %v", err)
 	}
 
-	log.Println("All Pods ready")
+	log.Println("Node drain workload ready")
 
 	// If success, add the workload to the list of installed workloads
 	h.AddWorkload(drainWorkloadName, h.CurrentProject())
 
-	log.Println("Deleting drain pod")
-	// Initiate the deletion of node-drain-test pod which will cause node drain to get stuck and be handled by managed-upgrade-operator
-	h.Kube().CoreV1().Pods(h.CurrentProject()).Delete(context.TODO(), drainWorkloadName, metav1.DeleteOptions{})
+	// Initiate the deletion of node-drain-test deployment which will cause node drain to get stuck and tested being handled by managed-upgrade-operator
+	log.Println("Deleting node drain workload")
+	h.Kube().AppsV1().Deployments(h.CurrentProject()).Delete(context.TODO(), drainWorkloadName, metav1.DeleteOptions{})
 
 	return nil
 }

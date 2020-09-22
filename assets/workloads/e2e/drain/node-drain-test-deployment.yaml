@@ -1,0 +1,30 @@
+#
+# Deployment manifest to test node drain
+# Faulty finalizer is added to prevent deletion of the pod which subsequently prevents node drain
+# The command to manually solve this issue is to remove the faulty finalizer:
+# COMMAND: `oc patch pod node-drain-test-xxx-123 -p '{"metadata":{"finalizers":[]}}' --type=merge`
+#
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: node-drain-test
+  name: node-drain-test
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: node-drain-test
+  template:
+    metadata:
+      labels:
+        app: node-drain-test
+      finalizers:
+      - ingress.openshift.io/canttouchthis
+    spec:
+      containers:
+      - image: busybox
+        name: busybox
+        args:
+        - sleep
+        - "1000000"
