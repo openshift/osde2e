@@ -154,6 +154,9 @@ func (o *OCMProvider) UpgradeSource() spi.UpgradeSource {
 // channel won't be used for integration since the upgrade source for integration is the release
 // controller and not Cincinnati.
 func (o *OCMProvider) CincinnatiChannel() spi.CincinnatiChannel {
+	if o.Environment() == "prod" {
+		return spi.CincinnatiStableChannel
+	}
 	return spi.CincinnatiFastChannel
 }
 
