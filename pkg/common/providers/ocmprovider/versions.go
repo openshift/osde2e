@@ -74,6 +74,9 @@ func (o *OCMProvider) Versions() (*spi.VersionList, error) {
 					if o.Environment() == "prod" && v.ChannelGroup() != "stable" {
 						return true
 					}
+					if o.Environment() == "stage" && v.ChannelGroup() == "nightly" {
+						return true
+					}
 					versions = append(versions, spi.NewVersionBuilder().
 						Version(version).
 						Default(v.Default()).
