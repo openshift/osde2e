@@ -82,7 +82,7 @@ func TriggerManagedUpgrade(h *helper.H) (*configv1.ClusterVersion, error) {
 
 	// Create Pod Disruption Budget test workloads if desired
 	if viper.GetBool(config.Upgrade.ManagedUpgradeTestPodDisruptionBudgets) {
-		err = createPodDisruptionBudgetWorkloads(h)
+		err = createManagedUpgradeWorkload(pdbWorkloadName, pdbWorkloadDir, h)
 		if err != nil {
 			return cVersion, fmt.Errorf("unable to setup PDB workload for upgrade: %v", err)
 		}
@@ -90,10 +90,15 @@ func TriggerManagedUpgrade(h *helper.H) (*configv1.ClusterVersion, error) {
 
 	// Create Node Drain test workloads if desired
 	if viper.GetBool(config.Upgrade.ManagedUpgradeTestNodeDrain) {
-		err = createNodeDrainWorkload(h)
+		err = createManagedUpgradeWorkload(drainWorkloadName, drainWorkloadDir, h)
 		if err != nil {
 			return cVersion, fmt.Errorf("unable to setup node drain test workload for upgrade: %v", err)
 		}
+
+		// Delete node drain workload so that removal of pod stuck in terminating state will be tested by managed-upgrade-operator
+		log.Printf("Deleting workload %s to test node drain by upgrade", drainWorkloadName)
+		h.Kube().AppsV1().Deployments(h.CurrentProject()).Delete(context.TODO(), drainWorkloadName, metav1.DeleteOptions{})
+
 	}
 
 	// override the Hive-managed operator config with our testing one, so that
@@ -203,20 +208,21 @@ func createUpgradeConfig(channel string, version string, h *helper.H) error {
 	return nil
 }
 
-// creates workloads that are protected by Pod Disruption Budgets (PDBs)
-// which the managed-upgrade-operator is expected to be able to handle
-func createPodDisruptionBudgetWorkloads(h *helper.H) error {
+func createManagedUpgradeWorkload(workLoadName string, workLoadDir string, h *helper.H) error {
 
-	if _, ok := h.GetWorkload(pdbWorkloadName); ok {
+	if _, ok := h.GetWorkload(workLoadName); ok {
 		return nil
 	}
 
-	// Create all K8s objects that are within the testDir
-	log.Printf("Applying Pod Disruption Budget workload: %s\n", pdbWorkloadDir)
-	_, err := helper.ApplyYamlInFolder(pdbWorkloadDir, h.CurrentProject(), h.Kube())
+	// Create all K8s objects that are within the workLoadDir
+	log.Printf("Applying %s workload from %s\n", workLoadName, workLoadDir)
+	obj, err := helper.ApplyYamlInFolder(workLoadDir, h.CurrentProject(), h.Kube())
 	if err != nil {
-		return fmt.Errorf("can't create upgrade PDB workload: %v", err)
+		return fmt.Errorf("can't create %s workload: %v", workLoadName, err)
 	}
+
+	// Log how many objects have been created
+	log.Printf("%v object(s) created for %s workload from %s path\n", len(obj), workLoadName, workLoadDir)
 
 	// Give the cluster a second to churn before checking
 	time.Sleep(workloadCreationWaitTime * time.Second)
@@ -229,54 +235,11 @@ func createPodDisruptionBudgetWorkloads(h *helper.H) error {
 		return true, nil
 	})
 	if err != nil {
-		return fmt.Errorf("PDB workload not running correctly: %v", err)
+		return fmt.Errorf("%s workload not running correctly: %v", workLoadName, err)
 	}
 
 	// If success, add the workload to the list of installed workloads
-	h.AddWorkload(pdbWorkloadName, h.CurrentProject())
-
-	return nil
-}
-
-// createNodeDrainWorkload creates test workload to test Node Drain functionality
-// which the managed-upgrade-operator is expected to be able to handle
-func createNodeDrainWorkload(h *helper.H) error {
-	if _, ok := h.GetWorkload(drainWorkloadName); ok {
-		return nil
-	}
-
-	// Create all K8s objects that are within the testDir
-	log.Printf("Applying Node Drain workload: %s\n", drainWorkloadDir)
-	objects, err := helper.ApplyYamlInFolder(drainWorkloadDir, h.CurrentProject(), h.Kube())
-	if err != nil {
-		return fmt.Errorf("can't create node drain test workload: %v", err)
-	}
-
-	// Log how many objects have been created
-	log.Printf("%v objects created\n", len(objects))
-
-	// Wait for few seconds for workload to be created on the cluster (defaults 3 seconds)
-	time.Sleep(workloadCreationWaitTime * time.Second)
-
-	// Wait for all pods to come up healthy
-	err = wait.PollImmediate(5*time.Second, 2*time.Minute, func() (bool, error) {
-		if check, err := healthchecks.CheckPodHealth(h.Kube().CoreV1(), nil); !check || err != nil {
-			return false, nil
-		}
-		return true, nil
-	})
-	if err != nil {
-		return fmt.Errorf("Node Drain workload not running correctly: %v", err)
-	}
-
-	log.Println("Node drain workload ready")
-
-	// If success, add the workload to the list of installed workloads
-	h.AddWorkload(drainWorkloadName, h.CurrentProject())
-
-	// Initiate the deletion of node-drain-test deployment which will cause node drain to get stuck and tested being handled by managed-upgrade-operator
-	log.Println("Deleting node drain workload")
-	h.Kube().AppsV1().Deployments(h.CurrentProject()).Delete(context.TODO(), drainWorkloadName, metav1.DeleteOptions{})
+	h.AddWorkload(workLoadName, h.CurrentProject())
 
 	return nil
 }
