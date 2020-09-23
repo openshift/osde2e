@@ -22,13 +22,13 @@ require (
 	github.com/markbates/pkger v0.16.0
 	github.com/onsi/ginkgo v1.13.0
 	github.com/onsi/gomega v1.10.1
-	github.com/openshift-online/ocm-sdk-go v0.1.128
+	github.com/openshift-online/ocm-sdk-go v0.1.130
 	github.com/openshift/api v0.0.0-20200522173408-17ada6e4245b
 	github.com/openshift/client-go v0.0.0-20200326155132-2a6cd50aedd0
 	github.com/openshift/cluster-api v0.0.0-20191129101638-b09907ac6668
 	github.com/openshift/machine-api-operator v0.2.1-0.20200529045911-d19e8d007f7c
 	github.com/openshift/managed-upgrade-operator v0.0.0-20200820052802-5d57e1785b53
-	github.com/openshift/moactl v0.0.10
+	github.com/openshift/moactl v0.0.11
 	github.com/operator-framework/api v0.3.6
 	github.com/operator-framework/operator-lifecycle-manager v0.0.0-20200521062108-408ca95d458f
 	github.com/prometheus/alertmanager v0.21.0

@@ -8,6 +8,13 @@ import (
 
 // testCmd configures default Service Account as a kubeconfig, runs openshift-tests, and serves results over HTTP
 const testCmd = `#!/bin/bash
+oc config set-cluster {{.Name}} --server={{.Server}} --certificate-authority={{.CA}}
+oc config set-credentials {{.Name}} --token=$(cat {{.TokenFile}})
+oc config set-context {{.Name}} --cluster={{.Name}} --user={{.Name}}
+oc config use-context {{.Name}}
+oc config view > /tmp/kubeconfig
+export KUBECONFIG=/tmp/kubeconfig
+
 oc cluster-info
 
 # create OutputDir

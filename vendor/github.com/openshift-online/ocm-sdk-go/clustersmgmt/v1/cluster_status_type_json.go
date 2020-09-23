@@ -64,12 +64,36 @@ func writeClusterStatus(object *ClusterStatus, stream *jsoniter.Stream) {
 		stream.WriteString(*object.href)
 		count++
 	}
+	if object.dnsReady != nil {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("dns_ready")
+		stream.WriteBool(*object.dnsReady)
+		count++
+	}
 	if object.description != nil {
 		if count > 0 {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("description")
 		stream.WriteString(*object.description)
+		count++
+	}
+	if object.provisionErrorReason != nil {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("provision_error_reason")
+		stream.WriteString(*object.provisionErrorReason)
+		count++
+	}
+	if object.provisionErrorType != nil {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("provision_error_type")
+		stream.WriteString(*object.provisionErrorType)
 		count++
 	}
 	if object.state != nil {
@@ -113,9 +137,18 @@ func readClusterStatus(iterator *jsoniter.Iterator) *ClusterStatus {
 		case "href":
 			value := iterator.ReadString()
 			object.href = &value
+		case "dns_ready":
+			value := iterator.ReadBool()
+			object.dnsReady = &value
 		case "description":
 			value := iterator.ReadString()
 			object.description = &value
+		case "provision_error_reason":
+			value := iterator.ReadString()
+			object.provisionErrorReason = &value
+		case "provision_error_type":
+			value := iterator.ReadString()
+			object.provisionErrorType = &value
 		case "state":
 			text := iterator.ReadString()
 			value := ClusterState(text)
