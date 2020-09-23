@@ -51,10 +51,11 @@ func ChooseVersions() (err error) {
 // chooses between default version and nightly based on target versions.
 func setupVersion(versionList *spi.VersionList) (*semver.Version, error) {
 	var selectedVersion *semver.Version
+	var clusterVersion string
 
 	versionType := "user supplied version"
 
-	clusterVersion := viper.GetString(config.Cluster.Version)
+	clusterVersion = viper.GetString(config.Cluster.Version)
 	if len(clusterVersion) == 0 {
 		var err error
 
@@ -63,7 +64,6 @@ func setupVersion(versionList *spi.VersionList) (*semver.Version, error) {
 		if err == nil {
 			if viper.GetBool(config.Cluster.EnoughVersionsForOldestOrMiddleTest) && viper.GetBool(config.Cluster.PreviousVersionFromDefaultFound) {
 				viper.Set(config.Cluster.Version, util.SemverToOpenshiftVersion(selectedVersion))
-				clusterVersion = util.SemverToOpenshiftVersion(selectedVersion)
 			} else {
 				log.Printf("Unable to get the %s.", versionType)
 			}
