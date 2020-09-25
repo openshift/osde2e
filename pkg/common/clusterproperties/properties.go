@@ -22,4 +22,7 @@ const (
 
 	// JobID is the name of the job ID that is associated with the cluster.
 	JobID = "JobID"
+
+	// ProvisionShardID is the shard ID that is set to provision a shard for the cluster.
+	ProvisionShardID = "provision_shard_id"
 )

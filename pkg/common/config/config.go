@@ -253,6 +253,9 @@ var Cluster = struct {
 
 	// PreviousVersionFromDefaultFound is true if a previous version from default was found.
 	PreviousVersionFromDefaultFound string
+
+	// ProvisionShardID is the shard ID that is set to provision a shard for the cluster.
+	ProvisionShardID string
 }{
 	MultiAZ:                             "cluster.multiAZ",
 	DestroyAfterTest:                    "cluster.destroyAfterTest",
@@ -270,6 +273,7 @@ var Cluster = struct {
 	Version:                             "cluster.version",
 	EnoughVersionsForOldestOrMiddleTest: "cluster.enoughVersionForOldestOrMiddleTest",
 	PreviousVersionFromDefaultFound:     "cluster.previousVersionFromDefaultFound",
+	ProvisionShardID:                    "cluster.provisionshardID",
 }
 
 // CloudProvider config keys.
@@ -497,6 +501,9 @@ func init() {
 	viper.SetDefault(Cluster.EnoughVersionsForOldestOrMiddleTest, true)
 
 	viper.SetDefault(Cluster.PreviousVersionFromDefaultFound, true)
+
+	viper.SetDefault(Cluster.ProvisionShardID, "")
+	viper.BindEnv(Cluster.ProvisionShardID, "PROVISION_SHARD_ID")
 
 	// ----- Cloud Provider -----
 	viper.SetDefault(CloudProvider.CloudProviderID, "aws")
