@@ -176,12 +176,18 @@ func (o *OCMProvider) GenerateProperties() (map[string]string, error) {
 
 	installedversion := viper.GetString(config.Cluster.Version)
 
+	provisionshardID := viper.GetString(config.Cluster.ProvisionShardID)
+
 	properties := map[string]string{
 		clusterproperties.MadeByOSDe2e:     "true",
 		clusterproperties.OwnedBy:          username,
 		clusterproperties.InstalledVersion: installedversion,
 		clusterproperties.UpgradeVersion:   "--",
 		clusterproperties.Status:           clusterproperties.StatusProvisioning,
+	}
+
+	if provisionshardID != "" {
+		properties[clusterproperties.ProvisionShardID] = provisionshardID
 	}
 
 	additionalLabels := viper.GetString(AdditionalLabels)
