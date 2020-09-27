@@ -6,7 +6,7 @@
     <description>Recent content on OSDe2e Reporting</description>
     <generator>Hugo -- gohugo.io</generator>
     <copyright>Copyright © 2020, Red Hat, all rights reserved.</copyright>
-    <lastBuildDate>Sat, 26 Sep 2020 12:00:50 +0000</lastBuildDate>
+    <lastBuildDate>Sun, 27 Sep 2020 12:02:35 +0000</lastBuildDate>
     
 	<atom:link href="https://openshift.github.io/osde2e/index.xml" rel="self" type="application/rss+xml" />
     
@@ -18,6 +18,33 @@
       
       <guid>https://openshift.github.io/osde2e/about/</guid>
       <description>Automatically generated reports generated from OSDe2e data live here.</description>
+    </item>
+    
+    <item>
+      <title>OSDe2e aws Weather Report 2020-09-27 12:02:35.132563575 &#43;0000 UTC</title>
+      <link>https://openshift.github.io/osde2e/post/ad91cb47b06343eaa89084a6cf98b10f/</link>
+      <pubDate>Sun, 27 Sep 2020 12:02:35 +0000</pubDate>
+      
+      <guid>https://openshift.github.io/osde2e/post/ad91cb47b06343eaa89084a6cf98b10f/</guid>
+      <description>&lt;table class=&#34;summary&#34;&gt;&lt;tr&gt;&lt;td bgcolor=&#34;#4db200&#34;&gt;&lt;/td&gt;&lt;td&gt;int (Pass rate: 97.00)&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td bgcolor=&#34;#06f900&#34;&gt;&lt;/td&gt;&lt;td&gt;prod (Pass rate: 99.78)&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td bgcolor=&#34;#dd2200&#34;&gt;&lt;/td&gt;&lt;td&gt;stage (Pass rate: 91.37)&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;</description>
+    </item>
+    
+    <item>
+      <title>OSDe2e aws Weather Report 2020-09-27 12:02:24.204178465 &#43;0000 UTC</title>
+      <link>https://openshift.github.io/osde2e/post/af9fb5cd386d4b77ad2c2f2e922cb13a/</link>
+      <pubDate>Sun, 27 Sep 2020 12:02:24 +0000</pubDate>
+      
+      <guid>https://openshift.github.io/osde2e/post/af9fb5cd386d4b77ad2c2f2e922cb13a/</guid>
+      <description>&lt;table class=&#34;summary&#34;&gt;&lt;tr&gt;&lt;td bgcolor=&#34;#4db200&#34;&gt;&lt;/td&gt;&lt;td&gt;int (Pass rate: 97.00)&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td bgcolor=&#34;#06f900&#34;&gt;&lt;/td&gt;&lt;td&gt;prod (Pass rate: 99.78)&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td bgcolor=&#34;#dd2200&#34;&gt;&lt;/td&gt;&lt;td&gt;stage (Pass rate: 91.37)&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;</description>
+    </item>
+    
+    <item>
+      <title>OSDe2e aws Weather Report 2020-09-27 12:02:10.013878637 &#43;0000 UTC</title>
+      <link>https://openshift.github.io/osde2e/post/77235e3b94624ba59424f438d2ca890d/</link>
+      <pubDate>Sun, 27 Sep 2020 12:02:10 +0000</pubDate>
+      
+      <guid>https://openshift.github.io/osde2e/post/77235e3b94624ba59424f438d2ca890d/</guid>
+      <description>&lt;table class=&#34;summary&#34;&gt;&lt;tr&gt;&lt;td bgcolor=&#34;#4db200&#34;&gt;&lt;/td&gt;&lt;td&gt;int (Pass rate: 97.00)&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td bgcolor=&#34;#06f900&#34;&gt;&lt;/td&gt;&lt;td&gt;prod (Pass rate: 99.78)&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td bgcolor=&#34;#dd2200&#34;&gt;&lt;/td&gt;&lt;td&gt;stage (Pass rate: 91.37)&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;</description>
     </item>
     
     <item>
