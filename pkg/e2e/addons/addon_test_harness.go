@@ -1,6 +1,7 @@
 package addons
 
 import (
+	"log"
 	"strings"
 
 	"github.com/onsi/ginkgo"
@@ -15,6 +16,7 @@ var _ = ginkgo.Describe("[Suite: addons] Addon Test Harness", func() {
 	h := helper.New()
 
 	addonTimeoutInSeconds := float64(viper.GetFloat64(config.Tests.PollingTimeout))
+	log.Printf("addon timeout is %v", addonTimeoutInSeconds)
 	if addonTimeoutInSeconds == 30 {
 		// 30s is too short of a time for addons. So override the default with
 		// a new default of 60m (3600s)
@@ -22,6 +24,6 @@ var _ = ginkgo.Describe("[Suite: addons] Addon Test Harness", func() {
 	}
 	ginkgo.It("should run until completion", func() {
 		h.SetServiceAccount(viper.GetString(config.Addons.TestUser))
-		h.RunAddonTests("addon-tests", strings.Split(viper.GetString(config.Addons.TestHarnesses), ","), []string{})
-	}, addonTimeoutInSeconds)
+		h.RunAddonTests("addon-tests", int(addonTimeoutInSeconds), strings.Split(viper.GetString(config.Addons.TestHarnesses), ","), []string{})
+	}, addonTimeoutInSeconds+30)
 })

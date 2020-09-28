@@ -19,8 +19,7 @@ var err error
 
 // RunAddonTests will attempt to run the configured addon tests for the current job
 // It allows you to specify a job name prefix and arguments to a test harness container
-func (h *H) RunAddonTests(name string, harnesses []string, args []string) {
-	addonTimeoutInSeconds := 3600
+func (h *H) RunAddonTests(name string, timeout int, harnesses []string, args []string) {
 	addonTestTemplate, err = templates.LoadTemplate("/assets/addons/addon-runner.template")
 
 	if err != nil {
@@ -39,7 +38,9 @@ func (h *H) RunAddonTests(name string, harnesses []string, args []string) {
 		latestImageStream, err := r.GetLatestImageStreamTag()
 		jobName := fmt.Sprintf("%s-%s", name, suffix)
 		Expect(err).NotTo(HaveOccurred())
+		serviceAccountDir := "/var/run/secrets/kubernetes.io/serviceaccount"
 		values := struct {
+			Name                 string
 			JobName              string
 			Arguments            string
 			Timeout              int
@@ -48,14 +49,21 @@ func (h *H) RunAddonTests(name string, harnesses []string, args []string) {
 			ServiceAccount       string
 			PushResultsContainer string
 			Suffix               string
+			Server               string
+			CA                   string
+			TokenFile            string
 		}{
+			Name:                 jobName,
 			JobName:              jobName,
-			Timeout:              addonTimeoutInSeconds,
+			Timeout:              timeout,
 			Image:                harness,
 			OutputDir:            runner.DefaultRunner.OutputDir,
 			ServiceAccount:       h.GetNamespacedServiceAccount(),
 			PushResultsContainer: latestImageStream,
 			Suffix:               suffix,
+			Server:               "https://kubernetes.default",
+			CA:                   serviceAccountDir + "/ca.crt",
+			TokenFile:            serviceAccountDir + "/token",
 		}
 
 		if len(args) > 0 {
@@ -69,7 +77,7 @@ func (h *H) RunAddonTests(name string, harnesses []string, args []string) {
 
 		// run tests
 		stopCh := make(chan struct{})
-		err = r.Run(addonTimeoutInSeconds, stopCh)
+		err = r.Run(timeout, stopCh)
 		Expect(err).NotTo(HaveOccurred())
 
 		// get results

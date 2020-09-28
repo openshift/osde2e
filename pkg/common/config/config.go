@@ -137,7 +137,7 @@ var Kubeconfig = struct {
 
 // Tests config keys.
 var Tests = struct {
-	// PollingTimeout is how long (in mimutes) to wait for an object to be created before failing the test.
+	// PollingTimeout is how long (in seconds) to wait for an object to be created before failing the test.
 	// Env: POLLING_TIMEOUT
 	PollingTimeout string
 

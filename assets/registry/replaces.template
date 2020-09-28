@@ -1,5 +1,12 @@
 REGISTRY_QUERY_FILE="{{.OutputDir}}/registry.json"
 
+oc config set-cluster {{.Name}} --server=https://kubernetes.default --certificate-authority={{.CA}}
+oc config set-credentials {{.Name}} --token=$(cat {{.TokenFile}})
+oc config set-context {{.Name}} --cluster={{.Name}} --user={{.Name}}
+oc config use-context {{.Name}}
+oc config view > /tmp/kubeconfig
+export KUBECONFIG=/tmp/kubeconfig
+
 oc run grpcurl-query -n {{.Namespace}} --quiet --rm=true --restart=Never --attach=true \
     --image=quay.io/rogbas/grpcurl -- -plaintext -d \
     '{"pkgName":"{{.PackageName}}","channelName":"{{.PackageChannel}}"}' \
