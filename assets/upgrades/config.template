@@ -1,5 +1,6 @@
 maintenance:
   controlPlaneTime: 90
+  workerNodeTime: 8
 scale:
   timeOut: 15
 upgradeWindow:
