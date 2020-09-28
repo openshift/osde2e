@@ -23,11 +23,14 @@ package v1 // github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1
 //
 // Detailed status of a cluster.
 type ClusterStatusBuilder struct {
-	id          *string
-	href        *string
-	link        bool
-	description *string
-	state       *ClusterState
+	id                   *string
+	href                 *string
+	link                 bool
+	dnsReady             *bool
+	description          *string
+	provisionErrorReason *string
+	provisionErrorType   *string
+	state                *ClusterState
 }
 
 // NewClusterStatus creates a new builder of 'cluster_status' objects.
@@ -53,11 +56,35 @@ func (b *ClusterStatusBuilder) Link(value bool) *ClusterStatusBuilder {
 	return b
 }
 
+// DNSReady sets the value of the 'DNS_ready' attribute to the given value.
+//
+//
+func (b *ClusterStatusBuilder) DNSReady(value bool) *ClusterStatusBuilder {
+	b.dnsReady = &value
+	return b
+}
+
 // Description sets the value of the 'description' attribute to the given value.
 //
 //
 func (b *ClusterStatusBuilder) Description(value string) *ClusterStatusBuilder {
 	b.description = &value
+	return b
+}
+
+// ProvisionErrorReason sets the value of the 'provision_error_reason' attribute to the given value.
+//
+//
+func (b *ClusterStatusBuilder) ProvisionErrorReason(value string) *ClusterStatusBuilder {
+	b.provisionErrorReason = &value
+	return b
+}
+
+// ProvisionErrorType sets the value of the 'provision_error_type' attribute to the given value.
+//
+//
+func (b *ClusterStatusBuilder) ProvisionErrorType(value string) *ClusterStatusBuilder {
+	b.provisionErrorType = &value
 	return b
 }
 
@@ -77,7 +104,10 @@ func (b *ClusterStatusBuilder) Copy(object *ClusterStatus) *ClusterStatusBuilder
 	b.id = object.id
 	b.href = object.href
 	b.link = object.link
+	b.dnsReady = object.dnsReady
 	b.description = object.description
+	b.provisionErrorReason = object.provisionErrorReason
+	b.provisionErrorType = object.provisionErrorType
 	b.state = object.state
 	return b
 }
@@ -88,7 +118,10 @@ func (b *ClusterStatusBuilder) Build() (object *ClusterStatus, err error) {
 	object.id = b.id
 	object.href = b.href
 	object.link = b.link
+	object.dnsReady = b.dnsReady
 	object.description = b.description
+	object.provisionErrorReason = b.provisionErrorReason
+	object.provisionErrorType = b.provisionErrorType
 	object.state = b.state
 	return
 }

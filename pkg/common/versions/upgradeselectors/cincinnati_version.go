@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"strings"
 	"sync"
 
 	"github.com/Masterminds/semver"
@@ -39,6 +40,7 @@ func (c cincinnatiUpgrade) Priority() int {
 
 func (c cincinnatiUpgrade) SelectVersion(installVersion *semver.Version, versionList *spi.VersionList) (string, string, error) {
 	var filteredVersionList = []*semver.Version{}
+
 	for _, version := range versionList.AvailableVersions() {
 		if filterOnCincinnati(installVersion, version.Version()) {
 			filteredVersionList = append(filteredVersionList, version.Version())
@@ -57,7 +59,6 @@ func (c cincinnatiUpgrade) SelectVersion(installVersion *semver.Version, version
 	releaseName := ""
 	// If the available cluster image set makes sense, then we'll just use that
 	if !cisUpgradeVersion.LessThan(installVersion) {
-		log.Printf("Using cluster image set.")
 		releaseName = util.SemverToOpenshiftVersion(cisUpgradeVersion)
 		metadata.Instance.SetUpgradeVersionSource("cluster image set")
 		viper.Set(config.Upgrade.UpgradeVersionEqualToInstallVersion, cisUpgradeVersion.Equal(installVersion))
@@ -177,6 +178,12 @@ func doesEdgeExistInCincinnati(installVersion, upgradeVersion *semver.Version) (
 		return false, fmt.Errorf("error loading Cincinnati data: %v", err)
 	}
 
+	if !strings.Contains(channel, "stable") {
+		if i := strings.LastIndex(upgradeVersion.Original(), "-"); i != -1 {
+			upgradeVersion, _ = semver.NewVersion(upgradeVersion.Original()[:i])
+		}
+	}
+
 	installIndex := -1
 	upgradeIndex := -1
 	for i, cincinnatiVersion := range cincinnatiVersions.Versions {
@@ -188,22 +195,8 @@ func doesEdgeExistInCincinnati(installVersion, upgradeVersion *semver.Version) (
 		}
 	}
 
-	targetEdge := []int{installIndex, upgradeIndex}
-
 	for _, edge := range cincinnatiVersions.Edges {
-		if len(edge) != len(targetEdge) {
-			continue
-		}
-
-		match := true
-		for i := range edge {
-			if edge[i] != targetEdge[i] {
-				match = false
-				break
-			}
-		}
-
-		if match {
+		if edge[0] == installIndex && edge[1] == upgradeIndex {
 			return true, nil
 		}
 	}

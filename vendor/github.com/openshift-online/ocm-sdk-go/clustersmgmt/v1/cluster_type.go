@@ -112,6 +112,7 @@ type Cluster struct {
 	provisionShard                    *ProvisionShard
 	region                            *CloudRegion
 	state                             *ClusterState
+	status                            *ClusterStatus
 	storageQuota                      *Value
 	subscription                      *Subscription
 	version                           *Version
@@ -1007,6 +1008,29 @@ func (o *Cluster) GetState() (value ClusterState, ok bool) {
 	ok = o != nil && o.state != nil
 	if ok {
 		value = *o.state
+	}
+	return
+}
+
+// Status returns the value of the 'status' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+// Status of cluster
+func (o *Cluster) Status() *ClusterStatus {
+	if o == nil {
+		return nil
+	}
+	return o.status
+}
+
+// GetStatus returns the value of the 'status' attribute and
+// a flag indicating if the attribute has a value.
+//
+// Status of cluster
+func (o *Cluster) GetStatus() (value *ClusterStatus, ok bool) {
+	ok = o != nil && o.status != nil
+	if ok {
+		value = o.status
 	}
 	return
 }

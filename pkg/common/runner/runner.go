@@ -16,6 +16,8 @@ import (
 const (
 	// name used in Runner resources
 	defaultName = "osde2e-runner"
+	// directory containing service account credentials
+	serviceAccountDir = "/var/run/secrets/kubernetes.io/serviceaccount"
 )
 
 // DefaultRunner is a runner with the most commonly desired settings.
@@ -30,6 +32,9 @@ var DefaultRunner = &Runner{
 		RestartPolicy: kubev1.RestartPolicyNever,
 	},
 	OutputDir: "/test-run-results",
+	Server:    "https://kubernetes.default",
+	CA:        serviceAccountDir + "/ca.crt",
+	TokenFile: serviceAccountDir + "/token",
 	Logger:    log.New(os.Stderr, "", log.LstdFlags),
 }
 
@@ -43,6 +48,15 @@ type Runner struct {
 
 	// Name of the operation being performed.
 	Name string
+
+	// Server is the endpoint within the pod the Kubernetes API should be
+	Server string
+
+	// CA is the CA bundle used to auth against the Kubernetes API
+	CA string
+
+	// TokenFile is the credentials used to auth against the Kubernetes API
+	TokenFile string
 
 	// Namespace runner resources should be created in.
 	Namespace string

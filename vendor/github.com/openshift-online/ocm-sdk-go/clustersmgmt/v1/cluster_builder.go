@@ -100,6 +100,7 @@ type ClusterBuilder struct {
 	provisionShard                    *ProvisionShardBuilder
 	region                            *CloudRegionBuilder
 	state                             *ClusterState
+	status                            *ClusterStatusBuilder
 	storageQuota                      *ValueBuilder
 	subscription                      *SubscriptionBuilder
 	version                           *VersionBuilder
@@ -401,6 +402,14 @@ func (b *ClusterBuilder) State(value ClusterState) *ClusterBuilder {
 	return b
 }
 
+// Status sets the value of the 'status' attribute to the given value.
+//
+// Detailed status of a cluster.
+func (b *ClusterBuilder) Status(value *ClusterStatusBuilder) *ClusterBuilder {
+	b.status = value
+	return b
+}
+
 // StorageQuota sets the value of the 'storage_quota' attribute to the given value.
 //
 // Numeric value and the unit used to measure it.
@@ -567,6 +576,11 @@ func (b *ClusterBuilder) Copy(object *Cluster) *ClusterBuilder {
 		b.region = nil
 	}
 	b.state = object.state
+	if object.status != nil {
+		b.status = NewClusterStatus().Copy(object.status)
+	} else {
+		b.status = nil
+	}
 	if object.storageQuota != nil {
 		b.storageQuota = NewValue().Copy(object.storageQuota)
 	} else {
@@ -725,6 +739,12 @@ func (b *ClusterBuilder) Build() (object *Cluster, err error) {
 		}
 	}
 	object.state = b.state
+	if b.status != nil {
+		object.status, err = b.status.Build()
+		if err != nil {
+			return
+		}
+	}
 	if b.storageQuota != nil {
 		object.storageQuota, err = b.storageQuota.Build()
 		if err != nil {

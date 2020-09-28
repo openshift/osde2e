@@ -369,6 +369,14 @@ func writeCluster(object *Cluster, stream *jsoniter.Stream) {
 		stream.WriteString(string(*object.state))
 		count++
 	}
+	if object.status != nil {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("status")
+		writeClusterStatus(object.status, stream)
+		count++
+	}
 	if object.storageQuota != nil {
 		if count > 0 {
 			stream.WriteMore()
@@ -636,6 +644,9 @@ func readCluster(iterator *jsoniter.Iterator) *Cluster {
 			text := iterator.ReadString()
 			value := ClusterState(text)
 			object.state = &value
+		case "status":
+			value := readClusterStatus(iterator)
+			object.status = value
 		case "storage_quota":
 			value := readValue(iterator)
 			object.storageQuota = value
