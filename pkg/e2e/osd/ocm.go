@@ -27,9 +27,6 @@ var _ = ginkgo.Describe(ocmTestName, func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(metrics.CriticalAlertsFiring()).NotTo(BeNil())
 			Expect(metrics.OperatorsConditionFailing()).NotTo(BeNil())
-			Expect(metrics.Nodes().Compute()).NotTo(BeZero())
-			Expect(metrics.Nodes().Infra()).NotTo(BeZero())
-			Expect(metrics.Nodes().Master()).NotTo(BeZero())
 			Expect(metrics.ComputeNodesSockets().Empty()).NotTo(BeFalse())
 
 		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
