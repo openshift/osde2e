@@ -13,3 +13,10 @@ healthCheck:
   - DNSErrors05MinSRE
   - MetricsClientSendFailingSRE
   - UpgradeNodeScalingFailedSRE
+verification:
+  ignoredNamespaces:
+  - openshift-logging
+  namespacePrefixesToCheck:
+  - openshift
+  - kube
+  - default
