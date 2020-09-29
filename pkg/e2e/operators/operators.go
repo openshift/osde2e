@@ -4,12 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/openshift/osde2e/pkg/common/providers"
-	"github.com/openshift/osde2e/pkg/common/runner"
-	"github.com/openshift/osde2e/pkg/common/templates"
 	"log"
 	"strings"
 	"time"
+
+	"github.com/openshift/osde2e/pkg/common/providers"
+	"github.com/openshift/osde2e/pkg/common/runner"
+	"github.com/openshift/osde2e/pkg/common/templates"
 
 	kerror "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -520,28 +521,36 @@ func getReplacesCSV(h *helper.H, subscriptionNS string, csvDisplayName string, c
 
 	h.SetServiceAccount("system:serviceaccount:%s:cluster-admin")
 	r := h.RunnerWithNoCommand()
+	r.Name = fmt.Sprintf("csvq-%s", csvDisplayName)
 
 	Expect(err).NotTo(HaveOccurred())
 	values := struct {
+		Name           string
 		OutputDir      string
 		Namespace      string
 		PackageName    string
 		PackageChannel string
 		ServiceName    string
 		ServicePort    string
+		CA             string
+		TokenFile      string
+		Server         string
 	}{
+		Name:           r.Name,
 		OutputDir:      runner.DefaultRunner.OutputDir,
 		Namespace:      subscriptionNS,
 		PackageName:    csvDisplayName,
 		PackageChannel: packageChannel,
 		ServiceName:    catalogSvcName,
 		ServicePort:    registrySvcPort,
+		Server:         "https://kubernetes.default",
+		CA:             "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt",
+		TokenFile:      "/var/run/secrets/kubernetes.io/serviceaccount/token",
 	}
 
 	registryQueryCmd, err := h.ConvertTemplateToString(cmdTestTemplate, values)
 	Expect(err).NotTo(HaveOccurred())
 
-	r.Name = fmt.Sprintf("csvq-%s", csvDisplayName)
 	r.Cmd = registryQueryCmd
 
 	// run tests

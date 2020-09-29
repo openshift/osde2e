@@ -39,6 +39,7 @@ var _ = ginkgo.Describe(testName, func() {
 		// Does this workload exist? If so, this must be a repeat run.
 		// In this case we should assume the workload has had a valid run once already
 		// And simply run another test validating the workload.
+		h.SetServiceAccount("")
 		if _, ok := h.GetWorkload(workloadName); ok {
 			// Run the workload test
 			doTest(h)

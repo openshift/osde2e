@@ -41,6 +41,12 @@ set -e
 
 cat <<PUSH_RESULTS > push-results.sh
 #!/usr/bin/env bash
+oc config set-cluster {{.Name}} --server=https://kubernetes.default --certificate-authority={{.CA}}
+oc config set-credentials {{.Name}} --token=$(cat {{.TokenFile}})
+oc config set-context {{.Name}} --cluster={{.Name}} --user={{.Name}}
+oc config use-context {{.Name}}
+oc config view > /tmp/kubeconfig
+export KUBECONFIG=/tmp/kubeconfig
 
 JOB_POD=\$(oc get pods -l job-name={{.JobName}} -o=jsonpath='{.items[0].metadata.name}')
 echo "Found Job Pod: \$JOB_POD"
