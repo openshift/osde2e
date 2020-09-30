@@ -7,8 +7,16 @@ upgradeWindow:
   timeOut: 60
 nodeDrain:
   timeOut: 10
+  expectedNodeDrainTime: 8
 healthCheck:
   ignoredCriticals:
   - DNSErrors05MinSRE
   - MetricsClientSendFailingSRE
   - UpgradeNodeScalingFailedSRE
+verification:
+  ignoredNamespaces:
+  - openshift-logging
+  namespacePrefixesToCheck:
+  - openshift
+  - kube
+  - default

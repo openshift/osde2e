@@ -1,0 +1,9 @@
+apiVersion: policy/v1beta1
+kind: PodDisruptionBudget
+metadata:
+  name: pdb-case-2
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: pdb-case-2

@@ -37,26 +37,44 @@ import (
 	"github.com/openshift-online/ocm-sdk-go/internal"
 )
 
+const (
+	tokenExpiry = 1 * time.Minute
+)
+
 // Tokens returns the access and refresh tokens that is currently in use by the connection. If it is
 // necessary to request a new token because it wasn't requested yet, or because it is expired, this
 // method will do it and will return an error if it fails.
 //
 // This operation is potentially lengthy, as it may require network communication. Consider using a
 // context and the TokensContext method.
-func (c *Connection) Tokens() (access, refresh string, err error) {
-	return c.TokensContext(context.Background())
+func (c *Connection) Tokens(expiresIn ...time.Duration) (access, refresh string, err error) {
+	if len(expiresIn) == 1 {
+		access, refresh, err = c.TokensContext(context.Background(), expiresIn[0])
+	} else {
+		access, refresh, err = c.TokensContext(context.Background())
+	}
+	return
+
 }
 
 // TokensContext returns the access and refresh tokens that is currently in use by the connection.
 // If it is necessary to request a new token because it wasn't requested yet, or because it is
 // expired, this method will do it and will return an error if it fails.
 // The function will retry the operation in an exponential-backoff method.
-func (c *Connection) TokensContext(ctx context.Context) (access, refresh string, err error) {
+func (c *Connection) TokensContext(
+	ctx context.Context,
+	expiresIn ...time.Duration,
+) (access, refresh string, err error) {
+	expiresDuration := tokenExpiry
+	if len(expiresIn) == 1 {
+		expiresDuration = expiresIn[0]
+	}
+
 	attempt := 0
 	operation := func() error {
 		attempt++
 		var code int
-		code, access, refresh, err = c.tokensContext(ctx, attempt)
+		code, access, refresh, err = c.tokensContext(ctx, attempt, expiresDuration)
 		if err != nil {
 			if code >= http.StatusInternalServerError {
 				c.logger.Error(ctx,
@@ -89,6 +107,7 @@ func (c *Connection) TokensContext(ctx context.Context) (access, refresh string,
 func (c *Connection) tokensContext(
 	ctx context.Context,
 	attempt int,
+	expiresIn time.Duration,
 ) (code int, access, refresh string, err error) {
 	// We need to make sure that this method isn't execute concurrently, as we will be updating
 	// multiple attributes of the connection:
@@ -120,7 +139,7 @@ func (c *Connection) tokensContext(
 
 	// If the access token is available and it isn't expired or about to expire then we can
 	// return the current tokens directly:
-	if c.accessToken != nil && (!accessExpires || accessLeft >= 1*time.Minute) {
+	if c.accessToken != nil && (!accessExpires || accessLeft >= expiresIn) {
 		access, refresh = c.currentTokens()
 		return
 	}
@@ -129,7 +148,7 @@ func (c *Connection) tokensContext(
 	c.logger.Debug(ctx, "OCM auth: trying to get new tokens (attempt %d)", attempt)
 
 	// So we need to check if we can use the refresh token to request a new one.
-	if c.refreshToken != nil && (!refreshExpires || refreshLeft >= 1*time.Minute) {
+	if c.refreshToken != nil && (!refreshExpires || refreshLeft >= expiresIn) {
 		code, _, err = c.sendRefreshTokenForm(ctx, attempt)
 		if err != nil {
 			return
