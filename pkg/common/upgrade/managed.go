@@ -94,11 +94,6 @@ func TriggerManagedUpgrade(h *helper.H) (*configv1.ClusterVersion, error) {
 		if err != nil {
 			return cVersion, fmt.Errorf("unable to setup node drain test workload for upgrade: %v", err)
 		}
-
-		// Delete node drain workload so that removal of pod stuck in terminating state will be tested by managed-upgrade-operator
-		log.Printf("Deleting workload %s to test node drain by upgrade", drainWorkloadName)
-		h.Kube().AppsV1().Deployments(h.CurrentProject()).Delete(context.TODO(), drainWorkloadName, metav1.DeleteOptions{})
-
 	}
 
 	// override the Hive-managed operator config with our testing one, so that
