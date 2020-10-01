@@ -3,14 +3,13 @@ package upgrade
 import (
 	"context"
 	"fmt"
-	"log"
-	"time"
-
 	"github.com/openshift/osde2e/pkg/common/cluster/healthchecks"
 	"github.com/openshift/osde2e/pkg/common/templates"
 	"github.com/openshift/osde2e/pkg/common/util"
 	"github.com/spf13/viper"
 	"k8s.io/apimachinery/pkg/util/wait"
+	"log"
+	"time"
 
 	configv1 "github.com/openshift/api/config/v1"
 	upgradev1alpha1 "github.com/openshift/managed-upgrade-operator/pkg/apis/upgrade/v1alpha1"
@@ -56,21 +55,13 @@ func TriggerManagedUpgrade(h *helper.H) (*configv1.ClusterVersion, error) {
 		return cVersion, fmt.Errorf("couldn't get current ClusterVersion '%s': %v", ClusterVersionName, err)
 	}
 
+	image := viper.GetString(config.Upgrade.Image)
 	releaseName := viper.GetString(config.Upgrade.ReleaseName)
 
 	// determine requested upgrade targets
-
-	// At this point, any upgrade target is validated against a Cincinnati edge.
-	// If it comes with an image, it should be a valid edge and, a valid version.
-	// Therefore, this check should be unnecessary and is currently blocking us
-	// from validating upgrades to a nightly.
-	// TODO: Remove once we validate this has no negative impact
-	/*
-		image := viper.GetString(config.Upgrade.Image)
-		if image != "" {
-			return cVersion, fmt.Errorf("image-based managed upgrades are unsupported")
-		}
-	*/
+	if image != "" {
+		return cVersion, fmt.Errorf("image-based managed upgrades are unsupported")
+	}
 
 	upgradeVersion, err := util.OpenshiftVersionToSemver(releaseName)
 	if err != nil {
