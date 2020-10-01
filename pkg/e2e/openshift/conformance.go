@@ -18,6 +18,9 @@ var DefaultE2EConfig = E2EConfig{
 		"--include-success",
 		"--junit-dir=" + runner.DefaultRunner.OutputDir,
 	},
+	Name:      "kubernetes-conformance",
+	CA:        "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt",
+	TokenFile: "/var/run/secrets/kubernetes.io/serviceaccount/token",
 }
 
 var conformanceK8sTestName string = "[Suite: conformance][k8s]"
@@ -70,6 +73,7 @@ var _ = ginkgo.Describe(conformanceOpenshiftTestName, func() {
 		// configure tests
 		cfg := DefaultE2EConfig
 		cfg.Suite = "openshift/conformance"
+		cfg.Name = "openshift-conformance"
 		cmd := cfg.Cmd()
 
 		// setup runner
