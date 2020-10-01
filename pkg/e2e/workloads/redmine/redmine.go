@@ -79,12 +79,13 @@ var _ = ginkgo.Describe(testName, func() {
 func createWorkload(h *helper.H) error {
 	// Create all K8s objects that are within the testDir
 	objects, err := helper.ApplyYamlInFolder(testDir, h.CurrentProject(), h.Kube())
-	if err != nil {
-		return fmt.Errorf("couldn't apply k8s yaml")
-	}
 
 	// Log how many objects have been created from the workload yaml
 	log.Printf("%v objects created", len(objects))
+
+	if err != nil {
+		return fmt.Errorf("couldn't apply k8s yaml: %s", err.Error())
+	}
 
 	// Create an OpenShift route to go with it
 	appRoute := &v1.Route{
