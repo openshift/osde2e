@@ -10,10 +10,11 @@ import (
 
 const (
 	// cmd to collect prometheus data
-	promCollectCmd = "oc exec -n openshift-monitoring prometheus-k8s-0 -c prometheus -- /bin/sh -c \"cp -ruf /prometheus /tmp/ && tar cvzO -C /tmp/prometheus . \""
+	promCollectCmd            = "oc exec -n openshift-monitoring prometheus-k8s-0 -c prometheus -- /bin/sh -c \"cp -ruf /prometheus /tmp/ && tar cvzO -C /tmp/prometheus . \""
+	clusterStateInformingName = "[Suite: informing] Cluster state"
 )
 
-var _ = ginkgo.Describe(clusterStateTestName, func() {
+var _ = ginkgo.Describe(clusterStateInformingName, func() {
 	defer ginkgo.GinkgoRecover()
 	h := helper.New()
 
