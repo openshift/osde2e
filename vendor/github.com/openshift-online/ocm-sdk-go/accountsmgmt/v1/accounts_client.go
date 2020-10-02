@@ -235,15 +235,17 @@ func (r *AccountsAddResponse) GetBody() (value *Account, ok bool) {
 
 // AccountsListRequest is the request for the 'list' method.
 type AccountsListRequest struct {
-	transport http.RoundTripper
-	path      string
-	metric    string
-	query     url.Values
-	header    http.Header
-	order     *string
-	page      *int
-	search    *string
-	size      *int
+	transport         http.RoundTripper
+	path              string
+	metric            string
+	query             url.Values
+	header            http.Header
+	fetchlabelsLabels *bool
+	fields            *string
+	order             *string
+	page              *int
+	search            *string
+	size              *int
 }
 
 // Parameter adds a query parameter.
@@ -255,6 +257,27 @@ func (r *AccountsListRequest) Parameter(name string, value interface{}) *Account
 // Header adds a request header.
 func (r *AccountsListRequest) Header(name string, value interface{}) *AccountsListRequest {
 	helpers.AddHeader(&r.header, name, value)
+	return r
+}
+
+// FetchlabelsLabels sets the value of the 'fetchlabels_labels' parameter.
+//
+// If true, includes the labels on an account in the output. Could slow request response time.
+func (r *AccountsListRequest) FetchlabelsLabels(value bool) *AccountsListRequest {
+	r.fetchlabelsLabels = &value
+	return r
+}
+
+// Fields sets the value of the 'fields' parameter.
+//
+// Projection
+// This field contains a comma-separated list of fields you'd like to get in
+// a result. No new fields can be added, only existing ones can be filtered.
+// To specify a field 'id' of a structure 'plan' use 'plan.id'.
+// To specify all fields of a structure 'labels' use 'labels.*'.
+//
+func (r *AccountsListRequest) Fields(value string) *AccountsListRequest {
+	r.fields = &value
 	return r
 }
 
@@ -326,6 +349,12 @@ func (r *AccountsListRequest) Send() (result *AccountsListResponse, err error) {
 // SendContext sends this request, waits for the response, and returns it.
 func (r *AccountsListRequest) SendContext(ctx context.Context) (result *AccountsListResponse, err error) {
 	query := helpers.CopyQuery(r.query)
+	if r.fetchlabelsLabels != nil {
+		helpers.AddValue(&query, "fetchlabels_labels", *r.fetchlabelsLabels)
+	}
+	if r.fields != nil {
+		helpers.AddValue(&query, "fields", *r.fields)
+	}
 	if r.order != nil {
 		helpers.AddValue(&query, "order", *r.order)
 	}

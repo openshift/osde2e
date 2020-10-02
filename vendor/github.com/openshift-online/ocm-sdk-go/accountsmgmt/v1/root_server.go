@@ -66,6 +66,21 @@ type Server interface {
 	// account.
 	CurrentAccount() CurrentAccountServer
 
+	// FeatureToggles returns the target 'feature_toggles' resource.
+	//
+	// Reference to the resource that manages feature toggles.
+	FeatureToggles() FeatureTogglesServer
+
+	// Labels returns the target 'labels' resource.
+	//
+	// Reference to the resource that manages the collection of labels.
+	Labels() LabelsServer
+
+	// Notify returns the target 'notify' resource.
+	//
+	// Reference to the resource that manages the notifications.
+	Notify() NotifyServer
+
 	// Organizations returns the target 'organizations' resource.
 	//
 	// Reference to the resource that manages the collection of
@@ -110,11 +125,27 @@ type Server interface {
 	// Reference to the resource that manages the collection of roles.
 	Roles() RolesServer
 
+	// SkuRules returns the target 'sku_rules' resource.
+	//
+	// Reference to the resource that manages the collection of
+	// Sku Rules
+	SkuRules() SkuRulesServer
+
 	// Subscriptions returns the target 'subscriptions' resource.
 	//
 	// Reference to the resource that manages the collection of
 	// subscriptions.
 	Subscriptions() SubscriptionsServer
+
+	// SupportCases returns the target 'support_cases' resource.
+	//
+	// Reference to the resource that manages the support cases.
+	SupportCases() SupportCasesServer
+
+	// TokenAuthorization returns the target 'token_authorization' resource.
+	//
+	// Reference to the resource that manages token authorization.
+	TokenAuthorization() TokenAuthorizationServer
 }
 
 // Dispatch navigates the servers tree rooted at the given server
@@ -178,6 +209,27 @@ func Dispatch(w http.ResponseWriter, r *http.Request, server Server, segments []
 			return
 		}
 		dispatchCurrentAccount(w, r, target, segments[1:])
+	case "feature_toggles":
+		target := server.FeatureToggles()
+		if target == nil {
+			errors.SendNotFound(w, r)
+			return
+		}
+		dispatchFeatureToggles(w, r, target, segments[1:])
+	case "labels":
+		target := server.Labels()
+		if target == nil {
+			errors.SendNotFound(w, r)
+			return
+		}
+		dispatchLabels(w, r, target, segments[1:])
+	case "notify":
+		target := server.Notify()
+		if target == nil {
+			errors.SendNotFound(w, r)
+			return
+		}
+		dispatchNotify(w, r, target, segments[1:])
 	case "organizations":
 		target := server.Organizations()
 		if target == nil {
@@ -234,6 +286,13 @@ func Dispatch(w http.ResponseWriter, r *http.Request, server Server, segments []
 			return
 		}
 		dispatchRoles(w, r, target, segments[1:])
+	case "sku_rules":
+		target := server.SkuRules()
+		if target == nil {
+			errors.SendNotFound(w, r)
+			return
+		}
+		dispatchSkuRules(w, r, target, segments[1:])
 	case "subscriptions":
 		target := server.Subscriptions()
 		if target == nil {
@@ -241,6 +300,20 @@ func Dispatch(w http.ResponseWriter, r *http.Request, server Server, segments []
 			return
 		}
 		dispatchSubscriptions(w, r, target, segments[1:])
+	case "support_cases":
+		target := server.SupportCases()
+		if target == nil {
+			errors.SendNotFound(w, r)
+			return
+		}
+		dispatchSupportCases(w, r, target, segments[1:])
+	case "token_authorization":
+		target := server.TokenAuthorization()
+		if target == nil {
+			errors.SendNotFound(w, r)
+			return
+		}
+		dispatchTokenAuthorization(w, r, target, segments[1:])
 	default:
 		errors.SendNotFound(w, r)
 		return

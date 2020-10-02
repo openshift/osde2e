@@ -61,6 +61,18 @@ func (c *CloudProviderClient) Get() *CloudProviderGetRequest {
 	}
 }
 
+// AvailableRegions returns the target 'available_regions' resource.
+//
+// Reference to the resource that manages the collection of available regions for
+// this cloud provider.
+func (c *CloudProviderClient) AvailableRegions() *AvailableRegionsClient {
+	return NewAvailableRegionsClient(
+		c.transport,
+		path.Join(c.path, "available_regions"),
+		path.Join(c.metric, "available_regions"),
+	)
+}
+
 // Regions returns the target 'cloud_regions' resource.
 //
 // Reference to the resource that manages the collection of regions for

@@ -106,6 +106,9 @@ var Upgrade = struct {
 
 	// Create disruptive Pod Disruption Budget workloads to test the Managed Upgrade Operator's ability to handle them.
 	ManagedUpgradeTestPodDisruptionBudgets string
+
+	// Create disruptive Node Drain workload to test the Managed Upgrade Operator's ability to handle them.
+	ManagedUpgradeTestNodeDrain string
 }{
 	UpgradeToCISIfPossible:                 "upgrade.upgradeToCISIfPossible",
 	OnlyUpgradeToZReleases:                 "upgrade.onlyUpgradeToZReleases",
@@ -118,6 +121,7 @@ var Upgrade = struct {
 	ManagedUpgrade:                         "upgrade.managedUpgrade",
 	WaitForWorkersToManagedUpgrade:         "upgrade.waitForWorkersToManagedUpgrade",
 	ManagedUpgradeTestPodDisruptionBudgets: "upgrade.managedUpgradeTestPodDisruptionBudgets",
+	ManagedUpgradeTestNodeDrain:            "upgrade.managedUpgradeTestNodeDrain",
 }
 
 // Kubeconfig config keys.
@@ -137,7 +141,7 @@ var Kubeconfig = struct {
 
 // Tests config keys.
 var Tests = struct {
-	// PollingTimeout is how long (in mimutes) to wait for an object to be created before failing the test.
+	// PollingTimeout is how long (in seconds) to wait for an object to be created before failing the test.
 	// Env: POLLING_TIMEOUT
 	PollingTimeout string
 
@@ -253,6 +257,9 @@ var Cluster = struct {
 
 	// PreviousVersionFromDefaultFound is true if a previous version from default was found.
 	PreviousVersionFromDefaultFound string
+
+	// ProvisionShardID is the shard ID that is set to provision a shard for the cluster.
+	ProvisionShardID string
 }{
 	MultiAZ:                             "cluster.multiAZ",
 	DestroyAfterTest:                    "cluster.destroyAfterTest",
@@ -270,6 +277,7 @@ var Cluster = struct {
 	Version:                             "cluster.version",
 	EnoughVersionsForOldestOrMiddleTest: "cluster.enoughVersionForOldestOrMiddleTest",
 	PreviousVersionFromDefaultFound:     "cluster.previousVersionFromDefaultFound",
+	ProvisionShardID:                    "cluster.provisionshardID",
 }
 
 // CloudProvider config keys.
@@ -422,6 +430,9 @@ func init() {
 	viper.BindEnv(Upgrade.ManagedUpgradeTestPodDisruptionBudgets, "UPGRADE_MANAGED_TEST_PDBS")
 	viper.SetDefault(Upgrade.ManagedUpgradeTestPodDisruptionBudgets, false)
 
+	viper.BindEnv(Upgrade.ManagedUpgradeTestNodeDrain, "UPGRADE_MANAGED_TEST_DRAIN")
+	viper.SetDefault(Upgrade.ManagedUpgradeTestNodeDrain, false)
+
 	viper.BindEnv(Upgrade.WaitForWorkersToManagedUpgrade, "UPGRADE_WAIT_FOR_WORKERS")
 	viper.SetDefault(Upgrade.WaitForWorkersToManagedUpgrade, true)
 
@@ -497,6 +508,9 @@ func init() {
 	viper.SetDefault(Cluster.EnoughVersionsForOldestOrMiddleTest, true)
 
 	viper.SetDefault(Cluster.PreviousVersionFromDefaultFound, true)
+
+	viper.SetDefault(Cluster.ProvisionShardID, "")
+	viper.BindEnv(Cluster.ProvisionShardID, "PROVISION_SHARD_ID")
 
 	// ----- Cloud Provider -----
 	viper.SetDefault(CloudProvider.CloudProviderID, "aws")

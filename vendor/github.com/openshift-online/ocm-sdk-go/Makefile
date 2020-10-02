@@ -22,11 +22,11 @@ export GOPROXY=https://proxy.golang.org
 export CGO_ENABLED=0
 
 # Details of the model to use:
-model_version:=v0.0.59
+model_version:=v0.0.82
 model_url:=https://github.com/openshift-online/ocm-api-model.git
 
 # Details of the metamodel to use:
-metamodel_version:=v0.0.28
+metamodel_version:=v0.0.32
 metamodel_url:=https://github.com/openshift-online/ocm-api-metamodel.git
 
 .PHONY: examples
@@ -46,6 +46,7 @@ fmt:
 
 .PHONY: lint
 lint:
+	golangci-lint --version
 	golangci-lint run
 
 .PHONY: generate
@@ -69,16 +70,26 @@ generate: model metamodel
 .PHONY: model
 model:
 	rm -rf "$@"
-	git clone "$(model_url)" "$@"
-	cd "$@" && git fetch --tags origin
-	cd "$@" && git checkout -B build "$(model_version)"
+	if [ -d "$(model_url)" ]; then \
+		cp -r "$(model_url)" "$@"; \
+	else \
+		git clone "$(model_url)" "$@"; \
+		cd "$@"; \
+		git fetch --tags origin; \
+		git checkout -B build "$(model_version)"; \
+	fi
 
 .PHONY: metamodel
 metamodel:
 	rm -rf "$@"
-	git clone "$(metamodel_url)" "$@"
-	cd "$@" && git fetch --tags origin
-	cd "$@" && git checkout -B build "$(metamodel_version)"
+	if [ -d "$(metamodel_url)" ]; then \
+		cp -r "$(metamodel_url)" "$@"; \
+	else \
+		git clone "$(metamodel_url)" "$@"; \
+		cd "$@"; \
+		git fetch --tags origin; \
+		git checkout -B build "$(metamodel_version)"; \
+	fi
 	make -C "$@"
 
 .PHONY: clean

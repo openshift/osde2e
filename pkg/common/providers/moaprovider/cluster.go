@@ -2,12 +2,17 @@ package moaprovider
 
 import (
 	"fmt"
+	"log"
 	"net"
 	"time"
 
+	"github.com/Masterminds/semver"
 	cmv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 	"github.com/openshift/moactl/pkg/cluster"
+	"github.com/openshift/moactl/pkg/ocm/versions"
 	"github.com/openshift/osde2e/pkg/common/config"
+	"github.com/openshift/osde2e/pkg/common/spi"
+	"github.com/openshift/osde2e/pkg/common/util"
 	"github.com/spf13/viper"
 )
 
@@ -56,6 +61,7 @@ func (m *MOAProvider) LaunchCluster(clusterName string) (string, error) {
 	}
 
 	clusterProperties, err := m.ocmProvider.GenerateProperties()
+	clusterProperties["moa_use_marketplace_ami"] = "true"
 
 	if err != nil {
 		return "", fmt.Errorf("error generating cluster properties: %v", err)
@@ -95,4 +101,39 @@ func (m *MOAProvider) LaunchCluster(clusterName string) (string, error) {
 	}
 
 	return createdCluster.ID(), nil
+}
+
+// Versions will call Versions from the OCM provider.
+func (m *MOAProvider) Versions() (*spi.VersionList, error) {
+	clustersClient := m.ocmProvider.GetConnection().ClustersMgmt().V1()
+	versionResponse, err := versions.GetVersions(clustersClient, "")
+	if err != nil {
+		return nil, err
+	}
+	spiVersions := []*spi.Version{}
+	var defaultVersionOverride *semver.Version = nil
+
+	for _, v := range versionResponse {
+		if version, err := util.OpenshiftVersionToSemver(v.ID()); err != nil {
+			log.Printf("could not parse version '%s': %v", v.ID(), err)
+		} else if v.Enabled() {
+			if (m.Environment() == "stage" || m.Environment() == "prod") && v.ChannelGroup() != "stable" {
+				continue
+			}
+			if v.Default() {
+				defaultVersionOverride = version
+			}
+			spiVersions = append(spiVersions, spi.NewVersionBuilder().
+				Version(version).
+				Default(v.Default()).
+				Build())
+		}
+	}
+
+	versionList := spi.NewVersionListBuilder().
+		AvailableVersions(spiVersions).
+		DefaultVersionOverride(defaultVersionOverride).
+		Build()
+
+	return versionList, nil
 }

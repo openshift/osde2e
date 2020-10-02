@@ -35,11 +35,14 @@ const ClusterStatusNilKind = "ClusterStatusNil"
 //
 // Detailed status of a cluster.
 type ClusterStatus struct {
-	id          *string
-	href        *string
-	link        bool
-	description *string
-	state       *ClusterState
+	id                   *string
+	href                 *string
+	link                 bool
+	dnsReady             *bool
+	description          *string
+	provisionErrorReason *string
+	provisionErrorType   *string
+	state                *ClusterState
 }
 
 // Kind returns the name of the type of the object.
@@ -97,9 +100,35 @@ func (o *ClusterStatus) GetHREF() (value string, ok bool) {
 // Empty returns true if the object is empty, i.e. no attribute has a value.
 func (o *ClusterStatus) Empty() bool {
 	return o == nil || (o.id == nil &&
+		o.dnsReady == nil &&
 		o.description == nil &&
+		o.provisionErrorReason == nil &&
+		o.provisionErrorType == nil &&
 		o.state == nil &&
 		true)
+}
+
+// DNSReady returns the value of the 'DNS_ready' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+// DNSReady from Provisioner
+func (o *ClusterStatus) DNSReady() bool {
+	if o != nil && o.dnsReady != nil {
+		return *o.dnsReady
+	}
+	return false
+}
+
+// GetDNSReady returns the value of the 'DNS_ready' attribute and
+// a flag indicating if the attribute has a value.
+//
+// DNSReady from Provisioner
+func (o *ClusterStatus) GetDNSReady() (value bool, ok bool) {
+	ok = o != nil && o.dnsReady != nil
+	if ok {
+		value = *o.dnsReady
+	}
+	return
 }
 
 // Description returns the value of the 'description' attribute, or
@@ -121,6 +150,52 @@ func (o *ClusterStatus) GetDescription() (value string, ok bool) {
 	ok = o != nil && o.description != nil
 	if ok {
 		value = *o.description
+	}
+	return
+}
+
+// ProvisionErrorReason returns the value of the 'provision_error_reason' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+// Provisioning Error Reason
+func (o *ClusterStatus) ProvisionErrorReason() string {
+	if o != nil && o.provisionErrorReason != nil {
+		return *o.provisionErrorReason
+	}
+	return ""
+}
+
+// GetProvisionErrorReason returns the value of the 'provision_error_reason' attribute and
+// a flag indicating if the attribute has a value.
+//
+// Provisioning Error Reason
+func (o *ClusterStatus) GetProvisionErrorReason() (value string, ok bool) {
+	ok = o != nil && o.provisionErrorReason != nil
+	if ok {
+		value = *o.provisionErrorReason
+	}
+	return
+}
+
+// ProvisionErrorType returns the value of the 'provision_error_type' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+// Provisioning Error Type
+func (o *ClusterStatus) ProvisionErrorType() string {
+	if o != nil && o.provisionErrorType != nil {
+		return *o.provisionErrorType
+	}
+	return ""
+}
+
+// GetProvisionErrorType returns the value of the 'provision_error_type' attribute and
+// a flag indicating if the attribute has a value.
+//
+// Provisioning Error Type
+func (o *ClusterStatus) GetProvisionErrorType() (value string, ok bool) {
+	ok = o != nil && o.provisionErrorType != nil
+	if ok {
+		value = *o.provisionErrorType
 	}
 	return
 }

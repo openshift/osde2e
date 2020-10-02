@@ -26,10 +26,15 @@ import (
 	"mime"
 	"net/http"
 	"path"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
+
+	strip "github.com/grokify/html-strip-tags-go"
 )
+
+var wsRegex = regexp.MustCompile(`\s+`)
 
 func (c *Connection) RoundTrip(request *http.Request) (response *http.Response, err error) {
 	// Check if the connection is closed:
@@ -67,9 +72,10 @@ func (c *Connection) RoundTrip(request *http.Request) (response *http.Response, 
 			code = response.StatusCode
 		}
 		labels := map[string]string{
-			metricsMethodLabel: request.Method,
-			metricsPathLabel:   metric,
-			metricsCodeLabel:   strconv.Itoa(code),
+			metricsAPIServiceLabel: c.GetAPIServiceLabelFromPath(request.URL.Path),
+			metricsMethodLabel:     request.Method,
+			metricsPathLabel:       metric,
+			metricsCodeLabel:       strconv.Itoa(code),
 		}
 		if c.callCountMetric != nil {
 			c.callCountMetric.With(labels).Inc()
@@ -107,8 +113,8 @@ func (c *Connection) send(ctx context.Context, request *http.Request) (response 
 			)
 			return
 		}
-	case http.MethodPost, http.MethodPatch:
-		// POST and PATCH don't need to have a body. It is up to the server to decide if
+	case http.MethodPost, http.MethodPatch, http.MethodPut:
+		// POST and PATCH and PUT don't need to have a body. It is up to the server to decide if
 		// this is acceptable.
 	default:
 		err = fmt.Errorf("method '%s' is not allowed", request.Method)
@@ -133,7 +139,7 @@ func (c *Connection) send(ctx context.Context, request *http.Request) (response 
 		request.Header.Set("Authorization", "Bearer "+token)
 	}
 	switch request.Method {
-	case http.MethodPost, http.MethodPatch:
+	case http.MethodPost, http.MethodPatch, http.MethodPut:
 		request.Header.Set("Content-Type", "application/json")
 	}
 	request.Header.Set("Accept", "application/json")
@@ -171,7 +177,7 @@ func (c *Connection) checkContentType(response *http.Response) error {
 	}
 	if !strings.EqualFold(mediaType, "application/json") {
 		var summary string
-		summary, err = c.contentSummary(response)
+		summary, err = c.contentSummary(mediaType, response)
 		if err != nil {
 			return fmt.Errorf(
 				"expected response content type 'application/json' but received "+
@@ -191,14 +197,20 @@ func (c *Connection) checkContentType(response *http.Response) error {
 // contentSummary reads the body of the given response and returns a summary it. The summary will
 // be the complete body if it isn't too log. If it is too long then the summary will be the
 // beginning of the content followed by ellipsis.
-func (c *Connection) contentSummary(response *http.Response) (summary string, err error) {
+func (c *Connection) contentSummary(mediaType string, response *http.Response) (summary string, err error) {
 	var body []byte
 	body, err = ioutil.ReadAll(response.Body)
 	if err != nil {
 		return
 	}
+	limit := 200
 	runes := []rune(string(body))
-	if len(runes) > 200 {
+	if strings.EqualFold(mediaType, "text/html") && len(runes) > limit {
+		content := strip.StripTags(string(body))
+		content = wsRegex.ReplaceAllString(strings.TrimSpace(content), " ")
+		runes = []rune(content)
+	}
+	if len(runes) > limit {
 		summary = fmt.Sprintf("%s...", string(runes[:200]))
 	} else {
 		summary = string(runes)

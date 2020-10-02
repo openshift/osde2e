@@ -70,7 +70,9 @@ type ClusterBuilder struct {
 	aws                               *AWSBuilder
 	awsInfrastructureAccessRoleGrants *AWSInfrastructureAccessRoleGrantListBuilder
 	byoc                              *bool
+	ccs                               *CCSBuilder
 	dns                               *DNSBuilder
+	dnsReady                          *bool
 	addons                            *AddOnInstallationListBuilder
 	cloudProvider                     *CloudProviderBuilder
 	clusterAdminEnabled               *bool
@@ -79,6 +81,7 @@ type ClusterBuilder struct {
 	displayName                       *string
 	expirationTimestamp               *time.Time
 	externalID                        *string
+	externalConfiguration             *ExternalConfigurationBuilder
 	flavour                           *FlavourBuilder
 	groups                            *GroupListBuilder
 	healthState                       *ClusterHealthState
@@ -94,8 +97,10 @@ type ClusterBuilder struct {
 	openshiftVersion                  *string
 	product                           *ProductBuilder
 	properties                        map[string]string
+	provisionShard                    *ProvisionShardBuilder
 	region                            *CloudRegionBuilder
 	state                             *ClusterState
+	status                            *ClusterStatusBuilder
 	storageQuota                      *ValueBuilder
 	subscription                      *SubscriptionBuilder
 	version                           *VersionBuilder
@@ -156,11 +161,27 @@ func (b *ClusterBuilder) BYOC(value bool) *ClusterBuilder {
 	return b
 }
 
+// CCS sets the value of the 'CCS' attribute to the given value.
+//
+//
+func (b *ClusterBuilder) CCS(value *CCSBuilder) *ClusterBuilder {
+	b.ccs = value
+	return b
+}
+
 // DNS sets the value of the 'DNS' attribute to the given value.
 //
 // DNS settings of the cluster.
 func (b *ClusterBuilder) DNS(value *DNSBuilder) *ClusterBuilder {
 	b.dns = value
+	return b
+}
+
+// DNSReady sets the value of the 'DNS_ready' attribute to the given value.
+//
+//
+func (b *ClusterBuilder) DNSReady(value bool) *ClusterBuilder {
+	b.dnsReady = &value
 	return b
 }
 
@@ -225,6 +246,14 @@ func (b *ClusterBuilder) ExpirationTimestamp(value time.Time) *ClusterBuilder {
 //
 func (b *ClusterBuilder) ExternalID(value string) *ClusterBuilder {
 	b.externalID = &value
+	return b
+}
+
+// ExternalConfiguration sets the value of the 'external_configuration' attribute to the given value.
+//
+// Representation of cluster external configuration.
+func (b *ClusterBuilder) ExternalConfiguration(value *ExternalConfigurationBuilder) *ClusterBuilder {
+	b.externalConfiguration = value
 	return b
 }
 
@@ -349,6 +378,14 @@ func (b *ClusterBuilder) Properties(value map[string]string) *ClusterBuilder {
 	return b
 }
 
+// ProvisionShard sets the value of the 'provision_shard' attribute to the given value.
+//
+// Contains the properties of the provision shard, including AWS and GCP related configurations
+func (b *ClusterBuilder) ProvisionShard(value *ProvisionShardBuilder) *ClusterBuilder {
+	b.provisionShard = value
+	return b
+}
+
 // Region sets the value of the 'region' attribute to the given value.
 //
 // Description of a region of a cloud provider.
@@ -362,6 +399,14 @@ func (b *ClusterBuilder) Region(value *CloudRegionBuilder) *ClusterBuilder {
 // Overall state of a cluster.
 func (b *ClusterBuilder) State(value ClusterState) *ClusterBuilder {
 	b.state = &value
+	return b
+}
+
+// Status sets the value of the 'status' attribute to the given value.
+//
+// Detailed status of a cluster.
+func (b *ClusterBuilder) Status(value *ClusterStatusBuilder) *ClusterBuilder {
+	b.status = value
 	return b
 }
 
@@ -430,11 +475,17 @@ func (b *ClusterBuilder) Copy(object *Cluster) *ClusterBuilder {
 		b.awsInfrastructureAccessRoleGrants = nil
 	}
 	b.byoc = object.byoc
+	if object.ccs != nil {
+		b.ccs = NewCCS().Copy(object.ccs)
+	} else {
+		b.ccs = nil
+	}
 	if object.dns != nil {
 		b.dns = NewDNS().Copy(object.dns)
 	} else {
 		b.dns = nil
 	}
+	b.dnsReady = object.dnsReady
 	if object.addons != nil {
 		b.addons = NewAddOnInstallationList().Copy(object.addons)
 	} else {
@@ -455,6 +506,11 @@ func (b *ClusterBuilder) Copy(object *Cluster) *ClusterBuilder {
 	b.displayName = object.displayName
 	b.expirationTimestamp = object.expirationTimestamp
 	b.externalID = object.externalID
+	if object.externalConfiguration != nil {
+		b.externalConfiguration = NewExternalConfiguration().Copy(object.externalConfiguration)
+	} else {
+		b.externalConfiguration = nil
+	}
 	if object.flavour != nil {
 		b.flavour = NewFlavour().Copy(object.flavour)
 	} else {
@@ -509,12 +565,22 @@ func (b *ClusterBuilder) Copy(object *Cluster) *ClusterBuilder {
 	} else {
 		b.properties = nil
 	}
+	if object.provisionShard != nil {
+		b.provisionShard = NewProvisionShard().Copy(object.provisionShard)
+	} else {
+		b.provisionShard = nil
+	}
 	if object.region != nil {
 		b.region = NewCloudRegion().Copy(object.region)
 	} else {
 		b.region = nil
 	}
 	b.state = object.state
+	if object.status != nil {
+		b.status = NewClusterStatus().Copy(object.status)
+	} else {
+		b.status = nil
+	}
 	if object.storageQuota != nil {
 		b.storageQuota = NewValue().Copy(object.storageQuota)
 	} else {
@@ -558,12 +624,19 @@ func (b *ClusterBuilder) Build() (object *Cluster, err error) {
 		}
 	}
 	object.byoc = b.byoc
+	if b.ccs != nil {
+		object.ccs, err = b.ccs.Build()
+		if err != nil {
+			return
+		}
+	}
 	if b.dns != nil {
 		object.dns, err = b.dns.Build()
 		if err != nil {
 			return
 		}
 	}
+	object.dnsReady = b.dnsReady
 	if b.addons != nil {
 		object.addons, err = b.addons.Build()
 		if err != nil {
@@ -587,6 +660,12 @@ func (b *ClusterBuilder) Build() (object *Cluster, err error) {
 	object.displayName = b.displayName
 	object.expirationTimestamp = b.expirationTimestamp
 	object.externalID = b.externalID
+	if b.externalConfiguration != nil {
+		object.externalConfiguration, err = b.externalConfiguration.Build()
+		if err != nil {
+			return
+		}
+	}
 	if b.flavour != nil {
 		object.flavour, err = b.flavour.Build()
 		if err != nil {
@@ -647,6 +726,12 @@ func (b *ClusterBuilder) Build() (object *Cluster, err error) {
 			object.properties[k] = v
 		}
 	}
+	if b.provisionShard != nil {
+		object.provisionShard, err = b.provisionShard.Build()
+		if err != nil {
+			return
+		}
+	}
 	if b.region != nil {
 		object.region, err = b.region.Build()
 		if err != nil {
@@ -654,6 +739,12 @@ func (b *ClusterBuilder) Build() (object *Cluster, err error) {
 		}
 	}
 	object.state = b.state
+	if b.status != nil {
+		object.status, err = b.status.Build()
+		if err != nil {
+			return
+		}
+	}
 	if b.storageQuota != nil {
 		object.storageQuota, err = b.storageQuota.Build()
 		if err != nil {

@@ -89,7 +89,7 @@ func (c *ClusterClient) Update() *ClusterUpdateRequest {
 
 // AWSInfrastructureAccessRoleGrants returns the target 'AWS_infrastructure_access_role_grants' resource.
 //
-// Refrence to the resource that manages the collection of AWS infrastructure
+// Reference to the resource that manages the collection of AWS infrastructure
 // access role grants on this cluster.
 func (c *ClusterClient) AWSInfrastructureAccessRoleGrants() *AWSInfrastructureAccessRoleGrantsClient {
 	return NewAWSInfrastructureAccessRoleGrantsClient(
@@ -101,7 +101,7 @@ func (c *ClusterClient) AWSInfrastructureAccessRoleGrants() *AWSInfrastructureAc
 
 // Addons returns the target 'add_on_installations' resource.
 //
-// Refrence to the resource that manages the collection of add-ons installed on this cluster.
+// Reference to the resource that manages the collection of add-ons installed on this cluster.
 func (c *ClusterClient) Addons() *AddOnInstallationsClient {
 	return NewAddOnInstallationsClient(
 		c.transport,
@@ -118,6 +118,17 @@ func (c *ClusterClient) Credentials() *CredentialsClient {
 		c.transport,
 		path.Join(c.path, "credentials"),
 		path.Join(c.metric, "credentials"),
+	)
+}
+
+// ExternalConfiguration returns the target 'external_configuration' resource.
+//
+// Reference to the resource that manages the external configuration.
+func (c *ClusterClient) ExternalConfiguration() *ExternalConfigurationClient {
+	return NewExternalConfigurationClient(
+		c.transport,
+		path.Join(c.path, "external_configuration"),
+		path.Join(c.metric, "external_configuration"),
 	)
 }
 
@@ -187,6 +198,17 @@ func (c *ClusterClient) Product() *ProductClient {
 	)
 }
 
+// ProvisionShard returns the target 'provision_shard' resource.
+//
+// Reference to the resource that manages the cluster's provision shard.
+func (c *ClusterClient) ProvisionShard() *ProvisionShardClient {
+	return NewProvisionShardClient(
+		c.transport,
+		path.Join(c.path, "provision_shard"),
+		path.Join(c.metric, "provision_shard"),
+	)
+}
+
 // Status returns the target 'cluster_status' resource.
 //
 // Reference to the resource that manages the detailed status of the cluster.
@@ -195,6 +217,17 @@ func (c *ClusterClient) Status() *ClusterStatusClient {
 		c.transport,
 		path.Join(c.path, "status"),
 		path.Join(c.metric, "status"),
+	)
+}
+
+// UpgradePolicies returns the target 'upgrade_policies' resource.
+//
+// Reference to the resource that manages the collection of upgrade policies defined for this cluster.
+func (c *ClusterClient) UpgradePolicies() *UpgradePoliciesClient {
+	return NewUpgradePoliciesClient(
+		c.transport,
+		path.Join(c.path, "upgrade_policies"),
+		path.Join(c.metric, "upgrade_policies"),
 	)
 }
 

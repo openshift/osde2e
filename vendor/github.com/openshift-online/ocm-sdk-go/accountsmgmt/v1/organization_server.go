@@ -40,6 +40,11 @@ type OrganizationServer interface {
 	// Updates the organization.
 	Update(ctx context.Context, request *OrganizationUpdateServerRequest, response *OrganizationUpdateServerResponse) error
 
+	// Labels returns the target 'generic_labels' resource.
+	//
+	// Reference to the list of labels of a specific organization.
+	Labels() GenericLabelsServer
+
 	// QuotaSummary returns the target 'quota_summary' resource.
 	//
 	// Reference to the service that returns the summary of the resource quota for this
@@ -51,6 +56,12 @@ type OrganizationServer interface {
 	// Reference to the service that manages the resource quotas for this
 	// organization.
 	ResourceQuota() ResourceQuotasServer
+
+	// SummaryDashboard returns the target 'summary_dashboard' resource.
+	//
+	// Reference to the service that manages the resource quotas for this
+	// organization.
+	SummaryDashboard() SummaryDashboardServer
 }
 
 // OrganizationGetServerRequest is the request for the 'get' method.
@@ -144,6 +155,13 @@ func dispatchOrganization(w http.ResponseWriter, r *http.Request, server Organiz
 		}
 	}
 	switch segments[0] {
+	case "labels":
+		target := server.Labels()
+		if target == nil {
+			errors.SendNotFound(w, r)
+			return
+		}
+		dispatchGenericLabels(w, r, target, segments[1:])
 	case "quota_summary":
 		target := server.QuotaSummary()
 		if target == nil {
@@ -158,6 +176,13 @@ func dispatchOrganization(w http.ResponseWriter, r *http.Request, server Organiz
 			return
 		}
 		dispatchResourceQuotas(w, r, target, segments[1:])
+	case "summary_dashboard":
+		target := server.SummaryDashboard()
+		if target == nil {
+			errors.SendNotFound(w, r)
+			return
+		}
+		dispatchSummaryDashboard(w, r, target, segments[1:])
 	default:
 		errors.SendNotFound(w, r)
 		return

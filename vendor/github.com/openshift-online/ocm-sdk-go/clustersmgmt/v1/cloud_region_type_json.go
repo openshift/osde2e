@@ -96,6 +96,14 @@ func writeCloudRegion(object *CloudRegion, stream *jsoniter.Stream) {
 		stream.WriteString(*object.name)
 		count++
 	}
+	if object.supportsMultiAZ != nil {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("supports_multi_az")
+		stream.WriteBool(*object.supportsMultiAZ)
+		count++
+	}
 	stream.WriteObjectEnd()
 }
 
@@ -141,6 +149,9 @@ func readCloudRegion(iterator *jsoniter.Iterator) *CloudRegion {
 		case "name":
 			value := iterator.ReadString()
 			object.name = &value
+		case "supports_multi_az":
+			value := iterator.ReadBool()
+			object.supportsMultiAZ = &value
 		default:
 			iterator.ReadAny()
 		}

@@ -129,6 +129,14 @@ func writeResourceQuota(object *ResourceQuota, stream *jsoniter.Stream) {
 		stream.WriteString(*object.resourceType)
 		count++
 	}
+	if object.skuCount != nil {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("sku_count")
+		stream.WriteInt(*object.skuCount)
+		count++
+	}
 	if object.type_ != nil {
 		if count > 0 {
 			stream.WriteMore()
@@ -206,6 +214,9 @@ func readResourceQuota(iterator *jsoniter.Iterator) *ResourceQuota {
 		case "resource_type":
 			value := iterator.ReadString()
 			object.resourceType = &value
+		case "sku_count":
+			value := iterator.ReadInt()
+			object.skuCount = &value
 		case "type":
 			value := iterator.ReadString()
 			object.type_ = &value

@@ -69,6 +69,11 @@ type Server interface {
 	// Reference to the resource that manages the collection of products.
 	Products() ProductsServer
 
+	// ProvisionShards returns the target 'provision_shards' resource.
+	//
+	// Reference to the resource that manages the collection of provision shards.
+	ProvisionShards() ProvisionShardsServer
+
 	// Versions returns the target 'versions' resource.
 	//
 	// Reference to the resource that manage the collection of versions.
@@ -143,6 +148,13 @@ func Dispatch(w http.ResponseWriter, r *http.Request, server Server, segments []
 			return
 		}
 		dispatchProducts(w, r, target, segments[1:])
+	case "provision_shards":
+		target := server.ProvisionShards()
+		if target == nil {
+			errors.SendNotFound(w, r)
+			return
+		}
+		dispatchProvisionShards(w, r, target, segments[1:])
 	case "versions":
 		target := server.Versions()
 		if target == nil {

@@ -7,7 +7,7 @@ import (
 )
 
 // testCmd configures default Service Account as a kubeconfig, runs openshift-tests, and serves results over HTTP
-const testCmd = `#!/bin/bash
+const testCmd = `#!/usr/bin/env bash
 oc cluster-info
 
 # create OutputDir
@@ -26,8 +26,20 @@ mkdir -p {{.OutputDir}}
 	tar cvfz {{$outDir}}/{{.Name}}.tgz {{.OutputDir}}
 {{end}}
 
+case $(rpm -qa python) in
+python-2*)
+	MODULE="SimpleHTTPServer"
+	;;
+python-3*)
+	MODULE="http.server"
+	;;
+*)
+	MODULE="http.server"
+	;;
+esac
+
 # make results available using HTTP
-cd {{$outDir}} && echo "Starting server" && python -m SimpleHTTPServer
+cd {{$outDir}} && echo "Starting server" && python -m "${MODULE}"
 `
 
 var (

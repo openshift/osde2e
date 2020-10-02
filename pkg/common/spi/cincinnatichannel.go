@@ -8,4 +8,7 @@ const (
 
 	// CincinnatiFastChannel is the fast Cincinnati channel.
 	CincinnatiFastChannel = "fast"
+
+	// CincinnatiCandidateChannel is the candidate Cincinnati channel.
+	CincinnatiCandidateChannel = "candidate"
 )

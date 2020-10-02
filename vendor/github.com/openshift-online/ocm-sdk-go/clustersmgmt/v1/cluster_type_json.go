@@ -101,12 +101,28 @@ func writeCluster(object *Cluster, stream *jsoniter.Stream) {
 		stream.WriteBool(*object.byoc)
 		count++
 	}
+	if object.ccs != nil {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("ccs")
+		writeCCS(object.ccs, stream)
+		count++
+	}
 	if object.dns != nil {
 		if count > 0 {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("dns")
 		writeDNS(object.dns, stream)
+		count++
+	}
+	if object.dnsReady != nil {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("dns_ready")
+		stream.WriteBool(*object.dnsReady)
 		count++
 	}
 	if object.addons != nil {
@@ -174,6 +190,14 @@ func writeCluster(object *Cluster, stream *jsoniter.Stream) {
 		}
 		stream.WriteObjectField("external_id")
 		stream.WriteString(*object.externalID)
+		count++
+	}
+	if object.externalConfiguration != nil {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("external_configuration")
+		writeExternalConfiguration(object.externalConfiguration, stream)
 		count++
 	}
 	if object.flavour != nil {
@@ -321,6 +345,14 @@ func writeCluster(object *Cluster, stream *jsoniter.Stream) {
 		stream.WriteObjectEnd()
 		count++
 	}
+	if object.provisionShard != nil {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("provision_shard")
+		writeProvisionShard(object.provisionShard, stream)
+		count++
+	}
 	if object.region != nil {
 		if count > 0 {
 			stream.WriteMore()
@@ -335,6 +367,14 @@ func writeCluster(object *Cluster, stream *jsoniter.Stream) {
 		}
 		stream.WriteObjectField("state")
 		stream.WriteString(string(*object.state))
+		count++
+	}
+	if object.status != nil {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("status")
+		writeClusterStatus(object.status, stream)
 		count++
 	}
 	if object.storageQuota != nil {
@@ -424,9 +464,15 @@ func readCluster(iterator *jsoniter.Iterator) *Cluster {
 		case "byoc":
 			value := iterator.ReadBool()
 			object.byoc = &value
+		case "ccs":
+			value := readCCS(iterator)
+			object.ccs = value
 		case "dns":
 			value := readDNS(iterator)
 			object.dns = value
+		case "dns_ready":
+			value := iterator.ReadBool()
+			object.dnsReady = &value
 		case "addons":
 			value := &AddOnInstallationList{}
 			for {
@@ -477,6 +523,9 @@ func readCluster(iterator *jsoniter.Iterator) *Cluster {
 		case "external_id":
 			value := iterator.ReadString()
 			object.externalID = &value
+		case "external_configuration":
+			value := readExternalConfiguration(iterator)
+			object.externalConfiguration = value
 		case "flavour":
 			value := readFlavour(iterator)
 			object.flavour = value
@@ -585,6 +634,9 @@ func readCluster(iterator *jsoniter.Iterator) *Cluster {
 				value[key] = item
 			}
 			object.properties = value
+		case "provision_shard":
+			value := readProvisionShard(iterator)
+			object.provisionShard = value
 		case "region":
 			value := readCloudRegion(iterator)
 			object.region = value
@@ -592,6 +644,9 @@ func readCluster(iterator *jsoniter.Iterator) *Cluster {
 			text := iterator.ReadString()
 			value := ClusterState(text)
 			object.state = &value
+		case "status":
+			value := readClusterStatus(iterator)
+			object.status = value
 		case "storage_quota":
 			value := readValue(iterator)
 			object.storageQuota = value

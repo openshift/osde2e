@@ -46,6 +46,14 @@ func writeClusterRegistration(object *ClusterRegistration, stream *jsoniter.Stre
 		stream.WriteString(*object.externalID)
 		count++
 	}
+	if object.organizationID != nil {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("organization_id")
+		stream.WriteString(*object.organizationID)
+		count++
+	}
 	if object.subscriptionID != nil {
 		if count > 0 {
 			stream.WriteMore()
@@ -81,6 +89,9 @@ func readClusterRegistration(iterator *jsoniter.Iterator) *ClusterRegistration {
 		case "external_id":
 			value := iterator.ReadString()
 			object.externalID = &value
+		case "organization_id":
+			value := iterator.ReadString()
+			object.organizationID = &value
 		case "subscription_id":
 			value := iterator.ReadString()
 			object.subscriptionID = &value

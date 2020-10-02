@@ -42,11 +42,6 @@ func (m *MOAProvider) InstallAddons(clusterID string, addonIDs []string) (int, e
 	return m.ocmProvider.InstallAddons(clusterID, addonIDs)
 }
 
-// Versions will call Versions from the OCM provider.
-func (m *MOAProvider) Versions() (*spi.VersionList, error) {
-	return m.ocmProvider.Versions()
-}
-
 // Logs will call Logs from the OCM provider.
 func (m *MOAProvider) Logs(clusterID string) (map[string][]byte, error) {
 	return m.ocmProvider.Logs(clusterID)
@@ -78,6 +73,6 @@ func (m *MOAProvider) ExtendExpiry(clusterID string, hours uint64, minutes uint6
 }
 
 // AddProperty will call AddProperty from the OCM provider.
-func (m *MOAProvider) AddProperty(clusterID string, tag string, value string) error {
-	return m.ocmProvider.AddProperty(clusterID, tag, value)
+func (m *MOAProvider) AddProperty(cluster *spi.Cluster, tag string, value string) error {
+	return m.ocmProvider.AddProperty(cluster, tag, value)
 }

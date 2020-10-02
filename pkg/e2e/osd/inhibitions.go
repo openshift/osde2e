@@ -23,15 +23,9 @@ import (
 )
 
 const (
-	AlertmanagerConfigFileName         = "alertmanager.yaml"
-	AlertmanagerConfigSecretName       = "alertmanager-main"
-	ClusterVersionOperatorFileName     = "openshift-cluster-version-cluster-version-operator.yaml"
-	MonitoringNamespace                = "openshift-monitoring"
-	PrometheusPod0                     = "prometheus-k8s-0"
-	PrometheusPod1                     = "prometheus-k8s-1"
-	PrometheusRouteName                = "prometheus-k8s"
-	PrometheusRulesConfigMapName       = "prometheus-k8s-rulefiles-0"
-	PrometheusServiceAccountSecretName = "prometheus-k8s"
+	AlertmanagerConfigFileName   = "alertmanager.yaml"
+	AlertmanagerConfigSecretName = "alertmanager-main"
+	MonitoringNamespace          = "openshift-monitoring"
 )
 
 // tests start here
@@ -73,6 +67,36 @@ var _ = ginkgo.Describe(inhibitionsTestName, func() {
 				expectedEqual: prometheusModel.LabelNames{
 					"namespace",
 					"name",
+				},
+				expectedPresent: true,
+			},
+			{
+				name:           "KubeNodeNotReady inhibits KubeDaemonSetRolloutStuck",
+				expectedSource: "KubeNodeNotReady",
+				expectedTarget: "KubeDaemonSetRolloutStuck",
+				expectedEqual: prometheusModel.LabelNames{
+					"namespace",
+					"instance",
+				},
+				expectedPresent: true,
+			},
+			{
+				name:           "KubePodNotReady inhibits KubeDeploymentReplicasMismatch",
+				expectedSource: "KubePodNotReady",
+				expectedTarget: "KubeDeploymentReplicasMismatch",
+				expectedEqual: prometheusModel.LabelNames{
+					"namespace",
+					"pod",
+				},
+				expectedPresent: true,
+			},
+			{
+				name:           "KubePodCrashLooping inhibits KubeDeploymentReplicasMismatch",
+				expectedSource: "KubePodNotReady",
+				expectedTarget: "KubeDeploymentReplicasMismatch",
+				expectedEqual: prometheusModel.LabelNames{
+					"namespace",
+					"pod",
 				},
 				expectedPresent: true,
 			},

@@ -147,3 +147,19 @@ func writeIngressesListResponse(response *IngressesListServerResponse, w http.Re
 	stream.Flush()
 	return stream.Error
 }
+func readIngressesUpdateRequest(request *IngressesUpdateServerRequest, r *http.Request) error {
+	var err error
+	request.body, err = UnmarshalIngressList(r.Body)
+	return err
+}
+func writeIngressesUpdateRequest(request *IngressesUpdateRequest, writer io.Writer) error {
+	return MarshalIngressList(request.body, writer)
+}
+func readIngressesUpdateResponse(response *IngressesUpdateResponse, reader io.Reader) error {
+	var err error
+	response.body, err = UnmarshalIngressList(reader)
+	return err
+}
+func writeIngressesUpdateResponse(response *IngressesUpdateServerResponse, w http.ResponseWriter) error {
+	return MarshalIngressList(response.body, w)
+}

@@ -96,10 +96,66 @@ func (r *AccountsAddServerResponse) Status(value int) *AccountsAddServerResponse
 
 // AccountsListServerRequest is the request for the 'list' method.
 type AccountsListServerRequest struct {
-	order  *string
-	page   *int
-	search *string
-	size   *int
+	fetchlabelsLabels *bool
+	fields            *string
+	order             *string
+	page              *int
+	search            *string
+	size              *int
+}
+
+// FetchlabelsLabels returns the value of the 'fetchlabels_labels' parameter.
+//
+// If true, includes the labels on an account in the output. Could slow request response time.
+func (r *AccountsListServerRequest) FetchlabelsLabels() bool {
+	if r != nil && r.fetchlabelsLabels != nil {
+		return *r.fetchlabelsLabels
+	}
+	return false
+}
+
+// GetFetchlabelsLabels returns the value of the 'fetchlabels_labels' parameter and
+// a flag indicating if the parameter has a value.
+//
+// If true, includes the labels on an account in the output. Could slow request response time.
+func (r *AccountsListServerRequest) GetFetchlabelsLabels() (value bool, ok bool) {
+	ok = r != nil && r.fetchlabelsLabels != nil
+	if ok {
+		value = *r.fetchlabelsLabels
+	}
+	return
+}
+
+// Fields returns the value of the 'fields' parameter.
+//
+// Projection
+// This field contains a comma-separated list of fields you'd like to get in
+// a result. No new fields can be added, only existing ones can be filtered.
+// To specify a field 'id' of a structure 'plan' use 'plan.id'.
+// To specify all fields of a structure 'labels' use 'labels.*'.
+//
+func (r *AccountsListServerRequest) Fields() string {
+	if r != nil && r.fields != nil {
+		return *r.fields
+	}
+	return ""
+}
+
+// GetFields returns the value of the 'fields' parameter and
+// a flag indicating if the parameter has a value.
+//
+// Projection
+// This field contains a comma-separated list of fields you'd like to get in
+// a result. No new fields can be added, only existing ones can be filtered.
+// To specify a field 'id' of a structure 'plan' use 'plan.id'.
+// To specify all fields of a structure 'labels' use 'labels.*'.
+//
+func (r *AccountsListServerRequest) GetFields() (value string, ok bool) {
+	ok = r != nil && r.fields != nil
+	if ok {
+		value = *r.fields
+	}
+	return
 }
 
 // Order returns the value of the 'order' parameter.

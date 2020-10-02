@@ -37,6 +37,10 @@ func readSubscriptionsListRequest(request *SubscriptionsListServerRequest, r *ht
 	if err != nil {
 		return err
 	}
+	request.fields, err = helpers.ParseString(query, "fields")
+	if err != nil {
+		return err
+	}
 	request.labels, err = helpers.ParseString(query, "labels")
 	if err != nil {
 		return err
@@ -150,4 +154,20 @@ func writeSubscriptionsListResponse(response *SubscriptionsListServerResponse, w
 	stream.WriteObjectEnd()
 	stream.Flush()
 	return stream.Error
+}
+func readSubscriptionsPostRequest(request *SubscriptionsPostServerRequest, r *http.Request) error {
+	var err error
+	request.request, err = UnmarshalSubscriptionRegistration(r)
+	return err
+}
+func writeSubscriptionsPostRequest(request *SubscriptionsPostRequest, writer io.Writer) error {
+	return MarshalSubscriptionRegistration(request.request, writer)
+}
+func readSubscriptionsPostResponse(response *SubscriptionsPostResponse, reader io.Reader) error {
+	var err error
+	response.response, err = UnmarshalSubscription(reader)
+	return err
+}
+func writeSubscriptionsPostResponse(response *SubscriptionsPostServerResponse, w http.ResponseWriter) error {
+	return MarshalSubscription(response.response, w)
 }

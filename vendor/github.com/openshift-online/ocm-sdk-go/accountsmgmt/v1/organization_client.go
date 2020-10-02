@@ -76,6 +76,17 @@ func (c *OrganizationClient) Update() *OrganizationUpdateRequest {
 	}
 }
 
+// Labels returns the target 'generic_labels' resource.
+//
+// Reference to the list of labels of a specific organization.
+func (c *OrganizationClient) Labels() *GenericLabelsClient {
+	return NewGenericLabelsClient(
+		c.transport,
+		path.Join(c.path, "labels"),
+		path.Join(c.metric, "labels"),
+	)
+}
+
 // QuotaSummary returns the target 'quota_summary' resource.
 //
 // Reference to the service that returns the summary of the resource quota for this
@@ -97,6 +108,18 @@ func (c *OrganizationClient) ResourceQuota() *ResourceQuotasClient {
 		c.transport,
 		path.Join(c.path, "resource_quota"),
 		path.Join(c.metric, "resource_quota"),
+	)
+}
+
+// SummaryDashboard returns the target 'summary_dashboard' resource.
+//
+// Reference to the service that manages the resource quotas for this
+// organization.
+func (c *OrganizationClient) SummaryDashboard() *SummaryDashboardClient {
+	return NewSummaryDashboardClient(
+		c.transport,
+		path.Join(c.path, "summary_dashboard"),
+		path.Join(c.metric, "summary_dashboard"),
 	)
 }
 

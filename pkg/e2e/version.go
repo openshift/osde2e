@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"strings"
 
 	"github.com/Masterminds/semver"
 	"github.com/openshift/osde2e/pkg/common/config"
@@ -50,18 +51,19 @@ func ChooseVersions() (err error) {
 // chooses between default version and nightly based on target versions.
 func setupVersion(versionList *spi.VersionList) (*semver.Version, error) {
 	var selectedVersion *semver.Version
+	var clusterVersion string
 
 	versionType := "user supplied version"
 
-	clusterVersion := viper.GetString(config.Cluster.Version)
+	clusterVersion = viper.GetString(config.Cluster.Version)
 	if len(clusterVersion) == 0 {
 		var err error
 
 		selectedVersion, versionType, err = versions.GetVersionForInstall(versionList)
+
 		if err == nil {
 			if viper.GetBool(config.Cluster.EnoughVersionsForOldestOrMiddleTest) && viper.GetBool(config.Cluster.PreviousVersionFromDefaultFound) {
 				viper.Set(config.Cluster.Version, util.SemverToOpenshiftVersion(selectedVersion))
-				clusterVersion = util.SemverToOpenshiftVersion(selectedVersion)
 			} else {
 				log.Printf("Unable to get the %s.", versionType)
 			}
@@ -81,7 +83,7 @@ func setupVersion(versionList *spi.VersionList) (*semver.Version, error) {
 	if selectedVersion == nil {
 		log.Printf("Unable to select a cluster version.")
 	} else {
-		log.Printf("Using the %s '%s'", versionType, clusterVersion)
+		log.Printf("Using the %s '%s'", versionType, selectedVersion.Original())
 	}
 
 	return selectedVersion, nil
@@ -112,6 +114,10 @@ func setupUpgradeVersion(clusterVersion *semver.Version, versionList *spi.Versio
 		log.Printf("No upgrade selector found. Not selecting an upgrade version.")
 		return nil
 	}
+
+	releaseName = strings.Replace(releaseName, "-nightly", "", -1)
+	releaseName = strings.Replace(releaseName, "-candidate", "", -1)
+	releaseName = strings.Replace(releaseName, "-fast", "", -1)
 
 	viper.Set(config.Upgrade.ReleaseName, releaseName)
 	viper.Set(config.Upgrade.Image, image)

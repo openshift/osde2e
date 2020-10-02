@@ -104,6 +104,14 @@ func writeMachineType(object *MachineType, stream *jsoniter.Stream) {
 		stream.WriteString(*object.name)
 		count++
 	}
+	if object.size != nil {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("size")
+		stream.WriteString(string(*object.size))
+		count++
+	}
 	stream.WriteObjectEnd()
 }
 
@@ -153,6 +161,10 @@ func readMachineType(iterator *jsoniter.Iterator) *MachineType {
 		case "name":
 			value := iterator.ReadString()
 			object.name = &value
+		case "size":
+			text := iterator.ReadString()
+			value := MachineTypeSize(text)
+			object.size = &value
 		default:
 			iterator.ReadAny()
 		}

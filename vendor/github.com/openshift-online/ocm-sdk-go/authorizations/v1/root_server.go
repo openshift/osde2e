@@ -33,6 +33,11 @@ type Server interface {
 	// Reference to the resource that is used to submit access review requests.
 	AccessReview() AccessReviewServer
 
+	// CapabilityReview returns the target 'capability_review' resource.
+	//
+	// Reference to the resource that is used to submit capability review requests.
+	CapabilityReview() CapabilityReviewServer
+
 	// ExportControlReview returns the target 'export_control_review' resource.
 	//
 	// Reference to the resource that is used to submit export control review requests.
@@ -47,6 +52,23 @@ type Server interface {
 	//
 	// Reference to the resource that is used to submit self access review requests.
 	SelfAccessReview() SelfAccessReviewServer
+
+	// SelfCapabilityReview returns the target 'self_capability_review' resource.
+	//
+	// Reference to the resource that is used to submit self capability review requests.
+	SelfCapabilityReview() SelfCapabilityReviewServer
+
+	// SelfTermsReview returns the target 'self_terms_review' resource.
+	//
+	// Reference to the resource that is used to submit Red Hat's Terms and Conditions
+	// for using OpenShift Dedicated and Amazon Red Hat OpenShift self-review requests.
+	SelfTermsReview() SelfTermsReviewServer
+
+	// TermsReview returns the target 'terms_review' resource.
+	//
+	// Reference to the resource that is used to submit Red Hat's Terms and Conditions
+	// for using OpenShift Dedicated and Amazon Red Hat OpenShift review requests.
+	TermsReview() TermsReviewServer
 }
 
 // Dispatch navigates the servers tree rooted at the given server
@@ -68,6 +90,13 @@ func Dispatch(w http.ResponseWriter, r *http.Request, server Server, segments []
 			return
 		}
 		dispatchAccessReview(w, r, target, segments[1:])
+	case "capability_review":
+		target := server.CapabilityReview()
+		if target == nil {
+			errors.SendNotFound(w, r)
+			return
+		}
+		dispatchCapabilityReview(w, r, target, segments[1:])
 	case "export_control_review":
 		target := server.ExportControlReview()
 		if target == nil {
@@ -89,6 +118,27 @@ func Dispatch(w http.ResponseWriter, r *http.Request, server Server, segments []
 			return
 		}
 		dispatchSelfAccessReview(w, r, target, segments[1:])
+	case "self_capability_review":
+		target := server.SelfCapabilityReview()
+		if target == nil {
+			errors.SendNotFound(w, r)
+			return
+		}
+		dispatchSelfCapabilityReview(w, r, target, segments[1:])
+	case "self_terms_review":
+		target := server.SelfTermsReview()
+		if target == nil {
+			errors.SendNotFound(w, r)
+			return
+		}
+		dispatchSelfTermsReview(w, r, target, segments[1:])
+	case "terms_review":
+		target := server.TermsReview()
+		if target == nil {
+			errors.SendNotFound(w, r)
+			return
+		}
+		dispatchTermsReview(w, r, target, segments[1:])
 	default:
 		errors.SendNotFound(w, r)
 		return

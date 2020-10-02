@@ -7,6 +7,7 @@ import (
 	"math"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -221,11 +222,14 @@ func setupCluster(wg *sync.WaitGroup, successfulClustersCounter *int32) {
 
 				select {
 				case <-timeout:
-					isHealthy, _ := clusterutil.PollClusterHealth(cluster.ID(), discardLogger)
+					isHealthy, failures, _ := clusterutil.PollClusterHealth(cluster.ID(), discardLogger)
 					if isHealthy {
 						fmt.Printf("Cluster %s is healthy (could be transient).\n", cluster.ID())
 					} else {
 						fmt.Printf("Cluster %s is not healthy yet.\n", cluster.ID())
+						if len(failures) > 0 {
+							fmt.Printf("Currently failing %s health checks", strings.Join(failures, ", "))
+						}
 					}
 				case <-terminate:
 					return

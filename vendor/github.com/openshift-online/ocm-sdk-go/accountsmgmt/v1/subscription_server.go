@@ -45,6 +45,16 @@ type SubscriptionServer interface {
 	// Update a subscription
 	Update(ctx context.Context, request *SubscriptionUpdateServerRequest, response *SubscriptionUpdateServerResponse) error
 
+	// Labels returns the target 'generic_labels' resource.
+	//
+	// Reference to the list of labels of a specific subscription.
+	Labels() GenericLabelsServer
+
+	// Notify returns the target 'subscription_notify' resource.
+	//
+	// Notify a user related to the subscription via email
+	Notify() SubscriptionNotifyServer
+
 	// ReservedResources returns the target 'subscription_reserved_resources' resource.
 	//
 	// Reference to the resource that manages the collection of resources reserved by the
@@ -162,6 +172,20 @@ func dispatchSubscription(w http.ResponseWriter, r *http.Request, server Subscri
 		}
 	}
 	switch segments[0] {
+	case "labels":
+		target := server.Labels()
+		if target == nil {
+			errors.SendNotFound(w, r)
+			return
+		}
+		dispatchGenericLabels(w, r, target, segments[1:])
+	case "notify":
+		target := server.Notify()
+		if target == nil {
+			errors.SendNotFound(w, r)
+			return
+		}
+		dispatchSubscriptionNotify(w, r, target, segments[1:])
 	case "reserved_resources":
 		target := server.ReservedResources()
 		if target == nil {

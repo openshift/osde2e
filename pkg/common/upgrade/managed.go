@@ -3,13 +3,14 @@ package upgrade
 import (
 	"context"
 	"fmt"
+	"log"
+	"time"
+
 	"github.com/openshift/osde2e/pkg/common/cluster/healthchecks"
 	"github.com/openshift/osde2e/pkg/common/templates"
 	"github.com/openshift/osde2e/pkg/common/util"
 	"github.com/spf13/viper"
 	"k8s.io/apimachinery/pkg/util/wait"
-	"log"
-	"time"
 
 	configv1 "github.com/openshift/api/config/v1"
 	upgradev1alpha1 "github.com/openshift/managed-upgrade-operator/pkg/apis/upgrade/v1alpha1"
@@ -36,6 +37,12 @@ const (
 	pdbWorkloadName = "pdb"
 	// directory containing pod disruption budget workload assets
 	pdbWorkloadDir = "/assets/workloads/e2e/pdb"
+	// name of the workload for node drain tests
+	drainWorkloadName = "node-drain-test"
+	// directory containing node drain workload assets
+	drainWorkloadDir = "/assets/workloads/e2e/drain"
+	// Time to wait in seconds for workload to be created
+	workloadCreationWaitTime = 3
 
 	// config override template asset
 	configOverrideTemplate = "/assets/upgrades/config.template"
@@ -75,9 +82,17 @@ func TriggerManagedUpgrade(h *helper.H) (*configv1.ClusterVersion, error) {
 
 	// Create Pod Disruption Budget test workloads if desired
 	if viper.GetBool(config.Upgrade.ManagedUpgradeTestPodDisruptionBudgets) {
-		err = createPodDisruptionBudgetWorkloads(h)
+		err = createManagedUpgradeWorkload(pdbWorkloadName, pdbWorkloadDir, h)
 		if err != nil {
 			return cVersion, fmt.Errorf("unable to setup PDB workload for upgrade: %v", err)
+		}
+	}
+
+	// Create Node Drain test workloads if desired
+	if viper.GetBool(config.Upgrade.ManagedUpgradeTestNodeDrain) {
+		err = createManagedUpgradeWorkload(drainWorkloadName, drainWorkloadDir, h)
+		if err != nil {
+			return cVersion, fmt.Errorf("unable to setup node drain test workload for upgrade: %v", err)
 		}
 	}
 
@@ -188,23 +203,24 @@ func createUpgradeConfig(channel string, version string, h *helper.H) error {
 	return nil
 }
 
-// creates workloads that are protected by Pod Disruption Budgets (PDBs)
-// which the managed-upgrade-operator is expected to be able to handle
-func createPodDisruptionBudgetWorkloads(h *helper.H) error {
+func createManagedUpgradeWorkload(workLoadName string, workLoadDir string, h *helper.H) error {
 
-	if _, ok := h.GetWorkload(pdbWorkloadName); ok {
+	if _, ok := h.GetWorkload(workLoadName); ok {
 		return nil
 	}
 
-	// Create all K8s objects that are within the testDir
-	log.Printf("Applying Pod Disruption Budget workload: %s\n", pdbWorkloadDir)
-	_, err := helper.ApplyYamlInFolder(pdbWorkloadDir, h.CurrentProject(), h.Kube())
+	// Create all K8s objects that are within the workLoadDir
+	log.Printf("Applying %s workload from %s\n", workLoadName, workLoadDir)
+	obj, err := helper.ApplyYamlInFolder(workLoadDir, h.CurrentProject(), h.Kube())
 	if err != nil {
-		return fmt.Errorf("can't create upgrade PDB workload: %v", err)
+		return fmt.Errorf("can't create %s workload: %v", workLoadName, err)
 	}
 
+	// Log how many objects have been created
+	log.Printf("%v object(s) created for %s workload from %s path\n", len(obj), workLoadName, workLoadDir)
+
 	// Give the cluster a second to churn before checking
-	time.Sleep(3 * time.Second)
+	time.Sleep(workloadCreationWaitTime * time.Second)
 
 	// Wait for all pods to come up healthy
 	err = wait.PollImmediate(5*time.Second, 2*time.Minute, func() (bool, error) {
@@ -214,11 +230,11 @@ func createPodDisruptionBudgetWorkloads(h *helper.H) error {
 		return true, nil
 	})
 	if err != nil {
-		return fmt.Errorf("PDB workload not running correctly: %v", err)
+		return fmt.Errorf("%s workload not running correctly: %v", workLoadName, err)
 	}
 
 	// If success, add the workload to the list of installed workloads
-	h.AddWorkload(pdbWorkloadName, h.CurrentProject())
+	h.AddWorkload(workLoadName, h.CurrentProject())
 
 	return nil
 }

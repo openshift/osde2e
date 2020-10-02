@@ -45,6 +45,14 @@ func writeOrganizationsAddResponse(response *OrganizationsAddServerResponse, w h
 func readOrganizationsListRequest(request *OrganizationsListServerRequest, r *http.Request) error {
 	var err error
 	query := r.URL.Query()
+	request.fetchlabelsLabels, err = helpers.ParseBoolean(query, "fetchlabels_labels")
+	if err != nil {
+		return err
+	}
+	request.fields, err = helpers.ParseString(query, "fields")
+	if err != nil {
+		return err
+	}
 	request.page, err = helpers.ParseInteger(query, "page")
 	if err != nil {
 		return err

@@ -29,7 +29,6 @@ func (o *OCMProvider) Versions() (*spi.VersionList, error) {
 
 	o.versionCacheOnce.Do(func() {
 		versions := []*spi.Version{}
-
 		page := 1
 		log.Printf("Querying cluster versions endpoint.")
 		for {
@@ -72,6 +71,12 @@ func (o *OCMProvider) Versions() (*spi.VersionList, error) {
 				if version, err := util.OpenshiftVersionToSemver(v.ID()); err != nil {
 					log.Printf("could not parse version '%s': %v", v.ID(), err)
 				} else if v.Enabled() {
+					if o.Environment() == "prod" && v.ChannelGroup() != "stable" {
+						return true
+					}
+					if o.Environment() == "stage" && v.ChannelGroup() == "nightly" {
+						return true
+					}
 					versions = append(versions, spi.NewVersionBuilder().
 						Version(version).
 						Default(v.Default()).

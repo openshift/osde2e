@@ -83,6 +83,7 @@ var _ = ginkgo.SynchronizedBeforeSuite(func() []byte {
 		cluster, err := clusterutil.ProvisionCluster(nil)
 		events.HandleErrorWithEvents(err, events.InstallSuccessful, events.InstallFailed).ShouldNot(HaveOccurred(), "failed to setup cluster for testing")
 		if err != nil {
+			getLogs()
 			return []byte{}
 		}
 
@@ -107,13 +108,14 @@ var _ = ginkgo.SynchronizedBeforeSuite(func() []byte {
 		metadata.Instance.SetClusterID(cluster.ID())
 		metadata.Instance.SetRegion(cluster.Region())
 
-		if err = provider.AddProperty(cluster.ID(), "UpgradeVersion", viper.GetString(config.Upgrade.ReleaseName)); err != nil {
+		if err = provider.AddProperty(cluster, "UpgradeVersion", viper.GetString(config.Upgrade.ReleaseName)); err != nil {
 			log.Printf("Error while adding upgrade version property to cluster via OCM: %v", err)
 		}
 
 		err = clusterutil.WaitForClusterReady(cluster.ID(), nil)
 		events.HandleErrorWithEvents(err, events.HealthCheckSuccessful, events.HealthCheckFailed).ShouldNot(HaveOccurred(), "cluster failed health check")
 		if err != nil {
+			getLogs()
 			return []byte{}
 		}
 
@@ -121,6 +123,7 @@ var _ = ginkgo.SynchronizedBeforeSuite(func() []byte {
 			err = installAddons()
 			events.HandleErrorWithEvents(err, events.InstallAddonsSuccessful, events.InstallAddonsFailed).ShouldNot(HaveOccurred(), "failed while installing addons")
 			if err != nil {
+				getLogs()
 				return []byte{}
 			}
 		}
@@ -128,6 +131,7 @@ var _ = ginkgo.SynchronizedBeforeSuite(func() []byte {
 		var kubeconfigBytes []byte
 		if kubeconfigBytes, err = provider.ClusterKubeconfig(cluster.ID()); err != nil {
 			events.HandleErrorWithEvents(err, events.InstallKubeconfigRetrievalSuccess, events.InstallKubeconfigRetrievalFailure).ShouldNot(HaveOccurred(), "failed while retrieve kubeconfig")
+			getLogs()
 			return []byte{}
 		}
 		viper.Set(config.Kubeconfig.Contents, string(kubeconfigBytes))
@@ -140,7 +144,7 @@ var _ = ginkgo.SynchronizedBeforeSuite(func() []byte {
 			log.Printf("No kubeconfig contents found, but there should be some by now.")
 		}
 	}
-
+	getLogs()
 	return []byte{}
 }, func(data []byte) {
 	// only needs to run once
@@ -159,8 +163,11 @@ func getLogs() {
 		log.Println("CLUSTER_ID is not set, likely due to a setup failure. Skipping log collection...")
 	} else {
 		logs, err := provider.Logs(clusterID)
-		Expect(err).NotTo(HaveOccurred(), "failed to collect cluster logs")
-		writeLogs(logs)
+		if err != nil {
+			log.Printf("Error collecting cluster logs: %s", err.Error())
+		} else {
+			writeLogs(logs)
+		}
 	}
 }
 
@@ -169,7 +176,9 @@ func writeLogs(m map[string][]byte) {
 		name := k + "-log.txt"
 		filePath := filepath.Join(viper.GetString(config.ReportDir), name)
 		err := ioutil.WriteFile(filePath, v, os.ModePerm)
-		Expect(err).NotTo(HaveOccurred(), "failed to write log '%s'", filePath)
+		if err != nil {
+			log.Printf("Error writing log %s: %s", filePath, err.Error())
+		}
 	}
 }
 
@@ -316,6 +325,7 @@ func runGinkgoTests() error {
 	}
 
 	testsPassed := runTestsInPhase(phase.InstallPhase, "OSD e2e suite")
+	getLogs()
 	upgradeTestsPassed := true
 
 	var routeMonitorChan chan struct{}
@@ -391,6 +401,8 @@ func runGinkgoTests() error {
 	}
 
 	if !dryRun {
+		getLogs()
+
 		h := helper.NewOutsideGinkgo()
 
 		if h == nil {
@@ -503,7 +515,7 @@ func cleanupAfterE2E(h *helper.H) (errors []error) {
 			arguments = []string{}
 		}
 		log.Println("Running addon cleanup...")
-		h.RunAddonTests("addon-cleanup", harnesses, arguments)
+		h.RunAddonTests("addon-cleanup", 300, harnesses, arguments)
 	}
 
 	// We need to clean up our helper tests manually.

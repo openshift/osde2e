@@ -20,11 +20,15 @@ limitations under the License.
 package v1 // github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1
 
 import (
+	"bytes"
 	"context"
+	"io"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 	"path"
 
+	jsoniter "github.com/json-iterator/go"
 	"github.com/openshift-online/ocm-sdk-go/errors"
 	"github.com/openshift-online/ocm-sdk-go/helpers"
 )
@@ -60,6 +64,17 @@ func (c *SubscriptionsClient) List() *SubscriptionsListRequest {
 	}
 }
 
+// Post creates a request for the 'post' method.
+//
+// Create a new subscription and register a cluster for it.
+func (c *SubscriptionsClient) Post() *SubscriptionsPostRequest {
+	return &SubscriptionsPostRequest{
+		transport: c.transport,
+		path:      c.path,
+		metric:    c.metric,
+	}
+}
+
 // Subscription returns the target 'subscription' resource for the given identifier.
 //
 // Reference to the service that manages a specific subscription.
@@ -80,6 +95,7 @@ type SubscriptionsListRequest struct {
 	header                http.Header
 	fetchaccountsAccounts *bool
 	fetchlabelsLabels     *bool
+	fields                *string
 	labels                *string
 	order                 *string
 	page                  *int
@@ -112,6 +128,19 @@ func (r *SubscriptionsListRequest) FetchaccountsAccounts(value bool) *Subscripti
 // If true, includes the labels on a subscription in the output. Could slow request response time.
 func (r *SubscriptionsListRequest) FetchlabelsLabels(value bool) *SubscriptionsListRequest {
 	r.fetchlabelsLabels = &value
+	return r
+}
+
+// Fields sets the value of the 'fields' parameter.
+//
+// Projection
+// This field contains a comma-separated list of fields you'd like to get in
+// a result. No new fields can be added, only existing ones can be filtered.
+// To specify a field 'id' of a structure 'plan' use 'plan.id'.
+// To specify all fields of a structure 'labels' use 'labels.*'.
+//
+func (r *SubscriptionsListRequest) Fields(value string) *SubscriptionsListRequest {
+	r.fields = &value
 	return r
 }
 
@@ -202,6 +231,9 @@ func (r *SubscriptionsListRequest) SendContext(ctx context.Context) (result *Sub
 	}
 	if r.fetchlabelsLabels != nil {
 		helpers.AddValue(&query, "fetchlabels_labels", *r.fetchlabelsLabels)
+	}
+	if r.fields != nil {
+		helpers.AddValue(&query, "fields", *r.fields)
 	}
 	if r.labels != nil {
 		helpers.AddValue(&query, "labels", *r.labels)
@@ -375,6 +407,153 @@ func (r *SubscriptionsListResponse) GetTotal() (value int, ok bool) {
 	ok = r != nil && r.total != nil
 	if ok {
 		value = *r.total
+	}
+	return
+}
+
+// SubscriptionsPostRequest is the request for the 'post' method.
+type SubscriptionsPostRequest struct {
+	transport http.RoundTripper
+	path      string
+	metric    string
+	query     url.Values
+	header    http.Header
+	request   *SubscriptionRegistration
+}
+
+// Parameter adds a query parameter.
+func (r *SubscriptionsPostRequest) Parameter(name string, value interface{}) *SubscriptionsPostRequest {
+	helpers.AddValue(&r.query, name, value)
+	return r
+}
+
+// Header adds a request header.
+func (r *SubscriptionsPostRequest) Header(name string, value interface{}) *SubscriptionsPostRequest {
+	helpers.AddHeader(&r.header, name, value)
+	return r
+}
+
+// Request sets the value of the 'request' parameter.
+//
+//
+func (r *SubscriptionsPostRequest) Request(value *SubscriptionRegistration) *SubscriptionsPostRequest {
+	r.request = value
+	return r
+}
+
+// Send sends this request, waits for the response, and returns it.
+//
+// This is a potentially lengthy operation, as it requires network communication.
+// Consider using a context and the SendContext method.
+func (r *SubscriptionsPostRequest) Send() (result *SubscriptionsPostResponse, err error) {
+	return r.SendContext(context.Background())
+}
+
+// SendContext sends this request, waits for the response, and returns it.
+func (r *SubscriptionsPostRequest) SendContext(ctx context.Context) (result *SubscriptionsPostResponse, err error) {
+	query := helpers.CopyQuery(r.query)
+	header := helpers.SetHeader(r.header, r.metric)
+	buffer := &bytes.Buffer{}
+	err = writeSubscriptionsPostRequest(r, buffer)
+	if err != nil {
+		return
+	}
+	uri := &url.URL{
+		Path:     r.path,
+		RawQuery: query.Encode(),
+	}
+	request := &http.Request{
+		Method: "POST",
+		URL:    uri,
+		Header: header,
+		Body:   ioutil.NopCloser(buffer),
+	}
+	if ctx != nil {
+		request = request.WithContext(ctx)
+	}
+	response, err := r.transport.RoundTrip(request)
+	if err != nil {
+		return
+	}
+	defer response.Body.Close()
+	result = &SubscriptionsPostResponse{}
+	result.status = response.StatusCode
+	result.header = response.Header
+	if result.status >= 400 {
+		result.err, err = errors.UnmarshalError(response.Body)
+		if err != nil {
+			return
+		}
+		err = result.err
+		return
+	}
+	err = readSubscriptionsPostResponse(result, response.Body)
+	if err != nil {
+		return
+	}
+	return
+}
+
+// marshall is the method used internally to marshal requests for the
+// 'post' method.
+func (r *SubscriptionsPostRequest) marshal(writer io.Writer) error {
+	stream := helpers.NewStream(writer)
+	r.stream(stream)
+	return stream.Error
+}
+func (r *SubscriptionsPostRequest) stream(stream *jsoniter.Stream) {
+}
+
+// SubscriptionsPostResponse is the response for the 'post' method.
+type SubscriptionsPostResponse struct {
+	status   int
+	header   http.Header
+	err      *errors.Error
+	response *Subscription
+}
+
+// Status returns the response status code.
+func (r *SubscriptionsPostResponse) Status() int {
+	if r == nil {
+		return 0
+	}
+	return r.status
+}
+
+// Header returns header of the response.
+func (r *SubscriptionsPostResponse) Header() http.Header {
+	if r == nil {
+		return nil
+	}
+	return r.header
+}
+
+// Error returns the response error.
+func (r *SubscriptionsPostResponse) Error() *errors.Error {
+	if r == nil {
+		return nil
+	}
+	return r.err
+}
+
+// Response returns the value of the 'response' parameter.
+//
+//
+func (r *SubscriptionsPostResponse) Response() *Subscription {
+	if r == nil {
+		return nil
+	}
+	return r.response
+}
+
+// GetResponse returns the value of the 'response' parameter and
+// a flag indicating if the parameter has a value.
+//
+//
+func (r *SubscriptionsPostResponse) GetResponse() (value *Subscription, ok bool) {
+	ok = r != nil && r.response != nil
+	if ok {
+		value = r.response
 	}
 	return
 }

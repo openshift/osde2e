@@ -17,6 +17,7 @@ import (
 
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/spf13/viper"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -121,7 +122,7 @@ var _ = ginkgo.Describe(namespaceWebhookTestName, func() {
 				namespacesToCheck = append(namespacesToCheck, ns)
 			}
 
-			wait.PollImmediate(2*time.Second, 2*time.Minute, func() (bool, error) {
+			wait.PollImmediate(5*time.Second, 3*time.Minute, func() (bool, error) {
 				for _, ns := range namespacesToCheck {
 					namespace, _ := h.Kube().CoreV1().Namespaces().Get(context.TODO(), ns, metav1.GetOptions{})
 					if namespace != nil && namespace.Status.Phase == "Terminating" {
@@ -209,16 +210,12 @@ func deleteGroup(groupName string, h *helper.H) error {
 	return h.User().UserV1().Groups().Delete(context.TODO(), groupName, metav1.DeleteOptions{})
 }
 
-func updateNamespace(namespace string, asUser string, userGroup string, h *helper.H) error {
+func updateNamespace(namespace string, asUser string, userGroup string, h *helper.H) (err error) {
+	// reset impersonation upon return
+	defer h.Impersonate(rest.ImpersonationConfig{})
 
-	// reset impersonation
+	// reset impersonation at the beginning just-in-case
 	h.Impersonate(rest.ImpersonationConfig{})
-
-	// Verify the namespace already exists
-	ns, err := h.Kube().CoreV1().Namespaces().Get(context.TODO(), namespace, metav1.GetOptions{})
-	if err != nil {
-		return fmt.Errorf("failed to find namespace to update '%s': %v", namespace, err)
-	}
 
 	// we need to add these groups for impersonation to work
 	userGroups := []string{"system:authenticated", "system:authenticated:oauth"}
@@ -231,10 +228,38 @@ func updateNamespace(namespace string, asUser string, userGroup string, h *helpe
 		UserName: asUser,
 		Groups:   userGroups,
 	})
-	_, err = h.Kube().CoreV1().Namespaces().Update(context.TODO(), ns, metav1.UpdateOptions{})
 
-	// reset impersonation
-	h.Impersonate(rest.ImpersonationConfig{})
+	var updatedNamespace *v1.Namespace
+	var ns *v1.Namespace
+
+	err = wait.PollImmediate(10*time.Second, 1*time.Minute, func() (bool, error) {
+		// Verify the namespace already exists
+		ns, err = h.Kube().CoreV1().Namespaces().Get(context.TODO(), namespace, metav1.GetOptions{})
+		if err != nil {
+			return false, fmt.Errorf("failed to find namespace to update '%s': %v", namespace, err)
+		}
+
+		updatedNamespace, err = h.Kube().CoreV1().Namespaces().Update(context.TODO(), ns, metav1.UpdateOptions{})
+		if err != nil {
+			if apierrors.IsConflict(err) {
+				return false, nil
+			}
+			return false, err
+		}
+		return true, nil
+	})
+	if err != nil {
+		return err
+	}
+
+	err = wait.PollImmediate(5*time.Second, 3*time.Minute, func() (bool, error) {
+		ns, err = h.Kube().CoreV1().Namespaces().Get(context.TODO(), namespace, metav1.GetOptions{})
+		if err != nil {
+			return false, fmt.Errorf("failed to find updated namespace '%s': %v", namespace, err)
+		}
+
+		return updatedNamespace.ResourceVersion == ns.ResourceVersion, nil
+	})
 
 	return err
 }
@@ -277,7 +302,7 @@ func createNamespace(namespace string, h *helper.H) (*v1.Namespace, error) {
 	h.Kube().CoreV1().Namespaces().Create(context.TODO(), ns, metav1.CreateOptions{})
 
 	// Wait for the namespace to create. This is usually pretty quick.
-	err = wait.PollImmediate(2*time.Second, 1*time.Minute, func() (bool, error) {
+	err = wait.PollImmediate(5*time.Second, 2*time.Minute, func() (bool, error) {
 		if _, err := h.Kube().CoreV1().Namespaces().Get(context.TODO(), namespace, metav1.GetOptions{}); err != nil {
 			return false, nil
 		}

@@ -58,14 +58,24 @@ var _ = ginkgo.Describe(clusterStateTestName, func() {
 		h.SetServiceAccount("system:serviceaccount:%s:cluster-admin")
 		r := h.RunnerWithNoCommand()
 
+		r.Name = "alerts"
+		serviceAccountDir := "/var/run/secrets/kubernetes.io/serviceaccount"
+
 		alertsCommand, err := h.ConvertTemplateToString(alertsCmdTpl, struct {
 			OutputDir string
+			Name      string
+			Server    string
+			CA        string
+			TokenFile string
 		}{
 			OutputDir: runner.DefaultRunner.OutputDir,
+			Name:      r.Name,
+			Server:    "https://kubernetes.default",
+			CA:        serviceAccountDir + "/ca.crt",
+			TokenFile: serviceAccountDir + "/token",
 		})
 		Expect(err).NotTo(HaveOccurred(), "failure creating templated command")
 
-		r.Name = "alerts"
 		r.Cmd = alertsCommand
 
 		stopCh := make(chan struct{})

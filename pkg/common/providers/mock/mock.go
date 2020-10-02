@@ -240,6 +240,6 @@ func (m *MockProvider) ExtendExpiry(clusterID string, hours uint64, minutes uint
 }
 
 // AddProperty mocks an add new cluster property operation.
-func (m *MockProvider) AddProperty(clusterID string, tag string, value string) error {
+func (m *MockProvider) AddProperty(cluster *spi.Cluster, tag string, value string) error {
 	return fmt.Errorf("AddProperty is unsupported by mock clusters")
 }

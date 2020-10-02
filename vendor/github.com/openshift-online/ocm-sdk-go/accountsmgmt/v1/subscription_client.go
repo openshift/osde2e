@@ -87,6 +87,28 @@ func (c *SubscriptionClient) Update() *SubscriptionUpdateRequest {
 	}
 }
 
+// Labels returns the target 'generic_labels' resource.
+//
+// Reference to the list of labels of a specific subscription.
+func (c *SubscriptionClient) Labels() *GenericLabelsClient {
+	return NewGenericLabelsClient(
+		c.transport,
+		path.Join(c.path, "labels"),
+		path.Join(c.metric, "labels"),
+	)
+}
+
+// Notify returns the target 'subscription_notify' resource.
+//
+// Notify a user related to the subscription via email
+func (c *SubscriptionClient) Notify() *SubscriptionNotifyClient {
+	return NewSubscriptionNotifyClient(
+		c.transport,
+		path.Join(c.path, "notify"),
+		path.Join(c.metric, "notify"),
+	)
+}
+
 // ReservedResources returns the target 'subscription_reserved_resources' resource.
 //
 // Reference to the resource that manages the collection of resources reserved by the

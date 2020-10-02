@@ -38,7 +38,7 @@ var (
 	}
 
 	// MaxDuration is how long an upgrade will run before failing.
-	MaxDuration = 100 * time.Minute
+	MaxDuration = 180 * time.Minute
 )
 
 // RunUpgrade uses the OpenShift extended suite to upgrade a cluster to the image provided in cfg.
@@ -78,6 +78,12 @@ func RunUpgrade() error {
 	done = false
 	if err = wait.PollImmediate(10*time.Second, MaxDuration, func() (bool, error) {
 		if viper.GetBool(config.Upgrade.ManagedUpgrade) && viper.GetBool(config.Upgrade.WaitForWorkersToManagedUpgrade) {
+			// Keep the managed upgrade's configuration overrides in place, in case Hive has replaced them
+			err = overrideOperatorConfig(h)
+			// Log if it errored, but don't cancel the upgrade because of it
+			if err != nil {
+				log.Printf("problem overriding managed upgrade config: %v", err)
+			}
 			// If performing a managed upgrade, check if we want to wait for workers to fully upgrade too
 			done, msg, err = isManagedUpgradeDone(h, desired.Spec.DesiredUpdate)
 		} else {
@@ -131,7 +137,12 @@ func TriggerUpgrade(h *helper.H) (*configv1.ClusterVersion, error) {
 		return nil, fmt.Errorf("error getting cluster provider: %v", err)
 	}
 
-	provider.AddProperty(clusterID, clusterproperties.Status, clusterproperties.StatusUpgrading)
+	cluster, err := provider.GetCluster(clusterID)
+	if err != nil {
+		return nil, fmt.Errorf("error retrieving cluster: %v", err)
+	}
+
+	provider.AddProperty(cluster, clusterproperties.Status, clusterproperties.StatusUpgrading)
 
 	// set requested upgrade targets
 	if image != "" {

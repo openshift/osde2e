@@ -26,6 +26,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"path"
 	"time"
 
 	jsoniter "github.com/json-iterator/go"
@@ -73,6 +74,17 @@ func (c *AccountClient) Update() *AccountUpdateRequest {
 		path:      c.path,
 		metric:    c.metric,
 	}
+}
+
+// Labels returns the target 'generic_labels' resource.
+//
+// Reference to the list of labels of a specific account.
+func (c *AccountClient) Labels() *GenericLabelsClient {
+	return NewGenericLabelsClient(
+		c.transport,
+		path.Join(c.path, "labels"),
+		path.Join(c.metric, "labels"),
+	)
 }
 
 // AccountPollRequest is the request for the Poll method.

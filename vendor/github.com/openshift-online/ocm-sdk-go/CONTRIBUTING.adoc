@@ -102,7 +102,7 @@ Below is an example CHANGES.adoc update:
 
 ----
 
-Submit an MR for review/merge with the CHANGES.adoc and Makefile update.
+Submit an MR for review/merge with the CHANGES.adoc and version.go update.
 
 Finally, create and submit a new tag with the new version following the below example:
 

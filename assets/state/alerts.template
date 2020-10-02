@@ -1,4 +1,5 @@
 ALERTS_FILE="{{.OutputDir}}/alerts.json"
+
 get_alerts() {
     curl -G -s -H "Authorization: Bearer $(oc whoami --show-token)" --data-urlencode 'query=ALERTS{alertstate!="pending",alertname!="Watchdog"}' "https://$(oc get route -n openshift-monitoring prometheus-k8s -o jsonpath='{.spec.host}')/api/v1/query" > "$ALERTS_FILE"
 }

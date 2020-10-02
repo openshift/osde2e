@@ -35,13 +35,14 @@ const CloudRegionNilKind = "CloudRegionNil"
 //
 // Description of a region of a cloud provider.
 type CloudRegion struct {
-	id            *string
-	href          *string
-	link          bool
-	cloudProvider *CloudProvider
-	displayName   *string
-	enabled       *bool
-	name          *string
+	id              *string
+	href            *string
+	link            bool
+	cloudProvider   *CloudProvider
+	displayName     *string
+	enabled         *bool
+	name            *string
+	supportsMultiAZ *bool
 }
 
 // Kind returns the name of the type of the object.
@@ -102,6 +103,7 @@ func (o *CloudRegion) Empty() bool {
 		o.displayName == nil &&
 		o.enabled == nil &&
 		o.name == nil &&
+		o.supportsMultiAZ == nil &&
 		true)
 }
 
@@ -199,6 +201,29 @@ func (o *CloudRegion) GetName() (value string, ok bool) {
 	ok = o != nil && o.name != nil
 	if ok {
 		value = *o.name
+	}
+	return
+}
+
+// SupportsMultiAZ returns the value of the 'supports_multi_AZ' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+// Whether the region supports multiple availability zones.
+func (o *CloudRegion) SupportsMultiAZ() bool {
+	if o != nil && o.supportsMultiAZ != nil {
+		return *o.supportsMultiAZ
+	}
+	return false
+}
+
+// GetSupportsMultiAZ returns the value of the 'supports_multi_AZ' attribute and
+// a flag indicating if the attribute has a value.
+//
+// Whether the region supports multiple availability zones.
+func (o *CloudRegion) GetSupportsMultiAZ() (value bool, ok bool) {
+	ok = o != nil && o.supportsMultiAZ != nil
+	if ok {
+		value = *o.supportsMultiAZ
 	}
 	return
 }

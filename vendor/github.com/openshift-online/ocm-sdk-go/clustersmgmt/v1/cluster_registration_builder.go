@@ -24,6 +24,7 @@ package v1 // github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1
 // Registration of a new cluster to the service.
 type ClusterRegistrationBuilder struct {
 	externalID     *string
+	organizationID *string
 	subscriptionID *string
 }
 
@@ -37,6 +38,14 @@ func NewClusterRegistration() *ClusterRegistrationBuilder {
 //
 func (b *ClusterRegistrationBuilder) ExternalID(value string) *ClusterRegistrationBuilder {
 	b.externalID = &value
+	return b
+}
+
+// OrganizationID sets the value of the 'organization_ID' attribute to the given value.
+//
+//
+func (b *ClusterRegistrationBuilder) OrganizationID(value string) *ClusterRegistrationBuilder {
+	b.organizationID = &value
 	return b
 }
 
@@ -54,6 +63,7 @@ func (b *ClusterRegistrationBuilder) Copy(object *ClusterRegistration) *ClusterR
 		return b
 	}
 	b.externalID = object.externalID
+	b.organizationID = object.organizationID
 	b.subscriptionID = object.subscriptionID
 	return b
 }
@@ -62,6 +72,7 @@ func (b *ClusterRegistrationBuilder) Copy(object *ClusterRegistration) *ClusterR
 func (b *ClusterRegistrationBuilder) Build() (object *ClusterRegistration, err error) {
 	object = new(ClusterRegistration)
 	object.externalID = b.externalID
+	object.organizationID = b.organizationID
 	object.subscriptionID = b.subscriptionID
 	return
 }
