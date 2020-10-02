@@ -6,7 +6,7 @@
 
 old=$(md5sum pkged.go| awk '{print $1 }')
 
-pkger --include "$pwd"/assets
+pkger --include $(pwd)/assets
 
 new=$(md5sum pkged.go| awk '{print $1 }')
 
