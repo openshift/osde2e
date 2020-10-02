@@ -10,6 +10,13 @@ import (
 )
 
 const testCmd = `
+oc config set-cluster {{.Name}} --server=https://kubernetes.default --certificate-authority={{.CA}}
+oc config set-credentials {{.Name}} --token=$(cat {{.TokenFile}})
+oc config set-context {{.Name}} --cluster={{.Name}} --user={{.Name}}
+oc config use-context {{.Name}}
+oc config view > /tmp/kubeconfig
+export KUBECONFIG=/tmp/kubeconfig
+
 {{printTests .TestNames}} | {{unwrap .Env}} openshift-tests {{.TestCmd}} {{selectTests .Suite .TestNames}} {{unwrap .Flags}}
 `
 
@@ -39,6 +46,10 @@ type E2EConfig struct {
 
 	// Flags to run the suite with.
 	Flags []string
+
+	Name      string
+	TokenFile string
+	CA        string
 }
 
 // Cmd returns a shell command which runs the suite.

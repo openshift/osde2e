@@ -17,11 +17,6 @@ import (
 	"k8s.io/client-go/rest"
 )
 
-const (
-	SRE_PROVIDER_NAME      = "OpenShift_SRE"
-	CUSTOMER_PROVIDER_NAME = "CUSTOM"
-)
-
 var userWebhookTestName string = "[Suite: service-definition] [OSD] user validating webhook"
 
 func init() {
@@ -45,6 +40,8 @@ var _ = ginkgo.Describe(userWebhookTestName, func() {
 				UserName: "test@customdomain",
 				Groups: []string{
 					"dedicated-admins",
+					"system:authenticated",
+					"system:authenticated:oauth",
 				},
 			})
 			err = deleteUser(userName, h)
@@ -65,52 +62,11 @@ var _ = ginkgo.Describe(userWebhookTestName, func() {
 				Groups: []string{
 					"dedicated-admins",
 					"system:authenticated",
+					"system:authenticated:oauth",
 				},
 			})
 			err = deleteUser(userName, h)
 			Expect(err).NotTo(HaveOccurred())
-		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
-
-		ginkgo.It("dedicated admins cannot manage redhat user identity", func() {
-			providerUsername := util.RandomStr(5)
-			idName := SRE_PROVIDER_NAME + ":" + util.RandomStr(5)
-			identity, err := createIdentity(idName, SRE_PROVIDER_NAME, providerUsername, h)
-			defer func() {
-				h.Impersonate(rest.ImpersonationConfig{})
-				err = deleteIdentity(identity.Name, h)
-				Expect(err).NotTo(HaveOccurred())
-			}()
-			Expect(err).NotTo(HaveOccurred())
-
-			h.Impersonate(rest.ImpersonationConfig{
-				UserName: "test@customdomain",
-				Groups: []string{
-					"dedicated-admins",
-				},
-			})
-			err = deleteIdentity(idName, h)
-			Expect(err).To(HaveOccurred())
-		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
-
-		ginkgo.It("dedicated admins can manage customer user identity", func() {
-			providerUsername := util.RandomStr(5)
-			idName := CUSTOMER_PROVIDER_NAME + ":" + util.RandomStr(5)
-			identity, err := createIdentity(idName, CUSTOMER_PROVIDER_NAME, providerUsername, h)
-			defer func() {
-				h.Impersonate(rest.ImpersonationConfig{})
-				err = deleteIdentity(identity.Name, h)
-				Expect(err).NotTo(HaveOccurred())
-			}()
-			Expect(err).NotTo(HaveOccurred())
-
-			h.Impersonate(rest.ImpersonationConfig{
-				UserName: "test@customdomain",
-				Groups: []string{
-					"dedicated-admins",
-				},
-			})
-			err = deleteIdentity(idName, h)
-			Expect(err).To(HaveOccurred())
 		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
 	})
 })
@@ -127,19 +83,4 @@ func createUser(userName string, groups []string, h *helper.H) (*userv1.User, er
 
 func deleteUser(userName string, h *helper.H) error {
 	return h.User().UserV1().Users().Delete(context.TODO(), userName, metav1.DeleteOptions{})
-}
-
-func createIdentity(idName string, providername string, providerUserName string, h *helper.H) (*userv1.Identity, error) {
-	identity := &userv1.Identity{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: idName,
-		},
-		ProviderName:     providername,
-		ProviderUserName: providerUserName,
-	}
-	return h.User().UserV1().Identities().Create(context.TODO(), identity, metav1.CreateOptions{})
-}
-
-func deleteIdentity(idName string, h *helper.H) error {
-	return h.User().UserV1().Identities().Delete(context.TODO(), idName, metav1.DeleteOptions{})
 }

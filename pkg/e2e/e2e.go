@@ -515,7 +515,7 @@ func cleanupAfterE2E(h *helper.H) (errors []error) {
 			arguments = []string{}
 		}
 		log.Println("Running addon cleanup...")
-		h.RunAddonTests("addon-cleanup", harnesses, arguments)
+		h.RunAddonTests("addon-cleanup", 300, harnesses, arguments)
 	}
 
 	// We need to clean up our helper tests manually.
