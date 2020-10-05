@@ -428,10 +428,10 @@ func init() {
 	viper.SetDefault(Upgrade.ManagedUpgrade, true)
 
 	viper.BindEnv(Upgrade.ManagedUpgradeTestPodDisruptionBudgets, "UPGRADE_MANAGED_TEST_PDBS")
-	viper.SetDefault(Upgrade.ManagedUpgradeTestPodDisruptionBudgets, false)
+	viper.SetDefault(Upgrade.ManagedUpgradeTestPodDisruptionBudgets, true)
 
 	viper.BindEnv(Upgrade.ManagedUpgradeTestNodeDrain, "UPGRADE_MANAGED_TEST_DRAIN")
-	viper.SetDefault(Upgrade.ManagedUpgradeTestNodeDrain, false)
+	viper.SetDefault(Upgrade.ManagedUpgradeTestNodeDrain, true)
 
 	viper.BindEnv(Upgrade.WaitForWorkersToManagedUpgrade, "UPGRADE_WAIT_FOR_WORKERS")
 	viper.SetDefault(Upgrade.WaitForWorkersToManagedUpgrade, true)
