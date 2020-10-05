@@ -5,7 +5,7 @@ cd "{{ .WorkloadsPath }}"
 
 # setup inventory
 set +x
-mkdir ~/.kube
+mkdir -p ~/.kube
 echo -e "{{ .Kubeconfig }}\n" > ~/.kube/config
 
 oc get project scale-ci-tooling && oc delete project scale-ci-tooling --wait
@@ -14,7 +14,7 @@ oc create serviceaccount useroot -n scale-ci-tooling
 oc adm policy add-scc-to-user privileged -z useroot -n scale-ci-tooling
 cp workloads/inventory.example inventory
 echo "localhost ansible_connection=local" >> inventory
-mkdir ~/.ssh
+mkdir -p ~/.ssh
 ssh-keygen -f ~/.ssh/id_rsa -q -N ""
 chmod 600 ~/.ssh/*
 set -x
