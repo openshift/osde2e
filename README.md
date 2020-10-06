@@ -122,7 +122,7 @@ MINOR_TARGET=2 \
 osde2e test --configs prod,e2e-suite
 ```
 
-A list of commonly used environment variables are included in the file /docs/Config.md.
+A list of commonly used environment variables are included in [Config variables].
 
 
 #### Using a custom YAML config
@@ -139,31 +139,31 @@ Some configuration settings are also exposed as command-line parameters. A full 
  
 An example is included below:
  
-```shell
+```
 osde2e test --cluster-id 1ddkj9cr9j908gdlb1q5v6ld4b7ina5m \
    --provider stage \
    --skip-health-check \
    --focus-tests "RBAC Operator"
 ```
  
-A list of commonly used CLI flags are included in the file /docs/Config.md.
+A list of commonly used CLI flags are included in [Config variables].
  
 ##### Full custom YAML config example
 ```
 dryRun: false
 cluster:
-name: jsica-test
-multiAZ: true
+   name: jsica-test
+   multiAZ: true
 ocm:
-debug: false
-token: [Redacted]
-env: stage
+   debug: false
+   token: [Redacted]
+   env: stage
 tests:
-testsToRun:
-- '[Suite: e2e]'
+   testsToRun:
+   - '[Suite: e2e]'
 ```
 
-A list of existing config files that can be used are included in the file /docs/Config.md.
+A list of existing config files that can be used are included in [Config variables].
  
 #### Order of precedence
  
@@ -241,6 +241,7 @@ To write your own test, see [Writing Tests].
 [Addon Testing Guide]:/docs/Addons.md
 [Grafana dashboards]:https://grafana.datahub.redhat.com/dashboard/db/osd-health-metrics?orgId=1
 [Writing Tests]:/docs/Writing-Tests.md
+[Config variables]:/docs/Config.md
  
  
 ## osde2ectl
@@ -251,40 +252,50 @@ The ENV variables and config files used for osde2e can be used for osde2ectl as 
  
 Key features include:-
  
-1. Cluster creation:
+### Cluster creation:
+
 osde2ectl allows to create a single cluster or multiple clusters which get created in batches. Users can decide the number of clusters in a single batch (By default, all clusters get created at once. This is also the case when the given value for batch size is 0 or less.)
  
 The total number of clusters to be created (default value is 1) and the number of seconds between batches (default value is 120 seconds) can also be specified.
  
-Example --> ```./osde2ectl create --configs prod --number-of-clusters 4 --batch-size 2 --seconds-between-batches 40```
+#### Example:
+```./osde2ectl create --configs prod --number-of-clusters 4 --batch-size 2 --seconds-between-batches 40```
  
 A folder named 'Clusters' would crop up with logs of the corresponding clusters being created inside files in the form of <cluster ID>.log
  
-2. Cluster deletion:
+### Cluster deletion:
+
 Clusters can be deleted once a user can provide a cluster ID and the environment in which it was created. Clusters belonging to an owner can also be deleted at once through a CLI parameter.
  
-Example --> ```./osde2ectl delete --cluster-id <cluster ID> --configs stage --environment ocm```
+#### Example:
+ ```./osde2ectl delete --cluster-id <cluster ID> --configs stage --environment ocm```
  
 ```./osde2ectl delete --owner agopalak```
  
-3. Extension of cluster expiry time:
+### Extension of cluster expiry time:
+
 The expiry time of clusters created by osde2e/osde2ectl can be extended through osde2ectl parameters. The time can be specified in hours, minutes and seconds.
  
-Example --> ```./osde2ectl extend --configs stage --cluster-id <cluster ID> --hours 2 --minutes 30 --seconds 20```
+#### Example:
+```./osde2ectl extend --configs stage --cluster-id <cluster ID> --hours 2 --minutes 30 --seconds 20```
  
-4. Get cluster information:
+### Get cluster information:
+
 Users can retrieve information about a specific cluster that exists. The --kube-config flag triggers the retrieval of a cluster's kubeconfig in the current directory by default or it could be downloaded into the path specified in the --kube-config-path CLI parameter.
  
 The output would show a cluster's name, ID, current state (ready, installing, etc.), current status (healthy, node, etc.), owner, installed version in the cluster and the upgrade version if any. If jobs are being run on a cluster, the job name as well job ID fields would be available along with the above information.
  
 The get command, by default extends the cluster expiry time by 30 minutes if the user has requested for the kubeconfig and the cluster expiry time is within 30 minutes or less. There's also a provision to extend the cluster expiry time in either minutes or hours using the CLI parameters --hours and --minutes.
  
-Example --> ```./osde2ectl get --cluster-id <cluster ID> --kube-config --hours 2 --minutes 30 ```
+#### Example:
+ ```./osde2ectl get --cluster-id <cluster ID> --kube-config --hours 2 --minutes 30 ```
  
-5. Cluster list retrieval:
+### Cluster list retrieval:
+
 Users can view the current crop of clusters in each environment through the list sub-command.
  
 Each cluster's information can be viewed similar to the one obtained using the get sub-command.
  
-Example --> ``` /osde2ectl list --configs stage ```
+#### Example:
+``` ./osde2ectl list --configs stage ```
 
