@@ -61,6 +61,9 @@ type E2EConfig struct {
 	// TestCmd determines which suite the runner executes.
 	TestCmd string
 
+	// Tarball determines whether the results should be tar'd or not
+	Tarball bool
+
 	// Suite to be run inside the runner.
 	Suite string
 
@@ -69,6 +72,9 @@ type E2EConfig struct {
 
 	// Flags to run the suite with.
 	Flags []string
+
+	// Output Dir is where e2e tests serve up results
+	OutputDir string
 
 	Name      string
 	TokenFile string

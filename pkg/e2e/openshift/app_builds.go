@@ -19,8 +19,10 @@ import (
 
 // BuildE2EConfig is the base configuration for the E2E run.
 var BuildE2EConfig = E2EConfig{
-	TestCmd: "run",
-	Suite:   "openshift/image-ecosystem",
+	OutputDir: "/test-run-results",
+	TestCmd:   "run",
+	Tarball:   true,
+	Suite:     "openshift/image-ecosystem",
 	Env: []string{
 		"DELETE_NAMESPACE=false",
 	},
