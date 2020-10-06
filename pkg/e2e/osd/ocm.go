@@ -9,7 +9,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-var ocmTestName string = "[Suite: informing] [OSD] OCM"
+var ocmTestName string = "[Suite: e2e] [OSD] OCM"
 
 func init() {
 	alert.RegisterGinkgoAlert(ocmTestName, "SD-CICD", "Jeffrey Sica", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
