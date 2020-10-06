@@ -13,7 +13,7 @@ import (
 	"k8s.io/client-go/rest"
 )
 
-var dedicatedAdminTestName string = "[Suite: operators] [OSD] dedicated-admin permissions"
+var dedicatedAdminTestName string = "[Suite: informing] [OSD] dedicated-admin permissions"
 
 func init() {
 	alert.RegisterGinkgoAlert(dedicatedAdminTestName, "SD-SREP", "Matt Bargenquast", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)

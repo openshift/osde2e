@@ -20,7 +20,7 @@ const (
 	externalLoadBalancer               = "rh-api"
 )
 
-var loadBalancersTestName string = "[Suite: service-definition] Load Balancers"
+var loadBalancersTestName string = "[Suite: informing] Load Balancers"
 
 func init() {
 	alert.RegisterGinkgoAlert(loadBalancersTestName, "SD-CICD", "Jeffrey Sica", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
