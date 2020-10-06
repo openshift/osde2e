@@ -20,7 +20,7 @@ import (
 
 const (
 	// image used for ansible commands
-	ansibleImage = "quay.io/openshift/origin-ansible:latest"
+	ansibleImage = "quay.io/openshift/origin-ansible:v3.11"
 
 	// WorkloadsPath is the location that the openshift-scale workloads git repo will be cloned on the runner pod
 	WorkloadsPath = "/src/github.com/openshift-scale/workloads"
