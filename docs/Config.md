@@ -150,6 +150,7 @@ The following are the values that can be plugged in for the --configs flag when 
 
 | Config Value | Usage |
 | --------------| ------------------------| 
+|crc | To run osde2e/osde2ectl in a local CRC environment.|
 |int | To run osde2e/osde2ectl in the integration environment.|
 |stage | To run osde2e/osde2ectl on stage.|
 |prod | To run osde2e/osde2ectl in the production environment. (This is the default value if nothing is specified.)|
