@@ -199,4 +199,4 @@ func init() {
 	alert.RegisterGinkgoAlert(inhibitionsTestName, "SD-SRE", "Alex Chvatal", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
 }
 
-var inhibitionsTestName string = "[Suite: informing] AlertmanagerInhibitions"
+var inhibitionsTestName string = "[Suite: operators] AlertmanagerInhibitions"

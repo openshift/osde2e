@@ -18,6 +18,29 @@ oc config view > /tmp/kubeconfig
 export KUBECONFIG=/tmp/kubeconfig
 
 {{printTests .TestNames}} | {{unwrap .Env}} openshift-tests {{.TestCmd}} {{selectTests .Suite .TestNames}} {{unwrap .Flags}}
+
+# create a Tarball of OutputDir if requested
+{{$outDir := .OutputDir}}
+{{if .Tarball}}
+	{{$outDir = "/tmp/out"}}
+        mkdir -p {{$outDir}}
+	tar cvfz {{$outDir}}/{{.Name}}.tgz {{.OutputDir}}
+{{end}}
+
+case $(rpm -qa python) in
+python-2*)
+	MODULE="SimpleHTTPServer"
+	;;
+python-3*)
+	MODULE="http.server"
+	;;
+*)
+	MODULE="http.server"
+	;;
+esac
+
+# make results available using HTTP
+cd {{$outDir}} && echo "Starting server" && python -m "${MODULE}"
 `
 
 var (
@@ -38,6 +61,9 @@ type E2EConfig struct {
 	// TestCmd determines which suite the runner executes.
 	TestCmd string
 
+	// Tarball determines whether the results should be tar'd or not
+	Tarball bool
+
 	// Suite to be run inside the runner.
 	Suite string
 
@@ -46,6 +72,9 @@ type E2EConfig struct {
 
 	// Flags to run the suite with.
 	Flags []string
+
+	// Output Dir is where e2e tests serve up results
+	OutputDir string
 
 	Name      string
 	TokenFile string

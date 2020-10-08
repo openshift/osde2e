@@ -6,7 +6,7 @@ scale:
 upgradeWindow:
   timeOut: 60
 nodeDrain:
-  timeOut: 10
+  timeOut: 7
   expectedNodeDrainTime: 8
 healthCheck:
   ignoredCriticals:

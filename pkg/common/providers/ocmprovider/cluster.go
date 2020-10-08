@@ -709,10 +709,10 @@ func (o *OCMProvider) ExtendExpiry(clusterID string, hours uint64, minutes uint6
 	}
 
 	if finalCluster.ExpirationTimestamp() != extendexpirytime {
-		return fmt.Errorf("expected expiration time %s not reflected in OCM (found %s)", extendexpirytime.UTC().Format("2002-01-02 14:03:02 Monday"), finalCluster.ExpirationTimestamp().UTC().Format("2002-01-02 14:03:02 Monday"))
+		return fmt.Errorf("expected expiration time %s not reflected in OCM (found %s)", extendexpirytime.UTC().Format("Monday, 02 Jan 2006 15:04:05 MST"), finalCluster.ExpirationTimestamp().UTC().Format("Monday, 02 Jan 2006 15:04:05 MST"))
 
 	}
-	log.Println("Successfully extended cluster expiry time to ", extendexpirytime.UTC().Format("2002-01-02 14:03:02 Monday"))
+	log.Println("Successfully extended cluster expiry time to", extendexpirytime.UTC().Format("Monday, 02 Jan 2006 15:04:05 MST"))
 
 	return nil
 }

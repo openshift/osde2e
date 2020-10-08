@@ -12,8 +12,10 @@ import (
 
 // DefaultE2EConfig is the base configuration for E2E runs.
 var DefaultE2EConfig = E2EConfig{
-	TestCmd: "run",
-	Suite:   "kubernetes/conformance",
+	OutputDir: "/test-run-results",
+	TestCmd:   "run",
+	Tarball:   true,
+	Suite:     "kubernetes/conformance",
 	Flags: []string{
 		"--include-success",
 		"--junit-dir=" + runner.DefaultRunner.OutputDir,

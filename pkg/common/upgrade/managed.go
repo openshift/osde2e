@@ -62,13 +62,7 @@ func TriggerManagedUpgrade(h *helper.H) (*configv1.ClusterVersion, error) {
 		return cVersion, fmt.Errorf("couldn't get current ClusterVersion '%s': %v", ClusterVersionName, err)
 	}
 
-	image := viper.GetString(config.Upgrade.Image)
 	releaseName := viper.GetString(config.Upgrade.ReleaseName)
-
-	// determine requested upgrade targets
-	if image != "" {
-		return cVersion, fmt.Errorf("image-based managed upgrades are unsupported")
-	}
 
 	upgradeVersion, err := util.OpenshiftVersionToSemver(releaseName)
 	if err != nil {
