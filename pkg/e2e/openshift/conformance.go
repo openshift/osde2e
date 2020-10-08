@@ -14,7 +14,7 @@ import (
 var DefaultE2EConfig = E2EConfig{
 	OutputDir: "/test-run-results",
 	TestCmd:   "run",
-	Tarball:   true,
+	Tarball:   false,
 	Suite:     "kubernetes/conformance",
 	Flags: []string{
 		"--include-success",
