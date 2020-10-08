@@ -19,6 +19,8 @@ ssh-keygen -f ~/.ssh/id_rsa -q -N ""
 chmod 600 ~/.ssh/*
 set -x
 
+export JOB_COMPLETION_POLL_ATTEMPTS="720"
+
 time ansible-playbook -vv -i inventory {{ .PlaybookPath }}
 
 SUCCESS=$?
