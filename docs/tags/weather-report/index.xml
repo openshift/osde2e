@@ -6,10 +6,28 @@
     <description>Recent content in weather-report on OSDe2e Reporting</description>
     <generator>Hugo -- gohugo.io</generator>
     <copyright>Copyright © 2020, Red Hat, all rights reserved.</copyright>
-    <lastBuildDate>Fri, 09 Oct 2020 12:11:30 +0000</lastBuildDate>
+    <lastBuildDate>Sat, 10 Oct 2020 12:02:19 +0000</lastBuildDate>
     
 	<atom:link href="https://openshift.github.io/osde2e/tags/weather-report/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>OSDe2e aws Weather Report 2020-10-10 12:02:19.50633574 &#43;0000 UTC</title>
+      <link>https://openshift.github.io/osde2e/post/0eb9a4838c1045a89aff25fb631b8545/</link>
+      <pubDate>Sat, 10 Oct 2020 12:02:19 +0000</pubDate>
+      
+      <guid>https://openshift.github.io/osde2e/post/0eb9a4838c1045a89aff25fb631b8545/</guid>
+      <description>&lt;table class=&#34;summary&#34;&gt;&lt;tr&gt;&lt;td bgcolor=&#34;#09f600&#34;&gt;&lt;/td&gt;&lt;td&gt;int (Pass rate: 99.67)&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td bgcolor=&#34;#01fe00&#34;&gt;&lt;/td&gt;&lt;td&gt;prod (Pass rate: 100.00)&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td bgcolor=&#34;#ff0000&#34;&gt;&lt;/td&gt;&lt;td&gt;stage (Pass rate: 87.50)&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;</description>
+    </item>
+    
+    <item>
+      <title>OSDe2e aws Weather Report 2020-10-10 12:01:42.316047828 &#43;0000 UTC</title>
+      <link>https://openshift.github.io/osde2e/post/8af88a8810184f99bd4121b9ca8ff5b4/</link>
+      <pubDate>Sat, 10 Oct 2020 12:01:42 +0000</pubDate>
+      
+      <guid>https://openshift.github.io/osde2e/post/8af88a8810184f99bd4121b9ca8ff5b4/</guid>
+      <description>&lt;table class=&#34;summary&#34;&gt;&lt;tr&gt;&lt;td bgcolor=&#34;#09f600&#34;&gt;&lt;/td&gt;&lt;td&gt;int (Pass rate: 99.67)&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td bgcolor=&#34;#01fe00&#34;&gt;&lt;/td&gt;&lt;td&gt;prod (Pass rate: 100.00)&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td bgcolor=&#34;#ff0000&#34;&gt;&lt;/td&gt;&lt;td&gt;stage (Pass rate: 87.50)&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;</description>
+    </item>
     
     <item>
       <title>OSDe2e aws Weather Report 2020-10-09 12:11:30.536258743 &#43;0000 UTC</title>
