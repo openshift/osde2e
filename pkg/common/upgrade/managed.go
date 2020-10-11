@@ -31,7 +31,7 @@ const (
 	// the 'upgrade type' that the upgrade operator should use when upgrading
 	muoUpgradeType = upgradev1alpha1.OSD
 	// the name of the generated UpgradeConfig resource containing upgrade configuration
-	upgradeConfigName = "osde2e-upgrade-config"
+	upgradeConfigName = "osd-upgrade-config"
 
 	// name of the workload for pod disruption budget tests
 	pdbWorkloadName = "pdb"
