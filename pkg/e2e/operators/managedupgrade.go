@@ -30,7 +30,7 @@ var _ = ginkgo.Describe(managedUpgradeOperatorTestName, func() {
 	var operatorName = "managed-upgrade-operator"
 	var operatorNamespace string = "openshift-managed-upgrade-operator"
 	var operatorLockFile string = "managed-upgrade-operator-lock"
-	var upgradeConfigResourceName string = "osde2e-upgrade-config"
+	var upgradeConfigResourceName string = "osd-upgrade-config"
 	var defaultDesiredReplicas int32 = 1
 	var clusterRoles = []string{
 		"managed-upgrade-operator",
@@ -161,7 +161,7 @@ var _ = ginkgo.Describe(managedUpgradeOperatorTestName, func() {
 
 			// Wait a minute for the operator to flag this as a problem
 			err = wait.PollImmediate(5*time.Second, 1*time.Minute, func() (bool, error) {
-				query := fmt.Sprintf("upgradeoperator_upgrade_window_breached{upgradeconfig_name=\"%s\"} == 1", "osde2e-upgrade-config")
+				query := fmt.Sprintf("upgradeoperator_upgrade_window_breached{upgradeconfig_name=\"%s\"} == 1", "osd-upgrade-config")
 				context, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
 				defer cancel()
 				value, _, err := promAPI.Query(context, query, time.Now())
