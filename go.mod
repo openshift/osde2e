@@ -6,7 +6,7 @@ require (
 	github.com/Masterminds/semver v1.5.0
 	github.com/PuerkitoBio/goquery v1.5.1
 	github.com/adamliesko/retry v0.0.0-20200123222335-86c8baac277d
-	github.com/aws/aws-sdk-go v1.29.17
+	github.com/aws/aws-sdk-go v1.34.16
 	github.com/bmizerany/perks v0.0.0-20141205001514-d9a9656a3a4b // indirect
 	github.com/code-ready/crc v1.10.0
 	github.com/dgryski/go-gk v0.0.0-20200319235926-a69029f61654 // indirect
@@ -19,12 +19,13 @@ require (
 	github.com/hpcloud/tail v1.0.0
 	github.com/influxdata/tdigest v0.0.1 // indirect
 	github.com/kylelemons/godebug v1.1.0
-	github.com/markbates/pkger v0.17.1
+	github.com/markbates/pkger v0.16.0
 	github.com/onsi/ginkgo v1.13.0
 	github.com/onsi/gomega v1.10.1
 	github.com/openshift-online/ocm-sdk-go v0.1.130
-	github.com/openshift/api v0.0.0-20200522173408-17ada6e4245b
+	github.com/openshift/api v3.9.1-0.20190924102528-32369d4db2ad+incompatible
 	github.com/openshift/client-go v0.0.0-20200326155132-2a6cd50aedd0
+	github.com/openshift/cloud-ingress-operator v0.0.0-20200922213113-a2e288b3cc76
 	github.com/openshift/cluster-api v0.0.0-20191129101638-b09907ac6668
 	github.com/openshift/machine-api-operator v0.2.1-0.20200529045911-d19e8d007f7c
 	github.com/openshift/managed-upgrade-operator v0.0.0-20200820052802-5d57e1785b53
@@ -43,7 +44,7 @@ require (
 	github.com/tsenart/vegeta v12.7.0+incompatible
 	github.com/vmware-tanzu/velero v1.5.0-beta.1.0.20200831161009-1dcaa1bf7512
 	golang.org/x/net v0.0.0-20200707034311-ab3426394381
-	gopkg.in/yaml.v3 v3.0.0-20191120175047-4206685974f2
+	gopkg.in/yaml.v3 v3.0.0-20200121175148-a6ecf24a6d71
 	k8s.io/api v0.19.2
 	k8s.io/apimachinery v0.19.2
 	k8s.io/client-go v12.0.0+incompatible
@@ -51,8 +52,13 @@ require (
 )
 
 replace (
+	github.com/deislabs/oras => github.com/deislabs/oras v0.7.0
+	github.com/docker/docker => github.com/moby/moby v0.7.3-0.20190826074503-38ab9da00309
 	github.com/openshift/api => github.com/openshift/api v0.0.0-20200526144822-34f54f12813a
 	github.com/openshift/client-go => github.com/openshift/client-go v0.0.0-20200521150516-05eb9880269c
+
+	github.com/operator-framework/operator-sdk => github.com/operator-framework/operator-sdk v0.15.1
+	helm.sh/helm/v3 => helm.sh/helm/v3 v3.1.2
 	k8s.io/api => k8s.io/api v0.19.2
 	k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.19.2
 	k8s.io/apimachinery => k8s.io/apimachinery v0.19.2
@@ -75,6 +81,7 @@ replace (
 	k8s.io/legacy-cloud-providers => k8s.io/legacy-cloud-providers v0.19.2
 	k8s.io/metrics => k8s.io/metrics v0.19.2
 	k8s.io/sample-apiserver => k8s.io/sample-apiserver v0.19.2
+	sigs.k8s.io/cluster-api-provider-aws => sigs.k8s.io/cluster-api-provider-aws v0.6.0
 	sigs.k8s.io/controller-runtime => sigs.k8s.io/controller-runtime v0.5.1-0.20200414221803-bac7e8aaf90a
 	sigs.k8s.io/structured-merge-diff => sigs.k8s.io/structured-merge-diff v1.0.1-0.20191108220359-b1b620dd3f06
 )
