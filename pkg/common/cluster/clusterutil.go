@@ -28,7 +28,7 @@ import (
 
 const (
 	// errorWindow is the number of checks made to determine if a cluster has truly failed.
-	errorWindow = 10
+	errorWindow = 20
 )
 
 // GetClusterVersion will get the current cluster version for the cluster.
