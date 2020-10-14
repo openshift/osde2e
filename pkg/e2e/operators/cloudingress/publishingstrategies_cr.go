@@ -61,10 +61,10 @@ func testDaCRpublishingstrategies(h *helper.H, operatorNamespace string) {
 
 func testCRpublishingstrategies(h *helper.H, operatorNamespace string) {
 	ginkgo.Context("cloud-ingress-operator", func() {
-		ginkgo.It("dedicated admin should not be allowed to manage publishingstrategies CR", func() {
+		ginkgo.It("admin should be allowed to manage publishingstrategies CR", func() {
 			ps := createPublishingstrategies()
 			err := addPublishingstrategy(h, ps, operatorNamespace)
-			Expect(apierrors.IsForbidden(err)).To(BeTrue())
+			Expect(err).NotTo(HaveOccurred())
 
 		})
 	})
