@@ -297,3 +297,10 @@ func (m *Provider) AddProperty(cluster *spi.Cluster, tag string, value string) e
 	log.Printf("AddProperty is unsupported by CRC clusters")
 	return nil
 }
+
+// Upgrade CRCs initiates a cluster upgrade to the given version
+func (m *Provider) Upgrade(clusterID string, version string, t time.Time) error {
+	// Noop for now and just note it.
+	log.Printf("Upgrade is unsupported by CRC clusters")
+	return nil
+}

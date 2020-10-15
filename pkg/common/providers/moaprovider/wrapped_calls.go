@@ -3,6 +3,7 @@ package moaprovider
 import (
 	v1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 	"github.com/openshift/osde2e/pkg/common/spi"
+	"time"
 )
 
 // The rest of the SPI functions will be wrapped by the OCM provider until the MOA provider can be adequately refactored.
@@ -75,4 +76,9 @@ func (m *MOAProvider) ExtendExpiry(clusterID string, hours uint64, minutes uint6
 // AddProperty will call AddProperty from the OCM provider.
 func (m *MOAProvider) AddProperty(cluster *spi.Cluster, tag string, value string) error {
 	return m.ocmProvider.AddProperty(cluster, tag, value)
+}
+
+// Upgrade initiates a cluster upgrade from the OCM provider.
+func (m *MOAProvider) Upgrade(clusterID string, version string, t time.Time) error {
+	return m.ocmProvider.Upgrade(clusterID, version, t)
 }

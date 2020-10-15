@@ -243,3 +243,8 @@ func (m *MockProvider) ExtendExpiry(clusterID string, hours uint64, minutes uint
 func (m *MockProvider) AddProperty(cluster *spi.Cluster, tag string, value string) error {
 	return fmt.Errorf("AddProperty is unsupported by mock clusters")
 }
+
+// Upgrade mocks initiates a cluster upgrade to the given version
+func (m *MockProvider) Upgrade(clusterID string, version string, t time.Time) error {
+	return fmt.Errorf("Upgrade is unsupported by mock clusters")
+}
