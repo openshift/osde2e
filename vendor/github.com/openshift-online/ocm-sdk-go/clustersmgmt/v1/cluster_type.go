@@ -84,7 +84,7 @@ type Cluster struct {
 	byoc                              *bool
 	ccs                               *CCS
 	dns                               *DNS
-	dnsReady                          *bool
+	gcp                               *GCP
 	addons                            *AddOnInstallationList
 	cloudProvider                     *CloudProvider
 	clusterAdminEnabled               *bool
@@ -100,6 +100,7 @@ type Cluster struct {
 	identityProviders                 *IdentityProviderList
 	ingresses                         *IngressList
 	loadBalancerQuota                 *int
+	machinePools                      *MachinePoolList
 	managed                           *bool
 	metrics                           *ClusterMetrics
 	multiAZ                           *bool
@@ -175,7 +176,6 @@ func (o *Cluster) Empty() bool {
 	return o == nil || (o.id == nil &&
 		o.awsInfrastructureAccessRoleGrants.Len() == 0 &&
 		o.byoc == nil &&
-		o.dnsReady == nil &&
 		o.addons.Len() == 0 &&
 		o.clusterAdminEnabled == nil &&
 		o.creationTimestamp == nil &&
@@ -187,6 +187,7 @@ func (o *Cluster) Empty() bool {
 		o.identityProviders.Len() == 0 &&
 		o.ingresses.Len() == 0 &&
 		o.loadBalancerQuota == nil &&
+		o.machinePools.Len() == 0 &&
 		o.managed == nil &&
 		o.multiAZ == nil &&
 		o.name == nil &&
@@ -334,25 +335,25 @@ func (o *Cluster) GetDNS() (value *DNS, ok bool) {
 	return
 }
 
-// DNSReady returns the value of the 'DNS_ready' attribute, or
+// GCP returns the value of the 'GCP' attribute, or
 // the zero value of the type if the attribute doesn't have a value.
 //
-// Provisioner DNS Ready Status
-func (o *Cluster) DNSReady() bool {
-	if o != nil && o.dnsReady != nil {
-		return *o.dnsReady
+// Google cloud platform settings of the cluster.
+func (o *Cluster) GCP() *GCP {
+	if o == nil {
+		return nil
 	}
-	return false
+	return o.gcp
 }
 
-// GetDNSReady returns the value of the 'DNS_ready' attribute and
+// GetGCP returns the value of the 'GCP' attribute and
 // a flag indicating if the attribute has a value.
 //
-// Provisioner DNS Ready Status
-func (o *Cluster) GetDNSReady() (value bool, ok bool) {
-	ok = o != nil && o.dnsReady != nil
+// Google cloud platform settings of the cluster.
+func (o *Cluster) GetGCP() (value *GCP, ok bool) {
+	ok = o != nil && o.gcp != nil
 	if ok {
-		value = *o.dnsReady
+		value = o.gcp
 	}
 	return
 }
@@ -710,6 +711,29 @@ func (o *Cluster) GetLoadBalancerQuota() (value int, ok bool) {
 	ok = o != nil && o.loadBalancerQuota != nil
 	if ok {
 		value = *o.loadBalancerQuota
+	}
+	return
+}
+
+// MachinePools returns the value of the 'machine_pools' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+// List of machine pools on this cluster.
+func (o *Cluster) MachinePools() *MachinePoolList {
+	if o == nil {
+		return nil
+	}
+	return o.machinePools
+}
+
+// GetMachinePools returns the value of the 'machine_pools' attribute and
+// a flag indicating if the attribute has a value.
+//
+// List of machine pools on this cluster.
+func (o *Cluster) GetMachinePools() (value *MachinePoolList, ok bool) {
+	ok = o != nil && o.machinePools != nil
+	if ok {
+		value = o.machinePools
 	}
 	return
 }

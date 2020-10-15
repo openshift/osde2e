@@ -29,7 +29,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/dgrijalva/jwt-go"
+	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/openshift-online/ocm-sdk-go/accountsmgmt"
@@ -531,6 +531,7 @@ func (b *ConnectionBuilder) createTransport() (transport http.RoundTripper, err 
 			InsecureSkipVerify: b.insecure,
 			RootCAs:            b.trustedCAs,
 		},
+		Proxy: http.ProxyFromEnvironment,
 	}
 
 	// If debug is enabled then wrap the raw transport with the round tripper that sends the

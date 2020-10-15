@@ -21,6 +21,7 @@ package v1 // github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1
 
 import (
 	"io"
+	"net/http"
 
 	jsoniter "github.com/json-iterator/go"
 	"github.com/openshift-online/ocm-sdk-go/helpers"
@@ -68,6 +69,9 @@ func writeAWS(object *AWS, stream *jsoniter.Stream) {
 // UnmarshalAWS reads a value of the 'AWS' type from the given
 // source, which can be an slice of bytes, a string or a reader.
 func UnmarshalAWS(source interface{}) (object *AWS, err error) {
+	if source == http.NoBody {
+		return
+	}
 	iterator, err := helpers.NewIterator(source)
 	if err != nil {
 		return

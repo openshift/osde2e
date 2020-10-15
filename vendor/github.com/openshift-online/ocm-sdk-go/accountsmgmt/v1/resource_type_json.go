@@ -21,6 +21,7 @@ package v1 // github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1
 
 import (
 	"io"
+	"net/http"
 
 	jsoniter "github.com/json-iterator/go"
 	"github.com/openshift-online/ocm-sdk-go/helpers"
@@ -118,6 +119,9 @@ func writeResource(object *Resource, stream *jsoniter.Stream) {
 // UnmarshalResource reads a value of the 'resource' type from the given
 // source, which can be an slice of bytes, a string or a reader.
 func UnmarshalResource(source interface{}) (object *Resource, err error) {
+	if source == http.NoBody {
+		return
+	}
 	iterator, err := helpers.NewIterator(source)
 	if err != nil {
 		return

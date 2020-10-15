@@ -21,6 +21,7 @@ package v1 // github.com/openshift-online/ocm-sdk-go/authorizations/v1
 
 import (
 	"io"
+	"net/http"
 
 	jsoniter "github.com/json-iterator/go"
 	"github.com/openshift-online/ocm-sdk-go/helpers"
@@ -100,6 +101,9 @@ func writeSelfCapabilityReviewRequest(object *SelfCapabilityReviewRequest, strea
 // UnmarshalSelfCapabilityReviewRequest reads a value of the 'self_capability_review_request' type from the given
 // source, which can be an slice of bytes, a string or a reader.
 func UnmarshalSelfCapabilityReviewRequest(source interface{}) (object *SelfCapabilityReviewRequest, err error) {
+	if source == http.NoBody {
+		return
+	}
 	iterator, err := helpers.NewIterator(source)
 	if err != nil {
 		return
