@@ -6,10 +6,37 @@
     <description>Recent content in Posts on OSDe2e Reporting</description>
     <generator>Hugo -- gohugo.io</generator>
     <copyright>Copyright © 2020, Red Hat, all rights reserved.</copyright>
-    <lastBuildDate>Sun, 18 Oct 2020 12:00:38 +0000</lastBuildDate>
+    <lastBuildDate>Mon, 19 Oct 2020 12:00:25 +0000</lastBuildDate>
     
 	<atom:link href="https://openshift.github.io/osde2e/post/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>OSDe2e aws Weather Report 2020-10-19 12:00:25.675339645 &#43;0000 UTC</title>
+      <link>https://openshift.github.io/osde2e/post/7b31494ae34f49b9a784d6ac45b383ad/</link>
+      <pubDate>Mon, 19 Oct 2020 12:00:25 +0000</pubDate>
+      
+      <guid>https://openshift.github.io/osde2e/post/7b31494ae34f49b9a784d6ac45b383ad/</guid>
+      <description>&lt;table class=&#34;summary&#34;&gt;&lt;/table&gt;</description>
+    </item>
+    
+    <item>
+      <title>OSDe2e aws Weather Report 2020-10-19 12:00:24.526106462 &#43;0000 UTC</title>
+      <link>https://openshift.github.io/osde2e/post/6ba19cc6990240f0807d8d4288adc10e/</link>
+      <pubDate>Mon, 19 Oct 2020 12:00:24 +0000</pubDate>
+      
+      <guid>https://openshift.github.io/osde2e/post/6ba19cc6990240f0807d8d4288adc10e/</guid>
+      <description>&lt;table class=&#34;summary&#34;&gt;&lt;/table&gt;</description>
+    </item>
+    
+    <item>
+      <title>OSDe2e aws Weather Report 2020-10-19 12:00:23.370131051 &#43;0000 UTC</title>
+      <link>https://openshift.github.io/osde2e/post/295d2ce85e394d17b2c71231bd1ecea2/</link>
+      <pubDate>Mon, 19 Oct 2020 12:00:23 +0000</pubDate>
+      
+      <guid>https://openshift.github.io/osde2e/post/295d2ce85e394d17b2c71231bd1ecea2/</guid>
+      <description>&lt;table class=&#34;summary&#34;&gt;&lt;/table&gt;</description>
+    </item>
     
     <item>
       <title>OSDe2e aws Weather Report 2020-10-18 12:00:38.305342127 &#43;0000 UTC</title>
