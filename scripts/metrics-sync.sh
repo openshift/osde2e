@@ -13,13 +13,14 @@ METRIC_ADDON_TIMEOUT_IN_SECONDS=46800 # 13h in seconds
 METRIC_SCALE_TIMEOUT_IN_SECONDS=93600 # 26h in seconds
 METRIC_IMAGESET_TIMEOUT_IN_SECONDS=93600 # 26h in seconds
 
-PUSHGATEWAY_URL=${PUSHGATEWAY_URL%/}
+PUSHGATEWAY_URL=${APPSRE_PUSHGW_URL%/}
+PUSHGATEWAY_CREDS=${APPSRE_PUSHGW_CREDS}
 
 # Cleanup the temporary directories
 trap 'rm -rf "$VENV" "$METRICS_DIR"' EXIT
 
 # First, we should detect any stale metrics and purge them if needed
-METRICS_LAST_UPDATED=$(curl "$PUSHGATEWAY_URL/metrics" | grep "^push_time_seconds{.*" | grep -E 'osde2e|ocm-api-test' | sed 's/^.*job="\([[:alnum:]_.-]*\)".*\}\s*\(.*\)$/\1,\2/' | sort | uniq)
+METRICS_LAST_UPDATED=$(curl --user "$PUSHGATEWAY_CREDS" "$PUSHGATEWAY_URL/metrics" | grep "^push_time_seconds{.*" | grep -E 'osde2e|ocm-api-test' | sed 's/^.*job="\([[:alnum:]_.-]*\)".*\}\s*\(.*\)$/\1,\2/' | sort | uniq)
 CURRENT_TIMESTAMP=$(date +%s)
 for metric_and_timestamp in $METRICS_LAST_UPDATED; do
 	JOB_NAME=$(echo -e "$metric_and_timestamp" | cut -f 1 -d,)
@@ -37,7 +38,7 @@ for metric_and_timestamp in $METRICS_LAST_UPDATED; do
 
 	if (( TIMESTAMP_PLUS_TIMEOUT < CURRENT_TIMESTAMP )); then
 		echo "Metrics for job $JOB_NAME have expired. Removing them from the pushgateway."
-		if ! curl -X DELETE "$PUSHGATEWAY_URL/metrics/job/$JOB_NAME"; then
+		if ! curl --user "$PUSHGATEWAY_CREDS" -X DELETE "$PUSHGATEWAY_URL/metrics/job/$JOB_NAME"; then
 			echo "Error deleting old results for $JOB_NAME."
 			exit 3
 		fi
@@ -73,12 +74,12 @@ for file in $METRICS_FILES; do
 	# shellcheck disable=SC2001
 	JOB_NAME=$(echo "$file" | sed 's/^[^\.]*\.\(.*\)\.metrics\.prom$/\1/')
 	if [[ ! $JOB_NAME = delete_* ]]; then
-		if ! curl -X DELETE "$PUSHGATEWAY_URL/metrics/job/$JOB_NAME"; then
+		if ! curl --user "$PUSHGATEWAY_CREDS" -X DELETE "$PUSHGATEWAY_URL/metrics/job/$JOB_NAME"; then
 			echo "Error deleting old results for $JOB_NAME."
 			exit 3
 		fi
 
-		if ! curl -T "$METRICS_DIR/$file" "$PUSHGATEWAY_URL/metrics/job/$JOB_NAME"; then
+		if ! curl --user "$PUSHGATEWAY_CREDS" -T "$METRICS_DIR/$file" "$PUSHGATEWAY_URL/metrics/job/$JOB_NAME"; then
 			echo "Error pushing new results for $JOB_NAME."
 			exit 4
 		fi
