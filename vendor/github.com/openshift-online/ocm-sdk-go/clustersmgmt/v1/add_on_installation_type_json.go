@@ -21,6 +21,7 @@ package v1 // github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1
 
 import (
 	"io"
+	"net/http"
 	"time"
 
 	jsoniter "github.com/json-iterator/go"
@@ -97,6 +98,17 @@ func writeAddOnInstallation(object *AddOnInstallation, stream *jsoniter.Stream) 
 		stream.WriteString(*object.operatorVersion)
 		count++
 	}
+	if object.parameters != nil {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("parameters")
+		stream.WriteObjectStart()
+		stream.WriteObjectField("items")
+		writeAddOnInstallationParameterList(object.parameters.items, stream)
+		stream.WriteObjectEnd()
+		count++
+	}
 	if object.state != nil {
 		if count > 0 {
 			stream.WriteMore()
@@ -127,6 +139,9 @@ func writeAddOnInstallation(object *AddOnInstallation, stream *jsoniter.Stream) 
 // UnmarshalAddOnInstallation reads a value of the 'add_on_installation' type from the given
 // source, which can be an slice of bytes, a string or a reader.
 func UnmarshalAddOnInstallation(source interface{}) (object *AddOnInstallation, err error) {
+	if source == http.NoBody {
+		return
+	}
 	iterator, err := helpers.NewIterator(source)
 	if err != nil {
 		return
@@ -170,6 +185,27 @@ func readAddOnInstallation(iterator *jsoniter.Iterator) *AddOnInstallation {
 		case "operator_version":
 			value := iterator.ReadString()
 			object.operatorVersion = &value
+		case "parameters":
+			value := &AddOnInstallationParameterList{}
+			for {
+				field := iterator.ReadObject()
+				if field == "" {
+					break
+				}
+				switch field {
+				case "kind":
+					text := iterator.ReadString()
+					value.link = text == AddOnInstallationParameterListLinkKind
+				case "href":
+					text := iterator.ReadString()
+					value.href = &text
+				case "items":
+					value.items = readAddOnInstallationParameterList(iterator)
+				default:
+					iterator.ReadAny()
+				}
+			}
+			object.parameters = value
 		case "state":
 			text := iterator.ReadString()
 			value := AddOnInstallationState(text)

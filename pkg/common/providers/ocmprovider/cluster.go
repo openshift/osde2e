@@ -1,10 +1,12 @@
 package ocmprovider
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"math"
 	"math/rand"
+	"net/http"
 	"os/user"
 	"strings"
 	"time"
@@ -782,5 +784,27 @@ func (o *OCMProvider) AddProperty(cluster *spi.Cluster, tag string, value string
 	}
 
 	log.Printf("Successfully added property[%s] - %s \n", tag, finalCluster.Properties()[tag])
+	return nil
+}
+
+// Upgrade initiates a cluster upgrade to the given version
+func (o *OCMProvider) Upgrade(clusterID string, version string, t time.Time) error {
+
+	nodeDrain := v1.NewValue().Value(5).Unit("minutes")
+	policy, err := v1.NewUpgradePolicy().Version(version).NextRun(t).ScheduleType("manual").NodeDrainGracePeriod(nodeDrain).Build()
+	if err != nil {
+		return err
+	}
+
+	addResp, err := o.conn.ClustersMgmt().V1().Clusters().Cluster(clusterID).UpgradePolicies().Add().Body(policy).SendContext(context.TODO())
+	if err != nil {
+		return err
+	}
+	if addResp.Status() != http.StatusOK {
+		log.Printf("Unable to schedule upgrade with provider (status %d, response %s)", addResp.Status(), addResp.Error().String())
+		return err
+	}
+
+	log.Printf("upgrade to version %s scheduled with provider for time %s", addResp.Body().Version(), addResp.Body().NextRun().Format(time.RFC3339))
 	return nil
 }

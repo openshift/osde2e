@@ -34,6 +34,7 @@ type AddOnInstallationBuilder struct {
 	cluster           *ClusterBuilder
 	creationTimestamp *time.Time
 	operatorVersion   *string
+	parameters        *AddOnInstallationParameterListBuilder
 	state             *AddOnInstallationState
 	stateDescription  *string
 	updatedTimestamp  *time.Time
@@ -130,6 +131,14 @@ func (b *AddOnInstallationBuilder) OperatorVersion(value string) *AddOnInstallat
 	return b
 }
 
+// Parameters sets the value of the 'parameters' attribute to the given values.
+//
+//
+func (b *AddOnInstallationBuilder) Parameters(value *AddOnInstallationParameterListBuilder) *AddOnInstallationBuilder {
+	b.parameters = value
+	return b
+}
+
 // State sets the value of the 'state' attribute to the given value.
 //
 // Representation of an add-on installation State field.
@@ -174,6 +183,11 @@ func (b *AddOnInstallationBuilder) Copy(object *AddOnInstallation) *AddOnInstall
 	}
 	b.creationTimestamp = object.creationTimestamp
 	b.operatorVersion = object.operatorVersion
+	if object.parameters != nil {
+		b.parameters = NewAddOnInstallationParameterList().Copy(object.parameters)
+	} else {
+		b.parameters = nil
+	}
 	b.state = object.state
 	b.stateDescription = object.stateDescription
 	b.updatedTimestamp = object.updatedTimestamp
@@ -200,6 +214,12 @@ func (b *AddOnInstallationBuilder) Build() (object *AddOnInstallation, err error
 	}
 	object.creationTimestamp = b.creationTimestamp
 	object.operatorVersion = b.operatorVersion
+	if b.parameters != nil {
+		object.parameters, err = b.parameters.Build()
+		if err != nil {
+			return
+		}
+	}
 	object.state = b.state
 	object.stateDescription = b.stateDescription
 	object.updatedTimestamp = b.updatedTimestamp

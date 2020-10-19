@@ -3,6 +3,7 @@ package spi
 
 import (
 	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
+	"time"
 )
 
 // Provider is the interface that must be implemented in order to provision clusters in osde2e.
@@ -103,4 +104,8 @@ type Provider interface {
 
 	// AddProperty adds a new property to the properties field of an existing cluster.
 	AddProperty(cluster *Cluster, tag string, value string) error
+
+	// Upgrade requests the provider initiate a cluster upgrade to the given version
+	Upgrade(clusterID string, version string, t time.Time) error
+
 }

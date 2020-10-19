@@ -21,6 +21,7 @@ package v1 // github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1
 
 import (
 	"io"
+	"net/http"
 
 	jsoniter "github.com/json-iterator/go"
 	"github.com/openshift-online/ocm-sdk-go/helpers"
@@ -88,6 +89,22 @@ func writeAddOn(object *AddOn, stream *jsoniter.Stream) {
 		stream.WriteBool(*object.enabled)
 		count++
 	}
+	if object.hasExternalResources != nil {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("has_external_resources")
+		stream.WriteBool(*object.hasExternalResources)
+		count++
+	}
+	if object.hidden != nil {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("hidden")
+		stream.WriteBool(*object.hidden)
+		count++
+	}
 	if object.icon != nil {
 		if count > 0 {
 			stream.WriteMore()
@@ -128,6 +145,17 @@ func writeAddOn(object *AddOn, stream *jsoniter.Stream) {
 		stream.WriteString(*object.operatorName)
 		count++
 	}
+	if object.parameters != nil {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("parameters")
+		stream.WriteObjectStart()
+		stream.WriteObjectField("items")
+		writeAddOnParameterList(object.parameters.items, stream)
+		stream.WriteObjectEnd()
+		count++
+	}
 	if object.resourceCost != nil {
 		if count > 0 {
 			stream.WriteMore()
@@ -158,6 +186,9 @@ func writeAddOn(object *AddOn, stream *jsoniter.Stream) {
 // UnmarshalAddOn reads a value of the 'add_on' type from the given
 // source, which can be an slice of bytes, a string or a reader.
 func UnmarshalAddOn(source interface{}) (object *AddOn, err error) {
+	if source == http.NoBody {
+		return
+	}
 	iterator, err := helpers.NewIterator(source)
 	if err != nil {
 		return
@@ -194,6 +225,12 @@ func readAddOn(iterator *jsoniter.Iterator) *AddOn {
 		case "enabled":
 			value := iterator.ReadBool()
 			object.enabled = &value
+		case "has_external_resources":
+			value := iterator.ReadBool()
+			object.hasExternalResources = &value
+		case "hidden":
+			value := iterator.ReadBool()
+			object.hidden = &value
 		case "icon":
 			value := iterator.ReadString()
 			object.icon = &value
@@ -210,6 +247,27 @@ func readAddOn(iterator *jsoniter.Iterator) *AddOn {
 		case "operator_name":
 			value := iterator.ReadString()
 			object.operatorName = &value
+		case "parameters":
+			value := &AddOnParameterList{}
+			for {
+				field := iterator.ReadObject()
+				if field == "" {
+					break
+				}
+				switch field {
+				case "kind":
+					text := iterator.ReadString()
+					value.link = text == AddOnParameterListLinkKind
+				case "href":
+					text := iterator.ReadString()
+					value.href = &text
+				case "items":
+					value.items = readAddOnParameterList(iterator)
+				default:
+					iterator.ReadAny()
+				}
+			}
+			object.parameters = value
 		case "resource_cost":
 			value := iterator.ReadFloat64()
 			object.resourceCost = &value

@@ -46,6 +46,7 @@ type AddOnInstallation struct {
 	cluster           *Cluster
 	creationTimestamp *time.Time
 	operatorVersion   *string
+	parameters        *AddOnInstallationParameterList
 	state             *AddOnInstallationState
 	stateDescription  *string
 	updatedTimestamp  *time.Time
@@ -108,6 +109,7 @@ func (o *AddOnInstallation) Empty() bool {
 	return o == nil || (o.id == nil &&
 		o.creationTimestamp == nil &&
 		o.operatorVersion == nil &&
+		o.parameters.Len() == 0 &&
 		o.state == nil &&
 		o.stateDescription == nil &&
 		o.updatedTimestamp == nil &&
@@ -202,6 +204,29 @@ func (o *AddOnInstallation) GetOperatorVersion() (value string, ok bool) {
 	ok = o != nil && o.operatorVersion != nil
 	if ok {
 		value = *o.operatorVersion
+	}
+	return
+}
+
+// Parameters returns the value of the 'parameters' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+// List of add-on parameters for this add-on installation.
+func (o *AddOnInstallation) Parameters() *AddOnInstallationParameterList {
+	if o == nil {
+		return nil
+	}
+	return o.parameters
+}
+
+// GetParameters returns the value of the 'parameters' attribute and
+// a flag indicating if the attribute has a value.
+//
+// List of add-on parameters for this add-on installation.
+func (o *AddOnInstallation) GetParameters() (value *AddOnInstallationParameterList, ok bool) {
+	ok = o != nil && o.parameters != nil
+	if ok {
+		value = o.parameters
 	}
 	return
 }

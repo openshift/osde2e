@@ -23,63 +23,13 @@ package v1 // github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1
 //
 // Counts of different classes of nodes inside a flavour.
 type FlavourNodes struct {
-	compute *int
-	infra   *int
-	master  *int
+	master *int
 }
 
 // Empty returns true if the object is empty, i.e. no attribute has a value.
 func (o *FlavourNodes) Empty() bool {
-	return o == nil || (o.compute == nil &&
-		o.infra == nil &&
-		o.master == nil &&
+	return o == nil || (o.master == nil &&
 		true)
-}
-
-// Compute returns the value of the 'compute' attribute, or
-// the zero value of the type if the attribute doesn't have a value.
-//
-// Number of compute nodes of the cluster.
-func (o *FlavourNodes) Compute() int {
-	if o != nil && o.compute != nil {
-		return *o.compute
-	}
-	return 0
-}
-
-// GetCompute returns the value of the 'compute' attribute and
-// a flag indicating if the attribute has a value.
-//
-// Number of compute nodes of the cluster.
-func (o *FlavourNodes) GetCompute() (value int, ok bool) {
-	ok = o != nil && o.compute != nil
-	if ok {
-		value = *o.compute
-	}
-	return
-}
-
-// Infra returns the value of the 'infra' attribute, or
-// the zero value of the type if the attribute doesn't have a value.
-//
-// Number of infra nodes of the cluster.
-func (o *FlavourNodes) Infra() int {
-	if o != nil && o.infra != nil {
-		return *o.infra
-	}
-	return 0
-}
-
-// GetInfra returns the value of the 'infra' attribute and
-// a flag indicating if the attribute has a value.
-//
-// Number of infra nodes of the cluster.
-func (o *FlavourNodes) GetInfra() (value int, ok bool) {
-	ok = o != nil && o.infra != nil
-	if ok {
-		value = *o.infra
-	}
-	return
 }
 
 // Master returns the value of the 'master' attribute, or

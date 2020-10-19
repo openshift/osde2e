@@ -21,6 +21,7 @@ package v1 // github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1
 
 import (
 	"io"
+	"net/http"
 	"sort"
 	"time"
 
@@ -117,12 +118,12 @@ func writeCluster(object *Cluster, stream *jsoniter.Stream) {
 		writeDNS(object.dns, stream)
 		count++
 	}
-	if object.dnsReady != nil {
+	if object.gcp != nil {
 		if count > 0 {
 			stream.WriteMore()
 		}
-		stream.WriteObjectField("dns_ready")
-		stream.WriteBool(*object.dnsReady)
+		stream.WriteObjectField("gcp")
+		writeGCP(object.gcp, stream)
 		count++
 	}
 	if object.addons != nil {
@@ -255,6 +256,17 @@ func writeCluster(object *Cluster, stream *jsoniter.Stream) {
 		}
 		stream.WriteObjectField("load_balancer_quota")
 		stream.WriteInt(*object.loadBalancerQuota)
+		count++
+	}
+	if object.machinePools != nil {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("machine_pools")
+		stream.WriteObjectStart()
+		stream.WriteObjectField("items")
+		writeMachinePoolList(object.machinePools.items, stream)
+		stream.WriteObjectEnd()
 		count++
 	}
 	if object.managed != nil {
@@ -407,6 +419,9 @@ func writeCluster(object *Cluster, stream *jsoniter.Stream) {
 // UnmarshalCluster reads a value of the 'cluster' type from the given
 // source, which can be an slice of bytes, a string or a reader.
 func UnmarshalCluster(source interface{}) (object *Cluster, err error) {
+	if source == http.NoBody {
+		return
+	}
 	iterator, err := helpers.NewIterator(source)
 	if err != nil {
 		return
@@ -470,9 +485,9 @@ func readCluster(iterator *jsoniter.Iterator) *Cluster {
 		case "dns":
 			value := readDNS(iterator)
 			object.dns = value
-		case "dns_ready":
-			value := iterator.ReadBool()
-			object.dnsReady = &value
+		case "gcp":
+			value := readGCP(iterator)
+			object.gcp = value
 		case "addons":
 			value := &AddOnInstallationList{}
 			for {
@@ -599,6 +614,27 @@ func readCluster(iterator *jsoniter.Iterator) *Cluster {
 		case "load_balancer_quota":
 			value := iterator.ReadInt()
 			object.loadBalancerQuota = &value
+		case "machine_pools":
+			value := &MachinePoolList{}
+			for {
+				field := iterator.ReadObject()
+				if field == "" {
+					break
+				}
+				switch field {
+				case "kind":
+					text := iterator.ReadString()
+					value.link = text == MachinePoolListLinkKind
+				case "href":
+					text := iterator.ReadString()
+					value.href = &text
+				case "items":
+					value.items = readMachinePoolList(iterator)
+				default:
+					iterator.ReadAny()
+				}
+			}
+			object.machinePools = value
 		case "managed":
 			value := iterator.ReadBool()
 			object.managed = &value
