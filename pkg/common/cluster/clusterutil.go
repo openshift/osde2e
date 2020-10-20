@@ -178,8 +178,6 @@ func waitForClusterReadyWithOverrideAndExpectedNumberOfNodes(clusterID string, l
 								log.Printf("error trying to add unhealthy property to cluster ID %s: %v", clusterID, err)
 								return false, nil
 							}
-
-							return false, fmt.Errorf("PollClusterHealth has returned an error %d times in a row. Failing osde2e", errorWindow)
 						}
 					}
 					cleanRuns = 0
@@ -188,7 +186,7 @@ func waitForClusterReadyWithOverrideAndExpectedNumberOfNodes(clusterID string, l
 					if currentStatus != failureString {
 						err = provider.AddProperty(cluster, clusterproperties.Status, failureString)
 						if err != nil {
-							return false, fmt.Errorf("error trying to add property to cluster ID %s: %v", cluster.ID(), err)
+							log.Printf("error trying to add property to cluster ID %s: %v", clusterID, err)
 						}
 					}
 

@@ -772,18 +772,8 @@ func (o *OCMProvider) AddProperty(cluster *spi.Cluster, tag string, value string
 		return resp.Error()
 	}
 
-	finalCluster, err := o.GetCluster(cluster.ID())
+	log.Printf("Successfully added property[%s] - %s \n", tag, resp.Body().Properties()[tag])
 
-	if err != nil {
-		log.Printf("error attempting to retrieve cluster for verification: %v", err)
-	}
-
-	if finalCluster.Properties()[tag] != value {
-		return fmt.Errorf("added property not reflected in OCM")
-
-	}
-
-	log.Printf("Successfully added property[%s] - %s \n", tag, finalCluster.Properties()[tag])
 	return nil
 }
 
