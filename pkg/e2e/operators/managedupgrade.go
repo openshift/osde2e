@@ -32,7 +32,8 @@ var _ = ginkgo.Describe(managedUpgradeOperatorTestName, func() {
 	var operatorName = "managed-upgrade-operator"
 	var operatorNamespace string = "openshift-managed-upgrade-operator"
 	var operatorLockFile string = "managed-upgrade-operator-lock"
-	var upgradeConfigResourceName string = "osde2e-upgrade-config"
+	var upgradeConfigResourceName string = "osd-upgrade-config"
+	var upgradeConfigForDedicatedAdminTestName string = "osde2e-da-upgrade-config"
 	var defaultDesiredReplicas int32 = 1
 	var clusterRoles = []string{
 		"managed-upgrade-operator",
@@ -181,15 +182,18 @@ var _ = ginkgo.Describe(managedUpgradeOperatorTestName, func() {
 
 		ginkgo.It("dedicated admin should not be able to manage the UpgradeConfig CR", func() {
 			// Add the upgradeconfig to the cluster
-			uc := makeMinimalUpgradeConfig(upgradeConfigResourceName, operatorNamespace)
+			uc := makeMinimalUpgradeConfig(upgradeConfigForDedicatedAdminTestName, operatorNamespace)
 			err = dedicatedAaddUpgradeConfig(uc, operatorNamespace, h)
 			Expect(apierrors.IsForbidden(err)).To(BeTrue())
 
 			err := addUpgradeConfig(uc, operatorNamespace, h)
 			Expect(err).NotTo(HaveOccurred())
 
-			err = dedicatedADeleteUpgradeConfig(upgradeConfigResourceName, operatorNamespace, h)
+			err = dedicatedADeleteUpgradeConfig(upgradeConfigForDedicatedAdminTestName, operatorNamespace, h)
 			Expect(apierrors.IsForbidden(err)).To(BeTrue())
+
+			err = deleteUpgradeConfig(upgradeConfigForDedicatedAdminTestName, operatorNamespace, h)
+			Expect(err).NotTo(HaveOccurred())
 
 		})
 
