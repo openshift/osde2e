@@ -43,6 +43,8 @@ type OCMProvider struct {
 	// expected to meaningfully change over the course of a run.
 	versionCacheOnce sync.Once
 	versionCache     *spi.VersionList
+	clusterCache     map[string]*spi.Cluster
+	credentialCache  map[string]string
 }
 
 func init() {
@@ -131,6 +133,8 @@ func NewWithEnv(env string) (*OCMProvider, error) {
 		conn:             conn,
 		prodProvider:     prodProvider,
 		versionCacheOnce: sync.Once{},
+		clusterCache:     make(map[string]*spi.Cluster),
+		credentialCache:  make(map[string]string),
 	}, nil
 }
 
