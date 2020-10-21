@@ -24,35 +24,36 @@ var _ = ginkgo.Describe(CloudIngressTestName, func() {
 	var err error
 	h := helper.New()
 
-	ginkgo.It("hostname resolves", func() {
-		wait.PollImmediate(30*time.Second, 15*time.Minute, func() (bool, error) {
-			getOpts := metav1.GetOptions{}
-			apiserver, err = h.Cfg().ConfigV1().APIServers().Get(context.TODO(), "cluster", getOpts)
-			if err != nil {
-				return false, err
-			}
-			if len(apiserver.Spec.ServingCerts.NamedCertificates) < 1 {
-				return false, nil
-			}
+	ginkgo.Context("api-test", func() {
+		ginkgo.It("hostname-resolves", func() {
+			wait.PollImmediate(30*time.Second, 15*time.Minute, func() (bool, error) {
+				getOpts := metav1.GetOptions{}
+				apiserver, err = h.Cfg().ConfigV1().APIServers().Get(context.TODO(), "cluster", getOpts)
+				if err != nil {
+					return false, err
+				}
+				if len(apiserver.Spec.ServingCerts.NamedCertificates) < 1 {
+					return false, nil
+				}
 
-			for _, namedCert := range apiserver.Spec.ServingCerts.NamedCertificates {
+				for _, namedCert := range apiserver.Spec.ServingCerts.NamedCertificates {
 
-				for _, name := range namedCert.Names {
-					if strings.Contains("rh-api", name) {
-						_, err := net.LookupHost(name)
-						if err != nil {
-							return false, err
+					for _, name := range namedCert.Names {
+						if strings.HasPrefix("rh-api", name) {
+							_, err := net.LookupHost(name)
+							if err != nil {
+								return false, err
+							}
 						}
 					}
 				}
-			}
-			return true, nil
-		})
-		Expect(err).NotTo(HaveOccurred())
-		Expect(len(apiserver.Spec.ServingCerts.NamedCertificates)).Should(BeNumerically(">", 0))
-	}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
-
-}) //Close DESCRIBE
+				return true, nil
+			})
+			Expect(err).NotTo(HaveOccurred())
+			Expect(len(apiserver.Spec.ServingCerts.NamedCertificates)).Should(BeNumerically(">", 0))
+		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
+	})
+})
 
 // utils
 
