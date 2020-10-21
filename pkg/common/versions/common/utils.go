@@ -20,7 +20,6 @@ func NextReleaseAfterGivenVersionFromVersionList(givenVersion *semver.Version, v
 	for _, version := range versionList {
 		versionSemver := version.Version()
 		majorMinor := createMajorMinorStringFromSemver(versionSemver)
-
 		if _, ok := versionBuckets[majorMinor]; !ok {
 			versionBuckets[majorMinor] = versionSemver
 		} else {
@@ -90,5 +89,8 @@ func NextReleaseAfterGivenVersionFromVersionList(givenVersion *semver.Version, v
 }
 
 func createMajorMinorStringFromSemver(version *semver.Version) string {
+	if version == nil {
+		return ""
+	}
 	return fmt.Sprintf("%d.%d", version.Major(), version.Minor())
 }
