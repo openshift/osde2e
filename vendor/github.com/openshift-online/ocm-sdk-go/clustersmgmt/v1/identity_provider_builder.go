@@ -31,6 +31,7 @@ type IdentityProviderBuilder struct {
 	github        *GithubIdentityProviderBuilder
 	gitlab        *GitlabIdentityProviderBuilder
 	google        *GoogleIdentityProviderBuilder
+	htpasswd      *HTPasswdIdentityProviderBuilder
 	login         *bool
 	mappingMethod *IdentityProviderMappingMethod
 	name          *string
@@ -98,6 +99,14 @@ func (b *IdentityProviderBuilder) Gitlab(value *GitlabIdentityProviderBuilder) *
 // Details for `google` identity providers.
 func (b *IdentityProviderBuilder) Google(value *GoogleIdentityProviderBuilder) *IdentityProviderBuilder {
 	b.google = value
+	return b
+}
+
+// Htpasswd sets the value of the 'htpasswd' attribute to the given value.
+//
+// Details for `htpasswd` identity providers.
+func (b *IdentityProviderBuilder) Htpasswd(value *HTPasswdIdentityProviderBuilder) *IdentityProviderBuilder {
+	b.htpasswd = value
 	return b
 }
 
@@ -170,6 +179,11 @@ func (b *IdentityProviderBuilder) Copy(object *IdentityProvider) *IdentityProvid
 	} else {
 		b.google = nil
 	}
+	if object.htpasswd != nil {
+		b.htpasswd = NewHTPasswdIdentityProvider().Copy(object.htpasswd)
+	} else {
+		b.htpasswd = nil
+	}
 	b.login = object.login
 	b.mappingMethod = object.mappingMethod
 	b.name = object.name
@@ -209,6 +223,12 @@ func (b *IdentityProviderBuilder) Build() (object *IdentityProvider, err error) 
 	}
 	if b.google != nil {
 		object.google, err = b.google.Build()
+		if err != nil {
+			return
+		}
+	}
+	if b.htpasswd != nil {
+		object.htpasswd, err = b.htpasswd.Build()
 		if err != nil {
 			return
 		}

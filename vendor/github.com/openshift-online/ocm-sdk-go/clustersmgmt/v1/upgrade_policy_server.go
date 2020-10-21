@@ -44,6 +44,11 @@ type UpgradePolicyServer interface {
 	//
 	// Update the upgrade policy.
 	Update(ctx context.Context, request *UpgradePolicyUpdateServerRequest, response *UpgradePolicyUpdateServerResponse) error
+
+	// State returns the target 'upgrade_policy_state' resource.
+	//
+	// Reference to the state of the upgrade policy.
+	State() UpgradePolicyStateServer
 }
 
 // UpgradePolicyDeleteServerRequest is the request for the 'delete' method.
@@ -156,6 +161,13 @@ func dispatchUpgradePolicy(w http.ResponseWriter, r *http.Request, server Upgrad
 		}
 	}
 	switch segments[0] {
+	case "state":
+		target := server.State()
+		if target == nil {
+			errors.SendNotFound(w, r)
+			return
+		}
+		dispatchUpgradePolicyState(w, r, target, segments[1:])
 	default:
 		errors.SendNotFound(w, r)
 		return

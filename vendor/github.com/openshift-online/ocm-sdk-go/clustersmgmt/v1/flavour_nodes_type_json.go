@@ -21,6 +21,7 @@ package v1 // github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1
 
 import (
 	"io"
+	"net/http"
 
 	jsoniter "github.com/json-iterator/go"
 	"github.com/openshift-online/ocm-sdk-go/helpers"
@@ -38,22 +39,6 @@ func MarshalFlavourNodes(object *FlavourNodes, writer io.Writer) error {
 func writeFlavourNodes(object *FlavourNodes, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
-	if object.compute != nil {
-		if count > 0 {
-			stream.WriteMore()
-		}
-		stream.WriteObjectField("compute")
-		stream.WriteInt(*object.compute)
-		count++
-	}
-	if object.infra != nil {
-		if count > 0 {
-			stream.WriteMore()
-		}
-		stream.WriteObjectField("infra")
-		stream.WriteInt(*object.infra)
-		count++
-	}
 	if object.master != nil {
 		if count > 0 {
 			stream.WriteMore()
@@ -68,6 +53,9 @@ func writeFlavourNodes(object *FlavourNodes, stream *jsoniter.Stream) {
 // UnmarshalFlavourNodes reads a value of the 'flavour_nodes' type from the given
 // source, which can be an slice of bytes, a string or a reader.
 func UnmarshalFlavourNodes(source interface{}) (object *FlavourNodes, err error) {
+	if source == http.NoBody {
+		return
+	}
 	iterator, err := helpers.NewIterator(source)
 	if err != nil {
 		return
@@ -86,12 +74,6 @@ func readFlavourNodes(iterator *jsoniter.Iterator) *FlavourNodes {
 			break
 		}
 		switch field {
-		case "compute":
-			value := iterator.ReadInt()
-			object.compute = &value
-		case "infra":
-			value := iterator.ReadInt()
-			object.infra = &value
 		case "master":
 			value := iterator.ReadInt()
 			object.master = &value

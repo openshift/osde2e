@@ -1,10 +1,12 @@
 package ocmprovider
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"math"
 	"math/rand"
+	"net/http"
 	"os/user"
 	"strings"
 	"time"
@@ -214,10 +216,15 @@ func (o *OCMProvider) GenerateProperties() (map[string]string, error) {
 // DeleteCluster requests the deletion of clusterID.
 func (o *OCMProvider) DeleteCluster(clusterID string) error {
 	var resp *v1.ClusterDeleteResponse
+	var cluster *spi.Cluster
+	var err error
+	var ok bool
 
-	cluster, err := o.GetCluster(clusterID)
-	if err != nil {
-		return fmt.Errorf("error retrieving cluster for deletion: %v", err)
+	if cluster, ok = o.clusterCache[clusterID]; !ok {
+		cluster, err = o.GetCluster(clusterID)
+		if err != nil {
+			return fmt.Errorf("error retrieving cluster for deletion: %v", err)
+		}
 	}
 
 	err = o.AddProperty(cluster, clusterproperties.Status, clusterproperties.StatusUninstalling)
@@ -247,20 +254,6 @@ func (o *OCMProvider) DeleteCluster(clusterID string) error {
 	if err != nil {
 		return fmt.Errorf("couldn't delete cluster '%s': %v", clusterID, err)
 	}
-
-	/*err = wait.PollImmediate(15*time.Second, 5*time.Minute, func() (bool, error) {
-		if _, err = o.GetCluster(clusterID); err != nil {
-			if strings.Contains(err.Error(), "identifier is '404', code is 'CLUSTERS-MGMT-404'") {
-				return true, nil
-			}
-			return false, nil
-		}
-		return false, nil
-	})
-
-	if err != nil {
-		return fmt.Errorf("Cluster still exists and has not uninstalled cleanly yet : %v", err)
-	}*/
 
 	return nil
 
@@ -308,6 +301,8 @@ func (o *OCMProvider) ScaleCluster(clusterID string, numComputeNodes int) error 
 			return errResp(resp.Error())
 		}
 
+		o.updateClusterCache(clusterID, resp.Body())
+
 		return nil
 	})
 
@@ -319,16 +314,6 @@ func (o *OCMProvider) ScaleCluster(clusterID string, numComputeNodes int) error 
 		return resp.Error()
 	}
 
-	finalCluster, err := o.GetCluster(clusterID)
-
-	if err != nil {
-		log.Printf("error attempting to retrieve cluster for verification: %v", err)
-	}
-
-	if finalCluster.NumComputeNodes() != numComputeNodes {
-		return fmt.Errorf("expected number of compute nodes (%d) not reflected in OCM (found %d)", numComputeNodes, finalCluster.NumComputeNodes())
-
-	}
 	log.Printf("Cluster successfully scaled to %d nodes", numComputeNodes)
 
 	return nil
@@ -384,6 +369,7 @@ func (o *OCMProvider) GetCluster(clusterID string) (*spi.Cluster, error) {
 	if err != nil {
 		return nil, err
 	}
+	o.clusterCache[clusterID] = cluster
 
 	return cluster, nil
 }
@@ -423,6 +409,10 @@ func (o *OCMProvider) getOCMCluster(clusterID string) (*v1.Cluster, error) {
 
 // ClusterKubeconfig returns the kubeconfig for the given cluster ID.
 func (o *OCMProvider) ClusterKubeconfig(clusterID string) ([]byte, error) {
+	if creds, ok := o.credentialCache[clusterID]; ok {
+		return []byte(creds), nil
+	}
+
 	var resp *v1.CredentialsGetResponse
 
 	err := retryer().Do(func() error {
@@ -449,6 +439,9 @@ func (o *OCMProvider) ClusterKubeconfig(clusterID string) ([]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("couldn't retrieve credentials for cluster '%s': %v", clusterID, err)
 	}
+
+	o.credentialCache[clusterID] = resp.Body().Kubeconfig()
+
 	return []byte(resp.Body().Kubeconfig()), nil
 }
 
@@ -496,8 +489,8 @@ func (o *OCMProvider) InstallAddons(clusterID string, addonIDs []string) (num in
 		addon := addonResp.Body()
 
 		alreadyInstalled := false
-		cluster, err := o.GetCluster(clusterID)
 
+		cluster, err := o.GetCluster(clusterID)
 		if err != nil {
 			return 0, fmt.Errorf("error getting current cluster state when trying to install addon %s", addonID)
 		}
@@ -535,6 +528,8 @@ func (o *OCMProvider) InstallAddons(clusterID string, addonIDs []string) (num in
 					log.Printf("%v", err)
 					return err
 				}
+
+				o.updateClusterCache(clusterID, aoar.Body().Cluster())
 
 				return nil
 			})
@@ -691,6 +686,8 @@ func (o *OCMProvider) ExtendExpiry(clusterID string, hours uint64, minutes uint6
 			return errResp(resp.Error())
 		}
 
+		o.updateClusterCache(clusterID, resp.Body())
+
 		return nil
 	})
 
@@ -702,16 +699,6 @@ func (o *OCMProvider) ExtendExpiry(clusterID string, hours uint64, minutes uint6
 		return resp.Error()
 	}
 
-	finalCluster, err := o.GetCluster(clusterID)
-
-	if err != nil {
-		log.Printf("error attempting to retrieve cluster for verification: %v", err)
-	}
-
-	if finalCluster.ExpirationTimestamp() != extendexpirytime {
-		return fmt.Errorf("expected expiration time %s not reflected in OCM (found %s)", extendexpirytime.UTC().Format("Monday, 02 Jan 2006 15:04:05 MST"), finalCluster.ExpirationTimestamp().UTC().Format("Monday, 02 Jan 2006 15:04:05 MST"))
-
-	}
 	log.Println("Successfully extended cluster expiry time to", extendexpirytime.UTC().Format("Monday, 02 Jan 2006 15:04:05 MST"))
 
 	return nil
@@ -770,17 +757,42 @@ func (o *OCMProvider) AddProperty(cluster *spi.Cluster, tag string, value string
 		return resp.Error()
 	}
 
-	finalCluster, err := o.GetCluster(cluster.ID())
+	// We need to update the cache post-update
+	o.updateClusterCache(cluster.ID(), resp.Body())
 
+	log.Printf("Successfully added property[%s] - %s \n", tag, resp.Body().Properties()[tag])
+
+	return nil
+}
+
+// Upgrade initiates a cluster upgrade to the given version
+func (o *OCMProvider) Upgrade(clusterID string, version string, t time.Time) error {
+
+	nodeDrain := v1.NewValue().Value(5).Unit("minutes")
+	policy, err := v1.NewUpgradePolicy().Version(version).NextRun(t).ScheduleType("manual").NodeDrainGracePeriod(nodeDrain).Build()
 	if err != nil {
-		log.Printf("error attempting to retrieve cluster for verification: %v", err)
+		return err
 	}
 
-	if finalCluster.Properties()[tag] != value {
-		return fmt.Errorf("added property not reflected in OCM")
-
+	addResp, err := o.conn.ClustersMgmt().V1().Clusters().Cluster(clusterID).UpgradePolicies().Add().Body(policy).SendContext(context.TODO())
+	if err != nil {
+		return err
+	}
+	if addResp.Status() != http.StatusOK {
+		log.Printf("Unable to schedule upgrade with provider (status %d, response %s)", addResp.Status(), addResp.Error().String())
+		return err
 	}
 
-	log.Printf("Successfully added property[%s] - %s \n", tag, finalCluster.Properties()[tag])
+	log.Printf("upgrade to version %s scheduled with provider for time %s", addResp.Body().Version(), addResp.Body().NextRun().Format(time.RFC3339))
+	return nil
+}
+
+// This assumes cluster is a resp.Body() response from an OCM update
+func (o *OCMProvider) updateClusterCache(id string, cluster *v1.Cluster) error {
+	c, err := o.ocmToSPICluster(cluster)
+	if err != nil {
+		return err
+	}
+	o.clusterCache[cluster.ID()] = c
 	return nil
 }

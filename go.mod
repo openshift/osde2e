@@ -8,6 +8,7 @@ require (
 	github.com/adamliesko/retry v0.0.0-20200123222335-86c8baac277d
 	github.com/aws/aws-sdk-go v1.34.16
 	github.com/bmizerany/perks v0.0.0-20141205001514-d9a9656a3a4b // indirect
+	github.com/cenkalti/backoff/v4 v4.1.0 // indirect
 	github.com/code-ready/crc v1.10.0
 	github.com/dgryski/go-gk v0.0.0-20200319235926-a69029f61654 // indirect
 	github.com/dgryski/go-lttb v0.0.0-20180810165845-318fcdf10a77 // indirect
@@ -15,6 +16,7 @@ require (
 	github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32
 	github.com/google/go-github/v31 v31.0.0
 	github.com/google/uuid v1.1.1
+	github.com/grokify/html-strip-tags-go v0.0.0-20200923094847-079d207a09f1 // indirect
 	github.com/hashicorp/go-multierror v1.1.0
 	github.com/hpcloud/tail v1.0.0
 	github.com/influxdata/tdigest v0.0.1 // indirect
@@ -22,7 +24,7 @@ require (
 	github.com/markbates/pkger v0.16.0
 	github.com/onsi/ginkgo v1.13.0
 	github.com/onsi/gomega v1.10.1
-	github.com/openshift-online/ocm-sdk-go v0.1.130
+	github.com/openshift-online/ocm-sdk-go v0.1.140
 	github.com/openshift/api v3.9.1-0.20190924102528-32369d4db2ad+incompatible
 	github.com/openshift/client-go v0.0.0-20200326155132-2a6cd50aedd0
 	github.com/openshift/cloud-ingress-operator v0.0.0-20200922213113-a2e288b3cc76
@@ -34,7 +36,8 @@ require (
 	github.com/operator-framework/operator-lifecycle-manager v0.0.0-20200521062108-408ca95d458f
 	github.com/prometheus/alertmanager v0.21.0
 	github.com/prometheus/client_golang v1.7.1
-	github.com/prometheus/common v0.13.0
+	github.com/prometheus/common v0.14.0
+	github.com/prometheus/procfs v0.2.0 // indirect
 	github.com/slack-go/slack v0.6.5
 	github.com/spf13/cobra v1.0.0
 	github.com/spf13/pflag v1.0.5
@@ -44,6 +47,7 @@ require (
 	github.com/tsenart/vegeta v12.7.0+incompatible
 	github.com/vmware-tanzu/velero v1.5.0-beta.1.0.20200831161009-1dcaa1bf7512
 	golang.org/x/net v0.0.0-20200707034311-ab3426394381
+	golang.org/x/sys v0.0.0-20201015000850-e3ed0017c211 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20200121175148-a6ecf24a6d71
 	k8s.io/api v0.19.2
 	k8s.io/apimachinery v0.19.2

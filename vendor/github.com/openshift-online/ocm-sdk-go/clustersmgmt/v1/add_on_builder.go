@@ -23,20 +23,23 @@ package v1 // github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1
 //
 // Representation of an add-on that can be installed in a cluster.
 type AddOnBuilder struct {
-	id              *string
-	href            *string
-	link            bool
-	description     *string
-	docsLink        *string
-	enabled         *bool
-	icon            *string
-	installMode     *AddOnInstallMode
-	label           *string
-	name            *string
-	operatorName    *string
-	resourceCost    *float64
-	resourceName    *string
-	targetNamespace *string
+	id                   *string
+	href                 *string
+	link                 bool
+	description          *string
+	docsLink             *string
+	enabled              *bool
+	hasExternalResources *bool
+	hidden               *bool
+	icon                 *string
+	installMode          *AddOnInstallMode
+	label                *string
+	name                 *string
+	operatorName         *string
+	parameters           *AddOnParameterListBuilder
+	resourceCost         *float64
+	resourceName         *string
+	targetNamespace      *string
 }
 
 // NewAddOn creates a new builder of 'add_on' objects.
@@ -86,6 +89,22 @@ func (b *AddOnBuilder) Enabled(value bool) *AddOnBuilder {
 	return b
 }
 
+// HasExternalResources sets the value of the 'has_external_resources' attribute to the given value.
+//
+//
+func (b *AddOnBuilder) HasExternalResources(value bool) *AddOnBuilder {
+	b.hasExternalResources = &value
+	return b
+}
+
+// Hidden sets the value of the 'hidden' attribute to the given value.
+//
+//
+func (b *AddOnBuilder) Hidden(value bool) *AddOnBuilder {
+	b.hidden = &value
+	return b
+}
+
 // Icon sets the value of the 'icon' attribute to the given value.
 //
 //
@@ -126,6 +145,14 @@ func (b *AddOnBuilder) OperatorName(value string) *AddOnBuilder {
 	return b
 }
 
+// Parameters sets the value of the 'parameters' attribute to the given values.
+//
+//
+func (b *AddOnBuilder) Parameters(value *AddOnParameterListBuilder) *AddOnBuilder {
+	b.parameters = value
+	return b
+}
+
 // ResourceCost sets the value of the 'resource_cost' attribute to the given value.
 //
 //
@@ -161,11 +188,18 @@ func (b *AddOnBuilder) Copy(object *AddOn) *AddOnBuilder {
 	b.description = object.description
 	b.docsLink = object.docsLink
 	b.enabled = object.enabled
+	b.hasExternalResources = object.hasExternalResources
+	b.hidden = object.hidden
 	b.icon = object.icon
 	b.installMode = object.installMode
 	b.label = object.label
 	b.name = object.name
 	b.operatorName = object.operatorName
+	if object.parameters != nil {
+		b.parameters = NewAddOnParameterList().Copy(object.parameters)
+	} else {
+		b.parameters = nil
+	}
 	b.resourceCost = object.resourceCost
 	b.resourceName = object.resourceName
 	b.targetNamespace = object.targetNamespace
@@ -181,11 +215,19 @@ func (b *AddOnBuilder) Build() (object *AddOn, err error) {
 	object.description = b.description
 	object.docsLink = b.docsLink
 	object.enabled = b.enabled
+	object.hasExternalResources = b.hasExternalResources
+	object.hidden = b.hidden
 	object.icon = b.icon
 	object.installMode = b.installMode
 	object.label = b.label
 	object.name = b.name
 	object.operatorName = b.operatorName
+	if b.parameters != nil {
+		object.parameters, err = b.parameters.Build()
+		if err != nil {
+			return
+		}
+	}
 	object.resourceCost = b.resourceCost
 	object.resourceName = b.resourceName
 	object.targetNamespace = b.targetNamespace

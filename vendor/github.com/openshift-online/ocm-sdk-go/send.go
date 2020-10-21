@@ -22,6 +22,7 @@ package sdk
 import (
 	"context"
 	"fmt"
+	"html"
 	"io/ioutil"
 	"mime"
 	"net/http"
@@ -203,15 +204,15 @@ func (c *Connection) contentSummary(mediaType string, response *http.Response) (
 	if err != nil {
 		return
 	}
-	limit := 200
+	limit := 250
 	runes := []rune(string(body))
 	if strings.EqualFold(mediaType, "text/html") && len(runes) > limit {
-		content := strip.StripTags(string(body))
+		content := html.UnescapeString(strip.StripTags(string(body)))
 		content = wsRegex.ReplaceAllString(strings.TrimSpace(content), " ")
 		runes = []rune(content)
 	}
 	if len(runes) > limit {
-		summary = fmt.Sprintf("%s...", string(runes[:200]))
+		summary = fmt.Sprintf("%s...", string(runes[:limit]))
 	} else {
 		summary = string(runes)
 	}

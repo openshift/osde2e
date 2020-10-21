@@ -23,14 +23,14 @@ package v1 // github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1
 //
 // Detailed status of a cluster.
 type ClusterStatusBuilder struct {
-	id                   *string
-	href                 *string
-	link                 bool
-	dnsReady             *bool
-	description          *string
-	provisionErrorReason *string
-	provisionErrorType   *string
-	state                *ClusterState
+	id                    *string
+	href                  *string
+	link                  bool
+	dnsReady              *bool
+	description           *string
+	provisionErrorCode    *string
+	provisionErrorMessage *string
+	state                 *ClusterState
 }
 
 // NewClusterStatus creates a new builder of 'cluster_status' objects.
@@ -72,19 +72,19 @@ func (b *ClusterStatusBuilder) Description(value string) *ClusterStatusBuilder {
 	return b
 }
 
-// ProvisionErrorReason sets the value of the 'provision_error_reason' attribute to the given value.
+// ProvisionErrorCode sets the value of the 'provision_error_code' attribute to the given value.
 //
 //
-func (b *ClusterStatusBuilder) ProvisionErrorReason(value string) *ClusterStatusBuilder {
-	b.provisionErrorReason = &value
+func (b *ClusterStatusBuilder) ProvisionErrorCode(value string) *ClusterStatusBuilder {
+	b.provisionErrorCode = &value
 	return b
 }
 
-// ProvisionErrorType sets the value of the 'provision_error_type' attribute to the given value.
+// ProvisionErrorMessage sets the value of the 'provision_error_message' attribute to the given value.
 //
 //
-func (b *ClusterStatusBuilder) ProvisionErrorType(value string) *ClusterStatusBuilder {
-	b.provisionErrorType = &value
+func (b *ClusterStatusBuilder) ProvisionErrorMessage(value string) *ClusterStatusBuilder {
+	b.provisionErrorMessage = &value
 	return b
 }
 
@@ -106,8 +106,8 @@ func (b *ClusterStatusBuilder) Copy(object *ClusterStatus) *ClusterStatusBuilder
 	b.link = object.link
 	b.dnsReady = object.dnsReady
 	b.description = object.description
-	b.provisionErrorReason = object.provisionErrorReason
-	b.provisionErrorType = object.provisionErrorType
+	b.provisionErrorCode = object.provisionErrorCode
+	b.provisionErrorMessage = object.provisionErrorMessage
 	b.state = object.state
 	return b
 }
@@ -120,8 +120,8 @@ func (b *ClusterStatusBuilder) Build() (object *ClusterStatus, err error) {
 	object.link = b.link
 	object.dnsReady = b.dnsReady
 	object.description = b.description
-	object.provisionErrorReason = b.provisionErrorReason
-	object.provisionErrorType = b.provisionErrorType
+	object.provisionErrorCode = b.provisionErrorCode
+	object.provisionErrorMessage = b.provisionErrorMessage
 	object.state = b.state
 	return
 }

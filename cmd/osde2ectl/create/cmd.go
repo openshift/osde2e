@@ -138,7 +138,7 @@ func run(cmd *cobra.Command, argv []string) error {
 	var successfulClustersCounter int32 = 0
 	createClusters(args.numberOfClusters, batchSize, args.secondsBetweenBatches, &successfulClustersCounter)
 
-	fmt.Printf("Successfully provisioned %d/%d clusters.\n", successfulClustersCounter, args.numberOfClusters)
+	log.Printf("Successfully provisioned %d/%d clusters.\n", successfulClustersCounter, args.numberOfClusters)
 
 	return nil
 }
@@ -190,9 +190,9 @@ func setupCluster(wg *sync.WaitGroup, successfulClustersCounter *int32) {
 
 	if err != nil {
 		if cluster != nil {
-			fmt.Printf("error while trying to provision up cluster with ID %s: %v\n", cluster.ID(), err)
+			log.Printf("error while trying to provision up cluster with ID %s: %v\n", cluster.ID(), err)
 		} else {
-			fmt.Printf("error while provisioning the cluster: %v\n", err)
+			log.Printf("error while provisioning the cluster: %v\n", err)
 		}
 	} else {
 		log.Printf("Starting provisioning cluster %s.", cluster.ID())
@@ -202,7 +202,7 @@ func setupCluster(wg *sync.WaitGroup, successfulClustersCounter *int32) {
 		defer outputFile.Close()
 
 		if err != nil {
-			fmt.Printf("error opening logfile for writing: %v", err)
+			log.Printf("error opening logfile for writing: %v", err)
 			return
 		}
 
@@ -224,11 +224,11 @@ func setupCluster(wg *sync.WaitGroup, successfulClustersCounter *int32) {
 				case <-timeout:
 					isHealthy, failures, _ := clusterutil.PollClusterHealth(cluster.ID(), discardLogger)
 					if isHealthy {
-						fmt.Printf("Cluster %s is healthy (could be transient).\n", cluster.ID())
+						log.Printf("Cluster %s is healthy (could be transient).\n", cluster.ID())
 					} else {
-						fmt.Printf("Cluster %s is not healthy yet.\n", cluster.ID())
+						log.Printf("Cluster %s is not healthy yet.\n", cluster.ID())
 						if len(failures) > 0 {
-							fmt.Printf("Currently failing %s health checks", strings.Join(failures, ", "))
+							log.Printf("Currently failing %s health checks", strings.Join(failures, ", "))
 						}
 					}
 				case <-terminate:
@@ -242,9 +242,9 @@ func setupCluster(wg *sync.WaitGroup, successfulClustersCounter *int32) {
 		terminate <- true
 
 		if err != nil {
-			fmt.Printf("Cluster %s never became healthy.\n", cluster.ID())
+			log.Printf("Cluster %s never became healthy.\n", cluster.ID())
 		} else {
-			fmt.Printf("Cluster %s is healthy.\n", cluster.ID())
+			log.Printf("Cluster %s is healthy.\n", cluster.ID())
 
 			atomic.AddInt32(successfulClustersCounter, 1)
 		}

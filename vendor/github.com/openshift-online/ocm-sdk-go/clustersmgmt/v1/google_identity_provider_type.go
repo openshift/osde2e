@@ -62,7 +62,7 @@ func (o *GoogleIdentityProvider) GetClientID() (value string, ok bool) {
 // ClientSecret returns the value of the 'client_secret' attribute, or
 // the zero value of the type if the attribute doesn't have a value.
 //
-// Client secret issued by _Google.
+// Client secret issued by _Google_.
 func (o *GoogleIdentityProvider) ClientSecret() string {
 	if o != nil && o.clientSecret != nil {
 		return *o.clientSecret
@@ -73,7 +73,7 @@ func (o *GoogleIdentityProvider) ClientSecret() string {
 // GetClientSecret returns the value of the 'client_secret' attribute and
 // a flag indicating if the attribute has a value.
 //
-// Client secret issued by _Google.
+// Client secret issued by _Google_.
 func (o *GoogleIdentityProvider) GetClientSecret() (value string, ok bool) {
 	ok = o != nil && o.clientSecret != nil
 	if ok {

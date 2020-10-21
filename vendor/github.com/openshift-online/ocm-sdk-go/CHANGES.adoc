@@ -3,6 +3,62 @@
 This document describes the relevant changes between releases of the OCM API
 SDK.
 
+== 0.1.140 Oct 14 2020
+
+- Update api-model to v0.0.91
+** Remove redudant fields
+** flavours: Remove infra and compute nodes
+** Add AddOnParameter modal type Update AddOn to include list of AddOnParameters
+** Add AddOnInstallationParameter modal type Update AddOnInstallation to include list of AddOnInstallationParameters
+
+== 0.1.139 Oct 11 2020
+
+- Update api-model to v0.0.90
+** Add machine pools locator
+** Add compute node labels
+- Interpret HTML entities in logged summary of error response
+- Use new limits for content summary
+
+== 0.1.138 Oct 5 2020
+
+- Update api-model to v0.0.88
+** Add missing machine pools resource
+
+== 0.1.137 Oct 5 2020
+
+- Update api-model to v0.0.87
+** Add missing machine pool resource
+
+== 0.1.136 Oct 5 2020
+
+- Update metamodel to v0.0.34
+** Support numeric initialisms
+- Update api-model to v0.0.86
+** Added New Error Message implementation
+** idp: Add HTPasswd provider
+** Uptdating SDK with GCP credentials
+
+== 0.1.135 Oct 5 2020
+
+- Update API model to v0.0.85
+** Add upgrade policy state
+
+== 0.1.133 Sep 30 2020
+
+- increase the limit/size of content summary
+- Update metamodel to v0.0.33
+** json: Support NoContent on POST responses
+
+== 0.1.132 Sep 24 2020
+
+- Update model to v0.0.83
+** add external resources to add on type model
+** SDA-2952 - Add "hidden" option to AddOn
+
+== 0.1.131 Sep 23 2020
+
+** Support http proxy
+
 == 0.1.130 Sep 21 2020
 
 Update model to v0.0.82

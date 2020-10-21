@@ -21,6 +21,7 @@ package v1 // github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1
 
 import (
 	"io"
+	"net/http"
 
 	jsoniter "github.com/json-iterator/go"
 	"github.com/openshift-online/ocm-sdk-go/helpers"
@@ -78,6 +79,9 @@ func writeSummaryDashboard(object *SummaryDashboard, stream *jsoniter.Stream) {
 // UnmarshalSummaryDashboard reads a value of the 'summary_dashboard' type from the given
 // source, which can be an slice of bytes, a string or a reader.
 func UnmarshalSummaryDashboard(source interface{}) (object *SummaryDashboard, err error) {
+	if source == http.NoBody {
+		return
+	}
 	iterator, err := helpers.NewIterator(source)
 	if err != nil {
 		return
