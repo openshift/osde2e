@@ -18,6 +18,7 @@ import (
 	clusterutil "github.com/openshift/osde2e/pkg/common/cluster"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/providers/ocmprovider"
+	"github.com/openshift/osde2e/pkg/common/spi"
 	"github.com/openshift/osde2e/pkg/common/versions"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -149,7 +150,7 @@ func run(cmd *cobra.Command, argv []string) error {
 		}
 	}
 
-	if _, err := os.Stat(args.awsAccountsFile); err != nil {
+	if _, err := os.Stat(args.awsAccountsFile); err == nil {
 		csvfile, err := os.Open(args.awsAccountsFile)
 		if err != nil {
 			log.Fatalln("Couldn't open the csv file", err)
@@ -224,12 +225,16 @@ func setupCluster(wg *sync.WaitGroup, successfulClustersCounter *int32) {
 		if currentAccount >= len(awsAccounts) {
 			currentAccount = 0
 		}
+		log.Printf("Setting CCS account for %s", awsAccounts[currentAccount][0])
 		viper.Set(ocmprovider.AWSAccount, awsAccounts[currentAccount][0])
 		viper.Set(ocmprovider.AWSAccessKey, awsAccounts[currentAccount][1])
 		viper.Set(ocmprovider.AWSSecretKey, awsAccounts[currentAccount][2])
 	}
 
-	cluster, err := clusterutil.ProvisionCluster(discardLogger)
+	var cluster *spi.Cluster
+	var err error
+
+	cluster, err = clusterutil.ProvisionCluster(discardLogger)
 
 	if len(awsAccounts) != 0 {
 		accountMutex.Unlock()
@@ -242,6 +247,10 @@ func setupCluster(wg *sync.WaitGroup, successfulClustersCounter *int32) {
 			log.Printf("error while provisioning the cluster: %v\n", err)
 		}
 	} else {
+		if cluster == nil {
+			log.Println("Cluster is nil")
+			return
+		}
 		log.Printf("Starting provisioning cluster %s.", cluster.ID())
 		outputFilePath := filepath.Join(viper.GetString(config.ReportDir), "clusters", cluster.ID()+".log")
 
