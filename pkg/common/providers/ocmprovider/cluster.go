@@ -85,11 +85,19 @@ func (o *OCMProvider) LaunchCluster(clusterName string) (string, error) {
 		newCluster = newCluster.ExpirationTimestamp(expiration)
 	}
 
+	numComputeNodes := viper.GetInt(config.Cluster.NumWorkerNodes)
+	if numComputeNodes > 0 {
+		nodeBuilder = nodeBuilder.Compute(numComputeNodes)
+	}
+
 	// Configure the cluster to be Multi-AZ if configured
 	// We must manually configure the number of compute nodes
 	// Currently set to 9 nodes. Whatever it is, must be divisible by 3.
 	if multiAZ {
 		nodeBuilder = nodeBuilder.Compute(9)
+		if numComputeNodes > 0 && math.Mod(float64(numComputeNodes), float64(3)) == 0 {
+			nodeBuilder = nodeBuilder.Compute(numComputeNodes)
+		}
 		newCluster = newCluster.MultiAZ(viper.GetBool(config.Cluster.MultiAZ))
 	}
 
