@@ -1,6 +1,7 @@
 package create
 
 import (
+	"encoding/csv"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -36,12 +37,17 @@ var args struct {
 	secretLocations       string
 	environment           string
 	kubeConfig            string
+	awsAccountsFile       string
 	numberOfClusters      int
 	batchSize             int
 	secondsBetweenBatches int
 }
 
 var discardLogger *log.Logger
+
+var awsAccounts [][]string
+var currentAccount int
+var accountMutex *sync.Mutex
 
 func init() {
 	pfs := Cmd.PersistentFlags()
@@ -100,6 +106,14 @@ func init() {
 		"The number of seconds between batches of cluster provisions.",
 	)
 
+	pfs.StringVarP(
+		&args.awsAccountsFile,
+		"aws-accounts-file",
+		"",
+		"",
+		"A file containing a comma-delimited list of AWS accounts with credentials eg. account,accessKey,secretKey",
+	)
+
 	viper.BindPFlag(config.Cluster.ID, Cmd.PersistentFlags().Lookup("cluster-id"))
 	viper.BindPFlag(ocmprovider.Env, Cmd.PersistentFlags().Lookup("environment"))
 	viper.BindPFlag(config.Kubeconfig.Path, Cmd.PersistentFlags().Lookup("kube-config"))
@@ -133,6 +147,22 @@ func run(cmd *cobra.Command, argv []string) error {
 		if err != nil {
 			return fmt.Errorf("unable to create clusters directory: %v", err)
 		}
+	}
+
+	if _, err := os.Stat(args.awsAccountsFile); err != nil {
+		csvfile, err := os.Open(args.awsAccountsFile)
+		if err != nil {
+			log.Fatalln("Couldn't open the csv file", err)
+		}
+
+		// Parse the file
+		r := csv.NewReader(csvfile)
+		awsAccounts, err = r.ReadAll()
+		if err != nil {
+			log.Fatalln("Couldn't retrieve list of accounts", err)
+		}
+		accountMutex = &sync.Mutex{}
+
 	}
 
 	var successfulClustersCounter int32 = 0
@@ -186,7 +216,24 @@ func createBatch(batchIteration int, numClustersInBatch int, batchWg *sync.WaitG
 
 func setupCluster(wg *sync.WaitGroup, successfulClustersCounter *int32) {
 	defer wg.Done()
+
+	if len(awsAccounts) != 0 {
+		accountMutex.Lock()
+
+		currentAccount++
+		if currentAccount >= len(awsAccounts) {
+			currentAccount = 0
+		}
+		viper.Set(ocmprovider.AWSAccount, awsAccounts[currentAccount][0])
+		viper.Set(ocmprovider.AWSAccessKey, awsAccounts[currentAccount][1])
+		viper.Set(ocmprovider.AWSSecretKey, awsAccounts[currentAccount][2])
+	}
+
 	cluster, err := clusterutil.ProvisionCluster(discardLogger)
+
+	if len(awsAccounts) != 0 {
+		accountMutex.Unlock()
+	}
 
 	if err != nil {
 		if cluster != nil {
