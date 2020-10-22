@@ -373,6 +373,8 @@ github.com/openshift/moactl/pkg/logging
 github.com/openshift/moactl/pkg/ocm/properties
 github.com/openshift/moactl/pkg/ocm/versions
 github.com/openshift/moactl/pkg/reporter
+# github.com/openshift/rbac-permissions-operator v0.0.0-20201020153617-819ec06cd5e3
+github.com/openshift/rbac-permissions-operator/pkg/apis/managed/v1alpha1
 # github.com/operator-framework/api v0.3.6
 github.com/operator-framework/api/pkg/lib/version
 github.com/operator-framework/api/pkg/operators
