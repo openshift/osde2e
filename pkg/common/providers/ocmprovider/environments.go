@@ -1,15 +1,16 @@
 package ocmprovider
 
 const (
-	crc        =  "crc"
+	crc         = "crc"
 	integration = "int"
 	stage       = "stage"
 	prod        = "prod"
 
 	crcURL         = "https://clusters-service.apps-crc.testing"
 	integrationURL = "https://api-integration.6943.hive-integration.openshiftapps.com"
-	stageURL       = "https://api.stage.openshift.com"
-	prodURL        = "https://api.openshift.com"
+	// stageURL       = "https://api.stage.openshift.com"
+	stageURL = "https://clusters-mgmt-use2-uhc-stage.apps.appsres04ue2.n4k3.p1.openshiftapps.com"
+	prodURL  = "https://api.openshift.com"
 )
 
 // Environments are known instance of OSD.
