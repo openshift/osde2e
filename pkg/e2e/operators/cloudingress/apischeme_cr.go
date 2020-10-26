@@ -24,9 +24,11 @@ var _ = ginkgo.Describe(CloudIngressTestName, func() {
 })
 
 func createApischeme() cloudingress.APIScheme {
-	apischeme := cloudingress.APIScheme{TypeMeta: metav1.TypeMeta{
-		Kind: "APIScheme",
-	},
+	apischeme := cloudingress.APIScheme{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "APIScheme",
+			APIVersion: cloudingress.SchemeGroupVersion.String(),
+		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "apischeme-CR-test",
 		},

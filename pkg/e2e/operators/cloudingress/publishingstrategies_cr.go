@@ -26,7 +26,8 @@ var _ = ginkgo.Describe(CloudIngressTestName, func() {
 func createPublishingstrategies() cloudingress.PublishingStrategy {
 	publishingstrategy := cloudingress.PublishingStrategy{
 		TypeMeta: metav1.TypeMeta{
-			Kind: "PublishingStrategy",
+			Kind:       "PublishingStrategy",
+			APIVersion: cloudingress.SchemeGroupVersion.String(),
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "publshingstrategy-CR-test",
