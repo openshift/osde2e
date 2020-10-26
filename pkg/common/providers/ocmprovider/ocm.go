@@ -3,7 +3,6 @@ package ocmprovider
 
 import (
 	"fmt"
-	"log"
 	"sync"
 
 	"github.com/openshift/osde2e/pkg/common/spi"
@@ -77,7 +76,7 @@ func OCMConnection(token, env string, debug bool) (*ocm.Connection, error) {
 
 	// select correct environment
 	url := Environments.Choose(env)
-	log.Printf("Using %s", url)
+
 	builder := ocm.NewConnectionBuilder().
 		URL(url).
 		TokenURL(TokenURL).
