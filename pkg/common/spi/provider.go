@@ -106,6 +106,6 @@ type Provider interface {
 	AddProperty(cluster *Cluster, tag string, value string) error
 
 	// Upgrade requests the provider initiate a cluster upgrade to the given version
-	Upgrade(clusterID string, version string, t time.Time) error
+	Upgrade(clusterID string, version string, pdbTimeoutMinutes int, t time.Time) error
 
 }
