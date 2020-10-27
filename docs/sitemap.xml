@@ -9,31 +9,56 @@
   
   <url>
     <loc>https://openshift.github.io/osde2e/</loc>
-    <lastmod>2020-10-27T16:06:37+00:00</lastmod>
+    <lastmod>2020-10-27T16:43:16+00:00</lastmod>
   </url>
   
   <url>
-    <loc>https://openshift.github.io/osde2e/tags/aws/</loc>
-    <lastmod>2020-10-27T16:06:37+00:00</lastmod>
+    <loc>https://openshift.github.io/osde2e/tags/moa/</loc>
+    <lastmod>2020-10-27T16:43:16+00:00</lastmod>
   </url>
   
   <url>
-    <loc>https://openshift.github.io/osde2e/post/15f76c8b0062409784b72f542366dfcc/</loc>
-    <lastmod>2020-10-27T16:06:37+00:00</lastmod>
+    <loc>https://openshift.github.io/osde2e/post/7143cadf472a4f82b2a676130c59b948/</loc>
+    <lastmod>2020-10-27T16:43:16+00:00</lastmod>
   </url>
   
   <url>
     <loc>https://openshift.github.io/osde2e/post/</loc>
-    <lastmod>2020-10-27T16:06:37+00:00</lastmod>
+    <lastmod>2020-10-27T16:43:16+00:00</lastmod>
   </url>
   
   <url>
     <loc>https://openshift.github.io/osde2e/tags/</loc>
-    <lastmod>2020-10-27T16:06:37+00:00</lastmod>
+    <lastmod>2020-10-27T16:43:16+00:00</lastmod>
   </url>
   
   <url>
     <loc>https://openshift.github.io/osde2e/tags/weather-report/</loc>
+    <lastmod>2020-10-27T16:43:16+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://openshift.github.io/osde2e/tags/gcp/</loc>
+    <lastmod>2020-10-27T16:43:13+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://openshift.github.io/osde2e/post/fba6cbe2d1da4c18aaa0eb8096e8f01e/</loc>
+    <lastmod>2020-10-27T16:43:13+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://openshift.github.io/osde2e/tags/aws/</loc>
+    <lastmod>2020-10-27T16:43:08+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://openshift.github.io/osde2e/post/abc8d6cb436b436e89b27a4abc2c037b/</loc>
+    <lastmod>2020-10-27T16:43:08+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://openshift.github.io/osde2e/post/15f76c8b0062409784b72f542366dfcc/</loc>
     <lastmod>2020-10-27T16:06:37+00:00</lastmod>
   </url>
   
@@ -1183,18 +1208,8 @@
   </url>
   
   <url>
-    <loc>https://openshift.github.io/osde2e/tags/moa/</loc>
-    <lastmod>2020-08-11T12:00:48+00:00</lastmod>
-  </url>
-  
-  <url>
     <loc>https://openshift.github.io/osde2e/post/95d86ab09fa141b9ae9feb4a36cff685/</loc>
     <lastmod>2020-08-11T12:00:48+00:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://openshift.github.io/osde2e/tags/gcp/</loc>
-    <lastmod>2020-08-11T12:00:38+00:00</lastmod>
   </url>
   
   <url>
