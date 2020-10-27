@@ -30,7 +30,11 @@ func createPublishingstrategies() cloudingress.PublishingStrategy {
 			APIVersion: cloudingress.SchemeGroupVersion.String(),
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name: "publshingstrategy-CR-test",
+			Name: "publshingstrategy-cr-test",
+		},
+		Spec: cloudingress.PublishingStrategySpec{
+			DefaultAPIServerIngress: cloudingress.DefaultAPIServerIngress{},
+			ApplicationIngress:      []cloudingress.ApplicationIngress{},
 		},
 	}
 	return publishingstrategy
