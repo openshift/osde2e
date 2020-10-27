@@ -30,7 +30,14 @@ func createApischeme() cloudingress.APIScheme {
 			APIVersion: cloudingress.SchemeGroupVersion.String(),
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name: "apischeme-CR-test",
+			Name: "apischeme-cr-test",
+		},
+		Spec: cloudingress.APISchemeSpec{
+			ManagementAPIServerIngress: cloudingress.ManagementAPIServerIngress{
+				Enabled:           false,
+				DNSName:           "osde2e",
+				AllowedCIDRBlocks: []string{},
+			},
 		},
 	}
 	return apischeme

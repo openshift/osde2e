@@ -787,9 +787,9 @@ func (o *OCMProvider) AddProperty(cluster *spi.Cluster, tag string, value string
 }
 
 // Upgrade initiates a cluster upgrade to the given version
-func (o *OCMProvider) Upgrade(clusterID string, version string, t time.Time) error {
+func (o *OCMProvider) Upgrade(clusterID string, version string, pdbTimeoutMinutes int, t time.Time) error {
 
-	nodeDrain := v1.NewValue().Value(5).Unit("minutes")
+	nodeDrain := v1.NewValue().Value(float64(pdbTimeoutMinutes)).Unit("minutes")
 	policy, err := v1.NewUpgradePolicy().Version(version).NextRun(t).ScheduleType("manual").NodeDrainGracePeriod(nodeDrain).Build()
 	if err != nil {
 		return err
