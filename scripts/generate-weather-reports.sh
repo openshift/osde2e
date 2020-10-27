@@ -5,7 +5,7 @@ OSDE2E=quay.io/app-sre/osde2e
 HUGO=quay.io/jlelse/hugo:0.74.3
 
 run_osde2e() {
-	WEATHER_PROVIDER=$1 JOB_ALLOWLIST="osde2e-.*-$1-e2e-.*" docker run -u "$(id -u)" -v "$DIR:/hugo-site" -e WEATHER_PROVIDER -e JOB_ALLOWLIST -e PROMETHEUS_ADDRESS -e PROMETHEUS_BEARER_TOKEN "$OSDE2E" report weather-report sd-report --output "/hugo-site/content/post/$(uuidgen | sed s/-//g).md"
+	REPORTING_WEATHER_PROVIDER=$1 REPORTING_WEATHER_JOB_ALLOWLIST="osde2e-.*-$1-e2e-.*" docker run -u "$(id -u)" -v "$DIR:/hugo-site" -e REPORTING_WEATHER_PROVIDER -e REPORTING_WEATHER_JOB_ALLOWLIST -e PROMETHEUS_ADDRESS -e PROMETHEUS_BEARER_TOKEN "$OSDE2E" report weather-report sd-report --output "/hugo-site/content/post/$(uuidgen | sed s/-//g).md"
 }
 
 docker pull $OSDE2E
