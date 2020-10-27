@@ -47,7 +47,7 @@ const (
 	configProviderWatchInterval = 60  // minutes
 	configScaleTimeout          = 15  // minutes
 	configUpgradeWindow         = 120 // minutes
-	configNodeDrainTimeout      = 7   // minutes
+	configNodeDrainTimeout      = 15  // minutes
 	configExpectedDrainTime     = 8   // minutes
 	configControlPlaneTime      = 90  // minutes
 )
