@@ -48,8 +48,10 @@ const (
 	configScaleTimeout          = 15  // minutes
 	configUpgradeWindow         = 120 // minutes
 	configNodeDrainTimeout      = 7   // minutes
-	configExpectedDrainTime     = 8   // minutes
+	configExpectedDrainTime     = 15  // minutes
 	configControlPlaneTime      = 90  // minutes
+	configPdbDrainTimeout       = 15  // minutes
+
 )
 
 // TriggerManagedUpgrade initiates an upgrade using the managed-upgrade-operator
@@ -268,7 +270,7 @@ func scheduleUpgradeWithProvider(version string) error {
 	// Our time will be as closely allowed as possible by the provider (now + 6 min)
 	t := time.Now().UTC().Add(6 * time.Minute)
 
-	err = clusterProvider.Upgrade(clusterID, version, t)
+	err = clusterProvider.Upgrade(clusterID, version, configPdbDrainTimeout, t)
 	if err != nil {
 		return fmt.Errorf("error initiating upgrade from provider: %v", err)
 	}
