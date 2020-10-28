@@ -39,5 +39,18 @@ var _ = ginkgo.Describe(regularuserWebhookTestName, func() {
 				Resource: "ClusterAutoscaler"}).Create(context.TODO(), &unstructured.Unstructured{}, metav1.CreateOptions{})
 			Expect(err).To(HaveOccurred())
 		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
+
+		ginkgo.It("Unprivledged users cannot delete clusterversion objects", func() {
+			h.Impersonate(rest.ImpersonationConfig{
+				UserName: "test@customdomain",
+				Groups: []string{
+					"system:authenticated",
+					"system:authenticated:oauth",
+				},
+			})
+			//Delete takes name of the deploymentConfig
+			err := h.Cfg().ConfigV1().ClusterVersions().Delete(context.TODO(), "version", metav1.DeleteOptions{})
+			Expect(err).To(HaveOccurred())
+		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
 	})
 })
