@@ -21,6 +21,7 @@ package v1 // github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1
 
 import (
 	"io"
+	"net/http"
 
 	jsoniter "github.com/json-iterator/go"
 	"github.com/openshift-online/ocm-sdk-go/helpers"
@@ -110,6 +111,9 @@ func writeVersion(object *Version, stream *jsoniter.Stream) {
 // UnmarshalVersion reads a value of the 'version' type from the given
 // source, which can be an slice of bytes, a string or a reader.
 func UnmarshalVersion(source interface{}) (object *Version, err error) {
+	if source == http.NoBody {
+		return
+	}
 	iterator, err := helpers.NewIterator(source)
 	if err != nil {
 		return

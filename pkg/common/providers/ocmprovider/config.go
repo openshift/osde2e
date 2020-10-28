@@ -29,6 +29,13 @@ const (
 
 	// AdditionalLabels is used to add more specific labels to a cluster in OCM.
 	AdditionalLabels = "ocm.additionalLabels"
+
+	// AWSAccount is used in CCS clusters
+	AWSAccount = "ocm.aws.account"
+	// AWSAccessKey is used in CCS clusters
+	AWSAccessKey = "ocm.aws.accessKey"
+	// AWSSecretKey is used in CCS clusters
+	AWSSecretKey = "ocm.aws.secretKey"
 )
 
 func init() {
@@ -54,4 +61,8 @@ func init() {
 	viper.BindEnv(Flavour, "OCM_FLAVOUR")
 
 	viper.BindEnv(AdditionalLabels, "OCM_ADDITIONAL_LABELS")
+
+	viper.BindEnv(AWSAccount, "OCM_AWS_ACCOUNT")
+	viper.BindEnv(AWSAccessKey, "OCM_AWS_ACCESS_KEY")
+	viper.BindEnv(AWSSecretKey, "OCM_AWS_SECRET_KEY")
 }

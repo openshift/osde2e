@@ -72,7 +72,7 @@ type ClusterBuilder struct {
 	byoc                              *bool
 	ccs                               *CCSBuilder
 	dns                               *DNSBuilder
-	dnsReady                          *bool
+	gcp                               *GCPBuilder
 	addons                            *AddOnInstallationListBuilder
 	cloudProvider                     *CloudProviderBuilder
 	clusterAdminEnabled               *bool
@@ -88,6 +88,7 @@ type ClusterBuilder struct {
 	identityProviders                 *IdentityProviderListBuilder
 	ingresses                         *IngressListBuilder
 	loadBalancerQuota                 *int
+	machinePools                      *MachinePoolListBuilder
 	managed                           *bool
 	metrics                           *ClusterMetricsBuilder
 	multiAZ                           *bool
@@ -177,11 +178,11 @@ func (b *ClusterBuilder) DNS(value *DNSBuilder) *ClusterBuilder {
 	return b
 }
 
-// DNSReady sets the value of the 'DNS_ready' attribute to the given value.
+// GCP sets the value of the 'GCP' attribute to the given value.
 //
-//
-func (b *ClusterBuilder) DNSReady(value bool) *ClusterBuilder {
-	b.dnsReady = &value
+// Google cloud platform settings of a cluster.
+func (b *ClusterBuilder) GCP(value *GCPBuilder) *ClusterBuilder {
+	b.gcp = value
 	return b
 }
 
@@ -303,6 +304,14 @@ func (b *ClusterBuilder) Ingresses(value *IngressListBuilder) *ClusterBuilder {
 //
 func (b *ClusterBuilder) LoadBalancerQuota(value int) *ClusterBuilder {
 	b.loadBalancerQuota = &value
+	return b
+}
+
+// MachinePools sets the value of the 'machine_pools' attribute to the given values.
+//
+//
+func (b *ClusterBuilder) MachinePools(value *MachinePoolListBuilder) *ClusterBuilder {
+	b.machinePools = value
 	return b
 }
 
@@ -485,7 +494,11 @@ func (b *ClusterBuilder) Copy(object *Cluster) *ClusterBuilder {
 	} else {
 		b.dns = nil
 	}
-	b.dnsReady = object.dnsReady
+	if object.gcp != nil {
+		b.gcp = NewGCP().Copy(object.gcp)
+	} else {
+		b.gcp = nil
+	}
 	if object.addons != nil {
 		b.addons = NewAddOnInstallationList().Copy(object.addons)
 	} else {
@@ -533,6 +546,11 @@ func (b *ClusterBuilder) Copy(object *Cluster) *ClusterBuilder {
 		b.ingresses = nil
 	}
 	b.loadBalancerQuota = object.loadBalancerQuota
+	if object.machinePools != nil {
+		b.machinePools = NewMachinePoolList().Copy(object.machinePools)
+	} else {
+		b.machinePools = nil
+	}
 	b.managed = object.managed
 	if object.metrics != nil {
 		b.metrics = NewClusterMetrics().Copy(object.metrics)
@@ -636,7 +654,12 @@ func (b *ClusterBuilder) Build() (object *Cluster, err error) {
 			return
 		}
 	}
-	object.dnsReady = b.dnsReady
+	if b.gcp != nil {
+		object.gcp, err = b.gcp.Build()
+		if err != nil {
+			return
+		}
+	}
 	if b.addons != nil {
 		object.addons, err = b.addons.Build()
 		if err != nil {
@@ -692,6 +715,12 @@ func (b *ClusterBuilder) Build() (object *Cluster, err error) {
 		}
 	}
 	object.loadBalancerQuota = b.loadBalancerQuota
+	if b.machinePools != nil {
+		object.machinePools, err = b.machinePools.Build()
+		if err != nil {
+			return
+		}
+	}
 	object.managed = b.managed
 	if b.metrics != nil {
 		object.metrics, err = b.metrics.Build()

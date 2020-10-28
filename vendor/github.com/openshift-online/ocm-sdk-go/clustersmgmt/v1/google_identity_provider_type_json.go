@@ -21,6 +21,7 @@ package v1 // github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1
 
 import (
 	"io"
+	"net/http"
 
 	jsoniter "github.com/json-iterator/go"
 	"github.com/openshift-online/ocm-sdk-go/helpers"
@@ -68,6 +69,9 @@ func writeGoogleIdentityProvider(object *GoogleIdentityProvider, stream *jsonite
 // UnmarshalGoogleIdentityProvider reads a value of the 'google_identity_provider' type from the given
 // source, which can be an slice of bytes, a string or a reader.
 func UnmarshalGoogleIdentityProvider(source interface{}) (object *GoogleIdentityProvider, err error) {
+	if source == http.NoBody {
+		return
+	}
 	iterator, err := helpers.NewIterator(source)
 	if err != nil {
 		return

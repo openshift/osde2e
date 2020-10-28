@@ -21,6 +21,7 @@ package v1 // github.com/openshift-online/ocm-sdk-go/servicelogs/v1
 
 import (
 	"io"
+	"net/http"
 	"time"
 
 	jsoniter "github.com/json-iterator/go"
@@ -127,6 +128,9 @@ func writeLogEntry(object *LogEntry, stream *jsoniter.Stream) {
 // UnmarshalLogEntry reads a value of the 'log_entry' type from the given
 // source, which can be an slice of bytes, a string or a reader.
 func UnmarshalLogEntry(source interface{}) (object *LogEntry, err error) {
+	if source == http.NoBody {
+		return
+	}
 	iterator, err := helpers.NewIterator(source)
 	if err != nil {
 		return

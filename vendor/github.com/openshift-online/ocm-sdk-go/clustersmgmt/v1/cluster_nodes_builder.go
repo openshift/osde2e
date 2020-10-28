@@ -23,7 +23,9 @@ package v1 // github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1
 //
 // Counts of different classes of nodes inside a cluster.
 type ClusterNodesBuilder struct {
+	availabilityZones  []string
 	compute            *int
+	computeLabels      map[string]string
 	computeMachineType *MachineTypeBuilder
 	infra              *int
 	master             *int
@@ -35,11 +37,28 @@ func NewClusterNodes() *ClusterNodesBuilder {
 	return new(ClusterNodesBuilder)
 }
 
+// AvailabilityZones sets the value of the 'availability_zones' attribute to the given values.
+//
+//
+func (b *ClusterNodesBuilder) AvailabilityZones(values ...string) *ClusterNodesBuilder {
+	b.availabilityZones = make([]string, len(values))
+	copy(b.availabilityZones, values)
+	return b
+}
+
 // Compute sets the value of the 'compute' attribute to the given value.
 //
 //
 func (b *ClusterNodesBuilder) Compute(value int) *ClusterNodesBuilder {
 	b.compute = &value
+	return b
+}
+
+// ComputeLabels sets the value of the 'compute_labels' attribute to the given value.
+//
+//
+func (b *ClusterNodesBuilder) ComputeLabels(value map[string]string) *ClusterNodesBuilder {
+	b.computeLabels = value
 	return b
 }
 
@@ -80,7 +99,21 @@ func (b *ClusterNodesBuilder) Copy(object *ClusterNodes) *ClusterNodesBuilder {
 	if object == nil {
 		return b
 	}
+	if object.availabilityZones != nil {
+		b.availabilityZones = make([]string, len(object.availabilityZones))
+		copy(b.availabilityZones, object.availabilityZones)
+	} else {
+		b.availabilityZones = nil
+	}
 	b.compute = object.compute
+	if len(object.computeLabels) > 0 {
+		b.computeLabels = make(map[string]string)
+		for k, v := range object.computeLabels {
+			b.computeLabels[k] = v
+		}
+	} else {
+		b.computeLabels = nil
+	}
 	if object.computeMachineType != nil {
 		b.computeMachineType = NewMachineType().Copy(object.computeMachineType)
 	} else {
@@ -95,7 +128,17 @@ func (b *ClusterNodesBuilder) Copy(object *ClusterNodes) *ClusterNodesBuilder {
 // Build creates a 'cluster_nodes' object using the configuration stored in the builder.
 func (b *ClusterNodesBuilder) Build() (object *ClusterNodes, err error) {
 	object = new(ClusterNodes)
+	if b.availabilityZones != nil {
+		object.availabilityZones = make([]string, len(b.availabilityZones))
+		copy(object.availabilityZones, b.availabilityZones)
+	}
 	object.compute = b.compute
+	if b.computeLabels != nil {
+		object.computeLabels = make(map[string]string)
+		for k, v := range b.computeLabels {
+			object.computeLabels[k] = v
+		}
+	}
 	if b.computeMachineType != nil {
 		object.computeMachineType, err = b.computeMachineType.Build()
 		if err != nil {

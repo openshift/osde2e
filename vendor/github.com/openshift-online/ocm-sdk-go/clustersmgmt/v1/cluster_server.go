@@ -86,6 +86,11 @@ type ClusterServer interface {
 	// Reference to the resource that manages the collection of logs of the cluster.
 	Logs() LogsServer
 
+	// MachinePools returns the target 'machine_pools' resource.
+	//
+	// Reference to the resource that manages the collection of machine pool resources.
+	MachinePools() MachinePoolsServer
+
 	// MetricQueries returns the target 'metric_queries' resource.
 	//
 	// Reference to the resource that manages metrics queries for the cluster.
@@ -278,6 +283,13 @@ func dispatchCluster(w http.ResponseWriter, r *http.Request, server ClusterServe
 			return
 		}
 		dispatchLogs(w, r, target, segments[1:])
+	case "machine_pools":
+		target := server.MachinePools()
+		if target == nil {
+			errors.SendNotFound(w, r)
+			return
+		}
+		dispatchMachinePools(w, r, target, segments[1:])
 	case "metric_queries":
 		target := server.MetricQueries()
 		if target == nil {

@@ -65,13 +65,30 @@ func RunUpgrade() error {
 
 	var desired *configv1.ClusterVersion
 	if viper.GetBool(config.Upgrade.ManagedUpgrade) {
-		desired, err = TriggerManagedUpgrade(h)
+
+		// Check we are on a supported provider
+		provider, err := providers.ClusterProvider()
+		if err != nil {
+			return fmt.Errorf("can't determine provider for managed upgrade: %s", err)
+		}
+		switch provider.Type() {
+		case "moa":
+			fallthrough
+		case "ocm":
+			desired, err = TriggerManagedUpgrade(h)
+			if err != nil {
+				return fmt.Errorf("failed triggering upgrade: %v", err)
+			}
+		default:
+			return fmt.Errorf("unsupported provider for managed upgrades (%s)", provider.Type())
+		}
 	} else {
 		desired, err = TriggerUpgrade(h)
+		if err != nil {
+			return fmt.Errorf("failed triggering upgrade: %v", err)
+		}
 	}
-	if err != nil {
-		return fmt.Errorf("failed triggering upgrade: %v", err)
-	}
+
 	log.Println("Cluster acknowledged update request.")
 
 	log.Println("Upgrading...")

@@ -260,6 +260,9 @@ var Cluster = struct {
 
 	// ProvisionShardID is the shard ID that is set to provision a shard for the cluster.
 	ProvisionShardID string
+
+	// NumWorkerNodes overrides the flavour's number of worker nodes specified
+	NumWorkerNodes string
 }{
 	MultiAZ:                             "cluster.multiAZ",
 	DestroyAfterTest:                    "cluster.destroyAfterTest",
@@ -278,6 +281,7 @@ var Cluster = struct {
 	EnoughVersionsForOldestOrMiddleTest: "cluster.enoughVersionForOldestOrMiddleTest",
 	PreviousVersionFromDefaultFound:     "cluster.previousVersionFromDefaultFound",
 	ProvisionShardID:                    "cluster.provisionshardID",
+	NumWorkerNodes:                      "cluster.numWorkerNodes",
 }
 
 // CloudProvider config keys.
@@ -511,6 +515,9 @@ func init() {
 
 	viper.SetDefault(Cluster.ProvisionShardID, "")
 	viper.BindEnv(Cluster.ProvisionShardID, "PROVISION_SHARD_ID")
+
+	viper.SetDefault(Cluster.NumWorkerNodes, "")
+	viper.BindEnv(Cluster.NumWorkerNodes, "NUM_WORKER_NODES")
 
 	// ----- Cloud Provider -----
 	viper.SetDefault(CloudProvider.CloudProviderID, "aws")

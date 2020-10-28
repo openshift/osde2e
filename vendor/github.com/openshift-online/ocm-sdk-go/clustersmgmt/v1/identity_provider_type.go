@@ -43,6 +43,7 @@ type IdentityProvider struct {
 	github        *GithubIdentityProvider
 	gitlab        *GitlabIdentityProvider
 	google        *GoogleIdentityProvider
+	htpasswd      *HTPasswdIdentityProvider
 	login         *bool
 	mappingMethod *IdentityProviderMappingMethod
 	name          *string
@@ -226,6 +227,29 @@ func (o *IdentityProvider) GetGoogle() (value *GoogleIdentityProvider, ok bool) 
 	ok = o != nil && o.google != nil
 	if ok {
 		value = o.google
+	}
+	return
+}
+
+// Htpasswd returns the value of the 'htpasswd' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+// Details for `htpasswd` identity providers.
+func (o *IdentityProvider) Htpasswd() *HTPasswdIdentityProvider {
+	if o == nil {
+		return nil
+	}
+	return o.htpasswd
+}
+
+// GetHtpasswd returns the value of the 'htpasswd' attribute and
+// a flag indicating if the attribute has a value.
+//
+// Details for `htpasswd` identity providers.
+func (o *IdentityProvider) GetHtpasswd() (value *HTPasswdIdentityProvider, ok bool) {
+	ok = o != nil && o.htpasswd != nil
+	if ok {
+		value = o.htpasswd
 	}
 	return
 }
