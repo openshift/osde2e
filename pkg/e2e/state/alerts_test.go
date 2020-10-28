@@ -5,14 +5,14 @@ import "testing"
 func TestFindCriticalAlerts(t *testing.T) {
 	tests := []struct {
 		Name        string
-		Results     []result
+		Results     result
 		Provider    string
 		Environment string
 		Expected    bool
 	}{
 		{
 			Name: "found critical",
-			Results: []result{
+			Results: result{
 				{
 					Metric: metric{
 						AlertName: "alert1",
@@ -38,7 +38,7 @@ func TestFindCriticalAlerts(t *testing.T) {
 		},
 		{
 			Name: "no critical",
-			Results: []result{
+			Results: result{
 				{
 					Metric: metric{
 						AlertName: "alert1",
@@ -64,7 +64,7 @@ func TestFindCriticalAlerts(t *testing.T) {
 		},
 		{
 			Name: "ignored critical",
-			Results: []result{
+			Results: result{
 				{
 					Metric: metric{
 						AlertName: "alert1",
@@ -90,7 +90,7 @@ func TestFindCriticalAlerts(t *testing.T) {
 		},
 		{
 			Name: "found critical ignored in other environment",
-			Results: []result{
+			Results: result{
 				{
 					Metric: metric{
 						AlertName: "alert1",
@@ -116,7 +116,7 @@ func TestFindCriticalAlerts(t *testing.T) {
 		},
 		{
 			Name: "found critical ignored in other provider",
-			Results: []result{
+			Results: result{
 				{
 					Metric: metric{
 						AlertName: "alert1",
