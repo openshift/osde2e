@@ -282,29 +282,37 @@ func scheduleUpgradeWithProvider(version string) error {
 func restartOperator(h *helper.H, ns string) error {
 
 	log.Printf("restarting managed-upgrade-operator to force upgrade resync..")
-	// scale down
-	s, err := h.Kube().AppsV1().Deployments(ns).GetScale(context.TODO(), "managed-upgrade-operator", metav1.GetOptions{})
-	if err != nil {
-		return err
-	}
-	sc := *s
-	sc.Spec.Replicas = 0
-	_, err = h.Kube().AppsV1().Deployments(ns).UpdateScale(context.TODO(), "managed-upgrade-operator", &sc, metav1.UpdateOptions{})
-	if err != nil {
-		return err
-	}
 
-	// scale up
-	s, err = h.Kube().AppsV1().Deployments(ns).GetScale(context.TODO(), "managed-upgrade-operator", metav1.GetOptions{})
+	err := wait.PollImmediate(5*time.Second, 2*time.Minute, func() (bool, error) {
+		// scale down
+		s, err := h.Kube().AppsV1().Deployments(ns).GetScale(context.TODO(), "managed-upgrade-operator", metav1.GetOptions{})
+		if err != nil {
+			return false, err
+		}
+		sc := *s
+		sc.Spec.Replicas = 0
+		_, err = h.Kube().AppsV1().Deployments(ns).UpdateScale(context.TODO(), "managed-upgrade-operator", &sc, metav1.UpdateOptions{})
+		if err != nil {
+			return false, err
+		}
+
+		// scale up
+		s, err = h.Kube().AppsV1().Deployments(ns).GetScale(context.TODO(), "managed-upgrade-operator", metav1.GetOptions{})
+		if err != nil {
+			return false, err
+		}
+		sc = *s
+		sc.Spec.Replicas = 1
+		_, err = h.Kube().AppsV1().Deployments(ns).UpdateScale(context.TODO(), "managed-upgrade-operator", &sc, metav1.UpdateOptions{})
+		if err != nil {
+			return false, err
+		}
+		log.Printf("managed-upgrade-operator restart complete..")
+		return true, nil
+	})
+
 	if err != nil {
-		return err
+		return fmt.Errorf("couldn't restart managed-upgrade-operator for config re-sync: %v", err)
 	}
-	sc = *s
-	sc.Spec.Replicas = 1
-	_, err = h.Kube().AppsV1().Deployments(ns).UpdateScale(context.TODO(), "managed-upgrade-operator", &sc, metav1.UpdateOptions{})
-	if err != nil {
-		return err
-	}
-	log.Printf("managed-upgrade-operator restart complete..")
 	return nil
 }

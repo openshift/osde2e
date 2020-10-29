@@ -799,8 +799,8 @@ func (o *OCMProvider) Upgrade(clusterID string, version string, pdbTimeoutMinute
 	if err != nil {
 		return err
 	}
-	if addResp.Status() != http.StatusOK {
-		log.Printf("Unable to schedule upgrade with provider (status %d, response %s)", addResp.Status(), addResp.Error().String())
+	if addResp.Status() != http.StatusCreated {
+		log.Printf("Unable to schedule upgrade with provider (status %d, response %v)", addResp.Status(), addResp.Error())
 		return err
 	}
 
