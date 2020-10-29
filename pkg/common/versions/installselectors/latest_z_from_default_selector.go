@@ -2,7 +2,6 @@ package installselectors
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/Masterminds/semver"
 	"github.com/openshift/osde2e/pkg/common/config"
@@ -18,7 +17,6 @@ func init() {
 type latestZVersion struct{}
 
 func (l latestZVersion) ShouldUse() bool {
-	log.Printf("Should use latest z? %v", viper.GetBool(config.Cluster.LatestZReleaseAfterProdDefault))
 	return viper.GetBool(config.Cluster.LatestZReleaseAfterProdDefault)
 }
 
