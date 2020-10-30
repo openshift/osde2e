@@ -110,9 +110,15 @@ func run(cmd *cobra.Command, argv []string) error {
 			return fmt.Errorf("could not setup cluster provider: %v", err)
 		}
 		environment := provider.Environment()
-		query = fmt.Sprintf("cicd_jUnitResult{cloud_provider=\"%s\",install_version=\"%s\", upgrade_version=\"%s\", environment=\"%s\"}",
-			escapeQuotes(cloudprovider), escapeQuotes(args.installVersion),
-			escapeQuotes(args.upgradeVersion), escapeQuotes(environment))
+		if args.upgradeVersion == "" {
+			query = fmt.Sprintf("count by (install_version) (cicd_jUnitResult{cloud_provider=\"%s\",install_version=\"%s\", environment=\"%s\", result=~\"passed|skipped\"}) / count by (install_version) (cicd_jUnitResult{cloud_provider=\"%s\",install_version=\"%s\", environment=\"%s\"})",
+				escapeQuotes(cloudprovider), escapeQuotes(args.installVersion), escapeQuotes(environment),
+				escapeQuotes(cloudprovider), escapeQuotes(args.installVersion), escapeQuotes(environment))
+		} else {
+			query = fmt.Sprintf("count by (install_version, upgrade_version) (cicd_jUnitResult{cloud_provider=\"%s\",install_version=\"%s\", upgrade_version=\"%s\", environment=\"%s\", result=~\"passed|skipped\"}) / count by (install_version) (cicd_jUnitResult{cloud_provider=\"%s\",install_version=\"%s\", upgrade_version=\"%s\", environment=\"%s\"})",
+				escapeQuotes(cloudprovider), escapeQuotes(args.installVersion), escapeQuotes(args.upgradeVersion), escapeQuotes(environment),
+				escapeQuotes(cloudprovider), escapeQuotes(args.installVersion), escapeQuotes(args.upgradeVersion), escapeQuotes(environment))
+		}
 	}
 
 	client, err := prometheus.CreateClient()
