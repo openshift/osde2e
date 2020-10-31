@@ -84,6 +84,12 @@ func New() (*Provider, error) {
 	return provider, nil
 }
 
+// IsValidClusterName validates the clustername prior to proceeding with it
+// in launching a cluster.
+func (m *Provider) IsValidClusterName(clusterName string) (bool, error) {
+	return true, nil
+}
+
 // LaunchCluster CRCs a launch cluster operation.
 func (m *Provider) LaunchCluster(clusterName string) (string, error) {
 	home, err := os.UserHomeDir()
