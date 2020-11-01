@@ -27,9 +27,9 @@ func (m *MOAProvider) IsValidClusterName(clusterName string) (bool, error) {
 
 	// Retrieve the list of clusters using pages of ten items, till we get a page that has less
 	// items than requests, as that marks the end of the collection:
-	size := 10
+	size := 50
 	page := 1
-	searchPhrase := fmt.Sprintf("name like '%s'", clusterName)
+	searchPhrase := fmt.Sprintf("name = '%s'", clusterName)
 	for {
 		// Retrieve the page:
 		response, err := collection.List().
