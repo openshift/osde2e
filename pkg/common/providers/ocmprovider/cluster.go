@@ -19,6 +19,46 @@ import (
 	"github.com/spf13/viper"
 )
 
+// IsValidClusterName validates the clustername prior to proceeding with it
+// in launching a cluster.
+func (o *OCMProvider) IsValidClusterName(clusterName string) (bool, error) {
+	// Create a context:
+	ctx := context.Background()
+
+	collection := o.conn.ClustersMgmt().V1().Clusters()
+
+	// Retrieve the list of clusters using pages of ten items, till we get a page that has less
+	// items than requests, as that marks the end of the collection:
+	size := 50
+	page := 1
+	searchPhrase := fmt.Sprintf("name = '%s'", clusterName)
+	for {
+		// Retrieve the page:
+		response, err := collection.List().
+			Search(searchPhrase).
+			Size(size).
+			Page(page).
+			SendContext(ctx)
+		if err != nil {
+			return false, fmt.Errorf("Can't retrieve page %d: %s\n", page, err)
+		}
+
+		if response.Total() != 0 {
+			return false, nil
+		}
+
+		// Break the loop if the size of the page is less than requested, otherwise go to
+		// the next page:
+		if response.Size() < size {
+			break
+		}
+		page++
+	}
+
+	// Name is valid.
+	return true, nil
+}
+
 // LaunchCluster setups an new cluster using the OSD API and returns it's ID.
 func (o *OCMProvider) LaunchCluster(clusterName string) (string, error) {
 	flavourID := getFlavour()

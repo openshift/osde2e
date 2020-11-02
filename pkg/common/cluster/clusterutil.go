@@ -338,7 +338,22 @@ func ProvisionCluster(logger *log.Logger) (*spi.Cluster, error) {
 	if clusterID == "" {
 		name := viper.GetString(config.Cluster.Name)
 		if name == "" {
-			name = clusterName()
+			attemptLimit := 10
+			for attempt := 1; attempt <= attemptLimit; attempt++ {
+				name = clusterName()
+				validName, err := provider.IsValidClusterName(name)
+				if err != nil {
+					fmt.Printf("an error occurred validating the cluster name %v\n", err)
+				} else if validName {
+					break
+				} else {
+					fmt.Printf("cluster name %s already exists.\n", name)
+				}
+				fmt.Printf("retrying to validate cluster name. Attempt %d of %d\n", attempt, attemptLimit)
+				if attempt == attemptLimit {
+					return nil, fmt.Errorf("could not validate cluster name. timed out")
+				}
+			}
 		}
 
 		if clusterID, err = provider.LaunchCluster(name); err != nil {
