@@ -65,6 +65,19 @@ func New() (*MockProvider, error) {
 	}, nil
 }
 
+// IsValidClusterName mocks a validation of cluster name
+func (m *MockProvider) IsValidClusterName(clusterName string) (bool, error) {
+	if m.env == "fail" {
+		switch clusterName {
+		case "error":
+			return false, fmt.Errorf("Fake IsValidClusterName error")
+		case "false":
+			return false, nil
+		}
+	}
+	return true, nil
+}
+
 // LaunchCluster mocks a launch cluster operation.
 func (m *MockProvider) LaunchCluster(clusterName string) (string, error) {
 	clusterID := uuid.New().String()
@@ -245,6 +258,6 @@ func (m *MockProvider) AddProperty(cluster *spi.Cluster, tag string, value strin
 }
 
 // Upgrade mocks initiates a cluster upgrade to the given version
-func (m *MockProvider) Upgrade(clusterID string, version string, t time.Time) error {
+func (m *MockProvider) Upgrade(clusterID string, version string, pdbTimeoutMinutes int, t time.Time) error {
 	return fmt.Errorf("Upgrade is unsupported by mock clusters")
 }

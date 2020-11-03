@@ -236,6 +236,12 @@ var Cluster = struct {
 	// Env: NEXT_RELEASE_AFTER_PROD_DEFAULT
 	NextReleaseAfterProdDefault string
 
+	// LatestYReleaseAfterProdDefault will select the next minor version CIS for an environment given the production default
+	LatestYReleaseAfterProdDefault string
+
+	// LatestZReleaseAfterProdDefault will select the next patch version CIS for an environment given the production default
+	LatestZReleaseAfterProdDefault string
+
 	// CleanCheckRuns lets us set the number of osd-verify checks we want to run before deeming a cluster "healthy"
 	// Env: CLEAN_CHECK_RUNS
 	CleanCheckRuns string
@@ -260,6 +266,9 @@ var Cluster = struct {
 
 	// ProvisionShardID is the shard ID that is set to provision a shard for the cluster.
 	ProvisionShardID string
+
+	// NumWorkerNodes overrides the flavour's number of worker nodes specified
+	NumWorkerNodes string
 }{
 	MultiAZ:                             "cluster.multiAZ",
 	DestroyAfterTest:                    "cluster.destroyAfterTest",
@@ -271,6 +280,8 @@ var Cluster = struct {
 	UseOldestClusterImageSetForInstall:  "cluster.useOldestClusterVersionForInstall",
 	DeltaReleaseFromDefault:             "cluster.deltaReleaseFromDefault",
 	NextReleaseAfterProdDefault:         "cluster.nextReleaseAfterProdDefault",
+	LatestYReleaseAfterProdDefault:      "cluster.latestYReleaseAfterProdDefault",
+	LatestZReleaseAfterProdDefault:      "cluster.latestZReleaseAfterProdDefault",
 	CleanCheckRuns:                      "cluster.cleanCheckRuns",
 	ID:                                  "cluster.id",
 	Name:                                "cluster.name",
@@ -278,6 +289,7 @@ var Cluster = struct {
 	EnoughVersionsForOldestOrMiddleTest: "cluster.enoughVersionForOldestOrMiddleTest",
 	PreviousVersionFromDefaultFound:     "cluster.previousVersionFromDefaultFound",
 	ProvisionShardID:                    "cluster.provisionshardID",
+	NumWorkerNodes:                      "cluster.numWorkerNodes",
 }
 
 // CloudProvider config keys.
@@ -490,6 +502,12 @@ func init() {
 	viper.SetDefault(Cluster.UseOldestClusterImageSetForInstall, false)
 	viper.BindEnv(Cluster.UseOldestClusterImageSetForInstall, "USE_OLDEST_CLUSTER_IMAGE_SET_FOR_INSTALL")
 
+	viper.SetDefault(Cluster.LatestYReleaseAfterProdDefault, false)
+	viper.BindEnv(Cluster.LatestYReleaseAfterProdDefault, "LATEST_Y_RELEASE_AFTER_PROD_DEFAULT")
+
+	viper.SetDefault(Cluster.LatestZReleaseAfterProdDefault, false)
+	viper.BindEnv(Cluster.LatestZReleaseAfterProdDefault, "LATEST_Z_RELEASE_AFTER_PROD_DEFAULT")
+
 	viper.SetDefault(Cluster.DeltaReleaseFromDefault, 0)
 	viper.BindEnv(Cluster.DeltaReleaseFromDefault, "DELTA_RELEASE_FROM_DEFAULT")
 
@@ -511,6 +529,9 @@ func init() {
 
 	viper.SetDefault(Cluster.ProvisionShardID, "")
 	viper.BindEnv(Cluster.ProvisionShardID, "PROVISION_SHARD_ID")
+
+	viper.SetDefault(Cluster.NumWorkerNodes, "")
+	viper.BindEnv(Cluster.NumWorkerNodes, "NUM_WORKER_NODES")
 
 	// ----- Cloud Provider -----
 	viper.SetDefault(CloudProvider.CloudProviderID, "aws")

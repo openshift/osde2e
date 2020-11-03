@@ -17,8 +17,19 @@ func TestClusterInteraction(t *testing.T) {
 		t.Errorf("expected quota or no error, got: %v, %v", hasQuota, err.Error())
 	}
 
-	clusterID1, _ := mockProvider.LaunchCluster("cluster1")
-	clusterID2, _ := mockProvider.LaunchCluster("cluster2")
+	clusterName1 := "cluster1"
+	clusterName2 := "cluster2"
+
+	if isValidClusterName1, err := mockProvider.IsValidClusterName(clusterName1); isValidClusterName1 != true || err != nil {
+		t.Errorf("unexpected validation or error using cluster name: %s", clusterName1)
+	}
+
+	if isValidClusterName2, err := mockProvider.IsValidClusterName(clusterName2); isValidClusterName2 != true || err != nil {
+		t.Errorf("unexpected validation or error using cluster name: %s", clusterName2)
+	}
+
+	clusterID1, _ := mockProvider.LaunchCluster(clusterName1)
+	clusterID2, _ := mockProvider.LaunchCluster(clusterName2)
 
 	cluster1, err := mockProvider.GetCluster(clusterID1)
 
@@ -63,6 +74,13 @@ func TestIntentionalFailures(t *testing.T) {
 	}
 	if err == nil {
 		t.Error("expected error to occur while checking quota")
+	}
+
+	failNames := []string{"error", "false"}
+	for _, name := range failNames {
+		if validClusterName, _ := mockProvider.IsValidClusterName(name); validClusterName != false {
+			t.Errorf("expected an error to occur of validation to fail using cluster name: %s", name)
+		}
 	}
 
 	clusterID1, _ := mockProvider.LaunchCluster("cluster1")

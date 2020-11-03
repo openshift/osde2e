@@ -19,6 +19,46 @@ import (
 	"github.com/spf13/viper"
 )
 
+// IsValidClusterName validates the clustername prior to proceeding with it
+// in launching a cluster.
+func (o *OCMProvider) IsValidClusterName(clusterName string) (bool, error) {
+	// Create a context:
+	ctx := context.Background()
+
+	collection := o.conn.ClustersMgmt().V1().Clusters()
+
+	// Retrieve the list of clusters using pages of ten items, till we get a page that has less
+	// items than requests, as that marks the end of the collection:
+	size := 50
+	page := 1
+	searchPhrase := fmt.Sprintf("name = '%s'", clusterName)
+	for {
+		// Retrieve the page:
+		response, err := collection.List().
+			Search(searchPhrase).
+			Size(size).
+			Page(page).
+			SendContext(ctx)
+		if err != nil {
+			return false, fmt.Errorf("Can't retrieve page %d: %s\n", page, err)
+		}
+
+		if response.Total() != 0 {
+			return false, nil
+		}
+
+		// Break the loop if the size of the page is less than requested, otherwise go to
+		// the next page:
+		if response.Size() < size {
+			break
+		}
+		page++
+	}
+
+	// Name is valid.
+	return true, nil
+}
+
 // LaunchCluster setups an new cluster using the OSD API and returns it's ID.
 func (o *OCMProvider) LaunchCluster(clusterName string) (string, error) {
 	flavourID := getFlavour()
@@ -64,6 +104,19 @@ func (o *OCMProvider) LaunchCluster(clusterName string) (string, error) {
 			ID(cloudProvider)).
 		Properties(clusterProperties)
 
+	// If AWS credentials are set, this must be a CCS cluster
+	awsAccount := viper.GetString(AWSAccount)
+	awsAccessKey := viper.GetString(AWSAccessKey)
+	awsSecretKey := viper.GetString(AWSSecretKey)
+
+	if awsAccount != "" && awsAccessKey != "" && awsSecretKey != "" {
+		newCluster.CCS(v1.NewCCS().Enabled(true)).AWS(
+			v1.NewAWS().
+				AccountID(awsAccount).
+				AccessKeyID(awsAccessKey).
+				SecretAccessKey(awsSecretKey))
+	}
+
 	expiryInMinutes := viper.GetDuration(config.Cluster.ExpiryInMinutes)
 	if expiryInMinutes > 0 {
 		// Calculate an expiration date for the cluster so that it will be automatically deleted if
@@ -72,11 +125,19 @@ func (o *OCMProvider) LaunchCluster(clusterName string) (string, error) {
 		newCluster = newCluster.ExpirationTimestamp(expiration)
 	}
 
+	numComputeNodes := viper.GetInt(config.Cluster.NumWorkerNodes)
+	if numComputeNodes > 0 {
+		nodeBuilder = nodeBuilder.Compute(numComputeNodes)
+	}
+
 	// Configure the cluster to be Multi-AZ if configured
 	// We must manually configure the number of compute nodes
 	// Currently set to 9 nodes. Whatever it is, must be divisible by 3.
 	if multiAZ {
 		nodeBuilder = nodeBuilder.Compute(9)
+		if numComputeNodes > 0 && math.Mod(float64(numComputeNodes), float64(3)) == 0 {
+			nodeBuilder = nodeBuilder.Compute(numComputeNodes)
+		}
 		newCluster = newCluster.MultiAZ(viper.GetBool(config.Cluster.MultiAZ))
 	}
 
@@ -724,7 +785,7 @@ func (o *OCMProvider) AddProperty(cluster *spi.Cluster, tag string, value string
 		return fmt.Errorf("error while building updated modified cluster object with new property: %v", err)
 	}
 
-	propertyFilename := fmt.Sprintf("%s-property-update.prom", cluster.ID())
+	propertyFilename := fmt.Sprintf("%s.osde2e-cluster-property-update.metrics.prom", cluster.ID())
 	data := fmt.Sprintf("# TYPE cicd_cluster_properties gauge\ncicd_cluster_properties{cluster_id=\"%s\",environment=\"%s\",job_id=\"%s\",property=\"%s\",region=\"%s\",value=\"%s\",version=\"%s\"} 0\n", cluster.ID(), o.Environment(), viper.GetString(config.JobID), tag, cluster.Region(), value, cluster.Version())
 	log.Println(data)
 	aws.WriteToS3(aws.CreateS3URL(viper.GetString(config.Tests.MetricsBucket), "incoming", propertyFilename), []byte(data))
@@ -766,9 +827,9 @@ func (o *OCMProvider) AddProperty(cluster *spi.Cluster, tag string, value string
 }
 
 // Upgrade initiates a cluster upgrade to the given version
-func (o *OCMProvider) Upgrade(clusterID string, version string, t time.Time) error {
+func (o *OCMProvider) Upgrade(clusterID string, version string, pdbTimeoutMinutes int, t time.Time) error {
 
-	nodeDrain := v1.NewValue().Value(5).Unit("minutes")
+	nodeDrain := v1.NewValue().Value(float64(pdbTimeoutMinutes)).Unit("minutes")
 	policy, err := v1.NewUpgradePolicy().Version(version).NextRun(t).ScheduleType("manual").NodeDrainGracePeriod(nodeDrain).Build()
 	if err != nil {
 		return err
@@ -778,8 +839,8 @@ func (o *OCMProvider) Upgrade(clusterID string, version string, t time.Time) err
 	if err != nil {
 		return err
 	}
-	if addResp.Status() != http.StatusOK {
-		log.Printf("Unable to schedule upgrade with provider (status %d, response %s)", addResp.Status(), addResp.Error().String())
+	if addResp.Status() != http.StatusCreated {
+		log.Printf("Unable to schedule upgrade with provider (status %d, response %v)", addResp.Status(), addResp.Error())
 		return err
 	}
 
