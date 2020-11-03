@@ -18,6 +18,7 @@ import (
 	"github.com/openshift/osde2e/pkg/common/providers"
 	"github.com/openshift/osde2e/pkg/common/spi"
 	v1 "github.com/prometheus/client_golang/api/prometheus/v1"
+	prometheusmodel "github.com/prometheus/common/model"
 )
 
 var Cmd = &cobra.Command{
@@ -100,6 +101,8 @@ func run(cmd *cobra.Command, argv []string) error {
 
 	var query string
 
+	var count prometheusmodel.Sample
+
 	if !args.versionCheck {
 		query = strings.Join(argv, " ")
 	} else {
@@ -158,6 +161,11 @@ func run(cmd *cobra.Command, argv []string) error {
 	if err != nil {
 		return fmt.Errorf("error writing output: %v", err)
 	}
+
+	encoded := []rune(string(data))
+	data = []byte(string(encoded[1:(len(string(data)) - 1)]))
+	count.UnmarshalJSON(data)
+	log.Printf("Valid version check count ratio - %v", count.Value)
 
 	return nil
 }
