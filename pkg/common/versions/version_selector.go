@@ -2,6 +2,7 @@ package versions
 
 import (
 	"fmt"
+	"log"
 	"math"
 
 	"github.com/Masterminds/semver"
@@ -55,8 +56,11 @@ func GetVersionForUpgrade(installVersion *semver.Version, versionList *spi.Versi
 
 	release, image, err := selectedVersionSelector.SelectVersion(spi.NewVersionBuilder().Version(installVersion).Build(), versionList)
 
-	if release.Version().Original() == "" && err == nil {
-		return util.NoVersionFound, "", nil
+	if release == nil || release.Version().Original() == "" {
+		if err != nil {
+			log.Printf("Error selecting version: %s", err.Error())
+		}
+		return util.NoVersionFound, "", err
 	}
 
 	return release.Version().Original(), image, err

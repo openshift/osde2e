@@ -67,21 +67,17 @@ var keyToSecretMappingMutex = sync.Mutex{}
 
 // Upgrade config keys.
 var Upgrade = struct {
-	// UpgradeToCISIfPossible will upgrade to the most recent cluster image set if it's newer than the install version
-	// Env: UPGRADE_TO_CIS_IF_POSSIBLE
-	UpgradeToCISIfPossible string
+	// UpgradeToLatest will look for the newest-possible version and select that
+	// Env: UPGRADE_TO_LATEST
+	UpgradeToLatest string
 
-	// OnlyUpgradeToZReleases will restrict upgrades to selecting Z releases on stage/prod.
-	// Env: ONLY_UPGRADE_TO_Z_RELEASES
-	OnlyUpgradeToZReleases string
+	// UpgradeToNextY will look for the next Y version for the cluster and select that
+	// Env: UPGRADE_TO_NEXT_Y
+	UpgradeToNextY string
 
-	// NextReleaseAfterProdDefaultForUpgrade will select the cluster image set that the given number of releases away from the the production default.
-	// Env: NEXT_RELEASE_AFTER_PROD_DEFAULT_FOR_UPGRADE
-	NextReleaseAfterProdDefaultForUpgrade string
-
-	// ReleaseStream used to retrieve latest release images. If set, it will be used to perform an upgrade.
-	// Env: UPGRADE_RELEASE_STREAM
-	ReleaseStream string
+	// UpgradeToLatestZ will look for the latest Z version for the cluster and select that
+	// Env: UPGRADE_TO_LATEST_Z
+	UpgradeToLatestZ string
 
 	// ReleaseName is the name of the release in a release stream.
 	// Env: UPGRADE_RELEASE_NAME
@@ -110,10 +106,9 @@ var Upgrade = struct {
 	// Create disruptive Node Drain workload to test the Managed Upgrade Operator's ability to handle them.
 	ManagedUpgradeTestNodeDrain string
 }{
-	UpgradeToCISIfPossible:                 "upgrade.upgradeToCISIfPossible",
-	OnlyUpgradeToZReleases:                 "upgrade.onlyUpgradeToZReleases",
-	NextReleaseAfterProdDefaultForUpgrade:  "upgrade.nextReleaseAfterProdDefaultForUpgrade",
-	ReleaseStream:                          "upgrade.releaseStream",
+	UpgradeToLatest:                        "upgrade.toLatest",
+	UpgradeToLatestZ:                       "upgrade.ToLatestZ",
+	UpgradeToNextY:                         "upgrade.ToNextY",
 	ReleaseName:                            "upgrade.releaseName",
 	Image:                                  "upgrade.image",
 	UpgradeVersionEqualToInstallVersion:    "upgrade.upgradeVersionEqualToInstallVersion",
@@ -416,16 +411,14 @@ func init() {
 	viper.BindEnv(MustGather, "MUST_GATHER")
 
 	// ----- Upgrade -----
-	viper.SetDefault(Upgrade.UpgradeToCISIfPossible, false)
-	viper.BindEnv(Upgrade.UpgradeToCISIfPossible, "UPGRADE_TO_CIS_IF_POSSIBLE")
+	viper.BindEnv(Upgrade.UpgradeToLatest, "UPGRADE_TO_LATEST")
+	viper.SetDefault(Upgrade.UpgradeToLatest, false)
 
-	viper.SetDefault(Upgrade.OnlyUpgradeToZReleases, false)
-	viper.BindEnv(Upgrade.OnlyUpgradeToZReleases, "ONLY_UPGRADE_TO_Z_RELEASES")
+	viper.BindEnv(Upgrade.UpgradeToLatestZ, "UPGRADE_TO_LATEST_Z")
+	viper.SetDefault(Upgrade.UpgradeToLatestZ, false)
 
-	viper.SetDefault(Upgrade.NextReleaseAfterProdDefaultForUpgrade, -1)
-	viper.BindEnv(Upgrade.NextReleaseAfterProdDefaultForUpgrade, "NEXT_RELEASE_AFTER_PROD_DEFAULT_FOR_UPGRADE")
-
-	viper.BindEnv(Upgrade.ReleaseStream, "UPGRADE_RELEASE_STREAM")
+	viper.BindEnv(Upgrade.UpgradeToNextY, "UPGRADE_TO_NEXT_Y")
+	viper.SetDefault(Upgrade.UpgradeToNextY, false)
 
 	viper.BindEnv(Upgrade.ReleaseName, "UPGRADE_RELEASE_NAME")
 

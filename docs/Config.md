@@ -55,11 +55,10 @@ Some environment variables commonly used for pipelines under osde2e are indicate
 ### Upgrade variables:-
 
 | Environment variable | Usage |
-| --------------| ------------------------|  
-|UPGRADE_TO_CIS_IF_POSSIBLE| UpgradeToCISIfPossible will upgrade to the most recent cluster image set if it's newer than the install version| 
-|ONLY_UPGRADE_TO_Z_RELEASES| OnlyUpgradeToZReleases will restrict upgrades to selecting Z releases on stage/prod.|
-|NEXT_RELEASE_AFTER_PROD_DEFAULT_FOR_UPGRADE| NextReleaseAfterProdDefaultForUpgrade will select the cluster image set that the given number of releases away from the the production default.|
-|UPGRADE_RELEASE_STREAM| ReleaseStream used to retrieve latest release images. If set, it will be used to perform an upgrade.|
+| --------------| ------------------------|
+|UPGRADE_TO_LATEST| UpgradeToLatest will upgrade to the latest valid version found.|
+|UPGRADE_TO_LATEST_Z| UpgradeToLatestZ looks for the newest valid patch-release and selects it.|
+|UPGRADE_TO_NEXT_Y| UpgradeToNextY looks for the newest valid minor release upgrade path and selects it.|
 |UPGRADE_RELEASE_NAME| ReleaseName is the name of the release in a release stream.|
 |UPGRADE_IMAGE| Image is the release image a cluster is upgraded to. If set, it overrides the release stream and upgrades.|
 |UPGRADE_MONITOR_ROUTES| MonitorRoutesDuringUpgrade will monitor the availability of routes whilst an upgrade takes place.|
@@ -203,15 +202,11 @@ The following are the values that can be plugged in for the --configs flag when 
 
 | Config Value | Usage |
 | --------------| ------------------------| 
-|only-upgrade-to-z-releases | To upgrade clusters only to the z releases on stage/prod.|
 |use-middle-version | To use the middle version for cluster install.|
 |use-oldest-version | To use the oldest version for cluster install.|
 |one-release-from-prod-default | To select the cluster image set that the given number of releases away from the the production default (1 in this case).|
 |two-releases-from-prod-default | To select the cluster image set that the given number of releases away from the the production default (2 in this case).|
 |nightly-release-for-prod-default | To select the cluster image set that the given number of releases away from the the production default (0 in this case).|
-|upgrade-nightly-release-for-prod-default | To select the upgrade cluster image set that the given number of releases away from the the production default (0 in this case).|
-|upgrade-one-release-from-prod-default | To select the upgrade cluster image set that the given number of releases away from the the production default (1 in this case).|
-|upgrade-two-releases-from-prod-default | To select the upgrade cluster image set that the given number of releases away from the the production default (2 in this case).|
-
-
-
+|upgrade-to-latest| To select the newest valid version to upgrade to|
+|upgrade-to-latest-z| To select the newest valid patch version to upgrade to|
+|upgrade-to-next-y| To select the newest valid minor release to upgrade to|

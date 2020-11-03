@@ -16,7 +16,7 @@ func init() {
 type latestVersion struct{}
 
 func (l latestVersion) ShouldUse() bool {
-	return viper.GetBool(config.Cluster.UseLatestVersionForInstall)
+	return viper.GetBool(config.Upgrade.UpgradeToLatest)
 }
 
 func (l latestVersion) Priority() int {
@@ -25,19 +25,17 @@ func (l latestVersion) Priority() int {
 
 func (l latestVersion) SelectVersion(installVersion *spi.Version, versionList *spi.VersionList) (*spi.Version, string, error) {
 	var newestVersion *spi.Version
+	newestVersion = installVersion
 
 	for _, v := range versionList.FindVersion(installVersion.Version().Original()) {
 		for upgradeVersion := range v.AvailableUpgrades() {
-			if newestVersion == nil {
-				newestVersion = spi.NewVersionBuilder().Version(upgradeVersion).Build()
-				continue
-			}
 			if upgradeVersion.GreaterThan(newestVersion.Version()) {
 				newestVersion = spi.NewVersionBuilder().Version(upgradeVersion).Build()
 			}
 		}
 	}
-	if newestVersion == nil {
+
+	if !newestVersion.Version().GreaterThan(installVersion.Version()) {
 		return nil, "latest version", fmt.Errorf("No available upgrade path for version %s", installVersion.Version().Original())
 	}
 	return newestVersion, "latest version", nil

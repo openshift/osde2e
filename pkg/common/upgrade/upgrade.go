@@ -265,7 +265,7 @@ func IsUpgradeDone(h *helper.H, desired *configv1.Update) (done bool, msg string
 // is being used, in which case the candidate channel will be used.
 func VersionToChannel(version *semver.Version) (string, error) {
 	useVersion := version
-	if viper.GetBool(config.Upgrade.OnlyUpgradeToZReleases) {
+	if viper.GetBool(config.Upgrade.UpgradeToLatestZ) {
 		var err error
 		useVersion, err = util.OpenshiftVersionToSemver(viper.GetString(config.Cluster.Version))
 
