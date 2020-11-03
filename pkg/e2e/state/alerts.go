@@ -15,6 +15,7 @@ import (
 
 	"github.com/openshift/osde2e/pkg/common/alert"
 	"github.com/openshift/osde2e/pkg/common/config"
+	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/providers"
 
 	"github.com/openshift/osde2e/pkg/common/prometheus"
@@ -36,13 +37,14 @@ func init() {
 
 var _ = ginkgo.Describe(clusterStateTestName, func() {
 	defer ginkgo.GinkgoRecover()
+	h := helper.New()
 
 	alertsTimeoutInSeconds := 900
 	ginkgo.It("should have no alerts", func() {
 
 		//Set up prometheus client
-		promClient, err := prometheus.CreateClient()
-
+		h.SetServiceAccount("system:serviceaccount:%s:cluster-admin")
+		promClient, err := prometheus.CreateClusterClient(h)
 		Expect(err).NotTo(HaveOccurred(), "error creating a prometheus client")
 		promAPI := promv1.NewAPI(promClient)
 
@@ -53,11 +55,11 @@ var _ = ginkgo.Describe(clusterStateTestName, func() {
 			query := fmt.Sprintf("ALERTS{alertstate!=\"pending\",alertname!=\"Watchdog\"}")
 			context, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
 			defer cancel()
-			result, _, err := promAPI.Query(context, query, time.Now())
+			value, _, err := promAPI.Query(context, query, time.Now())
 			if err != nil {
 				return false, fmt.Errorf("Unable to query prom API")
 			}
-			queryresult, err = json.MarshalIndent(result, "", "  ")
+			queryresult, err = json.MarshalIndent(value, "", "  ")
 			if err != nil {
 				return false, fmt.Errorf("error marshaling results: %v", err)
 			}
@@ -66,8 +68,7 @@ var _ = ginkgo.Describe(clusterStateTestName, func() {
 		Expect(err).NotTo(HaveOccurred(), "error retrieving results from alert gatherer")
 
 		//Store JSON query results in an object
-		queryJSON := result{}
-
+		queryJSON := []result{}
 		err = json.Unmarshal(queryresult, &queryJSON)
 		Expect(err).NotTo(HaveOccurred(), "error unmarshalling json from alert gatherer")
 
@@ -79,7 +80,7 @@ var _ = ginkgo.Describe(clusterStateTestName, func() {
 	}, float64(alertsTimeoutInSeconds+30))
 })
 
-func findCriticalAlerts(results result, provider, environment string) bool {
+func findCriticalAlerts(results []result, provider, environment string) bool {
 	log.Printf("Alerts found: %v", results)
 	foundCritical := false
 	for _, result := range results {
@@ -115,7 +116,15 @@ func findCriticalAlerts(results result, provider, environment string) bool {
 	return foundCritical
 }
 
-type result []struct {
+type query struct {
+	Data data `json:"data"`
+}
+
+type data struct {
+	Results []result `json:"result"`
+}
+
+type result struct {
 	Metric metric `json:"metric"`
 }
 
