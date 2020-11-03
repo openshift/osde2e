@@ -65,6 +65,19 @@ func New() (*MockProvider, error) {
 	}, nil
 }
 
+// IsValidClusterName mocks a validation of cluster name
+func (m *MockProvider) IsValidClusterName(clusterName string) (bool, error) {
+	if m.env == "fail" {
+		switch clusterName {
+		case "error":
+			return false, fmt.Errorf("Fake IsValidClusterName error")
+		case "false":
+			return false, nil
+		}
+	}
+	return true, nil
+}
+
 // LaunchCluster mocks a launch cluster operation.
 func (m *MockProvider) LaunchCluster(clusterName string) (string, error) {
 	clusterID := uuid.New().String()

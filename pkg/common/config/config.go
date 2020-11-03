@@ -236,6 +236,12 @@ var Cluster = struct {
 	// Env: NEXT_RELEASE_AFTER_PROD_DEFAULT
 	NextReleaseAfterProdDefault string
 
+	// LatestYReleaseAfterProdDefault will select the next minor version CIS for an environment given the production default
+	LatestYReleaseAfterProdDefault string
+
+	// LatestZReleaseAfterProdDefault will select the next patch version CIS for an environment given the production default
+	LatestZReleaseAfterProdDefault string
+
 	// CleanCheckRuns lets us set the number of osd-verify checks we want to run before deeming a cluster "healthy"
 	// Env: CLEAN_CHECK_RUNS
 	CleanCheckRuns string
@@ -274,6 +280,8 @@ var Cluster = struct {
 	UseOldestClusterImageSetForInstall:  "cluster.useOldestClusterVersionForInstall",
 	DeltaReleaseFromDefault:             "cluster.deltaReleaseFromDefault",
 	NextReleaseAfterProdDefault:         "cluster.nextReleaseAfterProdDefault",
+	LatestYReleaseAfterProdDefault:      "cluster.latestYReleaseAfterProdDefault",
+	LatestZReleaseAfterProdDefault:      "cluster.latestZReleaseAfterProdDefault",
 	CleanCheckRuns:                      "cluster.cleanCheckRuns",
 	ID:                                  "cluster.id",
 	Name:                                "cluster.name",
@@ -493,6 +501,12 @@ func init() {
 
 	viper.SetDefault(Cluster.UseOldestClusterImageSetForInstall, false)
 	viper.BindEnv(Cluster.UseOldestClusterImageSetForInstall, "USE_OLDEST_CLUSTER_IMAGE_SET_FOR_INSTALL")
+
+	viper.SetDefault(Cluster.LatestYReleaseAfterProdDefault, false)
+	viper.BindEnv(Cluster.LatestYReleaseAfterProdDefault, "LATEST_Y_RELEASE_AFTER_PROD_DEFAULT")
+
+	viper.SetDefault(Cluster.LatestZReleaseAfterProdDefault, false)
+	viper.BindEnv(Cluster.LatestZReleaseAfterProdDefault, "LATEST_Z_RELEASE_AFTER_PROD_DEFAULT")
 
 	viper.SetDefault(Cluster.DeltaReleaseFromDefault, 0)
 	viper.BindEnv(Cluster.DeltaReleaseFromDefault, "DELTA_RELEASE_FROM_DEFAULT")

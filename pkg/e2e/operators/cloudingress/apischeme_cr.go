@@ -15,12 +15,9 @@ import (
 )
 
 var _ = ginkgo.Describe(CloudIngressTestName, func() {
-	var operatorNamespace = "openshift-cloud-ingress-operator"
-
 	h := helper.New()
-	testDaCRapischemes(h, operatorNamespace)
-	testCRapischemes(h, operatorNamespace)
-
+	testDaCRapischemes(h, CloudIngressNamespace)
+	testCRapischemes(h, CloudIngressNamespace)
 })
 
 func createApischeme() cloudingress.APIScheme {

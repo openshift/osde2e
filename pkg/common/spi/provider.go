@@ -2,12 +2,19 @@
 package spi
 
 import (
-	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 	"time"
+
+	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 )
 
 // Provider is the interface that must be implemented in order to provision clusters in osde2e.
 type Provider interface {
+	// IsValidClusterName validates that the proposed name used for creating the cluster.
+	//
+	// Currently this validates if the proposed clusterName already exists before attempting to
+	// create and cycling on OCM errors.
+	IsValidClusterName(clusterName string) (bool, error)
+
 	// LaunchCluster creates a new cluster and returns the cluster ID.
 	//
 	// This is expected to kick off the cluster provisioning process and
@@ -107,5 +114,4 @@ type Provider interface {
 
 	// Upgrade requests the provider initiate a cluster upgrade to the given version
 	Upgrade(clusterID string, version string, pdbTimeoutMinutes int, t time.Time) error
-
 }
