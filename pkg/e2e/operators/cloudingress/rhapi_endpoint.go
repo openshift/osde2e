@@ -12,7 +12,7 @@ import (
 )
 
 // tests
-var _ = ginkgo.Describe(CloudIngressTestName, func() {
+var _ = ginkgo.Describe(CloudIngressInformingTestName, func() {
 	h := helper.New()
 
 	ginkgo.It("is a placeholder", func() {
