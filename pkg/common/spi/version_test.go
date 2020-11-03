@@ -7,25 +7,13 @@ import (
 	"github.com/Masterminds/semver"
 )
 
-func TestVersionBuilder(t *testing.T) {
-	builtVersion := NewVersionBuilder().
-		Version(semver.MustParse("1.2.3")).
-		Default(true).
-		Build()
-
-	definedVersion := Version{
-		version:   semver.MustParse("1.2.3"),
-		isDefault: true,
-	}
-
-	if !reflect.DeepEqual(definedVersion, *builtVersion) {
-		t.Errorf("version made through builder and version defined normally are not equal")
-	}
-}
-
 func TestVersionListBuilder(t *testing.T) {
 	version := NewVersionBuilder().
 		Version(semver.MustParse("1.2.3")).
+		AvailableUpgrades(map[*semver.Version]bool{
+			semver.MustParse("1.2.4"): true,
+			semver.MustParse("1.3.0"): true,
+		}).
 		Default(true).
 		Build()
 	overrideVersion := semver.MustParse("4.5.6")

@@ -42,7 +42,7 @@ func GetVersionForUpgrade(installVersion *semver.Version, versionList *spi.Versi
 	versionSelectors := upgradeselectors.GetVersionSelectors()
 
 	for _, versionSelector := range versionSelectors {
-		if versionSelector.ShouldUse(upgradeSource) && versionSelector.Priority() > curPriority {
+		if versionSelector.ShouldUse() && versionSelector.Priority() > curPriority {
 			selectedVersionSelector = versionSelector
 			curPriority = versionSelector.Priority()
 		}
@@ -53,11 +53,11 @@ func GetVersionForUpgrade(installVersion *semver.Version, versionList *spi.Versi
 		return "", "", nil
 	}
 
-	releaseName, image, err := selectedVersionSelector.SelectVersion(installVersion, versionList)
+	release, image, err := selectedVersionSelector.SelectVersion(spi.NewVersionBuilder().Version(installVersion).Build(), versionList)
 
-	if releaseName == "" && err == nil {
+	if release.Version().Original() == "" && err == nil {
 		return util.NoVersionFound, "", nil
 	}
 
-	return releaseName, image, err
+	return release.Version().Original(), image, err
 }

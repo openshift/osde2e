@@ -165,10 +165,18 @@ func (m *MOAProvider) Versions() (*spi.VersionList, error) {
 			if v.Default() {
 				defaultVersionOverride = version
 			}
-			spiVersions = append(spiVersions, spi.NewVersionBuilder().
+			spiVersion := spi.NewVersionBuilder().
 				Version(version).
 				Default(v.Default()).
-				Build())
+				Build()
+
+			for _, upgrade := range v.AvailableUpgrades() {
+				if version, err := util.OpenshiftVersionToSemver(upgrade); err == nil {
+					spiVersion.AddUpgradePath(version)
+				}
+			}
+
+			spiVersions = append(spiVersions, spiVersion)
 		}
 	}
 
