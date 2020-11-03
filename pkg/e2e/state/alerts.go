@@ -116,14 +116,6 @@ func findCriticalAlerts(results []result, provider, environment string) bool {
 	return foundCritical
 }
 
-type query struct {
-	Data data `json:"data"`
-}
-
-type data struct {
-	Results []result `json:"result"`
-}
-
 type result struct {
 	Metric metric `json:"metric"`
 }
