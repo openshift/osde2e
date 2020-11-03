@@ -71,9 +71,9 @@ var Upgrade = struct {
 	// Env: UPGRADE_TO_LATEST
 	UpgradeToLatest string
 
-	// UpgradeToNextY will look for the next Y version for the cluster and select that
-	// Env: UPGRADE_TO_NEXT_Y
-	UpgradeToNextY string
+	// UpgradeToLatestY will look for the latest Y version for the cluster and select that
+	// Env: UPGRADE_TO_LATEST_Y
+	UpgradeToLatestY string
 
 	// UpgradeToLatestZ will look for the latest Z version for the cluster and select that
 	// Env: UPGRADE_TO_LATEST_Z
@@ -108,7 +108,7 @@ var Upgrade = struct {
 }{
 	UpgradeToLatest:                        "upgrade.toLatest",
 	UpgradeToLatestZ:                       "upgrade.ToLatestZ",
-	UpgradeToNextY:                         "upgrade.ToNextY",
+	UpgradeToLatestY:                       "upgrade.ToLatestY",
 	ReleaseName:                            "upgrade.releaseName",
 	Image:                                  "upgrade.image",
 	UpgradeVersionEqualToInstallVersion:    "upgrade.upgradeVersionEqualToInstallVersion",
@@ -417,8 +417,8 @@ func init() {
 	viper.BindEnv(Upgrade.UpgradeToLatestZ, "UPGRADE_TO_LATEST_Z")
 	viper.SetDefault(Upgrade.UpgradeToLatestZ, false)
 
-	viper.BindEnv(Upgrade.UpgradeToNextY, "UPGRADE_TO_NEXT_Y")
-	viper.SetDefault(Upgrade.UpgradeToNextY, false)
+	viper.BindEnv(Upgrade.UpgradeToLatestY, "UPGRADE_TO_LATEST_Y")
+	viper.SetDefault(Upgrade.UpgradeToLatestY, false)
 
 	viper.BindEnv(Upgrade.ReleaseName, "UPGRADE_RELEASE_NAME")
 

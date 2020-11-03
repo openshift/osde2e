@@ -54,7 +54,7 @@ func GetVersionForUpgrade(installVersion *semver.Version, versionList *spi.Versi
 		return "", "", nil
 	}
 
-	release, image, err := selectedVersionSelector.SelectVersion(spi.NewVersionBuilder().Version(installVersion).Build(), versionList)
+	release, selector, err := selectedVersionSelector.SelectVersion(spi.NewVersionBuilder().Version(installVersion).Build(), versionList)
 
 	if release == nil || release.Version().Original() == "" {
 		if err != nil {
@@ -63,5 +63,9 @@ func GetVersionForUpgrade(installVersion *semver.Version, versionList *spi.Versi
 		return util.NoVersionFound, "", err
 	}
 
-	return release.Version().Original(), image, err
+	openshiftRelease := fmt.Sprintf("openshift-v%s", release.Version().Original())
+
+	log.Printf("Selected %s using selector `%s`", openshiftRelease, selector)
+
+	return openshiftRelease, "", err
 }

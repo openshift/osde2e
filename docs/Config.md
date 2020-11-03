@@ -58,7 +58,7 @@ Some environment variables commonly used for pipelines under osde2e are indicate
 | --------------| ------------------------|
 |UPGRADE_TO_LATEST| UpgradeToLatest will upgrade to the latest valid version found.|
 |UPGRADE_TO_LATEST_Z| UpgradeToLatestZ looks for the newest valid patch-release and selects it.|
-|UPGRADE_TO_NEXT_Y| UpgradeToNextY looks for the newest valid minor release upgrade path and selects it.|
+|UPGRADE_TO_LATEST_Y| UpgradeToLatestY looks for the newest valid minor release upgrade path and selects it.|
 |UPGRADE_RELEASE_NAME| ReleaseName is the name of the release in a release stream.|
 |UPGRADE_IMAGE| Image is the release image a cluster is upgraded to. If set, it overrides the release stream and upgrades.|
 |UPGRADE_MONITOR_ROUTES| MonitorRoutesDuringUpgrade will monitor the availability of routes whilst an upgrade takes place.|

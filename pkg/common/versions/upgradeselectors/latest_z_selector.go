@@ -2,6 +2,7 @@ package upgradeselectors
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/spi"
@@ -30,8 +31,19 @@ func (l latestZVersion) SelectVersion(installVersion *spi.Version, versionList *
 
 	for _, v := range versionList.FindVersion(installVersion.Version().Original()) {
 		for upgradeVersion := range v.AvailableUpgrades() {
-			if upgradeVersion.Minor() == installVersion.Version().Minor() && upgradeVersion.GreaterThan(newestVersion.Version()) {
-				newestVersion = spi.NewVersionBuilder().Version(upgradeVersion).Build()
+			if upgradeVersion.Minor() != installVersion.Version().Minor() {
+				continue
+			}
+			if upgradeVersion.Prerelease() != "" {
+				if strings.Contains(upgradeVersion.Prerelease(), "nightly") && upgradeVersion.GreaterThan(newestVersion.Version()) {
+					newestVersion = spi.NewVersionBuilder().Version(upgradeVersion).Build()
+				}
+			} else {
+				if newestVersion.Version().Prerelease() == "" {
+					if upgradeVersion.GreaterThan(newestVersion.Version()) {
+						newestVersion = spi.NewVersionBuilder().Version(upgradeVersion).Build()
+					}
+				}
 			}
 		}
 	}

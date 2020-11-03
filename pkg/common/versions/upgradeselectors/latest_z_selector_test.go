@@ -16,7 +16,7 @@ func TestLatestZVersionSelectVersion(t *testing.T) {
 		expectedErr     bool
 	}{
 		{
-			name:           "get latest version",
+			name:           "get latest z version",
 			installVersion: spi.NewVersionBuilder().Version(semver.MustParse("4.2.0")).Build(),
 			versions: spi.NewVersionListBuilder().
 				AvailableVersions([]*spi.Version{
@@ -38,7 +38,31 @@ func TestLatestZVersionSelectVersion(t *testing.T) {
 			expectedVersion: spi.NewVersionBuilder().Version(semver.MustParse("4.2.4")).Build(),
 		},
 		{
-			name:           "get latest version out of order",
+			name:           "get latest z version with nightlies",
+			installVersion: spi.NewVersionBuilder().Version(semver.MustParse("4.2.0")).Build(),
+			versions: spi.NewVersionListBuilder().
+				AvailableVersions([]*spi.Version{
+					spi.NewVersionBuilder().Version(semver.MustParse("4.1.0")).Build(),
+					spi.NewVersionBuilder().Version(semver.MustParse("4.2.0")).AvailableUpgrades(map[*semver.Version]bool{
+						semver.MustParse("4.2.2"):                             true,
+						semver.MustParse("4.2.4"):                             true,
+						semver.MustParse("4.3.0"):                             true,
+						semver.MustParse("4.2.0-0.nightly-2020-10-30-200737"): true,
+						semver.MustParse("4.2.0-0.nightly-2020-10-31-223819"): true,
+					}).Build(),
+					spi.NewVersionBuilder().Default(true).Version(semver.MustParse("4.2.0-0.nightly-2020-10-31-223819")).AvailableUpgrades(map[*semver.Version]bool{
+						semver.MustParse("4.3.2"): true,
+						semver.MustParse("4.3.4"): true,
+						semver.MustParse("4.4.0"): true,
+					}).Build(),
+					spi.NewVersionBuilder().Version(semver.MustParse("4.4.0")).Build(),
+					spi.NewVersionBuilder().Version(semver.MustParse("4.5.0")).Build(),
+				}).
+				Build(),
+			expectedVersion: spi.NewVersionBuilder().Version(semver.MustParse("4.2.4")).Build(),
+		},
+		{
+			name:           "get latest z version out of order",
 			installVersion: spi.NewVersionBuilder().Version(semver.MustParse("4.2.0")).Build(),
 			versions: spi.NewVersionListBuilder().
 				AvailableVersions([]*spi.Version{

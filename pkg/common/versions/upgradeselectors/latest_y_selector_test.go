@@ -7,7 +7,7 @@ import (
 	"github.com/openshift/osde2e/pkg/common/spi"
 )
 
-func TestNextYVersionSelectVersion(t *testing.T) {
+func TestLatestYVersionSelectVersion(t *testing.T) {
 	tests := []struct {
 		name            string
 		installVersion  *spi.Version
@@ -16,7 +16,7 @@ func TestNextYVersionSelectVersion(t *testing.T) {
 		expectedErr     bool
 	}{
 		{
-			name:           "get latest version",
+			name:           "get latest y version",
 			installVersion: spi.NewVersionBuilder().Version(semver.MustParse("4.2.0")).Build(),
 			versions: spi.NewVersionListBuilder().
 				AvailableVersions([]*spi.Version{
@@ -38,7 +38,32 @@ func TestNextYVersionSelectVersion(t *testing.T) {
 			expectedVersion: spi.NewVersionBuilder().Version(semver.MustParse("4.3.0")).Build(),
 		},
 		{
-			name:           "get latest version out of order",
+			name:           "get latest y nightly version",
+			installVersion: spi.NewVersionBuilder().Version(semver.MustParse("4.2.0")).Build(),
+			versions: spi.NewVersionListBuilder().
+				AvailableVersions([]*spi.Version{
+					spi.NewVersionBuilder().Version(semver.MustParse("4.1.0")).Build(),
+					spi.NewVersionBuilder().Version(semver.MustParse("4.2.0")).AvailableUpgrades(map[*semver.Version]bool{
+						semver.MustParse("4.2.2"):                             true,
+						semver.MustParse("4.2.4"):                             true,
+						semver.MustParse("4.3.0"):                             true,
+						semver.MustParse("4.3.2"):                             true,
+						semver.MustParse("4.3.0-0.nightly-2020-10-31-200727"): true,
+						semver.MustParse("4.3.0-0.nightly-2020-11-01-123456"): true,
+					}).Build(),
+					spi.NewVersionBuilder().Default(true).Version(semver.MustParse("4.3.0")).AvailableUpgrades(map[*semver.Version]bool{
+						semver.MustParse("4.3.2"): true,
+						semver.MustParse("4.3.4"): true,
+						semver.MustParse("4.4.0"): true,
+					}).Build(),
+					spi.NewVersionBuilder().Version(semver.MustParse("4.4.0")).Build(),
+					spi.NewVersionBuilder().Version(semver.MustParse("4.5.0")).Build(),
+				}).
+				Build(),
+			expectedVersion: spi.NewVersionBuilder().Version(semver.MustParse("4.3.0-0.nightly-2020-11-01-123456")).Build(),
+		},
+		{
+			name:           "get latest y version out of order",
 			installVersion: spi.NewVersionBuilder().Version(semver.MustParse("4.2.0")).Build(),
 			versions: spi.NewVersionListBuilder().
 				AvailableVersions([]*spi.Version{
@@ -71,7 +96,7 @@ func TestNextYVersionSelectVersion(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		selector := nextYVersion{}
+		selector := latestYVersion{}
 		selectedVersion, descriptor, err := selector.SelectVersion(test.installVersion, test.versions)
 
 		if err != nil && !test.expectedErr {
@@ -79,15 +104,15 @@ func TestNextYVersionSelectVersion(t *testing.T) {
 		}
 
 		if err == nil {
-			expectedDescriptor := "next y version"
+			expectedDescriptor := "latest y version"
 			if descriptor != expectedDescriptor {
 				t.Errorf("test %s: descriptor (%s) does not match expected '%s'", test.name, descriptor, expectedDescriptor)
 			}
 
 			if (selectedVersion == nil || test.expectedVersion == nil) && selectedVersion != test.expectedVersion {
-				t.Errorf("test %s: expected selected version (%v) to match expected version (%v) and one is nil", test.name, selectedVersion, test.expectedVersion)
+				t.Errorf("test %s: expected selected version (%v) to match expected version (%v) and one is nil", test.name, selectedVersion.Version().Original(), test.expectedVersion.Version().Original())
 			} else if selectedVersion != nil && !selectedVersion.Version().Equal(test.expectedVersion.Version()) {
-				t.Errorf("test %s: selected version (%v) does not match expected version (%v)", test.name, selectedVersion, test.expectedVersion)
+				t.Errorf("test %s: selected version (%v) does not match expected version (%v)", test.name, selectedVersion.Version().Original(), test.expectedVersion.Version().Original())
 			}
 		}
 	}

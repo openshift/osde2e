@@ -37,6 +37,7 @@ func ChooseVersions() (err error) {
 		err = setupUpgradeVersion(clusterVersion, versionList)
 
 		if err != nil {
+			log.Printf("error while selecting upgrade version: %v", err)
 			return fmt.Errorf("error while selecting upgrade version: %v", err)
 		}
 	}
