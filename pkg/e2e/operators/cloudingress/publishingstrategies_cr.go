@@ -15,9 +15,11 @@ import (
 )
 
 var _ = ginkgo.Describe(CloudIngressTestName, func() {
+	var operatorNamespace = "openshift-cloud-ingress-operator"
+
 	h := helper.New()
-	testDaCRpublishingstrategies(h, CloudIngressNamespace)
-	testCRpublishingstrategies(h, CloudIngressNamespace)
+	testDaCRpublishingstrategies(h, operatorNamespace)
+	testCRpublishingstrategies(h, operatorNamespace)
 
 })
 
