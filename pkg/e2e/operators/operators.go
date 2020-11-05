@@ -8,6 +8,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/openshift/osde2e/pkg/common/config"
+	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/providers"
 	"github.com/openshift/osde2e/pkg/common/runner"
 	"github.com/openshift/osde2e/pkg/common/templates"
@@ -17,16 +19,12 @@ import (
 	kerror "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
-	"k8s.io/client-go/util/retry"
+
+	operatorv1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 
 	"github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/spf13/viper"
-
-	"github.com/openshift/osde2e/pkg/common/config"
-	"github.com/openshift/osde2e/pkg/common/helper"
-
-	operatorv1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 )
 
 func checkClusterServiceVersion(h *helper.H, namespace, name string) {
@@ -157,78 +155,6 @@ func checkSecrets(h *helper.H, namespace string, secrets []string) {
 	})
 }
 
-func approveInstallPlan(h *helper.H, csv string, sub *operatorv1.Subscription) error {
-
-	// find the install plan associated with the CSV
-	var ip operatorv1.InstallPlan
-	err := wait.PollImmediate(5*time.Second, 5*time.Minute, func() (bool, error) {
-		ips, err := h.Operator().OperatorsV1alpha1().InstallPlans(sub.Namespace).List(context.TODO(), metav1.ListOptions{})
-		if err != nil {
-			return false, err
-		}
-		for _, i := range ips.Items {
-			for _, c := range i.Spec.ClusterServiceVersionNames {
-				if c == csv {
-					ip = i
-					return true, nil
-				}
-			}
-		}
-		return false, nil
-	})
-	if err != nil {
-		return fmt.Errorf("no install plan found for csv %s", csv)
-	}
-
-	log.Printf("Found install plan %s for csv %s", ip.Name, csv)
-	if ip.Spec.Approved == true {
-		log.Printf("Install plan %s already approved", ip.Name)
-		return nil
-	}
-
-	err = retry.RetryOnConflict(retry.DefaultBackoff, func() error {
-		ipToUpdate, err := h.Operator().OperatorsV1alpha1().InstallPlans(sub.Namespace).Get(context.TODO(), ip.Name, metav1.GetOptions{})
-		if err != nil {
-			return err
-		}
-		// Flag the install plan as approved
-		ipToUpdate.Spec.Approved = true
-		_, err = h.Operator().OperatorsV1alpha1().InstallPlans(ipToUpdate.Namespace).Update(context.TODO(), ipToUpdate, metav1.UpdateOptions{})
-		if err != nil {
-			log.Printf("Could not approve install plan %s", ipToUpdate.Name)
-			return err
-		}
-		log.Printf("Approved install plan %s", ipToUpdate.Name)
-		return nil
-	})
-	return err
-}
-
-func ensureCSVIsInstalled(h *helper.H, csvName string, sub *operatorv1.Subscription) error {
-	err := wait.PollImmediate(5*time.Second, 15*time.Minute, func() (bool, error) {
-		// Ensure the install plan for the CSV is approved
-		err := approveInstallPlan(h, csvName, sub)
-		Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("Failed approving InstallPlan for CSV %s", csvName))
-		log.Printf("Approved install plan for sub %s, now checking CSV %s is installed", sub.Name, csvName)
-
-		csv, err := h.Operator().OperatorsV1alpha1().ClusterServiceVersions(sub.Namespace).Get(context.TODO(), csvName, metav1.GetOptions{})
-		if err != nil && !kerror.IsNotFound(err) {
-			log.Printf("Returning err %v", err)
-			return false, err
-		}
-
-		if csv.Status.Phase == operatorv1.CSVPhaseSucceeded {
-			return true, nil
-		}
-		return false, nil
-	})
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func checkUpgrade(h *helper.H, subNamespace string, subName string, packageName string, regServiceName string) {
 
 	ginkgo.Context("Operator Upgrade", func() {
@@ -237,22 +163,22 @@ func checkUpgrade(h *helper.H, subNamespace string, subName string, packageName 
 			// Get the CSV we're currently installed with
 			sub, err := h.Operator().OperatorsV1alpha1().Subscriptions(subNamespace).Get(context.TODO(), subName, metav1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("failed trying to get Subscription %s in %s namespace", subName, subNamespace))
-			startingCSV := sub.Status.CurrentCSV
+			latestCSV := sub.Status.CurrentCSV
 
 			// Get the N-1 version of the CSV to test an upgrade from
 			previousCSV, err := getReplacesCSV(h, subNamespace, packageName, regServiceName)
 			Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("failed trying to get previous CSV for Subscription %s in %s namespace", subName, subNamespace))
 
-			log.Printf("Reverting to package %v from %v to test upgrade of %v", previousCSV, startingCSV, subName)
+			log.Printf("Reverting to package %v from %v to test upgrade of %v", previousCSV, latestCSV, subName)
 
 			// Delete current Operator installation
 			err = h.Operator().OperatorsV1alpha1().Subscriptions(subNamespace).Delete(context.TODO(), subName, metav1.DeleteOptions{})
 			Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("failed trying to delete Subscription %s", subName))
 			log.Printf("Removed subscription %s", subName)
 
-			err = h.Operator().OperatorsV1alpha1().ClusterServiceVersions(subNamespace).Delete(context.TODO(), startingCSV, metav1.DeleteOptions{})
-			Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("failed trying to delete ClusterServiceVersion %s", startingCSV))
-			log.Printf("Removed csv %s", startingCSV)
+			err = h.Operator().OperatorsV1alpha1().ClusterServiceVersions(subNamespace).Delete(context.TODO(), latestCSV, metav1.DeleteOptions{})
+			Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("failed trying to delete ClusterServiceVersion %s", latestCSV))
+			log.Printf("Removed csv %s", latestCSV)
 
 			Eventually(func() bool {
 				_, err := h.Operator().OperatorsV1alpha1().InstallPlans(subNamespace).Get(context.TODO(), sub.Status.Install.Name, metav1.GetOptions{})
@@ -271,41 +197,28 @@ func checkUpgrade(h *helper.H, subNamespace string, subName string, packageName 
 					Channel:                sub.Spec.Channel,
 					CatalogSourceNamespace: sub.Spec.CatalogSourceNamespace,
 					CatalogSource:          sub.Spec.CatalogSource,
-					InstallPlanApproval:    operatorv1.ApprovalManual,
+					InstallPlanApproval:    operatorv1.ApprovalAutomatic,
 					StartingCSV:            previousCSV,
 				},
 			}, metav1.CreateOptions{})
 			Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("failed trying to create Subscription %s", subName))
 
-			log.Printf("Created replacement subscription %s", subName)
+			log.Printf("Created replacement subscription %s with starting CSV %s", subName, previousCSV)
 
-			// Approve and manually verify the first installation to previousCSV
-			err = ensureCSVIsInstalled(h, previousCSV, sub)
-			Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("CSV %s did not install successfully", previousCSV))
-
-			log.Printf("Verified installation of previous CSV %s", previousCSV)
-
-			// Update the Subscription to apply Automatic updates from now on in order to reach currentCSV
-			err = retry.RetryOnConflict(retry.DefaultBackoff, func() error {
-				sub, err = h.Operator().OperatorsV1alpha1().Subscriptions(subNamespace).Get(context.TODO(), subName, metav1.GetOptions{})
-				if err != nil {
-					return err
+			// Wait for the operator to arrive back on its latest CSV
+			err = wait.PollImmediate(5*time.Second, 15*time.Minute, func() (bool, error) {
+				csv, err := h.Operator().OperatorsV1alpha1().ClusterServiceVersions(sub.Namespace).Get(context.TODO(), latestCSV, metav1.GetOptions{})
+				if err != nil && !kerror.IsNotFound(err) {
+					log.Printf("Returning err %v", err)
+					return false, err
 				}
-				sub.Spec.InstallPlanApproval = operatorv1.ApprovalAutomatic
-				sub, err = h.Operator().OperatorsV1alpha1().Subscriptions(subNamespace).Update(context.TODO(), sub, metav1.UpdateOptions{})
-				if err != nil {
-					return err
+				if csv.Status.Phase == operatorv1.CSVPhaseSucceeded {
+					return true, nil
 				}
-				return nil
+				return false, nil
 			})
-			Expect(err).To(BeNil(), fmt.Sprintf("unable to set Subscription to Automatic"))
+			Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("CSV %s did not eventually install successfully", latestCSV))
 
-			log.Printf("Set subscription %s to Automatic approval", subName)
-
-			// The previous CSV is now installed and a new InstallPlan is also created ready for approval to upgrade to startingCSV
-			// Approve and verify install to startingCSV
-			err = ensureCSVIsInstalled(h, startingCSV, sub)
-			Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("CSV %s did not install successfully", startingCSV))
 		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
 	})
 }
