@@ -164,6 +164,9 @@ func run(cmd *cobra.Command, argv []string) error {
 
 	if args.versionCheck {
 		data, err = json.MarshalIndent(value, "", "  ")
+		if err != nil {
+			return fmt.Errorf("error marshaling results: %v", err)
+		}
 		encoded := []rune(string(data))
 		data = []byte(string(encoded[1:(len(string(data)) - 1)]))
 		count.UnmarshalJSON(data)
