@@ -10,10 +10,15 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 
 	"github.com/openshift/osde2e/cmd/osde2e/common"
+	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/prometheus"
+	"github.com/openshift/osde2e/pkg/common/providers"
+	"github.com/openshift/osde2e/pkg/common/spi"
 	v1 "github.com/prometheus/client_golang/api/prometheus/v1"
+	prometheusmodel "github.com/prometheus/common/model"
 )
 
 var Cmd = &cobra.Command{
@@ -29,6 +34,9 @@ var args struct {
 	customConfig    string
 	secretLocations string
 	outputFormat    string
+	versionCheck    bool
+	installVersion  string
+	upgradeVersion  string
 }
 
 func init() {
@@ -58,6 +66,27 @@ func init() {
 		"-",
 		"Output format for query results (json|prom). Defaults to json.",
 	)
+	flags.BoolVarP(
+		&args.versionCheck,
+		"version-check",
+		"v",
+		false,
+		"A flag that triggers a query that lists valid installed/upgrade versions",
+	)
+	flags.StringVarP(
+		&args.installVersion,
+		"install-version",
+		"i",
+		"",
+		"The cluster install version input for version query",
+	)
+	flags.StringVarP(
+		&args.upgradeVersion,
+		"upgrade-version",
+		"u",
+		"",
+		"The cluster upgrade version input for upgrade query",
+	)
 
 	Cmd.RegisterFlagCompletionFunc("output-format", func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		return []string{"json", "prom"}, cobra.ShellCompDirectiveDefault
@@ -70,7 +99,30 @@ func run(cmd *cobra.Command, argv []string) error {
 		return fmt.Errorf("error loading initial state: %v", err)
 	}
 
-	query := strings.Join(argv, " ")
+	var query string
+
+	var count prometheusmodel.Sample
+
+	if !args.versionCheck {
+		query = strings.Join(argv, " ")
+	} else {
+		var provider spi.Provider
+		var err error
+		cloudprovider := viper.GetString(config.CloudProvider.CloudProviderID)
+		if provider, err = providers.ClusterProvider(); err != nil {
+			return fmt.Errorf("could not setup cluster provider: %v", err)
+		}
+		environment := provider.Environment()
+		if args.upgradeVersion == "" {
+			query = fmt.Sprintf("count by (install_version) (cicd_jUnitResult{cloud_provider=\"%s\",install_version=\"%s\", environment=\"%s\", result=~\"passed|skipped\"}) / count by (install_version) (cicd_jUnitResult{cloud_provider=\"%s\",install_version=\"%s\", environment=\"%s\"})",
+				escapeQuotes(cloudprovider), escapeQuotes(args.installVersion), escapeQuotes(environment),
+				escapeQuotes(cloudprovider), escapeQuotes(args.installVersion), escapeQuotes(environment))
+		} else {
+			query = fmt.Sprintf("count by (install_version, upgrade_version) (cicd_jUnitResult{cloud_provider=\"%s\",install_version=\"%s\", upgrade_version=\"%s\", environment=\"%s\", result=~\"passed|skipped\"}) / count by (install_version) (cicd_jUnitResult{cloud_provider=\"%s\",install_version=\"%s\", upgrade_version=\"%s\", environment=\"%s\"})",
+				escapeQuotes(cloudprovider), escapeQuotes(args.installVersion), escapeQuotes(args.upgradeVersion), escapeQuotes(environment),
+				escapeQuotes(cloudprovider), escapeQuotes(args.installVersion), escapeQuotes(args.upgradeVersion), escapeQuotes(environment))
+		}
+	}
 
 	client, err := prometheus.CreateClient()
 
@@ -110,5 +162,20 @@ func run(cmd *cobra.Command, argv []string) error {
 		return fmt.Errorf("error writing output: %v", err)
 	}
 
+	if args.versionCheck {
+		data, err = json.MarshalIndent(value, "", "  ")
+		if err != nil {
+			return fmt.Errorf("error marshaling results: %v", err)
+		}
+		encoded := []rune(string(data))
+		data = []byte(string(encoded[1:(len(string(data)) - 1)]))
+		count.UnmarshalJSON(data)
+		log.Printf("Valid version check count ratio - %v", count.Value)
+	}
+
 	return nil
+}
+
+func escapeQuotes(stringToEscape string) string {
+	return strings.Replace(stringToEscape, `"`, `\"`, -1)
 }
