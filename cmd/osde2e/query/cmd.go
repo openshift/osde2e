@@ -162,10 +162,13 @@ func run(cmd *cobra.Command, argv []string) error {
 		return fmt.Errorf("error writing output: %v", err)
 	}
 
-	encoded := []rune(string(data))
-	data = []byte(string(encoded[1:(len(string(data)) - 1)]))
-	count.UnmarshalJSON(data)
-	log.Printf("Valid version check count ratio - %v", count.Value)
+	if args.versionCheck {
+		data, err = json.MarshalIndent(value, "", "  ")
+		encoded := []rune(string(data))
+		data = []byte(string(encoded[1:(len(string(data)) - 1)]))
+		count.UnmarshalJSON(data)
+		log.Printf("Valid version check count ratio - %v", count.Value)
+	}
 
 	return nil
 }
