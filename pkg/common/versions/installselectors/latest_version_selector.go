@@ -6,6 +6,7 @@ import (
 	"github.com/Masterminds/semver"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/spi"
+	"github.com/openshift/osde2e/pkg/common/versions/common"
 	"github.com/spf13/viper"
 )
 
@@ -33,7 +34,7 @@ func (l latestVersion) SelectVersion(versionList *spi.VersionList) (*semver.Vers
 		return nil, versionType, fmt.Errorf("not enough versions to select the latest version")
 	}
 
-	sortVersions(availableVersions)
+	common.SortVersions(availableVersions)
 
 	return availableVersions[len(availableVersions)-1].Version(), versionType, nil
 }

@@ -1,11 +1,14 @@
 package spi
 
-import "github.com/Masterminds/semver"
+import (
+	"github.com/Masterminds/semver"
+)
 
 // Version represents an Openshift version.
 type Version struct {
-	version   *semver.Version
-	isDefault bool
+	version           *semver.Version
+	availableUpgrades map[*semver.Version]bool
+	isDefault         bool
 }
 
 // Version is the actual version found by the provider.
@@ -18,10 +21,27 @@ func (v *Version) Default() bool {
 	return v.isDefault
 }
 
+// CanUpgradeTo returns whether a version is a valid upgrade path
+func (v *Version) CanUpgradeTo(targetVersion *semver.Version) bool {
+	_, ok := v.availableUpgrades[targetVersion]
+	return ok
+}
+
+// AvailableUpgrades returns the available upgrades
+func (v *Version) AvailableUpgrades() map[*semver.Version]bool {
+	return v.availableUpgrades
+}
+
+// AddUpgradePath adds an upgrade edge to a version
+func (v *Version) AddUpgradePath(version *semver.Version) {
+	v.availableUpgrades[version] = true
+}
+
 // VersionBuilder is used to build version objects.
 type VersionBuilder struct {
-	version   *semver.Version
-	isDefault bool
+	version           *semver.Version
+	availableUpgrades map[*semver.Version]bool
+	isDefault         bool
 }
 
 // NewVersionBuilder creates a new version builder.
@@ -41,11 +61,21 @@ func (vb *VersionBuilder) Default(isDefault bool) *VersionBuilder {
 	return vb
 }
 
+// AvailableUpgrades sets the availableUpgrades value for the builder
+func (vb *VersionBuilder) AvailableUpgrades(availableUpgrades map[*semver.Version]bool) *VersionBuilder {
+	vb.availableUpgrades = availableUpgrades
+	return vb
+}
+
 // Build will build the version object.
 func (vb *VersionBuilder) Build() *Version {
+	if vb.availableUpgrades == nil {
+		vb.availableUpgrades = make(map[*semver.Version]bool)
+	}
 	return &Version{
-		version:   vb.version,
-		isDefault: vb.isDefault,
+		version:           vb.version,
+		isDefault:         vb.isDefault,
+		availableUpgrades: vb.availableUpgrades,
 	}
 }
 
@@ -58,6 +88,19 @@ type VersionList struct {
 // AvailableVersions is the list of versions available to the provider.
 func (vl *VersionList) AvailableVersions() []*Version {
 	return vl.availableVersions
+}
+
+// FindVersion looks for a version in the list and returns it
+// Since duplicate versions can be in the list thanks to channels
+// We must return multiple versions. /shrug
+func (vl *VersionList) FindVersion(version string) []*Version {
+	var response []*Version
+	for _, v := range vl.availableVersions {
+		if v.Version().Original() == version {
+			response = append(response, v)
+		}
+	}
+	return response
 }
 
 // Default is the default version in the VersionList. If defaultVersionOverride is
