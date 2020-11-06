@@ -50,7 +50,10 @@ Some environment variables commonly used for pipelines under osde2e are indicate
 |OCM_USER_OVERRIDE| UserOverride will hard set the user assigned to the "owner" tag by the OCM provider.|
 |OCM_FLAVOUR| Flavour is an OCM cluster descriptor for cluster defaults|
 |OCM_ADDITIONAL_LABELS| AdditionalLabels is used to add more specific labels to a cluster in OCM.|
- 
+|OCM_CCS| CCS defines whether the cluster should expect cloud credentials or not|
+|OCM_AWS_ACCOUNT| |
+|OCM_AWS_ACCESS_KEY| |
+|OCM_AWS_SECRET_KEY| |
   
 ### Upgrade variables:-
 

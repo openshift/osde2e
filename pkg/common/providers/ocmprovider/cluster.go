@@ -104,17 +104,21 @@ func (o *OCMProvider) LaunchCluster(clusterName string) (string, error) {
 			ID(cloudProvider)).
 		Properties(clusterProperties)
 
-	// If AWS credentials are set, this must be a CCS cluster
-	awsAccount := viper.GetString(AWSAccount)
-	awsAccessKey := viper.GetString(AWSAccessKey)
-	awsSecretKey := viper.GetString(AWSSecretKey)
+	if viper.GetBool(CCS) {
+		// If AWS credentials are set, this must be a CCS cluster
+		awsAccount := viper.GetString(AWSAccount)
+		awsAccessKey := viper.GetString(AWSAccessKey)
+		awsSecretKey := viper.GetString(AWSSecretKey)
 
-	if awsAccount != "" && awsAccessKey != "" && awsSecretKey != "" {
-		newCluster.CCS(v1.NewCCS().Enabled(true)).AWS(
-			v1.NewAWS().
-				AccountID(awsAccount).
-				AccessKeyID(awsAccessKey).
-				SecretAccessKey(awsSecretKey))
+		if awsAccount != "" && awsAccessKey != "" && awsSecretKey != "" {
+			newCluster.CCS(v1.NewCCS().Enabled(true)).AWS(
+				v1.NewAWS().
+					AccountID(awsAccount).
+					AccessKeyID(awsAccessKey).
+					SecretAccessKey(awsSecretKey))
+		} else {
+			return "", fmt.Errorf("Invalid or no AWS Credentials provided for CCS cluster")
+		}
 	}
 
 	expiryInMinutes := viper.GetDuration(config.Cluster.ExpiryInMinutes)

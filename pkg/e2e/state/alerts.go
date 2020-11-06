@@ -1,27 +1,25 @@
 package state
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
-	"text/template"
+	"time"
 
 	"log"
 
 	"github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/spf13/viper"
+	"k8s.io/apimachinery/pkg/util/wait"
 
 	"github.com/openshift/osde2e/pkg/common/alert"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/providers"
-	"github.com/openshift/osde2e/pkg/common/runner"
-	"github.com/openshift/osde2e/pkg/common/templates"
-)
 
-var (
-	// cmd to run get alerts from alertmanager
-	alertsCmdTpl *template.Template
+	"github.com/openshift/osde2e/pkg/common/prometheus"
+	promv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 )
 
 // A mapping of alerts to ignore by cluster provider and environment.
@@ -29,16 +27,6 @@ var ignoreAlerts = map[string]map[string][]string{
 	"ocm": {
 		"int": {"MetricsClientSendFailingSRE"},
 	},
-}
-
-func init() {
-	var err error
-
-	alertsCmdTpl, err = templates.LoadTemplate("/assets/state/alerts.template")
-
-	if err != nil {
-		panic(fmt.Sprintf("error while loading alerts command: %v", err))
-	}
 }
 
 var clusterStateTestName string = "[Suite: e2e] Cluster state"
@@ -53,51 +41,41 @@ var _ = ginkgo.Describe(clusterStateTestName, func() {
 
 	alertsTimeoutInSeconds := 900
 	ginkgo.It("should have no alerts", func() {
-		var results map[string][]byte
-		// setup runner
+
+		//Set up prometheus client
 		h.SetServiceAccount("system:serviceaccount:%s:cluster-admin")
-		r := h.RunnerWithNoCommand()
+		promClient, err := prometheus.CreateClusterClient(h)
+		Expect(err).NotTo(HaveOccurred(), "error creating a prometheus client")
+		promAPI := promv1.NewAPI(promClient)
 
-		r.Name = "alerts"
-		serviceAccountDir := "/var/run/secrets/kubernetes.io/serviceaccount"
+		var queryresult []byte
 
-		alertsCommand, err := h.ConvertTemplateToString(alertsCmdTpl, struct {
-			OutputDir string
-			Name      string
-			Server    string
-			CA        string
-			TokenFile string
-		}{
-			OutputDir: runner.DefaultRunner.OutputDir,
-			Name:      r.Name,
-			Server:    "https://kubernetes.default",
-			CA:        serviceAccountDir + "/ca.crt",
-			TokenFile: serviceAccountDir + "/token",
+		// Query for alerts with a retry count of 40 and timeout of 20 minutes
+		err = wait.PollImmediate(30*time.Second, 20*time.Minute, func() (bool, error) {
+			query := fmt.Sprintf("ALERTS{alertstate!=\"pending\",alertname!=\"Watchdog\"}")
+			context, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
+			defer cancel()
+			value, _, err := promAPI.Query(context, query, time.Now())
+			if err != nil {
+				return false, fmt.Errorf("Unable to query prom API")
+			}
+			queryresult, err = json.MarshalIndent(value, "", "  ")
+			if err != nil {
+				return false, fmt.Errorf("error marshaling results: %v", err)
+			}
+			return true, nil
 		})
-		Expect(err).NotTo(HaveOccurred(), "failure creating templated command")
-
-		r.Cmd = alertsCommand
-
-		stopCh := make(chan struct{})
-		// run tests
-		err = r.Run(alertsTimeoutInSeconds, stopCh)
-		Expect(err).NotTo(HaveOccurred(), "error running alert gatherer")
-
-		// get results
-		results, err = r.RetrieveResults()
 		Expect(err).NotTo(HaveOccurred(), "error retrieving results from alert gatherer")
 
-		queryJSON := query{}
-		err = json.Unmarshal(results["alerts.json"], &queryJSON)
+		//Store JSON query results in an object
+		queryJSON := []result{}
+		err = json.Unmarshal(queryresult, &queryJSON)
 		Expect(err).NotTo(HaveOccurred(), "error unmarshalling json from alert gatherer")
 
 		clusterProvider, err := providers.ClusterProvider()
 		Expect(err).NotTo(HaveOccurred(), "error retrieving cluster provider")
 
-		// write results
-		h.WriteResults(results)
-
-		Expect(!findCriticalAlerts(queryJSON.Data.Results, viper.GetString(config.Provider), clusterProvider.Environment())).Should(BeTrue(), "never able to find zero alerts")
+		Expect(!findCriticalAlerts(queryJSON, viper.GetString(config.Provider), clusterProvider.Environment())).Should(BeTrue(), "never able to find zero alerts")
 
 	}, float64(alertsTimeoutInSeconds+30))
 })
@@ -136,14 +114,6 @@ func findCriticalAlerts(results []result, provider, environment string) bool {
 	}
 
 	return foundCritical
-}
-
-type query struct {
-	Data data `json:"data"`
-}
-
-type data struct {
-	Results []result `json:"result"`
 }
 
 type result struct {
