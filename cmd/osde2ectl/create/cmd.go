@@ -150,20 +150,25 @@ func run(cmd *cobra.Command, argv []string) error {
 		}
 	}
 
-	if _, err := os.Stat(args.awsAccountsFile); err == nil {
-		csvfile, err := os.Open(args.awsAccountsFile)
-		if err != nil {
-			log.Fatalln("Couldn't open the csv file", err)
-		}
+	if args.awsAccountsFile != "" {
+		if f, err := os.Stat(args.awsAccountsFile); err == nil {
+			log.Printf("%v", f)
+			csvfile, err := os.Open(args.awsAccountsFile)
+			if err != nil {
+				log.Fatalln("Couldn't open the csv file", err)
+			}
 
-		// Parse the file
-		r := csv.NewReader(csvfile)
-		awsAccounts, err = r.ReadAll()
-		if err != nil {
-			log.Fatalln("Couldn't retrieve list of accounts", err)
-		}
-		accountMutex = &sync.Mutex{}
+			// Parse the file
+			r := csv.NewReader(csvfile)
+			awsAccounts, err = r.ReadAll()
+			if err != nil {
+				log.Fatalln("Couldn't retrieve list of accounts", err)
+			}
+			accountMutex = &sync.Mutex{}
 
+		} else {
+			log.Fatalf("Error finding file %s: %s", args.awsAccountsFile, err.Error())
+		}
 	}
 
 	var successfulClustersCounter int32 = 0
