@@ -30,6 +30,9 @@ const (
 	// AdditionalLabels is used to add more specific labels to a cluster in OCM.
 	AdditionalLabels = "ocm.additionalLabels"
 
+	// CCS defines whether the cluster should expect cloud credentials or not
+	CCS = "ocm.ccs"
+
 	// AWSAccount is used in CCS clusters
 	AWSAccount = "ocm.aws.account"
 	// AWSAccessKey is used in CCS clusters
@@ -61,6 +64,9 @@ func init() {
 	viper.BindEnv(Flavour, "OCM_FLAVOUR")
 
 	viper.BindEnv(AdditionalLabels, "OCM_ADDITIONAL_LABELS")
+
+	viper.SetDefault(CCS, false)
+	viper.BindEnv(CCS, "OCM_CCS")
 
 	viper.BindEnv(AWSAccount, "OCM_AWS_ACCOUNT")
 	viper.BindEnv(AWSAccessKey, "OCM_AWS_ACCESS_KEY")

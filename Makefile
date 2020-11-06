@@ -50,9 +50,13 @@ generate-providers:
 generate-reporters:
 	"$(DIR)scripts/generate-reporters-import.sh" > "$(DIR)pkg/reporting/reporters/reporters_generated.go"
 
-build:
+build: pkger
 	mkdir -p "$(OUT_DIR)"
 	go build -o "$(OUT_DIR)" "$(DIR)cmd/..."
+
+pkger:
+	GOFLAGS='' go get github.com/markbates/pkger/cmd/pkger
+	pkger --include $(DIR)assets --include $(DIR)configs
 
 diffproviders.txt:
 	"$(DIR)scripts/generate-providers-import.sh" > diffproviders.txt

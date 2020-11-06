@@ -17,3 +17,6 @@ out/
 *.swp
 *.code-workspace
 *.vscode
+
+# pkger artifact
+pkged.go
