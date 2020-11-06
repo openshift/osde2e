@@ -5,3 +5,4 @@ ocm:
   env: prod
   additionalLabels: scaleTestCluster
   flavour: osd-4,scale-test-r
+  ccs: true
