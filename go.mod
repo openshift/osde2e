@@ -21,7 +21,7 @@ require (
 	github.com/hpcloud/tail v1.0.0
 	github.com/influxdata/tdigest v0.0.1 // indirect
 	github.com/kylelemons/godebug v1.1.0
-	github.com/markbates/pkger v0.16.0
+	github.com/markbates/pkger v0.17.1
 	github.com/onsi/ginkgo v1.13.0
 	github.com/onsi/gomega v1.10.1
 	github.com/openshift-online/ocm-sdk-go v0.1.140

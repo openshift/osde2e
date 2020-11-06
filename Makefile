@@ -55,6 +55,7 @@ build: pkger
 	go build -o "$(OUT_DIR)" "$(DIR)cmd/..."
 
 pkger:
+	GOFLAGS='' go get github.com/markbates/pkger/cmd/pkger
 	pkger --include $(DIR)assets --include $(DIR)configs
 
 diffproviders.txt:
