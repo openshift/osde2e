@@ -237,6 +237,9 @@ var Cluster = struct {
 	// LatestZReleaseAfterProdDefault will select the next patch version CIS for an environment given the production default
 	LatestZReleaseAfterProdDefault string
 
+	// InstallSpecificNightly will select a nightly using a specific nightly given an "X.Y" formatted string
+	InstallSpecificNightly string
+
 	// CleanCheckRuns lets us set the number of osd-verify checks we want to run before deeming a cluster "healthy"
 	// Env: CLEAN_CHECK_RUNS
 	CleanCheckRuns string
@@ -277,6 +280,7 @@ var Cluster = struct {
 	NextReleaseAfterProdDefault:         "cluster.nextReleaseAfterProdDefault",
 	LatestYReleaseAfterProdDefault:      "cluster.latestYReleaseAfterProdDefault",
 	LatestZReleaseAfterProdDefault:      "cluster.latestZReleaseAfterProdDefault",
+	InstallSpecificNightly:              "cluster.installLatestNightly",
 	CleanCheckRuns:                      "cluster.cleanCheckRuns",
 	ID:                                  "cluster.id",
 	Name:                                "cluster.name",
@@ -500,6 +504,8 @@ func init() {
 
 	viper.SetDefault(Cluster.LatestZReleaseAfterProdDefault, false)
 	viper.BindEnv(Cluster.LatestZReleaseAfterProdDefault, "LATEST_Z_RELEASE_AFTER_PROD_DEFAULT")
+
+	viper.BindEnv(Cluster.InstallSpecificNightly, "INSTALL_LATEST_NIGHTLY")
 
 	viper.SetDefault(Cluster.DeltaReleaseFromDefault, 0)
 	viper.BindEnv(Cluster.DeltaReleaseFromDefault, "DELTA_RELEASE_FROM_DEFAULT")
