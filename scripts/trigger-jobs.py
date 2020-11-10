@@ -16,6 +16,11 @@ UPSTREAM_JOBS = {
 }
 
 
+def verify_upstream_jobs():
+    for job in UPSTREAM_JOBS.keys():
+        requests.head(f"{JENKINS_URL}/job/{job}").raise_for_status()
+
+
 def get_upstream_job():
     job = requests.get(f"{BUILD_URL}/api/json").json()
 
@@ -46,6 +51,8 @@ def trigger_cis_test(environment, cis):
 
 
 if __name__ == '__main__':
+    verify_upstream_jobs()
+
     upstream_job, upstream_build = get_upstream_job()
 
     if upstream_job and upstream_build:
