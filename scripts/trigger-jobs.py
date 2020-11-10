@@ -9,7 +9,6 @@ BUILD_URL = os.environ['BUILD_URL']
 JENKINS_URL = os.environ['JENKINS_URL']
 
 UPSTREAM_JOBS = {
-    "openshift-saas-deploy-saas-clusterimagesets-stage-osd-stage-01": "stage",
     "openshift-saas-deploy-saas-clusterimagesets-stage-osd-stage-hives02ue1": "stage",
     "openshift-saas-deploy-saas-clusterimagesets-prod-osd-production-hivep01ue1": "production",
     "openshift-saas-deploy-saas-clusterimagesets-integration-osd-integration-hivei01ue1": "integration",
