@@ -1,6 +1,7 @@
 package create
 
 import (
+	"encoding/csv"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -17,6 +18,7 @@ import (
 	clusterutil "github.com/openshift/osde2e/pkg/common/cluster"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/providers/ocmprovider"
+	"github.com/openshift/osde2e/pkg/common/spi"
 	"github.com/openshift/osde2e/pkg/common/versions"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -36,12 +38,17 @@ var args struct {
 	secretLocations       string
 	environment           string
 	kubeConfig            string
+	awsAccountsFile       string
 	numberOfClusters      int
 	batchSize             int
 	secondsBetweenBatches int
 }
 
 var discardLogger *log.Logger
+
+var awsAccounts [][]string
+var currentAccount int
+var accountMutex *sync.Mutex
 
 func init() {
 	pfs := Cmd.PersistentFlags()
@@ -100,6 +107,14 @@ func init() {
 		"The number of seconds between batches of cluster provisions.",
 	)
 
+	pfs.StringVarP(
+		&args.awsAccountsFile,
+		"aws-accounts-file",
+		"",
+		"",
+		"A file containing a comma-delimited list of AWS accounts with credentials eg. account,accessKey,secretKey",
+	)
+
 	viper.BindPFlag(config.Cluster.ID, Cmd.PersistentFlags().Lookup("cluster-id"))
 	viper.BindPFlag(ocmprovider.Env, Cmd.PersistentFlags().Lookup("environment"))
 	viper.BindPFlag(config.Kubeconfig.Path, Cmd.PersistentFlags().Lookup("kube-config"))
@@ -135,10 +150,31 @@ func run(cmd *cobra.Command, argv []string) error {
 		}
 	}
 
+	if args.awsAccountsFile != "" {
+		if f, err := os.Stat(args.awsAccountsFile); err == nil {
+			log.Printf("%v", f)
+			csvfile, err := os.Open(args.awsAccountsFile)
+			if err != nil {
+				log.Fatalln("Couldn't open the csv file", err)
+			}
+
+			// Parse the file
+			r := csv.NewReader(csvfile)
+			awsAccounts, err = r.ReadAll()
+			if err != nil {
+				log.Fatalln("Couldn't retrieve list of accounts", err)
+			}
+			accountMutex = &sync.Mutex{}
+
+		} else {
+			log.Fatalf("Error finding file %s: %s", args.awsAccountsFile, err.Error())
+		}
+	}
+
 	var successfulClustersCounter int32 = 0
 	createClusters(args.numberOfClusters, batchSize, args.secondsBetweenBatches, &successfulClustersCounter)
 
-	fmt.Printf("Successfully provisioned %d/%d clusters.\n", successfulClustersCounter, args.numberOfClusters)
+	log.Printf("Successfully provisioned %d/%d clusters.\n", successfulClustersCounter, args.numberOfClusters)
 
 	return nil
 }
@@ -186,15 +222,40 @@ func createBatch(batchIteration int, numClustersInBatch int, batchWg *sync.WaitG
 
 func setupCluster(wg *sync.WaitGroup, successfulClustersCounter *int32) {
 	defer wg.Done()
-	cluster, err := clusterutil.ProvisionCluster(discardLogger)
+
+	if len(awsAccounts) != 0 {
+		accountMutex.Lock()
+
+		currentAccount++
+		if currentAccount >= len(awsAccounts) {
+			currentAccount = 0
+		}
+		log.Printf("Setting CCS account for %s", awsAccounts[currentAccount][0])
+		viper.Set(ocmprovider.AWSAccount, awsAccounts[currentAccount][0])
+		viper.Set(ocmprovider.AWSAccessKey, awsAccounts[currentAccount][1])
+		viper.Set(ocmprovider.AWSSecretKey, awsAccounts[currentAccount][2])
+	}
+
+	var cluster *spi.Cluster
+	var err error
+
+	cluster, err = clusterutil.ProvisionCluster(discardLogger)
+
+	if len(awsAccounts) != 0 {
+		accountMutex.Unlock()
+	}
 
 	if err != nil {
 		if cluster != nil {
-			fmt.Printf("error while trying to provision up cluster with ID %s: %v\n", cluster.ID(), err)
+			log.Printf("error while trying to provision up cluster with ID %s: %v\n", cluster.ID(), err)
 		} else {
-			fmt.Printf("error while provisioning the cluster: %v\n", err)
+			log.Printf("error while provisioning the cluster: %v\n", err)
 		}
 	} else {
+		if cluster == nil {
+			log.Println("Cluster is nil")
+			return
+		}
 		log.Printf("Starting provisioning cluster %s.", cluster.ID())
 		outputFilePath := filepath.Join(viper.GetString(config.ReportDir), "clusters", cluster.ID()+".log")
 
@@ -202,7 +263,7 @@ func setupCluster(wg *sync.WaitGroup, successfulClustersCounter *int32) {
 		defer outputFile.Close()
 
 		if err != nil {
-			fmt.Printf("error opening logfile for writing: %v", err)
+			log.Printf("error opening logfile for writing: %v", err)
 			return
 		}
 
@@ -224,11 +285,11 @@ func setupCluster(wg *sync.WaitGroup, successfulClustersCounter *int32) {
 				case <-timeout:
 					isHealthy, failures, _ := clusterutil.PollClusterHealth(cluster.ID(), discardLogger)
 					if isHealthy {
-						fmt.Printf("Cluster %s is healthy (could be transient).\n", cluster.ID())
+						log.Printf("Cluster %s is healthy (could be transient).\n", cluster.ID())
 					} else {
-						fmt.Printf("Cluster %s is not healthy yet.\n", cluster.ID())
+						log.Printf("Cluster %s is not healthy yet.\n", cluster.ID())
 						if len(failures) > 0 {
-							fmt.Printf("Currently failing %s health checks", strings.Join(failures, ", "))
+							log.Printf("Currently failing %s health checks", strings.Join(failures, ", "))
 						}
 					}
 				case <-terminate:
@@ -242,9 +303,9 @@ func setupCluster(wg *sync.WaitGroup, successfulClustersCounter *int32) {
 		terminate <- true
 
 		if err != nil {
-			fmt.Printf("Cluster %s never became healthy.\n", cluster.ID())
+			log.Printf("Cluster %s never became healthy.\n", cluster.ID())
 		} else {
-			fmt.Printf("Cluster %s is healthy.\n", cluster.ID())
+			log.Printf("Cluster %s is healthy.\n", cluster.ID())
 
 			atomic.AddInt32(successfulClustersCounter, 1)
 		}

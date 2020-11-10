@@ -3,42 +3,57 @@ package upgrade
 import (
 	"context"
 	"fmt"
-	"github.com/openshift/osde2e/pkg/common/cluster/healthchecks"
-	"github.com/openshift/osde2e/pkg/common/templates"
-	"github.com/openshift/osde2e/pkg/common/util"
-	"github.com/spf13/viper"
-	"k8s.io/apimachinery/pkg/util/wait"
 	"log"
 	"time"
+
+	"github.com/openshift/osde2e/pkg/common/cluster/healthchecks"
+	"github.com/openshift/osde2e/pkg/common/util"
+	"github.com/spf13/viper"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/util/wait"
 
 	configv1 "github.com/openshift/api/config/v1"
 	upgradev1alpha1 "github.com/openshift/managed-upgrade-operator/pkg/apis/upgrade/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/helper"
+	"github.com/openshift/osde2e/pkg/common/providers"
+	"github.com/openshift/osde2e/pkg/common/providers/ocmprovider"
+	"github.com/openshift/osde2e/pkg/common/templates"
 )
 
 const (
 	// Namespace in which the managed-upgrade-operator runs
 	muoNamespace = "openshift-managed-upgrade-operator"
-	// default pod disruption budget timeout in minutes
-	muoPdbDrainTimeout = int32(5)
-	// the 'upgrade type' that the upgrade operator should use when upgrading
-	muoUpgradeType = upgradev1alpha1.OSD
 	// the name of the generated UpgradeConfig resource containing upgrade configuration
-	upgradeConfigName = "osde2e-upgrade-config"
+	upgradeConfigName = "osd-upgrade-config"
 
 	// name of the workload for pod disruption budget tests
 	pdbWorkloadName = "pdb"
 	// directory containing pod disruption budget workload assets
 	pdbWorkloadDir = "/assets/workloads/e2e/pdb"
+	// name of the workload for node drain tests
+	drainWorkloadName = "node-drain-test"
+	// directory containing node drain workload assets
+	drainWorkloadDir = "/assets/workloads/e2e/drain"
+	// Time to wait in seconds for workload to be created
+	workloadCreationWaitTime = 3
 
 	// config override template asset
 	configOverrideTemplate = "/assets/upgrades/config.template"
+	// config override values
+	configProviderWatchInterval   = 60  // minutes
+	configScaleTimeout            = 15  // minutes
+	configUpgradeWindow           = 120 // minutes
+	configNodeDrainTimeout        = 6   // minutes
+	configExpectedDrainTime       = 7   // minutes
+	configControlPlaneTime        = 90  // minutes
+	configPdbPolicyDrainTimeout   = 15  // minutes
+	configPdbDrainTimeoutOverride = 5   // minutes
+
 )
 
 // TriggerManagedUpgrade initiates an upgrade using the managed-upgrade-operator
@@ -55,29 +70,26 @@ func TriggerManagedUpgrade(h *helper.H) (*configv1.ClusterVersion, error) {
 		return cVersion, fmt.Errorf("couldn't get current ClusterVersion '%s': %v", ClusterVersionName, err)
 	}
 
-	image := viper.GetString(config.Upgrade.Image)
 	releaseName := viper.GetString(config.Upgrade.ReleaseName)
-
-	// determine requested upgrade targets
-	if image != "" {
-		return cVersion, fmt.Errorf("image-based managed upgrades are unsupported")
-	}
 
 	upgradeVersion, err := util.OpenshiftVersionToSemver(releaseName)
 	if err != nil {
 		return nil, fmt.Errorf("supplied release %s is invalid: %v", releaseName, err)
 	}
 
-	targetChannel, err := VersionToChannel(upgradeVersion)
-	if err != nil {
-		return cVersion, fmt.Errorf("unable to channel from version: %v", err)
-	}
-
 	// Create Pod Disruption Budget test workloads if desired
 	if viper.GetBool(config.Upgrade.ManagedUpgradeTestPodDisruptionBudgets) {
-		err = createPodDisruptionBudgetWorkloads(h)
+		err = createManagedUpgradeWorkload(pdbWorkloadName, pdbWorkloadDir, h)
 		if err != nil {
 			return cVersion, fmt.Errorf("unable to setup PDB workload for upgrade: %v", err)
+		}
+	}
+
+	// Create Node Drain test workloads if desired
+	if viper.GetBool(config.Upgrade.ManagedUpgradeTestNodeDrain) {
+		err = createManagedUpgradeWorkload(drainWorkloadName, drainWorkloadDir, h)
+		if err != nil {
+			return cVersion, fmt.Errorf("unable to setup node drain test workload for upgrade: %v", err)
 		}
 	}
 
@@ -89,9 +101,17 @@ func TriggerManagedUpgrade(h *helper.H) (*configv1.ClusterVersion, error) {
 	}
 
 	// Create the upgrade config and initiate the upgrade process
-	err = createUpgradeConfig(targetChannel, upgradeVersion.String(), h)
+	err = scheduleUpgradeWithProvider(upgradeVersion.String())
 	if err != nil {
 		return cVersion, fmt.Errorf("can't initiate managed upgrade: %v", err)
+	}
+
+	// We need to force the operator to resync with its provider. Whilst this would happen naturally,
+	// it's too long to wait for E2E (could be up to 1 hour). In lieu of a better way to trigger this,
+	// let's bounce the deployment to hurry that process.
+	err = restartOperator(h, muoNamespace)
+	if err != nil {
+		return cVersion, fmt.Errorf("error restarting managed-upgrade-operator: %v", err)
 	}
 
 	// The managed-upgrade-operator won't have updated the CVO version yet, and that's fine.
@@ -118,11 +138,32 @@ func overrideOperatorConfig(h *helper.H) error {
 		return fmt.Errorf("managed-upgrade-operator configmap missing mandatory key config.yaml")
 	}
 
+	// select correct environment
+	providerEnv := viper.GetString(ocmprovider.Env)
+	url := ocmprovider.Environments.Choose(providerEnv)
+	replaceValues := struct {
+		ProviderEnvironmentUrl string
+		ProviderWatchInterval  int
+		ControlPlaneTime       int
+		ScaleTimeout           int
+		UpgradeWindow          int
+		NodeDrainTimeout       int
+		ExpectedDrainTime      int
+	}{
+		ProviderEnvironmentUrl: url,
+		ProviderWatchInterval:  configProviderWatchInterval,
+		ControlPlaneTime:       configControlPlaneTime,
+		ScaleTimeout:           configScaleTimeout,
+		UpgradeWindow:          configUpgradeWindow,
+		NodeDrainTimeout:       configNodeDrainTimeout,
+		ExpectedDrainTime:      configExpectedDrainTime,
+	}
+
 	configOverrideTemplate, err := templates.LoadTemplate(configOverrideTemplate)
 	if err != nil {
 		return fmt.Errorf("can't read upgrade config override template: %v", err)
 	}
-	configOverride, err := h.ConvertTemplateToString(configOverrideTemplate, nil)
+	configOverride, err := h.ConvertTemplateToString(configOverrideTemplate, replaceValues)
 	if err != nil {
 		return fmt.Errorf("can't parse upgrade config override template: %v", err)
 	}
@@ -139,72 +180,52 @@ func overrideOperatorConfig(h *helper.H) error {
 	return nil
 }
 
-// Create the UpgradeConfig CR for the managed-upgrade-operator which will
-// cause the upgrade process to initiate.
-func createUpgradeConfig(channel string, version string, h *helper.H) error {
+// Override the cluster's UpgradeConfig with custom values where needed.
+// This is primarily being used to override the Pod Disruption Budget timeout
+// in order to minimize the worker upgrade length.
+func overrideUpgradeConfig(uc upgradev1alpha1.UpgradeConfig, h *helper.H) error {
 
-	// Delete any existing UpgradeConfig
-	h.Dynamic().Resource(schema.GroupVersionResource{
-		Group: "upgrade.managed.openshift.io", Version: "v1alpha1", Resource: "upgradeconfigs",
-	}).Namespace(muoNamespace).Delete(context.TODO(), upgradeConfigName, metav1.DeleteOptions{})
-
-	// Create a new UpgradeConfig and add it to the cluster
-	uc := upgradev1alpha1.UpgradeConfig{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "UpgradeConfig",
-			APIVersion: "upgrade.managed.openshift.io/v1alpha1",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      upgradeConfigName,
-			Namespace: muoNamespace,
-		},
-		Spec: upgradev1alpha1.UpgradeConfigSpec{
-			Desired: upgradev1alpha1.Update{
-				Version: version,
-				Channel: channel,
-			},
-			UpgradeAt:            time.Now().UTC().Format(time.RFC3339),
-			PDBForceDrainTimeout: muoPdbDrainTimeout,
-			Type:                 muoUpgradeType,
-		},
+	// only update if we need to
+	if uc.Spec.PDBForceDrainTimeout == configPdbDrainTimeoutOverride {
+		return nil
 	}
 
+	uc.Spec.PDBForceDrainTimeout = configPdbDrainTimeoutOverride
 	obj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(uc.DeepCopy())
 	if err != nil {
 		return fmt.Errorf("can't convert UpgradeConfig to unstructured resource: %v", err)
 	}
-
 	uobj := unstructured.Unstructured{obj}
 	_, err = h.Dynamic().Resource(schema.GroupVersionResource{
 		Group:    "upgrade.managed.openshift.io",
 		Version:  "v1alpha1",
 		Resource: "upgradeconfigs",
-	}).Namespace(muoNamespace).Create(context.TODO(), &uobj, metav1.CreateOptions{})
+	}).Namespace(muoNamespace).Update(context.TODO(), &uobj, metav1.UpdateOptions{})
 
 	if err != nil {
-		return fmt.Errorf("can't create UpgradeConfig resource: %v", err)
+		return err
 	}
-
 	return nil
 }
 
-// creates workloads that are protected by Pod Disruption Budgets (PDBs)
-// which the managed-upgrade-operator is expected to be able to handle
-func createPodDisruptionBudgetWorkloads(h *helper.H) error {
+func createManagedUpgradeWorkload(workLoadName string, workLoadDir string, h *helper.H) error {
 
-	if _, ok := h.GetWorkload(pdbWorkloadName); ok {
+	if _, ok := h.GetWorkload(workLoadName); ok {
 		return nil
 	}
 
-	// Create all K8s objects that are within the testDir
-	log.Printf("Applying Pod Disruption Budget workload: %s\n", pdbWorkloadDir)
-	_, err := helper.ApplyYamlInFolder(pdbWorkloadDir, h.CurrentProject(), h.Kube())
+	// Create all K8s objects that are within the workLoadDir
+	log.Printf("Applying %s workload from %s\n", workLoadName, workLoadDir)
+	obj, err := helper.ApplyYamlInFolder(workLoadDir, h.CurrentProject(), h.Kube())
 	if err != nil {
-		return fmt.Errorf("can't create upgrade PDB workload: %v", err)
+		return fmt.Errorf("can't create %s workload: %v", workLoadName, err)
 	}
 
+	// Log how many objects have been created
+	log.Printf("%v object(s) created for %s workload from %s path\n", len(obj), workLoadName, workLoadDir)
+
 	// Give the cluster a second to churn before checking
-	time.Sleep(3 * time.Second)
+	time.Sleep(workloadCreationWaitTime * time.Second)
 
 	// Wait for all pods to come up healthy
 	err = wait.PollImmediate(5*time.Second, 2*time.Minute, func() (bool, error) {
@@ -214,11 +235,11 @@ func createPodDisruptionBudgetWorkloads(h *helper.H) error {
 		return true, nil
 	})
 	if err != nil {
-		return fmt.Errorf("PDB workload not running correctly: %v", err)
+		return fmt.Errorf("%s workload not running correctly: %v", workLoadName, err)
 	}
 
 	// If success, add the workload to the list of installed workloads
-	h.AddWorkload(pdbWorkloadName, h.CurrentProject())
+	h.AddWorkload(workLoadName, h.CurrentProject())
 
 	return nil
 }
@@ -244,6 +265,14 @@ func isManagedUpgradeDone(h *helper.H, desired *configv1.Update) (done bool, msg
 		return false, "", fmt.Errorf("error parsing upgradeconfig into object")
 	}
 
+	// First attempt any necessary UpgradeConfig overrides we need to do during our regular sync/check
+	err = overrideUpgradeConfig(upgradeConfig, h)
+	if err != nil {
+		// log it, but this isn't a problem worth failing out over
+		log.Printf("could not apply UpgradeConfig overrides: %v", err)
+	}
+
+	// Now check if the Upgrade is complete
 	upgradeHistory := upgradeConfig.Status.History.GetHistory(desired.Version)
 	if upgradeHistory == nil {
 		return false, fmt.Sprintf("upgrade yet to commence"), nil
@@ -265,4 +294,63 @@ func isManagedUpgradeDone(h *helper.H, desired *configv1.Update) (done bool, msg
 	}
 
 	return true, "", nil
+}
+
+// Requests a cluster upgrade from the cluster provider
+func scheduleUpgradeWithProvider(version string) error {
+
+	clusterID := viper.GetString(config.Cluster.ID)
+	clusterProvider, err := providers.ClusterProvider()
+	if err != nil {
+		return fmt.Errorf("error getting clusterprovider for upgrade: %v", err)
+	}
+
+	// Our time will be as closely allowed as possible by the provider (now + 6 min)
+	t := time.Now().UTC().Add(6 * time.Minute)
+
+	err = clusterProvider.Upgrade(clusterID, version, configPdbPolicyDrainTimeout, t)
+	if err != nil {
+		return fmt.Errorf("error initiating upgrade from provider: %v", err)
+	}
+	return nil
+
+}
+
+// Scales down and scales up the operator deployment to initiate a pod restart
+func restartOperator(h *helper.H, ns string) error {
+
+	log.Printf("restarting managed-upgrade-operator to force upgrade resync..")
+
+	err := wait.PollImmediate(5*time.Second, 2*time.Minute, func() (bool, error) {
+		// scale down
+		s, err := h.Kube().AppsV1().Deployments(ns).GetScale(context.TODO(), "managed-upgrade-operator", metav1.GetOptions{})
+		if err != nil {
+			return false, nil
+		}
+		sc := *s
+		sc.Spec.Replicas = 0
+		_, err = h.Kube().AppsV1().Deployments(ns).UpdateScale(context.TODO(), "managed-upgrade-operator", &sc, metav1.UpdateOptions{})
+		if err != nil {
+			return false, nil
+		}
+
+		// scale up
+		s, err = h.Kube().AppsV1().Deployments(ns).GetScale(context.TODO(), "managed-upgrade-operator", metav1.GetOptions{})
+		if err != nil {
+			return false, nil
+		}
+		sc = *s
+		sc.Spec.Replicas = 1
+		_, err = h.Kube().AppsV1().Deployments(ns).UpdateScale(context.TODO(), "managed-upgrade-operator", &sc, metav1.UpdateOptions{})
+		if err != nil {
+			return false, nil
+		}
+		log.Printf("managed-upgrade-operator restart complete..")
+		return true, nil
+	})
+
+	if err != nil {
+		return fmt.Errorf("couldn't restart managed-upgrade-operator for config re-sync: %v", err)
+	}
+	return nil
 }

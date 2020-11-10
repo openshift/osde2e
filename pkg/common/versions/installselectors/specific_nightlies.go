@@ -1,0 +1,54 @@
+package installselectors
+
+import (
+	"fmt"
+	"strings"
+
+	"github.com/Masterminds/semver"
+	"github.com/openshift/osde2e/pkg/common/config"
+	"github.com/openshift/osde2e/pkg/common/spi"
+	"github.com/openshift/osde2e/pkg/common/versions/common"
+	"github.com/spf13/viper"
+)
+
+func init() {
+	registerSelector(specificNightlies{})
+}
+
+// MiddleClusterImageSet will use the image in the middle of the available versions.
+type specificNightlies struct{}
+
+func (m specificNightlies) ShouldUse() bool {
+	return viper.GetString(config.Cluster.InstallSpecificNightly) != ""
+}
+
+func (m specificNightlies) Priority() int {
+	return 60
+}
+
+func (m specificNightlies) SelectVersion(versionList *spi.VersionList) (*semver.Version, string, error) {
+	specificNightly := viper.GetString(config.Cluster.InstallSpecificNightly)
+	versionsWithoutDefault := removeDefaultVersion(versionList.AvailableVersions())
+	versionType := "specific nightly"
+
+	if specificNightly == "" {
+		return nil, versionType, fmt.Errorf("no version to match nightly found")
+	}
+
+	common.SortVersions(versionsWithoutDefault)
+
+	versionToMatch := semver.MustParse(specificNightly)
+
+	if versionToMatch == nil {
+		return nil, versionType, fmt.Errorf("error parsing semver version for %s", specificNightly)
+	}
+
+	for i := len(versionsWithoutDefault) - 1; i > -1; i-- {
+		if strings.Contains(versionsWithoutDefault[i].Version().Original(), "nightly") && versionsWithoutDefault[i].Version().Major() == versionToMatch.Major() && versionsWithoutDefault[i].Version().Minor() == versionToMatch.Minor() {
+			// Since we're going through a list in reverse-order, the first X.Y that matches should be the latest!
+			return versionsWithoutDefault[i].Version(), versionType, nil
+		}
+	}
+
+	return nil, versionType, fmt.Errorf("no valid nightly found for version %s", specificNightly)
+}

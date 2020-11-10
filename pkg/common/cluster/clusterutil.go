@@ -28,7 +28,7 @@ import (
 
 const (
 	// errorWindow is the number of checks made to determine if a cluster has truly failed.
-	errorWindow = 5
+	errorWindow = 20
 )
 
 // GetClusterVersion will get the current cluster version for the cluster.
@@ -178,8 +178,6 @@ func waitForClusterReadyWithOverrideAndExpectedNumberOfNodes(clusterID string, l
 								log.Printf("error trying to add unhealthy property to cluster ID %s: %v", clusterID, err)
 								return false, nil
 							}
-
-							return false, fmt.Errorf("PollClusterHealth has returned an error %d times in a row. Failing osde2e", errorWindow)
 						}
 					}
 					cleanRuns = 0
@@ -188,7 +186,7 @@ func waitForClusterReadyWithOverrideAndExpectedNumberOfNodes(clusterID string, l
 					if currentStatus != failureString {
 						err = provider.AddProperty(cluster, clusterproperties.Status, failureString)
 						if err != nil {
-							return false, fmt.Errorf("error trying to add property to cluster ID %s: %v", cluster.ID(), err)
+							log.Printf("error trying to add property to cluster ID %s: %v", clusterID, err)
 						}
 					}
 
@@ -340,7 +338,22 @@ func ProvisionCluster(logger *log.Logger) (*spi.Cluster, error) {
 	if clusterID == "" {
 		name := viper.GetString(config.Cluster.Name)
 		if name == "" {
-			name = clusterName()
+			attemptLimit := 10
+			for attempt := 1; attempt <= attemptLimit; attempt++ {
+				name = clusterName()
+				validName, err := provider.IsValidClusterName(name)
+				if err != nil {
+					fmt.Printf("an error occurred validating the cluster name %v\n", err)
+				} else if validName {
+					break
+				} else {
+					fmt.Printf("cluster name %s already exists.\n", name)
+				}
+				fmt.Printf("retrying to validate cluster name. Attempt %d of %d\n", attempt, attemptLimit)
+				if attempt == attemptLimit {
+					return nil, fmt.Errorf("could not validate cluster name. timed out")
+				}
+			}
 		}
 
 		if clusterID, err = provider.LaunchCluster(name); err != nil {

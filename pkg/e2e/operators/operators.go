@@ -4,28 +4,27 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/openshift/osde2e/pkg/common/providers"
-	"github.com/openshift/osde2e/pkg/common/runner"
-	"github.com/openshift/osde2e/pkg/common/templates"
 	"log"
 	"strings"
 	"time"
 
+	"github.com/openshift/osde2e/pkg/common/config"
+	"github.com/openshift/osde2e/pkg/common/helper"
+	"github.com/openshift/osde2e/pkg/common/providers"
+	"github.com/openshift/osde2e/pkg/common/runner"
+	"github.com/openshift/osde2e/pkg/common/templates"
+
+	appsv1 "k8s.io/api/apps/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	kerror "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
+
+	operatorv1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 
 	"github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/spf13/viper"
-
-	"github.com/openshift/osde2e/pkg/common/config"
-	"github.com/openshift/osde2e/pkg/common/helper"
-
-	appsv1 "k8s.io/api/apps/v1"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
-	operatorv1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 )
 
 func checkClusterServiceVersion(h *helper.H, namespace, name string) {
@@ -156,81 +155,36 @@ func checkSecrets(h *helper.H, namespace string, secrets []string) {
 	})
 }
 
-func getInstallPlan(h *helper.H, sub *operatorv1.Subscription) (*operatorv1.InstallPlan, error) {
-	subNamespace := sub.Namespace
-	subName := sub.Name
-	err := wait.PollImmediate(5*time.Second, 5*time.Minute, func() (bool, error) {
-		s, err := h.Operator().OperatorsV1alpha1().Subscriptions(subNamespace).Get(context.TODO(), subName, metav1.GetOptions{})
-		if err != nil {
-			return false, nil
-		}
-		if s.Status.InstallPlanRef != nil {
-			sub = s
-			return true, nil
-		}
-
-		return false, nil
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	return h.Operator().OperatorsV1alpha1().InstallPlans(subNamespace).Get(context.TODO(), sub.Status.InstallPlanRef.Name, metav1.GetOptions{})
-}
-
-func approveInstallPlan(h *helper.H, ip *operatorv1.InstallPlan) error {
-	ip.Spec.Approved = true
-	_, err := h.Operator().OperatorsV1alpha1().InstallPlans(ip.Namespace).Update(context.TODO(), ip, metav1.UpdateOptions{})
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func ensureCSVIsInstalled(h *helper.H, csvName string, namespace string) error {
-	err := wait.PollImmediate(5*time.Second, 15*time.Minute, func() (bool, error) {
-		csv, err := h.Operator().OperatorsV1alpha1().ClusterServiceVersions(namespace).Get(context.TODO(), csvName, metav1.GetOptions{})
-		if err != nil && !kerror.IsNotFound(err) {
-			return false, err
-		}
-
-		if csv.Status.Phase == operatorv1.CSVPhaseSucceeded {
-			return true, nil
-		}
-		return false, nil
-	})
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func checkUpgrade(h *helper.H, subNamespace string, subName string, packageName string, regServiceName string) {
 
 	ginkgo.Context("Operator Upgrade", func() {
 		ginkgo.It("should upgrade from the replaced version", func() {
 
+			// Get the CSV we're currently installed with
+			sub, err := h.Operator().OperatorsV1alpha1().Subscriptions(subNamespace).Get(context.TODO(), subName, metav1.GetOptions{})
+			Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("failed trying to get Subscription %s in %s namespace", subName, subNamespace))
+			latestCSV := sub.Status.CurrentCSV
+
 			// Get the N-1 version of the CSV to test an upgrade from
 			previousCSV, err := getReplacesCSV(h, subNamespace, packageName, regServiceName)
 			Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("failed trying to get previous CSV for Subscription %s in %s namespace", subName, subNamespace))
 
-			log.Printf("Reverting to package %v to test upgrade of %v", previousCSV, subName)
-			sub, err := h.Operator().OperatorsV1alpha1().Subscriptions(subNamespace).Get(context.TODO(), subName, metav1.GetOptions{})
-			Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("failed trying to get Subscription %s in %s namespace", subName, subNamespace))
-			startingCSV := sub.Status.CurrentCSV
+			log.Printf("Reverting to package %v from %v to test upgrade of %v", previousCSV, latestCSV, subName)
 
 			// Delete current Operator installation
 			err = h.Operator().OperatorsV1alpha1().Subscriptions(subNamespace).Delete(context.TODO(), subName, metav1.DeleteOptions{})
 			Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("failed trying to delete Subscription %s", subName))
-			err = h.Operator().OperatorsV1alpha1().ClusterServiceVersions(subNamespace).Delete(context.TODO(), startingCSV, metav1.DeleteOptions{})
-			Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("failed trying to delete ClusterServiceVersion %s", startingCSV))
+			log.Printf("Removed subscription %s", subName)
+
+			err = h.Operator().OperatorsV1alpha1().ClusterServiceVersions(subNamespace).Delete(context.TODO(), latestCSV, metav1.DeleteOptions{})
+			Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("failed trying to delete ClusterServiceVersion %s", latestCSV))
+			log.Printf("Removed csv %s", latestCSV)
 
 			Eventually(func() bool {
 				_, err := h.Operator().OperatorsV1alpha1().InstallPlans(subNamespace).Get(context.TODO(), sub.Status.Install.Name, metav1.GetOptions{})
 				return apierrors.IsNotFound(err)
 			}, 5*time.Minute, 10*time.Second).Should(BeTrue(), "installplan never garbage collected")
+			log.Printf("Verified installplan removal")
 
 			// Create subscription to the previous version
 			sub, err = h.Operator().OperatorsV1alpha1().Subscriptions(subNamespace).Create(context.TODO(), &operatorv1.Subscription{
@@ -243,35 +197,27 @@ func checkUpgrade(h *helper.H, subNamespace string, subName string, packageName 
 					Channel:                sub.Spec.Channel,
 					CatalogSourceNamespace: sub.Spec.CatalogSourceNamespace,
 					CatalogSource:          sub.Spec.CatalogSource,
-					InstallPlanApproval:    operatorv1.ApprovalManual,
+					InstallPlanApproval:    operatorv1.ApprovalAutomatic,
 					StartingCSV:            previousCSV,
 				},
 			}, metav1.CreateOptions{})
 			Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("failed trying to create Subscription %s", subName))
 
-			// Approve and manually verify the first installation to previousCSV
-			ip, err := getInstallPlan(h, sub)
-			Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("Failed getting InstallPlan for CSV %s", previousCSV))
-			err = approveInstallPlan(h, ip)
-			Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("Failed approving InstallPlan for CSV %s", previousCSV))
-			err = ensureCSVIsInstalled(h, previousCSV, subNamespace)
-			Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("CSV %s did not install successfully", previousCSV))
+			log.Printf("Created replacement subscription %s with starting CSV %s", subName, previousCSV)
 
-			// Update the Subscription to apply Automatic updates from now on in order to reach currentCSV
-			sub, err = h.Operator().OperatorsV1alpha1().Subscriptions(subNamespace).Get(context.TODO(), subName, metav1.GetOptions{})
-			Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("Failed retrieving updated subscription for %s", subName))
-			sub.Spec.InstallPlanApproval = operatorv1.ApprovalAutomatic
-			sub, err = h.Operator().OperatorsV1alpha1().Subscriptions(subNamespace).Update(context.TODO(), sub, metav1.UpdateOptions{})
-			Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("Failed updating subscription to Automatic for CSV %s", previousCSV))
-
-			// The previous CSV is now installed and a new InstallPlan is also created ready for approval to upgrade to startingCSV
-			// Approve and verify install to startingCSV
-			ip, err = getInstallPlan(h, sub)
-			Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("Failed getting InstallPlan for CSV %s", startingCSV))
-			err = approveInstallPlan(h, ip)
-			Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("Failed approving InstallPlan for CSV %s", startingCSV))
-			err = ensureCSVIsInstalled(h, startingCSV, subNamespace)
-			Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("CSV %s did not install successfully", startingCSV))
+			// Wait for the operator to arrive back on its latest CSV
+			err = wait.PollImmediate(5*time.Second, 15*time.Minute, func() (bool, error) {
+				csv, err := h.Operator().OperatorsV1alpha1().ClusterServiceVersions(sub.Namespace).Get(context.TODO(), latestCSV, metav1.GetOptions{})
+				if err != nil && !kerror.IsNotFound(err) {
+					log.Printf("Returning err %v", err)
+					return false, err
+				}
+				if csv.Status.Phase == operatorv1.CSVPhaseSucceeded {
+					return true, nil
+				}
+				return false, nil
+			})
+			Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("CSV %s did not eventually install successfully", latestCSV))
 
 		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
 	})
@@ -520,28 +466,36 @@ func getReplacesCSV(h *helper.H, subscriptionNS string, csvDisplayName string, c
 
 	h.SetServiceAccount("system:serviceaccount:%s:cluster-admin")
 	r := h.RunnerWithNoCommand()
+	r.Name = fmt.Sprintf("csvq-%s", csvDisplayName)
 
 	Expect(err).NotTo(HaveOccurred())
 	values := struct {
+		Name           string
 		OutputDir      string
 		Namespace      string
 		PackageName    string
 		PackageChannel string
 		ServiceName    string
 		ServicePort    string
+		CA             string
+		TokenFile      string
+		Server         string
 	}{
+		Name:           r.Name,
 		OutputDir:      runner.DefaultRunner.OutputDir,
 		Namespace:      subscriptionNS,
 		PackageName:    csvDisplayName,
 		PackageChannel: packageChannel,
 		ServiceName:    catalogSvcName,
 		ServicePort:    registrySvcPort,
+		Server:         "https://kubernetes.default",
+		CA:             "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt",
+		TokenFile:      "/var/run/secrets/kubernetes.io/serviceaccount/token",
 	}
 
 	registryQueryCmd, err := h.ConvertTemplateToString(cmdTestTemplate, values)
 	Expect(err).NotTo(HaveOccurred())
 
-	r.Name = fmt.Sprintf("csvq-%s", csvDisplayName)
 	r.Cmd = registryQueryCmd
 
 	// run tests

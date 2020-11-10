@@ -1,10 +1,12 @@
 package ocmprovider
 
 const (
+	crc        =  "crc"
 	integration = "int"
 	stage       = "stage"
 	prod        = "prod"
 
+	crcURL         = "https://clusters-service.apps-crc.testing"
 	integrationURL = "https://api-integration.6943.hive-integration.openshiftapps.com"
 	stageURL       = "https://api.stage.openshift.com"
 	prodURL        = "https://api.openshift.com"
@@ -16,6 +18,7 @@ var Environments = environments{
 	"": integration,
 
 	// environments available
+	crc:         crcURL,
 	integration: integrationURL,
 	stage:       stageURL,
 	prod:        prodURL,

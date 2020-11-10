@@ -151,21 +151,15 @@ Static files for `OSDe2e`  such as YAML manifests are managed using a project ca
 
 **[`pkger`]** takes and compresses assets into a single file for easier distribution. If your test has a static asset such as a manifest, add it into the **[`/assets/`]** directory. 
 
-Once your assets are in the correct directory, do the following:
+Once your assets are in the correct directory, they will automatically be added to the `pkged.go` file that is created by [`pkger`]. during a `make build`.
 
-1. Install **[`pkger`]** on your system
-```
-$ go get github.com/markbates/pkger/cmd/pkger
-```
-2. Have **[`pkger`]** update the asset file (`/pkged.go`)
-```
-pkger -include $(pwd)/assets
-```
-3. Verify your new files are present
+__Note__: `make build` or `make pkger` will automatically install [`pkger`] on your system
+
+You can debug [`pkger`] and ensure that your assets have been installed by running:
+
 ```
 pkger list
 ```
-4. Ensure the updated asset file is part of your PR.
 
 ## CRC Provider
 

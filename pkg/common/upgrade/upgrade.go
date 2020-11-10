@@ -65,19 +65,42 @@ func RunUpgrade() error {
 
 	var desired *configv1.ClusterVersion
 	if viper.GetBool(config.Upgrade.ManagedUpgrade) {
-		desired, err = TriggerManagedUpgrade(h)
+
+		// Check we are on a supported provider
+		provider, err := providers.ClusterProvider()
+		if err != nil {
+			return fmt.Errorf("can't determine provider for managed upgrade: %s", err)
+		}
+		switch provider.Type() {
+		case "moa":
+			fallthrough
+		case "ocm":
+			desired, err = TriggerManagedUpgrade(h)
+			if err != nil {
+				return fmt.Errorf("failed triggering upgrade: %v", err)
+			}
+		default:
+			return fmt.Errorf("unsupported provider for managed upgrades (%s)", provider.Type())
+		}
 	} else {
 		desired, err = TriggerUpgrade(h)
+		if err != nil {
+			return fmt.Errorf("failed triggering upgrade: %v", err)
+		}
 	}
-	if err != nil {
-		return fmt.Errorf("failed triggering upgrade: %v", err)
-	}
+
 	log.Println("Cluster acknowledged update request.")
 
 	log.Println("Upgrading...")
 	done = false
 	if err = wait.PollImmediate(10*time.Second, MaxDuration, func() (bool, error) {
 		if viper.GetBool(config.Upgrade.ManagedUpgrade) && viper.GetBool(config.Upgrade.WaitForWorkersToManagedUpgrade) {
+			// Keep the managed upgrade's configuration overrides in place, in case Hive has replaced them
+			err = overrideOperatorConfig(h)
+			// Log if it errored, but don't cancel the upgrade because of it
+			if err != nil {
+				log.Printf("problem overriding managed upgrade config: %v", err)
+			}
 			// If performing a managed upgrade, check if we want to wait for workers to fully upgrade too
 			done, msg, err = isManagedUpgradeDone(h, desired.Spec.DesiredUpdate)
 		} else {
@@ -242,7 +265,7 @@ func IsUpgradeDone(h *helper.H, desired *configv1.Update) (done bool, msg string
 // is being used, in which case the candidate channel will be used.
 func VersionToChannel(version *semver.Version) (string, error) {
 	useVersion := version
-	if viper.GetBool(config.Upgrade.OnlyUpgradeToZReleases) {
+	if viper.GetBool(config.Upgrade.UpgradeToLatestZ) {
 		var err error
 		useVersion, err = util.OpenshiftVersionToSemver(viper.GetString(config.Cluster.Version))
 

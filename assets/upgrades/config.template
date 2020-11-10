@@ -1,14 +1,33 @@
+configManager:
+  source: OCM
+  ocmBaseUrl: {{ .ProviderEnvironmentUrl }}
+  watchInterval: {{ .ProviderWatchInterval }}
 maintenance:
-  controlPlaneTime: 90
-  workerNodeTime: 8
+  controlPlaneTime: {{ .ControlPlaneTime }}
+  ignoredAlerts:
+  controlPlaneCriticals:
+  - etcdMembersDown
+  - KubeDeploymentReplicasMismatch
+  - ClusterOperatorDown
+  - MachineWithNoRunningPhase
+  - ClusterOperatorDegraded
 scale:
-  timeOut: 15
+  timeOut: {{ .ScaleTimeout }}
 upgradeWindow:
-  timeOut: 60
+  timeOut: {{ .UpgradeWindow }}
 nodeDrain:
-  timeOut: 10
+  timeOut: {{ .NodeDrainTimeout }}
+  expectedNodeDrainTime: {{ .ExpectedDrainTime }}
 healthCheck:
   ignoredCriticals:
   - DNSErrors05MinSRE
   - MetricsClientSendFailingSRE
   - UpgradeNodeScalingFailedSRE
+  - UpgradeClusterCheckFailedSRE
+verification:
+  ignoredNamespaces:
+  - openshift-logging
+  namespacePrefixesToCheck:
+  - openshift
+  - kube
+  - default

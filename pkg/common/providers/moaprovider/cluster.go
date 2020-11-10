@@ -1,6 +1,7 @@
 package moaprovider
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net"
@@ -15,6 +16,47 @@ import (
 	"github.com/openshift/osde2e/pkg/common/util"
 	"github.com/spf13/viper"
 )
+
+// IsValidClusterName validates the clustername prior to proceeding with it
+// in launching a cluster.
+func (m *MOAProvider) IsValidClusterName(clusterName string) (bool, error) {
+	// Create a context:
+	ctx := context.Background()
+
+	collection := m.ocmProvider.GetConnection().ClustersMgmt().V1().Clusters()
+
+	// Retrieve the list of clusters using pages of ten items, till we get a page that has less
+	// items than requests, as that marks the end of the collection:
+	size := 50
+	page := 1
+	searchPhrase := fmt.Sprintf("name = '%s'", clusterName)
+	for {
+		// Retrieve the page:
+		response, err := collection.List().
+			Search(searchPhrase).
+			Size(size).
+			Page(page).
+			SendContext(ctx)
+		if err != nil {
+			return false, fmt.Errorf("Can't retrieve page %d: %s\n", page, err)
+		}
+
+		if response.Total() != 0 {
+			return false, nil
+		}
+
+		// Break the loop if the size of the page is less than requested, otherwise go to
+		// the next page:
+		if response.Size() < size {
+			break
+		}
+		page++
+	}
+
+	// Name is valid.
+	return true, nil
+
+}
 
 // LaunchCluster will provision an AWS cluster.
 func (m *MOAProvider) LaunchCluster(clusterName string) (string, error) {
@@ -123,10 +165,18 @@ func (m *MOAProvider) Versions() (*spi.VersionList, error) {
 			if v.Default() {
 				defaultVersionOverride = version
 			}
-			spiVersions = append(spiVersions, spi.NewVersionBuilder().
+			spiVersion := spi.NewVersionBuilder().
 				Version(version).
 				Default(v.Default()).
-				Build())
+				Build()
+
+			for _, upgrade := range v.AvailableUpgrades() {
+				if version, err := util.OpenshiftVersionToSemver(upgrade); err == nil {
+					spiVersion.AddUpgradePath(version)
+				}
+			}
+
+			spiVersions = append(spiVersions, spiVersion)
 		}
 	}
 

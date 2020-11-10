@@ -20,7 +20,6 @@ func NextReleaseAfterGivenVersionFromVersionList(givenVersion *semver.Version, v
 	for _, version := range versionList {
 		versionSemver := version.Version()
 		majorMinor := createMajorMinorStringFromSemver(versionSemver)
-
 		if _, ok := versionBuckets[majorMinor]; !ok {
 			versionBuckets[majorMinor] = versionSemver
 		} else {
@@ -89,6 +88,23 @@ func NextReleaseAfterGivenVersionFromVersionList(givenVersion *semver.Version, v
 	return versionBuckets[nextMajorMinor], nil
 }
 
+// SortVersions accepts a pointer to a list of spi.Versions and sorts it
+func SortVersions(availableVersions []*spi.Version) {
+	sort.SliceStable(availableVersions, func(i, j int) bool {
+		this := availableVersions[i]
+		that := availableVersions[j]
+
+		if this == nil || that == nil {
+			return false
+		}
+
+		return this.Version().LessThan(that.Version())
+	})
+}
+
 func createMajorMinorStringFromSemver(version *semver.Version) string {
+	if version == nil {
+		return ""
+	}
 	return fmt.Sprintf("%d.%d", version.Major(), version.Minor())
 }

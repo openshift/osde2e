@@ -23,30 +23,12 @@ package v1 // github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1
 //
 // Counts of different classes of nodes inside a flavour.
 type FlavourNodesBuilder struct {
-	compute *int
-	infra   *int
-	master  *int
+	master *int
 }
 
 // NewFlavourNodes creates a new builder of 'flavour_nodes' objects.
 func NewFlavourNodes() *FlavourNodesBuilder {
 	return new(FlavourNodesBuilder)
-}
-
-// Compute sets the value of the 'compute' attribute to the given value.
-//
-//
-func (b *FlavourNodesBuilder) Compute(value int) *FlavourNodesBuilder {
-	b.compute = &value
-	return b
-}
-
-// Infra sets the value of the 'infra' attribute to the given value.
-//
-//
-func (b *FlavourNodesBuilder) Infra(value int) *FlavourNodesBuilder {
-	b.infra = &value
-	return b
 }
 
 // Master sets the value of the 'master' attribute to the given value.
@@ -62,8 +44,6 @@ func (b *FlavourNodesBuilder) Copy(object *FlavourNodes) *FlavourNodesBuilder {
 	if object == nil {
 		return b
 	}
-	b.compute = object.compute
-	b.infra = object.infra
 	b.master = object.master
 	return b
 }
@@ -71,8 +51,6 @@ func (b *FlavourNodesBuilder) Copy(object *FlavourNodes) *FlavourNodesBuilder {
 // Build creates a 'flavour_nodes' object using the configuration stored in the builder.
 func (b *FlavourNodesBuilder) Build() (object *FlavourNodes, err error) {
 	object = new(FlavourNodes)
-	object.compute = b.compute
-	object.infra = b.infra
 	object.master = b.master
 	return
 }

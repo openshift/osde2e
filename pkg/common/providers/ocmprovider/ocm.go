@@ -43,6 +43,8 @@ type OCMProvider struct {
 	// expected to meaningfully change over the course of a run.
 	versionCacheOnce sync.Once
 	versionCache     *spi.VersionList
+	clusterCache     map[string]*spi.Cluster
+	credentialCache  map[string]string
 }
 
 func init() {
@@ -81,6 +83,10 @@ func OCMConnection(token, env string, debug bool) (*ocm.Connection, error) {
 		Client(ClientID, "").
 		Logger(logger).
 		Tokens(token)
+
+	if env == crc {
+		builder = builder.Insecure(true)
+	}
 
 	connection, err := builder.Build()
 
@@ -127,6 +133,8 @@ func NewWithEnv(env string) (*OCMProvider, error) {
 		conn:             conn,
 		prodProvider:     prodProvider,
 		versionCacheOnce: sync.Once{},
+		clusterCache:     make(map[string]*spi.Cluster),
+		credentialCache:  make(map[string]string),
 	}, nil
 }
 
@@ -143,7 +151,7 @@ func (o *OCMProvider) Metrics(clusterID string) (*v1.ClusterMetrics, error) {
 // UpgradeSource indicates that for stage/production clusters, we should use Cincinnati.
 // For integration clusters, we should use the release controller.
 func (o *OCMProvider) UpgradeSource() spi.UpgradeSource {
-	if o.env != integration {
+	if o.env == stage || o.env == prod {
 		return spi.CincinnatiSource
 	}
 

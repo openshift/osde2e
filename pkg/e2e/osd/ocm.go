@@ -9,7 +9,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-var ocmTestName string = "[Suite: informing] [OSD] OCM"
+var ocmTestName string = "[Suite: e2e] [OSD] OCM"
 
 func init() {
 	alert.RegisterGinkgoAlert(ocmTestName, "SD-CICD", "Jeffrey Sica", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
@@ -27,9 +27,6 @@ var _ = ginkgo.Describe(ocmTestName, func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(metrics.CriticalAlertsFiring()).NotTo(BeNil())
 			Expect(metrics.OperatorsConditionFailing()).NotTo(BeNil())
-			Expect(metrics.Nodes().Compute()).NotTo(BeZero())
-			Expect(metrics.Nodes().Infra()).NotTo(BeZero())
-			Expect(metrics.Nodes().Master()).NotTo(BeZero())
 			Expect(metrics.ComputeNodesSockets().Empty()).NotTo(BeFalse())
 
 		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))

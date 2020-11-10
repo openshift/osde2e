@@ -1,10 +1,12 @@
 package ocmprovider
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"math"
 	"math/rand"
+	"net/http"
 	"os/user"
 	"strings"
 	"time"
@@ -16,6 +18,46 @@ import (
 	"github.com/openshift/osde2e/pkg/common/spi"
 	"github.com/spf13/viper"
 )
+
+// IsValidClusterName validates the clustername prior to proceeding with it
+// in launching a cluster.
+func (o *OCMProvider) IsValidClusterName(clusterName string) (bool, error) {
+	// Create a context:
+	ctx := context.Background()
+
+	collection := o.conn.ClustersMgmt().V1().Clusters()
+
+	// Retrieve the list of clusters using pages of ten items, till we get a page that has less
+	// items than requests, as that marks the end of the collection:
+	size := 50
+	page := 1
+	searchPhrase := fmt.Sprintf("name = '%s'", clusterName)
+	for {
+		// Retrieve the page:
+		response, err := collection.List().
+			Search(searchPhrase).
+			Size(size).
+			Page(page).
+			SendContext(ctx)
+		if err != nil {
+			return false, fmt.Errorf("Can't retrieve page %d: %s\n", page, err)
+		}
+
+		if response.Total() != 0 {
+			return false, nil
+		}
+
+		// Break the loop if the size of the page is less than requested, otherwise go to
+		// the next page:
+		if response.Size() < size {
+			break
+		}
+		page++
+	}
+
+	// Name is valid.
+	return true, nil
+}
 
 // LaunchCluster setups an new cluster using the OSD API and returns it's ID.
 func (o *OCMProvider) LaunchCluster(clusterName string) (string, error) {
@@ -62,6 +104,23 @@ func (o *OCMProvider) LaunchCluster(clusterName string) (string, error) {
 			ID(cloudProvider)).
 		Properties(clusterProperties)
 
+	if viper.GetBool(CCS) {
+		// If AWS credentials are set, this must be a CCS cluster
+		awsAccount := viper.GetString(AWSAccount)
+		awsAccessKey := viper.GetString(AWSAccessKey)
+		awsSecretKey := viper.GetString(AWSSecretKey)
+
+		if awsAccount != "" && awsAccessKey != "" && awsSecretKey != "" {
+			newCluster.CCS(v1.NewCCS().Enabled(true)).AWS(
+				v1.NewAWS().
+					AccountID(awsAccount).
+					AccessKeyID(awsAccessKey).
+					SecretAccessKey(awsSecretKey))
+		} else {
+			return "", fmt.Errorf("Invalid or no AWS Credentials provided for CCS cluster")
+		}
+	}
+
 	expiryInMinutes := viper.GetDuration(config.Cluster.ExpiryInMinutes)
 	if expiryInMinutes > 0 {
 		// Calculate an expiration date for the cluster so that it will be automatically deleted if
@@ -70,11 +129,19 @@ func (o *OCMProvider) LaunchCluster(clusterName string) (string, error) {
 		newCluster = newCluster.ExpirationTimestamp(expiration)
 	}
 
+	numComputeNodes := viper.GetInt(config.Cluster.NumWorkerNodes)
+	if numComputeNodes > 0 {
+		nodeBuilder = nodeBuilder.Compute(numComputeNodes)
+	}
+
 	// Configure the cluster to be Multi-AZ if configured
 	// We must manually configure the number of compute nodes
 	// Currently set to 9 nodes. Whatever it is, must be divisible by 3.
 	if multiAZ {
 		nodeBuilder = nodeBuilder.Compute(9)
+		if numComputeNodes > 0 && math.Mod(float64(numComputeNodes), float64(3)) == 0 {
+			nodeBuilder = nodeBuilder.Compute(numComputeNodes)
+		}
 		newCluster = newCluster.MultiAZ(viper.GetBool(config.Cluster.MultiAZ))
 	}
 
@@ -214,10 +281,15 @@ func (o *OCMProvider) GenerateProperties() (map[string]string, error) {
 // DeleteCluster requests the deletion of clusterID.
 func (o *OCMProvider) DeleteCluster(clusterID string) error {
 	var resp *v1.ClusterDeleteResponse
+	var cluster *spi.Cluster
+	var err error
+	var ok bool
 
-	cluster, err := o.GetCluster(clusterID)
-	if err != nil {
-		return fmt.Errorf("error retrieving cluster for deletion: %v", err)
+	if cluster, ok = o.clusterCache[clusterID]; !ok {
+		cluster, err = o.GetCluster(clusterID)
+		if err != nil {
+			return fmt.Errorf("error retrieving cluster for deletion: %v", err)
+		}
 	}
 
 	err = o.AddProperty(cluster, clusterproperties.Status, clusterproperties.StatusUninstalling)
@@ -247,20 +319,6 @@ func (o *OCMProvider) DeleteCluster(clusterID string) error {
 	if err != nil {
 		return fmt.Errorf("couldn't delete cluster '%s': %v", clusterID, err)
 	}
-
-	/*err = wait.PollImmediate(15*time.Second, 5*time.Minute, func() (bool, error) {
-		if _, err = o.GetCluster(clusterID); err != nil {
-			if strings.Contains(err.Error(), "identifier is '404', code is 'CLUSTERS-MGMT-404'") {
-				return true, nil
-			}
-			return false, nil
-		}
-		return false, nil
-	})
-
-	if err != nil {
-		return fmt.Errorf("Cluster still exists and has not uninstalled cleanly yet : %v", err)
-	}*/
 
 	return nil
 
@@ -308,6 +366,8 @@ func (o *OCMProvider) ScaleCluster(clusterID string, numComputeNodes int) error 
 			return errResp(resp.Error())
 		}
 
+		o.updateClusterCache(clusterID, resp.Body())
+
 		return nil
 	})
 
@@ -319,16 +379,6 @@ func (o *OCMProvider) ScaleCluster(clusterID string, numComputeNodes int) error 
 		return resp.Error()
 	}
 
-	finalCluster, err := o.GetCluster(clusterID)
-
-	if err != nil {
-		log.Printf("error attempting to retrieve cluster for verification: %v", err)
-	}
-
-	if finalCluster.NumComputeNodes() != numComputeNodes {
-		return fmt.Errorf("expected number of compute nodes (%d) not reflected in OCM (found %d)", numComputeNodes, finalCluster.NumComputeNodes())
-
-	}
 	log.Printf("Cluster successfully scaled to %d nodes", numComputeNodes)
 
 	return nil
@@ -384,6 +434,7 @@ func (o *OCMProvider) GetCluster(clusterID string) (*spi.Cluster, error) {
 	if err != nil {
 		return nil, err
 	}
+	o.clusterCache[clusterID] = cluster
 
 	return cluster, nil
 }
@@ -423,6 +474,10 @@ func (o *OCMProvider) getOCMCluster(clusterID string) (*v1.Cluster, error) {
 
 // ClusterKubeconfig returns the kubeconfig for the given cluster ID.
 func (o *OCMProvider) ClusterKubeconfig(clusterID string) ([]byte, error) {
+	if creds, ok := o.credentialCache[clusterID]; ok {
+		return []byte(creds), nil
+	}
+
 	var resp *v1.CredentialsGetResponse
 
 	err := retryer().Do(func() error {
@@ -449,6 +504,9 @@ func (o *OCMProvider) ClusterKubeconfig(clusterID string) ([]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("couldn't retrieve credentials for cluster '%s': %v", clusterID, err)
 	}
+
+	o.credentialCache[clusterID] = resp.Body().Kubeconfig()
+
 	return []byte(resp.Body().Kubeconfig()), nil
 }
 
@@ -496,8 +554,8 @@ func (o *OCMProvider) InstallAddons(clusterID string, addonIDs []string) (num in
 		addon := addonResp.Body()
 
 		alreadyInstalled := false
-		cluster, err := o.GetCluster(clusterID)
 
+		cluster, err := o.GetCluster(clusterID)
 		if err != nil {
 			return 0, fmt.Errorf("error getting current cluster state when trying to install addon %s", addonID)
 		}
@@ -535,6 +593,8 @@ func (o *OCMProvider) InstallAddons(clusterID string, addonIDs []string) (num in
 					log.Printf("%v", err)
 					return err
 				}
+
+				o.updateClusterCache(clusterID, aoar.Body().Cluster())
 
 				return nil
 			})
@@ -691,6 +751,8 @@ func (o *OCMProvider) ExtendExpiry(clusterID string, hours uint64, minutes uint6
 			return errResp(resp.Error())
 		}
 
+		o.updateClusterCache(clusterID, resp.Body())
+
 		return nil
 	})
 
@@ -702,17 +764,7 @@ func (o *OCMProvider) ExtendExpiry(clusterID string, hours uint64, minutes uint6
 		return resp.Error()
 	}
 
-	finalCluster, err := o.GetCluster(clusterID)
-
-	if err != nil {
-		log.Printf("error attempting to retrieve cluster for verification: %v", err)
-	}
-
-	if finalCluster.ExpirationTimestamp() != extendexpirytime {
-		return fmt.Errorf("expected expiration time %s not reflected in OCM (found %s)", extendexpirytime.UTC().Format("2002-01-02 14:03:02 Monday"), finalCluster.ExpirationTimestamp().UTC().Format("2002-01-02 14:03:02 Monday"))
-
-	}
-	log.Println("Successfully extended cluster expiry time to ", extendexpirytime.UTC().Format("2002-01-02 14:03:02 Monday"))
+	log.Println("Successfully extended cluster expiry time to", extendexpirytime.UTC().Format("Monday, 02 Jan 2006 15:04:05 MST"))
 
 	return nil
 }
@@ -737,7 +789,7 @@ func (o *OCMProvider) AddProperty(cluster *spi.Cluster, tag string, value string
 		return fmt.Errorf("error while building updated modified cluster object with new property: %v", err)
 	}
 
-	propertyFilename := fmt.Sprintf("%s-property-update.prom", cluster.ID())
+	propertyFilename := fmt.Sprintf("%s.osde2e-cluster-property-update.metrics.prom", cluster.ID())
 	data := fmt.Sprintf("# TYPE cicd_cluster_properties gauge\ncicd_cluster_properties{cluster_id=\"%s\",environment=\"%s\",job_id=\"%s\",property=\"%s\",region=\"%s\",value=\"%s\",version=\"%s\"} 0\n", cluster.ID(), o.Environment(), viper.GetString(config.JobID), tag, cluster.Region(), value, cluster.Version())
 	log.Println(data)
 	aws.WriteToS3(aws.CreateS3URL(viper.GetString(config.Tests.MetricsBucket), "incoming", propertyFilename), []byte(data))
@@ -770,17 +822,42 @@ func (o *OCMProvider) AddProperty(cluster *spi.Cluster, tag string, value string
 		return resp.Error()
 	}
 
-	finalCluster, err := o.GetCluster(cluster.ID())
+	// We need to update the cache post-update
+	o.updateClusterCache(cluster.ID(), resp.Body())
 
+	log.Printf("Successfully added property[%s] - %s \n", tag, resp.Body().Properties()[tag])
+
+	return nil
+}
+
+// Upgrade initiates a cluster upgrade to the given version
+func (o *OCMProvider) Upgrade(clusterID string, version string, pdbTimeoutMinutes int, t time.Time) error {
+
+	nodeDrain := v1.NewValue().Value(float64(pdbTimeoutMinutes)).Unit("minutes")
+	policy, err := v1.NewUpgradePolicy().Version(version).NextRun(t).ScheduleType("manual").NodeDrainGracePeriod(nodeDrain).Build()
 	if err != nil {
-		log.Printf("error attempting to retrieve cluster for verification: %v", err)
+		return err
 	}
 
-	if finalCluster.Properties()[tag] != value {
-		return fmt.Errorf("added property not reflected in OCM")
-
+	addResp, err := o.conn.ClustersMgmt().V1().Clusters().Cluster(clusterID).UpgradePolicies().Add().Body(policy).SendContext(context.TODO())
+	if err != nil {
+		return err
+	}
+	if addResp.Status() != http.StatusCreated {
+		log.Printf("Unable to schedule upgrade with provider (status %d, response %v)", addResp.Status(), addResp.Error())
+		return err
 	}
 
-	log.Printf("Successfully added property[%s] - %s \n", tag, finalCluster.Properties()[tag])
+	log.Printf("upgrade to version %s scheduled with provider for time %s", addResp.Body().Version(), addResp.Body().NextRun().Format(time.RFC3339))
+	return nil
+}
+
+// This assumes cluster is a resp.Body() response from an OCM update
+func (o *OCMProvider) updateClusterCache(id string, cluster *v1.Cluster) error {
+	c, err := o.ocmToSPICluster(cluster)
+	if err != nil {
+		return err
+	}
+	o.clusterCache[cluster.ID()] = c
 	return nil
 }

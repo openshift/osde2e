@@ -32,5 +32,7 @@ const (
 	//
 	IdentityProviderTypeGoogle IdentityProviderType = "google"
 	//
+	IdentityProviderTypeHtpasswd IdentityProviderType = "htpasswd"
+	//
 	IdentityProviderTypeOpenID IdentityProviderType = "open_ID"
 )

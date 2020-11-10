@@ -6,7 +6,7 @@ import (
 
 const (
 	// GitImage is the Docker image used to invoke Git.
-	GitImage = "docker.io/alpine/git@sha256:8f5659025d83a60e9d140123bb1b27f3c334578aef10d002da4e5848580f1a6c"
+	GitImage = "docker.io/alpine/git:v2.26.2"
 
 	// tmpClonePath is the path cloned to by the container.
 	tmpClonePath = "/git"

@@ -26,6 +26,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"path"
 	"time"
 
 	jsoniter "github.com/json-iterator/go"
@@ -84,6 +85,17 @@ func (c *UpgradePolicyClient) Update() *UpgradePolicyUpdateRequest {
 		path:      c.path,
 		metric:    c.metric,
 	}
+}
+
+// State returns the target 'upgrade_policy_state' resource.
+//
+// Reference to the state of the upgrade policy.
+func (c *UpgradePolicyClient) State() *UpgradePolicyStateClient {
+	return NewUpgradePolicyStateClient(
+		c.transport,
+		path.Join(c.path, "state"),
+		path.Join(c.metric, "state"),
+	)
 }
 
 // UpgradePolicyPollRequest is the request for the Poll method.

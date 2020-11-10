@@ -176,6 +176,17 @@ func (c *ClusterClient) Logs() *LogsClient {
 	)
 }
 
+// MachinePools returns the target 'machine_pools' resource.
+//
+// Reference to the resource that manages the collection of machine pool resources.
+func (c *ClusterClient) MachinePools() *MachinePoolsClient {
+	return NewMachinePoolsClient(
+		c.transport,
+		path.Join(c.path, "machine_pools"),
+		path.Join(c.metric, "machine_pools"),
+	)
+}
+
 // MetricQueries returns the target 'metric_queries' resource.
 //
 // Reference to the resource that manages metrics queries for the cluster.

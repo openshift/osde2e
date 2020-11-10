@@ -84,6 +84,12 @@ func New() (*Provider, error) {
 	return provider, nil
 }
 
+// IsValidClusterName validates the clustername prior to proceeding with it
+// in launching a cluster.
+func (m *Provider) IsValidClusterName(clusterName string) (bool, error) {
+	return true, nil
+}
+
 // LaunchCluster CRCs a launch cluster operation.
 func (m *Provider) LaunchCluster(clusterName string) (string, error) {
 	home, err := os.UserHomeDir()
@@ -295,5 +301,12 @@ func (m *Provider) ExtendExpiry(clusterID string, hours uint64, minutes uint64, 
 func (m *Provider) AddProperty(cluster *spi.Cluster, tag string, value string) error {
 	// Noop for now and just note it.
 	log.Printf("AddProperty is unsupported by CRC clusters")
+	return nil
+}
+
+// Upgrade CRCs initiates a cluster upgrade to the given version
+func (m *Provider) Upgrade(clusterID string, version string, pdbTimeoutMinutes int, t time.Time) error {
+	// Noop for now and just note it.
+	log.Printf("Upgrade is unsupported by CRC clusters")
 	return nil
 }

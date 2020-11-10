@@ -2,6 +2,7 @@ package versions
 
 import (
 	"fmt"
+	"log"
 	"math"
 
 	"github.com/Masterminds/semver"
@@ -42,7 +43,7 @@ func GetVersionForUpgrade(installVersion *semver.Version, versionList *spi.Versi
 	versionSelectors := upgradeselectors.GetVersionSelectors()
 
 	for _, versionSelector := range versionSelectors {
-		if versionSelector.ShouldUse(upgradeSource) && versionSelector.Priority() > curPriority {
+		if versionSelector.ShouldUse() && versionSelector.Priority() > curPriority {
 			selectedVersionSelector = versionSelector
 			curPriority = versionSelector.Priority()
 		}
@@ -53,11 +54,18 @@ func GetVersionForUpgrade(installVersion *semver.Version, versionList *spi.Versi
 		return "", "", nil
 	}
 
-	releaseName, image, err := selectedVersionSelector.SelectVersion(installVersion, versionList)
+	release, selector, err := selectedVersionSelector.SelectVersion(spi.NewVersionBuilder().Version(installVersion).Build(), versionList)
 
-	if releaseName == "" && err == nil {
-		return util.NoVersionFound, "", nil
+	if release == nil || release.Version().Original() == "" {
+		if err != nil {
+			log.Printf("Error selecting version: %s", err.Error())
+		}
+		return util.NoVersionFound, "", err
 	}
 
-	return releaseName, image, err
+	openshiftRelease := fmt.Sprintf("openshift-v%s", release.Version().Original())
+
+	log.Printf("Selected %s using selector `%s`", openshiftRelease, selector)
+
+	return openshiftRelease, "", err
 }

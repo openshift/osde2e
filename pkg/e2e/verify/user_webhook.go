@@ -17,11 +17,6 @@ import (
 	"k8s.io/client-go/rest"
 )
 
-const (
-	SRE_PROVIDER_NAME      = "OpenShift_SRE"
-	CUSTOMER_PROVIDER_NAME = "CUSTOM"
-)
-
 var userWebhookTestName string = "[Suite: service-definition] [OSD] user validating webhook"
 
 func init() {
@@ -32,95 +27,569 @@ var _ = ginkgo.Describe(userWebhookTestName, func() {
 	h := helper.New()
 
 	ginkgo.Context("user validating webhook", func() {
-		ginkgo.It("dedicated admins cannot manage redhat users", func() {
+
+		// for all tests, "manage" is synonymous with "create/update/delete"
+
+		//system:admin can do whatever it wants
+
+		ginkgo.It("system:admin can manage redhat users with SRE IDP and RH group", func() {
 			userName := util.RandomStr(5) + "@redhat.com"
-			user, err := createUser(userName, []string{}, h)
+			identities := []string{"OpenShift_SRE:" + util.RandomStr(5)}
+			groups := []string{"osd-devaccess"}
+			// we need to add the username to the group before we create the user,
+			// because the user object cannot be created until the username is in
+			// the group
+			addUserToGroup(userName, groups[0], h)
+			h.Impersonate(rest.ImpersonationConfig{
+				UserName: "system:admin",
+				Groups: []string{
+					"system:authenticated",
+					"system:authenticated:oauth",
+				},
+			})
+			user, err := createUser(userName, identities, groups, h)
 			defer func() {
 				h.Impersonate(rest.ImpersonationConfig{})
 				deleteUser(user.Name, h)
 			}()
 			Expect(err).NotTo(HaveOccurred())
+			err = deleteUser(user.Name, h)
+			Expect(err).NotTo(HaveOccurred())
+		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
 
+		ginkgo.It("system:admin can manage redhat users with SRE IDP and no group", func() {
+			userName := util.RandomStr(5) + "@redhat.com"
+			identities := []string{"OpenShift_SRE:" + util.RandomStr(5)}
 			h.Impersonate(rest.ImpersonationConfig{
-				UserName: "test@customdomain",
+				UserName: "system:admin",
 				Groups: []string{
-					"dedicated-admins",
+					"system:authenticated",
+					"system:authenticated:oauth",
 				},
 			})
-			err = deleteUser(userName, h)
+			user, err := createUser(userName, identities, []string{}, h)
+			defer func() {
+				h.Impersonate(rest.ImpersonationConfig{})
+				deleteUser(user.Name, h)
+			}()
+			Expect(err).NotTo(HaveOccurred())
+			err = deleteUser(user.Name, h)
+			Expect(err).NotTo(HaveOccurred())
+		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
+
+		ginkgo.It("system:admin can manage redhat users with other IDP and RH group", func() {
+			userName := util.RandomStr(5) + "@redhat.com"
+			identities := []string{"otherIDP:testing_string"}
+			groups := []string{"osd-devaccess"}
+			// we need to add the username to the group before we create the user,
+			// because the user object cannot be created until the username is in
+			// the group
+			addUserToGroup(userName, groups[0], h)
+			h.Impersonate(rest.ImpersonationConfig{
+				UserName: "system:admin",
+				Groups: []string{
+					"system:authenticated",
+					"system:authenticated:oauth",
+				},
+			})
+			user, err := createUser(userName, identities, groups, h)
+			defer func() {
+				h.Impersonate(rest.ImpersonationConfig{})
+				deleteUser(user.Name, h)
+			}()
+			Expect(err).NotTo(HaveOccurred())
+			err = deleteUser(user.Name, h)
+			Expect(err).NotTo(HaveOccurred())
+		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
+
+		ginkgo.It("system:admin can manage redhat users with other IDP and no group", func() {
+			userName := util.RandomStr(5) + "@redhat.com"
+			identities := []string{"otherIDP:testing_string"}
+			h.Impersonate(rest.ImpersonationConfig{
+				UserName: "system:admin",
+				Groups: []string{
+					"system:authenticated",
+					"system:authenticated:oauth",
+				},
+			})
+			user, err := createUser(userName, identities, []string{}, h)
+			defer func() {
+				h.Impersonate(rest.ImpersonationConfig{})
+				deleteUser(user.Name, h)
+			}()
+			Expect(err).NotTo(HaveOccurred())
+			err = deleteUser(user.Name, h)
+			Expect(err).NotTo(HaveOccurred())
+		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
+
+		ginkgo.It("system:admin can manage customer users with SRE IDP and RH group", func() {
+			userName := util.RandomStr(5) + "@customdomain"
+			identities := []string{"OpenShift_SRE:" + util.RandomStr(5)}
+			groups := []string{"osd-devaccess"}
+			// we need to add the username to the group before we create the user,
+			// because the user object cannot be created until the username is in
+			// the group
+			addUserToGroup(userName, groups[0], h)
+			h.Impersonate(rest.ImpersonationConfig{
+				UserName: "system:admin",
+				Groups: []string{
+					"system:authenticated",
+					"system:authenticated:oauth",
+				},
+			})
+			user, err := createUser(userName, identities, groups, h)
+			defer func() {
+				h.Impersonate(rest.ImpersonationConfig{})
+				deleteUser(user.Name, h)
+			}()
+			Expect(err).NotTo(HaveOccurred())
+			err = deleteUser(user.Name, h)
+			Expect(err).NotTo(HaveOccurred())
+		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
+
+		ginkgo.It("system:admin can manage customer users with SRE IDP and no group", func() {
+			userName := util.RandomStr(5) + "@customdomain"
+			identities := []string{"OpenShift_SRE:" + util.RandomStr(5)}
+			h.Impersonate(rest.ImpersonationConfig{
+				UserName: "system:admin",
+				Groups: []string{
+					"system:authenticated",
+					"system:authenticated:oauth",
+				},
+			})
+			user, err := createUser(userName, identities, []string{}, h)
+			defer func() {
+				h.Impersonate(rest.ImpersonationConfig{})
+				deleteUser(user.Name, h)
+			}()
+			Expect(err).NotTo(HaveOccurred())
+			err = deleteUser(user.Name, h)
+			Expect(err).NotTo(HaveOccurred())
+		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
+
+		ginkgo.It("system:admin can manage customer users with other IDP and RH group", func() {
+			userName := util.RandomStr(5) + "@customdomain"
+			identities := []string{"otherIDP:testing_string"}
+			groups := []string{"osd-devaccess"}
+			// we need to add the username to the group before we create the user,
+			// because the user object cannot be created until the username is in
+			// the group
+			addUserToGroup(userName, groups[0], h)
+			h.Impersonate(rest.ImpersonationConfig{
+				UserName: "system:admin",
+				Groups: []string{
+					"system:authenticated",
+					"system:authenticated:oauth",
+				},
+			})
+			user, err := createUser(userName, identities, groups, h)
+			defer func() {
+				h.Impersonate(rest.ImpersonationConfig{})
+				deleteUser(user.Name, h)
+			}()
+			Expect(err).NotTo(HaveOccurred())
+			err = deleteUser(user.Name, h)
+			Expect(err).NotTo(HaveOccurred())
+		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
+
+		ginkgo.It("system:admin can manage customer users with other IDP and no group", func() {
+			userName := util.RandomStr(5) + "@customdomain"
+			identities := []string{"otherIDP:testing_string"}
+			h.Impersonate(rest.ImpersonationConfig{
+				UserName: "system:admin",
+				Groups: []string{
+					"system:authenticated",
+					"system:authenticated:oauth",
+				},
+			})
+			user, err := createUser(userName, identities, []string{}, h)
+			defer func() {
+				h.Impersonate(rest.ImpersonationConfig{})
+				deleteUser(user.Name, h)
+			}()
+			Expect(err).NotTo(HaveOccurred())
+			err = deleteUser(user.Name, h)
+			Expect(err).NotTo(HaveOccurred())
+		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
+
+		// not testing osd-sre-admins because RBAC prevents them from managing
+		// users, even though webhook allows them to
+
+		// not testing system:serviceaccount:openshift-authentication:oauth-openshift
+		// because RBAC prevents it from managing users, even though webhook
+		// allows it to
+
+		// osd-sre-cluster-admins can manage protected RH users as long as the
+		// user is in one of the protected groups and is using the SRE IdP
+		ginkgo.It("osd-sre-cluster-admins can manage protected redhat users with SRE IDP and RH group", func() {
+			userName := util.RandomStr(5) + "@redhat.com"
+			identities := []string{"OpenShift_SRE:" + util.RandomStr(5)}
+			groups := []string{"osd-devaccess"}
+			// we need to add the username to the group before we create the user,
+			// because the user object cannot be created until the username is in
+			// the group
+			addUserToGroup(userName, groups[0], h)
+			h.Impersonate(rest.ImpersonationConfig{
+				UserName: "test-user@redhat.com",
+				Groups: []string{
+					"osd-sre-cluster-admins",
+					"system:authenticated",
+					"system:authenticated:oauth",
+				},
+			})
+			user, err := createUser(userName, identities, groups, h)
+			defer func() {
+				h.Impersonate(rest.ImpersonationConfig{})
+				deleteUser(user.Name, h)
+			}()
+			Expect(err).NotTo(HaveOccurred())
+			err = deleteUser(user.Name, h)
+			Expect(err).NotTo(HaveOccurred())
+		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
+
+		// osd-sre-cluster-admins cannot create/update protected RH users if
+		// the user is using the SRE IdP but is not in one of the protected
+		// groups
+		ginkgo.It("osd-sre-cluster-admins cannot create/update protected redhat users with SRE IDP and no group", func() {
+			userName := util.RandomStr(5) + "@redhat.com"
+			identities := []string{"OpenShift_SRE:" + util.RandomStr(5)}
+			h.Impersonate(rest.ImpersonationConfig{
+				UserName: "test-user@redhat.com",
+				Groups: []string{
+					"osd-sre-cluster-admins",
+					"system:authenticated",
+					"system:authenticated:oauth",
+				},
+			})
+			user, err := createUser(userName, identities, []string{}, h)
+			defer func() {
+				h.Impersonate(rest.ImpersonationConfig{})
+				deleteUser(user.Name, h)
+			}()
 			Expect(err).To(HaveOccurred())
 		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
 
-		ginkgo.It("dedicated admins can manage customer users", func() {
-			userName := util.RandomStr(5) + "@customdomain"
-			user, err := createUser(userName, []string{}, h)
+		// osd-sre-cluster-admins cannot create/update protected RH users if
+		// the user is in one of the protected groups but is not using the SRE
+		// IdP
+		ginkgo.It("osd-sre-cluster-admins cannot create/update protected redhat users with other IDP and RH group", func() {
+			userName := util.RandomStr(5) + "@redhat.com"
+			identities := []string{"otherIDP:testing_string"}
+			groups := []string{"osd-devaccess"}
+			// we need to add the username to the group before we create the user,
+			// because the user object cannot be created until the username is in
+			// the group
+			addUserToGroup(userName, groups[0], h)
+			h.Impersonate(rest.ImpersonationConfig{
+				UserName: "test-user@redhat.com",
+				Groups: []string{
+					"osd-sre-cluster-admins",
+					"system:authenticated",
+					"system:authenticated:oauth",
+				},
+			})
+			user, err := createUser(userName, identities, groups, h)
+			defer func() {
+				h.Impersonate(rest.ImpersonationConfig{})
+				deleteUser(user.Name, h)
+			}()
+			Expect(err).To(HaveOccurred())
+		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
+
+		// osd-sre-cluster-admins can manage RH users if the user is both not
+		// using the SRE IdP and is not in one of the protected groups
+		ginkgo.It("osd-sre-cluster-admins can manage non-protected redhat users with other IDP and no group", func() {
+			userName := util.RandomStr(5) + "@redhat.com"
+			identities := []string{"otherIDP:testing_string"}
+			h.Impersonate(rest.ImpersonationConfig{
+				UserName: "test-user@redhat.com",
+				Groups: []string{
+					"osd-sre-cluster-admins",
+					"system:authenticated",
+					"system:authenticated:oauth",
+				},
+			})
+			user, err := createUser(userName, identities, []string{}, h)
 			defer func() {
 				h.Impersonate(rest.ImpersonationConfig{})
 				deleteUser(user.Name, h)
 			}()
 			Expect(err).NotTo(HaveOccurred())
+			err = deleteUser(user.Name, h)
+			Expect(err).NotTo(HaveOccurred())
+		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
 
+		// osd-sre-cluster-admins can manage customer users
+		ginkgo.It("osd-sre-cluster-admins can manage customer users with other IDP and no group", func() {
+			userName := util.RandomStr(5) + "@customdomain"
+			identities := []string{"otherIDP:testing_string"}
+			h.Impersonate(rest.ImpersonationConfig{
+				UserName: "test-user@redhat.com",
+				Groups: []string{
+					"osd-sre-cluster-admins",
+					"system:authenticated",
+					"system:authenticated:oauth",
+				},
+			})
+			user, err := createUser(userName, identities, []string{}, h)
+			defer func() {
+				h.Impersonate(rest.ImpersonationConfig{})
+				deleteUser(user.Name, h)
+			}()
+			Expect(err).NotTo(HaveOccurred())
+			err = deleteUser(user.Name, h)
+			Expect(err).NotTo(HaveOccurred())
+		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
+
+		// dedicated-admins can only manage non-RH users
+
+		ginkgo.It("dedicated admins cannot manage redhat users with SRE IDP and RH group", func() {
+			userName := util.RandomStr(5) + "@redhat.com"
+			identities := []string{"OpenShift_SRE:" + util.RandomStr(5)}
+			groups := []string{"osd-devaccess"}
+			// we need to add the username to the group before we create the user,
+			// because the user object cannot be created until the username is in
+			// the group
+			addUserToGroup(userName, groups[0], h)
 			h.Impersonate(rest.ImpersonationConfig{
 				UserName: "test@customdomain",
 				Groups: []string{
 					"dedicated-admins",
 					"system:authenticated",
+					"system:authenticated:oauth",
 				},
 			})
-			err = deleteUser(userName, h)
-			Expect(err).NotTo(HaveOccurred())
-		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
-
-		ginkgo.It("dedicated admins cannot manage redhat user identity", func() {
-			providerUsername := util.RandomStr(5)
-			idName := SRE_PROVIDER_NAME + ":" + util.RandomStr(5)
-			identity, err := createIdentity(idName, SRE_PROVIDER_NAME, providerUsername, h)
+			user, err := createUser(userName, identities, groups, h)
 			defer func() {
 				h.Impersonate(rest.ImpersonationConfig{})
-				err = deleteIdentity(identity.Name, h)
-				Expect(err).NotTo(HaveOccurred())
+				deleteUser(user.Name, h)
 			}()
-			Expect(err).NotTo(HaveOccurred())
+			Expect(err).To(HaveOccurred())
+		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
 
+		ginkgo.It("dedicated admins cannot manage redhat users with SRE IDP and no group", func() {
+			userName := util.RandomStr(5) + "@redhat.com"
+			identities := []string{"OpenShift_SRE:" + util.RandomStr(5)}
 			h.Impersonate(rest.ImpersonationConfig{
 				UserName: "test@customdomain",
 				Groups: []string{
 					"dedicated-admins",
+					"system:authenticated",
+					"system:authenticated:oauth",
 				},
 			})
-			err = deleteIdentity(idName, h)
+			user, err := createUser(userName, identities, []string{}, h)
+			defer func() {
+				h.Impersonate(rest.ImpersonationConfig{})
+				deleteUser(user.Name, h)
+			}()
 			Expect(err).To(HaveOccurred())
 		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
 
-		ginkgo.It("dedicated admins can manage customer user identity", func() {
-			providerUsername := util.RandomStr(5)
-			idName := CUSTOMER_PROVIDER_NAME + ":" + util.RandomStr(5)
-			identity, err := createIdentity(idName, CUSTOMER_PROVIDER_NAME, providerUsername, h)
-			defer func() {
-				h.Impersonate(rest.ImpersonationConfig{})
-				err = deleteIdentity(identity.Name, h)
-				Expect(err).NotTo(HaveOccurred())
-			}()
-			Expect(err).NotTo(HaveOccurred())
-
+		ginkgo.It("dedicated admins cannot manage redhat users with other IDP and RH group", func() {
+			userName := util.RandomStr(5) + "@redhat.com"
+			identities := []string{"otherIDP:testing_string"}
+			groups := []string{"osd-devaccess"}
+			// we need to add the username to the group before we create the user,
+			// because the user object cannot be created until the username is in
+			// the group
+			addUserToGroup(userName, groups[0], h)
 			h.Impersonate(rest.ImpersonationConfig{
 				UserName: "test@customdomain",
 				Groups: []string{
 					"dedicated-admins",
+					"system:authenticated",
+					"system:authenticated:oauth",
 				},
 			})
-			err = deleteIdentity(idName, h)
+			user, err := createUser(userName, identities, groups, h)
+			defer func() {
+				h.Impersonate(rest.ImpersonationConfig{})
+				deleteUser(user.Name, h)
+			}()
 			Expect(err).To(HaveOccurred())
 		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
+
+		ginkgo.It("dedicated admins cannot manage redhat users with other IDP and no group", func() {
+			userName := util.RandomStr(5) + "@redhat.com"
+			identities := []string{"otherIDP:testing_string"}
+			h.Impersonate(rest.ImpersonationConfig{
+				UserName: "test@customdomain",
+				Groups: []string{
+					"dedicated-admins",
+					"system:authenticated",
+					"system:authenticated:oauth",
+				},
+			})
+			user, err := createUser(userName, identities, []string{}, h)
+			defer func() {
+				h.Impersonate(rest.ImpersonationConfig{})
+				deleteUser(user.Name, h)
+			}()
+			Expect(err).To(HaveOccurred())
+		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
+
+		ginkgo.It("dedicated admins can manage customer users with other IdP and no group", func() {
+			userName := util.RandomStr(5) + "@customdomain"
+			identities := []string{"otherIDP:testing_string"}
+			h.Impersonate(rest.ImpersonationConfig{
+				UserName: "test@customdomain",
+				Groups: []string{
+					"dedicated-admins",
+					"system:authenticated",
+					"system:authenticated:oauth",
+				},
+			})
+			user, err := createUser(userName, identities, []string{}, h)
+			defer func() {
+				h.Impersonate(rest.ImpersonationConfig{})
+				deleteUser(user.Name, h)
+			}()
+			Expect(err).NotTo(HaveOccurred())
+			err = deleteUser(user.Name, h)
+			Expect(err).NotTo(HaveOccurred())
+		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
+
+		ginkgo.It("dedicated admins can manage customer users with other IdP and customer group", func() {
+			userName := util.RandomStr(5) + "@customdomain"
+			identities := []string{"otherIDP:testing_string"}
+			groups := []string{"dedicated-admins"}
+			// we need to add the username to the group before we create the user,
+			// because the user object cannot be created until the username is in
+			// the group
+			addUserToGroup(userName, groups[0], h)
+			h.Impersonate(rest.ImpersonationConfig{
+				UserName: "test@customdomain",
+				Groups: []string{
+					"dedicated-admins",
+					"system:authenticated",
+					"system:authenticated:oauth",
+				},
+			})
+			user, err := createUser(userName, identities, groups, h)
+			defer func() {
+				h.Impersonate(rest.ImpersonationConfig{})
+				deleteUser(user.Name, h)
+			}()
+			Expect(err).NotTo(HaveOccurred())
+			err = deleteUser(user.Name, h)
+			Expect(err).NotTo(HaveOccurred())
+		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
+
+		// clean-up operations. osd-sre-cluster-admins should be allowed to
+		// delete a protected RH user that is either using the SRE IdP and is
+		// not in a protected group, or that is in a protected group and is
+		// not using the SRE IdP - we do not want these combinations to be
+		// possible, so we must have a way to clean them up if we find users
+		// who match these combinations (e.g. were created before webhook was
+		// put into place)
+
+		ginkgo.It("osd-sre-cluster-admins can delete protected redhat users with SRE IDP and no group", func() {
+			userName := util.RandomStr(5) + "@redhat.com"
+			identities := []string{"OpenShift_SRE:" + util.RandomStr(5)}
+			user, err := createUser(userName, identities, []string{}, h)
+			defer func() {
+				h.Impersonate(rest.ImpersonationConfig{})
+				deleteUser(user.Name, h)
+			}()
+			Expect(err).NotTo(HaveOccurred())
+			h.Impersonate(rest.ImpersonationConfig{
+				UserName: "test-user@redhat.com",
+				Groups: []string{
+					"osd-sre-cluster-admins",
+					"system:authenticated",
+					"system:authenticated:oauth",
+				},
+			})
+			err = deleteUser(user.Name, h)
+			Expect(err).NotTo(HaveOccurred())
+		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
+
+		ginkgo.It("osd-sre-cluster-admins can delete protected redhat users with other IDP and RH group", func() {
+			userName := util.RandomStr(5) + "@redhat.com"
+			identities := []string{"otherIDP:testing_string"}
+			groups := []string{"osd-devaccess"}
+			// we need to add the username to the group before we create the user,
+			// because the user object cannot be created until the username is in
+			// the group
+			addUserToGroup(userName, groups[0], h)
+			user, err := createUser(userName, identities, groups, h)
+			defer func() {
+				h.Impersonate(rest.ImpersonationConfig{})
+				deleteUser(user.Name, h)
+			}()
+			Expect(err).NotTo(HaveOccurred())
+			h.Impersonate(rest.ImpersonationConfig{
+				UserName: "test-user@redhat.com",
+				Groups: []string{
+					"osd-sre-cluster-admins",
+					"system:authenticated",
+					"system:authenticated:oauth",
+				},
+			})
+			err = deleteUser(user.Name, h)
+			Expect(err).NotTo(HaveOccurred())
+		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
+
+		// dedicated-admins should not be able to delete these users, however
+
+		ginkgo.It("dedicated-admins cannot delete protected redhat users with SRE IDP and no group", func() {
+			userName := util.RandomStr(5) + "@redhat.com"
+			identities := []string{"OpenShift_SRE:" + util.RandomStr(5)}
+			user, err := createUser(userName, identities, []string{}, h)
+			defer func() {
+				h.Impersonate(rest.ImpersonationConfig{})
+				deleteUser(user.Name, h)
+			}()
+			Expect(err).NotTo(HaveOccurred())
+			h.Impersonate(rest.ImpersonationConfig{
+				UserName: "test@customdomain",
+				Groups: []string{
+					"dedicated-admins",
+					"system:authenticated",
+					"system:authenticated:oauth",
+				},
+			})
+			err = deleteUser(user.Name, h)
+			Expect(err).To(HaveOccurred())
+		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
+
+		ginkgo.It("dedicated-admins cannot delete protected redhat users with other IDP and RH group", func() {
+			userName := util.RandomStr(5) + "@redhat.com"
+			identities := []string{"otherIDP:testing_string"}
+			groups := []string{"osd-devaccess"}
+			// we need to add the username to the group before we create the user,
+			// because the user object cannot be created until the username is in
+			// the group
+			addUserToGroup(userName, groups[0], h)
+			user, err := createUser(userName, identities, groups, h)
+			defer func() {
+				h.Impersonate(rest.ImpersonationConfig{})
+				deleteUser(user.Name, h)
+			}()
+			Expect(err).NotTo(HaveOccurred())
+			h.Impersonate(rest.ImpersonationConfig{
+				UserName: "test@customdomain",
+				Groups: []string{
+					"dedicated-admins",
+					"system:authenticated",
+					"system:authenticated:oauth",
+				},
+			})
+			err = deleteUser(user.Name, h)
+			Expect(err).To(HaveOccurred())
+		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
+
 	})
 })
 
-func createUser(userName string, groups []string, h *helper.H) (*userv1.User, error) {
+func createUser(userName string, identities []string, groups []string, h *helper.H) (*userv1.User, error) {
 	user := &userv1.User{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: userName,
 		},
-		Groups: groups,
+		Identities: identities,
+		Groups:     groups,
 	}
 	return h.User().UserV1().Users().Create(context.TODO(), user, metav1.CreateOptions{})
 }
@@ -129,17 +598,10 @@ func deleteUser(userName string, h *helper.H) error {
 	return h.User().UserV1().Users().Delete(context.TODO(), userName, metav1.DeleteOptions{})
 }
 
-func createIdentity(idName string, providername string, providerUserName string, h *helper.H) (*userv1.Identity, error) {
-	identity := &userv1.Identity{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: idName,
-		},
-		ProviderName:     providername,
-		ProviderUserName: providerUserName,
-	}
-	return h.User().UserV1().Identities().Create(context.TODO(), identity, metav1.CreateOptions{})
-}
+func addUserToGroup(userName string, groupName string, h *helper.H) (result *userv1.Group, err error) {
+	group, err := h.User().UserV1().Groups().Get(context.TODO(), groupName, metav1.GetOptions{})
+	Expect(err).NotTo(HaveOccurred())
 
-func deleteIdentity(idName string, h *helper.H) error {
-	return h.User().UserV1().Identities().Delete(context.TODO(), idName, metav1.DeleteOptions{})
+	group.Users = append(group.Users, userName)
+	return h.User().UserV1().Groups().Update(context.TODO(), group, metav1.UpdateOptions{})
 }

@@ -296,7 +296,8 @@ func runGinkgoTests() error {
 
 		// configure cluster and upgrade versions
 		if err = ChooseVersions(); err != nil {
-			return fmt.Errorf("failed to configure versions: %v", err)
+			log.Printf("failed to configure versions: %v", err)
+			return nil
 		}
 
 		switch {
@@ -311,6 +312,9 @@ func runGinkgoTests() error {
 			return nil
 		case viper.GetString(config.Upgrade.ReleaseName) == util.NoVersionFound:
 			log.Printf("No valid upgrade versions were found. Skipping tests.")
+			return nil
+		case viper.GetString(config.Upgrade.Image) != "":
+			log.Printf("image-based managed upgrades are unsupported: %s", viper.GetString(config.Upgrade.Image))
 			return nil
 		}
 	}
@@ -515,7 +519,7 @@ func cleanupAfterE2E(h *helper.H) (errors []error) {
 			arguments = []string{}
 		}
 		log.Println("Running addon cleanup...")
-		h.RunAddonTests("addon-cleanup", harnesses, arguments)
+		h.RunAddonTests("addon-cleanup", 300, harnesses, arguments)
 	}
 
 	// We need to clean up our helper tests manually.

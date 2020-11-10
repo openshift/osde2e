@@ -67,21 +67,17 @@ var keyToSecretMappingMutex = sync.Mutex{}
 
 // Upgrade config keys.
 var Upgrade = struct {
-	// UpgradeToCISIfPossible will upgrade to the most recent cluster image set if it's newer than the install version
-	// Env: UPGRADE_TO_CIS_IF_POSSIBLE
-	UpgradeToCISIfPossible string
+	// UpgradeToLatest will look for the newest-possible version and select that
+	// Env: UPGRADE_TO_LATEST
+	UpgradeToLatest string
 
-	// OnlyUpgradeToZReleases will restrict upgrades to selecting Z releases on stage/prod.
-	// Env: ONLY_UPGRADE_TO_Z_RELEASES
-	OnlyUpgradeToZReleases string
+	// UpgradeToLatestY will look for the latest Y version for the cluster and select that
+	// Env: UPGRADE_TO_LATEST_Y
+	UpgradeToLatestY string
 
-	// NextReleaseAfterProdDefaultForUpgrade will select the cluster image set that the given number of releases away from the the production default.
-	// Env: NEXT_RELEASE_AFTER_PROD_DEFAULT_FOR_UPGRADE
-	NextReleaseAfterProdDefaultForUpgrade string
-
-	// ReleaseStream used to retrieve latest release images. If set, it will be used to perform an upgrade.
-	// Env: UPGRADE_RELEASE_STREAM
-	ReleaseStream string
+	// UpgradeToLatestZ will look for the latest Z version for the cluster and select that
+	// Env: UPGRADE_TO_LATEST_Z
+	UpgradeToLatestZ string
 
 	// ReleaseName is the name of the release in a release stream.
 	// Env: UPGRADE_RELEASE_NAME
@@ -106,11 +102,13 @@ var Upgrade = struct {
 
 	// Create disruptive Pod Disruption Budget workloads to test the Managed Upgrade Operator's ability to handle them.
 	ManagedUpgradeTestPodDisruptionBudgets string
+
+	// Create disruptive Node Drain workload to test the Managed Upgrade Operator's ability to handle them.
+	ManagedUpgradeTestNodeDrain string
 }{
-	UpgradeToCISIfPossible:                 "upgrade.upgradeToCISIfPossible",
-	OnlyUpgradeToZReleases:                 "upgrade.onlyUpgradeToZReleases",
-	NextReleaseAfterProdDefaultForUpgrade:  "upgrade.nextReleaseAfterProdDefaultForUpgrade",
-	ReleaseStream:                          "upgrade.releaseStream",
+	UpgradeToLatest:                        "upgrade.toLatest",
+	UpgradeToLatestZ:                       "upgrade.ToLatestZ",
+	UpgradeToLatestY:                       "upgrade.ToLatestY",
 	ReleaseName:                            "upgrade.releaseName",
 	Image:                                  "upgrade.image",
 	UpgradeVersionEqualToInstallVersion:    "upgrade.upgradeVersionEqualToInstallVersion",
@@ -118,6 +116,7 @@ var Upgrade = struct {
 	ManagedUpgrade:                         "upgrade.managedUpgrade",
 	WaitForWorkersToManagedUpgrade:         "upgrade.waitForWorkersToManagedUpgrade",
 	ManagedUpgradeTestPodDisruptionBudgets: "upgrade.managedUpgradeTestPodDisruptionBudgets",
+	ManagedUpgradeTestNodeDrain:            "upgrade.managedUpgradeTestNodeDrain",
 }
 
 // Kubeconfig config keys.
@@ -137,7 +136,7 @@ var Kubeconfig = struct {
 
 // Tests config keys.
 var Tests = struct {
-	// PollingTimeout is how long (in mimutes) to wait for an object to be created before failing the test.
+	// PollingTimeout is how long (in seconds) to wait for an object to be created before failing the test.
 	// Env: POLLING_TIMEOUT
 	PollingTimeout string
 
@@ -232,6 +231,15 @@ var Cluster = struct {
 	// Env: NEXT_RELEASE_AFTER_PROD_DEFAULT
 	NextReleaseAfterProdDefault string
 
+	// LatestYReleaseAfterProdDefault will select the next minor version CIS for an environment given the production default
+	LatestYReleaseAfterProdDefault string
+
+	// LatestZReleaseAfterProdDefault will select the next patch version CIS for an environment given the production default
+	LatestZReleaseAfterProdDefault string
+
+	// InstallSpecificNightly will select a nightly using a specific nightly given an "X.Y" formatted string
+	InstallSpecificNightly string
+
 	// CleanCheckRuns lets us set the number of osd-verify checks we want to run before deeming a cluster "healthy"
 	// Env: CLEAN_CHECK_RUNS
 	CleanCheckRuns string
@@ -256,6 +264,9 @@ var Cluster = struct {
 
 	// ProvisionShardID is the shard ID that is set to provision a shard for the cluster.
 	ProvisionShardID string
+
+	// NumWorkerNodes overrides the flavour's number of worker nodes specified
+	NumWorkerNodes string
 }{
 	MultiAZ:                             "cluster.multiAZ",
 	DestroyAfterTest:                    "cluster.destroyAfterTest",
@@ -267,6 +278,9 @@ var Cluster = struct {
 	UseOldestClusterImageSetForInstall:  "cluster.useOldestClusterVersionForInstall",
 	DeltaReleaseFromDefault:             "cluster.deltaReleaseFromDefault",
 	NextReleaseAfterProdDefault:         "cluster.nextReleaseAfterProdDefault",
+	LatestYReleaseAfterProdDefault:      "cluster.latestYReleaseAfterProdDefault",
+	LatestZReleaseAfterProdDefault:      "cluster.latestZReleaseAfterProdDefault",
+	InstallSpecificNightly:              "cluster.installLatestNightly",
 	CleanCheckRuns:                      "cluster.cleanCheckRuns",
 	ID:                                  "cluster.id",
 	Name:                                "cluster.name",
@@ -274,6 +288,7 @@ var Cluster = struct {
 	EnoughVersionsForOldestOrMiddleTest: "cluster.enoughVersionForOldestOrMiddleTest",
 	PreviousVersionFromDefaultFound:     "cluster.previousVersionFromDefaultFound",
 	ProvisionShardID:                    "cluster.provisionshardID",
+	NumWorkerNodes:                      "cluster.numWorkerNodes",
 }
 
 // CloudProvider config keys.
@@ -400,16 +415,14 @@ func init() {
 	viper.BindEnv(MustGather, "MUST_GATHER")
 
 	// ----- Upgrade -----
-	viper.SetDefault(Upgrade.UpgradeToCISIfPossible, false)
-	viper.BindEnv(Upgrade.UpgradeToCISIfPossible, "UPGRADE_TO_CIS_IF_POSSIBLE")
+	viper.BindEnv(Upgrade.UpgradeToLatest, "UPGRADE_TO_LATEST")
+	viper.SetDefault(Upgrade.UpgradeToLatest, false)
 
-	viper.SetDefault(Upgrade.OnlyUpgradeToZReleases, false)
-	viper.BindEnv(Upgrade.OnlyUpgradeToZReleases, "ONLY_UPGRADE_TO_Z_RELEASES")
+	viper.BindEnv(Upgrade.UpgradeToLatestZ, "UPGRADE_TO_LATEST_Z")
+	viper.SetDefault(Upgrade.UpgradeToLatestZ, false)
 
-	viper.SetDefault(Upgrade.NextReleaseAfterProdDefaultForUpgrade, -1)
-	viper.BindEnv(Upgrade.NextReleaseAfterProdDefaultForUpgrade, "NEXT_RELEASE_AFTER_PROD_DEFAULT_FOR_UPGRADE")
-
-	viper.BindEnv(Upgrade.ReleaseStream, "UPGRADE_RELEASE_STREAM")
+	viper.BindEnv(Upgrade.UpgradeToLatestY, "UPGRADE_TO_LATEST_Y")
+	viper.SetDefault(Upgrade.UpgradeToLatestY, false)
 
 	viper.BindEnv(Upgrade.ReleaseName, "UPGRADE_RELEASE_NAME")
 
@@ -424,7 +437,10 @@ func init() {
 	viper.SetDefault(Upgrade.ManagedUpgrade, true)
 
 	viper.BindEnv(Upgrade.ManagedUpgradeTestPodDisruptionBudgets, "UPGRADE_MANAGED_TEST_PDBS")
-	viper.SetDefault(Upgrade.ManagedUpgradeTestPodDisruptionBudgets, false)
+	viper.SetDefault(Upgrade.ManagedUpgradeTestPodDisruptionBudgets, true)
+
+	viper.BindEnv(Upgrade.ManagedUpgradeTestNodeDrain, "UPGRADE_MANAGED_TEST_DRAIN")
+	viper.SetDefault(Upgrade.ManagedUpgradeTestNodeDrain, true)
 
 	viper.BindEnv(Upgrade.WaitForWorkersToManagedUpgrade, "UPGRADE_WAIT_FOR_WORKERS")
 	viper.SetDefault(Upgrade.WaitForWorkersToManagedUpgrade, true)
@@ -483,6 +499,14 @@ func init() {
 	viper.SetDefault(Cluster.UseOldestClusterImageSetForInstall, false)
 	viper.BindEnv(Cluster.UseOldestClusterImageSetForInstall, "USE_OLDEST_CLUSTER_IMAGE_SET_FOR_INSTALL")
 
+	viper.SetDefault(Cluster.LatestYReleaseAfterProdDefault, false)
+	viper.BindEnv(Cluster.LatestYReleaseAfterProdDefault, "LATEST_Y_RELEASE_AFTER_PROD_DEFAULT")
+
+	viper.SetDefault(Cluster.LatestZReleaseAfterProdDefault, false)
+	viper.BindEnv(Cluster.LatestZReleaseAfterProdDefault, "LATEST_Z_RELEASE_AFTER_PROD_DEFAULT")
+
+	viper.BindEnv(Cluster.InstallSpecificNightly, "INSTALL_LATEST_NIGHTLY")
+
 	viper.SetDefault(Cluster.DeltaReleaseFromDefault, 0)
 	viper.BindEnv(Cluster.DeltaReleaseFromDefault, "DELTA_RELEASE_FROM_DEFAULT")
 
@@ -504,6 +528,9 @@ func init() {
 
 	viper.SetDefault(Cluster.ProvisionShardID, "")
 	viper.BindEnv(Cluster.ProvisionShardID, "PROVISION_SHARD_ID")
+
+	viper.SetDefault(Cluster.NumWorkerNodes, "")
+	viper.BindEnv(Cluster.NumWorkerNodes, "NUM_WORKER_NODES")
 
 	// ----- Cloud Provider -----
 	viper.SetDefault(CloudProvider.CloudProviderID, "aws")

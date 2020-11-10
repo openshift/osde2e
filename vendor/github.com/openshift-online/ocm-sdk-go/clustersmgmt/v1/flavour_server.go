@@ -41,7 +41,6 @@ type FlavourServer interface {
 	//
 	// Attributes that can be updated are:
 	//
-	// - `nodes.infra`
 	// - `aws.infra_volume`
 	// - `aws.infra_instance_type`
 	// - `gcp.infra_instance_type`

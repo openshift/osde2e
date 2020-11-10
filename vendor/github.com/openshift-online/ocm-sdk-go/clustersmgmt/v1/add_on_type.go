@@ -35,20 +35,23 @@ const AddOnNilKind = "AddOnNil"
 //
 // Representation of an add-on that can be installed in a cluster.
 type AddOn struct {
-	id              *string
-	href            *string
-	link            bool
-	description     *string
-	docsLink        *string
-	enabled         *bool
-	icon            *string
-	installMode     *AddOnInstallMode
-	label           *string
-	name            *string
-	operatorName    *string
-	resourceCost    *float64
-	resourceName    *string
-	targetNamespace *string
+	id                   *string
+	href                 *string
+	link                 bool
+	description          *string
+	docsLink             *string
+	enabled              *bool
+	hasExternalResources *bool
+	hidden               *bool
+	icon                 *string
+	installMode          *AddOnInstallMode
+	label                *string
+	name                 *string
+	operatorName         *string
+	parameters           *AddOnParameterList
+	resourceCost         *float64
+	resourceName         *string
+	targetNamespace      *string
 }
 
 // Kind returns the name of the type of the object.
@@ -109,11 +112,14 @@ func (o *AddOn) Empty() bool {
 		o.description == nil &&
 		o.docsLink == nil &&
 		o.enabled == nil &&
+		o.hasExternalResources == nil &&
+		o.hidden == nil &&
 		o.icon == nil &&
 		o.installMode == nil &&
 		o.label == nil &&
 		o.name == nil &&
 		o.operatorName == nil &&
+		o.parameters.Len() == 0 &&
 		o.resourceCost == nil &&
 		o.resourceName == nil &&
 		o.targetNamespace == nil &&
@@ -185,6 +191,52 @@ func (o *AddOn) GetEnabled() (value bool, ok bool) {
 	ok = o != nil && o.enabled != nil
 	if ok {
 		value = *o.enabled
+	}
+	return
+}
+
+// HasExternalResources returns the value of the 'has_external_resources' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+// Indicates if this add-on has external resources associated with it
+func (o *AddOn) HasExternalResources() bool {
+	if o != nil && o.hasExternalResources != nil {
+		return *o.hasExternalResources
+	}
+	return false
+}
+
+// GetHasExternalResources returns the value of the 'has_external_resources' attribute and
+// a flag indicating if the attribute has a value.
+//
+// Indicates if this add-on has external resources associated with it
+func (o *AddOn) GetHasExternalResources() (value bool, ok bool) {
+	ok = o != nil && o.hasExternalResources != nil
+	if ok {
+		value = *o.hasExternalResources
+	}
+	return
+}
+
+// Hidden returns the value of the 'hidden' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+// Indicates if this add-on is hidden.
+func (o *AddOn) Hidden() bool {
+	if o != nil && o.hidden != nil {
+		return *o.hidden
+	}
+	return false
+}
+
+// GetHidden returns the value of the 'hidden' attribute and
+// a flag indicating if the attribute has a value.
+//
+// Indicates if this add-on is hidden.
+func (o *AddOn) GetHidden() (value bool, ok bool) {
+	ok = o != nil && o.hidden != nil
+	if ok {
+		value = *o.hidden
 	}
 	return
 }
@@ -300,6 +352,29 @@ func (o *AddOn) GetOperatorName() (value string, ok bool) {
 	ok = o != nil && o.operatorName != nil
 	if ok {
 		value = *o.operatorName
+	}
+	return
+}
+
+// Parameters returns the value of the 'parameters' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+// List of parameters for this add-on.
+func (o *AddOn) Parameters() *AddOnParameterList {
+	if o == nil {
+		return nil
+	}
+	return o.parameters
+}
+
+// GetParameters returns the value of the 'parameters' attribute and
+// a flag indicating if the attribute has a value.
+//
+// List of parameters for this add-on.
+func (o *AddOn) GetParameters() (value *AddOnParameterList, ok bool) {
+	ok = o != nil && o.parameters != nil
+	if ok {
+		value = o.parameters
 	}
 	return
 }

@@ -77,10 +77,18 @@ func (o *OCMProvider) Versions() (*spi.VersionList, error) {
 					if o.Environment() == "stage" && v.ChannelGroup() == "nightly" {
 						return true
 					}
-					versions = append(versions, spi.NewVersionBuilder().
+					spiVersion := spi.NewVersionBuilder().
 						Version(version).
 						Default(v.Default()).
-						Build())
+						Build()
+
+					for _, upgrade := range v.AvailableUpgrades() {
+						if version, err := util.OpenshiftVersionToSemver(upgrade); err == nil {
+							spiVersion.AddUpgradePath(version)
+						}
+					}
+
+					versions = append(versions, spiVersion)
 				}
 				return true
 			})

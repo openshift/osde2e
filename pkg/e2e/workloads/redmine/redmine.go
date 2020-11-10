@@ -44,6 +44,7 @@ var _ = ginkgo.Describe(testName, func() {
 		// Does this workload exist? If so, this must be a repeat run.
 		// In this case we should assume the workload has had a valid run once already
 		// And simply run another test validating the workload.
+		h.SetServiceAccount("")
 		if _, ok := h.GetWorkload(workloadName); ok {
 			// Run the workload test
 			doTest(h)
@@ -78,12 +79,13 @@ var _ = ginkgo.Describe(testName, func() {
 func createWorkload(h *helper.H) error {
 	// Create all K8s objects that are within the testDir
 	objects, err := helper.ApplyYamlInFolder(testDir, h.CurrentProject(), h.Kube())
-	if err != nil {
-		return fmt.Errorf("couldn't apply k8s yaml")
-	}
 
 	// Log how many objects have been created from the workload yaml
 	log.Printf("%v objects created", len(objects))
+
+	if err != nil {
+		return fmt.Errorf("couldn't apply k8s yaml: %s", err.Error())
+	}
 
 	// Create an OpenShift route to go with it
 	appRoute := &v1.Route{

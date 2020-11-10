@@ -21,6 +21,8 @@ package v1 // github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1
 
 import (
 	"io"
+	"net/http"
+	"sort"
 
 	jsoniter "github.com/json-iterator/go"
 	"github.com/openshift-online/ocm-sdk-go/helpers"
@@ -38,12 +40,44 @@ func MarshalClusterNodes(object *ClusterNodes, writer io.Writer) error {
 func writeClusterNodes(object *ClusterNodes, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
+	if object.availabilityZones != nil {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("availability_zones")
+		writeStringList(object.availabilityZones, stream)
+		count++
+	}
 	if object.compute != nil {
 		if count > 0 {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("compute")
 		stream.WriteInt(*object.compute)
+		count++
+	}
+	if object.computeLabels != nil {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("compute_labels")
+		stream.WriteObjectStart()
+		keys := make([]string, len(object.computeLabels))
+		i := 0
+		for key := range object.computeLabels {
+			keys[i] = key
+			i++
+		}
+		sort.Strings(keys)
+		for i, key := range keys {
+			if i > 0 {
+				stream.WriteMore()
+			}
+			item := object.computeLabels[key]
+			stream.WriteObjectField(key)
+			stream.WriteString(item)
+		}
+		stream.WriteObjectEnd()
 		count++
 	}
 	if object.computeMachineType != nil {
@@ -84,6 +118,9 @@ func writeClusterNodes(object *ClusterNodes, stream *jsoniter.Stream) {
 // UnmarshalClusterNodes reads a value of the 'cluster_nodes' type from the given
 // source, which can be an slice of bytes, a string or a reader.
 func UnmarshalClusterNodes(source interface{}) (object *ClusterNodes, err error) {
+	if source == http.NoBody {
+		return
+	}
 	iterator, err := helpers.NewIterator(source)
 	if err != nil {
 		return
@@ -102,9 +139,23 @@ func readClusterNodes(iterator *jsoniter.Iterator) *ClusterNodes {
 			break
 		}
 		switch field {
+		case "availability_zones":
+			value := readStringList(iterator)
+			object.availabilityZones = value
 		case "compute":
 			value := iterator.ReadInt()
 			object.compute = &value
+		case "compute_labels":
+			value := map[string]string{}
+			for {
+				key := iterator.ReadObject()
+				if key == "" {
+					break
+				}
+				item := iterator.ReadString()
+				value[key] = item
+			}
+			object.computeLabels = value
 		case "compute_machine_type":
 			value := readMachineType(iterator)
 			object.computeMachineType = value
