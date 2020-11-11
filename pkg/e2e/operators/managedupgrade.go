@@ -3,6 +3,8 @@ package operators
 import (
 	"context"
 	"fmt"
+	"time"
+
 	"github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	v1 "github.com/openshift/api/config/v1"
@@ -12,12 +14,12 @@ import (
 	"github.com/openshift/osde2e/pkg/common/prometheus"
 	prometheusv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/prometheus/common/model"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/wait"
-	"time"
 )
 
 var managedUpgradeOperatorTestName string = "[Suite: informing] [OSD] Managed Upgrade Operator"
@@ -31,6 +33,7 @@ var _ = ginkgo.Describe(managedUpgradeOperatorTestName, func() {
 	var operatorNamespace string = "openshift-managed-upgrade-operator"
 	var operatorLockFile string = "managed-upgrade-operator-lock"
 	var upgradeConfigResourceName string = "osd-upgrade-config"
+	var upgradeConfigForDedicatedAdminTestName string = "osde2e-da-upgrade-config"
 	var defaultDesiredReplicas int32 = 1
 	var clusterRoles = []string{
 		"managed-upgrade-operator",
@@ -161,7 +164,7 @@ var _ = ginkgo.Describe(managedUpgradeOperatorTestName, func() {
 
 			// Wait a minute for the operator to flag this as a problem
 			err = wait.PollImmediate(5*time.Second, 1*time.Minute, func() (bool, error) {
-				query := fmt.Sprintf("upgradeoperator_upgrade_window_breached{upgradeconfig_name=\"%s\"} == 1", "osd-upgrade-config")
+				query := fmt.Sprintf("upgradeoperator_upgrade_window_breached{upgradeconfig_name=\"%s\"} == 1", "osde2e-upgrade-config")
 				context, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
 				defer cancel()
 				value, _, err := promAPI.Query(context, query, time.Now())
@@ -175,6 +178,23 @@ var _ = ginkgo.Describe(managedUpgradeOperatorTestName, func() {
 				return true, nil
 			})
 			Expect(err).NotTo(HaveOccurred())
+		})
+
+		ginkgo.It("dedicated admin should not be able to manage the UpgradeConfig CR", func() {
+			// Add the upgradeconfig to the cluster
+			uc := makeMinimalUpgradeConfig(upgradeConfigForDedicatedAdminTestName, operatorNamespace)
+			err = dedicatedAaddUpgradeConfig(uc, operatorNamespace, h)
+			Expect(apierrors.IsForbidden(err)).To(BeTrue())
+
+			err := addUpgradeConfig(uc, operatorNamespace, h)
+			Expect(err).NotTo(HaveOccurred())
+
+			err = dedicatedADeleteUpgradeConfig(upgradeConfigForDedicatedAdminTestName, operatorNamespace, h)
+			Expect(apierrors.IsForbidden(err)).To(BeTrue())
+
+			err = deleteUpgradeConfig(upgradeConfigForDedicatedAdminTestName, operatorNamespace, h)
+			Expect(err).NotTo(HaveOccurred())
+
 		})
 
 		ginkgo.It("should error if provided an invalid start time", func() {
@@ -227,6 +247,7 @@ var _ = ginkgo.Describe(managedUpgradeOperatorTestName, func() {
 				return true, nil
 			})
 			Expect(err).NotTo(HaveOccurred())
+
 		})
 
 	})
@@ -267,6 +288,19 @@ func makeUpgradeConfig(name string, ns string, startTime string, version string,
 	return uc
 }
 
+func makeMinimalUpgradeConfig(name string, ns string) upgradev1alpha1.UpgradeConfig {
+	uc := upgradev1alpha1.UpgradeConfig{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "UpgradeConfig",
+			APIVersion: "upgrade.managed.openshift.io/v1alpha1",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: ns,
+		},
+	}
+	return uc
+}
 func addUpgradeConfig(upgradeConfig upgradev1alpha1.UpgradeConfig, operatorNamespace string, h *helper.H) error {
 	obj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(upgradeConfig.DeepCopy())
 	if err != nil {
@@ -301,4 +335,27 @@ func getUpgradeConfig(name string, ns string, h *helper.H) (*upgradev1alpha1.Upg
 	}
 
 	return &upgradeConfig, nil
+}
+
+// test for CR customresourcedefinition.apiextensions.k8s.io/upgradeconfigs.upgrade.managed.openshift.io
+// dedicated admin should not be able to create/edit this CR
+
+func dedicatedAaddUpgradeConfig(upgradeConfig upgradev1alpha1.UpgradeConfig, operatorNamespace string, h *helper.H) error {
+	obj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(upgradeConfig.DeepCopy())
+	if err != nil {
+		return err
+	}
+	h.SetServiceAccount("system:serviceaccount:%s:dedicated-admin-project")
+	unstructuredObj := unstructured.Unstructured{obj}
+	_, err = h.Dynamic().Resource(schema.GroupVersionResource{
+		Group: "upgrade.managed.openshift.io", Version: "v1alpha1", Resource: "upgradeconfigs",
+	}).Namespace(operatorNamespace).Create(context.TODO(), &unstructuredObj, metav1.CreateOptions{})
+	return (err)
+}
+
+func dedicatedADeleteUpgradeConfig(name string, operatorNamespace string, h *helper.H) error {
+	h.SetServiceAccount("system:serviceaccount:%s:dedicated-admin-project")
+	return h.Dynamic().Resource(schema.GroupVersionResource{
+		Group: "upgrade.managed.openshift.io", Version: "v1alpha1", Resource: "upgradeconfigs",
+	}).Namespace(operatorNamespace).Delete(context.TODO(), name, metav1.DeleteOptions{})
 }
