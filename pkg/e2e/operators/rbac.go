@@ -5,16 +5,18 @@ import (
 	"fmt"
 
 	"github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
 	"github.com/openshift/osde2e/pkg/common/alert"
 	"github.com/openshift/osde2e/pkg/common/config"
-	"github.com/spf13/viper"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-
-	. "github.com/onsi/gomega"
-
 	"github.com/openshift/osde2e/pkg/common/helper"
+	api "github.com/openshift/rbac-permissions-operator/pkg/apis/managed/v1alpha1"
+	"github.com/spf13/viper"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	unstruct "k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 var operatorName = "rbac-permissions-operator"
@@ -50,6 +52,24 @@ var _ = ginkgo.Describe(rbacOperatorBlocking, func() {
 var _ = ginkgo.Describe(subjectPermissionsTestName, func() {
 	h := helper.New()
 	checkSubjectPermissions(h, "dedicated-admins")
+
+	ginkgo.Context("dedicated-admin-subjectpermission", func() {
+		ginkgo.It("For dedicated admin access should be forbidden to create Subjectpermissions", func() {
+			h.SetServiceAccount("system:serviceaccount:%s:dedicated-admin-project")
+			sp := makeSubjectPermission("osde2e-dedicated-admins-cluster")
+			err := createSubjectPermission(sp, operatorNamespace, h)
+			Expect(apierrors.IsForbidden(err)).To(BeTrue())
+		})
+	})
+
+	ginkgo.Context("dedicated-admin-subjectpermission", func() {
+		ginkgo.It("For cluster admin access should be allowed to create Subjectpermissions", func() {
+			sp := makeSubjectPermission("osde2e-cluster-admins")
+			err := createSubjectPermission(sp, operatorNamespace, h)
+			Expect(err).NotTo(HaveOccurred())
+
+		})
+	})
 })
 
 func checkSubjectPermissions(h *helper.H, spName string) {
@@ -74,6 +94,45 @@ func checkSubjectPermissions(h *helper.H, spName string) {
 
 		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
 	})
+}
+
+func makeSubjectPermission(name string) api.SubjectPermission {
+	sp := api.SubjectPermission{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "SubjectPermission",
+			APIVersion: "managed.openshift.io/v1alpha1",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: operatorNamespace,
+		},
+		Spec: api.SubjectPermissionSpec{
+			SubjectName:        name,
+			ClusterPermissions: []string{"sre-admins-cluster"},
+			Permissions: []api.Permission{
+				{
+					ClusterRoleName:        "sre-admins-project",
+					NamespacesAllowedRegex: "^(default|openshift.*|kube.*)$",
+					AllowFirst:             true,
+				},
+			},
+		},
+	}
+
+	return sp
+}
+
+func createSubjectPermission(sp api.SubjectPermission, operatorNamespace string, h *helper.H) error {
+	obj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(sp.DeepCopy())
+	if err != nil {
+		return err
+	}
+	unstructuredObj := unstructured.Unstructured{obj}
+	_, err = h.Dynamic().Resource(schema.GroupVersionResource{
+		Group:    "managed.openshift.io",
+		Version:  "v1alpha1",
+		Resource: "subjectpermissions"}).Namespace(operatorNamespace).Create(context.TODO(), &unstructuredObj, metav1.CreateOptions{})
+	return err
 }
 
 func getSubjectPermissionRBACInfo(h *helper.H, spName string) ([]string, []string, []string, error) {

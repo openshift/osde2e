@@ -32,6 +32,7 @@ require (
 	github.com/openshift/machine-api-operator v0.2.1-0.20200529045911-d19e8d007f7c
 	github.com/openshift/managed-upgrade-operator v0.0.0-20200820052802-5d57e1785b53
 	github.com/openshift/moactl v0.0.11
+	github.com/openshift/rbac-permissions-operator v0.0.0-20201020153617-819ec06cd5e3
 	github.com/operator-framework/api v0.3.6
 	github.com/operator-framework/operator-lifecycle-manager v0.0.0-20200521062108-408ca95d458f
 	github.com/prometheus/alertmanager v0.21.0
@@ -53,6 +54,7 @@ require (
 	k8s.io/apimachinery v0.19.2
 	k8s.io/client-go v12.0.0+incompatible
 	k8s.io/utils v0.0.0-20200729134348-d5654de09c73
+
 )
 
 replace (
