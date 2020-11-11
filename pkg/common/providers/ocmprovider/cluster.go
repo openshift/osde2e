@@ -392,7 +392,7 @@ func (o *OCMProvider) ListClusters(query string) ([]*spi.Cluster, error) {
 	emptyPage := false
 	page := 1
 
-	for len(clusters) < totalItems || emptyPage {
+	for len(clusters) < totalItems || !emptyPage {
 		clusterListRequest := o.conn.ClustersMgmt().V1().Clusters().List()
 
 		response, err := clusterListRequest.Search(query).Page(page).Send()
