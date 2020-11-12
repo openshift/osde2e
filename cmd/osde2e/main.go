@@ -15,6 +15,7 @@ import (
 	"github.com/openshift/osde2e/cmd/osde2e/arguments"
 	"github.com/openshift/osde2e/cmd/osde2e/cleanup"
 	"github.com/openshift/osde2e/cmd/osde2e/completion"
+	"github.com/openshift/osde2e/cmd/osde2e/healthcheck"
 	"github.com/openshift/osde2e/cmd/osde2e/query"
 	"github.com/openshift/osde2e/cmd/osde2e/report"
 	"github.com/openshift/osde2e/cmd/osde2e/test"
@@ -42,6 +43,7 @@ func init() {
 
 	root.AddCommand(report.Cmd)
 	root.AddCommand(test.Cmd)
+	root.AddCommand(healthcheck.Cmd)
 	root.AddCommand(query.Cmd)
 	root.AddCommand(completion.Cmd)
 	root.AddCommand(alert.Cmd)
