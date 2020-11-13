@@ -27,6 +27,10 @@ func pod(name, namespace string, phase v1.PodPhase) *v1.Pod {
 	}
 }
 func TestCheckPodHealth(t *testing.T) {
+	const (
+		ns1 = "openshift-1"
+		ns2 = "openshift-2"
+	)
 	var tests = []struct {
 		description   string
 		expectedState bool
@@ -34,14 +38,15 @@ func TestCheckPodHealth(t *testing.T) {
 		objs          []runtime.Object
 	}{
 		{"no pods", false, true, nil},
-		{"single pod failed", false, true, []runtime.Object{pod("a", "a", v1.PodFailed)}},
-		{"one pod good one pod bad same namespace", false, true, []runtime.Object{pod("a", "a", v1.PodFailed), pod("b", "a", v1.PodRunning)}},
-		{"one pod good one pod pending same namespace", false, false, []runtime.Object{pod("a", "a", v1.PodPending), pod("b", "a", v1.PodRunning)}},
-		{"one pod good one pod bad diff namespace", false, true, []runtime.Object{pod("a", "a", v1.PodFailed), pod("b", "b", v1.PodRunning)}},
-		{"single pod running", true, false, []runtime.Object{pod("a", "a", v1.PodRunning)}},
-		{"single pod succeeded", true, false, []runtime.Object{pod("a", "a", v1.PodSucceeded)}},
-		{"two succeeded pods diff namespace", true, false, []runtime.Object{pod("a", "a", v1.PodSucceeded), pod("b", "b", v1.PodSucceeded)}},
-		{"two running pods diff namespace", true, false, []runtime.Object{pod("a", "a", v1.PodRunning), pod("b", "b", v1.PodRunning)}},
+		{"single pod failed", false, true, []runtime.Object{pod("a", ns1, v1.PodFailed)}},
+		{"single pod failed bad namespace", true, false, []runtime.Object{pod("a", "foobar", v1.PodFailed)}},
+		{"one pod good one pod bad same namespace", false, true, []runtime.Object{pod("a", ns1, v1.PodFailed), pod("b", ns1, v1.PodRunning)}},
+		{"one pod good one pod pending same namespace", false, false, []runtime.Object{pod("a", ns1, v1.PodPending), pod("b", ns1, v1.PodRunning)}},
+		{"one pod good one pod bad diff namespace", false, true, []runtime.Object{pod("a", ns1, v1.PodFailed), pod("b", ns2, v1.PodRunning)}},
+		{"single pod running", true, false, []runtime.Object{pod("a", ns1, v1.PodRunning)}},
+		{"single pod succeeded", true, false, []runtime.Object{pod("a", ns1, v1.PodSucceeded)}},
+		{"two succeeded pods diff namespace", true, false, []runtime.Object{pod("a", ns1, v1.PodSucceeded), pod("b", ns2, v1.PodSucceeded)}},
+		{"two running pods diff namespace", true, false, []runtime.Object{pod("a", ns1, v1.PodRunning), pod("b", ns2, v1.PodRunning)}},
 	}
 
 	for _, test := range tests {

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"strings"
 
 	"github.com/openshift/osde2e/pkg/common/logging"
 	kubev1 "k8s.io/api/core/v1"
@@ -29,7 +30,13 @@ func CheckPodHealth(podClient v1.CoreV1Interface, logger *log.Logger) (bool, err
 		return false, fmt.Errorf("pod list is empty. this should NOT happen")
 	}
 
+	total := 0
 	for _, pod := range list.Items {
+		// we only care about the openshift, redhat, and osde2e namespaces
+		if !containsPrefixes(pod.Namespace, "openshift-", "redhat-", "osde2e-") {
+			continue
+		}
+		total++
 		phase := pod.Status.Phase
 
 		if phase != kubev1.PodRunning && phase != kubev1.PodSucceeded {
@@ -41,11 +48,19 @@ func CheckPodHealth(podClient v1.CoreV1Interface, logger *log.Logger) (bool, err
 		}
 	}
 
-	total := len(list.Items)
 	ready := float64(total - len(notReady))
 	curRatio := (ready / float64(total)) * 100
 
-	logger.Printf("%v%% of pods are currently alive: ", curRatio)
+	logger.Printf("%v%% of %v pods are currently alive...", curRatio, total)
 
 	return len(notReady) == 0, nil
+}
+
+func containsPrefixes(str string, subs ...string) bool {
+	for _, sub := range subs {
+		if strings.HasPrefix(str, sub) {
+			return true
+		}
+	}
+	return false
 }
