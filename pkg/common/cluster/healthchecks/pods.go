@@ -33,7 +33,7 @@ func CheckPodHealth(podClient v1.CoreV1Interface, logger *log.Logger) (bool, err
 	total := 0
 	for _, pod := range list.Items {
 		// we only care about the openshift, redhat, and osde2e namespaces
-		if !containsPrefixes(pod.Namespace, "openshift-", "redhat-*", "osde2e-*") {
+		if !containsPrefixes(pod.Namespace, "openshift-", "redhat-", "osde2e-") {
 			continue
 		}
 		total++
