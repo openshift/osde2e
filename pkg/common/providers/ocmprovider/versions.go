@@ -7,8 +7,10 @@ import (
 
 	"github.com/Masterminds/semver"
 	v1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
+	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/spi"
 	"github.com/openshift/osde2e/pkg/common/util"
+	"github.com/spf13/viper"
 )
 
 const (
@@ -72,10 +74,14 @@ func (o *OCMProvider) Versions() (*spi.VersionList, error) {
 					log.Printf("could not parse version '%s': %v", v.ID(), err)
 				} else if v.Enabled() {
 					if o.Environment() == "prod" && v.ChannelGroup() != "stable" {
-						return true
+						if viper.GetString(config.Cluster.InstallSpecificNightly) == "" {
+							return true
+						}
 					}
 					if o.Environment() == "stage" && v.ChannelGroup() == "nightly" {
-						return true
+						if viper.GetString(config.Cluster.InstallSpecificNightly) == "" {
+							return true
+						}
 					}
 					spiVersion := spi.NewVersionBuilder().
 						Version(version).
