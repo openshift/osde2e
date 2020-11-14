@@ -211,6 +211,9 @@ var Cluster = struct {
 	// Env: CLUSTER_UP_TIMEOUT
 	InstallTimeout string
 
+	// ReleaseImageLatest is used when we're testing versions not-yet-accepted from the release controller.
+	ReleaseImageLatest string
+
 	// UseLatestVersionForInstall will select the latest cluster image set available for a fresh install.
 	// Env: USE_LATEST_VERSION_FOR_INSTALL
 	UseLatestVersionForInstall string
@@ -273,6 +276,7 @@ var Cluster = struct {
 	ExpiryInMinutes:                     "cluster.expiryInMinutes",
 	AfterTestWait:                       "cluster.afterTestWait",
 	InstallTimeout:                      "cluster.installTimeout",
+	ReleaseImageLatest:                  "cluster.releaseImageLatest",
 	UseLatestVersionForInstall:          "cluster.useLatestVersionForInstall",
 	UseMiddleClusterImageSetForInstall:  "cluster.useMiddleClusterVersionForInstall",
 	UseOldestClusterImageSetForInstall:  "cluster.useOldestClusterVersionForInstall",
@@ -489,6 +493,8 @@ func init() {
 
 	viper.SetDefault(Cluster.InstallTimeout, 135)
 	viper.BindEnv(Cluster.InstallTimeout, "CLUSTER_UP_TIMEOUT")
+
+	viper.BindEnv(Cluster.ReleaseImageLatest, "RELEASE_IMAGE_LATEST")
 
 	viper.SetDefault(Cluster.UseLatestVersionForInstall, false)
 	viper.BindEnv(Cluster.UseLatestVersionForInstall, "USE_LATEST_VERSION_FOR_INSTALL")

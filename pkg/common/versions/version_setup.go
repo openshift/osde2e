@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"time"
 
 	"github.com/Masterminds/semver"
 	"github.com/openshift/osde2e/pkg/common/config"
@@ -26,12 +27,27 @@ func ChooseVersions() (err error) {
 		err = errors.New("osd must be setup when upgrading with release stream")
 	} else {
 		versionList, err := provider.Versions()
-
+		log.Println("hihihi")
 		if err != nil {
 			return fmt.Errorf("error getting versions: %v", err)
 		}
 
-		clusterVersion, err := setupVersion(versionList)
+		clusterVersion, versionSelector, err := setupVersion(versionList)
+
+		// We need to hard-code a retry in this specific case
+		// If we're trying to select a version that doesn't yet exist in OCM, it should
+		// get added within 10min. We therefore will sleep(10) then check again.
+		if err != nil && versionSelector == "specific image" {
+			log.Println("Waiting for CIS to sync with the Release Controller")
+			time.Sleep(10 * time.Minute)
+			versionList, err = provider.Versions()
+
+			if err != nil {
+				return fmt.Errorf("error getting versions: %v", err)
+			}
+
+			clusterVersion, _, err = setupVersion(versionList)
+		}
 
 		if err != nil {
 			return fmt.Errorf("error while selecting install version: %v", err)
@@ -52,7 +68,7 @@ func ChooseVersions() (err error) {
 }
 
 // chooses between default version and nightly based on target versions.
-func setupVersion(versionList *spi.VersionList) (*semver.Version, error) {
+func setupVersion(versionList *spi.VersionList) (*semver.Version, string, error) {
 	var selectedVersion *semver.Version
 
 	versionType := "user supplied version"
@@ -70,7 +86,7 @@ func setupVersion(versionList *spi.VersionList) (*semver.Version, error) {
 				log.Printf("Unable to get the %s.", versionType)
 			}
 		} else {
-			return nil, fmt.Errorf("error finding default cluster version: %v", err)
+			return nil, versionType, fmt.Errorf("error finding default cluster version: %v", err)
 		}
 	} else {
 		var err error
@@ -78,7 +94,7 @@ func setupVersion(versionList *spi.VersionList) (*semver.Version, error) {
 		selectedVersion, err = util.OpenshiftVersionToSemver(clusterVersion)
 
 		if err != nil {
-			return nil, fmt.Errorf("supplied version %s is invalid: %v", clusterVersion, err)
+			return nil, versionType, fmt.Errorf("supplied version %s is invalid: %v", clusterVersion, err)
 		}
 	}
 
@@ -88,7 +104,7 @@ func setupVersion(versionList *spi.VersionList) (*semver.Version, error) {
 		log.Printf("Using the %s '%s'", versionType, clusterVersion)
 	}
 
-	return selectedVersion, nil
+	return selectedVersion, versionType, nil
 }
 
 // chooses version based on optimal upgrade path

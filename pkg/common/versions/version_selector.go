@@ -31,7 +31,9 @@ func GetVersionForInstall(versionList *spi.VersionList) (*semver.Version, string
 		return nil, "", fmt.Errorf("unable to find an install version selector")
 	}
 
-	return selectedVersionSelector.SelectVersion(versionList)
+	v, selector, err := selectedVersionSelector.SelectVersion(versionList)
+
+	return v, selector, err
 }
 
 // GetVersionForUpgrade will get a version based upon available configuration options.
