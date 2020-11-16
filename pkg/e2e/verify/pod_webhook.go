@@ -35,10 +35,10 @@ var _ = ginkgo.Describe(podWebhookTestName, func() {
 		ginkgo.It("Webhook will mark pod spec invalid and block deploying", func() {
 			name := "osde2e-pod-webhook-test1"
 			namespace := "a-namespace"
-			_, err := createNamespace(namespace, h)
+			createNamespace(namespace, h)
 			defer deleteNamespace(namespace, true, h)
 			h.SetServiceAccount("system:serviceaccount:%s:dedicated-admin-project")
-			_, err = createPod(name, namespace, "node-role.kubernetes.io/master", "toleration-key-value", v1.TaintEffectNoSchedule, "node-role.kubernetes.io/infra", "toleration-key-value2", v1.TaintEffectNoSchedule, h)
+			_, err := createPod(name, namespace, "node-role.kubernetes.io/master", "toleration-key-value", v1.TaintEffectNoSchedule, "node-role.kubernetes.io/infra", "toleration-key-value2", v1.TaintEffectNoSchedule, h)
 			defer deletePod(name, namespace, h)
 			Expect(apierrors.IsForbidden(err)).To(BeTrue())
 		})
@@ -92,9 +92,9 @@ var _ = ginkgo.Describe(podWebhookTestName, func() {
 			namespace := "random-namespace"
 			user := "alice"
 			userGroup := "test-users"
-			_, err := createNamespace(namespace, h)
+			createNamespace(namespace, h)
 			defer deleteNamespace(namespace, true, h)
-			err = asUser(namespace, user, userGroup, h)
+			err := asUser(namespace, user, userGroup, h)
 			if err != nil {
 				log.Printf("Could not impersonate user, Error %v", err)
 				return
