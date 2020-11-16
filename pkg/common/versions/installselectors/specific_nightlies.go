@@ -15,7 +15,7 @@ func init() {
 	registerSelector(specificNightlies{})
 }
 
-// MiddleClusterImageSet will use the image in the middle of the available versions.
+// SpecificNightlies attempts to parse a config option as semver and use the major.minor to look for nightlies
 type specificNightlies struct{}
 
 func (m specificNightlies) ShouldUse() bool {
