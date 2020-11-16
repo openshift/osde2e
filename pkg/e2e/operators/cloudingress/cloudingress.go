@@ -5,7 +5,7 @@ import (
 )
 
 const (
-	CloudIngressNamespace = "openshift-ingress-operator"
+	CloudIngressNamespace = "openshift-cloud-ingress-operator"
 	CloudIngressTestName  = "[Suite: informing] CloudIngressOperator"
 )
 
