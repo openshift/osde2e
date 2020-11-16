@@ -2,6 +2,7 @@ package operators
 
 import (
 	"context"
+	"log"
 
 	"github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -38,6 +39,11 @@ var _ = ginkgo.Describe(splunkForwarderBlocking, func() {
 		"splunk-forwarder-operator-og-view",
 	}
 
+	var splunkforwarder_names = []string{
+		"osde2e-dedicated-admin-splunkforwarder-x",
+		"osde2e-splunkforwarder-test-2",
+	}
+
 	h := helper.New()
 	checkClusterServiceVersion(h, operatorNamespace, operatorName)
 	checkConfigMapLockfile(h, operatorNamespace, operatorLockFile)
@@ -48,23 +54,33 @@ var _ = ginkgo.Describe(splunkForwarderBlocking, func() {
 		"openshift-splunk-forwarder-operator", "splunk-forwarder-operator",
 		"splunk-forwarder-operator-catalog")
 
+	//Clean up splunkforwarders after tests
+	ginkgo.JustAfterEach(func() {
+		namespace := "openshift-splunk-forwarder-operator"
+		for _, name := range splunkforwarder_names {
+			err := deleteSplunkforwarder(name, namespace, h)
+			Expect(err).NotTo(HaveOccurred())
+		}
+
+	})
+
 	ginkgo.Context("splunkforwarders", func() {
-		ginkgo.It("dedicated admin should not be able to manage splunkforwarders CR", func() {
-			sf := makeMinimalSplunkforwarder("SplunkForwarder", "splunkforwarder.managed.openshift.io/v1alpha1", "osde2e-splunkforwarder-test-1")
-			err := dedicatedAaddSplunkforwarder(sf, h)
+		ginkgo.It("dedicated admin should not be able to manage SplunkForwarders CR", func() {
+			name := "osde2e-dedicated-admin-splunkforwarder-x"
+			sf := makeMinimalSplunkforwarder("SplunkForwarder", "splunkforwarder.managed.openshift.io/v1alpha1", name)
+			err := dedicatedAaddSplunkforwarder(sf, "openshift-splunk-forwarder-operator", h)
 			Expect(apierrors.IsForbidden(err)).To(BeTrue())
+
 		})
 	})
 
 	ginkgo.Context("splunkforwarders", func() {
-		ginkgo.It("admin should be able to manage splunkforwarders CR", func() {
-			sf := makeMinimalSplunkforwarder("SplunkForwarder", "splunkforwarder.managed.openshift.io/v1alpha1", "osde2e-splunkforwarder-test-2")
-			err := addSplunkforwarder(sf, h)
+		ginkgo.It("admin should be able to manage SplunkForwarders CR", func() {
+			name := "osde2e-splunkforwarder-test-2"
+			sf := makeMinimalSplunkforwarder("SplunkForwarder", "splunkforwarder.managed.openshift.io/v1alpha1", name)
+			err := addSplunkforwarder(sf, "openshift-splunk-forwarder-operator", h)
 			Expect(err).NotTo(HaveOccurred())
 
-			h.Dynamic().Resource(schema.GroupVersionResource{
-				Group: "splunkforwarder.managed.openshift.io", Version: "v1alpha1", Resource: "splunkforwarders",
-			}).Namespace(operatorNamespace).Delete(context.TODO(), "osde2e-splunkforwarder-test-2", metav1.DeleteOptions{})
 		})
 	})
 
@@ -93,7 +109,7 @@ func makeMinimalSplunkforwarder(kind string, apiversion string, name string) sfv
 	return sf
 }
 
-func dedicatedAaddSplunkforwarder(SplunkForwarder sfv1alpha1.SplunkForwarder, h *helper.H) error {
+func dedicatedAaddSplunkforwarder(SplunkForwarder sfv1alpha1.SplunkForwarder, namespace string, h *helper.H) error {
 	obj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(SplunkForwarder.DeepCopy())
 	if err != nil {
 		return err
@@ -102,11 +118,11 @@ func dedicatedAaddSplunkforwarder(SplunkForwarder sfv1alpha1.SplunkForwarder, h 
 	h.SetServiceAccount("system:serviceaccount:%s:dedicated-admin-project")
 	_, err = h.Dynamic().Resource(schema.GroupVersionResource{
 		Group: "splunkforwarder.managed.openshift.io", Version: "v1alpha1", Resource: "splunkforwarders",
-	}).Namespace(operatorNamespace).Create(context.TODO(), &unstructuredObj, metav1.CreateOptions{})
+	}).Namespace(namespace).Create(context.TODO(), &unstructuredObj, metav1.CreateOptions{})
 	return (err)
 }
 
-func addSplunkforwarder(SplunkForwarder sfv1alpha1.SplunkForwarder, h *helper.H) error {
+func addSplunkforwarder(SplunkForwarder sfv1alpha1.SplunkForwarder, namespace string, h *helper.H) error {
 	obj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(SplunkForwarder.DeepCopy())
 	if err != nil {
 		return err
@@ -114,6 +130,21 @@ func addSplunkforwarder(SplunkForwarder sfv1alpha1.SplunkForwarder, h *helper.H)
 	unstructuredObj := unstructured.Unstructured{obj}
 	_, err = h.Dynamic().Resource(schema.GroupVersionResource{
 		Group: "splunkforwarder.managed.openshift.io", Version: "v1alpha1", Resource: "splunkforwarders",
-	}).Namespace(operatorNamespace).Create(context.TODO(), &unstructuredObj, metav1.CreateOptions{})
+	}).Namespace(namespace).Create(context.TODO(), &unstructuredObj, metav1.CreateOptions{})
 	return (err)
+}
+
+func deleteSplunkforwarder(name string, namespace string, h *helper.H) error {
+	_, err := h.Dynamic().Resource(schema.GroupVersionResource{
+		Group: "splunkforwarder.managed.openshift.io", Version: "v1alpha1", Resource: "splunkforwarders",
+	}).Namespace(namespace).Get(context.TODO(), name, metav1.GetOptions{})
+	log.Printf("Get splunkforwarder %s in namespace %s; Error:(%v)", name, operatorNamespace, err)
+	if err == nil {
+		e := h.Dynamic().Resource(schema.GroupVersionResource{
+			Group: "splunkforwarder.managed.openshift.io", Version: "v1alpha1", Resource: "splunkforwarders",
+		}).Namespace(namespace).Delete(context.TODO(), name, metav1.DeleteOptions{})
+		log.Printf("Delete splunkforwarder %s in namespace %s; Error:(%v)", name, operatorNamespace, e)
+		return (e)
+	}
+	return nil
 }
