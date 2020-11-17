@@ -11,7 +11,6 @@ import (
 	"github.com/openshift/osde2e/pkg/common/helper"
 	api "github.com/openshift/rbac-permissions-operator/pkg/apis/managed/v1alpha1"
 	"github.com/spf13/viper"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	unstruct "k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -58,7 +57,7 @@ var _ = ginkgo.Describe(subjectPermissionsTestName, func() {
 			h.SetServiceAccount("system:serviceaccount:%s:dedicated-admin-project")
 			sp := makeSubjectPermission("osde2e-dedicated-admins-cluster")
 			err := createSubjectPermission(sp, operatorNamespace, h)
-			Expect(apierrors.IsForbidden(err)).To(BeTrue())
+			Expect(err).To(HaveOccurred())
 		})
 	})
 
