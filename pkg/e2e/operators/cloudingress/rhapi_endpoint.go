@@ -34,7 +34,7 @@ var _ = ginkgo.Describe(CloudIngressTestName, func() {
 
 })
 
-// utils
+//testHostnameResolves Confirms hostname on the cluster resolves
 func testHostnameResolves(h *helper.H) {
 	var err error
 	ginkgo.Context("rh-api-test", func() {
@@ -68,6 +68,8 @@ func testHostnameResolves(h *helper.H) {
 	})
 }
 
+//testCIDRBlockUpdates compares the CIRDBlock on the related apischeme and the service
+//after an update to make sure changes to the apischem
 func testCIDRBlockUpdates(h *helper.H) {
 	ginkgo.Context("rh-api-test", func() {
 		ginkgo.It("cidr block changes should updated the service", func() {
@@ -121,4 +123,5 @@ func testCIDRBlockUpdates(h *helper.H) {
 	})
 }
 
+// utils
 // common setup and utils are in cloudingress.go
