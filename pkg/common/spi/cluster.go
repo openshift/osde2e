@@ -4,6 +4,7 @@ import (
 	"time"
 
 	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
+	"github.com/openshift/osde2e/pkg/common/metadata"
 )
 
 // ClusterState is the state of the cluster.
@@ -168,6 +169,7 @@ func (cb *ClusterBuilder) ExpirationTimestamp(expirationTimestamp time.Time) *Cl
 // State sets the state for a cluster builder.
 func (cb *ClusterBuilder) State(state ClusterState) *ClusterBuilder {
 	cb.state = state
+	metadata.Instance.SetStatus(string(state))
 	return cb
 }
 

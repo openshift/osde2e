@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/openshift/osde2e/pkg/common/logging"
+	"github.com/openshift/osde2e/pkg/common/metadata"
 	kubev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	v1 "k8s.io/client-go/kubernetes/typed/core/v1"
@@ -30,6 +31,8 @@ func CheckPodHealth(podClient v1.CoreV1Interface, logger *log.Logger) (bool, err
 		return false, fmt.Errorf("pod list is empty. this should NOT happen")
 	}
 
+	var metadataState []string
+
 	total := 0
 	for _, pod := range list.Items {
 		// we only care about the openshift, redhat, and osde2e namespaces
@@ -40,6 +43,7 @@ func CheckPodHealth(podClient v1.CoreV1Interface, logger *log.Logger) (bool, err
 		phase := pod.Status.Phase
 
 		if phase != kubev1.PodRunning && phase != kubev1.PodSucceeded {
+			metadataState = append(metadataState, fmt.Sprintf("%v", pod))
 			if phase != kubev1.PodPending {
 				return false, fmt.Errorf("Pod %s errored: %s - %s", pod.GetName(), pod.Status.Reason, pod.Status.Message)
 			}
@@ -52,6 +56,12 @@ func CheckPodHealth(podClient v1.CoreV1Interface, logger *log.Logger) (bool, err
 	curRatio := (ready / float64(total)) * 100
 
 	logger.Printf("%v%% of %v pods are currently alive...", curRatio, total)
+
+	if len(metadataState) > 0 {
+		metadata.Instance.SetHealthcheckValue("pods", metadataState)
+	} else {
+		metadata.Instance.ClearHealthcheckValue("pods")
+	}
 
 	return len(notReady) == 0, nil
 }

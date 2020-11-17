@@ -37,16 +37,19 @@ func CheckCerts(secretClient v1.CoreV1Interface, logger *log.Logger) (bool, erro
 	}
 	secrets, err := secretClient.Secrets("openshift-config").List(context.TODO(), listOpts)
 	if err != nil {
+		metadata.Instance.SetHealthcheckValue("certs", []string{"error"})
 		return false, fmt.Errorf("error trying to find issued certificate(s): %v", err)
 	}
 	if len(secrets.Items) < 1 {
 		logger.Printf("Certificate(s) not yet issued.")
+		metadata.Instance.SetHealthcheckValue("certs", []string{"pending"})
 		return false, nil
 	}
 
 	if !certCheck.certFound {
 		certCheck.certFound = true
 		metadata.Instance.SetTimeToCertificateIssued(time.Since(certCheck.startTime).Seconds())
+		metadata.Instance.ClearHealthcheckValue("certs")
 	}
 
 	logger.Printf("Certificate(s) has been found.")
