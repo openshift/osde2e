@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"reflect"
 
 	"github.com/openshift/osde2e/pkg/common/phase"
 )
@@ -45,6 +46,11 @@ type Metadata struct {
 	RouteThroughputs            map[string]float64 `json:"route-throughputs"`
 	RouteAvailabilities         map[string]float64 `json:"route-availabilities"`
 
+	// Real Time Data
+	HealthChecks         map[string][]string `json:"healthchecks"`
+	HealthCheckIteration float64             `json:"healthcheckIteration"`
+	Status               string              `json:"status"`
+
 	// Internal variables
 	ReportDir string `json:"-"`
 }
@@ -60,6 +66,7 @@ func init() {
 	Instance.RouteLatencies = make(map[string]float64)
 	Instance.RouteThroughputs = make(map[string]float64)
 	Instance.RouteAvailabilities = make(map[string]float64)
+	Instance.HealthChecks = make(map[string][]string)
 }
 
 // Next are a bunch of setter functions that allow us
@@ -140,6 +147,40 @@ func (m *Metadata) SetTimeToUpgradedClusterReady(timeToUpgradedClusterReady floa
 // SetTimeToCertificateIssued sets the time it took for a certificate to be issued to the cluster
 func (m *Metadata) SetTimeToCertificateIssued(timeToCertificateIssued float64) {
 	m.TimeToCertificateIssued = timeToCertificateIssued
+	m.WriteToJSON(m.ReportDir)
+}
+
+// SetHealthcheckValue sets an arbitrary string value to a healthcheck
+func (m *Metadata) SetHealthcheckValue(key string, value []string) {
+	if !reflect.DeepEqual(m.HealthChecks[key], value) {
+		m.HealthChecks[key] = value
+		m.WriteToJSON(m.ReportDir)
+	}
+}
+
+// ClearHealthcheckValue removes a pending healthcheck
+func (m *Metadata) ClearHealthcheckValue(key string) {
+	if _, ok := m.HealthChecks[key]; ok {
+		delete(m.HealthChecks, key)
+		m.WriteToJSON(m.ReportDir)
+	}
+}
+
+// IncrementHealthcheckIteration increments the healthcheck counter
+func (m *Metadata) IncrementHealthcheckIteration() {
+	m.HealthCheckIteration++
+	m.WriteToJSON(m.ReportDir)
+}
+
+// ZeroHealthcheckIteration zeroes out the healthcheck counter
+func (m *Metadata) ZeroHealthcheckIteration() {
+	m.HealthCheckIteration = 0
+	m.WriteToJSON(m.ReportDir)
+}
+
+// SetStatus stores the status of an osde2e cluster
+func (m *Metadata) SetStatus(status string) {
+	m.Status = status
 	m.WriteToJSON(m.ReportDir)
 }
 

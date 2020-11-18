@@ -6,6 +6,7 @@ import (
 	"log"
 
 	"github.com/openshift/osde2e/pkg/common/logging"
+	"github.com/openshift/osde2e/pkg/common/metadata"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	v1 "k8s.io/client-go/kubernetes/typed/core/v1"
 )
@@ -27,16 +28,26 @@ func CheckNodeHealth(nodeClient v1.CoreV1Interface, logger *log.Logger) (bool, e
 		return false, fmt.Errorf("no nodes found")
 	}
 
+	var metadataState []string
+
 	for _, node := range list.Items {
 		for _, ns := range node.Status.Conditions {
 			if ns.Type != "Ready" && ns.Status == "True" {
+				metadataState = append(metadataState, fmt.Sprintf("%v", node))
 				logger.Printf("Node (%v) issue: %v=%v %v\n", node.ObjectMeta.Name, ns.Type, ns.Status, ns.Message)
 				success = false
 			} else if ns.Type == "Ready" && ns.Status != "True" {
+				metadataState = append(metadataState, fmt.Sprintf("%v", node))
 				logger.Printf("Node (%v) not ready: %v=%v %v\n", node.ObjectMeta.Name, ns.Type, ns.Status, ns.Message)
 				success = false
 			}
 		}
+	}
+
+	if len(metadataState) > 0 {
+		metadata.Instance.SetHealthcheckValue("nodes", metadataState)
+	} else {
+		metadata.Instance.ClearHealthcheckValue("nodes")
 	}
 
 	return success, nil

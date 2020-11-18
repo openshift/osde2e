@@ -9,6 +9,7 @@ import (
 	configclient "github.com/openshift/client-go/config/clientset/versioned/typed/config/v1"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/logging"
+	"github.com/openshift/osde2e/pkg/common/metadata"
 	"github.com/spf13/viper"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -40,6 +41,8 @@ func CheckOperatorReadiness(configClient configclient.ConfigV1Interface, logger 
 		}
 	}
 
+	var metadataState []string
+
 	for _, co := range list.Items {
 		if _, ok := operatorSkipList[co.GetName()]; !ok {
 			for _, cos := range co.Status.Conditions {
@@ -47,11 +50,18 @@ func CheckOperatorReadiness(configClient configclient.ConfigV1Interface, logger 
 					continue
 				}
 				if (cos.Type != "Available" && cos.Status != "False") && cos.Type != "Upgradeable" {
+					metadataState = append(metadataState, fmt.Sprintf("%v", co))
 					logger.Printf("Operator %v type %v is %v: %v", co.ObjectMeta.Name, cos.Type, cos.Status, cos.Message)
 					success = false
 				}
 			}
 		}
+	}
+
+	if len(metadataState) > 0 {
+		metadata.Instance.SetHealthcheckValue("operators", metadataState)
+	} else {
+		metadata.Instance.ClearHealthcheckValue("operators")
 	}
 
 	return success, nil

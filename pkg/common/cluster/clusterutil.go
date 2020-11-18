@@ -105,6 +105,7 @@ func waitForClusterReadyWithOverrideAndExpectedNumberOfNodes(clusterID string, l
 				return false, nil
 			}
 
+			metadata.Instance.IncrementHealthcheckIteration()
 			properties := cluster.Properties()
 			currentStatus := properties[clusterproperties.Status]
 
