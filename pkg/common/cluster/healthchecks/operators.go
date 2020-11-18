@@ -43,6 +43,9 @@ func CheckOperatorReadiness(configClient configclient.ConfigV1Interface, logger 
 	for _, co := range list.Items {
 		if _, ok := operatorSkipList[co.GetName()]; !ok {
 			for _, cos := range co.Status.Conditions {
+				if cos.Type == "Disabled" && cos.Status == "True" {
+					continue
+				}
 				if (cos.Type != "Available" && cos.Status != "False") && cos.Type != "Upgradeable" {
 					logger.Printf("Operator %v type %v is %v: %v", co.ObjectMeta.Name, cos.Type, cos.Status, cos.Message)
 					success = false
