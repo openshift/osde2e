@@ -33,6 +33,7 @@ require (
 	github.com/openshift/managed-upgrade-operator v0.0.0-20200820052802-5d57e1785b53
 	github.com/openshift/moactl v0.0.11
 	github.com/openshift/rbac-permissions-operator v0.0.0-20201020153617-819ec06cd5e3
+	github.com/openshift/splunk-forwarder-operator v0.0.0-20201112162206-2f454770b6c0
 	github.com/operator-framework/api v0.3.6
 	github.com/operator-framework/operator-lifecycle-manager v0.0.0-20200521062108-408ca95d458f
 	github.com/prometheus/alertmanager v0.21.0

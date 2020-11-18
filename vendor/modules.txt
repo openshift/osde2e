@@ -373,6 +373,8 @@ github.com/openshift/moactl/pkg/ocm/versions
 github.com/openshift/moactl/pkg/reporter
 # github.com/openshift/rbac-permissions-operator v0.0.0-20201020153617-819ec06cd5e3
 github.com/openshift/rbac-permissions-operator/pkg/apis/managed/v1alpha1
+# github.com/openshift/splunk-forwarder-operator v0.0.0-20201112162206-2f454770b6c0
+github.com/openshift/splunk-forwarder-operator/pkg/apis/splunkforwarder/v1alpha1
 # github.com/operator-framework/api v0.3.6
 github.com/operator-framework/api/pkg/lib/version
 github.com/operator-framework/api/pkg/operators
@@ -777,6 +779,7 @@ k8s.io/kube-openapi/pkg/util/proto
 k8s.io/utils/integer
 k8s.io/utils/pointer
 # sigs.k8s.io/controller-runtime v0.6.1 => sigs.k8s.io/controller-runtime v0.5.1-0.20200414221803-bac7e8aaf90a
+sigs.k8s.io/controller-runtime/pkg/runtime/scheme
 sigs.k8s.io/controller-runtime/pkg/scheme
 # sigs.k8s.io/structured-merge-diff/v4 v4.0.1
 sigs.k8s.io/structured-merge-diff/v4/value
