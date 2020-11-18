@@ -79,6 +79,6 @@ func (m *MOAProvider) AddProperty(cluster *spi.Cluster, tag string, value string
 }
 
 // Upgrade initiates a cluster upgrade from the OCM provider.
-func (m *MOAProvider) Upgrade(clusterID string, version string, pdbTimeoutMinutes int, t time.Time) error {
-	return m.ocmProvider.Upgrade(clusterID, version, pdbTimeoutMinutes, t)
+func (m *MOAProvider) Upgrade(clusterID string, version string, t time.Time) error {
+	return m.ocmProvider.Upgrade(clusterID, version, t)
 }

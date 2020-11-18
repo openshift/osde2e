@@ -51,7 +51,6 @@ const (
 	configNodeDrainTimeout        = 6   // minutes
 	configExpectedDrainTime       = 7   // minutes
 	configControlPlaneTime        = 90  // minutes
-	configPdbPolicyDrainTimeout   = 15  // minutes
 	configPdbDrainTimeoutOverride = 5   // minutes
 
 )
@@ -308,7 +307,7 @@ func scheduleUpgradeWithProvider(version string) error {
 	// Our time will be as closely allowed as possible by the provider (now + 6 min)
 	t := time.Now().UTC().Add(6 * time.Minute)
 
-	err = clusterProvider.Upgrade(clusterID, version, configPdbPolicyDrainTimeout, t)
+	err = clusterProvider.Upgrade(clusterID, version, t)
 	if err != nil {
 		return fmt.Errorf("error initiating upgrade from provider: %v", err)
 	}
