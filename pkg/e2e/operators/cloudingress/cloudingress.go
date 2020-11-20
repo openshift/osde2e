@@ -8,6 +8,7 @@ const (
 	CloudIngressNamespace = "openshift-cloud-ingress-operator"
 	CloudIngressTestName  = "[Suite: informing] CloudIngressOperator"
 	OperatorName          = "cloud-ingress-operator"
+	apiSchemeResourceName = "rh-api"
 )
 
 // utils

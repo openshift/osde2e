@@ -80,7 +80,7 @@ func testCIDRBlockUpdates(h *helper.H) {
 			//Get the APIScheme
 			APISchemeRawData, err := h.Dynamic().Resource(schema.GroupVersionResource{
 				Group: "cloudingress.managed.openshift.io", Version: "v1alpha1", Resource: "apischemes",
-			}).Namespace(CloudIngressNamespace).Get(context.TODO(), "rh-api", metav1.GetOptions{})
+			}).Namespace(CloudIngressNamespace).Get(context.TODO(), apiSchemeResourceName, metav1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred())
 
 			//structure the APIScheme unstructured data into a APIScheme object
@@ -111,7 +111,7 @@ func testCIDRBlockUpdates(h *helper.H) {
 			rhAPIService := &corev1.Service{}
 
 			//Extract the LoadBalancerSourceRanges from the service
-			rhAPIService, err = h.Kube().CoreV1().Services("openshift-kube-apiserver").Get(context.TODO(), "rh-api", metav1.GetOptions{})
+			rhAPIService, err = h.Kube().CoreV1().Services("openshift-kube-apiserver").Get(context.TODO(), apiSchemeResourceName, metav1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred())
 
 			//Make sure both the New CIDRBlock and the Service LoadBalancerSourceRanges are equal
