@@ -15,7 +15,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
-var _ = ginkgo.Describe(constants.SuiteInforming+TestPrefix, func() {
+var _ = ginkgo.Describe(constants.SuiteOperators+TestPrefix, func() {
 	h := helper.New()
 	testCRapiSchemesPresent(h)
 	testDaCRapischemes(h)

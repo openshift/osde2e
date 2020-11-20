@@ -20,7 +20,7 @@ import (
 
 // tests
 
-var _ = ginkgo.Describe(constants.SuiteInforming+TestPrefix, func() {
+var _ = ginkgo.Describe(constants.SuiteOperators+TestPrefix, func() {
 
 	var defaultDesiredReplicas int32 = 1
 
