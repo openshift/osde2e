@@ -6,6 +6,7 @@ import (
 	"github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	cloudingress "github.com/openshift/cloud-ingress-operator/pkg/apis/cloudingress/v1alpha1"
+	"github.com/openshift/osde2e/pkg/common/constants"
 	"github.com/openshift/osde2e/pkg/common/helper"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -14,12 +15,10 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
-var _ = ginkgo.Describe(CloudIngressTestName, func() {
-	var operatorNamespace = "openshift-cloud-ingress-operator"
-
+var _ = ginkgo.Describe(constants.SuiteInforming+TestPrefix, func() {
 	h := helper.New()
-	testDaCRpublishingstrategies(h, operatorNamespace)
-	testCRpublishingstrategies(h, operatorNamespace)
+	testDaCRpublishingstrategies(h)
+	testCRpublishingstrategies(h)
 
 })
 
@@ -40,7 +39,7 @@ func createPublishingstrategies() cloudingress.PublishingStrategy {
 	return publishingstrategy
 }
 
-func addPublishingstrategy(h *helper.H, publishingstrategy cloudingress.PublishingStrategy, operatorNamespace string) error {
+func addPublishingstrategy(h *helper.H, publishingstrategy cloudingress.PublishingStrategy) error {
 	obj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(publishingstrategy.DeepCopy())
 	if err != nil {
 		return err
@@ -48,27 +47,27 @@ func addPublishingstrategy(h *helper.H, publishingstrategy cloudingress.Publishi
 	unstructuredObj := unstructured.Unstructured{obj}
 	_, err = h.Dynamic().Resource(schema.GroupVersionResource{
 		Group: "cloudingress.managed.openshift.io", Version: "v1alpha1", Resource: "publishingstrategies",
-	}).Namespace(operatorNamespace).Create(context.TODO(), &unstructuredObj, metav1.CreateOptions{})
+	}).Namespace(OperatorNamespace).Create(context.TODO(), &unstructuredObj, metav1.CreateOptions{})
 	return err
 }
 
-func testDaCRpublishingstrategies(h *helper.H, operatorNamespace string) {
+func testDaCRpublishingstrategies(h *helper.H) {
 	ginkgo.Context("cloud-ingress-operator", func() {
 		ginkgo.It("dedicated admin should not be allowed to manage publishingstrategies CR", func() {
 			h.SetServiceAccount("system:serviceaccount:%s:dedicated-admin-project")
 			ps := createPublishingstrategies()
-			err := addPublishingstrategy(h, ps, operatorNamespace)
+			err := addPublishingstrategy(h, ps)
 			Expect(apierrors.IsForbidden(err)).To(BeTrue())
 
 		})
 	})
 }
 
-func testCRpublishingstrategies(h *helper.H, operatorNamespace string) {
+func testCRpublishingstrategies(h *helper.H) {
 	ginkgo.Context("cloud-ingress-operator", func() {
 		ginkgo.It("admin should be allowed to manage publishingstrategies CR", func() {
 			ps := createPublishingstrategies()
-			err := addPublishingstrategy(h, ps, operatorNamespace)
+			err := addPublishingstrategy(h, ps)
 			Expect(err).NotTo(HaveOccurred())
 
 		})

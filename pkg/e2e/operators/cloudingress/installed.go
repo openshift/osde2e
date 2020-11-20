@@ -9,6 +9,7 @@ import (
 
 	"github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"github.com/openshift/osde2e/pkg/common/constants"
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/spf13/viper"
 
@@ -19,7 +20,7 @@ import (
 
 // tests
 
-var _ = ginkgo.Describe(CloudIngressTestName, func() {
+var _ = ginkgo.Describe(constants.SuiteInforming+TestPrefix, func() {
 
 	var defaultDesiredReplicas int32 = 1
 
@@ -28,13 +29,13 @@ var _ = ginkgo.Describe(CloudIngressTestName, func() {
 	// Check that the operator deployment exists in the operator namespace
 	ginkgo.Context("deployment", func() {
 		ginkgo.It("should exist", func() {
-			deployment, err := pollDeployment(h, CloudIngressNamespace, OperatorName)
+			deployment, err := pollDeployment(h, OperatorNamespace, OperatorName)
 			Expect(err).ToNot(HaveOccurred(), "failed fetching deployment")
 			Expect(deployment).NotTo(BeNil(), "deployment is nil")
 		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
 
 		ginkgo.It("should have all desired replicas ready", func() {
-			deployment, err := pollDeployment(h, CloudIngressNamespace, OperatorName)
+			deployment, err := pollDeployment(h, OperatorNamespace, OperatorName)
 			Expect(err).ToNot(HaveOccurred(), "failed fetching deployment")
 
 			readyReplicas := deployment.Status.ReadyReplicas

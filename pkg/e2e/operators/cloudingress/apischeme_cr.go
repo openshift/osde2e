@@ -6,6 +6,7 @@ import (
 	"github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	cloudingress "github.com/openshift/cloud-ingress-operator/pkg/apis/cloudingress/v1alpha1"
+	"github.com/openshift/osde2e/pkg/common/constants"
 	"github.com/openshift/osde2e/pkg/common/helper"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -14,13 +15,11 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
-var _ = ginkgo.Describe(CloudIngressTestName, func() {
-	var operatorNamespace = "openshift-cloud-ingress-operator"
-
+var _ = ginkgo.Describe(constants.SuiteInforming+TestPrefix, func() {
 	h := helper.New()
 	testCRapiSchemesPresent(h)
-	testDaCRapischemes(h, operatorNamespace)
-	testCRapischemes(h, operatorNamespace)
+	testDaCRapischemes(h)
+	testCRapischemes(h)
 
 })
 
@@ -44,7 +43,7 @@ func createApischeme() cloudingress.APIScheme {
 	return apischeme
 }
 
-func addApischeme(h *helper.H, apischeme cloudingress.APIScheme, operatorNamespace string) error {
+func addApischeme(h *helper.H, apischeme cloudingress.APIScheme) error {
 	obj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(apischeme.DeepCopy())
 	if err != nil {
 		return err
@@ -52,27 +51,27 @@ func addApischeme(h *helper.H, apischeme cloudingress.APIScheme, operatorNamespa
 	unstructuredObj := unstructured.Unstructured{obj}
 	_, err = h.Dynamic().Resource(schema.GroupVersionResource{
 		Group: "cloudingress.managed.openshift.io", Version: "v1alpha1", Resource: "apischemes",
-	}).Namespace(operatorNamespace).Create(context.TODO(), &unstructuredObj, metav1.CreateOptions{})
+	}).Namespace(OperatorNamespace).Create(context.TODO(), &unstructuredObj, metav1.CreateOptions{})
 	return err
 }
 
-func testDaCRapischemes(h *helper.H, operatorNamespace string) {
+func testDaCRapischemes(h *helper.H) {
 	ginkgo.Context("apischeme-cr-test", func() {
 		ginkgo.It("dedicated admin should not be allowed to manage apischemes CR", func() {
 			h.SetServiceAccount("system:serviceaccount:%s:dedicated-admin-project")
 			as := createApischeme()
-			err := addApischeme(h, as, operatorNamespace)
+			err := addApischeme(h, as)
 			Expect(apierrors.IsForbidden(err)).To(BeTrue())
 
 		})
 	})
 }
 
-func testCRapischemes(h *helper.H, operatorNamespace string) {
+func testCRapischemes(h *helper.H) {
 	ginkgo.Context("apischeme-cr-test", func() {
 		ginkgo.It("admin should be allowed to manage apischemes CR", func() {
 			as := createApischeme()
-			err := addApischeme(h, as, operatorNamespace)
+			err := addApischeme(h, as)
 			Expect(err).NotTo(HaveOccurred())
 
 		})
@@ -81,10 +80,10 @@ func testCRapischemes(h *helper.H, operatorNamespace string) {
 
 func testCRapiSchemesPresent(h *helper.H) {
 	ginkgo.Context("apischeme-cr-test", func() {
-		ginkgo.It("ApiSchemeCR must be present on cluster", func() {
+		ginkgo.It("apischemes CR instance must be present on cluster", func() {
 			_, err := h.Dynamic().Resource(schema.GroupVersionResource{
 				Group: "cloudingress.managed.openshift.io", Version: "v1alpha1", Resource: "apischemes",
-			}).Namespace(CloudIngressNamespace).Get(context.TODO(), apiSchemeResourceName, metav1.GetOptions{})
+			}).Namespace(OperatorNamespace).Get(context.TODO(), apiSchemeResourceName, metav1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred())
 		})
 	})
