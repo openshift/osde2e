@@ -74,6 +74,9 @@ func testCRapischemes(h *helper.H) {
 			err := addApischeme(h, as)
 			Expect(err).NotTo(HaveOccurred())
 
+			err = apiSchemeCleanup(h, as.Name)
+			Expect(err).NotTo(HaveOccurred())
+
 		})
 	})
 }
@@ -87,4 +90,10 @@ func testCRapiSchemesPresent(h *helper.H) {
 			Expect(err).NotTo(HaveOccurred())
 		})
 	})
+}
+
+func apiSchemeCleanup(h *helper.H, apiSchemeName string) error {
+	return h.Dynamic().Resource(schema.GroupVersionResource{
+		Group: "cloudingress.managed.openshift.io", Version: "v1alpha1", Resource: "apischemes",
+	}).Namespace(OperatorNamespace).Delete(context.TODO(), apiSchemeName, metav1.DeleteOptions{})
 }
