@@ -14,6 +14,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 
 	"github.com/openshift/osde2e/pkg/common/config"
+	"github.com/openshift/osde2e/pkg/common/constants"
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/spf13/viper"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -25,8 +26,7 @@ import (
 
 // tests
 
-var _ = ginkgo.Describe(CloudIngressTestName, func() {
-
+var _ = ginkgo.Describe(constants.SuiteOperators+TestPrefix, func() {
 	h := helper.New()
 
 	testHostnameResolves(h)
@@ -80,7 +80,7 @@ func testCIDRBlockUpdates(h *helper.H) {
 			//Get the APIScheme
 			APISchemeRawData, err := h.Dynamic().Resource(schema.GroupVersionResource{
 				Group: "cloudingress.managed.openshift.io", Version: "v1alpha1", Resource: "apischemes",
-			}).Namespace(CloudIngressNamespace).Get(context.TODO(), apiSchemeResourceName, metav1.GetOptions{})
+			}).Namespace(OperatorNamespace).Get(context.TODO(), apiSchemeResourceName, metav1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred())
 
 			//structure the APIScheme unstructured data into a APIScheme object
@@ -104,7 +104,7 @@ func testCIDRBlockUpdates(h *helper.H) {
 			// //Update the APIScheme
 			APISchemeRawData, err = h.Dynamic().Resource(schema.GroupVersionResource{
 				Group: "cloudingress.managed.openshift.io", Version: "v1alpha1", Resource: "apischemes",
-			}).Namespace(CloudIngressNamespace).Update(context.TODO(), APISchemeRawData, metav1.UpdateOptions{})
+			}).Namespace(OperatorNamespace).Update(context.TODO(), APISchemeRawData, metav1.UpdateOptions{})
 			Expect(err).NotTo(HaveOccurred())
 
 			//Create a service Object
