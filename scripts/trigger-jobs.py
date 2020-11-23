@@ -10,8 +10,8 @@ JENKINS_URL = os.environ['JENKINS_URL']
 
 UPSTREAM_JOBS = {
     "openshift-saas-deploy-saas-clusterimagesets-stage-osd-stage-hives02ue1": "stage",
-    "openshift-saas-deploy-saas-clusterimagesets-prod-osd-production-hivep01ue1": "production",
-    "openshift-saas-deploy-saas-clusterimagesets-integration-osd-integration-hivei01ue1": "integration",
+    "openshift-saas-deploy-saas-clusterimagesets-prod-osd-production-hivep01ue1": "prod",
+    "openshift-saas-deploy-saas-clusterimagesets-integration-osd-integration-hivei01ue1": "int",
 }
 
 
@@ -45,8 +45,9 @@ def get_changed_cis(job, build):
     return cis
 
 
-def trigger_cis_test(environment, cis):
-    print(f"triggering cis test: {environment}-{cis}")
+def trigger_cis_test(environment, cis, cloud_provider):
+    run_command = f"docker run -u \"$(id -u)\" -e OCM_TOKEN -e CLOUD_PROVIDER_ID=\"{cloud_provider}\" -e OSD_ENV=\"{environment}\" -e INSTALL_VERSION=\"{cis}\" -e \"CLUSTER_EXPIRY_IN_MINUTES=240\" -e \"OCM_USER_OVERRIDE=ci-int-jenkins\" quay.io/app-sre/osde2e test"
+    print(run_command)
 
 
 if __name__ == '__main__':
@@ -58,6 +59,7 @@ if __name__ == '__main__':
         if upstream_job in UPSTREAM_JOBS:
             environment = UPSTREAM_JOBS[upstream_job]
             for cis in get_changed_cis(upstream_job, upstream_build):
-                trigger_cis_test(environment, cis)
+                trigger_cis_test(environment, cis, "aws")
+                trigger_cis_test(environment, cis, "gcp")
         else:
             print("NOT A CIS JOB")
