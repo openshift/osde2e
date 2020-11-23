@@ -71,10 +71,8 @@ func testCRapischemes(h *helper.H) {
 	ginkgo.Context("apischeme-cr-test", func() {
 		ginkgo.It("admin should be allowed to manage apischemes CR", func() {
 			as := createApischeme()
+			defer apiSchemeCleanup(h, as.Name)
 			err := addApischeme(h, as)
-			Expect(err).NotTo(HaveOccurred())
-
-			err = apiSchemeCleanup(h, as.Name)
 			Expect(err).NotTo(HaveOccurred())
 
 		})
