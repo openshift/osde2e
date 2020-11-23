@@ -272,3 +272,13 @@ func (m *MockProvider) AddProperty(cluster *spi.Cluster, tag string, value strin
 func (m *MockProvider) Upgrade(clusterID string, version string, t time.Time) error {
 	return fmt.Errorf("Upgrade is unsupported by mock clusters")
 }
+
+// Get upgrade policy mocks fetch the upgrade policy for a cluster
+func (m *MockProvider) GetUpgradePolicy(clusterID string) (string, error) {
+	return "mock", fmt.Errorf("Get mock upgrade policy failed")
+}
+
+// UpdateSchedule mocks reschedule the upgrade
+func (m *MockProvider) UpdateSchedule(clusterID string, version string, t time.Time, policyID string) error {
+	return fmt.Errorf("Upgrade Schedule is not supported by mock clusters")
+}

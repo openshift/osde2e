@@ -108,6 +108,9 @@ var Upgrade = struct {
 
 	// Create disruptive Node Drain workload to test the Managed Upgrade Operator's ability to handle them.
 	ManagedUpgradeTestNodeDrain string
+
+	// Reschedule the upgrade via provider before commence
+	ManagedUpgradeRescheduled string
 }{
 	UpgradeToLatest:                        "upgrade.toLatest",
 	UpgradeToLatestZ:                       "upgrade.ToLatestZ",
@@ -120,6 +123,7 @@ var Upgrade = struct {
 	WaitForWorkersToManagedUpgrade:         "upgrade.waitForWorkersToManagedUpgrade",
 	ManagedUpgradeTestPodDisruptionBudgets: "upgrade.managedUpgradeTestPodDisruptionBudgets",
 	ManagedUpgradeTestNodeDrain:            "upgrade.managedUpgradeTestNodeDrain",
+	ManagedUpgradeRescheduled:				"upgrade.managedUpgradeRescheduled",
 }
 
 // Kubeconfig config keys.
@@ -450,6 +454,9 @@ func init() {
 
 	viper.BindEnv(Upgrade.ManagedUpgradeTestNodeDrain, "UPGRADE_MANAGED_TEST_DRAIN")
 	viper.SetDefault(Upgrade.ManagedUpgradeTestNodeDrain, true)
+
+	viper.BindEnv(Upgrade.ManagedUpgradeRescheduled, "UPGRADE_MANAGED_TEST_RESCHEDULE")
+	viper.SetDefault(Upgrade.ManagedUpgradeRescheduled, false)
 
 	viper.BindEnv(Upgrade.WaitForWorkersToManagedUpgrade, "UPGRADE_WAIT_FOR_WORKERS")
 	viper.SetDefault(Upgrade.WaitForWorkersToManagedUpgrade, true)
