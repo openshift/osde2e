@@ -110,6 +110,9 @@ func testCIDRBlockUpdates(h *helper.H) {
 			//Create a service Object
 			rhAPIService := &corev1.Service{}
 
+			//wait 10 secs for apiserver to reconcile
+			time.Sleep(10 * time.Second)
+
 			//Extract the LoadBalancerSourceRanges from the service
 			rhAPIService, err = h.Kube().CoreV1().Services("openshift-kube-apiserver").Get(context.TODO(), apiSchemeResourceName, metav1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred())
