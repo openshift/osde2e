@@ -2,11 +2,16 @@
 
 import os
 import re
+import sys
+import pathlib
 
+import subprocess
 import requests
 
 BUILD_URL = os.environ['BUILD_URL']
 JENKINS_URL = os.environ['JENKINS_URL']
+CWD = pathlib.Path(__file__).parent.absolute()
+UID = os.getuid()
 
 UPSTREAM_JOBS = {
     "openshift-saas-deploy-saas-clusterimagesets-stage-osd-stage-hives02ue1": "stage",
@@ -46,9 +51,16 @@ def get_changed_cis(job, build):
 
 
 def trigger_cis_test(environment, cis, cloud_provider):
-    run_command = f"docker run -u \"$(id -u)\" -e OCM_TOKEN -e CLOUD_PROVIDER_ID=\"{cloud_provider}\" -e OSD_ENV=\"{environment}\" -e INSTALL_VERSION=\"{cis}\" -e \"CLUSTER_EXPIRY_IN_MINUTES=240\" -e \"OCM_USER_OVERRIDE=ci-int-jenkins\" quay.io/app-sre/osde2e test"
-    print(run_command)
+    run_array = [
+        "docker", "run", f"-u {UID}", f"-v {CWD}/report:/report",
+        "-e OCM_TOKEN", "-e REPORT_DIR=/report", f"-e CLOUD_PROVIDER_ID={cloud_provider}", f"-e OSD_ENV={environment}",
+        f"-e CLUSTER_VERSION={cis}", "-e CLUSTER_EXPIRY_IN_MINUTES=240", "-e OCM_USER_OVERRIDE=ci-int-jenkins", 
+        "quay.io/app-sre/osde2e", "test"
+    ]
 
+    print(" ".join(run_array))
+    
+    return os.system(" ".join(run_array))
 
 if __name__ == '__main__':
     verify_upstream_jobs()
@@ -58,8 +70,16 @@ if __name__ == '__main__':
     if upstream_job and upstream_build:
         if upstream_job in UPSTREAM_JOBS:
             environment = UPSTREAM_JOBS[upstream_job]
+            pathlib.Path(".").mkdir(parents=True, exist_ok=True)
+            success = True
             for cis in get_changed_cis(upstream_job, upstream_build):
-                trigger_cis_test(environment, cis, "aws")
-                trigger_cis_test(environment, cis, "gcp")
+                if trigger_cis_test(environment, cis, "aws") > 0:
+                    print("AWS Job failed!")
+                    success = False
+                if trigger_cis_test(environment, cis, "gcp") > 0:
+                    print ("GCP Job failed!")
+                    success = False
+            
+            sys.exit(not success)
         else:
             print("NOT A CIS JOB")
