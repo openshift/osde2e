@@ -231,7 +231,7 @@ func createManagedUpgradeWorkload(workLoadName string, workLoadDir string, podPr
 	// Wait for all pods to come up healthy
 	err = wait.PollImmediate(5*time.Second, 2*time.Minute, func() (bool, error) {
 
-		if check, err := healthchecks.CheckPodHealth(h.Kube().CoreV1(), nil, podPrefixes...); !check || err != nil {
+		if check, err := healthchecks.CheckPodHealth(h.Kube().CoreV1(), nil, h.CurrentProject(), podPrefixes...); !check || err != nil {
 			return false, nil
 		}
 		return true, nil
