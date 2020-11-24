@@ -14,7 +14,7 @@ import (
 )
 
 // CheckPodHealth attempts to look at the state of all pods and returns true if things are healthy.
-func CheckPodHealth(podClient v1.CoreV1Interface, logger *log.Logger) (bool, error) {
+func CheckPodHealth(podClient v1.CoreV1Interface, logger *log.Logger, podPrefixes ...string) (bool, error) {
 	logger = logging.CreateNewStdLoggerOrUseExistingLogger(logger)
 
 	var notReady []kubev1.Pod
@@ -39,6 +39,11 @@ func CheckPodHealth(podClient v1.CoreV1Interface, logger *log.Logger) (bool, err
 		if !containsPrefixes(pod.Namespace, "openshift-", "redhat-", "osde2e-") {
 			continue
 		}
+		// if pod prefixes are supplied, look for them specifically
+		if len(podPrefixes) > 0 && !containsPrefixes(pod.Name, podPrefixes...) {
+			continue
+		}
+
 		total++
 		phase := pod.Status.Phase
 

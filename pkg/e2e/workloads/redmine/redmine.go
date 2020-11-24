@@ -39,8 +39,13 @@ var _ = ginkgo.Describe(testName, func() {
 	// setup helper
 	h := helper.New()
 
+	// used for verifying creation of workload pods
+	podPrefixes := []string{"redmine"}
+
 	redmineTimeoutInSeconds := 900
 	ginkgo.It("should get created in the cluster", func() {
+
+
 		// Does this workload exist? If so, this must be a repeat run.
 		// In this case we should assume the workload has had a valid run once already
 		// And simply run another test validating the workload.
@@ -60,7 +65,7 @@ var _ = ginkgo.Describe(testName, func() {
 			// Wait for all pods to come up healthy
 			err = wait.PollImmediate(15*time.Second, 10*time.Minute, func() (bool, error) {
 				// This is pretty basic. Are all the pods up? Cool.
-				if check, err := healthchecks.CheckPodHealth(h.Kube().CoreV1(), nil); !check || err != nil {
+				if check, err := healthchecks.CheckPodHealth(h.Kube().CoreV1(), nil, podPrefixes...); !check || err != nil {
 					return false, nil
 				}
 				return true, nil
