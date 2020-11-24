@@ -12,6 +12,7 @@ BUILD_URL = os.environ['BUILD_URL']
 JENKINS_URL = os.environ['JENKINS_URL']
 CWD = pathlib.Path(__file__).parent.absolute()
 UID = os.getuid()
+OSDe2eImage = "quay.io/app-sre/osde2e:latest"
 
 UPSTREAM_JOBS = {
     "openshift-saas-deploy-saas-clusterimagesets-stage-osd-stage-hives02ue1": "stage",
@@ -55,7 +56,7 @@ def trigger_cis_test(environment, cis, cloud_provider):
         "docker", "run", f"-u {UID}", f"-v {CWD}/report:/report",
         "-e OCM_TOKEN", "-e REPORT_DIR=/report", f"-e CLOUD_PROVIDER_ID={cloud_provider}", f"-e OSD_ENV={environment}",
         f"-e CLUSTER_VERSION={cis}", "-e CLUSTER_EXPIRY_IN_MINUTES=240", "-e OCM_USER_OVERRIDE=ci-int-jenkins", 
-        "quay.io/app-sre/osde2e", "test"
+        OSDe2eImage, "test"
     ]
 
     print(" ".join(run_array))
@@ -71,6 +72,7 @@ if __name__ == '__main__':
         if upstream_job in UPSTREAM_JOBS:
             environment = UPSTREAM_JOBS[upstream_job]
             pathlib.Path(".").mkdir(parents=True, exist_ok=True)
+            os.system(f"docker pull {OSDe2eImage}")
             success = True
             for cis in get_changed_cis(upstream_job, upstream_build):
                 if trigger_cis_test(environment, cis, "aws") > 0:
