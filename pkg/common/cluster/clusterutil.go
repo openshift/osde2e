@@ -324,7 +324,11 @@ func ProvisionCluster(logger *log.Logger) (*spi.Cluster, error) {
 
 	// if TEST_KUBECONFIG has been set, skip configuring OCM
 	if len(viper.GetString(config.Kubeconfig.Contents)) > 0 || len(viper.GetString(config.Kubeconfig.Path)) > 0 {
-		return nil, useKubeconfig(logger)
+		err := useKubeconfig(logger)
+		if err != nil {
+			return nil, err
+		}
+		viper.Set(config.Provider, "mock")
 	}
 
 	provider, err := providers.ClusterProvider()
