@@ -29,7 +29,7 @@ var _ = ginkgo.Describe(pruneJobsTestName, func() {
 	h := helper.New()
 	ginkgo.Context("pruner jobs should works", func() {
 		namespace := "openshift-sre-pruning"
-		cronJobs := []string{"builds-pruner", "deployments-pruner", "image-pruner"}
+		cronJobs := []string{"builds-pruner", "deployments-pruner"}
 		for _, cronJob := range cronJobs {
 			ginkgo.It(cronJob+" should run successfully", func() {
 				getOpts := metav1.GetOptions{}
