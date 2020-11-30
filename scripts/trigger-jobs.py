@@ -9,6 +9,7 @@ import subprocess
 import requests
 
 BUILD_URL = os.environ['BUILD_URL']
+BUILD_ID = os.environ['BUILD_ID']
 JENKINS_URL = os.environ['JENKINS_URL']
 CWD = pathlib.Path(__file__).parent.absolute()
 UID = os.getuid()
@@ -53,7 +54,7 @@ def get_changed_cis(job, build):
 
 def trigger_cis_test(environment, cis, cloud_provider):
     run_array = [
-        "docker", "run", f"-u {UID}", f"-v {CWD}/report:/report",
+        "docker", "run", f"-u {UID}", f"-v {CWD}/report_{BUILD_ID}:/report",
         "-e OCM_TOKEN", "-e REPORT_DIR=/report", f"-e CLOUD_PROVIDER_ID={cloud_provider}", f"-e OSD_ENV={environment}",
         f"-e CLUSTER_VERSION={cis}", "-e CLUSTER_EXPIRY_IN_MINUTES=240", "-e OCM_USER_OVERRIDE=ci-int-jenkins", 
         OSDe2eImage, "test"
@@ -71,7 +72,7 @@ if __name__ == '__main__':
     if upstream_job and upstream_build:
         if upstream_job in UPSTREAM_JOBS:
             environment = UPSTREAM_JOBS[upstream_job]
-            pathlib.Path(".").mkdir(parents=True, exist_ok=True)
+            pathlib.Path(f"{CWD}/report_{BUILD_ID}").mkdir(parents=True, exist_ok=True)
             os.system(f"docker pull {OSDe2eImage}")
             success = True
             for cis in get_changed_cis(upstream_job, upstream_build):
