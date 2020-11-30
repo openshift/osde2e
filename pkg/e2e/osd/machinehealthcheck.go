@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	OperatorNamespace = "openshift-machine-api"
+	machineAPINamespace = "openshift-machine-api"
 )
 
 var machineHealthTestName string = "[Suite: e2e] MachineHealthChecks"
@@ -27,35 +27,56 @@ func init() {
 var _ = ginkgo.Describe(machineHealthTestName, func() {
 	h := helper.New()
 
-	ginkgo.It("should exist", func() {
-		machineHealthChecks, err := h.Machine().MachineV1beta1().MachineHealthChecks(OperatorNamespace).List(context.TODO(), metav1.ListOptions{})
+	ginkgo.It("infra MHC should exist", func() {
+		mhc, err := h.Machine().MachineV1beta1().MachineHealthChecks(machineAPINamespace).Get(context.TODO(), "srep-infra-healthcheck", metav1.GetOptions{})
 		Expect(err).NotTo(HaveOccurred())
 
-		for _, mhc := range machineHealthChecks.Items {
-			// verify there's an MHC for infra and worker nodes
-			Expect(mhc.Spec.Selector.MatchLabels["machine.openshift.io/cluster-api-machine-role"]).To(SatisfyAny(
-				Equal("infra"),
-				Equal("worker"),
-			))
+		// verify there's an MHC for infra nodes
+		Expect(mhc.Spec.Selector.MatchLabels["machine.openshift.io/cluster-api-machine-role"]).To(Equal("infra"))
 
-			// verify the unhealthy conditions are on all nodes
-			Expect(mhc.Spec.UnhealthyConditions).To(SatisfyAll(
-				ContainElement(
-					machineV1beta1.UnhealthyCondition{
-						Type:    corev1.NodeReady,
-						Status:  corev1.ConditionFalse,
-						Timeout: "480s",
-					},
-				),
-				ContainElement(
-					machineV1beta1.UnhealthyCondition{
-						Type:    corev1.NodeReady,
-						Status:  corev1.ConditionUnknown,
-						Timeout: "480s",
-					},
-				),
-			))
-		}
+		// verify the unhealthy conditions are on all nodes
+		Expect(mhc.Spec.UnhealthyConditions).To(SatisfyAll(
+			ContainElement(
+				machineV1beta1.UnhealthyCondition{
+					Type:    corev1.NodeReady,
+					Status:  corev1.ConditionFalse,
+					Timeout: "480s",
+				},
+			),
+			ContainElement(
+				machineV1beta1.UnhealthyCondition{
+					Type:    corev1.NodeReady,
+					Status:  corev1.ConditionUnknown,
+					Timeout: "480s",
+				},
+			),
+		))
+	})
+
+	ginkgo.It("worker MHC should exist", func() {
+		mhc, err := h.Machine().MachineV1beta1().MachineHealthChecks(machineAPINamespace).Get(context.TODO(), "srep-worker-healthcheck", metav1.GetOptions{})
+		Expect(err).NotTo(HaveOccurred())
+
+		// verify there's an MHC for worker nodes
+		Expect(mhc.Spec.Selector.MatchLabels["machine.openshift.io/cluster-api-machine-role"]).To(Equal("worker"))
+
+		// verify the unhealthy conditions are on all nodes
+		Expect(mhc.Spec.UnhealthyConditions).To(SatisfyAll(
+			ContainElement(
+				machineV1beta1.UnhealthyCondition{
+					Type:    corev1.NodeReady,
+					Status:  corev1.ConditionFalse,
+					Timeout: "480s",
+				},
+			),
+			ContainElement(
+				machineV1beta1.UnhealthyCondition{
+					Type:    corev1.NodeReady,
+					Status:  corev1.ConditionUnknown,
+					Timeout: "480s",
+				},
+			),
+		))
 	})
 
 	ginkgo.It("should replace unhealthy nodes", func() {
@@ -66,21 +87,19 @@ var _ = ginkgo.Describe(machineHealthTestName, func() {
 		r.PodSpec.Containers[0].SecurityContext.Privileged = &truePointer
 
 		// get original list of machines to compare against later
-		originalMachines, err := h.Machine().MachineV1beta1().Machines(OperatorNamespace).List(context.TODO(), metav1.ListOptions{})
+		originalMachines, err := h.Machine().MachineV1beta1().Machines(machineAPINamespace).List(context.TODO(), metav1.ListOptions{})
 		Expect(err).NotTo(HaveOccurred())
 
 		// modify the MHC to have a very short unhealthy time
-		machineHealthChecks, err := h.Machine().MachineV1beta1().MachineHealthChecks(OperatorNamespace).List(context.TODO(), metav1.ListOptions{})
+		mhc, err := h.Machine().MachineV1beta1().MachineHealthChecks(machineAPINamespace).Get(context.TODO(), "srep-worker-healthcheck", metav1.GetOptions{})
 		Expect(err).NotTo(HaveOccurred())
-		for _, m := range machineHealthChecks.Items {
-			h.Machine().MachineV1beta1().MachineHealthChecks(OperatorNamespace).Patch(
-				context.TODO(),
-				m.ObjectMeta.Name,
-				types.MergePatchType,
-				[]byte("{'spec':{'unhealthyConditions[0]':{'timeout':10}}}"),
-				metav1.PatchOptions{},
-			)
-		}
+		h.Machine().MachineV1beta1().MachineHealthChecks(machineAPINamespace).Patch(
+			context.TODO(),
+			mhc.ObjectMeta.Name,
+			types.MergePatchType,
+			[]byte("{'spec':{'unhealthyConditions[0]':{'timeout':10}}}"),
+			metav1.PatchOptions{},
+		)
 
 		// execute the runner
 		stopCh := make(chan struct{})
@@ -88,7 +107,7 @@ var _ = ginkgo.Describe(machineHealthTestName, func() {
 		Expect(err).NotTo(HaveOccurred())
 
 		// wait and confirm that there's a new machine
-		newMachines, err := h.Machine().MachineV1beta1().Machines(OperatorNamespace).List(context.TODO(), metav1.ListOptions{})
+		newMachines, err := h.Machine().MachineV1beta1().Machines(machineAPINamespace).List(context.TODO(), metav1.ListOptions{})
 		Expect(err).NotTo(HaveOccurred())
 		Expect(originalMachines).NotTo(Equal(newMachines))
 	})
