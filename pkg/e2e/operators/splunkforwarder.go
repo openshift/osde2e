@@ -17,12 +17,70 @@ import (
 )
 
 var splunkForwarderBlocking string = "[Suite: operators] [OSD] Splunk Forwarder Operator"
+var splunkForwarderInforming string = "[Suite: informing] [OSD] Splunk Forwarder Operator"
 
 func init() {
 	alert.RegisterGinkgoAlert(splunkForwarderBlocking, "SD-SREP", "Matt Bargenquast", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+	alert.RegisterGinkgoAlert(splunkForwarderInforming, "SD-SREP", "Matt Bargenquast", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
 }
 
+// Blocking SplunkForwarder Signal
 var _ = ginkgo.Describe(splunkForwarderBlocking, func() {
+
+	var operatorName = "splunk-forwarder-operator"
+	var operatorNamespace string = "openshift-splunk-forwarder-operator"
+	var operatorLockFile string = "splunk-forwarder-operator-lock"
+	var defaultDesiredReplicas int32 = 1
+	var clusterRoleBindings = []string{
+		"splunk-forwarder-operator-clusterrolebinding",
+	}
+
+	var clusterRoles = []string{
+		"splunk-forwarder-operator",
+		"splunk-forwarder-operator-og-admin",
+		"splunk-forwarder-operator-og-edit",
+		"splunk-forwarder-operator-og-view",
+	}
+
+	var splunkforwarder_names = []string{
+		"osde2e-dedicated-admin-splunkforwarder-x",
+		"osde2e-splunkforwarder-test-2",
+	}
+
+	h := helper.New()
+	checkClusterServiceVersion(h, operatorNamespace, operatorName)
+	checkConfigMapLockfile(h, operatorNamespace, operatorLockFile)
+	checkDeployment(h, operatorNamespace, operatorName, defaultDesiredReplicas)
+	checkClusterRoleBindings(h, clusterRoleBindings, false)
+	checkClusterRoles(h, clusterRoles, false)
+	checkUpgrade(helper.New(), "openshift-splunk-forwarder-operator",
+		"openshift-splunk-forwarder-operator", "splunk-forwarder-operator",
+		"splunk-forwarder-operator-catalog")
+
+	//Clean up splunkforwarders after tests
+	ginkgo.JustAfterEach(func() {
+		namespace := "openshift-splunk-forwarder-operator"
+		for _, name := range splunkforwarder_names {
+			err := deleteSplunkforwarder(name, namespace, h)
+			Expect(err).NotTo(HaveOccurred())
+		}
+
+	})
+
+	ginkgo.Context("splunkforwarders", func() {
+		ginkgo.It("admin should be able to manage SplunkForwarders CR", func() {
+			name := "osde2e-splunkforwarder-test-2"
+			sf := makeMinimalSplunkforwarder("SplunkForwarder", "splunkforwarder.managed.openshift.io/v1alpha1", name)
+			err := addSplunkforwarder(sf, "openshift-splunk-forwarder-operator", h)
+			Expect(err).NotTo(HaveOccurred())
+
+		})
+	})
+
+})
+
+// Informing SplunkForwarder Signal
+var _ = ginkgo.Describe(splunkForwarderInforming, func() {
 
 	var operatorName = "splunk-forwarder-operator"
 	var operatorNamespace string = "openshift-splunk-forwarder-operator"
@@ -70,16 +128,6 @@ var _ = ginkgo.Describe(splunkForwarderBlocking, func() {
 			sf := makeMinimalSplunkforwarder("SplunkForwarder", "splunkforwarder.managed.openshift.io/v1alpha1", name)
 			err := dedicatedAaddSplunkforwarder(sf, "openshift-splunk-forwarder-operator", h)
 			Expect(apierrors.IsForbidden(err)).To(BeTrue())
-
-		})
-	})
-
-	ginkgo.Context("splunkforwarders", func() {
-		ginkgo.It("admin should be able to manage SplunkForwarders CR", func() {
-			name := "osde2e-splunkforwarder-test-2"
-			sf := makeMinimalSplunkforwarder("SplunkForwarder", "splunkforwarder.managed.openshift.io/v1alpha1", name)
-			err := addSplunkforwarder(sf, "openshift-splunk-forwarder-operator", h)
-			Expect(err).NotTo(HaveOccurred())
 
 		})
 	})
