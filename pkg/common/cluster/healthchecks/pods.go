@@ -7,17 +7,44 @@ import (
 	"strings"
 
 	"github.com/openshift/osde2e/pkg/common/logging"
-	"github.com/openshift/osde2e/pkg/common/metadata"
 	kubev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	v1 "k8s.io/client-go/kubernetes/typed/core/v1"
 )
 
-// CheckPodHealth attempts to look at the state of all pods and returns true if things are healthy.
-func CheckPodHealth(podClient v1.CoreV1Interface, logger *log.Logger) (bool, error) {
-	logger = logging.CreateNewStdLoggerOrUseExistingLogger(logger)
+// CheckClusterPodHealth attempts to look at the state of all internal cluster pods and
+// returns true if things are healthy.
+func CheckClusterPodHealth(podClient v1.CoreV1Interface, logger *log.Logger) (bool, error) {
+	filters := []PodPredicate{
+		IsClusterPod,
+		IsNotRunning,
+		IsNotCompleted,
+	}
+	foundErrorPods, err := checkPods(podClient, logger, filters...)
+	if err != nil {
+		return false, err
+	}
+	return !foundErrorPods, err
+}
 
-	var notReady []kubev1.Pod
+// CheckPodHealth attempts to look at the state of all pods and returns true if things are healthy.
+func CheckPodHealth(podClient v1.CoreV1Interface, logger *log.Logger, ns string, podPrefixes ...string) (bool, error) {
+	filters := []PodPredicate{
+		MatchesNamespace(ns),
+		MatchesNames(podPrefixes...),
+		IsNotRunning,
+		IsNotCompleted,
+	}
+	foundErrorPods, err := checkPods(podClient, logger, filters...)
+	if err != nil {
+		return false, err
+	}
+	return !foundErrorPods, err
+}
+
+// checkPods looks for pods matching the supplied predicates and returns true if any are found
+func checkPods(podClient v1.CoreV1Interface, logger *log.Logger, filters ...PodPredicate) (bool, error) {
+	logger = logging.CreateNewStdLoggerOrUseExistingLogger(logger)
 
 	logger.Print("Checking that all Pods are running or completed...")
 
@@ -31,39 +58,17 @@ func CheckPodHealth(podClient v1.CoreV1Interface, logger *log.Logger) (bool, err
 		return false, fmt.Errorf("pod list is empty. this should NOT happen")
 	}
 
-	var metadataState []string
+	pods := filterPods(list, filters...)
 
-	total := 0
-	for _, pod := range list.Items {
-		// we only care about the openshift, redhat, and osde2e namespaces
-		if !containsPrefixes(pod.Namespace, "openshift-", "redhat-", "osde2e-") {
-			continue
+	logger.Printf("%v pods are currently not running or complete:", len(pods.Items))
+	for _, pod := range pods.Items {
+		if pod.Status.Phase != kubev1.PodPending {
+			return false, fmt.Errorf("Pod %s errored: %s - %s", pod.GetName(), pod.Status.Reason, pod.Status.Message)
 		}
-		total++
-		phase := pod.Status.Phase
-
-		if phase != kubev1.PodRunning && phase != kubev1.PodSucceeded {
-			metadataState = append(metadataState, fmt.Sprintf("%v", pod))
-			if phase != kubev1.PodPending {
-				return false, fmt.Errorf("Pod %s errored: %s - %s", pod.GetName(), pod.Status.Reason, pod.Status.Message)
-			}
-			notReady = append(notReady, pod)
-			logger.Printf("%s is not ready. Phase: %s, Message: %s, Reason: %s", pod.Name, pod.Status.Phase, pod.Status.Message, pod.Status.Reason)
-		}
+		logger.Printf("%s is not ready. Phase: %s, Message: %s, Reason: %s", pod.Name, pod.Status.Phase, pod.Status.Message, pod.Status.Reason)
 	}
 
-	ready := float64(total - len(notReady))
-	curRatio := (ready / float64(total)) * 100
-
-	logger.Printf("%v%% of %v pods are currently alive...", curRatio, total)
-
-	if len(metadataState) > 0 {
-		metadata.Instance.SetHealthcheckValue("pods", metadataState)
-	} else {
-		metadata.Instance.ClearHealthcheckValue("pods")
-	}
-
-	return len(notReady) == 0, nil
+	return len(pods.Items) > 0, nil
 }
 
 func containsPrefixes(str string, subs ...string) bool {
@@ -73,4 +78,21 @@ func containsPrefixes(str string, subs ...string) bool {
 		}
 	}
 	return false
+}
+
+func filterPods(podList *kubev1.PodList, predicates ...PodPredicate) *kubev1.PodList {
+	filteredPods := &kubev1.PodList{}
+	for _, pod := range podList.Items {
+		var match = true
+		for _, p := range predicates {
+			if !p(pod) {
+				match = false
+				break
+			}
+		}
+		if match {
+			filteredPods.Items = append(filteredPods.Items, pod)
+		}
+	}
+	return filteredPods
 }

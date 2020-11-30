@@ -78,7 +78,8 @@ func TriggerManagedUpgrade(h *helper.H) (*configv1.ClusterVersion, error) {
 
 	// Create Pod Disruption Budget test workloads if desired
 	if viper.GetBool(config.Upgrade.ManagedUpgradeTestPodDisruptionBudgets) {
-		err = createManagedUpgradeWorkload(pdbWorkloadName, pdbWorkloadDir, h)
+		pdbPodPrefixes := []string{"pdb"}
+		err = createManagedUpgradeWorkload(pdbWorkloadName, pdbWorkloadDir, pdbPodPrefixes, h)
 		if err != nil {
 			return cVersion, fmt.Errorf("unable to setup PDB workload for upgrade: %v", err)
 		}
@@ -86,7 +87,8 @@ func TriggerManagedUpgrade(h *helper.H) (*configv1.ClusterVersion, error) {
 
 	// Create Node Drain test workloads if desired
 	if viper.GetBool(config.Upgrade.ManagedUpgradeTestNodeDrain) {
-		err = createManagedUpgradeWorkload(drainWorkloadName, drainWorkloadDir, h)
+		drainPodPrefixes := []string{"node-drain-test"}
+		err = createManagedUpgradeWorkload(drainWorkloadName, drainWorkloadDir, drainPodPrefixes, h)
 		if err != nil {
 			return cVersion, fmt.Errorf("unable to setup node drain test workload for upgrade: %v", err)
 		}
@@ -207,7 +209,7 @@ func overrideUpgradeConfig(uc upgradev1alpha1.UpgradeConfig, h *helper.H) error 
 	return nil
 }
 
-func createManagedUpgradeWorkload(workLoadName string, workLoadDir string, h *helper.H) error {
+func createManagedUpgradeWorkload(workLoadName string, workLoadDir string, podPrefixes []string, h *helper.H) error {
 
 	if _, ok := h.GetWorkload(workLoadName); ok {
 		return nil
@@ -228,7 +230,8 @@ func createManagedUpgradeWorkload(workLoadName string, workLoadDir string, h *he
 
 	// Wait for all pods to come up healthy
 	err = wait.PollImmediate(5*time.Second, 2*time.Minute, func() (bool, error) {
-		if check, err := healthchecks.CheckPodHealth(h.Kube().CoreV1(), nil); !check || err != nil {
+
+		if check, err := healthchecks.CheckPodHealth(h.Kube().CoreV1(), nil, h.CurrentProject(), podPrefixes...); !check || err != nil {
 			return false, nil
 		}
 		return true, nil

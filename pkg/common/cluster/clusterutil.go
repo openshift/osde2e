@@ -272,7 +272,7 @@ func PollClusterHealth(clusterID string, logger *log.Logger) (status bool, failu
 			clusterHealthy = false
 		}
 
-		if check, err := healthchecks.CheckPodHealth(kubeClient.CoreV1(), logger); !check || err != nil {
+		if check, err := healthchecks.CheckClusterPodHealth(kubeClient.CoreV1(), logger); !check || err != nil {
 			healthErr = multierror.Append(healthErr, err)
 			failures = append(failures, "pod")
 			clusterHealthy = false
@@ -324,7 +324,11 @@ func ProvisionCluster(logger *log.Logger) (*spi.Cluster, error) {
 
 	// if TEST_KUBECONFIG has been set, skip configuring OCM
 	if len(viper.GetString(config.Kubeconfig.Contents)) > 0 || len(viper.GetString(config.Kubeconfig.Path)) > 0 {
-		return nil, useKubeconfig(logger)
+		err := useKubeconfig(logger)
+		if err != nil {
+			return nil, err
+		}
+		viper.Set(config.Provider, "mock")
 	}
 
 	provider, err := providers.ClusterProvider()
