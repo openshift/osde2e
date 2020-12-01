@@ -55,7 +55,7 @@ def get_changed_cis(job, build):
 def trigger_cis_test(environment, cis, cloud_provider, region):
     run_array = [
         "docker", "run", f"-u {UID}", f"-v {CWD}/report_{BUILD_ID}:/report",
-        "-e OCM_TOKEN", "-e REPORT_DIR=/report", f"-e CLOUD_PROVIDER_ID={cloud_provider}", f"-e CLOUD_PROVIDER_REGION={region}" f"-e OSD_ENV={environment}",
+        "-e OCM_TOKEN", "-e REPORT_DIR=/report", f"-e CLOUD_PROVIDER_ID={cloud_provider}", f"-e CLOUD_PROVIDER_REGION={region}", f"-e OSD_ENV={environment}",
         f"-e CLUSTER_VERSION={cis}", "-e CLUSTER_EXPIRY_IN_MINUTES=240", "-e OCM_USER_OVERRIDE=ci-int-jenkins", 
         OSDe2eImage, "test"
     ]
