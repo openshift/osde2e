@@ -29,116 +29,102 @@ const (
 func (o *OCMProvider) Versions() (*spi.VersionList, error) {
 	var err error
 
-	o.versionCacheOnce.Do(func() {
-		versions := []*spi.Version{}
-		page := 1
-		log.Printf("Querying cluster versions endpoint.")
-		for {
-			var resp *v1.VersionsListResponse
-			err = retryer().Do(func() error {
-				var err error
+	versions := []*spi.Version{}
+	page := 1
+	log.Printf("Querying cluster versions endpoint.")
+	for {
+		var resp *v1.VersionsListResponse
+		err = retryer().Do(func() error {
+			var err error
 
-				resp, err = o.conn.ClustersMgmt().V1().Versions().List().Page(page).Size(PageSize).Send()
-
-				if err != nil {
-					return err
-				}
-
-				if resp != nil && resp.Error() != nil {
-					return errResp(resp.Error())
-				}
-
-				return nil
-			})
+			resp, err = o.conn.ClustersMgmt().V1().Versions().List().Page(page).Size(PageSize).Send()
 
 			if err != nil {
-				err = fmt.Errorf("failed getting list of OSD versions: %v", err)
-			} else if resp != nil {
-				err = errResp(resp.Error())
+				return err
 			}
 
-			if err != nil {
-				log.Print("error getting cluster versions from getSemverList.Response")
-				log.Printf("Response Headers: %v", resp.Header())
-				log.Printf("Response Error(s): %v", resp.Error())
-				log.Printf("HTTP Code: %d", resp.Status())
-				log.Printf("Size of response: %d", resp.Size())
-
-				err = fmt.Errorf("couldn't retrieve available versions: %v", err)
-				return
+			if resp != nil && resp.Error() != nil {
+				return errResp(resp.Error())
 			}
 
-			// parse versions, filter for major+minor nightlies, then sort
-			resp.Items().Each(func(v *v1.Version) bool {
-				if version, err := util.OpenshiftVersionToSemver(v.ID()); err != nil {
-					log.Printf("could not parse version '%s': %v", v.ID(), err)
-				} else if v.Enabled() {
-					if o.Environment() == "prod" && v.ChannelGroup() != "stable" {
-						if viper.GetString(config.Cluster.InstallSpecificNightly) == "" &&
-							viper.GetString(config.Cluster.ReleaseImageLatest) == "" {
-							return true
-						}
-					}
-					if o.Environment() == "stage" && v.ChannelGroup() == "nightly" {
-						if viper.GetString(config.Cluster.InstallSpecificNightly) == "" &&
-							viper.GetString(config.Cluster.ReleaseImageLatest) == "" {
-							return true
-						}
-					}
-					spiVersion := spi.NewVersionBuilder().
-						Version(version).
-						Default(v.Default()).
-						Build()
-
-					for _, upgrade := range v.AvailableUpgrades() {
-						if version, err := util.OpenshiftVersionToSemver(upgrade); err == nil {
-							spiVersion.AddUpgradePath(version)
-						}
-					}
-
-					versions = append(versions, spiVersion)
-				}
-				return true
-			})
-
-			// If we've looked at all the results, stop collecting them.
-			if page*PageSize >= resp.Total() {
-				break
-			}
-			page++
-		}
-
-		sort.Slice(versions, func(i, j int) bool {
-			return versions[i].Version().LessThan(versions[j].Version())
+			return nil
 		})
 
-		var defaultVersionOverride *semver.Version = nil
-
-		if o.env != prod {
-			var versionList *spi.VersionList
-			versionList, err = o.prodProvider.Versions()
-
-			if err != nil {
-				err = fmt.Errorf("error getting production default: %v", err)
-				return
-			}
-
-			defaultVersionOverride = versionList.Default()
+		if err != nil {
+			err = fmt.Errorf("failed getting list of OSD versions: %v", err)
+		} else if resp != nil {
+			err = errResp(resp.Error())
 		}
 
-		o.versionCache = spi.NewVersionListBuilder().
-			AvailableVersions(versions).
-			DefaultVersionOverride(defaultVersionOverride).
-			Build()
+		if err != nil {
+			log.Print("error getting cluster versions from getSemverList.Response")
+			log.Printf("Response Headers: %v", resp.Header())
+			log.Printf("Response Error(s): %v", resp.Error())
+			log.Printf("HTTP Code: %d", resp.Status())
+			log.Printf("Size of response: %d", resp.Size())
+
+			return nil, fmt.Errorf("couldn't retrieve available versions: %v", err)
+		}
+
+		// parse versions, filter for major+minor nightlies, then sort
+		resp.Items().Each(func(v *v1.Version) bool {
+			if version, err := util.OpenshiftVersionToSemver(v.ID()); err != nil {
+				log.Printf("could not parse version '%s': %v", v.ID(), err)
+			} else if v.Enabled() {
+				if o.Environment() == "prod" && v.ChannelGroup() != "stable" {
+					if viper.GetString(config.Cluster.InstallSpecificNightly) == "" &&
+						viper.GetString(config.Cluster.ReleaseImageLatest) == "" {
+						return true
+					}
+				}
+				if o.Environment() == "stage" && v.ChannelGroup() == "nightly" {
+					if viper.GetString(config.Cluster.InstallSpecificNightly) == "" &&
+						viper.GetString(config.Cluster.ReleaseImageLatest) == "" {
+						return true
+					}
+				}
+				spiVersion := spi.NewVersionBuilder().
+					Version(version).
+					Default(v.Default()).
+					Build()
+
+				for _, upgrade := range v.AvailableUpgrades() {
+					if version, err := util.OpenshiftVersionToSemver(upgrade); err == nil {
+						spiVersion.AddUpgradePath(version)
+					}
+				}
+
+				versions = append(versions, spiVersion)
+			}
+			return true
+		})
+
+		// If we've looked at all the results, stop collecting them.
+		if page*PageSize >= resp.Total() {
+			break
+		}
+		page++
+	}
+
+	sort.Slice(versions, func(i, j int) bool {
+		return versions[i].Version().LessThan(versions[j].Version())
 	})
 
-	if err != nil {
-		return nil, err
+	var defaultVersionOverride *semver.Version = nil
+
+	if o.env != prod {
+		var versionList *spi.VersionList
+		versionList, err = o.prodProvider.Versions()
+
+		if err != nil {
+			return nil, fmt.Errorf("error getting production default: %v", err)
+		}
+
+		defaultVersionOverride = versionList.Default()
 	}
 
-	if o.versionCache == nil {
-		return nil, fmt.Errorf("error getting versions, please refer to log for details")
-	}
-
-	return o.versionCache, nil
+	return spi.NewVersionListBuilder().
+		AvailableVersions(versions).
+		DefaultVersionOverride(defaultVersionOverride).
+		Build(), nil
 }
