@@ -50,7 +50,9 @@ generate-providers:
 generate-reporters:
 	"$(DIR)scripts/generate-reporters-import.sh" > "$(DIR)pkg/reporting/reporters/reporters_generated.go"
 
-build: pkger
+build: pkger build-quick
+
+build-quick:
 	mkdir -p "$(OUT_DIR)"
 	go build -o "$(OUT_DIR)" "$(DIR)cmd/..."
 
