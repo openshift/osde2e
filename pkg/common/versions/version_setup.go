@@ -13,11 +13,15 @@ import (
 	"github.com/openshift/osde2e/pkg/common/spi"
 	"github.com/openshift/osde2e/pkg/common/util"
 	"github.com/spf13/viper"
+	"k8s.io/apimachinery/pkg/util/wait"
 )
 
 // ChooseVersions sets versions in cfg if not set based on defaults and upgrade options.
 // If a release stream is set for an upgrade the previous available version is used and it's image is used for upgrade.
 func ChooseVersions() (err error) {
+	var clusterVersion *semver.Version
+	var versionSelector string
+	var versionList *spi.VersionList
 	provider, err := providers.ClusterProvider()
 	if err != nil {
 		return fmt.Errorf("error getting cluster provider: %v", err)
@@ -26,28 +30,24 @@ func ChooseVersions() (err error) {
 	if provider == nil {
 		err = errors.New("osd must be setup when upgrading with release stream")
 	} else {
-		versionList, err := provider.Versions()
-		log.Println("hihihi")
-		if err != nil {
-			return fmt.Errorf("error getting versions: %v", err)
-		}
 
-		clusterVersion, versionSelector, err := setupVersion(versionList)
-
-		// We need to hard-code a retry in this specific case
-		// If we're trying to select a version that doesn't yet exist in OCM, it should
-		// get added within 10min. We therefore will sleep(10) then check again.
-		if err != nil && versionSelector == "specific image" {
-			log.Println("Waiting for CIS to sync with the Release Controller")
-			time.Sleep(10 * time.Minute)
+		wait.PollImmediate(1*time.Minute, 30*time.Minute, func() (bool, error) {
 			versionList, err = provider.Versions()
-
 			if err != nil {
-				return fmt.Errorf("error getting versions: %v", err)
+				return false, fmt.Errorf("error getting versions: %v", err)
 			}
 
-			clusterVersion, _, err = setupVersion(versionList)
-		}
+			clusterVersion, versionSelector, err = setupVersion(versionList)
+			if err != nil {
+				if versionSelector == "specific image" {
+					log.Println("Waiting for CIS to sync with the Release Controller")
+					return false, nil
+				}
+				return false, err
+			}
+
+			return true, nil
+		})
 
 		if err != nil {
 			return fmt.Errorf("error while selecting install version: %v", err)
