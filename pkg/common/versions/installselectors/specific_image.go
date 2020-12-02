@@ -2,6 +2,7 @@ package installselectors
 
 import (
 	"fmt"
+	"log"
 	"strings"
 
 	"github.com/Masterminds/semver"
@@ -48,6 +49,8 @@ func (m specificImage) SelectVersion(versionList *spi.VersionList) (*semver.Vers
 	if versionToMatch == nil {
 		return nil, versionType, fmt.Errorf("error parsing semver version for %s", specificImage)
 	}
+
+	log.Printf("Looking to match %s", versionToMatch)
 
 	for _, version := range versionsWithoutDefault {
 		if version.Version().Original() == versionToMatch.Original() {
