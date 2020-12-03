@@ -2,6 +2,14 @@
 
 set -o pipefail
 
+# prow doesn't allow init containers or a second container
+export PATH=$PATH:/tmp/bin
+mkdir /tmp/bin
+curl https://mirror.openshift.com/pub/openshift-v4/clients/oc/4.6/linux/oc.tar.gz | tar xvzf - -C /tmp/bin/ oc
+chmod ug+x /tmp/bin/oc
+
+export OCM_CONFIG=$(pwd)/.ocm.json
+
 {
 
 go get -u github.com/openshift-online/ocm-cli/cmd/ocm
