@@ -132,6 +132,8 @@ func run(cmd *cobra.Command, argv []string) error {
 			}
 		}
 		return allErrors.ErrorOrNil()
+	} else {
+		return fmt.Errorf("could not delete cluster: %v", "No cluster ID or cluster owner provided")
 	}
 
 	fmt.Printf("Clusters may take a while to disappear from OCM.\n")
