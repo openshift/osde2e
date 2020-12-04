@@ -2,6 +2,8 @@
 
 set -o pipefail
 
+export OCM_CONFIG=$(pwd)/.ocm.json
+
 {
 
 go get -u github.com/openshift-online/ocm-cli/cmd/ocm

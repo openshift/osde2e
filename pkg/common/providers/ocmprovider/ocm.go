@@ -3,7 +3,6 @@ package ocmprovider
 
 import (
 	"fmt"
-	"sync"
 
 	"github.com/openshift/osde2e/pkg/common/spi"
 	"github.com/spf13/viper"
@@ -38,13 +37,8 @@ type OCMProvider struct {
 	conn         *ocm.Connection
 	prodProvider *OCMProvider
 
-	// Since getting versions is a noisy operation, we'll just cache the version retrieval.
-	// This changes rarely and we only ever look at it once at the start of time, so it's not
-	// expected to meaningfully change over the course of a run.
-	versionCacheOnce sync.Once
-	versionCache     *spi.VersionList
-	clusterCache     map[string]*spi.Cluster
-	credentialCache  map[string]string
+	clusterCache    map[string]*spi.Cluster
+	credentialCache map[string]string
 }
 
 func init() {
@@ -129,12 +123,11 @@ func NewWithEnv(env string) (*OCMProvider, error) {
 	}
 
 	return &OCMProvider{
-		env:              env,
-		conn:             conn,
-		prodProvider:     prodProvider,
-		versionCacheOnce: sync.Once{},
-		clusterCache:     make(map[string]*spi.Cluster),
-		credentialCache:  make(map[string]string),
+		env:             env,
+		conn:            conn,
+		prodProvider:    prodProvider,
+		clusterCache:    make(map[string]*spi.Cluster),
+		credentialCache: make(map[string]string),
 	}, nil
 }
 
