@@ -2,6 +2,9 @@ package test
 
 import (
 	"fmt"
+	"log"
+	"math/rand"
+	"time"
 
 	"github.com/openshift/osde2e/cmd/osde2e/common"
 	"github.com/openshift/osde2e/cmd/osde2e/helpers"
@@ -133,6 +136,18 @@ func init() {
 func run(cmd *cobra.Command, argv []string) error {
 	if err := common.LoadConfigs(args.configString, args.customConfig, args.secretLocations); err != nil {
 		return fmt.Errorf("error loading initial state: %v", err)
+	}
+
+	canaryChance := viper.GetInt(config.CanaryChance)
+	if canaryChance > 0 {
+		log.Printf("Canary job detected with %d chance", canaryChance)
+		rand.Seed(time.Now().UTC().UnixNano())
+		outcome := rand.Intn(canaryChance)
+		if outcome != 0 {
+			log.Printf("Canary job lost with a value of %d", outcome)
+			return nil
+		}
+		log.Println("Canary job won!")
 	}
 
 	if e2e.RunTests() {

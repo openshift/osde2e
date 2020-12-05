@@ -4,10 +4,12 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"math/rand"
 	"strings"
 	"time"
 
 	"github.com/Masterminds/semver"
+	"github.com/goombaio/namegenerator"
 	"github.com/hashicorp/go-multierror"
 	osconfig "github.com/openshift/client-go/config/clientset/versioned"
 	"github.com/openshift/osde2e/pkg/common/cluster/healthchecks"
@@ -342,7 +344,7 @@ func ProvisionCluster(logger *log.Logger) (*spi.Cluster, error) {
 	clusterID := viper.GetString(config.Cluster.ID)
 	if clusterID == "" {
 		name := viper.GetString(config.Cluster.Name)
-		if name == "" {
+		if name == "" || name == "random" {
 			attemptLimit := 10
 			for attempt := 1; attempt <= attemptLimit; attempt++ {
 				name = clusterName()
@@ -402,6 +404,31 @@ func useKubeconfig(logger *log.Logger) (err error) {
 // clusterName returns a cluster name with a format which must be short enough to support all versions
 func clusterName() string {
 	suffix := viper.GetString(config.Suffix)
+	name := viper.GetString(config.Cluster.Name)
+
+	if name == "random" {
+		seed := time.Now().UTC().UnixNano()
+		rand.Seed(seed)
+		newName := ""
+		prefixes := []string{"prod", "production", "stage", "staging", "int", "integration", "test", "testing"}
+		suffixes := []string{"0", "1", "2", "3", "5", "8", "13", "temp", "final"}
+
+		doPrefix := rand.Intn(3)
+		doSuffix := rand.Intn(2)
+
+		if doPrefix > 0 {
+			newName = fmt.Sprintf("%s-", prefixes[rand.Intn(len(prefixes))])
+		}
+
+		nameGenerator := namegenerator.NewNameGenerator(seed)
+		newName = newName + nameGenerator.Generate()
+
+		if doSuffix > 0 {
+			newName = fmt.Sprintf("%s-%s", newName, suffixes[rand.Intn(len(suffixes))])
+		}
+
+		return newName
+	}
 
 	if suffix == "" {
 		suffix = util.RandomStr(5)

@@ -59,6 +59,9 @@ const (
 
 	// Project is both the project and SA automatically created to house all objects created during an osde2e-run
 	Project = "project"
+
+	// CanaryChance
+	CanaryChance = "canaryChance"
 )
 
 // This is a config key to secret file mapping. We will attempt to read in from secret files before loading anything else.
@@ -417,6 +420,8 @@ func init() {
 
 	viper.SetDefault(MustGather, true)
 	viper.BindEnv(MustGather, "MUST_GATHER")
+
+	viper.BindEnv(CanaryChance, "CANARY_CHANCE")
 
 	// ----- Upgrade -----
 	viper.BindEnv(Upgrade.UpgradeToLatest, "UPGRADE_TO_LATEST")

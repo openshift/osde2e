@@ -16,6 +16,7 @@ require (
 	github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32
 	github.com/google/go-github/v31 v31.0.0
 	github.com/google/uuid v1.1.1
+	github.com/goombaio/namegenerator v0.0.0-20181006234301-989e774b106e
 	github.com/grokify/html-strip-tags-go v0.0.0-20200923094847-079d207a09f1 // indirect
 	github.com/hashicorp/go-multierror v1.1.0
 	github.com/hpcloud/tail v1.0.0

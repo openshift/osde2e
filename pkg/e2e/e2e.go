@@ -216,6 +216,7 @@ func RunTests() bool {
 // nolint:gocyclo
 func runGinkgoTests() error {
 	var err error
+
 	gomega.RegisterFailHandler(ginkgo.Fail)
 
 	dryRun := viper.GetBool(config.DryRun)
