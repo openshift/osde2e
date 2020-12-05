@@ -28,7 +28,8 @@ data:
     telemeterClient:
       telemeterServerURL: https://infogw.api.stage.openshift.com
 EOF
-    sleep 300;
+    sleep 600;
+    oc get -n openshift-monitoring configmap/cluster-monitoring-config
 fi
 
 COUNT=$(CLUSTER_ID=$(oc get clusterversion -o jsonpath='{.items[].spec.clusterID}{"\n"}'); ocm get clusters --parameter search="external_id is '$CLUSTER_ID'" | jq '.size')
