@@ -3,6 +3,7 @@ package list
 import (
 	"fmt"
 	"log"
+	"strconv"
 
 	"github.com/openshift/osde2e/cmd/osde2e/common"
 	"github.com/openshift/osde2e/pkg/common/clusterproperties"
@@ -125,10 +126,25 @@ func run(cmd *cobra.Command, argv []string) error {
 	if len(clusters) == 0 {
 		log.Printf("No results found")
 	} else {
-		fmt.Printf("%-25s%-35s%-15s%-25s%-25s%-25s%s\n", "NAME", "ID", "STATE", "STATUS", "OWNER", "INSTALLED VERSION", "UPGRADE VERSION")
+		statuslengthmax, installedverlengthmax, ownerlengthmax := 0, 0, 0
 		for _, cluster := range clusters {
 			properties := cluster.Properties()
-			fmt.Printf("%-25s%-35s%-15s%-25s%-25s%-25s%s\n", cluster.Name(), cluster.ID(), cluster.State(), properties[clusterproperties.Status], properties[clusterproperties.OwnedBy], properties[clusterproperties.InstalledVersion], properties[clusterproperties.UpgradeVersion])
+			if len(properties[clusterproperties.Status]) > statuslengthmax {
+				statuslengthmax = len(properties[clusterproperties.Status])
+			}
+			if len(properties[clusterproperties.InstalledVersion]) > installedverlengthmax {
+				installedverlengthmax = len(properties[clusterproperties.InstalledVersion])
+			}
+			if len(properties[clusterproperties.OwnedBy]) > ownerlengthmax {
+				ownerlengthmax = len(properties[clusterproperties.OwnedBy])
+			}
+		}
+
+		headerspace := "%-25s%-35s%-15s%-" + strconv.Itoa(statuslengthmax+5) + "s%-" + strconv.Itoa(ownerlengthmax+5) + "s%-" + strconv.Itoa(installedverlengthmax+5) + "s%s\n"
+		fmt.Printf(headerspace, "NAME", "ID", "STATE", "STATUS", "OWNER", "INSTALLED VERSION", "UPGRADE VERSION")
+		for _, cluster := range clusters {
+			properties := cluster.Properties()
+			fmt.Printf(headerspace, cluster.Name(), cluster.ID(), cluster.State(), properties[clusterproperties.Status], properties[clusterproperties.OwnedBy], properties[clusterproperties.InstalledVersion], properties[clusterproperties.UpgradeVersion])
 		}
 	}
 
