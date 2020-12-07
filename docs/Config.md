@@ -9,7 +9,7 @@ Some environment variables commonly used for pipelines under osde2e are indicate
 
 | Environment variable | Usage |
 | --------------| ------------------------|
-|TEST_KUBECONFIG| This variable represents the filepath of an existing Kubeconfig | 
+|TEST_KUBECONFIG| This variable represents the filepath of an existing Kubeconfig. Will override fetching credentials from the OCM provider if specified. | 
 |OSD_ENV |  int, stage, prod|
 |CLOUD_PROVIDER_ID| aws, gcp| 
 |CLOUD_PROVIDER_REGION| Must be a valid region enabled within OCM. Ex. us-east-1|
@@ -43,7 +43,7 @@ Some environment variables commonly used for pipelines under osde2e are indicate
 ### OCM related:-
  
 | Environment variable | Usage |
-| --------------| ------------------------| 
+| --------------| ------------------------|
 |DEBUG_OSD| Debug shows debug level messages when enabled.|
 |NUM_RETRIES|NumRetries is the number of times to retry each OCM call.|
 |OCM_COMPUTE_MACHINE_TYPE| ComputeMachineType is the specific cloud machine type to use for compute nodes.|
@@ -54,6 +54,7 @@ Some environment variables commonly used for pipelines under osde2e are indicate
 |OCM_AWS_ACCOUNT| |
 |OCM_AWS_ACCESS_KEY| |
 |OCM_AWS_SECRET_KEY| |
+|TEST_KUBECONFIG| Path to a local kubeconfig; will override fetching Kubeconfig credentials from OCM if specified.| 
   
 ### Upgrade variables:-
 

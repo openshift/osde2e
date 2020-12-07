@@ -324,17 +324,7 @@ func getRestConfig(provider spi.Provider, clusterID string) (*rest.Config, error
 func ProvisionCluster(logger *log.Logger) (*spi.Cluster, error) {
 	logger = logging.CreateNewStdLoggerOrUseExistingLogger(logger)
 
-	// if TEST_KUBECONFIG has been set, skip configuring OCM
-	if len(viper.GetString(config.Kubeconfig.Contents)) > 0 || len(viper.GetString(config.Kubeconfig.Path)) > 0 {
-		err := useKubeconfig(logger)
-		if err != nil {
-			return nil, err
-		}
-		viper.Set(config.Provider, "mock")
-	}
-
 	provider, err := providers.ClusterProvider()
-
 	if err != nil {
 		return nil, fmt.Errorf("error getting cluster provisioning client: %v", err)
 	}
@@ -380,25 +370,6 @@ func ProvisionCluster(logger *log.Logger) (*spi.Cluster, error) {
 	}
 
 	return cluster, nil
-}
-
-// useKubeconfig reads the path provided for a TEST_KUBECONFIG and uses it for testing.
-func useKubeconfig(logger *log.Logger) (err error) {
-	_, err = clientcmd.RESTConfigFromKubeConfig([]byte(viper.GetString(config.Kubeconfig.Contents)))
-	if err != nil {
-		logger.Println("Not an existing Kubeconfig, attempting to read file instead...")
-	} else {
-		logger.Println("Existing valid kubeconfig!")
-		return nil
-	}
-
-	kubeconfigPath := viper.GetString(config.Kubeconfig.Path)
-	_, err = ioutil.ReadFile(kubeconfigPath)
-	if err != nil {
-		return fmt.Errorf("failed reading '%s' which has been set as the TEST_KUBECONFIG: %v", kubeconfigPath, err)
-	}
-	logger.Printf("Using a set TEST_KUBECONFIG of '%s' for Origin API calls.", kubeconfigPath)
-	return nil
 }
 
 // clusterName returns a cluster name with a format which must be short enough to support all versions
