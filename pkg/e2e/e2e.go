@@ -285,10 +285,10 @@ func runGinkgoTests() error {
 
 	// Get the cluster ID now to test against later
 	clusterID := viper.GetString(config.Cluster.ID)
+	providerCfg := viper.GetString(config.Provider)
 	// setup OSD unless Kubeconfig is present
-	if len(viper.GetString(config.Kubeconfig.Path)) > 0 {
+	if len(viper.GetString(config.Kubeconfig.Path)) > 0 && providerCfg == "mock" {
 		log.Print("Found an existing Kubeconfig!")
-		viper.Set(config.Provider, "mock")
 		if provider, err = providers.ClusterProvider(); err != nil {
 			return fmt.Errorf("could not setup cluster provider: %v", err)
 		}

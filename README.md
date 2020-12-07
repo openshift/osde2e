@@ -174,6 +174,7 @@ Config options are currently parsed by loading defaults, attempting to load envi
 It is possible to test against non-OSD clusters by specifying a kubeconfig to test against.
  
 ```
+PROVIDER=mock \
 TEST_KUBECONFIG=~/.kube/config \
 osde2e test --configs prod --custom-config .osde2e.yaml
 ```

@@ -3,10 +3,12 @@ package ocmprovider
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"math"
 	"math/rand"
 	"net/http"
+	"os"
 	"os/user"
 	"strings"
 	"time"
@@ -474,6 +476,14 @@ func (o *OCMProvider) getOCMCluster(clusterID string) (*v1.Cluster, error) {
 
 // ClusterKubeconfig returns the kubeconfig for the given cluster ID.
 func (o *OCMProvider) ClusterKubeconfig(clusterID string) ([]byte, error) {
+
+	// Override with a local kubeconfig if defined
+	localKubeConfig := viper.GetString(config.Kubeconfig.Path)
+	if len(localKubeConfig) > 0 {
+		log.Printf("Overriding provider kubeconfig with local: %s", localKubeConfig)
+		return getLocalKubeConfig(localKubeConfig)
+	}
+
 	if creds, ok := o.credentialCache[clusterID]; ok {
 		return []byte(creds), nil
 	}
@@ -508,6 +518,19 @@ func (o *OCMProvider) ClusterKubeconfig(clusterID string) ([]byte, error) {
 	o.credentialCache[clusterID] = resp.Body().Kubeconfig()
 
 	return []byte(resp.Body().Kubeconfig()), nil
+}
+
+// Loads and returns the supplied filepath
+func getLocalKubeConfig(path string) ([]byte, error) {
+	fileReader, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	f, err := ioutil.ReadAll(fileReader)
+	if err != nil {
+		return nil, err
+	}
+	return []byte(f), nil
 }
 
 // GetMetrics gathers metrics from OCM on a cluster
