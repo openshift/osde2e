@@ -37,9 +37,12 @@ var _ = ginkgo.Describe(podWebhookTestName, func() {
 			namespace := "a-namespace"
 			createNamespace(namespace, h)
 			defer deleteNamespace(namespace, true, h)
-			h.SetServiceAccount("system:serviceaccount:%s:dedicated-admin-project")
+			impersonateDedicatedAdmin(h, "test-user")
+			defer func() {
+				h.Impersonate(rest.ImpersonationConfig{})
+			}()
 			_, err := createPod(name, namespace, "node-role.kubernetes.io/master", "toleration-key-value", v1.TaintEffectNoSchedule, "node-role.kubernetes.io/infra", "toleration-key-value2", v1.TaintEffectNoSchedule, h)
-			defer deletePod(name, namespace, h)
+			//defer deletePod(name, namespace, h)
 			Expect(apierrors.IsForbidden(err)).To(BeTrue())
 		})
 
@@ -47,10 +50,13 @@ var _ = ginkgo.Describe(podWebhookTestName, func() {
 
 	ginkgo.Context("pod webhook", func() {
 		ginkgo.It("Webhook will mark pod spec invalid and block deploying", func() {
-			h.SetServiceAccount("system:serviceaccount:%s:dedicated-admin-project")
+			impersonateDedicatedAdmin(h, "test-user")
+			defer func() {
+				h.Impersonate(rest.ImpersonationConfig{})
+			}()
 			name := "osde2e-pod-webhook-test2"
 			namespace := "openshift-logging"
-			defer deletePod(name, namespace, h)
+			//defer deletePod(name, namespace, h)
 			_, err := createPod(name, namespace, "node-role.kubernetes.io/infra", "toleration-key-value", v1.TaintEffectPreferNoSchedule, "node-role.kubernetes.io/master", "toleration-key-value2", v1.TaintEffectNoExecute, h)
 			Expect(apierrors.IsForbidden(err)).To(BeTrue())
 
@@ -59,10 +65,13 @@ var _ = ginkgo.Describe(podWebhookTestName, func() {
 
 	ginkgo.Context("pod webhook", func() {
 		ginkgo.It("Webhook will allow pod to deploy", func() {
-			h.SetServiceAccount("system:serviceaccount:%s:dedicated-admin-project")
+			impersonateDedicatedAdmin(h, "test-user")
+			defer func() {
+				h.Impersonate(rest.ImpersonationConfig{})
+			}()
 			name := "osde2e-pod-webhook-test3"
 			namespace := "openshift-apiserver"
-			defer deletePod(name, namespace, h)
+			//defer deletePod(name, namespace, h)
 			_, err := createPod(name, namespace, "node-role.kubernetes.io/infra", "toleration-key-value", v1.TaintEffectNoSchedule, "node-role.kubernetes.io/master", "toleration-key-value2", v1.TaintEffectNoSchedule, h)
 			Expect(err).NotTo(HaveOccurred())
 		})
@@ -206,4 +215,15 @@ func asUser(namespace string, user string, userGroup string, h *helper.H) (err e
 	})
 
 	return err
+}
+
+func impersonateDedicatedAdmin(h *helper.H, user string) *helper.H {
+	h.Impersonate(rest.ImpersonationConfig{
+		UserName: user,
+		Groups: []string{
+			"dedicated-admins",
+		},
+	})
+
+	return h
 }
