@@ -73,6 +73,18 @@ func checkDeployment(h *helper.H, namespace string, name string, defaultDesiredR
 	})
 }
 
+func checkServiceAccount(h *helper.H, serviceAccounts []string) {
+	// Check that deployed serviceAccounts exist
+	ginkgo.Context("serviceAccounts", func() {
+		ginkgo.It("should exist", func() {
+			for _, serviceAccountName := range serviceAccounts {
+				_, err := h.Kube().CoreV1().serviceAccounts(namespace).Get(context.TODO(), serviceAccountName, metav1.GetOptions{})
+				Expect(err).NotTo(HaveOccurred(), "failed to get serviceAccount %v\n", serviceAccountName)
+			}
+		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
+	})
+}
+
 func checkClusterRoles(h *helper.H, clusterRoles []string, matchPrefix bool) {
 	// Check that the clusterRoles exist
 	ginkgo.Context("clusterRoles", func() {
