@@ -83,7 +83,33 @@ docker run -e
 -e OCM_TOKEN="[OCM token here]" \
 quay.io/app-sre/osde2e test --configs "e2e-suite"
 ```
- 
+
+### Running via a local Kubeconfig
+
+By default, osde2e will try to obtain Kubeconfig admin credentials for the cluster by calling OCM's [credentials](https://api.openshift.com/#/default/get_api_clusters_mgmt_v1_clusters__cluster_id__credentials) API.
+
+Permission to use that API is dependent upon a user's role in OCM. This will be noticable if you encounter the following error:
+
+```
+could not get kubeconfig for cluster: couldn't retrieve credentials for cluster '$CLUSTERID'
+```
+
+In this situation, you can override the credentials fetch by using a locally-sourced Kubeconfig:
+
+- Log in to the cluster you wish to test against, to update your kubeconfig. 
+- Many tests require elevated permissions. Elevate to be a member of a cluster-admin group.
+- Set the `TEST_KUBECONFIG` environment variable to the path of your kubeconfig.
+- Run osde2e as usual.
+
+A full example of this process is presented below:
+
+```bash
+$ ocm cluster login <cluster>
+$ oc adm groups add-users osd-sre-cluster-admins $(oc whoami)
+$ export TEST_KUBECONFIG=$HOME/.kube/config
+$ osde2e test --configs e2e-suite,stage --skip-health-check
+```
+
 ## Configuration
  
 There are many options to drive an osde2e run. Please refer to the [config package] for the most up to date config options. While golang, each option is well documented and includes the environment variable name for the option (where applicable.)
