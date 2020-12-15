@@ -101,11 +101,20 @@ var _ = ginkgo.Describe(inhibitionsTestName, func() {
 			},
 			{
 				name:           "KubePodCrashLooping inhibits KubeDeploymentReplicasMismatch",
-				expectedSource: "KubePodNotReady",
+				expectedSource: "KubePodCrashLooping",
 				expectedTarget: "KubeDeploymentReplicasMismatch",
 				expectedEqual: prometheusModel.LabelNames{
 					"namespace",
 					"pod",
+				},
+				expectedPresent: true,
+			},
+			{
+				name:           "KubeNodeNotReady inhibits TargetDown",
+				expectedSource: "KubeNodeNotReady",
+				expectedTarget: "TargetDown",
+				expectedEqual: prometheusModel.LabelNames{
+					"instance",
 				},
 				expectedPresent: true,
 			},
@@ -124,12 +133,12 @@ var _ = ginkgo.Describe(inhibitionsTestName, func() {
 					// match the source
 					if rule.SourceMatch["alertname"] == test.expectedSource {
 						// match the target
-						rulePresent = rule.TargetMatchRE["alertname"].Regexp.Match([]byte(test.expectedTarget))
+						rulePresent = rulePresent || rule.TargetMatchRE["alertname"].Regexp.Match([]byte(test.expectedTarget))
 					}
 				}
 			}
 
-			Expect(rulePresent).To(Equal(test.expectedPresent))
+			Expect(rulePresent).To(Equal(test.expectedPresent), test.name)
 		}
 	})
 
