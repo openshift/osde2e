@@ -11,6 +11,7 @@ import (
 	"github.com/openshift/osde2e/cmd/osde2ectl/delete"
 	"github.com/openshift/osde2e/cmd/osde2ectl/extend"
 	"github.com/openshift/osde2e/cmd/osde2ectl/get"
+	"github.com/openshift/osde2e/cmd/osde2ectl/healthcheck"
 	"github.com/openshift/osde2e/cmd/osde2ectl/list"
 	"github.com/spf13/cobra"
 )
@@ -27,6 +28,7 @@ func init() {
 	root.AddCommand(list.Cmd)
 	root.AddCommand(get.Cmd)
 	root.AddCommand(extend.Cmd)
+	root.AddCommand(healthcheck.Cmd)
 
 }
 
