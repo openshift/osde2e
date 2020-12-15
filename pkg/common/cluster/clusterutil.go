@@ -381,21 +381,26 @@ func clusterName() string {
 		seed := time.Now().UTC().UnixNano()
 		rand.Seed(seed)
 		newName := ""
-		prefixes := []string{"prod", "production", "stage", "staging", "int", "integration", "test", "testing"}
+		prefixes := []string{"prod", "stg", "int", "test", "p", "i", "s", "pre"}
 		suffixes := []string{"0", "1", "2", "3", "5", "8", "13", "temp", "final"}
 
 		doPrefix := rand.Intn(3)
 		doSuffix := rand.Intn(2)
 
-		if doPrefix > 0 {
-			newName = fmt.Sprintf("%s-", prefixes[rand.Intn(len(prefixes))])
+		nameGenerator := namegenerator.NewNameGenerator(seed)
+		newName = nameGenerator.Generate()
+
+		if doPrefix > 0 && len(newName) <= 10 {
+			newName = fmt.Sprintf("%s-%s", prefixes[rand.Intn(len(prefixes))], newName)
 		}
 
-		nameGenerator := namegenerator.NewNameGenerator(seed)
-		newName = newName + nameGenerator.Generate()
-
-		if doSuffix > 0 {
+		if doSuffix > 0 && len(newName) <= 10 {
 			newName = fmt.Sprintf("%s-%s", newName, suffixes[rand.Intn(len(suffixes))])
+		}
+
+		if len(newName) > 15 {
+			log.Printf("%s is longer than 15 characters. Generating a new name...", newName)
+			newName = clusterName()
 		}
 
 		return newName
