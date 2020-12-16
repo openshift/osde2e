@@ -14,6 +14,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/rest"
 )
 
 var splunkForwarderBlocking string = "[Suite: operators] [OSD] Splunk Forwarder Operator"
@@ -163,7 +164,12 @@ func dedicatedAaddSplunkforwarder(SplunkForwarder sfv1alpha1.SplunkForwarder, na
 		return err
 	}
 	unstructuredObj := unstructured.Unstructured{obj}
-	h.SetServiceAccount("system:serviceaccount:%s:dedicated-admin-project")
+	h.Impersonate(rest.ImpersonationConfig{
+		UserName: "test-user@redhat.com",
+		Groups: []string{
+			"dedicated-admins",
+		},
+	})
 	_, err = h.Dynamic().Resource(schema.GroupVersionResource{
 		Group: "splunkforwarder.managed.openshift.io", Version: "v1alpha1", Resource: "splunkforwarders",
 	}).Namespace(namespace).Create(context.TODO(), &unstructuredObj, metav1.CreateOptions{})
