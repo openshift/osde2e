@@ -32,53 +32,73 @@ var _ = ginkgo.Describe(podWebhookTestName, func() {
 		//Dedicated admin can not deploy pod on master on infra nodes in namespaces
 		//openshift-operators, openshift-logging namespace or any other namespace that is not a core namespace like openshift-*, redhat-*, default, kube-*.
 
-		ginkgo.It("Webhook will mark pod spec invalid and block deploying", func() {
+		ginkgo.It("Test 1: Webhook will mark pod spec invalid and block deploying", func() {
 			name := "osde2e-pod-webhook-test1"
-			namespace := "a-namespace"
+			namespace := "openshift-logging"
 			createNamespace(namespace, h)
 			defer deleteNamespace(namespace, true, h)
-			impersonateDedicatedAdmin(h, "test-user")
+			//impersonate dedicated-admin
+			h.Impersonate(rest.ImpersonationConfig{
+				UserName: "test-user@redhat.com",
+				Groups: []string{
+					"dedicated-admins",
+					"system:authenticated",
+				},
+			})
 			defer func() {
 				h.Impersonate(rest.ImpersonationConfig{})
 			}()
 			_, err := createPod(name, namespace, "node-role.kubernetes.io/master", "toleration-key-value", v1.TaintEffectNoSchedule, "node-role.kubernetes.io/infra", "toleration-key-value2", v1.TaintEffectNoSchedule, h)
-			//defer deletePod(name, namespace, h)
+			defer deletePod(name, namespace, h)
+			log.Printf("Create pod error: %v", err)
 			Expect(apierrors.IsForbidden(err)).To(BeTrue())
 		})
 
-	})
-
-	ginkgo.Context("pod webhook", func() {
-		ginkgo.It("Webhook will mark pod spec invalid and block deploying", func() {
-			impersonateDedicatedAdmin(h, "test-user")
+		ginkgo.It("Test 2: Webhook will mark pod spec invalid and block deploying", func() {
+			name := "osde2e-pod-webhook-test2"
+			namespace := "openshift-logging"
+			h.Impersonate(rest.ImpersonationConfig{
+				UserName: "test-user@redhat.com",
+				Groups: []string{
+					"dedicated-admins",
+					"system:authenticated",
+				},
+			})
 			defer func() {
 				h.Impersonate(rest.ImpersonationConfig{})
 			}()
-			name := "osde2e-pod-webhook-test2"
-			namespace := "openshift-logging"
-			//defer deletePod(name, namespace, h)
+
+			defer deletePod(name, namespace, h)
 			_, err := createPod(name, namespace, "node-role.kubernetes.io/infra", "toleration-key-value", v1.TaintEffectPreferNoSchedule, "node-role.kubernetes.io/master", "toleration-key-value2", v1.TaintEffectNoExecute, h)
 			Expect(apierrors.IsForbidden(err)).To(BeTrue())
 
 		})
-	})
 
-	ginkgo.Context("pod webhook", func() {
+		// The serviceaccount:dedicated-admin-project is allowed to launch a pod and the pod-webhook will allow it
 		ginkgo.It("Webhook will allow pod to deploy", func() {
+			name := "osde2e-pod-webhook-test3"
+			namespace := "openshift-apiserver"
+			h.SetServiceAccount("system:serviceaccount:%s:dedicated-admin-project")
+			defer deletePod(name, namespace, h)
+			_, err := createPod(name, namespace, "node-role.kubernetes.io/infra", "toleration-key-value", v1.TaintEffectNoSchedule, "node-role.kubernetes.io/master", "toleration-key-value2", v1.TaintEffectNoSchedule, h)
+			Expect(err).NotTo(HaveOccurred())
+		})
+
+		// RBAC blocks dedicated-admins group from creating a pod in openshift-apiserver namespace
+		ginkgo.It("Webhook will allow pod to deploy", func() {
+			name := "osde2e-pod-webhook-test3"
+			namespace := "openshift-apiserver"
 			impersonateDedicatedAdmin(h, "test-user")
 			defer func() {
 				h.Impersonate(rest.ImpersonationConfig{})
 			}()
-			name := "osde2e-pod-webhook-test3"
-			namespace := "openshift-apiserver"
-			//defer deletePod(name, namespace, h)
+			defer deletePod(name, namespace, h)
 			_, err := createPod(name, namespace, "node-role.kubernetes.io/infra", "toleration-key-value", v1.TaintEffectNoSchedule, "node-role.kubernetes.io/master", "toleration-key-value2", v1.TaintEffectNoSchedule, h)
-			Expect(err).NotTo(HaveOccurred())
+			Expect(apierrors.IsForbidden(err)).To(BeTrue())
 		})
-	})
 
-	// RBAC will prevent ordinary users from creating pods
-	ginkgo.Context("pod webhook", func() {
+		// RBAC will prevent ordinary users from creating pods
+
 		ginkgo.It("RBAC will deny deploying pod", func() {
 			name := "osde2e-pod-webhook-test4"
 			namespace := "openshift-logging"
@@ -90,6 +110,7 @@ var _ = ginkgo.Describe(podWebhookTestName, func() {
 				return
 			}
 			defer h.Impersonate(rest.ImpersonationConfig{})
+			defer deletePod(name, namespace, h)
 			_, err = createPod(name, namespace, "node-role.kubernetes.io/master", "toleration-key-value", v1.TaintEffectNoSchedule, "node-role.kubernetes.io/infra", "toleration-key-value2", v1.TaintEffectNoSchedule, h)
 			Expect(apierrors.IsForbidden(err)).To(BeTrue())
 		})
@@ -109,6 +130,7 @@ var _ = ginkgo.Describe(podWebhookTestName, func() {
 				return
 			}
 			defer h.Impersonate(rest.ImpersonationConfig{})
+			defer deletePod(name, namespace, h)
 			_, err = createPod(name, namespace, "node-role.kubernetes.io/master", "toleration-key-value", v1.TaintEffectNoSchedule, "node-role.kubernetes.io/infra", "toleration-key-value2", v1.TaintEffectNoSchedule, h)
 			Expect(apierrors.IsForbidden(err)).To(BeTrue())
 		})
@@ -180,7 +202,7 @@ func createPod(name string, namespace string, key string, value string, effect v
 		return pd, err
 	}
 
-	log.Printf("Creating pod for the validation webhook (%s)", pod)
+	//log.Printf("Creating pod for the validation webhook (%s)", pod)
 	pd, err = h.Kube().CoreV1().Pods(namespace).Create(context.TODO(), pod, metav1.CreateOptions{})
 	log.Printf("Result of the create command: (%v)", err)
 	if err != nil {
@@ -222,6 +244,7 @@ func impersonateDedicatedAdmin(h *helper.H, user string) *helper.H {
 		UserName: user,
 		Groups: []string{
 			"dedicated-admins",
+			"system:authenticated",
 		},
 	})
 
