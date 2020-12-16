@@ -170,6 +170,9 @@ func dedicatedAaddSplunkforwarder(SplunkForwarder sfv1alpha1.SplunkForwarder, na
 			"dedicated-admins",
 		},
 	})
+	defer func() {
+		h.Impersonate(rest.ImpersonationConfig{})
+	}()
 	_, err = h.Dynamic().Resource(schema.GroupVersionResource{
 		Group: "splunkforwarder.managed.openshift.io", Version: "v1alpha1", Resource: "splunkforwarders",
 	}).Namespace(namespace).Create(context.TODO(), &unstructuredObj, metav1.CreateOptions{})
