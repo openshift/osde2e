@@ -18,8 +18,34 @@ import (
 
 var _ = ginkgo.Describe(constants.SuiteOperators+TestPrefix, func() {
 	h := helper.New()
-	testDaCRpublishingstrategies(h)
-	testCRpublishingstrategies(h)
+	ginkgo.Context("publishingstrategies", func() {
+		ginkgo.It("dedicated admin should not be allowed to manage publishingstrategies CR", func() {
+			h.Impersonate(rest.ImpersonationConfig{
+				UserName: "test-user@redhat.com",
+				Groups: []string{
+					"dedicated-admins",
+				},
+			})
+			defer func() {
+				h.Impersonate(rest.ImpersonationConfig{})
+			}()
+			ps := createPublishingstrategies("publishingstrategy-cr-test-1")
+			err := addPublishingstrategy(h, ps)
+			Expect(apierrors.IsForbidden(err)).To(BeTrue())
+
+		})
+
+		ginkgo.It("cluster admin should be allowed to manage publishingstrategies CR", func() {
+			publishingstrategyName := "publishingstrategy-cr-test-2"
+			ps := createPublishingstrategies(publishingstrategyName)
+			err := addPublishingstrategy(h, ps)
+			defer func() {
+				publishingstrategyCleanup(h, publishingstrategyName)
+			}()
+			Expect(err).NotTo(HaveOccurred())
+
+		})
+	})
 
 })
 
@@ -52,36 +78,9 @@ func addPublishingstrategy(h *helper.H, publishingstrategy cloudingress.Publishi
 	return err
 }
 
-func testDaCRpublishingstrategies(h *helper.H) {
-	ginkgo.Context("publishingstrategies", func() {
-		ginkgo.It("dedicated admin should not be allowed to manage publishingstrategies CR", func() {
-			h.Impersonate(rest.ImpersonationConfig{
-				UserName: "test-user@redhat.com",
-				Groups: []string{
-					"dedicated-admins",
-				},
-			})
-			defer func() {
-				h.Impersonate(rest.ImpersonationConfig{})
-			}()
-			ps := createPublishingstrategies("publishingstrategy-cr-test-1")
-			err := addPublishingstrategy(h, ps)
-			Expect(apierrors.IsForbidden(err)).To(BeTrue())
+func publishingstrategyCleanup(h *helper.H, publishingstrategyName string) error {
+	return h.Dynamic().Resource(schema.GroupVersionResource{
+		Group: "cloudingress.managed.openshift.io", Version: "v1alpha1", Resource: "publishingstrategies",
+	}).Namespace(OperatorNamespace).Delete(context.TODO(), publishingstrategyName, metav1.DeleteOptions{})
 
-		})
-	})
-}
-
-func testCRpublishingstrategies(h *helper.H) {
-	ginkgo.Context("publishingstrategies", func() {
-		ginkgo.It("admin should be allowed to manage publishingstrategies CR", func() {
-			ps := createPublishingstrategies("publishingstrategy-cr-test-2")
-			err := addPublishingstrategy(h, ps)
-			Expect(err).NotTo(HaveOccurred())
-			err = h.Dynamic().Resource(schema.GroupVersionResource{
-				Group: "cloudingress.managed.openshift.io", Version: "v1alpha1", Resource: "publishingstrategies",
-			}).Namespace(OperatorNamespace).Delete(context.TODO(), "publishingstrategy-cr-test-2", metav1.DeleteOptions{})
-			Expect(err).NotTo(HaveOccurred())
-		})
-	})
 }
