@@ -16,10 +16,10 @@ import (
 	"k8s.io/client-go/rest"
 )
 
-var podWebhookTestName string = "[Suite: e2e] [OSD] pod validating webhook"
+var podWebhookTestName string = "[Suite: informing] [OSD] pod validating webhook"
 
 func init() {
-	alert.RegisterGinkgoAlert(podWebhookTestName, "SD-SREP", "Alice Hubenko", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+	alert.RegisterGinkgoAlert(podWebhookTestName, "SD-SREP", "Matt Bargenquast", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
 }
 
 var _ = ginkgo.Describe(podWebhookTestName, func() {
