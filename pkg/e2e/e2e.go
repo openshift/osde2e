@@ -319,7 +319,7 @@ func runGinkgoTests() error {
 		case viper.GetString(config.Upgrade.ReleaseName) == util.NoVersionFound:
 			log.Printf("No valid upgrade versions were found. Skipping tests.")
 			return nil
-		case viper.GetString(config.Upgrade.Image) != "":
+		case viper.GetString(config.Upgrade.Image) != "" && viper.GetBool(config.Upgrade.ManagedUpgrade):
 			log.Printf("image-based managed upgrades are unsupported: %s", viper.GetString(config.Upgrade.Image))
 			return nil
 		}
