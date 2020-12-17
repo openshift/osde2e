@@ -123,7 +123,7 @@ var Upgrade = struct {
 	WaitForWorkersToManagedUpgrade:         "upgrade.waitForWorkersToManagedUpgrade",
 	ManagedUpgradeTestPodDisruptionBudgets: "upgrade.managedUpgradeTestPodDisruptionBudgets",
 	ManagedUpgradeTestNodeDrain:            "upgrade.managedUpgradeTestNodeDrain",
-	ManagedUpgradeRescheduled:				"upgrade.managedUpgradeRescheduled",
+	ManagedUpgradeRescheduled:              "upgrade.managedUpgradeRescheduled",
 }
 
 // Kubeconfig config keys.

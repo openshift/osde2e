@@ -318,7 +318,7 @@ func (m *Provider) UpdateSchedule(clusterID string, version string, t time.Time,
 	return nil
 }
 
-// GetUpgradePolicy CRCs gets the first upgrade policy for the cluster
-func (m *Provider) GetUpgradePolicy(clusterID string) (string, error) {
+// GetUpgradePolicyID CRCs gets the first upgrade policy for the cluster
+func (m *Provider) GetUpgradePolicyID(clusterID string) (string, error) {
 	return "", nil
 }

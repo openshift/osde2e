@@ -91,7 +91,7 @@ func RunUpgrade() error {
 
 	// When the upgrade being rescheduled, we should expect that the upgrade will not be triggered
 	if viper.GetBool(config.Upgrade.ManagedUpgradeRescheduled) {
-		time.Sleep(6 * time.Minute)
+		time.Sleep(10 * time.Minute)
 		triggered, err := isUpgradeTriggered(h, desired.Spec.DesiredUpdate)
 		if triggered {
 			return fmt.Errorf("the upgrade was triggered unexpectly: %v", err)

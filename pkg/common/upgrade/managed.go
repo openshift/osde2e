@@ -115,6 +115,14 @@ func TriggerManagedUpgrade(h *helper.H) (*configv1.ClusterVersion, error) {
 		return cVersion, fmt.Errorf("error restarting managed-upgrade-operator: %v", err)
 	}
 
+	// wait for a few seconds to get the upgradeconfig synced from upgradepolicy
+	for c := 0; c < 6; c++ {
+		ucCreated, _ := isUpgradeConfigCreated(h)
+		if !ucCreated {
+			time.Sleep(30 * time.Second)
+		}
+	}
+
 	// Reschedule the upgrade if flag specified
 	if viper.GetBool(config.Upgrade.ManagedUpgradeRescheduled) {
 		err = updateUpgradeWithProvider(upgradeVersion.String())
@@ -315,8 +323,8 @@ func scheduleUpgradeWithProvider(version string) error {
 		return fmt.Errorf("error getting clusterprovider for upgrade: %v", err)
 	}
 
-	// Our time will be as closely allowed as possible by the provider (now + 6 min)
-	t := time.Now().UTC().Add(6 * time.Minute)
+	// Our time will be as closely allowed as possible by the provider (now + 7 min)
+	t := time.Now().UTC().Add(7 * time.Minute)
 
 	err = clusterProvider.Upgrade(clusterID, version, t)
 	if err != nil {
@@ -334,7 +342,7 @@ func updateUpgradeWithProvider(version string) error {
 	if err != nil {
 		return fmt.Errorf("error getting clusterprovider for upgrade: %v", err)
 	}
-	policyID, err := clusterProvider.GetUpgradePolicy(clusterID)
+	policyID, err := clusterProvider.GetUpgradePolicyID(clusterID)
 	if err != nil {
 		return err
 	}
@@ -386,6 +394,21 @@ func restartOperator(h *helper.H, ns string) error {
 		return fmt.Errorf("couldn't restart managed-upgrade-operator for config re-sync: %v", err)
 	}
 	return nil
+}
+
+// this makes sure that the upgradeconfig has been synced from provider to the cluster
+func isUpgradeConfigCreated(h *helper.H) (bool, error) {
+	ucList, err := h.Dynamic().Resource(schema.GroupVersionResource{
+		Group: "upgrade.managed.openshift.io", Version: "v1alpha1", Resource: "upgradeconfigs",
+	}).Namespace(muoNamespace).List(context.TODO(), metav1.ListOptions{})
+
+	if err != nil {
+		return false, err
+	}
+	if len(ucList.Items) < 1 {
+		return false, nil
+	}
+	return true, nil
 }
 
 // check the upgradeconfig status to determine if the upgrade is started

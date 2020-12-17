@@ -69,6 +69,8 @@ Some environment variables commonly used for pipelines under osde2e are indicate
 |UPGRADE_MANAGED| Perform an upgrade using the Managed Upgrade Operator.|
 |UPGRADE_MANAGED_TEST_PDBS| Create disruptive Pod Disruption Budget workloads to test the Managed Upgrade Operator's ability to handle them.|
 |UPGRADE_WAIT_FOR_WORKERS| Wait for workers to upgrade before considering the upgrade complete.|
+|UPGRADE_MANAGED_TEST_RESCHEDULE| Test the managed upgrade when the upgrade schedule changed.|
+
  
  
 ### Job related:-
@@ -214,3 +216,4 @@ The following are the values that can be plugged in for the --configs flag when 
 |upgrade-to-latest| To select the newest valid version to upgrade to|
 |upgrade-to-latest-z| To select the newest valid patch version to upgrade to|
 |upgrade-to-next-y| To select the newest valid minor release to upgrade to|
+|upgrade-rescheduled| To test the upgrade being rescheduled.|

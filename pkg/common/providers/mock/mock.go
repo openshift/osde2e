@@ -273,8 +273,8 @@ func (m *MockProvider) Upgrade(clusterID string, version string, t time.Time) er
 	return fmt.Errorf("Upgrade is unsupported by mock clusters")
 }
 
-// Get upgrade policy mocks fetch the upgrade policy for a cluster
-func (m *MockProvider) GetUpgradePolicy(clusterID string) (string, error) {
+// Get upgrade policy ID mocks fetch the upgrade policy for a cluster
+func (m *MockProvider) GetUpgradePolicyID(clusterID string) (string, error) {
 	return "mock", fmt.Errorf("Get mock upgrade policy failed")
 }
 

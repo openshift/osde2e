@@ -84,9 +84,9 @@ func (m *MOAProvider) Upgrade(clusterID string, version string, t time.Time) err
 	return m.ocmProvider.Upgrade(clusterID, version, t)
 }
 
-// GetUpgradePolicy fetchs the upgrade policy from the OCM provider
-func (m *MOAProvider) GetUpgradePolicy(clusterID string) (string, error) {
-	return m.ocmProvider.GetUpgradePolicy(clusterID)
+// GetUpgradePolicyID fetchs the upgrade policy from the OCM provider
+func (m *MOAProvider) GetUpgradePolicyID(clusterID string) (string, error) {
+	return m.ocmProvider.GetUpgradePolicyID(clusterID)
 }
 
 // UpdateSchedule mocks reschedule the upgrade via the OCM provider

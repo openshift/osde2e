@@ -874,21 +874,22 @@ func (o *OCMProvider) Upgrade(clusterID string, version string, t time.Time) err
 	return nil
 }
 
-//GetUpgradePolicy gets the first upgrade policy from the top
-func (o *OCMProvider) GetUpgradePolicy(clusterID string) (string, error) {
+//GetUpgradePolicyID gets the first upgrade policy from the top
+func (o *OCMProvider) GetUpgradePolicyID(clusterID string) (string, error) {
 
-	getResp, err := o.conn.ClustersMgmt().V1().Clusters().Cluster(clusterID).UpgradePolicies().List().Size(1).Send()
+	listResp, err := o.conn.ClustersMgmt().V1().Clusters().Cluster(clusterID).UpgradePolicies().List().SendContext(context.TODO())
+
 	if err != nil {
 		return "", err
 	}
-	if getResp.Status() != http.StatusOK {
-		log.Printf("Unable to find upgrade schedule with provider (status %d, response %v)", getResp.Status(), getResp.Error())
-		return "", getResp.Error()
+	if listResp.Status() != http.StatusOK {
+		log.Printf("Unable to find upgrade schedule with provider (status %d, response %v)", listResp.Status(), listResp.Error())
+		return "", listResp.Error()
 	}
 
-	policyID, ok := getResp.Items().Get(1).GetID()
-	if !ok {
-		return "", fmt.Errorf("Failed to get the policy ID")
+	policyID := listResp.Items().Get(0).ID()
+	if policyID == "" {
+		return "", fmt.Errorf("failed to get the policy ID")
 	}
 
 	return policyID, nil
