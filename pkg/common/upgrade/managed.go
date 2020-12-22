@@ -115,6 +115,22 @@ func TriggerManagedUpgrade(h *helper.H) (*configv1.ClusterVersion, error) {
 		return cVersion, fmt.Errorf("error restarting managed-upgrade-operator: %v", err)
 	}
 
+	// wait for a few seconds to get the upgradeconfig synced from upgradepolicy
+	for c := 0; c < 6; c++ {
+		ucCreated, _ := isUpgradeConfigCreated(h)
+		if !ucCreated {
+			time.Sleep(30 * time.Second)
+		}
+	}
+
+	// Reschedule the upgrade if flag specified
+	if viper.GetBool(config.Upgrade.ManagedUpgradeRescheduled) {
+		err = updateUpgradeWithProvider(upgradeVersion.String())
+		if err != nil {
+			return cVersion, fmt.Errorf("can't reschedule upgrade: %v", err)
+		}
+	}
+
 	// The managed-upgrade-operator won't have updated the CVO version yet, and that's fine.
 	// But let's return what it will look like, for the later 'is it upgraded yet' tests.
 	cUpdate := configv1.Update{
@@ -307,8 +323,8 @@ func scheduleUpgradeWithProvider(version string) error {
 		return fmt.Errorf("error getting clusterprovider for upgrade: %v", err)
 	}
 
-	// Our time will be as closely allowed as possible by the provider (now + 6 min)
-	t := time.Now().UTC().Add(6 * time.Minute)
+	// Our time will be as closely allowed as possible by the provider (now + 7 min)
+	t := time.Now().UTC().Add(7 * time.Minute)
 
 	err = clusterProvider.Upgrade(clusterID, version, t)
 	if err != nil {
@@ -316,6 +332,29 @@ func scheduleUpgradeWithProvider(version string) error {
 	}
 	return nil
 
+}
+
+// Reschedule the upgrade via the provider
+func updateUpgradeWithProvider(version string) error {
+
+	clusterID := viper.GetString(config.Cluster.ID)
+	clusterProvider, err := providers.ClusterProvider()
+	if err != nil {
+		return fmt.Errorf("error getting clusterprovider for upgrade: %v", err)
+	}
+	policyID, err := clusterProvider.GetUpgradePolicyID(clusterID)
+	if err != nil {
+		return err
+	}
+
+	newT := time.Now().UTC().Add(300 * time.Minute)
+
+	err = clusterProvider.UpdateSchedule(clusterID, version, newT, policyID)
+	if err != nil {
+		return fmt.Errorf("error updating the upgrade schedule via provider: %v", err)
+	}
+
+	return nil
 }
 
 // Scales down and scales up the operator deployment to initiate a pod restart
@@ -355,4 +394,53 @@ func restartOperator(h *helper.H, ns string) error {
 		return fmt.Errorf("couldn't restart managed-upgrade-operator for config re-sync: %v", err)
 	}
 	return nil
+}
+
+// this makes sure that the upgradeconfig has been synced from provider to the cluster
+func isUpgradeConfigCreated(h *helper.H) (bool, error) {
+	ucList, err := h.Dynamic().Resource(schema.GroupVersionResource{
+		Group: "upgrade.managed.openshift.io", Version: "v1alpha1", Resource: "upgradeconfigs",
+	}).Namespace(muoNamespace).List(context.TODO(), metav1.ListOptions{})
+
+	if err != nil {
+		return false, err
+	}
+	if len(ucList.Items) < 1 {
+		return false, nil
+	}
+	return true, nil
+}
+
+// check the upgradeconfig status to determine if the upgrade is started
+func isUpgradeTriggered(h *helper.H, desired *configv1.Update) (bool, error) {
+
+	// retrieve UpgradeConfig
+	ucObj, err := h.Dynamic().Resource(schema.GroupVersionResource{
+		Group: "upgrade.managed.openshift.io", Version: "v1alpha1", Resource: "upgradeconfigs",
+	}).Namespace(muoNamespace).Get(context.TODO(), upgradeConfigName, metav1.GetOptions{})
+	if err != nil {
+		// The API may sometimes be unavailable, this is fine. We don't want
+		// to return an error because there's every chance the upgrade is still going
+		// and the API will come back.
+		return false, fmt.Errorf("failed to get the upgrade config: %v", err)
+	}
+
+	var upgradeConfig upgradev1alpha1.UpgradeConfig
+	err = runtime.DefaultUnstructuredConverter.FromUnstructured(ucObj.UnstructuredContent(), &upgradeConfig)
+	if err != nil {
+		// This, however, is probably error-worthy because it means our UpgradeConfig
+		// has been messed with or something odd's occurred
+		return false, err
+	}
+
+	// Check if the Upgrade is trigger
+	upgradeHistory := upgradeConfig.Status.History.GetHistory(desired.Version)
+	if upgradeHistory == nil {
+		return false, fmt.Errorf("upgrade has not been scheduled")
+	}
+	if upgradeHistory.Phase != "Pending" {
+		return true, fmt.Errorf("cluster upgrade has been triggered")
+	}
+
+	return false, nil
 }

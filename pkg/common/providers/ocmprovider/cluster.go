@@ -867,10 +867,52 @@ func (o *OCMProvider) Upgrade(clusterID string, version string, t time.Time) err
 	}
 	if addResp.Status() != http.StatusCreated {
 		log.Printf("Unable to schedule upgrade with provider (status %d, response %v)", addResp.Status(), addResp.Error())
-		return err
+		return addResp.Error()
 	}
 
 	log.Printf("upgrade to version %s scheduled with provider for time %s", addResp.Body().Version(), addResp.Body().NextRun().Format(time.RFC3339))
+	return nil
+}
+
+//GetUpgradePolicyID gets the first upgrade policy from the top
+func (o *OCMProvider) GetUpgradePolicyID(clusterID string) (string, error) {
+
+	listResp, err := o.conn.ClustersMgmt().V1().Clusters().Cluster(clusterID).UpgradePolicies().List().SendContext(context.TODO())
+
+	if err != nil {
+		return "", err
+	}
+	if listResp.Status() != http.StatusOK {
+		log.Printf("Unable to find upgrade schedule with provider (status %d, response %v)", listResp.Status(), listResp.Error())
+		return "", listResp.Error()
+	}
+
+	policyID := listResp.Items().Get(0).ID()
+	if policyID == "" {
+		return "", fmt.Errorf("failed to get the policy ID")
+	}
+
+	return policyID, nil
+}
+
+// UpdateSchedule updates the existing upgrade policy for re-scheduling
+func (o *OCMProvider) UpdateSchedule(clusterID string, version string, t time.Time, policyID string) error {
+
+	policyBody, err := v1.NewUpgradePolicy().NextRun(t).Build()
+	if err != nil {
+		return err
+	}
+
+	updateResp, err := o.conn.ClustersMgmt().V1().Clusters().Cluster(clusterID).UpgradePolicies().UpgradePolicy(policyID).Update().Body(policyBody).SendContext(context.TODO())
+	if err != nil {
+		return err
+	}
+	if updateResp.Status() != http.StatusOK {
+		log.Printf("Unable to update upgrade schedule with provider (status %d, response %v)", updateResp.Status(), updateResp.Error())
+		return err
+	}
+
+	log.Printf("Update the upgrade schedule for cluster %s to %s", clusterID, t)
 	return nil
 }
 

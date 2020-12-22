@@ -354,8 +354,11 @@ func runGinkgoTests() error {
 			}
 			events.RecordEvent(events.UpgradeSuccessful)
 
-			log.Println("Running e2e tests POST-UPGRADE...")
-			upgradeTestsPassed = runTestsInPhase(phase.UpgradePhase, "OSD e2e suite post-upgrade")
+			if !viper.GetBool(config.Upgrade.ManagedUpgradeRescheduled) {
+				log.Println("Running e2e tests POST-UPGRADE...")
+				upgradeTestsPassed = runTestsInPhase(phase.UpgradePhase, "OSD e2e suite post-upgrade")
+			}
+			log.Println("Upgrade rescheduled, skip the POST-UPGRADE testing")
 		} else {
 			log.Println("No Kubeconfig found from initial cluster setup. Unable to run upgrade.")
 		}

@@ -310,3 +310,15 @@ func (m *Provider) Upgrade(clusterID string, version string, t time.Time) error 
 	log.Printf("Upgrade is unsupported by CRC clusters")
 	return nil
 }
+
+// UpdateSchedule CRCs updates the upgrade schedule for a given cluster
+func (m *Provider) UpdateSchedule(clusterID string, version string, t time.Time, policyID string) error {
+	// Noop for now and just note it.
+	log.Printf("UpdateSchedule is unsupported by CRC clusters")
+	return nil
+}
+
+// GetUpgradePolicyID CRCs gets the first upgrade policy for the cluster
+func (m *Provider) GetUpgradePolicyID(clusterID string) (string, error) {
+	return "", nil
+}
