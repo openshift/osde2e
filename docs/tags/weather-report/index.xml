@@ -6,10 +6,37 @@
     <description>Recent content in weather-report on OSDe2e Reporting</description>
     <generator>Hugo -- gohugo.io</generator>
     <copyright>Copyright © 2020, Red Hat, all rights reserved.</copyright>
-    <lastBuildDate>Fri, 25 Dec 2020 12:00:34 +0000</lastBuildDate>
+    <lastBuildDate>Sat, 26 Dec 2020 12:00:33 +0000</lastBuildDate>
     
 	<atom:link href="https://openshift.github.io/osde2e/tags/weather-report/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>OSDe2e moa Weather Report 2020-12-26 12:00:33.415500389 &#43;0000 UTC</title>
+      <link>https://openshift.github.io/osde2e/post/163a9554516c4a21843200d15519fc2e/</link>
+      <pubDate>Sat, 26 Dec 2020 12:00:33 +0000</pubDate>
+      
+      <guid>https://openshift.github.io/osde2e/post/163a9554516c4a21843200d15519fc2e/</guid>
+      <description>&lt;table class=&#34;summary&#34;&gt;&lt;tr&gt;&lt;td bgcolor=&#34;#ff0000&#34;&gt;&lt;/td&gt;&lt;td&gt;prod (Pass rate: 0.00)&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td bgcolor=&#34;#ff0000&#34;&gt;&lt;/td&gt;&lt;td&gt;stage (Pass rate: 0.00)&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;</description>
+    </item>
+    
+    <item>
+      <title>OSDe2e gcp Weather Report 2020-12-26 12:00:28.94257642 &#43;0000 UTC</title>
+      <link>https://openshift.github.io/osde2e/post/983abe9d8be64f8ab7fa848bb5408adc/</link>
+      <pubDate>Sat, 26 Dec 2020 12:00:28 +0000</pubDate>
+      
+      <guid>https://openshift.github.io/osde2e/post/983abe9d8be64f8ab7fa848bb5408adc/</guid>
+      <description>&lt;table class=&#34;summary&#34;&gt;&lt;tr&gt;&lt;td bgcolor=&#34;#0ef100&#34;&gt;&lt;/td&gt;&lt;td&gt;int (Pass rate: 99.46)&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td bgcolor=&#34;#da2500&#34;&gt;&lt;/td&gt;&lt;td&gt;prod (Pass rate: 91.49)&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td bgcolor=&#34;#d52a00&#34;&gt;&lt;/td&gt;&lt;td&gt;stage (Pass rate: 91.67)&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;</description>
+    </item>
+    
+    <item>
+      <title>OSDe2e aws Weather Report 2020-12-26 12:00:23.243632837 &#43;0000 UTC</title>
+      <link>https://openshift.github.io/osde2e/post/1639e00750574001b3049f82b321b154/</link>
+      <pubDate>Sat, 26 Dec 2020 12:00:23 +0000</pubDate>
+      
+      <guid>https://openshift.github.io/osde2e/post/1639e00750574001b3049f82b321b154/</guid>
+      <description>&lt;table class=&#34;summary&#34;&gt;&lt;tr&gt;&lt;td bgcolor=&#34;#05fa00&#34;&gt;&lt;/td&gt;&lt;td&gt;int (Pass rate: 99.82)&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td bgcolor=&#34;#ff0000&#34;&gt;&lt;/td&gt;&lt;td&gt;prod (Pass rate: 85.13)&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td bgcolor=&#34;#679800&#34;&gt;&lt;/td&gt;&lt;td&gt;stage (Pass rate: 95.97)&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;</description>
+    </item>
     
     <item>
       <title>OSDe2e moa Weather Report 2020-12-25 12:00:34.211034457 &#43;0000 UTC</title>
