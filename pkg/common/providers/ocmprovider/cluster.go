@@ -76,8 +76,12 @@ func (o *OCMProvider) LaunchCluster(clusterName string) (string, error) {
 	}
 
 	multiAZ := viper.GetBool(config.Cluster.MultiAZ)
-	computeMachineType := viper.GetString(ComputeMachineType)
 	cloudProvider := viper.GetString(config.CloudProvider.CloudProviderID)
+	computeMachineType, err := o.DetermineMachineType(cloudProvider)
+
+	if err != nil {
+		return "", fmt.Errorf("error while determining machine type: %v", err)
+	}
 
 	region, err := o.DetermineRegion(cloudProvider)
 
