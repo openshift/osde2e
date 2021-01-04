@@ -93,3 +93,8 @@ func (m *MOAProvider) GetUpgradePolicyID(clusterID string) (string, error) {
 func (m *MOAProvider) UpdateSchedule(clusterID string, version string, t time.Time, policyID string) error {
 	return m.ocmProvider.UpdateSchedule(clusterID, version, t, policyID)
 }
+
+// DetermineMachineType calls DetermineMachineType from the OCM provider
+func (m *MOAProvider) DetermineMachineType(cloudProvider string) (string, error) {
+	return m.ocmProvider.DetermineMachineType(cloudProvider)
+}

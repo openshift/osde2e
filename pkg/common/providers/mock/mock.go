@@ -143,7 +143,6 @@ func (m *MockProvider) ClusterKubeconfig(clusterID string) ([]byte, error) {
 		return nil, fmt.Errorf("failed to get versions: Some fake error")
 	}
 
-
 	localKubeConfig := viper.GetString(config.Kubeconfig.Path)
 	if len(localKubeConfig) > 0 {
 		// Read from the TEST_KUBECONFIG if it's been specified
@@ -281,4 +280,9 @@ func (m *MockProvider) GetUpgradePolicyID(clusterID string) (string, error) {
 // UpdateSchedule mocks reschedule the upgrade
 func (m *MockProvider) UpdateSchedule(clusterID string, version string, t time.Time, policyID string) error {
 	return fmt.Errorf("Upgrade Schedule is not supported by mock clusters")
+}
+
+// DetermineMachineType returns a random machine type for a given cluster
+func (m *MockProvider) DetermineMachineType(cloudProvider string) (string, error) {
+	return "mock", fmt.Errorf("DetermineMachineType is not supported by mock clusters")
 }
