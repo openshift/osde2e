@@ -120,4 +120,7 @@ type Provider interface {
 
 	// UpdateSchedule updates the existing upgrade policy for re-scheduling
 	UpdateSchedule(clusterID string, version string, t time.Time, policyID string) error
+
+	// DetermineMachineType selects a random machine type for a given cluster.
+	DetermineMachineType(cloudProvider string) (string, error)
 }

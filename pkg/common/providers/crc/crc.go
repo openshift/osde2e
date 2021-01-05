@@ -322,3 +322,8 @@ func (m *Provider) UpdateSchedule(clusterID string, version string, t time.Time,
 func (m *Provider) GetUpgradePolicyID(clusterID string) (string, error) {
 	return "", nil
 }
+
+// DetermineMachineType returns a random machine type for a given cluster
+func (m *Provider) DetermineMachineType(cloudProvider string) (string, error) {
+	return "", nil
+}
