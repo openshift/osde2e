@@ -5,3 +5,4 @@
 /model/
 /vendor/
 !/examples/*.go
+!/examples/*.yaml

@@ -63,6 +63,14 @@ func writeAWS(object *AWS, stream *jsoniter.Stream) {
 		stream.WriteString(*object.secretAccessKey)
 		count++
 	}
+	if object.subnetIDs != nil {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("subnet_ids")
+		writeStringList(object.subnetIDs, stream)
+		count++
+	}
 	stream.WriteObjectEnd()
 }
 
@@ -99,6 +107,9 @@ func readAWS(iterator *jsoniter.Iterator) *AWS {
 		case "secret_access_key":
 			value := iterator.ReadString()
 			object.secretAccessKey = &value
+		case "subnet_ids":
+			value := readStringList(iterator)
+			object.subnetIDs = value
 		default:
 			iterator.ReadAny()
 		}

@@ -17,7 +17,7 @@ Some environment variables commonly used for pipelines under osde2e are indicate
 |CLUSTER_EXPIRY_IN_MINUTES| Optional: Set this if you want to ensure the cluster gets cleaned up.|
 |CLUSTER_ID| The value identifying the cluster. If set at start, an existing cluster is tested.|
 |CLUSTER_NAME| The name of the cluster to be created.|
-|PROVIDER| Provider is what provider to use to create/delete clusters. Ex. ocm, moa, crc, mock|
+|PROVIDER| Provider is what provider to use to create/delete clusters. Ex. ocm, rosa, crc, mock|
 |PROVISION_SHARD_ID| ProvisionShardID is the shard ID that is set to provision a shard for the cluster.|
 |MULTI_AZ| MultiAZ deploys a cluster across multiple availability zones.|
 |DESTROY_CLUSTER| Set to true if you want to the cluster to be explicitly deleted after the test.|
@@ -31,13 +31,13 @@ Some environment variables commonly used for pipelines under osde2e are indicate
 |CLEAN_CHECK_RUNS| CleanCheckRuns lets us set the number of osd-verify checks we want to run before deeming a cluster "healthy"|
  
 
-### MOA cluster related:-
+### ROSA cluster related:-
  
 | Environment variable | Usage |
 | --------------| ------------------------| 
-|MOA_AWS_ACCESS_KEY_ID| AWSAccessKeyID for provisioning clusters|
-|MOA_AWS_SECRET_ACCESS_KEY| AWSSecretAccessKey for provisioning clusters.|
-|MOA_AWS_REGION| AWSRegion for provisioning clusters.|
+|ROSA_AWS_ACCESS_KEY_ID| AWSAccessKeyID for provisioning clusters|
+|ROSA_AWS_SECRET_ACCESS_KEY| AWSSecretAccessKey for provisioning clusters.|
+|ROSA_AWS_REGION| AWSRegion for provisioning clusters.|
  
  
 ### OCM related:-
@@ -133,7 +133,7 @@ CLI flags that are commonly used include:
 --configs:  A comma separated list of built in configs to use. (stage, prod, e2e-suite, etc.)
 --custom-config: Custom config file for osde2e.
 --destroy-cluster: A flag to trigger cluster deletion after test completion.
---environment: Cluster provider environment to use. (ocm, moa, etc.).
+--environment: Cluster provider environment to use. (ocm, rosa, etc.).
 --kube-config: Path to local Kube config for running tests against.
 --skip-health-check:  a flag to skip cluster health checks.
 --skip-tests: Skip any Ginkgo tests whose names match the regular expression.
@@ -173,7 +173,7 @@ The following are the values that can be plugged in for the --configs flag when 
 | Config Value | Usage |
 | --------------| ------------------------| 
 |ocm | To specify ocm as the cluster provider.|
-|moa | To specify moa as the cluster provider.|
+|rosa | To specify rosa as the cluster provider.|
 
 
 ### Test suite values:

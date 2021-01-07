@@ -20,11 +20,15 @@ limitations under the License.
 package v1 // github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1
 
 import (
+	"bytes"
 	"context"
+	"io"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 	"time"
 
+	jsoniter "github.com/json-iterator/go"
 	"github.com/openshift-online/ocm-sdk-go/errors"
 	"github.com/openshift-online/ocm-sdk-go/helpers"
 )
@@ -49,11 +53,33 @@ func NewAddOnInstallationClient(transport http.RoundTripper, path string, metric
 	}
 }
 
+// Delete creates a request for the 'delete' method.
+//
+// Delete an add-on installation and remove it from the collection of add-on installations on the cluster.
+func (c *AddOnInstallationClient) Delete() *AddOnInstallationDeleteRequest {
+	return &AddOnInstallationDeleteRequest{
+		transport: c.transport,
+		path:      c.path,
+		metric:    c.metric,
+	}
+}
+
 // Get creates a request for the 'get' method.
 //
 // Retrieves the details of the add-on installation.
 func (c *AddOnInstallationClient) Get() *AddOnInstallationGetRequest {
 	return &AddOnInstallationGetRequest{
+		transport: c.transport,
+		path:      c.path,
+		metric:    c.metric,
+	}
+}
+
+// Update creates a request for the 'update' method.
+//
+// Updates the add-on installation.
+func (c *AddOnInstallationClient) Update() *AddOnInstallationUpdateRequest {
+	return &AddOnInstallationUpdateRequest{
 		transport: c.transport,
 		path:      c.path,
 		metric:    c.metric,
@@ -181,6 +207,101 @@ func (c *AddOnInstallationClient) Poll() *AddOnInstallationPollRequest {
 	}
 }
 
+// AddOnInstallationDeleteRequest is the request for the 'delete' method.
+type AddOnInstallationDeleteRequest struct {
+	transport http.RoundTripper
+	path      string
+	metric    string
+	query     url.Values
+	header    http.Header
+}
+
+// Parameter adds a query parameter.
+func (r *AddOnInstallationDeleteRequest) Parameter(name string, value interface{}) *AddOnInstallationDeleteRequest {
+	helpers.AddValue(&r.query, name, value)
+	return r
+}
+
+// Header adds a request header.
+func (r *AddOnInstallationDeleteRequest) Header(name string, value interface{}) *AddOnInstallationDeleteRequest {
+	helpers.AddHeader(&r.header, name, value)
+	return r
+}
+
+// Send sends this request, waits for the response, and returns it.
+//
+// This is a potentially lengthy operation, as it requires network communication.
+// Consider using a context and the SendContext method.
+func (r *AddOnInstallationDeleteRequest) Send() (result *AddOnInstallationDeleteResponse, err error) {
+	return r.SendContext(context.Background())
+}
+
+// SendContext sends this request, waits for the response, and returns it.
+func (r *AddOnInstallationDeleteRequest) SendContext(ctx context.Context) (result *AddOnInstallationDeleteResponse, err error) {
+	query := helpers.CopyQuery(r.query)
+	header := helpers.SetHeader(r.header, r.metric)
+	uri := &url.URL{
+		Path:     r.path,
+		RawQuery: query.Encode(),
+	}
+	request := &http.Request{
+		Method: "DELETE",
+		URL:    uri,
+		Header: header,
+	}
+	if ctx != nil {
+		request = request.WithContext(ctx)
+	}
+	response, err := r.transport.RoundTrip(request)
+	if err != nil {
+		return
+	}
+	defer response.Body.Close()
+	result = &AddOnInstallationDeleteResponse{}
+	result.status = response.StatusCode
+	result.header = response.Header
+	if result.status >= 400 {
+		result.err, err = errors.UnmarshalError(response.Body)
+		if err != nil {
+			return
+		}
+		err = result.err
+		return
+	}
+	return
+}
+
+// AddOnInstallationDeleteResponse is the response for the 'delete' method.
+type AddOnInstallationDeleteResponse struct {
+	status int
+	header http.Header
+	err    *errors.Error
+}
+
+// Status returns the response status code.
+func (r *AddOnInstallationDeleteResponse) Status() int {
+	if r == nil {
+		return 0
+	}
+	return r.status
+}
+
+// Header returns header of the response.
+func (r *AddOnInstallationDeleteResponse) Header() http.Header {
+	if r == nil {
+		return nil
+	}
+	return r.header
+}
+
+// Error returns the response error.
+func (r *AddOnInstallationDeleteResponse) Error() *errors.Error {
+	if r == nil {
+		return nil
+	}
+	return r.err
+}
+
 // AddOnInstallationGetRequest is the request for the 'get' method.
 type AddOnInstallationGetRequest struct {
 	transport http.RoundTripper
@@ -296,6 +417,153 @@ func (r *AddOnInstallationGetResponse) Body() *AddOnInstallation {
 //
 //
 func (r *AddOnInstallationGetResponse) GetBody() (value *AddOnInstallation, ok bool) {
+	ok = r != nil && r.body != nil
+	if ok {
+		value = r.body
+	}
+	return
+}
+
+// AddOnInstallationUpdateRequest is the request for the 'update' method.
+type AddOnInstallationUpdateRequest struct {
+	transport http.RoundTripper
+	path      string
+	metric    string
+	query     url.Values
+	header    http.Header
+	body      *AddOnInstallation
+}
+
+// Parameter adds a query parameter.
+func (r *AddOnInstallationUpdateRequest) Parameter(name string, value interface{}) *AddOnInstallationUpdateRequest {
+	helpers.AddValue(&r.query, name, value)
+	return r
+}
+
+// Header adds a request header.
+func (r *AddOnInstallationUpdateRequest) Header(name string, value interface{}) *AddOnInstallationUpdateRequest {
+	helpers.AddHeader(&r.header, name, value)
+	return r
+}
+
+// Body sets the value of the 'body' parameter.
+//
+//
+func (r *AddOnInstallationUpdateRequest) Body(value *AddOnInstallation) *AddOnInstallationUpdateRequest {
+	r.body = value
+	return r
+}
+
+// Send sends this request, waits for the response, and returns it.
+//
+// This is a potentially lengthy operation, as it requires network communication.
+// Consider using a context and the SendContext method.
+func (r *AddOnInstallationUpdateRequest) Send() (result *AddOnInstallationUpdateResponse, err error) {
+	return r.SendContext(context.Background())
+}
+
+// SendContext sends this request, waits for the response, and returns it.
+func (r *AddOnInstallationUpdateRequest) SendContext(ctx context.Context) (result *AddOnInstallationUpdateResponse, err error) {
+	query := helpers.CopyQuery(r.query)
+	header := helpers.SetHeader(r.header, r.metric)
+	buffer := &bytes.Buffer{}
+	err = writeAddOnInstallationUpdateRequest(r, buffer)
+	if err != nil {
+		return
+	}
+	uri := &url.URL{
+		Path:     r.path,
+		RawQuery: query.Encode(),
+	}
+	request := &http.Request{
+		Method: "PATCH",
+		URL:    uri,
+		Header: header,
+		Body:   ioutil.NopCloser(buffer),
+	}
+	if ctx != nil {
+		request = request.WithContext(ctx)
+	}
+	response, err := r.transport.RoundTrip(request)
+	if err != nil {
+		return
+	}
+	defer response.Body.Close()
+	result = &AddOnInstallationUpdateResponse{}
+	result.status = response.StatusCode
+	result.header = response.Header
+	if result.status >= 400 {
+		result.err, err = errors.UnmarshalError(response.Body)
+		if err != nil {
+			return
+		}
+		err = result.err
+		return
+	}
+	err = readAddOnInstallationUpdateResponse(result, response.Body)
+	if err != nil {
+		return
+	}
+	return
+}
+
+// marshall is the method used internally to marshal requests for the
+// 'update' method.
+func (r *AddOnInstallationUpdateRequest) marshal(writer io.Writer) error {
+	stream := helpers.NewStream(writer)
+	r.stream(stream)
+	return stream.Error
+}
+func (r *AddOnInstallationUpdateRequest) stream(stream *jsoniter.Stream) {
+}
+
+// AddOnInstallationUpdateResponse is the response for the 'update' method.
+type AddOnInstallationUpdateResponse struct {
+	status int
+	header http.Header
+	err    *errors.Error
+	body   *AddOnInstallation
+}
+
+// Status returns the response status code.
+func (r *AddOnInstallationUpdateResponse) Status() int {
+	if r == nil {
+		return 0
+	}
+	return r.status
+}
+
+// Header returns header of the response.
+func (r *AddOnInstallationUpdateResponse) Header() http.Header {
+	if r == nil {
+		return nil
+	}
+	return r.header
+}
+
+// Error returns the response error.
+func (r *AddOnInstallationUpdateResponse) Error() *errors.Error {
+	if r == nil {
+		return nil
+	}
+	return r.err
+}
+
+// Body returns the value of the 'body' parameter.
+//
+//
+func (r *AddOnInstallationUpdateResponse) Body() *AddOnInstallation {
+	if r == nil {
+		return nil
+	}
+	return r.body
+}
+
+// GetBody returns the value of the 'body' parameter and
+// a flag indicating if the parameter has a value.
+//
+//
+func (r *AddOnInstallationUpdateResponse) GetBody() (value *AddOnInstallation, ok bool) {
 	ok = r != nil && r.body != nil
 	if ok {
 		value = r.body

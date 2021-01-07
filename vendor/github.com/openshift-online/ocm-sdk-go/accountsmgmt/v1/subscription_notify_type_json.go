@@ -63,6 +63,14 @@ func writeSubscriptionNotify(object *SubscriptionNotify, stream *jsoniter.Stream
 		stream.WriteString(*object.clusterUUID)
 		count++
 	}
+	if object.includeRedHatAssociates != nil {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("include_red_hat_associates")
+		stream.WriteBool(*object.includeRedHatAssociates)
+		count++
+	}
 	if object.subject != nil {
 		if count > 0 {
 			stream.WriteMore()
@@ -131,6 +139,9 @@ func readSubscriptionNotify(iterator *jsoniter.Iterator) *SubscriptionNotify {
 		case "cluster_uuid":
 			value := iterator.ReadString()
 			object.clusterUUID = &value
+		case "include_red_hat_associates":
+			value := iterator.ReadBool()
+			object.includeRedHatAssociates = &value
 		case "subject":
 			value := iterator.ReadString()
 			object.subject = &value

@@ -72,7 +72,7 @@ func RunUpgrade() error {
 			return fmt.Errorf("can't determine provider for managed upgrade: %s", err)
 		}
 		switch provider.Type() {
-		case "moa":
+		case "rosa":
 			fallthrough
 		case "ocm":
 			desired, err = TriggerManagedUpgrade(h)

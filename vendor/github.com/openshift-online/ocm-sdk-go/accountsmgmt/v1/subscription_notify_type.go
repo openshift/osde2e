@@ -24,13 +24,14 @@ package v1 // github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1
 // This struct is a request to send a templated email to a user related to this
 // subscription.
 type SubscriptionNotify struct {
-	bccAddress         *string
-	clusterID          *string
-	clusterUUID        *string
-	subject            *string
-	subscriptionID     *string
-	templateName       *string
-	templateParameters []*TemplateParameter
+	bccAddress              *string
+	clusterID               *string
+	clusterUUID             *string
+	includeRedHatAssociates *bool
+	subject                 *string
+	subscriptionID          *string
+	templateName            *string
+	templateParameters      []*TemplateParameter
 }
 
 // Empty returns true if the object is empty, i.e. no attribute has a value.
@@ -38,6 +39,7 @@ func (o *SubscriptionNotify) Empty() bool {
 	return o == nil || (o.bccAddress == nil &&
 		o.clusterID == nil &&
 		o.clusterUUID == nil &&
+		o.includeRedHatAssociates == nil &&
 		o.subject == nil &&
 		o.subscriptionID == nil &&
 		o.templateName == nil &&
@@ -110,6 +112,29 @@ func (o *SubscriptionNotify) GetClusterUUID() (value string, ok bool) {
 	ok = o != nil && o.clusterUUID != nil
 	if ok {
 		value = *o.clusterUUID
+	}
+	return
+}
+
+// IncludeRedHatAssociates returns the value of the 'include_red_hat_associates' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+// Indicates whether to include red hat associates in the email notification
+func (o *SubscriptionNotify) IncludeRedHatAssociates() bool {
+	if o != nil && o.includeRedHatAssociates != nil {
+		return *o.includeRedHatAssociates
+	}
+	return false
+}
+
+// GetIncludeRedHatAssociates returns the value of the 'include_red_hat_associates' attribute and
+// a flag indicating if the attribute has a value.
+//
+// Indicates whether to include red hat associates in the email notification
+func (o *SubscriptionNotify) GetIncludeRedHatAssociates() (value bool, ok bool) {
+	ok = o != nil && o.includeRedHatAssociates != nil
+	if ok {
+		value = *o.includeRedHatAssociates
 	}
 	return
 }

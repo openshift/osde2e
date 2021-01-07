@@ -70,6 +70,17 @@ func (c *Connection) TokensContext(
 		expiresDuration = expiresIn[0]
 	}
 
+	// Configure the back-off so that it honours the deadline of the context passed
+	// to the method. Note that we need to specify explicitly the type of the variable
+	// because the backoff.NewExponentialBackOff function returns the implementation
+	// type but backoff.WithContext returns the interface instead.
+	exponentialBackoffMethod := backoff.NewExponentialBackOff()
+	exponentialBackoffMethod.MaxElapsedTime = 15 * time.Second
+	var backoffMethod backoff.BackOff = exponentialBackoffMethod
+	if ctx != nil {
+		backoffMethod = backoff.WithContext(backoffMethod, ctx)
+	}
+
 	attempt := 0
 	operation := func() error {
 		attempt++
@@ -97,8 +108,7 @@ func (c *Connection) TokensContext(
 		}
 		return nil
 	}
-	backoffMethod := backoff.NewExponentialBackOff()
-	backoffMethod.MaxElapsedTime = time.Second * 15
+
 	// nolint
 	backoff.Retry(operation, backoffMethod)
 	return access, refresh, err
@@ -330,7 +340,7 @@ func (c *Connection) sendTokenFormTimed(ctx context.Context, form url.Values) (c
 	header.Set("Content-Type", "application/x-www-form-urlencoded")
 	header.Set("Accept", "application/json")
 	if err != nil {
-		err = fmt.Errorf("can't create request: %v", err)
+		err = fmt.Errorf("can't create request: %w", err)
 		return
 	}
 
@@ -342,7 +352,7 @@ func (c *Connection) sendTokenFormTimed(ctx context.Context, form url.Values) (c
 	// Send the HTTP request:
 	response, err := c.client.Do(request)
 	if err != nil {
-		err = fmt.Errorf("can't send request: %v", err)
+		err = fmt.Errorf("can't send request: %w", err)
 		return
 	}
 	defer response.Body.Close()
@@ -358,7 +368,7 @@ func (c *Connection) sendTokenFormTimed(ctx context.Context, form url.Values) (c
 	// Read the response body:
 	body, err = ioutil.ReadAll(response.Body)
 	if err != nil {
-		err = fmt.Errorf("can't read response: %v", err)
+		err = fmt.Errorf("can't read response: %w", err)
 		return
 	}
 
@@ -366,7 +376,7 @@ func (c *Connection) sendTokenFormTimed(ctx context.Context, form url.Values) (c
 	result = &internal.TokenResponse{}
 	err = json.Unmarshal(body, result)
 	if err != nil {
-		err = fmt.Errorf("can't parse JSON response: %v", err)
+		err = fmt.Errorf("can't parse JSON response: %w", err)
 		return
 	}
 	if result.Error != nil {

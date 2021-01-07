@@ -27,16 +27,15 @@ import (
 //
 // Representation of an upgrade policy that can be set for a cluster.
 type UpgradePolicyBuilder struct {
-	id                   *string
-	href                 *string
-	link                 bool
-	clusterID            *string
-	nextRun              *time.Time
-	nodeDrainGracePeriod *ValueBuilder
-	schedule             *string
-	scheduleType         *string
-	upgradeType          *string
-	version              *string
+	id           *string
+	href         *string
+	link         bool
+	clusterID    *string
+	nextRun      *time.Time
+	schedule     *string
+	scheduleType *string
+	upgradeType  *string
+	version      *string
 }
 
 // NewUpgradePolicy creates a new builder of 'upgrade_policy' objects.
@@ -75,31 +74,6 @@ func (b *UpgradePolicyBuilder) ClusterID(value string) *UpgradePolicyBuilder {
 //
 func (b *UpgradePolicyBuilder) NextRun(value time.Time) *UpgradePolicyBuilder {
 	b.nextRun = &value
-	return b
-}
-
-// NodeDrainGracePeriod sets the value of the 'node_drain_grace_period' attribute to the given value.
-//
-// Numeric value and the unit used to measure it.
-//
-// Units are not mandatory, and they're not specified for some resources. For
-// resources that use bytes, the accepted units are:
-//
-// - 1 B = 1 byte
-// - 1 KB = 10^3 bytes
-// - 1 MB = 10^6 bytes
-// - 1 GB = 10^9 bytes
-// - 1 TB = 10^12 bytes
-// - 1 PB = 10^15 bytes
-//
-// - 1 B = 1 byte
-// - 1 KiB = 2^10 bytes
-// - 1 MiB = 2^20 bytes
-// - 1 GiB = 2^30 bytes
-// - 1 TiB = 2^40 bytes
-// - 1 PiB = 2^50 bytes
-func (b *UpgradePolicyBuilder) NodeDrainGracePeriod(value *ValueBuilder) *UpgradePolicyBuilder {
-	b.nodeDrainGracePeriod = value
 	return b
 }
 
@@ -145,11 +119,6 @@ func (b *UpgradePolicyBuilder) Copy(object *UpgradePolicy) *UpgradePolicyBuilder
 	b.link = object.link
 	b.clusterID = object.clusterID
 	b.nextRun = object.nextRun
-	if object.nodeDrainGracePeriod != nil {
-		b.nodeDrainGracePeriod = NewValue().Copy(object.nodeDrainGracePeriod)
-	} else {
-		b.nodeDrainGracePeriod = nil
-	}
 	b.schedule = object.schedule
 	b.scheduleType = object.scheduleType
 	b.upgradeType = object.upgradeType
@@ -165,12 +134,6 @@ func (b *UpgradePolicyBuilder) Build() (object *UpgradePolicy, err error) {
 	object.link = b.link
 	object.clusterID = b.clusterID
 	object.nextRun = b.nextRun
-	if b.nodeDrainGracePeriod != nil {
-		object.nodeDrainGracePeriod, err = b.nodeDrainGracePeriod.Build()
-		if err != nil {
-			return
-		}
-	}
 	object.schedule = b.schedule
 	object.scheduleType = b.scheduleType
 	object.upgradeType = b.upgradeType

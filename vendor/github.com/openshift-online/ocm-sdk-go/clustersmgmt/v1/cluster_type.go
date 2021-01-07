@@ -81,7 +81,6 @@ type Cluster struct {
 	api                               *ClusterAPI
 	aws                               *AWS
 	awsInfrastructureAccessRoleGrants *AWSInfrastructureAccessRoleGrantList
-	byoc                              *bool
 	ccs                               *CCS
 	dns                               *DNS
 	gcp                               *GCP
@@ -91,6 +90,7 @@ type Cluster struct {
 	console                           *ClusterConsole
 	creationTimestamp                 *time.Time
 	displayName                       *string
+	etcdEncryption                    *bool
 	expirationTimestamp               *time.Time
 	externalID                        *string
 	externalConfiguration             *ExternalConfiguration
@@ -106,6 +106,7 @@ type Cluster struct {
 	multiAZ                           *bool
 	name                              *string
 	network                           *Network
+	nodeDrainGracePeriod              *Value
 	nodes                             *ClusterNodes
 	openshiftVersion                  *string
 	product                           *Product
@@ -116,6 +117,7 @@ type Cluster struct {
 	status                            *ClusterStatus
 	storageQuota                      *Value
 	subscription                      *Subscription
+	upgradeChannelGroup               *string
 	version                           *Version
 }
 
@@ -175,11 +177,11 @@ func (o *Cluster) GetHREF() (value string, ok bool) {
 func (o *Cluster) Empty() bool {
 	return o == nil || (o.id == nil &&
 		o.awsInfrastructureAccessRoleGrants.Len() == 0 &&
-		o.byoc == nil &&
 		o.addons.Len() == 0 &&
 		o.clusterAdminEnabled == nil &&
 		o.creationTimestamp == nil &&
 		o.displayName == nil &&
+		o.etcdEncryption == nil &&
 		o.expirationTimestamp == nil &&
 		o.externalID == nil &&
 		o.groups.Len() == 0 &&
@@ -194,6 +196,7 @@ func (o *Cluster) Empty() bool {
 		o.openshiftVersion == nil &&
 		len(o.properties) == 0 &&
 		o.state == nil &&
+		o.upgradeChannelGroup == nil &&
 		true)
 }
 
@@ -262,29 +265,6 @@ func (o *Cluster) GetAWSInfrastructureAccessRoleGrants() (value *AWSInfrastructu
 	ok = o != nil && o.awsInfrastructureAccessRoleGrants != nil
 	if ok {
 		value = o.awsInfrastructureAccessRoleGrants
-	}
-	return
-}
-
-// BYOC returns the value of the 'BYOC' attribute, or
-// the zero value of the type if the attribute doesn't have a value.
-//
-// Flag indicating if the cluster is BYOC (customer cloud subscription).
-func (o *Cluster) BYOC() bool {
-	if o != nil && o.byoc != nil {
-		return *o.byoc
-	}
-	return false
-}
-
-// GetBYOC returns the value of the 'BYOC' attribute and
-// a flag indicating if the attribute has a value.
-//
-// Flag indicating if the cluster is BYOC (customer cloud subscription).
-func (o *Cluster) GetBYOC() (value bool, ok bool) {
-	ok = o != nil && o.byoc != nil
-	if ok {
-		value = *o.byoc
 	}
 	return
 }
@@ -496,6 +476,31 @@ func (o *Cluster) GetDisplayName() (value string, ok bool) {
 	ok = o != nil && o.displayName != nil
 	if ok {
 		value = *o.displayName
+	}
+	return
+}
+
+// EtcdEncryption returns the value of the 'etcd_encryption' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+// Indicates whether that etcd is encrypted or not.
+// This is set only during cluster creation.
+func (o *Cluster) EtcdEncryption() bool {
+	if o != nil && o.etcdEncryption != nil {
+		return *o.etcdEncryption
+	}
+	return false
+}
+
+// GetEtcdEncryption returns the value of the 'etcd_encryption' attribute and
+// a flag indicating if the attribute has a value.
+//
+// Indicates whether that etcd is encrypted or not.
+// This is set only during cluster creation.
+func (o *Cluster) GetEtcdEncryption() (value bool, ok bool) {
+	ok = o != nil && o.etcdEncryption != nil
+	if ok {
+		value = *o.etcdEncryption
 	}
 	return
 }
@@ -865,6 +870,29 @@ func (o *Cluster) GetNetwork() (value *Network, ok bool) {
 	return
 }
 
+// NodeDrainGracePeriod returns the value of the 'node_drain_grace_period' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+// Node drain grace period.
+func (o *Cluster) NodeDrainGracePeriod() *Value {
+	if o == nil {
+		return nil
+	}
+	return o.nodeDrainGracePeriod
+}
+
+// GetNodeDrainGracePeriod returns the value of the 'node_drain_grace_period' attribute and
+// a flag indicating if the attribute has a value.
+//
+// Node drain grace period.
+func (o *Cluster) GetNodeDrainGracePeriod() (value *Value, ok bool) {
+	ok = o != nil && o.nodeDrainGracePeriod != nil
+	if ok {
+		value = o.nodeDrainGracePeriod
+	}
+	return
+}
+
 // Nodes returns the value of the 'nodes' attribute, or
 // the zero value of the type if the attribute doesn't have a value.
 //
@@ -1103,6 +1131,29 @@ func (o *Cluster) GetSubscription() (value *Subscription, ok bool) {
 	ok = o != nil && o.subscription != nil
 	if ok {
 		value = o.subscription
+	}
+	return
+}
+
+// UpgradeChannelGroup returns the value of the 'upgrade_channel_group' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+// Channel group to be used for upgrading the cluster. Valid values: stable (default), fast, candidate, nightly.
+func (o *Cluster) UpgradeChannelGroup() string {
+	if o != nil && o.upgradeChannelGroup != nil {
+		return *o.upgradeChannelGroup
+	}
+	return ""
+}
+
+// GetUpgradeChannelGroup returns the value of the 'upgrade_channel_group' attribute and
+// a flag indicating if the attribute has a value.
+//
+// Channel group to be used for upgrading the cluster. Valid values: stable (default), fast, candidate, nightly.
+func (o *Cluster) GetUpgradeChannelGroup() (value string, ok bool) {
+	ok = o != nil && o.upgradeChannelGroup != nil
+	if ok {
+		value = *o.upgradeChannelGroup
 	}
 	return
 }

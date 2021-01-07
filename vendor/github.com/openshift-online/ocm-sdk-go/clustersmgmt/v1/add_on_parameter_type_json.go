@@ -73,6 +73,14 @@ func writeAddOnParameter(object *AddOnParameter, stream *jsoniter.Stream) {
 		writeAddOn(object.addon, stream)
 		count++
 	}
+	if object.defaultValue != nil {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("default_value")
+		stream.WriteString(*object.defaultValue)
+		count++
+	}
 	if object.description != nil {
 		if count > 0 {
 			stream.WriteMore()
@@ -87,6 +95,14 @@ func writeAddOnParameter(object *AddOnParameter, stream *jsoniter.Stream) {
 		}
 		stream.WriteObjectField("editable")
 		stream.WriteBool(*object.editable)
+		count++
+	}
+	if object.enabled != nil {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("enabled")
+		stream.WriteBool(*object.enabled)
 		count++
 	}
 	if object.name != nil {
@@ -160,12 +176,18 @@ func readAddOnParameter(iterator *jsoniter.Iterator) *AddOnParameter {
 		case "addon":
 			value := readAddOn(iterator)
 			object.addon = value
+		case "default_value":
+			value := iterator.ReadString()
+			object.defaultValue = &value
 		case "description":
 			value := iterator.ReadString()
 			object.description = &value
 		case "editable":
 			value := iterator.ReadBool()
 			object.editable = &value
+		case "enabled":
+			value := iterator.ReadBool()
+			object.enabled = &value
 		case "name":
 			value := iterator.ReadString()
 			object.name = &value

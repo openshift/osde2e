@@ -24,13 +24,14 @@ package v1 // github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1
 // This struct is a request to send a templated email to a user related to this
 // subscription.
 type SubscriptionNotifyBuilder struct {
-	bccAddress         *string
-	clusterID          *string
-	clusterUUID        *string
-	subject            *string
-	subscriptionID     *string
-	templateName       *string
-	templateParameters []*TemplateParameterBuilder
+	bccAddress              *string
+	clusterID               *string
+	clusterUUID             *string
+	includeRedHatAssociates *bool
+	subject                 *string
+	subscriptionID          *string
+	templateName            *string
+	templateParameters      []*TemplateParameterBuilder
 }
 
 // NewSubscriptionNotify creates a new builder of 'subscription_notify' objects.
@@ -59,6 +60,14 @@ func (b *SubscriptionNotifyBuilder) ClusterID(value string) *SubscriptionNotifyB
 //
 func (b *SubscriptionNotifyBuilder) ClusterUUID(value string) *SubscriptionNotifyBuilder {
 	b.clusterUUID = &value
+	return b
+}
+
+// IncludeRedHatAssociates sets the value of the 'include_red_hat_associates' attribute to the given value.
+//
+//
+func (b *SubscriptionNotifyBuilder) IncludeRedHatAssociates(value bool) *SubscriptionNotifyBuilder {
+	b.includeRedHatAssociates = &value
 	return b
 }
 
@@ -103,6 +112,7 @@ func (b *SubscriptionNotifyBuilder) Copy(object *SubscriptionNotify) *Subscripti
 	b.bccAddress = object.bccAddress
 	b.clusterID = object.clusterID
 	b.clusterUUID = object.clusterUUID
+	b.includeRedHatAssociates = object.includeRedHatAssociates
 	b.subject = object.subject
 	b.subscriptionID = object.subscriptionID
 	b.templateName = object.templateName
@@ -123,6 +133,7 @@ func (b *SubscriptionNotifyBuilder) Build() (object *SubscriptionNotify, err err
 	object.bccAddress = b.bccAddress
 	object.clusterID = b.clusterID
 	object.clusterUUID = b.clusterUUID
+	object.includeRedHatAssociates = b.includeRedHatAssociates
 	object.subject = b.subject
 	object.subscriptionID = b.subscriptionID
 	object.templateName = b.templateName

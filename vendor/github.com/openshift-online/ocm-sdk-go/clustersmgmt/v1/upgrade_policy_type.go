@@ -39,16 +39,15 @@ const UpgradePolicyNilKind = "UpgradePolicyNil"
 //
 // Representation of an upgrade policy that can be set for a cluster.
 type UpgradePolicy struct {
-	id                   *string
-	href                 *string
-	link                 bool
-	clusterID            *string
-	nextRun              *time.Time
-	nodeDrainGracePeriod *Value
-	schedule             *string
-	scheduleType         *string
-	upgradeType          *string
-	version              *string
+	id           *string
+	href         *string
+	link         bool
+	clusterID    *string
+	nextRun      *time.Time
+	schedule     *string
+	scheduleType *string
+	upgradeType  *string
+	version      *string
 }
 
 // Kind returns the name of the type of the object.
@@ -157,29 +156,6 @@ func (o *UpgradePolicy) GetNextRun() (value time.Time, ok bool) {
 	ok = o != nil && o.nextRun != nil
 	if ok {
 		value = *o.nextRun
-	}
-	return
-}
-
-// NodeDrainGracePeriod returns the value of the 'node_drain_grace_period' attribute, or
-// the zero value of the type if the attribute doesn't have a value.
-//
-// Node drain grace period.
-func (o *UpgradePolicy) NodeDrainGracePeriod() *Value {
-	if o == nil {
-		return nil
-	}
-	return o.nodeDrainGracePeriod
-}
-
-// GetNodeDrainGracePeriod returns the value of the 'node_drain_grace_period' attribute and
-// a flag indicating if the attribute has a value.
-//
-// Node drain grace period.
-func (o *UpgradePolicy) GetNodeDrainGracePeriod() (value *Value, ok bool) {
-	ok = o != nil && o.nodeDrainGracePeriod != nil
-	if ok {
-		value = o.nodeDrainGracePeriod
 	}
 	return
 }

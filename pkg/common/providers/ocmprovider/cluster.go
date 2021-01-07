@@ -192,7 +192,7 @@ func (o *OCMProvider) LaunchCluster(clusterName string) (string, error) {
 }
 
 // DetermineRegion will return the region provided by configs. This mainly wraps the random functionality for use
-// by the MOA provider.
+// by the ROSA provider.
 func (o *OCMProvider) DetermineRegion(cloudProvider string) (string, error) {
 	region := viper.GetString(config.CloudProvider.Region)
 

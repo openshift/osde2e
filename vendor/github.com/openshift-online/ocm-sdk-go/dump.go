@@ -31,12 +31,14 @@ import (
 	"strings"
 
 	"gitlab.com/c0b/go-ordered-json"
+
+	"github.com/openshift-online/ocm-sdk-go/logging"
 )
 
 // dumpRoundTripper is a round tripper that dumps the details of the requests and the responses to
 // the log.
 type dumpRoundTripper struct {
-	logger Logger
+	logger logging.Logger
 	next   http.RoundTripper
 }
 
@@ -84,8 +86,13 @@ func (d *dumpRoundTripper) RoundTrip(request *http.Request) (response *http.Resp
 		if err != nil {
 			return
 		}
-		d.dumpResponse(ctx, response, body)
-		response.Body = ioutil.NopCloser(bytes.NewBuffer(body))
+		if len(body) == 0 {
+			d.dumpResponse(ctx, response, nil)
+			response.Body = http.NoBody // checked by Unmarshal* functions.
+		} else {
+			d.dumpResponse(ctx, response, body)
+			response.Body = ioutil.NopCloser(bytes.NewBuffer(body))
+		}
 	} else {
 		d.dumpResponse(ctx, response, nil)
 	}

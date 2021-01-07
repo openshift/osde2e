@@ -23,6 +23,7 @@ package v1 // github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1
 //
 // Counts of different classes of nodes inside a cluster.
 type ClusterNodes struct {
+	autoscaleCompute   *MachinePoolAutoscaling
 	availabilityZones  []string
 	compute            *int
 	computeLabels      map[string]string
@@ -41,6 +42,31 @@ func (o *ClusterNodes) Empty() bool {
 		o.master == nil &&
 		o.total == nil &&
 		true)
+}
+
+// AutoscaleCompute returns the value of the 'autoscale_compute' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+// Details for auto-scaling the compute machine pool.
+// Compute and AutoscaleCompute cannot be used together.
+func (o *ClusterNodes) AutoscaleCompute() *MachinePoolAutoscaling {
+	if o == nil {
+		return nil
+	}
+	return o.autoscaleCompute
+}
+
+// GetAutoscaleCompute returns the value of the 'autoscale_compute' attribute and
+// a flag indicating if the attribute has a value.
+//
+// Details for auto-scaling the compute machine pool.
+// Compute and AutoscaleCompute cannot be used together.
+func (o *ClusterNodes) GetAutoscaleCompute() (value *MachinePoolAutoscaling, ok bool) {
+	ok = o != nil && o.autoscaleCompute != nil
+	if ok {
+		value = o.autoscaleCompute
+	}
+	return
 }
 
 // AvailabilityZones returns the value of the 'availability_zones' attribute, or
@@ -70,6 +96,7 @@ func (o *ClusterNodes) GetAvailabilityZones() (value []string, ok bool) {
 // the zero value of the type if the attribute doesn't have a value.
 //
 // Number of compute nodes of the cluster.
+// Compute and AutoscaleCompute cannot be used together.
 func (o *ClusterNodes) Compute() int {
 	if o != nil && o.compute != nil {
 		return *o.compute
@@ -81,6 +108,7 @@ func (o *ClusterNodes) Compute() int {
 // a flag indicating if the attribute has a value.
 //
 // Number of compute nodes of the cluster.
+// Compute and AutoscaleCompute cannot be used together.
 func (o *ClusterNodes) GetCompute() (value int, ok bool) {
 	ok = o != nil && o.compute != nil
 	if ok {

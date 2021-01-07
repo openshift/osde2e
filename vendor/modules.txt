@@ -51,6 +51,7 @@ github.com/aws/aws-sdk-go/internal/strings
 github.com/aws/aws-sdk-go/internal/sync/singleflight
 github.com/aws/aws-sdk-go/private/checksum
 github.com/aws/aws-sdk-go/private/protocol
+github.com/aws/aws-sdk-go/private/protocol/ec2query
 github.com/aws/aws-sdk-go/private/protocol/eventstream
 github.com/aws/aws-sdk-go/private/protocol/eventstream/eventstreamapi
 github.com/aws/aws-sdk-go/private/protocol/json/jsonutil
@@ -62,6 +63,8 @@ github.com/aws/aws-sdk-go/private/protocol/restxml
 github.com/aws/aws-sdk-go/private/protocol/xml/xmlutil
 github.com/aws/aws-sdk-go/service/cloudformation
 github.com/aws/aws-sdk-go/service/cloudformation/cloudformationiface
+github.com/aws/aws-sdk-go/service/ec2
+github.com/aws/aws-sdk-go/service/ec2/ec2iface
 github.com/aws/aws-sdk-go/service/iam
 github.com/aws/aws-sdk-go/service/iam/iamiface
 github.com/aws/aws-sdk-go/service/organizations
@@ -308,7 +311,7 @@ github.com/onsi/gomega/matchers/support/goraph/edge
 github.com/onsi/gomega/matchers/support/goraph/node
 github.com/onsi/gomega/matchers/support/goraph/util
 github.com/onsi/gomega/types
-# github.com/openshift-online/ocm-sdk-go v0.1.140
+# github.com/openshift-online/ocm-sdk-go v0.1.152
 github.com/openshift-online/ocm-sdk-go
 github.com/openshift-online/ocm-sdk-go/accountsmgmt
 github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1
@@ -316,9 +319,11 @@ github.com/openshift-online/ocm-sdk-go/authorizations
 github.com/openshift-online/ocm-sdk-go/authorizations/v1
 github.com/openshift-online/ocm-sdk-go/clustersmgmt
 github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1
+github.com/openshift-online/ocm-sdk-go/configuration
 github.com/openshift-online/ocm-sdk-go/errors
 github.com/openshift-online/ocm-sdk-go/helpers
 github.com/openshift-online/ocm-sdk-go/internal
+github.com/openshift-online/ocm-sdk-go/logging
 github.com/openshift-online/ocm-sdk-go/servicelogs
 github.com/openshift-online/ocm-sdk-go/servicelogs/v1
 # github.com/openshift/api v3.9.1-0.20190924102528-32369d4db2ad+incompatible => github.com/openshift/api v0.0.0-20200526144822-34f54f12813a
@@ -362,17 +367,18 @@ github.com/openshift/machine-api-operator/pkg/generated/clientset/versioned/sche
 github.com/openshift/machine-api-operator/pkg/generated/clientset/versioned/typed/machine/v1beta1
 # github.com/openshift/managed-upgrade-operator v0.0.0-20200820052802-5d57e1785b53
 github.com/openshift/managed-upgrade-operator/pkg/apis/upgrade/v1alpha1
-# github.com/openshift/moactl v0.0.11
-github.com/openshift/moactl/assets
-github.com/openshift/moactl/pkg/aws
-github.com/openshift/moactl/pkg/aws/tags
-github.com/openshift/moactl/pkg/cluster
-github.com/openshift/moactl/pkg/debug
-github.com/openshift/moactl/pkg/info
-github.com/openshift/moactl/pkg/logging
-github.com/openshift/moactl/pkg/ocm/properties
-github.com/openshift/moactl/pkg/ocm/versions
-github.com/openshift/moactl/pkg/reporter
+# github.com/openshift/rosa v0.1.4
+github.com/openshift/rosa/assets
+github.com/openshift/rosa/pkg/aws
+github.com/openshift/rosa/pkg/aws/profile
+github.com/openshift/rosa/pkg/aws/tags
+github.com/openshift/rosa/pkg/cluster
+github.com/openshift/rosa/pkg/debug
+github.com/openshift/rosa/pkg/info
+github.com/openshift/rosa/pkg/logging
+github.com/openshift/rosa/pkg/ocm/properties
+github.com/openshift/rosa/pkg/ocm/versions
+github.com/openshift/rosa/pkg/reporter
 # github.com/openshift/splunk-forwarder-operator v0.0.0-20201112162206-2f454770b6c0
 github.com/openshift/splunk-forwarder-operator/pkg/apis/splunkforwarder/v1alpha1
 # github.com/operator-framework/api v0.3.6
@@ -567,7 +573,7 @@ gopkg.in/ini.v1
 gopkg.in/tomb.v1
 # gopkg.in/yaml.v2 v2.3.0
 gopkg.in/yaml.v2
-# gopkg.in/yaml.v3 v3.0.0-20200121175148-a6ecf24a6d71
+# gopkg.in/yaml.v3 v3.0.0-20200615113413-eeeca48fe776
 gopkg.in/yaml.v3
 # howett.net/plist v0.0.0-20181124034731-591f970eefbb
 howett.net/plist

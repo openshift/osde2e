@@ -40,6 +40,14 @@ func MarshalClusterNodes(object *ClusterNodes, writer io.Writer) error {
 func writeClusterNodes(object *ClusterNodes, stream *jsoniter.Stream) {
 	count := 0
 	stream.WriteObjectStart()
+	if object.autoscaleCompute != nil {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("autoscale_compute")
+		writeMachinePoolAutoscaling(object.autoscaleCompute, stream)
+		count++
+	}
 	if object.availabilityZones != nil {
 		if count > 0 {
 			stream.WriteMore()
@@ -139,6 +147,9 @@ func readClusterNodes(iterator *jsoniter.Iterator) *ClusterNodes {
 			break
 		}
 		switch field {
+		case "autoscale_compute":
+			value := readMachinePoolAutoscaling(iterator)
+			object.autoscaleCompute = value
 		case "availability_zones":
 			value := readStringList(iterator)
 			object.availabilityZones = value

@@ -247,7 +247,7 @@ func PollClusterHealth(clusterID string, logger *log.Logger) (status bool, failu
 
 	var healthErr *multierror.Error
 	switch provider.Type() {
-	case "moa":
+	case "rosa":
 		fallthrough
 	case "ocm":
 		if check, err := healthchecks.CheckCVOReadiness(oscfg.ConfigV1(), logger); !check || err != nil {

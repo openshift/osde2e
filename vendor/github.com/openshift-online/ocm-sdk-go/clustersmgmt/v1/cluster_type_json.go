@@ -94,14 +94,6 @@ func writeCluster(object *Cluster, stream *jsoniter.Stream) {
 		stream.WriteObjectEnd()
 		count++
 	}
-	if object.byoc != nil {
-		if count > 0 {
-			stream.WriteMore()
-		}
-		stream.WriteObjectField("byoc")
-		stream.WriteBool(*object.byoc)
-		count++
-	}
 	if object.ccs != nil {
 		if count > 0 {
 			stream.WriteMore()
@@ -175,6 +167,14 @@ func writeCluster(object *Cluster, stream *jsoniter.Stream) {
 		}
 		stream.WriteObjectField("display_name")
 		stream.WriteString(*object.displayName)
+		count++
+	}
+	if object.etcdEncryption != nil {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("etcd_encryption")
+		stream.WriteBool(*object.etcdEncryption)
 		count++
 	}
 	if object.expirationTimestamp != nil {
@@ -309,6 +309,14 @@ func writeCluster(object *Cluster, stream *jsoniter.Stream) {
 		writeNetwork(object.network, stream)
 		count++
 	}
+	if object.nodeDrainGracePeriod != nil {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("node_drain_grace_period")
+		writeValue(object.nodeDrainGracePeriod, stream)
+		count++
+	}
 	if object.nodes != nil {
 		if count > 0 {
 			stream.WriteMore()
@@ -405,6 +413,14 @@ func writeCluster(object *Cluster, stream *jsoniter.Stream) {
 		writeSubscription(object.subscription, stream)
 		count++
 	}
+	if object.upgradeChannelGroup != nil {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("upgrade_channel_group")
+		stream.WriteString(*object.upgradeChannelGroup)
+		count++
+	}
 	if object.version != nil {
 		if count > 0 {
 			stream.WriteMore()
@@ -476,9 +492,6 @@ func readCluster(iterator *jsoniter.Iterator) *Cluster {
 				}
 			}
 			object.awsInfrastructureAccessRoleGrants = value
-		case "byoc":
-			value := iterator.ReadBool()
-			object.byoc = &value
 		case "ccs":
 			value := readCCS(iterator)
 			object.ccs = value
@@ -528,6 +541,9 @@ func readCluster(iterator *jsoniter.Iterator) *Cluster {
 		case "display_name":
 			value := iterator.ReadString()
 			object.displayName = &value
+		case "etcd_encryption":
+			value := iterator.ReadBool()
+			object.etcdEncryption = &value
 		case "expiration_timestamp":
 			text := iterator.ReadString()
 			value, err := time.Parse(time.RFC3339, text)
@@ -650,6 +666,9 @@ func readCluster(iterator *jsoniter.Iterator) *Cluster {
 		case "network":
 			value := readNetwork(iterator)
 			object.network = value
+		case "node_drain_grace_period":
+			value := readValue(iterator)
+			object.nodeDrainGracePeriod = value
 		case "nodes":
 			value := readClusterNodes(iterator)
 			object.nodes = value
@@ -689,6 +708,9 @@ func readCluster(iterator *jsoniter.Iterator) *Cluster {
 		case "subscription":
 			value := readSubscription(iterator)
 			object.subscription = value
+		case "upgrade_channel_group":
+			value := iterator.ReadString()
+			object.upgradeChannelGroup = &value
 		case "version":
 			value := readVersion(iterator)
 			object.version = value

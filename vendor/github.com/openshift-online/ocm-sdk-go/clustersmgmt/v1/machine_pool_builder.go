@@ -26,11 +26,13 @@ type MachinePoolBuilder struct {
 	id                *string
 	href              *string
 	link              bool
+	autoscaling       *MachinePoolAutoscalingBuilder
 	availabilityZones []string
 	cluster           *ClusterBuilder
 	instanceType      *string
 	labels            map[string]string
 	replicas          *int
+	taints            []*TaintBuilder
 }
 
 // NewMachinePool creates a new builder of 'machine_pool' objects.
@@ -53,6 +55,14 @@ func (b *MachinePoolBuilder) HREF(value string) *MachinePoolBuilder {
 // Link sets the flag that indicates if this is a link.
 func (b *MachinePoolBuilder) Link(value bool) *MachinePoolBuilder {
 	b.link = value
+	return b
+}
+
+// Autoscaling sets the value of the 'autoscaling' attribute to the given value.
+//
+// Representation of a autoscaling in a machine pool.
+func (b *MachinePoolBuilder) Autoscaling(value *MachinePoolAutoscalingBuilder) *MachinePoolBuilder {
+	b.autoscaling = value
 	return b
 }
 
@@ -133,6 +143,15 @@ func (b *MachinePoolBuilder) Replicas(value int) *MachinePoolBuilder {
 	return b
 }
 
+// Taints sets the value of the 'taints' attribute to the given values.
+//
+//
+func (b *MachinePoolBuilder) Taints(values ...*TaintBuilder) *MachinePoolBuilder {
+	b.taints = make([]*TaintBuilder, len(values))
+	copy(b.taints, values)
+	return b
+}
+
 // Copy copies the attributes of the given object into this builder, discarding any previous values.
 func (b *MachinePoolBuilder) Copy(object *MachinePool) *MachinePoolBuilder {
 	if object == nil {
@@ -141,6 +160,11 @@ func (b *MachinePoolBuilder) Copy(object *MachinePool) *MachinePoolBuilder {
 	b.id = object.id
 	b.href = object.href
 	b.link = object.link
+	if object.autoscaling != nil {
+		b.autoscaling = NewMachinePoolAutoscaling().Copy(object.autoscaling)
+	} else {
+		b.autoscaling = nil
+	}
 	if object.availabilityZones != nil {
 		b.availabilityZones = make([]string, len(object.availabilityZones))
 		copy(b.availabilityZones, object.availabilityZones)
@@ -162,6 +186,14 @@ func (b *MachinePoolBuilder) Copy(object *MachinePool) *MachinePoolBuilder {
 		b.labels = nil
 	}
 	b.replicas = object.replicas
+	if object.taints != nil {
+		b.taints = make([]*TaintBuilder, len(object.taints))
+		for i, v := range object.taints {
+			b.taints[i] = NewTaint().Copy(v)
+		}
+	} else {
+		b.taints = nil
+	}
 	return b
 }
 
@@ -171,6 +203,12 @@ func (b *MachinePoolBuilder) Build() (object *MachinePool, err error) {
 	object.id = b.id
 	object.href = b.href
 	object.link = b.link
+	if b.autoscaling != nil {
+		object.autoscaling, err = b.autoscaling.Build()
+		if err != nil {
+			return
+		}
+	}
 	if b.availabilityZones != nil {
 		object.availabilityZones = make([]string, len(b.availabilityZones))
 		copy(object.availabilityZones, b.availabilityZones)
@@ -189,5 +227,14 @@ func (b *MachinePoolBuilder) Build() (object *MachinePool, err error) {
 		}
 	}
 	object.replicas = b.replicas
+	if b.taints != nil {
+		object.taints = make([]*Taint, len(b.taints))
+		for i, v := range b.taints {
+			object.taints[i], err = v.Build()
+			if err != nil {
+				return
+			}
+		}
+	}
 	return
 }

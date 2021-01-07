@@ -24,7 +24,7 @@ Results would be published in the following manner:
       "endpoint": "scrape",
       "environment": "prod",
       "install_version": "openshift-v4.5.16",
-      "job": "osde2e-prod-moa-e2e-default",
+      "job": "osde2e-prod-rosa-e2e-default",
       "job_id": "1330662521106862080",
       "namespace": "app-sre-observability-production",
       "phase": "install",

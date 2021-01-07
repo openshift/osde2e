@@ -26,6 +26,7 @@ type AWSBuilder struct {
 	accessKeyID     *string
 	accountID       *string
 	secretAccessKey *string
+	subnetIDs       []string
 }
 
 // NewAWS creates a new builder of 'AWS' objects.
@@ -57,6 +58,15 @@ func (b *AWSBuilder) SecretAccessKey(value string) *AWSBuilder {
 	return b
 }
 
+// SubnetIDs sets the value of the 'subnet_IDs' attribute to the given values.
+//
+//
+func (b *AWSBuilder) SubnetIDs(values ...string) *AWSBuilder {
+	b.subnetIDs = make([]string, len(values))
+	copy(b.subnetIDs, values)
+	return b
+}
+
 // Copy copies the attributes of the given object into this builder, discarding any previous values.
 func (b *AWSBuilder) Copy(object *AWS) *AWSBuilder {
 	if object == nil {
@@ -65,6 +75,12 @@ func (b *AWSBuilder) Copy(object *AWS) *AWSBuilder {
 	b.accessKeyID = object.accessKeyID
 	b.accountID = object.accountID
 	b.secretAccessKey = object.secretAccessKey
+	if object.subnetIDs != nil {
+		b.subnetIDs = make([]string, len(object.subnetIDs))
+		copy(b.subnetIDs, object.subnetIDs)
+	} else {
+		b.subnetIDs = nil
+	}
 	return b
 }
 
@@ -74,5 +90,9 @@ func (b *AWSBuilder) Build() (object *AWS, err error) {
 	object.accessKeyID = b.accessKeyID
 	object.accountID = b.accountID
 	object.secretAccessKey = b.secretAccessKey
+	if b.subnetIDs != nil {
+		object.subnetIDs = make([]string, len(b.subnetIDs))
+		copy(object.subnetIDs, b.subnetIDs)
+	}
 	return
 }

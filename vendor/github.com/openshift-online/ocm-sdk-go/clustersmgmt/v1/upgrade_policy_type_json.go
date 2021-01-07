@@ -82,14 +82,6 @@ func writeUpgradePolicy(object *UpgradePolicy, stream *jsoniter.Stream) {
 		stream.WriteString((*object.nextRun).Format(time.RFC3339))
 		count++
 	}
-	if object.nodeDrainGracePeriod != nil {
-		if count > 0 {
-			stream.WriteMore()
-		}
-		stream.WriteObjectField("node_drain_grace_period")
-		writeValue(object.nodeDrainGracePeriod, stream)
-		count++
-	}
 	if object.schedule != nil {
 		if count > 0 {
 			stream.WriteMore()
@@ -168,9 +160,6 @@ func readUpgradePolicy(iterator *jsoniter.Iterator) *UpgradePolicy {
 				iterator.ReportError("", err.Error())
 			}
 			object.nextRun = &value
-		case "node_drain_grace_period":
-			value := readValue(iterator)
-			object.nodeDrainGracePeriod = value
 		case "schedule":
 			value := iterator.ReadString()
 			object.schedule = &value

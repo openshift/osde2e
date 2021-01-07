@@ -27,7 +27,7 @@ func main(){
     }
 
     // Specify a job name to look up
-    job := "osde2e-prod-moa-e2e-default"
+    job := "osde2e-prod-rosa-e2e-default"
 
     end := time.Now()
     // Look back 24 hours

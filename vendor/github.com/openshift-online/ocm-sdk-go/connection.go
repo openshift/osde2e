@@ -23,9 +23,12 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"net/http/cookiejar"
 	"net/url"
+	"regexp"
+	"sort"
 	"strings"
 	"sync"
 
@@ -35,6 +38,8 @@ import (
 	"github.com/openshift-online/ocm-sdk-go/accountsmgmt"
 	"github.com/openshift-online/ocm-sdk-go/authorizations"
 	"github.com/openshift-online/ocm-sdk-go/clustersmgmt"
+	"github.com/openshift-online/ocm-sdk-go/configuration"
+	"github.com/openshift-online/ocm-sdk-go/logging"
 	"github.com/openshift-online/ocm-sdk-go/servicelogs"
 )
 
@@ -58,22 +63,29 @@ var DefaultScopes = []string{
 // function instead.
 type ConnectionBuilder struct {
 	// Basic attributes:
-	logger           Logger
-	trustedCAs       *x509.CertPool
-	insecure         bool
-	tokenURL         string
-	clientID         string
-	clientSecret     string
-	apiURL           string
-	agent            string
-	user             string
-	password         string
-	tokens           []string
-	scopes           []string
-	transportWrapper TransportWrapper
+	logger            logging.Logger
+	trustedCASources  []interface{}
+	trustedCAPool     *x509.CertPool
+	insecure          bool
+	disableKeepAlives bool
+	tokenURL          string
+	clientID          string
+	clientSecret      string
+	urlTable          map[string]string
+	agent             string
+	user              string
+	password          string
+	tokens            []string
+	scopes            []string
+	transportWrapper  TransportWrapper
 
 	// Metrics:
-	subsystem string
+	metricsSubsystem string
+
+	// Error detected while populating the builder. Once set calls to methods to
+	// set other builder parameters will be ignored and the Build method will
+	// exit inmediately returning this error.
+	err error
 }
 
 // TransportWrapper is a wrapper for a transport of type http.RoundTripper.
@@ -85,35 +97,67 @@ type TransportWrapper func(http.RoundTripper) http.RoundTripper
 // of this type directly, use the builder instead.
 type Connection struct {
 	// Basic attributes:
-	closed       bool
-	logger       Logger
-	trustedCAs   *x509.CertPool
-	insecure     bool
-	client       *http.Client
-	tokenURL     *url.URL
-	clientID     string
-	clientSecret string
-	apiURL       *url.URL
-	agent        string
-	user         string
-	password     string
-	tokenMutex   *sync.Mutex
-	tokenParser  *jwt.Parser
-	accessToken  *jwt.Token
-	refreshToken *jwt.Token
-	scopes       []string
+	closed            bool
+	logger            logging.Logger
+	trustedCAs        *x509.CertPool
+	insecure          bool
+	disableKeepAlives bool
+	client            *http.Client
+	tokenURL          *url.URL
+	clientID          string
+	clientSecret      string
+	urlTable          []urlTableEntry
+	agent             string
+	user              string
+	password          string
+	tokenMutex        *sync.Mutex
+	tokenParser       *jwt.Parser
+	accessToken       *jwt.Token
+	refreshToken      *jwt.Token
+	scopes            []string
 
 	// Metrics:
+	metricsSubsystem    string
 	tokenCountMetric    *prometheus.CounterVec
 	tokenDurationMetric *prometheus.HistogramVec
 	callCountMetric     *prometheus.CounterVec
 	callDurationMetric  *prometheus.HistogramVec
 }
 
+// urlTableEntry is used to store one entry of the table that contains the correspondence between
+// path prefixes and base URLs. For example, for following table:
+//
+//	/clusters_mgmt -> https://my.server.com
+//	/accounts_mgmt -> https://your.server.com
+//
+// Will be reprsented by the following Go value:
+//
+//	[]urlTableEntry{
+//		{
+//			prefix: "/api/clusters_mgmt",
+//			re:     regexp.Compile("^/api/clusters_mgmt(/.*)?$"),
+//			url:    url.Parse("https://my.server.com"),
+//		},
+//		{
+//			prefix: "/api/accounts_mgmt",
+//			re:     regexp.Compile("^/api/accounts_mgmt(/.*)?$"),
+//			url:    url.Parse("https://your.server.com"),
+//		},
+//	}
+type urlTableEntry struct {
+	prefix string
+	re     *regexp.Regexp
+	url    *url.URL
+}
+
 // NewConnectionBuilder creates an builder that knows how to create connections with the default
 // configuration.
 func NewConnectionBuilder() *ConnectionBuilder {
-	return new(ConnectionBuilder)
+	return &ConnectionBuilder{
+		urlTable: map[string]string{
+			"": DefaultURL,
+		},
+	}
 }
 
 // Logger sets the logger that will be used by the connection. By default it uses the Go `log`
@@ -121,7 +165,7 @@ func NewConnectionBuilder() *ConnectionBuilder {
 // can create a logger and pass it to this method. For example:
 //
 //	// Create a logger with the debug level enabled:
-//	logger, err := client.NewGoLoggerBuilder().
+//	logger, err := logging.NewGoLoggerBuilder().
 //		Debug(true).
 //		Build()
 //	if err != nil {
@@ -137,7 +181,10 @@ func NewConnectionBuilder() *ConnectionBuilder {
 //	}
 //
 // You can also build your own logger, implementing the Logger interface.
-func (b *ConnectionBuilder) Logger(logger Logger) *ConnectionBuilder {
+func (b *ConnectionBuilder) Logger(logger logging.Logger) *ConnectionBuilder {
+	if b.err != nil {
+		return b
+	}
 	b.logger = logger
 	return b
 }
@@ -145,6 +192,9 @@ func (b *ConnectionBuilder) Logger(logger Logger) *ConnectionBuilder {
 // TokenURL sets the URL that will be used to request OpenID access tokens. The default is
 // `https://sso.redhat.com/auth/realms/cloud-services/protocol/openid-connect/token`.
 func (b *ConnectionBuilder) TokenURL(url string) *ConnectionBuilder {
+	if b.err != nil {
+		return b
+	}
 	b.tokenURL = url
 	return b
 }
@@ -172,6 +222,9 @@ func (b *ConnectionBuilder) TokenURL(url string) *ConnectionBuilder {
 //
 // Note the empty client secret.
 func (b *ConnectionBuilder) Client(id string, secret string) *ConnectionBuilder {
+	if b.err != nil {
+		return b
+	}
 	b.clientID = id
 	b.clientSecret = secret
 	return b
@@ -179,13 +232,63 @@ func (b *ConnectionBuilder) Client(id string, secret string) *ConnectionBuilder 
 
 // URL sets the base URL of the API gateway. The default is `https://api.openshift.com`.
 func (b *ConnectionBuilder) URL(url string) *ConnectionBuilder {
-	b.apiURL = url
+	if b.err != nil {
+		return b
+	}
+	return b.AlternativeURL("", url)
+}
+
+// AlternativeURL sets an alternative base URL for the given path prefix. For example, to configure
+// the connection so that it sends the requests for the clusters management service to
+// `https://my.server.com`:
+//
+//	connection, err := client.NewConnectionBuilder().
+//		URL("https://api.example.com").
+//		AlternativeURL("/api/clusters_mgmt", "https://my.server.com").
+//		Build()
+//
+// Requests for other paths that don't start with the given prefix will still be sent to the default
+// base URL.
+//
+// This method can be called multiple times to set alternative URLs for multiple prefixes.
+func (b *ConnectionBuilder) AlternativeURL(prefix, base string) *ConnectionBuilder {
+	if b.err != nil {
+		return b
+	}
+	b.urlTable[prefix] = base
+	return b
+}
+
+// AlternativeURLs sets an collection of alternative base URLs. For example, to configure the
+// connection so that it sends the requests for the clusters management service to
+// `https://my.server.com` and the requests for the accounts management service to
+// `https://your.server.com`:
+//
+//	connection, err := client.NewConnectionBuilder().
+//		URL("https://api.example.com").
+//		AlternativeURLs(map[string]string{
+//			"/api/clusters_mgmt": "https://my.server.com",
+//			"/api/accounts_mgmt": "https://your.server.com",
+//		}).
+//		Build()
+//
+// The effect is the same as calling the AlternativeURL multiple times.
+func (b *ConnectionBuilder) AlternativeURLs(entries map[string]string) *ConnectionBuilder {
+	if b.err != nil {
+		return b
+	}
+	for prefix, base := range entries {
+		b.urlTable[prefix] = base
+	}
 	return b
 }
 
 // Agent sets the `User-Agent` header that the client will use in all the HTTP requests. The default
 // is `OCM` followed by an slash and the version of the client, for example `OCM/0.0.0`.
 func (b *ConnectionBuilder) Agent(agent string) *ConnectionBuilder {
+	if b.err != nil {
+		return b
+	}
 	b.agent = agent
 	return b
 }
@@ -211,6 +314,9 @@ func (b *ConnectionBuilder) Agent(agent string) *ConnectionBuilder {
 //
 // Note the empty client secret.
 func (b *ConnectionBuilder) User(name string, password string) *ConnectionBuilder {
+	if b.err != nil {
+		return b
+	}
 	b.user = name
 	b.password = password
 	return b
@@ -229,7 +335,11 @@ func (b *ConnectionBuilder) User(name string, password string) *ConnectionBuilde
 //
 // If you just want to use the default 'openid' then there is no need to use this method.
 func (b *ConnectionBuilder) Scopes(values ...string) *ConnectionBuilder {
-	b.scopes = append(b.scopes, values...)
+	if b.err != nil {
+		return b
+	}
+	b.scopes = make([]string, len(values))
+	copy(b.scopes, values)
 	return b
 }
 
@@ -243,6 +353,9 @@ func (b *ConnectionBuilder) Scopes(values ...string) *ConnectionBuilder {
 // stop working when both tokens expire. That can happen, for example, if the connection isn't used
 // for a period of time longer than the life of the refresh token.
 func (b *ConnectionBuilder) Tokens(tokens ...string) *ConnectionBuilder {
+	if b.err != nil {
+		return b
+	}
 	b.tokens = append(b.tokens, tokens...)
 	return b
 }
@@ -251,28 +364,58 @@ func (b *ConnectionBuilder) Tokens(tokens ...string) *ConnectionBuilder {
 // trusted by the connection. If this isn't explicitly specified then the client will trust the
 // certificate authorities trusted by default by the system.
 func (b *ConnectionBuilder) TrustedCAs(value *x509.CertPool) *ConnectionBuilder {
-	b.trustedCAs = value
+	if b.err != nil {
+		return b
+	}
+	b.trustedCASources = append(b.trustedCASources, value)
+	return b
+}
+
+// TrustedCAFile sets the name of a file that contains the certificate authorities that will be
+// trusted by the connection. If this isn't explicitly specified then the client will trust the
+// certificate authorities trusted by default by the system.
+func (b *ConnectionBuilder) TrustedCAFile(value string) *ConnectionBuilder {
+	if b.err != nil {
+		return b
+	}
+	b.trustedCASources = append(b.trustedCASources, value)
 	return b
 }
 
 // Insecure enables insecure communication with the server. This disables verification of TLS
 // certificates and host names and it isn't recommended for a production environment.
 func (b *ConnectionBuilder) Insecure(flag bool) *ConnectionBuilder {
+	if b.err != nil {
+		return b
+	}
 	b.insecure = flag
+	return b
+}
+
+// DisableKeepAlives disables HTTP keep-alives with the server. This is unrelated to similarly
+// named TCP keep-alives.
+func (b *ConnectionBuilder) DisableKeepAlives(flag bool) *ConnectionBuilder {
+	if b.err != nil {
+		return b
+	}
+	b.disableKeepAlives = flag
 	return b
 }
 
 // TransportWrapper allows setting a transportWrapper layer into the connection for capturing and
 // manipulating the request or response.
 func (b *ConnectionBuilder) TransportWrapper(transportWrapper TransportWrapper) *ConnectionBuilder {
+	if b.err != nil {
+		return b
+	}
 	b.transportWrapper = transportWrapper
 	return b
 }
 
-// Metrics sets the name of the subsystem that will be used by the connection to register metrics
-// with Prometheus. If this isn't explicitly specified, or if it is an empty string, then no metrics
-// will be registered. For example, if the value is `api_outbound` then the following metrics will
-// be registered:
+// MetricsSubsystem sets the name of the subsystem that will be used by the connection to register
+// metrics with Prometheus. If this isn't explicitly specified, or if it is an empty string, then no
+// metrics will be registered.  For example, if the value is `api_outbound` then the following
+// metrics will be registered:
 //
 //	api_outbound_request_count - Number of API requests sent.
 //	api_outbound_request_duration_sum - Total time to send API requests, in seconds.
@@ -318,8 +461,153 @@ func (b *ConnectionBuilder) TransportWrapper(transportWrapper TransportWrapper) 
 //
 // Note that setting this attribute is not enough to have metrics published, you also need to
 // create and start a metrics server, as described in the documentation of the Prometheus library.
+func (b *ConnectionBuilder) MetricsSubsystem(value string) *ConnectionBuilder {
+	if b.err != nil {
+		return b
+	}
+	b.metricsSubsystem = value
+	return b
+}
+
+// Metrics sets the name of the subsystem that will be used by the connection to register metrics
+// with Prometheus.
+//
+// Deprecated: has been replaced by MetricsSubsystem.
 func (b *ConnectionBuilder) Metrics(value string) *ConnectionBuilder {
-	b.subsystem = value
+	return b.MetricsSubsystem(value)
+}
+
+// Load loads the connection configuration from the given source. The source must be a YAML
+// document with content similar to this:
+//
+//	url: https://my.server.com
+//	alternative_urls:
+//	- /api/clusters_mgmt: https://your.server.com
+//	- /api/accounts_mgmt: https://her.server.com
+//	token_url: https://openid.server.com
+//	user: myuser
+//	password: mypassword
+//	client_id: myclient
+//	client_secret: mysecret
+//	tokens:
+//	- eY...
+//	- eY...
+//	scopes:
+//	- openid
+//	insecure: false
+//	trusted_cas:
+//	- /my/ca.pem
+//	- /your/ca.pem
+//	agent: myagent
+//
+// Setting any of these fields in the file has the same effect that calling the corresponding method
+// of the builder.
+//
+// For details of the supported syntax see the documentation of the configuration package.
+func (b *ConnectionBuilder) Load(source interface{}) *ConnectionBuilder {
+	if b.err != nil {
+		return b
+	}
+
+	// Load the configuration:
+	var config *configuration.Object
+	config, b.err = configuration.New().
+		Load(source).
+		Build()
+	if b.err != nil {
+		return b
+	}
+	var view struct {
+		URL              *string           `yaml:"url"`
+		AlternativeURLs  map[string]string `yaml:"alternative_urls"`
+		TokenURL         *string           `yaml:"token_url"`
+		User             *string           `yaml:"user"`
+		Password         *string           `yaml:"password"`
+		ClientID         *string           `yaml:"client_id"`
+		ClientSecret     *string           `yaml:"client_secret"`
+		Tokens           []string          `yaml:"tokens"`
+		Insecure         *bool             `yaml:"insecure"`
+		TrustedCAs       []string          `yaml:"trusted_cas"`
+		Scopes           []string          `yaml:"scopes"`
+		Agent            *string           `yaml:"agent"`
+		MetricsSubsystem *string           `yaml:"metrics_subsystem"`
+	}
+	b.err = config.Populate(&view)
+	if b.err != nil {
+		return b
+	}
+
+	// URL:
+	if view.URL != nil {
+		b.URL(*view.URL)
+	}
+	if view.TokenURL != nil {
+		b.TokenURL(*view.TokenURL)
+	}
+
+	// Alternative URLs:
+	if view.AlternativeURLs != nil {
+		for prefix, base := range view.AlternativeURLs {
+			b.AlternativeURL(prefix, base)
+		}
+	}
+
+	// User and password:
+	var user string
+	var password string
+	if view.User != nil {
+		user = *view.User
+	}
+	if view.Password != nil {
+		password = *view.Password
+	}
+	if user != "" || password != "" {
+		b.User(user, password)
+	}
+
+	// Client identifier and secret:
+	var clientID string
+	var clientSecret string
+	if view.ClientID != nil {
+		clientID = *view.ClientID
+	}
+	if view.ClientSecret != nil {
+		clientSecret = *view.ClientSecret
+	}
+	if clientID != "" || clientSecret != "" {
+		b.Client(clientID, clientSecret)
+	}
+
+	// Tokens:
+	if view.Tokens != nil {
+		b.Tokens(view.Tokens...)
+	}
+
+	// Scopes:
+	if view.Scopes != nil {
+		b.Scopes(view.Scopes...)
+	}
+
+	// Insecure:
+	if view.Insecure != nil {
+		b.Insecure(*view.Insecure)
+	}
+
+	// Trusted CAs:
+	for _, trustedCA := range view.TrustedCAs {
+		b.TrustedCAFile(trustedCA)
+	}
+
+	// Agent:
+	if view.Agent != nil {
+		b.Agent(*view.Agent)
+	}
+
+	// Metrics subsystem:
+	if view.MetricsSubsystem != nil {
+		b.MetricsSubsystem(*view.MetricsSubsystem)
+	}
+
 	return b
 }
 
@@ -337,6 +625,12 @@ func (b *ConnectionBuilder) Build() (connection *Connection, err error) {
 // can be reused to create multiple connections with the same configuration. It returns a pointer to
 // the connection, and an error if something fails when trying to create it.
 func (b *ConnectionBuilder) BuildContext(ctx context.Context) (connection *Connection, err error) {
+	// If an error has been detected while populating the builder then return it and finish:
+	if b.err != nil {
+		err = b.err
+		return
+	}
+
 	// Check that we have some kind of credentials or a token:
 	haveTokens := len(b.tokens) > 0
 	havePassword := b.user != "" && b.password != ""
@@ -357,7 +651,7 @@ func (b *ConnectionBuilder) BuildContext(ctx context.Context) (connection *Conne
 		var token *jwt.Token
 		token, _, err = tokenParser.ParseUnverified(text, jwt.MapClaims{})
 		if err != nil {
-			err = fmt.Errorf("can't parse token %d: %v", i, err)
+			err = fmt.Errorf("can't parse token %d: %w", i, err)
 			return
 		}
 		claims, ok := token.Claims.(jwt.MapClaims)
@@ -390,14 +684,14 @@ func (b *ConnectionBuilder) BuildContext(ctx context.Context) (connection *Conne
 
 	// Create the default logger, if needed:
 	if b.logger == nil {
-		b.logger, err = NewGoLoggerBuilder().
+		b.logger, err = logging.NewGoLoggerBuilder().
 			Debug(false).
 			Info(true).
 			Warn(true).
 			Error(true).
 			Build()
 		if err != nil {
-			err = fmt.Errorf("can't create default logger: %v", err)
+			err = fmt.Errorf("can't create default logger: %w", err)
 			return
 		}
 		b.logger.Debug(ctx, "Logger wasn't provided, will use Go log")
@@ -413,9 +707,9 @@ func (b *ConnectionBuilder) BuildContext(ctx context.Context) (connection *Conne
 			rawTokenURL,
 		)
 	}
-	tokenURL, err := url.Parse(rawTokenURL)
+	tokenURL, err := b.parseURL(rawTokenURL)
 	if err != nil {
-		err = fmt.Errorf("can't parse token URL '%s': %v", rawTokenURL, err)
+		err = fmt.Errorf("can't parse token URL '%s': %w", rawTokenURL, err)
 		return
 	}
 	clientID := b.clientID
@@ -448,15 +742,9 @@ func (b *ConnectionBuilder) BuildContext(ctx context.Context) (connection *Conne
 		}
 	}
 
-	// Set the default URL, if needed:
-	rawAPIURL := b.apiURL
-	if rawAPIURL == "" {
-		rawAPIURL = DefaultURL
-		b.logger.Debug(ctx, "URL wasn't provided, will use the default '%s'", rawAPIURL)
-	}
-	apiURL, err := url.Parse(rawAPIURL)
+	// Create the URL table:
+	urlTable, err := b.createURLTable(ctx)
 	if err != nil {
-		err = fmt.Errorf("can't parse API URL '%s': %v", rawAPIURL, err)
 		return
 	}
 
@@ -472,6 +760,12 @@ func (b *ConnectionBuilder) BuildContext(ctx context.Context) (connection *Conne
 		return
 	}
 
+	// Load trusted CAs:
+	err = b.loadTrustedCAs(ctx)
+	if err != nil {
+		return
+	}
+
 	// Create the transport:
 	transport, err := b.createTransport()
 	if err != nil {
@@ -483,35 +777,115 @@ func (b *ConnectionBuilder) BuildContext(ctx context.Context) (connection *Conne
 		Jar:       jar,
 		Transport: transport,
 	}
+	if b.logger.DebugEnabled() {
+		client.CheckRedirect = func(request *http.Request, via []*http.Request) error {
+			b.logger.Info(
+				request.Context(),
+				"Following redirect from '%s' to '%s'",
+				via[0].URL,
+				request.URL,
+			)
+			return nil
+		}
+	}
 
 	// Allocate and populate the connection object:
 	connection = &Connection{
-		logger:       b.logger,
-		trustedCAs:   b.trustedCAs,
-		insecure:     b.insecure,
-		client:       client,
-		tokenURL:     tokenURL,
-		clientID:     clientID,
-		clientSecret: clientSecret,
-		apiURL:       apiURL,
-		agent:        agent,
-		user:         b.user,
-		password:     b.password,
-		tokenParser:  tokenParser,
-		accessToken:  accessToken,
-		refreshToken: refreshToken,
-		scopes:       scopes,
+		logger:            b.logger,
+		trustedCAs:        b.trustedCAPool,
+		insecure:          b.insecure,
+		disableKeepAlives: b.disableKeepAlives,
+		client:            client,
+		tokenURL:          tokenURL,
+		clientID:          clientID,
+		clientSecret:      clientSecret,
+		urlTable:          urlTable,
+		agent:             agent,
+		user:              b.user,
+		password:          b.password,
+		tokenParser:       tokenParser,
+		accessToken:       accessToken,
+		refreshToken:      refreshToken,
+		scopes:            scopes,
+		metricsSubsystem:  b.metricsSubsystem,
 	}
 
 	// Create the mutex that protects token manipulations:
 	connection.tokenMutex = &sync.Mutex{}
 
 	// Register metrics:
-	if b.subsystem != "" {
-		err = connection.registerMetrics(b.subsystem)
+	if b.metricsSubsystem != "" {
+		err = connection.registerMetrics(b.metricsSubsystem)
 		if err != nil {
-			err = fmt.Errorf("can't register metrics: %v", err)
+			err = fmt.Errorf("can't register metrics: %w", err)
 			return
+		}
+	}
+
+	return
+}
+
+func (b *ConnectionBuilder) createURLTable(ctx context.Context) (table []urlTableEntry, err error) {
+	// Check that all the prefixes are acceptable:
+	for prefix, base := range b.urlTable {
+		if !validPrefixRE.MatchString(prefix) {
+			err = fmt.Errorf(
+				"prefix '%s' for alternative URL '%s' isn't valid; it must start "+
+					"with a slash and be composed of slash separated segments "+
+					"containing only digits, letters, dashes and undercores",
+				prefix, base,
+			)
+			return
+		}
+	}
+
+	// Allocate space for the table:
+	table = make([]urlTableEntry, len(b.urlTable))
+
+	// For each alternative URL create the regular expression that will be used to check if
+	// paths match it, and parse the base URL:
+	i := 0
+	for prefix, base := range b.urlTable {
+		entry := &table[i]
+		entry.prefix = prefix
+		pattern := fmt.Sprintf("^%s(/.*)?$", regexp.QuoteMeta(prefix))
+		entry.re, err = regexp.Compile(pattern)
+		if err != nil {
+			err = fmt.Errorf(
+				"can't compile regular expression '%s' for alternative URL with "+
+					"prefix '%s' and URL '%s': %v",
+				pattern, prefix, base, err,
+			)
+			return
+		}
+		entry.url, err = b.parseURL(base)
+		if err != nil {
+			err = fmt.Errorf(
+				"can't parse alternative URL '%s' for prefix '%s': %w",
+				base, prefix, err,
+			)
+			return
+		}
+		i++
+	}
+
+	// Sort the entries in descending order of the length of the prefix, so that later
+	// when matching it will be easier to select the longest prefix that matches:
+	sort.Slice(table, func(i, j int) bool {
+		lenI := len(table[i].prefix)
+		lenJ := len(table[j].prefix)
+		return lenI > lenJ
+	})
+
+	// Write to the log the resulting table:
+	if b.logger.DebugEnabled() {
+		for _, entry := range table {
+			b.logger.Debug(
+				ctx,
+				"Added alternative URL with prefix '%s', regular expression "+
+					"'%s' and URL '%s'",
+				entry.prefix, entry.re, entry.url,
+			)
 		}
 	}
 
@@ -523,15 +897,61 @@ func (b *ConnectionBuilder) createCookieJar() (jar http.CookieJar, err error) {
 	return
 }
 
-func (b *ConnectionBuilder) createTransport() (transport http.RoundTripper, err error) {
+func (b *ConnectionBuilder) loadTrustedCAs(ctx context.Context) error {
+	var err error
+	b.trustedCAPool, err = x509.SystemCertPool()
+	if err != nil {
+		return err
+	}
+	for _, ca := range b.trustedCASources {
+		switch source := ca.(type) {
+		case *x509.CertPool:
+			b.logger.Debug(
+				ctx,
+				"Default trusted CA certificates have been explicitly replaced",
+			)
+			b.trustedCAPool = source
+		case string:
+			b.logger.Debug(
+				ctx,
+				"Loading trusted CA certificates from file '%s'",
+				source,
+			)
+			var buffer []byte
+			buffer, err = ioutil.ReadFile(source) // #nosec G304
+			if err != nil {
+				return fmt.Errorf(
+					"can't read trusted CA certificates from file '%s': %w",
+					source, err,
+				)
+			}
+			if !b.trustedCAPool.AppendCertsFromPEM(buffer) {
+				return fmt.Errorf(
+					"file '%s' doesn't contain any certificate",
+					source,
+				)
+			}
+		default:
+			return fmt.Errorf(
+				"don't know how to load trusted CA from source of type '%T'",
+				source,
+			)
+		}
+	}
+	return nil
+}
+
+func (b *ConnectionBuilder) createTransport() (
+	transport http.RoundTripper, err error) {
 	// Create the raw transport:
 	// #nosec 402
 	transport = &http.Transport{
 		TLSClientConfig: &tls.Config{
 			InsecureSkipVerify: b.insecure,
-			RootCAs:            b.trustedCAs,
+			RootCAs:            b.trustedCAPool,
 		},
-		Proxy: http.ProxyFromEnvironment,
+		Proxy:             http.ProxyFromEnvironment,
+		DisableKeepAlives: b.disableKeepAlives,
 	}
 
 	// If debug is enabled then wrap the raw transport with the round tripper that sends the
@@ -551,8 +971,31 @@ func (b *ConnectionBuilder) createTransport() (transport http.RoundTripper, err 
 	return
 }
 
+func (b *ConnectionBuilder) parseURL(text string) (result *url.URL, err error) {
+	result, err = url.Parse(text)
+	if err != nil {
+		return
+	}
+	scheme := strings.ToLower(result.Scheme)
+	if scheme != "http" && scheme != "https" {
+		result = nil
+		err = fmt.Errorf(
+			"URL '%s' should have scheme 'http' or 'https' but has '%s'",
+			text, scheme,
+		)
+		return
+	}
+	host := result.Hostname()
+	if host == "" {
+		result = nil
+		err = fmt.Errorf("URL '%s' doesn't have a host name", text)
+		return
+	}
+	return
+}
+
 // Logger returns the logger that is used by the connection.
-func (c *Connection) Logger() Logger {
+func (c *Connection) Logger() logging.Logger {
 	return c.logger
 }
 
@@ -569,7 +1012,16 @@ func (c *Connection) Client() (id, secret string) {
 
 // URL returns the base URL of the API gateway.
 func (c *Connection) URL() string {
-	return c.apiURL.String()
+	// The base URL will most likely be the last in the URL table because it is sorted in
+	// descending order of the prefix length, so it is faster to traverse the table in
+	// reverse order.
+	for i := len(c.urlTable) - 1; i >= 0; i-- {
+		entry := &c.urlTable[i]
+		if entry.prefix == "" {
+			return entry.url.String()
+		}
+	}
+	return ""
 }
 
 // Agent returns the `User-Agent` header that the client is using for all HTTP requests.
@@ -598,6 +1050,30 @@ func (c *Connection) TrustedCAs() *x509.CertPool {
 // Insecure returns the flag that indicates if insecure communication with the server is enabled.
 func (c *Connection) Insecure() bool {
 	return c.insecure
+}
+
+func (c *Connection) DisableKeepAlives() bool {
+	return c.disableKeepAlives
+}
+
+// MetricsSubsystem returns the name of the subsystem that is used by the connection to register
+// metrics with Prometheus. An empty string means that no metrics are registered.
+func (c *Connection) MetricsSubsystem() string {
+	return c.metricsSubsystem
+}
+
+// AlternativeURLs returns the alternative URLs in use by the connection. Note that the map returned
+// is a copy of the data used internally, so changing it will have no effect on the connection.
+func (c *Connection) AlternativeURLs() map[string]string {
+	// Copy all the entries of the URL table except the one corresponding to the empty prefix, as
+	// that isn't usually set via the alternative URLs mechanism:
+	result := map[string]string{}
+	for _, entry := range c.urlTable {
+		if entry.prefix != "" {
+			result[entry.prefix] = entry.url.String()
+		}
+	}
+	return result
 }
 
 // AccountsMgmt returns the client for the accounts management service.
@@ -638,3 +1114,6 @@ func (c *Connection) checkClosed() error {
 	}
 	return nil
 }
+
+// validPrefixRE is the regular expression used to check patch prefixes
+var validPrefixRE = regexp.MustCompile(`^((/\w+)*)?$`)

@@ -66,6 +66,14 @@ func writeMachinePool(object *MachinePool, stream *jsoniter.Stream) {
 		stream.WriteString(*object.href)
 		count++
 	}
+	if object.autoscaling != nil {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("autoscaling")
+		writeMachinePoolAutoscaling(object.autoscaling, stream)
+		count++
+	}
 	if object.availabilityZones != nil {
 		if count > 0 {
 			stream.WriteMore()
@@ -122,6 +130,14 @@ func writeMachinePool(object *MachinePool, stream *jsoniter.Stream) {
 		stream.WriteInt(*object.replicas)
 		count++
 	}
+	if object.taints != nil {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("taints")
+		writeTaintList(object.taints, stream)
+		count++
+	}
 	stream.WriteObjectEnd()
 }
 
@@ -158,6 +174,9 @@ func readMachinePool(iterator *jsoniter.Iterator) *MachinePool {
 		case "href":
 			value := iterator.ReadString()
 			object.href = &value
+		case "autoscaling":
+			value := readMachinePoolAutoscaling(iterator)
+			object.autoscaling = value
 		case "availability_zones":
 			value := readStringList(iterator)
 			object.availabilityZones = value
@@ -181,6 +200,9 @@ func readMachinePool(iterator *jsoniter.Iterator) *MachinePool {
 		case "replicas":
 			value := iterator.ReadInt()
 			object.replicas = &value
+		case "taints":
+			value := readTaintList(iterator)
+			object.taints = value
 		default:
 			iterator.ReadAny()
 		}

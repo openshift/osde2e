@@ -23,16 +23,18 @@ package v1 // github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1
 //
 // Representation of an add-on parameter.
 type AddOnParameterBuilder struct {
-	id          *string
-	href        *string
-	link        bool
-	addon       *AddOnBuilder
-	description *string
-	editable    *bool
-	name        *string
-	required    *bool
-	validation  *string
-	valueType   *string
+	id           *string
+	href         *string
+	link         bool
+	addon        *AddOnBuilder
+	defaultValue *string
+	description  *string
+	editable     *bool
+	enabled      *bool
+	name         *string
+	required     *bool
+	validation   *string
+	valueType    *string
 }
 
 // NewAddOnParameter creates a new builder of 'add_on_parameter' objects.
@@ -66,6 +68,14 @@ func (b *AddOnParameterBuilder) Addon(value *AddOnBuilder) *AddOnParameterBuilde
 	return b
 }
 
+// DefaultValue sets the value of the 'default_value' attribute to the given value.
+//
+//
+func (b *AddOnParameterBuilder) DefaultValue(value string) *AddOnParameterBuilder {
+	b.defaultValue = &value
+	return b
+}
+
 // Description sets the value of the 'description' attribute to the given value.
 //
 //
@@ -79,6 +89,14 @@ func (b *AddOnParameterBuilder) Description(value string) *AddOnParameterBuilder
 //
 func (b *AddOnParameterBuilder) Editable(value bool) *AddOnParameterBuilder {
 	b.editable = &value
+	return b
+}
+
+// Enabled sets the value of the 'enabled' attribute to the given value.
+//
+//
+func (b *AddOnParameterBuilder) Enabled(value bool) *AddOnParameterBuilder {
+	b.enabled = &value
 	return b
 }
 
@@ -127,8 +145,10 @@ func (b *AddOnParameterBuilder) Copy(object *AddOnParameter) *AddOnParameterBuil
 	} else {
 		b.addon = nil
 	}
+	b.defaultValue = object.defaultValue
 	b.description = object.description
 	b.editable = object.editable
+	b.enabled = object.enabled
 	b.name = object.name
 	b.required = object.required
 	b.validation = object.validation
@@ -148,8 +168,10 @@ func (b *AddOnParameterBuilder) Build() (object *AddOnParameter, err error) {
 			return
 		}
 	}
+	object.defaultValue = b.defaultValue
 	object.description = b.description
 	object.editable = b.editable
+	object.enabled = b.enabled
 	object.name = b.name
 	object.required = b.required
 	object.validation = b.validation

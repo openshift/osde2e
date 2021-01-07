@@ -23,6 +23,7 @@ package v1 // github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1
 //
 // Counts of different classes of nodes inside a cluster.
 type ClusterNodesBuilder struct {
+	autoscaleCompute   *MachinePoolAutoscalingBuilder
 	availabilityZones  []string
 	compute            *int
 	computeLabels      map[string]string
@@ -35,6 +36,14 @@ type ClusterNodesBuilder struct {
 // NewClusterNodes creates a new builder of 'cluster_nodes' objects.
 func NewClusterNodes() *ClusterNodesBuilder {
 	return new(ClusterNodesBuilder)
+}
+
+// AutoscaleCompute sets the value of the 'autoscale_compute' attribute to the given value.
+//
+// Representation of a autoscaling in a machine pool.
+func (b *ClusterNodesBuilder) AutoscaleCompute(value *MachinePoolAutoscalingBuilder) *ClusterNodesBuilder {
+	b.autoscaleCompute = value
+	return b
 }
 
 // AvailabilityZones sets the value of the 'availability_zones' attribute to the given values.
@@ -99,6 +108,11 @@ func (b *ClusterNodesBuilder) Copy(object *ClusterNodes) *ClusterNodesBuilder {
 	if object == nil {
 		return b
 	}
+	if object.autoscaleCompute != nil {
+		b.autoscaleCompute = NewMachinePoolAutoscaling().Copy(object.autoscaleCompute)
+	} else {
+		b.autoscaleCompute = nil
+	}
 	if object.availabilityZones != nil {
 		b.availabilityZones = make([]string, len(object.availabilityZones))
 		copy(b.availabilityZones, object.availabilityZones)
@@ -128,6 +142,12 @@ func (b *ClusterNodesBuilder) Copy(object *ClusterNodes) *ClusterNodesBuilder {
 // Build creates a 'cluster_nodes' object using the configuration stored in the builder.
 func (b *ClusterNodesBuilder) Build() (object *ClusterNodes, err error) {
 	object = new(ClusterNodes)
+	if b.autoscaleCompute != nil {
+		object.autoscaleCompute, err = b.autoscaleCompute.Build()
+		if err != nil {
+			return
+		}
+	}
 	if b.availabilityZones != nil {
 		object.availabilityZones = make([]string, len(b.availabilityZones))
 		copy(object.availabilityZones, b.availabilityZones)

@@ -25,14 +25,14 @@ require (
 	github.com/markbates/pkger v0.17.1
 	github.com/onsi/ginkgo v1.13.0
 	github.com/onsi/gomega v1.10.1
-	github.com/openshift-online/ocm-sdk-go v0.1.140
+	github.com/openshift-online/ocm-sdk-go v0.1.152
 	github.com/openshift/api v3.9.1-0.20190924102528-32369d4db2ad+incompatible
 	github.com/openshift/client-go v0.0.0-20200326155132-2a6cd50aedd0
 	github.com/openshift/cloud-ingress-operator v0.0.0-20200922213113-a2e288b3cc76
 	github.com/openshift/cluster-api v0.0.0-20191129101638-b09907ac6668
 	github.com/openshift/machine-api-operator v0.2.1-0.20200529045911-d19e8d007f7c
 	github.com/openshift/managed-upgrade-operator v0.0.0-20200820052802-5d57e1785b53
-	github.com/openshift/moactl v0.0.11
+	github.com/openshift/rosa v0.1.4
 	github.com/openshift/splunk-forwarder-operator v0.0.0-20201112162206-2f454770b6c0
 	github.com/operator-framework/api v0.3.6
 	github.com/operator-framework/operator-lifecycle-manager v0.0.0-20200521062108-408ca95d458f
@@ -50,7 +50,7 @@ require (
 	github.com/vmware-tanzu/velero v1.5.0-beta.1.0.20200831161009-1dcaa1bf7512
 	golang.org/x/net v0.0.0-20200707034311-ab3426394381
 	golang.org/x/sys v0.0.0-20201015000850-e3ed0017c211 // indirect
-	gopkg.in/yaml.v3 v3.0.0-20200121175148-a6ecf24a6d71
+	gopkg.in/yaml.v3 v3.0.0-20200615113413-eeeca48fe776
 	k8s.io/api v0.19.2
 	k8s.io/apimachinery v0.19.2
 	k8s.io/client-go v12.0.0+incompatible

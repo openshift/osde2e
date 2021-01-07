@@ -26,11 +26,12 @@ type VersionBuilder struct {
 	id                *string
 	href              *string
 	link              bool
-	moaEnabled        *bool
+	rosaEnabled       *bool
 	availableUpgrades []string
 	channelGroup      *string
 	default_          *bool
 	enabled           *bool
+	rawID             *string
 }
 
 // NewVersion creates a new builder of 'version' objects.
@@ -56,11 +57,11 @@ func (b *VersionBuilder) Link(value bool) *VersionBuilder {
 	return b
 }
 
-// MOAEnabled sets the value of the 'MOA_enabled' attribute to the given value.
+// ROSAEnabled sets the value of the 'ROSA_enabled' attribute to the given value.
 //
 //
-func (b *VersionBuilder) MOAEnabled(value bool) *VersionBuilder {
-	b.moaEnabled = &value
+func (b *VersionBuilder) ROSAEnabled(value bool) *VersionBuilder {
+	b.rosaEnabled = &value
 	return b
 }
 
@@ -97,6 +98,14 @@ func (b *VersionBuilder) Enabled(value bool) *VersionBuilder {
 	return b
 }
 
+// RawID sets the value of the 'raw_ID' attribute to the given value.
+//
+//
+func (b *VersionBuilder) RawID(value string) *VersionBuilder {
+	b.rawID = &value
+	return b
+}
+
 // Copy copies the attributes of the given object into this builder, discarding any previous values.
 func (b *VersionBuilder) Copy(object *Version) *VersionBuilder {
 	if object == nil {
@@ -105,7 +114,7 @@ func (b *VersionBuilder) Copy(object *Version) *VersionBuilder {
 	b.id = object.id
 	b.href = object.href
 	b.link = object.link
-	b.moaEnabled = object.moaEnabled
+	b.rosaEnabled = object.rosaEnabled
 	if object.availableUpgrades != nil {
 		b.availableUpgrades = make([]string, len(object.availableUpgrades))
 		copy(b.availableUpgrades, object.availableUpgrades)
@@ -115,6 +124,7 @@ func (b *VersionBuilder) Copy(object *Version) *VersionBuilder {
 	b.channelGroup = object.channelGroup
 	b.default_ = object.default_
 	b.enabled = object.enabled
+	b.rawID = object.rawID
 	return b
 }
 
@@ -124,7 +134,7 @@ func (b *VersionBuilder) Build() (object *Version, err error) {
 	object.id = b.id
 	object.href = b.href
 	object.link = b.link
-	object.moaEnabled = b.moaEnabled
+	object.rosaEnabled = b.rosaEnabled
 	if b.availableUpgrades != nil {
 		object.availableUpgrades = make([]string, len(b.availableUpgrades))
 		copy(object.availableUpgrades, b.availableUpgrades)
@@ -132,5 +142,6 @@ func (b *VersionBuilder) Build() (object *Version, err error) {
 	object.channelGroup = b.channelGroup
 	object.default_ = b.default_
 	object.enabled = b.enabled
+	object.rawID = b.rawID
 	return
 }

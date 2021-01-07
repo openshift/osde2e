@@ -26,6 +26,7 @@ type AWS struct {
 	accessKeyID     *string
 	accountID       *string
 	secretAccessKey *string
+	subnetIDs       []string
 }
 
 // Empty returns true if the object is empty, i.e. no attribute has a value.
@@ -33,6 +34,7 @@ func (o *AWS) Empty() bool {
 	return o == nil || (o.accessKeyID == nil &&
 		o.accountID == nil &&
 		o.secretAccessKey == nil &&
+		len(o.subnetIDs) == 0 &&
 		true)
 }
 
@@ -101,6 +103,29 @@ func (o *AWS) GetSecretAccessKey() (value string, ok bool) {
 	ok = o != nil && o.secretAccessKey != nil
 	if ok {
 		value = *o.secretAccessKey
+	}
+	return
+}
+
+// SubnetIDs returns the value of the 'subnet_IDs' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+// SubnetIDs are the subnet ids to be used when installing the cluster.
+func (o *AWS) SubnetIDs() []string {
+	if o == nil {
+		return nil
+	}
+	return o.subnetIDs
+}
+
+// GetSubnetIDs returns the value of the 'subnet_IDs' attribute and
+// a flag indicating if the attribute has a value.
+//
+// SubnetIDs are the subnet ids to be used when installing the cluster.
+func (o *AWS) GetSubnetIDs() (value []string, ok bool) {
+	ok = o != nil && o.subnetIDs != nil
+	if ok {
+		value = o.subnetIDs
 	}
 	return
 }

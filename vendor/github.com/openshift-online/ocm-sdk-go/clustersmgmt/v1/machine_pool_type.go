@@ -38,11 +38,13 @@ type MachinePool struct {
 	id                *string
 	href              *string
 	link              bool
+	autoscaling       *MachinePoolAutoscaling
 	availabilityZones []string
 	cluster           *Cluster
 	instanceType      *string
 	labels            map[string]string
 	replicas          *int
+	taints            []*Taint
 }
 
 // Kind returns the name of the type of the object.
@@ -104,7 +106,33 @@ func (o *MachinePool) Empty() bool {
 		o.instanceType == nil &&
 		len(o.labels) == 0 &&
 		o.replicas == nil &&
+		len(o.taints) == 0 &&
 		true)
+}
+
+// Autoscaling returns the value of the 'autoscaling' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+// Details for auto-scaling the machine pool.
+// Replicas and autoscaling cannot be used together.
+func (o *MachinePool) Autoscaling() *MachinePoolAutoscaling {
+	if o == nil {
+		return nil
+	}
+	return o.autoscaling
+}
+
+// GetAutoscaling returns the value of the 'autoscaling' attribute and
+// a flag indicating if the attribute has a value.
+//
+// Details for auto-scaling the machine pool.
+// Replicas and autoscaling cannot be used together.
+func (o *MachinePool) GetAutoscaling() (value *MachinePoolAutoscaling, ok bool) {
+	ok = o != nil && o.autoscaling != nil
+	if ok {
+		value = o.autoscaling
+	}
+	return
 }
 
 // AvailabilityZones returns the value of the 'availability_zones' attribute, or
@@ -203,6 +231,7 @@ func (o *MachinePool) GetLabels() (value map[string]string, ok bool) {
 // the zero value of the type if the attribute doesn't have a value.
 //
 // The number of Machines (and Nodes) to create.
+// Replicas and autoscaling cannot be used together.
 func (o *MachinePool) Replicas() int {
 	if o != nil && o.replicas != nil {
 		return *o.replicas
@@ -214,10 +243,34 @@ func (o *MachinePool) Replicas() int {
 // a flag indicating if the attribute has a value.
 //
 // The number of Machines (and Nodes) to create.
+// Replicas and autoscaling cannot be used together.
 func (o *MachinePool) GetReplicas() (value int, ok bool) {
 	ok = o != nil && o.replicas != nil
 	if ok {
 		value = *o.replicas
+	}
+	return
+}
+
+// Taints returns the value of the 'taints' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+// The taints set on the Nodes created.
+func (o *MachinePool) Taints() []*Taint {
+	if o == nil {
+		return nil
+	}
+	return o.taints
+}
+
+// GetTaints returns the value of the 'taints' attribute and
+// a flag indicating if the attribute has a value.
+//
+// The taints set on the Nodes created.
+func (o *MachinePool) GetTaints() (value []*Taint, ok bool) {
+	ok = o != nil && o.taints != nil
+	if ok {
+		value = o.taints
 	}
 	return
 }

@@ -3,6 +3,81 @@
 This document describes the relevant changes between releases of the OCM API
 SDK.
 
+== 0.1.152 Dec 17 2020
+
+- Update model to v0.0.102
+** add default value to add-on parameter type
+** Add upgrade channel group for a cluster
+
+== 0.1.151 Dec 2 2020
+
+- Move logging code to `logging` package
+- Rename `Metrics` to `MetricsSubsystem`
+- Add method to read metrics subsystem
+- Load metrics subsystem configuration from file
+- Load string if it doesn't look like a file
+- Load `os.Stdin` in dump configuration example
+- Reject URLs without scheme or host name
+- Add redirection tests
+- update model to 0.0.101
+
+== 0.1.150 Nov 25 2020
+
+- update model to 0.0.100
+
+== 0.1.149 Nov 24 2020
+
+- Fix issue in the method that returns the URL of a connection: it was returning
+  an empty string when no alternative URLs were configured.
+
+== 0.1.148 Nov 23 2020
+
+- Rename `!shell` configuration tag to `!script`.
+- Add `!yaml` configuration tag.
+
+== 0.1.147 Nov 19 2020
+
+- Add support for alternative URLs.
+- Add support for loading trusted CA files.
+- Add suppott for loading configuration from YAML file.
+
+== 0.1.146 Nov 17 2020
+
+- Add `EvaluateTemplate` function for tests
+- Don't crash in debug mode deserializing an empty response
+- Update model to v0.0.99
+** Add deletion add-on installation endpoint
+** Add Update method to addon installation resource
+- Update metamodel tp v0.0.35
+** Update to version 4.8 of Antlr
+** Wrap errors
+
+== 0.1.145 Nov 10 2020
+
+- Update model to v0.0.98
+
+== 0.1.144 Nov 2 2020
+
+- Update model to v0.0.96
+** Add Enabled to AddOnParameter type.
+
+== 0.1.143 Oct 27 2020
+
+- Update api-model to v0.0.95
+** Add SubnetIDs field to AWS type.
+
+== 0.1.142 Oct 26 2020
+
+- Allow disabling keep alive connections in the SDK connection transport
+- Update api-model to v0.0.94
+** version: Rename field from MOA to ROSA
+** [AMS] Add IncludeRedHatAssociates to SubscriptionNotify
+
+== 0.1.141 Oct 21 2020
+
+- Update api-model to v0.0.92
+** Add RawID field to Version type
+
 == 0.1.140 Oct 14 2020
 
 - Update api-model to v0.0.91

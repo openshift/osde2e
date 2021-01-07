@@ -65,12 +65,12 @@ func writeVersion(object *Version, stream *jsoniter.Stream) {
 		stream.WriteString(*object.href)
 		count++
 	}
-	if object.moaEnabled != nil {
+	if object.rosaEnabled != nil {
 		if count > 0 {
 			stream.WriteMore()
 		}
-		stream.WriteObjectField("moa_enabled")
-		stream.WriteBool(*object.moaEnabled)
+		stream.WriteObjectField("rosa_enabled")
+		stream.WriteBool(*object.rosaEnabled)
 		count++
 	}
 	if object.availableUpgrades != nil {
@@ -103,6 +103,14 @@ func writeVersion(object *Version, stream *jsoniter.Stream) {
 		}
 		stream.WriteObjectField("enabled")
 		stream.WriteBool(*object.enabled)
+		count++
+	}
+	if object.rawID != nil {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("raw_id")
+		stream.WriteString(*object.rawID)
 		count++
 	}
 	stream.WriteObjectEnd()
@@ -141,9 +149,9 @@ func readVersion(iterator *jsoniter.Iterator) *Version {
 		case "href":
 			value := iterator.ReadString()
 			object.href = &value
-		case "moa_enabled":
+		case "rosa_enabled":
 			value := iterator.ReadBool()
-			object.moaEnabled = &value
+			object.rosaEnabled = &value
 		case "available_upgrades":
 			value := readStringList(iterator)
 			object.availableUpgrades = value
@@ -156,6 +164,9 @@ func readVersion(iterator *jsoniter.Iterator) *Version {
 		case "enabled":
 			value := iterator.ReadBool()
 			object.enabled = &value
+		case "raw_id":
+			value := iterator.ReadString()
+			object.rawID = &value
 		default:
 			iterator.ReadAny()
 		}

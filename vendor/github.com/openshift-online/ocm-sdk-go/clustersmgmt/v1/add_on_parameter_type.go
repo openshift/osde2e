@@ -35,16 +35,18 @@ const AddOnParameterNilKind = "AddOnParameterNil"
 //
 // Representation of an add-on parameter.
 type AddOnParameter struct {
-	id          *string
-	href        *string
-	link        bool
-	addon       *AddOn
-	description *string
-	editable    *bool
-	name        *string
-	required    *bool
-	validation  *string
-	valueType   *string
+	id           *string
+	href         *string
+	link         bool
+	addon        *AddOn
+	defaultValue *string
+	description  *string
+	editable     *bool
+	enabled      *bool
+	name         *string
+	required     *bool
+	validation   *string
+	valueType    *string
 }
 
 // Kind returns the name of the type of the object.
@@ -102,8 +104,10 @@ func (o *AddOnParameter) GetHREF() (value string, ok bool) {
 // Empty returns true if the object is empty, i.e. no attribute has a value.
 func (o *AddOnParameter) Empty() bool {
 	return o == nil || (o.id == nil &&
+		o.defaultValue == nil &&
 		o.description == nil &&
 		o.editable == nil &&
+		o.enabled == nil &&
 		o.name == nil &&
 		o.required == nil &&
 		o.validation == nil &&
@@ -130,6 +134,29 @@ func (o *AddOnParameter) GetAddon() (value *AddOn, ok bool) {
 	ok = o != nil && o.addon != nil
 	if ok {
 		value = o.addon
+	}
+	return
+}
+
+// DefaultValue returns the value of the 'default_value' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+// Indicates the value default for the add-on parameter
+func (o *AddOnParameter) DefaultValue() string {
+	if o != nil && o.defaultValue != nil {
+		return *o.defaultValue
+	}
+	return ""
+}
+
+// GetDefaultValue returns the value of the 'default_value' attribute and
+// a flag indicating if the attribute has a value.
+//
+// Indicates the value default for the add-on parameter
+func (o *AddOnParameter) GetDefaultValue() (value string, ok bool) {
+	ok = o != nil && o.defaultValue != nil
+	if ok {
+		value = *o.defaultValue
 	}
 	return
 }
@@ -176,6 +203,29 @@ func (o *AddOnParameter) GetEditable() (value bool, ok bool) {
 	ok = o != nil && o.editable != nil
 	if ok {
 		value = *o.editable
+	}
+	return
+}
+
+// Enabled returns the value of the 'enabled' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+// Indicates if this parameter is enabled for the add-on.
+func (o *AddOnParameter) Enabled() bool {
+	if o != nil && o.enabled != nil {
+		return *o.enabled
+	}
+	return false
+}
+
+// GetEnabled returns the value of the 'enabled' attribute and
+// a flag indicating if the attribute has a value.
+//
+// Indicates if this parameter is enabled for the add-on.
+func (o *AddOnParameter) GetEnabled() (value bool, ok bool) {
+	ok = o != nil && o.enabled != nil
+	if ok {
+		value = *o.enabled
 	}
 	return
 }
