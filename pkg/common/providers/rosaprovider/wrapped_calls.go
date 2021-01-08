@@ -85,16 +85,16 @@ func (m *ROSAProvider) Upgrade(clusterID string, version string, t time.Time) er
 }
 
 // GetUpgradePolicyID fetchs the upgrade policy from the OCM provider
-func (m *MOAProvider) GetUpgradePolicyID(clusterID string) (string, error) {
+func (m *ROSAProvider) GetUpgradePolicyID(clusterID string) (string, error) {
 	return m.ocmProvider.GetUpgradePolicyID(clusterID)
 }
 
 // UpdateSchedule mocks reschedule the upgrade via the OCM provider
-func (m *MOAProvider) UpdateSchedule(clusterID string, version string, t time.Time, policyID string) error {
+func (m *ROSAProvider) UpdateSchedule(clusterID string, version string, t time.Time, policyID string) error {
 	return m.ocmProvider.UpdateSchedule(clusterID, version, t, policyID)
 }
 
 // DetermineMachineType calls DetermineMachineType from the OCM provider
-func (m *MOAProvider) DetermineMachineType(cloudProvider string) (string, error) {
+func (m *ROSAProvider) DetermineMachineType(cloudProvider string) (string, error) {
 	return m.ocmProvider.DetermineMachineType(cloudProvider)
 }
