@@ -20,6 +20,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/client-go/rest"
 )
 
 var managedUpgradeOperatorTestName string = "[Suite: informing] [OSD] Managed Upgrade Operator"
@@ -180,23 +181,6 @@ var _ = ginkgo.Describe(managedUpgradeOperatorTestName, func() {
 			Expect(err).NotTo(HaveOccurred())
 		})
 
-		ginkgo.It("dedicated admin should not be able to manage the UpgradeConfig CR", func() {
-			// Add the upgradeconfig to the cluster
-			uc := makeMinimalUpgradeConfig(upgradeConfigForDedicatedAdminTestName, operatorNamespace)
-			err = dedicatedAaddUpgradeConfig(uc, operatorNamespace, h)
-			Expect(apierrors.IsForbidden(err)).To(BeTrue())
-
-			err := addUpgradeConfig(uc, operatorNamespace, h)
-			Expect(err).NotTo(HaveOccurred())
-
-			err = dedicatedADeleteUpgradeConfig(upgradeConfigForDedicatedAdminTestName, operatorNamespace, h)
-			Expect(apierrors.IsForbidden(err)).To(BeTrue())
-
-			err = deleteUpgradeConfig(upgradeConfigForDedicatedAdminTestName, operatorNamespace, h)
-			Expect(err).NotTo(HaveOccurred())
-
-		})
-
 		ginkgo.It("should error if provided an invalid start time", func() {
 			// Validate clusterversion
 			Expect(err).NotTo(HaveOccurred())
@@ -249,6 +233,25 @@ var _ = ginkgo.Describe(managedUpgradeOperatorTestName, func() {
 			Expect(err).NotTo(HaveOccurred())
 
 		})
+	})
+	ginkgo.Context("upgradeconfig", func() {
+
+		ginkgo.It("dedicated admin should not be able to manage the UpgradeConfig CR", func() {
+			// Add the upgradeconfig to the cluster
+			uc := makeMinimalUpgradeConfig(upgradeConfigForDedicatedAdminTestName, operatorNamespace)
+			err := dedicatedAaddUpgradeConfig(uc, operatorNamespace, h)
+			Expect(apierrors.IsForbidden(err)).To(BeTrue())
+
+			err = addUpgradeConfig(uc, operatorNamespace, h)
+			Expect(err).NotTo(HaveOccurred())
+
+			err = dedicatedADeleteUpgradeConfig(upgradeConfigForDedicatedAdminTestName, operatorNamespace, h)
+			Expect(apierrors.IsForbidden(err)).To(BeTrue())
+
+			err = deleteUpgradeConfig(upgradeConfigForDedicatedAdminTestName, operatorNamespace, h)
+			Expect(err).NotTo(HaveOccurred())
+
+		})
 
 	})
 
@@ -298,6 +301,9 @@ func makeMinimalUpgradeConfig(name string, ns string) upgradev1alpha1.UpgradeCon
 			Name:      name,
 			Namespace: ns,
 		},
+		Spec: upgradev1alpha1.UpgradeConfigSpec{
+			Type: upgradev1alpha1.OSD,
+		},
 	}
 	return uc
 }
@@ -345,7 +351,15 @@ func dedicatedAaddUpgradeConfig(upgradeConfig upgradev1alpha1.UpgradeConfig, ope
 	if err != nil {
 		return err
 	}
-	h.SetServiceAccount("system:serviceaccount:%s:dedicated-admin-project")
+	h.Impersonate(rest.ImpersonationConfig{
+		UserName: "test-user@redhat.com",
+		Groups: []string{
+			"dedicated-admins",
+		},
+	})
+	defer func() {
+		h.Impersonate(rest.ImpersonationConfig{})
+	}()
 	unstructuredObj := unstructured.Unstructured{obj}
 	_, err = h.Dynamic().Resource(schema.GroupVersionResource{
 		Group: "upgrade.managed.openshift.io", Version: "v1alpha1", Resource: "upgradeconfigs",
@@ -354,7 +368,15 @@ func dedicatedAaddUpgradeConfig(upgradeConfig upgradev1alpha1.UpgradeConfig, ope
 }
 
 func dedicatedADeleteUpgradeConfig(name string, operatorNamespace string, h *helper.H) error {
-	h.SetServiceAccount("system:serviceaccount:%s:dedicated-admin-project")
+	h.Impersonate(rest.ImpersonationConfig{
+		UserName: "test-user@redhat.com",
+		Groups: []string{
+			"dedicated-admins",
+		},
+	})
+	defer func() {
+		h.Impersonate(rest.ImpersonationConfig{})
+	}()
 	return h.Dynamic().Resource(schema.GroupVersionResource{
 		Group: "upgrade.managed.openshift.io", Version: "v1alpha1", Resource: "upgradeconfigs",
 	}).Namespace(operatorNamespace).Delete(context.TODO(), name, metav1.DeleteOptions{})

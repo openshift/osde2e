@@ -319,7 +319,7 @@ func runGinkgoTests() error {
 		case viper.GetString(config.Upgrade.ReleaseName) == util.NoVersionFound:
 			log.Printf("No valid upgrade versions were found. Skipping tests.")
 			return nil
-		case viper.GetString(config.Upgrade.Image) != "":
+		case viper.GetString(config.Upgrade.Image) != "" && viper.GetBool(config.Upgrade.ManagedUpgrade):
 			log.Printf("image-based managed upgrades are unsupported: %s", viper.GetString(config.Upgrade.Image))
 			return nil
 		}
@@ -338,36 +338,44 @@ func runGinkgoTests() error {
 	getLogs()
 	upgradeTestsPassed := true
 
-	var routeMonitorChan chan struct{}
-	closeMonitorChan := make(chan struct{})
-	if viper.GetBool(config.Upgrade.MonitorRoutesDuringUpgrade) && !dryRun {
-		routeMonitorChan = setupRouteMonitors(closeMonitorChan)
-		log.Println("Route Monitors created.")
-	}
-
 	// upgrade cluster if requested
 	if viper.GetString(config.Upgrade.Image) != "" || viper.GetString(config.Upgrade.ReleaseName) != "" {
+
 		if len(viper.GetString(config.Kubeconfig.Contents)) > 0 {
+			// create route monitors for the upgrade
+			var routeMonitorChan chan struct{}
+			closeMonitorChan := make(chan struct{})
+			if viper.GetBool(config.Upgrade.MonitorRoutesDuringUpgrade) && !dryRun {
+				routeMonitorChan = setupRouteMonitors(closeMonitorChan)
+				log.Println("Route Monitors created.")
+			}
+
+			// run the upgrade
 			if err = upgrade.RunUpgrade(); err != nil {
 				events.RecordEvent(events.UpgradeFailed)
 				return fmt.Errorf("error performing upgrade: %v", err)
 			}
 			events.RecordEvent(events.UpgradeSuccessful)
 
-			log.Println("Running e2e tests POST-UPGRADE...")
-			upgradeTestsPassed = runTestsInPhase(phase.UpgradePhase, "OSD e2e suite post-upgrade")
+			// test upgrade rescheduling if desired
+			if !viper.GetBool(config.Upgrade.ManagedUpgradeRescheduled) {
+				log.Println("Running e2e tests POST-UPGRADE...")
+				upgradeTestsPassed = runTestsInPhase(phase.UpgradePhase, "OSD e2e suite post-upgrade")
+			}
+			log.Println("Upgrade rescheduled, skip the POST-UPGRADE testing")
+
+			// close route monitors
+			if viper.GetBool(config.Upgrade.MonitorRoutesDuringUpgrade) && !dryRun {
+				close(routeMonitorChan)
+				_ = <-closeMonitorChan
+				log.Println("Route monitors reconciled")
+			}
+
 		} else {
 			log.Println("No Kubeconfig found from initial cluster setup. Unable to run upgrade.")
 		}
 	}
-
-	if viper.GetBool(config.Upgrade.MonitorRoutesDuringUpgrade) && !dryRun {
-		close(routeMonitorChan)
-		_ = <-closeMonitorChan
-		log.Println("Route monitors reconciled")
-
-	}
-
+	
 	if reportDir != "" {
 		if err = metadata.Instance.WriteToJSON(reportDir); err != nil {
 			return fmt.Errorf("error while writing the custom metadata: %v", err)

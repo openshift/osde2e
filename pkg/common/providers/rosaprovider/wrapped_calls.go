@@ -1,9 +1,10 @@
 package rosaprovider
 
 import (
+	"time"
+
 	v1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 	"github.com/openshift/osde2e/pkg/common/spi"
-	"time"
 )
 
 // The rest of the SPI functions will be wrapped by the OCM provider until the ROSA provider can be adequately refactored.
@@ -81,4 +82,19 @@ func (m *ROSAProvider) AddProperty(cluster *spi.Cluster, tag string, value strin
 // Upgrade initiates a cluster upgrade from the OCM provider.
 func (m *ROSAProvider) Upgrade(clusterID string, version string, t time.Time) error {
 	return m.ocmProvider.Upgrade(clusterID, version, t)
+}
+
+// GetUpgradePolicyID fetchs the upgrade policy from the OCM provider
+func (m *MOAProvider) GetUpgradePolicyID(clusterID string) (string, error) {
+	return m.ocmProvider.GetUpgradePolicyID(clusterID)
+}
+
+// UpdateSchedule mocks reschedule the upgrade via the OCM provider
+func (m *MOAProvider) UpdateSchedule(clusterID string, version string, t time.Time, policyID string) error {
+	return m.ocmProvider.UpdateSchedule(clusterID, version, t, policyID)
+}
+
+// DetermineMachineType calls DetermineMachineType from the OCM provider
+func (m *MOAProvider) DetermineMachineType(cloudProvider string) (string, error) {
+	return m.ocmProvider.DetermineMachineType(cloudProvider)
 }

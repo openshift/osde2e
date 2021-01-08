@@ -2,6 +2,7 @@ package cloudingress
 
 import (
 	"context"
+	"time"
 
 	"github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -13,24 +14,68 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/client-go/rest"
 )
 
 var _ = ginkgo.Describe(constants.SuiteOperators+TestPrefix, func() {
 	h := helper.New()
-	testCRapiSchemesPresent(h)
-	testDaCRapischemes(h)
-	testCRapischemes(h)
+	ginkgo.Context("apischeme", func() {
+		ginkgo.It("apischemes CR instance must be present on cluster", func() {
+
+			err := wait.PollImmediate(2*time.Second, 2*time.Minute, func() (bool, error) {
+				if _, err := h.Dynamic().Resource(schema.GroupVersionResource{
+					Group: "cloudingress.managed.openshift.io", Version: "v1alpha1", Resource: "apischemes",
+				}).Namespace(OperatorNamespace).Get(context.TODO(), apiSchemeResourceName, metav1.GetOptions{}); err != nil {
+					return false, nil
+				}
+				return true, nil
+			})
+			Expect(err).NotTo(HaveOccurred())
+
+		})
+
+		ginkgo.It("dedicated admin should not be allowed to manage apischemes CR", func() {
+			user := "test-user"
+			impersonateDedicatedAdmin(h, user)
+
+			defer func() {
+				apiSchemeCleanup(h, "apischeme-osde2e-test")
+			}()
+			defer func() {
+				h.Impersonate(rest.ImpersonationConfig{})
+			}()
+
+			as := createApischeme("apischeme-osde2e-test")
+			err := addApischeme(h, as)
+			Expect(apierrors.IsForbidden(err)).To(BeTrue())
+
+			_, err = h.Dynamic().Resource(schema.GroupVersionResource{
+				Group: "cloudingress.managed.openshift.io", Version: "v1alpha1", Resource: "apischemes",
+			}).Namespace(OperatorNamespace).Get(context.TODO(), "apischeme-osde2e-test", metav1.GetOptions{})
+			Expect(apierrors.IsNotFound(err)).To(BeTrue())
+
+		})
+
+		ginkgo.It("cluster admin should be allowed to manage apischemes CR", func() {
+			as := createApischeme("apischeme-cr-test")
+			defer apiSchemeCleanup(h, "apischeme-cr-test")
+			err := addApischeme(h, as)
+			Expect(err).NotTo(HaveOccurred())
+
+		})
+	})
 
 })
 
-func createApischeme() cloudingress.APIScheme {
+func createApischeme(name string) cloudingress.APIScheme {
 	apischeme := cloudingress.APIScheme{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "APIScheme",
 			APIVersion: cloudingress.SchemeGroupVersion.String(),
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name: "apischeme-cr-test",
+			Name: name,
 		},
 		Spec: cloudingress.APISchemeSpec{
 			ManagementAPIServerIngress: cloudingress.ManagementAPIServerIngress{
@@ -55,43 +100,19 @@ func addApischeme(h *helper.H, apischeme cloudingress.APIScheme) error {
 	return err
 }
 
-func testDaCRapischemes(h *helper.H) {
-	ginkgo.Context("apischeme-cr-test", func() {
-		ginkgo.It("dedicated admin should not be allowed to manage apischemes CR", func() {
-			h.SetServiceAccount("system:serviceaccount:%s:dedicated-admin-project")
-			as := createApischeme()
-			err := addApischeme(h, as)
-			Expect(apierrors.IsForbidden(err)).To(BeTrue())
-
-		})
-	})
-}
-
-func testCRapischemes(h *helper.H) {
-	ginkgo.Context("apischeme-cr-test", func() {
-		ginkgo.It("admin should be allowed to manage apischemes CR", func() {
-			as := createApischeme()
-			defer apiSchemeCleanup(h, as.Name)
-			err := addApischeme(h, as)
-			Expect(err).NotTo(HaveOccurred())
-
-		})
-	})
-}
-
-func testCRapiSchemesPresent(h *helper.H) {
-	ginkgo.Context("apischeme-cr-test", func() {
-		ginkgo.It("apischemes CR instance must be present on cluster", func() {
-			_, err := h.Dynamic().Resource(schema.GroupVersionResource{
-				Group: "cloudingress.managed.openshift.io", Version: "v1alpha1", Resource: "apischemes",
-			}).Namespace(OperatorNamespace).Get(context.TODO(), apiSchemeResourceName, metav1.GetOptions{})
-			Expect(err).NotTo(HaveOccurred())
-		})
-	})
-}
-
 func apiSchemeCleanup(h *helper.H, apiSchemeName string) error {
 	return h.Dynamic().Resource(schema.GroupVersionResource{
 		Group: "cloudingress.managed.openshift.io", Version: "v1alpha1", Resource: "apischemes",
 	}).Namespace(OperatorNamespace).Delete(context.TODO(), apiSchemeName, metav1.DeleteOptions{})
+}
+
+func impersonateDedicatedAdmin(h *helper.H, user string) *helper.H {
+	h.Impersonate(rest.ImpersonationConfig{
+		UserName: user,
+		Groups: []string{
+			"dedicated-admins",
+		},
+	})
+
+	return h
 }

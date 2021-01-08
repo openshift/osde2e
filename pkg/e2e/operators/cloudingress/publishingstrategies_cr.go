@@ -13,23 +13,50 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/rest"
 )
 
 var _ = ginkgo.Describe(constants.SuiteOperators+TestPrefix, func() {
 	h := helper.New()
-	testDaCRpublishingstrategies(h)
-	testCRpublishingstrategies(h)
+	ginkgo.Context("publishingstrategies", func() {
+		ginkgo.It("dedicated admin should not be allowed to manage publishingstrategies CR", func() {
+			h.Impersonate(rest.ImpersonationConfig{
+				UserName: "test-user@redhat.com",
+				Groups: []string{
+					"dedicated-admins",
+				},
+			})
+			defer func() {
+				h.Impersonate(rest.ImpersonationConfig{})
+			}()
+			ps := createPublishingstrategies("publishingstrategy-cr-test-1")
+			err := addPublishingstrategy(h, ps)
+			Expect(apierrors.IsForbidden(err)).To(BeTrue())
+
+		})
+
+		ginkgo.It("cluster admin should be allowed to manage publishingstrategies CR", func() {
+			publishingstrategyName := "publishingstrategy-cr-test-2"
+			ps := createPublishingstrategies(publishingstrategyName)
+			err := addPublishingstrategy(h, ps)
+			defer func() {
+				publishingstrategyCleanup(h, publishingstrategyName)
+			}()
+			Expect(err).NotTo(HaveOccurred())
+
+		})
+	})
 
 })
 
-func createPublishingstrategies() cloudingress.PublishingStrategy {
+func createPublishingstrategies(name string) cloudingress.PublishingStrategy {
 	publishingstrategy := cloudingress.PublishingStrategy{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "PublishingStrategy",
 			APIVersion: cloudingress.SchemeGroupVersion.String(),
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name: "publshingstrategy-cr-test",
+			Name: name,
 		},
 		Spec: cloudingress.PublishingStrategySpec{
 			DefaultAPIServerIngress: cloudingress.DefaultAPIServerIngress{},
@@ -51,25 +78,9 @@ func addPublishingstrategy(h *helper.H, publishingstrategy cloudingress.Publishi
 	return err
 }
 
-func testDaCRpublishingstrategies(h *helper.H) {
-	ginkgo.Context("cloud-ingress-operator", func() {
-		ginkgo.It("dedicated admin should not be allowed to manage publishingstrategies CR", func() {
-			h.SetServiceAccount("system:serviceaccount:%s:dedicated-admin-project")
-			ps := createPublishingstrategies()
-			err := addPublishingstrategy(h, ps)
-			Expect(apierrors.IsForbidden(err)).To(BeTrue())
+func publishingstrategyCleanup(h *helper.H, publishingstrategyName string) error {
+	return h.Dynamic().Resource(schema.GroupVersionResource{
+		Group: "cloudingress.managed.openshift.io", Version: "v1alpha1", Resource: "publishingstrategies",
+	}).Namespace(OperatorNamespace).Delete(context.TODO(), publishingstrategyName, metav1.DeleteOptions{})
 
-		})
-	})
-}
-
-func testCRpublishingstrategies(h *helper.H) {
-	ginkgo.Context("cloud-ingress-operator", func() {
-		ginkgo.It("admin should be allowed to manage publishingstrategies CR", func() {
-			ps := createPublishingstrategies()
-			err := addPublishingstrategy(h, ps)
-			Expect(err).NotTo(HaveOccurred())
-
-		})
-	})
 }

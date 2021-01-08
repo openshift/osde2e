@@ -114,4 +114,13 @@ type Provider interface {
 
 	// Upgrade requests the provider initiate a cluster upgrade to the given version
 	Upgrade(clusterID string, version string, t time.Time) error
+
+	// GetUpgradePolicyID gets the first upgrade policy from the top
+	GetUpgradePolicyID(clusterID string) (string, error)
+
+	// UpdateSchedule updates the existing upgrade policy for re-scheduling
+	UpdateSchedule(clusterID string, version string, t time.Time, policyID string) error
+
+	// DetermineMachineType selects a random machine type for a given cluster.
+	DetermineMachineType(cloudProvider string) (string, error)
 }
