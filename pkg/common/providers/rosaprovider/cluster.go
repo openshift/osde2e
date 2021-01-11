@@ -122,17 +122,20 @@ func (m *ROSAProvider) LaunchCluster(clusterName string) (string, error) {
 		clusterSpec := cluster.Spec{
 			Name:               clusterName,
 			Region:             region,
+			ChannelGroup:       "stable",
 			MultiAZ:            viper.GetBool(config.Cluster.MultiAZ),
 			Version:            viper.GetString(config.Cluster.Version),
 			Expiration:         expiration,
 			ComputeMachineType: viper.GetString(ComputeMachineType),
 			ComputeNodes:       viper.GetInt(ComputeNodes),
 
-			CustomProperties: clusterProperties,
-			MachineCIDR:      *machineCIDRParsed,
-			ServiceCIDR:      *serviceCIDRParsed,
-			PodCIDR:          *podCIDRParsed,
-			HostPrefix:       viper.GetInt(HostPrefix),
+			CustomProperties:  clusterProperties,
+			MachineCIDR:       *machineCIDRParsed,
+			ServiceCIDR:       *serviceCIDRParsed,
+			PodCIDR:           *podCIDRParsed,
+			HostPrefix:        viper.GetInt(HostPrefix),
+			SubnetIds:         []string{},
+			AvailabilityZones: []string{},
 		}
 
 		createdCluster, err = cluster.CreateCluster(clustersClient, clusterSpec)
