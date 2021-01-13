@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/Masterminds/semver"
-	"github.com/goombaio/namegenerator"
 	"github.com/hashicorp/go-multierror"
 	osconfig "github.com/openshift/client-go/config/clientset/versioned"
 	"github.com/openshift/osde2e/pkg/common/cluster/healthchecks"
@@ -381,14 +380,14 @@ func clusterName() string {
 		seed := time.Now().UTC().UnixNano()
 		rand.Seed(seed)
 		newName := ""
-		prefixes := []string{"prod", "stg", "int", "test", "p", "i", "s", "pre"}
+		prefixes := []string{"prod", "stg", "int", "p", "i", "s", "pre"}
+		names := []string{"app", "db", "cache", "ocp", "openshift", "store", "control", "swap", "testing", "application", "user", "customer", "cust", "osd", "dedicated"}
 		suffixes := []string{"0", "1", "2", "3", "5", "8", "13", "temp", "final"}
 
 		doPrefix := rand.Intn(3)
-		doSuffix := rand.Intn(2)
+		doSuffix := rand.Intn(3)
 
-		nameGenerator := namegenerator.NewNameGenerator(seed)
-		newName = nameGenerator.Generate()
+		newName = fmt.Sprintf("%s", names[rand.Intn(len(names))])
 
 		if doPrefix > 0 && len(newName) <= 10 {
 			newName = fmt.Sprintf("%s-%s", prefixes[rand.Intn(len(prefixes))], newName)

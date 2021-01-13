@@ -198,8 +198,6 @@ github.com/google/uuid
 github.com/googleapis/gnostic/compiler
 github.com/googleapis/gnostic/extensions
 github.com/googleapis/gnostic/openapiv2
-# github.com/goombaio/namegenerator v0.0.0-20181006234301-989e774b106e
-github.com/goombaio/namegenerator
 # github.com/gorilla/websocket v1.4.2
 github.com/gorilla/websocket
 # github.com/grokify/html-strip-tags-go v0.0.0-20200923094847-079d207a09f1
