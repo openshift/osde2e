@@ -101,7 +101,6 @@ func (m *ROSAProvider) LaunchCluster(clusterName string) (string, error) {
 	}
 
 	clusterProperties, err := m.ocmProvider.GenerateProperties()
-	clusterProperties["rosa_use_marketplace_ami"] = "true"
 
 	if err != nil {
 		return "", fmt.Errorf("error generating cluster properties: %v", err)
