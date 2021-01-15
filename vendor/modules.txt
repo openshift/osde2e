@@ -365,7 +365,7 @@ github.com/openshift/machine-api-operator/pkg/generated/clientset/versioned/sche
 github.com/openshift/machine-api-operator/pkg/generated/clientset/versioned/typed/machine/v1beta1
 # github.com/openshift/managed-upgrade-operator v0.0.0-20200820052802-5d57e1785b53
 github.com/openshift/managed-upgrade-operator/pkg/apis/upgrade/v1alpha1
-# github.com/openshift/rosa v0.1.4
+# github.com/openshift/rosa v0.1.5
 github.com/openshift/rosa/assets
 github.com/openshift/rosa/pkg/aws
 github.com/openshift/rosa/pkg/aws/profile

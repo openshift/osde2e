@@ -285,20 +285,58 @@ func DeleteCluster(client *cmv1.ClustersClient, clusterKey string, creatorARN st
 	return cluster, nil
 }
 
-func InstallAddOn(client *cmv1.ClustersClient, clusterKey string, creatorARN string, addOnID string) error {
+func GetAddOnParameters(client *cmv1.AddOnsClient, addOnID string) (*cmv1.AddOnParameterList, error) {
+	response, err := client.Addon(addOnID).Get().Send()
+	if err != nil {
+		return nil, handleErr(response.Error(), err)
+	}
+	return response.Body().Parameters(), nil
+}
+
+type AddOnParam struct {
+	Key string
+	Val string
+}
+
+func InstallAddOn(client *cmv1.ClustersClient, clusterKey string, creatorARN string, addOnID string,
+	params []AddOnParam) error {
 	cluster, err := GetCluster(client, clusterKey, creatorARN)
 	if err != nil {
 		return err
 	}
 
-	addOnInstallation, err := cmv1.NewAddOnInstallation().
-		Addon(cmv1.NewAddOn().ID(addOnID)).
-		Build()
+	addOnInstallationBuilder := cmv1.NewAddOnInstallation().
+		Addon(cmv1.NewAddOn().ID(addOnID))
+
+	if len(params) > 0 {
+		addOnParamList := make([]*cmv1.AddOnInstallationParameterBuilder, len(params))
+		for i, param := range params {
+			addOnParamList[i] = cmv1.NewAddOnInstallationParameter().ID(param.Key).Value(param.Val)
+		}
+		addOnInstallationBuilder = addOnInstallationBuilder.
+			Parameters(cmv1.NewAddOnInstallationParameterList().Items(addOnParamList...))
+	}
+
+	addOnInstallation, err := addOnInstallationBuilder.Build()
 	if err != nil {
 		return err
 	}
 
 	response, err := client.Cluster(cluster.ID()).Addons().Add().Body(addOnInstallation).Send()
+	if err != nil {
+		return handleErr(response.Error(), err)
+	}
+
+	return nil
+}
+
+func UninstallAddOn(client *cmv1.ClustersClient, clusterKey string, creatorARN string, addOnID string) error {
+	cluster, err := GetCluster(client, clusterKey, creatorARN)
+	if err != nil {
+		return err
+	}
+
+	response, err := client.Cluster(cluster.ID()).Addons().Addoninstallation(addOnID).Delete().Send()
 	if err != nil {
 		return handleErr(response.Error(), err)
 	}

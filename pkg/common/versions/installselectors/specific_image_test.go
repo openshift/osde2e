@@ -31,7 +31,7 @@ func TestSpecificImages(t *testing.T) {
 					spi.NewVersionBuilder().Version(semver.MustParse("4.5.0")).Build(),
 				}).
 				Build(),
-			image:           "registry.svc.ci.openshift.org/ocp/release:4.4.0-0.nightly-2020-11-07-020245",
+			image:           "registry.ci.openshift.org/ocp/release:4.4.0-0.nightly-2020-11-07-020245",
 			expectedVersion: semver.MustParse("4.4.0-0.nightly-2020-11-07-020245-nightly"),
 		},
 		{
@@ -45,7 +45,7 @@ func TestSpecificImages(t *testing.T) {
 					spi.NewVersionBuilder().Version(semver.MustParse("4.6.0-0.nightly-2020-11-07-035509-nightly")).Build(),
 				}).
 				Build(),
-			image:           "registry.svc.ci.openshift.org/ocp/release:4.6.0-0.nightly-2020-11-07-035509",
+			image:           "registry.ci.openshift.org/ocp/release:4.6.0-0.nightly-2020-11-07-035509",
 			expectedVersion: semver.MustParse("4.6.0-0.nightly-2020-11-07-035509-nightly"),
 		},
 		{
@@ -53,14 +53,14 @@ func TestSpecificImages(t *testing.T) {
 			versions: spi.NewVersionListBuilder().
 				AvailableVersions([]*spi.Version{
 					spi.NewVersionBuilder().Version(semver.MustParse("4.4.0-0.nightly-2020-11-06-130917-nightly")).Build(),
-					spi.NewVersionBuilder().Version(semver.MustParse("4.4.0-0.nightly-2020-11-06-072238-nightly")).Build(),
+					spi.NewVersionBuilder().Version(semver.MustParse("4.7.0-0.nightly-2021-01-15-100321-nightly")).Build(),
 					spi.NewVersionBuilder().Version(semver.MustParse("4.4.0-0.nightly-2020-11-07-020245-nightly")).Build(),
 					spi.NewVersionBuilder().Version(semver.MustParse("4.4.0-0.nightly-2020-11-05-113252-nightly")).Build(),
 					spi.NewVersionBuilder().Default(true).Version(semver.MustParse("4.4.3")).Build(),
 				}).
 				Build(),
-			image:           "registry.svc.ci.openshift.org/ocp/release:4.4.0-0.nightly-2020-11-07-020245",
-			expectedVersion: semver.MustParse("4.4.0-0.nightly-2020-11-07-020245-nightly"),
+			image:           "registry.ci.openshift.org/ocp/release:4.7.0-0.nightly-2021-01-15-100321",
+			expectedVersion: semver.MustParse("4.7.0-0.nightly-2021-01-15-100321-nightly"),
 		},
 		{
 			name: "no versions",
