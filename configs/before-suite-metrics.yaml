@@ -1,0 +1,13 @@
+beforeSuiteMetrics:
+- name: cluster-health-check
+  regex: "cluster failed health check"
+  highThreshold: 1
+  lowThreshold: -1
+- name: quota-check
+  regex: "currently not enough quota exists to run this test"
+  highThreshold: 1
+  lowThreshold: -1
+- name: cluster-install
+  regex: "Cluster is not ready, current status 'installing'"
+  highThreshold: 40
+  lowThreshold: -1

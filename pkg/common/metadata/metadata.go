@@ -42,6 +42,7 @@ type Metadata struct {
 	InstallPhasePassRate        float64            `json:"install-phase-pass-rate,string"`
 	UpgradePhasePassRate        float64            `json:"upgrade-phase-pass-rate,string"`
 	LogMetrics                  map[string]int     `json:"log-metrics"`
+	BeforeSuiteMetrics          map[string]int     `json:"before-suite-metrics"`
 	RouteLatencies              map[string]float64 `json:"route-latencies"`
 	RouteThroughputs            map[string]float64 `json:"route-throughputs"`
 	RouteAvailabilities         map[string]float64 `json:"route-availabilities"`
@@ -63,6 +64,7 @@ func init() {
 	Instance.InstallPhasePassRate = -1.0
 	Instance.UpgradePhasePassRate = -1.0
 	Instance.LogMetrics = make(map[string]int)
+	Instance.BeforeSuiteMetrics = make(map[string]int)
 	Instance.RouteLatencies = make(map[string]float64)
 	Instance.RouteThroughputs = make(map[string]float64)
 	Instance.RouteAvailabilities = make(map[string]float64)
@@ -210,6 +212,25 @@ func (m *Metadata) IncrementLogMetric(metric string, value int) {
 		m.LogMetrics[metric] += value
 	} else {
 		m.LogMetrics[metric] = value
+	}
+
+	m.WriteToJSON(m.ReportDir)
+}
+
+// ResetBeforeSuiteMetrics zeroes out old results to be used before a new run.
+func (m *Metadata) ResetBeforeSuiteMetrics() {
+	for metric := range m.BeforeSuiteMetrics {
+		m.BeforeSuiteMetrics[metric] = 0
+	}
+}
+
+// IncrementBeforeSuiteMetric adds a supplied number to a before suite metric or sets the metric to
+// the value if it doesn't exist already
+func (m *Metadata) IncrementBeforeSuiteMetric(metric string, value int) {
+	if _, ok := m.BeforeSuiteMetrics[metric]; ok {
+		m.BeforeSuiteMetrics[metric] += value
+	} else {
+		m.BeforeSuiteMetrics[metric] = value
 	}
 
 	m.WriteToJSON(m.ReportDir)
