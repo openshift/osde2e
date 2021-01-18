@@ -71,4 +71,8 @@ func init() {
 	viper.BindEnv(AWSAccount, "OCM_AWS_ACCOUNT")
 	viper.BindEnv(AWSAccessKey, "OCM_AWS_ACCESS_KEY")
 	viper.BindEnv(AWSSecretKey, "OCM_AWS_SECRET_KEY")
+
+	config.RegisterSecret(AWSAccount, "ocm-aws-account")
+	config.RegisterSecret(AWSAccessKey, "ocm-aws-access-key")
+	config.RegisterSecret(AWSSecretKey, "ocm-aws-secret-access-key")
 }

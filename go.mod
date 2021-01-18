@@ -16,7 +16,6 @@ require (
 	github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32
 	github.com/google/go-github/v31 v31.0.0
 	github.com/google/uuid v1.1.1
-	github.com/goombaio/namegenerator v0.0.0-20181006234301-989e774b106e
 	github.com/grokify/html-strip-tags-go v0.0.0-20200923094847-079d207a09f1 // indirect
 	github.com/hashicorp/go-multierror v1.1.0
 	github.com/hpcloud/tail v1.0.0
@@ -32,7 +31,7 @@ require (
 	github.com/openshift/cluster-api v0.0.0-20191129101638-b09907ac6668
 	github.com/openshift/machine-api-operator v0.2.1-0.20200529045911-d19e8d007f7c
 	github.com/openshift/managed-upgrade-operator v0.0.0-20200820052802-5d57e1785b53
-	github.com/openshift/rosa v0.1.4
+	github.com/openshift/rosa v0.1.5
 	github.com/openshift/splunk-forwarder-operator v0.0.0-20201112162206-2f454770b6c0
 	github.com/operator-framework/api v0.3.6
 	github.com/operator-framework/operator-lifecycle-manager v0.0.0-20200521062108-408ca95d458f

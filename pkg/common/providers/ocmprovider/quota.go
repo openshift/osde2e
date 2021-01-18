@@ -120,7 +120,7 @@ func HasQuotaFor(q *accounts.QuotaSummary, resourceType, machineType string) boo
 	}
 
 	if q.ResourceType() == resourceType && q.ResourceName() == machineType || machineType == "" {
-		if q.AvailabilityZoneType() == azType {
+		if q.AvailabilityZoneType() == azType || q.AvailabilityZoneType() == "any" {
 			if q.Reserved() < q.Allowed() {
 				return true
 			}

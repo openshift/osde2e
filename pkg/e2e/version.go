@@ -35,6 +35,7 @@ func ChooseVersions() (err error) {
 
 			clusterVersion, versionSelector, err = setupVersion(versionList)
 			if err != nil {
+				log.Printf("Error setting up version: %s", err.Error())
 				if versionSelector == "specific image" {
 					log.Printf("Waiting for %s CIS to sync with the Release Controller", viper.GetString(config.Cluster.ReleaseImageLatest))
 					return false, nil

@@ -60,8 +60,6 @@ func (m *ROSAProvider) IsValidClusterName(clusterName string) (bool, error) {
 
 // LaunchCluster will provision an AWS cluster.
 func (m *ROSAProvider) LaunchCluster(clusterName string) (string, error) {
-	clustersClient := m.ocmProvider.GetConnection().ClustersMgmt().V1().Clusters()
-
 	// Calculate an expiration date for the cluster so that it will be automatically deleted if
 	// we happen to forget to do it:
 	var expiration time.Time
@@ -103,7 +101,6 @@ func (m *ROSAProvider) LaunchCluster(clusterName string) (string, error) {
 	}
 
 	clusterProperties, err := m.ocmProvider.GenerateProperties()
-	clusterProperties["rosa_use_marketplace_ami"] = "true"
 
 	if err != nil {
 		return "", fmt.Errorf("error generating cluster properties: %v", err)
@@ -117,32 +114,39 @@ func (m *ROSAProvider) LaunchCluster(clusterName string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("error determining region to use: %v", err)
 	}
+	falseValue := false
 
-	callAndSetAWSSession(func() {
-		clusterSpec := cluster.Spec{
-			Name:               clusterName,
-			Region:             region,
-			ChannelGroup:       "stable",
-			MultiAZ:            viper.GetBool(config.Cluster.MultiAZ),
-			Version:            viper.GetString(config.Cluster.Version),
-			Expiration:         expiration,
-			ComputeMachineType: viper.GetString(ComputeMachineType),
-			ComputeNodes:       viper.GetInt(ComputeNodes),
+	clustersClient := m.ocmProvider.GetConnection().ClustersMgmt().V1().Clusters()
+	clusterSpec := cluster.Spec{
+		Name:               clusterName,
+		Region:             region,
+		ChannelGroup:       "stable",
+		MultiAZ:            viper.GetBool(config.Cluster.MultiAZ),
+		Version:            viper.GetString(config.Cluster.Version),
+		Expiration:         expiration,
+		ComputeMachineType: viper.GetString(ComputeMachineType),
+		ComputeNodes:       viper.GetInt(ComputeNodes),
+		DryRun:             &falseValue,
 
-			CustomProperties:  clusterProperties,
-			MachineCIDR:       *machineCIDRParsed,
-			ServiceCIDR:       *serviceCIDRParsed,
-			PodCIDR:           *podCIDRParsed,
-			HostPrefix:        viper.GetInt(HostPrefix),
-			SubnetIds:         []string{},
-			AvailabilityZones: []string{},
-		}
+		CustomProperties:  clusterProperties,
+		MachineCIDR:       *machineCIDRParsed,
+		ServiceCIDR:       *serviceCIDRParsed,
+		PodCIDR:           *podCIDRParsed,
+		HostPrefix:        viper.GetInt(HostPrefix),
+		SubnetIds:         []string{},
+		AvailabilityZones: []string{},
+	}
 
+	err = callAndSetAWSSession(func() error {
 		createdCluster, err = cluster.CreateCluster(clustersClient, clusterSpec)
+		if err != nil {
+			return fmt.Errorf("Error creating cluster: %s", err.Error())
+		}
+		return nil
 	})
 
 	if err != nil {
-		return "", fmt.Errorf("error while creating cluster: %v", err)
+		return "", err
 	}
 
 	return createdCluster.ID(), nil

@@ -607,8 +607,6 @@ github.com/googleapis/gnostic v0.3.0/go.mod h1:sJBsCZ4ayReDTBIg8b9dl28c5xFWyhBTV
 github.com/googleapis/gnostic v0.3.1/go.mod h1:on+2t9HRStVgn95RSsFWFz+6Q0Snyqv1awfrALZdbtU=
 github.com/googleapis/gnostic v0.4.1 h1:DLJCy1n/vrD4HPjOvYcT8aYQXpPIzoRZONaYwyycI+I=
 github.com/googleapis/gnostic v0.4.1/go.mod h1:LRhVm6pbyptWbWbuZ38d1eyptfvIytN3ir6b65WBswg=
-github.com/goombaio/namegenerator v0.0.0-20181006234301-989e774b106e h1:XmA6L9IPRdUr28a+SK/oMchGgQy159wvzXA5tJ7l+40=
-github.com/goombaio/namegenerator v0.0.0-20181006234301-989e774b106e/go.mod h1:AFIo+02s+12CEg8Gzz9kzhCbmbq6JcKNrhHffCGA9z4=
 github.com/gophercloud/gophercloud v0.1.0/go.mod h1:vxM41WHh5uqHVBMZHzuwNOHh8XEoIEcSTewFxm1c5g8=
 github.com/gophercloud/gophercloud v0.2.0/go.mod h1:vxM41WHh5uqHVBMZHzuwNOHh8XEoIEcSTewFxm1c5g8=
 github.com/gopherjs/gopherjs v0.0.0-20181017120253-0766667cb4d1 h1:EGx4pi6eqNxGaHF6qqu48+N2wcFQ5qg5FXgOdqsJ5d8=
@@ -949,7 +947,6 @@ github.com/opencontainers/runtime-spec v0.1.2-0.20190618234442-a950415649c7/go.m
 github.com/opencontainers/runtime-spec v1.0.0/go.mod h1:jwyrGlmzljRJv/Fgzds9SsS/C5hL+LL3ko9hs6T5lQ0=
 github.com/opencontainers/runtime-tools v0.0.0-20181011054405-1d69bd0f9c39/go.mod h1:r3f7wjNzSs2extwzU3Y+6pKfobzPh+kKFJ3ofN+3nfs=
 github.com/opencontainers/selinux v1.3.1-0.20190929122143-5215b1806f52/go.mod h1:+BLncwf63G4dgOzykXAxcmnFlUaOlkDdmw/CqsW6pjs=
-github.com/openshift-online/ocm-sdk-go v0.1.150/go.mod h1:wtDv/a2arfeFkYpgQg6J7axTwXkrlSifaVRWeZkUZzo=
 github.com/openshift-online/ocm-sdk-go v0.1.152 h1:CcY43aaw7G1DFutegD5q4I4tN0DhP/0MHNF2bfE4yLc=
 github.com/openshift-online/ocm-sdk-go v0.1.152/go.mod h1:wtDv/a2arfeFkYpgQg6J7axTwXkrlSifaVRWeZkUZzo=
 github.com/openshift/api v0.0.0-20200526144822-34f54f12813a h1:riE/kCXnb051RWT/z+DytxKEZ3+JromVDl79rXAKyFY=
@@ -972,8 +969,8 @@ github.com/openshift/managed-upgrade-operator v0.0.0-20200820052802-5d57e1785b53
 github.com/openshift/operator-custom-metrics v0.3.0/go.mod h1:4k6G9+KHKg6r/ShP8Vi9YFnpJ5fbHPkQsYCUlzMwtYQ=
 github.com/openshift/origin v0.0.0-20160503220234-8f127d736703/go.mod h1:0Rox5r9C8aQn6j1oAOQ0c1uC86mYbUFObzjBRvUKHII=
 github.com/openshift/prom-label-proxy v0.1.1-0.20191016113035-b8153a7f39f1/go.mod h1:p5MuxzsYP1JPsNGwtjtcgRHHlGziCJJfztff91nNixw=
-github.com/openshift/rosa v0.1.4 h1:QP0ehVtibcjMJnCLWAwQ9i0kKf0hftV6LB7GdnQUuvM=
-github.com/openshift/rosa v0.1.4/go.mod h1:YVh4fHLRszgqPkZtcnJtqbuW3CRXQgiBwGHAzmSEa4I=
+github.com/openshift/rosa v0.1.5 h1:OLmYDHy6PV/kOtOL4ptxQtoCCzRFvLH4cur2nSQ4QZ8=
+github.com/openshift/rosa v0.1.5/go.mod h1:4P9JEy79gRmS0NUgadARZE2YadgSbMQ2Q234IIVCfNw=
 github.com/openshift/splunk-forwarder-operator v0.0.0-20201112162206-2f454770b6c0 h1:1mnD/uvJ+OuVZVX+UdIQ9DqukHKUeNbJ+snKL03strE=
 github.com/openshift/splunk-forwarder-operator v0.0.0-20201112162206-2f454770b6c0/go.mod h1:SrwqA2c0PLPXAdXEs9oZV6XUwgPolofyBFS49U3fYB8=
 github.com/opentracing-contrib/go-observer v0.0.0-20170622124052-a52f23424492/go.mod h1:Ngi6UdF0k5OKD5t5wlmGhe/EDKPoUM3BXZSSfIuJbis=
