@@ -18,12 +18,22 @@ var once = sync.Once{}
 
 var logMetrics = LogMetrics{}
 
+var beforeSuiteMetrics = LogMetrics{}
+
 // GetLogMetrics will return the log metrics.
 func GetLogMetrics() LogMetrics {
 	once.Do(func() {
 		viper.UnmarshalKey("logMetrics", &logMetrics)
 	})
 	return logMetrics
+}
+
+// GetBeforeSuiteMetrics will return the log metrics.
+func GetBeforeSuiteMetrics() LogMetrics {
+	once.Do(func() {
+		viper.UnmarshalKey("beforeSuiteMetrics", &beforeSuiteMetrics)
+	})
+	return beforeSuiteMetrics
 }
 
 // GetMetricByName returns a pointer to a LogMetric from the array based on the name

@@ -375,7 +375,7 @@ func runGinkgoTests() error {
 			log.Println("No Kubeconfig found from initial cluster setup. Unable to run upgrade.")
 		}
 	}
-	
+
 	if reportDir != "" {
 		if err = metadata.Instance.WriteToJSON(reportDir); err != nil {
 			return fmt.Errorf("error while writing the custom metadata: %v", err)
@@ -633,6 +633,9 @@ func runTestsInPhase(phase string, description string) bool {
 	// Ensure all log metrics are zeroed out before running again
 	metadata.Instance.ResetLogMetrics()
 
+	//Ensure all before suite metrics are zeroed out before running again
+	metadata.Instance.ResetBeforeSuiteMetrics()
+
 	for _, file := range files {
 		if logFileRegex.MatchString(file.Name()) {
 			data, err := ioutil.ReadFile(filepath.Join(reportDir, file.Name()))
@@ -643,12 +646,16 @@ func runTestsInPhase(phase string, description string) bool {
 			for _, metric := range config.GetLogMetrics() {
 				metadata.Instance.IncrementLogMetric(metric.Name, metric.HasMatches(data))
 			}
+			for _, metric := range config.GetBeforeSuiteMetrics() {
+				metadata.Instance.IncrementBeforeSuiteMetric(metric.Name, metric.HasMatches(data))
+			}
 		}
 	}
 
 	logMetricTestSuite := reporters.JUnitTestSuite{
 		Name: "Log Metrics",
 	}
+
 	for name, value := range metadata.Instance.LogMetrics {
 		testCase := reporters.JUnitTestCase{
 			ClassName: "Log Metrics",
@@ -674,6 +681,40 @@ func runTestsInPhase(phase string, description string) bool {
 	data, err := xml.Marshal(&logMetricTestSuite)
 
 	err = ioutil.WriteFile(filepath.Join(phaseDirectory, "junit_logmetrics.xml"), data, 0644)
+	if err != nil {
+		log.Printf("error writing to junit file: %s", err.Error())
+		return false
+	}
+
+	beforeSuiteMetricTestSuite := reporters.JUnitTestSuite{
+		Name: "Before Suite Metrics",
+	}
+
+	for name, value := range metadata.Instance.BeforeSuiteMetrics {
+		testCase := reporters.JUnitTestCase{
+			ClassName: "Before Suite Metrics",
+			Name:      fmt.Sprintf("[BeforeSuite] %s", name),
+			Time:      float64(value),
+		}
+
+		if config.GetBeforeSuiteMetrics().GetMetricByName(name).IsPassing(value) {
+			testCase.PassedMessage = &reporters.JUnitPassedMessage{
+				Message: fmt.Sprintf("Passed with %d matches", value),
+			}
+		} else {
+			testCase.FailureMessage = &reporters.JUnitFailureMessage{
+				Message: fmt.Sprintf("Failed with %d matches", value),
+			}
+			beforeSuiteMetricTestSuite.Failures++
+		}
+		beforeSuiteMetricTestSuite.Tests++
+
+		beforeSuiteMetricTestSuite.TestCases = append(beforeSuiteMetricTestSuite.TestCases, testCase)
+	}
+
+	newdata, err := xml.Marshal(&beforeSuiteMetricTestSuite)
+
+	err = ioutil.WriteFile(filepath.Join(phaseDirectory, "junit_beforesuite.xml"), newdata, 0644)
 	if err != nil {
 		log.Printf("error writing to junit file: %s", err.Error())
 		return false
