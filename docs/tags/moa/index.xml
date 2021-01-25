@@ -6,10 +6,19 @@
     <description>Recent content in moa on OSDe2e Reporting</description>
     <generator>Hugo -- gohugo.io</generator>
     <copyright>Copyright © 2020, Red Hat, all rights reserved.</copyright>
-    <lastBuildDate>Sun, 24 Jan 2021 12:00:32 +0000</lastBuildDate>
+    <lastBuildDate>Mon, 25 Jan 2021 12:00:42 +0000</lastBuildDate>
     
 	<atom:link href="https://openshift.github.io/osde2e/tags/moa/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>OSDe2e moa Weather Report 2021-01-25 12:00:42.533439277 &#43;0000 UTC</title>
+      <link>https://openshift.github.io/osde2e/post/ff7530bb68474ec89d078d0c9ec026af/</link>
+      <pubDate>Mon, 25 Jan 2021 12:00:42 +0000</pubDate>
+      
+      <guid>https://openshift.github.io/osde2e/post/ff7530bb68474ec89d078d0c9ec026af/</guid>
+      <description>&lt;table class=&#34;summary&#34;&gt;&lt;/table&gt;</description>
+    </item>
     
     <item>
       <title>OSDe2e moa Weather Report 2021-01-24 12:00:32.182297111 &#43;0000 UTC</title>
