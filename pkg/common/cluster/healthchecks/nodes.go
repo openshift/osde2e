@@ -42,6 +42,14 @@ func CheckNodeHealth(nodeClient v1.CoreV1Interface, logger *log.Logger) (bool, e
 				success = false
 			}
 		}
+		// Check taints to ensure node is schedulable
+		for _, nt := range node.Spec.Taints {
+			if nt.Effect == "NoSchedule" && nt.Key == "node.kubernetes.io/unschedulable" {
+				metadataState = append(metadataState, fmt.Sprintf("%v", node))
+				logger.Printf("Node (%v) not ready taint: %v=%v\n", node.ObjectMeta.Name, nt.Key, nt.Effect)
+				success = false
+			}
+		}
 	}
 
 	if len(metadataState) > 0 {
