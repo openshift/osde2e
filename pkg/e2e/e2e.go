@@ -143,15 +143,12 @@ var _ = ginkgo.SynchronizedBeforeSuite(func() []byte {
 		} else {
 			log.Printf("No kubeconfig contents found, but there should be some by now.")
 		}
+		getLogs()
 	}
-	getLogs()
 	return []byte{}
 }, func(data []byte) {
 	// only needs to run once
 })
-
-// Collect logs after each test
-var _ = ginkgo.JustAfterEach(getLogs)
 
 func getLogs() {
 	defer ginkgo.GinkgoRecover()
