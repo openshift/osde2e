@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"strings"
-	"text/template"
 
 	. "github.com/onsi/gomega"
 
@@ -14,13 +13,11 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-var addonTestTemplate *template.Template
-var err error
-
-// RunAddonTests will attempt to run the configured addon tests for the current job
-// It allows you to specify a job name prefix and arguments to a test harness container
-func (h *H) RunAddonTests(name string, timeout int, harnesses []string, args []string) {
-	addonTestTemplate, err = templates.LoadTemplate("/assets/addons/addon-runner.template")
+// RunAddonTests will attempt to run the configured addon tests for the current job.
+// It allows you to specify a job name prefix and arguments to a test harness container.
+// It returns the names of test harnesses that failed (empty slice if none failed).
+func (h *H) RunAddonTests(name string, timeout int, harnesses, args []string) (failed []string) {
+	addonTestTemplate, err := templates.LoadTemplate("/assets/addons/addon-runner.template")
 
 	if err != nil {
 		panic(fmt.Sprintf("error while loading addon test runner: %v", err))
@@ -90,6 +87,9 @@ func (h *H) RunAddonTests(name string, timeout int, harnesses []string, args []s
 		// ensure job has not failed
 		job, err := h.Kube().BatchV1().Jobs(r.Namespace).Get(context.TODO(), jobName, metav1.GetOptions{})
 		Expect(err).NotTo(HaveOccurred())
-		Expect(job.Status.Failed).Should(BeNumerically("==", 0))
+		if !Expect(job.Status.Failed).Should(BeNumerically("==", 0)) {
+			failed = append(failed, harness)
+		}
 	}
+	return failed
 }

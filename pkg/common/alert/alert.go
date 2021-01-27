@@ -96,7 +96,7 @@ func (ma MetricAlert) Check(client *metrics.Client) error {
 
 	if len(results) >= ma.FailureThreshold {
 		log.Printf("Alert triggered for %s: %d >= %d", ma.Name, len(results), ma.FailureThreshold)
-		if err := sendSlackMessage(ma.SlackChannel, fmt.Sprintf("%s has seen %d failures in the last 24h", ma.Name, len(results))); err != nil {
+		if err := SendSlackMessage(ma.SlackChannel, fmt.Sprintf("%s has seen %d failures in the last 24h", ma.Name, len(results))); err != nil {
 			log.Printf("Error sending slack message: %s", err.Error())
 		}
 	}
@@ -132,7 +132,8 @@ func RegisterGinkgoAlert(test, team, contact, slack, email string, threshold int
 	ma.AddAlert(testAlert)
 }
 
-func sendSlackMessage(channel, message string) error {
+// SendSlackMessage sends the message text to the provided channel (if it can be found).
+func SendSlackMessage(channel, message string) error {
 	slackAPI := slack.New(viper.GetString(config.Alert.SlackAPIToken))
 	var slackChannel slack.Channel
 	var ok bool

@@ -346,6 +346,11 @@ var Addons = struct {
 	// artifacts created after test harnesses have run
 	// Env: ADDON_CLEANUP_HARNESSES
 	CleanupHarnesses string
+
+	// SlackChannel is the name of a slack channel in the CoreOS slack workspace that will
+	// receive an alert if the tests fail.
+	// Env: ADDON_SLACK_CHANNEL
+	SlackChannel string
 }{
 	IDsAtCreation:    "addons.idsAtCreation",
 	IDs:              "addons.ids",
@@ -353,6 +358,7 @@ var Addons = struct {
 	TestUser:         "addons.testUser",
 	RunCleanup:       "addons.runCleanup",
 	CleanupHarnesses: "addons.cleanupHarnesses",
+	SlackChannel:     "addons.slackChannel",
 }
 
 // Scale config keys.
@@ -570,6 +576,9 @@ func init() {
 
 	viper.SetDefault(Addons.RunCleanup, false)
 	viper.BindEnv(Addons.RunCleanup, "ADDON_RUN_CLEANUP")
+
+	viper.SetDefault(Addons.SlackChannel, "sd-cicd-alerts")
+	viper.BindEnv(Addons.SlackChannel, "ADDON_SLACK_CHANNEL")
 
 	// ----- Scale -----
 	viper.SetDefault(Scale.WorkloadsRepository, "https://github.com/openshift-scale/workloads")
