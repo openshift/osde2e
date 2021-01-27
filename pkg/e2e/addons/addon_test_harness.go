@@ -1,12 +1,14 @@
 package addons
 
 import (
+	"fmt"
 	"log"
 	"strings"
 
 	"github.com/onsi/ginkgo"
 	"github.com/spf13/viper"
 
+	"github.com/openshift/osde2e/pkg/common/alert"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/helper"
 )
@@ -24,6 +26,11 @@ var _ = ginkgo.Describe("[Suite: addons] Addon Test Harness", func() {
 	}
 	ginkgo.It("should run until completion", func() {
 		h.SetServiceAccount(viper.GetString(config.Addons.TestUser))
-		h.RunAddonTests("addon-tests", int(addonTimeoutInSeconds), strings.Split(viper.GetString(config.Addons.TestHarnesses), ","), []string{})
+		harnesses := strings.Split(viper.GetString(config.Addons.TestHarnesses), ",")
+		failed := h.RunAddonTests("addon-tests", int(addonTimeoutInSeconds), harnesses, []string{})
+		if len(failed) > 0 {
+			// tests failed, notify
+			alert.SendSlackMessage(viper.GetString(config.Addons.SlackChannel), fmt.Sprintf("Addon tests failed: %v", failed))
+		}
 	}, addonTimeoutInSeconds+30)
 })
