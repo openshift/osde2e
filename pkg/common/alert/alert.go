@@ -134,7 +134,11 @@ func RegisterGinkgoAlert(test, team, contact, slack, email string, threshold int
 
 // SendSlackMessage sends the message text to the provided channel (if it can be found).
 func SendSlackMessage(channel, message string) error {
-	slackAPI := slack.New(viper.GetString(config.Alert.SlackAPIToken))
+	token := viper.GetString(config.Alert.SlackAPIToken)
+	if len(token) == 0 {
+		return fmt.Errorf("no slack token configured")
+	}
+	slackAPI := slack.New(token)
 	var slackChannel slack.Channel
 	var ok bool
 
