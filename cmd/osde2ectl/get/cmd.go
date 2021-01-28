@@ -162,7 +162,8 @@ func run(cmd *cobra.Command, argv []string) error {
 				if err != nil {
 					return fmt.Errorf("Unable to create a new directory - %s", err.Error())
 				}
-			} else {
+			}
+			if err != nil {
 				return fmt.Errorf("Unable to stat file path: %s", err.Error())
 			}
 			filePath = filepath.Join(args.kubeConfigPath, filename)
