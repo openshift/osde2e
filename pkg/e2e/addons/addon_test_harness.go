@@ -3,6 +3,7 @@ package addons
 import (
 	"fmt"
 	"log"
+	"os"
 	"strings"
 
 	"github.com/onsi/ginkgo"
@@ -12,6 +13,23 @@ import (
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/helper"
 )
+
+// jobURL infers the URL of this job using environment variables
+// provided by Prow. It is not foolproof, and the URLs generated
+// are only valid for "JOB_TYPE=periodic" jobs.
+func jobURL() (url string, ok bool) {
+	if os.Getenv("JOB_TYPE") != "periodic" {
+		return
+	}
+	var jobID, jobName string
+	if jobID, ok = os.LookupEnv("BUILD_ID"); !ok {
+		return
+	}
+	if jobName, ok = os.LookupEnv("JOB_NAME"); !ok {
+		return
+	}
+	return fmt.Sprintf("https://prow.ci.openshift.org/view/gs/origin-ci-test/logs/%s/%s", jobName, jobID), true
+}
 
 var _ = ginkgo.Describe("[Suite: addons] Addon Test Harness", func() {
 	defer ginkgo.GinkgoRecover()
@@ -30,7 +48,11 @@ var _ = ginkgo.Describe("[Suite: addons] Addon Test Harness", func() {
 		failed := h.RunAddonTests("addon-tests", int(addonTimeoutInSeconds), harnesses, []string{})
 		if len(failed) > 0 {
 			// tests failed, notify
-			alert.SendSlackMessage(viper.GetString(config.Addons.SlackChannel), fmt.Sprintf("Addon tests failed: %v", failed))
+			message := fmt.Sprintf("Addon tests failed: %v", failed)
+			if url, ok := jobURL(); ok {
+				message += "\n" + url
+			}
+			alert.SendSlackMessage(viper.GetString(config.Addons.SlackChannel), message)
 		}
 	}, addonTimeoutInSeconds+30)
 })
