@@ -518,7 +518,13 @@ func (o *OCMProvider) ClusterKubeconfig(clusterID string) ([]byte, error) {
 		return getLocalKubeConfig(localKubeConfig)
 	}
 
+	existingKubeConfig := viper.GetString(config.Kubeconfig.Contents)
+	if existingKubeConfig != "" {
+		return []byte(existingKubeConfig), nil
+	}
+
 	if creds, ok := o.credentialCache[clusterID]; ok {
+		viper.Set(config.Kubeconfig.Contents, creds)
 		return []byte(creds), nil
 	}
 
@@ -550,6 +556,7 @@ func (o *OCMProvider) ClusterKubeconfig(clusterID string) ([]byte, error) {
 	}
 
 	o.credentialCache[clusterID] = resp.Body().Kubeconfig()
+	viper.Set(config.Kubeconfig.Contents, resp.Body().Kubeconfig())
 
 	return []byte(resp.Body().Kubeconfig()), nil
 }

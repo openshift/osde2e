@@ -61,9 +61,9 @@ var _ = ginkgo.Describe(inhibitionsTestName, func() {
 				expectedPresent: false,
 			},
 			{
-				name:           "ClusterOperatorDown inhibits ClusterOperatorDegraded",
-				expectedSource: "ClusterOperatorDown",
-				expectedTarget: "ClusterOperatorDegraded",
+				name:           "ClusterOperatorDegraded inhibits ClusterOperatorDown",
+				expectedSource: "ClusterOperatorDegraded",
+				expectedTarget: "ClusterOperatorDown",
 				expectedEqual: prometheusModel.LabelNames{
 					"namespace",
 					"name",
@@ -71,49 +71,11 @@ var _ = ginkgo.Describe(inhibitionsTestName, func() {
 				expectedPresent: true,
 			},
 			{
-				name:           "KubeNodeNotReady inhibits KubeDaemonSetRolloutStuck",
+				name:           "KubeNodeNotReady inhibits KubeNodeUnreachable",
 				expectedSource: "KubeNodeNotReady",
-				expectedTarget: "KubeDaemonSetRolloutStuck",
-				expectedEqual: prometheusModel.LabelNames{
-					"instance",
-				},
-				expectedPresent: true,
-			},
-			{
-				name:           "KubeNodeUnreachable inhibits KubeNodeNotReady",
-				expectedSource: "KubeNodeUnreachable",
-				expectedTarget: "KubeNodeNotReady",
+				expectedTarget: "KubeNodeUnreachable",
 				expectedEqual: prometheusModel.LabelNames{
 					"node",
-					"instance",
-				},
-				expectedPresent: true,
-			},
-			{
-				name:           "KubePodNotReady inhibits KubeDeploymentReplicasMismatch",
-				expectedSource: "KubePodNotReady",
-				expectedTarget: "KubeDeploymentReplicasMismatch",
-				expectedEqual: prometheusModel.LabelNames{
-					"namespace",
-					"pod",
-				},
-				expectedPresent: true,
-			},
-			{
-				name:           "KubePodCrashLooping inhibits KubeDeploymentReplicasMismatch",
-				expectedSource: "KubePodCrashLooping",
-				expectedTarget: "KubeDeploymentReplicasMismatch",
-				expectedEqual: prometheusModel.LabelNames{
-					"namespace",
-					"pod",
-				},
-				expectedPresent: true,
-			},
-			{
-				name:           "KubeNodeNotReady inhibits TargetDown",
-				expectedSource: "KubeNodeNotReady",
-				expectedTarget: "TargetDown",
-				expectedEqual: prometheusModel.LabelNames{
 					"instance",
 				},
 				expectedPresent: true,
