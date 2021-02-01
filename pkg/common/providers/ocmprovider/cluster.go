@@ -209,22 +209,47 @@ func (o *OCMProvider) DetermineRegion(cloudProvider string) (string, error) {
 		if err != nil {
 			return "", err
 		}
+		items := regions.Items().Slice()
 
-		for range regions.Items().Slice() {
-			regionObj := regions.Items().Slice()[rand.Intn(regions.Total())]
-			region = regionObj.ID()
-
-			if regionObj.Enabled() {
-				break
-			}
+		region, found := ChooseRandomRegion(toCloudRegions(items)...)
+		if !found {
+			return "", fmt.Errorf("unable to choose a random enabled region")
 		}
 
-		log.Printf("Random region requested, selected %s region.", region)
+		regionID := region.ID()
+
+		log.Printf("Random region requested, selected %s region.", regionID)
 
 		// Update the Config with the selected random region
-		viper.Set(config.CloudProvider.Region, region)
+		viper.Set(config.CloudProvider.Region, regionID)
 	}
 	return region, nil
+}
+
+type CloudRegion interface {
+	ID() string
+	Enabled() bool
+}
+
+var _ CloudRegion = &v1.CloudRegion{}
+
+func toCloudRegions(in []*v1.CloudRegion) []CloudRegion {
+	out := make([]CloudRegion, 0, len(in))
+	for i := range in {
+		out = append(out, in[i])
+	}
+	return out
+}
+
+func ChooseRandomRegion(regions ...CloudRegion) (CloudRegion, bool) {
+	for range regions {
+		regionObj := regions[rand.Intn(len(regions))]
+
+		if regionObj.Enabled() {
+			return regionObj, true
+		}
+	}
+	return nil, false
 }
 
 // DetermineMachineType will return the machine type provided by configs. This mainly wraps the random functionality for use
