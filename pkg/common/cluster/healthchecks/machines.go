@@ -14,18 +14,28 @@ import (
 	"k8s.io/client-go/dynamic"
 )
 
+const (
+	runningPhase      = "Running"
+	machinesNamespace = "openshift-machine-api"
+)
+
 // CheckMachinesObjectState lists all openshift machines and validates that they are "Running"
 func CheckMachinesObjectState(dynamicClient dynamic.Interface, logger *log.Logger) (bool, error) {
 	logger = logging.CreateNewStdLoggerOrUseExistingLogger(logger)
 
 	logger.Print("Checking that machines are healthy...")
 
-	mc := dynamicClient.Resource(schema.GroupVersionResource{Group: "machine.openshift.io", Resource: "machines", Version: "v1beta1"})
+	mc := dynamicClient.
+		Resource(schema.GroupVersionResource{Group: "machine.openshift.io", Resource: "machines", Version: "v1beta1"}).
+		Namespace(machinesNamespace)
 	obj, err := mc.List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		return false, err
 	}
-	var runningPhase string = "Running"
+	if len(obj.Items) == 0 {
+		return false, fmt.Errorf("No machines found in the %s namespace", machinesNamespace)
+	}
+
 	var metadataState []string
 
 	for _, item := range obj.Items {
