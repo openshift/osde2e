@@ -17,6 +17,7 @@ import (
 func CheckClusterPodHealth(podClient v1.CoreV1Interface, logger *log.Logger) (bool, error) {
 	filters := []PodPredicate{
 		IsClusterPod,
+		IsNotReadinessPod,
 		IsNotRunning,
 		IsNotCompleted,
 	}
