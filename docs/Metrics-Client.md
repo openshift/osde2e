@@ -1,10 +1,17 @@
 # Metrics Client
 
-OSDe2e produces and sends many metrics up to DataHub Prometheus. To enable teams to consume this data in a simpler fashion, OSDe2e has a metrics consumption library bundled with commonly-used queries built in.
+OSDe2e produces and sends many metrics up to Prometheus managed by the App-SRE team. To enable teams to consume this data in a simpler fashion, OSDe2e has a metrics consumption library bundled with commonly-used queries built in.
 
-## Prometheus Bearer Token
 
-A Prometheus bearer token will be required to query against DataHub prometheus. To do so, file a request at [https://help.datahub.redhat.com/docs/data-hub-report-issues](https://help.datahub.redhat.com/docs/data-hub-report-issues) for a bearer token. Your GPG key will be asked for when the request gets processed.
+## Prometheus Queries
+
+Access to Prometheus has to be granted by the App-SRE team and this can be done by sending a pull request as indicated by the instructions shown here - [app-sre monitoring](https://gitlab.cee.redhat.com/service/app-interface/-/blob/master/docs/app-sre/monitoring.md#prometheus)
+
+
+Once access is granted, users can directly query in app-sre prometheus and view results through the following link - [app-sre](https://prometheus.app-sre-prod-01.devshift.net/).
+
+
+
 
 ## Quickstart Example
 
