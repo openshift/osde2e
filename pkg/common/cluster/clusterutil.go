@@ -208,20 +208,40 @@ func waitForClusterReadyWithOverrideAndExpectedNumberOfNodes(clusterID string, l
 }
 
 // PollClusterHealth looks at CVO data to determine if a cluster is alive/healthy or not
+// param clusterID: If specified, Provider will be discovered through OCM. If the empty string,
+// 		assume we are running in a cluster and use in-cluster REST config instead.
 func PollClusterHealth(clusterID string, logger *log.Logger) (status bool, failures []string, err error) {
 	logger = logging.CreateNewStdLoggerOrUseExistingLogger(logger)
 
-	provider, err := providers.ClusterProvider()
-
-	if err != nil {
-		return false, nil, fmt.Errorf("error getting cluster provisioning client: %v", err)
-	}
-
 	logger.Print("Polling Cluster Health...\n")
-	restConfig, err := getRestConfig(provider, clusterID)
-	if err != nil {
-		logger.Printf("Error generating Rest Config: %v\n", err)
-		return false, nil, nil
+
+	var restConfig *rest.Config
+	var providerType string
+
+	if clusterID == "" {
+		if restConfig, err = rest.InClusterConfig(); err != nil {
+			logger.Printf("Error getting in-cluster REST config: %v\n", err)
+			return false, nil, nil
+		}
+
+		// FIXME: Is there a way to discover this from within the cluster?
+		// For now, ocm and rosa behave the same, so hardcode either.
+		providerType = "ocm"
+
+	} else {
+		provider, err := providers.ClusterProvider()
+
+		if err != nil {
+			return false, nil, fmt.Errorf("error getting cluster provisioning client: %v", err)
+		}
+
+		restConfig, err = getRestConfig(provider, clusterID)
+		if err != nil {
+			logger.Printf("Error generating Rest Config: %v\n", err)
+			return false, nil, nil
+		}
+
+		providerType = provider.Type()
 	}
 
 	kubeClient, err := kubernetes.NewForConfig(restConfig)
@@ -245,7 +265,7 @@ func PollClusterHealth(clusterID string, logger *log.Logger) (status bool, failu
 	clusterHealthy := true
 
 	var healthErr *multierror.Error
-	switch provider.Type() {
+	switch providerType {
 	case "rosa":
 		fallthrough
 	case "ocm":
@@ -285,7 +305,7 @@ func PollClusterHealth(clusterID string, logger *log.Logger) (status bool, failu
 			clusterHealthy = false
 		}
 	default:
-		logger.Printf("No provisioner-specific logic for %s", provider.Type())
+		logger.Printf("No provisioner-specific logic for %q", providerType)
 	}
 
 	return clusterHealthy, failures, healthErr.ErrorOrNil()

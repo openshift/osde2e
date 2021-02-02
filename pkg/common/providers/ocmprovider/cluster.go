@@ -210,22 +210,65 @@ func (o *OCMProvider) DetermineRegion(cloudProvider string) (string, error) {
 		if err != nil {
 			return "", err
 		}
+		items := regions.Items().Slice()
 
-		for range regions.Items().Slice() {
-			regionObj := regions.Items().Slice()[rand.Intn(regions.Total())]
-			region = regionObj.ID()
-
-			if regionObj.Enabled() {
-				break
-			}
+		region, found := ChooseRandomRegion(toCloudRegions(items)...)
+		if !found {
+			return "", fmt.Errorf("unable to choose a random enabled region")
 		}
 
-		log.Printf("Random region requested, selected %s region.", region)
+		regionID := region.ID()
+
+		log.Printf("Random region requested, selected %s region.", regionID)
 
 		// Update the Config with the selected random region
-		viper.Set(config.CloudProvider.Region, region)
+		viper.Set(config.CloudProvider.Region, regionID)
 	}
 	return region, nil
+}
+
+// CloudRegion provides an interface for methods on *v1.CloudRegion so that
+// compatible types can be instantiated from tests.
+type CloudRegion interface {
+	ID() string
+	Enabled() bool
+}
+
+// ensure *v1.CloudRegion implements CloudRegion at compile time
+var _ CloudRegion = &v1.CloudRegion{}
+
+// toCloudRegions converts a slice of *v1.CloudRegion into a slice of CloudRegion.
+// This helper can be removed once generics lands in Go, as this will no longer be
+// necessary.
+func toCloudRegions(in []*v1.CloudRegion) []CloudRegion {
+	out := make([]CloudRegion, 0, len(in))
+	for i := range in {
+		out = append(out, in[i])
+	}
+	return out
+}
+
+// ChooseRandomRegion chooses a random enabled region from the provided options. Its
+// second return parameter indicates whether it was successful in finding an enabled
+// region.
+func ChooseRandomRegion(regions ...CloudRegion) (CloudRegion, bool) {
+	// remove disabled regions from consideration
+	enabledRegions := make([]CloudRegion, 0, len(regions))
+	for _, region := range regions {
+		if region.Enabled() {
+			enabledRegions = append(enabledRegions, region)
+		}
+	}
+	// randomize the order of the candidates
+	rand.Shuffle(len(enabledRegions), func(i, j int) {
+		enabledRegions[i], enabledRegions[j] = enabledRegions[j], enabledRegions[i]
+	})
+	// return the first element if the list is not empty
+	for _, regionObj := range enabledRegions {
+		return regionObj, true
+	}
+	// indicate that there were no enabled candidates
+	return nil, false
 }
 
 // DetermineMachineType will return the machine type provided by configs. This mainly wraps the random functionality for use
