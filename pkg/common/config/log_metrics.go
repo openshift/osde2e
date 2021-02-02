@@ -30,9 +30,7 @@ func GetLogMetrics() LogMetrics {
 
 // GetBeforeSuiteMetrics will return the log metrics.
 func GetBeforeSuiteMetrics() LogMetrics {
-	once.Do(func() {
-		viper.UnmarshalKey("beforeSuiteMetrics", &beforeSuiteMetrics)
-	})
+	viper.UnmarshalKey("beforeSuiteMetrics", &beforeSuiteMetrics)
 	return beforeSuiteMetrics
 }
 
