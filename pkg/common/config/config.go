@@ -594,6 +594,7 @@ func init() {
 
 	// ----- Alert ----
 	viper.BindEnv(Alert.SlackAPIToken, "SLACK_API_TOKEN")
+	RegisterSecret(Alert.SlackAPIToken, "slack-api-token")
 }
 
 // PostProcess is a variety of post-processing commands that is intended to be run after a config is loaded.
