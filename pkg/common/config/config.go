@@ -202,6 +202,10 @@ var Cluster = struct {
 	// Env: MULTI_AZ
 	MultiAZ string
 
+	// Channel dictates which install/upgrade edges will be available to the cluster
+	// Env: CHANNEL
+	Channel string
+
 	// DestroyClusterAfterTest set to true if you want to the cluster to be explicitly deleted after the test.
 	// Env: DESTROY_CLUSTER
 	DestroyAfterTest string
@@ -279,6 +283,7 @@ var Cluster = struct {
 	NumWorkerNodes string
 }{
 	MultiAZ:                             "cluster.multiAZ",
+	Channel:                             "cluster.channel",
 	DestroyAfterTest:                    "cluster.destroyAfterTest",
 	ExpiryInMinutes:                     "cluster.expiryInMinutes",
 	AfterTestWait:                       "cluster.afterTestWait",
@@ -499,6 +504,9 @@ func init() {
 	// ----- Cluster -----
 	viper.SetDefault(Cluster.MultiAZ, false)
 	viper.BindEnv(Cluster.MultiAZ, "MULTI_AZ")
+
+	viper.SetDefault(Cluster.Channel, "stable")
+	viper.BindEnv(Cluster.Channel, "CHANNEL")
 
 	viper.SetDefault(Cluster.DestroyAfterTest, false)
 	viper.BindEnv(Cluster.DestroyAfterTest, "DESTROY_CLUSTER")

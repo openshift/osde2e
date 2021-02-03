@@ -105,7 +105,8 @@ func (o *OCMProvider) LaunchCluster(clusterName string) (string, error) {
 			ID(region)).
 		MultiAZ(multiAZ).
 		Version(v1.NewVersion().
-			ID(viper.GetString(config.Cluster.Version))).
+			ID(viper.GetString(config.Cluster.Version)).
+			ChannelGroup(viper.GetString(config.Cluster.Channel))).
 		CloudProvider(v1.NewCloudProvider().
 			ID(cloudProvider)).
 		Properties(clusterProperties)
