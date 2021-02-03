@@ -34,24 +34,21 @@ func (l latestYVersion) SelectVersion(installVersion *spi.Version, versionList *
 				continue
 			}
 
-			if upgradeVersion.Prerelease() != "" {
-				if strings.Contains(upgradeVersion.Prerelease(), "nightly") {
-					if strings.Contains(newestVersion.Version().Prerelease(), "nightly") {
-						if upgradeVersion.GreaterThan(newestVersion.Version()) {
-							newestVersion = spi.NewVersionBuilder().Version(upgradeVersion).Build()
-						}
-					} else {
-						if upgradeVersion.Minor() >= newestVersion.Version().Minor() {
-							newestVersion = spi.NewVersionBuilder().Version(upgradeVersion).Build()
-						}
-					}
-				}
+			// Automatically assume a Y+1 nightly is greater than a non-nightly-build
+			if strings.Contains(upgradeVersion.Original(), "nightly") && !strings.Contains(newestVersion.Version().Original(), "nightly") {
+				newestVersion = spi.NewVersionBuilder().Version(upgradeVersion).Build()
+				continue
+			}
 
+			// Automatically assume a Y+1 nightly is greater than a non-nightly-build
+			if strings.Contains(upgradeVersion.Original(), "nightly") && strings.Contains(newestVersion.Version().Original(), "nightly") {
+				if upgradeVersion.Original() > newestVersion.Version().Original() {
+					newestVersion = spi.NewVersionBuilder().Version(upgradeVersion).Build()
+				}
 			} else {
-				if newestVersion.Version().Prerelease() == "" {
-					if upgradeVersion.GreaterThan(newestVersion.Version()) {
-						newestVersion = spi.NewVersionBuilder().Version(upgradeVersion).Build()
-					}
+				// Catch the rest
+				if upgradeVersion.GreaterThan(newestVersion.Version()) {
+					newestVersion = spi.NewVersionBuilder().Version(upgradeVersion).Build()
 				}
 			}
 		}

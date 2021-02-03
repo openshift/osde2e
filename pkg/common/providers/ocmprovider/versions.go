@@ -71,30 +71,20 @@ func (o *OCMProvider) Versions() (*spi.VersionList, error) {
 			if version, err := util.OpenshiftVersionToSemver(v.ID()); err != nil {
 				log.Printf("could not parse version '%s': %v", v.ID(), err)
 			} else if v.Enabled() {
-				if o.Environment() == "prod" && v.ChannelGroup() != "stable" {
-					if viper.GetString(config.Cluster.InstallSpecificNightly) == "" &&
-						viper.GetString(config.Cluster.ReleaseImageLatest) == "" {
-						return true
-					}
-				}
-				if o.Environment() == "stage" && v.ChannelGroup() == "nightly" {
-					if viper.GetString(config.Cluster.InstallSpecificNightly) == "" &&
-						viper.GetString(config.Cluster.ReleaseImageLatest) == "" {
-						return true
-					}
-				}
-				spiVersion := spi.NewVersionBuilder().
-					Version(version).
-					Default(v.Default()).
-					Build()
+				if v.ChannelGroup() == "stable" || v.ChannelGroup() == viper.GetString(config.Cluster.Channel) {
+					spiVersion := spi.NewVersionBuilder().
+						Version(version).
+						Default(v.Default()).
+						Build()
 
-				for _, upgrade := range v.AvailableUpgrades() {
-					if version, err := util.OpenshiftVersionToSemver(upgrade); err == nil {
-						spiVersion.AddUpgradePath(version)
+					for _, upgrade := range v.AvailableUpgrades() {
+						if version, err := util.OpenshiftVersionToSemver(upgrade); err == nil {
+							spiVersion.AddUpgradePath(version)
+						}
 					}
-				}
 
-				versions = append(versions, spiVersion)
+					versions = append(versions, spiVersion)
+				}
 			}
 			return true
 		})
