@@ -2,23 +2,20 @@ package cloudingress
 
 import (
 	"context"
-	"fmt"
 	"log"
-	"strings"
 	"time"
 
 	"github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	cloudingressv1alpha1 "github.com/openshift/cloud-ingress-operator/pkg/apis/cloudingress/v1alpha1"
-	"github.com/spf13/viper"
 
-	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/constants"
 	"github.com/openshift/osde2e/pkg/common/helper"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/util/wait"
 )
 
 // tests
@@ -30,15 +27,40 @@ var _ = ginkgo.Describe(constants.SuiteInforming+TestPrefix, func() {
 
 			updateApplicationIngress(h, "internal")
 
-			// Wait for the router-default service to have the correct annotation
-			err := pollAppIngressService(h, "router-default", "openshift-ingress", "private")
+			//wait for router-default service loadbalancer to have an annotation indicating its scheme is internal
+			err := wait.PollImmediate(10*time.Second, 5*time.Minute, func() (bool, error) {
+				service, err := h.Kube().CoreV1().Services("openshift-ingress").Get(context.TODO(), "router-default", metav1.GetOptions{})
+				if err != nil {
+					log.Printf("Waiting for router-default service in openshift-ingress namespace to be private")
+					return false, nil
+				}
+				if _, ok := service.Annotations["service.beta.kubernetes.io/aws-load-balancer-internal"]; ok == true {
+					log.Printf("router-default service in openshift-ingress namespace successfully switched to private")
+					return true, nil
+				}
+				log.Printf("Waiting for router-default service in openshift-ingress namespace to be private")
+				return false, nil
+			})
 			Expect(err).NotTo(HaveOccurred())
 		})
 		ginkgo.It("should be able to toggle the default applicationingress from private to public", func() {
+
 			updateApplicationIngress(h, "external")
 
-			// Wait for the router-default service to have the correct annotation
-			err := pollAppIngressService(h, "router-default", "openshift-ingress", "public")
+			//wait for router-default service loadbalancer to NOT have an annotation indicating its scheme is internal
+			err := wait.PollImmediate(10*time.Second, 5*time.Minute, func() (bool, error) {
+				service, err := h.Kube().CoreV1().Services("openshift-ingress").Get(context.TODO(), "router-default", metav1.GetOptions{})
+				if err != nil {
+					log.Printf("Waiting for router-default service in openshift-ingress namespace to be public")
+					return false, nil
+				}
+				if _, ok := service.Annotations["service.beta.kubernetes.io/aws-load-balancer-internal"]; ok == false {
+					log.Printf("router-default service in openshift-ingress namespace successfully switched to public")
+					return true, nil
+				}
+				log.Printf("Waiting for router-default service in openshift-ingress namespace to be public")
+				return false, nil
+			})
 			Expect(err).NotTo(HaveOccurred())
 		})
 	})
@@ -74,56 +96,6 @@ func updateApplicationIngress(h *helper.H, lbscheme string) {
 	// Update the publishingstrategy
 	ps, err = h.Dynamic().Resource(schema.GroupVersionResource{Group: "cloudingress.managed.openshift.io", Version: "v1alpha1", Resource: "publishingstrategies"}).Namespace(OperatorNamespace).Update(context.TODO(), ps, metav1.UpdateOptions{})
 	Expect(err).NotTo(HaveOccurred())
-}
-
-func pollAppIngressService(h *helper.H, serviceName string, svcNamespace string, lbscheme string) error {
-	// pollAppIngressService will check for the existence of a service
-	// in the specified project with the specified load balancer scheme
-	// and wait for it to exist until a timeout
-
-	var err error
-	// interval is the duration in seconds between polls
-	// values here for humans
-
-	interval := 5
-
-	// convert time.Duration type
-	timeoutDuration := time.Duration(viper.GetFloat64(config.Tests.PollingTimeout)) * time.Minute
-	intervalDuration := time.Duration(interval) * time.Second
-
-	start := time.Now()
-
-Loop:
-	for {
-		service, err := h.Kube().CoreV1().Services(svcNamespace).Get(context.TODO(), serviceName, metav1.GetOptions{})
-		elapsed := time.Since(start)
-
-		switch {
-		case err == nil:
-			if lbscheme == "private" {
-				if _, ok := service.Annotations["service.beta.kubernetes.io/aws-load-balancer-internal"]; ok == true {
-					log.Printf("%s service switched a %v LoadBalancer scheme after polling for %v", serviceName, lbscheme, elapsed)
-					break Loop
-				}
-			}
-			if lbscheme == "public" {
-				//Success
-				log.Printf("%s service switched a %v LoadBalancer scheme after polling for %v", serviceName, lbscheme, elapsed)
-				break Loop
-			}
-		case strings.Contains(err.Error(), "forbidden"):
-			return err
-		default:
-			if elapsed < timeoutDuration {
-				log.Printf("Waiting %v for %s service to exist with a %v LoadBalancer scheme", (timeoutDuration - elapsed), serviceName, lbscheme)
-				time.Sleep(intervalDuration)
-			} else {
-				err = fmt.Errorf("Failed to get service %s before timeout", serviceName)
-				break Loop
-			}
-		}
-	}
-	return err
 }
 
 // common setup and utils are in cloudingress.go
