@@ -33,6 +33,7 @@ func CheckPodHealth(podClient v1.CoreV1Interface, logger *log.Logger, ns string,
 	filters := []PodPredicate{
 		MatchesNamespace(ns),
 		MatchesNames(podPrefixes...),
+		IsNotReadinessPod,
 		IsNotRunning,
 		IsNotCompleted,
 	}
