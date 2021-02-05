@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"strings"
 	"time"
 
 	"github.com/Masterminds/semver"
@@ -129,10 +128,6 @@ func setupUpgradeVersion(clusterVersion *semver.Version, versionList *spi.Versio
 		log.Printf("No upgrade selector found. Not selecting an upgrade version.")
 		return nil
 	}
-
-	releaseName = strings.Replace(releaseName, "-nightly", "", -1)
-	releaseName = strings.Replace(releaseName, "-candidate", "", -1)
-	releaseName = strings.Replace(releaseName, "-fast", "", -1)
 
 	viper.Set(config.Upgrade.ReleaseName, releaseName)
 	viper.Set(config.Upgrade.Image, image)
