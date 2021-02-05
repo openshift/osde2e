@@ -7,6 +7,7 @@ import (
 	image "github.com/openshift/client-go/image/clientset/versioned"
 	project "github.com/openshift/client-go/project/clientset/versioned"
 	route "github.com/openshift/client-go/route/clientset/versioned"
+	security "github.com/openshift/client-go/security/clientset/versioned"
 	user "github.com/openshift/client-go/user/clientset/versioned"
 	machine "github.com/openshift/machine-api-operator/pkg/generated/clientset/versioned"
 	operator "github.com/operator-framework/operator-lifecycle-manager/pkg/api/client/clientset/versioned"
@@ -33,6 +34,13 @@ func (h *H) Cfg() config.Interface {
 func (h *H) Dynamic() dynamic.Interface {
 	client, err := dynamic.NewForConfig(h.restConfig)
 	Expect(err).ShouldNot(HaveOccurred(), "failed to configure Dynamic client")
+	return client
+}
+
+// Security returns the clientset for Security objects.
+func (h *H) Security() security.Interface {
+	client, err := security.NewForConfig(h.restConfig)
+	Expect(err).ShouldNot(HaveOccurred(), "failed to configure Security clientset")
 	return client
 }
 
