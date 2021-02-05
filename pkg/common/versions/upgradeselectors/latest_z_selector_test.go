@@ -44,11 +44,9 @@ func TestLatestZVersionSelectVersion(t *testing.T) {
 				AvailableVersions([]*spi.Version{
 					spi.NewVersionBuilder().Version(semver.MustParse("4.1.0")).Build(),
 					spi.NewVersionBuilder().Version(semver.MustParse("4.2.0")).AvailableUpgrades(map[*semver.Version]bool{
-						semver.MustParse("4.2.2"):                             true,
-						semver.MustParse("4.2.4"):                             true,
-						semver.MustParse("4.3.0"):                             true,
-						semver.MustParse("4.2.0-0.nightly-2020-10-30-200737"): true,
 						semver.MustParse("4.2.0-0.nightly-2020-10-31-223819"): true,
+						semver.MustParse("4.2.0-0.nightly-2020-11-01-223819"): true,
+						semver.MustParse("4.2.0-0.nightly-2020-10-31-213556"): true,
 					}).Build(),
 					spi.NewVersionBuilder().Default(true).Version(semver.MustParse("4.2.0-0.nightly-2020-10-31-223819")).AvailableUpgrades(map[*semver.Version]bool{
 						semver.MustParse("4.3.2"): true,
@@ -59,7 +57,7 @@ func TestLatestZVersionSelectVersion(t *testing.T) {
 					spi.NewVersionBuilder().Version(semver.MustParse("4.5.0")).Build(),
 				}).
 				Build(),
-			expectedVersion: spi.NewVersionBuilder().Version(semver.MustParse("4.2.4")).Build(),
+			expectedVersion: spi.NewVersionBuilder().Version(semver.MustParse("4.2.0-0.nightly-2020-11-01-223819")).Build(),
 		},
 		{
 			name:           "get latest z version out of order",
@@ -109,9 +107,9 @@ func TestLatestZVersionSelectVersion(t *testing.T) {
 			}
 
 			if (selectedVersion == nil || test.expectedVersion == nil) && selectedVersion != test.expectedVersion {
-				t.Errorf("test %s: expected selected version (%v) to match expected version (%v) and one is nil", test.name, selectedVersion, test.expectedVersion)
+				t.Errorf("test %s: expected selected version (%v) to match expected version (%v) and one is nil", test.name, selectedVersion.Version().Original(), test.expectedVersion.Version().Original())
 			} else if selectedVersion != nil && !selectedVersion.Version().Equal(test.expectedVersion.Version()) {
-				t.Errorf("test %s: selected version (%v) does not match expected version (%v)", test.name, selectedVersion, test.expectedVersion)
+				t.Errorf("test %s: selected version (%v) does not match expected version (%v)", test.name, selectedVersion.Version().Original(), test.expectedVersion.Version().Original())
 			}
 		}
 	}

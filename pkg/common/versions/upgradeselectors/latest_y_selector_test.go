@@ -44,12 +44,11 @@ func TestLatestYVersionSelectVersion(t *testing.T) {
 				AvailableVersions([]*spi.Version{
 					spi.NewVersionBuilder().Version(semver.MustParse("4.1.0")).Build(),
 					spi.NewVersionBuilder().Version(semver.MustParse("4.2.0")).AvailableUpgrades(map[*semver.Version]bool{
-						semver.MustParse("4.2.2"):                             true,
-						semver.MustParse("4.2.4"):                             true,
-						semver.MustParse("4.3.0"):                             true,
-						semver.MustParse("4.3.2"):                             true,
 						semver.MustParse("4.3.0-0.nightly-2020-10-31-200727"): true,
-						semver.MustParse("4.3.0-0.nightly-2020-11-01-123456"): true,
+						semver.MustParse("4.3.0-0.nightly-2020-11-01-200727"): true,
+						semver.MustParse("4.3.0-0.nightly-2020-10-31-200727"): true,
+						semver.MustParse("4.3.0-0.nightly-2020-11-02-200727"): true,
+						semver.MustParse("4.3.0-0.nightly-2020-11-02-423456"): true,
 					}).Build(),
 					spi.NewVersionBuilder().Default(true).Version(semver.MustParse("4.3.0")).AvailableUpgrades(map[*semver.Version]bool{
 						semver.MustParse("4.3.2"): true,
@@ -60,7 +59,7 @@ func TestLatestYVersionSelectVersion(t *testing.T) {
 					spi.NewVersionBuilder().Version(semver.MustParse("4.5.0")).Build(),
 				}).
 				Build(),
-			expectedVersion: spi.NewVersionBuilder().Version(semver.MustParse("4.3.0-0.nightly-2020-11-01-123456")).Build(),
+			expectedVersion: spi.NewVersionBuilder().Version(semver.MustParse("4.3.0-0.nightly-2020-11-02-423456")).Build(),
 		},
 		{
 			name:           "get latest y version out of order",

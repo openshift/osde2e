@@ -95,8 +95,14 @@ func (vl *VersionList) AvailableVersions() []*Version {
 // We must return multiple versions. /shrug
 func (vl *VersionList) FindVersion(version string) []*Version {
 	var response []*Version
+	parsedVersion := semver.MustParse(version)
+	if parsedVersion == nil {
+		return nil
+	}
 	for _, v := range vl.availableVersions {
-		if v.Version().Original() == version {
+		if v.Version().Major() == parsedVersion.Major() &&
+			v.Version().Minor() == parsedVersion.Minor() &&
+			v.Version().Patch() == parsedVersion.Patch() {
 			response = append(response, v)
 		}
 	}

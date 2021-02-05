@@ -34,20 +34,26 @@ func (l latestZVersion) SelectVersion(installVersion *spi.Version, versionList *
 			if upgradeVersion.Minor() != installVersion.Version().Minor() {
 				continue
 			}
-			if upgradeVersion.Prerelease() != "" {
-				if strings.Contains(upgradeVersion.Prerelease(), "nightly") && upgradeVersion.GreaterThan(newestVersion.Version()) {
+
+			// Automatically assume a Y+1 nightly is greater than a non-nightly-build
+			if strings.Contains(upgradeVersion.Original(), "nightly") && !strings.Contains(newestVersion.Version().Original(), "nightly") {
+				newestVersion = spi.NewVersionBuilder().Version(upgradeVersion).Build()
+				continue
+			}
+
+			// Catch the rest
+			if strings.Contains(upgradeVersion.Original(), "nightly") && strings.Contains(newestVersion.Version().Original(), "nightly") {
+				if upgradeVersion.Original() > newestVersion.Version().Original() {
 					newestVersion = spi.NewVersionBuilder().Version(upgradeVersion).Build()
 				}
 			} else {
-				if newestVersion.Version().Prerelease() == "" {
-					if upgradeVersion.GreaterThan(newestVersion.Version()) {
-						newestVersion = spi.NewVersionBuilder().Version(upgradeVersion).Build()
-					}
+				if upgradeVersion.GreaterThan(newestVersion.Version()) {
+					newestVersion = spi.NewVersionBuilder().Version(upgradeVersion).Build()
 				}
 			}
 		}
 	}
-	if !newestVersion.Version().GreaterThan(installVersion.Version()) {
+	if newestVersion.Version().Equal(installVersion.Version()) {
 		return nil, "latest z version", fmt.Errorf("No available upgrade path for version %s", installVersion.Version().Original())
 	}
 	return newestVersion, "latest z version", nil

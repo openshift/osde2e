@@ -120,7 +120,7 @@ func (m *ROSAProvider) LaunchCluster(clusterName string) (string, error) {
 	clusterSpec := cluster.Spec{
 		Name:               clusterName,
 		Region:             region,
-		ChannelGroup:       "stable",
+		ChannelGroup:       viper.GetString(config.Cluster.Channel),
 		MultiAZ:            viper.GetBool(config.Cluster.MultiAZ),
 		Version:            viper.GetString(config.Cluster.Version),
 		Expiration:         expiration,

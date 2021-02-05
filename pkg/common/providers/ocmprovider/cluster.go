@@ -105,7 +105,8 @@ func (o *OCMProvider) LaunchCluster(clusterName string) (string, error) {
 			ID(region)).
 		MultiAZ(multiAZ).
 		Version(v1.NewVersion().
-			ID(viper.GetString(config.Cluster.Version))).
+			ID(viper.GetString(config.Cluster.Version)).
+			ChannelGroup(viper.GetString(config.Cluster.Channel))).
 		CloudProvider(v1.NewCloudProvider().
 			ID(cloudProvider)).
 		Properties(clusterProperties)
@@ -211,17 +212,17 @@ func (o *OCMProvider) DetermineRegion(cloudProvider string) (string, error) {
 		}
 		items := regions.Items().Slice()
 
-		region, found := ChooseRandomRegion(toCloudRegions(items)...)
+		cloudRegion, found := ChooseRandomRegion(toCloudRegions(items)...)
 		if !found {
 			return "", fmt.Errorf("unable to choose a random enabled region")
 		}
 
-		regionID := region.ID()
+		region = cloudRegion.ID()
 
-		log.Printf("Random region requested, selected %s region.", regionID)
+		log.Printf("Random region requested, selected %s region.", region)
 
 		// Update the Config with the selected random region
-		viper.Set(config.CloudProvider.Region, regionID)
+		viper.Set(config.CloudProvider.Region, region)
 	}
 	return region, nil
 }
