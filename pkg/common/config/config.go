@@ -357,7 +357,7 @@ var Addons = struct {
 	// Env: ADDON_SLACK_CHANNEL
 	SlackChannel string
 
-	// SkipAddonList is a boolean to indicate whether the listing of addons has to be disbaled or not.
+	// SkipAddonList is a boolean to indicate whether the listing of addons has to be disabled or not.
 	// Env: SKIP_ADDON_LIST
 	SkipAddonList string
 }{
