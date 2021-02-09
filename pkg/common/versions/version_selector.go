@@ -4,12 +4,15 @@ import (
 	"fmt"
 	"log"
 	"math"
+	"strings"
 
 	"github.com/Masterminds/semver"
+	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/spi"
 	"github.com/openshift/osde2e/pkg/common/util"
 	"github.com/openshift/osde2e/pkg/common/versions/installselectors"
 	"github.com/openshift/osde2e/pkg/common/versions/upgradeselectors"
+	"github.com/spf13/viper"
 )
 
 // GetVersionForInstall will get a version based upon available configuration options.
@@ -32,6 +35,11 @@ func GetVersionForInstall(versionList *spi.VersionList) (*semver.Version, string
 	}
 
 	v, selector, err := selectedVersionSelector.SelectVersion(versionList)
+
+	channel := viper.GetString(config.Cluster.Channel)
+	if channel != "stable" && !strings.Contains(v.Original(), channel) {
+		v = semver.MustParse(fmt.Sprintf("%s-%s", v.Original(), channel))
+	}
 
 	return v, selector, err
 }

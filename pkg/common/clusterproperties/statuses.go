@@ -30,4 +30,7 @@ const (
 
 	// StatusUninstalling represents the cluster uninstalling.
 	StatusUninstalling = "uninstalling"
+
+	// StatusCompleted represents the cluster having finished its CI work and awaiting teardown.
+	StatusCompleted = "completed"
 )

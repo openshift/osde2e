@@ -967,6 +967,7 @@ github.com/openshift/machine-config-operator v4.2.0-alpha.0.0.20190917115525-033
 github.com/openshift/managed-upgrade-operator v0.0.0-20200820052802-5d57e1785b53 h1:e8F2JBoojgka2S9Ij5WslGUuTzt9185Djukda4KpPDQ=
 github.com/openshift/managed-upgrade-operator v0.0.0-20200820052802-5d57e1785b53/go.mod h1:ds7uALiqWAx+Z0Ru/NcSUIp55jgxbkzfb6wMwG2cMhQ=
 github.com/openshift/operator-custom-metrics v0.3.0/go.mod h1:4k6G9+KHKg6r/ShP8Vi9YFnpJ5fbHPkQsYCUlzMwtYQ=
+github.com/openshift/origin v0.0.0-20160503220234-8f127d736703 h1:KLVRXtjLhZHVtrcdnuefaI2Bf182EEiTfEVDHokoyng=
 github.com/openshift/origin v0.0.0-20160503220234-8f127d736703/go.mod h1:0Rox5r9C8aQn6j1oAOQ0c1uC86mYbUFObzjBRvUKHII=
 github.com/openshift/prom-label-proxy v0.1.1-0.20191016113035-b8153a7f39f1/go.mod h1:p5MuxzsYP1JPsNGwtjtcgRHHlGziCJJfztff91nNixw=
 github.com/openshift/rosa v0.1.5 h1:OLmYDHy6PV/kOtOL4ptxQtoCCzRFvLH4cur2nSQ4QZ8=
@@ -1763,6 +1764,7 @@ k8s.io/kube-scheduler v0.19.2/go.mod h1:Mh/QNfmP0eqt7JtNUyIAsGhU2zO4j1EWel8TFizx
 k8s.io/kube-state-metrics v1.7.2/go.mod h1:U2Y6DRi07sS85rmVPmBFlmv+2peBcL8IWGjM+IjYA/E=
 k8s.io/kubectl v0.19.2/go.mod h1:4ib3oj5ma6gF95QukTvC7ZBMxp60+UEAhDPjLuBIrV4=
 k8s.io/kubelet v0.19.2/go.mod h1:FHHoByVWzh6kNaarXaDPAa751Oz6REcOVRyFT84L1Is=
+k8s.io/kubernetes v1.18.0 h1:rVe+edi5GwutPQJ4KIZq1Nk506nmnfyz/KOZVCLv7Yo=
 k8s.io/kubernetes v1.18.0/go.mod h1:z8xjOOO1Ljz+TaHpOxVGC7cxtF32TesIamoQ+BZrVS0=
 k8s.io/legacy-cloud-providers v0.19.2/go.mod h1:++wIKZl+1DvQ5i5y1T2ZzwYRkLFuhsZ/SIEivHsM9ro=
 k8s.io/metrics v0.19.2/go.mod h1:IlLaAGXN0q7yrtB+SV0q3JIraf6VtlDr+iuTcX21fCU=

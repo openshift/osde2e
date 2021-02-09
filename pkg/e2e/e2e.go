@@ -29,6 +29,7 @@ import (
 	"github.com/openshift/osde2e/pkg/common/aws"
 	"github.com/openshift/osde2e/pkg/common/cluster"
 	clusterutil "github.com/openshift/osde2e/pkg/common/cluster"
+	"github.com/openshift/osde2e/pkg/common/clusterproperties"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/events"
 	"github.com/openshift/osde2e/pkg/common/helper"
@@ -509,6 +510,14 @@ func cleanupAfterE2E(h *helper.H) (errors []error) {
 		cluster, err := provider.GetCluster(clusterID)
 		if err != nil {
 			log.Printf("error getting Cluster state: %s", err.Error())
+			defer func() {
+				// set the completed property right before this function returns, which should be after
+				// all cleanup is finished.
+				err = provider.AddProperty(cluster, clusterproperties.Status, clusterproperties.StatusCompleted)
+				if err != nil {
+					log.Printf("Failed setting completed status: %v", err)
+				}
+			}()
 		} else {
 			log.Printf("Cluster addons: %v", cluster.Addons())
 			log.Printf("Cluster cloud provider: %v", cluster.CloudProvider())
