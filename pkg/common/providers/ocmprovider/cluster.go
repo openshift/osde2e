@@ -749,40 +749,43 @@ func (o *OCMProvider) ocmToSPICluster(ocmCluster *v1.Cluster) (*spi.Cluster, err
 		cluster.Properties(properties)
 	}
 
-	var addonsResp *v1.AddOnInstallationsListResponse
-	err = retryer().Do(func() error {
-		var err error
-		addonsResp, err = o.conn.ClustersMgmt().V1().Clusters().Cluster(ocmCluster.ID()).Addons().
-			List().
-			Send()
+	if !viper.GetBool(config.Addons.SkipAddonList) {
+		var addonsResp *v1.AddOnInstallationsListResponse
+		err = retryer().Do(func() error {
+			var err error
+			addonsResp, err = o.conn.ClustersMgmt().V1().Clusters().Cluster(ocmCluster.ID()).Addons().
+				List().
+				Send()
+
+			if err != nil {
+				err = fmt.Errorf("couldn't retrieve addons for cluster '%s': %v", ocmCluster.ID(), err)
+				log.Printf("%v", err)
+				return err
+			}
+
+			if addonsResp != nil && addonsResp.Error() != nil {
+				log.Printf("error while trying to retrieve addons list for cluster: %v", err)
+				return errResp(resp.Error())
+			}
+
+			return nil
+		})
 
 		if err != nil {
-			err = fmt.Errorf("couldn't retrieve addons for cluster '%s': %v", ocmCluster.ID(), err)
-			log.Printf("%v", err)
-			return err
+			return nil, err
 		}
 
-		if addonsResp != nil && addonsResp.Error() != nil {
-			log.Printf("error while trying to retrieve addons list for cluster: %v", err)
-			return errResp(resp.Error())
+		if addonsResp.Error() != nil {
+			return nil, addonsResp.Error()
 		}
 
-		return nil
-	})
+		if addons, ok := addonsResp.GetItems(); ok {
+			addons.Each(func(addon *v1.AddOnInstallation) bool {
+				cluster.AddAddon(addon.ID())
+				return true
+			})
+		}
 
-	if err != nil {
-		return nil, err
-	}
-
-	if addonsResp.Error() != nil {
-		return nil, addonsResp.Error()
-	}
-
-	if addons, ok := addonsResp.GetItems(); ok {
-		addons.Each(func(addon *v1.AddOnInstallation) bool {
-			cluster.AddAddon(addon.ID())
-			return true
-		})
 	}
 
 	cluster.ExpirationTimestamp(ocmCluster.ExpirationTimestamp())

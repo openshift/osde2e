@@ -35,7 +35,6 @@ import (
 	"github.com/openshift/osde2e/pkg/common/metadata"
 	"github.com/openshift/osde2e/pkg/common/phase"
 	"github.com/openshift/osde2e/pkg/common/providers"
-	"github.com/openshift/osde2e/pkg/common/providers/ocmprovider"
 	"github.com/openshift/osde2e/pkg/common/runner"
 	"github.com/openshift/osde2e/pkg/common/spi"
 	"github.com/openshift/osde2e/pkg/common/upgrade"
@@ -103,17 +102,7 @@ var _ = ginkgo.SynchronizedBeforeSuite(func() []byte {
 		viper.Set(config.CloudProvider.Region, cluster.Region())
 		log.Printf("CLOUD_PROVIDER_REGION set to %s from OCM.", viper.GetString(config.CloudProvider.Region))
 
-		scaleTestCluster := false
-		additionalLabels := viper.GetString(ocmprovider.AdditionalLabels)
-		if len(additionalLabels) > 0 {
-			for _, label := range strings.Split(additionalLabels, ",") {
-				if label == "scaleTestCluster" {
-					scaleTestCluster = true
-				}
-			}
-		}
-
-		if !scaleTestCluster {
+		if !viper.GetBool(config.Addons.SkipAddonList) {
 			log.Printf("Found addons: %s", strings.Join(cluster.Addons(), ","))
 		}
 
