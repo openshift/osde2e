@@ -6,6 +6,7 @@ import (
 	config "github.com/openshift/client-go/config/clientset/versioned"
 	image "github.com/openshift/client-go/image/clientset/versioned"
 	project "github.com/openshift/client-go/project/clientset/versioned"
+	quotaclient "github.com/openshift/client-go/quota/clientset/versioned"
 	route "github.com/openshift/client-go/route/clientset/versioned"
 	user "github.com/openshift/client-go/user/clientset/versioned"
 	machine "github.com/openshift/machine-api-operator/pkg/generated/clientset/versioned"
@@ -41,6 +42,13 @@ func (h *H) Kube() kubernetes.Interface {
 	client, err := kubernetes.NewForConfig(h.restConfig)
 	Expect(err).ShouldNot(HaveOccurred(), "failed to configure Kubernetes clientset")
 	return client
+}
+
+// Quota returns the client for Quota operations.
+func (h *H) Quota() (*quotaclient.Clientset, error) {
+	client, err := quotaclient.NewForConfig(h.restConfig)
+	Expect(err).ShouldNot(HaveOccurred(), "failed to configure quota clientset")
+	return client, err
 }
 
 // Velero returns the clientset for Velero objects.

@@ -1,0 +1,286 @@
+package verify
+
+import (
+	"context"
+	"fmt"
+	"math/rand"
+	"time"
+
+	"github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
+	ov1 "github.com/openshift/api/quota/v1"
+	"github.com/openshift/osde2e/pkg/common/alert"
+	"github.com/openshift/osde2e/pkg/common/config"
+	v1 "k8s.io/api/core/v1"
+	"k8s.io/client-go/rest"
+
+	"k8s.io/apimachinery/pkg/util/wait"
+
+	"github.com/openshift/osde2e/pkg/common/helper"
+	"github.com/spf13/viper"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+)
+
+var hiveownershipWebhookTestName string = "[Suite: e2e] [OSD] hive ownership validating webhook"
+
+func init() {
+	alert.RegisterGinkgoAlert(hiveownershipWebhookTestName, "SD-SREP", "Boran Seref", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+}
+
+var _ = ginkgo.Describe(hiveownershipWebhookTestName, func() {
+	//const
+	const (
+		// Group to use for impersonation
+		DUMMY_GROUP = "random-group-name"
+		// User to use for impersonation
+		DUMMY_USER = "testuser@testdomain"
+		// User to simulate sre
+		SRE_USER = "dummy@redhat.com"
+	)
+
+	// Map of CRQS name and whether it should be created/deleted by the test
+	var PRIVILEGED_CRQs = map[string]bool{
+		"managed-first-quota":  true,
+		"managed-second-quota": true,
+		"openshift-quota":      false,
+		"default":              false,
+	}
+
+	var PRIVILEGED_USER = "system:admin"
+
+	var ELEVATED_SRE_GROUPS = []string{
+		"osd-sre-cluster-admins",
+	}
+
+	h := helper.New()
+	ginkgo.Context("hiveownership validating webhook", func() {
+		// Create all crqs needed for the tests
+		ginkgo.JustBeforeEach(func() {
+			_, err := createGroup(DUMMY_GROUP, h)
+			Expect(err).NotTo(HaveOccurred())
+
+			for privileged, managed := range PRIVILEGED_CRQs {
+				err := CreateClusterResourceQuota(h, produceCRQ(privileged, managed), PRIVILEGED_USER, "")
+				Expect(err).NotTo(HaveOccurred())
+			}
+		})
+
+		// Clean up all clusterresourcequotas and groups generated for the tests
+		ginkgo.JustAfterEach(func() {
+			err := deleteGroup(DUMMY_GROUP, h)
+			Expect(err).NotTo(HaveOccurred())
+
+			for privileged := range PRIVILEGED_CRQs {
+				err := DeleteClusterResourceQuota(h, privileged, PRIVILEGED_USER, "")
+				Expect(err).NotTo(HaveOccurred())
+			}
+		})
+
+		// TESTS BEGIN
+
+		// though https://github.com/openshift/managed-cluster-config/pull/626, we expect dedicated-admins cannot delete managed resources by protection of the hook.
+		ginkgo.It("dedicated admins cannot delete managed CRQs", func() {
+			for item, managed := range PRIVILEGED_CRQs {
+				if managed {
+					err := DeleteClusterResourceQuota(h, item, DUMMY_USER, "dedicated-admins")
+					Expect(err).To(HaveOccurred())
+				}
+			}
+		}, viper.GetFloat64(config.Tests.PollingTimeout))
+
+		// Passing constantly.
+		ginkgo.It("a random user cannot delete managed CRQs", func() {
+			for item, managed := range PRIVILEGED_CRQs {
+				if managed {
+					err := DeleteClusterResourceQuota(h, item, DUMMY_USER, DUMMY_GROUP)
+					Expect(err).To(HaveOccurred())
+				}
+			}
+		}, viper.GetFloat64(config.Tests.PollingTimeout))
+
+		// Passsing Constantly.
+		ginkgo.It("Members of SRE groups can update a managed quota object", func() {
+			for _, sreGroup := range ELEVATED_SRE_GROUPS {
+				for item, managed := range PRIVILEGED_CRQs {
+					if managed {
+						err := UpdateClusterResourceQuota(h, item, SRE_USER, sreGroup)
+						Expect(err).NotTo(HaveOccurred())
+					}
+				}
+			}
+		}, viper.GetFloat64(config.Tests.PollingTimeout))
+		//ENDS
+	})
+})
+
+// CRUD OPERATIONS
+
+// CreateClusterResourceQuota creates a clusterResourceQuota obj in the cluster as given user
+func CreateClusterResourceQuota(h *helper.H, crq *ov1.ClusterResourceQuota, asUser, userGroup string) (err error) {
+	// reset impersonation upon return
+	defer h.Impersonate(rest.ImpersonationConfig{})
+
+	// reset impersonation at the beginning just-in-case
+	h.Impersonate(rest.ImpersonationConfig{})
+
+	// we need to add these groups for impersonation to work
+	userGroups := []string{"system:authenticated", "system:authenticated:oauth"}
+	if userGroup != "" {
+		userGroups = append(userGroups, userGroup)
+	}
+
+	// update the namespace as our desired user
+	h.Impersonate(rest.ImpersonationConfig{
+		UserName: asUser,
+		Groups:   userGroups,
+	})
+
+	// set up cli
+	cli, err := h.Quota()
+	if err != nil {
+		return fmt.Errorf("cannot create quota client")
+	}
+
+	err = wait.PollImmediate(5*time.Second, 10*time.Second, func() (bool, error) {
+		// create the CRQ
+		quotas, err := cli.QuotaV1().ClusterResourceQuotas().Create(context.TODO(), crq, metav1.CreateOptions{})
+		if err != nil {
+			return false, fmt.Errorf("failed to create ClusterResourceQuota: '%s': %v", quotas, err)
+		}
+
+		return true, nil
+	})
+	return err
+}
+
+// DeleteClusterResourceQuota deletes a given clusterResourceQuota obj
+func DeleteClusterResourceQuota(h *helper.H, name, asUser, userGroup string) (err error) {
+	// reset impersonation upon return
+	defer h.Impersonate(rest.ImpersonationConfig{})
+
+	// reset impersonation at the beginning just-in-case
+	h.Impersonate(rest.ImpersonationConfig{})
+
+	// we need to add these groups for impersonation to work
+	userGroups := []string{"system:authenticated", "system:authenticated:oauth"}
+	if userGroup != "" {
+		userGroups = append(userGroups, userGroup)
+	}
+
+	// update the namespace as our desired user
+	h.Impersonate(rest.ImpersonationConfig{
+		UserName: asUser,
+		Groups:   userGroups,
+	})
+
+	// set up cli
+	cli, err := h.Quota()
+	if err != nil {
+		return fmt.Errorf("cannot create quota client")
+	}
+
+	err = wait.PollImmediate(5*time.Second, 10*time.Second, func() (bool, error) {
+		// delete the CRQ
+		err := cli.QuotaV1().ClusterResourceQuotas().Delete(context.TODO(), name, metav1.DeleteOptions{})
+		if err != nil {
+			return false, fmt.Errorf("failed to delete ClusterResourceQuota: '%s': %v", name, err)
+		}
+
+		return true, nil
+	})
+	return err
+}
+
+// UpdateClusterResourceQuota updates the label with a random text for a given clusterResourceQuota obj
+func UpdateClusterResourceQuota(h *helper.H, name, asUser, userGroup string) (err error) {
+	// reset impersonation upon return
+	defer h.Impersonate(rest.ImpersonationConfig{})
+
+	// reset impersonation at the beginning just-in-case
+	h.Impersonate(rest.ImpersonationConfig{})
+
+	// we need to add these groups for impersonation to work
+	userGroups := []string{"system:authenticated", "system:authenticated:oauth"}
+	if userGroup != "" {
+		userGroups = append(userGroups, userGroup)
+	}
+
+	// update the namespace as our desired user
+	h.Impersonate(rest.ImpersonationConfig{
+		UserName: asUser,
+		Groups:   userGroups,
+	})
+
+	// set up cli
+	cli, err := h.Quota()
+	if err != nil {
+		return fmt.Errorf("cannot create quota client")
+	}
+
+	crq, err := cli.QuotaV1().ClusterResourceQuotas().Get(context.TODO(), name, metav1.GetOptions{})
+	if err != nil {
+		return fmt.Errorf("failed to get ClusterResourceQuota: '%s': %v", name, err)
+	}
+
+	// update the CRQ
+	updated, err := cli.QuotaV1().ClusterResourceQuotas().Update(context.TODO(), updateCRQ(crq), metav1.UpdateOptions{})
+	if err != nil {
+		return fmt.Errorf("failed to update ClusterResourceQuota: '%s': %v", updated, err)
+	}
+
+	return err
+}
+
+// ClusterResourceQuota Producer/Updater
+func produceCRQ(name string, managed bool) *ov1.ClusterResourceQuota {
+	labels := map[string]string{"dummy": "true"}
+	annotation := map[string]string{"openshift.io/requester": "test"}
+
+	if managed {
+		labels = map[string]string{
+			"hive.openshift.io/managed": "true",
+		}
+	}
+
+	return &ov1.ClusterResourceQuota{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:              name,
+			CreationTimestamp: metav1.Time{Time: time.Now()},
+			Labels:            labels,
+		},
+		Spec: ov1.ClusterResourceQuotaSpec{
+			Selector: ov1.ClusterResourceQuotaSelector{
+				AnnotationSelector: annotation,
+			},
+		},
+		Status: ov1.ClusterResourceQuotaStatus{
+			Total: v1.ResourceQuotaStatus{},
+		},
+	}
+}
+
+func updateCRQ(crq *ov1.ClusterResourceQuota) *ov1.ClusterResourceQuota {
+	labels := crq.GetLabels()
+	labels[random(5)] = random(5)
+	crq.SetLabels(labels)
+	return crq
+}
+
+// RANDOM OPERATIONS
+const charset = "abcdefghijklmnopqrstuvwxyz" +
+	"ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+
+var seededRand *rand.Rand = rand.New(
+	rand.NewSource(time.Now().UnixNano()))
+
+func stringWithCharset(length int, charset string) string {
+	b := make([]byte, length)
+	for i := range b {
+		b[i] = charset[seededRand.Intn(len(charset))]
+	}
+	return string(b)
+}
+
+func random(length int) string {
+	return stringWithCharset(length, charset)
+}
