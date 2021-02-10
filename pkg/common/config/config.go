@@ -356,6 +356,10 @@ var Addons = struct {
 	// receive an alert if the tests fail.
 	// Env: ADDON_SLACK_CHANNEL
 	SlackChannel string
+
+	// SkipAddonList is a boolean to indicate whether the listing of addons has to be disabled or not.
+	// Env: SKIP_ADDON_LIST
+	SkipAddonList string
 }{
 	IDsAtCreation:    "addons.idsAtCreation",
 	IDs:              "addons.ids",
@@ -364,6 +368,7 @@ var Addons = struct {
 	RunCleanup:       "addons.runCleanup",
 	CleanupHarnesses: "addons.cleanupHarnesses",
 	SlackChannel:     "addons.slackChannel",
+	SkipAddonList:    "addons.skipAddonlist",
 }
 
 // Scale config keys.
@@ -587,6 +592,9 @@ func init() {
 
 	viper.SetDefault(Addons.SlackChannel, "sd-cicd-alerts")
 	viper.BindEnv(Addons.SlackChannel, "ADDON_SLACK_CHANNEL")
+
+	viper.SetDefault(Addons.SkipAddonList, false)
+	viper.BindEnv(Addons.SkipAddonList, "SKIP_ADDON_LIST")
 
 	// ----- Scale -----
 	viper.SetDefault(Scale.WorkloadsRepository, "https://github.com/openshift-scale/workloads")

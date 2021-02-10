@@ -103,7 +103,9 @@ var _ = ginkgo.SynchronizedBeforeSuite(func() []byte {
 		viper.Set(config.CloudProvider.Region, cluster.Region())
 		log.Printf("CLOUD_PROVIDER_REGION set to %s from OCM.", viper.GetString(config.CloudProvider.Region))
 
-		log.Printf("Found addons: %s", strings.Join(cluster.Addons(), ","))
+		if !viper.GetBool(config.Addons.SkipAddonList) {
+			log.Printf("Found addons: %s", strings.Join(cluster.Addons(), ","))
+		}
 
 		metadata.Instance.SetClusterName(cluster.Name())
 		metadata.Instance.SetClusterID(cluster.ID())
