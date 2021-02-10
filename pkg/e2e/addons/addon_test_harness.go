@@ -52,7 +52,9 @@ var _ = ginkgo.Describe("[Suite: addons] Addon Test Harness", func() {
 			if url, ok := jobURL(); ok {
 				message += "\n" + url
 			}
-			alert.SendSlackMessage(viper.GetString(config.Addons.SlackChannel), message)
+			if err := alert.SendSlackMessage(viper.GetString(config.Addons.SlackChannel), message); err != nil {
+				log.Printf("Failed sending slack alert for addon failure: %v", err)
+			}
 		}
 	}, addonTimeoutInSeconds+30)
 })
