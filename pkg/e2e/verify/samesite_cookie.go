@@ -25,20 +25,20 @@ var _ = ginkgo.FDescribe(samesiteTestName, func() {
 
 	ginkgo.FContext("Validating samesite cookie", func() {
 		ginkgo.FIt("should be set for openshift-monitoring OSD managed routes", func() {
-			foundKey, err := managedRouteN(h, monNamespace)
+			foundKey, err := managedRoutes(h, monNamespace)
 			Expect(err).NotTo(HaveOccurred(), "failed getting routes for %v", monNamespace)
 			Expect(foundKey).Should(BeTrue(), "%v namespace routes have samesite cookie set", monNamespace)
 		}, 5)
 
 		ginkgo.FIt("should be set for openshift-console OSD managed routes", func() {
-			foundKey, err := managedRouteN(h, conNamespace)
+			foundKey, err := managedRoutes(h, conNamespace)
 			Expect(err).NotTo(HaveOccurred(), "failed getting routes for %v", conNamespace)
 			Expect(foundKey).Should(BeTrue(), "%v namespace routes have samesite cookie set", conNamespace)
 		}, 5)
 	})
 })
 
-func managedRouteN(h *helper.H, namespace string) (bool, error) {
+func managedRoutes(h *helper.H, namespace string) (bool, error) {
 	route, err := h.Route().RouteV1().Routes(namespace).List(context.TODO(), metav1.ListOptions{})
 	samesiteExists := false
 	if err != nil || route == nil {
