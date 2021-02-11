@@ -2,15 +2,18 @@ package runner
 
 import (
 	"context"
+	"encoding/xml"
 	"errors"
 	"fmt"
 	"io"
 	"log"
 	"path"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/onsi/ginkgo/reporters"
 	"golang.org/x/net/html"
 	"k8s.io/apimachinery/pkg/util/wait"
 	restclient "k8s.io/client-go/rest"
@@ -22,9 +25,49 @@ var (
 	errNotRun = errors.New("suite has not run yet")
 )
 
+func ensurePassingXML(results map[string][]byte) (hadXML bool, err error) {
+	// ensure the junit xml indicates a passing job
+	var match bool
+	for filename, data := range results {
+		log.Println("checking", filename)
+		match, err = filepath.Match("junit*.xml", filename)
+		if err != nil {
+			err = fmt.Errorf("Failed matching filename %s: %w", filename, err)
+			return
+		}
+		if match {
+			hadXML = true
+			// Use Ginkgo's JUnitTestSuite to unmarshal the JUnit XML file
+			var testSuite reporters.JUnitTestSuite
+			if err = xml.Unmarshal(data, &testSuite); err != nil {
+				err = fmt.Errorf("Failed parsing junit xml in %s: %w", filename, err)
+				return
+			}
+			for _, testcase := range testSuite.TestCases {
+				if (testcase.FailureMessage) != nil {
+					err = fmt.Errorf("at least one test failed (see junit xml for more): %s", testcase.FailureMessage)
+					return
+				}
+			}
+		}
+	}
+	return
+}
+
 // RetrieveResults gathers the results from the test Pod. Should only be called after tests are finished.
 func (r *Runner) RetrieveResults() (map[string][]byte, error) {
-	return r.retrieveResultsForDirectory("")
+	results, err := r.retrieveResultsForDirectory("")
+	if err != nil {
+		return nil, fmt.Errorf("failed retrieving results: %w", err)
+	}
+	hadXML, err := ensurePassingXML(results)
+	if err != nil {
+		return nil, fmt.Errorf("failed checking results for Junit XML report: %w", err)
+	}
+	if !hadXML {
+		return nil, fmt.Errorf("results did not contain Junit XML report")
+	}
+	return results, err
 }
 
 func (r *Runner) retrieveResultsForDirectory(directory string) (map[string][]byte, error) {
