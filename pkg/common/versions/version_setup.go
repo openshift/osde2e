@@ -31,6 +31,10 @@ func ChooseVersions() (err error) {
 		err = errors.New("osd must be setup when upgrading with release stream")
 	} else {
 
+		if viper.GetString(config.Cluster.ReleaseImageLatest) != "" || viper.GetString(config.Cluster.InstallSpecificNightly) != "" {
+			viper.Set(config.Cluster.Channel, "nightly")
+		}
+
 		err = wait.PollImmediate(1*time.Minute, 30*time.Minute, func() (bool, error) {
 			versionList, err = provider.Versions()
 			if err != nil {
