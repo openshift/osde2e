@@ -168,26 +168,6 @@ func (r ResultsServerReactor) React(action kubetest.Action) (handled bool, ret r
 	return
 }
 
-func resultsServerReactor(action kubetest.Action) (handled bool, ret rest.ResponseWrapper, err error) {
-	proxyAction := action.(kubetest.ProxyGetActionImpl)
-
-	// only respond to service proxy requests
-	if handled = proxyAction.Matches(http.MethodGet, "services"); !handled {
-		return
-	}
-
-	path := strings.TrimPrefix(proxyAction.Path, "/")
-	if path == "" {
-		ret = resultPage
-	} else if data, ok := goodResults[path]; ok {
-		ret = response(data)
-	} else {
-		ret = response{}
-	}
-
-	return
-}
-
 type response []byte
 
 func (r response) DoRaw(context.Context) ([]byte, error) {
