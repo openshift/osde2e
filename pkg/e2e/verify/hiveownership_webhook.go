@@ -3,7 +3,6 @@ package verify
 import (
 	"context"
 	"fmt"
-	"math/rand"
 	"time"
 
 	"github.com/onsi/ginkgo"
@@ -11,6 +10,7 @@ import (
 	ov1 "github.com/openshift/api/quota/v1"
 	"github.com/openshift/osde2e/pkg/common/alert"
 	"github.com/openshift/osde2e/pkg/common/config"
+	"github.com/openshift/osde2e/pkg/common/util"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/rest"
 
@@ -261,26 +261,7 @@ func produceCRQ(name string, managed bool) *ov1.ClusterResourceQuota {
 
 func updateCRQ(crq *ov1.ClusterResourceQuota) *ov1.ClusterResourceQuota {
 	labels := crq.GetLabels()
-	labels[random(5)] = random(5)
+	labels[util.RandomStr(5)] = util.RandomStr(5)
 	crq.SetLabels(labels)
 	return crq
-}
-
-// RANDOM OPERATIONS
-const charset = "abcdefghijklmnopqrstuvwxyz" +
-	"ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-
-var seededRand *rand.Rand = rand.New(
-	rand.NewSource(time.Now().UnixNano()))
-
-func stringWithCharset(length int, charset string) string {
-	b := make([]byte, length)
-	for i := range b {
-		b[i] = charset[seededRand.Intn(len(charset))]
-	}
-	return string(b)
-}
-
-func random(length int) string {
-	return stringWithCharset(length, charset)
 }
