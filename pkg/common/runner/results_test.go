@@ -9,12 +9,27 @@ import (
 	"net/http"
 	"strings"
 	"testing"
+	"text/template"
 
 	kubev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes/fake"
 	"k8s.io/client-go/rest"
 	kubetest "k8s.io/client-go/testing"
 )
+
+func resultString(files ...string) string {
+	var b bytes.Buffer
+	resultTemplate.Execute(&b, struct{ Files []string }{files})
+	return b.String()
+}
+
+func keys(in map[string][]byte) []string {
+	out := make([]string, 0, len(in))
+	for key := range in {
+		out = append(out, key)
+	}
+	return out
+}
 
 var (
 	goodResults = map[string][]byte{
@@ -44,53 +59,24 @@ var (
 	badXML = `<testsuite name="Suite" tests="1" failures="0" errors="0" time="0">
     <test`
 
-	resultPage = response(`
+	resultTemplate = template.Must(template.New("results").Parse(`
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 3.2 Final//EN"><html>
 <title>Directory listing for /</title>
 <body>
 <h2>Directory listing for /</h2>
 <hr>
 <ul>
-<li><a href="a">a</a>
-<li><a href="b">b</a>
-<li><a href="c">c</a>
-<li><a href="junit-results.xml">junit-results.xml</a>
+{{ range .Files }}
+<li><a href="{{.}}">{{.}}</a></li>
+{{end}}
 </ul>
 <hr>
 </body>
 </html>
-`)
-	noXMLResultPage = response(`
-<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 3.2 Final//EN"><html>
-<title>Directory listing for /</title>
-<body>
-<h2>Directory listing for /</h2>
-<hr>
-<ul>
-<li><a href="a">a</a>
-<li><a href="b">b</a>
-<li><a href="c">c</a>
-</ul>
-<hr>
-</body>
-</html>
-`)
-	badXMLResultPage = response(`
-<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 3.2 Final//EN"><html>
-<title>Directory listing for /</title>
-<body>
-<h2>Directory listing for /</h2>
-<hr>
-<ul>
-<li><a href="a">a</a>
-<li><a href="b">b</a>
-<li><a href="c">c</a>
-<li><a href="junit-bad-results.xml">junit-bad-results.xml</a>
-</ul>
-<hr>
-</body>
-</html>
-`)
+`))
+	resultPage       = response(resultString(keys(goodResults)...))
+	noXMLResultPage  = response(resultString(keys(noXMLResults)...))
+	badXMLResultPage = response(resultString(keys(badResults)...))
 )
 
 func TestRetrieveResults(t *testing.T) {
@@ -114,7 +100,7 @@ func TestRetrieveResults(t *testing.T) {
 			ShouldError:          true,
 		},
 		{
-			Name:                 "XMLMissing",
+			Name:                 "invalidXML",
 			ResultsServerReactor: ResultsServerReactor{badXMLResultPage},
 			Expected:             badResults,
 			ShouldError:          true,
@@ -141,6 +127,8 @@ func TestRetrieveResults(t *testing.T) {
 			results, err := r.RetrieveResults()
 			if err != nil && !testcase.ShouldError {
 				t.Fatalf("Failed to get results: %v", err)
+			} else if err == nil && testcase.ShouldError {
+				t.Fatalf("RetrieveResults should have failed")
 			}
 			if !testcase.ShouldError {
 				// compare to expected
