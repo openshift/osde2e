@@ -26,6 +26,7 @@ var _ = ginkgo.Describe(disruptiveTestName, func() {
 		cfg := DefaultE2EConfig
 		cfg.Suite = "openshift/disruptive"
 		cmd := cfg.Cmd()
+		h.SetServiceAccount("system:serviceaccount:%s:cluster-admin")
 
 		// setup runner
 		r := h.Runner(cmd)
