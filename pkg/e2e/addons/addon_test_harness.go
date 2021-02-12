@@ -46,15 +46,15 @@ var _ = ginkgo.Describe("[Suite: addons] Addon Test Harness", func() {
 		h.SetServiceAccount(viper.GetString(config.Addons.TestUser))
 		harnesses := strings.Split(viper.GetString(config.Addons.TestHarnesses), ",")
 		failed := h.RunAddonTests("addon-tests", int(addonTimeoutInSeconds), harnesses, []string{})
+		message := fmt.Sprintf("Addon tests succeeded! %v", harnesses)
 		if len(failed) > 0 {
-			// tests failed, notify
-			message := fmt.Sprintf("Addon tests failed: %v", failed)
-			if url, ok := jobURL(); ok {
-				message += "\n" + url
-			}
-			if err := alert.SendSlackMessage(viper.GetString(config.Addons.SlackChannel), message); err != nil {
-				log.Printf("Failed sending slack alert for addon failure: %v", err)
-			}
+			message = fmt.Sprintf("Addon tests failed: %v", failed)
+		}
+		if url, ok := jobURL(); ok {
+			message += "\n" + url
+		}
+		if err := alert.SendSlackMessage(viper.GetString(config.Addons.SlackChannel), message); err != nil {
+			log.Printf("Failed sending slack alert for addon failure: %v", err)
 		}
 	}, addonTimeoutInSeconds+30)
 })
