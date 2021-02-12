@@ -20,17 +20,17 @@ const (
 
 var samesiteTestName string = "[Suite: informing] Samesite Cookie Strict"
 
-var _ = ginkgo.FDescribe(samesiteTestName, func() {
+var _ = ginkgo.Describe(samesiteTestName, func() {
 	h := helper.New()
 
-	ginkgo.FContext("Validating samesite cookie", func() {
-		ginkgo.FIt("should be set for openshift-monitoring OSD managed routes", func() {
+	ginkgo.Context("Validating samesite cookie", func() {
+		ginkgo.It("should be set for openshift-monitoring OSD managed routes", func() {
 			foundKey, err := managedRoutes(h, monNamespace)
 			Expect(err).NotTo(HaveOccurred(), "failed getting routes for %v", monNamespace)
 			Expect(foundKey).Should(BeTrue(), "%v namespace routes have samesite cookie set", monNamespace)
 		}, 5)
 
-		ginkgo.FIt("should be set for openshift-console OSD managed routes", func() {
+		ginkgo.It("should be set for openshift-console OSD managed routes", func() {
 			foundKey, err := managedRoutes(h, conNamespace)
 			Expect(err).NotTo(HaveOccurred(), "failed getting routes for %v", conNamespace)
 			Expect(foundKey).Should(BeTrue(), "%v namespace routes have samesite cookie set", conNamespace)
