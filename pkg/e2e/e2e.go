@@ -219,12 +219,15 @@ func runGinkgoTests() error {
 
 	gomega.RegisterFailHandler(ginkgo.Fail)
 
-	dryRun := viper.GetBool(config.DryRun)
-
 	ginkgoConfig.DefaultReporterConfig.NoisySkippings = !viper.GetBool(config.Tests.SuppressSkipNotifications)
 	ginkgoConfig.GinkgoConfig.SkipString = viper.GetString(config.Tests.GinkgoSkip)
 	ginkgoConfig.GinkgoConfig.FocusString = viper.GetString(config.Tests.GinkgoFocus)
-	ginkgoConfig.GinkgoConfig.DryRun = dryRun
+	ginkgoConfig.GinkgoConfig.DryRun = viper.GetBool(config.DryRun)
+
+	if ginkgoConfig.GinkgoConfig.DryRun {
+		// Draw attention to DRYRUN as it can exist in ENV.
+		log.Println(string("\x1b[33m"), "WARNING! This is a DRY RUN. Review this state if outcome is unexpected.", string("\033[0m"))
+	}
 
 	// setup reporter
 	reportDir := viper.GetString(config.ReportDir)
@@ -334,7 +337,7 @@ func runGinkgoTests() error {
 		viper.Set(config.Suffix, util.RandomStr(5))
 	}
 
-	testsPassed := runTestsInPhase(phase.InstallPhase, "OSD e2e suite")
+	testsPassed := runTestsInPhase(phase.InstallPhase, "OSD e2e suite", ginkgoConfig.GinkgoConfig.DryRun)
 	getLogs()
 	upgradeTestsPassed := true
 
@@ -345,7 +348,7 @@ func runGinkgoTests() error {
 			// create route monitors for the upgrade
 			var routeMonitorChan chan struct{}
 			closeMonitorChan := make(chan struct{})
-			if viper.GetBool(config.Upgrade.MonitorRoutesDuringUpgrade) && !dryRun {
+			if viper.GetBool(config.Upgrade.MonitorRoutesDuringUpgrade) && !ginkgoConfig.GinkgoConfig.DryRun {
 				routeMonitorChan = setupRouteMonitors(closeMonitorChan)
 				log.Println("Route Monitors created.")
 			}
@@ -360,12 +363,12 @@ func runGinkgoTests() error {
 			// test upgrade rescheduling if desired
 			if !viper.GetBool(config.Upgrade.ManagedUpgradeRescheduled) {
 				log.Println("Running e2e tests POST-UPGRADE...")
-				upgradeTestsPassed = runTestsInPhase(phase.UpgradePhase, "OSD e2e suite post-upgrade")
+				upgradeTestsPassed = runTestsInPhase(phase.UpgradePhase, "OSD e2e suite post-upgrade", ginkgoConfig.GinkgoConfig.DryRun)
 			}
 			log.Println("Upgrade rescheduled, skip the POST-UPGRADE testing")
 
 			// close route monitors
-			if viper.GetBool(config.Upgrade.MonitorRoutesDuringUpgrade) && !dryRun {
+			if viper.GetBool(config.Upgrade.MonitorRoutesDuringUpgrade) && !ginkgoConfig.GinkgoConfig.DryRun {
 				close(routeMonitorChan)
 				_ = <-closeMonitorChan
 				log.Println("Route monitors reconciled")
@@ -418,7 +421,7 @@ func runGinkgoTests() error {
 		}
 	}
 
-	if !dryRun {
+	if !ginkgoConfig.GinkgoConfig.DryRun {
 		getLogs()
 
 		h := helper.NewOutsideGinkgo()
@@ -554,7 +557,7 @@ func cleanupAfterE2E(h *helper.H) (errors []error) {
 }
 
 // nolint:gocyclo
-func runTestsInPhase(phase string, description string) bool {
+func runTestsInPhase(phase string, description string, dryrun bool) bool {
 	viper.Set(config.Phase, phase)
 	reportDir := viper.GetString(config.ReportDir)
 	phaseDirectory := filepath.Join(reportDir, phase)
@@ -743,7 +746,7 @@ func runTestsInPhase(phase string, description string) bool {
 		}
 		clusterState = cluster.State()
 	}
-	if !viper.GetBool(config.DryRun) && clusterState == spi.ClusterStateReady {
+	if !dryrun && clusterState == spi.ClusterStateReady {
 		h := helper.NewOutsideGinkgo()
 		if h == nil {
 			log.Println("Unable to generate helper outside of ginkgo")
