@@ -62,10 +62,10 @@ func (r *Runner) RetrieveResults() (map[string][]byte, error) {
 	}
 	hadXML, err := ensurePassingXML(results)
 	if err != nil {
-		return nil, fmt.Errorf("failed checking results for Junit XML report: %w", err)
+		return results, fmt.Errorf("failed checking results for Junit XML report: %w", err)
 	}
 	if !hadXML {
-		return nil, fmt.Errorf("results did not contain Junit XML report")
+		return results, fmt.Errorf("results did not contain Junit XML report")
 	}
 	return results, err
 }

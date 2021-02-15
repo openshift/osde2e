@@ -74,42 +74,39 @@ var (
 </body>
 </html>
 `))
-	resultPage       = response(resultString(keys(goodResults)...))
-	noXMLResultPage  = response(resultString(keys(noXMLResults)...))
-	badXMLResultPage = response(resultString(keys(badResults)...))
 )
 
 func TestRetrieveResults(t *testing.T) {
 	type testcase struct {
-		Name string
-		ResultsServerReactor
+		Name        string
 		Expected    map[string][]byte
 		ShouldError bool
 	}
 	for _, testcase := range []testcase{
 		{
-			Name:                 "validXMLPresent",
-			ResultsServerReactor: ResultsServerReactor{resultPage},
-			Expected:             goodResults,
-			ShouldError:          false,
+			Name:        "validXMLPresent",
+			Expected:    goodResults,
+			ShouldError: false,
 		},
 		{
-			Name:                 "XMLMissing",
-			ResultsServerReactor: ResultsServerReactor{noXMLResultPage},
-			Expected:             noXMLResults,
-			ShouldError:          true,
+			Name:        "XMLMissing",
+			Expected:    noXMLResults,
+			ShouldError: true,
 		},
 		{
-			Name:                 "invalidXML",
-			ResultsServerReactor: ResultsServerReactor{badXMLResultPage},
-			Expected:             badResults,
-			ShouldError:          true,
+			Name:        "invalidXML",
+			Expected:    badResults,
+			ShouldError: true,
 		},
 	} {
 		t.Run(testcase.Name, func(t *testing.T) {
+			reactor := ResultsServerReactor{
+				IndexPage: response(resultString(keys(testcase.Expected)...)),
+				Results:   testcase.Expected,
+			}
 			// setup mock client
 			client := fake.NewSimpleClientset()
-			client.AddProxyReactor("services", testcase.React)
+			client.AddProxyReactor("services", reactor.React)
 
 			// setup runner
 			def := *DefaultRunner
@@ -130,14 +127,13 @@ func TestRetrieveResults(t *testing.T) {
 			} else if err == nil && testcase.ShouldError {
 				t.Fatalf("RetrieveResults should have failed")
 			}
-			if !testcase.ShouldError {
-				// compare to expected
-				for k, v := range testcase.Expected {
-					if actualV, ok := results[k]; !ok {
-						t.Fatalf("missing file '%s' in results", k)
-					} else if !bytes.Equal(actualV, v) {
-						t.Fatalf("file '%s' has been corrupted: want '%s', got '%s'", k, v, actualV)
-					}
+			// compare to expected unconditionally because even if it fails, it should return
+			// the files it was able to find.
+			for k, v := range testcase.Expected {
+				if actualV, ok := results[k]; !ok {
+					t.Fatalf("missing file '%s' in results", k)
+				} else if !bytes.Equal(actualV, v) {
+					t.Fatalf("file '%s' has been corrupted: want '%s', got '%s'", k, v, actualV)
 				}
 			}
 		})
@@ -146,6 +142,7 @@ func TestRetrieveResults(t *testing.T) {
 
 type ResultsServerReactor struct {
 	IndexPage rest.ResponseWrapper
+	Results   map[string][]byte
 }
 
 func (r ResultsServerReactor) React(action kubetest.Action) (handled bool, ret rest.ResponseWrapper, err error) {
@@ -159,7 +156,7 @@ func (r ResultsServerReactor) React(action kubetest.Action) (handled bool, ret r
 	path := strings.TrimPrefix(proxyAction.Path, "/")
 	if path == "" {
 		ret = r.IndexPage
-	} else if data, ok := goodResults[path]; ok {
+	} else if data, ok := r.Results[path]; ok {
 		ret = response(data)
 	} else {
 		ret = response{}
