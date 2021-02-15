@@ -21,7 +21,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-var hiveownershipWebhookTestName string = "[Suite: e2e] [OSD] hive ownership validating webhook"
+var hiveownershipWebhookTestName string = "[Suite: informing] [OSD] hive ownership validating webhook"
 
 func init() {
 	alert.RegisterGinkgoAlert(hiveownershipWebhookTestName, "SD-SREP", "Boran Seref", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
@@ -108,6 +108,24 @@ var _ = ginkgo.Describe(hiveownershipWebhookTestName, func() {
 					}
 				}
 			}
+		}, viper.GetFloat64(config.Tests.PollingTimeout))
+
+		// MCC TESTS(dedicated-admin changes - https://github.com/openshift/managed-cluster-config/pull/626)
+		ginkgo.It("as dedicated admin can update crqs inside the cluster that are non managed.", func() {
+			for item, managed := range PRIVILEGED_CRQs {
+				if !managed {
+					err := UpdateClusterResourceQuota(h, item, DUMMY_USER, "dedicated-admins")
+					Expect(err).NotTo(HaveOccurred())
+				}
+			}
+		}, viper.GetFloat64(config.Tests.PollingTimeout))
+
+		ginkgo.It("as dedicated admin can create a crq inside the cluster that is non managed.", func() {
+			cuQuota := "quota-customer"
+			err := CreateClusterResourceQuota(h, produceCRQ(cuQuota, false), DUMMY_USER, "dedicated-admins")
+			Expect(err).NotTo(HaveOccurred())
+			err = DeleteClusterResourceQuota(h, cuQuota, DUMMY_USER, "dedicated-admins")
+			Expect(err).NotTo(HaveOccurred())
 		}, viper.GetFloat64(config.Tests.PollingTimeout))
 		//ENDS
 	})
