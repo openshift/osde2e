@@ -30,20 +30,10 @@ func (l latestVersion) SelectVersion(installVersion *spi.Version, versionList *s
 
 	for _, v := range versionList.FindVersion(installVersion.Version().Original()) {
 		for upgradeVersion := range v.AvailableUpgrades() {
-			if strings.Contains(upgradeVersion.Original(), "nightly") && !strings.Contains(newestVersion.Version().Original(), "nightly") {
+			upgradeIsNightly := strings.Contains(upgradeVersion.Original(), "nightly")
+			newestIsNightly := strings.Contains(newestVersion.Version().Original(), "nightly")
+			if (upgradeIsNightly && !newestIsNightly) || upgradeVersion.GreaterThan(newestVersion.Version()) {
 				newestVersion = spi.NewVersionBuilder().Version(upgradeVersion).Build()
-				continue
-			}
-
-			// Catch the rest
-			if strings.Contains(upgradeVersion.Original(), "nightly") && strings.Contains(newestVersion.Version().Original(), "nightly") {
-				if upgradeVersion.Original() > newestVersion.Version().Original() {
-					newestVersion = spi.NewVersionBuilder().Version(upgradeVersion).Build()
-				}
-			} else {
-				if upgradeVersion.GreaterThan(newestVersion.Version()) {
-					newestVersion = spi.NewVersionBuilder().Version(upgradeVersion).Build()
-				}
 			}
 		}
 	}

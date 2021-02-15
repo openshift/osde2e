@@ -41,15 +41,10 @@ func (l latestZVersion) SelectVersion(installVersion *spi.Version, versionList *
 				continue
 			}
 
-			// Catch the rest
-			if strings.Contains(upgradeVersion.Original(), "nightly") && strings.Contains(newestVersion.Version().Original(), "nightly") {
-				if upgradeVersion.Original() > newestVersion.Version().Original() {
-					newestVersion = spi.NewVersionBuilder().Version(upgradeVersion).Build()
-				}
-			} else {
-				if upgradeVersion.GreaterThan(newestVersion.Version()) {
-					newestVersion = spi.NewVersionBuilder().Version(upgradeVersion).Build()
-				}
+			upgradeIsNightly := strings.Contains(upgradeVersion.Original(), "nightly")
+			newestIsNightly := strings.Contains(newestVersion.Version().Original(), "nightly")
+			if (upgradeIsNightly && !newestIsNightly) || upgradeVersion.GreaterThan(newestVersion.Version()) {
+				newestVersion = spi.NewVersionBuilder().Version(upgradeVersion).Build()
 			}
 		}
 	}
