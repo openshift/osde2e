@@ -60,6 +60,15 @@ func (r *Runner) RetrieveResults() (map[string][]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed retrieving results: %w", err)
 	}
+	return results, err
+}
+
+// RetrieveTestResults gathers and validates the results from the test Pod. Should only be called after tests are finished. This method both fetches the results and ensures that they contain valid JUnit XML indicating that all tests passed.
+func (r *Runner) RetrieveTestResults() (map[string][]byte, error) {
+	results, err := r.RetrieveResults()
+	if err != nil {
+		return nil, fmt.Errorf("failed retrieving results: %w", err)
+	}
 	hadXML, err := ensurePassingXML(results)
 	if err != nil {
 		return results, fmt.Errorf("failed checking results for Junit XML report: %w", err)
