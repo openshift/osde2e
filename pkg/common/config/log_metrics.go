@@ -100,5 +100,8 @@ func (metric LogMetric) HasMatches(data []byte) int {
 // IsPassing checks the current counter against the thresholds to see if this
 // metric should be passing or failing via JUnit
 func (metric LogMetric) IsPassing(value int) bool {
+	if CloudProvider.CloudProviderID == "aws" {
+		metric.HighThreshold = metric.HighThreshold / 2
+	}
 	return metric.HighThreshold > value && metric.LowThreshold < value
 }
