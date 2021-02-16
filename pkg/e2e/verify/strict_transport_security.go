@@ -13,13 +13,13 @@ import (
 
 var hstsTestName string = "[Suite: informing] HTTP Strict Transport Security"
 
-var _ = ginkgo.FDescribe(hstsTestName, func() {
+var _ = ginkgo.Describe(hstsTestName, func() {
 	h := helper.New()
 	namespaces := [2]string{"openshift-monitoring", "openshift-console"}
 
-	ginkgo.FContext("Validating HTTP strict transport security", func() {
+	ginkgo.Context("Validating HTTP strict transport security", func() {
 		for _, namespace := range namespaces {
-			ginkgo.FIt("should be set for openshift-monitoring OSD managed routes", func() {
+			ginkgo.It("should be set for openshift-monitoring OSD managed routes", func() {
 				foundKey, err := hstsManagedRoutes(h, namespace)
 				Expect(err).NotTo(HaveOccurred(), "failed getting routes for %v", namespace)
 				Expect(foundKey).Should(BeTrue(), "%v namespace routes have HTTP strict transport security set", namespace)
