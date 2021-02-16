@@ -82,6 +82,28 @@ func TestLatestZVersionSelectVersion(t *testing.T) {
 			expectedVersion: spi.NewVersionBuilder().Version(semver.MustParse("4.2.4")).Build(),
 		},
 		{
+			name:           "get latest version from candidate channel",
+			installVersion: spi.NewVersionBuilder().Version(semver.MustParse("4.2.0-candidate")).Build(),
+			versions: spi.NewVersionListBuilder().
+				AvailableVersions([]*spi.Version{
+					spi.NewVersionBuilder().Version(semver.MustParse("4.4.0-candidate")).Build(),
+					spi.NewVersionBuilder().Version(semver.MustParse("4.2.0-candidate")).AvailableUpgrades(map[*semver.Version]bool{
+						semver.MustParse("4.2.2-candidate"): true,
+						semver.MustParse("4.2.4-candidate"): true,
+						semver.MustParse("4.3.3-candidate"): true,
+					}).Build(),
+					spi.NewVersionBuilder().Version(semver.MustParse("4.5.0-candidate")).Build(),
+					spi.NewVersionBuilder().Version(semver.MustParse("4.1.0-candidate")).Build(),
+					spi.NewVersionBuilder().Default(true).Version(semver.MustParse("4.3.0-candidate")).AvailableUpgrades(map[*semver.Version]bool{
+						semver.MustParse("4.3.2-candidate"): true,
+						semver.MustParse("4.3.4-candidate"): true,
+						semver.MustParse("4.4.0-candidate"): true,
+					}).Build(),
+				}).
+				Build(),
+			expectedVersion: spi.NewVersionBuilder().Version(semver.MustParse("4.2.4-candidate")).Build(),
+		},
+		{
 			name:           "no versions",
 			installVersion: spi.NewVersionBuilder().Version(semver.MustParse("4.2.0")).Build(),
 			versions: spi.NewVersionListBuilder().

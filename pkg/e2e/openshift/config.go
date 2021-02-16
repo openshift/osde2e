@@ -10,11 +10,11 @@ import (
 )
 
 const testCmd = `
-oc config set-cluster {{.Name}} --server=https://kubernetes.default --certificate-authority={{.CA}}
-oc config set-credentials {{.Name}} --token=$(cat {{.TokenFile}})
-oc config set-context {{.Name}} --cluster={{.Name}} --user={{.Name}}
-oc config use-context {{.Name}}
-oc config view > /tmp/kubeconfig
+oc config set-cluster cluster --server=https://kubernetes.default.svc --certificate-authority=/var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+oc config set-credentials user --token=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
+oc config set-context cluster --cluster=cluster --user=user
+oc config use-context cluster
+oc config view --raw=true > /tmp/kubeconfig
 export KUBECONFIG=/tmp/kubeconfig
 
 {{printTests .TestNames}} | {{unwrap .Env}} openshift-tests {{.TestCmd}} {{selectTests .Suite .TestNames}} {{unwrap .Flags}}

@@ -23,6 +23,7 @@ var _ = ginkgo.Describe(imageRegistryTestName, func() {
 
 	e2eTimeoutInSeconds := 3600
 	ginkgo.It("should run until completion", func() {
+		h.SetServiceAccount("system:serviceaccount:%s:cluster-admin")
 		// configure tests
 		cfg := DefaultE2EConfig
 		cfg.Suite = "openshift/image-registry"
@@ -39,7 +40,7 @@ var _ = ginkgo.Describe(imageRegistryTestName, func() {
 		Expect(err).NotTo(HaveOccurred())
 
 		// get results
-		results, err := r.RetrieveResults()
+		results, err := r.RetrieveTestResults()
 		Expect(err).NotTo(HaveOccurred())
 
 		// write results
@@ -58,6 +59,7 @@ var _ = ginkgo.Describe(imageEcosystemTestName, func() {
 		cfg.Suite = "openshift/image-ecosystem"
 		cmd := cfg.Cmd()
 
+		h.SetServiceAccount("system:serviceaccount:%s:cluster-admin")
 		// setup runner
 		r := h.Runner(cmd)
 
@@ -69,7 +71,7 @@ var _ = ginkgo.Describe(imageEcosystemTestName, func() {
 		Expect(err).NotTo(HaveOccurred())
 
 		// get results
-		results, err := r.RetrieveResults()
+		results, err := r.RetrieveTestResults()
 		Expect(err).NotTo(HaveOccurred())
 
 		// write results
