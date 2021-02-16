@@ -76,7 +76,7 @@ var (
 `))
 )
 
-func TestRetrieveResults(t *testing.T) {
+func TestRetrieveTestResults(t *testing.T) {
 	type testcase struct {
 		Name        string
 		Expected    map[string][]byte
@@ -121,7 +121,7 @@ func TestRetrieveResults(t *testing.T) {
 			r.svc = svc
 
 			// get results
-			results, err := r.RetrieveResults()
+			results, err := r.RetrieveTestResults()
 			if err != nil && !testcase.ShouldError {
 				t.Fatalf("Failed to get results: %v", err)
 			} else if err == nil && testcase.ShouldError {

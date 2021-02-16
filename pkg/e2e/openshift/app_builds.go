@@ -103,7 +103,7 @@ var _ = ginkgo.Describe(appBuildsTestName, func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			// get results
-			results, err := r.RetrieveResults()
+			results, err := r.RetrieveTestResults()
 			Expect(err).NotTo(HaveOccurred())
 
 			// write results

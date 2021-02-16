@@ -78,7 +78,7 @@ func (h *H) RunAddonTests(name string, timeout int, harnesses, args []string) (f
 		Expect(err).NotTo(HaveOccurred())
 
 		// get results
-		results, err := r.RetrieveResults()
+		results, err := r.RetrieveTestResults()
 		Expect(err).NotTo(HaveOccurred())
 
 		// write results

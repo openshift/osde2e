@@ -57,7 +57,7 @@ var _ = ginkgo.Describe(conformanceK8sTestName, func() {
 		Expect(err).NotTo(HaveOccurred())
 
 		// get results
-		results, err := r.RetrieveResults()
+		results, err := r.RetrieveTestResults()
 		Expect(err).NotTo(HaveOccurred())
 
 		// write results
@@ -89,7 +89,7 @@ var _ = ginkgo.Describe(conformanceOpenshiftTestName, func() {
 		Expect(err).NotTo(HaveOccurred())
 
 		// get results
-		results, err := r.RetrieveResults()
+		results, err := r.RetrieveTestResults()
 		Expect(err).NotTo(HaveOccurred())
 
 		// write results

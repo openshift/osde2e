@@ -40,7 +40,7 @@ var _ = ginkgo.Describe(imageRegistryTestName, func() {
 		Expect(err).NotTo(HaveOccurred())
 
 		// get results
-		results, err := r.RetrieveResults()
+		results, err := r.RetrieveTestResults()
 		Expect(err).NotTo(HaveOccurred())
 
 		// write results
@@ -71,7 +71,7 @@ var _ = ginkgo.Describe(imageEcosystemTestName, func() {
 		Expect(err).NotTo(HaveOccurred())
 
 		// get results
-		results, err := r.RetrieveResults()
+		results, err := r.RetrieveTestResults()
 		Expect(err).NotTo(HaveOccurred())
 
 		// write results
