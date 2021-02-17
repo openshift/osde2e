@@ -15,16 +15,21 @@ var hstsTestName string = "[Suite: informing] HTTP Strict Transport Security"
 
 var _ = ginkgo.Describe(hstsTestName, func() {
 	h := helper.New()
-	namespaces := [2]string{"openshift-monitoring", "openshift-console"}
+
+	consoleNamespace := "openshift-console"
+	monitorNamespace := "openshift-monitoring"
 
 	ginkgo.Context("Validating HTTP strict transport security", func() {
-		for _, namespace := range namespaces {
-			ginkgo.It("should be set for openshift-monitoring OSD managed routes", func() {
-				foundKey, err := hstsManagedRoutes(h, namespace)
-				Expect(err).NotTo(HaveOccurred(), "failed getting routes for %v", namespace)
-				Expect(foundKey).Should(BeTrue(), "%v namespace routes have HTTP strict transport security set", namespace)
-			}, 5)
-		}
+		ginkgo.It("should be set for openshift-console OSD managed routes", func() {
+			foundKey, err := hstsManagedRoutes(h, consoleNamespace)
+			Expect(err).NotTo(HaveOccurred(), "failed getting routes for %v", consoleNamespace)
+			Expect(foundKey).Should(BeTrue(), "%v namespace routes have HTTP strict transport security set", consoleNamespace)
+		}, 5)
+		ginkgo.It("should be set for openshift-monitoring OSD managed routes", func() {
+			foundKey, err := hstsManagedRoutes(h, monitorNamespace)
+			Expect(err).NotTo(HaveOccurred(), "failed getting routes for %v", monitorNamespace)
+			Expect(foundKey).Should(BeTrue(), "%v namespace routes have HTTP strict transport security set", monitorNamespace)
+		}, 5)
 	})
 })
 
