@@ -38,6 +38,12 @@ var (
 		"c":                 []byte("evenmoretestdata"),
 		"junit-results.xml": []byte(goodXML),
 	}
+	goodResults2 = map[string][]byte{
+		"a":                 []byte("testdata"),
+		"b":                 []byte("moretestdata"),
+		"c":                 []byte("evenmoretestdata"),
+		"junit-results.xml": []byte(goodXML2),
+	}
 	badResults = map[string][]byte{
 		"a":                     []byte("testdata"),
 		"b":                     []byte("moretestdata"),
@@ -55,6 +61,16 @@ var (
         </passed>
     </testcase>
 </testsuite>`
+
+	// ensure multiple suites are also accepted
+	goodXML2 = `<testsuites>
+	<testsuite name="Suite" tests="1" failures="0" errors="0" time="0">
+    <testcase name="[Suite] testname" classname="classname" time="0">
+        <passed>Passed with 0 matches
+        </passed>
+    </testcase>
+</testsuite>
+</testsuites>`
 
 	badXML = `<testsuite name="Suite" tests="1" failures="0" errors="0" time="0">
     <test`
@@ -86,6 +102,11 @@ func TestRetrieveTestResults(t *testing.T) {
 		{
 			Name:        "validXMLPresent",
 			Expected:    goodResults,
+			ShouldError: false,
+		},
+		{
+			Name:        "validMultiSuiteXMLPresent",
+			Expected:    goodResults2,
 			ShouldError: false,
 		},
 		{
