@@ -13,7 +13,7 @@ import (
 
 var hstsTestName string = "[Suite: informing] HTTP Strict Transport Security"
 
-var _ = ginkgo.FDescribe(hstsTestName, func() {
+var _ = ginkgo.Describe(hstsTestName, func() {
 	h := helper.New()
 
 	consoleNamespace := "openshift-console"
