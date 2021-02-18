@@ -2,6 +2,7 @@ package osd
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -10,7 +11,9 @@ import (
 	"github.com/openshift/osde2e/pkg/common/alert"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/helper"
+	operatorv1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	"github.com/spf13/viper"
+	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/rest"
@@ -24,6 +27,12 @@ func init() {
 
 var _ = ginkgo.Describe(dedicatedAdminTestName, func() {
 	ginkgo.Context("dedicated-admin group permissions", func() {
+
+		// list of namespaces to loop through
+		var namespaceList = []string{
+			"openshift-operators",
+			"openshift-operators-redhat",
+		}
 
 		// setup helper
 		h := helper.New()
@@ -240,6 +249,46 @@ var _ = ginkgo.Describe(dedicatedAdminTestName, func() {
 
 		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
 
+		// dedicated-admin can manage secrets
+		// in selected namespaces
+		ginkgo.It("ded-admin can manage secrets in selected namespaces", func() {
+
+			// Impersonate ded-admin
+			h.Impersonate(rest.ImpersonationConfig{
+				UserName: "dummy-admin@redhat.com",
+				Groups: []string{
+					"dedicated-admins",
+				},
+			})
+			defer func() {
+				h.Impersonate(rest.ImpersonationConfig{})
+			}()
+
+			err := manageSecrets(namespaceList, h)
+			Expect(err).NotTo(HaveOccurred())
+
+		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
+
+		// dedicated-admin can manage subscriptions
+		// in selected namespaces
+		ginkgo.It("ded-admin can manage subscriptions in selected namespaces", func() {
+
+			// Impersonate ded-admin
+			h.Impersonate(rest.ImpersonationConfig{
+				UserName: "dummy-admin@redhat.com",
+				Groups: []string{
+					"dedicated-admins",
+				},
+			})
+			defer func() {
+				h.Impersonate(rest.ImpersonationConfig{})
+			}()
+
+			err := manageSubscriptions(namespaceList, h)
+			Expect(err).NotTo(HaveOccurred())
+
+		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
+
 	})
 })
 
@@ -264,4 +313,81 @@ func createRolebinding(ns string, user *userv1.User, kind string, kindName strin
 		},
 	}, metav1.CreateOptions{})
 	return rb, err
+}
+
+// manageSecrets takes in a list of namespaces
+// and returns error if an action fails
+func manageSecrets(nsList []string, h *helper.H) error {
+
+	for _, ns := range nsList {
+
+		newSecretName := "sample-cust-secret"
+
+		// check 'create' permission
+		dummySecret, err := h.Kube().CoreV1().Secrets(ns).Create(context.TODO(), &corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      newSecretName,
+				Namespace: ns,
+			},
+		}, metav1.CreateOptions{})
+		Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("failed to create secret %s in namespace %s", newSecretName, ns))
+
+		// check 'get' permission
+		dummySecret, err = h.Kube().CoreV1().Secrets(ns).Get(context.TODO(), newSecretName, metav1.GetOptions{})
+		Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("failed to get secret %s in namespace %s", newSecretName, ns))
+
+		// check 'list' permission
+		_, err = h.Kube().CoreV1().Secrets(ns).List(context.TODO(), metav1.ListOptions{})
+		Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("failed to list secret %s in namespace %s", newSecretName, ns))
+
+		// check 'update' permission
+		dummySecret.Type = corev1.SecretTypeOpaque
+		_, err = h.Kube().CoreV1().Secrets(ns).Update(context.TODO(), dummySecret, metav1.UpdateOptions{})
+		Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("failed to update secret %s in namespace %s", newSecretName, ns))
+
+		// check 'delete' permission
+		err = h.Kube().CoreV1().Secrets(ns).Delete(context.TODO(), newSecretName, metav1.DeleteOptions{})
+		Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("failed to delete secret %s in namespace %s", newSecretName, ns))
+	}
+	return nil
+}
+
+// manageSubscription takes in a list of namespaces
+// and returns error if an action fails
+func manageSubscriptions(nsList []string, h *helper.H) error {
+
+	newSubscriptionName := "sameple-cust-subscription"
+
+	for _, ns := range nsList {
+
+		// check 'create permission
+		_, err := h.Operator().OperatorsV1alpha1().Subscriptions(ns).Create(context.TODO(), &operatorv1.Subscription{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      newSubscriptionName,
+				Namespace: ns,
+			},
+			Spec: &operatorv1.SubscriptionSpec{
+				Channel: "alpha",
+			},
+		}, metav1.CreateOptions{})
+		Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("failed to create subscription %s in namespace %s", newSubscriptionName, ns))
+
+		// check 'get' permission
+		sub, err := h.Operator().OperatorsV1alpha1().Subscriptions(ns).Get(context.TODO(), newSubscriptionName, metav1.GetOptions{})
+		Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("failed to get subscription %s in namespace %s", newSubscriptionName, ns))
+
+		// check 'list' permission
+		_, err = h.Operator().OperatorsV1alpha1().Subscriptions(ns).List(context.TODO(), metav1.ListOptions{})
+		Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("failed to list subscription %s in namespace %s", newSubscriptionName, ns))
+
+		// check 'update' permission
+		sub.Spec.Channel = "beta"
+		_, err = h.Operator().OperatorsV1alpha1().Subscriptions(ns).Update(context.TODO(), sub, metav1.UpdateOptions{})
+		Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("failed to update subscription %s in namespace %s", newSubscriptionName, ns))
+
+		// check 'delete' permission
+		err = h.Operator().OperatorsV1alpha1().Subscriptions(ns).Delete(context.TODO(), newSubscriptionName, metav1.DeleteOptions{})
+		Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("failed to delete subscription %s in namespace %s", newSubscriptionName, ns))
+	}
+	return nil
 }
