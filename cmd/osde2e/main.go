@@ -52,6 +52,7 @@ func init() {
 }
 
 func main() {
+	log.SetFlags(log.Flags() | log.Lshortfile)
 
 	// Execute the root command:
 	//root.SetArgs(os.Args[1:])
