@@ -219,7 +219,7 @@ func (m *Provider) CheckQuota(flavour string) (bool, error) {
 }
 
 // InstallAddons CRCs an install addons operation.
-func (m *Provider) InstallAddons(clusterID string, addonIDs []string) (int, error) {
+func (m *Provider) InstallAddons(clusterID string, addonIDs []spi.AddOnID, params map[spi.AddOnID]spi.AddOnParams) (int, error) {
 	return 0, nil
 }
 
