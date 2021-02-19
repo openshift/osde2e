@@ -36,6 +36,8 @@ require (
 	github.com/openshift/splunk-forwarder-operator v0.0.0-20201112162206-2f454770b6c0
 	github.com/operator-framework/api v0.3.6
 	github.com/operator-framework/operator-lifecycle-manager v0.0.0-20200521062108-408ca95d458f
+	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.44.1
+	github.com/prometheus-operator/prometheus-operator/pkg/client v0.45.0
 	github.com/prometheus/alertmanager v0.21.0
 	github.com/prometheus/client_golang v1.7.1
 	github.com/prometheus/common v0.14.0
