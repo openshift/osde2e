@@ -357,6 +357,15 @@ var Addons = struct {
 	// Env: ADDON_SLACK_CHANNEL
 	SlackChannel string
 
+	// Parameters is a nested json object. Top-level keys should be addon
+	// IDs provided in the IDs field. The values should be objects with
+	// string key-value pairs of parameters to provide to the addon with
+	// the associated top-level ID.
+	// An example:
+	// {"AddonA": {"paramName":"paramValue"}, "AddonB": {"paramName": "paramValue"}}
+	// Env: ADDON_PARAMETERS
+	Parameters string
+
 	// SkipAddonList is a boolean to indicate whether the listing of addons has to be disabled or not.
 	// Env: SKIP_ADDON_LIST
 	SkipAddonList string
@@ -369,6 +378,7 @@ var Addons = struct {
 	CleanupHarnesses: "addons.cleanupHarnesses",
 	SlackChannel:     "addons.slackChannel",
 	SkipAddonList:    "addons.skipAddonlist",
+	Parameters:       "addons.parameters",
 }
 
 // Scale config keys.
@@ -592,6 +602,9 @@ func init() {
 
 	viper.SetDefault(Addons.SlackChannel, "sd-cicd-alerts")
 	viper.BindEnv(Addons.SlackChannel, "ADDON_SLACK_CHANNEL")
+
+	viper.SetDefault(Addons.Parameters, "{}")
+	viper.BindEnv(Addons.Parameters, "ADDON_PARAMETERS")
 
 	viper.SetDefault(Addons.SkipAddonList, false)
 	viper.BindEnv(Addons.SkipAddonList, "SKIP_ADDON_LIST")

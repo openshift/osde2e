@@ -185,7 +185,12 @@ func writeLogs(m map[string][]byte) {
 // installAddons installs addons onto the cluster
 func installAddons() (err error) {
 	clusterID := viper.GetString(config.Cluster.ID)
-	num, err := provider.InstallAddons(clusterID, strings.Split(viper.GetString(config.Addons.IDs), ","))
+	params := make(map[string]map[string]string)
+	strParams := viper.GetString(config.Addons.Parameters)
+	if err := json.Unmarshal([]byte(strParams), &params); err != nil {
+		return fmt.Errorf("failed unmarshalling addon parameters %s: %w", strParams, err)
+	}
+	num, err := provider.InstallAddons(clusterID, strings.Split(viper.GetString(config.Addons.IDs), ","), params)
 	if err != nil {
 		return fmt.Errorf("could not install addons: %s", err.Error())
 	}
