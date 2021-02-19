@@ -516,7 +516,7 @@ func getReplacesCSV(h *helper.H, subscriptionNS string, csvDisplayName string, c
 	Expect(err).NotTo(HaveOccurred())
 
 	// get results
-	results, err := r.RetrieveTestResults()
+	results, err := r.RetrieveResults()
 	Expect(err).NotTo(HaveOccurred())
 
 	var result map[string]interface{}

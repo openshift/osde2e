@@ -2,7 +2,6 @@ package runner
 
 import (
 	"context"
-	"encoding/xml"
 	"errors"
 	"fmt"
 	"io"
@@ -13,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/onsi/ginkgo/reporters"
+	junit "github.com/joshdk/go-junit"
 	"golang.org/x/net/html"
 	"k8s.io/apimachinery/pkg/util/wait"
 	restclient "k8s.io/client-go/rest"
@@ -38,15 +37,17 @@ func ensurePassingXML(results map[string][]byte) (hadXML bool, err error) {
 		if match {
 			hadXML = true
 			// Use Ginkgo's JUnitTestSuite to unmarshal the JUnit XML file
-			var testSuite reporters.JUnitTestSuite
-			if err = xml.Unmarshal(data, &testSuite); err != nil {
-				err = fmt.Errorf("Failed parsing junit xml in %s: %w", filename, err)
+			suites, e := junit.Ingest(data)
+			if e != nil {
+				err = fmt.Errorf("Failed parsing junit xml in %s: %w", filename, e)
 				return
 			}
-			for _, testcase := range testSuite.TestCases {
-				if (testcase.FailureMessage) != nil {
-					err = fmt.Errorf("at least one test failed (see junit xml for more): %s", testcase.FailureMessage)
-					return
+			for _, suite := range suites {
+				for _, testcase := range suite.Tests {
+					if (testcase.Error) != nil {
+						err = fmt.Errorf("at least one test failed (see junit xml for more): %s", testcase.Error)
+						return
+					}
 				}
 			}
 		}

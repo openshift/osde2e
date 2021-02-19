@@ -20,6 +20,7 @@ require (
 	github.com/hashicorp/go-multierror v1.1.0
 	github.com/hpcloud/tail v1.0.0
 	github.com/influxdata/tdigest v0.0.1 // indirect
+	github.com/joshdk/go-junit v0.0.0-20201221202203-061ee62ada40
 	github.com/kylelemons/godebug v1.1.0
 	github.com/markbates/pkger v0.17.1
 	github.com/onsi/ginkgo v1.13.0

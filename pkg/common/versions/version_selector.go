@@ -35,6 +35,10 @@ func GetVersionForInstall(versionList *spi.VersionList) (*semver.Version, string
 	}
 
 	v, selector, err := selectedVersionSelector.SelectVersion(versionList)
+	if err != nil {
+		return v, selector, fmt.Errorf("could not select a version from versionlist %v: %w", versionList, err)
+
+	}
 
 	channel := viper.GetString(config.Cluster.Channel)
 	if channel != "stable" && !strings.Contains(v.Original(), channel) {
