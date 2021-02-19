@@ -91,7 +91,7 @@ func TestIntentionalFailures(t *testing.T) {
 	}
 
 	// InstallAddons
-	if addonsInstalled, err := mockProvider.InstallAddons(clusterID1, []string{"addon1", "addon2"}); addonsInstalled != 0 || err == nil {
+	if addonsInstalled, err := mockProvider.InstallAddons(clusterID1, []string{"addon1", "addon2"}, map[string]map[string]string{}); addonsInstalled != 0 || err == nil {
 		t.Errorf("expected error to occur installing addons: %v, %v", addonsInstalled, err)
 	}
 
@@ -113,7 +113,7 @@ func TestMockAddons(t *testing.T) {
 
 	toInstall := []string{"addon1", "addon2"}
 
-	numInstalled, err := mockProvider.InstallAddons(clusterID1, toInstall)
+	numInstalled, err := mockProvider.InstallAddons(clusterID1, toInstall, map[string]map[string]string{})
 	if err != nil {
 		t.Errorf("expected no error, got: %s", err.Error())
 	}
