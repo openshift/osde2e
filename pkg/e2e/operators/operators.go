@@ -424,11 +424,15 @@ func pollCsvList(h *helper.H, namespace, csvDisplayName string) (*operatorv1.Clu
 Loop:
 	for {
 		csvList, err = h.Operator().OperatorsV1alpha1().ClusterServiceVersions(namespace).List(context.TODO(), metav1.ListOptions{})
+
+	CSVCheck:
 		for _, csv := range csvList.Items {
 			switch {
 			case csvDisplayName == csv.Spec.DisplayName:
 				// Success
 				err = nil
+				// Don't check any other CSVs since we found the target
+				break CSVCheck
 			default:
 				err = fmt.Errorf("No matching clusterServiceVersion in CSV List")
 			}
