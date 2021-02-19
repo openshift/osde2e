@@ -1,0 +1,81 @@
+gcpbeforeSuiteMetrics:
+- name: cluster-health-check
+  regex: "cluster failed health check"
+  highThreshold: 1
+  lowThreshold: -1
+- name: quota-check
+  regex: "currently not enough quota exists to run this test"
+  highThreshold: 1
+  lowThreshold: -1
+- name: missing quota for cluster creation
+  regex: "last error api error: Unauthorized due to missing quota"
+  highThreshold: 3
+  lowThreshold: -1
+- name: cluster-install timeout
+  regex: "Cluster is not ready, current status 'installing'"
+  highThreshold: 40
+  lowThreshold: -1
+- name: cluster-setup
+  regex: "failed to setup cluster for testing"
+  highThreshold: 1
+  lowThreshold: -1
+- name: cluster-retrieval OCM error
+  regex: "error during OCM attempt: couldn't retrieve cluster"
+  highThreshold: 3
+  lowThreshold: -1
+- name: AWS error due to missing source clusterconfig
+  regex: "CVO State not complete: Failing: True Cluster operator insights is reporting a failure: Source clusterconfig could not be retrieved:"
+  highThreshold: 160
+  lowThreshold: -1  
+- name: AWS credentials not valid
+  regex: "Error creating cluster: The provided AWS credentials are not valid"
+  highThreshold: 1
+  lowThreshold: -1
+- name: AWS region not enabled
+  regex: "Error creating cluster: AWS region is not enabled"
+  highThreshold: 1
+  lowThreshold: -1
+- name: AWS image AMI failure
+  regex: "Error creating cluster: Failed to create instance using AMI"
+  highThreshold: 1
+  lowThreshold: -1
+- name: BYOC account vaildation failure
+  regex: "An error occurred while trying to validate BYOC account: Failed to get the user details"
+  highThreshold: 1
+  lowThreshold: -1
+- name: AMI ID Retieval Failure
+  regex: "Failed to get AMI ID"
+  highThreshold: 1
+  lowThreshold: -1
+- name: Setting osa_use_marketplace_ami property manually
+  regex: "Setting the 'rosa_use_marketplace_ami' property manually is not supported"
+  highThreshold: 1
+  lowThreshold: -1 
+- name: Test Panicked due to runtime error
+  regex: "runtime error: invalid memory address or nil pointer dereference"
+  highThreshold: 1
+  lowThreshold: -1 
+- name: Error in PollClusterHealth
+  regex: "Error in PollClusterHealth"
+  highThreshold: 100
+  lowThreshold: -1
+- name: running task Updating Alertmanager failed
+  regex: "Failed to rollout the stack. Error: running task Updating Alertmanager failed: waiting for Alertmanager object changes failed"
+  highThreshold: 250
+  lowThreshold: -1
+- name: timed out waiting for the condition during syncRequiredMachineConfigPools
+  regex: "timed out waiting for the condition during syncRequiredMachineConfigPools: error pool master is not ready, retrying"
+  highThreshold: 175
+  lowThreshold: -1
+- name: error creating cluster
+  regex: "Error creating cluster: identifier is '500', code is 'CLUSTERS-MGMT-500'"
+  highThreshold: 1
+  lowThreshold: -1 
+- name: failed to get access keys for user 'osdCcsAdmin'
+  regex: "Unable to create cluster spec: Failed to get access keys for user 'osdCcsAdmin': NoSuchEntity: The Access Key with id"
+  highThreshold: 1
+  lowThreshold: -1 
+- name: AWS client creation failure
+  regex: "Failed to create AWS client: Failed to find credentials. Check your AWS configuration and try again"
+  highThreshold: 1
+  lowThreshold: -1   

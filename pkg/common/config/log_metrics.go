@@ -23,14 +23,22 @@ var beforeSuiteMetrics = LogMetrics{}
 // GetLogMetrics will return the log metrics.
 func GetLogMetrics() LogMetrics {
 	once.Do(func() {
-		viper.UnmarshalKey("logMetrics", &logMetrics)
+		if CloudProvider.CloudProviderID == "gcp" {
+			viper.UnmarshalKey("gcplogMetrics", &logMetrics)
+		} else {
+			viper.UnmarshalKey("awslogMetrics", &logMetrics)
+		}
 	})
 	return logMetrics
 }
 
 // GetBeforeSuiteMetrics will return the log metrics.
 func GetBeforeSuiteMetrics() LogMetrics {
-	viper.UnmarshalKey("beforeSuiteMetrics", &beforeSuiteMetrics)
+	if CloudProvider.CloudProviderID == "gcp" {
+		viper.UnmarshalKey("gcpbeforeSuiteMetrics", &beforeSuiteMetrics)
+	} else {
+		viper.UnmarshalKey("awsbeforeSuiteMetrics", &beforeSuiteMetrics)
+	}
 	return beforeSuiteMetrics
 }
 
@@ -100,8 +108,5 @@ func (metric LogMetric) HasMatches(data []byte) int {
 // IsPassing checks the current counter against the thresholds to see if this
 // metric should be passing or failing via JUnit
 func (metric LogMetric) IsPassing(value int) bool {
-	if CloudProvider.CloudProviderID == "aws" {
-		metric.HighThreshold = metric.HighThreshold / 2
-	}
 	return metric.HighThreshold > value && metric.LowThreshold < value
 }

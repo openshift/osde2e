@@ -1,0 +1,24 @@
+awslogMetrics:
+- name: cluster-mgmt-500
+  regex: "CLUSTERS-MGMT-500"
+  highThreshold: 1
+  lowThreshold: -1
+- name: access-token-500
+  regex: "can't get access token: token response status is: 500 Internal Server Error"
+  highThreshold: 1
+  lowThreshold: -1
+- name: eof
+  regex: "EOF"
+  highThreshold: 3
+  lowThreshold: -1
+- name: cluster-pending
+  regex: "Cluster is not ready, current status 'pending'"
+  highThreshold: 10
+  lowThreshold: -1
+- name: host-dns-lookup
+  regex: "no such host"
+  ignoreIfMatchContains: [
+    "Still waiting for the Kubernetes API"
+  ]
+  highThreshold: 1
+  lowThreshold: -1
