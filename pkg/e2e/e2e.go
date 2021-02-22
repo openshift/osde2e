@@ -20,6 +20,7 @@ import (
 	junit "github.com/joshdk/go-junit"
 	vegeta "github.com/tsenart/vegeta/lib"
 
+	pd "github.com/PagerDuty/go-pagerduty"
 	"github.com/onsi/ginkgo"
 	ginkgoConfig "github.com/onsi/ginkgo/config"
 	"github.com/onsi/ginkgo/reporters"
@@ -447,6 +448,14 @@ func runGinkgoTests() error {
 	}
 
 	if !testsPassed || !upgradeTestsPassed {
+		// fire PD incident if JOB_TYPE==periodic
+		if os.Getenv("JOB_TYPE") == "periodic" {
+			client := pd.NewClient(viper.GetString(config.Alert.PagerDutyAPIToken))
+			_, err := client.CreateIncident("build failed", &pd.CreateIncidentOptions{})
+			if err != nil {
+				log.Printf("Failed creating PD incident: %v", err)
+			}
+		}
 		return fmt.Errorf("please inspect logs for more details")
 	}
 
