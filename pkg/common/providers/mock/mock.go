@@ -176,7 +176,7 @@ func (m *MockProvider) CheckQuota(flavour string) (bool, error) {
 }
 
 // InstallAddons mocks an install addons operation.
-func (m *MockProvider) InstallAddons(clusterID string, addonIDs []string) (int, error) {
+func (m *MockProvider) InstallAddons(clusterID string, addonIDs []spi.AddOnID, params map[spi.AddOnID]spi.AddOnParams) (int, error) {
 	if clusterID == "fail" {
 		return 0, fmt.Errorf("failed to get versions: Some fake error")
 	}

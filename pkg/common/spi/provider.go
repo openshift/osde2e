@@ -7,6 +7,12 @@ import (
 	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 )
 
+// AddOnID is a string used as the identifier for an addon
+type AddOnID = string
+
+// AddOnParams is a key-value store of parameters for an addon's installation
+type AddOnParams = map[string]string
+
 // Provider is the interface that must be implemented in order to provision clusters in osde2e.
 type Provider interface {
 	// IsValidClusterName validates that the proposed name used for creating the cluster.
@@ -65,7 +71,7 @@ type Provider interface {
 	// OpenShift dedicated has the notion of addon installation, which users can request from
 	// the OCM API. If you wish to emulate this support, the provider will need to support a similar
 	// mechanism.
-	InstallAddons(clusterID string, addonIDs []string) (int, error)
+	InstallAddons(clusterID string, addonIDs []AddOnID, params map[AddOnID]AddOnParams) (int, error)
 
 	// Versions returns a sorted list of supported OpenShift versions.
 	//
