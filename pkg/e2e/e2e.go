@@ -105,7 +105,7 @@ var _ = ginkgo.SynchronizedBeforeSuite(func() []byte {
 		viper.Set(config.CloudProvider.Region, cluster.Region())
 		log.Printf("CLOUD_PROVIDER_REGION set to %s from OCM.", viper.GetString(config.CloudProvider.Region))
 
-		if !viper.GetBool(config.Addons.SkipAddonList) {
+		if !viper.GetBool(config.Addons.SkipAddonList) || viper.GetString(config.Provider) != "mock" {
 			log.Printf("Found addons: %s", strings.Join(cluster.Addons(), ","))
 		}
 
@@ -125,11 +125,16 @@ var _ = ginkgo.SynchronizedBeforeSuite(func() []byte {
 		}
 
 		if len(viper.GetString(config.Addons.IDs)) > 0 {
-			err = installAddons()
-			events.HandleErrorWithEvents(err, events.InstallAddonsSuccessful, events.InstallAddonsFailed).ShouldNot(HaveOccurred(), "failed while installing addons")
-			if err != nil {
-				getLogs()
-				return []byte{}
+			if viper.GetString(config.Provider) != "mock" {
+				err = installAddons()
+				events.HandleErrorWithEvents(err, events.InstallAddonsSuccessful, events.InstallAddonsFailed).ShouldNot(HaveOccurred(), "failed while installing addons")
+				if err != nil {
+					getLogs()
+					return []byte{}
+				}
+			} else {
+				log.Println("Skipping addon installation due to mock provider.")
+				log.Println("If you are running local addon tests, please ensure the addon components are already installed.")
 			}
 		}
 
