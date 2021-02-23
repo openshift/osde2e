@@ -40,8 +40,8 @@ func (m *ROSAProvider) CheckQuota(flavour string) (bool, error) {
 }
 
 // InstallAddons will call InstallAddons from the OCM provider.
-func (m *ROSAProvider) InstallAddons(clusterID string, addonIDs []string) (int, error) {
-	return m.ocmProvider.InstallAddons(clusterID, addonIDs)
+func (m *ROSAProvider) InstallAddons(clusterID string, addonIDs []spi.AddOnID, addonParams map[spi.AddOnID]spi.AddOnParams) (int, error) {
+	return m.ocmProvider.InstallAddons(clusterID, addonIDs, addonParams)
 }
 
 // Logs will call Logs from the OCM provider.

@@ -12,6 +12,7 @@ import (
 	user "github.com/openshift/client-go/user/clientset/versioned"
 	machine "github.com/openshift/machine-api-operator/pkg/generated/clientset/versioned"
 	operator "github.com/operator-framework/operator-lifecycle-manager/pkg/api/client/clientset/versioned"
+	prometheusop "github.com/prometheus-operator/prometheus-operator/pkg/client/versioned"
 	velero "github.com/vmware-tanzu/velero/pkg/generated/clientset/versioned"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
@@ -112,5 +113,12 @@ func (h *H) Machine() machine.Interface {
 func (h *H) REST() *rest.RESTClient {
 	client, err := rest.RESTClientFor(h.restConfig)
 	Expect(err).ShouldNot(HaveOccurred(), "failed to configure REST client")
+	return client
+}
+
+// Monitoring returns the clientset for prometheus-operator
+func (h *H) Prometheusop() prometheusop.Interface {
+	client, err := prometheusop.NewForConfig(h.restConfig)
+	Expect(err).ShouldNot(HaveOccurred(), "failed to configure Prometheus-operator clientset")
 	return client
 }

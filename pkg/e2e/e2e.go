@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"github.com/hpcloud/tail"
+	junit "github.com/joshdk/go-junit"
 	vegeta "github.com/tsenart/vegeta/lib"
 
 	"github.com/onsi/ginkgo"
@@ -42,6 +43,7 @@ import (
 	"github.com/openshift/osde2e/pkg/common/util"
 	"github.com/openshift/osde2e/pkg/debug"
 	"github.com/openshift/osde2e/pkg/e2e/routemonitors"
+	"github.com/openshift/osde2e/pkg/reporting/ginkgorep"
 )
 
 const (
@@ -103,7 +105,7 @@ var _ = ginkgo.SynchronizedBeforeSuite(func() []byte {
 		viper.Set(config.CloudProvider.Region, cluster.Region())
 		log.Printf("CLOUD_PROVIDER_REGION set to %s from OCM.", viper.GetString(config.CloudProvider.Region))
 
-		if !viper.GetBool(config.Addons.SkipAddonList) {
+		if !viper.GetBool(config.Addons.SkipAddonList) || viper.GetString(config.Provider) != "mock" {
 			log.Printf("Found addons: %s", strings.Join(cluster.Addons(), ","))
 		}
 
@@ -123,11 +125,16 @@ var _ = ginkgo.SynchronizedBeforeSuite(func() []byte {
 		}
 
 		if len(viper.GetString(config.Addons.IDs)) > 0 {
-			err = installAddons()
-			events.HandleErrorWithEvents(err, events.InstallAddonsSuccessful, events.InstallAddonsFailed).ShouldNot(HaveOccurred(), "failed while installing addons")
-			if err != nil {
-				getLogs()
-				return []byte{}
+			if viper.GetString(config.Provider) != "mock" {
+				err = installAddons()
+				events.HandleErrorWithEvents(err, events.InstallAddonsSuccessful, events.InstallAddonsFailed).ShouldNot(HaveOccurred(), "failed while installing addons")
+				if err != nil {
+					getLogs()
+					return []byte{}
+				}
+			} else {
+				log.Println("Skipping addon installation due to mock provider.")
+				log.Println("If you are running local addon tests, please ensure the addon components are already installed.")
 			}
 		}
 
@@ -185,7 +192,12 @@ func writeLogs(m map[string][]byte) {
 // installAddons installs addons onto the cluster
 func installAddons() (err error) {
 	clusterID := viper.GetString(config.Cluster.ID)
-	num, err := provider.InstallAddons(clusterID, strings.Split(viper.GetString(config.Addons.IDs), ","))
+	params := make(map[string]map[string]string)
+	strParams := viper.GetString(config.Addons.Parameters)
+	if err := json.Unmarshal([]byte(strParams), &params); err != nil {
+		return fmt.Errorf("failed unmarshalling addon parameters %s: %w", strParams, err)
+	}
+	num, err := provider.InstallAddons(clusterID, strings.Split(viper.GetString(config.Addons.IDs), ","), params)
 	if err != nil {
 		return fmt.Errorf("could not install addons: %s", err.Error())
 	}
@@ -569,7 +581,7 @@ func runTestsInPhase(phase string, description string, dryrun bool) bool {
 	}
 	suffix := viper.GetString(config.Suffix)
 	phaseReportPath := filepath.Join(phaseDirectory, fmt.Sprintf("junit_%v.xml", suffix))
-	phaseReporter := reporters.NewJUnitReporter(phaseReportPath)
+	phaseReporter := ginkgorep.NewPhaseReporter(phase, phaseReportPath)
 	ginkgoPassed := false
 
 	// We need this anonymous function to make sure GinkgoRecover runs where we want it to
@@ -592,39 +604,24 @@ func runTestsInPhase(phase string, description string, dryrun bool) bool {
 		if file != nil {
 			// Process the jUnit XML result files
 			if junitFileRegex.MatchString(file.Name()) {
-				data, err := ioutil.ReadFile(filepath.Join(phaseDirectory, file.Name()))
+				suites, err := junit.IngestFile(filepath.Join(phaseDirectory, file.Name()))
 				if err != nil {
-					log.Printf("error opening junit file %s: %s", file.Name(), err.Error())
-					return false
-				}
-				// Use Ginkgo's JUnitTestSuite to unmarshal the JUnit XML file
-				var testSuite reporters.JUnitTestSuite
-
-				if err = xml.Unmarshal(data, &testSuite); err != nil {
-					log.Printf("error unmarshalling junit xml: %s", err.Error())
+					log.Printf("error reading junit xml file %s: %s", file.Name(), err.Error())
 					return false
 				}
 
-				for i, testcase := range testSuite.TestCases {
-					isSkipped := testcase.Skipped != nil
-					isFail := testcase.FailureMessage != nil
+				for _, testSuite := range suites {
+					for _, testcase := range testSuite.Tests {
+						isSkipped := testcase.Status == junit.StatusSkipped
+						isFail := testcase.Status == junit.StatusFailed
 
-					if !isSkipped {
-						numTests++
+						if !isSkipped {
+							numTests++
+						}
+						if !isFail && !isSkipped {
+							numPassingTests++
+						}
 					}
-					if !isFail && !isSkipped {
-						numPassingTests++
-					}
-
-					testSuite.TestCases[i].Name = fmt.Sprintf("[%s] %s", phase, testcase.Name)
-				}
-
-				data, err = xml.Marshal(&testSuite)
-
-				err = ioutil.WriteFile(filepath.Join(phaseDirectory, file.Name()), data, 0644)
-				if err != nil {
-					log.Printf("error writing to junit file: %s", err.Error())
-					return false
 				}
 			}
 		}

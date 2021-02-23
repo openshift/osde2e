@@ -634,12 +634,13 @@ func (o *OCMProvider) GetMetrics(clusterID string) (*v1.ClusterMetrics, error) {
 
 // InstallAddons loops through the addons list in the config
 // and performs the CRUD operation to trigger addon installation
-func (o *OCMProvider) InstallAddons(clusterID string, addonIDs []string) (num int, err error) {
+func (o *OCMProvider) InstallAddons(clusterID string, addonIDs []spi.AddOnID, addonParams map[spi.AddOnID]spi.AddOnParams) (num int, err error) {
 	num = 0
 	addonsClient := o.conn.ClustersMgmt().V1().Addons()
 	clusterClient := o.conn.ClustersMgmt().V1().Clusters().Cluster(clusterID)
 	for _, addonID := range addonIDs {
 		var addonResp *v1.AddOnGetResponse
+		params := addonParams[addonID]
 
 		err = retryer().Do(func() error {
 			var err error
@@ -681,7 +682,17 @@ func (o *OCMProvider) InstallAddons(clusterID string, addonIDs []string) (num in
 		}
 
 		if addon.Enabled() {
-			addonInstallation, err := v1.NewAddOnInstallation().Addon(v1.NewAddOn().Copy(addon)).Build()
+			builder := v1.NewAddOnInstallation().Addon(v1.NewAddOn().Copy(addon))
+
+			if len(params) > 0 {
+				addOnParamList := make([]*v1.AddOnInstallationParameterBuilder, 0, len(params))
+				for name, value := range params {
+					addOnParamList = append(addOnParamList, v1.NewAddOnInstallationParameter().ID(name).Value(value))
+				}
+				builder = builder.Parameters(v1.NewAddOnInstallationParameterList().Items(addOnParamList...))
+			}
+
+			addonInstallation, err := builder.Build()
 			if err != nil {
 				return 0, err
 			}

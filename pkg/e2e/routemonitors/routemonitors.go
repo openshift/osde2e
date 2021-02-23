@@ -18,10 +18,11 @@ import (
 )
 
 const (
-	consoleNamespace = "openshift-console"
-	consoleLabel     = "console"
-	oauthNamespace   = "openshift-authentication"
-	oauthName        = "oauth-openshift"
+	consoleNamespace    = "openshift-console"
+	consoleLabel        = "console"
+	monitoringNamespace = "openshift-monitoring"
+	oauthNamespace      = "openshift-authentication"
+	oauthName           = "oauth-openshift"
 )
 
 type RouteMonitors struct {
@@ -112,6 +113,23 @@ func Create() (*RouteMonitors, error) {
 				URL:    workloadUrl,
 			})
 			targeters[u.Host] = workloadTargeter
+		}
+	}
+
+	// Create monitors for each route existing in openshift-monitoring
+	monitoringRoutes, err := h.Route().RouteV1().Routes(monitoringNamespace).List(context.TODO(), metav1.ListOptions{})
+	if err != nil {
+		return nil, fmt.Errorf("could not retrieve list of workload routes")
+	}
+	for _, monitoringRoute := range monitoringRoutes.Items {
+		monitoringURL := fmt.Sprintf("https://%s", monitoringRoute.Spec.Host)
+		u, err := url.Parse(monitoringURL)
+		if err == nil {
+			monitoringTargeter := vegeta.NewStaticTargeter(vegeta.Target{
+				Method: "GET",
+				URL:    monitoringURL,
+			})
+			targeters[u.Host] = monitoringTargeter
 		}
 	}
 
