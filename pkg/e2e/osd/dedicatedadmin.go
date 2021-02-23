@@ -324,7 +324,8 @@ func manageSecrets(nsList []string, h *helper.H) error {
 		newSecretName := "sample-cust-secret"
 
 		// check 'create' permission
-		dummySecret, err := h.Kube().CoreV1().Secrets(ns).Create(context.TODO(), &corev1.Secret{
+		secrets := h.Kube().CoreV1().Secrets(ns)
+		dummySecret, err := secrets.Create(context.TODO(), &corev1.Secret{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      newSecretName,
 				Namespace: ns,
@@ -333,20 +334,20 @@ func manageSecrets(nsList []string, h *helper.H) error {
 		Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("failed to create secret %s in namespace %s", newSecretName, ns))
 
 		// check 'get' permission
-		dummySecret, err = h.Kube().CoreV1().Secrets(ns).Get(context.TODO(), newSecretName, metav1.GetOptions{})
+		dummySecret, err = secrets.Get(context.TODO(), newSecretName, metav1.GetOptions{})
 		Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("failed to get secret %s in namespace %s", newSecretName, ns))
 
 		// check 'list' permission
-		_, err = h.Kube().CoreV1().Secrets(ns).List(context.TODO(), metav1.ListOptions{})
+		_, err = secrets.List(context.TODO(), metav1.ListOptions{})
 		Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("failed to list secret %s in namespace %s", newSecretName, ns))
 
 		// check 'update' permission
 		dummySecret.Type = corev1.SecretTypeOpaque
-		_, err = h.Kube().CoreV1().Secrets(ns).Update(context.TODO(), dummySecret, metav1.UpdateOptions{})
+		_, err = secrets.Update(context.TODO(), dummySecret, metav1.UpdateOptions{})
 		Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("failed to update secret %s in namespace %s", newSecretName, ns))
 
 		// check 'delete' permission
-		err = h.Kube().CoreV1().Secrets(ns).Delete(context.TODO(), newSecretName, metav1.DeleteOptions{})
+		err = secrets.Delete(context.TODO(), newSecretName, metav1.DeleteOptions{})
 		Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("failed to delete secret %s in namespace %s", newSecretName, ns))
 	}
 	return nil
@@ -356,12 +357,13 @@ func manageSecrets(nsList []string, h *helper.H) error {
 // and returns error if an action fails
 func manageSubscriptions(nsList []string, h *helper.H) error {
 
-	newSubscriptionName := "sameple-cust-subscription"
+	newSubscriptionName := "sample-cust-subscription"
 
 	for _, ns := range nsList {
 
 		// check 'create permission
-		_, err := h.Operator().OperatorsV1alpha1().Subscriptions(ns).Create(context.TODO(), &operatorv1.Subscription{
+		subscriptions := h.Operator().OperatorsV1alpha1().Subscriptions(ns)
+		_, err := subscriptions.Create(context.TODO(), &operatorv1.Subscription{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      newSubscriptionName,
 				Namespace: ns,
@@ -373,20 +375,20 @@ func manageSubscriptions(nsList []string, h *helper.H) error {
 		Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("failed to create subscription %s in namespace %s", newSubscriptionName, ns))
 
 		// check 'get' permission
-		sub, err := h.Operator().OperatorsV1alpha1().Subscriptions(ns).Get(context.TODO(), newSubscriptionName, metav1.GetOptions{})
+		sub, err := subscriptions.Get(context.TODO(), newSubscriptionName, metav1.GetOptions{})
 		Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("failed to get subscription %s in namespace %s", newSubscriptionName, ns))
 
 		// check 'list' permission
-		_, err = h.Operator().OperatorsV1alpha1().Subscriptions(ns).List(context.TODO(), metav1.ListOptions{})
+		_, err = subscriptions.List(context.TODO(), metav1.ListOptions{})
 		Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("failed to list subscription %s in namespace %s", newSubscriptionName, ns))
 
 		// check 'update' permission
 		sub.Spec.Channel = "beta"
-		_, err = h.Operator().OperatorsV1alpha1().Subscriptions(ns).Update(context.TODO(), sub, metav1.UpdateOptions{})
+		_, err = subscriptions.Update(context.TODO(), sub, metav1.UpdateOptions{})
 		Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("failed to update subscription %s in namespace %s", newSubscriptionName, ns))
 
 		// check 'delete' permission
-		err = h.Operator().OperatorsV1alpha1().Subscriptions(ns).Delete(context.TODO(), newSubscriptionName, metav1.DeleteOptions{})
+		err = subscriptions.Delete(context.TODO(), newSubscriptionName, metav1.DeleteOptions{})
 		Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("failed to delete subscription %s in namespace %s", newSubscriptionName, ns))
 	}
 	return nil
