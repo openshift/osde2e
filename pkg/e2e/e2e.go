@@ -20,7 +20,6 @@ import (
 	junit "github.com/joshdk/go-junit"
 	vegeta "github.com/tsenart/vegeta/lib"
 
-	pd "github.com/PagerDuty/go-pagerduty"
 	"github.com/onsi/ginkgo"
 	ginkgoConfig "github.com/onsi/ginkgo/config"
 	"github.com/onsi/ginkgo/reporters"
@@ -36,8 +35,10 @@ import (
 	"github.com/openshift/osde2e/pkg/common/events"
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/metadata"
+	"github.com/openshift/osde2e/pkg/common/pagerduty"
 	"github.com/openshift/osde2e/pkg/common/phase"
 	"github.com/openshift/osde2e/pkg/common/providers"
+	"github.com/openshift/osde2e/pkg/common/prow"
 	"github.com/openshift/osde2e/pkg/common/runner"
 	"github.com/openshift/osde2e/pkg/common/spi"
 	"github.com/openshift/osde2e/pkg/common/upgrade"
@@ -450,10 +451,16 @@ func runGinkgoTests() error {
 	if !testsPassed || !upgradeTestsPassed {
 		// fire PD incident if JOB_TYPE==periodic
 		if os.Getenv("JOB_TYPE") == "periodic" {
-			client := pd.NewClient(viper.GetString(config.Alert.PagerDutyAPIToken))
-			_, err := client.CreateIncident("build failed", &pd.CreateIncidentOptions{})
-			if err != nil {
-				log.Printf("Failed creating PD incident: %v", err)
+			pdc := pagerduty.Config{
+				Token:     viper.GetString(config.Alert.PagerDutyAPIToken),
+				ServiceID: "P7VT2V5", // https://redhat.pagerduty.com/service-directory/P7VT2V5
+				PolicyID:  "PN48RK3", // https://redhat.pagerduty.com/escalation_policies#PN48RK3
+			}
+			url, _ := prow.JobURL()
+			jobName := os.Getenv("JOB_NAME")
+
+			if err := pdc.FireIncident(jobName+" failed", url); err != nil {
+				log.Printf("Failed creating pagerduty incident for failure: %v", err)
 			}
 		}
 		return fmt.Errorf("please inspect logs for more details")
