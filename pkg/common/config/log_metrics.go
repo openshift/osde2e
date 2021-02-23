@@ -3,7 +3,9 @@ package config
 import (
 	"bufio"
 	"bytes"
+	"fmt"
 	"io"
+	"log"
 	"regexp"
 	"strings"
 	"sync"
@@ -23,9 +25,9 @@ var beforeSuiteMetrics = LogMetrics{}
 // GetLogMetrics will return the log metrics.
 func GetLogMetrics() LogMetrics {
 	once.Do(func() {
-		if CloudProvider.CloudProviderID == "gcp" {
-			viper.UnmarshalKey("gcplogMetrics", &logMetrics)
-		} else {
+		err := viper.UnmarshalKey(fmt.Sprintf("%slogMetrics", CloudProvider.CloudProviderID), &logMetrics)
+		if err != nil {
+			log.Printf("Log Metric Thresholds not set for the provider %s, defaulting to AWS settings", CloudProvider.CloudProviderID)
 			viper.UnmarshalKey("awslogMetrics", &logMetrics)
 		}
 	})
@@ -34,9 +36,9 @@ func GetLogMetrics() LogMetrics {
 
 // GetBeforeSuiteMetrics will return the log metrics.
 func GetBeforeSuiteMetrics() LogMetrics {
-	if CloudProvider.CloudProviderID == "gcp" {
-		viper.UnmarshalKey("gcpbeforeSuiteMetrics", &beforeSuiteMetrics)
-	} else {
+	err := viper.UnmarshalKey(fmt.Sprintf("%sbeforeSuiteMetrics", CloudProvider.CloudProviderID), &beforeSuiteMetrics)
+	if err != nil {
+		log.Printf("Before Suite Metric Thresholds not set for the provider %s, defaulting to AWS settings", CloudProvider.CloudProviderID)
 		viper.UnmarshalKey("awsbeforeSuiteMetrics", &beforeSuiteMetrics)
 	}
 	return beforeSuiteMetrics
