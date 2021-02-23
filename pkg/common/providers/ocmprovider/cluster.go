@@ -204,15 +204,35 @@ func (o *OCMProvider) DetermineRegion(cloudProvider string) (string, error) {
 	// If a region is set to "random", it will poll OCM for all the regions available
 	// It then will pull a random entry from the list of regions and set the ID to that
 	if region == "random" {
-		regionsClient := o.conn.ClustersMgmt().V1().CloudProviders().CloudProvider(cloudProvider).Regions().List()
+		var regions []*v1.CloudRegion
+		// We support multiple cloud providers....
+		if cloudProvider == "aws" {
+			if viper.GetString(AWSAccessKey) == "" || viper.GetString(AWSSecretKey) == "" {
+				log.Println("Random region requested but cloud credentials not supplied. Defaulting to us-east-1")
+				return "us-east-1", nil
+			}
+			awsCredentials, err := v1.NewAWS().
+				AccessKeyID(viper.GetString(AWSAccessKey)).
+				SecretAccessKey(viper.GetString(AWSSecretKey)).
+				Build()
+			if err != nil {
+				return "", err
+			}
 
-		regions, err := regionsClient.Send()
-		if err != nil {
-			return "", err
+			response, err := o.conn.ClustersMgmt().V1().CloudProviders().CloudProvider(cloudProvider).AvailableRegions().Search().Body(awsCredentials).Send()
+			if err != nil {
+				return "", err
+			}
+			regions = response.Items().Slice()
 		}
-		items := regions.Items().Slice()
 
-		cloudRegion, found := ChooseRandomRegion(toCloudRegions(items)...)
+		// But we don't support passing GCP credentials yet :)
+		if cloudProvider == "gcp" {
+			log.Println("Random GCP region not supported yet. Setting region to us-east1")
+			return "us-east1", nil
+		}
+
+		cloudRegion, found := ChooseRandomRegion(toCloudRegions(regions)...)
 		if !found {
 			return "", fmt.Errorf("unable to choose a random enabled region")
 		}
@@ -224,6 +244,7 @@ func (o *OCMProvider) DetermineRegion(cloudProvider string) (string, error) {
 		// Update the Config with the selected random region
 		viper.Set(config.CloudProvider.Region, region)
 	}
+
 	return region, nil
 }
 
