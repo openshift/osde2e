@@ -9,26 +9,6 @@ if [ -z "${OCM_TOKEN+x}" ]; then
     OCM_TOKEN=$(cat /usr/local/osde2e-credentials/ocm-refresh-token)
 fi
 
-if [ -z "${AWS_ACCESS_KEY_ID+x}" ]; then
-    echo "Assuming the AWS Access token should be read from Prow";
-    AWS_ACCESS_KEY_ID=$(cat /usr/local/osde2e-credentials/aws-access-key-id)
-fi
-
-if [ -z "${AWS_SECRET_ACCESS_KEY+x}" ]; then
-    echo "Assuming the AWS Secret token should be read from Prow";
-    AWS_SECRET_ACCESS_KEY=$(cat /usr/local/osde2e-credentials/aws-secret-access-key)
-fi
-
-if [ -z "${PULL_SECRET_FILE+x}" ]; then
-    echo "Assuming the Pull Secret should be read from Prow";
-    PULL_SECRET_FILE=/usr/local/osde2e-credentials/stage-ocm-pull-secret
-fi
-
-if [ -z "${INSTALLER_CONFIG+x}" ]; then
-    echo "Assuming the Installer Config should be read from Prow";
-    INSTALLER_CONFIG=/usr/local/osde2e-credentials/stage-installer-config
-fi
-
 export OCM_CONFIG=./.ocm.json
 export KUBECONFIG="${SHARED_DIR}/kubeconfig"
 
