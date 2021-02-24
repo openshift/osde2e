@@ -32,8 +32,8 @@ metadata:
     namespace: openshift-monitoring
 data:
     config.yaml: |
-    telemeterClient:
-        telemeterServerURL: https://infogw.api.stage.openshift.com
+        telemeterClient:
+            telemeterServerURL: https://infogw.api.stage.openshift.com
 EOF
 
 sleep 600;
