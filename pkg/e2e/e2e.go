@@ -457,7 +457,7 @@ func runGinkgoTests() error {
 			url, _ := prow.JobURL()
 			jobName := os.Getenv("JOB_NAME")
 
-			if err := pdc.FireAlert(jobName+" failed", url); err != nil {
+			if err := pdc.FireAlert(jobName, url); err != nil {
 				log.Printf("Failed creating pagerduty incident for failure: %v", err)
 			}
 		}
