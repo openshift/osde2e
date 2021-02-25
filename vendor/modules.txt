@@ -1,5 +1,7 @@
 # github.com/Masterminds/semver v1.5.0
 github.com/Masterminds/semver
+# github.com/PagerDuty/go-pagerduty v1.3.0
+github.com/PagerDuty/go-pagerduty
 # github.com/PuerkitoBio/goquery v1.5.1
 github.com/PuerkitoBio/goquery
 # github.com/PuerkitoBio/purell v1.1.1
