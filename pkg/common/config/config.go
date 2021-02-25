@@ -414,8 +414,13 @@ var Alert = struct {
 	// SlackAPIToken is a bot slack token
 	// Env: SLACK_API_TOKEN
 	SlackAPIToken string
+
+	// PagerDutyAPIToken is a pagerduty token
+	// Env: PAGERDUTY_API_TOKEN
+	PagerDutyAPIToken string
 }{
-	SlackAPIToken: "alert.slackAPIToken",
+	SlackAPIToken:     "alert.slackAPIToken",
+	PagerDutyAPIToken: "alert.pagerDutyAPIToken",
 }
 
 func init() {
@@ -624,6 +629,9 @@ func init() {
 	// ----- Alert ----
 	viper.BindEnv(Alert.SlackAPIToken, "SLACK_API_TOKEN")
 	RegisterSecret(Alert.SlackAPIToken, "slack-api-token")
+
+	viper.BindEnv(Alert.PagerDutyAPIToken, "PAGERDUTY_API_TOKEN")
+	RegisterSecret(Alert.PagerDutyAPIToken, "pagerduty-api-token")
 }
 
 // PostProcess is a variety of post-processing commands that is intended to be run after a config is loaded.

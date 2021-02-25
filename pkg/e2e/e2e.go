@@ -35,8 +35,10 @@ import (
 	"github.com/openshift/osde2e/pkg/common/events"
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/metadata"
+	"github.com/openshift/osde2e/pkg/common/pagerduty"
 	"github.com/openshift/osde2e/pkg/common/phase"
 	"github.com/openshift/osde2e/pkg/common/providers"
+	"github.com/openshift/osde2e/pkg/common/prow"
 	"github.com/openshift/osde2e/pkg/common/runner"
 	"github.com/openshift/osde2e/pkg/common/spi"
 	"github.com/openshift/osde2e/pkg/common/upgrade"
@@ -447,6 +449,18 @@ func runGinkgoTests() error {
 	}
 
 	if !testsPassed || !upgradeTestsPassed {
+		// fire PD incident if JOB_TYPE==periodic
+		if os.Getenv("JOB_TYPE") == "periodic" {
+			pdc := pagerduty.Config{
+				IntegrationKey: viper.GetString(config.Alert.PagerDutyAPIToken),
+			}
+			url, _ := prow.JobURL()
+			jobName := os.Getenv("JOB_NAME")
+
+			if err := pdc.FireAlert(jobName+" failed", url); err != nil {
+				log.Printf("Failed creating pagerduty incident for failure: %v", err)
+			}
+		}
 		return fmt.Errorf("please inspect logs for more details")
 	}
 
