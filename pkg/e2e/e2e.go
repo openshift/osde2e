@@ -452,14 +452,12 @@ func runGinkgoTests() error {
 		// fire PD incident if JOB_TYPE==periodic
 		if os.Getenv("JOB_TYPE") == "periodic" {
 			pdc := pagerduty.Config{
-				Token:     viper.GetString(config.Alert.PagerDutyAPIToken),
-				ServiceID: "P7VT2V5", // https://redhat.pagerduty.com/service-directory/P7VT2V5
-				PolicyID:  "PN48RK3", // https://redhat.pagerduty.com/escalation_policies#PN48RK3
+				IntegrationKey: viper.GetString(config.Alert.PagerDutyAPIToken),
 			}
 			url, _ := prow.JobURL()
 			jobName := os.Getenv("JOB_NAME")
 
-			if err := pdc.FireIncident(jobName+" failed", url); err != nil {
+			if err := pdc.FireAlert(jobName+" failed", url); err != nil {
 				log.Printf("Failed creating pagerduty incident for failure: %v", err)
 			}
 		}

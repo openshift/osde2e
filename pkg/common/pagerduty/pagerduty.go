@@ -21,6 +21,9 @@ func (pdc Config) FireAlert(pipeline, details string) error {
 			Summary:  pipeline + " failed",
 			Severity: "info",
 			Source:   pipeline,
+			Details: map[string]string{
+				"details": details,
+			},
 		},
 	}
 	_, err := pd.ManageEvent(event)
