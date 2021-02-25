@@ -526,7 +526,7 @@ func init() {
 	viper.SetDefault(Cluster.DestroyAfterTest, false)
 	viper.BindEnv(Cluster.DestroyAfterTest, "DESTROY_CLUSTER")
 
-	viper.SetDefault(Cluster.ExpiryInMinutes, 210)
+	viper.SetDefault(Cluster.ExpiryInMinutes, 360)
 	viper.BindEnv(Cluster.ExpiryInMinutes, "CLUSTER_EXPIRY_IN_MINUTES")
 
 	viper.SetDefault(Cluster.AfterTestWait, 60)
