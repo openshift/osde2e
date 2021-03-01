@@ -18,7 +18,7 @@ const (
 	conNamespace    = "openshift-console"
 )
 
-var samesiteTestName string = "[Suite: informing] Samesite Cookie Strict"
+var samesiteTestName string = "[Suite: e2e] [OSD] Samesite Cookie Strict"
 
 var _ = ginkgo.Describe(samesiteTestName, func() {
 	h := helper.New()
