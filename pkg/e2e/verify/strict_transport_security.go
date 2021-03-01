@@ -11,7 +11,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-var hstsTestName string = "[Suite: informing] HTTP Strict Transport Security"
+var hstsTestName string = "[Suite: e2e] [OSD] HTTP Strict Transport Security"
 
 var _ = ginkgo.Describe(hstsTestName, func() {
 	h := helper.New()
