@@ -31,7 +31,7 @@ if [ -z "$REPORT_DIR" ]; then
 fi
 
 # Install the dependencies
-(cd "$(dirname "$0")/.."; go mod tidy && go mod vendor)
+(cd "$(dirname "$0")/.."; go mod tidy)
 
 # Ensure the report directory exists
 mkdir -p "$REPORT_DIR"
