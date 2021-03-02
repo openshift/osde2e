@@ -13,22 +13,15 @@ type Config struct {
 
 // FireIncident attempts to create an alert indicating a failure in the provided
 // pipeline.
-func (pdc Config) FireAlert(pipeline, details string) error {
+func (pdc Config) FireAlert(details pd.V2Payload) (*pd.V2EventResponse, error) {
 	event := pd.V2Event{
 		RoutingKey: pdc.IntegrationKey,
 		Action:     "trigger",
-		Payload: &pd.V2Payload{
-			Summary:  pipeline + " failed",
-			Severity: "info",
-			Source:   pipeline,
-			Details: map[string]string{
-				"details": details,
-			},
-		},
+		Payload:    &details,
 	}
-	_, err := pd.ManageEvent(event)
+	e, err := pd.ManageEvent(event)
 	if err != nil {
-		return fmt.Errorf("failed firing alert: %w", err)
+		return e, fmt.Errorf("failed firing alert: %w", err)
 	}
-	return nil
+	return e, nil
 }
