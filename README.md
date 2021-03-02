@@ -17,8 +17,6 @@ Install dependencies:
 ```
 # Install dependencies
 $ go mod tidy
-# Copy them to a vendor dir
-$ go mod vendor
 ```
  
 Set OCM_TOKEN environment variable:
