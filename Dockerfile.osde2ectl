@@ -5,6 +5,7 @@ ENV PKG=/go/src/github.com/openshift/osde2e/
 WORKDIR ${PKG}
 
 COPY . .
+RUN go env
 RUN make check
 RUN make build
 
