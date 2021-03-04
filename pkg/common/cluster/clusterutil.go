@@ -29,8 +29,11 @@ import (
 
 const (
 	// errorWindow is the number of checks made to determine if a cluster has truly failed.
-	errorWindow = 20
+	errorWindow         = 20
+	pendingPodThreshold = 5
 )
+
+var podErrorCount = make(map[string]int)
 
 // GetClusterVersion will get the current cluster version for the cluster.
 func GetClusterVersion(provider spi.Provider, clusterID string) (*semver.Version, error) {
@@ -293,10 +296,18 @@ func PollClusterHealth(clusterID string, logger *log.Logger) (status bool, failu
 			clusterHealthy = false
 		}
 
-		if check, err := healthchecks.CheckClusterPodHealth(kubeClient.CoreV1(), logger); !check || err != nil {
+		if podlist, err := healthchecks.CheckClusterPodHealth(kubeClient.CoreV1(), logger); (podlist == nil) || err != nil {
 			healthErr = multierror.Append(healthErr, err)
 			failures = append(failures, "pod")
 			clusterHealthy = false
+		} else {
+			newpodcount, podcheck, err := healthchecks.CheckPendingPods(podlist, podErrorCount, pendingPodThreshold)
+			if err != nil || !podcheck {
+				healthErr = multierror.Append(healthErr, err)
+				failures = append(failures, "pod")
+				clusterHealthy = false
+			}
+			podErrorCount = newpodcount
 		}
 
 		if check, err := healthchecks.CheckCerts(kubeClient.CoreV1(), logger); !check || err != nil {
