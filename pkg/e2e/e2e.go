@@ -471,17 +471,22 @@ func openPDAlerts(suites []junit.Suite, jobName, jobURL string) {
 			failingTests = append(failingTests, testcase.Name)
 		}
 	}
+	jobDetails := map[string]string{
+		"details":        jobURL,
+		"clusterID":      viper.GetString(config.Cluster.ID),
+		"clusterName":    viper.GetString(config.Cluster.Name),
+		"clusterVersion": viper.GetString(config.Cluster.Version),
+		"expiration":     "clusters expire 6 hours after creation",
+	}
 	// if too many things failed, open a single alert that isn't grouped with the others.
 	if len(failingTests) > 10 {
+		jobDetails["help"] = "This is likely a more complex problem, like a test harness or infrastructure issue. The test harness will attempt to notify #sd-cicd"
 		if event, err := pdc.FireAlert(pd.V2Payload{
 			Summary:  "A lot of tests failed together",
 			Severity: "info",
 			Source:   jobName,
 			Group:    "", // do not group
-			Details: map[string]string{
-				"details": jobURL,
-				"help":    "This is likely a more complex problem, like a test harness or infrastructure issue. The test harness will attempt to notify #sd-cicd",
-			},
+			Details:  jobDetails,
 		}); err != nil {
 			log.Printf("Failed creating pagerduty incident for failure: %v", err)
 		} else {
@@ -501,9 +506,7 @@ PD info: %v`, jobName, jobURL, event)); err != nil {
 			Severity: "info",
 			Source:   jobName,
 			Group:    name, // group by test case
-			Details: map[string]string{
-				"details": jobURL,
-			},
+			Details:  jobDetails,
 		}); err != nil {
 			log.Printf("Failed creating pagerduty incident for failure: %v", err)
 		}
