@@ -45,6 +45,7 @@ var _ = ginkgo.Describe(podWebhookTestName, func() {
 					"system:authenticated",
 				},
 			})
+			time.Sleep(5 * time.Second)
 			defer func() {
 				h.Impersonate(rest.ImpersonationConfig{})
 			}()
