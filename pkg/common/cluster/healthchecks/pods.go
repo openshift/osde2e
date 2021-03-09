@@ -58,12 +58,13 @@ func checkPods(podClient v1.CoreV1Interface, logger *log.Logger, filters ...PodP
 	}
 
 	if len(list.Items) == 0 {
-		return nil, fmt.Errorf("pod list is empty. this should NOT happen") //false
+		return nil, fmt.Errorf("pod list is empty. this should NOT happen")
 	}
 
 	pods := filterPods(list, filters...)
 
 	logger.Printf("%v pods are currently not running or complete:", len(pods.Items))
+
 	for _, pod := range pods.Items {
 		if pod.Status.Phase != kubev1.PodPending {
 			return nil, fmt.Errorf("Pod %s errored: %s - %s", pod.GetName(), pod.Status.Reason, pod.Status.Message)
@@ -111,5 +112,6 @@ func CheckPendingPods(podlist []kubev1.Pod, podErrorCount map[string]int, pendin
 			podErrorCount[pod.Name] = 1
 		}
 	}
+
 	return podErrorCount, true, nil
 }

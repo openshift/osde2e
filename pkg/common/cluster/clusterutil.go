@@ -30,7 +30,7 @@ import (
 const (
 	// errorWindow is the number of checks made to determine if a cluster has truly failed.
 	errorWindow         = 20
-	pendingPodThreshold = 5
+	pendingPodThreshold = 10
 )
 
 var podErrorCount = make(map[string]int)
@@ -296,7 +296,7 @@ func PollClusterHealth(clusterID string, logger *log.Logger) (status bool, failu
 			clusterHealthy = false
 		}
 
-		if podlist, err := healthchecks.CheckClusterPodHealth(kubeClient.CoreV1(), logger); (podlist == nil) || err != nil {
+		if podlist, err := healthchecks.CheckClusterPodHealth(kubeClient.CoreV1(), logger); (podlist == nil) && err != nil {
 			healthErr = multierror.Append(healthErr, err)
 			failures = append(failures, "pod")
 			clusterHealthy = false
