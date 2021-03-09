@@ -20,6 +20,7 @@ import (
 	junit "github.com/joshdk/go-junit"
 	vegeta "github.com/tsenart/vegeta/lib"
 
+	pd "github.com/PagerDuty/go-pagerduty"
 	"github.com/onsi/ginkgo"
 	ginkgoConfig "github.com/onsi/ginkgo/config"
 	"github.com/onsi/ginkgo/reporters"
@@ -27,6 +28,7 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/spf13/viper"
 
+	"github.com/openshift/osde2e/pkg/common/alert"
 	"github.com/openshift/osde2e/pkg/common/aws"
 	"github.com/openshift/osde2e/pkg/common/cluster"
 	clusterutil "github.com/openshift/osde2e/pkg/common/cluster"
@@ -449,22 +451,67 @@ func runGinkgoTests() error {
 	}
 
 	if !testsPassed || !upgradeTestsPassed {
-		// fire PD incident if JOB_TYPE==periodic
-		if os.Getenv("JOB_TYPE") == "periodic" {
-			pdc := pagerduty.Config{
-				IntegrationKey: viper.GetString(config.Alert.PagerDutyAPIToken),
-			}
-			url, _ := prow.JobURL()
-			jobName := os.Getenv("JOB_NAME")
-
-			if err := pdc.FireAlert(jobName, url); err != nil {
-				log.Printf("Failed creating pagerduty incident for failure: %v", err)
-			}
-		}
 		return fmt.Errorf("please inspect logs for more details")
 	}
 
 	return nil
+}
+
+func openPDAlerts(suites []junit.Suite, jobName, jobURL string) {
+	pdc := pagerduty.Config{
+		IntegrationKey: viper.GetString(config.Alert.PagerDutyAPIToken),
+	}
+	failingTests := []string{}
+	for _, suite := range suites {
+	inner:
+		for _, testcase := range suite.Tests {
+			if testcase.Status != junit.StatusFailed {
+				continue inner
+			}
+			failingTests = append(failingTests, testcase.Name)
+		}
+	}
+	jobDetails := map[string]string{
+		"details":        jobURL,
+		"clusterID":      viper.GetString(config.Cluster.ID),
+		"clusterName":    viper.GetString(config.Cluster.Name),
+		"clusterVersion": viper.GetString(config.Cluster.Version),
+		"expiration":     "clusters expire 6 hours after creation",
+	}
+	// if too many things failed, open a single alert that isn't grouped with the others.
+	if len(failingTests) > 10 {
+		jobDetails["help"] = "This is likely a more complex problem, like a test harness or infrastructure issue. The test harness will attempt to notify #sd-cicd"
+		if event, err := pdc.FireAlert(pd.V2Payload{
+			Summary:  "A lot of tests failed together",
+			Severity: "info",
+			Source:   jobName,
+			Group:    "", // do not group
+			Details:  jobDetails,
+		}); err != nil {
+			log.Printf("Failed creating pagerduty incident for failure: %v", err)
+		} else {
+			if err := alert.SendSlackMessage("#sd-cicd", fmt.Sprintf(`@osde2e A bunch of tests failed at once:
+pipeline: %s
+URL: %s
+PD info: %v`, jobName, jobURL, event)); err != nil {
+				log.Printf("Failed sending slack message to CICD team: %v", err)
+			}
+		}
+		return
+	}
+	// open an alert for each failing test
+	for _, name := range failingTests {
+		if _, err := pdc.FireAlert(pd.V2Payload{
+			Summary:  name + " failed",
+			Severity: "info",
+			Source:   jobName,
+			Group:    name, // group by test case
+			Details:  jobDetails,
+		}); err != nil {
+			log.Printf("Failed creating pagerduty incident for failure: %v", err)
+		}
+	}
+	return
 }
 
 func cleanupAfterE2E(h *helper.H) (errors []error) {
@@ -539,6 +586,7 @@ func cleanupAfterE2E(h *helper.H) (errors []error) {
 		cluster, err := provider.GetCluster(clusterID)
 		if err != nil {
 			log.Printf("error getting Cluster state: %s", err.Error())
+		} else {
 			defer func() {
 				// set the completed property right before this function returns, which should be after
 				// all cleanup is finished.
@@ -547,7 +595,6 @@ func cleanupAfterE2E(h *helper.H) (errors []error) {
 					log.Printf("Failed setting completed status: %v", err)
 				}
 			}()
-		} else {
 			log.Printf("Cluster addons: %v", cluster.Addons())
 			log.Printf("Cluster cloud provider: %v", cluster.CloudProvider())
 			log.Printf("Cluster expiration: %v", cluster.ExpirationTimestamp())
@@ -636,6 +683,13 @@ func runTestsInPhase(phase string, description string, dryrun bool) bool {
 							numPassingTests++
 						}
 					}
+				}
+
+				// fire PD incident if JOB_TYPE==periodic
+				if os.Getenv("JOB_TYPE") == "periodic" {
+					url, _ := prow.JobURL()
+					jobName := os.Getenv("JOB_NAME")
+					openPDAlerts(suites, jobName, url)
 				}
 			}
 		}
