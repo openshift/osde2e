@@ -586,6 +586,7 @@ func cleanupAfterE2E(h *helper.H) (errors []error) {
 		cluster, err := provider.GetCluster(clusterID)
 		if err != nil {
 			log.Printf("error getting Cluster state: %s", err.Error())
+		} else {
 			defer func() {
 				// set the completed property right before this function returns, which should be after
 				// all cleanup is finished.
@@ -594,7 +595,6 @@ func cleanupAfterE2E(h *helper.H) (errors []error) {
 					log.Printf("Failed setting completed status: %v", err)
 				}
 			}()
-		} else {
 			log.Printf("Cluster addons: %v", cluster.Addons())
 			log.Printf("Cluster cloud provider: %v", cluster.CloudProvider())
 			log.Printf("Cluster expiration: %v", cluster.ExpirationTimestamp())
