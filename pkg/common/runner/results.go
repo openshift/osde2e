@@ -138,7 +138,8 @@ func (r *Runner) downloadLinks(n *html.Node, results map[string][]byte, director
 					directoryResults, err := r.retrieveResultsForDirectory(newDirectory)
 
 					if err != nil {
-						return fmt.Errorf("error while getting results for directory %s: %v", newDirectory, err)
+						log.Printf("error while getting results for directory %s: %v", newDirectory, err)
+						continue
 					}
 
 					for k, v := range directoryResults {
