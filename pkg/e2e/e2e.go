@@ -4,6 +4,7 @@ package e2e
 import (
 	"bytes"
 	"compress/gzip"
+	"context"
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
@@ -19,6 +20,7 @@ import (
 	"github.com/hpcloud/tail"
 	junit "github.com/joshdk/go-junit"
 	vegeta "github.com/tsenart/vegeta/lib"
+	"k8s.io/client-go/kubernetes"
 
 	pd "github.com/PagerDuty/go-pagerduty"
 	"github.com/onsi/ginkgo"
@@ -32,6 +34,7 @@ import (
 	"github.com/openshift/osde2e/pkg/common/aws"
 	"github.com/openshift/osde2e/pkg/common/cluster"
 	clusterutil "github.com/openshift/osde2e/pkg/common/cluster"
+	"github.com/openshift/osde2e/pkg/common/cluster/healthchecks"
 	"github.com/openshift/osde2e/pkg/common/clusterproperties"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/events"
@@ -121,7 +124,20 @@ var _ = ginkgo.SynchronizedBeforeSuite(func() []byte {
 			log.Printf("Error while adding upgrade version property to cluster via OCM: %v", err)
 		}
 
-		err = clusterutil.WaitForClusterReady(cluster.ID(), nil)
+		clusterConfig, _, err := clusterutil.ClusterConfig(cluster.ID())
+		if err != nil {
+			log.Printf("Failed looking up cluster config for healthcheck: %v", err)
+		}
+		kubeClient, err := kubernetes.NewForConfig(clusterConfig)
+		if err != nil {
+			log.Printf("Error generating Kube Clientset: %v\n", err)
+		}
+
+		ctx, _ := context.WithTimeout(context.Background(), time.Hour*2)
+		ready, err := healthchecks.CheckHealthcheckJob(kubeClient.CoreV1(), ctx, nil)
+		if !ready && err == nil {
+			err = fmt.Errorf("Cluster not ready")
+		}
 		events.HandleErrorWithEvents(err, events.HealthCheckSuccessful, events.HealthCheckFailed).ShouldNot(HaveOccurred(), "cluster failed health check")
 		if err != nil {
 			getLogs()

@@ -7,7 +7,6 @@ import (
 
 	"github.com/openshift/osde2e/pkg/common/logging"
 	batchv1 "k8s.io/api/batch/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/watch"
 	batchv1client "k8s.io/client-go/kubernetes/typed/batch/v1"
@@ -22,14 +21,11 @@ func CheckHealthcheckJob(k8sClient v1.CoreV1Interface, ctx context.Context, logg
 
 	bv1C := batchv1client.New(k8sClient.RESTClient())
 	watcher, err := bv1C.Jobs("openshift-monitoring").Watch(ctx, metav1.ListOptions{
-		Watch:         true,
-		FieldSelector: "metadata.name=osd-cluster-ready",
+		Watch:           true,
+		FieldSelector:   "metadata.name=osd-cluster-ready",
+		ResourceVersion: "0",
 	})
 	if err != nil {
-		if errors.IsNotFound(err) {
-			// Job doesn't exist yet
-			return false, nil
-		}
 		// Failed checking for job
 		return false, fmt.Errorf("failed looking up job: %w", err)
 	}
