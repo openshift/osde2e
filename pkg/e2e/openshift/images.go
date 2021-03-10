@@ -41,10 +41,12 @@ var _ = ginkgo.Describe(imageRegistryTestName, func() {
 
 		// get results
 		results, err := r.RetrieveTestResults()
-		Expect(err).NotTo(HaveOccurred())
 
 		// write results
 		h.WriteResults(results)
+
+		// evaluate results
+		Expect(err).NotTo(HaveOccurred())
 	}, float64(e2eTimeoutInSeconds+30))
 })
 
@@ -72,9 +74,11 @@ var _ = ginkgo.Describe(imageEcosystemTestName, func() {
 
 		// get results
 		results, err := r.RetrieveTestResults()
-		Expect(err).NotTo(HaveOccurred())
 
 		// write results
 		h.WriteResults(results)
+
+		// evaluate results
+		Expect(err).NotTo(HaveOccurred())
 	}, float64(e2eTimeoutInSeconds+30))
 })

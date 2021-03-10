@@ -79,10 +79,12 @@ func (h *H) RunAddonTests(name string, timeout int, harnesses, args []string) (f
 
 		// get results
 		results, err := r.RetrieveTestResults()
-		Expect(err).NotTo(HaveOccurred())
 
 		// write results
 		h.WriteResults(results)
+
+		// evaluate results
+		Expect(err).NotTo(HaveOccurred())
 
 		// ensure job has not failed
 		job, err := h.Kube().BatchV1().Jobs(r.Namespace).Get(context.TODO(), jobName, metav1.GetOptions{})
