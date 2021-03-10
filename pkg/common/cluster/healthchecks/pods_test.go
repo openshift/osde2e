@@ -38,7 +38,7 @@ func TestCheckPodHealth(t *testing.T) {
 		objs           []runtime.Object
 	}{
 		{"no pods", 0, true, nil},
-		{"single pod failed", 1, true, []runtime.Object{pod("a", ns1, v1.PodFailed)}},
+		{"single pod failed", 0, true, []runtime.Object{pod("a", ns1, v1.PodFailed)}},
 		{"pod is pending beyond specified threshold", 1, false, []runtime.Object{pod("a", "foobar", v1.PodPending)}},
 		{"single pod running", 0, false, []runtime.Object{pod("a", ns1, v1.PodRunning)}},
 		{"single pod succeeded", 0, false, []runtime.Object{pod("a", ns1, v1.PodSucceeded)}},
@@ -49,8 +49,8 @@ func TestCheckPodHealth(t *testing.T) {
 		state, err := CheckClusterPodHealth(kubeClient.CoreV1(), nil)
 
 		// Length of the pending pods list is validated here. The list may have multiple pending pods even if the error is for one pending pod.
-		if len(state) < test.expectedLength {
-			t.Errorf("%v: Expected length of state doesn't match returned value (%v, %v)", test.description, test.expectedLength, state)
+		if len(state) >= test.expectedLength {
+			t.Errorf("%v: Expected length of state doesn't match returned value (%v, %v)", test.description, test.expectedLength, len(state))
 		}
 
 		if (err != nil && test.expectedError == false) || (err == nil && test.expectedError == true) {
