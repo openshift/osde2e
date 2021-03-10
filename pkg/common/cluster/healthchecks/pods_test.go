@@ -49,7 +49,7 @@ func TestCheckPodHealth(t *testing.T) {
 		state, err := CheckClusterPodHealth(kubeClient.CoreV1(), nil)
 
 		// Length of the pending pods list is validated here. The list may have multiple pending pods even if the error is for one pending pod.
-		if len(state) >= test.expectedLength {
+		if len(state) < test.expectedLength {
 			t.Errorf("%v: Expected length of state doesn't match returned value (%v, %v)", test.description, test.expectedLength, len(state))
 		}
 
