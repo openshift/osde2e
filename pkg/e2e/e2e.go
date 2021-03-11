@@ -132,9 +132,8 @@ var _ = ginkgo.SynchronizedBeforeSuite(func() []byte {
 		if err != nil {
 			log.Printf("Error generating Kube Clientset: %v\n", err)
 		}
-
 		ctx, _ := context.WithTimeout(context.Background(), time.Hour*2)
-		ready, err := healthchecks.CheckHealthcheckJob(kubeClient.CoreV1(), ctx, nil)
+		ready, err := healthchecks.CheckHealthcheckJob(kubeClient, ctx, nil)
 		if !ready && err == nil {
 			err = fmt.Errorf("Cluster not ready")
 		}
