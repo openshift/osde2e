@@ -40,9 +40,11 @@ var _ = ginkgo.Describe(disruptiveTestName, func() {
 
 		// get results
 		results, err := r.RetrieveTestResults()
-		Expect(err).NotTo(HaveOccurred())
 
 		// write results
 		h.WriteResults(results)
+
+		// evaluate results
+		Expect(err).NotTo(HaveOccurred())
 	}, float64(e2eTimeoutInSeconds+30))
 })
