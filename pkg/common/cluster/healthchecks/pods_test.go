@@ -42,6 +42,12 @@ func TestCheckPodHealth(t *testing.T) {
 		{"pod is pending beyond specified threshold", 1, false, []runtime.Object{pod("a", ns1, v1.PodPending)}},
 		{"single pod running", 0, false, []runtime.Object{pod("a", ns1, v1.PodRunning)}},
 		{"single pod succeeded", 0, false, []runtime.Object{pod("a", ns1, v1.PodSucceeded)}},
+		{"single pod failed bad namespace", 0, false, []runtime.Object{pod("a", "foobar", v1.PodFailed)}},
+		{"one pod good one pod bad same namespace", 0, true, []runtime.Object{pod("a", ns1, v1.PodFailed), pod("b", ns1, v1.PodRunning)}},
+		{"one pod good one pod pending same namespace", 0, false, []runtime.Object{pod("a", ns1, v1.PodPending), pod("b", ns1, v1.PodRunning)}},
+		{"one pod good one pod bad diff namespace", 0, true, []runtime.Object{pod("a", ns1, v1.PodFailed), pod("b", ns2, v1.PodRunning)}},
+		{"two succeeded pods diff namespace", 0, false, []runtime.Object{pod("a", ns1, v1.PodSucceeded), pod("b", ns2, v1.PodSucceeded)}},
+		{"two running pods diff namespace", 0, false, []runtime.Object{pod("a", ns1, v1.PodRunning), pod("b", ns2, v1.PodRunning)}},
 	}
 
 	for _, test := range tests {

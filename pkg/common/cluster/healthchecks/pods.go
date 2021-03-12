@@ -101,17 +101,17 @@ func filterPods(podList *kubev1.PodList, predicates ...PodPredicate) *kubev1.Pod
 }
 
 // CheckPendingPods looks for a pod that still remains under pending state for a given number of times in a row
-func CheckPendingPods(podlist []kubev1.Pod, podErrorCount map[string]int, pendingPodThreshold int) (map[string]int, bool, error) {
+func CheckPendingPods(podlist []kubev1.Pod, podErrorCount map[string]int, pendingPodThreshold int) (bool, error) {
 	for _, pod := range podlist {
 		if val, found := podErrorCount[pod.Name]; found {
 			podErrorCount[pod.Name]++
 			if val >= pendingPodThreshold {
-				return podErrorCount, false, fmt.Errorf("Pod %s is pending beyond normal threshold: %s - %s", pod.GetName(), pod.Status.Reason, pod.Status.Message)
+				return false, fmt.Errorf("Pod %s is pending beyond normal threshold: %s - %s", pod.GetName(), pod.Status.Reason, pod.Status.Message)
 			}
 		} else {
 			podErrorCount[pod.Name] = 1
 		}
 	}
 
-	return podErrorCount, true, nil
+	return true, nil
 }

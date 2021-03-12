@@ -301,13 +301,12 @@ func PollClusterHealth(clusterID string, logger *log.Logger) (status bool, failu
 			failures = append(failures, "pod")
 			clusterHealthy = false
 		} else {
-			newpodcount, podcheck, err := healthchecks.CheckPendingPods(podlist, podErrorCount, pendingPodThreshold)
+			podcheck, err := healthchecks.CheckPendingPods(podlist, podErrorCount, pendingPodThreshold)
 			if err != nil || !podcheck {
 				healthErr = multierror.Append(healthErr, err)
 				failures = append(failures, "pod")
 				clusterHealthy = false
 			}
-			podErrorCount = newpodcount
 		}
 
 		if check, err := healthchecks.CheckCerts(kubeClient.CoreV1(), logger); !check || err != nil {
