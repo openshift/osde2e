@@ -30,6 +30,7 @@ import (
 const (
 	// errorWindow is the number of checks made to determine if a cluster has truly failed.
 	errorWindow         = 20
+	// pendingPodThreshold is the maximum number of times a pod is allowed to be in pending state before erroring out in PollClusterHealth.
 	pendingPodThreshold = 10
 )
 
