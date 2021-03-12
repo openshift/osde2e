@@ -137,6 +137,9 @@ var _ = ginkgo.SynchronizedBeforeSuite(func() []byte {
 		if !ready && err == nil {
 			err = fmt.Errorf("Cluster not ready")
 		}
+		if ready {
+			log.Println("Cluster is healthy and ready for testing")
+		}
 		events.HandleErrorWithEvents(err, events.HealthCheckSuccessful, events.HealthCheckFailed).ShouldNot(HaveOccurred(), "cluster failed health check")
 		if err != nil {
 			getLogs()
