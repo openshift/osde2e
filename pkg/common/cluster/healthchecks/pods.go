@@ -13,7 +13,7 @@ import (
 )
 
 // CheckClusterPodHealth attempts to look at the state of all internal cluster pods and
-// returns true if things are healthy.
+// returns the list of pending pods if any exist.
 func CheckClusterPodHealth(podClient v1.CoreV1Interface, logger *log.Logger) ([]kubev1.Pod, error) {
 	filters := []PodPredicate{
 		IsClusterPod,
@@ -45,7 +45,7 @@ func CheckPodHealth(podClient v1.CoreV1Interface, logger *log.Logger, ns string,
 	return !(len(podlist) > 0), err
 }
 
-// checkPods looks for pods matching the supplied predicates and returns true if any are found
+// checkPods looks for pods matching the supplied predicates and returns the list of pods (pending pods) if any are found
 func checkPods(podClient v1.CoreV1Interface, logger *log.Logger, filters ...PodPredicate) ([]kubev1.Pod, error) {
 	logger = logging.CreateNewStdLoggerOrUseExistingLogger(logger)
 
