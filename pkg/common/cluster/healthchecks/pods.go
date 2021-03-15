@@ -12,6 +12,19 @@ import (
 	v1 "k8s.io/client-go/kubernetes/typed/core/v1"
 )
 
+// PodErrorTracker is the structure that keeps count of each pending pod's threshold
+type PodErrorTracker struct {
+	Counts                  map[string]int
+	MaxPendingPodsThreshold int
+}
+
+// NewPodErrorTracker initializes the PodErrorTracker structure with a given pending pod threshold and a new pod counter
+func (p *PodErrorTracker) NewPodErrorTracker(threshold int) *PodErrorTracker {
+	p.Counts = make(map[string]int)
+	p.MaxPendingPodsThreshold = threshold
+	return p
+}
+
 // CheckClusterPodHealth attempts to look at the state of all internal cluster pods and
 // returns the list of pending pods if any exist.
 func CheckClusterPodHealth(podClient v1.CoreV1Interface, logger *log.Logger) ([]kubev1.Pod, error) {
@@ -100,18 +113,21 @@ func filterPods(podList *kubev1.PodList, predicates ...PodPredicate) *kubev1.Pod
 	return filteredPods
 }
 
-// CheckPendingPods looks for a pod that still remains under pending state for a given number of times in a row
-func CheckPendingPods(podlist []kubev1.Pod, podErrorCount map[string]int, pendingPodThreshold int) (bool, error) {
+// CheckPendingPods checks each pod in the provided list for pending state and updates
+// the PodErrorTracker accordingly. It returns nil if no pods were pending more than
+// their maximum threshold, and errors if a pod ever exceeds its maximum
+// pending threshold.
+func (p *PodErrorTracker) CheckPendingPods(podlist []kubev1.Pod) error {
 	for _, pod := range podlist {
-		if val, found := podErrorCount[pod.Name]; found {
-			podErrorCount[pod.Name]++
-			if val >= pendingPodThreshold {
-				return false, fmt.Errorf("Pod %s is pending beyond normal threshold: %s - %s", pod.GetName(), pod.Status.Reason, pod.Status.Message)
+		if val, found := p.Counts[pod.Name]; found {
+			p.Counts[pod.Name]++
+			if val >= p.MaxPendingPodsThreshold {
+				return fmt.Errorf("Pod %s is pending beyond normal threshold: %s - %s", pod.GetName(), pod.Status.Reason, pod.Status.Message)
 			}
 		} else {
-			podErrorCount[pod.Name] = 1
+			p.Counts[pod.Name] = 1
 		}
 	}
 
-	return true, nil
+	return nil
 }

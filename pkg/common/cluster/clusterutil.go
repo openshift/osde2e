@@ -29,12 +29,12 @@ import (
 
 const (
 	// errorWindow is the number of checks made to determine if a cluster has truly failed.
-	errorWindow         = 20
+	errorWindow = 20
 	// pendingPodThreshold is the maximum number of times a pod is allowed to be in pending state before erroring out in PollClusterHealth.
 	pendingPodThreshold = 10
 )
 
-var podErrorCount = make(map[string]int)
+var podErrorTracker healthchecks.PodErrorTracker
 
 // GetClusterVersion will get the current cluster version for the cluster.
 func GetClusterVersion(provider spi.Provider, clusterID string) (*semver.Version, error) {
@@ -74,11 +74,13 @@ func ScaleCluster(clusterID string, numComputeNodes int) error {
 		return fmt.Errorf("error trying to scale cluster: %v", err)
 	}
 
+	podErrorTracker.NewPodErrorTracker(pendingPodThreshold)
 	return waitForClusterReadyWithOverrideAndExpectedNumberOfNodes(clusterID, nil, true)
 }
 
 // WaitForClusterReady blocks until the cluster is ready for testing.
 func WaitForClusterReady(clusterID string, logger *log.Logger) error {
+	podErrorTracker.NewPodErrorTracker(pendingPodThreshold)
 	return waitForClusterReadyWithOverrideAndExpectedNumberOfNodes(clusterID, logger, false)
 }
 
@@ -302,8 +304,8 @@ func PollClusterHealth(clusterID string, logger *log.Logger) (status bool, failu
 			failures = append(failures, "pod")
 			clusterHealthy = false
 		} else {
-			podcheck, err := healthchecks.CheckPendingPods(podlist, podErrorCount, pendingPodThreshold)
-			if err != nil || !podcheck {
+			err := podErrorTracker.CheckPendingPods(podlist)
+			if err != nil {
 				healthErr = multierror.Append(healthErr, err)
 				failures = append(failures, "pod")
 				clusterHealthy = false
