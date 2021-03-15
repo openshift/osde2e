@@ -51,7 +51,8 @@ var _ = ginkgo.Describe(userWorkloadMonitoringTestName, func() {
 			pod := newPod(prometheusName, uwmtestns, "quay.io/brancz/prometheus-example-app:v0.2.0")
 			err = createPodUwm(pod, uwmtestns, h)
 			Expect(err).NotTo(HaveOccurred(), "Could not create user workload monitoring testing pod")
-			_, err = GenerateService(8080, prometheusName, uwmtestns, prometheusName)
+			svc := GenerateService(8080, prometheusName, uwmtestns, prometheusName, h)
+			err = createService(svc, h)
 			Expect(err).NotTo(HaveOccurred(), "Could not create user workload monitoring testing service")
 		})
 
@@ -111,6 +112,24 @@ var _ = ginkgo.Describe(userWorkloadMonitoringTestName, func() {
 
 })
 
+func createService(svc *kv1.Service, h *helper.H) error {
+	uwm, err := h.Kube().CoreV1().Services(svc.Namespace).Create(context.TODO(), svc, metav1.CreateOptions{})
+	log.Printf("Result of the create command: (%v)", err)
+	if err != nil {
+		log.Printf("Could not issue create command")
+		return err
+	}
+
+	// Wait for the pod to create.
+	err = wait.PollImmediate(5*time.Second, 1*time.Minute, func() (bool, error) {
+		if _, err := h.Kube().CoreV1().Services(uwm.Namespace).Get(context.TODO(), uwm.Name, metav1.GetOptions{}); err != nil {
+			return false, nil
+		}
+		return true, nil
+	})
+	return err
+}
+
 func createPodUwm(pod *kv1.Pod, namespace string, h *helper.H) error {
 	uwm, err := h.Kube().CoreV1().Pods(namespace).Create(context.TODO(), pod, metav1.CreateOptions{})
 	log.Printf("Result of the create command: (%v)", err)
@@ -166,7 +185,7 @@ func newServiceMonitor(name, namespace string) *v1.ServiceMonitor {
 	}
 }
 
-func GenerateService(port int32, serviceName, serviceNamespace string, prometheusName string) (*kv1.Service, error) {
+func GenerateService(port int32, serviceName, serviceNamespace string, prometheusName string, h *helper.H) *kv1.Service {
 	service := &kv1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      prometheusName,
@@ -189,7 +208,7 @@ func GenerateService(port int32, serviceName, serviceNamespace string, prometheu
 			Selector: map[string]string{prometheusName: serviceName},
 		},
 	}
-	return service, nil
+	return service
 }
 
 func newPrometheusRule(name, namespace string) *v1.PrometheusRule {
