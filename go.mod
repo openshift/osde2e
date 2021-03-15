@@ -24,8 +24,8 @@ require (
 	github.com/joshdk/go-junit v0.0.0-20201221202203-061ee62ada40
 	github.com/kylelemons/godebug v1.1.0
 	github.com/markbates/pkger v0.17.1
-	github.com/onsi/ginkgo v1.13.0
-	github.com/onsi/gomega v1.10.1
+	github.com/onsi/ginkgo v1.14.1
+	github.com/onsi/gomega v1.10.2
 	github.com/openshift-online/ocm-sdk-go v0.1.152
 	github.com/openshift/api v3.9.1-0.20190924102528-32369d4db2ad+incompatible
 	github.com/openshift/client-go v0.0.0-20200326155132-2a6cd50aedd0
@@ -43,6 +43,7 @@ require (
 	github.com/prometheus/client_golang v1.7.1
 	github.com/prometheus/common v0.14.0
 	github.com/prometheus/procfs v0.2.0 // indirect
+	github.com/redhat-cop/must-gather-operator v1.0.0
 	github.com/slack-go/slack v0.6.5
 	github.com/spf13/cobra v1.0.0
 	github.com/spf13/pflag v1.0.5
@@ -54,8 +55,8 @@ require (
 	golang.org/x/net v0.0.0-20200707034311-ab3426394381
 	golang.org/x/sys v0.0.0-20201015000850-e3ed0017c211 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20200615113413-eeeca48fe776
-	k8s.io/api v0.19.2
-	k8s.io/apimachinery v0.19.2
+	k8s.io/api v0.20.0
+	k8s.io/apimachinery v0.20.0
 	k8s.io/client-go v12.0.0+incompatible
 	k8s.io/utils v0.0.0-20200729134348-d5654de09c73
 )
