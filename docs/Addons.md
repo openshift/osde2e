@@ -1,49 +1,22 @@
 # **Add-On Testing**
 
-## **Test Requirements**
+This document describes the requirements to configure E2E testing of an Addon within `osde2e`. This is only one part of the overall process of onboarding an addon to OSD. The full process is outlined in the documentation [available here](https://gitlab.cee.redhat.com/service/managed-tenants/-/tree/master).
 
-How an add-on is tested can vary between groups and projects. In light of this, there are a few requirements for an add-on test harness to be integrated into OSDe2e. The test should:
+## **The Structure of an Addon Test**
 
-*   Assume it is executing in a pod within an OpenShift cluster. This means once the test code is written, it needs to be packaged into a container image.
+How an add-on is tested can vary between groups and projects. In light of this, we've tried to create a very flexible and unopinionated framework for your testing. Your test harness should take the form of an OCI (docker) container that does the following:
+
+*   Assume it is executing in a pod within an OpenShift cluster.
 *   Assume the pod will inherit `cluster-admin` rights. 
-*   Output a valid `junit.xml` file to the `/test-run-results` directory.
+*	Block until your addon is ready to be tested (we will launch your container after requesting installation of the addon, but we can't control when the addon is finished installing).
+*   Output a valid `junit.xml` file to the `/test-run-results` directory before the container exits.
 *   Output metadata to `addon-metadata.json` in the `/test-run-results` directory.
 
 The [Prow Operator Test] is a good example of a [Basic operator test]. It verifies that the Prow operator and all the necessary CRDs are installed in the cluster. 
 
+## **Test Environments**
 
-## **Configuring OSDe2e**
-
-Once a test harness has been written, an OSDe2e test needs to be configured to install the desired add-on, then run the test harness against it. This is done by creating a PR ([example PR]) against the [openshift/release] repo. 
-
-Regarding addon testing, OSDe2e has four primary config options: `ADDON_IDS`, `ADDON_TEST_HARNESSES`, `ADDON_TEST_USER`, and `ADDON_PARAMETERS`. The first two of these are comma-delimited lists when supplied by environment variables, or YAML arrays when using the YAML config. `ADDON_IDS` informs OSDe2e which addons to install once a cluster is healthy. `ADDON_TEST_HARNESSES` is a list of addon test containers to run as pods within the test cluster. 
-
-`ADDON_TEST_USER` will specify the in-cluster user that the test harness containers will run as. It allows for a single wildcard (`%s`) which will automatically be evaluated as the OpenShift Project the test harness is created under.
-
-`ADDON_PARAMETERS` allows you to configure parameters that will be passed to OCM for the installation of your addon. The format is a two-level JSON object. The outer object's keys are the IDs of addons, and the inner objects are key-value pairs that will be passed to the associated addon.
-
-```
-env:
-- name: ADDON_IDS
-  value: prow-operator
-- name: ADDON_TEST_HARNESSES
-  value: quay.io/miwilson/prow-operator-test-harness
-- name: ADDON_TEST_USER
-  value: system:serviceaccount:%s:cluster-admin
-- name: ADDON_PARAMETERS
-  value: '{"prow-operator": {"foo": "bar"}}'
-```
-
-### Addon Cleanup
-
-If your addon test creates or affects anything outside of the OSD cluster lifecycle, a separate cleanup action is required. If `ADDON_RUN_CLEANUP` is set to `true`, OSDe2e will run the test harness a **second time** passing the argument `cleanup` to the container.
-
-There may be a case where a separate cleanup container/harness is required. That may be configured using the `ADDON_CLEANUP_HARNESSES` config option. It is formatted in the same way as `ADDON_TEST_HARNESSES`. This however, may cause some confusion as to what is run when:
-
-`ADDON_RUN_CLEANUP` is true, and `ADDON_CLEANUP_HARNESSES` is not set, OSDe2e will only run `ADDON_TEST_HARNESSES` again, passing the `cleanup` argument.
-
-`ADDON_RUN_CLEANUP` is true, and `ADDON_CLEANUP_HARNESSES` is set, OSDe2e will only run the `ADDON_CLEANUP_HARNESSES`, passing no arguments.
-
+We have three test environments: integration (int), staging (stage), and production (prod). Your job will probably want to be configured for all of them once you have gained confidence in your test harness. Each environment requires a separate prow job configuration. The next section covers prow configuration in detail.
 
 ### **Getting an OCM refresh token for your tests**
 
@@ -66,6 +39,146 @@ metadata:
 data:
   ocm-refresh-token: <token-goes-here>
 ```
+
+## SKUs and Quota
+
+In order to provision OSD and install your addon, your OCM token will need to have a quota of OSD clusters and installations of your addon available. In order to allocate quota for your addon, it must be assigned a SKU. You can request a SKU [by following these instructions](https://gitlab.cee.redhat.com/service/managed-tenants/-/tree/master).
+
+Once you have a SKU, you'll need to also allocate quota to test within [`app-interface`](https://gitlab.cee.redhat.com/service/app-interface/#manage-openshift-resourcequotas-via-app-interface-openshiftquota-1yml). Quota is allocated independently in each of `int`, `stage`, and `prod` (different instances of OCM), so you'll need to allocate quota three times.
+
+[Here](https://gitlab.cee.redhat.com/service/ocm-resources/-/blob/master/data/uhc-production/orgs/13215750.yaml#L13) is an example of SD-CICD's quota for production. The `rh_org_id` (which is also the file name) can be determined by logging into OCM via the `ocm` CLI with your OCM token and running `ocm whoami`.
+
+An example production quota for an addon would look like:
+```
+---
+$schema: /org-1.yaml
+
+name: "Your Org Name"
+
+rh_org_id: <your-org-id>
+
+SKUs:
+  # e2e testing
+  # m5.xlarge singleAZ 4 compute
+  MCT3326: 2
+
+  <your-addon-sku>: 2
+
+environment: "uhc-production"
+```
+
+For `int` and `stage`, the file will need to go into a different folder and use a different value for the `environment` key.
+
+> *NOTE*: The SKU `MCT3326` is the SKU that `osde2e` uses to provision OpenShift clusters by default. If you do not request quota of this SKU, your jobs will all fail to provision clusters.
+
+## **Configuring OSDe2e**
+
+Once a test harness has been written, an OSDe2e test needs to be configured to install the desired add-on, then run the test harness against it. This is done by creating a PR ([example PR]) against the [openshift/release] repo. 
+
+Your PR will instruct Prow (our CI service) to run a pod on some schedule. You will then specify that the job should run `osde2e` with some specific environment variables and flags that describe your test harness.
+
+For addon testing, `osde2e` uses four primary environment variables: `ADDON_IDS`, `ADDON_TEST_HARNESSES`, `ADDON_TEST_USER`, and `ADDON_PARAMETERS`.
+
+The first two of these are comma-delimited lists when supplied by environment variables. `ADDON_IDS` informs OSDe2e which addons to install once a cluster is healthy. `ADDON_TEST_HARNESSES` is a list of addon test containers to run as pods within the test cluster. 
+
+`ADDON_TEST_USER` will specify the in-cluster user that the test harness containers will run as. It allows for a single wildcard (`%s`) which will automatically be evaluated as the OpenShift Project (namespace) the test harness is created under.
+
+`ADDON_PARAMETERS` allows you to configure parameters that will be passed to OCM for the installation of your addon. The format is a two-level JSON object. The outer object's keys are the IDs of addons, and the inner objects are key-value pairs that will be passed to the associated addon.
+
+An example prow job that configures the "prow" operator in the stage environment:
+
+```yaml
+- agent: kubernetes
+  cluster: build02
+  cron: 0 */12 * * *
+  decorate: true
+  extra_refs:
+  - base_ref: main
+    org: openshift
+    repo: osde2e
+  labels:
+    pj-rehearse.openshift.io/can-be-rehearsed: "false"
+  name: osde2e-stage-aws-addon-prow-operator
+  spec:
+    containers:
+    - args:
+      - test
+      - --secret-locations
+      - $(SECRET_LOCATIONS)
+      - --configs
+      - $(CONFIGS)
+      command:
+      - /osde2e
+      env:
+      - name: ADDON_IDS
+        value: prow-operator
+      - name: ADDON_TEST_HARNESSES
+        value: quay.io/miwilson/prow-operator-test-harness
+      - name: CONFIGS
+        value: aws,stage,addon-suite
+      - name: SECRET_LOCATIONS
+        value: /usr/local/osde2e-common,/usr/local/osde2e-credentials
+      image: quay.io/app-sre/osde2e
+      imagePullPolicy: Always
+      name: ""
+      resources:
+        requests:
+          cpu: 10m
+      volumeMounts:
+      - mountPath: /usr/local/osde2e-common
+        name: osde2e-common
+        readOnly: true
+      - mountPath: /usr/local/osde2e-credentials
+        name: osde2e-credentials
+        readOnly: true
+    serviceAccountName: ci-operator
+    volumes:
+    - name: osde2e-common
+      secret:
+        secretName: osde2e-common
+    - name: osde2e-credentials
+      secret:
+        secretName: osde2e-credentials
+```
+
+To adapt this to your job, you would redefine the `ADDON_IDS` and `ADDON_TEST_HARNESSES`, as well as potentially adding some of the other variables discussed above.
+
+> *NOTE*: If you want your job to run in a different environment, such as `int` or `prod`, you need to both change its name to include the proper environment *and* redefine the `CONFIGS` environment variable by replacing `stage` with the name of the appropriate environment.
+
+
+
+### Providing Secrets to Your Build
+
+If you need to add additional secrets to the job, follow the documentation [here](https://docs.ci.openshift.org/docs/how-tos/adding-a-new-secret-to-ci/) to create them and configure them to be mirrored into the `ci` namespace [like ours](https://github.com/openshift/release/blob/master/core-services/secret-mirroring/_mapping.yaml#L62).
+
+### Addon Cleanup
+
+If your addon test creates or affects anything outside of the OSD cluster lifecycle, a separate cleanup action is required. If `ADDON_RUN_CLEANUP` is set to `true`, OSDe2e will run your test harness container a **second time** passing the argument `cleanup` to the container (as the first command line argument).
+
+There may be a case where a separate cleanup container/harness is required. That may be configured using the `ADDON_CLEANUP_HARNESSES` config option. It is formatted in the same way as `ADDON_TEST_HARNESSES`. This however, may cause some confusion as to what is run when:
+
+`ADDON_RUN_CLEANUP` is true, and `ADDON_CLEANUP_HARNESSES` is not set, OSDe2e will only run `ADDON_TEST_HARNESSES` again, passing the `cleanup` argument.
+
+`ADDON_RUN_CLEANUP` is true, and `ADDON_CLEANUP_HARNESSES` is set, OSDe2e will only run the `ADDON_CLEANUP_HARNESSES`, passing no arguments.
+
+### CCS Cluster Testing
+
+If you want to test a CCS (bring your own AWS account) cluster, you'll need to provide some additional details about your AWS account in a secret. In particular, you'll need to provide values for these environment variables (from your secret):
+
+```
+OCM_AWS_ACCOUNT=""
+OCM_AWS_ACCESS_KEY=""
+OCM_AWS_SECRET_KEY=""
+OCM_TOKEN=""
+```
+
+You will also need to set `OCM_CCS="true"` in the normal environment configuration.
+
+> *NOTE*: If you perform CCS testing, your OSD clusters will automatically back themselves up to S3 in your AWS account. You can find these backups by running `aws s3 ls --profile osd`. You should probably clean them up as part of the cleanup phase of your build.
+
+### Slack Notifications
+
+If you want to be notified of the results of your builds in slack, you can take advantage of [this feature](https://docs.ci.openshift.org/docs/how-tos/notification/). [Here](https://github.com/openshift/release/pull/16674/files#diff-d214756a87b37f0ad838abce8ddfa8993c7cd6a7614fc15384f5f3e4307f079aR1983) is an example PR of someone configuring slack alerts for an Addon.
 
 ## **Querying results from Datahub**
 
