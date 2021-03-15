@@ -180,7 +180,7 @@ func run(cmd *cobra.Command, argv []string) error {
 		if err != nil {
 			return fmt.Errorf("could not write KubeConfig into a file: %v", err)
 		}
-		fmt.Println("Successfully downloaded the kubeconfig into -", filePath, ". Run the command \"export TEST_KUBECONFIG=", filePath, "\"")
+		fmt.Println("Successfully downloaded the kubeconfig into " + filePath + ". Run the command:\n\nexport TEST_KUBECONFIG=\"" + filePath + "\"\n")
 		if args.hours == 0 && args.minutes == 0 {
 			if timediff <= 30 {
 				fmt.Println("Cluster expiry time is less than 30 minutes. Extending expiry time by 30 minutes.")
