@@ -12,20 +12,34 @@ import (
 	v1 "k8s.io/client-go/kubernetes/typed/core/v1"
 )
 
+// PodErrorTracker is the structure that keeps count of each pending pod's threshold
+type PodErrorTracker struct {
+	Counts                  map[string]int
+	MaxPendingPodsThreshold int
+}
+
+// NewPodErrorTracker initializes the PodErrorTracker structure with a given pending pod threshold and a new pod counter
+func (p *PodErrorTracker) NewPodErrorTracker(threshold int) *PodErrorTracker {
+	p.Counts = make(map[string]int)
+	p.MaxPendingPodsThreshold = threshold
+	return p
+}
+
 // CheckClusterPodHealth attempts to look at the state of all internal cluster pods and
-// returns true if things are healthy.
-func CheckClusterPodHealth(podClient v1.CoreV1Interface, logger *log.Logger) (bool, error) {
+// returns the list of pending pods if any exist.
+func CheckClusterPodHealth(podClient v1.CoreV1Interface, logger *log.Logger) ([]kubev1.Pod, error) {
 	filters := []PodPredicate{
 		IsClusterPod,
 		IsNotReadinessPod,
 		IsNotRunning,
 		IsNotCompleted,
 	}
-	foundErrorPods, err := checkPods(podClient, logger, filters...)
+	podlist, err := checkPods(podClient, logger, filters...)
 	if err != nil {
-		return false, err
+		return nil, err
 	}
-	return !foundErrorPods, err
+
+	return podlist, err
 }
 
 // CheckPodHealth attempts to look at the state of all pods and returns true if things are healthy.
@@ -37,15 +51,15 @@ func CheckPodHealth(podClient v1.CoreV1Interface, logger *log.Logger, ns string,
 		IsNotRunning,
 		IsNotCompleted,
 	}
-	foundErrorPods, err := checkPods(podClient, logger, filters...)
+	podlist, err := checkPods(podClient, logger, filters...)
 	if err != nil {
 		return false, err
 	}
-	return !foundErrorPods, err
+	return !(len(podlist) > 0), err
 }
 
-// checkPods looks for pods matching the supplied predicates and returns true if any are found
-func checkPods(podClient v1.CoreV1Interface, logger *log.Logger, filters ...PodPredicate) (bool, error) {
+// checkPods looks for pods matching the supplied predicates and returns the list of pods (pending pods) if any are found
+func checkPods(podClient v1.CoreV1Interface, logger *log.Logger, filters ...PodPredicate) ([]kubev1.Pod, error) {
 	logger = logging.CreateNewStdLoggerOrUseExistingLogger(logger)
 
 	logger.Print("Checking that all Pods are running or completed...")
@@ -53,24 +67,24 @@ func checkPods(podClient v1.CoreV1Interface, logger *log.Logger, filters ...PodP
 	listOpts := metav1.ListOptions{}
 	list, err := podClient.Pods(metav1.NamespaceAll).List(context.TODO(), listOpts)
 	if err != nil {
-		return false, fmt.Errorf("error getting pod list: %v", err)
+		return nil, fmt.Errorf("error getting pod list: %v", err)
 	}
 
 	if len(list.Items) == 0 {
-		return false, fmt.Errorf("pod list is empty. this should NOT happen")
+		return nil, fmt.Errorf("pod list is empty. this should NOT happen")
 	}
 
 	pods := filterPods(list, filters...)
 
 	logger.Printf("%v pods are currently not running or complete:", len(pods.Items))
+
 	for _, pod := range pods.Items {
 		if pod.Status.Phase != kubev1.PodPending {
-			return false, fmt.Errorf("Pod %s errored: %s - %s", pod.GetName(), pod.Status.Reason, pod.Status.Message)
+			return nil, fmt.Errorf("Pod %s errored: %s - %s", pod.GetName(), pod.Status.Reason, pod.Status.Message)
 		}
 		logger.Printf("%s is not ready. Phase: %s, Message: %s, Reason: %s", pod.Name, pod.Status.Phase, pod.Status.Message, pod.Status.Reason)
 	}
-
-	return len(pods.Items) > 0, nil
+	return pods.Items, nil
 }
 
 func containsPrefixes(str string, subs ...string) bool {
@@ -97,4 +111,23 @@ func filterPods(podList *kubev1.PodList, predicates ...PodPredicate) *kubev1.Pod
 		}
 	}
 	return filteredPods
+}
+
+// CheckPendingPods checks each pod in the provided list for pending state and updates
+// the PodErrorTracker accordingly. It returns nil if no pods were pending more than
+// their maximum threshold, and errors if a pod ever exceeds its maximum
+// pending threshold.
+func (p *PodErrorTracker) CheckPendingPods(podlist []kubev1.Pod) error {
+	for _, pod := range podlist {
+		if val, found := p.Counts[pod.Name]; found {
+			p.Counts[pod.Name]++
+			if val >= p.MaxPendingPodsThreshold {
+				return fmt.Errorf("Pod %s is pending beyond normal threshold: %s - %s", pod.GetName(), pod.Status.Reason, pod.Status.Message)
+			}
+		} else {
+			p.Counts[pod.Name] = 1
+		}
+	}
+
+	return nil
 }
