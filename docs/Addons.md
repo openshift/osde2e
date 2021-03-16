@@ -58,7 +58,7 @@ name: "Your Org Name"
 rh_org_id: <your-org-id>
 
 SKUs:
-  # e2e testing
+  # e2e testing for OSD (non CCS)
   # m5.xlarge singleAZ 4 compute
   MCT3326: 2
 
@@ -70,6 +70,8 @@ environment: "uhc-production"
 For `int` and `stage`, the file will need to go into a different folder and use a different value for the `environment` key.
 
 > *NOTE*: The SKU `MCT3326` is the SKU that `osde2e` uses to provision OpenShift clusters by default. If you do not request quota of this SKU, your jobs will all fail to provision clusters.
+
+If you want to test on CCS clusters instead, you need to use the SKU `MW00530` and follow the instructions in [CCS Cluster Testing](ccs-cluster-testing).
 
 ## **Configuring OSDe2e**
 
@@ -117,7 +119,7 @@ An example prow job that configures the "prow" operator in the stage environment
       - name: CONFIGS
         value: aws,stage,addon-suite
       - name: SECRET_LOCATIONS
-        value: /usr/local/osde2e-common,/usr/local/osde2e-credentials
+        value: /usr/local/osde2e-common,/usr/local/prow-operator-credentials
       image: quay.io/app-sre/osde2e
       imagePullPolicy: Always
       name: ""
@@ -128,23 +130,26 @@ An example prow job that configures the "prow" operator in the stage environment
       - mountPath: /usr/local/osde2e-common
         name: osde2e-common
         readOnly: true
-      - mountPath: /usr/local/osde2e-credentials
-        name: osde2e-credentials
+      - mountPath: /usr/local/prow-operator-credentials
+        name: prow-operator-credentials
         readOnly: true
     serviceAccountName: ci-operator
     volumes:
     - name: osde2e-common
       secret:
         secretName: osde2e-common
-    - name: osde2e-credentials
+    - name: prow-operator-credentials
       secret:
-        secretName: osde2e-credentials
+        secretName: prow-operator-credentials
 ```
 
 To adapt this to your job, you would redefine the `ADDON_IDS` and `ADDON_TEST_HARNESSES`, as well as potentially adding some of the other variables discussed above.
 
+You will *also* need to provide your own secrets by swapping the `prow-operator-credentials` above with your job's secrets.
+
 > *NOTE*: If you want your job to run in a different environment, such as `int` or `prod`, you need to both change its name to include the proper environment *and* redefine the `CONFIGS` environment variable by replacing `stage` with the name of the appropriate environment.
 
+You can change the cron scheduling of the job as well.
 
 
 ### Providing Secrets to Your Build
@@ -163,13 +168,13 @@ There may be a case where a separate cleanup container/harness is required. That
 
 ### CCS Cluster Testing
 
-If you want to test a CCS (bring your own AWS account) cluster, you'll need to provide some additional details about your AWS account in a secret. In particular, you'll need to provide values for these environment variables (from your secret):
+If you want to test a CCS (bring your own AWS account) cluster, you'll need to provide some additional details about your AWS account in a secret. In particular, you'll need to provide these values in your credentials secret:
 
 ```
-OCM_AWS_ACCOUNT=""
-OCM_AWS_ACCESS_KEY=""
-OCM_AWS_SECRET_KEY=""
-OCM_TOKEN=""
+ocm-aws-account
+ocm-aws-access-key
+ocm-aws-secret-key
+ocm-token
 ```
 
 You will also need to set `OCM_CCS="true"` in the normal environment configuration.
