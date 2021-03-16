@@ -12,11 +12,11 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
-// CheckHealthcheckJob uses the `openshift-cluster-ready-*` healthcheck job to determine cluster readiness.
+// CheckHealthcheckJob uses the `osd-cluster-ready` healthcheck job to determine cluster readiness.
 func CheckHealthcheckJob(k8sClient *kubernetes.Clientset, ctx context.Context, logger *log.Logger) (bool, error) {
 	logger = logging.CreateNewStdLoggerOrUseExistingLogger(logger)
 
-	logger.Print("Checking that all Nodes are running or completed...")
+	logger.Print("Checking whether cluster is healthy before proceeding...")
 
 	bv1C := k8sClient.BatchV1()
 	namespace := "openshift-monitoring"

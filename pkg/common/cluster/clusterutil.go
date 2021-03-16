@@ -207,6 +207,10 @@ func waitForClusterReadyWithOverrideAndExpectedNumberOfNodes(clusterID string, l
 	return nil
 }
 
+// ClusterConfig returns the rest API config for a given cluster as well as the provider it
+// inferred to discover the config.
+// param clusterID: If specified, Provider will be discovered through OCM. If the empty string,
+// 		assume we are running in a cluster and use in-cluster REST config instead.
 func ClusterConfig(clusterID string) (restConfig *rest.Config, providerType string, err error) {
 	if clusterID == "" {
 		if restConfig, err = rest.InClusterConfig(); err != nil {
