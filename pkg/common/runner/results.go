@@ -162,7 +162,7 @@ func (r *Runner) downloadLinks(n *html.Node, results map[string][]byte, director
 
 	for c := n.FirstChild; c != nil; c = c.NextSibling {
 		if err := r.downloadLinks(c, results, directory); err != nil {
-			return err
+			log.Printf("error while getting results for %s: %v", directory, err)
 		}
 	}
 	return nil

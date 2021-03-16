@@ -77,7 +77,7 @@ var _ = ginkgo.Describe(conformanceOpenshiftTestName, func() {
 		h.SetServiceAccount("system:serviceaccount:%s:cluster-admin")
 		// configure tests
 		cfg := DefaultE2EConfig
-		cfg.Suite = "openshift/conformance"
+		cfg.Suite = "openshift/conformance/parallel suite"
 		cfg.Name = "openshift-conformance"
 		cmd := cfg.Cmd()
 
