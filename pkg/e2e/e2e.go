@@ -87,9 +87,11 @@ var _ = ginkgo.SynchronizedBeforeSuite(func() []byte {
 
 	// Skip provisioning if we already have a kubeconfig
 	if viper.GetString(config.Kubeconfig.Contents) == "" {
+
 		cluster, err := clusterutil.ProvisionCluster(nil)
 		events.HandleErrorWithEvents(err, events.InstallSuccessful, events.InstallFailed).ShouldNot(HaveOccurred(), "failed to setup cluster for testing")
 		if err != nil {
+			log.Printf("Failed to set up or retrieve cluster: %v", err)
 			getLogs()
 			return []byte{}
 		}
@@ -124,6 +126,7 @@ var _ = ginkgo.SynchronizedBeforeSuite(func() []byte {
 		err = clusterutil.WaitForClusterReady(cluster.ID(), nil)
 		events.HandleErrorWithEvents(err, events.HealthCheckSuccessful, events.HealthCheckFailed).ShouldNot(HaveOccurred(), "cluster failed health check")
 		if err != nil {
+			log.Printf("Cluster failed health check: %v", err)
 			getLogs()
 			return []byte{}
 		}
@@ -133,6 +136,7 @@ var _ = ginkgo.SynchronizedBeforeSuite(func() []byte {
 				err = installAddons()
 				events.HandleErrorWithEvents(err, events.InstallAddonsSuccessful, events.InstallAddonsFailed).ShouldNot(HaveOccurred(), "failed while installing addons")
 				if err != nil {
+					log.Printf("Cluster failed installing addons: %v", err)
 					getLogs()
 					return []byte{}
 				}
@@ -145,6 +149,7 @@ var _ = ginkgo.SynchronizedBeforeSuite(func() []byte {
 		var kubeconfigBytes []byte
 		if kubeconfigBytes, err = provider.ClusterKubeconfig(cluster.ID()); err != nil {
 			events.HandleErrorWithEvents(err, events.InstallKubeconfigRetrievalSuccess, events.InstallKubeconfigRetrievalFailure).ShouldNot(HaveOccurred(), "failed while retrieve kubeconfig")
+			log.Printf("Failed retrieving kubeconfig: %v", err)
 			getLogs()
 			return []byte{}
 		}

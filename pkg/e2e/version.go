@@ -79,7 +79,7 @@ func setupVersion(versionList *spi.VersionList) (*semver.Version, string, error)
 		var err error
 
 		selectedVersion, versionType, err = versions.GetVersionForInstall(versionList)
-		if err == nil {
+		if err == nil && selectedVersion != nil {
 			if viper.GetBool(config.Cluster.EnoughVersionsForOldestOrMiddleTest) && viper.GetBool(config.Cluster.PreviousVersionFromDefaultFound) {
 				viper.Set(config.Cluster.Version, util.SemverToOpenshiftVersion(selectedVersion))
 			} else {
