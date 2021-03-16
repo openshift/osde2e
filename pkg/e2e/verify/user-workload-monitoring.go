@@ -51,7 +51,7 @@ var _ = ginkgo.Describe(userWorkloadMonitoringTestName, func() {
 			pod := newPod(prometheusName, uwmtestns, "quay.io/brancz/prometheus-example-app:v0.2.0")
 			err = createPodUwm(pod, uwmtestns, h)
 			Expect(err).NotTo(HaveOccurred(), "Could not create user workload monitoring testing pod")
-			svc := GenerateService(8080, prometheusName, uwmtestns, prometheusName, h)
+			svc := GenerateService(8080, prometheusName, uwmtestns, prometheusName)
 			err = createService(svc, h)
 			Expect(err).NotTo(HaveOccurred(), "Could not create user workload monitoring testing service")
 		})
@@ -185,7 +185,7 @@ func newServiceMonitor(name, namespace string) *v1.ServiceMonitor {
 	}
 }
 
-func GenerateService(port int32, serviceName, serviceNamespace string, prometheusName string, h *helper.H) *kv1.Service {
+func GenerateService(port int32, serviceName, serviceNamespace string, prometheusName string) *kv1.Service {
 	service := &kv1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      prometheusName,
