@@ -73,6 +73,32 @@ For `int` and `stage`, the file will need to go into a different folder and use 
 
 If you want to test on CCS clusters instead, you need to use the SKU `MW00530` and follow the instructions in [CCS Cluster Testing](ccs-cluster-testing).
 
+## OCM Permissions
+
+The OCM user/organization that runs your tests will need some specific permissions within OCM in order to launch your test clusters.
+
+These permissions are configured via [`ocm-resources`](https://gitlab.cee.redhat.com/service/ocm-resources), and will look like this:
+
+```yaml
+---
+$schema: /user-1.yaml
+
+user_id: "your-ocm-user"
+
+kerberos_id: "N/A"
+
+roles:
+- SDCICD:
+    scope: Organization
+    organization_id: "your-organization-id"
+
+environment: "see below"
+```
+
+You can determine your `user_id` and `organization_id` by running `ocm whoami` with the OCM token you acquired in previous steps.
+
+You will need to create three copies of this file, specifying the environments `uhc-{state,integration,production}`, and those files will need to be MR-ed into the folders `ocm-resources/data/uhc-{stage,integration,production}/users/your-ocm-user.yaml`.
+
 ## **Configuring OSDe2e**
 
 Once a test harness has been written, an OSDe2e test needs to be configured to install the desired add-on, then run the test harness against it. This is done by creating a PR ([example PR]) against the [openshift/release] repo. 
