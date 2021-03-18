@@ -173,7 +173,7 @@ If you want to test a CCS (bring your own AWS account) cluster, you'll need to p
 ```
 ocm-aws-account
 ocm-aws-access-key
-ocm-aws-secret-key
+ocm-aws-secret-access-key
 ocm-token
 ```
 
