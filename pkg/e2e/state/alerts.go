@@ -57,11 +57,15 @@ var _ = ginkgo.Describe(clusterStateTestName, func() {
 			defer cancel()
 			value, _, err := promAPI.Query(context, query, time.Now())
 			if err != nil {
-				return false, fmt.Errorf("Unable to query prom API: %w", err)
+				log.Printf("Unable to query prom API: %v", err)
+				// try again
+				return false, nil
 			}
 			queryresult, err = json.MarshalIndent(value, "", "  ")
 			if err != nil {
-				return false, fmt.Errorf("error marshaling results: %w", err)
+				log.Printf("Error marshaling results: %v", err)
+				// try again
+				return false, nil
 			}
 			return true, nil
 		})
