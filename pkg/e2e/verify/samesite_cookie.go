@@ -84,7 +84,6 @@ func getClusterVersion(h *helper.H) (*v1.ClusterVersion, int, error) {
 	splitVersion := strings.Split(clusterVersion.Status.Desired.Version, ".")
 	majMinVersion, err := strconv.Atoi(splitVersion[0] + splitVersion[1])
 	Expect(err).NotTo(HaveOccurred(), "failed normalizing major/minor version to integer %v", err)
-	fmt.Printf("Major/Minor version is: %v", majMinVersion)
 
 	return clusterVersion, majMinVersion, nil
 }
