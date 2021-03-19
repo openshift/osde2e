@@ -3,10 +3,12 @@ package verify
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	v1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/osde2e/pkg/common/helper"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -16,21 +18,39 @@ const (
 	samesiteSetting = "Strict"
 	monNamespace    = "openshift-monitoring"
 	conNamespace    = "openshift-console"
+	supportVersion  = 46 // samesite cookie is only supported on >= v4.6.x
 )
 
-var samesiteTestName string = "[Suite: e2e] [OSD] Samesite Cookie Strict"
+var samesiteTestName string = "[Suite: informing] Samesite Cookie Strict"
 
 var _ = ginkgo.Describe(samesiteTestName, func() {
 	h := helper.New()
 
 	ginkgo.Context("Validating samesite cookie", func() {
-		ginkgo.It("should be set for openshift-monitoring OSD managed routes", func() {
+
+		ginkgo.FIt("should be set for openshift-monitoring OSD managed routes", func() {
+			clusterVersion, majMinVersion, err := getClusterVersion(h)
+			Expect(err).NotTo(HaveOccurred(), "failed getting cluster version")
+			Expect(clusterVersion).NotTo(BeNil())
+
+			if majMinVersion < supportVersion {
+				ginkgo.Skip("skipping due to unsupported cluster version. Must be >=4.6.0")
+			}
+
 			foundKey, err := managedRoutes(h, monNamespace)
 			Expect(err).NotTo(HaveOccurred(), "failed getting routes for %v", monNamespace)
 			Expect(foundKey).Should(BeTrue(), "%v namespace routes have samesite cookie set", monNamespace)
 		}, 5)
 
-		ginkgo.It("should be set for openshift-console OSD managed routes", func() {
+		ginkgo.FIt("should be set for openshift-console OSD managed routes", func() {
+			clusterVersion, majMinVersion, err := getClusterVersion(h)
+			Expect(err).NotTo(HaveOccurred(), "failed getting cluster version")
+			Expect(clusterVersion).NotTo(BeNil())
+
+			if majMinVersion < supportVersion {
+				ginkgo.Skip("skipping due to unsupported cluster version. Must be >=4.6.0")
+			}
+
 			foundKey, err := managedRoutes(h, conNamespace)
 			Expect(err).NotTo(HaveOccurred(), "failed getting routes for %v", conNamespace)
 			Expect(foundKey).Should(BeTrue(), "%v namespace routes have samesite cookie set", conNamespace)
@@ -51,4 +71,20 @@ func managedRoutes(h *helper.H, namespace string) (bool, error) {
 		}
 	}
 	return samesiteExists, nil
+}
+
+func getClusterVersion(h *helper.H) (*v1.ClusterVersion, int, error) {
+	cfgClient := h.Cfg()
+	getOpts := metav1.GetOptions{}
+	clusterVersion, err := cfgClient.ConfigV1().ClusterVersions().Get(context.TODO(), "version", getOpts)
+	if err != nil {
+		return nil, 0, fmt.Errorf("couldn't get current ClusterVersion '%s': %v", "version", err)
+	}
+	// Get the cluster version and slice it, then convert the major/minor version to int Ex. majMinVersion := 46
+	splitVersion := strings.Split(clusterVersion.Status.Desired.Version, ".")
+	majMinVersion, err := strconv.Atoi(splitVersion[0] + splitVersion[1])
+	Expect(err).NotTo(HaveOccurred(), "failed normalizing major/minor version to integer %v", err)
+	fmt.Printf("Major/Minor version is: %v", majMinVersion)
+
+	return clusterVersion, majMinVersion, nil
 }
