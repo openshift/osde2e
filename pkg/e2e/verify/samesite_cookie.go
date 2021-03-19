@@ -21,14 +21,14 @@ const (
 	supportVersion  = 46 // samesite cookie is only supported on >= v4.6.x
 )
 
-var samesiteTestName string = "[Suite: informing] Samesite Cookie Strict"
+var samesiteTestName string = "[Suite: e2e] [OSD] Samesite Cookie Strict"
 
 var _ = ginkgo.Describe(samesiteTestName, func() {
 	h := helper.New()
 
 	ginkgo.Context("Validating samesite cookie", func() {
 
-		ginkgo.FIt("should be set for openshift-monitoring OSD managed routes", func() {
+		ginkgo.It("should be set for openshift-monitoring OSD managed routes", func() {
 			clusterVersion, majMinVersion, err := getClusterVersion(h)
 			Expect(err).NotTo(HaveOccurred(), "failed getting cluster version")
 			Expect(clusterVersion).NotTo(BeNil())
@@ -42,7 +42,7 @@ var _ = ginkgo.Describe(samesiteTestName, func() {
 			Expect(foundKey).Should(BeTrue(), "%v namespace routes have samesite cookie set", monNamespace)
 		}, 5)
 
-		ginkgo.FIt("should be set for openshift-console OSD managed routes", func() {
+		ginkgo.It("should be set for openshift-console OSD managed routes", func() {
 			clusterVersion, majMinVersion, err := getClusterVersion(h)
 			Expect(err).NotTo(HaveOccurred(), "failed getting cluster version")
 			Expect(clusterVersion).NotTo(BeNil())
