@@ -137,18 +137,13 @@ var _ = ginkgo.SynchronizedBeforeSuite(func() []byte {
 		if viper.GetString(config.Tests.SkipClusterHealthChecks) != "" {
 			log.Println("WARNING: Skipping cluster health checks is no longer supported, as they no longer introduce delay into the build. Ignoring your request to skip them.")
 		}
-		ready, err := healthchecks.CheckHealthcheckJob(kubeClient, ctx, nil)
-		if !ready && err == nil {
-			err = fmt.Errorf("Cluster not ready")
-		}
-		if ready {
-			log.Println("Cluster is healthy and ready for testing")
-		}
+		err = healthchecks.CheckHealthcheckJob(kubeClient, ctx, nil)
 		events.HandleErrorWithEvents(err, events.HealthCheckSuccessful, events.HealthCheckFailed).ShouldNot(HaveOccurred(), "cluster failed health check")
 		if err != nil {
 			getLogs()
 			return []byte{}
 		}
+		log.Println("Cluster is healthy and ready for testing")
 
 		if len(viper.GetString(config.Addons.IDs)) > 0 {
 			if viper.GetString(config.Provider) != "mock" {
