@@ -23,40 +23,47 @@ const (
 
 var samesiteTestName string = "[Suite: e2e] [OSD] Samesite Cookie Strict"
 
-var _ = ginkgo.Describe(samesiteTestName, func() {
+var _ = ginkgo.FDescribe(samesiteTestName, func() {
 	h := helper.New()
 
-	ginkgo.Context("Validating samesite cookie", func() {
+	ginkgo.FContext("Validating samesite cookie", func() {
 
-		ginkgo.It("should be set for openshift-monitoring OSD managed routes", func() {
-			clusterVersion, majMinVersion, err := getClusterVersion(h)
-			Expect(err).NotTo(HaveOccurred(), "failed getting cluster version")
-			Expect(clusterVersion).NotTo(BeNil())
+		checkVersion := verifyVersion(h)
+		fmt.Println(checkVersion())
 
-			if majMinVersion < supportVersion {
+		ginkgo.FIt("should be set for openshift-monitoring OSD managed routes", func() {
+			if checkVersion() {
 				ginkgo.Skip("skipping due to unsupported cluster version. Must be >=4.6.0")
 			}
-
 			foundKey, err := managedRoutes(h, monNamespace)
 			Expect(err).NotTo(HaveOccurred(), "failed getting routes for %v", monNamespace)
 			Expect(foundKey).Should(BeTrue(), "%v namespace routes have samesite cookie set", monNamespace)
 		}, 5)
 
-		ginkgo.It("should be set for openshift-console OSD managed routes", func() {
-			clusterVersion, majMinVersion, err := getClusterVersion(h)
-			Expect(err).NotTo(HaveOccurred(), "failed getting cluster version")
-			Expect(clusterVersion).NotTo(BeNil())
-
-			if majMinVersion < supportVersion {
+		ginkgo.FIt("should be set for openshift-console OSD managed routes", func() {
+			if checkVersion() {
 				ginkgo.Skip("skipping due to unsupported cluster version. Must be >=4.6.0")
 			}
-
 			foundKey, err := managedRoutes(h, conNamespace)
 			Expect(err).NotTo(HaveOccurred(), "failed getting routes for %v", conNamespace)
 			Expect(foundKey).Should(BeTrue(), "%v namespace routes have samesite cookie set", conNamespace)
 		}, 5)
 	})
 })
+
+func verifyVersion(h *helper.H) func() bool {
+	return func() bool {
+		unsupportedVersion := false
+		clusterVersion, majMinVersion, err := getClusterVersion(h)
+		Expect(err).NotTo(HaveOccurred(), "failed getting cluster version")
+		Expect(clusterVersion).NotTo(BeNil())
+
+		if majMinVersion < supportVersion {
+			unsupportedVersion = true
+		}
+		return unsupportedVersion
+	}
+}
 
 func managedRoutes(h *helper.H, namespace string) (bool, error) {
 	route, err := h.Route().RouteV1().Routes(namespace).List(context.TODO(), metav1.ListOptions{})
