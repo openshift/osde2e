@@ -8,7 +8,6 @@ import (
 
 	"github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	v1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/osde2e/pkg/common/helper"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -21,18 +20,18 @@ const (
 	supportVersion  = 46 // samesite cookie is only supported on >= v4.6.x
 )
 
-var samesiteTestName string = "[Suite: e2e] [OSD] Samesite Cookie Strict"
+var samesiteTestName string = "[Suite: informing] [OSD] Samesite Cookie Strict"
 
-var _ = ginkgo.FDescribe(samesiteTestName, func() {
+var _ = ginkgo.Describe(samesiteTestName, func() {
 	h := helper.New()
 
-	ginkgo.FContext("Validating samesite cookie", func() {
+	ginkgo.Context("Validating samesite cookie", func() {
 
 		checkVersion := verifyVersion(h)
-		fmt.Println(checkVersion())
 
 		ginkgo.FIt("should be set for openshift-monitoring OSD managed routes", func() {
 			if checkVersion() {
+				fmt.Printf("checkVersion failed - TEST %v", checkVersion())
 				ginkgo.Skip("skipping due to unsupported cluster version. Must be >=4.6.0")
 			}
 			foundKey, err := managedRoutes(h, monNamespace)
@@ -42,6 +41,7 @@ var _ = ginkgo.FDescribe(samesiteTestName, func() {
 
 		ginkgo.FIt("should be set for openshift-console OSD managed routes", func() {
 			if checkVersion() {
+				fmt.Printf("checkVersion failed - TEST 2 %v", checkVersion())
 				ginkgo.Skip("skipping due to unsupported cluster version. Must be >=4.6.0")
 			}
 			foundKey, err := managedRoutes(h, conNamespace)
@@ -54,9 +54,14 @@ var _ = ginkgo.FDescribe(samesiteTestName, func() {
 func verifyVersion(h *helper.H) func() bool {
 	return func() bool {
 		unsupportedVersion := false
-		clusterVersion, majMinVersion, err := getClusterVersion(h)
+		clusterVersionObj, currentVersion, err := h.GetClusterVersion()
 		Expect(err).NotTo(HaveOccurred(), "failed getting cluster version")
-		Expect(clusterVersion).NotTo(BeNil())
+		Expect(clusterVersionObj).NotTo(BeNil())
+
+		// Get the cluster version and slice it, then convert the major/minor version to int Ex. majMinVersion := 46
+		splitVersion := strings.Split(currentVersion, ".")
+		majMinVersion, err := strconv.Atoi(splitVersion[0] + splitVersion[1])
+		Expect(err).NotTo(HaveOccurred(), "failed normalizing major/minor version to integer %v", err)
 
 		if majMinVersion < supportVersion {
 			unsupportedVersion = true
@@ -78,19 +83,4 @@ func managedRoutes(h *helper.H, namespace string) (bool, error) {
 		}
 	}
 	return samesiteExists, nil
-}
-
-func getClusterVersion(h *helper.H) (*v1.ClusterVersion, int, error) {
-	cfgClient := h.Cfg()
-	getOpts := metav1.GetOptions{}
-	clusterVersion, err := cfgClient.ConfigV1().ClusterVersions().Get(context.TODO(), "version", getOpts)
-	if err != nil {
-		return nil, 0, fmt.Errorf("couldn't get current ClusterVersion '%s': %v", "version", err)
-	}
-	// Get the cluster version and slice it, then convert the major/minor version to int Ex. majMinVersion := 46
-	splitVersion := strings.Split(clusterVersion.Status.Desired.Version, ".")
-	majMinVersion, err := strconv.Atoi(splitVersion[0] + splitVersion[1])
-	Expect(err).NotTo(HaveOccurred(), "failed normalizing major/minor version to integer %v", err)
-
-	return clusterVersion, majMinVersion, nil
 }
