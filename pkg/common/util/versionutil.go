@@ -13,6 +13,10 @@ var (
 
 	// Version440 represents Openshift version 4.4.0 and above
 	Version440 *semver.Constraints
+
+	// Version460 represents Openshift version 4.6.0 and above
+	Version460 *semver.Constraints
+
 )
 
 func init() {
@@ -28,4 +32,10 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
+
+	Version460, err = semver.NewConstraint(">= 4.6.0-0")
+	if err != nil {
+		panic(err)
+	}
+
 }
