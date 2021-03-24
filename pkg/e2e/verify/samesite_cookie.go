@@ -29,7 +29,7 @@ var _ = ginkgo.Describe(samesiteTestName, func() {
 
 		checkVersion := verifyVersion(h)
 
-		ginkgo.FIt("should be set for openshift-monitoring OSD managed routes", func() {
+		ginkgo.It("should be set for openshift-monitoring OSD managed routes", func() {
 			if checkVersion() {
 				ginkgo.Skip("skipping due to unsupported cluster version. Must be >=4.6.0")
 			}
@@ -38,7 +38,7 @@ var _ = ginkgo.Describe(samesiteTestName, func() {
 			Expect(foundKey).Should(BeTrue(), "%v namespace routes have samesite cookie set", monNamespace)
 		}, 5)
 
-		ginkgo.FIt("should be set for openshift-console OSD managed routes", func() {
+		ginkgo.It("should be set for openshift-console OSD managed routes", func() {
 			if checkVersion() {
 				ginkgo.Skip("skipping due to unsupported cluster version. Must be >=4.6.0")
 			}
