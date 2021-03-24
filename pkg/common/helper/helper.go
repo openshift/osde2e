@@ -342,13 +342,13 @@ func (h *H) InspectState() {
 	Expect(err).ShouldNot(HaveOccurred(), "could not inspect project '%s'", h.proj)
 }
 
-// GetClusterVersion returns the Cluster Version object and current cluster version ex. 4.7.1 as string
-func (h *H) GetClusterVersion() (*configv1.ClusterVersion, string, error) {
+// GetClusterVersion returns the Cluster Version object
+func (h *H) GetClusterVersion() (*configv1.ClusterVersion, error) {
 	cfgClient := h.Cfg()
 	getOpts := metav1.GetOptions{}
 	clusterVersionObj, err := cfgClient.ConfigV1().ClusterVersions().Get(context.TODO(), "version", getOpts)
 	if err != nil {
-		return nil, "", fmt.Errorf("couldn't get current ClusterVersion '%s': %v", "version", err)
+		return nil, fmt.Errorf("couldn't get current ClusterVersion '%s': %v", "version", err)
 	}
-	return clusterVersionObj, clusterVersionObj.Status.Desired.Version, nil
+	return clusterVersionObj, nil
 }
