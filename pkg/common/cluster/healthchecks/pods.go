@@ -118,16 +118,21 @@ func filterPods(podList *kubev1.PodList, predicates ...PodPredicate) *kubev1.Pod
 // their maximum threshold, and errors if a pod ever exceeds its maximum
 // pending threshold.
 func (p *PodErrorTracker) CheckPendingPods(podlist []kubev1.Pod) error {
+	tempTracker := make(map[string]int)
 	for _, pod := range podlist {
-		if val, found := p.Counts[pod.Name]; found {
-			p.Counts[pod.Name]++
-			if val >= p.MaxPendingPodsThreshold {
-				return fmt.Errorf("Pod %s is pending beyond normal threshold: %s - %s", pod.GetName(), pod.Status.Reason, pod.Status.Message)
-			}
+		if val, found := p.Counts[string(pod.UID)]; found {
+			tempTracker[string(pod.UID)] = val + 1
 		} else {
-			p.Counts[pod.Name] = 1
+			tempTracker[string(pod.UID)] = 1
+		}
+		if tempTracker[string(pod.UID)] >= p.MaxPendingPodsThreshold {
+			return fmt.Errorf("Pod %s is pending beyond normal threshold: %s - %s", pod.GetName(), pod.Status.Reason, pod.Status.Message)
 		}
 	}
+	p.Counts = tempTracker
 
+	if podlist != nil {
+		return fmt.Errorf("Pending pod key-value entries still present in the pending pod counter map")
+	}
 	return nil
 }
