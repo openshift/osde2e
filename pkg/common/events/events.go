@@ -2,8 +2,6 @@ package events
 
 import (
 	"log"
-
-	"github.com/onsi/gomega"
 )
 
 // Events records individual events that occur during the execution of osde2e
@@ -23,8 +21,8 @@ func initializeEvents() {
 	Instance.Events = map[string]bool{}
 }
 
-// HandleErrorWithEvents returns a gomega assertion and records events depending on the error state.
-func HandleErrorWithEvents(err error, successEvent EventType, failEvent EventType) gomega.Assertion {
+// HandleErrorWithEvents records events depending on the error state.
+func HandleErrorWithEvents(err error, successEvent EventType, failEvent EventType) {
 	if err != nil {
 		log.Printf("Fail event: %v", failEvent)
 		RecordEvent(failEvent)
@@ -32,7 +30,6 @@ func HandleErrorWithEvents(err error, successEvent EventType, failEvent EventTyp
 		log.Printf("Success event: %v", successEvent)
 		RecordEvent(successEvent)
 	}
-	return gomega.Expect(err)
 }
 
 // RecordEvent records the given event in the global events instance
