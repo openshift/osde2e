@@ -1,6 +1,8 @@
 package events
 
 import (
+	"log"
+
 	"github.com/onsi/gomega"
 )
 
@@ -24,8 +26,10 @@ func initializeEvents() {
 // HandleErrorWithEvents returns a gomega assertion and records events depending on the error state.
 func HandleErrorWithEvents(err error, successEvent EventType, failEvent EventType) gomega.Assertion {
 	if err != nil {
+		log.Printf("Fail event: %v", failEvent)
 		RecordEvent(failEvent)
 	} else {
+		log.Printf("Success event: %v", successEvent)
 		RecordEvent(successEvent)
 	}
 	return gomega.Expect(err)
