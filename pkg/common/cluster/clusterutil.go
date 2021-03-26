@@ -34,6 +34,7 @@ const (
 	pendingPodThreshold = 10
 )
 
+// podErrorTracker is the data structure that keeps track of pending state counters for each pod against their pod UIDs.
 var podErrorTracker healthchecks.PodErrorTracker
 
 // GetClusterVersion will get the current cluster version for the cluster.
