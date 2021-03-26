@@ -52,19 +52,15 @@ var clusterImageSources = map[string]string{"standard": `imageContentSources:
 func (o *OCMProvider) ChooseImageSource(choice string) (source string) {
 	var ok bool
 	if choice == "random" || choice == "" {
-		chosenKey := rand.Intn(len(clusterImageSources))
-		key := 0
-		for _, val := range clusterImageSources {
-			if key == chosenKey {
-				source = val
-			}
-			key++
+		var sources []string
+		for key := range clusterImageSources {
+			sources=append(sources, key)
 		}
-	} else {
-		if source, ok = clusterImageSources[choice]; !ok {
-			log.Printf("Image source not found: %s", choice)
-			return ""
-		}
+		choice = sources[rand.Intn(len(sources))]
+	}
+	if source, ok = clusterImageSources[choice]; !ok {
+		log.Printf("Image source not found: %s", choice)
+		return ""
 	}
 
 	log.Printf("Choice: %s", choice)
