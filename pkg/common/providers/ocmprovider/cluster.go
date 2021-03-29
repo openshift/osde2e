@@ -97,7 +97,9 @@ func (o *OCMProvider) LaunchCluster(clusterName string) (string, error) {
 	}
 
 	if o.Environment() != "prod" {
-		clusterProperties["install_config"] = fmt.Sprintf("%s\n%s", o.ChooseImageSource(viper.GetString(config.Cluster.ImageContentSource)), viper.GetString(config.Cluster.InstallConfig))
+		imageSource := viper.GetString(config.Cluster.ImageContentSource)
+		log.Printf("Setting imageSource: %s", imageSource)
+		clusterProperties["install_config"] = fmt.Sprintf("%s\n%s", o.ChooseImageSource(imageSource), viper.GetString(config.Cluster.InstallConfig))
 	}
 
 	newCluster := v1.NewCluster().
