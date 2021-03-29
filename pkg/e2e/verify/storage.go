@@ -282,6 +282,7 @@ func createTestPod(h *helper.H, namespace string, pvclaims []*corev1.PersistentV
 // the pod has already reached completed state.
 var errPodCompleted = fmt.Errorf("pod ran to completion")
 
+// podRunning checks if pod is running 
 func podRunning(h *helper.H, podName, namespace string) wait.ConditionFunc {
 	return func() (bool, error) {
 		pod, err := h.Kube().CoreV1().Pods(namespace).Get(context.TODO(), podName, metav1.GetOptions{})
