@@ -189,7 +189,7 @@ func createPVC(h *helper.H, ns string, pvc *corev1.PersistentVolumeClaim) (*core
 	return pvc, nil
 }
 
-// This function Deletes the PVC.
+// deletePersistentVolumeClaim deletes the PVC.
 func deletePersistentVolumeClaim(h *helper.H, pvcName string, ns string) error {
 	if h != nil && len(pvcName) > 0 {
 		log.Printf("Deleting PersistentVolumeClaim %q", pvcName)
