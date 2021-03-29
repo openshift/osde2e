@@ -93,7 +93,7 @@ var _ = ginkgo.Describe(storageTestName, func() {
 	})
 })
 
-//Extracts Storage Class names and
+// Get Storage Class names and cloud provider
 func getScNames(list *v1.StorageClassList, h *helper.H) ([]string, string) {
 	var scs []string
 	var provider string
