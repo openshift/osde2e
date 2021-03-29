@@ -92,9 +92,14 @@ func (o *OCMProvider) LaunchCluster(clusterName string) (string, error) {
 	nodeBuilder := &v1.ClusterNodesBuilder{}
 
 	clusterProperties, err := o.GenerateProperties()
-
 	if err != nil {
 		return "", fmt.Errorf("error generating cluster properties: %v", err)
+	}
+
+	if o.Environment() != "prod" {
+		imageSource := viper.GetString(config.Cluster.ImageContentSource)
+		log.Printf("Setting imageSource: %s", imageSource)
+		clusterProperties["install_config"] = fmt.Sprintf("%s\n%s", o.ChooseImageSource(imageSource), viper.GetString(config.Cluster.InstallConfig))
 	}
 
 	newCluster := v1.NewCluster().
