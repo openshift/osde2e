@@ -281,6 +281,15 @@ var Cluster = struct {
 
 	// NumWorkerNodes overrides the flavour's number of worker nodes specified
 	NumWorkerNodes string
+
+	// Specify a key in the pre-defined imageContentSource array in the ocmprovider
+	// Blank will default to a randomized option
+	ImageContentSource string
+
+	//InstallConfig overrides merges on top of the installer's default OCP installer config
+	// Blank will do nothing
+	// Cannot specify imageContentSources within this config
+	InstallConfig string
 }{
 	MultiAZ:                             "cluster.multiAZ",
 	Channel:                             "cluster.channel",
@@ -583,6 +592,9 @@ func init() {
 
 	viper.SetDefault(Cluster.NumWorkerNodes, "")
 	viper.BindEnv(Cluster.NumWorkerNodes, "NUM_WORKER_NODES")
+
+	viper.BindEnv(Cluster.ImageContentSource, "CLUSTER_IMAGE_CONTENT_SOURCE")
+	viper.BindEnv(Cluster.InstallConfig, "CLUSTER_INSTALL_CONFIG")
 
 	// ----- Cloud Provider -----
 	viper.SetDefault(CloudProvider.CloudProviderID, "aws")
