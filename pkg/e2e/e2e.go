@@ -644,7 +644,7 @@ func runTestsInPhase(phase string, description string, dryrun bool) bool {
 	phaseReporter := ginkgorep.NewPhaseReporter(phase, phaseReportPath)
 	ginkgoPassed := false
 
-	if !dryrun || ginkgoConfig.GinkgoConfig.DryRun {
+	if !dryrun || !ginkgoConfig.GinkgoConfig.DryRun {
 		if result := beforeSuite(); result == false {
 			log.Println("Error getting kubeconfig from beforeSuite function")
 			return false
