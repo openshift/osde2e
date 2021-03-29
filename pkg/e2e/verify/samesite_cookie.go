@@ -29,7 +29,7 @@ var _ = ginkgo.Describe(samesiteTestName, func() {
 
 		checkVersion := verifyVersion(h)
 
-		ginkgo.FIt("should be set for openshift-monitoring OSD managed routes", func() {
+		ginkgo.It("should be set for openshift-monitoring OSD managed routes", func() {
 			if checkVersion() {
 				ginkgo.Skip("skipping due to unsupported cluster version. Must be >=4.6.0")
 			}
@@ -38,7 +38,7 @@ var _ = ginkgo.Describe(samesiteTestName, func() {
 			Expect(foundKey).Should(BeTrue(), "%v namespace routes have samesite cookie set", monNamespace)
 		}, 5)
 
-		ginkgo.FIt("should be set for openshift-console OSD managed routes", func() {
+		ginkgo.It("should be set for openshift-console OSD managed routes", func() {
 			if checkVersion() {
 				ginkgo.Skip("skipping due to unsupported cluster version. Must be >=4.6.0")
 			}
@@ -51,7 +51,6 @@ var _ = ginkgo.Describe(samesiteTestName, func() {
 
 func verifyVersion(h *helper.H) func() bool {
 	return func() bool {
-		unsupportedVersion := false
 		clusterVersionObj, err := h.GetClusterVersion()
 		Expect(err).NotTo(HaveOccurred(), "failed getting cluster version")
 		Expect(clusterVersionObj).NotTo(BeNil())
@@ -60,22 +59,27 @@ func verifyVersion(h *helper.H) func() bool {
 		splitVersion := strings.Split(clusterVersionObj.Status.Desired.Version, ".")
 
 		// Assume the len is <= 3 since semver major/minor could be something like 4.11.x
-		if len(splitVersion) != 2 && len(splitVersion) != 3 {
-			return true
-		}
-
-		//if len(splitVersion) > 3 && len(splitVersion) != 0 {
-		//	return true
-		//}
-
-		majMinVersion, err := strconv.Atoi(splitVersion[0] + splitVersion[1])
-		Expect(err).NotTo(HaveOccurred(), "failed normalizing major/minor version to integer %v", err)
-
 		// Even if the semver maj/min exceed 4.9, this will still work. Ex. 4.11 = 411, which 411 > 46
-		if majMinVersion < supportVersion {
-			unsupportedVersion = true
+		if len(splitVersion) <= 1 || len(splitVersion) > 3 {
+			return true
+		} else {
+			if len(splitVersion) == 2 {
+				majMinVersion, err := strconv.Atoi(splitVersion[0] + splitVersion[1])
+				Expect(err).NotTo(HaveOccurred(), "failed normalizing major/minor version %v to integer %v", majMinVersion, err)
+				if majMinVersion < supportVersion {
+					return true
+				}
+			}
+
+			if len(splitVersion) == 3 {
+				majMinVersion, err := strconv.Atoi(splitVersion[0] + splitVersion[1] + splitVersion[2])
+				Expect(err).NotTo(HaveOccurred(), "failed normalizing major/minor version %v to integer %v", majMinVersion, err)
+				if majMinVersion < supportVersion {
+					return true
+				}
+			}
 		}
-		return unsupportedVersion
+		return false
 	}
 }
 
