@@ -25,16 +25,16 @@ var clusterImageSources = map[string]string{"standard": `imageContentSources:
 	"ecr-only": `imageContentSources:
 - mirrors:
   - 950916221866.dkr.ecr.us-east-1.amazonaws.com/ocp-release
-  source: 950916221866.dkr.ecr.us-east-1.amazonaws.com/ocp-release
+  source: quay.io/openshift-release-dev/ocp-release
 - mirrors:
   - 950916221866.dkr.ecr.us-east-1.amazonaws.com/ocp-art-dev
-  source: 950916221866.dkr.ecr.us-east-1.amazonaws.com/ocp-art-dev
+  source: quay.io/openshift-release-dev/ocp-v4.0-art-dev
 - mirrors:
   - 950916221866.dkr.ecr.us-east-1.amazonaws.com/managed-upgrade-operator
-  source: 950916221866.dkr.ecr.us-east-1.amazonaws.com/managed-upgrade-operator
+  source: quay.io/app-sre/managed-upgrade-operator
 - mirrors:
   - 950916221866.dkr.ecr.us-east-1.amazonaws.com/managed-upgrade-operator-registry
-  source: 950916221866.dkr.ecr.us-east-1.amazonaws.com/managed-upgrade-operator-registry`,
+  source: quay.io/app-sre/managed-upgrade-operator-registry`,
 	"quay-only": `imageContentSources:
 - mirrors:
   - quay.io/openshift-release-dev/ocp-release

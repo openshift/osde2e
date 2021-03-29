@@ -314,6 +314,8 @@ var Cluster = struct {
 	PreviousVersionFromDefaultFound:     "cluster.previousVersionFromDefaultFound",
 	ProvisionShardID:                    "cluster.provisionshardID",
 	NumWorkerNodes:                      "cluster.numWorkerNodes",
+	ImageContentSource:                  "cluster.imageContentSource",
+	InstallConfig:                       "cluster.installConfig",
 }
 
 // CloudProvider config keys.
