@@ -139,7 +139,7 @@ var _ = ginkgo.SynchronizedBeforeSuite(func() []byte {
 		}
 		ctx, cancel := context.WithTimeout(context.Background(), duration)
 		defer cancel()
-		if viper.GetString(config.Tests.SkipClusterHealthChecks) != "" {
+		if viper.GetString(config.Tests.SkipClusterHealthChecks) != "false" {
 			log.Println("WARNING: Skipping cluster health checks is no longer supported, as they no longer introduce delay into the build. Ignoring your request to skip them.")
 		}
 		err = healthchecks.CheckHealthcheckJob(kubeClient, ctx, nil)
