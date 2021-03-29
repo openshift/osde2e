@@ -132,7 +132,12 @@ var _ = ginkgo.SynchronizedBeforeSuite(func() []byte {
 		if err != nil {
 			log.Printf("Error generating Kube Clientset: %v\n", err)
 		}
-		ctx, cancel := context.WithTimeout(context.Background(), time.Hour*2)
+		duration, err := time.ParseDuration(viper.GetString(config.Tests.ClusterHealthChecksTimeout))
+		if err != nil {
+			log.Printf("Failed parsing health check timeout, using 2 hours: %v", err)
+			duration = time.Hour * 2
+		}
+		ctx, cancel := context.WithTimeout(context.Background(), duration)
 		defer cancel()
 		if viper.GetString(config.Tests.SkipClusterHealthChecks) != "" {
 			log.Println("WARNING: Skipping cluster health checks is no longer supported, as they no longer introduce delay into the build. Ignoring your request to skip them.")
