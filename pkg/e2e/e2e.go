@@ -124,33 +124,31 @@ func beforeSuite() bool {
 			log.Printf("Error while adding upgrade version property to cluster via OCM: %v", err)
 		}
 
-		clusterConfig, _, err := clusterutil.ClusterConfig(cluster.ID())
-		if err != nil {
-			log.Printf("Failed looking up cluster config for healthcheck: %v", err)
+		if viper.GetString(config.Tests.SkipClusterHealthChecks) != "true" {
+			clusterConfig, _, err := clusterutil.ClusterConfig(cluster.ID())
+			if err != nil {
+				log.Printf("Failed looking up cluster config for healthcheck: %v", err)
+			}
+			kubeClient, err := kubernetes.NewForConfig(clusterConfig)
+			if err != nil {
+				log.Printf("Error generating Kube Clientset: %v\n", err)
+			}
+			duration, err := time.ParseDuration(viper.GetString(config.Tests.ClusterHealthChecksTimeout))
+			if err != nil {
+				log.Printf("Failed parsing health check timeout: %v", err)
+				return false
+			}
+			ctx, cancel := context.WithTimeout(context.Background(), duration)
+			defer cancel()
+			err = healthchecks.CheckHealthcheckJob(kubeClient, ctx, nil)
+			events.HandleErrorWithEvents(err, events.HealthCheckSuccessful, events.HealthCheckFailed)
+			if err != nil {
+				log.Printf("Cluster failed health check: %v", err)
+				getLogs()
+				return false
+			}
+			log.Println("Cluster is healthy and ready for testing")
 		}
-		kubeClient, err := kubernetes.NewForConfig(clusterConfig)
-		if err != nil {
-			log.Printf("Error generating Kube Clientset: %v\n", err)
-		}
-		duration, err := time.ParseDuration(viper.GetString(config.Tests.ClusterHealthChecksTimeout))
-		if err != nil {
-			log.Printf("Failed parsing health check timeout: %v", err)
-			return false
-		}
-		ctx, cancel := context.WithTimeout(context.Background(), duration)
-		defer cancel()
-		if viper.GetString(config.Tests.SkipClusterHealthChecks) != "false" {
-			log.Println("WARNING: Skipping cluster health checks is no longer supported, as they no longer introduce delay into the build. Ignoring your request to skip them.")
-		}
-		err = healthchecks.CheckHealthcheckJob(kubeClient, ctx, nil)
-		events.HandleErrorWithEvents(err, events.HealthCheckSuccessful, events.HealthCheckFailed)
-		if err != nil {
-			log.Printf("Cluster failed health check: %v", err)
-			getLogs()
-			return false
-		}
-		log.Println("Cluster is healthy and ready for testing")
-
 		if len(viper.GetString(config.Addons.IDs)) > 0 {
 			if viper.GetString(config.Provider) != "mock" {
 				err = installAddons()
