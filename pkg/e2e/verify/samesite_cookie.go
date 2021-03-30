@@ -31,7 +31,7 @@ var _ = ginkgo.Describe(samesiteTestName, func() {
 
 		supportedVersion := verifyVersionSupport(h)
 
-		ginkgo.It("should be set for openshift-monitoring OSD managed routes", func() {
+		ginkgo.FIt("should be set for openshift-monitoring OSD managed routes", func() {
 			if supportedVersion() {
 				foundKey, err := managedRoutes(h, monNamespace)
 				Expect(err).NotTo(HaveOccurred(), "failed getting routes for %v", monNamespace)
@@ -41,7 +41,7 @@ var _ = ginkgo.Describe(samesiteTestName, func() {
 			}
 		}, 5)
 
-		ginkgo.It("should be set for openshift-console OSD managed routes", func() {
+		ginkgo.FIt("should be set for openshift-console OSD managed routes", func() {
 			if supportedVersion() {
 				foundKey, err := managedRoutes(h, conNamespace)
 				Expect(err).NotTo(HaveOccurred(), "failed getting routes for %v", conNamespace)
@@ -59,8 +59,7 @@ func verifyVersionSupport(h *helper.H) func() bool {
 		Expect(err).NotTo(HaveOccurred(), "failed getting cluster version")
 		Expect(clusterVersionObj).NotTo(BeNil())
 
-		//splitVersion := strings.Split(clusterVersionObj.Status.Desired.Version, ".")
-		splitVersion := []string{"3", "5", "11"}
+		splitVersion := strings.Split(clusterVersionObj.Status.Desired.Version, ".")
 
 		// check that semver is 3 elements e.g. 4.6.0, but we only need to verify major/minor version
 		if len(splitVersion) == 3 {
