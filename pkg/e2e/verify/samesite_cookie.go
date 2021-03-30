@@ -31,7 +31,7 @@ var _ = ginkgo.Describe(samesiteTestName, func() {
 
 		supportedVersion := verifyVersionSupport(h)
 
-		ginkgo.FIt("should be set for openshift-monitoring OSD managed routes", func() {
+		ginkgo.It("should be set for openshift-monitoring OSD managed routes", func() {
 			if supportedVersion() {
 				foundKey, err := managedRoutes(h, monNamespace)
 				Expect(err).NotTo(HaveOccurred(), "failed getting routes for %v", monNamespace)
@@ -41,7 +41,7 @@ var _ = ginkgo.Describe(samesiteTestName, func() {
 			}
 		}, 5)
 
-		ginkgo.FIt("should be set for openshift-console OSD managed routes", func() {
+		ginkgo.It("should be set for openshift-console OSD managed routes", func() {
 			if supportedVersion() {
 				foundKey, err := managedRoutes(h, conNamespace)
 				Expect(err).NotTo(HaveOccurred(), "failed getting routes for %v", conNamespace)
