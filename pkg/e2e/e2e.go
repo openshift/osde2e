@@ -128,10 +128,12 @@ func beforeSuite() bool {
 			clusterConfig, _, err := clusterutil.ClusterConfig(cluster.ID())
 			if err != nil {
 				log.Printf("Failed looking up cluster config for healthcheck: %v", err)
+				return false
 			}
 			kubeClient, err := kubernetes.NewForConfig(clusterConfig)
 			if err != nil {
 				log.Printf("Error generating Kube Clientset: %v\n", err)
+				return false
 			}
 			duration, err := time.ParseDuration(viper.GetString(config.Tests.ClusterHealthChecksTimeout))
 			if err != nil {
