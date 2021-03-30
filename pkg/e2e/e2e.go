@@ -148,6 +148,8 @@ func beforeSuite() bool {
 				return false
 			}
 			log.Println("Cluster is healthy and ready for testing")
+		} else {
+			log.Println("Skipping health checks as requested")
 		}
 		if len(viper.GetString(config.Addons.IDs)) > 0 {
 			if viper.GetString(config.Provider) != "mock" {
