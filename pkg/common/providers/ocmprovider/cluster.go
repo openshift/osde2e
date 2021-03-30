@@ -92,9 +92,16 @@ func (o *OCMProvider) LaunchCluster(clusterName string) (string, error) {
 	nodeBuilder := &v1.ClusterNodesBuilder{}
 
 	clusterProperties, err := o.GenerateProperties()
-
 	if err != nil {
 		return "", fmt.Errorf("error generating cluster properties: %v", err)
+	}
+
+	// This skips setting install_config for any prod job OR any periodic addon job.
+	// To invoke this logic locally you will have to set JOB_TYPE to "periodic".
+	if o.Environment() != "prod" || (os.Getenv("JOB_TYPE") == "periodic" && !strings.Contains(os.Getenv("JOB_NAME"), "addon")) {
+		imageSource := viper.GetString(config.Cluster.ImageContentSource)
+		log.Printf("Setting imageSource: %s", imageSource)
+		clusterProperties["install_config"] = fmt.Sprintf("%s\n%s", o.ChooseImageSource(imageSource), viper.GetString(config.Cluster.InstallConfig))
 	}
 
 	newCluster := v1.NewCluster().

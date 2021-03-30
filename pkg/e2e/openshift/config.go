@@ -17,7 +17,11 @@ oc config use-context cluster
 oc config view --raw=true > /tmp/kubeconfig
 export KUBECONFIG=/tmp/kubeconfig
 
-{{printTests .TestNames}} | {{unwrap .Env}} openshift-tests {{.TestCmd}} {{selectTests .Suite .TestNames}} {{unwrap .Flags}}
+REGION="$(oc get -o jsonpath='{.status.platformStatus.aws.region}' infrastructure cluster)"
+ZONE="$(oc get -o jsonpath='{.items[0].metadata.labels.failure-domain\.beta\.kubernetes\.io/zone}' nodes)"
+export TEST_PROVIDER="{\"type\":\"aws\",\"region\":\"${REGION}\",\"zone\":\"${ZONE}\",\"multizone\":true,\"multimaster\":true}"
+
+{{printTests .TestNames}} | {{unwrap .Env}} openshift-tests {{.TestCmd}} {{selectTests .Suite .TestNames}} {{unwrap .Flags}} --provider "${TEST_PROVIDER}"
 
 # create a Tarball of OutputDir if requested
 {{$outDir := .OutputDir}}

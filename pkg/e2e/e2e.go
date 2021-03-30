@@ -27,7 +27,6 @@ import (
 	ginkgoConfig "github.com/onsi/ginkgo/config"
 	"github.com/onsi/ginkgo/reporters"
 	"github.com/onsi/gomega"
-	. "github.com/onsi/gomega"
 	"github.com/spf13/viper"
 
 	"github.com/openshift/osde2e/pkg/common/alert"
@@ -84,17 +83,18 @@ var _ = ginkgo.BeforeEach(func() {
 	}
 })
 
-// Setup cluster before testing begins.
-var _ = ginkgo.SynchronizedBeforeSuite(func() []byte {
-	defer ginkgo.GinkgoRecover()
-
+// beforeSuite attempts to populate several required cluster fields (either by provisioning a new cluster, or re-using an existing one)
+// If there is an issue with provisioning, retrieving, or getting the kubeconfig, this will return `false`.
+func beforeSuite() bool {
 	// Skip provisioning if we already have a kubeconfig
 	if viper.GetString(config.Kubeconfig.Contents) == "" {
+
 		cluster, err := clusterutil.ProvisionCluster(nil)
-		events.HandleErrorWithEvents(err, events.InstallSuccessful, events.InstallFailed).ShouldNot(HaveOccurred(), "failed to setup cluster for testing")
+		events.HandleErrorWithEvents(err, events.InstallSuccessful, events.InstallFailed)
 		if err != nil {
+			log.Printf("Failed to set up or retrieve cluster: %v", err)
 			getLogs()
-			return []byte{}
+			return false
 		}
 
 		viper.Set(config.Cluster.ID, cluster.ID())
@@ -143,20 +143,22 @@ var _ = ginkgo.SynchronizedBeforeSuite(func() []byte {
 			log.Println("WARNING: Skipping cluster health checks is no longer supported, as they no longer introduce delay into the build. Ignoring your request to skip them.")
 		}
 		err = healthchecks.CheckHealthcheckJob(kubeClient, ctx, nil)
-		events.HandleErrorWithEvents(err, events.HealthCheckSuccessful, events.HealthCheckFailed).ShouldNot(HaveOccurred(), "cluster failed health check")
+		events.HandleErrorWithEvents(err, events.HealthCheckSuccessful, events.HealthCheckFailed)
 		if err != nil {
+			log.Printf("Cluster failed health check: %v", err)
 			getLogs()
-			return []byte{}
+			return false
 		}
 		log.Println("Cluster is healthy and ready for testing")
 
 		if len(viper.GetString(config.Addons.IDs)) > 0 {
 			if viper.GetString(config.Provider) != "mock" {
 				err = installAddons()
-				events.HandleErrorWithEvents(err, events.InstallAddonsSuccessful, events.InstallAddonsFailed).ShouldNot(HaveOccurred(), "failed while installing addons")
+				events.HandleErrorWithEvents(err, events.InstallAddonsSuccessful, events.InstallAddonsFailed)
 				if err != nil {
+					log.Printf("Cluster failed installing addons: %v", err)
 					getLogs()
-					return []byte{}
+					return false
 				}
 			} else {
 				log.Println("Skipping addon installation due to mock provider.")
@@ -166,9 +168,10 @@ var _ = ginkgo.SynchronizedBeforeSuite(func() []byte {
 
 		var kubeconfigBytes []byte
 		if kubeconfigBytes, err = provider.ClusterKubeconfig(cluster.ID()); err != nil {
-			events.HandleErrorWithEvents(err, events.InstallKubeconfigRetrievalSuccess, events.InstallKubeconfigRetrievalFailure).ShouldNot(HaveOccurred(), "failed while retrieve kubeconfig")
+			events.HandleErrorWithEvents(err, events.InstallKubeconfigRetrievalSuccess, events.InstallKubeconfigRetrievalFailure)
+			log.Printf("Failed retrieving kubeconfig: %v", err)
 			getLogs()
-			return []byte{}
+			return false
 		}
 		viper.Set(config.Kubeconfig.Contents, string(kubeconfigBytes))
 
@@ -181,14 +184,10 @@ var _ = ginkgo.SynchronizedBeforeSuite(func() []byte {
 		}
 		getLogs()
 	}
-	return []byte{}
-}, func(data []byte) {
-	// only needs to run once
-})
+	return true
+}
 
 func getLogs() {
-	defer ginkgo.GinkgoRecover()
-
 	clusterID := viper.GetString(config.Cluster.ID)
 	if provider == nil {
 		log.Println("OSD was not configured. Skipping log collection...")
@@ -666,6 +665,13 @@ func runTestsInPhase(phase string, description string, dryrun bool) bool {
 	phaseReportPath := filepath.Join(phaseDirectory, fmt.Sprintf("junit_%v.xml", suffix))
 	phaseReporter := ginkgorep.NewPhaseReporter(phase, phaseReportPath)
 	ginkgoPassed := false
+
+	if !dryrun || !ginkgoConfig.GinkgoConfig.DryRun {
+		if !beforeSuite() {
+			log.Println("Error getting kubeconfig from beforeSuite function")
+			return false
+		}
+	}
 
 	// We need this anonymous function to make sure GinkgoRecover runs where we want it to
 	// and will still execute the rest of the function regardless whether the tests pass or fail.

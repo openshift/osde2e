@@ -32,29 +32,31 @@ func TestCheckPodHealth(t *testing.T) {
 		ns2 = "openshift-2"
 	)
 	var tests = []struct {
-		description   string
-		expectedState bool
-		expectedError bool
-		objs          []runtime.Object
+		description    string
+		expectedLength int
+		expectedError  bool
+		objs           []runtime.Object
 	}{
-		{"no pods", false, true, nil},
-		{"single pod failed", false, true, []runtime.Object{pod("a", ns1, v1.PodFailed)}},
-		{"single pod failed bad namespace", true, false, []runtime.Object{pod("a", "foobar", v1.PodFailed)}},
-		{"one pod good one pod bad same namespace", false, true, []runtime.Object{pod("a", ns1, v1.PodFailed), pod("b", ns1, v1.PodRunning)}},
-		{"one pod good one pod pending same namespace", false, false, []runtime.Object{pod("a", ns1, v1.PodPending), pod("b", ns1, v1.PodRunning)}},
-		{"one pod good one pod bad diff namespace", false, true, []runtime.Object{pod("a", ns1, v1.PodFailed), pod("b", ns2, v1.PodRunning)}},
-		{"single pod running", true, false, []runtime.Object{pod("a", ns1, v1.PodRunning)}},
-		{"single pod succeeded", true, false, []runtime.Object{pod("a", ns1, v1.PodSucceeded)}},
-		{"two succeeded pods diff namespace", true, false, []runtime.Object{pod("a", ns1, v1.PodSucceeded), pod("b", ns2, v1.PodSucceeded)}},
-		{"two running pods diff namespace", true, false, []runtime.Object{pod("a", ns1, v1.PodRunning), pod("b", ns2, v1.PodRunning)}},
+		{"no pods", 0, true, nil},
+		{"single pod failed", 0, true, []runtime.Object{pod("a", ns1, v1.PodFailed)}},
+		{"pod is pending beyond specified threshold", 1, false, []runtime.Object{pod("a", ns1, v1.PodPending)}},
+		{"single pod running", 0, false, []runtime.Object{pod("a", ns1, v1.PodRunning)}},
+		{"single pod succeeded", 0, false, []runtime.Object{pod("a", ns1, v1.PodSucceeded)}},
+		{"single pod failed bad namespace", 0, false, []runtime.Object{pod("a", "foobar", v1.PodFailed)}},
+		{"one pod good one pod bad same namespace", 0, true, []runtime.Object{pod("a", ns1, v1.PodFailed), pod("b", ns1, v1.PodRunning)}},
+		{"one pod good one pod pending same namespace", 0, false, []runtime.Object{pod("a", ns1, v1.PodPending), pod("b", ns1, v1.PodRunning)}},
+		{"one pod good one pod bad diff namespace", 0, true, []runtime.Object{pod("a", ns1, v1.PodFailed), pod("b", ns2, v1.PodRunning)}},
+		{"two succeeded pods diff namespace", 0, false, []runtime.Object{pod("a", ns1, v1.PodSucceeded), pod("b", ns2, v1.PodSucceeded)}},
+		{"two running pods diff namespace", 0, false, []runtime.Object{pod("a", ns1, v1.PodRunning), pod("b", ns2, v1.PodRunning)}},
 	}
 
 	for _, test := range tests {
 		kubeClient := kubernetes.NewSimpleClientset(test.objs...)
 		state, err := CheckClusterPodHealth(kubeClient.CoreV1(), nil)
 
-		if state != test.expectedState {
-			t.Errorf("%v: Expected state doesn't match returned value (%v, %v)", test.description, test.expectedState, state)
+		// Length of the pending pods list is validated here. The list may have multiple pending pods even if the error is for one pending pod.
+		if len(state) < test.expectedLength {
+			t.Errorf("%v: Expected length of state doesn't match returned value (%v, %v)", test.description, test.expectedLength, len(state))
 		}
 
 		if (err != nil && test.expectedError == false) || (err == nil && test.expectedError == true) {

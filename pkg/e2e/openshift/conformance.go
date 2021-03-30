@@ -37,7 +37,7 @@ var _ = ginkgo.Describe(conformanceK8sTestName, func() {
 	defer ginkgo.GinkgoRecover()
 	h := helper.New()
 
-	e2eTimeoutInSeconds := 3600
+	e2eTimeoutInSeconds := 7200
 	ginkgo.It("should run until completion", func() {
 		// configure tests
 		h.SetServiceAccount("system:serviceaccount:%s:cluster-admin")
@@ -58,10 +58,13 @@ var _ = ginkgo.Describe(conformanceK8sTestName, func() {
 
 		// get results
 		results, err := r.RetrieveTestResults()
-		Expect(err).NotTo(HaveOccurred())
 
 		// write results
 		h.WriteResults(results)
+
+		// evaluate results
+		Expect(err).NotTo(HaveOccurred())
+
 	}, float64(e2eTimeoutInSeconds+30))
 })
 
@@ -74,7 +77,7 @@ var _ = ginkgo.Describe(conformanceOpenshiftTestName, func() {
 		h.SetServiceAccount("system:serviceaccount:%s:cluster-admin")
 		// configure tests
 		cfg := DefaultE2EConfig
-		cfg.Suite = "openshift/conformance"
+		cfg.Suite = "openshift/conformance/parallel suite"
 		cfg.Name = "openshift-conformance"
 		cmd := cfg.Cmd()
 
@@ -90,9 +93,11 @@ var _ = ginkgo.Describe(conformanceOpenshiftTestName, func() {
 
 		// get results
 		results, err := r.RetrieveTestResults()
-		Expect(err).NotTo(HaveOccurred())
 
 		// write results
 		h.WriteResults(results)
+
+		// evaluate results
+		Expect(err).NotTo(HaveOccurred())
 	}, float64(e2eTimeoutInSeconds+30))
 })

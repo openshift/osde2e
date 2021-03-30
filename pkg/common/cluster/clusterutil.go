@@ -30,7 +30,12 @@ import (
 const (
 	// errorWindow is the number of checks made to determine if a cluster has truly failed.
 	errorWindow = 20
+	// pendingPodThreshold is the maximum number of times a pod is allowed to be in pending state before erroring out in PollClusterHealth.
+	pendingPodThreshold = 10
 )
+
+// podErrorTracker is the data structure that keeps track of pending state counters for each pod against their pod UIDs.
+var podErrorTracker healthchecks.PodErrorTracker
 
 // GetClusterVersion will get the current cluster version for the cluster.
 func GetClusterVersion(provider spi.Provider, clusterID string) (*semver.Version, error) {
@@ -70,11 +75,13 @@ func ScaleCluster(clusterID string, numComputeNodes int) error {
 		return fmt.Errorf("error trying to scale cluster: %v", err)
 	}
 
+	podErrorTracker.NewPodErrorTracker(pendingPodThreshold)
 	return waitForClusterReadyWithOverrideAndExpectedNumberOfNodes(clusterID, nil, true)
 }
 
 // WaitForClusterReady blocks until the cluster is ready for testing.
 func WaitForClusterReady(clusterID string, logger *log.Logger) error {
+	podErrorTracker.NewPodErrorTracker(pendingPodThreshold)
 	return waitForClusterReadyWithOverrideAndExpectedNumberOfNodes(clusterID, logger, false)
 }
 
@@ -302,10 +309,17 @@ func PollClusterHealth(clusterID string, logger *log.Logger) (status bool, failu
 			clusterHealthy = false
 		}
 
-		if check, err := healthchecks.CheckClusterPodHealth(kubeClient.CoreV1(), logger); !check || err != nil {
+		if podlist, err := healthchecks.CheckClusterPodHealth(kubeClient.CoreV1(), logger); (podlist == nil) && err != nil {
 			healthErr = multierror.Append(healthErr, err)
 			failures = append(failures, "pod")
 			clusterHealthy = false
+		} else {
+			err := podErrorTracker.CheckPendingPods(podlist)
+			if err != nil {
+				healthErr = multierror.Append(healthErr, err)
+				failures = append(failures, "pod")
+				clusterHealthy = false
+			}
 		}
 
 		if check, err := healthchecks.CheckCerts(kubeClient.CoreV1(), logger); !check || err != nil {
