@@ -134,8 +134,8 @@ func beforeSuite() bool {
 		}
 		duration, err := time.ParseDuration(viper.GetString(config.Tests.ClusterHealthChecksTimeout))
 		if err != nil {
-			log.Printf("Failed parsing health check timeout, using 2 hours: %v", err)
-			duration = time.Hour * 2
+			log.Printf("Failed parsing health check timeout: %v", err)
+			return false
 		}
 		ctx, cancel := context.WithTimeout(context.Background(), duration)
 		defer cancel()
