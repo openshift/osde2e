@@ -17,7 +17,9 @@ const (
 	samesiteSetting = "Strict"
 	monNamespace    = "openshift-monitoring"
 	conNamespace    = "openshift-console"
-	supportVersion  = 46 // samesite cookie is only supported on >= v4.6.x
+	// samesite cookie is only supported on >= v4.6.x
+	supportMajorVersion = 4
+	supportMinorVersion = 6
 )
 
 var samesiteTestName string = "[Suite: informing] [OSD] Samesite Cookie Strict"
@@ -27,59 +29,57 @@ var _ = ginkgo.Describe(samesiteTestName, func() {
 
 	ginkgo.Context("Validating samesite cookie", func() {
 
-		checkVersion := verifyVersion(h)
+		supportedVersion := verifyVersionSupport(h)
 
 		ginkgo.It("should be set for openshift-monitoring OSD managed routes", func() {
-			if checkVersion() {
+			if supportedVersion() {
+				foundKey, err := managedRoutes(h, monNamespace)
+				Expect(err).NotTo(HaveOccurred(), "failed getting routes for %v", monNamespace)
+				Expect(foundKey).Should(BeTrue(), "%v namespace routes have samesite cookie set", monNamespace)
+			} else {
 				ginkgo.Skip("skipping due to unsupported cluster version. Must be >=4.6.0")
 			}
-			foundKey, err := managedRoutes(h, monNamespace)
-			Expect(err).NotTo(HaveOccurred(), "failed getting routes for %v", monNamespace)
-			Expect(foundKey).Should(BeTrue(), "%v namespace routes have samesite cookie set", monNamespace)
 		}, 5)
 
 		ginkgo.It("should be set for openshift-console OSD managed routes", func() {
-			if checkVersion() {
+			if supportedVersion() {
+				foundKey, err := managedRoutes(h, conNamespace)
+				Expect(err).NotTo(HaveOccurred(), "failed getting routes for %v", conNamespace)
+				Expect(foundKey).Should(BeTrue(), "%v namespace routes have samesite cookie set", conNamespace)
+			} else {
 				ginkgo.Skip("skipping due to unsupported cluster version. Must be >=4.6.0")
 			}
-			foundKey, err := managedRoutes(h, conNamespace)
-			Expect(err).NotTo(HaveOccurred(), "failed getting routes for %v", conNamespace)
-			Expect(foundKey).Should(BeTrue(), "%v namespace routes have samesite cookie set", conNamespace)
 		}, 5)
 	})
 })
 
-func verifyVersion(h *helper.H) func() bool {
+func verifyVersionSupport(h *helper.H) func() bool {
 	return func() bool {
 		clusterVersionObj, err := h.GetClusterVersion()
 		Expect(err).NotTo(HaveOccurred(), "failed getting cluster version")
 		Expect(clusterVersionObj).NotTo(BeNil())
 
-		// Get the cluster version and slice it, then convert the major/minor version to int Ex. majMinVersion := 46
-		splitVersion := strings.Split(clusterVersionObj.Status.Desired.Version, ".")
+		//splitVersion := strings.Split(clusterVersionObj.Status.Desired.Version, ".")
+		splitVersion := []string{"3", "5", "11"}
 
-		// Assume the len is <= 3 since semver major/minor could be something like 4.11.x
-		// Even if the semver maj/min exceed 4.9, this will still work. Ex. 4.11 = 411, which 411 > 46
-		if len(splitVersion) <= 1 || len(splitVersion) > 3 {
-			return true
+		// check that semver is 3 elements e.g. 4.6.0, but we only need to verify major/minor version
+		if len(splitVersion) == 3 {
+			majorVersion, err := strconv.Atoi(splitVersion[0])
+			Expect(err).NotTo(HaveOccurred(), "failed getting major version %v. Error: %v", majorVersion, err)
+			minorVersion, err := strconv.Atoi(splitVersion[1])
+			Expect(err).NotTo(HaveOccurred(), "failed getting minor version %v. Error: %v", minorVersion, err)
+
+			if majorVersion < supportMajorVersion {
+				return false
+			} else if majorVersion == supportMajorVersion && minorVersion < supportMinorVersion {
+				return false
+			} else {
+				return true
+			}
 		} else {
-			if len(splitVersion) == 2 {
-				majMinVersion, err := strconv.Atoi(splitVersion[0] + splitVersion[1])
-				Expect(err).NotTo(HaveOccurred(), "failed normalizing major/minor version %v to integer %v", majMinVersion, err)
-				if majMinVersion < supportVersion {
-					return true
-				}
-			}
-
-			if len(splitVersion) == 3 {
-				majMinVersion, err := strconv.Atoi(splitVersion[0] + splitVersion[1] + splitVersion[2])
-				Expect(err).NotTo(HaveOccurred(), "failed normalizing major/minor version %v to integer %v", majMinVersion, err)
-				if majMinVersion < supportVersion {
-					return true
-				}
-			}
+			// semver not in correct format if anything other than 3 elements exist
+			return false
 		}
-		return false
 	}
 }
 
