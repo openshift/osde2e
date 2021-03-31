@@ -98,3 +98,13 @@ func (m *ROSAProvider) UpdateSchedule(clusterID string, version string, t time.T
 func (m *ROSAProvider) DetermineMachineType(cloudProvider string) (string, error) {
 	return m.ocmProvider.DetermineMachineType(cloudProvider)
 }
+
+// Resume calls DetermineMachineType from the OCM provider
+func (m *ROSAProvider) Resume(id string) bool {
+	return m.ocmProvider.Resume(id)
+}
+
+// Hibernate calls DetermineMachineType from the OCM provider
+func (m *ROSAProvider) Hibernate(id string) bool {
+	return m.ocmProvider.Hibernate(id)
+}

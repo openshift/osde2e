@@ -1043,6 +1043,42 @@ func (o *OCMProvider) UpdateSchedule(clusterID string, version string, t time.Ti
 	return nil
 }
 
+// Resume resumes a cluster via OCM
+func (o *OCMProvider) Resume(id string) bool {
+	resp, err := o.conn.ClustersMgmt().V1().Clusters().Cluster(id).Resume().Send()
+
+	if err != nil {
+		err = fmt.Errorf("couldn't resume cluster '%s': %v", id, err)
+		log.Printf("%v", err)
+		return false
+	}
+
+	if resp != nil && resp.Error() != nil {
+		log.Printf("error while trying to resume cluster: %v", err)
+		return false
+	}
+
+	return true
+}
+
+// Hibernate resumes a cluster via OCM
+func (o *OCMProvider) Hibernate(id string) bool {
+	resp, err := o.conn.ClustersMgmt().V1().Clusters().Cluster(id).Hibernate().Send()
+
+	if err != nil {
+		err = fmt.Errorf("couldn't hibernate cluster '%s': %v", id, err)
+		log.Printf("%v", err)
+		return false
+	}
+
+	if resp != nil && resp.Error() != nil {
+		log.Printf("error while trying to hibernate cluster: %v", err)
+		return false
+	}
+
+	return true
+}
+
 // This assumes cluster is a resp.Body() response from an OCM update
 func (o *OCMProvider) updateClusterCache(id string, cluster *v1.Cluster) error {
 	c, err := o.ocmToSPICluster(cluster)
