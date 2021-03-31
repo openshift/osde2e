@@ -25,6 +25,12 @@ const (
 	ClusterStateUninstalling ClusterState = "uninstalling"
 	// ClusterStateUnknown the cluster state is unknown.
 	ClusterStateUnknown ClusterState = "unknown"
+	//ClusterStatePoweringDown
+	ClusterStatePoweringDown ClusterState = "powering_down"
+	//ClusterStateHibernating
+	ClusterStateHibernating ClusterState = "hibernating"
+	//ClusterStateResuming
+	ClusterStateResuming ClusterState = "resuming"
 )
 
 // Cluster is the intermediary cluster object between a provisioner and osde2e.
