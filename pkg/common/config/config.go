@@ -175,12 +175,6 @@ var Tests = struct {
 	// Env: SKIP_CLUSTER_HEALTH_CHECKS
 	SkipClusterHealthChecks string
 
-	// ClusterHealthChecksTimeout defines the duration for which the harness will
-	// wait for the cluster to indicate it is healthy before cancelling the test
-	// run. This value should be formatted for use with time.ParseDuration.
-	// Env: CLUSTER_HEALTH_CHECKS_TIMEOUT
-	ClusterHealthChecksTimeout string
-
 	// MetricsBucket is the bucket that metrics data will be uploaded to.
 	// Env: METRICS_BUCKET
 	MetricsBucket string
@@ -190,17 +184,16 @@ var Tests = struct {
 	ServiceAccount string
 }{
 
-	PollingTimeout:             "tests.pollingTimeout",
-	GinkgoSkip:                 "tests.ginkgoSkip",
-	GinkgoFocus:                "tests.focus",
-	TestsToRun:                 "tests.testsToRun",
-	SuppressSkipNotifications:  "tests.suppressSkipNotifications",
-	CleanRuns:                  "tests.cleanRuns",
-	OperatorSkip:               "tests.operatorSkip",
-	SkipClusterHealthChecks:    "tests.skipClusterHealthChecks",
-	MetricsBucket:              "tests.metricsBucket",
-	ServiceAccount:             "tests.serviceAccount",
-	ClusterHealthChecksTimeout: "tests.clusterHealthChecksTimeout",
+	PollingTimeout:            "tests.pollingTimeout",
+	GinkgoSkip:                "tests.ginkgoSkip",
+	GinkgoFocus:               "tests.focus",
+	TestsToRun:                "tests.testsToRun",
+	SuppressSkipNotifications: "tests.suppressSkipNotifications",
+	CleanRuns:                 "tests.cleanRuns",
+	OperatorSkip:              "tests.operatorSkip",
+	SkipClusterHealthChecks:   "tests.skipClusterHealthChecks",
+	MetricsBucket:             "tests.metricsBucket",
+	ServiceAccount:            "tests.serviceAccount",
 }
 
 // Cluster config keys.
@@ -533,9 +526,6 @@ func init() {
 
 	viper.SetDefault(Tests.SkipClusterHealthChecks, false)
 	viper.BindEnv(Tests.OperatorSkip, "SKIP_CLUSTER_HEALTH_CHECKS")
-
-	viper.SetDefault(Tests.ClusterHealthChecksTimeout, "2h")
-	viper.BindEnv(Tests.ClusterHealthChecksTimeout, "CLUSTER_HEALTH_CHECKS_TIMEOUT")
 
 	viper.SetDefault(Tests.MetricsBucket, "osde2e-metrics")
 	viper.BindEnv(Tests.MetricsBucket, "METRICS_BUCKET")
