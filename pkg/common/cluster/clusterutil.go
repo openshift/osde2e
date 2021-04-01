@@ -85,6 +85,58 @@ func WaitForClusterReady(clusterID string, logger *log.Logger) error {
 	return waitForClusterReadyWithOverrideAndExpectedNumberOfNodes(clusterID, logger, false)
 }
 
+func waitForOCMProvisioning(provider spi.Provider, clusterID string, installTimeout int64, logger *log.Logger) (becameReadyAt time.Time, err error) {
+	ocmReady := false
+	readinessSet := false
+	var readinessStarted time.Time
+	clusterStarted := time.Now()
+	return readinessStarted, wait.PollImmediate(30*time.Second, time.Duration(installTimeout)*time.Minute, func() (bool, error) {
+		cluster, err := provider.GetCluster(clusterID)
+		if err != nil {
+			log.Printf("Error fetching cluster details from provider: %s", err)
+			return false, nil
+		}
+
+		metadata.Instance.IncrementHealthcheckIteration()
+		properties := cluster.Properties()
+		currentStatus := properties[clusterproperties.Status]
+
+		if currentStatus == clusterproperties.StatusProvisioning && !readinessSet {
+			err = provider.AddProperty(cluster, clusterproperties.Status, clusterproperties.StatusWaitingForReady)
+			if err != nil {
+				log.Printf("Error adding property to cluster: %s", err.Error())
+				return false, nil
+			}
+
+		}
+
+		if cluster != nil && cluster.State() == spi.ClusterStateReady {
+			// This is the first time that we've entered this section, so we'll consider this the time until OCM has said the cluster is ready
+			if !ocmReady {
+				ocmReady = true
+				if metadata.Instance.TimeToOCMReportingInstalled == 0 {
+					metadata.Instance.SetTimeToOCMReportingInstalled(time.Since(clusterStarted).Seconds())
+				}
+
+				if currentStatus == clusterproperties.StatusUpgrading {
+					err = provider.AddProperty(cluster, clusterproperties.Status, clusterproperties.StatusUpgradeHealthCheck)
+				} else {
+					err = provider.AddProperty(cluster, clusterproperties.Status, clusterproperties.StatusHealthCheck)
+				}
+
+				if err != nil {
+					log.Printf("error trying to add health-check property to cluster ID %s: %v", cluster.ID(), err)
+					return false, nil
+				}
+
+				readinessStarted = time.Now()
+			}
+			return true, nil
+		}
+		return false, nil
+	})
+}
+
 func waitForClusterReadyWithOverrideAndExpectedNumberOfNodes(clusterID string, logger *log.Logger, overrideSkipCheck bool) error {
 	logger = logging.CreateNewStdLoggerOrUseExistingLogger(logger)
 
@@ -100,13 +152,12 @@ func waitForClusterReadyWithOverrideAndExpectedNumberOfNodes(clusterID string, l
 	cleanRuns := 0
 	errRuns := 0
 
-	clusterStarted := time.Now()
-	var readinessStarted time.Time
-	ocmReady := false
-	readinessSet := false
-
 	if !viper.GetBool(config.Tests.SkipClusterHealthChecks) || overrideSkipCheck {
-		return wait.PollImmediate(30*time.Second, time.Duration(installTimeout)*time.Minute, func() (bool, error) {
+		readinessStarted, err := waitForOCMProvisioning(provider, clusterID, installTimeout, logger)
+		if err != nil {
+			return fmt.Errorf("OCM never became ready: %w", err)
+		}
+		pollErr := wait.PollImmediate(30*time.Second, time.Duration(installTimeout)*time.Minute, func() (bool, error) {
 			cluster, err := provider.GetCluster(clusterID)
 			if err != nil {
 				log.Printf("Error fetching cluster details from provider: %s", err)
@@ -117,58 +168,12 @@ func waitForClusterReadyWithOverrideAndExpectedNumberOfNodes(clusterID string, l
 			properties := cluster.Properties()
 			currentStatus := properties[clusterproperties.Status]
 
-			if currentStatus == clusterproperties.StatusProvisioning && !readinessSet {
-				err = provider.AddProperty(cluster, clusterproperties.Status, clusterproperties.StatusWaitingForReady)
-				if err != nil {
-					log.Printf("Error adding property to cluster: %s", err.Error())
-					return false, nil
-				}
-
-			}
-
 			if cluster != nil && cluster.State() == spi.ClusterStateReady {
-				// This is the first time that we've entered this section, so we'll consider this the time until OCM has said the cluster is ready
-				if !ocmReady {
-					ocmReady = true
-					if metadata.Instance.TimeToOCMReportingInstalled == 0 {
-						metadata.Instance.SetTimeToOCMReportingInstalled(time.Since(clusterStarted).Seconds())
-					}
-
-					if currentStatus == clusterproperties.StatusUpgrading {
-						err = provider.AddProperty(cluster, clusterproperties.Status, clusterproperties.StatusUpgradeHealthCheck)
-					} else {
-						err = provider.AddProperty(cluster, clusterproperties.Status, clusterproperties.StatusHealthCheck)
-					}
-
-					if err != nil {
-						log.Printf("error trying to add health-check property to cluster ID %s: %v", cluster.ID(), err)
-						return false, nil
-					}
-
-					readinessStarted = time.Now()
-				}
 				if success, failures, err := PollClusterHealth(clusterID, logger); success {
 					cleanRuns++
 					logger.Printf("Clean run %d/%d...", cleanRuns, cleanRunsNeeded)
 					errRuns = 0
 					if cleanRuns == cleanRunsNeeded {
-						if metadata.Instance.TimeToClusterReady == 0 {
-							metadata.Instance.SetTimeToClusterReady(time.Since(readinessStarted).Seconds())
-						} else {
-							metadata.Instance.SetTimeToUpgradedClusterReady(time.Since(readinessStarted).Seconds())
-						}
-
-						if currentStatus == clusterproperties.StatusUpgradeHealthCheck {
-							err = provider.AddProperty(cluster, clusterproperties.Status, clusterproperties.StatusUpgradeHealthy)
-						} else {
-							err = provider.AddProperty(cluster, clusterproperties.Status, clusterproperties.StatusHealthy)
-						}
-
-						if err != nil {
-							log.Printf("error trying to add healthy property to cluster ID %s: %v", cluster.ID(), err)
-							return false, nil
-						}
-
 						return true, nil
 					}
 					return false, nil
@@ -210,6 +215,26 @@ func waitForClusterReadyWithOverrideAndExpectedNumberOfNodes(clusterID string, l
 			}
 			return false, nil
 		})
+		if pollErr == nil {
+    		// polling succeeded and the cluster is healthy
+			if metadata.Instance.TimeToClusterReady == 0 {
+				metadata.Instance.SetTimeToClusterReady(time.Since(readinessStarted).Seconds())
+			} else {
+				metadata.Instance.SetTimeToUpgradedClusterReady(time.Since(readinessStarted).Seconds())
+			}
+
+			if currentStatus == clusterproperties.StatusUpgradeHealthCheck {
+				err = provider.AddProperty(cluster, clusterproperties.Status, clusterproperties.StatusUpgradeHealthy)
+			} else {
+				err = provider.AddProperty(cluster, clusterproperties.Status, clusterproperties.StatusHealthy)
+			}
+
+			if err != nil {
+				log.Printf("error trying to add healthy property to cluster ID %s: %v", cluster.ID(), err)
+				return false, nil
+			}
+		}
+
 	}
 	return nil
 }
