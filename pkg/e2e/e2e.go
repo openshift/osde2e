@@ -489,7 +489,7 @@ func openPDAlerts(suites []junit.Suite, jobName, jobURL string) {
 		}); err != nil {
 			log.Printf("Failed creating pagerduty incident for failure: %v", err)
 		} else {
-			if err := alert.SendSlackMessage("#sd-cicd", fmt.Sprintf(`@osde2e A bunch of tests failed at once:
+			if err := alert.SendSlackMessage("sd-cicd", fmt.Sprintf(`@osde2e A bunch of tests failed at once:
 pipeline: %s
 URL: %s
 PD info: %v`, jobName, jobURL, event)); err != nil {
