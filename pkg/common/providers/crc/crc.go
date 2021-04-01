@@ -327,3 +327,15 @@ func (m *Provider) GetUpgradePolicyID(clusterID string) (string, error) {
 func (m *Provider) DetermineMachineType(cloudProvider string) (string, error) {
 	return "", nil
 }
+
+// Resume resumes a cluster via OCM
+func (o *Provider) Resume(id string) bool {
+	log.Println("Hibernation not supported in CRC Provider")
+	return true
+}
+
+// Hibernate resumes a cluster via OCM
+func (o *Provider) Hibernate(id string) bool {
+	log.Println("Hibernation not supported in CRC Provider")
+	return true
+}

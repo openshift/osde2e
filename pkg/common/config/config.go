@@ -290,6 +290,10 @@ var Cluster = struct {
 	// Blank will do nothing
 	// Cannot specify imageContentSources within this config
 	InstallConfig string
+
+	// HibernateAfterUse will tell the provider to attempt to hibernate the cluster after
+	// the test run, assuming the provider supports hibernation
+	HibernateAfterUse string
 }{
 	MultiAZ:                             "cluster.multiAZ",
 	Channel:                             "cluster.channel",
@@ -316,6 +320,7 @@ var Cluster = struct {
 	NumWorkerNodes:                      "cluster.numWorkerNodes",
 	ImageContentSource:                  "cluster.imageContentSource",
 	InstallConfig:                       "cluster.installConfig",
+	HibernateAfterUse:                   "cluster.hibernateAfterUse",
 }
 
 // CloudProvider config keys.
@@ -597,6 +602,9 @@ func init() {
 
 	viper.BindEnv(Cluster.ImageContentSource, "CLUSTER_IMAGE_CONTENT_SOURCE")
 	viper.BindEnv(Cluster.InstallConfig, "CLUSTER_INSTALL_CONFIG")
+
+	viper.SetDefault(Cluster.HibernateAfterUse, true)
+	viper.BindEnv(Cluster.HibernateAfterUse, "HIBERNATE_AFTER_USE")
 
 	// ----- Cloud Provider -----
 	viper.SetDefault(CloudProvider.CloudProviderID, "aws")

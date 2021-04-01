@@ -129,4 +129,14 @@ type Provider interface {
 
 	// DetermineMachineType selects a random machine type for a given cluster.
 	DetermineMachineType(cloudProvider string) (string, error)
+
+	// Hibernate triggers a hibernation of the cluster
+	// If hibernation is unsupported by the provider, it will log that it's unsupported
+	// but still return True.
+	Hibernate(clusterID string) bool
+
+	// Resume triggers a hibernated cluster to wake up
+	// If hibernation is unsupported by the provider, it will log that it's unsupported
+	// but still return True.
+	Resume(clusterID string) bool
 }
