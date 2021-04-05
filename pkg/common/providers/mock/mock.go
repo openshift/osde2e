@@ -10,7 +10,6 @@ import (
 	"github.com/Masterminds/semver"
 	"github.com/google/uuid"
 	"github.com/markbates/pkger"
-	v1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/spi"
 	"github.com/spf13/viper"
@@ -232,8 +231,8 @@ func (m *MockProvider) Environment() string {
 }
 
 // Metrics is a stub function for now
-func (m *MockProvider) Metrics(clusterID string) (*v1.ClusterMetrics, error) {
-	return nil, nil
+func (m *MockProvider) Metrics(clusterID string) (bool, error) {
+	return true, nil
 }
 
 // UpgradeSource mocks an environment source operation.

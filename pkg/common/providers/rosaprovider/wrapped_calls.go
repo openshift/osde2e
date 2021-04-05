@@ -3,7 +3,6 @@ package rosaprovider
 import (
 	"time"
 
-	v1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 	"github.com/openshift/osde2e/pkg/common/spi"
 )
 
@@ -55,7 +54,7 @@ func (m *ROSAProvider) Environment() string {
 }
 
 // Metrics will call Metrics from the OCM provider.
-func (m *ROSAProvider) Metrics(clusterID string) (*v1.ClusterMetrics, error) {
+func (m *ROSAProvider) Metrics(clusterID string) (bool, error) {
 	return m.ocmProvider.Metrics(clusterID)
 }
 
