@@ -660,8 +660,8 @@ func init() {
 	viper.BindEnv(Alert.PagerDutyAPIToken, "PAGERDUTY_API_TOKEN")
 	RegisterSecret(Alert.PagerDutyAPIToken, "pagerduty-api-token")
 
-	viper.BindEnv(Alert.PagerDutyAPIToken, "PAGERDUTY_USER_TOKEN")
-	RegisterSecret(Alert.PagerDutyAPIToken, "pagerduty-user-token")
+	viper.BindEnv(Alert.PagerDutyUserToken, "PAGERDUTY_USER_TOKEN")
+	RegisterSecret(Alert.PagerDutyUserToken, "pagerduty-user-token")
 }
 
 // PostProcess is a variety of post-processing commands that is intended to be run after a config is loaded.
