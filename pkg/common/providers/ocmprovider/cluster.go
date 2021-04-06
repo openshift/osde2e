@@ -648,20 +648,6 @@ func getLocalKubeConfig(path string) ([]byte, error) {
 	return []byte(f), nil
 }
 
-// GetMetrics gathers metrics from OCM on a cluster
-func (o *OCMProvider) GetMetrics(clusterID string) (*v1.ClusterMetrics, error) {
-	var err error
-
-	clusterClient := o.conn.ClustersMgmt().V1().Clusters().Cluster(clusterID)
-
-	cluster, err := clusterClient.Get().Send()
-	if err != nil {
-		return nil, err
-	}
-
-	return cluster.Body().Metrics(), nil
-}
-
 // InstallAddons loops through the addons list in the config
 // and performs the CRUD operation to trigger addon installation
 func (o *OCMProvider) InstallAddons(clusterID string, addonIDs []spi.AddOnID, addonParams map[spi.AddOnID]spi.AddOnParams) (num int, err error) {
