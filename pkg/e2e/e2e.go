@@ -489,7 +489,7 @@ func openPDAlerts(suites []junit.Suite, jobName, jobURL string) {
 		}); err != nil {
 			log.Printf("Failed creating pagerduty incident for failure: %v", err)
 		} else {
-			if err := alert.SendSlackMessage("#sd-cicd", fmt.Sprintf(`@osde2e A bunch of tests failed at once:
+			if err := alert.SendSlackMessage("sd-cicd", fmt.Sprintf(`@osde2e A bunch of tests failed at once:
 pipeline: %s
 URL: %s
 PD info: %v`, jobName, jobURL, event)); err != nil {
@@ -628,14 +628,15 @@ func cleanupAfterE2E(h *helper.H) (errors []error) {
 	// We need a provider to hibernate
 	// We need a cluster to hibernate
 	// We need to check that the test run wants to hibernate after this run
-	if provider != nil && viper.GetString(config.Cluster.ID) != "" && viper.GetBool(config.Cluster.HibernateAfterUse) {
-		msg := "Unable to hibernate %s"
-		if provider.Hibernate(viper.GetString(config.Cluster.ID)) {
-			msg = "Hibernating %s"
+	/*
+		if provider != nil && viper.GetString(config.Cluster.ID) != "" && viper.GetBool(config.Cluster.HibernateAfterUse) {
+			msg := "Unable to hibernate %s"
+			if provider.Hibernate(viper.GetString(config.Cluster.ID)) {
+				msg = "Hibernating %s"
+			}
+			log.Printf(msg, viper.GetString(config.Cluster.ID))
 		}
-		log.Printf(msg, viper.GetString(config.Cluster.ID))
-	}
-
+	*/
 	return errors
 }
 
@@ -709,6 +710,13 @@ func runTestsInPhase(phase string, description string, dryrun bool) bool {
 					openPDAlerts(suites, jobName, url)
 				}
 			}
+		}
+	}
+	// If we could have opened new alerts, consolidate them
+	if os.Getenv("JOB_TYPE") == "periodic" {
+		err := pagerduty.MergeCICDIncidents(pd.NewClient(viper.GetString(config.Alert.PagerDutyUserToken)))
+		if err != nil {
+			log.Printf("Failed merging PD incidents: %v", err)
 		}
 	}
 

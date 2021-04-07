@@ -16,6 +16,7 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/spf13/viper"
 
+	configv1 "github.com/openshift/api/config/v1"
 	projectv1 "github.com/openshift/api/project/v1"
 	v1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
@@ -339,4 +340,15 @@ func (h *H) InspectState() {
 	}
 	err = h.inspect(h.CurrentProject())
 	Expect(err).ShouldNot(HaveOccurred(), "could not inspect project '%s'", h.proj)
+}
+
+// GetClusterVersion returns the Cluster Version object
+func (h *H) GetClusterVersion() (*configv1.ClusterVersion, error) {
+	cfgClient := h.Cfg()
+	getOpts := metav1.GetOptions{}
+	clusterVersionObj, err := cfgClient.ConfigV1().ClusterVersions().Get(context.TODO(), "version", getOpts)
+	if err != nil {
+		return nil, fmt.Errorf("couldn't get current ClusterVersion '%s': %v", "version", err)
+	}
+	return clusterVersionObj, nil
 }

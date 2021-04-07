@@ -99,10 +99,12 @@ func (o *OCMProvider) LaunchCluster(clusterName string) (string, error) {
 
 	// This skips setting install_config for any prod job OR any periodic addon job.
 	// To invoke this logic locally you will have to set JOB_TYPE to "periodic".
-	if o.Environment() != "prod" || (os.Getenv("JOB_TYPE") == "periodic" && !strings.Contains(os.Getenv("JOB_NAME"), "addon")) {
-		imageSource := viper.GetString(config.Cluster.ImageContentSource)
-		log.Printf("Setting imageSource: %s", imageSource)
-		clusterProperties["install_config"] = fmt.Sprintf("%s\n%s", o.ChooseImageSource(imageSource), viper.GetString(config.Cluster.InstallConfig))
+	if o.Environment() != "prod" {
+		if os.Getenv("JOB_TYPE") == "periodic" && !strings.Contains(os.Getenv("JOB_NAME"), "addon") {
+			imageSource := viper.GetString(config.Cluster.ImageContentSource)
+			log.Printf("Setting imageSource: %s", imageSource)
+			clusterProperties["install_config"] = fmt.Sprintf("%s\n%s", o.ChooseImageSource(imageSource), viper.GetString(config.Cluster.InstallConfig))
+		}
 	}
 
 	newCluster := v1.NewCluster().
@@ -678,20 +680,6 @@ func getLocalKubeConfig(path string) ([]byte, error) {
 		return nil, err
 	}
 	return []byte(f), nil
-}
-
-// GetMetrics gathers metrics from OCM on a cluster
-func (o *OCMProvider) GetMetrics(clusterID string) (*v1.ClusterMetrics, error) {
-	var err error
-
-	clusterClient := o.conn.ClustersMgmt().V1().Clusters().Cluster(clusterID)
-
-	cluster, err := clusterClient.Get().Send()
-	if err != nil {
-		return nil, err
-	}
-
-	return cluster.Body().Metrics(), nil
 }
 
 // InstallAddons loops through the addons list in the config
