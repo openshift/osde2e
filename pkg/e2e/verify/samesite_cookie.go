@@ -22,7 +22,7 @@ const (
 	supportMinorVersion = 6
 )
 
-var samesiteTestName string = "[Suite: informing] [OSD] Samesite Cookie Strict"
+var samesiteTestName string = "[Suite: e2e] [OSD] Samesite Cookie Strict"
 
 var _ = ginkgo.Describe(samesiteTestName, func() {
 	h := helper.New()
