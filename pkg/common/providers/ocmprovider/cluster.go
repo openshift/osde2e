@@ -401,40 +401,50 @@ func (o *OCMProvider) DeleteCluster(clusterID string) error {
 		return fmt.Errorf("error retrieving cluster for deletion: %v", err)
 	}
 
-	if cluster.State() == spi.ClusterStateHibernating || cluster.State() == spi.ClusterStateResuming {
-		if cluster.State() == spi.ClusterStateHibernating {
-			if err = retryer().Do(func() error {
-				var err error
-				resumeResp, err = o.conn.ClustersMgmt().V1().Clusters().Cluster(clusterID).Resume().Send()
+	// If the cluster is hibernating according to OCM, wake it up
+	if cluster.State() == spi.ClusterStateHibernating {
+		if err = retryer().Do(func() error {
+			var err error
+			resumeResp, err = o.conn.ClustersMgmt().V1().Clusters().Cluster(clusterID).Resume().Send()
 
-				if err != nil {
-					return fmt.Errorf("couldn't resume cluster '%s': %v", clusterID, err)
-				}
+			if err != nil {
+				return fmt.Errorf("couldn't resume cluster '%s': %v", clusterID, err)
+			}
 
-				if resumeResp != nil && resumeResp.Error() != nil {
-					err = errResp(resumeResp.Error())
-					log.Printf("%v", err)
-					return err
-				}
-
-				return nil
-			}); err != nil {
+			if resumeResp != nil && resumeResp.Error() != nil {
+				err = errResp(resumeResp.Error())
+				log.Printf("%v", err)
 				return err
 			}
-		}
 
-		wait.PollImmediate(1*time.Minute, 15*time.Minute, func() (bool, error) {
+			return nil
+		}); err != nil {
+			return err
+		}
+	}
+
+	wait.PollImmediate(1*time.Minute, 15*time.Minute, func() (bool, error) {
+		// If the cluster state is anything but Hibernating or Ready, poll the state again
+		if cluster.State() == spi.ClusterStateHibernating || cluster.State() == spi.ClusterStateReady {
 			cluster, err = o.GetCluster(clusterID)
 			if err != nil {
 				log.Printf("error retrieving cluster for deletion: %v", err)
 				return false, nil
 			}
-			if cluster.State() == spi.ClusterStateReady {
-				return true, nil
-			}
-			return false, nil
-		})
-	}
+		}
+		// A cluster errored in OCM is unlikely to recover so we should fail fast
+		if cluster.State() == spi.ClusterStateError {
+			return false, fmt.Errorf("Cluster %s is in an errored state.", cluster.ID())
+		}
+
+		// We have a ready cluster, hooray
+		if cluster.State() == spi.ClusterStateReady {
+			return true, nil
+		}
+
+		// The cluster isn't ready so we should loop again
+		return false, nil
+	})
 
 	err = o.AddProperty(cluster, clusterproperties.Status, clusterproperties.StatusUninstalling)
 	if err != nil {
