@@ -628,15 +628,15 @@ func cleanupAfterE2E(h *helper.H) (errors []error) {
 	// We need a provider to hibernate
 	// We need a cluster to hibernate
 	// We need to check that the test run wants to hibernate after this run
-	// Temporary fix: Do not hibernate all clusters by default :)
-	/*if provider != nil && viper.GetString(config.Cluster.ID) != "" && viper.GetBool(config.Cluster.HibernateAfterUse) {
-		msg := "Unable to hibernate %s"
-		if provider.Hibernate(viper.GetString(config.Cluster.ID)) {
-			msg = "Hibernating %s"
+	/*
+		if provider != nil && viper.GetString(config.Cluster.ID) != "" && viper.GetBool(config.Cluster.HibernateAfterUse) {
+			msg := "Unable to hibernate %s"
+			if provider.Hibernate(viper.GetString(config.Cluster.ID)) {
+				msg = "Hibernating %s"
+			}
+			log.Printf(msg, viper.GetString(config.Cluster.ID))
 		}
-		log.Printf(msg, viper.GetString(config.Cluster.ID))
-	}*/
-
+	*/
 	return errors
 }
 

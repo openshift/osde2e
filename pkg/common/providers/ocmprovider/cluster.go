@@ -19,6 +19,7 @@ import (
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/spi"
 	"github.com/spf13/viper"
+	"k8s.io/apimachinery/pkg/util/wait"
 )
 
 // IsValidClusterName validates the clustername prior to proceeding with it
@@ -390,17 +391,60 @@ func (o *OCMProvider) GenerateProperties() (map[string]string, error) {
 
 // DeleteCluster requests the deletion of clusterID.
 func (o *OCMProvider) DeleteCluster(clusterID string) error {
-	var resp *v1.ClusterDeleteResponse
+	var deleteResp *v1.ClusterDeleteResponse
+	var resumeResp *v1.ClusterResumeResponse
 	var cluster *spi.Cluster
 	var err error
-	var ok bool
 
-	if cluster, ok = o.clusterCache[clusterID]; !ok {
-		cluster, err = o.GetCluster(clusterID)
-		if err != nil {
-			return fmt.Errorf("error retrieving cluster for deletion: %v", err)
+	cluster, err = o.GetCluster(clusterID)
+	if err != nil {
+		return fmt.Errorf("error retrieving cluster for deletion: %v", err)
+	}
+
+	// If the cluster is hibernating according to OCM, wake it up
+	if cluster.State() == spi.ClusterStateHibernating {
+		if err = retryer().Do(func() error {
+			var err error
+			resumeResp, err = o.conn.ClustersMgmt().V1().Clusters().Cluster(clusterID).Resume().Send()
+
+			if err != nil {
+				return fmt.Errorf("couldn't resume cluster '%s': %v", clusterID, err)
+			}
+
+			if resumeResp != nil && resumeResp.Error() != nil {
+				err = errResp(resumeResp.Error())
+				log.Printf("%v", err)
+				return err
+			}
+
+			return nil
+		}); err != nil {
+			return err
 		}
 	}
+
+	wait.PollImmediate(1*time.Minute, 15*time.Minute, func() (bool, error) {
+		// If the cluster state is anything but Hibernating or Ready, poll the state again
+		if cluster.State() == spi.ClusterStateHibernating || cluster.State() == spi.ClusterStateReady {
+			cluster, err = o.GetCluster(clusterID)
+			if err != nil {
+				log.Printf("error retrieving cluster for deletion: %v", err)
+				return false, nil
+			}
+		}
+		// A cluster errored in OCM is unlikely to recover so we should fail fast
+		if cluster.State() == spi.ClusterStateError {
+			return false, fmt.Errorf("Cluster %s is in an errored state.", cluster.ID())
+		}
+
+		// We have a ready cluster, hooray
+		if cluster.State() == spi.ClusterStateReady {
+			return true, nil
+		}
+
+		// The cluster isn't ready so we should loop again
+		return false, nil
+	})
 
 	err = o.AddProperty(cluster, clusterproperties.Status, clusterproperties.StatusUninstalling)
 	if err != nil {
@@ -409,7 +453,7 @@ func (o *OCMProvider) DeleteCluster(clusterID string) error {
 
 	err = retryer().Do(func() error {
 		var err error
-		resp, err = o.conn.ClustersMgmt().V1().Clusters().Cluster(clusterID).
+		deleteResp, err = o.conn.ClustersMgmt().V1().Clusters().Cluster(clusterID).
 			Delete().
 			Send()
 
@@ -417,8 +461,8 @@ func (o *OCMProvider) DeleteCluster(clusterID string) error {
 			return fmt.Errorf("couldn't delete cluster '%s': %v", clusterID, err)
 		}
 
-		if resp != nil && resp.Error() != nil {
-			err = errResp(resp.Error())
+		if deleteResp != nil && deleteResp.Error() != nil {
+			err = errResp(deleteResp.Error())
 			log.Printf("%v", err)
 			return err
 		}
