@@ -214,6 +214,38 @@ func waitForClusterReadyWithOverrideAndExpectedNumberOfNodes(clusterID string, l
 	return nil
 }
 
+// ClusterConfig returns the rest API config for a given cluster as well as the provider it
+// inferred to discover the config.
+// param clusterID: If specified, Provider will be discovered through OCM. If the empty string,
+// 		assume we are running in a cluster and use in-cluster REST config instead.
+func ClusterConfig(clusterID string) (restConfig *rest.Config, providerType string, err error) {
+	if clusterID == "" {
+		if restConfig, err = rest.InClusterConfig(); err != nil {
+			return nil, "", fmt.Errorf("error getting in-cluster rest config: %w", err)
+		}
+
+		// FIXME: Is there a way to discover this from within the cluster?
+		// For now, ocm and rosa behave the same, so hardcode either.
+		providerType = "ocm"
+		return
+
+	}
+	provider, err := providers.ClusterProvider()
+
+	if err != nil {
+		return nil, "", fmt.Errorf("error getting cluster provisioning client: %w", err)
+	}
+	providerType = provider.Type()
+
+	restConfig, err = getRestConfig(provider, clusterID)
+	if err != nil {
+
+		return nil, "", fmt.Errorf("error generating rest config: %w", err)
+	}
+
+	return
+}
+
 // PollClusterHealth looks at CVO data to determine if a cluster is alive/healthy or not
 // param clusterID: If specified, Provider will be discovered through OCM. If the empty string,
 // 		assume we are running in a cluster and use in-cluster REST config instead.
@@ -222,33 +254,10 @@ func PollClusterHealth(clusterID string, logger *log.Logger) (status bool, failu
 
 	logger.Print("Polling Cluster Health...\n")
 
-	var restConfig *rest.Config
-	var providerType string
-
-	if clusterID == "" {
-		if restConfig, err = rest.InClusterConfig(); err != nil {
-			logger.Printf("Error getting in-cluster REST config: %v\n", err)
-			return false, nil, nil
-		}
-
-		// FIXME: Is there a way to discover this from within the cluster?
-		// For now, ocm and rosa behave the same, so hardcode either.
-		providerType = "ocm"
-
-	} else {
-		provider, err := providers.ClusterProvider()
-
-		if err != nil {
-			return false, nil, fmt.Errorf("error getting cluster provisioning client: %v", err)
-		}
-
-		restConfig, err = getRestConfig(provider, clusterID)
-		if err != nil {
-			logger.Printf("Error generating Rest Config: %v\n", err)
-			return false, nil, nil
-		}
-
-		providerType = provider.Type()
+	restConfig, providerType, err := ClusterConfig(clusterID)
+	if err != nil {
+		logger.Printf("Error getting cluster config: %v\n", err)
+		return false, nil, nil
 	}
 
 	kubeClient, err := kubernetes.NewForConfig(restConfig)
