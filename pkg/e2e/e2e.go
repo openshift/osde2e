@@ -4,7 +4,6 @@ package e2e
 import (
 	"bytes"
 	"compress/gzip"
-	"context"
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
@@ -20,7 +19,6 @@ import (
 	"github.com/hpcloud/tail"
 	junit "github.com/joshdk/go-junit"
 	vegeta "github.com/tsenart/vegeta/lib"
-	"k8s.io/client-go/kubernetes"
 
 	pd "github.com/PagerDuty/go-pagerduty"
 	"github.com/onsi/ginkgo"
@@ -33,7 +31,6 @@ import (
 	"github.com/openshift/osde2e/pkg/common/aws"
 	"github.com/openshift/osde2e/pkg/common/cluster"
 	clusterutil "github.com/openshift/osde2e/pkg/common/cluster"
-	"github.com/openshift/osde2e/pkg/common/cluster/healthchecks"
 	"github.com/openshift/osde2e/pkg/common/clusterproperties"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/events"
@@ -125,26 +122,7 @@ func beforeSuite() bool {
 		}
 
 		if viper.GetString(config.Tests.SkipClusterHealthChecks) != "true" {
-			clusterConfig, _, err := clusterutil.ClusterConfig(cluster.ID())
-			if err != nil {
-				log.Printf("Failed looking up cluster config for healthcheck: %v", err)
-				return false
-			}
-			kubeClient, err := kubernetes.NewForConfig(clusterConfig)
-			if err != nil {
-				log.Printf("Error generating Kube Clientset: %v\n", err)
-				return false
-			}
-			duration, err := time.ParseDuration(viper.GetString(config.Tests.ClusterHealthChecksTimeout))
-			if err != nil {
-				log.Printf("Failed parsing health check timeout: %v", err)
-				return false
-			}
-			ctx, cancel := context.WithTimeout(context.Background(), duration)
-			defer cancel()
-			err = healthchecks.CheckHealthcheckJob(kubeClient, ctx, nil)
-			events.HandleErrorWithEvents(err, events.HealthCheckSuccessful, events.HealthCheckFailed)
-			if err != nil {
+			if err := clusterutil.WaitForClusterReadyPostInstall(cluster.ID(), nil); err != nil {
 				log.Printf("Cluster failed health check: %v", err)
 				getLogs()
 				return false
@@ -229,7 +207,7 @@ func installAddons() (err error) {
 		return fmt.Errorf("could not install addons: %s", err.Error())
 	}
 	if num > 0 {
-		if err = cluster.WaitForClusterReady(clusterID, nil); err != nil {
+		if err = cluster.WaitForClusterReadyPostInstall(clusterID, nil); err != nil {
 			return fmt.Errorf("failed waiting for cluster ready: %v", err)
 		}
 	}
