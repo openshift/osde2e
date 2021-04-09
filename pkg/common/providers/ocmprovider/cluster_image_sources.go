@@ -5,7 +5,7 @@ import (
 	"math/rand"
 )
 
-var clusterImageSources = map[string]string{"standard": `imageContentSources:
+var clusterImageSources = map[string]string{"quay-primary": `imageContentSources:
 - mirrors:
   - quay.io/openshift-release-dev/ocp-release
   - 950916221866.dkr.ecr.us-east-1.amazonaws.com/ocp-release
@@ -21,6 +21,23 @@ var clusterImageSources = map[string]string{"standard": `imageContentSources:
 - mirrors:
   - quay.io/app-sre/managed-upgrade-operator-registry
   - 950916221866.dkr.ecr.us-east-1.amazonaws.com/managed-upgrade-operator-registry
+  source: quay.io/app-sre/managed-upgrade-operator-registry`,
+	"ecr-primary": `imageContentSources:
+- mirrors:
+  - 950916221866.dkr.ecr.us-east-1.amazonaws.com/ocp-release
+  - quay.io/openshift-release-dev/ocp-release
+  source: quay.io/openshift-release-dev/ocp-release
+- mirrors:
+  - 950916221866.dkr.ecr.us-east-1.amazonaws.com/ocp-art-dev
+  - quay.io/openshift-release-dev/ocp-v4.0-art-dev
+  source: quay.io/openshift-release-dev/ocp-v4.0-art-dev
+- mirrors:
+  - 950916221866.dkr.ecr.us-east-1.amazonaws.com/managed-upgrade-operator
+  - quay.io/app-sre/managed-upgrade-operator
+  source: quay.io/app-sre/managed-upgrade-operator
+- mirrors:
+  - 950916221866.dkr.ecr.us-east-1.amazonaws.com/managed-upgrade-operator-registry
+  - quay.io/app-sre/managed-upgrade-operator-registry
   source: quay.io/app-sre/managed-upgrade-operator-registry`,
 	"ecr-only": `imageContentSources:
 - mirrors:
@@ -54,7 +71,7 @@ func (o *OCMProvider) ChooseImageSource(choice string) (source string) {
 	if choice == "random" || choice == "" {
 		var sources []string
 		for key := range clusterImageSources {
-			sources=append(sources, key)
+			sources = append(sources, key)
 		}
 		choice = sources[rand.Intn(len(sources))]
 	}

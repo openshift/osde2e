@@ -290,6 +290,10 @@ var Cluster = struct {
 	// Blank will do nothing
 	// Cannot specify imageContentSources within this config
 	InstallConfig string
+
+	// HibernateAfterUse will tell the provider to attempt to hibernate the cluster after
+	// the test run, assuming the provider supports hibernation
+	HibernateAfterUse string
 }{
 	MultiAZ:                             "cluster.multiAZ",
 	Channel:                             "cluster.channel",
@@ -316,6 +320,7 @@ var Cluster = struct {
 	NumWorkerNodes:                      "cluster.numWorkerNodes",
 	ImageContentSource:                  "cluster.imageContentSource",
 	InstallConfig:                       "cluster.installConfig",
+	HibernateAfterUse:                   "cluster.hibernateAfterUse",
 }
 
 // CloudProvider config keys.
@@ -429,9 +434,14 @@ var Alert = struct {
 	// PagerDutyAPIToken is a pagerduty token
 	// Env: PAGERDUTY_API_TOKEN
 	PagerDutyAPIToken string
+
+	// PagerDutyUserToken is a pagerduty token for a user account with full access to the v2 API
+	// Env: PAGERDUTY_API_TOKEN
+	PagerDutyUserToken string
 }{
-	SlackAPIToken:     "alert.slackAPIToken",
-	PagerDutyAPIToken: "alert.pagerDutyAPIToken",
+	SlackAPIToken:      "alert.slackAPIToken",
+	PagerDutyAPIToken:  "alert.pagerDutyAPIToken",
+	PagerDutyUserToken: "alert.pagerDutyUserToken",
 }
 
 func init() {
@@ -598,6 +608,9 @@ func init() {
 	viper.BindEnv(Cluster.ImageContentSource, "CLUSTER_IMAGE_CONTENT_SOURCE")
 	viper.BindEnv(Cluster.InstallConfig, "CLUSTER_INSTALL_CONFIG")
 
+	viper.SetDefault(Cluster.HibernateAfterUse, true)
+	viper.BindEnv(Cluster.HibernateAfterUse, "HIBERNATE_AFTER_USE")
+
 	// ----- Cloud Provider -----
 	viper.SetDefault(CloudProvider.CloudProviderID, "aws")
 	viper.BindEnv(CloudProvider.CloudProviderID, "CLOUD_PROVIDER_ID")
@@ -646,6 +659,9 @@ func init() {
 
 	viper.BindEnv(Alert.PagerDutyAPIToken, "PAGERDUTY_API_TOKEN")
 	RegisterSecret(Alert.PagerDutyAPIToken, "pagerduty-api-token")
+
+	viper.BindEnv(Alert.PagerDutyUserToken, "PAGERDUTY_USER_TOKEN")
+	RegisterSecret(Alert.PagerDutyUserToken, "pagerduty-user-token")
 }
 
 // PostProcess is a variety of post-processing commands that is intended to be run after a config is loaded.

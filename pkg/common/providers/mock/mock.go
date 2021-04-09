@@ -3,6 +3,7 @@ package mock
 import (
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"os"
 	"time"
@@ -10,7 +11,6 @@ import (
 	"github.com/Masterminds/semver"
 	"github.com/google/uuid"
 	"github.com/markbates/pkger"
-	v1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/spi"
 	"github.com/spf13/viper"
@@ -232,8 +232,8 @@ func (m *MockProvider) Environment() string {
 }
 
 // Metrics is a stub function for now
-func (m *MockProvider) Metrics(clusterID string) (*v1.ClusterMetrics, error) {
-	return nil, nil
+func (m *MockProvider) Metrics(clusterID string) (bool, error) {
+	return true, nil
 }
 
 // UpgradeSource mocks an environment source operation.
@@ -285,4 +285,16 @@ func (m *MockProvider) UpdateSchedule(clusterID string, version string, t time.T
 // DetermineMachineType returns a random machine type for a given cluster
 func (m *MockProvider) DetermineMachineType(cloudProvider string) (string, error) {
 	return "mock", fmt.Errorf("DetermineMachineType is not supported by mock clusters")
+}
+
+// Resume resumes a cluster via OCM
+func (o *MockProvider) Resume(id string) bool {
+	log.Println("Hibernation not supported in Mock Provider")
+	return true
+}
+
+// Hibernate resumes a cluster via OCM
+func (o *MockProvider) Hibernate(id string) bool {
+	log.Println("Hibernation not supported in Mock Provider")
+	return true
 }

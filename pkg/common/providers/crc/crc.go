@@ -18,7 +18,6 @@ import (
 	"github.com/code-ready/crc/pkg/crc/preflight"
 	"github.com/code-ready/crc/pkg/crc/validation"
 	"github.com/code-ready/crc/pkg/crc/version"
-	v1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 	"github.com/openshift/osde2e/pkg/common/spi"
 	"github.com/spf13/viper"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -249,8 +248,8 @@ func (m *Provider) Environment() string {
 }
 
 // Metrics is a stub function for now
-func (m *Provider) Metrics(clusterID string) (*v1.ClusterMetrics, error) {
-	return &v1.ClusterMetrics{}, nil
+func (m *Provider) Metrics(clusterID string) (bool, error) {
+	return true, nil
 }
 
 // UpgradeSource CRCs an environment source operation.
@@ -326,4 +325,16 @@ func (m *Provider) GetUpgradePolicyID(clusterID string) (string, error) {
 // DetermineMachineType returns a random machine type for a given cluster
 func (m *Provider) DetermineMachineType(cloudProvider string) (string, error) {
 	return "", nil
+}
+
+// Resume resumes a cluster via OCM
+func (o *Provider) Resume(id string) bool {
+	log.Println("Hibernation not supported in CRC Provider")
+	return true
+}
+
+// Hibernate resumes a cluster via OCM
+func (o *Provider) Hibernate(id string) bool {
+	log.Println("Hibernation not supported in CRC Provider")
+	return true
 }
