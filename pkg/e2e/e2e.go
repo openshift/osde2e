@@ -905,6 +905,7 @@ func setupRouteMonitors(closeChannel chan struct{}) chan struct{} {
 				routeMonitors.End()
 				routeMonitors.SaveReports(viper.GetString(config.ReportDir))
 				routeMonitors.SavePlots(viper.GetString(config.ReportDir))
+				routeMonitors.ExtractData(viper.GetString(config.ReportDir))
 				routeMonitors.StoreMetadata()
 				close(closeChannel)
 				return
