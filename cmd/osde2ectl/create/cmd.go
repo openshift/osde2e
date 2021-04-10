@@ -298,7 +298,7 @@ func setupCluster(wg *sync.WaitGroup, successfulClustersCounter *int32) {
 			}
 		}()
 
-		err = clusterutil.WaitForClusterReady(cluster.ID(), logger)
+		err = clusterutil.WaitForClusterReadyPostInstall(cluster.ID(), logger)
 
 		terminate <- true
 

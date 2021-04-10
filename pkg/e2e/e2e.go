@@ -121,14 +121,16 @@ func beforeSuite() bool {
 			log.Printf("Error while adding upgrade version property to cluster via OCM: %v", err)
 		}
 
-		err = clusterutil.WaitForClusterReady(cluster.ID(), nil)
-		events.HandleErrorWithEvents(err, events.HealthCheckSuccessful, events.HealthCheckFailed)
-		if err != nil {
-			log.Printf("Cluster failed health check: %v", err)
-			getLogs()
-			return false
+		if viper.GetString(config.Tests.SkipClusterHealthChecks) != "true" {
+			if err := clusterutil.WaitForClusterReadyPostInstall(cluster.ID(), nil); err != nil {
+				log.Printf("Cluster failed health check: %v", err)
+				getLogs()
+				return false
+			}
+			log.Println("Cluster is healthy and ready for testing")
+		} else {
+			log.Println("Skipping health checks as requested")
 		}
-
 		if len(viper.GetString(config.Addons.IDs)) > 0 {
 			if viper.GetString(config.Provider) != "mock" {
 				err = installAddons()
@@ -205,7 +207,7 @@ func installAddons() (err error) {
 		return fmt.Errorf("could not install addons: %s", err.Error())
 	}
 	if num > 0 {
-		if err = cluster.WaitForClusterReady(clusterID, nil); err != nil {
+		if err = cluster.WaitForClusterReadyPostInstall(clusterID, nil); err != nil {
 			return fmt.Errorf("failed waiting for cluster ready: %v", err)
 		}
 	}
