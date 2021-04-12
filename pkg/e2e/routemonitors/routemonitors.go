@@ -35,12 +35,17 @@ type RouteMonitors struct {
 	Plots      map[string]*plot.Plot
 	targeters  map[string]vegeta.Targeter
 	attackers  []*vegeta.Attacker
-	ReportData map[string][][]float64
+	ReportData map[string][]RouteMonData
 }
 
 // Frequency of requests per second (per route)
 const pollFrequency = 3
 const timeoutSeconds = 3 * time.Second
+
+// Data Structure used to store time-value values of Route Monitor Data
+type RouteMonData struct {
+	Time, Value float64
+}
 
 // Detects the available routes in the cluster and initializes monitors for their availability
 func Create() (*RouteMonitors, error) {
@@ -139,11 +144,11 @@ func Create() (*RouteMonitors, error) {
 	}
 
 	return &RouteMonitors{
-		Monitors:   make(map[string]<-chan *vegeta.Result, 0),
-		Metrics:    make(map[string]*vegeta.Metrics, 0),
-		Plots:      make(map[string]*plot.Plot, 0),
+		Monitors:   make(map[string]<-chan *vegeta.Result),
+		Metrics:    make(map[string]*vegeta.Metrics),
+		Plots:      make(map[string]*plot.Plot),
 		targeters:  targeters,
-		ReportData: make(map[string][][]float64, 0),
+		ReportData: make(map[string][]RouteMonData),
 	}, nil
 }
 
@@ -248,14 +253,12 @@ func createPlot(title string) *plot.Plot {
 func (rm *RouteMonitors) ExtractData(baseDir string) error {
 	outputDirectory := filepath.Join(baseDir, "route-monitors")
 	if _, err := os.Stat(outputDirectory); os.IsNotExist(err) {
-		if err := os.Mkdir(outputDirectory, os.FileMode(0755)); err != nil {
+		if err := os.MkdirAll(outputDirectory, os.FileMode(0755)); err != nil {
 			return fmt.Errorf("error while creating route monitor report directory %s: %v", outputDirectory, err)
 		}
 	}
 
-	for title, pl := range rm.Plots {
-		_ = pl
-
+	for title := range rm.Plots {
 		// Open the plot file
 		htmlfilePath := filepath.Join(outputDirectory, fmt.Sprintf("%s.html", title))
 		file, err := os.Open(htmlfilePath)
@@ -271,7 +274,8 @@ func (rm *RouteMonitors) ExtractData(baseDir string) error {
 		readdata := false
 
 		// This list stores the numbers
-		datalist := make([][]float64, 0)
+
+		datalist := make([]RouteMonData, 0)
 
 		// Scan each line in the html file to extract data
 		scanner := bufio.NewReader(file)
@@ -286,15 +290,15 @@ func (rm *RouteMonitors) ExtractData(baseDir string) error {
 			if readdata {
 				if datanum_regex.FindString(line) != "" {
 					num_str := strings.Split(start_regex.FindString(line), ",")
-					time_num, err := strconv.ParseFloat(num_str[0], 64)
+					num_data := RouteMonData{}
+					num_data.Time, err = strconv.ParseFloat(num_str[0], 64)
 					if err != nil {
 						log.Printf("Error while parsing route monitor data values - %v", err)
 					}
-					value_num, err := strconv.ParseFloat(num_str[1], 64)
+					num_data.Value, err = strconv.ParseFloat(num_str[1], 64)
 					if err != nil {
 						log.Printf("Error while parsing route monitor data values - %v", err)
 					}
-					num_data := []float64{time_num, value_num}
 					datalist = append(datalist, num_data)
 				}
 			}
