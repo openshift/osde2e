@@ -1,6 +1,7 @@
 package routemonitors
 
 import (
+	"bufio"
 	"context"
 	"fmt"
 	"log"
@@ -8,6 +9,9 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"regexp"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/openshift/osde2e/pkg/common/helper"
@@ -26,16 +30,22 @@ const (
 )
 
 type RouteMonitors struct {
-	Monitors  map[string]<-chan *vegeta.Result
-	Metrics   map[string]*vegeta.Metrics
-	Plots     map[string]*plot.Plot
-	targeters map[string]vegeta.Targeter
-	attackers []*vegeta.Attacker
+	Monitors   map[string]<-chan *vegeta.Result
+	Metrics    map[string]*vegeta.Metrics
+	Plots      map[string]*plot.Plot
+	targeters  map[string]vegeta.Targeter
+	attackers  []*vegeta.Attacker
+	ReportData map[string][]RouteMonData
 }
 
 // Frequency of requests per second (per route)
 const pollFrequency = 3
 const timeoutSeconds = 3 * time.Second
+
+// Data Structure used to store time-value values of Route Monitor Data
+type RouteMonData struct {
+	Time, Value float64
+}
 
 // Detects the available routes in the cluster and initializes monitors for their availability
 func Create() (*RouteMonitors, error) {
@@ -134,10 +144,11 @@ func Create() (*RouteMonitors, error) {
 	}
 
 	return &RouteMonitors{
-		Monitors:  make(map[string]<-chan *vegeta.Result, 0),
-		Metrics:   make(map[string]*vegeta.Metrics, 0),
-		Plots:     make(map[string]*plot.Plot, 0),
-		targeters: targeters,
+		Monitors:   make(map[string]<-chan *vegeta.Result),
+		Metrics:    make(map[string]*vegeta.Metrics),
+		Plots:      make(map[string]*plot.Plot),
+		targeters:  targeters,
+		ReportData: make(map[string][]RouteMonData),
 	}, nil
 }
 
@@ -236,4 +247,73 @@ func createPlot(title string) *plot.Plot {
 		plot.Title(title),
 		plot.Label(plot.ErrorLabeler),
 	)
+}
+
+// Extracts the numbers and title from the route monitor plot files
+func (rm *RouteMonitors) ExtractData(baseDir string) error {
+	outputDirectory := filepath.Join(baseDir, "route-monitors")
+	if _, err := os.Stat(outputDirectory); os.IsNotExist(err) {
+		if err := os.MkdirAll(outputDirectory, os.FileMode(0755)); err != nil {
+			return fmt.Errorf("error while creating route monitor report directory %s: %v", outputDirectory, err)
+		}
+	}
+
+	for title := range rm.Plots {
+		// Open the plot file
+		htmlfilePath := filepath.Join(outputDirectory, fmt.Sprintf("%s.html", title))
+		file, err := os.Open(htmlfilePath)
+		if err != nil {
+			log.Printf("Unable to read route monitor plot file; %v\n", err)
+		}
+
+		// Regex to match numbers for the data variable inside the plot file
+		start_regex := regexp.MustCompile(`var data`)
+		datanum_regex := regexp.MustCompile(`[0-9]*\.?[0-9]+,[0-9]*\.?[0-9]+`)
+
+		// Boolean to only scan for numbers once the line `var data` has passed
+		readdata := false
+
+		// This list stores the numbers
+
+		datalist := make([]RouteMonData, 0)
+
+		// Scan each line in the html file to extract data
+		scanner := bufio.NewReader(file)
+		for {
+			filebytes, _, err := scanner.ReadLine()
+			line := strings.TrimSpace(string(filebytes))
+			if len(line) > 0 {
+				if start_regex.MatchString(line) {
+					readdata = true
+				}
+			}
+			if readdata {
+				if datanum_regex.FindString(line) != "" {
+					num_str := strings.Split(start_regex.FindString(line), ",")
+					num_data := RouteMonData{}
+					num_data.Time, err = strconv.ParseFloat(num_str[0], 64)
+					if err != nil {
+						log.Printf("Error while parsing route monitor data values - %v", err)
+					}
+					num_data.Value, err = strconv.ParseFloat(num_str[1], 64)
+					if err != nil {
+						log.Printf("Error while parsing route monitor data values - %v", err)
+					}
+					datalist = append(datalist, num_data)
+				}
+			}
+			if err != nil {
+				break
+			}
+		}
+
+		// Store the extracted data corresponding to the plotfile title
+		rm.ReportData[title] = datalist
+
+		if err != nil {
+			log.Printf("Error - %v", err.Error())
+		}
+	}
+
+	return nil
 }
