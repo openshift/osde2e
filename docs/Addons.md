@@ -18,86 +18,35 @@ The [Prow Operator Test] is a good example of a [Basic operator test]. It verifi
 
 We have three test environments: integration (int), staging (stage), and production (prod). Your job will probably want to be configured for all of them once you have gained confidence in your test harness. Each environment requires a separate prow job configuration. The next section covers prow configuration in detail.
 
-### **Getting an OCM refresh token for your tests**
-
-You will need to request an OCM refresh token in order to run your tests. The easiest way to do this is to visit [https://cloud.redhat.com/openshift/token] and copy the OFFLINE_REFRESH_TOKEN. If you do not have an account or quota, please see [Managing Organization Quota]
-
-Your account will need the following permissions:
-
-*   Credentials API access
-
-### **Configuring your job to use your OCM refresh token**
-
-In order to run addon tests in osde2e, you will need to create a secret in Origin CI with your OCM refresh token. Please follow [these instructions] to both create a secret and a secret mapping into the ci namespace. Note: The secret object must contain a key named `ocm-refresh-token` that contains the Offline Refresh Token from above.
-
-Example secret:
-```
-apiVersion: v1
-kind: Secret
-metadata:
-  name: my-addon-credentials
-data:
-  ocm-refresh-token: <token-goes-here>
-```
-
 ## SKUs and Quota
 
-In order to provision OSD and install your addon, your OCM token will need to have a quota of OSD clusters and installations of your addon available. In order to allocate quota for your addon, it must be assigned a SKU. You can request a SKU [by following these instructions](https://gitlab.cee.redhat.com/service/managed-tenants/-/tree/master).
+In order to provision OSD and install your addon, our OCM token will need to have a quota of OSD clusters and installations of your addon available. In order to allocate quota for your addon, it must be assigned a SKU. You can request a SKU [by following these instructions](https://gitlab.cee.redhat.com/service/managed-tenants/-/tree/master).
 
 Once you have a SKU, you'll need to also allocate quota to test within [`app-interface`](https://gitlab.cee.redhat.com/service/app-interface/#manage-openshift-resourcequotas-via-app-interface-openshiftquota-1yml). Quota is allocated independently in each of `int`, `stage`, and `prod` (different instances of OCM), so you'll need to allocate quota three times.
 
-[Here](https://gitlab.cee.redhat.com/service/ocm-resources/-/blob/master/data/uhc-production/orgs/13215750.yaml#L13) is an example of SD-CICD's quota for production. The `rh_org_id` (which is also the file name) can be determined by logging into OCM via the `ocm` CLI with your OCM token and running `ocm whoami`.
+[Here](https://gitlab.cee.redhat.com/service/ocm-resources/-/blob/master/data/uhc-production/orgs/13215750.yaml#L13) is an example of SD-CICD's quota for production.
 
-An example production quota for an addon would look like:
+You need to open an MR to update the `SDCICD` org's quota so that it can provision your addon (as well as bumping the number of CCS clusters by 2 or so). You'll need to modify the following three files:
+
+- [Our production quota](https://gitlab.cee.redhat.com/service/ocm-resources/-/blob/master/data/uhc-production/orgs/13215750.yaml)
+- [Our stage quota](https://gitlab.cee.redhat.com/service/ocm-resources/-/blob/master/data/uhc-stage/orgs/13215750.yaml)
+- [Our integration quota](https://gitlab.cee.redhat.com/service/ocm-resources/-/blob/master/data/uhc-integration/orgs/13215750.yaml)
+
+Please bump the quota for SKU `MW00530` by 2 so that we can provision additional CCS clusters for you!
+
+### Providing Secrets to Your Build
+
+If you are not a part of the public GitHub Organization `OpenShift`, join it by following [these instructions](https://source.redhat.com/groups/public/atomicopenshift/atomicopenshift_wiki/setting_up_your_accounts_openshift).
+
+Follow the documentation [here](https://docs.ci.openshift.org/docs/how-tos/adding-a-new-secret-to-ci/) to create secrets and configure them to be mirrored into the `ci` namespace [like ours](https://github.com/openshift/release/blob/master/core-services/secret-mirroring/_mapping.yaml#L62).
+
+You'll need to provide some additional details about your AWS account in a secret. In particular, you'll need to provide these values in your credentials secret:
+
 ```
----
-$schema: /org-1.yaml
-
-name: "Your Org Name"
-
-rh_org_id: <your-org-id>
-
-SKUs:
-  # e2e testing for OSD (non CCS)
-  # m5.xlarge singleAZ 4 compute
-  MCT3326: 2
-
-  <your-addon-sku>: 2
-
-environment: "uhc-production"
+ocm-aws-account
+ocm-aws-access-key
+ocm-aws-secret-access-key
 ```
-
-For `int` and `stage`, the file will need to go into a different folder and use a different value for the `environment` key.
-
-> *NOTE*: The SKU `MCT3326` is the SKU that `osde2e` uses to provision OpenShift clusters by default. If you do not request quota of this SKU, your jobs will all fail to provision clusters.
-
-If you want to test on CCS clusters instead, you need to use the SKU `MW00530` and follow the instructions in [CCS Cluster Testing](ccs-cluster-testing).
-
-## OCM Permissions
-
-The OCM user/organization that runs your tests will need some specific permissions within OCM in order to launch your test clusters.
-
-These permissions are configured via [`ocm-resources`](https://gitlab.cee.redhat.com/service/ocm-resources), and will look like this:
-
-```yaml
----
-$schema: /user-1.yaml
-
-user_id: "your-ocm-user"
-
-kerberos_id: "N/A"
-
-roles:
-- SDCICD:
-    scope: Organization
-    organization_id: "your-organization-id"
-
-environment: "see below"
-```
-
-You can determine your `user_id` and `organization_id` by running `ocm whoami` with the OCM token you acquired in previous steps.
-
-You will need to create three copies of this file, specifying the environments `uhc-{state,integration,production}`, and those files will need to be MR-ed into the folders `ocm-resources/data/uhc-{stage,integration,production}/users/your-ocm-user.yaml`.
 
 ## **Configuring OSDe2e**
 
@@ -140,12 +89,14 @@ An example prow job that configures the "prow" operator in the stage environment
       env:
       - name: ADDON_IDS
         value: prow-operator
+      - name: OCM_CCS
+        value: "true"
       - name: ADDON_TEST_HARNESSES
         value: quay.io/miwilson/prow-operator-test-harness
       - name: CONFIGS
         value: aws,stage,addon-suite
       - name: SECRET_LOCATIONS
-        value: /usr/local/osde2e-common,/usr/local/prow-operator-credentials
+        value: /usr/local/osde2e-common,/usr/local/osde2e-credentials,/usr/local/prow-operator-credentials
       image: quay.io/app-sre/osde2e
       imagePullPolicy: Always
       name: ""
@@ -156,6 +107,9 @@ An example prow job that configures the "prow" operator in the stage environment
       - mountPath: /usr/local/osde2e-common
         name: osde2e-common
         readOnly: true
+      - mountPath: /usr/local/osde2e-credentials
+        name: osde2e-credentials
+        readOnly: true
       - mountPath: /usr/local/prow-operator-credentials
         name: prow-operator-credentials
         readOnly: true
@@ -164,6 +118,9 @@ An example prow job that configures the "prow" operator in the stage environment
     - name: osde2e-common
       secret:
         secretName: osde2e-common
+    - name: osde2e-credentials
+      secret:
+        secretName: osde2e-credentials
     - name: prow-operator-credentials
       secret:
         secretName: prow-operator-credentials
@@ -171,16 +128,11 @@ An example prow job that configures the "prow" operator in the stage environment
 
 To adapt this to your job, you would redefine the `ADDON_IDS` and `ADDON_TEST_HARNESSES`, as well as potentially adding some of the other variables discussed above.
 
-You will *also* need to provide your own secrets by swapping the `prow-operator-credentials` above with your job's secrets.
+You will *also* need to provide your own secrets by swapping the `prow-operator-credentials` above with your job's secrets. Note that we load osde2e's credentials, followed by the ones you supply. This allows your credentials to override any duplicate credentials supplied in our config.
 
 > *NOTE*: If you want your job to run in a different environment, such as `int` or `prod`, you need to both change its name to include the proper environment *and* redefine the `CONFIGS` environment variable by replacing `stage` with the name of the appropriate environment.
 
 You can change the cron scheduling of the job as well.
-
-
-### Providing Secrets to Your Build
-
-If you need to add additional secrets to the job, follow the documentation [here](https://docs.ci.openshift.org/docs/how-tos/adding-a-new-secret-to-ci/) to create them and configure them to be mirrored into the `ci` namespace [like ours](https://github.com/openshift/release/blob/master/core-services/secret-mirroring/_mapping.yaml#L62).
 
 ### Addon Cleanup
 
@@ -192,21 +144,8 @@ There may be a case where a separate cleanup container/harness is required. That
 
 `ADDON_RUN_CLEANUP` is true, and `ADDON_CLEANUP_HARNESSES` is set, OSDe2e will only run the `ADDON_CLEANUP_HARNESSES`, passing no arguments.
 
-### CCS Cluster Testing
-
-If you want to test a CCS (bring your own AWS account) cluster, you'll need to provide some additional details about your AWS account in a secret. In particular, you'll need to provide these values in your credentials secret:
-
-```
-ocm-aws-account
-ocm-aws-access-key
-ocm-aws-secret-access-key
-ocm-token
-```
-
-You will also need to set `OCM_CCS="true"` in the normal environment configuration.
-
-> *NOTE*: If you perform CCS testing, your OSD clusters will automatically back themselves up to S3 in your AWS account. You can find these backups by running `aws s3 ls --profile osd`. You should probably clean them up as part of the cleanup phase of your build.
-
+> *NOTE*: Your OSD clusters will automatically back themselves up to S3 in your AWS account. You can find these backups by running `aws s3 ls --profile osd`. You should probably clean them up as part of the cleanup phase of your build.
+ 
 ### Slack Notifications
 
 If you want to be notified of the results of your builds in slack, you can take advantage of [this feature](https://docs.ci.openshift.org/docs/how-tos/notification/). [Here](https://github.com/openshift/release/pull/16674/files#diff-d214756a87b37f0ad838abce8ddfa8993c7cd6a7614fc15384f5f3e4307f079aR1983) is an example PR of someone configuring slack alerts for an Addon.
