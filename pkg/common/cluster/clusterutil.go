@@ -1,6 +1,7 @@
 package cluster
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -76,22 +77,135 @@ func ScaleCluster(clusterID string, numComputeNodes int) error {
 	}
 
 	podErrorTracker.NewPodErrorTracker(pendingPodThreshold)
-	return waitForClusterReadyWithOverrideAndExpectedNumberOfNodes(clusterID, nil, true)
+	return waitForClusterReadyWithOverrideAndExpectedNumberOfNodes(clusterID, nil, false, true)
 }
 
-// WaitForClusterReady blocks until the cluster is ready for testing.
-func WaitForClusterReady(clusterID string, logger *log.Logger) error {
-	podErrorTracker.NewPodErrorTracker(pendingPodThreshold)
-	return waitForClusterReadyWithOverrideAndExpectedNumberOfNodes(clusterID, logger, false)
-}
-
-func waitForClusterReadyWithOverrideAndExpectedNumberOfNodes(clusterID string, logger *log.Logger, overrideSkipCheck bool) error {
+// WaitForClusterReadyPostInstall blocks until the cluster is ready for testing using mechanisms appropriate
+// for a newly-installed cluster.
+func WaitForClusterReadyPostInstall(clusterID string, logger *log.Logger) error {
 	logger = logging.CreateNewStdLoggerOrUseExistingLogger(logger)
+	podErrorTracker.NewPodErrorTracker(pendingPodThreshold)
+	provider, err := providers.ClusterProvider()
+	if err != nil {
+		return fmt.Errorf("error getting cluster provisioning client: %v", err)
+	}
+
+	installTimeout := viper.GetInt64(config.Cluster.InstallTimeout)
+	logger.Printf("Waiting %v minutes for cluster '%s' to be ready...\n", installTimeout, clusterID)
+
+	_, err = waitForOCMProvisioning(provider, clusterID, installTimeout, logger, false)
+	if err != nil {
+		return fmt.Errorf("OCM never became ready: %w", err)
+	}
+	logger.Println("Cluster is provisioned in OCM")
+	clusterConfig, _, err := ClusterConfig(clusterID)
+	if err != nil {
+		return fmt.Errorf("failed looking up cluster config for healthcheck: %w", err)
+	}
+	kubeClient, err := kubernetes.NewForConfig(clusterConfig)
+	if err != nil {
+		return fmt.Errorf("error generating Kube Clientset: %w", err)
+	}
+	duration, err := time.ParseDuration(viper.GetString(config.Tests.ClusterHealthChecksTimeout))
+	if err != nil {
+		return fmt.Errorf("failed parsing health check timeout: %w", err)
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), duration)
+	defer cancel()
+	err = healthchecks.CheckHealthcheckJob(kubeClient, ctx, nil)
+	if err != nil {
+		return fmt.Errorf("cluster failed health check: %w", err)
+	}
+	cluster, err := provider.GetCluster(clusterID)
+	if err != nil {
+		return fmt.Errorf("failed getting cluster from provider: %w", err)
+	}
+	if err := provider.AddProperty(cluster, clusterproperties.Status, clusterproperties.StatusHealthy); err != nil {
+		return fmt.Errorf("error trying to add healthy property to cluster ID %s: %w", cluster.ID(), err)
+	}
+	return nil
+}
+
+// WaitForClusterReadyPostUpgrade blocks until the cluster is ready for testing using healthcheck mechanisms appropriate
+// for after a cluster version upgrade.
+func WaitForClusterReadyPostUpgrade(clusterID string, logger *log.Logger) error {
+	podErrorTracker.NewPodErrorTracker(pendingPodThreshold)
+	return waitForClusterReadyWithOverrideAndExpectedNumberOfNodes(clusterID, logger, true, false)
+}
+
+// WaitForClusterReadyPostScale blocks until the cluster is ready for testing and uses healthcheck mechanisms appropriate
+// for after the cluster has been scaled.
+func WaitForClusterReadyPostScale(clusterID string, logger *log.Logger) error {
+	podErrorTracker.NewPodErrorTracker(pendingPodThreshold)
+	return waitForClusterReadyWithOverrideAndExpectedNumberOfNodes(clusterID, logger, false, false)
+}
+
+func waitForOCMProvisioning(provider spi.Provider, clusterID string, installTimeout int64, logger *log.Logger, isUpgrade bool) (becameReadyAt time.Time, err error) {
+	logger = logging.CreateNewStdLoggerOrUseExistingLogger(logger)
+	readinessSet := false
+	var readinessStarted time.Time
+	clusterStarted := time.Now()
+
+	healthcheckStatus := clusterproperties.StatusHealthCheck
+	if isUpgrade {
+		healthcheckStatus = clusterproperties.StatusUpgradeHealthCheck
+	}
+
+	return readinessStarted, wait.PollImmediate(30*time.Second, time.Duration(installTimeout)*time.Minute, func() (bool, error) {
+		cluster, err := provider.GetCluster(clusterID)
+		if err != nil {
+			logger.Printf("Error fetching cluster details from provider: %s", err)
+			return false, nil
+		}
+
+		metadata.Instance.IncrementHealthcheckIteration()
+		properties := cluster.Properties()
+		currentStatus := properties[clusterproperties.Status]
+
+		if currentStatus == clusterproperties.StatusProvisioning && !readinessSet {
+			err = provider.AddProperty(cluster, clusterproperties.Status, clusterproperties.StatusWaitingForReady)
+			if err != nil {
+				logger.Printf("Error adding property to cluster: %s", err.Error())
+				return false, nil
+			}
+		}
+
+		if cluster.State() == spi.ClusterStateReady {
+			if metadata.Instance.TimeToOCMReportingInstalled == 0 {
+				metadata.Instance.SetTimeToOCMReportingInstalled(time.Since(clusterStarted).Seconds())
+			}
+
+			if err := provider.AddProperty(cluster, clusterproperties.Status, healthcheckStatus); err != nil {
+				logger.Printf("error trying to add health-check property to cluster ID %s: %v", cluster.ID(), err)
+				return false, nil
+			}
+
+			readinessStarted = time.Now()
+			return true, nil
+		}
+		logger.Printf("cluster is not ready, state is: %v", cluster.State())
+		return false, nil
+	})
+}
+
+func waitForClusterReadyWithOverrideAndExpectedNumberOfNodes(clusterID string, logger *log.Logger, isUpgrade, overrideSkipCheck bool) error {
+	logger = logging.CreateNewStdLoggerOrUseExistingLogger(logger)
+	if viper.GetBool(config.Tests.SkipClusterHealthChecks) && !overrideSkipCheck {
+		logger.Println("Skipping health checks...")
+		return nil
+	}
 
 	provider, err := providers.ClusterProvider()
 
 	if err != nil {
 		return fmt.Errorf("error getting cluster provisioning client: %v", err)
+	}
+
+	unhealthyStatus := clusterproperties.StatusUnhealthy
+	healthyStatus := clusterproperties.StatusHealthy
+	if isUpgrade {
+		unhealthyStatus = clusterproperties.StatusUpgradeUnhealthy
+		healthyStatus = clusterproperties.StatusUpgradeHealthy
 	}
 
 	installTimeout := viper.GetInt64(config.Cluster.InstallTimeout)
@@ -100,118 +214,103 @@ func waitForClusterReadyWithOverrideAndExpectedNumberOfNodes(clusterID string, l
 	cleanRuns := 0
 	errRuns := 0
 
-	clusterStarted := time.Now()
-	var readinessStarted time.Time
-	ocmReady := false
-	readinessSet := false
+	readinessStarted, err := waitForOCMProvisioning(provider, clusterID, installTimeout, logger, isUpgrade)
+	if err != nil {
+		return fmt.Errorf("OCM never became ready: %w", err)
+	}
 
-	if !viper.GetBool(config.Tests.SkipClusterHealthChecks) || overrideSkipCheck {
-		return wait.PollImmediate(30*time.Second, time.Duration(installTimeout)*time.Minute, func() (bool, error) {
-			cluster, err := provider.GetCluster(clusterID)
-			if err != nil {
-				log.Printf("Error fetching cluster details from provider: %s", err)
-				return false, nil
-			}
+	cluster, err := provider.GetCluster(clusterID)
+	if err != nil {
+		return fmt.Errorf("Error fetching cluster details from provider: %w", err)
+	}
 
-			metadata.Instance.IncrementHealthcheckIteration()
-			properties := cluster.Properties()
-			currentStatus := properties[clusterproperties.Status]
+	if pollErr := wait.PollImmediate(30*time.Second, time.Duration(installTimeout)*time.Minute, func() (bool, error) {
+		if cluster.State() != spi.ClusterStateReady {
+			logger.Printf("Cluster is not ready, current status '%s'.", cluster.State())
+			return false, nil
+		}
 
-			if currentStatus == clusterproperties.StatusProvisioning && !readinessSet {
-				err = provider.AddProperty(cluster, clusterproperties.Status, clusterproperties.StatusWaitingForReady)
-				if err != nil {
-					log.Printf("Error adding property to cluster: %s", err.Error())
-					return false, nil
-				}
+		metadata.Instance.IncrementHealthcheckIteration()
+		properties := cluster.Properties()
+		currentStatus := properties[clusterproperties.Status]
 
-			}
-
-			if cluster != nil && cluster.State() == spi.ClusterStateReady {
-				// This is the first time that we've entered this section, so we'll consider this the time until OCM has said the cluster is ready
-				if !ocmReady {
-					ocmReady = true
-					if metadata.Instance.TimeToOCMReportingInstalled == 0 {
-						metadata.Instance.SetTimeToOCMReportingInstalled(time.Since(clusterStarted).Seconds())
-					}
-
-					if currentStatus == clusterproperties.StatusUpgrading {
-						err = provider.AddProperty(cluster, clusterproperties.Status, clusterproperties.StatusUpgradeHealthCheck)
-					} else {
-						err = provider.AddProperty(cluster, clusterproperties.Status, clusterproperties.StatusHealthCheck)
-					}
-
-					if err != nil {
-						log.Printf("error trying to add health-check property to cluster ID %s: %v", cluster.ID(), err)
-						return false, nil
-					}
-
-					readinessStarted = time.Now()
-				}
-				if success, failures, err := PollClusterHealth(clusterID, logger); success {
-					cleanRuns++
-					logger.Printf("Clean run %d/%d...", cleanRuns, cleanRunsNeeded)
-					errRuns = 0
-					if cleanRuns == cleanRunsNeeded {
-						if metadata.Instance.TimeToClusterReady == 0 {
-							metadata.Instance.SetTimeToClusterReady(time.Since(readinessStarted).Seconds())
-						} else {
-							metadata.Instance.SetTimeToUpgradedClusterReady(time.Since(readinessStarted).Seconds())
-						}
-
-						if currentStatus == clusterproperties.StatusUpgradeHealthCheck {
-							err = provider.AddProperty(cluster, clusterproperties.Status, clusterproperties.StatusUpgradeHealthy)
-						} else {
-							err = provider.AddProperty(cluster, clusterproperties.Status, clusterproperties.StatusHealthy)
-						}
-
-						if err != nil {
-							log.Printf("error trying to add healthy property to cluster ID %s: %v", cluster.ID(), err)
-							return false, nil
-						}
-
-						return true, nil
-					}
-					return false, nil
-				} else {
-					if err != nil {
-						errRuns++
-						logger.Printf("Error in PollClusterHealth: %v", err)
-						if errRuns >= errorWindow {
-							if currentStatus == clusterproperties.StatusUpgradeHealthCheck {
-								err = provider.AddProperty(cluster, clusterproperties.Status, clusterproperties.StatusUpgradeUnhealthy)
-							} else {
-								err = provider.AddProperty(cluster, clusterproperties.Status, clusterproperties.StatusUnhealthy)
-							}
-
-							if err != nil {
-								log.Printf("error trying to add unhealthy property to cluster ID %s: %v", clusterID, err)
-								return false, nil
-							}
-						}
-					}
-					cleanRuns = 0
-
-					failureString := strings.Join(failures, ",")
-					if currentStatus != failureString {
-						err = provider.AddProperty(cluster, clusterproperties.Status, failureString)
-						if err != nil {
-							log.Printf("error trying to add property to cluster ID %s: %v", clusterID, err)
-						}
-					}
-
-					return false, nil
-				}
-			} else if cluster == nil {
-				return false, fmt.Errorf("the cluster is null despite there being no error: please check the logs")
-			} else if cluster.State() == spi.ClusterStateError {
-				return false, fmt.Errorf("the installation of cluster '%s' has errored", clusterID)
-			} else {
-				logger.Printf("Cluster is not ready, current status '%s'.", cluster.State())
+		if success, failures, err := PollClusterHealth(clusterID, logger); success {
+			cleanRuns++
+			logger.Printf("Clean run %d/%d...", cleanRuns, cleanRunsNeeded)
+			errRuns = 0
+			if cleanRuns == cleanRunsNeeded {
+				return true, nil
 			}
 			return false, nil
-		})
+		} else {
+			if err != nil {
+				errRuns++
+				logger.Printf("Error in PollClusterHealth: %v", err)
+				if errRuns >= errorWindow {
+					if err := provider.AddProperty(cluster, clusterproperties.Status, unhealthyStatus); err != nil {
+						log.Printf("error trying to add unhealthy property to cluster ID %s: %v", clusterID, err)
+					}
+					return false, nil
+				}
+			}
+			cleanRuns = 0
+
+			failureString := strings.Join(failures, ",")
+			if currentStatus != failureString {
+				err = provider.AddProperty(cluster, clusterproperties.Status, failureString)
+				if err != nil {
+					log.Printf("error trying to add property to cluster ID %s: %v", clusterID, err)
+				}
+			}
+
+			return false, nil
+		}
+	}); pollErr != nil {
+		return fmt.Errorf("failed polling for cluster health: %w", err)
+	}
+	// polling succeeded and the cluster is healthy
+	if metadata.Instance.TimeToClusterReady == 0 {
+		metadata.Instance.SetTimeToClusterReady(time.Since(readinessStarted).Seconds())
+	} else {
+		metadata.Instance.SetTimeToUpgradedClusterReady(time.Since(readinessStarted).Seconds())
+	}
+
+	if err := provider.AddProperty(cluster, clusterproperties.Status, healthyStatus); err != nil {
+		return fmt.Errorf("error trying to add healthy property to cluster ID %s: %w", cluster.ID(), err)
 	}
 	return nil
+}
+
+// ClusterConfig returns the rest API config for a given cluster as well as the provider it
+// inferred to discover the config.
+// param clusterID: If specified, Provider will be discovered through OCM. If the empty string,
+// 		assume we are running in a cluster and use in-cluster REST config instead.
+func ClusterConfig(clusterID string) (restConfig *rest.Config, providerType string, err error) {
+	if clusterID == "" {
+		if restConfig, err = rest.InClusterConfig(); err != nil {
+			return nil, "", fmt.Errorf("error getting in-cluster rest config: %w", err)
+		}
+
+		// FIXME: Is there a way to discover this from within the cluster?
+		// For now, ocm and rosa behave the same, so hardcode either.
+		providerType = "ocm"
+		return
+
+	}
+	provider, err := providers.ClusterProvider()
+
+	if err != nil {
+		return nil, "", fmt.Errorf("error getting cluster provisioning client: %w", err)
+	}
+	providerType = provider.Type()
+
+	restConfig, err = getRestConfig(provider, clusterID)
+	if err != nil {
+
+		return nil, "", fmt.Errorf("error generating rest config: %w", err)
+	}
+
+	return
 }
 
 // PollClusterHealth looks at CVO data to determine if a cluster is alive/healthy or not
@@ -222,33 +321,10 @@ func PollClusterHealth(clusterID string, logger *log.Logger) (status bool, failu
 
 	logger.Print("Polling Cluster Health...\n")
 
-	var restConfig *rest.Config
-	var providerType string
-
-	if clusterID == "" {
-		if restConfig, err = rest.InClusterConfig(); err != nil {
-			logger.Printf("Error getting in-cluster REST config: %v\n", err)
-			return false, nil, nil
-		}
-
-		// FIXME: Is there a way to discover this from within the cluster?
-		// For now, ocm and rosa behave the same, so hardcode either.
-		providerType = "ocm"
-
-	} else {
-		provider, err := providers.ClusterProvider()
-
-		if err != nil {
-			return false, nil, fmt.Errorf("error getting cluster provisioning client: %v", err)
-		}
-
-		restConfig, err = getRestConfig(provider, clusterID)
-		if err != nil {
-			logger.Printf("Error generating Rest Config: %v\n", err)
-			return false, nil, nil
-		}
-
-		providerType = provider.Type()
+	restConfig, providerType, err := ClusterConfig(clusterID)
+	if err != nil {
+		logger.Printf("Error getting cluster config: %v\n", err)
+		return false, nil, nil
 	}
 
 	kubeClient, err := kubernetes.NewForConfig(restConfig)
