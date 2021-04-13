@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"math"
@@ -16,7 +17,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/hpcloud/tail"
 	junit "github.com/joshdk/go-junit"
 	vegeta "github.com/tsenart/vegeta/lib"
 
@@ -269,37 +269,8 @@ func runGinkgoTests() error {
 		return fmt.Errorf("unable to create build log in report directory: %v", err)
 	}
 
-	// Save off stdout, create the build log writer.
-	stdout := os.Stdout
-	os.Stdout = buildLogWriter
-
-	// Set the logger output to the build log writer.
-	log.SetOutput(buildLogWriter)
-
-	// Restore stdout and close the build log writer at the end of this function.
-	defer func() {
-		os.Stdout = stdout
-		log.SetOutput(stdout)
-		buildLogWriter.Close()
-	}()
-
-	// Tail the build log.
-	tail, err := tail.TailFile(buildLogPath, tail.Config{
-		Follow: true,
-		Logger: tail.DiscardingLogger,
-	})
-
-	if err != nil {
-		return fmt.Errorf("unable to tail build log: %v", err)
-	}
-
-	// Write each line from the build log to stdout.
-	go func() {
-		for line := range tail.Lines {
-			// This can return an err, but is unlikely -- we're going to skip this check intentionally for now.
-			stdout.WriteString(line.Text + "\n")
-		}
-	}()
+	mw := io.MultiWriter(os.Stdout, buildLogWriter)
+	log.SetOutput(mw)
 
 	log.Printf("Outputting log to build log at %s", buildLogPath)
 
