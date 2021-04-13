@@ -47,7 +47,7 @@ func CheckHealthcheckJob(k8sClient *kubernetes.Clientset, ctx context.Context, l
 func watchJob(bv1C v1.BatchV1Interface, ctx context.Context, namespace, jobname string) error {
 	jobs, err := bv1C.Jobs(namespace).List(ctx, metav1.ListOptions{})
 	if err != nil {
-		return fmt.Errorf("failed listing jobs and timed out: %w", err)
+		return fmt.Errorf("failed listing jobs: %w", err)
 	}
 	for _, job := range jobs.Items {
 		if job.Name != jobname {
