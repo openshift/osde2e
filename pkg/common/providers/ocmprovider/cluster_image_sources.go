@@ -8,61 +8,35 @@ import (
 var clusterImageSources = map[string]string{"quay-primary": `imageContentSources:
 - mirrors:
   - quay.io/openshift-release-dev/ocp-release
-  - 950916221866.dkr.ecr.us-east-1.amazonaws.com/ocp-release
+  - pull.q1w2.quay.rhcloud.com/ocp-release
   source: quay.io/openshift-release-dev/ocp-release
 - mirrors:
   - quay.io/openshift-release-dev/ocp-v4.0-art-dev
-  - 950916221866.dkr.ecr.us-east-1.amazonaws.com/ocp-art-dev
+  - pull.q1w2.quay.rhcloud.com/ocp-art-dev
   source: quay.io/openshift-release-dev/ocp-v4.0-art-dev
 - mirrors:
   - quay.io/app-sre/managed-upgrade-operator
-  - 950916221866.dkr.ecr.us-east-1.amazonaws.com/managed-upgrade-operator
+  - pull.q1w2.quay.rhcloud.com/managed-upgrade-operator
   source: quay.io/app-sre/managed-upgrade-operator
 - mirrors:
   - quay.io/app-sre/managed-upgrade-operator-registry
-  - 950916221866.dkr.ecr.us-east-1.amazonaws.com/managed-upgrade-operator-registry
+  - pull.q1w2.quay.rhcloud.com/managed-upgrade-operator-registry
   source: quay.io/app-sre/managed-upgrade-operator-registry`,
-	"ecr-primary": `imageContentSources:
+	"regional-primary": `imageContentSources:
 - mirrors:
-  - 950916221866.dkr.ecr.us-east-1.amazonaws.com/ocp-release
+  - pull.q1w2.quay.rhcloud.com/ocp-release
   - quay.io/openshift-release-dev/ocp-release
   source: quay.io/openshift-release-dev/ocp-release
 - mirrors:
-  - 950916221866.dkr.ecr.us-east-1.amazonaws.com/ocp-art-dev
+  - pull.q1w2.quay.rhcloud.com/ocp-art-dev
   - quay.io/openshift-release-dev/ocp-v4.0-art-dev
   source: quay.io/openshift-release-dev/ocp-v4.0-art-dev
 - mirrors:
-  - 950916221866.dkr.ecr.us-east-1.amazonaws.com/managed-upgrade-operator
+  - pull.q1w2.quay.rhcloud.com/managed-upgrade-operator
   - quay.io/app-sre/managed-upgrade-operator
   source: quay.io/app-sre/managed-upgrade-operator
 - mirrors:
-  - 950916221866.dkr.ecr.us-east-1.amazonaws.com/managed-upgrade-operator-registry
-  - quay.io/app-sre/managed-upgrade-operator-registry
-  source: quay.io/app-sre/managed-upgrade-operator-registry`,
-	"ecr-only": `imageContentSources:
-- mirrors:
-  - 950916221866.dkr.ecr.us-east-1.amazonaws.com/ocp-release
-  source: quay.io/openshift-release-dev/ocp-release
-- mirrors:
-  - 950916221866.dkr.ecr.us-east-1.amazonaws.com/ocp-art-dev
-  source: quay.io/openshift-release-dev/ocp-v4.0-art-dev
-- mirrors:
-  - 950916221866.dkr.ecr.us-east-1.amazonaws.com/managed-upgrade-operator
-  source: quay.io/app-sre/managed-upgrade-operator
-- mirrors:
-  - 950916221866.dkr.ecr.us-east-1.amazonaws.com/managed-upgrade-operator-registry
-  source: quay.io/app-sre/managed-upgrade-operator-registry`,
-	"quay-only": `imageContentSources:
-- mirrors:
-  - quay.io/openshift-release-dev/ocp-release
-  source: quay.io/openshift-release-dev/ocp-release
-- mirrors:
-  - quay.io/openshift-release-dev/ocp-v4.0-art-dev
-  source: quay.io/openshift-release-dev/ocp-v4.0-art-dev
-- mirrors:
-  - quay.io/app-sre/managed-upgrade-operator
-  source: quay.io/app-sre/managed-upgrade-operator
-- mirrors:
+  - pull.q1w2.quay.rhcloud.com/managed-upgrade-operator-registry
   - quay.io/app-sre/managed-upgrade-operator-registry
   source: quay.io/app-sre/managed-upgrade-operator-registry`}
 
