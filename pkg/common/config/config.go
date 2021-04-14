@@ -5,7 +5,7 @@ import (
 	"log"
 	"sync"
 
-	"github.com/spf13/viper"
+	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 )
 
 const (

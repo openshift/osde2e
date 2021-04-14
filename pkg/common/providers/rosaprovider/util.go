@@ -6,7 +6,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/spf13/viper"
+	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 )
 
 // At the moment, rosa requires AWS sessions to be set globally. To get around that, we'll use this

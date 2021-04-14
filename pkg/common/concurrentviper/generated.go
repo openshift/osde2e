@@ -1,16 +1,16 @@
 package concurrentviper
 
 import (
-	afero "github.com/spf13/afero"
-	mapstructure "github.com/mitchellh/mapstructure"
-	fsnotify "github.com/fsnotify/fsnotify"
+	time "time"
 	pflag "github.com/spf13/pflag"
 	strings "strings"
+	io "io"
+	viper "github.com/spf13/viper"
+	mapstructure "github.com/mitchellh/mapstructure"
+	fsnotify "github.com/fsnotify/fsnotify"
+	afero "github.com/spf13/afero"
 	os "os"
 	sync "sync"
-	viper "github.com/spf13/viper"
-	time "time"
-	io "io"
 )
 
 var l sync.Mutex

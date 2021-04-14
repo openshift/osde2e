@@ -1,3 +1,6 @@
+/*
+Package main generates a threadsafe version of github.com/spf13/viper
+*/
 package main
 
 import (

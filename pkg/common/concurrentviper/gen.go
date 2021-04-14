@@ -1,5 +1,6 @@
 package concurrentviper
 
-//go:generate go run github.com/openshift/osde2e/gen generated.go
+//go:generate go run ./gen generated.go
+//go:generate go mod tidy
 
 // The above regenerates this package when you run `go generate ./...`

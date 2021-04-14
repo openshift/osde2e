@@ -1,6 +1,6 @@
 package reporting
 
-import "github.com/spf13/viper"
+import viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 
 const (
 	// SlackWebhook for pushing reports to slack

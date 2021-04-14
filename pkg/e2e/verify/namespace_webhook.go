@@ -16,7 +16,7 @@ import (
 	"k8s.io/client-go/rest"
 
 	"github.com/openshift/osde2e/pkg/common/helper"
-	"github.com/spf13/viper"
+	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
