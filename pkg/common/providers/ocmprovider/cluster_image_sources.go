@@ -8,35 +8,35 @@ import (
 var clusterImageSources = map[string]string{"quay-primary": `imageContentSources:
 - mirrors:
   - quay.io/openshift-release-dev/ocp-release
-  - pull.q1w2.quay.rhcloud.com/ocp-release
+  - pull.q1w2.quay.rhcloud.com/openshift-release-dev/ocp-release
   source: quay.io/openshift-release-dev/ocp-release
 - mirrors:
   - quay.io/openshift-release-dev/ocp-v4.0-art-dev
-  - pull.q1w2.quay.rhcloud.com/ocp-art-dev
+  - pull.q1w2.quay.rhcloud.com/openshift-release-dev/ocp-art-dev
   source: quay.io/openshift-release-dev/ocp-v4.0-art-dev
 - mirrors:
   - quay.io/app-sre/managed-upgrade-operator
-  - pull.q1w2.quay.rhcloud.com/managed-upgrade-operator
+  - pull.q1w2.quay.rhcloud.com/app-sre/managed-upgrade-operator
   source: quay.io/app-sre/managed-upgrade-operator
 - mirrors:
   - quay.io/app-sre/managed-upgrade-operator-registry
-  - pull.q1w2.quay.rhcloud.com/managed-upgrade-operator-registry
+  - pull.q1w2.quay.rhcloud.com/app-sre/managed-upgrade-operator-registry
   source: quay.io/app-sre/managed-upgrade-operator-registry`,
 	"regional-primary": `imageContentSources:
 - mirrors:
-  - pull.q1w2.quay.rhcloud.com/ocp-release
+  - pull.q1w2.quay.rhcloud.com/openshift-release-dev/ocp-release
   - quay.io/openshift-release-dev/ocp-release
   source: quay.io/openshift-release-dev/ocp-release
 - mirrors:
-  - pull.q1w2.quay.rhcloud.com/ocp-art-dev
+  - pull.q1w2.quay.rhcloud.com/openshift-release-dev/ocp-art-dev
   - quay.io/openshift-release-dev/ocp-v4.0-art-dev
   source: quay.io/openshift-release-dev/ocp-v4.0-art-dev
 - mirrors:
-  - pull.q1w2.quay.rhcloud.com/managed-upgrade-operator
+  - pull.q1w2.quay.rhcloud.com/app-sre/managed-upgrade-operator
   - quay.io/app-sre/managed-upgrade-operator
   source: quay.io/app-sre/managed-upgrade-operator
 - mirrors:
-  - pull.q1w2.quay.rhcloud.com/managed-upgrade-operator-registry
+  - pull.q1w2.quay.rhcloud.com/app-sre/managed-upgrade-operator-registry
   - quay.io/app-sre/managed-upgrade-operator-registry
   source: quay.io/app-sre/managed-upgrade-operator-registry`}
 
