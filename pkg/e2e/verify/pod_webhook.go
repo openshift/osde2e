@@ -39,10 +39,10 @@ var _ = ginkgo.Describe(podWebhookTestName, func() {
 			daemonSetName := "validation-webhook"
 			serviceName := "validation-webhook"
 
-			err := waitTimeoutForDaemonSetInNamespace(h, daemonSetName, namespace, daemonStartTimeout)
+			err := h.WaitTimeoutForDaemonSetInNamespace(daemonSetName, namespace, daemonStartTimeout, poll)
 			Expect(err).NotTo(HaveOccurred(), "No Daemonset named %s found.", daemonSetName)
 
-			err = waitTimeoutForServiceInNamespace(h, serviceName, namespace, serviceStartTimeout)
+			err = h.WaitTimeoutForServiceInNamespace(serviceName, namespace, serviceStartTimeout, poll)
 			Expect(err).NotTo(HaveOccurred(), "No service named %s found.", serviceName)
 
 		})
@@ -268,36 +268,4 @@ func impersonateDedicatedAdmin(h *helper.H, user string) *helper.H {
 	})
 
 	return h
-}
-
-func getDaemonSet(namespace string, daemonSetName string, h *helper.H) wait.ConditionFunc {
-	return func() (bool, error) {
-		_, err := h.Kube().AppsV1().DaemonSets(namespace).Get(context.TODO(), daemonSetName, metav1.GetOptions{})
-		Expect(err).NotTo(HaveOccurred(), "failed to get daemonset %v\n", daemonSetName)
-		if err != nil {
-			return false, err
-		}
-		return true, nil
-	}
-}
-
-// waitTimeoutForDaemonSetInNamespace waits the given timeout duration for the specified ds.
-func waitTimeoutForDaemonSetInNamespace(h *helper.H, daemonSetName string, namespace string, timeout time.Duration) error {
-	return wait.PollImmediate(poll, timeout, getDaemonSet(namespace, daemonSetName, h))
-}
-
-func getService(namespace string, serviceName string, h *helper.H) wait.ConditionFunc {
-	return func() (bool, error) {
-		_, err := h.Kube().CoreV1().Services(namespace).Get(context.TODO(), serviceName, metav1.GetOptions{})
-		Expect(err).NotTo(HaveOccurred(), "failed to get service %v\n", serviceName)
-		if err != nil {
-			return false, err
-		}
-		return true, nil
-	}
-}
-
-// waitTimeoutForServiceInNamespace waits the given timeout duration for the specified service.
-func waitTimeoutForServiceInNamespace(h *helper.H, serviceName string, namespace string, timeout time.Duration) error {
-	return wait.PollImmediate(poll, timeout, getService(namespace, serviceName, h))
 }
