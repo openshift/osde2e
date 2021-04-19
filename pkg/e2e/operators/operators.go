@@ -142,6 +142,37 @@ func checkRole(h *helper.H, namespace string, roles []string) {
 
 }
 
+func checkRolesWithNamePrefix(h *helper.H, namespace string, prefix string, count int) {
+	ginkgo.Context("roles with prefix", func() {
+		ginkgo.It("should exist", func() {
+			rolesList, err := h.Kube().RbacV1().Roles(namespace).List(context.TODO(), metav1.ListOptions{})
+			Expect(err).NotTo(HaveOccurred(), "failed to get roles in namespace %s", namespace)
+			var roleCount int
+			for _, r := range rolesList.Items {
+				if strings.HasPrefix(r.Name, prefix) {
+					roleCount++
+				}
+			}
+			Expect(roleCount).To(BeNumerically(">=", count))
+		}, viper.GetFloat64(config.Tests.PollingTimeout))
+	})
+}
+
+func checkRoleBindingsWithNamePrefix(h *helper.H, namespace string, prefix string, count int) {
+	ginkgo.Context("roles with prefix", func() {
+		ginkgo.It("should exist", func() {
+			roleBindings, err := h.Kube().RbacV1().RoleBindings(namespace).List(context.TODO(), metav1.ListOptions{})
+			Expect(err).NotTo(HaveOccurred(), "failed to get roles in namespace %s", namespace)
+			var roleCount int
+			for _, r := range roleBindings.Items {
+				if strings.HasPrefix(r.Name, prefix) {
+					roleCount++
+				}
+			}
+			Expect(roleCount).To(BeNumerically(">=", count))
+		}, viper.GetFloat64(config.Tests.PollingTimeout))
+	})
+}
 func checkRoleBindings(h *helper.H, namespace string, roleBindings []string) {
 	// Check that deployed rolebindings exist
 	ginkgo.Context("roleBindings", func() {
