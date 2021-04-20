@@ -22,11 +22,30 @@ func init() {
 	alert.RegisterGinkgoAlert(podWebhookTestName, "SD-SREP", "Matt Bargenquast", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
 }
 
+const (
+	serviceStartTimeout = 1 * time.Minute
+
+	daemonStartTimeout = 1 * time.Minute
+)
+
 var _ = ginkgo.Describe(podWebhookTestName, func() {
 
 	h := helper.New()
 
 	ginkgo.Context("pod webhook", func() {
+
+		ginkgo.It("Verify the validation webhook service is running", func() {
+			namespace := "openshift-validation-webhook"
+			daemonSetName := "validation-webhook"
+			serviceName := "validation-webhook"
+
+			err := h.WaitTimeoutForDaemonSetInNamespace(daemonSetName, namespace, daemonStartTimeout, poll)
+			Expect(err).NotTo(HaveOccurred(), "No Daemonset named %s found.", daemonSetName)
+
+			err = h.WaitTimeoutForServiceInNamespace(serviceName, namespace, serviceStartTimeout, poll)
+			Expect(err).NotTo(HaveOccurred(), "No service named %s found.", serviceName)
+
+		})
 
 		// for all tests, "manage" is synonymous with "create/update/delete"
 		//Dedicated admin can not deploy pod on master on infra nodes in namespaces
