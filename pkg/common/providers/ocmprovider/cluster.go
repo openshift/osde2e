@@ -97,15 +97,21 @@ func (o *OCMProvider) LaunchCluster(clusterName string) (string, error) {
 		return "", fmt.Errorf("error generating cluster properties: %v", err)
 	}
 
+	installConfig := ""
+
 	// This skips setting install_config for any prod job OR any periodic addon job.
 	// To invoke this logic locally you will have to set JOB_TYPE to "periodic".
 	if o.Environment() != "prod" {
 		if os.Getenv("JOB_TYPE") == "periodic" && !strings.Contains(os.Getenv("JOB_NAME"), "addon") {
 			imageSource := viper.GetString(config.Cluster.ImageContentSource)
-			log.Printf("Setting imageSource: %s", imageSource)
-			clusterProperties["install_config"] = fmt.Sprintf("%s\n%s", o.ChooseImageSource(imageSource), viper.GetString(config.Cluster.InstallConfig))
+			installConfig += "\n" + o.ChooseImageSource(imageSource)
+			installConfig += "\n" + o.GetNetworkConfig(viper.GetString(config.Cluster.NetworkProvider))
 		}
 	}
+
+	installConfig += "\n" + viper.GetString(config.Cluster.InstallConfig)
+	log.Println("Install config:", installConfig)
+	clusterProperties["install_config"] = installConfig
 
 	newCluster := v1.NewCluster().
 		Name(clusterName).
@@ -1119,4 +1125,25 @@ func (o *OCMProvider) updateClusterCache(id string, cluster *v1.Cluster) error {
 	}
 	o.clusterCache[cluster.ID()] = c
 	return nil
+}
+
+func (o *OCMProvider) GetNetworkConfig(networkProvider string) string {
+	if networkProvider == config.DefaultNetworkProvider {
+		return ""
+	}
+	if networkProvider != "OVNKubernetes" {
+		return ""
+	}
+	return `
+networking:
+  clusterNetwork:
+  - cidr: 10.128.0.0/14
+    hostPrefix: 23
+  machineCIDR: 10.0.0.0/16
+  machineNetwork:
+  - cidr: 10.0.0.0/16
+  networkType: OVNKubernetes
+  serviceNetwork:
+  - 172.30.0.0/16
+`
 }
