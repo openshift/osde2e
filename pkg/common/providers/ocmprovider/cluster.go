@@ -109,9 +109,14 @@ func (o *OCMProvider) LaunchCluster(clusterName string) (string, error) {
 		}
 	}
 
-	installConfig += "\n" + viper.GetString(config.Cluster.InstallConfig)
-	log.Println("Install config:", installConfig)
-	clusterProperties["install_config"] = installConfig
+	if viper.GetString(config.Cluster.InstallConfig) != "" {
+		installConfig += "\n" + viper.GetString(config.Cluster.InstallConfig)
+	}
+
+	if installConfig != "" {
+		log.Println("Install config:", installConfig)
+		clusterProperties["install_config"] = installConfig
+	}
 
 	newCluster := v1.NewCluster().
 		Name(clusterName).
