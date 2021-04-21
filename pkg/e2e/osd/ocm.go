@@ -151,6 +151,9 @@ var _ = ginkgo.Describe(ocmTestName, func() {
 				if err != nil {
 					return false, nil
 				}
+				if len(pod.Status.ContainerStatuses) < 1 {
+					return false, nil
+				}
 				if w := pod.Status.ContainerStatuses[0].State.Waiting; w != nil &&
 					strings.EqualFold(w.Reason, "ImagePullBackOff") {
 					return false, fmt.Errorf("image failed to pull while quay was unavailable")
