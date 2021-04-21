@@ -62,6 +62,9 @@ const (
 
 	// CanaryChance
 	CanaryChance = "canaryChance"
+
+	// Default network provider for OSD
+	DefaultNetworkProvider = "OpenShiftSDN"
 )
 
 // This is a config key to secret file mapping. We will attempt to read in from secret files before loading anything else.
@@ -289,6 +292,9 @@ var Cluster = struct {
 	// NumWorkerNodes overrides the flavour's number of worker nodes specified
 	NumWorkerNodes string
 
+	// NetworkProvider chooses the network driver powering the cluster.
+	NetworkProvider string
+
 	// Specify a key in the pre-defined imageContentSource array in the ocmprovider
 	// Blank will default to a randomized option
 	ImageContentSource string
@@ -325,6 +331,7 @@ var Cluster = struct {
 	PreviousVersionFromDefaultFound:     "cluster.previousVersionFromDefaultFound",
 	ProvisionShardID:                    "cluster.provisionshardID",
 	NumWorkerNodes:                      "cluster.numWorkerNodes",
+	NetworkProvider:                     "cluster.networkProvider",
 	ImageContentSource:                  "cluster.imageContentSource",
 	InstallConfig:                       "cluster.installConfig",
 	HibernateAfterUse:                   "cluster.hibernateAfterUse",
@@ -617,6 +624,9 @@ func init() {
 
 	viper.BindEnv(Cluster.ImageContentSource, "CLUSTER_IMAGE_CONTENT_SOURCE")
 	viper.BindEnv(Cluster.InstallConfig, "CLUSTER_INSTALL_CONFIG")
+
+	viper.SetDefault(Cluster.NetworkProvider, DefaultNetworkProvider)
+	viper.BindEnv(Cluster.NetworkProvider, "CLUSTER_NETWORK_PROVIDER")
 
 	viper.SetDefault(Cluster.HibernateAfterUse, true)
 	viper.BindEnv(Cluster.HibernateAfterUse, "HIBERNATE_AFTER_USE")
