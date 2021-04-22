@@ -687,7 +687,7 @@ func runTestsInPhase(phase string, description string, dryrun bool) bool {
 	}
 	// If we could have opened new alerts, consolidate them
 	if os.Getenv("JOB_TYPE") == "periodic" {
-		err := pagerduty.MergeCICDIncidents(pd.NewClient(viper.GetString(config.Alert.PagerDutyUserToken)))
+		err := pagerduty.ProcessCICDIncidents(pd.NewClient(viper.GetString(config.Alert.PagerDutyUserToken)))
 		if err != nil {
 			log.Printf("Failed merging PD incidents: %v", err)
 		}
