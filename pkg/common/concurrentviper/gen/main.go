@@ -209,7 +209,6 @@ func main() {
 				// skip if not a function
 				continue
 			}
-			fd.Doc = nil
 			if fd.Recv != nil {
 				// skip if a method instead of a function
 				continue
@@ -218,6 +217,10 @@ func main() {
 				// skip if not exported
 				continue
 			}
+			if fd.Doc == nil {
+				fd.Doc = &ast.CommentGroup{}
+			}
+			fd.Doc.List = append(fd.Doc.List, &ast.Comment{Text: "// This function is safe for concurrent use."})
 			// redefine function body to be a lock/unlock followed by a call to
 			// the original viper function
 			call := &ast.CallExpr{
