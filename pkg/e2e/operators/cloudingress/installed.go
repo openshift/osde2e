@@ -11,7 +11,7 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/openshift/osde2e/pkg/common/constants"
 	"github.com/openshift/osde2e/pkg/common/helper"
-	"github.com/spf13/viper"
+	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 
 	"github.com/openshift/osde2e/pkg/common/config"
 	appsv1 "k8s.io/api/apps/v1"

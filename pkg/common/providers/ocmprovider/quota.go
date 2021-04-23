@@ -8,7 +8,7 @@ import (
 	accounts "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"
 	v1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 	"github.com/openshift/osde2e/pkg/common/config"
-	"github.com/spf13/viper"
+	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 )
 
 const (

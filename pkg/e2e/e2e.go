@@ -25,7 +25,7 @@ import (
 	ginkgoConfig "github.com/onsi/ginkgo/config"
 	"github.com/onsi/ginkgo/reporters"
 	"github.com/onsi/gomega"
-	"github.com/spf13/viper"
+	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 
 	"github.com/openshift/osde2e/pkg/common/alert"
 	"github.com/openshift/osde2e/pkg/common/aws"
@@ -687,7 +687,7 @@ func runTestsInPhase(phase string, description string, dryrun bool) bool {
 	}
 	// If we could have opened new alerts, consolidate them
 	if os.Getenv("JOB_TYPE") == "periodic" {
-		err := pagerduty.MergeCICDIncidents(pd.NewClient(viper.GetString(config.Alert.PagerDutyUserToken)))
+		err := pagerduty.ProcessCICDIncidents(pd.NewClient(viper.GetString(config.Alert.PagerDutyUserToken)))
 		if err != nil {
 			log.Printf("Failed merging PD incidents: %v", err)
 		}

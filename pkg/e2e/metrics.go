@@ -22,7 +22,7 @@ import (
 	"github.com/openshift/osde2e/pkg/common/spi"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/common/expfmt"
-	"github.com/spf13/viper"
+	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 )
 
 const (

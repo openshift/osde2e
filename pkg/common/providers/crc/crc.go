@@ -19,7 +19,7 @@ import (
 	"github.com/code-ready/crc/pkg/crc/validation"
 	"github.com/code-ready/crc/pkg/crc/version"
 	"github.com/openshift/osde2e/pkg/common/spi"
-	"github.com/spf13/viper"
+	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"k8s.io/apimachinery/pkg/util/wait"
 
 	// Specifically using this for YAMLToJSON

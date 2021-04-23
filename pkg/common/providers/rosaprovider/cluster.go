@@ -14,7 +14,7 @@ import (
 	"github.com/openshift/osde2e/pkg/common/util"
 	"github.com/openshift/rosa/pkg/cluster"
 	"github.com/openshift/rosa/pkg/ocm/versions"
-	"github.com/spf13/viper"
+	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 )
 
 // IsValidClusterName validates the clustername prior to proceeding with it

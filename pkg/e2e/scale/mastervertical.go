@@ -3,7 +3,7 @@ package scale
 import (
 	"github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"github.com/spf13/viper"
+	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	kubev1 "k8s.io/api/core/v1"
 
 	"github.com/openshift/osde2e/pkg/common/alert"

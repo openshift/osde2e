@@ -11,7 +11,7 @@ import (
 	"github.com/openshift/osde2e/pkg/metrics"
 	"github.com/openshift/osde2e/pkg/reporting/spi"
 	"github.com/openshift/osde2e/pkg/reporting/templates"
-	"github.com/spf13/viper"
+	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 )
 
 // Intermediary structs

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"sort"
+	"time"
 
 	pd "github.com/PagerDuty/go-pagerduty"
 )
@@ -28,8 +29,9 @@ func (pdc Config) FireAlert(details pd.V2Payload) (*pd.V2EventResponse, error) {
 	return e, nil
 }
 
-// MergeCICDIncidents merges all incidents for the CI Watcher by their title.
-func MergeCICDIncidents(client *pd.Client) error {
+// ProcessCICDIncidents merges all incidents for the CI Watcher by their title and then closes
+// any incidents that haven't had recent alerts.
+func ProcessCICDIncidents(client *pd.Client) error {
 	options := pd.ListIncidentsOptions{
 		ServiceIDs: []string{"P7VT2V5"},
 		Statuses:   []string{"triggered", "acknowledged"},
@@ -46,6 +48,49 @@ func MergeCICDIncidents(client *pd.Client) error {
 	}
 	if err := MergeIncidentsByTitle(client, incidents); err != nil {
 		return fmt.Errorf("failed merging incidents: %w", err)
+	}
+	if err := ResolveOldIncidents(client, incidents); err != nil {
+		return fmt.Errorf("failed resolving incidents: %w", err)
+	}
+	return nil
+}
+
+// ResolveOldIncidents automatically resolves any incident whose most recent alert is
+// older than 30 hours.
+func ResolveOldIncidents(c *pd.Client, incidents []pd.Incident) error {
+	now := time.Now()
+	changes := []pd.ManageIncidentsOptions{}
+	for _, i := range incidents {
+		newest := time.Time{}
+		if err := Alerts(c, i, pd.ListIncidentAlertsOptions{}, func(a pd.IncidentAlert) error {
+			t, err := time.Parse(time.RFC3339, a.CreatedAt)
+			if err != nil {
+				return fmt.Errorf("Unable to parse time %v: %w", a.CreatedAt, err)
+			}
+			if t.After(newest) {
+				newest = t
+			}
+			return nil
+		}); err != nil {
+			return fmt.Errorf("failed listing alerts for incident %s: %w", i.Id, err)
+		}
+		if age := now.Sub(newest); newest != (time.Time{}) && age > time.Hour*30 {
+			log.Printf("Resolving incident %v because it is %v old.", i.Id, age)
+			changes = append(changes, pd.ManageIncidentsOptions{
+				ID:     i.Id,
+				Type:   i.Type,
+				Status: "resolved",
+			})
+		} else {
+			log.Printf("Not resolving %v, newest alert is %v old", i.Id, age)
+		}
+	}
+	if len(changes) > 0 {
+		if _, err := c.ManageIncidents("", changes); err != nil {
+			if err != nil {
+				return fmt.Errorf("failed auto-resolving incidents: %w", err)
+			}
+		}
 	}
 	return nil
 }

@@ -12,7 +12,7 @@ import (
 	"github.com/openshift/osde2e/pkg/common/providers/ocmprovider"
 	"github.com/openshift/osde2e/pkg/e2e"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
+	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 
 	// import suites to be tested
 	_ "github.com/openshift/osde2e/pkg/e2e/addons"

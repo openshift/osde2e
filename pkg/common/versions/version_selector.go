@@ -12,7 +12,7 @@ import (
 	"github.com/openshift/osde2e/pkg/common/util"
 	"github.com/openshift/osde2e/pkg/common/versions/installselectors"
 	"github.com/openshift/osde2e/pkg/common/versions/upgradeselectors"
-	"github.com/spf13/viper"
+	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 )
 
 // GetVersionForInstall will get a version based upon available configuration options.

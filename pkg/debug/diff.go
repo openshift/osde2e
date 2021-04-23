@@ -14,7 +14,7 @@ import (
 	"github.com/google/go-github/v31/github"
 	"github.com/kylelemons/godebug/diff"
 	"github.com/openshift/osde2e/pkg/common/config"
-	"github.com/spf13/viper"
+	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"

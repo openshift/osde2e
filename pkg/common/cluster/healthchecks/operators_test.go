@@ -6,7 +6,7 @@ import (
 	configv1 "github.com/openshift/api/config/v1"
 	fakeConfig "github.com/openshift/client-go/config/clientset/versioned/fake"
 	"github.com/openshift/osde2e/pkg/common/config"
-	"github.com/spf13/viper"
+	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 )
