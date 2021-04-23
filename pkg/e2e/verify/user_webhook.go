@@ -583,6 +583,9 @@ var _ = ginkgo.Describe(userWebhookTestName, func() {
 	})
 })
 
+// createUser creates the given user.
+// Note that it may take time for operators to reconcile the permissions of new users,
+// so it's best to poll your first attempt to use the resulting user for a couple minutes.
 func createUser(userName string, identities []string, groups []string, h *helper.H) (*userv1.User, error) {
 	user := &userv1.User{
 		ObjectMeta: metav1.ObjectMeta{
@@ -598,6 +601,9 @@ func deleteUser(userName string, h *helper.H) error {
 	return h.User().UserV1().Users().Delete(context.TODO(), userName, metav1.DeleteOptions{})
 }
 
+// addUserToGroup adds a user to the given group.
+// Note that it may take time for operators to reconcile the permissions of new users,
+// so it's best to poll your first attempt to use the resulting user for a couple minutes.
 func addUserToGroup(userName string, groupName string, h *helper.H) (result *userv1.Group, err error) {
 	group, err := h.User().UserV1().Groups().Get(context.TODO(), groupName, metav1.GetOptions{})
 	Expect(err).NotTo(HaveOccurred())
