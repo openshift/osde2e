@@ -61,14 +61,14 @@ var _ = ginkgo.Describe(dedicatedAdminSccTestName, func() {
 			Expect(err).NotTo(HaveOccurred())
 			log.Printf("Error:(%v)", err)
 			//Deleting all prometheus pods
-			list, _ := filterPods("openshift-monitoring", "app=prometheus", h)
-			names, _ := getPodNames("prometheus-operator", list, h)
+			list, _ := FilterPods("openshift-monitoring", "app=prometheus", h)
+			names, _ := GetPodNames("prometheus-operator", list, h)
 			log.Printf("Names of pods:(%v)", names)
 			numPrometheusPods := deletePods(names, "openshift-monitoring", h)
 			//Verifying the same number of running prometheus pods has come up
 			err = wait.PollImmediate(2*time.Second, 3*time.Minute, func() (bool, error) {
-				list, _ = filterPods("openshift-monitoring", "app=prometheus", h)
-				_, newNamesNum := getPodNames("prometheus-operator", list, h)
+				list, _ = FilterPods("openshift-monitoring", "app=prometheus", h)
+				_, newNamesNum := GetPodNames("prometheus-operator", list, h)
 				if numPrometheusPods == newNamesNum {
 					err = nil
 					return true, err
@@ -78,14 +78,14 @@ var _ = ginkgo.Describe(dedicatedAdminSccTestName, func() {
 			})
 			Expect(err).NotTo(HaveOccurred())
 			//Deleting the ssh pods
-			list, _ = filterPods("openshift-sre-sshd", "deployment=rh-ssh", h)
-			names, _ = getPodNames("openshift-sre-sshd", list, h)
+			list, _ = FilterPods("openshift-sre-sshd", "deployment=rh-ssh", h)
+			names, _ = GetPodNames("openshift-sre-sshd", list, h)
 			log.Printf("Names of pods:(%v)", names)
 			numSSHPods := deletePods(names, "openshift-sre-sshd", h)
 			//Verifying the same number of running ssh pods has come up
 			err = wait.PollImmediate(2*time.Second, 3*time.Minute, func() (bool, error) {
-				list, _ = filterPods("openshift-sre-sshd", "deployment=rh-ssh", h)
-				_, newSSHNum := getPodNames("openshift-sre-sshd", list, h)
+				list, _ = FilterPods("openshift-sre-sshd", "deployment=rh-ssh", h)
+				_, newSSHNum := GetPodNames("openshift-sre-sshd", list, h)
 				if numSSHPods == newSSHNum {
 					err = nil
 					return true, err
@@ -175,7 +175,7 @@ func deleteScc(scc string, h *helper.H) error {
 }
 
 //Filters pods based on namespace and label
-func filterPods(namespace string, label string, h *helper.H) (*apiv1.PodList, error) {
+func FilterPods(namespace string, label string, h *helper.H) (*apiv1.PodList, error) {
 
 	list, err := h.Kube().CoreV1().Pods(namespace).List(context.TODO(), metav1.ListOptions{
 		LabelSelector: label})
@@ -189,7 +189,7 @@ func filterPods(namespace string, label string, h *helper.H) (*apiv1.PodList, er
 }
 
 //Extracts pod names from a filtered list and counts how many are in running state
-func getPodNames(namespace string, list *apiv1.PodList, h *helper.H) ([]string, int) {
+func GetPodNames(namespace string, list *apiv1.PodList, h *helper.H) ([]string, int) {
 	var notReady []apiv1.Pod
 	var ready []apiv1.Pod
 	var podNames []string
