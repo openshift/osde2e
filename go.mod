@@ -14,6 +14,7 @@ require (
 	github.com/dgryski/go-gk v0.0.0-20200319235926-a69029f61654 // indirect
 	github.com/dgryski/go-lttb v0.0.0-20180810165845-318fcdf10a77 // indirect
 	github.com/emicklei/go-restful v2.9.6+incompatible
+	github.com/fsnotify/fsnotify v1.4.9
 	github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32
 	github.com/google/go-github/v31 v31.0.0
 	github.com/google/uuid v1.1.1
@@ -23,6 +24,7 @@ require (
 	github.com/joshdk/go-junit v0.0.0-20201221202203-061ee62ada40
 	github.com/kylelemons/godebug v1.1.0
 	github.com/markbates/pkger v0.17.1
+	github.com/mitchellh/mapstructure v1.1.2
 	github.com/onsi/ginkgo v1.14.1
 	github.com/onsi/gomega v1.10.2
 	github.com/openshift-online/ocm-sdk-go v0.1.166
@@ -43,14 +45,16 @@ require (
 	github.com/prometheus/common v0.15.0
 	github.com/redhat-cop/must-gather-operator v1.0.0
 	github.com/slack-go/slack v0.6.5
+	github.com/spf13/afero v1.2.2
 	github.com/spf13/cobra v1.1.3
 	github.com/spf13/pflag v1.0.5
-	github.com/spf13/viper v1.7.0
+	github.com/spf13/viper v1.7.1
 	github.com/streadway/quantile v0.0.0-20150917103942-b0c588724d25 // indirect
 	github.com/tsenart/go-tsz v0.0.0-20180814235614-0bd30b3df1c3 // indirect
 	github.com/tsenart/vegeta v12.7.0+incompatible
 	github.com/vmware-tanzu/velero v1.5.0-beta.1.0.20200831161009-1dcaa1bf7512
 	golang.org/x/net v0.0.0-20210226172049-e18ecbb05110
+	golang.org/x/tools v0.0.0-20200616133436-c1934b75d054
 	gopkg.in/yaml.v3 v3.0.0-20200615113413-eeeca48fe776
 	k8s.io/api v0.20.0
 	k8s.io/apimachinery v0.20.0
@@ -65,6 +69,7 @@ replace (
 	github.com/openshift/client-go => github.com/openshift/client-go v0.0.0-20200521150516-05eb9880269c
 
 	github.com/operator-framework/operator-sdk => github.com/operator-framework/operator-sdk v0.15.1
+
 	helm.sh/helm/v3 => helm.sh/helm/v3 v3.1.2
 	k8s.io/api => k8s.io/api v0.19.2
 	k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.19.2

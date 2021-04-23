@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/adamliesko/retry"
-	"github.com/spf13/viper"
+	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 )
 
 var ocmOnce = sync.Once{}

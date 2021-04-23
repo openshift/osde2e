@@ -16,7 +16,7 @@ import (
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/prometheus/client_golang/api"
-	"github.com/spf13/viper"
+	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 )
 
 // CreateClient will create a Prometheus client.

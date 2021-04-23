@@ -1,6 +1,6 @@
 package weather
 
-import "github.com/spf13/viper"
+import viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 
 const (
 	StartOfTimeWindowInHours = "reporting.weather.startOfTimeWindowInHours"

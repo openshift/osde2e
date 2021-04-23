@@ -2,7 +2,7 @@ package ocmprovider
 
 import (
 	"github.com/openshift/osde2e/pkg/common/config"
-	"github.com/spf13/viper"
+	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 )
 
 const (

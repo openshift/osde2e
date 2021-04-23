@@ -12,7 +12,7 @@ import (
 	"github.com/openshift/osde2e/pkg/common/metadata"
 	"github.com/openshift/osde2e/pkg/common/providers/mock"
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/spf13/viper"
+	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 )
 
 func TestProcessJUnitXMLFile(t *testing.T) {

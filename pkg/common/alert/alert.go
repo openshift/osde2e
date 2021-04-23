@@ -10,7 +10,7 @@ import (
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/metrics"
 	"github.com/slack-go/slack"
-	"github.com/spf13/viper"
+	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 )
 
 // MetricAlerts is an array of LogMetric types with an easier lookup method
