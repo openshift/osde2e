@@ -2,6 +2,7 @@ package state
 
 import (
 	"errors"
+	"strings"
 	"time"
 
 	"github.com/onsi/ginkgo"
@@ -31,24 +32,25 @@ var _ = ginkgo.Describe(clusterStateInformingName, func() {
 		// common for a running prometheus instance
 		cmd := promCollectCmd + " > " + runner.DefaultRunner.OutputDir + "/prometheus.tar.gz; err=$? ; if (( $err != 0 )) ; then exit $err ; fi"
 
+		// ensure prometheus pods are up before trying to extract data
 		poderr := wait.PollImmediate(2*time.Second, 5*time.Minute, func() (bool, error) {
 			podCount := 0
-			var podErr error
-			list, _ := verify.FilterPods("openshift-monitoring", "app=prometheus", h)
+			list, listerr := verify.FilterPods("openshift-monitoring", "app=prometheus", h)
+			if listerr != nil {
+				return false, listerr
+			}
 			names, podNum := verify.GetPodNames("prometheus-operator", list, h)
 			if podNum > 0 {
 				for _, value := range names {
-					if (value == "prometheus-k8s-0") || (value == "prometheus-k8s-1") {
+					if strings.HasPrefix("prometheus-k8s-", value) {
 						podCount += 1
 					}
 				}
-				if podCount == 2 {
-					podErr = nil
-					return true, podErr
+				if podCount >= 2 {
+					return true, nil
 				}
 			}
-			podErr = errors.New("Prometheus pods are not in running state")
-			return false, podErr
+			return false, errors.New("Prometheus pods are not in running state")
 		})
 		Expect(poderr).NotTo(HaveOccurred())
 
