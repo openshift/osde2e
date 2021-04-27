@@ -125,11 +125,22 @@ func beforeSuite() bool {
 		}
 
 		if viper.GetString(config.Tests.SkipClusterHealthChecks) != "true" {
-			if err := clusterutil.WaitForClusterReadyPostInstall(cluster.ID(), nil); err != nil {
-				log.Printf("Cluster failed health check: %v", err)
-				getLogs()
-				return false
+			if viper.GetBool(config.Cluster.Reused) {
+				// We should manually run all our health checks if the cluster is waking up
+				if err := clusterutil.WaitForClusterReadyPostWake(cluster.ID(), nil); err != nil {
+					log.Printf("Cluster failed health check: %v", err)
+					getLogs()
+					return false
+				}
+			} else {
+				// This is a new cluster and we should check the OSD Ready job
+				if err := clusterutil.WaitForClusterReadyPostInstall(cluster.ID(), nil); err != nil {
+					log.Printf("Cluster failed health check: %v", err)
+					getLogs()
+					return false
+				}
 			}
+
 			log.Println("Cluster is healthy and ready for testing")
 		} else {
 			log.Println("Skipping health checks as requested")
@@ -258,6 +269,7 @@ func runGinkgoTests() error {
 	var err error
 
 	gomega.RegisterFailHandler(ginkgo.Fail)
+	viper.Set(config.Cluster.Passing, false)
 
 	ginkgoConfig.DefaultReporterConfig.NoisySkippings = !viper.GetBool(config.Tests.SuppressSkipNotifications)
 	ginkgoConfig.GinkgoConfig.SkipString = viper.GetString(config.Tests.GinkgoSkip)
@@ -350,6 +362,7 @@ func runGinkgoTests() error {
 
 	testsPassed := runTestsInPhase(phase.InstallPhase, "OSD e2e suite", ginkgoConfig.GinkgoConfig.DryRun)
 	getLogs()
+	viper.Set(config.Cluster.Passing, testsPassed)
 	upgradeTestsPassed := true
 
 	// upgrade cluster if requested
@@ -374,7 +387,9 @@ func runGinkgoTests() error {
 			// test upgrade rescheduling if desired
 			if !viper.GetBool(config.Upgrade.ManagedUpgradeRescheduled) {
 				log.Println("Running e2e tests POST-UPGRADE...")
+				viper.Set(config.Cluster.Passing, false)
 				upgradeTestsPassed = runTestsInPhase(phase.UpgradePhase, "OSD e2e suite post-upgrade", ginkgoConfig.GinkgoConfig.DryRun)
+				viper.Set(config.Cluster.Passing, upgradeTestsPassed)
 			}
 			log.Println("Upgrade rescheduled, skip the POST-UPGRADE testing")
 
@@ -446,6 +461,7 @@ func runGinkgoTests() error {
 	}
 
 	if !testsPassed || !upgradeTestsPassed {
+		viper.Set(config.Cluster.Passing, false)
 		return fmt.Errorf("please inspect logs for more details")
 	}
 
@@ -593,10 +609,17 @@ func cleanupAfterE2E(h *helper.H) (errors []error) {
 			defer func() {
 				// set the completed property right before this function returns, which should be after
 				// all cleanup is finished.
-				err = provider.AddProperty(cluster, clusterproperties.Status, clusterproperties.StatusCompleted)
+
+				clusterStatus := clusterproperties.StatusCompletedFailing
+				if viper.GetBool(config.Cluster.Passing) {
+					clusterStatus = clusterproperties.StatusCompletedPassing
+				}
+
+				err = provider.AddProperty(cluster, clusterproperties.Status, clusterStatus)
 				if err != nil {
 					log.Printf("Failed setting completed status: %v", err)
 				}
+
 			}()
 			log.Printf("Cluster addons: %v", cluster.Addons())
 			log.Printf("Cluster cloud provider: %v", cluster.CloudProvider())
@@ -632,15 +655,21 @@ func cleanupAfterE2E(h *helper.H) (errors []error) {
 	// We need a provider to hibernate
 	// We need a cluster to hibernate
 	// We need to check that the test run wants to hibernate after this run
-	/*
-		if provider != nil && viper.GetString(config.Cluster.ID) != "" && viper.GetBool(config.Cluster.HibernateAfterUse) {
-			msg := "Unable to hibernate %s"
-			if provider.Hibernate(viper.GetString(config.Cluster.ID)) {
-				msg = "Hibernating %s"
-			}
-			log.Printf(msg, viper.GetString(config.Cluster.ID))
+	if provider != nil && viper.GetString(config.Cluster.ID) != "" && viper.GetBool(config.Cluster.HibernateAfterUse) {
+		msg := "Unable to hibernate %s"
+		if provider.Hibernate(viper.GetString(config.Cluster.ID)) {
+			msg = "Hibernating %s"
 		}
-	*/
+		log.Printf(msg, viper.GetString(config.Cluster.ID))
+
+		// Current default expiration is 6 hours.
+		// If the cluster hasn't been recycled, and the tests passed: Extend it 24h
+		if !viper.GetBool(config.Cluster.Reused) && viper.GetBool(config.Cluster.Passing) {
+			if err := provider.ExtendExpiry(viper.GetString(config.Cluster.ID), 18, 0, 0); err != nil {
+				log.Printf("Error extending cluster expiration: %s", err.Error())
+			}
+		}
+	}
 	return errors
 }
 

@@ -14,13 +14,15 @@ import (
 	osconfig "github.com/openshift/client-go/config/clientset/versioned"
 	"github.com/openshift/osde2e/pkg/common/cluster/healthchecks"
 	"github.com/openshift/osde2e/pkg/common/clusterproperties"
+	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/logging"
 	"github.com/openshift/osde2e/pkg/common/metadata"
 	"github.com/openshift/osde2e/pkg/common/providers"
 	"github.com/openshift/osde2e/pkg/common/spi"
 	"github.com/openshift/osde2e/pkg/common/util"
-	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
+	corev1 "k8s.io/api/core/v1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
@@ -136,6 +138,38 @@ func WaitForClusterReadyPostUpgrade(clusterID string, logger *log.Logger) error 
 // WaitForClusterReadyPostScale blocks until the cluster is ready for testing and uses healthcheck mechanisms appropriate
 // for after the cluster has been scaled.
 func WaitForClusterReadyPostScale(clusterID string, logger *log.Logger) error {
+	podErrorTracker.NewPodErrorTracker(pendingPodThreshold)
+	return waitForClusterReadyWithOverrideAndExpectedNumberOfNodes(clusterID, logger, false, false)
+}
+
+// WaitForClusterReadyPostWake blocks until the cluster is ready for testing, deletes errored pods, and then uses
+// healthcheck mechanisms appropriate for after the cluster has been scaled.
+func WaitForClusterReadyPostWake(clusterID string, logger *log.Logger) error {
+	log.Printf("Cluster %s just woke up, waiting for 10 minutes...", clusterID)
+	time.Sleep(10 * time.Minute)
+
+	restConfig, _, err := ClusterConfig(clusterID)
+	if err != nil {
+		return fmt.Errorf("Error getting cluster config: %v\n", err)
+	}
+
+	kubeClient, err := kubernetes.NewForConfig(restConfig)
+	if err != nil {
+		return fmt.Errorf("Error generating Kube Clientset: %v\n", err)
+	}
+
+	list, err := kubeClient.CoreV1().Pods("").List(context.TODO(), v1.ListOptions{})
+	if err != nil {
+		return fmt.Errorf("Error retrieving pod list: %s", err.Error())
+	}
+
+	for _, pod := range list.Items {
+		if pod.Status.Phase == corev1.PodFailed {
+			log.Printf("Cleaning up errored pod: %s", pod.Name)
+			kubeClient.CoreV1().Pods(pod.Namespace).Delete(context.TODO(), pod.Name, v1.DeleteOptions{})
+		}
+	}
+
 	podErrorTracker.NewPodErrorTracker(pendingPodThreshold)
 	return waitForClusterReadyWithOverrideAndExpectedNumberOfNodes(clusterID, logger, false, false)
 }

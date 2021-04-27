@@ -198,6 +198,10 @@ func (o *OCMProvider) LaunchCluster(clusterName string) (string, error) {
 
 	var resp *v1.ClustersAddResponse
 
+	if clusterID := o.findRecycledCluster(cluster); clusterID != "" {
+		return clusterID, nil
+	}
+
 	err = retryer().Do(func() error {
 		var err error
 		resp, err = o.conn.ClustersMgmt().V1().Clusters().Add().
@@ -215,6 +219,31 @@ func (o *OCMProvider) LaunchCluster(clusterName string) (string, error) {
 		return "", fmt.Errorf("couldn't create cluster: %v", err)
 	}
 	return resp.Body().ID(), nil
+}
+
+func (o *OCMProvider) findRecycledCluster(cluster *v1.Cluster) string {
+	query := fmt.Sprintf("properties.InstalledVersion='%s' and properties.UpgradeVersion='' and properties.Status='%s'", cluster.Version().ID(), "completed-passing")
+	log.Println(query)
+	listResponse, err := o.conn.ClustersMgmt().V1().Clusters().List().Search(query).Send()
+	if err == nil && listResponse.Total() > 0 {
+		log.Printf("We've found %d matching clusters to reuse", listResponse.Total())
+		recycledCluster := listResponse.Items().Slice()[rand.Intn(listResponse.Total())]
+		if recycledCluster.State() == v1.ClusterStateReady {
+			viper.Set(config.Cluster.Reused, true)
+			log.Println("Hot cluster ready, moving on...")
+			return recycledCluster.ID()
+		}
+		if recycledCluster.State() == "hibernating" && o.Resume(recycledCluster.ID()) {
+			log.Println("Resuming cluster to use...")
+			viper.Set(config.Cluster.Reused, true)
+			return recycledCluster.ID()
+		}
+		log.Printf("Failed to recycle cluster %s", recycledCluster.ID())
+	}
+
+	// We couldn't resume the cluster. We'll log that we failed but continue the test with a new cluster
+	log.Println("Creating a new cluster instead")
+	return ""
 }
 
 // DetermineRegion will return the region provided by configs. This mainly wraps the random functionality for use

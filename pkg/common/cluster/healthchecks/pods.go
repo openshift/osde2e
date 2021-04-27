@@ -50,6 +50,7 @@ func CheckPodHealth(podClient v1.CoreV1Interface, logger *log.Logger, ns string,
 		IsNotReadinessPod,
 		IsNotRunning,
 		IsNotCompleted,
+		IsNotControlledByJob,
 	}
 	podlist, err := checkPods(podClient, logger, filters...)
 	if err != nil {
