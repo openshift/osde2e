@@ -59,7 +59,7 @@ var (
 		{Group: "rbac.authorization.k8s.io", Version: "v1", Resource: "roles"},
 
 		// machine
-		{Group: "machine.openshift.io", Version: "v1", Resource: "machine"},
+		{Group: "machine.openshift.io", Version: "v1beta1", Resource: "machines"},
 
 		// core
 		{Group: "", Version: "v1", Resource: "configmaps"},
