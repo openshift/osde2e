@@ -9,14 +9,15 @@ import (
 	projectv1 "github.com/openshift/api/project/v1"
 	userv1 "github.com/openshift/api/user/v1"
 	"github.com/openshift/osde2e/pkg/common/alert"
+	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/helper"
 	operatorv1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
-	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/rest"
+	"k8s.io/client-go/util/retry"
 )
 
 var dedicatedAdminTestName string = "[Suite: informing] [OSD] dedicated-admin permissions"
@@ -375,16 +376,21 @@ func manageSubscriptions(nsList []string, h *helper.H) error {
 		Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("failed to create subscription %s in namespace %s", newSubscriptionName, ns))
 
 		// check 'get' permission
-		sub, err := subscriptions.Get(context.TODO(), newSubscriptionName, metav1.GetOptions{})
+		_, err = subscriptions.Get(context.TODO(), newSubscriptionName, metav1.GetOptions{})
 		Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("failed to get subscription %s in namespace %s", newSubscriptionName, ns))
 
 		// check 'list' permission
 		_, err = subscriptions.List(context.TODO(), metav1.ListOptions{})
 		Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("failed to list subscription %s in namespace %s", newSubscriptionName, ns))
 
-		// check 'update' permission
-		sub.Spec.Channel = "beta"
-		_, err = subscriptions.Update(context.TODO(), sub, metav1.UpdateOptions{})
+		err = retry.RetryOnConflict(retry.DefaultBackoff, func() error {
+			sub, err := subscriptions.Get(context.TODO(), newSubscriptionName, metav1.GetOptions{})
+			Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("failed to get subscription %s in namespace %s", newSubscriptionName, ns))
+			// check 'update' permission
+			sub.Spec.Channel = "beta"
+			_, err = subscriptions.Update(context.TODO(), sub, metav1.UpdateOptions{})
+			return err
+		})
 		Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("failed to update subscription %s in namespace %s", newSubscriptionName, ns))
 
 		// check 'delete' permission
