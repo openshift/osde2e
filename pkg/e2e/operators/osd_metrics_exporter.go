@@ -43,7 +43,7 @@ var _ = ginkgo.Describe(osdMetricsExporterBasicTest, func() {
 	checkUpgrade(helper.New(), operatorNamespace, operatorName, operatorName, "osd-metrics-exporter-registry")
 })
 
-var _ = ginkgo.FDescribe(osdMetricsExporterEndpointTest, func() {
+var _ = ginkgo.Describe(osdMetricsExporterEndpointTest, func() {
 	var (
 		operatorNamespace = "openshift-osd-metrics"
 		operatorName      = "osd-metrics-exporter"
