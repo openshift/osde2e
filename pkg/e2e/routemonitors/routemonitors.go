@@ -260,55 +260,54 @@ func (rm *RouteMonitors) ExtractData(baseDir string) error {
 
 	for title := range rm.Plots {
 		// Open the plot file
-		htmlfilePath := filepath.Join(outputDirectory, fmt.Sprintf("%s.html", title))
-		file, err := os.Open(htmlfilePath)
+		htmlFilePath := filepath.Join(outputDirectory, fmt.Sprintf("%s.html", title))
+		file, err := os.Open(htmlFilePath)
 		if err != nil {
 			log.Printf("Unable to read route monitor plot file; %v\n", err)
 		}
 
 		// Regex to match numbers for the data variable inside the plot file
-		start_regex := regexp.MustCompile(`var data`)
-		datanum_regex := regexp.MustCompile(`[0-9]*\.?[0-9]+,[0-9]*\.?[0-9]+`)
-
-		// Boolean to only scan for numbers once the line `var data` has passed
-		readdata := false
+		startRegex := regexp.MustCompile(`var data`)
+		dataNumRegex := regexp.MustCompile(`[0-9]*\.?[0-9]+,[0-9]*\.?[0-9]+`)
 
 		// This list stores the numbers
 
-		datalist := make([]RouteMonData, 0)
+		dataList := make([]RouteMonData, 0)
 
 		// Scan each line in the html file to extract data
 		scanner := bufio.NewReader(file)
+	scanLoop:
 		for {
-			filebytes, _, err := scanner.ReadLine()
-			line := strings.TrimSpace(string(filebytes))
-			if len(line) > 0 {
-				if start_regex.MatchString(line) {
-					readdata = true
-				}
-			}
-			if readdata {
-				if datanum_regex.FindString(line) != "" {
-					num_str := strings.Split(start_regex.FindString(line), ",")
-					num_data := RouteMonData{}
-					num_data.Time, err = strconv.ParseFloat(num_str[0], 64)
-					if err != nil {
-						log.Printf("Error while parsing route monitor data values - %v", err)
-					}
-					num_data.Value, err = strconv.ParseFloat(num_str[1], 64)
-					if err != nil {
-						log.Printf("Error while parsing route monitor data values - %v", err)
-					}
-					datalist = append(datalist, num_data)
-				}
-			}
+			fileBytes, _, err := scanner.ReadLine()
 			if err != nil {
-				break
+				break scanLoop
 			}
+			line := strings.TrimSpace(string(fileBytes))
+
+			if readData := len(line) > 0 && startRegex.MatchString(line); !readData {
+				continue scanLoop
+			}
+			if dataNumRegex.FindString(line) == "" {
+				continue scanLoop
+			}
+			numStrings := strings.Split(startRegex.FindString(line), ",")
+			if len(numStrings) < 2 {
+				continue scanLoop
+			}
+			numData := RouteMonData{}
+			numData.Time, err = strconv.ParseFloat(numStrings[0], 64)
+			if err != nil {
+				log.Printf("Error while parsing route monitor data values - %v", err)
+			}
+			numData.Value, err = strconv.ParseFloat(numStrings[1], 64)
+			if err != nil {
+				log.Printf("Error while parsing route monitor data values - %v", err)
+			}
+			dataList = append(dataList, numData)
 		}
 
 		// Store the extracted data corresponding to the plotfile title
-		rm.ReportData[title] = datalist
+		rm.ReportData[title] = dataList
 
 		if err != nil {
 			log.Printf("Error - %v", err.Error())
