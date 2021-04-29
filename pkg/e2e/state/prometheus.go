@@ -42,7 +42,7 @@ var _ = ginkgo.Describe(clusterStateInformingName, func() {
 			names, podNum := verify.GetPodNames("prometheus-operator", list, h)
 			if podNum > 0 {
 				for _, value := range names {
-					if strings.HasPrefix("prometheus-k8s-", value) {
+					if strings.HasPrefix(value, "prometheus-k8s-") {
 						podCount += 1
 					}
 				}
@@ -55,6 +55,7 @@ var _ = ginkgo.Describe(clusterStateInformingName, func() {
 		Expect(poderr).NotTo(HaveOccurred())
 
 		h.SetServiceAccount("system:serviceaccount:%s:cluster-admin")
+
 		r := h.Runner(cmd)
 		r.Name = "collect-prometheus"
 
