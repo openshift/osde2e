@@ -13,10 +13,10 @@ import (
 	"github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/openshift/osde2e/pkg/common/alert"
+	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/providers"
-	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -125,7 +125,7 @@ var _ = ginkgo.Describe(ocmTestName, func() {
 			// construct a pod that should force a pull
 			pod := &v1.Pod{
 				ObjectMeta: metav1.ObjectMeta{
-					Name: "try-pull",
+					GenerateName: "try-pull",
 				},
 				Spec: v1.PodSpec{
 					RestartPolicy: v1.RestartPolicyNever,
