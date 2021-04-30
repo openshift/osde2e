@@ -10,8 +10,8 @@ import (
 	"strings"
 
 	"github.com/markbates/pkger"
-	"github.com/openshift/osde2e/pkg/common/config"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
+	"github.com/openshift/osde2e/pkg/common/config"
 )
 
 const (
@@ -66,6 +66,30 @@ func Configs(configs []string, customConfig string, secretLocations []string) er
 		for key, secretFilename := range secrets {
 			loadSecretFileIntoKey(key, secretFilename, secretLocations)
 		}
+
+		for _, folder := range secretLocations {
+			passthruSecrets := viper.GetStringMapString(config.NonOSDe2eSecrets)
+			if !strings.Contains(folder, "osde2e-credentials") && !strings.Contains(folder, "osde2e-common") {
+				continue
+			}
+
+			err := filepath.Walk(folder, func(path string, info os.FileInfo, err error) error {
+				if err != nil {
+					return fmt.Errorf("Error walking folder %s: %s", folder, err.Error())
+				}
+				data, err := ioutil.ReadFile(path)
+				if err != nil {
+					return fmt.Errorf("error loading passthru-secret file %s", path)
+				}
+				passthruSecrets[info.Name()] = strings.TrimSpace(string(data))
+				return nil
+			})
+			if err != nil {
+				log.Printf("Error loading secret: %s", err.Error())
+			}
+			viper.Set(config.NonOSDe2eSecrets, passthruSecrets)
+		}
+
 	}
 
 	// 4. Config post-processing.

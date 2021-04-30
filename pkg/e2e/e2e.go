@@ -4,6 +4,7 @@ package e2e
 import (
 	"bytes"
 	"compress/gzip"
+	"context"
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
@@ -19,6 +20,8 @@ import (
 
 	junit "github.com/joshdk/go-junit"
 	vegeta "github.com/tsenart/vegeta/lib"
+	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	pd "github.com/PagerDuty/go-pagerduty"
 	"github.com/onsi/ginkgo"
@@ -163,6 +166,26 @@ func beforeSuite() bool {
 			log.Printf("No kubeconfig contents found, but there should be some by now.")
 		}
 		getLogs()
+	}
+
+	// If there are test harnesses present, we need to populate the
+	// secrets into the test cluster
+	if viper.GetString(config.Addons.TestHarnesses) != "" {
+		secretsNamespace := "ci-secrets"
+		h := helper.NewOutsideGinkgo()
+		h.CreateProject(secretsNamespace)
+
+		_, err := h.Kube().CoreV1().Secrets("osde2e-"+secretsNamespace).Create(context.TODO(), &v1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "ci-secrets",
+				Namespace: "osde2e-" + secretsNamespace,
+			},
+			StringData: viper.GetStringMapString(config.NonOSDe2eSecrets),
+		}, metav1.CreateOptions{})
+
+		if err != nil {
+			log.Printf("Error creating Prow secrets in-cluster: %s", err.Error())
+		}
 	}
 	return true
 }

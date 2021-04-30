@@ -65,6 +65,10 @@ const (
 
 	// Default network provider for OSD
 	DefaultNetworkProvider = "OpenShiftSDN"
+
+	// NonOSDe2eSecrets is an internal-only Viper Key.
+	// End users should not be using this key, there may be unforeseen consequences.
+	NonOSDe2eSecrets = "nonOSDe2eSecrets"
 )
 
 // This is a config key to secret file mapping. We will attempt to read in from secret files before loading anything else.
