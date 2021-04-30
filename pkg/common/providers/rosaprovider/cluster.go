@@ -9,12 +9,12 @@ import (
 
 	"github.com/Masterminds/semver"
 	cmv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
+	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/spi"
 	"github.com/openshift/osde2e/pkg/common/util"
 	"github.com/openshift/rosa/pkg/cluster"
 	"github.com/openshift/rosa/pkg/ocm/versions"
-	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 )
 
 // IsValidClusterName validates the clustername prior to proceeding with it
@@ -166,9 +166,6 @@ func (m *ROSAProvider) Versions() (*spi.VersionList, error) {
 		if version, err := util.OpenshiftVersionToSemver(v.ID()); err != nil {
 			log.Printf("could not parse version '%s': %v", v.ID(), err)
 		} else if v.Enabled() {
-			if (m.Environment() == "stage" || m.Environment() == "prod") && v.ChannelGroup() != "stable" {
-				continue
-			}
 			if v.Default() {
 				defaultVersionOverride = version
 			}
