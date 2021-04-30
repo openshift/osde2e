@@ -2,9 +2,6 @@ package operators
 
 import (
 	"context"
-	"fmt"
-	"net/http"
-
 	"github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/openshift/osde2e/pkg/common/alert"
@@ -46,7 +43,6 @@ var _ = ginkgo.Describe(osdMetricsExporterBasicTest, func() {
 
 func checkService(h *helper.H, namespace string, name string, port int) {
 	pollTimeout := viper.GetFloat64(config.Tests.PollingTimeout)
-	serviceEndpoint := fmt.Sprintf("http://%s.%s:%d/metrics", name, namespace, port)
 	ginkgo.Context("service", func() {
 		ginkgo.It(
 			"should exist",
@@ -58,16 +54,6 @@ func checkService(h *helper.H, namespace string, name string, port int) {
 					}
 					return true
 				}, "30m", "1m").Should(BeTrue())
-			},
-			pollTimeout,
-		)
-		ginkgo.It(
-			"should return response",
-			func() {
-				Eventually(func() (*http.Response, error) {
-					response, err := http.Get(serviceEndpoint)
-					return response, err
-				}, "30m", "1m").Should(HaveHTTPStatus(http.StatusOK))
 			},
 			pollTimeout,
 		)
