@@ -19,7 +19,7 @@ ifndef $(GOPATH)
     export GOPATH
 endif
 
-check: shellcheck diffproviders.txt diffreporters.txt
+check: shellcheck vipercheck diffproviders.txt diffreporters.txt
 	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(shell go env GOPATH)/bin v1.23.8
 	(cd "$(DIR)"; golangci-lint run -c .golang-ci.yml ./...)
 	cmp -s diffproviders.txt "$(DIR)pkg/common/providers/providers_generated.go"
@@ -29,6 +29,9 @@ check: shellcheck diffproviders.txt diffreporters.txt
 
 shellcheck:
 	find "$(DIR)scripts" -name "*.sh" -exec $(DIR)scripts/shellcheck.sh {} +
+
+vipercheck:
+	@if [ "$(shell go list -f '{{.Name}} {{.Imports}}' ./... | grep -v -E "^concurrentviper" | grep 'github.com/spf13/viper'| wc -l)" -gt 0 ]; then echo "Error: Code contains direct import of github.com/spf13/viper, use github.com/openshift/osde2e/pkg/common/concurrentviper instead."; fi
 
 build-image:
 	$(CONTAINER_ENGINE) build -f "$(DIR)Dockerfile.osde2e" -t "$(OSDE2E_IMAGE_NAME):$(IMAGE_TAG)" .
