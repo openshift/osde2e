@@ -29,12 +29,22 @@ import (
 
 func checkClusterServiceVersion(h *helper.H, namespace, name string) {
 	// Check that the operator clusterServiceVersion exists
-	ginkgo.Context("clusterServiceVersion", func() {
-		ginkgo.It("should exist", func() {
-			csvs, err := pollCsvList(h, namespace, name)
-			Expect(err).ToNot(HaveOccurred(), "failed fetching the clusterServiceVersions")
-			Expect(csvs).NotTo(BeNil())
-		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
+	ginkgo.Context(fmt.Sprintf("clusterServiceVersion %s/%s", namespace, name), func() {
+		ginkgo.It("should be present and in succeeded state", func() {
+			Eventually(func() bool {
+				csvList, err := h.Operator().OperatorsV1alpha1().ClusterServiceVersions(namespace).List(context.TODO(), metav1.ListOptions{})
+				if err != nil {
+					log.Printf("failed to get CSVs in namespace %s: %v", namespace, err)
+					return false
+				}
+				for _, csv := range csvList.Items {
+					if csv.Spec.DisplayName == name && csv.Status.Phase == operatorv1.CSVPhaseSucceeded {
+						return true
+					}
+				}
+				return false
+			}, "30m", "15s").Should(BeTrue())
+		}, viper.GetFloat64(config.Tests.PollingTimeout))
 	})
 }
 
@@ -432,63 +442,6 @@ Loop:
 	}
 
 	return deployment, err
-}
-
-func pollCsvList(h *helper.H, namespace, csvDisplayName string) (*operatorv1.ClusterServiceVersionList, error) {
-	// pollCsvList polls for clusterServiceVersions with a timeout
-	// to handle the case when a new cluster is up but the OLM has not yet
-	// finished deploying the operator
-
-	var err error
-	var csvList *operatorv1.ClusterServiceVersionList
-
-	// interval is the duration in seconds between polls
-	// values here for humans
-	interval := 5
-
-	// convert time.Duration type
-	timeoutDuration := time.Duration(viper.GetFloat64(config.Tests.PollingTimeout)) * time.Minute
-	intervalDuration := time.Duration(interval) * time.Second
-
-	start := time.Now()
-
-Loop:
-	for {
-		csvList, err = h.Operator().OperatorsV1alpha1().ClusterServiceVersions(namespace).List(context.TODO(), metav1.ListOptions{})
-
-	CSVCheck:
-		for _, csv := range csvList.Items {
-			switch {
-			case csvDisplayName == csv.Spec.DisplayName:
-				// Success
-				err = nil
-				// Don't check any other CSVs since we found the target
-				break CSVCheck
-			default:
-				err = fmt.Errorf("No matching clusterServiceVersion in CSV List")
-			}
-		}
-		elapsed := time.Since(start)
-
-		switch {
-		case err == nil:
-			// Success
-			break Loop
-		case strings.Contains(err.Error(), "forbidden"):
-			return nil, err
-		default:
-			if elapsed < timeoutDuration {
-				log.Printf("Waiting %v for %s clusterServiceVersion to exist", (timeoutDuration - elapsed), csvDisplayName)
-				time.Sleep(intervalDuration)
-			} else {
-				csvList = nil
-				err = fmt.Errorf("Failed to get %s clusterServiceVersion before timeout", csvDisplayName)
-				break Loop
-			}
-		}
-	}
-
-	return csvList, err
 }
 
 func getReplacesCSV(h *helper.H, subscriptionNS string, csvDisplayName string, catalogSvcName string) (string, error) {
