@@ -6,7 +6,7 @@ import (
 	"net/http"
 
 	"github.com/onsi/ginkgo"
-	"github.com/onsi/gomega"
+	. "github.com/onsi/gomega"
 	"github.com/openshift/osde2e/pkg/common/alert"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/helper"
@@ -17,7 +17,6 @@ import (
 var (
 	osdMetricsExporterTestPrefix   = "[Suite: operators] [OSD] OSD Metrics Exporter"
 	osdMetricsExporterBasicTest    = osdMetricsExporterTestPrefix + " Basic Test"
-	osdMetricsExporterEndpointTest = osdMetricsExporterTestPrefix + " Endpoint Test"
 )
 
 func init() {
@@ -34,23 +33,15 @@ var _ = ginkgo.Describe(osdMetricsExporterBasicTest, func() {
 		clusterRoleBindings = []string{
 			"osd-metrics-exporter",
 		}
+		servicePort = 8383
 	)
 	h := helper.New()
 	checkClusterServiceVersion(h, operatorNamespace, operatorName)
 	checkDeployment(h, operatorNamespace, operatorName, 1)
 	checkClusterRoles(h, clusterRoles, true)
 	checkClusterRoleBindings(h, clusterRoleBindings, true)
-	checkUpgrade(helper.New(), operatorNamespace, operatorName, operatorName, "osd-metrics-exporter-registry")
-})
-
-var _ = ginkgo.Describe(osdMetricsExporterEndpointTest, func() {
-	var (
-		operatorNamespace = "openshift-osd-metrics"
-		operatorName      = "osd-metrics-exporter"
-		servicePort       = 8383
-	)
-	h := helper.New()
 	checkService(h, operatorNamespace, operatorName, servicePort)
+	checkUpgrade(helper.New(), operatorNamespace, operatorName, operatorName, "osd-metrics-exporter-registry")
 })
 
 func checkService(h *helper.H, namespace string, name string, port int) {
@@ -60,18 +51,23 @@ func checkService(h *helper.H, namespace string, name string, port int) {
 		ginkgo.It(
 			"should exist",
 			func() {
-				service, err := h.Kube().CoreV1().Services(namespace).Get(context.Background(), name, metav1.GetOptions{})
-				gomega.Expect(err).NotTo(gomega.HaveOccurred())
-				gomega.Expect(service).NotTo(gomega.BeNil())
+				Eventually(func() bool {
+					_, err := h.Kube().CoreV1().Services(namespace).Get(context.Background(), name, metav1.GetOptions{})
+					if err != nil {
+						return false
+					}
+					return true
+				}, "30m", "1m").Should(BeTrue())
 			},
 			pollTimeout,
 		)
 		ginkgo.It(
 			"should return response",
 			func() {
-				response, err := http.Get(serviceEndpoint)
-				gomega.Expect(err).ToNot(gomega.HaveOccurred())
-				gomega.Expect(response).To(gomega.HaveHTTPStatus(http.StatusOK))
+				Eventually(func() (*http.Response, error) {
+					response, err := http.Get(serviceEndpoint)
+					return response, err
+				}, "30m", "1m").Should(HaveHTTPStatus(http.StatusOK))
 			},
 			pollTimeout,
 		)
