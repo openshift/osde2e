@@ -35,8 +35,8 @@ var _ = ginkgo.Describe(configureAlertManagerOperators, func() {
 	checkClusterRoles(h, clusterRoles, true)
 	checkClusterRoleBindings(h, clusterRoleBindings, true)
 	checkServiceAccounts(h, operatorNamespace, serviceAccounts)
-	checkRolesWithNamePrefix(h, operatorNamespace, operatorName, 2)
-	checkRoleBindingsWithNamePrefix(h, operatorNamespace, operatorName, 2)
+	checkRolesWithNamePrefix(h, operatorNamespace, operatorName, 1)
+	checkRoleBindingsWithNamePrefix(h, operatorNamespace, operatorName, 1)
 	checkUpgrade(helper.New(), "openshift-monitoring", "configure-alertmanager-operator",
 		"configure-alertmanager-operator", "configure-alertmanager-operator-registry")
 })
