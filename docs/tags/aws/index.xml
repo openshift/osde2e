@@ -6,10 +6,19 @@
     <description>Recent content in aws on OSDe2e Reporting</description>
     <generator>Hugo -- gohugo.io</generator>
     <copyright>Copyright © 2020, Red Hat, all rights reserved.</copyright>
-    <lastBuildDate>Sun, 02 May 2021 12:00:22 +0000</lastBuildDate>
+    <lastBuildDate>Mon, 03 May 2021 12:00:24 +0000</lastBuildDate>
     
 	<atom:link href="https://openshift.github.io/osde2e/tags/aws/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>OSDe2e aws Weather Report 2021-05-03 12:00:24.157875591 &#43;0000 UTC</title>
+      <link>https://openshift.github.io/osde2e/post/7afee6249711439cbda3a4401c50c497/</link>
+      <pubDate>Mon, 03 May 2021 12:00:24 +0000</pubDate>
+      
+      <guid>https://openshift.github.io/osde2e/post/7afee6249711439cbda3a4401c50c497/</guid>
+      <description>&lt;table class=&#34;summary&#34;&gt;&lt;tr&gt;&lt;td bgcolor=&#34;#0ef100&#34;&gt;&lt;/td&gt;&lt;td&gt;prod (Pass rate: 99.49)&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td bgcolor=&#34;#09f600&#34;&gt;&lt;/td&gt;&lt;td&gt;stage (Pass rate: 99.68)&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;</description>
+    </item>
     
     <item>
       <title>OSDe2e aws Weather Report 2021-05-02 12:00:22.121501038 &#43;0000 UTC</title>
