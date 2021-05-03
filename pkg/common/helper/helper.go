@@ -352,3 +352,13 @@ func (h *H) GetClusterVersion() (*configv1.ClusterVersion, error) {
 	}
 	return clusterVersionObj, nil
 }
+
+// WithToken returns helper with a given bearer token
+func (h *H) WithToken(token string) *H {
+        config := rest.AnonymousClientConfig(h.restConfig)
+        config.BearerToken = token
+        return &H{
+                restConfig: config,
+        }
+}
+
