@@ -16,9 +16,9 @@ import (
 	v1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 	"github.com/openshift/osde2e/pkg/common/aws"
 	"github.com/openshift/osde2e/pkg/common/clusterproperties"
+	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/spi"
-	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"k8s.io/apimachinery/pkg/util/wait"
 )
 
@@ -223,7 +223,7 @@ func (o *OCMProvider) LaunchCluster(clusterName string) (string, error) {
 
 func (o *OCMProvider) findRecycledCluster(cluster *v1.Cluster) string {
 	query := fmt.Sprintf("properties.InstalledVersion='%s' and properties.UpgradeVersion='' and properties.Status='%s'", cluster.Version().ID(), "completed-passing")
-	log.Println(query)
+
 	listResponse, err := o.conn.ClustersMgmt().V1().Clusters().List().Search(query).Send()
 	if err == nil && listResponse.Total() > 0 {
 		log.Printf("We've found %d matching clusters to reuse", listResponse.Total())
@@ -939,6 +939,11 @@ func (o *OCMProvider) ExtendExpiry(clusterID string, hours uint64, minutes uint6
 	}
 
 	extendexpirytime := cluster.ExpirationTimestamp()
+
+	if extendexpirytime.Year() < 2000 {
+		log.Println("Cluster does not have an expiration!")
+		return nil
+	}
 
 	if hours != 0 {
 		extendexpirytime = extendexpirytime.Add(time.Duration(hours) * time.Hour).UTC()

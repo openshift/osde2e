@@ -143,7 +143,7 @@ func WaitForClusterReadyPostScale(clusterID string, logger *log.Logger) error {
 }
 
 // WaitForClusterReadyPostWake blocks until the cluster is ready for testing, deletes errored pods, and then uses
-// healthcheck mechanisms appropriate for after the cluster has been scaled.
+// healthcheck mechanisms appropriate for after the cluster resumed from hibernation.
 func WaitForClusterReadyPostWake(clusterID string, logger *log.Logger) error {
 	log.Printf("Cluster %s just woke up, waiting for 10 minutes...", clusterID)
 	time.Sleep(10 * time.Minute)
@@ -158,16 +158,21 @@ func WaitForClusterReadyPostWake(clusterID string, logger *log.Logger) error {
 		return fmt.Errorf("Error generating Kube Clientset: %v\n", err)
 	}
 
-	list, err := kubeClient.CoreV1().Pods("").List(context.TODO(), v1.ListOptions{})
-	if err != nil {
-		return fmt.Errorf("Error retrieving pod list: %s", err.Error())
+	var continueToken string
+	nextPods := func() (*corev1.PodList, error) {
+		return kubeClient.CoreV1().Pods("").List(context.TODO(), v1.ListOptions{Continue: continueToken})
 	}
-
-	for _, pod := range list.Items {
-		if pod.Status.Phase == corev1.PodFailed {
-			log.Printf("Cleaning up errored pod: %s", pod.Name)
-			kubeClient.CoreV1().Pods(pod.Namespace).Delete(context.TODO(), pod.Name, v1.DeleteOptions{})
+	for list, err := nextPods(); list.Size() > 0; list, err = nextPods() {
+		if err != nil {
+			return fmt.Errorf("Error retrieving pod list: %s", err.Error())
 		}
+		for _, pod := range list.Items {
+			if pod.Status.Phase == corev1.PodFailed {
+				log.Printf("Cleaning up errored pod: %s", pod.Name)
+				kubeClient.CoreV1().Pods(pod.Namespace).Delete(context.TODO(), pod.Name, v1.DeleteOptions{})
+			}
+		}
+		continueToken = list.Continue
 	}
 
 	podErrorTracker.NewPodErrorTracker(pendingPodThreshold)
