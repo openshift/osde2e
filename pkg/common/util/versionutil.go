@@ -2,6 +2,10 @@ package util
 
 import (
 	"github.com/Masterminds/semver"
+	"github.com/onsi/ginkgo"
+	ginkgoConfig "github.com/onsi/ginkgo/config"
+	. "github.com/onsi/gomega"
+	v1 "github.com/openshift/api/config/v1"
 )
 
 var (
@@ -16,8 +20,29 @@ var (
 
 	// Version460 represents Openshift version 4.6.0 and above
 	Version460 *semver.Constraints
-
 )
+
+// ClusterVersionProvider is a type that can return cluster version
+// information. The *helper.H type implements this interface.
+type ClusterVersionProvider interface {
+	GetClusterVersion() (*v1.ClusterVersion, error)
+}
+
+// OnSupportedVersionIt runs a ginkgo It() if and only if the cluster version meets the provided constraint.
+// The cluster version is looked up using the provided helper.H.
+func OnSupportedVersionIt(constraints *semver.Constraints, helper ClusterVersionProvider, description string, f interface{}, timeout ...float64) {
+	getVersion := func() *semver.Version {
+		ver, err := helper.GetClusterVersion()
+		Expect(err).ToNot(HaveOccurred())
+		return semver.MustParse(ver.Status.Desired.Version)
+	}
+
+	if ginkgoConfig.GinkgoConfig.DryRun || constraints.Check(getVersion()) {
+		ginkgo.It(description, f, timeout...)
+		return
+	}
+	ginkgo.Skip(description)
+}
 
 func init() {
 	var err error

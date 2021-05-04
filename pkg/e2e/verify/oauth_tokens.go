@@ -8,18 +8,13 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/Masterminds/semver"
 	"github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	configv1 "github.com/openshift/api/config/v1"
 	oauthv1 "github.com/openshift/api/oauth/v1"
 	userv1 "github.com/openshift/api/user/v1"
 
-        viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
-	"github.com/openshift/osde2e/pkg/common/cluster"
-	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/helper"
-	"github.com/openshift/osde2e/pkg/common/providers"
 	"github.com/openshift/osde2e/pkg/common/util"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -31,22 +26,6 @@ var oauthTokensTestIdleTimeout time.Duration = 5 * time.Minute // minimum accept
 var _ = ginkgo.Describe(oauthTokensTestName, func() {
 
 	h := helper.New()
-
-	getVersion := func() *semver.Version {
-		provider, err := providers.ClusterProvider()
-		Expect(err).ToNot(HaveOccurred())
-		version, err := cluster.GetClusterVersion(provider, viper.GetString(config.Cluster.ID))
-		Expect(err).ToNot(HaveOccurred())
-		return version
-	}
-
-	onSupportedVersionIt := func(description string, f interface{}, timeout ...float64) {
-		if util.Version460.Check(getVersion()) {
-			ginkgo.It(description, f, timeout...)
-		} else {
-			ginkgo.PIt(description, f)
-		}
-	}
 
 	ginkgo.PContext("global token config", func() {
 
@@ -64,7 +43,7 @@ var _ = ginkgo.Describe(oauthTokensTestName, func() {
 			Expect(tokenConfig.AccessTokenMaxAgeSeconds).ToNot(BeZero(), "access token max age setting should not be zero")
 		})
 
-		onSupportedVersionIt("should include token inactivity timeout", func() {
+		util.OnSupportedVersionIt(util.Version460, h, "should include token inactivity timeout", func() {
 			tokenConfig := oauthcfg.Spec.TokenConfig
 			Expect(tokenConfig).ShouldNot(BeNil(), "tokenConfig should be set")
 			Expect(tokenConfig.AccessTokenInactivityTimeoutSeconds).ToNot(BeZero(), "access token idle timeout setting should not be zero")
@@ -84,21 +63,21 @@ var _ = ginkgo.Describe(oauthTokensTestName, func() {
 			Expect(client).ToNot(BeNil())
 		})
 
-		onSupportedVersionIt("should be present on oauthaccesstokens", func() {
+		util.OnSupportedVersionIt(util.Version460, h, "should be present on oauthaccesstokens", func() {
 			_, oauthAccessToken := simulateLogin(user, client, h)
 			Expect(oauthAccessToken.ExpiresIn).ToNot(BeZero(), "oauthaccesstoken expiry time should not be zero")
 			Expect(oauthAccessToken.InactivityTimeoutSeconds).ToNot(BeZero(), "oauthaccesstoken idle timeout should not be zero")
 		})
 
-		onSupportedVersionIt("should not affect active sessions", func() {
+		util.OnSupportedVersionIt(util.Version460, h, "should not affect active sessions", func() {
 			bearerToken, _ := simulateLogin(user, client, h)
 			tokenCheck := verifyUserToken(bearerToken, user, h)
 			Expect(tokenCheck()).To(BeTrue(), "bearer token should be valid")
-			Consistently(tokenCheck, oauthTokensTestIdleTimeout + time.Minute, time.Minute).
+			Consistently(tokenCheck, oauthTokensTestIdleTimeout+time.Minute, time.Minute).
 				Should(BeTrue(), "bearer token should still be valid")
 		}, (oauthTokensTestIdleTimeout + (2 * time.Minute)).Seconds())
 
-		onSupportedVersionIt("should end idle sessions", func() {
+		util.OnSupportedVersionIt(util.Version460, h, "should end idle sessions", func() {
 			bearerToken, _ := simulateLogin(user, client, h)
 			tokenCheck := verifyUserToken(bearerToken, user, h)
 			Expect(tokenCheck()).To(BeTrue(), "bearer token should be valid")
