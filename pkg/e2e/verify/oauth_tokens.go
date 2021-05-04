@@ -48,7 +48,7 @@ var _ = ginkgo.Describe(oauthTokensTestName, func() {
 		}
 	}
 
-	ginkgo.Context("global token config", func() {
+	ginkgo.PContext("global token config", func() {
 
 		var oauthcfg *configv1.OAuth
 
@@ -72,7 +72,7 @@ var _ = ginkgo.Describe(oauthTokensTestName, func() {
 
 	})
 
-	ginkgo.Context("oauth token timeout", func() {
+	ginkgo.PContext("oauth token timeout", func() {
 
 		var user *userv1.User
 		var client *oauthv1.OAuthClient
