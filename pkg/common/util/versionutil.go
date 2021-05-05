@@ -3,7 +3,6 @@ package util
 import (
 	"github.com/Masterminds/semver"
 	"github.com/onsi/ginkgo"
-	ginkgoConfig "github.com/onsi/ginkgo/config"
 	. "github.com/onsi/gomega"
 	v1 "github.com/openshift/api/config/v1"
 )
@@ -30,18 +29,19 @@ type ClusterVersionProvider interface {
 
 // OnSupportedVersionIt runs a ginkgo It() if and only if the cluster version meets the provided constraint.
 // The cluster version is looked up using the provided helper.H.
-func OnSupportedVersionIt(constraints *semver.Constraints, helper ClusterVersionProvider, description string, f interface{}, timeout ...float64) {
+func OnSupportedVersionIt(constraints *semver.Constraints, helper ClusterVersionProvider, description string, f func(), timeout ...float64) {
 	getVersion := func() *semver.Version {
 		ver, err := helper.GetClusterVersion()
 		Expect(err).ToNot(HaveOccurred())
 		return semver.MustParse(ver.Status.Desired.Version)
 	}
 
-	if ginkgoConfig.GinkgoConfig.DryRun || constraints.Check(getVersion()) {
-		ginkgo.It(description, f, timeout...)
-		return
-	}
-	ginkgo.Skip(description)
+	ginkgo.It(description, func() {
+		if !constraints.Check(getVersion()) {
+			ginkgo.Skip("unsupported version")
+		}
+		f()
+	}, timeout...)
 }
 
 func init() {
