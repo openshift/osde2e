@@ -616,6 +616,7 @@ github.com/googleapis/gnostic v0.4.1 h1:DLJCy1n/vrD4HPjOvYcT8aYQXpPIzoRZONaYwyyc
 github.com/googleapis/gnostic v0.4.1/go.mod h1:LRhVm6pbyptWbWbuZ38d1eyptfvIytN3ir6b65WBswg=
 github.com/gophercloud/gophercloud v0.1.0/go.mod h1:vxM41WHh5uqHVBMZHzuwNOHh8XEoIEcSTewFxm1c5g8=
 github.com/gophercloud/gophercloud v0.2.0/go.mod h1:vxM41WHh5uqHVBMZHzuwNOHh8XEoIEcSTewFxm1c5g8=
+github.com/gophercloud/gophercloud v0.3.0/go.mod h1:vxM41WHh5uqHVBMZHzuwNOHh8XEoIEcSTewFxm1c5g8=
 github.com/gopherjs/gopherjs v0.0.0-20181017120253-0766667cb4d1 h1:EGx4pi6eqNxGaHF6qqu48+N2wcFQ5qg5FXgOdqsJ5d8=
 github.com/gopherjs/gopherjs v0.0.0-20181017120253-0766667cb4d1/go.mod h1:wJfORRmW1u3UXTncJ5qlYoELFm8eSnnEO6hX4iZ3EWY=
 github.com/gorilla/context v1.1.1/go.mod h1:kBGZzfjB9CEq2AlWe17Uuf7NDRt0dE0s8S51q0aT7Yg=
@@ -964,6 +965,7 @@ github.com/openshift-online/ocm-sdk-go v0.1.166/go.mod h1:/DStCZJQ2XOV/ktkODyVnU
 github.com/openshift/api v0.0.0-20200526144822-34f54f12813a h1:riE/kCXnb051RWT/z+DytxKEZ3+JromVDl79rXAKyFY=
 github.com/openshift/api v0.0.0-20200526144822-34f54f12813a/go.mod h1:l6TGeqJ92DrZBuWMNKcot1iZUHfbYSJyBWHGgg6Dn6s=
 github.com/openshift/build-machinery-go v0.0.0-20200424080330-082bf86082cc/go.mod h1:1CkcsT3aVebzRBzVTSbiKSkJMsC/CASqxesfqEMfJEc=
+github.com/openshift/certman-operator v1.0.0/go.mod h1:sJjfSfsoChSswv5y37sPCPa3avNGvWyKLDXLk7EGLmI=
 github.com/openshift/client-go v0.0.0-20200521150516-05eb9880269c h1:l7CmbzzkyWl4Y6qHmy6m4FvbH4iLnIXGrXqOfE5IFNA=
 github.com/openshift/client-go v0.0.0-20200521150516-05eb9880269c/go.mod h1:kCMeo6IE4o4qvnepM9lgHQ4j/ZFfvY/N/2G/jpJdwm4=
 github.com/openshift/cloud-ingress-operator v0.0.0-20200922213113-a2e288b3cc76 h1:ziIWXLWbxaCoTQ9o9JZpeKGfPtny1/1PD6U/b3XWmGw=
@@ -971,6 +973,8 @@ github.com/openshift/cloud-ingress-operator v0.0.0-20200922213113-a2e288b3cc76/g
 github.com/openshift/cluster-api v0.0.0-20191129101638-b09907ac6668 h1:IDZyg/Kye98ptqpc9j9rzPjZJlijjEDe8g7TZ67CmLU=
 github.com/openshift/cluster-api v0.0.0-20191129101638-b09907ac6668/go.mod h1:T18COkr6nLh9RyZKPMP7YjnwBME7RX8P2ar1SQbBltM=
 github.com/openshift/cluster-version-operator v3.11.1-0.20190629164025-08cac1c02538+incompatible/go.mod h1:0BbpR1mrN0F2ZRae5N1XHcytmkvVPaeKgSQwRRBWugc=
+github.com/openshift/custom-domains-operator v0.0.0-20210423153044-6e7655fbdecf h1:vbSzdZ29gHf325wDWQ2AV3bJYvxmFSkXFC0XF9TF4cQ=
+github.com/openshift/custom-domains-operator v0.0.0-20210423153044-6e7655fbdecf/go.mod h1:lT4xTRK/K3H4j+GFXMHLAN5d6mhe0qsGCT31p20kOhM=
 github.com/openshift/library-go v0.0.0-20200512120242-21a1ff978534/go.mod h1:2kWwXTkpoQJUN3jZ3QW88EIY1hdRMqxgRs2hheEW/pg=
 github.com/openshift/machine-api-operator v0.2.1-0.20200226185612-9b0170a1ba07/go.mod h1:b3huCV+DbroXP1sHtsU5xBwx97zqc6GKB5owyl2zsNM=
 github.com/openshift/machine-api-operator v0.2.1-0.20200529045911-d19e8d007f7c h1:HKDaAPanhzB1w9wi9EHbRouWZ2ZbmrD4TrM7Au47Q40=
@@ -979,6 +983,7 @@ github.com/openshift/machine-config-operator v4.2.0-alpha.0.0.20190917115525-033
 github.com/openshift/managed-upgrade-operator v0.0.0-20200820052802-5d57e1785b53 h1:e8F2JBoojgka2S9Ij5WslGUuTzt9185Djukda4KpPDQ=
 github.com/openshift/managed-upgrade-operator v0.0.0-20200820052802-5d57e1785b53/go.mod h1:ds7uALiqWAx+Z0Ru/NcSUIp55jgxbkzfb6wMwG2cMhQ=
 github.com/openshift/operator-custom-metrics v0.3.0/go.mod h1:4k6G9+KHKg6r/ShP8Vi9YFnpJ5fbHPkQsYCUlzMwtYQ=
+github.com/openshift/operator-custom-metrics v0.4.2/go.mod h1:pF8VqYYaJrZo780/ebeMDcaI20ETzJuUSDHGXSzjWwk=
 github.com/openshift/origin v0.0.0-20160503220234-8f127d736703/go.mod h1:0Rox5r9C8aQn6j1oAOQ0c1uC86mYbUFObzjBRvUKHII=
 github.com/openshift/prom-label-proxy v0.1.1-0.20191016113035-b8153a7f39f1/go.mod h1:p5MuxzsYP1JPsNGwtjtcgRHHlGziCJJfztff91nNixw=
 github.com/openshift/rosa v1.0.2 h1:9JuamKW+/fT+GYjv1uukHmnczsFuhTutluhaeBi/ns4=

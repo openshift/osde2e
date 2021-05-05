@@ -30,6 +30,7 @@ require (
 	github.com/openshift/client-go v0.0.0-20200326155132-2a6cd50aedd0
 	github.com/openshift/cloud-ingress-operator v0.0.0-20200922213113-a2e288b3cc76
 	github.com/openshift/cluster-api v0.0.0-20191129101638-b09907ac6668
+	github.com/openshift/custom-domains-operator v0.0.0-20210423153044-6e7655fbdecf
 	github.com/openshift/machine-api-operator v0.2.1-0.20200529045911-d19e8d007f7c
 	github.com/openshift/managed-upgrade-operator v0.0.0-20200820052802-5d57e1785b53
 	github.com/openshift/rosa v1.0.2
