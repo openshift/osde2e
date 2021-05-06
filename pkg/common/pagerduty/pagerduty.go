@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"sort"
+	"strings"
 	"time"
 
 	pd "github.com/PagerDuty/go-pagerduty"
@@ -101,7 +102,10 @@ func MergeIncidentsByTitle(c *pd.Client, incidents []pd.Incident) error {
 	titleToIncident := make(map[string][]pd.Incident)
 
 	for _, incident := range incidents {
-		titleToIncident[incident.Title] = append(titleToIncident[incident.Title], incident)
+		title := incident.Title
+		title = strings.TrimPrefix(title, "[install] ")
+		title = strings.TrimPrefix(title, "[upgrade] ")
+		titleToIncident[title] = append(titleToIncident[title], incident)
 	}
 
 	for _, incidents := range titleToIncident {
