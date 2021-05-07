@@ -39,6 +39,8 @@ import (
 
 const (
 	customDomainsOperatorTestName = "[Suite: operators] [OSD] Custom Domains Operator"
+	pollInterval = 30 * time.Second
+	pollTimeout = 15 * time.Minute
 )
 
 
@@ -50,7 +52,6 @@ func init() {
 var _ = ginkgo.Describe(customDomainsOperatorTestName, func() {
 
 	ginkgo.Context("Should allow dedicated-admins to create domains", func() {
-
 		var (
 			err error
 			h = helper.New()
@@ -61,29 +62,18 @@ var _ = ginkgo.Describe(customDomainsOperatorTestName, func() {
 
 		ginkgo.BeforeEach(func(){
 			ginkgo.By("Logging in as a dedicated-admin")
-
 			h.Impersonate(rest.ImpersonationConfig{
 				UserName: "dummy-admin@redhat.com",
 				Groups: []string{
 					"dedicated-admins",
 				},
-
 			})
 
-
 			ginkgo.By("Creating an ssl certificate and tls secret in OSD")
-
-			secretData := make(map[string][]byte)
-			testDomainName := testInstanceName + ".io"
-
 			customDomainRSAKey, err := rsa.GenerateKey(rand.Reader, 4096)
 			Expect(err).ToNot(HaveOccurred())
 
-			secretData["tls.key"] = pem.EncodeToMemory(&pem.Block{
-				Type: "RSA PRIVATE KEY",
-				Bytes: x509.MarshalPKCS1PrivateKey(customDomainRSAKey),
-			})
-
+			testDomainName := testInstanceName + ".io"
 			customDomainX509Template := &x509.Certificate{
 				SerialNumber: big.NewInt(1),
 				Subject: pkix.Name{
@@ -100,6 +90,11 @@ var _ = ginkgo.Describe(customDomainsOperatorTestName, func() {
 			customDomainX509, err := x509.CreateCertificate(rand.Reader, customDomainX509Template, customDomainX509Template, &customDomainRSAKey.PublicKey, customDomainRSAKey)
 			Expect(err).ToNot(HaveOccurred())
 
+			secretData := make(map[string][]byte)
+			secretData["tls.key"] = pem.EncodeToMemory(&pem.Block{
+				Type: "RSA PRIVATE KEY",
+				Bytes: x509.MarshalPKCS1PrivateKey(customDomainRSAKey),
+			})
 			secretData["tls.crt"] = pem.EncodeToMemory(&pem.Block{
 				Type: "CERTIFICATE",
 				Bytes: customDomainX509,
@@ -118,9 +113,7 @@ var _ = ginkgo.Describe(customDomainsOperatorTestName, func() {
 			}, metav1.CreateOptions{})
 			Expect(err).ToNot(HaveOccurred())
 
-
 			ginkgo.By("Creating a CustomDomain CRD from the tls secret")
-
 			testDomain = &customdomainv1alpha1.CustomDomain{
 				TypeMeta: metav1.TypeMeta{
 					Kind: "CustomDomain",
@@ -146,7 +139,7 @@ var _ = ginkgo.Describe(customDomainsOperatorTestName, func() {
 				DoRaw(context.TODO())
 			Expect(err).ToNot(HaveOccurred())
 
-			wait.PollImmediate(30*time.Second, 15*time.Minute, func() (bool, error) {
+			wait.PollImmediate(pollInterval, pollTimeout, func() (bool, error) {
 				byteResult, err := h.Cfg().ConfigV1().RESTClient().Get().
 					AbsPath("/apis/managed.openshift.io/v1alpha1").
 					Resource("customdomains").
@@ -172,7 +165,7 @@ var _ = ginkgo.Describe(customDomainsOperatorTestName, func() {
 			Expect(string(testDomain.Status.Endpoint)).ToNot(Equal(""))
 
 			// Ensure customdomain endpoint is resolvable
-			wait.PollImmediate(30*time.Second, 15*time.Minute, func() (bool, error){
+			wait.PollImmediate(pollInterval, pollTimeout, func() (bool, error){
 				endpointIP, err := net.LookupHost(testDomain.Status.Endpoint)
 
 				if len(endpointIP) == 0 {
@@ -183,10 +176,9 @@ var _ = ginkgo.Describe(customDomainsOperatorTestName, func() {
 				}
 				return true, err
 			})
-			Expect(err).ToNot(HaveOccurred())
+			Expect(err).ToNot(HaveOccurred(), "Time out or error waiting for customdomain endpoint '" + testDomain.Status.Endpoint +"' to resolve.")
 
 		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
-
 
 		ginkgo.It("Should be resolvable by external services", func() {
 			ginkgo.By("Logging in as a dedicated-admin")
@@ -196,12 +188,10 @@ var _ = ginkgo.Describe(customDomainsOperatorTestName, func() {
 				Groups: []string{
 					"dedicated-admins",
 				},
-
 			})
 
 
 			ginkgo.By("Creating a new app and exposing it via an Openshift route")
-
 			testAppReplicas := int32(1)
 			testApp, err := h.Kube().AppsV1().Deployments(h.CurrentProject()).Create(context.TODO(), &appsv1.Deployment{
 				TypeMeta: metav1.TypeMeta{
@@ -241,7 +231,7 @@ var _ = ginkgo.Describe(customDomainsOperatorTestName, func() {
 			metav1.CreateOptions{})
 			Expect(err).ToNot(HaveOccurred())
 
-			wait.PollImmediate(30*time.Second, 15*time.Minute, func() (bool, error) {
+			wait.PollImmediate(pollInterval, pollTimeout, func() (bool, error) {
 				testApp, err = h.Kube().AppsV1().Deployments(h.CurrentProject()).Get(context.TODO(), testApp.GetName(), metav1.GetOptions{})
 				if err != nil {
 					return false, err
@@ -271,7 +261,6 @@ var _ = ginkgo.Describe(customDomainsOperatorTestName, func() {
 								Type: intstr.Int,
 								IntVal: 8080,
 							},
-
 						},
 						{
 							Name: "8888-tcp",
@@ -313,17 +302,14 @@ var _ = ginkgo.Describe(customDomainsOperatorTestName, func() {
 						Name: testAppService.GetName(),
 					},
 				},
-
 			}, metav1.CreateOptions{})
 			Expect(err).ToNot(HaveOccurred())
 
 
 			ginkgo.By("Requesting the app using the custom domain")
-
 			dialer := &net.Dialer{
 				Timeout: 180 * time.Second,
 			}
-
 			client := &http.Client{
 				Transport: &http.Transport{
 					TLSClientConfig: &tls.Config{
@@ -340,7 +326,7 @@ var _ = ginkgo.Describe(customDomainsOperatorTestName, func() {
 			}
 
 			var response *http.Response
-			wait.PollImmediate(30*time.Second,15*time.Minute,func() (bool, error) {
+			wait.PollImmediate(pollInterval, pollTimeout, func() (bool, error) {
 				response, err = client.Get("https://" + testRoute.Spec.Host)
 				if err != nil {
 					return false, err
@@ -353,7 +339,6 @@ var _ = ginkgo.Describe(customDomainsOperatorTestName, func() {
 				return true, err
 			})
 			Expect(err).ToNot(HaveOccurred(), "Timed out or error waiting for hello-openshift service (deployment name: '" + testAppService.GetName() +"') to be available.")
-
 
 		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
 
