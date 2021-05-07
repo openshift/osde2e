@@ -42,8 +42,7 @@ chmod +x openshift-install
     cp "${INSTALLER_CONFIG}" ./installer/metadata.json ./installer/auth/kubeconfig "${SHARED_DIR}" &&
     echo "Copied installer files."
 } || {
-    cp "${INSTALLER_CONFIG}" "${SHARED_DIR}"
-    cp ./installer/metadata.json "${SHARED_DIR}"
+    cp "${INSTALLER_CONFIG}" ./installer/metadata.json "${SHARED_DIR}" &&
     echo "Error creating cluster.";
     exit 1;
 }
