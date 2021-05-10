@@ -496,6 +496,10 @@ PD info: %v`, jobName, jobURL, event)); err != nil {
 	}
 	// open an alert for each failing test
 	for _, name := range failingTests {
+		if strings.Contains(name, "informing") {
+			// skip informing suite failures, as they do not warrant CI watcher investigation
+			continue
+		}
 		if _, err := pdc.FireAlert(pd.V2Payload{
 			Summary:  name + " failed",
 			Severity: "info",
