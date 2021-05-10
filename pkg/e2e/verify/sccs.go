@@ -62,13 +62,13 @@ var _ = ginkgo.Describe(dedicatedAdminSccTestName, func() {
 			log.Printf("Error:(%v)", err)
 			//Deleting all prometheus pods
 			list, _ := FilterPods("openshift-monitoring", "app=prometheus", h)
-			names, _ := GetPodNames("prometheus-operator", list, h)
+			names, _ := GetPodNames(list, h)
 			log.Printf("Names of pods:(%v)", names)
 			numPrometheusPods := deletePods(names, "openshift-monitoring", h)
 			//Verifying the same number of running prometheus pods has come up
 			err = wait.PollImmediate(2*time.Second, 3*time.Minute, func() (bool, error) {
 				list, _ = FilterPods("openshift-monitoring", "app=prometheus", h)
-				_, newNamesNum := GetPodNames("prometheus-operator", list, h)
+				_, newNamesNum := GetPodNames(list, h)
 				if numPrometheusPods == newNamesNum {
 					err = nil
 					return true, err
@@ -79,13 +79,13 @@ var _ = ginkgo.Describe(dedicatedAdminSccTestName, func() {
 			Expect(err).NotTo(HaveOccurred())
 			//Deleting the ssh pods
 			list, _ = FilterPods("openshift-sre-sshd", "deployment=rh-ssh", h)
-			names, _ = GetPodNames("openshift-sre-sshd", list, h)
+			names, _ = GetPodNames(list, h)
 			log.Printf("Names of pods:(%v)", names)
 			numSSHPods := deletePods(names, "openshift-sre-sshd", h)
 			//Verifying the same number of running ssh pods has come up
 			err = wait.PollImmediate(2*time.Second, 3*time.Minute, func() (bool, error) {
 				list, _ = FilterPods("openshift-sre-sshd", "deployment=rh-ssh", h)
-				_, newSSHNum := GetPodNames("openshift-sre-sshd", list, h)
+				_, newSSHNum := GetPodNames(list, h)
 				if numSSHPods == newSSHNum {
 					err = nil
 					return true, err
@@ -189,7 +189,7 @@ func FilterPods(namespace string, label string, h *helper.H) (*apiv1.PodList, er
 }
 
 //Extracts pod names from a filtered list and counts how many are in running state
-func GetPodNames(namespace string, list *apiv1.PodList, h *helper.H) ([]string, int) {
+func GetPodNames(list *apiv1.PodList, h *helper.H) ([]string, int) {
 	var notReady []apiv1.Pod
 	var ready []apiv1.Pod
 	var podNames []string
