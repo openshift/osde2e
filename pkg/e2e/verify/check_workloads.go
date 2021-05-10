@@ -88,14 +88,15 @@ func checkPods(podClient v1.CoreV1Interface, infra []string) (map[string]string,
 	return violators, nil
 }
 
-func listNodesByType(nodeClient v1.CoreV1Interface) ([]string, []string, error) {
+//This function returns a list of worker nodes and a list of infra nodes
+func listNodesByType(nodeClient v1.CoreV1Interface) (worker, infra []string, err error) {
 
 	log.Printf("Getting node list")
 
 	listOpts := metav1.ListOptions{}
+	//This call will list all the nodes in the cluster
 	list, err := nodeClient.Nodes().List(context.TODO(), listOpts)
-	var worker []string
-	var infra []string
+
 	if err != nil {
 		return nil, nil, fmt.Errorf("error getting node list: %v", err)
 	}
