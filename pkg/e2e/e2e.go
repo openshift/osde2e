@@ -453,6 +453,10 @@ func runGinkgoTests() error {
 }
 
 func openPDAlerts(suites []junit.Suite, jobName, jobURL string) {
+	if strings.Contains(strings.ToLower(jobName), "addon") {
+		// do not report pd alerts from addon tests
+		return
+	}
 	pdc := pagerduty.Config{
 		IntegrationKey: viper.GetString(config.Alert.PagerDutyAPIToken),
 	}
