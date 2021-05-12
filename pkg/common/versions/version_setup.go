@@ -7,12 +7,12 @@ import (
 	"time"
 
 	"github.com/Masterminds/semver"
+	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/metadata"
 	"github.com/openshift/osde2e/pkg/common/providers"
 	"github.com/openshift/osde2e/pkg/common/spi"
 	"github.com/openshift/osde2e/pkg/common/util"
-	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"k8s.io/apimachinery/pkg/util/wait"
 )
 
@@ -91,7 +91,7 @@ func setupVersion(versionList *spi.VersionList) (*semver.Version, string, error)
 				log.Printf("Unable to get the %s.", versionType)
 			}
 		} else {
-			return nil, versionType, fmt.Errorf("error finding default cluster version: %v", err)
+			return nil, versionType, nil
 		}
 	} else {
 		var err error
