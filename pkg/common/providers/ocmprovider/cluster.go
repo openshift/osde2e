@@ -222,7 +222,7 @@ func (o *OCMProvider) LaunchCluster(clusterName string) (string, error) {
 }
 
 func (o *OCMProvider) findRecycledCluster(cluster *v1.Cluster) string {
-	query := fmt.Sprintf("properties.InstalledVersion='%s' and properties.UpgradeVersion='' and properties.Status='%s'", cluster.Version().ID(), "completed-passing")
+	query := fmt.Sprintf("properties.InstalledVersion='%s' and properties.UpgradeVersion='' and properties.Status like '%s%%'", cluster.Version().ID(), "completed-")
 
 	listResponse, err := o.conn.ClustersMgmt().V1().Clusters().List().Search(query).Send()
 	if err == nil && listResponse.Total() > 0 {

@@ -162,20 +162,27 @@ func WaitForClusterReadyPostWake(clusterID string, logger *log.Logger) error {
 	nextPods := func() (*corev1.PodList, error) {
 		return kubeClient.CoreV1().Pods("").List(context.TODO(), v1.ListOptions{Continue: continueToken})
 	}
-	for list, err := nextPods(); list.Size() > 0; list, err = nextPods() {
+	for list, err := nextPods(); len(list.Items) > 0; list, err = nextPods() {
 		if err != nil {
-			return fmt.Errorf("Error retrieving pod list: %s", err.Error())
+			return fmt.Errorf("error retrieving pod list: %s", err.Error())
 		}
 		for _, pod := range list.Items {
-			if pod.Status.Phase == corev1.PodFailed {
-				log.Printf("Cleaning up errored pod: %s", pod.Name)
+			if pod.Status.Phase == corev1.PodFailed || pod.Status.Phase == corev1.PodPending {
+				log.Printf("Cleaning up stale pod: %s", pod.Name)
 				kubeClient.CoreV1().Pods(pod.Namespace).Delete(context.TODO(), pod.Name, v1.DeleteOptions{})
 			}
+			if len(pod.OwnerReferences) > 0 && pod.OwnerReferences[0].Kind == "Job" {
+				kubeClient.BatchV1().Jobs(pod.Namespace).Delete(context.TODO(), pod.OwnerReferences[0].Name, v1.DeleteOptions{})
+			}
+		}
+		if list.Continue == "" {
+			break
 		}
 		continueToken = list.Continue
 	}
 
 	podErrorTracker.NewPodErrorTracker(pendingPodThreshold)
+	viper.Set(config.Cluster.CleanCheckRuns, 5)
 	return waitForClusterReadyWithOverrideAndExpectedNumberOfNodes(clusterID, logger, false, false)
 }
 
