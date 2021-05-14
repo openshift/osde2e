@@ -87,6 +87,7 @@ var _ = ginkgo.BeforeEach(func() {
 // If there is an issue with provisioning, retrieving, or getting the kubeconfig, this will return `false`.
 func beforeSuite() bool {
 	// Skip provisioning if we already have a kubeconfig
+	var err error
 	if viper.GetString(config.Kubeconfig.Contents) == "" {
 
 		cluster, err := clusterutil.ProvisionCluster(nil)
@@ -127,57 +128,54 @@ func beforeSuite() bool {
 		if viper.GetString(config.Tests.SkipClusterHealthChecks) != "true" {
 			if viper.GetBool(config.Cluster.Reused) {
 				// We should manually run all our health checks if the cluster is waking up
-				if err := clusterutil.WaitForClusterReadyPostWake(cluster.ID(), nil); err != nil {
-					log.Printf("Cluster failed health check: %v", err)
-					getLogs()
-					return false
-				}
+				err = clusterutil.WaitForClusterReadyPostWake(cluster.ID(), nil)
 			} else {
 				// This is a new cluster and we should check the OSD Ready job
-				if err := clusterutil.WaitForClusterReadyPostInstall(cluster.ID(), nil); err != nil {
-					log.Printf("Cluster failed health check: %v", err)
-					getLogs()
-					return false
-				}
+				err = clusterutil.WaitForClusterReadyPostInstall(cluster.ID(), nil)
 			}
-
-			log.Println("Cluster is healthy and ready for testing")
-		} else {
-			log.Println("Skipping health checks as requested")
-		}
-		if len(viper.GetString(config.Addons.IDs)) > 0 {
-			if viper.GetString(config.Provider) != "mock" {
-				err = installAddons()
-				events.HandleErrorWithEvents(err, events.InstallAddonsSuccessful, events.InstallAddonsFailed)
-				if err != nil {
-					log.Printf("Cluster failed installing addons: %v", err)
-					getLogs()
-					return false
-				}
-			} else {
-				log.Println("Skipping addon installation due to mock provider.")
-				log.Println("If you are running local addon tests, please ensure the addon components are already installed.")
+			if err != nil {
+				log.Printf("Cluster failed health check: %v", err)
+				getLogs()
+				return false
 			}
 		}
 
-		var kubeconfigBytes []byte
-		if kubeconfigBytes, err = provider.ClusterKubeconfig(cluster.ID()); err != nil {
-			events.HandleErrorWithEvents(err, events.InstallKubeconfigRetrievalSuccess, events.InstallKubeconfigRetrievalFailure)
-			log.Printf("Failed retrieving kubeconfig: %v", err)
-			getLogs()
-			return false
-		}
-		viper.Set(config.Kubeconfig.Contents, string(kubeconfigBytes))
-
-		if len(viper.GetString(config.Kubeconfig.Contents)) == 0 {
-			// Give the cluster some breathing room.
-			log.Println("OSD cluster installed. Sleeping for 600s.")
-			time.Sleep(600 * time.Second)
-		} else {
-			log.Printf("No kubeconfig contents found, but there should be some by now.")
-		}
-		getLogs()
+		log.Println("Cluster is healthy and ready for testing")
+	} else {
+		log.Println("Skipping health checks as requested")
 	}
+	if len(viper.GetString(config.Addons.IDs)) > 0 {
+		if viper.GetString(config.Provider) != "mock" {
+			err = installAddons()
+			events.HandleErrorWithEvents(err, events.InstallAddonsSuccessful, events.InstallAddonsFailed)
+			if err != nil {
+				log.Printf("Cluster failed installing addons: %v", err)
+				getLogs()
+				return false
+			}
+		} else {
+			log.Println("Skipping addon installation due to mock provider.")
+			log.Println("If you are running local addon tests, please ensure the addon components are already installed.")
+		}
+	}
+
+	var kubeconfigBytes []byte
+	if kubeconfigBytes, err = provider.ClusterKubeconfig(viper.GetString(config.Cluster.ID)); err != nil {
+		events.HandleErrorWithEvents(err, events.InstallKubeconfigRetrievalSuccess, events.InstallKubeconfigRetrievalFailure)
+		log.Printf("Failed retrieving kubeconfig: %v", err)
+		getLogs()
+		return false
+	}
+	viper.Set(config.Kubeconfig.Contents, string(kubeconfigBytes))
+
+	if len(viper.GetString(config.Kubeconfig.Contents)) == 0 {
+		// Give the cluster some breathing room.
+		log.Println("OSD cluster installed. Sleeping for 600s.")
+		time.Sleep(600 * time.Second)
+	} else {
+		log.Printf("No kubeconfig contents found, but there should be some by now.")
+	}
+	getLogs()
 
 	// If there are test harnesses present, we need to populate the
 	// secrets into the test cluster

@@ -169,10 +169,16 @@ func WaitForClusterReadyPostWake(clusterID string, logger *log.Logger) error {
 		for _, pod := range list.Items {
 			if pod.Status.Phase == corev1.PodFailed || pod.Status.Phase == corev1.PodPending {
 				log.Printf("Cleaning up stale pod: %s", pod.Name)
-				kubeClient.CoreV1().Pods(pod.Namespace).Delete(context.TODO(), pod.Name, v1.DeleteOptions{})
+				err = kubeClient.CoreV1().Pods(pod.Namespace).Delete(context.TODO(), pod.Name, v1.DeleteOptions{})
+				if err != nil {
+					log.Printf("Error deleting stale pod: %s", err.Error())
+				}
 			}
 			if len(pod.OwnerReferences) > 0 && pod.OwnerReferences[0].Kind == "Job" {
-				kubeClient.BatchV1().Jobs(pod.Namespace).Delete(context.TODO(), pod.OwnerReferences[0].Name, v1.DeleteOptions{})
+				err = kubeClient.BatchV1().Jobs(pod.Namespace).Delete(context.TODO(), pod.OwnerReferences[0].Name, v1.DeleteOptions{})
+				if err != nil {
+					log.Printf("Error deleting stale job: %s", err.Error())
+				}
 			}
 		}
 		if list.Continue == "" {
