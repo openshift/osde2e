@@ -14,13 +14,15 @@ import (
 	osconfig "github.com/openshift/client-go/config/clientset/versioned"
 	"github.com/openshift/osde2e/pkg/common/cluster/healthchecks"
 	"github.com/openshift/osde2e/pkg/common/clusterproperties"
+	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/logging"
 	"github.com/openshift/osde2e/pkg/common/metadata"
 	"github.com/openshift/osde2e/pkg/common/providers"
 	"github.com/openshift/osde2e/pkg/common/spi"
 	"github.com/openshift/osde2e/pkg/common/util"
-	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
+	corev1 "k8s.io/api/core/v1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
@@ -137,6 +139,56 @@ func WaitForClusterReadyPostUpgrade(clusterID string, logger *log.Logger) error 
 // for after the cluster has been scaled.
 func WaitForClusterReadyPostScale(clusterID string, logger *log.Logger) error {
 	podErrorTracker.NewPodErrorTracker(pendingPodThreshold)
+	return waitForClusterReadyWithOverrideAndExpectedNumberOfNodes(clusterID, logger, false, false)
+}
+
+// WaitForClusterReadyPostWake blocks until the cluster is ready for testing, deletes errored pods, and then uses
+// healthcheck mechanisms appropriate for after the cluster resumed from hibernation.
+func WaitForClusterReadyPostWake(clusterID string, logger *log.Logger) error {
+	log.Printf("Cluster %s just woke up, waiting for 10 minutes...", clusterID)
+	time.Sleep(10 * time.Minute)
+
+	restConfig, _, err := ClusterConfig(clusterID)
+	if err != nil {
+		return fmt.Errorf("Error getting cluster config: %v\n", err)
+	}
+
+	kubeClient, err := kubernetes.NewForConfig(restConfig)
+	if err != nil {
+		return fmt.Errorf("Error generating Kube Clientset: %v\n", err)
+	}
+
+	var continueToken string
+	nextPods := func() (*corev1.PodList, error) {
+		return kubeClient.CoreV1().Pods("").List(context.TODO(), v1.ListOptions{Continue: continueToken})
+	}
+	for list, err := nextPods(); len(list.Items) > 0; list, err = nextPods() {
+		if err != nil {
+			return fmt.Errorf("error retrieving pod list: %s", err.Error())
+		}
+		for _, pod := range list.Items {
+			if pod.Status.Phase == corev1.PodFailed || pod.Status.Phase == corev1.PodPending {
+				log.Printf("Cleaning up stale pod: %s", pod.Name)
+				err = kubeClient.CoreV1().Pods(pod.Namespace).Delete(context.TODO(), pod.Name, v1.DeleteOptions{})
+				if err != nil {
+					log.Printf("Error deleting stale pod: %s", err.Error())
+				}
+			}
+			if len(pod.OwnerReferences) > 0 && pod.OwnerReferences[0].Kind == "Job" {
+				err = kubeClient.BatchV1().Jobs(pod.Namespace).Delete(context.TODO(), pod.OwnerReferences[0].Name, v1.DeleteOptions{})
+				if err != nil {
+					log.Printf("Error deleting stale job: %s", err.Error())
+				}
+			}
+		}
+		if list.Continue == "" {
+			break
+		}
+		continueToken = list.Continue
+	}
+
+	podErrorTracker.NewPodErrorTracker(pendingPodThreshold)
+	viper.Set(config.Cluster.CleanCheckRuns, 5)
 	return waitForClusterReadyWithOverrideAndExpectedNumberOfNodes(clusterID, logger, false, false)
 }
 

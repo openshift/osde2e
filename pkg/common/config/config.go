@@ -311,6 +311,12 @@ var Cluster = struct {
 	// HibernateAfterUse will tell the provider to attempt to hibernate the cluster after
 	// the test run, assuming the provider supports hibernation
 	HibernateAfterUse string
+
+	// Passing tracks the internal status of the tests: Pass or Fail
+	Passing string
+
+	// Reused tracks whether this cluster's test run used a new or recycled cluster
+	Reused string
 }{
 	MultiAZ:                             "cluster.multiAZ",
 	Channel:                             "cluster.channel",
@@ -339,6 +345,8 @@ var Cluster = struct {
 	ImageContentSource:                  "cluster.imageContentSource",
 	InstallConfig:                       "cluster.installConfig",
 	HibernateAfterUse:                   "cluster.hibernateAfterUse",
+	Passing:                             "cluster.passing",
+	Reused:                              "cluster.rused",
 }
 
 // CloudProvider config keys.
@@ -573,7 +581,7 @@ func init() {
 	viper.SetDefault(Cluster.DestroyAfterTest, false)
 	viper.BindEnv(Cluster.DestroyAfterTest, "DESTROY_CLUSTER")
 
-	viper.SetDefault(Cluster.ExpiryInMinutes, 360)
+	viper.SetDefault(Cluster.ExpiryInMinutes, 1440)
 	viper.BindEnv(Cluster.ExpiryInMinutes, "CLUSTER_EXPIRY_IN_MINUTES")
 
 	viper.SetDefault(Cluster.AfterTestWait, 60)
@@ -634,6 +642,9 @@ func init() {
 
 	viper.SetDefault(Cluster.HibernateAfterUse, true)
 	viper.BindEnv(Cluster.HibernateAfterUse, "HIBERNATE_AFTER_USE")
+
+	viper.SetDefault(Cluster.Reused, false)
+	viper.SetDefault(Cluster.Passing, false)
 
 	// ----- Cloud Provider -----
 	viper.SetDefault(CloudProvider.CloudProviderID, "aws")

@@ -87,6 +87,7 @@ var _ = ginkgo.BeforeEach(func() {
 // If there is an issue with provisioning, retrieving, or getting the kubeconfig, this will return `false`.
 func beforeSuite() bool {
 	// Skip provisioning if we already have a kubeconfig
+	var err error
 	if viper.GetString(config.Kubeconfig.Contents) == "" {
 
 		cluster, err := clusterutil.ProvisionCluster(nil)
@@ -125,48 +126,56 @@ func beforeSuite() bool {
 		}
 
 		if viper.GetString(config.Tests.SkipClusterHealthChecks) != "true" {
-			if err := clusterutil.WaitForClusterReadyPostInstall(cluster.ID(), nil); err != nil {
+			if viper.GetBool(config.Cluster.Reused) {
+				// We should manually run all our health checks if the cluster is waking up
+				err = clusterutil.WaitForClusterReadyPostWake(cluster.ID(), nil)
+			} else {
+				// This is a new cluster and we should check the OSD Ready job
+				err = clusterutil.WaitForClusterReadyPostInstall(cluster.ID(), nil)
+			}
+			if err != nil {
 				log.Printf("Cluster failed health check: %v", err)
 				getLogs()
 				return false
 			}
-			log.Println("Cluster is healthy and ready for testing")
-		} else {
-			log.Println("Skipping health checks as requested")
-		}
-		if len(viper.GetString(config.Addons.IDs)) > 0 {
-			if viper.GetString(config.Provider) != "mock" {
-				err = installAddons()
-				events.HandleErrorWithEvents(err, events.InstallAddonsSuccessful, events.InstallAddonsFailed)
-				if err != nil {
-					log.Printf("Cluster failed installing addons: %v", err)
-					getLogs()
-					return false
-				}
-			} else {
-				log.Println("Skipping addon installation due to mock provider.")
-				log.Println("If you are running local addon tests, please ensure the addon components are already installed.")
-			}
 		}
 
-		var kubeconfigBytes []byte
-		if kubeconfigBytes, err = provider.ClusterKubeconfig(cluster.ID()); err != nil {
-			events.HandleErrorWithEvents(err, events.InstallKubeconfigRetrievalSuccess, events.InstallKubeconfigRetrievalFailure)
-			log.Printf("Failed retrieving kubeconfig: %v", err)
-			getLogs()
-			return false
-		}
-		viper.Set(config.Kubeconfig.Contents, string(kubeconfigBytes))
-
-		if len(viper.GetString(config.Kubeconfig.Contents)) == 0 {
-			// Give the cluster some breathing room.
-			log.Println("OSD cluster installed. Sleeping for 600s.")
-			time.Sleep(600 * time.Second)
-		} else {
-			log.Printf("No kubeconfig contents found, but there should be some by now.")
-		}
-		getLogs()
+		log.Println("Cluster is healthy and ready for testing")
+	} else {
+		log.Println("Skipping health checks as requested")
 	}
+	if len(viper.GetString(config.Addons.IDs)) > 0 {
+		if viper.GetString(config.Provider) != "mock" {
+			err = installAddons()
+			events.HandleErrorWithEvents(err, events.InstallAddonsSuccessful, events.InstallAddonsFailed)
+			if err != nil {
+				log.Printf("Cluster failed installing addons: %v", err)
+				getLogs()
+				return false
+			}
+		} else {
+			log.Println("Skipping addon installation due to mock provider.")
+			log.Println("If you are running local addon tests, please ensure the addon components are already installed.")
+		}
+	}
+
+	var kubeconfigBytes []byte
+	if kubeconfigBytes, err = provider.ClusterKubeconfig(viper.GetString(config.Cluster.ID)); err != nil {
+		events.HandleErrorWithEvents(err, events.InstallKubeconfigRetrievalSuccess, events.InstallKubeconfigRetrievalFailure)
+		log.Printf("Failed retrieving kubeconfig: %v", err)
+		getLogs()
+		return false
+	}
+	viper.Set(config.Kubeconfig.Contents, string(kubeconfigBytes))
+
+	if len(viper.GetString(config.Kubeconfig.Contents)) == 0 {
+		// Give the cluster some breathing room.
+		log.Println("OSD cluster installed. Sleeping for 600s.")
+		time.Sleep(600 * time.Second)
+	} else {
+		log.Printf("No kubeconfig contents found, but there should be some by now.")
+	}
+	getLogs()
 
 	// If there are test harnesses present, we need to populate the
 	// secrets into the test cluster
@@ -258,6 +267,7 @@ func runGinkgoTests() error {
 	var err error
 
 	gomega.RegisterFailHandler(ginkgo.Fail)
+	viper.Set(config.Cluster.Passing, false)
 
 	ginkgoConfig.DefaultReporterConfig.NoisySkippings = !viper.GetBool(config.Tests.SuppressSkipNotifications)
 	ginkgoConfig.GinkgoConfig.SkipString = viper.GetString(config.Tests.GinkgoSkip)
@@ -350,6 +360,7 @@ func runGinkgoTests() error {
 
 	testsPassed := runTestsInPhase(phase.InstallPhase, "OSD e2e suite", ginkgoConfig.GinkgoConfig.DryRun)
 	getLogs()
+	viper.Set(config.Cluster.Passing, testsPassed)
 	upgradeTestsPassed := true
 
 	// upgrade cluster if requested
@@ -374,7 +385,9 @@ func runGinkgoTests() error {
 			// test upgrade rescheduling if desired
 			if !viper.GetBool(config.Upgrade.ManagedUpgradeRescheduled) {
 				log.Println("Running e2e tests POST-UPGRADE...")
+				viper.Set(config.Cluster.Passing, false)
 				upgradeTestsPassed = runTestsInPhase(phase.UpgradePhase, "OSD e2e suite post-upgrade", ginkgoConfig.GinkgoConfig.DryRun)
+				viper.Set(config.Cluster.Passing, upgradeTestsPassed)
 			}
 			log.Println("Upgrade rescheduled, skip the POST-UPGRADE testing")
 
@@ -446,6 +459,7 @@ func runGinkgoTests() error {
 	}
 
 	if !testsPassed || !upgradeTestsPassed {
+		viper.Set(config.Cluster.Passing, false)
 		return fmt.Errorf("please inspect logs for more details")
 	}
 
@@ -593,10 +607,17 @@ func cleanupAfterE2E(h *helper.H) (errors []error) {
 			defer func() {
 				// set the completed property right before this function returns, which should be after
 				// all cleanup is finished.
-				err = provider.AddProperty(cluster, clusterproperties.Status, clusterproperties.StatusCompleted)
+
+				clusterStatus := clusterproperties.StatusCompletedFailing
+				if viper.GetBool(config.Cluster.Passing) {
+					clusterStatus = clusterproperties.StatusCompletedPassing
+				}
+
+				err = provider.AddProperty(cluster, clusterproperties.Status, clusterStatus)
 				if err != nil {
 					log.Printf("Failed setting completed status: %v", err)
 				}
+
 			}()
 			log.Printf("Cluster addons: %v", cluster.Addons())
 			log.Printf("Cluster cloud provider: %v", cluster.CloudProvider())
@@ -632,15 +653,21 @@ func cleanupAfterE2E(h *helper.H) (errors []error) {
 	// We need a provider to hibernate
 	// We need a cluster to hibernate
 	// We need to check that the test run wants to hibernate after this run
-	/*
-		if provider != nil && viper.GetString(config.Cluster.ID) != "" && viper.GetBool(config.Cluster.HibernateAfterUse) {
-			msg := "Unable to hibernate %s"
-			if provider.Hibernate(viper.GetString(config.Cluster.ID)) {
-				msg = "Hibernating %s"
-			}
-			log.Printf(msg, viper.GetString(config.Cluster.ID))
+	if provider != nil && viper.GetString(config.Cluster.ID) != "" && viper.GetBool(config.Cluster.HibernateAfterUse) {
+		msg := "Unable to hibernate %s"
+		if provider.Hibernate(viper.GetString(config.Cluster.ID)) {
+			msg = "Hibernating %s"
 		}
-	*/
+		log.Printf(msg, viper.GetString(config.Cluster.ID))
+
+		// Current default expiration is 6 hours.
+		// If the cluster hasn't been recycled, and the tests passed: Extend it 24h
+		if !viper.GetBool(config.Cluster.Reused) && viper.GetBool(config.Cluster.Passing) {
+			if err := provider.ExtendExpiry(viper.GetString(config.Cluster.ID), 18, 0, 0); err != nil {
+				log.Printf("Error extending cluster expiration: %s", err.Error())
+			}
+		}
+	}
 	return errors
 }
 

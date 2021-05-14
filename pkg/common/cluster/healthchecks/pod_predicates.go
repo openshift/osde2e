@@ -43,3 +43,9 @@ func matchingNS(pod kubev1.Pod, ns string) bool {
 	return pod.Namespace == ns
 }
 
+func IsNotControlledByJob(pod kubev1.Pod) bool {
+	if len(pod.OwnerReferences) > 0 {
+		return pod.OwnerReferences[0].Kind != "Job"
+	}
+	return true
+}

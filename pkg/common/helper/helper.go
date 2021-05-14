@@ -135,20 +135,29 @@ func (h *H) Cleanup() {
 	var err error
 
 	h.restConfig, err = clientcmd.RESTConfigFromKubeConfig([]byte(viper.GetString(config.Kubeconfig.Contents)))
-	Expect(err).ShouldNot(HaveOccurred(), "failed to configure client")
+	if err != nil {
+		log.Printf("Error setting Cleanup() restConfig: %s", err.Error())
+		return
+	}
 
 	// Set the SA back to the default. This is required for cleanup in case other helper calls switched SAs
 	h.SetServiceAccount(viper.GetString(config.Tests.ServiceAccount))
-
-	project := viper.GetString(config.Project)
-	if h.proj == nil && project != "" {
-		log.Printf("Setting project name to %s", project)
-		h.proj, err = h.Project().ProjectV1().Projects().Get(context.TODO(), project, metav1.GetOptions{})
-		Expect(err).ShouldNot(HaveOccurred(), "failed to retrieve project")
-		Expect(h.proj).ShouldNot(BeNil())
-
-		err = h.cleanup(h.CurrentProject())
-		Expect(err).ShouldNot(HaveOccurred(), "could not delete project '%s'", h.proj)
+	projects, err := h.Project().ProjectV1().Projects().List(context.TODO(), metav1.ListOptions{})
+	if err != nil {
+		log.Printf("Error listing existing projects in Cleanup(): %s", err.Error())
+	}
+	for _, project := range projects.Items {
+		if strings.Contains(project.Name, "osde2e-") {
+			log.Printf("Deleting project `%s`", project.Name)
+			err = h.Project().ProjectV1().Projects().Delete(context.TODO(), project.Name, metav1.DeleteOptions{})
+			if err != nil {
+				log.Printf("Error deleting project `%s` in Cleanup(): %s", project.Name, err.Error())
+			}
+			err = h.Kube().CoreV1().ServiceAccounts("dedicated-admin").Delete(context.TODO(), project.Name, metav1.DeleteOptions{})
+			if err != nil {
+				log.Printf("Error deleting dedicated-admin serviceaccount for '%s': %v", project.Name, err)
+			}
+		}
 	}
 
 	h.restConfig = nil
@@ -355,10 +364,9 @@ func (h *H) GetClusterVersion() (*configv1.ClusterVersion, error) {
 
 // WithToken returns helper with a given bearer token
 func (h *H) WithToken(token string) *H {
-        config := rest.AnonymousClientConfig(h.restConfig)
-        config.BearerToken = token
-        return &H{
-                restConfig: config,
-        }
+	config := rest.AnonymousClientConfig(h.restConfig)
+	config.BearerToken = token
+	return &H{
+		restConfig: config,
+	}
 }
-

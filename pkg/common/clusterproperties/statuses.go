@@ -33,4 +33,10 @@ const (
 
 	// StatusCompleted represents the cluster having finished its CI work and awaiting teardown.
 	StatusCompleted = "completed"
+
+	// StatusCompletedPassing represents the cluster having finished its CI and tests having passed
+	StatusCompletedPassing = "completed-passing"
+
+	// StatusCompletedFailing represents the cluster having finished its CI and tests having failed
+	StatusCompletedFailing = "completed-failing"
 )
