@@ -1,0 +1,2 @@
+-- comment
+DROP TABLE test;
