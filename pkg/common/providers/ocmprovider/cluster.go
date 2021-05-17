@@ -198,8 +198,10 @@ func (o *OCMProvider) LaunchCluster(clusterName string) (string, error) {
 
 	var resp *v1.ClustersAddResponse
 
-	if clusterID := o.findRecycledCluster(cluster); clusterID != "" {
-		return clusterID, nil
+	if viper.GetBool(config.Cluster.UseExistingCluster) {
+		if clusterID := o.findRecycledCluster(cluster); clusterID != "" {
+			return clusterID, nil
+		}
 	}
 
 	err = retryer().Do(func() error {
@@ -222,19 +224,43 @@ func (o *OCMProvider) LaunchCluster(clusterName string) (string, error) {
 }
 
 func (o *OCMProvider) findRecycledCluster(cluster *v1.Cluster) string {
-	query := fmt.Sprintf("properties.InstalledVersion='%s' and properties.UpgradeVersion='' and properties.Status like '%s%%'", cluster.Version().ID(), "completed-")
+	query := fmt.Sprintf("cloud_provider.id='%s' and properties.JobID='' and properties.InstalledVersion='%s' and properties.UpgradeVersion='' and properties.Status like '%s%%'",
+		cluster.CloudProvider().ID(), cluster.Version().ID(), "completed-")
 
 	listResponse, err := o.conn.ClustersMgmt().V1().Clusters().List().Search(query).Send()
 	if err == nil && listResponse.Total() > 0 {
 		log.Printf("We've found %d matching clusters to reuse", listResponse.Total())
 		recycledCluster := listResponse.Items().Slice()[rand.Intn(listResponse.Total())]
+		spiRecycledCluster, err := o.ocmToSPICluster(recycledCluster)
+		if err != nil {
+			log.Printf("Error converting recycled cluster to an SPI Cluster: %s", err.Error())
+			return ""
+		}
+
+		err = o.AddProperty(spiRecycledCluster, clusterproperties.JobID, viper.GetString(config.JobID))
+		if err != nil {
+			log.Printf("Error adding property to cluster: %s", err.Error())
+			return ""
+		}
+
+		time.Sleep(5 * time.Second)
+
+		spiRecycledCluster, err = o.GetCluster(spiRecycledCluster.ID())
+		if err != nil {
+			log.Printf("Error retrieving cluster during job ID check: %s", err.Error())
+			return ""
+		}
+		if jobID, ok := spiRecycledCluster.Properties()["JobID"]; ok && jobID != viper.GetString(config.JobID) {
+			log.Printf("Cluster already recycled by %s", spiRecycledCluster.Properties()["JobID"])
+			return o.findRecycledCluster(cluster)
+		}
+
 		if recycledCluster.State() == v1.ClusterStateReady {
-			spiRecycledCluster, err := o.ocmToSPICluster(recycledCluster)
+			err = o.AddProperty(spiRecycledCluster, clusterproperties.Status, clusterproperties.StatusHealthy)
 			if err != nil {
-				log.Printf("Error converting recycled cluster to an SPI Cluster: %s", err.Error())
+				log.Printf("Error adding property to cluster: %s", err.Error())
 				return ""
 			}
-			o.AddProperty(spiRecycledCluster, clusterproperties.Status, clusterproperties.StatusHealthy)
 			viper.Set(config.Cluster.Reused, true)
 			log.Println("Hot cluster ready, moving on...")
 
@@ -242,6 +268,11 @@ func (o *OCMProvider) findRecycledCluster(cluster *v1.Cluster) string {
 		}
 		if recycledCluster.State() == "hibernating" && o.Resume(recycledCluster.ID()) {
 			log.Println("Resuming cluster to use...")
+			err = o.AddProperty(spiRecycledCluster, clusterproperties.Status, clusterproperties.StatusResuming)
+			if err != nil {
+				log.Printf("Error adding property to cluster: %s", err.Error())
+				return ""
+			}
 			viper.Set(config.Cluster.Reused, true)
 			return recycledCluster.ID()
 		}
@@ -404,6 +435,7 @@ func (o *OCMProvider) GenerateProperties() (map[string]string, error) {
 	provisionshardID := viper.GetString(config.Cluster.ProvisionShardID)
 
 	properties := map[string]string{
+		clusterproperties.JobID:            viper.GetString(config.JobID),
 		clusterproperties.MadeByOSDe2e:     "true",
 		clusterproperties.OwnedBy:          username,
 		clusterproperties.InstalledVersion: installedversion,

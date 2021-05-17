@@ -312,6 +312,11 @@ var Cluster = struct {
 	// the test run, assuming the provider supports hibernation
 	HibernateAfterUse string
 
+	// UseExistingCluster will allow the test run to use an existing cluster if available
+	// ENV: USE_EXISTING_CLUSTER
+	// Default: True
+	UseExistingCluster string
+
 	// Passing tracks the internal status of the tests: Pass or Fail
 	Passing string
 
@@ -345,6 +350,7 @@ var Cluster = struct {
 	ImageContentSource:                  "cluster.imageContentSource",
 	InstallConfig:                       "cluster.installConfig",
 	HibernateAfterUse:                   "cluster.hibernateAfterUse",
+	UseExistingCluster:                  "cluster.useExistingCluster",
 	Passing:                             "cluster.passing",
 	Reused:                              "cluster.rused",
 }
@@ -642,6 +648,9 @@ func init() {
 
 	viper.SetDefault(Cluster.HibernateAfterUse, true)
 	viper.BindEnv(Cluster.HibernateAfterUse, "HIBERNATE_AFTER_USE")
+
+	viper.SetDefault(Cluster.UseExistingCluster, true)
+	viper.BindEnv(Cluster.UseExistingCluster, "USE_EXISTING_CLUSTER")
 
 	viper.SetDefault(Cluster.Reused, false)
 	viper.SetDefault(Cluster.Passing, false)

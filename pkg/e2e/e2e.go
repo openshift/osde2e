@@ -616,6 +616,7 @@ func cleanupAfterE2E(h *helper.H) (errors []error) {
 				}
 
 				err = provider.AddProperty(cluster, clusterproperties.Status, clusterStatus)
+				err = provider.AddProperty(cluster, clusterproperties.JobID, "")
 				if err != nil {
 					log.Printf("Failed setting completed status: %v", err)
 				}
