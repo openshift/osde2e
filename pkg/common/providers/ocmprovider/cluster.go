@@ -13,6 +13,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Masterminds/semver"
 	v1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 	"github.com/openshift/osde2e/pkg/common/aws"
 	"github.com/openshift/osde2e/pkg/common/clusterproperties"
@@ -224,8 +225,11 @@ func (o *OCMProvider) LaunchCluster(clusterName string) (string, error) {
 }
 
 func (o *OCMProvider) findRecycledCluster(cluster *v1.Cluster) string {
-	query := fmt.Sprintf("cloud_provider.id='%s' and properties.JobID='' and properties.InstalledVersion='%s' and properties.UpgradeVersion='' and properties.Status like '%s%%'",
-		cluster.CloudProvider().ID(), cluster.Version().ID(), "completed-")
+	version := semver.MustParse(strings.TrimPrefix(cluster.Version().ID(), "openshift-"))
+	query := fmt.Sprintf("cloud_provider.id='%s' and properties.JobID='' and properties.Status like '%s%%' and version.id like 'openshift-v%s%%'",
+		cluster.CloudProvider().ID(), "completed-", version.String())
+
+	log.Println(query)
 
 	listResponse, err := o.conn.ClustersMgmt().V1().Clusters().List().Search(query).Send()
 	if err == nil && listResponse.Total() > 0 {

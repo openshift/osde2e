@@ -581,7 +581,7 @@ func init() {
 	viper.SetDefault(Cluster.MultiAZ, false)
 	viper.BindEnv(Cluster.MultiAZ, "MULTI_AZ")
 
-	viper.SetDefault(Cluster.Channel, "stable")
+	viper.SetDefault(Cluster.Channel, "candidate")
 	viper.BindEnv(Cluster.Channel, "CHANNEL")
 
 	viper.SetDefault(Cluster.DestroyAfterTest, false)
