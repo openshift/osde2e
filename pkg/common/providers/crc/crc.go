@@ -18,8 +18,8 @@ import (
 	"github.com/code-ready/crc/pkg/crc/preflight"
 	"github.com/code-ready/crc/pkg/crc/validation"
 	"github.com/code-ready/crc/pkg/crc/version"
-	"github.com/openshift/osde2e/pkg/common/spi"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
+	"github.com/openshift/osde2e/pkg/common/spi"
 	"k8s.io/apimachinery/pkg/util/wait"
 
 	// Specifically using this for YAMLToJSON
