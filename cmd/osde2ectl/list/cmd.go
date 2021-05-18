@@ -126,7 +126,7 @@ func run(cmd *cobra.Command, argv []string) error {
 	if len(clusters) == 0 {
 		log.Printf("No results found")
 	} else {
-		statuslengthmax, installedverlengthmax, ownerlengthmax := 0, 0, 0
+		statuslengthmax, installedverlengthmax, ownerlengthmax, upgradeversionlengthmax := 0, 0, 0, 0
 		for _, cluster := range clusters {
 			properties := cluster.Properties()
 			if len(properties[clusterproperties.Status]) > statuslengthmax {
@@ -135,16 +135,19 @@ func run(cmd *cobra.Command, argv []string) error {
 			if len(properties[clusterproperties.InstalledVersion]) > installedverlengthmax {
 				installedverlengthmax = len(properties[clusterproperties.InstalledVersion])
 			}
+			if len(properties[clusterproperties.UpgradeVersion]) > upgradeversionlengthmax {
+				upgradeversionlengthmax = len(properties[clusterproperties.UpgradeVersion])
+			}
 			if len(properties[clusterproperties.OwnedBy]) > ownerlengthmax {
 				ownerlengthmax = len(properties[clusterproperties.OwnedBy])
 			}
 		}
 
-		headerspace := "%-25s%-35s%-15s%-" + strconv.Itoa(statuslengthmax+5) + "s%-" + strconv.Itoa(ownerlengthmax+5) + "s%-" + strconv.Itoa(installedverlengthmax+5) + "s%s\n"
-		fmt.Printf(headerspace, "NAME", "ID", "STATE", "STATUS", "OWNER", "INSTALLED VERSION", "UPGRADE VERSION")
+		headerspace := "%-25s%-35s%-15s%-" + strconv.Itoa(statuslengthmax+5) + "s%-" + strconv.Itoa(ownerlengthmax+5) + "s%-" + strconv.Itoa(installedverlengthmax+5) + "s%-" + strconv.Itoa(upgradeversionlengthmax+5) + "s%s\n"
+		fmt.Printf(headerspace, "NAME", "ID", "STATE", "STATUS", "OWNER", "INSTALLED VERSION", "UPGRADE VERSION", "REGION")
 		for _, cluster := range clusters {
 			properties := cluster.Properties()
-			fmt.Printf(headerspace, cluster.Name(), cluster.ID(), cluster.State(), properties[clusterproperties.Status], properties[clusterproperties.OwnedBy], properties[clusterproperties.InstalledVersion], properties[clusterproperties.UpgradeVersion])
+			fmt.Printf(headerspace, cluster.Name(), cluster.ID(), cluster.State(), properties[clusterproperties.Status], properties[clusterproperties.OwnedBy], properties[clusterproperties.InstalledVersion], properties[clusterproperties.UpgradeVersion], cluster.Region())
 		}
 	}
 
