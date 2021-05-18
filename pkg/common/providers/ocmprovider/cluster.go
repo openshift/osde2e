@@ -956,6 +956,10 @@ func ocmStateToInternalState(state v1.ClusterState) spi.ClusterState {
 		return spi.ClusterStateReady
 	case v1.ClusterStateUninstalling:
 		return spi.ClusterStateUninstalling
+	case v1.ClusterStateHibernating:
+		return spi.ClusterStateHibernating
+	case v1.ClusterStateResuming:
+		return spi.ClusterStateResuming
 	default:
 		return spi.ClusterStateUnknown
 	}
