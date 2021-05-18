@@ -535,6 +535,7 @@ PD info: %v`, jobName, jobURL, event)); err != nil {
 
 func cleanupAfterE2E(h *helper.H) (errors []error) {
 	var err error
+	clusterStatus := clusterproperties.StatusCompletedFailing
 	defer ginkgo.GinkgoRecover()
 
 	if viper.GetBool(config.MustGather) {
@@ -549,10 +550,12 @@ func cleanupAfterE2E(h *helper.H) (errors []error) {
 
 		if err != nil {
 			log.Printf("Error running must-gather: %s", err.Error())
+			clusterStatus = clusterproperties.StatusCompletedError
 		} else {
 			gatherResults, err := r.RetrieveResults()
 			if err != nil {
 				log.Printf("Error retrieving must-gather results: %s", err.Error())
+				clusterStatus = clusterproperties.StatusCompletedError
 			} else {
 				h.WriteResults(gatherResults)
 			}
@@ -572,16 +575,19 @@ func cleanupAfterE2E(h *helper.H) (errors []error) {
 		data, err := json.MarshalIndent(list, "", "    ")
 		if err != nil {
 			log.Printf("error marshalling JSON for %s/%s/%s", resource.Group, resource.Version, resource.Resource)
+			clusterStatus = clusterproperties.StatusCompletedError
 		} else {
 			var gbuf bytes.Buffer
 			zw := gzip.NewWriter(&gbuf)
 			_, err = zw.Write(data)
 			if err != nil {
 				log.Print("Error writing data to buffer")
+				clusterStatus = clusterproperties.StatusCompletedError
 			}
 			err = zw.Close()
 			if err != nil {
 				log.Print("Error closing writer to buffer")
+				clusterStatus = clusterproperties.StatusCompletedError
 			}
 			// include gzip in filename to mark compressed data
 			filename := fmt.Sprintf("%s-%s-%s.json.gzip", resource.Group, resource.Version, resource.Resource)
@@ -597,6 +603,7 @@ func cleanupAfterE2E(h *helper.H) (errors []error) {
 	if len(clusterID) > 0 {
 		if provider, err = providers.ClusterProvider(); err != nil {
 			log.Printf("Error getting cluster provider: %s", err.Error())
+			clusterStatus = clusterproperties.StatusCompletedError
 		}
 
 		// Get state from Provisioner
@@ -605,12 +612,11 @@ func cleanupAfterE2E(h *helper.H) (errors []error) {
 		cluster, err := provider.GetCluster(clusterID)
 		if err != nil {
 			log.Printf("error getting Cluster state: %s", err.Error())
+			clusterStatus = clusterproperties.StatusCompletedError
 		} else {
 			defer func() {
 				// set the completed property right before this function returns, which should be after
 				// all cleanup is finished.
-
-				clusterStatus := clusterproperties.StatusCompletedFailing
 				if viper.GetBool(config.Cluster.Passing) {
 					clusterStatus = clusterproperties.StatusCompletedPassing
 				}
@@ -665,7 +671,7 @@ func cleanupAfterE2E(h *helper.H) (errors []error) {
 
 		// Current default expiration is 6 hours.
 		// If the cluster hasn't been recycled, and the tests passed: Extend it 24h
-		if !viper.GetBool(config.Cluster.Reused) && viper.GetBool(config.Cluster.Passing) {
+		if !viper.GetBool(config.Cluster.Reused) && clusterStatus != clusterproperties.StatusCompletedError {
 			if err := provider.ExtendExpiry(viper.GetString(config.Cluster.ID), 18, 0, 0); err != nil {
 				log.Printf("Error extending cluster expiration: %s", err.Error())
 			}
