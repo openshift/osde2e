@@ -14,6 +14,7 @@ import (
 	"github.com/openshift/osde2e/pkg/common/helper"
 	apiv1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
 )
 
@@ -62,30 +63,34 @@ var _ = ginkgo.Describe(dedicatedAdminSccTestName, func() {
 			log.Printf("Error:(%v)", err)
 			//Deleting all prometheus pods
 			list, _ := FilterPods("openshift-monitoring", "app=prometheus", h)
-			names, _ := GetPodNames("prometheus-operator", list, h)
+			names, _ := GetPodNames(list, h)
 			log.Printf("Names of pods:(%v)", names)
 			numPrometheusPods := deletePods(names, "openshift-monitoring", h)
 			//Verifying the same number of running prometheus pods has come up
 			err = wait.PollImmediate(2*time.Second, 3*time.Minute, func() (bool, error) {
-				list, _ = FilterPods("openshift-monitoring", "app=prometheus", h)
-				_, newNamesNum := GetPodNames("prometheus-operator", list, h)
-				if numPrometheusPods == newNamesNum {
-					err = nil
-					return true, err
+				pollList, _ := FilterPods("openshift-monitoring", "app=prometheus", h)
+				if !AllDifferentPods(list, pollList) {
+					return false, nil
 				}
-				err = errors.New("Number of prometheus pods isn't equal to the number before")
-				return false, err
+				_, newNamesNum := GetPodNames(pollList, h)
+				if numPrometheusPods == newNamesNum {
+					return true, nil
+				}
+				return false, nil
 			})
 			Expect(err).NotTo(HaveOccurred())
 			//Deleting the ssh pods
 			list, _ = FilterPods("openshift-sre-sshd", "deployment=rh-ssh", h)
-			names, _ = GetPodNames("openshift-sre-sshd", list, h)
+			names, _ = GetPodNames(list, h)
 			log.Printf("Names of pods:(%v)", names)
 			numSSHPods := deletePods(names, "openshift-sre-sshd", h)
 			//Verifying the same number of running ssh pods has come up
 			err = wait.PollImmediate(2*time.Second, 3*time.Minute, func() (bool, error) {
-				list, _ = FilterPods("openshift-sre-sshd", "deployment=rh-ssh", h)
-				_, newSSHNum := GetPodNames("openshift-sre-sshd", list, h)
+				pollList, _ := FilterPods("openshift-sre-sshd", "deployment=rh-ssh", h)
+				if !AllDifferentPods(list, pollList) {
+					return false, nil
+				}
+				_, newSSHNum := GetPodNames(pollList, h)
 				if numSSHPods == newSSHNum {
 					err = nil
 					return true, err
@@ -94,10 +99,26 @@ var _ = ginkgo.Describe(dedicatedAdminSccTestName, func() {
 				return false, err
 			})
 			Expect(err).NotTo(HaveOccurred())
-
 		})
 	})
 })
+
+// AllDifferentPods returns whether or not the newPods contains a pod with
+// the same UID as a pod in originalPods. It is useful for ensureing that
+// all pods in a given deployment have been restarted (the new ones will
+// have different UIDs).
+func AllDifferentPods(originalPods, newPods *apiv1.PodList) bool {
+	orig := make(map[types.UID]struct{})
+	for _, p := range originalPods.Items {
+		orig[p.ObjectMeta.UID] = struct{}{}
+	}
+	for _, p := range newPods.Items {
+		if _, ok := orig[p.ObjectMeta.UID]; ok {
+			return false
+		}
+	}
+	return true
+}
 
 func checkSccPermissions(h *helper.H, clusterRole string, scc string) {
 
@@ -189,12 +210,14 @@ func FilterPods(namespace string, label string, h *helper.H) (*apiv1.PodList, er
 }
 
 //Extracts pod names from a filtered list and counts how many are in running state
-func GetPodNames(namespace string, list *apiv1.PodList, h *helper.H) ([]string, int) {
+func GetPodNames(list *apiv1.PodList, h *helper.H) ([]string, int) {
 	var notReady []apiv1.Pod
 	var ready []apiv1.Pod
 	var podNames []string
 	var total int
 	var numReady int
+
+podLoop:
 	for _, pod := range list.Items {
 		name := pod.Name
 		podNames = append(podNames, name)
@@ -203,6 +226,12 @@ func GetPodNames(namespace string, list *apiv1.PodList, h *helper.H) ([]string, 
 		if phase != apiv1.PodRunning && phase != apiv1.PodSucceeded {
 			notReady = append(notReady, pod)
 		} else {
+			for _, status := range pod.Status.ContainerStatuses {
+				if !status.Ready {
+					notReady = append(notReady, pod)
+					continue podLoop
+				}
+			}
 			ready = append(ready, pod)
 
 		}
