@@ -159,6 +159,15 @@ func (m *ROSAProvider) Versions() (*spi.VersionList, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	if viper.GetString(config.Cluster.Channel) != "stable" {
+		versionResponseChannel, err := versions.GetVersions(clustersClient, viper.GetString(config.Cluster.Channel))
+		if err != nil {
+			return nil, err
+		}
+		versionResponse = append(versionResponse, versionResponseChannel...)
+	}
+
 	spiVersions := []*spi.Version{}
 	var defaultVersionOverride *semver.Version = nil
 
