@@ -163,6 +163,10 @@ func TestMigrations(t *testing.T) {
 	url := getDBURL(t)
 	if err := db.WithDB(url, func(pg *sql.DB) error {
 		return db.WithMigrator(pg, func(m *migrate.Migrate) error {
+			t.Cleanup(func() {
+				m.Down()
+			})
+
 			if err := m.Up(); err != nil {
 				t.Fatalf("Failed running all up migrations: %v", err)
 			}
