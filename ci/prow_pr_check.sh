@@ -6,6 +6,11 @@ set -eo pipefail
 
 {
     export GOFLAGS=""
+    PG_HOST=$(cat /usr/local/osde2e-common/rds-host)
+    PG_USER=$(cat /usr/local/osde2e-common/rds-user)
+    PG_PORT=$(cat /usr/local/osde2e-common/rds-port)
+    PG_PASS=$(cat /usr/local/osde2e-common/rds-pass)
+    export PG_HOST PG_USER PG_PASS PG_PORT
     make check
 
     make build
