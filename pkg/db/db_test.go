@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"os"
 	"testing"
 
 	"github.com/golang-migrate/migrate/v4"
@@ -16,37 +17,44 @@ var dbPool *dockertest.Pool = func() *dockertest.Pool {
 	// uses a sensible default on windows (tcp/http) and linux/osx (socket)
 	dbPool, err := dockertest.NewPool("")
 	if err != nil {
-		log.Fatalf("Could not connect to docker: %s", err)
+		log.Printf("Could not connect to docker: %s", err)
+		return nil
+	} else if os.Getenv("FORCE_REAL_DB_TESTS") == "1" {
+		return nil
 	}
 	return dbPool
 }()
 
 func getDBURL(t *testing.T) string {
+	const testDatabase = "test-database-do-not-use"
 	const password = "secret"
-	// pulls an image, creates a container based on it and runs it
-	resource, err := dbPool.Run("postgres", "13", []string{"POSTGRES_PASSWORD=" + password})
-	if err != nil {
-		t.Fatalf("Could not start resource: %s", err)
-	}
-	t.Cleanup(func() {
-		if err := dbPool.Purge(resource); err != nil {
-			log.Printf("Could not purge resource: %s", err)
-		}
-	})
-
-	url := fmt.Sprintf("postgres://postgres:%s@127.0.0.1:%s/postgres?sslmode=disable", password, resource.GetPort("5432/tcp"))
-
-	// exponential backoff-retry, because the application in the container might not be ready to accept connections yet
-	if err := dbPool.Retry(func() error {
-		db, err := sql.Open("pgx", url)
+	if dbPool != nil {
+		// pulls an image, creates a container based on it and runs it
+		resource, err := dbPool.Run("postgres", "13", []string{"POSTGRES_PASSWORD=" + password, "POSTGRES_DB=" + testDatabase})
 		if err != nil {
-			return err
+			t.Fatalf("Could not start resource: %s", err)
 		}
-		return db.Ping()
-	}); err != nil {
-		t.Fatalf("Could not connect to postgres: %s", err)
+		t.Cleanup(func() {
+			if err := dbPool.Purge(resource); err != nil {
+				log.Printf("Could not purge resource: %s", err)
+			}
+		})
+
+		url := fmt.Sprintf("postgres://postgres:%s@127.0.0.1:%s/%s?sslmode=disable", password, resource.GetPort("5432/tcp"), testDatabase)
+
+		// exponential backoff-retry, because the application in the container might not be ready to accept connections yet
+		if err := dbPool.Retry(func() error {
+			db, err := sql.Open("pgx", url)
+			if err != nil {
+				return err
+			}
+			return db.Ping()
+		}); err != nil {
+			t.Fatalf("Could not connect to postgres: %s", err)
+		}
+		return url
 	}
-	return url
+	return fmt.Sprintf("postgres://%s:%s@%s:%s/%s", os.Getenv("PG_USER"), os.Getenv("PG_PASS"), os.Getenv("PG_HOST"), os.Getenv("PG_PORT"), testDatabase)
 }
 
 // tableNames returns the names of all existing tables (of type BASE TABLE) in the public
@@ -126,6 +134,10 @@ func ensureTables(expectedNames ...string) func(pg *sql.DB, t *testing.T) {
 // allow checking for the effects of the migration.
 // the `postdown` function will be run after the down migration has been applied
 // to ensure that the migration cleaned up after itself properly.
+//
+// NOTE: All three handler functions are _required_. Leaving them nil will cause
+// tests to panic, and this is by design. All migrations should validate their
+// behavior at each of these points in their lifecycle.
 type migrationTestCase struct {
 	preup, during, postdown func(pg *sql.DB, t *testing.T)
 }
