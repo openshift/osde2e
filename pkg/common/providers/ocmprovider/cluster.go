@@ -64,6 +64,7 @@ func (o *OCMProvider) IsValidClusterName(clusterName string) (bool, error) {
 }
 
 // LaunchCluster setups an new cluster using the OSD API and returns it's ID.
+// nolint:gocyclo
 func (o *OCMProvider) LaunchCluster(clusterName string) (string, error) {
 	flavourID := getFlavour()
 	if flavourID == "" {
@@ -242,6 +243,11 @@ func (o *OCMProvider) findRecycledCluster(cluster *v1.Cluster) string {
 		}
 
 		err = o.AddProperty(spiRecycledCluster, clusterproperties.JobID, viper.GetString(config.JobID))
+		if err != nil {
+			log.Printf("Error adding property to cluster: %s", err.Error())
+			return ""
+		}
+		err = o.AddProperty(spiRecycledCluster, clusterproperties.JobName, viper.GetString(config.JobName))
 		if err != nil {
 			log.Printf("Error adding property to cluster: %s", err.Error())
 			return ""
@@ -439,6 +445,7 @@ func (o *OCMProvider) GenerateProperties() (map[string]string, error) {
 	provisionshardID := viper.GetString(config.Cluster.ProvisionShardID)
 
 	properties := map[string]string{
+		clusterproperties.JobName:          viper.GetString(config.JobName),
 		clusterproperties.JobID:            viper.GetString(config.JobID),
 		clusterproperties.MadeByOSDe2e:     "true",
 		clusterproperties.OwnedBy:          username,

@@ -622,6 +622,7 @@ func cleanupAfterE2E(h *helper.H) (errors []error) {
 
 				err = provider.AddProperty(cluster, clusterproperties.Status, clusterStatus)
 				err = provider.AddProperty(cluster, clusterproperties.JobID, "")
+				err = provider.AddProperty(cluster, clusterproperties.JobName, "")
 				if err != nil {
 					log.Printf("Failed setting completed status: %v", err)
 				}
@@ -677,7 +678,7 @@ func cleanupAfterE2E(h *helper.H) (errors []error) {
 					log.Printf("Error extending cluster expiration: %s", err.Error())
 				}
 			} else {
-				// If the cluster hasn't been recycled, and the tests passed: Extend it 24h
+				// If the cluster hasn't been recycled, and the cluster isn't errored: Extend it 24h
 				if err := provider.ExtendExpiry(viper.GetString(config.Cluster.ID), 18, 0, 0); err != nil {
 					log.Printf("Error extending cluster expiration: %s", err.Error())
 				}
