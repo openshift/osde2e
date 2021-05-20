@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -o pipefail
+set -eo pipefail
 
 . "$(dirname "$0")/prow_setup.sh"
 
