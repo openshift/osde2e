@@ -9,6 +9,7 @@ import (
 
 	"github.com/openshift/osde2e/cmd/osde2ectl/create"
 	"github.com/openshift/osde2e/cmd/osde2ectl/delete"
+	"github.com/openshift/osde2e/cmd/osde2ectl/expire"
 	"github.com/openshift/osde2e/cmd/osde2ectl/extend"
 	"github.com/openshift/osde2e/cmd/osde2ectl/get"
 	"github.com/openshift/osde2e/cmd/osde2ectl/healthcheck"
@@ -28,6 +29,7 @@ func init() {
 	root.AddCommand(list.Cmd)
 	root.AddCommand(get.Cmd)
 	root.AddCommand(extend.Cmd)
+	root.AddCommand(expire.Cmd)
 	root.AddCommand(healthcheck.Cmd)
 
 }

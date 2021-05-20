@@ -64,6 +64,7 @@ func (o *OCMProvider) IsValidClusterName(clusterName string) (bool, error) {
 }
 
 // LaunchCluster setups an new cluster using the OSD API and returns it's ID.
+// nolint:gocyclo
 func (o *OCMProvider) LaunchCluster(clusterName string) (string, error) {
 	flavourID := getFlavour()
 	if flavourID == "" {
@@ -199,7 +200,7 @@ func (o *OCMProvider) LaunchCluster(clusterName string) (string, error) {
 
 	var resp *v1.ClustersAddResponse
 
-	if viper.GetBool(config.Cluster.UseExistingCluster) {
+	if viper.GetBool(config.Cluster.UseExistingCluster) && viper.GetString(config.Addons.IDs) == "" {
 		if clusterID := o.findRecycledCluster(cluster); clusterID != "" {
 			return clusterID, nil
 		}
@@ -242,6 +243,11 @@ func (o *OCMProvider) findRecycledCluster(cluster *v1.Cluster) string {
 		}
 
 		err = o.AddProperty(spiRecycledCluster, clusterproperties.JobID, viper.GetString(config.JobID))
+		if err != nil {
+			log.Printf("Error adding property to cluster: %s", err.Error())
+			return ""
+		}
+		err = o.AddProperty(spiRecycledCluster, clusterproperties.JobName, viper.GetString(config.JobName))
 		if err != nil {
 			log.Printf("Error adding property to cluster: %s", err.Error())
 			return ""
@@ -439,6 +445,7 @@ func (o *OCMProvider) GenerateProperties() (map[string]string, error) {
 	provisionshardID := viper.GetString(config.Cluster.ProvisionShardID)
 
 	properties := map[string]string{
+		clusterproperties.JobName:          viper.GetString(config.JobName),
 		clusterproperties.JobID:            viper.GetString(config.JobID),
 		clusterproperties.MadeByOSDe2e:     "true",
 		clusterproperties.OwnedBy:          username,
@@ -1039,6 +1046,53 @@ func (o *OCMProvider) ExtendExpiry(clusterID string, hours uint64, minutes uint6
 	}
 
 	log.Println("Successfully extended cluster expiry time to", extendexpirytime.UTC().Format("Monday, 02 Jan 2006 15:04:05 MST"))
+
+	return nil
+}
+
+// Expire sets the expiration time of an existing cluster to the current time
+func (o *OCMProvider) Expire(clusterID string) error {
+	var resp *v1.ClusterUpdateResponse
+
+	now := time.Now().Add(1 * time.Minute)
+
+	extendexpiryCluster, err := v1.NewCluster().ExpirationTimestamp(now).Build()
+
+	if err != nil {
+		return fmt.Errorf("error while building updated expiration time cluster object: %v", err)
+	}
+
+	err = retryer().Do(func() error {
+		var err error
+		resp, err = o.conn.ClustersMgmt().V1().Clusters().Cluster(clusterID).Update().
+			Body(extendexpiryCluster).
+			Send()
+
+		if err != nil {
+			err = fmt.Errorf("couldn't update cluster '%s': %v", clusterID, err)
+			log.Printf("%v", err)
+			return err
+		}
+
+		if resp != nil && resp.Error() != nil {
+			log.Printf("error while trying to update cluster: %v", err)
+			return errResp(resp.Error())
+		}
+
+		o.updateClusterCache(clusterID, resp.Body())
+
+		return nil
+	})
+
+	if err != nil {
+		return err
+	}
+
+	if resp.Error() != nil {
+		return resp.Error()
+	}
+
+	log.Println("Successfully set cluster expiry time to", now.UTC().Format("Monday, 02 Jan 2006 15:04:05 MST"))
 
 	return nil
 }

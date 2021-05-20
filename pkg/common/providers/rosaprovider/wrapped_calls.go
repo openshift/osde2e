@@ -73,6 +73,11 @@ func (m *ROSAProvider) ExtendExpiry(clusterID string, hours uint64, minutes uint
 	return m.ocmProvider.ExtendExpiry(clusterID, hours, minutes, seconds)
 }
 
+// Expire will call Expire from the OCM provider.
+func (m *ROSAProvider) Expire(clusterID string) error {
+	return m.ocmProvider.Expire(clusterID)
+}
+
 // AddProperty will call AddProperty from the OCM provider.
 func (m *ROSAProvider) AddProperty(cluster *spi.Cluster, tag string, value string) error {
 	return m.ocmProvider.AddProperty(cluster, tag, value)
