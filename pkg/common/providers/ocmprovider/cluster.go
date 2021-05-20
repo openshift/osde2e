@@ -229,8 +229,15 @@ func (o *OCMProvider) findRecycledCluster(cluster *v1.Cluster) string {
 		log.Printf("We've found %d matching clusters to reuse", listResponse.Total())
 		recycledCluster := listResponse.Items().Slice()[rand.Intn(listResponse.Total())]
 		if recycledCluster.State() == v1.ClusterStateReady {
+			spiRecycledCluster, err := o.ocmToSPICluster(recycledCluster)
+			if err != nil {
+				log.Printf("Error converting recycled cluster to an SPI Cluster: %s", err.Error())
+				return ""
+			}
+			o.AddProperty(spiRecycledCluster, clusterproperties.Status, clusterproperties.StatusHealthy)
 			viper.Set(config.Cluster.Reused, true)
 			log.Println("Hot cluster ready, moving on...")
+
 			return recycledCluster.ID()
 		}
 		if recycledCluster.State() == "hibernating" && o.Resume(recycledCluster.ID()) {

@@ -146,16 +146,25 @@ func WaitForClusterReadyPostScale(clusterID string, logger *log.Logger) error {
 // healthcheck mechanisms appropriate for after the cluster resumed from hibernation.
 func WaitForClusterReadyPostWake(clusterID string, logger *log.Logger) error {
 	log.Printf("Cluster %s just woke up, waiting for 10 minutes...", clusterID)
+	provider, err := providers.ClusterProvider()
+	if err != nil {
+		return fmt.Errorf("error getting cluster provider: %s", err.Error())
+	}
+	cluster, err := provider.GetCluster(clusterID)
+	if err != nil {
+		return fmt.Errorf("error getting cluster from provider: %s", err.Error())
+	}
+	provider.AddProperty(cluster, clusterproperties.Status, clusterproperties.StatusHealthCheck)
 	time.Sleep(10 * time.Minute)
 
 	restConfig, _, err := ClusterConfig(clusterID)
 	if err != nil {
-		return fmt.Errorf("Error getting cluster config: %v\n", err)
+		return fmt.Errorf("error getting cluster config: %s", err.Error())
 	}
 
 	kubeClient, err := kubernetes.NewForConfig(restConfig)
 	if err != nil {
-		return fmt.Errorf("Error generating Kube Clientset: %v\n", err)
+		return fmt.Errorf("error generating Kube Clientset: %s", err.Error())
 	}
 
 	var continueToken string
