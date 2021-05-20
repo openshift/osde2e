@@ -262,6 +262,11 @@ func (m *MockProvider) ExtendExpiry(clusterID string, hours uint64, minutes uint
 	return fmt.Errorf("ExtendExpiry is unsupported by mock clusters")
 }
 
+// Expire mocks an expire cluster expiry operation.
+func (m *MockProvider) Expire(clusterID string) error {
+	return fmt.Errorf("Expire is unsupported by mock clusters")
+}
+
 // AddProperty mocks an add new cluster property operation.
 func (m *MockProvider) AddProperty(cluster *spi.Cluster, tag string, value string) error {
 	return fmt.Errorf("AddProperty is unsupported by mock clusters")

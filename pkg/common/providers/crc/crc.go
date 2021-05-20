@@ -296,6 +296,11 @@ func (m *Provider) ExtendExpiry(clusterID string, hours uint64, minutes uint64, 
 	return fmt.Errorf("ExtendExpiry is unsupported by CRC clusters")
 }
 
+// Expire CRCs an extend cluster expiry operation.
+func (m *Provider) Expire(clusterID string) error {
+	return fmt.Errorf("Expire is unsupported by CRC clusters")
+}
+
 // AddProperty CRCs an add new cluster property operation.
 func (m *Provider) AddProperty(cluster *spi.Cluster, tag string, value string) error {
 	// Noop for now and just note it.

@@ -1043,6 +1043,53 @@ func (o *OCMProvider) ExtendExpiry(clusterID string, hours uint64, minutes uint6
 	return nil
 }
 
+// Expire sets the expiration time of an existing cluster to the current time
+func (o *OCMProvider) Expire(clusterID string) error {
+	var resp *v1.ClusterUpdateResponse
+
+	now := time.Now().Add(1 * time.Minute)
+
+	extendexpiryCluster, err := v1.NewCluster().ExpirationTimestamp(now).Build()
+
+	if err != nil {
+		return fmt.Errorf("error while building updated expiration time cluster object: %v", err)
+	}
+
+	err = retryer().Do(func() error {
+		var err error
+		resp, err = o.conn.ClustersMgmt().V1().Clusters().Cluster(clusterID).Update().
+			Body(extendexpiryCluster).
+			Send()
+
+		if err != nil {
+			err = fmt.Errorf("couldn't update cluster '%s': %v", clusterID, err)
+			log.Printf("%v", err)
+			return err
+		}
+
+		if resp != nil && resp.Error() != nil {
+			log.Printf("error while trying to update cluster: %v", err)
+			return errResp(resp.Error())
+		}
+
+		o.updateClusterCache(clusterID, resp.Body())
+
+		return nil
+	})
+
+	if err != nil {
+		return err
+	}
+
+	if resp.Error() != nil {
+		return resp.Error()
+	}
+
+	log.Println("Successfully set cluster expiry time to", now.UTC().Format("Monday, 02 Jan 2006 15:04:05 MST"))
+
+	return nil
+}
+
 // AddProperty adds a new property to the properties field of an existing cluster
 func (o *OCMProvider) AddProperty(cluster *spi.Cluster, tag string, value string) error {
 	var resp *v1.ClusterUpdateResponse
