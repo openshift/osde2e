@@ -199,7 +199,7 @@ func (o *OCMProvider) LaunchCluster(clusterName string) (string, error) {
 
 	var resp *v1.ClustersAddResponse
 
-	if viper.GetBool(config.Cluster.UseExistingCluster) {
+	if viper.GetBool(config.Cluster.UseExistingCluster) && viper.GetString(config.Addons.IDs) == "" {
 		if clusterID := o.findRecycledCluster(cluster); clusterID != "" {
 			return clusterID, nil
 		}
