@@ -39,7 +39,7 @@ var _ = ginkgo.Describe(clusterStateInformingName, func() {
 			if listerr != nil {
 				return false, listerr
 			}
-			names, podNum := verify.GetPodNames("prometheus-operator", list, h)
+			names, podNum := verify.GetPodNames(list, h)
 			if podNum > 0 {
 				for _, value := range names {
 					if strings.HasPrefix(value, "prometheus-k8s-") {

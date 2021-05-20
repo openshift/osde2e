@@ -7,12 +7,12 @@ import (
 	"time"
 
 	"github.com/Masterminds/semver"
+	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/metadata"
 	"github.com/openshift/osde2e/pkg/common/spi"
 	"github.com/openshift/osde2e/pkg/common/util"
 	"github.com/openshift/osde2e/pkg/common/versions"
-	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"k8s.io/apimachinery/pkg/util/wait"
 )
 
@@ -38,12 +38,11 @@ func ChooseVersions() (err error) {
 
 			clusterVersion, versionSelector, err = setupVersion(versionList)
 			if err != nil {
-				log.Printf("Error setting up version: %s", err.Error())
-				if versionSelector == "specific image" {
-					log.Printf("Waiting for %s CIS to sync with the Release Controller", viper.GetString(config.Cluster.ReleaseImageLatest))
-					return false, nil
-				}
 				return false, err
+			}
+			if clusterVersion == nil && versionSelector == "specific image" {
+				log.Printf("Waiting for %s CIS to sync with the Release Controller", viper.GetString(config.Cluster.ReleaseImageLatest))
+				return false, nil
 			}
 
 			return true, nil
@@ -86,7 +85,7 @@ func setupVersion(versionList *spi.VersionList) (*semver.Version, string, error)
 				log.Printf("Unable to get the %s.", versionType)
 			}
 		} else {
-			return nil, versionType, fmt.Errorf("error finding default cluster version: %v", err)
+			return nil, versionType, nil
 		}
 	} else {
 		var err error

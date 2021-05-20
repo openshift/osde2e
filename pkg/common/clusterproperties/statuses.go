@@ -39,4 +39,10 @@ const (
 
 	// StatusCompletedFailing represents the cluster having finished its CI and tests having failed
 	StatusCompletedFailing = "completed-failing"
+
+	// StatusCompletedError represents the cluster that exhibits issues outside of the test results
+	StatusCompletedError = "completed-error"
+
+	// StatusResuming represents the cluster having just been woken up
+	StatusResuming = "resuming"
 )

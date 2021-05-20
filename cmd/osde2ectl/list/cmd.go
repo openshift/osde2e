@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"strconv"
+	"strings"
 
 	"github.com/openshift/osde2e/cmd/osde2e/common"
 	"github.com/openshift/osde2e/pkg/common/clusterproperties"
@@ -26,8 +27,7 @@ var args struct {
 	customConfig    string
 	secretLocations string
 	clusterStatus   string
-	installVersion  string
-	upgradeVersion  string
+	version         string
 	ownedBy         string
 }
 
@@ -60,18 +60,11 @@ func init() {
 		"A flag to indicate the cluster status parameter in the cluster list query",
 	)
 	flags.StringVarP(
-		&args.installVersion,
-		"install-version",
+		&args.version,
+		"version",
 		"i",
 		"",
-		"A flag to indicate the cluster install version parameter in the cluster list query",
-	)
-	flags.StringVarP(
-		&args.upgradeVersion,
-		"upgrade-version",
-		"u",
-		"",
-		"A flag to indicate the cluster upgrade version parameter in the cluster list query",
+		"A flag to indicate the cluster version parameter in the cluster list query",
 	)
 	flags.StringVarP(
 		&args.ownedBy,
@@ -100,14 +93,13 @@ func run(cmd *cobra.Command, argv []string) error {
 	querystring := "properties.MadeByOSDe2e='true'"
 
 	propertymap := map[string]string{
-		args.clusterStatus:  "properties.Status",
-		args.ownedBy:        "properties.OwnedBy",
-		args.installVersion: "properties.InstalledVersion",
-		args.upgradeVersion: "properties.UpgradeVersion",
+		args.clusterStatus: "properties.Status",
+		args.ownedBy:       "properties.OwnedBy",
+		args.version:       "version.id",
 	}
 
 	filterlist := []string{
-		args.ownedBy, args.clusterStatus, args.installVersion, args.upgradeVersion,
+		args.ownedBy, args.clusterStatus, args.version,
 	}
 
 	for _, filter := range filterlist {
@@ -126,25 +118,25 @@ func run(cmd *cobra.Command, argv []string) error {
 	if len(clusters) == 0 {
 		log.Printf("No results found")
 	} else {
-		statuslengthmax, installedverlengthmax, ownerlengthmax := 0, 0, 0
+		statuslengthmax, versionlengthmax, ownerlengthmax := 0, 0, 0
 		for _, cluster := range clusters {
 			properties := cluster.Properties()
 			if len(properties[clusterproperties.Status]) > statuslengthmax {
 				statuslengthmax = len(properties[clusterproperties.Status])
 			}
-			if len(properties[clusterproperties.InstalledVersion]) > installedverlengthmax {
-				installedverlengthmax = len(properties[clusterproperties.InstalledVersion])
+			if len(cluster.Version()) > versionlengthmax {
+				versionlengthmax = len(cluster.Version())
 			}
 			if len(properties[clusterproperties.OwnedBy]) > ownerlengthmax {
 				ownerlengthmax = len(properties[clusterproperties.OwnedBy])
 			}
 		}
 
-		headerspace := "%-25s%-35s%-15s%-" + strconv.Itoa(statuslengthmax+5) + "s%-" + strconv.Itoa(ownerlengthmax+5) + "s%-" + strconv.Itoa(installedverlengthmax+5) + "s%s\n"
-		fmt.Printf(headerspace, "NAME", "ID", "STATE", "STATUS", "OWNER", "INSTALLED VERSION", "UPGRADE VERSION")
+		headerspace := "%-15s%-" + strconv.Itoa(ownerlengthmax+5) + "s%-35s%-10s%-15s%-" + strconv.Itoa(statuslengthmax+5) + "s%-" + strconv.Itoa(versionlengthmax-5) + "s%-25s%s\n"
+		fmt.Printf(headerspace, "NAME", "OWNER", "ID", "CLOUD", "STATE", "STATUS", "VERSION", "JOB_ID", "JOB")
 		for _, cluster := range clusters {
 			properties := cluster.Properties()
-			fmt.Printf(headerspace, cluster.Name(), cluster.ID(), cluster.State(), properties[clusterproperties.Status], properties[clusterproperties.OwnedBy], properties[clusterproperties.InstalledVersion], properties[clusterproperties.UpgradeVersion])
+			fmt.Printf(headerspace, cluster.Name(), properties[clusterproperties.OwnedBy], cluster.ID(), cluster.CloudProvider(), cluster.State(), properties[clusterproperties.Status], strings.TrimLeft(cluster.Version(), "openshift-v"), properties[clusterproperties.JobID], properties[clusterproperties.JobName])
 		}
 	}
 

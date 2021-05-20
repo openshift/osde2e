@@ -13,6 +13,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Masterminds/semver"
 	v1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 	"github.com/openshift/osde2e/pkg/common/aws"
 	"github.com/openshift/osde2e/pkg/common/clusterproperties"
@@ -63,6 +64,7 @@ func (o *OCMProvider) IsValidClusterName(clusterName string) (bool, error) {
 }
 
 // LaunchCluster setups an new cluster using the OSD API and returns it's ID.
+// nolint:gocyclo
 func (o *OCMProvider) LaunchCluster(clusterName string) (string, error) {
 	flavourID := getFlavour()
 	if flavourID == "" {
@@ -198,8 +200,10 @@ func (o *OCMProvider) LaunchCluster(clusterName string) (string, error) {
 
 	var resp *v1.ClustersAddResponse
 
-	if clusterID := o.findRecycledCluster(cluster); clusterID != "" {
-		return clusterID, nil
+	if viper.GetBool(config.Cluster.UseExistingCluster) && viper.GetString(config.Addons.IDs) == "" {
+		if clusterID := o.findRecycledCluster(cluster); clusterID != "" {
+			return clusterID, nil
+		}
 	}
 
 	err = retryer().Do(func() error {
@@ -222,19 +226,51 @@ func (o *OCMProvider) LaunchCluster(clusterName string) (string, error) {
 }
 
 func (o *OCMProvider) findRecycledCluster(cluster *v1.Cluster) string {
-	query := fmt.Sprintf("properties.InstalledVersion='%s' and properties.UpgradeVersion='' and properties.Status like '%s%%'", cluster.Version().ID(), "completed-")
+	version := semver.MustParse(strings.TrimPrefix(cluster.Version().ID(), "openshift-"))
+	query := fmt.Sprintf("cloud_provider.id='%s' and properties.JobID='' and properties.Status like '%s%%' and version.id like 'openshift-v%s%%'",
+		cluster.CloudProvider().ID(), "completed-", version.String())
+
+	log.Println(query)
 
 	listResponse, err := o.conn.ClustersMgmt().V1().Clusters().List().Search(query).Send()
 	if err == nil && listResponse.Total() > 0 {
 		log.Printf("We've found %d matching clusters to reuse", listResponse.Total())
 		recycledCluster := listResponse.Items().Slice()[rand.Intn(listResponse.Total())]
+		spiRecycledCluster, err := o.ocmToSPICluster(recycledCluster)
+		if err != nil {
+			log.Printf("Error converting recycled cluster to an SPI Cluster: %s", err.Error())
+			return ""
+		}
+
+		err = o.AddProperty(spiRecycledCluster, clusterproperties.JobID, viper.GetString(config.JobID))
+		if err != nil {
+			log.Printf("Error adding property to cluster: %s", err.Error())
+			return ""
+		}
+		err = o.AddProperty(spiRecycledCluster, clusterproperties.JobName, viper.GetString(config.JobName))
+		if err != nil {
+			log.Printf("Error adding property to cluster: %s", err.Error())
+			return ""
+		}
+
+		time.Sleep(5 * time.Second)
+
+		spiRecycledCluster, err = o.GetCluster(spiRecycledCluster.ID())
+		if err != nil {
+			log.Printf("Error retrieving cluster during job ID check: %s", err.Error())
+			return ""
+		}
+		if jobID, ok := spiRecycledCluster.Properties()["JobID"]; ok && jobID != viper.GetString(config.JobID) {
+			log.Printf("Cluster already recycled by %s", spiRecycledCluster.Properties()["JobID"])
+			return o.findRecycledCluster(cluster)
+		}
+
 		if recycledCluster.State() == v1.ClusterStateReady {
-			spiRecycledCluster, err := o.ocmToSPICluster(recycledCluster)
+			err = o.AddProperty(spiRecycledCluster, clusterproperties.Status, clusterproperties.StatusHealthy)
 			if err != nil {
-				log.Printf("Error converting recycled cluster to an SPI Cluster: %s", err.Error())
+				log.Printf("Error adding property to cluster: %s", err.Error())
 				return ""
 			}
-			o.AddProperty(spiRecycledCluster, clusterproperties.Status, clusterproperties.StatusHealthy)
 			viper.Set(config.Cluster.Reused, true)
 			log.Println("Hot cluster ready, moving on...")
 
@@ -242,6 +278,11 @@ func (o *OCMProvider) findRecycledCluster(cluster *v1.Cluster) string {
 		}
 		if recycledCluster.State() == "hibernating" && o.Resume(recycledCluster.ID()) {
 			log.Println("Resuming cluster to use...")
+			err = o.AddProperty(spiRecycledCluster, clusterproperties.Status, clusterproperties.StatusResuming)
+			if err != nil {
+				log.Printf("Error adding property to cluster: %s", err.Error())
+				return ""
+			}
 			viper.Set(config.Cluster.Reused, true)
 			return recycledCluster.ID()
 		}
@@ -404,6 +445,8 @@ func (o *OCMProvider) GenerateProperties() (map[string]string, error) {
 	provisionshardID := viper.GetString(config.Cluster.ProvisionShardID)
 
 	properties := map[string]string{
+		clusterproperties.JobName:          viper.GetString(config.JobName),
+		clusterproperties.JobID:            viper.GetString(config.JobID),
 		clusterproperties.MadeByOSDe2e:     "true",
 		clusterproperties.OwnedBy:          username,
 		clusterproperties.InstalledVersion: installedversion,
@@ -924,6 +967,10 @@ func ocmStateToInternalState(state v1.ClusterState) spi.ClusterState {
 		return spi.ClusterStateReady
 	case v1.ClusterStateUninstalling:
 		return spi.ClusterStateUninstalling
+	case v1.ClusterStateHibernating:
+		return spi.ClusterStateHibernating
+	case v1.ClusterStateResuming:
+		return spi.ClusterStateResuming
 	default:
 		return spi.ClusterStateUnknown
 	}
@@ -999,6 +1046,53 @@ func (o *OCMProvider) ExtendExpiry(clusterID string, hours uint64, minutes uint6
 	}
 
 	log.Println("Successfully extended cluster expiry time to", extendexpirytime.UTC().Format("Monday, 02 Jan 2006 15:04:05 MST"))
+
+	return nil
+}
+
+// Expire sets the expiration time of an existing cluster to the current time
+func (o *OCMProvider) Expire(clusterID string) error {
+	var resp *v1.ClusterUpdateResponse
+
+	now := time.Now().Add(1 * time.Minute)
+
+	extendexpiryCluster, err := v1.NewCluster().ExpirationTimestamp(now).Build()
+
+	if err != nil {
+		return fmt.Errorf("error while building updated expiration time cluster object: %v", err)
+	}
+
+	err = retryer().Do(func() error {
+		var err error
+		resp, err = o.conn.ClustersMgmt().V1().Clusters().Cluster(clusterID).Update().
+			Body(extendexpiryCluster).
+			Send()
+
+		if err != nil {
+			err = fmt.Errorf("couldn't update cluster '%s': %v", clusterID, err)
+			log.Printf("%v", err)
+			return err
+		}
+
+		if resp != nil && resp.Error() != nil {
+			log.Printf("error while trying to update cluster: %v", err)
+			return errResp(resp.Error())
+		}
+
+		o.updateClusterCache(clusterID, resp.Body())
+
+		return nil
+	})
+
+	if err != nil {
+		return err
+	}
+
+	if resp.Error() != nil {
+		return resp.Error()
+	}
+
+	log.Println("Successfully set cluster expiry time to", now.UTC().Format("Monday, 02 Jan 2006 15:04:05 MST"))
 
 	return nil
 }

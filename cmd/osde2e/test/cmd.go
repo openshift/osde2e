@@ -1,18 +1,18 @@
 package test
 
 import (
-	"fmt"
 	"log"
 	"math/rand"
+	"os"
 	"time"
 
 	"github.com/openshift/osde2e/cmd/osde2e/common"
 	"github.com/openshift/osde2e/cmd/osde2e/helpers"
+	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/providers/ocmprovider"
 	"github.com/openshift/osde2e/pkg/e2e"
 	"github.com/spf13/cobra"
-	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 
 	// import suites to be tested
 	_ "github.com/openshift/osde2e/pkg/e2e/addons"
@@ -32,7 +32,7 @@ var Cmd = &cobra.Command{
 	Short: "Runs end to end tests.",
 	Long:  "Runs end to end tests on a cluster using the provided arguments.",
 	Args:  cobra.OnlyValidArgs,
-	RunE:  run,
+	Run:   run,
 }
 
 var args struct {
@@ -133,9 +133,10 @@ func init() {
 	viper.BindPFlag(config.MustGather, Cmd.PersistentFlags().Lookup("must-gather"))
 }
 
-func run(cmd *cobra.Command, argv []string) error {
+func run(cmd *cobra.Command, argv []string) {
 	if err := common.LoadConfigs(args.configString, args.customConfig, args.secretLocations); err != nil {
-		return fmt.Errorf("error loading initial state: %v", err)
+		log.Printf("error loading initial state: %v", err)
+		os.Exit(1)
 	}
 
 	canaryChance := viper.GetInt(config.CanaryChance)
@@ -145,14 +146,10 @@ func run(cmd *cobra.Command, argv []string) error {
 		outcome := rand.Intn(canaryChance)
 		if outcome != 0 {
 			log.Printf("Canary job lost with a value of %d", outcome)
-			return nil
 		}
 		log.Println("Canary job won!")
 	}
 
-	if e2e.RunTests() {
-		return nil
-	}
-
-	return fmt.Errorf("testing failed")
+	exitCode := e2e.RunTests()
+	os.Exit(exitCode)
 }

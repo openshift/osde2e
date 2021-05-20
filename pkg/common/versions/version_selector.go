@@ -7,12 +7,12 @@ import (
 	"strings"
 
 	"github.com/Masterminds/semver"
+	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/spi"
 	"github.com/openshift/osde2e/pkg/common/util"
 	"github.com/openshift/osde2e/pkg/common/versions/installselectors"
 	"github.com/openshift/osde2e/pkg/common/versions/upgradeselectors"
-	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 )
 
 // GetVersionForInstall will get a version based upon available configuration options.
@@ -36,7 +36,11 @@ func GetVersionForInstall(versionList *spi.VersionList) (*semver.Version, string
 
 	v, selector, err := selectedVersionSelector.SelectVersion(versionList)
 	if err != nil {
-		return v, selector, fmt.Errorf("could not select a version from versionlist %v: %w", versionList, err)
+		log.Printf("No valid install version found for selector `%s`", selector)
+		for _, vers := range versionList.AvailableVersions() {
+			log.Printf("%s - Default? %v", vers.Version().Original(), vers.Default())
+		}
+		return nil, selector, nil
 
 	}
 

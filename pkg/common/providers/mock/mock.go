@@ -11,9 +11,9 @@ import (
 	"github.com/Masterminds/semver"
 	"github.com/google/uuid"
 	"github.com/markbates/pkger"
+	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/spi"
-	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 )
 
 const (
@@ -260,6 +260,11 @@ func (m *MockProvider) Type() string {
 // ExtendExpiry mocks an extend cluster expiry operation.
 func (m *MockProvider) ExtendExpiry(clusterID string, hours uint64, minutes uint64, seconds uint64) error {
 	return fmt.Errorf("ExtendExpiry is unsupported by mock clusters")
+}
+
+// Expire mocks an expire cluster expiry operation.
+func (m *MockProvider) Expire(clusterID string) error {
+	return fmt.Errorf("Expire is unsupported by mock clusters")
 }
 
 // AddProperty mocks an add new cluster property operation.

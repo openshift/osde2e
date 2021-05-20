@@ -18,8 +18,8 @@ import (
 	"github.com/code-ready/crc/pkg/crc/preflight"
 	"github.com/code-ready/crc/pkg/crc/validation"
 	"github.com/code-ready/crc/pkg/crc/version"
-	"github.com/openshift/osde2e/pkg/common/spi"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
+	"github.com/openshift/osde2e/pkg/common/spi"
 	"k8s.io/apimachinery/pkg/util/wait"
 
 	// Specifically using this for YAMLToJSON
@@ -294,6 +294,11 @@ func getPullSecretFileContent() (string, error) {
 // ExtendExpiry CRCs an extend cluster expiry operation.
 func (m *Provider) ExtendExpiry(clusterID string, hours uint64, minutes uint64, seconds uint64) error {
 	return fmt.Errorf("ExtendExpiry is unsupported by CRC clusters")
+}
+
+// Expire CRCs an extend cluster expiry operation.
+func (m *Provider) Expire(clusterID string) error {
+	return fmt.Errorf("Expire is unsupported by CRC clusters")
 }
 
 // AddProperty CRCs an add new cluster property operation.
