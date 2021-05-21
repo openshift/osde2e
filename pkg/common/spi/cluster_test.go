@@ -8,6 +8,7 @@ import (
 
 func TestClusterBuilder(t *testing.T) {
 	expirationTimestamp := time.Now()
+	creationTimestamp := time.Now().Add(-6 * time.Hour)
 	builtCluster := NewClusterBuilder().
 		ID("test-id").
 		Name("test-name").
@@ -16,6 +17,7 @@ func TestClusterBuilder(t *testing.T) {
 		Region("test-region").
 		State(ClusterStateReady).
 		ExpirationTimestamp(expirationTimestamp).
+		CreationTimestamp(creationTimestamp).
 		Flavour("test-flavour").
 		Addons([]string{"test-addon1", "test-addon2"}).
 		Build()
@@ -28,6 +30,7 @@ func TestClusterBuilder(t *testing.T) {
 		region:              "test-region",
 		state:               ClusterStateReady,
 		expirationTimestamp: expirationTimestamp,
+		creationTimestamp:   creationTimestamp,
 		flavour:             "test-flavour",
 		addons:              []string{"test-addon1", "test-addon2"},
 	}

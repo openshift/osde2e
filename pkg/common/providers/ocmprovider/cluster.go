@@ -950,6 +950,7 @@ func (o *OCMProvider) ocmToSPICluster(ocmCluster *v1.Cluster) (*spi.Cluster, err
 	}
 
 	cluster.ExpirationTimestamp(ocmCluster.ExpirationTimestamp())
+	cluster.CreationTimestamp(ocmCluster.CreationTimestamp())
 	cluster.NumComputeNodes(ocmCluster.Nodes().Compute())
 
 	return cluster.Build(), nil

@@ -672,14 +672,12 @@ func cleanupAfterE2E(h *helper.H) (errors []error) {
 		// Current default expiration is 6 hours.
 		// If this cluster has addons, we don't want to extend the expiration
 		if !viper.GetBool(config.Cluster.Reused) && clusterStatus != clusterproperties.StatusCompletedError && viper.GetString(config.Addons.IDs) == "" {
-			if viper.GetString(config.Cluster.InstallSpecificNightly) != "" {
-				// For release-specific jobs, we want a shorter expiration for these: No more than 12h
+			cluster, err := provider.GetCluster(viper.GetString(config.Cluster.ID))
+			if err != nil {
+				log.Printf("Error getting cluster from provider: %s", err.Error())
+			}
+			if !cluster.ExpirationTimestamp().Add(6 * time.Hour).After(cluster.CreationTimestamp().Add(24 * time.Hour)) {
 				if err := provider.ExtendExpiry(viper.GetString(config.Cluster.ID), 6, 0, 0); err != nil {
-					log.Printf("Error extending cluster expiration: %s", err.Error())
-				}
-			} else {
-				// If the cluster hasn't been recycled, and the cluster isn't errored: Extend it 24h
-				if err := provider.ExtendExpiry(viper.GetString(config.Cluster.ID), 18, 0, 0); err != nil {
 					log.Printf("Error extending cluster expiration: %s", err.Error())
 				}
 			}

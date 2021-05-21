@@ -39,6 +39,7 @@ type Cluster struct {
 	version             string
 	cloudProvider       string
 	region              string
+	creationTimestamp   time.Time
 	expirationTimestamp time.Time
 	state               ClusterState
 	flavour             string
@@ -82,6 +83,11 @@ func (c *Cluster) ExpirationTimestamp() time.Time {
 	return c.expirationTimestamp
 }
 
+// CreationTimestamp returns the creation timestamp.
+func (c *Cluster) CreationTimestamp() time.Time {
+	return c.creationTimestamp
+}
+
 // State returns the cluster state.
 func (c *Cluster) State() ClusterState {
 	return c.state
@@ -114,6 +120,7 @@ type ClusterBuilder struct {
 	version             string
 	cloudProvider       string
 	region              string
+	creationTimestamp   time.Time
 	expirationTimestamp time.Time
 	state               ClusterState
 	flavour             string
@@ -166,6 +173,12 @@ func (cb *ClusterBuilder) ExpirationTimestamp(expirationTimestamp time.Time) *Cl
 	return cb
 }
 
+// CreationTimestamp sets the creation timestamp for a cluster builder.
+func (cb *ClusterBuilder) CreationTimestamp(creationTimestamp time.Time) *ClusterBuilder {
+	cb.creationTimestamp = creationTimestamp
+	return cb
+}
+
 // State sets the state for a cluster builder.
 func (cb *ClusterBuilder) State(state ClusterState) *ClusterBuilder {
 	cb.state = state
@@ -212,6 +225,7 @@ func (cb *ClusterBuilder) Build() *Cluster {
 		cloudProvider:       cb.cloudProvider,
 		region:              cb.region,
 		expirationTimestamp: cb.expirationTimestamp,
+		creationTimestamp:   cb.creationTimestamp,
 		state:               cb.state,
 		flavour:             cb.flavour,
 		addons:              cb.addons,

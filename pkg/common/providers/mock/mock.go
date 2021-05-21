@@ -93,6 +93,7 @@ func (m *MockProvider) LaunchCluster(clusterName string) (string, error) {
 		State(spi.ClusterStateReady).
 		CloudProvider(MockCloudProvider).
 		Region(MockRegion).
+		CreationTimestamp(time.Now().Add(-2 * time.Hour)).
 		ExpirationTimestamp(time.Now()).
 		Flavour("osd-4").
 		Build()
