@@ -199,7 +199,7 @@ func TestMigrations(t *testing.T) {
 		}
 		return nil
 	}); err != nil {
-		t.Errorf("Failed to create test database: %v", err)
+		t.Fatalf("Failed to create test database: %v", err)
 	}
 	// ensure that our test DB is destroyed later
 	t.Cleanup(func() {
@@ -213,7 +213,7 @@ func TestMigrations(t *testing.T) {
 		start := time.Now()
 		for err := db.WithDB(urlWithoutDB, dropDb); err != nil; err = db.WithDB(urlWithoutDB, dropDb) {
 			if time.Now().Sub(start) > time.Minute {
-				t.Errorf("Failed to drop test database: %v", err)
+				t.Fatalf("Failed to drop test database: %v", err)
 			}
 			time.Sleep(time.Second * 5)
 		}
@@ -225,44 +225,44 @@ func TestMigrations(t *testing.T) {
 			// make sure we know how many migrations exist, and that they all apply cleanly
 			// up and down
 			if err := m.Up(); err != nil {
-				t.Errorf("Failed running all up migrations: %v", err)
+				t.Fatalf("Failed running all up migrations: %v", err)
 			}
 			maxVersion, _, err := m.Version()
 			if err != nil {
-				t.Errorf("Did not expect error fetching final migration version: %v", err)
+				t.Fatalf("Did not expect error fetching final migration version: %v", err)
 			}
 			if err := m.Down(); err != nil {
-				t.Errorf("Failed running all down migrations: %v", err)
+				t.Fatalf("Failed running all down migrations: %v", err)
 			}
 			// ensure each migration passes its own tests
 			for migrationNum := 1; migrationNum <= int(maxVersion); migrationNum++ {
 				testcase, ok := migrationTests[migrationNum]
 				if !ok {
-					t.Errorf("No test cases provided for migration number %d", migrationNum)
+					t.Fatalf("No test cases provided for migration number %d", migrationNum)
 				}
 				testcase.preup(pg, t)
 				if err := m.Steps(1); err != nil {
-					t.Errorf("Failed running migration %d: %v", migrationNum, err)
+					t.Fatalf("Failed running migration %d: %v", migrationNum, err)
 				}
 				version, _, err := m.Version()
 				if err != nil && !errors.Is(err, migrate.ErrNilVersion) {
-					t.Errorf("Did not expect error fetching migration version: %v", err)
+					t.Fatalf("Did not expect error fetching migration version: %v", err)
 				}
 				if int(version) != migrationNum {
-					t.Errorf("Expected version after migration to be %d, got %d", migrationNum, version)
+					t.Fatalf("Expected version after migration to be %d, got %d", migrationNum, version)
 				}
 				testcase.during(pg, t)
 				if err := m.Steps(-1); err != nil {
-					t.Errorf("Failed reversing migration %d: %v", migrationNum, err)
+					t.Fatalf("Failed reversing migration %d: %v", migrationNum, err)
 				}
 				testcase.postdown(pg, t)
 				if err := m.Steps(1); err != nil {
-					t.Errorf("Failed re-applying migration %d: %v", migrationNum, err)
+					t.Fatalf("Failed re-applying migration %d: %v", migrationNum, err)
 				}
 			}
 			return nil
 		})
 	}); err != nil {
-		t.Errorf("Expected to succeed creating db, got %v", err)
+		t.Fatalf("Expected to succeed creating db, got %v", err)
 	}
 }

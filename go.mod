@@ -17,7 +17,6 @@ require (
 	github.com/fsnotify/fsnotify v1.4.9
 	github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32
 	github.com/golang-migrate/migrate/v4 v4.14.2-0.20210511063805-2e7358e012a6
-	github.com/google/go-cmp v0.5.5 // indirect
 	github.com/google/go-github/v31 v31.0.0
 	github.com/google/uuid v1.1.2
 	github.com/gotestyourself/gotestyourself v2.2.0+incompatible // indirect
@@ -26,9 +25,8 @@ require (
 	github.com/influxdata/tdigest v0.0.1 // indirect
 	github.com/jackc/pgx/v4 v4.11.0 // indirect
 	github.com/joshdk/go-junit v0.0.0-20201221202203-061ee62ada40
-	github.com/kr/pretty v0.2.1 // indirect
+	github.com/kyleconroy/sqlc v1.8.0
 	github.com/kylelemons/godebug v1.1.0
-	github.com/lib/pq v1.10.1 // indirect
 	github.com/markbates/pkger v0.17.1
 	github.com/mitchellh/mapstructure v1.1.2
 	github.com/onsi/ginkgo v1.14.1
