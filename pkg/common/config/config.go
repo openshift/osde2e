@@ -476,6 +476,31 @@ var Alert = struct {
 	PagerDutyUserToken: "alert.pagerDutyUserToken",
 }
 
+// Database config keys.
+var Database = struct {
+	// The Postgres user used to access the database.
+	// Env: PG_USER
+	User string
+	// The Postgres password for the user.
+	// Env: PG_PASS
+	Pass string
+	// The Postgres instance's hostname.
+	// Env: PG_HOST
+	Host string
+	// The Postgres instance's listen port.
+	// Env: PG_PORT
+	Port string
+	// The Postgres database name to connect to.
+	// Env: PG_DATABASE
+	DatabaseName string
+}{
+	User:         "database.user",
+	Pass:         "database.pass",
+	Host:         "database.host",
+	Port:         "database.port",
+	DatabaseName: "database.name",
+}
+
 func init() {
 	// Here's where we bind environment variables to config options and set defaults
 
@@ -706,6 +731,25 @@ func init() {
 
 	viper.BindEnv(Alert.PagerDutyUserToken, "PAGERDUTY_USER_TOKEN")
 	RegisterSecret(Alert.PagerDutyUserToken, "pagerduty-user-token")
+
+	// ----- Database -----
+	viper.SetDefault(Database.User, "postgres")
+	viper.BindEnv(Database.User, "PG_USER")
+	RegisterSecret(Database.User, "rds-user")
+
+	viper.BindEnv(Database.Pass, "PG_PASS")
+	RegisterSecret(Database.User, "rds-pass")
+
+	viper.BindEnv(Database.Host, "PG_HOST")
+	RegisterSecret(Database.User, "rds-host")
+
+	viper.SetDefault(Database.Port, "5432")
+	viper.BindEnv(Database.Port, "PG_PORT")
+	RegisterSecret(Database.Port, "rds-port")
+
+	viper.SetDefault(Database.DatabaseName, "cicd_test_data")
+	viper.BindEnv(Database.DatabaseName, "PG_DATABASE")
+	RegisterSecret(Database.DatabaseName, "rds-database")
 }
 
 // PostProcess is a variety of post-processing commands that is intended to be run after a config is loaded.
