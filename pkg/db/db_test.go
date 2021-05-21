@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/openshift/osde2e/pkg/db"
@@ -25,12 +26,26 @@ var dbPool *dockertest.Pool = func() *dockertest.Pool {
 	return dbPool
 }()
 
-func getDBURL(t *testing.T) string {
-	const testDatabase = "test-database-do-not-use"
-	const password = "secret"
+// dbConfig is a lightweight type that constructs connection strings. It isn't very
+// smart, but is much easier to use than the smart options in other libraries. If
+// it ever needs to be smarter, we should switch to those types instead.
+type dbConfig struct {
+	Host, Port, User, Pass, Database, Params string
+}
+
+// URL constructs a url from the config.
+func (d dbConfig) URL() string {
+	return fmt.Sprintf("postgres://%s:%s@%s:%s/%s?%s",
+		d.User, d.Pass, d.Host, d.Port, d.Database, d.Params)
+}
+
+// getDBConfig returns the database connection configuration for a database against
+// which tests can run.
+func getDBConfig(t *testing.T) dbConfig {
 	if dbPool != nil {
+		const password = "secret"
 		// pulls an image, creates a container based on it and runs it
-		resource, err := dbPool.Run("postgres", "13", []string{"POSTGRES_PASSWORD=" + password, "POSTGRES_DB=" + testDatabase})
+		resource, err := dbPool.Run("postgres", "13", []string{"POSTGRES_PASSWORD=" + password})
 		if err != nil {
 			t.Fatalf("Could not start resource: %s", err)
 		}
@@ -39,8 +54,15 @@ func getDBURL(t *testing.T) string {
 				log.Printf("Could not purge resource: %s", err)
 			}
 		})
+		config := dbConfig{
+			User:   "postgres",
+			Pass:   password,
+			Host:   "127.0.0.1",
+			Port:   resource.GetPort("5432/tcp"),
+			Params: "sslmode=disable",
+		}
 
-		url := fmt.Sprintf("postgres://postgres:%s@127.0.0.1:%s/%s?sslmode=disable", password, resource.GetPort("5432/tcp"), testDatabase)
+		url := config.URL()
 
 		// exponential backoff-retry, because the application in the container might not be ready to accept connections yet
 		if err := dbPool.Retry(func() error {
@@ -52,9 +74,14 @@ func getDBURL(t *testing.T) string {
 		}); err != nil {
 			t.Fatalf("Could not connect to postgres: %s", err)
 		}
-		return url
+		return config
 	}
-	return fmt.Sprintf("postgres://%s:%s@%s:%s/%s", os.Getenv("PG_USER"), os.Getenv("PG_PASS"), os.Getenv("PG_HOST"), os.Getenv("PG_PORT"), testDatabase)
+	return dbConfig{
+		User: os.Getenv("PG_USER"),
+		Pass: os.Getenv("PG_PASS"),
+		Host: os.Getenv("PG_HOST"),
+		Port: os.Getenv("PG_PORT"),
+	}
 }
 
 // tableNames returns the names of all existing tables (of type BASE TABLE) in the public
@@ -160,51 +187,82 @@ var migrationTests = map[int]migrationTestCase{
 // TestMigrations runs all configured migrations up and down, verifying their correctness
 // using the contents of `migrationTests`.
 func TestMigrations(t *testing.T) {
-	url := getDBURL(t)
-	if err := db.WithDB(url, func(pg *sql.DB) error {
+	// generate probably-unique DB name
+	testDatabase := "test_db_" + fmt.Sprintf("%d", time.Now().UnixNano())
+	config := getDBConfig(t)
+	urlWithoutDB := config.URL()
+	// create DB for testing
+	if err := db.WithDB(urlWithoutDB, func(pd *sql.DB) error {
+		_, err := pd.Exec("CREATE DATABASE " + testDatabase)
+		if err != nil {
+			return fmt.Errorf("failed creating ephemeral test database: %v", err)
+		}
+		return nil
+	}); err != nil {
+		t.Errorf("Failed to create test database: %v", err)
+	}
+	// ensure that our test DB is destroyed later
+	t.Cleanup(func() {
+		dropDb := func(pd *sql.DB) error {
+			_, err := pd.Exec("DROP DATABASE " + testDatabase)
+			if err != nil {
+				return fmt.Errorf("failed dropping ephemeral test database: %v", err)
+			}
+			return nil
+		}
+		start := time.Now()
+		for err := db.WithDB(urlWithoutDB, dropDb); err != nil; err = db.WithDB(urlWithoutDB, dropDb) {
+			if time.Now().Sub(start) > time.Minute {
+				t.Errorf("Failed to drop test database: %v", err)
+			}
+			time.Sleep(time.Second * 5)
+		}
+	})
+	// exercise our migrations against the test DB
+	config.Database = testDatabase
+	if err := db.WithDB(config.URL(), func(pg *sql.DB) error {
 		return db.WithMigrator(pg, func(m *migrate.Migrate) error {
-			t.Cleanup(func() {
-				m.Down()
-			})
-
+			// make sure we know how many migrations exist, and that they all apply cleanly
+			// up and down
 			if err := m.Up(); err != nil {
-				t.Fatalf("Failed running all up migrations: %v", err)
+				t.Errorf("Failed running all up migrations: %v", err)
 			}
 			maxVersion, _, err := m.Version()
 			if err != nil {
-				t.Fatalf("Did not expect error fetching final migration version: %v", err)
+				t.Errorf("Did not expect error fetching final migration version: %v", err)
 			}
 			if err := m.Down(); err != nil {
-				t.Fatalf("Failed running all down migrations: %v", err)
+				t.Errorf("Failed running all down migrations: %v", err)
 			}
+			// ensure each migration passes its own tests
 			for migrationNum := 1; migrationNum <= int(maxVersion); migrationNum++ {
 				testcase, ok := migrationTests[migrationNum]
 				if !ok {
-					t.Fatalf("No test cases provided for migration number %d", migrationNum)
+					t.Errorf("No test cases provided for migration number %d", migrationNum)
 				}
 				testcase.preup(pg, t)
 				if err := m.Steps(1); err != nil {
-					t.Fatalf("Failed running migration %d: %v", migrationNum, err)
+					t.Errorf("Failed running migration %d: %v", migrationNum, err)
 				}
 				version, _, err := m.Version()
 				if err != nil && !errors.Is(err, migrate.ErrNilVersion) {
-					t.Fatalf("Did not expect error fetching migration version: %v", err)
+					t.Errorf("Did not expect error fetching migration version: %v", err)
 				}
 				if int(version) != migrationNum {
-					t.Fatalf("Expected version after migration to be %d, got %d", migrationNum, version)
+					t.Errorf("Expected version after migration to be %d, got %d", migrationNum, version)
 				}
 				testcase.during(pg, t)
 				if err := m.Steps(-1); err != nil {
-					t.Fatalf("Failed reversing migration %d: %v", migrationNum, err)
+					t.Errorf("Failed reversing migration %d: %v", migrationNum, err)
 				}
 				testcase.postdown(pg, t)
 				if err := m.Steps(1); err != nil {
-					t.Fatalf("Failed re-applying migration %d: %v", migrationNum, err)
+					t.Errorf("Failed re-applying migration %d: %v", migrationNum, err)
 				}
 			}
 			return nil
 		})
 	}); err != nil {
-		t.Fatalf("Expected to succeed creating db, got %v", err)
+		t.Errorf("Expected to succeed creating db, got %v", err)
 	}
 }
