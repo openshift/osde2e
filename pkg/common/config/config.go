@@ -4,6 +4,7 @@ package config
 import (
 	"log"
 	"sync"
+	"time"
 
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 )
@@ -69,6 +70,9 @@ const (
 	// NonOSDe2eSecrets is an internal-only Viper Key.
 	// End users should not be using this key, there may be unforeseen consequences.
 	NonOSDe2eSecrets = "nonOSDe2eSecrets"
+
+	// JobStartedAt tracks when the job began running.
+	JobStartedAt = "JobStartedAt"
 )
 
 // This is a config key to secret file mapping. We will attempt to read in from secret files before loading anything else.
@@ -505,6 +509,9 @@ func init() {
 	// Here's where we bind environment variables to config options and set defaults
 
 	viper.SetConfigType("yaml") // Our configs are all in yaml.
+
+	// capture job startup time
+	viper.SetDefault(JobStartedAt, time.Now().UTC().Format(time.RFC3339))
 
 	// ----- Top Level Configs -----
 	viper.SetDefault(Provider, "ocm")

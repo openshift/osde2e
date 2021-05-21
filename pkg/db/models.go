@@ -6,6 +6,8 @@ import (
 	"database/sql"
 	"fmt"
 	"time"
+
+	"github.com/jackc/pgtype"
 )
 
 type JobResult string
@@ -32,9 +34,9 @@ type TestResult string
 
 const (
 	TestResultPassed  TestResult = "passed"
-	TestResultFailed  TestResult = "failed"
+	TestResultFailure TestResult = "failure"
 	TestResultSkipped TestResult = "skipped"
-	TestResultPending TestResult = "pending"
+	TestResultError   TestResult = "error"
 )
 
 func (e *TestResult) Scan(src interface{}) error {
@@ -75,12 +77,12 @@ type Job struct {
 }
 
 type Testcase struct {
-	ID       int64      `json:"id"`
-	JobID    int64      `json:"job_id"`
-	Result   TestResult `json:"result"`
-	Name     string     `json:"name"`
-	Duration int64      `json:"duration"`
-	Error    string     `json:"error"`
-	Stdout   string     `json:"stdout"`
-	Stderr   string     `json:"stderr"`
+	ID       int64           `json:"id"`
+	JobID    int64           `json:"job_id"`
+	Result   TestResult      `json:"result"`
+	Name     string          `json:"name"`
+	Duration pgtype.Interval `json:"duration"`
+	Error    string          `json:"error"`
+	Stdout   string          `json:"stdout"`
+	Stderr   string          `json:"stderr"`
 }

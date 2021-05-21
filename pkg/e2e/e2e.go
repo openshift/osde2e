@@ -5,8 +5,10 @@ import (
 	"bytes"
 	"compress/gzip"
 	"context"
+	"database/sql"
 	"encoding/json"
 	"encoding/xml"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -18,6 +20,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/golang-migrate/migrate/v4"
+	"github.com/jackc/pgtype"
 	junit "github.com/joshdk/go-junit"
 	vegeta "github.com/tsenart/vegeta/lib"
 	v1 "k8s.io/api/core/v1"
@@ -29,6 +33,7 @@ import (
 	"github.com/onsi/ginkgo/reporters"
 	"github.com/onsi/gomega"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
+	"github.com/openshift/osde2e/pkg/db"
 
 	"github.com/openshift/osde2e/pkg/common/alert"
 	"github.com/openshift/osde2e/pkg/common/aws"
@@ -359,10 +364,11 @@ func runGinkgoTests() (int, error) {
 		viper.Set(config.Suffix, util.RandomStr(5))
 	}
 
-	testsPassed := runTestsInPhase(phase.InstallPhase, "OSD e2e suite", ginkgoConfig.GinkgoConfig.DryRun)
+	testsPassed, installTestCaseData := runTestsInPhase(phase.InstallPhase, "OSD e2e suite", ginkgoConfig.GinkgoConfig.DryRun)
 	getLogs()
 	viper.Set(config.Cluster.Passing, testsPassed)
 	upgradeTestsPassed := true
+	var upgradeTestCaseData []db.CreateTestcaseParams
 
 	// upgrade cluster if requested
 	if viper.GetString(config.Upgrade.Image) != "" || viper.GetString(config.Upgrade.ReleaseName) != "" {
@@ -387,7 +393,7 @@ func runGinkgoTests() (int, error) {
 			if !viper.GetBool(config.Upgrade.ManagedUpgradeRescheduled) {
 				log.Println("Running e2e tests POST-UPGRADE...")
 				viper.Set(config.Cluster.Passing, false)
-				upgradeTestsPassed = runTestsInPhase(phase.UpgradePhase, "OSD e2e suite post-upgrade", ginkgoConfig.GinkgoConfig.DryRun)
+				upgradeTestsPassed, upgradeTestCaseData = runTestsInPhase(phase.UpgradePhase, "OSD e2e suite post-upgrade", ginkgoConfig.GinkgoConfig.DryRun)
 				viper.Set(config.Cluster.Passing, upgradeTestsPassed)
 			}
 			log.Println("Upgrade rescheduled, skip the POST-UPGRADE testing")
@@ -401,6 +407,83 @@ func runGinkgoTests() (int, error) {
 
 		} else {
 			log.Println("No Kubeconfig found from initial cluster setup. Unable to run upgrade.")
+		}
+	}
+
+	testsFinished := time.Now().UTC()
+
+	_, storeInDB := os.LookupEnv("JOB_ID")
+	dbURL := fmt.Sprintf("postgres://%s:%s@%s:%s/%s",
+		viper.GetString(config.Database.User),
+		viper.GetString(config.Database.Pass),
+		viper.GetString(config.Database.Host),
+		viper.GetString(config.Database.Port),
+		viper.GetString(config.Database.DatabaseName),
+	)
+	var jobID int64
+	// connect to the db
+	if storeInDB {
+		if err := db.WithDB(dbURL, func(pg *sql.DB) error {
+			// ensure it's on the latest schema
+			if err := db.WithMigrator(pg, func(m *migrate.Migrate) error {
+				if err := m.Up(); err != nil && !errors.Is(err, migrate.ErrNoChange) {
+					return err
+				}
+				return nil
+			}); err != nil {
+				return err
+			}
+
+			q := db.New(pg)
+
+			// insert this job's info
+			jobID, err = q.CreateJob(context.TODO(), db.CreateJobParams{
+				Provider: viper.GetString(config.Provider),
+				JobName:  viper.GetString(config.JobName),
+				JobID:    viper.GetString(config.JobID),
+				Url: func() string {
+					url, _ := prow.JobURL()
+					return url
+				}(),
+				Started: func() time.Time {
+					t, _ := time.Parse(time.RFC3339, viper.GetString(config.JobStartedAt))
+					return t
+				}(),
+				Finished:           testsFinished,
+				ClusterVersion:     viper.GetString(config.Cluster.Version),
+				ClusterName:        viper.GetString(config.Cluster.Name),
+				ClusterID:          viper.GetString(config.Cluster.ID),
+				MultiAz:            viper.GetString(config.Cluster.MultiAZ),
+				Channel:            viper.GetString(config.Cluster.Channel),
+				Environment:        provider.Environment(),
+				Region:             viper.GetString(config.CloudProvider.Region),
+				NumbWorkerNodes:    viper.GetInt32(config.Cluster.NumWorkerNodes),
+				NetworkProvider:    viper.GetString(config.Cluster.NetworkProvider),
+				ImageContentSource: viper.GetString(config.Cluster.ImageContentSource),
+				InstallConfig:      viper.GetString(config.Cluster.InstallConfig),
+				HibernateAfterUse:  viper.GetString(config.Cluster.HibernateAfterUse) == "true",
+				Reused:             viper.GetString(config.Cluster.Reused) == "true",
+				Result: func() db.JobResult {
+					if upgradeTestsPassed && testsPassed {
+						return db.JobResultPassed
+					}
+					return db.JobResultFailed
+				}(),
+			})
+			if err != nil {
+				return fmt.Errorf("failed creating job: %w", err)
+			}
+
+			for _, tc := range append(installTestCaseData, upgradeTestCaseData...) {
+				tc.JobID = jobID
+				_, err := q.CreateTestcase(context.TODO(), tc)
+				if err != nil {
+					return fmt.Errorf("failed creating test case: %w", err)
+				}
+			}
+			return nil
+		}); err != nil {
+			log.Println("failed creating job entry in db: %v", err)
 		}
 	}
 
@@ -687,14 +770,15 @@ func cleanupAfterE2E(h *helper.H) (errors []error) {
 }
 
 // nolint:gocyclo
-func runTestsInPhase(phase string, description string, dryrun bool) bool {
+func runTestsInPhase(phase string, description string, dryrun bool) (bool, []db.CreateTestcaseParams) {
+	var testCaseData []db.CreateTestcaseParams
 	viper.Set(config.Phase, phase)
 	reportDir := viper.GetString(config.ReportDir)
 	phaseDirectory := filepath.Join(reportDir, phase)
 	if _, err := os.Stat(phaseDirectory); os.IsNotExist(err) {
 		if err := os.Mkdir(phaseDirectory, os.FileMode(0755)); err != nil {
 			log.Printf("error while creating phase directory %s", phaseDirectory)
-			return false
+			return false, testCaseData
 		}
 	}
 	suffix := viper.GetString(config.Suffix)
@@ -705,7 +789,7 @@ func runTestsInPhase(phase string, description string, dryrun bool) bool {
 	if !dryrun || !ginkgoConfig.GinkgoConfig.DryRun {
 		if !beforeSuite() {
 			log.Println("Error getting kubeconfig from beforeSuite function")
-			return false
+			return false, testCaseData
 		}
 	}
 
@@ -719,7 +803,7 @@ func runTestsInPhase(phase string, description string, dryrun bool) bool {
 	files, err := ioutil.ReadDir(phaseDirectory)
 	if err != nil {
 		log.Printf("error reading phase directory: %s", err.Error())
-		return false
+		return false, testCaseData
 	}
 
 	numTests := 0
@@ -732,7 +816,7 @@ func runTestsInPhase(phase string, description string, dryrun bool) bool {
 				suites, err := junit.IngestFile(filepath.Join(phaseDirectory, file.Name()))
 				if err != nil {
 					log.Printf("error reading junit xml file %s: %s", file.Name(), err.Error())
-					return false
+					return false, testCaseData
 				}
 
 				for _, testSuite := range suites {
@@ -754,6 +838,36 @@ func runTestsInPhase(phase string, description string, dryrun bool) bool {
 					url, _ := prow.JobURL()
 					jobName := os.Getenv("JOB_NAME")
 					openPDAlerts(suites, jobName, url)
+				}
+
+				// store relevant test and job information in the database
+				if _, ok := os.LookupEnv("JOB_ID"); ok {
+					// record each test case
+					for _, suite := range suites {
+						for _, test := range suite.Tests {
+							testCaseData = append(testCaseData, db.CreateTestcaseParams{
+								Result: func(s junit.Status) db.TestResult {
+									switch s {
+									case "passed":
+										return db.TestResultPassed
+									case "failure":
+										return db.TestResultFailure
+									case "skipped":
+										return db.TestResultSkipped
+									case "error":
+										fallthrough
+									default:
+										return db.TestResultError
+									}
+								}(test.Status),
+								Name:     test.Name,
+								Duration: pgtype.Interval{Microseconds: test.Duration.Microseconds()},
+								Error:    test.Error.Error(),
+								Stdout:   test.SystemOut,
+								Stderr:   test.SystemErr,
+							})
+						}
+					}
 				}
 			}
 		}
@@ -777,7 +891,7 @@ func runTestsInPhase(phase string, description string, dryrun bool) bool {
 	files, err = ioutil.ReadDir(reportDir)
 	if err != nil {
 		log.Printf("error reading phase directory: %s", err.Error())
-		return false
+		return false, testCaseData
 	}
 
 	// Ensure all log metrics are zeroed out before running again
@@ -791,7 +905,7 @@ func runTestsInPhase(phase string, description string, dryrun bool) bool {
 			data, err := ioutil.ReadFile(filepath.Join(reportDir, file.Name()))
 			if err != nil {
 				log.Printf("error opening log file %s: %s", file.Name(), err.Error())
-				return false
+				return false, testCaseData
 			}
 			for _, metric := range config.GetLogMetrics() {
 				metadata.Instance.IncrementLogMetric(metric.Name, metric.HasMatches(data))
@@ -833,7 +947,7 @@ func runTestsInPhase(phase string, description string, dryrun bool) bool {
 	err = ioutil.WriteFile(filepath.Join(phaseDirectory, "junit_logmetrics.xml"), data, 0644)
 	if err != nil {
 		log.Printf("error writing to junit file: %s", err.Error())
-		return false
+		return false, testCaseData
 	}
 
 	beforeSuiteMetricTestSuite := reporters.JUnitTestSuite{
@@ -867,7 +981,7 @@ func runTestsInPhase(phase string, description string, dryrun bool) bool {
 	err = ioutil.WriteFile(filepath.Join(phaseDirectory, "junit_beforesuite.xml"), newdata, 0644)
 	if err != nil {
 		log.Printf("error writing to junit file: %s", err.Error())
-		return false
+		return false, testCaseData
 	}
 
 	clusterID := viper.GetString(config.Cluster.ID)
@@ -878,7 +992,7 @@ func runTestsInPhase(phase string, description string, dryrun bool) bool {
 		cluster, err := provider.GetCluster(clusterID)
 		if err != nil {
 			log.Printf("error getting cluster state after a test run: %v", err)
-			return false
+			return false, testCaseData
 		}
 		clusterState = cluster.State()
 	}
@@ -886,7 +1000,7 @@ func runTestsInPhase(phase string, description string, dryrun bool) bool {
 		h := helper.NewOutsideGinkgo()
 		if h == nil {
 			log.Println("Unable to generate helper outside of ginkgo")
-			return ginkgoPassed
+			return ginkgoPassed, testCaseData
 		}
 		dependencies, err := debug.GenerateDependencies(h.Kube())
 		if err != nil {
@@ -903,7 +1017,7 @@ func runTestsInPhase(phase string, description string, dryrun bool) bool {
 
 		}
 	}
-	return ginkgoPassed
+	return ginkgoPassed, testCaseData
 }
 
 // checkBeforeMetricsGeneration runs a variety of checks before generating metrics.
