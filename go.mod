@@ -1,6 +1,6 @@
 module github.com/openshift/osde2e
 
-go 1.13
+go 1.16
 
 require (
 	github.com/Masterminds/semver v1.5.0
@@ -16,13 +16,19 @@ require (
 	github.com/emicklei/go-restful v2.9.6+incompatible
 	github.com/fsnotify/fsnotify v1.4.9
 	github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32
+	github.com/golang-migrate/migrate/v4 v4.14.2-0.20210511063805-2e7358e012a6
+	github.com/google/go-cmp v0.5.5 // indirect
 	github.com/google/go-github/v31 v31.0.0
-	github.com/google/uuid v1.1.1
+	github.com/google/uuid v1.1.2
+	github.com/gotestyourself/gotestyourself v2.2.0+incompatible // indirect
 	github.com/grokify/html-strip-tags-go v0.0.0-20200923094847-079d207a09f1 // indirect
 	github.com/hashicorp/go-multierror v1.1.0
 	github.com/influxdata/tdigest v0.0.1 // indirect
+	github.com/jackc/pgx/v4 v4.11.0 // indirect
 	github.com/joshdk/go-junit v0.0.0-20201221202203-061ee62ada40
+	github.com/kr/pretty v0.2.1 // indirect
 	github.com/kylelemons/godebug v1.1.0
+	github.com/lib/pq v1.10.1 // indirect
 	github.com/markbates/pkger v0.17.1
 	github.com/mitchellh/mapstructure v1.1.2
 	github.com/onsi/ginkgo v1.14.1
@@ -39,6 +45,7 @@ require (
 	github.com/openshift/splunk-forwarder-operator v0.0.0-20201112162206-2f454770b6c0
 	github.com/operator-framework/api v0.3.6
 	github.com/operator-framework/operator-lifecycle-manager v0.0.0-20200521062108-408ca95d458f
+	github.com/ory/dockertest v3.3.5+incompatible
 	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.44.1
 	github.com/prometheus-operator/prometheus-operator/pkg/client v0.45.0
 	github.com/prometheus/alertmanager v0.21.0
@@ -55,7 +62,7 @@ require (
 	github.com/tsenart/vegeta v12.7.0+incompatible
 	github.com/vmware-tanzu/velero v1.5.0-beta.1.0.20200831161009-1dcaa1bf7512
 	golang.org/x/net v0.0.0-20210226172049-e18ecbb05110
-	golang.org/x/tools v0.0.0-20200616133436-c1934b75d054
+	golang.org/x/tools v0.0.0-20210106214847-113979e3529a
 	gopkg.in/yaml.v3 v3.0.0-20200615113413-eeeca48fe776
 	k8s.io/api v0.20.0
 	k8s.io/apimachinery v0.20.0
