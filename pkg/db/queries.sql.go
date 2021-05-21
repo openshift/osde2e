@@ -90,7 +90,6 @@ func (q *Queries) CreateJob(ctx context.Context, arg CreateJobParams) (int64, er
 
 const createTestcase = `-- name: CreateTestcase :one
 INSERT INTO testcases (
-    id,
     job_id,
     result,
     name,
@@ -99,12 +98,11 @@ INSERT INTO testcases (
     stdout,
     stderr
 )
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+VALUES ($1, $2, $3, $4, $5, $6, $7)
 RETURNING id
 `
 
 type CreateTestcaseParams struct {
-	ID       int64           `json:"id"`
 	JobID    int64           `json:"job_id"`
 	Result   TestResult      `json:"result"`
 	Name     string          `json:"name"`
@@ -116,7 +114,6 @@ type CreateTestcaseParams struct {
 
 func (q *Queries) CreateTestcase(ctx context.Context, arg CreateTestcaseParams) (int64, error) {
 	row := q.queryRow(ctx, q.createTestcaseStmt, createTestcase,
-		arg.ID,
 		arg.JobID,
 		arg.Result,
 		arg.Name,

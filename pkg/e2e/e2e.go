@@ -865,11 +865,19 @@ func runTestsInPhase(phase string, description string, dryrun bool) (bool, []db.
 										return db.TestResultError
 									}
 								}(test.Status),
-								Name:     test.Name,
-								Duration: pgtype.Interval{Microseconds: test.Duration.Microseconds()},
-								Error:    test.Error.Error(),
-								Stdout:   test.SystemOut,
-								Stderr:   test.SystemErr,
+								Name: test.Name,
+								Duration: pgtype.Interval{
+									Microseconds: test.Duration.Microseconds(),
+									Status:       pgtype.Present,
+								},
+								Error: func() string {
+									if test.Error != nil {
+										return err.Error()
+									}
+									return ""
+								}(),
+								Stdout: test.SystemOut,
+								Stderr: test.SystemErr,
 							})
 						}
 					}

@@ -10,6 +10,8 @@ import (
 	"github.com/golang-migrate/migrate/v4/source/iofs"
 )
 
+//go:generate go run github.com/kyleconroy/sqlc/cmd/sqlc generate
+
 //go:embed migrations
 var migrations embed.FS
 

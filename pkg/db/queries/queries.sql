@@ -36,7 +36,6 @@ ORDER BY id;
 
 -- name: CreateTestcase :one
 INSERT INTO testcases (
-    id,
     job_id,
     result,
     name,
@@ -45,7 +44,7 @@ INSERT INTO testcases (
     stdout,
     stderr
 )
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+VALUES ($1, $2, $3, $4, $5, $6, $7)
 RETURNING id;
 
 -- name: GetTestcase :one
