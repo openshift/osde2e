@@ -16,6 +16,7 @@ import (
 	"math"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -449,15 +450,19 @@ func runGinkgoTests() (int, error) {
 					t, _ := time.Parse(time.RFC3339, viper.GetString(config.JobStartedAt))
 					return t
 				}(),
-				Finished:           testsFinished,
-				ClusterVersion:     viper.GetString(config.Cluster.Version),
-				ClusterName:        viper.GetString(config.Cluster.Name),
-				ClusterID:          viper.GetString(config.Cluster.ID),
-				MultiAz:            viper.GetString(config.Cluster.MultiAZ),
-				Channel:            viper.GetString(config.Cluster.Channel),
-				Environment:        provider.Environment(),
-				Region:             viper.GetString(config.CloudProvider.Region),
-				NumbWorkerNodes:    viper.GetInt32(config.Cluster.NumWorkerNodes),
+				Finished:       testsFinished,
+				ClusterVersion: viper.GetString(config.Cluster.Version),
+				ClusterName:    viper.GetString(config.Cluster.Name),
+				ClusterID:      viper.GetString(config.Cluster.ID),
+				MultiAz:        viper.GetString(config.Cluster.MultiAZ),
+				Channel:        viper.GetString(config.Cluster.Channel),
+				Environment:    provider.Environment(),
+				Region:         viper.GetString(config.CloudProvider.Region),
+				NumbWorkerNodes: func() int32 {
+					asString := viper.GetString(config.Cluster.NumWorkerNodes)
+					asInt, _ := strconv.Atoi(asString)
+					return int32(asInt)
+				}(),
 				NetworkProvider:    viper.GetString(config.Cluster.NetworkProvider),
 				ImageContentSource: viper.GetString(config.Cluster.ImageContentSource),
 				InstallConfig:      viper.GetString(config.Cluster.InstallConfig),
