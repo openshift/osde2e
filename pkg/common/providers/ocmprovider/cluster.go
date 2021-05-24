@@ -394,10 +394,11 @@ func ChooseRandomRegion(regions ...CloudRegion) (CloudRegion, bool) {
 // by the OCM provider. (Returns a random machine type if the config suggests it to be random.)
 func (o *OCMProvider) DetermineMachineType(cloudProvider string) (string, error) {
 	computeMachineType := viper.GetString(ComputeMachineType)
+	returnedType := ""
 
-	// If a region is set to "random", it will poll OCM for all the regions available
-	// It then will pull a random entry from the list of regions and set the ID to that
-	if computeMachineType == "random" {
+	// If a machineType is set to "random", it will poll OCM for all the machines available
+	// It then will pull a random entry from the list of machines and set the machineTypes to that
+	if computeMachineType == "random" && rand.Intn(3) >= 2 {
 		searchstring := fmt.Sprintf("cloud_provider.id like '%s'", cloudProvider)
 		machinetypeClient := o.conn.ClustersMgmt().V1().MachineTypes().List().Search(searchstring)
 
@@ -408,16 +409,17 @@ func (o *OCMProvider) DetermineMachineType(cloudProvider string) (string, error)
 
 		for range machinetypes.Items().Slice() {
 			machinetypeObj := machinetypes.Items().Slice()[rand.Intn(machinetypes.Total())]
-			computeMachineType = machinetypeObj.ID()
+			returnedType = machinetypeObj.ID()
 			break
 		}
-
-		log.Printf("Random machine type requested, selected %s machine type.", computeMachineType)
-
-		// Update the Config with the selected random region
-		viper.Set(ComputeMachineType, computeMachineType)
 	}
-	return computeMachineType, nil
+
+	log.Printf("Random machine type requested, selected `%s` machine type.", returnedType)
+
+	// Update the Config with the selected random machine
+	viper.Set(ComputeMachineType, returnedType)
+
+	return returnedType, nil
 }
 
 // GenerateProperties will generate a set of properties to assign to a cluster.
