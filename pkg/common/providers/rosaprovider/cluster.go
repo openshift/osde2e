@@ -137,6 +137,12 @@ func (m *ROSAProvider) LaunchCluster(clusterName string) (string, error) {
 		AvailabilityZones: []string{},
 	}
 
+	if viper.GetBool(config.Cluster.UseExistingCluster) && viper.GetString(config.Addons.IDs) == "" {
+		if clusterID := m.ocmProvider.FindRecycledCluster(clusterSpec.Version, "aws", "rosa"); clusterID != "" {
+			return clusterID, nil
+		}
+	}
+
 	err = callAndSetAWSSession(func() error {
 		createdCluster, err = cluster.CreateCluster(clustersClient, clusterSpec)
 		if err != nil {
