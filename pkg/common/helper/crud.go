@@ -104,6 +104,11 @@ func DeleteRouteMonitor(nsName types.NamespacedName, waitForDelete bool, h *H) e
 
 func SampleRouteMonitor(name string, ns string, h *H) *routemonitorv1alpha1.RouteMonitor {
 	routeMonitor := routemonitorv1alpha1.RouteMonitor{
+		// This is required for ToUnstructured to work correctly (test and see output)
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "RouteMonitor",
+			APIVersion: "monitoring.openshift.io/v1alpha1",
+		},
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: ns,
 			Name:      name,
