@@ -1,4 +1,4 @@
-CREATE TYPE test_result as ENUM ('passed', 'failed', 'skipped', 'pending');
+CREATE TYPE test_result as ENUM ('passed', 'failure', 'skipped', 'error');
 
 CREATE TABLE IF NOT EXISTS testcases (
     id bigserial PRIMARY KEY,

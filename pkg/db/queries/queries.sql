@@ -6,7 +6,6 @@ INSERT INTO jobs (
     url,
     started,
     finished,
-    duration,
     cluster_version,
     cluster_name,
     cluster_id,
@@ -22,7 +21,7 @@ INSERT INTO jobs (
     reused,
     result
 )
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)
 RETURNING id;
 
 -- name: GetJob :one
@@ -37,7 +36,6 @@ ORDER BY id;
 
 -- name: CreateTestcase :one
 INSERT INTO testcases (
-    id,
     job_id,
     result,
     name,
@@ -46,7 +44,7 @@ INSERT INTO testcases (
     stdout,
     stderr
 )
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+VALUES ($1, $2, $3, $4, $5, $6, $7)
 RETURNING id;
 
 -- name: GetTestcase :one
