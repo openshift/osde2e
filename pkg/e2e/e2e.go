@@ -488,7 +488,7 @@ func runGinkgoTests() (int, error) {
 			}
 			return nil
 		}); err != nil {
-			log.Println("failed creating job entry in db: %v", err)
+			log.Printf("failed creating job entry in db: %v", err)
 		}
 	}
 
