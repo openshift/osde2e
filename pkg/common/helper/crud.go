@@ -58,16 +58,16 @@ func UpdateRouteMonitor(routeMonitor *routemonitorv1alpha1.RouteMonitor, namespa
 }
 
 func CreateRouteMonitor(routeMonitor *routemonitorv1alpha1.RouteMonitor, namespace string, h *H) error {
-	rawObj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(routeMonitor.DeepCopy())
-	obj := &unstructured.Unstructured{rawObj} // warning about unjeyed fields here
-	if err != nil {
-		return fmt.Errorf("can't convert RouteMonitor to unstructured resource: %w", err)
-	}
 
-	_, err = RouteMonitorResource(h).Namespace(namespace).Create(context.TODO(), obj, metav1.CreateOptions{})
+	rawObj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(routeMonitor.DeepCopy())
 	if err != nil {
-		log.Printf("Could not issue create command")
-		return err
+		return fmt.Errorf("can't convert UpgradeConfig to unstructured resource: %w", err)
+	}
+	obj := &unstructured.Unstructured{rawObj} // warning about unjeyed fields here
+
+	newObj, err := RouteMonitorResource(h).Namespace(namespace).Create(context.TODO(), obj, metav1.CreateOptions{})
+	if err != nil {
+		return fmt.Errorf("can't create RouteMonitor, returned obj %v: %w", newObj, err)
 	}
 
 	// Wait for the pod to create.
@@ -84,7 +84,7 @@ func DeleteRouteMonitor(nsName types.NamespacedName, waitForDelete bool, h *H) e
 	namespace, name := nsName.Namespace, nsName.Name
 	err := RouteMonitorResource(h).Namespace(namespace).Delete(context.TODO(), name, metav1.DeleteOptions{})
 	if err != nil {
-		return fmt.Errorf("failed to delete namespace '%s': %v", namespace, err)
+		return fmt.Errorf("failed to delete namespace '%s': %w", namespace, err)
 	}
 
 	// Deleting a namespace can take a while. If desired, wait for the namespace to delete before returning.
@@ -273,7 +273,7 @@ func DeleteNamespace(namespace string, waitForDelete bool, h *H) error {
 	log.Printf("Deleting namespace (%s)", namespace)
 	err := h.Kube().CoreV1().Namespaces().Delete(context.TODO(), namespace, metav1.DeleteOptions{})
 	if err != nil {
-		return fmt.Errorf("failed to delete namespace '%s': %v", namespace, err)
+		return fmt.Errorf("failed to delete namespace '%s': %w", namespace, err)
 	}
 
 	// Deleting a namespace can take a while. If desired, wait for the namespace to delete before returning.

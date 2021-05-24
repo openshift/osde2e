@@ -13,6 +13,8 @@ import (
 	"github.com/openshift/osde2e/pkg/common/alert"
 	"github.com/openshift/osde2e/pkg/common/helper"
 
+	"k8s.io/apimachinery/pkg/util/wait"
+
 	kubev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -107,10 +109,19 @@ func testRouteMonitorCreationWorks(h *helper.H) {
 			err = helper.CreateRouteMonitor(rmo, routeMonitorNamespace, h)
 			Expect(err).NotTo(HaveOccurred(), "Couldn't create application route monitor")
 
-			_, err = h.Prometheusop().MonitoringV1().ServiceMonitors(routeMonitorNamespace).Get(context.TODO(), routeMonitorName, metav1.GetOptions{})
-			Expect(err).NotTo(HaveOccurred(), "Couldn't get sample serviceMonitor, should have been generated from RouteMonitor")
-			_, err = h.Prometheusop().MonitoringV1().PrometheusRules(routeMonitorNamespace).Get(context.TODO(), routeMonitorName, metav1.GetOptions{})
-			Expect(err).NotTo(HaveOccurred(), "Couldn't get sample prometheusRule, should have been generated from RouteMonitor")
+			err = wait.PollImmediate(15*time.Second, 10*time.Minute, func() (bool, error) {
+				_, err = h.Prometheusop().MonitoringV1().ServiceMonitors(routeMonitorNamespace).Get(context.TODO(), routeMonitorName, metav1.GetOptions{})
+				if !k8serrors.IsNotFound(err) {
+					return false, err
+				}
+				_, err = h.Prometheusop().MonitoringV1().PrometheusRules(routeMonitorNamespace).Get(context.TODO(), routeMonitorName, metav1.GetOptions{})
+				if !k8serrors.IsNotFound(err) {
+					return false, err
+				}
+				return true, nil
+			})
+
+			Expect(err).NotTo(HaveOccurred(), "dependant resources weren't created via RouteMonitor")
 
 			// //will be re-added when https://github.com/openshift/route-monitor-operator/pull/94 is ready in production (IT IS NOW, BUT TESTING IS REQUIRED BEFORE UNCOMMENT)
 			// modifiedRmo, err := helper.GetRouteMonitor(routeMonitorName, routeMonitorNamespace, h)
