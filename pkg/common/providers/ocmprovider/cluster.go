@@ -201,7 +201,7 @@ func (o *OCMProvider) LaunchCluster(clusterName string) (string, error) {
 	var resp *v1.ClustersAddResponse
 
 	if viper.GetBool(config.Cluster.UseExistingCluster) && viper.GetString(config.Addons.IDs) == "" {
-		if clusterID := o.findRecycledCluster(cluster); clusterID != "" {
+		if clusterID := o.FindRecycledCluster(cluster.Version().ID(), cluster.CloudProvider().ID(), cluster.Product().ID()); clusterID != "" {
 			return clusterID, nil
 		}
 	}
@@ -225,10 +225,10 @@ func (o *OCMProvider) LaunchCluster(clusterName string) (string, error) {
 	return resp.Body().ID(), nil
 }
 
-func (o *OCMProvider) findRecycledCluster(cluster *v1.Cluster) string {
-	version := semver.MustParse(strings.TrimPrefix(cluster.Version().ID(), "openshift-"))
-	query := fmt.Sprintf("cloud_provider.id='%s' and properties.JobID='' and properties.Status like '%s%%' and version.id like 'openshift-v%s%%'",
-		cluster.CloudProvider().ID(), "completed-", version.String())
+func (o *OCMProvider) FindRecycledCluster(originalVersion, cloudProvider, product string) string {
+	version := semver.MustParse(strings.TrimPrefix(originalVersion, "openshift-"))
+	query := fmt.Sprintf("cloud_provider.id='%s' and properties.JobID='' and product.id='%s' and properties.Status like '%s%%' and version.id like 'openshift-v%s%%'",
+		cloudProvider, product, "completed-", version.String())
 
 	log.Println(query)
 
@@ -262,7 +262,7 @@ func (o *OCMProvider) findRecycledCluster(cluster *v1.Cluster) string {
 		}
 		if jobID, ok := spiRecycledCluster.Properties()["JobID"]; ok && jobID != viper.GetString(config.JobID) {
 			log.Printf("Cluster already recycled by %s", spiRecycledCluster.Properties()["JobID"])
-			return o.findRecycledCluster(cluster)
+			return o.FindRecycledCluster(originalVersion, cloudProvider, product)
 		}
 
 		if recycledCluster.State() == v1.ClusterStateReady {
