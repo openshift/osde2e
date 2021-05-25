@@ -136,7 +136,7 @@ func run(cmd *cobra.Command, argv []string) error {
 		fmt.Printf(headerspace, "NAME", "OWNER", "ID", "CLOUD", "STATE", "STATUS", "VERSION", "JOB_ID", "JOB")
 		for _, cluster := range clusters {
 			properties := cluster.Properties()
-			fmt.Printf(headerspace, cluster.Name(), properties[clusterproperties.OwnedBy], cluster.ID(), cluster.CloudProvider(), cluster.State(), properties[clusterproperties.Status], strings.TrimLeft(cluster.Version(), "openshift-v"), properties[clusterproperties.JobID], properties[clusterproperties.JobName])
+			fmt.Printf(headerspace, cluster.Name(), properties[clusterproperties.OwnedBy], cluster.ID(), fmt.Sprintf("%s/%s", cluster.Product(), cluster.CloudProvider()), cluster.State(), properties[clusterproperties.Status], strings.TrimLeft(cluster.Version(), "openshift-v"), properties[clusterproperties.JobID], properties[clusterproperties.JobName])
 		}
 	}
 

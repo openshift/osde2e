@@ -904,6 +904,10 @@ func (o *OCMProvider) ocmToSPICluster(ocmCluster *v1.Cluster) (*spi.Cluster, err
 		cluster.CloudProvider(cloudProvider.ID())
 	}
 
+	if product, ok := ocmCluster.GetProduct(); ok {
+		cluster.Product(product.ID())
+	}
+
 	if state, ok := ocmCluster.GetState(); ok {
 		cluster.State(ocmStateToInternalState(state))
 	}

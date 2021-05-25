@@ -36,6 +36,9 @@ const (
 	// CloudProvider indicates that the cloud provider is just a CRC.
 	CloudProvider = "crc"
 
+	// Product indicates that the RH Product is CRC.
+	Product = "crc"
+
 	// Region indicates that the region used is just a CRC.
 	Region = "local"
 
@@ -145,6 +148,7 @@ func (m *Provider) LaunchCluster(clusterName string) (string, error) {
 		State(spi.ClusterStateReady).
 		Version(CRCVersion).
 		CloudProvider(CloudProvider).
+		Product(Product).
 		Region(Region).
 		ExpirationTimestamp(time.Now()).
 		Flavour(version.GetCRCVersion()).

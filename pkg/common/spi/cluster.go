@@ -38,6 +38,7 @@ type Cluster struct {
 	name                string
 	version             string
 	cloudProvider       string
+	product             string
 	region              string
 	creationTimestamp   time.Time
 	expirationTimestamp time.Time
@@ -71,6 +72,11 @@ func (c *Cluster) Version() string {
 // CloudProvider returns the cloud provider.
 func (c *Cluster) CloudProvider() string {
 	return c.cloudProvider
+}
+
+// Product returns the product.
+func (c *Cluster) Product() string {
+	return c.product
 }
 
 // Region returns the cloud provider region.
@@ -119,6 +125,7 @@ type ClusterBuilder struct {
 	name                string
 	version             string
 	cloudProvider       string
+	product             string
 	region              string
 	creationTimestamp   time.Time
 	expirationTimestamp time.Time
@@ -158,6 +165,12 @@ func (cb *ClusterBuilder) Version(version string) *ClusterBuilder {
 // CloudProvider sets the cloud provider for a cluster builder.
 func (cb *ClusterBuilder) CloudProvider(cloudProvider string) *ClusterBuilder {
 	cb.cloudProvider = cloudProvider
+	return cb
+}
+
+// Product sets the cloud provider for a cluster builder.
+func (cb *ClusterBuilder) Product(product string) *ClusterBuilder {
+	cb.product = product
 	return cb
 }
 
@@ -223,6 +236,7 @@ func (cb *ClusterBuilder) Build() *Cluster {
 		name:                cb.name,
 		version:             cb.version,
 		cloudProvider:       cb.cloudProvider,
+		product:             cb.product,
 		region:              cb.region,
 		expirationTimestamp: cb.expirationTimestamp,
 		creationTimestamp:   cb.creationTimestamp,

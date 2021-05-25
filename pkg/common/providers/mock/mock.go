@@ -22,6 +22,9 @@ const (
 
 	// MockRegion indicates that the region used is just a mock.
 	MockRegion = "mock-region"
+
+	// MockProduct indicates a product that is just a mock.
+	MockProduct = "mock-product"
 )
 
 // MockProvider for unit testing.
@@ -92,6 +95,7 @@ func (m *MockProvider) LaunchCluster(clusterName string) (string, error) {
 		Version(viper.GetString(config.Cluster.Version)).
 		State(spi.ClusterStateReady).
 		CloudProvider(MockCloudProvider).
+		Product(MockProduct).
 		Region(MockRegion).
 		CreationTimestamp(time.Now().Add(-2 * time.Hour)).
 		ExpirationTimestamp(time.Now()).
