@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"strings"
 	"time"
 
 	"github.com/Masterminds/semver"
@@ -117,12 +118,19 @@ func (m *ROSAProvider) LaunchCluster(clusterName string) (string, error) {
 	falseValue := false
 
 	clustersClient := m.ocmProvider.GetConnection().ClustersMgmt().V1().Clusters()
+
+	rosaClusterVersion := strings.Replace(viper.GetString(config.Cluster.Version), "-fast", "", -1)
+	rosaClusterVersion = strings.Replace(rosaClusterVersion, "-candidate", "", -1)
+	rosaClusterVersion = strings.Replace(rosaClusterVersion, "-stable", "", -1)
+	rosaClusterVersion = fmt.Sprintf("%s-%s", rosaClusterVersion, viper.GetString(config.Cluster.Channel))
+	log.Printf("ROSA cluster version: %s", rosaClusterVersion)
+
 	clusterSpec := cluster.Spec{
 		Name:               clusterName,
 		Region:             region,
 		ChannelGroup:       viper.GetString(config.Cluster.Channel),
 		MultiAZ:            viper.GetBool(config.Cluster.MultiAZ),
-		Version:            viper.GetString(config.Cluster.Version),
+		Version:            rosaClusterVersion,
 		Expiration:         expiration,
 		ComputeMachineType: viper.GetString(ComputeMachineType),
 		ComputeNodes:       viper.GetInt(ComputeNodes),
