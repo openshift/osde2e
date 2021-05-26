@@ -745,10 +745,10 @@ func init() {
 	RegisterSecret(Database.User, "rds-user")
 
 	viper.BindEnv(Database.Pass, "PG_PASS")
-	RegisterSecret(Database.User, "rds-pass")
+	RegisterSecret(Database.Pass, "rds-pass")
 
 	viper.BindEnv(Database.Host, "PG_HOST")
-	RegisterSecret(Database.User, "rds-host")
+	RegisterSecret(Database.Host, "rds-host")
 
 	viper.SetDefault(Database.Port, "5432")
 	viper.BindEnv(Database.Port, "PG_PORT")
