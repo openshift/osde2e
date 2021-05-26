@@ -1,4 +1,4 @@
-FROM registry.ci.openshift.org/openshift/release:golang-1.15
+FROM registry.ci.openshift.org/openshift/release:golang-1.16
 
 ENV GOFLAGS=
 ENV PKG=/go/src/github.com/openshift/osde2e/
