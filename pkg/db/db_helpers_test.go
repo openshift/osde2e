@@ -42,6 +42,11 @@ func (d dbConfig) URL() string {
 // getDBConfig returns the database connection configuration for a database against
 // which tests can run.
 func getDBConfig(t *testing.T) dbConfig {
+	_, err := dbPool.Client.Version()
+	if err != nil && os.Getenv("PG_HOST") == "" {
+		t.Skip()
+		return dbConfig{}
+	}
 	if dbPool != nil {
 		const password = "secret"
 		// pulls an image, creates a container based on it and runs it
