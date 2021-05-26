@@ -135,6 +135,10 @@ func (r *Runner) createPod() (pod *kubev1.Pod, err error) {
 		if container.Name == "" || container.Name == r.Name {
 			pod.Spec.Containers[i].Name = r.Name
 			pod.Spec.Containers[i].Image = r.ImageName
+			pod.Spec.Containers[i].Env = append(pod.Spec.Containers[i].Env, kubev1.EnvVar{
+				Name:  "OSDE2E",
+				Value: "true",
+			})
 
 			// run command in pod if, present
 			if len(r.Cmd) != 0 {
