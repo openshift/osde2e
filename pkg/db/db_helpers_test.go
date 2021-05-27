@@ -42,6 +42,10 @@ func (d dbConfig) URL() string {
 // getDBConfig returns the database connection configuration for a database against
 // which tests can run.
 func getDBConfig(t *testing.T) dbConfig {
+	if dbPool == nil {
+		t.Skip()
+		return dbConfig{}
+	}
 	_, err := dbPool.Client.Version()
 	if err != nil && os.Getenv("PG_HOST") == "" {
 		t.Skip()
@@ -192,6 +196,10 @@ var migrationTests = map[int]migrationTestCase{
 // TestMigrations runs all configured migrations up and down, verifying their correctness
 // using the contents of `migrationTests`.
 func TestMigrations(t *testing.T) {
+	// if dbPool is nil, assume database connectivity is unavailable and skip the test
+	if dbPool == nil {
+		t.Skip()
+	}
 	// generate probably-unique DB name
 	testDatabase := "test_db_" + fmt.Sprintf("%d", time.Now().UnixNano())
 	config := getDBConfig(t)
