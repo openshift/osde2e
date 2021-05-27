@@ -413,7 +413,6 @@ func runGinkgoTests() (int, error) {
 
 	testsFinished := time.Now().UTC()
 
-	_, storeInDB := os.LookupEnv("JOB_ID")
 	dbURL := fmt.Sprintf("postgres://%s:%s@%s:%s/%s",
 		viper.GetString(config.Database.User),
 		viper.GetString(config.Database.Pass),
@@ -423,8 +422,10 @@ func runGinkgoTests() (int, error) {
 	)
 	var jobID int64
 	// connect to the db
-	if storeInDB {
+	if viper.GetString(config.JobID) != "" {
+		log.Printf("Storing data for Job ID: %s", viper.GetString(config.JobID))
 		if err := db.WithDB(dbURL, func(pg *sql.DB) error {
+			log.Println("We're storing data in the database!")
 			// ensure it's on the latest schema
 			if err := db.WithMigrator(pg, func(m *migrate.Migrate) error {
 				if err := m.Up(); err != nil && !errors.Is(err, migrate.ErrNoChange) {
