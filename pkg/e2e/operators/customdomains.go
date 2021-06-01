@@ -39,8 +39,9 @@ import (
 
 const (
 	customDomainsOperatorTestName = "[Suite: operators] [OSD] Custom Domains Operator"
-	pollInterval = 30 * time.Second
-	pollTimeout = 15 * time.Minute
+	pollInterval = 15 * time.Second
+	pollTimeout = 20 * time.Minute
+	minConsecutiveResolves = 8
 )
 
 
@@ -50,7 +51,6 @@ func init() {
 
 
 var _ = ginkgo.Describe(customDomainsOperatorTestName, func() {
-
 	ginkgo.Context("Should allow dedicated-admins to create domains", func() {
 		var (
 			err error
@@ -161,23 +161,28 @@ var _ = ginkgo.Describe(customDomainsOperatorTestName, func() {
 				return false, err
 			})
 			Expect(err).ToNot(HaveOccurred(), "Time out or error waiting for customdomain '" + testDomain.GetName() + "' to become ready.")
-			Expect(string(testDomain.Status.State)).To(Equal("Ready"))
-			Expect(string(testDomain.Status.Endpoint)).ToNot(Equal(""))
+			Expect(string(testDomain.Status.State)).To(Equal("Ready"), "Customdomain may be unstable (.status.state is not 'Ready' anymore)")
+			Expect(string(testDomain.Status.Endpoint)).ToNot(Equal(""), "Customdomain's .status.endpoint field empty when .status.state field is 'Ready'")
 
-			// Ensure customdomain endpoint is resolvable
+			// Customdomain endpoints have been known to 1) not resolve initially and/or 2) resolve once, then fail to resolve for a time after.
+			// To ensure the endpoint is ready & stable, check that it resolves successfully several times before continuing
+			var consecutiveResolves int
 			wait.PollImmediate(pollInterval, pollTimeout, func() (bool, error){
-				endpointIP, err := net.LookupHost(testDomain.Status.Endpoint)
-
-				if len(endpointIP) == 0 {
+				endpointIPs, err := net.LookupHost(testDomain.Status.Endpoint)
+				if len(endpointIPs) == 0 {
+					consecutiveResolves = 0
 					return false, nil
 				}
 				if err != nil {
 					return false, err
 				}
+				if consecutiveResolves < minConsecutiveResolves - 1 {
+					consecutiveResolves++
+					return false, err
+				}
 				return true, err
 			})
 			Expect(err).ToNot(HaveOccurred(), "Time out or error waiting for customdomain endpoint '" + testDomain.Status.Endpoint +"' to resolve.")
-
 		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
 
 		ginkgo.It("Should be resolvable by external services", func() {
@@ -189,7 +194,6 @@ var _ = ginkgo.Describe(customDomainsOperatorTestName, func() {
 					"dedicated-admins",
 				},
 			})
-
 
 			ginkgo.By("Creating a new app and exposing it via an Openshift route")
 			testAppReplicas := int32(1)
@@ -305,7 +309,6 @@ var _ = ginkgo.Describe(customDomainsOperatorTestName, func() {
 			}, metav1.CreateOptions{})
 			Expect(err).ToNot(HaveOccurred())
 
-
 			ginkgo.By("Requesting the app using the custom domain")
 			dialer := &net.Dialer{
 				Timeout: 180 * time.Second,
@@ -328,18 +331,18 @@ var _ = ginkgo.Describe(customDomainsOperatorTestName, func() {
 			var response *http.Response
 			wait.PollImmediate(pollInterval, pollTimeout, func() (bool, error) {
 				response, err = client.Get("https://" + testRoute.Spec.Host)
-				if err != nil {
-					return false, err
-				}
-				if response.StatusCode != http.StatusOK {
-					response.Body.Close()
-					return false, err
-				}
-				response.Body.Close()
-				return true, err
-			})
-			Expect(err).ToNot(HaveOccurred(), "Timed out or error waiting for hello-openshift service (deployment name: '" + testAppService.GetName() +"') to be available.")
+				defer func(response *http.Response) {
+					if response != nil {
+						response.Body.Close()
+					}
+				}(response)
 
+				if response != nil && response.StatusCode == http.StatusOK {
+					return true, err
+				}
+				return false, err
+			})
+			Expect(err).ToNot(HaveOccurred(), "Timed out or error requesting hello-openshift service via custom domain (customdomain endpoint: '" + testDomain.Status.Endpoint + "').")
 		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
 
 		ginkgo.AfterEach(func(){
@@ -363,7 +366,5 @@ var _ = ginkgo.Describe(customDomainsOperatorTestName, func() {
 			h.Impersonate(rest.ImpersonationConfig{})
 
 		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
-
 	})
 })
-
