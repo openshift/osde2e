@@ -13,10 +13,10 @@ import (
 	cloudingressv1alpha1 "github.com/openshift/cloud-ingress-operator/pkg/apis/cloudingress/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 
+	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/constants"
 	"github.com/openshift/osde2e/pkg/common/helper"
-	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -110,8 +110,8 @@ func testCIDRBlockUpdates(h *helper.H) {
 			//Create a service Object
 			rhAPIService := &corev1.Service{}
 
-			//wait 10 secs for apiserver to reconcile
-			time.Sleep(10 * time.Second)
+			// wait 30 secs for apiserver to reconcile
+			time.Sleep(30 * time.Second)
 
 			//Extract the LoadBalancerSourceRanges from the service
 			rhAPIService, err = h.Kube().CoreV1().Services("openshift-kube-apiserver").Get(context.TODO(), apiSchemeResourceName, metav1.GetOptions{})

@@ -83,6 +83,28 @@ func checkDeployment(h *helper.H, namespace string, name string, defaultDesiredR
 	})
 }
 
+func checkPod(h *helper.H, namespace string, name string, gracePeriod int, maxAcceptedRestart int) {
+	// Checks that deployed pods have less than maxAcceptedRestart restarts
+
+	ginkgo.Context("pods", func() {
+		ginkgo.It(fmt.Sprintf("should have %v or less restart(s)", maxAcceptedRestart), func() {
+			// wait for graceperiod
+			time.Sleep(time.Duration(gracePeriod) * time.Second)
+			//retrieve pods
+			pods, err := h.Kube().CoreV1().Pods(namespace).List(context.TODO(), metav1.ListOptions{LabelSelector: "name=" + name})
+			Expect(err).ToNot(HaveOccurred(), "failed fetching pods")
+
+			var restartSum int32 = 0
+			for _, pod := range pods.Items {
+				for _, status := range pod.Status.ContainerStatuses {
+					restartSum += status.RestartCount
+				}
+			}
+			Expect(restartSum).To(BeNumerically("<=", maxAcceptedRestart))
+		}, viper.GetFloat64(config.Tests.PollingTimeout))
+	})
+}
+
 func checkServiceAccounts(h *helper.H, operatorNamespace string, serviceAccounts []string) {
 	// Check that deployed serviceAccounts exist
 	ginkgo.Context("serviceAccounts", func() {
@@ -523,4 +545,12 @@ func getReplacesCSV(h *helper.H, subscriptionNS string, csvDisplayName string, c
 	Expect(ok).NotTo(BeFalse(), "cannot find 'replaces' clusterversion from registry gatherer")
 
 	return fmt.Sprintf("%v", replacesCsv), nil
+}
+
+func CheckUpgrade(h *helper.H, subNamespace string, subName string, packageName string, regServiceName string) {
+	checkUpgrade(h, subNamespace, subName, packageName, regServiceName)
+}
+
+func CheckPod(h *helper.H, namespace string, name string, gracePeriod int, maxAcceptedRestart int) {
+	checkPod(h, namespace, name, gracePeriod, maxAcceptedRestart)
 }
