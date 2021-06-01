@@ -48,10 +48,12 @@ func RunUpgrade() error {
 	var err error
 	var upgradeStarted time.Time
 
+	managedUpgrade := viper.GetBool(config.Upgrade.ManagedUpgrade)
+
 	// setup helper
 	h := helper.NewOutsideGinkgo()
 	if h == nil {
-		return fmt.Errorf("Unable to generate helper outside ginkgo")
+		return fmt.Errorf("unable to generate helper outside ginkgo")
 	}
 
 	image := viper.GetString(config.Upgrade.Image)
@@ -64,7 +66,7 @@ func RunUpgrade() error {
 	upgradeStarted = time.Now()
 
 	var desired *configv1.ClusterVersion
-	if viper.GetBool(config.Upgrade.ManagedUpgrade) {
+	if managedUpgrade {
 
 		// Check we are on a supported provider
 		provider, err := providers.ClusterProvider()
@@ -106,7 +108,7 @@ func RunUpgrade() error {
 	log.Println("Upgrading...")
 	done = false
 	if err = wait.PollImmediate(10*time.Second, MaxDuration, func() (bool, error) {
-		if viper.GetBool(config.Upgrade.ManagedUpgrade) && viper.GetBool(config.Upgrade.WaitForWorkersToManagedUpgrade) {
+		if managedUpgrade && viper.GetBool(config.Upgrade.WaitForWorkersToManagedUpgrade) {
 			// Keep the managed upgrade's configuration overrides in place, in case Hive has replaced them
 			err = overrideOperatorConfig(h)
 			// Log if it errored, but don't cancel the upgrade because of it
@@ -123,6 +125,7 @@ func RunUpgrade() error {
 		if !done {
 			log.Printf("Upgrade in progress: %s", msg)
 		}
+
 		return done, err
 	}); err != nil {
 		return fmt.Errorf("failed to upgrade cluster: %v", err)
@@ -136,6 +139,14 @@ func RunUpgrade() error {
 
 	if err = cluster.WaitForClusterReadyPostUpgrade(viper.GetString(config.Cluster.ID), nil); err != nil {
 		return fmt.Errorf("failed waiting for cluster ready: %v", err)
+	}
+
+	// Post upgrade verifcation for managed upgrade
+	if managedUpgrade && viper.GetBool(config.Upgrade.WaitForWorkersToManagedUpgrade) {
+		clusterHealthy, err := isClusterHealthy(h)
+		if err != nil || !clusterHealthy {
+			return fmt.Errorf("post verification for managed upgrade failed: %v", err)
+		}
 	}
 
 	log.Println("Upgrade complete!")

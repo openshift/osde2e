@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/openshift/osde2e/pkg/common/cluster/healthchecks"
-	"github.com/openshift/osde2e/pkg/common/util"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
+	"github.com/openshift/osde2e/pkg/common/util"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -443,4 +443,38 @@ func isUpgradeTriggered(h *helper.H, desired *configv1.Update) (bool, error) {
 	}
 
 	return false, nil
+}
+
+// isClusterHealthy checks if the core services are running well on the cluster after upgrade completed
+func isClusterHealthy(h *helper.H) (bool, error) {
+	dsList, err := h.Kube().AppsV1().DaemonSets(metav1.NamespaceAll).List(context.TODO(), metav1.ListOptions{})
+	if err != nil {
+		return false, err
+	}
+	dsTotalCount := len(dsList.Items)
+	dsReadyCount := 0
+	for _, ds := range dsList.Items {
+		if ds.Status.NumberReady == ds.Status.DesiredNumberScheduled {
+			dsReadyCount = dsReadyCount + 1
+		}
+	}
+
+	rsList, err := h.Kube().AppsV1().ReplicaSets(metav1.NamespaceAll).List(context.TODO(), metav1.ListOptions{})
+	if err != nil {
+		return false, err
+	}
+	rsTotalCount := len(rsList.Items)
+	rsReadyCount := 0
+	for _, rs := range rsList.Items {
+		if rs.Status.ReadyReplicas == rs.Status.Replicas {
+			rsReadyCount = rsReadyCount + 1
+		}
+	}
+
+	if dsTotalCount != dsReadyCount || rsTotalCount != rsReadyCount {
+		return false, fmt.Errorf("cluster post upgrade verification failed, not all the daemonsets and replicasets are running well."+
+			"ReadyRS: %v, TotalRS: %v, ReadyDS: %v, TotalDS: %v", rsReadyCount, rsTotalCount, dsReadyCount, dsTotalCount)
+	}
+
+	return true, nil
 }
