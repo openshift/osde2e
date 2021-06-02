@@ -201,7 +201,11 @@ func (o *OCMProvider) LaunchCluster(clusterName string) (string, error) {
 	var resp *v1.ClustersAddResponse
 
 	if viper.GetBool(config.Cluster.UseExistingCluster) && viper.GetString(config.Addons.IDs) == "" {
-		if clusterID := o.FindRecycledCluster(cluster.Version().ID(), cluster.CloudProvider().ID(), cluster.Product().ID()); clusterID != "" {
+		product := cluster.Product().ID()
+		if product == "" {
+			product = "osd"
+		}
+		if clusterID := o.FindRecycledCluster(cluster.Version().ID(), cluster.CloudProvider().ID(), product); clusterID != "" {
 			return clusterID, nil
 		}
 	}
