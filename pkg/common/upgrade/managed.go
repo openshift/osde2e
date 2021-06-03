@@ -29,7 +29,7 @@ const (
 	// Namespace in which the managed-upgrade-operator runs
 	muoNamespace = "openshift-managed-upgrade-operator"
 	// the name of the generated UpgradeConfig resource containing upgrade configuration
-	upgradeConfigName = "osd-upgrade-config"
+	upgradeConfigName = "managed-upgrade-config"
 
 	// name of the workload for pod disruption budget tests
 	pdbWorkloadName = "pdb"
