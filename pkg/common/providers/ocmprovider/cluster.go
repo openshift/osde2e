@@ -240,20 +240,26 @@ func (o *OCMProvider) FindRecycledCluster(originalVersion, cloudProvider, produc
 	if err == nil && listResponse.Total() > 0 {
 		log.Printf("We've found %d matching clusters to reuse", listResponse.Total())
 		recycledCluster := listResponse.Items().Slice()[rand.Intn(listResponse.Total())]
-
-		if recycledCluster.ExpirationTimestamp().Before(time.Now().Add(4 * time.Hour)) {
-			// If this cluster is the only available cluster, trigger a new cluster
-			if listResponse.Items().Len() == 1 {
-				return ""
-			}
-			// Otherwise, try and grab a different existing cluster
-			return o.FindRecycledCluster(originalVersion, cloudProvider, product)
-		}
-
 		spiRecycledCluster, err := o.ocmToSPICluster(recycledCluster)
 		if err != nil {
 			log.Printf("Error converting recycled cluster to an SPI Cluster: %s", err.Error())
 			return ""
+		}
+
+		if recycledCluster.ExpirationTimestamp().Before(time.Now().Add(4 * time.Hour)) {
+			// Let's just expire this cluster immediately
+			err = o.AddProperty(spiRecycledCluster, "job", "expiring")
+			if err != nil {
+				log.Printf("Error adding `expiring` to job name: %s", err.Error())
+				return ""
+			}
+			err = o.Expire(spiRecycledCluster.ID())
+			if err != nil {
+				log.Printf("Error expiring cluster %s: %s", spiRecycledCluster.ID(), err.Error())
+				return ""
+			}
+			// Now try and grab a different existing cluster
+			return o.FindRecycledCluster(originalVersion, cloudProvider, product)
 		}
 
 		err = o.AddProperty(spiRecycledCluster, clusterproperties.JobID, viper.GetString(config.JobID))
