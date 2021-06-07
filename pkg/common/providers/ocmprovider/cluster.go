@@ -242,6 +242,11 @@ func (o *OCMProvider) FindRecycledCluster(originalVersion, cloudProvider, produc
 		recycledCluster := listResponse.Items().Slice()[rand.Intn(listResponse.Total())]
 
 		if recycledCluster.ExpirationTimestamp().Before(time.Now().Add(4 * time.Hour)) {
+			// If this cluster is the only available cluster, trigger a new cluster
+			if listResponse.Items().Len() == 1 {
+				return ""
+			}
+			// Otherwise, try and grab a different existing cluster
 			return o.FindRecycledCluster(originalVersion, cloudProvider, product)
 		}
 
