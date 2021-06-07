@@ -246,6 +246,22 @@ func (o *OCMProvider) FindRecycledCluster(originalVersion, cloudProvider, produc
 			return ""
 		}
 
+		if recycledCluster.ExpirationTimestamp().Before(time.Now().Add(4 * time.Hour)) {
+			// Let's just expire this cluster immediately
+			err = o.AddProperty(spiRecycledCluster, "job", "expiring")
+			if err != nil {
+				log.Printf("Error adding `expiring` to job name: %s", err.Error())
+				return ""
+			}
+			err = o.Expire(spiRecycledCluster.ID())
+			if err != nil {
+				log.Printf("Error expiring cluster %s: %s", spiRecycledCluster.ID(), err.Error())
+				return ""
+			}
+			// Now try and grab a different existing cluster
+			return o.FindRecycledCluster(originalVersion, cloudProvider, product)
+		}
+
 		err = o.AddProperty(spiRecycledCluster, clusterproperties.JobID, viper.GetString(config.JobID))
 		if err != nil {
 			log.Printf("Error adding property to cluster: %s", err.Error())
