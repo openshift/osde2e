@@ -240,6 +240,11 @@ func (o *OCMProvider) FindRecycledCluster(originalVersion, cloudProvider, produc
 	if err == nil && listResponse.Total() > 0 {
 		log.Printf("We've found %d matching clusters to reuse", listResponse.Total())
 		recycledCluster := listResponse.Items().Slice()[rand.Intn(listResponse.Total())]
+
+		if recycledCluster.ExpirationTimestamp().Before(time.Now().Add(4 * time.Hour)) {
+			return o.FindRecycledCluster(originalVersion, cloudProvider, product)
+		}
+
 		spiRecycledCluster, err := o.ocmToSPICluster(recycledCluster)
 		if err != nil {
 			log.Printf("Error converting recycled cluster to an SPI Cluster: %s", err.Error())
