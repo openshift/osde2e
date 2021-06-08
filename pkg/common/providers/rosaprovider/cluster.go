@@ -121,8 +121,8 @@ func (m *ROSAProvider) LaunchCluster(clusterName string) (string, error) {
 
 	rosaClusterVersion := strings.Replace(viper.GetString(config.Cluster.Version), "-fast", "", -1)
 	rosaClusterVersion = strings.Replace(rosaClusterVersion, "-candidate", "", -1)
-	rosaClusterVersion = strings.Replace(rosaClusterVersion, "-stable", "", -1)
 	rosaClusterVersion = fmt.Sprintf("%s-%s", rosaClusterVersion, viper.GetString(config.Cluster.Channel))
+	rosaClusterVersion = strings.Replace(rosaClusterVersion, "-stable", "", -1)
 	log.Printf("ROSA cluster version: %s", rosaClusterVersion)
 
 	clusterSpec := cluster.Spec{
