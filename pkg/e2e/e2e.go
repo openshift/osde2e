@@ -855,41 +855,38 @@ func runTestsInPhase(phase string, description string, dryrun bool) (bool, []db.
 					openPDAlerts(suites, jobName, url)
 				}
 
-				// store relevant test and job information in the database
-				if _, ok := os.LookupEnv("JOB_ID"); ok {
-					// record each test case
-					for _, suite := range suites {
-						for _, test := range suite.Tests {
-							testCaseData = append(testCaseData, db.CreateTestcaseParams{
-								Result: func(s junit.Status) db.TestResult {
-									switch s {
-									case "passed":
-										return db.TestResultPassed
-									case "failure":
-										return db.TestResultFailure
-									case "skipped":
-										return db.TestResultSkipped
-									case "error":
-										fallthrough
-									default:
-										return db.TestResultError
-									}
-								}(test.Status),
-								Name: test.Name,
-								Duration: pgtype.Interval{
-									Microseconds: test.Duration.Microseconds(),
-									Status:       pgtype.Present,
-								},
-								Error: func() string {
-									if test.Error != nil {
-										return err.Error()
-									}
-									return ""
-								}(),
-								Stdout: test.SystemOut,
-								Stderr: test.SystemErr,
-							})
-						}
+				// record each test case
+				for _, suite := range suites {
+					for _, test := range suite.Tests {
+						testCaseData = append(testCaseData, db.CreateTestcaseParams{
+							Result: func(s junit.Status) db.TestResult {
+								switch s {
+								case "passed":
+									return db.TestResultPassed
+								case "failure":
+									return db.TestResultFailure
+								case "skipped":
+									return db.TestResultSkipped
+								case "error":
+									fallthrough
+								default:
+									return db.TestResultError
+								}
+							}(test.Status),
+							Name: test.Name,
+							Duration: pgtype.Interval{
+								Microseconds: test.Duration.Microseconds(),
+								Status:       pgtype.Present,
+							},
+							Error: func() string {
+								if test.Error != nil {
+									return err.Error()
+								}
+								return ""
+							}(),
+							Stdout: test.SystemOut,
+							Stderr: test.SystemErr,
+						})
 					}
 				}
 			}
