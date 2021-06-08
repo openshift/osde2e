@@ -98,6 +98,16 @@ var _ = ginkgo.BeforeEach(func() {
 func beforeSuite() bool {
 	// Skip provisioning if we already have a kubeconfig
 	var err error
+	kubeconfigPath := viper.GetString(config.Kubeconfig.Path)
+	if kubeconfigPath != "" {
+		kubeconfigBytes, err := ioutil.ReadFile(kubeconfigPath)
+		if err != nil {
+			log.Printf("failed reading '%s' which has been set as the TEST_KUBECONFIG: %v", kubeconfigPath, err)
+			return false
+		}
+		viper.Set(config.Kubeconfig.Contents, string(kubeconfigBytes))
+	}
+
 	if viper.GetString(config.Kubeconfig.Contents) == "" {
 		cluster, err := clusterutil.ProvisionCluster(nil)
 		events.HandleErrorWithEvents(err, events.InstallSuccessful, events.InstallFailed)
