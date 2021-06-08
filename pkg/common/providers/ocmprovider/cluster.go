@@ -231,7 +231,7 @@ func (o *OCMProvider) LaunchCluster(clusterName string) (string, error) {
 
 func (o *OCMProvider) FindRecycledCluster(originalVersion, cloudProvider, product string) string {
 	version := semver.MustParse(strings.TrimPrefix(originalVersion, "openshift-"))
-	query := fmt.Sprintf("cloud_provider.id='%s' and properties.JobID='' and product.id='%s' and properties.Status like '%s%%' and version.id like 'openshift-v%s%%'",
+	query := fmt.Sprintf("cloud_provider.id='%s' and properties.JobName='' and properties.JobID='' and product.id='%s' and properties.Status like '%s%%' and version.id like 'openshift-v%s%%'",
 		cloudProvider, product, "completed-", version.String())
 
 	log.Println(query)
