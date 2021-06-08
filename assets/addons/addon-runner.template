@@ -55,6 +55,8 @@ oc create configmap push-results-{{.Suffix}} --from-file=push-results.sh
 
 oc apply -f workload.yaml
 
+sleep 5
+
 set +e
 
 while oc get job/{{.JobName}} -o=jsonpath='{.status}' | grep -q active; do sleep 1; done
