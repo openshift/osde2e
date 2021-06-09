@@ -98,6 +98,16 @@ var _ = ginkgo.BeforeEach(func() {
 func beforeSuite() bool {
 	// Skip provisioning if we already have a kubeconfig
 	var err error
+	kubeconfigPath := viper.GetString(config.Kubeconfig.Path)
+	if kubeconfigPath != "" {
+		kubeconfigBytes, err := ioutil.ReadFile(kubeconfigPath)
+		if err != nil {
+			log.Printf("failed reading '%s' which has been set as the TEST_KUBECONFIG: %v", kubeconfigPath, err)
+			return false
+		}
+		viper.Set(config.Kubeconfig.Contents, string(kubeconfigBytes))
+	}
+
 	if viper.GetString(config.Kubeconfig.Contents) == "" {
 		cluster, err := clusterutil.ProvisionCluster(nil)
 		events.HandleErrorWithEvents(err, events.InstallSuccessful, events.InstallFailed)
@@ -150,9 +160,22 @@ func beforeSuite() bool {
 		}
 
 		log.Println("Cluster is healthy and ready for testing")
+
+		var kubeconfigBytes []byte
+		if kubeconfigBytes, err = provider.ClusterKubeconfig(viper.GetString(config.Cluster.ID)); err != nil {
+			events.HandleErrorWithEvents(err, events.InstallKubeconfigRetrievalSuccess, events.InstallKubeconfigRetrievalFailure)
+			log.Printf("Failed retrieving kubeconfig: %v", err)
+			getLogs()
+			return false
+		}
+		viper.Set(config.Kubeconfig.Contents, string(kubeconfigBytes))
+
+		getLogs()
+
 	} else {
 		log.Println("Skipping health checks as requested")
 	}
+
 	if len(viper.GetString(config.Addons.IDs)) > 0 {
 		if viper.GetString(config.Provider) != "mock" {
 			err = installAddons()
@@ -167,24 +190,6 @@ func beforeSuite() bool {
 			log.Println("If you are running local addon tests, please ensure the addon components are already installed.")
 		}
 	}
-
-	var kubeconfigBytes []byte
-	if kubeconfigBytes, err = provider.ClusterKubeconfig(viper.GetString(config.Cluster.ID)); err != nil {
-		events.HandleErrorWithEvents(err, events.InstallKubeconfigRetrievalSuccess, events.InstallKubeconfigRetrievalFailure)
-		log.Printf("Failed retrieving kubeconfig: %v", err)
-		getLogs()
-		return false
-	}
-	viper.Set(config.Kubeconfig.Contents, string(kubeconfigBytes))
-
-	if len(viper.GetString(config.Kubeconfig.Contents)) == 0 {
-		// Give the cluster some breathing room.
-		log.Println("OSD cluster installed. Sleeping for 600s.")
-		time.Sleep(600 * time.Second)
-	} else {
-		log.Printf("No kubeconfig contents found, but there should be some by now.")
-	}
-	getLogs()
 
 	// If there are test harnesses present, we need to populate the
 	// secrets into the test cluster
