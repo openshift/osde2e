@@ -170,13 +170,6 @@ func beforeSuite() bool {
 		}
 		viper.Set(config.Kubeconfig.Contents, string(kubeconfigBytes))
 
-		if len(viper.GetString(config.Kubeconfig.Contents)) == 0 {
-			// Give the cluster some breathing room.
-			log.Println("OSD cluster installed. Sleeping for 600s.")
-			time.Sleep(600 * time.Second)
-		} else {
-			log.Printf("No kubeconfig contents found, but there should be some by now.")
-		}
 		getLogs()
 
 	} else {
