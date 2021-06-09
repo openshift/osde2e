@@ -146,6 +146,9 @@ func run(cmd *cobra.Command, argv []string) error {
 	}
 
 	if kubeconfigStatus {
+		if cluster.State() == spi.ClusterStateHibernating && !provider.Resume(cluster.ID()) {
+			fmt.Printf("Attempt to wake cluster %s failed.", cluster.ID())
+		}
 		content, err := getKubeconfig(clusterID)
 		if err != nil {
 			return fmt.Errorf("Error getting the cluster's kubeconfig - %s", err)
