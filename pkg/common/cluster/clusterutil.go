@@ -455,6 +455,19 @@ func PollClusterHealth(clusterID string, logger *log.Logger) (status bool, failu
 			failures = append(failures, "cert")
 			clusterHealthy = false
 		}
+
+		if check, err := healthchecks.CheckReplicaCountForDaemonSets(kubeClient.AppsV1(), logger); !check || err != nil {
+			healthErr = multierror.Append(healthErr, err)
+			failures = append(failures, "daemonset")
+			clusterHealthy = false
+		}
+
+		if check, err := healthchecks.CheckReplicaCountForReplicaSets(kubeClient.AppsV1(), logger); !check || err != nil {
+			healthErr = multierror.Append(healthErr, err)
+			failures = append(failures, "replicaset")
+			clusterHealthy = false
+		}
+
 	default:
 		logger.Printf("No provisioner-specific logic for %q", providerType)
 	}
