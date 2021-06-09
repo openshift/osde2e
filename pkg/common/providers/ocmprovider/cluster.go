@@ -248,7 +248,7 @@ func (o *OCMProvider) FindRecycledCluster(originalVersion, cloudProvider, produc
 
 		if recycledCluster.ExpirationTimestamp().Before(time.Now().Add(4 * time.Hour)) {
 			// Let's just expire this cluster immediately
-			err = o.AddProperty(spiRecycledCluster, "job", "expiring")
+			err = o.AddProperty(spiRecycledCluster, clusterproperties.JobName, "expiring")
 			if err != nil {
 				log.Printf("Error adding `expiring` to job name: %s", err.Error())
 				return ""
