@@ -51,7 +51,7 @@ func init() {
 var _ = ginkgo.Describe(encryptedStorageTestName, func(){
 	ginkgo.Context("in GCP clusters", func() {
 		if (viper.GetString(config.CloudProvider.CloudProviderID) != "gcp") {
-			ginkgo.Skip("Skipping test, cluster is not hosted on GCP")
+			return
 		}
 		h := helper.New()
 
