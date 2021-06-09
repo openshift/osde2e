@@ -880,7 +880,7 @@ func runTestsInPhase(phase string, description string, dryrun bool) (bool, []db.
 							},
 							Error: func() string {
 								if test.Error != nil {
-									return err.Error()
+									return test.Error.Error()
 								}
 								return ""
 							}(),
