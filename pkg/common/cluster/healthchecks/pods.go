@@ -81,7 +81,7 @@ func checkPods(podClient v1.CoreV1Interface, logger *log.Logger, filters ...PodP
 
 	for _, pod := range pods.Items {
 		if pod.Status.Phase != kubev1.PodPending {
-			return nil, fmt.Errorf("Pod %s errored: %s - %s", pod.GetName(), pod.Status.Reason, pod.Status.Message)
+			return nil, fmt.Errorf("Pod %s in unexpected phase %s: reason: %s message: %s", pod.Status.Phase, pod.GetName(), pod.Status.Reason, pod.Status.Message)
 		}
 		logger.Printf("%s is not ready. Phase: %s, Message: %s, Reason: %s", pod.Name, pod.Status.Phase, pod.Status.Message, pod.Status.Reason)
 	}
