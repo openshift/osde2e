@@ -63,3 +63,77 @@ SELECT *
 FROM testcases
 ORDER BY id;
 
+-- name: ListAlertableFailuresForJob :many
+select 
+    jobs.*,
+    -- remove the job phase from the test name
+    regexp_replace(testcases.name, '\[(install|upgrade)\] (.*)', '\2') as name,
+    testcases.result as testresult
+from jobs
+    join testcases
+    on jobs.id = testcases.job_id
+where
+    jobs.id = sqlc.arg(jobID)
+    -- filter kinds of test we do not care about
+    and testcases.name !~ '.*\[Suite: (informing|addons|conformance)\].*'
+    -- ensure this test does belong to a suite
+    and testcases.name ~ '.*\[Suite:.*'
+    and testcases.result != 'passed'
+    and testcases.result != 'skipped'
+;
+
+-- name: ListAlertableRecentTestFailures :many
+with testcases as (
+    select 
+        jobs.*,
+        -- remove the job phase from the test name
+        regexp_replace(testcases.name, '\[(install|upgrade)\] (.*)', '\2') as name,
+        testcases.result as testresult
+    from jobs
+        join testcases
+        on jobs.id = testcases.job_id
+    where
+        now() - jobs.started < interval '48 hours'
+)
+select *
+from testcases
+where
+    testcases.name = ANY(sqlc.arg(names)::text[])
+;
+
+-- name: ListProblematicTests :many
+with recent_tests as (
+    select 
+        jobs.*,
+        regexp_replace(name, '\[(install|upgrade)\] (.*)', '\2') as name,
+        testcases.result as testresult
+    from jobs
+        join testcases
+        on jobs.id = testcases.job_id
+    where
+        -- filter kinds of test we do not care about
+        testcases.name !~ '.*\[Suite: (informing|addons|conformance)\].*'
+        -- ensure this test does belong to a suite
+        and testcases.name ~ '.*\[Suite:.*'
+        and testcases.name !~ '.*sig-.*'
+        and now() - jobs.started < interval '48 hours'
+        -- filter out osde2e's own CI jobs
+        and jobs.job_id != '-1'
+), counts as (
+        -- synthesize a table with the name of a test and columns counting how often it has resulted
+        -- in each result type
+        select
+            name,
+            count(CASE WHEN recent_tests.testresult='failure' THEN 1 END) as failure,
+            count(CASE WHEN recent_tests.testresult='error' THEN 1 END) as error
+        from recent_tests
+        group by name
+)
+select 
+    counts.name,
+    (counts.error + counts.failure) as problems
+from
+    counts
+where counts.error + counts.failure > 1
+;
+
