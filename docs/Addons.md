@@ -134,6 +134,25 @@ You will *also* need to provide your own secrets by swapping the `prow-operator-
 
 You can change the cron scheduling of the job as well.
 
+### ROSA Testing
+
+If you would like to test against ROSA instead of plain OSD, you will need to change your configs from using `aws` to `rosa`, and you will need to supply differently-named secrets.
+
+```
+rosa-aws-account
+rosa-aws-access-key
+rosa-aws-secret-access-key
+```
+
+These secrets need the same values as the ones prefixed with `ocm-` described in [Providing Secrets to Your Build](#providing-secrets-to-your-build) above.
+
+You should also provide these environment variables:
+
+- `ROSA_AWS_REGION` (we recommend setting this to `random`)
+- `ROSA_ENV` (set this to `integration`, `stage`, or `production` based on the environment the test is executing within).
+
+For an example build that tests an Addon on ROSA, search [this file](https://github.com/openshift/release/blob/master/ci-operator/jobs/openshift/osde2e/openshift-osde2e-main-periodics.yaml) for the configuration of `osde2e-stage-rosa-addon-prow-operator`.
+
 ### Addon Cleanup
 
 If your addon test creates or affects anything outside of the OSD cluster lifecycle, a separate cleanup action is required. If `ADDON_RUN_CLEANUP` is set to `true`, OSDe2e will run your test harness container a **second time** passing the argument `cleanup` to the container (as the first command line argument).
