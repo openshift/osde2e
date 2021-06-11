@@ -6,10 +6,9 @@ maintenance:
   controlPlaneTime: {{ .ControlPlaneTime }}
   ignoredAlerts:
   controlPlaneCriticals:
-  - etcdMembersDown
-  - KubeDeploymentReplicasMismatch
+  # ClusterOperatorDown - OSD-6330
   - ClusterOperatorDown
-  - MachineWithNoRunningPhase
+  # ClusterOperatorDown - OSD-6330
   - ClusterOperatorDegraded
 scale:
   timeOut: {{ .ScaleTimeout }}
@@ -24,9 +23,18 @@ healthCheck:
   - MetricsClientSendFailingSRE
   - UpgradeNodeScalingFailedSRE
   - UpgradeClusterCheckFailedSRE
+  - PrometheusRuleFailures
+  - CannotRetrieveUpdates
+  - FluentdNodeDown
 verification:
   ignoredNamespaces:
   - openshift-logging
+  - openshift-redhat-marketplace
+  - openshift-operators
+  - openshift-customer-monitoring
+  - openshift-route-monitoring-operator
+  - openshift-user-workload-monitoring
+  - openshift-pipelines
   namespacePrefixesToCheck:
   - openshift
   - kube
