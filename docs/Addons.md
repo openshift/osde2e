@@ -151,6 +151,8 @@ You should also provide these environment variables:
 - `ROSA_AWS_REGION` (we recommend setting this to `random`)
 - `ROSA_ENV` (set this to `integration`, `stage`, or `production` based on the environment the test is executing within).
 
+For an example build that tests an Addon on ROSA, search [this file](https://github.com/openshift/release/blob/master/ci-operator/jobs/openshift/osde2e/openshift-osde2e-main-periodics.yaml) for the configuration of `osde2e-stage-rosa-addon-prow-operator`.
+
 ### Addon Cleanup
 
 If your addon test creates or affects anything outside of the OSD cluster lifecycle, a separate cleanup action is required. If `ADDON_RUN_CLEANUP` is set to `true`, OSDe2e will run your test harness container a **second time** passing the argument `cleanup` to the container (as the first command line argument).
