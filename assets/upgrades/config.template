@@ -34,8 +34,3 @@ healthCheck:
   - openshift-route-monitoring-operator                                                                                                                                      
   - openshift-user-workload-monitoring
   - openshift-pipelines
-verification:
-  namespacePrefixesToCheck:
-  - openshift
-  - kube
-  - default
