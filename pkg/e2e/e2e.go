@@ -492,6 +492,28 @@ func runGinkgoTests() (int, error) {
 					return fmt.Errorf("failed creating test case: %w", err)
 				}
 			}
+
+			alertData, err := db.AlertDataForJob(ctx.TODO(), jobID)
+			if err != nil {
+				return fmt.Errorf("failed creating alert data: %w", err)
+			}
+			for name, instances := range alertData {
+				// extract useful data into PD alerts
+				// and create the PD alerts.
+			}
+
+			problems, err := db.ListProblematicTests(ctx.TODO())
+			if err != nil {
+				return fmt.Errorf("failed listing problematic tests: %w", err)
+			}
+
+			// get a list of open incidents from PD
+
+			// compare against actually problematic tests
+
+			// close any PD incidents that are not in the problems list,
+			// these must have self-resolved.
+
 			return nil
 		}); err != nil {
 			log.Printf("failed creating job entry in db: %v", err)
