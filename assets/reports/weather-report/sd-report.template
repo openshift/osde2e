@@ -9,7 +9,7 @@ summary = "{{.Summary}}"
 
 | Job Name | Pass Rate | More detail |
 |----------|-----------|-------------|
-{{range .Jobs}}|[{{.Name}}](https://prow.svc.ci.openshift.org/?job={{.Name}})| <span style="color:{{.Color}};">{{printf "%.2f%%" .PassRate}}</span>|[More Detail](#{{.Name}})|
+{{range .Jobs}}|[{{.Name}}](https://prow.ci.openshift.org/?job={{.Name}})| <span style="color:{{.Color}};">{{printf "%.2f%%" .PassRate}}</span>|[More Detail](#{{.Name}})|
 {{end}}
 {{range .Jobs}}
 {{ $jobScope := . }}
