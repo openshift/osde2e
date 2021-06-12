@@ -31,6 +31,6 @@ healthCheck:
   - openshift-redhat-marketplace
   - openshift-operators
   - openshift-customer-monitoring
-  - openshift-route-monitoring-operator                                                                                                                                      
+  - openshift-route-monitor-operator                                                                                                                                      
   - openshift-user-workload-monitoring
   - openshift-pipelines
