@@ -6,6 +6,7 @@ import (
 	"log"
 
 	"github.com/hashicorp/go-multierror"
+	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/logging"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	appsv1 "k8s.io/client-go/kubernetes/typed/apps/v1"
@@ -14,6 +15,7 @@ import (
 //CheckReplicaCountForDaemonSets checks if all the daemonsets running on the cluster have expected replicas
 func CheckReplicaCountForDaemonSets(dsClient appsv1.AppsV1Interface, logger *log.Logger) (bool, error) {
 	allErrors := &multierror.Error{}
+	helper := helper.NewOutsideGinkgo()
 	logger = logging.CreateNewStdLoggerOrUseExistingLogger(logger)
 	logger.Print("Checking that all Daemonsets are running with expected replicas...")
 
@@ -25,6 +27,10 @@ func CheckReplicaCountForDaemonSets(dsClient appsv1.AppsV1Interface, logger *log
 	dsTotalCount := len(dsList.Items)
 	if dsTotalCount != 0 {
 		for _, ds := range dsList.Items {
+			// Ignore daemonsets in the OSDE2E project
+			if helper != nil && ds.Namespace == helper.CurrentProject() {
+				continue
+			}
 			if ds.Status.NumberReady != ds.Status.DesiredNumberScheduled {
 				err = fmt.Errorf("daemonset %s has %d out of %d replicas ready", ds.Name, ds.Status.NumberReady, ds.Status.DesiredNumberScheduled)
 				allErrors = multierror.Append(allErrors, err)
@@ -41,6 +47,7 @@ func CheckReplicaCountForDaemonSets(dsClient appsv1.AppsV1Interface, logger *log
 
 //CheckReplicaCountForReplicaSets checks if all the replicasets running on the cluster have expected replicas
 func CheckReplicaCountForReplicaSets(dsClient appsv1.AppsV1Interface, logger *log.Logger) (bool, error) {
+	helper := helper.NewOutsideGinkgo()
 	allErrors := &multierror.Error{}
 	logger = logging.CreateNewStdLoggerOrUseExistingLogger(logger)
 	logger.Print("Checking that all Replicasets are running with expected replicas...")
@@ -53,6 +60,10 @@ func CheckReplicaCountForReplicaSets(dsClient appsv1.AppsV1Interface, logger *lo
 	rsTotalCount := len(rsList.Items)
 	if rsTotalCount != 0 {
 		for _, rs := range rsList.Items {
+			// Ignore replicasets in the OSDE2E project
+			if helper != nil && rs.Namespace == helper.CurrentProject() {
+				continue
+			}
 			if rs.Status.ReadyReplicas != rs.Status.Replicas {
 				err = fmt.Errorf("replicaset %s has %d out of %d replicas ready", rs.Name, rs.Status.ReadyReplicas, rs.Status.Replicas)
 				allErrors = multierror.Append(allErrors, err)
