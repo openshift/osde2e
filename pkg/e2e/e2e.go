@@ -425,98 +425,49 @@ func runGinkgoTests() (int, error) {
 		viper.GetString(config.Database.Port),
 		viper.GetString(config.Database.DatabaseName),
 	)
-	var jobID int64
 	// connect to the db
 	if viper.GetString(config.JobID) != "" {
 		log.Printf("Storing data for Job ID: %s", viper.GetString(config.JobID))
-		if err := db.WithDB(dbURL, func(pg *sql.DB) error {
-			log.Println("We're storing data in the database!")
-			// ensure it's on the latest schema
-			if err := db.WithMigrator(pg, func(m *migrate.Migrate) error {
-				if err := m.Up(); err != nil && !errors.Is(err, migrate.ErrNoChange) {
-					return err
+		jobData := db.CreateJobParams{
+			Provider: viper.GetString(config.Provider),
+			JobName:  viper.GetString(config.JobName),
+			JobID:    viper.GetString(config.JobID),
+			Url: func() string {
+				url, _ := prow.JobURL()
+				return url
+			}(),
+			Started: func() time.Time {
+				t, _ := time.Parse(time.RFC3339, viper.GetString(config.JobStartedAt))
+				return t
+			}(),
+			Finished:       testsFinished,
+			ClusterVersion: viper.GetString(config.Cluster.Version),
+			ClusterName:    viper.GetString(config.Cluster.Name),
+			ClusterID:      viper.GetString(config.Cluster.ID),
+			MultiAz:        viper.GetString(config.Cluster.MultiAZ),
+			Channel:        viper.GetString(config.Cluster.Channel),
+			Environment:    provider.Environment(),
+			Region:         viper.GetString(config.CloudProvider.Region),
+			NumbWorkerNodes: func() int32 {
+				asString := viper.GetString(config.Cluster.NumWorkerNodes)
+				asInt, _ := strconv.Atoi(asString)
+				return int32(asInt)
+			}(),
+			NetworkProvider:    viper.GetString(config.Cluster.NetworkProvider),
+			ImageContentSource: viper.GetString(config.Cluster.ImageContentSource),
+			InstallConfig:      viper.GetString(config.Cluster.InstallConfig),
+			HibernateAfterUse:  viper.GetString(config.Cluster.HibernateAfterUse) == "true",
+			Reused:             viper.GetString(config.Cluster.Reused) == "true",
+			Result: func() db.JobResult {
+				if upgradeTestsPassed && testsPassed {
+					return db.JobResultPassed
 				}
-				return nil
-			}); err != nil {
-				return err
-			}
-
-			q := db.New(pg)
-
-			// insert this job's info
-			jobID, err = q.CreateJob(context.TODO(), db.CreateJobParams{
-				Provider: viper.GetString(config.Provider),
-				JobName:  viper.GetString(config.JobName),
-				JobID:    viper.GetString(config.JobID),
-				Url: func() string {
-					url, _ := prow.JobURL()
-					return url
-				}(),
-				Started: func() time.Time {
-					t, _ := time.Parse(time.RFC3339, viper.GetString(config.JobStartedAt))
-					return t
-				}(),
-				Finished:       testsFinished,
-				ClusterVersion: viper.GetString(config.Cluster.Version),
-				ClusterName:    viper.GetString(config.Cluster.Name),
-				ClusterID:      viper.GetString(config.Cluster.ID),
-				MultiAz:        viper.GetString(config.Cluster.MultiAZ),
-				Channel:        viper.GetString(config.Cluster.Channel),
-				Environment:    provider.Environment(),
-				Region:         viper.GetString(config.CloudProvider.Region),
-				NumbWorkerNodes: func() int32 {
-					asString := viper.GetString(config.Cluster.NumWorkerNodes)
-					asInt, _ := strconv.Atoi(asString)
-					return int32(asInt)
-				}(),
-				NetworkProvider:    viper.GetString(config.Cluster.NetworkProvider),
-				ImageContentSource: viper.GetString(config.Cluster.ImageContentSource),
-				InstallConfig:      viper.GetString(config.Cluster.InstallConfig),
-				HibernateAfterUse:  viper.GetString(config.Cluster.HibernateAfterUse) == "true",
-				Reused:             viper.GetString(config.Cluster.Reused) == "true",
-				Result: func() db.JobResult {
-					if upgradeTestsPassed && testsPassed {
-						return db.JobResultPassed
-					}
-					return db.JobResultFailed
-				}(),
-			})
-			if err != nil {
-				return fmt.Errorf("failed creating job: %w", err)
-			}
-
-			for _, tc := range append(installTestCaseData, upgradeTestCaseData...) {
-				tc.JobID = jobID
-				_, err := q.CreateTestcase(context.TODO(), tc)
-				if err != nil {
-					return fmt.Errorf("failed creating test case: %w", err)
-				}
-			}
-
-			alertData, err := db.AlertDataForJob(ctx.TODO(), jobID)
-			if err != nil {
-				return fmt.Errorf("failed creating alert data: %w", err)
-			}
-			for name, instances := range alertData {
-				// extract useful data into PD alerts
-				// and create the PD alerts.
-			}
-
-			problems, err := db.ListProblematicTests(ctx.TODO())
-			if err != nil {
-				return fmt.Errorf("failed listing problematic tests: %w", err)
-			}
-
-			// get a list of open incidents from PD
-
-			// compare against actually problematic tests
-
-			// close any PD incidents that are not in the problems list,
-			// these must have self-resolved.
-
-			return nil
-		}); err != nil {
-			log.Printf("failed creating job entry in db: %v", err)
+				return db.JobResultFailed
+			}(),
+		}
+		testData := append(installTestCaseData, upgradeTestCaseData...)
+		if err := updateDatabaseAndPagerduty(dbURL, jobData, testData...); err != nil {
+			log.Printf("failed updating database or pagerduty: %v", err)
 		}
 	}
 
@@ -583,6 +534,10 @@ func runGinkgoTests() (int, error) {
 	return Success, nil
 }
 
+// ManyGroupedFailureName is the incident title assigned to incidents reperesenting a large
+// cluster of test failures.
+const ManyGroupedFailureName = "A lot of tests failed together"
+
 func openPDAlerts(suites []junit.Suite, jobName, jobURL string) {
 	if strings.Contains(strings.ToLower(jobName), "addon") {
 		// do not report pd alerts from addon tests
@@ -612,7 +567,7 @@ func openPDAlerts(suites []junit.Suite, jobName, jobURL string) {
 	if len(failingTests) > 10 {
 		jobDetails["help"] = "This is likely a more complex problem, like a test harness or infrastructure issue. The test harness will attempt to notify #sd-cicd"
 		if event, err := pdc.FireAlert(pd.V2Payload{
-			Summary:  "A lot of tests failed together",
+			Summary:  ManyGroupedFailureName,
 			Severity: "info",
 			Source:   jobName,
 			Group:    "", // do not group
@@ -875,13 +830,6 @@ func runTestsInPhase(phase string, description string, dryrun bool) (bool, []db.
 					}
 				}
 
-				// fire PD incident if JOB_TYPE==periodic
-				if os.Getenv("JOB_TYPE") == "periodic" {
-					url, _ := prow.JobURL()
-					jobName := os.Getenv("JOB_NAME")
-					openPDAlerts(suites, jobName, url)
-				}
-
 				// record each test case
 				for _, suite := range suites {
 					for _, test := range suite.Tests {
@@ -1140,4 +1088,140 @@ func setupRouteMonitors(closeChannel chan struct{}) chan struct{} {
 		}
 	}()
 	return routeMonitorChan
+}
+
+func updateDatabaseAndPagerduty(dbURL string, jobData db.CreateJobParams, testData ...db.CreateTestcaseParams) error {
+	var (
+		problematicSet = make(map[string]db.ListProblematicTestsRow)
+		alertData      map[string][]db.ListAlertableRecentTestFailuresRow
+		jobID          int64
+		err            error
+	)
+
+	// Record data from this job and extract data that we need to operate on PD.
+	log.Printf("Storing data for Job ID: %s", viper.GetString(config.JobID))
+	if err := db.WithDB(dbURL, func(pg *sql.DB) error {
+		log.Println("We're storing data in the database!")
+		// ensure it's on the latest schema
+		if err := db.WithMigrator(pg, func(m *migrate.Migrate) error {
+			if err := m.Up(); err != nil && !errors.Is(err, migrate.ErrNoChange) {
+				return err
+			}
+			return nil
+		}); err != nil {
+			return err
+		}
+
+		q := db.New(pg)
+
+		// insert this job's info
+		jobID, err = q.CreateJob(context.TODO(), jobData)
+		if err != nil {
+			return fmt.Errorf("failed creating job: %w", err)
+		}
+
+		log.Printf("This job has Database ID %d", jobID)
+
+		for _, tc := range testData {
+			tc.JobID = jobID
+			_, err := q.CreateTestcase(context.TODO(), tc)
+			if err != nil {
+				return fmt.Errorf("failed creating test case: %w", err)
+			}
+		}
+
+		alertData, err = q.AlertDataForJob(context.TODO(), jobID)
+		if err != nil {
+			return fmt.Errorf("failed creating alert data: %w", err)
+		}
+
+		problems, err := q.ListProblematicTests(context.TODO())
+		if err != nil {
+			return fmt.Errorf("failed listing problematic tests: %w", err)
+		}
+
+		for _, p := range problems {
+			problematicSet[p.Name] = p
+		}
+		return nil
+	}); err != nil {
+		return fmt.Errorf("failed communicating with database: %w", err)
+	}
+
+	// Extract useful data into PD alerts and create the PD alerts.
+	pdAlertClient := pagerduty.Config{
+		IntegrationKey: viper.GetString(config.Alert.PagerDutyAPIToken),
+	}
+	for name, instances := range alertData {
+		if _, err := pdAlertClient.FireAlert(pd.V2Payload{
+			Summary:  name + " failed",
+			Severity: "info",
+			Source:   fmt.Sprintf("job %d", jobID),
+			Group:    name, // group by test case
+			Details:  instances,
+		}); err != nil {
+			return fmt.Errorf("failed creating PD alert: %w", err)
+		}
+	}
+
+	// Deduplicate incidents.
+	pdClient := pd.NewClient(viper.GetString(config.Alert.PagerDutyUserToken))
+	listOptions := pd.ListIncidentsOptions{
+		ServiceIDs: []string{"P7VT2V5"},
+		Statuses:   []string{"triggered", "acknowledged"},
+		APIListObject: pd.APIListObject{
+			Limit: 100,
+		},
+	}
+	var incidentsList []pd.Incident
+	if err := pagerduty.Incidents(
+		pdClient,
+		listOptions,
+		func(incident pd.Incident) error {
+			incidentsList = append(incidentsList, incident)
+			return nil
+		},
+	); err != nil {
+		return fmt.Errorf("failed listing open PD incidents: %w", err)
+	}
+
+	if err := pagerduty.MergeIncidentsByTitle(pdClient, incidentsList); err != nil {
+		return fmt.Errorf("failed merging incidents: %w", err)
+	}
+
+	// Find all active PD incidents that aren't in our problem list. We
+	// list them again since we just tried to merge some of them.
+	var needsClose []pd.ManageIncidentsOptions
+	if err := pagerduty.Incidents(
+		pdClient,
+		listOptions,
+		func(incident pd.Incident) error {
+			incidentsList = append(incidentsList, incident)
+			// convert the name to the notation we expect from the database
+			name := strings.TrimPrefix(incident.Title, "[install] ")
+			name = strings.TrimPrefix(name, "[upgrade] ")
+			name = strings.TrimSuffix(name, " failed")
+			if name == ManyGroupedFailureName {
+				return nil
+			}
+			if _, ok := problematicSet[name]; !ok {
+				// mark this PD incident as needing to be closed
+				needsClose = append(needsClose, pd.ManageIncidentsOptions{
+					ID:         incident.Id,
+					Type:       incident.Type,
+					Status:     "resolved",
+					Resolution: fmt.Sprintf("Resolved by job %d", jobID),
+				})
+			}
+			return nil
+		},
+	); err != nil {
+		return fmt.Errorf("failed listing open PD incidents: %w", err)
+	}
+
+	// Resolve all of the incidents that aren't on our problem list.
+	if _, err := pdClient.ManageIncidentsWithContext(context.TODO(), "", needsClose); err != nil {
+		return fmt.Errorf("failed resolving incidents: %w", err)
+	}
+	return nil
 }
