@@ -36,7 +36,6 @@ import (
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/db"
 
-	"github.com/openshift/osde2e/pkg/common/alert"
 	"github.com/openshift/osde2e/pkg/common/aws"
 	"github.com/openshift/osde2e/pkg/common/cluster"
 	clusterutil "github.com/openshift/osde2e/pkg/common/cluster"
