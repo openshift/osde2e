@@ -10,3 +10,6 @@ packages:
 overrides:
   - db_type: "pg_catalog.interval"
     go_type: "github.com/jackc/pgtype.Interval"
+    nullable: true
+  - db_type: "pg_catalog.interval"
+    go_type: "github.com/jackc/pgtype.Interval"
