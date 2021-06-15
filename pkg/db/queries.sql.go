@@ -104,13 +104,13 @@ RETURNING id
 `
 
 type CreateTestcaseParams struct {
-	JobID    int64      `json:"job_id"`
-	Result   TestResult `json:"result"`
-	Name     string     `json:"name"`
-	Duration int64      `json:"duration"`
-	Error    string     `json:"error"`
-	Stdout   string     `json:"stdout"`
-	Stderr   string     `json:"stderr"`
+	JobID    int64           `json:"job_id"`
+	Result   TestResult      `json:"result"`
+	Name     string          `json:"name"`
+	Duration pgtype.Interval `json:"duration"`
+	Error    string          `json:"error"`
+	Stdout   string          `json:"stdout"`
+	Stderr   string          `json:"stderr"`
 }
 
 func (q *Queries) CreateTestcase(ctx context.Context, arg CreateTestcaseParams) (int64, error) {
