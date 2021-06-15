@@ -5,7 +5,6 @@ package db
 
 import (
 	"context"
-	"database/sql"
 	"time"
 
 	"github.com/jackc/pgtype"
@@ -105,13 +104,13 @@ RETURNING id
 `
 
 type CreateTestcaseParams struct {
-	JobID    int64           `json:"job_id"`
-	Result   TestResult      `json:"result"`
-	Name     string          `json:"name"`
-	Duration pgtype.Interval `json:"duration"`
-	Error    string          `json:"error"`
-	Stdout   string          `json:"stdout"`
-	Stderr   string          `json:"stderr"`
+	JobID    int64      `json:"job_id"`
+	Result   TestResult `json:"result"`
+	Name     string     `json:"name"`
+	Duration int64      `json:"duration"`
+	Error    string     `json:"error"`
+	Stdout   string     `json:"stdout"`
+	Stderr   string     `json:"stderr"`
 }
 
 func (q *Queries) CreateTestcase(ctx context.Context, arg CreateTestcaseParams) (int64, error) {
@@ -246,30 +245,30 @@ where
 `
 
 type ListAlertableFailuresForJobRow struct {
-	ID                 int64         `json:"id"`
-	Provider           string        `json:"provider"`
-	JobName            string        `json:"job_name"`
-	JobID              string        `json:"job_id"`
-	Url                string        `json:"url"`
-	Started            time.Time     `json:"started"`
-	Finished           time.Time     `json:"finished"`
-	Duration           sql.NullInt64 `json:"duration"`
-	ClusterVersion     string        `json:"cluster_version"`
-	ClusterName        string        `json:"cluster_name"`
-	ClusterID          string        `json:"cluster_id"`
-	MultiAz            string        `json:"multi_az"`
-	Channel            string        `json:"channel"`
-	Environment        string        `json:"environment"`
-	Region             string        `json:"region"`
-	NumbWorkerNodes    int32         `json:"numb_worker_nodes"`
-	NetworkProvider    string        `json:"network_provider"`
-	ImageContentSource string        `json:"image_content_source"`
-	InstallConfig      string        `json:"install_config"`
-	HibernateAfterUse  bool          `json:"hibernate_after_use"`
-	Reused             bool          `json:"reused"`
-	Result             JobResult     `json:"result"`
-	Name               string        `json:"name"`
-	Testresult         TestResult    `json:"testresult"`
+	ID                 int64           `json:"id"`
+	Provider           string          `json:"provider"`
+	JobName            string          `json:"job_name"`
+	JobID              string          `json:"job_id"`
+	Url                string          `json:"url"`
+	Started            time.Time       `json:"started"`
+	Finished           time.Time       `json:"finished"`
+	Duration           pgtype.Interval `json:"duration"`
+	ClusterVersion     string          `json:"cluster_version"`
+	ClusterName        string          `json:"cluster_name"`
+	ClusterID          string          `json:"cluster_id"`
+	MultiAz            string          `json:"multi_az"`
+	Channel            string          `json:"channel"`
+	Environment        string          `json:"environment"`
+	Region             string          `json:"region"`
+	NumbWorkerNodes    int32           `json:"numb_worker_nodes"`
+	NetworkProvider    string          `json:"network_provider"`
+	ImageContentSource string          `json:"image_content_source"`
+	InstallConfig      string          `json:"install_config"`
+	HibernateAfterUse  bool            `json:"hibernate_after_use"`
+	Reused             bool            `json:"reused"`
+	Result             JobResult       `json:"result"`
+	Name               string          `json:"name"`
+	Testresult         TestResult      `json:"testresult"`
 }
 
 func (q *Queries) ListAlertableFailuresForJob(ctx context.Context, jobid int64) ([]ListAlertableFailuresForJobRow, error) {
@@ -340,30 +339,30 @@ where
 `
 
 type ListAlertableRecentTestFailuresRow struct {
-	ID                 int64         `json:"id"`
-	Provider           string        `json:"provider"`
-	JobName            string        `json:"job_name"`
-	JobID              string        `json:"job_id"`
-	Url                string        `json:"url"`
-	Started            time.Time     `json:"started"`
-	Finished           time.Time     `json:"finished"`
-	Duration           sql.NullInt64 `json:"duration"`
-	ClusterVersion     string        `json:"cluster_version"`
-	ClusterName        string        `json:"cluster_name"`
-	ClusterID          string        `json:"cluster_id"`
-	MultiAz            string        `json:"multi_az"`
-	Channel            string        `json:"channel"`
-	Environment        string        `json:"environment"`
-	Region             string        `json:"region"`
-	NumbWorkerNodes    int32         `json:"numb_worker_nodes"`
-	NetworkProvider    string        `json:"network_provider"`
-	ImageContentSource string        `json:"image_content_source"`
-	InstallConfig      string        `json:"install_config"`
-	HibernateAfterUse  bool          `json:"hibernate_after_use"`
-	Reused             bool          `json:"reused"`
-	Result             JobResult     `json:"result"`
-	Name               string        `json:"name"`
-	Testresult         TestResult    `json:"testresult"`
+	ID                 int64           `json:"id"`
+	Provider           string          `json:"provider"`
+	JobName            string          `json:"job_name"`
+	JobID              string          `json:"job_id"`
+	Url                string          `json:"url"`
+	Started            time.Time       `json:"started"`
+	Finished           time.Time       `json:"finished"`
+	Duration           pgtype.Interval `json:"duration"`
+	ClusterVersion     string          `json:"cluster_version"`
+	ClusterName        string          `json:"cluster_name"`
+	ClusterID          string          `json:"cluster_id"`
+	MultiAz            string          `json:"multi_az"`
+	Channel            string          `json:"channel"`
+	Environment        string          `json:"environment"`
+	Region             string          `json:"region"`
+	NumbWorkerNodes    int32           `json:"numb_worker_nodes"`
+	NetworkProvider    string          `json:"network_provider"`
+	ImageContentSource string          `json:"image_content_source"`
+	InstallConfig      string          `json:"install_config"`
+	HibernateAfterUse  bool            `json:"hibernate_after_use"`
+	Reused             bool            `json:"reused"`
+	Result             JobResult       `json:"result"`
+	Name               string          `json:"name"`
+	Testresult         TestResult      `json:"testresult"`
 }
 
 func (q *Queries) ListAlertableRecentTestFailures(ctx context.Context, names []string) ([]ListAlertableRecentTestFailuresRow, error) {
