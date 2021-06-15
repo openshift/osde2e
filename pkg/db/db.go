@@ -37,8 +37,17 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	if q.getTestcaseForJobStmt, err = db.PrepareContext(ctx, getTestcaseForJob); err != nil {
 		return nil, fmt.Errorf("error preparing query GetTestcaseForJob: %w", err)
 	}
+	if q.listAlertableFailuresForJobStmt, err = db.PrepareContext(ctx, listAlertableFailuresForJob); err != nil {
+		return nil, fmt.Errorf("error preparing query ListAlertableFailuresForJob: %w", err)
+	}
+	if q.listAlertableRecentTestFailuresStmt, err = db.PrepareContext(ctx, listAlertableRecentTestFailures); err != nil {
+		return nil, fmt.Errorf("error preparing query ListAlertableRecentTestFailures: %w", err)
+	}
 	if q.listJobsStmt, err = db.PrepareContext(ctx, listJobs); err != nil {
 		return nil, fmt.Errorf("error preparing query ListJobs: %w", err)
+	}
+	if q.listProblematicTestsStmt, err = db.PrepareContext(ctx, listProblematicTests); err != nil {
+		return nil, fmt.Errorf("error preparing query ListProblematicTests: %w", err)
 	}
 	if q.listTestcasesStmt, err = db.PrepareContext(ctx, listTestcases); err != nil {
 		return nil, fmt.Errorf("error preparing query ListTestcases: %w", err)
@@ -73,9 +82,24 @@ func (q *Queries) Close() error {
 			err = fmt.Errorf("error closing getTestcaseForJobStmt: %w", cerr)
 		}
 	}
+	if q.listAlertableFailuresForJobStmt != nil {
+		if cerr := q.listAlertableFailuresForJobStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing listAlertableFailuresForJobStmt: %w", cerr)
+		}
+	}
+	if q.listAlertableRecentTestFailuresStmt != nil {
+		if cerr := q.listAlertableRecentTestFailuresStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing listAlertableRecentTestFailuresStmt: %w", cerr)
+		}
+	}
 	if q.listJobsStmt != nil {
 		if cerr := q.listJobsStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing listJobsStmt: %w", cerr)
+		}
+	}
+	if q.listProblematicTestsStmt != nil {
+		if cerr := q.listProblematicTestsStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing listProblematicTestsStmt: %w", cerr)
 		}
 	}
 	if q.listTestcasesStmt != nil {
@@ -120,27 +144,33 @@ func (q *Queries) queryRow(ctx context.Context, stmt *sql.Stmt, query string, ar
 }
 
 type Queries struct {
-	db                    DBTX
-	tx                    *sql.Tx
-	createJobStmt         *sql.Stmt
-	createTestcaseStmt    *sql.Stmt
-	getJobStmt            *sql.Stmt
-	getTestcaseStmt       *sql.Stmt
-	getTestcaseForJobStmt *sql.Stmt
-	listJobsStmt          *sql.Stmt
-	listTestcasesStmt     *sql.Stmt
+	db                                  DBTX
+	tx                                  *sql.Tx
+	createJobStmt                       *sql.Stmt
+	createTestcaseStmt                  *sql.Stmt
+	getJobStmt                          *sql.Stmt
+	getTestcaseStmt                     *sql.Stmt
+	getTestcaseForJobStmt               *sql.Stmt
+	listAlertableFailuresForJobStmt     *sql.Stmt
+	listAlertableRecentTestFailuresStmt *sql.Stmt
+	listJobsStmt                        *sql.Stmt
+	listProblematicTestsStmt            *sql.Stmt
+	listTestcasesStmt                   *sql.Stmt
 }
 
 func (q *Queries) WithTx(tx *sql.Tx) *Queries {
 	return &Queries{
-		db:                    tx,
-		tx:                    tx,
-		createJobStmt:         q.createJobStmt,
-		createTestcaseStmt:    q.createTestcaseStmt,
-		getJobStmt:            q.getJobStmt,
-		getTestcaseStmt:       q.getTestcaseStmt,
-		getTestcaseForJobStmt: q.getTestcaseForJobStmt,
-		listJobsStmt:          q.listJobsStmt,
-		listTestcasesStmt:     q.listTestcasesStmt,
+		db:                                  tx,
+		tx:                                  tx,
+		createJobStmt:                       q.createJobStmt,
+		createTestcaseStmt:                  q.createTestcaseStmt,
+		getJobStmt:                          q.getJobStmt,
+		getTestcaseStmt:                     q.getTestcaseStmt,
+		getTestcaseForJobStmt:               q.getTestcaseForJobStmt,
+		listAlertableFailuresForJobStmt:     q.listAlertableFailuresForJobStmt,
+		listAlertableRecentTestFailuresStmt: q.listAlertableRecentTestFailuresStmt,
+		listJobsStmt:                        q.listJobsStmt,
+		listProblematicTestsStmt:            q.listProblematicTestsStmt,
+		listTestcasesStmt:                   q.listTestcasesStmt,
 	}
 }

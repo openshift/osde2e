@@ -5,7 +5,7 @@ go 1.16
 require (
 	cloud.google.com/go v0.83.0
 	github.com/Masterminds/semver v1.5.0
-	github.com/PagerDuty/go-pagerduty v1.3.0
+	github.com/PagerDuty/go-pagerduty v1.4.1
 	github.com/PuerkitoBio/goquery v1.5.1
 	github.com/adamliesko/retry v0.0.0-20200123222335-86c8baac277d
 	github.com/antlr/antlr4 v0.0.0-20200209180723-1177c0b58d07
@@ -30,6 +30,7 @@ require (
 	github.com/joshdk/go-junit v0.0.0-20201221202203-061ee62ada40
 	github.com/kyleconroy/sqlc v1.8.0
 	github.com/kylelemons/godebug v1.1.0
+	github.com/lib/pq v1.10.1
 	github.com/markbates/pkger v0.17.1
 	github.com/mitchellh/mapstructure v1.1.2
 	github.com/onsi/ginkgo v1.14.1
