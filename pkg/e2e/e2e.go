@@ -16,6 +16,7 @@ import (
 	"math"
 	"os"
 	"path/filepath"
+	"sort"
 	"strconv"
 	"strings"
 	"testing"
@@ -33,6 +34,7 @@ import (
 	ginkgoConfig "github.com/onsi/ginkgo/config"
 	"github.com/onsi/ginkgo/reporters"
 	"github.com/onsi/gomega"
+	"github.com/openshift/osde2e/pkg/common/alert"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/db"
 
@@ -1086,15 +1088,51 @@ func updateDatabaseAndPagerduty(dbURL string, jobData db.CreateJobParams, testDa
 	pdAlertClient := pagerduty.Config{
 		IntegrationKey: viper.GetString(config.Alert.PagerDutyAPIToken),
 	}
-	for name, instances := range alertData {
-		if _, err := pdAlertClient.FireAlert(pd.V2Payload{
-			Summary:  name + " failed",
+	alertSource := fmt.Sprintf("job %d", jobID)
+	// if too many things failed, open a single alert that isn't grouped with the others.
+	if len(alertData) > 10 {
+		event, err := pdAlertClient.FireAlert(pd.V2Payload{
+			Summary:  ManyGroupedFailureName,
 			Severity: "info",
-			Source:   fmt.Sprintf("job %d", jobID),
-			Group:    name, // group by test case
-			Details:  instances,
-		}); err != nil {
-			return fmt.Errorf("failed creating PD alert: %w", err)
+			Source:   alertSource,
+			Group:    "", // do not group
+			Details:  alertData,
+		})
+		if err != nil {
+			log.Printf("Failed creating pagerduty incident for failure: %v", err)
+		}
+		if err := alert.SendSlackMessage("sd-cicd", fmt.Sprintf(`@osde2e A bunch of tests failed at once:
+pipeline: %s
+URL: %s
+PD info: %v`, jobData.JobName, jobData.Url, event)); err != nil {
+			log.Printf("Failed sending slack message to CICD team: %v", err)
+		}
+	} else {
+		// open many alerts
+		for name, instances := range alertData {
+			sort.Slice(instances, func(i, j int) bool {
+				return instances[i].Started.Before(instances[j].Started)
+			})
+			var oldest, current db.ListAlertableRecentTestFailuresRow
+			oldest = instances[0]
+			for _, instance := range instances {
+				if instance.ID == jobID {
+					current = instance
+					break
+				}
+			}
+			if _, err := pdAlertClient.FireAlert(pd.V2Payload{
+				Summary:  name + " failed",
+				Severity: "info",
+				Source:   alertSource,
+				Group:    name, // group by test case
+				Details: map[string]db.ListAlertableRecentTestFailuresRow{
+					"oldest":  oldest,
+					"current": current,
+				},
+			}); err != nil {
+				return fmt.Errorf("failed creating PD alert: %w", err)
+			}
 		}
 	}
 
