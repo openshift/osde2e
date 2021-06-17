@@ -26,12 +26,12 @@ func (h *H) createProject(suffix string) (*projectv1.Project, error) {
 	}
 
 	wait.PollImmediate(5*time.Second, 60*time.Second, func() (done bool, err error) {
-		project, err = h.Project().ProjectV1().Projects().Get(context.TODO(), project.Name, metav1.GetOptions{})
+		ns, err := h.Kube().CoreV1().Namespaces().Get(context.TODO(), project.Name, metav1.GetOptions{})
 		if err != nil {
 			return false, err
 		}
 
-		if project != nil {
+		if ns != nil {
 			return true, nil
 		}
 
