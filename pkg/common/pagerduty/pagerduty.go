@@ -47,7 +47,7 @@ func ProcessCICDIncidents(client *pd.Client) error {
 	}); err != nil {
 		return fmt.Errorf("failed collecting incidents: %w", err)
 	}
-	if err := MergeIncidentsByTitle(client, incidents); err != nil {
+	if _, err := MergeIncidentsByTitle(client, incidents); err != nil {
 		return fmt.Errorf("failed merging incidents: %w", err)
 	}
 	if err := ResolveOldIncidents(client, incidents); err != nil {
@@ -96,9 +96,37 @@ func ResolveOldIncidents(c *pd.Client, incidents []pd.Incident) error {
 	return nil
 }
 
+// EnsureIncidentsMerged continuously lists pd incidents and merges them by name
+// until an iteration that performs no merges. This ensures a converging, eventually-
+// consistent set of incidents are active at any given time.
+func EnsureIncidentsMerged(client *pd.Client) error {
+	for {
+		options := pd.ListIncidentsOptions{
+			ServiceIDs: []string{"P7VT2V5"},
+			Statuses:   []string{"triggered", "acknowledged"},
+			APIListObject: pd.APIListObject{
+				Limit: 100,
+			},
+		}
+		var incidents []pd.Incident
+		if err := Incidents(client, options, func(i pd.Incident) error {
+			incidents = append(incidents, i)
+			return nil
+		}); err != nil {
+			return fmt.Errorf("failed collecting incidents: %w", err)
+		}
+		if numMerges, err := MergeIncidentsByTitle(client, incidents); err != nil {
+			return fmt.Errorf("failed merging incidents: %w", err)
+		} else if numMerges == 0 {
+			return nil
+		}
+	}
+}
+
 // MergeIncidentsByTitle will combine all incidents in the provided slice that share the
-// same title into a single incident with multiple alerts.
-func MergeIncidentsByTitle(c *pd.Client, incidents []pd.Incident) error {
+// same title into a single incident with multiple alerts. It returns the number of merges
+// that it performed.
+func MergeIncidentsByTitle(c *pd.Client, incidents []pd.Incident) (int, error) {
 	titleToIncident := make(map[string][]pd.Incident)
 
 	for _, incident := range incidents {
@@ -107,6 +135,7 @@ func MergeIncidentsByTitle(c *pd.Client, incidents []pd.Incident) error {
 		title = strings.TrimPrefix(title, "[upgrade] ")
 		titleToIncident[title] = append(titleToIncident[title], incident)
 	}
+	merges := 0
 
 	for _, incidents := range titleToIncident {
 		sort.Slice(incidents, func(i, j int) bool {
@@ -126,10 +155,11 @@ func MergeIncidentsByTitle(c *pd.Client, incidents []pd.Incident) error {
 		log.Printf("Merging into %s: %v", first.Id, mergeOptions)
 		_, err := c.MergeIncidents("", first.Id, mergeOptions)
 		if err != nil {
-			return fmt.Errorf("Failed merging %d incidents into %s: %w", len(incidents)-1, first.Id, err)
+			return merges, fmt.Errorf("Failed merging %d incidents into %s: %w", len(incidents)-1, first.Id, err)
 		}
+		merges++
 	}
-	return nil
+	return merges, nil
 }
 
 // Incidents uses the provided client to retrieve all Incidents matching the provided

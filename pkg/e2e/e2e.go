@@ -1037,7 +1037,6 @@ func updateDatabaseAndPagerduty(dbURL string, jobData db.CreateJobParams, testDa
 	// Record data from this job and extract data that we need to operate on PD.
 	log.Printf("Storing data for Job ID: %s", viper.GetString(config.JobID))
 	if err := db.WithDB(dbURL, func(pg *sql.DB) error {
-		log.Println("We're storing data in the database!")
 		// ensure it's on the latest schema
 		if err := db.WithMigrator(pg, func(m *migrate.Migrate) error {
 			if err := m.Up(); err != nil && !errors.Is(err, migrate.ErrNoChange) {
@@ -1089,6 +1088,7 @@ func updateDatabaseAndPagerduty(dbURL string, jobData db.CreateJobParams, testDa
 		IntegrationKey: viper.GetString(config.Alert.PagerDutyAPIToken),
 	}
 	alertSource := fmt.Sprintf("job %d", jobID)
+	log.Println("Creating pagerduty alerts for job (if any)")
 	// if too many things failed, open a single alert that isn't grouped with the others.
 	if len(alertData) > 10 {
 		event, err := pdAlertClient.FireAlert(pd.V2Payload{
@@ -1136,6 +1136,7 @@ PD info: %v`, jobData.JobName, jobData.Url, event)); err != nil {
 		}
 	}
 
+	log.Println("Deduplicating pagerduty incidents")
 	// Deduplicate incidents.
 	pdClient := pd.NewClient(viper.GetString(config.Alert.PagerDutyUserToken))
 	listOptions := pd.ListIncidentsOptions{
@@ -1145,22 +1146,11 @@ PD info: %v`, jobData.JobName, jobData.Url, event)); err != nil {
 			Limit: 100,
 		},
 	}
-	var incidentsList []pd.Incident
-	if err := pagerduty.Incidents(
-		pdClient,
-		listOptions,
-		func(incident pd.Incident) error {
-			incidentsList = append(incidentsList, incident)
-			return nil
-		},
-	); err != nil {
-		return fmt.Errorf("failed listing open PD incidents: %w", err)
-	}
-
-	if err := pagerduty.MergeIncidentsByTitle(pdClient, incidentsList); err != nil {
+	if err := pagerduty.EnsureIncidentsMerged(pdClient); err != nil {
 		return fmt.Errorf("failed merging incidents: %w", err)
 	}
 
+	log.Println("Closing old pagerduty incidents")
 	// Find all active PD incidents that aren't in our problem list. We
 	// list them again since we just tried to merge some of them.
 	var needsClose []pd.ManageIncidentsOptions
@@ -1168,7 +1158,6 @@ PD info: %v`, jobData.JobName, jobData.Url, event)); err != nil {
 		pdClient,
 		listOptions,
 		func(incident pd.Incident) error {
-			incidentsList = append(incidentsList, incident)
 			// convert the name to the notation we expect from the database
 			name := strings.TrimPrefix(incident.Title, "[install] ")
 			name = strings.TrimPrefix(name, "[upgrade] ")
