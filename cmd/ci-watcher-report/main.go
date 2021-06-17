@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"os"
 	"sort"
@@ -11,6 +12,7 @@ import (
 	"github.com/openshift/osde2e/pkg/common/pagerduty"
 )
 
+// AllIncidents returns the unresolved incidents for the CI Watcher.
 func AllIncidents(c *pd.Client) ([]pd.Incident, error) {
 	var incidents []pd.Incident
 	options := pd.ListIncidentsOptions{
@@ -29,59 +31,62 @@ func AllIncidents(c *pd.Client) ([]pd.Incident, error) {
 	return incidents, nil
 }
 
+// AllNotes returns the pagerduty notes for a given incident.
 func AllNotes(c *pd.Client, incident pd.Incident) ([]pd.IncidentNote, error) {
 	return c.ListIncidentNotes(incident.Id)
 }
 
+// PrintIncident pretty-prints an incident with data from its alerts and notes.
 func PrintIncident(incident pd.Incident, alerts []pd.IncidentAlert, notes []pd.IncidentNote) {
-	if len(alerts) < 2 {
-		return
-	}
 	status := incident.Status
 	if status == "acknowledged" {
 		status = color.GreenString(status)
 	} else if status == "triggered" {
 		status = color.MagentaString(status)
 	}
-	fmt.Printf("%-3d %10s %s\n", len(alerts), status, incident.Title)
-	segments := make([]map[string]struct{}, 0)
+	fmt.Printf("%s\n%-3d %10s\n", incident.Title, len(alerts), status)
+	jobNames := make(map[string]struct{}, 0)
 	for _, alert := range alerts {
-		url := alert.Body["details"].(map[string]interface{})["details"].(string)
-		parts := strings.Split(url, "/")
-		build := parts[len(parts)-2]
-		if strings.HasPrefix(build, "release-") {
+		data, ok := alert.Body["details"].(map[string]interface{})
+		if !ok {
 			continue
 		}
-		for i, segment := range strings.Split(build, "-") {
-			if i >= len(segments) {
-				segments = append(segments, make(map[string]struct{}))
-			}
-			segments[i][segment] = struct{}{}
-		}
-	}
-	for i, value := range segments {
-		if i == 0 {
+		current, ok := data["current"].(map[string]interface{})
+		if !ok {
 			continue
 		}
-		values := []string{}
-		for k := range value {
-			values = append(values, k)
+		name, ok := current["job_name"].(string)
+		if !ok {
+			continue
 		}
-		if len(values) == 1 {
-			fmt.Print(color.RedString(fmt.Sprint(values)))
-		} else {
-			fmt.Print(values)
+		if strings.HasPrefix(name, "release-") || name == "" {
+			continue
 		}
+		jobNames[name] = struct{}{}
 	}
-	fmt.Print("\n")
-	fmt.Println(incident.HTMLURL)
+	for name := range jobNames {
+		fmt.Println(name)
+	}
+	fmt.Println(color.YellowString(incident.HTMLURL))
 	for _, note := range notes {
 		fmt.Println(color.CyanString(note.Content))
 	}
 	fmt.Print("\n")
 }
 
+// run examines pagerduty and prints a report
 func run() error {
+	flag.Usage = func() {
+		fmt.Fprintf(flag.CommandLine.Output(), `Usage of %[1]s:
+
+%[1]s
+
+You must set the $PAGERDUTY_TOKEN environment variable to your
+personal pagerduty token in order for the report to be generated.
+`, os.Args[0])
+		flag.PrintDefaults()
+	}
+	flag.Parse()
 	client := pd.NewClient(os.Getenv("PAGERDUTY_TOKEN"))
 	incidents, err := AllIncidents(client)
 	if err != nil {
