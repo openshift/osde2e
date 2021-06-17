@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+set -euo pipefail
+
 echo "Installing Azure CLI"
 
 curl -L https://aka.ms/InstallAzureCli | bash
@@ -55,11 +57,11 @@ az network vnet subnet create \
     --vnet-name aro-vnet \
     --disable-private-link-service-network-policies true
 
-CREATE_CMD="az aro create --resource-group $RESOURCEGROUP_NAME --name $CLUSTER_NAME --vnet aro-vnet --master-subnet master-subnet --worker-subnet worker-subnet "
+CREATE_CMD="az aro create --resource-group \"$RESOURCEGROUP_NAME\" --name \"$CLUSTER_NAME\" --vnet aro-vnet --master-subnet master-subnet --worker-subnet worker-subnet "
 
 if [ "$PULL_SECRET_FILE" != "" ];
 then
-    CREATE_CMD="$CREATE_CMD --pull-secret @$PULL_SECRET_FILE"
+    CREATE_CMD="$CREATE_CMD --pull-secret @\"$PULL_SECRET_FILE\""
 fi
 
 echo "Running ARO create command"
