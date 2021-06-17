@@ -94,6 +94,7 @@ with testcases as (
         on jobs.id = testcases.job_id
     where
         now() - jobs.started < interval '48 hours'
+        and (testcases.result = 'failure' or testcases.result = 'error')
 )
 select *
 from testcases
