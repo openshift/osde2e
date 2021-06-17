@@ -331,6 +331,7 @@ with testcases as (
         on jobs.id = testcases.job_id
     where
         now() - jobs.started < interval '48 hours'
+        and (testcases.result = 'failure' or testcases.result = 'error')
 )
 select id, provider, job_name, job_id, url, started, finished, duration, cluster_version, cluster_name, cluster_id, multi_az, channel, environment, region, numb_worker_nodes, network_provider, image_content_source, install_config, hibernate_after_use, reused, result, name, testresult
 from testcases
