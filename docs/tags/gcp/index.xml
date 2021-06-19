@@ -6,10 +6,19 @@
     <description>Recent content in gcp on OSDe2e Reporting</description>
     <generator>Hugo -- gohugo.io</generator>
     <copyright>Copyright © 2020, Red Hat, all rights reserved.</copyright>
-    <lastBuildDate>Fri, 18 Jun 2021 12:00:36 +0000</lastBuildDate>
+    <lastBuildDate>Sat, 19 Jun 2021 12:00:32 +0000</lastBuildDate>
     
 	<atom:link href="https://openshift.github.io/osde2e/tags/gcp/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>OSDe2e gcp Weather Report 2021-06-19 12:00:32.885146726 &#43;0000 UTC</title>
+      <link>https://openshift.github.io/osde2e/post/86dbb099b285456f87e1169fd8d84947/</link>
+      <pubDate>Sat, 19 Jun 2021 12:00:32 +0000</pubDate>
+      
+      <guid>https://openshift.github.io/osde2e/post/86dbb099b285456f87e1169fd8d84947/</guid>
+      <description>&lt;table class=&#34;summary&#34;&gt;&lt;tr&gt;&lt;td bgcolor=&#34;#bf4000&#34;&gt;&lt;/td&gt;&lt;td&gt;int (Pass rate: 92.55)&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td bgcolor=&#34;#13ec00&#34;&gt;&lt;/td&gt;&lt;td&gt;prod (Pass rate: 99.27)&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td bgcolor=&#34;#04fb00&#34;&gt;&lt;/td&gt;&lt;td&gt;stage (Pass rate: 99.84)&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;</description>
+    </item>
     
     <item>
       <title>OSDe2e gcp Weather Report 2021-06-18 12:00:36.500863779 &#43;0000 UTC</title>
