@@ -34,7 +34,7 @@ require (
 	github.com/lib/pq v1.10.1
 	github.com/markbates/pkger v0.17.1
 	github.com/mitchellh/mapstructure v1.1.2
-	github.com/onsi/ginkgo v1.14.1
+	github.com/onsi/ginkgo v1.16.4
 	github.com/onsi/gomega v1.10.2
 	github.com/openshift-online/ocm-sdk-go v0.1.177
 	github.com/openshift/api v3.9.1-0.20190924102528-32369d4db2ad+incompatible

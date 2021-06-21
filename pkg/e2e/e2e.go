@@ -287,8 +287,8 @@ func runGinkgoTests() (int, error) {
 	viper.Set(config.Cluster.Passing, false)
 
 	ginkgoConfig.DefaultReporterConfig.NoisySkippings = !viper.GetBool(config.Tests.SuppressSkipNotifications)
-	ginkgoConfig.GinkgoConfig.SkipString = viper.GetString(config.Tests.GinkgoSkip)
-	ginkgoConfig.GinkgoConfig.FocusString = viper.GetString(config.Tests.GinkgoFocus)
+	ginkgoConfig.GinkgoConfig.SkipStrings = []string{viper.GetString(config.Tests.GinkgoSkip)}
+	ginkgoConfig.GinkgoConfig.FocusStrings = []string{viper.GetString(config.Tests.GinkgoFocus)}
 	ginkgoConfig.GinkgoConfig.DryRun = viper.GetBool(config.DryRun)
 
 	if ginkgoConfig.GinkgoConfig.DryRun {
@@ -859,9 +859,7 @@ func runTestsInPhase(phase string, description string, dryrun bool) (bool, []db.
 		}
 
 		if config.GetLogMetrics().GetMetricByName(name).IsPassing(value) {
-			testCase.PassedMessage = &reporters.JUnitPassedMessage{
-				Message: fmt.Sprintf("Passed with %d matches", value),
-			}
+			testCase.SystemOut = fmt.Sprintf("Passed with %d matches", value)
 		} else {
 			testCase.FailureMessage = &reporters.JUnitFailureMessage{
 				Message: fmt.Sprintf("Failed with %d matches", value),
@@ -893,9 +891,7 @@ func runTestsInPhase(phase string, description string, dryrun bool) (bool, []db.
 		}
 
 		if config.GetBeforeSuiteMetrics().GetMetricByName(name).IsPassing(value) {
-			testCase.PassedMessage = &reporters.JUnitPassedMessage{
-				Message: fmt.Sprintf("Passed with %d matches", value),
-			}
+			testCase.SystemOut = fmt.Sprintf("Passed with %d matches", value)
 		} else {
 			testCase.FailureMessage = &reporters.JUnitFailureMessage{
 				Message: fmt.Sprintf("Failed with %d matches", value),
