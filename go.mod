@@ -16,7 +16,7 @@ require (
 	github.com/dgryski/go-gk v0.0.0-20200319235926-a69029f61654 // indirect
 	github.com/dgryski/go-lttb v0.0.0-20180810165845-318fcdf10a77 // indirect
 	github.com/emicklei/go-restful v2.9.6+incompatible
-	github.com/fatih/color v1.10.0 // indirect
+	github.com/fatih/color v1.10.0
 	github.com/fsnotify/fsnotify v1.4.9
 	github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32
 	github.com/golang-migrate/migrate/v4 v4.14.2-0.20210511063805-2e7358e012a6
@@ -34,7 +34,7 @@ require (
 	github.com/lib/pq v1.10.1
 	github.com/markbates/pkger v0.17.1
 	github.com/mitchellh/mapstructure v1.1.2
-	github.com/onsi/ginkgo v1.14.1
+	github.com/onsi/ginkgo v1.16.4
 	github.com/onsi/gomega v1.10.2
 	github.com/openshift-online/ocm-sdk-go v0.1.177
 	github.com/openshift/api v3.9.1-0.20190924102528-32369d4db2ad+incompatible
