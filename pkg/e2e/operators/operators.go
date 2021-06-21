@@ -554,3 +554,7 @@ func CheckUpgrade(h *helper.H, subNamespace string, subName string, packageName 
 func CheckPod(h *helper.H, namespace string, name string, gracePeriod int, maxAcceptedRestart int) {
 	checkPod(h, namespace, name, gracePeriod, maxAcceptedRestart)
 }
+
+func PollDeployment(h *helper.H, namespace, deploymentName string) (*appsv1.Deployment, error) {
+	return pollDeployment(h, namespace, deploymentName)
+}
