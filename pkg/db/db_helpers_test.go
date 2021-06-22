@@ -54,7 +54,7 @@ func getDBConfig(t *testing.T) dbConfig {
 	if dbPool != nil {
 		const password = "secret"
 		// pulls an image, creates a container based on it and runs it
-		resource, err := dbPool.Run("postgres", "13", []string{"POSTGRES_PASSWORD=" + password})
+		resource, err := dbPool.Run("postgres", "12", []string{"POSTGRES_PASSWORD=" + password})
 		if err != nil {
 			t.Fatalf("Could not start resource: %s", err)
 		}
