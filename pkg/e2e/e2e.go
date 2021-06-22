@@ -287,8 +287,12 @@ func runGinkgoTests() (int, error) {
 	viper.Set(config.Cluster.Passing, false)
 
 	ginkgoConfig.DefaultReporterConfig.NoisySkippings = !viper.GetBool(config.Tests.SuppressSkipNotifications)
-	ginkgoConfig.GinkgoConfig.SkipStrings = []string{viper.GetString(config.Tests.GinkgoSkip)}
-	ginkgoConfig.GinkgoConfig.FocusStrings = []string{viper.GetString(config.Tests.GinkgoFocus)}
+	if skip := viper.GetString(config.Tests.GinkgoSkip); skip != "" {
+		ginkgoConfig.GinkgoConfig.SkipStrings = append(ginkgoConfig.GinkgoConfig.SkipStrings, skip)
+	}
+	if focus := viper.GetString(config.Tests.GinkgoFocus); focus != "" {
+		ginkgoConfig.GinkgoConfig.FocusStrings = append(ginkgoConfig.GinkgoConfig.FocusStrings, focus)
+	}
 	ginkgoConfig.GinkgoConfig.DryRun = viper.GetBool(config.DryRun)
 
 	if ginkgoConfig.GinkgoConfig.DryRun {
