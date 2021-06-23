@@ -4,13 +4,13 @@ set -euo pipefail
 
 echo "Installing Azure CLI"
 
-rpm --import https://packages.microsoft.com/keys/microsoft.asc
+sudo rpm --import https://packages.microsoft.com/keys/microsoft.asc
 
 echo -e "[azure-cli]
 name=Azure CLI
 baseurl=https://packages.microsoft.com/yumrepos/azure-cli
 enabled=1
 gpgcheck=1
-gpgkey=https://packages.microsoft.com/keys/microsoft.asc" | tee /etc/yum.repos.d/azure-cli.repo
+gpgkey=https://packages.microsoft.com/keys/microsoft.asc" | sudo tee /etc/yum.repos.d/azure-cli.repo
 
-dnf install azure-cli
+sudo dnf install azure-cli
