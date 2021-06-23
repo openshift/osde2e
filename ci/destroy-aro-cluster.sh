@@ -2,9 +2,7 @@
 
 set -euo pipefail
 
-echo "Installing Azure CLI"
-
-curl -L https://aka.ms/InstallAzureCli | bash
+source ./ci/install-azure-cli.sh
 
 echo "Logging into Azure"
 
