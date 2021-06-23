@@ -254,6 +254,34 @@ A failure at any step taints and fails the run.
 Every run of OSDe2e captures as much data as possible. This includes cluster and pod logs, prometheus metrics, and test info. In addition to cluster-specific info, the version of hive and OSDe2e itself is captured to identify potential flakes or environment failures. Every test suite generates a `junit.xml` file that contains test names, pass/fails, and the time the test segment took. It is expected that addon testing will follow this pattern and generate their own `junit.xml` file for their test results.
  
 The `junit.xml` files are converted to meaningful metrics and stored in DataHub. These metrics are then published via [Grafana dashboards] used by Service Delivery as well as Third Parties to monitor project health and promote confidence in releases. Alerting rules are housed within the DataHub Grafana instance and addon authors can maintain their own individual dashboards.
+
+### CI/CD Job Results Database
+
+We have provisioned an AWS RDS Postgres database to store information about our CI jobs and the tests that they execute. We used to store our data only within prometheus, but prometheus's timeseries paradigm prevented us from being able to express certain queries (even simple ones like "when was the last time this test failed").
+
+The test results database (at time of writing) stores data about each job and its configuration, as well as about each test case reported by the Junit XML output of the job.
+
+This data allows us to answer questions about frequency of job/test failure, relationships between failures, and more. The code responsible for managing the database can be found in the [`./pkg/db/`](https://github.com/openshift/osde2e/tree/cfd38c75532274d619840ad505c1232881eb417a/pkg/db) directory, along with a README describing how to develop against it.
+
+#### Database usage from OSDe2e
+
+Because `osde2e` runs a a cluster of parallel, ephemeral prow jobs, our usage of the database is unconventional. We have to write all of our database interaction logic with the understanding that any number of other prow jobs could be modifying the data at the same time that we are.
+
+We use the database to generate alerts for the CI Watcher to use, and we follow this algorithm to generate those alerts safely in our highly-concurrent usecase (at time of writing, implemented [here](https://github.com/openshift/osde2e/blob/cfd38c75532274d619840ad505c1232881eb417a/pkg/e2e/e2e.go#L1029)):
+
+1. At the end of each job, list all testcases that failed during the current job. Implemented by [`ListAlertableFailuresForJob`](https://github.com/openshift/osde2e/blob/cfd38c75532274d619840ad505c1232881eb417a/pkg/db/queries/queries.sql#L66).
+1. Generate a list of testcases (in any job) that have failed more than once during the last 48 hours. Implemented by [`ListProblematicTests`](https://github.com/openshift/osde2e/blob/cfd38c75532274d619840ad505c1232881eb417a/pkg/db/queries/queries.sql#L105).
+1. For each failing testcase in the current job, create a PD alert if the testcase is one of those that have failed more than once in the last 48 hours.
+1. After generating all alerts as above, merge all pagerduty alerts that indicate failures for the same testcase (this merge uses the title of the alert, which is the testcase name, to group the alerts).
+1. Finally, close any PD incident for a testcase that does not appear in the list of testcases failing during the last 48 hours.
+
+> Why does each job only report its own failures? The database is global, and a single job could report for all of them.
+
+If each job reported for the failures of all recent jobs, we'd create an enormous number of redundant alerts for no benefit. Having each job only report its own failures keeps the level of noise down _without_ requiring us to build some kind of concensus mechanism between the jobs executing in parallel.
+
+> Why close the PD incidents for test cases that haven't failed in the last 48 hours?
+
+This is a heuristic designed to automatically close incidents when the underlying test problem has been dealt with. If we stop seeing failures for a testcase, it probably means that the testcase has stopped failing. This can backfire, and a more intelligent heuristic is certainly possible.
  
 ## Writing tests
 To write your own test, see [Writing Tests].
