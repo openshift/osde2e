@@ -16,6 +16,7 @@ import (
 	"math"
 	"os"
 	"path/filepath"
+	"runtime"
 	"sort"
 	"strconv"
 	"strings"
@@ -76,23 +77,28 @@ var provider spi.Provider
 
 // --- BEGIN Ginkgo setup
 // Check if the test should run
-var _ = ginkgo.BeforeEach(func() {
-	testText := ginkgo.CurrentGinkgoTestDescription().TestText
-	testContext := strings.TrimSpace(strings.TrimSuffix(ginkgo.CurrentGinkgoTestDescription().FullTestText, testText))
+var _ = func() interface{} {
+	var stackTrace [4096]byte
+	written := runtime.Stack(stackTrace[:], true)
+	log.Println("Before BeforeEach:", string(stackTrace[:written]))
+	return ginkgo.BeforeEach(func() {
+		testText := ginkgo.CurrentGinkgoTestDescription().TestText
+		testContext := strings.TrimSpace(strings.TrimSuffix(ginkgo.CurrentGinkgoTestDescription().FullTestText, testText))
 
-	shouldRun := false
-	testsToRun := viper.GetStringSlice(config.Tests.TestsToRun)
-	for _, testToRun := range testsToRun {
-		if strings.HasPrefix(testContext, testToRun) {
-			shouldRun = true
-			break
+		shouldRun := false
+		testsToRun := viper.GetStringSlice(config.Tests.TestsToRun)
+		for _, testToRun := range testsToRun {
+			if strings.HasPrefix(testContext, testToRun) {
+				shouldRun = true
+				break
+			}
 		}
-	}
 
-	if !shouldRun {
-		ginkgo.Skip(fmt.Sprintf("test %s will not be run as its context (%s) is not specified as part of the tests to run", ginkgo.CurrentGinkgoTestDescription().FullTestText, testContext))
-	}
-})
+		if !shouldRun {
+			ginkgo.Skip(fmt.Sprintf("test %s will not be run as its context (%s) is not specified as part of the tests to run", ginkgo.CurrentGinkgoTestDescription().FullTestText, testContext))
+		}
+	})
+}()
 
 // beforeSuite attempts to populate several required cluster fields (either by provisioning a new cluster, or re-using an existing one)
 // If there is an issue with provisioning, retrieving, or getting the kubeconfig, this will return `false`.

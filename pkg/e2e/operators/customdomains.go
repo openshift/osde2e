@@ -10,9 +10,11 @@ import (
 	"encoding/json"
 	"encoding/pem"
 	"fmt"
+	"log"
 	"math/big"
 	"net"
 	"net/http"
+	"runtime"
 	"time"
 
 	"github.com/onsi/ginkgo"
@@ -59,6 +61,9 @@ var _ = ginkgo.Describe(customDomainsOperatorTestName, func() {
 			testInstanceName = "test-customdomain-" + time.Now().Format("20060102-150405-") + fmt.Sprint(time.Now().Nanosecond()/1000000) + "-" + fmt.Sprint(ginkgo.GinkgoParallelNode())
 			testDomain       *customdomainv1alpha1.CustomDomain
 		)
+		var stackTrace [4096]byte
+		written := runtime.Stack(stackTrace[:], true)
+		log.Println("Before BeforeEach:", string(stackTrace[:written]))
 
 		ginkgo.BeforeEach(func() {
 			ginkgo.By("Logging in as a dedicated-admin")
