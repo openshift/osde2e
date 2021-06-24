@@ -6,10 +6,37 @@
     <description>Recent content in weather-report on OSDe2e Reporting</description>
     <generator>Hugo -- gohugo.io</generator>
     <copyright>Copyright © 2020, Red Hat, all rights reserved.</copyright>
-    <lastBuildDate>Wed, 23 Jun 2021 12:00:38 +0000</lastBuildDate>
+    <lastBuildDate>Thu, 24 Jun 2021 12:00:44 +0000</lastBuildDate>
     
 	<atom:link href="https://openshift.github.io/osde2e/tags/weather-report/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>OSDe2e moa Weather Report 2021-06-24 12:00:44.940248529 &#43;0000 UTC</title>
+      <link>https://openshift.github.io/osde2e/post/fea13a89a1184efbabad81a1eacdeb21/</link>
+      <pubDate>Thu, 24 Jun 2021 12:00:44 +0000</pubDate>
+      
+      <guid>https://openshift.github.io/osde2e/post/fea13a89a1184efbabad81a1eacdeb21/</guid>
+      <description>&lt;table class=&#34;summary&#34;&gt;&lt;/table&gt;</description>
+    </item>
+    
+    <item>
+      <title>OSDe2e gcp Weather Report 2021-06-24 12:00:38.862479561 &#43;0000 UTC</title>
+      <link>https://openshift.github.io/osde2e/post/bae48de2870f48daa409225fcc6b272d/</link>
+      <pubDate>Thu, 24 Jun 2021 12:00:38 +0000</pubDate>
+      
+      <guid>https://openshift.github.io/osde2e/post/bae48de2870f48daa409225fcc6b272d/</guid>
+      <description>&lt;table class=&#34;summary&#34;&gt;&lt;tr&gt;&lt;td bgcolor=&#34;#05fa00&#34;&gt;&lt;/td&gt;&lt;td&gt;int (Pass rate: 99.84)&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td bgcolor=&#34;#15ea00&#34;&gt;&lt;/td&gt;&lt;td&gt;prod (Pass rate: 99.18)&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td bgcolor=&#34;#12ed00&#34;&gt;&lt;/td&gt;&lt;td&gt;stage (Pass rate: 99.32)&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;</description>
+    </item>
+    
+    <item>
+      <title>OSDe2e aws Weather Report 2021-06-24 12:00:33.237734968 &#43;0000 UTC</title>
+      <link>https://openshift.github.io/osde2e/post/facdb19f321c482cbaa75eecfd57d59e/</link>
+      <pubDate>Thu, 24 Jun 2021 12:00:33 +0000</pubDate>
+      
+      <guid>https://openshift.github.io/osde2e/post/facdb19f321c482cbaa75eecfd57d59e/</guid>
+      <description>&lt;table class=&#34;summary&#34;&gt;&lt;tr&gt;&lt;td bgcolor=&#34;#0bf400&#34;&gt;&lt;/td&gt;&lt;td&gt;prod (Pass rate: 99.58)&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td bgcolor=&#34;#04fb00&#34;&gt;&lt;/td&gt;&lt;td&gt;stage (Pass rate: 99.84)&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;</description>
+    </item>
     
     <item>
       <title>OSDe2e moa Weather Report 2021-06-23 12:00:38.59822836 &#43;0000 UTC</title>
