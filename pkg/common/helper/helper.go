@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"math/rand"
+	"runtime"
 	"strings"
 	"sync"
 	"text/template"
@@ -44,6 +45,9 @@ func Init() *H {
 // New instantiates a helper function to be used within a Ginkgo Test block
 func New() *H {
 	h := Init()
+	var stackTrace [4096]byte
+	written := runtime.Stack(stackTrace[:], true)
+	log.Println("Before BeforeEach:", string(stackTrace[:written]))
 	ginkgo.BeforeEach(h.SetupWrapper)
 
 	return h
