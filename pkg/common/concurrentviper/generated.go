@@ -1,13 +1,13 @@
 package concurrentviper
 
 import (
-	mapstructure "github.com/mitchellh/mapstructure"
-	fsnotify "github.com/fsnotify/fsnotify"
-	time "time"
-	strings "strings"
-	afero "github.com/spf13/afero"
 	sync "sync"
 	viper "github.com/spf13/viper"
+	mapstructure "github.com/mitchellh/mapstructure"
+	strings "strings"
+	afero "github.com/spf13/afero"
+	fsnotify "github.com/fsnotify/fsnotify"
+	time "time"
 	pflag "github.com/spf13/pflag"
 	io "io"
 	os "os"

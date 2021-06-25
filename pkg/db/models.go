@@ -73,6 +73,7 @@ type Job struct {
 	HibernateAfterUse  bool            `json:"hibernate_after_use"`
 	Reused             bool            `json:"reused"`
 	Result             JobResult       `json:"result"`
+	UpgradeVersion     string          `json:"upgrade_version"`
 }
 
 type Testcase struct {
