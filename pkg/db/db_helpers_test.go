@@ -122,6 +122,33 @@ func tableNames(pg *sql.DB) ([]string, error) {
 	return tableNames, nil
 }
 
+// columnNames returns the names of all existing columns for a specified table
+// postgres schema of the connected database.
+func columnNames(pg *sql.DB, table string) ([]string, error) {
+	const q = "select column_name from information_schema.columns where table_name = $1;"
+
+	rows, err := pg.Query(q, table)
+	if err != nil {
+		return nil, fmt.Errorf("failed listing column names: %w", err)
+	}
+	defer rows.Close()
+	var columnNames []string
+	for i := 0; rows.Next(); i++ {
+		var name string
+		if err := rows.Scan(&name); err != nil {
+			return nil, fmt.Errorf("failed scanning row %d: %w", i, err)
+		}
+		columnNames = append(columnNames, name)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, fmt.Errorf("failed closing rows: %w", err)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("failed checking error on rows: %w", err)
+	}
+	return columnNames, nil
+}
+
 // ensureNotTables returns a function that will fail a test if any of the provided table
 // names currently exists in the connected database.
 func ensureNotTables(unexpectedNames ...string) func(pg *sql.DB, t *testing.T) {
@@ -162,6 +189,46 @@ func ensureTables(expectedNames ...string) func(pg *sql.DB, t *testing.T) {
 	}
 }
 
+// ensureColumns returns a function that will fail a test if any of the provided columns
+// don't exist within a specified table in the connected database.
+func ensureColumns(table string, expectedColumns ...string) func(pg *sql.DB, t *testing.T) {
+	return func(pg *sql.DB, t *testing.T) {
+		names, err := columnNames(pg, table)
+		if err != nil {
+			t.Fatalf("couldn't list column rows: %v", err)
+		}
+		existing := make(map[string]bool)
+		for _, name := range names {
+			existing[name] = true
+		}
+		for _, name := range expectedColumns {
+			if !existing[name] {
+				t.Errorf("expected column %s to exist", name)
+			}
+		}
+	}
+}
+
+// ensureNotColumns returns a function that will fail a test if any of the provided columns
+// don't exist within a specified table in the connected database.
+func ensureNotColumns(table string, expectedColumns ...string) func(pg *sql.DB, t *testing.T) {
+	return func(pg *sql.DB, t *testing.T) {
+		names, err := columnNames(pg, table)
+		if err != nil {
+			t.Fatalf("couldn't list column rows: %v", err)
+		}
+		existing := make(map[string]bool)
+		for _, name := range names {
+			existing[name] = true
+		}
+		for _, name := range expectedColumns {
+			if existing[name] {
+				t.Errorf("did not expect column %s to exist", name)
+			}
+		}
+	}
+}
+
 // migrationTestCase provides hooks for testing database migrations.
 // The `preup` function will be run before the up migration is applied to ensure
 // that state is as expected and to provide an opportunity to seed the database
@@ -190,6 +257,11 @@ var migrationTests = map[int]migrationTestCase{
 		preup:    ensureNotTables("testcases"),
 		during:   ensureTables("testcases"),
 		postdown: ensureNotTables("testcases"),
+	},
+	3: {
+		preup:    ensureNotColumns("jobs", "upgrade_version"),
+		during:   ensureColumns("jobs", "upgrade_version"),
+		postdown: ensureNotColumns("jobs", "upgrade_version"),
 	},
 }
 
@@ -225,7 +297,7 @@ func TestMigrations(t *testing.T) {
 		}
 		start := time.Now()
 		for err := db.WithDB(urlWithoutDB, dropDb); err != nil; err = db.WithDB(urlWithoutDB, dropDb) {
-			if time.Now().Sub(start) > time.Minute {
+			if time.Now().Sub(start) > 2*time.Minute {
 				t.Fatalf("Failed to drop test database: %v", err)
 			}
 			time.Sleep(time.Second * 5)

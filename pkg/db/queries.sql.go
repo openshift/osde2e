@@ -20,6 +20,7 @@ INSERT INTO jobs (
     started,
     finished,
     cluster_version,
+    upgrade_version,
     cluster_name,
     cluster_id,
     multi_az,
@@ -34,7 +35,7 @@ INSERT INTO jobs (
     reused,
     result
 )
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21)
 RETURNING id
 `
 
@@ -46,6 +47,7 @@ type CreateJobParams struct {
 	Started            time.Time `json:"started"`
 	Finished           time.Time `json:"finished"`
 	ClusterVersion     string    `json:"cluster_version"`
+	UpgradeVersion     string    `json:"upgrade_version"`
 	ClusterName        string    `json:"cluster_name"`
 	ClusterID          string    `json:"cluster_id"`
 	MultiAz            string    `json:"multi_az"`
@@ -70,6 +72,7 @@ func (q *Queries) CreateJob(ctx context.Context, arg CreateJobParams) (int64, er
 		arg.Started,
 		arg.Finished,
 		arg.ClusterVersion,
+		arg.UpgradeVersion,
 		arg.ClusterName,
 		arg.ClusterID,
 		arg.MultiAz,
@@ -129,7 +132,7 @@ func (q *Queries) CreateTestcase(ctx context.Context, arg CreateTestcaseParams) 
 }
 
 const getJob = `-- name: GetJob :one
-SELECT id, provider, job_name, job_id, url, started, finished, duration, cluster_version, cluster_name, cluster_id, multi_az, channel, environment, region, numb_worker_nodes, network_provider, image_content_source, install_config, hibernate_after_use, reused, result
+SELECT id, provider, job_name, job_id, url, started, finished, duration, cluster_version, cluster_name, cluster_id, multi_az, channel, environment, region, numb_worker_nodes, network_provider, image_content_source, install_config, hibernate_after_use, reused, result, upgrade_version
 FROM jobs
 WHERE jobs.id = $1
 `
@@ -160,6 +163,7 @@ func (q *Queries) GetJob(ctx context.Context, id int64) (Job, error) {
 		&i.HibernateAfterUse,
 		&i.Reused,
 		&i.Result,
+		&i.UpgradeVersion,
 	)
 	return i, err
 }
@@ -227,7 +231,7 @@ func (q *Queries) GetTestcaseForJob(ctx context.Context, jobID int64) ([]Testcas
 
 const listAlertableFailuresForJob = `-- name: ListAlertableFailuresForJob :many
 select 
-    jobs.id, jobs.provider, jobs.job_name, jobs.job_id, jobs.url, jobs.started, jobs.finished, jobs.duration, jobs.cluster_version, jobs.cluster_name, jobs.cluster_id, jobs.multi_az, jobs.channel, jobs.environment, jobs.region, jobs.numb_worker_nodes, jobs.network_provider, jobs.image_content_source, jobs.install_config, jobs.hibernate_after_use, jobs.reused, jobs.result,
+    jobs.id, jobs.provider, jobs.job_name, jobs.job_id, jobs.url, jobs.started, jobs.finished, jobs.duration, jobs.cluster_version, jobs.cluster_name, jobs.cluster_id, jobs.multi_az, jobs.channel, jobs.environment, jobs.region, jobs.numb_worker_nodes, jobs.network_provider, jobs.image_content_source, jobs.install_config, jobs.hibernate_after_use, jobs.reused, jobs.result, jobs.upgrade_version,
     -- remove the job phase from the test name
     regexp_replace(testcases.name, '\[(install|upgrade)\] (.*)', '\2') as name,
     testcases.result as testresult
@@ -267,6 +271,7 @@ type ListAlertableFailuresForJobRow struct {
 	HibernateAfterUse  bool            `json:"hibernate_after_use"`
 	Reused             bool            `json:"reused"`
 	Result             JobResult       `json:"result"`
+	UpgradeVersion     string          `json:"upgrade_version"`
 	Name               string          `json:"name"`
 	Testresult         TestResult      `json:"testresult"`
 }
@@ -303,6 +308,7 @@ func (q *Queries) ListAlertableFailuresForJob(ctx context.Context, jobid int64) 
 			&i.HibernateAfterUse,
 			&i.Reused,
 			&i.Result,
+			&i.UpgradeVersion,
 			&i.Name,
 			&i.Testresult,
 		); err != nil {
@@ -322,7 +328,7 @@ func (q *Queries) ListAlertableFailuresForJob(ctx context.Context, jobid int64) 
 const listAlertableRecentTestFailures = `-- name: ListAlertableRecentTestFailures :many
 with testcases as (
     select 
-        jobs.id, jobs.provider, jobs.job_name, jobs.job_id, jobs.url, jobs.started, jobs.finished, jobs.duration, jobs.cluster_version, jobs.cluster_name, jobs.cluster_id, jobs.multi_az, jobs.channel, jobs.environment, jobs.region, jobs.numb_worker_nodes, jobs.network_provider, jobs.image_content_source, jobs.install_config, jobs.hibernate_after_use, jobs.reused, jobs.result,
+        jobs.id, jobs.provider, jobs.job_name, jobs.job_id, jobs.url, jobs.started, jobs.finished, jobs.duration, jobs.cluster_version, jobs.cluster_name, jobs.cluster_id, jobs.multi_az, jobs.channel, jobs.environment, jobs.region, jobs.numb_worker_nodes, jobs.network_provider, jobs.image_content_source, jobs.install_config, jobs.hibernate_after_use, jobs.reused, jobs.result, jobs.upgrade_version,
         -- remove the job phase from the test name
         regexp_replace(testcases.name, '\[(install|upgrade)\] (.*)', '\2') as name,
         testcases.result as testresult
@@ -333,7 +339,7 @@ with testcases as (
         now() - jobs.started < interval '48 hours'
         and (testcases.result = 'failure' or testcases.result = 'error')
 )
-select id, provider, job_name, job_id, url, started, finished, duration, cluster_version, cluster_name, cluster_id, multi_az, channel, environment, region, numb_worker_nodes, network_provider, image_content_source, install_config, hibernate_after_use, reused, result, name, testresult
+select id, provider, job_name, job_id, url, started, finished, duration, cluster_version, cluster_name, cluster_id, multi_az, channel, environment, region, numb_worker_nodes, network_provider, image_content_source, install_config, hibernate_after_use, reused, result, upgrade_version, name, testresult
 from testcases
 where
     testcases.name = ANY($1::text[])
@@ -362,6 +368,7 @@ type ListAlertableRecentTestFailuresRow struct {
 	HibernateAfterUse  bool            `json:"hibernate_after_use"`
 	Reused             bool            `json:"reused"`
 	Result             JobResult       `json:"result"`
+	UpgradeVersion     string          `json:"upgrade_version"`
 	Name               string          `json:"name"`
 	Testresult         TestResult      `json:"testresult"`
 }
@@ -398,6 +405,7 @@ func (q *Queries) ListAlertableRecentTestFailures(ctx context.Context, names []s
 			&i.HibernateAfterUse,
 			&i.Reused,
 			&i.Result,
+			&i.UpgradeVersion,
 			&i.Name,
 			&i.Testresult,
 		); err != nil {
@@ -415,7 +423,7 @@ func (q *Queries) ListAlertableRecentTestFailures(ctx context.Context, names []s
 }
 
 const listJobs = `-- name: ListJobs :many
-SELECT id, provider, job_name, job_id, url, started, finished, duration, cluster_version, cluster_name, cluster_id, multi_az, channel, environment, region, numb_worker_nodes, network_provider, image_content_source, install_config, hibernate_after_use, reused, result
+SELECT id, provider, job_name, job_id, url, started, finished, duration, cluster_version, cluster_name, cluster_id, multi_az, channel, environment, region, numb_worker_nodes, network_provider, image_content_source, install_config, hibernate_after_use, reused, result, upgrade_version
 FROM jobs
 ORDER BY id
 `
@@ -452,6 +460,7 @@ func (q *Queries) ListJobs(ctx context.Context) ([]Job, error) {
 			&i.HibernateAfterUse,
 			&i.Reused,
 			&i.Result,
+			&i.UpgradeVersion,
 		); err != nil {
 			return nil, err
 		}
@@ -469,7 +478,7 @@ func (q *Queries) ListJobs(ctx context.Context) ([]Job, error) {
 const listProblematicTests = `-- name: ListProblematicTests :many
 with recent_tests as (
     select 
-        jobs.id, jobs.provider, jobs.job_name, jobs.job_id, jobs.url, jobs.started, jobs.finished, jobs.duration, jobs.cluster_version, jobs.cluster_name, jobs.cluster_id, jobs.multi_az, jobs.channel, jobs.environment, jobs.region, jobs.numb_worker_nodes, jobs.network_provider, jobs.image_content_source, jobs.install_config, jobs.hibernate_after_use, jobs.reused, jobs.result,
+        jobs.id, jobs.provider, jobs.job_name, jobs.job_id, jobs.url, jobs.started, jobs.finished, jobs.duration, jobs.cluster_version, jobs.cluster_name, jobs.cluster_id, jobs.multi_az, jobs.channel, jobs.environment, jobs.region, jobs.numb_worker_nodes, jobs.network_provider, jobs.image_content_source, jobs.install_config, jobs.hibernate_after_use, jobs.reused, jobs.result, jobs.upgrade_version,
         regexp_replace(name, '\[(install|upgrade)\] (.*)', '\2') as name,
         testcases.result as testresult
     from jobs

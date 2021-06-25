@@ -453,6 +453,7 @@ func runGinkgoTests() (int, error) {
 			}(),
 			Finished:       testsFinished,
 			ClusterVersion: viper.GetString(config.Cluster.Version),
+			UpgradeVersion: viper.GetString(config.Upgrade.ReleaseName),
 			ClusterName:    viper.GetString(config.Cluster.Name),
 			ClusterID:      viper.GetString(config.Cluster.ID),
 			MultiAz:        viper.GetString(config.Cluster.MultiAZ),
