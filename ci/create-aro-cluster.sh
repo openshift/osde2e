@@ -2,8 +2,6 @@
 
 set -euo pipefail
 
-source ./ci/install-azure-cli.sh
-
 echo "Installing oc binary"
 
 curl -s https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/openshift-client-linux.tar.gz | tar zxvf - oc
