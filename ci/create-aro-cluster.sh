@@ -8,19 +8,20 @@ curl -s https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/openshi
 
 chmod +x oc
 
-echo "Setting config variables"
+echo "Setting CLUSTER_NAME";
 
-CLUSTER_NAME="osde2e-$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 6 | head -n 1)"
+CLUSTER_NAME="osde2e-$(openssl rand -hex 3)"
 
-echo $CLUSTER_NAME > ${SHARED_DIR}/cluster-name
+echo "Writing CLUSTER_NAME $CLUSTER_NAME to ${SHARED_DIR}/cluster-name"
 
-LOCATION=$2
+echo "$CLUSTER_NAME" > "${SHARED_DIR}/cluster-name"
+
+echo "Setting LOCATION";
+
+LOCATION="eastus";
+
+echo "Setting PULL_SECRET_FILE";
 PULL_SECRET_FILE="/usr/local/osde2e-credentials/stage-ocm-pull-secret"
- 
-if [ "$LOCATION" == "" ];
-then
-    LOCATION="eastus"
-fi
 
 # just automating the steps in https://docs.microsoft.com/en-us/azure/openshift/tutorial-create-cluster
 
@@ -45,10 +46,23 @@ az network vnet create \
     --resource-group $RESOURCEGROUP_NAME \
     --name aro-vnet \
     --address-prefixes 10.0.0.0/22
-    
+
 az network vnet subnet create \
     --resource-group $RESOURCEGROUP_NAME \
-    --vnet-name aro-vnet $CLUSTER_NAME \
+    --vnet-name aro-vnet \
+    --name master-subnet \
+    --address-prefixes 10.0.0.0/23 \
+    --service-endpoints Microsoft.ContainerRegistry
+
+az network vnet subnet create \
+    --resource-group $RESOURCEGROUP_NAME \
+    --vnet-name aro-vnet \
+    --name worker-subnet \
+    --address-prefixes 10.0.2.0/23 \
+    --service-endpoints Microsoft.ContainerRegistry
+    
+az network vnet subnet update \
+    --name master-subnet \
     --resource-group $RESOURCEGROUP_NAME \
     --vnet-name aro-vnet \
     --disable-private-link-service-network-policies true
@@ -63,11 +77,22 @@ fi
 echo "Running ARO create command"
 
 AROINFO="$(eval "$CREATE_CMD")"
+
+echo "Cluster created, sleeping 300";
+
+sleep 300
+
+echo "Retrieving credentials"
+
 KUBEAPI=$(echo "$AROINFO" | jq -r '.apiserverProfile.url')
 KUBECRED=$(az aro list-credentials --name $CLUSTER_NAME --resource-group $CLUSTER_NAME)
 KUBEUSER=$(echo "$KUBECRED" | jq -r '.kubeadminUsername')
 KUBEPASS=$(echo "$KUBECRED" | jq -r '.kubeadminPassword')
 
+echo "Logging into the cluster"
+
 oc login "$KUBEAPI" --username="$KUBEUSER" --password="$KUBEPASS"
+
+echo "Generating kubeconfig in ${SHARED_DIR}/kubeconfig"
 
 oc config view --raw > ${SHARED_DIR}/kubeconfig
