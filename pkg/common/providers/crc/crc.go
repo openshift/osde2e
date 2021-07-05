@@ -214,7 +214,7 @@ func (m *Provider) ClusterKubeconfig(clusterID string) ([]byte, error) {
 }
 
 // CheckQuota CRCs a check quota operation.
-func (m *Provider) CheckQuota(flavour string) (bool, error) {
+func (m *Provider) CheckQuota(sku string) (bool, error) {
 	if len(m.clusters) > 0 {
 		return false, fmt.Errorf("only one CRC cluster may be used at a time")
 	}
