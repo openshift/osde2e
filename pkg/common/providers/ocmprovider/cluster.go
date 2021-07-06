@@ -67,15 +67,17 @@ func (o *OCMProvider) IsValidClusterName(clusterName string) (bool, error) {
 // nolint:gocyclo
 func (o *OCMProvider) LaunchCluster(clusterName string) (string, error) {
 	flavourID := getFlavour()
-	if flavourID == "" {
-		return "", fmt.Errorf("No flavour has been selected")
-	}
-
-	// check that enough quota exists for this test if creating cluster
-	if enoughQuota, err := o.CheckQuota(flavourID); err != nil {
-		log.Printf("Failed to check if enough quota is available: %v", err)
-	} else if !enoughQuota {
-		return "", fmt.Errorf("currently not enough quota exists to run this test")
+	skuID := getSKU()
+	if skuID != "" {
+		// check that enough quota exists for this test if creating cluster
+		if enoughQuota, err := o.CheckQuota(skuID); err != nil {
+			log.Printf("Failed to check if enough quota is available: %v", err)
+		} else if !enoughQuota {
+			return "", fmt.Errorf("currently not enough quota exists to run this test")
+		}
+	} else {
+		// If no SKU specified, just continue on with no validation, but log it
+		log.Printf("No SKU specified, will not check if enough quota is available.")
 	}
 
 	multiAZ := viper.GetBool(config.Cluster.MultiAZ)

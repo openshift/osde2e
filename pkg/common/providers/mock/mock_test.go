@@ -5,8 +5,8 @@ import (
 	"testing"
 
 	"github.com/Masterminds/semver"
-	"github.com/openshift/osde2e/pkg/common/spi"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
+	"github.com/openshift/osde2e/pkg/common/spi"
 	"k8s.io/client-go/tools/clientcmd"
 )
 

@@ -34,8 +34,8 @@ func (m *ROSAProvider) ClusterKubeconfig(clusterID string) ([]byte, error) {
 }
 
 // CheckQuota will call CheckQuota from the OCM provider.
-func (m *ROSAProvider) CheckQuota(flavour string) (bool, error) {
-	return m.ocmProvider.CheckQuota(flavour)
+func (m *ROSAProvider) CheckQuota(sku string) (bool, error) {
+	return m.ocmProvider.CheckQuota(sku)
 }
 
 // InstallAddons will call InstallAddons from the OCM provider.

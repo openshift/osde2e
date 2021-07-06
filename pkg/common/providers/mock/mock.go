@@ -170,7 +170,7 @@ func (m *MockProvider) ClusterKubeconfig(clusterID string) ([]byte, error) {
 }
 
 // CheckQuota mocks a check quota operation.
-func (m *MockProvider) CheckQuota(flavour string) (bool, error) {
+func (m *MockProvider) CheckQuota(sku string) (bool, error) {
 	if m.env == "fail" {
 		return false, fmt.Errorf("failed to get versions: Some fake error")
 	}

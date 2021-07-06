@@ -6,33 +6,27 @@ import (
 	"log"
 
 	accounts "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"
-	v1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
-	"github.com/openshift/osde2e/pkg/common/config"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
-)
-
-const (
-	// resourceClusterFmt is the format string for a quota resource type for a cluster.
-	resourceClusterFmt = "cluster.%s"
+	"github.com/openshift/osde2e/pkg/common/config"
 )
 
 // CheckQuota determines if enough quota is available to launch with cfg.
-func (o *OCMProvider) CheckQuota(flavourID string) (bool, error) {
+func (o *OCMProvider) CheckQuota(skuRuleID string) (bool, error) {
 	// get flavour being deployed
-	var flavourResp *v1.FlavourGetResponse
+	var skuResp *accounts.SkuRuleGetResponse
 	err := retryer().Do(func() error {
 		var err error
-		if flavourID == "" {
-			return fmt.Errorf("No valid flavour selected")
+		if skuRuleID == "" {
+			return fmt.Errorf("No valid SKU selected")
 		}
-		flavourResp, err = o.conn.ClustersMgmt().V1().Flavours().Flavour(flavourID).Get().Send()
+		skuResp, err = o.conn.AccountsMgmt().V1().SkuRules().SkuRule(skuRuleID).Get().Send()
 
 		if err != nil {
 			return err
 		}
 
-		if flavourResp != nil && flavourResp.Error() != nil {
-			err = errResp(flavourResp.Error())
+		if skuResp != nil && skuResp.Error() != nil {
+			err = errResp(skuResp.Error())
 			if err != nil {
 				return err
 			}
@@ -42,13 +36,13 @@ func (o *OCMProvider) CheckQuota(flavourID string) (bool, error) {
 	})
 
 	if err != nil {
-		return false, fmt.Errorf("error trying to get flavours: %v", err)
+		return false, fmt.Errorf("error trying to get SKUs: %v", err)
 	}
 
-	if flavourResp == nil || flavourResp.Body().Empty() {
-		return false, errors.New("returned flavour can't be empty")
+	if skuResp == nil || skuResp.Body().Empty() {
+		return false, errors.New("returned SKU can't be empty")
 	}
-	flavour := flavourResp.Body()
+	sku := skuResp.Body()
 
 	// get quota
 	quotaList, err := o.currentAccountQuota()
@@ -56,16 +50,17 @@ func (o *OCMProvider) CheckQuota(flavourID string) (bool, error) {
 		return false, fmt.Errorf("could not get quota: %v", err)
 	}
 
-	// TODO: use compute_machine_type when available in OCM SDK
-	_ = flavour.Nodes()
-	machineType := ""
+	skuQuota, hasQuota := sku.GetQuotaId()
+	if !hasQuota {
+		// Assume this is a bad thing? All SKU rules currently have a quota associated.
+		return false, errors.New("returned SKU has no associated quota")
+	}
 
 	quotaFound := false
-	resourceClusterType := fmt.Sprintf(resourceClusterFmt, viper.GetString(config.CloudProvider.CloudProviderID))
 	for _, q := range quotaList.Slice() {
-		if quotaFound = HasQuotaFor(q, resourceClusterType, machineType); quotaFound {
-			log.Printf("Quota for test config (%s/%s/multiAZ=%t) found: total=%d, remaining: %d",
-				resourceClusterType, machineType, viper.GetBool(config.Cluster.MultiAZ), q.Allowed(), q.Allowed()-q.Reserved())
+		if quotaFound = HasQuotaForSKU(q, skuQuota); quotaFound {
+			log.Printf("Quota for test config (sku=%s/quota=%s/multiAZ=%t) found: total=%d, remaining: %d",
+				skuRuleID, skuQuota, viper.GetBool(config.Cluster.MultiAZ), q.Allowed(), q.Allowed()-q.Consumed())
 			break
 		}
 	}
@@ -74,7 +69,7 @@ func (o *OCMProvider) CheckQuota(flavourID string) (bool, error) {
 }
 
 // CurrentAccountQuota returns quota available for the current account's organization in the environment.
-func (o *OCMProvider) currentAccountQuota() (*accounts.QuotaSummaryList, error) {
+func (o *OCMProvider) currentAccountQuota() (*accounts.QuotaCostList, error) {
 	resp, err := o.conn.AccountsMgmt().V1().CurrentAccount().Get().Send()
 	if err != nil || resp == nil {
 		return nil, fmt.Errorf("couldn't get current account: %v", err)
@@ -88,10 +83,10 @@ func (o *OCMProvider) currentAccountQuota() (*accounts.QuotaSummaryList, error) 
 
 	orgID := acc.Organization().ID()
 
-	var quotaList *accounts.QuotaSummaryListResponse
+	var quotaList *accounts.QuotaCostListResponse
 	err = retryer().Do(func() error {
 		var err error
-		quotaList, err = o.conn.AccountsMgmt().V1().Organizations().Organization(orgID).QuotaSummary().List().Send()
+		quotaList, err = o.conn.AccountsMgmt().V1().Organizations().Organization(orgID).QuotaCost().List().Send()
 
 		if err != nil {
 			return err
@@ -112,18 +107,12 @@ func (o *OCMProvider) currentAccountQuota() (*accounts.QuotaSummaryList, error) 
 	return quotaList.Items(), nil
 }
 
-// HasQuotaFor the desired configuration. If machineT is empty a default will try to be selected.
-func HasQuotaFor(q *accounts.QuotaSummary, resourceType, machineType string) bool {
-	azType := "single"
-	if viper.GetBool(config.Cluster.MultiAZ) {
-		azType = "multi"
-	}
-
-	if q.ResourceType() == resourceType && q.ResourceName() == machineType || machineType == "" {
-		if q.AvailabilityZoneType() == azType || q.AvailabilityZoneType() == "any" {
-			if q.Reserved() < q.Allowed() {
-				return true
-			}
+// HasQuotaForSKU looks for a quota cost for the desired SKU and returns it if one is found
+// and sufficient quota exists.
+func HasQuotaForSKU(q *accounts.QuotaCost, skuQuota string) bool {
+	if q.QuotaID() == skuQuota {
+		if q.Consumed() < q.Allowed() {
+			return true
 		}
 	}
 	return false

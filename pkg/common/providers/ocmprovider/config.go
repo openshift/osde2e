@@ -1,8 +1,8 @@
 package ocmprovider
 
 import (
-	"github.com/openshift/osde2e/pkg/common/config"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
+	"github.com/openshift/osde2e/pkg/common/config"
 )
 
 const (
@@ -26,6 +26,9 @@ const (
 
 	// Flavour is an OCM cluster descriptor for cluster defaults
 	Flavour = "ocm.flavour"
+
+	// SKU Rule ID is an identifier for a SKU that OCM can provision
+	Sku = "ocm.skuRule"
 
 	// AdditionalLabels is used to add more specific labels to a cluster in OCM.
 	AdditionalLabels = "ocm.additionalLabels"
@@ -62,6 +65,9 @@ func init() {
 
 	viper.SetDefault(Flavour, "osd-4")
 	viper.BindEnv(Flavour, "OCM_FLAVOUR")
+
+	viper.SetDefault(Sku, "")
+	viper.BindEnv(Sku, "OCM_SKU")
 
 	viper.BindEnv(AdditionalLabels, "OCM_ADDITIONAL_LABELS")
 
