@@ -1219,6 +1219,12 @@ func (o *OCMProvider) GetUpgradePolicyID(clusterID string) (string, error) {
 		return "", listResp.Error()
 	}
 
+	if listResp.Items().Len() < 1 {
+		// Don't treat this as an error (because it may not be), just return nothing
+		log.Printf("No upgrade policies currently exist on the provider.")
+		return "", nil
+	}
+
 	policyID := listResp.Items().Get(0).ID()
 	if policyID == "" {
 		return "", fmt.Errorf("failed to get the policy ID")

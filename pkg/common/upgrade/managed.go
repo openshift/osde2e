@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/openshift/osde2e/pkg/common/cluster/healthchecks"
-	"github.com/openshift/osde2e/pkg/common/util"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
+	"github.com/openshift/osde2e/pkg/common/util"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -45,9 +45,9 @@ const (
 	// config override template asset
 	configOverrideTemplate = "/assets/upgrades/config.template"
 	// config override values
-	configProviderWatchInterval   = 60  // minutes
+	configProviderWatchInterval   = 15  // minutes
 	configScaleTimeout            = 15  // minutes
-	configUpgradeWindow           = 120 // minutes
+	configUpgradeWindow           = 30  // minutes
 	configNodeDrainTimeout        = 6   // minutes
 	configExpectedDrainTime       = 7   // minutes
 	configControlPlaneTime        = 90  // minutes
@@ -266,15 +266,44 @@ func createManagedUpgradeWorkload(workLoadName string, workLoadDir string, podPr
 func isManagedUpgradeDone(h *helper.H, desired *configv1.Update) (done bool, msg string, err error) {
 
 	// retrieve UpgradeConfig
-	ucObj, err := h.Dynamic().Resource(schema.GroupVersionResource{
+	ucList, err := h.Dynamic().Resource(schema.GroupVersionResource{
 		Group: "upgrade.managed.openshift.io", Version: "v1alpha1", Resource: "upgradeconfigs",
-	}).Namespace(muoNamespace).Get(context.TODO(), upgradeConfigName, metav1.GetOptions{})
+	}).Namespace(muoNamespace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		// The API may sometimes be unavailable, this is fine. We don't want
 		// to return an error because there's every chance the upgrade is still going
 		// and the API will come back.
 		return false, fmt.Sprintf("error getting UpgradeConfig: %v", err), nil
 	}
+	if len(ucList.Items) < 1 {
+		// The API returned successfully, but thinks there's no UpgradeConfigs.
+		// This is an unexpected state to be in, so let's verify with the provider
+		// that it thinks there's an upgrade going on.
+		clusterID := viper.GetString(config.Cluster.ID)
+		clusterProvider, err := providers.ClusterProvider()
+		if err != nil {
+			// We shouldn't be upgrading if there's no cluster provider
+			return false, "", fmt.Errorf("error getting clusterprovider for upgrade: %v", err)
+		}
+		policyID, err := clusterProvider.GetUpgradePolicyID(clusterID)
+		if err != nil {
+			// The provider errored when attempting to query its upgrade policies; try again next time
+			return false, fmt.Sprintf("couldn't check upgrade policy state from provider: %v", err), nil
+		}
+		if policyID != "" {
+			// The provider has an upgrade policy. MUO might be waiting to sync it into an upgradeconfig
+			return false, fmt.Sprintf("cluster provider has an upgrade policy, but cluster has no upgradeconfig yet"), nil
+		}
+		if policyID == "" {
+			// The provider successfully returned that it contains no upgrade policies.
+			// If we're in this state with no UC and no policy, the upgrade must have either
+			// failed or been cancelled. Either way, there's no point monitoring for the upgrade any more.
+			return true, "", fmt.Errorf("the provider no longer has an upgrade policy, the upgrade has been cancelled or failed")
+		}
+	}
+
+	// We have an UpgradeConfig on-cluster, so we can use that to reliably tell what the upgrade state is
+	ucObj := ucList.Items[0]
 	var upgradeConfig upgradev1alpha1.UpgradeConfig
 	err = runtime.DefaultUnstructuredConverter.FromUnstructured(ucObj.UnstructuredContent(), &upgradeConfig)
 	if err != nil {
@@ -290,12 +319,24 @@ func isManagedUpgradeDone(h *helper.H, desired *configv1.Update) (done bool, msg
 		log.Printf("could not apply UpgradeConfig overrides: %v", err)
 	}
 
-	// Now check if the Upgrade is complete
 	upgradeHistory := upgradeConfig.Status.History.GetHistory(desired.Version)
+
+	// If the Upgrade History is empty, the upgrade hasn't started, try again later
 	if upgradeHistory == nil {
 		return false, fmt.Sprintf("upgrade yet to commence"), nil
 	}
 
+	// If the Upgrade History phase indicates the upgrade has failed, we can bail out here
+	if upgradeHistory.Phase == upgradev1alpha1.UpgradePhaseFailed {
+		return true, "", fmt.Errorf("managed-upgrade-operator has indicated upgrade failed to commence")
+	}
+
+	// If the UpgradeHistory phase indicates the upgrade has completed, we can also bail out here (successfully)
+	if upgradeHistory.Phase == upgradev1alpha1.UpgradePhaseUpgraded {
+		return true, "", nil
+	}
+
+	// Otherwise, report back what current phase and upgrade condition the upgrade is at
 	upgradeConditions := upgradeHistory.Conditions
 	if len(upgradeConditions) == 0 {
 		return false, fmt.Sprintf("current upgrade status is pending"), nil
@@ -307,11 +348,7 @@ func isManagedUpgradeDone(h *helper.H, desired *configv1.Update) (done bool, msg
 		statusTimeStr = upgradeHistory.StartTime.String()
 	}
 
-	if upgradeHistory.Phase != upgradev1alpha1.UpgradePhaseUpgraded {
-		return false, fmt.Sprintf(`current upgrade status is "%s" since "%s"`, statusMsg, statusTimeStr), nil
-	}
-
-	return true, "", nil
+	return false, fmt.Sprintf(`current upgrade status is "%s" since "%s"`, statusMsg, statusTimeStr), nil
 }
 
 // Requests a cluster upgrade from the cluster provider
@@ -344,11 +381,13 @@ func updateUpgradeWithProvider(version string) error {
 	}
 	policyID, err := clusterProvider.GetUpgradePolicyID(clusterID)
 	if err != nil {
-		return err
+		return fmt.Errorf("unable to retrieve upgrade policy ID to update: %v", err)
+	}
+	if policyID == "" {
+		return fmt.Errorf("no upgrade policy exists on the cluster to update")
 	}
 
 	newT := time.Now().UTC().Add(300 * time.Minute)
-
 	err = clusterProvider.UpdateSchedule(clusterID, version, newT, policyID)
 	if err != nil {
 		return fmt.Errorf("error updating the upgrade schedule via provider: %v", err)
