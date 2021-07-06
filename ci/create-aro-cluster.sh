@@ -80,7 +80,7 @@ AROINFO="$(eval "$CREATE_CMD")"
 
 echo "Cluster created, sleeping 300";
 
-sleep 300
+sleep 600
 
 echo "Retrieving credentials"
 
