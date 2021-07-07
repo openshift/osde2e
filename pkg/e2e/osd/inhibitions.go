@@ -2,8 +2,6 @@ package osd
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
 	"reflect"
 	"time"
 
@@ -19,7 +17,7 @@ import (
 	prometheusModel "github.com/prometheus/common/model"
 	"gopkg.in/yaml.v3"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/util/retry"
 )
 
 const (
@@ -106,7 +104,7 @@ var _ = ginkgo.Describe(inhibitionsTestName, func() {
 
 	ginkgo.It("inhibits ClusterOperatorDegraded", func() {
 		// define an IdP that will cause the authentication operator to degrade
-		degradingIdentityProvider, err := json.Marshal(configV1.IdentityProvider{
+		degradingIdentityProvider := configV1.IdentityProvider{
 			Name:          "oidcidp",
 			MappingMethod: "claim",
 			IdentityProviderConfig: configV1.IdentityProviderConfig{
@@ -130,19 +128,46 @@ var _ = ginkgo.Describe(inhibitionsTestName, func() {
 					Issuer: "https://www.idp-issuer.example.com",
 				},
 			},
-		})
-		Expect(err).To(BeNil())
+		}
 
 		// send the IdP in as a patch to the cluster oauth. this will cause the
 		// authentication cluster operator to degrade, and since there is only one
 		// pod, it will also be down.
-		authenticationOperatorPatch := fmt.Sprintf("[{\"op\":\"add\",\"path\":\"/spec/identityProviders/-\",\"value\":%s}]", []byte(degradingIdentityProvider))
-		_, err = h.Cfg().ConfigV1().OAuths().Patch(context.TODO(), "cluster", types.JSONPatchType, []byte(authenticationOperatorPatch), metav1.PatchOptions{}, "")
-		Expect(err).To(BeNil())
+		err := retry.RetryOnConflict(retry.DefaultBackoff, func() error {
+			oauthcfg, err := h.Cfg().ConfigV1().OAuths().Get(context.TODO(), "cluster", metav1.GetOptions{})
+			Expect(err).To(BeNil())
+			if oauthcfg.Spec.IdentityProviders != nil {
+				oauthcfg.Spec.IdentityProviders = append(oauthcfg.Spec.IdentityProviders, degradingIdentityProvider)
+			} else {
+				oauthcfg.Spec.IdentityProviders = []configV1.IdentityProvider{
+					degradingIdentityProvider,
+				}
+			}
+			_, err = h.Cfg().ConfigV1().OAuths().Update(context.TODO(), oauthcfg, metav1.UpdateOptions{})
+			return err
+		})
+		Expect(err).NotTo(HaveOccurred(), "failed to update cluster oauth")
 
 		// clean up after this test completes
-		authenticationOperatorPatch = "[{\"op\":\"remove\",\"path\":\"/spec/identityProviders/1\"}]"
-		defer h.Cfg().ConfigV1().OAuths().Patch(context.TODO(), "cluster", types.JSONPatchType, []byte(authenticationOperatorPatch), metav1.PatchOptions{}, "")
+		defer func() {
+			err := retry.RetryOnConflict(retry.DefaultBackoff, func() error {
+				oauthcfg, err := h.Cfg().ConfigV1().OAuths().Get(context.TODO(), "cluster", metav1.GetOptions{})
+				Expect(err).To(BeNil())
+				foundidx := -1
+				for i, idp := range oauthcfg.Spec.IdentityProviders {
+					if idp.Name == degradingIdentityProvider.Name {
+						foundidx = i
+						break
+					}
+				}
+				if foundidx >= 0 {
+					oauthcfg.Spec.IdentityProviders = append(oauthcfg.Spec.IdentityProviders[:foundidx], oauthcfg.Spec.IdentityProviders[foundidx+1:]...)
+					_, err = h.Cfg().ConfigV1().OAuths().Update(context.TODO(), oauthcfg, metav1.UpdateOptions{})
+				}
+				return err
+			})
+			Expect(err).To(BeNil())
+		}()
 
 		// the clusteroperatordown/degraded alerts take 10 minutes to trip
 		time.Sleep(10 * time.Minute)
