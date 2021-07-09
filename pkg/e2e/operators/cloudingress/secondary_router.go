@@ -30,6 +30,8 @@ var _ = ginkgo.Describe(constants.SuiteInforming+TestPrefix, func() {
 			//only create the secondary ingress if it doesn't exist already in the publishing strategy
 			if _, exists, _ := appIngressExits(h, false, secondaryIngress.DNSName); !exists {
 				addAppIngress(h, secondaryIngress)
+				// wait 2 minute for all resources to be created
+				time.Sleep(time.Duration(120) * time.Second)
 			}
 
 			// from DNSName app-e2e-apps.cluster.mfvz.s1.devshift.org,
@@ -43,11 +45,9 @@ var _ = ginkgo.Describe(constants.SuiteInforming+TestPrefix, func() {
 			// the created router name should be router-app-e2e-apps
 			deploymentName := "router-" + ingressControllerName
 			deployment, err := operators.PollDeployment(h, "openshift-ingress", deploymentName)
+
 			Expect(err).ToNot(HaveOccurred(), "failed fetching deployment")
 			Expect(deployment).NotTo(BeNil(), "deployment is nil")
-
-			// wait 1 minute for all routers to start
-			time.Sleep(time.Duration(60) * time.Second)
 			Expect(deployment.Status.ReadyReplicas).To(BeNumerically("==", deployment.Status.Replicas))
 		})
 
