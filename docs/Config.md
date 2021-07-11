@@ -29,7 +29,7 @@ Some environment variables commonly used for pipelines under osde2e are indicate
 |DELTA_RELEASE_FROM_DEFAULT| DeltaReleaseFromDefault will select the cluster image set that is the given number of releases from the current default in either direction.|
 |NEXT_RELEASE_AFTER_PROD_DEFAULT|  NextReleaseAfterProdDefault will select the cluster image set that the given number of releases away from the the production default.|
 |CLEAN_CHECK_RUNS| CleanCheckRuns lets us set the number of osd-verify checks we want to run before deeming a cluster "healthy"|
- 
+|INSPECT_NAMESPACES| InspectNamespaces is a comma-delimeted list of namespaces to perform an `oc adm inspect` on during E2E cleanup|
 
 ### ROSA cluster related:-
  

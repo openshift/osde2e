@@ -326,6 +326,9 @@ var Cluster = struct {
 
 	// Reused tracks whether this cluster's test run used a new or recycled cluster
 	Reused string
+
+	// InspectNamespaces is a comma-delimited list of namespaces to perform an inspect on during test cleanup
+	InspectNamespaces string
 }{
 	MultiAZ:                             "cluster.multiAZ",
 	Channel:                             "cluster.channel",
@@ -357,6 +360,7 @@ var Cluster = struct {
 	UseExistingCluster:                  "cluster.useExistingCluster",
 	Passing:                             "cluster.passing",
 	Reused:                              "cluster.rused",
+	InspectNamespaces:                   "cluster.inspectNamespaces",
 }
 
 // CloudProvider config keys.
@@ -686,6 +690,9 @@ func init() {
 
 	viper.SetDefault(Cluster.Reused, false)
 	viper.SetDefault(Cluster.Passing, false)
+
+	viper.SetDefault(Cluster.InspectNamespaces, "")
+	viper.BindEnv(Cluster.InspectNamespaces, "INSPECT_NAMESPACES")
 
 	// ----- Cloud Provider -----
 	viper.SetDefault(CloudProvider.CloudProviderID, "aws")

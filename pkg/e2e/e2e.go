@@ -579,7 +579,7 @@ func cleanupAfterE2E(h *helper.H) (errors []error) {
 		}
 	}
 
-	log.Print("Gathering Test Project State...")
+	log.Print("Gathering Project States...")
 	h.InspectState()
 
 	log.Print("Gathering OLM State...")
