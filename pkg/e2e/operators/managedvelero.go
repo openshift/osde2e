@@ -15,6 +15,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/client-go/rest"
 )
 
 var veleroOperatorTestName string = "[Suite: operators] [OSD] Managed Velero Operator"
@@ -78,6 +79,10 @@ func testDaCRbackups(h *helper.H) {
 	ginkgo.Context("velero", func() {
 		ginkgo.It("Access should be forbidden to edit Backups", func() {
 			h.SetServiceAccount("system:serviceaccount:%s:dedicated-admin-project")
+			defer func() {
+				h.Impersonate(rest.ImpersonationConfig{})
+			}()
+
 			backup := velerov1.Backup{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "dedicated-admin-backup-test",
@@ -94,6 +99,10 @@ func testDaCRrestore(h *helper.H) {
 	ginkgo.Context("velero", func() {
 		ginkgo.It("Access should be forbidden to edit Restore", func() {
 			h.SetServiceAccount("system:serviceaccount:%s:dedicated-admin-project")
+			defer func() {
+				h.Impersonate(rest.ImpersonationConfig{})
+			}()
+
 			restore := velerov1.Restore{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "dedicated-admin-restore-test",
@@ -110,6 +119,9 @@ func testDaCRdeleteBackupRequests(h *helper.H) {
 	ginkgo.Context("velero", func() {
 		ginkgo.It("Access should be forbidden to edit DeleteBackupRequests", func() {
 			h.SetServiceAccount("system:serviceaccount:%s:dedicated-admin-project")
+			defer func() {
+				h.Impersonate(rest.ImpersonationConfig{})
+			}()
 
 			deleteBackupRequest := velerov1.DeleteBackupRequest{
 				ObjectMeta: metav1.ObjectMeta{
@@ -126,6 +138,9 @@ func testDaCRbackupStorageLocations(h *helper.H) {
 	ginkgo.Context("velero", func() {
 		ginkgo.It("Access should be forbidden to edit BackupStorageLocations", func() {
 			h.SetServiceAccount("system:serviceaccount:%s:dedicated-admin-project")
+			defer func() {
+				h.Impersonate(rest.ImpersonationConfig{})
+			}()
 
 			backupStorageLocation := velerov1.BackupStorageLocation{
 				ObjectMeta: metav1.ObjectMeta{
@@ -151,6 +166,9 @@ func testDaCRdownloadRequests(h *helper.H) {
 	ginkgo.Context("velero", func() {
 		ginkgo.It("Access should be forbidden to edit DownloadRequests", func() {
 			h.SetServiceAccount("system:serviceaccount:%s:dedicated-admin-project")
+			defer func() {
+				h.Impersonate(rest.ImpersonationConfig{})
+			}()
 
 			downloadRequest := velerov1.DownloadRequest{
 				ObjectMeta: metav1.ObjectMeta{
@@ -173,6 +191,9 @@ func testDaCRpodVolumeBackup(h *helper.H) {
 	ginkgo.Context("velero", func() {
 		ginkgo.It("Access should be forbidden to edit PodVolumeBackups", func() {
 			h.SetServiceAccount("system:serviceaccount:%s:dedicated-admin-project")
+			defer func() {
+				h.Impersonate(rest.ImpersonationConfig{})
+			}()
 
 			podVolumeBackup := velerov1.PodVolumeBackup{
 				ObjectMeta: metav1.ObjectMeta{
@@ -189,6 +210,9 @@ func testDaCRpodVolumeRestores(h *helper.H) {
 	ginkgo.Context("velero", func() {
 		ginkgo.It("Access should be forbidden to edit PodVolumeRestores", func() {
 			h.SetServiceAccount("system:serviceaccount:%s:dedicated-admin-project")
+			defer func() {
+				h.Impersonate(rest.ImpersonationConfig{})
+			}()
 
 			podVolumeRestore := velerov1.PodVolumeRestore{
 				ObjectMeta: metav1.ObjectMeta{
@@ -206,6 +230,9 @@ func testDaCRvolumeSnapshotLocation(h *helper.H) {
 	ginkgo.Context("velero", func() {
 		ginkgo.It("Access should be forbidden to edit VolumeSnapshotLocations", func() {
 			h.SetServiceAccount("system:serviceaccount:%s:dedicated-admin-project")
+			defer func() {
+				h.Impersonate(rest.ImpersonationConfig{})
+			}()
 
 			volumeSnapshotLocation := velerov1.VolumeSnapshotLocation{
 				ObjectMeta: metav1.ObjectMeta{
@@ -222,6 +249,9 @@ func testDaCRschedules(h *helper.H) {
 	ginkgo.Context("velero", func() {
 		ginkgo.It("Access should be forbidden to edit Schedules", func() {
 			h.SetServiceAccount("system:serviceaccount:%s:dedicated-admin-project")
+			defer func() {
+				h.Impersonate(rest.ImpersonationConfig{})
+			}()
 
 			schedules := velerov1.Schedule{
 				ObjectMeta: metav1.ObjectMeta{
@@ -238,6 +268,9 @@ func testDaCRserverStatusRequest(h *helper.H) {
 	ginkgo.Context("velero", func() {
 		ginkgo.It("Access should be forbidden to edit ServerStatusRequests", func() {
 			h.SetServiceAccount("system:serviceaccount:%s:dedicated-admin-project")
+			defer func() {
+				h.Impersonate(rest.ImpersonationConfig{})
+			}()
 
 			serverStatusRequest := velerov1.ServerStatusRequest{
 				ObjectMeta: metav1.ObjectMeta{
@@ -254,6 +287,9 @@ func testDaCRrestricRepository(h *helper.H) {
 	ginkgo.Context("velero", func() {
 		ginkgo.It("Access should be forbidden to edit RestricRepository", func() {
 			h.SetServiceAccount("system:serviceaccount:%s:dedicated-admin-project")
+			defer func() {
+				h.Impersonate(rest.ImpersonationConfig{})
+			}()
 
 			resticRepository := velerov1.ResticRepository{
 				ObjectMeta: metav1.ObjectMeta{
