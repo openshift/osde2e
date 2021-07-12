@@ -1104,7 +1104,7 @@ func updateDatabaseAndPagerduty(dbURL string, jobData db.CreateJobParams, testDa
 		if err != nil {
 			log.Printf("Failed creating pagerduty incident for failure: %v", err)
 		}
-		if err := alert.SendSlackMessage("sd-cicd", fmt.Sprintf(`@osde2e A bunch of tests failed at once:
+		if err := alert.SendSlackMessage("sd-cicd-alerts", fmt.Sprintf(`@osde2e A bunch of tests failed at once:
 pipeline: %s
 URL: %s
 PD info: %v`, jobData.JobName, jobData.Url, event)); err != nil {
