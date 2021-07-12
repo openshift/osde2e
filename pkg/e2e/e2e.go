@@ -16,7 +16,6 @@ import (
 	"math"
 	"os"
 	"path/filepath"
-	"runtime"
 	"sort"
 	"strconv"
 	"strings"
@@ -78,9 +77,6 @@ var provider spi.Provider
 // --- BEGIN Ginkgo setup
 // Check if the test should run
 var _ = func() interface{} {
-	var stackTrace [4096]byte
-	written := runtime.Stack(stackTrace[:], true)
-	log.Println("Before BeforeEach:", string(stackTrace[:written]))
 	return ginkgo.BeforeEach(func() {
 		testText := ginkgo.CurrentGinkgoTestDescription().TestText
 		testContext := strings.TrimSpace(strings.TrimSuffix(ginkgo.CurrentGinkgoTestDescription().FullTestText, testText))
