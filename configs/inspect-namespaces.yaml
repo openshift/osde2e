@@ -1,0 +1,2 @@
+cluster:
+  inspectNamespaces: openshift-managed-upgrade-operator,openshift-velero,openshift-build-test,openshift-sre-pruning,openshift-cloud-ingress-operator,openshift-rbac-permissions,openshift-route-monitor-operator,openshift-validation-webhook,openshift-backplane,openshift-custom-domains-operator,openshift-must-gather-operator,openshift-splunk-forwarder-operator,openshift-sre-sshd,openshift-rbac-permissions

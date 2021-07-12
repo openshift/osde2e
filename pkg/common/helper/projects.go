@@ -3,6 +3,7 @@ package helper
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/openshift/osde2e/pkg/common/runner"
@@ -41,11 +42,17 @@ func (h *H) createProject(suffix string) (*projectv1.Project, error) {
 	return project, err
 }
 
-func (h *H) inspect(projectName string) error {
+func (h *H) inspect(projects []string) error {
 	inspectTimeoutInSeconds := 200
 	h.SetServiceAccount("system:serviceaccount:%s:cluster-admin")
-	r := h.Runner(fmt.Sprintf("oc adm inspect ns/%v --dest-dir=%v", projectName, runner.DefaultRunner.OutputDir))
-	r.Name = "osde2e-project"
+
+	// add "ns/" prefix to each project
+	for i, project := range projects {
+		projects[i] = "ns/" + project
+	}
+	projectsArg := strings.Join(projects, " ")
+	r := h.Runner(fmt.Sprintf("oc adm inspect %v --dest-dir=%v", projectsArg, runner.DefaultRunner.OutputDir))
+	r.Name = "must-gather-additional-projects"
 	r.Tarball = true
 	stopCh := make(chan struct{})
 
