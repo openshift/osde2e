@@ -4,10 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"net/url"
-	"runtime"
 	"time"
 
 	"github.com/onsi/ginkgo"
@@ -33,9 +31,6 @@ var _ = ginkgo.Describe(oauthTokensTestName, func() {
 
 		var oauthcfg *configv1.OAuth
 
-		var stackTrace [4096]byte
-		written := runtime.Stack(stackTrace[:], true)
-		log.Println("Before BeforeEach:", string(stackTrace[:written]))
 		ginkgo.BeforeEach(func() {
 			var err error
 			oauthcfg, err = h.Cfg().ConfigV1().OAuths().Get(context.TODO(), "cluster", metav1.GetOptions{})
@@ -61,9 +56,6 @@ var _ = ginkgo.Describe(oauthTokensTestName, func() {
 		var user *userv1.User
 		var client *oauthv1.OAuthClient
 
-		var stackTrace [4096]byte
-		written := runtime.Stack(stackTrace[:], true)
-		log.Println("Before BeforeEach:", string(stackTrace[:written]))
 		ginkgo.BeforeEach(func() {
 			user, _ = createUser("osde2e-token-user-"+util.RandomStr(5), nil, nil, h)
 			Expect(user).ToNot(BeNil())

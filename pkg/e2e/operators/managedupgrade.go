@@ -3,9 +3,7 @@ package operators
 import (
 	"context"
 	"fmt"
-	"log"
 	"time"
-	stdruntime "runtime"
 
 	"github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -61,9 +59,6 @@ var _ = ginkgo.Describe(managedUpgradeOperatorTestName, func() {
 			err            error
 		)
 
-		var stackTrace [4096]byte
-		written := stdruntime.Stack(stackTrace[:], true)
-		log.Println("Before BeforeEach:", string(stackTrace[:written]))
 		ginkgo.BeforeEach(func() {
 			clusterVersion, err = getClusterVersion(h)
 		})
