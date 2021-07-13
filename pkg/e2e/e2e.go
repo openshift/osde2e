@@ -74,28 +74,6 @@ const (
 // provisioner is used to deploy and manage clusters.
 var provider spi.Provider
 
-// --- BEGIN Ginkgo setup
-// Check if the test should run
-var _ = func() interface{} {
-	return ginkgo.BeforeEach(func() {
-		testText := ginkgo.CurrentGinkgoTestDescription().TestText
-		testContext := strings.TrimSpace(strings.TrimSuffix(ginkgo.CurrentGinkgoTestDescription().FullTestText, testText))
-
-		shouldRun := false
-		testsToRun := viper.GetStringSlice(config.Tests.TestsToRun)
-		for _, testToRun := range testsToRun {
-			if strings.HasPrefix(testContext, testToRun) {
-				shouldRun = true
-				break
-			}
-		}
-
-		if !shouldRun {
-			ginkgo.Skip(fmt.Sprintf("test %s will not be run as its context (%s) is not specified as part of the tests to run", ginkgo.CurrentGinkgoTestDescription().FullTestText, testContext))
-		}
-	})
-}()
-
 // beforeSuite attempts to populate several required cluster fields (either by provisioning a new cluster, or re-using an existing one)
 // If there is an issue with provisioning, retrieving, or getting the kubeconfig, this will return `false`.
 func beforeSuite() bool {
@@ -737,6 +715,25 @@ func runTestsInPhase(phase string, description string, dryrun bool) (bool, []db.
 	// and will still execute the rest of the function regardless whether the tests pass or fail.
 	func() {
 		defer ginkgo.GinkgoRecover()
+
+		ginkgo.BeforeEach(func() {
+			testText := ginkgo.CurrentGinkgoTestDescription().TestText
+			testContext := strings.TrimSpace(strings.TrimSuffix(ginkgo.CurrentGinkgoTestDescription().FullTestText, testText))
+
+			shouldRun := false
+			testsToRun := viper.GetStringSlice(config.Tests.TestsToRun)
+			for _, testToRun := range testsToRun {
+				if strings.HasPrefix(testContext, testToRun) {
+					shouldRun = true
+					break
+				}
+			}
+
+			if !shouldRun {
+				ginkgo.Skip(fmt.Sprintf("test %s will not be run as its context (%s) is not specified as part of the tests to run", ginkgo.CurrentGinkgoTestDescription().FullTestText, testContext))
+			}
+		})
+
 		ginkgoPassed = ginkgo.RunSpecsWithDefaultAndCustomReporters(ginkgo.GinkgoT(), description, []ginkgo.Reporter{phaseReporter})
 	}()
 
