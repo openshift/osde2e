@@ -145,7 +145,7 @@ func (h *H) Cleanup() {
 		log.Printf("Error listing existing projects in Cleanup(): %s", err.Error())
 	}
 	for _, project := range projects.Items {
-		if strings.Contains(project.Name, "osde2e-") {
+		if h.proj.Name == project.Name {
 			log.Printf("Deleting project `%s`", project.Name)
 			err = h.Project().ProjectV1().Projects().Delete(context.TODO(), project.Name, metav1.DeleteOptions{})
 			if err != nil {
