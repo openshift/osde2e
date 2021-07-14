@@ -46,17 +46,30 @@ func (h *H) inspect(projects []string) error {
 	inspectTimeoutInSeconds := 200
 	h.SetServiceAccount("system:serviceaccount:%s:cluster-admin")
 
-	// add "ns/" prefix to each project
-	for i, project := range projects {
-		projects[i] = "ns/" + project
+	// Get a list of projects from the cluster
+	clusterProjects, err := h.Project().ProjectV1().Projects().List(context.TODO(), metav1.ListOptions{})
+	if err != nil {
+		return err
 	}
-	projectsArg := strings.Join(projects, " ")
+
+	// from our list of projects to inspect, build a list of ones which exist on the cluster
+	inspectProjects := make([]string, 0)
+	for _, clusterProject := range clusterProjects.Items {
+		for _, p := range projects {
+			if clusterProject.Name == p {
+				// Add an 'ns/' prefix for the inspect call
+				inspectProjects = append(inspectProjects, "ns/" + clusterProject.Name)
+			}
+		}
+	}
+
+	projectsArg := strings.Join(inspectProjects, " ")
 	r := h.Runner(fmt.Sprintf("oc adm inspect %v --dest-dir=%v", projectsArg, runner.DefaultRunner.OutputDir))
 	r.Name = "must-gather-additional-projects"
 	r.Tarball = true
 	stopCh := make(chan struct{})
 
-	err := r.Run(inspectTimeoutInSeconds, stopCh)
+	err = r.Run(inspectTimeoutInSeconds, stopCh)
 	if err != nil {
 		return fmt.Errorf("Error running project inspection: %s", err.Error())
 	}
