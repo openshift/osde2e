@@ -1,6 +1,6 @@
 tests:
   testsToRun:
-  - '[Suite: e2e]'
-  - '[Suite: operators]'
-  - '[Suite: service-definition]'
-  - '[Suite: app-builds]'
+  - '\[Suite\: e2e\]'
+  - '\[Suite\: operators\]'
+  - '\[Suite\: service-definition\]'
+  - '\[Suite\: app-builds\]'

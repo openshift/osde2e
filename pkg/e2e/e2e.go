@@ -270,6 +270,13 @@ func runGinkgoTests() (int, error) {
 	if skip := viper.GetString(config.Tests.GinkgoSkip); skip != "" {
 		ginkgoConfig.GinkgoConfig.SkipStrings = append(ginkgoConfig.GinkgoConfig.SkipStrings, skip)
 	}
+
+	if testsToRun := viper.GetStringSlice(config.Tests.TestsToRun); len(testsToRun) > 0 {
+		log.Printf("%v", testsToRun)
+		ginkgoConfig.GinkgoConfig.FocusStrings = testsToRun
+		log.Printf("%v", ginkgoConfig.GinkgoConfig.FocusStrings)
+	}
+
 	if focus := viper.GetString(config.Tests.GinkgoFocus); focus != "" {
 		ginkgoConfig.GinkgoConfig.FocusStrings = append(ginkgoConfig.GinkgoConfig.FocusStrings, focus)
 	}
@@ -715,24 +722,6 @@ func runTestsInPhase(phase string, description string, dryrun bool) (bool, []db.
 	// and will still execute the rest of the function regardless whether the tests pass or fail.
 	func() {
 		defer ginkgo.GinkgoRecover()
-
-		ginkgo.BeforeEach(func() {
-			testText := ginkgo.CurrentGinkgoTestDescription().TestText
-			testContext := strings.TrimSpace(strings.TrimSuffix(ginkgo.CurrentGinkgoTestDescription().FullTestText, testText))
-
-			shouldRun := false
-			testsToRun := viper.GetStringSlice(config.Tests.TestsToRun)
-			for _, testToRun := range testsToRun {
-				if strings.HasPrefix(testContext, testToRun) {
-					shouldRun = true
-					break
-				}
-			}
-
-			if !shouldRun {
-				ginkgo.Skip(fmt.Sprintf("test %s will not be run as its context (%s) is not specified as part of the tests to run", ginkgo.CurrentGinkgoTestDescription().FullTestText, testContext))
-			}
-		})
 
 		ginkgoPassed = ginkgo.RunSpecsWithDefaultAndCustomReporters(ginkgo.GinkgoT(), description, []ginkgo.Reporter{phaseReporter})
 	}()
