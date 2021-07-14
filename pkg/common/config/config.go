@@ -3,6 +3,7 @@ package config
 
 import (
 	"log"
+	"strings"
 	"sync"
 	"time"
 
@@ -78,6 +79,25 @@ const (
 // This is a config key to secret file mapping. We will attempt to read in from secret files before loading anything else.
 var keyToSecretMapping = map[string]string{}
 var keyToSecretMappingMutex = sync.Mutex{}
+
+// This is a list of OSD-specific namespaces to include in the post-E2E cleanup must-gather
+// that takes place.
+var defaultInspectNamespaces = []string {
+	"openshift-managed-upgrade-operator",
+	"openshift-velero",
+	"openshift-build-test",
+	"openshift-sre-pruning",
+	"openshift-cloud-ingress-operator",
+	"openshift-rbac-permissions",
+	"openshift-route-monitor-operator",
+	"openshift-validation-webhook",
+	"openshift-backplane",
+	"openshift-custom-domains-operator",
+	"openshift-must-gather-operator",
+	"openshift-splunk-forwarder-operator",
+	"openshift-sre-sshd",
+	"openshift-rbac-permissions",
+}
 
 // Upgrade config keys.
 var Upgrade = struct {
@@ -691,7 +711,7 @@ func init() {
 	viper.SetDefault(Cluster.Reused, false)
 	viper.SetDefault(Cluster.Passing, false)
 
-	viper.SetDefault(Cluster.InspectNamespaces, "")
+	viper.SetDefault(Cluster.InspectNamespaces, strings.Join(defaultInspectNamespaces, ","))
 	viper.BindEnv(Cluster.InspectNamespaces, "INSPECT_NAMESPACES")
 
 	// ----- Cloud Provider -----
