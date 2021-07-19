@@ -26,6 +26,7 @@ healthCheck:
   - PrometheusRuleFailures
   - CannotRetrieveUpdates
   - FluentdNodeDown
+  - PruningCronjobErrorSRE
   ignoredNamespaces:
   - openshift-logging
   - openshift-redhat-marketplace
