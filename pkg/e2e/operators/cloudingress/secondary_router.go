@@ -52,7 +52,9 @@ var _ = ginkgo.Describe(constants.SuiteInforming+TestPrefix, func() {
 			// the created router name should be router-app-e2e-apps
 			deploymentName := "router-" + ingressControllerName
 			deployment, err := operators.PollDeployment(h, "openshift-ingress", deploymentName)
+			ingress, _ := getingressController(h, ingressControllerName)
 
+			Expect(ingress.Annotations["Owner"]).To(Equal("cloud-ingress-operator"))
 			Expect(err).ToNot(HaveOccurred(), "failed fetching deployment")
 			Expect(deployment).NotTo(BeNil(), "deployment is nil")
 			Expect(deployment.Status.ReadyReplicas).To(BeNumerically("==", deployment.Status.Replicas))
@@ -69,16 +71,16 @@ var _ = ginkgo.Describe(constants.SuiteInforming+TestPrefix, func() {
 				time.Sleep(time.Duration(120) * time.Second)
 			}
 
-			ingressControllerName := strings.Split(secondaryIngress.DNSName, ".")[0]
+			ingressControllerName := strings.Split(secondaryIngress.DNSName, ".")[1]
 			// check that the ingresscontroller app-e2e-apps was deleted
 			ingressControllerExists(h, ingressControllerName, false)
 		})
 	})
-
 })
 
 // appIngressExits returns the appIngress matching the criteria if it exists
 func appIngressExits(h *helper.H, isdefault bool, dnsname string) (appIngress cloudingressv1alpha1.ApplicationIngress, exists bool, index int) {
+
 	PublishingStrategyInstance, _ := getPublishingStrategy(h)
 
 	// Grab the current list of Application Ingresses from the Publishing Strategy
