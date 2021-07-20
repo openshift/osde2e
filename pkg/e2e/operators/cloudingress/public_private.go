@@ -3,6 +3,7 @@ package cloudingress
 import (
 	"context"
 	"log"
+	"strings"
 	"time"
 
 	"github.com/onsi/ginkgo"
@@ -11,7 +12,6 @@ import (
 
 	"github.com/openshift/osde2e/pkg/common/constants"
 	"github.com/openshift/osde2e/pkg/common/helper"
-
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -41,8 +41,16 @@ var _ = ginkgo.Describe(constants.SuiteInforming+TestPrefix, func() {
 				log.Printf("Waiting for router-default service in openshift-ingress namespace to be private")
 				return false, nil
 			})
+
+			//ingress_controller := &operatorv1.IngressController{}
+			ingress_controller, exists, _ := appIngress(h, true, "")
+			Expect(exists).To(BeTrue())
+			if ingress_controller.Listening == "internal" {
+				log.Printf("ingresscontroller successfully switched from external to internal")
+			}
 			Expect(err).NotTo(HaveOccurred())
 		})
+
 		ginkgo.It("should be able to toggle the default applicationingress from private to public", func() {
 
 			updateApplicationIngress(h, "external")
@@ -61,6 +69,12 @@ var _ = ginkgo.Describe(constants.SuiteInforming+TestPrefix, func() {
 				log.Printf("Waiting for router-default service in openshift-ingress namespace to be public")
 				return false, nil
 			})
+			//ingress_controller := &operatorv1.IngressController{}
+			ingress_controller, exists, _ := appIngress(h, true, "")
+			Expect(exists).To(BeTrue())
+			if ingress_controller.Listening == "external" {
+				log.Printf("ingresscontroller successfully switched from internal to external")
+			}
 			Expect(err).NotTo(HaveOccurred())
 		})
 	})
@@ -96,6 +110,25 @@ func updateApplicationIngress(h *helper.H, lbscheme string) {
 	// Update the publishingstrategy
 	ps, err = h.Dynamic().Resource(schema.GroupVersionResource{Group: "cloudingress.managed.openshift.io", Version: "v1alpha1", Resource: "publishingstrategies"}).Namespace(OperatorNamespace).Update(context.TODO(), ps, metav1.UpdateOptions{})
 	Expect(err).NotTo(HaveOccurred())
+}
+
+//Function to grab the default ingresscontroller
+func appIngress(h *helper.H, isdefault bool, dnsname string) (appIngress cloudingressv1alpha1.ApplicationIngress, exists bool, index int) {
+	PublishingStrategyInstance, _ := getPublishingStrategy(h)
+
+	// Grab the current list of Application Ingresses from the Publishing Strategy
+	AppIngressList := PublishingStrategyInstance.Spec.ApplicationIngress
+
+	// Find the application ingress matching our criteria
+	for i, v := range AppIngressList {
+		if v.Default == isdefault && strings.HasPrefix(v.DNSName, dnsname) {
+			appIngress = v
+			exists = true
+			index = i
+			break
+		}
+	}
+	return appIngress, exists, index
 }
 
 // common setup and utils are in cloudingress.go

@@ -9,9 +9,9 @@ import (
 
 	"github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/constants"
 	"github.com/openshift/osde2e/pkg/common/helper"
-	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 
 	"github.com/openshift/osde2e/pkg/common/config"
 	appsv1 "k8s.io/api/apps/v1"
