@@ -7,6 +7,7 @@ import (
 	"github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	cloudingress "github.com/openshift/cloud-ingress-operator/pkg/apis/cloudingress/v1alpha1"
+	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/constants"
 	"github.com/openshift/osde2e/pkg/common/helper"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -19,6 +20,11 @@ import (
 )
 
 var _ = ginkgo.Describe(constants.SuiteOperators+TestPrefix, func() {
+	ginkgo.BeforeEach(func() {
+		if viper.GetBool("rosa.STS") {
+			ginkgo.Skip("STS does not support MVO")
+		}
+	})
 	h := helper.New()
 	ginkgo.Context("apischeme", func() {
 		ginkgo.It("apischemes CR instance must be present on cluster", func() {

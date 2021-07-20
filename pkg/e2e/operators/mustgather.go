@@ -45,12 +45,12 @@ var _ = ginkgo.Describe(mustGatherOperatorTest, func() {
 	checkUpgrade(h, "openshift-must-gather-operator", "must-gather-operator",
 		"must-gather-operator", "must-gather-operator-registry")
 
-	ginkgo.Context("as Members of osd-devaccess", func() {
+	ginkgo.Context("as Members of CEE", func() {
 		mg := generateMustGather(h, "foo-example")
 		ginkgo.It("can manage MustGather CRs in openshift-must-gather-operator namespace", func() {
-			err := createMustGather(h, mg, operatorNamespace, "dummy@redhat.com", "osd-devaccess")
+			err := createMustGather(h, mg, operatorNamespace, "a-dummy-service-account-name", "system:serviceaccounts:openshift-backplane-cee")
 			Expect(err).NotTo(HaveOccurred())
-			err = deleteMustGather(h, mg.Name, operatorNamespace, "dummy@redhat.com", "osd-devaccess")
+			err = deleteMustGather(h, mg.Name, operatorNamespace, "a-dummy-service-account-name", "system:serviceaccounts:openshift-backplane-cee")
 			Expect(err).NotTo(HaveOccurred())
 		})
 	})

@@ -8,6 +8,7 @@ import (
 	"github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/openshift/osde2e/pkg/common/alert"
+	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/helper"
 	velerov1 "github.com/vmware-tanzu/velero/pkg/apis/velero/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -25,6 +26,11 @@ func init() {
 }
 
 var _ = ginkgo.Describe(veleroOperatorTestName, func() {
+	ginkgo.BeforeEach(func() {
+		if viper.GetBool("rosa.STS") {
+			ginkgo.Skip("STS does not support MVO")
+		}
+	})
 	var operatorName = "managed-velero-operator"
 	var operatorNamespace string = "openshift-velero"
 	var operatorLockFile string = "managed-velero-operator-lock"
