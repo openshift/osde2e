@@ -374,11 +374,9 @@ var _ = ginkgo.Describe(customDomainsOperatorTestName, func() {
 					}
 					// Check for URL DNS error
 					if urlError, ok := err.(*url.Error); ok {
-						if opError, ok := urlError.Err.(*net.OpError); ok {
-							if dnsError, ok := opError.Err.(*net.DNSError); ok && dnsError.IsNotFound {
-								// do not abort on flaky DNS responses
-								return false, nil
-							}
+						if _, ok := urlError.Err.(*net.OpError); ok {
+							// do not abort on flaky network operations
+							return false, nil
 						}
 					}
 					// Unhandled error
