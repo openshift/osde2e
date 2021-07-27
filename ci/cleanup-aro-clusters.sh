@@ -9,6 +9,6 @@ az login --service-principal --username "$(cat /usr/local/osde2e-credentials/aro
 az aro list | jq '.[] | select(.name|test("osde2e-.")) | .name' | while read line ; do
     echo "Cleaning up old cluster cluster $line"
 
-    az aro delete --yes --name="$line" --resource-group="$(cat "$line")"
-    az group delete --yes --name="$(cat "$line")"
+    az aro delete --yes --name="$line" --resource-group="$line"
+    az group delete --yes --name="$line"
 done
