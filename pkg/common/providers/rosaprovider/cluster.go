@@ -107,6 +107,17 @@ func (m *ROSAProvider) LaunchCluster(clusterName string) (string, error) {
 		return "", fmt.Errorf("error generating cluster properties: %v", err)
 	}
 
+	installConfig := ""
+
+	if viper.GetString(config.Cluster.InstallConfig) != "" {
+		installConfig += viper.GetString(config.Cluster.InstallConfig)
+	}
+
+	if installConfig != "" {
+		log.Println("Install config:", installConfig)
+		clusterProperties["install_config"] = installConfig
+	}
+
 	var createdCluster *cmv1.Cluster
 
 	// ROSA uses the AWS provider in the background, so we'll determine region this way.
