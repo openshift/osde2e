@@ -139,6 +139,21 @@ func RunUpgrade() error {
 	}
 
 	log.Println("Upgrade complete!")
+	if viper.GetBool(config.Upgrade.ManagedUpgradeTestNodeDrain) {
+		list, err := h.Kube().CoreV1().Pods(h.CurrentProject()).List(context.TODO(), metav1.ListOptions{LabelSelector: "app=node-drain-test"})
+		if err != nil {
+			return fmt.Errorf("Error listing pods: %s", err.Error())
+		}
+		if len(list.Items) != 0 {
+			for _, item := range list.Items {
+				log.Printf("Removing finalizers from %s", item.Name)
+				item.Finalizers = []string{}
+				h.Kube().CoreV1().Pods(h.CurrentProject()).Update(context.TODO(), &item, metav1.UpdateOptions{})
+				log.Printf("Deleting pod %s", item.Name)
+				h.Kube().CoreV1().Pods(h.CurrentProject()).Delete(context.TODO(), item.Name, metav1.DeleteOptions{})
+			}
+		}
+	}
 	return nil
 }
 
