@@ -82,7 +82,7 @@ var keyToSecretMappingMutex = sync.Mutex{}
 
 // This is a list of OSD-specific namespaces to include in the post-E2E cleanup must-gather
 // that takes place.
-var defaultInspectNamespaces = []string {
+var defaultInspectNamespaces = []string{
 	"openshift-managed-upgrade-operator",
 	"openshift-velero",
 	"openshift-build-test",
@@ -121,18 +121,16 @@ var Upgrade = struct {
 	// Env: UPGRADE_IMAGE
 	Image string
 
+	// Type of upgrader to use when upgrading (OSD or ARO)
+	// ENV: UPGRADE_TYPE
+	Type string
+
 	// UpgradeVersionEqualToInstallVersion is true if the install version and upgrade versions are the same.
 	UpgradeVersionEqualToInstallVersion string
 
 	// MonitorRoutesDuringUpgrade will monitor the availability of routes whilst an upgrade takes place
 	// Env: UPGRADE_MONITOR_ROUTES
 	MonitorRoutesDuringUpgrade string
-
-	// Perform an upgrade using the Managed Upgrade Operator
-	ManagedUpgrade string
-
-	// Wait for workers to upgrade before considering upgrade complete
-	WaitForWorkersToManagedUpgrade string
 
 	// Create disruptive Pod Disruption Budget workloads to test the Managed Upgrade Operator's ability to handle them.
 	ManagedUpgradeTestPodDisruptionBudgets string
@@ -148,10 +146,9 @@ var Upgrade = struct {
 	UpgradeToLatestY:                       "upgrade.ToLatestY",
 	ReleaseName:                            "upgrade.releaseName",
 	Image:                                  "upgrade.image",
+	Type:                                   "upgrade.type",
 	UpgradeVersionEqualToInstallVersion:    "upgrade.upgradeVersionEqualToInstallVersion",
 	MonitorRoutesDuringUpgrade:             "upgrade.monitorRoutesDuringUpgrade",
-	ManagedUpgrade:                         "upgrade.managedUpgrade",
-	WaitForWorkersToManagedUpgrade:         "upgrade.waitForWorkersToManagedUpgrade",
 	ManagedUpgradeTestPodDisruptionBudgets: "upgrade.managedUpgradeTestPodDisruptionBudgets",
 	ManagedUpgradeTestNodeDrain:            "upgrade.managedUpgradeTestNodeDrain",
 	ManagedUpgradeRescheduled:              "upgrade.managedUpgradeRescheduled",
@@ -581,13 +578,13 @@ func init() {
 
 	viper.BindEnv(Upgrade.Image, "UPGRADE_IMAGE")
 
+	viper.SetDefault(Upgrade.Type, "OSD")
+	viper.BindEnv(Upgrade.Type, "UPGRADE_TYPE")
+
 	viper.SetDefault(Upgrade.UpgradeVersionEqualToInstallVersion, false)
 
 	viper.BindEnv(Upgrade.MonitorRoutesDuringUpgrade, "UPGRADE_MONITOR_ROUTES")
 	viper.SetDefault(Upgrade.MonitorRoutesDuringUpgrade, true)
-
-	viper.BindEnv(Upgrade.ManagedUpgrade, "UPGRADE_MANAGED")
-	viper.SetDefault(Upgrade.ManagedUpgrade, true)
 
 	viper.BindEnv(Upgrade.ManagedUpgradeTestPodDisruptionBudgets, "UPGRADE_MANAGED_TEST_PDBS")
 	viper.SetDefault(Upgrade.ManagedUpgradeTestPodDisruptionBudgets, true)
@@ -597,9 +594,6 @@ func init() {
 
 	viper.BindEnv(Upgrade.ManagedUpgradeRescheduled, "UPGRADE_MANAGED_TEST_RESCHEDULE")
 	viper.SetDefault(Upgrade.ManagedUpgradeRescheduled, false)
-
-	viper.BindEnv(Upgrade.WaitForWorkersToManagedUpgrade, "UPGRADE_WAIT_FOR_WORKERS")
-	viper.SetDefault(Upgrade.WaitForWorkersToManagedUpgrade, true)
 
 	// ----- Kubeconfig -----
 	viper.BindEnv(Kubeconfig.Path, "TEST_KUBECONFIG")

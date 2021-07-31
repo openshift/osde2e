@@ -15,7 +15,7 @@ require (
 	github.com/code-ready/crc v1.10.0
 	github.com/dgryski/go-gk v0.0.0-20200319235926-a69029f61654 // indirect
 	github.com/dgryski/go-lttb v0.0.0-20180810165845-318fcdf10a77 // indirect
-	github.com/emicklei/go-restful v2.9.6+incompatible
+	github.com/emicklei/go-restful v2.10.0+incompatible
 	github.com/fatih/color v1.10.0
 	github.com/fsnotify/fsnotify v1.4.9
 	github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32
@@ -44,7 +44,7 @@ require (
 	github.com/openshift/cluster-api v0.0.0-20191129101638-b09907ac6668
 	github.com/openshift/custom-domains-operator v0.0.0-20210423153044-6e7655fbdecf
 	github.com/openshift/machine-api-operator v0.2.1-0.20200529045911-d19e8d007f7c
-	github.com/openshift/managed-upgrade-operator v0.0.0-20200820052802-5d57e1785b53
+	github.com/openshift/managed-upgrade-operator v0.0.0-20210728104325-95212635e5e1
 	github.com/openshift/rosa v1.0.6
 	github.com/openshift/route-monitor-operator v0.0.0-20210309123726-229da76cc133
 	github.com/openshift/splunk-forwarder-operator v0.0.0-20201112162206-2f454770b6c0
@@ -72,8 +72,8 @@ require (
 	google.golang.org/api v0.47.0
 	google.golang.org/genproto v0.0.0-20210602131652-f16073e35f0c
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
-	k8s.io/api v0.20.0
-	k8s.io/apimachinery v0.20.0
+	k8s.io/api v0.20.2
+	k8s.io/apimachinery v0.20.2
 	k8s.io/client-go v12.0.0+incompatible
 	k8s.io/utils v0.0.0-20200729134348-d5654de09c73
 )
