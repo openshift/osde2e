@@ -178,6 +178,12 @@ func WaitForClusterReadyPostWake(clusterID string, logger *log.Logger) error {
 		for _, pod := range list.Items {
 			if pod.Status.Phase == corev1.PodFailed || pod.Status.Phase == corev1.PodPending {
 				log.Printf("Cleaning up stale pod: %s", pod.Name)
+				if len(pod.Finalizers) > 0 {
+					log.Printf("Removing finalizers from %s", pod.Name)
+					pod.Finalizers = []string{}
+					kubeClient.CoreV1().Pods(pod.Namespace).Update(context.TODO(), &pod, v1.UpdateOptions{})
+				}
+				log.Printf("Deleting pod %s", pod.Name)
 				err = kubeClient.CoreV1().Pods(pod.Namespace).Delete(context.TODO(), pod.Name, v1.DeleteOptions{})
 				if err != nil {
 					log.Printf("Error deleting stale pod: %s", err.Error())
