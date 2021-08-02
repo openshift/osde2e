@@ -445,6 +445,11 @@ var Addons = struct {
 	// SkipAddonList is a boolean to indicate whether the listing of addons has to be disabled or not.
 	// Env: SKIP_ADDON_LIST
 	SkipAddonList string
+
+	// PollingTimeout is how long (in seconds) to wait for the add-on test to complete running.
+	// Env: ADDON_POLLING_TIMEOUT
+	PollingTimeout string
+
 }{
 	IDsAtCreation:    "addons.idsAtCreation",
 	IDs:              "addons.ids",
@@ -455,6 +460,7 @@ var Addons = struct {
 	SlackChannel:     "addons.slackChannel",
 	SkipAddonList:    "addons.skipAddonlist",
 	Parameters:       "addons.parameters",
+	PollingTimeout:   "addons.pollingTimeout",
 }
 
 // Scale config keys.
@@ -743,6 +749,9 @@ func init() {
 
 	viper.SetDefault(Addons.SkipAddonList, false)
 	viper.BindEnv(Addons.SkipAddonList, "SKIP_ADDON_LIST")
+
+	viper.SetDefault(Addons.PollingTimeout, 3600)
+	viper.BindEnv(Addons.PollingTimeout, "ADDON_POLLING_TIMEOUT")
 
 	// ----- Scale -----
 	viper.SetDefault(Scale.WorkloadsRepository, "https://github.com/openshift-scale/workloads")

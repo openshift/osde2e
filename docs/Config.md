@@ -114,7 +114,7 @@ Some environment variables commonly used for pipelines under osde2e are indicate
 |ADDON_TEST_USER| TestUser is the OpenShift user that the tests will run as. If "%s" is detected in the TestUser string, it will evaluate that as the project namespace. Ex. "system:serviceaccount:%s:dedicated-admin" . Evaluated : "system:serviceaccount:osde2e-abc123:dedicated-admin"|
 |ADDON_RUN_CLEANUP| RunCleanup is a boolean to specify whether the testHarnesses should have a separate cleanup phase. This phase would run at the end of all e2e testing|
 |ADDON_CLEANUP_HARNESSES| CleanupHarnesses is a comma separated list of container images that will clean up any artifacts created after test harnesses have run|
- 
+|ADDON_POLLING_TIMEOUT| PollingTimeout defines in seconds the amount of time to wait for an add-on test job to finish before timing it out|
  
 ### Prometheus related:-
 
