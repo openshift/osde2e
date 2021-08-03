@@ -129,11 +129,15 @@ func (m *ROSAProvider) LaunchCluster(clusterName string) (string, error) {
 	falseValue := false
 
 	clustersClient := m.ocmProvider.GetConnection().ClustersMgmt().V1().Clusters()
+	rosaClusterVersion := viper.GetString(config.Cluster.Version)
 
-	rosaClusterVersion := strings.Replace(viper.GetString(config.Cluster.Version), "-fast", "", -1)
+	rosaClusterVersion = strings.Replace(rosaClusterVersion, "-fast", "", -1)
 	rosaClusterVersion = strings.Replace(rosaClusterVersion, "-candidate", "", -1)
-	rosaClusterVersion = fmt.Sprintf("%s-%s", rosaClusterVersion, viper.GetString(config.Cluster.Channel))
+	if !strings.HasSuffix(rosaClusterVersion, "-nightly") {
+		rosaClusterVersion = fmt.Sprintf("%s-%s", rosaClusterVersion, viper.GetString(config.Cluster.Channel))
+	}
 	rosaClusterVersion = strings.Replace(rosaClusterVersion, "-stable", "", -1)
+
 	log.Printf("ROSA cluster version: %s", rosaClusterVersion)
 
 	clusterSpec := cluster.Spec{
