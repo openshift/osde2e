@@ -434,9 +434,13 @@ func (o *OCMProvider) DetermineMachineType(cloudProvider string) (string, error)
 			returnedType = machinetypeObj.ID()
 			break
 		}
+		log.Printf("Random machine type requested, selected `%s` machine type.", returnedType)
 	}
 
-	log.Printf("Random machine type requested, selected `%s` machine type.", returnedType)
+	if computeMachineType != "random" && computeMachineType != "" {
+		log.Printf("Machine type manually set to %s", computeMachineType)
+		returnedType = computeMachineType
+	}
 
 	// Update the Config with the selected random machine
 	viper.Set(ComputeMachineType, returnedType)
