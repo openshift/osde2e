@@ -135,6 +135,8 @@ func (m *ROSAProvider) LaunchCluster(clusterName string) (string, error) {
 	rosaClusterVersion = strings.Replace(rosaClusterVersion, "-candidate", "", -1)
 	if !strings.HasSuffix(rosaClusterVersion, "-nightly") {
 		rosaClusterVersion = fmt.Sprintf("%s-%s", rosaClusterVersion, viper.GetString(config.Cluster.Channel))
+	} else {
+		viper.Set(config.Cluster.Channel, "nightly")
 	}
 	rosaClusterVersion = strings.Replace(rosaClusterVersion, "-stable", "", -1)
 
