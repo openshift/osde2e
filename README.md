@@ -11,7 +11,7 @@ Provide a standard for testing every aspect of the Openshift Dedicated product. 
  
 Log into OCM, then go here to obtain an [OpenShift Offline Token].
  
-A properly setup Go workspace using **Go 1.13+ is required**.
+A properly setup Go workspace using **Go 1.16+ is required**.
  
 Install dependencies:
 ```
