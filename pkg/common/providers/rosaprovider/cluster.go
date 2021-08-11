@@ -14,8 +14,7 @@ import (
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/spi"
 	"github.com/openshift/osde2e/pkg/common/util"
-	"github.com/openshift/rosa/pkg/cluster"
-	"github.com/openshift/rosa/pkg/ocm/versions"
+	"github.com/openshift/rosa/pkg/ocm"
 )
 
 // IsValidClusterName validates the clustername prior to proceeding with it
@@ -39,7 +38,7 @@ func (m *ROSAProvider) IsValidClusterName(clusterName string) (bool, error) {
 			Page(page).
 			SendContext(ctx)
 		if err != nil {
-			return false, fmt.Errorf("Can't retrieve page %d: %s\n", page, err)
+			return false, fmt.Errorf("can't retrieve page %d: %s", page, err)
 		}
 
 		if response.Total() != 0 {
@@ -64,13 +63,18 @@ func (m *ROSAProvider) LaunchCluster(clusterName string) (string, error) {
 	// Calculate an expiration date for the cluster so that it will be automatically deleted if
 	// we happen to forget to do it:
 	var expiration time.Time
+	var err error
+
+	ocmClient, err := ocm.NewClient().Build()
+	if err != nil {
+		return "", fmt.Errorf("unable to create OCM client: %s", err.Error())
+	}
 
 	expiryInMinutes := viper.GetDuration(config.Cluster.ExpiryInMinutes)
 	if expiryInMinutes > 0 {
 		expiration = time.Now().Add(expiryInMinutes * time.Minute).UTC() // UTC() to workaround SDA-1567.
 	}
 
-	var err error
 	var machineCIDRParsed = &net.IPNet{}
 	machineCIDRString := viper.GetString(MachineCIDR)
 	if machineCIDRString != "" {
@@ -128,7 +132,6 @@ func (m *ROSAProvider) LaunchCluster(clusterName string) (string, error) {
 	}
 	falseValue := false
 
-	clustersClient := m.ocmProvider.GetConnection().ClustersMgmt().V1().Clusters()
 	rosaClusterVersion := viper.GetString(config.Cluster.Version)
 
 	rosaClusterVersion = strings.Replace(rosaClusterVersion, "-fast", "", -1)
@@ -142,7 +145,7 @@ func (m *ROSAProvider) LaunchCluster(clusterName string) (string, error) {
 
 	log.Printf("ROSA cluster version: %s", rosaClusterVersion)
 
-	clusterSpec := cluster.Spec{
+	clusterSpec := ocm.Spec{
 		Name:               clusterName,
 		Region:             region,
 		ChannelGroup:       viper.GetString(config.Cluster.Channel),
@@ -169,9 +172,9 @@ func (m *ROSAProvider) LaunchCluster(clusterName string) (string, error) {
 	}
 
 	err = callAndSetAWSSession(func() error {
-		createdCluster, err = cluster.CreateCluster(clustersClient, clusterSpec)
+		createdCluster, err = ocmClient.CreateCluster(clusterSpec)
 		if err != nil {
-			return fmt.Errorf("Error creating cluster: %s", err.Error())
+			return fmt.Errorf("error creating cluster: %s", err.Error())
 		}
 		return nil
 	})
@@ -185,14 +188,18 @@ func (m *ROSAProvider) LaunchCluster(clusterName string) (string, error) {
 
 // Versions will call Versions from the OCM provider.
 func (m *ROSAProvider) Versions() (*spi.VersionList, error) {
-	clustersClient := m.ocmProvider.GetConnection().ClustersMgmt().V1()
-	versionResponse, err := versions.GetVersions(clustersClient, "")
+	ocmClient, err := ocm.NewClient().Build()
+	if err != nil {
+		return nil, fmt.Errorf("unable to create OCM client: %s", err.Error())
+	}
+
+	versionResponse, err := ocmClient.GetVersions("")
 	if err != nil {
 		return nil, err
 	}
 
 	if viper.GetString(config.Cluster.Channel) != "stable" {
-		versionResponseChannel, err := versions.GetVersions(clustersClient, viper.GetString(config.Cluster.Channel))
+		versionResponseChannel, err := ocmClient.GetVersions(viper.GetString(config.Cluster.Channel))
 		if err != nil {
 			return nil, err
 		}

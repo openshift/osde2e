@@ -9,7 +9,7 @@ require (
 	github.com/PuerkitoBio/goquery v1.5.1
 	github.com/adamliesko/retry v0.0.0-20200123222335-86c8baac277d
 	github.com/antlr/antlr4 v0.0.0-20200209180723-1177c0b58d07
-	github.com/aws/aws-sdk-go v1.37.14
+	github.com/aws/aws-sdk-go v1.39.3
 	github.com/bmizerany/perks v0.0.0-20141205001514-d9a9656a3a4b // indirect
 	github.com/cenkalti/backoff/v4 v4.1.0 // indirect
 	github.com/code-ready/crc v1.10.0
@@ -21,22 +21,21 @@ require (
 	github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32
 	github.com/golang-migrate/migrate/v4 v4.14.2-0.20210511063805-2e7358e012a6
 	github.com/google/go-github/v31 v31.0.0
-	github.com/google/uuid v1.1.2
+	github.com/google/uuid v1.2.0
 	github.com/gotestyourself/gotestyourself v2.2.0+incompatible // indirect
-	github.com/grokify/html-strip-tags-go v0.0.0-20200923094847-079d207a09f1 // indirect
 	github.com/hashicorp/go-multierror v1.1.0
 	github.com/influxdata/tdigest v0.0.1 // indirect
-	github.com/jackc/pgtype v1.7.0
+	github.com/jackc/pgtype v1.8.0
 	github.com/jinzhu/inflection v1.0.0
 	github.com/joshdk/go-junit v0.0.0-20201221202203-061ee62ada40
 	github.com/kyleconroy/sqlc v1.8.0
 	github.com/kylelemons/godebug v1.1.0
-	github.com/lib/pq v1.10.1
+	github.com/lib/pq v1.10.2
 	github.com/markbates/pkger v0.17.1
 	github.com/mitchellh/mapstructure v1.1.2
 	github.com/onsi/ginkgo v1.16.4
 	github.com/onsi/gomega v1.10.2
-	github.com/openshift-online/ocm-sdk-go v0.1.190
+	github.com/openshift-online/ocm-sdk-go v0.1.200
 	github.com/openshift/api v3.9.1-0.20190924102528-32369d4db2ad+incompatible
 	github.com/openshift/client-go v0.0.0-20200827190008-3062137373b5
 	github.com/openshift/cloud-credential-operator v0.0.0-20210525141023-02cc6303cd10
@@ -45,7 +44,7 @@ require (
 	github.com/openshift/custom-domains-operator v0.0.0-20210423153044-6e7655fbdecf
 	github.com/openshift/machine-api-operator v0.2.1-0.20200529045911-d19e8d007f7c
 	github.com/openshift/managed-upgrade-operator v0.0.0-20210728104325-95212635e5e1
-	github.com/openshift/rosa v1.0.6
+	github.com/openshift/rosa v1.1.0
 	github.com/openshift/route-monitor-operator v0.0.0-20210309123726-229da76cc133
 	github.com/openshift/splunk-forwarder-operator v0.0.0-20201112162206-2f454770b6c0
 	github.com/operator-framework/api v0.3.6
@@ -67,7 +66,7 @@ require (
 	github.com/tsenart/go-tsz v0.0.0-20180814235614-0bd30b3df1c3 // indirect
 	github.com/tsenart/vegeta v12.7.0+incompatible
 	github.com/vmware-tanzu/velero v1.5.0-beta.1.0.20200831161009-1dcaa1bf7512
-	golang.org/x/net v0.0.0-20210503060351-7fd8e65b6420
+	golang.org/x/net v0.0.0-20210614182718-04defd469f4e
 	golang.org/x/tools v0.1.2
 	google.golang.org/api v0.47.0
 	google.golang.org/genproto v0.0.0-20210602131652-f16073e35f0c
