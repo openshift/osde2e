@@ -14,7 +14,10 @@ import (
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/spi"
 	"github.com/openshift/osde2e/pkg/common/util"
+	rosaLogin "github.com/openshift/rosa/cmd/login"
+	"github.com/openshift/rosa/pkg/logging"
 	"github.com/openshift/rosa/pkg/ocm"
+	rprtr "github.com/openshift/rosa/pkg/reporter"
 )
 
 // IsValidClusterName validates the clustername prior to proceeding with it
@@ -65,7 +68,17 @@ func (m *ROSAProvider) LaunchCluster(clusterName string) (string, error) {
 	var expiration time.Time
 	var err error
 
-	ocmClient, err := ocm.NewClient().Build()
+	newLogin := rosaLogin.Cmd
+	newLogin.SetArgs([]string{"--token", viper.GetString("ocm.token")})
+	err = newLogin.Execute()
+	if err != nil {
+		return "", fmt.Errorf("unable to login to OCM: %s", err.Error())
+	}
+
+	reporter := rprtr.CreateReporterOrExit()
+	logger := logging.CreateLoggerOrExit(reporter)
+
+	ocmClient, err := ocm.NewClient().Logger(logger).Build()
 	if err != nil {
 		return "", fmt.Errorf("unable to create OCM client: %s", err.Error())
 	}
@@ -188,7 +201,17 @@ func (m *ROSAProvider) LaunchCluster(clusterName string) (string, error) {
 
 // Versions will call Versions from the OCM provider.
 func (m *ROSAProvider) Versions() (*spi.VersionList, error) {
-	ocmClient, err := ocm.NewClient().Build()
+	newLogin := rosaLogin.Cmd
+	newLogin.SetArgs([]string{"--token", viper.GetString("ocm.token")})
+	err := newLogin.Execute()
+	if err != nil {
+		return nil, fmt.Errorf("unable to login to OCM: %s", err.Error())
+	}
+
+	reporter := rprtr.CreateReporterOrExit()
+	logger := logging.CreateLoggerOrExit(reporter)
+
+	ocmClient, err := ocm.NewClient().Logger(logger).Build()
 	if err != nil {
 		return nil, fmt.Errorf("unable to create OCM client: %s", err.Error())
 	}
