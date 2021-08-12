@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"os"
 	"strings"
 	"time"
 
@@ -68,19 +69,9 @@ func (m *ROSAProvider) LaunchCluster(clusterName string) (string, error) {
 	var expiration time.Time
 	var err error
 
-	newLogin := rosaLogin.Cmd
-	newLogin.SetArgs([]string{"--token", viper.GetString("ocm.token")})
-	err = newLogin.Execute()
+	ocmClient, err := m.ocmLogin()
 	if err != nil {
-		return "", fmt.Errorf("unable to login to OCM: %s", err.Error())
-	}
-
-	reporter := rprtr.CreateReporterOrExit()
-	logger := logging.CreateLoggerOrExit(reporter)
-
-	ocmClient, err := ocm.NewClient().Logger(logger).Build()
-	if err != nil {
-		return "", fmt.Errorf("unable to create OCM client: %s", err.Error())
+		return "", err
 	}
 
 	expiryInMinutes := viper.GetDuration(config.Cluster.ExpiryInMinutes)
@@ -199,11 +190,14 @@ func (m *ROSAProvider) LaunchCluster(clusterName string) (string, error) {
 	return createdCluster.ID(), nil
 }
 
-// Versions will call Versions from the OCM provider.
-func (m *ROSAProvider) Versions() (*spi.VersionList, error) {
+func (m *ROSAProvider) ocmLogin() (*ocm.Client, error) {
+	err := os.Setenv("OCM_CONFIG", "/tmp/ocm.json")
+	if err != nil {
+		return nil, err
+	}
 	newLogin := rosaLogin.Cmd
 	newLogin.SetArgs([]string{"--token", viper.GetString("ocm.token")})
-	err := newLogin.Execute()
+	err = newLogin.Execute()
 	if err != nil {
 		return nil, fmt.Errorf("unable to login to OCM: %s", err.Error())
 	}
@@ -214,6 +208,16 @@ func (m *ROSAProvider) Versions() (*spi.VersionList, error) {
 	ocmClient, err := ocm.NewClient().Logger(logger).Build()
 	if err != nil {
 		return nil, fmt.Errorf("unable to create OCM client: %s", err.Error())
+	}
+
+	return ocmClient, err
+}
+
+// Versions will call Versions from the OCM provider.
+func (m *ROSAProvider) Versions() (*spi.VersionList, error) {
+	ocmClient, err := m.ocmLogin()
+	if err != nil {
+		return nil, err
 	}
 
 	versionResponse, err := ocmClient.GetVersions("")
