@@ -281,8 +281,20 @@ func (m *ROSAProvider) ocmLogin() (*ocm.Client, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	// URLAliases allows the value of the `--env` option to map to the various API URLs.
+	var URLAliases = map[string]string{
+		"prod":  "https://api.openshift.com",
+		"stage": "https://api.stage.openshift.com",
+		"int":   "https://api.integration.openshift.com",
+	}
+	url, ok := URLAliases[viper.GetString(Env)]
+	if !ok {
+		url = URLAliases["prod"]
+	}
+
 	newLogin := rosaLogin.Cmd
-	newLogin.SetArgs([]string{"--token", viper.GetString("ocm.token")})
+	newLogin.SetArgs([]string{"--token", viper.GetString("ocm.token"), "--env", url})
 	err = newLogin.Execute()
 	if err != nil {
 		return nil, fmt.Errorf("unable to login to OCM: %s", err.Error())
