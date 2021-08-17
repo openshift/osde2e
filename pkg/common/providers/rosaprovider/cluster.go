@@ -119,8 +119,18 @@ func (m *ROSAProvider) LaunchCluster(clusterName string) (string, error) {
 
 	installConfig := ""
 
+	// This skips setting install_config for any prod job OR any periodic addon job.
+	// To invoke this logic locally you will have to set JOB_TYPE to "periodic".
+	if m.Environment() != "prod" {
+		if os.Getenv("JOB_TYPE") == "periodic" && !strings.Contains(os.Getenv("JOB_NAME"), "addon") {
+			imageSource := viper.GetString(config.Cluster.ImageContentSource)
+			installConfig += "\n" + m.ChooseImageSource(imageSource)
+			installConfig += "\n" + m.GetNetworkConfig(viper.GetString(config.Cluster.NetworkProvider))
+		}
+	}
+
 	if viper.GetString(config.Cluster.InstallConfig) != "" {
-		installConfig += viper.GetString(config.Cluster.InstallConfig)
+		installConfig += "\n" + viper.GetString(config.Cluster.InstallConfig)
 	}
 
 	if installConfig != "" {
@@ -361,4 +371,25 @@ func toCloudRegions(in []*v1.CloudRegion) []CloudRegion {
 		out = append(out, in[i])
 	}
 	return out
+}
+
+func (m *ROSAProvider) GetNetworkConfig(networkProvider string) string {
+	if networkProvider == config.DefaultNetworkProvider {
+		return ""
+	}
+	if networkProvider != "OVNKubernetes" {
+		return ""
+	}
+	return `
+networking:
+  clusterNetwork:
+  - cidr: 10.128.0.0/14
+    hostPrefix: 23
+  machineCIDR: 10.0.0.0/16
+  machineNetwork:
+  - cidr: 10.0.0.0/16
+  networkType: OVNKubernetes
+  serviceNetwork:
+  - 172.30.0.0/16
+`
 }
