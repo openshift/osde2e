@@ -62,6 +62,8 @@ The first two of these are comma-delimited lists when supplied by environment va
 
 `ADDON_PARAMETERS` allows you to configure parameters that will be passed to OCM for the installation of your addon. The format is a two-level JSON object. The outer object's keys are the IDs of addons, and the inner objects are key-value pairs that will be passed to the associated addon.
 
+`CHANNEL` lets you specify the Cincinnati channel for version selection. Valid options include `nightly`, `candidate`, `fast`, and `stable`. By default, this is set to `candidate`
+
 An example prow job that configures the "prow" operator in the stage environment:
 
 ```yaml
