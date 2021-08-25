@@ -105,6 +105,7 @@ A full example of this process is presented below:
 $ ocm cluster login <cluster>
 $ oc adm groups add-users osd-sre-cluster-admins $(oc whoami)
 $ export TEST_KUBECONFIG=$HOME/.kube/config
+$ export OCM_TOKEN=${YOUR_OCM_TOKEN_HERE}
 $ osde2e test --configs e2e-suite,stage --skip-health-check
 ```
 
