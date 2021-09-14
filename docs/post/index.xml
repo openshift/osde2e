@@ -6,10 +6,37 @@
     <description>Recent content in Posts on OSDe2e Reporting</description>
     <generator>Hugo -- gohugo.io</generator>
     <copyright>Copyright © 2020, Red Hat, all rights reserved.</copyright>
-    <lastBuildDate>Mon, 13 Sep 2021 12:02:42 +0000</lastBuildDate>
+    <lastBuildDate>Tue, 14 Sep 2021 12:01:30 +0000</lastBuildDate>
     
 	<atom:link href="https://openshift.github.io/osde2e/post/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>OSDe2e moa Weather Report 2021-09-14 12:01:30.548578559 &#43;0000 UTC</title>
+      <link>https://openshift.github.io/osde2e/post/7a158a31f0cb4da498d62fa9f91c6909/</link>
+      <pubDate>Tue, 14 Sep 2021 12:01:30 +0000</pubDate>
+      
+      <guid>https://openshift.github.io/osde2e/post/7a158a31f0cb4da498d62fa9f91c6909/</guid>
+      <description>&lt;table class=&#34;summary&#34;&gt;&lt;/table&gt;</description>
+    </item>
+    
+    <item>
+      <title>OSDe2e gcp Weather Report 2021-09-14 12:01:26.162806307 &#43;0000 UTC</title>
+      <link>https://openshift.github.io/osde2e/post/f9aed5bfa59e4407a7736813d63a6872/</link>
+      <pubDate>Tue, 14 Sep 2021 12:01:26 +0000</pubDate>
+      
+      <guid>https://openshift.github.io/osde2e/post/f9aed5bfa59e4407a7736813d63a6872/</guid>
+      <description>&lt;table class=&#34;summary&#34;&gt;&lt;tr&gt;&lt;td bgcolor=&#34;#01fe00&#34;&gt;&lt;/td&gt;&lt;td&gt;int (Pass rate: 100.00)&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td bgcolor=&#34;#16e900&#34;&gt;&lt;/td&gt;&lt;td&gt;prod (Pass rate: 99.15)&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td bgcolor=&#34;#07f800&#34;&gt;&lt;/td&gt;&lt;td&gt;stage (Pass rate: 99.73)&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;</description>
+    </item>
+    
+    <item>
+      <title>OSDe2e aws Weather Report 2021-09-14 12:01:22.42174089 &#43;0000 UTC</title>
+      <link>https://openshift.github.io/osde2e/post/8f299895ee3c4470a609fd75303cd10a/</link>
+      <pubDate>Tue, 14 Sep 2021 12:01:22 +0000</pubDate>
+      
+      <guid>https://openshift.github.io/osde2e/post/8f299895ee3c4470a609fd75303cd10a/</guid>
+      <description>&lt;table class=&#34;summary&#34;&gt;&lt;tr&gt;&lt;td bgcolor=&#34;#07f800&#34;&gt;&lt;/td&gt;&lt;td&gt;int (Pass rate: 99.73)&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td bgcolor=&#34;#0bf400&#34;&gt;&lt;/td&gt;&lt;td&gt;prod (Pass rate: 99.60)&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td bgcolor=&#34;#0ff000&#34;&gt;&lt;/td&gt;&lt;td&gt;stage (Pass rate: 99.42)&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;</description>
+    </item>
     
     <item>
       <title>OSDe2e moa Weather Report 2021-09-13 12:02:42.407889051 &#43;0000 UTC</title>
