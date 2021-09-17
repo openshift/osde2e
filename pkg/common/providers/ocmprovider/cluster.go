@@ -294,6 +294,9 @@ func (o *OCMProvider) FindRecycledCluster(originalVersion, cloudProvider, produc
 				return ""
 			}
 			viper.Set(config.Cluster.Reused, true)
+			if recycledCluster.AWS().STS().RoleARN() != "" {
+				viper.Set("rosa.STS", true)
+			}
 			log.Println("Hot cluster ready, moving on...")
 
 			return recycledCluster.ID()
@@ -306,6 +309,9 @@ func (o *OCMProvider) FindRecycledCluster(originalVersion, cloudProvider, produc
 				return ""
 			}
 			viper.Set(config.Cluster.Reused, true)
+			if recycledCluster.AWS().STS().RoleARN() != "" {
+				viper.Set("rosa.STS", true)
+			}
 			return recycledCluster.ID()
 		}
 		log.Printf("Failed to recycle cluster %s", recycledCluster.ID())
