@@ -49,6 +49,10 @@ func CheckOperatorReadiness(configClient configclient.ConfigV1Interface, logger 
 				if cos.Type == "Disabled" && cos.Status == "True" {
 					continue
 				}
+				// Workaround for https://bugzilla.redhat.com/show_bug.cgi?id=2005952
+				if (cos.Type =="RecentUpgrade" && cos.Status == "Unknown") {
+					continue
+				}
 				if (cos.Type != "Available" && cos.Status != "False") && cos.Type != "Upgradeable" {
 					metadataState = append(metadataState, fmt.Sprintf("%v", co))
 					logger.Printf("Operator %v type %v is %v: %v", co.ObjectMeta.Name, cos.Type, cos.Status, cos.Message)
