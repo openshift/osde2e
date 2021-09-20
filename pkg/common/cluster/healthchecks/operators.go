@@ -50,7 +50,7 @@ func CheckOperatorReadiness(configClient configclient.ConfigV1Interface, logger 
 					continue
 				}
 				// Workaround for https://bugzilla.redhat.com/show_bug.cgi?id=2005952
-				if (cos.Type =="RecentUpgrade" && cos.Status == "Unknown") {
+				if (co.GetName() == "etcd" && cos.Type =="RecentUpgrade" && cos.Status == "Unknown") {
 					continue
 				}
 				if (cos.Type != "Available" && cos.Status != "False") && cos.Type != "Upgradeable" {
