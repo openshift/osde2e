@@ -7,10 +7,10 @@ import (
 	"strings"
 
 	configclient "github.com/openshift/client-go/config/clientset/versioned/typed/config/v1"
+	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/logging"
 	"github.com/openshift/osde2e/pkg/common/metadata"
-	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -50,7 +50,7 @@ func CheckOperatorReadiness(configClient configclient.ConfigV1Interface, logger 
 					continue
 				}
 				// Workaround for https://bugzilla.redhat.com/show_bug.cgi?id=2005952
-				if (co.GetName() == "etcd" && cos.Type =="RecentUpgrade" && cos.Status == "Unknown") {
+				if co.GetName() == "etcd" && (cos.Type == "RecentUpgrade" || cos.Type == "RecentBackup") && cos.Status == "Unknown" {
 					continue
 				}
 				if (cos.Type != "Available" && cos.Status != "False") && cos.Type != "Upgradeable" {
