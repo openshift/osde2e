@@ -46,14 +46,14 @@ func CheckOperatorReadiness(configClient configclient.ConfigV1Interface, logger 
 	for _, co := range list.Items {
 		if _, ok := operatorSkipList[co.GetName()]; !ok {
 			for _, cos := range co.Status.Conditions {
-				if cos.Status == "Unknown" || cos.Status == "False"{
+				if cos.Status == "Unknown" || cos.Status == "False" {
 					continue
 				}
 				if cos.Type == "Disabled" || cos.Type == "Available" || cos.Type == "Upgradeable" {
 					continue
 				}
 				metadataState = append(metadataState, fmt.Sprintf("%v", co))
-				logger.Printf("Operator %v type %v is %v: %v", co.ObjectMeta.Name, cos.Type, cos.Status, cos.Message)
+				logger.Printf("Unexpected condition status for operator %v: Condition %v has status %v: %v", co.ObjectMeta.Name, cos.Type, cos.Status, cos.Message)
 				success = false
 			}
 		}

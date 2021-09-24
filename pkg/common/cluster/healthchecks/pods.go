@@ -127,7 +127,7 @@ func (p *PodErrorTracker) CheckPendingPods(podlist []kubev1.Pod) error {
 			tempTracker[string(pod.UID)] = 1
 		}
 		if tempTracker[string(pod.UID)] >= p.MaxPendingPodsThreshold {
-			return fmt.Errorf("Pod %s is pending beyond normal threshold: %s - %s", pod.GetName(), pod.Status.Reason, pod.Status.Message)
+			return fmt.Errorf("Pod %s in namespace %s is pending beyond normal threshold: %s - %s", pod.GetName(), pod.GetNamespace(), pod.Status.Reason, pod.Status.Message)
 		}
 	}
 	p.Counts = tempTracker
