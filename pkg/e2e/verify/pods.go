@@ -51,7 +51,9 @@ var _ = ginkgo.Describe(podsTestName, func() {
 			for _, pod := range list.Items {
 				phase := pod.Status.Phase
 				if phase != v1.PodRunning && phase != v1.PodSucceeded {
-					notReady = append(notReady, pod)
+					if len(pod.GetOwnerReferences()) > 0 && pod.GetOwnerReferences()[0].Kind != "Job" {
+						notReady = append(notReady, pod)
+					}
 				}
 			}
 
@@ -68,12 +70,19 @@ var _ = ginkgo.Describe(podsTestName, func() {
 	}, 300)
 
 	ginkgo.It("should not be Failed", func() {
-		list, err := h.Kube().CoreV1().Pods(metav1.NamespaceAll).List(context.TODO(), metav1.ListOptions{
-			FieldSelector: fmt.Sprintf("status.phase=%s", v1.PodFailed),
-		})
+		list, err := h.Kube().CoreV1().Pods(metav1.NamespaceAll).List(context.TODO(), metav1.ListOptions{})
+		filteredList := &v1.PodList{}
+
+		for _, pod := range list.Items {
+			if pod.Status.Phase == v1.PodFailed {
+				if len(pod.GetOwnerReferences()) > 0 && pod.GetOwnerReferences()[0].Kind != "Job" {
+					filteredList.Items = append(filteredList.Items, pod)
+				}
+			}
+		}
 		Expect(err).NotTo(HaveOccurred(), "couldn't list Pods")
-		Expect(list).NotTo(BeNil())
-		Expect(list.Items).Should(HaveLen(0), "'%d' Pods are 'Failed'", len(list.Items))
+		Expect(filteredList).NotTo(BeNil())
+		Expect(filteredList.Items).Should(HaveLen(0), "'%d' Pods are 'Failed'", len(filteredList.Items))
 	}, 300)
 })
 
