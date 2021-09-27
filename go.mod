@@ -36,6 +36,7 @@ require (
 	github.com/onsi/ginkgo v1.16.4
 	github.com/onsi/gomega v1.13.0
 	github.com/openshift-online/ocm-sdk-go v0.1.200
+	github.com/openshift/addon-operator v0.4.0
 	github.com/openshift/api v3.9.1-0.20190924102528-32369d4db2ad+incompatible
 	github.com/openshift/client-go v0.0.0-20200827190008-3062137373b5
 	github.com/openshift/cloud-credential-operator v0.0.0-20210525141023-02cc6303cd10
@@ -75,6 +76,7 @@ require (
 	k8s.io/apimachinery v0.22.0
 	k8s.io/client-go v12.0.0+incompatible
 	k8s.io/utils v0.0.0-20210707171843-4b05e18ac7d9
+	sigs.k8s.io/controller-runtime v0.9.2
 )
 
 replace (

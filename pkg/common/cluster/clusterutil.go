@@ -11,6 +11,7 @@ import (
 
 	"github.com/Masterminds/semver"
 	"github.com/hashicorp/go-multierror"
+	addonoperatorapis "github.com/openshift/addon-operator/apis"
 	osconfig "github.com/openshift/client-go/config/clientset/versioned"
 	"github.com/openshift/osde2e/pkg/common/cluster/healthchecks"
 	"github.com/openshift/osde2e/pkg/common/clusterproperties"
@@ -23,11 +24,13 @@ import (
 	"github.com/openshift/osde2e/pkg/common/util"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
+	runtimeclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 const (
@@ -412,6 +415,15 @@ func PollClusterHealth(clusterID string, logger *log.Logger) (status bool, failu
 		return false, nil, nil
 	}
 
+	scheme := runtime.NewScheme()
+	_ = addonoperatorapis.AddToScheme(scheme)
+	runtimeClient, err := runtimeclient.New(restConfig, runtimeclient.Options{
+		Scheme: scheme,
+	})
+	if err != nil {
+		logger.Printf("Error generating Controller Runtime Clientset: %v\n", err)
+	}
+
 	clusterHealthy := true
 
 	var healthErr *multierror.Error
@@ -471,6 +483,13 @@ func PollClusterHealth(clusterID string, logger *log.Logger) (status bool, failu
 		if check, err := healthchecks.CheckReplicaCountForReplicaSets(kubeClient.AppsV1(), logger); !check || err != nil {
 			healthErr = multierror.Append(healthErr, err)
 			failures = append(failures, "replicaset")
+			clusterHealthy = false
+		}
+
+		if check, err := healthchecks.CheckAddonOperatorReadiness(
+			runtimeClient, logger); !check || err != nil {
+			healthErr = multierror.Append(healthErr, err)
+			failures = append(failures, "addonoperator")
 			clusterHealthy = false
 		}
 
