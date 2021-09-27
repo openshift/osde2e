@@ -416,12 +416,16 @@ func PollClusterHealth(clusterID string, logger *log.Logger) (status bool, failu
 	}
 
 	scheme := runtime.NewScheme()
-	_ = addonoperatorapis.AddToScheme(scheme)
+	if err := addonoperatorapis.AddToScheme(scheme); err != nil {
+		logger.Printf("Error adding AddonOperator APIs to scheme: %v\n", err)
+		return false, nil, nil
+	}
 	runtimeClient, err := runtimeclient.New(restConfig, runtimeclient.Options{
 		Scheme: scheme,
 	})
 	if err != nil {
 		logger.Printf("Error generating Controller Runtime Clientset: %v\n", err)
+		return false, nil, nil
 	}
 
 	clusterHealthy := true
