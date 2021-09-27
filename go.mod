@@ -16,7 +16,7 @@ require (
 	github.com/dgryski/go-gk v0.0.0-20200319235926-a69029f61654 // indirect
 	github.com/dgryski/go-lttb v0.0.0-20180810165845-318fcdf10a77 // indirect
 	github.com/emicklei/go-restful v2.10.0+incompatible
-	github.com/fatih/color v1.10.0
+	github.com/fatih/color v1.12.0
 	github.com/fsnotify/fsnotify v1.4.9
 	github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32
 	github.com/golang-migrate/migrate/v4 v4.14.2-0.20210511063805-2e7358e012a6
@@ -34,7 +34,7 @@ require (
 	github.com/markbates/pkger v0.17.1
 	github.com/mitchellh/mapstructure v1.1.2
 	github.com/onsi/ginkgo v1.16.4
-	github.com/onsi/gomega v1.10.2
+	github.com/onsi/gomega v1.13.0
 	github.com/openshift-online/ocm-sdk-go v0.1.200
 	github.com/openshift/api v3.9.1-0.20190924102528-32369d4db2ad+incompatible
 	github.com/openshift/client-go v0.0.0-20200827190008-3062137373b5
@@ -47,15 +47,15 @@ require (
 	github.com/openshift/rosa v1.1.0
 	github.com/openshift/route-monitor-operator v0.0.0-20210309123726-229da76cc133
 	github.com/openshift/splunk-forwarder-operator v0.0.0-20201112162206-2f454770b6c0
-	github.com/operator-framework/api v0.3.6
-	github.com/operator-framework/operator-lifecycle-manager v0.0.0-20200521062108-408ca95d458f
+	github.com/operator-framework/api v0.10.3
+	github.com/operator-framework/operator-lifecycle-manager v0.19.1
 	github.com/ory/dockertest v3.3.5+incompatible
 	github.com/pganalyze/pg_query_go/v2 v2.0.2
 	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.44.1
 	github.com/prometheus-operator/prometheus-operator/pkg/client v0.45.0
 	github.com/prometheus/alertmanager v0.21.0
-	github.com/prometheus/client_golang v1.9.0
-	github.com/prometheus/common v0.15.0
+	github.com/prometheus/client_golang v1.11.0
+	github.com/prometheus/common v0.26.0
 	github.com/redhat-cop/must-gather-operator v1.0.0
 	github.com/slack-go/slack v0.6.5
 	github.com/spf13/afero v1.2.2
@@ -67,14 +67,14 @@ require (
 	github.com/tsenart/vegeta v12.7.0+incompatible
 	github.com/vmware-tanzu/velero v1.5.0-beta.1.0.20200831161009-1dcaa1bf7512
 	golang.org/x/net v0.0.0-20210614182718-04defd469f4e
-	golang.org/x/tools v0.1.2
+	golang.org/x/tools v0.1.3
 	google.golang.org/api v0.47.0
 	google.golang.org/genproto v0.0.0-20210602131652-f16073e35f0c
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
-	k8s.io/api v0.20.2
-	k8s.io/apimachinery v0.20.2
+	k8s.io/api v0.22.0
+	k8s.io/apimachinery v0.22.0
 	k8s.io/client-go v12.0.0+incompatible
-	k8s.io/utils v0.0.0-20200729134348-d5654de09c73
+	k8s.io/utils v0.0.0-20210707171843-4b05e18ac7d9
 )
 
 replace (
