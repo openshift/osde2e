@@ -54,18 +54,19 @@ var _ = ginkgo.Describe(encryptedStorageTestName, func(){
 			return
 		}
 		h := helper.New()
+		var testInstanceName string
 
 		ginkgo.It("can be created by dedicated admins", func() {
-			testInstanceName := h.CurrentProject() + "-" + fmt.Sprint(ginkgo.GinkgoParallelNode())
+			testInstanceName = "test-" + time.Now().Format("20060102-150405-") + fmt.Sprint(time.Now().Nanosecond()/1000000) + "-" + fmt.Sprint(ginkgo.GinkgoParallelNode())
 
 			ginkgo.By("Creating an encryption key in the cluster's gcp project")
 			serviceAccountJson, err := createGCPServiceAccount(h, testInstanceName, h.CurrentProject())
 			Expect(err).ToNot(HaveOccurred(), "Error creating credentialsrequest")
 
 			testKey, err := createGCPKey(h, serviceAccountJson, testInstanceName)
-			Expect(err).ToNot(HaveOccurred(), "Error creating encryption key in GCP KMS.")
+			Expect(err).ToNot(HaveOccurred(), "Error creating or retrieving encryption key in GCP KMS.")
 
-			ginkgo.By("Using the key to create an encrypted an encrypted storageclass as a dedicated-admin")
+			ginkgo.By("Using the key to create an encrypted storageclass as a dedicated-admin")
 			// RBAC rules must be set manually if not testing with a ccs cluster
 			// (gcp dedicated-admins only have permissions to create/modify storageclasses on ccs clusters)
 			if !viper.GetBool(ocmprovider.CCS) {
@@ -205,18 +206,24 @@ var _ = ginkgo.Describe(encryptedStorageTestName, func(){
 
 		// Cleanup
 		ginkgo.AfterEach(func() {
-			testInstanceName := h.CurrentProject() + "-" + fmt.Sprint(ginkgo.GinkgoParallelNode())
-			err := h.Kube().CoreV1().Pods(h.CurrentProject()).Delete(context.TODO(), testInstanceName, metav1.DeleteOptions{})
+			h.Impersonate(rest.ImpersonationConfig{})
+
+			err := deleteGCPServiceAccount(h, testInstanceName)
 			Expect(err).ToNot(HaveOccurred())
-			err = h.Kube().CoreV1().PersistentVolumeClaims(h.CurrentProject()).Delete(context.TODO(), testInstanceName, metav1.DeleteOptions{})
+
+			err = deleteStorageClass(h, testInstanceName)
 			Expect(err).ToNot(HaveOccurred())
-			err = h.Kube().StorageV1().StorageClasses().Delete(context.TODO(), testInstanceName, metav1.DeleteOptions{})
+
+			err = deletePersistentVolumeClaim(h, testInstanceName, h.CurrentProject())
 			Expect(err).ToNot(HaveOccurred())
+
+			err = deletePod(testInstanceName, h.CurrentProject(), h)
+			Expect(err).ToNot(HaveOccurred())
+
 			if !viper.GetBool(ocmprovider.CCS) {
-				err = h.Kube().RbacV1().ClusterRoles().Delete(context.TODO(), testInstanceName,metav1.DeleteOptions{})
+				err = deleteClusterRole(h, testInstanceName)
 				Expect(err).ToNot(HaveOccurred())
 			}
-			h.Impersonate(rest.ImpersonationConfig{})
 		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
 	})
 })
@@ -233,23 +240,36 @@ func createGCPKey(h *helper.H, serviceAccountJson []byte, keyName string) (strin
 	if err != nil { return "", err }
 	defer kmsClient.Close()
 
-	// KMS may not be ready immediately after enabling -> poll until we are able to successfully create a keyring, indicating it is fully available for this project
-	var keyRing *kmsprotov1.KeyRing
-	wait.PollImmediate(pollInterval, pollTimeout, func() (bool, error){
-		keyRing, err = kmsClient.CreateKeyRing(context.TODO(), &kmsprotov1.CreateKeyRingRequest{
-			Parent: "projects/" + clusterInfra.Status.PlatformStatus.GCP.ProjectID + "/locations/" + clusterInfra.Status.PlatformStatus.GCP.Region,
-			KeyRingId: keyName,
-		})
-		if keyRing == nil {
-			return false, nil
-		} else if err != nil {
-			return false, err
-		}
-		return true, err
+	// GCP KMS doesn't allow cryptokeys to be deleted. Therefore we have to reuse any key or keyRing that already exists with the same name
+	keyRing, err := kmsClient.GetKeyRing(context.TODO(), &kmsprotov1.GetKeyRingRequest{
+		Name: "projects/" + clusterInfra.Status.PlatformStatus.GCP.ProjectID + "/locations/" + clusterInfra.Status.PlatformStatus.GCP.Region + "/keyRings/" + keyName,
 	})
-	if err != nil { return "", err }
+	if keyRing == nil {
+		// keyRing does not exist yet, & KMS was likely just enabled for the project.
+		// KMS may not be ready immediately after enabling, poll until we are able to successfully create a keyring, indicating it is fully available for this project
+		wait.PollImmediate(pollInterval, pollTimeout, func() (bool, error){
+			keyRing, err = kmsClient.CreateKeyRing(context.TODO(), &kmsprotov1.CreateKeyRingRequest{
+				Parent: "projects/" + clusterInfra.Status.PlatformStatus.GCP.ProjectID + "/locations/" + clusterInfra.Status.PlatformStatus.GCP.Region,
+				KeyRingId: keyName,
+			})
+			if keyRing == nil {
+				return false, nil
+			} else if err != nil {
+				return false, err
+			}
+			return true, err
+		})
+		if err != nil { return "", err }
+	}
 
-	key, err := kmsClient.CreateCryptoKey(context.TODO(), &kmsprotov1.CreateCryptoKeyRequest{
+	key, err := kmsClient.GetCryptoKey(context.TODO(), &kmsprotov1.GetCryptoKeyRequest{
+		Name: keyRing.GetName() + "/cryptoKeys/" + keyName,
+	})
+	if key != nil {
+		return key.GetName(), err
+	}
+
+	key, err = kmsClient.CreateCryptoKey(context.TODO(), &kmsprotov1.CreateCryptoKeyRequest{
 		Parent: keyRing.GetName(),
 		CryptoKeyId: keyName,
 		CryptoKey: &kmsprotov1.CryptoKey{
@@ -351,4 +371,20 @@ func createGCPServiceAccount(h *helper.H, saName string, saNamespace string) ([]
 	saSecret, err := h.Kube().CoreV1().Secrets(saCredentialReq.Spec.SecretRef.Namespace).Get(context.TODO(), saCredentialReq.Spec.SecretRef.Name, metav1.GetOptions{})
 	if err != nil { return nil, err }
 	return saSecret.Data["service_account.json"], err
+}
+
+func deleteGCPServiceAccount(h *helper.H, name string) error {
+	return h.Dynamic().Resource(schema.GroupVersionResource{
+		Group: "cloudcredential.openshift.io",
+		Version: "v1",
+		Resource: "credentialsrequests",
+	}).Namespace(h.CurrentProject()).Delete(context.TODO(), name, metav1.DeleteOptions{})
+}
+
+func deleteClusterRole(h *helper.H, name string) error {
+	return h.Kube().RbacV1().ClusterRoles().Delete(context.TODO(), name, metav1.DeleteOptions{})
+}
+
+func deleteStorageClass(h *helper.H, name string) error {
+	return h.Kube().StorageV1().StorageClasses().Delete(context.TODO(), name, metav1.DeleteOptions{})
 }
