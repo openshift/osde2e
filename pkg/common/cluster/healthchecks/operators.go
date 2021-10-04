@@ -46,18 +46,15 @@ func CheckOperatorReadiness(configClient configclient.ConfigV1Interface, logger 
 	for _, co := range list.Items {
 		if _, ok := operatorSkipList[co.GetName()]; !ok {
 			for _, cos := range co.Status.Conditions {
-				if cos.Type == "Disabled" && cos.Status == "True" {
+				if cos.Status == "Unknown" || cos.Status == "False" {
 					continue
 				}
-				// Workaround for https://bugzilla.redhat.com/show_bug.cgi?id=2005952
-				if co.GetName() == "etcd" && (cos.Type == "RecentUpgrade" || cos.Type == "RecentBackup") && cos.Status == "Unknown" {
+				if cos.Type == "Disabled" || cos.Type == "Available" || cos.Type == "Upgradeable" {
 					continue
 				}
-				if (cos.Type != "Available" && cos.Status != "False") && cos.Type != "Upgradeable" {
-					metadataState = append(metadataState, fmt.Sprintf("%v", co))
-					logger.Printf("Operator %v type %v is %v: %v", co.ObjectMeta.Name, cos.Type, cos.Status, cos.Message)
-					success = false
-				}
+				metadataState = append(metadataState, fmt.Sprintf("%v", co))
+				logger.Printf("Unexpected condition status for operator %v: Condition %v has status %v: %v", co.ObjectMeta.Name, cos.Type, cos.Status, cos.Message)
+				success = false
 			}
 		}
 	}
