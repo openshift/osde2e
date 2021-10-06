@@ -5,19 +5,22 @@ import (
 	"fmt"
 	"log"
 	"math/rand"
-	"net"
 	"os"
 	"strings"
 	"time"
 
 	"github.com/Masterminds/semver"
-	cmv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 	v1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/spi"
 	"github.com/openshift/osde2e/pkg/common/util"
+	accountRoles "github.com/openshift/rosa/cmd/create/accountroles"
+	createCluster "github.com/openshift/rosa/cmd/create/cluster"
+	oidcProvider "github.com/openshift/rosa/cmd/create/oidcprovider"
+	operatorRoles "github.com/openshift/rosa/cmd/create/operatorroles"
 	rosaLogin "github.com/openshift/rosa/cmd/login"
+	"github.com/openshift/rosa/pkg/aws"
 	"github.com/openshift/rosa/pkg/logging"
 	"github.com/openshift/rosa/pkg/ocm"
 	rprtr "github.com/openshift/rosa/pkg/reporter"
@@ -70,10 +73,26 @@ func (m *ROSAProvider) LaunchCluster(clusterName string) (string, error) {
 	// we happen to forget to do it:
 	var expiration time.Time
 	var err error
+	var awsCreator *aws.Creator
 
-	ocmClient, err := m.ocmLogin()
-	if err != nil {
-		return "", err
+	rosaClusterVersion := viper.GetString(config.Cluster.Version)
+
+	rosaClusterVersion = strings.Replace(rosaClusterVersion, "-fast", "", -1)
+	rosaClusterVersion = strings.Replace(rosaClusterVersion, "-candidate", "", -1)
+	if !strings.HasSuffix(rosaClusterVersion, "-nightly") {
+		rosaClusterVersion = fmt.Sprintf("%s-%s", rosaClusterVersion, viper.GetString(config.Cluster.Channel))
+	} else {
+		viper.Set(config.Cluster.Channel, "nightly")
+	}
+	rosaClusterVersion = strings.Replace(rosaClusterVersion, "-stable", "", -1)
+	rosaClusterVersion = strings.Replace(rosaClusterVersion, "openshift-v", "", -1)
+
+	log.Printf("ROSA cluster version: %s", rosaClusterVersion)
+
+	if viper.GetBool(config.Cluster.UseExistingCluster) && viper.GetString(config.Addons.IDs) == "" {
+		if clusterID := m.ocmProvider.FindRecycledCluster(rosaClusterVersion, "aws", "rosa"); clusterID != "" {
+			return clusterID, nil
+		}
 	}
 
 	expiryInMinutes := viper.GetDuration(config.Cluster.ExpiryInMinutes)
@@ -81,34 +100,76 @@ func (m *ROSAProvider) LaunchCluster(clusterName string) (string, error) {
 		expiration = time.Now().Add(expiryInMinutes * time.Minute).UTC() // UTC() to workaround SDA-1567.
 	}
 
-	var machineCIDRParsed = &net.IPNet{}
-	machineCIDRString := viper.GetString(MachineCIDR)
-	if machineCIDRString != "" {
-		_, machineCIDRParsed, err = net.ParseCIDR(machineCIDRString)
-
-		if err != nil {
-			return "", fmt.Errorf("error while parsing machine CIDR: %v", err)
-		}
+	// ROSA uses the AWS provider in the background, so we'll determine region this way.
+	region, err := m.DetermineRegion("aws")
+	if err != nil {
+		return "", fmt.Errorf("error determining region to use: %v", err)
 	}
 
-	var serviceCIDRParsed = &net.IPNet{}
-	serviceCIDRString := viper.GetString(ServiceCIDR)
-	if serviceCIDRString != "" {
-		_, serviceCIDRParsed, err = net.ParseCIDR(ServiceCIDR)
-
-		if err != nil {
-			return "", fmt.Errorf("error while parsing service CIDR: %v", err)
-		}
+	createClusterArgs := []string{
+		"--cluster-name", clusterName,
+		"--region", region,
+		"--channel-group", viper.GetString(config.Cluster.Channel),
+		"--version", rosaClusterVersion,
+		"--expiration-time", expiration.Format(time.RFC3339),
+		"--compute-machine-type", viper.GetString(ComputeMachineType),
+		"--compute-nodes", viper.GetString(ComputeNodes),
+		"--machine-cidr", viper.GetString(MachineCIDR),
+		"--service-cidr", viper.GetString(ServiceCIDR),
+		"--pod-cidr", viper.GetString(PodCIDR),
+		"--host-prefix", viper.GetString(HostPrefix),
+	}
+	if viper.GetBool(config.Cluster.MultiAZ) {
+		createClusterArgs = append(createClusterArgs, "--multi-az")
 	}
 
-	var podCIDRParsed = &net.IPNet{}
-	podCIDRString := viper.GetString(PodCIDR)
-	if podCIDRString != "" {
-		_, podCIDRParsed, err = net.ParseCIDR(podCIDRString)
+	awsAccountID := ""
+
+	err = callAndSetAWSSession(func() error {
+		// Retrieve AWS Account info
+		logger, err := logging.NewLogger().
+			Build()
+		if err != nil {
+			return fmt.Errorf("unable to create AWS logger: %v", err)
+		}
+
+		awsClient, err := aws.NewClient().
+			Logger(logger).
+			Region(aws.DefaultRegion).
+			Build()
 
 		if err != nil {
-			return "", fmt.Errorf("error while parsing pod CIDR: %v", err)
+			return err
 		}
+
+		awsCreator, err = awsClient.GetCreator()
+		if err != nil {
+			return fmt.Errorf("unable to get IAM credentials: %v", err)
+		}
+
+		awsAccountID = awsCreator.AccountID
+
+		return nil
+	})
+	if err != nil {
+		return "", err
+	}
+
+	if viper.GetBool(STS) {
+		parsedVersion := semver.MustParse(rosaClusterVersion)
+		majorMinor := fmt.Sprintf("%d.%d", parsedVersion.Major(), parsedVersion.Minor())
+
+		err = m.stsAccountSetup(majorMinor)
+		if err != nil {
+			return "", err
+		}
+		createClusterArgs = append(createClusterArgs,
+			"--role-arn", fmt.Sprintf("arn:aws:iam::%s:role/ManagedOpenShift-%s-Installer-Role", awsAccountID, majorMinor),
+			"--support-role-arn", fmt.Sprintf("arn:aws:iam::%s:role/ManagedOpenShift-%s-Support-Role", awsAccountID, majorMinor),
+			"--master-iam-role", fmt.Sprintf("arn:aws:iam::%s:role/ManagedOpenShift-%s-ControlPlane-Role", awsAccountID, majorMinor),
+			"--worker-iam-role", fmt.Sprintf("arn:aws:iam::%s:role/ManagedOpenShift-%s-Worker-Role", awsAccountID, majorMinor),
+		)
+
 	}
 
 	clusterProperties, err := m.ocmProvider.GenerateProperties()
@@ -138,67 +199,76 @@ func (m *ROSAProvider) LaunchCluster(clusterName string) (string, error) {
 		clusterProperties["install_config"] = installConfig
 	}
 
-	var createdCluster *cmv1.Cluster
-
-	// ROSA uses the AWS provider in the background, so we'll determine region this way.
-	region, err := m.DetermineRegion("aws")
-	if err != nil {
-		return "", fmt.Errorf("error determining region to use: %v", err)
-	}
-	falseValue := false
-
-	rosaClusterVersion := viper.GetString(config.Cluster.Version)
-
-	rosaClusterVersion = strings.Replace(rosaClusterVersion, "-fast", "", -1)
-	rosaClusterVersion = strings.Replace(rosaClusterVersion, "-candidate", "", -1)
-	if !strings.HasSuffix(rosaClusterVersion, "-nightly") {
-		rosaClusterVersion = fmt.Sprintf("%s-%s", rosaClusterVersion, viper.GetString(config.Cluster.Channel))
-	} else {
-		viper.Set(config.Cluster.Channel, "nightly")
-	}
-	rosaClusterVersion = strings.Replace(rosaClusterVersion, "-stable", "", -1)
-
-	log.Printf("ROSA cluster version: %s", rosaClusterVersion)
-
-	clusterSpec := ocm.Spec{
-		Name:               clusterName,
-		Region:             region,
-		ChannelGroup:       viper.GetString(config.Cluster.Channel),
-		MultiAZ:            viper.GetBool(config.Cluster.MultiAZ),
-		Version:            rosaClusterVersion,
-		Expiration:         expiration,
-		ComputeMachineType: viper.GetString(ComputeMachineType),
-		ComputeNodes:       viper.GetInt(ComputeNodes),
-		DryRun:             &falseValue,
-
-		CustomProperties:  clusterProperties,
-		MachineCIDR:       *machineCIDRParsed,
-		ServiceCIDR:       *serviceCIDRParsed,
-		PodCIDR:           *podCIDRParsed,
-		HostPrefix:        viper.GetInt(HostPrefix),
-		SubnetIds:         []string{},
-		AvailabilityZones: []string{},
+	for k, v := range clusterProperties {
+		createClusterArgs = append(createClusterArgs, "--properties", fmt.Sprintf("%s:%s", k, v))
 	}
 
-	if viper.GetBool(config.Cluster.UseExistingCluster) && viper.GetString(config.Addons.IDs) == "" {
-		if clusterID := m.ocmProvider.FindRecycledCluster(clusterSpec.Version, "aws", "rosa"); clusterID != "" {
-			return clusterID, nil
+	// Filter out any create arguments that are blank.
+	// This assumes `--arg ""` and will remove both elements
+	for k, v := range createClusterArgs {
+		if (k + 1) < len(createClusterArgs) {
+			if len(strings.TrimSpace(createClusterArgs[k+1])) == 0 || createClusterArgs[k+1] == `""` {
+				log.Printf("Pruning `%s` and `%s`", v, createClusterArgs[k+1])
+				createClusterArgs = append(createClusterArgs[:k], createClusterArgs[k+1:]...)
+			}
 		}
 	}
 
+	log.Printf("%v", createClusterArgs)
+
+	newCluster := createCluster.Cmd
+	newCluster.SetArgs(createClusterArgs)
 	err = callAndSetAWSSession(func() error {
-		createdCluster, err = ocmClient.CreateCluster(clusterSpec)
-		if err != nil {
-			return fmt.Errorf("error creating cluster: %s", err.Error())
-		}
-		return nil
+		return newCluster.Execute()
 	})
-
 	if err != nil {
 		return "", err
 	}
 
-	return createdCluster.ID(), nil
+	ocmClient, err := m.ocmLogin()
+	if err != nil {
+		return "", err
+	}
+
+	cluster, err := ocmClient.GetCluster(clusterName, awsCreator)
+	if err != nil {
+		return "", fmt.Errorf("failed to get cluster '%s': %v", clusterName, err)
+	}
+
+	if viper.GetBool(STS) {
+		m.stsClusterSetup(cluster)
+	}
+
+	return cluster.ID(), nil
+}
+
+func (m *ROSAProvider) stsAccountSetup(version string) error {
+	newAccountRoles := accountRoles.Cmd
+	args := []string{"--version", version, "--prefix", fmt.Sprintf("ManagedOpenShift-%s", version), "--mode", "auto", "--yes"}
+	log.Printf("%v", args)
+	newAccountRoles.SetArgs(args)
+	return callAndSetAWSSession(func() error {
+		return newAccountRoles.Execute()
+	})
+}
+
+func (m *ROSAProvider) stsClusterSetup(cluster *v1.Cluster) error {
+	newOperatorRoles := operatorRoles.Cmd
+	newOperatorRoles.SetArgs([]string{"--cluster", cluster.Name(), "--mode", "auto", "--yes"})
+	return callAndSetAWSSession(func() error {
+		err := newOperatorRoles.Execute()
+		if err != nil {
+			return err
+		}
+
+		newOIDCProvider := oidcProvider.Cmd
+		newOIDCProvider.SetArgs([]string{"--cluster", cluster.Name(), "--mode", "auto", "--yes"})
+		err = newOIDCProvider.Execute()
+		if err != nil {
+			return err
+		}
+		return nil
+	})
 }
 
 // DetermineRegion will return the region provided by configs. This mainly wraps the random functionality for use

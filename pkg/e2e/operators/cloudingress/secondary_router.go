@@ -11,6 +11,7 @@ import (
 	"github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	cloudingressv1alpha1 "github.com/openshift/cloud-ingress-operator/pkg/apis/cloudingress/v1alpha1"
+	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/constants"
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/e2e/operators"
@@ -21,6 +22,12 @@ import (
 )
 
 var _ = ginkgo.Describe(constants.SuiteInforming+TestPrefix, func() {
+	ginkgo.BeforeEach(func() {
+		if viper.GetBool("rosa.STS") {
+			ginkgo.Skip("STS does not support MVO")
+		}
+	})
+
 	h := helper.New()
 	ginkgo.Context("secondary router", func() {
 		ginkgo.It("should be created when added to publishingstrategy ", func() {
