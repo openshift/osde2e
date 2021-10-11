@@ -2,6 +2,7 @@ reviewers:
   - cblecker
   - clcollins
   - dofinn
+  - dsantamaria
   - jeefy
   - jeremyeder
   - mrbarge
@@ -10,7 +11,8 @@ approvers:
   - cblecker
   - clcollins
   - dofinn
+  - dsantamaria
   - jeefy
   - jeremyeder
   - mrbarge
-  - dsantamaria
+
