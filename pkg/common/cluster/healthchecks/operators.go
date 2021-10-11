@@ -49,7 +49,7 @@ func CheckOperatorReadiness(configClient configclient.ConfigV1Interface, logger 
 				if cos.Status == "Unknown" || cos.Status == "False" {
 					continue
 				}
-				if cos.Type == "Disabled" || cos.Type == "Available" || cos.Type == "Upgradeable" || cos.Type == "RecentBackup" || cos.Type == "UpgradeBackupSuccessful" {
+				if cos.Type == "Disabled" || cos.Type == "Available" || cos.Type == "Upgradeable" || cos.Type == "RecentBackup" {
 					continue
 				}
 				metadataState = append(metadataState, fmt.Sprintf("%v", co))

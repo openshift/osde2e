@@ -49,8 +49,8 @@ var _ = ginkgo.Describe(constants.SuiteOperators+TestPrefix, func() {
 				publishingstrategyCleanup(h, publishingstrategyName)
 			}()
 			Expect(err).NotTo(HaveOccurred())
-
 		})
+
 	})
 
 })
