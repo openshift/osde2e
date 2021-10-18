@@ -13,4 +13,8 @@ chmod +x oc
 
 PATH="$(pwd):$PATH"
 
+echo "Giving the cluster time to settle. Sleeping for 600 seconds.";
+
+sleep 600
+
 test/extended/conformance-k8s.sh
