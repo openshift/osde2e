@@ -315,7 +315,7 @@ func (m *ROSAProvider) LaunchCluster(clusterName string) (string, error) {
 	return cluster.ID(), nil
 }
 
-func (m *ROSAProvider) stsAccountSetup(version string) error {
+func (m *ROSAProvider) stsAccountSetup(version string) (string, error) {
 	newAccountRoles := accountRoles.Cmd
 	args := []string{"--version", version, "--prefix", fmt.Sprintf("ManagedOpenShift-%s", version), "--mode", "auto", "--yes"}
 	log.Printf("%v", args)
@@ -325,7 +325,7 @@ func (m *ROSAProvider) stsAccountSetup(version string) error {
 	})
 }
 
-func (m *ROSAProvider) stsClusterSetup(cluster *v1.Cluster) error {
+func (m *ROSAProvider) stsClusterSetup(cluster *v1.Cluster) (string, error) {
 	newOperatorRoles := operatorRoles.Cmd
 	newOperatorRoles.SetArgs([]string{"--cluster", cluster.Name(), "--mode", "auto", "--yes"})
 	return callAndSetAWSSession(func() error {
