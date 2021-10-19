@@ -96,6 +96,7 @@ var defaultInspectNamespaces = []string{
 	"openshift-must-gather-operator",
 	"openshift-splunk-forwarder-operator",
 	"openshift-sre-sshd",
+
 	"openshift-rbac-permissions",
 }
 
@@ -446,7 +447,6 @@ var Addons = struct {
 	// PollingTimeout is how long (in seconds) to wait for the add-on test to complete running.
 	// Env: ADDON_POLLING_TIMEOUT
 	PollingTimeout string
-
 }{
 	IDsAtCreation:    "addons.idsAtCreation",
 	IDs:              "addons.ids",
