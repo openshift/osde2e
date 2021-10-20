@@ -7,10 +7,10 @@ import (
 	"strings"
 
 	configclient "github.com/openshift/client-go/config/clientset/versioned/typed/config/v1"
+	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/logging"
 	"github.com/openshift/osde2e/pkg/common/metadata"
-	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -46,14 +46,15 @@ func CheckOperatorReadiness(configClient configclient.ConfigV1Interface, logger 
 	for _, co := range list.Items {
 		if _, ok := operatorSkipList[co.GetName()]; !ok {
 			for _, cos := range co.Status.Conditions {
-				if cos.Type == "Disabled" && cos.Status == "True" {
+				if cos.Status == "Unknown" || cos.Status == "False" {
 					continue
 				}
-				if (cos.Type != "Available" && cos.Status != "False") && cos.Type != "Upgradeable" {
-					metadataState = append(metadataState, fmt.Sprintf("%v", co))
-					logger.Printf("Operator %v type %v is %v: %v", co.ObjectMeta.Name, cos.Type, cos.Status, cos.Message)
-					success = false
+				if cos.Type == "Disabled" || cos.Type == "Available" || cos.Type == "Upgradeable" || cos.Type == "RecentBackup" {
+					continue
 				}
+				metadataState = append(metadataState, fmt.Sprintf("%v", co))
+				logger.Printf("Unexpected condition status for operator %v: Condition %v has status %v: %v", co.ObjectMeta.Name, cos.Type, cos.Status, cos.Message)
+				success = false
 			}
 		}
 	}

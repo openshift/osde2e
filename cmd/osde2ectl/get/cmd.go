@@ -125,9 +125,6 @@ func run(cmd *cobra.Command, argv []string) error {
 	}
 
 	properties := cluster.Properties()
-	if properties[clusterproperties.MadeByOSDe2e] != "true" {
-		return fmt.Errorf("Cluster was not created by osde2e")
-	}
 
 	fmt.Printf("%17s: %s\n", "NAME", cluster.Name())
 	fmt.Printf("%17s: %s\n", "ID", cluster.ID())

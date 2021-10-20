@@ -2,7 +2,6 @@ package verify
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log"
 	"time"
@@ -77,26 +76,6 @@ var _ = ginkgo.Describe(dedicatedAdminSccTestName, func() {
 					return true, nil
 				}
 				return false, nil
-			})
-			Expect(err).NotTo(HaveOccurred())
-			//Deleting the ssh pods
-			list, _ = FilterPods("openshift-sre-sshd", "deployment=rh-ssh", h)
-			names, _ = GetPodNames(list, h)
-			log.Printf("Names of pods:(%v)", names)
-			numSSHPods := deletePods(names, "openshift-sre-sshd", h)
-			//Verifying the same number of running ssh pods has come up
-			err = wait.PollImmediate(2*time.Second, 3*time.Minute, func() (bool, error) {
-				pollList, _ := FilterPods("openshift-sre-sshd", "deployment=rh-ssh", h)
-				if !AllDifferentPods(list, pollList) {
-					return false, nil
-				}
-				_, newSSHNum := GetPodNames(pollList, h)
-				if numSSHPods == newSSHNum {
-					err = nil
-					return true, err
-				}
-				err = errors.New("Number of ssh pods isn't equal to the number before")
-				return false, err
 			})
 			Expect(err).NotTo(HaveOccurred())
 		})

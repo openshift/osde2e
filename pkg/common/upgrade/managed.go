@@ -31,6 +31,11 @@ const (
 	// the name of the generated UpgradeConfig resource containing upgrade configuration
 	upgradeConfigName = "managed-upgrade-config"
 
+	// Name of the provider for syncing upgrade policy from OCM
+	providerOCM = "OCM"
+	// Name of the provider for syncing an UpgradeConfig locally
+	providerLocal = "LOCAL"
+
 	// name of the workload for pod disruption budget tests
 	pdbWorkloadName = "pdb"
 	// directory containing pod disruption budget workload assets
@@ -56,55 +61,24 @@ const (
 )
 
 // TriggerManagedUpgrade initiates an upgrade using the managed-upgrade-operator
-func TriggerManagedUpgrade(h *helper.H) (*configv1.ClusterVersion, error) {
-	var cVersion *configv1.ClusterVersion
-	var err error
-	// setup Config client
-	cfgClient := h.Cfg()
-
-	// get current Version
-	getOpts := metav1.GetOptions{}
-	cVersion, err = cfgClient.ConfigV1().ClusterVersions().Get(context.TODO(), ClusterVersionName, getOpts)
+func TriggerManagedUpgrade(h *helper.H) (*configv1.Update, error) {
+	// Create any pre-upgrade workloads to test the managed-upgrade-operator with
+	err := createUpgradeClusterWorkloads(h)
 	if err != nil {
-		return cVersion, fmt.Errorf("couldn't get current ClusterVersion '%s': %v", ClusterVersionName, err)
-	}
-
-	releaseName := viper.GetString(config.Upgrade.ReleaseName)
-
-	upgradeVersion, err := util.OpenshiftVersionToSemver(releaseName)
-	if err != nil {
-		return nil, fmt.Errorf("supplied release %s is invalid: %v", releaseName, err)
-	}
-
-	// Create Pod Disruption Budget test workloads if desired
-	if viper.GetBool(config.Upgrade.ManagedUpgradeTestPodDisruptionBudgets) {
-		pdbPodPrefixes := []string{"pdb"}
-		err = createManagedUpgradeWorkload(pdbWorkloadName, pdbWorkloadDir, pdbPodPrefixes, h)
-		if err != nil {
-			return cVersion, fmt.Errorf("unable to setup PDB workload for upgrade: %v", err)
-		}
-	}
-
-	// Create Node Drain test workloads if desired
-	if viper.GetBool(config.Upgrade.ManagedUpgradeTestNodeDrain) {
-		drainPodPrefixes := []string{"node-drain-test"}
-		err = createManagedUpgradeWorkload(drainWorkloadName, drainWorkloadDir, drainPodPrefixes, h)
-		if err != nil {
-			return cVersion, fmt.Errorf("unable to setup node drain test workload for upgrade: %v", err)
-		}
+		return nil, err
 	}
 
 	// override the Hive-managed operator config with our testing one, so that
 	// we don't give worker upgrades the same upgrade grace periods
 	err = overrideOperatorConfig(h)
 	if err != nil {
-		return cVersion, fmt.Errorf("unable to override operator configuration: %v", err)
+		return nil, fmt.Errorf("unable to override operator configuration: %v", err)
 	}
 
 	// Create the upgrade config and initiate the upgrade process
-	err = scheduleUpgradeWithProvider(upgradeVersion.String())
+	err = scheduleUpgradeWithProvider(h)
 	if err != nil {
-		return cVersion, fmt.Errorf("can't initiate managed upgrade: %v", err)
+		return nil, fmt.Errorf("can't initiate managed upgrade: %v", err)
 	}
 
 	// We need to force the operator to resync with its provider. Whilst this would happen naturally,
@@ -112,7 +86,7 @@ func TriggerManagedUpgrade(h *helper.H) (*configv1.ClusterVersion, error) {
 	// let's bounce the deployment to hurry that process.
 	err = restartOperator(h, muoNamespace)
 	if err != nil {
-		return cVersion, fmt.Errorf("error restarting managed-upgrade-operator: %v", err)
+		return nil, fmt.Errorf("error restarting managed-upgrade-operator: %v", err)
 	}
 
 	// wait for a few seconds to get the upgradeconfig synced from upgradepolicy
@@ -125,20 +99,29 @@ func TriggerManagedUpgrade(h *helper.H) (*configv1.ClusterVersion, error) {
 
 	// Reschedule the upgrade if flag specified
 	if viper.GetBool(config.Upgrade.ManagedUpgradeRescheduled) {
-		err = updateUpgradeWithProvider(upgradeVersion.String())
+		err = updateUpgradeWithProvider()
 		if err != nil {
-			return cVersion, fmt.Errorf("can't reschedule upgrade: %v", err)
+			return nil, fmt.Errorf("can't reschedule upgrade: %v", err)
 		}
 	}
 
 	// The managed-upgrade-operator won't have updated the CVO version yet, and that's fine.
 	// But let's return what it will look like, for the later 'is it upgraded yet' tests.
-	cUpdate := configv1.Update{
-		Version: upgradeVersion.String(),
-	}
-	cVersion.Spec.DesiredUpdate = &cUpdate
+	cUpdate := &configv1.Update{}
 
-	return cVersion, nil
+	releaseName := viper.GetString(config.Upgrade.ReleaseName)
+	if releaseName != "" {
+		upgradeVersion, err := util.OpenshiftVersionToSemver(releaseName)
+		if err != nil {
+			cUpdate.Version = upgradeVersion.String()
+		}
+	}
+	image := viper.GetString(config.Upgrade.Image)
+	if image != "" {
+		cUpdate.Image = image
+	}
+
+	return cUpdate, nil
 }
 
 // Override the managed-upgrade-operator's existing configmap with an e2e-focused one, if
@@ -159,6 +142,7 @@ func overrideOperatorConfig(h *helper.H) error {
 	providerEnv := viper.GetString(ocmprovider.Env)
 	url := ocmprovider.Environments.Choose(providerEnv)
 	replaceValues := struct {
+		ProviderSource string
 		ProviderEnvironmentUrl string
 		ProviderWatchInterval  int
 		ControlPlaneTime       int
@@ -167,6 +151,7 @@ func overrideOperatorConfig(h *helper.H) error {
 		NodeDrainTimeout       int
 		ExpectedDrainTime      int
 	}{
+		ProviderSource:         getProviderSource(),
 		ProviderEnvironmentUrl: url,
 		ProviderWatchInterval:  configProviderWatchInterval,
 		ControlPlaneTime:       configControlPlaneTime,
@@ -263,7 +248,7 @@ func createManagedUpgradeWorkload(workLoadName string, workLoadDir string, podPr
 }
 
 // IsManagedUpgradeDone returns with done true when a managed upgrade is complete.
-func isManagedUpgradeDone(h *helper.H, desired *configv1.Update) (done bool, msg string, err error) {
+func isManagedUpgradeDone(h *helper.H) (done bool, msg string, err error) {
 
 	// retrieve UpgradeConfig
 	ucList, err := h.Dynamic().Resource(schema.GroupVersionResource{
@@ -319,7 +304,7 @@ func isManagedUpgradeDone(h *helper.H, desired *configv1.Update) (done bool, msg
 		log.Printf("could not apply UpgradeConfig overrides: %v", err)
 	}
 
-	upgradeHistory := upgradeConfig.Status.History.GetHistory(desired.Version)
+	upgradeHistory := upgradeConfig.Status.History.GetHistory(upgradeConfig.Spec.Desired.Version)
 
 	// If the Upgrade History is empty, the upgrade hasn't started, try again later
 	if upgradeHistory == nil {
@@ -352,27 +337,30 @@ func isManagedUpgradeDone(h *helper.H, desired *configv1.Update) (done bool, msg
 }
 
 // Requests a cluster upgrade from the cluster provider
-func scheduleUpgradeWithProvider(version string) error {
-
-	clusterID := viper.GetString(config.Cluster.ID)
-	clusterProvider, err := providers.ClusterProvider()
-	if err != nil {
-		return fmt.Errorf("error getting clusterprovider for upgrade: %v", err)
+func scheduleUpgradeWithProvider(h *helper.H) error {
+	switch getProviderSource() {
+	case providerOCM:
+		return scheduleOCMUpgrade()
+	case providerLocal:
+		return scheduleLocalUpgrade(h)
+	default:
+		return fmt.Errorf("unable to determine upgrade policy provider to schedule upgrade")
 	}
-
-	// Our time will be as closely allowed as possible by the provider (now + 7 min)
-	t := time.Now().UTC().Add(7 * time.Minute)
-
-	err = clusterProvider.Upgrade(clusterID, version, t)
-	if err != nil {
-		return fmt.Errorf("error initiating upgrade from provider: %v", err)
-	}
-	return nil
-
 }
 
 // Reschedule the upgrade via the provider
-func updateUpgradeWithProvider(version string) error {
+func updateUpgradeWithProvider() error {
+
+	// Only supported by OCM
+	if getProviderSource() == providerLocal {
+		return nil
+	}
+
+	releaseName := viper.GetString(config.Upgrade.ReleaseName)
+	upgradeVersion, err := util.OpenshiftVersionToSemver(releaseName)
+	if err != nil {
+		return fmt.Errorf("error parsing releasename into semver: %v", err)
+	}
 
 	clusterID := viper.GetString(config.Cluster.ID)
 	clusterProvider, err := providers.ClusterProvider()
@@ -388,7 +376,7 @@ func updateUpgradeWithProvider(version string) error {
 	}
 
 	newT := time.Now().UTC().Add(300 * time.Minute)
-	err = clusterProvider.UpdateSchedule(clusterID, version, newT, policyID)
+	err = clusterProvider.UpdateSchedule(clusterID, upgradeVersion.String(), newT, policyID)
 	if err != nil {
 		return fmt.Errorf("error updating the upgrade schedule via provider: %v", err)
 	}
@@ -482,4 +470,113 @@ func isUpgradeTriggered(h *helper.H, desired *configv1.Update) (bool, error) {
 	}
 
 	return false, nil
+}
+
+// create cluster workloads prior to upgrade commencement which will test
+// manage-upgrade-operator's drain strategy functions
+func createUpgradeClusterWorkloads(h *helper.H) error {
+
+	// Create Pod Disruption Budget test workloads if desired
+	if viper.GetBool(config.Upgrade.ManagedUpgradeTestPodDisruptionBudgets) {
+		pdbPodPrefixes := []string{"pdb"}
+		err := createManagedUpgradeWorkload(pdbWorkloadName, pdbWorkloadDir, pdbPodPrefixes, h)
+		if err != nil {
+			return fmt.Errorf("unable to setup PDB workload for upgrade: %v", err)
+		}
+	}
+
+	// Create Node Drain test workloads if desired
+	if viper.GetBool(config.Upgrade.ManagedUpgradeTestNodeDrain) {
+		drainPodPrefixes := []string{"node-drain-test"}
+		err := createManagedUpgradeWorkload(drainWorkloadName, drainWorkloadDir, drainPodPrefixes, h)
+		if err != nil {
+			return fmt.Errorf("unable to setup node drain test workload for upgrade: %v", err)
+		}
+	}
+
+	return nil
+}
+
+// determine which policy provider to use for an upgrade policy source
+func getProviderSource() string {
+	// If upgrading using an image, then the provider must be LOCAL
+	if viper.GetString(config.Upgrade.Image) != "" {
+		return providerLocal
+	}
+	return providerOCM
+}
+
+func scheduleOCMUpgrade() error {
+	releaseName := viper.GetString(config.Upgrade.ReleaseName)
+	if releaseName == "" {
+		return fmt.Errorf("missing release name used for upgrade")
+	}
+	upgradeVersion, err := util.OpenshiftVersionToSemver(releaseName)
+	if err != nil {
+		return fmt.Errorf("unable to semantic-version parse release name: %v", releaseName)
+	}
+	clusterID := viper.GetString(config.Cluster.ID)
+	clusterProvider, err := providers.ClusterProvider()
+	if err != nil {
+		return fmt.Errorf("error getting clusterprovider for upgrade: %v", err)
+	}
+
+	// Our time will be as closely allowed as possible by the provider (now + 7 min)
+	t := time.Now().UTC().Add(7 * time.Minute)
+
+	err = clusterProvider.Upgrade(clusterID, upgradeVersion.String(), t)
+	if err != nil {
+		return fmt.Errorf("error initiating upgrade from provider: %v", err)
+	}
+
+	return nil
+}
+
+func scheduleLocalUpgrade(h *helper.H) error {
+
+	// Validate the upgrade type is supported
+	var upgradeType upgradev1alpha1.UpgradeType
+	switch viper.GetString(config.Upgrade.Type) {
+	case "OSD":
+		upgradeType = upgradev1alpha1.OSD
+	case "ARO":
+		upgradeType = upgradev1alpha1.ARO
+	default:
+		return fmt.Errorf("unsupported upgrade type: %v", viper.GetString(config.Upgrade.Type))
+	}
+
+	localUpgradeConfig := upgradev1alpha1.UpgradeConfig{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "UpgradeConfig",
+			APIVersion: "upgrade.managed.openshift.io/v1alpha1",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "managed-upgrade-config",
+			Namespace: muoNamespace,
+		},
+		Spec: upgradev1alpha1.UpgradeConfigSpec{
+			Desired: upgradev1alpha1.Update{
+				Image: viper.GetString(config.Upgrade.Image),
+			},
+			UpgradeAt:            time.Now().UTC().Format(time.RFC3339),
+			PDBForceDrainTimeout: configPdbDrainTimeoutOverride,
+			Type:                 upgradeType,
+			CapacityReservation: true,
+		},
+		Status: upgradev1alpha1.UpgradeConfigStatus{},
+	}
+
+	// Create the UpgradeConfig on-cluster
+	obj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(localUpgradeConfig.DeepCopy())
+	if err != nil {
+		return fmt.Errorf("can't convert UpgradeConfig to unstructured resource: %v", err)
+	}
+	uobj := unstructured.Unstructured{obj}
+	_, err = h.Dynamic().Resource(schema.GroupVersionResource{
+		Group:    "upgrade.managed.openshift.io",
+		Version:  "v1alpha1",
+		Resource: "upgradeconfigs",
+	}).Namespace(muoNamespace).Create(context.TODO(), &uobj, metav1.CreateOptions{})
+
+	return err
 }

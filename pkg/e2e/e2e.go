@@ -334,7 +334,8 @@ func runGinkgoTests() (int, error) {
 
 		// configure cluster and upgrade versions
 		if err = ChooseVersions(); err != nil {
-			return Failure, err
+			// if we fail to choose versions, we should gracefully exit
+			return Success, err
 		}
 
 		switch {
@@ -346,10 +347,13 @@ func runGinkgoTests() (int, error) {
 			return Aborted, fmt.Errorf("install version and upgrade version are the same -- skipping tests")
 		case viper.GetString(config.Upgrade.ReleaseName) == util.NoVersionFound:
 			return Aborted, fmt.Errorf("no valid upgrade versions were found. Skipping tests")
-		case viper.GetString(config.Upgrade.Image) != "" && viper.GetBool(config.Upgrade.ManagedUpgrade):
-			return Aborted, fmt.Errorf("image-based managed upgrades are unsupported: %s", viper.GetString(config.Upgrade.Image))
 		case viper.GetString(config.Cluster.Version) == "":
-			return Aborted, fmt.Errorf("no valid install version found")
+			returnState := Aborted
+			if viper.GetBool(config.Cluster.LatestYReleaseAfterProdDefault) || viper.GetBool(config.Cluster.LatestZReleaseAfterProdDefault) {
+				log.Println("At the latest available version with no newer targets. Exiting...")
+				returnState = Success
+			}
+			return returnState, fmt.Errorf("no valid install version found")
 		}
 	}
 

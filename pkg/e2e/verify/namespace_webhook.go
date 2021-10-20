@@ -15,8 +15,8 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/rest"
 
-	"github.com/openshift/osde2e/pkg/common/helper"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
+	"github.com/openshift/osde2e/pkg/common/helper"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -37,11 +37,7 @@ var _ = ginkgo.Describe(namespaceWebhookTestName, func() {
 
 	var PRIVILEGED_USERS = []string{
 		"system:admin",
-	}
-
-	var SRE_GROUPS = []string{
-		"osd-sre-cluster-admins",
-		"osd-sre-admins",
+		"backplane-cluster-admin",
 	}
 
 	// Map of namespace name and whether it should be created/deleted by the test
@@ -152,19 +148,6 @@ var _ = ginkgo.Describe(namespaceWebhookTestName, func() {
 			for _, namespace := range REDHAT_NAMESPACES {
 				err := updateNamespace(namespace, DUMMY_USER, DUMMY_GROUP, h)
 				Expect(err).To(HaveOccurred())
-			}
-		}, viper.GetFloat64(config.Tests.PollingTimeout))
-
-		ginkgo.It("Members of SRE groups can manage all namespaces", func() {
-			for _, sreGroup := range SRE_GROUPS {
-				for privilegedNamespace := range PRIVILEGED_NAMESPACES {
-					err := updateNamespace(privilegedNamespace, DUMMY_USER, sreGroup, h)
-					Expect(err).NotTo(HaveOccurred())
-				}
-				for _, namespace := range append(REDHAT_NAMESPACES, NONPRIV_NAMESPACES...) {
-					err := updateNamespace(namespace, DUMMY_USER, sreGroup, h)
-					Expect(err).NotTo(HaveOccurred())
-				}
 			}
 		}, viper.GetFloat64(config.Tests.PollingTimeout))
 

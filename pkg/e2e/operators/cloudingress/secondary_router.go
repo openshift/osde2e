@@ -11,6 +11,7 @@ import (
 	"github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	cloudingressv1alpha1 "github.com/openshift/cloud-ingress-operator/pkg/apis/cloudingress/v1alpha1"
+	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/constants"
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/e2e/operators"
@@ -21,6 +22,12 @@ import (
 )
 
 var _ = ginkgo.Describe(constants.SuiteInforming+TestPrefix, func() {
+	ginkgo.BeforeEach(func() {
+		if viper.GetBool("rosa.STS") {
+			ginkgo.Skip("STS does not support MVO")
+		}
+	})
+
 	h := helper.New()
 	ginkgo.Context("secondary router", func() {
 		ginkgo.It("should be created when added to publishingstrategy ", func() {
@@ -30,6 +37,8 @@ var _ = ginkgo.Describe(constants.SuiteInforming+TestPrefix, func() {
 			//only create the secondary ingress if it doesn't exist already in the publishing strategy
 			if _, exists, _ := appIngressExits(h, false, secondaryIngress.DNSName); !exists {
 				addAppIngress(h, secondaryIngress)
+				// wait 2 minute for all resources to be created
+				time.Sleep(time.Duration(120) * time.Second)
 			}
 
 			// from DNSName app-e2e-apps.cluster.mfvz.s1.devshift.org,
@@ -43,14 +52,15 @@ var _ = ginkgo.Describe(constants.SuiteInforming+TestPrefix, func() {
 			// the created router name should be router-app-e2e-apps
 			deploymentName := "router-" + ingressControllerName
 			deployment, err := operators.PollDeployment(h, "openshift-ingress", deploymentName)
+
 			ingress, _ := getingressController(h, ingressControllerName)
 
 			Expect(ingress.Annotations["Owner"]).To(Equal("cloud-ingress-operator"))
+
+
+
 			Expect(err).ToNot(HaveOccurred(), "failed fetching deployment")
 			Expect(deployment).NotTo(BeNil(), "deployment is nil")
-
-			// wait 1 minute for all routers to start
-			time.Sleep(time.Duration(60) * time.Second)
 			Expect(deployment.Status.ReadyReplicas).To(BeNumerically("==", deployment.Status.Replicas))
 		})
 

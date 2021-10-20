@@ -198,3 +198,21 @@ func verifyUserToken(token string, user *userv1.User, h *helper.H) func() bool {
 		return user.Name == tokenuser.Name
 	}
 }
+
+// createUser creates the given user.
+// Note that it may take time for operators to reconcile the permissions of new users,
+// so it's best to poll your first attempt to use the resulting user for a couple minutes.
+func createUser(userName string, identities []string, groups []string, h *helper.H) (*userv1.User, error) {
+	user := &userv1.User{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: userName,
+		},
+		Identities: identities,
+		Groups:     groups,
+	}
+	return h.User().UserV1().Users().Create(context.TODO(), user, metav1.CreateOptions{})
+}
+
+func deleteUser(userName string, h *helper.H) error {
+	return h.User().UserV1().Users().Delete(context.TODO(), userName, metav1.DeleteOptions{})
+}

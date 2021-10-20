@@ -16,8 +16,8 @@ import (
 
 	"k8s.io/apimachinery/pkg/util/wait"
 
-	"github.com/openshift/osde2e/pkg/common/helper"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
+	"github.com/openshift/osde2e/pkg/common/helper"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -34,8 +34,6 @@ var _ = ginkgo.Describe(hiveownershipWebhookTestName, func() {
 		DUMMY_GROUP = "random-group-name"
 		// User to use for impersonation
 		DUMMY_USER = "testuser@testdomain"
-		// User to simulate sre
-		SRE_USER = "dummy@redhat.com"
 	)
 
 	// Map of CRQS name and whether it should be created/deleted by the test
@@ -48,9 +46,7 @@ var _ = ginkgo.Describe(hiveownershipWebhookTestName, func() {
 
 	var PRIVILEGED_USER = "system:admin"
 
-	var ELEVATED_SRE_GROUPS = []string{
-		"osd-sre-cluster-admins",
-	}
+	var ELEVATED_SRE_USER = "backplane-cluster-admin"
 
 	h := helper.New()
 	ginkgo.Context("hiveownership validating webhook", func() {
@@ -99,13 +95,11 @@ var _ = ginkgo.Describe(hiveownershipWebhookTestName, func() {
 		}, viper.GetFloat64(config.Tests.PollingTimeout))
 
 		// Passsing Constantly.
-		ginkgo.It("Members of SRE groups can update a managed quota object", func() {
-			for _, sreGroup := range ELEVATED_SRE_GROUPS {
-				for item, managed := range PRIVILEGED_CRQs {
-					if managed {
-						err := UpdateClusterResourceQuota(h, item, SRE_USER, sreGroup)
-						Expect(err).NotTo(HaveOccurred())
-					}
+		ginkgo.It("Members of SRE can update a managed quota object", func() {
+			for item, managed := range PRIVILEGED_CRQs {
+				if managed {
+					err := UpdateClusterResourceQuota(h, item, ELEVATED_SRE_USER, "")
+					Expect(err).NotTo(HaveOccurred())
 				}
 			}
 		}, viper.GetFloat64(config.Tests.PollingTimeout))

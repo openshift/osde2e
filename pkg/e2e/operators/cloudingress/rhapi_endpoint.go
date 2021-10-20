@@ -27,6 +27,12 @@ import (
 // tests
 
 var _ = ginkgo.Describe(constants.SuiteOperators+TestPrefix, func() {
+	ginkgo.BeforeEach(func() {
+		if viper.GetBool("rosa.STS") {
+			ginkgo.Skip("STS does not support MVO")
+		}
+	})
+
 	h := helper.New()
 
 	testHostnameResolves(h)

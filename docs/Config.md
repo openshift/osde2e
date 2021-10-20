@@ -60,15 +60,14 @@ Some environment variables commonly used for pipelines under osde2e are indicate
 
 | Environment variable | Usage |
 | --------------| ------------------------|
+|UPGRADE_TYPE| UpgradeType will define what managed cluster upgrader to use. Valid values "OSD" (default) or "ARO".|
 |UPGRADE_TO_LATEST| UpgradeToLatest will upgrade to the latest valid version found.|
 |UPGRADE_TO_LATEST_Z| UpgradeToLatestZ looks for the newest valid patch-release and selects it.|
 |UPGRADE_TO_LATEST_Y| UpgradeToLatestY looks for the newest valid minor release upgrade path and selects it.|
 |UPGRADE_RELEASE_NAME| ReleaseName is the name of the release in a release stream.|
 |UPGRADE_IMAGE| Image is the release image a cluster is upgraded to. If set, it overrides the release stream and upgrades.|
 |UPGRADE_MONITOR_ROUTES| MonitorRoutesDuringUpgrade will monitor the availability of routes whilst an upgrade takes place.|
-|UPGRADE_MANAGED| Perform an upgrade using the Managed Upgrade Operator.|
 |UPGRADE_MANAGED_TEST_PDBS| Create disruptive Pod Disruption Budget workloads to test the Managed Upgrade Operator's ability to handle them.|
-|UPGRADE_WAIT_FOR_WORKERS| Wait for workers to upgrade before considering the upgrade complete.|
 |UPGRADE_MANAGED_TEST_RESCHEDULE| Test the managed upgrade when the upgrade schedule changed.|
 
  
@@ -114,7 +113,7 @@ Some environment variables commonly used for pipelines under osde2e are indicate
 |ADDON_TEST_USER| TestUser is the OpenShift user that the tests will run as. If "%s" is detected in the TestUser string, it will evaluate that as the project namespace. Ex. "system:serviceaccount:%s:dedicated-admin" . Evaluated : "system:serviceaccount:osde2e-abc123:dedicated-admin"|
 |ADDON_RUN_CLEANUP| RunCleanup is a boolean to specify whether the testHarnesses should have a separate cleanup phase. This phase would run at the end of all e2e testing|
 |ADDON_CLEANUP_HARNESSES| CleanupHarnesses is a comma separated list of container images that will clean up any artifacts created after test harnesses have run|
- 
+|ADDON_POLLING_TIMEOUT| PollingTimeout defines in seconds the amount of time to wait for an add-on test job to finish before timing it out|
  
 ### Prometheus related:-
 

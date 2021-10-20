@@ -1,7 +1,8 @@
-package ocmprovider
+package rosaprovider
 
 import (
 	"log"
+	"math/rand"
 )
 
 var clusterImageSources = map[string]string{"quay-primary": `imageContentSources:
@@ -39,18 +40,14 @@ var clusterImageSources = map[string]string{"quay-primary": `imageContentSources
   - quay.io/app-sre/managed-upgrade-operator-registry
   source: quay.io/app-sre/managed-upgrade-operator-registry`}
 
-func (o *OCMProvider) ChooseImageSource(choice string) (source string) {
+func (m *ROSAProvider) ChooseImageSource(choice string) (source string) {
 	var ok bool
 	if choice == "random" || choice == "" {
-		/*
-			    var sources []string
-					for key := range clusterImageSources {
-						sources = append(sources, key)
-					}
-					choice = sources[rand.Intn(len(sources))]
-		*/
-		// TODO: This is a temporary fix for BZ2008539
-		choice = clusterImageSources["quay-primary"]
+		var sources []string
+		for key := range clusterImageSources {
+			sources = append(sources, key)
+		}
+		choice = sources[rand.Intn(len(sources))]
 	}
 	if source, ok = clusterImageSources[choice]; !ok {
 		log.Printf("Image source not found: %s", choice)

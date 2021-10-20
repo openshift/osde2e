@@ -11,7 +11,7 @@ Provide a standard for testing every aspect of the Openshift Dedicated product. 
  
 Log into OCM, then go here to obtain an [OpenShift Offline Token].
  
-A properly setup Go workspace using **Go 1.13+ is required**.
+A properly setup Go workspace using **Go 1.16+ is required**.
  
 Install dependencies:
 ```
@@ -105,6 +105,7 @@ A full example of this process is presented below:
 $ ocm cluster login <cluster>
 $ oc adm groups add-users osd-sre-cluster-admins $(oc whoami)
 $ export TEST_KUBECONFIG=$HOME/.kube/config
+$ export OCM_TOKEN=${YOUR_OCM_TOKEN_HERE}
 $ osde2e test --configs e2e-suite,stage --skip-health-check
 ```
 
