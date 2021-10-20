@@ -42,9 +42,9 @@ const (
 	pollInterval                  = 10 * time.Second
 	defaultTimeout                = 5 * time.Minute
 	endpointReadyTimeout          = 5 * time.Minute
-	endpointResolveTimeout        = 5 * time.Minute
+	endpointResolveTimeout        = 20 * time.Minute
 	dnsResolverTimeout            = 10 * time.Second
-	minConsecutiveResolves        = 3
+	minConsecutiveResolves        = 5
 	routeHostname                 = "hello-openshift"
 )
 
@@ -69,7 +69,6 @@ var _ = ginkgo.Describe(customDomainsOperatorTestName, func() {
 
 	ginkgo.Context("Should allow dedicated-admins to create custom domains", func() {
 		var (
-			err error
 			h   = helper.New()
 
 			testInstanceName = "test-" + time.Now().Format("20060102-150405-") + fmt.Sprint(time.Now().Nanosecond()/1000000) + "-" + fmt.Sprint(ginkgo.GinkgoParallelNode())
@@ -159,7 +158,7 @@ var _ = ginkgo.Describe(customDomainsOperatorTestName, func() {
 
 			// Wait for CustomDomain CR Endpoint to be ready
 			ginkgo.By("Wait for CustomDomain CR Endpoint to be ready")
-			wait.PollImmediate(pollInterval, endpointReadyTimeout, func() (bool, error) {
+			err = wait.PollImmediate(pollInterval, endpointReadyTimeout, func() (bool, error) {
 				byteResult, err := h.Cfg().ConfigV1().RESTClient().Get().
 					AbsPath("/apis/managed.openshift.io/v1alpha1").
 					Resource("customdomains").
@@ -172,7 +171,7 @@ var _ = ginkgo.Describe(customDomainsOperatorTestName, func() {
 				if err != nil {
 					return false, err
 				}
-				if testDomain.Status.State == "Ready" {
+				if testDomain.Status.State == "Ready" && testDomain.Status.Endpoint != "" {
 					return true, err
 				}
 				return false, err
@@ -181,13 +180,12 @@ var _ = ginkgo.Describe(customDomainsOperatorTestName, func() {
 			Expect(string(testDomain.Status.State)).To(Equal("Ready"), "Customdomain may be unstable (.status.state is not 'Ready' anymore)")
 			Expect(string(testDomain.Status.Endpoint)).ToNot(Equal(""), "Customdomain's .status.endpoint field empty when .status.state field is 'Ready'")
 
-			// Customdomain endpoints have been known to:
-			// 1) not resolve initially and/or
-			// 2) resolve once, then fail to resolve for a time after
+			// Customdomain ready, now wait for endpoint to resolve consistently.
+			// Customdomain endpoints have been known to resolve once, then fail to resolve for a time after
 			// To ensure the endpoint is ready & stable, check that it resolves successfully several times before continuing
 			ginkgo.By("Wait for CustomDomain endpoint to resolve")
 			consecutiveResolves := 0
-			wait.PollImmediate(pollInterval, endpointResolveTimeout, func() (bool, error) {
+			err = wait.PollImmediate(pollInterval, endpointResolveTimeout, func() (bool, error) {
 				endpointIPs, err := dialer.Resolver.LookupHost(context.TODO(), testDomain.Status.Endpoint)
 				if len(endpointIPs) == 0 {
 					// No IPs returned
@@ -224,7 +222,7 @@ var _ = ginkgo.Describe(customDomainsOperatorTestName, func() {
 				},
 			})
 
-			ginkgo.By("Creating a new app and exposing it via an Openshift route")
+			ginkgo.By("Creating a new app")
 			testAppReplicas := int32(1)
 			testApp, err := h.Kube().AppsV1().Deployments(h.CurrentProject()).Create(context.TODO(), &appsv1.Deployment{
 				TypeMeta: metav1.TypeMeta{
@@ -264,8 +262,8 @@ var _ = ginkgo.Describe(customDomainsOperatorTestName, func() {
 			Expect(err).ToNot(HaveOccurred())
 
 			// Ensure the "hello-world" app is created
-			ginkgo.By("Ensuring new app is created")
-			wait.PollImmediate(pollInterval, defaultTimeout, func() (bool, error) {
+			ginkgo.By("Ensuring the new app is created")
+			err = wait.PollImmediate(pollInterval, defaultTimeout, func() (bool, error) {
 				testApp, err = h.Kube().AppsV1().Deployments(h.CurrentProject()).Get(context.TODO(), testApp.GetName(), metav1.GetOptions{})
 				if err != nil {
 					return false, err
@@ -277,6 +275,7 @@ var _ = ginkgo.Describe(customDomainsOperatorTestName, func() {
 			})
 			Expect(err).ToNot(HaveOccurred(), "Time out or error waiting for hello-openshift (deployment name: '"+testApp.GetName()+"') to become ready.")
 
+			ginkgo.By("Exposing the new app via an Openshift route")
 			testAppService, err := h.Kube().CoreV1().Services(h.CurrentProject()).Create(context.TODO(), &corev1.Service{
 				TypeMeta: metav1.TypeMeta{
 					Kind:       "Service",
@@ -359,7 +358,7 @@ var _ = ginkgo.Describe(customDomainsOperatorTestName, func() {
 
 			// This ensures that the app is available and returns a response
 			var response *http.Response
-			wait.PollImmediate(pollInterval, defaultTimeout, func() (bool, error) {
+			err = wait.PollImmediate(pollInterval, defaultTimeout*3, func() (bool, error) {
 				response, err = client.Get("https://" + testRoute.Spec.Host)
 				defer func(response *http.Response) {
 					if response != nil {
@@ -392,7 +391,7 @@ var _ = ginkgo.Describe(customDomainsOperatorTestName, func() {
 
 		ginkgo.AfterEach(func() {
 			ginkgo.By("Deleting resources after testing")
-			_, err = h.Cfg().ConfigV1().RESTClient().Delete().
+			_, err := h.Cfg().ConfigV1().RESTClient().Delete().
 				AbsPath("/apis/managed.openshift.io/v1alpha1").
 				Resource("customdomains").
 				Name(testDomain.GetName()).
