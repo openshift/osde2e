@@ -113,6 +113,7 @@ func updateAnnotation(h *helper.H, name string, annotation1 string, annotation2 
 		Expect(err).NotTo(HaveOccurred())
 
 		ingresscontroller, err = h.Dynamic().Resource(schema.GroupVersionResource{Group: "operator.openshift.io", Version: "v1", Resource: "ingresscontrollers"}).Namespace("openshift-ingress-operator").Update(context.TODO(), ingresscontroller, metav1.UpdateOptions{})
+		Expect(err).NotTo(HaveOccurred())
 		updatePublishingStrategy(h, ingressController, name)
 	}
 	return ingressController

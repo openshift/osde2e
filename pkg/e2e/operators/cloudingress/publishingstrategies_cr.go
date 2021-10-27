@@ -39,8 +39,8 @@ var _ = ginkgo.Describe(constants.SuiteOperators+TestPrefix, func() {
 			err := addPublishingstrategy(h, ps)
 			Expect(apierrors.IsForbidden(err)).To(BeTrue())
 
-			ingress, _ := getingressController(h, "default")
-			Expect(ingress.Annotations["Owner"]).To(Equal("cloud-ingress-operator"))
+			//ingress, _ := getingressController(h, "default")
+			//Expect(ingress.Annotations["Owner"]).To(Equal("cloud-ingress-operator"))
 		})
 
 		ginkgo.It("cluster admin should be allowed to manage publishingstrategies CR", func() {
