@@ -13,6 +13,7 @@ import (
 	"math/big"
 	"net"
 	"net/http"
+	"net/url"
 	"time"
 
 	"github.com/onsi/ginkgo"
@@ -38,12 +39,13 @@ import (
 
 const (
 	customDomainsOperatorTestName = "[Suite: operators] [OSD] Custom Domains Operator"
-	pollInterval                  = 15 * time.Second
-	defaultTimeout                = 20 * time.Minute
-	endpointTimeout               = 20 * time.Minute
-	endpointStabilityTimeout      = 20 * time.Minute
-	dnsTimeout                    = 5 * time.Minute
-	minConsecutiveResolves        = 3
+	pollInterval                  = 10 * time.Second
+	defaultTimeout                = 5 * time.Minute
+	endpointReadyTimeout          = 5 * time.Minute
+	endpointResolveTimeout        = 20 * time.Minute
+	dnsResolverTimeout            = 10 * time.Second
+	minConsecutiveResolves        = 5
+	routeHostname                 = "hello-openshift"
 )
 
 func init() {
@@ -51,12 +53,25 @@ func init() {
 }
 
 var _ = ginkgo.Describe(customDomainsOperatorTestName, func() {
-	ginkgo.Context("Should allow dedicated-admins to create domains", func() {
+
+	// custom dialer for use w/ resolver and http.client
+	dialer := &net.Dialer{
+		Resolver: &net.Resolver{
+			PreferGo: true,
+			Dial: func(ctx context.Context, network, address string) (net.Conn, error) {
+				d := net.Dialer{
+					Timeout: dnsResolverTimeout,
+				}
+				return d.DialContext(ctx, network, address)
+			},
+		},
+	}
+
+	ginkgo.Context("Should allow dedicated-admins to create custom domains", func() {
 		var (
-			err error
 			h   = helper.New()
 
-			testInstanceName = "test-customdomain-" + time.Now().Format("20060102-150405-") + fmt.Sprint(time.Now().Nanosecond()/1000000) + "-" + fmt.Sprint(ginkgo.GinkgoParallelNode())
+			testInstanceName = "test-" + time.Now().Format("20060102-150405-") + fmt.Sprint(time.Now().Nanosecond()/1000000) + "-" + fmt.Sprint(ginkgo.GinkgoParallelNode())
 			testDomain       *customdomainv1alpha1.CustomDomain
 		)
 
@@ -142,7 +157,8 @@ var _ = ginkgo.Describe(customDomainsOperatorTestName, func() {
 			Expect(err).ToNot(HaveOccurred())
 
 			// Wait for CustomDomain CR Endpoint to be ready
-			wait.PollImmediate(pollInterval, endpointTimeout, func() (bool, error) {
+			ginkgo.By("Wait for CustomDomain CR Endpoint to be ready")
+			err = wait.PollImmediate(pollInterval, endpointReadyTimeout, func() (bool, error) {
 				byteResult, err := h.Cfg().ConfigV1().RESTClient().Get().
 					AbsPath("/apis/managed.openshift.io/v1alpha1").
 					Resource("customdomains").
@@ -155,8 +171,7 @@ var _ = ginkgo.Describe(customDomainsOperatorTestName, func() {
 				if err != nil {
 					return false, err
 				}
-
-				if testDomain.Status.State == "Ready" {
+				if testDomain.Status.State == "Ready" && testDomain.Status.Endpoint != "" {
 					return true, err
 				}
 				return false, err
@@ -165,19 +180,27 @@ var _ = ginkgo.Describe(customDomainsOperatorTestName, func() {
 			Expect(string(testDomain.Status.State)).To(Equal("Ready"), "Customdomain may be unstable (.status.state is not 'Ready' anymore)")
 			Expect(string(testDomain.Status.Endpoint)).ToNot(Equal(""), "Customdomain's .status.endpoint field empty when .status.state field is 'Ready'")
 
-			// Customdomain endpoints have been known to:
-			// 1) not resolve initially and/or
-			// 2) resolve once, then fail to resolve for a time after
+			// Customdomain ready, now wait for endpoint to resolve consistently.
+			// Customdomain endpoints have been known to resolve once, then fail to resolve for a time after
 			// To ensure the endpoint is ready & stable, check that it resolves successfully several times before continuing
-			var consecutiveResolves int
-			wait.PollImmediate(pollInterval, endpointStabilityTimeout, func() (bool, error) {
-				endpointIPs, err := net.LookupHost(testDomain.Status.Endpoint)
+			ginkgo.By("Wait for CustomDomain endpoint to resolve")
+			consecutiveResolves := 0
+			err = wait.PollImmediate(pollInterval, endpointResolveTimeout, func() (bool, error) {
+				endpointIPs, err := dialer.Resolver.LookupHost(context.TODO(), testDomain.Status.Endpoint)
 				if len(endpointIPs) == 0 {
+					// No IPs returned
 					consecutiveResolves = 0
 					return false, nil
 				}
 				if err != nil {
 					return false, err
+				}
+				for _, addr := range endpointIPs {
+					if net.ParseIP(addr) == nil {
+						// Not a valid ip address
+						consecutiveResolves = 0
+						return false, nil
+					}
 				}
 				if consecutiveResolves < minConsecutiveResolves-1 {
 					consecutiveResolves++
@@ -199,7 +222,7 @@ var _ = ginkgo.Describe(customDomainsOperatorTestName, func() {
 				},
 			})
 
-			ginkgo.By("Creating a new app and exposing it via an Openshift route")
+			ginkgo.By("Creating a new app")
 			testAppReplicas := int32(1)
 			testApp, err := h.Kube().AppsV1().Deployments(h.CurrentProject()).Create(context.TODO(), &appsv1.Deployment{
 				TypeMeta: metav1.TypeMeta{
@@ -239,7 +262,8 @@ var _ = ginkgo.Describe(customDomainsOperatorTestName, func() {
 			Expect(err).ToNot(HaveOccurred())
 
 			// Ensure the "hello-world" app is created
-			wait.PollImmediate(pollInterval, defaultTimeout, func() (bool, error) {
+			ginkgo.By("Ensuring the new app is created")
+			err = wait.PollImmediate(pollInterval, defaultTimeout, func() (bool, error) {
 				testApp, err = h.Kube().AppsV1().Deployments(h.CurrentProject()).Get(context.TODO(), testApp.GetName(), metav1.GetOptions{})
 				if err != nil {
 					return false, err
@@ -251,6 +275,7 @@ var _ = ginkgo.Describe(customDomainsOperatorTestName, func() {
 			})
 			Expect(err).ToNot(HaveOccurred(), "Time out or error waiting for hello-openshift (deployment name: '"+testApp.GetName()+"') to become ready.")
 
+			ginkgo.By("Exposing the new app via an Openshift route")
 			testAppService, err := h.Kube().CoreV1().Services(h.CurrentProject()).Create(context.TODO(), &corev1.Service{
 				TypeMeta: metav1.TypeMeta{
 					Kind:       "Service",
@@ -295,7 +320,7 @@ var _ = ginkgo.Describe(customDomainsOperatorTestName, func() {
 					Name: testInstanceName,
 				},
 				Spec: routev1.RouteSpec{
-					Host: "osde2e-customdomain." + testDomain.Spec.Domain,
+					Host: routeHostname + "." + testDomain.Spec.Domain,
 					Port: &routev1.RoutePort{
 						TargetPort: intstr.IntOrString{
 							Type:   intstr.String,
@@ -313,47 +338,60 @@ var _ = ginkgo.Describe(customDomainsOperatorTestName, func() {
 			}, metav1.CreateOptions{})
 			Expect(err).ToNot(HaveOccurred())
 
-			// TODO: Look at tweaking local DNS client configuration here
 			ginkgo.By("Requesting the app using the custom domain")
-			dialer := &net.Dialer{
-				Timeout: dnsTimeout,
+			// dialContext customized for http client to simulate DNS lookup
+			dialContext := func(ctx context.Context, network, addr string) (net.Conn, error) {
+				if addr == testRoute.Spec.Host+":443" {
+					addr = testDomain.Status.Endpoint + ":443"
+				}
+				return dialer.DialContext(ctx, network, addr)
 			}
+			http.DefaultTransport.(*http.Transport).DialContext = dialContext
 			client := &http.Client{
 				Transport: &http.Transport{
 					TLSClientConfig: &tls.Config{
 						InsecureSkipVerify: true,
 					},
-					DialContext: func(context context.Context, network, addr string) (net.Conn, error) {
-						// Simulate DNS lookup
-						if addr == testRoute.Spec.Host+":443" {
-							addr = testDomain.Status.Endpoint + ":443"
-						}
-						return dialer.DialContext(context, network, addr)
-					},
+					DialContext: dialContext,
 				},
 			}
 
 			// This ensures that the app is available and returns a response
 			var response *http.Response
-			wait.PollImmediate(pollInterval, defaultTimeout, func() (bool, error) {
+			err = wait.PollImmediate(pollInterval, defaultTimeout*3, func() (bool, error) {
 				response, err = client.Get("https://" + testRoute.Spec.Host)
 				defer func(response *http.Response) {
 					if response != nil {
 						response.Body.Close()
 					}
 				}(response)
-
-				if response != nil && response.StatusCode == http.StatusOK {
-					return true, err
+				if err != nil {
+					// Check for DNS error
+					if e, ok := err.(*net.DNSError); ok && e.IsNotFound {
+						// do not abort on flaky DNS responses
+						return false, nil
+					}
+					// Check for URL DNS error
+					if urlError, ok := err.(*url.Error); ok {
+						if _, ok := urlError.Err.(*net.OpError); ok {
+							// do not abort on flaky network operations
+							return false, nil
+						}
+					}
+					// Unhandled error
+					return false, err
 				}
-				return false, err
+				if response != nil && response.StatusCode == http.StatusOK {
+					return true, nil
+				}
+				return false, nil
 			})
 			Expect(err).ToNot(HaveOccurred(), "Timed out or error requesting hello-openshift service via custom domain (customdomain endpoint: '"+testDomain.Status.Endpoint+"').")
 		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
 
 		ginkgo.AfterEach(func() {
 			ginkgo.By("Deleting resources after testing")
-			_, err = h.Cfg().ConfigV1().RESTClient().Delete().
+			_, err := h.Cfg().ConfigV1().RESTClient().Delete().
 				AbsPath("/apis/managed.openshift.io/v1alpha1").
 				Resource("customdomains").
 				Name(testDomain.GetName()).

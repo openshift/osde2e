@@ -1,8 +1,8 @@
 package rosaprovider
 
 import (
-	"github.com/openshift/osde2e/pkg/common/config"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
+	"github.com/openshift/osde2e/pkg/common/config"
 )
 
 const (
@@ -35,6 +35,9 @@ const (
 
 	// HostPrefix is the prefix for the hosts produced by ROSA.
 	HostPrefix = "rosa.hostPrefix"
+
+	// STS is a boolean tracking whether or not this cluster should be provisioned using the STS workflow
+	STS = "rosa.STS"
 )
 
 func init() {
@@ -60,6 +63,11 @@ func init() {
 	viper.BindEnv(ComputeMachineType, "ROSA_COMPUTE_MACHINE_TYPE")
 
 	viper.BindEnv(ComputeNodes, "ROSA_COMPUTE_NODES")
+	viper.SetDefault(ComputeNodes, 2)
 
 	viper.BindEnv(HostPrefix, "ROSA_HOST_PREFIX")
+	viper.SetDefault(HostPrefix, 0)
+
+	viper.BindEnv(STS, "ROSA_STS")
+	viper.SetDefault(STS, false)
 }

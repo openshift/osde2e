@@ -16,7 +16,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 
 	"github.com/openshift/osde2e/pkg/common/cluster"
-	"github.com/openshift/osde2e/pkg/common/clusterproperties"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/metadata"
@@ -63,36 +62,29 @@ func RunUpgrade() error {
 
 	upgradeStarted = time.Now()
 
-	var desired *configv1.ClusterVersion
-	if viper.GetBool(config.Upgrade.ManagedUpgrade) {
+	var desiredUpdate *configv1.Update
 
-		// Check we are on a supported provider
-		provider, err := providers.ClusterProvider()
-		if err != nil {
-			return fmt.Errorf("can't determine provider for managed upgrade: %s", err)
-		}
-		switch provider.Type() {
-		case "rosa":
-			fallthrough
-		case "ocm":
-			desired, err = TriggerManagedUpgrade(h)
-			if err != nil {
-				return fmt.Errorf("failed triggering upgrade: %v", err)
-			}
-		default:
-			return fmt.Errorf("unsupported provider for managed upgrades (%s)", provider.Type())
-		}
-	} else {
-		desired, err = TriggerUpgrade(h)
+	// Check we are on a supported provider
+	provider, err := providers.ClusterProvider()
+	if err != nil {
+		return fmt.Errorf("can't determine provider for managed upgrade: %s", err)
+	}
+	switch provider.Type() {
+	case "rosa":
+		fallthrough
+	case "ocm":
+		desiredUpdate, err = TriggerManagedUpgrade(h)
 		if err != nil {
 			return fmt.Errorf("failed triggering upgrade: %v", err)
 		}
+	default:
+		return fmt.Errorf("unsupported provider for managed upgrades (%s)", provider.Type())
 	}
 
 	// When the upgrade being rescheduled, we should expect that the upgrade will not be triggered
 	if viper.GetBool(config.Upgrade.ManagedUpgradeRescheduled) {
 		time.Sleep(10 * time.Minute)
-		triggered, err := isUpgradeTriggered(h, desired.Spec.DesiredUpdate)
+		triggered, err := isUpgradeTriggered(h, desiredUpdate)
 		if triggered {
 			return fmt.Errorf("the upgrade was triggered unexpectly: %v", err)
 		} else {
@@ -106,19 +98,15 @@ func RunUpgrade() error {
 	log.Println("Upgrading...")
 	done = false
 	if err = wait.PollImmediate(10*time.Second, MaxDuration, func() (bool, error) {
-		if viper.GetBool(config.Upgrade.ManagedUpgrade) && viper.GetBool(config.Upgrade.WaitForWorkersToManagedUpgrade) {
-			// Keep the managed upgrade's configuration overrides in place, in case Hive has replaced them
-			err = overrideOperatorConfig(h)
-			// Log if it errored, but don't cancel the upgrade because of it
-			if err != nil {
-				log.Printf("problem overriding managed upgrade config: %v", err)
-			}
-			// If performing a managed upgrade, check if we want to wait for workers to fully upgrade too
-			done, msg, err = isManagedUpgradeDone(h, desired.Spec.DesiredUpdate)
-		} else {
-			// Otherwise, just wait for the control plane to upgrade
-			done, msg, err = IsUpgradeDone(h, desired.Spec.DesiredUpdate)
+
+		// Keep the managed upgrade's configuration overrides in place, in case Hive has replaced them
+		err = overrideOperatorConfig(h)
+		// Log if it errored, but don't cancel the upgrade because of it
+		if err != nil {
+			log.Printf("problem overriding managed upgrade config: %v", err)
 		}
+		// If performing a managed upgrade, check if we want to wait for workers to fully upgrade too
+		done, msg, err = isManagedUpgradeDone(h)
 
 		if !done {
 			log.Printf("Upgrade in progress: %s", msg)
@@ -139,135 +127,22 @@ func RunUpgrade() error {
 	}
 
 	log.Println("Upgrade complete!")
+	if viper.GetBool(config.Upgrade.ManagedUpgradeTestNodeDrain) {
+		list, err := h.Kube().CoreV1().Pods(h.CurrentProject()).List(context.TODO(), metav1.ListOptions{LabelSelector: "app=node-drain-test"})
+		if err != nil {
+			return fmt.Errorf("Error listing pods: %s", err.Error())
+		}
+		if len(list.Items) != 0 {
+			for _, item := range list.Items {
+				log.Printf("Removing finalizers from %s", item.Name)
+				item.Finalizers = []string{}
+				h.Kube().CoreV1().Pods(h.CurrentProject()).Update(context.TODO(), &item, metav1.UpdateOptions{})
+				log.Printf("Deleting pod %s", item.Name)
+				h.Kube().CoreV1().Pods(h.CurrentProject()).Delete(context.TODO(), item.Name, metav1.DeleteOptions{})
+			}
+		}
+	}
 	return nil
-}
-
-// TriggerUpgrade uses a helper to perform an upgrade.
-func TriggerUpgrade(h *helper.H) (*configv1.ClusterVersion, error) {
-	var cVersion *configv1.ClusterVersion
-	var err error
-	// setup Config client
-	cfgClient := h.Cfg()
-
-	// get current Version
-	getOpts := metav1.GetOptions{}
-	cVersion, err = cfgClient.ConfigV1().ClusterVersions().Get(context.TODO(), ClusterVersionName, getOpts)
-	if err != nil {
-		return cVersion, fmt.Errorf("couldn't get current ClusterVersion '%s': %v", ClusterVersionName, err)
-	}
-
-	clusterID := viper.GetString(config.Cluster.ID)
-	image := viper.GetString(config.Upgrade.Image)
-	releaseName := viper.GetString(config.Upgrade.ReleaseName)
-
-	provider, err := providers.ClusterProvider()
-
-	if err != nil {
-		return nil, fmt.Errorf("error getting cluster provider: %v", err)
-	}
-
-	cluster, err := provider.GetCluster(clusterID)
-	if err != nil {
-		return nil, fmt.Errorf("error retrieving cluster: %v", err)
-	}
-
-	provider.AddProperty(cluster, clusterproperties.Status, clusterproperties.StatusUpgrading)
-
-	// set requested upgrade targets
-	if image != "" {
-		cVersion.Spec.DesiredUpdate = &configv1.Update{
-			Version: strings.Replace(releaseName, "openshift-v", "", -1),
-			Image:   image,
-			Force:   true, // Force if we have an image specified
-		}
-	} else {
-		upgradeVersion := strings.Replace(releaseName, "openshift-v", "", -1)
-		installVersion := strings.Replace(viper.GetString(config.Cluster.Version), "openshift-v", "", -1)
-
-		upgradeVersionParsed := semver.MustParse(upgradeVersion)
-		installVersionParsed := semver.MustParse(installVersion)
-
-		if upgradeVersionParsed.GreaterThan(installVersionParsed) {
-			cVersion.Spec.Channel, err = VersionToChannel(upgradeVersionParsed)
-			if err != nil {
-				return cVersion, fmt.Errorf("unable to channel from version: %v", err)
-			}
-
-			cVersion, err = cfgClient.ConfigV1().ClusterVersions().Update(context.TODO(), cVersion, metav1.UpdateOptions{})
-			if err != nil {
-				return cVersion, fmt.Errorf("couldn't update desired release channel: %v", err)
-			}
-
-			// https://github.com/openshift/managed-cluster-config/blob/master/scripts/cluster-upgrade.sh#L258
-			time.Sleep(15 * time.Second)
-
-			cVersion, err = cfgClient.ConfigV1().ClusterVersions().Get(context.TODO(), ClusterVersionName, getOpts)
-			if err != nil {
-				return cVersion, fmt.Errorf("couldn't get current ClusterVersion '%s' after updating release channel: %v", ClusterVersionName, err)
-			}
-		}
-
-		// Assume CIS has all the information required. Just pass version info.
-		cVersion.Spec.DesiredUpdate = &configv1.Update{
-			Version: strings.Replace(releaseName, "openshift-v", "", -1),
-		}
-	}
-
-	updatedCV, err := cfgClient.ConfigV1().ClusterVersions().Update(context.TODO(), cVersion, metav1.UpdateOptions{})
-	if err != nil {
-		return updatedCV, fmt.Errorf("couldn't update desired ClusterVersion: %v", err)
-	}
-
-	// wait for update acknowledgement
-	updateGeneration := updatedCV.Generation
-	if err = wait.PollImmediate(15*time.Second, 5*time.Minute, func() (bool, error) {
-		if cVersion, err = cfgClient.ConfigV1().ClusterVersions().Get(context.TODO(), ClusterVersionName, getOpts); err != nil {
-			return false, err
-		}
-		return cVersion.Status.ObservedGeneration >= updateGeneration, nil
-	}); err != nil {
-		return updatedCV, fmt.Errorf("cluster did not acknowledge update in a timely manner: %v", err)
-	}
-
-	return updatedCV, nil
-}
-
-// IsUpgradeDone returns with done true when an upgrade is complete at desired and any available msg.
-func IsUpgradeDone(h *helper.H, desired *configv1.Update) (done bool, msg string, err error) {
-	// retrieve current ClusterVersion
-	cfgClient, getOpts := h.Cfg(), metav1.GetOptions{}
-	cVersion, err := cfgClient.ConfigV1().ClusterVersions().Get(context.TODO(), ClusterVersionName, getOpts)
-	if err != nil {
-		log.Printf("error getting ClusterVersion '%s': %v", ClusterVersionName, err)
-	}
-
-	// ensure working towards correct desired
-	curDesired := cVersion.Status.Desired
-	if curDesired.Version != desired.Version {
-		return false, fmt.Sprintf("desired not yet updated; desired: %v, cur: %v", desired.Version, curDesired.Version), nil
-	}
-
-	// check if any ActiveConditions indicate an upgrade is ongoing
-	for _, aCondition := range ActiveConditions {
-		for _, c := range cVersion.Status.Conditions {
-			if c.Type == aCondition && c.Status == configv1.ConditionTrue {
-				return false, c.Message, nil
-			}
-		}
-	}
-
-	// check that latest history entry is desired and completed
-	if len(cVersion.Status.History) > 0 {
-		latest := &cVersion.Status.History[0]
-		if latest == nil || latest.State != configv1.CompletedUpdate {
-			return false, "history doesn't have a completed update", nil
-		} else if latest.Version != desired.Version {
-			return false, fmt.Sprintf("latest in history doesn't match desired; desired: %v, cur: %v", desired, latest), nil
-		}
-	}
-
-	done = true
-	return
 }
 
 // VersionToChannel creates a Cincinnati channel version out of an OpenShift version.

@@ -9,10 +9,12 @@ import (
 	. "github.com/onsi/gomega"
 	operatorv1 "github.com/openshift/api/operator/v1"
 	cloudingressv1alpha1 "github.com/openshift/cloud-ingress-operator/pkg/apis/cloudingress/v1alpha1"
+
+	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/constants"
 	"github.com/openshift/osde2e/pkg/common/helper"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -20,6 +22,12 @@ import (
 
 // tests
 var _ = ginkgo.Describe(constants.SuiteInforming+TestPrefix, func() {
+	ginkgo.BeforeEach(func() {
+		if viper.GetBool("rosa.STS") {
+			ginkgo.Skip("STS does not support MVO")
+		}
+	})
+
 	h := helper.New()
 
 	ginkgo.Context("publishingstrategy-public-private", func() {
@@ -49,9 +57,10 @@ var _ = ginkgo.Describe(constants.SuiteInforming+TestPrefix, func() {
 			temp := (int64(1))
 			Expect(ingress.Generation).To(Equal(temp))
 		})
-
 		ginkgo.It("should be able to toggle the default applicationingress from private to public", func() {
+
 			updateApplicationIngress(h, "external")
+
 			//wait for router-default service loadbalancer to NOT have an annotation indicating its scheme is internal
 			err := wait.PollImmediate(10*time.Second, 5*time.Minute, func() (bool, error) {
 				service, err := h.Kube().CoreV1().Services("openshift-ingress").Get(context.TODO(), "router-default", metav1.GetOptions{})
@@ -63,7 +72,6 @@ var _ = ginkgo.Describe(constants.SuiteInforming+TestPrefix, func() {
 					log.Printf("router-default service in openshift-ingress namespace successfully switched to public")
 					return true, nil
 				}
-
 				log.Printf("Waiting for router-default service in openshift-ingress namespace to be public")
 				return false, nil
 			})

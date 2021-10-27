@@ -60,6 +60,15 @@ func progressingClusterOperator(name string) *configv1.ClusterOperator {
 	return op
 }
 
+func clusterOperatorWithUnknownStatus(name string) *configv1.ClusterOperator {
+	op := clusterOperator(name)
+	op.Status.Conditions[0].Status = configv1.ConditionFalse
+	op.Status.Conditions[1].Status = configv1.ConditionUnknown
+	op.Status.Conditions[0].Message = "Fake Condition"
+	op.Status.Conditions[1].Message = "RecentBackup"
+	return op
+}
+
 func TestCheckOperatorReadiness(t *testing.T) {
 	var tests = []struct {
 		description   string
@@ -74,6 +83,7 @@ func TestCheckOperatorReadiness(t *testing.T) {
 		{"single operator progressing", false, []runtime.Object{progressingClusterOperator("a")}, false, ""},
 		{"multi operator success", true, []runtime.Object{clusterOperator("a"), clusterOperator("b")}, false, ""},
 		{"multi operator one progressing", false, []runtime.Object{clusterOperator("a"), progressingClusterOperator("b")}, false, ""},
+		{"multi operator one with condition status unknown", true, []runtime.Object{clusterOperator("a"), clusterOperatorWithUnknownStatus("b"), }, false, ""},
 		{"multi operator one failure", false, []runtime.Object{clusterOperator("a"), unavailableClusterOperator("b")}, false, ""},
 		{"multi operator, skip success", true, []runtime.Object{
 			clusterOperator("a"),

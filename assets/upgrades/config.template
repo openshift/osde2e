@@ -1,7 +1,8 @@
 configManager:
-  source: OCM
+  source: {{ .ProviderSource }}
   ocmBaseUrl: {{ .ProviderEnvironmentUrl }}
   watchInterval: {{ .ProviderWatchInterval }}
+  localConfigName: managed-upgrade-config
 maintenance:
   controlPlaneTime: {{ .ControlPlaneTime }}
   ignoredAlerts:
@@ -26,6 +27,7 @@ healthCheck:
   - PrometheusRuleFailures
   - CannotRetrieveUpdates
   - FluentdNodeDown
+  - PruningCronjobErrorSRE
   ignoredNamespaces:
   - openshift-logging
   - openshift-redhat-marketplace

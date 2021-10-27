@@ -4,18 +4,26 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"net"
+	"math/rand"
+	"os"
 	"strings"
 	"time"
 
 	"github.com/Masterminds/semver"
-	cmv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
+	v1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/spi"
 	"github.com/openshift/osde2e/pkg/common/util"
-	"github.com/openshift/rosa/pkg/cluster"
-	"github.com/openshift/rosa/pkg/ocm/versions"
+	accountRoles "github.com/openshift/rosa/cmd/create/accountroles"
+	createCluster "github.com/openshift/rosa/cmd/create/cluster"
+	oidcProvider "github.com/openshift/rosa/cmd/create/oidcprovider"
+	operatorRoles "github.com/openshift/rosa/cmd/create/operatorroles"
+	rosaLogin "github.com/openshift/rosa/cmd/login"
+	"github.com/openshift/rosa/pkg/aws"
+	"github.com/openshift/rosa/pkg/logging"
+	"github.com/openshift/rosa/pkg/ocm"
+	rprtr "github.com/openshift/rosa/pkg/reporter"
 )
 
 // IsValidClusterName validates the clustername prior to proceeding with it
@@ -39,7 +47,7 @@ func (m *ROSAProvider) IsValidClusterName(clusterName string) (bool, error) {
 			Page(page).
 			SendContext(ctx)
 		if err != nil {
-			return false, fmt.Errorf("Can't retrieve page %d: %s\n", page, err)
+			return false, fmt.Errorf("can't retrieve page %d: %s", page, err)
 		}
 
 		if response.Total() != 0 {
@@ -64,41 +72,104 @@ func (m *ROSAProvider) LaunchCluster(clusterName string) (string, error) {
 	// Calculate an expiration date for the cluster so that it will be automatically deleted if
 	// we happen to forget to do it:
 	var expiration time.Time
+	var err error
+	var awsCreator *aws.Creator
+
+	rosaClusterVersion := viper.GetString(config.Cluster.Version)
+
+	rosaClusterVersion = strings.Replace(rosaClusterVersion, "-fast", "", -1)
+	rosaClusterVersion = strings.Replace(rosaClusterVersion, "-candidate", "", -1)
+	if !strings.HasSuffix(rosaClusterVersion, "-nightly") {
+		rosaClusterVersion = fmt.Sprintf("%s-%s", rosaClusterVersion, viper.GetString(config.Cluster.Channel))
+	} else {
+		viper.Set(config.Cluster.Channel, "nightly")
+	}
+	rosaClusterVersion = strings.Replace(rosaClusterVersion, "-stable", "", -1)
+	rosaClusterVersion = strings.Replace(rosaClusterVersion, "openshift-v", "", -1)
+
+	log.Printf("ROSA cluster version: %s", rosaClusterVersion)
+
+	if viper.GetBool(config.Cluster.UseExistingCluster) && viper.GetString(config.Addons.IDs) == "" {
+		if clusterID := m.ocmProvider.FindRecycledCluster(rosaClusterVersion, "aws", "rosa"); clusterID != "" {
+			return clusterID, nil
+		}
+	}
 
 	expiryInMinutes := viper.GetDuration(config.Cluster.ExpiryInMinutes)
 	if expiryInMinutes > 0 {
 		expiration = time.Now().Add(expiryInMinutes * time.Minute).UTC() // UTC() to workaround SDA-1567.
 	}
 
-	var err error
-	var machineCIDRParsed = &net.IPNet{}
-	machineCIDRString := viper.GetString(MachineCIDR)
-	if machineCIDRString != "" {
-		_, machineCIDRParsed, err = net.ParseCIDR(machineCIDRString)
-
-		if err != nil {
-			return "", fmt.Errorf("error while parsing machine CIDR: %v", err)
-		}
+	// ROSA uses the AWS provider in the background, so we'll determine region this way.
+	region, err := m.DetermineRegion("aws")
+	if err != nil {
+		return "", fmt.Errorf("error determining region to use: %v", err)
 	}
 
-	var serviceCIDRParsed = &net.IPNet{}
-	serviceCIDRString := viper.GetString(ServiceCIDR)
-	if serviceCIDRString != "" {
-		_, serviceCIDRParsed, err = net.ParseCIDR(ServiceCIDR)
-
-		if err != nil {
-			return "", fmt.Errorf("error while parsing service CIDR: %v", err)
-		}
+	createClusterArgs := []string{
+		"--cluster-name", clusterName,
+		"--region", region,
+		"--channel-group", viper.GetString(config.Cluster.Channel),
+		"--version", rosaClusterVersion,
+		"--expiration-time", expiration.Format(time.RFC3339),
+		"--compute-machine-type", viper.GetString(ComputeMachineType),
+		"--compute-nodes", viper.GetString(ComputeNodes),
+		"--machine-cidr", viper.GetString(MachineCIDR),
+		"--service-cidr", viper.GetString(ServiceCIDR),
+		"--pod-cidr", viper.GetString(PodCIDR),
+		"--host-prefix", viper.GetString(HostPrefix),
+	}
+	if viper.GetBool(config.Cluster.MultiAZ) {
+		createClusterArgs = append(createClusterArgs, "--multi-az")
 	}
 
-	var podCIDRParsed = &net.IPNet{}
-	podCIDRString := viper.GetString(PodCIDR)
-	if podCIDRString != "" {
-		_, podCIDRParsed, err = net.ParseCIDR(podCIDRString)
+	awsAccountID := ""
+
+	err = callAndSetAWSSession(func() error {
+		// Retrieve AWS Account info
+		logger, err := logging.NewLogger().
+			Build()
+		if err != nil {
+			return fmt.Errorf("unable to create AWS logger: %v", err)
+		}
+
+		awsClient, err := aws.NewClient().
+			Logger(logger).
+			Region(aws.DefaultRegion).
+			Build()
 
 		if err != nil {
-			return "", fmt.Errorf("error while parsing pod CIDR: %v", err)
+			return err
 		}
+
+		awsCreator, err = awsClient.GetCreator()
+		if err != nil {
+			return fmt.Errorf("unable to get IAM credentials: %v", err)
+		}
+
+		awsAccountID = awsCreator.AccountID
+
+		return nil
+	})
+	if err != nil {
+		return "", err
+	}
+
+	if viper.GetBool(STS) {
+		parsedVersion := semver.MustParse(rosaClusterVersion)
+		majorMinor := fmt.Sprintf("%d.%d", parsedVersion.Major(), parsedVersion.Minor())
+
+		err = m.stsAccountSetup(majorMinor)
+		if err != nil {
+			return "", err
+		}
+		createClusterArgs = append(createClusterArgs,
+			"--role-arn", fmt.Sprintf("arn:aws:iam::%s:role/ManagedOpenShift-%s-Installer-Role", awsAccountID, majorMinor),
+			"--support-role-arn", fmt.Sprintf("arn:aws:iam::%s:role/ManagedOpenShift-%s-Support-Role", awsAccountID, majorMinor),
+			"--master-iam-role", fmt.Sprintf("arn:aws:iam::%s:role/ManagedOpenShift-%s-ControlPlane-Role", awsAccountID, majorMinor),
+			"--worker-iam-role", fmt.Sprintf("arn:aws:iam::%s:role/ManagedOpenShift-%s-Worker-Role", awsAccountID, majorMinor),
+		)
+
 	}
 
 	clusterProperties, err := m.ocmProvider.GenerateProperties()
@@ -107,75 +178,223 @@ func (m *ROSAProvider) LaunchCluster(clusterName string) (string, error) {
 		return "", fmt.Errorf("error generating cluster properties: %v", err)
 	}
 
-	var createdCluster *cmv1.Cluster
+	installConfig := ""
 
-	// ROSA uses the AWS provider in the background, so we'll determine region this way.
-	region, err := m.ocmProvider.DetermineRegion("aws")
-
-	if err != nil {
-		return "", fmt.Errorf("error determining region to use: %v", err)
-	}
-	falseValue := false
-
-	clustersClient := m.ocmProvider.GetConnection().ClustersMgmt().V1().Clusters()
-
-	rosaClusterVersion := strings.Replace(viper.GetString(config.Cluster.Version), "-fast", "", -1)
-	rosaClusterVersion = strings.Replace(rosaClusterVersion, "-candidate", "", -1)
-	rosaClusterVersion = fmt.Sprintf("%s-%s", rosaClusterVersion, viper.GetString(config.Cluster.Channel))
-	rosaClusterVersion = strings.Replace(rosaClusterVersion, "-stable", "", -1)
-	log.Printf("ROSA cluster version: %s", rosaClusterVersion)
-
-	clusterSpec := cluster.Spec{
-		Name:               clusterName,
-		Region:             region,
-		ChannelGroup:       viper.GetString(config.Cluster.Channel),
-		MultiAZ:            viper.GetBool(config.Cluster.MultiAZ),
-		Version:            rosaClusterVersion,
-		Expiration:         expiration,
-		ComputeMachineType: viper.GetString(ComputeMachineType),
-		ComputeNodes:       viper.GetInt(ComputeNodes),
-		DryRun:             &falseValue,
-
-		CustomProperties:  clusterProperties,
-		MachineCIDR:       *machineCIDRParsed,
-		ServiceCIDR:       *serviceCIDRParsed,
-		PodCIDR:           *podCIDRParsed,
-		HostPrefix:        viper.GetInt(HostPrefix),
-		SubnetIds:         []string{},
-		AvailabilityZones: []string{},
-	}
-
-	if viper.GetBool(config.Cluster.UseExistingCluster) && viper.GetString(config.Addons.IDs) == "" {
-		if clusterID := m.ocmProvider.FindRecycledCluster(clusterSpec.Version, "aws", "rosa"); clusterID != "" {
-			return clusterID, nil
+	// This skips setting install_config for any prod job OR any periodic addon job.
+	// To invoke this logic locally you will have to set JOB_TYPE to "periodic".
+	if m.Environment() != "prod" {
+		if os.Getenv("JOB_TYPE") == "periodic" && !strings.Contains(os.Getenv("JOB_NAME"), "addon") {
+			imageSource := viper.GetString(config.Cluster.ImageContentSource)
+			installConfig += "\n" + m.ChooseImageSource(imageSource)
+			installConfig += "\n" + m.GetNetworkConfig(viper.GetString(config.Cluster.NetworkProvider))
 		}
 	}
 
+	if viper.GetString(config.Cluster.InstallConfig) != "" {
+		installConfig += "\n" + viper.GetString(config.Cluster.InstallConfig)
+	}
+
+	if installConfig != "" {
+		log.Println("Install config:", installConfig)
+		clusterProperties["install_config"] = installConfig
+	}
+
+	for k, v := range clusterProperties {
+		createClusterArgs = append(createClusterArgs, "--properties", fmt.Sprintf("%s:%s", k, v))
+	}
+
+	// Filter out any create arguments that are blank.
+	// This assumes `--arg ""` and will remove both elements
+	for k, v := range createClusterArgs {
+		if (k + 1) < len(createClusterArgs) {
+			if len(strings.TrimSpace(createClusterArgs[k+1])) == 0 || createClusterArgs[k+1] == `""` {
+				log.Printf("Pruning `%s` and `%s`", v, createClusterArgs[k+1])
+				createClusterArgs = append(createClusterArgs[:k], createClusterArgs[k+1:]...)
+			}
+		}
+	}
+
+	log.Printf("%v", createClusterArgs)
+
+	newCluster := createCluster.Cmd
+	newCluster.SetArgs(createClusterArgs)
 	err = callAndSetAWSSession(func() error {
-		createdCluster, err = cluster.CreateCluster(clustersClient, clusterSpec)
-		if err != nil {
-			return fmt.Errorf("Error creating cluster: %s", err.Error())
-		}
-		return nil
+		return newCluster.Execute()
 	})
-
 	if err != nil {
 		return "", err
 	}
 
-	return createdCluster.ID(), nil
+	ocmClient, err := m.ocmLogin()
+	if err != nil {
+		return "", err
+	}
+
+	cluster, err := ocmClient.GetCluster(clusterName, awsCreator)
+	if err != nil {
+		return "", fmt.Errorf("failed to get cluster '%s': %v", clusterName, err)
+	}
+
+	if viper.GetBool(STS) {
+		m.stsClusterSetup(cluster)
+	}
+
+	return cluster.ID(), nil
+}
+
+func (m *ROSAProvider) stsAccountSetup(version string) error {
+	newAccountRoles := accountRoles.Cmd
+	args := []string{"--version", version, "--prefix", fmt.Sprintf("ManagedOpenShift-%s", version), "--mode", "auto", "--yes"}
+	log.Printf("%v", args)
+	newAccountRoles.SetArgs(args)
+	return callAndSetAWSSession(func() error {
+		return newAccountRoles.Execute()
+	})
+}
+
+func (m *ROSAProvider) stsClusterSetup(cluster *v1.Cluster) error {
+	newOperatorRoles := operatorRoles.Cmd
+	newOperatorRoles.SetArgs([]string{"--cluster", cluster.Name(), "--mode", "auto", "--yes"})
+	return callAndSetAWSSession(func() error {
+		err := newOperatorRoles.Execute()
+		if err != nil {
+			return err
+		}
+
+		newOIDCProvider := oidcProvider.Cmd
+		newOIDCProvider.SetArgs([]string{"--cluster", cluster.Name(), "--mode", "auto", "--yes"})
+		err = newOIDCProvider.Execute()
+		if err != nil {
+			return err
+		}
+		return nil
+	})
+}
+
+// DetermineRegion will return the region provided by configs. This mainly wraps the random functionality for use
+// by the ROSA provider.
+func (m *ROSAProvider) DetermineRegion(cloudProvider string) (string, error) {
+	region := viper.GetString(AWSRegion)
+
+	// If a region is set to "random", it will poll OCM for all the regions available
+	// It then will pull a random entry from the list of regions and set the ID to that
+	if region == "random" {
+		var regions []*v1.CloudRegion
+		// We support multiple cloud providers....
+		if cloudProvider == "aws" {
+			if viper.GetString(AWSAccessKeyID) == "" || viper.GetString(AWSSecretAccessKey) == "" {
+				log.Println("Random region requested but cloud credentials not supplied. Defaulting to us-east-1")
+				return "us-east-1", nil
+			}
+			awsCredentials, err := v1.NewAWS().
+				AccessKeyID(viper.GetString(AWSAccessKeyID)).
+				SecretAccessKey(viper.GetString(AWSSecretAccessKey)).
+				Build()
+			if err != nil {
+				return "", err
+			}
+
+			response, err := m.ocmProvider.GetConnection().ClustersMgmt().V1().CloudProviders().CloudProvider(cloudProvider).AvailableRegions().Search().Body(awsCredentials).Send()
+			if err != nil {
+				return "", err
+			}
+			regions = response.Items().Slice()
+		}
+
+		// But we don't support passing GCP credentials yet :)
+		if cloudProvider == "gcp" {
+			log.Println("Random GCP region not supported yet. Setting region to us-east1")
+			return "us-east1", nil
+		}
+
+		cloudRegion, found := ChooseRandomRegion(toCloudRegions(regions)...)
+		if !found {
+			return "", fmt.Errorf("unable to choose a random enabled region")
+		}
+
+		region = cloudRegion.ID()
+
+		log.Printf("Random region requested, selected %s region.", region)
+
+		// Update the Config with the selected random region
+		viper.Set(config.CloudProvider.Region, region)
+	}
+
+	return region, nil
+}
+
+// ChooseRandomRegion chooses a random enabled region from the provided options. Its
+// second return parameter indicates whether it was successful in finding an enabled
+// region.
+func ChooseRandomRegion(regions ...CloudRegion) (CloudRegion, bool) {
+	// remove disabled regions from consideration
+	enabledRegions := make([]CloudRegion, 0, len(regions))
+	for _, region := range regions {
+		if region.Enabled() {
+			enabledRegions = append(enabledRegions, region)
+		}
+	}
+	// randomize the order of the candidates
+	rand.Shuffle(len(enabledRegions), func(i, j int) {
+		enabledRegions[i], enabledRegions[j] = enabledRegions[j], enabledRegions[i]
+	})
+	// return the first element if the list is not empty
+	for _, regionObj := range enabledRegions {
+		return regionObj, true
+	}
+	// indicate that there were no enabled candidates
+	return nil, false
+}
+
+func (m *ROSAProvider) ocmLogin() (*ocm.Client, error) {
+	err := os.Setenv("OCM_CONFIG", "/tmp/ocm.json")
+	if err != nil {
+		return nil, err
+	}
+
+	// URLAliases allows the value of the `--env` option to map to the various API URLs.
+	var URLAliases = map[string]string{
+		"prod":  "https://api.openshift.com",
+		"stage": "https://api.stage.openshift.com",
+		"int":   "https://api.integration.openshift.com",
+	}
+	url, ok := URLAliases[viper.GetString(Env)]
+	if !ok {
+		url = URLAliases["prod"]
+	}
+
+	newLogin := rosaLogin.Cmd
+	newLogin.SetArgs([]string{"--token", viper.GetString("ocm.token"), "--env", url})
+	err = newLogin.Execute()
+	if err != nil {
+		return nil, fmt.Errorf("unable to login to OCM: %s", err.Error())
+	}
+
+	reporter := rprtr.CreateReporterOrExit()
+	logger := logging.CreateLoggerOrExit(reporter)
+
+	ocmClient, err := ocm.NewClient().Logger(logger).Build()
+	if err != nil {
+		return nil, fmt.Errorf("unable to create OCM client: %s", err.Error())
+	}
+
+	return ocmClient, err
 }
 
 // Versions will call Versions from the OCM provider.
 func (m *ROSAProvider) Versions() (*spi.VersionList, error) {
-	clustersClient := m.ocmProvider.GetConnection().ClustersMgmt().V1()
-	versionResponse, err := versions.GetVersions(clustersClient, "")
+	ocmClient, err := m.ocmLogin()
+	if err != nil {
+		return nil, err
+	}
+
+	versionResponse, err := ocmClient.GetVersions("")
 	if err != nil {
 		return nil, err
 	}
 
 	if viper.GetString(config.Cluster.Channel) != "stable" {
-		versionResponseChannel, err := versions.GetVersions(clustersClient, viper.GetString(config.Cluster.Channel))
+		versionResponseChannel, err := ocmClient.GetVersions(viper.GetString(config.Cluster.Channel))
 		if err != nil {
 			return nil, err
 		}
@@ -213,4 +432,46 @@ func (m *ROSAProvider) Versions() (*spi.VersionList, error) {
 		Build()
 
 	return versionList, nil
+}
+
+// CloudRegion provides an interface for methods on *v1.CloudRegion so that
+// compatible types can be instantiated from tests.
+type CloudRegion interface {
+	ID() string
+	Enabled() bool
+}
+
+// ensure *v1.CloudRegion implements CloudRegion at compile time
+var _ CloudRegion = &v1.CloudRegion{}
+
+// toCloudRegions converts a slice of *v1.CloudRegion into a slice of CloudRegion.
+// This helper can be removed once generics lands in Go, as this will no longer be
+// necessary.
+func toCloudRegions(in []*v1.CloudRegion) []CloudRegion {
+	out := make([]CloudRegion, 0, len(in))
+	for i := range in {
+		out = append(out, in[i])
+	}
+	return out
+}
+
+func (m *ROSAProvider) GetNetworkConfig(networkProvider string) string {
+	if networkProvider == config.DefaultNetworkProvider {
+		return ""
+	}
+	if networkProvider != "OVNKubernetes" {
+		return ""
+	}
+	return `
+networking:
+  clusterNetwork:
+  - cidr: 10.128.0.0/14
+    hostPrefix: 23
+  machineCIDR: 10.0.0.0/16
+  machineNetwork:
+  - cidr: 10.0.0.0/16
+  networkType: OVNKubernetes
+  serviceNetwork:
+  - 172.30.0.0/16
+`
 }

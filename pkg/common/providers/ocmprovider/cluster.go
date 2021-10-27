@@ -294,6 +294,9 @@ func (o *OCMProvider) FindRecycledCluster(originalVersion, cloudProvider, produc
 				return ""
 			}
 			viper.Set(config.Cluster.Reused, true)
+			if recycledCluster.AWS().STS().RoleARN() != "" {
+				viper.Set("rosa.STS", true)
+			}
 			log.Println("Hot cluster ready, moving on...")
 
 			return recycledCluster.ID()
@@ -306,6 +309,9 @@ func (o *OCMProvider) FindRecycledCluster(originalVersion, cloudProvider, produc
 				return ""
 			}
 			viper.Set(config.Cluster.Reused, true)
+			if recycledCluster.AWS().STS().RoleARN() != "" {
+				viper.Set("rosa.STS", true)
+			}
 			return recycledCluster.ID()
 		}
 		log.Printf("Failed to recycle cluster %s", recycledCluster.ID())
@@ -434,9 +440,13 @@ func (o *OCMProvider) DetermineMachineType(cloudProvider string) (string, error)
 			returnedType = machinetypeObj.ID()
 			break
 		}
+		log.Printf("Random machine type requested, selected `%s` machine type.", returnedType)
 	}
 
-	log.Printf("Random machine type requested, selected `%s` machine type.", returnedType)
+	if computeMachineType != "random" && computeMachineType != "" {
+		log.Printf("Machine type manually set to %s", computeMachineType)
+		returnedType = computeMachineType
+	}
 
 	// Update the Config with the selected random machine
 	viper.Set(ComputeMachineType, returnedType)
