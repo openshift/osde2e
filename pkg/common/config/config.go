@@ -216,6 +216,10 @@ var Tests = struct {
 	// ServiceAccount defines what user the tests should run as. By default, osde2e uses system:admin
 	// Env: SERVICE_ACCOUNT
 	ServiceAccount string
+
+	// EnableFips enables the FIPS test suite
+	// Env: ENABLE_FIPS
+	EnableFips string
 }{
 
 	PollingTimeout:             "tests.pollingTimeout",
@@ -229,6 +233,7 @@ var Tests = struct {
 	MetricsBucket:              "tests.metricsBucket",
 	ServiceAccount:             "tests.serviceAccount",
 	ClusterHealthChecksTimeout: "tests.clusterHealthChecksTimeout",
+	EnableFips:                 "tests.enableFips",
 }
 
 // Cluster config keys.
@@ -632,6 +637,9 @@ func init() {
 	viper.BindEnv(Tests.MetricsBucket, "METRICS_BUCKET")
 
 	viper.BindEnv(Tests.ServiceAccount, "SERVICE_ACCOUNT")
+
+	viper.SetDefault(Tests.EnableFips, false)
+	viper.BindEnv(Tests.EnableFips, "ENABLE_FIPS")
 
 	// ----- Cluster -----
 	viper.SetDefault(Cluster.MultiAZ, false)
