@@ -3,13 +3,16 @@ package prow
 import (
 	"fmt"
 	"os"
+
+	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
+	"github.com/openshift/osde2e/pkg/common/config"
 )
 
 // JobURL infers the URL of this job using environment variables
 // provided by Prow. It is not foolproof, and the URLs generated
 // are only valid for "JOB_TYPE=periodic" jobs.
 func JobURL() (url string, ok bool) {
-	if os.Getenv("JOB_TYPE") != "periodic" {
+	if viper.GetString(config.JobType) != "periodic" {
 		return
 	}
 	var jobID, jobName string

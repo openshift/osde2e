@@ -9,6 +9,8 @@ import (
 
 	pd "github.com/PagerDuty/go-pagerduty"
 	"github.com/fatih/color"
+	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
+	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/pagerduty"
 )
 
@@ -87,7 +89,7 @@ personal pagerduty token in order for the report to be generated.
 		flag.PrintDefaults()
 	}
 	flag.Parse()
-	client := pd.NewClient(os.Getenv("PAGERDUTY_TOKEN"))
+	client := pd.NewClient(viper.GetString(config.Alert.PagerDutyAPIToken))
 	incidents, err := AllIncidents(client)
 	if err != nil {
 		return fmt.Errorf("failed listing incidents: %w", err)
