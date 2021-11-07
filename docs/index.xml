@@ -6,7 +6,7 @@
     <description>Recent content on OSDe2e Reporting</description>
     <generator>Hugo -- gohugo.io</generator>
     <copyright>Copyright © 2020, Red Hat, all rights reserved.</copyright>
-    <lastBuildDate>Sat, 06 Nov 2021 12:00:34 +0000</lastBuildDate>
+    <lastBuildDate>Sun, 07 Nov 2021 12:00:35 +0000</lastBuildDate>
     
 	<atom:link href="https://openshift.github.io/osde2e/index.xml" rel="self" type="application/rss+xml" />
     
@@ -18,6 +18,33 @@
       
       <guid>https://openshift.github.io/osde2e/about/</guid>
       <description>Automatically generated reports generated from OSDe2e data live here.</description>
+    </item>
+    
+    <item>
+      <title>OSDe2e moa Weather Report 2021-11-07 12:00:35.399880334 &#43;0000 UTC</title>
+      <link>https://openshift.github.io/osde2e/post/4b5c0ac8a5a14ee6b733fd36c3f26bcd/</link>
+      <pubDate>Sun, 07 Nov 2021 12:00:35 +0000</pubDate>
+      
+      <guid>https://openshift.github.io/osde2e/post/4b5c0ac8a5a14ee6b733fd36c3f26bcd/</guid>
+      <description>&lt;table class=&#34;summary&#34;&gt;&lt;/table&gt;</description>
+    </item>
+    
+    <item>
+      <title>OSDe2e gcp Weather Report 2021-11-07 12:00:32.476208307 &#43;0000 UTC</title>
+      <link>https://openshift.github.io/osde2e/post/3e36693bef0a4f3fb63bc8afb3adaa74/</link>
+      <pubDate>Sun, 07 Nov 2021 12:00:32 +0000</pubDate>
+      
+      <guid>https://openshift.github.io/osde2e/post/3e36693bef0a4f3fb63bc8afb3adaa74/</guid>
+      <description>&lt;table class=&#34;summary&#34;&gt;&lt;tr&gt;&lt;td bgcolor=&#34;#04fb00&#34;&gt;&lt;/td&gt;&lt;td&gt;prod (Pass rate: 99.87)&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;</description>
+    </item>
+    
+    <item>
+      <title>OSDe2e aws Weather Report 2021-11-07 12:00:28.826638401 &#43;0000 UTC</title>
+      <link>https://openshift.github.io/osde2e/post/e4835ddad2b1447190c5e939172dfc92/</link>
+      <pubDate>Sun, 07 Nov 2021 12:00:28 +0000</pubDate>
+      
+      <guid>https://openshift.github.io/osde2e/post/e4835ddad2b1447190c5e939172dfc92/</guid>
+      <description>&lt;table class=&#34;summary&#34;&gt;&lt;tr&gt;&lt;td bgcolor=&#34;#08f700&#34;&gt;&lt;/td&gt;&lt;td&gt;prod (Pass rate: 99.71)&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td bgcolor=&#34;#2ad500&#34;&gt;&lt;/td&gt;&lt;td&gt;stage (Pass rate: 98.39)&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;</description>
     </item>
     
     <item>
