@@ -54,11 +54,13 @@ var _ = ginkgo.Describe(promExportersTestname, func() {
 		},
 	}
 
-	var secretsToCheck = map[string][]string{
-		awsProvider: []string{
+	var secretsToCheck = map[string][]string{}
+	if !viper.GetBool("rosa.STS") {
+		// Only check AWS provider secrets for non-STS clusters
+		secretsToCheck[awsProvider] = []string{
 			"sre-ebs-iops-reporter-aws-credentials",
 			"sre-stuck-ebs-vols-aws-credentials",
-		},
+		}
 	}
 
 	var roleBindingsToCheck = map[string][]string{
