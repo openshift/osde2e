@@ -815,7 +815,7 @@ func PostProcess() {
 // RegisterSecret will register the secret filename that will be used for the corresponding Viper string.
 func RegisterSecret(key string, secretFileName string) {
 	keyToSecretMappingMutex.Lock()
-	keyToSecretMapping[key] = secretFileName
+	keyToSecretMapping[secretFileName] = key
 	keyToSecretMappingMutex.Unlock()
 }
 
