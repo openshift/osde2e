@@ -3,13 +3,14 @@ package runner
 import (
 	"fmt"
 	"math/rand"
-	"os"
 	"testing"
 	"time"
 
 	. "github.com/onsi/gomega"
 
 	image "github.com/openshift/client-go/image/clientset/versioned"
+	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
+	"github.com/openshift/osde2e/pkg/common/config"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 )
@@ -66,7 +67,7 @@ func TestRunner(t *testing.T) {
 
 func setupRunner(t *testing.T) *Runner {
 	r := DefaultRunner.DeepCopy()
-	if filename := os.Getenv(TestKubeconfigVar); len(filename) == 0 {
+	if filename := viper.GetString(config.Kubeconfig.Path); len(filename) == 0 {
 		t.Skipf("TEST_KUBECONFIG must be set to test against a cluster.")
 	} else if restConfig, err := clientcmd.BuildConfigFromFlags("", filename); err != nil {
 		t.Fatalf("failed reading '%s' which has been set as the TEST_KUBECONFIG: %v", filename, err)

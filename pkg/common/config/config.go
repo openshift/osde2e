@@ -23,6 +23,10 @@ const (
 	// Env: BUILD_NUMBER
 	JobID = "jobID"
 
+	// JobType is the type of job according to prow for this run
+	// Env: JOB_TYPE
+	JobType = "jobType"
+
 	// BaseJobURL is the root location for all job artifacts
 	// For example, https://storage.googleapis.com/origin-ci-test/logs/osde2e-prod-gcp-e2e-next/61/build-log.txt would be
 	// https://storage.googleapis.com/origin-ci-test/logs -- This is also our default
@@ -154,7 +158,7 @@ var Upgrade = struct {
 	ManagedUpgradeRescheduled:              "upgrade.managedUpgradeRescheduled",
 }
 
-// Kubeconfig config keys.
+// Kubeconfig configBUILD_NUMBER keys.
 var Kubeconfig = struct {
 	// Path is the filepath of an existing Kubeconfig
 	// Env: TEST_KUBECONFIG
@@ -451,7 +455,6 @@ var Addons = struct {
 	// PollingTimeout is how long (in seconds) to wait for the add-on test to complete running.
 	// Env: ADDON_POLLING_TIMEOUT
 	PollingTimeout string
-
 }{
 	IDsAtCreation:    "addons.idsAtCreation",
 	IDs:              "addons.ids",
@@ -550,6 +553,7 @@ func init() {
 	viper.BindEnv(Provider, "PROVIDER")
 
 	viper.BindEnv(JobName, "JOB_NAME")
+	viper.BindEnv(JobType, "JOB_TYPE")
 
 	viper.SetDefault(JobID, -1)
 	viper.BindEnv(JobID, "BUILD_NUMBER")
@@ -771,7 +775,8 @@ func init() {
 	viper.BindEnv(Alert.SlackAPIToken, "SLACK_API_TOKEN")
 	RegisterSecret(Alert.SlackAPIToken, "slack-api-token")
 
-	viper.BindEnv(Alert.PagerDutyAPIToken, "PAGERDUTY_API_TOKEN")
+	// Support Legacy ENV Reference
+	viper.BindEnv(Alert.PagerDutyAPIToken, "PAGERDUTY_API_TOKEN", "PAGERDUTY_TOKEN")
 	RegisterSecret(Alert.PagerDutyAPIToken, "pagerduty-api-token")
 
 	viper.BindEnv(Alert.PagerDutyUserToken, "PAGERDUTY_USER_TOKEN")

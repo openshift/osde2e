@@ -106,7 +106,7 @@ func (o *OCMProvider) LaunchCluster(clusterName string) (string, error) {
 	// This skips setting install_config for any prod job OR any periodic addon job.
 	// To invoke this logic locally you will have to set JOB_TYPE to "periodic".
 	if o.Environment() != "prod" {
-		if os.Getenv("JOB_TYPE") == "periodic" && !strings.Contains(os.Getenv("JOB_NAME"), "addon") {
+		if viper.GetString(config.JobType) == "periodic" && !strings.Contains(viper.GetString(config.JobName), "addon") {
 			imageSource := viper.GetString(config.Cluster.ImageContentSource)
 			installConfig += "\n" + o.ChooseImageSource(imageSource)
 			installConfig += "\n" + o.GetNetworkConfig(viper.GetString(config.Cluster.NetworkProvider))
