@@ -63,7 +63,7 @@ func Configs(configs []string, customConfig string, secretLocations []string) er
 	// 4. Secrets. These will override all previous entries.
 	if len(secretLocations) > 0 {
 		secrets := config.GetAllSecrets()
-		for key, secretFilename := range secrets {
+		for secretFilename, key := range secrets {
 			loadSecretFileIntoKey(key, secretFilename, secretLocations)
 		}
 
