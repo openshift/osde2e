@@ -134,13 +134,14 @@ func beforeSuite() bool {
 				err = clusterutil.WaitForClusterReadyPostInstall(cluster.ID(), nil)
 			}
 			if err != nil {
+				log.Println("*******************")
 				log.Printf("Cluster failed health check: %v", err)
+				log.Println("*******************")
 				getLogs()
-				return false
+			} else {
+				log.Println("Cluster is healthy and ready for testing")
 			}
 		}
-
-		log.Println("Cluster is healthy and ready for testing")
 
 		var kubeconfigBytes []byte
 		if kubeconfigBytes, err = provider.ClusterKubeconfig(viper.GetString(config.Cluster.ID)); err != nil {

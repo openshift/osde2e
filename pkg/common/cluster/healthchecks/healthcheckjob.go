@@ -3,14 +3,21 @@ package healthchecks
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
 	"log"
+	"os"
+	"path/filepath"
+	"strings"
 
+	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
+	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/logging"
 	batchv1 "k8s.io/api/batch/v1"
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/kubernetes"
-	v1 "k8s.io/client-go/kubernetes/typed/batch/v1"
+	typedbatchv1 "k8s.io/client-go/kubernetes/typed/batch/v1"
 )
 
 // CheckHealthcheckJob uses the `osd-cluster-ready` healthcheck job to determine cluster readiness. If the cluster
@@ -33,6 +40,21 @@ func CheckHealthcheckJob(k8sClient *kubernetes.Clientset, ctx context.Context, l
 
 		select {
 		case <-ctx.Done():
+			pods, err := k8sClient.CoreV1().Pods(namespace).List(ctx, metav1.ListOptions{})
+			if err != nil {
+				log.Printf("failed listing errored pods: %s", err.Error())
+			}
+			for _, pod := range pods.Items {
+				if strings.Contains(pod.Name, name) {
+					data, err := k8sClient.CoreV1().Pods(namespace).GetLogs(pod.Name, &v1.PodLogOptions{}).DoRaw(ctx)
+					if err != nil {
+						log.Printf("failed getting logs for pod %s: %s", pod.Name, err.Error())
+					}
+					if err = ioutil.WriteFile(filepath.Join(viper.GetString(config.ReportDir), fmt.Sprintf("%s.log", pod.Name)), data, os.FileMode(0644)); err != nil {
+						log.Printf("unable to output container logfile %s.log: %s", pod.Name, err.Error())
+					}
+				}
+			}
 			return fmt.Errorf("timed out while retrying from error: %w", err)
 		default:
 			logger.Printf("healthcheck failed, retrying for error: %v", err)
@@ -44,7 +66,7 @@ func CheckHealthcheckJob(k8sClient *kubernetes.Clientset, ctx context.Context, l
 // it experiences while trying to establish this watch. If the watch succeeds, it will return nil only if
 // the watched job succeeds. If the watched job fails, is disconnected, the watch produces an error, the
 // watch channel closes, or the context is cancelled, it will return an error.
-func watchJob(bv1C v1.BatchV1Interface, ctx context.Context, namespace, jobname string) error {
+func watchJob(bv1C typedbatchv1.BatchV1Interface, ctx context.Context, namespace, jobname string) error {
 	jobs, err := bv1C.Jobs(namespace).List(ctx, metav1.ListOptions{})
 	if err != nil {
 		return fmt.Errorf("failed listing jobs: %w", err)
