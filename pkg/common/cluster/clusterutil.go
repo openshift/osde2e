@@ -100,28 +100,34 @@ func WaitForClusterReadyPostInstall(clusterID string, logger *log.Logger) error 
 		return fmt.Errorf("OCM never became ready: %w", err)
 	}
 	logger.Println("Cluster is provisioned in OCM")
+
 	clusterConfig, _, err := ClusterConfig(clusterID)
 	if err != nil {
 		return fmt.Errorf("failed looking up cluster config for healthcheck: %w", err)
 	}
+
 	kubeClient, err := kubernetes.NewForConfig(clusterConfig)
 	if err != nil {
 		return fmt.Errorf("error generating Kube Clientset: %w", err)
 	}
+
 	duration, err := time.ParseDuration(viper.GetString(config.Tests.ClusterHealthChecksTimeout))
 	if err != nil {
 		return fmt.Errorf("failed parsing health check timeout: %w", err)
 	}
+
 	ctx, cancel := context.WithTimeout(context.Background(), duration)
 	defer cancel()
 	err = healthchecks.CheckHealthcheckJob(kubeClient, ctx, nil)
 	if err != nil {
 		return fmt.Errorf("cluster failed health check: %w", err)
 	}
+
 	cluster, err := provider.GetCluster(clusterID)
 	if err != nil {
 		return fmt.Errorf("failed getting cluster from provider: %w", err)
 	}
+
 	if err := provider.AddProperty(cluster, clusterproperties.Status, clusterproperties.StatusHealthy); err != nil {
 		return fmt.Errorf("error trying to add healthy property to cluster ID %s: %w", cluster.ID(), err)
 	}
