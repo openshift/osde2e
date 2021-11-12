@@ -347,7 +347,11 @@ func (o *OCMProvider) DetermineRegion(cloudProvider string) (string, error) {
 
 			response, err := o.conn.ClustersMgmt().V1().CloudProviders().CloudProvider(cloudProvider).AvailableRegions().Search().Body(awsCredentials).Send()
 			if err != nil {
-				return "", err
+				log.Printf("Error selecting region: %s", err.Error())
+				log.Println("Defaulting to us-east-1")
+				region := "us-east-1"
+				viper.Set(config.CloudProvider.Region, region)
+				return region, nil
 			}
 			regions = response.Items().Slice()
 		}
