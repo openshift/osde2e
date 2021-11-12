@@ -10,6 +10,7 @@ import (
 
 	"github.com/openshift/osde2e/pkg/common/alert"
 	"github.com/openshift/osde2e/pkg/common/helper"
+	"github.com/openshift/osde2e/pkg/common/util"
 )
 
 var imageStreamsTestName string = "[Suite: e2e] ImageStreams"
@@ -21,7 +22,7 @@ func init() {
 var _ = ginkgo.Describe(imageStreamsTestName, func() {
 	h := helper.New()
 
-	ginkgo.It("should exist in the cluster", func() {
+	util.GinkgoIt("should exist in the cluster", func() {
 		list, err := h.Image().ImageV1().ImageStreams(metav1.NamespaceAll).List(context.TODO(), metav1.ListOptions{})
 		Expect(err).NotTo(HaveOccurred(), "couldn't list ImageStreams")
 		Expect(list).NotTo(BeNil())

@@ -11,6 +11,7 @@ import (
 	v1 "github.com/openshift/api/security/v1"
 	"github.com/openshift/osde2e/pkg/common/alert"
 	"github.com/openshift/osde2e/pkg/common/helper"
+	"github.com/openshift/osde2e/pkg/common/util"
 	apiv1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -30,21 +31,21 @@ var _ = ginkgo.Describe(dedicatedAdminSccTestName, func() {
 
 	ginkgo.Context("Dedicated Admin permissions", func() {
 
-		ginkgo.It("should include anyuid", func() {
+		util.GinkgoIt("should include anyuid", func() {
 			checkSccPermissions(h, "dedicated-admins-cluster", "anyuid")
 		})
 
-		ginkgo.It("should include nonroot", func() {
+		util.GinkgoIt("should include nonroot", func() {
 			checkSccPermissions(h, "dedicated-admins-cluster", "nonroot")
 		})
 
-		ginkgo.It("can create pods with SCCs", func() {
+		util.GinkgoIt("can create pods with SCCs", func() {
 			_, err := helper.ApplyYamlInFolder(workloadDir, h.CurrentProject(), h.Kube())
 			Expect(err).NotTo(HaveOccurred(), "couldn't apply workload yaml")
 		})
 	})
 	ginkgo.Context("scc-test", func() {
-		ginkgo.It("new SCC does not break pods", func() {
+		util.GinkgoIt("new SCC does not break pods", func() {
 			//Test to verify that creation of a permissive scc does not disrupt ability to run pods https://bugzilla.redhat.com/show_bug.cgi?id=1868976
 			newScc := makeMinimalSCC("scc-test")
 			log.Printf("SCC:(%v)", newScc)

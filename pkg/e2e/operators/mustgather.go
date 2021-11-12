@@ -8,6 +8,7 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/openshift/osde2e/pkg/common/alert"
 	"github.com/openshift/osde2e/pkg/common/helper"
+	"github.com/openshift/osde2e/pkg/common/util"
 	mustgatherv1alpha1 "github.com/redhat-cop/must-gather-operator/api/v1alpha1"
 	kv1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -47,7 +48,7 @@ var _ = ginkgo.Describe(mustGatherOperatorTest, func() {
 
 	ginkgo.Context("as Members of CEE", func() {
 		mg := generateMustGather(h, "foo-example")
-		ginkgo.It("can manage MustGather CRs in openshift-must-gather-operator namespace", func() {
+		util.GinkgoIt("can manage MustGather CRs in openshift-must-gather-operator namespace", func() {
 			err := createMustGather(h, mg, operatorNamespace, "a-dummy-service-account-name", "system:serviceaccounts:openshift-backplane-cee")
 			Expect(err).NotTo(HaveOccurred())
 			err = deleteMustGather(h, mg.Name, operatorNamespace, "a-dummy-service-account-name", "system:serviceaccounts:openshift-backplane-cee")
@@ -57,7 +58,7 @@ var _ = ginkgo.Describe(mustGatherOperatorTest, func() {
 
 	ginkgo.Context("as an elevated SRE", func() {
 		mg := generateMustGather(h, "bar-example")
-		ginkgo.It("can manage MustGather CRs in openshift-must-gather-operator namespace", func() {
+		util.GinkgoIt("can manage MustGather CRs in openshift-must-gather-operator namespace", func() {
 			err := createMustGather(h, mg, operatorNamespace, "backplane-cluster-admin", "")
 			Expect(err).NotTo(HaveOccurred())
 			err = deleteMustGather(h, mg.Name, operatorNamespace, "backplane-cluster-admin", "")

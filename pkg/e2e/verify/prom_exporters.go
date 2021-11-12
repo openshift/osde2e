@@ -81,7 +81,7 @@ var _ = ginkgo.Describe(promExportersTestname, func() {
 
 	h := helper.New()
 
-	ginkgo.It("should exist and be running in the cluster", func() {
+	util.GinkgoIt("should exist and be running in the cluster", func() {
 
 		envs := []string{allProviders, viper.GetString(config.CloudProvider.CloudProviderID)}
 

@@ -7,10 +7,10 @@ import (
 	"github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/openshift/osde2e/pkg/common/alert"
+	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/util"
-	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -46,7 +46,7 @@ var _ = ginkgo.Describe(privilegedTestname, func() {
 		// setup helper
 		h := helper.New()
 
-		ginkgo.It("privileged container should not get created", func() {
+		util.GinkgoIt("privileged container should not get created", func() {
 			// Set it to a wildcard dedicated-admin
 			h.SetServiceAccount("system:serviceaccount:%s:dedicated-admin-project")
 

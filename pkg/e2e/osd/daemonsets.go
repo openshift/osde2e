@@ -7,10 +7,10 @@ import (
 	"github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/openshift/osde2e/pkg/common/alert"
+	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/util"
-	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -28,7 +28,7 @@ var _ = ginkgo.Describe(daemonSetsTestName, func() {
 		h := helper.New()
 		nodeLabels := make(map[string]string)
 
-		ginkgo.It("empty node-label daemonset should get created", func() {
+		util.GinkgoIt("empty node-label daemonset should get created", func() {
 			// Set it to a wildcard dedicated-admin
 			h.SetServiceAccount("system:serviceaccount:%s:dedicated-admin-project")
 
@@ -38,7 +38,7 @@ var _ = ginkgo.Describe(daemonSetsTestName, func() {
 			Expect(err).NotTo(HaveOccurred())
 		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
 
-		ginkgo.It("worker node daemonset should get created", func() {
+		util.GinkgoIt("worker node daemonset should get created", func() {
 			// Set it to a wildcard dedicated-admin
 			h.SetServiceAccount("system:serviceaccount:%s:dedicated-admin-project")
 
@@ -49,7 +49,7 @@ var _ = ginkgo.Describe(daemonSetsTestName, func() {
 			Expect(err).NotTo(HaveOccurred())
 		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
 
-		ginkgo.It("infra node daemonset should get created", func() {
+		util.GinkgoIt("infra node daemonset should get created", func() {
 			// Set it to a wildcard dedicated-admin
 			h.SetServiceAccount("system:serviceaccount:%s:dedicated-admin-project")
 

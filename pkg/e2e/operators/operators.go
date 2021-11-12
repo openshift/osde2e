@@ -13,6 +13,7 @@ import (
 	"github.com/openshift/osde2e/pkg/common/providers"
 	"github.com/openshift/osde2e/pkg/common/runner"
 	"github.com/openshift/osde2e/pkg/common/templates"
+	"github.com/openshift/osde2e/pkg/common/util"
 
 	appsv1 "k8s.io/api/apps/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -30,7 +31,7 @@ import (
 func checkClusterServiceVersion(h *helper.H, namespace, name string) {
 	// Check that the operator clusterServiceVersion exists
 	ginkgo.Context(fmt.Sprintf("clusterServiceVersion %s/%s", namespace, name), func() {
-		ginkgo.It("should be present and in succeeded state", func() {
+		util.GinkgoIt("should be present and in succeeded state", func() {
 			Eventually(func() bool {
 				csvList, err := h.Operator().OperatorsV1alpha1().ClusterServiceVersions(namespace).List(context.TODO(), metav1.ListOptions{})
 				if err != nil {
@@ -51,7 +52,7 @@ func checkClusterServiceVersion(h *helper.H, namespace, name string) {
 func checkConfigMapLockfile(h *helper.H, namespace, operatorLockFile string) {
 	// Check that the operator configmap has been deployed
 	ginkgo.Context("configmaps", func() {
-		ginkgo.It("should exist", func() {
+		util.GinkgoIt("should exist", func() {
 			// Wait for lockfile to signal operator is active
 			err := pollLockFile(h, namespace, operatorLockFile)
 			Expect(err).ToNot(HaveOccurred(), "failed fetching the configMap lockfile")
@@ -62,12 +63,12 @@ func checkConfigMapLockfile(h *helper.H, namespace, operatorLockFile string) {
 func checkDeployment(h *helper.H, namespace string, name string, defaultDesiredReplicas int32) {
 	// Check that the operator deployment exists in the operator namespace
 	ginkgo.Context("deployment", func() {
-		ginkgo.It("should exist", func() {
+		util.GinkgoIt("should exist", func() {
 			deployment, err := pollDeployment(h, namespace, name)
 			Expect(err).ToNot(HaveOccurred(), "failed fetching deployment")
 			Expect(deployment).NotTo(BeNil(), "deployment is nil")
 		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
-		ginkgo.It("should have all desired replicas ready", func() {
+		util.GinkgoIt("should have all desired replicas ready", func() {
 			deployment, err := pollDeployment(h, namespace, name)
 			Expect(err).ToNot(HaveOccurred(), "failed fetching deployment")
 
@@ -87,7 +88,7 @@ func checkPod(h *helper.H, namespace string, name string, gracePeriod int, maxAc
 	// Checks that deployed pods have less than maxAcceptedRestart restarts
 
 	ginkgo.Context("pods", func() {
-		ginkgo.It(fmt.Sprintf("should have %v or less restart(s)", maxAcceptedRestart), func() {
+		util.GinkgoIt(fmt.Sprintf("should have %v or less restart(s)", maxAcceptedRestart), func() {
 			// wait for graceperiod
 			time.Sleep(time.Duration(gracePeriod) * time.Second)
 			//retrieve pods
@@ -108,7 +109,7 @@ func checkPod(h *helper.H, namespace string, name string, gracePeriod int, maxAc
 func checkServiceAccounts(h *helper.H, operatorNamespace string, serviceAccounts []string) {
 	// Check that deployed serviceAccounts exist
 	ginkgo.Context("serviceAccounts", func() {
-		ginkgo.It("should exist", func() {
+		util.GinkgoIt("should exist", func() {
 			for _, serviceAccountName := range serviceAccounts {
 				_, err := h.Kube().CoreV1().ServiceAccounts(operatorNamespace).Get(context.TODO(), serviceAccountName, metav1.GetOptions{})
 				Expect(err).NotTo(HaveOccurred(), "failed to get serviceAccount %v\n", serviceAccountName)
@@ -120,7 +121,7 @@ func checkServiceAccounts(h *helper.H, operatorNamespace string, serviceAccounts
 func checkClusterRoles(h *helper.H, clusterRoles []string, matchPrefix bool) {
 	// Check that the clusterRoles exist
 	ginkgo.Context("clusterRoles", func() {
-		ginkgo.It("should exist", func() {
+		util.GinkgoIt("should exist", func() {
 			allClusterRoles, err := h.Kube().RbacV1().ClusterRoles().List(context.TODO(), metav1.ListOptions{})
 			Expect(err).ToNot(HaveOccurred(), "failed to list clusterRoles\n")
 
@@ -142,7 +143,7 @@ func checkClusterRoles(h *helper.H, clusterRoles []string, matchPrefix bool) {
 func checkClusterRoleBindings(h *helper.H, clusterRoleBindings []string, matchPrefix bool) {
 	// Check that the clusterRoles exist
 	ginkgo.Context("clusterRoleBindings", func() {
-		ginkgo.It("should exist", func() {
+		util.GinkgoIt("should exist", func() {
 			allClusterRoleBindings, err := h.Kube().RbacV1().ClusterRoleBindings().List(context.TODO(), metav1.ListOptions{})
 			Expect(err).ToNot(HaveOccurred(), "failed to list clusterRoles\n")
 
@@ -164,7 +165,7 @@ func checkClusterRoleBindings(h *helper.H, clusterRoleBindings []string, matchPr
 func checkRole(h *helper.H, namespace string, roles []string) {
 	// Check that deployed roles exist
 	ginkgo.Context("roles", func() {
-		ginkgo.It("should exist", func() {
+		util.GinkgoIt("should exist", func() {
 			for _, roleName := range roles {
 				_, err := h.Kube().RbacV1().Roles(namespace).Get(context.TODO(), roleName, metav1.GetOptions{})
 				Expect(err).NotTo(HaveOccurred(), "failed to get role %v\n", roleName)
@@ -176,7 +177,7 @@ func checkRole(h *helper.H, namespace string, roles []string) {
 
 func checkRolesWithNamePrefix(h *helper.H, namespace string, prefix string, count int) {
 	ginkgo.Context("roles with prefix", func() {
-		ginkgo.It("should exist", func() {
+		util.GinkgoIt("should exist", func() {
 			Eventually(func() int {
 				rolesList, err := h.Kube().RbacV1().Roles(namespace).List(context.TODO(), metav1.ListOptions{})
 				Expect(err).NotTo(HaveOccurred(), "failed to get roles in namespace %s", namespace)
@@ -194,7 +195,7 @@ func checkRolesWithNamePrefix(h *helper.H, namespace string, prefix string, coun
 
 func checkRoleBindingsWithNamePrefix(h *helper.H, namespace string, prefix string, count int) {
 	ginkgo.Context("roles with prefix", func() {
-		ginkgo.It("should exist", func() {
+		util.GinkgoIt("should exist", func() {
 			Eventually(func() int {
 				roleBindings, err := h.Kube().RbacV1().RoleBindings(namespace).List(context.TODO(), metav1.ListOptions{})
 				Expect(err).NotTo(HaveOccurred(), "failed to get roles in namespace %s", namespace)
@@ -212,7 +213,7 @@ func checkRoleBindingsWithNamePrefix(h *helper.H, namespace string, prefix strin
 func checkRoleBindings(h *helper.H, namespace string, roleBindings []string) {
 	// Check that deployed rolebindings exist
 	ginkgo.Context("roleBindings", func() {
-		ginkgo.It("should exist", func() {
+		util.GinkgoIt("should exist", func() {
 			for _, roleBindingName := range roleBindings {
 				err := pollRoleBinding(h, namespace, roleBindingName)
 				Expect(err).NotTo(HaveOccurred(), "failed to get roleBinding %v\n", roleBindingName)
@@ -225,7 +226,7 @@ func checkRoleBindings(h *helper.H, namespace string, roleBindings []string) {
 func checkSecrets(h *helper.H, namespace string, secrets []string) {
 	// Check that deployed secrets exist
 	ginkgo.Context("secrets", func() {
-		ginkgo.It("should exist", func() {
+		util.GinkgoIt("should exist", func() {
 			for _, secretName := range secrets {
 				_, err := h.Kube().CoreV1().Secrets(namespace).Get(context.TODO(), secretName, metav1.GetOptions{})
 				Expect(err).NotTo(HaveOccurred(), "failed to get secret %v\n", secretName)
@@ -237,7 +238,7 @@ func checkSecrets(h *helper.H, namespace string, secrets []string) {
 func checkUpgrade(h *helper.H, subNamespace string, subName string, packageName string, regServiceName string) {
 
 	ginkgo.Context("Operator Upgrade", func() {
-		ginkgo.It("should upgrade from the replaced version", func() {
+		util.GinkgoIt("should upgrade from the replaced version", func() {
 
 			// Get the CSV we're currently installed with
 			sub, err := h.Operator().OperatorsV1alpha1().Subscriptions(subNamespace).Get(context.TODO(), subName, metav1.GetOptions{})

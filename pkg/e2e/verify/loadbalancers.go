@@ -11,6 +11,7 @@ import (
 
 	"github.com/openshift/osde2e/pkg/common/alert"
 	"github.com/openshift/osde2e/pkg/common/helper"
+	"github.com/openshift/osde2e/pkg/common/util"
 )
 
 const (
@@ -29,13 +30,13 @@ func init() {
 var _ = ginkgo.Describe(loadBalancersTestName, func() {
 	h := helper.New()
 
-	ginkgo.It("router/ingress load balancer should exist", func() {
+	util.GinkgoIt("router/ingress load balancer should exist", func() {
 		exists, err := loadBalancerExists(h, routerIngressLoadBalancerNamespace, routerIngressLoadBalancer)
 		Expect(err).ToNot(HaveOccurred(), "an error should not have occurred when looking for the load balancer")
 		Expect(exists).To(BeTrue(), "the load balancer should exist")
 	}, 10)
 
-	ginkgo.It("external load balancer should exist", func() {
+	util.GinkgoIt("external load balancer should exist", func() {
 		exists, err := loadBalancerExists(h, externalLoadBalancerNamespace, externalLoadBalancer)
 		Expect(err).ToNot(HaveOccurred(), "an error should not have occurred when looking for the load balancer")
 		Expect(exists).To(BeTrue(), "the load balancer should exist")

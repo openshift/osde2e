@@ -12,6 +12,7 @@ import (
 	"github.com/openshift/osde2e/pkg/common/alert"
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/prometheus"
+	"github.com/openshift/osde2e/pkg/common/util"
 	prometheusv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/prometheus/common/model"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -63,7 +64,7 @@ var _ = ginkgo.Describe(managedUpgradeOperatorTestName, func() {
 			clusterVersion, err = getClusterVersion(h)
 		})
 
-		ginkgo.It("should not upgrade if the upgrade time is in the future", func() {
+		util.GinkgoIt("should not upgrade if the upgrade time is in the future", func() {
 			// Validate clusterversion
 			Expect(err).NotTo(HaveOccurred())
 			Expect(clusterVersion).NotTo(BeNil())
@@ -126,7 +127,7 @@ var _ = ginkgo.Describe(managedUpgradeOperatorTestName, func() {
 
 		})
 
-		ginkgo.It("should error if the upgrade time is too far in the past", func() {
+		util.GinkgoIt("should error if the upgrade time is too far in the past", func() {
 			// Validate clusterversion
 			Expect(err).NotTo(HaveOccurred())
 			Expect(clusterVersion).NotTo(BeNil())
@@ -181,7 +182,7 @@ var _ = ginkgo.Describe(managedUpgradeOperatorTestName, func() {
 			Expect(err).NotTo(HaveOccurred())
 		})
 
-		ginkgo.It("should error if provided an invalid start time", func() {
+		util.GinkgoIt("should error if provided an invalid start time", func() {
 			// Validate clusterversion
 			Expect(err).NotTo(HaveOccurred())
 			Expect(clusterVersion).NotTo(BeNil())
@@ -236,7 +237,7 @@ var _ = ginkgo.Describe(managedUpgradeOperatorTestName, func() {
 	})
 	ginkgo.Context("upgradeconfig", func() {
 
-		ginkgo.It("dedicated admin should not be able to manage the UpgradeConfig CR", func() {
+		util.GinkgoIt("dedicated admin should not be able to manage the UpgradeConfig CR", func() {
 			// Add the upgradeconfig to the cluster
 			uc := makeMinimalUpgradeConfig(upgradeConfigForDedicatedAdminTestName, operatorNamespace)
 			err := dedicatedAaddUpgradeConfig(uc, operatorNamespace, h)

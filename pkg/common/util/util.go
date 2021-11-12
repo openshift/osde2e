@@ -6,6 +6,8 @@ import (
 	"time"
 
 	"github.com/Masterminds/semver"
+	"github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
 )
 
 const (
@@ -33,4 +35,21 @@ func OpenshiftVersionToSemver(openshiftVersion string) (*semver.Version, error) 
 // SemverToOpenshiftVersion converts an OpenShift version to a semver string which can then be used for comparisons.
 func SemverToOpenshiftVersion(version *semver.Version) string {
 	return VersionPrefix + version.String()
+}
+
+// GinkgoIt wraps the 2.0 Ginkgo It function to allow for additional functionality.
+func GinkgoIt(text string, body func(), timeout ...float64) bool {
+	return ginkgo.It(text, func() {
+		done := make(chan interface{})
+		go func() {
+			defer ginkgo.GinkgoRecover()
+			body()
+			close(done)
+		}()
+		duration := time.Duration(1) * time.Second
+		if len(timeout) > 0 {
+			duration = time.Duration(timeout[0]) * time.Second
+		}
+		Eventually(done, duration).Should(BeClosed())
+	})
 }

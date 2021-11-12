@@ -75,7 +75,7 @@ var _ = ginkgo.Describe(hiveownershipWebhookTestName, func() {
 		// TESTS BEGIN
 
 		// though https://github.com/openshift/managed-cluster-config/pull/626, we expect dedicated-admins cannot delete managed resources by protection of the hook.
-		ginkgo.It("dedicated admins cannot delete managed CRQs", func() {
+		util.GinkgoIt("dedicated admins cannot delete managed CRQs", func() {
 			for item, managed := range PRIVILEGED_CRQs {
 				if managed {
 					err := DeleteClusterResourceQuota(h, item, DUMMY_USER, "dedicated-admins")
@@ -85,7 +85,7 @@ var _ = ginkgo.Describe(hiveownershipWebhookTestName, func() {
 		}, viper.GetFloat64(config.Tests.PollingTimeout))
 
 		// Passing constantly.
-		ginkgo.It("a random user cannot delete managed CRQs", func() {
+		util.GinkgoIt("a random user cannot delete managed CRQs", func() {
 			for item, managed := range PRIVILEGED_CRQs {
 				if managed {
 					err := DeleteClusterResourceQuota(h, item, DUMMY_USER, DUMMY_GROUP)
@@ -95,7 +95,7 @@ var _ = ginkgo.Describe(hiveownershipWebhookTestName, func() {
 		}, viper.GetFloat64(config.Tests.PollingTimeout))
 
 		// Passsing Constantly.
-		ginkgo.It("Members of SRE can update a managed quota object", func() {
+		util.GinkgoIt("Members of SRE can update a managed quota object", func() {
 			for item, managed := range PRIVILEGED_CRQs {
 				if managed {
 					err := UpdateClusterResourceQuota(h, item, ELEVATED_SRE_USER, "")
@@ -105,7 +105,7 @@ var _ = ginkgo.Describe(hiveownershipWebhookTestName, func() {
 		}, viper.GetFloat64(config.Tests.PollingTimeout))
 
 		// MCC TESTS(dedicated-admin changes - https://github.com/openshift/managed-cluster-config/pull/626)
-		ginkgo.It("as dedicated admin can update crqs inside the cluster that are non managed.", func() {
+		util.GinkgoIt("as dedicated admin can update crqs inside the cluster that are non managed.", func() {
 			for item, managed := range PRIVILEGED_CRQs {
 				if !managed {
 					err := UpdateClusterResourceQuota(h, item, DUMMY_USER, "dedicated-admins")
@@ -114,7 +114,7 @@ var _ = ginkgo.Describe(hiveownershipWebhookTestName, func() {
 			}
 		}, viper.GetFloat64(config.Tests.PollingTimeout))
 
-		ginkgo.It("as dedicated admin can create a crq inside the cluster that is non managed.", func() {
+		util.GinkgoIt("as dedicated admin can create a crq inside the cluster that is non managed.", func() {
 			cuQuota := "quota-customer"
 			err := CreateClusterResourceQuota(h, produceCRQ(cuQuota, false), DUMMY_USER, "dedicated-admins")
 			Expect(err).NotTo(HaveOccurred())

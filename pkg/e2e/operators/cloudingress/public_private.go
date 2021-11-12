@@ -12,6 +12,7 @@ import (
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/constants"
 	"github.com/openshift/osde2e/pkg/common/helper"
+	"github.com/openshift/osde2e/pkg/common/util"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -30,7 +31,7 @@ var _ = ginkgo.Describe(constants.SuiteInforming+TestPrefix, func() {
 	h := helper.New()
 
 	ginkgo.Context("publishingstrategy-public-private", func() {
-		ginkgo.It("should be able to toggle the default applicationingress from public to private", func() {
+		util.GinkgoIt("should be able to toggle the default applicationingress from public to private", func() {
 
 			updateApplicationIngress(h, "internal")
 
@@ -50,7 +51,7 @@ var _ = ginkgo.Describe(constants.SuiteInforming+TestPrefix, func() {
 			})
 			Expect(err).NotTo(HaveOccurred())
 		})
-		ginkgo.It("should be able to toggle the default applicationingress from private to public", func() {
+		util.GinkgoIt("should be able to toggle the default applicationingress from private to public", func() {
 
 			updateApplicationIngress(h, "external")
 

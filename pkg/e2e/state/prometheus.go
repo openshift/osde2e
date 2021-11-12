@@ -10,6 +10,7 @@ import (
 
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/runner"
+	"github.com/openshift/osde2e/pkg/common/util"
 	"github.com/openshift/osde2e/pkg/e2e/verify"
 	"k8s.io/apimachinery/pkg/util/wait"
 )
@@ -25,7 +26,7 @@ var _ = ginkgo.Describe(clusterStateInformingName, func() {
 	h := helper.New()
 
 	prometheusTimeoutInSeconds := 900
-	ginkgo.It("should include Prometheus data", func() {
+	util.GinkgoIt("should include Prometheus data", func() {
 		// setup runner
 		// this command is has specific code to capture and suppress an exit code of
 		// 1 as tar 1.26 will exit 1 if files change while the tar is running, as is

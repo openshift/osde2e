@@ -17,6 +17,7 @@ import (
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/providers"
+	"github.com/openshift/osde2e/pkg/common/util"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -71,7 +72,7 @@ func cmdFromIPs(ips []string, templ *template.Template) string {
 var _ = ginkgo.Describe(ocmTestName, func() {
 	ginkgo.Context("Metrics", func() {
 		clusterID := viper.GetString(config.Cluster.ID)
-		ginkgo.It("do exist and are not empty", func() {
+		util.GinkgoIt("do exist and are not empty", func() {
 			provider, err := providers.ClusterProvider()
 			Expect(err).NotTo(HaveOccurred())
 
@@ -84,7 +85,7 @@ var _ = ginkgo.Describe(ocmTestName, func() {
 	})
 	ginkgo.Context("Quay Fallback", func() {
 		h := helper.New()
-		ginkgo.It("uses a quay mirror when quay is unavailable", func() {
+		util.GinkgoIt("uses a quay mirror when quay is unavailable", func() {
 			if strings.Contains(config.JobName, "prod") {
 				ginkgo.Skip("Skipping this test in production, as it cannot yet pass.")
 			}

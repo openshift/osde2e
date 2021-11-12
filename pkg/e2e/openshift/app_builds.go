@@ -13,6 +13,7 @@ import (
 	"github.com/openshift/osde2e/pkg/common/alert"
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/runner"
+	"github.com/openshift/osde2e/pkg/common/util"
 	kubev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -52,7 +53,7 @@ var _ = ginkgo.Describe(appBuildsTestName, func() {
 	h := helper.New()
 
 	e2eTimeoutInSeconds := 3600
-	ginkgo.It("should get created in the cluster", func() {
+	util.GinkgoIt("should get created in the cluster", func() {
 
 		namespacesExist := false
 		for _, application := range testApplications {

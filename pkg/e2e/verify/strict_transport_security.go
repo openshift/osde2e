@@ -8,6 +8,7 @@ import (
 	"github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/openshift/osde2e/pkg/common/helper"
+	"github.com/openshift/osde2e/pkg/common/util"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -20,12 +21,12 @@ var _ = ginkgo.Describe(hstsTestName, func() {
 	monitorNamespace := "openshift-monitoring"
 
 	ginkgo.Context("Validating HTTP strict transport security", func() {
-		ginkgo.It("should be set for openshift-console OSD managed routes", func() {
+		util.GinkgoIt("should be set for openshift-console OSD managed routes", func() {
 			foundKey, err := hstsManagedRoutes(h, consoleNamespace)
 			Expect(err).NotTo(HaveOccurred(), "failed getting routes for %v", consoleNamespace)
 			Expect(foundKey).Should(BeTrue(), "%v namespace routes have HTTP strict transport security set", consoleNamespace)
 		}, 5)
-		ginkgo.It("should be set for openshift-monitoring OSD managed routes", func() {
+		util.GinkgoIt("should be set for openshift-monitoring OSD managed routes", func() {
 			foundKey, err := hstsManagedRoutes(h, monitorNamespace)
 			Expect(err).NotTo(HaveOccurred(), "failed getting routes for %v", monitorNamespace)
 			Expect(foundKey).Should(BeTrue(), "%v namespace routes have HTTP strict transport security set", monitorNamespace)

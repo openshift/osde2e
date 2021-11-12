@@ -9,9 +9,10 @@ import (
 	"github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/openshift/osde2e/pkg/common/alert"
+	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/helper"
-	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
+	"github.com/openshift/osde2e/pkg/common/util"
 
 	batchv1 "k8s.io/api/batch/v1"
 	batchv1beta1 "k8s.io/api/batch/v1beta1"
@@ -31,7 +32,7 @@ var _ = ginkgo.Describe(pruneJobsTestName, func() {
 		namespace := "openshift-sre-pruning"
 		cronJobs := []string{"builds-pruner", "deployments-pruner"}
 		for _, cronJob := range cronJobs {
-			ginkgo.It(cronJob+" should run successfully", func() {
+			util.GinkgoIt(cronJob+" should run successfully", func() {
 				getOpts := metav1.GetOptions{}
 				cjob, err := h.Kube().BatchV1beta1().CronJobs(namespace).Get(context.TODO(), cronJob, getOpts)
 				Expect(err).NotTo(HaveOccurred())

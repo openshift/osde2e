@@ -20,6 +20,7 @@ import (
 	. "github.com/onsi/gomega"
 
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
+	"github.com/openshift/osde2e/pkg/common/util"
 
 	routev1 "github.com/openshift/api/route/v1"
 	customdomainv1alpha1 "github.com/openshift/custom-domains-operator/pkg/apis/customdomain/v1alpha1"
@@ -69,7 +70,7 @@ var _ = ginkgo.Describe(customDomainsOperatorTestName, func() {
 
 	ginkgo.Context("Should allow dedicated-admins to create custom domains", func() {
 		var (
-			h   = helper.New()
+			h = helper.New()
 
 			testInstanceName = "test-" + time.Now().Format("20060102-150405-") + fmt.Sprint(time.Now().Nanosecond()/1000000) + "-" + fmt.Sprint(ginkgo.GinkgoParallelNode())
 			testDomain       *customdomainv1alpha1.CustomDomain
@@ -212,7 +213,7 @@ var _ = ginkgo.Describe(customDomainsOperatorTestName, func() {
 		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
 
 		// Now that the endpoint is stable, make sure it's resolvable and usable.
-		ginkgo.It("Should be resolvable by external services", func() {
+		util.GinkgoIt("Should be resolvable by external services", func() {
 			ginkgo.By("Logging in as a dedicated-admin")
 
 			h.Impersonate(rest.ImpersonationConfig{

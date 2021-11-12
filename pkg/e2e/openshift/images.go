@@ -7,6 +7,7 @@ import (
 
 	"github.com/openshift/osde2e/pkg/common/alert"
 	"github.com/openshift/osde2e/pkg/common/helper"
+	"github.com/openshift/osde2e/pkg/common/util"
 )
 
 var imageRegistryTestName string = "[Suite: openshift][image-registry]"
@@ -22,7 +23,7 @@ var _ = ginkgo.Describe(imageRegistryTestName, func() {
 	h := helper.New()
 
 	e2eTimeoutInSeconds := 3600
-	ginkgo.It("should run until completion", func() {
+	util.GinkgoIt("should run until completion", func() {
 		h.SetServiceAccount("system:serviceaccount:%s:cluster-admin")
 		// configure tests
 		cfg := DefaultE2EConfig
@@ -55,7 +56,7 @@ var _ = ginkgo.Describe(imageEcosystemTestName, func() {
 	h := helper.New()
 
 	e2eTimeoutInSeconds := 3600
-	ginkgo.It("should run until completion", func() {
+	util.GinkgoIt("should run until completion", func() {
 		// configure tests
 		cfg := DefaultE2EConfig
 		cfg.Suite = "openshift/image-ecosystem"

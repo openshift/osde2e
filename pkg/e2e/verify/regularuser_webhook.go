@@ -7,9 +7,10 @@ import (
 	. "github.com/onsi/gomega"
 	v1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/osde2e/pkg/common/alert"
+	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/helper"
-	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
+	"github.com/openshift/osde2e/pkg/common/util"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/rest"
 )
@@ -24,7 +25,7 @@ var _ = ginkgo.Describe(regularuserWebhookTestName, func() {
 	h := helper.New()
 
 	ginkgo.Context("regularuser validating webhook", func() {
-		ginkgo.It("Privledged users allowed to create autoscalers and delete clusterversion objects", func() {
+		util.GinkgoIt("Privledged users allowed to create autoscalers and delete clusterversion objects", func() {
 			h.Impersonate(rest.ImpersonationConfig{
 				UserName: "system:admin",
 				Groups: []string{

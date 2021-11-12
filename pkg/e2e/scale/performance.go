@@ -7,6 +7,7 @@ import (
 
 	"github.com/openshift/osde2e/pkg/common/alert"
 	"github.com/openshift/osde2e/pkg/common/helper"
+	"github.com/openshift/osde2e/pkg/common/util"
 )
 
 var performanceTestName string = "[Suite: scale-performance] Scaling"
@@ -20,7 +21,7 @@ var _ = ginkgo.Describe(performanceTestName, func() {
 	h := helper.New()
 
 	httpTimeoutInSeconds := 7200
-	ginkgo.It("should be tested with HTTP", func() {
+	util.GinkgoIt("should be tested with HTTP", func() {
 		h.SetServiceAccount("system:serviceaccount:%s:cluster-admin")
 		// setup runner
 		scaleCfg := scaleRunnerConfig{
@@ -42,7 +43,7 @@ var _ = ginkgo.Describe(performanceTestName, func() {
 
 	// TODO: Enable once the network test is fixed. Currently running into UPERF_SSHD_PORT not defined
 	//networkTimeoutInSeconds := 7200
-	//ginkgo.It("should be tested with Network", func() {
+	//util.GinkgoIt("should be tested with Network", func() {
 	//	// setup runner
 	//	scaleCfg := scaleRunnerConfig{
 	//		Name:         "network",
@@ -64,7 +65,7 @@ var _ = ginkgo.Describe(performanceTestName, func() {
 	// TODO: Reenable this once we can figure out how to get it working. It looks like this takes longer than 2.5 hours,
 	//       so this may require being split into multiple tests
 	//prometheusTimeoutInSeconds := 7200
-	//ginkgo.It("should be tested with Prometheus", func() {
+	//util.GinkgoIt("should be tested with Prometheus", func() {
 	//	// setup runner
 	//	scaleCfg := scaleRunnerConfig{
 	//		Name:         "prometheus",
@@ -85,7 +86,7 @@ var _ = ginkgo.Describe(performanceTestName, func() {
 
 	// TODO: Enable once the fio test is fixed. Currently failing with 'azure_auth' is undefined
 	//fioTimeoutInSeconds := 3600
-	//ginkgo.It("should be tested with fio", func() {
+	//util.GinkgoIt("should be tested with fio", func() {
 	//	// setup runner
 	//	scaleCfg := scaleRunnerConfig{
 	//		Name:         "fio",

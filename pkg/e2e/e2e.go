@@ -31,7 +31,6 @@ import (
 
 	pd "github.com/PagerDuty/go-pagerduty"
 	"github.com/onsi/ginkgo"
-	ginkgoConfig "github.com/onsi/ginkgo/config"
 	"github.com/onsi/ginkgo/reporters"
 	"github.com/onsi/gomega"
 	"github.com/openshift/osde2e/pkg/common/alert"
@@ -56,7 +55,6 @@ import (
 	"github.com/openshift/osde2e/pkg/common/util"
 	"github.com/openshift/osde2e/pkg/debug"
 	"github.com/openshift/osde2e/pkg/e2e/routemonitors"
-	"github.com/openshift/osde2e/pkg/reporting/ginkgorep"
 )
 
 const (
@@ -266,24 +264,24 @@ func runGinkgoTests() (int, error) {
 
 	gomega.RegisterFailHandler(ginkgo.Fail)
 	viper.Set(config.Cluster.Passing, false)
+	suiteConfig, _ := ginkgo.GinkgoConfiguration()
 
-	ginkgoConfig.DefaultReporterConfig.NoisySkippings = !viper.GetBool(config.Tests.SuppressSkipNotifications)
 	if skip := viper.GetString(config.Tests.GinkgoSkip); skip != "" {
-		ginkgoConfig.GinkgoConfig.SkipStrings = append(ginkgoConfig.GinkgoConfig.SkipStrings, skip)
+		suiteConfig.SkipStrings = append(suiteConfig.SkipStrings, skip)
 	}
 
 	if testsToRun := viper.GetStringSlice(config.Tests.TestsToRun); len(testsToRun) > 0 {
 		log.Printf("%v", testsToRun)
-		ginkgoConfig.GinkgoConfig.FocusStrings = testsToRun
-		log.Printf("%v", ginkgoConfig.GinkgoConfig.FocusStrings)
+		suiteConfig.FocusStrings = testsToRun
+		log.Printf("%v", suiteConfig.FocusStrings)
 	}
 
 	if focus := viper.GetString(config.Tests.GinkgoFocus); focus != "" {
-		ginkgoConfig.GinkgoConfig.FocusStrings = append(ginkgoConfig.GinkgoConfig.FocusStrings, focus)
+		suiteConfig.FocusStrings = append(suiteConfig.FocusStrings, focus)
 	}
-	ginkgoConfig.GinkgoConfig.DryRun = viper.GetBool(config.DryRun)
+	suiteConfig.DryRun = viper.GetBool(config.DryRun)
 
-	if ginkgoConfig.GinkgoConfig.DryRun {
+	if suiteConfig.DryRun {
 		// Draw attention to DRYRUN as it can exist in ENV.
 		log.Println(string("\x1b[33m"), "WARNING! This is a DRY RUN. Review this state if outcome is unexpected.", string("\033[0m"))
 	}
@@ -367,7 +365,7 @@ func runGinkgoTests() (int, error) {
 		viper.Set(config.Suffix, util.RandomStr(5))
 	}
 
-	testsPassed, installTestCaseData := runTestsInPhase(phase.InstallPhase, "OSD e2e suite", ginkgoConfig.GinkgoConfig.DryRun)
+	testsPassed, installTestCaseData := runTestsInPhase(phase.InstallPhase, "OSD e2e suite", suiteConfig.DryRun)
 	getLogs()
 	viper.Set(config.Cluster.Passing, testsPassed)
 	upgradeTestsPassed := true
@@ -380,7 +378,7 @@ func runGinkgoTests() (int, error) {
 			// create route monitors for the upgrade
 			var routeMonitorChan chan struct{}
 			closeMonitorChan := make(chan struct{})
-			if viper.GetBool(config.Upgrade.MonitorRoutesDuringUpgrade) && !ginkgoConfig.GinkgoConfig.DryRun {
+			if viper.GetBool(config.Upgrade.MonitorRoutesDuringUpgrade) && !suiteConfig.DryRun {
 				routeMonitorChan = setupRouteMonitors(closeMonitorChan)
 				log.Println("Route Monitors created.")
 			}
@@ -396,13 +394,13 @@ func runGinkgoTests() (int, error) {
 			if !viper.GetBool(config.Upgrade.ManagedUpgradeRescheduled) {
 				log.Println("Running e2e tests POST-UPGRADE...")
 				viper.Set(config.Cluster.Passing, false)
-				upgradeTestsPassed, upgradeTestCaseData = runTestsInPhase(phase.UpgradePhase, "OSD e2e suite post-upgrade", ginkgoConfig.GinkgoConfig.DryRun)
+				upgradeTestsPassed, upgradeTestCaseData = runTestsInPhase(phase.UpgradePhase, "OSD e2e suite post-upgrade", suiteConfig.DryRun)
 				viper.Set(config.Cluster.Passing, upgradeTestsPassed)
 			}
 			log.Println("Upgrade rescheduled, skip the POST-UPGRADE testing")
 
 			// close route monitors
-			if viper.GetBool(config.Upgrade.MonitorRoutesDuringUpgrade) && !ginkgoConfig.GinkgoConfig.DryRun {
+			if viper.GetBool(config.Upgrade.MonitorRoutesDuringUpgrade) && !suiteConfig.DryRun {
 				close(routeMonitorChan)
 				_ = <-closeMonitorChan
 				log.Println("Route monitors reconciled")
@@ -511,7 +509,7 @@ func runGinkgoTests() (int, error) {
 		}
 	}
 
-	if !ginkgoConfig.GinkgoConfig.DryRun {
+	if !suiteConfig.DryRun {
 		getLogs()
 
 		h := helper.NewOutsideGinkgo()
@@ -701,6 +699,7 @@ func cleanupAfterE2E(h *helper.H) (errors []error) {
 
 // nolint:gocyclo
 func runTestsInPhase(phase string, description string, dryrun bool) (bool, []db.CreateTestcaseParams) {
+	suiteConfig, reporterConfig := ginkgo.GinkgoConfiguration()
 	var testCaseData []db.CreateTestcaseParams
 	viper.Set(config.Phase, phase)
 	reportDir := viper.GetString(config.ReportDir)
@@ -712,11 +711,11 @@ func runTestsInPhase(phase string, description string, dryrun bool) (bool, []db.
 		}
 	}
 	suffix := viper.GetString(config.Suffix)
-	phaseReportPath := filepath.Join(phaseDirectory, fmt.Sprintf("junit_%v.xml", suffix))
-	phaseReporter := ginkgorep.NewPhaseReporter(phase, phaseReportPath)
+	reporterConfig.JUnitReport = filepath.Join(phaseDirectory, fmt.Sprintf("junit_%v.xml", suffix))
+	reporterConfig.Succinct = true
 	ginkgoPassed := false
 
-	if !dryrun || !ginkgoConfig.GinkgoConfig.DryRun {
+	if !dryrun || !suiteConfig.DryRun {
 		if !beforeSuite() {
 			log.Println("Error getting kubeconfig from beforeSuite function")
 			return false, testCaseData
@@ -728,7 +727,7 @@ func runTestsInPhase(phase string, description string, dryrun bool) (bool, []db.
 	func() {
 		defer ginkgo.GinkgoRecover()
 
-		ginkgoPassed = ginkgo.RunSpecsWithDefaultAndCustomReporters(ginkgo.GinkgoT(), description, []ginkgo.Reporter{phaseReporter})
+		ginkgoPassed = ginkgo.RunSpecs(ginkgo.GinkgoT(), description, suiteConfig, reporterConfig)
 	}()
 
 	files, err := ioutil.ReadDir(phaseDirectory)
@@ -851,7 +850,7 @@ func runTestsInPhase(phase string, description string, dryrun bool) (bool, []db.
 
 	for name, value := range metadata.Instance.LogMetrics {
 		testCase := reporters.JUnitTestCase{
-			ClassName: "Log Metrics",
+			Classname: "Log Metrics",
 			Name:      fmt.Sprintf("[Log Metrics] %s", name),
 			Time:      float64(value),
 		}
@@ -859,7 +858,7 @@ func runTestsInPhase(phase string, description string, dryrun bool) (bool, []db.
 		if config.GetLogMetrics().GetMetricByName(name).IsPassing(value) {
 			testCase.SystemOut = fmt.Sprintf("Passed with %d matches", value)
 		} else {
-			testCase.FailureMessage = &reporters.JUnitFailureMessage{
+			testCase.Failure = &reporters.JUnitFailure{
 				Message: fmt.Sprintf("Failed with %d matches", value),
 			}
 			logMetricTestSuite.Failures++
@@ -883,7 +882,7 @@ func runTestsInPhase(phase string, description string, dryrun bool) (bool, []db.
 
 	for name, value := range metadata.Instance.BeforeSuiteMetrics {
 		testCase := reporters.JUnitTestCase{
-			ClassName: "Before Suite Metrics",
+			Classname: "Before Suite Metrics",
 			Name:      fmt.Sprintf("[BeforeSuite] %s", name),
 			Time:      float64(value),
 		}
@@ -891,7 +890,7 @@ func runTestsInPhase(phase string, description string, dryrun bool) (bool, []db.
 		if config.GetBeforeSuiteMetrics().GetMetricByName(name).IsPassing(value) {
 			testCase.SystemOut = fmt.Sprintf("Passed with %d matches", value)
 		} else {
-			testCase.FailureMessage = &reporters.JUnitFailureMessage{
+			testCase.Failure = &reporters.JUnitFailure{
 				Message: fmt.Sprintf("Failed with %d matches", value),
 			}
 			beforeSuiteMetricTestSuite.Failures++

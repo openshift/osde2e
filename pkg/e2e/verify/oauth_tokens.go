@@ -37,7 +37,7 @@ var _ = ginkgo.Describe(oauthTokensTestName, func() {
 			Expect(err).ToNot(HaveOccurred())
 		})
 
-		ginkgo.It("should include token max age", func() {
+		util.GinkgoIt("should include token max age", func() {
 			tokenConfig := oauthcfg.Spec.TokenConfig
 			Expect(tokenConfig).ShouldNot(BeNil(), "tokenConfig should be set")
 			Expect(tokenConfig.AccessTokenMaxAgeSeconds).ToNot(BeZero(), "access token max age setting should not be zero")
@@ -47,7 +47,7 @@ var _ = ginkgo.Describe(oauthTokensTestName, func() {
 			tokenConfig := oauthcfg.Spec.TokenConfig
 			Expect(tokenConfig).ShouldNot(BeNil(), "tokenConfig should be set")
 			Expect(tokenConfig.AccessTokenInactivityTimeoutSeconds).ToNot(BeZero(), "access token idle timeout setting should not be zero")
-		})
+		}, 5)
 
 	})
 
@@ -67,7 +67,7 @@ var _ = ginkgo.Describe(oauthTokensTestName, func() {
 			_, oauthAccessToken := simulateLogin(user, client, h)
 			Expect(oauthAccessToken.ExpiresIn).ToNot(BeZero(), "oauthaccesstoken expiry time should not be zero")
 			Expect(oauthAccessToken.InactivityTimeoutSeconds).ToNot(BeZero(), "oauthaccesstoken idle timeout should not be zero")
-		})
+		}, 30)
 
 		util.OnSupportedVersionIt(util.Version460, h, "should not affect active sessions", func() {
 			bearerToken, _ := simulateLogin(user, client, h)

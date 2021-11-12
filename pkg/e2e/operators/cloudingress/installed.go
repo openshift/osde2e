@@ -12,6 +12,7 @@ import (
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/constants"
 	"github.com/openshift/osde2e/pkg/common/helper"
+	"github.com/openshift/osde2e/pkg/common/util"
 
 	"github.com/openshift/osde2e/pkg/common/config"
 	appsv1 "k8s.io/api/apps/v1"
@@ -33,13 +34,13 @@ var _ = ginkgo.Describe(constants.SuiteOperators+TestPrefix, func() {
 
 	// Check that the operator deployment exists in the operator namespace
 	ginkgo.Context("deployment", func() {
-		ginkgo.It("should exist", func() {
+		util.GinkgoIt("should exist", func() {
 			deployment, err := pollDeployment(h, OperatorNamespace, OperatorName)
 			Expect(err).ToNot(HaveOccurred(), "failed fetching deployment")
 			Expect(deployment).NotTo(BeNil(), "deployment is nil")
 		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
 
-		ginkgo.It("should have all desired replicas ready", func() {
+		util.GinkgoIt("should have all desired replicas ready", func() {
 			deployment, err := pollDeployment(h, OperatorNamespace, OperatorName)
 			Expect(err).ToNot(HaveOccurred(), "failed fetching deployment")
 
