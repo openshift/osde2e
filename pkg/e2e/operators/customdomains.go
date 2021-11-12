@@ -72,7 +72,7 @@ var _ = ginkgo.Describe(customDomainsOperatorTestName, func() {
 		var (
 			h = helper.New()
 
-			testInstanceName = "test-" + time.Now().Format("20060102-150405-") + fmt.Sprint(time.Now().Nanosecond()/1000000) + "-" + fmt.Sprint(ginkgo.GinkgoParallelNode())
+			testInstanceName = "test-" + time.Now().Format("20060102-150405-") + fmt.Sprint(time.Now().Nanosecond()/1000000) + "-" + fmt.Sprint(ginkgo.GinkgoParallelProcess())
 			testDomain       *customdomainv1alpha1.CustomDomain
 		)
 

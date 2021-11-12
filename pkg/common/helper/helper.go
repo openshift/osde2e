@@ -82,6 +82,8 @@ type H struct {
 func (h *H) Setup() error {
 	var err error
 
+	defer ginkgo.GinkgoRecover()
+
 	h.restConfig, err = clientcmd.RESTConfigFromKubeConfig([]byte(viper.GetString(config.Kubeconfig.Contents)))
 	if h.OutsideGinkgo && err != nil {
 		return fmt.Errorf("error generating restconfig: %s", err.Error())

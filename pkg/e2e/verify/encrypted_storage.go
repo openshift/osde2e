@@ -58,7 +58,7 @@ var _ = ginkgo.Describe(encryptedStorageTestName, func() {
 		var testInstanceName string
 
 		util.GinkgoIt("can be created by dedicated admins", func() {
-			testInstanceName = "test-" + time.Now().Format("20060102-150405-") + fmt.Sprint(time.Now().Nanosecond()/1000000) + "-" + fmt.Sprint(ginkgo.GinkgoParallelNode())
+			testInstanceName = "test-" + time.Now().Format("20060102-150405-") + fmt.Sprint(time.Now().Nanosecond()/1000000) + "-" + fmt.Sprint(ginkgo.GinkgoParallelProcess())
 
 			ginkgo.By("Creating an encryption key in the cluster's gcp project")
 			serviceAccountJson, err := createGCPServiceAccount(h, testInstanceName, h.CurrentProject())

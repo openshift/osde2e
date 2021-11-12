@@ -32,6 +32,7 @@ import (
 	pd "github.com/PagerDuty/go-pagerduty"
 	"github.com/onsi/ginkgo"
 	"github.com/onsi/ginkgo/reporters"
+	"github.com/onsi/ginkgo/types"
 	"github.com/onsi/gomega"
 	"github.com/openshift/osde2e/pkg/common/alert"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
@@ -365,7 +366,7 @@ func runGinkgoTests() (int, error) {
 		viper.Set(config.Suffix, util.RandomStr(5))
 	}
 
-	testsPassed, installTestCaseData := runTestsInPhase(phase.InstallPhase, "OSD e2e suite", suiteConfig.DryRun)
+	testsPassed, installTestCaseData := runTestsInPhase(phase.InstallPhase, "OSD e2e suite", suiteConfig)
 	getLogs()
 	viper.Set(config.Cluster.Passing, testsPassed)
 	upgradeTestsPassed := true
@@ -394,7 +395,7 @@ func runGinkgoTests() (int, error) {
 			if !viper.GetBool(config.Upgrade.ManagedUpgradeRescheduled) {
 				log.Println("Running e2e tests POST-UPGRADE...")
 				viper.Set(config.Cluster.Passing, false)
-				upgradeTestsPassed, upgradeTestCaseData = runTestsInPhase(phase.UpgradePhase, "OSD e2e suite post-upgrade", suiteConfig.DryRun)
+				upgradeTestsPassed, upgradeTestCaseData = runTestsInPhase(phase.UpgradePhase, "OSD e2e suite post-upgrade", suiteConfig)
 				viper.Set(config.Cluster.Passing, upgradeTestsPassed)
 			}
 			log.Println("Upgrade rescheduled, skip the POST-UPGRADE testing")
@@ -421,7 +422,7 @@ func runGinkgoTests() (int, error) {
 		viper.GetString(config.Database.DatabaseName),
 	)
 	// connect to the db
-	if viper.GetString(config.JobID) != "" {
+	if viper.GetInt(config.JobID) > 0 {
 		log.Printf("Storing data for Job ID: %s", viper.GetString(config.JobID))
 		jobData := db.CreateJobParams{
 			Provider: viper.GetString(config.Provider),
@@ -698,8 +699,8 @@ func cleanupAfterE2E(h *helper.H) (errors []error) {
 }
 
 // nolint:gocyclo
-func runTestsInPhase(phase string, description string, dryrun bool) (bool, []db.CreateTestcaseParams) {
-	suiteConfig, reporterConfig := ginkgo.GinkgoConfiguration()
+func runTestsInPhase(phase string, description string, suiteConfig types.SuiteConfig) (bool, []db.CreateTestcaseParams) {
+	_, reporterConfig := ginkgo.GinkgoConfiguration()
 	var testCaseData []db.CreateTestcaseParams
 	viper.Set(config.Phase, phase)
 	reportDir := viper.GetString(config.ReportDir)
@@ -715,7 +716,7 @@ func runTestsInPhase(phase string, description string, dryrun bool) (bool, []db.
 	reporterConfig.Succinct = true
 	ginkgoPassed := false
 
-	if !dryrun || !suiteConfig.DryRun {
+	if !suiteConfig.DryRun {
 		if !beforeSuite() {
 			log.Println("Error getting kubeconfig from beforeSuite function")
 			return false, testCaseData
@@ -920,7 +921,7 @@ func runTestsInPhase(phase string, description string, dryrun bool) (bool, []db.
 		}
 		clusterState = cluster.State()
 	}
-	if !dryrun && clusterState == spi.ClusterStateReady {
+	if !suiteConfig.DryRun && clusterState == spi.ClusterStateReady {
 		h := helper.NewOutsideGinkgo()
 		if h == nil {
 			log.Println("Unable to generate helper outside of ginkgo")

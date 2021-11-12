@@ -39,7 +39,7 @@ var _ = ginkgo.Describe(fipsTestName, func() {
 		h := helper.New()
 
 		util.GinkgoIt("for all nodes in a cluster", func() {
-			testName := fmt.Sprintf("test-fips-%s-%d-%d", time.Now().Format("20060102-150405"), time.Now().Nanosecond()/1000000, ginkgo.GinkgoParallelNode())
+			testName := fmt.Sprintf("test-fips-%s-%d-%d", time.Now().Format("20060102-150405"), time.Now().Nanosecond()/1000000, ginkgo.GinkgoParallelProcess())
 
 			// Create Daemonset to test FIPS for each node
 			// The test consists of mounting '/proc/sys/crypto/fips_enabled' to an init container and checking that the value is 1
