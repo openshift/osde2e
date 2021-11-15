@@ -10,6 +10,11 @@ import (
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 )
 
+type Secret struct {
+	FileLocation string
+	Key          string
+}
+
 const (
 	// Provider is what provider to use to create/delete clusters.
 	// Env: PROVIDER
@@ -81,7 +86,8 @@ const (
 )
 
 // This is a config key to secret file mapping. We will attempt to read in from secret files before loading anything else.
-var keyToSecretMapping = map[string]string{}
+
+var keyToSecretMapping = []Secret{}
 var keyToSecretMappingMutex = sync.Mutex{}
 
 // This is a list of OSD-specific namespaces to include in the post-E2E cleanup must-gather
@@ -815,11 +821,14 @@ func PostProcess() {
 // RegisterSecret will register the secret filename that will be used for the corresponding Viper string.
 func RegisterSecret(key string, secretFileName string) {
 	keyToSecretMappingMutex.Lock()
-	keyToSecretMapping[secretFileName] = key
+	keyToSecretMapping = append(keyToSecretMapping, Secret{
+		Key:          key,
+		FileLocation: secretFileName,
+	})
 	keyToSecretMappingMutex.Unlock()
 }
 
 // GetAllSecrets will return Viper config keys and their corresponding secret filenames.
-func GetAllSecrets() map[string]string {
+func GetAllSecrets() []Secret {
 	return keyToSecretMapping
 }
