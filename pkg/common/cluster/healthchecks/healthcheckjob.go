@@ -40,13 +40,13 @@ func CheckHealthcheckJob(k8sClient *kubernetes.Clientset, ctx context.Context, l
 
 		select {
 		case <-ctx.Done():
-			pods, err := k8sClient.CoreV1().Pods(namespace).List(ctx, metav1.ListOptions{})
+			pods, err := k8sClient.CoreV1().Pods(namespace).List(context.TODO(), metav1.ListOptions{})
 			if err != nil {
 				log.Printf("failed listing errored pods: %s", err.Error())
 			}
 			for _, pod := range pods.Items {
 				if strings.Contains(pod.Name, name) {
-					data, err := k8sClient.CoreV1().Pods(namespace).GetLogs(pod.Name, &v1.PodLogOptions{}).DoRaw(ctx)
+					data, err := k8sClient.CoreV1().Pods(namespace).GetLogs(pod.Name, &v1.PodLogOptions{}).DoRaw(context.TODO())
 					if err != nil {
 						log.Printf("failed getting logs for pod %s: %s", pod.Name, err.Error())
 					}
