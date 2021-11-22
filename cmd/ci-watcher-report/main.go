@@ -83,7 +83,7 @@ func run() error {
 
 %[1]s
 
-You must set the $PAGERDUTY_TOKEN environment variable to your
+You must set the $PAGERDUTY_API_TOKEN environment variable to your
 personal pagerduty token in order for the report to be generated.
 `, os.Args[0])
 		flag.PrintDefaults()
