@@ -144,7 +144,14 @@ func beforeSuite() bool {
 		}
 
 		var kubeconfigBytes []byte
-		if kubeconfigBytes, err = provider.ClusterKubeconfig(viper.GetString(config.Cluster.ID)); err != nil {
+		for i := 1; i < 21; i++ {
+			if kubeconfigBytes, err = provider.ClusterKubeconfig(viper.GetString(config.Cluster.ID)); err == nil {
+				break
+			}
+			log.Printf("Failed to get kubeconfig from OCM: %v\nWaiting two minutes before retrying %d/20", err, i)
+			time.Sleep(1 * time.Minute)
+		}
+		if err != nil {
 			events.HandleErrorWithEvents(err, events.InstallKubeconfigRetrievalSuccess, events.InstallKubeconfigRetrievalFailure)
 			log.Printf("Failed retrieving kubeconfig: %v", err)
 			getLogs()
