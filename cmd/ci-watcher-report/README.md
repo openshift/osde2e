@@ -4,12 +4,12 @@ This CLI prints a report of active issues that fall within the scope of the CI W
 
 It will print the pagerduty incidents, their alert counts, their status, the names of pipelines that generated them, a link to the PD incident, and any notes attached to the incident.
 
-To use it, you must supply the `PAGERDUTY_TOKEN` environment variable set to your own PD token.
+To use it, you must supply the `PAGERDUTY_API_TOKEN` environment variable set to your own PD token.
 
 A sample usage:
 
 ```sh
-$ PAGERDUTY_TOKEN=(pass tokens/pagerduty/cwaldon) go run ./cmd/ci-watcher-report/
+$ PAGERDUTY_API_TOKEN=(pass tokens/pagerduty/cwaldon) go run ./cmd/ci-watcher-report/
 [Suite: operators] [OSD] Splunk Forwarder Operator Operator Upgrade should upgrade from the replaced version failed
 23  acknowledged
 osde2e-prod-aws-e2e-next
