@@ -105,7 +105,6 @@ var defaultInspectNamespaces = []string{
 	"openshift-custom-domains-operator",
 	"openshift-must-gather-operator",
 	"openshift-splunk-forwarder-operator",
-	"openshift-sre-sshd",
 	"openshift-rbac-permissions",
 }
 
