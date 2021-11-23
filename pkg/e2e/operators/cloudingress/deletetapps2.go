@@ -4,6 +4,10 @@ import (
 	"context"
 	"log"
 	"strings"
+<<<<<<< HEAD
+=======
+
+>>>>>>> 14cdbbc12c93f30a7157c3b8488debda75369133
 	"time"
 
 	"github.com/onsi/ginkgo"
@@ -16,8 +20,11 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+<<<<<<< HEAD
 	"k8s.io/apimachinery/pkg/util/wait"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+=======
+>>>>>>> 14cdbbc12c93f30a7157c3b8488debda75369133
 )
 
 var _ = ginkgo.Describe(constants.SuiteInforming+TestPrefix, func() {
@@ -31,6 +38,10 @@ var _ = ginkgo.Describe(constants.SuiteInforming+TestPrefix, func() {
 			if _, exists, _ := appIngressExits(h, false, secondaryIngress.DNSName); !exists {
 				addAppIngress(h, secondaryIngress)
 			}
+<<<<<<< HEAD
+=======
+			time.Sleep(time.Duration(30) * time.Second)
+>>>>>>> 14cdbbc12c93f30a7157c3b8488debda75369133
 			// from DNSName app-e2e-apps.cluster.mfvz.s1.devshift.org,
 			// the ingresscontroller name is app-e2e-apps: everything before the first period
 			ingressControllerName := strings.Split(secondaryIngress.DNSName, ".")[0]
@@ -43,7 +54,13 @@ var _ = ginkgo.Describe(constants.SuiteInforming+TestPrefix, func() {
 			Expect(err).ToNot(HaveOccurred(), "failed fetching deployment")
 			Expect(deployment).NotTo(BeNil(), "deployment is nil")
 
+<<<<<<< HEAD
 
+=======
+			// wait 1 minute for all routers to start
+
+			time.Sleep(time.Duration(60) * time.Second)
+>>>>>>> 14cdbbc12c93f30a7157c3b8488debda75369133
 			//2.delete the annotation
 			apps2Ingress, _ := getingressController(h, ingressControllerName)
 			log.Printf("The ingresscontroller object annotation : %+v\n", apps2Ingress.ObjectMeta.Annotations)
@@ -51,7 +68,12 @@ var _ = ginkgo.Describe(constants.SuiteInforming+TestPrefix, func() {
 			apps2Ingress = newAnnotations
 			//3. Delete secondaryIngress in publishingstrategy
 			removeIngressController(h, ingressControllerName)
+<<<<<<< HEAD
 			Expect(err).NotTo(HaveOccurred())
+=======
+			//long sleep statement to make sure secondaryIngress is done deleting
+			time.Sleep(time.Duration(360) * time.Second)
+>>>>>>> 14cdbbc12c93f30a7157c3b8488debda75369133
 			// check that the ingresscontroller app-e2e-apps was deleted
 			ingressControllerExists(h, ingressControllerName, true)
 			apps2Ingress = updateAnnotation(h, ingressControllerName, "Owner", "cloud-ingress-operator")
@@ -61,11 +83,16 @@ var _ = ginkgo.Describe(constants.SuiteInforming+TestPrefix, func() {
 	})
 })
 
+<<<<<<< HEAD
 func removeIngressController(h *helper.H, name string) error {
+=======
+func removeIngressController(h *helper.H, name string) {
+>>>>>>> 14cdbbc12c93f30a7157c3b8488debda75369133
 	_, exists, index := appIngressExits(h, false, name)
 	// only remove the secondary ingress if it already exist in the publishing strategy
 	if exists {
 		removeAppIngress(h, index)
+<<<<<<< HEAD
 	}
 	err := wait.PollImmediate(10*time.Second, 2*time.Minute, func() (bool, error) {
 		_, err := h.Dynamic().Resource(schema.GroupVersionResource{Group: "operator.openshift.io", Version: "v1", Resource: "ingresscontrollers"}).Namespace("openshift-ingress-operator").Get(context.TODO(), name, metav1.GetOptions{})
@@ -75,6 +102,11 @@ func removeIngressController(h *helper.H, name string) error {
 		return false, err
 	})
 	return err
+=======
+		//wait 2 minute for all resources to be deleted
+		time.Sleep(time.Duration(120) * time.Second)
+	}
+>>>>>>> 14cdbbc12c93f30a7157c3b8488debda75369133
 }
 func updateAnnotation(h *helper.H, name string, annotation1 string, annotation2 string) operatorv1.IngressController {
 	var ingressController operatorv1.IngressController
