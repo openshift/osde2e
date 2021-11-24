@@ -35,7 +35,7 @@ var _ = ginkgo.Describe(clusterStateInformingName, func() {
 		// ensure prometheus pods are up before trying to extract data
 		poderr := wait.PollImmediate(2*time.Second, 5*time.Minute, func() (bool, error) {
 			podCount := 0
-			list, listerr := verify.FilterPods("openshift-monitoring", "app=prometheus", h)
+			list, listerr := verify.FilterPods("openshift-monitoring", "app.kubernetes.io/name=prometheus", h)
 			if listerr != nil {
 				return false, listerr
 			}
