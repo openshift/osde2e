@@ -244,7 +244,7 @@ func createGCPKey(h *helper.H, serviceAccountJson []byte, keyName string) (strin
 	keyRing, err := kmsClient.GetKeyRing(context.TODO(), &kmsprotov1.GetKeyRingRequest{
 		Name: "projects/" + clusterInfra.Status.PlatformStatus.GCP.ProjectID + "/locations/" + clusterInfra.Status.PlatformStatus.GCP.Region + "/keyRings/" + keyName,
 	})
-	if keyRing == nil {
+	if err != nil {
 		// keyRing does not exist yet, & KMS was likely just enabled for the project.
 		// KMS may not be ready immediately after enabling, poll until we are able to successfully create a keyring, indicating it is fully available for this project
 		wait.PollImmediate(pollInterval, pollTimeout, func() (bool, error){
@@ -265,7 +265,7 @@ func createGCPKey(h *helper.H, serviceAccountJson []byte, keyName string) (strin
 	key, err := kmsClient.GetCryptoKey(context.TODO(), &kmsprotov1.GetCryptoKeyRequest{
 		Name: keyRing.GetName() + "/cryptoKeys/" + keyName,
 	})
-	if key != nil {
+	if key != nil && err == nil {
 		return key.GetName(), err
 	}
 
