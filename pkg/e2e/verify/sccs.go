@@ -61,13 +61,13 @@ var _ = ginkgo.Describe(dedicatedAdminSccTestName, func() {
 			Expect(err).NotTo(HaveOccurred())
 			log.Printf("Error:(%v)", err)
 			//Deleting all prometheus pods
-			list, _ := FilterPods("openshift-monitoring", "app=prometheus", h)
+			list, _ := FilterPods("openshift-monitoring", "app.kubernetes.io/name=prometheus", h)
 			names, _ := GetPodNames(list, h)
 			log.Printf("Names of pods:(%v)", names)
 			numPrometheusPods := deletePods(names, "openshift-monitoring", h)
 			//Verifying the same number of running prometheus pods has come up
 			err = wait.PollImmediate(2*time.Second, 3*time.Minute, func() (bool, error) {
-				pollList, _ := FilterPods("openshift-monitoring", "app=prometheus", h)
+				pollList, _ := FilterPods("openshift-monitoring", "app.kubernetes.io/name=prometheus", h)
 				if !AllDifferentPods(list, pollList) {
 					return false, nil
 				}
