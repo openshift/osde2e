@@ -50,3 +50,21 @@ do
 		exit 1
 	fi
 done
+
+for data in $(aws iam list-roles | jq '.Roles[] | select(.RoleName|test("osde2e-.")) | @base64');
+do
+	role=$(echo "$data" | tr -d '"' | base64 --decode)
+	role_name=$(echo "$role" | jq -r '.RoleName')
+	roleCreatedAt=$(echo "$role" | jq -r '.CreateDate')
+	if (( $(date -d "$roleCreatedAt" +%s) < $(date -d "1 day ago" +%s) ))
+	then
+		echo "Deleting role $role_name"
+		if aws iam delete-role --role-name "$role_name"
+		then
+			echo "Successfully deleted role $role_name."
+		else
+			echo "Error deleting role $role_name."
+		fi
+	fi
+	sleep 2;
+done
