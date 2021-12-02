@@ -157,7 +157,10 @@ func loadSecretFileIntoKey(key string, filename string, secretLocations []string
 				return fmt.Errorf("error loading secret file %s from location %s", filename, secretLocation)
 			}
 			log.Printf("Found secret for key %s.", key)
-			viper.Set(key, strings.TrimSpace(string(data)))
+			cleanData := strings.TrimSpace(string(data))
+			if cleanData != "" {
+				viper.Set(key, cleanData)
+			}
 			return nil
 		}
 	}

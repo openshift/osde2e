@@ -137,19 +137,49 @@ func (o *OCMProvider) LaunchCluster(clusterName string) (string, error) {
 		Properties(clusterProperties)
 
 	if viper.GetBool(CCS) {
-		// If AWS credentials are set, this must be a CCS cluster
+		// If AWS credentials are set, this must be an AWS CCS cluster
 		awsAccount := viper.GetString(AWSAccount)
 		awsAccessKey := viper.GetString(AWSAccessKey)
 		awsSecretKey := viper.GetString(AWSSecretKey)
 
+		if viper.GetString(GCPCredsJSON) != "" {
+			gcp, err := v1.UnmarshalGCP(viper.GetString(GCPCredsJSON))
+			if err != nil {
+				return "", fmt.Errorf("error unmarshalling GCP credentials: %v", err)
+			}
+			viper.Set(GCPCredsJSON, gcp.Type())
+			viper.Set(GCPProjectID, gcp.ProjectID())
+			viper.Set(GCPPrivateKeyID, gcp.PrivateKeyID())
+			viper.Set(GCPPrivateKey, gcp.PrivateKey())
+			viper.Set(GCPClientEmail, gcp.ClientEmail())
+			viper.Set(GCPClientID, gcp.ClientID())
+			viper.Set(GCPAuthURI, gcp.AuthURI())
+			viper.Set(GCPTokenURI, gcp.TokenURI())
+			viper.Set(GCPAuthProviderX509CertURL, gcp.AuthProviderX509CertURL())
+			viper.Set(gcp.ClientX509CertURL(), gcp.ClientX509CertURL())
+		}
+
 		if awsAccount != "" && awsAccessKey != "" && awsSecretKey != "" {
-			newCluster.CCS(v1.NewCCS().Enabled(true)).AWS(
+			newCluster = newCluster.CCS(v1.NewCCS().Enabled(true)).AWS(
 				v1.NewAWS().
 					AccountID(awsAccount).
 					AccessKeyID(awsAccessKey).
 					SecretAccessKey(awsSecretKey))
+		} else if viper.GetString(GCPProjectID) != "" {
+			// If GCP credentials are set, this must be a GCP CCS cluster
+			newCluster = newCluster.CCS(v1.NewCCS().Enabled(true)).GCP(v1.NewGCP().
+				Type(viper.GetString(GCPCredsType)).
+				ProjectID(viper.GetString(GCPProjectID)).
+				PrivateKey(viper.GetString(GCPPrivateKey)).
+				PrivateKeyID(viper.GetString(GCPPrivateKeyID)).
+				ClientEmail(viper.GetString(GCPClientEmail)).
+				ClientID(viper.GetString(GCPClientID)).
+				AuthURI(viper.GetString(GCPAuthURI)).
+				TokenURI(viper.GetString(GCPTokenURI)).
+				AuthProviderX509CertURL(viper.GetString(GCPAuthProviderX509CertURL)).
+				ClientX509CertURL(viper.GetString(GCPClientX509CertURL)))
 		} else {
-			return "", fmt.Errorf("Invalid or no AWS Credentials provided for CCS cluster")
+			return "", fmt.Errorf("invalid or no CCS Credentials provided for CCS cluster")
 		}
 	}
 

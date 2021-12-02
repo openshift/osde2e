@@ -42,6 +42,19 @@ const (
 	AWSAccessKey = "ocm.aws.accessKey"
 	// AWSSecretKey is used in CCS clusters
 	AWSSecretKey = "ocm.aws.secretKey"
+
+	// GCP CCS Credentials
+	GCPCredsJSON               = "ocm.gcp.credsJSON"
+	GCPCredsType               = "ocm.gcp.credsType"
+	GCPProjectID               = "ocm.gcp.projectID"
+	GCPPrivateKey              = "ocm.gcp.privateKey"
+	GCPPrivateKeyID            = "ocm.gcp.privateKeyID"
+	GCPClientEmail             = "ocm.gcp.clientEmail"
+	GCPClientID                = "ocm.gcp.clientID"
+	GCPAuthURI                 = "ocm.gcp.authURI"
+	GCPTokenURI                = "ocm.gcp.tokenURI"
+	GCPAuthProviderX509CertURL = "ocm.gcp.authProviderX509CertURL"
+	GCPClientX509CertURL       = "ocm.gcp.clientX509CertURL"
 )
 
 func init() {
@@ -72,7 +85,7 @@ func init() {
 	viper.BindEnv(AdditionalLabels, "OCM_ADDITIONAL_LABELS")
 
 	viper.SetDefault(CCS, false)
-	viper.BindEnv(CCS, "OCM_CCS")
+	viper.BindEnv(CCS, "OCM_CCS", "CCS")
 
 	viper.BindEnv(AWSAccount, "OCM_AWS_ACCOUNT", "AWS_ACCOUNT")
 	viper.BindEnv(AWSAccessKey, "OCM_AWS_ACCESS_KEY", "AWS_ACCESS_KEY_ID")
@@ -84,4 +97,41 @@ func init() {
 	config.RegisterSecret(AWSAccount, "ocm-aws-account")
 	config.RegisterSecret(AWSAccessKey, "ocm-aws-access-key")
 	config.RegisterSecret(AWSSecretKey, "ocm-aws-secret-access-key")
+
+	viper.BindEnv(GCPCredsType, "OCM_GCP_CREDS_TYPE", "GCP_CREDS_TYPE")
+	viper.BindEnv(GCPProjectID, "OCM_GCP_PROJECT_ID", "GCP_PROJECT_ID")
+	viper.BindEnv(GCPPrivateKey, "OCM_GCP_PRIVATE_KEY", "GCP_PRIVATE_KEY")
+	viper.BindEnv(GCPPrivateKeyID, "OCM_GCP_PRIVATE_KEY_ID", "GCP_PRIVATE_KEY_ID")
+	viper.BindEnv(GCPClientEmail, "OCM_GCP_CLIENT_EMAIL", "GCP_CLIENT_EMAIL")
+	viper.BindEnv(GCPClientID, "OCM_GCP_CLIENT_ID", "GCP_CLIENT_ID")
+	viper.BindEnv(GCPAuthURI, "OCM_GCP_AUTH_URI", "GCP_AUTH_URI")
+	viper.BindEnv(GCPTokenURI, "OCM_GCP_TOKEN_URI", "GCP_TOKEN_URI")
+	viper.BindEnv(GCPAuthProviderX509CertURL, "OCM_GCP_AUTH_PROVIDER_X509_CERT_URL", "GCP_AUTH_PROVIDER_X509_CERT_URL")
+	viper.BindEnv(GCPClientX509CertURL, "OCM_GCP_CLIENT_X509_CERT_URL", "GCP_CLIENT_X509_CERT_URL")
+
+	config.RegisterSecret(GCPCredsJSON, "ocm-gcp-creds.json")
+	config.RegisterSecret(GCPCredsJSON, "gcp-creds.json")
+
+	config.RegisterSecret(GCPCredsType, "ocm-gcp-creds-type")
+	config.RegisterSecret(GCPProjectID, "ocm-gcp-project-id")
+	config.RegisterSecret(GCPPrivateKey, "ocm-gcp-private-key")
+	config.RegisterSecret(GCPPrivateKeyID, "ocm-gcp-private-key-id")
+	config.RegisterSecret(GCPClientEmail, "ocm-gcp-client-email")
+	config.RegisterSecret(GCPClientID, "ocm-gcp-client-id")
+	config.RegisterSecret(GCPAuthURI, "ocm-gcp-auth-uri")
+	config.RegisterSecret(GCPTokenURI, "ocm-gcp-token-uri")
+	config.RegisterSecret(GCPAuthProviderX509CertURL, "ocm-gcp-auth-provider-x509-cert-url")
+	config.RegisterSecret(GCPClientX509CertURL, "ocm-gcp-client-x509-cert-url")
+
+	config.RegisterSecret(GCPCredsType, "gcp-creds-type")
+	config.RegisterSecret(GCPProjectID, "gcp-project-id")
+	config.RegisterSecret(GCPPrivateKey, "gcp-private-key")
+	config.RegisterSecret(GCPPrivateKeyID, "ocp-private-key-id")
+	config.RegisterSecret(GCPClientEmail, "gcp-client-email")
+	config.RegisterSecret(GCPClientID, "gcp-client-id")
+	config.RegisterSecret(GCPAuthURI, "gcp-auth-uri")
+	config.RegisterSecret(GCPTokenURI, "gcp-token-uri")
+	config.RegisterSecret(GCPAuthProviderX509CertURL, "gcp-auth-provider-x509-cert-url")
+	config.RegisterSecret(GCPClientX509CertURL, "gcp-client-x509-cert-url")
+
 }
