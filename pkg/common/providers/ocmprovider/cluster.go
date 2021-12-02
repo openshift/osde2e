@@ -159,13 +159,13 @@ func (o *OCMProvider) LaunchCluster(clusterName string) (string, error) {
 			viper.Set(gcp.ClientX509CertURL(), gcp.ClientX509CertURL())
 		}
 
-		if awsAccount != "" && awsAccessKey != "" && awsSecretKey != "" {
+		if viper.GetString(config.CloudProvider.CloudProviderID) == "aws" && awsAccount != "" && awsAccessKey != "" && awsSecretKey != "" {
 			newCluster = newCluster.CCS(v1.NewCCS().Enabled(true)).AWS(
 				v1.NewAWS().
 					AccountID(awsAccount).
 					AccessKeyID(awsAccessKey).
 					SecretAccessKey(awsSecretKey))
-		} else if viper.GetString(GCPProjectID) != "" {
+		} else if viper.GetString(config.CloudProvider.CloudProviderID) == "gcp" && viper.GetString(GCPProjectID) != "" {
 			// If GCP credentials are set, this must be a GCP CCS cluster
 			newCluster = newCluster.CCS(v1.NewCCS().Enabled(true)).GCP(v1.NewGCP().
 				Type(viper.GetString(GCPCredsType)).
