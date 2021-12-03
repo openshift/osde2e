@@ -240,9 +240,22 @@ func checkUpgrade(h *helper.H, subNamespace string, subName string, packageName 
 		ginkgo.It("should upgrade from the replaced version", func() {
 
 			// Get the CSV we're currently installed with
-			sub, err := h.Operator().OperatorsV1alpha1().Subscriptions(subNamespace).Get(context.TODO(), subName, metav1.GetOptions{})
-			Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("failed trying to get Subscription %s in %s namespace", subName, subNamespace))
-			latestCSV := sub.Status.CurrentCSV
+			var latestCSV string
+			var sub *operatorv1.Subscription
+			var err error
+
+			pollErr := wait.PollImmediate(5*time.Second, 5*time.Minute, func() (bool, error) {
+				sub, err = h.Operator().OperatorsV1alpha1().Subscriptions(subNamespace).Get(context.TODO(), subName, metav1.GetOptions{})
+				if err != nil {
+					return false, err
+				}
+				latestCSV = sub.Status.CurrentCSV
+				if latestCSV != "" {
+					return true, nil
+				}
+				return false, nil
+			})
+			Expect(pollErr).NotTo(HaveOccurred(), fmt.Sprintf("failed trying to get Subscription %s in %s namespace: %s", subName, subNamespace, err.Error()))
 
 			// Get the N-1 version of the CSV to test an upgrade from
 			previousCSV, err := getReplacesCSV(h, subNamespace, packageName, regServiceName)
