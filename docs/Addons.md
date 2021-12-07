@@ -54,11 +54,11 @@ Once a test harness has been written, an OSDe2e test needs to be configured to i
 
 Your PR will instruct Prow (our CI service) to run a pod on some schedule. You will then specify that the job should run `osde2e` with some specific environment variables and flags that describe your test harness.
 
-For addon testing, `osde2e` uses four primary environment variables: `ADDON_IDS`, `ADDON_TEST_HARNESSES`, `ADDON_TEST_USER`, and `ADDON_PARAMETERS`.
+For addon testing, `osde2e` uses four primary environment variables: `ADDON_IDS`, `TEST_HARNESSES`, `TEST_USER`, and `ADDON_PARAMETERS`.
 
-The first two of these are comma-delimited lists when supplied by environment variables. `ADDON_IDS` informs OSDe2e which addons to install once a cluster is healthy. `ADDON_TEST_HARNESSES` is a list of addon test containers to run as pods within the test cluster. 
+The first two of these are comma-delimited lists when supplied by environment variables. `ADDON_IDS` informs OSDe2e which addons to install once a cluster is healthy. `TEST_HARNESSES` is a list of addon test containers to run as pods within the test cluster. 
 
-`ADDON_TEST_USER` will specify the in-cluster user that the test harness containers will run as. It allows for a single wildcard (`%s`) which will automatically be evaluated as the OpenShift Project (namespace) the test harness is created under.
+`TEST_USER` will specify the in-cluster user that the test harness containers will run as. It allows for a single wildcard (`%s`) which will automatically be evaluated as the OpenShift Project (namespace) the test harness is created under.
 
 `ADDON_PARAMETERS` allows you to configure parameters that will be passed to OCM for the installation of your addon. The format is a two-level JSON object. The outer object's keys are the IDs of addons, and the inner objects are key-value pairs that will be passed to the associated addon.
 
@@ -93,7 +93,7 @@ An example prow job that configures the "prow" operator in the stage environment
         value: prow-operator
       - name: OCM_CCS
         value: "true"
-      - name: ADDON_TEST_HARNESSES
+      - name: TEST_HARNESSES
         value: quay.io/miwilson/prow-operator-test-harness
       - name: CONFIGS
         value: aws,stage,addon-suite
@@ -128,7 +128,7 @@ An example prow job that configures the "prow" operator in the stage environment
         secretName: prow-operator-credentials
 ```
 
-To adapt this to your job, you would redefine the `ADDON_IDS` and `ADDON_TEST_HARNESSES`, as well as potentially adding some of the other variables discussed above.
+To adapt this to your job, you would redefine the `ADDON_IDS` and `TEST_HARNESSES`, as well as potentially adding some of the other variables discussed above.
 
 You will *also* need to provide your own secrets by swapping the `prow-operator-credentials` above with your job's secrets. Note that we load osde2e's credentials, followed by the ones you supply. This allows your credentials to override any duplicate credentials supplied in our config.
 
@@ -159,9 +159,9 @@ For an example build that tests an Addon on ROSA, search [this file](https://git
 
 If your addon test creates or affects anything outside of the OSD cluster lifecycle, a separate cleanup action is required. If `ADDON_RUN_CLEANUP` is set to `true`, OSDe2e will run your test harness container a **second time** passing the argument `cleanup` to the container (as the first command line argument).
 
-There may be a case where a separate cleanup container/harness is required. That may be configured using the `ADDON_CLEANUP_HARNESSES` config option. It is formatted in the same way as `ADDON_TEST_HARNESSES`. This however, may cause some confusion as to what is run when:
+There may be a case where a separate cleanup container/harness is required. That may be configured using the `ADDON_CLEANUP_HARNESSES` config option. It is formatted in the same way as `TEST_HARNESSES`. This however, may cause some confusion as to what is run when:
 
-`ADDON_RUN_CLEANUP` is true, and `ADDON_CLEANUP_HARNESSES` is not set, OSDe2e will only run `ADDON_TEST_HARNESSES` again, passing the `cleanup` argument.
+`ADDON_RUN_CLEANUP` is true, and `ADDON_CLEANUP_HARNESSES` is not set, OSDe2e will only run `TEST_HARNESSES` again, passing the `cleanup` argument.
 
 `ADDON_RUN_CLEANUP` is true, and `ADDON_CLEANUP_HARNESSES` is set, OSDe2e will only run the `ADDON_CLEANUP_HARNESSES`, passing no arguments.
 

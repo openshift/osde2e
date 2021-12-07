@@ -101,6 +101,12 @@ Some environment variables commonly used for pipelines under osde2e are indicate
 |SKIP_CLUSTER_HEALTH_CHECKS| SkipClusterHealthChecks skips the cluster health checks. Useful when developing against a running cluster.|
 |METRICS_BUCKET| MetricsBucket is the bucket that metrics data will be uploaded to.|
 |SERVICE_ACCOUNT| ServiceAccount defines what user the tests should run as. By default, osde2e uses system:admin|
+|TEST_HARNESSES:| TestHarnesses is a comma separated list of container images that will test the addon|
+|TEST_USER| TestUser is the OpenShift user that the tests will run as. If "%s" is detected in the TestUser string, it will evaluate that as the project namespace. Ex. "system:serviceaccount:%s:dedicated-admin" . Evaluated : "system:serviceaccount:osde2e-abc123:dedicated-admin"|
+|TEST_CLEANUP_HARNESSES| CleanupHarnesses is a comma separated list of container images that will clean up any artifacts created after test harnesses have run|
+|TEST_RUN_CLEANUP| RunCleanup is a boolean to specify whether the testHarnesses should have a separate cleanup phase. This phase would run at the end of all e2e testing|
+|TEST_HARNESS_TIMEOUT| PollingTimeout defines in seconds the amount of time to wait for an add-on test job to finish before timing it out|
+
  
 
 ### Addon test related:-
@@ -109,11 +115,6 @@ Some environment variables commonly used for pipelines under osde2e are indicate
 | --------------| ------------------------|  
 |ADDON_IDS_AT_CREATION| Comma separated list of IDs to create at cluster creation time|
 |ADDONS_IDS| Comma separated list of IDs to install after a cluster is created.|
-|ADDON_TEST_HARNESSES:| TestHarnesses is a comma separated list of container images that will test the addon|
-|ADDON_TEST_USER| TestUser is the OpenShift user that the tests will run as. If "%s" is detected in the TestUser string, it will evaluate that as the project namespace. Ex. "system:serviceaccount:%s:dedicated-admin" . Evaluated : "system:serviceaccount:osde2e-abc123:dedicated-admin"|
-|ADDON_RUN_CLEANUP| RunCleanup is a boolean to specify whether the testHarnesses should have a separate cleanup phase. This phase would run at the end of all e2e testing|
-|ADDON_CLEANUP_HARNESSES| CleanupHarnesses is a comma separated list of container images that will clean up any artifacts created after test harnesses have run|
-|ADDON_POLLING_TIMEOUT| PollingTimeout defines in seconds the amount of time to wait for an add-on test job to finish before timing it out|
  
 ### Prometheus related:-
 

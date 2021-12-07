@@ -16,8 +16,8 @@ import (
 // RunAddonTests will attempt to run the configured addon tests for the current job.
 // It allows you to specify a job name prefix and arguments to a test harness container.
 // It returns the names of test harnesses that failed (empty slice if none failed).
-func (h *H) RunAddonTests(name string, timeout int, harnesses, args []string) (failed []string) {
-	addonTestTemplate, err := templates.LoadTemplate("/assets/addons/addon-runner.template")
+func (h *H) RunTestHarness(name string, timeout int, harnesses, args []string) (failed []string) {
+	addonTestTemplate, err := templates.LoadTemplate("/assets/harness/test-harness-runner.template")
 
 	if err != nil {
 		panic(fmt.Sprintf("error while loading addon test runner: %v", err))
@@ -69,7 +69,7 @@ func (h *H) RunAddonTests(name string, timeout int, harnesses, args []string) (f
 		addonTestCommand, err := h.ConvertTemplateToString(addonTestTemplate, values)
 		Expect(err).NotTo(HaveOccurred())
 
-		r.Name = "addon-tests"
+		r.Name = "test-harness"
 		r.Cmd = addonTestCommand
 
 		// run tests

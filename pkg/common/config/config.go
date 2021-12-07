@@ -229,6 +229,24 @@ var Tests = struct {
 	// EnableFips enables the FIPS test suite
 	// Env: ENABLE_FIPS
 	EnableFips string
+
+	// TestHarnesses is a comma separated list of container images that will test the addon
+	// Env: TEST_HARNESSES
+	TestHarnesses string
+
+	// RunCleanup is a boolean to specify whether the testHarnesses should have a separate
+	// cleanup phase. This phase would run at the end of all e2e testing
+	// Env: TEST_RUN_CLEANUP
+	RunCleanup string
+
+	// CleanupHarnesses is a comma separated list of container images that will clean up any
+	// artifacts created after test harnesses have run
+	// Env: TEST_CLEANUP_HARNESSES
+	CleanupHarnesses string
+
+	// TestPollingTimeout is how long (in seconds) to wait for the add-on test to complete running.
+	// Env: TEST_HARNESS_TIMEOUT
+	HarnessTimeout string
 }{
 
 	PollingTimeout:             "tests.pollingTimeout",
@@ -243,6 +261,10 @@ var Tests = struct {
 	ServiceAccount:             "tests.serviceAccount",
 	ClusterHealthChecksTimeout: "tests.clusterHealthChecksTimeout",
 	EnableFips:                 "tests.enableFips",
+	TestHarnesses:              "tests.testHarnesses",
+	RunCleanup:                 "tests.runCleanup",
+	CleanupHarnesses:           "tests.cleanupHarnesses",
+	HarnessTimeout:             "tests.harnessTimeout",
 }
 
 // Cluster config keys.
@@ -418,27 +440,6 @@ var Addons = struct {
 	// Env: ADDON_IDS
 	IDs string
 
-	// TestHarnesses is a comma separated list of container images that will test the addon
-	// Env: ADDON_TEST_HARNESSES
-	TestHarnesses string
-
-	// TestUser is the OpenShift user that the tests will run as
-	// If "%s" is detected in the TestUser string, it will evaluate that as the project namespace
-	// Example: "system:serviceaccount:%s:dedicated-admin"
-	// Evaluated: "system:serviceaccount:osde2e-abc123:dedicated-admin"
-	// Env: ADDON_TEST_USER
-	TestUser string
-
-	// RunCleanup is a boolean to specify whether the testHarnesses should have a separate
-	// cleanup phase. This phase would run at the end of all e2e testing
-	// Env: ADDON_RUN_CLEANUP
-	RunCleanup string
-
-	// CleanupHarnesses is a comma separated list of container images that will clean up any
-	// artifacts created after test harnesses have run
-	// Env: ADDON_CLEANUP_HARNESSES
-	CleanupHarnesses string
-
 	// SlackChannel is the name of a slack channel in the CoreOS slack workspace that will
 	// receive an alert if the tests fail.
 	// Env: ADDON_SLACK_CHANNEL
@@ -456,21 +457,12 @@ var Addons = struct {
 	// SkipAddonList is a boolean to indicate whether the listing of addons has to be disabled or not.
 	// Env: SKIP_ADDON_LIST
 	SkipAddonList string
-
-	// PollingTimeout is how long (in seconds) to wait for the add-on test to complete running.
-	// Env: ADDON_POLLING_TIMEOUT
-	PollingTimeout string
 }{
-	IDsAtCreation:    "addons.idsAtCreation",
-	IDs:              "addons.ids",
-	TestHarnesses:    "addons.testHarnesses",
-	TestUser:         "addons.testUser",
-	RunCleanup:       "addons.runCleanup",
-	CleanupHarnesses: "addons.cleanupHarnesses",
-	SlackChannel:     "addons.slackChannel",
-	SkipAddonList:    "addons.skipAddonlist",
-	Parameters:       "addons.parameters",
-	PollingTimeout:   "addons.pollingTimeout",
+	IDsAtCreation: "addons.idsAtCreation",
+	IDs:           "addons.ids",
+	SlackChannel:  "addons.slackChannel",
+	SkipAddonList: "addons.skipAddonlist",
+	Parameters:    "addons.parameters",
 }
 
 // Scale config keys.
@@ -650,6 +642,15 @@ func init() {
 	viper.SetDefault(Tests.EnableFips, false)
 	viper.BindEnv(Tests.EnableFips, "ENABLE_FIPS")
 
+	viper.BindEnv(Tests.TestHarnesses, "TEST_HARNESSES")
+	viper.BindEnv(Tests.CleanupHarnesses, "TEST_CLEANUP_HARNESSES")
+
+	viper.SetDefault(Tests.RunCleanup, false)
+	viper.BindEnv(Tests.RunCleanup, "TEST_RUN_CLEANUP")
+
+	viper.SetDefault(Tests.HarnessTimeout, 3600)
+	viper.BindEnv(Tests.HarnessTimeout, "TEST_HARNESS_TIMEOUT")
+
 	// ----- Cluster -----
 	viper.SetDefault(Cluster.MultiAZ, false)
 	viper.BindEnv(Cluster.MultiAZ, "MULTI_AZ")
@@ -743,15 +744,6 @@ func init() {
 
 	viper.BindEnv(Addons.IDs, "ADDON_IDS")
 
-	viper.BindEnv(Addons.TestHarnesses, "ADDON_TEST_HARNESSES")
-	viper.BindEnv(Addons.CleanupHarnesses, "ADDON_CLEANUP_HARNESSES")
-
-	viper.SetDefault(Addons.TestUser, "system:serviceaccount:%s:cluster-admin")
-	viper.BindEnv(Addons.TestUser, "ADDON_TEST_USER")
-
-	viper.SetDefault(Addons.RunCleanup, false)
-	viper.BindEnv(Addons.RunCleanup, "ADDON_RUN_CLEANUP")
-
 	viper.SetDefault(Addons.SlackChannel, "sd-cicd-alerts")
 	viper.BindEnv(Addons.SlackChannel, "ADDON_SLACK_CHANNEL")
 
@@ -760,9 +752,6 @@ func init() {
 
 	viper.SetDefault(Addons.SkipAddonList, false)
 	viper.BindEnv(Addons.SkipAddonList, "SKIP_ADDON_LIST")
-
-	viper.SetDefault(Addons.PollingTimeout, 3600)
-	viper.BindEnv(Addons.PollingTimeout, "ADDON_POLLING_TIMEOUT")
 
 	// ----- Scale -----
 	viper.SetDefault(Scale.WorkloadsRepository, "https://github.com/openshift-scale/workloads")

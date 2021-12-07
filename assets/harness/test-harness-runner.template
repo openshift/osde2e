@@ -12,7 +12,7 @@ spec:
     spec:
       serviceAccount: {{.ServiceAccount}}
       containers:
-      - name: addon-tests
+      - name: test-harness
         image: {{.Image}}
         {{ if .Arguments }}
         args: {{.Arguments}}

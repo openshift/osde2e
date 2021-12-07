@@ -15,7 +15,7 @@ import (
 	"github.com/spf13/cobra"
 
 	// import suites to be tested
-	_ "github.com/openshift/osde2e/pkg/e2e/addons"
+	_ "github.com/openshift/osde2e/pkg/e2e/harness"
 	_ "github.com/openshift/osde2e/pkg/e2e/openshift"
 	_ "github.com/openshift/osde2e/pkg/e2e/operators"
 	_ "github.com/openshift/osde2e/pkg/e2e/operators/cloudingress"

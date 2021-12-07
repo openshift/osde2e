@@ -9,7 +9,7 @@ import (
 	"github.com/openshift/osde2e/pkg/common/alert"
 
 	// import suites to be alerted on
-	_ "github.com/openshift/osde2e/pkg/e2e/addons"
+	_ "github.com/openshift/osde2e/pkg/e2e/harness"
 	_ "github.com/openshift/osde2e/pkg/e2e/openshift"
 	_ "github.com/openshift/osde2e/pkg/e2e/operators"
 	_ "github.com/openshift/osde2e/pkg/e2e/osd"
