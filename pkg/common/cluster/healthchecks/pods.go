@@ -32,7 +32,6 @@ func CheckClusterPodHealth(podClient v1.CoreV1Interface, logger *log.Logger) ([]
 		IsClusterPod,
 		IsNotReadinessPod,
 		IsNotRunning,
-		IsNotCompleted,
 	}
 	podlist, err := checkPods(podClient, logger, filters...)
 	if err != nil {
@@ -79,12 +78,48 @@ func checkPods(podClient v1.CoreV1Interface, logger *log.Logger, filters ...PodP
 
 	logger.Printf("%v pods are currently not running or complete:", len(pods.Items))
 
+	// Create a map of pods with their cronJob names under the given namespace. If pod with no associated cronJob is not Pending, simply return the error message.
+	filteredPods := map[string]map[string]interface{}{}
+	namespace := ""
+	jobName := 0
+	cronJobName := ""
 	for _, pod := range pods.Items {
-		if pod.Status.Phase != kubev1.PodPending {
-			return nil, fmt.Errorf("Pod %s in unexpected phase %s: reason: %s message: %s", pod.GetName(), pod.Status.Phase, pod.Status.Reason, pod.Status.Message)
+		if pod.ObjectMeta.Labels["job-name"] == "" {
+			if pod.Status.Phase != kubev1.PodPending {
+				return nil, fmt.Errorf("Pod %s in unexpected phase %s: reason: %s message: %s", pod.GetName(), pod.Status.Phase, pod.Status.Reason, pod.Status.Message)
+			}
+			logger.Printf("%s is not ready. Phase: %s, Message: %s, Reason: %s", pod.Name, pod.Status.Phase, pod.Status.Message, pod.Status.Reason)
 		}
-		logger.Printf("%s is not ready. Phase: %s, Message: %s, Reason: %s", pod.Name, pod.Status.Phase, pod.Status.Message, pod.Status.Reason)
+		if namespace == "" || namespace != pod.Namespace {
+			filteredPods[pod.Namespace] = map[string]interface{}{}
+		}
+		jobName = strings.LastIndex(pod.ObjectMeta.Labels["job-name"], "-")
+		if cronJobName == "" || cronJobName != pod.ObjectMeta.Labels["job-name"][:jobName] || namespace != pod.Namespace {
+			namespace = pod.Namespace
+			cronJobName = pod.ObjectMeta.Labels["job-name"][:jobName]
+			filteredPods[namespace][cronJobName] = &kubev1.PodList{}
+		}
+		if pod.ObjectMeta.Labels["job-name"][:jobName] == cronJobName && pod.Namespace == namespace {
+			filteredPods[namespace][cronJobName].(*kubev1.PodList).Items = append(filteredPods[namespace][cronJobName].(*kubev1.PodList).Items, pod)
+		}
 	}
+
+	// Iterate over the map of pods that was created above. If Phase of the last pod of the cronJob was Successful, do not return an error. Otherwise, return an error message.
+	for namespace := range filteredPods {
+		for cronJob := range filteredPods[namespace] {
+			latestPodPhase := filteredPods[namespace][cronJob].(*kubev1.PodList).Items[len(filteredPods[namespace][cronJob].(*kubev1.PodList).Items)-1].Status.Phase
+			for _, pod := range filteredPods[namespace][cronJob].(*kubev1.PodList).Items {
+				if latestPodPhase == kubev1.PodSucceeded {
+					break
+				}
+				if latestPodPhase != kubev1.PodPending {
+					return nil, fmt.Errorf("Pod %s in unexpected phase %s: reason: %s message: %s", pod.GetName(), pod.Status.Phase, pod.Status.Reason, pod.Status.Message)
+				}
+				logger.Printf("%s is not ready. Phase: %s, Message: %s, Reason: %s", pod.Name, pod.Status.Phase, pod.Status.Message, pod.Status.Reason)
+			}
+		}
+	}
+
 	return pods.Items, nil
 }
 

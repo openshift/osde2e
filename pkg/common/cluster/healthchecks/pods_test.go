@@ -9,9 +9,9 @@ import (
 	kubernetes "k8s.io/client-go/kubernetes/fake"
 )
 
-func pod(name, namespace string, phase v1.PodPhase) *v1.Pod {
+func pod(name, namespace string, label map[string]string, phase v1.PodPhase) *v1.Pod {
 	return &v1.Pod{
-		ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: namespace},
+		ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: namespace, Labels: label},
 		Spec: v1.PodSpec{
 			Containers: []v1.Container{
 				{
@@ -37,17 +37,21 @@ func TestCheckPodHealth(t *testing.T) {
 		expectedError  bool
 		objs           []runtime.Object
 	}{
+		{"two pods bad, one pod good with same label in the same namespace", 0, false, []runtime.Object{pod("a", ns1, map[string]string{"job-name": "image-pruner-123"}, v1.PodFailed), pod("b", ns1, map[string]string{"job-name": "image-pruner-124"}, v1.PodFailed), pod("c", ns1, map[string]string{"job-name": "image-pruner-125"}, v1.PodSucceeded)}},
+		{"one pod bad, one pod good with same label in the same namespace. One pod bad with different label and namespace", 0, true, []runtime.Object{pod("a", ns1, map[string]string{"job-name": "image-pruner-123"}, v1.PodFailed), pod("b", ns1, map[string]string{"job-name": "image-pruner-124"}, v1.PodSucceeded), pod("c", ns1, map[string]string{"job-name": "new-image-pruner-124"}, v1.PodFailed)}},
 		{"no pods", 0, true, nil},
-		{"single pod failed", 0, true, []runtime.Object{pod("a", ns1, v1.PodFailed)}},
-		{"pod is pending beyond specified threshold", 1, false, []runtime.Object{pod("a", ns1, v1.PodPending)}},
-		{"single pod running", 0, false, []runtime.Object{pod("a", ns1, v1.PodRunning)}},
-		{"single pod succeeded", 0, false, []runtime.Object{pod("a", ns1, v1.PodSucceeded)}},
-		{"single pod failed bad namespace", 0, false, []runtime.Object{pod("a", "foobar", v1.PodFailed)}},
-		{"one pod good one pod bad same namespace", 0, true, []runtime.Object{pod("a", ns1, v1.PodFailed), pod("b", ns1, v1.PodRunning)}},
-		{"one pod good one pod pending same namespace", 0, false, []runtime.Object{pod("a", ns1, v1.PodPending), pod("b", ns1, v1.PodRunning)}},
-		{"one pod good one pod bad diff namespace", 0, true, []runtime.Object{pod("a", ns1, v1.PodFailed), pod("b", ns2, v1.PodRunning)}},
-		{"two succeeded pods diff namespace", 0, false, []runtime.Object{pod("a", ns1, v1.PodSucceeded), pod("b", ns2, v1.PodSucceeded)}},
-		{"two running pods diff namespace", 0, false, []runtime.Object{pod("a", ns1, v1.PodRunning), pod("b", ns2, v1.PodRunning)}},
+		{"single pod failed", 0, true, []runtime.Object{pod("a", ns1, map[string]string{"job-name": "image-pruner-123"}, v1.PodFailed)}},
+		{"single pod without job-name label failed", 0, true, []runtime.Object{pod("a", ns1, map[string]string{}, v1.PodFailed)}},
+		{"pod is pending beyond specified threshold", 1, false, []runtime.Object{pod("a", ns1, map[string]string{"job-name": "image-pruner-123"}, v1.PodPending)}},
+		{"single pod running", 0, false, []runtime.Object{pod("a", ns1, map[string]string{"job-name": "image-pruner-123"}, v1.PodRunning)}},
+		{"single pod succeeded", 0, false, []runtime.Object{pod("a", ns1, map[string]string{"job-name": "image-pruner-123"}, v1.PodSucceeded)}},
+		{"single pod failed bad namespace", 0, false, []runtime.Object{pod("a", "foobar", map[string]string{"job-name": "image-pruner-123"}, v1.PodFailed)}},
+		{"one pod good one pod bad same namespace", 0, true, []runtime.Object{pod("a", ns1, map[string]string{"job-name": "image-pruner-123"}, v1.PodFailed), pod("b", ns1, map[string]string{"job-name": "image-pruner-124"}, v1.PodRunning)}},
+		{"one pod good one pod pending same namespace", 0, false, []runtime.Object{pod("a", ns1, map[string]string{"job-name": "image-pruner-123"}, v1.PodPending), pod("b", ns1, map[string]string{"job-name": "image-pruner-124"}, v1.PodRunning)}},
+		{"one pod good one pod bad diff namespace", 0, true, []runtime.Object{pod("a", ns1, map[string]string{"job-name": "image-pruner-123"}, v1.PodFailed), pod("b", ns2, map[string]string{"job-name": "image-pruner-124"}, v1.PodRunning)}},
+		{"two succeeded pods diff namespace", 0, false, []runtime.Object{pod("a", ns1, map[string]string{"job-name": "image-pruner-123"}, v1.PodSucceeded), pod("b", ns2, map[string]string{"job-name": "image-pruner-124"}, v1.PodSucceeded)}},
+		{"one pod good, one pod bad diff namespace", 0, true, []runtime.Object{pod("a", ns1, map[string]string{"job-name": "image-pruner-123"}, v1.PodSucceeded), pod("b", ns2, map[string]string{"job-name": "image-pruner-124"}, v1.PodFailed)}},
+		{"two running pods diff namespace", 0, false, []runtime.Object{pod("a", ns1, map[string]string{"job-name": "image-pruner-123"}, v1.PodRunning), pod("b", ns2, map[string]string{"job-name": "image-pruner-124"}, v1.PodRunning)}},
 	}
 
 	for _, test := range tests {
