@@ -41,19 +41,15 @@ var _ = ginkgo.Describe(namespaceWebhookTestName, func() {
 	}
 
 	// Map of namespace name and whether it should be created/deleted by the test
+	// Should match up with namespaces found in managed-cluster-config:
+	// * https://github.com/openshift/managed-cluster-config/blob/master/deploy/osd-managed-resources/ocp-namespaces.ConfigMap.yaml
+	// * https://github.com/openshift/managed-cluster-config/blob/master/deploy/osd-managed-resources/managed-namespaces.ConfigMap.yaml
 	var PRIVILEGED_NAMESPACES = map[string]bool{
-		"kube-admin":    true,
-		"kube-foo":      true,
-		"openshifter":   true,
-		"openshift-foo": true,
-		"openshift":     false,
-		"default":       false,
-	}
-
-	// All namespaces in this list will be created/deleted by the test
-	var REDHAT_NAMESPACES = []string{
-		"redhat-user",
-		"redhatuser",
+		"kube-system":                    false,
+		"openshift-apiserver":            false,
+		"openshift":                      false,
+		"default":                        false,
+		"redhat-ocm-addon-test-operator": true,
 	}
 
 	// All namespaces in this list will be created/deleted by the test
@@ -82,10 +78,6 @@ var _ = ginkgo.Describe(namespaceWebhookTestName, func() {
 					Expect(err).NotTo(HaveOccurred())
 				}
 			}
-			for _, namespace := range append(REDHAT_NAMESPACES, NONPRIV_NAMESPACES...) {
-				_, err := createNamespace(namespace, h)
-				Expect(err).NotTo(HaveOccurred())
-			}
 		})
 
 		// Clean up all namespaces and groups created for the tests
@@ -101,21 +93,13 @@ var _ = ginkgo.Describe(namespaceWebhookTestName, func() {
 					Expect(err).NotTo(HaveOccurred())
 				}
 			}
-			for _, namespace := range append(REDHAT_NAMESPACES, NONPRIV_NAMESPACES...) {
-				err := deleteNamespace(namespace, false, h)
-				Expect(err).NotTo(HaveOccurred())
-			}
 
 			// Wait until all namespaces have verified to be deleted
-
 			namespacesToCheck := make([]string, 0)
 			for ns, managed := range PRIVILEGED_NAMESPACES {
 				if managed {
 					namespacesToCheck = append(namespacesToCheck, ns)
 				}
-			}
-			for _, ns := range append(REDHAT_NAMESPACES, NONPRIV_NAMESPACES...) {
-				namespacesToCheck = append(namespacesToCheck, ns)
 			}
 
 			wait.PollImmediate(5*time.Second, 3*time.Minute, func() (bool, error) {
@@ -134,19 +118,11 @@ var _ = ginkgo.Describe(namespaceWebhookTestName, func() {
 				err := updateNamespace(privilegedNamespace, DUMMY_USER, "dedicated-admins", h)
 				Expect(err).To(HaveOccurred())
 			}
-			for _, namespace := range REDHAT_NAMESPACES {
-				err := updateNamespace(namespace, DUMMY_USER, "dedicated-admins", h)
-				Expect(err).To(HaveOccurred())
-			}
 		}, viper.GetFloat64(config.Tests.PollingTimeout))
 
 		ginkgo.It("Non-privileged users cannot manage privileged namespaces", func() {
 			for privilegedNamespace := range PRIVILEGED_NAMESPACES {
 				err := updateNamespace(privilegedNamespace, DUMMY_USER, DUMMY_GROUP, h)
-				Expect(err).To(HaveOccurred())
-			}
-			for _, namespace := range REDHAT_NAMESPACES {
-				err := updateNamespace(namespace, DUMMY_USER, DUMMY_GROUP, h)
 				Expect(err).To(HaveOccurred())
 			}
 		}, viper.GetFloat64(config.Tests.PollingTimeout))
@@ -155,10 +131,6 @@ var _ = ginkgo.Describe(namespaceWebhookTestName, func() {
 			for _, privilegedUser := range PRIVILEGED_USERS {
 				for privilegedNamespace := range PRIVILEGED_NAMESPACES {
 					err := updateNamespace(privilegedNamespace, privilegedUser, "", h)
-					Expect(err).NotTo(HaveOccurred())
-				}
-				for _, namespace := range append(REDHAT_NAMESPACES, NONPRIV_NAMESPACES...) {
-					err := updateNamespace(namespace, privilegedUser, "", h)
 					Expect(err).NotTo(HaveOccurred())
 				}
 			}
