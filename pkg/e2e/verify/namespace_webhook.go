@@ -78,6 +78,10 @@ var _ = ginkgo.Describe(namespaceWebhookTestName, func() {
 					Expect(err).NotTo(HaveOccurred())
 				}
 			}
+			for _, namespace := range NONPRIV_NAMESPACES {
+				_, err := createNamespace(namespace, h)
+				Expect(err).NotTo(HaveOccurred())
+			}
 		})
 
 		// Clean up all namespaces and groups created for the tests
@@ -93,6 +97,10 @@ var _ = ginkgo.Describe(namespaceWebhookTestName, func() {
 					Expect(err).NotTo(HaveOccurred())
 				}
 			}
+			for _, namespace := range NONPRIV_NAMESPACES {
+				err := deleteNamespace(namespace, false, h)
+				Expect(err).NotTo(HaveOccurred())
+			}
 
 			// Wait until all namespaces have verified to be deleted
 			namespacesToCheck := make([]string, 0)
@@ -100,6 +108,9 @@ var _ = ginkgo.Describe(namespaceWebhookTestName, func() {
 				if managed {
 					namespacesToCheck = append(namespacesToCheck, ns)
 				}
+			}
+			for _, ns := range NONPRIV_NAMESPACES {
+				namespacesToCheck = append(namespacesToCheck, ns)
 			}
 
 			wait.PollImmediate(5*time.Second, 3*time.Minute, func() (bool, error) {
@@ -131,6 +142,10 @@ var _ = ginkgo.Describe(namespaceWebhookTestName, func() {
 			for _, privilegedUser := range PRIVILEGED_USERS {
 				for privilegedNamespace := range PRIVILEGED_NAMESPACES {
 					err := updateNamespace(privilegedNamespace, privilegedUser, "", h)
+					Expect(err).NotTo(HaveOccurred())
+				}
+				for _, namespace := range NONPRIV_NAMESPACES {
+					err := updateNamespace(namespace, privilegedUser, "", h)
 					Expect(err).NotTo(HaveOccurred())
 				}
 			}
