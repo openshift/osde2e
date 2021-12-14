@@ -1,5 +1,7 @@
 REGISTRY_QUERY_FILE="{{.OutputDir}}/registry.json"
 
+oc delete pod --ignore-not-found=true -n {{.Namespace}} grpcurl-query
+
 oc run grpcurl-query -n {{.Namespace}} --quiet --rm=true --restart=Never --attach=true \
     --image=quay.io/rogbas/grpcurl -- -plaintext -d \
     '{"pkgName":"{{.PackageName}}","channelName":"{{.PackageChannel}}"}' \
