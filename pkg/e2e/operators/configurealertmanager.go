@@ -9,7 +9,7 @@ import (
 var configureAlertManagerOperators string = "[Suite: operators] [OSD] Configure AlertManager Operator"
 
 func init() {
-	alert.RegisterGinkgoAlert(configureAlertManagerOperators, "SD-SREP", "Christopher Collins", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+	alert.RegisterGinkgoAlert(configureAlertManagerOperators, "SD-SREP", "@sd-srep-team-thor", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
 }
 
 var _ = ginkgo.Describe(configureAlertManagerOperators, func() {
