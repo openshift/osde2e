@@ -26,7 +26,7 @@ import (
 var managedUpgradeOperatorTestName string = "[Suite: informing] [OSD] Managed Upgrade Operator"
 
 func init() {
-	alert.RegisterGinkgoAlert(managedUpgradeOperatorTestName, "SD-SREP", "Matt Bargenquast", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+	alert.RegisterGinkgoAlert(managedUpgradeOperatorTestName, "SD-SREP", "@managed-upgrade-operator", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
 }
 
 var _ = ginkgo.Describe(managedUpgradeOperatorTestName, func() {
