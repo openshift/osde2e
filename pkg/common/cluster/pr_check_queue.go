@@ -1,4 +1,4 @@
-package verify
+package cluster
 
 import (
 	"context"
@@ -22,7 +22,7 @@ func PrCheckQueue() error {
 	var (
 		StatusOSDe2eRunning = "osde2e-running"
 		interval            = 5 * time.Minute
-		timeout             = 2 * time.Hour
+		timeout             = 2*time.Hour + 30*time.Minute
 	)
 	h := helper.NewOutsideGinkgo()
 
