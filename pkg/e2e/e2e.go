@@ -56,6 +56,7 @@ import (
 	"github.com/openshift/osde2e/pkg/common/util"
 	"github.com/openshift/osde2e/pkg/debug"
 	"github.com/openshift/osde2e/pkg/e2e/routemonitors"
+	"github.com/openshift/osde2e/pkg/e2e/verify"
 	"github.com/openshift/osde2e/pkg/reporting/ginkgorep"
 )
 
@@ -156,6 +157,17 @@ func beforeSuite() bool {
 
 	} else {
 		log.Println("Skipping health checks as requested")
+	}
+
+	//Creates a configmap for PrCheck to use as a psudo queue
+	if viper.GetBool(config.Tests.EnablePrCheck) {
+		if err := verify.PrCheckQueue(); err != nil {
+			log.Printf("Failed to create queue for PrCheck: %v", err)
+			viper.Set(config.Tests.EnablePrCheck, false)
+			viper.Set(config.Cluster.HibernateAfterUse, false)
+			getLogs()
+			return false
+		}
 	}
 
 	if len(viper.GetString(config.Addons.IDs)) > 0 {
@@ -658,6 +670,11 @@ func cleanupAfterE2E(h *helper.H) (errors []error) {
 		}
 		log.Println("Running addon cleanup...")
 		h.RunAddonTests("addon-cleanup", 300, harnesses, arguments)
+	}
+
+	// Cleanup PrCheckQueue after the cluster is back to default state
+	if viper.GetBool(config.Tests.EnablePrCheck) {
+		verify.PrCheckQueueCleanup()
 	}
 
 	// We need to clean up our helper tests manually.
