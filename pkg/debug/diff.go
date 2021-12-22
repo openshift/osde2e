@@ -13,8 +13,8 @@ import (
 	"github.com/PuerkitoBio/goquery"
 	"github.com/google/go-github/v31/github"
 	"github.com/kylelemons/godebug/diff"
-	"github.com/openshift/osde2e/pkg/common/config"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
+	"github.com/openshift/osde2e/pkg/common/config"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -132,7 +132,12 @@ func GetCurrentMCCHash() (hash string, err error) {
 
 func getLastJobID(baseProwURL, jobName string) (int, error) {
 	// Look up the list of previous jobs with a given name
-	url := fmt.Sprintf("%s/job-history/gs/origin-ci-test/logs/%s", baseProwURL, jobName)
+	var url string
+	if viper.GetBool(config.Tests.EnablePrCheck) {
+		url = fmt.Sprintf("%s/job-history/gs/origin-ci-test/pr-logs/directory/%s", baseProwURL, jobName)
+	} else {
+		url = fmt.Sprintf("%s/job-history/gs/origin-ci-test/logs/%s", baseProwURL, jobName)
+	}
 	log.Printf("Looking up job history from %s", url)
 	res, err := http.Get(url)
 	if err != nil {
