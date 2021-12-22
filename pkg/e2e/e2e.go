@@ -158,17 +158,6 @@ func beforeSuite() bool {
 		log.Println("Skipping health checks as requested")
 	}
 
-	//Creates a configmap for PrCheck to use as a psudo queue
-	if viper.GetBool(config.Tests.EnablePrCheck) {
-		if err := cluster.PrCheckQueue(); err != nil {
-			log.Printf("Failed to create queue for PrCheck: %v", err)
-			viper.Set(config.Tests.EnablePrCheck, false)
-			viper.Set(config.Cluster.HibernateAfterUse, false)
-			getLogs()
-			return false
-		}
-	}
-
 	if len(viper.GetString(config.Addons.IDs)) > 0 {
 		if viper.GetString(config.Provider) != "mock" {
 			err = installAddons()
@@ -260,6 +249,7 @@ func installAddons() (err error) {
 func RunTests() int {
 	var err error
 	var exitCode int
+
 	testing.Init()
 
 	exitCode, err = runGinkgoTests()
@@ -371,6 +361,14 @@ func runGinkgoTests() (int, error) {
 
 	// Update the metadata object to use the report directory.
 	metadata.Instance.SetReportDir(reportDir)
+
+	//Checks for existing pr-checker job
+	if viper.GetBool(config.Tests.EnablePrCheck) {
+		if err := cluster.PrCheckQueue(provider); err != nil {
+			getLogs()
+			return Failure, fmt.Errorf("error checking for existing pr-checker job: %v", err)
+		}
+	}
 
 	log.Println("Running e2e tests...")
 
@@ -669,11 +667,6 @@ func cleanupAfterE2E(h *helper.H) (errors []error) {
 		}
 		log.Println("Running addon cleanup...")
 		h.RunAddonTests("addon-cleanup", 300, harnesses, arguments)
-	}
-
-	// Cleanup PrCheckQueue after the cluster is back to default state
-	if viper.GetBool(config.Tests.EnablePrCheck) {
-		cluster.PrCheckQueueCleanup()
 	}
 
 	// We need to clean up our helper tests manually.
