@@ -21,8 +21,8 @@ var splunkForwarderBlocking string = "[Suite: operators] [OSD] Splunk Forwarder 
 var splunkForwarderInforming string = "[Suite: informing] [OSD] Splunk Forwarder Operator"
 
 func init() {
-	alert.RegisterGinkgoAlert(splunkForwarderBlocking, "SD-SREP", "Matt Bargenquast", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
-	alert.RegisterGinkgoAlert(splunkForwarderInforming, "SD-SREP", "Matt Bargenquast", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+	alert.RegisterGinkgoAlert(splunkForwarderBlocking, "SD-SREP", "@srep-security-team", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+	alert.RegisterGinkgoAlert(splunkForwarderInforming, "SD-SREP", "@srep-security-team", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
 }
 
 // Blocking SplunkForwarder Signal
