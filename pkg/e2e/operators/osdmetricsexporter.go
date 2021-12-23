@@ -13,12 +13,12 @@ import (
 )
 
 var (
-	osdMetricsExporterTestPrefix   = "[Suite: operators] [OSD] OSD Metrics Exporter"
-	osdMetricsExporterBasicTest    = osdMetricsExporterTestPrefix + " Basic Test"
+	osdMetricsExporterTestPrefix = "[Suite: operators] [OSD] OSD Metrics Exporter"
+	osdMetricsExporterBasicTest  = osdMetricsExporterTestPrefix + " Basic Test"
 )
 
 func init() {
-	alert.RegisterGinkgoAlert(osdMetricsExporterBasicTest, "SD_SREP", "Arjun Naik", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+	alert.RegisterGinkgoAlert(osdMetricsExporterBasicTest, "SD_SREP", "@sre-platform-team-v1alpha1", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
 }
 
 var _ = ginkgo.Describe(osdMetricsExporterBasicTest, func() {
