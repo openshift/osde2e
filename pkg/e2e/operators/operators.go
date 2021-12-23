@@ -255,7 +255,7 @@ func checkUpgrade(h *helper.H, subNamespace string, subName string, packageName 
 				}
 				return false, nil
 			})
-			Expect(pollErr).NotTo(HaveOccurred(), fmt.Sprintf("failed trying to get Subscription %s in %s namespace: %s", subName, subNamespace, err.Error()))
+			Expect(pollErr).NotTo(HaveOccurred(), fmt.Sprintf("failed trying to get Subscription %s in %s namespace: %v", subName, subNamespace, err))
 
 			// Get the N-1 version of the CSV to test an upgrade from
 			previousCSV, err := getReplacesCSV(h, subNamespace, packageName, regServiceName)
