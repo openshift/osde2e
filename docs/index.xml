@@ -6,7 +6,7 @@
     <description>Recent content on OSDe2e Reporting</description>
     <generator>Hugo -- gohugo.io</generator>
     <copyright>Copyright © 2020, Red Hat, all rights reserved.</copyright>
-    <lastBuildDate>Sun, 26 Dec 2021 12:00:45 +0000</lastBuildDate>
+    <lastBuildDate>Mon, 27 Dec 2021 12:01:02 +0000</lastBuildDate>
     
 	<atom:link href="https://openshift.github.io/osde2e/index.xml" rel="self" type="application/rss+xml" />
     
@@ -18,6 +18,33 @@
       
       <guid>https://openshift.github.io/osde2e/about/</guid>
       <description>Automatically generated reports generated from OSDe2e data live here.</description>
+    </item>
+    
+    <item>
+      <title>OSDe2e moa Weather Report 2021-12-27 12:01:02.835336279 &#43;0000 UTC</title>
+      <link>https://openshift.github.io/osde2e/post/3fb608bd32f94d70909f3c9dc6e530c1/</link>
+      <pubDate>Mon, 27 Dec 2021 12:01:02 +0000</pubDate>
+      
+      <guid>https://openshift.github.io/osde2e/post/3fb608bd32f94d70909f3c9dc6e530c1/</guid>
+      <description>&lt;table class=&#34;summary&#34;&gt;&lt;/table&gt;</description>
+    </item>
+    
+    <item>
+      <title>OSDe2e gcp Weather Report 2021-12-27 12:00:59.836242108 &#43;0000 UTC</title>
+      <link>https://openshift.github.io/osde2e/post/f245f56f536f4d15940b2bda62a0ca77/</link>
+      <pubDate>Mon, 27 Dec 2021 12:00:59 +0000</pubDate>
+      
+      <guid>https://openshift.github.io/osde2e/post/f245f56f536f4d15940b2bda62a0ca77/</guid>
+      <description>&lt;table class=&#34;summary&#34;&gt;&lt;tr&gt;&lt;td bgcolor=&#34;#01fe00&#34;&gt;&lt;/td&gt;&lt;td&gt;int (Pass rate: 100.00)&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td bgcolor=&#34;#10ef00&#34;&gt;&lt;/td&gt;&lt;td&gt;prod (Pass rate: 99.40)&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td bgcolor=&#34;#1ce300&#34;&gt;&lt;/td&gt;&lt;td&gt;stage (Pass rate: 98.93)&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;</description>
+    </item>
+    
+    <item>
+      <title>OSDe2e aws Weather Report 2021-12-27 12:00:56.060121012 &#43;0000 UTC</title>
+      <link>https://openshift.github.io/osde2e/post/6334977af1b14d55806dc098548ac0af/</link>
+      <pubDate>Mon, 27 Dec 2021 12:00:56 +0000</pubDate>
+      
+      <guid>https://openshift.github.io/osde2e/post/6334977af1b14d55806dc098548ac0af/</guid>
+      <description>&lt;table class=&#34;summary&#34;&gt;&lt;tr&gt;&lt;td bgcolor=&#34;#0bf400&#34;&gt;&lt;/td&gt;&lt;td&gt;int (Pass rate: 99.60)&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td bgcolor=&#34;#1ee100&#34;&gt;&lt;/td&gt;&lt;td&gt;prod (Pass rate: 98.83)&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td bgcolor=&#34;#15ea00&#34;&gt;&lt;/td&gt;&lt;td&gt;stage (Pass rate: 99.18)&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;</description>
     </item>
     
     <item>
