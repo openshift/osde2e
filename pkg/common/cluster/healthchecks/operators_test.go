@@ -5,8 +5,8 @@ import (
 
 	configv1 "github.com/openshift/api/config/v1"
 	fakeConfig "github.com/openshift/client-go/config/clientset/versioned/fake"
-	"github.com/openshift/osde2e/pkg/common/config"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
+	"github.com/openshift/osde2e/pkg/common/config"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 )
@@ -83,7 +83,7 @@ func TestCheckOperatorReadiness(t *testing.T) {
 		{"single operator progressing", false, []runtime.Object{progressingClusterOperator("a")}, false, ""},
 		{"multi operator success", true, []runtime.Object{clusterOperator("a"), clusterOperator("b")}, false, ""},
 		{"multi operator one progressing", false, []runtime.Object{clusterOperator("a"), progressingClusterOperator("b")}, false, ""},
-		{"multi operator one with condition status unknown", true, []runtime.Object{clusterOperator("a"), clusterOperatorWithUnknownStatus("b"), }, false, ""},
+		{"multi operator one with condition status unknown", false, []runtime.Object{clusterOperator("a"), clusterOperatorWithUnknownStatus("b")}, false, ""},
 		{"multi operator one failure", false, []runtime.Object{clusterOperator("a"), unavailableClusterOperator("b")}, false, ""},
 		{"multi operator, skip success", true, []runtime.Object{
 			clusterOperator("a"),
