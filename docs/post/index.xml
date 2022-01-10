@@ -6,10 +6,37 @@
     <description>Recent content in Posts on OSDe2e Reporting</description>
     <generator>Hugo -- gohugo.io</generator>
     <copyright>Copyright © 2020, Red Hat, all rights reserved.</copyright>
-    <lastBuildDate>Sun, 09 Jan 2022 12:00:51 +0000</lastBuildDate>
+    <lastBuildDate>Mon, 10 Jan 2022 12:00:59 +0000</lastBuildDate>
     
 	<atom:link href="https://openshift.github.io/osde2e/post/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>OSDe2e moa Weather Report 2022-01-10 12:00:59.440229452 &#43;0000 UTC</title>
+      <link>https://openshift.github.io/osde2e/post/4c474d196a4a40ce9b0d27a9e63f55c4/</link>
+      <pubDate>Mon, 10 Jan 2022 12:00:59 +0000</pubDate>
+      
+      <guid>https://openshift.github.io/osde2e/post/4c474d196a4a40ce9b0d27a9e63f55c4/</guid>
+      <description>&lt;table class=&#34;summary&#34;&gt;&lt;/table&gt;</description>
+    </item>
+    
+    <item>
+      <title>OSDe2e gcp Weather Report 2022-01-10 12:00:56.601780654 &#43;0000 UTC</title>
+      <link>https://openshift.github.io/osde2e/post/bc2d9e3cd8be406ca52d59eedbcddb81/</link>
+      <pubDate>Mon, 10 Jan 2022 12:00:56 +0000</pubDate>
+      
+      <guid>https://openshift.github.io/osde2e/post/bc2d9e3cd8be406ca52d59eedbcddb81/</guid>
+      <description>&lt;table class=&#34;summary&#34;&gt;&lt;tr&gt;&lt;td bgcolor=&#34;#01fe00&#34;&gt;&lt;/td&gt;&lt;td&gt;int (Pass rate: 100.00)&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td bgcolor=&#34;#15ea00&#34;&gt;&lt;/td&gt;&lt;td&gt;stage (Pass rate: 99.20)&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;</description>
+    </item>
+    
+    <item>
+      <title>OSDe2e aws Weather Report 2022-01-10 12:00:51.868787103 &#43;0000 UTC</title>
+      <link>https://openshift.github.io/osde2e/post/e3685df324b344a194e206444ce0ac39/</link>
+      <pubDate>Mon, 10 Jan 2022 12:00:51 +0000</pubDate>
+      
+      <guid>https://openshift.github.io/osde2e/post/e3685df324b344a194e206444ce0ac39/</guid>
+      <description>&lt;table class=&#34;summary&#34;&gt;&lt;tr&gt;&lt;td bgcolor=&#34;#15ea00&#34;&gt;&lt;/td&gt;&lt;td&gt;int (Pass rate: 99.19)&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td bgcolor=&#34;#1be400&#34;&gt;&lt;/td&gt;&lt;td&gt;prod (Pass rate: 98.94)&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td bgcolor=&#34;#2fd000&#34;&gt;&lt;/td&gt;&lt;td&gt;stage (Pass rate: 98.19)&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;</description>
+    </item>
     
     <item>
       <title>OSDe2e moa Weather Report 2022-01-09 12:00:51.193271125 &#43;0000 UTC</title>
