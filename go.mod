@@ -25,17 +25,17 @@ require (
 	github.com/gotestyourself/gotestyourself v2.2.0+incompatible // indirect
 	github.com/hashicorp/go-multierror v1.1.0
 	github.com/influxdata/tdigest v0.0.1 // indirect
-	github.com/jackc/pgtype v1.8.0
+	github.com/jackc/pgtype v1.9.1
 	github.com/jinzhu/inflection v1.0.0
 	github.com/joshdk/go-junit v0.0.0-20201221202203-061ee62ada40
 	github.com/kyleconroy/sqlc v1.8.0
 	github.com/kylelemons/godebug v1.1.0
-	github.com/lib/pq v1.10.2
+	github.com/lib/pq v1.10.4
 	github.com/markbates/pkger v0.17.1
 	github.com/mitchellh/mapstructure v1.4.2
 	github.com/onsi/ginkgo v1.16.4
-	github.com/onsi/gomega v1.16.0
-	github.com/openshift-online/ocm-sdk-go v0.1.215
+	github.com/onsi/gomega v1.17.0
+	github.com/openshift-online/ocm-sdk-go v0.1.235
 	github.com/openshift/api v3.9.1-0.20190924102528-32369d4db2ad+incompatible
 	github.com/openshift/client-go v0.0.0-20200827190008-3062137373b5
 	github.com/openshift/cloud-credential-operator v0.0.0-20210525141023-02cc6303cd10
@@ -66,7 +66,7 @@ require (
 	github.com/tsenart/go-tsz v0.0.0-20180814235614-0bd30b3df1c3 // indirect
 	github.com/tsenart/vegeta v12.7.0+incompatible
 	github.com/vmware-tanzu/velero v1.5.0-beta.1.0.20200831161009-1dcaa1bf7512
-	golang.org/x/net v0.0.0-20210614182718-04defd469f4e
+	golang.org/x/net v0.0.0-20210805182204-aaa1db679c0d
 	golang.org/x/tools v0.1.5
 	google.golang.org/api v0.58.0
 	google.golang.org/genproto v0.0.0-20211018162055-cf77aa76bad2
