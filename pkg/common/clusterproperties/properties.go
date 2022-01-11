@@ -25,4 +25,7 @@ const (
 
 	// ProvisionShardID is the shard ID that is set to provision a shard for the cluster.
 	ProvisionShardID = "provision_shard_id"
+
+	// Osde2eStartTime is the time when Osde2e started to run.
+	JobStartedAt = "JobStartedAt"
 )
