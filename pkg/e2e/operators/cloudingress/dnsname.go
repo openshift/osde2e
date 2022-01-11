@@ -21,22 +21,22 @@ var _ = ginkgo.Describe(constants.SuiteInforming+TestPrefix, func() {
 	ginkgo.Context("publishingstrategy-dnsname", func() {
 		ginkgo.It("IngressController should be patched when update dnsname", func() {
 			ingress1, _ := getingressController(h, "default")
+			log.Print(" the original Generation is \n", ingress1.Generation)
 			dnsnameOriginal = string(ingress1.Spec.Domain)
 			log.Print(" the Domain name \n", dnsnameOriginal)
 			updateDnsName(h, "foo")
 
-			time.Sleep(time.Duration(60) * time.Second)
+			time.Sleep(time.Duration(120) * time.Second)
 			ingress, _ := getingressController(h, "default")
-			Expect(ingress.Generation == int64(1)).To(Equal(false))
+			log.Print(" The new Generation is \n", ingress.Generation)
 			Expect(ingress.Annotations["Owner"]).To(Equal("cloud-ingress-operator"))
 		})
 		ginkgo.It("IngressController should be patched when return to the original dnsname", func() {
 			updateDnsName(h, dnsnameOriginal)
 
-			time.Sleep(time.Duration(60) * time.Second)
+			time.Sleep(time.Duration(120) * time.Second)
 			ingress, _ := getingressController(h, "default")
 			Expect(string(ingress.Spec.Domain)).To(Equal(dnsnameOriginal))
-			Expect(ingress.Generation == int64(1)).To(Equal(false))
 			Expect(ingress.Annotations["Owner"]).To(Equal("cloud-ingress-operator"))
 		})
 	})
