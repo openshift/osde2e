@@ -6,7 +6,7 @@ require (
 	cloud.google.com/go/kms v1.1.0
 	github.com/Masterminds/semver v1.5.0
 	github.com/PagerDuty/go-pagerduty v1.4.1
-	github.com/PuerkitoBio/goquery v1.5.1
+	github.com/PuerkitoBio/goquery v1.8.0
 	github.com/adamliesko/retry v0.0.0-20200123222335-86c8baac277d
 	github.com/antlr/antlr4 v0.0.0-20200209180723-1177c0b58d07
 	github.com/aws/aws-sdk-go v1.39.3
@@ -66,7 +66,7 @@ require (
 	github.com/tsenart/go-tsz v0.0.0-20180814235614-0bd30b3df1c3 // indirect
 	github.com/tsenart/vegeta v12.7.0+incompatible
 	github.com/vmware-tanzu/velero v1.5.0-beta.1.0.20200831161009-1dcaa1bf7512
-	golang.org/x/net v0.0.0-20210805182204-aaa1db679c0d
+	golang.org/x/net v0.0.0-20210916014120-12bc252f5db8
 	golang.org/x/tools v0.1.5
 	google.golang.org/api v0.58.0
 	google.golang.org/genproto v0.0.0-20211018162055-cf77aa76bad2
