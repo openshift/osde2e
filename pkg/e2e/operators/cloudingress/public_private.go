@@ -3,6 +3,7 @@ package cloudingress
 import (
 	"context"
 	"time"
+	"log"
 
 	"github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -31,7 +32,8 @@ var _ = ginkgo.Describe(constants.SuiteInforming+TestPrefix, func() {
 
 	ginkgo.Context("publishingstrategy-public-private", func() {
 		ginkgo.It("should be able to toggle the default applicationingress from public to private", func() {
-
+			ingressog, _ := getingressController(h, "default")
+			log.Print("The Origial Ingress Controller Generation is: \n ", ingressog.Generation)
 			updateApplicationIngress(h, "internal")
 
 			//wait for router-default service loadbalancer to have an annotation indicating its scheme is internal
@@ -51,7 +53,6 @@ var _ = ginkgo.Describe(constants.SuiteInforming+TestPrefix, func() {
 			Expect(string(ingress.Spec.EndpointPublishingStrategy.LoadBalancer.Scope)).To(Equal("Internal"))
 			Expect(ingress.Annotations["Owner"]).To(Equal("cloud-ingress-operator"))
 
-			Expect(ingress.Generation).To(Equal(int64(1)))
 		})
 
 		ginkgo.It("should be able to toggle the default applicationingress from private to public", func() {
@@ -75,7 +76,6 @@ var _ = ginkgo.Describe(constants.SuiteInforming+TestPrefix, func() {
 			Expect(exists).To(BeTrue())
 			Expect(string(ingress_controller.Listening)).To(Equal("external"))
 			Expect(ingress.Annotations["Owner"]).To(Equal("cloud-ingress-operator"))
-			Expect(ingress.Generation).To(Equal(int64(1)))
 		})
 	})
 })

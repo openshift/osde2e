@@ -41,14 +41,18 @@ var _ = ginkgo.Describe(constants.SuiteInforming+TestPrefix, func() {
 			deployment, err := operators.PollDeployment(h, "openshift-ingress", deploymentName)
 			Expect(err).ToNot(HaveOccurred(), "failed fetching deployment")
 			Expect(deployment).NotTo(BeNil(), "deployment is nil")
+			time.Sleep(time.Duration(120) * time.Second)
 
 			//2.delete the annotation
 			apps2Ingress, _ := getingressController(h, ingressControllerName)
 			log.Printf("The ingresscontroller object annotation : %+v\n", apps2Ingress.ObjectMeta.Annotations)
 			newAnnotations := updateAnnotation(h, ingressControllerName, "Owner", "cloud-ingress-operator")
 			apps2Ingress = newAnnotations
+			time.Sleep(time.Duration(120) * time.Second)
+
 			//3. Delete secondaryIngress in publishingstrategy
 			removeIngressController(h, ingressControllerName)
+			time.Sleep(time.Duration(120) * time.Second)
 			Expect(err).NotTo(HaveOccurred())
 			// check that the ingresscontroller app-e2e-apps was deleted
 			ingressControllerExists(h, ingressControllerName, true)

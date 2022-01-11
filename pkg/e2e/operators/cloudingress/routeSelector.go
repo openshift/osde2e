@@ -22,16 +22,15 @@ var _ = ginkgo.Describe(constants.SuiteInforming+TestPrefix, func() {
 		ginkgo.It("IngressController should be patched when update routeSelector matchLabels", func() {
 			updateMatchLabels(h, "tier", "frontend")
 
-			time.Sleep(time.Duration(60) * time.Second)
+			time.Sleep(time.Duration(120) * time.Second)
 			ingress, _ := getingressController(h, "default")
 			Expect(string(ingress.Spec.RouteSelector.MatchLabels["tier"])).To(Equal("frontend"))
-			Expect(ingress.Generation == int64(1)).To(Equal(false))
 			Expect(ingress.Annotations["Owner"]).To(Equal("cloud-ingress-operator"))
 		})
 		ginkgo.It("IngressController should be patched when update routeSelector matchExpressions", func() {
 			updateMatchExpressions(h, "foo", "In", "bar")
 
-			time.Sleep(time.Duration(60) * time.Second)
+			time.Sleep(time.Duration(120) * time.Second)
 			ingress, _ := getingressController(h, "default")
 			expectedExpressions := []metav1.LabelSelectorRequirement{
 				{"foo", metav1.LabelSelectorOperator("In"), []string{"bar"}},
@@ -39,17 +38,15 @@ var _ = ginkgo.Describe(constants.SuiteInforming+TestPrefix, func() {
 			for j := range ingress.Spec.RouteSelector.MatchExpressions {
 				Expect(reflect.DeepEqual(ingress.Spec.RouteSelector.MatchExpressions[j], expectedExpressions)).To(BeTrue())
 			}
-			Expect(ingress.Generation == int64(1)).To(Equal(false))
 			Expect(ingress.Annotations["Owner"]).To(Equal("cloud-ingress-operator"))
 		})
 		ginkgo.It("IngressController should be patched when reset matchLabels and matchExpressions", func() {
 			resetRouteSelector(h)
-			time.Sleep(time.Duration(60) * time.Second)
+			time.Sleep(time.Duration(120) * time.Second)
 
 			ingress, _ := getingressController(h, "default")
 			Expect(ingress.Spec.RouteSelector.MatchLabels).To(BeNil())
 			Expect(ingress.Spec.RouteSelector.MatchExpressions).To(BeNil())
-			Expect(ingress.Generation == int64(1)).To(Equal(false))
 			Expect(ingress.Annotations["Owner"]).To(Equal("cloud-ingress-operator"))
 
 		})
