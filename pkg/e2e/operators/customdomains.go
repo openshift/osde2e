@@ -50,7 +50,7 @@ const (
 )
 
 func init() {
-	alert.RegisterGinkgoAlert(customDomainsOperatorTestName, "SD-SREP", "Dustin Row", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+	alert.RegisterGinkgoAlert(customDomainsOperatorTestName, "SD-SREP", "@custom-domains-operator", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
 }
 
 var _ = ginkgo.Describe(customDomainsOperatorTestName, func() {

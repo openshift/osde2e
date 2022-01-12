@@ -22,7 +22,7 @@ import (
 var mustGatherOperatorTest = "[Suite: operators] [OSD] Must Gather Operator"
 
 func init() {
-	alert.RegisterGinkgoAlert(mustGatherOperatorTest, "SD-SREP", "Arjun Naik", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+	alert.RegisterGinkgoAlert(mustGatherOperatorTest, "SD-SREP", "@sd-sre-aurora-team", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
 }
 
 var _ = ginkgo.Describe(mustGatherOperatorTest, func() {

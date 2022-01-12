@@ -23,7 +23,7 @@ import (
 var veleroOperatorTestName string = "[Suite: operators] [OSD] Managed Velero Operator"
 
 func init() {
-	alert.RegisterGinkgoAlert(veleroOperatorTestName, "SD-SREP", "Christoph Blecker", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+	alert.RegisterGinkgoAlert(veleroOperatorTestName, "SD-SREP", "@managed-velero-operator", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
 }
 
 var _ = ginkgo.Describe(veleroOperatorTestName, func() {

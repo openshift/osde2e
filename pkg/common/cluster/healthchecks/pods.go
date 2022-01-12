@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"strings"
+	"time"
 
 	"github.com/openshift/osde2e/pkg/common/logging"
 	kubev1 "k8s.io/api/core/v1"
@@ -29,6 +30,7 @@ func (p *PodErrorTracker) NewPodErrorTracker(threshold int) *PodErrorTracker {
 // returns the list of pending pods if any exist.
 func CheckClusterPodHealth(podClient v1.CoreV1Interface, logger *log.Logger) ([]kubev1.Pod, error) {
 	filters := []PodPredicate{
+		IsOlderThan(1 * time.Minute),
 		IsClusterPod,
 		IsNotReadinessPod,
 		IsNotRunning,
@@ -45,6 +47,7 @@ func CheckClusterPodHealth(podClient v1.CoreV1Interface, logger *log.Logger) ([]
 // CheckPodHealth attempts to look at the state of all pods and returns true if things are healthy.
 func CheckPodHealth(podClient v1.CoreV1Interface, logger *log.Logger, ns string, podPrefixes ...string) (bool, error) {
 	filters := []PodPredicate{
+		IsOlderThan(1 * time.Minute),
 		MatchesNamespace(ns),
 		MatchesNames(podPrefixes...),
 		IsNotReadinessPod,
