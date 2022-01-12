@@ -15,7 +15,7 @@ require (
 	github.com/code-ready/crc v1.10.0
 	github.com/dgryski/go-gk v0.0.0-20200319235926-a69029f61654 // indirect
 	github.com/dgryski/go-lttb v0.0.0-20180810165845-318fcdf10a77 // indirect
-	github.com/emicklei/go-restful v2.10.0+incompatible
+	github.com/emicklei/go-restful v2.15.0+incompatible
 	github.com/fatih/color v1.10.0
 	github.com/fsnotify/fsnotify v1.5.1
 	github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32
