@@ -21,7 +21,7 @@ require (
 	github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32
 	github.com/golang-migrate/migrate/v4 v4.14.2-0.20210511063805-2e7358e012a6
 	github.com/google/go-github/v31 v31.0.0
-	github.com/google/uuid v1.2.0
+	github.com/google/uuid v1.3.0
 	github.com/gotestyourself/gotestyourself v2.2.0+incompatible // indirect
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/influxdata/tdigest v0.0.1 // indirect
@@ -50,7 +50,7 @@ require (
 	github.com/operator-framework/api v0.3.6
 	github.com/operator-framework/operator-lifecycle-manager v0.0.0-20200521062108-408ca95d458f
 	github.com/ory/dockertest v3.3.5+incompatible
-	github.com/pganalyze/pg_query_go/v2 v2.0.2
+	github.com/pganalyze/pg_query_go/v2 v2.1.0
 	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.44.1
 	github.com/prometheus-operator/prometheus-operator/pkg/client v0.45.0
 	github.com/prometheus/alertmanager v0.21.0
