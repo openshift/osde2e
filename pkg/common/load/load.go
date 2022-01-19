@@ -70,17 +70,24 @@ func Configs(configs []string, customConfig string, secretLocations []string) er
 		for _, folder := range secretLocations {
 			passthruSecrets := viper.GetStringMapString(config.NonOSDe2eSecrets)
 			if !strings.Contains(folder, "osde2e-credentials") && !strings.Contains(folder, "osde2e-common") {
-				continue
+				if viper.Get(config.Addons.IDs) != nil {
+					passthruSecrets["ocm-token-refresh"] = viper.Get("ocm.token").(string)
+				} else {
+					continue
+				}
 			}
 
 			err := filepath.Walk(folder, func(path string, info os.FileInfo, err error) error {
 				if err != nil {
 					return fmt.Errorf("Error walking folder %s: %s", folder, err.Error())
 				}
+				fmt.Printf(path)
+
 				data, err := ioutil.ReadFile(path)
 				if err != nil {
 					return fmt.Errorf("error loading passthru-secret file %s", path)
 				}
+				fmt.Printf(info.Name())
 				passthruSecrets[info.Name()] = strings.TrimSpace(string(data))
 				return nil
 			})
