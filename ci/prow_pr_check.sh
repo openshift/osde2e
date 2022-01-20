@@ -16,8 +16,8 @@ set -eo pipefail
 
     make build
 
-    CLUSTER_ID=1kgq75e84eloshd81c8gcjl10fglg0jb \
+    CLUSTER_ID=1ovu95eaupho53f1g3grp70a9r9kd55e \
     GINKGO_SKIP="Must Gather Operator" \
-    ./out/osde2e test --configs=prod,aws,e2e-suite --secret-locations=/usr/local/osde2e-common,/usr/local/osde2e-credentials
+    ./out/osde2e test --configs=prod,aws,pr-check,e2e-suite --secret-locations=/usr/local/osde2e-common,/usr/local/osde2e-credentials
 
 } 2>&1 | tee -a "$REPORT_DIR/test_output.log"

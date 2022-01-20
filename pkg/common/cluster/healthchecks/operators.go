@@ -46,15 +46,23 @@ func CheckOperatorReadiness(configClient configclient.ConfigV1Interface, logger 
 	for _, co := range list.Items {
 		if _, ok := operatorSkipList[co.GetName()]; !ok {
 			for _, cos := range co.Status.Conditions {
-				if cos.Status == "Unknown" || cos.Status == "False" {
-					continue
+				if cos.Type == "Available" && cos.Status == "False" {
+					metadataState = append(metadataState, fmt.Sprintf("%v", co))
+					logger.Printf("Operator %v not available: Condition %v has status %v: %v", co.ObjectMeta.Name, cos.Type, cos.Status, cos.Message)
+					success = false
 				}
-				if cos.Type == "Disabled" || cos.Type == "Available" || cos.Type == "Upgradeable" || cos.Type == "RecentBackup" {
-					continue
+
+				if cos.Type == "Progressing" && cos.Status == "True" {
+					metadataState = append(metadataState, fmt.Sprintf("%v", co))
+					logger.Printf("Operator %v is progressing: Condition %v has status %v: %v", co.ObjectMeta.Name, cos.Type, cos.Status, cos.Message)
+					success = false
 				}
-				metadataState = append(metadataState, fmt.Sprintf("%v", co))
-				logger.Printf("Unexpected condition status for operator %v: Condition %v has status %v: %v", co.ObjectMeta.Name, cos.Type, cos.Status, cos.Message)
-				success = false
+
+				if cos.Type == "Degraded" && cos.Status == "True" {
+					metadataState = append(metadataState, fmt.Sprintf("%v", co))
+					logger.Printf("Operator %v is degraded: Condition %v has status %v: %v", co.ObjectMeta.Name, cos.Type, cos.Status, cos.Message)
+					success = false
+				}
 			}
 		}
 	}

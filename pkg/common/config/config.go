@@ -247,6 +247,10 @@ var Tests = struct {
 	// TestPollingTimeout is how long (in seconds) to wait for the add-on test to complete running.
 	// Env: TEST_HARNESS_TIMEOUT
 	HarnessTimeout string
+	// EnablePrCheck enables the PR check Mode
+	// Env: ENABLE_PR_CHECK
+	EnablePrCheck string
+
 }{
 
 	PollingTimeout:             "tests.pollingTimeout",
@@ -265,6 +269,7 @@ var Tests = struct {
 	RunCleanup:                 "tests.runCleanup",
 	CleanupHarnesses:           "tests.cleanupHarnesses",
 	HarnessTimeout:             "tests.harnessTimeout",
+	EnablePrCheck:              "tests.enablePrCheck",
 }
 
 // Cluster config keys.
@@ -650,6 +655,9 @@ func init() {
 
 	viper.SetDefault(Tests.HarnessTimeout, 3600)
 	viper.BindEnv(Tests.HarnessTimeout, "TEST_HARNESS_TIMEOUT")
+
+	viper.SetDefault(Tests.EnablePrCheck, false)
+	viper.BindEnv(Tests.EnablePrCheck, "ENABLE_PR_CHECK")
 
 	// ----- Cluster -----
 	viper.SetDefault(Cluster.MultiAZ, false)

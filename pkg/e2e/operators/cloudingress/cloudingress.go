@@ -14,6 +14,6 @@ const (
 
 // utils
 func init() {
-	alert.RegisterGinkgoAlert(constants.SuiteInforming+TestPrefix, "SD-SRE", "Alex Chvatal", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
-	alert.RegisterGinkgoAlert(constants.SuiteOperators+TestPrefix, "SD-SRE", "Alex Chvatal", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+	alert.RegisterGinkgoAlert(constants.SuiteInforming+TestPrefix, "SD-SRE", "@sd-sre-aurora-team", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+	alert.RegisterGinkgoAlert(constants.SuiteOperators+TestPrefix, "SD-SRE", "@sd-sre-aurora-team", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
 }
