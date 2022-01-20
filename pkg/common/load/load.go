@@ -76,17 +76,14 @@ func Configs(configs []string, customConfig string, secretLocations []string) er
 					continue
 				}
 			}
-
 			err := filepath.Walk(folder, func(path string, info os.FileInfo, err error) error {
 				if err != nil {
 					return fmt.Errorf("Error walking folder %s: %s", folder, err.Error())
 				}
-
 				data, err := ioutil.ReadFile(path)
 				if err != nil {
 					return fmt.Errorf("error loading passthru-secret file %s", path)
 				}
-
 				passthruSecrets[info.Name()] = strings.TrimSpace(string(data))
 				return nil
 			})
