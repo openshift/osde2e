@@ -6,10 +6,37 @@
     <description>Recent content in weather-report on OSDe2e Reporting</description>
     <generator>Hugo -- gohugo.io</generator>
     <copyright>Copyright © 2020, Red Hat, all rights reserved.</copyright>
-    <lastBuildDate>Sat, 22 Jan 2022 12:00:52 +0000</lastBuildDate>
+    <lastBuildDate>Sun, 23 Jan 2022 12:01:11 +0000</lastBuildDate>
     
 	<atom:link href="https://openshift.github.io/osde2e/tags/weather-report/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>OSDe2e moa Weather Report 2022-01-23 12:01:11.596279711 &#43;0000 UTC</title>
+      <link>https://openshift.github.io/osde2e/post/52fc5b1e999c47898a9a818a7946c561/</link>
+      <pubDate>Sun, 23 Jan 2022 12:01:11 +0000</pubDate>
+      
+      <guid>https://openshift.github.io/osde2e/post/52fc5b1e999c47898a9a818a7946c561/</guid>
+      <description>&lt;table class=&#34;summary&#34;&gt;&lt;/table&gt;</description>
+    </item>
+    
+    <item>
+      <title>OSDe2e gcp Weather Report 2022-01-23 12:01:08.618041583 &#43;0000 UTC</title>
+      <link>https://openshift.github.io/osde2e/post/6eb3f8c7b33d498eb6b5d3480dc10b18/</link>
+      <pubDate>Sun, 23 Jan 2022 12:01:08 +0000</pubDate>
+      
+      <guid>https://openshift.github.io/osde2e/post/6eb3f8c7b33d498eb6b5d3480dc10b18/</guid>
+      <description>&lt;table class=&#34;summary&#34;&gt;&lt;tr&gt;&lt;td bgcolor=&#34;#19e600&#34;&gt;&lt;/td&gt;&lt;td&gt;prod (Pass rate: 99.03)&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;</description>
+    </item>
+    
+    <item>
+      <title>OSDe2e aws Weather Report 2022-01-23 12:01:04.909732791 &#43;0000 UTC</title>
+      <link>https://openshift.github.io/osde2e/post/e30c98442b09453bbc15280fbaaf3081/</link>
+      <pubDate>Sun, 23 Jan 2022 12:01:04 +0000</pubDate>
+      
+      <guid>https://openshift.github.io/osde2e/post/e30c98442b09453bbc15280fbaaf3081/</guid>
+      <description>&lt;table class=&#34;summary&#34;&gt;&lt;tr&gt;&lt;td bgcolor=&#34;#22dd00&#34;&gt;&lt;/td&gt;&lt;td&gt;prod (Pass rate: 98.68)&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;</description>
+    </item>
     
     <item>
       <title>OSDe2e moa Weather Report 2022-01-22 12:00:52.876396167 &#43;0000 UTC</title>
