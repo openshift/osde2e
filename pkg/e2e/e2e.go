@@ -30,9 +30,9 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	pd "github.com/PagerDuty/go-pagerduty"
-	"github.com/onsi/ginkgo/reporters"
-	"github.com/onsi/ginkgo/types"
 	"github.com/onsi/ginkgo/v2"
+	"github.com/onsi/ginkgo/v2/reporters"
+	"github.com/onsi/ginkgo/v2/types"
 	"github.com/onsi/gomega"
 	"github.com/openshift/osde2e/pkg/common/alert"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
@@ -375,7 +375,7 @@ func runGinkgoTests() (int, error) {
 		viper.Set(config.Suffix, util.RandomStr(5))
 	}
 
-	testsPassed, installTestCaseData := runTestsInPhase(phase.InstallPhase, "OSD e2e suite", types.SuiteConfig(suiteConfig))
+	testsPassed, installTestCaseData := runTestsInPhase(phase.InstallPhase, "OSD e2e suite", suiteConfig)
 	getLogs()
 	viper.Set(config.Cluster.Passing, testsPassed)
 	upgradeTestsPassed := true
@@ -404,7 +404,7 @@ func runGinkgoTests() (int, error) {
 			if !viper.GetBool(config.Upgrade.ManagedUpgradeRescheduled) {
 				log.Println("Running e2e tests POST-UPGRADE...")
 				viper.Set(config.Cluster.Passing, false)
-				upgradeTestsPassed, upgradeTestCaseData = runTestsInPhase(phase.UpgradePhase, "OSD e2e suite post-upgrade", types.SuiteConfig(suiteConfig))
+				upgradeTestsPassed, upgradeTestCaseData = runTestsInPhase(phase.UpgradePhase, "OSD e2e suite post-upgrade", suiteConfig)
 				viper.Set(config.Cluster.Passing, upgradeTestsPassed)
 			}
 			log.Println("Upgrade rescheduled, skip the POST-UPGRADE testing")

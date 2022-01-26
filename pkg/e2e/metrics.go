@@ -14,7 +14,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/onsi/ginkgo/reporters"
+	"github.com/onsi/ginkgo/v2/reporters"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/events"
