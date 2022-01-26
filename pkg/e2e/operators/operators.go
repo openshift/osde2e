@@ -23,7 +23,7 @@ import (
 
 	operatorv1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 
-	"github.com/onsi/ginkgo"
+	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 )

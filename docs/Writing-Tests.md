@@ -31,7 +31,7 @@ This test from **[`/pkg/e2e/verify/imagestreams.go`]** provides a good example o
 **imagestreams.go**
 ```go
 import (
-	"github.com/onsi/ginkgo"
+	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega
 )
 ```
@@ -104,7 +104,7 @@ The "ImageStreams should exist in the cluster" test will run as part of the suit
 package verify
 
 import (
-	"github.com/onsi/ginkgo"
+	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"

@@ -7,7 +7,7 @@ import (
 
 	// "reflect" this is needed when PR https://github.com/openshift/route-monitor-operator/pull/94 is merged
 
-	"github.com/onsi/ginkgo"
+	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega" // go-staticcheck ST1001  should not use dot imports
 
 	"github.com/openshift/osde2e/pkg/common/alert"

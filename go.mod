@@ -33,9 +33,9 @@ require (
 	github.com/kylelemons/godebug v1.1.0
 	github.com/lib/pq v1.10.4
 	github.com/markbates/pkger v0.17.1
-	github.com/mitchellh/mapstructure v1.4.2
-	github.com/onsi/ginkgo v1.16.6-0.20211111194924-3d158de66b85
 	github.com/mitchellh/mapstructure v1.4.3
+	github.com/onsi/ginkgo v1.16.6-0.20211111194924-3d158de66b85
+	github.com/onsi/ginkgo/v2 v2.1.0 // indirect
 	github.com/onsi/gomega v1.17.0
 	github.com/openshift-online/ocm-sdk-go v0.1.215
 	github.com/openshift/api v3.9.1-0.20190924102528-32369d4db2ad+incompatible

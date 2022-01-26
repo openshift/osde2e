@@ -3,7 +3,7 @@ package osd
 import (
 	"context"
 
-	"github.com/onsi/ginkgo"
+	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
 	machineV1beta1 "github.com/openshift/machine-api-operator/pkg/apis/machine/v1beta1"
