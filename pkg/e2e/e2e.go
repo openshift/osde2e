@@ -375,7 +375,7 @@ func runGinkgoTests() (int, error) {
 		viper.Set(config.Suffix, util.RandomStr(5))
 	}
 
-	testsPassed, installTestCaseData := runTestsInPhase(phase.InstallPhase, "OSD e2e suite", suiteConfig)
+	testsPassed, installTestCaseData := runTestsInPhase(phase.InstallPhase, "OSD e2e suite", types.SuiteConfig(suiteConfig))
 	getLogs()
 	viper.Set(config.Cluster.Passing, testsPassed)
 	upgradeTestsPassed := true
@@ -404,7 +404,7 @@ func runGinkgoTests() (int, error) {
 			if !viper.GetBool(config.Upgrade.ManagedUpgradeRescheduled) {
 				log.Println("Running e2e tests POST-UPGRADE...")
 				viper.Set(config.Cluster.Passing, false)
-				upgradeTestsPassed, upgradeTestCaseData = runTestsInPhase(phase.UpgradePhase, "OSD e2e suite post-upgrade", suiteConfig)
+				upgradeTestsPassed, upgradeTestCaseData = runTestsInPhase(phase.UpgradePhase, "OSD e2e suite post-upgrade", types.SuiteConfig(suiteConfig))
 				viper.Set(config.Cluster.Passing, upgradeTestsPassed)
 			}
 			log.Println("Upgrade rescheduled, skip the POST-UPGRADE testing")

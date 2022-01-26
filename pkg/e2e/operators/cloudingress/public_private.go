@@ -2,10 +2,10 @@ package cloudingress
 
 import (
 	"context"
-	"time"
 	"log"
+	"time"
 
-	"github.com/onsi/ginkgo/v2"
+	"github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	operatorv1 "github.com/openshift/api/operator/v1"
 	cloudingressv1alpha1 "github.com/openshift/cloud-ingress-operator/pkg/apis/cloudingress/v1alpha1"
@@ -13,8 +13,6 @@ import (
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/constants"
 	"github.com/openshift/osde2e/pkg/common/helper"
-	"github.com/openshift/osde2e/pkg/common/util"
-
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -33,8 +31,9 @@ var _ = ginkgo.Describe(constants.SuiteInforming+TestPrefix, func() {
 	h := helper.New()
 
 	ginkgo.Context("publishingstrategy-public-private", func() {
-		util.GinkgoIt("should be able to toggle the default applicationingress from public to private", func() {
-
+		ginkgo.It("should be able to toggle the default applicationingress from public to private", func() {
+			ingressog, _ := getingressController(h, "default")
+			log.Print("The Origial Ingress Controller Generation is: \n ", ingressog.Generation)
 			updateApplicationIngress(h, "internal")
 
 			//wait for router-default service loadbalancer to have an annotation indicating its scheme is internal
@@ -55,8 +54,6 @@ var _ = ginkgo.Describe(constants.SuiteInforming+TestPrefix, func() {
 			Expect(ingress.Annotations["Owner"]).To(Equal("cloud-ingress-operator"))
 
 		})
-    
-		util.GinkgoIt("should be able to toggle the default applicationingress from private to public", func() {
 
 		ginkgo.It("should be able to toggle the default applicationingress from private to public", func() {
 			updateApplicationIngress(h, "external")
