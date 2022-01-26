@@ -8,6 +8,18 @@ then
 	exit 1
 fi
 
+if [ -n "$(command -v apt-get)" ]; then
+	apt update
+	apt install -y jq
+fi
+if [ -n "$(command -v yum)" ]; then
+	yum install -y jq
+fi
+if [ -n "$(command -v apk)" ]; then
+	apk update
+	apk add jq
+fi
+
 # Load secrets from a given directory.
 AWS_ACCESS_KEY_ID="$(cat "$1/rosa-aws-access-key")"
 AWS_SECRET_ACCESS_KEY="$(cat "$1/rosa-aws-secret-access-key")"

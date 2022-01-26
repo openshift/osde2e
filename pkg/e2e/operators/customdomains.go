@@ -49,7 +49,7 @@ const (
 )
 
 func init() {
-	alert.RegisterGinkgoAlert(customDomainsOperatorTestName, "SD-SREP", "Dustin Row", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+	alert.RegisterGinkgoAlert(customDomainsOperatorTestName, "SD-SREP", "@custom-domains-operator", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
 }
 
 var _ = ginkgo.Describe(customDomainsOperatorTestName, func() {
@@ -69,7 +69,7 @@ var _ = ginkgo.Describe(customDomainsOperatorTestName, func() {
 
 	ginkgo.Context("Should allow dedicated-admins to create custom domains", func() {
 		var (
-			h   = helper.New()
+			h = helper.New()
 
 			testInstanceName = "test-" + time.Now().Format("20060102-150405-") + fmt.Sprint(time.Now().Nanosecond()/1000000) + "-" + fmt.Sprint(ginkgo.GinkgoParallelNode())
 			testDomain       *customdomainv1alpha1.CustomDomain

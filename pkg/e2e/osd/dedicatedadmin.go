@@ -23,7 +23,7 @@ import (
 var dedicatedAdminTestName string = "[Suite: informing] [OSD] dedicated-admin permissions"
 
 func init() {
-	alert.RegisterGinkgoAlert(dedicatedAdminTestName, "SD-SREP", "Matt Bargenquast", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+	alert.RegisterGinkgoAlert(dedicatedAdminTestName, "SD-SREP", "@dedicated-admin-operator", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
 }
 
 var _ = ginkgo.Describe(dedicatedAdminTestName, func() {

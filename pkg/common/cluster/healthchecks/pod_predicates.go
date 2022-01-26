@@ -1,6 +1,9 @@
 package healthchecks
 
-import kubev1 "k8s.io/api/core/v1"
+import (
+	kubev1 "k8s.io/api/core/v1"
+	"time"
+)
 
 type PodPredicate func(kubev1.Pod) bool
 
@@ -48,4 +51,19 @@ func IsNotControlledByJob(pod kubev1.Pod) bool {
 		return pod.OwnerReferences[0].Kind != "Job"
 	}
 	return true
+}
+
+func IsOlderThan(d time.Duration) PodPredicate {
+	return func(p kubev1.Pod) bool {
+		return olderThan(p, d)
+	}
+}
+
+func olderThan(pod kubev1.Pod, d time.Duration) bool {
+	// Let's not just assume that a caller gave a negative duration
+	if d > 0 {
+		d = -d
+	}
+	beforeTime := time.Now().Add(d)
+	return pod.CreationTimestamp.Time.Before(beforeTime)
 }

@@ -24,7 +24,7 @@ import (
 var routeMonitorOperatorTestName string = "[Suite: informing] [OSD] Route Monitor Operator (rmo)"
 
 func init() {
-	alert.RegisterGinkgoAlert(routeMonitorOperatorTestName, "SD-SREP", "Ron Green", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+	alert.RegisterGinkgoAlert(routeMonitorOperatorTestName, "SD-SREP", "@sre-platform-team-orange", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
 }
 
 var _ = ginkgo.Describe(routeMonitorOperatorTestName, func() {

@@ -8,9 +8,9 @@ import (
 	. "github.com/onsi/gomega"
 	osv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/osde2e/pkg/common/alert"
+	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/helper"
-	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -19,7 +19,7 @@ import (
 var certmanOperatorTestName string = "[Suite: operators] [OSD] Certman Operator"
 
 func init() {
-	alert.RegisterGinkgoAlert(certmanOperatorTestName, "SD-SREP", "Christoph Blecker", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+	alert.RegisterGinkgoAlert(certmanOperatorTestName, "SD-SREP", "@certman-operator", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
 }
 
 var _ = ginkgo.Describe(certmanOperatorTestName, func() {
