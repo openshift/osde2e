@@ -10,7 +10,7 @@ require (
 	github.com/PuerkitoBio/goquery v1.8.0
 	github.com/adamliesko/retry v0.0.0-20200123222335-86c8baac277d
 	github.com/antlr/antlr4 v0.0.0-20200209180723-1177c0b58d07
-	github.com/aws/aws-sdk-go v1.42.39
+	github.com/aws/aws-sdk-go v1.42.41
 	github.com/bmizerany/perks v0.0.0-20141205001514-d9a9656a3a4b // indirect
 	github.com/cenkalti/backoff/v4 v4.1.0 // indirect
 	github.com/code-ready/crc v1.10.0
