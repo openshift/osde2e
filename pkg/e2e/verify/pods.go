@@ -6,7 +6,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/onsi/ginkgo"
+	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
 	v1 "k8s.io/api/core/v1"
@@ -15,6 +15,7 @@ import (
 
 	"github.com/openshift/osde2e/pkg/common/alert"
 	"github.com/openshift/osde2e/pkg/common/helper"
+	"github.com/openshift/osde2e/pkg/common/util"
 )
 
 var podsTestName string = "[Suite: e2e] Pods"
@@ -26,7 +27,7 @@ func init() {
 var _ = ginkgo.Describe(podsTestName, func() {
 	h := helper.New()
 
-	ginkgo.It("should be Running or Succeeded", func() {
+	util.GinkgoIt("should be Running or Succeeded", func() {
 		var (
 			interval = 30 * time.Second
 			timeout  = 10 * time.Minute
@@ -69,7 +70,7 @@ var _ = ginkgo.Describe(podsTestName, func() {
 		Expect(curRatio).Should(Equal(requiredRatio), msg, curRatio, requiredRatio, listPodPhases(notReady))
 	}, 300)
 
-	ginkgo.It("should not be Failed", func() {
+	util.GinkgoIt("should not be Failed", func() {
 		list, err := h.Kube().CoreV1().Pods(metav1.NamespaceAll).List(context.TODO(), metav1.ListOptions{})
 		filteredList := &v1.PodList{}
 

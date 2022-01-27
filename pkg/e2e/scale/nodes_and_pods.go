@@ -3,12 +3,13 @@ package scale
 import (
 	"strconv"
 
-	"github.com/onsi/ginkgo"
+	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	kubev1 "k8s.io/api/core/v1"
 
 	"github.com/openshift/osde2e/pkg/common/alert"
 	"github.com/openshift/osde2e/pkg/common/helper"
+	"github.com/openshift/osde2e/pkg/common/util"
 )
 
 const (
@@ -26,7 +27,7 @@ var _ = ginkgo.Describe(nodesPodsTestName, func() {
 	h := helper.New()
 
 	nodeVerticalTimeoutInSeconds := 3600
-	ginkgo.It("should be tested with NodeVertical", func() {
+	util.GinkgoIt("should be tested with NodeVertical", func() {
 		h.SetServiceAccount("system:serviceaccount:%s:cluster-admin")
 		// setup runner
 		scaleCfg := scaleRunnerConfig{
@@ -53,7 +54,7 @@ var _ = ginkgo.Describe(nodesPodsTestName, func() {
 	}, float64(nodeVerticalTimeoutInSeconds))
 
 	podVerticalTimeoutInSeconds := 3600
-	ginkgo.It("should be tested with PodVertical", func() {
+	util.GinkgoIt("should be tested with PodVertical", func() {
 		h.SetServiceAccount("system:serviceaccount:%s:cluster-admin")
 		// setup runner
 		scaleCfg := scaleRunnerConfig{

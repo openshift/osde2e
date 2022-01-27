@@ -1,9 +1,10 @@
 package scale
 
 import (
-	"github.com/onsi/ginkgo"
+	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
+	"github.com/openshift/osde2e/pkg/common/util"
 	kubev1 "k8s.io/api/core/v1"
 
 	"github.com/openshift/osde2e/pkg/common/alert"
@@ -27,7 +28,7 @@ var _ = ginkgo.Describe(masterVerticalTestName, func() {
 	h := helper.New()
 
 	masterVerticalTimeoutInSeconds := 7200
-	ginkgo.It("should be tested with MasterVertical", func() {
+	util.GinkgoIt("should be tested with MasterVertical", func() {
 		var err error
 		// Before we do anything, scale the cluster.
 		err = cluster.ScaleCluster(viper.GetString(config.Cluster.ID), numNodesToScaleTo)

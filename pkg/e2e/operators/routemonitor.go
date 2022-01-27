@@ -7,11 +7,12 @@ import (
 
 	// "reflect" this is needed when PR https://github.com/openshift/route-monitor-operator/pull/94 is merged
 
-	"github.com/onsi/ginkgo"
+	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega" // go-staticcheck ST1001  should not use dot imports
 
 	"github.com/openshift/osde2e/pkg/common/alert"
 	"github.com/openshift/osde2e/pkg/common/helper"
+	"github.com/openshift/osde2e/pkg/common/util"
 
 	"k8s.io/apimachinery/pkg/util/wait"
 
@@ -64,7 +65,7 @@ var _ = ginkgo.Describe(routeMonitorOperatorTestName, func() {
 
 func verifyExistingRouteMonitorsAreValid(h *helper.H) {
 	ginkgo.Context("rmo Route Monitor Operator regression for console", func() {
-		ginkgo.It("has all of the required resouces", func() {
+		util.GinkgoIt("has all of the required resouces", func() {
 			const (
 				consoleNamespace = "openshift-route-monitor-operator"
 				consoleName      = "console"
@@ -81,7 +82,7 @@ func verifyExistingRouteMonitorsAreValid(h *helper.H) {
 }
 func testRouteMonitorCreationWorks(h *helper.H) {
 	ginkgo.Context("rmo Route Monitor Operator integration test", func() {
-		ginkgo.It("Creates and deletes a RouteMonitor to see if it works accordingly", func() {
+		util.GinkgoIt("Creates and deletes a RouteMonitor to see if it works accordingly", func() {
 			var (
 				routeMonitorNamespace = h.CurrentProject()
 				err                   error

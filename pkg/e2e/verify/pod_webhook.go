@@ -5,10 +5,11 @@ import (
 	"log"
 	"time"
 
-	"github.com/onsi/ginkgo"
+	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/openshift/osde2e/pkg/common/alert"
 	"github.com/openshift/osde2e/pkg/common/helper"
+	"github.com/openshift/osde2e/pkg/common/util"
 	v1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -34,7 +35,7 @@ var _ = ginkgo.Describe(podWebhookTestName, func() {
 
 	ginkgo.Context("pod webhook", func() {
 
-		ginkgo.It("Verify the validation webhook service is running", func() {
+		util.GinkgoIt("Verify the validation webhook service is running", func() {
 			namespace := "openshift-validation-webhook"
 			daemonSetName := "validation-webhook"
 			serviceName := "validation-webhook"
@@ -51,7 +52,7 @@ var _ = ginkgo.Describe(podWebhookTestName, func() {
 		//Dedicated admin can not deploy pod on master on infra nodes in namespaces
 		//openshift-operators, openshift-logging namespace or any other namespace that is not a core namespace like openshift-*, redhat-*, default, kube-*.
 
-		ginkgo.It("Test 1: Webhook will mark pod spec invalid and block deploying", func() {
+		util.GinkgoIt("Test 1: Webhook will mark pod spec invalid and block deploying", func() {
 			name := "osde2e-pod-webhook-test1"
 			namespace := "openshift-logging"
 			createNamespace(namespace, h)
@@ -73,7 +74,7 @@ var _ = ginkgo.Describe(podWebhookTestName, func() {
 			Expect(apierrors.IsForbidden(err)).To(BeTrue())
 		})
 
-		ginkgo.It("Test 2: Webhook will mark pod spec invalid and block deploying", func() {
+		util.GinkgoIt("Test 2: Webhook will mark pod spec invalid and block deploying", func() {
 			name := "osde2e-pod-webhook-test2"
 			namespace := "openshift-logging"
 			h.Impersonate(rest.ImpersonationConfig{
@@ -94,7 +95,7 @@ var _ = ginkgo.Describe(podWebhookTestName, func() {
 		})
 
 		// The serviceaccount:dedicated-admin-project is allowed to launch a pod and the pod-webhook will allow it
-		ginkgo.It("Webhook will allow pod to deploy", func() {
+		util.GinkgoIt("Webhook will allow pod to deploy", func() {
 			name := "osde2e-pod-webhook-test3"
 			namespace := "openshift-apiserver"
 			h.SetServiceAccount("system:serviceaccount:%s:dedicated-admin-project")
@@ -104,7 +105,7 @@ var _ = ginkgo.Describe(podWebhookTestName, func() {
 		})
 
 		// RBAC blocks dedicated-admins group from creating a pod in openshift-apiserver namespace
-		ginkgo.It("Webhook will allow pod to deploy", func() {
+		util.GinkgoIt("Webhook will allow pod to deploy", func() {
 			name := "osde2e-pod-webhook-test3"
 			namespace := "openshift-apiserver"
 			impersonateDedicatedAdmin(h, "test-user")
@@ -118,7 +119,7 @@ var _ = ginkgo.Describe(podWebhookTestName, func() {
 
 		// RBAC will prevent ordinary users from creating pods
 
-		ginkgo.It("RBAC will deny deploying pod", func() {
+		util.GinkgoIt("RBAC will deny deploying pod", func() {
 			name := "osde2e-pod-webhook-test4"
 			namespace := "openshift-logging"
 			user := "alice"
@@ -136,7 +137,7 @@ var _ = ginkgo.Describe(podWebhookTestName, func() {
 	})
 
 	ginkgo.Context("pod webhook", func() {
-		ginkgo.It("RBAC will deny deploying pod", func() {
+		util.GinkgoIt("RBAC will deny deploying pod", func() {
 			name := "osde2e-pod-webhook-test4"
 			namespace := "random-namespace"
 			user := "alice"

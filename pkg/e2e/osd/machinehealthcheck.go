@@ -3,12 +3,13 @@ package osd
 import (
 	"context"
 
-	"github.com/onsi/ginkgo"
+	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
 	machineV1beta1 "github.com/openshift/machine-api-operator/pkg/apis/machine/v1beta1"
 	"github.com/openshift/osde2e/pkg/common/alert"
 	"github.com/openshift/osde2e/pkg/common/helper"
+	"github.com/openshift/osde2e/pkg/common/util"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -26,8 +27,9 @@ func init() {
 
 var _ = ginkgo.Describe(machineHealthTestName, func() {
 	h := helper.New()
+	runnerTimeout := 30
 
-	ginkgo.It("infra MHC should exist", func() {
+	util.GinkgoIt("infra MHC should exist", func() {
 		mhc, err := h.Machine().MachineV1beta1().MachineHealthChecks(machineAPINamespace).Get(context.TODO(), "srep-infra-healthcheck", metav1.GetOptions{})
 		Expect(err).NotTo(HaveOccurred())
 
@@ -53,7 +55,7 @@ var _ = ginkgo.Describe(machineHealthTestName, func() {
 		))
 	})
 
-	ginkgo.It("worker MHC should exist", func() {
+	util.GinkgoIt("worker MHC should exist", func() {
 		mhc, err := h.Machine().MachineV1beta1().MachineHealthChecks(machineAPINamespace).Get(context.TODO(), "srep-worker-healthcheck", metav1.GetOptions{})
 		Expect(err).NotTo(HaveOccurred())
 
@@ -79,7 +81,7 @@ var _ = ginkgo.Describe(machineHealthTestName, func() {
 		))
 	})
 
-	ginkgo.It("should replace unhealthy nodes", func() {
+	util.GinkgoIt("should replace unhealthy nodes", func() {
 		r := h.Runner("chroot /host -- systemctl stop kubelet")
 		r.Name = "stop-kubelet"
 		// i can't believe SecurityContext.Privileged is a pointer to a bool
@@ -103,12 +105,12 @@ var _ = ginkgo.Describe(machineHealthTestName, func() {
 
 		// execute the runner
 		stopCh := make(chan struct{})
-		err = r.Run(30, stopCh)
+		err = r.Run(runnerTimeout, stopCh)
 		Expect(err).NotTo(HaveOccurred())
 
 		// wait and confirm that there's a new machine
 		newMachines, err := h.Machine().MachineV1beta1().Machines(machineAPINamespace).List(context.TODO(), metav1.ListOptions{})
 		Expect(err).NotTo(HaveOccurred())
 		Expect(originalMachines).NotTo(Equal(newMachines))
-	})
+	}, float64(runnerTimeout+2))
 })

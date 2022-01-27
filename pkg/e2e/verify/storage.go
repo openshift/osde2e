@@ -7,11 +7,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/onsi/ginkgo"
+	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
 	"github.com/openshift/osde2e/pkg/common/alert"
 	"github.com/openshift/osde2e/pkg/common/helper"
+	"github.com/openshift/osde2e/pkg/common/util"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/api/storage/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -40,7 +41,7 @@ var _ = ginkgo.Describe(storageTestName, func() {
 
 	ginkgo.Context("storage", func() {
 
-		ginkgo.It("create PVCs", func() {
+		util.GinkgoIt("create PVCs", func() {
 
 			sc, err := h.Kube().StorageV1().StorageClasses().List(context.TODO(), metav1.ListOptions{})
 			Expect(err).NotTo(HaveOccurred(), "couldn't list StorageClasses")
@@ -74,12 +75,12 @@ var _ = ginkgo.Describe(storageTestName, func() {
 
 			}
 
-		})
+		}, float64(60*time.Second))
 
 	})
 
 	ginkgo.Context("sc-list", func() {
-		ginkgo.It("should be able to be expanded", func() {
+		util.GinkgoIt("should be able to be expanded", func() {
 			scList, err := h.Kube().StorageV1().StorageClasses().List(context.TODO(), metav1.ListOptions{})
 			Expect(err).NotTo(HaveOccurred(), "couldn't list StorageClasses")
 			Expect(scList).NotTo(BeNil())
@@ -282,7 +283,7 @@ func createTestPod(h *helper.H, namespace string, pvclaims []*corev1.PersistentV
 // the pod has already reached completed state.
 var errPodCompleted = fmt.Errorf("pod ran to completion")
 
-// podRunning checks if pod is running 
+// podRunning checks if pod is running
 func podRunning(h *helper.H, podName, namespace string) wait.ConditionFunc {
 	return func() (bool, error) {
 		pod, err := h.Kube().CoreV1().Pods(namespace).Get(context.TODO(), podName, metav1.GetOptions{})

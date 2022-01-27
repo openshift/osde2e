@@ -5,7 +5,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/onsi/ginkgo"
+	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	v1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	kv1 "k8s.io/api/core/v1"
@@ -37,7 +37,7 @@ var _ = ginkgo.Describe(userWorkloadMonitoringTestName, func() {
 	uwmtestns := util.RandomStr(5)
 
 	ginkgo.Context("User Workload Monitoring", func() {
-		ginkgo.It("has the required prerequisites for testing", func() {
+		util.GinkgoIt("has the required prerequisites for testing", func() {
 			//Create a new user that will have dedicated-admin privileges, add the user to the dedicated-admins group
 			_, err := helper.CreateUser(userName, identities, groups, h)
 			Expect(err).NotTo(HaveOccurred(), "Could not create user workload monitoring testing user")
@@ -57,7 +57,7 @@ var _ = ginkgo.Describe(userWorkloadMonitoringTestName, func() {
 			Expect(err).NotTo(HaveOccurred(), "Could not create user workload monitoring testing service")
 		})
 
-		ginkgo.It("has create access to the user-workload-monitoring-config configmap", func() {
+		util.GinkgoIt("has create access to the user-workload-monitoring-config configmap", func() {
 			h.Impersonate(rest.ImpersonationConfig{
 				UserName: userName,
 				Groups:   []string{"system:authenticated", "system:authenticated:oauth", "dedicated-admins"},
@@ -74,7 +74,7 @@ var _ = ginkgo.Describe(userWorkloadMonitoringTestName, func() {
 		})
 
 		//Verify prometheus-operator pod && promethus-user-workload*/thanos-ruler-user-workload* pods are active
-		ginkgo.It("has the required prometheus and thanos pods", func() {
+		util.GinkgoIt("has the required prometheus and thanos pods", func() {
 			h.Impersonate(rest.ImpersonationConfig{
 				UserName: userName,
 				Groups:   []string{"system:authenticated", "system:authenticated:oauth", "dedicated-admins"},
@@ -88,7 +88,7 @@ var _ = ginkgo.Describe(userWorkloadMonitoringTestName, func() {
 			}
 		})
 		//Verify a dedicated admin can create ServiceMonitor objects
-		ginkgo.It("has access to create SerivceMonitor objects", func() {
+		util.GinkgoIt("has access to create SerivceMonitor objects", func() {
 			h.Impersonate(rest.ImpersonationConfig{
 				UserName: userName,
 				Groups:   []string{"system:authenticated", "system:authenticated:oauth", "dedicated-admins"},
@@ -107,7 +107,7 @@ var _ = ginkgo.Describe(userWorkloadMonitoringTestName, func() {
 		})
 
 		//Verify a dedicated admin can create PrometheusRule objects
-		ginkgo.It("has access to create PrometheusRule objects", func() {
+		util.GinkgoIt("has access to create PrometheusRule objects", func() {
 			h.Impersonate(rest.ImpersonationConfig{
 				UserName: userName,
 				Groups:   []string{"system:authenticated", "system:authenticated:oauth", "dedicated-admins"},

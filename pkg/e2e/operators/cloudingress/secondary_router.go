@@ -8,12 +8,13 @@ import (
 
 	"time"
 
-	"github.com/onsi/ginkgo"
+	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	cloudingressv1alpha1 "github.com/openshift/cloud-ingress-operator/pkg/apis/cloudingress/v1alpha1"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/constants"
 	"github.com/openshift/osde2e/pkg/common/helper"
+	"github.com/openshift/osde2e/pkg/common/util"
 	"github.com/openshift/osde2e/pkg/e2e/operators"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -30,7 +31,7 @@ var _ = ginkgo.Describe(constants.SuiteInforming+TestPrefix, func() {
 
 	h := helper.New()
 	ginkgo.Context("secondary router", func() {
-		ginkgo.It("should be created when added to publishingstrategy ", func() {
+		util.GinkgoIt("should be created when added to publishingstrategy ", func() {
 
 			secondaryIngress := secondaryIngress(h)
 
@@ -60,7 +61,7 @@ var _ = ginkgo.Describe(constants.SuiteInforming+TestPrefix, func() {
 			Expect(deployment.Status.ReadyReplicas).To(BeNumerically("==", deployment.Status.Replicas))
 		})
 
-		ginkgo.It("should be deleted when removed from publishingstrategy", func() {
+		util.GinkgoIt("should be deleted when removed from publishingstrategy", func() {
 			secondaryIngress := secondaryIngress(h)
 
 			_, exists, index := appIngressExits(h, false, secondaryIngress.DNSName)

@@ -12,7 +12,7 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/onsi/ginkgo"
+	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 
@@ -81,6 +81,8 @@ type H struct {
 // Setup configures a *rest.Config using the embedded kubeconfig then sets up a Project for tests to run in.
 func (h *H) Setup() error {
 	var err error
+
+	defer ginkgo.GinkgoRecover()
 
 	h.restConfig, err = clientcmd.RESTConfigFromKubeConfig([]byte(viper.GetString(config.Kubeconfig.Contents)))
 	if h.OutsideGinkgo && err != nil {

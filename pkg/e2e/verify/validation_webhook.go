@@ -6,11 +6,12 @@ import (
 	kubev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/onsi/ginkgo"
+	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
 	"github.com/openshift/osde2e/pkg/common/alert"
 	"github.com/openshift/osde2e/pkg/common/helper"
+	"github.com/openshift/osde2e/pkg/common/util"
 )
 
 var validationWebhookTestName string = "[Suite: e2e] Validation Webhook"
@@ -27,7 +28,7 @@ var _ = ginkgo.Describe(validationWebhookTestName, func() {
 
 	h := helper.New()
 
-	ginkgo.It("should exist and be running in the cluster", func() {
+	util.GinkgoIt("should exist and be running in the cluster", func() {
 
 		// Expect project to exist
 		_, err := h.Project().ProjectV1().Projects().Get(context.TODO(), namespace, metav1.GetOptions{})

@@ -14,7 +14,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/onsi/ginkgo/reporters"
+	"github.com/onsi/ginkgo/v2/reporters"
+	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/events"
 	"github.com/openshift/osde2e/pkg/common/metadata"
@@ -22,7 +23,6 @@ import (
 	"github.com/openshift/osde2e/pkg/common/spi"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/common/expfmt"
-	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 )
 
 const (
@@ -189,7 +189,7 @@ func (m *Metrics) processJUnitXMLFile(phase string, junitFile string) (err error
 
 	for _, testcase := range testSuite.TestCases {
 		var result string
-		if testcase.FailureMessage != nil {
+		if testcase.Failure != nil {
 			result = "failed"
 		} else if testcase.Skipped != nil {
 			result = "skipped"

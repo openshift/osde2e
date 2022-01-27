@@ -5,17 +5,18 @@ import (
 	"log"
 	"strings"
 	"time"
-	"github.com/onsi/ginkgo"
+
+	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	operatorv1 "github.com/openshift/api/operator/v1"
 	cloudingressv1alpha1 "github.com/openshift/cloud-ingress-operator/pkg/apis/cloudingress/v1alpha1"
 	"github.com/openshift/osde2e/pkg/common/constants"
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/e2e/operators"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/util/wait"
 )
 
@@ -63,7 +64,7 @@ var _ = ginkgo.Describe(constants.SuiteInforming+TestPrefix, func() {
 	})
 })
 
-func removeIngressController(h *helper.H, name string) error{
+func removeIngressController(h *helper.H, name string) error {
 	_, exists, index := appIngressExits(h, false, name)
 	// only remove the secondary ingress if it already exist in the publishing strategy
 	if exists {
