@@ -28,6 +28,7 @@ import (
 	vegeta "github.com/tsenart/vegeta/lib"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/wait"
 
 	pd "github.com/PagerDuty/go-pagerduty"
 	"github.com/onsi/ginkgo/v2"
@@ -143,13 +144,23 @@ func beforeSuite() bool {
 		}
 
 		var kubeconfigBytes []byte
-		if kubeconfigBytes, err = provider.ClusterKubeconfig(viper.GetString(config.Cluster.ID)); err != nil {
+		clusterConfigerr := wait.PollImmediate(2*time.Second, 5*time.Minute, func() (bool, error) {
+			kubeconfigBytes, err = provider.ClusterKubeconfig(viper.GetString(config.Cluster.ID))
+			if err != nil {
+				log.Printf("Failed to get kubeconfig from OCM: %v\nWaiting two seconds before retrying", err)
+				return false, err
+			} else {
+				viper.Set(config.Kubeconfig.Contents, string(kubeconfigBytes))
+				return true, nil
+			}
+		})
+
+		if clusterConfigerr != nil {
 			events.HandleErrorWithEvents(err, events.InstallKubeconfigRetrievalSuccess, events.InstallKubeconfigRetrievalFailure)
-			log.Printf("Failed retrieving kubeconfig: %v", err)
+			log.Printf("Failed retrieving kubeconfig: %v", clusterConfigerr)
 			getLogs()
 			return false
 		}
-		viper.Set(config.Kubeconfig.Contents, string(kubeconfigBytes))
 
 		getLogs()
 
