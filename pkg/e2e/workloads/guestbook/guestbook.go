@@ -8,14 +8,23 @@ import (
 
 	v1 "github.com/openshift/api/route/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/wait"
 
 	"github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
 	"github.com/openshift/osde2e/pkg/common/alert"
 	"github.com/openshift/osde2e/pkg/common/cluster/healthchecks"
+	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
+	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/helper"
-	"k8s.io/apimachinery/pkg/util/wait"
+)
+
+const (
+	// Service name for the guestbook front-end
+	guestbookSvcName = "frontend"
+	// Service port for the guestbook front-end
+	guestbookSvcPort = "3000"
 )
 
 // Specify where the YAML definitions are for the workloads.
@@ -95,6 +104,23 @@ var _ = ginkgo.Describe(testName, func() {
 })
 
 func doTest(h *helper.H) {
-	_, err := h.Kube().CoreV1().Services(h.CurrentProject()).ProxyGet("http", "frontend", "3000", "/", nil).DoRaw(context.TODO())
+
+	// track if error occurs
+	var err error
+
+	// duration in seconds between polls
+	interval := 5
+
+	// convert time.Duration type
+	timeoutDuration := time.Duration(viper.GetFloat64(config.Tests.PollingTimeout)) * time.Second
+	intervalDuration := time.Duration(interval) * time.Second
+
+	err = wait.PollImmediate(intervalDuration, timeoutDuration, func() (bool, error) {
+		_, err = h.Kube().CoreV1().Services(h.CurrentProject()).ProxyGet("http", guestbookSvcName, guestbookSvcPort, "/", nil).DoRaw(context.TODO())
+		if err == nil {
+			return true, nil
+		}
+		return false, nil
+	})
 	Expect(err).NotTo(HaveOccurred(), "unable to access front end of app")
 }
