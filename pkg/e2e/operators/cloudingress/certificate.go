@@ -29,8 +29,6 @@ var _ = ginkgo.Describe(constants.SuiteInforming+TestPrefix, func() {
 			ingress, _ := getingressController(h, "default")
 
 			Expect(string(ingress.Spec.DefaultCertificate.Name)).To(Equal("foo-bar"))
-			Expect(ingress.Generation == int64(1)).To(Equal(false))
-			Expect(ingress.Annotations["Owner"]).To(Equal("cloud-ingress-operator"))
 		}, pollingDuration.Seconds())
 
 		ginkgo.It("IngressController should be patched when return the original Certificate", func() {
@@ -38,8 +36,6 @@ var _ = ginkgo.Describe(constants.SuiteInforming+TestPrefix, func() {
 			time.Sleep(pollingDuration)
 			ingress, _ := getingressController(h, "default")
 			Expect(string(ingress.Spec.DefaultCertificate.Name)).To(Equal(originalCert))
-			Expect(ingress.Generation == int64(1)).To(Equal(false))
-			Expect(ingress.Annotations["Owner"]).To(Equal("cloud-ingress-operator"))
 		}, pollingDuration.Seconds())
 	})
 })
