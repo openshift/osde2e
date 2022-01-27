@@ -71,5 +71,5 @@ var _ = ginkgo.Describe(clusterStateInformingName, func() {
 
 		// write results
 		h.WriteResults(results)
-	}, float64(prometheusTimeoutInSeconds+30))
+	}, float64(prometheusTimeoutInSeconds+60))
 })

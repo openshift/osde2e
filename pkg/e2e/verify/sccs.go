@@ -79,7 +79,7 @@ var _ = ginkgo.Describe(dedicatedAdminSccTestName, func() {
 				return false, nil
 			})
 			Expect(err).NotTo(HaveOccurred())
-		})
+		}, float64(60*time.Second))
 	})
 })
 

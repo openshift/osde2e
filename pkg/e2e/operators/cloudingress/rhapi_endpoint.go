@@ -129,7 +129,7 @@ func testCIDRBlockUpdates(h *helper.H) {
 			res := reflect.DeepEqual(CIDRBlock, rhAPIService.Spec.LoadBalancerSourceRanges)
 			Expect(res).Should(BeTrue())
 
-		})
+		}, float64(60*time.Second))
 	})
 }
 

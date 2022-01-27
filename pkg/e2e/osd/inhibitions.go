@@ -25,7 +25,7 @@ const (
 	AlertmanagerConfigFileName   = "alertmanager.yaml"
 	AlertmanagerConfigSecretName = "alertmanager-main"
 	MonitoringNamespace          = "openshift-monitoring"
-	IdentityProviderName = "oidcidp"
+	IdentityProviderName         = "oidcidp"
 )
 
 // tests start here
@@ -185,7 +185,7 @@ var _ = ginkgo.Describe(inhibitionsTestName, func() {
 		}
 		Expect(operatorDownAlertPresent).To(BeTrue())
 		Expect(operatorDegradedAlertPresent).To(BeFalse())
-	})
+	}, float64(60*time.Second))
 })
 
 func cleanup(h *helper.H) {

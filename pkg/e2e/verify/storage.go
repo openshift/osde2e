@@ -75,7 +75,7 @@ var _ = ginkgo.Describe(storageTestName, func() {
 
 			}
 
-		})
+		}, float64(60*time.Second))
 
 	})
 
