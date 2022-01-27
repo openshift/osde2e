@@ -46,7 +46,7 @@ func GinkgoIt(text string, body func(), timeout ...float64) bool {
 			body()
 			close(done)
 		}()
-		duration := time.Duration(1) * time.Second
+		duration := time.Duration(5) * time.Second
 		if len(timeout) > 0 {
 			duration = time.Duration(timeout[0]) * time.Second
 		}

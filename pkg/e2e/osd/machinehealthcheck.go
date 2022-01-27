@@ -27,6 +27,7 @@ func init() {
 
 var _ = ginkgo.Describe(machineHealthTestName, func() {
 	h := helper.New()
+	runnerTimeout := 30
 
 	util.GinkgoIt("infra MHC should exist", func() {
 		mhc, err := h.Machine().MachineV1beta1().MachineHealthChecks(machineAPINamespace).Get(context.TODO(), "srep-infra-healthcheck", metav1.GetOptions{})
@@ -104,12 +105,12 @@ var _ = ginkgo.Describe(machineHealthTestName, func() {
 
 		// execute the runner
 		stopCh := make(chan struct{})
-		err = r.Run(30, stopCh)
+		err = r.Run(runnerTimeout, stopCh)
 		Expect(err).NotTo(HaveOccurred())
 
 		// wait and confirm that there's a new machine
 		newMachines, err := h.Machine().MachineV1beta1().Machines(machineAPINamespace).List(context.TODO(), metav1.ListOptions{})
 		Expect(err).NotTo(HaveOccurred())
 		Expect(originalMachines).NotTo(Equal(newMachines))
-	})
+	}, float64(runnerTimeout+2))
 })
