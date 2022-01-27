@@ -24,6 +24,7 @@ const (
 	AlertmanagerConfigFileName   = "alertmanager.yaml"
 	AlertmanagerConfigSecretName = "alertmanager-main"
 	MonitoringNamespace          = "openshift-monitoring"
+	IdentityProviderName = "oidcidp"
 )
 
 // tests start here
@@ -105,7 +106,7 @@ var _ = ginkgo.Describe(inhibitionsTestName, func() {
 	ginkgo.It("inhibits ClusterOperatorDegraded", func() {
 		// define an IdP that will cause the authentication operator to degrade
 		degradingIdentityProvider := configV1.IdentityProvider{
-			Name:          "oidcidp",
+			Name:          IdentityProviderName,
 			MappingMethod: "claim",
 			IdentityProviderConfig: configV1.IdentityProviderConfig{
 				Type: configV1.IdentityProviderTypeOpenID,
@@ -130,6 +131,9 @@ var _ = ginkgo.Describe(inhibitionsTestName, func() {
 			},
 		}
 
+		// Clean up the IDP if it already existed for some reason
+		cleanup(h)
+
 		// send the IdP in as a patch to the cluster oauth. this will cause the
 		// authentication cluster operator to degrade, and since there is only one
 		// pod, it will also be down.
@@ -150,23 +154,7 @@ var _ = ginkgo.Describe(inhibitionsTestName, func() {
 
 		// clean up after this test completes
 		defer func() {
-			err := retry.RetryOnConflict(retry.DefaultBackoff, func() error {
-				oauthcfg, err := h.Cfg().ConfigV1().OAuths().Get(context.TODO(), "cluster", metav1.GetOptions{})
-				Expect(err).To(BeNil())
-				foundidx := -1
-				for i, idp := range oauthcfg.Spec.IdentityProviders {
-					if idp.Name == degradingIdentityProvider.Name {
-						foundidx = i
-						break
-					}
-				}
-				if foundidx >= 0 {
-					oauthcfg.Spec.IdentityProviders = append(oauthcfg.Spec.IdentityProviders[:foundidx], oauthcfg.Spec.IdentityProviders[foundidx+1:]...)
-					_, err = h.Cfg().ConfigV1().OAuths().Update(context.TODO(), oauthcfg, metav1.UpdateOptions{})
-				}
-				return err
-			})
-			Expect(err).To(BeNil())
+			cleanup(h)
 		}()
 
 		// the clusteroperatordown/degraded alerts take 10 minutes to trip
@@ -198,6 +186,26 @@ var _ = ginkgo.Describe(inhibitionsTestName, func() {
 		Expect(operatorDegradedAlertPresent).To(BeFalse())
 	})
 })
+
+func cleanup(h *helper.H) {
+	err := retry.RetryOnConflict(retry.DefaultBackoff, func() error {
+		oauthcfg, err := h.Cfg().ConfigV1().OAuths().Get(context.TODO(), "cluster", metav1.GetOptions{})
+		Expect(err).To(BeNil())
+		foundidx := -1
+		for i, idp := range oauthcfg.Spec.IdentityProviders {
+			if idp.Name == IdentityProviderName {
+				foundidx = i
+				break
+			}
+		}
+		if foundidx >= 0 {
+			oauthcfg.Spec.IdentityProviders = append(oauthcfg.Spec.IdentityProviders[:foundidx], oauthcfg.Spec.IdentityProviders[foundidx+1:]...)
+			_, err = h.Cfg().ConfigV1().OAuths().Update(context.TODO(), oauthcfg, metav1.UpdateOptions{})
+		}
+		return err
+	})
+	Expect(err).To(BeNil())
+}
 
 // utils
 func init() {
