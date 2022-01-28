@@ -26,7 +26,7 @@ import (
 var ocmTestName string = "[Suite: e2e] [OSD] OCM"
 
 func init() {
-	alert.RegisterGinkgoAlert(ocmTestName, "SD-CICD", "Jeffrey Sica", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+	alert.RegisterGinkgoAlert(ocmTestName, "SD-CICD", "Diego Santamaria", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
 }
 
 const (

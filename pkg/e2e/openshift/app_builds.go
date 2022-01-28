@@ -44,7 +44,7 @@ var testApplications = []string{
 var appBuildsTestName string = "[Suite: app-builds] OpenShift Application Build E2E"
 
 func init() {
-	alert.RegisterGinkgoAlert(appBuildsTestName, "SD-CICD", "Jeffrey Sica", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+	alert.RegisterGinkgoAlert(appBuildsTestName, "SD-CICD", "Diego Santamaria", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
 }
 
 var _ = ginkgo.Describe(appBuildsTestName, func() {

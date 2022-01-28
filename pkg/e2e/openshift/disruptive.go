@@ -13,7 +13,7 @@ import (
 var disruptiveTestName = "[Suite: openshift][disruptive]"
 
 func init() {
-	alert.RegisterGinkgoAlert(disruptiveTestName, "SD-CICD", "Jeffrey Sica", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+	alert.RegisterGinkgoAlert(disruptiveTestName, "SD-CICD", "Diego Santamaria", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
 }
 
 // Disruptive tests require SSH access to nodes.
