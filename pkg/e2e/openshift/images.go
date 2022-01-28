@@ -14,8 +14,8 @@ var imageRegistryTestName string = "[Suite: openshift][image-registry]"
 var imageEcosystemTestName string = "[Suite: openshift][image-ecosystem]"
 
 func init() {
-	alert.RegisterGinkgoAlert(imageRegistryTestName, "SD-CICD", "Jeffrey Sica", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
-	alert.RegisterGinkgoAlert(imageEcosystemTestName, "SD-CICD", "Jeffrey Sica", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+	alert.RegisterGinkgoAlert(imageRegistryTestName, "SD-CICD", "Diego Santamaria", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+	alert.RegisterGinkgoAlert(imageEcosystemTestName, "SD-CICD", "Diego Santamaria", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
 }
 
 var _ = ginkgo.Describe(imageRegistryTestName, func() {
