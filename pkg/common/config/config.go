@@ -550,7 +550,7 @@ var Database = struct {
 	DatabaseName: "database.name",
 }
 
-func init() {
+func InitViper() {
 	// Here's where we bind environment variables to config options and set defaults
 
 	viper.SetConfigType("yaml") // Our configs are all in yaml.
@@ -801,6 +801,7 @@ func init() {
 	RegisterSecret(Database.User, "rds-user")
 
 	viper.BindEnv(Database.Pass, "PG_PASS")
+
 	RegisterSecret(Database.Pass, "rds-pass")
 
 	viper.BindEnv(Database.Host, "PG_HOST")
@@ -813,6 +814,10 @@ func init() {
 	viper.SetDefault(Database.DatabaseName, "cicd_test_data")
 	viper.BindEnv(Database.DatabaseName, "PG_DATABASE")
 	RegisterSecret(Database.DatabaseName, "rds-database")
+}
+
+func init() {
+	InitViper()
 }
 
 // PostProcess is a variety of post-processing commands that is intended to be run after a config is loaded.
