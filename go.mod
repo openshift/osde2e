@@ -10,7 +10,7 @@ require (
 	github.com/PuerkitoBio/goquery v1.8.0
 	github.com/adamliesko/retry v0.0.0-20200123222335-86c8baac277d
 	github.com/antlr/antlr4 v0.0.0-20200209180723-1177c0b58d07
-	github.com/aws/aws-sdk-go v1.42.42
+	github.com/aws/aws-sdk-go v1.42.43
 	github.com/bmizerany/perks v0.0.0-20141205001514-d9a9656a3a4b // indirect
 	github.com/cenkalti/backoff/v4 v4.1.0 // indirect
 	github.com/code-ready/crc v1.10.0
@@ -34,9 +34,9 @@ require (
 	github.com/lib/pq v1.10.4
 	github.com/markbates/pkger v0.17.1
 	github.com/mitchellh/mapstructure v1.4.3
-	github.com/onsi/ginkgo/v2 v2.1.0
+	github.com/onsi/ginkgo/v2 v2.1.1
 	github.com/onsi/gomega v1.18.1
-	github.com/openshift-online/ocm-sdk-go v0.1.215
+	github.com/openshift-online/ocm-sdk-go v0.1.238
 	github.com/openshift/api v3.9.1-0.20190924102528-32369d4db2ad+incompatible
 	github.com/openshift/client-go v0.0.0-20200827190008-3062137373b5
 	github.com/openshift/cloud-credential-operator v0.0.0-20210525141023-02cc6303cd10
