@@ -39,6 +39,7 @@ func SemverToOpenshiftVersion(version *semver.Version) string {
 
 // GinkgoIt wraps the 2.0 Ginkgo It function to allow for additional functionality.
 func GinkgoIt(text string, body func(), timeout ...float64) bool {
+	defer ginkgo.GinkgoRecover()
 	return ginkgo.It(text, func() {
 		done := make(chan interface{})
 		go func() {
