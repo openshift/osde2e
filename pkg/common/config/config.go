@@ -2,6 +2,8 @@
 package config
 
 import (
+	"fmt"
+	"io/ioutil"
 	"log"
 	"strings"
 	"sync"
@@ -843,4 +845,17 @@ func RegisterSecret(key string, secretFileName string) {
 // GetAllSecrets will return Viper config keys and their corresponding secret filenames.
 func GetAllSecrets() []Secret {
 	return keyToSecretMapping
+}
+
+// LoadKubeconfig will, given a path to a kubeconfig, attempt to load it into the Viper config.
+func LoadKubeconfig() error {
+	kubeconfigPath := viper.GetString(Kubeconfig.Path)
+	if kubeconfigPath != "" {
+		kubeconfigBytes, err := ioutil.ReadFile(kubeconfigPath)
+		if err != nil {
+			return fmt.Errorf("failed reading '%s' which has been set as the TEST_KUBECONFIG: %v", kubeconfigPath, err)
+		}
+		viper.Set(Kubeconfig.Contents, string(kubeconfigBytes))
+	}
+	return nil
 }

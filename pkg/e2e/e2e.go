@@ -79,15 +79,9 @@ var provider spi.Provider
 func beforeSuite() bool {
 	// Skip provisioning if we already have a kubeconfig
 	var err error
-	kubeconfigPath := viper.GetString(config.Kubeconfig.Path)
-	if kubeconfigPath != "" {
-		kubeconfigBytes, err := ioutil.ReadFile(kubeconfigPath)
-		if err != nil {
-			log.Printf("failed reading '%s' which has been set as the TEST_KUBECONFIG: %v", kubeconfigPath, err)
-			return false
-		}
-		viper.Set(config.Kubeconfig.Contents, string(kubeconfigBytes))
-	}
+
+	// We don't care if this errors. If it does, we'll just wind up creating a new cluster anyway.
+	config.LoadKubeconfig()
 
 	if viper.GetString(config.Kubeconfig.Contents) == "" {
 		cluster, err := clusterutil.ProvisionCluster(nil)
