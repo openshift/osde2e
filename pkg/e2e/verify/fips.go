@@ -134,6 +134,6 @@ var _ = ginkgo.Describe(fipsTestName, func() {
 				return false, err
 			})
 			Expect(err).ToNot(HaveOccurred(), fmt.Sprintf("Error waiting for pods to become ready: %v", err))
-		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
+		}, float64(fipsTestPollDuration*2))
 	})
 })
