@@ -102,7 +102,7 @@ var _ = ginkgo.Describe(inhibitionsTestName, func() {
 
 			Expect(rulePresent).To(Equal(test.expectedPresent), test.name)
 		}
-	})
+	}, float64(30))
 
 	util.GinkgoIt("inhibits ClusterOperatorDegraded", func() {
 		// define an IdP that will cause the authentication operator to degrade
@@ -185,7 +185,7 @@ var _ = ginkgo.Describe(inhibitionsTestName, func() {
 		}
 		Expect(operatorDownAlertPresent).To(BeTrue())
 		Expect(operatorDegradedAlertPresent).To(BeFalse())
-	}, float64(60*time.Second))
+	}, float64(720))
 })
 
 func cleanup(h *helper.H) {
