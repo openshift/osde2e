@@ -53,7 +53,7 @@ var _ = ginkgo.Describe(machineHealthTestName, func() {
 				},
 			),
 		))
-	})
+	}, float64(500))
 
 	util.GinkgoIt("worker MHC should exist", func() {
 		mhc, err := h.Machine().MachineV1beta1().MachineHealthChecks(machineAPINamespace).Get(context.TODO(), "srep-worker-healthcheck", metav1.GetOptions{})
@@ -79,7 +79,7 @@ var _ = ginkgo.Describe(machineHealthTestName, func() {
 				},
 			),
 		))
-	})
+	}, float64(500))
 
 	util.GinkgoIt("should replace unhealthy nodes", func() {
 		r := h.Runner("chroot /host -- systemctl stop kubelet")
