@@ -2,7 +2,6 @@ package cloudingress
 
 import (
 	"context"
-	"log"
 	"time"
 
 	"github.com/onsi/ginkgo/v2"
@@ -13,6 +12,8 @@ import (
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/constants"
 	"github.com/openshift/osde2e/pkg/common/helper"
+	"github.com/openshift/osde2e/pkg/common/util"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -30,14 +31,16 @@ var _ = ginkgo.Describe(constants.SuiteInforming+TestPrefix, func() {
 
 	h := helper.New()
 
+	// How long to wait for changes to be effected on cluster
+	pollingDuration := 5 * time.Minute
+
 	ginkgo.Context("publishingstrategy-public-private", func() {
-		ginkgo.It("should be able to toggle the default applicationingress from public to private", func() {
-			ingressog, _ := getingressController(h, "default")
-			log.Print("The Origial Ingress Controller Generation is: \n ", ingressog.Generation)
+		util.GinkgoIt("should be able to toggle the default applicationingress from public to private", func() {
+
 			updateApplicationIngress(h, "internal")
 
 			//wait for router-default service loadbalancer to have an annotation indicating its scheme is internal
-			err := wait.PollImmediate(10*time.Second, 5*time.Minute, func() (bool, error) {
+			err := wait.PollImmediate(10*time.Second, pollingDuration, func() (bool, error) {
 				service, err := h.Kube().CoreV1().Services("openshift-ingress").Get(context.TODO(), "router-default", metav1.GetOptions{})
 				if err != nil {
 					return false, nil
@@ -53,12 +56,13 @@ var _ = ginkgo.Describe(constants.SuiteInforming+TestPrefix, func() {
 			Expect(string(ingress.Spec.EndpointPublishingStrategy.LoadBalancer.Scope)).To(Equal("Internal"))
 			Expect(ingress.Annotations["Owner"]).To(Equal("cloud-ingress-operator"))
 
-		})
+			Expect(ingress.Generation).To(Equal(int64(1)))
+		}, pollingDuration.Seconds())
 
-		ginkgo.It("should be able to toggle the default applicationingress from private to public", func() {
+		util.GinkgoIt("should be able to toggle the default applicationingress from private to public", func() {
 			updateApplicationIngress(h, "external")
 			//wait for router-default service loadbalancer to NOT have an annotation indicating its scheme is internal
-			err := wait.PollImmediate(10*time.Second, 5*time.Minute, func() (bool, error) {
+			err := wait.PollImmediate(10*time.Second, pollingDuration, func() (bool, error) {
 				service, err := h.Kube().CoreV1().Services("openshift-ingress").Get(context.TODO(), "router-default", metav1.GetOptions{})
 				if err != nil {
 					return false, nil
@@ -76,7 +80,8 @@ var _ = ginkgo.Describe(constants.SuiteInforming+TestPrefix, func() {
 			Expect(exists).To(BeTrue())
 			Expect(string(ingress_controller.Listening)).To(Equal("external"))
 			Expect(ingress.Annotations["Owner"]).To(Equal("cloud-ingress-operator"))
-		})
+			Expect(ingress.Generation).To(Equal(int64(1)))
+		}, pollingDuration.Seconds())
 	})
 })
 

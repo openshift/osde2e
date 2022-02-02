@@ -25,7 +25,11 @@ var _ = ginkgo.Describe(clusterStateInformingName, func() {
 	defer ginkgo.GinkgoRecover()
 	h := helper.New()
 
-	prometheusTimeoutInSeconds := 900
+	// How long to wait for the prometheus test job to finish
+	prometheusTimeout := 15 * time.Minute
+	// How long to wait for Prometheus pods to be running
+	prometheusPodStartedDuration := 5 * time.Minute
+
 	util.GinkgoIt("should include Prometheus data", func() {
 		// setup runner
 		// this command is has specific code to capture and suppress an exit code of
@@ -34,7 +38,7 @@ var _ = ginkgo.Describe(clusterStateInformingName, func() {
 		cmd := promCollectCmd + " > " + runner.DefaultRunner.OutputDir + "/prometheus.tar.gz; err=$? ; if (( $err != 0 )) ; then exit $err ; fi"
 
 		// ensure prometheus pods are up before trying to extract data
-		poderr := wait.PollImmediate(2*time.Second, 5*time.Minute, func() (bool, error) {
+		poderr := wait.PollImmediate(2*time.Second, prometheusPodStartedDuration, func() (bool, error) {
 			podCount := 0
 			list, listerr := verify.FilterPods("openshift-monitoring", "app.kubernetes.io/name=prometheus", h)
 			if listerr != nil {
@@ -62,7 +66,7 @@ var _ = ginkgo.Describe(clusterStateInformingName, func() {
 
 		// run tests
 		stopCh := make(chan struct{})
-		err := r.Run(prometheusTimeoutInSeconds, stopCh)
+		err := r.Run(int(prometheusTimeout.Seconds()), stopCh)
 		Expect(err).NotTo(HaveOccurred())
 
 		// get results
@@ -71,5 +75,5 @@ var _ = ginkgo.Describe(clusterStateInformingName, func() {
 
 		// write results
 		h.WriteResults(results)
-	}, float64(prometheusTimeoutInSeconds+60))
+	}, prometheusTimeout.Seconds() + prometheusPodStartedDuration.Seconds())
 })

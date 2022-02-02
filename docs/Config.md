@@ -91,7 +91,7 @@ Some environment variables commonly used for pipelines under osde2e are indicate
 
 | Environment variable | Usage |
 | --------------| ------------------------|  
-|POLLING_TIMEOUT| PollingTimeout is how long (in mimutes) to wait for an object to be created before failing the test.|
+|POLLING_TIMEOUT| PollingTimeout is how long (in seconds) to wait for an object to be created before failing the test.|
 |GINKGO_SKIP| GinkgoSkip is a regex passed to Ginkgo that skips any test suites matching the regex. ex. "Operator"|
 |GINKGO_FOCUS| GinkgoFocus is a regex passed to Ginkgo that focus on any test suites matching the regex. ex. "Operator"|
 |TESTS_TO_RUN| TestsToRun is a list of files which should be executed as part of a test suite|

@@ -102,7 +102,7 @@ func checkPod(h *helper.H, namespace string, name string, gracePeriod int, maxAc
 				}
 			}
 			Expect(restartSum).To(BeNumerically("<=", maxAcceptedRestart))
-		}, viper.GetFloat64(config.Tests.PollingTimeout))
+		}, float64(gracePeriod)+viper.GetFloat64(config.Tests.PollingTimeout))
 	})
 }
 
@@ -238,6 +238,10 @@ func checkSecrets(h *helper.H, namespace string, secrets []string) {
 func checkUpgrade(h *helper.H, subNamespace string, subName string, packageName string, regServiceName string) {
 
 	ginkgo.Context("Operator Upgrade", func() {
+
+    installPlanPollingDuration := 5 * time.Minute
+    upgradePollingDuration := 15 * time.Minute
+
 		util.GinkgoIt("should upgrade from the replaced version", func() {
 
 			// Get the CSV we're currently installed with
@@ -276,7 +280,7 @@ func checkUpgrade(h *helper.H, subNamespace string, subName string, packageName 
 			Eventually(func() bool {
 				_, err := h.Operator().OperatorsV1alpha1().InstallPlans(subNamespace).Get(context.TODO(), sub.Status.Install.Name, metav1.GetOptions{})
 				return apierrors.IsNotFound(err)
-			}, 5*time.Minute, 10*time.Second).Should(BeTrue(), "installplan never garbage collected")
+			}, installPlanPollingDuration, 10*time.Second).Should(BeTrue(), "installplan never garbage collected")
 			log.Printf("Verified installplan removal")
 
 			// Create subscription to the previous version
@@ -299,7 +303,7 @@ func checkUpgrade(h *helper.H, subNamespace string, subName string, packageName 
 			log.Printf("Created replacement subscription %s with starting CSV %s", subName, previousCSV)
 
 			// Wait for the operator to arrive back on its latest CSV
-			err = wait.PollImmediate(5*time.Second, 15*time.Minute, func() (bool, error) {
+			err = wait.PollImmediate(5*time.Second, upgradePollingDuration, func() (bool, error) {
 				csv, err := h.Operator().OperatorsV1alpha1().ClusterServiceVersions(sub.Namespace).Get(context.TODO(), latestCSV, metav1.GetOptions{})
 				if err != nil && !kerror.IsNotFound(err) {
 					log.Printf("Returning err %v", err)
@@ -312,7 +316,8 @@ func checkUpgrade(h *helper.H, subNamespace string, subName string, packageName 
 			})
 			Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("CSV %s did not eventually install successfully", latestCSV))
 
-		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
+		}, upgradePollingDuration.Seconds()+installPlanPollingDuration.Seconds()+
+			float64(viper.GetFloat64(config.Tests.PollingTimeout)))
 	})
 }
 
@@ -327,7 +332,7 @@ func pollClusterRoleBinding(h *helper.H, clusterRoleBindingName string) error {
 	interval := 5
 
 	// convert time.Duration type
-	timeoutDuration := time.Duration(viper.GetFloat64(config.Tests.PollingTimeout)) * time.Minute
+	timeoutDuration := time.Duration(viper.GetFloat64(config.Tests.PollingTimeout)) * time.Second
 	intervalDuration := time.Duration(interval) * time.Second
 
 	start := time.Now()

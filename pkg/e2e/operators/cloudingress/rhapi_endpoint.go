@@ -44,9 +44,11 @@ var _ = ginkgo.Describe(constants.SuiteOperators+TestPrefix, func() {
 //testHostnameResolves Confirms hostname on the cluster resolves
 func testHostnameResolves(h *helper.H) {
 	var err error
+
+	hostnameResolvePollDuration := 15 * time.Minute
 	ginkgo.Context("rh-api-test", func() {
 		util.GinkgoIt("hostname should resolve", func() {
-			wait.PollImmediate(30*time.Second, 15*time.Minute, func() (bool, error) {
+			wait.PollImmediate(30*time.Second, hostnameResolvePollDuration, func() (bool, error) {
 
 				getOpts := metav1.GetOptions{}
 				apiserver, err := h.Cfg().ConfigV1().APIServers().Get(context.TODO(), "cluster", getOpts)
@@ -71,7 +73,7 @@ func testHostnameResolves(h *helper.H) {
 				return true, nil
 			})
 			Expect(err).NotTo(HaveOccurred())
-		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
+		}, (hostnameResolvePollDuration + 1 * time.Minute).Seconds())
 	})
 }
 
@@ -129,7 +131,7 @@ func testCIDRBlockUpdates(h *helper.H) {
 			res := reflect.DeepEqual(CIDRBlock, rhAPIService.Spec.LoadBalancerSourceRanges)
 			Expect(res).Should(BeTrue())
 
-		}, float64(60*time.Second))
+		}, viper.GetFloat64(config.Tests.PollingTimeout))
 	})
 }
 

@@ -48,6 +48,7 @@ var _ = ginkgo.Describe(testName, func() {
 	// used for verifying creation of workload pods
 	podPrefixes := []string{"frontend", "redis-master", "redis-slave"}
 
+  workloadPollDuration := 5 * time.Minute
 	util.GinkgoIt("should get created in the cluster", func() {
 
 		// Does this workload exist? If so, this must be a repeat run.
@@ -86,7 +87,7 @@ var _ = ginkgo.Describe(testName, func() {
 			time.Sleep(3 * time.Second)
 
 			// Wait for all pods to come up healthy
-			err = wait.PollImmediate(15*time.Second, 5*time.Minute, func() (bool, error) {
+			err = wait.PollImmediate(15*time.Second, workloadPollDuration, func() (bool, error) {
 				// This is pretty basic. Are all the pods up? Cool.
 				if check, err := healthchecks.CheckPodHealth(h.Kube().CoreV1(), nil, h.CurrentProject(), podPrefixes...); !check || err != nil {
 					return false, nil
@@ -101,7 +102,7 @@ var _ = ginkgo.Describe(testName, func() {
 			h.AddWorkload(workloadName, h.CurrentProject())
 		}
 
-	})
+	}, (workloadPollDuration + (30 * time.Second)).Seconds())
 })
 
 func doTest(h *helper.H) {
