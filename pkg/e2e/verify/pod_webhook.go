@@ -8,6 +8,8 @@ import (
 	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/openshift/osde2e/pkg/common/alert"
+	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
+	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/util"
 	v1 "k8s.io/api/core/v1"
@@ -24,9 +26,10 @@ func init() {
 }
 
 const (
-	serviceStartTimeout = 1 * time.Minute
-
-	daemonStartTimeout = 1 * time.Minute
+	serviceStartTimeout     = 1 * time.Minute
+	daemonStartTimeout      = 1 * time.Minute
+	deletePodWaitDuration   = 5 * time.Minute
+	podCreationwaitDuration = 1 * time.Minute
 )
 
 var _ = ginkgo.Describe(podWebhookTestName, func() {
@@ -46,7 +49,7 @@ var _ = ginkgo.Describe(podWebhookTestName, func() {
 			err = h.WaitTimeoutForServiceInNamespace(serviceName, namespace, serviceStartTimeout, poll)
 			Expect(err).NotTo(HaveOccurred(), "No service named %s found.", serviceName)
 
-		})
+		}, daemonStartTimeout.Seconds()+serviceStartTimeout.Seconds())
 
 		// for all tests, "manage" is synonymous with "create/update/delete"
 		//Dedicated admin can not deploy pod on master on infra nodes in namespaces
@@ -72,7 +75,7 @@ var _ = ginkgo.Describe(podWebhookTestName, func() {
 			defer deletePod(name, namespace, h)
 			log.Printf("Create pod error: %v", err)
 			Expect(apierrors.IsForbidden(err)).To(BeTrue())
-		})
+		}, deletePodWaitDuration.Seconds()+podCreationwaitDuration.Seconds())
 
 		util.GinkgoIt("Test 2: Webhook will mark pod spec invalid and block deploying", func() {
 			name := "osde2e-pod-webhook-test2"
@@ -92,7 +95,7 @@ var _ = ginkgo.Describe(podWebhookTestName, func() {
 			_, err := createPod(name, namespace, "node-role.kubernetes.io/infra", "toleration-key-value", v1.TaintEffectPreferNoSchedule, "node-role.kubernetes.io/master", "toleration-key-value2", v1.TaintEffectNoExecute, h)
 			Expect(apierrors.IsForbidden(err)).To(BeTrue())
 
-		})
+		}, deletePodWaitDuration.Seconds()+podCreationwaitDuration.Seconds())
 
 		// The serviceaccount:dedicated-admin-project is allowed to launch a pod and the pod-webhook will allow it
 		util.GinkgoIt("Webhook will allow pod to deploy", func() {
@@ -102,7 +105,7 @@ var _ = ginkgo.Describe(podWebhookTestName, func() {
 			defer deletePod(name, namespace, h)
 			_, err := createPod(name, namespace, "node-role.kubernetes.io/infra", "toleration-key-value", v1.TaintEffectNoSchedule, "node-role.kubernetes.io/master", "toleration-key-value2", v1.TaintEffectNoSchedule, h)
 			Expect(err).NotTo(HaveOccurred())
-		})
+		}, deletePodWaitDuration.Seconds()+podCreationwaitDuration.Seconds())
 
 		// RBAC blocks dedicated-admins group from creating a pod in openshift-apiserver namespace
 		util.GinkgoIt("Webhook will allow pod to deploy", func() {
@@ -115,7 +118,7 @@ var _ = ginkgo.Describe(podWebhookTestName, func() {
 			defer deletePod(name, namespace, h)
 			_, err := createPod(name, namespace, "node-role.kubernetes.io/infra", "toleration-key-value", v1.TaintEffectNoSchedule, "node-role.kubernetes.io/master", "toleration-key-value2", v1.TaintEffectNoSchedule, h)
 			Expect(apierrors.IsForbidden(err)).To(BeTrue())
-		})
+		}, viper.GetFloat64(config.Tests.PollingTimeout))
 
 		// RBAC will prevent ordinary users from creating pods
 
@@ -133,8 +136,8 @@ var _ = ginkgo.Describe(podWebhookTestName, func() {
 			defer deletePod(name, namespace, h)
 			_, err = createPod(name, namespace, "node-role.kubernetes.io/master", "toleration-key-value", v1.TaintEffectNoSchedule, "node-role.kubernetes.io/infra", "toleration-key-value2", v1.TaintEffectNoSchedule, h)
 			Expect(apierrors.IsForbidden(err)).To(BeTrue())
-		})
-	})
+		}, viper.GetFloat64(config.Tests.PollingTimeout))
+	}, deletePodWaitDuration.Seconds()+podCreationwaitDuration.Seconds())
 
 	ginkgo.Context("pod webhook", func() {
 		util.GinkgoIt("RBAC will deny deploying pod", func() {
@@ -153,7 +156,7 @@ var _ = ginkgo.Describe(podWebhookTestName, func() {
 			defer deletePod(name, namespace, h)
 			_, err = createPod(name, namespace, "node-role.kubernetes.io/master", "toleration-key-value", v1.TaintEffectNoSchedule, "node-role.kubernetes.io/infra", "toleration-key-value2", v1.TaintEffectNoSchedule, h)
 			Expect(apierrors.IsForbidden(err)).To(BeTrue())
-		})
+		}, deletePodWaitDuration.Seconds())
 	})
 
 })
@@ -199,7 +202,7 @@ func deletePod(name string, namespace string, h *helper.H) error {
 		log.Printf("Deleting pod %s, error: %v", name, err)
 
 		// Wait for the pod to delete.
-		err = wait.PollImmediate(5*time.Second, 5*time.Minute, func() (bool, error) {
+		err = wait.PollImmediate(5*time.Second, deletePodWaitDuration, func() (bool, error) {
 			if _, err := h.Kube().CoreV1().Pods(namespace).Get(context.TODO(), name, metav1.GetOptions{}); err != nil {
 				return true, nil
 			}
@@ -231,7 +234,7 @@ func createPod(name string, namespace string, key string, value string, effect v
 	}
 
 	// Wait for the pod to create.
-	err = wait.PollImmediate(5*time.Second, 1*time.Minute, func() (bool, error) {
+	err = wait.PollImmediate(5*time.Second, podCreationwaitDuration, func() (bool, error) {
 		if _, err := h.Kube().CoreV1().Pods(namespace).Get(context.TODO(), name, metav1.GetOptions{}); err != nil {
 			return false, nil
 		}

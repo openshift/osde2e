@@ -12,6 +12,8 @@ import (
 	"k8s.io/client-go/rest"
 
 	"github.com/openshift/osde2e/pkg/common/alert"
+	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
+	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/util"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -36,6 +38,9 @@ var _ = ginkgo.Describe(userWorkloadMonitoringTestName, func() {
 	groups := []string{"dedicated-admins"}
 	uwmtestns := util.RandomStr(5)
 
+	// How long to wait for expected resources to be created on-cluster
+	uwmPollingDuration := 2 * time.Minute
+
 	ginkgo.Context("User Workload Monitoring", func() {
 		util.GinkgoIt("has the required prerequisites for testing", func() {
 			//Create a new user that will have dedicated-admin privileges, add the user to the dedicated-admins group
@@ -55,7 +60,7 @@ var _ = ginkgo.Describe(userWorkloadMonitoringTestName, func() {
 			svc := helper.SampleService(8080, 8080, prometheusName, uwmtestns, prometheusName)
 			err = helper.CreateService(svc, h)
 			Expect(err).NotTo(HaveOccurred(), "Could not create user workload monitoring testing service")
-		})
+		}, viper.GetFloat64(config.Tests.PollingTimeout))
 
 		util.GinkgoIt("has create access to the user-workload-monitoring-config configmap", func() {
 			h.Impersonate(rest.ImpersonationConfig{
@@ -71,7 +76,7 @@ var _ = ginkgo.Describe(userWorkloadMonitoringTestName, func() {
 			Expect(err).NotTo(HaveOccurred(), "could not edit user-workload-monitoring-config configmap")
 			err = deleteUwmCM(h)
 			Expect(err).NotTo(HaveOccurred(), "could not delete user-workload-monitoring-config configmap")
-		})
+		}, viper.GetFloat64(config.Tests.PollingTimeout))
 
 		//Verify prometheus-operator pod && promethus-user-workload*/thanos-ruler-user-workload* pods are active
 		util.GinkgoIt("has the required prometheus and thanos pods", func() {
@@ -86,7 +91,8 @@ var _ = ginkgo.Describe(userWorkloadMonitoringTestName, func() {
 			for _, someuwmpod := range uwmpods.Items {
 				Expect(someuwmpod.Name).To(MatchRegexp("^prometheus-|^thanos"))
 			}
-		})
+		}, viper.GetFloat64(config.Tests.PollingTimeout))
+
 		//Verify a dedicated admin can create ServiceMonitor objects
 		util.GinkgoIt("has access to create SerivceMonitor objects", func() {
 			h.Impersonate(rest.ImpersonationConfig{
@@ -95,7 +101,7 @@ var _ = ginkgo.Describe(userWorkloadMonitoringTestName, func() {
 			})
 			//Create ServiceMonitor
 			uwme2esm := newServiceMonitor(prometheusName, uwmtestns)
-			err := wait.PollImmediate(time.Second*15, time.Minute*2, func() (bool, error) {
+			err := wait.PollImmediate(time.Second*15, uwmPollingDuration, func() (bool, error) {
 				_, err := h.Prometheusop().MonitoringV1().ServiceMonitors(uwmtestns).Create(context.TODO(), uwme2esm, metav1.CreateOptions{})
 				if err != nil {
 					log.Printf("failed creating service monitor: %v", err)
@@ -104,16 +110,16 @@ var _ = ginkgo.Describe(userWorkloadMonitoringTestName, func() {
 				return true, nil
 			})
 			Expect(err).NotTo(HaveOccurred(), "Could not create ServiceMonitor")
-		})
+		}, uwmPollingDuration.Seconds())
 
-		//Verify a dedicated admin can create PrometheusRule objects
+	//Verify a dedicated admin can create PrometheusRule objects
 		util.GinkgoIt("has access to create PrometheusRule objects", func() {
 			h.Impersonate(rest.ImpersonationConfig{
 				UserName: userName,
 				Groups:   []string{"system:authenticated", "system:authenticated:oauth", "dedicated-admins"},
 			})
 			uwme2etestrule := newPrometheusRule(prometheusName, uwmtestns)
-			err := wait.PollImmediate(time.Second*15, time.Minute*2, func() (bool, error) {
+			err := wait.PollImmediate(time.Second*15, uwmPollingDuration, func() (bool, error) {
 				_, err := h.Prometheusop().MonitoringV1().PrometheusRules(uwmtestns).Create(context.TODO(), uwme2etestrule, metav1.CreateOptions{})
 				if err != nil {
 					log.Printf("failed creating prometheus rules: %v", err)
@@ -122,7 +128,7 @@ var _ = ginkgo.Describe(userWorkloadMonitoringTestName, func() {
 				return true, nil
 			})
 			Expect(err).NotTo(HaveOccurred(), "Could not create PrometheusRules")
-		})
+		}, uwmPollingDuration.Seconds())
 	})
 
 })

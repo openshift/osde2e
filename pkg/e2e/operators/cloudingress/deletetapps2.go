@@ -8,11 +8,13 @@ import (
 
 	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+
 	operatorv1 "github.com/openshift/api/operator/v1"
 	cloudingressv1alpha1 "github.com/openshift/cloud-ingress-operator/pkg/apis/cloudingress/v1alpha1"
 	"github.com/openshift/osde2e/pkg/common/constants"
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/e2e/operators"
+
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -42,25 +44,21 @@ var _ = ginkgo.Describe(constants.SuiteInforming+TestPrefix, func() {
 			deployment, err := operators.PollDeployment(h, "openshift-ingress", deploymentName)
 			Expect(err).ToNot(HaveOccurred(), "failed fetching deployment")
 			Expect(deployment).NotTo(BeNil(), "deployment is nil")
-			time.Sleep(time.Duration(120) * time.Second)
 
 			//2.delete the annotation
 			apps2Ingress, _ := getingressController(h, ingressControllerName)
 			log.Printf("The ingresscontroller object annotation : %+v\n", apps2Ingress.ObjectMeta.Annotations)
 			newAnnotations := updateAnnotation(h, ingressControllerName, "Owner", "cloud-ingress-operator")
 			apps2Ingress = newAnnotations
-			time.Sleep(time.Duration(120) * time.Second)
-
 			//3. Delete secondaryIngress in publishingstrategy
 			removeIngressController(h, ingressControllerName)
-			time.Sleep(time.Duration(120) * time.Second)
 			Expect(err).NotTo(HaveOccurred())
 			// check that the ingresscontroller app-e2e-apps was deleted
 			ingressControllerExists(h, ingressControllerName, true)
 			apps2Ingress = updateAnnotation(h, ingressControllerName, "Owner", "cloud-ingress-operator")
 			removeIngressController(h, ingressControllerName)
 			ingressControllerExists(h, ingressControllerName, false)
-		})
+		}, (10 * time.Minute).Seconds())
 	})
 })
 

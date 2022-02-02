@@ -25,7 +25,7 @@ import (
 var routeMonitorOperatorTestName string = "[Suite: informing] [OSD] Route Monitor Operator (rmo)"
 
 func init() {
-	alert.RegisterGinkgoAlert(routeMonitorOperatorTestName, "SD-SREP", "@sre-platform-team-orange", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+  alert.RegisterGinkgoAlert(routeMonitorOperatorTestName, "SD-SREP", "@sre-platform-team-orange", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
 }
 
 var _ = ginkgo.Describe(routeMonitorOperatorTestName, func() {
@@ -82,6 +82,9 @@ func verifyExistingRouteMonitorsAreValid(h *helper.H) {
 }
 func testRouteMonitorCreationWorks(h *helper.H) {
 	ginkgo.Context("rmo Route Monitor Operator integration test", func() {
+
+		// How long to wait for service monitors to be created
+		pollingDuration := 10 * time.Minute
 		util.GinkgoIt("Creates and deletes a RouteMonitor to see if it works accordingly", func() {
 			var (
 				routeMonitorNamespace = h.CurrentProject()
@@ -110,7 +113,7 @@ func testRouteMonitorCreationWorks(h *helper.H) {
 			err = helper.CreateRouteMonitor(rmo, routeMonitorNamespace, h)
 			Expect(err).NotTo(HaveOccurred(), "Couldn't create application route monitor")
 
-			err = wait.PollImmediate(15*time.Second, 10*time.Minute, func() (bool, error) {
+			err = wait.PollImmediate(15*time.Second, pollingDuration, func() (bool, error) {
 				_, err = h.Prometheusop().MonitoringV1().ServiceMonitors(routeMonitorNamespace).Get(context.TODO(), routeMonitorName, metav1.GetOptions{})
 				if !k8serrors.IsNotFound(err) {
 					return false, err
@@ -146,6 +149,6 @@ func testRouteMonitorCreationWorks(h *helper.H) {
 			Expect(k8serrors.IsNotFound(err)).To(BeTrue(), "sample serviceMonitor still exists, deletion of RouteMonitor didn't clean it up")
 			_, err = h.Prometheusop().MonitoringV1().PrometheusRules(routeMonitorNamespace).Get(context.TODO(), routeMonitorName, metav1.GetOptions{})
 			Expect(k8serrors.IsNotFound(err)).To(BeTrue(), "sample prometheusRule still exists, deletion of RouteMonitor didn't clean it up")
-		})
+		}, pollingDuration.Seconds())
 	})
 }

@@ -11,6 +11,8 @@ import (
 	. "github.com/onsi/gomega"
 
 	"github.com/openshift/osde2e/pkg/common/alert"
+	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
+	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/util"
 	corev1 "k8s.io/api/core/v1"
@@ -75,7 +77,7 @@ var _ = ginkgo.Describe(storageTestName, func() {
 
 			}
 
-		}, float64(60*time.Second))
+		}, podStartTimeout.Seconds() + viper.GetFloat64(config.Tests.PollingTimeout))
 
 	})
 

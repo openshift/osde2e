@@ -28,6 +28,8 @@ var _ = ginkgo.Describe(dedicatedAdminSccTestName, func() {
 	h := helper.New()
 
 	workloadDir := "/assets/workloads/e2e/scc"
+	// How long to wait for prometheus pods to restart
+	prometheusRestartPollingDuration := 3 * time.Minute
 
 	ginkgo.Context("Dedicated Admin permissions", func() {
 
@@ -67,7 +69,7 @@ var _ = ginkgo.Describe(dedicatedAdminSccTestName, func() {
 			log.Printf("Names of pods:(%v)", names)
 			numPrometheusPods := deletePods(names, "openshift-monitoring", h)
 			//Verifying the same number of running prometheus pods has come up
-			err = wait.PollImmediate(2*time.Second, 3*time.Minute, func() (bool, error) {
+			err = wait.PollImmediate(2*time.Second, prometheusRestartPollingDuration, func() (bool, error) {
 				pollList, _ := FilterPods("openshift-monitoring", "app.kubernetes.io/name=prometheus", h)
 				if !AllDifferentPods(list, pollList) {
 					return false, nil
@@ -79,7 +81,7 @@ var _ = ginkgo.Describe(dedicatedAdminSccTestName, func() {
 				return false, nil
 			})
 			Expect(err).NotTo(HaveOccurred())
-		}, float64(60*time.Second))
+		}, (prometheusRestartPollingDuration + 30 * time.Second).Seconds())
 	})
 })
 
