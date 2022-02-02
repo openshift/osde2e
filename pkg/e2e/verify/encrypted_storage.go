@@ -41,8 +41,8 @@ import (
 
 const (
 	encryptedStorageTestName string = "[Suite: e2e] Encrypted Storage"
-	pollInterval                    = 30 * time.Second
-	pollTimeout                     = 15 * time.Minute
+	encryptedStoragePollInterval    = 30 * time.Second
+	encryptedStoragePollTimeout     = 10 * time.Minute
 )
 
 func init() {
@@ -99,7 +99,7 @@ var _ = ginkgo.Describe(encryptedStorageTestName, func() {
 
 			// Updated RBAC rules may take time to apply -> poll until we can successfully create a storageclass
 			volumeBindingMode := storagev1.VolumeBindingWaitForFirstConsumer
-			wait.PollImmediate(pollInterval, pollTimeout, func() (bool, error) {
+			wait.PollImmediate(encryptedStoragePollInterval, encryptedStoragePollTimeout, func() (bool, error) {
 				_, err = h.Kube().StorageV1().StorageClasses().Create(context.TODO(), &storagev1.StorageClass{
 					TypeMeta: metav1.TypeMeta{
 						Kind:       "StorageClass",
@@ -181,7 +181,7 @@ var _ = ginkgo.Describe(encryptedStorageTestName, func() {
 			}, metav1.CreateOptions{})
 			Expect(err).ToNot(HaveOccurred(), "Error creating pod '"+pod.GetName()+"':")
 
-			wait.PollImmediate(pollInterval, pollTimeout, func() (bool, error) {
+			wait.PollImmediate(encryptedStoragePollInterval, encryptedStoragePollTimeout, func() (bool, error) {
 				pod, err = h.Kube().CoreV1().Pods(pod.GetNamespace()).Get(context.TODO(), pod.GetName(), metav1.GetOptions{})
 				if err != nil || pod.Status.Phase != corev1.PodSucceeded {
 					return false, err
@@ -206,7 +206,7 @@ var _ = ginkgo.Describe(encryptedStorageTestName, func() {
 			disk, err := computeService.Disks.Get(clusterInfra.Status.PlatformStatus.GCP.ProjectID, node.Labels["topology.kubernetes.io/zone"], pvc.Spec.VolumeName).Context(context.TODO()).Do()
 			Expect(err).ToNot(HaveOccurred(), "Error retrieving encrypted disk from gcp: ")
 			Expect(strings.Contains(disk.DiskEncryptionKey.KmsKeyName, testKey), "Disk '"+disk.Name+"' not using a customer managed key as expected!")
-		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
+		}, float64(encryptedStoragePollTimeout*2))
 
 		// Cleanup
 		ginkgo.AfterEach(func() {
@@ -257,7 +257,7 @@ func createGCPKey(h *helper.H, serviceAccountJson []byte, keyName string) (strin
 	if err != nil {
 		// keyRing does not exist yet, & KMS was likely just enabled for the project.
 		// KMS may not be ready immediately after enabling, poll until we are able to successfully create a keyring, indicating it is fully available for this project
-		wait.PollImmediate(pollInterval, pollTimeout, func() (bool, error) {
+		wait.PollImmediate(encryptedStoragePollInterval, encryptedStoragePollTimeout, func() (bool, error) {
 			keyRing, err = kmsClient.CreateKeyRing(context.TODO(), &kmsprotov1.CreateKeyRingRequest{
 				Parent:    "projects/" + clusterInfra.Status.PlatformStatus.GCP.ProjectID + "/locations/" + clusterInfra.Status.PlatformStatus.GCP.Region,
 				KeyRingId: keyName,
@@ -382,7 +382,7 @@ func createGCPServiceAccount(h *helper.H, saName string, saNamespace string) ([]
 		return nil, err
 	}
 
-	wait.PollImmediate(pollInterval, pollTimeout, func() (bool, error) {
+	wait.PollImmediate(encryptedStoragePollInterval, encryptedStoragePollTimeout, func() (bool, error) {
 		unstructCredentialReq, err := h.Dynamic().Resource(schema.GroupVersionResource{
 			Group:    "cloudcredential.openshift.io",
 			Version:  "v1",
