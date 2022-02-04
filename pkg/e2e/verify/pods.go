@@ -68,7 +68,7 @@ var _ = ginkgo.Describe(podsTestName, func() {
 		msg := "only %f%% of Pods ready, need %f%%. Not ready: %s"
 		Expect(err).NotTo(HaveOccurred(), msg, curRatio, requiredRatio, listPodPhases(notReady))
 		Expect(curRatio).Should(Equal(requiredRatio), msg, curRatio, requiredRatio, listPodPhases(notReady))
-	}, 300)
+	}, 600)
 
 	util.GinkgoIt("should not be Failed", func() {
 		list, err := h.Kube().CoreV1().Pods(metav1.NamespaceAll).List(context.TODO(), metav1.ListOptions{})
@@ -84,7 +84,7 @@ var _ = ginkgo.Describe(podsTestName, func() {
 		Expect(err).NotTo(HaveOccurred(), "couldn't list Pods")
 		Expect(filteredList).NotTo(BeNil())
 		Expect(filteredList.Items).Should(HaveLen(0), "'%d' Pods are 'Failed'", len(filteredList.Items))
-	}, 300)
+	}, 600)
 })
 
 func listPodPhases(pods []v1.Pod) (out string) {
