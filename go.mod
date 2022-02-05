@@ -12,7 +12,6 @@ require (
 	github.com/antlr/antlr4 v0.0.0-20200209180723-1177c0b58d07
 	github.com/aws/aws-sdk-go v1.42.46
 	github.com/bmizerany/perks v0.0.0-20141205001514-d9a9656a3a4b // indirect
-	github.com/cenkalti/backoff/v4 v4.1.0 // indirect
 	github.com/code-ready/crc v1.10.0
 	github.com/dgryski/go-gk v0.0.0-20200319235926-a69029f61654 // indirect
 	github.com/dgryski/go-lttb v0.0.0-20180810165845-318fcdf10a77 // indirect
@@ -54,9 +53,9 @@ require (
 	github.com/pganalyze/pg_query_go/v2 v2.1.0
 	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.44.1
 	github.com/prometheus-operator/prometheus-operator/pkg/client v0.45.0
-	github.com/prometheus/alertmanager v0.21.0
-	github.com/prometheus/client_golang v1.9.0
-	github.com/prometheus/common v0.15.0
+	github.com/prometheus/alertmanager v0.23.0
+	github.com/prometheus/client_golang v1.11.0
+	github.com/prometheus/common v0.30.0
 	github.com/redhat-cop/must-gather-operator v1.1.2
 	github.com/slack-go/slack v0.10.1
 	github.com/spf13/afero v1.8.0
