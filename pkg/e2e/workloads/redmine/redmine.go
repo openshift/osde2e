@@ -50,7 +50,7 @@ var _ = ginkgo.Describe(testName, func() {
 	// used for verifying creation of workload pods
 	podPrefixes := []string{"redmine"}
 
-	redmineTimeoutInSeconds := 1800
+	redmineTimeoutInSeconds := 2500
 	util.GinkgoIt("should get created in the cluster", func() {
 
 		// Does this workload exist? If so, this must be a repeat run.
