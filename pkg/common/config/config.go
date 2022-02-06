@@ -626,7 +626,7 @@ func InitViper() {
 	viper.BindEnv(Kubeconfig.Path, "TEST_KUBECONFIG")
 
 	// ----- Tests -----
-	viper.SetDefault(Tests.PollingTimeout, 60)
+	viper.SetDefault(Tests.PollingTimeout, 500)
 	viper.BindEnv(Tests.PollingTimeout, "POLLING_TIMEOUT")
 
 	viper.BindEnv(Tests.GinkgoSkip, "GINKGO_SKIP")
