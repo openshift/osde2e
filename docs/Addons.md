@@ -38,7 +38,7 @@ Please bump the quota for SKU `MW00530` by 2 so that we can provision additional
 
 If you are not a part of the public GitHub Organization `OpenShift`, join it by following [these instructions](https://source.redhat.com/groups/public/atomicopenshift/atomicopenshift_wiki/setting_up_your_accounts_openshift).
 
-Follow the documentation [here](https://docs.ci.openshift.org/docs/how-tos/adding-a-new-secret-to-ci/) to create secrets and configure them to be mirrored into the `ci` namespace [like ours](https://github.com/openshift/release/blob/master/core-services/secret-mirroring/_mapping.yaml#L62).
+Follow the documentation [here](https://docs.ci.openshift.org/docs/how-tos/adding-a-new-secret-to-ci/) to create secrets.
 
 You'll need to provide some additional details about your AWS account in a secret. In particular, you'll need to provide these values in your credentials secret:
 
