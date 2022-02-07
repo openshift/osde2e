@@ -86,7 +86,7 @@ func checkPods(podClient v1.CoreV1Interface, logger *log.Logger, filters ...PodP
 	for _, pod := range pods.Items {
 		if pod.ObjectMeta.Labels["job-name"] == "" {
 			if pod.Status.Phase != kubev1.PodPending {
-				return nil, fmt.Errorf("Pod %s in unexpected phase %s: reason: %s message: %s", pod.GetName(), pod.Status.Phase, pod.Status.Reason, pod.Status.Message)
+				return nil, fmt.Errorf("pod %s in unexpected phase %s: reason: %s message: %s", pod.GetName(), pod.Status.Phase, pod.Status.Reason, pod.Status.Message)
 			}
 			logger.Printf("%s is not ready. Phase: %s, Message: %s, Reason: %s", pod.Name, pod.Status.Phase, pod.Status.Message, pod.Status.Reason)
 		}
@@ -94,6 +94,9 @@ func checkPods(podClient v1.CoreV1Interface, logger *log.Logger, filters ...PodP
 			filteredPods[pod.Namespace] = map[string]interface{}{}
 		}
 		jobName = strings.LastIndex(pod.ObjectMeta.Labels["job-name"], "-")
+		if jobName == -1 {
+			return nil, fmt.Errorf("error parsing 'job-name' label of %s pod", pod.Name)
+		}
 		if cronJobName == "" || cronJobName != pod.ObjectMeta.Labels["job-name"][:jobName] || namespace != pod.Namespace {
 			namespace = pod.Namespace
 			cronJobName = pod.ObjectMeta.Labels["job-name"][:jobName]
@@ -113,7 +116,7 @@ func checkPods(podClient v1.CoreV1Interface, logger *log.Logger, filters ...PodP
 					break
 				}
 				if latestPodPhase != kubev1.PodPending {
-					return nil, fmt.Errorf("Pod %s in unexpected phase %s: reason: %s message: %s", pod.GetName(), pod.Status.Phase, pod.Status.Reason, pod.Status.Message)
+					return nil, fmt.Errorf("pod %s in unexpected phase %s: reason: %s message: %s", pod.GetName(), pod.Status.Phase, pod.Status.Reason, pod.Status.Message)
 				}
 				logger.Printf("%s is not ready. Phase: %s, Message: %s, Reason: %s", pod.Name, pod.Status.Phase, pod.Status.Message, pod.Status.Reason)
 			}
@@ -162,13 +165,13 @@ func (p *PodErrorTracker) CheckPendingPods(podlist []kubev1.Pod) error {
 			tempTracker[string(pod.UID)] = 1
 		}
 		if tempTracker[string(pod.UID)] >= p.MaxPendingPodsThreshold {
-			return fmt.Errorf("Pod %s in namespace %s is pending beyond normal threshold: %s - %s", pod.GetName(), pod.GetNamespace(), pod.Status.Reason, pod.Status.Message)
+			return fmt.Errorf("pod %s in namespace %s is pending beyond normal threshold: %s - %s", pod.GetName(), pod.GetNamespace(), pod.Status.Reason, pod.Status.Message)
 		}
 	}
 	p.Counts = tempTracker
 
 	if podlist != nil {
-		return fmt.Errorf("Pending pod key-value entries still present in the pending pod counter map")
+		return fmt.Errorf("pending pod key-value entries still present in the pending pod counter map")
 	}
 	return nil
 }
