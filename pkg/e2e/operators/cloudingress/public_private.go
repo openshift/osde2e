@@ -54,9 +54,6 @@ var _ = ginkgo.Describe(constants.SuiteInforming+TestPrefix, func() {
 
 			ingress, _ := getingressController(h, "default")
 			Expect(string(ingress.Spec.EndpointPublishingStrategy.LoadBalancer.Scope)).To(Equal("Internal"))
-			Expect(ingress.Annotations["Owner"]).To(Equal("cloud-ingress-operator"))
-
-			Expect(ingress.Generation).To(Equal(int64(1)))
 		}, pollingDuration.Seconds())
 
 		util.GinkgoIt("should be able to toggle the default applicationingress from private to public", func() {
@@ -76,11 +73,8 @@ var _ = ginkgo.Describe(constants.SuiteInforming+TestPrefix, func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			ingress_controller, exists, _ := appIngressExits(h, true, "")
-			ingress, _ := getingressController(h, "default")
 			Expect(exists).To(BeTrue())
 			Expect(string(ingress_controller.Listening)).To(Equal("external"))
-			Expect(ingress.Annotations["Owner"]).To(Equal("cloud-ingress-operator"))
-			Expect(ingress.Generation).To(Equal(int64(1)))
 		}, pollingDuration.Seconds())
 	})
 })
