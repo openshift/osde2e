@@ -2,6 +2,7 @@ package cloudingress
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -19,6 +20,10 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/elb"
 	"k8s.io/apimachinery/pkg/util/wait"
+
+	"golang.org/x/oauth2/google"
+	computev1 "google.golang.org/api/compute/v1"
+	"google.golang.org/api/option"
 )
 
 var _ = ginkgo.Describe(constants.SuiteInforming+TestPrefix, func() {
@@ -95,5 +100,39 @@ func testLBDeletion(h *helper.H) {
 				Expect(err).NotTo(HaveOccurred())
 			}
 		})
+		if viper.GetString(config.CloudProvider.CloudProviderID) == "gcp" {
+			ginkgo.It("LB is recreated in GCP", func() {
+				gcpCredsJson := viper.Get("ocm.gcp.credsJSON")
+				project := viper.GetString("ocm.gcp.projectID")
+				region := viper.GetString("cloudProvider.region")
+				oldLBName, err := getLBForService(h, "openshift-kube-apiserver", "rh-api")
+				ctx := context.TODO()
+
+				credsBytes, err := json.Marshal(gcpCredsJson)
+				credentials, err := google.CredentialsFromJSON(
+					ctx, credsBytes,
+					computev1.ComputeScope)
+				computeService, err := computev1.NewService(ctx, option.WithCredentials(credentials))
+
+				// Delete LB in GCP
+				_, err = computeService.ForwardingRules.Delete(project, region, oldLBName).Do()
+
+				// wait for the new LB to be created
+				err = wait.PollImmediate(15*time.Second, 5*time.Minute, func() (bool, error) {
+					newLBName, err := getLBForService(h, "openshift-kube-apiserver", "rh-api")
+					if err != nil || newLBName == "" {
+						// either we couldn't retrieve the LB name, or it wasn't created yet
+						return false, nil
+					}
+					if newLBName != oldLBName {
+						// the LB was successfully recreated
+						return true, nil
+					}
+					// the rh-api svc hasn't been deleted yet
+					return false, nil
+				})
+				Expect(err).NotTo(HaveOccurred())
+			})
+		}
 	})
 }
