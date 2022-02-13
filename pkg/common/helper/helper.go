@@ -4,7 +4,15 @@ package helper
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
+	cloudcredentialv1 "github.com/openshift/cloud-credential-operator/pkg/apis/cloudcredential/v1"
+	"golang.org/x/oauth2/google"
+	computev1 "google.golang.org/api/compute/v1"
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"log"
 	"math/rand"
 	"strings"
@@ -309,6 +317,82 @@ func (h *H) GetWorkload(name string) (string, bool) {
 	}
 
 	return "", false
+}
+
+func (h *H) GetGCPCreds(ctx context.Context) (*google.Credentials, bool) {
+	testInstanceName := "test-" + time.Now().Format("20060102-150405-") + fmt.Sprint(time.Now().Nanosecond()/1000000) + "-" + fmt.Sprint(ginkgo.GinkgoParallelProcess())
+	providerBytes := bytes.Buffer{}
+	encoder := json.NewEncoder(&providerBytes)
+	encoder.Encode(cloudcredentialv1.GCPProviderSpec{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "GCPProviderSpec",
+			APIVersion: "cloudcredential.openshift.io/v1",
+		},
+		PredefinedRoles: []string{
+			"roles/owner",
+		},
+		SkipServiceCheck: true,
+	})
+	saCredentialReq := &cloudcredentialv1.CredentialsRequest{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "CredentialsRequest",
+			APIVersion: "cloudcredential.openshift.io/v1",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      testInstanceName,
+			Namespace: h.CurrentProject(),
+		},
+		Spec: cloudcredentialv1.CredentialsRequestSpec{
+			SecretRef: corev1.ObjectReference{
+				Name:      testInstanceName,
+				Namespace: h.CurrentProject(),
+			},
+			ProviderSpec: &runtime.RawExtension{
+				Raw:    providerBytes.Bytes(),
+				Object: &cloudcredentialv1.GCPProviderSpec{},
+			},
+		},
+	}
+
+	credentialReqObj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(saCredentialReq)
+	if err != nil {
+		return nil, false
+	}
+	_, err = h.Dynamic().Resource(schema.GroupVersionResource{
+		Group:    "cloudcredential.openshift.io",
+		Version:  "v1",
+		Resource: "credentialsrequests",
+	}).Namespace(saCredentialReq.GetNamespace()).Create(context.TODO(), &unstructured.Unstructured{Object: credentialReqObj}, metav1.CreateOptions{})
+
+	wait.PollImmediate(15*time.Second, 5*time.Minute, func() (bool, error) {
+		unstructCredentialReq, _ := h.Dynamic().Resource(schema.GroupVersionResource{
+			Group:    "cloudcredential.openshift.io",
+			Version:  "v1",
+			Resource: "credentialsrequests",
+		}).Namespace(h.CurrentProject()).Get(context.TODO(), saCredentialReq.GetName(), metav1.GetOptions{})
+
+		err = runtime.DefaultUnstructuredConverter.FromUnstructured(unstructCredentialReq.UnstructuredContent(), saCredentialReq)
+		if err != nil || !saCredentialReq.Status.Provisioned {
+			return false, err
+		}
+		return true, err
+	})
+
+	saSecret, err := h.Kube().CoreV1().Secrets(saCredentialReq.Spec.SecretRef.Namespace).Get(context.TODO(), saCredentialReq.Spec.SecretRef.Name, metav1.GetOptions{})
+	if err != nil {
+		return nil, false
+	}
+	serviceAccountJSON, ok := saSecret.Data["service_account.json"]
+	if !ok {
+		return nil, false
+	}
+	credentials, err := google.CredentialsFromJSON(
+		ctx, serviceAccountJSON,
+		computev1.ComputeScope)
+	if err != nil {
+		return nil, false
+	}
+	return credentials, true
 }
 
 // AddWorkload uniquely appends a workload to the workloads list
