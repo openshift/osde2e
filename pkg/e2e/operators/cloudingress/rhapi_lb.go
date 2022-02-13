@@ -2,6 +2,7 @@ package cloudingress
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -19,6 +20,11 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/elb"
 	"k8s.io/apimachinery/pkg/util/wait"
+
+	"golang.org/x/oauth2/google"
+	computev1 "google.golang.org/api/compute/v1"
+
+	"google.golang.org/api/option"
 )
 
 var _ = ginkgo.Describe(constants.SuiteInforming+TestPrefix, func() {
@@ -55,44 +61,85 @@ func getLBForService(h *helper.H, namespace string, service string) (string, err
 
 // testLBDeletion deletes the loadbalancer of rh-api service and ensures that cloud-ingress-operator recreates it
 func testLBDeletion(h *helper.H) {
+
 	ginkgo.Context("rh-api-test", func() {
-		ginkgo.It("Manually deleted LB should be recreated", func() {
-			if viper.GetString(config.CloudProvider.CloudProviderID) == "aws" {
-				awsAccessKey := viper.GetString("ocm.aws.accessKey")
-				awsSecretKey := viper.GetString("ocm.aws.secretKey")
-				awsRegion := viper.GetString(config.CloudProvider.Region)
+		ginkgo.Context("when the external LB is deleted manually", func() {
 
-				// getLoadBalancer name currently associated with rh-api service
-				oldLBName, err := getLBForService(h, "openshift-kube-apiserver", "rh-api")
-				Expect(err).NotTo(HaveOccurred())
+			ginkgo.It("Manually deleted LB should be recreated in AWS", func() {
+				if viper.GetString(config.CloudProvider.CloudProviderID) == "aws" {
+					awsAccessKey := viper.GetString("ocm.aws.accessKey")
+					awsSecretKey := viper.GetString("ocm.aws.secretKey")
+					awsRegion := viper.GetString(config.CloudProvider.Region)
 
-				// delete the load balancer in aws
-				awsSession, err := session.NewSession(aws.NewConfig().WithCredentials(credentials.NewStaticCredentials(awsAccessKey, awsSecretKey, "")).WithRegion(awsRegion))
-				Expect(err).NotTo(HaveOccurred())
+					// getLoadBalancer name currently associated with rh-api service
+					oldLBName, err := getLBForService(h, "openshift-kube-apiserver", "rh-api")
+					Expect(err).NotTo(HaveOccurred())
 
-				lb := elb.New(awsSession)
-				input := &elb.DeleteLoadBalancerInput{
-					LoadBalancerName: aws.String(oldLBName),
-				}
+					// delete the load balancer in aws
+					awsSession, err := session.NewSession(aws.NewConfig().WithCredentials(credentials.NewStaticCredentials(awsAccessKey, awsSecretKey, "")).WithRegion(awsRegion))
+					Expect(err).NotTo(HaveOccurred())
 
-				_, err = lb.DeleteLoadBalancer(input)
-				Expect(err).NotTo(HaveOccurred())
+					lb := elb.New(awsSession)
+					input := &elb.DeleteLoadBalancerInput{
+						LoadBalancerName: aws.String(oldLBName),
+					}
 
-				// wait for the new LB to be created
-				err = wait.PollImmediate(15*time.Second, 5*time.Minute, func() (bool, error) {
-					newLBName, err := getLBForService(h, "openshift-kube-apiserver", "rh-api")
-					if err != nil || newLBName == "" {
-						// either we couldn't retrieve the LB name, or it wasn't created yet
+					_, err = lb.DeleteLoadBalancer(input)
+					Expect(err).NotTo(HaveOccurred())
+
+					// wait for the new LB to be created
+					err = wait.PollImmediate(15*time.Second, 5*time.Minute, func() (bool, error) {
+						newLBName, err := getLBForService(h, "openshift-kube-apiserver", "rh-api")
+						if err != nil || newLBName == "" {
+							// either we couldn't retrieve the LB name, or it wasn't created yet
+							return false, nil
+						}
+						if newLBName != oldLBName {
+							// the LB was successfully recreated
+							return true, nil
+						}
+						// the rh-api svc hasn't been deleted yet
 						return false, nil
-					}
-					if newLBName != oldLBName {
-						// the LB was successfully recreated
-						return true, nil
-					}
-					// the rh-api svc hasn't been deleted yet
-					return false, nil
+					})
+					Expect(err).NotTo(HaveOccurred())
+				}
+			})
+
+			if viper.GetString(config.CloudProvider.CloudProviderID) == "gcp" {
+				ginkgo.It("LB is recreated in GCP", func() {
+					gcpCredsJson := viper.Get("ocm.gcp.credsJSON")
+					project := viper.GetString("ocm.gcp.projectID")
+					region := viper.GetString("cloudProvider.region")
+					oldLBName, err := getLBForService(h, "openshift-kube-apiserver", "rh-api")
+					ctx := context.TODO()
+
+					credsBytes, err := json.Marshal(gcpCredsJson)
+					credentials, err := google.CredentialsFromJSON(
+						ctx, credsBytes,
+						computev1.ComputeScope)
+					computeService, err := computev1.NewService(ctx, option.WithCredentials(credentials))
+
+					// Delete LB in GCP
+					_, err = computeService.ForwardingRules.Delete(project, region, oldLBName).Do()
+
+					// wait for the new LB to be created
+					err = wait.PollImmediate(15*time.Second, 5*time.Minute, func() (bool, error) {
+						newLBName, err := getLBForService(h, "openshift-kube-apiserver", "rh-api")
+						if err != nil || newLBName == "" {
+							// either we couldn't retrieve the LB name, or it wasn't created yet
+							return false, nil
+						}
+						if newLBName != oldLBName {
+							// the LB was successfully recreated
+							return true, nil
+						}
+						// the rh-api svc hasn't been deleted yet
+						return false, nil
+					})
+
+					Expect(err).NotTo(HaveOccurred())
+
 				})
-				Expect(err).NotTo(HaveOccurred())
 			}
 		})
 	})
