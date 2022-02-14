@@ -31,9 +31,6 @@ var _ = ginkgo.Describe(constants.SuiteInforming+TestPrefix, func() {
 		if viper.GetBool("rosa.STS") {
 			ginkgo.Skip("for now we skip this suite for STS")
 		}
-		if viper.GetString(config.CloudProvider.CloudProviderID) != "aws" {
-			ginkgo.Skip("for now we only support aws provider")
-		}
 	})
 
 	h := helper.New()
