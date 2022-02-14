@@ -101,7 +101,7 @@ func testLBDeletion(h *helper.H) {
 			}
 		})
 		if viper.GetString(config.CloudProvider.CloudProviderID) == "gcp" {
-			ginkgo.It("LB is recreated in GCP", func() {
+			ginkgo.It("LB should be recreated in GCP", func() {
 				gcpCredsJson := viper.Get("ocm.gcp.credsJSON")
 				project := viper.GetString("ocm.gcp.projectID")
 				region := viper.GetString("cloudProvider.region")
