@@ -69,9 +69,13 @@ func Configs(configs []string, customConfig string, secretLocations []string) er
 
 		for _, folder := range secretLocations {
 			passthruSecrets := viper.GetStringMapString(config.NonOSDe2eSecrets)
-			if !strings.Contains(folder, "osde2e-credentials") && !strings.Contains(folder, "osde2e-common") {
+			if !strings.Contains(folder, "osde2e-credentials") || !strings.Contains(folder, "osde2e-common") {
 				if viper.Get(config.Addons.IDs) != nil {
-					passthruSecrets["ocm-token-refresh"] = viper.GetString("ocm.token")
+					_, exist := passthruSecrets["ocm-token-refresh"]
+					if !exist {
+						passthruSecrets["ocm-token-refresh"] = viper.GetString("ocm.token")
+						viper.Set(config.NonOSDe2eSecrets, passthruSecrets)
+					}
 				}
 				continue
 			}
