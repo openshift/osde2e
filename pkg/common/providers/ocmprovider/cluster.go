@@ -160,11 +160,28 @@ func (o *OCMProvider) LaunchCluster(clusterName string) (string, error) {
 		}
 
 		if viper.GetString(config.CloudProvider.CloudProviderID) == "aws" && awsAccount != "" && awsAccessKey != "" && awsSecretKey != "" {
-			newCluster = newCluster.CCS(v1.NewCCS().Enabled(true)).AWS(
-				v1.NewAWS().
-					AccountID(awsAccount).
-					AccessKeyID(awsAccessKey).
-					SecretAccessKey(awsSecretKey))
+			subnetIDs := strings.Split(viper.GetString(AWSVPCSubnetIDs), ",")
+			awsBuilder := v1.NewAWS().
+				AccountID(awsAccount).
+				AccessKeyID(awsAccessKey).
+				SecretAccessKey(awsSecretKey).
+				SubnetIDs(subnetIDs...)
+			newCluster = newCluster.CCS(v1.NewCCS().Enabled(true)).AWS(awsBuilder)
+			if len(subnetIDs) > 0 {
+				cloudProviderData, err := v1.NewCloudProviderData().
+					AWS(awsBuilder).
+					Region(v1.NewCloudRegion().ID(region)).
+					Build()
+				if err != nil {
+					return "", fmt.Errorf("error building AWS cloud provider data for retrieving Availability Zones: %v", err)
+				}
+				subnetworks, err := o.GetSubnetworks(cloudProviderData)
+				if err != nil {
+					return "", fmt.Errorf("error retrieving AWS subnetworks: %v", err)
+				}
+				availabilityZones := GetAvailabilityZones(subnetworks, subnetIDs)
+				nodeBuilder.AvailabilityZones(availabilityZones...)
+			}
 		} else if viper.GetString(config.CloudProvider.CloudProviderID) == "gcp" && viper.GetString(GCPProjectID) != "" {
 			// If GCP credentials are set, this must be a GCP CCS cluster
 			newCluster = newCluster.CCS(v1.NewCCS().Enabled(true)).GCP(v1.NewGCP().
@@ -1365,4 +1382,40 @@ networking:
   serviceNetwork:
   - 172.30.0.0/16
 `
+}
+
+func (o *OCMProvider) GetSubnetworks(cloudProviderData *v1.CloudProviderData) (subnetworks []*v1.Subnetwork, err error) {
+	if viper.GetBool(CCS) && viper.GetString(config.CloudProvider.CloudProviderID) == "aws" {
+		response, err := o.conn.ClustersMgmt().V1().AWSInquiries().Vpcs().Search().
+			Page(1).
+			Size(-1).
+			Body(cloudProviderData).
+			Send()
+		if err != nil {
+			return nil, err
+		}
+
+		cloudVPCs := response.Items().Slice()
+
+		for _, vpc := range cloudVPCs {
+			subnetworks = append(subnetworks, vpc.AWSSubnets()...)
+		}
+	}
+	return subnetworks, nil
+}
+
+func GetAvailabilityZones(subnetworks []*v1.Subnetwork, configSubnetIDs []string) (availabilityZones []string) {
+	collectedAZs := map[string]bool{}
+	for _, subnet := range subnetworks {
+		subnetID := subnet.SubnetID()
+		availabilityZone := subnet.AvailabilityZone()
+		for _, configSubnetID := range configSubnetIDs {
+			if subnetID != configSubnetID || collectedAZs[availabilityZone] {
+				continue
+			}
+			collectedAZs[availabilityZone] = true
+			availabilityZones = append(availabilityZones, availabilityZone)
+		}
+	}
+	return availabilityZones
 }

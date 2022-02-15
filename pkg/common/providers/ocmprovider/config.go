@@ -42,6 +42,8 @@ const (
 	AWSAccessKey = "ocm.aws.accessKey"
 	// AWSSecretKey is used in CCS clusters
 	AWSSecretKey = "ocm.aws.secretKey"
+	// AWSVPCSubnetIDs is used in CCS clusters
+	AWSVPCSubnetIDs = "ocm.aws.vpcSubnetIDs"
 
 	// GCP CCS Credentials
 	GCPCredsJSON               = "ocm.gcp.credsJSON"
@@ -90,6 +92,7 @@ func init() {
 	viper.BindEnv(AWSAccount, "OCM_AWS_ACCOUNT", "AWS_ACCOUNT")
 	viper.BindEnv(AWSAccessKey, "OCM_AWS_ACCESS_KEY", "AWS_ACCESS_KEY_ID")
 	viper.BindEnv(AWSSecretKey, "OCM_AWS_SECRET_KEY", "AWS_SECRET_ACCESS_KEY")
+	viper.BindEnv(AWSVPCSubnetIDs, "OCM_AWS_VPC_SUBNET_IDS")
 
 	config.RegisterSecret(AWSAccessKey, "aws-access-key-id")
 	config.RegisterSecret(AWSSecretKey, "aws-secret-access-key")

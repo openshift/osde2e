@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"testing"
 
+	v1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 	"github.com/openshift/osde2e/pkg/common/providers/ocmprovider"
+	"gotest.tools/v3/assert"
 )
 
 type mockCloudRegion struct {
@@ -66,4 +68,23 @@ func TestChooseRandomRegion(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestGetAvailabilityZones(t *testing.T) {
+	subnet1, _ := v1.NewSubnetwork().AvailabilityZone("az1").SubnetID("subnet1").Build()
+	subnet2, _ := v1.NewSubnetwork().AvailabilityZone("az1").SubnetID("subnet2").Build()
+	subnet3, _ := v1.NewSubnetwork().AvailabilityZone("az2").SubnetID("subnet3").Build()
+	subnetworksInput := []*v1.Subnetwork{subnet1, subnet2, subnet3}
+	configSubnetsInput := []string{"subnet1", "subnet2"}
+	result := ocmprovider.GetAvailabilityZones(subnetworksInput, configSubnetsInput)
+	assert.DeepEqual(t, result, []string{"az1"})
+
+	configSubnetsInput = []string{"subnet1", "subnet3"}
+	result = ocmprovider.GetAvailabilityZones(subnetworksInput, configSubnetsInput)
+	assert.DeepEqual(t, result, []string{"az1", "az2"})
+
+	configSubnetsInput = []string{"subnet5"}
+	var expected []string
+	result = ocmprovider.GetAvailabilityZones(subnetworksInput, configSubnetsInput)
+	assert.DeepEqual(t, result, expected)
 }
