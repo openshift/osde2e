@@ -12,7 +12,7 @@ var (
 )
 
 func init() {
-	alert.RegisterGinkgoAlert(ocmAgentBasicTest, "SD_SREP", "@sre-platform-team-v1alpha1", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+	alert.RegisterGinkgoAlert(ocmAgentBasicTest, "SD_SREP", "@ocm-agent-operator", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
 }
 
 var _ = ginkgo.Describe(ocmAgentBasicTest, func() {
