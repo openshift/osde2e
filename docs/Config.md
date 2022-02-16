@@ -54,6 +54,7 @@ Some environment variables commonly used for pipelines under osde2e are indicate
 |OCM_AWS_ACCOUNT| |
 |OCM_AWS_ACCESS_KEY| |
 |OCM_AWS_SECRET_KEY| |
+|OCM_AWS_VPC_SUBNET_IDS| Define existing VPC via a comma-separated list of subnet id's.|
 |TEST_KUBECONFIG| Path to a local kubeconfig; will override fetching Kubeconfig credentials from OCM if specified.| 
   
 ### Upgrade variables:-
