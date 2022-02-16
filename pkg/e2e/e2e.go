@@ -94,6 +94,11 @@ func beforeSuite() bool {
 
 		viper.Set(config.Cluster.ID, cluster.ID())
 		log.Printf("CLUSTER_ID set to %s from OCM.", viper.GetString(config.Cluster.ID))
+		if viper.Get(config.Addons.IDs) != nil {
+			passthruSecrets := viper.GetStringMapString(config.NonOSDe2eSecrets)
+			passthruSecrets["CLUSTER_ID"] = viper.GetString(config.Cluster.ID)
+			viper.Set(config.NonOSDe2eSecrets, passthruSecrets)
+		}
 
 		viper.Set(config.Cluster.Name, cluster.Name())
 		log.Printf("CLUSTER_NAME set to %s from OCM.", viper.GetString(config.Cluster.Name))
