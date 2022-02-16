@@ -76,6 +76,7 @@ func Configs(configs []string, customConfig string, secretLocations []string) er
 					_, exist := passthruSecrets["ocm-token-refresh"]
 					if !exist {
 						passthruSecrets["ocm-token-refresh"] = viper.GetString("ocm.token")
+						passthruSecrets["ENV"] = viper.GetString("ocm.env")
 						viper.Set(config.NonOSDe2eSecrets, passthruSecrets)
 					}
 				}
