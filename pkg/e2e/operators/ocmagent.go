@@ -7,7 +7,7 @@ import (
 )
 
 var (
-	ocmAgentTestPrefix = "[Suite: operators] [OSD] OCM Agent Operator"
+	ocmAgentTestPrefix = "[Suite: informing] [OSD] OCM Agent Operator"
 	ocmAgentBasicTest  = ocmAgentTestPrefix + " Basic Test"
 )
 
