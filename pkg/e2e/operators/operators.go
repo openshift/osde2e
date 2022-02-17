@@ -239,8 +239,8 @@ func checkUpgrade(h *helper.H, subNamespace string, subName string, packageName 
 
 	ginkgo.Context("Operator Upgrade", func() {
 
-    installPlanPollingDuration := 5 * time.Minute
-    upgradePollingDuration := 15 * time.Minute
+		installPlanPollingDuration := 5 * time.Minute
+		upgradePollingDuration := 15 * time.Minute
 
 		util.GinkgoIt("should upgrade from the replaced version", func() {
 
@@ -318,6 +318,25 @@ func checkUpgrade(h *helper.H, subNamespace string, subName string, packageName 
 
 		}, upgradePollingDuration.Seconds()+installPlanPollingDuration.Seconds()+
 			float64(viper.GetFloat64(config.Tests.PollingTimeout)))
+	})
+}
+
+func checkService(h *helper.H, namespace string, name string, port int) {
+	pollTimeout := viper.GetFloat64(config.Tests.PollingTimeout)
+	ginkgo.Context("service", func() {
+		util.GinkgoIt(
+			"should exist",
+			func() {
+				Eventually(func() bool {
+					_, err := h.Kube().CoreV1().Services(namespace).Get(context.Background(), name, metav1.GetOptions{})
+					if err != nil {
+						return false
+					}
+					return true
+				}, "30m", "1m").Should(BeTrue())
+			},
+			pollTimeout,
+		)
 	})
 }
 
