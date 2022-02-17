@@ -122,6 +122,12 @@ func (m *ROSAProvider) LaunchCluster(clusterName string) (string, error) {
 	if viper.GetBool(config.Cluster.MultiAZ) {
 		createClusterArgs = append(createClusterArgs, "--multi-az")
 	}
+	networkProvider := viper.GetString(config.Cluster.NetworkProvider)
+	if networkProvider != config.DefaultNetworkProvider {
+		createClusterArgs = append(createClusterArgs,
+			"--network-type", networkProvider,
+		)
+	}
 
 	awsAccountID := ""
 
@@ -186,7 +192,6 @@ func (m *ROSAProvider) LaunchCluster(clusterName string) (string, error) {
 		if viper.GetString(config.JobType) == "periodic" && !strings.Contains(viper.GetString(config.JobName), "addon") {
 			imageSource := viper.GetString(config.Cluster.ImageContentSource)
 			installConfig += "\n" + m.ChooseImageSource(imageSource)
-			installConfig += "\n" + m.GetNetworkConfig(viper.GetString(config.Cluster.NetworkProvider))
 		}
 	}
 
@@ -453,25 +458,4 @@ func toCloudRegions(in []*v1.CloudRegion) []CloudRegion {
 		out = append(out, in[i])
 	}
 	return out
-}
-
-func (m *ROSAProvider) GetNetworkConfig(networkProvider string) string {
-	if networkProvider == config.DefaultNetworkProvider {
-		return ""
-	}
-	if networkProvider != "OVNKubernetes" {
-		return ""
-	}
-	return `
-networking:
-  clusterNetwork:
-  - cidr: 10.128.0.0/14
-    hostPrefix: 23
-  machineCIDR: 10.0.0.0/16
-  machineNetwork:
-  - cidr: 10.0.0.0/16
-  networkType: OVNKubernetes
-  serviceNetwork:
-  - 172.30.0.0/16
-`
 }
