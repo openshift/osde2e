@@ -7,7 +7,6 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
-	"encoding/xml"
 	"errors"
 	"fmt"
 	"io"
@@ -32,7 +31,6 @@ import (
 
 	pd "github.com/PagerDuty/go-pagerduty"
 	"github.com/onsi/ginkgo/v2"
-	"github.com/onsi/ginkgo/v2/reporters"
 	"github.com/onsi/ginkgo/v2/types"
 	"github.com/onsi/gomega"
 	"github.com/openshift/osde2e/pkg/common/alert"
@@ -864,69 +862,71 @@ func runTestsInPhase(phase string, description string, suiteConfig types.SuiteCo
 		}
 	}
 
-	logMetricTestSuite := reporters.JUnitTestSuite{
-		Name: "Log Metrics",
-	}
+	//Flagging this block for deletion.
+	//Delete, Refactor, broken
+	// logMetricTestSuite := reporters.JUnitTestSuite{
+	// 	Name: "Log Metrics",
+	// }
 
-	for name, value := range metadata.Instance.LogMetrics {
-		testCase := reporters.JUnitTestCase{
-			Classname: "Log Metrics",
-			Name:      fmt.Sprintf("[Log Metrics] %s", name),
-			Time:      float64(value),
-		}
+	// for name, value := range metadata.Instance.LogMetrics {
+	// 	testCase := reporters.JUnitTestCase{
+	// 		Classname: "Log Metrics",
+	// 		Name:      fmt.Sprintf("[Log Metrics] %s", name),
+	// 		Time:      float64(value),
+	// 	}
 
-		if config.GetLogMetrics().GetMetricByName(name).IsPassing(value) {
-			testCase.SystemOut = fmt.Sprintf("Passed with %d matches", value)
-		} else {
-			testCase.Failure = &reporters.JUnitFailure{
-				Message: fmt.Sprintf("Failed with %d matches", value),
-			}
-			logMetricTestSuite.Failures++
-		}
-		logMetricTestSuite.Tests++
+	// 	if config.GetLogMetrics().GetMetricByName(name).IsPassing(value) {
+	// 		testCase.SystemOut = fmt.Sprintf("Passed with %d matches", value)
+	// 	} else {
+	// 		testCase.Failure = &reporters.JUnitFailure{
+	// 			Message: fmt.Sprintf("Failed with %d matches", value),
+	// 		}
+	// 		logMetricTestSuite.Failures++
+	// 	}
+	// 	logMetricTestSuite.Tests++
 
-		logMetricTestSuite.TestCases = append(logMetricTestSuite.TestCases, testCase)
-	}
+	// 	logMetricTestSuite.TestCases = append(logMetricTestSuite.TestCases, testCase)
+	// }
 
-	data, err := xml.Marshal(&logMetricTestSuite)
+	// data, err := xml.Marshal(&logMetricTestSuite)
 
-	err = ioutil.WriteFile(filepath.Join(phaseDirectory, "junit_logmetrics.xml"), data, 0644)
-	if err != nil {
-		log.Printf("error writing to junit file: %s", err.Error())
-		return false, testCaseData
-	}
+	// err = ioutil.WriteFile(filepath.Join(phaseDirectory, "junit_logmetrics.xml"), data, 0644)
+	// if err != nil {
+	// 	log.Printf("error writing to junit file: %s", err.Error())
+	// 	return false, testCaseData
+	// }
 
-	beforeSuiteMetricTestSuite := reporters.JUnitTestSuite{
-		Name: "Before Suite Metrics",
-	}
+	// beforeSuiteMetricTestSuite := reporters.JUnitTestSuite{
+	// 	Name: "Before Suite Metrics",
+	// }
 
-	for name, value := range metadata.Instance.BeforeSuiteMetrics {
-		testCase := reporters.JUnitTestCase{
-			Classname: "Before Suite Metrics",
-			Name:      fmt.Sprintf("[BeforeSuite] %s", name),
-			Time:      float64(value),
-		}
+	// for name, value := range metadata.Instance.BeforeSuiteMetrics {
+	// 	testCase := reporters.JUnitTestCase{
+	// 		Classname: "Before Suite Metrics",
+	// 		Name:      fmt.Sprintf("[BeforeSuite] %s", name),
+	// 		Time:      float64(value),
+	// 	}
 
-		if config.GetBeforeSuiteMetrics().GetMetricByName(name).IsPassing(value) {
-			testCase.SystemOut = fmt.Sprintf("Passed with %d matches", value)
-		} else {
-			testCase.Failure = &reporters.JUnitFailure{
-				Message: fmt.Sprintf("Failed with %d matches", value),
-			}
-			beforeSuiteMetricTestSuite.Failures++
-		}
-		beforeSuiteMetricTestSuite.Tests++
+	// 	if config.GetBeforeSuiteMetrics().GetMetricByName(name).IsPassing(value) {
+	// 		testCase.SystemOut = fmt.Sprintf("Passed with %d matches", value)
+	// 	} else {
+	// 		testCase.Failure = &reporters.JUnitFailure{
+	// 			Message: fmt.Sprintf("Failed with %d matches", value),
+	// 		}
+	// 		beforeSuiteMetricTestSuite.Failures++
+	// 	}
+	// 	beforeSuiteMetricTestSuite.Tests++
 
-		beforeSuiteMetricTestSuite.TestCases = append(beforeSuiteMetricTestSuite.TestCases, testCase)
-	}
+	// 	beforeSuiteMetricTestSuite.TestCases = append(beforeSuiteMetricTestSuite.TestCases, testCase)
+	// }
 
-	newdata, err := xml.Marshal(&beforeSuiteMetricTestSuite)
+	// newdata, err := xml.Marshal(&beforeSuiteMetricTestSuite)
 
-	err = ioutil.WriteFile(filepath.Join(phaseDirectory, "junit_beforesuite.xml"), newdata, 0644)
-	if err != nil {
-		log.Printf("error writing to junit file: %s", err.Error())
-		return false, testCaseData
-	}
+	// err = ioutil.WriteFile(filepath.Join(phaseDirectory, "junit_beforesuite.xml"), newdata, 0644)
+	// if err != nil {
+	// 	log.Printf("error writing to junit file: %s", err.Error())
+	// 	return false, testCaseData
+	// }
 
 	clusterID := viper.GetString(config.Cluster.ID)
 
