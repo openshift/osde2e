@@ -12,6 +12,12 @@ echo "Setting CLUSTER_NAME";
 
 CLUSTER_NAME="osde2e-$(openssl rand -hex 3)"
 
+RESOURCEGROUP_NAME=$CLUSTER_NAME
+
+export KEYVAULT_NAME=$CLUSTER_NAME-enckv
+export KEYVAULT_KEY_NAME=$CLUSTER_NAME-key
+export DISK_ENCRYPTION_SET_NAME=$CLUSTER_NAME-des
+
 echo "Writing CLUSTER_NAME $CLUSTER_NAME to ${SHARED_DIR}/cluster-name"
 
 echo "$CLUSTER_NAME" > "${SHARED_DIR}/cluster-name"
@@ -25,13 +31,26 @@ PULL_SECRET_FILE="/usr/local/osde2e-credentials/stage-ocm-pull-secret"
 
 # just automating the steps in https://docs.microsoft.com/en-us/azure/openshift/tutorial-create-cluster
 
+echo "Pulling ARO-RP"
+RP_COMMIT=$(curl --silent https://arorpversion.blob.core.windows.net/rpversion/$LOCATION)
+git clone https://github.com/Azure/ARO-RP.git
+cd ARO-RP
+git checkout $RP_COMMIT
+
+echo "Installing AzureCLI Extension"
+make az
+
+cd ..
 echo "Logging into Azure"
 
 az login --service-principal --username "$(cat /usr/local/osde2e-credentials/aro-app-id)" --password "$(cat /usr/local/osde2e-credentials/aro-password)" --tenant "$(cat /usr/local/osde2e-credentials/aro-tenant)"
 
-echo "Creating required Azure objects"
+echo "Configuring Disk Encryption Set"
 
-RESOURCEGROUP_NAME=$CLUSTER_NAME
+#hardcoded ResourceId in the Azure Red Hat OpenShift (RH Engineering) Azure subscription in v4-eastus
+DES_ID="$(cat /usr/local/osde2e-credentials/des-id)"
+
+echo "Creating required Azure objects (Network infrastructure)"
 
 az provider register -n Microsoft.RedHatOpenShift --wait
 az provider register -n Microsoft.Compute --wait
@@ -67,7 +86,8 @@ az network vnet subnet update \
     --vnet-name aro-vnet \
     --disable-private-link-service-network-policies true
 
-CREATE_CMD="az aro create --resource-group \"$RESOURCEGROUP_NAME\" --name \"$CLUSTER_NAME\" --vnet aro-vnet --master-subnet master-subnet --worker-subnet worker-subnet "
+
+CREATE_CMD="az aro create --resource-group \"$RESOURCEGROUP_NAME\" --name \"$CLUSTER_NAME\" --vnet aro-vnet --master-subnet master-subnet --worker-subnet worker-subnet --disk-encryption-set \"$DES_ID\" --master-encryption-at-host --worker-encryption-at-host "
 
 if [ "$PULL_SECRET_FILE" != "" ];
 then
