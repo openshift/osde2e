@@ -160,27 +160,35 @@ func (o *OCMProvider) LaunchCluster(clusterName string) (string, error) {
 		}
 
 		if viper.GetString(config.CloudProvider.CloudProviderID) == "aws" && awsAccount != "" && awsAccessKey != "" && awsSecretKey != "" {
-			subnetIDs := strings.Split(viper.GetString(AWSVPCSubnetIDs), ",")
-			awsBuilder := v1.NewAWS().
-				AccountID(awsAccount).
-				AccessKeyID(awsAccessKey).
-				SecretAccessKey(awsSecretKey).
-				SubnetIDs(subnetIDs...)
-			newCluster = newCluster.CCS(v1.NewCCS().Enabled(true)).AWS(awsBuilder)
-			if len(subnetIDs) > 0 {
-				cloudProviderData, err := v1.NewCloudProviderData().
-					AWS(awsBuilder).
-					Region(v1.NewCloudRegion().ID(region)).
-					Build()
-				if err != nil {
-					return "", fmt.Errorf("error building AWS cloud provider data for retrieving Availability Zones: %v", err)
+			if viper.GetString("ocm.aws.vpcSubnetIDs") != "" {
+				subnetIDs := strings.Split(viper.GetString(AWSVPCSubnetIDs), ",")
+				awsBuilder := v1.NewAWS().
+					AccountID(awsAccount).
+					AccessKeyID(awsAccessKey).
+					SecretAccessKey(awsSecretKey).
+					SubnetIDs(subnetIDs...)
+				newCluster = newCluster.CCS(v1.NewCCS().Enabled(true)).AWS(awsBuilder)
+				if len(subnetIDs) > 0 {
+					cloudProviderData, err := v1.NewCloudProviderData().
+						AWS(awsBuilder).
+						Region(v1.NewCloudRegion().ID(region)).
+						Build()
+					if err != nil {
+						return "", fmt.Errorf("error building AWS cloud provider data for retrieving Availability Zones: %v", err)
+					}
+					subnetworks, err := o.GetSubnetworks(cloudProviderData)
+					if err != nil {
+						return "", fmt.Errorf("error retrieving AWS subnetworks: %v", err)
+					}
+					availabilityZones := GetAvailabilityZones(subnetworks, subnetIDs)
+					nodeBuilder.AvailabilityZones(availabilityZones...)
 				}
-				subnetworks, err := o.GetSubnetworks(cloudProviderData)
-				if err != nil {
-					return "", fmt.Errorf("error retrieving AWS subnetworks: %v", err)
-				}
-				availabilityZones := GetAvailabilityZones(subnetworks, subnetIDs)
-				nodeBuilder.AvailabilityZones(availabilityZones...)
+			} else {
+				newCluster = newCluster.CCS(v1.NewCCS().Enabled(true)).AWS(
+					v1.NewAWS().
+						AccountID(awsAccount).
+						AccessKeyID(awsAccessKey).
+						SecretAccessKey(awsSecretKey))
 			}
 		} else if viper.GetString(config.CloudProvider.CloudProviderID) == "gcp" && viper.GetString(GCPProjectID) != "" {
 			// If GCP credentials are set, this must be a GCP CCS cluster
