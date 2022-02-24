@@ -3,6 +3,7 @@ module github.com/openshift/osde2e
 go 1.16
 
 require (
+	cloud.google.com/go/compute v1.2.0
 	cloud.google.com/go/iam v0.1.0 // indirect
 	cloud.google.com/go/kms v1.1.0
 	github.com/Masterminds/semver v1.5.0
@@ -14,6 +15,7 @@ require (
 	github.com/bmizerany/perks v0.0.0-20141205001514-d9a9656a3a4b // indirect
 	github.com/cenkalti/backoff/v4 v4.1.0 // indirect
 	github.com/code-ready/crc v1.10.0
+	github.com/davecgh/go-spew v1.1.1
 	github.com/dgryski/go-gk v0.0.0-20200319235926-a69029f61654 // indirect
 	github.com/dgryski/go-lttb v0.0.0-20180810165845-318fcdf10a77 // indirect
 	github.com/emicklei/go-restful v2.15.0+incompatible
