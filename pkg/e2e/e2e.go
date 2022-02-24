@@ -78,7 +78,7 @@ func beforeSuite() bool {
 	// Skip provisioning if we already have a kubeconfig
 	var err error
 
-	// We don't care if this errors. If it does, we'll just wind up creating a new cluster anyway.
+	//We can capture this error if TEST_KUBECONFIG is set, but we can't use it to skip provisioning
 	config.LoadKubeconfig()
 
 	if viper.GetString(config.Kubeconfig.Contents) == "" {
@@ -281,6 +281,7 @@ func runGinkgoTests() (int, error) {
 	}
 
 	if testsToRun := viper.GetStringSlice(config.Tests.TestsToRun); len(testsToRun) > 0 {
+		//Flag to delete sice these Print statements are duplicated, all we really are doing is setting an array to be passed to the Ginkgo suite.
 		log.Printf("%v", testsToRun)
 		suiteConfig.FocusStrings = testsToRun
 		log.Printf("%v", suiteConfig.FocusStrings)
@@ -730,6 +731,8 @@ func runTestsInPhase(phase string, description string, suiteConfig types.SuiteCo
 	}
 	suffix := viper.GetString(config.Suffix)
 	reporterConfig.JUnitReport = filepath.Join(phaseDirectory, fmt.Sprintf("junit_%v.xml", suffix))
+	//Controlling Verbosity
+	//Ginkgo has four verbosity settings: succinct (the default when running multiple suites), normal (the default when running a single suite), verbose, and very-verbose.
 	reporterConfig.Succinct = true
 	ginkgoPassed := false
 

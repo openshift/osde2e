@@ -160,7 +160,7 @@ func (o *OCMProvider) LaunchCluster(clusterName string) (string, error) {
 		}
 
 		if viper.GetString(config.CloudProvider.CloudProviderID) == "aws" && awsAccount != "" && awsAccessKey != "" && awsSecretKey != "" {
-			if viper.GetString("ocm.aws.vpcSubnetIDs") != "" {
+			if viper.GetString(AWSVPCSubnetIDs) != "" {
 				subnetIDs := strings.Split(viper.GetString(AWSVPCSubnetIDs), ",")
 				awsBuilder := v1.NewAWS().
 					AccountID(awsAccount).
