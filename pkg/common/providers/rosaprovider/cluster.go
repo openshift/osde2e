@@ -84,6 +84,8 @@ func (m *ROSAProvider) LaunchCluster(clusterName string) (string, error) {
 	} else {
 		viper.Set(config.Cluster.Channel, "nightly")
 	}
+
+	//Refactor: Was this not redundant with the above?
 	rosaClusterVersion = strings.Replace(rosaClusterVersion, "-stable", "", -1)
 	rosaClusterVersion = strings.Replace(rosaClusterVersion, "openshift-v", "", -1)
 
@@ -222,6 +224,7 @@ func (m *ROSAProvider) LaunchCluster(clusterName string) (string, error) {
 		return newCluster.Execute()
 	})
 	if err != nil {
+		log.Print("Error creating cluster: ", err)
 		return "", err
 	}
 
@@ -378,6 +381,7 @@ func (m *ROSAProvider) ocmLogin() (*ocm.Client, error) {
 		return nil, fmt.Errorf("unable to create OCM client: %s", err.Error())
 	}
 
+	log.Print("created OCM client")
 	return ocmClient, err
 }
 
