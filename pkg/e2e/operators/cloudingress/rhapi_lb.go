@@ -9,6 +9,7 @@ import (
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/constants"
 	"github.com/openshift/osde2e/pkg/common/helper"
+	"github.com/pingcap/log"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"time"
 
@@ -158,7 +159,9 @@ func testLBDeletion(h *helper.H) {
 					} else {
 						ginkgo.By("Deleting GCP forwarding rule for rh-api")
 						_, err = computeService.ForwardingRules.Delete(project, region, oldLB.Name).Do()
-						Expect(err).NotTo(HaveOccurred())
+						if err != nil {
+							log.Warn("Error deleting forwarding rule ")
+						}
 					}
 
 					ginkgo.By("Deleting GCP backend service rule for rh-api")
@@ -167,7 +170,9 @@ func testLBDeletion(h *helper.H) {
 						fmt.Printf("GCP backend service already deleted.")
 					} else {
 						_, err = computeService.BackendServices.Delete(project, oldLB.Name).Do()
-						Expect(err).NotTo(HaveOccurred())
+						if err != nil {
+							log.Warn("Error deleting backend service ")
+						}
 					}
 
 					ginkgo.By("Deleting GCP health check for rh-api")
@@ -176,7 +181,9 @@ func testLBDeletion(h *helper.H) {
 						fmt.Printf("GCP health check already deleted")
 					} else {
 						_, err = computeService.ForwardingRules.Delete(project, region, oldLB.Name).Do()
-						Expect(err).NotTo(HaveOccurred())
+						if err != nil {
+							log.Warn("Error deleting health check ")
+						}
 					}
 
 					ginkgo.By("Deleting GCP target pool for rh-api")
@@ -185,7 +192,9 @@ func testLBDeletion(h *helper.H) {
 						fmt.Printf("GCP target pool already deleted")
 					} else {
 						_, err = computeService.ForwardingRules.Delete(project, region, oldLB.Name).Do()
-						Expect(err).NotTo(HaveOccurred())
+						if err != nil {
+							log.Warn("Error deleting target pool ")
+						}
 					}
 				}
 
@@ -195,11 +204,13 @@ func testLBDeletion(h *helper.H) {
 					fmt.Printf("GCP IP address already deleted")
 				} else {
 					_, err = computeService.Addresses.Delete(project, region, oldLBIP).Do()
-					Expect(err).NotTo(HaveOccurred())
+					if err != nil {
+						log.Warn("Error deleting address ")
+					}
 				}
 
 				// Getting the newly created IP from rh-api service
-				ginkgo.By("Polling OCM to get the new rh-api LB")
+				ginkgo.By("Getting new IP from rh-api service in OCM")
 				newLBIP := ""
 				err = wait.PollImmediate(15*time.Second, 5*time.Minute, func() (bool, error) {
 					newLBIP, err = getLBForService(h, "openshift-kube-apiserver", "rh-api", "ip")
