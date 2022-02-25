@@ -48,7 +48,7 @@ az login --service-principal --username "$(cat /usr/local/osde2e-credentials/aro
 echo "Configuring Disk Encryption Set"
 
 #hardcoded ResourceId in the Azure Red Hat OpenShift (RH Engineering) Azure subscription in v4-eastus
-DES_ID="$(cat /usr/local/osde2e-credentials/des-id)"
+DES_ID="$(cat /usr/local/osde2e-credentials/aro-des-id)"
 
 echo "Creating required Azure objects (Network infrastructure)"
 
