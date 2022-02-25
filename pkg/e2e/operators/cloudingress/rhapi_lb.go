@@ -1,21 +1,16 @@
 package cloudingress
 
 import (
-	compute "cloud.google.com/go/compute/apiv1"
 	"context"
-	"encoding/json"
 	"fmt"
-	"github.com/davecgh/go-spew/spew"
-	"time"
-
-	ginkgo "github.com/onsi/ginkgo/v2"
+	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/constants"
 	"github.com/openshift/osde2e/pkg/common/helper"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
@@ -23,10 +18,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/elb"
 	"k8s.io/apimachinery/pkg/util/wait"
 
-	"golang.org/x/oauth2/google"
 	computev1 "google.golang.org/api/compute/v1"
-	computepb "google.golang.org/genproto/googleapis/cloud/compute/v1"
-
 	"google.golang.org/api/option"
 )
 
@@ -41,15 +33,33 @@ var _ = ginkgo.Describe(constants.SuiteInforming+TestPrefix, func() {
 	testLBDeletion(h)
 })
 
-// getLBForService retrieves the loadbalancer name associated with a service of type LoadBalancer
+// Get forwarding rule for rh-api loadbalancer in GCP
+func getGCPForwardingRuleForIP(computeService *computev1.Service, oldLBIP string, project string, region string) (*computev1.ForwardingRule, error) {
+	listCall := computeService.ForwardingRules.List(project, region)
+	response, err := listCall.Do()
+	var oldLB *computev1.ForwardingRule
+	if err != nil {
+		return nil, err
+	}
+
+	for _, lb := range response.Items {
+		// This list of forwardingrules (LBs) includes any service LBs
+		// for application routers so check the IP to identify
+		// the rh-api LB.
+		if lb.IPAddress == oldLBIP {
+			oldLB = lb
+		}
+	}
+
+	return oldLB, nil
+}
+
+// getLBForService retrieves the loadbalancer name or IP associated with a service of type LoadBalancer
 func getLBForService(h *helper.H, namespace string, service string, idtype string) (string, error) {
 	svc, err := h.Kube().CoreV1().Services(namespace).Get(context.TODO(), service, metav1.GetOptions{})
 	if err != nil {
 		return "", err
 	}
-	//debugging
-	fmt.Printf("%s", "service dump: ")
-	spew.Dump(svc)
 	if svc.Spec.Type != "LoadBalancer" {
 		return "", fmt.Errorf("service type is not LoadBalancer")
 	}
@@ -69,8 +79,9 @@ func getLBForService(h *helper.H, namespace string, service string, idtype strin
 // testLBDeletion deletes the loadbalancer of rh-api service and ensures that cloud-ingress-operator recreates it
 func testLBDeletion(h *helper.H) {
 	ginkgo.Context("rh-api-lb-test", func() {
-		ginkgo.It("Manually deleted LB should be recreated", func() {
-			if viper.GetString(config.CloudProvider.CloudProviderID) == "aws" {
+
+		if viper.GetString(config.CloudProvider.CloudProviderID) == "aws" {
+			ginkgo.It("Manually deleted LB should be recreated in AWS", func() {
 				awsAccessKey := viper.GetString("ocm.aws.accessKey")
 				awsSecretKey := viper.GetString("ocm.aws.secretKey")
 				awsRegion := viper.GetString(config.CloudProvider.Region)
@@ -106,80 +117,125 @@ func testLBDeletion(h *helper.H) {
 					return false, nil
 				})
 				Expect(err).NotTo(HaveOccurred())
-			}
-		})
+
+			})
+		}
+
 		if viper.GetString(config.CloudProvider.CloudProviderID) == "gcp" {
-			ginkgo.It("LB should be recreated in GCP", func() {
-				gcpCredsJson := viper.Get("ocm.gcp.credsJSON")
-				project := viper.GetString("ocm.gcp.projectID")
+			ginkgo.It("Manually deleted LB should be recreated in GCP", func() {
+
 				region := viper.GetString("cloudProvider.region")
-				ctx := context.Background()
-				c, _ := compute.NewForwardingRulesRESTClient(ctx)
+				ctx := context.TODO()
+
+				ginkgo.By("Getting rh-api IP")
 				oldLBIP, err := getLBForService(h, "openshift-kube-apiserver", "rh-api", "ip")
+				Expect(err).NotTo(HaveOccurred())
 				fmt.Printf("oldLBIP:  %s", oldLBIP)
 
-				credsBytes, err := json.Marshal(gcpCredsJson)
-				credentials, err := google.CredentialsFromJSON(
-					ctx, credsBytes,
-					computev1.ComputeScope)
-				computeService, err := computev1.NewService(ctx, option.WithCredentials(credentials))
+				ginkgo.By("Getting GCP creds")
+				credentials, status := h.GetGCPCreds(ctx)
+				Expect(status).To(BeTrue())
+				project := credentials.ProjectID
 
-				// Delete LB in GCP
-				oldLBName := "OldName"
-				filtertext := "IPAddress = " + oldLBIP
-				req := &computepb.AggregatedListForwardingRulesRequest{
-					Filter:  &filtertext,
-					Project: project,
-				}
-				it := c.AggregatedList(ctx, req)
+				ginkgo.By("Initializing GCP compute service")
+				computeService, err := computev1.NewService(ctx, option.WithCredentials(credentials), option.WithScopes("https://www.googleapis.com/auth/compute"))
+				Expect(err).NotTo(HaveOccurred())
 
-				//debugging
-				spew.Dump(it)
-				//Find old LB Name in GCP and delete it
-				//Use the first result
-				resp, err := it.Next()
-				//debugging
-				spew.Dump(resp)
+				ginkgo.By("Getting GCP forwarding rule for rh-api")
+				oldLB, err := getGCPForwardingRuleForIP(computeService, oldLBIP, project, region)
+				Expect(err).NotTo(HaveOccurred())
 
-				oldLBName = *resp.Value.ForwardingRules[0].Name
-				_, err = computeService.ForwardingRules.Delete(project, region, oldLBName).Do()
-
-				// wait for the new LB to be created
-				err = wait.PollImmediate(15*time.Second, 5*time.Minute, func() (bool, error) {
-					newLBName := "newLBName"
-					newLBIP, _ := getLBForService(h, "openshift-kube-apiserver", "rh-api", "ip")
-					fmt.Printf("newLBIP:  %s", newLBIP)
-					filtertext := "IPAddress = " + newLBIP
-
-					req := &computepb.AggregatedListForwardingRulesRequest{
-						Filter:  &filtertext,
-						Project: project,
+				//There's no single command to delete a loadbalancer in GCP
+				//Delete GCP all instances related to rh-api LB
+				ginkgo.By("Deleting rh-api loadbalancer related resources in GCP")
+				if oldLB == nil {
+					fmt.Printf("GCP forwarding rule for rh-api does not exist; Skipping deletion")
+				} else {
+					fmt.Printf("Old lb name:  %s", oldLB.Name)
+					_, err = computeService.ForwardingRules.Get(project, region, oldLB.Name).Do()
+					if err != nil {
+						fmt.Printf("GCP forwarding rule for rh-api not found!")
+					} else {
+						ginkgo.By("Deleting GCP forwarding rule for rh-api")
+						_, err = computeService.ForwardingRules.Delete(project, region, oldLB.Name).Do()
+						Expect(err).NotTo(HaveOccurred())
 					}
-					it := c.AggregatedList(ctx, req)
-					//debugging
-					spew.Dump(it)
 
-					//Find new LB Name and compare with old
-					//Use the first result
-					resp, err := it.Next()
-					//debugging
-					spew.Dump(resp)
-					newLBName = *resp.Value.ForwardingRules[0].Name
-					//debugging
-					spew.Dump(newLBName)
-					if err != nil || newLBName == "" {
-						// either we couldn't retrieve the LB name, or it wasn't created yet
+					ginkgo.By("Deleting GCP backendservice rule for rh-api")
+					_, err = computeService.BackendServices.Get(project, oldLB.Name).Do()
+					if err != nil {
+						fmt.Printf("GCP backend service already deleted.")
+					} else {
+						_, err = computeService.BackendServices.Delete(project, oldLB.Name).Do()
+						Expect(err).NotTo(HaveOccurred())
+					}
+
+					ginkgo.By("Deleting GCP healthcheck for rh-api")
+					_, err = computeService.Addresses.Get(project, region, oldLB.Name).Do()
+					if err != nil {
+						fmt.Printf("GCP healthcheck already deleted")
+					} else {
+						_, err = computeService.ForwardingRules.Delete(project, region, oldLB.Name).Do()
+						Expect(err).NotTo(HaveOccurred())
+					}
+
+					ginkgo.By("Deleting GCP target pool for rh-api")
+					_, err = computeService.TargetPools.Get(project, region, oldLB.Name).Do()
+					if err != nil {
+						fmt.Printf("GCP healthcheck already deleted")
+					} else {
+						_, err = computeService.ForwardingRules.Delete(project, region, oldLB.Name).Do()
+						Expect(err).NotTo(HaveOccurred())
+					}
+				}
+
+				ginkgo.By("Deleting GCP address for rh-api")
+				_, err = computeService.Addresses.Get(project, region, oldLBIP).Do()
+				if err != nil {
+					fmt.Printf("GCP IP address already deleted")
+				} else {
+					_, err = computeService.Addresses.Delete(project, region, oldLBIP).Do()
+					Expect(err).NotTo(HaveOccurred())
+				}
+
+				// getting the newly created IP from rh-api service
+				ginkgo.By("Polling OCM to get the new rh-api IP")
+				newLBIP := ""
+				err = wait.PollImmediate(15*time.Second, 5*time.Minute, func() (bool, error) {
+					newLBIP, err = getLBForService(h, "openshift-kube-apiserver", "rh-api", "ip")
+					if err != nil || newLBIP == "" {
+						// either the new rh-api LB or the new IP can not be found in OCM
 						return false, nil
 					}
-					if newLBName != oldLBName {
-						// a new LB was successfully recreated
-						return true, nil
-					}
-					// the rh-api svc hasn't been deleted yet
-					return false, nil
+					fmt.Printf("newLBIP:  %s", newLBIP)
+					return true,nil
 				})
-				Expect(err).NotTo(HaveOccurred())
+				Expect(newLBIP).ToNot(Equal(""))
+
+				// getting the new LB from GCP
+				if (newLBIP != "") {
+					err = wait.PollImmediate(15*time.Second, 5*time.Minute, func() (bool, error) {
+						ginkgo.By("Polling GCP to get new forwarding rule for rh-api")
+						newLB, _ := getGCPForwardingRuleForIP(computeService, newLBIP, project, region)
+						if err != nil || newLB == nil {
+							// either we couldn't retrieve the LB, or it wasn't created yet
+							fmt.Printf("New forwarding rule not found yet...")
+							return false, nil
+						}
+						if newLB.Name != oldLB.Name {
+							// a new LB was successfully recreated in GCP
+							return true, nil
+						}
+						// the rh-api lb hasn't been deleted yet
+						fmt.Printf("Old forwarding rule not deleted yet...")
+						return false, nil
+					})
+					Expect(err).NotTo(HaveOccurred())
+
+				}
+
 			})
+
 		}
 	})
 }
