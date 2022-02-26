@@ -219,14 +219,14 @@ func testLBDeletion(h *helper.H) {
 							ginkgo.By("Getting new IP from rh-api service in OCM")
 
 							newLBIP, err = getLBForService(h, "openshift-kube-apiserver", "rh-api", "ip")
-							if err != nil || newLBIP == "" {
+							if (err != nil) || (newLBIP == "") || (newLBIP == oldLBIP) {
 								fmt.Printf("New rh-api svc not created yet...")
 								return false, nil
 							}
 							fmt.Printf("new lb IP: %s ", newLBIP)
 						}
 						ginkgo.By("Polling GCP to get new forwarding rule for rh-api")
-						newLB, _ := getGCPForwardingRuleForIP(computeService, newLBIP, project, region)
+						newLB, err := getGCPForwardingRuleForIP(computeService, newLBIP, project, region)
 						if err != nil || newLB == nil {
 							// Either we couldn't retrieve the LB, or it wasn't created yet
 							fmt.Printf("New forwarding rule not found yet...")
