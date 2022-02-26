@@ -151,12 +151,12 @@ func testLBDeletion(h *helper.H) {
 				//Delete all GCP resources related to rh-api LB setup
 				ginkgo.By("Deleting rh-api load balancer related resources in GCP")
 				if oldLB == nil {
-					fmt.Printf("GCP forwarding rule for rh-api does not exist; Skipping deletion")
+					fmt.Printf("GCP forwarding rule for rh-api does not exist; Skipping deletion ")
 				} else {
 					fmt.Printf("Old lb name:  %s", oldLB.Name)
 					_, err = computeService.ForwardingRules.Get(project, region, oldLB.Name).Do()
 					if err != nil {
-						fmt.Printf("GCP forwarding rule for rh-api not found!")
+						fmt.Printf("GCP forwarding rule for rh-api not found! ")
 					} else {
 						ginkgo.By("Deleting GCP forwarding rule for rh-api")
 						_, err = computeService.ForwardingRules.Delete(project, region, oldLB.Name).Do()
@@ -168,7 +168,7 @@ func testLBDeletion(h *helper.H) {
 					ginkgo.By("Deleting GCP backend service rule for rh-api")
 					_, err = computeService.BackendServices.Get(project, oldLB.Name).Do()
 					if err != nil {
-						fmt.Printf("GCP backend service already deleted.")
+						fmt.Printf("GCP backend service already deleted. ")
 					} else {
 						_, err = computeService.BackendServices.Delete(project, oldLB.Name).Do()
 						if err != nil {
@@ -176,10 +176,10 @@ func testLBDeletion(h *helper.H) {
 						}
 					}
 
-					ginkgo.By("Deleting GCP health check for rh-api")
+					ginkgo.By("Deleting GCP health check for rh-api ")
 					_, err = computeService.Addresses.Get(project, region, oldLB.Name).Do()
 					if err != nil {
-						fmt.Printf("GCP health check already deleted")
+						fmt.Printf("GCP health check already deleted ")
 					} else {
 						_, err = computeService.ForwardingRules.Delete(project, region, oldLB.Name).Do()
 						if err != nil {
@@ -187,10 +187,10 @@ func testLBDeletion(h *helper.H) {
 						}
 					}
 
-					ginkgo.By("Deleting GCP target pool for rh-api")
+					ginkgo.By("Deleting GCP target pool for rh-api ")
 					_, err = computeService.TargetPools.Get(project, region, oldLB.Name).Do()
 					if err != nil {
-						fmt.Printf("GCP target pool already deleted")
+						fmt.Printf("GCP target pool already deleted ")
 					} else {
 						_, err = computeService.ForwardingRules.Delete(project, region, oldLB.Name).Do()
 						if err != nil {
@@ -202,7 +202,7 @@ func testLBDeletion(h *helper.H) {
 				ginkgo.By("Deleting GCP address for rh-api")
 				_, err = computeService.Addresses.Get(project, region, oldLBIP).Do()
 				if err != nil {
-					fmt.Printf("GCP IP address already deleted")
+					fmt.Printf("GCP IP address already deleted ")
 				} else {
 					_, err = computeService.Addresses.Delete(project, region, oldLBIP).Do()
 					if err != nil {
@@ -211,19 +211,20 @@ func testLBDeletion(h *helper.H) {
 				}
 
 
-
+				newLBIP := ""
 				// Getting the new LB from GCP
 					err = wait.PollImmediate(15*time.Second, 5*time.Minute, func() (bool, error) {
-						// Getting the newly created IP from rh-api service
-						ginkgo.By("Getting new IP from rh-api service in OCM")
-						newLBIP := ""
-						newLBIP, err = getLBForService(h, "openshift-kube-apiserver", "rh-api", "ip")
-						if err != nil || newLBIP == "" {
-							fmt.Printf("New rh-api svc not created yet...")
-							return false, nil
-						}
-						fmt.Printf("new lb IP %s", newLBIP)
+						if newLBIP == "" {
+							// Getting the newly created IP from rh-api service
+							ginkgo.By("Getting new IP from rh-api service in OCM")
 
+							newLBIP, err = getLBForService(h, "openshift-kube-apiserver", "rh-api", "ip")
+							if err != nil || newLBIP == "" {
+								fmt.Printf("New rh-api svc not created yet...")
+								return false, nil
+							}
+							fmt.Printf("new lb IP: %s ", newLBIP)
+						}
 						ginkgo.By("Polling GCP to get new forwarding rule for rh-api")
 						newLB, _ := getGCPForwardingRuleForIP(computeService, newLBIP, project, region)
 						if err != nil || newLB == nil {
@@ -231,7 +232,7 @@ func testLBDeletion(h *helper.H) {
 							fmt.Printf("New forwarding rule not found yet...")
 							return false, nil
 						}
-						fmt.Printf("new lb name %s", newLB.Name)
+						fmt.Printf("new lb name: %s ", newLB.Name)
 
 						if newLB.Name != oldLB.Name {
 							// A new LB was successfully recreated in GCP
