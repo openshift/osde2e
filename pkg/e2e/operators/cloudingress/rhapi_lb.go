@@ -132,7 +132,7 @@ func testLBDeletion(h *helper.H) {
 				ginkgo.By("Getting rh-api IP")
 				oldLBIP, err := getLBForService(h, "openshift-kube-apiserver", "rh-api", "ip")
 				Expect(err).NotTo(HaveOccurred())
-				fmt.Printf("oldLBIP:  %s", oldLBIP)
+				fmt.Printf("old LB IP:  %s ", oldLBIP)
 
 				ginkgo.By("Getting GCP creds")
 				gcpCreds, status := h.GetGCPCreds(ctx)
@@ -153,7 +153,7 @@ func testLBDeletion(h *helper.H) {
 				if oldLB == nil {
 					fmt.Printf("GCP forwarding rule for rh-api does not exist; Skipping deletion ")
 				} else {
-					fmt.Printf("Old lb name:  %s", oldLB.Name)
+					fmt.Printf("Old lb name:  %s ", oldLB.Name)
 					_, err = computeService.ForwardingRules.Get(project, region, oldLB.Name).Do()
 					if err != nil {
 						fmt.Printf("GCP forwarding rule for rh-api not found! ")
