@@ -5,11 +5,12 @@ import (
 	"fmt"
 	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	"github.com/openshift/origin/Godeps/_workspace/src/github.com/emicklei/go-restful/log"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/constants"
 	"github.com/openshift/osde2e/pkg/common/helper"
-	"github.com/pingcap/log"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"time"
 
@@ -160,7 +161,7 @@ func testLBDeletion(h *helper.H) {
 						ginkgo.By("Deleting GCP forwarding rule for rh-api")
 						_, err = computeService.ForwardingRules.Delete(project, region, oldLB.Name).Do()
 						if err != nil {
-							log.Warn("Error deleting forwarding rule ")
+							log.Printf("Error deleting forwarding rule ")
 						}
 					}
 
@@ -171,7 +172,7 @@ func testLBDeletion(h *helper.H) {
 					} else {
 						_, err = computeService.BackendServices.Delete(project, oldLB.Name).Do()
 						if err != nil {
-							log.Warn("Error deleting backend service ")
+							log.Printf("Error deleting backend service ")
 						}
 					}
 
@@ -182,7 +183,7 @@ func testLBDeletion(h *helper.H) {
 					} else {
 						_, err = computeService.ForwardingRules.Delete(project, region, oldLB.Name).Do()
 						if err != nil {
-							log.Warn("Error deleting health check ")
+							log.Printf("Error deleting health check ")
 						}
 					}
 
@@ -193,7 +194,7 @@ func testLBDeletion(h *helper.H) {
 					} else {
 						_, err = computeService.ForwardingRules.Delete(project, region, oldLB.Name).Do()
 						if err != nil {
-							log.Warn("Error deleting target pool ")
+							log.Printf("Error deleting target pool ")
 						}
 					}
 				}
@@ -205,27 +206,24 @@ func testLBDeletion(h *helper.H) {
 				} else {
 					_, err = computeService.Addresses.Delete(project, region, oldLBIP).Do()
 					if err != nil {
-						log.Warn("Error deleting address ")
+						log.Printf("Error deleting address ")
 					}
 				}
 
-				// Getting the newly created IP from rh-api service
-				ginkgo.By("Getting new IP from rh-api service in OCM")
-				newLBIP := ""
-				err = wait.PollImmediate(15*time.Second, 5*time.Minute, func() (bool, error) {
-					newLBIP, err = getLBForService(h, "openshift-kube-apiserver", "rh-api", "ip")
-					if err != nil || newLBIP == "" {
-						// either the new rh-api LB or the new IP can not be found in OCM
-						return false, nil
-					}
-					fmt.Printf("newLBIP:  %s", newLBIP)
-					return true,nil
-				})
-				Expect(newLBIP).ToNot(Equal(""))
+
 
 				// Getting the new LB from GCP
-				if newLBIP != "" {
 					err = wait.PollImmediate(15*time.Second, 5*time.Minute, func() (bool, error) {
+						// Getting the newly created IP from rh-api service
+						ginkgo.By("Getting new IP from rh-api service in OCM")
+						newLBIP := ""
+						newLBIP, err = getLBForService(h, "openshift-kube-apiserver", "rh-api", "ip")
+						if err != nil || newLBIP == "" {
+							fmt.Printf("New rh-api svc not created yet...")
+							return false, nil
+						}
+						fmt.Printf("new lb IP %s", newLBIP)
+
 						ginkgo.By("Polling GCP to get new forwarding rule for rh-api")
 						newLB, _ := getGCPForwardingRuleForIP(computeService, newLBIP, project, region)
 						if err != nil || newLB == nil {
@@ -233,6 +231,8 @@ func testLBDeletion(h *helper.H) {
 							fmt.Printf("New forwarding rule not found yet...")
 							return false, nil
 						}
+						fmt.Printf("new lb name %s", newLB.Name)
+
 						if newLB.Name != oldLB.Name {
 							// A new LB was successfully recreated in GCP
 							return true, nil
@@ -242,9 +242,6 @@ func testLBDeletion(h *helper.H) {
 						return false, nil
 					})
 					Expect(err).NotTo(HaveOccurred())
-
-				}
-
 			})
 
 		}
