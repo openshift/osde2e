@@ -210,39 +210,44 @@ func testLBDeletion(h *helper.H) {
 					}
 				}
 
-
 				newLBIP := ""
 				// Getting the new LB from GCP
-					err = wait.PollImmediate(15*time.Second, 5*time.Minute, func() (bool, error) {
-						if newLBIP == "" {
-							// Getting the newly created IP from rh-api service
-							ginkgo.By("Getting new IP from rh-api service in OCM")
+				err = wait.PollImmediate(15*time.Second, 5*time.Minute, func() (bool, error) {
+						// Getting the newly created IP from rh-api service
+						ginkgo.By("Getting new IP from rh-api service in OCM")
 
-							newLBIP, err = getLBForService(h, "openshift-kube-apiserver", "rh-api", "ip")
-							if (err != nil) || (newLBIP == "") || (newLBIP == oldLBIP) {
-								fmt.Printf("New rh-api svc not created yet...")
-								return false, nil
-							}
-							fmt.Printf("new lb IP: %s ", newLBIP)
-						}
-						ginkgo.By("Polling GCP to get new forwarding rule for rh-api")
-						newLB, err := getGCPForwardingRuleForIP(computeService, newLBIP, project, region)
-						if err != nil || newLB == nil {
-							// Either we couldn't retrieve the LB, or it wasn't created yet
-							fmt.Printf("New forwarding rule not found yet...")
+						newLBIP, err = getLBForService(h, "openshift-kube-apiserver", "rh-api", "ip")
+						if (err != nil) || (newLBIP == "") || (newLBIP == oldLBIP) {
+							fmt.Printf("New rh-api svc not created yet...")
 							return false, nil
-						}
-						fmt.Printf("new lb name: %s ", newLB.Name)
-
-						if newLB.Name != oldLB.Name {
-							// A new LB was successfully recreated in GCP
+						}else{
+							fmt.Printf("Found new rh-api svc! ")
+							fmt.Printf("new lb IP: %s ", newLBIP)
 							return true, nil
 						}
-						// rh-api lb hasn't been deleted yet
-						fmt.Printf("Old forwarding rule not deleted yet...")
+					return false,nil
+				})
+				Expect(err).NotTo(HaveOccurred())
+
+				err = wait.PollImmediate(15*time.Second, 5*time.Minute, func() (bool, error) {
+					ginkgo.By("Polling GCP to get new forwarding rule for rh-api")
+					newLB, err := getGCPForwardingRuleForIP(computeService, newLBIP, project, region)
+					if err != nil || newLB == nil {
+						// Either we couldn't retrieve the LB, or it wasn't created yet
+						fmt.Printf("New forwarding rule not found yet...")
 						return false, nil
-					})
-					Expect(err).NotTo(HaveOccurred())
+					}
+					fmt.Printf("new lb name: %s ", newLB.Name)
+
+					if newLB.Name != oldLB.Name {
+						// A new LB was successfully recreated in GCP
+						return true, nil
+					}
+					// rh-api lb hasn't been deleted yet
+					fmt.Printf("Old forwarding rule not deleted yet...")
+					return false, nil
+				})
+				Expect(err).NotTo(HaveOccurred())
 			})
 
 		}
