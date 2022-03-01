@@ -767,6 +767,7 @@ func InitViper() {
 
 	viper.SetDefault(Addons.Parameters, "{}")
 	viper.BindEnv(Addons.Parameters, "ADDON_PARAMETERS")
+	RegisterSecret(Addons.Parameters, "addon-parameters")
 
 	viper.SetDefault(Addons.SkipAddonList, false)
 	viper.BindEnv(Addons.SkipAddonList, "SKIP_ADDON_LIST")
