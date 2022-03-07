@@ -161,8 +161,16 @@ func loadYAMLFromFile(name string) error {
 // loadSecretFileIntoKey will attempt to load the contents of a secret file into the given key.
 // If the secret file doesn't exist, we'll skip this.
 func loadSecretFileIntoKey(key string, filename string, secretLocations []string) error {
+	//We should rewrite all of this logic. This introduces a bug with the current expected behavior that overwrites values but does this multiple times.
 	for _, secretLocation := range secretLocations {
 		fullFilename := filepath.Join(secretLocation, filename)
+		//This is a bandage fix until we can rewrite the logic to load secrets.
+		if (strings.Contains(fullFilename, "osde2e-credentials") || strings.Contains(fullFilename, "osde2e-common")) && (key == "ocm.aws.accesKey" || key == "ocm.aws.secretKey") {
+			if viper.GetBool("ocm.ccs") {
+				continue
+			}
+		}
+
 		stat, err := os.Stat(fullFilename)
 		if err == nil && !stat.IsDir() {
 			data, err := ioutil.ReadFile(fullFilename)
