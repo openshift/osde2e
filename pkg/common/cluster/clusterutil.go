@@ -256,7 +256,7 @@ func waitForOCMProvisioning(provider spi.Provider, clusterID string, installTime
 			readinessStarted = time.Now()
 			return true, nil
 		} else if cluster.State() == spi.ClusterStateError {
-			return false, fmt.Errorf("cluster is in error state, check AWS for more details")
+			log.Print("cluster is in error state, check AWS for more details")
 		}
 		logger.Printf("cluster is not ready, state is: %v", cluster.State())
 		return false, nil
