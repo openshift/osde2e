@@ -6,7 +6,7 @@
     <description>Recent content on OSDe2e Reporting</description>
     <generator>Hugo -- gohugo.io</generator>
     <copyright>Copyright © 2020, Red Hat, all rights reserved.</copyright>
-    <lastBuildDate>Sun, 06 Mar 2022 12:00:57 +0000</lastBuildDate>
+    <lastBuildDate>Mon, 07 Mar 2022 12:00:41 +0000</lastBuildDate>
     
 	<atom:link href="https://openshift.github.io/osde2e/index.xml" rel="self" type="application/rss+xml" />
     
@@ -18,6 +18,33 @@
       
       <guid>https://openshift.github.io/osde2e/about/</guid>
       <description>Automatically generated reports generated from OSDe2e data live here.</description>
+    </item>
+    
+    <item>
+      <title>OSDe2e moa Weather Report 2022-03-07 12:00:41.353272092 &#43;0000 UTC</title>
+      <link>https://openshift.github.io/osde2e/post/73a29fc432f944afb1f7da352b7c7f1a/</link>
+      <pubDate>Mon, 07 Mar 2022 12:00:41 +0000</pubDate>
+      
+      <guid>https://openshift.github.io/osde2e/post/73a29fc432f944afb1f7da352b7c7f1a/</guid>
+      <description>&lt;table class=&#34;summary&#34;&gt;&lt;/table&gt;</description>
+    </item>
+    
+    <item>
+      <title>OSDe2e gcp Weather Report 2022-03-07 12:00:40.493856827 &#43;0000 UTC</title>
+      <link>https://openshift.github.io/osde2e/post/95fbbc0a58c34735a6fde936d2ae2db1/</link>
+      <pubDate>Mon, 07 Mar 2022 12:00:40 +0000</pubDate>
+      
+      <guid>https://openshift.github.io/osde2e/post/95fbbc0a58c34735a6fde936d2ae2db1/</guid>
+      <description>&lt;table class=&#34;summary&#34;&gt;&lt;/table&gt;</description>
+    </item>
+    
+    <item>
+      <title>OSDe2e aws Weather Report 2022-03-07 12:00:39.601978858 &#43;0000 UTC</title>
+      <link>https://openshift.github.io/osde2e/post/c59f2abc093d48cd9852634f362cbf6f/</link>
+      <pubDate>Mon, 07 Mar 2022 12:00:39 +0000</pubDate>
+      
+      <guid>https://openshift.github.io/osde2e/post/c59f2abc093d48cd9852634f362cbf6f/</guid>
+      <description>&lt;table class=&#34;summary&#34;&gt;&lt;/table&gt;</description>
     </item>
     
     <item>
