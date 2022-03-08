@@ -214,7 +214,7 @@ func testLBDeletion(h *helper.H) {
 
 				newLBIP := ""
 				// Getting the new LB from GCP
-				err = wait.PollImmediate(15*time.Second, 5*time.Minute, func() (bool, error) {
+				err = wait.PollImmediate(15*time.Second, 10*time.Minute, func() (bool, error) {
 						// Getting the newly created IP from rh-api service
 						ginkgo.By("Getting new IP from rh-api service in OCM")
 
@@ -230,7 +230,7 @@ func testLBDeletion(h *helper.H) {
 				})
 				Expect(err).NotTo(HaveOccurred())
 
-				err = wait.PollImmediate(15*time.Second, 5*time.Minute, func() (bool, error) {
+				err = wait.PollImmediate(15*time.Second, 10*time.Minute, func() (bool, error) {
 					ginkgo.By("Polling GCP to get new forwarding rule for rh-api")
 					newLB, err := getGCPForwardingRuleForIP(computeService, newLBIP, project, region)
 					if err != nil || newLB == nil {
