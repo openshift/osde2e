@@ -3,8 +3,11 @@ package cloudingress
 import (
 	"context"
 	"fmt"
+	"time"
+
 	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+
 	"github.com/openshift/origin/Godeps/_workspace/src/github.com/emicklei/go-restful/log"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
@@ -12,13 +15,12 @@ import (
 	"github.com/openshift/osde2e/pkg/common/helper"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"time"
+	"k8s.io/apimachinery/pkg/util/wait"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/elb"
-	"k8s.io/apimachinery/pkg/util/wait"
 
 	computev1 "google.golang.org/api/compute/v1"
 	"google.golang.org/api/option"
@@ -225,7 +227,6 @@ func testLBDeletion(h *helper.H) {
 							fmt.Printf("new lb IP: %s ", newLBIP)
 							return true, nil
 						}
-					return false,nil
 				})
 				Expect(err).NotTo(HaveOccurred())
 
