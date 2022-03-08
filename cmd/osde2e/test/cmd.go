@@ -137,6 +137,7 @@ func init() {
 func run(cmd *cobra.Command, argv []string) {
 	if err := common.LoadConfigs(args.configString, args.customConfig, args.secretLocations); err != nil {
 		log.Printf("error loading initial state: %v", err)
+		log.Printf("Killing execution, refer to logs for more on faulty config.")
 		os.Exit(1)
 	}
 

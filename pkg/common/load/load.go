@@ -175,6 +175,8 @@ func loadSecretFileIntoKey(key string, filename string, secretLocations []string
 				viper.Set(key, cleanData)
 			}
 			return nil
+		} else {
+			log.Printf("Could not find secret file %s from location %s", filename, secretLocation)
 		}
 	}
 
