@@ -78,6 +78,16 @@ An example prow job that configures the "prow" operator in the stage environment
   labels:
     pj-rehearse.openshift.io/can-be-rehearsed: "false"
   name: osde2e-stage-aws-addon-prow-operator
+  reporter_config:
+    slack:
+      channel: '#slack-channel-name'
+      job_states_to_report:
+      - failure
+      - error
+      report_template: '{{if eq .Status.State "success"}} :white_check_mark: Job *{{.Spec.Job}}*
+        ended with *{{.Status.State}}*. <{{.Status.URL}}|View logs> :white_check_mark:
+        {{else}} :warning:  Job *{{.Spec.Job}}* ended with *{{.Status.State}}*. <{{.Status.URL}}|View
+        logs> :warning: {{end}}'
   spec:
     containers:
     - args:
@@ -95,6 +105,8 @@ An example prow job that configures the "prow" operator in the stage environment
         value: "true"
       - name: ADDON_TEST_HARNESSES
         value: quay.io/miwilson/prow-operator-test-harness
+      - name: CHANNEL
+        value: stable
       - name: CONFIGS
         value: aws,stage,addon-suite
       - name: SECRET_LOCATIONS
