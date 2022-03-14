@@ -6,10 +6,19 @@
     <description>Recent content in aws on OSDe2e Reporting</description>
     <generator>Hugo -- gohugo.io</generator>
     <copyright>Copyright © 2020, Red Hat, all rights reserved.</copyright>
-    <lastBuildDate>Sun, 13 Mar 2022 12:00:47 +0000</lastBuildDate>
+    <lastBuildDate>Mon, 14 Mar 2022 12:06:25 +0000</lastBuildDate>
     
 	<atom:link href="https://openshift.github.io/osde2e/tags/aws/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>OSDe2e aws Weather Report 2022-03-14 12:06:25.698387317 &#43;0000 UTC</title>
+      <link>https://openshift.github.io/osde2e/post/7906f7c8718642b5a08aee15db99ce23/</link>
+      <pubDate>Mon, 14 Mar 2022 12:06:25 +0000</pubDate>
+      
+      <guid>https://openshift.github.io/osde2e/post/7906f7c8718642b5a08aee15db99ce23/</guid>
+      <description>&lt;table class=&#34;summary&#34;&gt;&lt;/table&gt;</description>
+    </item>
     
     <item>
       <title>OSDe2e aws Weather Report 2022-03-13 12:00:47.656488421 &#43;0000 UTC</title>
