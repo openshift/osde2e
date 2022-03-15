@@ -7,6 +7,7 @@ import (
 
 	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	"github.com/openshift/osde2e/pkg/common/util"
 
 	"github.com/openshift/origin/Godeps/_workspace/src/github.com/emicklei/go-restful/log"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
@@ -85,7 +86,7 @@ func testLBDeletion(h *helper.H) {
 	ginkgo.Context("rh-api-test", func() {
 
 		if viper.GetString(config.CloudProvider.CloudProviderID) == "aws" {
-			ginkgo.It("Manually deleted LB should be recreated in AWS", func() {
+			util.GinkgoIt("Manually deleted LB should be recreated in AWS", func() {
 				awsAccessKey := viper.GetString("ocm.aws.accessKey")
 				awsSecretKey := viper.GetString("ocm.aws.secretKey")
 				awsRegion := viper.GetString(config.CloudProvider.Region)
@@ -126,7 +127,7 @@ func testLBDeletion(h *helper.H) {
 		}
 
 		if viper.GetString(config.CloudProvider.CloudProviderID) == "gcp" {
-			ginkgo.It("Manually deleted LB should be recreated in GCP", func() {
+			util.GinkgoIt("Manually deleted LB should be recreated in GCP", func() {
 
 				region := viper.GetString("cloudProvider.region")
 				ctx := context.TODO()
