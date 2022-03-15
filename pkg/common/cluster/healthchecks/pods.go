@@ -89,16 +89,16 @@ func checkPods(podClient v1.CoreV1Interface, logger *log.Logger, filters ...PodP
 	for _, pod := range pods.Items {
 		if pod.ObjectMeta.Labels["job-name"] == "" {
 			if pod.Status.Phase != kubev1.PodPending {
-				return nil, fmt.Errorf("pod %s in unexpected phase %s: reason: %s message: %s", pod.GetName(), pod.Status.Phase, pod.Status.Reason, pod.Status.Message)
+				return nil, fmt.Errorf("pod %s in namespace %s in unexpected phase %s: reason: %s message: %s", pod.GetName(), pod.GetNamespace(), pod.Status.Phase, pod.Status.Reason, pod.Status.Message)
 			}
-			logger.Printf("%s is not ready. Phase: %s, Message: %s, Reason: %s", pod.Name, pod.Status.Phase, pod.Status.Message, pod.Status.Reason)
+			logger.Printf("%s in namespace %s is not ready. Phase: %s, Message: %s, Reason: %s", pod.GetName(), pod.GetNamespace(), pod.Status.Phase, pod.Status.Message, pod.Status.Reason)
 		}
 		if namespace == "" || namespace != pod.Namespace {
 			filteredPods[pod.Namespace] = map[string]interface{}{}
 		}
 		jobName = strings.LastIndex(pod.ObjectMeta.Labels["job-name"], "-")
 		if jobName == -1 {
-			return nil, fmt.Errorf("error parsing 'job-name' label of %s pod", pod.Name)
+			return nil, fmt.Errorf("error parsing 'job-name' label of pod %s in namespace %s", pod.GetName(), pod.GetNamespace())
 		}
 		if cronJobName == "" || cronJobName != pod.ObjectMeta.Labels["job-name"][:jobName] || namespace != pod.Namespace {
 			namespace = pod.Namespace
@@ -119,9 +119,9 @@ func checkPods(podClient v1.CoreV1Interface, logger *log.Logger, filters ...PodP
 					break
 				}
 				if latestPodPhase != kubev1.PodPending {
-					return nil, fmt.Errorf("pod %s in unexpected phase %s: reason: %s message: %s", pod.GetName(), pod.Status.Phase, pod.Status.Reason, pod.Status.Message)
+					return nil, fmt.Errorf("pod %s in namespace %s in unexpected phase %s: reason: %s message: %s", pod.GetName(), pod.GetNamespace(), pod.Status.Phase, pod.Status.Reason, pod.Status.Message)
 				}
-				logger.Printf("%s is not ready. Phase: %s, Message: %s, Reason: %s", pod.Name, pod.Status.Phase, pod.Status.Message, pod.Status.Reason)
+				logger.Printf("%s in namespace %s is not ready. Phase: %s, Message: %s, Reason: %s", pod.GetName(), pod.GetNamespace(), pod.Status.Phase, pod.Status.Message, pod.Status.Reason)
 			}
 		}
 	}
