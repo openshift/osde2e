@@ -83,7 +83,7 @@ func getLBForService(h *helper.H, namespace string, service string, idtype strin
 
 // testLBDeletion deletes the load balancer of rh-api service and ensures that cloud-ingress-operator recreates it
 func testLBDeletion(h *helper.H) {
-	ginkgo.Context("rh-api-test", func() {
+	ginkgo.Context("rh-api-lb-test", func() {
 
 		if viper.GetString(config.CloudProvider.CloudProviderID) == "aws" {
 			util.GinkgoIt("Manually deleted LB should be recreated in AWS", func() {
