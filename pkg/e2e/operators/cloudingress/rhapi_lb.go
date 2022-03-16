@@ -135,7 +135,7 @@ func testLBDeletion(h *helper.H) {
 				ginkgo.By("Getting rh-api IP")
 				oldLBIP, err := getLBForService(h, "openshift-kube-apiserver", "rh-api", "ip")
 				Expect(err).NotTo(HaveOccurred())
-				fmt.Printf("old LB IP:  %s ", oldLBIP)
+				log.Printf("old LB IP:  %s ", oldLBIP)
 
 				ginkgo.By("Getting GCP creds")
 				gcpCreds, status := h.GetGCPCreds(ctx)
@@ -154,12 +154,12 @@ func testLBDeletion(h *helper.H) {
 				//Delete all GCP resources related to rh-api LB setup
 				ginkgo.By("Deleting rh-api load balancer related resources in GCP")
 				if oldLB == nil {
-					fmt.Printf("GCP forwarding rule for rh-api does not exist; Skipping deletion ")
+					log.Printf("GCP forwarding rule for rh-api does not exist; Skipping deletion ")
 				} else {
-					fmt.Printf("Old lb name:  %s ", oldLB.Name)
+					log.Printf("Old lb name:  %s ", oldLB.Name)
 					_, err = computeService.ForwardingRules.Get(project, region, oldLB.Name).Do()
 					if err != nil {
-						fmt.Printf("GCP forwarding rule for rh-api not found! ")
+						log.Printf("GCP forwarding rule for rh-api not found! ")
 					} else {
 						ginkgo.By("Deleting GCP forwarding rule for rh-api")
 						_, err = computeService.ForwardingRules.Delete(project, region, oldLB.Name).Do()
@@ -171,7 +171,7 @@ func testLBDeletion(h *helper.H) {
 					ginkgo.By("Deleting GCP backend service rule for rh-api")
 					_, err = computeService.BackendServices.Get(project, oldLB.Name).Do()
 					if err != nil {
-						fmt.Printf("GCP backend service already deleted. ")
+						log.Printf("GCP backend service already deleted. ")
 					} else {
 						_, err = computeService.BackendServices.Delete(project, oldLB.Name).Do()
 						if err != nil {
@@ -182,7 +182,7 @@ func testLBDeletion(h *helper.H) {
 					ginkgo.By("Deleting GCP health check for rh-api ")
 					_, err = computeService.Addresses.Get(project, region, oldLB.Name).Do()
 					if err != nil {
-						fmt.Printf("GCP health check already deleted ")
+						log.Printf("GCP health check already deleted ")
 					} else {
 						_, err = computeService.ForwardingRules.Delete(project, region, oldLB.Name).Do()
 						if err != nil {
@@ -193,7 +193,7 @@ func testLBDeletion(h *helper.H) {
 					ginkgo.By("Deleting GCP target pool for rh-api ")
 					_, err = computeService.TargetPools.Get(project, region, oldLB.Name).Do()
 					if err != nil {
-						fmt.Printf("GCP target pool already deleted ")
+						log.Printf("GCP target pool already deleted ")
 					} else {
 						_, err = computeService.ForwardingRules.Delete(project, region, oldLB.Name).Do()
 						if err != nil {
@@ -205,7 +205,7 @@ func testLBDeletion(h *helper.H) {
 				ginkgo.By("Deleting GCP address for rh-api")
 				_, err = computeService.Addresses.Get(project, region, oldLBIP).Do()
 				if err != nil {
-					fmt.Printf("GCP IP address already deleted ")
+					log.Printf("GCP IP address already deleted ")
 				} else {
 					_, err = computeService.Addresses.Delete(project, region, oldLBIP).Do()
 					if err != nil {
@@ -221,11 +221,11 @@ func testLBDeletion(h *helper.H) {
 
 						newLBIP, err = getLBForService(h, "openshift-kube-apiserver", "rh-api", "ip")
 						if (err != nil) || (newLBIP == "") || (newLBIP == oldLBIP) {
-							fmt.Printf("New rh-api svc not created yet...")
+							log.Printf("New rh-api svc not created yet...")
 							return false, nil
 						}else{
-							fmt.Printf("Found new rh-api svc! ")
-							fmt.Printf("new lb IP: %s ", newLBIP)
+							log.Printf("Found new rh-api svc! ")
+							log.Printf("new lb IP: %s ", newLBIP)
 							return true, nil
 						}
 				})
@@ -236,17 +236,17 @@ func testLBDeletion(h *helper.H) {
 					newLB, err := getGCPForwardingRuleForIP(computeService, newLBIP, project, region)
 					if err != nil || newLB == nil {
 						// Either we couldn't retrieve the LB, or it wasn't created yet
-						fmt.Printf("New forwarding rule not found yet...")
+						log.Printf("New forwarding rule not found yet...")
 						return false, nil
 					}
-					fmt.Printf("new lb name: %s ", newLB.Name)
+					log.Printf("new lb name: %s ", newLB.Name)
 
 					if newLB.Name != oldLB.Name {
 						// A new LB was successfully recreated in GCP
 						return true, nil
 					}
 					// rh-api lb hasn't been deleted yet
-					fmt.Printf("Old forwarding rule not deleted yet...")
+					log.Printf("Old forwarding rule not deleted yet...")
 					return false, nil
 				})
 				Expect(err).NotTo(HaveOccurred())
