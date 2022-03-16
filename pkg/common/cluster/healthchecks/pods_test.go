@@ -42,6 +42,7 @@ func TestCheckPodHealth(t *testing.T) {
 		{"no pods", 0, true, nil},
 		{"single pod failed", 0, true, []runtime.Object{pod("a", ns1, map[string]string{"job-name": "image-pruner-123"}, v1.PodFailed)}},
 		{"single pod without job-name label failed", 0, true, []runtime.Object{pod("a", ns1, map[string]string{}, v1.PodFailed)}},
+		{"single pod without job-name label succeeded", 0, false, []runtime.Object{pod("a", ns1, map[string]string{}, v1.PodSucceeded)}},
 		{"pod is pending beyond specified threshold", 1, false, []runtime.Object{pod("a", ns1, map[string]string{"job-name": "image-pruner-123"}, v1.PodPending)}},
 		{"single pod running", 0, false, []runtime.Object{pod("a", ns1, map[string]string{"job-name": "image-pruner-123"}, v1.PodRunning)}},
 		{"single pod succeeded", 0, false, []runtime.Object{pod("a", ns1, map[string]string{"job-name": "image-pruner-123"}, v1.PodSucceeded)}},

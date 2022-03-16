@@ -88,6 +88,10 @@ func checkPods(podClient v1.CoreV1Interface, logger *log.Logger, filters ...PodP
 	cronJobName := ""
 	for _, pod := range pods.Items {
 		if pod.ObjectMeta.Labels["job-name"] == "" {
+			// Completed pod not associated with a job, e.g. a standalone pod
+			if pod.Status.Phase == kubev1.PodSucceeded {
+				continue
+			}
 			if pod.Status.Phase != kubev1.PodPending {
 				return nil, fmt.Errorf("pod %s in unexpected phase %s: reason: %s message: %s", pod.GetName(), pod.Status.Phase, pod.Status.Reason, pod.Status.Message)
 			}
