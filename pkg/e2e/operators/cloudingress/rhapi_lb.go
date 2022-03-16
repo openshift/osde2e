@@ -123,7 +123,7 @@ func testLBDeletion(h *helper.H) {
 				})
 				Expect(err).NotTo(HaveOccurred())
 
-			})
+			}, 600)
 		}
 
 		if viper.GetString(config.CloudProvider.CloudProviderID) == "gcp" {
@@ -250,7 +250,7 @@ func testLBDeletion(h *helper.H) {
 					return false, nil
 				})
 				Expect(err).NotTo(HaveOccurred())
-			})
+			}, 600)
 
 		}
 	})
