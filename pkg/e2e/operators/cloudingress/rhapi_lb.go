@@ -27,7 +27,7 @@ import (
 	"google.golang.org/api/option"
 )
 
-var _ = ginkgo.Describe(constants.SuiteInforming+TestPrefix, func() {
+var _ = ginkgo.Describe(constants.SuiteOperators+TestPrefix, func() {
 	ginkgo.BeforeEach(func() {
 		if viper.GetBool("rosa.STS") {
 			ginkgo.Skip("for now we skip this suite for STS")
