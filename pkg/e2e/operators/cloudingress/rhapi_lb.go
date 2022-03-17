@@ -106,19 +106,23 @@ func testLBDeletion(h *helper.H) {
 
 				_, err = lb.DeleteLoadBalancer(input)
 				Expect(err).NotTo(HaveOccurred())
+				log.Printf("Old LB %s deleted",oldLBName)
 
 				// wait for the new LB to be created
 				err = wait.PollImmediate(15*time.Second, 5*time.Minute, func() (bool, error) {
 					newLBName, err := getLBForService(h, "openshift-kube-apiserver", "rh-api", "hostname")
 					if err != nil || newLBName == "" {
 						// either we couldn't retrieve the LB name, or it wasn't created yet
+						log.Printf("LB not found yet")
 						return false, nil
 					}
 					if newLBName != oldLBName {
 						// the LB was successfully recreated
+						log.Printf("New LB created. LB name: %s",newLBName)
 						return true, nil
 					}
 					// the rh-api svc hasn't been deleted yet
+					log.Printf("rh-api service not delted yet")
 					return false, nil
 				})
 				Expect(err).NotTo(HaveOccurred())
