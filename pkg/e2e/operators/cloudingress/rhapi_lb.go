@@ -89,10 +89,13 @@ func testLBDeletion(h *helper.H) {
 				awsAccessKey := viper.GetString("ocm.aws.accessKey")
 				awsSecretKey := viper.GetString("ocm.aws.secretKey")
 				awsRegion := viper.GetString(config.CloudProvider.Region)
+				log.Printf("AWS Region - %s ",awsRegion)
+				log.Printf("AWS access key - %s ",awsAccessKey)
 
 				// getLoadBalancer name currently associated with rh-api service
 				oldLBName, err := getLBForService(h, "openshift-kube-apiserver", "rh-api", "hostname")
 				Expect(err).NotTo(HaveOccurred())
+				log.Printf("Old LB - %s ",oldLBName)
 
 				// delete the load balancer in aws
 				awsSession, err := session.NewSession(aws.NewConfig().WithCredentials(credentials.NewStaticCredentials(awsAccessKey, awsSecretKey, "")).WithRegion(awsRegion))
@@ -105,7 +108,7 @@ func testLBDeletion(h *helper.H) {
 
 				_, err = lb.DeleteLoadBalancer(input)
 				Expect(err).NotTo(HaveOccurred())
-				log.Printf("Old LB %s deleted",oldLBName)
+				log.Printf("Old LB deleted" )
 
 				// wait for the new LB to be created
 				err = wait.PollImmediate(15*time.Second, 5*time.Minute, func() (bool, error) {
