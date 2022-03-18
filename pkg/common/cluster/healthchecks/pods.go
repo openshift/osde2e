@@ -80,7 +80,6 @@ func checkPods(podClient v1.CoreV1Interface, logger *log.Logger, filters ...PodP
 	}
 
 	pods := filterPods(list, filters...)
-	logger.Printf("%v pods are currently not running or complete:", len(pods.Items))
 
 	// Keep track of all pending pods that are not associated with a job
 	// and store all pods associated with a job for further analysis
@@ -107,6 +106,7 @@ func checkPods(podClient v1.CoreV1Interface, logger *log.Logger, filters ...PodP
 	if err != nil {
 		return nil, err
 	}
+	logger.Printf("%v pods are currently not running or complete:", len(pendingPods)+len(pendingJobPods))
 
 	return append(pendingPods, pendingJobPods...), nil
 }
