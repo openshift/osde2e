@@ -8,11 +8,20 @@ How an add-on is tested can vary between groups and projects. In light of this, 
 
 *   Assume it is executing in a pod within an OpenShift cluster.
 *   Assume the pod will inherit `cluster-admin` rights. 
-*	Block until your addon is ready to be tested (we will launch your container after requesting installation of the addon, but we can't control when the addon is finished installing).
+*	  Block until your addon is ready to be tested (we will launch your container after requesting installation of the addon, but we can't control when the addon is finished installing).
 *   Output a valid `junit.xml` file to the `/test-run-results` directory before the container exits.
 *   Output metadata to `addon-metadata.json` in the `/test-run-results` directory.
 
 The [Prow Operator Test] is a good example of a [Basic operator test]. It verifies that the Prow operator and all the necessary CRDs are installed in the cluster. 
+
+# **Onboarding to OSDE2E**
+
+Add-on developers should first onboard to OSD as described in the [OSD documentation] above. 
+In order to debug Test Harnesses, we recommend running OSDE2E in a local environment as detailed in: [Running from source](https://github.com/openshift/osde2e#running-from-source)
+
+A common worflow is to create a cluster, install the addon, and then run the test harness through OSDE2E:
+
+
 
 ## **Test Environments**
 
