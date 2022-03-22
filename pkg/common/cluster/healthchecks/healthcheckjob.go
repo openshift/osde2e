@@ -89,6 +89,7 @@ func watchJob(bv1C typedbatchv1.BatchV1Interface, ctx context.Context, namespace
 	for {
 		select {
 		case event, more := <-watcher.ResultChan():
+			log.Printf("Watching job %s: %s", jobname, event.Type)
 			switch event.Type {
 			case watch.Added:
 				fallthrough
