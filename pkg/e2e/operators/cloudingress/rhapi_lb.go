@@ -102,11 +102,11 @@ func testLBDeletion(h *helper.H) {
 				Expect(err).NotTo(HaveOccurred())
 
 				lb := elb.New(awsSession)
-				log.Printf(lb)
+				log.Printf("%v", lb)
 				input := &elb.DeleteLoadBalancerInput{
 					LoadBalancerName: aws.String(oldLBName), 
 				}
-				log.Printf(input)
+				log.Printf("%v", input)
 
 				_, err = lb.DeleteLoadBalancer(input)
 				Expect(err).NotTo(HaveOccurred())
