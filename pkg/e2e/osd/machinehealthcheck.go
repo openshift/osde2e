@@ -34,7 +34,21 @@ var _ = ginkgo.Describe(machineHealthTestName, func() {
 		Expect(err).NotTo(HaveOccurred())
 
 		// verify there's an MHC for infra nodes
-		Expect(mhc.Spec.Selector.MatchLabels["machine.openshift.io/cluster-api-machine-role"]).To(Equal("infra"))
+		Expect(mhc.Spec.Selector.MatchExpressions).To(SatisfyAll(
+			ContainElement(
+				metav1.LabelSelectorRequirement{
+					Key:      "machine.openshift.io/cluster-api-machine-role",
+					Operator: metav1.LabelSelectorOpIn,
+					Values:   []string{"infra"},
+				},
+			),
+			ContainElement(
+				metav1.LabelSelectorRequirement{
+					Key:      "machine.openshift.io/cluster-api-machineset",
+					Operator: metav1.LabelSelectorOpExists,
+				},
+			),
+		))
 
 		// verify the unhealthy conditions are on all nodes
 		Expect(mhc.Spec.UnhealthyConditions).To(SatisfyAll(
@@ -60,7 +74,21 @@ var _ = ginkgo.Describe(machineHealthTestName, func() {
 		Expect(err).NotTo(HaveOccurred())
 
 		// verify there's an MHC for worker nodes
-		Expect(mhc.Spec.Selector.MatchLabels["machine.openshift.io/cluster-api-machine-role"]).To(Equal("worker"))
+		Expect(mhc.Spec.Selector.MatchExpressions).To(SatisfyAll(
+			ContainElement(
+				metav1.LabelSelectorRequirement{
+					Key:      "machine.openshift.io/cluster-api-machine-role",
+					Operator: metav1.LabelSelectorOpNotIn,
+					Values:   []string{"infra", "master"},
+				},
+			),
+			ContainElement(
+				metav1.LabelSelectorRequirement{
+					Key:      "machine.openshift.io/cluster-api-machineset",
+					Operator: metav1.LabelSelectorOpExists,
+				},
+			),
+		))
 
 		// verify the unhealthy conditions are on all nodes
 		Expect(mhc.Spec.UnhealthyConditions).To(SatisfyAll(
