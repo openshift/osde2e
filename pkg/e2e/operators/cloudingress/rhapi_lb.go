@@ -86,8 +86,8 @@ func testLBDeletion(h *helper.H) {
 
 		if viper.GetString(config.CloudProvider.CloudProviderID) == "aws" {
 			util.GinkgoIt("manually deleted LB should be recreated in AWS", func() {
-				awsAccessKey := viper.GetString("ocm.aws.accessKey")
-				awsSecretKey := viper.GetString("ocm.aws.secretKey")
+				awsAccessKey := viper.GetString(AWSAccessKeyID)
+				awsSecretKey := viper.GetString(AWSSecretAccessKey)
 				awsRegion := viper.GetString(config.CloudProvider.Region)
 				log.Printf("AWS Region - %s ",awsRegion)
 				log.Printf("AWS access key - %s ",awsAccessKey)
@@ -98,7 +98,8 @@ func testLBDeletion(h *helper.H) {
 				log.Printf("Old LB - %s ",oldLBName)
 
 				// delete the load balancer in aws
-				awsSession := session.Must(session.NewSession(aws.NewConfig().WithCredentials(credentials.NewStaticCredentials(awsAccessKey, awsSecretKey, "")).WithRegion(awsRegion)))
+				awsSession, err := session.NewSession(aws.NewConfig().WithCredentials(credentials.NewStaticCredentials(awsAccessKey, awsSecretKey, "")).WithRegion(awsRegion))
+				Expect(err).NotTo(HaveOccurred())
 
 				lb := elb.New(awsSession)
 				input := &elb.DeleteLoadBalancerInput{
