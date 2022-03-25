@@ -18,6 +18,6 @@ set -eo pipefail
 
     CLUSTER_ID=1r3v8s6qd0an5k9eac9riqnshmsrrp8t \
     GINKGO_SKIP="Must Gather Operator" \
-    ./out/osde2e test --configs=prod,aws,pr-check,e2e-suite --secret-locations=/usr/local/osde2e-common,/usr/local/osde2e-credentials
+    ./out/osde2e test --configs=prod,aws,pr-check,e2e-suite --secret-locations=/usr/local/osde2e-common,/usr/local/osde2e-credentials,/usr/local/sd-cicd-aws-prod
 
 } 2>&1 | tee -a "$REPORT_DIR/test_output.log"
