@@ -89,8 +89,6 @@ func testLBDeletion(h *helper.H) {
 				awsAccessKey := viper.GetString("ocm.aws.accessKey")
 				awsSecretKey := viper.GetString("ocm.aws.secretKey")
 				awsRegion := viper.GetString(config.CloudProvider.Region)
-				log.Printf("AWS Region - %s ",awsRegion)
-				log.Printf("AWS access key - %s ",awsAccessKey)
 
 				// getLoadBalancer name currently associated with rh-api service
 				oldLBName, err := getLBForService(h, "openshift-kube-apiserver", "rh-api", "hostname")
@@ -124,11 +122,11 @@ func testLBDeletion(h *helper.H) {
 						return true, nil
 					}
 					// the rh-api svc hasn't been deleted yet
-					log.Printf("rh-api service not delted yet")
+					log.Printf("rh-api service not deleted yet")
 					return false, nil
 				})
 				Expect(err).NotTo(HaveOccurred())
-			}, 600)
+			}, 900)
 		}
 
 		if viper.GetString(config.CloudProvider.CloudProviderID) == "gcp" {
@@ -255,7 +253,7 @@ func testLBDeletion(h *helper.H) {
 					return false, nil
 				})
 				Expect(err).NotTo(HaveOccurred())
-			}, 600)
+			}, 900)
 		}
 	})
 }
