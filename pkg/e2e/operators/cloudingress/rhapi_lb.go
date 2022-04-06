@@ -74,9 +74,13 @@ func getLBForService(h *helper.H, namespace string, service string, idtype strin
 		// the LB wasn't created yet
 		return "", nil
 	}
+	log.Printf("service found Hostname-%s IP-%s", ingressList[0].Hostname[0:32], ingressList[0].IP)
+	log.Printf("service deletion timestamp-%s ", svc.DeletionTimestamp)
+
 	if idtype == "ip" {
 		return ingressList[0].IP, nil
 	}
+
 	return ingressList[0].Hostname[0:32], nil
 }
 
@@ -111,6 +115,8 @@ func testLBDeletion(h *helper.H) {
 				// wait for the new LB to be created
 				err = wait.PollImmediate(15*time.Second, 5*time.Minute, func() (bool, error) {
 					newLBName, err := getLBForService(h, "openshift-kube-apiserver", "rh-api", "hostname")
+					log.Printf("new LB name %s",newLBName)
+
 					if err != nil || newLBName == "" {
 						// either we couldn't retrieve the LB name, or it wasn't created yet
 						log.Printf("LB not found yet")
