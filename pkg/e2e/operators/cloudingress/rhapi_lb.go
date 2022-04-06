@@ -108,9 +108,12 @@ func testLBDeletion(h *helper.H) {
 					LoadBalancerName: aws.String(oldLBName),
 				}
 
-				_, err = lb.DeleteLoadBalancer(input)
+				ret , err := lb.DeleteLoadBalancer(input)
+
 				Expect(err).NotTo(HaveOccurred())
 				log.Printf("Old LB deleted" )
+				log.Printf("delete response: %s", ret )
+
 
 				// wait for the new LB to be created
 				err = wait.PollImmediate(15*time.Second, 5*time.Minute, func() (bool, error) {
