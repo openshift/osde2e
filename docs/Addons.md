@@ -1,6 +1,7 @@
 # **Add-On Testing**
 
-This document describes the requirements to configure E2E testing of an Addon within `osde2e`. This is only one part of the overall process of onboarding an addon to OSD. The full process is outlined in the documentation [available here](https://gitlab.cee.redhat.com/service/managed-tenants/-/tree/master).
+This document describes the requirements to configure E2E testing of an Addon within `osde2e`. This is only one part of the overall process of onboarding an addon to OSD. The addons integration tests are to make sure we have some "on osd" tests they do not replace your existing QE
+The full process is outlined in the documentation [available here](https://gitlab.cee.redhat.com/service/managed-tenants/-/tree/master).
 
 ## **The Structure of an Addon Test**
 
@@ -8,11 +9,34 @@ How an add-on is tested can vary between groups and projects. In light of this, 
 
 *   Assume it is executing in a pod within an OpenShift cluster.
 *   Assume the pod will inherit `cluster-admin` rights. 
-*	Block until your addon is ready to be tested (we will launch your container after requesting installation of the addon, but we can't control when the addon is finished installing).
+*	  Block until your addon is ready to be tested (we will launch your container after requesting installation of the addon, but we can't control when the addon is finished installing).
 *   Output a valid `junit.xml` file to the `/test-run-results` directory before the container exits.
 *   Output metadata to `addon-metadata.json` in the `/test-run-results` directory.
 
 The [Prow Operator Test] is a good example of a [Basic operator test]. It verifies that the Prow operator and all the necessary CRDs are installed in the cluster. 
+
+# **Onboarding to OSDE2E**
+
+Add-on developers should first onboard to OSD as described in the [OSD documentation] above. 
+In order to debug Test Harnesses, we recommend running OSDE2E in a local environment as detailed in: [Running from source](https://github.com/openshift/osde2e#running-from-source)
+
+A common worflow is to create a cluster and then run the test harness through OSDE2E:
+ADDON_IDS is the OCM value to install the addon.
+
+```bash
+#!/usr/bin/env bash
+make build
+
+OCM_TOKEN="[OCM token here]" \ 
+CLUSTER_ID="[cluster id here]" \
+ADDON_IDS="[addon id here]" \ 
+ADDON_TEST_HARNESSES="[quay.io address here]" \
+REPORT_DIR="[path to report directory]" \
+./out/osde2e test --configs "stage,addon-suite" --skip-health-check
+```
+Once the execution is complete, you can view the report in the defined `report_dir` directory.
+
+After the Test Harness has been validated to work as intended locally, this flow can be be performed in a CI pipeline to test agaisnt OSD releases. 
 
 ## **Test Environments**
 
@@ -205,5 +229,4 @@ In addition to programmatically gating your addon releases, you can also use the
 [openshift/release]:https://github.com/openshift/release
 [Managing Organization Quota]:https://gitlab.cee.redhat.com/service/ocm-resources/blob/master/docs/quota.md
 [https://cloud.redhat.com/openshift/token]:https://cloud.redhat.com/openshift/token
-[these instructions]:https://github.com/openshift/release/blob/master/core-services/secret-mirroring/README.md
 [Grafana instance]:https://grafana.datahub.redhat.com/

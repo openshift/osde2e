@@ -2,6 +2,7 @@ package cloudingress
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -22,6 +23,11 @@ import (
 	"github.com/aws/aws-sdk-go/service/elb"
 	"k8s.io/apimachinery/pkg/util/wait"
 
+	computev1 "google.golang.org/api/compute/v1"
+
+	"google.golang.org/api/option"
+
+	"golang.org/x/oauth2/google"
 	computev1 "google.golang.org/api/compute/v1"
 
 	"google.golang.org/api/option"
@@ -88,7 +94,7 @@ func getLBForService(h *helper.H, namespace string, service string, idtype strin
 func testLBDeletion(h *helper.H) {
 	ginkgo.Context("rh-api-lb-test", func() {
 
-		if viper.GetString(config.CloudProvider.CloudProviderID) == "aws" {
+			if viper.GetString(config.CloudProvider.CloudProviderID) == "aws" {
 			util.GinkgoIt("manually deleted LB should be recreated in AWS", func() {
 				awsAccessKey := viper.GetString("ocm.aws.accessKey")
 				awsSecretKey := viper.GetString("ocm.aws.secretKey")
@@ -239,8 +245,8 @@ func testLBDeletion(h *helper.H) {
 							log.Printf("Found new rh-api svc! ")
 							log.Printf("new lb IP: %s ", newLBIP)
 							return true, nil
-						}
-				})
+			}
+		})
 				Expect(err).NotTo(HaveOccurred())
 
 				err = wait.PollImmediate(15*time.Second, 10*time.Minute, func() (bool, error) {
