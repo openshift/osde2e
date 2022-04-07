@@ -34,24 +34,30 @@ var _ = ginkgo.Describe(machineHealthTestName, func() {
 		Expect(err).NotTo(HaveOccurred())
 
 		// verify there's an MHC for infra nodes
-		Expect(mhc.Spec.Selector.MatchLabels["machine.openshift.io/cluster-api-machine-role"]).To(Equal("infra"))
+		Expect(mhc.Spec.Selector.MatchExpressions).To(ConsistOf(
+			metav1.LabelSelectorRequirement{
+				Key:      "machine.openshift.io/cluster-api-machine-role",
+				Operator: metav1.LabelSelectorOpIn,
+				Values:   []string{"infra"},
+			},
+			metav1.LabelSelectorRequirement{
+				Key:      "machine.openshift.io/cluster-api-machineset",
+				Operator: metav1.LabelSelectorOpExists,
+			},
+		))
 
 		// verify the unhealthy conditions are on all nodes
-		Expect(mhc.Spec.UnhealthyConditions).To(SatisfyAll(
-			ContainElement(
-				machineV1beta1.UnhealthyCondition{
-					Type:    corev1.NodeReady,
-					Status:  corev1.ConditionFalse,
-					Timeout: "480s",
-				},
-			),
-			ContainElement(
-				machineV1beta1.UnhealthyCondition{
-					Type:    corev1.NodeReady,
-					Status:  corev1.ConditionUnknown,
-					Timeout: "480s",
-				},
-			),
+		Expect(mhc.Spec.UnhealthyConditions).To(ConsistOf(
+			machineV1beta1.UnhealthyCondition{
+				Type:    corev1.NodeReady,
+				Status:  corev1.ConditionFalse,
+				Timeout: "480s",
+			},
+			machineV1beta1.UnhealthyCondition{
+				Type:    corev1.NodeReady,
+				Status:  corev1.ConditionUnknown,
+				Timeout: "480s",
+			},
 		))
 	}, float64(500))
 
@@ -60,24 +66,30 @@ var _ = ginkgo.Describe(machineHealthTestName, func() {
 		Expect(err).NotTo(HaveOccurred())
 
 		// verify there's an MHC for worker nodes
-		Expect(mhc.Spec.Selector.MatchLabels["machine.openshift.io/cluster-api-machine-role"]).To(Equal("worker"))
+		Expect(mhc.Spec.Selector.MatchExpressions).To(ConsistOf(
+			metav1.LabelSelectorRequirement{
+				Key:      "machine.openshift.io/cluster-api-machine-role",
+				Operator: metav1.LabelSelectorOpNotIn,
+				Values:   []string{"infra", "master"},
+			},
+			metav1.LabelSelectorRequirement{
+				Key:      "machine.openshift.io/cluster-api-machineset",
+				Operator: metav1.LabelSelectorOpExists,
+			},
+		))
 
 		// verify the unhealthy conditions are on all nodes
-		Expect(mhc.Spec.UnhealthyConditions).To(SatisfyAll(
-			ContainElement(
-				machineV1beta1.UnhealthyCondition{
-					Type:    corev1.NodeReady,
-					Status:  corev1.ConditionFalse,
-					Timeout: "480s",
-				},
-			),
-			ContainElement(
-				machineV1beta1.UnhealthyCondition{
-					Type:    corev1.NodeReady,
-					Status:  corev1.ConditionUnknown,
-					Timeout: "480s",
-				},
-			),
+		Expect(mhc.Spec.UnhealthyConditions).To(ConsistOf(
+			machineV1beta1.UnhealthyCondition{
+				Type:    corev1.NodeReady,
+				Status:  corev1.ConditionFalse,
+				Timeout: "480s",
+			},
+			machineV1beta1.UnhealthyCondition{
+				Type:    corev1.NodeReady,
+				Status:  corev1.ConditionUnknown,
+				Timeout: "480s",
+			},
 		))
 	}, float64(500))
 
