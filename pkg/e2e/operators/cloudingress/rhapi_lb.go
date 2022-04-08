@@ -113,15 +113,17 @@ func testLBDeletion(h *helper.H) {
 
 				// delete the load balancer in aws
 				awsSession, err := session.NewSession(aws.NewConfig().WithCredentials(credentials.NewStaticCredentials(awsAccessKey, awsSecretKey, "")).WithRegion(awsRegion))
+				log.Printf("aws session was %s", awsSession)
 				Expect(err).NotTo(HaveOccurred())
 
 				lb := elb.New(awsSession)
+				
 				input := &elb.DeleteLoadBalancerInput{
 					LoadBalancerName: aws.String(oldLBName),
 				}
 
 				ret , err := lb.DeleteLoadBalancer(input)
-
+				log.Printf("LB session was %s", ret)
 				Expect(err).NotTo(HaveOccurred())
 				log.Printf("Old LB deleted" )
 				log.Printf("delete response: %s", ret )
