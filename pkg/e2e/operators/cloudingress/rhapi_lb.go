@@ -90,18 +90,21 @@ func testLBDeletion(h *helper.H) {
 
 		if viper.GetString(config.CloudProvider.CloudProviderID) == "aws" {
 			util.GinkgoIt("manually deleted LB should be recreated in AWS", func() {
-				if viper.GetString("ocm.aws.accessKey") == "" {
-					log.Printf("aws access are not being passed in this scope")
-				}
-				if viper.GetString("ocm.aws.secretKey") == "" {
-					log.Printf("aws secret are not being passed in this scope")
-				}
-				if viper.GetString(config.CloudProvider.Region) == "" {
-					log.Printf("aws secret are not being passed in this scope")
-				}
 				awsAccessKey := viper.GetString("ocm.aws.accessKey")
 				awsSecretKey := viper.GetString("ocm.aws.secretKey")
 				awsRegion := viper.GetString(config.CloudProvider.Region)
+
+				if awsAccessKey == "" {
+					log.Printf("aws access are not being passed in this scope")
+				}
+				if awsSecretKey == "" {
+					log.Printf("aws secret are not being passed in this scope")
+				}
+				if awsRegion == "" {
+					log.Printf("aws secret are not being passed in this scope")
+				} else {
+					log.Printf("The expected region is %s", awsRegion)
+				}
 
 				// getLoadBalancer name currently associated with rh-api service
 				oldLBName, err := getLBForService(h, "openshift-kube-apiserver", "rh-api", "hostname")
