@@ -46,6 +46,12 @@ func clusterVersion() *configv1.ClusterVersion {
 					Reason:  "Available",
 					Message: "Available",
 				},
+				{
+					Type:    "ReleaseAccepted",
+					Status:	 configv1.ConditionTrue,
+					Reason:	 "Available",
+					Message: "Available",
+				},
 			},
 		},
 	}
