@@ -33,11 +33,25 @@ func CheckCVOReadiness(configClient configclient.ConfigV1Interface, logger *log.
 	var metadataState []string
 
 	for _, v := range cvInfo.Status.Conditions {
-		if (v.Type != "Available" && v.Status != "False") && v.Type != "Upgradeable" && v.Type != "RetrievedUpdates" {
-			metadataState = append(metadataState, fmt.Sprintf("%v", v))
-			logger.Printf("CVO State not complete: %v: %v %v", v.Type, v.Status, v.Message)
-			success = false
+		switch v.Type {
+		case "Available":
+			// Available must be true
+			if v.Status == "True" {
+				continue
+			}
+		case "Upgradeable", "RetrievedUpdates", "ReleaseAccepted":
+			// These conditions don't matter to readiness state
+			continue
+		default:
+			// Ignore any condition that isn't true
+			// Any other true condition will return an error
+			if v.Status != "True" {
+				continue
+			}
 		}
+		metadataState = append(metadataState, fmt.Sprintf("%v", v))
+		logger.Printf("CVO State not complete: %v: %v %v", v.Type, v.Status, v.Message)
+		success = false
 	}
 
 	if len(metadataState) > 0 {
