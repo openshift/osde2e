@@ -279,8 +279,9 @@ func (h *H) SetProject(proj *projectv1.Project) *H {
 // CreateProject returns the project being used for testing.
 func (h *H) CreateProject(name string) {
 	var err error
+	defer ginkgo.GinkgoRecover()
 	h.proj, err = h.createProject(name)
-	Expect(err).To(BeNil(), "error creating project")
+	Expect(err).To(BeNil(), fmt.Sprintf("error creating project: %s", err))
 }
 
 // CurrentProject returns the project being used for testing.
