@@ -192,11 +192,11 @@ func testLBDeletion(h *helper.H) {
 					}
 
 					ginkgo.By("Deleting GCP health check for rh-api ")
-					_, err = computeService.Addresses.Get(project, region, oldLB.Name).Do()
+					_, err = computeService.HealthChecks.Get(project, oldLB.Name).Do()
 					if err != nil {
 						log.Printf("GCP health check already deleted ")
 					} else {
-						_, err = computeService.ForwardingRules.Delete(project, region, oldLB.Name).Do()
+						_, err = computeService.HealthChecks.Delete(project, oldLB.Name).Do()
 						if err != nil {
 							log.Printf("Error deleting health check ")
 						}
@@ -207,7 +207,7 @@ func testLBDeletion(h *helper.H) {
 					if err != nil {
 						log.Printf("GCP target pool already deleted ")
 					} else {
-						_, err = computeService.ForwardingRules.Delete(project, region, oldLB.Name).Do()
+						_, err = computeService.TargetPools.Delete(project, region, oldLB.Name).Do()
 						if err != nil {
 							log.Printf("Error deleting target pool ")
 						}
