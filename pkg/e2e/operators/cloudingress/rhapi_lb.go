@@ -2,7 +2,6 @@ package cloudingress
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"time"
 
@@ -23,11 +22,6 @@ import (
 	"github.com/aws/aws-sdk-go/service/elb"
 	"k8s.io/apimachinery/pkg/util/wait"
 
-	computev1 "google.golang.org/api/compute/v1"
-
-	"google.golang.org/api/option"
-
-	"golang.org/x/oauth2/google"
 	computev1 "google.golang.org/api/compute/v1"
 
 	"google.golang.org/api/option"

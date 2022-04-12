@@ -10,6 +10,7 @@ require (
 	github.com/PuerkitoBio/goquery v1.8.0
 	github.com/adamliesko/retry v0.0.0-20200123222335-86c8baac277d
 	github.com/antlr/antlr4 v0.0.0-20200209180723-1177c0b58d07
+	github.com/asaskevich/govalidator v0.0.0-20210307081110-f21760c49a8d // indirect
 	github.com/aws/aws-sdk-go v1.43.21
 	github.com/bmizerany/perks v0.0.0-20141205001514-d9a9656a3a4b // indirect
 	github.com/cenkalti/backoff/v4 v4.1.0 // indirect
@@ -36,7 +37,7 @@ require (
 	github.com/mitchellh/mapstructure v1.4.3
 	github.com/onsi/ginkgo/v2 v2.1.1
 	github.com/onsi/gomega v1.18.1
-	github.com/openshift-online/ocm-sdk-go v0.1.257
+	github.com/openshift-online/ocm-sdk-go v0.1.258
 	github.com/openshift/api v3.9.1-0.20190924102528-32369d4db2ad+incompatible
 	github.com/openshift/client-go v0.0.0-20200827190008-3062137373b5
 	github.com/openshift/cloud-credential-operator v0.0.0-20210525141023-02cc6303cd10
@@ -45,8 +46,8 @@ require (
 	github.com/openshift/custom-domains-operator v0.0.0-20210423153044-6e7655fbdecf
 	github.com/openshift/machine-api-operator v0.2.1-0.20200529045911-d19e8d007f7c
 	github.com/openshift/managed-upgrade-operator v0.0.0-20210728104325-95212635e5e1
+	github.com/openshift/rosa v1.1.12
 	github.com/openshift/origin v0.0.0-20160503220234-8f127d736703
-	github.com/openshift/rosa v1.1.3-0.20210915184258-dd4fe43a0f71
 	github.com/openshift/route-monitor-operator v0.0.0-20210309123726-229da76cc133
 	github.com/openshift/splunk-forwarder-operator v0.0.0-20201112162206-2f454770b6c0
 	github.com/operator-framework/api v0.3.6
@@ -60,7 +61,7 @@ require (
 	github.com/prometheus/common v0.15.0
 	github.com/redhat-cop/must-gather-operator v1.1.2
 	github.com/slack-go/slack v0.10.1
-	github.com/spf13/afero v1.8.0
+	github.com/spf13/afero v1.8.2
 	github.com/spf13/cobra v1.3.0
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.10.1
