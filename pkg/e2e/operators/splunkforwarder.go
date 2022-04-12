@@ -76,7 +76,7 @@ var _ = ginkgo.Describe(splunkForwarderBlocking, func() {
 			err := addSplunkforwarder(sf, "openshift-splunk-forwarder-operator", h)
 			Expect(err).NotTo(HaveOccurred())
 
-		})
+		}, float64(defaultTimeout))
 	})
 
 })
@@ -131,7 +131,7 @@ var _ = ginkgo.Describe(splunkForwarderInforming, func() {
 			err := dedicatedAaddSplunkforwarder(sf, "openshift-splunk-forwarder-operator", h)
 			Expect(apierrors.IsForbidden(err)).To(BeTrue())
 
-		})
+		}, float64(defaultTimeout))
 	})
 
 })
