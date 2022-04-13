@@ -74,8 +74,6 @@ func getLBForService(h *helper.H, namespace string, service string, idtype strin
 		// the LB wasn't created yet
 		return "", nil
 	}
-	log.Printf("service found Hostname-%s IP-%s", ingressList[0].Hostname[0:32], ingressList[0].IP)
-	log.Printf("service deletion timestamp-%s ", svc.DeletionTimestamp)
 
 	if idtype == "ip" {
 		return ingressList[0].IP, nil
@@ -97,7 +95,7 @@ func testLBDeletion(h *helper.H) {
 				// getLoadBalancer name currently associated with rh-api service
 				oldLBName, err := getLBForService(h, "openshift-kube-apiserver", "rh-api", "hostname")
 				Expect(err).NotTo(HaveOccurred())
-				log.Printf("Old LB - %s ",oldLBName)
+				log.Printf("Old LB name %s ",oldLBName)
 
 				// delete the load balancer in aws
 				awsSession, err := session.NewSession(aws.NewConfig().WithCredentials(credentials.NewStaticCredentials(awsAccessKey, awsSecretKey, "")).WithRegion(awsRegion))
@@ -108,17 +106,16 @@ func testLBDeletion(h *helper.H) {
 					LoadBalancerName: aws.String(oldLBName),
 				}
 
-				ret , err := lb.DeleteLoadBalancer(input)
+				_ , err = lb.DeleteLoadBalancer(input)
 
 				Expect(err).NotTo(HaveOccurred())
 				log.Printf("Old LB deleted" )
-				log.Printf("delete response: %s", ret )
 
 
 				// wait for the new LB to be created
 				err = wait.PollImmediate(15*time.Second, 5*time.Minute, func() (bool, error) {
 					newLBName, err := getLBForService(h, "openshift-kube-apiserver", "rh-api", "hostname")
-					log.Printf("new LB name %s",newLBName)
+					log.Printf("Looking for new LB")
 
 					if err != nil || newLBName == "" {
 						// either we couldn't retrieve the LB name, or it wasn't created yet
@@ -127,7 +124,7 @@ func testLBDeletion(h *helper.H) {
 					}
 					if newLBName != oldLBName {
 						// the LB was successfully recreated
-						log.Printf("New LB created. LB name: %s",newLBName)
+						log.Printf("New LB found. LB name: %s",newLBName)
 						return true, nil
 					}
 					// the rh-api svc hasn't been deleted yet
