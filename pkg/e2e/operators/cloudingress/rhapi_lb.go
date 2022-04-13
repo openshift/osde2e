@@ -30,7 +30,10 @@ import (
 var _ = ginkgo.Describe(constants.SuiteOperators+TestPrefix, func() {
 	ginkgo.BeforeEach(func() {
 		if viper.GetBool("rosa.STS") {
-			ginkgo.Skip("for now we skip this suite for STS")
+			ginkgo.Skip("Cluster is STS. For now we skip rh-api LB reconcile test for STS")
+		}
+		if viper.GetBool("ocm.ccs") != true {
+			ginkgo.Skip("Cluster is non-CCS. For now we skip rh-api LB reconcile test for non-CCS.")
 		}
 	})
 
@@ -132,7 +135,7 @@ func testLBDeletion(h *helper.H) {
 					return false, nil
 				})
 				Expect(err).NotTo(HaveOccurred())
-			}, 900)
+			}, 600)
 		}
 
 		if viper.GetString(config.CloudProvider.CloudProviderID) == "gcp" {
@@ -259,7 +262,7 @@ func testLBDeletion(h *helper.H) {
 					return false, nil
 				})
 				Expect(err).NotTo(HaveOccurred())
-			}, 900)
+			}, 600)
 		}
 	})
 }
