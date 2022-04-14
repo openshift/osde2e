@@ -30,6 +30,9 @@ const (
 	// ComputeMachineType is instance size of the compute nodes in a cluster.
 	ComputeMachineType = "rosa.computeMachineType"
 
+	// ComputeMachineType is instance size of the compute nodes in a cluster.
+	ComputeMachineTypeRegex = "rosa.computeMachineTypeRegex"
+
 	// ComputeNodes is number of compute nodes in a cluster.
 	ComputeNodes = "rosa.computeNodes"
 
@@ -61,6 +64,7 @@ func init() {
 	viper.BindEnv(PodCIDR, "ROSA_POD_CIDR")
 
 	viper.BindEnv(ComputeMachineType, "ROSA_COMPUTE_MACHINE_TYPE")
+	viper.BindEnv(ComputeMachineTypeRegex, "ROSA_COMPUTE_MACHINE_TYPE")
 
 	viper.BindEnv(ComputeNodes, "ROSA_COMPUTE_NODES")
 	viper.SetDefault(ComputeNodes, 2)

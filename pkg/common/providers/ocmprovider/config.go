@@ -21,6 +21,9 @@ const (
 	// ComputeMachineType is the specific cloud machine type to use for compute nodes.
 	ComputeMachineType = "ocm.computeMachineType"
 
+	// ComputeMachineTypeRegex is the regex for cloud machine type to use for compute nodes.
+	ComputeMachineTypeRegex = "ocm.computeMachineTypeRegex"
+
 	// UserOverride will hard set the user assigned to the "owner" tag by the OCM provider.
 	UserOverride = "ocm.userOverride"
 
@@ -75,6 +78,9 @@ func init() {
 
 	viper.SetDefault(ComputeMachineType, "")
 	viper.BindEnv(ComputeMachineType, "OCM_COMPUTE_MACHINE_TYPE")
+
+	viper.SetDefault(ComputeMachineTypeRegex, "")
+	viper.BindEnv(ComputeMachineTypeRegex, "OCM_COMPUTE_MACHINE_TYPE_REGEX")
 
 	viper.BindEnv(UserOverride, "OCM_USER_OVERRIDE")
 

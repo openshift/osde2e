@@ -47,6 +47,7 @@ Some environment variables commonly used for pipelines under osde2e are indicate
 |DEBUG_OSD| Debug shows debug level messages when enabled.|
 |NUM_RETRIES|NumRetries is the number of times to retry each OCM call.|
 |OCM_COMPUTE_MACHINE_TYPE| ComputeMachineType is the specific cloud machine type to use for compute nodes.|
+|OCM_COMPUTE_MACHINE_TYPE_REGEX| ComputeMachineTypeRegex is the regex for cloud machine type to use for compute nodes.|
 |OCM_USER_OVERRIDE| UserOverride will hard set the user assigned to the "owner" tag by the OCM provider.|
 |OCM_FLAVOUR| Flavour is an OCM cluster descriptor for cluster defaults|
 |OCM_ADDITIONAL_LABELS| AdditionalLabels is used to add more specific labels to a cluster in OCM.|
