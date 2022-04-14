@@ -121,15 +121,26 @@ func checkJobPods(pods []kubev1.Pod, logger *log.Logger) ([]kubev1.Pod, error) {
 		if _, ok := filteredPods[pod.Namespace]; !ok {
 			filteredPods[pod.Namespace] = make(map[string][]kubev1.Pod)
 		}
-		jobName := strings.LastIndex(pod.ObjectMeta.Labels["job-name"], "-")
-		if jobName == -1 {
-			return nil, fmt.Errorf("error parsing 'job-name' label of %s pod", pod.Name)
+
+		jobOrCronJobName, ok := pod.ObjectMeta.Labels["job-name"]
+		if !ok || len(jobOrCronJobName) == 0 {
+			return nil, fmt.Errorf("expected 'job-name' label to be non-empty for pod %s/%s", pod.Namespace, pod.Name)
 		}
-		cronJobName := pod.ObjectMeta.Labels["job-name"][:jobName]
-		if _, ok := filteredPods[pod.Namespace][cronJobName]; !ok {
-			filteredPods[pod.Namespace][cronJobName] = []kubev1.Pod{}
+
+		// The maximum length of a CronJob name is 52 characters, resulting in a job-name of
+		// cronJobName-timestamp, where timestamp is a numeric string.
+		// If it's a standalone job instead, it can be up to 63 characters
+		if len(jobOrCronJobName) <= 52 {
+			jobNameCutoff := strings.LastIndex(pod.ObjectMeta.Labels["job-name"], "-")
+			if jobNameCutoff != -1 {
+				jobOrCronJobName = pod.ObjectMeta.Labels["job-name"][:jobNameCutoff]
+			}
 		}
-		filteredPods[pod.Namespace][cronJobName] = append(filteredPods[pod.Namespace][cronJobName], pod)
+
+		if _, ok := filteredPods[pod.Namespace][jobOrCronJobName]; !ok {
+			filteredPods[pod.Namespace][jobOrCronJobName] = []kubev1.Pod{}
+		}
+		filteredPods[pod.Namespace][jobOrCronJobName] = append(filteredPods[pod.Namespace][jobOrCronJobName], pod)
 	}
 
 	for namespace := range filteredPods {
