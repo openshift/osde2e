@@ -482,31 +482,20 @@ func ChooseRandomRegion(regions ...CloudRegion) (CloudRegion, bool) {
 // Returns a random machine type if the machine type is set to "random" and a more narrowed random if a regex was specified.
 func (o *OCMProvider) DetermineMachineType(cloudProvider string) (string, error) {
 	computeMachineType, computeMachineTypeRegex := viper.GetString(ComputeMachineType), viper.GetString(ComputeMachineTypeRegex)
-	returnedType := ""
-
-	// If a machine type is set to "random", it will poll OCM for all the machine types available based on a regex
-	if computeMachineType == "random" && computeMachineTypeRegex != "" {
-		searchstring := fmt.Sprintf("cloud_provider.id like '%s' AND machine_types.id like 'c5n' ", cloudProvider)
-		machinetypeClient := o.conn.ClustersMgmt().V1().MachineTypes().List().Search(searchstring)
-
-		machinetypes, err := machinetypeClient.Send()
-		if err != nil {
-			return "", err
-		}
-
-		for range machinetypes.Items().Slice() {
-			machinetypeObj := machinetypes.Items().Slice()[rand.Intn(machinetypes.Total())]
-			returnedType = machinetypeObj.ID()
-			break
-		}
-		log.Printf("Random machine type requested, selected `%s` machine type.", returnedType)
-	}
+	searchString, returnedType := "", ""
 
 	// If a machineType is set to "random", it will poll OCM for all the machines available
 	// It then will pull a random entry from the list of machines and set the machineTypes to that
-	if computeMachineType == "random" && rand.Intn(3) >= 2 {
-		searchstring := fmt.Sprintf("cloud_provider.id like '%s'", cloudProvider)
-		machinetypeClient := o.conn.ClustersMgmt().V1().MachineTypes().List().Search(searchstring)
+	if (computeMachineType == "random" && rand.Intn(3) >= 2) || (computeMachineType == "random" && computeMachineTypeRegex != "") {
+		//Create search string based on wether we are using a regex or not
+		switch {
+		case computeMachineType == "random" && computeMachineTypeRegex != "":
+			searchString = fmt.Sprintf("cloud_provider.id like '%s' AND id like '%s.%%'", cloudProvider, computeMachineTypeRegex)
+		case computeMachineType == "random" && computeMachineTypeRegex == "":
+			searchString = fmt.Sprintf("cloud_provider.id like '%s'", cloudProvider)
+		}
+		machinetypeClient := o.conn.ClustersMgmt().V1().MachineTypes().List().Search(searchString)
+		log.Printf("Randomly picking size for MachineTypes with search string %s", computeMachineTypeRegex)
 
 		machinetypes, err := machinetypeClient.Send()
 		if err != nil {
