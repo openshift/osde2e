@@ -478,17 +478,24 @@ func ChooseRandomRegion(regions ...CloudRegion) (CloudRegion, bool) {
 	return nil, false
 }
 
-// DetermineMachineType will return the machine type provided by configs. This mainly wraps the random functionality for use
-// by the OCM provider. (Returns a random machine type if the config suggests it to be random.)
+// DetermineMachineType will return the machine type provided by configs. This mainly wraps the random functionality for use by the OCM provider.
+// Returns a random machine type if the machine type is set to "random" and a more narrowed random if a regex was specified.
 func (o *OCMProvider) DetermineMachineType(cloudProvider string) (string, error) {
-	computeMachineType := viper.GetString(ComputeMachineType)
-	returnedType := ""
+	computeMachineType, computeMachineTypeRegex := viper.GetString(ComputeMachineType), viper.GetString(ComputeMachineTypeRegex)
+	searchString, returnedType := "", ""
 
 	// If a machineType is set to "random", it will poll OCM for all the machines available
 	// It then will pull a random entry from the list of machines and set the machineTypes to that
-	if computeMachineType == "random" && rand.Intn(3) >= 2 {
-		searchstring := fmt.Sprintf("cloud_provider.id like '%s'", cloudProvider)
-		machinetypeClient := o.conn.ClustersMgmt().V1().MachineTypes().List().Search(searchstring)
+	if (computeMachineType == "random" && rand.Intn(3) >= 2) || (computeMachineType == "random" && computeMachineTypeRegex != "") {
+		//Create search string based on wether we are using a regex or not
+		switch {
+		case computeMachineType == "random" && computeMachineTypeRegex != "":
+			searchString = fmt.Sprintf("cloud_provider.id like '%s' AND id like '%s.%%'", cloudProvider, computeMachineTypeRegex)
+		case computeMachineType == "random" && computeMachineTypeRegex == "":
+			searchString = fmt.Sprintf("cloud_provider.id like '%s'", cloudProvider)
+		}
+		machinetypeClient := o.conn.ClustersMgmt().V1().MachineTypes().List().Search(searchString)
+		log.Printf("Randomly picking size for MachineTypes with search string %s", computeMachineTypeRegex)
 
 		machinetypes, err := machinetypeClient.Send()
 		if err != nil {
