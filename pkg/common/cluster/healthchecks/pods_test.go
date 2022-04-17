@@ -93,6 +93,7 @@ func TestCheckPodHealth(t *testing.T) {
 			objs: []runtime.Object{
 				pod("running", ns1, map[string]string{}, v1.PodRunning),
 				pod("completed", ns2, map[string]string{}, v1.PodSucceeded),
+				pod("long-job-name", ns2, map[string]string{"job-name": "thisisalongjobnamethatisawhoppingsixtythreecharacterslongtotest"}, v1.PodSucceeded),
 				pod("failed-first-run", ns1, map[string]string{"job-name": "test-job-122"}, v1.PodFailed),
 				pod("but-completed-second-run", ns1, map[string]string{"job-name": "test-job-123"}, v1.PodSucceeded),
 				pod("worked-first-try", ns2, map[string]string{"job-name": "other-job-456"}, v1.PodSucceeded),
