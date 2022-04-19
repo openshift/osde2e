@@ -11,7 +11,7 @@ require (
 	github.com/adamliesko/retry v0.0.0-20200123222335-86c8baac277d
 	github.com/antlr/antlr4 v0.0.0-20200209180723-1177c0b58d07
 	github.com/asaskevich/govalidator v0.0.0-20210307081110-f21760c49a8d // indirect
-	github.com/aws/aws-sdk-go v1.42.46
+	github.com/aws/aws-sdk-go v1.43.41
 	github.com/bmizerany/perks v0.0.0-20141205001514-d9a9656a3a4b // indirect
 	github.com/cenkalti/backoff/v4 v4.1.0 // indirect
 	github.com/code-ready/crc v1.10.0
@@ -37,7 +37,7 @@ require (
 	github.com/mitchellh/mapstructure v1.4.3
 	github.com/onsi/ginkgo/v2 v2.1.1
 	github.com/onsi/gomega v1.18.1
-	github.com/openshift-online/ocm-sdk-go v0.1.258
+	github.com/openshift-online/ocm-sdk-go v0.1.262
 	github.com/openshift/api v3.9.1-0.20190924102528-32369d4db2ad+incompatible
 	github.com/openshift/client-go v0.0.0-20200827190008-3062137373b5
 	github.com/openshift/cloud-credential-operator v0.0.0-20210525141023-02cc6303cd10
@@ -68,7 +68,7 @@ require (
 	github.com/tsenart/go-tsz v0.0.0-20180814235614-0bd30b3df1c3 // indirect
 	github.com/tsenart/vegeta v12.7.0+incompatible
 	github.com/vmware-tanzu/velero v1.5.0-beta.1.0.20200831161009-1dcaa1bf7512
-	golang.org/x/net v0.0.0-20211216030914-fe4d6282115f
+	golang.org/x/net v0.0.0-20220127200216-cd36cc0744dd
 	golang.org/x/tools v0.1.10
 	google.golang.org/api v0.67.0
 	google.golang.org/genproto v0.0.0-20220126215142-9970aeb2e350

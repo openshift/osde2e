@@ -38,6 +38,8 @@ const (
 
 	// CCS defines whether the cluster should expect cloud credentials or not
 	CCS = "ocm.ccs"
+	// CCS_OVERWRITE defines an overwrite flag that will attempt to create CCS credentials for the cluster
+	CCS_OVERWRITE = "ocm.ccs.overwrite"
 
 	// AWSAccount is used in CCS clusters
 	AWSAccount = "ocm.aws.account"
@@ -93,7 +95,9 @@ func init() {
 	viper.BindEnv(AdditionalLabels, "OCM_ADDITIONAL_LABELS")
 
 	viper.SetDefault(CCS, false)
+	viper.SetDefault(CCS_OVERWRITE, false)
 	viper.BindEnv(CCS, "OCM_CCS", "CCS")
+	viper.BindEnv(CCS_OVERWRITE, "CCS_OVERWRITE", "CCS_ADMIN")
 
 	viper.BindEnv(AWSAccount, "OCM_AWS_ACCOUNT", "AWS_ACCOUNT")
 	viper.BindEnv(AWSAccessKey, "OCM_AWS_ACCESS_KEY", "AWS_ACCESS_KEY_ID")

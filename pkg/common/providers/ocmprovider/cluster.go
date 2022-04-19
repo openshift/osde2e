@@ -137,6 +137,7 @@ func (o *OCMProvider) LaunchCluster(clusterName string) (string, error) {
 		Properties(clusterProperties)
 
 	if viper.GetBool(CCS) {
+		//Refactor: This CCS is messy and this PR I'm submitting to bandage this issue will make it worse. Rewrite this.
 		// If AWS credentials are set, this must be an AWS CCS cluster
 		awsAccount := viper.GetString(AWSAccount)
 		awsAccessKey := viper.GetString(AWSAccessKey)
@@ -185,11 +186,21 @@ func (o *OCMProvider) LaunchCluster(clusterName string) (string, error) {
 					nodeBuilder.AvailabilityZones(availabilityZones...)
 				}
 			} else {
+				ccsUser, err := aws.VerifyCCS()
+				if err != nil {
+					return "", fmt.Errorf("error verifying CCS credentials: %v", err)
+				}
+				log.Printf("ocm.ccs.overwrite is: %v", viper.GetString(CCS_OVERWRITE))
+				if viper.GetBool("ocm.ccs.overwrite") && ccsUser != "osdCcsAdmin" {
+					aws.CcsAwsSession.GenerateCCSKeyPair()
+				}
+
 				newCluster = newCluster.CCS(v1.NewCCS().Enabled(true)).AWS(
 					v1.NewAWS().
 						AccountID(awsAccount).
 						AccessKeyID(awsAccessKey).
 						SecretAccessKey(awsSecretKey))
+
 			}
 		} else if viper.GetString(config.CloudProvider.CloudProviderID) == "gcp" && viper.GetString(GCPProjectID) != "" {
 			// If GCP credentials are set, this must be a GCP CCS cluster
