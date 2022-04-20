@@ -191,7 +191,7 @@ func (o *OCMProvider) LaunchCluster(clusterName string) (string, error) {
 				}
 				log.Printf("ocm.ccs.overwrite is: %v", viper.GetString(CCS_OVERWRITE))
 				if viper.GetBool("ocm.ccs.overwrite") && ccsUser != "osdCcsAdmin" {
-					aws.CcsAwsSession.GenerateCCSKeyPair()
+					awsAccessKey, awsSecretKey, err = aws.CcsAwsSession.GenerateCCSKeyPair()
 				}
 
 				newCluster = newCluster.CCS(v1.NewCCS().Enabled(true)).AWS(

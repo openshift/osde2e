@@ -75,7 +75,7 @@ func (a *ccsAwsSession) getSession() (*session.Session, error) {
 func (a *ccsAwsSession) GenerateCCSKeyPair() (string, string, error) {
 	svc := iam.New(CcsAwsSession.session) //Reuses the session
 
-	wait.PollImmediate(1*time.Minute, 15*time.Minute, func() (bool, error) {
+	wait.PollImmediate(1*time.Minute, 30*time.Minute, func() (bool, error) {
 		//Grabs existing keys
 		keys, err := svc.ListAccessKeys(&iam.ListAccessKeysInput{
 			UserName: aws.String("osdCCSAdmin"),
