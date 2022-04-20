@@ -185,6 +185,15 @@ func (o *OCMProvider) LaunchCluster(clusterName string) (string, error) {
 					nodeBuilder.AvailabilityZones(availabilityZones...)
 				}
 			} else {
+				ccsUser, err := aws.VerifyCCS()
+				if err != nil {
+					return "", fmt.Errorf("error verifying CCS credentials: %v", err)
+				}
+				log.Printf("ocm.ccs.overwrite is: %v", viper.GetString(CCS_OVERWRITE))
+				if viper.GetBool("ocm.ccs.overwrite") && ccsUser != "osdCcsAdmin" {
+					aws.CcsAwsSession.GenerateCCSKeyPair()
+				}
+
 				newCluster = newCluster.CCS(v1.NewCCS().Enabled(true)).AWS(
 					v1.NewAWS().
 						AccountID(awsAccount).
