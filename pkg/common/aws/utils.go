@@ -20,16 +20,8 @@ type ccsAwsSession struct {
 	once    sync.Once
 }
 
-type result struct {
-	accessKeyMetadata []interface{} `json:"AccessKeyMetadata"`
-	isTruncated       bool          `json:"IsTruncated"`
-}
-
 // CCSAWSSession is the global AWS session for interacting with AWS.
 var CcsAwsSession ccsAwsSession
-
-// result holds UnmarshalJSON result
-var result_unmarshal result
 
 // AWS check for osdCCSAdmin credentials
 func VerifyCCS() (string, error) {
@@ -44,11 +36,10 @@ func VerifyCCS() (string, error) {
 		return "", err
 	}
 
-	if *result.User.UserName != "osdCCSAdmin" {
-		log.Printf("The user %s is not osdCCSAdmin", *result.User.UserName)
+	if *result.User.UserName != "osdCcsAdmin" {
+		log.Printf("The user %s is not osdCcsAdmin", *result.User.UserName)
 	}
 
-	fmt.Println("Success", result)
 	return string(*result.User.UserName), nil
 }
 
@@ -78,14 +69,12 @@ func (a *ccsAwsSession) GenerateCCSKeyPair() (string, string, error) {
 	wait.PollImmediate(1*time.Minute, 30*time.Minute, func() (bool, error) {
 		//Grabs existing keys
 		keys, err := svc.ListAccessKeys(&iam.ListAccessKeysInput{
-			UserName: aws.String("osdCCSAdmin"),
+			UserName: aws.String("osdCcsAdmin"),
 		})
 		if err != nil {
 			log.Printf("error listing keys: %v", err)
 			return false, err
 		}
-
-		log.Printf(keys.GoString())
 
 		switch {
 		case len(keys.AccessKeyMetadata) < 2:
@@ -93,10 +82,11 @@ func (a *ccsAwsSession) GenerateCCSKeyPair() (string, string, error) {
 		case len(keys.AccessKeyMetadata) == 2:
 			for _, key := range keys.AccessKeyMetadata {
 				//If the create date is older than 5 minutes, delete the key
+				//This should be enough time for OCM to finish with old CCS keys used to create a cluster.
 				if key.CreateDate.Before(time.Now().Add(-5 * time.Minute)) {
 					_, err := svc.DeleteAccessKey(&iam.DeleteAccessKeyInput{
 						AccessKeyId: key.AccessKeyId,
-						UserName:    aws.String("osdCCSAdmin"),
+						UserName:    aws.String("osdCcSAdmin"),
 					})
 					if err != nil {
 						log.Printf("error deleting key: %v", err)
@@ -110,14 +100,13 @@ func (a *ccsAwsSession) GenerateCCSKeyPair() (string, string, error) {
 	})
 
 	ccsKeys, err := svc.CreateAccessKey(&iam.CreateAccessKeyInput{
-		UserName: aws.String("osdCCSAdmin"),
+		UserName: aws.String("osdCcSAdmin"),
 	})
 	if err != nil {
-		log.Printf("Error creating key: %v", err)
 		return "", "", err
+	} else {
+		log.Printf("Created new key pair for osdCcsAdmin")
 	}
 
 	return *ccsKeys.AccessKey.AccessKeyId, *ccsKeys.AccessKey.SecretAccessKey, nil
 }
-
-//Test scenarios. No key exist. 1 key Exist.
