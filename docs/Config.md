@@ -52,9 +52,10 @@ Some environment variables commonly used for pipelines under osde2e are indicate
 |OCM_FLAVOUR| Flavour is an OCM cluster descriptor for cluster defaults|
 |OCM_ADDITIONAL_LABELS| AdditionalLabels is used to add more specific labels to a cluster in OCM.|
 |OCM_CCS| CCS defines whether the cluster should expect cloud credentials or not|
-|OCM_AWS_ACCOUNT| |
-|OCM_AWS_ACCESS_KEY| |
-|OCM_AWS_SECRET_KEY| |
+|OCM_CCS_ADMIN| Overwrite Flag that will attempt to cycle osdCcsAdmin credentials for a CCS install when the osdCcsAdmin credentials were not passed.|
+|OCM_AWS_ACCOUNT|
+|OCM_AWS_ACCESS_KEY| 
+|OCM_AWS_SECRET_KEY| 
 |OCM_AWS_VPC_SUBNET_IDS| Define existing VPC via a comma-separated list of subnet id's.|
 |TEST_KUBECONFIG| Path to a local kubeconfig; will override fetching Kubeconfig credentials from OCM if specified.| 
   
