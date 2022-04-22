@@ -27,7 +27,7 @@ require (
 	github.com/gotestyourself/gotestyourself v2.2.0+incompatible // indirect
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/influxdata/tdigest v0.0.1 // indirect
-	github.com/jackc/pgtype v1.9.1
+	github.com/jackc/pgtype v1.11.0
 	github.com/jinzhu/inflection v1.0.0
 	github.com/joshdk/go-junit v0.0.0-20201221202203-061ee62ada40
 	github.com/kyleconroy/sqlc v1.11.0
