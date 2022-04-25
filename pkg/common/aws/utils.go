@@ -65,8 +65,9 @@ func (a *ccsAwsSession) getSession() (*session.Session, error) {
 
 func (a *ccsAwsSession) GenerateCCSKeyPair() (string, string, error) {
 	svc := iam.New(CcsAwsSession.session) //Reuses the session
+	var err error
 
-	wait.PollImmediate(2*time.Minute, 90*time.Minute, func() (bool, error) {
+	err = wait.PollImmediate(2*time.Minute, 90*time.Minute, func() (bool, error) {
 		//Grabs existing keys
 		keys, err := svc.ListAccessKeys(&iam.ListAccessKeysInput{
 			UserName: aws.String("osdCcsAdmin"),
@@ -91,6 +92,8 @@ func (a *ccsAwsSession) GenerateCCSKeyPair() (string, string, error) {
 					if err != nil {
 						log.Printf("error deleting key: %v", err)
 						return false, err
+					} else {
+						return true, nil
 					}
 				}
 
@@ -98,6 +101,9 @@ func (a *ccsAwsSession) GenerateCCSKeyPair() (string, string, error) {
 		}
 		return false, fmt.Errorf("unable to generate key pair")
 	})
+	if err != nil {
+		return "", "", err
+	}
 
 	ccsKeys, err := svc.CreateAccessKey(&iam.CreateAccessKeyInput{
 		UserName: aws.String("osdCcSAdmin"),
