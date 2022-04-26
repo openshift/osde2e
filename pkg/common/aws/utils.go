@@ -103,7 +103,6 @@ func CcsScale() (string, string, error) {
 						} else {
 							return true, nil
 						}
-						break
 					}
 				} else {
 					log.Printf("Existing key pair for osdCcsAdmin is not safe to delete")
