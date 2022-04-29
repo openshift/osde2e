@@ -7,4 +7,4 @@ updates:
   labels:
     - "dependencies"
     - "ok-to-test"
-  open-pull-requests-limit: 10
+  open-pull-requests-limit: 20
