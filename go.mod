@@ -60,7 +60,7 @@ require (
 	github.com/prometheus/client_golang v1.9.0
 	github.com/prometheus/common v0.15.0
 	github.com/redhat-cop/must-gather-operator v1.1.2
-	github.com/slack-go/slack v0.10.1
+	github.com/slack-go/slack v0.10.3
 	github.com/spf13/afero v1.8.2
 	github.com/spf13/cobra v1.3.0
 	github.com/spf13/pflag v1.0.5
