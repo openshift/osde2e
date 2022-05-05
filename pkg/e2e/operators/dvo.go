@@ -90,7 +90,7 @@ var _ = ginkgo.FDescribe(deploymentValidationOperatorTestName, func() {
 		_, err := h.Kube().AppsV1().Deployments(h.CurrentProject()).Create(context.TODO(), &ds, metav1.CreateOptions{})
 		Expect(err).NotTo(HaveOccurred())
 
-		err = wait.PollImmediate(2*time.Second, 15*time.Second, func() (bool, error) {
+		wait.PollImmediate(2*time.Second, 15*time.Second, func() (bool, error) {
 
 			resp := h.Kube().CoreV1().Services(operatorNamespace).ProxyGet("http", "deployment-validation-operator-metrics", "8383", "/metrics", nil)
 			data, _ := resp.DoRaw(context.TODO())
