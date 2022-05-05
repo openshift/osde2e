@@ -451,19 +451,6 @@ func PollClusterHealth(clusterID string, logger *log.Logger) (status bool, failu
 			clusterHealthy = false
 		}
 
-		if podlist, err := healthchecks.CheckClusterPodHealth(kubeClient.CoreV1(), logger); (podlist == nil) && err != nil {
-			healthErr = multierror.Append(healthErr, err)
-			failures = append(failures, "pod")
-			clusterHealthy = false
-		} else {
-			err := podErrorTracker.CheckPendingPods(podlist)
-			if err != nil {
-				healthErr = multierror.Append(healthErr, err)
-				failures = append(failures, "pod")
-				clusterHealthy = false
-			}
-		}
-
 		if check, err := healthchecks.CheckCerts(kubeClient.CoreV1(), logger); !check || err != nil {
 			healthErr = multierror.Append(healthErr, err)
 			failures = append(failures, "cert")

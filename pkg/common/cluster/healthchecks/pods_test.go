@@ -14,7 +14,6 @@ import (
 
 const (
 	ns1 = "openshift-1"
-	ns2 = "openshift-2"
 )
 
 func pod(name, namespace string, label map[string]string, phase v1.PodPhase) *v1.Pod {
@@ -59,65 +58,57 @@ func pod(name, namespace string, label map[string]string, phase v1.PodPhase) *v1
 
 func TestCheckPodHealth(t *testing.T) {
 	var tests = []struct {
-		description    string
-		expectedLength int
-		expectedError  bool
-		objs           []runtime.Object
+		description   string
+		isHealthy     bool
+		expectedError bool
+		objs          []runtime.Object
 	}{
 		{
-			description:    "no pods",
-			expectedLength: 0,
-			expectedError:  true,
-			objs:           nil,
+			description:   "no pods",
+			isHealthy:     false,
+			expectedError: true,
+			objs:          nil,
 		},
 		{
-			description:    "single pod failed",
-			expectedLength: 0,
-			expectedError:  true,
+			description:   "single pod failed",
+			isHealthy:     false,
+			expectedError: true,
 			objs: []runtime.Object{
 				pod("a", ns1, map[string]string{}, v1.PodFailed),
 			},
 		},
 		{
-			description:    "single pod pending",
-			expectedLength: 1,
-			expectedError:  false,
-			objs: []runtime.Object{
-				pod("a", ns1, map[string]string{}, v1.PodPending),
-			},
-		},
-		{
-			description:    "healthy pods",
-			expectedLength: 0,
-			expectedError:  false,
+			description:   "healthy pods",
+			isHealthy:     true,
+			expectedError: false,
 			objs: []runtime.Object{
 				pod("running", ns1, map[string]string{}, v1.PodRunning),
-				pod("completed", ns2, map[string]string{}, v1.PodSucceeded),
-				pod("long-job-name", ns2, map[string]string{"job-name": "thisisalongjobnamethatisawhoppingsixtythreecharacterslongtotest"}, v1.PodSucceeded),
+				pod("completed", ns1, map[string]string{}, v1.PodSucceeded),
+				pod("long-job-name", ns1, map[string]string{"job-name": "thisisalongjobnamethatisawhoppingsixtythreecharacterslongtotest"}, v1.PodSucceeded),
 				pod("failed-first-run", ns1, map[string]string{"job-name": "test-job-122"}, v1.PodFailed),
 				pod("but-completed-second-run", ns1, map[string]string{"job-name": "test-job-123"}, v1.PodSucceeded),
-				pod("worked-first-try", ns2, map[string]string{"job-name": "other-job-456"}, v1.PodSucceeded),
+				pod("worked-first-try", ns1, map[string]string{"job-name": "other-job-456"}, v1.PodSucceeded),
 			},
 		},
 		{
-			description:    "currently unhealthy cronjob pods",
-			expectedLength: 0,
-			expectedError:  true,
+			description:   "multiple unhealthy pods",
+			isHealthy:     false,
+			expectedError: true,
 			objs: []runtime.Object{
-				pod("complted-first-run", ns1, map[string]string{"job-name": "test-job-122"}, v1.PodSucceeded),
-				pod("but-failed-second-run", ns1, map[string]string{"job-name": "test-job-124"}, v1.PodFailed),
-				pod("and-failed-again-run", ns1, map[string]string{"job-name": "test-job-125"}, v1.PodFailed),
+				pod("running-first-pod", ns1, map[string]string{}, v1.PodRunning),
+				pod("but-failed-second-pod", ns1, map[string]string{}, v1.PodFailed),
+				pod("and-failed-again-pod", ns1, map[string]string{}, v1.PodFailed),
 			},
 		},
 	}
 
 	for _, test := range tests {
 		kubeClient := kubernetes.NewSimpleClientset(test.objs...)
-		state, err := CheckClusterPodHealth(kubeClient.CoreV1(), nil)
+		state, err := CheckPodHealth(kubeClient.CoreV1(), nil, ns1, "")
 
 		// Length of the pending pods list is validated here. The list may have multiple pending pods even if the error is for one pending pod.
-		if len(state) < test.expectedLength {
-			t.Errorf("%v: Expected length of state doesn't match returned value (%v, %v)", test.description, test.expectedLength, len(state))
+		if state != test.isHealthy {
+			t.Errorf("%v: Expected health state of pods doesn't match returned value (%v, %v)", test.description, test.isHealthy, state)
 		}
 
 		if (err != nil && test.expectedError == false) || (err == nil && test.expectedError == true) {

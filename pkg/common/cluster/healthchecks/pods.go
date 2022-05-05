@@ -27,25 +27,6 @@ func (p *PodErrorTracker) NewPodErrorTracker(threshold int) *PodErrorTracker {
 	return p
 }
 
-// CheckClusterPodHealth attempts to look at the state of all internal cluster pods and
-// returns the list of pending pods if any exist.
-func CheckClusterPodHealth(podClient v1.CoreV1Interface, logger *log.Logger) ([]kubev1.Pod, error) {
-	// We are not filtering IsNotCompleted due to an attempt to mark clusters healthy
-	// if a CronJob's latest pod is Completed, even if previous runs may have failed.
-	filters := []PodPredicate{
-		IsOlderThan(1 * time.Minute),
-		IsClusterPod,
-		IsNotReadinessPod,
-		IsNotRunning,
-	}
-	podlist, err := checkPods(podClient, logger, filters...)
-	if err != nil {
-		return nil, err
-	}
-
-	return podlist, err
-}
-
 // CheckPodHealth attempts to look at the state of all pods and returns true if things are healthy.
 func CheckPodHealth(podClient v1.CoreV1Interface, logger *log.Logger, ns string, podPrefixes ...string) (bool, error) {
 	filters := []PodPredicate{
