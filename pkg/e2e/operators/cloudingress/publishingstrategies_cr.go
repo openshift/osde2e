@@ -3,12 +3,13 @@ package cloudingress
 import (
 	"context"
 
-	"github.com/onsi/ginkgo"
+	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	cloudingress "github.com/openshift/cloud-ingress-operator/pkg/apis/cloudingress/v1alpha1"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/constants"
 	"github.com/openshift/osde2e/pkg/common/helper"
+	"github.com/openshift/osde2e/pkg/common/util"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -25,7 +26,7 @@ var _ = ginkgo.Describe(constants.SuiteOperators+TestPrefix, func() {
 	})
 	h := helper.New()
 	ginkgo.Context("publishingstrategies", func() {
-		ginkgo.It("dedicated admin should not be allowed to manage publishingstrategies CR", func() {
+		util.GinkgoIt("dedicated admin should not be allowed to manage publishingstrategies CR", func() {
 			h.Impersonate(rest.ImpersonationConfig{
 				UserName: "test-user@redhat.com",
 				Groups: []string{
@@ -41,7 +42,7 @@ var _ = ginkgo.Describe(constants.SuiteOperators+TestPrefix, func() {
 
 		})
 
-		ginkgo.It("cluster admin should be allowed to manage publishingstrategies CR", func() {
+		util.GinkgoIt("cluster admin should be allowed to manage publishingstrategies CR", func() {
 			publishingstrategyName := "publishingstrategy-cr-test-2"
 			ps := createPublishingstrategies(publishingstrategyName)
 			err := addPublishingstrategy(h, ps)

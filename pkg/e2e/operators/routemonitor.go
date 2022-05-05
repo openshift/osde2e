@@ -7,11 +7,12 @@ import (
 
 	// "reflect" this is needed when PR https://github.com/openshift/route-monitor-operator/pull/94 is merged
 
-	"github.com/onsi/ginkgo"
+	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega" // go-staticcheck ST1001  should not use dot imports
 
 	"github.com/openshift/osde2e/pkg/common/alert"
 	"github.com/openshift/osde2e/pkg/common/helper"
+	"github.com/openshift/osde2e/pkg/common/util"
 
 	"k8s.io/apimachinery/pkg/util/wait"
 
@@ -24,7 +25,7 @@ import (
 var routeMonitorOperatorTestName string = "[Suite: informing] [OSD] Route Monitor Operator (rmo)"
 
 func init() {
-	alert.RegisterGinkgoAlert(routeMonitorOperatorTestName, "SD-SREP", "@sre-platform-team-orange", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+  alert.RegisterGinkgoAlert(routeMonitorOperatorTestName, "SD-SREP", "@sre-platform-team-orange", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
 }
 
 var _ = ginkgo.Describe(routeMonitorOperatorTestName, func() {
@@ -64,7 +65,7 @@ var _ = ginkgo.Describe(routeMonitorOperatorTestName, func() {
 
 func verifyExistingRouteMonitorsAreValid(h *helper.H) {
 	ginkgo.Context("rmo Route Monitor Operator regression for console", func() {
-		ginkgo.It("has all of the required resouces", func() {
+		util.GinkgoIt("has all of the required resouces", func() {
 			const (
 				consoleNamespace = "openshift-route-monitor-operator"
 				consoleName      = "console"
@@ -81,7 +82,10 @@ func verifyExistingRouteMonitorsAreValid(h *helper.H) {
 }
 func testRouteMonitorCreationWorks(h *helper.H) {
 	ginkgo.Context("rmo Route Monitor Operator integration test", func() {
-		ginkgo.It("Creates and deletes a RouteMonitor to see if it works accordingly", func() {
+
+		// How long to wait for service monitors to be created
+		pollingDuration := 10 * time.Minute
+		util.GinkgoIt("Creates and deletes a RouteMonitor to see if it works accordingly", func() {
 			var (
 				routeMonitorNamespace = h.CurrentProject()
 				err                   error
@@ -109,7 +113,7 @@ func testRouteMonitorCreationWorks(h *helper.H) {
 			err = helper.CreateRouteMonitor(rmo, routeMonitorNamespace, h)
 			Expect(err).NotTo(HaveOccurred(), "Couldn't create application route monitor")
 
-			err = wait.PollImmediate(15*time.Second, 10*time.Minute, func() (bool, error) {
+			err = wait.PollImmediate(15*time.Second, pollingDuration, func() (bool, error) {
 				_, err = h.Prometheusop().MonitoringV1().ServiceMonitors(routeMonitorNamespace).Get(context.TODO(), routeMonitorName, metav1.GetOptions{})
 				if !k8serrors.IsNotFound(err) {
 					return false, err
@@ -145,6 +149,6 @@ func testRouteMonitorCreationWorks(h *helper.H) {
 			Expect(k8serrors.IsNotFound(err)).To(BeTrue(), "sample serviceMonitor still exists, deletion of RouteMonitor didn't clean it up")
 			_, err = h.Prometheusop().MonitoringV1().PrometheusRules(routeMonitorNamespace).Get(context.TODO(), routeMonitorName, metav1.GetOptions{})
 			Expect(k8serrors.IsNotFound(err)).To(BeTrue(), "sample prometheusRule still exists, deletion of RouteMonitor didn't clean it up")
-		})
+		}, pollingDuration.Seconds())
 	})
 }

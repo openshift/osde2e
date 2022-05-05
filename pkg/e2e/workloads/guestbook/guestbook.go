@@ -9,13 +9,23 @@ import (
 	v1 "github.com/openshift/api/route/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/onsi/ginkgo"
+	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
 	"github.com/openshift/osde2e/pkg/common/alert"
 	"github.com/openshift/osde2e/pkg/common/cluster/healthchecks"
+	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
+	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/helper"
+	"github.com/openshift/osde2e/pkg/common/util"
 	"k8s.io/apimachinery/pkg/util/wait"
+)
+
+const (
+	// Service name for the guestbook front-end
+	guestbookSvcName = "frontend"
+	// Service port for the guestbook front-end
+	guestbookSvcPort = "3000"
 )
 
 // Specify where the YAML definitions are for the workloads.
@@ -27,7 +37,7 @@ var workloadName = filepath.Base(testDir)
 var testName string = "[Suite: e2e] Workload (" + workloadName + ")"
 
 func init() {
-	alert.RegisterGinkgoAlert(testName, "SD-CICD", "Jeffrey Sica", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+	alert.RegisterGinkgoAlert(testName, "SD-CICD", "Diego Santamaria", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
 }
 
 var _ = ginkgo.Describe(testName, func() {
@@ -38,7 +48,8 @@ var _ = ginkgo.Describe(testName, func() {
 	// used for verifying creation of workload pods
 	podPrefixes := []string{"frontend", "redis-master", "redis-slave"}
 
-	ginkgo.It("should get created in the cluster", func() {
+  workloadPollDuration := 5 * time.Minute
+	util.GinkgoIt("should get created in the cluster", func() {
 
 		// Does this workload exist? If so, this must be a repeat run.
 		// In this case we should assume the workload has had a valid run once already
@@ -76,7 +87,7 @@ var _ = ginkgo.Describe(testName, func() {
 			time.Sleep(3 * time.Second)
 
 			// Wait for all pods to come up healthy
-			err = wait.PollImmediate(15*time.Second, 5*time.Minute, func() (bool, error) {
+			err = wait.PollImmediate(15*time.Second, workloadPollDuration, func() (bool, error) {
 				// This is pretty basic. Are all the pods up? Cool.
 				if check, err := healthchecks.CheckPodHealth(h.Kube().CoreV1(), nil, h.CurrentProject(), podPrefixes...); !check || err != nil {
 					return false, nil
@@ -91,10 +102,27 @@ var _ = ginkgo.Describe(testName, func() {
 			h.AddWorkload(workloadName, h.CurrentProject())
 		}
 
-	})
+	}, (workloadPollDuration + (30 * time.Second)).Seconds())
 })
 
 func doTest(h *helper.H) {
-	_, err := h.Kube().CoreV1().Services(h.CurrentProject()).ProxyGet("http", "frontend", "3000", "/", nil).DoRaw(context.TODO())
+
+	// track if error occurs
+	var err error
+
+	// duration in seconds between polls
+	interval := 5
+
+	// convert time.Duration type
+	timeoutDuration := time.Duration(viper.GetFloat64(config.Tests.PollingTimeout)) * time.Second
+	intervalDuration := time.Duration(interval) * time.Second
+
+	err = wait.PollImmediate(intervalDuration, timeoutDuration, func() (bool, error) {
+		_, err = h.Kube().CoreV1().Services(h.CurrentProject()).ProxyGet("http", guestbookSvcName, guestbookSvcPort, "/", nil).DoRaw(context.TODO())
+		if err == nil {
+			return true, nil
+		}
+		return false, nil
+	})
 	Expect(err).NotTo(HaveOccurred(), "unable to access front end of app")
 }

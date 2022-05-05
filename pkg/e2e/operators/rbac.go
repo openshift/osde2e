@@ -4,12 +4,13 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/onsi/ginkgo"
+	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/openshift/osde2e/pkg/common/alert"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/helper"
+	"github.com/openshift/osde2e/pkg/common/util"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	unstruct "k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -52,7 +53,7 @@ var _ = ginkgo.Describe(subjectPermissionsTestName, func() {
 
 func checkSubjectPermissions(h *helper.H, spName string) {
 	ginkgo.Context("SubjectPermission", func() {
-		ginkgo.It("should have the expected ClusterRoles, ClusterRoleBindings and RoleBindinsg", func() {
+		util.GinkgoIt("should have the expected ClusterRoles, ClusterRoleBindings and RoleBindinsg", func() {
 			clusterRoles, clusterRoleBindings, roleBindings, err := getSubjectPermissionRBACInfo(h, spName)
 			Expect(err).NotTo(HaveOccurred())
 

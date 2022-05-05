@@ -8,7 +8,7 @@ import (
 
 	"net"
 
-	"github.com/onsi/ginkgo"
+	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	cloudingressv1alpha1 "github.com/openshift/cloud-ingress-operator/pkg/apis/cloudingress/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
@@ -17,6 +17,7 @@ import (
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/constants"
 	"github.com/openshift/osde2e/pkg/common/helper"
+	"github.com/openshift/osde2e/pkg/common/util"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -43,9 +44,11 @@ var _ = ginkgo.Describe(constants.SuiteOperators+TestPrefix, func() {
 //testHostnameResolves Confirms hostname on the cluster resolves
 func testHostnameResolves(h *helper.H) {
 	var err error
+
+	hostnameResolvePollDuration := 15 * time.Minute
 	ginkgo.Context("rh-api-test", func() {
-		ginkgo.It("hostname should resolve", func() {
-			wait.PollImmediate(30*time.Second, 15*time.Minute, func() (bool, error) {
+		util.GinkgoIt("hostname should resolve", func() {
+			wait.PollImmediate(30*time.Second, hostnameResolvePollDuration, func() (bool, error) {
 
 				getOpts := metav1.GetOptions{}
 				apiserver, err := h.Cfg().ConfigV1().APIServers().Get(context.TODO(), "cluster", getOpts)
@@ -70,7 +73,7 @@ func testHostnameResolves(h *helper.H) {
 				return true, nil
 			})
 			Expect(err).NotTo(HaveOccurred())
-		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
+		}, (hostnameResolvePollDuration + 1 * time.Minute).Seconds())
 	})
 }
 
@@ -78,7 +81,7 @@ func testHostnameResolves(h *helper.H) {
 //after an update to make sure changes to the apischem
 func testCIDRBlockUpdates(h *helper.H) {
 	ginkgo.Context("rh-api-test", func() {
-		ginkgo.It("cidr block changes should updated the service", func() {
+		util.GinkgoIt("cidr block changes should updated the service", func() {
 
 			//Create APISScheme Object
 			var APISchemeInstance cloudingressv1alpha1.APIScheme
@@ -128,7 +131,7 @@ func testCIDRBlockUpdates(h *helper.H) {
 			res := reflect.DeepEqual(CIDRBlock, rhAPIService.Spec.LoadBalancerSourceRanges)
 			Expect(res).Should(BeTrue())
 
-		})
+		}, viper.GetFloat64(config.Tests.PollingTimeout))
 	})
 }
 

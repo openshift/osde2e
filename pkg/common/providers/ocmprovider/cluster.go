@@ -141,7 +141,8 @@ func (o *OCMProvider) LaunchCluster(clusterName string) (string, error) {
 		awsAccount := viper.GetString(AWSAccount)
 		awsAccessKey := viper.GetString(AWSAccessKey)
 		awsSecretKey := viper.GetString(AWSSecretKey)
-
+		//Refactor: This is a hack to get the AWS CCS cluster to work. In reality today we are loading too many secrets and need a better way to do this.
+		//IE: If aws keys are set but not awsAccount, we should mention it's an AWS execution but we are missing credentials.
 		if viper.GetString(GCPCredsJSON) != "" {
 			gcp, err := v1.UnmarshalGCP(viper.GetString(GCPCredsJSON))
 			if err != nil {
@@ -160,11 +161,50 @@ func (o *OCMProvider) LaunchCluster(clusterName string) (string, error) {
 		}
 
 		if viper.GetString(config.CloudProvider.CloudProviderID) == "aws" && awsAccount != "" && awsAccessKey != "" && awsSecretKey != "" {
-			newCluster = newCluster.CCS(v1.NewCCS().Enabled(true)).AWS(
-				v1.NewAWS().
+			if viper.GetString(AWSVPCSubnetIDs) != "" {
+				subnetIDs := strings.Split(viper.GetString(AWSVPCSubnetIDs), ",")
+				awsBuilder := v1.NewAWS().
 					AccountID(awsAccount).
 					AccessKeyID(awsAccessKey).
-					SecretAccessKey(awsSecretKey))
+					SecretAccessKey(awsSecretKey).
+					SubnetIDs(subnetIDs...)
+				newCluster = newCluster.CCS(v1.NewCCS().Enabled(true)).AWS(awsBuilder)
+				if len(subnetIDs) > 0 {
+					cloudProviderData, err := v1.NewCloudProviderData().
+						AWS(awsBuilder).
+						Region(v1.NewCloudRegion().ID(region)).
+						Build()
+					if err != nil {
+						return "", fmt.Errorf("error building AWS cloud provider data for retrieving Availability Zones: %v", err)
+					}
+					subnetworks, err := o.GetSubnetworks(cloudProviderData)
+					if err != nil {
+						return "", fmt.Errorf("error retrieving AWS subnetworks: %v", err)
+					}
+					availabilityZones := GetAvailabilityZones(subnetworks, subnetIDs)
+					nodeBuilder.AvailabilityZones(availabilityZones...)
+				}
+			} else {
+				var err error
+				var ccsUser string
+				ccsUser, err = aws.VerifyCCS()
+				if err != nil {
+					return "", fmt.Errorf("error verifying CCS credentials: %v", err)
+				}
+				log.Printf("ocm.ccs.overwrite is: %v - will attempt to generate CCS keys.", viper.GetString(CCS_OVERWRITE))
+				if viper.GetBool("ocm.ccs.overwrite") && ccsUser != "osdCcsAdmin" {
+					awsAccessKey, awsSecretKey, err = aws.CcsScale()
+				}
+				if err != nil {
+					return "", fmt.Errorf("error generating CCS keys: %v", err)
+				}
+
+				newCluster = newCluster.CCS(v1.NewCCS().Enabled(true)).AWS(
+					v1.NewAWS().
+						AccountID(awsAccount).
+						AccessKeyID(awsAccessKey).
+						SecretAccessKey(awsSecretKey))
+			}
 		} else if viper.GetString(config.CloudProvider.CloudProviderID) == "gcp" && viper.GetString(GCPProjectID) != "" {
 			// If GCP credentials are set, this must be a GCP CCS cluster
 			newCluster = newCluster.CCS(v1.NewCCS().Enabled(true)).GCP(v1.NewGCP().
@@ -452,17 +492,24 @@ func ChooseRandomRegion(regions ...CloudRegion) (CloudRegion, bool) {
 	return nil, false
 }
 
-// DetermineMachineType will return the machine type provided by configs. This mainly wraps the random functionality for use
-// by the OCM provider. (Returns a random machine type if the config suggests it to be random.)
+// DetermineMachineType will return the machine type provided by configs. This mainly wraps the random functionality for use by the OCM provider.
+// Returns a random machine type if the machine type is set to "random" and a more narrowed random if a regex was specified.
 func (o *OCMProvider) DetermineMachineType(cloudProvider string) (string, error) {
-	computeMachineType := viper.GetString(ComputeMachineType)
-	returnedType := ""
+	computeMachineType, computeMachineTypeRegex := viper.GetString(ComputeMachineType), viper.GetString(ComputeMachineTypeRegex)
+	searchString, returnedType := "", ""
 
 	// If a machineType is set to "random", it will poll OCM for all the machines available
 	// It then will pull a random entry from the list of machines and set the machineTypes to that
-	if computeMachineType == "random" && rand.Intn(3) >= 2 {
-		searchstring := fmt.Sprintf("cloud_provider.id like '%s'", cloudProvider)
-		machinetypeClient := o.conn.ClustersMgmt().V1().MachineTypes().List().Search(searchstring)
+	if (computeMachineType == "random" && rand.Intn(3) >= 2) || (computeMachineType == "random" && computeMachineTypeRegex != "") {
+		//Create search string based on wether we are using a regex or not
+		switch {
+		case computeMachineType == "random" && computeMachineTypeRegex != "":
+			searchString = fmt.Sprintf("cloud_provider.id like '%s' AND id like '%s.%%'", cloudProvider, computeMachineTypeRegex)
+		case computeMachineType == "random" && computeMachineTypeRegex == "":
+			searchString = fmt.Sprintf("cloud_provider.id like '%s'", cloudProvider)
+		}
+		machinetypeClient := o.conn.ClustersMgmt().V1().MachineTypes().List().Search(searchString)
+		log.Printf("Randomly picking size for MachineTypes with search string %s", computeMachineTypeRegex)
 
 		machinetypes, err := machinetypeClient.Send()
 		if err != nil {
@@ -1365,4 +1412,40 @@ networking:
   serviceNetwork:
   - 172.30.0.0/16
 `
+}
+
+func (o *OCMProvider) GetSubnetworks(cloudProviderData *v1.CloudProviderData) (subnetworks []*v1.Subnetwork, err error) {
+	if viper.GetBool(CCS) && viper.GetString(config.CloudProvider.CloudProviderID) == "aws" {
+		response, err := o.conn.ClustersMgmt().V1().AWSInquiries().Vpcs().Search().
+			Page(1).
+			Size(-1).
+			Body(cloudProviderData).
+			Send()
+		if err != nil {
+			return nil, err
+		}
+
+		cloudVPCs := response.Items().Slice()
+
+		for _, vpc := range cloudVPCs {
+			subnetworks = append(subnetworks, vpc.AWSSubnets()...)
+		}
+	}
+	return subnetworks, nil
+}
+
+func GetAvailabilityZones(subnetworks []*v1.Subnetwork, configSubnetIDs []string) (availabilityZones []string) {
+	collectedAZs := map[string]bool{}
+	for _, subnet := range subnetworks {
+		subnetID := subnet.SubnetID()
+		availabilityZone := subnet.AvailabilityZone()
+		for _, configSubnetID := range configSubnetIDs {
+			if subnetID != configSubnetID || collectedAZs[availabilityZone] {
+				continue
+			}
+			collectedAZs[availabilityZone] = true
+			availabilityZones = append(availabilityZones, availabilityZone)
+		}
+	}
+	return availabilityZones
 }

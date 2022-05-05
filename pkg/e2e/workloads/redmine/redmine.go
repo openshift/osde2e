@@ -12,14 +12,22 @@ import (
 
 	"github.com/openshift/osde2e/pkg/common/alert"
 	"github.com/openshift/osde2e/pkg/common/cluster/healthchecks"
-	"github.com/openshift/osde2e/pkg/common/config"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
+	"github.com/openshift/osde2e/pkg/common/config"
+	"github.com/openshift/osde2e/pkg/common/util"
 
-	"github.com/onsi/ginkgo"
+	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"k8s.io/apimachinery/pkg/util/wait"
+)
+
+const (
+	// Service name for the Redmine front-end
+	redmineSvcName = "redmine-frontend"
+	// Service port for the Redmine front-end
+	redmineSvcPort = "3000"
 )
 
 // Specify where the YAML definitions are for the workloads.
@@ -42,9 +50,8 @@ var _ = ginkgo.Describe(testName, func() {
 	// used for verifying creation of workload pods
 	podPrefixes := []string{"redmine"}
 
-	redmineTimeoutInSeconds := 900
-	ginkgo.It("should get created in the cluster", func() {
-
+	redmineTimeoutInSeconds := 2500
+	util.GinkgoIt("should get created in the cluster", func() {
 
 		// Does this workload exist? If so, this must be a repeat run.
 		// In this case we should assume the workload has had a valid run once already
@@ -122,30 +129,15 @@ func doTest(h *helper.H) {
 	interval := 5
 
 	// convert time.Duration type
-	timeoutDuration := time.Duration(viper.GetFloat64(config.Tests.PollingTimeout)) * time.Minute
+	timeoutDuration := time.Duration(viper.GetFloat64(config.Tests.PollingTimeout)) * time.Second
 	intervalDuration := time.Duration(interval) * time.Second
 
-	start := time.Now()
-
-Loop:
-	for {
-		_, err = h.Kube().CoreV1().Services(h.CurrentProject()).ProxyGet("http", "redmine-frontend", "3000", "/", nil).DoRaw(context.TODO())
-		elapsed := time.Since(start)
-
-		switch {
-		case err == nil:
-			// Success
-			break Loop
-		default:
-			if elapsed < timeoutDuration {
-				log.Printf("Waiting %v for application to load", (timeoutDuration - elapsed))
-				time.Sleep(intervalDuration)
-			} else {
-				err = fmt.Errorf("failed to check service before timeout")
-				break Loop
-			}
+	err = wait.PollImmediate(intervalDuration, timeoutDuration, func() (bool, error) {
+		_, err = h.Kube().CoreV1().Services(h.CurrentProject()).ProxyGet("http", redmineSvcName, redmineSvcPort, "/", nil).DoRaw(context.TODO())
+		if err == nil {
+			return true, nil
 		}
-	}
-
+		return false, nil
+	})
 	Expect(err).NotTo(HaveOccurred(), "unable to access front end of app")
 }

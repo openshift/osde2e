@@ -6,11 +6,12 @@ import (
 	"log"
 	"time"
 
-	"github.com/onsi/ginkgo"
+	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	userv1 "github.com/openshift/api/user/v1"
 	"github.com/openshift/osde2e/pkg/common/alert"
 	"github.com/openshift/osde2e/pkg/common/config"
+	"github.com/openshift/osde2e/pkg/common/util"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/rest"
@@ -124,21 +125,21 @@ var _ = ginkgo.Describe(namespaceWebhookTestName, func() {
 			})
 		})
 
-		ginkgo.It("dedicated admins cannot manage privileged namespaces", func() {
+		util.GinkgoIt("dedicated admins cannot manage privileged namespaces", func() {
 			for privilegedNamespace := range PRIVILEGED_NAMESPACES {
 				err := updateNamespace(privilegedNamespace, DUMMY_USER, "dedicated-admins", h)
 				Expect(err).To(HaveOccurred())
 			}
 		}, viper.GetFloat64(config.Tests.PollingTimeout))
 
-		ginkgo.It("Non-privileged users cannot manage privileged namespaces", func() {
+		util.GinkgoIt("Non-privileged users cannot manage privileged namespaces", func() {
 			for privilegedNamespace := range PRIVILEGED_NAMESPACES {
 				err := updateNamespace(privilegedNamespace, DUMMY_USER, DUMMY_GROUP, h)
 				Expect(err).To(HaveOccurred())
 			}
 		}, viper.GetFloat64(config.Tests.PollingTimeout))
 
-		ginkgo.It("Privileged users can manage all namespaces", func() {
+		util.GinkgoIt("Privileged users can manage all namespaces", func() {
 			for _, privilegedUser := range PRIVILEGED_USERS {
 				for privilegedNamespace := range PRIVILEGED_NAMESPACES {
 					err := updateNamespace(privilegedNamespace, privilegedUser, "", h)
@@ -151,7 +152,7 @@ var _ = ginkgo.Describe(namespaceWebhookTestName, func() {
 			}
 		}, viper.GetFloat64(config.Tests.PollingTimeout))
 
-		ginkgo.It("Non-privileged users can manage all non-privileged namespaces", func() {
+		util.GinkgoIt("Non-privileged users can manage all non-privileged namespaces", func() {
 			// Non-privileged users can manage all non-privileged namespaces
 			for _, nonPrivilegedNamespace := range NONPRIV_NAMESPACES {
 				err := updateNamespace(nonPrivilegedNamespace, DUMMY_USER, "dedicated-admins", h)

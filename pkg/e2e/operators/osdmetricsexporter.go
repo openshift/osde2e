@@ -1,15 +1,9 @@
 package operators
 
 import (
-	"context"
-
-	"github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
+	"github.com/onsi/ginkgo/v2"
 	"github.com/openshift/osde2e/pkg/common/alert"
-	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
-	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/helper"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 var (
@@ -41,22 +35,3 @@ var _ = ginkgo.Describe(osdMetricsExporterBasicTest, func() {
 	checkService(h, operatorNamespace, operatorName, servicePort)
 	checkUpgrade(helper.New(), operatorNamespace, operatorName, operatorName, "osd-metrics-exporter-registry")
 })
-
-func checkService(h *helper.H, namespace string, name string, port int) {
-	pollTimeout := viper.GetFloat64(config.Tests.PollingTimeout)
-	ginkgo.Context("service", func() {
-		ginkgo.It(
-			"should exist",
-			func() {
-				Eventually(func() bool {
-					_, err := h.Kube().CoreV1().Services(namespace).Get(context.Background(), name, metav1.GetOptions{})
-					if err != nil {
-						return false
-					}
-					return true
-				}, "30m", "1m").Should(BeTrue())
-			},
-			pollTimeout,
-		)
-	})
-}

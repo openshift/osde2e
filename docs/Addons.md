@@ -1,6 +1,7 @@
 # **Add-On Testing**
 
-This document describes the requirements to configure E2E testing of an Addon within `osde2e`. This is only one part of the overall process of onboarding an addon to OSD. The full process is outlined in the documentation [available here](https://gitlab.cee.redhat.com/service/managed-tenants/-/tree/master).
+This document describes the requirements to configure E2E testing of an Addon within `osde2e`. This is only one part of the overall process of onboarding an addon to OSD. The addons integration tests are to make sure we have some "on osd" tests they do not replace your existing QE
+The full process is outlined in the documentation [available here](https://gitlab.cee.redhat.com/service/managed-tenants/-/tree/master).
 
 ## **The Structure of an Addon Test**
 
@@ -8,11 +9,34 @@ How an add-on is tested can vary between groups and projects. In light of this, 
 
 *   Assume it is executing in a pod within an OpenShift cluster.
 *   Assume the pod will inherit `cluster-admin` rights. 
-*	Block until your addon is ready to be tested (we will launch your container after requesting installation of the addon, but we can't control when the addon is finished installing).
+*	  Block until your addon is ready to be tested (we will launch your container after requesting installation of the addon, but we can't control when the addon is finished installing).
 *   Output a valid `junit.xml` file to the `/test-run-results` directory before the container exits.
 *   Output metadata to `addon-metadata.json` in the `/test-run-results` directory.
 
 The [Prow Operator Test] is a good example of a [Basic operator test]. It verifies that the Prow operator and all the necessary CRDs are installed in the cluster. 
+
+# **Onboarding to OSDE2E**
+
+Add-on developers should first onboard to OSD as described in the [OSD documentation] above. 
+In order to debug Test Harnesses, we recommend running OSDE2E in a local environment as detailed in: [Running from source](https://github.com/openshift/osde2e#running-from-source)
+
+A common worflow is to create a cluster and then run the test harness through OSDE2E:
+ADDON_IDS is the OCM value to install the addon.
+
+```bash
+#!/usr/bin/env bash
+make build
+
+OCM_TOKEN="[OCM token here]" \ 
+CLUSTER_ID="[cluster id here]" \
+ADDON_IDS="[addon id here]" \ 
+ADDON_TEST_HARNESSES="[quay.io address here]" \
+REPORT_DIR="[path to report directory]" \
+./out/osde2e test --configs "stage,addon-suite" --skip-health-check
+```
+Once the execution is complete, you can view the report in the defined `report_dir` directory.
+
+After the Test Harness has been validated to work as intended locally, this flow can be be performed in a CI pipeline to test agaisnt OSD releases. 
 
 ## **Test Environments**
 
@@ -38,7 +62,7 @@ Please bump the quota for SKU `MW00530` by 2 so that we can provision additional
 
 If you are not a part of the public GitHub Organization `OpenShift`, join it by following [these instructions](https://source.redhat.com/groups/public/atomicopenshift/atomicopenshift_wiki/setting_up_your_accounts_openshift).
 
-Follow the documentation [here](https://docs.ci.openshift.org/docs/how-tos/adding-a-new-secret-to-ci/) to create secrets and configure them to be mirrored into the `ci` namespace [like ours](https://github.com/openshift/release/blob/master/core-services/secret-mirroring/_mapping.yaml#L62).
+Follow the documentation [here](https://docs.ci.openshift.org/docs/how-tos/adding-a-new-secret-to-ci/) to create secrets.
 
 You'll need to provide some additional details about your AWS account in a secret. In particular, you'll need to provide these values in your credentials secret:
 
@@ -62,7 +86,7 @@ The first two of these are comma-delimited lists when supplied by environment va
 
 `ADDON_PARAMETERS` allows you to configure parameters that will be passed to OCM for the installation of your addon. The format is a two-level JSON object. The outer object's keys are the IDs of addons, and the inner objects are key-value pairs that will be passed to the associated addon.
 
-`CHANNEL` lets you specify the Cincinnati channel for version selection. Valid options include `nightly`, `candidate`, `fast`, and `stable`. By default, this is set to `candidate`
+`CHANNEL` lets you specify the Cincinnati channel for version selection. Valid options include `nightly`, `candidate`, `fast`, and `stable`. By default, this is set to `candidate`.  It is best practice to have several pipelines.  One that tests as far left as you can (e.g. nightlies) and one that tests candidate, fast or stable.  The idea behind this is that your left-most test pipeline will give you early warning of things that may break in the future, giving you time to react to failed test notifications and fix things.
 
 An example prow job that configures the "prow" operator in the stage environment:
 
@@ -78,6 +102,16 @@ An example prow job that configures the "prow" operator in the stage environment
   labels:
     pj-rehearse.openshift.io/can-be-rehearsed: "false"
   name: osde2e-stage-aws-addon-prow-operator
+  reporter_config:
+    slack:
+      channel: '#slack-channel-name'
+      job_states_to_report:
+      - failure
+      - error
+      report_template: '{{if eq .Status.State "success"}} :white_check_mark: Job *{{.Spec.Job}}*
+        ended with *{{.Status.State}}*. <{{.Status.URL}}|View logs> :white_check_mark:
+        {{else}} :warning:  Job *{{.Spec.Job}}* ended with *{{.Status.State}}*. <{{.Status.URL}}|View
+        logs> :warning: {{end}}'
   spec:
     containers:
     - args:
@@ -95,6 +129,8 @@ An example prow job that configures the "prow" operator in the stage environment
         value: "true"
       - name: ADDON_TEST_HARNESSES
         value: quay.io/miwilson/prow-operator-test-harness
+      - name: CHANNEL
+        value: stable
       - name: CONFIGS
         value: aws,stage,addon-suite
       - name: SECRET_LOCATIONS
@@ -193,5 +229,4 @@ In addition to programmatically gating your addon releases, you can also use the
 [openshift/release]:https://github.com/openshift/release
 [Managing Organization Quota]:https://gitlab.cee.redhat.com/service/ocm-resources/blob/master/docs/quota.md
 [https://cloud.redhat.com/openshift/token]:https://cloud.redhat.com/openshift/token
-[these instructions]:https://github.com/openshift/release/blob/master/core-services/secret-mirroring/README.md
 [Grafana instance]:https://grafana.datahub.redhat.com/

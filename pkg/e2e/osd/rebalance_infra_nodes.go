@@ -3,18 +3,22 @@ package osd
 import (
 	"context"
 	"fmt"
-	"github.com/onsi/ginkgo"
+	"log"
+	"os/exec"
+	"time"
+
+	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/openshift/osde2e/pkg/common/alert"
+	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
+	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/helper"
+	"github.com/openshift/osde2e/pkg/common/util"
 	batchv1 "k8s.io/api/batch/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/utils/pointer"
-	"log"
-	"os/exec"
-	"time"
 )
 
 const (
@@ -36,7 +40,7 @@ var _ = ginkgo.Describe(rebalanceInfraNodesTestName, func() {
 
 	ginkgo.Context("re-balance the infra nodes with cronjob", func() {
 
-		ginkgo.It("infra nodes should be rebalanced after executing the cronjob", func() {
+		util.GinkgoIt("infra nodes should be rebalanced after executing the cronjob", func() {
 			ginkgo.By("Putting the cluster into imbalanced state")
 			output, err := exec.Command("/bin/sh", imbalanceScriptPath).Output()
 			Expect(err).ToNot(HaveOccurred())
@@ -156,7 +160,7 @@ var _ = ginkgo.Describe(rebalanceInfraNodesTestName, func() {
 				podsNumber = checkPodsBalance(h, splunkNamespace, "name", "splunk-heavy-forwarder", node.Name)
 				Expect(podsNumber).To(BeNumerically("<=", 1))
 			}
-		})
+		}, podSucceededTimeout.Seconds()+viper.GetFloat64(config.Tests.PollingTimeout))
 	})
 })
 

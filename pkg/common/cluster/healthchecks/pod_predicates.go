@@ -1,8 +1,9 @@
 package healthchecks
 
 import (
-	kubev1 "k8s.io/api/core/v1"
 	"time"
+
+	kubev1 "k8s.io/api/core/v1"
 )
 
 type PodPredicate func(kubev1.Pod) bool

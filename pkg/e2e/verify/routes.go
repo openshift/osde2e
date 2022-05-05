@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/onsi/ginkgo"
+	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
 	v1 "github.com/openshift/api/route/v1"
@@ -14,6 +14,7 @@ import (
 
 	"github.com/openshift/osde2e/pkg/common/alert"
 	"github.com/openshift/osde2e/pkg/common/helper"
+	"github.com/openshift/osde2e/pkg/common/util"
 )
 
 const (
@@ -26,27 +27,27 @@ const (
 var routesTestName string = "[Suite: e2e] Routes"
 
 func init() {
-	alert.RegisterGinkgoAlert(routesTestName, "SD-CICD", "Jeffrey Sica", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+	alert.RegisterGinkgoAlert(routesTestName, "SD-CICD", "Diego Santamaria", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
 }
 
 var _ = ginkgo.Describe(routesTestName, func() {
 	h := helper.New()
 
-	ginkgo.It("should be created for Console", func() {
+	util.GinkgoIt("should be created for Console", func() {
 		consoleRoutes(h)
 	}, 300)
 
-	ginkgo.It("should be functioning for Console", func() {
+	util.GinkgoIt("should be functioning for Console", func() {
 		for _, route := range consoleRoutes(h) {
 			testRouteIngresses(route, http.StatusOK)
 		}
 	}, 300)
 
-	ginkgo.It("should be created for oauth", func() {
+	util.GinkgoIt("should be created for oauth", func() {
 		oauthRoute(h)
 	}, 300)
 
-	ginkgo.It("should be functioning for oauth", func() {
+	util.GinkgoIt("should be functioning for oauth", func() {
 		testRouteIngresses(oauthRoute(h), http.StatusForbidden)
 	}, 300)
 

@@ -4,13 +4,12 @@ import (
 	"context"
 	"time"
 
-	"github.com/onsi/ginkgo"
+	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	osv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/osde2e/pkg/common/alert"
-	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
-	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/helper"
+	"github.com/openshift/osde2e/pkg/common/util"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -31,8 +30,10 @@ var _ = ginkgo.Describe(certmanOperatorTestName, func() {
 		var err error
 		var apiserver *osv1.APIServer
 
-		ginkgo.It("certificate secret exist under openshift-config namespace", func() {
-			wait.PollImmediate(30*time.Second, 15*time.Minute, func() (bool, error) {
+		// Waiting period to wait for certman resources to appear
+		pollingDuration := 15 * time.Minute
+		util.GinkgoIt("certificate secret exist under openshift-config namespace", func() {
+			wait.PollImmediate(30*time.Second, pollingDuration, func() (bool, error) {
 				listOpts := metav1.ListOptions{
 					LabelSelector: "certificate_request",
 				}
@@ -48,10 +49,10 @@ var _ = ginkgo.Describe(certmanOperatorTestName, func() {
 			})
 			Expect(err).NotTo(HaveOccurred())
 			Expect(len(secrets.Items)).Should(Equal(1))
-		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
+		}, pollingDuration.Seconds())
 
-		ginkgo.It("certificate secret should be applied to apiserver object", func() {
-			wait.PollImmediate(30*time.Second, 15*time.Minute, func() (bool, error) {
+		util.GinkgoIt("certificate secret should be applied to apiserver object", func() {
+			wait.PollImmediate(30*time.Second, pollingDuration, func() (bool, error) {
 				getOpts := metav1.GetOptions{}
 				apiserver, err = h.Cfg().ConfigV1().APIServers().Get(context.TODO(), "cluster", getOpts)
 				if err != nil {
@@ -65,6 +66,6 @@ var _ = ginkgo.Describe(certmanOperatorTestName, func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(len(apiserver.Spec.ServingCerts.NamedCertificates)).Should(BeNumerically(">", 0))
 			Expect(apiserver.Spec.ServingCerts.NamedCertificates[0].ServingCertificate.Name).Should(Equal(secretName))
-		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
+		}, pollingDuration.Seconds())
 	})
 })

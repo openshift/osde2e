@@ -8,12 +8,14 @@ import (
 
 	"time"
 
-	"github.com/onsi/ginkgo"
+	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	cloudingressv1alpha1 "github.com/openshift/cloud-ingress-operator/pkg/apis/cloudingress/v1alpha1"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
+	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/constants"
 	"github.com/openshift/osde2e/pkg/common/helper"
+	"github.com/openshift/osde2e/pkg/common/util"
 	"github.com/openshift/osde2e/pkg/e2e/operators"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -30,7 +32,11 @@ var _ = ginkgo.Describe(constants.SuiteInforming+TestPrefix, func() {
 
 	h := helper.New()
 	ginkgo.Context("secondary router", func() {
-		ginkgo.It("should be created when added to publishingstrategy ", func() {
+
+		// How long to wait for resources to be created
+		pollingDuration := 2 * time.Minute
+
+		util.GinkgoIt("should be created when added to publishingstrategy ", func() {
 
 			secondaryIngress := secondaryIngress(h)
 
@@ -38,7 +44,7 @@ var _ = ginkgo.Describe(constants.SuiteInforming+TestPrefix, func() {
 			if _, exists, _ := appIngressExits(h, false, secondaryIngress.DNSName); !exists {
 				addAppIngress(h, secondaryIngress)
 				// wait 2 minute for all resources to be created
-				time.Sleep(time.Duration(120) * time.Second)
+				time.Sleep(pollingDuration)
 			}
 
 			// from DNSName app-e2e-apps.cluster.mfvz.s1.devshift.org,
@@ -58,9 +64,9 @@ var _ = ginkgo.Describe(constants.SuiteInforming+TestPrefix, func() {
 			Expect(err).ToNot(HaveOccurred(), "failed fetching deployment")
 			Expect(deployment).NotTo(BeNil(), "deployment is nil")
 			Expect(deployment.Status.ReadyReplicas).To(BeNumerically("==", deployment.Status.Replicas))
-		})
+		}, pollingDuration.Seconds() + viper.GetFloat64(config.Tests.PollingTimeout))
 
-		ginkgo.It("should be deleted when removed from publishingstrategy", func() {
+		util.GinkgoIt("should be deleted when removed from publishingstrategy", func() {
 			secondaryIngress := secondaryIngress(h)
 
 			_, exists, index := appIngressExits(h, false, secondaryIngress.DNSName)
@@ -68,13 +74,13 @@ var _ = ginkgo.Describe(constants.SuiteInforming+TestPrefix, func() {
 			if exists {
 				removeAppIngress(h, index)
 				// wait 2 minute for all resources to be deleted
-				time.Sleep(time.Duration(120) * time.Second)
+				time.Sleep(pollingDuration)
 			}
 			Expect(len(strings.Split(secondaryIngress.DNSName, "."))).To(BeNumerically(">", 1))
 			ingressControllerName := strings.Split(secondaryIngress.DNSName, ".")[1]
 			// check that the ingresscontroller app-e2e-apps was deleted
 			ingressControllerExists(h, ingressControllerName, false)
-		})
+		}, pollingDuration.Seconds() + viper.GetFloat64(config.Tests.PollingTimeout))
 	})
 })
 

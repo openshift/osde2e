@@ -6,9 +6,10 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/onsi/ginkgo"
+	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/openshift/osde2e/pkg/common/helper"
+	"github.com/openshift/osde2e/pkg/common/util"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -31,7 +32,7 @@ var _ = ginkgo.Describe(samesiteTestName, func() {
 
 		supportedVersion := verifyVersionSupport(h)
 
-		ginkgo.It("should be set for openshift-monitoring OSD managed routes", func() {
+		util.GinkgoIt("should be set for openshift-monitoring OSD managed routes", func() {
 			if supportedVersion() {
 				foundKey, err := managedRoutes(h, monNamespace)
 				Expect(err).NotTo(HaveOccurred(), "failed getting routes for %v", monNamespace)
@@ -41,7 +42,7 @@ var _ = ginkgo.Describe(samesiteTestName, func() {
 			}
 		}, 5)
 
-		ginkgo.It("should be set for openshift-console OSD managed routes", func() {
+		util.GinkgoIt("should be set for openshift-console OSD managed routes", func() {
 			if supportedVersion() {
 				foundKey, err := managedRoutes(h, conNamespace)
 				Expect(err).NotTo(HaveOccurred(), "failed getting routes for %v", conNamespace)

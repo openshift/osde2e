@@ -4,13 +4,14 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/onsi/ginkgo"
+	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/openshift/osde2e/pkg/common/alert"
 	"github.com/openshift/osde2e/pkg/common/helper"
+	"github.com/openshift/osde2e/pkg/common/util"
 )
 
 const (
@@ -23,19 +24,19 @@ const (
 var loadBalancersTestName string = "[Suite: informing] Load Balancers"
 
 func init() {
-	alert.RegisterGinkgoAlert(loadBalancersTestName, "SD-CICD", "Jeffrey Sica", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+	alert.RegisterGinkgoAlert(loadBalancersTestName, "SD-CICD", "Diego Santamaria", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
 }
 
 var _ = ginkgo.Describe(loadBalancersTestName, func() {
 	h := helper.New()
 
-	ginkgo.It("router/ingress load balancer should exist", func() {
+	util.GinkgoIt("router/ingress load balancer should exist", func() {
 		exists, err := loadBalancerExists(h, routerIngressLoadBalancerNamespace, routerIngressLoadBalancer)
 		Expect(err).ToNot(HaveOccurred(), "an error should not have occurred when looking for the load balancer")
 		Expect(exists).To(BeTrue(), "the load balancer should exist")
 	}, 10)
 
-	ginkgo.It("external load balancer should exist", func() {
+	util.GinkgoIt("external load balancer should exist", func() {
 		exists, err := loadBalancerExists(h, externalLoadBalancerNamespace, externalLoadBalancer)
 		Expect(err).ToNot(HaveOccurred(), "an error should not have occurred when looking for the load balancer")
 		Expect(exists).To(BeTrue(), "the load balancer should exist")

@@ -87,7 +87,7 @@ az network vnet subnet update \
     --disable-private-link-service-network-policies true
 
 
-CREATE_CMD="az aro create --resource-group \"$RESOURCEGROUP_NAME\" --name \"$CLUSTER_NAME\" --vnet aro-vnet --master-subnet master-subnet --worker-subnet worker-subnet --disk-encryption-set \"$DES_ID\" --master-encryption-at-host --worker-encryption-at-host "
+CREATE_CMD="az aro create --resource-group \"$RESOURCEGROUP_NAME\" --name \"$CLUSTER_NAME\" --vnet aro-vnet --master-subnet master-subnet --worker-subnet worker-subnet --disk-encryption-set \"$DES_ID\" --master-encryption-at-host --worker-encryption-at-host --sdn-type OVNKubernetes "
 
 if [ "$PULL_SECRET_FILE" != "" ];
 then

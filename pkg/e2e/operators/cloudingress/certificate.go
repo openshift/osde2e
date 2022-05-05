@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/onsi/ginkgo"
+	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/openshift/osde2e/pkg/common/constants"
 	"github.com/openshift/osde2e/pkg/common/helper"
@@ -17,24 +17,26 @@ import (
 var _ = ginkgo.Describe(constants.SuiteInforming+TestPrefix, func() {
 	h := helper.New()
 	var originalCert string
+
+	// How long to wait for IngressController changes
+	pollingDuration := 120 * time.Second
 	ginkgo.Context("publishingstrategy-certificate", func() {
 		ginkgo.It("IngressController should be patched when update Certificate", func() {
 			ingress1, _ := getingressController(h, "default")
 			originalCert = string(ingress1.Spec.DefaultCertificate.Name)
 			updateCertificate(h, "foo-bar")
-			time.Sleep(time.Duration(120) * time.Second)
+			time.Sleep(pollingDuration)
 			ingress, _ := getingressController(h, "default")
 
 			Expect(string(ingress.Spec.DefaultCertificate.Name)).To(Equal("foo-bar"))
-			Expect(ingress.Annotations["Owner"]).To(Equal("cloud-ingress-operator"))
-		})
+		}, pollingDuration.Seconds())
+
 		ginkgo.It("IngressController should be patched when return the original Certificate", func() {
 			updateCertificate(h, originalCert)
-			time.Sleep(time.Duration(120) * time.Second)
+			time.Sleep(pollingDuration)
 			ingress, _ := getingressController(h, "default")
 			Expect(string(ingress.Spec.DefaultCertificate.Name)).To(Equal(originalCert))
-			Expect(ingress.Annotations["Owner"]).To(Equal("cloud-ingress-operator"))
-		})
+		}, pollingDuration.Seconds())
 	})
 })
 

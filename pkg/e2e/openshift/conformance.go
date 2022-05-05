@@ -2,12 +2,13 @@
 package openshift
 
 import (
-	"github.com/onsi/ginkgo"
+	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
 	"github.com/openshift/osde2e/pkg/common/alert"
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/runner"
+	"github.com/openshift/osde2e/pkg/common/util"
 )
 
 // DefaultE2EConfig is the base configuration for E2E runs.
@@ -29,8 +30,8 @@ var conformanceK8sTestName string = "[Suite: conformance][k8s]"
 var conformanceOpenshiftTestName string = "[Suite: conformance][openshift]"
 
 func init() {
-	alert.RegisterGinkgoAlert(conformanceK8sTestName, "SD-CICD", "Jeffrey Sica", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
-	alert.RegisterGinkgoAlert(conformanceOpenshiftTestName, "SD-CICD", "Jeffrey Sica", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+	alert.RegisterGinkgoAlert(conformanceK8sTestName, "SD-CICD", "Diego Santamaria", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+	alert.RegisterGinkgoAlert(conformanceOpenshiftTestName, "SD-CICD", "Diego Santamaria", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
 }
 
 var _ = ginkgo.Describe(conformanceK8sTestName, func() {
@@ -38,7 +39,7 @@ var _ = ginkgo.Describe(conformanceK8sTestName, func() {
 	h := helper.New()
 
 	e2eTimeoutInSeconds := 7200
-	ginkgo.It("should run until completion", func() {
+	util.GinkgoIt("should run until completion", func() {
 		// configure tests
 		h.SetServiceAccount("system:serviceaccount:%s:cluster-admin")
 
@@ -73,7 +74,7 @@ var _ = ginkgo.Describe(conformanceOpenshiftTestName, func() {
 	h := helper.New()
 
 	e2eTimeoutInSeconds := 7200
-	ginkgo.It("should run until completion", func() {
+	util.GinkgoIt("should run until completion", func() {
 		h.SetServiceAccount("system:serviceaccount:%s:cluster-admin")
 		// configure tests
 		cfg := DefaultE2EConfig

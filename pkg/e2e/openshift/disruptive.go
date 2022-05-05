@@ -2,17 +2,18 @@
 package openshift
 
 import (
-	"github.com/onsi/ginkgo"
+	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
 	"github.com/openshift/osde2e/pkg/common/alert"
 	"github.com/openshift/osde2e/pkg/common/helper"
+	"github.com/openshift/osde2e/pkg/common/util"
 )
 
 var disruptiveTestName = "[Suite: openshift][disruptive]"
 
 func init() {
-	alert.RegisterGinkgoAlert(disruptiveTestName, "SD-CICD", "Jeffrey Sica", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+	alert.RegisterGinkgoAlert(disruptiveTestName, "SD-CICD", "Diego Santamaria", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
 }
 
 // Disruptive tests require SSH access to nodes.
@@ -21,7 +22,7 @@ var _ = ginkgo.Describe(disruptiveTestName, func() {
 	h := helper.New()
 
 	e2eTimeoutInSeconds := 3600
-	ginkgo.It("should run until completion", func() {
+	util.GinkgoIt("should run until completion", func() {
 		// configure tests
 		cfg := DefaultE2EConfig
 		cfg.Suite = "openshift/disruptive"

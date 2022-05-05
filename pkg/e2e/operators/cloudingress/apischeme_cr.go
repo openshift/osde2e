@@ -4,12 +4,13 @@ import (
 	"context"
 	"time"
 
-	"github.com/onsi/ginkgo"
+	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	cloudingress "github.com/openshift/cloud-ingress-operator/pkg/apis/cloudingress/v1alpha1"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/constants"
 	"github.com/openshift/osde2e/pkg/common/helper"
+	"github.com/openshift/osde2e/pkg/common/util"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -27,7 +28,7 @@ var _ = ginkgo.Describe(constants.SuiteOperators+TestPrefix, func() {
 	})
 	h := helper.New()
 	ginkgo.Context("apischeme", func() {
-		ginkgo.It("apischemes CR instance must be present on cluster", func() {
+		util.GinkgoIt("apischemes CR instance must be present on cluster", func() {
 
 			err := wait.PollImmediate(2*time.Second, 2*time.Minute, func() (bool, error) {
 				if _, err := h.Dynamic().Resource(schema.GroupVersionResource{
@@ -41,7 +42,7 @@ var _ = ginkgo.Describe(constants.SuiteOperators+TestPrefix, func() {
 
 		})
 
-		ginkgo.It("dedicated admin should not be allowed to manage apischemes CR", func() {
+		util.GinkgoIt("dedicated admin should not be allowed to manage apischemes CR", func() {
 			user := "test-user"
 			impersonateDedicatedAdmin(h, user)
 
@@ -63,7 +64,7 @@ var _ = ginkgo.Describe(constants.SuiteOperators+TestPrefix, func() {
 
 		})
 
-		ginkgo.It("cluster admin should be allowed to manage apischemes CR", func() {
+		util.GinkgoIt("cluster admin should be allowed to manage apischemes CR", func() {
 			as := createApischeme("apischeme-cr-test")
 			defer apiSchemeCleanup(h, "apischeme-cr-test")
 			err := addApischeme(h, as)

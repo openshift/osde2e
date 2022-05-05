@@ -21,6 +21,9 @@ const (
 	// ComputeMachineType is the specific cloud machine type to use for compute nodes.
 	ComputeMachineType = "ocm.computeMachineType"
 
+	// ComputeMachineTypeRegex is the regex for cloud machine type to use for compute nodes.
+	ComputeMachineTypeRegex = "ocm.computeMachineTypeRegex"
+
 	// UserOverride will hard set the user assigned to the "owner" tag by the OCM provider.
 	UserOverride = "ocm.userOverride"
 
@@ -36,12 +39,17 @@ const (
 	// CCS defines whether the cluster should expect cloud credentials or not
 	CCS = "ocm.ccs"
 
+	// CCS_OVERWRITE defines an overwrite flag that will attempt to create CCS credentials for the cluster
+	CCS_OVERWRITE = "ocm.ccs.overwrite"
+
 	// AWSAccount is used in CCS clusters
 	AWSAccount = "ocm.aws.account"
 	// AWSAccessKey is used in CCS clusters
 	AWSAccessKey = "ocm.aws.accessKey"
 	// AWSSecretKey is used in CCS clusters
 	AWSSecretKey = "ocm.aws.secretKey"
+	// AWSVPCSubnetIDs is used in CCS clusters
+	AWSVPCSubnetIDs = "ocm.aws.vpcSubnetIDs"
 
 	// GCP CCS Credentials
 	GCPCredsJSON               = "ocm.gcp.credsJSON"
@@ -74,6 +82,9 @@ func init() {
 	viper.SetDefault(ComputeMachineType, "")
 	viper.BindEnv(ComputeMachineType, "OCM_COMPUTE_MACHINE_TYPE")
 
+	viper.SetDefault(ComputeMachineTypeRegex, "")
+	viper.BindEnv(ComputeMachineTypeRegex, "OCM_COMPUTE_MACHINE_TYPE_REGEX")
+
 	viper.BindEnv(UserOverride, "OCM_USER_OVERRIDE")
 
 	viper.SetDefault(Flavour, "osd-4")
@@ -85,11 +96,14 @@ func init() {
 	viper.BindEnv(AdditionalLabels, "OCM_ADDITIONAL_LABELS")
 
 	viper.SetDefault(CCS, false)
+	viper.SetDefault(CCS_OVERWRITE, false)
 	viper.BindEnv(CCS, "OCM_CCS", "CCS")
+	viper.BindEnv(CCS_OVERWRITE, "CCS_OVERWRITE", "CCS_ADMIN")
 
 	viper.BindEnv(AWSAccount, "OCM_AWS_ACCOUNT", "AWS_ACCOUNT")
 	viper.BindEnv(AWSAccessKey, "OCM_AWS_ACCESS_KEY", "AWS_ACCESS_KEY_ID")
 	viper.BindEnv(AWSSecretKey, "OCM_AWS_SECRET_KEY", "AWS_SECRET_ACCESS_KEY")
+	viper.BindEnv(AWSVPCSubnetIDs, "OCM_AWS_VPC_SUBNET_IDS")
 
 	config.RegisterSecret(AWSAccessKey, "aws-access-key-id")
 	config.RegisterSecret(AWSSecretKey, "aws-secret-access-key")

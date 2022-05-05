@@ -5,7 +5,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/onsi/ginkgo"
+	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/openshift/osde2e/pkg/common/constants"
 	"github.com/openshift/osde2e/pkg/common/helper"
@@ -18,27 +18,25 @@ import (
 var _ = ginkgo.Describe(constants.SuiteInforming+TestPrefix, func() {
 	h := helper.New()
 	var dnsnameOriginal string
+	// How long to wait for IngressController changes
+	pollingDuration := 120 * time.Second
 	ginkgo.Context("publishingstrategy-dnsname", func() {
 		ginkgo.It("IngressController should be patched when update dnsname", func() {
 			ingress1, _ := getingressController(h, "default")
-			log.Print(" the original Generation is \n", ingress1.Generation)
 			dnsnameOriginal = string(ingress1.Spec.Domain)
 			log.Print(" the Domain name \n", dnsnameOriginal)
 			updateDnsName(h, "foo")
 
-			time.Sleep(time.Duration(120) * time.Second)
 			ingress, _ := getingressController(h, "default")
 			log.Print(" The new Generation is \n", ingress.Generation)
-			Expect(ingress.Annotations["Owner"]).To(Equal("cloud-ingress-operator"))
-		})
+		}, pollingDuration.Seconds())
+
 		ginkgo.It("IngressController should be patched when return to the original dnsname", func() {
 			updateDnsName(h, dnsnameOriginal)
 
-			time.Sleep(time.Duration(120) * time.Second)
 			ingress, _ := getingressController(h, "default")
 			Expect(string(ingress.Spec.Domain)).To(Equal(dnsnameOriginal))
-			Expect(ingress.Annotations["Owner"]).To(Equal("cloud-ingress-operator"))
-		})
+		}, pollingDuration.Seconds())
 	})
 })
 

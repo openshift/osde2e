@@ -47,13 +47,16 @@ Some environment variables commonly used for pipelines under osde2e are indicate
 |DEBUG_OSD| Debug shows debug level messages when enabled.|
 |NUM_RETRIES|NumRetries is the number of times to retry each OCM call.|
 |OCM_COMPUTE_MACHINE_TYPE| ComputeMachineType is the specific cloud machine type to use for compute nodes.|
+|OCM_COMPUTE_MACHINE_TYPE_REGEX| ComputeMachineTypeRegex is the regex for cloud machine type to use for compute nodes.|
 |OCM_USER_OVERRIDE| UserOverride will hard set the user assigned to the "owner" tag by the OCM provider.|
 |OCM_FLAVOUR| Flavour is an OCM cluster descriptor for cluster defaults|
 |OCM_ADDITIONAL_LABELS| AdditionalLabels is used to add more specific labels to a cluster in OCM.|
 |OCM_CCS| CCS defines whether the cluster should expect cloud credentials or not|
-|OCM_AWS_ACCOUNT| |
-|OCM_AWS_ACCESS_KEY| |
-|OCM_AWS_SECRET_KEY| |
+|OCM_CCS_ADMIN| Overwrite Flag that will attempt to cycle osdCcsAdmin credentials for a CCS install when the osdCcsAdmin credentials were not passed.|
+|OCM_AWS_ACCOUNT|
+|OCM_AWS_ACCESS_KEY| 
+|OCM_AWS_SECRET_KEY| 
+|OCM_AWS_VPC_SUBNET_IDS| Define existing VPC via a comma-separated list of subnet id's.|
 |TEST_KUBECONFIG| Path to a local kubeconfig; will override fetching Kubeconfig credentials from OCM if specified.| 
   
 ### Upgrade variables:-
@@ -91,7 +94,7 @@ Some environment variables commonly used for pipelines under osde2e are indicate
 
 | Environment variable | Usage |
 | --------------| ------------------------|  
-|POLLING_TIMEOUT| PollingTimeout is how long (in mimutes) to wait for an object to be created before failing the test.|
+|POLLING_TIMEOUT| PollingTimeout is how long (in seconds) to wait for an object to be created before failing the test.|
 |GINKGO_SKIP| GinkgoSkip is a regex passed to Ginkgo that skips any test suites matching the regex. ex. "Operator"|
 |GINKGO_FOCUS| GinkgoFocus is a regex passed to Ginkgo that focus on any test suites matching the regex. ex. "Operator"|
 |TESTS_TO_RUN| TestsToRun is a list of files which should be executed as part of a test suite|

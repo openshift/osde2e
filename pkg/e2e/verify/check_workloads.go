@@ -6,10 +6,11 @@ import (
 	"log"
 	"strings"
 
-	"github.com/onsi/ginkgo"
+	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/openshift/osde2e/pkg/common/alert"
 	"github.com/openshift/osde2e/pkg/common/helper"
+	"github.com/openshift/osde2e/pkg/common/util"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	v1 "k8s.io/client-go/kubernetes/typed/core/v1"
 )
@@ -26,7 +27,7 @@ var _ = ginkgo.Describe(onNodesTestName, func() {
 
 	ginkgo.Context("worker nodes", func() {
 
-		ginkgo.It("on worker nodes", func() {
+		util.GinkgoIt("on worker nodes", func() {
 
 			_, infra, err := listNodesByType(h.Kube().CoreV1())
 			Expect(err).NotTo(HaveOccurred())

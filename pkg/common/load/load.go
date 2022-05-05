@@ -69,15 +69,24 @@ func Configs(configs []string, customConfig string, secretLocations []string) er
 
 		for _, folder := range secretLocations {
 			passthruSecrets := viper.GetStringMapString(config.NonOSDe2eSecrets)
-			if !strings.Contains(folder, "osde2e-credentials") && !strings.Contains(folder, "osde2e-common") {
+			//Omit the osde2e secrets from going to the pass through secrets.
+			if strings.Contains(folder, "osde2e-credentials") || strings.Contains(folder, "osde2e-common") {
+				//If this is an addon test we will want to pass the ocm-token through.
 				if viper.Get(config.Addons.IDs) != nil {
-					passthruSecrets["ocm-token-refresh"] = viper.GetString("ocm.token")
-				} else {
-					continue
+					_, exist := passthruSecrets["ocm-token-refresh"]
+					if !exist {
+						passthruSecrets["ocm-token-refresh"] = viper.GetString("ocm.token")
+						passthruSecrets["ENV"] = viper.GetString("ocm.env")
+						viper.Set(config.NonOSDe2eSecrets, passthruSecrets)
+					}
 				}
+				continue
 			}
-			
+
 			err := filepath.Walk(folder, func(path string, info os.FileInfo, err error) error {
+				if info.IsDir() {
+					return nil
+				}
 				if err != nil {
 					return fmt.Errorf("Error walking folder %s: %s", folder, err.Error())
 				}
@@ -152,8 +161,16 @@ func loadYAMLFromFile(name string) error {
 // loadSecretFileIntoKey will attempt to load the contents of a secret file into the given key.
 // If the secret file doesn't exist, we'll skip this.
 func loadSecretFileIntoKey(key string, filename string, secretLocations []string) error {
+	//We should rewrite all of this logic. This introduces a bug with the current expected behavior that overwrites values but does this multiple times.
 	for _, secretLocation := range secretLocations {
 		fullFilename := filepath.Join(secretLocation, filename)
+		//This is a bandage fix until we can rewrite the logic to load secrets.
+		if (strings.Contains(fullFilename, "osde2e-credentials") || strings.Contains(fullFilename, "osde2e-common")) && (key == "ocm.aws.accesKey" || key == "ocm.aws.secretKey") {
+			if viper.GetBool("ocm.ccs") {
+				continue
+			}
+		}
+
 		stat, err := os.Stat(fullFilename)
 		if err == nil && !stat.IsDir() {
 			data, err := ioutil.ReadFile(fullFilename)

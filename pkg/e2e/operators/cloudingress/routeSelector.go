@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/onsi/ginkgo"
+	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/openshift/osde2e/pkg/common/constants"
 	"github.com/openshift/osde2e/pkg/common/helper"
@@ -18,19 +18,18 @@ import (
 var _ = ginkgo.Describe(constants.SuiteInforming+TestPrefix, func() {
 	h := helper.New()
 
+	// How long to wait for IngressController changes
+	pollingDuration := 120 * time.Second
 	ginkgo.Context("publishingstrategy-route-selector", func() {
 		ginkgo.It("IngressController should be patched when update routeSelector matchLabels", func() {
 			updateMatchLabels(h, "tier", "frontend")
 
-			time.Sleep(time.Duration(120) * time.Second)
 			ingress, _ := getingressController(h, "default")
 			Expect(string(ingress.Spec.RouteSelector.MatchLabels["tier"])).To(Equal("frontend"))
-			Expect(ingress.Annotations["Owner"]).To(Equal("cloud-ingress-operator"))
-		})
+		}, pollingDuration.Seconds())
 		ginkgo.It("IngressController should be patched when update routeSelector matchExpressions", func() {
 			updateMatchExpressions(h, "foo", "In", "bar")
 
-			time.Sleep(time.Duration(120) * time.Second)
 			ingress, _ := getingressController(h, "default")
 			expectedExpressions := []metav1.LabelSelectorRequirement{
 				{"foo", metav1.LabelSelectorOperator("In"), []string{"bar"}},
@@ -38,18 +37,15 @@ var _ = ginkgo.Describe(constants.SuiteInforming+TestPrefix, func() {
 			for j := range ingress.Spec.RouteSelector.MatchExpressions {
 				Expect(reflect.DeepEqual(ingress.Spec.RouteSelector.MatchExpressions[j], expectedExpressions)).To(BeTrue())
 			}
-			Expect(ingress.Annotations["Owner"]).To(Equal("cloud-ingress-operator"))
-		})
+		}, pollingDuration.Seconds())
 		ginkgo.It("IngressController should be patched when reset matchLabels and matchExpressions", func() {
 			resetRouteSelector(h)
-			time.Sleep(time.Duration(120) * time.Second)
 
 			ingress, _ := getingressController(h, "default")
 			Expect(ingress.Spec.RouteSelector.MatchLabels).To(BeNil())
 			Expect(ingress.Spec.RouteSelector.MatchExpressions).To(BeNil())
-			Expect(ingress.Annotations["Owner"]).To(Equal("cloud-ingress-operator"))
 
-		})
+		}, pollingDuration.Seconds())
 	})
 })
 

@@ -8,11 +8,12 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/onsi/ginkgo"
+	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/openshift/osde2e/pkg/common/alert"
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/runner"
+	"github.com/openshift/osde2e/pkg/common/util"
 	kubev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -43,7 +44,7 @@ var testApplications = []string{
 var appBuildsTestName string = "[Suite: app-builds] OpenShift Application Build E2E"
 
 func init() {
-	alert.RegisterGinkgoAlert(appBuildsTestName, "SD-CICD", "Jeffrey Sica", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+	alert.RegisterGinkgoAlert(appBuildsTestName, "SD-CICD", "Diego Santamaria", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
 }
 
 var _ = ginkgo.Describe(appBuildsTestName, func() {
@@ -52,7 +53,7 @@ var _ = ginkgo.Describe(appBuildsTestName, func() {
 	h := helper.New()
 
 	e2eTimeoutInSeconds := 3600
-	ginkgo.It("should get created in the cluster", func() {
+	util.GinkgoIt("should get created in the cluster", func() {
 
 		namespacesExist := false
 		for _, application := range testApplications {
