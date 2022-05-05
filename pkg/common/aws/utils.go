@@ -60,9 +60,8 @@ func VerifyCCS() (string, error) {
 }
 
 func CcsScale() (string, string, error) {
-	var err error
 
-	err = wait.PollImmediate(2*time.Minute, 120*time.Minute, func() (bool, error) {
+	err := wait.PollImmediate(2*time.Minute, 120*time.Minute, func() (bool, error) {
 
 		//Grabs existing keys
 		keys, err := CcsAwsSession.iam.ListAccessKeys(&iam.ListAccessKeysInput{
