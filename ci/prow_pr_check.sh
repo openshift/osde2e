@@ -16,9 +16,10 @@ set -eo pipefail
 
     make build
 
-    CLUSTER_ID=1rkd1isdn7ojkd9u06renmulm63rnvut \
+    CLUSTER_ID=1s0bptrsejnqrfib4m9scunb5iitpl8o \
     GINKGO_SKIP="Must Gather Operator" \
     OCM_CCS="true" \
+    HIBERNATE_AFTER_USE="false" \
     ./out/osde2e test --configs=prod,aws,pr-check,e2e-suite --secret-locations=/usr/local/osde2e-common,/usr/local/osde2e-credentials,/usr/local/sd-cicd-aws-prod
 
 } 2>&1 | tee -a "$REPORT_DIR/test_output.log"
