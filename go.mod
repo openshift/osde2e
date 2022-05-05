@@ -6,7 +6,7 @@ require (
 	cloud.google.com/go/iam v0.1.0 // indirect
 	cloud.google.com/go/kms v1.1.0
 	github.com/Masterminds/semver v1.5.0
-	github.com/PagerDuty/go-pagerduty v1.4.3
+	github.com/PagerDuty/go-pagerduty v1.5.1
 	github.com/PuerkitoBio/goquery v1.8.0
 	github.com/adamliesko/retry v0.0.0-20200123222335-86c8baac277d
 	github.com/antlr/antlr4 v0.0.0-20200209180723-1177c0b58d07
