@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/onsi/ginkgo"
+	"github.com/onsi/ginkgo/v2"
 	operatorv1 "github.com/operator-framework/api/pkg/operators/v1"
 	operatorv1alpha "github.com/operator-framework/api/pkg/operators/v1alpha1"
 
@@ -81,7 +81,7 @@ var _ = ginkgo.Describe(deploymentValidationOperatorTestName, func() {
 	checkDeployment(h, operatorNamespace, operatorDeploymentName, defaultDesiredReplicas)
 	checkClusterRoles(h, clusterRoles, false)
 
-	ginkgo.It("empty node-label deployment should get created", func() {
+	util.GinkgoIt("empty node-label deployment should get created", func() {
 		// Set it to a wildcard dedicated-admin
 		h.SetServiceAccount("system:serviceaccount:%s:cluster-admin")
 
@@ -183,7 +183,7 @@ func regexDVOCheck(filterValue string, data string, deploymentName string) bool 
 func deployDVO(h *helper.H, subNamespace string, subName string, packageName string, regServiceName string) {
 
 	ginkgo.Context("Install DVO", func() {
-		ginkgo.It("should install DVO for future tests", func() {
+		util.GinkgoIt("should install DVO for future tests", func() {
 
 			//Setup vars for error and target namespace for Operator Group
 			var err error
@@ -232,7 +232,7 @@ func deployDVO(h *helper.H, subNamespace string, subName string, packageName str
 func deleteDVO(h *helper.H, subNamespace string, subName string, packageName string, regServiceName string) {
 
 	ginkgo.Context("Operator Upgrade", func() {
-		ginkgo.It("should upgrade from the replaced version", func() {
+		util.GinkgoIt("should upgrade from the replaced version", func() {
 
 			// Get the CSV we're currently installed with
 			var latestCSV string
