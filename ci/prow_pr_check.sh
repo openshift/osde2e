@@ -16,7 +16,7 @@ set -eo pipefail
 
     make build
 
-    CLUSTER_ID=1s0bptrsejnqrfib4m9scunb5iitpl8o \
+    CLUSTER_ID=1s1ivv6n6d37k9h656lthfev8qendoi1 \
     GINKGO_SKIP="Must Gather Operator" \
     OCM_CCS="true" \
     HIBERNATE_AFTER_USE="false" \
