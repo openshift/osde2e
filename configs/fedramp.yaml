@@ -1,0 +1,11 @@
+tests:
+  enableFips: true
+  testsToRun:
+  - '\[Suite\: service-definition\]'
+  - '\[Suite\: app-builds\]'
+  - '\[Suite\: e2e\] FIPS'
+  - '\[Suite\: e2e\] Encrypted Storage'
+  - '\[Suite\: e2e\] ImageStreams'
+  - '\[Suite\: e2e\] \[OSD\] namespace validating webhook'
+  - '\[Suite\: e2e\] \[OSD\] OAuth tokens'
+  - '\[Suite: informing\] \[OSD\] pod validating webhook'
