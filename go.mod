@@ -3,8 +3,7 @@ module github.com/openshift/osde2e
 go 1.16
 
 require (
-	cloud.google.com/go/iam v0.1.0 // indirect
-	cloud.google.com/go/kms v1.1.0
+	cloud.google.com/go/kms v1.4.0
 	github.com/Masterminds/semver v1.5.0
 	github.com/PagerDuty/go-pagerduty v1.4.3
 	github.com/PuerkitoBio/goquery v1.8.0
@@ -72,8 +71,8 @@ require (
 	golang.org/x/net v0.0.0-20220225172249-27dd8689420f
 	golang.org/x/oauth2 v0.0.0-20211104180415-d3ed0bb246c8
 	golang.org/x/tools v0.1.10
-	google.golang.org/api v0.67.0
-	google.golang.org/genproto v0.0.0-20220126215142-9970aeb2e350
+	google.golang.org/api v0.70.0
+	google.golang.org/genproto v0.0.0-20220222213610-43724f9ea8cf
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
 	gotest.tools/v3 v3.1.0
 	k8s.io/api v0.20.2
