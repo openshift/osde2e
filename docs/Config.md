@@ -125,6 +125,13 @@ Some environment variables commonly used for pipelines under osde2e are indicate
 |PROMETHEUS_ADDRESS| Address of the Prometheus instance to connect to.|
 |PROMETHEUS_BEARER_TOKEN| Token needed for communicating with Prometheus.|
  
+### Proxy related:-
+
+| Environment variable | Usage |
+| --------------| ------------------------| 
+|TEST_HTTP_PROXY| Address of the HTTP Proxy to be added to a cluster. |
+|TEST_HTTPS_PROXY| Address of the HTTPS Proxy to be added to a cluster.|
+|USER_CA_BUNDLE| PEM-encoded CA Bundle to be added as the cluster's additional trusted CA. If prefixed by an @ symbol, the value will be treated as a filesystem path that the content is loaded from.|
 
 
 ## Command Line Flags for osde2e

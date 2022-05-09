@@ -112,3 +112,18 @@ func (m *ROSAProvider) Resume(id string) bool {
 func (m *ROSAProvider) Hibernate(id string) bool {
 	return m.ocmProvider.Hibernate(id)
 }
+
+// AddClusterProxy sets the cluster proxy configuration for the supplied cluster
+func (m *ROSAProvider) AddClusterProxy(clusterId string, httpsProxy string, httpProxy string, userCABundle string) error {
+	return m.ocmProvider.AddClusterProxy(clusterId, httpsProxy, httpProxy, userCABundle)
+}
+
+// RemoveClusterProxy removes the cluster proxy configuration for the supplied cluster
+func (m *ROSAProvider) RemoveClusterProxy(clusterId string) error {
+	return m.RemoveClusterProxy(clusterId)
+}
+
+// RemoveUserCABundle removes only the Additional Trusted CA Bundle from the cluster
+func (m *ROSAProvider) RemoveUserCABundle(clusterId string) error {
+	return m.RemoveUserCABundle(clusterId)
+}

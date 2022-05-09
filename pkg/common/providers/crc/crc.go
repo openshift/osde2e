@@ -347,3 +347,18 @@ func (o *Provider) Hibernate(id string) bool {
 	log.Println("Hibernation not supported in CRC Provider")
 	return true
 }
+
+// AddClusterProxy adds a proxy to a cluster
+func (m *Provider) AddClusterProxy(clusterId string, httpsProxy string, httpProxy string, userCABundle string) error {
+	return fmt.Errorf("proxies not supported in CRC Provider")
+}
+
+// RemoveClusterProxy removes a proxy from a cluster
+func (m *Provider) RemoveClusterProxy(clusterId string) error {
+	return fmt.Errorf("proxies not supported in CRC Provider")
+}
+
+// RemoveUserCABundle removes a CA Bundle from a cluster
+func (m *Provider) RemoveUserCABundle(clusterId string) error {
+	return fmt.Errorf("proxies not supported in CRC Provider")
+}

@@ -140,4 +140,14 @@ type Provider interface {
 	// If hibernation is unsupported by the provider, it will log that it's unsupported
 	// but still return True.
 	Resume(clusterID string) bool
+
+	// AddClusterProxy adds a cluster-wide proxy to the cluster.
+	AddClusterProxy(clusterId string, httpsProxy string, httpProxy string, userCABundle string) error
+
+	// RemoveClusterProxy removes the cluster proxy configuration for the supplied cluster
+	RemoveClusterProxy(clusterId string) error
+
+	// RemoveUserCABundle removes only the Additional Trusted CA Bundle from the cluster
+	RemoveUserCABundle(clusterId string) error
+
 }
