@@ -552,6 +552,20 @@ var Database = struct {
 	DatabaseName: "database.name",
 }
 
+// Proxy config keys
+var Proxy = struct {
+	// The HTTPS Proxy address to use for proxy tests,
+	HttpsProxy string
+	// The HTTP Proxy address to use for proxy tests.
+	HttpProxy string
+	// The User CA Bundle to use for proxy tests.
+	UserCABundle string
+}{
+	HttpsProxy:   "proxy.https_proxy",
+	HttpProxy:    "proxy.http_proxy",
+	UserCABundle: "proxy.user_ca_bundle",
+}
+
 func InitViper() {
 	// Here's where we bind environment variables to config options and set defaults
 
@@ -817,6 +831,13 @@ func InitViper() {
 	viper.SetDefault(Database.DatabaseName, "cicd_test_data")
 	viper.BindEnv(Database.DatabaseName, "PG_DATABASE")
 	RegisterSecret(Database.DatabaseName, "rds-database")
+
+	// ----- Proxy ------
+	viper.BindEnv(Proxy.HttpProxy, "TEST_HTTP_PROXY")
+
+	viper.BindEnv(Proxy.HttpsProxy, "TEST_HTTPS_PROXY")
+
+	viper.BindEnv(Proxy.UserCABundle, "USER_CA_BUNDLE")
 }
 
 func init() {
@@ -830,6 +851,12 @@ func PostProcess() {
 	if artifacts != "" {
 		log.Printf("Found an ARTIFACTS directory, using that for the REPORT_DIR.")
 		viper.Set(ReportDir, artifacts)
+	}
+
+	// Load UserCABundle from file if the value indicates a path
+	err := LoadUserCABundle()
+	if err != nil {
+		log.Printf("Unable to load User CA Bundle: %v", err)
 	}
 }
 
@@ -857,6 +884,24 @@ func LoadKubeconfig() error {
 			return fmt.Errorf("failed reading '%s' which has been set as the TEST_KUBECONFIG: %v", kubeconfigPath, err)
 		}
 		viper.Set(Kubeconfig.Contents, string(kubeconfigBytes))
+	}
+	return nil
+}
+
+// LoadUserCABundle will, given a path to a user CA bundle, attempt to load it into the Viper config
+func LoadUserCABundle() error {
+	userCABundlePath := viper.GetString(Proxy.UserCABundle)
+	if strings.HasPrefix(userCABundlePath, "@") {
+		userCABundlePath = userCABundlePath[1:]
+		data, err := ioutil.ReadFile(userCABundlePath)
+		if err != nil {
+			return fmt.Errorf(
+				"can't read userCABundle file '%s': %w",
+				userCABundlePath, err,
+			)
+		}
+		userCABundle := strings.TrimSpace(string(data))
+		viper.Set(Proxy.UserCABundle, userCABundle)
 	}
 	return nil
 }

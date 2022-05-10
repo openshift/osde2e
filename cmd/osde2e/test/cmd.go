@@ -20,6 +20,7 @@ import (
 	_ "github.com/openshift/osde2e/pkg/e2e/operators"
 	_ "github.com/openshift/osde2e/pkg/e2e/operators/cloudingress"
 	_ "github.com/openshift/osde2e/pkg/e2e/osd"
+	_ "github.com/openshift/osde2e/pkg/e2e/proxy"
 	_ "github.com/openshift/osde2e/pkg/e2e/scale"
 	_ "github.com/openshift/osde2e/pkg/e2e/state"
 	_ "github.com/openshift/osde2e/pkg/e2e/verify"
