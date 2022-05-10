@@ -68,11 +68,11 @@ require (
 	github.com/tsenart/go-tsz v0.0.0-20180814235614-0bd30b3df1c3 // indirect
 	github.com/tsenart/vegeta v12.7.0+incompatible
 	github.com/vmware-tanzu/velero v1.5.0-beta.1.0.20200831161009-1dcaa1bf7512
-	golang.org/x/net v0.0.0-20220225172249-27dd8689420f
-	golang.org/x/oauth2 v0.0.0-20211104180415-d3ed0bb246c8
+	golang.org/x/net v0.0.0-20220425223048-2871e0cb64e4
+	golang.org/x/oauth2 v0.0.0-20220411215720-9780585627b5
 	golang.org/x/tools v0.1.10
-	google.golang.org/api v0.70.0
-	google.golang.org/genproto v0.0.0-20220222213610-43724f9ea8cf
+	google.golang.org/api v0.78.0
+	google.golang.org/genproto v0.0.0-20220429170224-98d788798c3e
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
 	gotest.tools/v3 v3.2.0
 	k8s.io/api v0.20.2
