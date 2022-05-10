@@ -31,7 +31,7 @@ require (
 	github.com/joshdk/go-junit v0.0.0-20201221202203-061ee62ada40
 	github.com/kyleconroy/sqlc v1.11.0
 	github.com/kylelemons/godebug v1.1.0
-	github.com/lib/pq v1.10.4
+	github.com/lib/pq v1.10.5
 	github.com/markbates/pkger v0.17.1
 	github.com/mitchellh/mapstructure v1.4.3
 	github.com/onsi/ginkgo/v2 v2.1.4
