@@ -1158,9 +1158,7 @@ PD info: %v`, jobData.JobName, jobData.Url, event)); err != nil {
 	listOptions := pd.ListIncidentsOptions{
 		ServiceIDs: []string{"P7VT2V5"},
 		Statuses:   []string{"triggered", "acknowledged"},
-		APIListObject: pd.APIListObject{
-			Limit: 100,
-		},
+		Limit:      100,
 	}
 	if err := pagerduty.EnsureIncidentsMerged(pdClient); err != nil {
 		return fmt.Errorf("failed merging incidents: %w", err)
@@ -1184,7 +1182,7 @@ PD info: %v`, jobData.JobName, jobData.Url, event)); err != nil {
 			if _, ok := problematicSet[name]; !ok {
 				// mark this PD incident as needing to be closed
 				needsClose = append(needsClose, pd.ManageIncidentsOptions{
-					ID:         incident.Id,
+					ID:         incident.ID,
 					Type:       incident.Type,
 					Status:     "resolved",
 					Resolution: fmt.Sprintf("Resolved by job %d", jobID),

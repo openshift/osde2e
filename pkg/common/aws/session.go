@@ -2,14 +2,14 @@ package aws
 
 import (
 	"fmt"
+	"log"
 	"sync"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/openshift/osde2e/pkg/common/config"
-	"github.com/prometheus/common/log"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
+	"github.com/openshift/osde2e/pkg/common/config"
 )
 
 const (
@@ -55,7 +55,7 @@ func (a *awsSession) getSession() (*session.Session, error) {
 			WithRegion(viper.GetString(metricsAWSRegion)))
 
 		if err != nil {
-			log.Errorf("error initializing AWS session: %v", err)
+			log.Printf("error initializing AWS session: %v", err)
 		}
 	})
 

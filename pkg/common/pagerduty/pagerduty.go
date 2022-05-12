@@ -36,9 +36,7 @@ func ProcessCICDIncidents(client *pd.Client) error {
 	options := pd.ListIncidentsOptions{
 		ServiceIDs: []string{"P7VT2V5"},
 		Statuses:   []string{"triggered", "acknowledged"},
-		APIListObject: pd.APIListObject{
-			Limit: 100,
-		},
+		Limit:      100,
 	}
 	var incidents []pd.Incident
 	if err := Incidents(client, options, func(i pd.Incident) error {
@@ -73,17 +71,17 @@ func ResolveOldIncidents(c *pd.Client, incidents []pd.Incident) error {
 			}
 			return nil
 		}); err != nil {
-			return fmt.Errorf("failed listing alerts for incident %s: %w", i.Id, err)
+			return fmt.Errorf("failed listing alerts for incident %s: %w", i.ID, err)
 		}
 		if age := now.Sub(newest); newest != (time.Time{}) && age > time.Hour*30 {
-			log.Printf("Resolving incident %v because it is %v old.", i.Id, age)
+			log.Printf("Resolving incident %v because it is %v old.", i.ID, age)
 			changes = append(changes, pd.ManageIncidentsOptions{
-				ID:     i.Id,
+				ID:     i.ID,
 				Type:   i.Type,
 				Status: "resolved",
 			})
 		} else {
-			log.Printf("Not resolving %v, newest alert is %v old", i.Id, age)
+			log.Printf("Not resolving %v, newest alert is %v old", i.ID, age)
 		}
 	}
 	if len(changes) > 0 {
@@ -104,9 +102,7 @@ func EnsureIncidentsMerged(client *pd.Client) error {
 		options := pd.ListIncidentsOptions{
 			ServiceIDs: []string{"P7VT2V5"},
 			Statuses:   []string{"triggered", "acknowledged"},
-			APIListObject: pd.APIListObject{
-				Limit: 100,
-			},
+			Limit:      100,
 		}
 		var incidents []pd.Incident
 		if err := Incidents(client, options, func(i pd.Incident) error {
@@ -139,7 +135,7 @@ func MergeIncidentsByTitle(c *pd.Client, incidents []pd.Incident) (int, error) {
 
 	for _, incidents := range titleToIncident {
 		sort.Slice(incidents, func(i, j int) bool {
-			return incidents[i].Id < incidents[j].Id
+			return incidents[i].ID < incidents[j].ID
 		})
 		if len(incidents) < 2 {
 			continue
@@ -148,14 +144,14 @@ func MergeIncidentsByTitle(c *pd.Client, incidents []pd.Incident) (int, error) {
 		mergeOptions := []pd.MergeIncidentsOptions{}
 		for _, toMerge := range incidents[1:] {
 			mergeOptions = append(mergeOptions, pd.MergeIncidentsOptions{
-				ID:   toMerge.Id,
+				ID:   toMerge.ID,
 				Type: toMerge.APIObject.Type,
 			})
 		}
-		log.Printf("Merging into %s: %v", first.Id, mergeOptions)
-		_, err := c.MergeIncidents("", first.Id, mergeOptions)
+		log.Printf("Merging into %s: %v", first.ID, mergeOptions)
+		_, err := c.MergeIncidents("", first.ID, mergeOptions)
 		if err != nil {
-			return merges, fmt.Errorf("Failed merging %d incidents into %s: %w", len(incidents)-1, first.Id, err)
+			return merges, fmt.Errorf("Failed merging %d incidents into %s: %w", len(incidents)-1, first.ID, err)
 		}
 		merges++
 	}
@@ -173,7 +169,7 @@ func Incidents(c *pd.Client, options pd.ListIncidentsOptions, handler func(pd.In
 	firstIteration := true
 	for il.APIListObject.More || firstIteration {
 		firstIteration = false
-		options.APIListObject.Offset = il.APIListObject.Offset + uint(previousLen)
+		options.Offset = il.APIListObject.Offset + uint(previousLen)
 		il, err = c.ListIncidents(options)
 		if err != nil {
 			return fmt.Errorf("failed listing incidents: %w", err)
@@ -199,8 +195,8 @@ func Alerts(c *pd.Client, incident pd.Incident, options pd.ListIncidentAlertsOpt
 	firstIteration := true
 	for il.APIListObject.More || firstIteration {
 		firstIteration = false
-		options.APIListObject.Offset = il.APIListObject.Offset + uint(previousLen)
-		il, err = c.ListIncidentAlertsWithOpts(incident.Id, options)
+		options.Offset = il.APIListObject.Offset + uint(previousLen)
+		il, err = c.ListIncidentAlertsWithOpts(incident.ID, options)
 		if err != nil {
 			return fmt.Errorf("failed listing alerts: %w", err)
 		}

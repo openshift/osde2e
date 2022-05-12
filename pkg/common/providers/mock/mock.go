@@ -308,3 +308,18 @@ func (o *MockProvider) Hibernate(id string) bool {
 	log.Println("Hibernation not supported in Mock Provider")
 	return true
 }
+
+// AddClusterProxy adds a proxy to a cluster
+func (m *MockProvider) AddClusterProxy(clusterId string, httpsProxy string, httpProxy string, userCABundle string) error {
+	return fmt.Errorf("proxies not supported in Mock Provider")
+}
+
+// RemoveClusterProxy removes a proxy from a cluster
+func (m *MockProvider) RemoveClusterProxy(clusterId string) error {
+	return fmt.Errorf("proxies not supported in Mock Provider")
+}
+
+// RemoveUserCABundle removes a CA Bundle from a cluster
+func (m *MockProvider) RemoveUserCABundle(clusterId string) error {
+	return fmt.Errorf("proxies not supported in Mock Provider")
+}

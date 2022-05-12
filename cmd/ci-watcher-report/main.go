@@ -20,9 +20,7 @@ func AllIncidents(c *pd.Client) ([]pd.Incident, error) {
 	options := pd.ListIncidentsOptions{
 		ServiceIDs: []string{"P7VT2V5"},
 		Statuses:   []string{"triggered", "acknowledged"},
-		APIListObject: pd.APIListObject{
-			Limit: 100,
-		},
+		Limit:      100,
 	}
 	if err := pagerduty.Incidents(c, options, func(incident pd.Incident) error {
 		incidents = append(incidents, incident)
@@ -35,7 +33,7 @@ func AllIncidents(c *pd.Client) ([]pd.Incident, error) {
 
 // AllNotes returns the pagerduty notes for a given incident.
 func AllNotes(c *pd.Client, incident pd.Incident) ([]pd.IncidentNote, error) {
-	return c.ListIncidentNotes(incident.Id)
+	return c.ListIncidentNotes(incident.ID)
 }
 
 // PrintIncident pretty-prints an incident with data from its alerts and notes.
@@ -100,7 +98,7 @@ personal pagerduty token in order for the report to be generated.
 
 	for _, incident := range incidents {
 		if err := pagerduty.Alerts(client, incident, pd.ListIncidentAlertsOptions{}, func(alert pd.IncidentAlert) error {
-			alertsForIncident[incident.Id] = append(alertsForIncident[incident.Id], alert)
+			alertsForIncident[incident.ID] = append(alertsForIncident[incident.ID], alert)
 			return nil
 		}); err != nil {
 			return fmt.Errorf("failed listing alerts: %w", err)
@@ -108,19 +106,19 @@ personal pagerduty token in order for the report to be generated.
 		if notes, err := AllNotes(client, incident); err != nil {
 			return fmt.Errorf("failed listing notes: %w", err)
 		} else {
-			notesForIncident[incident.Id] = notes
+			notesForIncident[incident.ID] = notes
 		}
 	}
 
 	sort.Slice(incidents, func(i, j int) bool {
-		a := incidents[i].Id
-		b := incidents[j].Id
+		a := incidents[i].ID
+		b := incidents[j].ID
 		return len(alertsForIncident[a]) > len(alertsForIncident[b])
 	})
 
 	for _, incident := range incidents {
-		alerts := alertsForIncident[incident.Id]
-		notes := notesForIncident[incident.Id]
+		alerts := alertsForIncident[incident.ID]
+		notes := notesForIncident[incident.ID]
 		PrintIncident(incident, alerts, notes)
 	}
 
