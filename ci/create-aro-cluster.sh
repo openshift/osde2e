@@ -94,7 +94,7 @@ then
     CREATE_CMD="$CREATE_CMD --pull-secret @\"$PULL_SECRET_FILE\""
 fi
 
-echo "Running ARO create command"
+echo "Running ARO create command."
 
 AROINFO="$(eval "$CREATE_CMD")"
 
