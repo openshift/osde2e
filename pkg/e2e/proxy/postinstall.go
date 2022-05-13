@@ -32,16 +32,16 @@ func init() {
 }
 
 var _ = ginkgo.Describe(postInstallProxyTestName, func() {
-	ginkgo.Context("Adding a proxy", func() {
-		// setup helper
-		h := helper.New()
-		// setup logger
-		logger := logging.CreateNewStdLoggerOrUseExistingLogger(nil)
-		// How long to wait for proxy changes to be reflected in the resource
-		proxyConfigSyncDuration := 15 * time.Minute
-		// How long to wait for proxy changes to be applied and cluster to return to health
-		proxyHealthCheckWaitDuration := 45 * time.Minute
+	// setup helper
+	h := helper.New()
+	// setup logger
+	logger := logging.CreateNewStdLoggerOrUseExistingLogger(nil)
+	// How long to wait for proxy changes to be reflected in the resource
+	proxyConfigSyncDuration := 15 * time.Minute
+	// How long to wait for proxy changes to be applied and cluster to return to health
+	proxyHealthCheckWaitDuration := 45 * time.Minute
 
+	ginkgo.Context("Adding proxy", func() {
 		util.GinkgoIt("can add a proxy to the cluster successfully", func() {
 			clusterID := viper.GetString(config.Cluster.ID)
 			clusterProvider, err := providers.ClusterProvider()
@@ -111,6 +111,61 @@ var _ = ginkgo.Describe(postInstallProxyTestName, func() {
 					return true, nil
 				}
 				log.Printf("cluster is not healthy after proxy addition\n")
+				if len(failures) > 0 {
+					logger.Printf("Currently failing %s health checks", strings.Join(failures, ", "))
+				}
+				return false, nil
+			})
+			Expect(err).NotTo(HaveOccurred())
+		}, proxyConfigSyncDuration.Seconds()+proxyHealthCheckWaitDuration.Seconds())
+	})
+
+	ginkgo.Context("Removing proxy", func() {
+		util.GinkgoIt("can remove proxy from the cluster successfully", func() {
+			clusterID := viper.GetString(config.Cluster.ID)
+			clusterProvider, err := providers.ClusterProvider()
+			Expect(err).NotTo(HaveOccurred())
+
+			err = clusterProvider.RemoveClusterProxy(clusterID)
+			Expect(err).NotTo(HaveOccurred())
+
+			// Wait to see proxy reflected on the cluster
+			logger.Printf("Validating state of proxy on cluster within %v minutes", proxyConfigSyncDuration.Minutes())
+			err = wait.Poll(30*time.Second, proxyConfigSyncDuration, func() (bool, error) {
+				var proxy *configv1.Proxy
+
+				// Validate state of proxy on-cluster vs what values it should have
+				proxy, err = h.Cfg().ConfigV1().Proxies().Get(context.TODO(), "cluster", metav1.GetOptions{})
+				Expect(err).NotTo(HaveOccurred())
+
+				if proxy.Spec.HTTPProxy != "" || proxy.Status.HTTPProxy != "" {
+					return false, nil
+				}
+				if proxy.Spec.HTTPSProxy != "" || proxy.Status.HTTPSProxy != "" {
+					return false, nil
+				}
+
+				_, err = h.Kube().CoreV1().ConfigMaps("openshift-config").Get(context.TODO(), "user-ca-bundle", metav1.GetOptions{})
+				if !apierrors.IsNotFound(err) {
+					return false, nil
+				}
+				if proxy.Spec.TrustedCA.Name != "" {
+					return false, nil
+				}
+
+				return true, nil
+			})
+			Expect(err).NotTo(HaveOccurred())
+			// The cluster's proxy and configmap state reflects what we expect
+			// So now, is the cluster still healthy?
+			logger.Printf("Verifying cluster health after proxy removed..")
+			err = wait.PollImmediate(30*time.Second, proxyHealthCheckWaitDuration, func() (bool, error) {
+				isHealthy, failures, _ := cluster.PollClusterHealth(clusterID, logger)
+				if isHealthy {
+					logger.Printf("cluster is healthy after proxy removed\n")
+					return true, nil
+				}
+				log.Printf("cluster is not healthy after proxy removed\n")
 				if len(failures) > 0 {
 					logger.Printf("Currently failing %s health checks", strings.Join(failures, ", "))
 				}
