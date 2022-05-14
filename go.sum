@@ -1603,8 +1603,8 @@ github.com/pquerna/ffjson v0.0.0-20190813045741-dac163c6c0a9/go.mod h1:YARuvh7BU
 github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.44.1/go.mod h1:3WYi4xqXxGGXWDdQIITnLNmuDzO5n6wYva9spVhR4fg=
 github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.56.2 h1:Zq3a6OAJfp2IBKxu0iH65d5PAilDFiV+o1aofUNMb+4=
 github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.56.2/go.mod h1:/xf16Bu3krDP6G5WhrJL9avDnLW/AN0g7hAIK63mbes=
-github.com/prometheus-operator/prometheus-operator/pkg/client v0.45.0 h1:2qET5dx1d91irZVhvemXWumYtIiQ+qGBZ0fRtIGrhFA=
-github.com/prometheus-operator/prometheus-operator/pkg/client v0.45.0/go.mod h1:k4BrWlVQQsvBiTcDnKEMgyh/euRxyxgrHdur/ZX/sdA=
+github.com/prometheus-operator/prometheus-operator/pkg/client v0.56.2 h1:psZHmkyInelOfiHumxbc2D+2Lt8P7mO3tzPTJbC1V6U=
+github.com/prometheus-operator/prometheus-operator/pkg/client v0.56.2/go.mod h1:jtoOEXTxjUksvTgxv+nIeg/+tFp7o3Y9y4TMon/y6ZQ=
 github.com/prometheus/alertmanager v0.18.0/go.mod h1:WcxHBl40VSPuOaqWae6l6HpnEOVRIycEJ7i9iYkadEE=
 github.com/prometheus/alertmanager v0.20.0/go.mod h1:9g2i48FAyZW6BtbsnvHtMHQXl2aVtrORKwKVCQ+nbrg=
 github.com/prometheus/alertmanager v0.24.0 h1:HBWR3lk4uy3ys+naDZthDdV7yEsxpaNeZuUS+hJgrOw=
