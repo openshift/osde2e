@@ -1,5 +1,9 @@
 # **Add-On Testing**
 
+New versions of OpenShift must be qualified as part of a continuous delivery approach into managed environments.  The OpenShift Dedicated End to End (osde2e) test framework facilitates this for two primary use-cases:
+* Managed OpenShift (OSD, ROSA, ARO).  osde2e test results are part of the gating signal for promotion between environments.
+* Addons that run on top of Managed OpenShift.  Integration testing of two pieces of software (the Addon and the version of OCP it will run on) gives Addon owners the earliest possible signal as to whether newer versions of OpenShift (as deployed in OSD, ROSA or ARO) will affect their software.  This gives Addons owners time to fix issues well in advance of release.
+
 This document describes the requirements to configure E2E testing of an Addon within `osde2e`. This is only one part of the overall process of onboarding an addon to OSD. The addons integration tests are to make sure we have some "on osd" tests they do not replace your existing QE
 The full process is outlined in the documentation [available here](https://gitlab.cee.redhat.com/service/managed-tenants/-/tree/master).
 
@@ -20,7 +24,7 @@ The [Prow Operator Test] is a good example of a [Basic operator test]. It verifi
 Add-on developers should first onboard to OSD as described in the [OSD documentation] above. 
 In order to debug Test Harnesses, we recommend running OSDE2E in a local environment as detailed in: [Running from source](https://github.com/openshift/osde2e#running-from-source)
 
-A common worflow is to create a cluster and then run the test harness through OSDE2E:
+A common workflow is to create a cluster and then run the test harness through OSDE2E:
 ADDON_IDS is the OCM value to install the addon.
 
 ```bash
