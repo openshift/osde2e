@@ -370,14 +370,6 @@ func runGinkgoTests() (int, error) {
 	// Update the metadata object to use the report directory.
 	metadata.Instance.SetReportDir(reportDir)
 
-	//Checks for existing pr-checker job
-	if viper.GetBool(config.Tests.EnablePrCheck) {
-		if err := cluster.PrCheckQueue(provider); err != nil {
-			getLogs()
-			return Failure, fmt.Errorf("error checking for existing pr-checker job: %v", err)
-		}
-	}
-
 	log.Println("Running e2e tests...")
 
 	if viper.GetString(config.Suffix) == "" {

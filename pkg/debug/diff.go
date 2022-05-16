@@ -133,11 +133,6 @@ func GetCurrentMCCHash() (hash string, err error) {
 func getLastJobID(baseProwURL, jobName string) (int, error) {
 	// Look up the list of previous jobs with a given name
 	var url string
-	if viper.GetBool(config.Tests.EnablePrCheck) {
-		url = fmt.Sprintf("%s/job-history/gs/origin-ci-test/pr-logs/directory/%s", baseProwURL, jobName)
-	} else {
-		url = fmt.Sprintf("%s/job-history/gs/origin-ci-test/logs/%s", baseProwURL, jobName)
-	}
 	log.Printf("Looking up job history from %s", url)
 	res, err := http.Get(url)
 	if err != nil {

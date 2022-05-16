@@ -132,7 +132,6 @@ func init() {
 	viper.BindPFlag(config.Tests.GinkgoFocus, Cmd.PersistentFlags().Lookup("focus-tests"))
 	viper.BindPFlag(config.Tests.GinkgoSkip, Cmd.PersistentFlags().Lookup("skip-tests"))
 	viper.BindPFlag(config.MustGather, Cmd.PersistentFlags().Lookup("must-gather"))
-	viper.BindPFlag(config.Tests.EnablePrCheck, Cmd.PersistentFlags().Lookup("enable-pr-check"))
 }
 
 func run(cmd *cobra.Command, argv []string) {

@@ -231,10 +231,6 @@ var Tests = struct {
 	// EnableFips enables the FIPS test suite
 	// Env: ENABLE_FIPS
 	EnableFips string
-
-	// EnablePrCheck enables the PR check Mode
-	// Env: ENABLE_PR_CHECK
-	EnablePrCheck string
 }{
 
 	PollingTimeout:             "tests.pollingTimeout",
@@ -249,7 +245,6 @@ var Tests = struct {
 	ServiceAccount:             "tests.serviceAccount",
 	ClusterHealthChecksTimeout: "tests.clusterHealthChecksTimeout",
 	EnableFips:                 "tests.enableFips",
-	EnablePrCheck:              "tests.enablePrCheck",
 }
 
 // Cluster config keys.
@@ -670,9 +665,6 @@ func InitViper() {
 
 	viper.SetDefault(Tests.EnableFips, false)
 	viper.BindEnv(Tests.EnableFips, "ENABLE_FIPS")
-
-	viper.SetDefault(Tests.EnablePrCheck, false)
-	viper.BindEnv(Tests.EnablePrCheck, "ENABLE_PR_CHECK")
 
 	// ----- Cluster -----
 	viper.SetDefault(Cluster.MultiAZ, false)
