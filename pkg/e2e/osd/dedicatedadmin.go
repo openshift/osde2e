@@ -327,7 +327,7 @@ func manageSecrets(nsList []string, h *helper.H) error {
 
 		// check 'create' permission
 		secrets := h.Kube().CoreV1().Secrets(ns)
-		dummySecret, err := secrets.Create(context.TODO(), &corev1.Secret{
+		_, err := secrets.Create(context.TODO(), &corev1.Secret{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      newSecretName,
 				Namespace: ns,
@@ -336,7 +336,7 @@ func manageSecrets(nsList []string, h *helper.H) error {
 		Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("failed to create secret %s in namespace %s", newSecretName, ns))
 
 		// check 'get' permission
-		dummySecret, err = secrets.Get(context.TODO(), newSecretName, metav1.GetOptions{})
+		dummySecret, err := secrets.Get(context.TODO(), newSecretName, metav1.GetOptions{})
 		Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("failed to get secret %s in namespace %s", newSecretName, ns))
 
 		// check 'list' permission

@@ -35,9 +35,13 @@ Some environment variables commonly used for pipelines under osde2e are indicate
  
 | Environment variable | Usage |
 | --------------| ------------------------| 
-|ROSA_AWS_ACCESS_KEY_ID| AWSAccessKeyID for provisioning clusters|
+|ROSA_ENV| Environment for the e2e testing, default to prod.|
+|ROSA_AWS_ACCESS_KEY_ID| AWSAccessKeyID for provisioning clusters.|
 |ROSA_AWS_SECRET_ACCESS_KEY| AWSSecretAccessKey for provisioning clusters.|
 |ROSA_AWS_REGION| AWSRegion for provisioning clusters.|
+|ROSA_STS| Boolean value to indicate the cluster is STS enabled or not.|
+|ROSA_SUBNET_IDS| A list of subnets used to create the cluster, required for proxy enabled cluster.|
+|ROSA_COMPUTE_NODES| Compute node count for the rosa cluster, default is 2.|
  
  
 ### OCM related:-
@@ -131,7 +135,7 @@ Some environment variables commonly used for pipelines under osde2e are indicate
 | --------------| ------------------------| 
 |TEST_HTTP_PROXY| Address of the HTTP Proxy to be added to a cluster. |
 |TEST_HTTPS_PROXY| Address of the HTTPS Proxy to be added to a cluster.|
-|USER_CA_BUNDLE| PEM-encoded CA Bundle to be added as the cluster's additional trusted CA. If prefixed by an @ symbol, the value will be treated as a filesystem path that the content is loaded from.|
+|USER_CA_BUNDLE| A file contains a PEM-encoded X.509 certificate bundle that will be added to the nodes' trusted certificate store.|
 
 
 ## Command Line Flags for osde2e
