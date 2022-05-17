@@ -2,16 +2,18 @@ package ocmprovider
 
 import (
 	"fmt"
+	"io/ioutil"
 	"log"
+	"strings"
 
 	cmv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 )
 
 type ClusterWideProxy struct {
-	Enabled                   bool
-	HTTPProxy                 string
-	HTTPSProxy                string
-	AdditionalTrustBundle     string
+	Enabled               bool
+	HTTPProxy             string
+	HTTPSProxy            string
+	AdditionalTrustBundle string
 }
 
 // AddClusterProxy sets the cluster proxy configuration for the supplied cluster
@@ -23,7 +25,11 @@ func (o *OCMProvider) AddClusterProxy(clusterId string, httpsProxy string, httpP
 	clusterProxyBuilder = clusterProxyBuilder.HTTPProxy(httpProxy)
 	clusterProxyBuilder = clusterProxyBuilder.HTTPSProxy(httpsProxy)
 	clusterBuilder = clusterBuilder.Proxy(clusterProxyBuilder)
-	clusterBuilder = clusterBuilder.AdditionalTrustBundle(userCABundle)
+	userCABundleData, err := o.LoadUserCaBundleData(userCABundle)
+	if err != nil {
+		return fmt.Errorf("error loading ca bundle contents: %v", err)
+	}
+	clusterBuilder = clusterBuilder.AdditionalTrustBundle(userCABundleData)
 
 	clusterSpec, err := clusterBuilder.Build()
 	if err != nil {
@@ -77,4 +83,17 @@ func (o *OCMProvider) updateCluster(clusterId string, clusterSpec *cmv1.Cluster)
 	}
 
 	return nil
+}
+
+func (o *OCMProvider) LoadUserCaBundleData(file string) (string, error) {
+	data, err := ioutil.ReadFile(file)
+	if err != nil {
+		return "", fmt.Errorf(
+			"can't read userCABundle file '%s': %w",
+			file, err,
+		)
+	}
+
+	userCaBundleData := strings.TrimSpace(string(data))
+	return userCaBundleData, nil
 }

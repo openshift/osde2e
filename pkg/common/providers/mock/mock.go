@@ -323,3 +323,8 @@ func (m *MockProvider) RemoveClusterProxy(clusterId string) error {
 func (m *MockProvider) RemoveUserCABundle(clusterId string) error {
 	return fmt.Errorf("proxies not supported in Mock Provider")
 }
+
+// LoadUserCaBundleData loads CA contents from CA cert file
+func (m *MockProvider) LoadUserCaBundleData(file string) (string, error) {
+	return "", fmt.Errorf("proxies not supported in Mock Provider")
+}

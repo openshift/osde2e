@@ -41,6 +41,9 @@ const (
 
 	// STS is a boolean tracking whether or not this cluster should be provisioned using the STS workflow
 	STS = "rosa.STS"
+
+	// SubnetIDs is comma-separated list of strings to specify the subnets for cluster provision
+	SubnetIDs = "rosa.subnetIDs"
 )
 
 func init() {
@@ -74,4 +77,6 @@ func init() {
 
 	viper.BindEnv(STS, "ROSA_STS")
 	viper.SetDefault(STS, false)
+
+	viper.BindEnv(SubnetIDs, "ROSA_SUBNET_IDS")
 }

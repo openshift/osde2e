@@ -4,8 +4,8 @@ package ocmprovider
 import (
 	"fmt"
 
-	"github.com/openshift/osde2e/pkg/common/spi"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
+	"github.com/openshift/osde2e/pkg/common/spi"
 
 	ocm "github.com/openshift-online/ocm-sdk-go"
 	ocmerr "github.com/openshift-online/ocm-sdk-go/errors"

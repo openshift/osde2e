@@ -150,4 +150,6 @@ type Provider interface {
 	// RemoveUserCABundle removes only the Additional Trusted CA Bundle from the cluster
 	RemoveUserCABundle(clusterId string) error
 
+	// LoadUserCaBundleData loads CA contents from CA cert file
+	LoadUserCaBundleData(file string) (string, error)
 }
