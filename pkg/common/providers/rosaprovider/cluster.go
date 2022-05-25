@@ -124,6 +124,11 @@ func (m *ROSAProvider) LaunchCluster(clusterName string) (string, error) {
 	if viper.GetBool(config.Cluster.MultiAZ) {
 		createClusterArgs = append(createClusterArgs, "--multi-az")
 	}
+
+	if viper.GetBool(config.Cluster.PrivateLink) {
+		createClusterArgs = append(createClusterArgs, "--privateLink")
+	}
+
 	networkProvider := viper.GetString(config.Cluster.NetworkProvider)
 	if networkProvider != config.DefaultNetworkProvider {
 		createClusterArgs = append(createClusterArgs,
