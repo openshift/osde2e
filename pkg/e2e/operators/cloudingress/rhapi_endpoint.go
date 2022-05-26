@@ -73,7 +73,7 @@ func testHostnameResolves(h *helper.H) {
 				return true, nil
 			})
 			Expect(err).NotTo(HaveOccurred())
-		}, (hostnameResolvePollDuration + 1 * time.Minute).Seconds())
+		}, (hostnameResolvePollDuration + 1*time.Minute).Seconds())
 	})
 }
 
@@ -117,7 +117,7 @@ func testCIDRBlockUpdates(h *helper.H) {
 			Expect(err).NotTo(HaveOccurred())
 
 			//Create a service Object
-			rhAPIService := &corev1.Service{}
+			var rhAPIService *corev1.Service
 
 			// wait 30 secs for apiserver to reconcile
 			time.Sleep(30 * time.Second)
