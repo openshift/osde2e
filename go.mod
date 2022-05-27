@@ -71,7 +71,7 @@ require (
 	golang.org/x/tools v0.1.10
 	google.golang.org/api v0.81.0
 	google.golang.org/genproto v0.0.0-20220519153652-3a47de7e79bd
-	gopkg.in/yaml.v3 v3.0.0
+	gopkg.in/yaml.v3 v3.0.1
 	gotest.tools/v3 v3.2.0
 	k8s.io/api v0.23.0
 	k8s.io/apimachinery v0.23.0
