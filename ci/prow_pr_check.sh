@@ -19,7 +19,6 @@ set -eo pipefail
     CLUSTER_ID=1semjo4knp59fs6o6nsbh3814t3024bi \
     GINKGO_SKIP="Must Gather Operator" \
     OCM_CCS="true" \
-    HIBERNATE_AFTER_USE="fase" \
     ./out/osde2e test --configs=prod,aws,e2e-suite --secret-locations=/usr/local/osde2e-common,/usr/local/osde2e-credentials,/usr/local/sd-cicd-aws-prod
 
 } 2>&1 | tee -a "$REPORT_DIR/test_output.log"
