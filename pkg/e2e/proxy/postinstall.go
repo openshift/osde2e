@@ -50,6 +50,8 @@ var _ = ginkgo.Describe(postInstallProxyTestName, func() {
 			httpsProxy := viper.GetString(config.Proxy.HttpsProxy)
 			httpProxy := viper.GetString(config.Proxy.HttpProxy)
 			userCABundle := viper.GetString(config.Proxy.UserCABundle)
+			userCABundleData, err := clusterProvider.LoadUserCaBundleData(userCABundle)
+			Expect(err).NotTo(HaveOccurred())
 
 			logger.Printf("Setting cluster-wide proxy to httpsProxy=%v,httpProxy=%v,settingCA=%v",
 				httpsProxy, httpProxy, userCABundle != "")
@@ -78,7 +80,7 @@ var _ = ginkgo.Describe(postInstallProxyTestName, func() {
 					}
 					cabundleData, found := cabundle.Data["ca-bundle.crt"]
 					// if the configmap exists, so should this key, and the value should match
-					if !found || strings.TrimSpace(cabundleData) != strings.TrimSpace(userCABundle) {
+					if !found || strings.TrimSpace(cabundleData) != strings.TrimSpace(userCABundleData) {
 						logger.Printf("User CA Bundle still not reflected on cluster")
 						return false, nil
 					}

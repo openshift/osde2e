@@ -844,12 +844,6 @@ func PostProcess() {
 		log.Printf("Found an ARTIFACTS directory, using that for the REPORT_DIR.")
 		viper.Set(ReportDir, artifacts)
 	}
-
-	// Load UserCABundle from file if the value indicates a path
-	err := LoadUserCABundle()
-	if err != nil {
-		log.Printf("Unable to load User CA Bundle: %v", err)
-	}
 }
 
 // RegisterSecret will register the secret filename that will be used for the corresponding Viper string.
@@ -876,24 +870,6 @@ func LoadKubeconfig() error {
 			return fmt.Errorf("failed reading '%s' which has been set as the TEST_KUBECONFIG: %v", kubeconfigPath, err)
 		}
 		viper.Set(Kubeconfig.Contents, string(kubeconfigBytes))
-	}
-	return nil
-}
-
-// LoadUserCABundle will, given a path to a user CA bundle, attempt to load it into the Viper config
-func LoadUserCABundle() error {
-	userCABundlePath := viper.GetString(Proxy.UserCABundle)
-	if strings.HasPrefix(userCABundlePath, "@") {
-		userCABundlePath = userCABundlePath[1:]
-		data, err := ioutil.ReadFile(userCABundlePath)
-		if err != nil {
-			return fmt.Errorf(
-				"can't read userCABundle file '%s': %w",
-				userCABundlePath, err,
-			)
-		}
-		userCABundle := strings.TrimSpace(string(data))
-		viper.Set(Proxy.UserCABundle, userCABundle)
 	}
 	return nil
 }

@@ -2,6 +2,7 @@ package verify
 
 import (
 	"context"
+	"strings"
 
 	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -32,9 +33,18 @@ var _ = ginkgo.Describe(podsTestName, func() {
 
 		for _, pod := range list.Items {
 			if pod.Status.Phase == v1.PodFailed {
-				if len(pod.GetOwnerReferences()) > 0 && pod.GetOwnerReferences()[0].Kind != "Job" {
-					filteredList.Items = append(filteredList.Items, pod)
+				if len(pod.GetOwnerReferences()) > 0 {
+					if pod.GetOwnerReferences()[0].Kind == "Job" {
+						// Ignore failed jobs
+						continue
+					}
+					if pod.GetOwnerReferences()[0].Kind == "ConfigMap" && strings.HasPrefix(pod.GetOwnerReferences()[0].Name, "revision-status-") {
+						// Ignore failed pods owned by revision status config maps
+						continue
+					}
 				}
+
+				filteredList.Items = append(filteredList.Items, pod)
 			}
 		}
 		Expect(err).NotTo(HaveOccurred(), "couldn't list Pods")

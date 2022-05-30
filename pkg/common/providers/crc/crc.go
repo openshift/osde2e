@@ -362,3 +362,8 @@ func (m *Provider) RemoveClusterProxy(clusterId string) error {
 func (m *Provider) RemoveUserCABundle(clusterId string) error {
 	return fmt.Errorf("proxies not supported in CRC Provider")
 }
+
+// LoadUserCaBundleData loads CA contents from CA cert file
+func (m *Provider) LoadUserCaBundleData(file string) (string, error) {
+	return "", fmt.Errorf("proxies not supported in CRC Provider")
+}

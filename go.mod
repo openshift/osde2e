@@ -8,7 +8,8 @@ require (
 	github.com/PagerDuty/go-pagerduty v1.5.1
 	github.com/PuerkitoBio/goquery v1.8.0
 	github.com/adamliesko/retry v0.0.0-20200123222335-86c8baac277d
-	github.com/aws/aws-sdk-go v1.44.14
+	github.com/antlr/antlr4/runtime/Go/antlr v0.0.0-20220209173558-ad29539cd2e9
+	github.com/aws/aws-sdk-go v1.44.24
 	github.com/bmizerany/perks v0.0.0-20141205001514-d9a9656a3a4b // indirect
 	github.com/code-ready/crc v1.10.0
 	github.com/dgryski/go-gk v0.0.0-20200319235926-a69029f61654 // indirect
@@ -28,12 +29,12 @@ require (
 	github.com/joshdk/go-junit v0.0.0-20201221202203-061ee62ada40
 	github.com/kyleconroy/sqlc v1.13.0
 	github.com/kylelemons/godebug v1.1.0
-	github.com/lib/pq v1.10.5
+	github.com/lib/pq v1.10.6
 	github.com/markbates/pkger v0.17.1
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/onsi/ginkgo/v2 v2.1.4
 	github.com/onsi/gomega v1.19.0
-	github.com/openshift-online/ocm-sdk-go v0.1.266
+	github.com/openshift-online/ocm-sdk-go v0.1.270
 	github.com/openshift/api v3.9.1-0.20190924102528-32369d4db2ad+incompatible
 	github.com/openshift/client-go v0.0.0-20200827190008-3062137373b5
 	github.com/openshift/cloud-credential-operator v0.0.0-20210525141023-02cc6303cd10
@@ -60,17 +61,17 @@ require (
 	github.com/spf13/afero v1.8.2
 	github.com/spf13/cobra v1.4.0
 	github.com/spf13/pflag v1.0.5
-	github.com/spf13/viper v1.11.0
+	github.com/spf13/viper v1.12.0
 	github.com/streadway/quantile v0.0.0-20150917103942-b0c588724d25 // indirect
 	github.com/tsenart/go-tsz v0.0.0-20180814235614-0bd30b3df1c3 // indirect
 	github.com/tsenart/vegeta v12.7.0+incompatible
 	github.com/vmware-tanzu/velero v1.5.0-beta.1.0.20200831161009-1dcaa1bf7512
-	golang.org/x/net v0.0.0-20220425223048-2871e0cb64e4
+	golang.org/x/net v0.0.0-20220520000938-2e3eb7b945c2
 	golang.org/x/oauth2 v0.0.0-20220411215720-9780585627b5
 	golang.org/x/tools v0.1.10
-	google.golang.org/api v0.79.0
-	google.golang.org/genproto v0.0.0-20220505152158-f39f71e6c8f3
-	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
+	google.golang.org/api v0.81.0
+	google.golang.org/genproto v0.0.0-20220519153652-3a47de7e79bd
+	gopkg.in/yaml.v3 v3.0.1
 	gotest.tools/v3 v3.2.0
 	k8s.io/api v0.23.0
 	k8s.io/apimachinery v0.23.0

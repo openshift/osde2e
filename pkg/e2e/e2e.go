@@ -572,14 +572,14 @@ func cleanupAfterE2E(h *helper.H) (errors []error) {
 				h.WriteResults(gatherResults)
 			}
 		}
+
+		log.Print("Gathering Project States...")
+		h.InspectState()
+
+		log.Print("Gathering OLM State...")
+		h.InspectOLM()
 	}
-
-	log.Print("Gathering Project States...")
-	h.InspectState()
-
-	log.Print("Gathering OLM State...")
-	h.InspectOLM()
-
+	
 	log.Print("Gathering Cluster State...")
 	clusterState := h.GetClusterState()
 	stateResults := make(map[string][]byte, len(clusterState))

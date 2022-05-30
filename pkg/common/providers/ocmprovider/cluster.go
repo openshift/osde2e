@@ -184,6 +184,22 @@ func (o *OCMProvider) LaunchCluster(clusterName string) (string, error) {
 					availabilityZones := GetAvailabilityZones(subnetworks, subnetIDs)
 					nodeBuilder.AvailabilityZones(availabilityZones...)
 				}
+				proxy := v1.NewProxy()
+				if userCaBundle := viper.GetString(config.Proxy.UserCABundle); userCaBundle != "" {
+					userCaBundleData, err := o.LoadUserCaBundleData(userCaBundle)
+					if err != nil {
+						return "", fmt.Errorf("error loading CA contents: %v", err)
+					}
+					newCluster = newCluster.AdditionalTrustBundle(userCaBundleData)
+				}
+				if httpProxy := viper.GetString(config.Proxy.HttpProxy); httpProxy != "" {
+					proxy = proxy.HTTPProxy(httpProxy)
+					newCluster = newCluster.Proxy(proxy)
+				}
+				if httpsProxy := viper.GetString(config.Proxy.HttpsProxy); httpsProxy != "" {
+					proxy = proxy.HTTPSProxy(httpsProxy)
+					newCluster = newCluster.Proxy(proxy)
+				}
 			} else {
 				var err error
 				var ccsUser string
