@@ -6,7 +6,7 @@
     <description>Recent content in Tags on OSDe2e Reporting</description>
     <generator>Hugo -- gohugo.io</generator>
     <copyright>Copyright © 2020, Red Hat, all rights reserved.</copyright>
-    <lastBuildDate>Mon, 06 Jun 2022 12:01:21 +0000</lastBuildDate>
+    <lastBuildDate>Tue, 07 Jun 2022 12:00:55 +0000</lastBuildDate>
     
 	<atom:link href="https://openshift.github.io/osde2e/tags/index.xml" rel="self" type="application/rss+xml" />
     
@@ -14,7 +14,7 @@
     <item>
       <title>moa</title>
       <link>https://openshift.github.io/osde2e/tags/moa/</link>
-      <pubDate>Mon, 06 Jun 2022 12:01:21 +0000</pubDate>
+      <pubDate>Tue, 07 Jun 2022 12:00:55 +0000</pubDate>
       
       <guid>https://openshift.github.io/osde2e/tags/moa/</guid>
       <description></description>
@@ -23,27 +23,27 @@
     <item>
       <title>weather-report</title>
       <link>https://openshift.github.io/osde2e/tags/weather-report/</link>
-      <pubDate>Mon, 06 Jun 2022 12:01:21 +0000</pubDate>
+      <pubDate>Tue, 07 Jun 2022 12:00:55 +0000</pubDate>
       
       <guid>https://openshift.github.io/osde2e/tags/weather-report/</guid>
       <description></description>
     </item>
     
     <item>
-      <title>aws</title>
-      <link>https://openshift.github.io/osde2e/tags/aws/</link>
-      <pubDate>Mon, 06 Jun 2022 12:01:20 +0000</pubDate>
+      <title>gcp</title>
+      <link>https://openshift.github.io/osde2e/tags/gcp/</link>
+      <pubDate>Tue, 07 Jun 2022 12:00:54 +0000</pubDate>
       
-      <guid>https://openshift.github.io/osde2e/tags/aws/</guid>
+      <guid>https://openshift.github.io/osde2e/tags/gcp/</guid>
       <description></description>
     </item>
     
     <item>
-      <title>gcp</title>
-      <link>https://openshift.github.io/osde2e/tags/gcp/</link>
-      <pubDate>Mon, 06 Jun 2022 12:01:20 +0000</pubDate>
+      <title>aws</title>
+      <link>https://openshift.github.io/osde2e/tags/aws/</link>
+      <pubDate>Tue, 07 Jun 2022 12:00:53 +0000</pubDate>
       
-      <guid>https://openshift.github.io/osde2e/tags/gcp/</guid>
+      <guid>https://openshift.github.io/osde2e/tags/aws/</guid>
       <description></description>
     </item>
     
