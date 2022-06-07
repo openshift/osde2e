@@ -164,6 +164,19 @@ func (m *ROSAProvider) LaunchCluster(clusterName string) (string, error) {
 		createClusterArgs = append(createClusterArgs, "--multi-az")
 	}
 
+	//Enables OSDe2e to create a cluster with a BYO_VPC.
+	if viper.GetString(config.Cluster.ByoVpc) != "" {
+		if viper.GetString(config.Cluster.ByoVpc) == "auto" {
+			subnetIds, err := osde2eAws.ByoVpcSetup()
+			if err != nil {
+				return "", fmt.Errorf("error creating VPC: %v", err)
+			}
+			createClusterArgs = append(createClusterArgs, "--subnet-ids", strings.Join(subnetIds, ","))
+		} else {
+			createClusterArgs = append(createClusterArgs, "--subnet-ids", viper.GetString(config.Cluster.ByoVpc))
+		}
+	}
+
 	networkProvider := viper.GetString(config.Cluster.NetworkProvider)
 	if networkProvider != config.DefaultNetworkProvider {
 		createClusterArgs = append(createClusterArgs,

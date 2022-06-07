@@ -55,7 +55,7 @@ Some environment variables commonly used for pipelines under osde2e are indicate
 |ROSA_STS| Boolean value to indicate the cluster is STS enabled or not.|
 
 ### AWS Related:-
-
+ 
 | Environment variable | Usage |
 | --------------| ------------------------| 
 |AWS_ACCOUNT | AWS Account ID|
