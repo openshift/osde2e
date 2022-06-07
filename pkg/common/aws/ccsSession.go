@@ -30,9 +30,10 @@ func (CcsAwsSession *ccsAwsSession) getIamClient() (*session.Session, *iam.IAM, 
 
 	CcsAwsSession.once.Do(func() {
 		CcsAwsSession.session, err = session.NewSession(aws.NewConfig().
-			WithCredentials(credentials.NewStaticCredentials(viper.GetString("ocm.aws.accessKey"), viper.GetString("ocm.aws.secretKey"), "")).
+			WithCredentials(credentials.NewStaticCredentials(viper.GetString(config.AWSAccessKey), viper.GetString(config.AWSSecretAccessKey), "")).
 			WithRegion(viper.GetString(config.CloudProvider.Region)))
 		CcsAwsSession.iam = iam.New(CcsAwsSession.session)
+		CcsAwsSession.ec2 = ec2.New(CcsAwsSession.session)
 	})
 	if err != nil {
 		log.Printf("error initializing AWS session: %v", err)

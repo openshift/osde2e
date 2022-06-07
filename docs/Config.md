@@ -30,16 +30,8 @@ Some environment variables commonly used for pipelines under osde2e are indicate
 |NEXT_RELEASE_AFTER_PROD_DEFAULT|  NextReleaseAfterProdDefault will select the cluster image set that the given number of releases away from the the production default.|
 |CLEAN_CHECK_RUNS| CleanCheckRuns lets us set the number of osd-verify checks we want to run before deeming a cluster "healthy"|
 |INSPECT_NAMESPACES| InspectNamespaces is a comma-delimeted list of namespaces to perform an `oc adm inspect` on during E2E cleanup|
+|BYO_VPC| BYO_VPC is a comma-delimeted list of subnets to use for the cluster. It can also be set to `auto` to create a VPC for the cluster.|
 
-### ROSA cluster related:-
- 
-| Environment variable | Usage |
-| --------------| ------------------------| 
-|ROSA_AWS_ACCESS_KEY_ID| AWSAccessKeyID for provisioning clusters|
-|ROSA_AWS_SECRET_ACCESS_KEY| AWSSecretAccessKey for provisioning clusters.|
-|ROSA_AWS_REGION| AWSRegion for provisioning clusters.|
- 
- 
 ### OCM related:-
  
 | Environment variable | Usage |
@@ -53,12 +45,17 @@ Some environment variables commonly used for pipelines under osde2e are indicate
 |OCM_ADDITIONAL_LABELS| AdditionalLabels is used to add more specific labels to a cluster in OCM.|
 |OCM_CCS| CCS defines whether the cluster should expect cloud credentials or not|
 |OCM_CCS_ADMIN| Overwrite Flag that will attempt to cycle osdCcsAdmin credentials for a CCS install when the osdCcsAdmin credentials were not passed.|
-|OCM_AWS_ACCOUNT|
-|OCM_AWS_ACCESS_KEY| 
-|OCM_AWS_SECRET_KEY| 
-|OCM_AWS_VPC_SUBNET_IDS| Define existing VPC via a comma-separated list of subnet id's.|
 |TEST_KUBECONFIG| Path to a local kubeconfig; will override fetching Kubeconfig credentials from OCM if specified.| 
-  
+
+### AWS Related:-
+ 
+| Environment variable | Usage |
+| --------------| ------------------------| 
+|AWS_ACCOUNT | AWS Account ID|
+|AWS_ACCESS_KEY| AWSAccessKey for provisioning clusters|
+|AWS_SECRET_ACCESS_KEY| AWSSecretAccessKey for provisioning clusters.|
+|AWS_REGION| AWSRegion for provisioning clusters.|  
+|BYO_VPC| Define existing VPC via a vpc id|
 ### Upgrade variables:-
 
 | Environment variable | Usage |

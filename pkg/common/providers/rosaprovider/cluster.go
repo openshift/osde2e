@@ -11,6 +11,7 @@ import (
 
 	"github.com/Masterminds/semver"
 	v1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
+	osde2eAws "github.com/openshift/osde2e/pkg/common/aws"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/spi"
@@ -125,8 +126,17 @@ func (m *ROSAProvider) LaunchCluster(clusterName string) (string, error) {
 		createClusterArgs = append(createClusterArgs, "--multi-az")
 	}
 
-	if viper.GetBool(config.Cluster.PrivateLink) {
-		createClusterArgs = append(createClusterArgs, "--privateLink")
+	//Enables OSDe2e to create a cluster with a BYO_VPC.
+	if viper.GetString(config.Cluster.ByoVpc) != "" {
+		if viper.GetString(config.Cluster.ByoVpc) == "auto" {
+			subnetIds, err := osde2eAws.CreateVpc()
+			if err != nil {
+				return "", fmt.Errorf("error creating VPC: %v", err)
+			}
+			createClusterArgs = append(createClusterArgs, "--subnet-ids", subnetIds)
+		} else {
+			createClusterArgs = append(createClusterArgs, "--subnet-ids", viper.GetString(config.Cluster.ByoVpc))
+		}
 	}
 
 	networkProvider := viper.GetString(config.Cluster.NetworkProvider)
@@ -287,7 +297,7 @@ func (m *ROSAProvider) stsClusterSetup(cluster *v1.Cluster) error {
 // DetermineRegion will return the region provided by configs. This mainly wraps the random functionality for use
 // by the ROSA provider.
 func (m *ROSAProvider) DetermineRegion(cloudProvider string) (string, error) {
-	region := viper.GetString(AWSRegion)
+	region := viper.GetString(config.AWSRegion)
 
 	// If a region is set to "random", it will poll OCM for all the regions available
 	// It then will pull a random entry from the list of regions and set the ID to that
@@ -295,13 +305,13 @@ func (m *ROSAProvider) DetermineRegion(cloudProvider string) (string, error) {
 		var regions []*v1.CloudRegion
 		// We support multiple cloud providers....
 		if cloudProvider == "aws" {
-			if viper.GetString(AWSAccessKeyID) == "" || viper.GetString(AWSSecretAccessKey) == "" {
+			if viper.GetString(config.AWSAccessKey) == "" || viper.GetString(config.AWSSecretAccessKey) == "" {
 				log.Println("Random region requested but cloud credentials not supplied. Defaulting to us-east-1")
 				return "us-east-1", nil
 			}
 			awsCredentials, err := v1.NewAWS().
-				AccessKeyID(viper.GetString(AWSAccessKeyID)).
-				SecretAccessKey(viper.GetString(AWSSecretAccessKey)).
+				AccessKeyID(viper.GetString(config.AWSAccessKey)).
+				SecretAccessKey(viper.GetString(config.AWSSecretAccessKey)).
 				Build()
 			if err != nil {
 				return "", err

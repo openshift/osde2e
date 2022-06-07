@@ -12,6 +12,11 @@ import (
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 )
 
+func init() {
+	InitViper()
+	InitViperAws()
+}
+
 type Secret struct {
 	FileLocation string
 	Key          string
@@ -362,6 +367,10 @@ var Cluster = struct {
 
 	// InspectNamespaces is a comma-delimited list of namespaces to perform an inspect on during test cleanup
 	InspectNamespaces string
+
+	// BYO_VPC is used to create a cluster with an already existing VPC or if set to \"auto\" will create a VPC with default settings.
+	// Env: BYO_VPC
+	ByoVpc string
 }{
 	MultiAZ:                             "cluster.multiAZ",
 	Channel:                             "cluster.channel",
@@ -394,6 +403,7 @@ var Cluster = struct {
 	Passing:                             "cluster.passing",
 	Reused:                              "cluster.rused",
 	InspectNamespaces:                   "cluster.inspectNamespaces",
+	ByoVpc:                              "cluster.byoVpc",
 }
 
 // CloudProvider config keys.
@@ -747,6 +757,9 @@ func InitViper() {
 	viper.SetDefault(Cluster.InspectNamespaces, strings.Join(defaultInspectNamespaces, ","))
 	viper.BindEnv(Cluster.InspectNamespaces, "INSPECT_NAMESPACES")
 
+	viper.SetDefault(Cluster.ByoVpc, "")
+	viper.BindEnv(Cluster.ByoVpc, "BYO_VPC")
+
 	// ----- Cloud Provider -----
 	viper.SetDefault(CloudProvider.CloudProviderID, "aws")
 	viper.BindEnv(CloudProvider.CloudProviderID, "CLOUD_PROVIDER_ID")
@@ -830,10 +843,6 @@ func InitViper() {
 	viper.BindEnv(Proxy.HttpsProxy, "TEST_HTTPS_PROXY")
 
 	viper.BindEnv(Proxy.UserCABundle, "USER_CA_BUNDLE")
-}
-
-func init() {
-	InitViper()
 }
 
 // PostProcess is a variety of post-processing commands that is intended to be run after a config is loaded.

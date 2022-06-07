@@ -16,12 +16,12 @@ import (
 	"github.com/openshift/osde2e/cmd/osde2e/common"
 	"github.com/openshift/osde2e/cmd/osde2e/helpers"
 	clusterutil "github.com/openshift/osde2e/pkg/common/cluster"
+	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/providers/ocmprovider"
 	"github.com/openshift/osde2e/pkg/common/spi"
 	"github.com/openshift/osde2e/pkg/common/versions"
 	"github.com/spf13/cobra"
-	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 )
 
 var Cmd = &cobra.Command{
@@ -231,9 +231,9 @@ func setupCluster(wg *sync.WaitGroup, successfulClustersCounter *int32) {
 			currentAccount = 0
 		}
 		log.Printf("Setting CCS account for %s", awsAccounts[currentAccount][0])
-		viper.Set(ocmprovider.AWSAccount, awsAccounts[currentAccount][0])
-		viper.Set(ocmprovider.AWSAccessKey, awsAccounts[currentAccount][1])
-		viper.Set(ocmprovider.AWSSecretKey, awsAccounts[currentAccount][2])
+		viper.Set(config.AWSAccount, awsAccounts[currentAccount][0])
+		viper.Set(config.AWSAccessKey, awsAccounts[currentAccount][1])
+		viper.Set(config.AWSSecretAccessKey, awsAccounts[currentAccount][2])
 	}
 
 	var cluster *spi.Cluster

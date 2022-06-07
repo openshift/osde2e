@@ -42,15 +42,6 @@ const (
 	// CCS_OVERWRITE defines an overwrite flag that will attempt to create CCS credentials for the cluster
 	CCS_OVERWRITE = "ocm.ccs.overwrite"
 
-	// AWSAccount is used in CCS clusters
-	AWSAccount = "ocm.aws.account"
-	// AWSAccessKey is used in CCS clusters
-	AWSAccessKey = "ocm.aws.accessKey"
-	// AWSSecretKey is used in CCS clusters
-	AWSSecretKey = "ocm.aws.secretKey"
-	// AWSVPCSubnetIDs is used in CCS clusters
-	AWSVPCSubnetIDs = "ocm.aws.vpcSubnetIDs"
-
 	// GCP CCS Credentials
 	GCPCredsJSON               = "ocm.gcp.credsJSON"
 	GCPCredsType               = "ocm.gcp.credsType"
@@ -99,18 +90,6 @@ func init() {
 	viper.SetDefault(CCS_OVERWRITE, false)
 	viper.BindEnv(CCS, "OCM_CCS", "CCS")
 	viper.BindEnv(CCS_OVERWRITE, "CCS_OVERWRITE", "CCS_ADMIN")
-
-	viper.BindEnv(AWSAccount, "OCM_AWS_ACCOUNT", "AWS_ACCOUNT")
-	viper.BindEnv(AWSAccessKey, "OCM_AWS_ACCESS_KEY", "AWS_ACCESS_KEY_ID")
-	viper.BindEnv(AWSSecretKey, "OCM_AWS_SECRET_KEY", "AWS_SECRET_ACCESS_KEY")
-	viper.BindEnv(AWSVPCSubnetIDs, "OCM_AWS_VPC_SUBNET_IDS")
-
-	config.RegisterSecret(AWSAccessKey, "aws-access-key-id")
-	config.RegisterSecret(AWSSecretKey, "aws-secret-access-key")
-
-	config.RegisterSecret(AWSAccount, "ocm-aws-account")
-	config.RegisterSecret(AWSAccessKey, "ocm-aws-access-key")
-	config.RegisterSecret(AWSSecretKey, "ocm-aws-secret-access-key")
 
 	viper.BindEnv(GCPCredsType, "OCM_GCP_CREDS_TYPE", "GCP_CREDS_TYPE")
 	viper.BindEnv(GCPProjectID, "OCM_GCP_PROJECT_ID", "GCP_PROJECT_ID")

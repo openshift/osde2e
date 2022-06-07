@@ -2,21 +2,11 @@ package rosaprovider
 
 import (
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
-	"github.com/openshift/osde2e/pkg/common/config"
 )
 
 const (
 	// Env is the OpenShift Dedicated environment used to provision clusters.
 	Env = "rosa.env"
-
-	// AWSAccessKeyID for provisioning clusters.
-	AWSAccessKeyID = "rosa.awsAccessKey"
-
-	// AWSSecretAccessKey for provisioning clusters.
-	AWSSecretAccessKey = "rosa.awsSecretAccessKey"
-
-	// AWSRegion for provisioning clusters.
-	AWSRegion = "rosa.awsRegion"
 
 	// MachineCIDR is the CIDR to use for machines.
 	MachineCIDR = "rosa.machineCIDR"
@@ -47,15 +37,6 @@ func init() {
 	// ----- ROSA -----
 	viper.SetDefault(Env, "prod")
 	viper.BindEnv(Env, "ROSA_ENV")
-
-	viper.BindEnv(AWSAccessKeyID, "ROSA_AWS_ACCESS_KEY_ID", "AWS_ACCESS_KEY_ID")
-	config.RegisterSecret(AWSAccessKeyID, "rosa-aws-access-key")
-
-	viper.BindEnv(AWSSecretAccessKey, "ROSA_AWS_SECRET_ACCESS_KEY", "AWS_SECRET_ACCESS_KEY")
-	config.RegisterSecret(AWSSecretAccessKey, "rosa-aws-secret-access-key")
-
-	viper.BindEnv(AWSRegion, "ROSA_AWS_REGION", "AWS_REGION")
-	config.RegisterSecret(AWSRegion, "rosa-aws-region")
 
 	viper.BindEnv(MachineCIDR, "ROSA_MACHINE_CIDR")
 
