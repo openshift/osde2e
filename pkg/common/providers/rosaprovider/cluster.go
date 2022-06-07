@@ -69,6 +69,7 @@ func (m *ROSAProvider) IsValidClusterName(clusterName string) (bool, error) {
 }
 
 // LaunchCluster will provision an AWS cluster.
+// nolint:gocyclo
 func (m *ROSAProvider) LaunchCluster(clusterName string) (string, error) {
 	// Calculate an expiration date for the cluster so that it will be automatically deleted if
 	// we happen to forget to do it:
@@ -121,6 +122,19 @@ func (m *ROSAProvider) LaunchCluster(clusterName string) (string, error) {
 		"--service-cidr", viper.GetString(ServiceCIDR),
 		"--pod-cidr", viper.GetString(PodCIDR),
 		"--host-prefix", viper.GetString(HostPrefix),
+	}
+	if viper.GetString(SubnetIDs) != "" {
+		subnetIDs := viper.GetString(SubnetIDs)
+		createClusterArgs = append(createClusterArgs, "--subnet-ids", subnetIDs)
+		if httpProxy := viper.GetString(config.Proxy.HttpProxy); httpProxy != "" {
+			createClusterArgs = append(createClusterArgs, "--http-proxy", httpProxy)
+		}
+		if httpsProxy := viper.GetString(config.Proxy.HttpsProxy); httpsProxy != "" {
+			createClusterArgs = append(createClusterArgs, "--https-proxy", httpsProxy)
+		}
+		if userCaBundle := viper.GetString(config.Proxy.UserCABundle); userCaBundle != "" {
+			createClusterArgs = append(createClusterArgs, "--additional-trust-bundle-file", userCaBundle)
+		}
 	}
 	if viper.GetBool(config.Cluster.MultiAZ) {
 		createClusterArgs = append(createClusterArgs, "--multi-az")

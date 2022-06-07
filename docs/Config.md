@@ -128,7 +128,7 @@ Some environment variables commonly used for pipelines under osde2e are indicate
 | --------------| ------------------------| 
 |TEST_HTTP_PROXY| Address of the HTTP Proxy to be added to a cluster. |
 |TEST_HTTPS_PROXY| Address of the HTTPS Proxy to be added to a cluster.|
-|USER_CA_BUNDLE| PEM-encoded CA Bundle to be added as the cluster's additional trusted CA. If prefixed by an @ symbol, the value will be treated as a filesystem path that the content is loaded from.|
+|USER_CA_BUNDLE| A file contains a PEM-encoded X.509 certificate bundle that will be added to the nodes' trusted certificate store.|
 
 
 ## Command Line Flags for osde2e

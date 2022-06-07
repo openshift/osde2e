@@ -127,3 +127,7 @@ func (m *ROSAProvider) RemoveClusterProxy(clusterId string) error {
 func (m *ROSAProvider) RemoveUserCABundle(clusterId string) error {
 	return m.RemoveUserCABundle(clusterId)
 }
+
+func (m *ROSAProvider) LoadUserCaBundleData(file string) (string, error) {
+	return m.LoadUserCaBundleData(file)
+}
