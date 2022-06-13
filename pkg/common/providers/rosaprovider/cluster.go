@@ -123,35 +123,41 @@ func (m *ROSAProvider) LaunchCluster(clusterName string) (string, error) {
 		"--pod-cidr", viper.GetString(PodCIDR),
 		"--host-prefix", viper.GetString(HostPrefix),
 	}
-	if viper.GetString(SubnetIDs) != "" {
-		subnetIDs := viper.GetString(SubnetIDs)
-		createClusterArgs = append(createClusterArgs, "--subnet-ids", subnetIDs)
-		if httpProxy := viper.GetString(config.Proxy.HttpProxy); httpProxy != "" {
-			createClusterArgs = append(createClusterArgs, "--http-proxy", httpProxy)
-		}
-		if httpsProxy := viper.GetString(config.Proxy.HttpsProxy); httpsProxy != "" {
-			createClusterArgs = append(createClusterArgs, "--https-proxy", httpsProxy)
-		}
-		if userCaBundle := viper.GetString(config.Proxy.UserCABundle); userCaBundle != "" {
-			createClusterArgs = append(createClusterArgs, "--additional-trust-bundle-file", userCaBundle)
-		}
-	}
+
 	if viper.GetBool(config.Cluster.MultiAZ) {
 		createClusterArgs = append(createClusterArgs, "--multi-az")
 	}
 
 	//Enables OSDe2e to create a cluster with a BYO_VPC.
+
+	//We need to look at this logic and decide the logic of Proxy at Launch vs Day 2 Patch
 	if viper.GetString(config.Cluster.ByoVpc) != "" {
+		//proxy at installation
 		if viper.GetString(config.Cluster.ByoVpc) == "auto" {
-			subnetIds, err := osde2eAws.CreateVpc()
+			subnetIds, err := osde2eAws.ByoVpcSetup()
 			if err != nil {
 				return "", fmt.Errorf("error creating VPC: %v", err)
+			} else {
+				subnetIdsString := strings.Join(subnetIds, ",")
+				createClusterArgs = append(createClusterArgs, "--subnet-ids", subnetIdsString)
 			}
-			createClusterArgs = append(createClusterArgs, "--subnet-ids", subnetIds)
+
+			if httpProxy := viper.GetString(config.Proxy.HttpProxy); httpProxy != "" {
+				createClusterArgs = append(createClusterArgs, "--http-proxy", httpProxy)
+			}
+			if httpsProxy := viper.GetString(config.Proxy.HttpsProxy); httpsProxy != "" {
+				createClusterArgs = append(createClusterArgs, "--https-proxy", httpsProxy)
+			}
+			if userCaBundle := viper.GetString(config.Proxy.UserCABundle); userCaBundle != "" {
+				createClusterArgs = append(createClusterArgs, "--additional-trust-bundle-file", userCaBundle)
+			}
 		} else {
+			//Day 2+ Patch
 			createClusterArgs = append(createClusterArgs, "--subnet-ids", viper.GetString(config.Cluster.ByoVpc))
 		}
 	}
+
+	osde2eAws.ByoVpcCleanUp()
 
 	networkProvider := viper.GetString(config.Cluster.NetworkProvider)
 	if networkProvider != config.DefaultNetworkProvider {
