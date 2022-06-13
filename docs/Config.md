@@ -31,6 +31,8 @@ Some environment variables commonly used for pipelines under osde2e are indicate
 |CLEAN_CHECK_RUNS| CleanCheckRuns lets us set the number of osd-verify checks we want to run before deeming a cluster "healthy"|
 |INSPECT_NAMESPACES| InspectNamespaces is a comma-delimeted list of namespaces to perform an `oc adm inspect` on during E2E cleanup|
 |BYO_VPC| BYO_VPC is a comma-delimeted list of subnets to use for the cluster. It can also be set to `auto` to create a VPC for the cluster.|
+|USE_PROXY_FOR_INSTALL| UseProxyForInstall will use a cluster-wide proxy for the cluster installation, provided that cluster proxy configuration is also supplied.|
+
 
 ### OCM related:-
  

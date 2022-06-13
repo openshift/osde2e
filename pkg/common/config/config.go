@@ -371,6 +371,10 @@ var Cluster = struct {
 	// BYO_VPC is used to create a cluster with an already existing VPC or if set to \"auto\" will create a VPC with default settings.
 	// Env: BYO_VPC
 	ByoVpc string
+  
+	// UseProxyForInstall will attempt to use a cluster-wide proxy for cluster installation, provided that a cluster-wide proxy config is supplied
+	UseProxyForInstall string
+  
 }{
 	MultiAZ:                             "cluster.multiAZ",
 	Channel:                             "cluster.channel",
@@ -379,6 +383,7 @@ var Cluster = struct {
 	AfterTestWait:                       "cluster.afterTestWait",
 	InstallTimeout:                      "cluster.installTimeout",
 	ReleaseImageLatest:                  "cluster.releaseImageLatest",
+	UseProxyForInstall:                  "cluster.useProxyForInstall",
 	UseLatestVersionForInstall:          "cluster.useLatestVersionForInstall",
 	UseMiddleClusterImageSetForInstall:  "cluster.useMiddleClusterVersionForInstall",
 	UseOldestClusterImageSetForInstall:  "cluster.useOldestClusterVersionForInstall",
@@ -696,6 +701,9 @@ func InitViper() {
 	viper.BindEnv(Cluster.InstallTimeout, "CLUSTER_UP_TIMEOUT")
 
 	viper.BindEnv(Cluster.ReleaseImageLatest, "RELEASE_IMAGE_LATEST")
+
+	viper.SetDefault(Cluster.UseProxyForInstall, false)
+	viper.BindEnv(Cluster.UseProxyForInstall, "USE_PROXY_FOR_INSTALL")
 
 	viper.SetDefault(Cluster.UseLatestVersionForInstall, false)
 	viper.BindEnv(Cluster.UseLatestVersionForInstall, "USE_LATEST_VERSION_FOR_INSTALL")
