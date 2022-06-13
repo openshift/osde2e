@@ -125,14 +125,16 @@ func (m *ROSAProvider) LaunchCluster(clusterName string) (string, error) {
 	if viper.GetString(SubnetIDs) != "" {
 		subnetIDs := viper.GetString(SubnetIDs)
 		createClusterArgs = append(createClusterArgs, "--subnet-ids", subnetIDs)
-		if httpProxy := viper.GetString(config.Proxy.HttpProxy); httpProxy != "" {
-			createClusterArgs = append(createClusterArgs, "--http-proxy", httpProxy)
-		}
-		if httpsProxy := viper.GetString(config.Proxy.HttpsProxy); httpsProxy != "" {
-			createClusterArgs = append(createClusterArgs, "--https-proxy", httpsProxy)
-		}
-		if userCaBundle := viper.GetString(config.Proxy.UserCABundle); userCaBundle != "" {
-			createClusterArgs = append(createClusterArgs, "--additional-trust-bundle-file", userCaBundle)
+		if viper.GetBool(config.Cluster.UseProxyForInstall) {
+			if httpProxy := viper.GetString(config.Proxy.HttpProxy); httpProxy != "" {
+				createClusterArgs = append(createClusterArgs, "--http-proxy", httpProxy)
+			}
+			if httpsProxy := viper.GetString(config.Proxy.HttpsProxy); httpsProxy != "" {
+				createClusterArgs = append(createClusterArgs, "--https-proxy", httpsProxy)
+			}
+			if userCaBundle := viper.GetString(config.Proxy.UserCABundle); userCaBundle != "" {
+				createClusterArgs = append(createClusterArgs, "--additional-trust-bundle-file", userCaBundle)
+			}
 		}
 	}
 	if viper.GetBool(config.Cluster.MultiAZ) {
