@@ -112,7 +112,7 @@ func createByoVpc(name string, cidrBlock string) (string, error) {
 
 	// Create a new VPC
 	input := &ec2.CreateVpcInput{
-		CidrBlock: aws.String("10.0.0.0/16"),
+		CidrBlock: aws.String(cidrBlock),
 		TagSpecifications: []*ec2.TagSpecification{
 			{
 				ResourceType: aws.String("vpc"),
@@ -126,7 +126,6 @@ func createByoVpc(name string, cidrBlock string) (string, error) {
 		},
 	}
 
-	VerifyCCS()
 	result, err := CcsAwsSession.ec2.CreateVpc(input)
 	if err != nil {
 		if aerr, ok := err.(awserr.Error); ok {
