@@ -35,7 +35,7 @@ Some environment variables commonly used for pipelines under osde2e are indicate
 
 
 ### OCM related:-
- 
+
 | Environment variable | Usage |
 | --------------| ------------------------|
 |DEBUG_OSD| Debug shows debug level messages when enabled.|
@@ -49,8 +49,12 @@ Some environment variables commonly used for pipelines under osde2e are indicate
 |OCM_CCS_ADMIN| Overwrite Flag that will attempt to cycle osdCcsAdmin credentials for a CCS install when the osdCcsAdmin credentials were not passed.|
 |TEST_KUBECONFIG| Path to a local kubeconfig; will override fetching Kubeconfig credentials from OCM if specified.| 
 
+### ROSA cluster related:-
+
+|ROSA_STS| Boolean value to indicate the cluster is STS enabled or not.|
+
 ### AWS Related:-
- 
+
 | Environment variable | Usage |
 | --------------| ------------------------| 
 |AWS_ACCOUNT | AWS Account ID|
@@ -58,6 +62,8 @@ Some environment variables commonly used for pipelines under osde2e are indicate
 |AWS_SECRET_ACCESS_KEY| AWSSecretAccessKey for provisioning clusters.|
 |AWS_REGION| AWSRegion for provisioning clusters.|  
 |BYO_VPC| Define existing VPC via a vpc id|
+|SUBNET_IDS| A list of subnets used to create the cluster, required for proxy enabled cluster.|
+
 ### Upgrade variables:-
 
 | Environment variable | Usage |

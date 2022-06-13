@@ -128,7 +128,7 @@ func (m *ROSAProvider) LaunchCluster(clusterName string) (string, error) {
 		subnetIDs := viper.GetString(SubnetIDs)
 		createClusterArgs = append(createClusterArgs, "--subnet-ids", subnetIDs)
 		if viper.GetBool(config.Cluster.UseProxyForInstall) {
-			if httpProxy := viper.GetString(config.Proxy.HttpProxy); httpProxy != "" 
+			if httpProxy := viper.GetString(config.Proxy.HttpProxy); httpProxy != "" {
 				createClusterArgs = append(createClusterArgs, "--http-proxy", httpProxy)
 			}
 			if httpsProxy := viper.GetString(config.Proxy.HttpsProxy); httpsProxy != "" {
