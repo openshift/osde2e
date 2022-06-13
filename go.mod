@@ -27,7 +27,7 @@ require (
 	github.com/jackc/pgtype v1.11.0
 	github.com/jinzhu/inflection v1.0.0
 	github.com/joshdk/go-junit v0.0.0-20201221202203-061ee62ada40
-	github.com/kyleconroy/sqlc v1.13.0
+	github.com/kyleconroy/sqlc v1.14.0
 	github.com/kylelemons/godebug v1.1.0
 	github.com/lib/pq v1.10.6
 	github.com/markbates/pkger v0.17.1
