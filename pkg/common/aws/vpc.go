@@ -359,12 +359,12 @@ func byoVpcCreatePublicRoute(publicRouteTableId string, natGatewayId string) err
 		NatGatewayId:         aws.String(natGatewayId),
 	}
 
-	result, err := CcsAwsSession.ec2.CreateRoute(input)
+	_, err := CcsAwsSession.ec2.CreateRoute(input)
 	if err != nil {
 		log.Printf("Error creating Public Route: %v", err)
 		return err
 	} else {
-		log.Printf("Created Public Route %s", *result.Return)
+		log.Printf("Created Public Route")
 	}
 
 	return err
@@ -424,12 +424,12 @@ func byoVpcCreatePrivateRoute(privateRouteTableId string, natGatewayId string) e
 		NatGatewayId:         aws.String(natGatewayId),
 	}
 
-	result, err := CcsAwsSession.ec2.CreateRoute(input)
+	_, err := CcsAwsSession.ec2.CreateRoute(input)
 	if err != nil {
 		log.Printf("Error creating Private Route: %v", err)
 		return err
 	} else {
-		log.Printf("Created Private Route %s", *result.Return)
+		log.Printf("Created Private Route")
 	}
 
 	return err
