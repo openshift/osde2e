@@ -124,39 +124,27 @@ func (m *ROSAProvider) LaunchCluster(clusterName string) (string, error) {
 		"--host-prefix", viper.GetString(HostPrefix),
 	}
 
-	if viper.GetString(SubnetIDs) != "" {
-		subnetIDs := viper.GetString(SubnetIDs)
-		createClusterArgs = append(createClusterArgs, "--subnet-ids", subnetIDs)
-		if viper.GetBool(config.Cluster.UseProxyForInstall) {
-			if httpProxy := viper.GetString(config.Proxy.HttpProxy); httpProxy != "" {
-				createClusterArgs = append(createClusterArgs, "--http-proxy", httpProxy)
-			}
-			if httpsProxy := viper.GetString(config.Proxy.HttpsProxy); httpsProxy != "" {
-				createClusterArgs = append(createClusterArgs, "--https-proxy", httpsProxy)
-			}
-			if userCaBundle := viper.GetString(config.Proxy.UserCABundle); userCaBundle != "" {
-				createClusterArgs = append(createClusterArgs, "--additional-trust-bundle-file", userCaBundle)
-			}
-		}
-	}
-
 	if viper.GetBool(config.Cluster.MultiAZ) {
 		createClusterArgs = append(createClusterArgs, "--multi-az")
 	}
 
 	//Enables OSDe2e to create a cluster with a BYO_VPC.
-
 	//We need to look at this logic and decide the logic of Proxy at Launch vs Day 2 Patch
 	if viper.GetString(config.Cluster.ByoVpc) != "" {
 		//proxy at installation
+		var subnetIdsString string
 		if viper.GetString(config.Cluster.ByoVpc) == "auto" {
-			subnetIds, err := osde2eAws.ByoVpcSetup()
-			if err != nil {
-				return "", fmt.Errorf("error creating VPC: %v", err)
+			if viper.GetString(config.AWSVPCSubnetIDs) == "auto" {
+				subnetIds, err := osde2eAws.ByoVpcSetup()
+				if err != nil {
+					return "", fmt.Errorf("error creating VPC: %v", err)
+				}
+				subnetIdsString = strings.Join(subnetIds, ",")
 			} else {
-				subnetIdsString := strings.Join(subnetIds, ",")
-				createClusterArgs = append(createClusterArgs, "--subnet-ids", subnetIdsString)
+				subnetIdsString = viper.GetString(config.AWSVPCSubnetIDs)
 			}
+
+			createClusterArgs = append(createClusterArgs, "--subnet-ids", subnetIdsString)
 
 			if httpProxy := viper.GetString(config.Proxy.HttpProxy); httpProxy != "" {
 				createClusterArgs = append(createClusterArgs, "--http-proxy", httpProxy)
@@ -172,8 +160,6 @@ func (m *ROSAProvider) LaunchCluster(clusterName string) (string, error) {
 			createClusterArgs = append(createClusterArgs, "--subnet-ids", viper.GetString(config.Cluster.ByoVpc))
 		}
 	}
-
-	osde2eAws.ByoVpcCleanUp()
 
 	networkProvider := viper.GetString(config.Cluster.NetworkProvider)
 	if networkProvider != config.DefaultNetworkProvider {

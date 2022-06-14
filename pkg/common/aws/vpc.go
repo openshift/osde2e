@@ -13,28 +13,29 @@ import (
 //Refactor: Some of these variables should be set through Vyper.(Availability Zone, Subnets Cidr Block, etc)
 //Should I make this a struct to hold these variables?
 var (
-	ByoVpcName          string
-	vpcId               string
-	internetGatewayId   string
-	publicSubnetId      string
-	privateSubnetId     string
-	elasticIpId         string
-	natGatewayId        string
-	publicRouteTableId  string
-	privateRouteTableId string
-	vpcCidrBlock        = "10.0.0.0/16"
-	subnetsCidrBlock    = "10.0.0.0/17"
-	availabilityZone    = "us-east-1a"
+	ByoVpcName              string
+	vpcId                   string
+	internetGatewayId       string
+	publicSubnetId          string
+	privateSubnetId         string
+	elasticIpId             string
+	natGatewayId            string
+	publicRouteTableId      string
+	privateRouteTableId     string
+	vpcCidrBlock            = "10.0.0.0/16"
+	publicSubnetsCidrBlock  = "10.0.0.0/17"
+	privateSubnetsCidrBlock = "10.0.128.0/17"
+	availabilityZone        = "us-east-1a"
 )
 
 func init() {
 	//To be refactord later into the overall init and to be trigged by the flags that enable this job.
-	CcsAwsSession.getIamClient()
 	ByoVpcName = "BYO-VPC-" + strconv.FormatInt(time.Now().UTC().UnixNano(), 10)
 }
 
 //Prepare VPC for BYO environment using Squid Proxy
 func ByoVpcSetup() ([]string, error) {
+	CcsAwsSession.getIamClient()
 	var err error
 
 	vpcId, err = createByoVpc(ByoVpcName, vpcCidrBlock)
@@ -47,12 +48,12 @@ func ByoVpcSetup() ([]string, error) {
 		return nil, err
 	}
 
-	publicSubnetId, err = byoVpcPublicSubnetSetup(vpcId, availabilityZone, subnetsCidrBlock)
+	publicSubnetId, err = byoVpcPublicSubnetSetup(vpcId, availabilityZone, publicSubnetsCidrBlock)
 	if err != nil {
 		return nil, err
 	}
 
-	privateSubnetId, err = byoVpcPrivateSubnetSetup(vpcId, availabilityZone, subnetsCidrBlock)
+	privateSubnetId, err = byoVpcPrivateSubnetSetup(vpcId, availabilityZone, privateSubnetsCidrBlock)
 	if err != nil {
 		return nil, err
 	}
@@ -62,7 +63,7 @@ func ByoVpcSetup() ([]string, error) {
 		return nil, err
 	}
 
-	natGatewayId, err = byoVpcNatGatewaySetup(vpcId, internetGatewayId, elasticIpId)
+	natGatewayId, err = byoVpcNatGatewaySetup(vpcId, publicSubnetId, elasticIpId)
 	if err != nil {
 		return nil, err
 	}
@@ -203,7 +204,7 @@ func byoVpcPublicSubnetSetup(vpcId string, availabilityZone string, cidrBlock st
 
 	publicSubnet := &ec2.CreateSubnetInput{
 		VpcId:            aws.String(vpcId),
-		CidrBlock:        aws.String(cidrBlock),
+		CidrBlock:        aws.String(publicSubnetsCidrBlock),
 		AvailabilityZone: aws.String(availabilityZone),
 		TagSpecifications: []*ec2.TagSpecification{
 			{
@@ -233,7 +234,7 @@ func byoVpcPrivateSubnetSetup(vpcId string, availabilityZone string, cidrBlock s
 
 	privateSubnet := &ec2.CreateSubnetInput{
 		VpcId:            aws.String(vpcId),
-		CidrBlock:        aws.String(cidrBlock),
+		CidrBlock:        aws.String(privateSubnetsCidrBlock),
 		AvailabilityZone: aws.String(availabilityZone),
 		TagSpecifications: []*ec2.TagSpecification{
 			{
@@ -253,7 +254,7 @@ func byoVpcPrivateSubnetSetup(vpcId string, availabilityZone string, cidrBlock s
 		log.Printf("Error creating Private Subnet: %v", err)
 		return "", err
 	} else {
-		log.Printf("Created Pivrate Subnet %s", *result.Subnet.SubnetId)
+		log.Printf("Created Private Subnet %s", *result.Subnet.SubnetId)
 	}
 
 	return *result.Subnet.SubnetId, err
@@ -283,7 +284,7 @@ func byoVpcNatGatewaySetup(vpcId string, publicSubnetId string, elasticIp string
 		AllocationId: aws.String(elasticIp),
 		TagSpecifications: []*ec2.TagSpecification{
 			{
-				ResourceType: aws.String("nat-gateway"),
+				ResourceType: aws.String("natgateway"),
 				Tags: []*ec2.Tag{
 					{
 						Key:   aws.String("Name"),
@@ -299,6 +300,9 @@ func byoVpcNatGatewaySetup(vpcId string, publicSubnetId string, elasticIp string
 		log.Printf("Error creating NAT Gateway: %v", err)
 		return "", err
 	} else {
+		CcsAwsSession.ec2.WaitUntilNatGatewayAvailable(&ec2.DescribeNatGatewaysInput{
+			NatGatewayIds: []*string{result.NatGateway.NatGatewayId},
+		})
 		log.Printf("Created NAT Gateway %s", *result.NatGateway.NatGatewayId)
 	}
 
@@ -351,12 +355,12 @@ func byoVpcAssociatePublicTable(publicRouteTableId string, publicSubnetId string
 	return err
 }
 
-func byoVpcCreatePublicRoute(publicRouteTableId string, natGatewayId string) error {
+func byoVpcCreatePublicRoute(publicRouteTableId string, internetGatewayId string) error {
 
 	input := &ec2.CreateRouteInput{
 		RouteTableId:         aws.String(publicRouteTableId),
 		DestinationCidrBlock: aws.String("0.0.0.0/0"),
-		NatGatewayId:         aws.String(natGatewayId),
+		GatewayId:            aws.String(internetGatewayId),
 	}
 
 	_, err := CcsAwsSession.ec2.CreateRoute(input)
@@ -463,7 +467,8 @@ func byoVpcGetVpcSubnetIds(vpcId string) ([]string, error) {
 }
 
 //Deletes all the resources created by the BYO VPC
-func ByoVpcCleanUp() error {
+func ByoVpcCleanUp() []error {
+	var errs []error
 
 	//Delete Private Route Table
 	inputRouteTable := &ec2.DeleteRouteTableInput{
@@ -472,7 +477,7 @@ func ByoVpcCleanUp() error {
 	_, err := CcsAwsSession.ec2.DeleteRouteTable(inputRouteTable)
 	if err != nil {
 		log.Printf("Error deleting Private Route Table: %v", err)
-		return err
+		errs = append(errs, err)
 	} else {
 		log.Printf("Deleted Private Route Table %s", privateRouteTableId)
 	}
@@ -484,7 +489,7 @@ func ByoVpcCleanUp() error {
 	_, err = CcsAwsSession.ec2.DeleteRouteTable(inputRouteTable)
 	if err != nil {
 		log.Printf("Error deleting Public Route Table: %v", err)
-		return err
+		errs = append(errs, err)
 	} else {
 		log.Printf("Deleted Public Route Table %s", publicRouteTableId)
 	}
@@ -496,7 +501,7 @@ func ByoVpcCleanUp() error {
 	_, err = CcsAwsSession.ec2.DeleteNatGateway(inputNatGateway)
 	if err != nil {
 		log.Printf("Error deleting NAT Gateway: %v", err)
-		return err
+		errs = append(errs, err)
 	} else {
 		log.Printf("Deleted NAT Gateway %s", natGatewayId)
 	}
@@ -508,7 +513,7 @@ func ByoVpcCleanUp() error {
 	_, err = CcsAwsSession.ec2.ReleaseAddress(inputElasticIp)
 	if err != nil {
 		log.Printf("Error deleting Elastic IP: %v", err)
-		return err
+		errs = append(errs, err)
 	} else {
 		log.Printf("Deleted Elastic IP %s", elasticIpId)
 	}
@@ -520,7 +525,7 @@ func ByoVpcCleanUp() error {
 	_, err = CcsAwsSession.ec2.DeleteSubnet(inputSubnet)
 	if err != nil {
 		log.Printf("Error deleting Private Subnet: %v", err)
-		return err
+		errs = append(errs, err)
 	} else {
 		log.Printf("Deleted Private Subnet %s", privateSubnetId)
 	}
@@ -532,7 +537,7 @@ func ByoVpcCleanUp() error {
 	_, err = CcsAwsSession.ec2.DeleteSubnet(inputSubnet)
 	if err != nil {
 		log.Printf("Error deleting Public Subnet: %v", err)
-		return err
+		errs = append(errs, err)
 	} else {
 		log.Printf("Deleted Public Subnet %s", publicSubnetId)
 	}
@@ -544,10 +549,18 @@ func ByoVpcCleanUp() error {
 	_, err = CcsAwsSession.ec2.DeleteVpc(inputVpc)
 	if err != nil {
 		log.Printf("Error deleting VPC: %v", err)
-		return err
+		errs = append(errs, err)
 	} else {
 		log.Printf("Deleted VPC %s", vpcId)
 	}
 
-	return err
+	if len(errs) > 0 {
+		for _, err := range errs {
+			log.Printf("Error: %v", err)
+		}
+
+		return errs
+	}
+
+	return nil
 }
