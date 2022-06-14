@@ -76,7 +76,7 @@ func ByoVpcSetup() ([]string, error) {
 		if err != nil {
 			return nil, err
 		} else {
-			err = byoVpcCreatePublicRoute(publicRouteTableId, natGatewayId)
+			err = byoVpcCreatePublicRoute(publicRouteTableId, internetGatewayId)
 			if err != nil {
 				return nil, err
 			}
