@@ -180,6 +180,10 @@ func loadSecretFileIntoKey(key string, filename string, secretLocations []string
 			log.Printf("Found secret for key %s.", key)
 			cleanData := strings.TrimSpace(string(data))
 			if cleanData != "" {
+				//If the data contains a certificate, we'll need to pass the file path to the secret.
+				if strings.Contains(cleanData, "-----BEGIN CERTIFICATE-----") {
+					cleanData = fullFilename
+				}
 				viper.Set(key, cleanData)
 			}
 			return nil
