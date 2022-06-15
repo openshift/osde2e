@@ -59,5 +59,6 @@ func init() {
 	viper.BindEnv(STS, "ROSA_STS")
 	viper.SetDefault(STS, false)
 
-	viper.BindEnv(SubnetIDs, "ROSA_SUBNET_IDS")
+	viper.BindEnv(SubnetIDs, "ROSA_SUBNET_IDS", "SUBNET_IDS")
+	config.RegisterSecret(SubnetIDs, "subnet-ids")
 }
