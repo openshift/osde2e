@@ -833,10 +833,14 @@ func InitViper() {
 
 	// ----- Proxy ------
 	viper.BindEnv(Proxy.HttpProxy, "TEST_HTTP_PROXY")
+	RegisterSecret(Proxy.HttpProxy, "test-http-proxy")
 
 	viper.BindEnv(Proxy.HttpsProxy, "TEST_HTTPS_PROXY")
+	RegisterSecret(Proxy.HttpsProxy, "test-https-proxy")
 
 	viper.BindEnv(Proxy.UserCABundle, "USER_CA_BUNDLE")
+	RegisterSecret(Proxy.UserCABundle, "user-ca-bundle")
+	
 }
 
 func init() {
