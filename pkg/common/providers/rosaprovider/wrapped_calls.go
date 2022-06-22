@@ -120,14 +120,14 @@ func (m *ROSAProvider) AddClusterProxy(clusterId string, httpsProxy string, http
 
 // RemoveClusterProxy removes the cluster proxy configuration for the supplied cluster
 func (m *ROSAProvider) RemoveClusterProxy(clusterId string) error {
-	return m.RemoveClusterProxy(clusterId)
+	return m.ocmProvider.RemoveClusterProxy(clusterId)
 }
 
 // RemoveUserCABundle removes only the Additional Trusted CA Bundle from the cluster
 func (m *ROSAProvider) RemoveUserCABundle(clusterId string) error {
-	return m.RemoveUserCABundle(clusterId)
+	return m.ocmProvider.RemoveUserCABundle(clusterId)
 }
 
 func (m *ROSAProvider) LoadUserCaBundleData(file string) (string, error) {
-	return m.LoadUserCaBundleData(file)
+	return m.ocmProvider.LoadUserCaBundleData(file)
 }
