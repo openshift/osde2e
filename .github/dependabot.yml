@@ -3,7 +3,7 @@ updates:
 - package-ecosystem: gomod
   directory: "/"
   schedule:
-    interval: weekly
+    - cron: '0 15 * * 5'
   labels:
     - "dependencies"
     - "ok-to-test"
