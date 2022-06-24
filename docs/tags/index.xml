@@ -6,7 +6,7 @@
     <description>Recent content in Tags on OSDe2e Reporting</description>
     <generator>Hugo -- gohugo.io</generator>
     <copyright>Copyright © 2020, Red Hat, all rights reserved.</copyright>
-    <lastBuildDate>Thu, 23 Jun 2022 12:01:08 +0000</lastBuildDate>
+    <lastBuildDate>Fri, 24 Jun 2022 12:00:56 +0000</lastBuildDate>
     
 	<atom:link href="https://openshift.github.io/osde2e/tags/index.xml" rel="self" type="application/rss+xml" />
     
@@ -14,7 +14,7 @@
     <item>
       <title>moa</title>
       <link>https://openshift.github.io/osde2e/tags/moa/</link>
-      <pubDate>Thu, 23 Jun 2022 12:01:08 +0000</pubDate>
+      <pubDate>Fri, 24 Jun 2022 12:00:56 +0000</pubDate>
       
       <guid>https://openshift.github.io/osde2e/tags/moa/</guid>
       <description></description>
@@ -23,7 +23,7 @@
     <item>
       <title>weather-report</title>
       <link>https://openshift.github.io/osde2e/tags/weather-report/</link>
-      <pubDate>Thu, 23 Jun 2022 12:01:08 +0000</pubDate>
+      <pubDate>Fri, 24 Jun 2022 12:00:56 +0000</pubDate>
       
       <guid>https://openshift.github.io/osde2e/tags/weather-report/</guid>
       <description></description>
@@ -32,7 +32,7 @@
     <item>
       <title>aws</title>
       <link>https://openshift.github.io/osde2e/tags/aws/</link>
-      <pubDate>Thu, 23 Jun 2022 12:01:07 +0000</pubDate>
+      <pubDate>Fri, 24 Jun 2022 12:00:55 +0000</pubDate>
       
       <guid>https://openshift.github.io/osde2e/tags/aws/</guid>
       <description></description>
@@ -41,7 +41,7 @@
     <item>
       <title>gcp</title>
       <link>https://openshift.github.io/osde2e/tags/gcp/</link>
-      <pubDate>Thu, 23 Jun 2022 12:01:07 +0000</pubDate>
+      <pubDate>Fri, 24 Jun 2022 12:00:55 +0000</pubDate>
       
       <guid>https://openshift.github.io/osde2e/tags/gcp/</guid>
       <description></description>
