@@ -6,7 +6,7 @@
     <description>Recent content on OSDe2e Reporting</description>
     <generator>Hugo -- gohugo.io</generator>
     <copyright>Copyright © 2020, Red Hat, all rights reserved.</copyright>
-    <lastBuildDate>Sun, 26 Jun 2022 12:01:09 +0000</lastBuildDate>
+    <lastBuildDate>Mon, 27 Jun 2022 12:00:50 +0000</lastBuildDate>
     
 	<atom:link href="https://openshift.github.io/osde2e/index.xml" rel="self" type="application/rss+xml" />
     
@@ -18,6 +18,33 @@
       
       <guid>https://openshift.github.io/osde2e/about/</guid>
       <description>Automatically generated reports generated from OSDe2e data live here.</description>
+    </item>
+    
+    <item>
+      <title>OSDe2e moa Weather Report 2022-06-27 12:00:50.24951025 &#43;0000 UTC</title>
+      <link>https://openshift.github.io/osde2e/post/252c07c384b6420db673a1c590214a2c/</link>
+      <pubDate>Mon, 27 Jun 2022 12:00:50 +0000</pubDate>
+      
+      <guid>https://openshift.github.io/osde2e/post/252c07c384b6420db673a1c590214a2c/</guid>
+      <description>&lt;table class=&#34;summary&#34;&gt;&lt;/table&gt;</description>
+    </item>
+    
+    <item>
+      <title>OSDe2e gcp Weather Report 2022-06-27 12:00:49.698622376 &#43;0000 UTC</title>
+      <link>https://openshift.github.io/osde2e/post/344f2621d8644581b78350e00d93a72c/</link>
+      <pubDate>Mon, 27 Jun 2022 12:00:49 +0000</pubDate>
+      
+      <guid>https://openshift.github.io/osde2e/post/344f2621d8644581b78350e00d93a72c/</guid>
+      <description>&lt;table class=&#34;summary&#34;&gt;&lt;/table&gt;</description>
+    </item>
+    
+    <item>
+      <title>OSDe2e aws Weather Report 2022-06-27 12:00:48.990311686 &#43;0000 UTC</title>
+      <link>https://openshift.github.io/osde2e/post/b9edbd3e42fc450d90dcd2e4f044ab15/</link>
+      <pubDate>Mon, 27 Jun 2022 12:00:48 +0000</pubDate>
+      
+      <guid>https://openshift.github.io/osde2e/post/b9edbd3e42fc450d90dcd2e4f044ab15/</guid>
+      <description>&lt;table class=&#34;summary&#34;&gt;&lt;/table&gt;</description>
     </item>
     
     <item>
