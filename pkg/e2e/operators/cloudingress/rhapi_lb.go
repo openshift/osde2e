@@ -19,6 +19,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/elb"
 	"k8s.io/apimachinery/pkg/util/wait"
 
@@ -109,11 +110,24 @@ func testLBDeletion(h *helper.H) {
 					LoadBalancerName: aws.String(oldLBName),
 				}
 
-				_ , err = lb.DeleteLoadBalancer(input)
+				// must store security groups associated with LB so we can delete them
+				oldLBSecGroups := elb.DescribeLoadBalancers(&elb.DescribeLoadBalancersInput{
+					LoadBalancerNames: [1]*string{aws.String(oldLBName)},
+				})[0].SecurityGroups
+
+				_, err = lb.DeleteLoadBalancer(input)
 
 				Expect(err).NotTo(HaveOccurred())
 				log.Printf("Old LB deleted" )
 
+				// delete old LB's security groups, otherwise they'll leak
+				// TODO delete sg (https://docs.aws.amazon.com/sdk-for-go/api/service/ec2/#EC2.DeleteSecurityGroup)
+				ec2Svc := ec2.New(awsSession)
+				for _, secGroup := range oldLBSecGroups {
+					ec2Svc.DeleteSecurityGroup(&ec2Svc.DeleteSecurityGroupInput{
+						GroupName: aws.String(secGroup),
+					})
+				}
 
 				// wait for the new LB to be created
 				err = wait.PollImmediate(15*time.Second, 5*time.Minute, func() (bool, error) {
