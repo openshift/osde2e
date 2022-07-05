@@ -374,9 +374,6 @@ var Cluster = struct {
 
 	// UseProxyForInstall will attempt to use a cluster-wide proxy for cluster installation, provided that a cluster-wide proxy config is supplied
 	UseProxyForInstall string
-	// BYO_VPC is used to create a cluster with an already existing VPC or if set to \"auto\" will create a VPC with default settings.
-	// Env: BYO_VPC
-	ByoVpc string
 }{
 	MultiAZ:                             "cluster.multiAZ",
 	Channel:                             "cluster.channel",
