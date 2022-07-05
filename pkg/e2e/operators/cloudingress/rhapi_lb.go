@@ -111,9 +111,11 @@ func testLBDeletion(h *helper.H) {
 				}
 
 				// must store security groups associated with LB so we can delete them
-				oldLBSecGroups := elb.DescribeLoadBalancers(&elb.DescribeLoadBalancersInput{
-					LoadBalancerNames: [1]*string{aws.String(oldLBName)},
-				})[0].SecurityGroups
+				oldLBDesc, err := lb.DescribeLoadBalancers(&elb.DescribeLoadBalancersInput{
+					LoadBalancerNames: []*string{aws.String(oldLBName)},
+				})
+				Expect(err).NotTo(HaveOccurred())
+				oldLBSecGroups := oldLBDesc.LoadBalancerDescriptions[0].SecurityGroups
 
 				_, err = lb.DeleteLoadBalancer(input)
 
@@ -124,8 +126,8 @@ func testLBDeletion(h *helper.H) {
 				// TODO delete sg (https://docs.aws.amazon.com/sdk-for-go/api/service/ec2/#EC2.DeleteSecurityGroup)
 				ec2Svc := ec2.New(awsSession)
 				for _, secGroup := range oldLBSecGroups {
-					ec2Svc.DeleteSecurityGroup(&ec2Svc.DeleteSecurityGroupInput{
-						GroupName: aws.String(secGroup),
+					ec2Svc.DeleteSecurityGroup(&ec2.DeleteSecurityGroupInput{
+						GroupName: aws.String(*secGroup),
 					})
 				}
 
