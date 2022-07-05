@@ -2,6 +2,7 @@ package rosaprovider
 
 import (
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
+	"github.com/openshift/osde2e/pkg/common/config"
 )
 
 const (

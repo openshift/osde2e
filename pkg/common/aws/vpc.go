@@ -471,40 +471,25 @@ func byoVpcGetVpcSubnetIds(vpcId string) ([]string, error) {
 func ByoVpcCleanUp() []error {
 	var errs []error
 
-	//Delete Private Route Table
-	inputRouteTable := &ec2.DeleteRouteTableInput{
-		RouteTableId: aws.String(privateRouteTableId),
-	}
-	_, err := CcsAwsSession.ec2.DeleteRouteTable(inputRouteTable)
-	if err != nil {
-		log.Printf("Error deleting Private Route Table: %v", err)
-		errs = append(errs, err)
-	} else {
-		log.Printf("Deleted Private Route Table %s", privateRouteTableId)
-	}
-
-	//Delete Public Route Table
-	inputRouteTable = &ec2.DeleteRouteTableInput{
-		RouteTableId: aws.String(publicRouteTableId),
-	}
-	_, err = CcsAwsSession.ec2.DeleteRouteTable(inputRouteTable)
-	if err != nil {
-		log.Printf("Error deleting Public Route Table: %v", err)
-		errs = append(errs, err)
-	} else {
-		log.Printf("Deleted Public Route Table %s", publicRouteTableId)
-	}
-
 	//Delete NAT Gateway
 	inputNatGateway := &ec2.DeleteNatGatewayInput{
 		NatGatewayId: aws.String(natGatewayId),
 	}
-	_, err = CcsAwsSession.ec2.DeleteNatGateway(inputNatGateway)
+	_, err := CcsAwsSession.ec2.DeleteNatGateway(inputNatGateway)
 	if err != nil {
 		log.Printf("Error deleting NAT Gateway: %v", err)
 		errs = append(errs, err)
 	} else {
-		log.Printf("Deleted NAT Gateway %s", natGatewayId)
+		log.Printf("Waiting for NAT Gateway to be deleted...")
+		err = CcsAwsSession.ec2.WaitUntilNatGatewayDeleted(&ec2.DescribeNatGatewaysInput{
+			NatGatewayIds: []*string{aws.String(natGatewayId)},
+		})
+		if err != nil {
+			log.Printf("Timedout waiting for NAT Gateway to be deleted: %v", err)
+			errs = append(errs, err)
+		} else {
+			log.Printf("NAT Gateway deleted")
+		}
 	}
 
 	//Delete Elastic IP
@@ -541,6 +526,55 @@ func ByoVpcCleanUp() []error {
 		errs = append(errs, err)
 	} else {
 		log.Printf("Deleted Public Subnet %s", publicSubnetId)
+	}
+
+	//Delete Private Route Table
+	inputRouteTable := &ec2.DeleteRouteTableInput{
+		RouteTableId: aws.String(privateRouteTableId),
+	}
+	_, err = CcsAwsSession.ec2.DeleteRouteTable(inputRouteTable)
+	if err != nil {
+		log.Printf("Error deleting Private Route Table: %v", err)
+		errs = append(errs, err)
+	} else {
+		log.Printf("Deleted Private Route Table %s", privateRouteTableId)
+	}
+
+	//Delete Public Route Table
+	inputRouteTable = &ec2.DeleteRouteTableInput{
+		RouteTableId: aws.String(publicRouteTableId),
+	}
+	_, err = CcsAwsSession.ec2.DeleteRouteTable(inputRouteTable)
+	if err != nil {
+		log.Printf("Error deleting Public Route Table: %v", err)
+		errs = append(errs, err)
+	} else {
+		log.Printf("Deleted Public Route Table %s", publicRouteTableId)
+	}
+
+	//Detach Internet Gateway from VPC
+	inputVpcIgDetach := &ec2.DetachInternetGatewayInput{
+		InternetGatewayId: aws.String(internetGatewayId),
+		VpcId:             aws.String(vpcId),
+	}
+	_, err = CcsAwsSession.ec2.DetachInternetGateway(inputVpcIgDetach)
+	if err != nil {
+		log.Printf("Error detaching Internet Gateway from VPC: %v", err)
+		errs = append(errs, err)
+	} else {
+		log.Printf("Detached Internet Gateway from VPC %s", vpcId)
+	}
+
+	//Delete Internet Gateway
+	inputInternetGateway := &ec2.DeleteInternetGatewayInput{
+		InternetGatewayId: aws.String(internetGatewayId),
+	}
+	_, err = CcsAwsSession.ec2.DeleteInternetGateway(inputInternetGateway)
+	if err != nil {
+		log.Printf("Error deleting Internet Gateway: %v", err)
+		errs = append(errs, err)
+	} else {
+		log.Printf("Deleted Internet Gateway %s", internetGatewayId)
 	}
 
 	//Delete VPC

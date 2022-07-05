@@ -6,6 +6,7 @@ import (
 
 	"github.com/openshift/osde2e/pkg/common/providers/ocmprovider"
 	"github.com/openshift/osde2e/pkg/common/spi"
+
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 )
 
