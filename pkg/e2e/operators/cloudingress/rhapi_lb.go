@@ -123,12 +123,16 @@ func testLBDeletion(h *helper.H) {
 				log.Printf("Old LB deleted" )
 
 				// delete old LB's security groups, otherwise they'll leak
-				// TODO delete sg (https://docs.aws.amazon.com/sdk-for-go/api/service/ec2/#EC2.DeleteSecurityGroup)
 				ec2Svc := ec2.New(awsSession)
 				for _, secGroup := range oldLBSecGroups {
-					ec2Svc.DeleteSecurityGroup(&ec2.DeleteSecurityGroupInput{
-						GroupName: aws.String(*secGroup),
+					_, err := ec2Svc.DeleteSecurityGroup(&ec2.DeleteSecurityGroupInput{
+						GroupId: aws.String(*secGroup),
 					})
+					if err != nil {
+						log.Printf("Failed to delete security group %s: %s", *secGroup, err)
+					} else {
+						log.Printf("Deleted orphaned security group %s", *secGroup)
+					}
 				}
 
 				// wait for the new LB to be created
