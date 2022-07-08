@@ -122,19 +122,6 @@ func testLBDeletion(h *helper.H) {
 				Expect(err).NotTo(HaveOccurred())
 				log.Printf("Old LB deleted" )
 
-				// delete old LB's security groups, otherwise they'll leak
-				ec2Svc := ec2.New(awsSession)
-				for _, secGroup := range oldLBSecGroups {
-					_, err := ec2Svc.DeleteSecurityGroup(&ec2.DeleteSecurityGroupInput{
-						GroupId: aws.String(*secGroup),
-					})
-					if err != nil {
-						log.Printf("Failed to delete security group %s: %s", *secGroup, err)
-					} else {
-						log.Printf("Deleted orphaned security group %s", *secGroup)
-					}
-				}
-
 				// wait for the new LB to be created
 				err = wait.PollImmediate(15*time.Second, 5*time.Minute, func() (bool, error) {
 					newLBName, err := getLBForService(h, "openshift-kube-apiserver", "rh-api", "hostname")
@@ -155,6 +142,22 @@ func testLBDeletion(h *helper.H) {
 					return false, nil
 				})
 				Expect(err).NotTo(HaveOccurred())
+
+				// delete old LB's security groups, otherwise they'll leak
+				// TODO: first use DescribeSecurityGroups to list all SGs, then iterate
+				// over them, using DescribeSecurityGroupRules to look for rules that 
+				// reference our orphan. Finally, delete the rules making the reference
+				ec2Svc := ec2.New(awsSession)
+				for _, secGroup := range oldLBSecGroups {
+					_, err := ec2Svc.DeleteSecurityGroup(&ec2.DeleteSecurityGroupInput{
+						GroupId: aws.String(*secGroup),
+					})
+					if err != nil {
+						log.Printf("Failed to delete security group %s: %s", *secGroup, err)
+					} else {
+						log.Printf("Deleted orphaned security group %s", *secGroup)
+					}
+				}
 			}, 600)
 		}
 
