@@ -1,0 +1,15 @@
++++
+title = "OSDe2e moa Weather Report 2022-07-10 12:01:07.629600175 +0000 UTC"
+author = "OSDe2e Automation"
+date = "2022-07-10 12:01:07.629600175 +0000 UTC"
+tags = ["weather-report", "moa"]
+summary = "<table class=\"summary\"></table>"
++++
+## Summary
+
+| Job Name | Pass Rate | More detail |
+|----------|-----------|-------------|
+
+
+
+
