@@ -146,7 +146,7 @@ func deleteSecGroupReferencesToOrphans(awsSession *session.Session, orphanSecGro
 func testLBDeletion(h *helper.H) {
 	ginkgo.Context("rh-api-lb-test", func() {
 
-			if viper.GetString(config.CloudProvider.CloudProviderID) == "aws" {
+		if viper.GetString(config.CloudProvider.CloudProviderID) == "aws" {
 			util.GinkgoIt("manually deleted LB should be recreated in AWS", func() {
 				awsAccessKey := viper.GetString("ocm.aws.accessKey")
 				awsSecretKey := viper.GetString("ocm.aws.secretKey")
@@ -155,7 +155,7 @@ func testLBDeletion(h *helper.H) {
 				// getLoadBalancer name currently associated with rh-api service
 				oldLBName, err := getLBForService(h, "openshift-kube-apiserver", "rh-api", "hostname")
 				Expect(err).NotTo(HaveOccurred())
-				log.Printf("Old LB name %s ",oldLBName)
+				log.Printf("Old LB name %s ", oldLBName)
 
 				// delete the load balancer in aws
 				awsSession, err := session.NewSession(aws.NewConfig().WithCredentials(credentials.NewStaticCredentials(awsAccessKey, awsSecretKey, "")).WithRegion(awsRegion))
@@ -176,7 +176,7 @@ func testLBDeletion(h *helper.H) {
 				_, err = lb.DeleteLoadBalancer(input)
 
 				Expect(err).NotTo(HaveOccurred())
-				log.Printf("Old LB deleted" )
+				log.Printf("Old LB deleted")
 
 				// wait for the new LB to be created
 				err = wait.PollImmediate(15*time.Second, 5*time.Minute, func() (bool, error) {
@@ -190,7 +190,7 @@ func testLBDeletion(h *helper.H) {
 					}
 					if newLBName != oldLBName {
 						// the LB was successfully recreated
-						log.Printf("New LB found. LB name: %s",newLBName)
+						log.Printf("New LB found. LB name: %s", newLBName)
 						return true, nil
 					}
 					// the rh-api svc hasn't been deleted yet
