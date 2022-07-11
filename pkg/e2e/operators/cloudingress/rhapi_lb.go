@@ -88,8 +88,7 @@ func getLBForService(h *helper.H, namespace string, service string, idtype strin
 
 // deleteSecGroupReferencesToOrphans deletes any security group rules referencing the provided
 // security group IDs (assumed to be those of security groups "orphaned" by LB deletion)
-func deleteSecGroupReferencesToOrphans(awsSession *session.Session, orphanSecGroupIds []*string) (error) {
-	ec2Svc := ec2.New(awsSession)
+func deleteSecGroupReferencesToOrphans(ec2Svc *ec2.EC2, orphanSecGroupIds []*string) (error) {
 	for _, orphanSecGroupId := range orphanSecGroupIds {
 		// list all sec groups with in/outbound rules referring to our orphans
 		secGroupsMentioningOrphanDesc, err := ec2Svc.DescribeSecurityGroups(&ec2.DescribeSecurityGroupsInput{
@@ -119,7 +118,7 @@ func deleteSecGroupReferencesToOrphans(awsSession *session.Session, orphanSecGro
 					},
 				},
 			}
-			
+
 			// delete all egress rules matching pattern
 			_, err = ec2Svc.RevokeSecurityGroupEgress(&ec2.RevokeSecurityGroupEgressInput{
 				GroupId:       aws.String(*secGroupMentioningOrphan.GroupId),
@@ -199,9 +198,23 @@ func testLBDeletion(h *helper.H) {
 				})
 				Expect(err).NotTo(HaveOccurred())
 
-				// delete old LB's security groups, otherwise they'll leak
-				err = deleteSecGroupReferencesToOrphans(awsSession, orphanSecGroupIds)
+				// old LB's security groups ("orphans") will leak if not explicitly deleted
+				// first, delete sec group rule references to the orphans
+				ec2Svc := ec2.New(awsSession)
+				err = deleteSecGroupReferencesToOrphans(ec2Svc, orphanSecGroupIds)
 				Expect(err).NotTo(HaveOccurred())
+
+				// then delete the orphaned sec groups themselves
+				for _, orphanSecGroupId := range orphanSecGroupIds {
+					_, err := ec2Svc.DeleteSecurityGroup(&ec2.DeleteSecurityGroupInput{
+						GroupId: aws.String(*orphanSecGroupId),
+					})
+					if err != nil {
+						log.Printf("Failed to delete security group %s: %s", *orphanSecGroupId, err)
+					} else {
+						log.Printf("Deleted orphaned security group %s", *orphanSecGroupId)
+					}
+				}
 			}, 600)
 		}
 
