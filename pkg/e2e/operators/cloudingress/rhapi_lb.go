@@ -86,6 +86,62 @@ func getLBForService(h *helper.H, namespace string, service string, idtype strin
 	return ingressList[0].Hostname[0:32], nil
 }
 
+// deleteSecGroupReferencesToOrphans deletes any security group rules referencing the provided
+// security group IDs (assumed to be those of security groups "orphaned" by LB deletion)
+func deleteSecGroupReferencesToOrphans(awsSession *session.Session, orphanSecGroupIds []*string) (error) {
+	ec2Svc := ec2.New(awsSession)
+	for _, orphanSecGroupId := range orphanSecGroupIds {
+		// list all sec groups with in/outbound rules referring to our orphans
+		secGroupsMentioningOrphanDesc, err := ec2Svc.DescribeSecurityGroups(&ec2.DescribeSecurityGroupsInput{
+			Filters: []*ec2.Filter{
+				{
+					Name:   aws.String("egress.ip-permission.group-id"),
+					Values: []*string{aws.String(*orphanSecGroupId)},
+				},
+				{
+					Name:   aws.String("ip-permission.group-id"),
+					Values: []*string{aws.String(*orphanSecGroupId)},
+				},
+			},
+		})
+		if err != nil {
+			return err
+		}
+
+		// now that we know which sec groups mention the orphan, we can modify them to remove
+		// the referencing rules
+		for _, secGroupMentioningOrphan := range secGroupsMentioningOrphanDesc.SecurityGroups {
+			// define an "IpPermissions" pattern that matches all rules referencing orphan
+			orphanSecGroupIpPermissions := []*ec2.IpPermission{
+				{
+					UserIdGroupPairs: []*ec2.UserIdGroupPair{
+						{GroupId: aws.String(*orphanSecGroupId)},
+					},
+				},
+			}
+			
+			// delete all egress rules matching pattern
+			_, err = ec2Svc.RevokeSecurityGroupEgress(&ec2.RevokeSecurityGroupEgressInput{
+				GroupId:       aws.String(*secGroupMentioningOrphan.GroupId),
+				IpPermissions: orphanSecGroupIpPermissions,
+			})
+			if err != nil {
+				return err
+			}
+
+			// delete all ingress rules matching pattern
+			_, err = ec2Svc.RevokeSecurityGroupIngress(&ec2.RevokeSecurityGroupIngressInput{
+				GroupId:       aws.String(*secGroupMentioningOrphan.GroupId),
+				IpPermissions: orphanSecGroupIpPermissions,
+			})
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
 // testLBDeletion deletes the load balancer of rh-api service and ensures that cloud-ingress-operator recreates it
 func testLBDeletion(h *helper.H) {
 	ginkgo.Context("rh-api-lb-test", func() {
@@ -115,7 +171,7 @@ func testLBDeletion(h *helper.H) {
 					LoadBalancerNames: []*string{aws.String(oldLBName)},
 				})
 				Expect(err).NotTo(HaveOccurred())
-				oldLBSecGroups := oldLBDesc.LoadBalancerDescriptions[0].SecurityGroups
+				orphanSecGroupIds := oldLBDesc.LoadBalancerDescriptions[0].SecurityGroups
 
 				_, err = lb.DeleteLoadBalancer(input)
 
@@ -144,20 +200,8 @@ func testLBDeletion(h *helper.H) {
 				Expect(err).NotTo(HaveOccurred())
 
 				// delete old LB's security groups, otherwise they'll leak
-				// TODO: first use DescribeSecurityGroups to list all SGs, then iterate
-				// over them, using DescribeSecurityGroupRules to look for rules that 
-				// reference our orphan. Finally, delete the rules making the reference
-				ec2Svc := ec2.New(awsSession)
-				for _, secGroup := range oldLBSecGroups {
-					_, err := ec2Svc.DeleteSecurityGroup(&ec2.DeleteSecurityGroupInput{
-						GroupId: aws.String(*secGroup),
-					})
-					if err != nil {
-						log.Printf("Failed to delete security group %s: %s", *secGroup, err)
-					} else {
-						log.Printf("Deleted orphaned security group %s", *secGroup)
-					}
-				}
+				err = deleteSecGroupReferencesToOrphans(awsSession, orphanSecGroupIds)
+				Expect(err).NotTo(HaveOccurred())
 			}, 600)
 		}
 
