@@ -6,10 +6,37 @@
     <description>Recent content in weather-report on OSDe2e Reporting</description>
     <generator>Hugo -- gohugo.io</generator>
     <copyright>Copyright © 2020, Red Hat, all rights reserved.</copyright>
-    <lastBuildDate>Mon, 11 Jul 2022 12:00:58 +0000</lastBuildDate>
+    <lastBuildDate>Tue, 12 Jul 2022 12:00:47 +0000</lastBuildDate>
     
 	<atom:link href="https://openshift.github.io/osde2e/tags/weather-report/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>OSDe2e gcp Weather Report 2022-07-12 12:00:47.007930514 &#43;0000 UTC</title>
+      <link>https://openshift.github.io/osde2e/post/e1071ff922f74aeca052686d2f71a6ab/</link>
+      <pubDate>Tue, 12 Jul 2022 12:00:47 +0000</pubDate>
+      
+      <guid>https://openshift.github.io/osde2e/post/e1071ff922f74aeca052686d2f71a6ab/</guid>
+      <description>&lt;table class=&#34;summary&#34;&gt;&lt;/table&gt;</description>
+    </item>
+    
+    <item>
+      <title>OSDe2e moa Weather Report 2022-07-12 12:00:47.762641979 &#43;0000 UTC</title>
+      <link>https://openshift.github.io/osde2e/post/a6dcde6ddd9649e183f1f45daa172ee1/</link>
+      <pubDate>Tue, 12 Jul 2022 12:00:47 +0000</pubDate>
+      
+      <guid>https://openshift.github.io/osde2e/post/a6dcde6ddd9649e183f1f45daa172ee1/</guid>
+      <description>&lt;table class=&#34;summary&#34;&gt;&lt;/table&gt;</description>
+    </item>
+    
+    <item>
+      <title>OSDe2e aws Weather Report 2022-07-12 12:00:46.426357826 &#43;0000 UTC</title>
+      <link>https://openshift.github.io/osde2e/post/1a56bfde947c4939ba54d6adea90083b/</link>
+      <pubDate>Tue, 12 Jul 2022 12:00:46 +0000</pubDate>
+      
+      <guid>https://openshift.github.io/osde2e/post/1a56bfde947c4939ba54d6adea90083b/</guid>
+      <description>&lt;table class=&#34;summary&#34;&gt;&lt;/table&gt;</description>
+    </item>
     
     <item>
       <title>OSDe2e gcp Weather Report 2022-07-11 12:00:58.375055915 &#43;0000 UTC</title>
