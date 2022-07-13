@@ -29,7 +29,7 @@ import (
 	"google.golang.org/api/option"
 )
 
-var _ = ginkgo.Describe(constants.SuiteDummy+TestPrefix, func() {
+var _ = ginkgo.Describe(constants.SuiteOperators+TestPrefix, func() {
 	ginkgo.BeforeEach(func() {
 		if viper.GetBool("rosa.STS") {
 			ginkgo.Skip("Cluster is STS. For now we skip rh-api LB reconcile test for STS")
