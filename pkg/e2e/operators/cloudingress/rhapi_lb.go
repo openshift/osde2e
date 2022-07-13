@@ -28,7 +28,7 @@ import (
 	"google.golang.org/api/option"
 )
 
-var _ = ginkgo.Describe(constants.SuiteOperators+TestPrefix, func() {
+var _ = ginkgo.Describe(constants.SuiteDummy+TestPrefix, func() {
 	ginkgo.BeforeEach(func() {
 		if viper.GetBool("rosa.STS") {
 			ginkgo.Skip("Cluster is STS. For now we skip rh-api LB reconcile test for STS")
@@ -92,16 +92,16 @@ func deleteSecGroupReferencesToOrphans(ec2Svc *ec2.EC2, orphanSecGroupIds []*str
 	for _, orphanSecGroupId := range orphanSecGroupIds {
 		// list all sec groups with in/outbound rules referring to our orphans
 		secGroupsMentioningOrphanDesc, err := ec2Svc.DescribeSecurityGroups(&ec2.DescribeSecurityGroupsInput{
-			Filters: []*ec2.Filter{
-				{
-					Name:   aws.String("egress.ip-permission.group-id"),
-					Values: []*string{aws.String(*orphanSecGroupId)},
-				},
-				{
-					Name:   aws.String("ip-permission.group-id"),
-					Values: []*string{aws.String(*orphanSecGroupId)},
-				},
-			},
+			// Filters: []*ec2.Filter{
+			// 	{
+			// 		Name:   aws.String("egress.ip-permission.group-id"),
+			// 		Values: []*string{aws.String(*orphanSecGroupId)},
+			// 	},
+			// 	{
+			// 		Name:   aws.String("ip-permission.group-id"),
+			// 		Values: []*string{aws.String(*orphanSecGroupId)},
+			// 	},
+			// },
 		})
 		if err != nil {
 			return err
@@ -113,9 +113,8 @@ func deleteSecGroupReferencesToOrphans(ec2Svc *ec2.EC2, orphanSecGroupIds []*str
 			// define an "IpPermissions" pattern that matches all rules referencing orphan
 			orphanSecGroupIpPermissions := []*ec2.IpPermission{
 				{
-					UserIdGroupPairs: []*ec2.UserIdGroupPair{
-						{GroupId: aws.String(*orphanSecGroupId)},
-					},
+					IpProtocol:       aws.String("-1"), // Means "all protocols"
+					UserIdGroupPairs: []*ec2.UserIdGroupPair{{GroupId: aws.String(*orphanSecGroupId)}},
 				},
 			}
 
@@ -124,8 +123,8 @@ func deleteSecGroupReferencesToOrphans(ec2Svc *ec2.EC2, orphanSecGroupIds []*str
 				GroupId:       aws.String(*secGroupMentioningOrphan.GroupId),
 				IpPermissions: orphanSecGroupIpPermissions,
 			})
-			if err != nil {
-				return err
+			if err == nil {
+				log.Printf("Removed egress rule mentioning orphan from %s", *secGroupMentioningOrphan.GroupId)
 			}
 
 			// delete all ingress rules matching pattern
@@ -133,8 +132,8 @@ func deleteSecGroupReferencesToOrphans(ec2Svc *ec2.EC2, orphanSecGroupIds []*str
 				GroupId:       aws.String(*secGroupMentioningOrphan.GroupId),
 				IpPermissions: orphanSecGroupIpPermissions,
 			})
-			if err != nil {
-				return err
+			if err == nil {
+				log.Printf("Removed ingress rule mentioning orphan from %s", *secGroupMentioningOrphan.GroupId)
 			}
 		}
 	}
