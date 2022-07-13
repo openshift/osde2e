@@ -17,6 +17,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ec2"
@@ -88,28 +89,17 @@ func getLBForService(h *helper.H, namespace string, service string, idtype strin
 
 // deleteSecGroupReferencesToOrphans deletes any security group rules referencing the provided
 // security group IDs (assumed to be those of security groups "orphaned" by LB deletion)
-func deleteSecGroupReferencesToOrphans(ec2Svc *ec2.EC2, orphanSecGroupIds []*string) (error) {
+func deleteSecGroupReferencesToOrphans(ec2Svc *ec2.EC2, orphanSecGroupIds []*string) error {
 	for _, orphanSecGroupId := range orphanSecGroupIds {
-		// list all sec groups with in/outbound rules referring to our orphans
-		secGroupsMentioningOrphanDesc, err := ec2Svc.DescribeSecurityGroups(&ec2.DescribeSecurityGroupsInput{
-			// Filters: []*ec2.Filter{
-			// 	{
-			// 		Name:   aws.String("egress.ip-permission.group-id"),
-			// 		Values: []*string{aws.String(*orphanSecGroupId)},
-			// 	},
-			// 	{
-			// 		Name:   aws.String("ip-permission.group-id"),
-			// 		Values: []*string{aws.String(*orphanSecGroupId)},
-			// 	},
-			// },
-		})
+		// list all sec groups
+		secGroupsAll, err := ec2Svc.DescribeSecurityGroups(&ec2.DescribeSecurityGroupsInput{})
 		if err != nil {
 			return err
 		}
 
 		// now that we know which sec groups mention the orphan, we can modify them to remove
 		// the referencing rules
-		for _, secGroupMentioningOrphan := range secGroupsMentioningOrphanDesc.SecurityGroups {
+		for _, secGroup := range secGroupsAll.SecurityGroups {
 			// define an "IpPermissions" pattern that matches all rules referencing orphan
 			orphanSecGroupIpPermissions := []*ec2.IpPermission{
 				{
@@ -120,20 +110,27 @@ func deleteSecGroupReferencesToOrphans(ec2Svc *ec2.EC2, orphanSecGroupIds []*str
 
 			// delete all egress rules matching pattern
 			_, err = ec2Svc.RevokeSecurityGroupEgress(&ec2.RevokeSecurityGroupEgressInput{
-				GroupId:       aws.String(*secGroupMentioningOrphan.GroupId),
+				GroupId:       aws.String(*secGroup.GroupId),
 				IpPermissions: orphanSecGroupIpPermissions,
 			})
 			if err == nil {
-				log.Printf("Removed egress rule mentioning orphan from %s", *secGroupMentioningOrphan.GroupId)
+				log.Printf("Removed egress rule referring to orphan from %s", *secGroup.GroupId)
+			} else if err.(awserr.Error).Code() != "InvalidPermission.NotFound" {
+				// since we're iterating over all security groups, RevokeSecurityGroup*gress
+				// will often throw InvalidPermission; this is expected behavior. if a different
+				// error arises, report it
+				log.Printf("Encountered error while removing egress rule from %s: %s", *secGroup.GroupId, err)
 			}
 
 			// delete all ingress rules matching pattern
 			_, err = ec2Svc.RevokeSecurityGroupIngress(&ec2.RevokeSecurityGroupIngressInput{
-				GroupId:       aws.String(*secGroupMentioningOrphan.GroupId),
+				GroupId:       aws.String(*secGroup.GroupId),
 				IpPermissions: orphanSecGroupIpPermissions,
 			})
 			if err == nil {
-				log.Printf("Removed ingress rule mentioning orphan from %s", *secGroupMentioningOrphan.GroupId)
+				log.Printf("Removed ingress rule referring to orphan from %s", *secGroup.GroupId)
+			} else if err.(awserr.Error).Code() != "InvalidPermission.NotFound" {
+				log.Printf("Encountered error while removing ingress rule from %s: %s", *secGroup.GroupId, err)
 			}
 		}
 	}
@@ -200,6 +197,7 @@ func testLBDeletion(h *helper.H) {
 				// old LB's security groups ("orphans") will leak if not explicitly deleted
 				// first, delete sec group rule references to the orphans
 				ec2Svc := ec2.New(awsSession)
+				log.Printf("Cleaning up references to security groups orphaned by old LB deletion")
 				err = deleteSecGroupReferencesToOrphans(ec2Svc, orphanSecGroupIds)
 				Expect(err).NotTo(HaveOccurred())
 
