@@ -170,6 +170,12 @@ osde2e test --cluster-id 1ddkj9cr9j908gdlb1q5v6ld4b7ina5m \
    --skip-health-check \
    --focus-tests "RBAC Operator"
 ```
+
+Optionally, you may skip cluster health check, must gather, and cluster hibernation as follows. (Using ./out/osde2e binary created from `make build`)
+
+```
+HIBERNATE_AFTER_USE=false  POLLING_TIMEOUT=1     ./out/osde2e test --cluster-id=$CLUSTER_ID  --configs stage --must-gather=False --skip-health-check  --focus-tests="rh-api-lb-test"
+```
  
 A list of commonly used CLI flags are included in [Config variables].
  
