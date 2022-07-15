@@ -17,7 +17,6 @@ import (
 	"github.com/openshift/osde2e/pkg/common/util"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/rest"
 )
 
 var mnmoOperatorTestName string = "[Suite: e2e] [OSD] Managed Node Metadata Operator"
@@ -213,14 +212,7 @@ var _ = ginkgo.Describe(mnmoOperatorTestName, ginkgo.Ordered, func() {
 
 		// build the ocm client for this specific cluster
 		clusterClient = ocm.GetConnection().ClustersMgmt().V1().Clusters().Cluster(clusterId)
-
-		// build the cluster client to interact with things on-cluster with
-		h.Impersonate(rest.ImpersonationConfig{
-			UserName: "test-user@redhat.com",
-			Groups: []string{
-				"cluster-admins",
-			},
-		})
+		h.SetServiceAccount("system:serviceaccount:%s:cluster-admin")
 		// Before everything runs, we need to create a new MachinePoolBuilder to use for OCM
 		machinePoolBuilder = ocmTypes.NewMachinePool().
 			ID(ocmMachinePoolName)
