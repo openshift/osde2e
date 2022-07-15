@@ -17,8 +17,10 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/elb"
 	"k8s.io/apimachinery/pkg/util/wait"
 
@@ -85,11 +87,61 @@ func getLBForService(h *helper.H, namespace string, service string, idtype strin
 	return ingressList[0].Hostname[0:32], nil
 }
 
+// deleteSecGroupReferencesToOrphans deletes any security group rules referencing the provided
+// security group IDs (assumed to be those of security groups "orphaned" by LB deletion)
+func deleteSecGroupReferencesToOrphans(ec2Svc *ec2.EC2, orphanSecGroupIds []*string) error {
+	for _, orphanSecGroupId := range orphanSecGroupIds {
+		// list all sec groups
+		secGroupsAll, err := ec2Svc.DescribeSecurityGroups(&ec2.DescribeSecurityGroupsInput{})
+		if err != nil {
+			return err
+		}
+
+		// now that we know which sec groups mention the orphan, we can modify them to remove
+		// the referencing rules
+		for _, secGroup := range secGroupsAll.SecurityGroups {
+			// define an "IpPermissions" pattern that matches all rules referencing orphan
+			orphanSecGroupIpPermissions := []*ec2.IpPermission{
+				{
+					IpProtocol:       aws.String("-1"), // Means "all protocols"
+					UserIdGroupPairs: []*ec2.UserIdGroupPair{{GroupId: aws.String(*orphanSecGroupId)}},
+				},
+			}
+
+			// delete all egress rules matching pattern
+			_, err = ec2Svc.RevokeSecurityGroupEgress(&ec2.RevokeSecurityGroupEgressInput{
+				GroupId:       aws.String(*secGroup.GroupId),
+				IpPermissions: orphanSecGroupIpPermissions,
+			})
+			if err == nil {
+				log.Printf("Removed egress rule referring to orphan from %s", *secGroup.GroupId)
+			} else if err.(awserr.Error).Code() != "InvalidPermission.NotFound" {
+				// since we're iterating over all security groups, RevokeSecurityGroup*gress
+				// will often throw InvalidPermission; this is expected behavior. if a different
+				// error arises, report it
+				log.Printf("Encountered error while removing egress rule from %s: %s", *secGroup.GroupId, err)
+			}
+
+			// delete all ingress rules matching pattern
+			_, err = ec2Svc.RevokeSecurityGroupIngress(&ec2.RevokeSecurityGroupIngressInput{
+				GroupId:       aws.String(*secGroup.GroupId),
+				IpPermissions: orphanSecGroupIpPermissions,
+			})
+			if err == nil {
+				log.Printf("Removed ingress rule referring to orphan from %s", *secGroup.GroupId)
+			} else if err.(awserr.Error).Code() != "InvalidPermission.NotFound" {
+				log.Printf("Encountered error while removing ingress rule from %s: %s", *secGroup.GroupId, err)
+			}
+		}
+	}
+	return nil
+}
+
 // testLBDeletion deletes the load balancer of rh-api service and ensures that cloud-ingress-operator recreates it
 func testLBDeletion(h *helper.H) {
 	ginkgo.Context("rh-api-lb-test", func() {
 
-			if viper.GetString(config.CloudProvider.CloudProviderID) == "aws" {
+		if viper.GetString(config.CloudProvider.CloudProviderID) == "aws" {
 			util.GinkgoIt("manually deleted LB should be recreated in AWS", func() {
 				awsAccessKey := viper.GetString("ocm.aws.accessKey")
 				awsSecretKey := viper.GetString("ocm.aws.secretKey")
@@ -98,7 +150,7 @@ func testLBDeletion(h *helper.H) {
 				// getLoadBalancer name currently associated with rh-api service
 				oldLBName, err := getLBForService(h, "openshift-kube-apiserver", "rh-api", "hostname")
 				Expect(err).NotTo(HaveOccurred())
-				log.Printf("Old LB name %s ",oldLBName)
+				log.Printf("Old LB name %s ", oldLBName)
 
 				// delete the load balancer in aws
 				awsSession, err := session.NewSession(aws.NewConfig().WithCredentials(credentials.NewStaticCredentials(awsAccessKey, awsSecretKey, "")).WithRegion(awsRegion))
@@ -109,11 +161,17 @@ func testLBDeletion(h *helper.H) {
 					LoadBalancerName: aws.String(oldLBName),
 				}
 
-				_ , err = lb.DeleteLoadBalancer(input)
+				// must store security groups associated with LB so we can delete them
+				oldLBDesc, err := lb.DescribeLoadBalancers(&elb.DescribeLoadBalancersInput{
+					LoadBalancerNames: []*string{aws.String(oldLBName)},
+				})
+				Expect(err).NotTo(HaveOccurred())
+				orphanSecGroupIds := oldLBDesc.LoadBalancerDescriptions[0].SecurityGroups
+
+				_, err = lb.DeleteLoadBalancer(input)
 
 				Expect(err).NotTo(HaveOccurred())
-				log.Printf("Old LB deleted" )
-
+				log.Printf("Old LB deleted")
 
 				// wait for the new LB to be created
 				err = wait.PollImmediate(15*time.Second, 5*time.Minute, func() (bool, error) {
@@ -127,7 +185,7 @@ func testLBDeletion(h *helper.H) {
 					}
 					if newLBName != oldLBName {
 						// the LB was successfully recreated
-						log.Printf("New LB found. LB name: %s",newLBName)
+						log.Printf("New LB found. LB name: %s", newLBName)
 						return true, nil
 					}
 					// the rh-api svc hasn't been deleted yet
@@ -135,6 +193,25 @@ func testLBDeletion(h *helper.H) {
 					return false, nil
 				})
 				Expect(err).NotTo(HaveOccurred())
+
+				// old LB's security groups ("orphans") will leak if not explicitly deleted
+				// first, delete sec group rule references to the orphans
+				ec2Svc := ec2.New(awsSession)
+				log.Printf("Cleaning up references to security groups orphaned by old LB deletion")
+				err = deleteSecGroupReferencesToOrphans(ec2Svc, orphanSecGroupIds)
+				Expect(err).NotTo(HaveOccurred())
+
+				// then delete the orphaned sec groups themselves
+				for _, orphanSecGroupId := range orphanSecGroupIds {
+					_, err := ec2Svc.DeleteSecurityGroup(&ec2.DeleteSecurityGroupInput{
+						GroupId: aws.String(*orphanSecGroupId),
+					})
+					if err != nil {
+						log.Printf("Failed to delete security group %s: %s", *orphanSecGroupId, err)
+					} else {
+						log.Printf("Deleted orphaned security group %s", *orphanSecGroupId)
+					}
+				}
 			}, 600)
 		}
 
