@@ -20,11 +20,11 @@ ifndef $(GOPATH)
 endif
 
 check: shellcheck vipercheck diffproviders.txt diffreporters.txt
-	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(shell go env GOPATH)/bin v1.23.8
+	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(shell go env GOPATH)/bin v1.46.2
 	(cd "$(DIR)"; golangci-lint run -c .golang-ci.yml ./...)
 	cmp -s diffproviders.txt "$(DIR)pkg/common/providers/providers_generated.go"
 	cmp -s diffreporters.txt "$(DIR)pkg/reporting/reporters/reporters_generated.go"
-	
+
 	CGO_ENABLED=0 go test -v $(PKG)/cmd/... $(PKG)/pkg/...
 
 shellcheck:
