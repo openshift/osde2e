@@ -258,7 +258,7 @@ var _ = ginkgo.Describe(mnmoOperatorTestName, ginkgo.Ordered, func() {
 			}
 			err = waitFor(test, h, machineSetName)
 			Expect(err).NotTo(HaveOccurred())
-		}, 30)
+		}, 60)
 
 		util.GinkgoIt("Updates the label on the Nodes and Machines with a new value", func() {
 			labels := map[string]string{
@@ -288,7 +288,7 @@ var _ = ginkgo.Describe(mnmoOperatorTestName, ginkgo.Ordered, func() {
 			}
 			err = waitFor(test, h, machineSetName)
 			Expect(err).NotTo(HaveOccurred())
-		}, 30)
+		}, 60)
 
 		util.GinkgoIt("Adds a second label to the nodes and machines", func() {
 			labels := map[string]string{
@@ -328,7 +328,7 @@ var _ = ginkgo.Describe(mnmoOperatorTestName, ginkgo.Ordered, func() {
 			}
 			err = waitFor(test, h, machineSetName)
 			Expect(err).NotTo(HaveOccurred())
-		}, 30)
+		}, 60)
 
 		util.GinkgoIt("Removes a single label from the nodes and machines", func() {
 			labels := map[string]string{
@@ -364,7 +364,7 @@ var _ = ginkgo.Describe(mnmoOperatorTestName, ginkgo.Ordered, func() {
 			}
 			err = waitFor(test, h, machineSetName)
 			Expect(err).NotTo(HaveOccurred())
-		}, 30)
+		}, 60)
 
 		util.GinkgoIt("Removes all labels from nodes and machines", func() {
 			labels := map[string]string{}
@@ -392,7 +392,7 @@ var _ = ginkgo.Describe(mnmoOperatorTestName, ginkgo.Ordered, func() {
 			}
 			err = waitFor(test, h, machineSetName)
 			Expect(err).NotTo(HaveOccurred())
-		}, 30)
+		}, 60)
 	})
 
 	ginkgo.Context("When adding a Taint to a MachinePool", ginkgo.Ordered, func() {
@@ -435,7 +435,7 @@ var _ = ginkgo.Describe(mnmoOperatorTestName, ginkgo.Ordered, func() {
 			}
 			err = waitFor(test, h, machineSetName)
 			Expect(err).NotTo(HaveOccurred())
-		}, 30)
+		}, 60)
 
 		util.GinkgoIt("Updates the taint on the Nodes and Machines with a new value", func() {
 			testTaint := ocmTypes.NewTaint().Key(TestTaintKeyOne).Value(TestTaintValueOneUpdated).Effect(TestTaintEffectOne)
@@ -469,7 +469,7 @@ var _ = ginkgo.Describe(mnmoOperatorTestName, ginkgo.Ordered, func() {
 			}
 			err = waitFor(test, h, machineSetName)
 			Expect(err).NotTo(HaveOccurred())
-		}, 30)
+		}, 60)
 
 		util.GinkgoIt("Adds a second taint to the nodes and machines", func() {
 			testTaint := ocmTypes.NewTaint().Key(TestTaintKeyOne).Value(TestTaintValueOneUpdated).Effect(TestTaintEffectOne)
@@ -513,7 +513,7 @@ var _ = ginkgo.Describe(mnmoOperatorTestName, ginkgo.Ordered, func() {
 			}
 			err = waitFor(test, h, machineSetName)
 			Expect(err).NotTo(HaveOccurred())
-		}, 30)
+		}, 60)
 
 		util.GinkgoIt("Removes a single taint from the nodes and machines", func() {
 			testTaintTwo := ocmTypes.NewTaint().Key(TestTaintKeyTwo).Value(TestTaintValueTwo).Effect(TestTaintEffectTwo)
@@ -551,7 +551,7 @@ var _ = ginkgo.Describe(mnmoOperatorTestName, ginkgo.Ordered, func() {
 			}
 			err = waitFor(test, h, machineSetName)
 			Expect(err).NotTo(HaveOccurred())
-		}, 30)
+		}, 60)
 
 		util.GinkgoIt("Removes all taints from nodes and machines", func() {
 			machinePool, err := machinePoolBuilder.Taints().Build()
@@ -584,6 +584,6 @@ var _ = ginkgo.Describe(mnmoOperatorTestName, ginkgo.Ordered, func() {
 			}
 			err = waitFor(test, h, machineSetName)
 			Expect(err).NotTo(HaveOccurred())
-		}, 30)
+		}, 60)
 	})
 })
