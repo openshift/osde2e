@@ -13,10 +13,10 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/openshift/osde2e/pkg/common/helper"
-	"github.com/openshift/osde2e/pkg/common/config"
-	"github.com/prometheus/client_golang/api"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
+	"github.com/openshift/osde2e/pkg/common/config"
+	"github.com/openshift/osde2e/pkg/common/helper"
+	"github.com/prometheus/client_golang/api"
 )
 
 // CreateClient will create a Prometheus client.
@@ -94,28 +94,23 @@ func getClusterPrometheusHost(h *helper.H) (*string, error) {
 }
 
 func getClusterPrometheusToken(h *helper.H) (*string, error) {
-	sa, err := h.Kube().CoreV1().ServiceAccounts("openshift-monitoring").Get(context.TODO(), "prometheus-k8s", metav1.GetOptions{})
+
+	secrets, err := h.Kube().CoreV1().Secrets("openshift-monitoring").List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
-		return nil, fmt.Errorf("Unable to fetch prometheus-k8s service account: %s", err)
+		return nil, fmt.Errorf("Unable to fetch secrets in openshift-monitoring")
 	}
 
-	tokenSecret := ""
-	for _, secret := range sa.Secrets {
+	stringToken := ""
+	for _, secret := range secrets.Items {
 		if strings.HasPrefix(secret.Name, "prometheus-k8s-token") {
-			tokenSecret = secret.Name
+			token := secret.Data[corev1.ServiceAccountTokenKey]
+			stringToken = string(token)
+			break
 		}
 	}
-	if len(tokenSecret) == 0 {
+	if len(stringToken) == 0 {
 		return nil, fmt.Errorf("Failed to find token secret for prometheus-k8s SA")
 	}
-
-	secret, err := h.Kube().CoreV1().Secrets("openshift-monitoring").Get(context.TODO(), tokenSecret, metav1.GetOptions{})
-	if err != nil {
-		return nil, fmt.Errorf("Unable to fetch secret %s: %s", tokenSecret, err)
-	}
-
-	token := secret.Data[corev1.ServiceAccountTokenKey]
-	stringToken := string(token)
 
 	return &stringToken, nil
 }
