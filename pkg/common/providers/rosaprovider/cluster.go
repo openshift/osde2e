@@ -23,7 +23,6 @@ import (
 	"github.com/openshift/rosa/pkg/aws"
 	"github.com/openshift/rosa/pkg/logging"
 	"github.com/openshift/rosa/pkg/ocm"
-	rprtr "github.com/openshift/rosa/pkg/reporter"
 )
 
 // IsValidClusterName validates the clustername prior to proceeding with it
@@ -151,11 +150,7 @@ func (m *ROSAProvider) LaunchCluster(clusterName string) (string, error) {
 
 	err = callAndSetAWSSession(func() error {
 		// Retrieve AWS Account info
-		logger, err := logging.NewLogger().
-			Build()
-		if err != nil {
-			return fmt.Errorf("unable to create AWS logger: %v", err)
-		}
+		logger := logging.NewLogger()
 
 		awsClient, err := aws.NewClient().
 			Logger(logger).
@@ -394,8 +389,7 @@ func (m *ROSAProvider) ocmLogin() (*ocm.Client, error) {
 		return nil, fmt.Errorf("unable to login to OCM: %s", err.Error())
 	}
 
-	reporter := rprtr.CreateReporterOrExit()
-	logger := logging.CreateLoggerOrExit(reporter)
+	logger := logging.NewLogger()
 
 	ocmClient, err := ocm.NewClient().Logger(logger).Build()
 	if err != nil {
