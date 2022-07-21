@@ -95,22 +95,23 @@ func getClusterPrometheusHost(h *helper.H) (*string, error) {
 
 func getClusterPrometheusToken(h *helper.H) (*string, error) {
 
-	secrets, err := h.Kube().CoreV1().Secrets("openshift-monitoring").List(context.TODO(), metav1.ListOptions{})
+	secretList, err := h.Kube().CoreV1().Secrets("openshift-monitoring").List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
-		return nil, fmt.Errorf("Unable to fetch secrets in openshift-monitoring")
+		return nil, fmt.Errorf("Error listing secrets: %s", err.Error())
 	}
 
-	stringToken := ""
-	for _, secret := range secrets.Items {
+	token := ""
+	for _, secret := range secretList.Items {
 		if strings.HasPrefix(secret.Name, "prometheus-k8s-token") {
-			token := secret.Data[corev1.ServiceAccountTokenKey]
-			stringToken = string(token)
+			tokenData := secret.Data[corev1.ServiceAccountTokenKey]
+			token = string(tokenData)
 			break
 		}
 	}
-	if len(stringToken) == 0 {
+
+	if len(token) == 0 {
 		return nil, fmt.Errorf("Failed to find token secret for prometheus-k8s SA")
 	}
 
-	return &stringToken, nil
+	return &token, nil
 }
