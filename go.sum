@@ -1471,8 +1471,8 @@ github.com/openshift/operator-custom-metrics v0.4.2/go.mod h1:pF8VqYYaJrZo780/eb
 github.com/openshift/origin v0.0.0-20160503220234-8f127d736703 h1:KLVRXtjLhZHVtrcdnuefaI2Bf182EEiTfEVDHokoyng=
 github.com/openshift/origin v0.0.0-20160503220234-8f127d736703/go.mod h1:0Rox5r9C8aQn6j1oAOQ0c1uC86mYbUFObzjBRvUKHII=
 github.com/openshift/prom-label-proxy v0.1.1-0.20191016113035-b8153a7f39f1/go.mod h1:p5MuxzsYP1JPsNGwtjtcgRHHlGziCJJfztff91nNixw=
-github.com/openshift/rosa v1.2.4 h1:CZMFiJDDEsrskqexCeTtXOWXumVVsNQZVGGAn7IqBB4=
-github.com/openshift/rosa v1.2.4/go.mod h1:4cCAxzdFLlOMRAELN//oWG75iPwoPowg5NzekCYqNVU=
+github.com/openshift/rosa v1.2.5 h1:6w0CMBRxOFdizjeObGeL4Q19QXk6rt/m7OBJIrONsIE=
+github.com/openshift/rosa v1.2.5/go.mod h1:4cCAxzdFLlOMRAELN//oWG75iPwoPowg5NzekCYqNVU=
 github.com/openshift/route-monitor-operator v0.0.0-20210309123726-229da76cc133 h1:6Cr5RoyrSgaQ5184W/HX0N5k0t5P8Ru9zD83wR278Us=
 github.com/openshift/route-monitor-operator v0.0.0-20210309123726-229da76cc133/go.mod h1:ZVZAfHAN2JDYWelRwkYhvtkjR6RC1Mp/xH7Mm5n/P5A=
 github.com/openshift/runtime-utils v0.0.0-20200415173359-c45d4ff3f912/go.mod h1:0OXNy7VoqFexkxKqyQbHJLPwn1MFp1/CxRJAgKHM+/o=
