@@ -7,10 +7,10 @@ import (
 	"sync"
 	"time"
 
+	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/metrics"
 	"github.com/slack-go/slack"
-	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 )
 
 // MetricAlerts is an array of LogMetric types with an easier lookup method
@@ -19,7 +19,6 @@ type MetricAlerts []MetricAlert
 var once = sync.Once{}
 
 var metricAlerts = MetricAlerts{}
-var slackChannelCache = make(map[string]slack.Channel)
 
 // GetMetricAlerts will return the log metrics.
 func GetMetricAlerts() MetricAlerts {
@@ -134,38 +133,19 @@ func RegisterGinkgoAlert(test, team, contact, slack, email string, threshold int
 
 // SendSlackMessage sends the message text to the provided channel (if it can be found).
 func SendSlackMessage(channel, message string) error {
-	token := viper.GetString(config.Alert.SlackAPIToken)
-	if len(token) == 0 {
-		return fmt.Errorf("no slack token configured")
-	}
-	slackAPI := slack.New(token)
-	var slackChannel slack.Channel
-	var ok bool
+	var err error
+	if viper.GetBool(config.Alert.EnableAlerts) {
+		token := viper.GetString(config.Alert.SlackAPIToken)
+		if len(token) == 0 {
+			return fmt.Errorf("no slack token configured")
+		}
 
-	if slackChannel, ok = slackChannelCache[channel]; !ok {
-		cursor := ""
-		for {
-			channels, nextCursor, err := slackAPI.GetConversations(&slack.GetConversationsParameters{Cursor: cursor})
-			if err != nil {
-				return err
-			}
-			for _, c := range channels {
-				slackChannelCache[c.Name] = c
-				if c.Name == channel {
-					slackChannel = c
-				}
-			}
-			if nextCursor == "" {
-				break
-			}
-			cursor = nextCursor
+		slackAPI := slack.New(token)
+		_, _, _, err = slackAPI.SendMessage(channel, slack.MsgOptionText(message, false))
+		if err != nil {
+			return fmt.Errorf("error sending slack message: %v", err)
 		}
 	}
 
-	if slackChannel.ID == "" {
-		return fmt.Errorf("no slack channel named `%s` found", channel)
-	}
-
-	_, _, err := slackAPI.PostMessage(slackChannel.ID, slack.MsgOptionText(message, false))
-	return err
+	return nil
 }

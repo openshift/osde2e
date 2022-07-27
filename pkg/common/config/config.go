@@ -509,6 +509,10 @@ var Prometheus = struct {
 
 // Alert config keys.
 var Alert = struct {
+	// EnableAlerts is a boolean to indicate whether alerts should be enabled or not.
+	// Env: ENABLE_ALERTS
+	EnableAlerts string
+
 	// SlackAPIToken is a bot slack token
 	// Env: SLACK_API_TOKEN
 	SlackAPIToken string
@@ -521,6 +525,7 @@ var Alert = struct {
 	// Env: PAGERDUTY_API_TOKEN
 	PagerDutyUserToken string
 }{
+	EnableAlerts:       "alert.EnableAlerts",
 	SlackAPIToken:      "alert.slackAPIToken",
 	PagerDutyAPIToken:  "alert.pagerDutyAPIToken",
 	PagerDutyUserToken: "alert.pagerDutyUserToken",
@@ -801,6 +806,9 @@ func InitViper() {
 	viper.BindEnv(Prometheus.BearerToken, "PROMETHEUS_BEARER_TOKEN")
 
 	// ----- Alert ----
+	viper.BindEnv(Alert.EnableAlerts, "ENABLE_ALERTS")
+	viper.SetDefault(Alert.EnableAlerts, false)
+
 	viper.BindEnv(Alert.SlackAPIToken, "SLACK_API_TOKEN")
 	RegisterSecret(Alert.SlackAPIToken, "slack-api-token")
 
@@ -840,7 +848,7 @@ func InitViper() {
 
 	viper.BindEnv(Proxy.UserCABundle, "USER_CA_BUNDLE")
 	RegisterSecret(Proxy.UserCABundle, "user-ca-bundle")
-	
+
 }
 
 func init() {
