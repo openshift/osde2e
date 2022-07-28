@@ -20,12 +20,14 @@ import (
 	"k8s.io/client-go/rest"
 )
 
-var mnmoOperatorTestName string = "[Suite: e2e] [OSD] Managed Node Metadata Operator"
+var mnmoOperatorTestName string = "[Suite: informing] [OSD] Managed Node Metadata Operator"
 
 const (
-	ocmMachinePoolName                       = "osde2e-test"
-	MaxIndividualTestTimeout   time.Duration = 30 * time.Second
-	MaxMachinePoolInitWaitTime time.Duration = 5 * time.Minute
+	ocmMachinePoolName = "osde2e-test"
+	// The max time for an individual test to timeout before considering the test a failure in seconds
+	maxIndividualTestTimeout = 60
+	// The max time to wait for the MachinePool to have at least one ready node in seconds
+	maxMachinePoolInitWaitTime = 600
 )
 
 func init() {
@@ -51,7 +53,7 @@ func ensureMachinePoolExists(clusterClient *ocmTypes.ClusterClient, h *helper.H)
 
 		createPlainMachinePool(clusterClient, machinePool)
 	}
-	machineSet, err := waitForMachinePoolNodesReady(MaxMachinePoolInitWaitTime, h)
+	machineSet, err := waitForMachinePoolNodesReady(maxMachinePoolInitWaitTime, h)
 	Expect(err).NotTo(HaveOccurred())
 
 	return machineSet.Name
@@ -84,7 +86,7 @@ func waitForMachinePoolNodesReady(timeout time.Duration, h *helper.H) (*machinev
 		// ready node.
 		return machineSet, nil
 	}
-	return &machinev1.MachineSet{}, fmt.Errorf("Timed Out waiting for MachinePool Nodes to become Ready")
+	return &machinev1.MachineSet{}, fmt.Errorf("Timed Out waiting for MachinePool Nodes to become Ready, this might not indicate an error with the operator but could be a networking issue between OCM, Hive, AWS, etc")
 }
 
 func getMachineSet(h *helper.H) (*machinev1.MachineSet, error) {
@@ -229,6 +231,29 @@ var _ = ginkgo.Describe(mnmoOperatorTestName, ginkgo.Ordered, func() {
 		ginkgo.DeferCleanup(deleteMachinePool, clusterClient)
 	})
 
+	ginkgo.Context("Spin up the new MachinePool", func() {
+		// This test just is a specific test to indicate any problems
+		// with spinning up the machinepool and not specific to the
+		// managed-node-metadata-operator
+		test := MNMOTest{
+			interval: 2 * time.Second,
+			timeout:  maxMachinePoolInitWaitTime,
+			test: func(nodeList []*corev1.Node) (bool, error) {
+				for i := range nodeList {
+					if nodeList[i].Status.Phase == "Running" {
+						// methinks that this should be good enough, there's already a healthcheck
+						// in the BeforeAll function that checks to see that at least one node is
+						// ready, and this test is just to explicitly wait here for it.
+						return true, nil
+					}
+				}
+				return false, nil
+			},
+		}
+		err := waitFor(test, h, machineSetName)
+		Expect(err).NotTo(HaveOccurred())
+	}, maxMachinePoolInitWaitTime)
+
 	ginkgo.Context("When adding a label to a MachineSet", ginkgo.Ordered, func() {
 
 		var (
@@ -266,7 +291,7 @@ var _ = ginkgo.Describe(mnmoOperatorTestName, ginkgo.Ordered, func() {
 			}
 			err = waitFor(test, h, machineSetName)
 			Expect(err).NotTo(HaveOccurred())
-		}, 30)
+		}, maxIndividualTestTimeout)
 
 		util.GinkgoIt("Updates the label on the Nodes and Machines with a new value", func() {
 			labels := map[string]string{
@@ -296,7 +321,7 @@ var _ = ginkgo.Describe(mnmoOperatorTestName, ginkgo.Ordered, func() {
 			}
 			err = waitFor(test, h, machineSetName)
 			Expect(err).NotTo(HaveOccurred())
-		}, 30)
+		}, maxIndividualTestTimeout)
 
 		util.GinkgoIt("Adds a second label to the nodes and machines", func() {
 			labels := map[string]string{
@@ -336,7 +361,7 @@ var _ = ginkgo.Describe(mnmoOperatorTestName, ginkgo.Ordered, func() {
 			}
 			err = waitFor(test, h, machineSetName)
 			Expect(err).NotTo(HaveOccurred())
-		}, 30)
+		}, maxIndividualTestTimeout)
 
 		util.GinkgoIt("Removes a single label from the nodes and machines", func() {
 			labels := map[string]string{
@@ -372,7 +397,7 @@ var _ = ginkgo.Describe(mnmoOperatorTestName, ginkgo.Ordered, func() {
 			}
 			err = waitFor(test, h, machineSetName)
 			Expect(err).NotTo(HaveOccurred())
-		}, 30)
+		}, maxIndividualTestTimeout)
 
 		util.GinkgoIt("Removes all labels from nodes and machines", func() {
 			labels := map[string]string{}
@@ -400,7 +425,7 @@ var _ = ginkgo.Describe(mnmoOperatorTestName, ginkgo.Ordered, func() {
 			}
 			err = waitFor(test, h, machineSetName)
 			Expect(err).NotTo(HaveOccurred())
-		}, 30)
+		}, maxIndividualTestTimeout)
 	})
 
 	ginkgo.Context("When adding a Taint to a MachinePool", ginkgo.Ordered, func() {
@@ -443,7 +468,7 @@ var _ = ginkgo.Describe(mnmoOperatorTestName, ginkgo.Ordered, func() {
 			}
 			err = waitFor(test, h, machineSetName)
 			Expect(err).NotTo(HaveOccurred())
-		}, 30)
+		}, maxIndividualTestTimeout)
 
 		util.GinkgoIt("Updates the taint on the Nodes and Machines with a new value", func() {
 			testTaint := ocmTypes.NewTaint().Key(TestTaintKeyOne).Value(TestTaintValueOneUpdated).Effect(TestTaintEffectOne)
@@ -477,7 +502,7 @@ var _ = ginkgo.Describe(mnmoOperatorTestName, ginkgo.Ordered, func() {
 			}
 			err = waitFor(test, h, machineSetName)
 			Expect(err).NotTo(HaveOccurred())
-		}, 30)
+		}, maxIndividualTestTimeout)
 
 		util.GinkgoIt("Adds a second taint to the nodes and machines", func() {
 			testTaint := ocmTypes.NewTaint().Key(TestTaintKeyOne).Value(TestTaintValueOneUpdated).Effect(TestTaintEffectOne)
@@ -521,7 +546,7 @@ var _ = ginkgo.Describe(mnmoOperatorTestName, ginkgo.Ordered, func() {
 			}
 			err = waitFor(test, h, machineSetName)
 			Expect(err).NotTo(HaveOccurred())
-		}, 30)
+		}, maxIndividualTestTimeout)
 
 		util.GinkgoIt("Removes a single taint from the nodes and machines", func() {
 			testTaintTwo := ocmTypes.NewTaint().Key(TestTaintKeyTwo).Value(TestTaintValueTwo).Effect(TestTaintEffectTwo)
@@ -559,7 +584,7 @@ var _ = ginkgo.Describe(mnmoOperatorTestName, ginkgo.Ordered, func() {
 			}
 			err = waitFor(test, h, machineSetName)
 			Expect(err).NotTo(HaveOccurred())
-		}, 30)
+		}, maxIndividualTestTimeout)
 
 		util.GinkgoIt("Removes all taints from nodes and machines", func() {
 			machinePool, err := machinePoolBuilder.Taints().Build()
@@ -592,6 +617,6 @@ var _ = ginkgo.Describe(mnmoOperatorTestName, ginkgo.Ordered, func() {
 			}
 			err = waitFor(test, h, machineSetName)
 			Expect(err).NotTo(HaveOccurred())
-		}, 30)
+		}, maxIndividualTestTimeout)
 	})
 })
