@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"strings"
 
 	"github.com/hashicorp/go-multierror"
 	"github.com/openshift/osde2e/pkg/common/helper"
@@ -29,6 +30,10 @@ func CheckReplicaCountForDaemonSets(dsClient appsv1.AppsV1Interface, logger *log
 		for _, ds := range dsList.Items {
 			// Ignore daemonsets in the OSDE2E project
 			if helper != nil && ds.Namespace == helper.CurrentProject() {
+				continue
+			}
+			// Ignore daemonsets not managed by OSD
+			if !strings.HasPrefix(ds.Namespace, "openshift-") {
 				continue
 			}
 			if ds.Status.NumberReady != ds.Status.DesiredNumberScheduled {
@@ -62,6 +67,10 @@ func CheckReplicaCountForReplicaSets(dsClient appsv1.AppsV1Interface, logger *lo
 		for _, rs := range rsList.Items {
 			// Ignore replicasets in the OSDE2E project
 			if helper != nil && rs.Namespace == helper.CurrentProject() {
+				continue
+			}
+			// Ignore replicasets not managed by OSD
+			if !strings.HasPrefix(rs.Namespace, "openshift-") {
 				continue
 			}
 			if rs.Status.ReadyReplicas != rs.Status.Replicas {
