@@ -40,6 +40,19 @@ var _ = ginkgo.Describe(clusterStateTestName, func() {
 	defer ginkgo.GinkgoRecover()
 	h := helper.New()
 
+	ginkgo.AfterEach(func() {
+		//if spec failed, we want to send an alert
+		if ginkgo.CurrentSpecReport().Failed() {
+			metricAlert := alert.GetMetricAlerts()
+			for _, alerts := range metricAlert {
+				if alerts.Name == ginkgo.CurrentSpecReport().ContainerHierarchyTexts[0] {
+					fmt.Println(alerts.SlackChannel + " " + ginkgo.CurrentSpecReport().FailureMessage())
+					alert.SendSlackMessage(alerts.SlackChannel, ginkgo.CurrentSpecReport().FailureMessage())
+				}
+			}
+		}
+	})
+
 	alertsTimeoutInSeconds := 900
 	util.GinkgoIt("should have no alerts", func() {
 
