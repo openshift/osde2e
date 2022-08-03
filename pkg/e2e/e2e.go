@@ -288,7 +288,8 @@ func runGinkgoTests() (int, error) {
 	}
 
 	if focus := viper.GetString(config.Tests.GinkgoFocus); focus != "" {
-		suiteConfig.FocusStrings = append(suiteConfig.FocusStrings, focus)
+		focusTest := strings.Split(focus, ",")
+		suiteConfig.FocusStrings = append(suiteConfig.FocusStrings, focusTest...)
 	}
 	suiteConfig.DryRun = viper.GetBool(config.DryRun)
 
@@ -579,7 +580,7 @@ func cleanupAfterE2E(h *helper.H) (errors []error) {
 		log.Print("Gathering OLM State...")
 		h.InspectOLM()
 	}
-	
+
 	log.Print("Gathering Cluster State...")
 	clusterState := h.GetClusterState()
 	stateResults := make(map[string][]byte, len(clusterState))
