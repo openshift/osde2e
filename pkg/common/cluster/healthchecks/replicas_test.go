@@ -32,7 +32,7 @@ func testRS(name, namespace string, readyReplicas, totalReplicas int32) *appsv1.
 
 func TestCheckReplicaCountForDaemonSets(t *testing.T) {
 	const (
-		ns = "test-ns"
+		ns = "openshift-test-ns"
 	)
 	var tests = []struct {
 		description   string
@@ -45,14 +45,21 @@ func TestCheckReplicaCountForDaemonSets(t *testing.T) {
 		{"one matches", true, false, []runtime.Object{testDS("ds1", ns, 6, 6)}},
 		{"one of many does not match", false, true, []runtime.Object{testDS("ds1", ns, 4, 4), testDS("ds2", ns, 1, 5)}},
 		{"all match", true, false, []runtime.Object{testDS("ds1", ns, 1, 1), testDS("ds2", ns, 2, 2), testDS("ds3", ns, 3, 3)}},
+		{"one does not match in customer namespace", true, false, []runtime.Object{testDS("ds1", "default", 1, 3)}},
 	}
 	for _, test := range tests {
 		kubeClient := kubernetes.NewSimpleClientset(test.objs...)
 		state, err := CheckReplicaCountForDaemonSets(kubeClient.AppsV1(), nil)
-		if err != nil && !test.expectedError {
-			t.Errorf("Unexpected error: %s", err)
+		if err != nil {
+			if !test.expectedError {
+				t.Errorf("Unexpected error: %s", err)
+			}
+		} else {
+			if test.expectedError {
+				t.Error("Expected error")
+			}
 		}
-		if !state && test.expected {
+		if state != test.expected {
 			t.Errorf("%v: Expected value doesn't match returned value (%v, %v)", test.description, test.expected, state)
 		}
 	}
@@ -60,7 +67,7 @@ func TestCheckReplicaCountForDaemonSets(t *testing.T) {
 
 func TestCheckReplicaCountForReplicaSets(t *testing.T) {
 	const (
-		ns = "test-ns"
+		ns = "openshift-test-ns"
 	)
 	var tests = []struct {
 		description   string
@@ -73,14 +80,21 @@ func TestCheckReplicaCountForReplicaSets(t *testing.T) {
 		{"one matches", true, false, []runtime.Object{testRS("rs1", ns, 6, 6)}},
 		{"one of many does not match", false, true, []runtime.Object{testRS("rs1", ns, 4, 4), testRS("rs2", ns, 1, 5)}},
 		{"all match", true, false, []runtime.Object{testRS("rs1", ns, 1, 1), testRS("rs2", ns, 2, 2), testRS("rs3", ns, 3, 3)}},
+		{"one does not match in customer namespace", true, false, []runtime.Object{testRS("rs1", "default", 1, 3)}},
 	}
 	for _, test := range tests {
 		kubeClient := kubernetes.NewSimpleClientset(test.objs...)
 		state, err := CheckReplicaCountForReplicaSets(kubeClient.AppsV1(), nil)
-		if err != nil && !test.expectedError {
-			t.Errorf("Unexpected error: %s", err)
+		if err != nil {
+			if !test.expectedError {
+				t.Errorf("Unexpected error: %s", err)
+			}
+		} else {
+			if test.expectedError {
+				t.Error("Expected error")
+			}
 		}
-		if !state && test.expected {
+		if state != test.expected {
 			t.Errorf("%v: Expected value doesn't match returned value (%v, %v)", test.description, test.expected, state)
 		}
 	}
