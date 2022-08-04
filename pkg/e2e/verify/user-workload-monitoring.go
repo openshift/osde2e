@@ -69,13 +69,21 @@ var _ = ginkgo.Describe(userWorkloadMonitoringTestName, func() {
 			})
 			// Need a test to verify create/edit access to the user-workload-monitoring-config configmap
 			uwme2ecm := newUwmCm("user-workload-monitoring-config", "openshift-user-workload-monitoring", "foo:bar")
-			existingcm, err := h.Kube().CoreV1().ConfigMaps("openshift-user-workload-monitoring").Create(context.TODO(), uwme2ecm, metav1.CreateOptions{})
-			Expect(err).NotTo(HaveOccurred(), "could not create user-workload-monitoring-config configmap")
-			existingcm.Data["config.yaml"] = "2foo:2bar"
-			_, err = h.Kube().CoreV1().ConfigMaps("openshift-user-workload-monitoring").Update(context.TODO(), existingcm, metav1.UpdateOptions{})
-			Expect(err).NotTo(HaveOccurred(), "could not edit user-workload-monitoring-config configmap")
-			err = deleteUwmCM(h)
-			Expect(err).NotTo(HaveOccurred(), "could not delete user-workload-monitoring-config configmap")
+
+			existingcm, err := h.Kube().CoreV1().ConfigMaps("openshift-user-workload-monitoring").Get(context.TODO(), "user-workload-monitoring-config", metav1.GetOptions{})
+			if err != nil {
+
+				existingcm, err = h.Kube().CoreV1().ConfigMaps("openshift-user-workload-monitoring").Create(context.TODO(), uwme2ecm, metav1.CreateOptions{})
+				Expect(err).NotTo(HaveOccurred(), "could not create user-workload-monitoring-config configmap")
+				existingcm.Data["config.yaml"] = "2foo:2bar"
+				_, err = h.Kube().CoreV1().ConfigMaps("openshift-user-workload-monitoring").Update(context.TODO(), existingcm, metav1.UpdateOptions{})
+				Expect(err).NotTo(HaveOccurred(), "could not edit user-workload-monitoring-config configmap")
+				err = deleteUwmCM(h)
+				Expect(err).NotTo(HaveOccurred(), "could not delete user-workload-monitoring-config configmap")
+
+			}
+			Expect(existingcm).NotTo(BeNil(), "Configmap user-workload-monitoring-config was created")
+
 		}, viper.GetFloat64(config.Tests.PollingTimeout))
 
 		//Verify prometheus-operator pod && promethus-user-workload*/thanos-ruler-user-workload* pods are active
@@ -112,7 +120,7 @@ var _ = ginkgo.Describe(userWorkloadMonitoringTestName, func() {
 			Expect(err).NotTo(HaveOccurred(), "Could not create ServiceMonitor")
 		}, uwmPollingDuration.Seconds())
 
-	//Verify a dedicated admin can create PrometheusRule objects
+		//Verify a dedicated admin can create PrometheusRule objects
 		util.GinkgoIt("has access to create PrometheusRule objects", func() {
 			h.Impersonate(rest.ImpersonationConfig{
 				UserName: userName,
