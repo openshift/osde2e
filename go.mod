@@ -70,7 +70,7 @@ require (
 	golang.org/x/net v0.0.0-20220722155237-a158d28d115b
 	golang.org/x/oauth2 v0.0.0-20220622183110-fd043fe589d2
 	golang.org/x/tools v0.1.12
-	google.golang.org/api v0.90.0
+	google.golang.org/api v0.91.0
 	google.golang.org/genproto v0.0.0-20220624142145-8cd45d7dbd1f
 	gopkg.in/yaml.v3 v3.0.1
 	gotest.tools/v3 v3.3.0
