@@ -16,7 +16,6 @@ import (
 	"github.com/openshift/osde2e/pkg/common/util"
 
 	appsv1 "k8s.io/api/apps/v1"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	kerror "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -244,23 +243,24 @@ func checkUpgrade(h *helper.H, subNamespace string, subName string, packageName 
 
 		util.GinkgoIt("should upgrade from the replaced version", func() {
 
-			// Get the CSV we're currently installed with
 			var latestCSV string
 			var sub *operatorv1.Subscription
 			var err error
 
-			pollErr := wait.PollImmediate(5*time.Second, 5*time.Minute, func() (bool, error) {
-				sub, err = h.Operator().OperatorsV1alpha1().Subscriptions(subNamespace).Get(context.TODO(), subName, metav1.GetOptions{})
-				if err != nil {
-					return false, err
+			// The subscription must first exist on the cluster
+			sub, err = h.Operator().OperatorsV1alpha1().Subscriptions(subNamespace).Get(context.TODO(), subName, metav1.GetOptions{})
+			Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("subscription %s not found", subName))
+
+			// Get the CSV we're currently installed with
+			installedCSVs, err := h.Operator().OperatorsV1alpha1().ClusterServiceVersions(subNamespace).List(context.TODO(), metav1.ListOptions{})
+			for _, csv := range installedCSVs.Items {
+				if csv.Spec.DisplayName == packageName && csv.Status.Phase == operatorv1.CSVPhaseSucceeded {
+					latestCSV = csv.Name
 				}
-				latestCSV = sub.Status.CurrentCSV
-				if latestCSV != "" {
-					return true, nil
-				}
-				return false, nil
-			})
-			Expect(pollErr).NotTo(HaveOccurred(), fmt.Sprintf("failed trying to get Subscription %s in %s namespace: %v", subName, subNamespace, err))
+			}
+
+			// If we couldn't find a Succeeded CSV, then the operator is likely not even installed
+			Expect(latestCSV).NotTo(BeEmpty(), fmt.Sprintf("no successfully installed CSV found for subscription %s", subName))
 
 			// Get the N-1 version of the CSV to test an upgrade from
 			previousCSV, err := getReplacesCSV(h, subNamespace, packageName, regServiceName)
@@ -277,10 +277,22 @@ func checkUpgrade(h *helper.H, subNamespace string, subName string, packageName 
 			Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("failed trying to delete ClusterServiceVersion %s", latestCSV))
 			log.Printf("Removed csv %s", latestCSV)
 
-			Eventually(func() bool {
-				_, err := h.Operator().OperatorsV1alpha1().InstallPlans(subNamespace).Get(context.TODO(), sub.Status.Install.Name, metav1.GetOptions{})
-				return apierrors.IsNotFound(err)
-			}, installPlanPollingDuration, 10*time.Second).Should(BeTrue(), "installplan never garbage collected")
+			err = wait.PollImmediate(10*time.Second, installPlanPollingDuration, func() (bool, error) {
+				ips, err := h.Operator().OperatorsV1alpha1().InstallPlans(subNamespace).List(context.TODO(), metav1.ListOptions{})
+				if err != nil {
+					return false, err
+				}
+				// If an InstallPlan exists that is associated with the subscription, then the oeprator hasn't been fully removed
+				for _, ip := range ips.Items {
+					for _, csvName := range ip.Spec.ClusterServiceVersionNames {
+						if latestCSV == csvName {
+							return false, nil
+						}
+					}
+				}
+				return true, nil
+			})
+			Expect(err).NotTo(HaveOccurred(), "installplan never garbage collected")
 			log.Printf("Verified installplan removal")
 
 			// Create subscription to the previous version
@@ -315,6 +327,20 @@ func checkUpgrade(h *helper.H, subNamespace string, subName string, packageName 
 				return false, nil
 			})
 			Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("CSV %s did not eventually install successfully", latestCSV))
+
+			// Lastly, verify that the Subscription correctly reflects that the CSV is installed.
+			err = wait.PollImmediate(5*time.Second, 2*time.Minute, func() (bool, error) {
+				sub, err = h.Operator().OperatorsV1alpha1().Subscriptions(subNamespace).Get(context.TODO(), subName, metav1.GetOptions{})
+				if err != nil {
+					return false, err
+				}
+				currentCSV := sub.Status.CurrentCSV
+				if currentCSV == latestCSV {
+					return true, nil
+				}
+				return false, nil
+			})
+			Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("subscription %s status is not reflecting that csv %s is installed", subName, latestCSV))
 
 		}, upgradePollingDuration.Seconds()+installPlanPollingDuration.Seconds()+
 			float64(viper.GetFloat64(config.Tests.PollingTimeout)))
