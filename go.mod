@@ -8,7 +8,7 @@ require (
 	github.com/PagerDuty/go-pagerduty v1.5.1
 	github.com/PuerkitoBio/goquery v1.8.0
 	github.com/adamliesko/retry v0.0.0-20200123222335-86c8baac277d
-	github.com/antlr/antlr4/runtime/Go/antlr v0.0.0-20220209173558-ad29539cd2e9
+	github.com/antlr/antlr4/runtime/Go/antlr v0.0.0-20220626175859-9abda183db8e
 	github.com/aws/aws-sdk-go v1.44.76
 	github.com/bmizerany/perks v0.0.0-20141205001514-d9a9656a3a4b // indirect
 	github.com/cenkalti/backoff v2.2.1+incompatible // indirect
@@ -28,7 +28,7 @@ require (
 	github.com/jackc/pgtype v1.12.0
 	github.com/jinzhu/inflection v1.0.0
 	github.com/joshdk/go-junit v0.0.0-20201221202203-061ee62ada40
-	github.com/kyleconroy/sqlc v1.14.0
+	github.com/kyleconroy/sqlc v1.15.0
 	github.com/kylelemons/godebug v1.1.0
 	github.com/lib/pq v1.10.6
 	github.com/markbates/pkger v0.17.1
