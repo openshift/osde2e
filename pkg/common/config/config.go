@@ -782,7 +782,6 @@ func init() {
 
 	viper.SetDefault(Database.Port, "5432")
 	viper.BindEnv(Database.Port, "PG_PORT")
-	RegisterSecret(Database.Port, "rds-port")
 
 	viper.SetDefault(Database.DatabaseName, "cicd_test_data")
 	viper.BindEnv(Database.DatabaseName, "PG_DATABASE")
