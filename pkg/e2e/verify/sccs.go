@@ -29,7 +29,7 @@ var _ = ginkgo.Describe(dedicatedAdminSccTestName, func() {
 
 	workloadDir := "/assets/workloads/e2e/scc"
 	// How long to wait for prometheus pods to restart
-	prometheusRestartPollingDuration := 3 * time.Minute
+	prometheusRestartPollingDuration := 4 * time.Minute
 
 	ginkgo.Context("Dedicated Admin permissions", func() {
 
@@ -81,7 +81,7 @@ var _ = ginkgo.Describe(dedicatedAdminSccTestName, func() {
 				return false, nil
 			})
 			Expect(err).NotTo(HaveOccurred())
-		}, (prometheusRestartPollingDuration + 30 * time.Second).Seconds())
+		}, (prometheusRestartPollingDuration + 30*time.Second).Seconds())
 	})
 })
 
