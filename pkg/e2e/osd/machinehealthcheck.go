@@ -2,7 +2,6 @@ package osd
 
 import (
 	"context"
-
 	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
@@ -12,7 +11,6 @@ import (
 	"github.com/openshift/osde2e/pkg/common/util"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/types"
 )
 
 const (
@@ -27,7 +25,6 @@ func init() {
 
 var _ = ginkgo.Describe(machineHealthTestName, func() {
 	h := helper.New()
-	runnerTimeout := 30
 
 	util.GinkgoIt("infra MHC should exist", func() {
 		mhc, err := h.Machine().MachineV1beta1().MachineHealthChecks(machineAPINamespace).Get(context.TODO(), "srep-infra-healthcheck", metav1.GetOptions{})
@@ -92,37 +89,4 @@ var _ = ginkgo.Describe(machineHealthTestName, func() {
 			},
 		))
 	}, float64(500))
-
-	util.GinkgoIt("should replace unhealthy nodes", func() {
-		r := h.Runner("chroot /host -- systemctl stop kubelet")
-		r.Name = "stop-kubelet"
-		// i can't believe SecurityContext.Privileged is a pointer to a bool
-		truePointer := true
-		r.PodSpec.Containers[0].SecurityContext.Privileged = &truePointer
-
-		// get original list of machines to compare against later
-		originalMachines, err := h.Machine().MachineV1beta1().Machines(machineAPINamespace).List(context.TODO(), metav1.ListOptions{})
-		Expect(err).NotTo(HaveOccurred())
-
-		// modify the MHC to have a very short unhealthy time
-		mhc, err := h.Machine().MachineV1beta1().MachineHealthChecks(machineAPINamespace).Get(context.TODO(), "srep-worker-healthcheck", metav1.GetOptions{})
-		Expect(err).NotTo(HaveOccurred())
-		h.Machine().MachineV1beta1().MachineHealthChecks(machineAPINamespace).Patch(
-			context.TODO(),
-			mhc.ObjectMeta.Name,
-			types.MergePatchType,
-			[]byte("{'spec':{'unhealthyConditions[0]':{'timeout':10}}}"),
-			metav1.PatchOptions{},
-		)
-
-		// execute the runner
-		stopCh := make(chan struct{})
-		err = r.Run(runnerTimeout, stopCh)
-		Expect(err).NotTo(HaveOccurred())
-
-		// wait and confirm that there's a new machine
-		newMachines, err := h.Machine().MachineV1beta1().Machines(machineAPINamespace).List(context.TODO(), metav1.ListOptions{})
-		Expect(err).NotTo(HaveOccurred())
-		Expect(originalMachines).NotTo(Equal(newMachines))
-	}, float64(runnerTimeout+2))
 })
