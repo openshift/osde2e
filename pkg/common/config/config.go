@@ -77,7 +77,7 @@ const (
 	CanaryChance = "canaryChance"
 
 	// Default network provider for OSD
-	DefaultNetworkProvider = "OpenShiftSDN"
+	DefaultNetworkProvider = "OVNKubernetes"
 
 	// NonOSDe2eSecrets is an internal-only Viper Key.
 	// End users should not be using this key, there may be unforeseen consequences.
