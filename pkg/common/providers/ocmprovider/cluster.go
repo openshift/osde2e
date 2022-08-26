@@ -109,7 +109,6 @@ func (o *OCMProvider) LaunchCluster(clusterName string) (string, error) {
 		if viper.GetString(config.JobType) == "periodic" && !strings.Contains(viper.GetString(config.JobName), "addon") {
 			imageSource := viper.GetString(config.Cluster.ImageContentSource)
 			installConfig += "\n" + o.ChooseImageSource(imageSource)
-			installConfig += "\n" + o.GetNetworkConfig(viper.GetString(config.Cluster.NetworkProvider))
 		}
 	}
 
@@ -1409,27 +1408,6 @@ func (o *OCMProvider) updateClusterCache(id string, cluster *v1.Cluster) error {
 	}
 	o.clusterCache[cluster.ID()] = c
 	return nil
-}
-
-func (o *OCMProvider) GetNetworkConfig(networkProvider string) string {
-	if networkProvider == config.DefaultNetworkProvider {
-		return ""
-	}
-	if networkProvider != "OVNKubernetes" {
-		return ""
-	}
-	return `
-networking:
-  clusterNetwork:
-  - cidr: 10.128.0.0/14
-    hostPrefix: 23
-  machineCIDR: 10.0.0.0/16
-  machineNetwork:
-  - cidr: 10.0.0.0/16
-  networkType: OVNKubernetes
-  serviceNetwork:
-  - 172.30.0.0/16
-`
 }
 
 func (o *OCMProvider) GetSubnetworks(cloudProviderData *v1.CloudProviderData) (subnetworks []*v1.Subnetwork, err error) {
