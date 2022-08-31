@@ -217,12 +217,7 @@ var _ = ginkgo.Describe(mnmoOperatorTestName, ginkgo.Ordered, func() {
 		clusterClient = ocm.GetConnection().ClustersMgmt().V1().Clusters().Cluster(clusterId)
 
 		// build the cluster client to interact with things on-cluster with
-		h.Impersonate(rest.ImpersonationConfig{
-			UserName: "test-user@redhat.com",
-			Groups: []string{
-				"cluster-admins",
-			},
-		})
+		h.SetServiceAccount("system:serviceaccount:%s:cluster-admin")
 		// Before everything runs, we need to create a new MachinePoolBuilder to use for OCM
 		machinePoolBuilder = ocmTypes.NewMachinePool().
 			ID(ocmMachinePoolName)
