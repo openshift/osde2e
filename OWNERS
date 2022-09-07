@@ -1,6 +1,5 @@
 reviewers:
   - cblecker
-  - clcollins
   - dofinn
   - dustman9000
   - jeremyeder
@@ -9,7 +8,6 @@ reviewers:
   - aweiteka
 approvers:
   - cblecker
-  - clcollins
   - dofinn
   - dustman9000
   - jeremyeder
