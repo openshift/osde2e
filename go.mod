@@ -62,7 +62,7 @@ require (
 	github.com/spf13/afero v1.9.2
 	github.com/spf13/cobra v1.5.0
 	github.com/spf13/pflag v1.0.5
-	github.com/spf13/viper v1.12.0
+	github.com/spf13/viper v1.13.0
 	github.com/streadway/quantile v0.0.0-20150917103942-b0c588724d25 // indirect
 	github.com/tsenart/go-tsz v0.0.0-20180814235614-0bd30b3df1c3 // indirect
 	github.com/tsenart/vegeta v12.7.0+incompatible
