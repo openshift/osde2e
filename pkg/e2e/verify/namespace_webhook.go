@@ -265,9 +265,11 @@ func createNamespace(namespace string, h *helper.H) (*v1.Namespace, error) {
 	}
 
 	log.Printf("Creating namespace for namespace validation webhook (%s)", namespace)
+	labels := map[string]string{"pod-security.kubernetes.io/enforce": "privileged", "pod-security.kubernetes.io/audit": "privileged", "pod-security.kubernetes.io/warn": "privileged", "security.openshift.io/scc.podSecurityLabelSync": "false"}
 	ns = &v1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: namespace,
+			Name:   namespace,
+			Labels: labels,
 		},
 	}
 	h.Kube().CoreV1().Namespaces().Create(context.TODO(), ns, metav1.CreateOptions{})
