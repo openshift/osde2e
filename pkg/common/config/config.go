@@ -682,7 +682,7 @@ func InitViper() {
 	viper.SetDefault(Cluster.Channel, "candidate")
 	viper.BindEnv(Cluster.Channel, "CHANNEL")
 
-	viper.SetDefault(Cluster.DestroyAfterTest, false)
+	viper.SetDefault(Cluster.DestroyAfterTest, true)
 	viper.BindEnv(Cluster.DestroyAfterTest, "DESTROY_CLUSTER")
 
 	viper.SetDefault(Cluster.ExpiryInMinutes, 360)
@@ -747,10 +747,10 @@ func InitViper() {
 	viper.SetDefault(Cluster.NetworkProvider, DefaultNetworkProvider)
 	viper.BindEnv(Cluster.NetworkProvider, "CLUSTER_NETWORK_PROVIDER")
 
-	viper.SetDefault(Cluster.HibernateAfterUse, true)
+	viper.SetDefault(Cluster.HibernateAfterUse, false)
 	viper.BindEnv(Cluster.HibernateAfterUse, "HIBERNATE_AFTER_USE")
 
-	viper.SetDefault(Cluster.UseExistingCluster, true)
+	viper.SetDefault(Cluster.UseExistingCluster, false)
 	viper.BindEnv(Cluster.UseExistingCluster, "USE_EXISTING_CLUSTER")
 
 	viper.SetDefault(Cluster.Reused, false)
