@@ -5,7 +5,7 @@ go 1.16
 require (
 	cloud.google.com/go/kms v1.4.0
 	github.com/Masterminds/semver v1.5.0
-	github.com/PagerDuty/go-pagerduty v1.5.1
+	github.com/PagerDuty/go-pagerduty v1.6.0
 	github.com/PuerkitoBio/goquery v1.8.0
 	github.com/adamliesko/retry v0.0.0-20200123222335-86c8baac277d
 	github.com/antlr/antlr4/runtime/Go/antlr v0.0.0-20220626175859-9abda183db8e
