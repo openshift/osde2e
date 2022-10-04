@@ -1,0 +1,92 @@
+// begin header
+ifdef::env-github[]
+:tip-caption: :bulb:
+:note-caption: :information_source:
+:important-caption: :heavy_exclamation_mark:
+endif::[]
+:numbered:
+:toc: macro
+:toc-title: pass:[<b>Table of Contents</b>]
+// end header
+
+= Upgrading the operator-sdk version
+
+toc::[]
+
+== Description
+This page will provide in broad strokes the knowledge needed to upgrade an operator to the latest version (0.18.1)
+
+== What is required
+an existing repo, working with operator-sdk in some version and a willing to upgrade
+
+[[references]]
+== References
+Before anything can begin, you can look at:
+
+- https://sdk.operatorframework.io/docs/ as the landing page 
+- https://sdk.operatorframework.io/docs/migration/ for the upgrade homepage
+- https://sdk.operatorframework.io/docs/migration/version-upgrade-guide/ for actual upgrade guide
+
+== What to do?
+In the new version of the operator-sdk cli we are provided with some tools that make our job easier.
+
+=== Upgrade the dependencies
+you can use the command:
+
+[source]
+-------------------------
+$ operator-sdk print-deps
+-------------------------
+
+to get the go.mod minimum requirements for the operator to work.
+
+a good rule of thumb will be to seperate the file to sections that change together, ie kubernetes versions, operator-framework version etc.
+
+=== Go throught the upgrade procedure and change code accordingly
+using the <<references, references section>> to see if something has changed and needs to be fixed
+
+=== Regenerate resources
+to do that you will need to verify the integrity of the types file, remember to look at the generated type and the subtypes aswell.
+
+==== Regenerate crd's
+you will need to generate the crd's with the command:
+
+[source]
+--------------------------------------------------
+$ operator-sdk generate crds --crd-version=v1beta1
+--------------------------------------------------
+
+CAUTION: the `v1beta1` tag will be depracated at kubernetes v1.19 when we get there this flag should be removed
+
+==== Regenerate opeapi
+In version v0.13.x of the operator, the command `operator-sdk generate openapi` was removed from the operator.
+the way that is suggested is to use https://github.com/kubernetes/kube-openapi/tree/master/cmd/openapi-gen
+
+[source]
+----------------------------------------------------------------------------------------------------------
+# get the openapi-gen binary
+$ which ./bin/openapi-gen > /dev/null || go build -o ./bin/openapi-gen k8s.io/kube-openapi/cmd/openapi-gen
+# create an empty licence header file
+$ touch header.txt
+# run it on your codebase
+$ ./bin/openapi-gen --logtostderr=true \
+                  -i ./pkg/apis/<group>/<version> \
+                  -o "" \
+                  -O zz_generated.openapi \
+                  -p ./pkg/apis/<group>/<version> \
+                  -h ./header.txt \ 
+                  -r "-"
+----------------------------------------------------------------------------------------------------------
+
+it is also possible to usee an empty buffer: like `-h  <(echo)`
+
+==== Regenerate kubernetes
+This has stayed the same with the command:
+
+[code]
+---------------------------
+$ operator-sdk generate k8s
+---------------------------
+
+== If you are still stuck
+the operator-sdk team resides in slack on https://coreos.slack.com/archives/C3VS0LV41[#forum-operator-fw]
