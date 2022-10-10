@@ -1,0 +1,4 @@
+tests:
+  testsToRun:
+  - '\[Suite\: service-definition\]'
+  
