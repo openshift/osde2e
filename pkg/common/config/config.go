@@ -747,7 +747,7 @@ func InitViper() {
 	viper.SetDefault(Cluster.NetworkProvider, DefaultNetworkProvider)
 	viper.BindEnv(Cluster.NetworkProvider, "CLUSTER_NETWORK_PROVIDER")
 
-	viper.SetDefault(Cluster.HibernateAfterUse, false)
+	viper.SetDefault(Cluster.HibernateAfterUse, true)
 	viper.BindEnv(Cluster.HibernateAfterUse, "HIBERNATE_AFTER_USE")
 
 	viper.SetDefault(Cluster.UseExistingCluster, false)
