@@ -750,7 +750,7 @@ func InitViper() {
 	viper.SetDefault(Cluster.HibernateAfterUse, true)
 	viper.BindEnv(Cluster.HibernateAfterUse, "HIBERNATE_AFTER_USE")
 
-	viper.SetDefault(Cluster.UseExistingCluster, true)
+	viper.SetDefault(Cluster.UseExistingCluster, false)
 	viper.BindEnv(Cluster.UseExistingCluster, "USE_EXISTING_CLUSTER")
 
 	viper.SetDefault(Cluster.Reused, false)
