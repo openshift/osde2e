@@ -17,8 +17,6 @@ import (
 	"github.com/openshift/osde2e/pkg/common/util"
 	accountRoles "github.com/openshift/rosa/cmd/create/accountroles"
 	createCluster "github.com/openshift/rosa/cmd/create/cluster"
-	oidcProvider "github.com/openshift/rosa/cmd/create/oidcprovider"
-	operatorRoles "github.com/openshift/rosa/cmd/create/operatorroles"
 	rosaLogin "github.com/openshift/rosa/cmd/login"
 	"github.com/openshift/rosa/pkg/aws"
 	"github.com/openshift/rosa/pkg/logging"
@@ -254,10 +252,6 @@ func (m *ROSAProvider) LaunchCluster(clusterName string) (string, error) {
 		return "", fmt.Errorf("failed to get cluster '%s': %v", clusterName, err)
 	}
 
-	if viper.GetBool(STS) {
-		m.stsClusterSetup(cluster)
-	}
-
 	return cluster.ID(), nil
 }
 
@@ -268,25 +262,6 @@ func (m *ROSAProvider) stsAccountSetup(version string) error {
 	newAccountRoles.SetArgs(args)
 	return callAndSetAWSSession(func() error {
 		return newAccountRoles.Execute()
-	})
-}
-
-func (m *ROSAProvider) stsClusterSetup(cluster *v1.Cluster) error {
-	newOperatorRoles := operatorRoles.Cmd
-	newOperatorRoles.SetArgs([]string{"--cluster", cluster.Name(), "--mode", "auto", "--yes"})
-	return callAndSetAWSSession(func() error {
-		err := newOperatorRoles.Execute()
-		if err != nil {
-			return err
-		}
-
-		newOIDCProvider := oidcProvider.Cmd
-		newOIDCProvider.SetArgs([]string{"--cluster", cluster.Name(), "--mode", "auto", "--yes"})
-		err = newOIDCProvider.Execute()
-		if err != nil {
-			return err
-		}
-		return nil
 	})
 }
 
