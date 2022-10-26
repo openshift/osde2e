@@ -15,10 +15,7 @@ import (
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/spi"
 	"github.com/openshift/osde2e/pkg/common/util"
-	accountRoles "github.com/openshift/rosa/cmd/create/accountroles"
 	createCluster "github.com/openshift/rosa/cmd/create/cluster"
-	oidcProvider "github.com/openshift/rosa/cmd/create/oidcprovider"
-	operatorRoles "github.com/openshift/rosa/cmd/create/operatorroles"
 	rosaLogin "github.com/openshift/rosa/cmd/login"
 	"github.com/openshift/rosa/pkg/aws"
 	"github.com/openshift/rosa/pkg/logging"
@@ -120,6 +117,7 @@ func (m *ROSAProvider) LaunchCluster(clusterName string) (string, error) {
 		"--service-cidr", viper.GetString(ServiceCIDR),
 		"--pod-cidr", viper.GetString(PodCIDR),
 		"--host-prefix", viper.GetString(HostPrefix),
+		"--mode", viper.GetString(config.Cluster.Mode),
 	}
 	if viper.GetString(SubnetIDs) != "" {
 		subnetIDs := viper.GetString(SubnetIDs)
@@ -136,9 +134,11 @@ func (m *ROSAProvider) LaunchCluster(clusterName string) (string, error) {
 			}
 		}
 	}
+
 	if viper.GetBool(config.Cluster.MultiAZ) {
 		createClusterArgs = append(createClusterArgs, "--multi-az")
 	}
+
 	networkProvider := viper.GetString(config.Cluster.NetworkProvider)
 	if networkProvider != config.DefaultNetworkProvider {
 		createClusterArgs = append(createClusterArgs,
@@ -146,8 +146,18 @@ func (m *ROSAProvider) LaunchCluster(clusterName string) (string, error) {
 		)
 	}
 
-	awsAccountID := ""
+	if viper.GetBool("config.Cluster.HyperShift") {
+		createClusterArgs = append(createClusterArgs, "--hosted-cp")
+	}
 
+	if viper.GetBool(STS) {
+		createClusterArgs = append(createClusterArgs, "--sts")
+	}
+
+	if viper.GetString("config.Cluster.Mode") == "auto" {
+		createClusterArgs = append(createClusterArgs, "-y")
+	}
+	//(Tech Debt) I'm not a fan of this implementation, and I'd like to handle the AWS session differently in the future.
 	err = callAndSetAWSSession(func() error {
 		// Retrieve AWS Account info
 		logger := logging.NewLogger()
@@ -166,29 +176,10 @@ func (m *ROSAProvider) LaunchCluster(clusterName string) (string, error) {
 			return fmt.Errorf("unable to get IAM credentials: %v", err)
 		}
 
-		awsAccountID = awsCreator.AccountID
-
 		return nil
 	})
 	if err != nil {
 		return "", err
-	}
-
-	if viper.GetBool(STS) {
-		parsedVersion := semver.MustParse(rosaClusterVersion)
-		majorMinor := fmt.Sprintf("%d.%d", parsedVersion.Major(), parsedVersion.Minor())
-
-		err = m.stsAccountSetup(majorMinor)
-		if err != nil {
-			return "", err
-		}
-		createClusterArgs = append(createClusterArgs,
-			"--role-arn", fmt.Sprintf("arn:aws:iam::%s:role/ManagedOpenShift-%s-Installer-Role", awsAccountID, majorMinor),
-			"--support-role-arn", fmt.Sprintf("arn:aws:iam::%s:role/ManagedOpenShift-%s-Support-Role", awsAccountID, majorMinor),
-			"--master-iam-role", fmt.Sprintf("arn:aws:iam::%s:role/ManagedOpenShift-%s-ControlPlane-Role", awsAccountID, majorMinor),
-			"--worker-iam-role", fmt.Sprintf("arn:aws:iam::%s:role/ManagedOpenShift-%s-Worker-Role", awsAccountID, majorMinor),
-		)
-
 	}
 
 	clusterProperties, err := m.ocmProvider.GenerateProperties()
@@ -254,40 +245,7 @@ func (m *ROSAProvider) LaunchCluster(clusterName string) (string, error) {
 		return "", fmt.Errorf("failed to get cluster '%s': %v", clusterName, err)
 	}
 
-	if viper.GetBool(STS) {
-		m.stsClusterSetup(cluster)
-	}
-
 	return cluster.ID(), nil
-}
-
-func (m *ROSAProvider) stsAccountSetup(version string) error {
-	newAccountRoles := accountRoles.Cmd
-	args := []string{"--version", version, "--prefix", fmt.Sprintf("ManagedOpenShift-%s", version), "--mode", "auto", "--yes"}
-	log.Printf("%v", args)
-	newAccountRoles.SetArgs(args)
-	return callAndSetAWSSession(func() error {
-		return newAccountRoles.Execute()
-	})
-}
-
-func (m *ROSAProvider) stsClusterSetup(cluster *v1.Cluster) error {
-	newOperatorRoles := operatorRoles.Cmd
-	newOperatorRoles.SetArgs([]string{"--cluster", cluster.Name(), "--mode", "auto", "--yes"})
-	return callAndSetAWSSession(func() error {
-		err := newOperatorRoles.Execute()
-		if err != nil {
-			return err
-		}
-
-		newOIDCProvider := oidcProvider.Cmd
-		newOIDCProvider.SetArgs([]string{"--cluster", cluster.Name(), "--mode", "auto", "--yes"})
-		err = newOIDCProvider.Execute()
-		if err != nil {
-			return err
-		}
-		return nil
-	})
 }
 
 // DetermineRegion will return the region provided by configs. This mainly wraps the random functionality for use

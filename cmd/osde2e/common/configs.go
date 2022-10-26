@@ -15,13 +15,13 @@ func LoadConfigs(configString string, customConfig string, secretLocationsString
 		configs = strings.Split(configString, ",")
 	}
 
+	for _, config := range configs {
+		log.Printf("Will load config %s", config)
+	}
+
 	var secretLocations []string
 	if secretLocationsString != "" {
 		secretLocations = strings.Split(secretLocationsString, ",")
-	}
-
-	for _, config := range configs {
-		log.Printf("Will load config %s", config)
 	}
 
 	// Load configs
