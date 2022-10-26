@@ -123,6 +123,7 @@ func (m *ROSAProvider) LaunchCluster(clusterName string) (string, error) {
 		"--mode", "auto",
 		"--yes",
 	}
+
 	if viper.GetString(SubnetIDs) != "" {
 		subnetIDs := viper.GetString(SubnetIDs)
 		createClusterArgs = append(createClusterArgs, "--subnet-ids", subnetIDs)
