@@ -33,8 +33,8 @@ const (
 	// ComputeMachineType is instance size of the compute nodes in a cluster.
 	ComputeMachineTypeRegex = "rosa.computeMachineTypeRegex"
 
-	// ComputeNodes is number of compute nodes in a cluster.
-	ComputeNodes = "rosa.computeNodes"
+	// Replicas is number of compute nodes in a cluster.
+	Replicas = "rosa.replicas"
 
 	// HostPrefix is the prefix for the hosts produced by ROSA.
 	HostPrefix = "rosa.hostPrefix"
@@ -69,8 +69,8 @@ func init() {
 	viper.BindEnv(ComputeMachineType, "ROSA_COMPUTE_MACHINE_TYPE")
 	viper.BindEnv(ComputeMachineTypeRegex, "ROSA_COMPUTE_MACHINE_TYPE")
 
-	viper.BindEnv(ComputeNodes, "ROSA_COMPUTE_NODES")
-	viper.SetDefault(ComputeNodes, 2)
+	viper.BindEnv(Replicas, "ROSA_REPLICAS")
+	viper.SetDefault(Replicas, 2)
 
 	viper.BindEnv(HostPrefix, "ROSA_HOST_PREFIX")
 	viper.SetDefault(HostPrefix, 0)
