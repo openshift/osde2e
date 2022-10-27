@@ -115,7 +115,7 @@ func (m *ROSAProvider) LaunchCluster(clusterName string) (string, error) {
 		"--version", rosaClusterVersion,
 		"--expiration-time", expiration.Format(time.RFC3339),
 		"--compute-machine-type", viper.GetString(ComputeMachineType),
-		"--compute-nodes", viper.GetString(ComputeNodes),
+		"--replicas", viper.GetString(Replicas),
 		"--machine-cidr", viper.GetString(MachineCIDR),
 		"--service-cidr", viper.GetString(ServiceCIDR),
 		"--pod-cidr", viper.GetString(PodCIDR),
@@ -185,7 +185,7 @@ func (m *ROSAProvider) LaunchCluster(clusterName string) (string, error) {
 		createClusterArgs = append(createClusterArgs,
 			"--role-arn", fmt.Sprintf("arn:aws:iam::%s:role/ManagedOpenShift-%s-Installer-Role", awsAccountID, majorMinor),
 			"--support-role-arn", fmt.Sprintf("arn:aws:iam::%s:role/ManagedOpenShift-%s-Support-Role", awsAccountID, majorMinor),
-			"--master-iam-role", fmt.Sprintf("arn:aws:iam::%s:role/ManagedOpenShift-%s-ControlPlane-Role", awsAccountID, majorMinor),
+			"--controlplane-iam-role", fmt.Sprintf("arn:aws:iam::%s:role/ManagedOpenShift-%s-ControlPlane-Role", awsAccountID, majorMinor),
 			"--worker-iam-role", fmt.Sprintf("arn:aws:iam::%s:role/ManagedOpenShift-%s-Worker-Role", awsAccountID, majorMinor),
 		)
 
