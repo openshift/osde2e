@@ -11,16 +11,20 @@ import (
 
 	"github.com/Masterminds/semver"
 	v1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
-	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
-	"github.com/openshift/osde2e/pkg/common/config"
-	"github.com/openshift/osde2e/pkg/common/spi"
-	"github.com/openshift/osde2e/pkg/common/util"
 	accountRoles "github.com/openshift/rosa/cmd/create/accountroles"
 	createCluster "github.com/openshift/rosa/cmd/create/cluster"
+	"github.com/openshift/rosa/cmd/dlt/oidcprovider"
+	"github.com/openshift/rosa/cmd/dlt/operatorrole"
 	rosaLogin "github.com/openshift/rosa/cmd/login"
 	"github.com/openshift/rosa/pkg/aws"
 	"github.com/openshift/rosa/pkg/logging"
 	"github.com/openshift/rosa/pkg/ocm"
+	"k8s.io/apimachinery/pkg/util/wait"
+
+	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
+	"github.com/openshift/osde2e/pkg/common/config"
+	"github.com/openshift/osde2e/pkg/common/spi"
+	"github.com/openshift/osde2e/pkg/common/util"
 )
 
 // IsValidClusterName validates the clustername prior to proceeding with it
@@ -255,6 +259,20 @@ func (m *ROSAProvider) LaunchCluster(clusterName string) (string, error) {
 	return cluster.ID(), nil
 }
 
+// DeleteCluster will call DeleteCluster from the OCM provider then delete
+// additional AWS resources if STS is in use.
+func (m *ROSAProvider) DeleteCluster(clusterID string) error {
+	if err := m.ocmProvider.DeleteCluster(clusterID); err != nil {
+		return err
+	}
+
+	if viper.GetBool(STS) {
+		return m.stsClusterCleanup(clusterID)
+	}
+
+	return nil
+}
+
 func (m *ROSAProvider) stsAccountSetup(version string) error {
 	newAccountRoles := accountRoles.Cmd
 	args := []string{"--version", version, "--prefix", fmt.Sprintf("ManagedOpenShift-%s", version), "--mode", "auto", "--yes"}
@@ -262,6 +280,41 @@ func (m *ROSAProvider) stsAccountSetup(version string) error {
 	newAccountRoles.SetArgs(args)
 	return callAndSetAWSSession(func() error {
 		return newAccountRoles.Execute()
+	})
+}
+
+func (m *ROSAProvider) stsClusterCleanup(clusterID string) error {
+	// wait for the cluster to no longer be available
+	wait.PollImmediate(1*time.Minute, 15*time.Minute, func() (bool, error) {
+		clusters, err := m.ocmProvider.ListClusters(fmt.Sprintf("id = '%s'", clusterID))
+		if err != nil {
+			return false, err
+		}
+
+		return len(clusters) == 0, nil
+	})
+
+	return callAndSetAWSSession(func() error {
+		var err error
+		defaultArgs := []string{"--cluster", clusterID, "--mode", "auto", "--yes"}
+
+		deleteOperatorRolesArgs := append([]string{"operator-roles"}, defaultArgs...)
+		deleteOperatorRolesCmd := operatorrole.Cmd
+		deleteOperatorRolesCmd.SetArgs(deleteOperatorRolesArgs)
+
+		deleteOIDCProviderArgs := append([]string{"oidc-provider"}, defaultArgs...)
+		deleteOIDCProviderCmd := oidcprovider.Cmd
+		deleteOIDCProviderCmd.SetArgs(deleteOIDCProviderArgs)
+
+		if err = deleteOperatorRolesCmd.Execute(); err != nil {
+			return err
+		}
+
+		if err = deleteOIDCProviderCmd.Execute(); err != nil {
+			return err
+		}
+
+		return nil
 	})
 }
 
