@@ -27,7 +27,7 @@ func init() {
 	alert.RegisterGinkgoAlert(deploymentValidationOperatorTestName, "SD-SREP", "Ron Green", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
 }
 
-var _ = ginkgo.FDescribe(deploymentValidationOperatorTestName, func() {
+var _ = ginkgo.Describe(deploymentValidationOperatorTestName, func() {
 	const (
 		operatorNamespace      = "openshift-deployment-validation-operator"
 		operatorName           = "deployment-validation-operator"
