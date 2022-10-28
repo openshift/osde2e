@@ -16,10 +16,19 @@ import (
 	"github.com/openshift/osde2e/pkg/common/spi"
 	"github.com/openshift/osde2e/pkg/common/util"
 	createCluster "github.com/openshift/rosa/cmd/create/cluster"
+	accountRoles "github.com/openshift/rosa/cmd/create/accountroles"
+	"github.com/openshift/rosa/cmd/dlt/oidcprovider"
+	"github.com/openshift/rosa/cmd/dlt/operatorrole"
 	rosaLogin "github.com/openshift/rosa/cmd/login"
 	"github.com/openshift/rosa/pkg/aws"
 	"github.com/openshift/rosa/pkg/logging"
 	"github.com/openshift/rosa/pkg/ocm"
+	"k8s.io/apimachinery/pkg/util/wait"
+
+	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
+	"github.com/openshift/osde2e/pkg/common/config"
+	"github.com/openshift/osde2e/pkg/common/spi"
+	"github.com/openshift/osde2e/pkg/common/util"
 )
 
 // IsValidClusterName validates the clustername prior to proceeding with it
@@ -112,7 +121,7 @@ func (m *ROSAProvider) LaunchCluster(clusterName string) (string, error) {
 		"--version", rosaClusterVersion,
 		"--expiration-time", expiration.Format(time.RFC3339),
 		"--compute-machine-type", viper.GetString(ComputeMachineType),
-		"--compute-nodes", viper.GetString(ComputeNodes),
+		"--replicas", viper.GetString(Replicas),
 		"--machine-cidr", viper.GetString(MachineCIDR),
 		"--service-cidr", viper.GetString(ServiceCIDR),
 		"--pod-cidr", viper.GetString(PodCIDR),
@@ -182,6 +191,23 @@ func (m *ROSAProvider) LaunchCluster(clusterName string) (string, error) {
 		return "", err
 	}
 
+	if viper.GetBool(STS) {
+		parsedVersion := semver.MustParse(rosaClusterVersion)
+		majorMinor := fmt.Sprintf("%d.%d", parsedVersion.Major(), parsedVersion.Minor())
+
+		err = m.stsAccountSetup(majorMinor)
+		if err != nil {
+			return "", err
+		}
+		createClusterArgs = append(createClusterArgs,
+			"--role-arn", fmt.Sprintf("arn:aws:iam::%s:role/ManagedOpenShift-%s-Installer-Role", awsAccountID, majorMinor),
+			"--support-role-arn", fmt.Sprintf("arn:aws:iam::%s:role/ManagedOpenShift-%s-Support-Role", awsAccountID, majorMinor),
+			"--controlplane-iam-role", fmt.Sprintf("arn:aws:iam::%s:role/ManagedOpenShift-%s-ControlPlane-Role", awsAccountID, majorMinor),
+			"--worker-iam-role", fmt.Sprintf("arn:aws:iam::%s:role/ManagedOpenShift-%s-Worker-Role", awsAccountID, majorMinor),
+		)
+
+	}
+
 	clusterProperties, err := m.ocmProvider.GenerateProperties()
 
 	if err != nil {
@@ -246,6 +272,65 @@ func (m *ROSAProvider) LaunchCluster(clusterName string) (string, error) {
 	}
 
 	return cluster.ID(), nil
+}
+
+// DeleteCluster will call DeleteCluster from the OCM provider then delete
+// additional AWS resources if STS is in use.
+func (m *ROSAProvider) DeleteCluster(clusterID string) error {
+	if err := m.ocmProvider.DeleteCluster(clusterID); err != nil {
+		return err
+	}
+
+	if viper.GetBool(STS) {
+		return m.stsClusterCleanup(clusterID)
+	}
+
+	return nil
+}
+
+func (m *ROSAProvider) stsAccountSetup(version string) error {
+	newAccountRoles := accountRoles.Cmd
+	args := []string{"--version", version, "--prefix", fmt.Sprintf("ManagedOpenShift-%s", version), "--mode", "auto", "--yes"}
+	log.Printf("%v", args)
+	newAccountRoles.SetArgs(args)
+	return callAndSetAWSSession(func() error {
+		return newAccountRoles.Execute()
+	})
+}
+
+func (m *ROSAProvider) stsClusterCleanup(clusterID string) error {
+	// wait for the cluster to no longer be available
+	wait.PollImmediate(1*time.Minute, 15*time.Minute, func() (bool, error) {
+		clusters, err := m.ocmProvider.ListClusters(fmt.Sprintf("id = '%s'", clusterID))
+		if err != nil {
+			return false, err
+		}
+
+		return len(clusters) == 0, nil
+	})
+
+	return callAndSetAWSSession(func() error {
+		var err error
+		defaultArgs := []string{"--cluster", clusterID, "--mode", "auto", "--yes"}
+
+		deleteOperatorRolesArgs := append([]string{"operator-roles"}, defaultArgs...)
+		deleteOperatorRolesCmd := operatorrole.Cmd
+		deleteOperatorRolesCmd.SetArgs(deleteOperatorRolesArgs)
+
+		deleteOIDCProviderArgs := append([]string{"oidc-provider"}, defaultArgs...)
+		deleteOIDCProviderCmd := oidcprovider.Cmd
+		deleteOIDCProviderCmd.SetArgs(deleteOIDCProviderArgs)
+
+		if err = deleteOperatorRolesCmd.Execute(); err != nil {
+			return err
+		}
+
+		if err = deleteOIDCProviderCmd.Execute(); err != nil {
+			return err
+		}
+
+		return nil
+	})
 }
 
 // DetermineRegion will return the region provided by configs. This mainly wraps the random functionality for use

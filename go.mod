@@ -3,13 +3,13 @@ module github.com/openshift/osde2e
 go 1.16
 
 require (
-	cloud.google.com/go/kms v1.4.0
+	cloud.google.com/go/kms v1.5.0
 	github.com/Masterminds/semver v1.5.0
 	github.com/PagerDuty/go-pagerduty v1.6.0
 	github.com/PuerkitoBio/goquery v1.8.0
 	github.com/adamliesko/retry v0.0.0-20200123222335-86c8baac277d
 	github.com/antlr/antlr4/runtime/Go/antlr v0.0.0-20220626175859-9abda183db8e
-	github.com/aws/aws-sdk-go v1.44.120
+	github.com/aws/aws-sdk-go v1.44.125
 	github.com/bmizerany/perks v0.0.0-20141205001514-d9a9656a3a4b // indirect
 	github.com/cenkalti/backoff v2.2.1+incompatible // indirect
 	github.com/code-ready/crc v1.10.0
@@ -60,7 +60,7 @@ require (
 	github.com/redhat-cop/must-gather-operator v1.1.2
 	github.com/slack-go/slack v0.11.3
 	github.com/spf13/afero v1.9.2
-	github.com/spf13/cobra v1.6.0
+	github.com/spf13/cobra v1.6.1
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.13.0
 	github.com/streadway/quantile v0.0.0-20150917103942-b0c588724d25 // indirect
@@ -71,7 +71,7 @@ require (
 	golang.org/x/oauth2 v0.0.0-20221014153046-6fdb5e3db783
 	golang.org/x/tools v0.1.12
 	google.golang.org/api v0.100.0
-	google.golang.org/genproto v0.0.0-20221014213838-99cd37c6964a
+	google.golang.org/genproto v0.0.0-20221024183307-1bc688fe9f3e
 	gopkg.in/yaml.v3 v3.0.1
 	gotest.tools/v3 v3.4.0
 	k8s.io/api v0.23.0

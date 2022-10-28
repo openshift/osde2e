@@ -42,7 +42,7 @@ Some environment variables commonly used for pipelines under osde2e are indicate
 |ROSA_AWS_REGION| AWSRegion for provisioning clusters.|
 |ROSA_STS| Boolean value to indicate the cluster is STS enabled or not.|
 |ROSA_SUBNET_IDS| A list of subnets used to create the cluster, required for proxy enabled cluster.|
-|ROSA_COMPUTE_NODES| Compute node count for the rosa cluster, default is 2.|
+|ROSA_REPLICAS| Compute node count for the rosa cluster, default is 2.|
  
  
 ### OCM related:-
