@@ -60,7 +60,7 @@ require (
 	github.com/redhat-cop/must-gather-operator v1.1.2
 	github.com/slack-go/slack v0.11.3
 	github.com/spf13/afero v1.9.2
-	github.com/spf13/cobra v1.6.0
+	github.com/spf13/cobra v1.6.1
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.13.0
 	github.com/streadway/quantile v0.0.0-20150917103942-b0c588724d25 // indirect
