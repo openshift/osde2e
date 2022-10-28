@@ -507,19 +507,6 @@ func runGinkgoTests() (int, error) {
 		}
 	}
 
-	if viper.GetBool(config.Cluster.DestroyAfterTest) {
-		log.Printf("Destroying cluster '%s'...", clusterID)
-
-		if err = provider.DeleteCluster(clusterID); err != nil {
-			return Failure, fmt.Errorf("error deleting cluster: %s", err.Error())
-		}
-	} else {
-		// When using a local kubeconfig, provider might not be set
-		if provider != nil {
-			log.Printf("For debugging, please look for cluster ID %s in environment %s", viper.GetString(config.Cluster.ID), provider.Environment())
-		}
-	}
-
 	if !suiteConfig.DryRun {
 		getLogs()
 
@@ -536,6 +523,19 @@ func runGinkgoTests() (int, error) {
 	if !testsPassed || !upgradeTestsPassed {
 		viper.Set(config.Cluster.Passing, false)
 		return Failure, fmt.Errorf("please inspect logs for more details")
+	}
+
+	if viper.GetBool(config.Cluster.DestroyAfterTest) {
+		log.Printf("Destroying cluster '%s'...", clusterID)
+
+		if err = provider.DeleteCluster(clusterID); err != nil {
+			return Failure, fmt.Errorf("error deleting cluster: %s", err.Error())
+		}
+	} else {
+		// When using a local kubeconfig, provider might not be set
+		if provider != nil {
+			log.Printf("For debugging, please look for cluster ID %s in environment %s", viper.GetString(config.Cluster.ID), provider.Environment())
+		}
 	}
 
 	return Success, nil
