@@ -4,13 +4,10 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"regexp"
 	"strings"
 	"time"
 
 	"github.com/onsi/ginkgo/v2"
-	operatorv1 "github.com/operator-framework/api/pkg/operators/v1"
-	operatorv1alpha "github.com/operator-framework/api/pkg/operators/v1alpha1"
 
 	"github.com/openshift/osde2e/pkg/common/alert"
 	"github.com/openshift/osde2e/pkg/common/config"
@@ -21,9 +18,7 @@ import (
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/util/wait"
 )
 
 var deploymentValidationOperatorTestName string = "[Suite: informing] [OSD] Deployment Validation Operator (dvo)"
@@ -32,105 +27,57 @@ func init() {
 	alert.RegisterGinkgoAlert(deploymentValidationOperatorTestName, "SD-SREP", "Ron Green", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
 }
 
-var _ = ginkgo.Describe(deploymentValidationOperatorTestName, func() {
+var _ = ginkgo.FDescribe(deploymentValidationOperatorTestName, func() {
 	const (
-		operatorNamespace         = "osde2e-deployment-validation-operator"
-		operatorName              = "deployment-validation-operator"
-		operatorDeploymentName    = "deployment-validation-operator"
-		operatorCsvDisplayName    = "Deployment Validation Operator"
-		fVMinimum3Replicas        = `(?i)deployment_validation_operator_minimum_three_replicas\b\{\w+.\".*?\"\,.*?\,\w+.\".*?\".*?\"(?P<name>.*?)\".*?\"}`
-		fVNoLivenessProbe         = `(?i)deployment_validation_operator_no_liveness_probe\b\{\w+.\".*?\"\,.*?\,\w+.\".*?\".*?\"(?P<name>.*?)\".*?\"}`
-		fVNoReadinessProbe        = `(?i)deployment_validation_operator_no_readiness_probe\b\{\w+.\".*?\"\,.*?\,\w+.\".*?\".*?\"(?P<name>.*?)\".*?\"}`
-		fVNoReadOnlyFs            = `(?i)deployment_validation_operator_no_read_only_root_fs\b\{\w+.\".*?\"\,.*?\,\w+.\".*?\".*?\"(?P<name>.*?)\".*?\"}`
-		fVRequiredAnnotationEmail = `(?i)deployment_validation_operator_required_annotation_email\b\{\w+.\".*?\"\,.*?\,\w+.\".*?\".*?\"(?P<name>.*?)\".*?\"}`
-		fVRequiredLabelOwner      = `(?i)deployment_validation_operator_required_label_owner\b\{\w+.\".*?\"\,.*?\,\w+.\".*?\".*?\"(?P<name>.*?)\".*?\"}`
-		fVRunAsNonRoot            = `(?i)deployment_validation_operator_run_as_non_root\b\{\w+.\".*?\"\,.*?\,\w+.\".*?\".*?\"(?P<name>.*?)\".*?\"}`
-		fVUnsetCPURequirements    = `(?i)deployment_validation_operator_unset_cpu_requirements\b\{\w+.\".*?\"\,.*?\,\w+.\".*?\".*?\"(?P<name>.*?)\".*?\"}`
-		fVUnsetMemoryRequirements = `(?i)deployment_validation_operator_unset_memory_requirements\b\{\w+.\".*?\"\,.*?\,\w+.\".*?\".*?\"(?P<name>.*?)\".*?\"}`
-
-		operatorLockFile = "deployment-validation-operator-lock"
+		operatorNamespace      = "openshift-deployment-validation-operator"
+		operatorName           = "deployment-validation-operator"
+		operatorDeploymentName = "deployment-validation-operator"
+		operatorServiceName    = "deployment-validation-operator-metrics"
+		operatorCsvDisplayName = "Deployment Validation Operator"
+		testNamespace          = "osde2e-dvo-test"
+		dvoString              = "\"msg\":\"Set memory requests and limits for your container based on its requirements. Refer to https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/#requests-and-limits for details.\",\"request.namespace\":\"osde2e-dvo-test\""
+		operatorLockFile       = "deployment-validation-operator-lock"
 
 		defaultDesiredReplicas int32 = 1
 	)
 
 	var clusterRoles = []string{
-		"deployment-validation-operator-admin",
-		"deployment-validation-operator-edit",
-		"deployment-validation-operator-view",
+		"deployment-validation-operator-og-admin",
+		"deployment-validation-operator-og-edit",
+		"deployment-validation-operator-og-view",
 	}
 
 	h := helper.New()
 	nodeLabels := make(map[string]string)
 
-	//Create DVO project and install operator
-	deployDVO(helper.New(),
-		operatorNamespace,
-		operatorName,
-		operatorName,
-		"deployment-validation-operator")
-
-	// Future test once new versions are in place for DVO
-	//checkUpgrade(helper.New(),
-	//	operatorNamespace,
-	//	operatorName,
-	//	operatorName,
-	//	"deployment-validation-operator-registry")
-
-	checkClusterServiceVersion(h, operatorNamespace, operatorCsvDisplayName)
-	checkConfigMapLockfile(h, operatorNamespace, operatorLockFile)
 	checkDeployment(h, operatorNamespace, operatorDeploymentName, defaultDesiredReplicas)
+	checkService(h, operatorNamespace, operatorServiceName, 8383)
+	checkPod(h, operatorNamespace, operatorDeploymentName, 2, 3)
 	checkClusterRoles(h, clusterRoles, false)
 
-	util.GinkgoIt("empty node-label deployment should get created", func() {
+	util.GinkgoIt("Create and test deployment for DVO functionality", func() {
+
+		//Create and check test deployment
+		h.CreateProject("dvo-test")
+		h.SetProjectByName("osde2e-dvo-test")
+
 		// Set it to a wildcard dedicated-admin
-		h.SetServiceAccount("system:serviceaccount:%s:cluster-admin")
+		h.CreateServiceAccounts()
+		h.SetServiceAccount("system:serviceaccount:osde2e-dvo-test:cluster-admin")
 
 		// Test creating a basic deployment
 		ds := makeDeployment("dvo-test-case", h.GetNamespacedServiceAccount(), nodeLabels)
 		_, err := h.Kube().AppsV1().Deployments(h.CurrentProject()).Create(context.TODO(), &ds, metav1.CreateOptions{})
 		Expect(err).NotTo(HaveOccurred())
 
-		wait.PollImmediate(2*time.Second, 15*time.Second, func() (bool, error) {
-
-			resp := h.Kube().CoreV1().Services(operatorNamespace).ProxyGet("http", "deployment-validation-operator-metrics", "8383", "/metrics", nil)
-			data, _ := resp.DoRaw(context.TODO())
-			// Check for now if 503 repeat, if 200 continue (DVO-37 will fix the 3 pod metric issue)
-			if strings.Contains(string(data), "\"code\":503") {
-				return false, nil
-			}
-
-			// Setup array of regex filters for future check
-			var dvoMetricCheck [9]string
-			dvoMetricCheck[0] = fVMinimum3Replicas
-			dvoMetricCheck[1] = fVNoLivenessProbe
-			dvoMetricCheck[2] = fVNoReadinessProbe
-			dvoMetricCheck[3] = fVNoReadOnlyFs
-			dvoMetricCheck[4] = fVRequiredAnnotationEmail
-			dvoMetricCheck[5] = fVRequiredLabelOwner
-			dvoMetricCheck[6] = fVRunAsNonRoot
-			dvoMetricCheck[7] = fVUnsetCPURequirements
-			dvoMetricCheck[8] = fVUnsetMemoryRequirements
-
-			// Cast metric data to string
-			dataString := string(data)
-
-			// Check if corresponding DVO Metric exists against deployment
-			for _, dvoCheck := range dvoMetricCheck {
-				if !(regexDVOCheck(dvoCheck, dataString, ds.Name)) {
-					return false, nil
-				}
-			}
-			return true, nil
-		})
-
 	}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
 
-	// Teardown DVO (Project, Operator Group, and Subscription)
-	deleteDVO(helper.New(),
-		operatorNamespace,
-		operatorName,
-		operatorName,
-		"deployment-validation-operator")
+	// Check the logs of DVO to assert the right test is flagging for test deployment
+	checkPodLogs(h, operatorNamespace, testNamespace, operatorDeploymentName, operatorName, dvoString, 10)
+
+	// Delete DVO Test Deployment
+	deleteDVO(helper.New(), testNamespace)
+
 })
 
 // Function to create a standard deployment
@@ -156,7 +103,7 @@ func makeDeployment(name, sa string, nodeLabels map[string]string) appsv1.Deploy
 					Containers: []v1.Container{
 						{
 							Name:  "test",
-							Image: "registry.access.redhat.com/ubi8/ubi-minimal",
+							Image: "registry.k8s.io/echoserver:1.4",
 						},
 					},
 				},
@@ -167,113 +114,61 @@ func makeDeployment(name, sa string, nodeLabels map[string]string) appsv1.Deploy
 	return dep
 }
 
-// Helper function to perform regex substring checks
-func regexDVOCheck(filterValue string, data string, deploymentName string) bool {
-	r, _ := regexp.Compile(filterValue)
-	match := r.FindAllStringSubmatch(data, -1)
-	for _, v := range match {
-		if strings.Contains(v[1], deploymentName) {
-			return true
-		}
+// Check Pod Logs to see if DVO pod is reporting correct metrics
+func checkPodLogs(h *helper.H, namespace string, testNamespace string, name string, containerName string, dvoString string, gracePeriod int) {
+
+	fmt.Println("Enterned Check Pod Logs")
+
+	podLogOptions := v1.PodLogOptions{
+		Container: containerName,
 	}
-	return false
-}
 
-// Create DVO Subscription
-func deployDVO(h *helper.H, subNamespace string, subName string, packageName string, regServiceName string) {
+	dvoCheck := false
 
-	ginkgo.Context("Install DVO", func() {
-		util.GinkgoIt("should install DVO for future tests", func() {
+	ginkgo.Context("pods", func() {
+		util.GinkgoIt(fmt.Sprintf("Check logs in test namespace %s", testNamespace), func() {
+			// wait for graceperiod
+			fmt.Println("Waiting for grace period")
+			// Wait for graceperiod
+			time.Sleep(time.Duration(gracePeriod) * time.Second)
+			// Retrieve pods
+			pods, err := h.Kube().CoreV1().Pods(namespace).List(context.TODO(), metav1.ListOptions{LabelSelector: "name=" + name})
+			Expect(err).ToNot(HaveOccurred(), "failed fetching pods")
 
-			//Setup vars for error and target namespace for Operator Group
-			var err error
-			var targetns = []string{
-				"osde2e-deployment-validation-operator",
+			// Grab logs of pods
+			fmt.Println("Grabbing Logs for pod")
+
+			for _, pod := range pods.Items {
+				logs := h.Kube().CoreV1().Pods(namespace).GetLogs(pod.Name, &podLogOptions)
+				podLogs, err := logs.DoRaw(context.TODO())
+				if err != nil {
+					break
+				}
+				podString := string(podLogs)
+
+				if strings.Contains(podString, dvoString) {
+					dvoCheck = true
+				} else {
+					dvoCheck = false
+					Expect(dvoCheck).NotTo(HaveOccurred())
+				}
 			}
 
-			// Create DVO Namespace
-			h.CreateProject(subName)
-
-			// Create Operator Group
-			_, err = h.Operator().OperatorsV1().OperatorGroups(subNamespace).Create(context.TODO(), &operatorv1.OperatorGroup{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      subName,
-					Namespace: subNamespace,
-				},
-				Spec: operatorv1.OperatorGroupSpec{
-					TargetNamespaces: targetns,
-				},
-			}, metav1.CreateOptions{})
-			Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("failed trying to create Operator Group %s", subName))
-
-			// Create Subscription
-			_, err = h.Operator().OperatorsV1alpha1().Subscriptions(subNamespace).Create(context.TODO(), &operatorv1alpha.Subscription{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      subName,
-					Namespace: subNamespace,
-				},
-				Spec: &operatorv1alpha.SubscriptionSpec{
-					Package:                "deployment-validation-operator",
-					Channel:                "alpha",
-					CatalogSourceNamespace: "openshift-marketplace",
-					CatalogSource:          "community-operators",
-					InstallPlanApproval:    operatorv1alpha.ApprovalAutomatic,
-				},
-			}, metav1.CreateOptions{})
-			Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("failed trying to create Subscription %s", subName))
-
-			log.Printf("Created DVO subscription %s", subName)
-
-		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
+		}, float64(gracePeriod)+viper.GetFloat64(config.Tests.PollingTimeout))
 	})
 }
 
-// Delete DVO Subscription
-func deleteDVO(h *helper.H, subNamespace string, subName string, packageName string, regServiceName string) {
+// Delete DVO Test Deployment
+func deleteDVO(h *helper.H, subNamespace string) {
 
-	ginkgo.Context("Operator Upgrade", func() {
-		util.GinkgoIt("should upgrade from the replaced version", func() {
+	ginkgo.Context("Delete NS", func() {
+		util.GinkgoIt("Delete NS used for testing DVO", func() {
 
-			// Get the CSV we're currently installed with
-			var latestCSV string
-			var sub *operatorv1alpha.Subscription
 			var err error
-
-			pollErr := wait.PollImmediate(5*time.Second, 5*time.Minute, func() (bool, error) {
-				sub, err = h.Operator().OperatorsV1alpha1().Subscriptions(subNamespace).Get(context.TODO(), subName, metav1.GetOptions{})
-				if err != nil {
-					return false, err
-				}
-				latestCSV = sub.Status.CurrentCSV
-				if latestCSV != "" {
-					return true, nil
-				}
-				return false, nil
-			})
-			Expect(pollErr).NotTo(HaveOccurred(), fmt.Sprintf("failed trying to get Subscription %s in %s namespace: %v", subName, subNamespace, err))
-
-			// Delete current Operator installation
-			err = h.Operator().OperatorsV1().OperatorGroups(subNamespace).Delete(context.TODO(), subName, metav1.DeleteOptions{})
-			Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("failed trying to delete operator group %s", subName))
-			log.Printf("Removed operator group %s", subName)
-
-			err = h.Operator().OperatorsV1alpha1().Subscriptions(subNamespace).Delete(context.TODO(), subName, metav1.DeleteOptions{})
-			Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("failed trying to delete Subscription %s", subName))
-			log.Printf("Removed subscription %s", subName)
-
-			err = h.Operator().OperatorsV1alpha1().ClusterServiceVersions(subNamespace).Delete(context.TODO(), latestCSV, metav1.DeleteOptions{})
-			Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("failed trying to delete ClusterServiceVersion %s", latestCSV))
-			log.Printf("Removed csv %s", latestCSV)
-
 			err = helper.DeleteNamespace(subNamespace, true, h)
 			Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("failed trying to delete project %s", subNamespace))
 			log.Printf("Removed project %s", subNamespace)
 
-			Eventually(func() bool {
-				_, err := h.Operator().OperatorsV1alpha1().InstallPlans(subNamespace).Get(context.TODO(), sub.Status.Install.Name, metav1.GetOptions{})
-				return apierrors.IsNotFound(err)
-			}, 5*time.Minute, 10*time.Second).Should(BeTrue(), "installplan never garbage collected")
-			log.Printf("Verified installplan removal")
 		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
 	})
 }
