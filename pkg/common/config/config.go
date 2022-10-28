@@ -682,7 +682,7 @@ func InitViper() {
 	viper.SetDefault(Cluster.Channel, "candidate")
 	viper.BindEnv(Cluster.Channel, "CHANNEL")
 
-	viper.SetDefault(Cluster.DestroyAfterTest, false)
+	viper.SetDefault(Cluster.DestroyAfterTest, true)
 	viper.BindEnv(Cluster.DestroyAfterTest, "DESTROY_CLUSTER")
 
 	viper.SetDefault(Cluster.ExpiryInMinutes, 360)
