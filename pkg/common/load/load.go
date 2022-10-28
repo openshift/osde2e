@@ -2,14 +2,14 @@ package load
 
 import (
 	"fmt"
+	"io/fs"
 	"io/ioutil"
 	"log"
-	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
 
-	"github.com/markbates/pkger"
+	"github.com/openshift/osde2e/configs"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
 )
@@ -113,10 +113,12 @@ func Configs(configs []string, customConfig string, secretLocations []string) er
 
 // loadYAMLFromConfigs accepts a config name and attempts to unmarshal the config from the /configs directory.
 func loadYAMLFromConfigs(name string) error {
-	var file http.File
-	var err error
+	var (
+		file fs.File
+		err  error
+	)
 
-	if file, err = pkger.Open(filepath.Join("/configs", name+".yaml")); err != nil {
+	if file, err = configs.FS.Open(name + ".yaml"); err != nil {
 		return fmt.Errorf("error trying to open config %s: %v", name, err)
 	}
 

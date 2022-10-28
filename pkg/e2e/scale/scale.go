@@ -3,16 +3,16 @@ package scale
 import (
 	"bytes"
 	"fmt"
+	"io/fs"
 	"io/ioutil"
-	"net/http"
 	"sync"
 	"text/template"
 
-	"github.com/markbates/pkger"
 	. "github.com/onsi/gomega"
-	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	kubev1 "k8s.io/api/core/v1"
 
+	"github.com/openshift/osde2e/assets"
+	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/runner"
@@ -42,12 +42,12 @@ type scaleRunnerConfig struct {
 
 func init() {
 	var (
-		fileReader http.File
+		fileReader fs.File
 		data       []byte
 		err        error
 	)
 
-	if fileReader, err = pkger.Open("/assets/scale/scale-runner.template"); err != nil {
+	if fileReader, err = assets.FS.Open("scale/scale-runner.template"); err != nil {
 		panic(fmt.Sprintf("unable to open scale runner template: %v", err))
 	}
 

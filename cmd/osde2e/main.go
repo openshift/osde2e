@@ -8,8 +8,7 @@ import (
 	"strings"
 	"syscall"
 
-	// The root import needs to happen before importing the rest of osde2e, as this is what imports the various assets.
-	_ "github.com/openshift/osde2e"
+	"github.com/spf13/cobra"
 
 	"github.com/openshift/osde2e/cmd/osde2e/alert"
 	"github.com/openshift/osde2e/cmd/osde2e/arguments"
@@ -20,7 +19,6 @@ import (
 	"github.com/openshift/osde2e/cmd/osde2e/report"
 	"github.com/openshift/osde2e/cmd/osde2e/test"
 	"github.com/openshift/osde2e/cmd/osde2e/update"
-	"github.com/spf13/cobra"
 )
 
 var root = &cobra.Command{
@@ -48,14 +46,13 @@ func init() {
 	root.AddCommand(completion.Cmd)
 	root.AddCommand(alert.Cmd)
 	root.AddCommand(cleanup.Cmd)
-
 }
 
 func main() {
 	log.SetFlags(log.Flags() | log.Lshortfile)
 
 	// Execute the root command:
-	//root.SetArgs(os.Args[1:])
+	// root.SetArgs(os.Args[1:])
 	if err := root.Execute(); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)

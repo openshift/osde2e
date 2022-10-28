@@ -1,15 +1,17 @@
 package helpers
 
 import (
-	"github.com/markbates/pkger"
-	"github.com/spf13/cobra"
-	"os"
+	"io/fs"
 	"strings"
+
+	"github.com/spf13/cobra"
+
+	"github.com/openshift/osde2e/configs"
 )
 
-func ConfigComplete(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+func ConfigComplete(_ *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
 	completeArgs := make([]string, 0)
-	err := pkger.Walk("/configs", func(path string, info os.FileInfo, err error) error {
+	err := fs.WalkDir(configs.FS, ".", func(_ string, info fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}

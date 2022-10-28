@@ -31,7 +31,7 @@ const (
 )
 
 // Specify where the YAML definitions are for the workloads.
-var testDir = "/assets/workloads/e2e/redmine"
+var testDir = "workloads/e2e/redmine"
 
 // Use the base folder name for the workload name. Make it easy!
 var workloadName = filepath.Base(testDir)

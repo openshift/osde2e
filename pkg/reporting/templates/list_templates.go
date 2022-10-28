@@ -2,17 +2,17 @@ package templates
 
 import (
 	"fmt"
-	"os"
+	"io/fs"
 	"path/filepath"
 
-	"github.com/markbates/pkger"
+	"github.com/openshift/osde2e/assets"
 )
 
 // ListTemplates will list all templates for a report.
 func ListTemplates(reportName string) []string {
 	listOfTemplates := []string{}
 
-	pkger.Walk(fmt.Sprintf("/assets/reports/%s", reportName), func(path string, info os.FileInfo, err error) error {
+	fs.WalkDir(assets.FS, fmt.Sprintf("reports/%s", reportName), func(path string, info fs.DirEntry, _ error) error {
 		if !info.IsDir() {
 			template := filepath.Base(path)
 			extension := filepath.Ext(template)
