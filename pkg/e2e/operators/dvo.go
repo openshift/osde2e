@@ -19,6 +19,7 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/wait"
 )
 
 var deploymentValidationOperatorTestName string = "[Suite: informing] [OSD] Deployment Validation Operator (dvo)"
@@ -73,10 +74,10 @@ var _ = ginkgo.Describe(deploymentValidationOperatorTestName, func() {
 	}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
 
 	// Check the logs of DVO to assert the right test is flagging for test deployment
-	checkPodLogs(h, operatorNamespace, testNamespace, operatorDeploymentName, operatorName, dvoString, 10)
+	checkPodLogs(h, operatorNamespace, testNamespace, operatorDeploymentName, operatorName, dvoString, 300)
 
 	// Delete DVO Test Deployment
-	deleteDVO(helper.New(), testNamespace)
+	defer deleteNamespace(testNamespace, true, h)
 
 })
 
@@ -158,17 +159,24 @@ func checkPodLogs(h *helper.H, namespace string, testNamespace string, name stri
 	})
 }
 
-// Delete DVO Test Deployment
-func deleteDVO(h *helper.H, subNamespace string) {
+// Delete Namespace
+func deleteNamespace(namespace string, waitForDelete bool, h *helper.H) error {
+	log.Printf("Deleting namespace for namespace validation webhook (%s)", namespace)
+	err := h.Kube().CoreV1().Namespaces().Delete(context.TODO(), namespace, metav1.DeleteOptions{})
+	if err != nil {
+		return fmt.Errorf("failed to delete namespace '%s': %v", namespace, err)
+	}
 
-	ginkgo.Context("Delete NS", func() {
-		util.GinkgoIt("Delete NS used for testing DVO", func() {
+	// Deleting a namespace can take a while. If desired, wait for the namespace to delete before returning.
+	if waitForDelete {
+		err = wait.PollImmediate(2*time.Second, 1*time.Minute, func() (bool, error) {
+			ns, _ := h.Kube().CoreV1().Namespaces().Get(context.TODO(), namespace, metav1.GetOptions{})
+			if ns != nil && ns.Status.Phase == "Terminating" {
+				return false, nil
+			}
+			return true, nil
+		})
+	}
 
-			var err error
-			err = helper.DeleteNamespace(subNamespace, true, h)
-			Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("failed trying to delete project %s", subNamespace))
-			log.Printf("Removed project %s", subNamespace)
-
-		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
-	})
+	return err
 }
