@@ -326,7 +326,6 @@ func runGinkgoTests() (int, error) {
 	log.Printf("Outputting log to build log at %s", buildLogPath)
 
 	// Get the cluster ID now to test against later
-	clusterID := viper.GetString(config.Cluster.ID)
 	providerCfg := viper.GetString(config.Provider)
 	// setup OSD unless Kubeconfig is present
 	if len(viper.GetString(config.Kubeconfig.Path)) > 0 && providerCfg == "mock" {
@@ -526,9 +525,9 @@ func runGinkgoTests() (int, error) {
 	}
 
 	if viper.GetBool(config.Cluster.DestroyAfterTest) {
-		log.Printf("Destroying cluster '%s'...", clusterID)
+		log.Printf("Destroying cluster '%s'...", viper.GetString(config.Cluster.ID))
 
-		if err = provider.DeleteCluster(clusterID); err != nil {
+		if err = provider.DeleteCluster(viper.GetString(config.Cluster.ID)); err != nil {
 			return Failure, fmt.Errorf("error deleting cluster: %s", err.Error())
 		}
 	} else {
@@ -683,7 +682,7 @@ func cleanupAfterE2E(h *helper.H) (errors []error) {
 	// We need a provider to hibernate
 	// We need a cluster to hibernate
 	// We need to check that the test run wants to hibernate after this run
-	if provider != nil && viper.GetString(config.Cluster.ID) != "" && viper.GetBool(config.Cluster.HibernateAfterUse) {
+	if provider != nil && viper.GetString(config.Cluster.ID) != "" && viper.GetBool(config.Cluster.HibernateAfterUse) && !viper.GetBool(config.Cluster.DestroyAfterTest) {
 		msg := "Unable to hibernate %s"
 		if provider.Hibernate(viper.GetString(config.Cluster.ID)) {
 			msg = "Hibernating %s"

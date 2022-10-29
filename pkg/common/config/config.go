@@ -725,10 +725,13 @@ func InitViper() {
 	viper.SetDefault(Cluster.CleanCheckRuns, 20)
 	viper.BindEnv(Cluster.CleanCheckRuns, "CLEAN_CHECK_RUNS")
 
+	viper.SetDefault(Cluster.ID, "")
 	viper.BindEnv(Cluster.ID, "CLUSTER_ID")
 
+	viper.SetDefault(Cluster.Name, "")
 	viper.BindEnv(Cluster.Name, "CLUSTER_NAME")
 
+	viper.SetDefault(Cluster.Version, "")
 	viper.BindEnv(Cluster.Version, "CLUSTER_VERSION")
 
 	viper.SetDefault(Cluster.EnoughVersionsForOldestOrMiddleTest, true)
