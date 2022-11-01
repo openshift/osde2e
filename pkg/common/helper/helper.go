@@ -21,7 +21,6 @@ import (
 
 	configv1 "github.com/openshift/api/config/v1"
 	projectv1 "github.com/openshift/api/project/v1"
-	v1 "k8s.io/api/core/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -178,7 +177,7 @@ func (h *H) CreateServiceAccounts() *H {
 	Expect(h.proj).NotTo(BeNil(), "no project is currently set")
 
 	// Create project-specific dedicated-admin account
-	sa, err := h.Kube().CoreV1().ServiceAccounts(h.CurrentProject()).Create(context.TODO(), &v1.ServiceAccount{
+	sa, err := h.Kube().CoreV1().ServiceAccounts(h.CurrentProject()).Create(context.TODO(), &corev1.ServiceAccount{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "dedicated-admin-project",
 		},
@@ -188,7 +187,7 @@ func (h *H) CreateServiceAccounts() *H {
 	log.Printf("Created SA: %v", sa.GetName())
 
 	// Create cluster dedicated-admin account
-	sa, err = h.Kube().CoreV1().ServiceAccounts(h.CurrentProject()).Create(context.TODO(), &v1.ServiceAccount{
+	sa, err = h.Kube().CoreV1().ServiceAccounts(h.CurrentProject()).Create(context.TODO(), &corev1.ServiceAccount{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "dedicated-admin-cluster",
 		},
@@ -198,7 +197,7 @@ func (h *H) CreateServiceAccounts() *H {
 	log.Printf("Created SA: %v", sa.GetName())
 
 	// Create cluster-admin account
-	sa, err = h.Kube().CoreV1().ServiceAccounts(h.CurrentProject()).Create(context.TODO(), &v1.ServiceAccount{
+	sa, err = h.Kube().CoreV1().ServiceAccounts(h.CurrentProject()).Create(context.TODO(), &corev1.ServiceAccount{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "cluster-admin",
 		},
@@ -212,7 +211,7 @@ func (h *H) CreateServiceAccounts() *H {
 
 // CreateClusterRoleBinding takes an sa (presumably created by us) and applies a clusterRole to it
 // The cr is bound to the project and, thus, cleaned up when the project gets removed.
-func (h *H) CreateClusterRoleBinding(sa *v1.ServiceAccount, clusterRole string) {
+func (h *H) CreateClusterRoleBinding(sa *corev1.ServiceAccount, clusterRole string) {
 	gvk := schema.FromAPIVersionAndKind("project.openshift.io/v1", "Project")
 	projRef := *metav1.NewControllerRef(h.proj, gvk)
 
