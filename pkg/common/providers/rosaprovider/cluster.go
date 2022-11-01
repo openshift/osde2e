@@ -15,7 +15,6 @@ import (
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/spi"
 	"github.com/openshift/osde2e/pkg/common/util"
-	accountRoles "github.com/openshift/rosa/cmd/create/accountroles"
 	createCluster "github.com/openshift/rosa/cmd/create/cluster"
 	"github.com/openshift/rosa/cmd/dlt/oidcprovider"
 	"github.com/openshift/rosa/cmd/dlt/operatorrole"
@@ -121,6 +120,8 @@ func (m *ROSAProvider) LaunchCluster(clusterName string) (string, error) {
 		"--service-cidr", viper.GetString(ServiceCIDR),
 		"--pod-cidr", viper.GetString(PodCIDR),
 		"--host-prefix", viper.GetString(HostPrefix),
+		"--mode", "auto",
+		"--yes",
 	}
 	if viper.GetString(SubnetIDs) != "" {
 		subnetIDs := viper.GetString(SubnetIDs)
@@ -153,11 +154,6 @@ func (m *ROSAProvider) LaunchCluster(clusterName string) (string, error) {
 		createClusterArgs = append(createClusterArgs, "--hosted-cp")
 	}
 
-	if viper.GetBool(STS) {
-		createClusterArgs = append(createClusterArgs, "--sts", "--mode", "auto", "--yes")
-	}
-
-	//(Tech Debt) I'm not a fan of this implementation, and I'd like to handle the AWS session differently in the future.
 	err = callAndSetAWSSession(func() error {
 		// Retrieve AWS Account info
 		logger := logging.NewLogger()
@@ -183,7 +179,6 @@ func (m *ROSAProvider) LaunchCluster(clusterName string) (string, error) {
 	}
 
 	clusterProperties, err := m.ocmProvider.GenerateProperties()
-
 	if err != nil {
 		return "", fmt.Errorf("error generating cluster properties: %v", err)
 	}
@@ -260,16 +255,6 @@ func (m *ROSAProvider) DeleteCluster(clusterID string) error {
 	}
 
 	return nil
-}
-
-func (m *ROSAProvider) stsAccountSetup(version string) error {
-	newAccountRoles := accountRoles.Cmd
-	args := []string{"--version", version, "--prefix", fmt.Sprintf("ManagedOpenShift-%s", version), "--mode", "auto", "--yes"}
-	log.Printf("%v", args)
-	newAccountRoles.SetArgs(args)
-	return callAndSetAWSSession(func() error {
-		return newAccountRoles.Execute()
-	})
 }
 
 func (m *ROSAProvider) stsClusterCleanup(clusterID string) error {
