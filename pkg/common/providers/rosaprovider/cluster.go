@@ -285,12 +285,12 @@ func (m *ROSAProvider) stsAccountSetup(version string) error {
 
 func (m *ROSAProvider) stsClusterCleanup(clusterID string) error {
 	// wait for the cluster to no longer be available
-	wait.PollImmediate(1*time.Minute, 15*time.Minute, func() (bool, error) {
+	wait.PollImmediate(3*time.Minute, 15*time.Minute, func() (bool, error) {
 		clusters, err := m.ocmProvider.ListClusters(fmt.Sprintf("id = '%s'", clusterID))
 		if err != nil {
 			return false, err
 		}
-
+		log.Printf("Waiting for cluster %s to be deleted", clusterID)
 		return len(clusters) == 0, nil
 	})
 
@@ -301,18 +301,24 @@ func (m *ROSAProvider) stsClusterCleanup(clusterID string) error {
 		deleteOperatorRolesArgs := append([]string{"operator-roles"}, defaultArgs...)
 		deleteOperatorRolesCmd := operatorrole.Cmd
 		deleteOperatorRolesCmd.SetArgs(deleteOperatorRolesArgs)
+		log.Printf("%v", deleteOperatorRolesArgs)
 
 		deleteOIDCProviderArgs := append([]string{"oidc-provider"}, defaultArgs...)
 		deleteOIDCProviderCmd := oidcprovider.Cmd
 		deleteOIDCProviderCmd.SetArgs(deleteOIDCProviderArgs)
+		log.Printf("%v", deleteOIDCProviderArgs)
 
 		if err = deleteOperatorRolesCmd.Execute(); err != nil {
+			log.Printf("Error deleting operator roles: %v", err)
 			return err
 		}
+		log.Printf("Deleted operator roles for cluster %s", clusterID)
 
 		if err = deleteOIDCProviderCmd.Execute(); err != nil {
+			log.Printf("Error deleting OIDC provider: %v", err)
 			return err
 		}
+		log.Printf("Deleted OIDC provider for cluster %s", clusterID)
 
 		return nil
 	})
