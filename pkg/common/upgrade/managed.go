@@ -39,16 +39,16 @@ const (
 	// name of the workload for pod disruption budget tests
 	pdbWorkloadName = "pdb"
 	// directory containing pod disruption budget workload assets
-	pdbWorkloadDir = "/assets/workloads/e2e/pdb"
+	pdbWorkloadDir = "workloads/e2e/pdb"
 	// name of the workload for node drain tests
 	drainWorkloadName = "node-drain-test"
 	// directory containing node drain workload assets
-	drainWorkloadDir = "/assets/workloads/e2e/drain"
+	drainWorkloadDir = "workloads/e2e/drain"
 	// Time to wait in seconds for workload to be created
 	workloadCreationWaitTime = 3
 
 	// config override template asset
-	configOverrideTemplate = "/assets/upgrades/config.template"
+	configOverrideTemplate = "upgrades/config.template"
 	// config override values
 	configProviderWatchInterval   = 15  // minutes
 	configScaleTimeout            = 15  // minutes

@@ -2,15 +2,16 @@ package mock
 
 import (
 	"fmt"
+	"io/fs"
 	"io/ioutil"
 	"log"
-	"net/http"
 	"os"
 	"time"
 
 	"github.com/Masterminds/semver"
 	"github.com/google/uuid"
-	"github.com/markbates/pkger"
+
+	"github.com/openshift/osde2e/assets"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/spi"
@@ -140,7 +141,7 @@ func (m *MockProvider) ScaleCluster(clusterID string, numComputeNodes int) error
 // ClusterKubeconfig mocks a cluster kubeconfig operation.
 func (m *MockProvider) ClusterKubeconfig(clusterID string) ([]byte, error) {
 	var (
-		fileReader http.File
+		fileReader fs.File
 		err        error
 	)
 
@@ -157,7 +158,7 @@ func (m *MockProvider) ClusterKubeconfig(clusterID string) ([]byte, error) {
 		}
 	} else {
 		// This kubeconfig is valid and can be parsed, but attmping to use it will cause failures :)
-		fileReader, err = pkger.Open("/assets/providers/mock/kubeconfig")
+		fileReader, err = assets.FS.Open("providers/mock/kubeconfig")
 		if err != nil {
 			return nil, err
 		}

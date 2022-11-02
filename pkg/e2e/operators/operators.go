@@ -536,7 +536,7 @@ Loop:
 
 func getReplacesCSV(h *helper.H, subscriptionNS string, csvDisplayName string, catalogSvcName string) (string, error) {
 	cmdTimeoutInSeconds := 60
-	cmdTestTemplate, err := templates.LoadTemplate("/assets/registry/replaces.template")
+	cmdTestTemplate, err := templates.LoadTemplate("registry/replaces.template")
 
 	if err != nil {
 		panic(fmt.Sprintf("error while loading registry-replaces addon: %v", err))

@@ -147,19 +147,11 @@ The helper:
 - Provides commonly used test functions
 
 ## Static files
-Static files for `OSDe2e`  such as YAML manifests are managed using a project called **[`pkger`]**. 
 
-**[`pkger`]** takes and compresses assets into a single file for easier distribution. If your test has a static asset such as a manifest, add it into the **[`/assets/`]** directory. 
-
-Once your assets are in the correct directory, they will automatically be added to the `pkged.go` file that is created by [`pkger`]. during a `make build`.
-
-__Note__: `make build` or `make pkger` will automatically install [`pkger`] on your system
-
-You can debug [`pkger`] and ensure that your assets have been installed by running:
-
-```
-pkger list
-```
+Static files for `OSDe2e`  such as YAML manifests are managed using the native
+Go embed feature. If your test has a static asset such as a manifest, add it
+into the **[`/assets/`]** directory. It can then be accessed through the
+`assets.FS` [embedded filesystem](https://pkg.go.dev/embed#hdr-File_Systems)
 
 ## CRC Provider
 
@@ -206,7 +198,6 @@ All these negatives said, being able to run a subset of tests against a limited 
 [ocm-sdk-go]:https://github.com/openshift-online/ocm-sdk-go
 [`config.Config`]:https://godoc.org/github.com/openshift/osde2e/common/pkg/config#Config
 [`helper.New()`]:https://godoc.org/github.com/openshift/osde2e/pkg/common/helper#New
-[`pkger`]:https://github.com/markbates/pkger
 [`/assets/`]:/assets/
 [CRC]:https://github.com/code-ready/crc
 [Hive]:https://github.com/openshift/hive
