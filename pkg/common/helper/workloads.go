@@ -3,22 +3,21 @@ package helper
 import (
 	"context"
 	"fmt"
+	"io/fs"
 	"io/ioutil"
-	"net/http"
-	"os"
 	"strings"
 	"time"
 
-	"github.com/markbates/pkger"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	policyv1beta1 "k8s.io/api/policy/v1beta1"
-
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/scheme"
+
+	"github.com/openshift/osde2e/assets"
 )
 
 // ApplyYamlInFolder reads a folder and attempts to create objects in K8s with the yaml
@@ -29,7 +28,7 @@ func ApplyYamlInFolder(folder, namespace string, kube kubernetes.Interface) ([]r
 		files   []string
 		err     error
 	)
-	err = pkger.Walk(folder, func(path string, info os.FileInfo, err error) error {
+	err = fs.WalkDir(assets.FS, folder, func(path string, info fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
@@ -58,11 +57,11 @@ func ApplyYamlInFolder(folder, namespace string, kube kubernetes.Interface) ([]r
 // ReadK8sYaml reads a file at the specified path and attempts to decode it into a runtime.Object
 func ReadK8sYaml(file string) (runtime.Object, error) {
 	var (
-		fileReader http.File
+		fileReader fs.File
 		err        error
 	)
 
-	if fileReader, err = pkger.Open(file); err != nil {
+	if fileReader, err = assets.FS.Open(file); err != nil {
 		return nil, err
 	}
 
@@ -73,7 +72,6 @@ func ReadK8sYaml(file string) (runtime.Object, error) {
 
 	decode := scheme.Codecs.UniversalDeserializer().Decode
 	obj, _, err := decode([]byte(f), nil, nil)
-
 	if err != nil {
 		return nil, fmt.Errorf("Error while decoding YAML object. Err was: %s", err)
 	}

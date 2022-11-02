@@ -27,7 +27,7 @@ func init() {
 var _ = ginkgo.Describe(dedicatedAdminSccTestName, func() {
 	h := helper.New()
 
-	workloadDir := "/assets/workloads/e2e/scc"
+	workloadDir := "workloads/e2e/scc"
 	// How long to wait for prometheus pods to restart
 	prometheusRestartPollingDuration := 4 * time.Minute
 

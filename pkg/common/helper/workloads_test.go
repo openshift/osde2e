@@ -11,9 +11,9 @@ func TestCreateWorkload(t *testing.T) {
 		description string
 		file        string
 	}{
-		{"pod", "/assets/workloads/tests/pod.yaml"},
-		{"pods", "/assets/workloads/tests/pods.yaml"},
-		{"service", "/assets/workloads/tests/service.yaml"},
+		{"pod", "workloads/tests/pod.yaml"},
+		{"pods", "workloads/tests/pods.yaml"},
+		{"service", "workloads/tests/service.yaml"},
 	}
 
 	for _, test := range tests {

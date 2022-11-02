@@ -29,7 +29,7 @@ const (
 )
 
 // Specify where the YAML definitions are for the workloads.
-var testDir = "/assets/workloads/e2e/guestbook"
+var testDir = "workloads/e2e/guestbook"
 
 // Use the base folder name for the workload name. Make it easy!
 var workloadName = filepath.Base(testDir)

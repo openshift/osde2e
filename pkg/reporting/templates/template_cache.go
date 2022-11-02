@@ -36,7 +36,7 @@ func (t *templateCache) getReportTemplate(reportName string, reportType string) 
 		return template, nil
 	}
 
-	template, err := templates.LoadTemplate(fmt.Sprintf("/assets/reports/%s/%s.template", reportName, reportType))
+	template, err := templates.LoadTemplate(fmt.Sprintf("reports/%s/%s.template", reportName, reportType))
 
 	t.cache[key] = template
 	if err != nil {

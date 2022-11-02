@@ -31,7 +31,6 @@ require (
 	github.com/kyleconroy/sqlc v1.15.0
 	github.com/kylelemons/godebug v1.1.0
 	github.com/lib/pq v1.10.7
-	github.com/markbates/pkger v0.17.1
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/onsi/ginkgo/v2 v2.3.1
 	github.com/onsi/gomega v1.22.1

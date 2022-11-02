@@ -17,7 +17,7 @@ import (
 // It allows you to specify a job name prefix and arguments to a test harness container.
 // It returns the names of test harnesses that failed (empty slice if none failed).
 func (h *H) RunAddonTests(name string, timeout int, harnesses, args []string) (failed []string) {
-	addonTestTemplate, err := templates.LoadTemplate("/assets/addons/addon-runner.template")
+	addonTestTemplate, err := templates.LoadTemplate("addons/addon-runner.template")
 
 	if err != nil {
 		panic(fmt.Sprintf("error while loading addon test runner: %v", err))
