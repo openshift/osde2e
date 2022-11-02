@@ -15,8 +15,8 @@ import (
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/spi"
 	"github.com/openshift/osde2e/pkg/common/util"
-	createCluster "github.com/openshift/rosa/cmd/create/cluster"
 	accountRoles "github.com/openshift/rosa/cmd/create/accountroles"
+	createCluster "github.com/openshift/rosa/cmd/create/cluster"
 	"github.com/openshift/rosa/cmd/dlt/oidcprovider"
 	"github.com/openshift/rosa/cmd/dlt/operatorrole"
 	rosaLogin "github.com/openshift/rosa/cmd/login"
@@ -24,11 +24,6 @@ import (
 	"github.com/openshift/rosa/pkg/logging"
 	"github.com/openshift/rosa/pkg/ocm"
 	"k8s.io/apimachinery/pkg/util/wait"
-
-	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
-	"github.com/openshift/osde2e/pkg/common/config"
-	"github.com/openshift/osde2e/pkg/common/spi"
-	"github.com/openshift/osde2e/pkg/common/util"
 )
 
 // IsValidClusterName validates the clustername prior to proceeding with it
@@ -155,7 +150,7 @@ func (m *ROSAProvider) LaunchCluster(clusterName string) (string, error) {
 		)
 	}
 
-	if viper.GetBool("config.Cluster.HyperShift") {
+	if viper.GetBool(config.Cluster.HyperShift) {
 		createClusterArgs = append(createClusterArgs, "--hosted-cp")
 	}
 
@@ -163,9 +158,6 @@ func (m *ROSAProvider) LaunchCluster(clusterName string) (string, error) {
 		createClusterArgs = append(createClusterArgs, "--sts")
 	}
 
-	if viper.GetString("config.Cluster.Mode") == "auto" {
-		createClusterArgs = append(createClusterArgs, "-y")
-	}
 	//(Tech Debt) I'm not a fan of this implementation, and I'd like to handle the AWS session differently in the future.
 	err = callAndSetAWSSession(func() error {
 		// Retrieve AWS Account info
@@ -189,23 +181,6 @@ func (m *ROSAProvider) LaunchCluster(clusterName string) (string, error) {
 	})
 	if err != nil {
 		return "", err
-	}
-
-	if viper.GetBool(STS) {
-		parsedVersion := semver.MustParse(rosaClusterVersion)
-		majorMinor := fmt.Sprintf("%d.%d", parsedVersion.Major(), parsedVersion.Minor())
-
-		err = m.stsAccountSetup(majorMinor)
-		if err != nil {
-			return "", err
-		}
-		createClusterArgs = append(createClusterArgs,
-			"--role-arn", fmt.Sprintf("arn:aws:iam::%s:role/ManagedOpenShift-%s-Installer-Role", awsAccountID, majorMinor),
-			"--support-role-arn", fmt.Sprintf("arn:aws:iam::%s:role/ManagedOpenShift-%s-Support-Role", awsAccountID, majorMinor),
-			"--controlplane-iam-role", fmt.Sprintf("arn:aws:iam::%s:role/ManagedOpenShift-%s-ControlPlane-Role", awsAccountID, majorMinor),
-			"--worker-iam-role", fmt.Sprintf("arn:aws:iam::%s:role/ManagedOpenShift-%s-Worker-Role", awsAccountID, majorMinor),
-		)
-
 	}
 
 	clusterProperties, err := m.ocmProvider.GenerateProperties()
