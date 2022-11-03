@@ -85,6 +85,9 @@ const (
 
 	// JobStartedAt tracks when the job began running.
 	JobStartedAt = "JobStartedAt"
+
+	// Hypershift enables the use of hypershift for cluster creation.
+	Hypershift = "Hypershift"
 )
 
 // This is a config key to secret file mapping. We will attempt to read in from secret files before loading anything else.
@@ -365,12 +368,6 @@ var Cluster = struct {
 
 	// UseProxyForInstall will attempt to use a cluster-wide proxy for cluster installation, provided that a cluster-wide proxy config is supplied
 	UseProxyForInstall string
-
-	// Create a HyperShift cluster through the ROSA provider
-	HyperShift string
-
-	//Pass the Mode flag to the ROSA provider
-	Mode string
 }{
 	MultiAZ:                             "cluster.multiAZ",
 	Channel:                             "cluster.channel",
@@ -404,8 +401,6 @@ var Cluster = struct {
 	Passing:                             "cluster.passing",
 	Reused:                              "cluster.rused",
 	InspectNamespaces:                   "cluster.inspectNamespaces",
-	HyperShift:                          "cluster.hypershift",
-	Mode:                                "cluster.mode",
 }
 
 // CloudProvider config keys.
@@ -707,11 +702,8 @@ func InitViper() {
 	viper.SetDefault(Cluster.UseProxyForInstall, false)
 	viper.BindEnv(Cluster.UseProxyForInstall, "USE_PROXY_FOR_INSTALL")
 
-	viper.SetDefault(Cluster.HyperShift, false)
-	viper.BindEnv(Cluster.HyperShift, "HYPERSHIFT")
-
-	viper.SetDefault(Cluster.Mode, "")
-	viper.BindEnv(Cluster.Mode, "MODE")
+	viper.SetDefault(Hypershift, false)
+	viper.BindEnv(Hypershift, "HYPERSHIFT")
 
 	viper.SetDefault(Cluster.UseLatestVersionForInstall, false)
 	viper.BindEnv(Cluster.UseLatestVersionForInstall, "USE_LATEST_VERSION_FOR_INSTALL")

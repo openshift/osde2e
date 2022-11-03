@@ -1,8 +1,5 @@
 provider: rosa
+Hypershift: True
 rosa:
+  Env: stage
   STS: True
-config:
-  cluster: 
-    Hypershift: True
-    Mode: auto
-    

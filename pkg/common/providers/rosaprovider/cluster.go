@@ -121,7 +121,6 @@ func (m *ROSAProvider) LaunchCluster(clusterName string) (string, error) {
 		"--service-cidr", viper.GetString(ServiceCIDR),
 		"--pod-cidr", viper.GetString(PodCIDR),
 		"--host-prefix", viper.GetString(HostPrefix),
-		"--mode", viper.GetString(config.Cluster.Mode),
 	}
 	if viper.GetString(SubnetIDs) != "" {
 		subnetIDs := viper.GetString(SubnetIDs)
@@ -150,12 +149,12 @@ func (m *ROSAProvider) LaunchCluster(clusterName string) (string, error) {
 		)
 	}
 
-	if viper.GetBool(config.Cluster.HyperShift) {
+	if viper.GetBool(config.Hypershift) {
 		createClusterArgs = append(createClusterArgs, "--hosted-cp")
 	}
 
 	if viper.GetBool(STS) {
-		createClusterArgs = append(createClusterArgs, "--sts")
+		createClusterArgs = append(createClusterArgs, "--sts", "--mode", "auto", "--yes")
 	}
 
 	//(Tech Debt) I'm not a fan of this implementation, and I'd like to handle the AWS session differently in the future.

@@ -30,7 +30,7 @@ require (
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/onsi/ginkgo/v2 v2.3.1
 	github.com/onsi/gomega v1.22.1
-	github.com/openshift-online/ocm-sdk-go v0.1.288
+	github.com/openshift-online/ocm-sdk-go v0.1.289
 	github.com/openshift/api v3.9.1-0.20190924102528-32369d4db2ad+incompatible
 	github.com/openshift/client-go v0.0.0-20200827190008-3062137373b5
 	github.com/openshift/cloud-credential-operator v0.0.0-20210525141023-02cc6303cd10
@@ -40,7 +40,7 @@ require (
 	github.com/openshift/machine-api-operator v0.2.1-0.20200529045911-d19e8d007f7c
 	github.com/openshift/managed-upgrade-operator v0.0.0-20210728104325-95212635e5e1
 	github.com/openshift/origin v0.0.0-20160503220234-8f127d736703
-	github.com/openshift/rosa v1.2.8
+	github.com/openshift/rosa v1.2.9-0.20221102224332-b3a70e1bb1a4
 	github.com/openshift/route-monitor-operator v0.0.0-20210309123726-229da76cc133
 	github.com/openshift/splunk-forwarder-operator v0.0.0-20201112162206-2f454770b6c0
 	github.com/operator-framework/api v0.3.6
@@ -72,6 +72,8 @@ require (
 	k8s.io/client-go v12.0.0+incompatible
 	k8s.io/utils v0.0.0-20210930125809-cb0fa318a74b
 )
+
+require github.com/markbates/pkger v0.15.1
 
 require (
 	cloud.google.com/go/compute v1.10.0 // indirect
