@@ -368,12 +368,6 @@ var Cluster = struct {
 
 	// UseProxyForInstall will attempt to use a cluster-wide proxy for cluster installation, provided that a cluster-wide proxy config is supplied
 	UseProxyForInstall string
-
-	// Create a HyperShift cluster through the ROSA provider
-	HyperShift string
-
-	//Pass the Mode flag to the ROSA provider
-	Mode string
 }{
 	MultiAZ:                             "cluster.multiAZ",
 	Channel:                             "cluster.channel",
@@ -407,8 +401,6 @@ var Cluster = struct {
 	Passing:                             "cluster.passing",
 	Reused:                              "cluster.rused",
 	InspectNamespaces:                   "cluster.inspectNamespaces",
-	HyperShift:                          "cluster.hypershift",
-	Mode:                                "cluster.mode",
 }
 
 // CloudProvider config keys.
