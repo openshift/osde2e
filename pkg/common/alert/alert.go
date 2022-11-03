@@ -126,7 +126,7 @@ func RegisterGinkgoAlert(test, team, contact, slack, email string, threshold int
 		PrimaryContact:   contact,
 		SlackChannel:     slack,
 		Email:            email,
-		FailureThreshold: 4,
+		FailureThreshold: threshold,
 	}
 	ma.AddAlert(testAlert)
 }
