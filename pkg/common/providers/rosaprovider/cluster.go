@@ -173,8 +173,8 @@ func (m *ROSAProvider) LaunchCluster(clusterName string) (string, error) {
 		return "", err
 	}
 
-	if viper.GetBool(STS) {
-		createClusterArgs = append(createClusterArgs, "--sts")
+	if !viper.GetBool(STS) {
+		createClusterArgs = append(createClusterArgs, "--non-sts")
 	}
 
 	clusterProperties, err := m.ocmProvider.GenerateProperties()
