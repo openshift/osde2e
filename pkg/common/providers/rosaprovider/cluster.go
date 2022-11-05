@@ -11,7 +11,6 @@ import (
 
 	"github.com/Masterminds/semver"
 	v1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
-	accountRoles "github.com/openshift/rosa/cmd/create/accountroles"
 	createCluster "github.com/openshift/rosa/cmd/create/cluster"
 	"github.com/openshift/rosa/cmd/dlt/oidcprovider"
 	"github.com/openshift/rosa/cmd/dlt/operatorrole"
@@ -122,6 +121,8 @@ func (m *ROSAProvider) LaunchCluster(clusterName string) (string, error) {
 		"--service-cidr", viper.GetString(ServiceCIDR),
 		"--pod-cidr", viper.GetString(PodCIDR),
 		"--host-prefix", viper.GetString(HostPrefix),
+		"--mode", "auto",
+		"--yes",
 	}
 	if viper.GetString(SubnetIDs) != "" {
 		subnetIDs := viper.GetString(SubnetIDs)
@@ -148,8 +149,6 @@ func (m *ROSAProvider) LaunchCluster(clusterName string) (string, error) {
 		)
 	}
 
-	awsAccountID := ""
-
 	err = callAndSetAWSSession(func() error {
 		// Retrieve AWS Account info
 		logger := logging.NewLogger()
@@ -168,33 +167,17 @@ func (m *ROSAProvider) LaunchCluster(clusterName string) (string, error) {
 			return fmt.Errorf("unable to get IAM credentials: %v", err)
 		}
 
-		awsAccountID = awsCreator.AccountID
-
 		return nil
 	})
 	if err != nil {
 		return "", err
 	}
 
-	if viper.GetBool(STS) {
-		parsedVersion := semver.MustParse(rosaClusterVersion)
-		majorMinor := fmt.Sprintf("%d.%d", parsedVersion.Major(), parsedVersion.Minor())
-
-		err = m.stsAccountSetup(majorMinor)
-		if err != nil {
-			return "", err
-		}
-		createClusterArgs = append(createClusterArgs,
-			"--role-arn", fmt.Sprintf("arn:aws:iam::%s:role/ManagedOpenShift-%s-Installer-Role", awsAccountID, majorMinor),
-			"--support-role-arn", fmt.Sprintf("arn:aws:iam::%s:role/ManagedOpenShift-%s-Support-Role", awsAccountID, majorMinor),
-			"--controlplane-iam-role", fmt.Sprintf("arn:aws:iam::%s:role/ManagedOpenShift-%s-ControlPlane-Role", awsAccountID, majorMinor),
-			"--worker-iam-role", fmt.Sprintf("arn:aws:iam::%s:role/ManagedOpenShift-%s-Worker-Role", awsAccountID, majorMinor),
-		)
-
+	if !viper.GetBool(STS) {
+		createClusterArgs = append(createClusterArgs, "--non-sts")
 	}
 
 	clusterProperties, err := m.ocmProvider.GenerateProperties()
-
 	if err != nil {
 		return "", fmt.Errorf("error generating cluster properties: %v", err)
 	}
@@ -271,16 +254,6 @@ func (m *ROSAProvider) DeleteCluster(clusterID string) error {
 	}
 
 	return nil
-}
-
-func (m *ROSAProvider) stsAccountSetup(version string) error {
-	newAccountRoles := accountRoles.Cmd
-	args := []string{"--version", version, "--prefix", fmt.Sprintf("ManagedOpenShift-%s", version), "--mode", "auto", "--yes"}
-	log.Printf("%v", args)
-	newAccountRoles.SetArgs(args)
-	return callAndSetAWSSession(func() error {
-		return newAccountRoles.Execute()
-	})
 }
 
 func (m *ROSAProvider) stsClusterCleanup(clusterID string) error {
