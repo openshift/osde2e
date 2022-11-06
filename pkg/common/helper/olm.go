@@ -1,14 +1,16 @@
 package helper
 
 import (
+	"context"
 	"fmt"
+
 	"github.com/openshift/osde2e/pkg/common/runner"
 )
 
 // InspectOLM inspects the OLM state of the cluster and saves the state to disk for later debugging
-func (h *H) InspectOLM() error {
+func (h *H) InspectOLM(ctx context.Context) error {
 	inspectTimeoutInSeconds := 200
-	h.SetServiceAccount("system:serviceaccount:%s:cluster-admin")
+	h.SetServiceAccount(ctx, "system:serviceaccount:%s:cluster-admin")
 	r := h.Runner(fmt.Sprintf("oc adm inspect --dest-dir=%v -A olm", runner.DefaultRunner.OutputDir))
 	r.Name = "olm-inspect"
 	r.Tarball = true

@@ -48,20 +48,20 @@ var _ = ginkgo.Describe(mustGatherOperatorTest, func() {
 
 	ginkgo.Context("as Members of CEE", func() {
 		mg := generateMustGather(h, "foo-example")
-		util.GinkgoIt("can manage MustGather CRs in openshift-must-gather-operator namespace", func() {
-			err := createMustGather(h, mg, operatorNamespace, "a-dummy-service-account-name", "system:serviceaccounts:openshift-backplane-cee")
+		util.GinkgoIt("can manage MustGather CRs in openshift-must-gather-operator namespace", func(ctx context.Context) {
+			err := createMustGather(ctx, h, mg, operatorNamespace, "a-dummy-service-account-name", "system:serviceaccounts:openshift-backplane-cee")
 			Expect(err).NotTo(HaveOccurred())
-			err = deleteMustGather(h, mg.Name, operatorNamespace, "a-dummy-service-account-name", "system:serviceaccounts:openshift-backplane-cee")
+			err = deleteMustGather(ctx, h, mg.Name, operatorNamespace, "a-dummy-service-account-name", "system:serviceaccounts:openshift-backplane-cee")
 			Expect(err).NotTo(HaveOccurred())
 		})
 	})
 
 	ginkgo.Context("as an elevated SRE", func() {
 		mg := generateMustGather(h, "bar-example")
-		util.GinkgoIt("can manage MustGather CRs in openshift-must-gather-operator namespace", func() {
-			err := createMustGather(h, mg, operatorNamespace, "backplane-cluster-admin", "")
+		util.GinkgoIt("can manage MustGather CRs in openshift-must-gather-operator namespace", func(ctx context.Context) {
+			err := createMustGather(ctx, h, mg, operatorNamespace, "backplane-cluster-admin", "")
 			Expect(err).NotTo(HaveOccurred())
-			err = deleteMustGather(h, mg.Name, operatorNamespace, "backplane-cluster-admin", "")
+			err = deleteMustGather(ctx, h, mg.Name, operatorNamespace, "backplane-cluster-admin", "")
 			Expect(err).NotTo(HaveOccurred())
 		})
 	})
@@ -89,19 +89,19 @@ func impersonate(h *helper.H, asUser, userGroup string) dynamic.Interface {
 	return h.Dynamic()
 }
 
-func deleteMustGather(h *helper.H, name, namespace, asUser, userGroup string) (err error) {
+func deleteMustGather(ctx context.Context, h *helper.H, name, namespace, asUser, userGroup string) (err error) {
 	client := impersonate(h, asUser, userGroup)
 
 	err = client.Resource(schema.GroupVersionResource{
 		Group:    "managed.openshift.io",
 		Version:  "v1alpha1",
 		Resource: "mustgathers",
-	}).Namespace(namespace).Delete(context.TODO(), name, v1.DeleteOptions{})
+	}).Namespace(namespace).Delete(ctx, name, v1.DeleteOptions{})
 
 	return err
 }
 
-func createMustGather(h *helper.H, cr *mustgatherv1alpha1.MustGather, namespace, asUser, userGroup string) (err error) {
+func createMustGather(ctx context.Context, h *helper.H, cr *mustgatherv1alpha1.MustGather, namespace, asUser, userGroup string) (err error) {
 	client := impersonate(h, asUser, userGroup)
 
 	// transform the object to unstructured and send via dynamic client
@@ -114,7 +114,7 @@ func createMustGather(h *helper.H, cr *mustgatherv1alpha1.MustGather, namespace,
 		Group:    "managed.openshift.io",
 		Version:  "v1alpha1",
 		Resource: "mustgathers",
-	}).Namespace(namespace).Create(context.TODO(), &unstructured.Unstructured{obj}, v1.CreateOptions{})
+	}).Namespace(namespace).Create(ctx, &unstructured.Unstructured{obj}, v1.CreateOptions{})
 
 	return err
 }

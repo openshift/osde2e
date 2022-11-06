@@ -79,7 +79,7 @@ var _ = ginkgo.Describe(customDomainsOperatorTestName, func() {
 		)
 
 		// BeforeEach initializes a CustomDomain for testing
-		ginkgo.BeforeEach(func() {
+		ginkgo.BeforeEach(func(ctx context.Context) {
 			ginkgo.By("Logging in as a dedicated-admin")
 			h.Impersonate(rest.ImpersonationConfig{
 				UserName: "dummy-admin@redhat.com",
@@ -91,7 +91,7 @@ var _ = ginkgo.Describe(customDomainsOperatorTestName, func() {
 			ginkgo.By("Creating an ssl certificate and tls secret in OSD")
 			testDomainName := fmt.Sprintf("%s.io", testInstanceName)
 			testDnsNames := []string{fmt.Sprintf("*.%s", testDomainName)}
-			testDomainSecret, err = createTlsSecret(h, testInstanceName, testDnsNames)
+			testDomainSecret, err = createTlsSecret(ctx, h, testInstanceName, testDnsNames)
 			Expect(err).ToNot(HaveOccurred())
 			log.Printf("Created secret %s", testDomainSecret.Name)
 
@@ -119,7 +119,7 @@ var _ = ginkgo.Describe(customDomainsOperatorTestName, func() {
 				Resource("customdomains").
 				Name(testDomain.GetName()).
 				Body(testDomain).
-				DoRaw(context.TODO())
+				DoRaw(ctx)
 			Expect(err).ToNot(HaveOccurred())
 
 			// Wait for CustomDomain CR Endpoint to be ready
@@ -129,7 +129,7 @@ var _ = ginkgo.Describe(customDomainsOperatorTestName, func() {
 					AbsPath("/apis/managed.openshift.io/v1alpha1").
 					Resource("customdomains").
 					Name(testInstanceName).
-					DoRaw(context.TODO())
+					DoRaw(ctx)
 				if err != nil {
 					return false, err
 				}
@@ -153,7 +153,7 @@ var _ = ginkgo.Describe(customDomainsOperatorTestName, func() {
 			ginkgo.By("Wait for CustomDomain endpoint to resolve")
 			consecutiveResolves := 0
 			err = wait.PollImmediate(pollInterval, endpointResolveTimeout, func() (bool, error) {
-				endpointIPs, err := dialer.Resolver.LookupHost(context.TODO(), testDomain.Status.Endpoint)
+				endpointIPs, err := dialer.Resolver.LookupHost(ctx, testDomain.Status.Endpoint)
 				log.Printf("Waiting for CustomDomain %s endpoint to resolve: %s", testDomain.Name, endpointIPs)
 				if len(endpointIPs) == 0 {
 					// No IPs returned
@@ -180,7 +180,7 @@ var _ = ginkgo.Describe(customDomainsOperatorTestName, func() {
 		}, float64(defaultTimeout.Seconds()*3))
 
 		// Now that the endpoint is stable, make sure it's resolvable and usable.
-		util.GinkgoIt("Create customdomains that are resolvable by external services", func() {
+		util.GinkgoIt("Create customdomains that are resolvable by external services", func(ctx context.Context) {
 			ginkgo.By("Logging in as a dedicated-admin")
 			h.Impersonate(rest.ImpersonationConfig{
 				UserName: "dummy-admin@redhat.com",
@@ -191,7 +191,7 @@ var _ = ginkgo.Describe(customDomainsOperatorTestName, func() {
 
 			ginkgo.By("Creating a new app")
 			testAppReplicas := int32(1)
-			testApp, err := h.Kube().AppsV1().Deployments(h.CurrentProject()).Create(context.TODO(), &appsv1.Deployment{
+			testApp, err := h.Kube().AppsV1().Deployments(h.CurrentProject()).Create(ctx, &appsv1.Deployment{
 				TypeMeta: metav1.TypeMeta{
 					Kind:       "Deployment",
 					APIVersion: "apps/v1",
@@ -231,7 +231,7 @@ var _ = ginkgo.Describe(customDomainsOperatorTestName, func() {
 			// Ensure the "hello-world" app is created
 			ginkgo.By("Ensuring the new app is created")
 			err = wait.PollImmediate(pollInterval, defaultTimeout, func() (bool, error) {
-				testApp, err = h.Kube().AppsV1().Deployments(h.CurrentProject()).Get(context.TODO(), testApp.GetName(), metav1.GetOptions{})
+				testApp, err = h.Kube().AppsV1().Deployments(h.CurrentProject()).Get(ctx, testApp.GetName(), metav1.GetOptions{})
 				if err != nil {
 					return false, err
 				}
@@ -243,13 +243,13 @@ var _ = ginkgo.Describe(customDomainsOperatorTestName, func() {
 			Expect(err).ToNot(HaveOccurred(), "Time out or error waiting for hello-openshift (deployment name: '"+testApp.GetName()+"') to become ready.")
 			defer func() {
 				log.Printf("Deleting app %s", testApp.Name)
-				err = h.Kube().AppsV1().Deployments(h.CurrentProject()).Delete(context.TODO(), testApp.Name, metav1.DeleteOptions{})
+				err = h.Kube().AppsV1().Deployments(h.CurrentProject()).Delete(ctx, testApp.Name, metav1.DeleteOptions{})
 				Expect(err).ToNot(HaveOccurred())
 			}()
 			log.Printf("Created app %s", testApp.Name)
 
 			ginkgo.By("Exposing the new app via an Openshift route")
-			testAppService, err := h.Kube().CoreV1().Services(h.CurrentProject()).Create(context.TODO(), &corev1.Service{
+			testAppService, err := h.Kube().CoreV1().Services(h.CurrentProject()).Create(ctx, &corev1.Service{
 				TypeMeta: metav1.TypeMeta{
 					Kind:       "Service",
 					APIVersion: "v1",
@@ -285,11 +285,11 @@ var _ = ginkgo.Describe(customDomainsOperatorTestName, func() {
 			Expect(err).ToNot(HaveOccurred())
 			defer func() {
 				log.Printf("Deleting service %s", testAppService.Name)
-				err = h.Kube().CoreV1().Services(h.CurrentProject()).Delete(context.TODO(), testAppService.Name, metav1.DeleteOptions{})
+				err = h.Kube().CoreV1().Services(h.CurrentProject()).Delete(ctx, testAppService.Name, metav1.DeleteOptions{})
 				Expect(err).ToNot(HaveOccurred())
 			}()
 
-			testRoute, err := h.Route().RouteV1().Routes(h.CurrentProject()).Create(context.TODO(), &routev1.Route{
+			testRoute, err := h.Route().RouteV1().Routes(h.CurrentProject()).Create(ctx, &routev1.Route{
 				TypeMeta: metav1.TypeMeta{
 					Kind:       "Route",
 					APIVersion: "route.openshift.io/v1",
@@ -317,7 +317,7 @@ var _ = ginkgo.Describe(customDomainsOperatorTestName, func() {
 			Expect(err).ToNot(HaveOccurred())
 			defer func() {
 				log.Printf("Deleting route %s", testRoute.Name)
-				err = h.Route().RouteV1().Routes(h.CurrentProject()).Delete(context.TODO(), testRoute.Name, metav1.DeleteOptions{})
+				err = h.Route().RouteV1().Routes(h.CurrentProject()).Delete(ctx, testRoute.Name, metav1.DeleteOptions{})
 				Expect(err).ToNot(HaveOccurred())
 			}()
 
@@ -374,10 +374,10 @@ var _ = ginkgo.Describe(customDomainsOperatorTestName, func() {
 		}, float64(defaultTimeout.Seconds()*4))
 
 		// Ensure dedicated-admins can update CustomDomain certificates
-		util.GinkgoIt("Replace certificates", func() {
+		util.GinkgoIt("Replace certificates", func(ctx context.Context) {
 			ginkgo.By("Retrieving the original certificate")
 			h.Impersonate(rest.ImpersonationConfig{})
-			oldIngressSecret, err := getSecretForCustomDomain(h, testDomain)
+			oldIngressSecret, err := getSecretForCustomDomain(ctx, h, testDomain)
 			Expect(err).ToNot(HaveOccurred())
 			log.Printf("Retrieved ingress secret: %s", oldIngressSecret.Name)
 
@@ -392,11 +392,11 @@ var _ = ginkgo.Describe(customDomainsOperatorTestName, func() {
 			ginkgo.By("Generating a new certificate")
 			newSecretName := fmt.Sprintf("%s-new-secret", testInstanceName)
 			newDnsNames := []string{fmt.Sprintf("*.%s.io", testInstanceName)}
-			newSecret, err := createTlsSecret(h, newSecretName, newDnsNames)
+			newSecret, err := createTlsSecret(ctx, h, newSecretName, newDnsNames)
 			Expect(err).ToNot(HaveOccurred())
 			defer func() {
 				log.Printf("Deleting secret %s", newSecret.Name)
-				err = h.Kube().CoreV1().Secrets(h.CurrentProject()).Delete(context.TODO(), newSecret.Name, metav1.DeleteOptions{})
+				err = h.Kube().CoreV1().Secrets(h.CurrentProject()).Delete(ctx, newSecret.Name, metav1.DeleteOptions{})
 				Expect(err).ToNot(HaveOccurred())
 			}()
 			log.Printf("Generated new secret: %s", newSecret.Name)
@@ -408,7 +408,7 @@ var _ = ginkgo.Describe(customDomainsOperatorTestName, func() {
 				Resource("customdomains").
 				Name(testDomain.GetName()).
 				Body(testDomain).
-				DoRaw(context.TODO())
+				DoRaw(ctx)
 			Expect(err).ToNot(HaveOccurred())
 			log.Printf("Updated CustomDomain with new secret")
 
@@ -417,7 +417,7 @@ var _ = ginkgo.Describe(customDomainsOperatorTestName, func() {
 			var currentIngressSecret *corev1.Secret
 			err = wait.PollImmediate(pollInterval, defaultTimeout, func() (bool, error) {
 				log.Printf("Checking that secret change propagated")
-				currentIngressSecret, err = getSecretForCustomDomain(h, testDomain)
+				currentIngressSecret, err = getSecretForCustomDomain(ctx, h, testDomain)
 				if err != nil || bytes.Equal(currentIngressSecret.Data["tls.crt"], oldIngressSecret.Data["tls.crt"]) {
 					return false, err
 				}
@@ -430,16 +430,16 @@ var _ = ginkgo.Describe(customDomainsOperatorTestName, func() {
 		}, float64(defaultTimeout.Seconds()*2))
 
 		// AfterEach deletes resources created by BeforeEach
-		ginkgo.AfterEach(func() {
+		ginkgo.AfterEach(func(ctx context.Context) {
 			log.Printf("Cleaning up after testing")
 			_, err := h.Cfg().ConfigV1().RESTClient().Delete().
 				AbsPath("/apis/managed.openshift.io/v1alpha1").
 				Resource("customdomains").
 				Name(testDomain.GetName()).
-				DoRaw(context.TODO())
+				DoRaw(ctx)
 			Expect(err).ToNot(HaveOccurred())
 
-			err = h.Kube().CoreV1().Secrets(h.CurrentProject()).Delete(context.TODO(), testDomainSecret.Name, metav1.DeleteOptions{})
+			err = h.Kube().CoreV1().Secrets(h.CurrentProject()).Delete(ctx, testDomainSecret.Name, metav1.DeleteOptions{})
 			Expect(err).ToNot(HaveOccurred())
 
 			h.Impersonate(rest.ImpersonationConfig{})
@@ -447,12 +447,12 @@ var _ = ginkgo.Describe(customDomainsOperatorTestName, func() {
 	})
 })
 
-func getSecretForCustomDomain(h *helper.H, customDomain *customdomainv1alpha1.CustomDomain) (secret *corev1.Secret, err error) {
-	return h.Kube().CoreV1().Secrets("openshift-ingress").Get(context.TODO(), customDomain.Name, metav1.GetOptions{})
+func getSecretForCustomDomain(ctx context.Context, h *helper.H, customDomain *customdomainv1alpha1.CustomDomain) (secret *corev1.Secret, err error) {
+	return h.Kube().CoreV1().Secrets("openshift-ingress").Get(ctx, customDomain.Name, metav1.GetOptions{})
 }
 
 // createTlsSecret creates a TLS-type secret on the cluster, returning the resulting object
-func createTlsSecret(h *helper.H, secretName string, dnsNames []string) (secret *corev1.Secret, err error) {
+func createTlsSecret(ctx context.Context, h *helper.H, secretName string, dnsNames []string) (secret *corev1.Secret, err error) {
 	customDomainRSAKey, err := rsa.GenerateKey(rand.Reader, 4096)
 	if err != nil {
 		return
@@ -485,7 +485,7 @@ func createTlsSecret(h *helper.H, secretName string, dnsNames []string) (secret 
 		Bytes: customDomainX509,
 	})
 
-	secret, err = h.Kube().CoreV1().Secrets(h.CurrentProject()).Create(context.TODO(), &corev1.Secret{
+	secret, err = h.Kube().CoreV1().Secrets(h.CurrentProject()).Create(ctx, &corev1.Secret{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Secret",
 			APIVersion: "v1",

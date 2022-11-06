@@ -22,8 +22,8 @@ func init() {
 var _ = ginkgo.Describe(imageStreamsTestName, func() {
 	h := helper.New()
 
-	util.GinkgoIt("should exist in the cluster", func() {
-		list, err := h.Image().ImageV1().ImageStreams(metav1.NamespaceAll).List(context.TODO(), metav1.ListOptions{})
+	util.GinkgoIt("should exist in the cluster", func(ctx context.Context) {
+		list, err := h.Image().ImageV1().ImageStreams(metav1.NamespaceAll).List(ctx, metav1.ListOptions{})
 		Expect(err).NotTo(HaveOccurred(), "couldn't list ImageStreams")
 		Expect(list).NotTo(BeNil())
 

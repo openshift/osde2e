@@ -66,40 +66,38 @@ var _ = ginkgo.Describe(namespaceWebhookTestName, func() {
 	h := helper.New()
 
 	ginkgo.Context("namespace validating webhook", func() {
-
 		// Create all namespaces and groups needed for the tests
-		ginkgo.JustBeforeEach(func() {
-
-			_, err := createGroup(DUMMY_GROUP, h)
+		ginkgo.JustBeforeEach(func(ctx context.Context) {
+			_, err := createGroup(ctx, DUMMY_GROUP, h)
 			Expect(err).NotTo(HaveOccurred())
 
 			for privilegedNamespace, manageNamespace := range PRIVILEGED_NAMESPACES {
 				if manageNamespace {
-					_, err := createNamespace(privilegedNamespace, h)
+					_, err := createNamespace(ctx, privilegedNamespace, h)
 					Expect(err).NotTo(HaveOccurred())
 				}
 			}
 			for _, namespace := range NONPRIV_NAMESPACES {
-				_, err := createNamespace(namespace, h)
+				_, err := createNamespace(ctx, namespace, h)
 				Expect(err).NotTo(HaveOccurred())
 			}
 		})
 
 		// Clean up all namespaces and groups created for the tests
-		ginkgo.JustAfterEach(func() {
+		ginkgo.JustAfterEach(func(ctx context.Context) {
 			h.Impersonate(rest.ImpersonationConfig{})
-			err := deleteGroup(DUMMY_GROUP, h)
+			err := deleteGroup(ctx, DUMMY_GROUP, h)
 			Expect(err).NotTo(HaveOccurred())
 
 			for privilegedNamespace, manageNamespace := range PRIVILEGED_NAMESPACES {
 				if manageNamespace {
 					h.Impersonate(rest.ImpersonationConfig{})
-					err := deleteNamespace(privilegedNamespace, false, h)
+					err := deleteNamespace(ctx, privilegedNamespace, false, h)
 					Expect(err).NotTo(HaveOccurred())
 				}
 			}
 			for _, namespace := range NONPRIV_NAMESPACES {
-				err := deleteNamespace(namespace, false, h)
+				err := deleteNamespace(ctx, namespace, false, h)
 				Expect(err).NotTo(HaveOccurred())
 			}
 
@@ -116,7 +114,7 @@ var _ = ginkgo.Describe(namespaceWebhookTestName, func() {
 
 			wait.PollImmediate(5*time.Second, 3*time.Minute, func() (bool, error) {
 				for _, ns := range namespacesToCheck {
-					namespace, _ := h.Kube().CoreV1().Namespaces().Get(context.TODO(), ns, metav1.GetOptions{})
+					namespace, _ := h.Kube().CoreV1().Namespaces().Get(ctx, ns, metav1.GetOptions{})
 					if namespace != nil && namespace.Status.Phase == "Terminating" {
 						return false, nil
 					}
@@ -125,45 +123,45 @@ var _ = ginkgo.Describe(namespaceWebhookTestName, func() {
 			})
 		})
 
-		util.GinkgoIt("dedicated admins cannot manage privileged namespaces", func() {
+		util.GinkgoIt("dedicated admins cannot manage privileged namespaces", func(ctx context.Context) {
 			for privilegedNamespace := range PRIVILEGED_NAMESPACES {
-				err := updateNamespace(privilegedNamespace, DUMMY_USER, "dedicated-admins", h)
+				err := updateNamespace(ctx, privilegedNamespace, DUMMY_USER, "dedicated-admins", h)
 				Expect(err).To(HaveOccurred())
 			}
 		}, viper.GetFloat64(config.Tests.PollingTimeout))
 
-		util.GinkgoIt("Non-privileged users cannot manage privileged namespaces", func() {
+		util.GinkgoIt("Non-privileged users cannot manage privileged namespaces", func(ctx context.Context) {
 			for privilegedNamespace := range PRIVILEGED_NAMESPACES {
-				err := updateNamespace(privilegedNamespace, DUMMY_USER, DUMMY_GROUP, h)
+				err := updateNamespace(ctx, privilegedNamespace, DUMMY_USER, DUMMY_GROUP, h)
 				Expect(err).To(HaveOccurred())
 			}
 		}, viper.GetFloat64(config.Tests.PollingTimeout))
 
-		util.GinkgoIt("Privileged users can manage all namespaces", func() {
+		util.GinkgoIt("Privileged users can manage all namespaces", func(ctx context.Context) {
 			for _, privilegedUser := range PRIVILEGED_USERS {
 				for privilegedNamespace := range PRIVILEGED_NAMESPACES {
-					err := updateNamespace(privilegedNamespace, privilegedUser, "", h)
+					err := updateNamespace(ctx, privilegedNamespace, privilegedUser, "", h)
 					Expect(err).NotTo(HaveOccurred())
 				}
 				for _, namespace := range NONPRIV_NAMESPACES {
-					err := updateNamespace(namespace, privilegedUser, "", h)
+					err := updateNamespace(ctx, namespace, privilegedUser, "", h)
 					Expect(err).NotTo(HaveOccurred())
 				}
 			}
 		}, viper.GetFloat64(config.Tests.PollingTimeout))
 
-		util.GinkgoIt("Non-privileged users can manage all non-privileged namespaces", func() {
+		util.GinkgoIt("Non-privileged users can manage all non-privileged namespaces", func(ctx context.Context) {
 			// Non-privileged users can manage all non-privileged namespaces
 			for _, nonPrivilegedNamespace := range NONPRIV_NAMESPACES {
-				err := updateNamespace(nonPrivilegedNamespace, DUMMY_USER, "dedicated-admins", h)
+				err := updateNamespace(ctx, nonPrivilegedNamespace, DUMMY_USER, "dedicated-admins", h)
 				Expect(err).NotTo(HaveOccurred())
 			}
 		}, viper.GetFloat64(config.Tests.PollingTimeout))
 	})
 })
 
-func createGroup(groupName string, h *helper.H) (*userv1.Group, error) {
-	group, err := h.User().UserV1().Groups().Get(context.TODO(), groupName, metav1.GetOptions{})
+func createGroup(ctx context.Context, groupName string, h *helper.H) (*userv1.Group, error) {
+	group, err := h.User().UserV1().Groups().Get(ctx, groupName, metav1.GetOptions{})
 	if group != nil && err == nil {
 		return group, err
 	}
@@ -173,15 +171,15 @@ func createGroup(groupName string, h *helper.H) (*userv1.Group, error) {
 			Name: groupName,
 		},
 	}
-	return h.User().UserV1().Groups().Create(context.TODO(), group, metav1.CreateOptions{})
+	return h.User().UserV1().Groups().Create(ctx, group, metav1.CreateOptions{})
 }
 
-func deleteGroup(groupName string, h *helper.H) error {
+func deleteGroup(ctx context.Context, groupName string, h *helper.H) error {
 	log.Printf("Deleting group for namespace validation webhook (%s)", groupName)
-	return h.User().UserV1().Groups().Delete(context.TODO(), groupName, metav1.DeleteOptions{})
+	return h.User().UserV1().Groups().Delete(ctx, groupName, metav1.DeleteOptions{})
 }
 
-func updateNamespace(namespace string, asUser string, userGroup string, h *helper.H) (err error) {
+func updateNamespace(ctx context.Context, namespace string, asUser string, userGroup string, h *helper.H) (err error) {
 	// reset impersonation upon return
 	defer h.Impersonate(rest.ImpersonationConfig{})
 
@@ -205,12 +203,12 @@ func updateNamespace(namespace string, asUser string, userGroup string, h *helpe
 
 	err = wait.PollImmediate(10*time.Second, 1*time.Minute, func() (bool, error) {
 		// Verify the namespace already exists
-		ns, err = h.Kube().CoreV1().Namespaces().Get(context.TODO(), namespace, metav1.GetOptions{})
+		ns, err = h.Kube().CoreV1().Namespaces().Get(ctx, namespace, metav1.GetOptions{})
 		if err != nil {
 			return false, fmt.Errorf("failed to find namespace to update '%s': %v", namespace, err)
 		}
 
-		updatedNamespace, err = h.Kube().CoreV1().Namespaces().Update(context.TODO(), ns, metav1.UpdateOptions{})
+		updatedNamespace, err = h.Kube().CoreV1().Namespaces().Update(ctx, ns, metav1.UpdateOptions{})
 		if err != nil {
 			if apierrors.IsConflict(err) {
 				return false, nil
@@ -224,7 +222,7 @@ func updateNamespace(namespace string, asUser string, userGroup string, h *helpe
 	}
 
 	err = wait.PollImmediate(5*time.Second, 3*time.Minute, func() (bool, error) {
-		ns, err = h.Kube().CoreV1().Namespaces().Get(context.TODO(), namespace, metav1.GetOptions{})
+		ns, err = h.Kube().CoreV1().Namespaces().Get(ctx, namespace, metav1.GetOptions{})
 		if err != nil {
 			return false, fmt.Errorf("failed to find updated namespace '%s': %v", namespace, err)
 		}
@@ -235,9 +233,9 @@ func updateNamespace(namespace string, asUser string, userGroup string, h *helpe
 	return err
 }
 
-func deleteNamespace(namespace string, waitForDelete bool, h *helper.H) error {
+func deleteNamespace(ctx context.Context, namespace string, waitForDelete bool, h *helper.H) error {
 	log.Printf("Deleting namespace for namespace validation webhook (%s)", namespace)
-	err := h.Kube().CoreV1().Namespaces().Delete(context.TODO(), namespace, metav1.DeleteOptions{})
+	err := h.Kube().CoreV1().Namespaces().Delete(ctx, namespace, metav1.DeleteOptions{})
 	if err != nil {
 		return fmt.Errorf("failed to delete namespace '%s': %v", namespace, err)
 	}
@@ -245,7 +243,7 @@ func deleteNamespace(namespace string, waitForDelete bool, h *helper.H) error {
 	// Deleting a namespace can take a while. If desired, wait for the namespace to delete before returning.
 	if waitForDelete {
 		err = wait.PollImmediate(2*time.Second, 1*time.Minute, func() (bool, error) {
-			ns, _ := h.Kube().CoreV1().Namespaces().Get(context.TODO(), namespace, metav1.GetOptions{})
+			ns, _ := h.Kube().CoreV1().Namespaces().Get(ctx, namespace, metav1.GetOptions{})
 			if ns != nil && ns.Status.Phase == "Terminating" {
 				return false, nil
 			}
@@ -256,27 +254,31 @@ func deleteNamespace(namespace string, waitForDelete bool, h *helper.H) error {
 	return err
 }
 
-func createNamespace(namespace string, h *helper.H) (*v1.Namespace, error) {
-
+func createNamespace(ctx context.Context, namespace string, h *helper.H) (*v1.Namespace, error) {
 	// If the namespace already exists, we don't need to create it. Just return.
-	ns, err := h.Kube().CoreV1().Namespaces().Get(context.TODO(), namespace, metav1.GetOptions{})
+	ns, err := h.Kube().CoreV1().Namespaces().Get(ctx, namespace, metav1.GetOptions{})
 	if ns != nil && ns.Status.Phase != "Terminating" && err == nil {
 		return ns, err
 	}
 
 	log.Printf("Creating namespace for namespace validation webhook (%s)", namespace)
-	labels := map[string]string{"pod-security.kubernetes.io/enforce": "privileged", "pod-security.kubernetes.io/audit": "privileged", "pod-security.kubernetes.io/warn": "privileged", "security.openshift.io/scc.podSecurityLabelSync": "false"}
+	labels := map[string]string{
+		"pod-security.kubernetes.io/enforce":             "privileged",
+		"pod-security.kubernetes.io/audit":               "privileged",
+		"pod-security.kubernetes.io/warn":                "privileged",
+		"security.openshift.io/scc.podSecurityLabelSync": "false",
+	}
 	ns = &v1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:   namespace,
 			Labels: labels,
 		},
 	}
-	h.Kube().CoreV1().Namespaces().Create(context.TODO(), ns, metav1.CreateOptions{})
+	h.Kube().CoreV1().Namespaces().Create(ctx, ns, metav1.CreateOptions{})
 
 	// Wait for the namespace to create. This is usually pretty quick.
 	err = wait.PollImmediate(5*time.Second, 2*time.Minute, func() (bool, error) {
-		if _, err := h.Kube().CoreV1().Namespaces().Get(context.TODO(), namespace, metav1.GetOptions{}); err != nil {
+		if _, err := h.Kube().CoreV1().Namespaces().Get(ctx, namespace, metav1.GetOptions{}); err != nil {
 			return false, nil
 		}
 		return true, nil

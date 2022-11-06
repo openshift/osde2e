@@ -35,57 +35,73 @@ var _ = ginkgo.Describe(constants.SuiteInforming+TestPrefix, func() {
 	pollingDuration := 5 * time.Minute
 
 	ginkgo.Context("publishingstrategy-public-private", func() {
-		util.GinkgoIt("should be able to toggle the default applicationingress from public to private", func() {
+		util.GinkgoIt(
+			"should be able to toggle the default applicationingress from public to private",
+			func(ctx context.Context) {
+				updateApplicationIngress(ctx, h, "internal")
 
-			updateApplicationIngress(h, "internal")
-
-			//wait for router-default service loadbalancer to have an annotation indicating its scheme is internal
-			err := wait.PollImmediate(10*time.Second, pollingDuration, func() (bool, error) {
-				service, err := h.Kube().CoreV1().Services("openshift-ingress").Get(context.TODO(), "router-default", metav1.GetOptions{})
-				if err != nil {
+				// wait for router-default service loadbalancer to have an annotation indicating its scheme is internal
+				err := wait.PollImmediate(10*time.Second, pollingDuration, func() (bool, error) {
+					service, err := h.Kube().
+						CoreV1().
+						Services("openshift-ingress").
+						Get(ctx, "router-default", metav1.GetOptions{})
+					if err != nil {
+						return false, nil
+					}
+					if _, ok := service.Annotations["service.beta.kubernetes.io/aws-load-balancer-internal"]; ok == true {
+						return true, nil
+					}
 					return false, nil
-				}
-				if _, ok := service.Annotations["service.beta.kubernetes.io/aws-load-balancer-internal"]; ok == true {
-					return true, nil
-				}
-				return false, nil
-			})
-			Expect(err).NotTo(HaveOccurred())
+				})
+				Expect(err).NotTo(HaveOccurred())
 
-			ingress, _ := getingressController(h, "default")
-			Expect(string(ingress.Spec.EndpointPublishingStrategy.LoadBalancer.Scope)).To(Equal("Internal"))
-		}, pollingDuration.Seconds())
+				ingress, _ := getingressController(ctx, h, "default")
+				Expect(string(ingress.Spec.EndpointPublishingStrategy.LoadBalancer.Scope)).To(Equal("Internal"))
+			},
+			pollingDuration.Seconds(),
+		)
 
-		util.GinkgoIt("should be able to toggle the default applicationingress from private to public", func() {
-			updateApplicationIngress(h, "external")
-			//wait for router-default service loadbalancer to NOT have an annotation indicating its scheme is internal
-			err := wait.PollImmediate(10*time.Second, pollingDuration, func() (bool, error) {
-				service, err := h.Kube().CoreV1().Services("openshift-ingress").Get(context.TODO(), "router-default", metav1.GetOptions{})
-				if err != nil {
+		util.GinkgoIt(
+			"should be able to toggle the default applicationingress from private to public",
+			func(ctx context.Context) {
+				updateApplicationIngress(ctx, h, "external")
+				// wait for router-default service loadbalancer to NOT have an annotation indicating its scheme is internal
+				err := wait.PollImmediate(10*time.Second, pollingDuration, func() (bool, error) {
+					service, err := h.Kube().
+						CoreV1().
+						Services("openshift-ingress").
+						Get(ctx, "router-default", metav1.GetOptions{})
+					if err != nil {
+						return false, nil
+					}
+					if _, ok := service.Annotations["service.beta.kubernetes.io/aws-load-balancer-internal"]; ok == false {
+						return true, nil
+					}
+
 					return false, nil
-				}
-				if _, ok := service.Annotations["service.beta.kubernetes.io/aws-load-balancer-internal"]; ok == false {
-					return true, nil
-				}
+				})
+				Expect(err).NotTo(HaveOccurred())
 
-				return false, nil
-			})
-			Expect(err).NotTo(HaveOccurred())
-
-			ingress_controller, exists, _ := appIngressExits(h, true, "")
-			Expect(exists).To(BeTrue())
-			Expect(string(ingress_controller.Listening)).To(Equal("external"))
-		}, pollingDuration.Seconds())
+				ingress_controller, exists, _ := appIngressExits(ctx, h, true, "")
+				Expect(exists).To(BeTrue())
+				Expect(string(ingress_controller.Listening)).To(Equal("external"))
+			},
+			pollingDuration.Seconds(),
+		)
 	})
 })
 
 // utils
 
-func updateApplicationIngress(h *helper.H, lbscheme string) {
+func updateApplicationIngress(ctx context.Context, h *helper.H, lbscheme string) {
 	var PublishingStrategyInstance cloudingressv1alpha1.PublishingStrategy
 
 	// Check that the PublishingStrategy CR is present
-	ps, err := h.Dynamic().Resource(schema.GroupVersionResource{Group: "cloudingress.managed.openshift.io", Version: "v1alpha1", Resource: "publishingstrategies"}).Namespace(OperatorNamespace).Get(context.TODO(), "publishingstrategy", metav1.GetOptions{})
+	ps, err := h.Dynamic().
+		Resource(schema.GroupVersionResource{Group: "cloudingress.managed.openshift.io", Version: "v1alpha1", Resource: "publishingstrategies"}).
+		Namespace(OperatorNamespace).
+		Get(ctx, "publishingstrategy", metav1.GetOptions{})
 	Expect(err).NotTo(HaveOccurred())
 
 	err = runtime.DefaultUnstructuredConverter.FromUnstructured(ps.Object, &PublishingStrategyInstance)
@@ -107,13 +123,23 @@ func updateApplicationIngress(h *helper.H, lbscheme string) {
 	Expect(err).NotTo(HaveOccurred())
 
 	// Update the publishingstrategy
-	ps, err = h.Dynamic().Resource(schema.GroupVersionResource{Group: "cloudingress.managed.openshift.io", Version: "v1alpha1", Resource: "publishingstrategies"}).Namespace(OperatorNamespace).Update(context.TODO(), ps, metav1.UpdateOptions{})
+	ps, err = h.Dynamic().
+		Resource(schema.GroupVersionResource{Group: "cloudingress.managed.openshift.io", Version: "v1alpha1", Resource: "publishingstrategies"}).
+		Namespace(OperatorNamespace).
+		Update(ctx, ps, metav1.UpdateOptions{})
 	Expect(err).NotTo(HaveOccurred())
 }
 
-func getingressController(h *helper.H, name string) (operatorv1.IngressController, *unstructured.Unstructured) {
+func getingressController(
+	ctx context.Context,
+	h *helper.H,
+	name string,
+) (operatorv1.IngressController, *unstructured.Unstructured) {
 	var ingressController operatorv1.IngressController
-	ingresscontroller, err := h.Dynamic().Resource(schema.GroupVersionResource{Group: "operator.openshift.io", Version: "v1", Resource: "ingresscontrollers"}).Namespace("openshift-ingress-operator").Get(context.TODO(), name, metav1.GetOptions{})
+	ingresscontroller, err := h.Dynamic().
+		Resource(schema.GroupVersionResource{Group: "operator.openshift.io", Version: "v1", Resource: "ingresscontrollers"}).
+		Namespace("openshift-ingress-operator").
+		Get(ctx, name, metav1.GetOptions{})
 	Expect(err).NotTo(HaveOccurred())
 
 	err = runtime.DefaultUnstructuredConverter.FromUnstructured(ingresscontroller.Object, &ingressController)

@@ -30,11 +30,9 @@ var _ = ginkgo.Describe(samesiteTestName, func() {
 
 	ginkgo.Context("Validating samesite cookie", func() {
 
-		supportedVersion := verifyVersionSupport(h)
-
-		util.GinkgoIt("should be set for openshift-monitoring OSD managed routes", func() {
-			if supportedVersion() {
-				foundKey, err := managedRoutes(h, monNamespace)
+		util.GinkgoIt("should be set for openshift-monitoring OSD managed routes", func(ctx context.Context) {
+			if verifyVersionSupport(ctx, h) {
+				foundKey, err := managedRoutes(ctx, h, monNamespace)
 				Expect(err).NotTo(HaveOccurred(), "failed getting routes for %v", monNamespace)
 				Expect(foundKey).Should(BeTrue(), "%v namespace routes have samesite cookie set", monNamespace)
 			} else {
@@ -42,9 +40,9 @@ var _ = ginkgo.Describe(samesiteTestName, func() {
 			}
 		}, 5)
 
-		util.GinkgoIt("should be set for openshift-console OSD managed routes", func() {
-			if supportedVersion() {
-				foundKey, err := managedRoutes(h, conNamespace)
+		util.GinkgoIt("should be set for openshift-console OSD managed routes", func(ctx context.Context) {
+			if verifyVersionSupport(ctx, h) {
+				foundKey, err := managedRoutes(ctx, h, conNamespace)
 				Expect(err).NotTo(HaveOccurred(), "failed getting routes for %v", conNamespace)
 				Expect(foundKey).Should(BeTrue(), "%v namespace routes have samesite cookie set", conNamespace)
 			} else {
@@ -54,37 +52,35 @@ var _ = ginkgo.Describe(samesiteTestName, func() {
 	})
 })
 
-func verifyVersionSupport(h *helper.H) func() bool {
-	return func() bool {
-		clusterVersionObj, err := h.GetClusterVersion()
-		Expect(err).NotTo(HaveOccurred(), "failed getting cluster version")
-		Expect(clusterVersionObj).NotTo(BeNil())
+func verifyVersionSupport(ctx context.Context, h *helper.H) bool {
+	clusterVersionObj, err := h.GetClusterVersion(ctx)
+	Expect(err).NotTo(HaveOccurred(), "failed getting cluster version")
+	Expect(clusterVersionObj).NotTo(BeNil())
 
-		splitVersion := strings.Split(clusterVersionObj.Status.Desired.Version, ".")
+	splitVersion := strings.Split(clusterVersionObj.Status.Desired.Version, ".")
 
-		// check that semver is 3 elements e.g. 4.6.0, but we only need to verify major/minor version
-		if len(splitVersion) == 3 {
-			majorVersion, err := strconv.Atoi(splitVersion[0])
-			Expect(err).NotTo(HaveOccurred(), "failed getting major version %v. Error: %v", majorVersion, err)
-			minorVersion, err := strconv.Atoi(splitVersion[1])
-			Expect(err).NotTo(HaveOccurred(), "failed getting minor version %v. Error: %v", minorVersion, err)
+	// check that semver is 3 elements e.g. 4.6.0, but we only need to verify major/minor version
+	if len(splitVersion) == 3 {
+		majorVersion, err := strconv.Atoi(splitVersion[0])
+		Expect(err).NotTo(HaveOccurred(), "failed getting major version %v. Error: %v", majorVersion, err)
+		minorVersion, err := strconv.Atoi(splitVersion[1])
+		Expect(err).NotTo(HaveOccurred(), "failed getting minor version %v. Error: %v", minorVersion, err)
 
-			if majorVersion < supportMajorVersion {
-				return false
-			} else if majorVersion == supportMajorVersion && minorVersion < supportMinorVersion {
-				return false
-			} else {
-				return true
-			}
-		} else {
-			// semver not in correct format if anything other than 3 elements exist
+		if majorVersion < supportMajorVersion {
 			return false
+		} else if majorVersion == supportMajorVersion && minorVersion < supportMinorVersion {
+			return false
+		} else {
+			return true
 		}
+	} else {
+		// semver not in correct format if anything other than 3 elements exist
+		return false
 	}
 }
 
-func managedRoutes(h *helper.H, namespace string) (bool, error) {
-	route, err := h.Route().RouteV1().Routes(namespace).List(context.TODO(), metav1.ListOptions{})
+func managedRoutes(ctx context.Context, h *helper.H, namespace string) (bool, error) {
+	route, err := h.Route().RouteV1().Routes(namespace).List(ctx, metav1.ListOptions{})
 	samesiteExists := false
 	if err != nil || route == nil {
 		return false, fmt.Errorf("failed requesting routes: %v", err)

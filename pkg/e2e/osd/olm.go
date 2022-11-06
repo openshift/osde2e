@@ -27,8 +27,11 @@ var _ = ginkgo.Describe(olmTestName, func() {
 		// setup helper
 		h := helper.New()
 
-		util.GinkgoIt("subscriptions are satisfied", func() {
-			subs, err := h.Operator().OperatorsV1alpha1().Subscriptions(metav1.NamespaceAll).List(context.TODO(), metav1.ListOptions{})
+		util.GinkgoIt("subscriptions are satisfied", func(ctx context.Context) {
+			subs, err := h.Operator().
+				OperatorsV1alpha1().
+				Subscriptions(metav1.NamespaceAll).
+				List(ctx, metav1.ListOptions{})
 			Expect(err).NotTo(HaveOccurred())
 
 			for _, sub := range subs.Items {

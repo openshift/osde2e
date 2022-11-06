@@ -48,8 +48,8 @@ var _ = ginkgo.Describe(postInstallProxyTestName, func() {
 	})
 })
 
-func testAddProxy()  {
-	util.GinkgoIt("can add a proxy to the cluster successfully", func() {
+func testAddProxy() {
+	util.GinkgoIt("can add a proxy to the cluster successfully", func(ctx context.Context) {
 		// setup helper
 		h := helper.New()
 
@@ -75,7 +75,7 @@ func testAddProxy()  {
 			var cabundle *v1.ConfigMap
 
 			// Validate state of proxy on-cluster vs what values it should have
-			proxy, err = h.Cfg().ConfigV1().Proxies().Get(context.TODO(), "cluster", metav1.GetOptions{})
+			proxy, err = h.Cfg().ConfigV1().Proxies().Get(ctx, "cluster", metav1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred())
 
 			if userCABundle != "" {
@@ -83,7 +83,7 @@ func testAddProxy()  {
 					return false, nil
 				}
 				// Check if the ConfigMap exists
-				cabundle, err = h.Kube().CoreV1().ConfigMaps("openshift-config").Get(context.TODO(), "user-ca-bundle", metav1.GetOptions{})
+				cabundle, err = h.Kube().CoreV1().ConfigMaps("openshift-config").Get(ctx, "user-ca-bundle", metav1.GetOptions{})
 				// don't treat the cabundle not existing as an error
 				if err != nil && !apierrors.IsNotFound(err) {
 					return false, err
@@ -133,7 +133,7 @@ func testAddProxy()  {
 }
 
 func testRemoveProxy() {
-	util.GinkgoIt("can remove proxy from the cluster successfully", func() {
+	util.GinkgoIt("can remove proxy from the cluster successfully", func(ctx context.Context) {
 		// setup helper
 		h := helper.New()
 
@@ -150,7 +150,7 @@ func testRemoveProxy() {
 			var proxy *configv1.Proxy
 
 			// Validate state of proxy on-cluster vs what values it should have
-			proxy, err = h.Cfg().ConfigV1().Proxies().Get(context.TODO(), "cluster", metav1.GetOptions{})
+			proxy, err = h.Cfg().ConfigV1().Proxies().Get(ctx, "cluster", metav1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred())
 
 			if proxy.Spec.HTTPProxy != "" || proxy.Status.HTTPProxy != "" {
@@ -160,7 +160,7 @@ func testRemoveProxy() {
 				return false, nil
 			}
 
-			_, err = h.Kube().CoreV1().ConfigMaps("openshift-config").Get(context.TODO(), "user-ca-bundle", metav1.GetOptions{})
+			_, err = h.Kube().CoreV1().ConfigMaps("openshift-config").Get(ctx, "user-ca-bundle", metav1.GetOptions{})
 			if !apierrors.IsNotFound(err) {
 				return false, nil
 			}

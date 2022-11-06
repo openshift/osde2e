@@ -16,7 +16,7 @@ import (
 // RunAddonTests will attempt to run the configured addon tests for the current job.
 // It allows you to specify a job name prefix and arguments to a test harness container.
 // It returns the names of test harnesses that failed (empty slice if none failed).
-func (h *H) RunAddonTests(name string, timeout int, harnesses, args []string) (failed []string) {
+func (h *H) RunAddonTests(ctx context.Context, name string, timeout int, harnesses, args []string) (failed []string) {
 	addonTestTemplate, err := templates.LoadTemplate("addons/addon-runner.template")
 
 	if err != nil {
@@ -24,7 +24,7 @@ func (h *H) RunAddonTests(name string, timeout int, harnesses, args []string) (f
 	}
 
 	// We don't know what a test harness may need so let's give them everything.
-	h.SetServiceAccount("system:serviceaccount:%s:cluster-admin")
+	h.SetServiceAccount(ctx, "system:serviceaccount:%s:cluster-admin")
 	for _, harness := range harnesses {
 		// configure tests
 		// setup runner
@@ -87,7 +87,7 @@ func (h *H) RunAddonTests(name string, timeout int, harnesses, args []string) (f
 		Expect(err).NotTo(HaveOccurred())
 
 		// ensure job has not failed
-		job, err := h.Kube().BatchV1().Jobs(r.Namespace).Get(context.TODO(), jobName, metav1.GetOptions{})
+		job, err := h.Kube().BatchV1().Jobs(r.Namespace).Get(ctx, jobName, metav1.GetOptions{})
 		Expect(err).NotTo(HaveOccurred())
 		if !Expect(job.Status.Failed).Should(BeNumerically("==", 0)) {
 			failed = append(failed, harness)

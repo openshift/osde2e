@@ -3,7 +3,6 @@ package state
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"time"
 
 	"log"
@@ -41,10 +40,10 @@ var _ = ginkgo.Describe(clusterStateTestName, func() {
 	h := helper.New()
 
 	alertsTimeoutInSeconds := 900
-	util.GinkgoIt("should have no alerts", func() {
+	util.GinkgoIt("should have no alerts", func(ctx context.Context) {
 
 		//Set up prometheus client
-		h.SetServiceAccount("system:serviceaccount:%s:cluster-admin")
+		h.SetServiceAccount(ctx, "system:serviceaccount:%s:cluster-admin")
 		promClient, err := prometheus.CreateClusterClient(h)
 		Expect(err).NotTo(HaveOccurred(), "error creating a prometheus client")
 		promAPI := promv1.NewAPI(promClient)
@@ -53,8 +52,8 @@ var _ = ginkgo.Describe(clusterStateTestName, func() {
 
 		// Query for alerts with a retry count of 40 and timeout of 20 minutes
 		err = wait.PollImmediate(30*time.Second, 20*time.Minute, func() (bool, error) {
-			query := fmt.Sprintf("ALERTS{alertstate!=\"pending\",alertname!=\"Watchdog\"}")
-			context, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
+			query := "ALERTS{alertstate!=\"pending\",alertname!=\"Watchdog\"}"
+			context, cancel := context.WithTimeout(ctx, 1*time.Minute)
 			defer cancel()
 			value, _, err := promAPI.Query(context, query, time.Now())
 			if err != nil {

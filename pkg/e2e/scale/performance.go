@@ -1,6 +1,8 @@
 package scale
 
 import (
+	"context"
+
 	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	kubev1 "k8s.io/api/core/v1"
@@ -21,8 +23,8 @@ var _ = ginkgo.Describe(performanceTestName, func() {
 	h := helper.New()
 
 	httpTimeoutInSeconds := 7200
-	util.GinkgoIt("should be tested with HTTP", func() {
-		h.SetServiceAccount("system:serviceaccount:%s:cluster-admin")
+	util.GinkgoIt("should be tested with HTTP", func(ctx context.Context) {
+		h.SetServiceAccount(ctx, "system:serviceaccount:%s:cluster-admin")
 		// setup runner
 		scaleCfg := scaleRunnerConfig{
 			Name:         "http",

@@ -48,16 +48,16 @@ var _ = ginkgo.Describe(testName, func() {
 	// used for verifying creation of workload pods
 	podPrefixes := []string{"frontend", "redis-master", "redis-slave"}
 
-  workloadPollDuration := 5 * time.Minute
-	util.GinkgoIt("should get created in the cluster", func() {
+	workloadPollDuration := 5 * time.Minute
+	util.GinkgoIt("should get created in the cluster", func(ctx context.Context) {
 
 		// Does this workload exist? If so, this must be a repeat run.
 		// In this case we should assume the workload has had a valid run once already
 		// And simply run another test validating the workload.
-		h.SetServiceAccount("")
+		h.SetServiceAccount(ctx, "")
 		if _, ok := h.GetWorkload(workloadName); ok {
 			// Run the workload test
-			doTest(h)
+			doTest(ctx, h)
 
 		} else {
 			// Create all K8s objects that are within the testDir
@@ -80,7 +80,7 @@ var _ = ginkgo.Describe(testName, func() {
 				},
 				Status: v1.RouteStatus{},
 			}
-			_, err = h.Route().RouteV1().Routes(h.CurrentProject()).Create(context.TODO(), appRoute, metav1.CreateOptions{})
+			_, err = h.Route().RouteV1().Routes(h.CurrentProject()).Create(ctx, appRoute, metav1.CreateOptions{})
 			Expect(err).NotTo(HaveOccurred(), "couldn't create application route")
 
 			// Give the cluster a second to churn before checking
@@ -96,7 +96,7 @@ var _ = ginkgo.Describe(testName, func() {
 			})
 			Expect(err).NotTo(HaveOccurred(), "objects not created in a timely manner")
 			// Run the test
-			doTest(h)
+			doTest(ctx, h)
 
 			// If success, add the workload to the list of installed workloads
 			h.AddWorkload(workloadName, h.CurrentProject())
@@ -105,7 +105,7 @@ var _ = ginkgo.Describe(testName, func() {
 	}, (workloadPollDuration + (30 * time.Second)).Seconds())
 })
 
-func doTest(h *helper.H) {
+func doTest(ctx context.Context, h *helper.H) {
 
 	// track if error occurs
 	var err error
@@ -118,7 +118,7 @@ func doTest(h *helper.H) {
 	intervalDuration := time.Duration(interval) * time.Second
 
 	err = wait.PollImmediate(intervalDuration, timeoutDuration, func() (bool, error) {
-		_, err = h.Kube().CoreV1().Services(h.CurrentProject()).ProxyGet("http", guestbookSvcName, guestbookSvcPort, "/", nil).DoRaw(context.TODO())
+		_, err = h.Kube().CoreV1().Services(h.CurrentProject()).ProxyGet("http", guestbookSvcName, guestbookSvcPort, "/", nil).DoRaw(ctx)
 		if err == nil {
 			return true, nil
 		}

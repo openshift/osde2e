@@ -30,21 +30,21 @@ func init() {
 var _ = ginkgo.Describe(loadBalancersTestName, func() {
 	h := helper.New()
 
-	util.GinkgoIt("router/ingress load balancer should exist", func() {
-		exists, err := loadBalancerExists(h, routerIngressLoadBalancerNamespace, routerIngressLoadBalancer)
+	util.GinkgoIt("router/ingress load balancer should exist", func(ctx context.Context) {
+		exists, err := loadBalancerExists(ctx, h, routerIngressLoadBalancerNamespace, routerIngressLoadBalancer)
 		Expect(err).ToNot(HaveOccurred(), "an error should not have occurred when looking for the load balancer")
 		Expect(exists).To(BeTrue(), "the load balancer should exist")
 	}, 10)
 
-	util.GinkgoIt("external load balancer should exist", func() {
-		exists, err := loadBalancerExists(h, externalLoadBalancerNamespace, externalLoadBalancer)
+	util.GinkgoIt("external load balancer should exist", func(ctx context.Context) {
+		exists, err := loadBalancerExists(ctx, h, externalLoadBalancerNamespace, externalLoadBalancer)
 		Expect(err).ToNot(HaveOccurred(), "an error should not have occurred when looking for the load balancer")
 		Expect(exists).To(BeTrue(), "the load balancer should exist")
 	}, 10)
 })
 
-func loadBalancerExists(h *helper.H, namespace string, loadBalancer string) (bool, error) {
-	service, err := h.Kube().CoreV1().Services(namespace).Get(context.TODO(), loadBalancer, metav1.GetOptions{})
+func loadBalancerExists(ctx context.Context, h *helper.H, namespace string, loadBalancer string) (bool, error) {
+	service, err := h.Kube().CoreV1().Services(namespace).Get(ctx, loadBalancer, metav1.GetOptions{})
 
 	if err != nil {
 		return false, fmt.Errorf("error getting loadbalancer: %v", err)

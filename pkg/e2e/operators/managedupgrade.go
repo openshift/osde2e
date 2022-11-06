@@ -60,11 +60,11 @@ var _ = ginkgo.Describe(managedUpgradeOperatorTestName, func() {
 			err            error
 		)
 
-		ginkgo.BeforeEach(func() {
-			clusterVersion, err = getClusterVersion(h)
+		ginkgo.BeforeEach(func(ctx context.Context) {
+			clusterVersion, err = getClusterVersion(ctx, h)
 		})
 
-		util.GinkgoIt("should not upgrade if the upgrade time is in the future", func() {
+		util.GinkgoIt("should not upgrade if the upgrade time is in the future", func(ctx context.Context) {
 			// Validate clusterversion
 			Expect(err).NotTo(HaveOccurred())
 			Expect(clusterVersion).NotTo(BeNil())
@@ -75,7 +75,7 @@ var _ = ginkgo.Describe(managedUpgradeOperatorTestName, func() {
 
 			// If there is an existing upgrade config, we must be in a post-upgrade
 			// state, so no need to re-run the tests
-			existingUc, _ := getUpgradeConfig(upgradeConfigResourceName, operatorNamespace, h)
+			existingUc, _ := getUpgradeConfig(ctx, upgradeConfigResourceName, operatorNamespace, h)
 			if existingUc != nil {
 				ginkgo.Skip("skipping due to existing UpgradeConfig")
 			}
@@ -88,11 +88,11 @@ var _ = ginkgo.Describe(managedUpgradeOperatorTestName, func() {
 
 			// Add the upgradeconfig to the cluster
 			uc := makeUpgradeConfig(upgradeConfigResourceName, operatorNamespace, startTime.Format(time.RFC3339), targetVersion, targetChannel)
-			err = addUpgradeConfig(uc, operatorNamespace, h)
+			err = addUpgradeConfig(ctx, uc, operatorNamespace, h)
 			Expect(err).NotTo(HaveOccurred())
 			// Delete the upgradeconfig after the test
 			defer func() {
-				err := deleteUpgradeConfig(upgradeConfigResourceName, operatorNamespace, h)
+				err := deleteUpgradeConfig(ctx, upgradeConfigResourceName, operatorNamespace, h)
 				Expect(err).NotTo(HaveOccurred())
 			}()
 
@@ -100,7 +100,7 @@ var _ = ginkgo.Describe(managedUpgradeOperatorTestName, func() {
 			err = wait.Poll(1*time.Minute, 2*time.Minute, func() (bool, error) {
 				ucObj, err := h.Dynamic().Resource(schema.GroupVersionResource{
 					Group: "upgrade.managed.openshift.io", Version: "v1alpha1", Resource: "upgradeconfigs",
-				}).Namespace(operatorNamespace).Get(context.TODO(), upgradeConfigResourceName, metav1.GetOptions{})
+				}).Namespace(operatorNamespace).Get(ctx, upgradeConfigResourceName, metav1.GetOptions{})
 				if err != nil {
 					return false, fmt.Errorf("unable to retrieve upgradeconfig")
 				}
@@ -127,7 +127,7 @@ var _ = ginkgo.Describe(managedUpgradeOperatorTestName, func() {
 
 		})
 
-		util.GinkgoIt("should error if the upgrade time is too far in the past", func() {
+		util.GinkgoIt("should error if the upgrade time is too far in the past", func(ctx context.Context) {
 			// Validate clusterversion
 			Expect(err).NotTo(HaveOccurred())
 			Expect(clusterVersion).NotTo(BeNil())
@@ -138,7 +138,7 @@ var _ = ginkgo.Describe(managedUpgradeOperatorTestName, func() {
 
 			// If there is an existing upgrade config, we must be in a post-upgrade
 			// state, so no need to re-run the tests
-			existingUc, _ := getUpgradeConfig(upgradeConfigResourceName, operatorNamespace, h)
+			existingUc, _ := getUpgradeConfig(ctx, upgradeConfigResourceName, operatorNamespace, h)
 			if existingUc != nil {
 				ginkgo.Skip("skipping due to existing UpgradeConfig")
 			}
@@ -151,11 +151,11 @@ var _ = ginkgo.Describe(managedUpgradeOperatorTestName, func() {
 
 			// Add the upgradeconfig to the cluster
 			uc := makeUpgradeConfig(upgradeConfigResourceName, operatorNamespace, startTime.Format(time.RFC3339), targetVersion, targetChannel)
-			err = addUpgradeConfig(uc, operatorNamespace, h)
+			err = addUpgradeConfig(ctx, uc, operatorNamespace, h)
 			Expect(err).NotTo(HaveOccurred())
 			// Delete the upgradeconfig after the test
 			defer func() {
-				err := deleteUpgradeConfig(upgradeConfigResourceName, operatorNamespace, h)
+				err := deleteUpgradeConfig(ctx, upgradeConfigResourceName, operatorNamespace, h)
 				Expect(err).NotTo(HaveOccurred())
 			}()
 
@@ -182,7 +182,7 @@ var _ = ginkgo.Describe(managedUpgradeOperatorTestName, func() {
 			Expect(err).NotTo(HaveOccurred())
 		})
 
-		util.GinkgoIt("should error if provided an invalid start time", func() {
+		util.GinkgoIt("should error if provided an invalid start time", func(ctx context.Context) {
 			// Validate clusterversion
 			Expect(err).NotTo(HaveOccurred())
 			Expect(clusterVersion).NotTo(BeNil())
@@ -193,7 +193,7 @@ var _ = ginkgo.Describe(managedUpgradeOperatorTestName, func() {
 
 			// If there is an existing upgrade config, we must be in a post-upgrade
 			// state, so no need to re-run the tests
-			existingUc, _ := getUpgradeConfig(upgradeConfigResourceName, operatorNamespace, h)
+			existingUc, _ := getUpgradeConfig(ctx, upgradeConfigResourceName, operatorNamespace, h)
 			if existingUc != nil {
 				ginkgo.Skip("skipping due to existing UpgradeConfig")
 			}
@@ -203,11 +203,11 @@ var _ = ginkgo.Describe(managedUpgradeOperatorTestName, func() {
 
 			// Add the upgradeconfig to the cluster
 			uc := makeUpgradeConfig(upgradeConfigResourceName, operatorNamespace, "this is not a start time", targetVersion, targetChannel)
-			err = addUpgradeConfig(uc, operatorNamespace, h)
+			err = addUpgradeConfig(ctx, uc, operatorNamespace, h)
 			Expect(err).NotTo(HaveOccurred())
 			// Delete the upgradeconfig after the test
 			defer func() {
-				err := deleteUpgradeConfig(upgradeConfigResourceName, operatorNamespace, h)
+				err := deleteUpgradeConfig(ctx, upgradeConfigResourceName, operatorNamespace, h)
 				Expect(err).NotTo(HaveOccurred())
 			}()
 
@@ -237,19 +237,19 @@ var _ = ginkgo.Describe(managedUpgradeOperatorTestName, func() {
 	})
 	ginkgo.Context("upgradeconfig", func() {
 
-		util.GinkgoIt("dedicated admin should not be able to manage the UpgradeConfig CR", func() {
+		util.GinkgoIt("dedicated admin should not be able to manage the UpgradeConfig CR", func(ctx context.Context) {
 			// Add the upgradeconfig to the cluster
 			uc := makeMinimalUpgradeConfig(upgradeConfigForDedicatedAdminTestName, operatorNamespace)
-			err := dedicatedAaddUpgradeConfig(uc, operatorNamespace, h)
+			err := dedicatedAaddUpgradeConfig(ctx, uc, operatorNamespace, h)
 			Expect(apierrors.IsForbidden(err)).To(BeTrue())
 
-			err = addUpgradeConfig(uc, operatorNamespace, h)
+			err = addUpgradeConfig(ctx, uc, operatorNamespace, h)
 			Expect(err).NotTo(HaveOccurred())
 
-			err = dedicatedADeleteUpgradeConfig(upgradeConfigForDedicatedAdminTestName, operatorNamespace, h)
+			err = dedicatedADeleteUpgradeConfig(ctx, upgradeConfigForDedicatedAdminTestName, operatorNamespace, h)
 			Expect(apierrors.IsForbidden(err)).To(BeTrue())
 
-			err = deleteUpgradeConfig(upgradeConfigForDedicatedAdminTestName, operatorNamespace, h)
+			err = deleteUpgradeConfig(ctx, upgradeConfigForDedicatedAdminTestName, operatorNamespace, h)
 			Expect(err).NotTo(HaveOccurred())
 
 		})
@@ -258,11 +258,11 @@ var _ = ginkgo.Describe(managedUpgradeOperatorTestName, func() {
 
 })
 
-func getClusterVersion(h *helper.H) (*v1.ClusterVersion, error) {
+func getClusterVersion(ctx context.Context, h *helper.H) (*v1.ClusterVersion, error) {
 	// get cluster version
 	cfgClient := h.Cfg()
 	getOpts := metav1.GetOptions{}
-	cVersion, err := cfgClient.ConfigV1().ClusterVersions().Get(context.TODO(), "version", getOpts)
+	cVersion, err := cfgClient.ConfigV1().ClusterVersions().Get(ctx, "version", getOpts)
 	if err != nil {
 		return nil, fmt.Errorf("couldn't get current ClusterVersion '%s': %v", "version", err)
 	}
@@ -308,7 +308,7 @@ func makeMinimalUpgradeConfig(name string, ns string) upgradev1alpha1.UpgradeCon
 	}
 	return uc
 }
-func addUpgradeConfig(upgradeConfig upgradev1alpha1.UpgradeConfig, operatorNamespace string, h *helper.H) error {
+func addUpgradeConfig(ctx context.Context, upgradeConfig upgradev1alpha1.UpgradeConfig, operatorNamespace string, h *helper.H) error {
 	obj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(upgradeConfig.DeepCopy())
 	if err != nil {
 		return err
@@ -316,20 +316,20 @@ func addUpgradeConfig(upgradeConfig upgradev1alpha1.UpgradeConfig, operatorNames
 	unstructuredObj := unstructured.Unstructured{obj}
 	_, err = h.Dynamic().Resource(schema.GroupVersionResource{
 		Group: "upgrade.managed.openshift.io", Version: "v1alpha1", Resource: "upgradeconfigs",
-	}).Namespace(operatorNamespace).Create(context.TODO(), &unstructuredObj, metav1.CreateOptions{})
+	}).Namespace(operatorNamespace).Create(ctx, &unstructuredObj, metav1.CreateOptions{})
 	return err
 }
 
-func deleteUpgradeConfig(name string, operatorNamespace string, h *helper.H) error {
+func deleteUpgradeConfig(ctx context.Context, name string, operatorNamespace string, h *helper.H) error {
 	return h.Dynamic().Resource(schema.GroupVersionResource{
 		Group: "upgrade.managed.openshift.io", Version: "v1alpha1", Resource: "upgradeconfigs",
-	}).Namespace(operatorNamespace).Delete(context.TODO(), name, metav1.DeleteOptions{})
+	}).Namespace(operatorNamespace).Delete(ctx, name, metav1.DeleteOptions{})
 }
 
-func getUpgradeConfig(name string, ns string, h *helper.H) (*upgradev1alpha1.UpgradeConfig, error) {
+func getUpgradeConfig(ctx context.Context, name string, ns string, h *helper.H) (*upgradev1alpha1.UpgradeConfig, error) {
 	ucObj, err := h.Dynamic().Resource(schema.GroupVersionResource{
 		Group: "upgrade.managed.openshift.io", Version: "v1alpha1", Resource: "upgradeconfigs",
-	}).Namespace(ns).Get(context.TODO(), name, metav1.GetOptions{})
+	}).Namespace(ns).Get(ctx, name, metav1.GetOptions{})
 	if err != nil {
 		return nil, fmt.Errorf("error retrieving upgradeconfig: %v", err)
 	}
@@ -347,7 +347,7 @@ func getUpgradeConfig(name string, ns string, h *helper.H) (*upgradev1alpha1.Upg
 // test for CR customresourcedefinition.apiextensions.k8s.io/upgradeconfigs.upgrade.managed.openshift.io
 // dedicated admin should not be able to create/edit this CR
 
-func dedicatedAaddUpgradeConfig(upgradeConfig upgradev1alpha1.UpgradeConfig, operatorNamespace string, h *helper.H) error {
+func dedicatedAaddUpgradeConfig(ctx context.Context, upgradeConfig upgradev1alpha1.UpgradeConfig, operatorNamespace string, h *helper.H) error {
 	obj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(upgradeConfig.DeepCopy())
 	if err != nil {
 		return err
@@ -364,11 +364,11 @@ func dedicatedAaddUpgradeConfig(upgradeConfig upgradev1alpha1.UpgradeConfig, ope
 	unstructuredObj := unstructured.Unstructured{obj}
 	_, err = h.Dynamic().Resource(schema.GroupVersionResource{
 		Group: "upgrade.managed.openshift.io", Version: "v1alpha1", Resource: "upgradeconfigs",
-	}).Namespace(operatorNamespace).Create(context.TODO(), &unstructuredObj, metav1.CreateOptions{})
+	}).Namespace(operatorNamespace).Create(ctx, &unstructuredObj, metav1.CreateOptions{})
 	return (err)
 }
 
-func dedicatedADeleteUpgradeConfig(name string, operatorNamespace string, h *helper.H) error {
+func dedicatedADeleteUpgradeConfig(ctx context.Context, name string, operatorNamespace string, h *helper.H) error {
 	h.Impersonate(rest.ImpersonationConfig{
 		UserName: "test-user@redhat.com",
 		Groups: []string{
@@ -380,5 +380,5 @@ func dedicatedADeleteUpgradeConfig(name string, operatorNamespace string, h *hel
 	}()
 	return h.Dynamic().Resource(schema.GroupVersionResource{
 		Group: "upgrade.managed.openshift.io", Version: "v1alpha1", Resource: "upgradeconfigs",
-	}).Namespace(operatorNamespace).Delete(context.TODO(), name, metav1.DeleteOptions{})
+	}).Namespace(operatorNamespace).Delete(ctx, name, metav1.DeleteOptions{})
 }

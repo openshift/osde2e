@@ -65,8 +65,8 @@ func getGCPForwardingRuleForIP(computeService *computev1.Service, oldLBIP string
 }
 
 // getLBForService retrieves the load balancer name or IP associated with a service of type LoadBalancer
-func getLBForService(h *helper.H, namespace string, service string, idtype string) (string, error) {
-	svc, err := h.Kube().CoreV1().Services(namespace).Get(context.TODO(), service, metav1.GetOptions{})
+func getLBForService(ctx context.Context, h *helper.H, namespace string, service string, idtype string) (string, error) {
+	svc, err := h.Kube().CoreV1().Services(namespace).Get(ctx, service, metav1.GetOptions{})
 	if err != nil {
 		return "", err
 	}
@@ -142,13 +142,13 @@ func testLBDeletion(h *helper.H) {
 	ginkgo.Context("rh-api-lb-test", func() {
 
 		if viper.GetString(config.CloudProvider.CloudProviderID) == "aws" {
-			util.GinkgoIt("manually deleted LB should be recreated in AWS", func() {
+			util.GinkgoIt("manually deleted LB should be recreated in AWS", func(ctx context.Context) {
 				awsAccessKey := viper.GetString("ocm.aws.accessKey")
 				awsSecretKey := viper.GetString("ocm.aws.secretKey")
 				awsRegion := viper.GetString(config.CloudProvider.Region)
 
 				// getLoadBalancer name currently associated with rh-api service
-				oldLBName, err := getLBForService(h, "openshift-kube-apiserver", "rh-api", "hostname")
+				oldLBName, err := getLBForService(ctx, h, "openshift-kube-apiserver", "rh-api", "hostname")
 				Expect(err).NotTo(HaveOccurred())
 				log.Printf("Old LB name %s ", oldLBName)
 
@@ -162,7 +162,7 @@ func testLBDeletion(h *helper.H) {
 				}
 
 				// must store security groups associated with LB so we can delete them
-				oldLBDesc, err := lb.DescribeLoadBalancers(&elb.DescribeLoadBalancersInput{
+				oldLBDesc, err := lb.DescribeLoadBalancersWithContext(ctx, &elb.DescribeLoadBalancersInput{
 					LoadBalancerNames: []*string{aws.String(oldLBName)},
 				})
 				Expect(err).NotTo(HaveOccurred())
@@ -175,7 +175,7 @@ func testLBDeletion(h *helper.H) {
 
 				// wait for the new LB to be created
 				err = wait.PollImmediate(15*time.Second, 5*time.Minute, func() (bool, error) {
-					newLBName, err := getLBForService(h, "openshift-kube-apiserver", "rh-api", "hostname")
+					newLBName, err := getLBForService(ctx, h, "openshift-kube-apiserver", "rh-api", "hostname")
 					log.Printf("Looking for new LB")
 
 					if err != nil || newLBName == "" {
@@ -203,7 +203,7 @@ func testLBDeletion(h *helper.H) {
 
 				// then delete the orphaned sec groups themselves
 				for _, orphanSecGroupId := range orphanSecGroupIds {
-					_, err := ec2Svc.DeleteSecurityGroup(&ec2.DeleteSecurityGroupInput{
+					_, err := ec2Svc.DeleteSecurityGroupWithContext(ctx, &ec2.DeleteSecurityGroupInput{
 						GroupId: aws.String(*orphanSecGroupId),
 					})
 					if err != nil {
@@ -216,13 +216,12 @@ func testLBDeletion(h *helper.H) {
 		}
 
 		if viper.GetString(config.CloudProvider.CloudProviderID) == "gcp" {
-			util.GinkgoIt("manually deleted LB should be recreated in GCP", func() {
+			util.GinkgoIt("manually deleted LB should be recreated in GCP", func(ctx context.Context) {
 
 				region := viper.GetString("cloudProvider.region")
-				ctx := context.TODO()
 
 				ginkgo.By("Getting rh-api IP")
-				oldLBIP, err := getLBForService(h, "openshift-kube-apiserver", "rh-api", "ip")
+				oldLBIP, err := getLBForService(ctx, h, "openshift-kube-apiserver", "rh-api", "ip")
 				Expect(err).NotTo(HaveOccurred())
 				log.Printf("old LB IP:  %s ", oldLBIP)
 
@@ -305,19 +304,19 @@ func testLBDeletion(h *helper.H) {
 				newLBIP := ""
 				// Getting the new LB from GCP
 				err = wait.PollImmediate(15*time.Second, 10*time.Minute, func() (bool, error) {
-						// Getting the newly created IP from rh-api service
-						ginkgo.By("Getting new IP from rh-api service in OCM")
+					// Getting the newly created IP from rh-api service
+					ginkgo.By("Getting new IP from rh-api service in OCM")
 
-						newLBIP, err = getLBForService(h, "openshift-kube-apiserver", "rh-api", "ip")
-						if (err != nil) || (newLBIP == "") || (newLBIP == oldLBIP) {
-							log.Printf("New rh-api svc not created yet...")
-							return false, nil
-						}else{
-							log.Printf("Found new rh-api svc! ")
-							log.Printf("new lb IP: %s ", newLBIP)
-							return true, nil
-			}
-		})
+					newLBIP, err = getLBForService(ctx, h, "openshift-kube-apiserver", "rh-api", "ip")
+					if (err != nil) || (newLBIP == "") || (newLBIP == oldLBIP) {
+						log.Printf("New rh-api svc not created yet...")
+						return false, nil
+					} else {
+						log.Printf("Found new rh-api svc! ")
+						log.Printf("new lb IP: %s ", newLBIP)
+						return true, nil
+					}
+				})
 				Expect(err).NotTo(HaveOccurred())
 
 				err = wait.PollImmediate(15*time.Second, 10*time.Minute, func() (bool, error) {

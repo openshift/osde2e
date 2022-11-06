@@ -1,6 +1,7 @@
 package state
 
 import (
+	"context"
 	"errors"
 	"strings"
 	"time"
@@ -29,7 +30,7 @@ var _ = ginkgo.Describe(clusterStateInformingName, func() {
 	// How long to wait for Prometheus pods to be running
 	prometheusPodStartedDuration := 5 * time.Minute
 
-	util.GinkgoIt("should include Prometheus data", func() {
+	util.GinkgoIt("should include Prometheus data", func(ctx context.Context) {
 		// setup runner
 		// this command is has specific code to capture and suppress an exit code of
 		// 1 as tar 1.26 will exit 1 if files change while the tar is running, as is
@@ -39,7 +40,7 @@ var _ = ginkgo.Describe(clusterStateInformingName, func() {
 		// ensure prometheus pods are up before trying to extract data
 		poderr := wait.PollImmediate(2*time.Second, prometheusPodStartedDuration, func() (bool, error) {
 			podCount := 0
-			list, listerr := verify.FilterPods("openshift-monitoring", "app.kubernetes.io/name=prometheus", h)
+			list, listerr := verify.FilterPods(ctx, "openshift-monitoring", "app.kubernetes.io/name=prometheus", h)
 			if listerr != nil {
 				return false, listerr
 			}
@@ -54,11 +55,11 @@ var _ = ginkgo.Describe(clusterStateInformingName, func() {
 					return true, nil
 				}
 			}
-			return false, errors.New("Prometheus pods are not in running state")
+			return false, errors.New("prometheus pods are not in running state")
 		})
 		Expect(poderr).NotTo(HaveOccurred())
 
-		h.SetServiceAccount("system:serviceaccount:%s:cluster-admin")
+		h.SetServiceAccount(ctx, "system:serviceaccount:%s:cluster-admin")
 
 		r := h.Runner(cmd)
 		r.Name = "collect-prometheus"
@@ -74,5 +75,5 @@ var _ = ginkgo.Describe(clusterStateInformingName, func() {
 
 		// write results
 		h.WriteResults(results)
-	}, prometheusTimeout.Seconds() + prometheusPodStartedDuration.Seconds())
+	}, prometheusTimeout.Seconds()+prometheusPodStartedDuration.Seconds())
 })

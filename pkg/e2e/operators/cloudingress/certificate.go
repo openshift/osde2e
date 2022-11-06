@@ -21,28 +21,28 @@ var _ = ginkgo.Describe(constants.SuiteInforming+TestPrefix, func() {
 	// How long to wait for IngressController changes
 	pollingDuration := 120 * time.Second
 	ginkgo.Context("publishingstrategy-certificate", func() {
-		ginkgo.It("IngressController should be patched when update Certificate", func() {
-			ingress1, _ := getingressController(h, "default")
+		ginkgo.It("IngressController should be patched when update Certificate", func(ctx context.Context) {
+			ingress1, _ := getingressController(ctx, h, "default")
 			originalCert = string(ingress1.Spec.DefaultCertificate.Name)
-			updateCertificate(h, "foo-bar")
+			updateCertificate(ctx, h, "foo-bar")
 			time.Sleep(pollingDuration)
-			ingress, _ := getingressController(h, "default")
+			ingress, _ := getingressController(ctx, h, "default")
 
 			Expect(string(ingress.Spec.DefaultCertificate.Name)).To(Equal("foo-bar"))
 		}, pollingDuration.Seconds())
 
-		ginkgo.It("IngressController should be patched when return the original Certificate", func() {
-			updateCertificate(h, originalCert)
+		ginkgo.It("IngressController should be patched when return the original Certificate", func(ctx context.Context) {
+			updateCertificate(ctx, h, originalCert)
 			time.Sleep(pollingDuration)
-			ingress, _ := getingressController(h, "default")
+			ingress, _ := getingressController(ctx, h, "default")
 			Expect(string(ingress.Spec.DefaultCertificate.Name)).To(Equal(originalCert))
 		}, pollingDuration.Seconds())
 	})
 })
 
-func updateCertificate(h *helper.H, newName string) {
+func updateCertificate(ctx context.Context, h *helper.H, newName string) {
 	var err error
-	PublishingStrategyInstance, ps := getPublishingStrategy(h)
+	PublishingStrategyInstance, ps := getPublishingStrategy(ctx, h)
 
 	// Grab the current list of Application Ingresses from the Publishing Strategy
 	AppIngress := PublishingStrategyInstance.Spec.ApplicationIngress
@@ -60,6 +60,9 @@ func updateCertificate(h *helper.H, newName string) {
 	Expect(err).NotTo(HaveOccurred())
 
 	// Update the publishingstrategy
-	ps, err = h.Dynamic().Resource(schema.GroupVersionResource{Group: "cloudingress.managed.openshift.io", Version: "v1alpha1", Resource: "publishingstrategies"}).Namespace(OperatorNamespace).Update(context.TODO(), ps, metav1.UpdateOptions{})
+	ps, err = h.Dynamic().
+		Resource(schema.GroupVersionResource{Group: "cloudingress.managed.openshift.io", Version: "v1alpha1", Resource: "publishingstrategies"}).
+		Namespace(OperatorNamespace).
+		Update(ctx, ps, metav1.UpdateOptions{})
 	Expect(err).NotTo(HaveOccurred())
 }

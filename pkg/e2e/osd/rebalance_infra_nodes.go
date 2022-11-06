@@ -39,15 +39,17 @@ var _ = ginkgo.Describe(rebalanceInfraNodesTestName, func() {
 	h := helper.New()
 
 	ginkgo.Context("re-balance the infra nodes with cronjob", func() {
-
-		util.GinkgoIt("infra nodes should be rebalanced after executing the cronjob", func() {
+		util.GinkgoIt("infra nodes should be rebalanced after executing the cronjob", func(ctx context.Context) {
 			ginkgo.By("Putting the cluster into imbalanced state")
 			output, err := exec.Command("/bin/sh", imbalanceScriptPath).Output()
 			Expect(err).ToNot(HaveOccurred())
 			log.Printf("Output for imbalancing infra nodes: \n%v\n", string(output))
 
 			ginkgo.By("Creating job from CronJob to rebalance the infra workloads")
-			cronjob, err := h.Kube().BatchV1beta1().CronJobs(rebalanceInfraNodesNamespace).Get(context.TODO(), rebalanceInfraNodesCronJob, metav1.GetOptions{})
+			cronjob, err := h.Kube().
+				BatchV1beta1().
+				CronJobs(rebalanceInfraNodesNamespace).
+				Get(ctx, rebalanceInfraNodesCronJob, metav1.GetOptions{})
 			Expect(err).ToNot(HaveOccurred())
 			Expect(cronjob).NotTo(BeNil())
 
@@ -101,7 +103,10 @@ var _ = ginkgo.Describe(rebalanceInfraNodesTestName, func() {
 					},
 				},
 			}
-			job, err = h.Kube().BatchV1().Jobs(rebalanceInfraNodesNamespace).Create(context.TODO(), job, metav1.CreateOptions{})
+			job, err = h.Kube().
+				BatchV1().
+				Jobs(rebalanceInfraNodesNamespace).
+				Create(ctx, job, metav1.CreateOptions{})
 			Expect(err).ToNot(HaveOccurred())
 			Expect(job).NotTo(BeNil())
 			log.Printf("Created job %v from cronjob %v", job.Name, cronjob.Name)
@@ -111,7 +116,7 @@ var _ = ginkgo.Describe(rebalanceInfraNodesTestName, func() {
 				LabelSelector: labelSelector,
 				Limit:         100,
 			}
-			pods, err := h.Kube().CoreV1().Pods(rebalanceInfraNodesNamespace).List(context.TODO(), listOptions)
+			pods, err := h.Kube().CoreV1().Pods(rebalanceInfraNodesNamespace).List(ctx, listOptions)
 			Expect(err).ToNot(HaveOccurred())
 
 			var podName string
@@ -123,7 +128,10 @@ var _ = ginkgo.Describe(rebalanceInfraNodesTestName, func() {
 
 			var pod *v1.Pod
 			wait.PollImmediate(pollInterval, podSucceededTimeout, func() (bool, error) {
-				pod, err = h.Kube().CoreV1().Pods(rebalanceInfraNodesNamespace).Get(context.TODO(), podName, metav1.GetOptions{})
+				pod, err = h.Kube().
+					CoreV1().
+					Pods(rebalanceInfraNodesNamespace).
+					Get(ctx, podName, metav1.GetOptions{})
 				if err != nil {
 					return false, err
 				}
@@ -140,31 +148,31 @@ var _ = ginkgo.Describe(rebalanceInfraNodesTestName, func() {
 				LabelSelector: "node-role.kubernetes.io=infra",
 				Limit:         100,
 			}
-			infraNodeList, err := h.Kube().CoreV1().Nodes().List(context.TODO(), listOptions)
+			infraNodeList, err := h.Kube().CoreV1().Nodes().List(ctx, listOptions)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(infraNodeList).NotTo(BeNil())
 
 			for _, node := range infraNodeList.Items {
 				log.Printf("Verifying infra node: %v\n", node.Name)
 
-				podsNumber := checkPodsBalance(h, rebalanceInfraNodesNamespace, "app", "alertmanager", node.Name)
+				podsNumber := checkPodsBalance(ctx, h, rebalanceInfraNodesNamespace, "app", "alertmanager", node.Name)
 				max := 1
 				if len(infraNodeList.Items) < 3 {
 					max = 2
 				}
 				Expect(podsNumber).To(BeNumerically("<=", max))
 
-				podsNumber = checkPodsBalance(h, rebalanceInfraNodesNamespace, "app", "prometheus", node.Name)
+				podsNumber = checkPodsBalance(ctx, h, rebalanceInfraNodesNamespace, "app", "prometheus", node.Name)
 				Expect(podsNumber).To(BeNumerically("<=", 1))
 
-				podsNumber = checkPodsBalance(h, splunkNamespace, "name", "splunk-heavy-forwarder", node.Name)
+				podsNumber = checkPodsBalance(ctx, h, splunkNamespace, "name", "splunk-heavy-forwarder", node.Name)
 				Expect(podsNumber).To(BeNumerically("<=", 1))
 			}
 		}, podSucceededTimeout.Seconds()+viper.GetFloat64(config.Tests.PollingTimeout))
 	})
 })
 
-func checkPodsBalance(h *helper.H, namespace, labelName, workloadName, nodeName string) int {
+func checkPodsBalance(ctx context.Context, h *helper.H, namespace, labelName, workloadName, nodeName string) int {
 	labelSelector := fmt.Sprintf("%s=%s", labelName, workloadName)
 	fieldSelector := fmt.Sprintf("spec.nodeName=%s", nodeName)
 
@@ -174,7 +182,7 @@ func checkPodsBalance(h *helper.H, namespace, labelName, workloadName, nodeName 
 		Limit:         100,
 	}
 
-	pods, _ := h.Kube().CoreV1().Pods(namespace).List(context.TODO(), listOptions)
+	pods, _ := h.Kube().CoreV1().Pods(namespace).List(ctx, listOptions)
 	fmt.Printf("%v pods on node: %v\n", len(pods.Items), nodeName)
 	for _, pod := range pods.Items {
 		fmt.Printf("pod: %v on node: %v\n", pod.Name, nodeName)

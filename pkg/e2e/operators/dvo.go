@@ -56,19 +56,19 @@ var _ = ginkgo.Describe(deploymentValidationOperatorTestName, func() {
 	checkPod(h, operatorNamespace, operatorDeploymentName, 2, 3)
 	checkClusterRoles(h, clusterRoles, false)
 
-	util.GinkgoIt("Create and test deployment for DVO functionality", func() {
+	util.GinkgoIt("Create and test deployment for DVO functionality", func(ctx context.Context) {
 
 		//Create and check test deployment
-		h.CreateProject("dvo-test")
-		h.SetProjectByName("osde2e-dvo-test")
+		h.CreateProject(ctx, "dvo-test")
+		h.SetProjectByName(ctx, "osde2e-dvo-test")
 
 		// Set it to a wildcard dedicated-admin
-		h.CreateServiceAccounts()
-		h.SetServiceAccount("system:serviceaccount:osde2e-dvo-test:cluster-admin")
+		h.CreateServiceAccounts(ctx)
+		h.SetServiceAccount(ctx, "system:serviceaccount:osde2e-dvo-test:cluster-admin")
 
 		// Test creating a basic deployment
 		ds := makeDeployment("dvo-test-case", h.GetNamespacedServiceAccount(), nodeLabels)
-		_, err := h.Kube().AppsV1().Deployments(h.CurrentProject()).Create(context.TODO(), &ds, metav1.CreateOptions{})
+		_, err := h.Kube().AppsV1().Deployments(h.CurrentProject()).Create(ctx, &ds, metav1.CreateOptions{})
 		Expect(err).NotTo(HaveOccurred())
 
 	}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
@@ -77,7 +77,7 @@ var _ = ginkgo.Describe(deploymentValidationOperatorTestName, func() {
 	checkPodLogs(h, operatorNamespace, testNamespace, operatorDeploymentName, operatorName, dvoString, 300)
 
 	// Delete DVO Test Deployment
-	defer deleteNamespace(testNamespace, true, h)
+	defer deleteNamespace(context.TODO(), testNamespace, true, h)
 
 })
 
@@ -127,13 +127,13 @@ func checkPodLogs(h *helper.H, namespace string, testNamespace string, name stri
 	dvoCheck := false
 
 	ginkgo.Context("pods", func() {
-		util.GinkgoIt(fmt.Sprintf("Check logs in test namespace %s", testNamespace), func() {
+		util.GinkgoIt(fmt.Sprintf("Check logs in test namespace %s", testNamespace), func(ctx context.Context) {
 			// wait for graceperiod
 			fmt.Println("Waiting for grace period")
 			// Wait for graceperiod
 			time.Sleep(time.Duration(gracePeriod) * time.Second)
 			// Retrieve pods
-			pods, err := h.Kube().CoreV1().Pods(namespace).List(context.TODO(), metav1.ListOptions{LabelSelector: "name=" + name})
+			pods, err := h.Kube().CoreV1().Pods(namespace).List(ctx, metav1.ListOptions{LabelSelector: "name=" + name})
 			Expect(err).ToNot(HaveOccurred(), "failed fetching pods")
 
 			// Grab logs of pods
@@ -141,7 +141,7 @@ func checkPodLogs(h *helper.H, namespace string, testNamespace string, name stri
 
 			for _, pod := range pods.Items {
 				logs := h.Kube().CoreV1().Pods(namespace).GetLogs(pod.Name, &podLogOptions)
-				podLogs, err := logs.DoRaw(context.TODO())
+				podLogs, err := logs.DoRaw(ctx)
 				if err != nil {
 					break
 				}
@@ -160,9 +160,9 @@ func checkPodLogs(h *helper.H, namespace string, testNamespace string, name stri
 }
 
 // Delete Namespace
-func deleteNamespace(namespace string, waitForDelete bool, h *helper.H) error {
+func deleteNamespace(ctx context.Context, namespace string, waitForDelete bool, h *helper.H) error {
 	log.Printf("Deleting namespace for namespace validation webhook (%s)", namespace)
-	err := h.Kube().CoreV1().Namespaces().Delete(context.TODO(), namespace, metav1.DeleteOptions{})
+	err := h.Kube().CoreV1().Namespaces().Delete(ctx, namespace, metav1.DeleteOptions{})
 	if err != nil {
 		return fmt.Errorf("failed to delete namespace '%s': %v", namespace, err)
 	}
@@ -170,7 +170,7 @@ func deleteNamespace(namespace string, waitForDelete bool, h *helper.H) error {
 	// Deleting a namespace can take a while. If desired, wait for the namespace to delete before returning.
 	if waitForDelete {
 		err = wait.PollImmediate(2*time.Second, 1*time.Minute, func() (bool, error) {
-			ns, _ := h.Kube().CoreV1().Namespaces().Get(context.TODO(), namespace, metav1.GetOptions{})
+			ns, _ := h.Kube().CoreV1().Namespaces().Get(ctx, namespace, metav1.GetOptions{})
 			if ns != nil && ns.Status.Phase == "Terminating" {
 				return false, nil
 			}

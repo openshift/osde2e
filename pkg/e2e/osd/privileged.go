@@ -46,21 +46,20 @@ var _ = ginkgo.Describe(privilegedTestname, func() {
 		// setup helper
 		h := helper.New()
 
-		util.GinkgoIt("privileged container should not get created", func() {
+		util.GinkgoIt("privileged container should not get created", func(ctx context.Context) {
 			// Set it to a wildcard dedicated-admin
-			h.SetServiceAccount("system:serviceaccount:%s:dedicated-admin-project")
+			h.SetServiceAccount(ctx, "system:serviceaccount:%s:dedicated-admin-project")
 
 			// Test creating a privileged pod and expect a failure
 			pod := makePod("privileged-pod", h.GetNamespacedServiceAccount(), true)
 
-			_, err := h.Kube().CoreV1().Pods(h.CurrentProject()).Create(context.TODO(), &pod, metav1.CreateOptions{})
+			_, err := h.Kube().CoreV1().Pods(h.CurrentProject()).Create(ctx, &pod, metav1.CreateOptions{})
 			Expect(err).To(HaveOccurred())
 
 			// Test creating an unprivileged pod and expect success
 			pod = makePod("unprivileged-pod", h.GetNamespacedServiceAccount(), false)
-			_, err = h.Kube().CoreV1().Pods(h.CurrentProject()).Create(context.TODO(), &pod, metav1.CreateOptions{})
+			_, err = h.Kube().CoreV1().Pods(h.CurrentProject()).Create(ctx, &pod, metav1.CreateOptions{})
 			Expect(err).NotTo(HaveOccurred())
-
 		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
 	})
 })

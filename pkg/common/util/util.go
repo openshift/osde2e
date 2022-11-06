@@ -1,6 +1,7 @@
 package util
 
 import (
+	"context"
 	"math/rand"
 	"strings"
 	"time"
@@ -38,13 +39,13 @@ func SemverToOpenshiftVersion(version *semver.Version) string {
 }
 
 // GinkgoIt wraps the 2.0 Ginkgo It function to allow for additional functionality.
-func GinkgoIt(text string, body func(), timeout ...float64) bool {
+func GinkgoIt(text string, body func(ctx context.Context), timeout ...float64) bool {
 	defer ginkgo.GinkgoRecover()
-	return ginkgo.It(text, func() {
+	return ginkgo.It(text, func(ctx context.Context) {
 		done := make(chan interface{})
 		go func() {
 			defer ginkgo.GinkgoRecover()
-			body()
+			body(ctx)
 			close(done)
 		}()
 		duration := time.Duration(5) * time.Second
