@@ -23,11 +23,11 @@ var _ = ginkgo.Describe(nodeLabelsTestName, func() {
 	ginkgo.Context("Modifying nodeLabels is not allowed", func() {
 		// setup helper
 		h := helper.New()
-		util.GinkgoIt("node-label cannot be added", func() {
+		util.GinkgoIt("node-label cannot be added", func(ctx context.Context) {
 			// Set it to a wildcard dedicated-admin
-			h.SetServiceAccount("system:serviceaccount:%s:dedicated-admin-cluster")
+			h.SetServiceAccount(ctx, "system:serviceaccount:%s:dedicated-admin-cluster")
 
-			nodes, err := h.Kube().CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{})
+			nodes, err := h.Kube().CoreV1().Nodes().List(ctx, metav1.ListOptions{})
 			Expect(err).NotTo(HaveOccurred())
 			Expect(len(nodes.Items)).Should(BeNumerically(">", 0))
 
@@ -35,7 +35,7 @@ var _ = ginkgo.Describe(nodeLabelsTestName, func() {
 
 			node.Labels["osde2e"] = "touched by osde2e"
 
-			_, err = h.Kube().CoreV1().Nodes().Update(context.TODO(), &node, metav1.UpdateOptions{})
+			_, err = h.Kube().CoreV1().Nodes().Update(ctx, &node, metav1.UpdateOptions{})
 			Expect(err).To(HaveOccurred())
 		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
 	})

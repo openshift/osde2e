@@ -24,17 +24,17 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 
+	cloudcredentialv1 "github.com/openshift/cloud-credential-operator/pkg/apis/cloudcredential/v1"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/util"
-	cloudcredentialv1 "github.com/openshift/cloud-credential-operator/pkg/apis/cloudcredential/v1"
 )
 
 func init() {
@@ -92,6 +92,8 @@ func (h *H) Setup() error {
 
 	defer ginkgo.GinkgoRecover()
 
+	ctx := context.TODO()
+
 	h.restConfig, err = clientcmd.RESTConfigFromKubeConfig([]byte(viper.GetString(config.Kubeconfig.Contents)))
 	if h.OutsideGinkgo && err != nil {
 		return fmt.Errorf("error generating restconfig: %s", err.Error())
@@ -110,20 +112,20 @@ func (h *H) Setup() error {
 		viper.Set(config.Project, project)
 		log.Printf("Setup called for %s", project)
 
-		h.proj, err = h.createProject(suffix)
+		h.proj, err = h.createProject(ctx, suffix)
 		if h.OutsideGinkgo && err != nil {
 			return fmt.Errorf("failed to create project: %s", err.Error())
 		}
 		Expect(err).ShouldNot(HaveOccurred(), "failed to create project")
 		Expect(h.proj).ShouldNot(BeNil())
 
-		h.CreateServiceAccounts()
+		h.CreateServiceAccounts(ctx)
 		// We need a cool down period for RBAC operators to sync permissions
 		time.Sleep(60 * time.Second)
 
 	} else {
 		log.Printf("Setting project name to %s", project)
-		h.proj, err = h.Project().ProjectV1().Projects().Get(context.TODO(), project, metav1.GetOptions{})
+		h.proj, err = h.Project().ProjectV1().Projects().Get(ctx, project, metav1.GetOptions{})
 		if h.OutsideGinkgo && err != nil {
 			return fmt.Errorf("error retrieving project: %s", err.Error())
 		}
@@ -132,14 +134,14 @@ func (h *H) Setup() error {
 	}
 
 	// Set the default service account for future helper-method-calls
-	h.SetServiceAccount(viper.GetString(config.Tests.ServiceAccount))
+	h.SetServiceAccount(ctx, viper.GetString(config.Tests.ServiceAccount))
 
 	return nil
 
 }
 
 // Cleanup deletes a Project after tests have been ran.
-func (h *H) Cleanup() {
+func (h *H) Cleanup(ctx context.Context) {
 	var err error
 
 	h.restConfig, err = clientcmd.RESTConfigFromKubeConfig([]byte(viper.GetString(config.Kubeconfig.Contents)))
@@ -149,19 +151,19 @@ func (h *H) Cleanup() {
 	}
 
 	// Set the SA back to the default. This is required for cleanup in case other helper calls switched SAs
-	h.SetServiceAccount(viper.GetString(config.Tests.ServiceAccount))
-	projects, err := h.Project().ProjectV1().Projects().List(context.TODO(), metav1.ListOptions{})
+	h.SetServiceAccount(ctx, viper.GetString(config.Tests.ServiceAccount))
+	projects, err := h.Project().ProjectV1().Projects().List(ctx, metav1.ListOptions{})
 	if err != nil {
 		log.Printf("Error listing existing projects in Cleanup(): %s", err.Error())
 	}
 	for _, project := range projects.Items {
 		if h.proj.Name == project.Name {
 			log.Printf("Deleting project `%s`", project.Name)
-			err = h.Project().ProjectV1().Projects().Delete(context.TODO(), project.Name, metav1.DeleteOptions{})
+			err = h.Project().ProjectV1().Projects().Delete(ctx, project.Name, metav1.DeleteOptions{})
 			if err != nil {
 				log.Printf("Error deleting project `%s` in Cleanup(): %s", project.Name, err.Error())
 			}
-			err = h.Kube().CoreV1().ServiceAccounts("dedicated-admin").Delete(context.TODO(), project.Name, metav1.DeleteOptions{})
+			err = h.Kube().CoreV1().ServiceAccounts("dedicated-admin").Delete(ctx, project.Name, metav1.DeleteOptions{})
 			if err != nil {
 				log.Printf("Error deleting dedicated-admin serviceaccount for '%s': %v", project.Name, err)
 			}
@@ -173,37 +175,37 @@ func (h *H) Cleanup() {
 }
 
 // CreateServiceAccounts creates a set of serviceaccounts for test usage
-func (h *H) CreateServiceAccounts() *H {
+func (h *H) CreateServiceAccounts(ctx context.Context) *H {
 	Expect(h.proj).NotTo(BeNil(), "no project is currently set")
 
 	// Create project-specific dedicated-admin account
-	sa, err := h.Kube().CoreV1().ServiceAccounts(h.CurrentProject()).Create(context.TODO(), &corev1.ServiceAccount{
+	sa, err := h.Kube().CoreV1().ServiceAccounts(h.CurrentProject()).Create(ctx, &corev1.ServiceAccount{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "dedicated-admin-project",
 		},
 	}, metav1.CreateOptions{})
 	Expect(err).NotTo(HaveOccurred())
-	h.CreateClusterRoleBinding(sa, "dedicated-admins-project")
+	h.CreateClusterRoleBinding(ctx, sa, "dedicated-admins-project")
 	log.Printf("Created SA: %v", sa.GetName())
 
 	// Create cluster dedicated-admin account
-	sa, err = h.Kube().CoreV1().ServiceAccounts(h.CurrentProject()).Create(context.TODO(), &corev1.ServiceAccount{
+	sa, err = h.Kube().CoreV1().ServiceAccounts(h.CurrentProject()).Create(ctx, &corev1.ServiceAccount{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "dedicated-admin-cluster",
 		},
 	}, metav1.CreateOptions{})
 	Expect(err).NotTo(HaveOccurred())
-	h.CreateClusterRoleBinding(sa, "dedicated-admins-cluster")
+	h.CreateClusterRoleBinding(ctx, sa, "dedicated-admins-cluster")
 	log.Printf("Created SA: %v", sa.GetName())
 
 	// Create cluster-admin account
-	sa, err = h.Kube().CoreV1().ServiceAccounts(h.CurrentProject()).Create(context.TODO(), &corev1.ServiceAccount{
+	sa, err = h.Kube().CoreV1().ServiceAccounts(h.CurrentProject()).Create(ctx, &corev1.ServiceAccount{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "cluster-admin",
 		},
 	}, metav1.CreateOptions{})
 	Expect(err).NotTo(HaveOccurred())
-	h.CreateClusterRoleBinding(sa, "cluster-admin")
+	h.CreateClusterRoleBinding(ctx, sa, "cluster-admin")
 	log.Printf("Created SA: %v", sa.GetName())
 
 	return h
@@ -211,12 +213,12 @@ func (h *H) CreateServiceAccounts() *H {
 
 // CreateClusterRoleBinding takes an sa (presumably created by us) and applies a clusterRole to it
 // The cr is bound to the project and, thus, cleaned up when the project gets removed.
-func (h *H) CreateClusterRoleBinding(sa *corev1.ServiceAccount, clusterRole string) {
+func (h *H) CreateClusterRoleBinding(ctx context.Context, sa *corev1.ServiceAccount, clusterRole string) {
 	gvk := schema.FromAPIVersionAndKind("project.openshift.io/v1", "Project")
 	projRef := *metav1.NewControllerRef(h.proj, gvk)
 
 	// create binding with OwnerReference
-	_, err := h.Kube().RbacV1().ClusterRoleBindings().Create(context.TODO(), &rbacv1.ClusterRoleBinding{
+	_, err := h.Kube().RbacV1().ClusterRoleBindings().Create(ctx, &rbacv1.ClusterRoleBinding{
 		ObjectMeta: metav1.ObjectMeta{
 			GenerateName: "osde2e-test-access-",
 			OwnerReferences: []metav1.OwnerReference{
@@ -240,7 +242,7 @@ func (h *H) CreateClusterRoleBinding(sa *corev1.ServiceAccount, clusterRole stri
 }
 
 // SetServiceAccount sets the serviceAccount you want all helper commands to run as
-func (h *H) SetServiceAccount(sa string) *H {
+func (h *H) SetServiceAccount(ctx context.Context, sa string) *H {
 	if h.restConfig == nil {
 		log.Print("No restconfig found in SetServiceAccount")
 		return nil
@@ -255,7 +257,7 @@ func (h *H) SetServiceAccount(sa string) *H {
 	if h.ServiceAccount != "" {
 		parts := strings.Split(h.ServiceAccount, ":")
 		Expect(len(parts)).Should(Equal(4), "not a valid service account name: %v", h.ServiceAccount)
-		_, err := h.Kube().CoreV1().ServiceAccounts(parts[2]).Get(context.TODO(), parts[3], metav1.GetOptions{})
+		_, err := h.Kube().CoreV1().ServiceAccounts(parts[2]).Get(ctx, parts[3], metav1.GetOptions{})
 		Expect(err).ShouldNot(HaveOccurred(), "could not get sa '%s'", h.ServiceAccount)
 	}
 
@@ -285,10 +287,10 @@ func (h *H) SetProject(proj *projectv1.Project) *H {
 }
 
 // CreateProject returns the project being used for testing.
-func (h *H) CreateProject(name string) {
+func (h *H) CreateProject(ctx context.Context, name string) {
 	var err error
 	defer ginkgo.GinkgoRecover()
-	h.proj, err = h.createProject(name)
+	h.proj, err = h.createProject(ctx, name)
 	Expect(err).To(BeNil(), fmt.Sprintf("error creating project: %s", err))
 }
 
@@ -299,9 +301,9 @@ func (h *H) CurrentProject() string {
 }
 
 // SetProjectByName gets a project by name and sets it for the h.proj attribute
-func (h *H) SetProjectByName(projectName string) (*H, error) {
+func (h *H) SetProjectByName(ctx context.Context, projectName string) (*H, error) {
 	var err error
-	h.proj, err = h.Project().ProjectV1().Projects().Get(context.TODO(), projectName, metav1.GetOptions{})
+	h.proj, err = h.Project().ProjectV1().Projects().Get(ctx, projectName, metav1.GetOptions{})
 	Expect(err).To(BeNil(), "error retrieving project")
 	return h, nil
 }
@@ -363,14 +365,14 @@ func (h *H) GetGCPCreds(ctx context.Context) (*google.Credentials, bool) {
 		Group:    "cloudcredential.openshift.io",
 		Version:  "v1",
 		Resource: "credentialsrequests",
-	}).Namespace(saCredentialReq.GetNamespace()).Create(context.TODO(), &unstructured.Unstructured{Object: credentialReqObj}, metav1.CreateOptions{})
+	}).Namespace(saCredentialReq.GetNamespace()).Create(ctx, &unstructured.Unstructured{Object: credentialReqObj}, metav1.CreateOptions{})
 
 	wait.PollImmediate(15*time.Second, 5*time.Minute, func() (bool, error) {
 		unstructCredentialReq, _ := h.Dynamic().Resource(schema.GroupVersionResource{
 			Group:    "cloudcredential.openshift.io",
 			Version:  "v1",
 			Resource: "credentialsrequests",
-		}).Namespace(h.CurrentProject()).Get(context.TODO(), saCredentialReq.GetName(), metav1.GetOptions{})
+		}).Namespace(h.CurrentProject()).Get(ctx, saCredentialReq.GetName(), metav1.GetOptions{})
 
 		err = runtime.DefaultUnstructuredConverter.FromUnstructured(unstructCredentialReq.UnstructuredContent(), saCredentialReq)
 		if err != nil || !saCredentialReq.Status.Provisioned {
@@ -379,7 +381,7 @@ func (h *H) GetGCPCreds(ctx context.Context) (*google.Credentials, bool) {
 		return true, err
 	})
 
-	saSecret, err := h.Kube().CoreV1().Secrets(saCredentialReq.Spec.SecretRef.Namespace).Get(context.TODO(), saCredentialReq.Spec.SecretRef.Name, metav1.GetOptions{})
+	saSecret, err := h.Kube().CoreV1().Secrets(saCredentialReq.Spec.SecretRef.Namespace).Get(ctx, saCredentialReq.Spec.SecretRef.Name, metav1.GetOptions{})
 	if err != nil {
 		return nil, false
 	}
@@ -415,19 +417,19 @@ func (h *H) ConvertTemplateToString(template *template.Template, data interface{
 }
 
 // InspectState inspects the project used for testing, and saves the state to disk for later debugging
-func (h *H) InspectState() {
+func (h *H) InspectState(ctx context.Context) {
 	var err error
 
 	h.restConfig, err = clientcmd.RESTConfigFromKubeConfig([]byte(viper.GetString(config.Kubeconfig.Contents)))
 	Expect(err).ShouldNot(HaveOccurred(), "failed to configure client")
 
 	// Set the SA back to the default. This is required for inspection in case other helper calls switched SAs
-	h.SetServiceAccount(viper.GetString(config.Tests.ServiceAccount))
+	h.SetServiceAccount(ctx, viper.GetString(config.Tests.ServiceAccount))
 	project := viper.GetString(config.Project)
 
 	if h.proj == nil && project != "" {
 		log.Printf("Setting project name to %s", project)
-		h.proj, err = h.Project().ProjectV1().Projects().Get(context.TODO(), project, metav1.GetOptions{})
+		h.proj, err = h.Project().ProjectV1().Projects().Get(ctx, project, metav1.GetOptions{})
 		Expect(err).ShouldNot(HaveOccurred(), "failed to retrieve project")
 		Expect(h.proj).ShouldNot(BeNil())
 	}
@@ -441,15 +443,15 @@ func (h *H) InspectState() {
 		inspectProjects = append(inspectProjects, strings.Split(projectsToInspectStr, ",")...)
 	}
 
-	err = h.inspect(inspectProjects)
+	err = h.inspect(ctx, inspectProjects)
 	Expect(err).ShouldNot(HaveOccurred(), "could not inspect project '%s'", h.proj)
 }
 
 // GetClusterVersion returns the Cluster Version object
-func (h *H) GetClusterVersion() (*configv1.ClusterVersion, error) {
+func (h *H) GetClusterVersion(ctx context.Context) (*configv1.ClusterVersion, error) {
 	cfgClient := h.Cfg()
 	getOpts := metav1.GetOptions{}
-	clusterVersionObj, err := cfgClient.ConfigV1().ClusterVersions().Get(context.TODO(), "version", getOpts)
+	clusterVersionObj, err := cfgClient.ConfigV1().ClusterVersions().Get(ctx, "version", getOpts)
 	if err != nil {
 		return nil, fmt.Errorf("couldn't get current ClusterVersion '%s': %v", "version", err)
 	}

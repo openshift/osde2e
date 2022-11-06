@@ -2,11 +2,10 @@ package cloudingress
 
 import (
 	"context"
+	"net"
 	"reflect"
 	"strings"
 	"time"
-
-	"net"
 
 	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -38,20 +37,18 @@ var _ = ginkgo.Describe(constants.SuiteOperators+TestPrefix, func() {
 
 	testHostnameResolves(h)
 	testCIDRBlockUpdates(h)
-
 })
 
-//testHostnameResolves Confirms hostname on the cluster resolves
+// testHostnameResolves Confirms hostname on the cluster resolves
 func testHostnameResolves(h *helper.H) {
 	var err error
 
 	hostnameResolvePollDuration := 15 * time.Minute
 	ginkgo.Context("rh-api-test", func() {
-		util.GinkgoIt("hostname should resolve", func() {
+		util.GinkgoIt("hostname should resolve", func(ctx context.Context) {
 			wait.PollImmediate(30*time.Second, hostnameResolvePollDuration, func() (bool, error) {
-
 				getOpts := metav1.GetOptions{}
-				apiserver, err := h.Cfg().ConfigV1().APIServers().Get(context.TODO(), "cluster", getOpts)
+				apiserver, err := h.Cfg().ConfigV1().APIServers().Get(ctx, "cluster", getOpts)
 				if err != nil {
 					return false, err
 				}
@@ -60,7 +57,6 @@ func testHostnameResolves(h *helper.H) {
 				}
 
 				for _, namedCert := range apiserver.Spec.ServingCerts.NamedCertificates {
-
 					for _, name := range namedCert.Names {
 						if strings.HasPrefix("rh-api", name) {
 							_, err := net.LookupHost(name)
@@ -77,60 +73,61 @@ func testHostnameResolves(h *helper.H) {
 	})
 }
 
-//testCIDRBlockUpdates compares the CIRDBlock on the related apischeme and the service
-//after an update to make sure changes to the apischem
+// testCIDRBlockUpdates compares the CIRDBlock on the related apischeme and the service
+// after an update to make sure changes to the apischem
 func testCIDRBlockUpdates(h *helper.H) {
 	ginkgo.Context("rh-api-test", func() {
-		util.GinkgoIt("cidr block changes should updated the service", func() {
-
-			//Create APISScheme Object
+		util.GinkgoIt("cidr block changes should updated the service", func(ctx context.Context) {
+			// Create APISScheme Object
 			var APISchemeInstance cloudingressv1alpha1.APIScheme
 
-			//Get the APIScheme
+			// Get the APIScheme
 			APISchemeRawData, err := h.Dynamic().Resource(schema.GroupVersionResource{
 				Group: "cloudingress.managed.openshift.io", Version: "v1alpha1", Resource: "apischemes",
-			}).Namespace(OperatorNamespace).Get(context.TODO(), apiSchemeResourceName, metav1.GetOptions{})
+			}).Namespace(OperatorNamespace).Get(ctx, apiSchemeResourceName, metav1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred())
 
-			//structure the APIScheme unstructured data into a APIScheme object
+			// structure the APIScheme unstructured data into a APIScheme object
 			err = runtime.DefaultUnstructuredConverter.FromUnstructured(APISchemeRawData.Object, &APISchemeInstance)
 			Expect(err).NotTo(HaveOccurred())
 
-			//Extract the CIDRblock into its own var for ease of use and readability
+			// Extract the CIDRblock into its own var for ease of use and readability
 			CIDRBlock := APISchemeInstance.Spec.ManagementAPIServerIngress.AllowedCIDRBlocks
 
-			//remove last IP from the CIDRBlock:
+			// remove last IP from the CIDRBlock:
 			CIDRBlock[len(CIDRBlock)-1] = ""         // Erase last element (write zero value)
 			CIDRBlock = CIDRBlock[:len(CIDRBlock)-1] // Truncate slice
 
-			//Put the new CIRDBlock ranges into the APIScheme
+			// Put the new CIRDBlock ranges into the APIScheme
 			APISchemeInstance.Spec.ManagementAPIServerIngress.AllowedCIDRBlocks = CIDRBlock
 
-			//Unstructure the Data in order to be usable for the update of the CR
+			// Unstructure the Data in order to be usable for the update of the CR
 			APISchemeRawData.Object, err = runtime.DefaultUnstructuredConverter.ToUnstructured(&APISchemeInstance)
 			Expect(err).NotTo(HaveOccurred())
 
 			// //Update the APIScheme
 			APISchemeRawData, err = h.Dynamic().Resource(schema.GroupVersionResource{
 				Group: "cloudingress.managed.openshift.io", Version: "v1alpha1", Resource: "apischemes",
-			}).Namespace(OperatorNamespace).Update(context.TODO(), APISchemeRawData, metav1.UpdateOptions{})
+			}).Namespace(OperatorNamespace).Update(ctx, APISchemeRawData, metav1.UpdateOptions{})
 			Expect(err).NotTo(HaveOccurred())
 
-			//Create a service Object
+			// Create a service Object
 			var rhAPIService *corev1.Service
 
 			// wait 30 secs for apiserver to reconcile
 			time.Sleep(30 * time.Second)
 
-			//Extract the LoadBalancerSourceRanges from the service
-			rhAPIService, err = h.Kube().CoreV1().Services("openshift-kube-apiserver").Get(context.TODO(), apiSchemeResourceName, metav1.GetOptions{})
+			// Extract the LoadBalancerSourceRanges from the service
+			rhAPIService, err = h.Kube().
+				CoreV1().
+				Services("openshift-kube-apiserver").
+				Get(ctx, apiSchemeResourceName, metav1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred())
 
-			//Make sure both the New CIDRBlock and the Service LoadBalancerSourceRanges are equal
-			//If they are then the APIScheme update also updated the service.
+			// Make sure both the New CIDRBlock and the Service LoadBalancerSourceRanges are equal
+			// If they are then the APIScheme update also updated the service.
 			res := reflect.DeepEqual(CIDRBlock, rhAPIService.Spec.LoadBalancerSourceRanges)
 			Expect(res).Should(BeTrue())
-
 		}, viper.GetFloat64(config.Tests.PollingTimeout))
 	})
 }

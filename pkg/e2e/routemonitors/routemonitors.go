@@ -48,18 +48,18 @@ type RouteMonData struct {
 }
 
 // Detects the available routes in the cluster and initializes monitors for their availability
-func Create() (*RouteMonitors, error) {
+func Create(ctx context.Context) (*RouteMonitors, error) {
 	h := helper.NewOutsideGinkgo()
 
 	if h == nil {
-		return nil, fmt.Errorf("Unable to generate helper outside ginkgo")
+		return nil, fmt.Errorf("unable to generate helper outside ginkgo")
 	}
 
 	// record all targeters created in a map, accessible via a key which is their URL
 	targeters := make(map[string]vegeta.Targeter, 0)
 
 	// Create a monitor for the web console
-	consoleRoute, err := h.Route().RouteV1().Routes(consoleNamespace).Get(context.TODO(), consoleLabel, metav1.GetOptions{})
+	consoleRoute, err := h.Route().RouteV1().Routes(consoleNamespace).Get(ctx, consoleLabel, metav1.GetOptions{})
 	if err != nil {
 		return nil, fmt.Errorf("could not retrieve console route %s", consoleLabel)
 	}
@@ -74,7 +74,7 @@ func Create() (*RouteMonitors, error) {
 	}
 
 	// Create a monitor for the oauth URL
-	oauthRoute, err := h.Route().RouteV1().Routes(oauthNamespace).Get(context.TODO(), oauthName, metav1.GetOptions{})
+	oauthRoute, err := h.Route().RouteV1().Routes(oauthNamespace).Get(ctx, oauthName, metav1.GetOptions{})
 	if err != nil {
 		return nil, fmt.Errorf("could not retrieve oauth route %s", oauthName)
 	}
@@ -89,7 +89,7 @@ func Create() (*RouteMonitors, error) {
 	}
 
 	// Create monitors for API Server URLs
-	apiservers, err := h.Cfg().ConfigV1().APIServers().List(context.TODO(), metav1.ListOptions{})
+	apiservers, err := h.Cfg().ConfigV1().APIServers().List(ctx, metav1.ListOptions{})
 	if err != nil {
 		return nil, fmt.Errorf("could not retrieve list of API servers")
 	}
@@ -110,7 +110,7 @@ func Create() (*RouteMonitors, error) {
 	}
 
 	// If we created any routes during workload testing, let's add them too
-	workloadRoutes, err := h.Route().RouteV1().Routes(h.CurrentProject()).List(context.TODO(), metav1.ListOptions{})
+	workloadRoutes, err := h.Route().RouteV1().Routes(h.CurrentProject()).List(ctx, metav1.ListOptions{})
 	if err != nil {
 		return nil, fmt.Errorf("could not retrieve list of workload routes")
 	}
@@ -127,7 +127,7 @@ func Create() (*RouteMonitors, error) {
 	}
 
 	// Create monitors for each route existing in openshift-monitoring
-	monitoringRoutes, err := h.Route().RouteV1().Routes(monitoringNamespace).List(context.TODO(), metav1.ListOptions{})
+	monitoringRoutes, err := h.Route().RouteV1().Routes(monitoringNamespace).List(ctx, metav1.ListOptions{})
 	if err != nil {
 		return nil, fmt.Errorf("could not retrieve list of workload routes")
 	}

@@ -2,6 +2,7 @@ package osd
 
 import (
 	"context"
+
 	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
@@ -20,14 +21,24 @@ const (
 var machineHealthTestName string = "[Suite: e2e] MachineHealthChecks"
 
 func init() {
-	alert.RegisterGinkgoAlert(machineHealthTestName, "SD-SRE", "Alex Chvatal", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+	alert.RegisterGinkgoAlert(
+		machineHealthTestName,
+		"SD-SRE",
+		"Alex Chvatal",
+		"sd-cicd-alerts",
+		"sd-cicd@redhat.com",
+		4,
+	)
 }
 
 var _ = ginkgo.Describe(machineHealthTestName, func() {
 	h := helper.New()
 
-	util.GinkgoIt("infra MHC should exist", func() {
-		mhc, err := h.Machine().MachineV1beta1().MachineHealthChecks(machineAPINamespace).Get(context.TODO(), "srep-infra-healthcheck", metav1.GetOptions{})
+	util.GinkgoIt("infra MHC should exist", func(ctx context.Context) {
+		mhc, err := h.Machine().
+			MachineV1beta1().
+			MachineHealthChecks(machineAPINamespace).
+			Get(ctx, "srep-infra-healthcheck", metav1.GetOptions{})
 		Expect(err).NotTo(HaveOccurred())
 
 		// verify there's an MHC for infra nodes
@@ -58,8 +69,11 @@ var _ = ginkgo.Describe(machineHealthTestName, func() {
 		))
 	}, float64(500))
 
-	util.GinkgoIt("worker MHC should exist", func() {
-		mhc, err := h.Machine().MachineV1beta1().MachineHealthChecks(machineAPINamespace).Get(context.TODO(), "srep-worker-healthcheck", metav1.GetOptions{})
+	util.GinkgoIt("worker MHC should exist", func(ctx context.Context) {
+		mhc, err := h.Machine().
+			MachineV1beta1().
+			MachineHealthChecks(machineAPINamespace).
+			Get(ctx, "srep-worker-healthcheck", metav1.GetOptions{})
 		Expect(err).NotTo(HaveOccurred())
 
 		// verify there's an MHC for worker nodes

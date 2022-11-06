@@ -28,51 +28,47 @@ var _ = ginkgo.Describe(constants.SuiteOperators+TestPrefix, func() {
 	})
 	h := helper.New()
 	ginkgo.Context("apischeme", func() {
-		util.GinkgoIt("apischemes CR instance must be present on cluster", func() {
-
+		util.GinkgoIt("apischemes CR instance must be present on cluster", func(ctx context.Context) {
 			err := wait.PollImmediate(2*time.Second, 2*time.Minute, func() (bool, error) {
 				if _, err := h.Dynamic().Resource(schema.GroupVersionResource{
 					Group: "cloudingress.managed.openshift.io", Version: "v1alpha1", Resource: "apischemes",
-				}).Namespace(OperatorNamespace).Get(context.TODO(), apiSchemeResourceName, metav1.GetOptions{}); err != nil {
+				}).Namespace(OperatorNamespace).Get(ctx, apiSchemeResourceName, metav1.GetOptions{}); err != nil {
 					return false, nil
 				}
 				return true, nil
 			})
 			Expect(err).NotTo(HaveOccurred())
-
 		})
 
-		util.GinkgoIt("dedicated admin should not be allowed to manage apischemes CR", func() {
+		util.GinkgoIt("dedicated admin should not be allowed to manage apischemes CR", func(ctx context.Context) {
 			user := "test-user"
 			impersonateDedicatedAdmin(h, user)
 
 			defer func() {
-				apiSchemeCleanup(h, "apischeme-osde2e-test")
+				apiSchemeCleanup(ctx, h, "apischeme-osde2e-test")
 			}()
 			defer func() {
 				h.Impersonate(rest.ImpersonationConfig{})
 			}()
 
 			as := createApischeme("apischeme-osde2e-test")
-			err := addApischeme(h, as)
+			err := addApischeme(ctx, h, as)
 			Expect(apierrors.IsForbidden(err)).To(BeTrue())
 
 			_, err = h.Dynamic().Resource(schema.GroupVersionResource{
 				Group: "cloudingress.managed.openshift.io", Version: "v1alpha1", Resource: "apischemes",
-			}).Namespace(OperatorNamespace).Get(context.TODO(), "apischeme-osde2e-test", metav1.GetOptions{})
+			}).Namespace(OperatorNamespace).Get(ctx, "apischeme-osde2e-test", metav1.GetOptions{})
 			Expect(apierrors.IsNotFound(err)).To(BeTrue())
-
 		})
 
-		util.GinkgoIt("cluster admin should be allowed to manage apischemes CR", func() {
+		util.GinkgoIt("cluster admin should be allowed to manage apischemes CR", func(ctx context.Context) {
 			as := createApischeme("apischeme-cr-test")
-			defer apiSchemeCleanup(h, "apischeme-cr-test")
-			err := addApischeme(h, as)
+			defer apiSchemeCleanup(ctx, h, "apischeme-cr-test")
+			err := addApischeme(ctx, h, as)
 			Expect(err).NotTo(HaveOccurred())
 
 		})
 	})
-
 })
 
 func createApischeme(name string) cloudingress.APIScheme {
@@ -95,7 +91,7 @@ func createApischeme(name string) cloudingress.APIScheme {
 	return apischeme
 }
 
-func addApischeme(h *helper.H, apischeme cloudingress.APIScheme) error {
+func addApischeme(ctx context.Context, h *helper.H, apischeme cloudingress.APIScheme) error {
 	obj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(apischeme.DeepCopy())
 	if err != nil {
 		return err
@@ -103,14 +99,14 @@ func addApischeme(h *helper.H, apischeme cloudingress.APIScheme) error {
 	unstructuredObj := unstructured.Unstructured{obj}
 	_, err = h.Dynamic().Resource(schema.GroupVersionResource{
 		Group: "cloudingress.managed.openshift.io", Version: "v1alpha1", Resource: "apischemes",
-	}).Namespace(OperatorNamespace).Create(context.TODO(), &unstructuredObj, metav1.CreateOptions{})
+	}).Namespace(OperatorNamespace).Create(ctx, &unstructuredObj, metav1.CreateOptions{})
 	return err
 }
 
-func apiSchemeCleanup(h *helper.H, apiSchemeName string) error {
+func apiSchemeCleanup(ctx context.Context, h *helper.H, apiSchemeName string) error {
 	return h.Dynamic().Resource(schema.GroupVersionResource{
 		Group: "cloudingress.managed.openshift.io", Version: "v1alpha1", Resource: "apischemes",
-	}).Namespace(OperatorNamespace).Delete(context.TODO(), apiSchemeName, metav1.DeleteOptions{})
+	}).Namespace(OperatorNamespace).Delete(ctx, apiSchemeName, metav1.DeleteOptions{})
 }
 
 func impersonateDedicatedAdmin(h *helper.H, user string) *helper.H {

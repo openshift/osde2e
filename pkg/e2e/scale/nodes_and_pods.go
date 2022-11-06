@@ -1,6 +1,7 @@
 package scale
 
 import (
+	"context"
 	"strconv"
 
 	"github.com/onsi/ginkgo/v2"
@@ -27,8 +28,8 @@ var _ = ginkgo.Describe(nodesPodsTestName, func() {
 	h := helper.New()
 
 	nodeVerticalTimeoutInSeconds := 3600
-	util.GinkgoIt("should be tested with NodeVertical", func() {
-		h.SetServiceAccount("system:serviceaccount:%s:cluster-admin")
+	util.GinkgoIt("should be tested with NodeVertical", func(ctx context.Context) {
+		h.SetServiceAccount(ctx, "system:serviceaccount:%s:cluster-admin")
 		// setup runner
 		scaleCfg := scaleRunnerConfig{
 			Name:         "node-vertical",
@@ -54,8 +55,8 @@ var _ = ginkgo.Describe(nodesPodsTestName, func() {
 	}, float64(nodeVerticalTimeoutInSeconds))
 
 	podVerticalTimeoutInSeconds := 3600
-	util.GinkgoIt("should be tested with PodVertical", func() {
-		h.SetServiceAccount("system:serviceaccount:%s:cluster-admin")
+	util.GinkgoIt("should be tested with PodVertical", func(ctx context.Context) {
+		h.SetServiceAccount(ctx, "system:serviceaccount:%s:cluster-admin")
 		// setup runner
 		scaleCfg := scaleRunnerConfig{
 			Name:         "pod-vertical",

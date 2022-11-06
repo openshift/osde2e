@@ -2,6 +2,8 @@
 package openshift
 
 import (
+	"context"
+
 	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
@@ -39,9 +41,9 @@ var _ = ginkgo.Describe(conformanceK8sTestName, func() {
 	h := helper.New()
 
 	e2eTimeoutInSeconds := 7200
-	util.GinkgoIt("should run until completion", func() {
+	util.GinkgoIt("should run until completion", func(ctx context.Context) {
 		// configure tests
-		h.SetServiceAccount("system:serviceaccount:%s:cluster-admin")
+		h.SetServiceAccount(ctx, "system:serviceaccount:%s:cluster-admin")
 
 		cfg := DefaultE2EConfig
 		cmd := cfg.Cmd()
@@ -74,8 +76,8 @@ var _ = ginkgo.Describe(conformanceOpenshiftTestName, func() {
 	h := helper.New()
 
 	e2eTimeoutInSeconds := 7200
-	util.GinkgoIt("should run until completion", func() {
-		h.SetServiceAccount("system:serviceaccount:%s:cluster-admin")
+	util.GinkgoIt("should run until completion", func(ctx context.Context) {
+		h.SetServiceAccount(ctx, "system:serviceaccount:%s:cluster-admin")
 		// configure tests
 		cfg := DefaultE2EConfig
 		cfg.Suite = "openshift/conformance/parallel suite"

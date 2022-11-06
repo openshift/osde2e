@@ -3,9 +3,7 @@ package cloudingress
 import (
 	"context"
 	"fmt"
-
 	"strings"
-
 	"time"
 
 	"github.com/onsi/ginkgo/v2"
@@ -32,17 +30,15 @@ var _ = ginkgo.Describe(constants.SuiteInforming+TestPrefix, func() {
 
 	h := helper.New()
 	ginkgo.Context("secondary router", func() {
-
 		// How long to wait for resources to be created
 		pollingDuration := 2 * time.Minute
 
-		util.GinkgoIt("should be created when added to publishingstrategy ", func() {
+		util.GinkgoIt("should be created when added to publishingstrategy ", func(ctx context.Context) {
+			secondaryIngress := secondaryIngress(ctx, h)
 
-			secondaryIngress := secondaryIngress(h)
-
-			//only create the secondary ingress if it doesn't exist already in the publishing strategy
-			if _, exists, _ := appIngressExits(h, false, secondaryIngress.DNSName); !exists {
-				addAppIngress(h, secondaryIngress)
+			// only create the secondary ingress if it doesn't exist already in the publishing strategy
+			if _, exists, _ := appIngressExits(ctx, h, false, secondaryIngress.DNSName); !exists {
+				addAppIngress(ctx, h, secondaryIngress)
 				// wait 2 minute for all resources to be created
 				time.Sleep(pollingDuration)
 			}
@@ -52,42 +48,46 @@ var _ = ginkgo.Describe(constants.SuiteInforming+TestPrefix, func() {
 			ingressControllerName := strings.Split(secondaryIngress.DNSName, ".")[0]
 
 			// check that the ingresscontroller app-e2e-apps was created
-			ingressControllerExists(h, ingressControllerName, true)
+			ingressControllerExists(ctx, h, ingressControllerName, true)
 
 			// check if the secondary router is created
 			// the created router name should be router-app-e2e-apps
 			deploymentName := "router-" + ingressControllerName
-			deployment, err := operators.PollDeployment(h, "openshift-ingress", deploymentName)
-			ingress, _ := getingressController(h, ingressControllerName)
+			deployment, err := operators.PollDeployment(ctx, h, "openshift-ingress", deploymentName)
+			ingress, _ := getingressController(ctx, h, ingressControllerName)
 
 			Expect(ingress.Annotations["Owner"]).To(Equal("cloud-ingress-operator"))
 			Expect(err).ToNot(HaveOccurred(), "failed fetching deployment")
 			Expect(deployment).NotTo(BeNil(), "deployment is nil")
 			Expect(deployment.Status.ReadyReplicas).To(BeNumerically("==", deployment.Status.Replicas))
-		}, pollingDuration.Seconds() + viper.GetFloat64(config.Tests.PollingTimeout))
+		}, pollingDuration.Seconds()+viper.GetFloat64(config.Tests.PollingTimeout))
 
-		util.GinkgoIt("should be deleted when removed from publishingstrategy", func() {
-			secondaryIngress := secondaryIngress(h)
+		util.GinkgoIt("should be deleted when removed from publishingstrategy", func(ctx context.Context) {
+			secondaryIngress := secondaryIngress(ctx, h)
 
-			_, exists, index := appIngressExits(h, false, secondaryIngress.DNSName)
+			_, exists, index := appIngressExits(ctx, h, false, secondaryIngress.DNSName)
 			// only remove the secondary ingress if it already exist in the publishing strategy
 			if exists {
-				removeAppIngress(h, index)
+				removeAppIngress(ctx, h, index)
 				// wait 2 minute for all resources to be deleted
 				time.Sleep(pollingDuration)
 			}
 			Expect(len(strings.Split(secondaryIngress.DNSName, "."))).To(BeNumerically(">", 1))
 			ingressControllerName := strings.Split(secondaryIngress.DNSName, ".")[1]
 			// check that the ingresscontroller app-e2e-apps was deleted
-			ingressControllerExists(h, ingressControllerName, false)
-		}, pollingDuration.Seconds() + viper.GetFloat64(config.Tests.PollingTimeout))
+			ingressControllerExists(ctx, h, ingressControllerName, false)
+		}, pollingDuration.Seconds()+viper.GetFloat64(config.Tests.PollingTimeout))
 	})
 })
 
 // appIngressExits returns the appIngress matching the criteria if it exists
-func appIngressExits(h *helper.H, isdefault bool, dnsname string) (appIngress cloudingressv1alpha1.ApplicationIngress, exists bool, index int) {
-
-	PublishingStrategyInstance, _ := getPublishingStrategy(h)
+func appIngressExits(
+	ctx context.Context,
+	h *helper.H,
+	isdefault bool,
+	dnsname string,
+) (appIngress cloudingressv1alpha1.ApplicationIngress, exists bool, index int) {
+	PublishingStrategyInstance, _ := getPublishingStrategy(ctx, h)
 
 	// Grab the current list of Application Ingresses from the Publishing Strategy
 	AppIngressList := PublishingStrategyInstance.Spec.ApplicationIngress
@@ -106,9 +106,9 @@ func appIngressExits(h *helper.H, isdefault bool, dnsname string) (appIngress cl
 
 // secondaryIngress builds the secondary applicationIngress which is used in above tests
 // by tweaking the default applicationIngress
-func secondaryIngress(h *helper.H) cloudingressv1alpha1.ApplicationIngress {
+func secondaryIngress(ctx context.Context, h *helper.H) cloudingressv1alpha1.ApplicationIngress {
 	// first get the default ingresscontroller
-	secondaryIngress, exists, _ := appIngressExits(h, true, "")
+	secondaryIngress, exists, _ := appIngressExits(ctx, h, true, "")
 	Expect(exists).To(BeTrue())
 
 	// then update it to create a secondary ingress
@@ -119,11 +119,17 @@ func secondaryIngress(h *helper.H) cloudingressv1alpha1.ApplicationIngress {
 }
 
 // getPublishingStrategy returns publishing strategies
-func getPublishingStrategy(h *helper.H) (cloudingressv1alpha1.PublishingStrategy, *unstructured.Unstructured) {
+func getPublishingStrategy(
+	ctx context.Context,
+	h *helper.H,
+) (cloudingressv1alpha1.PublishingStrategy, *unstructured.Unstructured) {
 	var PublishingStrategyInstance cloudingressv1alpha1.PublishingStrategy
 
 	// Check that the PublishingStrategy CR is present
-	ps, err := h.Dynamic().Resource(schema.GroupVersionResource{Group: "cloudingress.managed.openshift.io", Version: "v1alpha1", Resource: "publishingstrategies"}).Namespace(OperatorNamespace).Get(context.TODO(), "publishingstrategy", metav1.GetOptions{})
+	ps, err := h.Dynamic().
+		Resource(schema.GroupVersionResource{Group: "cloudingress.managed.openshift.io", Version: "v1alpha1", Resource: "publishingstrategies"}).
+		Namespace(OperatorNamespace).
+		Get(ctx, "publishingstrategy", metav1.GetOptions{})
 	Expect(err).NotTo(HaveOccurred())
 
 	err = runtime.DefaultUnstructuredConverter.FromUnstructured(ps.Object, &PublishingStrategyInstance)
@@ -133,25 +139,31 @@ func getPublishingStrategy(h *helper.H) (cloudingressv1alpha1.PublishingStrategy
 }
 
 // addAppIngress  adds an application ingress to the default publishing strategy 's ApplicationIngressList
-func addAppIngress(h *helper.H, appIngressToAppend cloudingressv1alpha1.ApplicationIngress) {
+func addAppIngress(ctx context.Context, h *helper.H, appIngressToAppend cloudingressv1alpha1.ApplicationIngress) {
 	var err error
 
-	PublishingStrategyInstance, ps := getPublishingStrategy(h)
-	PublishingStrategyInstance.Spec.ApplicationIngress = append(PublishingStrategyInstance.Spec.ApplicationIngress, appIngressToAppend)
+	PublishingStrategyInstance, ps := getPublishingStrategy(ctx, h)
+	PublishingStrategyInstance.Spec.ApplicationIngress = append(
+		PublishingStrategyInstance.Spec.ApplicationIngress,
+		appIngressToAppend,
+	)
 
 	ps.Object, err = runtime.DefaultUnstructuredConverter.ToUnstructured(&PublishingStrategyInstance)
 	Expect(err).NotTo(HaveOccurred())
 
 	// Update the publishingstrategy
-	ps, err = h.Dynamic().Resource(schema.GroupVersionResource{Group: "cloudingress.managed.openshift.io", Version: "v1alpha1", Resource: "publishingstrategies"}).Namespace(OperatorNamespace).Update(context.TODO(), ps, metav1.UpdateOptions{})
+	ps, err = h.Dynamic().
+		Resource(schema.GroupVersionResource{Group: "cloudingress.managed.openshift.io", Version: "v1alpha1", Resource: "publishingstrategies"}).
+		Namespace(OperatorNamespace).
+		Update(ctx, ps, metav1.UpdateOptions{})
 	Expect(err).NotTo(HaveOccurred())
 }
 
 // removeAppIngress removes the application ingress at index `index` from the publishing strategy's ApplicationIngressList
-func removeAppIngress(h *helper.H, index int) {
+func removeAppIngress(ctx context.Context, h *helper.H, index int) {
 	var err error
 
-	PublishingStrategyInstance, ps := getPublishingStrategy(h)
+	PublishingStrategyInstance, ps := getPublishingStrategy(ctx, h)
 
 	// remove application ingress at index `index`
 	appIngressList := PublishingStrategyInstance.Spec.ApplicationIngress
@@ -161,13 +173,19 @@ func removeAppIngress(h *helper.H, index int) {
 	Expect(err).NotTo(HaveOccurred())
 
 	// Update the publishingstrategy
-	ps, err = h.Dynamic().Resource(schema.GroupVersionResource{Group: "cloudingress.managed.openshift.io", Version: "v1alpha1", Resource: "publishingstrategies"}).Namespace(OperatorNamespace).Update(context.TODO(), ps, metav1.UpdateOptions{})
+	ps, err = h.Dynamic().
+		Resource(schema.GroupVersionResource{Group: "cloudingress.managed.openshift.io", Version: "v1alpha1", Resource: "publishingstrategies"}).
+		Namespace(OperatorNamespace).
+		Update(ctx, ps, metav1.UpdateOptions{})
 	Expect(err).NotTo(HaveOccurred())
 }
 
 // ingressControllerExists checks if an Ingress controller was created or deleted
-func ingressControllerExists(h *helper.H, ingressControllerName string, shouldexist bool) {
-	_, err := h.Dynamic().Resource(schema.GroupVersionResource{Group: "operator.openshift.io", Version: "v1", Resource: "ingresscontrollers"}).Namespace("openshift-ingress-operator").Get(context.TODO(), ingressControllerName, metav1.GetOptions{})
+func ingressControllerExists(ctx context.Context, h *helper.H, ingressControllerName string, shouldexist bool) {
+	_, err := h.Dynamic().
+		Resource(schema.GroupVersionResource{Group: "operator.openshift.io", Version: "v1", Resource: "ingresscontrollers"}).
+		Namespace("openshift-ingress-operator").
+		Get(ctx, ingressControllerName, metav1.GetOptions{})
 	if shouldexist {
 		Expect(err).NotTo(HaveOccurred())
 	} else {

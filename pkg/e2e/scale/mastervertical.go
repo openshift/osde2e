@@ -1,6 +1,8 @@
 package scale
 
 import (
+	"context"
+
 	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
@@ -28,13 +30,13 @@ var _ = ginkgo.Describe(masterVerticalTestName, func() {
 	h := helper.New()
 
 	masterVerticalTimeoutInSeconds := 7200
-	util.GinkgoIt("should be tested with MasterVertical", func() {
+	util.GinkgoIt("should be tested with MasterVertical", func(ctx context.Context) {
 		var err error
 		// Before we do anything, scale the cluster.
 		err = cluster.ScaleCluster(viper.GetString(config.Cluster.ID), numNodesToScaleTo)
 		Expect(err).NotTo(HaveOccurred())
 
-		h.SetServiceAccount("system:serviceaccount:%s:cluster-admin")
+		h.SetServiceAccount(ctx, "system:serviceaccount:%s:cluster-admin")
 		// setup runner
 		scaleCfg := scaleRunnerConfig{
 			Name:         "master-vertical",

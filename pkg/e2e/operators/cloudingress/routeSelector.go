@@ -21,37 +21,38 @@ var _ = ginkgo.Describe(constants.SuiteInforming+TestPrefix, func() {
 	// How long to wait for IngressController changes
 	pollingDuration := 120 * time.Second
 	ginkgo.Context("publishingstrategy-route-selector", func() {
-		ginkgo.It("IngressController should be patched when update routeSelector matchLabels", func() {
-			updateMatchLabels(h, "tier", "frontend")
+		ginkgo.It("IngressController should be patched when update routeSelector matchLabels", func(ctx context.Context) {
+			updateMatchLabels(ctx, h, "tier", "frontend")
 
-			ingress, _ := getingressController(h, "default")
+			ingress, _ := getingressController(ctx, h, "default")
 			Expect(string(ingress.Spec.RouteSelector.MatchLabels["tier"])).To(Equal("frontend"))
 		}, pollingDuration.Seconds())
-		ginkgo.It("IngressController should be patched when update routeSelector matchExpressions", func() {
-			updateMatchExpressions(h, "foo", "In", "bar")
+		ginkgo.It("IngressController should be patched when update routeSelector matchExpressions", func(ctx context.Context) {
+			updateMatchExpressions(ctx, h, "foo", "In", "bar")
 
-			ingress, _ := getingressController(h, "default")
+			ingress, _ := getingressController(ctx, h, "default")
 			expectedExpressions := []metav1.LabelSelectorRequirement{
 				{"foo", metav1.LabelSelectorOperator("In"), []string{"bar"}},
 			}
 			for j := range ingress.Spec.RouteSelector.MatchExpressions {
-				Expect(reflect.DeepEqual(ingress.Spec.RouteSelector.MatchExpressions[j], expectedExpressions)).To(BeTrue())
+				Expect(
+					reflect.DeepEqual(ingress.Spec.RouteSelector.MatchExpressions[j], expectedExpressions),
+				).To(BeTrue())
 			}
 		}, pollingDuration.Seconds())
-		ginkgo.It("IngressController should be patched when reset matchLabels and matchExpressions", func() {
-			resetRouteSelector(h)
+		ginkgo.It("IngressController should be patched when reset matchLabels and matchExpressions", func(ctx context.Context) {
+			resetRouteSelector(ctx, h)
 
-			ingress, _ := getingressController(h, "default")
+			ingress, _ := getingressController(ctx, h, "default")
 			Expect(ingress.Spec.RouteSelector.MatchLabels).To(BeNil())
 			Expect(ingress.Spec.RouteSelector.MatchExpressions).To(BeNil())
-
 		}, pollingDuration.Seconds())
 	})
 })
 
-func updateMatchLabels(h *helper.H, tier string, routeS string) {
+func updateMatchLabels(ctx context.Context, h *helper.H, tier string, routeS string) {
 	var err error
-	PublishingStrategyInstance, ps := getPublishingStrategy(h)
+	PublishingStrategyInstance, ps := getPublishingStrategy(ctx, h)
 
 	// Grab the current list of Application Ingresses from the Publishing Strategy
 	AppIngress := PublishingStrategyInstance.Spec.ApplicationIngress
@@ -71,13 +72,16 @@ func updateMatchLabels(h *helper.H, tier string, routeS string) {
 	Expect(err).NotTo(HaveOccurred())
 
 	// Update the publishingstrategy
-	ps, err = h.Dynamic().Resource(schema.GroupVersionResource{Group: "cloudingress.managed.openshift.io", Version: "v1alpha1", Resource: "publishingstrategies"}).Namespace(OperatorNamespace).Update(context.TODO(), ps, metav1.UpdateOptions{})
+	ps, err = h.Dynamic().
+		Resource(schema.GroupVersionResource{Group: "cloudingress.managed.openshift.io", Version: "v1alpha1", Resource: "publishingstrategies"}).
+		Namespace(OperatorNamespace).
+		Update(ctx, ps, metav1.UpdateOptions{})
 	Expect(err).NotTo(HaveOccurred())
 }
 
-func updateMatchExpressions(h *helper.H, key string, operator string, values string) {
+func updateMatchExpressions(ctx context.Context, h *helper.H, key string, operator string, values string) {
 	var err error
-	PublishingStrategyInstance, ps := getPublishingStrategy(h)
+	PublishingStrategyInstance, ps := getPublishingStrategy(ctx, h)
 	// Grab the current list of Application Ingresses from the Publishing Strategy
 	AppIngress := PublishingStrategyInstance.Spec.ApplicationIngress
 	// Find the default router and update its scheme
@@ -94,12 +98,16 @@ func updateMatchExpressions(h *helper.H, key string, operator string, values str
 	Expect(err).NotTo(HaveOccurred())
 
 	// Update the publishingstrategy
-	ps, err = h.Dynamic().Resource(schema.GroupVersionResource{Group: "cloudingress.managed.openshift.io", Version: "v1alpha1", Resource: "publishingstrategies"}).Namespace(OperatorNamespace).Update(context.TODO(), ps, metav1.UpdateOptions{})
+	ps, err = h.Dynamic().
+		Resource(schema.GroupVersionResource{Group: "cloudingress.managed.openshift.io", Version: "v1alpha1", Resource: "publishingstrategies"}).
+		Namespace(OperatorNamespace).
+		Update(ctx, ps, metav1.UpdateOptions{})
 	Expect(err).NotTo(HaveOccurred())
 }
-func resetRouteSelector(h *helper.H) {
+
+func resetRouteSelector(ctx context.Context, h *helper.H) {
 	var err error
-	PublishingStrategyInstance, ps := getPublishingStrategy(h)
+	PublishingStrategyInstance, ps := getPublishingStrategy(ctx, h)
 	// Grab the current list of Application Ingresses from the Publishing Strategy
 	AppIngress := PublishingStrategyInstance.Spec.ApplicationIngress
 	// Find the default router and update its scheme
@@ -114,6 +122,9 @@ func resetRouteSelector(h *helper.H) {
 	Expect(err).NotTo(HaveOccurred())
 
 	// Update the publishingstrategy
-	ps, err = h.Dynamic().Resource(schema.GroupVersionResource{Group: "cloudingress.managed.openshift.io", Version: "v1alpha1", Resource: "publishingstrategies"}).Namespace(OperatorNamespace).Update(context.TODO(), ps, metav1.UpdateOptions{})
+	ps, err = h.Dynamic().
+		Resource(schema.GroupVersionResource{Group: "cloudingress.managed.openshift.io", Version: "v1alpha1", Resource: "publishingstrategies"}).
+		Namespace(OperatorNamespace).
+		Update(ctx, ps, metav1.UpdateOptions{})
 	Expect(err).NotTo(HaveOccurred())
 }

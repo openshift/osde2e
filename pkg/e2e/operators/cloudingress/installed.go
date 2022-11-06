@@ -34,14 +34,14 @@ var _ = ginkgo.Describe(constants.SuiteOperators+TestPrefix, func() {
 
 	// Check that the operator deployment exists in the operator namespace
 	ginkgo.Context("deployment", func() {
-		util.GinkgoIt("should exist", func() {
-			deployment, err := pollDeployment(h, OperatorNamespace, OperatorName)
+		util.GinkgoIt("should exist", func(ctx context.Context) {
+			deployment, err := pollDeployment(ctx, h, OperatorNamespace, OperatorName)
 			Expect(err).ToNot(HaveOccurred(), "failed fetching deployment")
 			Expect(deployment).NotTo(BeNil(), "deployment is nil")
 		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
 
-		util.GinkgoIt("should have all desired replicas ready", func() {
-			deployment, err := pollDeployment(h, OperatorNamespace, OperatorName)
+		util.GinkgoIt("should have all desired replicas ready", func(ctx context.Context) {
+			deployment, err := pollDeployment(ctx, h, OperatorNamespace, OperatorName)
 			Expect(err).ToNot(HaveOccurred(), "failed fetching deployment")
 
 			readyReplicas := deployment.Status.ReadyReplicas
@@ -57,7 +57,7 @@ var _ = ginkgo.Describe(constants.SuiteOperators+TestPrefix, func() {
 
 })
 
-func pollDeployment(h *helper.H, namespace, deploymentName string) (*appsv1.Deployment, error) {
+func pollDeployment(ctx context.Context, h *helper.H, namespace, deploymentName string) (*appsv1.Deployment, error) {
 	// pollDeployment polls for a deployment with a timeout
 	// to handle the case when a new cluster is up but the OLM has not yet
 	// finished deploying the operator
@@ -77,7 +77,7 @@ func pollDeployment(h *helper.H, namespace, deploymentName string) (*appsv1.Depl
 
 Loop:
 	for {
-		deployment, err = h.Kube().AppsV1().Deployments(namespace).Get(context.TODO(), deploymentName, metav1.GetOptions{})
+		deployment, err = h.Kube().AppsV1().Deployments(namespace).Get(ctx, deploymentName, metav1.GetOptions{})
 		elapsed := time.Since(start)
 
 		switch {

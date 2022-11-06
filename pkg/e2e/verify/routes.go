@@ -33,29 +33,29 @@ func init() {
 var _ = ginkgo.Describe(routesTestName, func() {
 	h := helper.New()
 
-	util.GinkgoIt("should be created for Console", func() {
-		consoleRoutes(h)
+	util.GinkgoIt("should be created for Console", func(ctx context.Context) {
+		consoleRoutes(ctx, h)
 	}, 300)
 
-	util.GinkgoIt("should be functioning for Console", func() {
-		for _, route := range consoleRoutes(h) {
-			testRouteIngresses(route, http.StatusOK)
+	util.GinkgoIt("should be functioning for Console", func(ctx context.Context) {
+		for _, route := range consoleRoutes(ctx, h) {
+			testRouteIngresses(ctx, route, http.StatusOK)
 		}
 	}, 300)
 
-	util.GinkgoIt("should be created for oauth", func() {
-		oauthRoute(h)
+	util.GinkgoIt("should be created for oauth", func(ctx context.Context) {
+		oauthRoute(ctx, h)
 	}, 300)
 
-	util.GinkgoIt("should be functioning for oauth", func() {
-		testRouteIngresses(oauthRoute(h), http.StatusForbidden)
+	util.GinkgoIt("should be functioning for oauth", func(ctx context.Context) {
+		testRouteIngresses(ctx, oauthRoute(ctx, h), http.StatusForbidden)
 	}, 300)
 
 })
 
-func consoleRoutes(h *helper.H) []v1.Route {
+func consoleRoutes(ctx context.Context, h *helper.H) []v1.Route {
 	labelSelector := fmt.Sprintf("app=%s", consoleLabel)
-	list, err := h.Route().RouteV1().Routes(consoleNamespace).List(context.TODO(), metav1.ListOptions{
+	list, err := h.Route().RouteV1().Routes(consoleNamespace).List(ctx, metav1.ListOptions{
 		LabelSelector: labelSelector,
 	})
 	if err != nil || list == nil {
@@ -68,8 +68,8 @@ func consoleRoutes(h *helper.H) []v1.Route {
 	return list.Items
 }
 
-func oauthRoute(h *helper.H) v1.Route {
-	route, err := h.Route().RouteV1().Routes(oauthNamespace).Get(context.TODO(), oauthName, metav1.GetOptions{})
+func oauthRoute(ctx context.Context, h *helper.H) v1.Route {
+	route, err := h.Route().RouteV1().Routes(oauthNamespace).Get(ctx, oauthName, metav1.GetOptions{})
 	if err != nil || route == nil {
 		err = fmt.Errorf("failed requesting routes: %v", err)
 	}
@@ -77,7 +77,7 @@ func oauthRoute(h *helper.H) v1.Route {
 	return *route
 }
 
-func testRouteIngresses(route v1.Route, status int) {
+func testRouteIngresses(ctx context.Context, route v1.Route, status int) {
 	Expect(route.Status.Ingress).ShouldNot(HaveLen(0),
 		"no ingresses have been setup for the route '%s/%s'", route.Namespace, route.Name)
 

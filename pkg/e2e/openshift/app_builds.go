@@ -53,11 +53,11 @@ var _ = ginkgo.Describe(appBuildsTestName, func() {
 	h := helper.New()
 
 	e2eTimeoutInSeconds := 3600
-	util.GinkgoIt("should get created in the cluster", func() {
+	util.GinkgoIt("should get created in the cluster", func(ctx context.Context) {
 
 		namespacesExist := false
 		for _, application := range testApplications {
-			_, err := findAppNamespace(h, application)
+			_, err := findAppNamespace(ctx, h, application)
 			if err == nil {
 				namespacesExist = true
 				break
@@ -71,10 +71,10 @@ var _ = ginkgo.Describe(appBuildsTestName, func() {
 
 			log.Printf("Existing applications detected, will verify rather than build.")
 			for _, applicationName := range testApplications {
-				appNamespace, err := findAppNamespace(h, applicationName)
+				appNamespace, err := findAppNamespace(ctx, h, applicationName)
 				Expect(err).NotTo(HaveOccurred())
 
-				list, err := h.Kube().CoreV1().Pods(appNamespace).List(context.TODO(), metav1.ListOptions{
+				list, err := h.Kube().CoreV1().Pods(appNamespace).List(ctx, metav1.ListOptions{
 					FieldSelector: fmt.Sprintf("status.phase=%s", kubev1.PodFailed),
 				})
 				Expect(err).NotTo(HaveOccurred(), "couldn't list Pods")
@@ -115,10 +115,10 @@ var _ = ginkgo.Describe(appBuildsTestName, func() {
 
 })
 
-func findAppNamespace(h *helper.H, appName string) (string, error) {
+func findAppNamespace(ctx context.Context, h *helper.H, appName string) (string, error) {
 
 	namespaceRegex := regexp.MustCompile("e2e-test-" + appName + "-repo-test-\\w+")
-	namespaceList, err := h.Project().ProjectV1().Projects().List(context.TODO(), metav1.ListOptions{})
+	namespaceList, err := h.Project().ProjectV1().Projects().List(ctx, metav1.ListOptions{})
 	//h.Kube().CoreV1().Namespaces().List()
 	if err != nil {
 		err = fmt.Errorf("failed to fetch namespaces")

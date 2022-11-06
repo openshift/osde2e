@@ -28,12 +28,19 @@ const (
 	IdentityProviderName         = "oidcidp"
 )
 
+// utils
+func init() {
+	alert.RegisterGinkgoAlert(inhibitionsTestName, "SD-SRE", "Alex Chvatal", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+}
+
+var inhibitionsTestName string = "[Suite: operators] AlertmanagerInhibitions"
+
 // tests start here
 var _ = ginkgo.Describe(inhibitionsTestName, func() {
 	h := helper.New()
 
-	util.GinkgoIt("should exist", func() {
-		alertmanagerConfigSecret, err := h.Kube().CoreV1().Secrets(MonitoringNamespace).Get(context.TODO(), AlertmanagerConfigSecretName, metav1.GetOptions{})
+	util.GinkgoIt("should exist", func(ctx context.Context) {
+		alertmanagerConfigSecret, err := h.Kube().CoreV1().Secrets(MonitoringNamespace).Get(ctx, AlertmanagerConfigSecretName, metav1.GetOptions{})
 		Expect(err).NotTo(HaveOccurred())
 
 		// looks for a section in the alertmanager config for inhibit_rules
@@ -104,7 +111,7 @@ var _ = ginkgo.Describe(inhibitionsTestName, func() {
 		}
 	}, float64(30))
 
-	util.GinkgoIt("inhibits ClusterOperatorDegraded", func() {
+	util.GinkgoIt("inhibits ClusterOperatorDegraded", func(ctx context.Context) {
 		// define an IdP that will cause the authentication operator to degrade
 		degradingIdentityProvider := configV1.IdentityProvider{
 			Name:          IdentityProviderName,
@@ -133,13 +140,13 @@ var _ = ginkgo.Describe(inhibitionsTestName, func() {
 		}
 
 		// Clean up the IDP if it already existed for some reason
-		cleanup(h)
+		cleanup(ctx, h)
 
 		// send the IdP in as a patch to the cluster oauth. this will cause the
 		// authentication cluster operator to degrade, and since there is only one
 		// pod, it will also be down.
 		err := retry.RetryOnConflict(retry.DefaultBackoff, func() error {
-			oauthcfg, err := h.Cfg().ConfigV1().OAuths().Get(context.TODO(), "cluster", metav1.GetOptions{})
+			oauthcfg, err := h.Cfg().ConfigV1().OAuths().Get(ctx, "cluster", metav1.GetOptions{})
 			Expect(err).To(BeNil())
 			if oauthcfg.Spec.IdentityProviders != nil {
 				oauthcfg.Spec.IdentityProviders = append(oauthcfg.Spec.IdentityProviders, degradingIdentityProvider)
@@ -148,14 +155,14 @@ var _ = ginkgo.Describe(inhibitionsTestName, func() {
 					degradingIdentityProvider,
 				}
 			}
-			_, err = h.Cfg().ConfigV1().OAuths().Update(context.TODO(), oauthcfg, metav1.UpdateOptions{})
+			_, err = h.Cfg().ConfigV1().OAuths().Update(ctx, oauthcfg, metav1.UpdateOptions{})
 			return err
 		})
 		Expect(err).NotTo(HaveOccurred(), "failed to update cluster oauth")
 
 		// clean up after this test completes
 		defer func() {
-			cleanup(h)
+			cleanup(ctx, h)
 		}()
 
 		// the clusteroperatordown/degraded alerts take 10 minutes to trip
@@ -188,9 +195,9 @@ var _ = ginkgo.Describe(inhibitionsTestName, func() {
 	}, float64(720))
 })
 
-func cleanup(h *helper.H) {
+func cleanup(ctx context.Context, h *helper.H) {
 	err := retry.RetryOnConflict(retry.DefaultBackoff, func() error {
-		oauthcfg, err := h.Cfg().ConfigV1().OAuths().Get(context.TODO(), "cluster", metav1.GetOptions{})
+		oauthcfg, err := h.Cfg().ConfigV1().OAuths().Get(ctx, "cluster", metav1.GetOptions{})
 		Expect(err).To(BeNil())
 		foundidx := -1
 		for i, idp := range oauthcfg.Spec.IdentityProviders {
@@ -201,16 +208,9 @@ func cleanup(h *helper.H) {
 		}
 		if foundidx >= 0 {
 			oauthcfg.Spec.IdentityProviders = append(oauthcfg.Spec.IdentityProviders[:foundidx], oauthcfg.Spec.IdentityProviders[foundidx+1:]...)
-			_, err = h.Cfg().ConfigV1().OAuths().Update(context.TODO(), oauthcfg, metav1.UpdateOptions{})
+			_, err = h.Cfg().ConfigV1().OAuths().Update(ctx, oauthcfg, metav1.UpdateOptions{})
 		}
 		return err
 	})
 	Expect(err).To(BeNil())
 }
-
-// utils
-func init() {
-	alert.RegisterGinkgoAlert(inhibitionsTestName, "SD-SRE", "Alex Chvatal", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
-}
-
-var inhibitionsTestName string = "[Suite: operators] AlertmanagerInhibitions"
