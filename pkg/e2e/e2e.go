@@ -274,7 +274,7 @@ func runGinkgoTests() (int, error) {
 
 	gomega.RegisterFailHandler(ginkgo.Fail)
 	viper.Set(config.Cluster.Passing, false)
-	suiteConfig, _ := ginkgo.GinkgoConfiguration()
+	suiteConfig, reporterConfig := ginkgo.GinkgoConfiguration()
 
 	if skip := viper.GetString(config.Tests.GinkgoSkip); skip != "" {
 		suiteConfig.SkipStrings = append(suiteConfig.SkipStrings, skip)
@@ -295,6 +295,18 @@ func runGinkgoTests() (int, error) {
 	if suiteConfig.DryRun {
 		// Draw attention to DRYRUN as it can exist in ENV.
 		log.Println(string("\x1b[33m"), "WARNING! This is a DRY RUN. Review this state if outcome is unexpected.", string("\033[0m"))
+	}
+
+	logLevel := viper.GetString(config.Tests.GinkgoLogLevel)
+	switch logLevel {
+	case "v":
+		reporterConfig.Verbose = true
+	case "vv":
+		reporterConfig.VeryVerbose = true
+	case "succinct":
+		fallthrough
+	default:
+		reporterConfig.Succinct = true
 	}
 
 	// setup reporter
@@ -375,7 +387,7 @@ func runGinkgoTests() (int, error) {
 		viper.Set(config.Suffix, util.RandomStr(5))
 	}
 
-	testsPassed, installTestCaseData := runTestsInPhase(phase.InstallPhase, "OSD e2e suite", suiteConfig)
+	testsPassed, installTestCaseData := runTestsInPhase(phase.InstallPhase, "OSD e2e suite", suiteConfig, reporterConfig)
 	getLogs()
 	viper.Set(config.Cluster.Passing, testsPassed)
 	upgradeTestsPassed := true
@@ -404,7 +416,12 @@ func runGinkgoTests() (int, error) {
 			if !viper.GetBool(config.Upgrade.ManagedUpgradeRescheduled) {
 				log.Println("Running e2e tests POST-UPGRADE...")
 				viper.Set(config.Cluster.Passing, false)
-				upgradeTestsPassed, upgradeTestCaseData = runTestsInPhase(phase.UpgradePhase, "OSD e2e suite post-upgrade", suiteConfig)
+				upgradeTestsPassed, upgradeTestCaseData = runTestsInPhase(
+					phase.UpgradePhase,
+					"OSD e2e suite post-upgrade",
+					suiteConfig,
+					reporterConfig,
+				)
 				viper.Set(config.Cluster.Passing, upgradeTestsPassed)
 			}
 			log.Println("Upgrade rescheduled, skip the POST-UPGRADE testing")
@@ -708,8 +725,12 @@ func cleanupAfterE2E(ctx context.Context, h *helper.H) (errors []error) {
 }
 
 // nolint:gocyclo
-func runTestsInPhase(phase string, description string, suiteConfig types.SuiteConfig) (bool, []db.CreateTestcaseParams) {
-	_, reporterConfig := ginkgo.GinkgoConfiguration()
+func runTestsInPhase(
+	phase string,
+	description string,
+	suiteConfig types.SuiteConfig,
+	reporterConfig types.ReporterConfig,
+) (bool, []db.CreateTestcaseParams) {
 	var testCaseData []db.CreateTestcaseParams
 	viper.Set(config.Phase, phase)
 	reportDir := viper.GetString(config.ReportDir)
@@ -722,9 +743,6 @@ func runTestsInPhase(phase string, description string, suiteConfig types.SuiteCo
 	}
 	suffix := viper.GetString(config.Suffix)
 	reporterConfig.JUnitReport = filepath.Join(phaseDirectory, fmt.Sprintf("junit_%v.xml", suffix))
-	//Controlling Verbosity
-	//Ginkgo has four verbosity settings: succinct (the default when running multiple suites), normal (the default when running a single suite), verbose, and very-verbose.
-	reporterConfig.Succinct = true
 	ginkgoPassed := false
 
 	if !suiteConfig.DryRun {

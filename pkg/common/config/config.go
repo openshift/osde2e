@@ -194,6 +194,10 @@ var Tests = struct {
 	// Env: GINKGO_FOCUS
 	GinkgoFocus string
 
+	// GinkgoLogLevel contrls the logging level used by ginkgo when providing test output
+	// Env: GINKGO_LOG_LEVEL
+	GinkgoLogLevel string
+
 	// TestsToRun is a list of files which should be executed as part of a test suite
 	// Env: TESTS_TO_RUN
 	TestsToRun string
@@ -232,10 +236,10 @@ var Tests = struct {
 	// Env: ENABLE_FIPS
 	EnableFips string
 }{
-
 	PollingTimeout:             "tests.pollingTimeout",
 	GinkgoSkip:                 "tests.ginkgoSkip",
 	GinkgoFocus:                "tests.focus",
+	GinkgoLogLevel:             "tests.ginkgoLogLevel",
 	TestsToRun:                 "tests.testsToRun",
 	SuppressSkipNotifications:  "tests.suppressSkipNotifications",
 	CleanRuns:                  "tests.cleanRuns",
@@ -651,6 +655,8 @@ func InitViper() {
 
 	viper.BindEnv(Tests.GinkgoFocus, "GINKGO_FOCUS")
 
+	viper.BindEnv(Tests.GinkgoLogLevel, "GINKGO_LOG_LEVEL")
+
 	viper.BindEnv(Tests.TestsToRun, "TESTS_TO_RUN")
 
 	viper.SetDefault(Tests.SuppressSkipNotifications, true)
@@ -850,7 +856,6 @@ func InitViper() {
 
 	viper.BindEnv(Proxy.UserCABundle, "USER_CA_BUNDLE")
 	RegisterSecret(Proxy.UserCABundle, "user-ca-bundle")
-
 }
 
 func init() {
