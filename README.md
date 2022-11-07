@@ -32,7 +32,7 @@ The `osde2e` command is the root command that executes all functionality within 
  
 To run osde2e locally, first build the binary (do this after all changes) by running `make build`. The resulting binaries will be in `./out/`.
  
-Once built, you can invoke osde2e by running `./out/osde2e` and osde2ectl by running `./out/osde2ectl`.
+Once built, you can invoke osde2e by running `./out/osde2e`.
  
 A common workflow is having a local script that combines these steps and the config. Example:
  
@@ -302,62 +302,3 @@ To write your own test, see [Writing Tests].
 [Grafana dashboards]:https://grafana.datahub.redhat.com/dashboard/db/osd-health-metrics?orgId=1
 [Writing Tests]:/docs/Writing-Tests.md
 [Config variables]:/docs/Config.md
- 
- 
-## osde2ectl
- 
-The `osde2ectl` command is a cluster provisioning and management tool that is complementary to osde2e. The sub-commands can be viewed using the --help parameter.
- 
-The ENV variables and config files used for osde2e can be used for osde2ectl as well as it shares the same codebase. The OCM token will also have to be exported before running osde2ectl.
- 
-Key features include:-
- 
-### Cluster creation:
-
-osde2ectl allows to create a single cluster or multiple clusters which get created in batches. Users can decide the number of clusters in a single batch (By default, all clusters get created at once. This is also the case when the given value for batch size is 0 or less.)
- 
-The total number of clusters to be created (default value is 1) and the number of seconds between batches (default value is 120 seconds) can also be specified.
- 
-#### Example:
-```./osde2ectl create --configs prod --number-of-clusters 4 --batch-size 2 --seconds-between-batches 40```
- 
-A folder named 'Clusters' would crop up with logs of the corresponding clusters being created inside files in the form of <cluster ID>.log
- 
-### Cluster deletion:
-
-Clusters can be deleted once a user can provide a cluster ID and the environment in which it was created. Clusters belonging to an owner can also be deleted at once through a CLI parameter.
-OSDe2e will delete the cluster post execution by default. If you'd like to keep a cluster post run for debugging pass the env variable:
-```DESTROY_CLUSTER=false```
- 
-#### Example:
- ```./osde2ectl delete --cluster-id <cluster ID> --configs stage --environment ocm```
- 
-```./osde2ectl delete --owner agopalak```
- 
-### Extension of cluster expiry time:
-
-The expiry time of clusters created by osde2e/osde2ectl can be extended through osde2ectl parameters. The time can be specified in hours, minutes and seconds.
- 
-#### Example:
-```./osde2ectl extend --configs stage --cluster-id <cluster ID> --hours 2 --minutes 30 --seconds 20```
- 
-### Get cluster information:
-
-Users can retrieve information about a specific cluster that exists. The --kube-config flag triggers the retrieval of a cluster's kubeconfig in the current directory by default or it could be downloaded into the path specified in the --kube-config-path CLI parameter.
- 
-The output would show a cluster's name, ID, current state (ready, installing, etc.), current status (healthy, node, etc.), owner, installed version in the cluster and the upgrade version if any. If jobs are being run on a cluster, the job name as well job ID fields would be available along with the above information.
- 
-The get command, by default extends the cluster expiry time by 30 minutes if the user has requested for the kubeconfig and the cluster expiry time is within 30 minutes or less. There's also a provision to extend the cluster expiry time in either minutes or hours using the CLI parameters --hours and --minutes.
- 
-#### Example:
- ```./osde2ectl get --cluster-id <cluster ID> --kube-config --hours 2 --minutes 30 ```
- 
-### Cluster list retrieval:
-
-Users can view the current crop of clusters in each environment through the list sub-command.
- 
-Each cluster's information can be viewed similar to the one obtained using the get sub-command.
- 
-#### Example:
-``` ./osde2ectl list --configs stage ```
-

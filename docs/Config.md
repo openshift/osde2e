@@ -1,6 +1,6 @@
 # **Environment variable configuration**
 
-Some environment variables commonly used for pipelines under osde2e are indicated below. These flags or variables are shared by both osde2e and osde2ectl.
+Some environment variables commonly used for pipelines under osde2e are indicated below. These flags or variables are used by osde2e.
 
 
 ## Common Environment Variables
@@ -162,17 +162,17 @@ CLI flags that are commonly used include:
  
 ## Common config flag values
 
-The following are the values that can be plugged in for the --configs flag when running osde2e/osde2ectl. The values correspond to existing YAML files in the /configs folder:-
+The following are the values that can be plugged in for the --configs flag when running osde2e. The values correspond to existing YAML files in the /configs folder:-
 
 ### OSD environment values:
 
 
 | Config Value | Usage |
 | --------------| ------------------------| 
-|crc | To run osde2e/osde2ectl in a local CRC environment.|
-|int | To run osde2e/osde2ectl in the integration environment.|
-|stage | To run osde2e/osde2ectl on stage.|
-|prod | To run osde2e/osde2ectl in the production environment. (This is the default value if nothing is specified.)|
+|crc | To run osde2e in a local CRC environment.|
+|int | To run osde2e in the integration environment.|
+|stage | To run osde2e on stage.|
+|prod | To run osde2e in the production environment. (This is the default value if nothing is specified.)|
 |scale | To set scale testing configurations for a cluster.|
 
 
