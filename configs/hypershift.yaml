@@ -3,3 +3,6 @@ Hypershift: True
 rosa:
   Env: stage
   STS: True
+tests:
+  testsToRun:
+  - '\[Suite\: hypershift\]'
