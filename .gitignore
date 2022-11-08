@@ -21,3 +21,4 @@ out/
 
 # pkger artifact
 pkged.go
+cmd/osde2e/__debug_bin
