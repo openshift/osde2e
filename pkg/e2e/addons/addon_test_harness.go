@@ -1,6 +1,7 @@
 package addons
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"strings"
@@ -21,10 +22,10 @@ var _ = ginkgo.Describe("[Suite: addons] Addon Test Harness", func() {
 
 	addonTimeoutInSeconds := float64(viper.GetFloat64(config.Addons.PollingTimeout))
 	log.Printf("addon timeout is %v", addonTimeoutInSeconds)
-	util.GinkgoIt("should run until completion", func() {
-		h.SetServiceAccount(viper.GetString(config.Addons.TestUser))
+	util.GinkgoIt("should run until completion", func(ctx context.Context) {
+		h.SetServiceAccount(ctx, viper.GetString(config.Addons.TestUser))
 		harnesses := strings.Split(viper.GetString(config.Addons.TestHarnesses), ",")
-		failed := h.RunAddonTests("addon-tests", int(addonTimeoutInSeconds), harnesses, []string{})
+		failed := h.RunAddonTests(ctx, "addon-tests", int(addonTimeoutInSeconds), harnesses, []string{})
 		if len(failed) > 0 {
 			message := fmt.Sprintf("Addon tests failed: %v", failed)
 			if url, ok := prow.JobURL(); ok {

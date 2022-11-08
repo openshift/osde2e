@@ -57,21 +57,21 @@ var _ = ginkgo.Describe(encryptedStorageTestName, func() {
 		h := helper.New()
 		var testInstanceName string
 
-		util.GinkgoIt("can be created by dedicated admins", func() {
+		util.GinkgoIt("can be created by dedicated admins", func(ctx context.Context) {
 			testInstanceName = "test-" + time.Now().Format("20060102-150405-") + fmt.Sprint(time.Now().Nanosecond()/1000000) + "-" + fmt.Sprint(ginkgo.GinkgoParallelProcess())
 
 			ginkgo.By("Creating an encryption key in the cluster's gcp project")
-			serviceAccountJson, err := createGCPServiceAccount(h, testInstanceName, h.CurrentProject())
+			serviceAccountJson, err := createGCPServiceAccount(ctx, h, testInstanceName, h.CurrentProject())
 			Expect(err).ToNot(HaveOccurred(), "Error creating credentialsrequest")
 
-			testKey, err := createGCPKey(h, serviceAccountJson, testInstanceName)
+			testKey, err := createGCPKey(ctx, h, serviceAccountJson, testInstanceName)
 			Expect(err).ToNot(HaveOccurred(), "Error creating or retrieving encryption key in GCP KMS.")
 
 			ginkgo.By("Using the key to create an encrypted storageclass as a dedicated-admin")
 			// RBAC rules must be set manually if not testing with a ccs cluster
 			// (gcp dedicated-admins only have permissions to create/modify storageclasses on ccs clusters)
 			if !viper.GetBool(ocmprovider.CCS) {
-				_, err := h.Kube().RbacV1().ClusterRoles().Create(context.TODO(), &rbacv1.ClusterRole{
+				_, err := h.Kube().RbacV1().ClusterRoles().Create(ctx, &rbacv1.ClusterRole{
 					TypeMeta: metav1.TypeMeta{
 						Kind:       "ClusterRole",
 						APIVersion: "rbac.authorization.k8s.io/v1",
@@ -100,7 +100,7 @@ var _ = ginkgo.Describe(encryptedStorageTestName, func() {
 			// Updated RBAC rules may take time to apply -> poll until we can successfully create a storageclass
 			volumeBindingMode := storagev1.VolumeBindingWaitForFirstConsumer
 			wait.PollImmediate(encryptedStoragePollInterval, encryptedStoragePollTimeout, func() (bool, error) {
-				_, err = h.Kube().StorageV1().StorageClasses().Create(context.TODO(), &storagev1.StorageClass{
+				_, err = h.Kube().StorageV1().StorageClasses().Create(ctx, &storagev1.StorageClass{
 					TypeMeta: metav1.TypeMeta{
 						Kind:       "StorageClass",
 						APIVersion: "storage.k8s.io/v1",
@@ -124,7 +124,7 @@ var _ = ginkgo.Describe(encryptedStorageTestName, func() {
 
 			ginkgo.By("Verifying the storageclass creates encrypted PVCs")
 			// Ensure pods can read/write on encrypted PVs
-			pvc, err := h.Kube().CoreV1().PersistentVolumeClaims(h.CurrentProject()).Create(context.TODO(), &corev1.PersistentVolumeClaim{
+			pvc, err := h.Kube().CoreV1().PersistentVolumeClaims(h.CurrentProject()).Create(ctx, &corev1.PersistentVolumeClaim{
 				TypeMeta: metav1.TypeMeta{
 					Kind:       "PersistentVolumeClaim",
 					APIVersion: "core/v1",
@@ -146,7 +146,7 @@ var _ = ginkgo.Describe(encryptedStorageTestName, func() {
 			Expect(err).ToNot(HaveOccurred(), "Error creating pvc '"+pvc.GetName()+"':")
 
 			volumeMountPath := "/mnt/volume"
-			pod, err := h.Kube().CoreV1().Pods(h.CurrentProject()).Create(context.TODO(), &corev1.Pod{
+			pod, err := h.Kube().CoreV1().Pods(h.CurrentProject()).Create(ctx, &corev1.Pod{
 				TypeMeta: metav1.TypeMeta{
 					Kind:       "Pod",
 					APIVersion: "v1",
@@ -182,7 +182,7 @@ var _ = ginkgo.Describe(encryptedStorageTestName, func() {
 			Expect(err).ToNot(HaveOccurred(), "Error creating pod '"+pod.GetName()+"':")
 
 			wait.PollImmediate(encryptedStoragePollInterval, encryptedStoragePollTimeout, func() (bool, error) {
-				pod, err = h.Kube().CoreV1().Pods(pod.GetNamespace()).Get(context.TODO(), pod.GetName(), metav1.GetOptions{})
+				pod, err = h.Kube().CoreV1().Pods(pod.GetNamespace()).Get(ctx, pod.GetName(), metav1.GetOptions{})
 				if err != nil || pod.Status.Phase != corev1.PodSucceeded {
 					return false, err
 				}
@@ -191,41 +191,41 @@ var _ = ginkgo.Describe(encryptedStorageTestName, func() {
 			Expect(err).ToNot(HaveOccurred(), "Error or timeout waiting for pod '"+pod.GetName()+"' to succeed. This implies the pod had trouble reading/writing to encrypted disk.")
 
 			// Ensure that gcp identifies the disk as customer-managed encryption
-			node, err := h.Kube().CoreV1().Nodes().Get(context.TODO(), pod.Spec.NodeName, metav1.GetOptions{})
+			node, err := h.Kube().CoreV1().Nodes().Get(ctx, pod.Spec.NodeName, metav1.GetOptions{})
 			Expect(err).ToNot(HaveOccurred(), "Error retrieving node '"+pod.Spec.NodeName+"':")
 
-			computeService, err := computev1.NewService(context.TODO(), option.WithCredentialsJSON(serviceAccountJson))
+			computeService, err := computev1.NewService(ctx, option.WithCredentialsJSON(serviceAccountJson))
 			Expect(err).ToNot(HaveOccurred(), "Error creating computev1 service:")
 
-			clusterInfra, err := h.Cfg().ConfigV1().Infrastructures().Get(context.TODO(), "cluster", metav1.GetOptions{})
+			clusterInfra, err := h.Cfg().ConfigV1().Infrastructures().Get(ctx, "cluster", metav1.GetOptions{})
 			Expect(err).ToNot(HaveOccurred(), "Error retrieving cluster infrastructure:")
 
-			pvc, err = h.Kube().CoreV1().PersistentVolumeClaims(h.CurrentProject()).Get(context.TODO(), pvc.GetName(), metav1.GetOptions{})
+			pvc, err = h.Kube().CoreV1().PersistentVolumeClaims(h.CurrentProject()).Get(ctx, pvc.GetName(), metav1.GetOptions{})
 			Expect(err).ToNot(HaveOccurred(), "Error retrieving pvc '"+testInstanceName+"':")
 
-			disk, err := computeService.Disks.Get(clusterInfra.Status.PlatformStatus.GCP.ProjectID, node.Labels["topology.kubernetes.io/zone"], pvc.Spec.VolumeName).Context(context.TODO()).Do()
+			disk, err := computeService.Disks.Get(clusterInfra.Status.PlatformStatus.GCP.ProjectID, node.Labels["topology.kubernetes.io/zone"], pvc.Spec.VolumeName).Context(ctx).Do()
 			Expect(err).ToNot(HaveOccurred(), "Error retrieving encrypted disk from gcp: ")
 			Expect(strings.Contains(disk.DiskEncryptionKey.KmsKeyName, testKey), "Disk '"+disk.Name+"' not using a customer managed key as expected!")
 		}, float64(encryptedStoragePollTimeout*2))
 
 		// Cleanup
-		ginkgo.AfterEach(func() {
+		ginkgo.AfterEach(func(ctx context.Context) {
 			h.Impersonate(rest.ImpersonationConfig{})
 
-			err := deleteGCPServiceAccount(h, testInstanceName)
+			err := deleteGCPServiceAccount(ctx, h, testInstanceName)
 			Expect(err).ToNot(HaveOccurred())
 
-			err = deleteStorageClass(h, testInstanceName)
+			err = deleteStorageClass(ctx, h, testInstanceName)
 			Expect(err).ToNot(HaveOccurred())
 
-			err = deletePersistentVolumeClaim(h, testInstanceName, h.CurrentProject())
+			err = deletePersistentVolumeClaim(ctx, h, testInstanceName, h.CurrentProject())
 			Expect(err).ToNot(HaveOccurred())
 
-			err = deletePod(testInstanceName, h.CurrentProject(), h)
+			err = deletePod(ctx, testInstanceName, h.CurrentProject(), h)
 			Expect(err).ToNot(HaveOccurred())
 
 			if !viper.GetBool(ocmprovider.CCS) {
-				err = deleteClusterRole(h, testInstanceName)
+				err = deleteClusterRole(ctx, h, testInstanceName)
 				Expect(err).ToNot(HaveOccurred())
 			}
 		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
@@ -233,32 +233,32 @@ var _ = ginkgo.Describe(encryptedStorageTestName, func() {
 })
 
 // Creates a keyring & key using the given service account credentials. Returns the full name of the key in GCP
-func createGCPKey(h *helper.H, serviceAccountJson []byte, keyName string) (string, error) {
-	clusterInfra, err := h.Cfg().ConfigV1().Infrastructures().Get(context.TODO(), "cluster", metav1.GetOptions{})
+func createGCPKey(ctx context.Context, h *helper.H, serviceAccountJson []byte, keyName string) (string, error) {
+	clusterInfra, err := h.Cfg().ConfigV1().Infrastructures().Get(ctx, "cluster", metav1.GetOptions{})
 	if err != nil {
 		return "", err
 	}
 
-	err = enableGCPKMS(clusterInfra.Status.PlatformStatus.GCP.ProjectID, serviceAccountJson)
+	err = enableGCPKMS(ctx, clusterInfra.Status.PlatformStatus.GCP.ProjectID, serviceAccountJson)
 	if err != nil {
 		return "", err
 	}
 
-	kmsClient, err := kmsv1.NewKeyManagementClient(context.TODO(), option.WithCredentialsJSON(serviceAccountJson))
+	kmsClient, err := kmsv1.NewKeyManagementClient(ctx, option.WithCredentialsJSON(serviceAccountJson))
 	if err != nil {
 		return "", err
 	}
 	defer kmsClient.Close()
 
 	// GCP KMS doesn't allow cryptokeys to be deleted. Therefore we have to reuse any key or keyRing that already exists with the same name
-	keyRing, err := kmsClient.GetKeyRing(context.TODO(), &kmsprotov1.GetKeyRingRequest{
+	keyRing, err := kmsClient.GetKeyRing(ctx, &kmsprotov1.GetKeyRingRequest{
 		Name: "projects/" + clusterInfra.Status.PlatformStatus.GCP.ProjectID + "/locations/" + clusterInfra.Status.PlatformStatus.GCP.Region + "/keyRings/" + keyName,
 	})
 	if err != nil {
 		// keyRing does not exist yet, & KMS was likely just enabled for the project.
 		// KMS may not be ready immediately after enabling, poll until we are able to successfully create a keyring, indicating it is fully available for this project
 		wait.PollImmediate(encryptedStoragePollInterval, encryptedStoragePollTimeout, func() (bool, error) {
-			keyRing, err = kmsClient.CreateKeyRing(context.TODO(), &kmsprotov1.CreateKeyRingRequest{
+			keyRing, err = kmsClient.CreateKeyRing(ctx, &kmsprotov1.CreateKeyRingRequest{
 				Parent:    "projects/" + clusterInfra.Status.PlatformStatus.GCP.ProjectID + "/locations/" + clusterInfra.Status.PlatformStatus.GCP.Region,
 				KeyRingId: keyName,
 			})
@@ -274,14 +274,14 @@ func createGCPKey(h *helper.H, serviceAccountJson []byte, keyName string) (strin
 		}
 	}
 
-	key, err := kmsClient.GetCryptoKey(context.TODO(), &kmsprotov1.GetCryptoKeyRequest{
+	key, err := kmsClient.GetCryptoKey(ctx, &kmsprotov1.GetCryptoKeyRequest{
 		Name: keyRing.GetName() + "/cryptoKeys/" + keyName,
 	})
 	if key != nil && err == nil {
 		return key.GetName(), err
 	}
 
-	key, err = kmsClient.CreateCryptoKey(context.TODO(), &kmsprotov1.CreateCryptoKeyRequest{
+	key, err = kmsClient.CreateCryptoKey(ctx, &kmsprotov1.CreateCryptoKeyRequest{
 		Parent:      keyRing.GetName(),
 		CryptoKeyId: keyName,
 		CryptoKey: &kmsprotov1.CryptoKey{
@@ -299,9 +299,9 @@ func createGCPKey(h *helper.H, serviceAccountJson []byte, keyName string) (strin
 
 // Enables KMS in GCP & grants necessary permissions to utilize it for pvc encryption using the given service account
 // NOTE: KMS may take up to several minutes to enable for a project (there doesn't appear to be a way to check if it's enabled except to attempt to use it).
-func enableGCPKMS(projectID string, serviceAccountJson []byte) error {
+func enableGCPKMS(ctx context.Context, projectID string, serviceAccountJson []byte) error {
 	// Enable KMS service
-	suService, err := serviceusagev1.NewService(context.TODO(), option.WithCredentialsJSON(serviceAccountJson))
+	suService, err := serviceusagev1.NewService(ctx, option.WithCredentialsJSON(serviceAccountJson))
 	if err != nil {
 		return err
 	}
@@ -311,11 +311,11 @@ func enableGCPKMS(projectID string, serviceAccountJson []byte) error {
 	}
 
 	// Add necessary permissions to the 'Compute Engine Service Agent' account
-	crmService, err := cloudresourcemanagerv1.NewService(context.TODO(), option.WithCredentialsJSON(serviceAccountJson))
+	crmService, err := cloudresourcemanagerv1.NewService(ctx, option.WithCredentialsJSON(serviceAccountJson))
 	if err != nil {
 		return err
 	}
-	result, err := crmService.Projects.Get(projectID).Context(context.TODO()).Do()
+	result, err := crmService.Projects.Get(projectID).Context(ctx).Do()
 	if err != nil {
 		return err
 	}
@@ -334,7 +334,7 @@ func enableGCPKMS(projectID string, serviceAccountJson []byte) error {
 
 // Creates a unique service account with owner privileges in GCP for the current test instance
 // Returns the service-account.json file for the newly created account
-func createGCPServiceAccount(h *helper.H, saName string, saNamespace string) ([]byte, error) {
+func createGCPServiceAccount(ctx context.Context, h *helper.H, saName string, saNamespace string) ([]byte, error) {
 	providerBytes := bytes.Buffer{}
 	encoder := json.NewEncoder(&providerBytes)
 	encoder.Encode(cloudcredentialv1.GCPProviderSpec{
@@ -377,7 +377,7 @@ func createGCPServiceAccount(h *helper.H, saName string, saNamespace string) ([]
 		Group:    "cloudcredential.openshift.io",
 		Version:  "v1",
 		Resource: "credentialsrequests",
-	}).Namespace(saCredentialReq.GetNamespace()).Create(context.TODO(), &unstructured.Unstructured{Object: credentialReqObj}, metav1.CreateOptions{})
+	}).Namespace(saCredentialReq.GetNamespace()).Create(ctx, &unstructured.Unstructured{Object: credentialReqObj}, metav1.CreateOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -387,7 +387,7 @@ func createGCPServiceAccount(h *helper.H, saName string, saNamespace string) ([]
 			Group:    "cloudcredential.openshift.io",
 			Version:  "v1",
 			Resource: "credentialsrequests",
-		}).Namespace(saNamespace).Get(context.TODO(), saCredentialReq.GetName(), metav1.GetOptions{})
+		}).Namespace(saNamespace).Get(ctx, saCredentialReq.GetName(), metav1.GetOptions{})
 		if err != nil {
 			return false, err
 		}
@@ -402,25 +402,25 @@ func createGCPServiceAccount(h *helper.H, saName string, saNamespace string) ([]
 		return nil, err
 	}
 
-	saSecret, err := h.Kube().CoreV1().Secrets(saCredentialReq.Spec.SecretRef.Namespace).Get(context.TODO(), saCredentialReq.Spec.SecretRef.Name, metav1.GetOptions{})
+	saSecret, err := h.Kube().CoreV1().Secrets(saCredentialReq.Spec.SecretRef.Namespace).Get(ctx, saCredentialReq.Spec.SecretRef.Name, metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
 	return saSecret.Data["service_account.json"], err
 }
 
-func deleteGCPServiceAccount(h *helper.H, name string) error {
+func deleteGCPServiceAccount(ctx context.Context, h *helper.H, name string) error {
 	return h.Dynamic().Resource(schema.GroupVersionResource{
 		Group:    "cloudcredential.openshift.io",
 		Version:  "v1",
 		Resource: "credentialsrequests",
-	}).Namespace(h.CurrentProject()).Delete(context.TODO(), name, metav1.DeleteOptions{})
+	}).Namespace(h.CurrentProject()).Delete(ctx, name, metav1.DeleteOptions{})
 }
 
-func deleteClusterRole(h *helper.H, name string) error {
-	return h.Kube().RbacV1().ClusterRoles().Delete(context.TODO(), name, metav1.DeleteOptions{})
+func deleteClusterRole(ctx context.Context, h *helper.H, name string) error {
+	return h.Kube().RbacV1().ClusterRoles().Delete(ctx, name, metav1.DeleteOptions{})
 }
 
-func deleteStorageClass(h *helper.H, name string) error {
-	return h.Kube().StorageV1().StorageClasses().Delete(context.TODO(), name, metav1.DeleteOptions{})
+func deleteStorageClass(ctx context.Context, h *helper.H, name string) error {
+	return h.Kube().StorageV1().StorageClasses().Delete(ctx, name, metav1.DeleteOptions{})
 }

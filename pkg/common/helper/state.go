@@ -72,7 +72,7 @@ var (
 )
 
 // GetClusterState retrieves the current objects in desiredClusterResources and desiredResources.
-func (h *H) GetClusterState() (resources map[schema.GroupVersionResource]*unstructured.UnstructuredList) {
+func (h *H) GetClusterState(ctx context.Context) (resources map[schema.GroupVersionResource]*unstructured.UnstructuredList) {
 	// setup client
 	client := h.Dynamic()
 
@@ -81,7 +81,7 @@ func (h *H) GetClusterState() (resources map[schema.GroupVersionResource]*unstru
 	listOpts := metav1.ListOptions{}
 	// retrieve cluster-wide resources
 	for _, r := range desiredClusterResources {
-		if list, err := client.Resource(r).List(context.TODO(), listOpts); err != nil {
+		if list, err := client.Resource(r).List(ctx, listOpts); err != nil {
 			log.Printf("Encountered error listing getting resource '%s': %v", r, err)
 		} else {
 			resources[r] = list
@@ -90,7 +90,7 @@ func (h *H) GetClusterState() (resources map[schema.GroupVersionResource]*unstru
 
 	// retrieve namespaces resources
 	for _, r := range desiredResources {
-		if list, err := client.Resource(r).Namespace(metav1.NamespaceAll).List(context.TODO(), listOpts); err != nil {
+		if list, err := client.Resource(r).Namespace(metav1.NamespaceAll).List(ctx, listOpts); err != nil {
 			log.Printf("Encountered error listing getting resource '%s': %v", r, err)
 		} else {
 			resources[r] = list

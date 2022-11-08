@@ -2,6 +2,8 @@
 package openshift
 
 import (
+	"context"
+
 	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
@@ -22,12 +24,12 @@ var _ = ginkgo.Describe(disruptiveTestName, func() {
 	h := helper.New()
 
 	e2eTimeoutInSeconds := 3600
-	util.GinkgoIt("should run until completion", func() {
+	util.GinkgoIt("should run until completion", func(ctx context.Context) {
 		// configure tests
 		cfg := DefaultE2EConfig
 		cfg.Suite = "openshift/disruptive"
 		cmd := cfg.Cmd()
-		h.SetServiceAccount("system:serviceaccount:%s:cluster-admin")
+		h.SetServiceAccount(ctx, "system:serviceaccount:%s:cluster-admin")
 
 		// setup runner
 		r := h.Runner(cmd)

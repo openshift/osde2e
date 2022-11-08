@@ -12,13 +12,13 @@ import (
 )
 
 // WaitForEndpointReady until Endpoint for svc is ready, checking n times and sleeping dur between them.
-func (h *H) WaitForEndpointReady(svc *kubev1.Service, n int, dur time.Duration) error {
+func (h *H) WaitForEndpointReady(ctx context.Context, svc *kubev1.Service, n int, dur time.Duration) error {
 	if svc == nil {
 		return errors.New("svc was nil")
 	}
 
 	for i := 0; i < n; i++ {
-		if endpoints, err := h.Kube().CoreV1().Endpoints(svc.Namespace).Get(context.TODO(), svc.Name, metav1.GetOptions{}); err != nil {
+		if endpoints, err := h.Kube().CoreV1().Endpoints(svc.Namespace).Get(ctx, svc.Name, metav1.GetOptions{}); err != nil {
 			log.Println(err)
 		} else if endpoints != nil {
 			for _, subset := range endpoints.Subsets {

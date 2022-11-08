@@ -23,7 +23,7 @@ var _ = ginkgo.Describe(regularuserWebhookTestName, func() {
 	h := helper.New()
 
 	ginkgo.Context("regularuser validating webhook", func() {
-		util.GinkgoIt("Privledged users allowed to create autoscalers and delete clusterversion objects", func() {
+		util.GinkgoIt("Privledged users allowed to create autoscalers and delete clusterversion objects", func(ctx context.Context) {
 			h.Impersonate(rest.ImpersonationConfig{
 				UserName: "system:admin",
 				Groups: []string{
@@ -32,10 +32,10 @@ var _ = ginkgo.Describe(regularuserWebhookTestName, func() {
 				},
 			})
 			defer func() {
-				err := h.Cfg().ConfigV1().ClusterVersions().Delete(context.TODO(), "osde2e-version", metav1.DeleteOptions{})
+				err := h.Cfg().ConfigV1().ClusterVersions().Delete(ctx, "osde2e-version", metav1.DeleteOptions{})
 				Expect(err).NotTo(HaveOccurred())
 			}()
-			_, err := h.Cfg().ConfigV1().ClusterVersions().Create(context.TODO(), &v1.ClusterVersion{
+			_, err := h.Cfg().ConfigV1().ClusterVersions().Create(ctx, &v1.ClusterVersion{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "osde2e-version",
 				},

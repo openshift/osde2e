@@ -72,7 +72,7 @@ func cmdFromIPs(ips []string, templ *template.Template) string {
 var _ = ginkgo.Describe(ocmTestName, func() {
 	ginkgo.Context("Metrics", func() {
 		clusterID := viper.GetString(config.Cluster.ID)
-		util.GinkgoIt("do exist and are not empty", func() {
+		util.GinkgoIt("do exist and are not empty", func(ctx context.Context) {
 			provider, err := providers.ClusterProvider()
 			Expect(err).NotTo(HaveOccurred())
 
@@ -80,17 +80,16 @@ var _ = ginkgo.Describe(ocmTestName, func() {
 
 			Expect(err).NotTo(HaveOccurred())
 			Expect(metrics).To(BeTrue())
-
 		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
 	})
 	ginkgo.Context("Quay Fallback", func() {
 		h := helper.New()
-		util.GinkgoIt("uses a quay mirror when quay is unavailable", func() {
+		util.GinkgoIt("uses a quay mirror when quay is unavailable", func(ctx context.Context) {
 			if strings.Contains(config.JobName, "prod") {
 				ginkgo.Skip("Skipping this test in production, as it cannot yet pass.")
 			}
 
-			h.SetServiceAccount("system:serviceaccount:%s:cluster-admin")
+			h.SetServiceAccount(ctx, "system:serviceaccount:%s:cluster-admin")
 
 			// look up quay's IPs
 			ips, err := net.LookupHost("quay.io")
@@ -143,12 +142,12 @@ var _ = ginkgo.Describe(ocmTestName, func() {
 				},
 			}
 			podAPI := h.Kube().CoreV1().Pods(h.CurrentProject())
-			pod, err = podAPI.Create(context.TODO(), pod, metav1.CreateOptions{})
+			pod, err = podAPI.Create(ctx, pod, metav1.CreateOptions{})
 			Expect(err).NotTo(HaveOccurred())
 
 			// make sure that the pull succeeded in spite of quay being unreachable
 			err = wait.PollImmediate(10*time.Second, 5*time.Minute, func() (bool, error) {
-				pod, err := podAPI.Get(context.TODO(), pod.Name, metav1.GetOptions{})
+				pod, err := podAPI.Get(ctx, pod.Name, metav1.GetOptions{})
 				if err != nil {
 					return false, nil
 				}
@@ -165,7 +164,6 @@ var _ = ginkgo.Describe(ocmTestName, func() {
 				return false, nil
 			})
 			Expect(err).NotTo(HaveOccurred())
-
 		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
 	})
 })

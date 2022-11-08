@@ -32,18 +32,18 @@ var _ = ginkgo.Describe(pruneJobsTestName, func() {
 		namespace := "openshift-sre-pruning"
 		cronJobs := []string{"builds-pruner", "deployments-pruner"}
 		for _, cronJob := range cronJobs {
-			util.GinkgoIt(cronJob+" should run successfully", func() {
+			util.GinkgoIt(cronJob+" should run successfully", func(ctx context.Context) {
 				getOpts := metav1.GetOptions{}
-				cjob, err := h.Kube().BatchV1beta1().CronJobs(namespace).Get(context.TODO(), cronJob, getOpts)
+				cjob, err := h.Kube().BatchV1beta1().CronJobs(namespace).Get(ctx, cronJob, getOpts)
 				Expect(err).NotTo(HaveOccurred())
 				job := createJobFromCronJob(cjob)
-				job, err = h.Kube().BatchV1().Jobs(namespace).Create(context.TODO(), job, metav1.CreateOptions{})
+				job, err = h.Kube().BatchV1().Jobs(namespace).Create(ctx, job, metav1.CreateOptions{})
 				defer func() {
-					err = h.Kube().BatchV1().Jobs(namespace).Delete(context.TODO(), job.Name, metav1.DeleteOptions{})
+					err = h.Kube().BatchV1().Jobs(namespace).Delete(ctx, job.Name, metav1.DeleteOptions{})
 					Expect(err).NotTo(HaveOccurred())
 				}()
 				Expect(err).NotTo(HaveOccurred())
-				err = waitJobComplete(h, namespace, job.Name)
+				err = waitJobComplete(ctx, h, namespace, job.Name)
 				Expect(err).NotTo(HaveOccurred())
 			}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
 		}
@@ -69,7 +69,7 @@ func createJobFromCronJob(cronJob *batchv1beta1.CronJob) *batchv1.Job {
 	}
 }
 
-func waitJobComplete(h *helper.H, namespace, jobName string) error {
+func waitJobComplete(ctx context.Context, h *helper.H, namespace, jobName string) error {
 	var err error
 	var job *batchv1.Job
 
@@ -85,7 +85,7 @@ func waitJobComplete(h *helper.H, namespace, jobName string) error {
 
 Loop:
 	for {
-		job, err = h.Kube().BatchV1().Jobs(namespace).Get(context.TODO(), jobName, metav1.GetOptions{})
+		job, err = h.Kube().BatchV1().Jobs(namespace).Get(ctx, jobName, metav1.GetOptions{})
 		elapsed := time.Since(start)
 
 		switch {

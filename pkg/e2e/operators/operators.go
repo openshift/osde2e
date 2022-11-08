@@ -30,9 +30,9 @@ import (
 func checkClusterServiceVersion(h *helper.H, namespace, name string) {
 	// Check that the operator clusterServiceVersion exists
 	ginkgo.Context(fmt.Sprintf("clusterServiceVersion %s/%s", namespace, name), func() {
-		util.GinkgoIt("should be present and in succeeded state", func() {
+		util.GinkgoIt("should be present and in succeeded state", func(ctx context.Context) {
 			Eventually(func() bool {
-				csvList, err := h.Operator().OperatorsV1alpha1().ClusterServiceVersions(namespace).List(context.TODO(), metav1.ListOptions{})
+				csvList, err := h.Operator().OperatorsV1alpha1().ClusterServiceVersions(namespace).List(ctx, metav1.ListOptions{})
 				if err != nil {
 					log.Printf("failed to get CSVs in namespace %s: %v", namespace, err)
 					return false
@@ -51,9 +51,9 @@ func checkClusterServiceVersion(h *helper.H, namespace, name string) {
 func checkConfigMapLockfile(h *helper.H, namespace, operatorLockFile string) {
 	// Check that the operator configmap has been deployed
 	ginkgo.Context("configmaps", func() {
-		util.GinkgoIt("should exist", func() {
+		util.GinkgoIt("should exist", func(ctx context.Context) {
 			// Wait for lockfile to signal operator is active
-			err := pollLockFile(h, namespace, operatorLockFile)
+			err := pollLockFile(ctx, h, namespace, operatorLockFile)
 			Expect(err).ToNot(HaveOccurred(), "failed fetching the configMap lockfile")
 		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
 	})
@@ -62,13 +62,13 @@ func checkConfigMapLockfile(h *helper.H, namespace, operatorLockFile string) {
 func checkDeployment(h *helper.H, namespace string, name string, defaultDesiredReplicas int32) {
 	// Check that the operator deployment exists in the operator namespace
 	ginkgo.Context("deployment", func() {
-		util.GinkgoIt("should exist", func() {
-			deployment, err := pollDeployment(h, namespace, name)
+		util.GinkgoIt("should exist", func(ctx context.Context) {
+			deployment, err := pollDeployment(ctx, h, namespace, name)
 			Expect(err).ToNot(HaveOccurred(), "failed fetching deployment")
 			Expect(deployment).NotTo(BeNil(), "deployment is nil")
 		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
-		util.GinkgoIt("should have all desired replicas ready", func() {
-			deployment, err := pollDeployment(h, namespace, name)
+		util.GinkgoIt("should have all desired replicas ready", func(ctx context.Context) {
+			deployment, err := pollDeployment(ctx, h, namespace, name)
 			Expect(err).ToNot(HaveOccurred(), "failed fetching deployment")
 
 			readyReplicas := deployment.Status.ReadyReplicas
@@ -87,11 +87,11 @@ func checkPod(h *helper.H, namespace string, name string, gracePeriod int, maxAc
 	// Checks that deployed pods have less than maxAcceptedRestart restarts
 
 	ginkgo.Context("pods", func() {
-		util.GinkgoIt(fmt.Sprintf("should have %v or less restart(s)", maxAcceptedRestart), func() {
+		util.GinkgoIt(fmt.Sprintf("should have %v or less restart(s)", maxAcceptedRestart), func(ctx context.Context) {
 			// wait for graceperiod
 			time.Sleep(time.Duration(gracePeriod) * time.Second)
 			//retrieve pods
-			pods, err := h.Kube().CoreV1().Pods(namespace).List(context.TODO(), metav1.ListOptions{LabelSelector: "name=" + name})
+			pods, err := h.Kube().CoreV1().Pods(namespace).List(ctx, metav1.ListOptions{LabelSelector: "name=" + name})
 			Expect(err).ToNot(HaveOccurred(), "failed fetching pods")
 
 			var restartSum int32 = 0
@@ -108,9 +108,9 @@ func checkPod(h *helper.H, namespace string, name string, gracePeriod int, maxAc
 func checkServiceAccounts(h *helper.H, operatorNamespace string, serviceAccounts []string) {
 	// Check that deployed serviceAccounts exist
 	ginkgo.Context("serviceAccounts", func() {
-		util.GinkgoIt("should exist", func() {
+		util.GinkgoIt("should exist", func(ctx context.Context) {
 			for _, serviceAccountName := range serviceAccounts {
-				_, err := h.Kube().CoreV1().ServiceAccounts(operatorNamespace).Get(context.TODO(), serviceAccountName, metav1.GetOptions{})
+				_, err := h.Kube().CoreV1().ServiceAccounts(operatorNamespace).Get(ctx, serviceAccountName, metav1.GetOptions{})
 				Expect(err).NotTo(HaveOccurred(), "failed to get serviceAccount %v\n", serviceAccountName)
 			}
 		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
@@ -120,8 +120,8 @@ func checkServiceAccounts(h *helper.H, operatorNamespace string, serviceAccounts
 func checkClusterRoles(h *helper.H, clusterRoles []string, matchPrefix bool) {
 	// Check that the clusterRoles exist
 	ginkgo.Context("clusterRoles", func() {
-		util.GinkgoIt("should exist", func() {
-			allClusterRoles, err := h.Kube().RbacV1().ClusterRoles().List(context.TODO(), metav1.ListOptions{})
+		util.GinkgoIt("should exist", func(ctx context.Context) {
+			allClusterRoles, err := h.Kube().RbacV1().ClusterRoles().List(ctx, metav1.ListOptions{})
 			Expect(err).ToNot(HaveOccurred(), "failed to list clusterRoles\n")
 
 			for _, clusterRoleToFind := range clusterRoles {
@@ -142,8 +142,8 @@ func checkClusterRoles(h *helper.H, clusterRoles []string, matchPrefix bool) {
 func checkClusterRoleBindings(h *helper.H, clusterRoleBindings []string, matchPrefix bool) {
 	// Check that the clusterRoles exist
 	ginkgo.Context("clusterRoleBindings", func() {
-		util.GinkgoIt("should exist", func() {
-			allClusterRoleBindings, err := h.Kube().RbacV1().ClusterRoleBindings().List(context.TODO(), metav1.ListOptions{})
+		util.GinkgoIt("should exist", func(ctx context.Context) {
+			allClusterRoleBindings, err := h.Kube().RbacV1().ClusterRoleBindings().List(ctx, metav1.ListOptions{})
 			Expect(err).ToNot(HaveOccurred(), "failed to list clusterRoles\n")
 
 			for _, clusterRoleBindingToFind := range clusterRoleBindings {
@@ -164,9 +164,9 @@ func checkClusterRoleBindings(h *helper.H, clusterRoleBindings []string, matchPr
 func checkRole(h *helper.H, namespace string, roles []string) {
 	// Check that deployed roles exist
 	ginkgo.Context("roles", func() {
-		util.GinkgoIt("should exist", func() {
+		util.GinkgoIt("should exist", func(ctx context.Context) {
 			for _, roleName := range roles {
-				_, err := h.Kube().RbacV1().Roles(namespace).Get(context.TODO(), roleName, metav1.GetOptions{})
+				_, err := h.Kube().RbacV1().Roles(namespace).Get(ctx, roleName, metav1.GetOptions{})
 				Expect(err).NotTo(HaveOccurred(), "failed to get role %v\n", roleName)
 			}
 		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
@@ -176,9 +176,9 @@ func checkRole(h *helper.H, namespace string, roles []string) {
 
 func checkRolesWithNamePrefix(h *helper.H, namespace string, prefix string, count int) {
 	ginkgo.Context("roles with prefix", func() {
-		util.GinkgoIt("should exist", func() {
+		util.GinkgoIt("should exist", func(ctx context.Context) {
 			Eventually(func() int {
-				rolesList, err := h.Kube().RbacV1().Roles(namespace).List(context.TODO(), metav1.ListOptions{})
+				rolesList, err := h.Kube().RbacV1().Roles(namespace).List(ctx, metav1.ListOptions{})
 				Expect(err).NotTo(HaveOccurred(), "failed to get roles in namespace %s", namespace)
 				var roleCount int
 				for _, r := range rolesList.Items {
@@ -194,9 +194,9 @@ func checkRolesWithNamePrefix(h *helper.H, namespace string, prefix string, coun
 
 func checkRoleBindingsWithNamePrefix(h *helper.H, namespace string, prefix string, count int) {
 	ginkgo.Context("roles with prefix", func() {
-		util.GinkgoIt("should exist", func() {
+		util.GinkgoIt("should exist", func(ctx context.Context) {
 			Eventually(func() int {
-				roleBindings, err := h.Kube().RbacV1().RoleBindings(namespace).List(context.TODO(), metav1.ListOptions{})
+				roleBindings, err := h.Kube().RbacV1().RoleBindings(namespace).List(ctx, metav1.ListOptions{})
 				Expect(err).NotTo(HaveOccurred(), "failed to get roles in namespace %s", namespace)
 				var roleCount int
 				for _, r := range roleBindings.Items {
@@ -212,9 +212,9 @@ func checkRoleBindingsWithNamePrefix(h *helper.H, namespace string, prefix strin
 func checkRoleBindings(h *helper.H, namespace string, roleBindings []string) {
 	// Check that deployed rolebindings exist
 	ginkgo.Context("roleBindings", func() {
-		util.GinkgoIt("should exist", func() {
+		util.GinkgoIt("should exist", func(ctx context.Context) {
 			for _, roleBindingName := range roleBindings {
-				err := pollRoleBinding(h, namespace, roleBindingName)
+				err := pollRoleBinding(ctx, h, namespace, roleBindingName)
 				Expect(err).NotTo(HaveOccurred(), "failed to get roleBinding %v\n", roleBindingName)
 			}
 		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
@@ -225,9 +225,9 @@ func checkRoleBindings(h *helper.H, namespace string, roleBindings []string) {
 func checkSecrets(h *helper.H, namespace string, secrets []string) {
 	// Check that deployed secrets exist
 	ginkgo.Context("secrets", func() {
-		util.GinkgoIt("should exist", func() {
+		util.GinkgoIt("should exist", func(ctx context.Context) {
 			for _, secretName := range secrets {
-				_, err := h.Kube().CoreV1().Secrets(namespace).Get(context.TODO(), secretName, metav1.GetOptions{})
+				_, err := h.Kube().CoreV1().Secrets(namespace).Get(ctx, secretName, metav1.GetOptions{})
 				Expect(err).NotTo(HaveOccurred(), "failed to get secret %v\n", secretName)
 			}
 		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
@@ -241,18 +241,18 @@ func checkUpgrade(h *helper.H, subNamespace string, subName string, packageName 
 		installPlanPollingDuration := 5 * time.Minute
 		upgradePollingDuration := 15 * time.Minute
 
-		util.GinkgoIt("should upgrade from the replaced version", func() {
+		util.GinkgoIt("should upgrade from the replaced version", func(ctx context.Context) {
 
 			var latestCSV string
 			var sub *operatorv1.Subscription
 			var err error
 
 			// The subscription must first exist on the cluster
-			sub, err = h.Operator().OperatorsV1alpha1().Subscriptions(subNamespace).Get(context.TODO(), subName, metav1.GetOptions{})
+			sub, err = h.Operator().OperatorsV1alpha1().Subscriptions(subNamespace).Get(ctx, subName, metav1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("subscription %s not found", subName))
 
 			// Get the CSV we're currently installed with
-			installedCSVs, err := h.Operator().OperatorsV1alpha1().ClusterServiceVersions(subNamespace).List(context.TODO(), metav1.ListOptions{})
+			installedCSVs, err := h.Operator().OperatorsV1alpha1().ClusterServiceVersions(subNamespace).List(ctx, metav1.ListOptions{})
 			for _, csv := range installedCSVs.Items {
 				if csv.Spec.DisplayName == packageName && csv.Status.Phase == operatorv1.CSVPhaseSucceeded {
 					latestCSV = csv.Name
@@ -263,22 +263,22 @@ func checkUpgrade(h *helper.H, subNamespace string, subName string, packageName 
 			Expect(latestCSV).NotTo(BeEmpty(), fmt.Sprintf("no successfully installed CSV found for subscription %s", subName))
 
 			// Get the N-1 version of the CSV to test an upgrade from
-			previousCSV, err := getReplacesCSV(h, subNamespace, packageName, regServiceName)
+			previousCSV, err := getReplacesCSV(ctx, h, subNamespace, packageName, regServiceName)
 			Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("failed trying to get previous CSV for Subscription %s in %s namespace", subName, subNamespace))
 
 			log.Printf("Reverting to package %v from %v to test upgrade of %v", previousCSV, latestCSV, subName)
 
 			// Delete current Operator installation
-			err = h.Operator().OperatorsV1alpha1().Subscriptions(subNamespace).Delete(context.TODO(), subName, metav1.DeleteOptions{})
+			err = h.Operator().OperatorsV1alpha1().Subscriptions(subNamespace).Delete(ctx, subName, metav1.DeleteOptions{})
 			Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("failed trying to delete Subscription %s", subName))
 			log.Printf("Removed subscription %s", subName)
 
-			err = h.Operator().OperatorsV1alpha1().ClusterServiceVersions(subNamespace).Delete(context.TODO(), latestCSV, metav1.DeleteOptions{})
+			err = h.Operator().OperatorsV1alpha1().ClusterServiceVersions(subNamespace).Delete(ctx, latestCSV, metav1.DeleteOptions{})
 			Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("failed trying to delete ClusterServiceVersion %s", latestCSV))
 			log.Printf("Removed csv %s", latestCSV)
 
 			err = wait.PollImmediate(10*time.Second, installPlanPollingDuration, func() (bool, error) {
-				ips, err := h.Operator().OperatorsV1alpha1().InstallPlans(subNamespace).List(context.TODO(), metav1.ListOptions{})
+				ips, err := h.Operator().OperatorsV1alpha1().InstallPlans(subNamespace).List(ctx, metav1.ListOptions{})
 				if err != nil {
 					return false, err
 				}
@@ -296,7 +296,7 @@ func checkUpgrade(h *helper.H, subNamespace string, subName string, packageName 
 			log.Printf("Verified installplan removal")
 
 			// Create subscription to the previous version
-			sub, err = h.Operator().OperatorsV1alpha1().Subscriptions(subNamespace).Create(context.TODO(), &operatorv1.Subscription{
+			sub, err = h.Operator().OperatorsV1alpha1().Subscriptions(subNamespace).Create(ctx, &operatorv1.Subscription{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      subName,
 					Namespace: subNamespace,
@@ -316,7 +316,7 @@ func checkUpgrade(h *helper.H, subNamespace string, subName string, packageName 
 
 			// Wait for the operator to arrive back on its latest CSV
 			err = wait.PollImmediate(5*time.Second, upgradePollingDuration, func() (bool, error) {
-				csv, err := h.Operator().OperatorsV1alpha1().ClusterServiceVersions(sub.Namespace).Get(context.TODO(), latestCSV, metav1.GetOptions{})
+				csv, err := h.Operator().OperatorsV1alpha1().ClusterServiceVersions(sub.Namespace).Get(ctx, latestCSV, metav1.GetOptions{})
 				if err != nil && !kerror.IsNotFound(err) {
 					log.Printf("Returning err %v", err)
 					return false, err
@@ -330,7 +330,7 @@ func checkUpgrade(h *helper.H, subNamespace string, subName string, packageName 
 
 			// Lastly, verify that the Subscription correctly reflects that the CSV is installed.
 			err = wait.PollImmediate(5*time.Second, 2*time.Minute, func() (bool, error) {
-				sub, err = h.Operator().OperatorsV1alpha1().Subscriptions(subNamespace).Get(context.TODO(), subName, metav1.GetOptions{})
+				sub, err = h.Operator().OperatorsV1alpha1().Subscriptions(subNamespace).Get(ctx, subName, metav1.GetOptions{})
 				if err != nil {
 					return false, err
 				}
@@ -352,9 +352,9 @@ func checkService(h *helper.H, namespace string, name string, port int) {
 	ginkgo.Context("service", func() {
 		util.GinkgoIt(
 			"should exist",
-			func() {
+			func(ctx context.Context) {
 				Eventually(func() bool {
-					_, err := h.Kube().CoreV1().Services(namespace).Get(context.Background(), name, metav1.GetOptions{})
+					_, err := h.Kube().CoreV1().Services(namespace).Get(ctx, name, metav1.GetOptions{})
 					if err != nil {
 						return false
 					}
@@ -366,7 +366,7 @@ func checkService(h *helper.H, namespace string, name string, port int) {
 	})
 }
 
-func pollClusterRoleBinding(h *helper.H, clusterRoleBindingName string) error {
+func pollClusterRoleBinding(ctx context.Context, h *helper.H, clusterRoleBindingName string) error {
 	// pollRoleBinding will check for the existence of a clusterRole
 	// in the specified project, and wait for it to exist, until a timeout
 
@@ -384,7 +384,7 @@ func pollClusterRoleBinding(h *helper.H, clusterRoleBindingName string) error {
 
 Loop:
 	for {
-		_, err = h.Kube().RbacV1().ClusterRoleBindings().Get(context.TODO(), clusterRoleBindingName, metav1.GetOptions{})
+		_, err = h.Kube().RbacV1().ClusterRoleBindings().Get(ctx, clusterRoleBindingName, metav1.GetOptions{})
 		elapsed := time.Since(start)
 
 		switch {
@@ -407,7 +407,7 @@ Loop:
 	return err
 }
 
-func pollRoleBinding(h *helper.H, projectName string, roleBindingName string) error {
+func pollRoleBinding(ctx context.Context, h *helper.H, projectName string, roleBindingName string) error {
 	// pollRoleBinding will check for the existence of a roleBinding
 	// in the specified project, and wait for it to exist, until a timeout
 
@@ -425,7 +425,7 @@ func pollRoleBinding(h *helper.H, projectName string, roleBindingName string) er
 
 Loop:
 	for {
-		_, err = h.Kube().RbacV1().RoleBindings(projectName).Get(context.TODO(), roleBindingName, metav1.GetOptions{})
+		_, err = h.Kube().RbacV1().RoleBindings(projectName).Get(ctx, roleBindingName, metav1.GetOptions{})
 		elapsed := time.Since(start)
 
 		switch {
@@ -448,7 +448,7 @@ Loop:
 	return err
 }
 
-func pollLockFile(h *helper.H, namespace, operatorLockFile string) error {
+func pollLockFile(ctx context.Context, h *helper.H, namespace, operatorLockFile string) error {
 	// GetConfigMap polls for a configMap with a timeout
 	// to handle the case when a new cluster is up but the OLM has not yet
 	// finished deploying the operator
@@ -467,7 +467,7 @@ func pollLockFile(h *helper.H, namespace, operatorLockFile string) error {
 
 Loop:
 	for {
-		_, err = h.Kube().CoreV1().ConfigMaps(namespace).Get(context.TODO(), operatorLockFile, metav1.GetOptions{})
+		_, err = h.Kube().CoreV1().ConfigMaps(namespace).Get(ctx, operatorLockFile, metav1.GetOptions{})
 		elapsed := time.Since(start)
 
 		switch {
@@ -490,7 +490,7 @@ Loop:
 	return err
 }
 
-func pollDeployment(h *helper.H, namespace, deploymentName string) (*appsv1.Deployment, error) {
+func pollDeployment(ctx context.Context, h *helper.H, namespace, deploymentName string) (*appsv1.Deployment, error) {
 	// pollDeployment polls for a deployment with a timeout
 	// to handle the case when a new cluster is up but the OLM has not yet
 	// finished deploying the operator
@@ -510,7 +510,7 @@ func pollDeployment(h *helper.H, namespace, deploymentName string) (*appsv1.Depl
 
 Loop:
 	for {
-		deployment, err = h.Kube().AppsV1().Deployments(namespace).Get(context.TODO(), deploymentName, metav1.GetOptions{})
+		deployment, err = h.Kube().AppsV1().Deployments(namespace).Get(ctx, deploymentName, metav1.GetOptions{})
 		elapsed := time.Since(start)
 
 		switch {
@@ -534,7 +534,7 @@ Loop:
 	return deployment, err
 }
 
-func getReplacesCSV(h *helper.H, subscriptionNS string, csvDisplayName string, catalogSvcName string) (string, error) {
+func getReplacesCSV(ctx context.Context, h *helper.H, subscriptionNS string, csvDisplayName string, catalogSvcName string) (string, error) {
 	cmdTimeoutInSeconds := 60
 	cmdTestTemplate, err := templates.LoadTemplate("registry/replaces.template")
 
@@ -554,7 +554,7 @@ func getReplacesCSV(h *helper.H, subscriptionNS string, csvDisplayName string, c
 	}
 	registrySvcPort := "50051"
 
-	h.SetServiceAccount("system:serviceaccount:%s:cluster-admin")
+	h.SetServiceAccount(ctx, "system:serviceaccount:%s:cluster-admin")
 	r := h.RunnerWithNoCommand()
 	r.Name = fmt.Sprintf("csvq-%s", csvDisplayName)
 
@@ -619,6 +619,6 @@ func CheckPod(h *helper.H, namespace string, name string, gracePeriod int, maxAc
 	checkPod(h, namespace, name, gracePeriod, maxAcceptedRestart)
 }
 
-func PollDeployment(h *helper.H, namespace, deploymentName string) (*appsv1.Deployment, error) {
-	return pollDeployment(h, namespace, deploymentName)
+func PollDeployment(ctx context.Context, h *helper.H, namespace, deploymentName string) (*appsv1.Deployment, error) {
+	return pollDeployment(ctx, h, namespace, deploymentName)
 }

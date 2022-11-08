@@ -51,19 +51,19 @@ var _ = ginkgo.Describe(testName, func() {
 	podPrefixes := []string{"redmine"}
 
 	redmineTimeoutInSeconds := 2500
-	util.GinkgoIt("should get created in the cluster", func() {
+	util.GinkgoIt("should get created in the cluster", func(ctx context.Context) {
 
 		// Does this workload exist? If so, this must be a repeat run.
 		// In this case we should assume the workload has had a valid run once already
 		// And simply run another test validating the workload.
-		h.SetServiceAccount("")
+		h.SetServiceAccount(ctx, "")
 		if _, ok := h.GetWorkload(workloadName); ok {
 			// Run the workload test
-			doTest(h)
+			doTest(ctx, h)
 
 		} else {
 			// Create all K8s objects that are within the testDir
-			err := createWorkload(h)
+			err := createWorkload(ctx, h)
 			Expect(err).NotTo(HaveOccurred(), "couldn't create workload")
 
 			// Give the cluster a second to churn before checking
@@ -79,7 +79,7 @@ var _ = ginkgo.Describe(testName, func() {
 			})
 			Expect(err).NotTo(HaveOccurred(), "objects not created in a timely manner")
 			// Run the test
-			doTest(h)
+			doTest(ctx, h)
 
 			// If success, add the workload to the list of installed workloads
 			h.AddWorkload(workloadName, h.CurrentProject())
@@ -88,7 +88,7 @@ var _ = ginkgo.Describe(testName, func() {
 	}, float64(redmineTimeoutInSeconds))
 })
 
-func createWorkload(h *helper.H) error {
+func createWorkload(ctx context.Context, h *helper.H) error {
 	// Create all K8s objects that are within the testDir
 	objects, err := helper.ApplyYamlInFolder(testDir, h.CurrentProject(), h.Kube())
 
@@ -112,7 +112,7 @@ func createWorkload(h *helper.H) error {
 		},
 		Status: v1.RouteStatus{},
 	}
-	_, err = h.Route().RouteV1().Routes(h.CurrentProject()).Create(context.TODO(), appRoute, metav1.CreateOptions{})
+	_, err = h.Route().RouteV1().Routes(h.CurrentProject()).Create(ctx, appRoute, metav1.CreateOptions{})
 	if err != nil {
 		return fmt.Errorf("couldn't create application route: %v", err)
 	}
@@ -120,7 +120,7 @@ func createWorkload(h *helper.H) error {
 	return nil
 }
 
-func doTest(h *helper.H) {
+func doTest(ctx context.Context, h *helper.H) {
 
 	// track if error occurs
 	var err error
@@ -133,7 +133,7 @@ func doTest(h *helper.H) {
 	intervalDuration := time.Duration(interval) * time.Second
 
 	err = wait.PollImmediate(intervalDuration, timeoutDuration, func() (bool, error) {
-		_, err = h.Kube().CoreV1().Services(h.CurrentProject()).ProxyGet("http", redmineSvcName, redmineSvcPort, "/", nil).DoRaw(context.TODO())
+		_, err = h.Kube().CoreV1().Services(h.CurrentProject()).ProxyGet("http", redmineSvcName, redmineSvcPort, "/", nil).DoRaw(ctx)
 		if err == nil {
 			return true, nil
 		}

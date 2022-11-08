@@ -33,34 +33,31 @@ const (
 )
 
 var _ = ginkgo.Describe(podWebhookTestName, func() {
-
 	h := helper.New()
 
 	ginkgo.Context("pod webhook", func() {
-
-		util.GinkgoIt("Verify the validation webhook service is running", func() {
+		util.GinkgoIt("Verify the validation webhook service is running", func(ctx context.Context) {
 			namespace := "openshift-validation-webhook"
 			daemonSetName := "validation-webhook"
 			serviceName := "validation-webhook"
 
-			err := h.WaitTimeoutForDaemonSetInNamespace(daemonSetName, namespace, daemonStartTimeout, poll)
+			err := h.WaitTimeoutForDaemonSetInNamespace(ctx, daemonSetName, namespace, daemonStartTimeout, poll)
 			Expect(err).NotTo(HaveOccurred(), "No Daemonset named %s found.", daemonSetName)
 
-			err = h.WaitTimeoutForServiceInNamespace(serviceName, namespace, serviceStartTimeout, poll)
+			err = h.WaitTimeoutForServiceInNamespace(ctx, serviceName, namespace, serviceStartTimeout, poll)
 			Expect(err).NotTo(HaveOccurred(), "No service named %s found.", serviceName)
-
 		}, daemonStartTimeout.Seconds()+serviceStartTimeout.Seconds())
 
 		// for all tests, "manage" is synonymous with "create/update/delete"
-		//Dedicated admin can not deploy pod on master on infra nodes in namespaces
-		//openshift-operators, openshift-logging namespace or any other namespace that is not a core namespace like openshift-*, redhat-*, default, kube-*.
+		// Dedicated admin can not deploy pod on master on infra nodes in namespaces
+		// openshift-operators, openshift-logging namespace or any other namespace that is not a core namespace like openshift-*, redhat-*, default, kube-*.
 
-		util.GinkgoIt("Test 1: Webhook will mark pod spec invalid and block deploying", func() {
+		util.GinkgoIt("Test 1: Webhook will mark pod spec invalid and block deploying", func(ctx context.Context) {
 			name := "osde2e-pod-webhook-test1"
 			namespace := "openshift-logging"
-			createNamespace(namespace, h)
-			defer deleteNamespace(namespace, true, h)
-			//impersonate dedicated-admin
+			createNamespace(ctx, namespace, h)
+			defer deleteNamespace(ctx, namespace, true, h)
+			// impersonate dedicated-admin
 			h.Impersonate(rest.ImpersonationConfig{
 				UserName: "test-user@redhat.com",
 				Groups: []string{
@@ -71,13 +68,24 @@ var _ = ginkgo.Describe(podWebhookTestName, func() {
 			defer func() {
 				h.Impersonate(rest.ImpersonationConfig{})
 			}()
-			_, err := createPod(name, namespace, "node-role.kubernetes.io/master", "toleration-key-value", v1.TaintEffectNoSchedule, "node-role.kubernetes.io/infra", "toleration-key-value2", v1.TaintEffectNoSchedule, h)
-			defer deletePod(name, namespace, h)
+			_, err := createPod(
+				ctx,
+				name,
+				namespace,
+				"node-role.kubernetes.io/master",
+				"toleration-key-value",
+				v1.TaintEffectNoSchedule,
+				"node-role.kubernetes.io/infra",
+				"toleration-key-value2",
+				v1.TaintEffectNoSchedule,
+				h,
+			)
+			defer deletePod(ctx, name, namespace, h)
 			log.Printf("Create pod error: %v", err)
 			Expect(apierrors.IsForbidden(err)).To(BeTrue())
 		}, deletePodWaitDuration.Seconds()+podCreationwaitDuration.Seconds())
 
-		util.GinkgoIt("Test 2: Webhook will mark pod spec invalid and block deploying", func() {
+		util.GinkgoIt("Test 2: Webhook will mark pod spec invalid and block deploying", func(ctx context.Context) {
 			name := "osde2e-pod-webhook-test2"
 			namespace := "openshift-logging"
 			h.Impersonate(rest.ImpersonationConfig{
@@ -91,38 +99,70 @@ var _ = ginkgo.Describe(podWebhookTestName, func() {
 				h.Impersonate(rest.ImpersonationConfig{})
 			}()
 
-			defer deletePod(name, namespace, h)
-			_, err := createPod(name, namespace, "node-role.kubernetes.io/infra", "toleration-key-value", v1.TaintEffectPreferNoSchedule, "node-role.kubernetes.io/master", "toleration-key-value2", v1.TaintEffectNoExecute, h)
+			defer deletePod(ctx, name, namespace, h)
+			_, err := createPod(
+				ctx,
+				name,
+				namespace,
+				"node-role.kubernetes.io/infra",
+				"toleration-key-value",
+				v1.TaintEffectPreferNoSchedule,
+				"node-role.kubernetes.io/master",
+				"toleration-key-value2",
+				v1.TaintEffectNoExecute,
+				h,
+			)
 			Expect(apierrors.IsForbidden(err)).To(BeTrue())
-
 		}, deletePodWaitDuration.Seconds()+podCreationwaitDuration.Seconds())
 
 		// The serviceaccount:dedicated-admin-project is allowed to launch a pod and the pod-webhook will allow it
-		util.GinkgoIt("Webhook will allow pod to deploy", func() {
+		util.GinkgoIt("Webhook will allow pod to deploy", func(ctx context.Context) {
 			name := "osde2e-pod-webhook-test3"
 			namespace := "openshift-apiserver"
-			h.SetServiceAccount("system:serviceaccount:%s:dedicated-admin-project")
-			defer deletePod(name, namespace, h)
-			_, err := createPod(name, namespace, "node-role.kubernetes.io/infra", "toleration-key-value", v1.TaintEffectNoSchedule, "node-role.kubernetes.io/master", "toleration-key-value2", v1.TaintEffectNoSchedule, h)
+			h.SetServiceAccount(ctx, "system:serviceaccount:%s:dedicated-admin-project")
+			defer deletePod(ctx, name, namespace, h)
+			_, err := createPod(
+				ctx,
+				name,
+				namespace,
+				"node-role.kubernetes.io/infra",
+				"toleration-key-value",
+				v1.TaintEffectNoSchedule,
+				"node-role.kubernetes.io/master",
+				"toleration-key-value2",
+				v1.TaintEffectNoSchedule,
+				h,
+			)
 			Expect(err).NotTo(HaveOccurred())
 		}, deletePodWaitDuration.Seconds()+podCreationwaitDuration.Seconds())
 
 		// RBAC blocks dedicated-admins group from creating a pod in openshift-apiserver namespace
-		util.GinkgoIt("Webhook will allow pod to deploy", func() {
+		util.GinkgoIt("Webhook will allow pod to deploy", func(ctx context.Context) {
 			name := "osde2e-pod-webhook-test3"
 			namespace := "openshift-apiserver"
 			impersonateDedicatedAdmin(h, "test-user")
 			defer func() {
 				h.Impersonate(rest.ImpersonationConfig{})
 			}()
-			defer deletePod(name, namespace, h)
-			_, err := createPod(name, namespace, "node-role.kubernetes.io/infra", "toleration-key-value", v1.TaintEffectNoSchedule, "node-role.kubernetes.io/master", "toleration-key-value2", v1.TaintEffectNoSchedule, h)
+			defer deletePod(ctx, name, namespace, h)
+			_, err := createPod(
+				ctx,
+				name,
+				namespace,
+				"node-role.kubernetes.io/infra",
+				"toleration-key-value",
+				v1.TaintEffectNoSchedule,
+				"node-role.kubernetes.io/master",
+				"toleration-key-value2",
+				v1.TaintEffectNoSchedule,
+				h,
+			)
 			Expect(apierrors.IsForbidden(err)).To(BeTrue())
 		}, viper.GetFloat64(config.Tests.PollingTimeout))
 
 		// RBAC will prevent ordinary users from creating pods
 
-		util.GinkgoIt("RBAC will deny deploying pod", func() {
+		util.GinkgoIt("RBAC will deny deploying pod", func(ctx context.Context) {
 			name := "osde2e-pod-webhook-test4"
 			namespace := "openshift-logging"
 			user := "alice"
@@ -133,36 +173,65 @@ var _ = ginkgo.Describe(podWebhookTestName, func() {
 				return
 			}
 			defer h.Impersonate(rest.ImpersonationConfig{})
-			defer deletePod(name, namespace, h)
-			_, err = createPod(name, namespace, "node-role.kubernetes.io/master", "toleration-key-value", v1.TaintEffectNoSchedule, "node-role.kubernetes.io/infra", "toleration-key-value2", v1.TaintEffectNoSchedule, h)
+			defer deletePod(ctx, name, namespace, h)
+			_, err = createPod(
+				ctx,
+				name,
+				namespace,
+				"node-role.kubernetes.io/master",
+				"toleration-key-value",
+				v1.TaintEffectNoSchedule,
+				"node-role.kubernetes.io/infra",
+				"toleration-key-value2",
+				v1.TaintEffectNoSchedule,
+				h,
+			)
 			Expect(apierrors.IsForbidden(err)).To(BeTrue())
 		}, viper.GetFloat64(config.Tests.PollingTimeout))
 	}, deletePodWaitDuration.Seconds()+podCreationwaitDuration.Seconds())
 
 	ginkgo.Context("pod webhook", func() {
-		util.GinkgoIt("RBAC will deny deploying pod", func() {
+		util.GinkgoIt("RBAC will deny deploying pod", func(ctx context.Context) {
 			name := "osde2e-pod-webhook-test4"
 			namespace := "random-namespace"
 			user := "alice"
 			userGroup := "test-users"
-			createNamespace(namespace, h)
-			defer deleteNamespace(namespace, true, h)
+			createNamespace(ctx, namespace, h)
+			defer deleteNamespace(ctx, namespace, true, h)
 			err := asUser(namespace, user, userGroup, h)
 			if err != nil {
 				log.Printf("Could not impersonate user, Error %v", err)
 				return
 			}
 			defer h.Impersonate(rest.ImpersonationConfig{})
-			defer deletePod(name, namespace, h)
-			_, err = createPod(name, namespace, "node-role.kubernetes.io/master", "toleration-key-value", v1.TaintEffectNoSchedule, "node-role.kubernetes.io/infra", "toleration-key-value2", v1.TaintEffectNoSchedule, h)
+			defer deletePod(ctx, name, namespace, h)
+			_, err = createPod(
+				ctx,
+				name,
+				namespace,
+				"node-role.kubernetes.io/master",
+				"toleration-key-value",
+				v1.TaintEffectNoSchedule,
+				"node-role.kubernetes.io/infra",
+				"toleration-key-value2",
+				v1.TaintEffectNoSchedule,
+				h,
+			)
 			Expect(apierrors.IsForbidden(err)).To(BeTrue())
 		}, deletePodWaitDuration.Seconds())
 	})
-
 })
 
-func makePod(name string, namespace string, key string, value string, effect v1.TaintEffect, key1 string, value1 string, effect1 v1.TaintEffect) *v1.Pod {
-
+func makePod(
+	name string,
+	namespace string,
+	key string,
+	value string,
+	effect v1.TaintEffect,
+	key1 string,
+	value1 string,
+	effect1 v1.TaintEffect,
+) *v1.Pod {
 	pod := &v1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
@@ -194,16 +263,16 @@ func makePod(name string, namespace string, key string, value string, effect v1.
 	return pod
 }
 
-func deletePod(name string, namespace string, h *helper.H) error {
-	_, err := h.Kube().CoreV1().Pods(namespace).Get(context.TODO(), name, metav1.GetOptions{})
+func deletePod(ctx context.Context, name string, namespace string, h *helper.H) error {
+	_, err := h.Kube().CoreV1().Pods(namespace).Get(ctx, name, metav1.GetOptions{})
 	log.Printf("Check before deleting pod %s, error: %v", name, err)
 	if err == nil {
-		err = h.Kube().CoreV1().Pods(namespace).Delete(context.TODO(), name, metav1.DeleteOptions{})
+		err = h.Kube().CoreV1().Pods(namespace).Delete(ctx, name, metav1.DeleteOptions{})
 		log.Printf("Deleting pod %s, error: %v", name, err)
 
 		// Wait for the pod to delete.
 		err = wait.PollImmediate(5*time.Second, deletePodWaitDuration, func() (bool, error) {
-			if _, err := h.Kube().CoreV1().Pods(namespace).Get(context.TODO(), name, metav1.GetOptions{}); err != nil {
+			if _, err := h.Kube().CoreV1().Pods(namespace).Get(ctx, name, metav1.GetOptions{}); err != nil {
 				return true, nil
 			}
 			return false, nil
@@ -213,20 +282,30 @@ func deletePod(name string, namespace string, h *helper.H) error {
 	return err
 }
 
-func createPod(name string, namespace string, key string, value string, effect v1.TaintEffect, key1 string, value1 string, effect1 v1.TaintEffect, h *helper.H) (*v1.Pod, error) {
-
+func createPod(
+	ctx context.Context,
+	name string,
+	namespace string,
+	key string,
+	value string,
+	effect v1.TaintEffect,
+	key1 string,
+	value1 string,
+	effect1 v1.TaintEffect,
+	h *helper.H,
+) (*v1.Pod, error) {
 	pod := makePod(name, namespace, key, value, effect, key1, value1, effect1)
 
-	//If pod is already created we delete the pod.
-	pd, err := h.Kube().CoreV1().Pods(namespace).Get(context.TODO(), name, metav1.GetOptions{})
+	// If pod is already created we delete the pod.
+	pd, err := h.Kube().CoreV1().Pods(namespace).Get(ctx, name, metav1.GetOptions{})
 	if pd != nil && err == nil {
 		log.Printf("Pod %s already exists in namespace %s", name, namespace)
-		err = deletePod(name, namespace, h)
+		err = deletePod(ctx, name, namespace, h)
 		return pd, err
 	}
 
-	//log.Printf("Creating pod for the validation webhook (%s)", pod)
-	pd, err = h.Kube().CoreV1().Pods(namespace).Create(context.TODO(), pod, metav1.CreateOptions{})
+	// log.Printf("Creating pod for the validation webhook (%s)", pod)
+	pd, err = h.Kube().CoreV1().Pods(namespace).Create(ctx, pod, metav1.CreateOptions{})
 	log.Printf("Result of the create command: (%v)", err)
 	if err != nil {
 		log.Printf("Could not issue create command")
@@ -235,7 +314,7 @@ func createPod(name string, namespace string, key string, value string, effect v
 
 	// Wait for the pod to create.
 	err = wait.PollImmediate(5*time.Second, podCreationwaitDuration, func() (bool, error) {
-		if _, err := h.Kube().CoreV1().Pods(namespace).Get(context.TODO(), name, metav1.GetOptions{}); err != nil {
+		if _, err := h.Kube().CoreV1().Pods(namespace).Get(ctx, name, metav1.GetOptions{}); err != nil {
 			return false, nil
 		}
 		return true, nil

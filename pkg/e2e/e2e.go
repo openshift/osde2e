@@ -185,7 +185,7 @@ func beforeSuite() bool {
 	if viper.GetString(config.Addons.TestHarnesses) != "" {
 		secretsNamespace := "ci-secrets"
 		h := helper.NewOutsideGinkgo()
-		h.CreateProject(secretsNamespace)
+		h.CreateProject(context.TODO(), secretsNamespace)
 
 		_, err := h.Kube().CoreV1().Secrets("osde2e-"+secretsNamespace).Create(context.TODO(), &v1.Secret{
 			ObjectMeta: metav1.ObjectMeta{
@@ -389,7 +389,7 @@ func runGinkgoTests() (int, error) {
 			var routeMonitorChan chan struct{}
 			closeMonitorChan := make(chan struct{})
 			if viper.GetBool(config.Upgrade.MonitorRoutesDuringUpgrade) && !suiteConfig.DryRun {
-				routeMonitorChan = setupRouteMonitors(closeMonitorChan)
+				routeMonitorChan = setupRouteMonitors(context.TODO(), closeMonitorChan)
 				log.Println("Route Monitors created.")
 			}
 
@@ -515,7 +515,7 @@ func runGinkgoTests() (int, error) {
 			return Failure, fmt.Errorf("Unable to generate helper object for cleanup")
 		}
 
-		cleanupAfterE2E(h)
+		cleanupAfterE2E(context.TODO(), h)
 
 	}
 
@@ -544,7 +544,7 @@ func runGinkgoTests() (int, error) {
 // cluster of test failures.
 const ManyGroupedFailureName = "A lot of tests failed together"
 
-func cleanupAfterE2E(h *helper.H) (errors []error) {
+func cleanupAfterE2E(ctx context.Context, h *helper.H) (errors []error) {
 	var err error
 	clusterStatus := clusterproperties.StatusCompletedFailing
 	defer ginkgo.GinkgoRecover()
@@ -552,7 +552,7 @@ func cleanupAfterE2E(h *helper.H) (errors []error) {
 	if viper.GetBool(config.MustGather) {
 		log.Print("Running Must Gather...")
 		mustGatherTimeoutInSeconds := 1800
-		h.SetServiceAccount("system:serviceaccount:%s:cluster-admin")
+		h.SetServiceAccount(ctx, "system:serviceaccount:%s:cluster-admin")
 		r := h.Runner(fmt.Sprintf("oc adm must-gather --dest-dir=%v", runner.DefaultRunner.OutputDir))
 		r.Name = "must-gather"
 		r.Tarball = true
@@ -573,14 +573,14 @@ func cleanupAfterE2E(h *helper.H) (errors []error) {
 		}
 
 		log.Print("Gathering Project States...")
-		h.InspectState()
+		h.InspectState(ctx)
 
 		log.Print("Gathering OLM State...")
-		h.InspectOLM()
+		h.InspectOLM(ctx)
 	}
 
 	log.Print("Gathering Cluster State...")
-	clusterState := h.GetClusterState()
+	clusterState := h.GetClusterState(ctx)
 	stateResults := make(map[string][]byte, len(clusterState))
 	for resource, list := range clusterState {
 		data, err := json.MarshalIndent(list, "", "    ")
@@ -665,11 +665,11 @@ func cleanupAfterE2E(h *helper.H) (errors []error) {
 			arguments = []string{}
 		}
 		log.Println("Running addon cleanup...")
-		h.RunAddonTests("addon-cleanup", 300, harnesses, arguments)
+		h.RunAddonTests(ctx, "addon-cleanup", 300, harnesses, arguments)
 	}
 
 	// We need to clean up our helper tests manually.
-	h.Cleanup()
+	h.Cleanup(ctx)
 
 	// If this is a nightly test, we don't want to expire this immediately
 	if viper.GetString(config.Cluster.InstallSpecificNightly) != "" || viper.GetString(config.Cluster.ReleaseImageLatest) != "" {
@@ -980,11 +980,11 @@ func uploadFileToMetricsBucket(filename string) error {
 
 // setupRouteMonitors initializes performance+availability monitoring of cluster routes,
 // returning a channel which can be used to terminate the monitoring.
-func setupRouteMonitors(closeChannel chan struct{}) chan struct{} {
+func setupRouteMonitors(ctx context.Context, closeChannel chan struct{}) chan struct{} {
 	routeMonitorChan := make(chan struct{})
 	go func() {
 		// Set up the route monitors
-		routeMonitors, err := routemonitors.Create()
+		routeMonitors, err := routemonitors.Create(ctx)
 		if err != nil {
 			log.Printf("Error creating route monitors: %v\n", err)
 			close(closeChannel)

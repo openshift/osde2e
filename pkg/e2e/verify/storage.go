@@ -43,47 +43,47 @@ var _ = ginkgo.Describe(storageTestName, func() {
 
 	ginkgo.Context("storage", func() {
 
-		util.GinkgoIt("create PVCs", func() {
+		util.GinkgoIt("create PVCs", func(ctx context.Context) {
 
-			sc, err := h.Kube().StorageV1().StorageClasses().List(context.TODO(), metav1.ListOptions{})
+			sc, err := h.Kube().StorageV1().StorageClasses().List(ctx, metav1.ListOptions{})
 			Expect(err).NotTo(HaveOccurred(), "couldn't list StorageClasses")
 			list, provider := getScNames(sc, h)
 			log.Printf(" PROVIDER:  %v", provider)
 			var pvc PersistentVolumeClaimConfig
 			namespace := "test-namespace"
-			_, err = createNamespace(namespace, h)
+			_, err = createNamespace(ctx, namespace, h)
 			Expect(err).NotTo(HaveOccurred(), "couldn't create Namespace")
 			defer func() {
-				deleteNamespace(namespace, true, h)
+				deleteNamespace(ctx, namespace, true, h)
 			}()
 			for _, name := range list {
 				var vc []*corev1.PersistentVolumeClaim
 				storageClassName := name
 				pvcName := "pvc-osde2e-" + name
 				pvcYaml := makePersistentVolumeClaim(pvc, namespace, storageClassName, pvcName)
-				pvc, err := createPVC(h, namespace, pvcYaml)
+				pvc, err := createPVC(ctx, h, namespace, pvcYaml)
 				log.Printf(" CREATING pvc:  %s", name)
 				defer func() {
-					deletePersistentVolumeClaim(h, pvcName, namespace)
+					deletePersistentVolumeClaim(ctx, h, pvcName, namespace)
 				}()
 				Expect(err).NotTo(HaveOccurred(), "couldn't create PVC")
 				vc = append(vc, pvc)
-				pod, err := createTestPod(h, namespace, vc, false)
+				pod, err := createTestPod(ctx, h, namespace, vc, false)
 				Expect(err).NotTo(HaveOccurred())
 				podName := pod.GetName()
 				defer func() {
-					deletePod(podName, namespace, h)
+					deletePod(ctx, podName, namespace, h)
 				}()
 
 			}
 
-		}, podStartTimeout.Seconds() + viper.GetFloat64(config.Tests.PollingTimeout))
+		}, podStartTimeout.Seconds()+viper.GetFloat64(config.Tests.PollingTimeout))
 
 	})
 
 	ginkgo.Context("sc-list", func() {
-		util.GinkgoIt("should be able to be expanded", func() {
-			scList, err := h.Kube().StorageV1().StorageClasses().List(context.TODO(), metav1.ListOptions{})
+		util.GinkgoIt("should be able to be expanded", func(ctx context.Context) {
+			scList, err := h.Kube().StorageV1().StorageClasses().List(ctx, metav1.ListOptions{})
 			Expect(err).NotTo(HaveOccurred(), "couldn't list StorageClasses")
 			Expect(scList).NotTo(BeNil())
 
@@ -184,8 +184,8 @@ func makePersistentVolumeClaim(cfg PersistentVolumeClaimConfig, ns string, stora
 }
 
 // createPVC creates the PVC resource. Fails test on error.
-func createPVC(h *helper.H, ns string, pvc *corev1.PersistentVolumeClaim) (*corev1.PersistentVolumeClaim, error) {
-	pvc, err := h.Kube().CoreV1().PersistentVolumeClaims(ns).Create(context.TODO(), pvc, metav1.CreateOptions{})
+func createPVC(ctx context.Context, h *helper.H, ns string, pvc *corev1.PersistentVolumeClaim) (*corev1.PersistentVolumeClaim, error) {
+	pvc, err := h.Kube().CoreV1().PersistentVolumeClaims(ns).Create(ctx, pvc, metav1.CreateOptions{})
 	if err != nil {
 		return nil, fmt.Errorf("PVC Create API error: %v", err)
 	}
@@ -193,10 +193,10 @@ func createPVC(h *helper.H, ns string, pvc *corev1.PersistentVolumeClaim) (*core
 }
 
 // deletePersistentVolumeClaim deletes the PVC.
-func deletePersistentVolumeClaim(h *helper.H, pvcName string, ns string) error {
+func deletePersistentVolumeClaim(ctx context.Context, h *helper.H, pvcName string, ns string) error {
 	if h != nil && len(pvcName) > 0 {
 		log.Printf("Deleting PersistentVolumeClaim %q", pvcName)
-		err := h.Kube().CoreV1().PersistentVolumeClaims(ns).Delete(context.TODO(), pvcName, metav1.DeleteOptions{})
+		err := h.Kube().CoreV1().PersistentVolumeClaims(ns).Delete(ctx, pvcName, metav1.DeleteOptions{})
 		if err != nil && !apierrors.IsNotFound(err) {
 			return fmt.Errorf("PVC Delete API error: %v", err)
 		}
@@ -262,19 +262,19 @@ func makeTestPod(ns string, pvclaims []*corev1.PersistentVolumeClaim, isPrivileg
 }
 
 // createTestPod creates pod with given pvc claims
-func createTestPod(h *helper.H, namespace string, pvclaims []*corev1.PersistentVolumeClaim, isPrivileged bool) (*corev1.Pod, error) {
+func createTestPod(ctx context.Context, h *helper.H, namespace string, pvclaims []*corev1.PersistentVolumeClaim, isPrivileged bool) (*corev1.Pod, error) {
 	pod := makeTestPod(namespace, pvclaims, isPrivileged)
-	pod, err := h.Kube().CoreV1().Pods(namespace).Create(context.TODO(), pod, metav1.CreateOptions{})
+	pod, err := h.Kube().CoreV1().Pods(namespace).Create(ctx, pod, metav1.CreateOptions{})
 	if err != nil {
 		return nil, fmt.Errorf("pod Create API error: %v", err)
 	}
 	// Waiting for pod to be running
-	err = waitForPodNameRunningInNamespace(h, pod.Name, namespace)
+	err = waitForPodNameRunningInNamespace(ctx, h, pod.Name, namespace)
 	if err != nil {
 		return pod, fmt.Errorf("pod %q is not Running: %v", pod.Name, err)
 	}
 	// get fresh pod info
-	pod, err = h.Kube().CoreV1().Pods(namespace).Get(context.TODO(), pod.Name, metav1.GetOptions{})
+	pod, err = h.Kube().CoreV1().Pods(namespace).Get(ctx, pod.Name, metav1.GetOptions{})
 	if err != nil {
 		return pod, fmt.Errorf("pod Get API error: %v", err)
 	}
@@ -286,9 +286,9 @@ func createTestPod(h *helper.H, namespace string, pvclaims []*corev1.PersistentV
 var errPodCompleted = fmt.Errorf("pod ran to completion")
 
 // podRunning checks if pod is running
-func podRunning(h *helper.H, podName, namespace string) wait.ConditionFunc {
+func podRunning(ctx context.Context, h *helper.H, podName, namespace string) wait.ConditionFunc {
 	return func() (bool, error) {
-		pod, err := h.Kube().CoreV1().Pods(namespace).Get(context.TODO(), podName, metav1.GetOptions{})
+		pod, err := h.Kube().CoreV1().Pods(namespace).Get(ctx, podName, metav1.GetOptions{})
 		if err != nil {
 			return false, err
 		}
@@ -304,11 +304,11 @@ func podRunning(h *helper.H, podName, namespace string) wait.ConditionFunc {
 
 // waitForPodNameRunningInNamespace waits default amount of time (PodStartTimeout) for the specified pod to become running.
 // Returns an error if timeout occurs first, or pod goes in to failed state.
-func waitForPodNameRunningInNamespace(h *helper.H, podName, namespace string) error {
-	return waitTimeoutForPodRunningInNamespace(h, podName, namespace, podStartTimeout)
+func waitForPodNameRunningInNamespace(ctx context.Context, h *helper.H, podName, namespace string) error {
+	return waitTimeoutForPodRunningInNamespace(ctx, h, podName, namespace, podStartTimeout)
 }
 
 // waitTimeoutForPodRunningInNamespace waits the given timeout duration for the specified pod to become running.
-func waitTimeoutForPodRunningInNamespace(h *helper.H, podName, namespace string, timeout time.Duration) error {
-	return wait.PollImmediate(poll, timeout, podRunning(h, podName, namespace))
+func waitTimeoutForPodRunningInNamespace(ctx context.Context, h *helper.H, podName, namespace string, timeout time.Duration) error {
+	return wait.PollImmediate(poll, timeout, podRunning(ctx, h, podName, namespace))
 }

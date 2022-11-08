@@ -28,35 +28,35 @@ var _ = ginkgo.Describe(daemonSetsTestName, func() {
 		h := helper.New()
 		nodeLabels := make(map[string]string)
 
-		util.GinkgoIt("empty node-label daemonset should get created", func() {
+		util.GinkgoIt("empty node-label daemonset should get created", func(ctx context.Context) {
 			// Set it to a wildcard dedicated-admin
-			h.SetServiceAccount("system:serviceaccount:%s:dedicated-admin-project")
+			h.SetServiceAccount(ctx, "system:serviceaccount:%s:dedicated-admin-project")
 
 			// Test creating a basic daemonset
 			ds := makeDaemonSet("empty-node-labels", h.GetNamespacedServiceAccount(), nodeLabels)
-			_, err := h.Kube().AppsV1().DaemonSets(h.CurrentProject()).Create(context.TODO(), &ds, metav1.CreateOptions{})
+			_, err := h.Kube().AppsV1().DaemonSets(h.CurrentProject()).Create(ctx, &ds, metav1.CreateOptions{})
 			Expect(err).NotTo(HaveOccurred())
 		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
 
-		util.GinkgoIt("worker node daemonset should get created", func() {
+		util.GinkgoIt("worker node daemonset should get created", func(ctx context.Context) {
 			// Set it to a wildcard dedicated-admin
-			h.SetServiceAccount("system:serviceaccount:%s:dedicated-admin-project")
+			h.SetServiceAccount(ctx, "system:serviceaccount:%s:dedicated-admin-project")
 
 			// Test creating a worker daemonset
 			nodeLabels["role"] = "worker"
 			ds := makeDaemonSet("worker-node-labels", h.GetNamespacedServiceAccount(), nodeLabels)
-			_, err := h.Kube().AppsV1().DaemonSets(h.CurrentProject()).Create(context.TODO(), &ds, metav1.CreateOptions{})
+			_, err := h.Kube().AppsV1().DaemonSets(h.CurrentProject()).Create(ctx, &ds, metav1.CreateOptions{})
 			Expect(err).NotTo(HaveOccurred())
 		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
 
-		util.GinkgoIt("infra node daemonset should get created", func() {
+		util.GinkgoIt("infra node daemonset should get created", func(ctx context.Context) {
 			// Set it to a wildcard dedicated-admin
-			h.SetServiceAccount("system:serviceaccount:%s:dedicated-admin-project")
+			h.SetServiceAccount(ctx, "system:serviceaccount:%s:dedicated-admin-project")
 
 			// Test creating an infra daemonset
 			nodeLabels["role"] = "infra"
 			ds := makeDaemonSet("infra-node-labels", h.GetNamespacedServiceAccount(), nodeLabels)
-			_, err := h.Kube().AppsV1().DaemonSets(h.CurrentProject()).Create(context.TODO(), &ds, metav1.CreateOptions{})
+			_, err := h.Kube().AppsV1().DaemonSets(h.CurrentProject()).Create(ctx, &ds, metav1.CreateOptions{})
 			Expect(err).NotTo(HaveOccurred())
 		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
 	})

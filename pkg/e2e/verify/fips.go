@@ -38,7 +38,7 @@ var _ = ginkgo.Describe(fipsTestName, func() {
 		}
 		h := helper.New()
 
-		util.GinkgoIt("for all nodes in a cluster", func() {
+		util.GinkgoIt("for all nodes in a cluster", func(ctx context.Context) {
 			testName := fmt.Sprintf("test-fips-%s-%d-%d", time.Now().Format("20060102-150405"), time.Now().Nanosecond()/1000000, ginkgo.GinkgoParallelProcess())
 
 			// Create Daemonset to test FIPS for each node
@@ -112,19 +112,19 @@ var _ = ginkgo.Describe(fipsTestName, func() {
 				},
 			}
 
-			ds, err := h.Kube().AppsV1().DaemonSets(h.CurrentProject()).Create(context.TODO(), ds, metav1.CreateOptions{})
+			ds, err := h.Kube().AppsV1().DaemonSets(h.CurrentProject()).Create(ctx, ds, metav1.CreateOptions{})
 			Expect(err).ToNot(HaveOccurred())
 			defer func() {
-				err := h.Kube().AppsV1().DaemonSets(h.CurrentProject()).Delete(context.TODO(), ds.Name, metav1.DeleteOptions{})
+				err := h.Kube().AppsV1().DaemonSets(h.CurrentProject()).Delete(ctx, ds.Name, metav1.DeleteOptions{})
 				Expect(err).ToNot(HaveOccurred(), fmt.Sprintf("Error deleting Daemonset: %v", err))
 			}()
 
-			nodes, err := h.Kube().CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{})
+			nodes, err := h.Kube().CoreV1().Nodes().List(ctx, metav1.ListOptions{})
 			Expect(err).ToNot(HaveOccurred(), fmt.Sprintf("Error retrieving nodes: %v", err))
 
 			// Poll until the number of ready pods is equal to the number of nodes, indicating FIPS is enabled for the cluster
 			err = wait.PollImmediate(fipsTestPollInterval, fipsTestPollDuration, func() (bool, error) {
-				ds, err = h.Kube().AppsV1().DaemonSets(h.CurrentProject()).Get(context.TODO(), testName, metav1.GetOptions{})
+				ds, err = h.Kube().AppsV1().DaemonSets(h.CurrentProject()).Get(ctx, testName, metav1.GetOptions{})
 				if err != nil {
 					return false, err
 				}

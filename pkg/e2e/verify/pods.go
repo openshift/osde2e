@@ -27,8 +27,8 @@ func init() {
 var _ = ginkgo.Describe(podsTestName, func() {
 	h := helper.New()
 
-	util.GinkgoIt("should not be Failed", func() {
-		list, err := h.Kube().CoreV1().Pods(metav1.NamespaceAll).List(context.TODO(), metav1.ListOptions{})
+	util.GinkgoIt("should not be Failed", func(ctx context.Context) {
+		list, err := h.Kube().CoreV1().Pods(metav1.NamespaceAll).List(ctx, metav1.ListOptions{})
 		filteredList := &v1.PodList{}
 
 		for _, pod := range list.Items {

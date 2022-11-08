@@ -51,23 +51,23 @@ var _ = ginkgo.Describe(hiveownershipWebhookTestName, func() {
 	h := helper.New()
 	ginkgo.Context("hiveownership validating webhook", func() {
 		// Create all crqs needed for the tests
-		ginkgo.JustBeforeEach(func() {
-			_, err := createGroup(DUMMY_GROUP, h)
+		ginkgo.JustBeforeEach(func(ctx context.Context) {
+			_, err := createGroup(ctx, DUMMY_GROUP, h)
 			Expect(err).NotTo(HaveOccurred())
 
 			for privileged, managed := range PRIVILEGED_CRQs {
-				err := CreateClusterResourceQuota(h, produceCRQ(privileged, managed), PRIVILEGED_USER, "")
+				err := createClusterResourceQuota(ctx, h, produceCRQ(privileged, managed), PRIVILEGED_USER, "")
 				Expect(err).NotTo(HaveOccurred())
 			}
 		})
 
 		// Clean up all clusterresourcequotas and groups generated for the tests
-		ginkgo.JustAfterEach(func() {
-			err := deleteGroup(DUMMY_GROUP, h)
+		ginkgo.JustAfterEach(func(ctx context.Context) {
+			err := deleteGroup(ctx, DUMMY_GROUP, h)
 			Expect(err).NotTo(HaveOccurred())
 
 			for privileged := range PRIVILEGED_CRQs {
-				err := DeleteClusterResourceQuota(h, privileged, PRIVILEGED_USER, "")
+				err := deleteClusterResourceQuota(ctx, h, privileged, PRIVILEGED_USER, "")
 				Expect(err).NotTo(HaveOccurred())
 			}
 		})
@@ -75,50 +75,50 @@ var _ = ginkgo.Describe(hiveownershipWebhookTestName, func() {
 		// TESTS BEGIN
 
 		// though https://github.com/openshift/managed-cluster-config/pull/626, we expect dedicated-admins cannot delete managed resources by protection of the hook.
-		util.GinkgoIt("dedicated admins cannot delete managed CRQs", func() {
+		util.GinkgoIt("dedicated admins cannot delete managed CRQs", func(ctx context.Context) {
 			for item, managed := range PRIVILEGED_CRQs {
 				if managed {
-					err := DeleteClusterResourceQuota(h, item, DUMMY_USER, "dedicated-admins")
+					err := deleteClusterResourceQuota(ctx, h, item, DUMMY_USER, "dedicated-admins")
 					Expect(err).To(HaveOccurred())
 				}
 			}
 		}, viper.GetFloat64(config.Tests.PollingTimeout))
 
 		// Passing constantly.
-		util.GinkgoIt("a random user cannot delete managed CRQs", func() {
+		util.GinkgoIt("a random user cannot delete managed CRQs", func(ctx context.Context) {
 			for item, managed := range PRIVILEGED_CRQs {
 				if managed {
-					err := DeleteClusterResourceQuota(h, item, DUMMY_USER, DUMMY_GROUP)
+					err := deleteClusterResourceQuota(ctx, h, item, DUMMY_USER, DUMMY_GROUP)
 					Expect(err).To(HaveOccurred())
 				}
 			}
 		}, viper.GetFloat64(config.Tests.PollingTimeout))
 
 		// Passsing Constantly.
-		util.GinkgoIt("Members of SRE can update a managed quota object", func() {
+		util.GinkgoIt("Members of SRE can update a managed quota object", func(ctx context.Context) {
 			for item, managed := range PRIVILEGED_CRQs {
 				if managed {
-					err := UpdateClusterResourceQuota(h, item, ELEVATED_SRE_USER, "")
+					err := updateClusterResourceQuota(ctx, h, item, ELEVATED_SRE_USER, "")
 					Expect(err).NotTo(HaveOccurred())
 				}
 			}
 		}, viper.GetFloat64(config.Tests.PollingTimeout))
 
 		// MCC TESTS(dedicated-admin changes - https://github.com/openshift/managed-cluster-config/pull/626)
-		util.GinkgoIt("as dedicated admin can update crqs inside the cluster that are non managed.", func() {
+		util.GinkgoIt("as dedicated admin can update crqs inside the cluster that are non managed.", func(ctx context.Context) {
 			for item, managed := range PRIVILEGED_CRQs {
 				if !managed {
-					err := UpdateClusterResourceQuota(h, item, DUMMY_USER, "dedicated-admins")
+					err := updateClusterResourceQuota(ctx, h, item, DUMMY_USER, "dedicated-admins")
 					Expect(err).NotTo(HaveOccurred())
 				}
 			}
 		}, viper.GetFloat64(config.Tests.PollingTimeout))
 
-		util.GinkgoIt("as dedicated admin can create a crq inside the cluster that is non managed.", func() {
+		util.GinkgoIt("as dedicated admin can create a crq inside the cluster that is non managed.", func(ctx context.Context) {
 			cuQuota := "quota-customer"
-			err := CreateClusterResourceQuota(h, produceCRQ(cuQuota, false), DUMMY_USER, "dedicated-admins")
+			err := createClusterResourceQuota(ctx, h, produceCRQ(cuQuota, false), DUMMY_USER, "dedicated-admins")
 			Expect(err).NotTo(HaveOccurred())
-			err = DeleteClusterResourceQuota(h, cuQuota, DUMMY_USER, "dedicated-admins")
+			err = deleteClusterResourceQuota(ctx, h, cuQuota, DUMMY_USER, "dedicated-admins")
 			Expect(err).NotTo(HaveOccurred())
 		}, viper.GetFloat64(config.Tests.PollingTimeout))
 		//ENDS
@@ -127,8 +127,8 @@ var _ = ginkgo.Describe(hiveownershipWebhookTestName, func() {
 
 // CRUD OPERATIONS
 
-// CreateClusterResourceQuota creates a clusterResourceQuota obj in the cluster as given user
-func CreateClusterResourceQuota(h *helper.H, crq *ov1.ClusterResourceQuota, asUser, userGroup string) (err error) {
+// createClusterResourceQuota creates a clusterResourceQuota obj in the cluster as given user
+func createClusterResourceQuota(ctx context.Context, h *helper.H, crq *ov1.ClusterResourceQuota, asUser, userGroup string) (err error) {
 	// reset impersonation upon return
 	defer h.Impersonate(rest.ImpersonationConfig{})
 
@@ -155,7 +155,7 @@ func CreateClusterResourceQuota(h *helper.H, crq *ov1.ClusterResourceQuota, asUs
 
 	err = wait.PollImmediate(5*time.Second, 10*time.Second, func() (bool, error) {
 		// create the CRQ
-		quotas, err := cli.QuotaV1().ClusterResourceQuotas().Create(context.TODO(), crq, metav1.CreateOptions{})
+		quotas, err := cli.QuotaV1().ClusterResourceQuotas().Create(ctx, crq, metav1.CreateOptions{})
 		if err != nil {
 			return false, fmt.Errorf("failed to create ClusterResourceQuota: '%s': %v", quotas, err)
 		}
@@ -165,8 +165,8 @@ func CreateClusterResourceQuota(h *helper.H, crq *ov1.ClusterResourceQuota, asUs
 	return err
 }
 
-// DeleteClusterResourceQuota deletes a given clusterResourceQuota obj
-func DeleteClusterResourceQuota(h *helper.H, name, asUser, userGroup string) (err error) {
+// deleteClusterResourceQuota deletes a given clusterResourceQuota obj
+func deleteClusterResourceQuota(ctx context.Context, h *helper.H, name, asUser, userGroup string) (err error) {
 	// reset impersonation upon return
 	defer h.Impersonate(rest.ImpersonationConfig{})
 
@@ -193,7 +193,7 @@ func DeleteClusterResourceQuota(h *helper.H, name, asUser, userGroup string) (er
 
 	err = wait.PollImmediate(5*time.Second, 10*time.Second, func() (bool, error) {
 		// delete the CRQ
-		err := cli.QuotaV1().ClusterResourceQuotas().Delete(context.TODO(), name, metav1.DeleteOptions{})
+		err := cli.QuotaV1().ClusterResourceQuotas().Delete(ctx, name, metav1.DeleteOptions{})
 		if err != nil {
 			return false, fmt.Errorf("failed to delete ClusterResourceQuota: '%s': %v", name, err)
 		}
@@ -203,8 +203,8 @@ func DeleteClusterResourceQuota(h *helper.H, name, asUser, userGroup string) (er
 	return err
 }
 
-// UpdateClusterResourceQuota updates the label with a random text for a given clusterResourceQuota obj
-func UpdateClusterResourceQuota(h *helper.H, name, asUser, userGroup string) (err error) {
+// updateClusterResourceQuota updates the label with a random text for a given clusterResourceQuota obj
+func updateClusterResourceQuota(ctx context.Context, h *helper.H, name, asUser, userGroup string) (err error) {
 	// reset impersonation upon return
 	defer h.Impersonate(rest.ImpersonationConfig{})
 
@@ -229,13 +229,13 @@ func UpdateClusterResourceQuota(h *helper.H, name, asUser, userGroup string) (er
 		return fmt.Errorf("cannot create quota client")
 	}
 
-	crq, err := cli.QuotaV1().ClusterResourceQuotas().Get(context.TODO(), name, metav1.GetOptions{})
+	crq, err := cli.QuotaV1().ClusterResourceQuotas().Get(ctx, name, metav1.GetOptions{})
 	if err != nil {
 		return fmt.Errorf("failed to get ClusterResourceQuota: '%s': %v", name, err)
 	}
 
 	// update the CRQ
-	updated, err := cli.QuotaV1().ClusterResourceQuotas().Update(context.TODO(), updateCRQ(crq), metav1.UpdateOptions{})
+	updated, err := cli.QuotaV1().ClusterResourceQuotas().Update(ctx, updateCRQ(crq), metav1.UpdateOptions{})
 	if err != nil {
 		return fmt.Errorf("failed to update ClusterResourceQuota: '%s': %v", updated, err)
 	}

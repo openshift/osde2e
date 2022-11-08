@@ -2,6 +2,8 @@
 package openshift
 
 import (
+	"context"
+
 	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
@@ -23,8 +25,8 @@ var _ = ginkgo.Describe(imageRegistryTestName, func() {
 	h := helper.New()
 
 	e2eTimeoutInSeconds := 3600
-	util.GinkgoIt("should run until completion", func() {
-		h.SetServiceAccount("system:serviceaccount:%s:cluster-admin")
+	util.GinkgoIt("should run until completion", func(ctx context.Context) {
+		h.SetServiceAccount(ctx, "system:serviceaccount:%s:cluster-admin")
 		// configure tests
 		cfg := DefaultE2EConfig
 		cfg.Suite = "openshift/image-registry"
@@ -56,13 +58,13 @@ var _ = ginkgo.Describe(imageEcosystemTestName, func() {
 	h := helper.New()
 
 	e2eTimeoutInSeconds := 3600
-	util.GinkgoIt("should run until completion", func() {
+	util.GinkgoIt("should run until completion", func(ctx context.Context) {
 		// configure tests
 		cfg := DefaultE2EConfig
 		cfg.Suite = "openshift/image-ecosystem"
 		cmd := cfg.Cmd()
 
-		h.SetServiceAccount("system:serviceaccount:%s:cluster-admin")
+		h.SetServiceAccount(ctx, "system:serviceaccount:%s:cluster-admin")
 		// setup runner
 		r := h.Runner(cmd)
 

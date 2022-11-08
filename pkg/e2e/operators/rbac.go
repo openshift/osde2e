@@ -53,21 +53,21 @@ var _ = ginkgo.Describe(subjectPermissionsTestName, func() {
 
 func checkSubjectPermissions(h *helper.H, spName string) {
 	ginkgo.Context("SubjectPermission", func() {
-		util.GinkgoIt("should have the expected ClusterRoles, ClusterRoleBindings and RoleBindinsg", func() {
-			clusterRoles, clusterRoleBindings, roleBindings, err := getSubjectPermissionRBACInfo(h, spName)
+		util.GinkgoIt("should have the expected ClusterRoles, ClusterRoleBindings and RoleBindinsg", func(ctx context.Context) {
+			clusterRoles, clusterRoleBindings, roleBindings, err := getSubjectPermissionRBACInfo(ctx, h, spName)
 			Expect(err).NotTo(HaveOccurred())
 
 			for _, clusterRoleName := range clusterRoles {
-				_, err := h.Kube().RbacV1().ClusterRoles().Get(context.TODO(), clusterRoleName, metav1.GetOptions{})
+				_, err := h.Kube().RbacV1().ClusterRoles().Get(ctx, clusterRoleName, metav1.GetOptions{})
 				Expect(err).ToNot(HaveOccurred(), "failed to get clusterRole %v\n", clusterRoleName)
 			}
 
 			for _, clusterRoleBindingName := range clusterRoleBindings {
-				err := pollClusterRoleBinding(h, clusterRoleBindingName)
+				err := pollClusterRoleBinding(ctx, h, clusterRoleBindingName)
 				Expect(err).ToNot(HaveOccurred(), "failed to get clusterRoleBinding %v\n", clusterRoleBindingName)
 			}
 			for _, roleBindingName := range roleBindings {
-				err := pollRoleBinding(h, h.CurrentProject(), roleBindingName)
+				err := pollRoleBinding(ctx, h, h.CurrentProject(), roleBindingName)
 				Expect(err).NotTo(HaveOccurred(), "failed to get roleBinding %v\n", roleBindingName)
 			}
 
@@ -75,11 +75,11 @@ func checkSubjectPermissions(h *helper.H, spName string) {
 	})
 }
 
-func getSubjectPermissionRBACInfo(h *helper.H, spName string) ([]string, []string, []string, error) {
+func getSubjectPermissionRBACInfo(ctx context.Context, h *helper.H, spName string) ([]string, []string, []string, error) {
 	us, err := h.Dynamic().Resource(schema.GroupVersionResource{
 		Group:    "managed.openshift.io",
 		Version:  "v1alpha1",
-		Resource: "subjectpermissions"}).Namespace(operatorNamespace).Get(context.TODO(), spName, metav1.GetOptions{})
+		Resource: "subjectpermissions"}).Namespace(operatorNamespace).Get(ctx, spName, metav1.GetOptions{})
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("Error getting %s SubjectPermission", spName)
 	}

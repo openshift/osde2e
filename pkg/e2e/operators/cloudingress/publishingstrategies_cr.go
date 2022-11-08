@@ -26,23 +26,24 @@ var _ = ginkgo.Describe(constants.SuiteOperators+TestPrefix, func() {
 	})
 	h := helper.New()
 	ginkgo.Context("publishingstrategies", func() {
-		util.GinkgoIt("dedicated admin should not be allowed to manage publishingstrategies CR", func() {
-			h.Impersonate(rest.ImpersonationConfig{
-				UserName: "test-user@redhat.com",
-				Groups: []string{
-					"dedicated-admins",
-				},
-			})
-			defer func() {
-				h.Impersonate(rest.ImpersonationConfig{})
-			}()
-			ps := createPublishingstrategies("publishingstrategy-cr-test-1")
-			err := addPublishingstrategy(h, ps)
-			Expect(apierrors.IsForbidden(err)).To(BeTrue())
-
-		})
+		util.GinkgoIt(
+			"dedicated admin should not be allowed to manage publishingstrategies CR",
+			func(ctx context.Context) {
+				h.Impersonate(rest.ImpersonationConfig{
+					UserName: "test-user@redhat.com",
+					Groups: []string{
+						"dedicated-admins",
+					},
+				})
+				defer func() {
+					h.Impersonate(rest.ImpersonationConfig{})
+				}()
+				ps := createPublishingstrategies("publishingstrategy-cr-test-1")
+				err := addPublishingstrategy(ctx, h, ps)
+				Expect(apierrors.IsForbidden(err)).To(BeTrue())
+			},
+		)
 	})
-
 })
 
 func createPublishingstrategies(name string) cloudingress.PublishingStrategy {
@@ -62,14 +63,15 @@ func createPublishingstrategies(name string) cloudingress.PublishingStrategy {
 	return publishingstrategy
 }
 
-func addPublishingstrategy(h *helper.H, publishingstrategy cloudingress.PublishingStrategy) error {
+func addPublishingstrategy(ctx context.Context, h *helper.H, publishingstrategy cloudingress.PublishingStrategy) error {
 	obj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(publishingstrategy.DeepCopy())
 	if err != nil {
 		return err
 	}
 	unstructuredObj := unstructured.Unstructured{obj}
-	_, err = h.Dynamic().Resource(schema.GroupVersionResource{
-		Group: "cloudingress.managed.openshift.io", Version: "v1alpha1", Resource: "publishingstrategies",
-	}).Namespace(OperatorNamespace).Create(context.TODO(), &unstructuredObj, metav1.CreateOptions{})
+	_, err = h.Dynamic().
+		Resource(schema.GroupVersionResource{Group: "cloudingress.managed.openshift.io", Version: "v1alpha1", Resource: "publishingstrategies"}).
+		Namespace(OperatorNamespace).
+		Create(ctx, &unstructuredObj, metav1.CreateOptions{})
 	return err
 }

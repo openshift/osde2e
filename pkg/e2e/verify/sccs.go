@@ -32,45 +32,44 @@ var _ = ginkgo.Describe(dedicatedAdminSccTestName, func() {
 	prometheusRestartPollingDuration := 4 * time.Minute
 
 	ginkgo.Context("Dedicated Admin permissions", func() {
-
-		util.GinkgoIt("should include anyuid", func() {
-			checkSccPermissions(h, "dedicated-admins-cluster", "anyuid")
+		util.GinkgoIt("should include anyuid", func(ctx context.Context) {
+			checkSccPermissions(ctx, h, "dedicated-admins-cluster", "anyuid")
 		})
 
-		util.GinkgoIt("should include nonroot", func() {
-			checkSccPermissions(h, "dedicated-admins-cluster", "nonroot")
+		util.GinkgoIt("should include nonroot", func(ctx context.Context) {
+			checkSccPermissions(ctx, h, "dedicated-admins-cluster", "nonroot")
 		})
 
-		util.GinkgoIt("can create pods with SCCs", func() {
+		util.GinkgoIt("can create pods with SCCs", func(ctx context.Context) {
 			_, err := helper.ApplyYamlInFolder(workloadDir, h.CurrentProject(), h.Kube())
 			Expect(err).NotTo(HaveOccurred(), "couldn't apply workload yaml")
 		})
 	})
 	ginkgo.Context("scc-test", func() {
-		util.GinkgoIt("new SCC does not break pods", func() {
-			//Test to verify that creation of a permissive scc does not disrupt ability to run pods https://bugzilla.redhat.com/show_bug.cgi?id=1868976
+		util.GinkgoIt("new SCC does not break pods", func(ctx context.Context) {
+			// Test to verify that creation of a permissive scc does not disrupt ability to run pods https://bugzilla.redhat.com/show_bug.cgi?id=1868976
 			newScc := makeMinimalSCC("scc-test")
 			log.Printf("SCC:(%v)", newScc)
-			err := createScc(newScc, h)
+			err := createScc(ctx, newScc, h)
 			Expect(err).NotTo(HaveOccurred())
 			defer func() {
-				err = deleteScc("scc-test", h)
+				err = deleteScc(ctx, "scc-test", h)
 				Expect(err).NotTo(HaveOccurred())
 			}()
 			log.Printf("Error:(%v)", err)
 
 			// Reestarting the prometheus operator
-			err = restartOperator(h, "prometheus-operator", "openshift-monitoring")
+			err = restartOperator(ctx, h, "prometheus-operator", "openshift-monitoring")
 			Expect(err).NotTo(HaveOccurred())
 			log.Printf("Error:(%v)", err)
-			//Deleting all prometheus pods
-			list, _ := FilterPods("openshift-monitoring", "app.kubernetes.io/name=prometheus", h)
+			// Deleting all prometheus pods
+			list, _ := FilterPods(ctx, "openshift-monitoring", "app.kubernetes.io/name=prometheus", h)
 			names, _ := GetPodNames(list, h)
 			log.Printf("Names of pods:(%v)", names)
-			numPrometheusPods := deletePods(names, "openshift-monitoring", h)
-			//Verifying the same number of running prometheus pods has come up
+			numPrometheusPods := deletePods(ctx, names, "openshift-monitoring", h)
+			// Verifying the same number of running prometheus pods has come up
 			err = wait.PollImmediate(2*time.Second, prometheusRestartPollingDuration, func() (bool, error) {
-				pollList, _ := FilterPods("openshift-monitoring", "app.kubernetes.io/name=prometheus", h)
+				pollList, _ := FilterPods(ctx, "openshift-monitoring", "app.kubernetes.io/name=prometheus", h)
 				if !AllDifferentPods(list, pollList) {
 					return false, nil
 				}
@@ -102,10 +101,9 @@ func AllDifferentPods(originalPods, newPods *apiv1.PodList) bool {
 	return true
 }
 
-func checkSccPermissions(h *helper.H, clusterRole string, scc string) {
-
+func checkSccPermissions(ctx context.Context, h *helper.H, clusterRole string, scc string) {
 	// Get the cluster role containing the definition
-	cr, err := h.Kube().RbacV1().ClusterRoles().Get(context.TODO(), clusterRole, metav1.GetOptions{})
+	cr, err := h.Kube().RbacV1().ClusterRoles().Get(ctx, clusterRole, metav1.GetOptions{})
 	Expect(err).ToNot(HaveOccurred(), "failed to get clusterRole %s\n", clusterRole)
 
 	foundRule := false
@@ -135,14 +133,11 @@ func checkSccPermissions(h *helper.H, clusterRole string, scc string) {
 
 func makeMinimalSCC(name string) v1.SecurityContextConstraints {
 	scc := v1.SecurityContextConstraints{
-
 		TypeMeta: metav1.TypeMeta{
-
 			Kind:       "SecurityContextConstraints",
 			APIVersion: "security.openshift.io/v1",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-
 			Name: name,
 		},
 		Groups: []string{
@@ -165,33 +160,30 @@ func makeMinimalSCC(name string) v1.SecurityContextConstraints {
 	return scc
 }
 
-func createScc(scc v1.SecurityContextConstraints, h *helper.H) error {
-
-	_, err := h.Security().SecurityV1().SecurityContextConstraints().Create(context.TODO(), &scc, metav1.CreateOptions{})
-	return (err)
+func createScc(ctx context.Context, scc v1.SecurityContextConstraints, h *helper.H) error {
+	_, err := h.Security().SecurityV1().SecurityContextConstraints().Create(ctx, &scc, metav1.CreateOptions{})
+	return err
 }
 
-func deleteScc(scc string, h *helper.H) error {
-
-	err := h.Security().SecurityV1().SecurityContextConstraints().Delete(context.TODO(), scc, metav1.DeleteOptions{})
-	return (err)
+func deleteScc(ctx context.Context, scc string, h *helper.H) error {
+	err := h.Security().SecurityV1().SecurityContextConstraints().Delete(ctx, scc, metav1.DeleteOptions{})
+	return err
 }
 
-//Filters pods based on namespace and label
-func FilterPods(namespace string, label string, h *helper.H) (*apiv1.PodList, error) {
-
-	list, err := h.Kube().CoreV1().Pods(namespace).List(context.TODO(), metav1.ListOptions{
-		LabelSelector: label})
+// Filters pods based on namespace and label
+func FilterPods(ctx context.Context, namespace string, label string, h *helper.H) (*apiv1.PodList, error) {
+	list, err := h.Kube().CoreV1().Pods(namespace).List(ctx, metav1.ListOptions{
+		LabelSelector: label,
+	})
 	if err != nil {
 		log.Printf("Could not issue create command")
 		return list, err
 	}
 
 	return list, err
-
 }
 
-//Extracts pod names from a filtered list and counts how many are in running state
+// Extracts pod names from a filtered list and counts how many are in running state
 func GetPodNames(list *apiv1.PodList, h *helper.H) ([]string, int) {
 	var notReady []apiv1.Pod
 	var ready []apiv1.Pod
@@ -228,47 +220,45 @@ podLoop:
 }
 
 // Scales down and scales up the operator deployment to initiate a pod restart
-func restartOperator(h *helper.H, operator string, ns string) error {
-
+func restartOperator(ctx context.Context, h *helper.H, operator string, ns string) error {
 	log.Printf("restarting %s operator to force re-initialize pods", operator)
 
 	err := wait.PollImmediate(5*time.Second, 2*time.Minute, func() (bool, error) {
 		// scale down
-		s, err := h.Kube().AppsV1().Deployments(ns).GetScale(context.TODO(), operator, metav1.GetOptions{})
+		s, err := h.Kube().AppsV1().Deployments(ns).GetScale(ctx, operator, metav1.GetOptions{})
 		if err != nil {
 			return false, nil
 		}
 		sc := *s
 		sc.Spec.Replicas = 0
-		_, err = h.Kube().AppsV1().Deployments(ns).UpdateScale(context.TODO(), operator, &sc, metav1.UpdateOptions{})
+		_, err = h.Kube().AppsV1().Deployments(ns).UpdateScale(ctx, operator, &sc, metav1.UpdateOptions{})
 		if err != nil {
 			return false, nil
 		}
 
 		// scale up
 		sc.Spec.Replicas = 1
-		_, err = h.Kube().AppsV1().Deployments(ns).UpdateScale(context.TODO(), operator, &sc, metav1.UpdateOptions{})
+		_, err = h.Kube().AppsV1().Deployments(ns).UpdateScale(ctx, operator, &sc, metav1.UpdateOptions{})
 		if err != nil {
 			return false, nil
 		}
 		log.Printf(" %s operator restart complete..", operator)
 		return true, nil
 	})
-
 	if err != nil {
 		return fmt.Errorf("couldn't restart %s operator to re-initiate pods: %v", operator, err)
 	}
 	return nil
 }
 
-func deletePods(names []string, namespace string, h *helper.H) int {
+func deletePods(ctx context.Context, names []string, namespace string, h *helper.H) int {
 	numPods := 0
 	for _, name := range names {
 		numPods = numPods + 1
-		_, err := h.Kube().CoreV1().Pods(namespace).Get(context.TODO(), name, metav1.GetOptions{})
+		_, err := h.Kube().CoreV1().Pods(namespace).Get(ctx, name, metav1.GetOptions{})
 		log.Printf("Check before deleting pod %s, error: %v", name, err)
 		if err == nil {
-			err := h.Kube().CoreV1().Pods(namespace).Delete(context.TODO(), name, metav1.DeleteOptions{})
+			err := h.Kube().CoreV1().Pods(namespace).Delete(ctx, name, metav1.DeleteOptions{})
 			log.Printf("Deleting pod %s, error: %v", name, err)
 		}
 	}

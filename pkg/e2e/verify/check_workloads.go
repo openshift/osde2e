@@ -27,19 +27,19 @@ var _ = ginkgo.Describe(onNodesTestName, func() {
 
 	ginkgo.Context("worker nodes", func() {
 
-		util.GinkgoIt("on worker nodes", func() {
+		util.GinkgoIt("on worker nodes", func(ctx context.Context) {
 
-			_, infra, err := listNodesByType(h.Kube().CoreV1())
+			_, infra, err := listNodesByType(ctx, h.Kube().CoreV1())
 			Expect(err).NotTo(HaveOccurred())
 
-			_, err = checkPods(h.Kube().CoreV1(), infra)
+			_, err = checkPods(ctx, h.Kube().CoreV1(), infra)
 			Expect(err).NotTo(HaveOccurred())
 
 		})
 	})
 })
 
-func checkPods(podClient v1.CoreV1Interface, infra []string) (map[string]string, error) {
+func checkPods(ctx context.Context, podClient v1.CoreV1Interface, infra []string) (map[string]string, error) {
 
 	type (
 		PodName      = string
@@ -59,7 +59,7 @@ func checkPods(podClient v1.CoreV1Interface, infra []string) (map[string]string,
 
 	listOpts := metav1.ListOptions{}
 
-	list, err := podClient.Pods(metav1.NamespaceAll).List(context.TODO(), listOpts)
+	list, err := podClient.Pods(metav1.NamespaceAll).List(ctx, listOpts)
 	if err != nil {
 		return nil, fmt.Errorf("error getting pod list: %v", err)
 	}
@@ -90,13 +90,13 @@ func checkPods(podClient v1.CoreV1Interface, infra []string) (map[string]string,
 }
 
 //This function returns a list of worker nodes and a list of infra nodes
-func listNodesByType(nodeClient v1.CoreV1Interface) (worker, infra []string, err error) {
+func listNodesByType(ctx context.Context, nodeClient v1.CoreV1Interface) (worker, infra []string, err error) {
 
 	log.Printf("Getting node list")
 
 	listOpts := metav1.ListOptions{}
 	//This call will list all the nodes in the cluster
-	list, err := nodeClient.Nodes().List(context.TODO(), listOpts)
+	list, err := nodeClient.Nodes().List(ctx, listOpts)
 
 	if err != nil {
 		return nil, nil, fmt.Errorf("error getting node list: %v", err)
