@@ -1,5 +1,5 @@
 // Package openshift runs the OpenShift extended test suite.
-package openshift
+package hypershift
 
 import (
 	"context"
@@ -7,7 +7,7 @@ import (
 
 	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	"github.com/spf13/viper"
+	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 
@@ -32,13 +32,13 @@ var _ = ginkgo.Describe(hypershiftInstallVerify, func() {
 	ginkgo.Context("Verify install using oc", func() {
 		util.GinkgoIt("Worker nodes are ready", func(ctx context.Context) {
 			Expect(checkWorkerNodesInCluster()).ToNot(BeEmpty())
-		}, viper.GetFloat64(config.Tests.PollingTimeout))
+		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
 	})
 
 	ginkgo.Context("Verify install using AWS", func() {
 		util.GinkgoIt("Worker nodes are present in CCS account", func(ctx context.Context) {
 			Expect(checkWorkerNodesInAWS()).To(BeTrue())
-		}, viper.GetFloat64(config.Tests.PollingTimeout))
+		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
 	})
 })
 

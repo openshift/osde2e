@@ -1,22 +1,30 @@
 package aws
 
+import (
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/ec2"
+)
+
+// Hypershift Test Helper Function:
+// This function is used to validate the worker nodes displayed by the cluster are the same as the worker nodes displayed by the AWS account.
 func (CcsAwsSession *ccsAwsSession) CheckIfEC2ExistBasedOnNodeName(nodeName string) (bool, error) {
 	var err error
-	CcsAwsSession.session, CcsAwsSession.iam = CcsAwsSession.getClient()
+	CcsAwsSession.session, _, CcsAwsSession.ec2 = CcsAwsSession.getClient()
 
-	// Get the list of instances
-	instances, err := CcsAwsSession.ec2.DescribeInstances(nil)
+	ec2Instances, err := CcsAwsSession.ec2.DescribeInstances(&ec2.DescribeInstancesInput{
+		Filters: []*ec2.Filter{
+			{
+				Name:   aws.String("private-dns-name"),
+				Values: []*string{aws.String(nodeName)},
+			},
+		},
+	})
 	if err != nil {
 		return false, err
 	}
 
-	// Loop through the instances
-	for _, reservation := range instances.Reservations {
-		for _, instance := range reservation.Instances {
-			if *instance.PrivateDnsName == nodeName {
-				return true, nil
-			}
-		}
+	if len(ec2Instances.Reservations) > 0 {
+		return true, nil
 	}
 
 	return false, nil

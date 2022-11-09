@@ -101,6 +101,11 @@ func WaitForClusterReadyPostInstall(clusterID string, logger *log.Logger) error 
 	}
 	logger.Println("Cluster is provisioned in OCM")
 
+	if viper.GetBool(config.Hypershift) {
+		//Hypershift clusters are ready at this point
+		return nil
+	}
+
 	clusterConfig, _, err := ClusterConfig(clusterID)
 	if err != nil {
 		return fmt.Errorf("failed looking up cluster config for healthcheck: %w", err)
