@@ -10,7 +10,7 @@ import (
 // the log package.
 func CreateNewStdLoggerOrUseExistingLogger(logger *log.Logger) *log.Logger {
 	if logger == nil {
-		return log.New(os.Stderr, "", log.LstdFlags)
+		return log.New(os.Stderr, "", log.LstdFlags|log.Lshortfile)
 	}
 
 	return logger
