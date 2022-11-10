@@ -20,7 +20,7 @@ type ROSAProvider struct {
 
 // New will create a new ROSAProvider.
 func New() (*ROSAProvider, error) {
-	ocmProvider, err := ocmprovider.NewWithEnv(viper.GetString(Env))
+	ocmProvider, err := ocmprovider.NewWithEnv(viper.GetString(ocmprovider.Env))
 
 	if err != nil {
 		return nil, fmt.Errorf("error creating OCM provider for ROSA provider: %v", err)
