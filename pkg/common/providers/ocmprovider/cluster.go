@@ -202,18 +202,9 @@ func (o *OCMProvider) LaunchCluster(clusterName string) (string, error) {
 					}
 				}
 			} else {
-				var err error
-				var ccsUser string
-				ccsUser, err = aws.VerifyCCS()
+				_, err = aws.VerifyCCS()
 				if err != nil {
 					return "", fmt.Errorf("error verifying CCS credentials: %v", err)
-				}
-				log.Printf("ocm.ccs.overwrite is: %v - will attempt to generate CCS keys.", viper.GetString(CCS_OVERWRITE))
-				if viper.GetBool("ocm.ccs.overwrite") && ccsUser != "osdCcsAdmin" {
-					awsAccessKey, awsSecretKey, err = aws.CcsScale()
-				}
-				if err != nil {
-					return "", fmt.Errorf("error generating CCS keys: %v", err)
 				}
 
 				newCluster = newCluster.CCS(v1.NewCCS().Enabled(true)).AWS(
