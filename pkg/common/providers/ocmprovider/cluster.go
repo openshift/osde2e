@@ -1254,10 +1254,16 @@ func (o *OCMProvider) AddProperty(cluster *spi.Cluster, tag string, value string
 		return fmt.Errorf("error while building updated modified cluster object with new property: %v", err)
 	}
 
-	propertyFilename := fmt.Sprintf("%s.osde2e-cluster-property-update.metrics.prom", cluster.ID())
-	data := fmt.Sprintf("# TYPE cicd_cluster_properties gauge\ncicd_cluster_properties{cluster_id=\"%s\",environment=\"%s\",job_id=\"%s\",property=\"%s\",region=\"%s\",value=\"%s\",version=\"%s\"} 0\n", cluster.ID(), o.Environment(), viper.GetString(config.JobID), tag, cluster.Region(), value, cluster.Version())
-	log.Println(data)
-	aws.WriteToS3(aws.CreateS3URL(viper.GetString(config.Tests.MetricsBucket), "incoming", propertyFilename), []byte(data))
+
+	if viper.GetString(config.JobName) != "" {
+		propertyFilename := fmt.Sprintf("%s.osde2e-cluster-property-update.metrics.prom", cluster.ID())
+		data := fmt.Sprintf("# TYPE cicd_cluster_properties gauge\ncicd_cluster_properties{cluster_id=\"%s\",environment=\"%s\",job_id=\"%s\",property=\"%s\",region=\"%s\",value=\"%s\",version=\"%s\"} 0\n", cluster.ID(), o.Environment(), viper.GetString(config.JobID), tag, cluster.Region(), value, cluster.Version())
+		err = aws.WriteToS3(aws.CreateS3URL(viper.GetString(config.Tests.MetricsBucket), "incoming", propertyFilename), []byte(data))
+		if err != nil {
+			return fmt.Errorf("failed to upload cluster property metrics: %v", err)
+		}
+		log.Println(data)
+	}
 
 	err = retryer().Do(func() error {
 		var err error

@@ -65,9 +65,13 @@ func WriteToS3(outputKey string, data []byte) error {
 		Body:   reader,
 	})
 
+	if err != nil {
+		return err
+	}
+
 	log.Printf("Uploaded to %s", outputKey)
 
-	return err
+	return nil
 }
 
 // CreateS3URL creates an S3 URL from a bucket and a key string.
