@@ -35,7 +35,7 @@ var DefaultRunner = &Runner{
 	Server:    "https://kubernetes.default",
 	CA:        serviceAccountDir + "/ca.crt",
 	TokenFile: serviceAccountDir + "/token",
-	Logger:    log.New(os.Stderr, "", log.LstdFlags),
+	Logger:    log.New(os.Stderr, "", log.LstdFlags|log.Lshortfile),
 }
 
 // Runner runs the OpenShift extended test suite within a cluster.

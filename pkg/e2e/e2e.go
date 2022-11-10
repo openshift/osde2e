@@ -110,7 +110,7 @@ func beforeSuite() bool {
 		viper.Set(config.CloudProvider.Region, cluster.Region())
 		log.Printf("CLOUD_PROVIDER_REGION set to %s from OCM.", viper.GetString(config.CloudProvider.Region))
 
-		if !viper.GetBool(config.Addons.SkipAddonList) || viper.GetString(config.Provider) != "mock" {
+		if (!viper.GetBool(config.Addons.SkipAddonList) || viper.GetString(config.Provider) != "mock") && len(cluster.Addons()) > 0 {
 			log.Printf("Found addons: %s", strings.Join(cluster.Addons(), ","))
 		}
 
@@ -934,7 +934,7 @@ func runTestsInPhase(phase string, description string, suiteConfig types.SuiteCo
 		}
 		clusterState = cluster.State()
 	}
-	if !suiteConfig.DryRun && clusterState == spi.ClusterStateReady {
+	if !suiteConfig.DryRun && clusterState == spi.ClusterStateReady && viper.GetString(config.JobName) != "" {
 		h := helper.NewOutsideGinkgo()
 		if h == nil {
 			log.Println("Unable to generate helper outside of ginkgo")
