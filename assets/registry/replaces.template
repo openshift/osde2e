@@ -14,7 +14,7 @@ spec:
   template:
     spec:
       securityContext:
-        runAsUser: 1000
+        runAsUser: 1000910001
       containers:
       - args:
         - -plaintext
