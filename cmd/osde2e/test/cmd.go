@@ -4,6 +4,7 @@ import (
 	"log"
 	"math/rand"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/openshift/osde2e/cmd/osde2e/common"
@@ -55,7 +56,7 @@ func init() {
 	pfs.StringVar(
 		&args.configString,
 		"configs",
-		"",
+		os.Getenv("CONFIGS"),
 		"A comma separated list of built in configs to use",
 	)
 	Cmd.RegisterFlagCompletionFunc("configs", helpers.ConfigComplete)
@@ -68,21 +69,21 @@ func init() {
 	pfs.StringVar(
 		&args.secretLocations,
 		"secret-locations",
-		"",
+		os.Getenv("SECRET_LOCATIONS"),
 		"A comma separated list of possible secret directory locations for loading secret configs.",
 	)
 	pfs.StringVarP(
 		&args.clusterID,
 		"cluster-id",
 		"i",
-		"",
+		os.Getenv("CLUSTER_ID"),
 		"Existing OCM cluster ID to run tests against.",
 	)
 	pfs.StringVarP(
 		&args.environment,
 		"environment",
 		"e",
-		"",
+		os.Getenv("ENV"),
 		"Cluster provider environment to use.",
 	)
 
@@ -99,10 +100,15 @@ func init() {
 		false,
 		"Destroy cluster after test completion.",
 	)
+ 
+	var sh = false
+	if strings.EqualFold(os.Getenv( "SKIP_HEALTH_CHECK" ),"true"){
+		sh = true
+	}
 	pfs.BoolVar(
 		&args.skipHealthChecks,
 		"skip-health-check",
-		false,
+		sh,
 		"Skip cluster health checks.",
 	)
 	pfs.StringVar(
@@ -117,10 +123,15 @@ func init() {
 		"",
 		"Skip any Ginkgo tests whose names match the regular expression.",
 	)
+
+	var mg = false
+	if strings.EqualFold(os.Getenv( "MUST_GATHER" ),"true"){
+		mg = true
+	}
 	pfs.BoolVar(
 		&args.mustGather,
 		"must-gather",
-		false,
+		mg,
 		"Control the Must Gather process at the end of a failed testing run.",
 	)
 
