@@ -1,3 +1,3 @@
 provider: rosa
 rosa:
-  Env: stage
+  env: stage
