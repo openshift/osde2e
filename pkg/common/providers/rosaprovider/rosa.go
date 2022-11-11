@@ -4,9 +4,9 @@ package rosaprovider
 import (
 	"fmt"
 
+	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/providers/ocmprovider"
 	"github.com/openshift/osde2e/pkg/common/spi"
-	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 )
 
 func init() {
@@ -20,7 +20,7 @@ type ROSAProvider struct {
 
 // New will create a new ROSAProvider.
 func New() (*ROSAProvider, error) {
-	ocmProvider, err := ocmprovider.NewWithEnv(viper.GetString(ocmprovider.Env))
+	ocmProvider, err := ocmprovider.NewWithEnv(viper.GetString(Env))
 
 	if err != nil {
 		return nil, fmt.Errorf("error creating OCM provider for ROSA provider: %v", err)
