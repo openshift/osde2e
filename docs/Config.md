@@ -37,11 +37,7 @@ Some environment variables commonly used for pipelines under osde2e are indicate
 | Environment variable | Usage |
 | --------------| ------------------------| 
 |ROSA_ENV| Environment for the e2e testing, default to prod.|
-|ROSA_AWS_ACCESS_KEY_ID| AWSAccessKeyID for provisioning clusters.|
-|ROSA_AWS_SECRET_ACCESS_KEY| AWSSecretAccessKey for provisioning clusters.|
-|ROSA_AWS_REGION| AWSRegion for provisioning clusters.|
 |ROSA_STS| Boolean value to indicate the cluster is STS enabled or not.|
-|ROSA_SUBNET_IDS| A list of subnets used to create the cluster, required for proxy enabled cluster.|
 |ROSA_REPLICAS| Compute node count for the rosa cluster, default is 2.|
  
  
@@ -58,10 +54,6 @@ Some environment variables commonly used for pipelines under osde2e are indicate
 |OCM_ADDITIONAL_LABELS| AdditionalLabels is used to add more specific labels to a cluster in OCM.|
 |OCM_CCS| CCS defines whether the cluster should expect cloud credentials or not|
 |OCM_CCS_ADMIN| Overwrite Flag that will attempt to cycle osdCcsAdmin credentials for a CCS install when the osdCcsAdmin credentials were not passed.|
-|OCM_AWS_ACCOUNT|
-|OCM_AWS_ACCESS_KEY| 
-|OCM_AWS_SECRET_KEY| 
-|OCM_AWS_VPC_SUBNET_IDS| Define existing VPC via a comma-separated list of subnet id's.|
 |TEST_KUBECONFIG| Path to a local kubeconfig; will override fetching Kubeconfig credentials from OCM if specified.| 
   
 ### Upgrade variables:-
@@ -184,6 +176,12 @@ The following are the values that can be plugged in for the --configs flag when 
 |aws | To specify aws as the cloud provider.|
 |gcp | To specify gcp as the cloud provider.|
 
+### AWS specific values:
+|AWS_ACCOUNT| AWS account to use for testing.| 
+|AWS_ACCESS_KEY| AWSAccessKeyID for provisioning clusters.|
+|AWS_SECRET_ACCESS_KEY| AWSSecretAccessKey for provisioning clusters.|
+|AWS_REGION| AWSRegion for provisioning clusters.|
+|AWS_VPC_SUBNET_IDS| AWSVPCSubnetIDs for provisioning clusters for BYO-VPC clusters.|
 
 ### Cluster Provider values:
 
