@@ -33,7 +33,7 @@ func (CcsAwsSession *ccsAwsSession) getClient() (*session.Session, *iam.IAM, *ec
 
 	CcsAwsSession.once.Do(func() {
 		CcsAwsSession.session, err = session.NewSession(aws.NewConfig().
-			WithCredentials(credentials.NewStaticCredentials(viper.GetString(AWSAccessKey), viper.GetString(AWSSecretAccessKey), "")).
+			WithCredentials(credentials.NewStaticCredentials(viper.GetString(config.AWSAccessKey), viper.GetString(config.AWSSecretAccessKey), "")).
 			WithRegion(viper.GetString(config.CloudProvider.Region)))
 		CcsAwsSession.iam = iam.New(CcsAwsSession.session)
 		CcsAwsSession.ec2 = ec2.New(CcsAwsSession.session)

@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
+	"github.com/openshift/osde2e/pkg/common/config"
 )
 
 // At the moment, rosa requires AWS sessions to be set globally. To get around that, we'll use this
@@ -22,9 +23,9 @@ func callAndSetAWSSession(f func() error) error {
 	}()
 
 	env = os.Environ()
-	os.Setenv("AWS_ACCESS_KEY_ID", viper.GetString(AWSAccessKey))
-	os.Setenv("AWS_SECRET_ACCESS_KEY", viper.GetString(AWSSecretAccessKey))
-	os.Setenv("AWS_REGION", viper.GetString(AWSRegion))
+	os.Setenv("AWS_ACCESS_KEY_ID", viper.GetString(config.AWSAccessKey))
+	os.Setenv("AWS_SECRET_ACCESS_KEY", viper.GetString(config.AWSSecretAccessKey))
+	os.Setenv("AWS_REGION", viper.GetString(config.AWSRegion))
 	error := false
 	if os.Getenv("AWS_ACCESS_KEY_ID") == "" {
 		log.Println("AWS_ACCESS_KEY_ID is empty")
