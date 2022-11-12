@@ -139,7 +139,7 @@ func (o *OCMProvider) LaunchCluster(clusterName string) (string, error) {
 		// If AWS credentials are set, this must be an AWS CCS cluster
 		awsAccount := viper.GetString(AWSAccount)
 		awsAccessKey := viper.GetString(AWSAccessKey)
-		awsSecretKey := viper.GetString(AWSSecretKey)
+		awsSecretKey := viper.GetString(AWSSecretAccessKey)
 		//Refactor: This is a hack to get the AWS CCS cluster to work. In reality today we are loading too many secrets and need a better way to do this.
 		//IE: If aws keys are set but not awsAccount, we should mention it's an AWS execution but we are missing credentials.
 		if viper.GetString(GCPCredsJSON) != "" {
@@ -411,13 +411,13 @@ func (o *OCMProvider) DetermineRegion(cloudProvider string) (string, error) {
 		var regions []*v1.CloudRegion
 		// We support multiple cloud providers....
 		if cloudProvider == "aws" {
-			if viper.GetString(AWSAccessKey) == "" || viper.GetString(AWSSecretKey) == "" {
+			if viper.GetString(AWSAccessKey) == "" || viper.GetString(AWSSecretAccessKey) == "" {
 				log.Println("Random region requested but cloud credentials not supplied. Defaulting to us-east-1")
 				return "us-east-1", nil
 			}
 			awsCredentials, err := v1.NewAWS().
 				AccessKeyID(viper.GetString(AWSAccessKey)).
-				SecretAccessKey(viper.GetString(AWSSecretKey)).
+				SecretAccessKey(viper.GetString(AWSSecretAccessKey)).
 				Build()
 			if err != nil {
 				return "", err
@@ -1245,7 +1245,6 @@ func (o *OCMProvider) AddProperty(cluster *spi.Cluster, tag string, value string
 		return fmt.Errorf("error while building updated modified cluster object with new property: %v", err)
 	}
 
-
 	if viper.GetString(config.JobName) != "" {
 		propertyFilename := fmt.Sprintf("%s.osde2e-cluster-property-update.metrics.prom", cluster.ID())
 		data := fmt.Sprintf("# TYPE cicd_cluster_properties gauge\ncicd_cluster_properties{cluster_id=\"%s\",environment=\"%s\",job_id=\"%s\",property=\"%s\",region=\"%s\",value=\"%s\",version=\"%s\"} 0\n", cluster.ID(), o.Environment(), viper.GetString(config.JobID), tag, cluster.Region(), value, cluster.Version())
@@ -1313,7 +1312,7 @@ func (o *OCMProvider) Upgrade(clusterID string, version string, t time.Time) err
 	return nil
 }
 
-//GetUpgradePolicyID gets the first upgrade policy from the top
+// GetUpgradePolicyID gets the first upgrade policy from the top
 func (o *OCMProvider) GetUpgradePolicyID(clusterID string) (string, error) {
 
 	listResp, err := o.conn.ClustersMgmt().V1().Clusters().Cluster(clusterID).UpgradePolicies().List().SendContext(context.TODO())

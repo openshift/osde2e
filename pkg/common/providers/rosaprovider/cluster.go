@@ -124,8 +124,8 @@ func (m *ROSAProvider) LaunchCluster(clusterName string) (string, error) {
 		"--mode", "auto",
 		"--yes",
 	}
-	if viper.GetString(SubnetIDs) != "" {
-		subnetIDs := viper.GetString(SubnetIDs)
+	if viper.GetString(AWSVPCSubnetIDs) != "" {
+		subnetIDs := viper.GetString(AWSVPCSubnetIDs)
 		createClusterArgs = append(createClusterArgs, "--subnet-ids", subnetIDs)
 		if viper.GetBool(config.Cluster.UseProxyForInstall) {
 			if httpProxy := viper.GetString(config.Proxy.HttpProxy); httpProxy != "" {
@@ -308,12 +308,12 @@ func (m *ROSAProvider) DetermineRegion(cloudProvider string) (string, error) {
 		var regions []*v1.CloudRegion
 		// We support multiple cloud providers....
 		if cloudProvider == "aws" {
-			if viper.GetString(AWSAccessKeyID) == "" || viper.GetString(AWSSecretAccessKey) == "" {
+			if viper.GetString(AWSAccessKey) == "" || viper.GetString(AWSSecretAccessKey) == "" {
 				log.Println("Random region requested but cloud credentials not supplied. Defaulting to us-east-1")
 				return "us-east-1", nil
 			}
 			awsCredentials, err := v1.NewAWS().
-				AccessKeyID(viper.GetString(AWSAccessKeyID)).
+				AccessKeyID(viper.GetString(AWSAccessKey)).
 				SecretAccessKey(viper.GetString(AWSSecretAccessKey)).
 				Build()
 			if err != nil {

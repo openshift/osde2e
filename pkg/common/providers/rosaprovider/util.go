@@ -22,7 +22,7 @@ func callAndSetAWSSession(f func() error) error {
 	}()
 
 	env = os.Environ()
-	os.Setenv("AWS_ACCESS_KEY_ID", viper.GetString(AWSAccessKeyID))
+	os.Setenv("AWS_ACCESS_KEY_ID", viper.GetString(AWSAccessKey))
 	os.Setenv("AWS_SECRET_ACCESS_KEY", viper.GetString(AWSSecretAccessKey))
 	os.Setenv("AWS_REGION", viper.GetString(AWSRegion))
 	error := false
