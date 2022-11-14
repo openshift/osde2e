@@ -34,7 +34,6 @@ func (o *OCMProvider) CheckQuota(skuRuleID string) (bool, error) {
 
 		return nil
 	})
-
 	if err != nil {
 		return false, fmt.Errorf("error trying to get SKUs: %v", err)
 	}

@@ -57,7 +57,6 @@ func TestSampleToJUnitResult(t *testing.T) {
 
 	for _, test := range tests {
 		jUnitResult, err := sampleToJUnitResult(test.sample)
-
 		if err != nil {
 			t.Errorf("test %s failed while converting the sample to JUnit result: %v", test.name, err)
 		}

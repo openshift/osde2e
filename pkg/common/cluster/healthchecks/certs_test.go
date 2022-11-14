@@ -56,7 +56,6 @@ func TestCerts(t *testing.T) {
 	for _, test := range tests {
 		kubeClient := kubernetes.NewSimpleClientset(test.objs...)
 		state, err := CheckCerts(kubeClient.CoreV1(), nil)
-
 		if err != nil {
 			t.Errorf("Unexpected error: %s", err)
 			return

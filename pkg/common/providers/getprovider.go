@@ -1,9 +1,9 @@
 package providers
 
 import (
+	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/spi"
-	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 )
 
 // ClusterProvider returns the provisioner configured by the config object.

@@ -12,8 +12,10 @@ import (
 	"github.com/openshift/osde2e/pkg/common/util"
 )
 
-var imageRegistryTestName string = "[Suite: openshift][image-registry]"
-var imageEcosystemTestName string = "[Suite: openshift][image-ecosystem]"
+var (
+	imageRegistryTestName  string = "[Suite: openshift][image-registry]"
+	imageEcosystemTestName string = "[Suite: openshift][image-ecosystem]"
+)
 
 func init() {
 	alert.RegisterGinkgoAlert(imageRegistryTestName, "SD-CICD", "Diego Santamaria", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)

@@ -216,7 +216,6 @@ func (m *MockProvider) Versions() (*spi.VersionList, error) {
 	}
 
 	return m.versions, nil
-
 }
 
 // Logs mocks a logs operation.

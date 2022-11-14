@@ -18,8 +18,10 @@ import (
 	"k8s.io/client-go/rest"
 )
 
-var splunkForwarderBlocking string = "[Suite: operators] [OSD] Splunk Forwarder Operator"
-var splunkForwarderInforming string = "[Suite: informing] [OSD] Splunk Forwarder Operator"
+var (
+	splunkForwarderBlocking  string = "[Suite: operators] [OSD] Splunk Forwarder Operator"
+	splunkForwarderInforming string = "[Suite: informing] [OSD] Splunk Forwarder Operator"
+)
 
 func init() {
 	alert.RegisterGinkgoAlert(splunkForwarderBlocking, "SD-SREP", "@srep-security-team", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
@@ -28,23 +30,22 @@ func init() {
 
 // Blocking SplunkForwarder Signal
 var _ = ginkgo.Describe(splunkForwarderBlocking, func() {
-
-	var operatorName = "splunk-forwarder-operator"
+	operatorName := "splunk-forwarder-operator"
 	var operatorNamespace string = "openshift-splunk-forwarder-operator"
 	var operatorLockFile string = "splunk-forwarder-operator-lock"
 	var defaultDesiredReplicas int32 = 1
-	var clusterRoleBindings = []string{
+	clusterRoleBindings := []string{
 		"splunk-forwarder-operator-clusterrolebinding",
 	}
 
-	var clusterRoles = []string{
+	clusterRoles := []string{
 		"splunk-forwarder-operator",
 		"splunk-forwarder-operator-og-admin",
 		"splunk-forwarder-operator-og-edit",
 		"splunk-forwarder-operator-og-view",
 	}
 
-	var splunkforwarder_names = []string{
+	splunkforwarder_names := []string{
 		"osde2e-dedicated-admin-splunkforwarder-x",
 		"osde2e-splunkforwarder-test-2",
 	}
@@ -59,14 +60,13 @@ var _ = ginkgo.Describe(splunkForwarderBlocking, func() {
 		"openshift-splunk-forwarder-operator", "splunk-forwarder-operator",
 		"splunk-forwarder-operator-catalog")
 
-	//Clean up splunkforwarders after tests
+	// Clean up splunkforwarders after tests
 	ginkgo.JustAfterEach(func(ctx context.Context) {
 		namespace := "openshift-splunk-forwarder-operator"
 		for _, name := range splunkforwarder_names {
 			err := deleteSplunkforwarder(ctx, name, namespace, h)
 			Expect(err).NotTo(HaveOccurred())
 		}
-
 	})
 
 	ginkgo.Context("splunkforwarders", func() {
@@ -75,31 +75,28 @@ var _ = ginkgo.Describe(splunkForwarderBlocking, func() {
 			sf := makeMinimalSplunkforwarder("SplunkForwarder", "splunkforwarder.managed.openshift.io/v1alpha1", name)
 			err := addSplunkforwarder(ctx, sf, "openshift-splunk-forwarder-operator", h)
 			Expect(err).NotTo(HaveOccurred())
-
 		}, float64(defaultTimeout))
 	})
-
 })
 
 // Informing SplunkForwarder Signal
 var _ = ginkgo.Describe(splunkForwarderInforming, func() {
-
-	var operatorName = "splunk-forwarder-operator"
+	operatorName := "splunk-forwarder-operator"
 	var operatorNamespace string = "openshift-splunk-forwarder-operator"
 	var operatorLockFile string = "splunk-forwarder-operator-lock"
 	var defaultDesiredReplicas int32 = 1
-	var clusterRoleBindings = []string{
+	clusterRoleBindings := []string{
 		"splunk-forwarder-operator-clusterrolebinding",
 	}
 
-	var clusterRoles = []string{
+	clusterRoles := []string{
 		"splunk-forwarder-operator",
 		"splunk-forwarder-operator-og-admin",
 		"splunk-forwarder-operator-og-edit",
 		"splunk-forwarder-operator-og-view",
 	}
 
-	var splunkforwarder_names = []string{
+	splunkforwarder_names := []string{
 		"osde2e-dedicated-admin-splunkforwarder-x",
 		"osde2e-splunkforwarder-test-2",
 	}
@@ -114,14 +111,13 @@ var _ = ginkgo.Describe(splunkForwarderInforming, func() {
 		"openshift-splunk-forwarder-operator", "splunk-forwarder-operator",
 		"splunk-forwarder-operator-catalog")
 
-	//Clean up splunkforwarders after tests
+	// Clean up splunkforwarders after tests
 	ginkgo.JustAfterEach(func(ctx context.Context) {
 		namespace := "openshift-splunk-forwarder-operator"
 		for _, name := range splunkforwarder_names {
 			err := deleteSplunkforwarder(ctx, name, namespace, h)
 			Expect(err).NotTo(HaveOccurred())
 		}
-
 	})
 
 	ginkgo.Context("splunkforwarders", func() {
@@ -130,10 +126,8 @@ var _ = ginkgo.Describe(splunkForwarderInforming, func() {
 			sf := makeMinimalSplunkforwarder("SplunkForwarder", "splunkforwarder.managed.openshift.io/v1alpha1", name)
 			err := dedicatedAaddSplunkforwarder(ctx, sf, "openshift-splunk-forwarder-operator", h)
 			Expect(apierrors.IsForbidden(err)).To(BeTrue())
-
 		}, float64(defaultTimeout))
 	})
-
 })
 
 func makeMinimalSplunkforwarder(kind string, apiversion string, name string) sfv1alpha1.SplunkForwarder {
@@ -143,7 +137,6 @@ func makeMinimalSplunkforwarder(kind string, apiversion string, name string) sfv
 			APIVersion: apiversion,
 		},
 		ObjectMeta: metav1.ObjectMeta{
-
 			Name: name,
 		},
 		Spec: sfv1alpha1.SplunkForwarderSpec{

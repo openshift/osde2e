@@ -94,7 +94,7 @@ var _ = ginkgo.Describe(rebalanceInfraNodesTestName, func() {
 											LocalObjectReference: v1.LocalObjectReference{
 												Name: rebalanceInfraNodesCronJob,
 											},
-											DefaultMode: pointer.Int32Ptr(0755),
+											DefaultMode: pointer.Int32Ptr(0o755),
 										},
 									},
 								},

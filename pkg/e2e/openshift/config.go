@@ -47,18 +47,15 @@ esac
 cd {{$outDir}} && echo "Starting server" && python -m "${MODULE}"
 `
 
-var (
-	cmdTemplate = template.Must(template.New("testCmd").
-		Funcs(template.FuncMap{
-			"printTests":  printTests,
-			"selectTests": selectTests,
-			"unwrap":      unwrap,
-		}).Parse(testCmd))
-)
+var cmdTemplate = template.Must(template.New("testCmd").
+	Funcs(template.FuncMap{
+		"printTests":  printTests,
+		"selectTests": selectTests,
+		"unwrap":      unwrap,
+	}).Parse(testCmd))
 
 // E2EConfig defines the behavior of the extended test suite.
 type E2EConfig struct {
-
 	// Env defines any environment variable settings in name=value pairs to control the test process
 	Env []string
 

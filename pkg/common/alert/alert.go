@@ -113,7 +113,6 @@ func (ma MetricAlert) QuerySafeName() string {
 	tmp = strings.Replace(tmp, ".", "\\\\.", -1)
 	tmp = strings.Replace(tmp, ":", "\\\\:", -1)
 	return tmp
-
 }
 
 // RegisterGinkgoAlert will retrieve the ginkgo test info and register an alert given

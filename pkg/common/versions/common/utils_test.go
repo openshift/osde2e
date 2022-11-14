@@ -74,7 +74,6 @@ func TestNextReleaseAfterGivenVersionFromVersionList(t *testing.T) {
 				Build())
 		}
 		selectedVersion, err := NextReleaseAfterGivenVersionFromVersionList(test.GivenVersion, versions, test.ReleasesFromGivenVersion)
-
 		if err != nil {
 			t.Errorf("error selecting version from list: %v", err)
 		}

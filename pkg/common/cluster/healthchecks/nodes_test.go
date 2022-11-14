@@ -14,10 +14,12 @@ func node(name string, conditions []v1.NodeCondition) *v1.Node {
 		ObjectMeta: metav1.ObjectMeta{Name: name},
 		Spec:       v1.NodeSpec{}, Status: v1.NodeStatus{
 			Conditions: conditions,
-		}}
+		},
+	}
 }
+
 func TestCheckNodeHealth(t *testing.T) {
-	var tests = []struct {
+	tests := []struct {
 		description   string
 		expected      bool
 		expectedError bool

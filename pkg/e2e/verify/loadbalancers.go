@@ -45,7 +45,6 @@ var _ = ginkgo.Describe(loadBalancersTestName, func() {
 
 func loadBalancerExists(ctx context.Context, h *helper.H, namespace string, loadBalancer string) (bool, error) {
 	service, err := h.Kube().CoreV1().Services(namespace).Get(ctx, loadBalancer, metav1.GetOptions{})
-
 	if err != nil {
 		return false, fmt.Errorf("error getting loadbalancer: %v", err)
 	}

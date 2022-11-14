@@ -140,7 +140,6 @@ func deleteSecGroupReferencesToOrphans(ec2Svc *ec2.EC2, orphanSecGroupIds []*str
 // testLBDeletion deletes the load balancer of rh-api service and ensures that cloud-ingress-operator recreates it
 func testLBDeletion(h *helper.H) {
 	ginkgo.Context("rh-api-lb-test", func() {
-
 		if viper.GetString(config.CloudProvider.CloudProviderID) == "aws" {
 			util.GinkgoIt("manually deleted LB should be recreated in AWS", func(ctx context.Context) {
 				awsAccessKey := viper.GetString("ocm.aws.accessKey")
@@ -217,7 +216,6 @@ func testLBDeletion(h *helper.H) {
 
 		if viper.GetString(config.CloudProvider.CloudProviderID) == "gcp" {
 			util.GinkgoIt("manually deleted LB should be recreated in GCP", func(ctx context.Context) {
-
 				region := viper.GetString("cloudProvider.region")
 
 				ginkgo.By("Getting rh-api IP")
@@ -238,8 +236,8 @@ func testLBDeletion(h *helper.H) {
 				oldLB, err := getGCPForwardingRuleForIP(computeService, oldLBIP, project, region)
 				Expect(err).NotTo(HaveOccurred())
 
-				//There's no single command to delete a load balancer in GCP
-				//Delete all GCP resources related to rh-api LB setup
+				// There's no single command to delete a load balancer in GCP
+				// Delete all GCP resources related to rh-api LB setup
 				ginkgo.By("Deleting rh-api load balancer related resources in GCP")
 				if oldLB == nil {
 					log.Printf("GCP forwarding rule for rh-api does not exist; Skipping deletion ")

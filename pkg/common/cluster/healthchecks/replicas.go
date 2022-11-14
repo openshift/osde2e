@@ -13,7 +13,7 @@ import (
 	appsv1 "k8s.io/client-go/kubernetes/typed/apps/v1"
 )
 
-//CheckReplicaCountForDaemonSets checks if all the daemonsets running on the cluster have expected replicas
+// CheckReplicaCountForDaemonSets checks if all the daemonsets running on the cluster have expected replicas
 func CheckReplicaCountForDaemonSets(dsClient appsv1.AppsV1Interface, logger *log.Logger) (bool, error) {
 	allErrors := &multierror.Error{}
 	helper := helper.NewOutsideGinkgo()
@@ -47,10 +47,9 @@ func CheckReplicaCountForDaemonSets(dsClient appsv1.AppsV1Interface, logger *log
 	}
 
 	return allErrors.ErrorOrNil() == nil, allErrors.ErrorOrNil()
-
 }
 
-//CheckReplicaCountForReplicaSets checks if all the replicasets running on the cluster have expected replicas
+// CheckReplicaCountForReplicaSets checks if all the replicasets running on the cluster have expected replicas
 func CheckReplicaCountForReplicaSets(dsClient appsv1.AppsV1Interface, logger *log.Logger) (bool, error) {
 	helper := helper.NewOutsideGinkgo()
 	allErrors := &multierror.Error{}
@@ -84,5 +83,4 @@ func CheckReplicaCountForReplicaSets(dsClient appsv1.AppsV1Interface, logger *lo
 	}
 
 	return allErrors.ErrorOrNil() == nil, allErrors.ErrorOrNil()
-
 }

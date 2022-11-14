@@ -284,7 +284,7 @@ func (m *Metadata) WriteToJSON(reportDir string) (err error) {
 					// Process the jUnit XML result files
 					if phaseFile.Name() == AddonMetadataFile {
 						// Unmarshal raw metadata to map
-						var rawMetadataJSON = map[string]interface{}{}
+						rawMetadataJSON := map[string]interface{}{}
 						if err := json.Unmarshal(data, &rawMetadataJSON); err != nil {
 							return err
 						}
@@ -295,7 +295,7 @@ func (m *Metadata) WriteToJSON(reportDir string) (err error) {
 							return err
 						}
 
-						var rawAddonMetadataJSON = map[string]interface{}{}
+						rawAddonMetadataJSON := map[string]interface{}{}
 						if err := json.Unmarshal(addonData, &rawAddonMetadataJSON); err != nil {
 							return err
 						}
@@ -311,11 +311,11 @@ func (m *Metadata) WriteToJSON(reportDir string) (err error) {
 		}
 	}
 
-	if err = ioutil.WriteFile(filepath.Join(reportDir, CustomMetadataFile), data, os.FileMode(0644)); err != nil {
+	if err = ioutil.WriteFile(filepath.Join(reportDir, CustomMetadataFile), data, os.FileMode(0o644)); err != nil {
 		return err
 	}
 
-	if err = ioutil.WriteFile(filepath.Join(reportDir, MetadataFile), data, os.FileMode(0644)); err != nil {
+	if err = ioutil.WriteFile(filepath.Join(reportDir, MetadataFile), data, os.FileMode(0o644)); err != nil {
 		return err
 	}
 

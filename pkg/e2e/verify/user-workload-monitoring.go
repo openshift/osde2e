@@ -43,16 +43,16 @@ var _ = ginkgo.Describe(userWorkloadMonitoringTestName, func() {
 
 	ginkgo.Context("User Workload Monitoring", func() {
 		util.GinkgoIt("has the required prerequisites for testing", func(ctx context.Context) {
-			//Create a new user that will have dedicated-admin privileges, add the user to the dedicated-admins group
+			// Create a new user that will have dedicated-admin privileges, add the user to the dedicated-admins group
 			_, err := helper.CreateUser(ctx, userName, identities, groups, h)
 			Expect(err).NotTo(HaveOccurred(), "Could not create user workload monitoring testing user")
-			//Add the user to the dedicated-admin group
+			// Add the user to the dedicated-admin group
 			_, err = helper.AddUserToGroup(ctx, userName, groups[0], h)
 			Expect(err).NotTo(HaveOccurred(), "Could not grant dedicated-admin permissions to user workload monitoring user")
-			//Create a namespace to run the tests in
+			// Create a namespace to run the tests in
 			_, err = helper.CreateNamespace(ctx, uwmtestns, h)
 			Expect(err).NotTo(HaveOccurred(), "Could not create user workload monitoring testing namespace")
-			//Launch a pod & service as the targets of the ServiceMonitor and PrometheusRules objects
+			// Launch a pod & service as the targets of the ServiceMonitor and PrometheusRules objects
 			pod := helper.SamplePod(prometheusName, uwmtestns, "quay.io/brancz/prometheus-example-app:v0.2.0")
 			err = helper.CreatePod(ctx, pod, uwmtestns, h)
 			Expect(err).NotTo(HaveOccurred(), "Could not create user workload monitoring testing pod")
@@ -83,10 +83,9 @@ var _ = ginkgo.Describe(userWorkloadMonitoringTestName, func() {
 
 			}
 			Expect(existingcm).NotTo(BeNil(), "Configmap user-workload-monitoring-config was created")
-
 		}, viper.GetFloat64(config.Tests.PollingTimeout))
 
-		//Verify prometheus-operator pod && promethus-user-workload*/thanos-ruler-user-workload* pods are active
+		// Verify prometheus-operator pod && promethus-user-workload*/thanos-ruler-user-workload* pods are active
 		util.GinkgoIt("has the required prometheus and thanos pods", func(ctx context.Context) {
 			h.Impersonate(rest.ImpersonationConfig{
 				UserName: userName,
@@ -95,19 +94,19 @@ var _ = ginkgo.Describe(userWorkloadMonitoringTestName, func() {
 			uwmpods, err := h.Kube().CoreV1().Pods("openshift-user-workload-monitoring").List(ctx, metav1.ListOptions{})
 			Expect(err).NotTo(HaveOccurred(), "Did not find any user-workload-monitoring pods")
 			Expect(uwmpods).NotTo(BeNil())
-			//Regex prefix matching expected pods
+			// Regex prefix matching expected pods
 			for _, someuwmpod := range uwmpods.Items {
 				Expect(someuwmpod.Name).To(MatchRegexp("^prometheus-|^thanos"))
 			}
 		}, viper.GetFloat64(config.Tests.PollingTimeout))
 
-		//Verify a dedicated admin can create ServiceMonitor objects
+		// Verify a dedicated admin can create ServiceMonitor objects
 		util.GinkgoIt("has access to create SerivceMonitor objects", func(ctx context.Context) {
 			h.Impersonate(rest.ImpersonationConfig{
 				UserName: userName,
 				Groups:   []string{"system:authenticated", "system:authenticated:oauth", "dedicated-admins"},
 			})
-			//Create ServiceMonitor
+			// Create ServiceMonitor
 			uwme2esm := newServiceMonitor(prometheusName, uwmtestns)
 			err := wait.PollImmediate(time.Second*15, uwmPollingDuration, func() (bool, error) {
 				_, err := h.Prometheusop().MonitoringV1().ServiceMonitors(uwmtestns).Create(ctx, uwme2esm, metav1.CreateOptions{})
@@ -120,7 +119,7 @@ var _ = ginkgo.Describe(userWorkloadMonitoringTestName, func() {
 			Expect(err).NotTo(HaveOccurred(), "Could not create ServiceMonitor")
 		}, uwmPollingDuration.Seconds())
 
-		//Verify a dedicated admin can create PrometheusRule objects
+		// Verify a dedicated admin can create PrometheusRule objects
 		util.GinkgoIt("has access to create PrometheusRule objects", func(ctx context.Context) {
 			h.Impersonate(rest.ImpersonationConfig{
 				UserName: userName,
@@ -138,7 +137,6 @@ var _ = ginkgo.Describe(userWorkloadMonitoringTestName, func() {
 			Expect(err).NotTo(HaveOccurred(), "Could not create PrometheusRules")
 		}, uwmPollingDuration.Seconds())
 	})
-
 })
 
 func newServiceMonitor(name, namespace string) *v1.ServiceMonitor {

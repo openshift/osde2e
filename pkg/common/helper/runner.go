@@ -38,7 +38,7 @@ func (h *H) Runner(cmd string) *runner.Runner {
 func (h *H) WriteResults(results map[string][]byte) {
 	for filename, data := range results {
 		dst := filepath.Join(viper.GetString(config.ReportDir), viper.GetString(config.Phase), filename)
-		err := os.MkdirAll(filepath.Dir(dst), os.FileMode(0755))
+		err := os.MkdirAll(filepath.Dir(dst), os.FileMode(0o755))
 		Expect(err).NotTo(HaveOccurred())
 		err = ioutil.WriteFile(dst, data, os.ModePerm)
 		Expect(err).NotTo(HaveOccurred())

@@ -42,9 +42,7 @@ var _ = ginkgo.Describe(storageTestName, func() {
 	h := helper.New()
 
 	ginkgo.Context("storage", func() {
-
 		util.GinkgoIt("create PVCs", func(ctx context.Context) {
-
 			sc, err := h.Kube().StorageV1().StorageClasses().List(ctx, metav1.ListOptions{})
 			Expect(err).NotTo(HaveOccurred(), "couldn't list StorageClasses")
 			list, provider := getScNames(sc, h)
@@ -76,9 +74,7 @@ var _ = ginkgo.Describe(storageTestName, func() {
 				}()
 
 			}
-
 		}, podStartTimeout.Seconds()+viper.GetFloat64(config.Tests.PollingTimeout))
-
 	})
 
 	ginkgo.Context("sc-list", func() {
@@ -91,7 +87,6 @@ var _ = ginkgo.Describe(storageTestName, func() {
 				Expect(sc.AllowVolumeExpansion).To(Not(BeNil()))
 				Expect(*sc.AllowVolumeExpansion).To(BeTrue())
 			}
-
 		}, 300)
 	})
 })
@@ -140,7 +135,6 @@ type PersistentVolumeClaimConfig struct {
 
 // makePersistentVolumeClaim returns a PVC API Object based on the PersistentVolumeClaimConfig.
 func makePersistentVolumeClaim(cfg PersistentVolumeClaimConfig, ns string, storageClass string, name string) *corev1.PersistentVolumeClaim {
-
 	cfg.Name = name
 
 	cfg.StorageClassName = &storageClass
@@ -249,8 +243,8 @@ func makeTestPod(ns string, pvclaims []*corev1.PersistentVolumeClaim, isPrivileg
 			RestartPolicy: corev1.RestartPolicyOnFailure,
 		},
 	}
-	var volumeMounts = make([]corev1.VolumeMount, len(pvclaims))
-	var volumes = make([]corev1.Volume, len(pvclaims))
+	volumeMounts := make([]corev1.VolumeMount, len(pvclaims))
+	volumes := make([]corev1.Volume, len(pvclaims))
 	for index, pvclaim := range pvclaims {
 		volumename := fmt.Sprintf("volume%v", index+1)
 		volumeMounts[index] = corev1.VolumeMount{Name: volumename, MountPath: "/mnt/" + volumename}

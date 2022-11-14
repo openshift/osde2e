@@ -16,10 +16,12 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
-var operatorName = "rbac-permissions-operator"
-var operatorNamespace = "openshift-rbac-permissions"
-var rbacOperatorBlocking string = "[Suite: operators] [OSD] RBAC Operator"
-var subjectPermissionsTestName string = "[Suite: operators] [OSD] RBAC Dedicated Admins SubjectPermission"
+var (
+	operatorName                      = "rbac-permissions-operator"
+	operatorNamespace                 = "openshift-rbac-permissions"
+	rbacOperatorBlocking       string = "[Suite: operators] [OSD] RBAC Operator"
+	subjectPermissionsTestName string = "[Suite: operators] [OSD] RBAC Dedicated Admins SubjectPermission"
+)
 
 func init() {
 	alert.RegisterGinkgoAlert(rbacOperatorBlocking, "SD-SREP", "@rbac-permissions-operator", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
@@ -27,10 +29,10 @@ func init() {
 }
 
 var _ = ginkgo.Describe(rbacOperatorBlocking, func() {
-	var operatorLockFile = "rbac-permissions-operator-lock"
+	operatorLockFile := "rbac-permissions-operator-lock"
 	var defaultDesiredReplicas int32 = 1
 
-	var clusterRoles = []string{
+	clusterRoles := []string{
 		"rbac-permissions-operator-admin",
 		"rbac-permissions-operator-edit",
 		"rbac-permissions-operator-view",
@@ -70,7 +72,6 @@ func checkSubjectPermissions(h *helper.H, spName string) {
 				err := pollRoleBinding(ctx, h, h.CurrentProject(), roleBindingName)
 				Expect(err).NotTo(HaveOccurred(), "failed to get roleBinding %v\n", roleBindingName)
 			}
-
 		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
 	})
 }
@@ -79,7 +80,8 @@ func getSubjectPermissionRBACInfo(ctx context.Context, h *helper.H, spName strin
 	us, err := h.Dynamic().Resource(schema.GroupVersionResource{
 		Group:    "managed.openshift.io",
 		Version:  "v1alpha1",
-		Resource: "subjectpermissions"}).Namespace(operatorNamespace).Get(ctx, spName, metav1.GetOptions{})
+		Resource: "subjectpermissions",
+	}).Namespace(operatorNamespace).Get(ctx, spName, metav1.GetOptions{})
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("Error getting %s SubjectPermission", spName)
 	}
@@ -94,7 +96,7 @@ func getSubjectPermissionRBACInfo(ctx context.Context, h *helper.H, spName strin
 		return nil, nil, nil, fmt.Errorf("Error getting clusterPermissions")
 	}
 
-	var clusterRoleBindings = []string{}
+	clusterRoleBindings := []string{}
 	for _, crName := range clusterRoles {
 		clusterRoleBindings = append(clusterRoleBindings, crName+"-"+subjectName)
 	}
@@ -104,7 +106,7 @@ func getSubjectPermissionRBACInfo(ctx context.Context, h *helper.H, spName strin
 		return nil, nil, nil, fmt.Errorf("Error getting permissions")
 	}
 
-	var roleBindings = []string{}
+	roleBindings := []string{}
 	for _, p := range permissions {
 		perm := p.(map[string]interface{})
 		cpName, _, err := unstruct.NestedString(perm, "clusterRoleName")

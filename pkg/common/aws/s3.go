@@ -15,13 +15,11 @@ import (
 // ReadFromS3 reads a key from S3 using the global AWS context.
 func ReadFromS3(inputKey string) ([]byte, error) {
 	bucket, key, err := ParseS3URL(inputKey)
-
 	if err != nil {
 		return nil, fmt.Errorf("error trying to parse S3 URL: %v", err)
 	}
 
 	session, err := AWSSession.getSession()
-
 	if err != nil {
 		return nil, err
 	}
@@ -45,13 +43,11 @@ func ReadFromS3(inputKey string) ([]byte, error) {
 // WriteToS3 writes the given byte array to S3.
 func WriteToS3(outputKey string, data []byte) error {
 	bucket, key, err := ParseS3URL(outputKey)
-
 	if err != nil {
 		return fmt.Errorf("error trying to parse S3 URL: %v", err)
 	}
 
 	session, err := AWSSession.getSession()
-
 	if err != nil {
 		return err
 	}
@@ -92,7 +88,6 @@ func CreateS3URL(bucket string, keys ...string) string {
 // ParseS3URL parses an S3 url into a bucket and key.
 func ParseS3URL(s3URL string) (string, string, error) {
 	parsedURL, err := url.Parse(s3URL)
-
 	if err != nil {
 		return "", "", err
 	}

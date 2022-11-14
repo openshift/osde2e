@@ -14,7 +14,6 @@ import (
 // ListAllJUnitResults will return all JUnitResults in the given time range.
 func (c *Client) ListAllJUnitResults(begin, end time.Time) ([]JUnitResult, error) {
 	results, err := c.issueQuery("cicd_jUnitResult", begin, end)
-
 	if err != nil {
 		return nil, fmt.Errorf("error listing all JUnit results: %v", err)
 	}
@@ -25,7 +24,6 @@ func (c *Client) ListAllJUnitResults(begin, end time.Time) ([]JUnitResult, error
 // ListPassRatesByJob will return a map of job names to their corresponding pass rates.
 func (c *Client) ListPassRatesByJob(begin, end time.Time) (map[string]float64, error) {
 	results, err := c.ListAllJUnitResults(begin, end)
-
 	if err != nil {
 		return nil, fmt.Errorf("error listing JUnit results while calculating pass rates: %v", err)
 	}
@@ -36,7 +34,6 @@ func (c *Client) ListPassRatesByJob(begin, end time.Time) (map[string]float64, e
 // ListPassRatesByJobID will return a map of job IDs to their corresponding pass rates given a job name.
 func (c *Client) ListPassRatesByJobID(jobName string, begin, end time.Time) (map[int64]float64, error) {
 	results, err := c.ListJUnitResultsByJobName(jobName, begin, end)
-
 	if err != nil {
 		return nil, fmt.Errorf("error listing JUnit results while calculating pass rates: %v", err)
 	}
@@ -63,7 +60,6 @@ func (c *Client) ListPassRatesByJobID(jobName string, begin, end time.Time) (map
 // GetPassRateForJob will return the pass rate for a given job.
 func (c *Client) GetPassRateForJob(jobName string, begin, end time.Time) (float64, error) {
 	results, err := c.ListJUnitResultsByJobName(jobName, begin, end)
-
 	if err != nil {
 		return 0, fmt.Errorf("error listing JUnit results for job %s while calculating pass rates: %v", jobName, err)
 	}
@@ -74,7 +70,6 @@ func (c *Client) GetPassRateForJob(jobName string, begin, end time.Time) (float6
 // ListJUnitResultsByJobName will return all JUnitResults in the given time range for the given job name across job IDs.
 func (c *Client) ListJUnitResultsByJobName(jobName string, begin, end time.Time) ([]JUnitResult, error) {
 	results, err := c.issueQuery(fmt.Sprintf("cicd_jUnitResult{job=\"%s\"}", escapeQuotes(jobName)), begin, end)
-
 	if err != nil {
 		return nil, fmt.Errorf("error listing all JUnit results: %v", err)
 	}
@@ -85,7 +80,6 @@ func (c *Client) ListJUnitResultsByJobName(jobName string, begin, end time.Time)
 // ListJUnitResultsByJobNameAndJobID will return all JUnitResults in the given time range for the given job name and ID.
 func (c *Client) ListJUnitResultsByJobNameAndJobID(jobName string, jobID int64, begin, end time.Time) ([]JUnitResult, error) {
 	results, err := c.issueQuery(fmt.Sprintf("cicd_jUnitResult{job=\"%s\", job_id=\"%d\"}", escapeQuotes(jobName), jobID), begin, end)
-
 	if err != nil {
 		return nil, fmt.Errorf("error listing all JUnit results: %v", err)
 	}
@@ -97,7 +91,6 @@ func (c *Client) ListJUnitResultsByJobNameAndJobID(jobName string, jobID int64, 
 func (c *Client) ListJUnitResultsByClusterID(cloudProvider, environment, clusterID string, begin, end time.Time) ([]JUnitResult, error) {
 	results, err := c.issueQuery(fmt.Sprintf("cicd_jUnitResult{cloud_provider=\"%s\", environment=\"%s\", cluster_id=\"%s\"}",
 		escapeQuotes(cloudProvider), escapeQuotes(environment), escapeQuotes(clusterID)), begin, end)
-
 	if err != nil {
 		return nil, fmt.Errorf("error listing all JUnit results: %v", err)
 	}
@@ -108,7 +101,6 @@ func (c *Client) ListJUnitResultsByClusterID(cloudProvider, environment, cluster
 // ListFailedJUnitResultsByTestName will return all JUnitResults in a given time range for a given test name.
 func (c *Client) ListFailedJUnitResultsByTestName(testName string, begin, end time.Time) ([]JUnitResult, error) {
 	results, err := c.issueQuery(fmt.Sprintf("cicd_jUnitResult{result=\"failed\", testname=~\".*%s.*\"}", escapeQuotes(testName)), begin, end)
-
 	if err != nil {
 		return nil, fmt.Errorf("error listing all JUnit results: %v", err)
 	}
@@ -180,7 +172,6 @@ func processJUnitResults(results model.Value) ([]JUnitResult, error) {
 	if matrixResults, ok := results.(model.Matrix); ok {
 		for _, sample := range matrixResults {
 			jUnitResult, err := sampleToJUnitResult(sample)
-
 			if err != nil {
 				return nil, fmt.Errorf("error while getting event from Prometheus: %v", err)
 			}
@@ -197,13 +188,11 @@ func processJUnitResults(results model.Value) ([]JUnitResult, error) {
 
 func sampleToJUnitResult(sample *model.SampleStream) (JUnitResult, error) {
 	installVersion, upgradeVersion, err := extractInstallAndUpgradeVersionsFromSample(sample)
-
 	if err != nil {
 		return JUnitResult{}, fmt.Errorf("error getting install and upgrade versions: %v", err)
 	}
 
 	jobID, err := strconv.ParseInt(extractMetricFromSample(sample, "job_id"), 0, 64)
-
 	if err != nil {
 		return JUnitResult{}, fmt.Errorf("error parsing job id: %v", err)
 	}
