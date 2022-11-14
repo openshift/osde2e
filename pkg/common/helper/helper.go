@@ -53,7 +53,6 @@ func Init() *H {
 func New() *H {
 	h := Init()
 	err := h.Setup()
-
 	if err != nil {
 		log.Fatalf("Error creating helper: %s", err.Error())
 	}
@@ -137,7 +136,6 @@ func (h *H) Setup() error {
 	h.SetServiceAccount(ctx, viper.GetString(config.Tests.ServiceAccount))
 
 	return nil
-
 }
 
 // Cleanup deletes a Project after tests have been ran.

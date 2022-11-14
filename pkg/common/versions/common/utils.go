@@ -54,7 +54,6 @@ func NextReleaseAfterGivenVersionFromVersionList(givenVersion *semver.Version, v
 
 	// Now that the list is sorted, we want to locate the major minor of the given version in the list.
 	givenMajorMinor, err := semver.NewVersion(createMajorMinorStringFromSemver(givenVersion))
-
 	if err != nil {
 		return nil, err
 	}

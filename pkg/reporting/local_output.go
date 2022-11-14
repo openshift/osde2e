@@ -22,8 +22,7 @@ func createWriter(output string) (*writer, error) {
 	if output == "-" {
 		writer.file = os.Stdout
 	} else {
-		file, err := os.OpenFile(output, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
-
+		file, err := os.OpenFile(output, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o644)
 		if err != nil {
 			return nil, fmt.Errorf("error opening output file for writing: %v", err)
 		}

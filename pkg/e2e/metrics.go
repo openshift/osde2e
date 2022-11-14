@@ -93,7 +93,6 @@ func NewMetrics() *Metrics {
 	metricRegistry.MustRegister(routeGatherer)
 
 	provider, err := providers.ClusterProvider()
-
 	if err != nil {
 		log.Printf("unable to get provider for metrics, failing: %v", err)
 		return nil
@@ -142,7 +141,6 @@ func (m *Metrics) WritePrometheusFile(reportDir string) (string, error) {
 					} else if phaseFile.Name() == metadata.AddonMetadataFile {
 						m.processJSONFile(m.addonGatherer, filepath.Join(phaseDir, phaseFile.Name()), phase)
 					}
-
 				}
 			} else if file.Name() == metadata.CustomMetadataFile {
 				m.processJSONFile(m.metadataGatherer, filepath.Join(reportDir, file.Name()), "")
@@ -155,12 +153,11 @@ func (m *Metrics) WritePrometheusFile(reportDir string) (string, error) {
 
 	prometheusFileName := fmt.Sprintf(prometheusFileNamePattern, viper.GetString(config.Cluster.ID), viper.GetString(config.JobName))
 	output, err := m.registryToExpositionFormat()
-
 	if err != nil {
 		return "", err
 	}
 
-	err = ioutil.WriteFile(filepath.Join(reportDir, prometheusFileName), output, os.FileMode(0644))
+	err = ioutil.WriteFile(filepath.Join(reportDir, prometheusFileName), output, os.FileMode(0o644))
 	if err != nil {
 		return "", err
 	}
@@ -172,8 +169,9 @@ func (m *Metrics) WritePrometheusFile(reportDir string) (string, error) {
 
 // processJUnitXMLFile will add results to the prometheusOutput that look like:
 //
-// cicd_jUnitResult {environment="prod", install_version="install-version", result="passed|failed|skipped", phase="currentphase", suite="suitename",
-//                   testname="testname", upgrade_version="upgrade-version"} testLength
+// cicd_jUnitResult {environment="prod", install_version="install-version",
+// result="passed|failed|skipped", phase="currentphase",
+// suite="suitename", testname="testname", upgrade_version="upgrade-version"}
 func (m *Metrics) processJUnitXMLFile(phase string, junitFile string) (err error) {
 	data, err := ioutil.ReadFile(junitFile)
 	if err != nil {
@@ -218,12 +216,13 @@ func (m *Metrics) processJUnitXMLFile(phase string, junitFile string) (err error
 // processJSONFile takes a JSON file and converts it into prometheus metrics of the general format:
 //
 // cicd_[addon_]metadata{environment="prod", install_version="install-version",
-//                       metadata_name="full.path.to.field.separated.by.periiod",
-//                       upgrade_version="upgrade-version"[, phase="install"]} userAssignedValue
+// metadata_name="full.path.to.field.separated.by.periiod",
+// upgrade_version="upgrade-version"[, phase="install"]} userAssignedValue
 //
-// Notes: Only numerical values or strings that look like numerical values will be captured. This is because
-//        Prometheus can only have numerical metric values and capturing strings through the use of labels is
-//        of questionable value.
+// Notes: Only numerical values or strings that look like numerical values will
+// be captured. This is because Prometheus can only have numerical metric
+// values and capturing strings through the use of labels is of questionable
+// value.
 func (m *Metrics) processJSONFile(gatherer *prometheus.GaugeVec, jsonFile string, phase string) (err error) {
 	data, err := ioutil.ReadFile(jsonFile)
 	if err != nil {
@@ -350,7 +349,6 @@ func (m *Metrics) processRoutes(gatherer *prometheus.GaugeVec) {
 				route, "throughput").Set(throughput)
 		}
 	}
-
 }
 
 // Generic Prometheus export file building functions
@@ -360,7 +358,6 @@ func (m *Metrics) registryToExpositionFormat() ([]byte, error) {
 	buf := &bytes.Buffer{}
 	encoder := expfmt.NewEncoder(buf, expfmt.FmtText)
 	metricFamilies, err := m.metricRegistry.Gather()
-
 	if err != nil {
 		return []byte{}, fmt.Errorf("error while gathering metrics: %v", err)
 	}

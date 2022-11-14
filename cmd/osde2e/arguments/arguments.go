@@ -15,4 +15,3 @@ func AddDebugFlag(fs *pflag.FlagSet) {
 func AddUpdateFlag(fs *pflag.FlagSet) {
 	update.AddFlag(fs)
 }
-

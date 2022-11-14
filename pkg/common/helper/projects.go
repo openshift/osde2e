@@ -21,7 +21,6 @@ func (h *H) createProject(ctx context.Context, suffix string) (*projectv1.Projec
 	}
 
 	project, err := h.Project().ProjectV1().Projects().Create(ctx, proj, metav1.CreateOptions{})
-
 	if err != nil {
 		return project, err
 	}

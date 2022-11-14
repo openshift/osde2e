@@ -24,11 +24,11 @@ const (
 	ClusterStateUninstalling ClusterState = "uninstalling"
 	// ClusterStateUnknown the cluster state is unknown.
 	ClusterStateUnknown ClusterState = "unknown"
-	//ClusterStatePoweringDown
+	// ClusterStatePoweringDown
 	ClusterStatePoweringDown ClusterState = "powering_down"
-	//ClusterStateHibernating
+	// ClusterStateHibernating
 	ClusterStateHibernating ClusterState = "hibernating"
-	//ClusterStateResuming
+	// ClusterStateResuming
 	ClusterStateResuming ClusterState = "resuming"
 )
 
@@ -114,7 +114,7 @@ func (c *Cluster) NumComputeNodes() int {
 	return c.numComputeNodes
 }
 
-//Properties returns properties related to the given cluster.
+// Properties returns properties related to the given cluster.
 func (c *Cluster) Properties() map[string]string {
 	return c.properties
 }

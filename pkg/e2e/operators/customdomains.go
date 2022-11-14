@@ -54,7 +54,6 @@ func init() {
 }
 
 var _ = ginkgo.Describe(customDomainsOperatorTestName, func() {
-
 	// custom dialer for use w/ resolver and http.client
 	dialer := &net.Dialer{
 		Resolver: &net.Resolver{
@@ -209,7 +208,8 @@ var _ = ginkgo.Describe(customDomainsOperatorTestName, func() {
 							Labels: map[string]string{"deployment": testInstanceName},
 						}, Spec: corev1.PodSpec{
 							Containers: []corev1.Container{
-								{Name: "hello-openshift",
+								{
+									Name:  "hello-openshift",
 									Image: "docker.io/openshift/hello-openshift",
 									Ports: []corev1.ContainerPort{
 										{

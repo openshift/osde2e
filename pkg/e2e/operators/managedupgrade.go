@@ -31,16 +31,16 @@ func init() {
 }
 
 var _ = ginkgo.Describe(managedUpgradeOperatorTestName, func() {
-	var operatorName = "managed-upgrade-operator"
+	operatorName := "managed-upgrade-operator"
 	var operatorNamespace string = "openshift-managed-upgrade-operator"
 	var operatorLockFile string = "managed-upgrade-operator-lock"
 	var upgradeConfigResourceName string = "managed-upgrade-config"
 	var upgradeConfigForDedicatedAdminTestName string = "osde2e-da-upgrade-config"
 	var defaultDesiredReplicas int32 = 1
-	var clusterRoles = []string{
+	clusterRoles := []string{
 		"managed-upgrade-operator",
 	}
-	var clusterRoleBindings = []string{
+	clusterRoleBindings := []string{
 		"managed-upgrade-operator",
 	}
 	h := helper.New()
@@ -124,7 +124,6 @@ var _ = ginkgo.Describe(managedUpgradeOperatorTestName, func() {
 				return true, nil
 			})
 			Expect(err).NotTo(HaveOccurred())
-
 		})
 
 		util.GinkgoIt("should error if the upgrade time is too far in the past", func(ctx context.Context) {
@@ -232,11 +231,9 @@ var _ = ginkgo.Describe(managedUpgradeOperatorTestName, func() {
 				return true, nil
 			})
 			Expect(err).NotTo(HaveOccurred())
-
 		})
 	})
 	ginkgo.Context("upgradeconfig", func() {
-
 		util.GinkgoIt("dedicated admin should not be able to manage the UpgradeConfig CR", func(ctx context.Context) {
 			// Add the upgradeconfig to the cluster
 			uc := makeMinimalUpgradeConfig(upgradeConfigForDedicatedAdminTestName, operatorNamespace)
@@ -251,11 +248,8 @@ var _ = ginkgo.Describe(managedUpgradeOperatorTestName, func() {
 
 			err = deleteUpgradeConfig(ctx, upgradeConfigForDedicatedAdminTestName, operatorNamespace, h)
 			Expect(err).NotTo(HaveOccurred())
-
 		})
-
 	})
-
 })
 
 func getClusterVersion(ctx context.Context, h *helper.H) (*v1.ClusterVersion, error) {
@@ -308,6 +302,7 @@ func makeMinimalUpgradeConfig(name string, ns string) upgradev1alpha1.UpgradeCon
 	}
 	return uc
 }
+
 func addUpgradeConfig(ctx context.Context, upgradeConfig upgradev1alpha1.UpgradeConfig, operatorNamespace string, h *helper.H) error {
 	obj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(upgradeConfig.DeepCopy())
 	if err != nil {

@@ -90,7 +90,7 @@ func checkPod(h *helper.H, namespace string, name string, gracePeriod int, maxAc
 		util.GinkgoIt(fmt.Sprintf("should have %v or less restart(s)", maxAcceptedRestart), func(ctx context.Context) {
 			// wait for graceperiod
 			time.Sleep(time.Duration(gracePeriod) * time.Second)
-			//retrieve pods
+			// retrieve pods
 			pods, err := h.Kube().CoreV1().Pods(namespace).List(ctx, metav1.ListOptions{LabelSelector: "name=" + name})
 			Expect(err).ToNot(HaveOccurred(), "failed fetching pods")
 
@@ -171,7 +171,6 @@ func checkRole(h *helper.H, namespace string, roles []string) {
 			}
 		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
 	})
-
 }
 
 func checkRolesWithNamePrefix(h *helper.H, namespace string, prefix string, count int) {
@@ -209,6 +208,7 @@ func checkRoleBindingsWithNamePrefix(h *helper.H, namespace string, prefix strin
 		}, viper.GetFloat64(config.Tests.PollingTimeout))
 	})
 }
+
 func checkRoleBindings(h *helper.H, namespace string, roleBindings []string) {
 	// Check that deployed rolebindings exist
 	ginkgo.Context("roleBindings", func() {
@@ -235,14 +235,11 @@ func checkSecrets(h *helper.H, namespace string, secrets []string) {
 }
 
 func checkUpgrade(h *helper.H, subNamespace string, subName string, packageName string, regServiceName string) {
-
 	ginkgo.Context("Operator Upgrade", func() {
-
 		installPlanPollingDuration := 5 * time.Minute
 		upgradePollingDuration := 15 * time.Minute
 
 		util.GinkgoIt("should upgrade from the replaced version", func(ctx context.Context) {
-
 			var latestCSV string
 			var sub *operatorv1.Subscription
 			var err error
@@ -341,7 +338,6 @@ func checkUpgrade(h *helper.H, subNamespace string, subName string, packageName 
 				return false, nil
 			})
 			Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("subscription %s status is not reflecting that csv %s is installed", subName, latestCSV))
-
 		}, upgradePollingDuration.Seconds()+installPlanPollingDuration.Seconds()+
 			float64(viper.GetFloat64(config.Tests.PollingTimeout)))
 	})
@@ -537,7 +533,6 @@ Loop:
 func getReplacesCSV(ctx context.Context, h *helper.H, subscriptionNS string, csvDisplayName string, catalogSvcName string) (string, error) {
 	cmdTimeoutInSeconds := 60
 	cmdTestTemplate, err := templates.LoadTemplate("registry/replaces.template")
-
 	if err != nil {
 		panic(fmt.Sprintf("error while loading registry-replaces addon: %v", err))
 	}

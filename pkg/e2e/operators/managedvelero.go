@@ -32,14 +32,14 @@ var _ = ginkgo.Describe(veleroOperatorTestName, func() {
 			ginkgo.Skip("STS does not support MVO")
 		}
 	})
-	var operatorName = "managed-velero-operator"
+	operatorName := "managed-velero-operator"
 	var operatorNamespace string = "openshift-velero"
 	var operatorLockFile string = "managed-velero-operator-lock"
 	var defaultDesiredReplicas int32 = 1
-	var clusterRoles = []string{
+	clusterRoles := []string{
 		"managed-velero-operator",
 	}
-	var clusterRoleBindings = []string{
+	clusterRoleBindings := []string{
 		"managed-velero-operator",
 		"velero",
 	}
@@ -77,10 +77,9 @@ var _ = ginkgo.Describe(veleroOperatorTestName, func() {
 	testCRrestricRepository(h)
 	checkClusterRoles(h, clusterRoles, true)
 	checkClusterRoleBindings(h, clusterRoleBindings, true)
-
 })
 
-//tests to confirm dedicated-admin user can not edit CRs
+// tests to confirm dedicated-admin user can not edit CRs
 
 func testDaCRbackups(h *helper.H) {
 	ginkgo.Context("velero", func() {
@@ -97,7 +96,6 @@ func testDaCRbackups(h *helper.H) {
 			}
 			_, err := h.Velero().VeleroV1().Backups(h.CurrentProject()).Create(ctx, &backup, metav1.CreateOptions{})
 			Expect(apierrors.IsForbidden(err)).To(BeTrue())
-
 		})
 	})
 }
@@ -117,7 +115,6 @@ func testDaCRrestore(h *helper.H) {
 			}
 			_, err := h.Velero().VeleroV1().Restores(h.CurrentProject()).Create(ctx, &restore, metav1.CreateOptions{})
 			Expect(apierrors.IsForbidden(err)).To(BeTrue())
-
 		})
 	})
 }
@@ -229,7 +226,6 @@ func testDaCRpodVolumeRestores(h *helper.H) {
 			_, err := h.Velero().VeleroV1().PodVolumeRestores(h.CurrentProject()).Create(ctx, &podVolumeRestore, metav1.CreateOptions{})
 			Expect(apierrors.IsForbidden(err)).To(BeTrue())
 		})
-
 	})
 }
 
@@ -309,7 +305,7 @@ func testDaCRrestricRepository(h *helper.H) {
 	})
 }
 
-//test to confirm admin user can edit CRs
+// test to confirm admin user can edit CRs
 
 func testCRbackups(h *helper.H) {
 	ginkgo.Context("velero", func() {
@@ -324,7 +320,6 @@ func testCRbackups(h *helper.H) {
 
 			h.Velero().VeleroV1().Backups(h.CurrentProject()).Delete(ctx, "admin-backup-test", metav1.DeleteOptions{})
 			Expect(err).NotTo(HaveOccurred())
-
 		})
 	})
 }
@@ -332,7 +327,6 @@ func testCRbackups(h *helper.H) {
 func testCRrestore(h *helper.H) {
 	ginkgo.Context("velero", func() {
 		util.GinkgoIt("Access should be allowed to edit Restore", func(ctx context.Context) {
-
 			restore := velerov1.Restore{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "restore-test",
@@ -343,7 +337,6 @@ func testCRrestore(h *helper.H) {
 
 			h.Velero().VeleroV1().Restores(h.CurrentProject()).Delete(ctx, "restore-test", metav1.DeleteOptions{})
 			Expect(err).NotTo(HaveOccurred())
-
 		})
 	})
 }
@@ -351,7 +344,6 @@ func testCRrestore(h *helper.H) {
 func testCRdeleteBackupRequests(h *helper.H) {
 	ginkgo.Context("velero", func() {
 		util.GinkgoIt("Access should be allowed to edit DeleteBackupRequests", func(ctx context.Context) {
-
 			deleteBackupRequest := velerov1.DeleteBackupRequest{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "delete-backup-request-test",
@@ -369,7 +361,6 @@ func testCRdeleteBackupRequests(h *helper.H) {
 func testCRbackupStorageLocations(h *helper.H) {
 	ginkgo.Context("velero", func() {
 		util.GinkgoIt("Access should be allowed to edit BackupStorageLocations", func(ctx context.Context) {
-
 			backupStorageLocation := velerov1.BackupStorageLocation{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "backup-storage-location-test",
@@ -389,7 +380,6 @@ func testCRbackupStorageLocations(h *helper.H) {
 
 			h.Velero().VeleroV1().BackupStorageLocations(h.CurrentProject()).Delete(ctx, "backup-storage-location-test", metav1.DeleteOptions{})
 			Expect(err).NotTo(HaveOccurred())
-
 		})
 	})
 }
@@ -397,7 +387,6 @@ func testCRbackupStorageLocations(h *helper.H) {
 func testCRdownloadRequests(h *helper.H) {
 	ginkgo.Context("velero", func() {
 		util.GinkgoIt("Access should be allowed to edit DownloadRequests", func(ctx context.Context) {
-
 			downloadRequest := velerov1.DownloadRequest{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "download-request-test",
@@ -415,7 +404,6 @@ func testCRdownloadRequests(h *helper.H) {
 
 			h.Velero().VeleroV1().DownloadRequests(h.CurrentProject()).Delete(ctx, "download-request-test", metav1.DeleteOptions{})
 			Expect(err).NotTo(HaveOccurred())
-
 		})
 	})
 }
@@ -423,7 +411,6 @@ func testCRdownloadRequests(h *helper.H) {
 func testCRpodVolumeBackup(h *helper.H) {
 	ginkgo.Context("velero", func() {
 		util.GinkgoIt("Access should be allowed to edit PodVolumeBackups", func(ctx context.Context) {
-
 			podVolumeBackup := velerov1.PodVolumeBackup{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "pod-volume-backup-test",
@@ -441,7 +428,6 @@ func testCRpodVolumeBackup(h *helper.H) {
 func testCRpodVolumeRestores(h *helper.H) {
 	ginkgo.Context("velero", func() {
 		util.GinkgoIt("Access should be allowed to edit PodVolumeRestores", func(ctx context.Context) {
-
 			podVolumeRestore := velerov1.PodVolumeRestore{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "pod-volume-restore-test",
@@ -453,14 +439,12 @@ func testCRpodVolumeRestores(h *helper.H) {
 			h.Velero().VeleroV1().PodVolumeRestores(h.CurrentProject()).Delete(ctx, "pod-volume-restore-test", metav1.DeleteOptions{})
 			Expect(err).NotTo(HaveOccurred())
 		})
-
 	})
 }
 
 func testCRvolumeSnapshotLocation(h *helper.H) {
 	ginkgo.Context("velero", func() {
 		util.GinkgoIt("Access should be allowed to edit VolumeSnapshotLocations", func(ctx context.Context) {
-
 			volumeSnapshotLocation := velerov1.VolumeSnapshotLocation{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "volume-snapshot-locations-test",
@@ -478,7 +462,6 @@ func testCRvolumeSnapshotLocation(h *helper.H) {
 func testCRschedules(h *helper.H) {
 	ginkgo.Context("velero", func() {
 		util.GinkgoIt("Access should be allowed to edit Schedules", func(ctx context.Context) {
-
 			schedules := velerov1.Schedule{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "schedules-test",
@@ -496,7 +479,6 @@ func testCRschedules(h *helper.H) {
 func testCRserverStatusRequest(h *helper.H) {
 	ginkgo.Context("velero", func() {
 		util.GinkgoIt("Access should be allowed to edit ServerStatusRequests", func(ctx context.Context) {
-
 			serverStatusRequest := velerov1.ServerStatusRequest{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "server-status-request-test",
@@ -514,7 +496,6 @@ func testCRserverStatusRequest(h *helper.H) {
 func testCRrestricRepository(h *helper.H) {
 	ginkgo.Context("velero", func() {
 		util.GinkgoIt("Access should be allowed to edit RestricRepository", func(ctx context.Context) {
-
 			resticRepository := velerov1.ResticRepository{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "restric-repository-test",
@@ -536,7 +517,8 @@ func checkVeleroBackups(h *helper.H) {
 				us, err := h.Dynamic().Resource(schema.GroupVersionResource{
 					Group:    "velero.io",
 					Version:  "v1",
-					Resource: "backups"}).Namespace(operatorNamespace).List(ctx, metav1.ListOptions{})
+					Resource: "backups",
+				}).Namespace(operatorNamespace).List(ctx, metav1.ListOptions{})
 				if err != nil {
 					return false, fmt.Errorf("Error getting backups: %s", err.Error())
 				}

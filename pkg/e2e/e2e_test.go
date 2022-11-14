@@ -8,9 +8,9 @@ import (
 	"reflect"
 	"testing"
 
+	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/events"
-	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 )
 
 func TestNoHiveLogs(t *testing.T) {

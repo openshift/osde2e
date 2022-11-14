@@ -12,12 +12,12 @@ import (
 	"time"
 
 	"github.com/Masterminds/semver"
+	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/prometheus"
 	"github.com/openshift/osde2e/pkg/common/util"
 	"github.com/prometheus/client_golang/api"
 	v1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/prometheus/common/model"
-	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 )
 
 const (
@@ -48,7 +48,6 @@ type Client struct {
 // If two arguments are supplied, the first will be used as the address for Prometheus and the second will be used as the bearer token.
 func NewClient(args ...string) (*Client, error) {
 	client, err := prometheus.CreateClient(args...)
-
 	if err != nil {
 		return nil, fmt.Errorf("error trying to create the metrics client: %v", err)
 	}
@@ -61,7 +60,6 @@ func NewClient(args ...string) (*Client, error) {
 // ListAllJobNames will give a list of all of the osde2e jobs names seen in the given range.
 func (c *Client) ListAllJobNames(begin, end time.Time) ([]string, error) {
 	results, err := c.issueQuery("count by (job) (cicd_jUnitResult)", begin, end)
-
 	if err != nil {
 		return nil, fmt.Errorf("error listing all jobs: %v", err)
 	}
@@ -85,7 +83,6 @@ func (c *Client) ListAllJobNames(begin, end time.Time) ([]string, error) {
 // ListAllJobIDs will list all of the individual job IDs (individual job runs) for a given job in the given range.
 func (c *Client) ListAllJobIDs(jobName string, begin, end time.Time) ([]int64, error) {
 	results, err := c.issueQuery(fmt.Sprintf("count by (job_id) (cicd_jUnitResult{job=\"%s\"})", escapeQuotes(jobName)), begin, end)
-
 	if err != nil {
 		return nil, fmt.Errorf("error listing job IDs: %v", err)
 	}
@@ -95,7 +92,6 @@ func (c *Client) ListAllJobIDs(jobName string, begin, end time.Time) ([]int64, e
 	if matrixResults, ok := results.(model.Matrix); ok {
 		for _, sample := range matrixResults {
 			jobID, err := strconv.ParseInt(extractMetricFromSample(sample, "job_id"), 0, 64)
-
 			if err != nil {
 				return nil, fmt.Errorf("error parsing job id: %v", err)
 			}
@@ -114,7 +110,6 @@ func (c *Client) ListAllJobIDs(jobName string, begin, end time.Time) ([]int64, e
 // ListAllCloudProviders will list all of the individual cloud providers in the given range.
 func (c *Client) ListAllCloudProviders(begin, end time.Time) ([]string, error) {
 	results, err := c.issueQuery("count by (cloud_provider) (cicd_jUnitResult)", begin, end)
-
 	if err != nil {
 		return nil, fmt.Errorf("error listing cloud providers: %v", err)
 	}
@@ -135,7 +130,6 @@ func (c *Client) ListAllCloudProviders(begin, end time.Time) ([]string, error) {
 // ListAllEnvironments will list all of the environments for a cloud provider in the given range.
 func (c *Client) ListAllEnvironments(cloudProvider string, begin, end time.Time) ([]string, error) {
 	results, err := c.issueQuery(fmt.Sprintf("count by (environment) (cicd_jUnitResult{cloud_provider=\"%s\"})", escapeQuotes(cloudProvider)), begin, end)
-
 	if err != nil {
 		return nil, fmt.Errorf("error listing environments: %v", err)
 	}
@@ -157,7 +151,6 @@ func (c *Client) ListAllEnvironments(cloudProvider string, begin, end time.Time)
 func (c *Client) ListAllClusterIDs(cloudProvider, environment string, begin, end time.Time) ([]string, error) {
 	results, err := c.issueQuery(fmt.Sprintf("count by (cluster_id) (cicd_jUnitResult{cloud_provider=\"%s\", environment=\"%s\"})",
 		escapeQuotes(cloudProvider), escapeQuotes(environment)), begin, end)
-
 	if err != nil {
 		return nil, fmt.Errorf("error listing cluster IDs: %v", err)
 	}

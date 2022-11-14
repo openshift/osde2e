@@ -23,7 +23,7 @@ func GetVersionForInstall(versionList *spi.VersionList) (*semver.Version, string
 
 	versionSelectors := installselectors.GetVersionSelectors()
 
-	//Review: This is a hack to get around the fact that the version selector for the latest version
+	// Review: This is a hack to get around the fact that the version selector for the latest version
 	for _, versionSelector := range versionSelectors {
 		if versionSelector.ShouldUse() && versionSelector.Priority() > curPriority {
 			selectedVersionSelector = versionSelector
@@ -45,7 +45,7 @@ func GetVersionForInstall(versionList *spi.VersionList) (*semver.Version, string
 
 	}
 
-	//Refactor: Second time I see channel being set.
+	// Refactor: Second time I see channel being set.
 	channel := viper.GetString(config.Cluster.Channel)
 	if channel != "stable" && !strings.Contains(v.Original(), channel) {
 		v = semver.MustParse(fmt.Sprintf("%s-%s", v.Original(), channel))

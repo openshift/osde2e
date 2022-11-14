@@ -83,13 +83,11 @@ func (o *OCMProvider) LaunchCluster(clusterName string) (string, error) {
 	multiAZ := viper.GetBool(config.Cluster.MultiAZ)
 	cloudProvider := viper.GetString(config.CloudProvider.CloudProviderID)
 	computeMachineType, err := o.DetermineMachineType(cloudProvider)
-
 	if err != nil {
 		return "", fmt.Errorf("error while determining machine type: %v", err)
 	}
 
 	region, err := o.DetermineRegion(cloudProvider)
-
 	if err != nil {
 		return "", fmt.Errorf("error while determining region: %v", err)
 	}
@@ -498,7 +496,7 @@ func (o *OCMProvider) DetermineMachineType(cloudProvider string) (string, error)
 	// If a machineType is set to "random", it will poll OCM for all the machines available
 	// It then will pull a random entry from the list of machines and set the machineTypes to that
 	if (computeMachineType == "random" && rand.Intn(3) >= 2) || (computeMachineType == "random" && computeMachineTypeRegex != "") {
-		//Create search string based on wether we are using a regex or not
+		// Create search string based on wether we are using a regex or not
 		switch {
 		case computeMachineType == "random" && computeMachineTypeRegex != "":
 			searchString = fmt.Sprintf("cloud_provider.id like '%s' AND id like '%s.%%'", cloudProvider, computeMachineTypeRegex)
@@ -544,7 +542,6 @@ func (o *OCMProvider) GenerateProperties() (map[string]string, error) {
 	} else {
 
 		user, err := user.Current()
-
 		if err != nil {
 			return nil, fmt.Errorf("unable to get current user: %v", err)
 		}
@@ -677,7 +674,6 @@ func (o *OCMProvider) DeleteCluster(clusterID string) error {
 	}
 
 	return nil
-
 }
 
 // ScaleCluster will grow or shink the cluster to the desired number of compute nodes.
@@ -686,7 +682,6 @@ func (o *OCMProvider) ScaleCluster(clusterID string, numComputeNodes int) error 
 
 	// Get the current state of the cluster
 	ocmCluster, err := o.getOCMCluster(clusterID)
-
 	if err != nil {
 		return err
 	}
@@ -700,7 +695,6 @@ func (o *OCMProvider) ScaleCluster(clusterID string, numComputeNodes int) error 
 		Nodes(v1.NewClusterNodes().
 			Compute(numComputeNodes)).
 		Build()
-
 	if err != nil {
 		return fmt.Errorf("error while building scaled cluster object: %v", err)
 	}
@@ -752,7 +746,6 @@ func (o *OCMProvider) ListClusters(query string) ([]*spi.Cluster, error) {
 		clusterListRequest := o.conn.ClustersMgmt().V1().Clusters().List()
 
 		response, err := clusterListRequest.Search(query).Page(page).Send()
-
 		if err != nil {
 			return nil, err
 		}
@@ -816,7 +809,6 @@ func (o *OCMProvider) getOCMCluster(clusterID string) (*v1.Cluster, error) {
 
 		return nil
 	})
-
 	if err != nil {
 		return nil, err
 	}
@@ -830,7 +822,6 @@ func (o *OCMProvider) getOCMCluster(clusterID string) (*v1.Cluster, error) {
 
 // ClusterKubeconfig returns the kubeconfig for the given cluster ID.
 func (o *OCMProvider) ClusterKubeconfig(clusterID string) ([]byte, error) {
-
 	// Override with a local kubeconfig if defined
 	localKubeConfig := viper.GetString(config.Kubeconfig.Path)
 	if len(localKubeConfig) > 0 {
@@ -870,7 +861,6 @@ func (o *OCMProvider) ClusterKubeconfig(clusterID string) ([]byte, error) {
 
 		return nil
 	})
-
 	if err != nil {
 		return nil, fmt.Errorf("couldn't retrieve credentials for cluster '%s': %v", clusterID, err)
 	}
@@ -1099,7 +1089,6 @@ func (o *OCMProvider) ExtendExpiry(clusterID string, hours uint64, minutes uint6
 
 	// Get the current state of the cluster
 	ocmCluster, err := o.getOCMCluster(clusterID)
-
 	if err != nil {
 		return err
 	}
@@ -1127,7 +1116,6 @@ func (o *OCMProvider) ExtendExpiry(clusterID string, hours uint64, minutes uint6
 	}
 
 	extendexpiryCluster, err := v1.NewCluster().ExpirationTimestamp(extendexpirytime).Build()
-
 	if err != nil {
 		return fmt.Errorf("error while building updated expiration time cluster object: %v", err)
 	}
@@ -1174,7 +1162,6 @@ func (o *OCMProvider) Expire(clusterID string) error {
 	now := time.Now().Add(1 * time.Minute)
 
 	extendexpiryCluster, err := v1.NewCluster().ExpirationTimestamp(now).Build()
-
 	if err != nil {
 		return fmt.Errorf("error while building updated expiration time cluster object: %v", err)
 	}
@@ -1229,7 +1216,6 @@ func (o *OCMProvider) AddProperty(cluster *spi.Cluster, tag string, value string
 	clusterproperties[tag] = value
 
 	modifiedCluster, err := v1.NewCluster().Properties(clusterproperties).Build()
-
 	if err != nil {
 		return fmt.Errorf("error while building updated modified cluster object with new property: %v", err)
 	}
@@ -1282,7 +1268,6 @@ func (o *OCMProvider) AddProperty(cluster *spi.Cluster, tag string, value string
 
 // Upgrade initiates a cluster upgrade to the given version
 func (o *OCMProvider) Upgrade(clusterID string, version string, t time.Time) error {
-
 	policy, err := v1.NewUpgradePolicy().Version(version).NextRun(t).ScheduleType("manual").Build()
 	if err != nil {
 		return err
@@ -1303,9 +1288,7 @@ func (o *OCMProvider) Upgrade(clusterID string, version string, t time.Time) err
 
 // GetUpgradePolicyID gets the first upgrade policy from the top
 func (o *OCMProvider) GetUpgradePolicyID(clusterID string) (string, error) {
-
 	listResp, err := o.conn.ClustersMgmt().V1().Clusters().Cluster(clusterID).UpgradePolicies().List().SendContext(context.TODO())
-
 	if err != nil {
 		return "", err
 	}
@@ -1330,7 +1313,6 @@ func (o *OCMProvider) GetUpgradePolicyID(clusterID string) (string, error) {
 
 // UpdateSchedule updates the existing upgrade policy for re-scheduling
 func (o *OCMProvider) UpdateSchedule(clusterID string, version string, t time.Time, policyID string) error {
-
 	policyBody, err := v1.NewUpgradePolicy().NextRun(t).Build()
 	if err != nil {
 		return err
@@ -1352,7 +1334,6 @@ func (o *OCMProvider) UpdateSchedule(clusterID string, version string, t time.Ti
 // Resume resumes a cluster via OCM
 func (o *OCMProvider) Resume(id string) bool {
 	resp, err := o.conn.ClustersMgmt().V1().Clusters().Cluster(id).Resume().Send()
-
 	if err != nil {
 		err = fmt.Errorf("couldn't resume cluster '%s': %v", id, err)
 		log.Printf("%v", err)
@@ -1370,7 +1351,6 @@ func (o *OCMProvider) Resume(id string) bool {
 // Hibernate resumes a cluster via OCM
 func (o *OCMProvider) Hibernate(id string) bool {
 	resp, err := o.conn.ClustersMgmt().V1().Clusters().Cluster(id).Hibernate().Send()
-
 	if err != nil {
 		err = fmt.Errorf("couldn't hibernate cluster '%s': %v", id, err)
 		log.Printf("%v", err)

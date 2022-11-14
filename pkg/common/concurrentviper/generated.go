@@ -1,16 +1,18 @@
+//nolint
 package concurrentviper
 
 import (
-	sync "sync"
-	viper "github.com/spf13/viper"
-	mapstructure "github.com/mitchellh/mapstructure"
-	strings "strings"
-	afero "github.com/spf13/afero"
-	fsnotify "github.com/fsnotify/fsnotify"
-	time "time"
-	pflag "github.com/spf13/pflag"
 	io "io"
 	os "os"
+	strings "strings"
+	sync "sync"
+	time "time"
+
+	fsnotify "github.com/fsnotify/fsnotify"
+	mapstructure "github.com/mitchellh/mapstructure"
+	afero "github.com/spf13/afero"
+	pflag "github.com/spf13/pflag"
+	viper "github.com/spf13/viper"
 )
 
 var l sync.Mutex
@@ -59,12 +61,14 @@ func NewWithOptions(opts ...viper.Option) *viper.Viper {
 // can use it in their testing as well.
 // This function is safe for concurrent use.
 func Reset() { l.Lock(); defer l.Unlock(); viper.Reset() }
+
 // This function is safe for concurrent use.
 func OnConfigChange(run func(in fsnotify.Event)) {
 	l.Lock()
 	defer l.Unlock()
 	viper.OnConfigChange(run)
 }
+
 // This function is safe for concurrent use.
 func WatchConfig() { l.Lock(); defer l.Unlock(); viper.WatchConfig() }
 
@@ -428,6 +432,7 @@ func SafeWriteConfigAs(filename string) error {
 // and read it in the remote configuration registry.
 // This function is safe for concurrent use.
 func ReadRemoteConfig() error { l.Lock(); defer l.Unlock(); return viper.ReadRemoteConfig() }
+
 // This function is safe for concurrent use.
 func WatchRemoteConfig() error { l.Lock(); defer l.Unlock(); return viper.WatchRemoteConfig() }
 

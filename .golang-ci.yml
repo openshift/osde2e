@@ -13,6 +13,7 @@ linters:
     - ineffassign
     - misspell
     - unused
+    - gofumpt
 issues:
   exclude:
     - composites

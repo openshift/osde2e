@@ -42,9 +42,7 @@ esac
 cd {{$outDir}} && echo "Starting server" && python -m "${MODULE}"
 `
 
-var (
-	cmdTemplate = template.Must(template.New("testCmd").Parse(testCmd))
-)
+var cmdTemplate = template.Must(template.New("testCmd").Parse(testCmd))
 
 // Command generates the templated command.
 func (r *Runner) Command() ([]byte, error) {

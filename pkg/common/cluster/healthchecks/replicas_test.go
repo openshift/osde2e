@@ -34,7 +34,7 @@ func TestCheckReplicaCountForDaemonSets(t *testing.T) {
 	const (
 		ns = "openshift-test-ns"
 	)
-	var tests = []struct {
+	tests := []struct {
 		description   string
 		expected      bool
 		expectedError bool
@@ -69,7 +69,7 @@ func TestCheckReplicaCountForReplicaSets(t *testing.T) {
 	const (
 		ns = "openshift-test-ns"
 	)
-	var tests = []struct {
+	tests := []struct {
 		description   string
 		expected      bool
 		expectedError bool

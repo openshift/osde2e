@@ -5,10 +5,10 @@ import (
 
 	config "github.com/openshift/client-go/config/clientset/versioned"
 	image "github.com/openshift/client-go/image/clientset/versioned"
+	oauth "github.com/openshift/client-go/oauth/clientset/versioned"
 	project "github.com/openshift/client-go/project/clientset/versioned"
 	quotaclient "github.com/openshift/client-go/quota/clientset/versioned"
 	route "github.com/openshift/client-go/route/clientset/versioned"
-	oauth "github.com/openshift/client-go/oauth/clientset/versioned"
 	security "github.com/openshift/client-go/security/clientset/versioned"
 	user "github.com/openshift/client-go/user/clientset/versioned"
 	machine "github.com/openshift/machine-api-operator/pkg/generated/clientset/versioned"

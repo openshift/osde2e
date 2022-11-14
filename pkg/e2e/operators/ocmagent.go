@@ -57,11 +57,9 @@ var _ = ginkgo.Describe(ocmAgentBasicTest, func() {
 	checkPod(h, operatorNamespace, ocmAgentDeploymentName, 300, 3)
 
 	ginkgo.Context("Reconcile resources", func() {
-
 		// Waiting period to wait for OAO resources to be appear once deleted
 		pollingDuration := 600 * time.Second
 		util.GinkgoIt("ocm-agent deployment should be restored when it gets deleted", func(ctx context.Context) {
-
 			err := deleteDeployment(ctx, ocmAgentDeploymentName, operatorNamespace, h)
 			Expect(err).NotTo(HaveOccurred())
 
@@ -82,7 +80,6 @@ var _ = ginkgo.Describe(ocmAgentBasicTest, func() {
 		}, pollingDuration.Seconds())
 
 		util.GinkgoIt("ocm-agent-config configmap should be restored when it gets deleted", func(ctx context.Context) {
-
 			err := deleteConfigMap(ctx, ocmAgentCofigRefName, operatorNamespace, h)
 			Expect(err).NotTo(HaveOccurred())
 
@@ -103,7 +100,6 @@ var _ = ginkgo.Describe(ocmAgentBasicTest, func() {
 		}, pollingDuration.Seconds())
 
 		util.GinkgoIt("ocm-agent-token secret should be restored when it gets deleted", func(ctx context.Context) {
-
 			err := deleteSecret(ctx, ocmAgentTokenRefName, operatorNamespace, h)
 			Expect(err).NotTo(HaveOccurred())
 
@@ -124,7 +120,6 @@ var _ = ginkgo.Describe(ocmAgentBasicTest, func() {
 		}, pollingDuration.Seconds())
 
 		util.GinkgoIt("ocm-agent-metrics servicemonitor should be restored when it gets deleted", func(ctx context.Context) {
-
 			err := deleteServiceMonitor(ctx, ocmAgentServiceMonitorName, operatorNamespace, h)
 			Expect(err).NotTo(HaveOccurred())
 
@@ -145,7 +140,6 @@ var _ = ginkgo.Describe(ocmAgentBasicTest, func() {
 		}, pollingDuration.Seconds())
 
 		util.GinkgoIt("ocm-agent service should be restored when it gets deleted", func(ctx context.Context) {
-
 			err := deleteService(ctx, ocmAgentServiceName, operatorNamespace, h)
 			Expect(err).NotTo(HaveOccurred())
 
@@ -166,7 +160,6 @@ var _ = ginkgo.Describe(ocmAgentBasicTest, func() {
 		}, pollingDuration.Seconds())
 
 		util.GinkgoIt("ocm-agent-allow-only-alertmanager  networkpolicy should restored when it gets deleted", func(ctx context.Context) {
-
 			err := deleteNetworkPolicy(ctx, ocmAgentNetworkpolicyName, operatorNamespace, h)
 			Expect(err).NotTo(HaveOccurred())
 

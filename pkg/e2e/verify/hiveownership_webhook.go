@@ -28,7 +28,7 @@ func init() {
 }
 
 var _ = ginkgo.Describe(hiveownershipWebhookTestName, func() {
-	//const
+	// const
 	const (
 		// Group to use for impersonation
 		DUMMY_GROUP = "random-group-name"
@@ -37,16 +37,16 @@ var _ = ginkgo.Describe(hiveownershipWebhookTestName, func() {
 	)
 
 	// Map of CRQS name and whether it should be created/deleted by the test
-	var PRIVILEGED_CRQs = map[string]bool{
+	PRIVILEGED_CRQs := map[string]bool{
 		"managed-first-quota":  true,
 		"managed-second-quota": true,
 		"openshift-quota":      false,
 		"default":              false,
 	}
 
-	var PRIVILEGED_USER = "system:admin"
+	PRIVILEGED_USER := "system:admin"
 
-	var ELEVATED_SRE_USER = "backplane-cluster-admin"
+	ELEVATED_SRE_USER := "backplane-cluster-admin"
 
 	h := helper.New()
 	ginkgo.Context("hiveownership validating webhook", func() {
@@ -121,7 +121,7 @@ var _ = ginkgo.Describe(hiveownershipWebhookTestName, func() {
 			err = deleteClusterResourceQuota(ctx, h, cuQuota, DUMMY_USER, "dedicated-admins")
 			Expect(err).NotTo(HaveOccurred())
 		}, viper.GetFloat64(config.Tests.PollingTimeout))
-		//ENDS
+		// ENDS
 	})
 })
 

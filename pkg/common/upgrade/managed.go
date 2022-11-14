@@ -50,13 +50,13 @@ const (
 	// config override template asset
 	configOverrideTemplate = "upgrades/config.template"
 	// config override values
-	configProviderWatchInterval   = 15  // minutes
-	configScaleTimeout            = 15  // minutes
-	configUpgradeWindow           = 30  // minutes
-	configNodeDrainTimeout        = 6   // minutes
-	configExpectedDrainTime       = 7   // minutes
-	configControlPlaneTime        = 90  // minutes
-	configPdbDrainTimeoutOverride = 5   // minutes
+	configProviderWatchInterval   = 15 // minutes
+	configScaleTimeout            = 15 // minutes
+	configUpgradeWindow           = 30 // minutes
+	configNodeDrainTimeout        = 6  // minutes
+	configExpectedDrainTime       = 7  // minutes
+	configControlPlaneTime        = 90 // minutes
+	configPdbDrainTimeoutOverride = 5  // minutes
 
 )
 
@@ -127,7 +127,6 @@ func TriggerManagedUpgrade(h *helper.H) (*configv1.Update, error) {
 // Override the managed-upgrade-operator's existing configmap with an e2e-focused one, if
 // the existing configmap contains different values
 func overrideOperatorConfig(h *helper.H) error {
-
 	// Retrieve the existing operator config data
 	cm, err := h.Kube().CoreV1().ConfigMaps(muoNamespace).Get(context.TODO(), "managed-upgrade-operator-config", metav1.GetOptions{})
 	if err != nil {
@@ -142,7 +141,7 @@ func overrideOperatorConfig(h *helper.H) error {
 	providerEnv := viper.GetString(ocmprovider.Env)
 	url := ocmprovider.Environments.Choose(providerEnv)
 	replaceValues := struct {
-		ProviderSource string
+		ProviderSource         string
 		ProviderEnvironmentUrl string
 		ProviderWatchInterval  int
 		ControlPlaneTime       int
@@ -186,7 +185,6 @@ func overrideOperatorConfig(h *helper.H) error {
 // This is primarily being used to override the Pod Disruption Budget timeout
 // in order to minimize the worker upgrade length.
 func overrideUpgradeConfig(uc upgradev1alpha1.UpgradeConfig, h *helper.H) error {
-
 	// only update if we need to
 	if uc.Spec.PDBForceDrainTimeout == configPdbDrainTimeoutOverride {
 		return nil
@@ -211,7 +209,6 @@ func overrideUpgradeConfig(uc upgradev1alpha1.UpgradeConfig, h *helper.H) error 
 }
 
 func createManagedUpgradeWorkload(workLoadName string, workLoadDir string, podPrefixes []string, h *helper.H) error {
-
 	if _, ok := h.GetWorkload(workLoadName); ok {
 		return nil
 	}
@@ -231,7 +228,6 @@ func createManagedUpgradeWorkload(workLoadName string, workLoadDir string, podPr
 
 	// Wait for all pods to come up healthy
 	err = wait.PollImmediate(5*time.Second, 2*time.Minute, func() (bool, error) {
-
 		if check, err := healthchecks.CheckPodHealth(h.Kube().CoreV1(), nil, h.CurrentProject(), podPrefixes...); !check || err != nil {
 			return false, nil
 		}
@@ -249,7 +245,6 @@ func createManagedUpgradeWorkload(workLoadName string, workLoadDir string, podPr
 
 // IsManagedUpgradeDone returns with done true when a managed upgrade is complete.
 func isManagedUpgradeDone(h *helper.H) (done bool, msg string, err error) {
-
 	// retrieve UpgradeConfig
 	ucList, err := h.Dynamic().Resource(schema.GroupVersionResource{
 		Group: "upgrade.managed.openshift.io", Version: "v1alpha1", Resource: "upgradeconfigs",
@@ -350,7 +345,6 @@ func scheduleUpgradeWithProvider(h *helper.H) error {
 
 // Reschedule the upgrade via the provider
 func updateUpgradeWithProvider() error {
-
 	// Only supported by OCM
 	if getProviderSource() == providerLocal {
 		return nil
@@ -386,7 +380,6 @@ func updateUpgradeWithProvider() error {
 
 // Scales down and scales up the operator deployment to initiate a pod restart
 func restartOperator(h *helper.H, ns string) error {
-
 	log.Printf("restarting managed-upgrade-operator to force upgrade resync..")
 
 	err := wait.PollImmediate(5*time.Second, 2*time.Minute, func() (bool, error) {
@@ -416,7 +409,6 @@ func restartOperator(h *helper.H, ns string) error {
 		log.Printf("managed-upgrade-operator restart complete..")
 		return true, nil
 	})
-
 	if err != nil {
 		return fmt.Errorf("couldn't restart managed-upgrade-operator for config re-sync: %v", err)
 	}
@@ -428,7 +420,6 @@ func isUpgradeConfigCreated(h *helper.H) (bool, error) {
 	ucList, err := h.Dynamic().Resource(schema.GroupVersionResource{
 		Group: "upgrade.managed.openshift.io", Version: "v1alpha1", Resource: "upgradeconfigs",
 	}).Namespace(muoNamespace).List(context.TODO(), metav1.ListOptions{})
-
 	if err != nil {
 		return false, err
 	}
@@ -440,7 +431,6 @@ func isUpgradeConfigCreated(h *helper.H) (bool, error) {
 
 // check the upgradeconfig status to determine if the upgrade is started
 func isUpgradeTriggered(h *helper.H, desired *configv1.Update) (bool, error) {
-
 	// retrieve UpgradeConfig
 	ucObj, err := h.Dynamic().Resource(schema.GroupVersionResource{
 		Group: "upgrade.managed.openshift.io", Version: "v1alpha1", Resource: "upgradeconfigs",
@@ -475,7 +465,6 @@ func isUpgradeTriggered(h *helper.H, desired *configv1.Update) (bool, error) {
 // create cluster workloads prior to upgrade commencement which will test
 // manage-upgrade-operator's drain strategy functions
 func createUpgradeClusterWorkloads(h *helper.H) error {
-
 	// Create Pod Disruption Budget test workloads if desired
 	if viper.GetBool(config.Upgrade.ManagedUpgradeTestPodDisruptionBudgets) {
 		pdbPodPrefixes := []string{"pdb"}
@@ -533,7 +522,6 @@ func scheduleOCMUpgrade() error {
 }
 
 func scheduleLocalUpgrade(h *helper.H) error {
-
 	// Validate the upgrade type is supported
 	var upgradeType upgradev1alpha1.UpgradeType
 	switch viper.GetString(config.Upgrade.Type) {
@@ -561,7 +549,7 @@ func scheduleLocalUpgrade(h *helper.H) error {
 			UpgradeAt:            time.Now().UTC().Format(time.RFC3339),
 			PDBForceDrainTimeout: configPdbDrainTimeoutOverride,
 			Type:                 upgradeType,
-			CapacityReservation: true,
+			CapacityReservation:  true,
 		},
 		Status: upgradev1alpha1.UpgradeConfigStatus{},
 	}
