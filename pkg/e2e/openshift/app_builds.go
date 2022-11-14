@@ -54,7 +54,6 @@ var _ = ginkgo.Describe(appBuildsTestName, func() {
 
 	e2eTimeoutInSeconds := 3600
 	util.GinkgoIt("should get created in the cluster", func(ctx context.Context) {
-
 		namespacesExist := false
 		for _, application := range testApplications {
 			_, err := findAppNamespace(ctx, h, application)
@@ -110,16 +109,13 @@ var _ = ginkgo.Describe(appBuildsTestName, func() {
 			// write results
 			h.WriteResults(results)
 		}
-
 	}, float64(e2eTimeoutInSeconds+30))
-
 })
 
 func findAppNamespace(ctx context.Context, h *helper.H, appName string) (string, error) {
-
 	namespaceRegex := regexp.MustCompile("e2e-test-" + appName + "-repo-test-\\w+")
 	namespaceList, err := h.Project().ProjectV1().Projects().List(ctx, metav1.ListOptions{})
-	//h.Kube().CoreV1().Namespaces().List()
+	// h.Kube().CoreV1().Namespaces().List()
 	if err != nil {
 		err = fmt.Errorf("failed to fetch namespaces")
 	}

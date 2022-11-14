@@ -5,7 +5,8 @@ import (
 	"math/rand"
 )
 
-var clusterImageSources = map[string]string{"quay-primary": `imageContentSources:
+var clusterImageSources = map[string]string{
+	"quay-primary": `imageContentSources:
 - mirrors:
   - quay.io/openshift-release-dev/ocp-release
   - pull.q1w2.quay.rhcloud.com/openshift-release-dev/ocp-release
@@ -38,7 +39,8 @@ var clusterImageSources = map[string]string{"quay-primary": `imageContentSources
 - mirrors:
   - pull.q1w2.quay.rhcloud.com/app-sre/managed-upgrade-operator-registry
   - quay.io/app-sre/managed-upgrade-operator-registry
-  source: quay.io/app-sre/managed-upgrade-operator-registry`}
+  source: quay.io/app-sre/managed-upgrade-operator-registry`,
+}
 
 func (m *ROSAProvider) ChooseImageSource(choice string) (source string) {
 	var ok bool

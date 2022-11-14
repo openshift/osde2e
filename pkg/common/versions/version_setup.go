@@ -131,7 +131,6 @@ func setupUpgradeVersion(clusterVersion *semver.Version, versionList *spi.Versio
 
 	upgradeSource := provider.UpgradeSource()
 	releaseName, image, err := GetVersionForUpgrade(clusterVersion, versionList, upgradeSource)
-
 	if err != nil {
 		return fmt.Errorf("error selecting an upgrade version: %v", err)
 	}

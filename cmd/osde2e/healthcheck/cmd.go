@@ -9,10 +9,10 @@ import (
 	"github.com/openshift/osde2e/cmd/osde2e/common"
 	"github.com/openshift/osde2e/cmd/osde2e/helpers"
 	clusterutil "github.com/openshift/osde2e/pkg/common/cluster"
+	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/providers/ocmprovider"
 	"github.com/spf13/cobra"
-	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 )
 
 var Cmd = &cobra.Command{

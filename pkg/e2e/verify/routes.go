@@ -50,7 +50,6 @@ var _ = ginkgo.Describe(routesTestName, func() {
 	util.GinkgoIt("should be functioning for oauth", func(ctx context.Context) {
 		testRouteIngresses(ctx, oauthRoute(ctx, h), http.StatusForbidden)
 	}, 300)
-
 })
 
 func consoleRoutes(ctx context.Context, h *helper.H) []v1.Route {

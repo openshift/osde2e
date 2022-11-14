@@ -89,8 +89,10 @@ const (
 
 // This is a config key to secret file mapping. We will attempt to read in from secret files before loading anything else.
 
-var keyToSecretMapping = []Secret{}
-var keyToSecretMappingMutex = sync.Mutex{}
+var (
+	keyToSecretMapping      = []Secret{}
+	keyToSecretMappingMutex = sync.Mutex{}
+)
 
 // This is a list of OSD-specific namespaces to include in the post-E2E cleanup must-gather
 // that takes place.
@@ -344,7 +346,7 @@ var Cluster = struct {
 	// Blank will default to a randomized option
 	ImageContentSource string
 
-	//InstallConfig overrides merges on top of the installer's default OCP installer config
+	// InstallConfig overrides merges on top of the installer's default OCP installer config
 	// Blank will do nothing
 	// Cannot specify imageContentSources within this config
 	InstallConfig string

@@ -54,7 +54,6 @@ func TestSampleToAddonMetadata(t *testing.T) {
 
 	for _, test := range tests {
 		addonMetadata, err := sampleToAddonMetadata(test.sample)
-
 		if err != nil {
 			t.Errorf("test %s failed while converting the sample to addon metadata: %v", test.name, err)
 		}

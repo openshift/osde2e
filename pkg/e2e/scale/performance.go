@@ -44,8 +44,8 @@ var _ = ginkgo.Describe(performanceTestName, func() {
 	}, float64(httpTimeoutInSeconds))
 
 	// TODO: Enable once the network test is fixed. Currently running into UPERF_SSHD_PORT not defined
-	//networkTimeoutInSeconds := 7200
-	//util.GinkgoIt("should be tested with Network", func() {
+	// networkTimeoutInSeconds := 7200
+	// util.GinkgoIt("should be tested with Network", func() {
 	//	// setup runner
 	//	scaleCfg := scaleRunnerConfig{
 	//		Name:         "network",
@@ -66,8 +66,8 @@ var _ = ginkgo.Describe(performanceTestName, func() {
 
 	// TODO: Reenable this once we can figure out how to get it working. It looks like this takes longer than 2.5 hours,
 	//       so this may require being split into multiple tests
-	//prometheusTimeoutInSeconds := 7200
-	//util.GinkgoIt("should be tested with Prometheus", func() {
+	// prometheusTimeoutInSeconds := 7200
+	// util.GinkgoIt("should be tested with Prometheus", func() {
 	//	// setup runner
 	//	scaleCfg := scaleRunnerConfig{
 	//		Name:         "prometheus",
@@ -87,8 +87,8 @@ var _ = ginkgo.Describe(performanceTestName, func() {
 	//}, float64(prometheusTimeoutInSeconds))
 
 	// TODO: Enable once the fio test is fixed. Currently failing with 'azure_auth' is undefined
-	//fioTimeoutInSeconds := 3600
-	//util.GinkgoIt("should be tested with fio", func() {
+	// fioTimeoutInSeconds := 3600
+	// util.GinkgoIt("should be tested with fio", func() {
 	//	// setup runner
 	//	scaleCfg := scaleRunnerConfig{
 	//		Name:         "fio",

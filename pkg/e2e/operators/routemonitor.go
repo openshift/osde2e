@@ -34,12 +34,12 @@ var _ = ginkgo.Describe(routeMonitorOperatorTestName, func() {
 		operatorName           = "route-monitor-operator"
 		operatorDeploymentName = "route-monitor-operator-controller-manager"
 		operatorCsvDisplayName = "Route Monitor Operator"
-		//operatorLockFile  = "route-monitor-operator-lock"
+		// operatorLockFile  = "route-monitor-operator-lock"
 
 		defaultDesiredReplicas int32 = 1
 	)
 
-	var clusterRoles = []string{
+	clusterRoles := []string{
 		"route-monitor-operator-admin",
 		"route-monitor-operator-edit",
 		"route-monitor-operator-view",
@@ -48,7 +48,7 @@ var _ = ginkgo.Describe(routeMonitorOperatorTestName, func() {
 	h := helper.New()
 
 	checkClusterServiceVersion(h, operatorNamespace, operatorCsvDisplayName)
-	//checkConfigMapLockfile(h,operatorNamespace, operatorLockFile)
+	// checkConfigMapLockfile(h,operatorNamespace, operatorLockFile)
 	checkDeployment(h, operatorNamespace, operatorDeploymentName, defaultDesiredReplicas)
 	checkClusterRoles(h, clusterRoles, false)
 
@@ -60,7 +60,6 @@ var _ = ginkgo.Describe(routeMonitorOperatorTestName, func() {
 		"route-monitor-operator-registry")
 	verifyExistingRouteMonitorsAreValid(h)
 	testRouteMonitorCreationWorks(h)
-
 })
 
 func verifyExistingRouteMonitorsAreValid(h *helper.H) {
@@ -80,9 +79,9 @@ func verifyExistingRouteMonitorsAreValid(h *helper.H) {
 		})
 	})
 }
+
 func testRouteMonitorCreationWorks(h *helper.H) {
 	ginkgo.Context("rmo Route Monitor Operator integration test", func() {
-
 		// How long to wait for service monitors to be created
 		pollingDuration := 10 * time.Minute
 		util.GinkgoIt("Creates and deletes a RouteMonitor to see if it works accordingly", func(ctx context.Context) {

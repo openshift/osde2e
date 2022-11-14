@@ -40,9 +40,9 @@ import (
 )
 
 const (
-	encryptedStorageTestName string = "[Suite: e2e] Encrypted Storage"
-	encryptedStoragePollInterval    = 30 * time.Second
-	encryptedStoragePollTimeout     = 10 * time.Minute
+	encryptedStorageTestName     string = "[Suite: e2e] Encrypted Storage"
+	encryptedStoragePollInterval        = 30 * time.Second
+	encryptedStoragePollTimeout         = 10 * time.Minute
 )
 
 func init() {

@@ -68,7 +68,6 @@ func GetClusterVersion(provider spi.Provider, clusterID string) (*semver.Version
 // ScaleCluster will scale the cluster up to the provided size.
 func ScaleCluster(clusterID string, numComputeNodes int) error {
 	provider, err := providers.ClusterProvider()
-
 	if err != nil {
 		return fmt.Errorf("error getting cluster provisioning client: %v", err)
 	}
@@ -271,7 +270,6 @@ func waitForClusterReadyWithOverrideAndExpectedNumberOfNodes(clusterID string, l
 	}
 
 	provider, err := providers.ClusterProvider()
-
 	if err != nil {
 		return fmt.Errorf("error getting cluster provisioning client: %v", err)
 	}
@@ -373,7 +371,6 @@ func ClusterConfig(clusterID string) (restConfig *rest.Config, providerType stri
 
 	}
 	provider, err := providers.ClusterProvider()
-
 	if err != nil {
 		return nil, "", fmt.Errorf("error getting cluster provisioning client: %w", err)
 	}
@@ -381,7 +378,6 @@ func ClusterConfig(clusterID string) (restConfig *rest.Config, providerType stri
 
 	restConfig, err = getRestConfig(provider, clusterID)
 	if err != nil {
-
 		return nil, "", fmt.Errorf("error generating rest config: %w", err)
 	}
 

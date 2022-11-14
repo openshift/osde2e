@@ -164,7 +164,7 @@ func containsPrefixes(str string, subs ...string) bool {
 func filterPods(podList *kubev1.PodList, predicates ...PodPredicate) *kubev1.PodList {
 	filteredPods := &kubev1.PodList{}
 	for _, pod := range podList.Items {
-		var match = true
+		match := true
 		for _, p := range predicates {
 			if !p(pod) {
 				match = false

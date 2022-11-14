@@ -9,8 +9,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/spf13/cobra"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
+	"github.com/spf13/cobra"
 
 	"github.com/openshift/osde2e/cmd/osde2e/common"
 	"github.com/openshift/osde2e/pkg/common/config"
@@ -94,7 +94,6 @@ func init() {
 }
 
 func run(cmd *cobra.Command, argv []string) error {
-
 	if err := common.LoadConfigs(args.configString, args.customConfig, args.secretLocations); err != nil {
 		return fmt.Errorf("error loading initial state: %v", err)
 	}
@@ -125,7 +124,6 @@ func run(cmd *cobra.Command, argv []string) error {
 	}
 
 	client, err := prometheus.CreateClient()
-
 	if err != nil {
 		return fmt.Errorf("unable to create Prometheus client: %v", err)
 	}
@@ -135,7 +133,6 @@ func run(cmd *cobra.Command, argv []string) error {
 	defer cancel()
 
 	value, warnings, err := promAPI.Query(context, query, time.Now())
-
 	if err != nil {
 		return fmt.Errorf("error issuing query: %v", err)
 	}

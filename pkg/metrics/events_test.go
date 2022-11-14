@@ -49,7 +49,6 @@ func TestSampleToEvent(t *testing.T) {
 
 	for _, test := range tests {
 		event, err := sampleToEvent(test.sample)
-
 		if err != nil {
 			t.Errorf("test %s failed while converting the sample to event: %v", test.name, err)
 		}

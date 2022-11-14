@@ -36,7 +36,7 @@ var _ = ginkgo.Describe(namespaceWebhookTestName, func() {
 		DUMMY_USER = "testuser@testdomain"
 	)
 
-	var PRIVILEGED_USERS = []string{
+	PRIVILEGED_USERS := []string{
 		"system:admin",
 		"backplane-cluster-admin",
 	}
@@ -45,7 +45,7 @@ var _ = ginkgo.Describe(namespaceWebhookTestName, func() {
 	// Should match up with namespaces found in managed-cluster-config:
 	// * https://github.com/openshift/managed-cluster-config/blob/master/deploy/osd-managed-resources/ocp-namespaces.ConfigMap.yaml
 	// * https://github.com/openshift/managed-cluster-config/blob/master/deploy/osd-managed-resources/managed-namespaces.ConfigMap.yaml
-	var PRIVILEGED_NAMESPACES = map[string]bool{
+	PRIVILEGED_NAMESPACES := map[string]bool{
 		"kube-system":                    false,
 		"openshift-apiserver":            false,
 		"openshift":                      false,
@@ -54,7 +54,7 @@ var _ = ginkgo.Describe(namespaceWebhookTestName, func() {
 	}
 
 	// All namespaces in this list will be created/deleted by the test
-	var NONPRIV_NAMESPACES = []string{
+	NONPRIV_NAMESPACES := []string{
 		"mykube-admin",
 		"open-shift",
 		"oopenshift",

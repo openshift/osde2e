@@ -69,9 +69,9 @@ func Configs(configs []string, customConfig string, secretLocations []string) er
 
 		for _, folder := range secretLocations {
 			passthruSecrets := viper.GetStringMapString(config.NonOSDe2eSecrets)
-			//Omit the osde2e secrets from going to the pass through secrets.
+			// Omit the osde2e secrets from going to the pass through secrets.
 			if strings.Contains(folder, "osde2e-credentials") || strings.Contains(folder, "osde2e-common") {
-				//If this is an addon test we will want to pass the ocm-token through.
+				// If this is an addon test we will want to pass the ocm-token through.
 				if viper.Get(config.Addons.IDs) != nil {
 					_, exist := passthruSecrets["ocm-token-refresh"]
 					if !exist {
@@ -163,10 +163,10 @@ func loadYAMLFromFile(name string) error {
 // loadSecretFileIntoKey will attempt to load the contents of a secret file into the given key.
 // If the secret file doesn't exist, we'll skip this.
 func loadSecretFileIntoKey(key string, filename string, secretLocations []string) error {
-	//We should rewrite all of this logic. This introduces a bug with the current expected behavior that overwrites values but does this multiple times.
+	// We should rewrite all of this logic. This introduces a bug with the current expected behavior that overwrites values but does this multiple times.
 	for _, secretLocation := range secretLocations {
 		fullFilename := filepath.Join(secretLocation, filename)
-		//This is a bandage fix until we can rewrite the logic to load secrets.
+		// This is a bandage fix until we can rewrite the logic to load secrets.
 		if (strings.Contains(fullFilename, "osde2e-credentials") || strings.Contains(fullFilename, "osde2e-common")) && (key == "ocm.aws.accesKey" || key == "ocm.aws.secretKey") {
 			if viper.GetBool("ocm.ccs") {
 				continue
@@ -182,7 +182,7 @@ func loadSecretFileIntoKey(key string, filename string, secretLocations []string
 			log.Printf("Found secret for key %s.", key)
 			cleanData := strings.TrimSpace(string(data))
 			if cleanData != "" {
-				//If the data contains a certificate, we'll need to pass the file path to the secret.
+				// If the data contains a certificate, we'll need to pass the file path to the secret.
 				if strings.Contains(cleanData, "-----BEGIN CERTIFICATE-----") {
 					cleanData = fullFilename
 				}

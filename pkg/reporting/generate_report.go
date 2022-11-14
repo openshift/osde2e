@@ -41,13 +41,11 @@ func ListReportTypes(reportName string) ([]string, error) {
 // GenerateReport will generate the specified report and return it.
 func GenerateReport(reporterName string, reportType string) ([]byte, error) {
 	reporter, err := reporters.GetReporter(reporterName)
-
 	if err != nil {
 		return nil, fmt.Errorf("error getting reporter: %v", err)
 	}
 
 	rawReport, err := reporter.GenerateReport(reportType)
-
 	if err != nil {
 		return nil, fmt.Errorf("error generating report: %v", err)
 	}

@@ -22,25 +22,20 @@ func init() {
 }
 
 var _ = ginkgo.Describe(onNodesTestName, func() {
-
 	h := helper.New()
 
 	ginkgo.Context("worker nodes", func() {
-
 		util.GinkgoIt("on worker nodes", func(ctx context.Context) {
-
 			_, infra, err := listNodesByType(ctx, h.Kube().CoreV1())
 			Expect(err).NotTo(HaveOccurred())
 
 			_, err = checkPods(ctx, h.Kube().CoreV1(), infra)
 			Expect(err).NotTo(HaveOccurred())
-
 		})
 	})
 })
 
 func checkPods(ctx context.Context, podClient v1.CoreV1Interface, infra []string) (map[string]string, error) {
-
 	type (
 		PodName      = string
 		Namespace    = string
@@ -48,14 +43,16 @@ func checkPods(ctx context.Context, podClient v1.CoreV1Interface, infra []string
 		Node         = string
 	)
 	violators := make(map[PodName]Node)
-	operators := map[OperatorName]Namespace{"cloud-ingress-operator": "openshift-cloud-ingress-operator",
+	operators := map[OperatorName]Namespace{
+		"cloud-ingress-operator":          "openshift-cloud-ingress-operator",
 		"configure-alertmanager-operator": "openshift-monitoring",
 		"custom-domains-operator":         "openshift-custom-domains-operator",
 		"managed-upgrade-operator":        "openshift-managed-upgrade-operator",
 		"managed-velero-operator":         "openshift-velero",
 		"must-gather-operator":            "openshift-must-gather-operator",
 		"osd-metrics-exporter":            "openshift-osd-metrics",
-		"rbac-permissions-operator":       "openshift-rbac-permissions"}
+		"rbac-permissions-operator":       "openshift-rbac-permissions",
+	}
 
 	listOpts := metav1.ListOptions{}
 
@@ -69,7 +66,7 @@ func checkPods(ctx context.Context, podClient v1.CoreV1Interface, infra []string
 	}
 
 	for _, pod := range list.Items {
-		//For each pod.ObjectMeta.Name, pod.Spec.NodeName we will check if they are a match for the operaor namespace and pod name prefix.
+		// For each pod.ObjectMeta.Name, pod.Spec.NodeName we will check if they are a match for the operaor namespace and pod name prefix.
 		for op, namespace := range operators {
 			if pod.ObjectMeta.Namespace == namespace {
 				if (strings.HasPrefix(pod.ObjectMeta.Name, op)) && !(strings.HasPrefix(pod.ObjectMeta.Name, op+"-registry")) {
@@ -89,15 +86,13 @@ func checkPods(ctx context.Context, podClient v1.CoreV1Interface, infra []string
 	return violators, nil
 }
 
-//This function returns a list of worker nodes and a list of infra nodes
+// This function returns a list of worker nodes and a list of infra nodes
 func listNodesByType(ctx context.Context, nodeClient v1.CoreV1Interface) (worker, infra []string, err error) {
-
 	log.Printf("Getting node list")
 
 	listOpts := metav1.ListOptions{}
-	//This call will list all the nodes in the cluster
+	// This call will list all the nodes in the cluster
 	list, err := nodeClient.Nodes().List(ctx, listOpts)
-
 	if err != nil {
 		return nil, nil, fmt.Errorf("error getting node list: %v", err)
 	}
@@ -109,7 +104,7 @@ func listNodesByType(ctx context.Context, nodeClient v1.CoreV1Interface) (worker
 	for _, node := range list.Items {
 		labels := node.Labels
 
-		for key, _ := range labels {
+		for key := range labels {
 			if key == "node-role.kubernetes.io/worker" {
 				worker = append(worker, node.Name)
 			}

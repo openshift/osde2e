@@ -210,6 +210,7 @@ func (r response) DoRaw(context.Context) ([]byte, error) {
 	}
 	return r, nil
 }
+
 func (r response) Stream(context.Context) (io.ReadCloser, error) {
 	if len(r) == 0 {
 		return nil, errors.New("file does not exist")

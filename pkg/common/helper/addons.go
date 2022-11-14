@@ -18,7 +18,6 @@ import (
 // It returns the names of test harnesses that failed (empty slice if none failed).
 func (h *H) RunAddonTests(ctx context.Context, name string, timeout int, harnesses, args []string) (failed []string) {
 	addonTestTemplate, err := templates.LoadTemplate("addons/addon-runner.template")
-
 	if err != nil {
 		panic(fmt.Sprintf("error while loading addon test runner: %v", err))
 	}
