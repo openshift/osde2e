@@ -3,8 +3,8 @@ package cluster
 import (
 	"testing"
 
-	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
+	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 )
 
 func TestRandomClusterName(t *testing.T) {

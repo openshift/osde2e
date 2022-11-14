@@ -79,6 +79,7 @@ func (o *OCMProvider) getLogList(clusterID string) ([]string, error) {
 
 		return nil
 	})
+
 	if err != nil {
 		return nil, fmt.Errorf("couldn't retrieve log list for cluster '%s': %v", clusterID, err)
 	}

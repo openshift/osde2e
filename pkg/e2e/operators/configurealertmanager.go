@@ -13,18 +13,18 @@ func init() {
 }
 
 var _ = ginkgo.Describe(configureAlertManagerOperators, func() {
-	operatorName := "configure-alertmanager-operator"
+	var operatorName = "configure-alertmanager-operator"
 	var operatorNamespace string = "openshift-monitoring"
 	var operatorLockFile string = "configure-alertmanager-operator-lock"
 	var defaultDesiredReplicas int32 = 1
 
-	clusterRoles := []string{
+	var clusterRoles = []string{
 		"configure-alertmanager-operator",
 	}
 
-	clusterRoleBindings := []string{}
+	var clusterRoleBindings = []string{}
 
-	serviceAccounts := []string{
+	var serviceAccounts = []string{
 		"configure-alertmanager-operator",
 	}
 

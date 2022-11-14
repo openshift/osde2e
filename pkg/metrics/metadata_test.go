@@ -50,6 +50,7 @@ func TestSampleToMetadata(t *testing.T) {
 
 	for _, test := range tests {
 		metadata, err := sampleToMetadata(test.sample)
+
 		if err != nil {
 			t.Errorf("test %s failed while converting the sample to metadata: %v", test.name, err)
 		}

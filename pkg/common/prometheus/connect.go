@@ -68,6 +68,7 @@ func createRoundTripper(bearerToken string) http.RoundTripper {
 }
 
 func CreateClusterClient(h *helper.H) (api.Client, error) {
+
 	promHost, err := getClusterPrometheusHost(h)
 	if err != nil {
 		return nil, err
@@ -93,6 +94,7 @@ func getClusterPrometheusHost(h *helper.H) (*string, error) {
 }
 
 func getClusterPrometheusToken(h *helper.H) (*string, error) {
+
 	secrets, err := h.Kube().CoreV1().Secrets("openshift-monitoring").List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		return nil, fmt.Errorf("Unable to fetch secrets in openshift-monitoring")

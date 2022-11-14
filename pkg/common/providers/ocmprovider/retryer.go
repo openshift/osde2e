@@ -9,10 +9,8 @@ import (
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 )
 
-var (
-	ocmOnce    = sync.Once{}
-	ocmRetryer *retry.Retryer
-)
+var ocmOnce = sync.Once{}
+var ocmRetryer *retry.Retryer
 
 // Retryer returns a retryer meant for OCM interactions.
 func retryer() *retry.Retryer {

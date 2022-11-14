@@ -8,10 +8,10 @@ import (
 	"strings"
 	"time"
 
-	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/metrics"
 	"github.com/openshift/osde2e/pkg/reporting/spi"
 	"github.com/openshift/osde2e/pkg/reporting/templates"
+	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 )
 
 // Intermediary structs
@@ -76,6 +76,7 @@ func (w weatherReport) Swap(i, j int) {
 // ToJSON will convert the weather report into a JSON object.
 func (w weatherReport) ToJSON() ([]byte, error) {
 	jsonReport, err := json.MarshalIndent(w, "", "  ")
+
 	if err != nil {
 		return nil, fmt.Errorf("error while marshaling report into JSON: %v", err)
 	}
@@ -84,7 +85,8 @@ func (w weatherReport) ToJSON() ([]byte, error) {
 }
 
 // Reporter will write out the actual weather report.
-type Reporter struct{}
+type Reporter struct {
+}
 
 func init() {
 	spi.RegisterReporter(Reporter{})
@@ -102,6 +104,7 @@ func (w Reporter) GenerateReport(reportType string) ([]byte, error) {
 	start := end.Add(-time.Hour * (viper.GetDuration(StartOfTimeWindowInHours)))
 
 	client, err := metrics.NewClient()
+
 	if err != nil {
 		return nil, fmt.Errorf("error while creating client: %v", err)
 	}
@@ -122,6 +125,7 @@ func (w Reporter) GenerateReport(reportType string) ([]byte, error) {
 
 	// Generate report from query results.
 	jobReportData, err := generateVersionsAndFailures(results)
+
 	if err != nil {
 		return nil, err
 	}
@@ -144,6 +148,7 @@ func (w Reporter) GenerateReport(reportType string) ([]byte, error) {
 
 		if allowed {
 			jobIDsAndPassRates, err := client.ListPassRatesByJobID(job, start, end)
+
 			if err != nil {
 				return nil, err
 			}
@@ -156,6 +161,7 @@ func (w Reporter) GenerateReport(reportType string) ([]byte, error) {
 				passRate += jobPassRate
 
 				jobIDResults, err := client.ListJUnitResultsByJobNameAndJobID(job, jobID, start, end)
+
 				if err != nil {
 					return nil, err
 				}
@@ -301,6 +307,7 @@ func arrayFromMapKeys(mapToExtractFrom map[string]int) []string {
 
 // Generates a raw HTML summary
 func generateSummaryTable(summary map[string]*summaryReportData) string {
+
 	// Sort the keys
 	environments := []string{}
 

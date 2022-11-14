@@ -93,6 +93,7 @@ func (r *Runner) waitForCompletion(podName string, timeoutInSeconds int) error {
 
 func (r *Runner) getAllLogsFromPod(podName string) error {
 	pod, err := r.Kube.CoreV1().Pods(r.svc.Namespace).Get(context.TODO(), podName, metav1.GetOptions{})
+
 	if err != nil {
 		return err
 	}
@@ -104,6 +105,7 @@ func (r *Runner) getAllLogsFromPod(podName string) error {
 			request := r.Kube.CoreV1().Pods(r.svc.Namespace).GetLogs(podName, &kubev1.PodLogOptions{Container: containerStatus.Name})
 
 			logStream, err := request.Stream(context.TODO())
+
 			if err != nil {
 				allErrors = multierror.Append(allErrors, err)
 				return
@@ -112,6 +114,7 @@ func (r *Runner) getAllLogsFromPod(podName string) error {
 			defer logStream.Close()
 
 			logBytes, err := ioutil.ReadAll(logStream)
+
 			if err != nil {
 				allErrors = multierror.Append(allErrors, err)
 				return
@@ -119,14 +122,14 @@ func (r *Runner) getAllLogsFromPod(podName string) error {
 
 			configMapDirectory := filepath.Join(viper.GetString(config.ReportDir), viper.GetString(config.Phase), containerLogs)
 
-			if err := os.MkdirAll(configMapDirectory, os.FileMode(0o755)); err != nil {
+			if err := os.MkdirAll(configMapDirectory, os.FileMode(0755)); err != nil {
 				allErrors = multierror.Append(allErrors, err)
 				return
 			}
 
 			logOutput := filepath.Join(configMapDirectory, fmt.Sprintf("%s-%s.log", podName, containerStatus.Name))
 
-			allErrors = multierror.Append(allErrors, ioutil.WriteFile(logOutput, logBytes, os.FileMode(0o644)))
+			allErrors = multierror.Append(allErrors, ioutil.WriteFile(logOutput, logBytes, os.FileMode(0644)))
 		}()
 	}
 

@@ -3,8 +3,8 @@ package reporting
 import (
 	"fmt"
 
-	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/slack-go/slack"
+	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 )
 
 // SendReportToSlack will send the weather report to slack

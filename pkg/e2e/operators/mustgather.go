@@ -26,12 +26,12 @@ func init() {
 }
 
 var _ = ginkgo.Describe(mustGatherOperatorTest, func() {
-	operatorName := "must-gather-operator"
-	operatorNamespace := "openshift-must-gather-operator"
-	operatorLockFile := "must-gather-operator-lock"
+	var operatorName = "must-gather-operator"
+	var operatorNamespace = "openshift-must-gather-operator"
+	var operatorLockFile = "must-gather-operator-lock"
 	var defaultDesiredReplicas int32 = 1
 
-	clusterRoles := []string{
+	var clusterRoles = []string{
 		"must-gather-operator-admin",
 		"must-gather-operator-edit",
 		"must-gather-operator-view",

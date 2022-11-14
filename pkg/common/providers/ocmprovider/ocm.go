@@ -82,6 +82,7 @@ func OCMConnection(token, env string, debug bool) (*ocm.Connection, error) {
 	}
 
 	connection, err := builder.Build()
+
 	if err != nil {
 		connectionCache[cacheKey] = nil
 		return nil, err
@@ -102,6 +103,7 @@ func NewWithEnv(env string) (*OCMProvider, error) {
 	debug := viper.GetBool(Debug)
 
 	conn, err := OCMConnection(token, env, debug)
+
 	if err != nil {
 		return nil, err
 	}

@@ -64,6 +64,7 @@ func (m *ROSAProvider) IsValidClusterName(clusterName string) (bool, error) {
 
 	// Name is valid.
 	return true, nil
+
 }
 
 // LaunchCluster will provision an AWS cluster.
@@ -85,7 +86,7 @@ func (m *ROSAProvider) LaunchCluster(clusterName string) (string, error) {
 		viper.Set(config.Cluster.Channel, "nightly")
 	}
 
-	// Refactor: Was this not redundant with the above?
+	//Refactor: Was this not redundant with the above?
 	rosaClusterVersion = strings.Replace(rosaClusterVersion, "-stable", "", -1)
 	rosaClusterVersion = strings.Replace(rosaClusterVersion, "openshift-v", "", -1)
 
@@ -156,6 +157,7 @@ func (m *ROSAProvider) LaunchCluster(clusterName string) (string, error) {
 			Logger(logger).
 			Region(aws.DefaultRegion).
 			Build()
+
 		if err != nil {
 			return err
 		}
@@ -377,7 +379,7 @@ func (m *ROSAProvider) ocmLogin() (*ocm.Client, error) {
 	}
 
 	// URLAliases allows the value of the `--env` option to map to the various API URLs.
-	URLAliases := map[string]string{
+	var URLAliases = map[string]string{
 		"prod":  "https://api.openshift.com",
 		"stage": "https://api.stage.openshift.com",
 		"int":   "https://api.integration.openshift.com",

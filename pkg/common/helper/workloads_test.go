@@ -7,7 +7,7 @@ import (
 )
 
 func TestCreateWorkload(t *testing.T) {
-	tests := []struct {
+	var tests = []struct {
 		description string
 		file        string
 	}{

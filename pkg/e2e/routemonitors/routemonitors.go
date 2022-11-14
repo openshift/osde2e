@@ -39,10 +39,8 @@ type RouteMonitors struct {
 }
 
 // Frequency of requests per second (per route)
-const (
-	pollFrequency  = 3
-	timeoutSeconds = 3 * time.Second
-)
+const pollFrequency = 3
+const timeoutSeconds = 3 * time.Second
 
 // Data Structure used to store time-value values of Route Monitor Data
 type RouteMonData struct {
@@ -167,7 +165,7 @@ func (rm *RouteMonitors) Start() {
 		rm.attackers = append(rm.attackers, attacker)
 	}
 
-	for title := range rm.Monitors {
+	for title, _ := range rm.Monitors {
 		rm.Metrics[title] = &vegeta.Metrics{}
 	}
 }
@@ -205,7 +203,7 @@ func (rm *RouteMonitors) StoreMetadata() {
 func (rm *RouteMonitors) SaveReports(baseDir string) error {
 	outputDirectory := filepath.Join(baseDir, "route-monitors")
 	if _, err := os.Stat(outputDirectory); os.IsNotExist(err) {
-		if err := os.Mkdir(outputDirectory, os.FileMode(0o755)); err != nil {
+		if err := os.Mkdir(outputDirectory, os.FileMode(0755)); err != nil {
 			return fmt.Errorf("error while creating route monitor report directory %s: %v", outputDirectory, err)
 		}
 	}
@@ -226,7 +224,7 @@ func (rm *RouteMonitors) SaveReports(baseDir string) error {
 func (rm *RouteMonitors) SavePlots(baseDir string) error {
 	outputDirectory := filepath.Join(baseDir, "route-monitors")
 	if _, err := os.Stat(outputDirectory); os.IsNotExist(err) {
-		if err := os.Mkdir(outputDirectory, os.FileMode(0o755)); err != nil {
+		if err := os.Mkdir(outputDirectory, os.FileMode(0755)); err != nil {
 			return fmt.Errorf("error while creating route monitor report directory %s: %v", outputDirectory, err)
 		}
 	}
@@ -255,7 +253,7 @@ func createPlot(title string) *plot.Plot {
 func (rm *RouteMonitors) ExtractData(baseDir string) error {
 	outputDirectory := filepath.Join(baseDir, "route-monitors")
 	if _, err := os.Stat(outputDirectory); os.IsNotExist(err) {
-		if err := os.MkdirAll(outputDirectory, os.FileMode(0o755)); err != nil {
+		if err := os.MkdirAll(outputDirectory, os.FileMode(0755)); err != nil {
 			return fmt.Errorf("error while creating route monitor report directory %s: %v", outputDirectory, err)
 		}
 	}

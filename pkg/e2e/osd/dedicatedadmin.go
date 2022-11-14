@@ -29,8 +29,9 @@ func init() {
 
 var _ = ginkgo.Describe(dedicatedAdminTestName, func() {
 	ginkgo.Context("dedicated-admin group permissions", func() {
+
 		// list of namespaces to loop through
-		namespaceList := []string{
+		var namespaceList = []string{
 			"openshift-operators",
 			"openshift-operators-redhat",
 		}

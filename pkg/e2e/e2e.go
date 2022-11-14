@@ -78,7 +78,7 @@ func beforeSuite() bool {
 	// Skip provisioning if we already have a kubeconfig
 	var err error
 
-	// We can capture this error if TEST_KUBECONFIG is set, but we can't use it to skip provisioning
+	//We can capture this error if TEST_KUBECONFIG is set, but we can't use it to skip provisioning
 	config.LoadKubeconfig()
 
 	if viper.GetString(config.Kubeconfig.Contents) == "" {
@@ -194,6 +194,7 @@ func beforeSuite() bool {
 			},
 			StringData: viper.GetStringMapString(config.NonOSDe2eSecrets),
 		}, metav1.CreateOptions{})
+
 		if err != nil {
 			log.Printf("Error creating Prow secrets in-cluster: %s", err.Error())
 		}
@@ -280,7 +281,7 @@ func runGinkgoTests() (int, error) {
 	}
 
 	if testsToRun := viper.GetStringSlice(config.Tests.TestsToRun); len(testsToRun) > 0 {
-		// Flag to delete sice these Print statements are duplicated, all we really are doing is setting an array to be passed to the Ginkgo suite.
+		//Flag to delete sice these Print statements are duplicated, all we really are doing is setting an array to be passed to the Ginkgo suite.
 		log.Printf("%v", testsToRun)
 		suiteConfig.FocusStrings = testsToRun
 		log.Printf("%v", suiteConfig.FocusStrings)
@@ -326,6 +327,7 @@ func runGinkgoTests() (int, error) {
 	// Redirect stdout to where we want it to go
 	buildLogPath := filepath.Join(reportDir, buildLog)
 	buildLogWriter, err := os.Create(buildLogPath)
+
 	if err != nil {
 		return Failure, fmt.Errorf("unable to create build log in report directory: %v", err)
 	}
@@ -393,6 +395,7 @@ func runGinkgoTests() (int, error) {
 
 	// upgrade cluster if requested
 	if viper.GetString(config.Upgrade.Image) != "" || viper.GetString(config.Upgrade.ReleaseName) != "" {
+
 		if len(viper.GetString(config.Kubeconfig.Contents)) > 0 {
 			// create route monitors for the upgrade
 			var routeMonitorChan chan struct{}
@@ -497,7 +500,7 @@ func runGinkgoTests() (int, error) {
 		}
 
 		// TODO: SDA-2594 Hotfix
-		// checkBeforeMetricsGeneration()
+		//checkBeforeMetricsGeneration()
 
 		newMetrics := NewMetrics()
 		if newMetrics == nil {
@@ -652,6 +655,7 @@ func cleanupAfterE2E(ctx context.Context, h *helper.H) (errors []error) {
 				if err != nil {
 					log.Printf("Failed setting completed status: %v", err)
 				}
+
 			}()
 			log.Printf("Cluster addons: %v", cluster.Addons())
 			log.Printf("Cluster cloud provider: %v", cluster.CloudProvider())
@@ -732,7 +736,7 @@ func runTestsInPhase(
 	reportDir := viper.GetString(config.ReportDir)
 	phaseDirectory := filepath.Join(reportDir, phase)
 	if _, err := os.Stat(phaseDirectory); os.IsNotExist(err) {
-		if err := os.Mkdir(phaseDirectory, os.FileMode(0o755)); err != nil {
+		if err := os.Mkdir(phaseDirectory, os.FileMode(0755)); err != nil {
 			log.Printf("error while creating phase directory %s", phaseDirectory)
 			return false, testCaseData
 		}
@@ -851,7 +855,7 @@ func runTestsInPhase(
 	// Ensure all log metrics are zeroed out before running again
 	metadata.Instance.ResetLogMetrics()
 
-	// Ensure all before suite metrics are zeroed out before running again
+	//Ensure all before suite metrics are zeroed out before running again
 	metadata.Instance.ResetBeforeSuiteMetrics()
 
 	for _, file := range files {
@@ -870,8 +874,8 @@ func runTestsInPhase(
 		}
 	}
 
-	// Flagging this block for deletion.
-	// Delete, Refactor, broken
+	//Flagging this block for deletion.
+	//Delete, Refactor, broken
 	// logMetricTestSuite := reporters.JUnitTestSuite{
 	// 	Name: "Log Metrics",
 	// }
@@ -958,7 +962,7 @@ func runTestsInPhase(
 		if err != nil {
 			log.Printf("Error generating dependencies: %s", err.Error())
 		} else {
-			if err = ioutil.WriteFile(filepath.Join(phaseDirectory, "dependencies.txt"), []byte(dependencies), 0o644); err != nil {
+			if err = ioutil.WriteFile(filepath.Join(phaseDirectory, "dependencies.txt"), []byte(dependencies), 0644); err != nil {
 				log.Printf("Error writing dependencies.txt: %s", err.Error())
 			}
 

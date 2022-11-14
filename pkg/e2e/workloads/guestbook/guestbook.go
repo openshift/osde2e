@@ -50,6 +50,7 @@ var _ = ginkgo.Describe(testName, func() {
 
 	workloadPollDuration := 5 * time.Minute
 	util.GinkgoIt("should get created in the cluster", func(ctx context.Context) {
+
 		// Does this workload exist? If so, this must be a repeat run.
 		// In this case we should assume the workload has had a valid run once already
 		// And simply run another test validating the workload.
@@ -57,6 +58,7 @@ var _ = ginkgo.Describe(testName, func() {
 		if _, ok := h.GetWorkload(workloadName); ok {
 			// Run the workload test
 			doTest(ctx, h)
+
 		} else {
 			// Create all K8s objects that are within the testDir
 			objects, err := helper.ApplyYamlInFolder(testDir, h.CurrentProject(), h.Kube())
@@ -99,10 +101,12 @@ var _ = ginkgo.Describe(testName, func() {
 			// If success, add the workload to the list of installed workloads
 			h.AddWorkload(workloadName, h.CurrentProject())
 		}
+
 	}, (workloadPollDuration + (30 * time.Second)).Seconds())
 })
 
 func doTest(ctx context.Context, h *helper.H) {
+
 	// track if error occurs
 	var err error
 

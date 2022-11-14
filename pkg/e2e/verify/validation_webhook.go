@@ -21,14 +21,15 @@ func init() {
 }
 
 var _ = ginkgo.Describe(validationWebhookTestName, func() {
-	namespace := "openshift-validation-webhook"
-	service := "validation-webhook"
-	configMapName := "webhook-cert"
-	secretName := "webhook-cert"
+	var namespace = "openshift-validation-webhook"
+	var service = "validation-webhook"
+	var configMapName = "webhook-cert"
+	var secretName = "webhook-cert"
 
 	h := helper.New()
 
 	util.GinkgoIt("should exist and be running in the cluster", func(ctx context.Context) {
+
 		// Expect project to exist
 		_, err := h.Project().ProjectV1().Projects().Get(ctx, namespace, metav1.GetOptions{})
 		Expect(err).ShouldNot(HaveOccurred(), "project should have been created")
@@ -55,5 +56,7 @@ var _ = ginkgo.Describe(validationWebhookTestName, func() {
 		// Ensure service is present
 		_, err = h.Kube().CoreV1().Services(namespace).Get(ctx, service, metav1.GetOptions{})
 		Expect(err).ShouldNot(HaveOccurred(), "service should have been created")
+
 	}, 300)
+
 })

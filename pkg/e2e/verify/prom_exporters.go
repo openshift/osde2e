@@ -32,29 +32,29 @@ var _ = ginkgo.Describe(promExportersTestname, func() {
 		awsProvider = "aws"
 	)
 
-	promNamespace := "openshift-monitoring"
+	var promNamespace = "openshift-monitoring"
 
-	servicesToCheck := map[string][]string{
-		allProviders: {
+	var servicesToCheck = map[string][]string{
+		allProviders: []string{
 			"sre-dns-latency-exporter",
 		},
-		awsProvider: {
+		awsProvider: []string{
 			"sre-ebs-iops-reporter",
 			"sre-stuck-ebs-vols",
 		},
 	}
 
-	configMapsToCheck := map[string][]string{
-		allProviders: {
+	var configMapsToCheck = map[string][]string{
+		allProviders: []string{
 			"sre-dns-latency-exporter-code",
 		},
-		awsProvider: {
+		awsProvider: []string{
 			"sre-stuck-ebs-vols-code",
 			"sre-ebs-iops-reporter-code",
 		},
 	}
 
-	secretsToCheck := map[string][]string{}
+	var secretsToCheck = map[string][]string{}
 	if !viper.GetBool("rosa.STS") {
 		// Only check AWS provider secrets for non-STS clusters
 		secretsToCheck[awsProvider] = []string{
@@ -63,18 +63,18 @@ var _ = ginkgo.Describe(promExportersTestname, func() {
 		}
 	}
 
-	roleBindingsToCheck := map[string][]string{
-		allProviders: {
+	var roleBindingsToCheck = map[string][]string{
+		allProviders: []string{
 			"sre-dns-latency-exporter",
 		},
-		awsProvider: {
+		awsProvider: []string{
 			"sre-ebs-iops-reporter",
 			"sre-stuck-ebs-vols",
 		},
 	}
 
-	daemonSetsToCheck := map[string][]string{
-		allProviders: {
+	var daemonSetsToCheck = map[string][]string{
+		allProviders: []string{
 			"sre-dns-latency-exporter",
 		},
 	}
@@ -82,6 +82,7 @@ var _ = ginkgo.Describe(promExportersTestname, func() {
 	h := helper.New()
 
 	util.GinkgoIt("should exist and be running in the cluster", func(ctx context.Context) {
+
 		envs := []string{allProviders, viper.GetString(config.CloudProvider.CloudProviderID)}
 
 		// Expect project to exist
@@ -103,6 +104,7 @@ var _ = ginkgo.Describe(promExportersTestname, func() {
 		// Ensure services are present
 		checkServices(ctx, promNamespace, servicesToCheck, h, envs...)
 	}, 300)
+
 })
 
 func checkConfigMaps(ctx context.Context, namespace string, configMaps map[string][]string, h *helper.H, providers ...string) {

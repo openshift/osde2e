@@ -21,6 +21,7 @@ func init() {
 }
 
 var _ = ginkgo.Describe(techPreviewNoUpgradeWebhookTestName, func() {
+
 	h := helper.New()
 
 	ginkgo.Context("techpreviewnoupgrade webhook", func() {
@@ -46,4 +47,5 @@ var _ = ginkgo.Describe(techPreviewNoUpgradeWebhookTestName, func() {
 			Expect(err).To((HaveOccurred()))
 		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
 	})
+
 })

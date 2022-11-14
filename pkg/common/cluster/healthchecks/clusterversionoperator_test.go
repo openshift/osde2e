@@ -48,8 +48,8 @@ func clusterVersion() *configv1.ClusterVersion {
 				},
 				{
 					Type:    "ReleaseAccepted",
-					Status:  configv1.ConditionTrue,
-					Reason:  "Available",
+					Status:	 configv1.ConditionTrue,
+					Reason:	 "Available",
 					Message: "Available",
 				},
 			},
@@ -77,7 +77,7 @@ func progressingClusterVersion() *configv1.ClusterVersion {
 }
 
 func TestCheckCVOReadiness(t *testing.T) {
-	tests := []struct {
+	var tests = []struct {
 		description   string
 		expected      bool
 		expectedError bool

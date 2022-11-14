@@ -54,6 +54,7 @@ var _ = ginkgo.Describe(constants.SuiteOperators+TestPrefix, func() {
 			Expect(readyReplicas).To(BeNumerically("==", desiredReplicas), "All desired replicas should be ready.")
 		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
 	})
+
 })
 
 func pollDeployment(ctx context.Context, h *helper.H, namespace, deploymentName string) (*appsv1.Deployment, error) {

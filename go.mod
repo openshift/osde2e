@@ -9,7 +9,7 @@ require (
 	github.com/PuerkitoBio/goquery v1.8.0
 	github.com/adamliesko/retry v0.0.0-20200123222335-86c8baac277d
 	github.com/antlr/antlr4/runtime/Go/antlr v0.0.0-20220626175859-9abda183db8e
-	github.com/aws/aws-sdk-go v1.44.135
+	github.com/aws/aws-sdk-go v1.44.132
 	github.com/bmizerany/perks v0.0.0-20141205001514-d9a9656a3a4b // indirect
 	github.com/cenkalti/backoff v2.2.1+incompatible // indirect
 	github.com/code-ready/crc v1.10.0
@@ -24,12 +24,12 @@ require (
 	github.com/jackc/pgtype v1.12.0
 	github.com/jinzhu/inflection v1.0.0
 	github.com/joshdk/go-junit v0.0.0-20201221202203-061ee62ada40
-	github.com/kyleconroy/sqlc v1.16.0
+	github.com/kyleconroy/sqlc v1.15.0
 	github.com/kylelemons/godebug v1.1.0
 	github.com/lib/pq v1.10.7
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/onsi/ginkgo/v2 v2.5.0
-	github.com/onsi/gomega v1.24.1
+	github.com/onsi/gomega v1.24.0
 	github.com/openshift-online/ocm-sdk-go v0.1.293
 	github.com/openshift/api v3.9.1-0.20190924102528-32369d4db2ad+incompatible
 	github.com/openshift/client-go v0.0.0-20200827190008-3062137373b5
@@ -59,10 +59,10 @@ require (
 	github.com/spf13/viper v1.14.0
 	github.com/tsenart/vegeta v12.7.0+incompatible
 	github.com/vmware-tanzu/velero v1.5.0-beta.1.0.20200831161009-1dcaa1bf7512
-	golang.org/x/net v0.2.0
+	golang.org/x/net v0.1.0
 	golang.org/x/oauth2 v0.0.0-20221014153046-6fdb5e3db783
-	golang.org/x/tools v0.3.0
-	google.golang.org/api v0.103.0
+	golang.org/x/tools v0.2.0
+	google.golang.org/api v0.102.0
 	google.golang.org/genproto v0.0.0-20221027153422-115e99e71e1c
 	gopkg.in/yaml.v3 v3.0.1
 	gotest.tools/v3 v3.4.0
@@ -119,7 +119,7 @@ require (
 	github.com/google/go-querystring v1.0.0 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.2.0 // indirect
-	github.com/googleapis/gax-go/v2 v2.7.0 // indirect
+	github.com/googleapis/gax-go/v2 v2.6.0 // indirect
 	github.com/googleapis/gnostic v0.5.1 // indirect
 	github.com/gorilla/css v1.0.0 // indirect
 	github.com/gorilla/websocket v1.4.2 // indirect
@@ -132,13 +132,13 @@ require (
 	github.com/inconshreveable/mousetrap v1.0.1 // indirect
 	github.com/influxdata/tdigest v0.0.1 // indirect
 	github.com/jackc/chunkreader/v2 v2.0.1 // indirect
-	github.com/jackc/pgconn v1.13.0 // indirect
+	github.com/jackc/pgconn v1.12.1 // indirect
 	github.com/jackc/pgerrcode v0.0.0-20201024163028-a0d42d470451 // indirect
 	github.com/jackc/pgio v1.0.0 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
-	github.com/jackc/pgproto3/v2 v2.3.1 // indirect
+	github.com/jackc/pgproto3/v2 v2.3.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20200714003250-2b9c44734f2b // indirect
-	github.com/jackc/pgx/v4 v4.17.2 // indirect
+	github.com/jackc/pgx/v4 v4.16.1 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/jpillora/backoff v1.0.0 // indirect
@@ -177,15 +177,15 @@ require (
 	github.com/xi2/xz v0.0.0-20171230120015-48954b6210f8 // indirect
 	github.com/zgalor/weberr v0.6.0 // indirect
 	gitlab.com/c0b/go-ordered-json v0.0.0-20171130231205-49bbdab258c2 // indirect
-	go.opencensus.io v0.24.0 // indirect
+	go.opencensus.io v0.23.0 // indirect
 	go.uber.org/atomic v1.9.0 // indirect
 	go.uber.org/multierr v1.8.0 // indirect
 	go.uber.org/zap v1.21.0 // indirect
 	golang.org/x/crypto v0.1.0 // indirect
 	golang.org/x/exp v0.0.0-20220428152302-39d4317da171 // indirect
-	golang.org/x/mod v0.7.0 // indirect
-	golang.org/x/sys v0.2.0 // indirect
-	golang.org/x/term v0.2.0 // indirect
+	golang.org/x/mod v0.6.0 // indirect
+	golang.org/x/sys v0.1.0 // indirect
+	golang.org/x/term v0.1.0 // indirect
 	golang.org/x/text v0.4.0 // indirect
 	golang.org/x/time v0.0.0-20220609170525-579cf78fd858 // indirect
 	google.golang.org/appengine v1.6.7 // indirect

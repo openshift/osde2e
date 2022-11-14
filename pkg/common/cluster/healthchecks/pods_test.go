@@ -57,7 +57,7 @@ func pod(name, namespace string, label map[string]string, phase v1.PodPhase) *v1
 }
 
 func TestCheckPodHealth(t *testing.T) {
-	tests := []struct {
+	var tests = []struct {
 		description   string
 		isHealthy     bool
 		expectedError bool

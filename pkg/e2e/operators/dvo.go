@@ -42,7 +42,7 @@ var _ = ginkgo.Describe(deploymentValidationOperatorTestName, func() {
 		defaultDesiredReplicas int32 = 1
 	)
 
-	clusterRoles := []string{
+	var clusterRoles = []string{
 		"deployment-validation-operator-og-admin",
 		"deployment-validation-operator-og-edit",
 		"deployment-validation-operator-og-view",
@@ -57,7 +57,8 @@ var _ = ginkgo.Describe(deploymentValidationOperatorTestName, func() {
 	checkClusterRoles(h, clusterRoles, false)
 
 	util.GinkgoIt("Create and test deployment for DVO functionality", func(ctx context.Context) {
-		// Create and check test deployment
+
+		//Create and check test deployment
 		h.CreateProject(ctx, "dvo-test")
 		h.SetProjectByName(ctx, "osde2e-dvo-test")
 
@@ -69,6 +70,7 @@ var _ = ginkgo.Describe(deploymentValidationOperatorTestName, func() {
 		ds := makeDeployment("dvo-test-case", h.GetNamespacedServiceAccount(), nodeLabels)
 		_, err := h.Kube().AppsV1().Deployments(h.CurrentProject()).Create(ctx, &ds, metav1.CreateOptions{})
 		Expect(err).NotTo(HaveOccurred())
+
 	}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
 
 	// Check the logs of DVO to assert the right test is flagging for test deployment
@@ -76,6 +78,7 @@ var _ = ginkgo.Describe(deploymentValidationOperatorTestName, func() {
 
 	// Delete DVO Test Deployment
 	defer deleteNamespace(context.TODO(), testNamespace, true, h)
+
 })
 
 // Function to create a standard deployment
@@ -114,6 +117,7 @@ func makeDeployment(name, sa string, nodeLabels map[string]string) appsv1.Deploy
 
 // Check Pod Logs to see if DVO pod is reporting correct metrics
 func checkPodLogs(h *helper.H, namespace string, testNamespace string, name string, containerName string, dvoString string, gracePeriod int) {
+
 	fmt.Println("Enterned Check Pod Logs")
 
 	podLogOptions := v1.PodLogOptions{
@@ -150,6 +154,7 @@ func checkPodLogs(h *helper.H, namespace string, testNamespace string, name stri
 					Expect(dvoCheck).NotTo(HaveOccurred())
 				}
 			}
+
 		}, float64(gracePeriod)+viper.GetFloat64(config.Tests.PollingTimeout))
 	})
 }

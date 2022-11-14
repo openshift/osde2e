@@ -32,6 +32,7 @@ func TestClusterInteraction(t *testing.T) {
 	clusterID2, _ := mockProvider.LaunchCluster(clusterName2)
 
 	cluster1, err := mockProvider.GetCluster(clusterID1)
+
 	if err != nil {
 		t.Errorf("error trying to get cluster 1: %v", err)
 	}
@@ -41,6 +42,7 @@ func TestClusterInteraction(t *testing.T) {
 	}
 
 	cluster2, err := mockProvider.GetCluster(clusterID2)
+
 	if err != nil {
 		t.Errorf("error trying to get cluster 2: %v", err)
 	}
@@ -56,6 +58,7 @@ func TestClusterInteraction(t *testing.T) {
 	if err == nil {
 		t.Errorf("expected error when retrieving cluster 1 after deletion")
 	}
+
 }
 
 func TestIntentionalFailures(t *testing.T) {
@@ -132,6 +135,7 @@ func TestMockAddons(t *testing.T) {
 	if !reflect.DeepEqual(toInstall, installedAddons) {
 		t.Errorf("difference in addon array: %v, %v", toInstall, installedAddons)
 	}
+
 }
 
 func TestClusterkubeconfig(t *testing.T) {
