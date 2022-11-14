@@ -1,11 +1,44 @@
 REGISTRY_QUERY_FILE="{{.OutputDir}}/registry.json"
 
-oc delete pod --ignore-not-found=true -n {{.Namespace}} grpcurl-query
+oc delete job --ignore-not-found=true -n {{.Namespace}} grpcurl-query
 
-oc run grpcurl-query -n {{.Namespace}} --quiet --rm=true --restart=Never --attach=true \
-    --image=quay.io/rogbas/grpcurl -- -plaintext -d \
-    '{"pkgName":"{{.PackageName}}","channelName":"{{.PackageChannel}}"}' \
-    {{.ServiceName}}:{{.ServicePort}} api.Registry/GetBundleForChannel > "$REGISTRY_QUERY_FILE"
+set -e
+cat <<EOF | oc apply -n {{.Namespace}} --wait -f -
+apiVersion: batch/v1
+kind: Job
+metadata:
+  labels:
+    run: grpcurl-query
+  name: grpcurl-query
+spec:
+  template:
+    spec:
+      containers:
+      - args:
+        - -plaintext
+        - -d
+        - '{"pkgName":"{{.PackageName}}","channelName":"{{.PackageChannel}}"}'
+        - '{{.ServiceName}}:{{.ServicePort}}'
+        - api.Registry/GetBundleForChannel
+        image: quay.io/rogbas/grpcurl
+        name: grpcurl-query
+        securityContext:
+          allowPrivilegeEscalation: false
+          runAsNonRoot: true
+          seccompProfile: 
+            type: RuntimeDefault
+          capabilities:
+            drop:
+              - ALL
+            add:
+              - NET_BIND_SERVICE
+      dnsPolicy: ClusterFirst
+      restartPolicy: Never
+EOF
+oc -n {{.Namespace}} wait --for=condition=complete job/grpcurl-query
+oc -n {{.Namespace}} logs job/grpcurl-query > $REGISTRY_QUERY_FILE
+set +e
+
 
 if ! [ -s "$REGISTRY_QUERY_FILE" ]
 then
