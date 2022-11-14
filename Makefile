@@ -18,9 +18,14 @@ ifndef $(GOPATH)
     export GOPATH
 endif
 
-check: shellcheck vipercheck diffproviders.txt diffreporters.txt
+fmt:
+	gofmt -s -w .
+
+lint:
 	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(shell go env GOPATH)/bin v1.50.1
 	(cd "$(DIR)"; golangci-lint run -c .golang-ci.yml ./...)
+
+check: lint shellcheck vipercheck diffproviders.txt diffreporters.txt
 	cmp -s diffproviders.txt "$(DIR)pkg/common/providers/providers_generated.go"
 	cmp -s diffreporters.txt "$(DIR)pkg/reporting/reporters/reporters_generated.go"
 

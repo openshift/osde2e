@@ -27,7 +27,7 @@ import (
 
 var (
 	postInstallProxyTestName string = "[Suite: proxy] Post-Install Cluster Proxy"
-	logger = logging.CreateNewStdLoggerOrUseExistingLogger(nil)
+	logger                          = logging.CreateNewStdLoggerOrUseExistingLogger(nil)
 )
 
 const (

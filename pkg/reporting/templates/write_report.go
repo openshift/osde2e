@@ -11,7 +11,6 @@ func WriteReport(data interface{}, reportName string, reportType string) ([]byte
 	report := new(bytes.Buffer)
 	if reportType == "json" {
 		reportBytes, err := json.MarshalIndent(data, "", "  ")
-
 		if err != nil {
 			return nil, fmt.Errorf("error while marshaling report into JSON: %v", err)
 		}
@@ -19,7 +18,6 @@ func WriteReport(data interface{}, reportName string, reportType string) ([]byte
 		report.Write(reportBytes)
 	} else {
 		template, err := cache.getReportTemplate(reportName, reportType)
-
 		if err != nil {
 			return nil, fmt.Errorf("error loading specified template: %v", err)
 		}

@@ -142,5 +142,4 @@ func init() {
 	config.RegisterSecret(GCPTokenURI, "gcp-token-uri")
 	config.RegisterSecret(GCPAuthProviderX509CertURL, "gcp-auth-provider-x509-cert-url")
 	config.RegisterSecret(GCPClientX509CertURL, "gcp-client-x509-cert-url")
-
 }

@@ -105,7 +105,6 @@ func run(cmd *cobra.Command, argv []string) error {
 	}
 
 	reportTypes, err := reporting.ListReportTypes(reportName)
-
 	if err != nil {
 		return fmt.Errorf("error getting report types: %v", err)
 	}
@@ -134,7 +133,6 @@ func run(cmd *cobra.Command, argv []string) error {
 	}
 
 	report, err := reporting.GenerateReport(reportName, reportType)
-
 	if err != nil {
 		return fmt.Errorf("error while generating report: %v", err)
 	}

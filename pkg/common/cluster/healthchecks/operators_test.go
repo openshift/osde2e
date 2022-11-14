@@ -70,7 +70,7 @@ func clusterOperatorWithUnknownStatus(name string) *configv1.ClusterOperator {
 }
 
 func TestCheckOperatorReadiness(t *testing.T) {
-	var tests = []struct {
+	tests := []struct {
 		description   string
 		expected      bool
 		objs          []runtime.Object

@@ -28,8 +28,10 @@ var DefaultE2EConfig = E2EConfig{
 	TokenFile: "/var/run/secrets/kubernetes.io/serviceaccount/token",
 }
 
-var conformanceK8sTestName string = "[Suite: conformance][k8s]"
-var conformanceOpenshiftTestName string = "[Suite: conformance][openshift]"
+var (
+	conformanceK8sTestName       string = "[Suite: conformance][k8s]"
+	conformanceOpenshiftTestName string = "[Suite: conformance][openshift]"
+)
 
 func init() {
 	alert.RegisterGinkgoAlert(conformanceK8sTestName, "SD-CICD", "Diego Santamaria", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
@@ -67,7 +69,6 @@ var _ = ginkgo.Describe(conformanceK8sTestName, func() {
 
 		// evaluate results
 		Expect(err).NotTo(HaveOccurred())
-
 	}, float64(e2eTimeoutInSeconds+30))
 })
 

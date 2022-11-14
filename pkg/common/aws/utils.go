@@ -22,10 +22,12 @@ type ccsAwsSession struct {
 }
 
 // CCSAWSSession is the global AWS session for interacting with AWS.
-var CcsAwsSession ccsAwsSession
-var ccsKeys *iam.CreateAccessKeyOutput
+var (
+	CcsAwsSession ccsAwsSession
+	ccsKeys       *iam.CreateAccessKeyOutput
+)
 
-//GetSession returns a new AWS session with the first AWS account in the config file. The session is cached for the rest of the program.
+// GetSession returns a new AWS session with the first AWS account in the config file. The session is cached for the rest of the program.
 func (CcsAwsSession *ccsAwsSession) getIamClient() (*session.Session, *iam.IAM) {
 	var err error
 
@@ -60,10 +62,8 @@ func VerifyCCS() (string, error) {
 }
 
 func CcsScale() (string, string, error) {
-
 	err := wait.PollImmediate(2*time.Minute, 120*time.Minute, func() (bool, error) {
-
-		//Grabs existing keys
+		// Grabs existing keys
 		keys, err := CcsAwsSession.iam.ListAccessKeys(&iam.ListAccessKeysInput{
 			UserName: aws.String("osdCcsAdmin"),
 		})
@@ -83,8 +83,8 @@ func CcsScale() (string, string, error) {
 			}
 		case len(keys.AccessKeyMetadata) == 2:
 			for _, key := range keys.AccessKeyMetadata {
-				//If the create date is older than 5 minutes, delete the key
-				//This should be enough time for OCM to finish with old CCS keys used to create a cluster.
+				// If the create date is older than 5 minutes, delete the key
+				// This should be enough time for OCM to finish with old CCS keys used to create a cluster.
 				if key.CreateDate.Before(time.Now().Add(-10 * time.Minute)) {
 					_, err := CcsAwsSession.iam.DeleteAccessKey(&iam.DeleteAccessKeyInput{
 						AccessKeyId: key.AccessKeyId,
@@ -120,7 +120,7 @@ func CcsScale() (string, string, error) {
 func createCcsKeys() error {
 	var err error
 
-	//Create new CCS key pair
+	// Create new CCS key pair
 	ccsKeys, err = CcsAwsSession.iam.CreateAccessKey(&iam.CreateAccessKeyInput{
 		UserName: aws.String("osdCcSAdmin"),
 	})

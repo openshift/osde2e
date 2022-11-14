@@ -26,12 +26,12 @@ const (
 	WorkloadsPath = "/src/github.com/openshift-scale/workloads"
 )
 
-var (
-	scaleRunnerCmdTpl *template.Template
-)
+var scaleRunnerCmdTpl *template.Template
 
-var once sync.Once = sync.Once{}
-var scaleRepos runner.Repos
+var (
+	once       sync.Once = sync.Once{}
+	scaleRepos runner.Repos
+)
 
 type scaleRunnerConfig struct {
 	Name          string

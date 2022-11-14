@@ -96,7 +96,6 @@ func NewDefinitionTracker(pkg *packages.Package) *definitionTracker {
 		d.nameToPath[p.Name] = path
 	}
 	return d
-
 }
 
 func (d *definitionTracker) MarkNeeded(pkgName, pkgPath string) {

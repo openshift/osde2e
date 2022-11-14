@@ -98,7 +98,6 @@ func RunUpgrade() error {
 	log.Println("Upgrading...")
 	done = false
 	if err = wait.PollImmediate(10*time.Second, MaxDuration, func() (bool, error) {
-
 		// Keep the managed upgrade's configuration overrides in place, in case Hive has replaced them
 		err = overrideOperatorConfig(h)
 		// Log if it errored, but don't cancel the upgrade because of it
@@ -166,7 +165,6 @@ func VersionToChannel(version *semver.Version) (string, error) {
 	}
 
 	provider, err := providers.ClusterProvider()
-
 	if err != nil {
 		return "", fmt.Errorf("unable to get provider: %s", err)
 	}

@@ -58,7 +58,6 @@ func UpdateRouteMonitor(ctx context.Context, routeMonitor *routemonitorv1alpha1.
 }
 
 func CreateRouteMonitor(ctx context.Context, routeMonitor *routemonitorv1alpha1.RouteMonitor, namespace string, h *H) error {
-
 	rawObj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(routeMonitor.DeepCopy())
 	if err != nil {
 		return fmt.Errorf("can't convert UpgradeConfig to unstructured resource: %w", err)
@@ -243,7 +242,6 @@ func CreateService(ctx context.Context, svc *kv1.Service, h *H) error {
 }
 
 func CreateNamespace(ctx context.Context, namespace string, h *H) (*kv1.Namespace, error) {
-
 	// If the namespace already exists, we don't need to create it. Just return.
 	ns, err := h.Kube().CoreV1().Namespaces().Get(ctx, namespace, metav1.GetOptions{})
 	if ns != nil && ns.Status.Phase != "Terminating" && err == nil {

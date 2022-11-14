@@ -82,7 +82,7 @@ func volumes(name string) []kubev1.Volume {
 					LocalObjectReference: kubev1.LocalObjectReference{
 						Name: name,
 					},
-					DefaultMode: pointer.Int32Ptr(0755),
+					DefaultMode: pointer.Int32Ptr(0o755),
 				},
 			},
 		},
@@ -112,7 +112,6 @@ func (r *Runner) createPod() (pod *kubev1.Pod, err error) {
 				osde2ePayloadScript: cmd,
 			},
 		}, metav1.CreateOptions{})
-
 		if err != nil {
 			return nil, fmt.Errorf("error creating ConfigMap: %v", err)
 		}

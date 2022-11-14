@@ -3,9 +3,8 @@ package state
 import (
 	"context"
 	"encoding/json"
-	"time"
-
 	"log"
+	"time"
 
 	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -41,8 +40,7 @@ var _ = ginkgo.Describe(clusterStateTestName, func() {
 
 	alertsTimeoutInSeconds := 900
 	util.GinkgoIt("should have no alerts", func(ctx context.Context) {
-
-		//Set up prometheus client
+		// Set up prometheus client
 		h.SetServiceAccount(ctx, "system:serviceaccount:%s:cluster-admin")
 		promClient, err := prometheus.CreateClusterClient(h)
 		Expect(err).NotTo(HaveOccurred(), "error creating a prometheus client")
@@ -71,7 +69,7 @@ var _ = ginkgo.Describe(clusterStateTestName, func() {
 		})
 		Expect(err).NotTo(HaveOccurred(), "error retrieving results from alert gatherer")
 
-		//Store JSON query results in an object
+		// Store JSON query results in an object
 		queryJSON := []result{}
 		err = json.Unmarshal(queryresult, &queryJSON)
 		Expect(err).NotTo(HaveOccurred(), "error unmarshalling json from alert gatherer")
@@ -80,7 +78,6 @@ var _ = ginkgo.Describe(clusterStateTestName, func() {
 		Expect(err).NotTo(HaveOccurred(), "error retrieving cluster provider")
 
 		Expect(!findCriticalAlerts(queryJSON, viper.GetString(config.Provider), clusterProvider.Environment())).Should(BeTrue(), "never able to find zero alerts")
-
 	}, float64(alertsTimeoutInSeconds+30))
 })
 

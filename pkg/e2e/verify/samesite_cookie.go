@@ -29,7 +29,6 @@ var _ = ginkgo.Describe(samesiteTestName, func() {
 	h := helper.New()
 
 	ginkgo.Context("Validating samesite cookie", func() {
-
 		util.GinkgoIt("should be set for openshift-monitoring OSD managed routes", func(ctx context.Context) {
 			if verifyVersionSupport(ctx, h) {
 				foundKey, err := managedRoutes(ctx, h, monNamespace)

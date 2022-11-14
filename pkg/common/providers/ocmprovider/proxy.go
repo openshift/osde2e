@@ -18,7 +18,6 @@ type ClusterWideProxy struct {
 
 // AddClusterProxy sets the cluster proxy configuration for the supplied cluster
 func (o *OCMProvider) AddClusterProxy(clusterId string, httpsProxy string, httpProxy string, userCABundle string) error {
-
 	clusterBuilder := cmv1.NewCluster()
 
 	clusterProxyBuilder := cmv1.NewProxy()
@@ -40,7 +39,6 @@ func (o *OCMProvider) AddClusterProxy(clusterId string, httpsProxy string, httpP
 
 // RemoveClusterProxy removes the cluster proxy configuration for the supplied cluster
 func (o *OCMProvider) RemoveClusterProxy(clusterId string) error {
-
 	clusterBuilder := cmv1.NewCluster()
 
 	clusterProxyBuilder := cmv1.NewProxy()
@@ -58,7 +56,6 @@ func (o *OCMProvider) RemoveClusterProxy(clusterId string) error {
 
 // RemoveUserCABundle removes only the Additional Trusted CA Bundle from the cluster
 func (o *OCMProvider) RemoveUserCABundle(clusterId string) error {
-
 	clusterBuilder := cmv1.NewCluster()
 	clusterBuilder = clusterBuilder.AdditionalTrustBundle("")
 	clusterSpec, err := clusterBuilder.Build()

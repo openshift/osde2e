@@ -6,10 +6,10 @@ import (
 	"strings"
 
 	"github.com/Masterminds/semver"
+	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/spi"
 	"github.com/openshift/osde2e/pkg/common/versions/common"
-	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 )
 
 func init() {
