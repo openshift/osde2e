@@ -576,7 +576,7 @@ var Proxy = struct {
 	UserCABundle: "proxy.user_ca_bundle",
 }
 
-func InitViper() {
+func InitOSDe2eViper() {
 	// Here's where we bind environment variables to config options and set defaults
 
 	viper.SetConfigType("yaml") // Our configs are all in yaml.
@@ -861,7 +861,8 @@ func InitViper() {
 }
 
 func init() {
-	InitViper()
+	InitOSDe2eViper()
+	InitAWSViper()
 }
 
 // PostProcess is a variety of post-processing commands that is intended to be run after a config is loaded.

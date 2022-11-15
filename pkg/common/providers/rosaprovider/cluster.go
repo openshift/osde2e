@@ -123,8 +123,8 @@ func (m *ROSAProvider) LaunchCluster(clusterName string) (string, error) {
 		"--mode", "auto",
 		"--yes",
 	}
-	if viper.GetString(SubnetIDs) != "" {
-		subnetIDs := viper.GetString(SubnetIDs)
+	if viper.GetString(config.AWSVPCSubnetIDs) != "" {
+		subnetIDs := viper.GetString(config.AWSVPCSubnetIDs)
 		createClusterArgs = append(createClusterArgs, "--subnet-ids", subnetIDs)
 		if viper.GetBool(config.Cluster.UseProxyForInstall) {
 			if httpProxy := viper.GetString(config.Proxy.HttpProxy); httpProxy != "" {
@@ -298,7 +298,7 @@ func (m *ROSAProvider) stsClusterCleanup(clusterID string) error {
 // DetermineRegion will return the region provided by configs. This mainly wraps the random functionality for use
 // by the ROSA provider.
 func (m *ROSAProvider) DetermineRegion(cloudProvider string) (string, error) {
-	region := viper.GetString(AWSRegion)
+	region := viper.GetString(config.AWSRegion)
 
 	// If a region is set to "random", it will poll OCM for all the regions available
 	// It then will pull a random entry from the list of regions and set the ID to that
@@ -306,13 +306,13 @@ func (m *ROSAProvider) DetermineRegion(cloudProvider string) (string, error) {
 		var regions []*v1.CloudRegion
 		// We support multiple cloud providers....
 		if cloudProvider == "aws" {
-			if viper.GetString(AWSAccessKeyID) == "" || viper.GetString(AWSSecretAccessKey) == "" {
+			if viper.GetString(config.AWSAccessKey) == "" || viper.GetString(config.AWSSecretAccessKey) == "" {
 				log.Println("Random region requested but cloud credentials not supplied. Defaulting to us-east-1")
 				return "us-east-1", nil
 			}
 			awsCredentials, err := v1.NewAWS().
-				AccessKeyID(viper.GetString(AWSAccessKeyID)).
-				SecretAccessKey(viper.GetString(AWSSecretAccessKey)).
+				AccessKeyID(viper.GetString(config.AWSAccessKey)).
+				SecretAccessKey(viper.GetString(config.AWSSecretAccessKey)).
 				Build()
 			if err != nil {
 				return "", err
