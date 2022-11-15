@@ -148,6 +148,10 @@ func (m *ROSAProvider) LaunchCluster(clusterName string) (string, error) {
 		)
 	}
 
+	if viper.GetBool(config.Hypershift) {
+		createClusterArgs = append(createClusterArgs, "--hosted-cp")
+	}
+
 	err = callAndSetAWSSession(func() error {
 		// Retrieve AWS Account info
 		logger := logging.NewLogger()
