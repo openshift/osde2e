@@ -85,6 +85,9 @@ const (
 
 	// JobStartedAt tracks when the job began running.
 	JobStartedAt = "JobStartedAt"
+
+	// Hypershift enables the use of hypershift for cluster creation.
+	Hypershift = "Hypershift"
 )
 
 // This is a config key to secret file mapping. We will attempt to read in from secret files before loading anything else.
@@ -706,6 +709,9 @@ func InitOSDe2eViper() {
 
 	viper.SetDefault(Cluster.UseProxyForInstall, false)
 	viper.BindEnv(Cluster.UseProxyForInstall, "USE_PROXY_FOR_INSTALL")
+
+	viper.SetDefault(Hypershift, false)
+	viper.BindEnv(Hypershift, "HYPERSHIFT")
 
 	viper.SetDefault(Cluster.UseLatestVersionForInstall, false)
 	viper.BindEnv(Cluster.UseLatestVersionForInstall, "USE_LATEST_VERSION_FOR_INSTALL")

@@ -115,6 +115,11 @@ func WaitForClusterReadyPostInstall(clusterID string, logger *log.Logger) error 
 		return fmt.Errorf("failed parsing health check timeout: %w", err)
 	}
 
+	if viper.GetBool(config.Hypershift) {
+		// Hypershift clusters are ready at this point and we can skip the rest of the checks.
+		return nil
+	}
+
 	ctx, cancel := context.WithTimeout(context.Background(), duration)
 	defer cancel()
 	err = healthchecks.CheckHealthcheckJob(kubeClient, ctx, nil)
