@@ -22,13 +22,13 @@ const (
 	metricsAWSRegionEnv          = "METRICS_AWS_REGION"
 )
 
-type awsSession struct {
+type metricsAWSSession struct {
 	session *session.Session
 	once    sync.Once
 }
 
 // AWSSession is the global AWS session for interacting with S3.
-var AWSSession awsSession
+var MetricsAWSSession metricsAWSSession
 
 func init() {
 	viper.BindEnv(metricsAWSAccessKeyID, metricsAWSAccessKeyIDEnv)
@@ -41,7 +41,7 @@ func init() {
 	config.RegisterSecret(metricsAWSRegion, "metrics-aws-region")
 }
 
-func (a *awsSession) getSession() (*session.Session, error) {
+func (a *metricsAWSSession) getSession() (*session.Session, error) {
 	var err error
 
 	// Initialize this once, and initialize it in getSession so that osde2e capabilities that don't use S3

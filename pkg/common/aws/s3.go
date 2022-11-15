@@ -19,7 +19,7 @@ func ReadFromS3(inputKey string) ([]byte, error) {
 		return nil, fmt.Errorf("error trying to parse S3 URL: %v", err)
 	}
 
-	session, err := AWSSession.getSession()
+	session, err := MetricsAWSSession.getSession()
 	if err != nil {
 		return nil, err
 	}
@@ -47,7 +47,7 @@ func WriteToS3(outputKey string, data []byte) error {
 		return fmt.Errorf("error trying to parse S3 URL: %v", err)
 	}
 
-	session, err := AWSSession.getSession()
+	session, err := MetricsAWSSession.getSession()
 	if err != nil {
 		return err
 	}
