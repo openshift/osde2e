@@ -153,38 +153,6 @@ Go embed feature. If your test has a static asset such as a manifest, add it
 into the **[`/assets/`]** directory. It can then be accessed through the
 `assets.FS` [embedded filesystem](https://pkg.go.dev/embed#hdr-File_Systems)
 
-## CRC Provider
-
-For local development, OSDe2e has a [CRC] provider. This ties in an existing [CRC] installation and will provision and run against a [CRC] cluster locally.
-
-**Supported CRC Version: 1.9.0**
-
-**Supported OpenShift version: 4.3.10**
-
-Example usage:
-
-```
-PROVIDER=crc make test
-```
-
-This provider assumes that you already have and verified the installation of [CRC]. For more information on setting it up, please refer to their docs.
-
-### Important information
-
-[CRC] clusters... 
-* will not be able to test upgrade paths
-* have multiple operators disabled
-* will not have many OSD operators installed
-* are not (yet) tied into a [Hive] installation
-* spin up a VM locally and require significant resources
-
-All these negatives said, being able to run a subset of tests against a limited cluster locally still boosts developer productivity and is recommended when doing development locally.
-
-
-
-
-
-
 [Ginkgo]:https://onsi.github.io/ginkgo/
 [Gomega]:https://onsi.github.io/gomega/
 [`/cmd/osde2e/test/cmd.go`]:/cmd/osde2e/test/cmd.go
@@ -199,5 +167,4 @@ All these negatives said, being able to run a subset of tests against a limited 
 [`config.Config`]:https://godoc.org/github.com/openshift/osde2e/common/pkg/config#Config
 [`helper.New()`]:https://godoc.org/github.com/openshift/osde2e/pkg/common/helper#New
 [`/assets/`]:/assets/
-[CRC]:https://github.com/code-ready/crc
 [Hive]:https://github.com/openshift/hive

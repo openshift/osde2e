@@ -17,7 +17,7 @@ Some environment variables commonly used for pipelines under osde2e are indicate
 |CLUSTER_EXPIRY_IN_MINUTES| Optional: Set this if you want to ensure the cluster gets cleaned up.|
 |CLUSTER_ID| The value identifying the cluster. If set at start, an existing cluster is tested.|
 |CLUSTER_NAME| The name of the cluster to be created.|
-|PROVIDER| Provider is what provider to use to create/delete clusters. Ex. ocm, rosa, crc, mock|
+|PROVIDER| Provider is what provider to use to create/delete clusters. Ex. ocm, rosa, mock|
 |PROVISION_SHARD_ID| ProvisionShardID is the shard ID that is set to provision a shard for the cluster.|
 |MULTI_AZ| MultiAZ deploys a cluster across multiple availability zones.|
 |DESTROY_CLUSTER| Set to true if you want to the cluster to be explicitly deleted after the test.|
@@ -170,7 +170,6 @@ The following are the values that can be plugged in for the --configs flag when 
 
 | Config Value | Usage |
 | --------------| ------------------------| 
-|crc | To run osde2e in a local CRC environment.|
 |int | To run osde2e in the integration environment.|
 |stage | To run osde2e on stage.|
 |prod | To run osde2e in the production environment. (This is the default value if nothing is specified.)|

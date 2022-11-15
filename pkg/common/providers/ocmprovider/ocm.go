@@ -77,10 +77,6 @@ func OCMConnection(token, env string, debug bool) (*ocm.Connection, error) {
 		Logger(logger).
 		Tokens(token)
 
-	if env == crc {
-		builder = builder.Insecure(true)
-	}
-
 	connection, err := builder.Build()
 	if err != nil {
 		connectionCache[cacheKey] = nil
