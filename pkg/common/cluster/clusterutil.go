@@ -116,7 +116,7 @@ func WaitForClusterReadyPostInstall(clusterID string, logger *log.Logger) error 
 	}
 
 	if viper.GetBool(config.Hypershift) {
-		//Hypershift clusters are ready at this point
+		// Hypershift clusters are ready at this point and we can skip the rest of the checks.
 		return nil
 	}
 
