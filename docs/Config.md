@@ -39,7 +39,12 @@ Some environment variables commonly used for pipelines under osde2e are indicate
 |ROSA_ENV| Environment for the e2e testing, default to prod.|
 |ROSA_STS| Boolean value to indicate the cluster is STS enabled or not.|
 |ROSA_REPLICAS| Compute node count for the rosa cluster, default is 2.|
+
+### Hypershift cluster related:-
  
+| Environment variable | Usage |
+| --------------| ------------------------| 
+|Hypershift| Boolean value to indicate the cluster should be created as a HostedCluster.|
  
 ### OCM related:-
  
