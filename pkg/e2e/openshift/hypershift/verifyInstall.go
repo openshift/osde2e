@@ -44,7 +44,6 @@ var _ = ginkgo.Describe(hypershiftInstallVerify, func() {
 
 // checkWorkerNodesInCluster returns a list of nodes in the cluster
 func checkWorkerNodesInCluster(ctx context.Context) ([]string, error) {
-
 	restConfig, _, err := cluster.ClusterConfig(viper.GetString(config.Cluster.ID))
 	if err != nil {
 		return nil, fmt.Errorf("error getting cluster config: %v", err)
