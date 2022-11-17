@@ -8,8 +8,10 @@ import (
 // Hypershift Test Helper Function:
 // This function is used to validate the worker nodes displayed by the cluster are the same as the worker nodes displayed by the AWS account.
 func (CcsAwsSession *ccsAwsSession) CheckIfEC2ExistBasedOnNodeName(nodeName string) (bool, error) {
-	var err error
-	CcsAwsSession.GetAWSSessions()
+	err := CcsAwsSession.GetAWSSessions()
+	if err != nil {
+		return false, err
+	}
 
 	ec2Instances, err := CcsAwsSession.ec2.DescribeInstances(&ec2.DescribeInstancesInput{
 		Filters: []*ec2.Filter{

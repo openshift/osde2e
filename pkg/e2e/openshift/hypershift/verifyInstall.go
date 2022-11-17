@@ -27,58 +27,61 @@ func init() {
 	alert.RegisterGinkgoAlert(hypershiftInstallVerify, "SD-CICD", "Diego Santamaria", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
 }
 
-// Checks the installation of the hypershift cluster
+// Checks the installation of the hypershift worker nodes in CCS AWS account
 var _ = ginkgo.Describe(hypershiftInstallVerify, func() {
-	ginkgo.Context("Verify install using oc", func() {
-		util.GinkgoIt("Worker nodes are ready", func(ctx context.Context) {
-			Expect(checkWorkerNodesInCluster(ctx)).ToNot(BeEmpty())
-		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
-	})
+	defer ginkgo.GinkgoRecover()
+	ginkgo.Context("Verify Hypershift worker node in CCS Account", func() {
+		util.GinkgoIt("Worker nodes are available in AWS", func(ctx context.Context) {
+			ginkgo.By("Getting the list of worker nodes from the cluster")
+			err := getWorkerNodesInCluster(ctx)
+			Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("error getting worker nodes in cluster: %v", err))
+			Expect(len(workerNodes)).To(BeNumerically(">", 0), "No worker nodes found in the cluster")
 
-	ginkgo.Context("Verify install using AWS", func() {
-		util.GinkgoIt("Worker nodes are present in CCS account", func(ctx context.Context) {
-			Expect(checkWorkerNodesInAWS(ctx)).To(BeTrue())
+			ginkgo.By("Checking if the worker nodes are present in AWS")
+			err = checkWorkerNodesInAWS()
+			Expect(err).NotTo(HaveOccurred(), "Error checking if worker nodes are present in AWS")
+
 		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
 	})
 })
 
 // checkWorkerNodesInCluster returns a list of nodes in the cluster
-func checkWorkerNodesInCluster(ctx context.Context) ([]string, error) {
+func getWorkerNodesInCluster(ctx context.Context) error {
 	restConfig, _, err := cluster.ClusterConfig(viper.GetString(config.Cluster.ID))
 	if err != nil {
-		return nil, fmt.Errorf("error getting cluster config: %v", err)
+		return fmt.Errorf("error getting cluster config: %v", err)
 	}
 
 	// Create a clientset to interact with the cluster
 	clientset, err := kubernetes.NewForConfig(restConfig)
 	if err != nil {
-		return nil, fmt.Errorf("error creating clientset: %v", err)
+		return fmt.Errorf("error creating clientset: %v", err)
 	}
 
 	// Get the list of nodes in the cluster
-	nodes, err := clientset.CoreV1().Nodes().List(context.Background(), metav1.ListOptions{})
+	nodes, err := clientset.CoreV1().Nodes().List(ctx, metav1.ListOptions{})
 	if err != nil {
-		return nil, fmt.Errorf("error getting nodes: %v", err)
+		return fmt.Errorf("error getting nodes: %v", err)
 	}
 
-	// add the worker nodes to the list
+	// Add nodes to slice of worker nodes
 	for _, node := range nodes.Items {
 		workerNodes = append(workerNodes, node.Name)
 	}
 
-	return workerNodes, nil
+	return nil
 }
 
-func checkWorkerNodesInAWS(ctx context.Context) (bool, error) {
+func checkWorkerNodesInAWS() error {
 	for _, node := range workerNodes {
 		exists, err := aws.CcsAwsSession.CheckIfEC2ExistBasedOnNodeName(node)
 		if err != nil {
-			return false, err
+			return err
 		}
 		if !exists {
-			return false, nil
+			return fmt.Errorf("worker node %s not found in AWS", node)
 		}
 	}
 
-	return true, nil
+	return nil
 }
