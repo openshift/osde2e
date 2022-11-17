@@ -40,7 +40,6 @@ var _ = ginkgo.Describe(hypershiftInstallVerify, func() {
 			ginkgo.By("Checking if the worker nodes are present in AWS")
 			err = checkWorkerNodesInAWS()
 			Expect(err).NotTo(HaveOccurred(), "Error checking if worker nodes are present in AWS")
-
 		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
 	})
 })
