@@ -13,6 +13,7 @@ import (
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/constants"
 	"github.com/openshift/osde2e/pkg/common/helper"
+	"github.com/openshift/osde2e/pkg/common/providers/rosaprovider"
 	"github.com/openshift/osde2e/pkg/common/util"
 	"github.com/openshift/osde2e/pkg/e2e/operators"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -23,8 +24,8 @@ import (
 
 var _ = ginkgo.Describe(constants.SuiteInforming+TestPrefix, func() {
 	ginkgo.BeforeEach(func() {
-		if viper.GetBool("rosa.STS") {
-			ginkgo.Skip("STS does not support MVO")
+		if viper.GetBool(rosaprovider.STS) {
+			ginkgo.Skip("STS does not support CIO")
 		}
 	})
 

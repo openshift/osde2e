@@ -9,6 +9,7 @@ import (
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/constants"
 	"github.com/openshift/osde2e/pkg/common/helper"
+	"github.com/openshift/osde2e/pkg/common/providers/rosaprovider"
 	"github.com/openshift/osde2e/pkg/common/util"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -20,8 +21,8 @@ import (
 
 var _ = ginkgo.Describe(constants.SuiteOperators+TestPrefix, func() {
 	ginkgo.BeforeEach(func() {
-		if viper.GetBool("rosa.STS") {
-			ginkgo.Skip("STS does not support MVO")
+		if viper.GetBool(rosaprovider.STS) {
+			ginkgo.Skip("STS does not support CIO")
 		}
 	})
 	h := helper.New()

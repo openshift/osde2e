@@ -11,8 +11,10 @@ import (
 
 	operatorv1 "github.com/openshift/api/operator/v1"
 	cloudingressv1alpha1 "github.com/openshift/cloud-ingress-operator/pkg/apis/cloudingress/v1alpha1"
+	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/constants"
 	"github.com/openshift/osde2e/pkg/common/helper"
+	"github.com/openshift/osde2e/pkg/common/providers/rosaprovider"
 	"github.com/openshift/osde2e/pkg/e2e/operators"
 
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
@@ -23,6 +25,12 @@ import (
 )
 
 var _ = ginkgo.Describe(constants.SuiteInforming+TestPrefix, func() {
+	ginkgo.BeforeEach(func() {
+		if viper.GetBool(rosaprovider.STS) {
+			ginkgo.Skip("STS does not support CIO")
+		}
+	})
+
 	h := helper.New()
 	ginkgo.Context("Delete apps2 ingresscontroller", func() {
 		ginkgo.It(
