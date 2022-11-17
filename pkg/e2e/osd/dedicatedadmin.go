@@ -17,6 +17,8 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/util/retry"
 )
@@ -267,6 +269,27 @@ var _ = ginkgo.Describe(dedicatedAdminTestName, func() {
 			}()
 
 			err := manageSubscriptions(ctx, namespaceList, h)
+			Expect(err).NotTo(HaveOccurred())
+		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
+
+		util.GinkgoIt("dedicated-admin user can patch consoles.operator.openshift.io CR", func(ctx context.Context) {
+			// Impersonate ded-admin
+			h.Impersonate(rest.ImpersonationConfig{
+				UserName: "dummy-admin@redhat.com",
+				Groups: []string{
+					"dedicated-admin",
+				},
+			})
+			defer func() {
+				h.Impersonate(rest.ImpersonationConfig{})
+			}()
+
+			patchData := []byte(fmt.Sprintf(`{"spec":{"plugins":["test"]}}`))
+
+			_, err := h.Dynamic().Resource(schema.GroupVersionResource{
+				Group: "operator.openshift.io", Version: "v1",
+				Resource: "consoles",
+			}).Patch(ctx, "cluster", types.MergePatchType, patchData, metav1.PatchOptions{})
 			Expect(err).NotTo(HaveOccurred())
 		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
 	})
