@@ -2,6 +2,18 @@
 
 OSD end-to-end testing uses the [Ginkgo] testing framework and [Gomega]  matching libraries.
 
+# Designing e2e Tests
+We recommend the following basic principles in designing your e2e tests:
+ - Map existing functionality to e2e test cases
+ - Map any bugs found into e2e test cases 
+ - Update e2e test cases as addon functionality is changed or added 
+ - Ensure the assertions and logs output by tests reflect 
+   - the execution paths and 
+   - potential causes of failures  
+   
+Kubernetes guide on the topic https://github.com/kubernetes/community/blob/master/contributors/devel/sig-testing/writing-good-e2e-tests.md 
+
+
 ## Writing first test
 
 ### Informing vs. Blocking
