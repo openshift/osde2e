@@ -3,7 +3,7 @@ package ocmprovider
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"math"
 	"math/rand"
@@ -877,7 +877,7 @@ func getLocalKubeConfig(path string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	f, err := ioutil.ReadAll(fileReader)
+	f, err := io.ReadAll(fileReader)
 	if err != nil {
 		return nil, err
 	}

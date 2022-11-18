@@ -3,8 +3,8 @@ package config
 
 import (
 	"fmt"
-	"io/ioutil"
 	"log"
+	"os"
 	"strings"
 	"sync"
 	"time"
@@ -900,7 +900,7 @@ func GetAllSecrets() []Secret {
 func LoadKubeconfig() error {
 	kubeconfigPath := viper.GetString(Kubeconfig.Path)
 	if kubeconfigPath != "" {
-		kubeconfigBytes, err := ioutil.ReadFile(kubeconfigPath)
+		kubeconfigBytes, err := os.ReadFile(kubeconfigPath)
 		if err != nil {
 			return fmt.Errorf("failed reading '%s' which has been set as the TEST_KUBECONFIG: %v", kubeconfigPath, err)
 		}

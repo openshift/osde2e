@@ -2,8 +2,8 @@ package ocmprovider
 
 import (
 	"fmt"
-	"io/ioutil"
 	"log"
+	"os"
 	"strings"
 
 	cmv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
@@ -83,7 +83,7 @@ func (o *OCMProvider) updateCluster(clusterId string, clusterSpec *cmv1.Cluster)
 }
 
 func (o *OCMProvider) LoadUserCaBundleData(file string) (string, error) {
-	data, err := ioutil.ReadFile(file)
+	data, err := os.ReadFile(file)
 	if err != nil {
 		return "", fmt.Errorf(
 			"can't read userCABundle file '%s': %w",

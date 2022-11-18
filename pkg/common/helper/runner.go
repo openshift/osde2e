@@ -1,7 +1,6 @@
 package helper
 
 import (
-	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -40,7 +39,7 @@ func (h *H) WriteResults(results map[string][]byte) {
 		dst := filepath.Join(viper.GetString(config.ReportDir), viper.GetString(config.Phase), filename)
 		err := os.MkdirAll(filepath.Dir(dst), os.FileMode(0o755))
 		Expect(err).NotTo(HaveOccurred())
-		err = ioutil.WriteFile(dst, data, os.ModePerm)
+		err = os.WriteFile(dst, data, os.ModePerm)
 		Expect(err).NotTo(HaveOccurred())
 	}
 }

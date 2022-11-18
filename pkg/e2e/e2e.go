@@ -10,7 +10,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"math"
 	"os"
@@ -221,7 +220,7 @@ func writeLogs(m map[string][]byte) {
 	for k, v := range m {
 		name := k + "-log.txt"
 		filePath := filepath.Join(viper.GetString(config.ReportDir), name)
-		err := ioutil.WriteFile(filePath, v, os.ModePerm)
+		err := os.WriteFile(filePath, v, os.ModePerm)
 		if err != nil {
 			log.Printf("Error writing log %s: %s", filePath, err.Error())
 		}
@@ -311,7 +310,7 @@ func runGinkgoTests() (int, error) {
 	// setup reporter
 	reportDir := viper.GetString(config.ReportDir)
 	if reportDir == "" {
-		reportDir, err = ioutil.TempDir("", "")
+		reportDir, err = os.MkdirTemp("", "")
 
 		if err != nil {
 			return Failure, fmt.Errorf("error creating temporary directory: %v", err)
@@ -756,7 +755,7 @@ func runTestsInPhase(
 		ginkgoPassed = ginkgo.RunSpecs(ginkgo.GinkgoT(), description, suiteConfig, reporterConfig)
 	}()
 
-	files, err := ioutil.ReadDir(phaseDirectory)
+	files, err := os.ReadDir(phaseDirectory)
 	if err != nil {
 		log.Printf("error reading phase directory: %s", err.Error())
 		return false, testCaseData
@@ -842,7 +841,7 @@ func runTestsInPhase(
 		metadata.Instance.SetPassRate(phase, passRate)
 	}
 
-	files, err = ioutil.ReadDir(reportDir)
+	files, err = os.ReadDir(reportDir)
 	if err != nil {
 		log.Printf("error reading phase directory: %s", err.Error())
 		return false, testCaseData
@@ -856,7 +855,7 @@ func runTestsInPhase(
 
 	for _, file := range files {
 		if logFileRegex.MatchString(file.Name()) {
-			data, err := ioutil.ReadFile(filepath.Join(reportDir, file.Name()))
+			data, err := os.ReadFile(filepath.Join(reportDir, file.Name()))
 			if err != nil {
 				log.Printf("error opening log file %s: %s", file.Name(), err.Error())
 				return false, testCaseData
@@ -958,7 +957,7 @@ func runTestsInPhase(
 		if err != nil {
 			log.Printf("Error generating dependencies: %s", err.Error())
 		} else {
-			if err = ioutil.WriteFile(filepath.Join(phaseDirectory, "dependencies.txt"), []byte(dependencies), 0o644); err != nil {
+			if err = os.WriteFile(filepath.Join(phaseDirectory, "dependencies.txt"), []byte(dependencies), 0o644); err != nil {
 				log.Printf("Error writing dependencies.txt: %s", err.Error())
 			}
 
@@ -984,7 +983,7 @@ func checkBeforeMetricsGeneration() error {
 
 // uploadFileToMetricsBucket uploads the given file (with absolute path) to the metrics S3 bucket "incoming" directory.
 func uploadFileToMetricsBucket(filename string) error {
-	data, err := ioutil.ReadFile(filename)
+	data, err := os.ReadFile(filename)
 	if err != nil {
 		return err
 	}
