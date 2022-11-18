@@ -180,12 +180,15 @@ The following are the values that can be plugged in for the --configs flag when 
 | aws          | To specify aws as the cloud provider. |
 | gcp          | To specify gcp as the cloud provider. |
 
+
 ### AWS specific values:
-|AWS_ACCOUNT| AWS account to use for testing.| 
-|AWS_ACCESS_KEY| AWSAccessKeyID for provisioning clusters.|
-|AWS_SECRET_ACCESS_KEY| AWSSecretAccessKey for provisioning clusters.|
-|AWS_REGION| AWSRegion for provisioning clusters.|
-|AWS_VPC_SUBNET_IDS| AWSVPCSubnetIDs for provisioning clusters for BYO-VPC clusters.|
+| Environment variable  | Usage                                                           |
+| --------------------- | --------------------------------------------------------------- |
+| AWS_ACCOUNT           | AWS account to use for testing.                                 |
+| AWS_ACCESS_KEY        | AWSAccessKeyID for provisioning clusters.                       |
+| AWS_SECRET_ACCESS_KEY | AWSSecretAccessKey for provisioning clusters.                   |
+| AWS_REGION            | AWSRegion for provisioning clusters.                            |
+| AWS_VPC_SUBNET_IDS    | AWSVPCSubnetIDs for provisioning clusters for BYO-VPC clusters. |
 
 ### Cluster Provider values:
 
