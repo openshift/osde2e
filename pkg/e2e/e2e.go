@@ -278,6 +278,10 @@ func runGinkgoTests() (int, error) {
 		suiteConfig.SkipStrings = append(suiteConfig.SkipStrings, skip)
 	}
 
+	if labels := viper.GetString(config.Tests.GinkgoLabelFilter); labels != "" {
+		suiteConfig.LabelFilter = labels
+	}
+
 	if testsToRun := viper.GetStringSlice(config.Tests.TestsToRun); len(testsToRun) > 0 {
 		// Flag to delete sice these Print statements are duplicated, all we really are doing is setting an array to be passed to the Ginkgo suite.
 		log.Printf("%v", testsToRun)
