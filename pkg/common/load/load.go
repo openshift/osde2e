@@ -3,7 +3,6 @@ package load
 import (
 	"fmt"
 	"io/fs"
-	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
@@ -90,7 +89,7 @@ func Configs(configs []string, customConfig string, secretLocations []string) er
 				if err != nil {
 					return fmt.Errorf("Error walking folder %s: %s", folder, err.Error())
 				}
-				data, err := ioutil.ReadFile(path)
+				data, err := os.ReadFile(path)
 				if err != nil {
 					return fmt.Errorf("error loading passthru-secret file %s", path)
 				}
@@ -175,7 +174,7 @@ func loadSecretFileIntoKey(key string, filename string, secretLocations []string
 
 		stat, err := os.Stat(fullFilename)
 		if err == nil && !stat.IsDir() {
-			data, err := ioutil.ReadFile(fullFilename)
+			data, err := os.ReadFile(fullFilename)
 			if err != nil {
 				return fmt.Errorf("error loading secret file %s from location %s", filename, secretLocation)
 			}

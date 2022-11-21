@@ -2,8 +2,8 @@ package mock
 
 import (
 	"fmt"
+	"io"
 	"io/fs"
-	"io/ioutil"
 	"log"
 	"os"
 	"time"
@@ -163,7 +163,7 @@ func (m *MockProvider) ClusterKubeconfig(clusterID string) ([]byte, error) {
 			return nil, err
 		}
 	}
-	f, err := ioutil.ReadAll(fileReader)
+	f, err := io.ReadAll(fileReader)
 	if err != nil {
 		return nil, err
 	}

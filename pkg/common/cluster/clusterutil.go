@@ -3,9 +3,9 @@ package cluster
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"math/rand"
+	"os"
 	"strings"
 	"time"
 
@@ -489,7 +489,7 @@ func getRestConfig(provider spi.Provider, clusterID string) (*rest.Config, error
 		}
 	} else if len(kubeconfigPath) != 0 {
 		kubeconfigPath := viper.GetString(config.Kubeconfig.Path)
-		kubeconfigBytes, err = ioutil.ReadFile(kubeconfigPath)
+		kubeconfigBytes, err = os.ReadFile(kubeconfigPath)
 		if err != nil {
 			return nil, fmt.Errorf("failed reading '%s' which has been set as the TEST_KUBECONFIG: %v", kubeconfigPath, err)
 		}

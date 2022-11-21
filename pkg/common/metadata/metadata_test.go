@@ -3,7 +3,6 @@ package metadata
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -86,7 +85,7 @@ func TestMetadata(t *testing.T) {
 
 func writeAndTestMetadata(m *Metadata) (err error) {
 	var tempDir string
-	if tempDir, err = ioutil.TempDir("", ""); err != nil {
+	if tempDir, err = os.MkdirTemp("", ""); err != nil {
 		return err
 	}
 
@@ -97,7 +96,7 @@ func writeAndTestMetadata(m *Metadata) (err error) {
 	}
 
 	var data []byte
-	if data, err = ioutil.ReadFile(filepath.Join(tempDir, MetadataFile)); err != nil {
+	if data, err = os.ReadFile(filepath.Join(tempDir, MetadataFile)); err != nil {
 		return err
 	}
 

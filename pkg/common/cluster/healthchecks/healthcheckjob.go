@@ -3,7 +3,6 @@ package healthchecks
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
@@ -50,7 +49,7 @@ func CheckHealthcheckJob(k8sClient *kubernetes.Clientset, ctx context.Context, l
 					if err != nil {
 						log.Printf("failed getting logs for pod %s: %s", pod.Name, err.Error())
 					}
-					if err = ioutil.WriteFile(filepath.Join(viper.GetString(config.ReportDir), fmt.Sprintf("%s.log", pod.Name)), data, os.FileMode(0o644)); err != nil {
+					if err = os.WriteFile(filepath.Join(viper.GetString(config.ReportDir), fmt.Sprintf("%s.log", pod.Name)), data, os.FileMode(0o644)); err != nil {
 						log.Printf("unable to output container logfile %s.log: %s", pod.Name, err.Error())
 					}
 				}

@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"math"
 	"os"
@@ -117,7 +116,7 @@ func init() {
 // WritePrometheusFile collects data and writes it out in the prometheus export file format (https://github.com/prometheus/docs/blob/master/content/docs/instrumenting/exposition_formats.md)
 // Returns the prometheus file name.
 func (m *Metrics) WritePrometheusFile(reportDir string) (string, error) {
-	files, err := ioutil.ReadDir(reportDir)
+	files, err := os.ReadDir(reportDir)
 	if err != nil {
 		return "", err
 	}
@@ -128,7 +127,7 @@ func (m *Metrics) WritePrometheusFile(reportDir string) (string, error) {
 			if file.IsDir() {
 				phase := file.Name()
 				phaseDir := filepath.Join(reportDir, phase)
-				phaseFiles, err := ioutil.ReadDir(phaseDir)
+				phaseFiles, err := os.ReadDir(phaseDir)
 				if err != nil {
 					return "", err
 				}
@@ -157,7 +156,7 @@ func (m *Metrics) WritePrometheusFile(reportDir string) (string, error) {
 		return "", err
 	}
 
-	err = ioutil.WriteFile(filepath.Join(reportDir, prometheusFileName), output, os.FileMode(0o644))
+	err = os.WriteFile(filepath.Join(reportDir, prometheusFileName), output, os.FileMode(0o644))
 	if err != nil {
 		return "", err
 	}
@@ -173,7 +172,7 @@ func (m *Metrics) WritePrometheusFile(reportDir string) (string, error) {
 // result="passed|failed|skipped", phase="currentphase",
 // suite="suitename", testname="testname", upgrade_version="upgrade-version"}
 func (m *Metrics) processJUnitXMLFile(phase string, junitFile string) (err error) {
-	data, err := ioutil.ReadFile(junitFile)
+	data, err := os.ReadFile(junitFile)
 	if err != nil {
 		return err
 	}
@@ -224,7 +223,7 @@ func (m *Metrics) processJUnitXMLFile(phase string, junitFile string) (err error
 // values and capturing strings through the use of labels is of questionable
 // value.
 func (m *Metrics) processJSONFile(gatherer *prometheus.GaugeVec, jsonFile string, phase string) (err error) {
-	data, err := ioutil.ReadFile(jsonFile)
+	data, err := os.ReadFile(jsonFile)
 	if err != nil {
 		return err
 	}

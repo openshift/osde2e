@@ -3,7 +3,6 @@ package metadata
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -264,7 +263,7 @@ func (m *Metadata) WriteToJSON(reportDir string) (err error) {
 		return err
 	}
 
-	files, err := ioutil.ReadDir(reportDir)
+	files, err := os.ReadDir(reportDir)
 	if err != nil {
 		return err
 	}
@@ -275,7 +274,7 @@ func (m *Metadata) WriteToJSON(reportDir string) (err error) {
 			if file.IsDir() {
 				phase := file.Name()
 				phaseDir := filepath.Join(reportDir, phase)
-				phaseFiles, err := ioutil.ReadDir(phaseDir)
+				phaseFiles, err := os.ReadDir(phaseDir)
 				if err != nil {
 					return err
 				}
@@ -290,7 +289,7 @@ func (m *Metadata) WriteToJSON(reportDir string) (err error) {
 						}
 
 						// Unmarshal addon metadata to map
-						addonData, err := ioutil.ReadFile(filepath.Join(phaseDir, phaseFile.Name()))
+						addonData, err := os.ReadFile(filepath.Join(phaseDir, phaseFile.Name()))
 						if err != nil {
 							return err
 						}
@@ -311,11 +310,11 @@ func (m *Metadata) WriteToJSON(reportDir string) (err error) {
 		}
 	}
 
-	if err = ioutil.WriteFile(filepath.Join(reportDir, CustomMetadataFile), data, os.FileMode(0o644)); err != nil {
+	if err = os.WriteFile(filepath.Join(reportDir, CustomMetadataFile), data, os.FileMode(0o644)); err != nil {
 		return err
 	}
 
-	if err = ioutil.WriteFile(filepath.Join(reportDir, MetadataFile), data, os.FileMode(0o644)); err != nil {
+	if err = os.WriteFile(filepath.Join(reportDir, MetadataFile), data, os.FileMode(0o644)); err != nil {
 		return err
 	}
 

@@ -3,7 +3,7 @@ package runner
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"os"
 	"path/filepath"
@@ -111,7 +111,7 @@ func (r *Runner) getAllLogsFromPod(podName string) error {
 
 			defer logStream.Close()
 
-			logBytes, err := ioutil.ReadAll(logStream)
+			logBytes, err := io.ReadAll(logStream)
 			if err != nil {
 				allErrors = multierror.Append(allErrors, err)
 				return
@@ -126,7 +126,7 @@ func (r *Runner) getAllLogsFromPod(podName string) error {
 
 			logOutput := filepath.Join(configMapDirectory, fmt.Sprintf("%s-%s.log", podName, containerStatus.Name))
 
-			allErrors = multierror.Append(allErrors, ioutil.WriteFile(logOutput, logBytes, os.FileMode(0o644)))
+			allErrors = multierror.Append(allErrors, os.WriteFile(logOutput, logBytes, os.FileMode(0o644)))
 		}()
 	}
 

@@ -3,8 +3,8 @@ package templates
 
 import (
 	"fmt"
+	"io"
 	"io/fs"
-	"io/ioutil"
 	"path/filepath"
 	"text/template"
 
@@ -23,7 +23,7 @@ func LoadTemplate(path string) (*template.Template, error) {
 		return nil, fmt.Errorf("unable to open template: %v", err)
 	}
 
-	if data, err = ioutil.ReadAll(fileReader); err != nil {
+	if data, err = io.ReadAll(fileReader); err != nil {
 		return nil, fmt.Errorf("unable to read template: %v", err)
 	}
 

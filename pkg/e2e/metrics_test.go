@@ -2,7 +2,6 @@ package e2e
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -75,7 +74,7 @@ cicd_jUnitResult{cloud_provider="aws",cluster_id="1a2b3c",environment="prod",ins
 		},
 	}
 
-	tmpDir, err := ioutil.TempDir("", "")
+	tmpDir, err := os.MkdirTemp("", "")
 	if err != nil {
 		t.Errorf("error creating temporary directory: %v", err)
 	}
@@ -88,7 +87,7 @@ cicd_jUnitResult{cloud_provider="aws",cluster_id="1a2b3c",environment="prod",ins
 		if m == nil {
 			t.Error("error creating new metrics provider")
 		}
-		tmpFile, err := ioutil.TempFile(tmpDir, "*")
+		tmpFile, err := os.CreateTemp(tmpDir, "*")
 		if err != nil {
 			t.Errorf("error writing temporary file: %v", err)
 		}
@@ -177,7 +176,7 @@ cicd_addon_metadata{cloud_provider="aws",cluster_id="1a2b3c",environment="prod",
 		},
 	}
 
-	tmpDir, err := ioutil.TempDir("", "")
+	tmpDir, err := os.MkdirTemp("", "")
 	if err != nil {
 		t.Errorf("error creating temporary directory: %v", err)
 	}
@@ -189,7 +188,7 @@ cicd_addon_metadata{cloud_provider="aws",cluster_id="1a2b3c",environment="prod",
 		if m == nil {
 			t.Error("error creating new metrics provider")
 		}
-		tmpFile, err := ioutil.TempFile(tmpDir, "*")
+		tmpFile, err := os.CreateTemp(tmpDir, "*")
 		if err != nil {
 			t.Errorf("error writing temporary file: %v", err)
 		}
@@ -340,7 +339,7 @@ cicd_addon_metadata{cloud_provider="aws",cluster_id="1a2b3c",environment="prod",
 		if m == nil {
 			t.Error("error creating new metrics provider")
 		}
-		tmpDir, err := ioutil.TempDir("", "")
+		tmpDir, err := os.MkdirTemp("", "")
 		if err != nil {
 			t.Errorf("error creating temporary directory: %v", err)
 		}
@@ -355,7 +354,7 @@ cicd_addon_metadata{cloud_provider="aws",cluster_id="1a2b3c",environment="prod",
 					t.Errorf("error creating jUnit file directory: %v", err)
 				}
 			}
-			tmpFile, err := ioutil.TempFile(jUnitDir, "junit*.xml")
+			tmpFile, err := os.CreateTemp(jUnitDir, "junit*.xml")
 			if err != nil {
 				t.Errorf("error writing junit file: %v", err)
 			}
@@ -366,14 +365,14 @@ cicd_addon_metadata{cloud_provider="aws",cluster_id="1a2b3c",environment="prod",
 		}
 
 		if test.metadataFileContents != "" {
-			err = ioutil.WriteFile(filepath.Join(tmpDir, metadata.CustomMetadataFile), []byte(test.metadataFileContents), os.FileMode(0o644))
+			err = os.WriteFile(filepath.Join(tmpDir, metadata.CustomMetadataFile), []byte(test.metadataFileContents), os.FileMode(0o644))
 			if err != nil {
 				t.Errorf("error writing metadata file: %v", err)
 			}
 		}
 
 		if test.addonMetadataFileContents != "" {
-			err = ioutil.WriteFile(filepath.Join(tmpDir, "install", metadata.AddonMetadataFile), []byte(test.addonMetadataFileContents), os.FileMode(0o644))
+			err = os.WriteFile(filepath.Join(tmpDir, "install", metadata.AddonMetadataFile), []byte(test.addonMetadataFileContents), os.FileMode(0o644))
 			if err != nil {
 				t.Errorf("error writing metadata file: %v", err)
 			}
@@ -388,7 +387,7 @@ cicd_addon_metadata{cloud_provider="aws",cluster_id="1a2b3c",environment="prod",
 			t.Errorf("unexpected prometheus filename: %s", prometheusFile)
 		}
 
-		data, err := ioutil.ReadFile(filepath.Join(tmpDir, prometheusFile))
+		data, err := os.ReadFile(filepath.Join(tmpDir, prometheusFile))
 		if err != nil {
 			t.Errorf("error while reading prometheus file: %v", err)
 		}

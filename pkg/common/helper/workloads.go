@@ -3,8 +3,8 @@ package helper
 import (
 	"context"
 	"fmt"
+	"io"
 	"io/fs"
-	"io/ioutil"
 	"strings"
 	"time"
 
@@ -65,7 +65,7 @@ func ReadK8sYaml(file string) (runtime.Object, error) {
 		return nil, err
 	}
 
-	f, err := ioutil.ReadAll(fileReader)
+	f, err := io.ReadAll(fileReader)
 	if err != nil {
 		return nil, err
 	}

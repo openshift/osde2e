@@ -3,8 +3,8 @@ package scale
 import (
 	"bytes"
 	"fmt"
+	"io"
 	"io/fs"
-	"io/ioutil"
 	"sync"
 	"text/template"
 
@@ -51,7 +51,7 @@ func init() {
 		panic(fmt.Sprintf("unable to open scale runner template: %v", err))
 	}
 
-	if data, err = ioutil.ReadAll(fileReader); err != nil {
+	if data, err = io.ReadAll(fileReader); err != nil {
 		panic(fmt.Sprintf("unable to read scale runner template: %v", err))
 	}
 
