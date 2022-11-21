@@ -12,12 +12,15 @@ import (
 	"github.com/openshift/osde2e/pkg/common/alert"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/util"
+	monv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/rest"
 
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/helper"
+	"k8s.io/apimachinery/pkg/api/errors"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -34,6 +37,8 @@ var _ = ginkgo.Describe(namespaceWebhookTestName, func() {
 		DUMMY_GROUP = "random-group-name"
 		// User to use for impersonation
 		DUMMY_USER = "testuser@testdomain"
+
+		prometheusName = "prometheus-example-app"
 	)
 
 	PRIVILEGED_USERS := []string{
@@ -101,6 +106,18 @@ var _ = ginkgo.Describe(namespaceWebhookTestName, func() {
 				Expect(err).NotTo(HaveOccurred())
 			}
 
+			for privilegedNamespace, manageNamespace := range PRIVILEGED_NAMESPACES {
+				if manageNamespace {
+					h.Impersonate(rest.ImpersonationConfig{})
+					err := deletePrometheusRule(privilegedNamespace, prometheusName, h)
+					Expect(err).NotTo(HaveOccurred())
+				}
+			}
+			for _, namespace := range NONPRIV_NAMESPACES {
+				err := deletePrometheusRule(namespace, prometheusName, h)
+				Expect(err).NotTo(HaveOccurred())
+			}
+
 			// Wait until all namespaces have verified to be deleted
 			namespacesToCheck := make([]string, 0)
 			for ns, managed := range PRIVILEGED_NAMESPACES {
@@ -154,6 +171,40 @@ var _ = ginkgo.Describe(namespaceWebhookTestName, func() {
 			// Non-privileged users can manage all non-privileged namespaces
 			for _, nonPrivilegedNamespace := range NONPRIV_NAMESPACES {
 				err := updateNamespace(ctx, nonPrivilegedNamespace, DUMMY_USER, "dedicated-admins", h)
+				Expect(err).NotTo(HaveOccurred())
+			}
+		}, viper.GetFloat64(config.Tests.PollingTimeout))
+
+		util.GinkgoIt("dedicated admin can not create PrometheusRule", func(ctx context.Context) {
+			for privilegedNamespace := range PRIVILEGED_NAMESPACES {
+				err := e2eCreatePrometheusRule(ctx, prometheusName, privilegedNamespace, DUMMY_USER, "dedicated-admins", h)
+				Expect(apierrors.IsForbidden(err)).To(BeTrue())
+			}
+		}, viper.GetFloat64(config.Tests.PollingTimeout))
+
+		util.GinkgoIt("Non-privileged users cannot create prometheusrule in privileged namespaces", func(ctx context.Context) {
+			for privilegedNamespace := range PRIVILEGED_NAMESPACES {
+				err := e2eCreatePrometheusRule(ctx, prometheusName, privilegedNamespace, DUMMY_USER, DUMMY_GROUP, h)
+				Expect(errors.IsForbidden(err)).To(Equal(true))
+			}
+		}, viper.GetFloat64(config.Tests.PollingTimeout))
+
+		util.GinkgoIt("Privileged users can create prometheusrule in all namespaces", func(ctx context.Context) {
+			for _, privilegedUser := range PRIVILEGED_USERS {
+				for privilegedNamespace := range PRIVILEGED_NAMESPACES {
+					err := e2eCreatePrometheusRule(ctx, prometheusName, privilegedNamespace, privilegedUser, "", h)
+					Expect(err).NotTo(HaveOccurred())
+				}
+				for _, namespace := range NONPRIV_NAMESPACES {
+					err := e2eCreatePrometheusRule(ctx, prometheusName, namespace, privilegedUser, "", h)
+					Expect(err).NotTo(HaveOccurred())
+				}
+			}
+		}, viper.GetFloat64(config.Tests.PollingTimeout))
+
+		util.GinkgoIt("Non-privileged users can create prometheusrule all non-privileged namespaces", func(ctx context.Context) {
+			for _, nonPrivilegedNamespace := range NONPRIV_NAMESPACES {
+				err := e2eCreatePrometheusRule(ctx, prometheusName, nonPrivilegedNamespace, DUMMY_USER, "dedicated-admins", h)
 				Expect(err).NotTo(HaveOccurred())
 			}
 		}, viper.GetFloat64(config.Tests.PollingTimeout))
@@ -254,6 +305,15 @@ func deleteNamespace(ctx context.Context, namespace string, waitForDelete bool, 
 	return err
 }
 
+func deletePrometheusRule(namespace, prometheusName string, h *helper.H) error {
+	log.Printf("Deleting prometheusrule for prometheusrule validation webhook (%s)", prometheusName)
+	err := h.Prometheusop().MonitoringV1().PrometheusRules(namespace).Delete(context.TODO(), prometheusName, metav1.DeleteOptions{})
+	if err != nil && !errors.IsNotFound(err) {
+		return fmt.Errorf("failed to delete prometheusrule from managed namespace '%s': %v", prometheusName, err)
+	}
+	return nil
+}
+
 func createNamespace(ctx context.Context, namespace string, h *helper.H) (*v1.Namespace, error) {
 	// If the namespace already exists, we don't need to create it. Just return.
 	ns, err := h.Kube().CoreV1().Namespaces().Get(ctx, namespace, metav1.GetOptions{})
@@ -285,4 +345,49 @@ func createNamespace(ctx context.Context, namespace string, h *helper.H) (*v1.Na
 	})
 
 	return ns, err
+}
+
+func e2eCreatePrometheusRule(ctx context.Context, prometheusrulename, namespace string, asUser string, userGroup string, h *helper.H) error {
+	// reset impersonation upon return
+	defer h.Impersonate(rest.ImpersonationConfig{})
+
+	// reset impersonation at the beginning just-in-case
+	h.Impersonate(rest.ImpersonationConfig{})
+
+	// we need to add these groups for impersonation to work
+	userGroups := []string{"system:authenticated", "system:authenticated:oauth"}
+	if userGroup != "" {
+		userGroups = append(userGroups, userGroup)
+	}
+
+	// update the namespace as our desired user
+	h.Impersonate(rest.ImpersonationConfig{
+		UserName: asUser,
+		Groups:   userGroups,
+	})
+
+	e2eprometheusrule := &monv1.PrometheusRule{
+		TypeMeta: metav1.TypeMeta{},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      prometheusrulename,
+			Namespace: namespace,
+		},
+		Spec: monv1.PrometheusRuleSpec{
+			Groups: []monv1.RuleGroup{
+				{
+					Name: "example",
+					Rules: []monv1.Rule{
+						{
+							Alert: "VersionAlert",
+							Expr: intstr.IntOrString{
+								StrVal: "version{job==\"prometheus-example-app\"} == 0",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	_, err := h.Prometheusop().MonitoringV1().PrometheusRules(namespace).Create(ctx, e2eprometheusrule, metav1.CreateOptions{})
+	return err
 }
