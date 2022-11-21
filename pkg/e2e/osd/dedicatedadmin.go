@@ -38,48 +38,6 @@ var _ = ginkgo.Describe(dedicatedAdminTestName, func() {
 		// setup helper
 		h := helper.New()
 
-		util.GinkgoIt("cannot add members to cluster-admin", func(ctx context.Context) {
-			h.Impersonate(rest.ImpersonationConfig{
-				UserName: "dummy-admin@redhat.com",
-				Groups: []string{
-					"dedicated-admins",
-				},
-			})
-			defer func() {
-				h.Impersonate(rest.ImpersonationConfig{})
-			}()
-
-			daGroup, err := h.User().UserV1().Groups().Get(ctx, "dedicated-admins", metav1.GetOptions{})
-			Expect(err).NotTo(HaveOccurred())
-
-			daGroup.Users = append(daGroup.Users, "new-dummy-admin@redhat.com")
-			_, err = h.User().UserV1().Groups().Update(ctx, daGroup, metav1.UpdateOptions{})
-			Expect(err).To(HaveOccurred())
-		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
-
-		util.GinkgoIt("cannot delete members from cluster-admin", func(ctx context.Context) {
-			// add dummy user
-			daGroup, err := h.User().UserV1().Groups().Get(ctx, "dedicated-admins", metav1.GetOptions{})
-			Expect(err).NotTo(HaveOccurred())
-			daGroup.Users = append(daGroup.Users, "user-to-delete@redhat.com")
-			daGroup, err = h.User().UserV1().Groups().Update(ctx, daGroup, metav1.UpdateOptions{})
-			Expect(err).NotTo(HaveOccurred())
-
-			// remove dummy user as dedicated-admin
-			daGroup.Users = []string{}
-			h.Impersonate(rest.ImpersonationConfig{
-				UserName: "dummy-admin@redhat.com",
-				Groups: []string{
-					"dedicated-admins",
-				},
-			})
-			defer func() {
-				h.Impersonate(rest.ImpersonationConfig{})
-			}()
-			_, err = h.User().UserV1().Groups().Update(context.TODO(), daGroup, metav1.UpdateOptions{})
-			Expect(err).To(HaveOccurred())
-		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
-
 		// dedicated-admin SA can create projectrequest object
 		util.GinkgoIt("ded-admin SA can create projectrequest", func(ctx context.Context) {
 			// Impersonate ded-admin
