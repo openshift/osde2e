@@ -277,7 +277,7 @@ var _ = ginkgo.Describe(dedicatedAdminTestName, func() {
 			h.Impersonate(rest.ImpersonationConfig{
 				UserName: "dummy-admin@redhat.com",
 				Groups: []string{
-					"dedicated-admin",
+					"dedicated-admins",
 				},
 			})
 			defer func() {
@@ -290,6 +290,14 @@ var _ = ginkgo.Describe(dedicatedAdminTestName, func() {
 				Group: "operator.openshift.io", Version: "v1",
 				Resource: "consoles",
 			}).Patch(ctx, "cluster", types.MergePatchType, patchData, metav1.PatchOptions{})
+			Expect(err).NotTo(HaveOccurred())
+			// revret the changes
+			patchEmpty := []byte(fmt.Sprintf(`{"spec":{"plugins":[""]}}`))
+
+			_, err = h.Dynamic().Resource(schema.GroupVersionResource{
+				Group: "operator.openshift.io", Version: "v1",
+				Resource: "consoles",
+			}).Patch(ctx, "cluster", types.MergePatchType, patchEmpty, metav1.PatchOptions{})
 			Expect(err).NotTo(HaveOccurred())
 		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
 	})
