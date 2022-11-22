@@ -8,14 +8,12 @@ import (
 	"time"
 
 	"github.com/onsi/ginkgo/v2"
-
+	. "github.com/onsi/gomega"
 	"github.com/openshift/osde2e/pkg/common/alert"
+	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/util"
-
-	. "github.com/onsi/gomega"
-	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -28,7 +26,7 @@ func init() {
 	alert.RegisterGinkgoAlert(deploymentValidationOperatorTestName, "SD-SREP", "Ron Green", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
 }
 
-var _ = ginkgo.Describe(deploymentValidationOperatorTestName, func() {
+var _ = ginkgo.Describe(deploymentValidationOperatorTestName, ginkgo.Ordered, func() {
 	const (
 		operatorNamespace      = "openshift-deployment-validation-operator"
 		operatorName           = "deployment-validation-operator"
@@ -75,7 +73,9 @@ var _ = ginkgo.Describe(deploymentValidationOperatorTestName, func() {
 	checkPodLogs(h, operatorNamespace, testNamespace, operatorDeploymentName, operatorName, dvoString, 300)
 
 	// Delete DVO Test Deployment
-	defer deleteNamespace(context.TODO(), testNamespace, true, h)
+	ginkgo.AfterAll(func(ctx context.Context) {
+		deleteNamespace(ctx, testNamespace, true, h)
+	})
 })
 
 // Function to create a standard deployment
@@ -114,8 +114,6 @@ func makeDeployment(name, sa string, nodeLabels map[string]string) appsv1.Deploy
 
 // Check Pod Logs to see if DVO pod is reporting correct metrics
 func checkPodLogs(h *helper.H, namespace string, testNamespace string, name string, containerName string, dvoString string, gracePeriod int) {
-	fmt.Println("Enterned Check Pod Logs")
-
 	podLogOptions := v1.PodLogOptions{
 		Container: containerName,
 	}
