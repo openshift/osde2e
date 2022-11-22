@@ -10,7 +10,7 @@ import (
 	. "github.com/onsi/gomega"
 
 	operatorv1 "github.com/openshift/api/operator/v1"
-	cloudingressv1alpha1 "github.com/openshift/cloud-ingress-operator/pkg/apis/cloudingress/v1alpha1"
+	cloudingressv1alpha1 "github.com/openshift/cloud-ingress-operator/api/v1alpha1"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/constants"
 	"github.com/openshift/osde2e/pkg/common/helper"

@@ -2,11 +2,12 @@ package osd
 
 import (
 	"context"
+	"time"
 
 	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	machineV1beta1 "github.com/openshift/machine-api-operator/pkg/apis/machine/v1beta1"
+	machineV1beta1 "github.com/openshift/api/machine/v1beta1"
 	"github.com/openshift/osde2e/pkg/common/alert"
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/util"
@@ -59,12 +60,12 @@ var _ = ginkgo.Describe(machineHealthTestName, func() {
 			machineV1beta1.UnhealthyCondition{
 				Type:    corev1.NodeReady,
 				Status:  corev1.ConditionFalse,
-				Timeout: "480s",
+				Timeout: metav1.Duration{Duration: 480 * time.Second},
 			},
 			machineV1beta1.UnhealthyCondition{
 				Type:    corev1.NodeReady,
 				Status:  corev1.ConditionUnknown,
-				Timeout: "480s",
+				Timeout: metav1.Duration{Duration: 480 * time.Second},
 			},
 		))
 	}, float64(500))
@@ -99,12 +100,12 @@ var _ = ginkgo.Describe(machineHealthTestName, func() {
 			machineV1beta1.UnhealthyCondition{
 				Type:    corev1.NodeReady,
 				Status:  corev1.ConditionFalse,
-				Timeout: "480s",
+				Timeout: metav1.Duration{Duration: 480 * time.Second},
 			},
 			machineV1beta1.UnhealthyCondition{
 				Type:    corev1.NodeReady,
 				Status:  corev1.ConditionUnknown,
-				Timeout: "480s",
+				Timeout: metav1.Duration{Duration: 480 * time.Second},
 			},
 		))
 	}, float64(500))
@@ -139,12 +140,12 @@ var _ = ginkgo.Describe(machineHealthTestName, func() {
 			machineV1beta1.UnhealthyCondition{
 				Type:    corev1.NodeReady,
 				Status:  corev1.ConditionFalse,
-				Timeout: "8m",
+				Timeout: metav1.Duration{Duration: 8 * time.Minute},
 			},
 			machineV1beta1.UnhealthyCondition{
 				Type:    corev1.NodeReady,
 				Status:  corev1.ConditionUnknown,
-				Timeout: "15m",
+				Timeout: metav1.Duration{Duration: 15 * time.Minute},
 			},
 		))
 	}, float64(500))

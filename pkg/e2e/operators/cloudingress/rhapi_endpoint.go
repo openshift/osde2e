@@ -9,7 +9,7 @@ import (
 
 	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	cloudingressv1alpha1 "github.com/openshift/cloud-ingress-operator/pkg/apis/cloudingress/v1alpha1"
+	cloudingressv1alpha1 "github.com/openshift/cloud-ingress-operator/api/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
