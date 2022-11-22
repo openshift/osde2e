@@ -3,18 +3,17 @@ package verify
 import (
 	"context"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
-
 	"github.com/openshift/osde2e/pkg/common/alert"
 	"github.com/openshift/osde2e/pkg/common/cluster"
+	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/helper"
 	clusterProviders "github.com/openshift/osde2e/pkg/common/providers"
+	"github.com/openshift/osde2e/pkg/common/providers/rosaprovider"
 	"github.com/openshift/osde2e/pkg/common/util"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 var promExportersTestname string = "[Suite: e2e] [OSD] Prometheus Exporters"
@@ -24,6 +23,12 @@ func init() {
 }
 
 var _ = ginkgo.Describe(promExportersTestname, func() {
+	ginkgo.BeforeEach(func() {
+		if viper.GetBool(rosaprovider.STS) {
+			ginkgo.Skip("Prometheus Exporters (ebs-iops-reporter and stuck-ebs-vols) are not deployed to STS clusters")
+		}
+	})
+
 	const (
 		// all represents all environments
 		allProviders = "all"
@@ -54,13 +59,11 @@ var _ = ginkgo.Describe(promExportersTestname, func() {
 		},
 	}
 
-	secretsToCheck := map[string][]string{}
-	if !viper.GetBool("rosa.STS") {
-		// Only check AWS provider secrets for non-STS clusters
-		secretsToCheck[awsProvider] = []string{
+	secretsToCheck := map[string][]string{
+		awsProvider: {
 			"sre-ebs-iops-reporter-aws-credentials",
 			"sre-stuck-ebs-vols-aws-credentials",
-		}
+		},
 	}
 
 	roleBindingsToCheck := map[string][]string{
