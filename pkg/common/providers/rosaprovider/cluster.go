@@ -150,6 +150,9 @@ func (m *ROSAProvider) LaunchCluster(clusterName string) (string, error) {
 
 	if viper.GetBool(config.Hypershift) {
 		createClusterArgs = append(createClusterArgs, "--hosted-cp")
+		if viper.GetString(config.AWSVPCSubnetIDs) == "" {
+			return "", fmt.Errorf("BYOVPC is required for ROSA hosted control plane.\n You can pass the subnet IDs using vault key 'subnet-ids' or setting the environment variable 'AWS_VPC_SUBNET_IDS'")
+		}
 	}
 
 	err = callAndSetAWSSession(func() error {
