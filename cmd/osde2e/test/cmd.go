@@ -49,6 +49,7 @@ var args struct {
 	mustGather       bool
 	focusTests       string
 	skipTests        string
+	labelFilter      string
 }
 
 func init() {
@@ -124,6 +125,12 @@ func init() {
 		false,
 		"Control the Must Gather process at the end of a failed testing run.",
 	)
+	pfs.StringVar(
+		&args.labelFilter,
+		"label-filter",
+		"",
+		"Only run any Ginkgo tests matching the ginkgo label filter",
+	)
 
 	viper.BindPFlag(config.Cluster.ID, Cmd.PersistentFlags().Lookup("cluster-id"))
 	viper.BindPFlag(ocmprovider.Env, Cmd.PersistentFlags().Lookup("environment"))
@@ -133,6 +140,7 @@ func init() {
 	viper.BindPFlag(config.Tests.GinkgoFocus, Cmd.PersistentFlags().Lookup("focus-tests"))
 	viper.BindPFlag(config.Tests.GinkgoSkip, Cmd.PersistentFlags().Lookup("skip-tests"))
 	viper.BindPFlag(config.MustGather, Cmd.PersistentFlags().Lookup("must-gather"))
+	viper.BindPFlag(config.Tests.GinkgoLabelFilter, Cmd.PersistentFlags().Lookup("label-filter"))
 }
 
 func run(cmd *cobra.Command, argv []string) {

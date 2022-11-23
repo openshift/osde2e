@@ -199,9 +199,13 @@ var Tests = struct {
 	// Env: GINKGO_FOCUS
 	GinkgoFocus string
 
-	// GinkgoLogLevel contrls the logging level used by ginkgo when providing test output
+	// GinkgoLogLevel controls the logging level used by ginkgo when providing test output
 	// Env: GINKGO_LOG_LEVEL
 	GinkgoLogLevel string
+
+	// GinkgoLabelFilter controls which test suites or tests to run
+	// Env: GINKGO_LABEL_FILTER
+	GinkgoLabelFilter string
 
 	// TestsToRun is a list of files which should be executed as part of a test suite
 	// Env: TESTS_TO_RUN
@@ -245,6 +249,7 @@ var Tests = struct {
 	GinkgoSkip:                 "tests.ginkgoSkip",
 	GinkgoFocus:                "tests.focus",
 	GinkgoLogLevel:             "tests.ginkgoLogLevel",
+	GinkgoLabelFilter:          "tests.ginkgoLabelFilter",
 	TestsToRun:                 "tests.testsToRun",
 	SuppressSkipNotifications:  "tests.suppressSkipNotifications",
 	CleanRuns:                  "tests.cleanRuns",
@@ -661,6 +666,8 @@ func InitOSDe2eViper() {
 	viper.BindEnv(Tests.GinkgoFocus, "GINKGO_FOCUS")
 
 	viper.BindEnv(Tests.GinkgoLogLevel, "GINKGO_LOG_LEVEL")
+
+	viper.BindEnv(Tests.GinkgoLabelFilter, "GINKGO_LABEL_FILTER")
 
 	viper.BindEnv(Tests.TestsToRun, "TESTS_TO_RUN")
 
