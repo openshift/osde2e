@@ -5,7 +5,8 @@ import (
 
 	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	cloudingress "github.com/openshift/cloud-ingress-operator/pkg/apis/cloudingress/v1alpha1"
+	cloudingress "github.com/openshift/cloud-ingress-operator/api/v1alpha1"
+	"github.com/openshift/cloud-ingress-operator/pkg/ingresscontroller"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/constants"
 	"github.com/openshift/osde2e/pkg/common/helper"
@@ -51,7 +52,7 @@ func createPublishingstrategies(name string) cloudingress.PublishingStrategy {
 	publishingstrategy := cloudingress.PublishingStrategy{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "PublishingStrategy",
-			APIVersion: cloudingress.SchemeGroupVersion.String(),
+			APIVersion: ingresscontroller.SchemeGroupVersion.String(),
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name: name,

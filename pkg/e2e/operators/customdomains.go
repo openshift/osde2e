@@ -24,7 +24,7 @@ import (
 	"github.com/openshift/osde2e/pkg/common/util"
 
 	routev1 "github.com/openshift/api/route/v1"
-	customdomainv1alpha1 "github.com/openshift/custom-domains-operator/pkg/apis/customdomain/v1alpha1"
+	customdomainv1alpha1 "github.com/openshift/custom-domains-operator/api/v1alpha1"
 
 	"github.com/openshift/osde2e/pkg/common/alert"
 	"github.com/openshift/osde2e/pkg/common/helper"

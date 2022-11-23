@@ -49,7 +49,7 @@ var DefaultContainer = kubev1.Container{
 	},
 	ImagePullPolicy: kubev1.PullAlways,
 	ReadinessProbe: &kubev1.Probe{
-		Handler: kubev1.Handler{
+		ProbeHandler: kubev1.ProbeHandler{
 			HTTPGet: &kubev1.HTTPGetAction{
 				Path: "/",
 				Port: intstr.FromInt(resultsPort),
