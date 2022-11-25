@@ -40,7 +40,7 @@ require (
 	github.com/openshift/route-monitor-operator v0.0.0-20210309123726-229da76cc133
 	github.com/openshift/splunk-forwarder-operator v0.0.0-20221120204055-42afd88abb4c
 	github.com/operator-framework/api v0.17.1
-	github.com/operator-framework/operator-lifecycle-manager v0.22.0
+	github.com/operator-framework/operator-lifecycle-manager v3.11.0+incompatible
 	github.com/ory/dockertest v3.3.5+incompatible
 	github.com/pganalyze/pg_query_go/v2 v2.2.0
 	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.61.0
@@ -88,6 +88,7 @@ require (
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
 	github.com/containerd/containerd v1.6.10 // indirect
 	github.com/containerd/continuity v0.3.0 // indirect
+	github.com/coreos/go-semver v0.3.0 // indirect
 	github.com/cznic/mathutil v0.0.0-20181122101859-297441e03548 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dgryski/go-gk v0.0.0-20200319235926-a69029f61654 // indirect

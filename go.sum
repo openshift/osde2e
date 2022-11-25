@@ -224,6 +224,7 @@ github.com/coreos/etcd v3.3.13+incompatible/go.mod h1:uF7uidLiAD3TWHmW31ZFd/JWoc
 github.com/coreos/go-etcd v2.0.0+incompatible/go.mod h1:Jez6KQU2B/sWsbdaef3ED8NzMklzPG4d5KIOhIy30Tk=
 github.com/coreos/go-oidc v2.1.0+incompatible/go.mod h1:CgnwVTmzoESiwO9qyAFEMiHoZ1nMCKZlZ9V6mm3/LKc=
 github.com/coreos/go-semver v0.2.0/go.mod h1:nnelYz7RCh+5ahJtPPxZlU+153eP4D4r3EedlOD2RNk=
+github.com/coreos/go-semver v0.3.0 h1:wkHLiw0WNATZnSG7epLsujiMCgPAc9xhjJ4tgnAxmfM=
 github.com/coreos/go-semver v0.3.0/go.mod h1:nnelYz7RCh+5ahJtPPxZlU+153eP4D4r3EedlOD2RNk=
 github.com/coreos/go-systemd v0.0.0-20180511133405-39ca1b05acc7/go.mod h1:F5haX7vjVVG0kc13fIWeqUViNPyEJxv/OmvnBo0Yme4=
 github.com/coreos/go-systemd v0.0.0-20190321100706-95778dfbb74e/go.mod h1:F5haX7vjVVG0kc13fIWeqUViNPyEJxv/OmvnBo0Yme4=
@@ -946,8 +947,8 @@ github.com/opentracing/opentracing-go v1.1.0/go.mod h1:UkNAQd3GIcIGf0SeVgPpRdFSt
 github.com/opentracing/opentracing-go v1.2.0/go.mod h1:GxEUsuufX4nBwe+T+Wl9TAgYrxe9dPLANfrWvHYVTgc=
 github.com/operator-framework/api v0.17.1 h1:J/6+Xj4IEV8C7hcirqUFwOiZAU3PbnJhWvB0/bB51c4=
 github.com/operator-framework/api v0.17.1/go.mod h1:kk8xJahHJR3bKqrA+A+1VIrhOTmyV76k+ARv+iV+u1Q=
-github.com/operator-framework/operator-lifecycle-manager v0.22.0 h1:7DEWOq24HQ0l5xPOXMhn17XaJACgwoipz+JfQ7QCXZw=
-github.com/operator-framework/operator-lifecycle-manager v0.22.0/go.mod h1:4zssIIl23ohxS1nXRU9xTkBmwt+qleuHMO02BaWOHLA=
+github.com/operator-framework/operator-lifecycle-manager v3.11.0+incompatible h1:Po8C8RVLRWq7pNQ5pKonM9CXpC/osoBWbmsuf+HJnSI=
+github.com/operator-framework/operator-lifecycle-manager v3.11.0+incompatible/go.mod h1:Ma5ZXd4S1vmMyewWlF7aO8CZiokR7Sd8dhSfkGkNU4U=
 github.com/ory/dockertest v3.3.5+incompatible h1:iLLK6SQwIhcbrG783Dghaaa3WPzGc+4Emza6EbVUUGA=
 github.com/ory/dockertest v3.3.5+incompatible/go.mod h1:1vX4m9wsvi00u5bseYwXaSnhNrne+V0E6LAcBILJdPs=
 github.com/pascaldekloe/goe v0.0.0-20180627143212-57f6aae5913c/go.mod h1:lzWF7FIEvWOWxwDKqyGYQf6ZUaNfKdP144TG7ZOy1lc=
