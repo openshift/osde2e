@@ -28,7 +28,7 @@ require (
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/onsi/ginkgo/v2 v2.5.1
 	github.com/onsi/gomega v1.24.1
-	github.com/openshift-online/ocm-sdk-go v0.1.293
+	github.com/openshift-online/ocm-sdk-go v0.1.296
 	github.com/openshift/api v3.9.1-0.20190924102528-32369d4db2ad+incompatible
 	github.com/openshift/client-go v0.0.0-20221107163225-3335a34a1d24
 	github.com/openshift/cloud-credential-operator v0.0.0-20210525141023-02cc6303cd10
