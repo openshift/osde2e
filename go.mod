@@ -33,7 +33,6 @@ require (
 	github.com/openshift/client-go v0.0.0-20221107163225-3335a34a1d24
 	github.com/openshift/cloud-credential-operator v0.0.0-20210525141023-02cc6303cd10
 	github.com/openshift/cloud-ingress-operator v0.0.0-20221102021309-ed3525c8ae22
-	github.com/openshift/cluster-api v0.0.0-20191129101638-b09907ac6668
 	github.com/openshift/custom-domains-operator v0.0.0-20221118192634-05fef2942c81
 	github.com/openshift/managed-upgrade-operator v0.0.0-20221004201436-ac05e85af861
 	github.com/openshift/rosa v1.2.9-0.20221103140620-386b9ce99acb
@@ -188,7 +187,6 @@ require (
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	k8s.io/apiextensions-apiserver v0.25.4 // indirect
-	k8s.io/klog v1.0.0 // indirect
 	k8s.io/klog/v2 v2.80.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20221116234839-dd070e2c4cb3 // indirect
 	sigs.k8s.io/controller-runtime v0.13.1 // indirect

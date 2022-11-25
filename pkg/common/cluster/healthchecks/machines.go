@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 
-	machineapi "github.com/openshift/cluster-api/pkg/apis/machine/v1beta1"
+	machineapi "github.com/openshift/api/machine/v1beta1"
 	"github.com/openshift/osde2e/pkg/common/logging"
 	"github.com/openshift/osde2e/pkg/common/metadata"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
