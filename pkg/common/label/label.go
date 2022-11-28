@@ -72,3 +72,7 @@ var (
 	// https://docs.openshift.com/dedicated/osd_architecture/osd_policy/osd-service-definition.html
 	ServiceDefinition = ginkgo.Label("ServiceDefinition")
 )
+
+func AllCloudProviders() []ginkgo.Labels {
+	return []ginkgo.Labels{AWS, GCP, Azure}
+}
