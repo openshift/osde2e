@@ -903,15 +903,21 @@ func GetAllSecrets() []Secret {
 	return keyToSecretMapping
 }
 
+var loadOnce sync.Once
+
 // LoadKubeconfig will, given a path to a kubeconfig, attempt to load it into the Viper config.
 func LoadKubeconfig() error {
-	kubeconfigPath := viper.GetString(Kubeconfig.Path)
-	if kubeconfigPath != "" {
-		kubeconfigBytes, err := os.ReadFile(kubeconfigPath)
-		if err != nil {
-			return fmt.Errorf("failed reading '%s' which has been set as the TEST_KUBECONFIG: %v", kubeconfigPath, err)
+	var kubeconfigBytes []byte
+	var err error
+	loadOnce.Do(func() {
+		kubeconfigPath := viper.GetString(Kubeconfig.Path)
+		if kubeconfigPath != "" && viper.GetString(Kubeconfig.Contents) == "" {
+			kubeconfigBytes, err = os.ReadFile(kubeconfigPath)
+			if err != nil {
+				err = fmt.Errorf("failed reading '%s' which has been set as the TEST_KUBECONFIG: %v", kubeconfigPath, err)
+			}
+			viper.Set(Kubeconfig.Contents, string(kubeconfigBytes))
 		}
-		viper.Set(Kubeconfig.Contents, string(kubeconfigBytes))
-	}
-	return nil
+	})
+	return err
 }
