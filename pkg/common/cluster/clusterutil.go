@@ -92,6 +92,10 @@ func WaitForClusterReadyPostInstall(clusterID string, logger *log.Logger) error 
 	}
 
 	installTimeout := viper.GetInt64(config.Cluster.InstallTimeout)
+	if viper.GetBool(config.Hypershift) {
+		// Install timeout 30 minutes for hypershift
+		installTimeout = 30
+	}
 	logger.Printf("Waiting %v minutes for cluster '%s' to be ready...\n", installTimeout, clusterID)
 
 	_, err = waitForOCMProvisioning(provider, clusterID, installTimeout, logger, false)

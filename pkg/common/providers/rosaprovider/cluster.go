@@ -263,7 +263,7 @@ func (m *ROSAProvider) DeleteCluster(clusterID string) error {
 
 func (m *ROSAProvider) stsClusterCleanup(clusterID string) error {
 	// wait for the cluster to no longer be available
-	wait.PollImmediate(3*time.Minute, 15*time.Minute, func() (bool, error) {
+	wait.PollImmediate(2*time.Minute, 30*time.Minute, func() (bool, error) {
 		clusters, err := m.ocmProvider.ListClusters(fmt.Sprintf("id = '%s'", clusterID))
 		if err != nil {
 			return false, err
