@@ -9,6 +9,7 @@ import (
 	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
+	"github.com/openshift/osde2e/pkg/common/label"
 	"github.com/openshift/osde2e/pkg/common/util"
 	"k8s.io/apimachinery/pkg/util/wait"
 
@@ -34,7 +35,7 @@ func init() {
 	alert.RegisterGinkgoAlert(clusterStateTestName, "SD-CICD", "Diego Santamaria", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
 }
 
-var _ = ginkgo.Describe(clusterStateTestName, func() {
+var _ = ginkgo.Describe(clusterStateTestName, label.E2E, func() {
 	defer ginkgo.GinkgoRecover()
 	h := helper.New()
 

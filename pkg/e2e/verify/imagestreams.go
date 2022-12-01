@@ -10,6 +10,7 @@ import (
 
 	"github.com/openshift/osde2e/pkg/common/alert"
 	"github.com/openshift/osde2e/pkg/common/helper"
+	"github.com/openshift/osde2e/pkg/common/label"
 	"github.com/openshift/osde2e/pkg/common/util"
 )
 
@@ -19,7 +20,7 @@ func init() {
 	alert.RegisterGinkgoAlert(imageStreamsTestName, "SD-CICD", "Diego Santamaria", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
 }
 
-var _ = ginkgo.Describe(imageStreamsTestName, func() {
+var _ = ginkgo.Describe(imageStreamsTestName, label.E2E, func() {
 	h := helper.New()
 
 	util.GinkgoIt("should exist in the cluster", func(ctx context.Context) {

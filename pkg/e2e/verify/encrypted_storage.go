@@ -16,6 +16,7 @@ import (
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/helper"
+	"github.com/openshift/osde2e/pkg/common/label"
 	"github.com/openshift/osde2e/pkg/common/providers/ocmprovider"
 	"github.com/openshift/osde2e/pkg/common/util"
 
@@ -49,7 +50,7 @@ func init() {
 	alert.RegisterGinkgoAlert(encryptedStorageTestName, "SD-SREP", "Trevor Nierman", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
 }
 
-var _ = ginkgo.Describe(encryptedStorageTestName, func() {
+var _ = ginkgo.Describe(encryptedStorageTestName, label.E2E, func() {
 	ginkgo.Context("in GCP clusters", func() {
 		if viper.GetString(config.CloudProvider.CloudProviderID) != "gcp" {
 			return

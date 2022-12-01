@@ -16,6 +16,7 @@ import (
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/helper"
+	"github.com/openshift/osde2e/pkg/common/label"
 	"github.com/openshift/osde2e/pkg/common/providers"
 	"github.com/openshift/osde2e/pkg/common/util"
 	v1 "k8s.io/api/core/v1"
@@ -69,7 +70,7 @@ func cmdFromIPs(ips []string, templ *template.Template) string {
 	return buf.String()
 }
 
-var _ = ginkgo.Describe(ocmTestName, func() {
+var _ = ginkgo.Describe(ocmTestName, label.E2E, func() {
 	ginkgo.Context("Metrics", func() {
 		clusterID := viper.GetString(config.Cluster.ID)
 		util.GinkgoIt("do exist and are not empty", func(ctx context.Context) {

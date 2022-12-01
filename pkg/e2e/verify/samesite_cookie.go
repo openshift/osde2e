@@ -9,6 +9,7 @@ import (
 	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/openshift/osde2e/pkg/common/helper"
+	"github.com/openshift/osde2e/pkg/common/label"
 	"github.com/openshift/osde2e/pkg/common/util"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -25,7 +26,7 @@ const (
 
 var samesiteTestName string = "[Suite: e2e] [OSD] Samesite Cookie Strict"
 
-var _ = ginkgo.Describe(samesiteTestName, func() {
+var _ = ginkgo.Describe(samesiteTestName, label.E2E, func() {
 	h := helper.New()
 
 	ginkgo.Context("Validating samesite cookie", func() {

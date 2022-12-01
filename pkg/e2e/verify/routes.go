@@ -14,6 +14,7 @@ import (
 
 	"github.com/openshift/osde2e/pkg/common/alert"
 	"github.com/openshift/osde2e/pkg/common/helper"
+	"github.com/openshift/osde2e/pkg/common/label"
 	"github.com/openshift/osde2e/pkg/common/util"
 )
 
@@ -30,7 +31,7 @@ func init() {
 	alert.RegisterGinkgoAlert(routesTestName, "SD-CICD", "Diego Santamaria", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
 }
 
-var _ = ginkgo.Describe(routesTestName, func() {
+var _ = ginkgo.Describe(routesTestName, label.E2E, func() {
 	h := helper.New()
 
 	util.GinkgoIt("should be created for Console", func(ctx context.Context) {

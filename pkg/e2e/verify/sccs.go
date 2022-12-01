@@ -11,6 +11,7 @@ import (
 	v1 "github.com/openshift/api/security/v1"
 	"github.com/openshift/osde2e/pkg/common/alert"
 	"github.com/openshift/osde2e/pkg/common/helper"
+	"github.com/openshift/osde2e/pkg/common/label"
 	"github.com/openshift/osde2e/pkg/common/util"
 	apiv1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -24,7 +25,7 @@ func init() {
 	alert.RegisterGinkgoAlert(dedicatedAdminSccTestName, "SD-CICD", "Matt Bargenquast", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
 }
 
-var _ = ginkgo.Describe(dedicatedAdminSccTestName, func() {
+var _ = ginkgo.Describe(dedicatedAdminSccTestName, label.E2E, func() {
 	h := helper.New()
 
 	workloadDir := "workloads/e2e/scc"

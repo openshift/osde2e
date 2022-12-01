@@ -11,6 +11,7 @@ import (
 
 	"github.com/openshift/osde2e/pkg/common/alert"
 	"github.com/openshift/osde2e/pkg/common/helper"
+	"github.com/openshift/osde2e/pkg/common/label"
 	"github.com/openshift/osde2e/pkg/common/util"
 )
 
@@ -20,7 +21,7 @@ func init() {
 	alert.RegisterGinkgoAlert(validationWebhookTestName, "SD-SREP", "Matt Bargenquast", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
 }
 
-var _ = ginkgo.Describe(validationWebhookTestName, func() {
+var _ = ginkgo.Describe(validationWebhookTestName, label.E2E, func() {
 	namespace := "openshift-validation-webhook"
 	service := "validation-webhook"
 	configMapName := "webhook-cert"
