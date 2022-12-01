@@ -11,7 +11,6 @@ import (
 
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
-	"github.com/openshift/osde2e/pkg/common/constants"
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/util"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -29,7 +28,7 @@ import (
 	"google.golang.org/api/option"
 )
 
-var _ = ginkgo.Describe(constants.SuiteOperators+TestPrefix, func() {
+var _ = ginkgo.Describe("[Suite: operators] "+TestPrefix, func() {
 	ginkgo.BeforeEach(func() {
 		if viper.GetBool("rosa.STS") {
 			ginkgo.Skip("Cluster is STS. For now we skip rh-api LB reconcile test for STS")
