@@ -171,10 +171,6 @@ func (h *H) Cleanup(ctx context.Context) {
 			if err != nil {
 				log.Printf("Error deleting project `%s` in Cleanup(): %s", project.Name, err.Error())
 			}
-			err = h.Kube().CoreV1().ServiceAccounts("dedicated-admin").Delete(ctx, project.Name, metav1.DeleteOptions{})
-			if err != nil {
-				log.Printf("Error deleting dedicated-admin serviceaccount for '%s': %v", project.Name, err)
-			}
 		}
 	}
 
