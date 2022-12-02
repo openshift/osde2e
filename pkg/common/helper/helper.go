@@ -23,6 +23,7 @@ import (
 	projectv1 "github.com/openshift/api/project/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -122,9 +123,15 @@ func (h *H) Setup() error {
 		Expect(h.proj).ShouldNot(BeNil())
 
 		h.CreateServiceAccounts(ctx)
-		// We need a cool down period for RBAC operators to sync permissions
-		time.Sleep(60 * time.Second)
 
+		err = wait.PollImmediate(1*time.Second, 1*time.Minute, func() (bool, error) {
+			_, err = h.Kube().RbacV1().RoleBindings(h.CurrentProject()).Get(ctx, "dedicated-admins-project-dedicated-admins", metav1.GetOptions{})
+			if apierrors.IsNotFound(err) {
+				return false, nil
+			}
+			return true, err
+		})
+		Expect(err).NotTo(HaveOccurred())
 	} else {
 		log.Printf("Setting project name to %s", project)
 		h.proj, err = h.Project().ProjectV1().Projects().Get(ctx, project, metav1.GetOptions{})
@@ -163,10 +170,6 @@ func (h *H) Cleanup(ctx context.Context) {
 			err = h.Project().ProjectV1().Projects().Delete(ctx, project.Name, metav1.DeleteOptions{})
 			if err != nil {
 				log.Printf("Error deleting project `%s` in Cleanup(): %s", project.Name, err.Error())
-			}
-			err = h.Kube().CoreV1().ServiceAccounts("dedicated-admin").Delete(ctx, project.Name, metav1.DeleteOptions{})
-			if err != nil {
-				log.Printf("Error deleting dedicated-admin serviceaccount for '%s': %v", project.Name, err)
 			}
 		}
 	}
