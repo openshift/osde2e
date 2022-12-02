@@ -15,7 +15,7 @@ import (
 	"github.com/openshift/osde2e/pkg/common/util"
 
 	batchv1 "k8s.io/api/batch/v1"
-	batchv1beta1 "k8s.io/api/batch/v1beta1"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/rand"
 )
@@ -34,12 +34,15 @@ var _ = ginkgo.Describe(pruneJobsTestName, func() {
 		for _, cronJob := range cronJobs {
 			util.GinkgoIt(cronJob+" should run successfully", func(ctx context.Context) {
 				getOpts := metav1.GetOptions{}
-				cjob, err := h.Kube().BatchV1beta1().CronJobs(namespace).Get(ctx, cronJob, getOpts)
+				cjob, err := h.Kube().BatchV1().CronJobs(namespace).Get(ctx, cronJob, getOpts)
 				Expect(err).NotTo(HaveOccurred())
 				job := createJobFromCronJob(cjob)
 				job, err = h.Kube().BatchV1().Jobs(namespace).Create(ctx, job, metav1.CreateOptions{})
 				defer func() {
-					err = h.Kube().BatchV1().Jobs(namespace).Delete(ctx, job.Name, metav1.DeleteOptions{})
+					propagationPolicy := metav1.DeletePropagationForeground
+					err = h.Kube().BatchV1().Jobs(namespace).Delete(ctx, job.Name, metav1.DeleteOptions{
+						PropagationPolicy: &propagationPolicy,
+					})
 					Expect(err).NotTo(HaveOccurred())
 				}()
 				Expect(err).NotTo(HaveOccurred())
@@ -50,7 +53,7 @@ var _ = ginkgo.Describe(pruneJobsTestName, func() {
 	})
 })
 
-func createJobFromCronJob(cronJob *batchv1beta1.CronJob) *batchv1.Job {
+func createJobFromCronJob(cronJob *batchv1.CronJob) *batchv1.Job {
 	annotations := make(map[string]string)
 	annotations["managed.openshift.io/instantiate"] = "manual"
 	for k, v := range cronJob.Spec.JobTemplate.Annotations {
