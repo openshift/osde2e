@@ -15,7 +15,7 @@ type AddonMetadata struct {
 	// Whether the CRD was found. Typically Spyglass seems to have issues displaying non-strings, so
 	// this will be written out as a string despite the native JSON boolean type.
 	Version string `json:"version,string"`
-	ID string `json:"id,string"`
+	ID      string `json:"id,string"`
 }
 
 // Instance is the global metadata instance
@@ -46,7 +46,7 @@ func (m *AddonMetadata) WriteToJSONFile(outputFilename string) (err error) {
 		log.Println(err)
 	}
 	defer f.Close()
-	log.Println("writing addon metadata to ",outputFilePath)
+	log.Println("writing addon metadata to ", outputFilePath)
 	if _, err := f.WriteString(string(data)); err != nil {
 		log.Println(err)
 	}

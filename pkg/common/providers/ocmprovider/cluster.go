@@ -931,7 +931,7 @@ func (o *OCMProvider) InstallAddons(clusterID string, addonIDs []spi.AddOnID, ad
 
 		if alreadyInstalled {
 			log.Printf("Addon %s is already installed. Skipping.", addonID)
-			o.writeAddonMetadata(addonsClient,addonID)
+			o.writeAddonMetadata(addonsClient, addonID)
 			continue
 		}
 
@@ -980,14 +980,14 @@ func (o *OCMProvider) InstallAddons(clusterID string, addonIDs []spi.AddOnID, ad
 
 			num++
 		}
-		o.writeAddonMetadata(addonsClient,addonID)
+		o.writeAddonMetadata(addonsClient, addonID)
 	}
 
 	return num, nil
 }
 
-//Write addon metadata
-func (o *OCMProvider) writeAddonMetadata(client *v1.AddOnsClient, addonID string)(){
+// Write addon metadata
+func (o *OCMProvider) writeAddonMetadata(client *v1.AddOnsClient, addonID string) {
 	var addonMetadata = &metadata.AddonMetadata{}
 	// Send the request to retrieve addon:
 	response, err := client.Addon(addonID).Get().Send()
