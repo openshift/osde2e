@@ -21,10 +21,6 @@ type AddonMetadata struct {
 // Instance is the global metadata instance
 var AddonInstance *AddonMetadata
 
-func init() {
-	AddonInstance = &AddonMetadata{}
-}
-
 func (m *AddonMetadata) SetVersion(version string) {
 	m.Version = version
 }
@@ -40,7 +36,7 @@ func (m *AddonMetadata) WriteToJSONFile(outputFilename string) (err error) {
 		return err
 	}
 	outputFilePath := filepath.Join(viper.GetString(config.ReportDir), outputFilename)
-	f, err := os.OpenFile(outputFilename,
+	f, err := os.OpenFile(outputFilePath,
 		os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		log.Println(err)
