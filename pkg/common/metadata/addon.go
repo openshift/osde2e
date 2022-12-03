@@ -37,7 +37,7 @@ func (m *AddonMetadata) WriteToJSONFile(outputFilename string) (err error) {
 	}
 	outputFilePath := filepath.Join(viper.GetString(config.ReportDir), outputFilename)
 	f, err := os.OpenFile(outputFilePath,
-		os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+		os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
 	if err != nil {
 		log.Println(err)
 	}
