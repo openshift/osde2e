@@ -988,7 +988,7 @@ func (o *OCMProvider) InstallAddons(clusterID string, addonIDs []spi.AddOnID, ad
 
 // Write addon metadata
 func (o *OCMProvider) writeAddonMetadata(client *v1.AddOnsClient, addonID string) {
-	var addonMetadata = &metadata.AddonMetadata{}
+	addonMetadata := &metadata.AddonMetadata{}
 	// Send the request to retrieve addon:
 	response, err := client.Addon(addonID).Get().Send()
 	if err != nil {
