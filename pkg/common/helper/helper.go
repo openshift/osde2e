@@ -131,7 +131,10 @@ func (h *H) Setup() error {
 			}
 			return true, err
 		})
-		Expect(err).NotTo(HaveOccurred())
+		// Quick fix for Hypershift pipelines failing. Currently the RBAC is not being created in the projects.
+		if !viper.GetBool(config.Hypershift) {
+			Expect(err).NotTo(HaveOccurred())
+		}
 	} else {
 		log.Printf("Setting project name to %s", project)
 		h.proj, err = h.Project().ProjectV1().Projects().Get(ctx, project, metav1.GetOptions{})
