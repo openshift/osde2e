@@ -36,6 +36,7 @@ import (
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/db"
 
+	"github.com/onsi/ginkgo/v2/reporters"
 	"github.com/openshift/osde2e/pkg/common/aws"
 	"github.com/openshift/osde2e/pkg/common/cluster"
 	clusterutil "github.com/openshift/osde2e/pkg/common/cluster"
@@ -741,7 +742,6 @@ func runTestsInPhase(
 		}
 	}
 	suffix := viper.GetString(config.Suffix)
-	reporterConfig.JUnitReport = filepath.Join(phaseDirectory, fmt.Sprintf("junit_%v.xml", suffix))
 	ginkgoPassed := false
 
 	if !suiteConfig.DryRun {
@@ -750,6 +750,18 @@ func runTestsInPhase(
 			return false, testCaseData
 		}
 	}
+
+	// Generate JUnit report once all tests have finished with customized settings
+	_ = ginkgo.ReportAfterSuite("OSDE2E", func(report ginkgo.Report) {
+		err := reporters.GenerateJUnitReportWithConfig(
+			report,
+			filepath.Join(phaseDirectory, fmt.Sprintf("junit_%v.xml", suffix)),
+			reporters.JunitReportConfig{OmitSpecLabels: true},
+		)
+		if err != nil {
+			log.Printf("error creating junit report file %s", err.Error())
+		}
+	})
 
 	// We need this anonymous function to make sure GinkgoRecover runs where we want it to
 	// and will still execute the rest of the function regardless whether the tests pass or fail.
