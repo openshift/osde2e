@@ -18,9 +18,6 @@ type AddonMetadata struct {
 	ID      string `json:"id,string"`
 }
 
-// Instance is the global metadata instance
-var AddonInstance *AddonMetadata
-
 func (m *AddonMetadata) SetVersion(version string) {
 	m.Version = version
 }
