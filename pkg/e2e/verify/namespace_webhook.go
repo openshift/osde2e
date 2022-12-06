@@ -194,9 +194,13 @@ var _ = ginkgo.Describe(namespaceWebhookTestName, func() {
 				for privilegedNamespace := range PRIVILEGED_NAMESPACES {
 					err := e2eCreatePrometheusRule(ctx, prometheusName, privilegedNamespace, privilegedUser, "", h)
 					Expect(err).NotTo(HaveOccurred())
+					err = deletePrometheusRule(privilegedNamespace, prometheusName, h)
+					Expect(err).NotTo(HaveOccurred())
 				}
 				for _, namespace := range NONPRIV_NAMESPACES {
 					err := e2eCreatePrometheusRule(ctx, prometheusName, namespace, privilegedUser, "", h)
+					Expect(err).NotTo(HaveOccurred())
+					err = deletePrometheusRule(namespace, prometheusName, h)
 					Expect(err).NotTo(HaveOccurred())
 				}
 			}
@@ -204,7 +208,7 @@ var _ = ginkgo.Describe(namespaceWebhookTestName, func() {
 
 		util.GinkgoIt("Non-privileged users can create prometheusrule all non-privileged namespaces", func(ctx context.Context) {
 			for _, nonPrivilegedNamespace := range NONPRIV_NAMESPACES {
-				err := e2eCreatePrometheusRule(ctx, prometheusName, nonPrivilegedNamespace, DUMMY_USER, "dedicated-admins", h)
+				err := e2eCreatePrometheusRule(ctx, prometheusName, nonPrivilegedNamespace, DUMMY_USER, "DUMMY_GROUP", h)
 				Expect(err).NotTo(HaveOccurred())
 			}
 		}, viper.GetFloat64(config.Tests.PollingTimeout))
