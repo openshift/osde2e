@@ -993,6 +993,7 @@ func (o *OCMProvider) writeAddonMetadata(client *v1.AddOnsClient, addonID string
 	response, err := client.Addon(addonID).Get().Send()
 	if err != nil {
 		log.Printf("error while getting addon from oc client: %v", err)
+		return
 	}
 	version, ok := response.Body().Version().GetID()
 	if ok != true {
@@ -1000,7 +1001,10 @@ func (o *OCMProvider) writeAddonMetadata(client *v1.AddOnsClient, addonID string
 	}
 	addonMetadata.SetVersion(version)
 	addonMetadata.SetID(addonID)
-	addonMetadata.WriteToJSONFile(metadata.AddonMetadataFile)
+	err = addonMetadata.WriteToJSONFile(metadata.AddonMetadataFile)
+	if err != nil {
+		log.Printf("couldn't write addon metadata for %v: %v", addonID, err)
+	}
 }
 
 func (o *OCMProvider) ocmToSPICluster(ocmCluster *v1.Cluster) (*spi.Cluster, error) {
