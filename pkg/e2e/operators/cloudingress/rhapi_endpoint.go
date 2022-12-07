@@ -15,6 +15,7 @@ import (
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/helper"
+	"github.com/openshift/osde2e/pkg/common/label"
 	"github.com/openshift/osde2e/pkg/common/providers/rosaprovider"
 	"github.com/openshift/osde2e/pkg/common/util"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -26,7 +27,7 @@ import (
 
 // tests
 
-var _ = ginkgo.Describe("[Suite: operators] "+TestPrefix, func() {
+var _ = ginkgo.Describe("[Suite: operators] "+TestPrefix, label.Operators, func() {
 	ginkgo.BeforeEach(func() {
 		if viper.GetBool(rosaprovider.STS) {
 			ginkgo.Skip("STS does not support CIO")

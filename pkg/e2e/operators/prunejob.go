@@ -12,6 +12,7 @@ import (
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/helper"
+	"github.com/openshift/osde2e/pkg/common/label"
 	"github.com/openshift/osde2e/pkg/common/util"
 
 	batchv1 "k8s.io/api/batch/v1"
@@ -26,7 +27,7 @@ func init() {
 	alert.RegisterGinkgoAlert(pruneJobsTestName, "SD-SREP", "Haoran Wang", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
 }
 
-var _ = ginkgo.Describe(pruneJobsTestName, func() {
+var _ = ginkgo.Describe(pruneJobsTestName, label.Operators, func() {
 	h := helper.New()
 	ginkgo.Context("pruner jobs should works", func() {
 		namespace := "openshift-sre-pruning"

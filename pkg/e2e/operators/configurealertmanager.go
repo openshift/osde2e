@@ -4,6 +4,7 @@ import (
 	"github.com/onsi/ginkgo/v2"
 	"github.com/openshift/osde2e/pkg/common/alert"
 	"github.com/openshift/osde2e/pkg/common/helper"
+	"github.com/openshift/osde2e/pkg/common/label"
 )
 
 var configureAlertManagerOperators string = "[Suite: operators] [OSD] Configure AlertManager Operator"
@@ -12,7 +13,7 @@ func init() {
 	alert.RegisterGinkgoAlert(configureAlertManagerOperators, "SD-SREP", "@sd-srep-team-thor", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
 }
 
-var _ = ginkgo.Describe(configureAlertManagerOperators, func() {
+var _ = ginkgo.Describe(configureAlertManagerOperators, label.Operators, func() {
 	operatorName := "configure-alertmanager-operator"
 	var operatorNamespace string = "openshift-monitoring"
 	var operatorLockFile string = "configure-alertmanager-operator-lock"

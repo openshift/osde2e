@@ -9,6 +9,7 @@ import (
 	osv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/osde2e/pkg/common/alert"
 	"github.com/openshift/osde2e/pkg/common/helper"
+	"github.com/openshift/osde2e/pkg/common/label"
 	"github.com/openshift/osde2e/pkg/common/util"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -21,7 +22,7 @@ func init() {
 	alert.RegisterGinkgoAlert(certmanOperatorTestName, "SD-SREP", "@certman-operator", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
 }
 
-var _ = ginkgo.Describe(certmanOperatorTestName, func() {
+var _ = ginkgo.Describe(certmanOperatorTestName, label.Operators, func() {
 	h := helper.New()
 
 	ginkgo.Context("certificate secret should be applied when cluster installed", func() {
