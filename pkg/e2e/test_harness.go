@@ -16,7 +16,7 @@ import (
 	"github.com/openshift/osde2e/pkg/common/prow"
 )
 
-//Generic harness suite: Essentially replicates addon harness suite, with generalized harness suite
+// Generic harness suite: Essentially replicates addon harness suite, with generalized harness suite
 var _ = ginkgo.Describe("[Suite: harnesses] Test Harness", func() {
 	defer ginkgo.GinkgoRecover()
 	h := helper.New()

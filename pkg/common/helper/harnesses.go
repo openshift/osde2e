@@ -13,7 +13,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-//GEneralizd harness runner: Essentially replicates addon harness runner, with generalized harness template
+// GEneralizd harness runner: Essentially replicates addon harness runner, with generalized harness template
 func (h *H) RunTestHarness(ctx context.Context, name string, timeout int, harnesses, args []string) (failed []string) {
 	testHarnessTemplate, err := templates.LoadTemplate("harness/harness-runner.template")
 	if err != nil {
