@@ -91,7 +91,8 @@ func beforeSuite() bool {
 
 		viper.Set(config.Cluster.ID, cluster.ID())
 		log.Printf("CLUSTER_ID set to %s from OCM.", viper.GetString(config.Cluster.ID))
-		if viper.Get(config.Addons.IDs) != nil {
+		// set up passthrough secrets for addons as well as generic harness images
+		if viper.Get(config.Addons.IDs) != nil || viper.GetString(config.Harness.Images) != "" {
 			passthruSecrets := viper.GetStringMapString(config.NonOSDe2eSecrets)
 			passthruSecrets["CLUSTER_ID"] = viper.GetString(config.Cluster.ID)
 			viper.Set(config.NonOSDe2eSecrets, passthruSecrets)
@@ -181,7 +182,7 @@ func beforeSuite() bool {
 
 	// If there are test harnesses present, we need to populate the
 	// secrets into the test cluster
-	if viper.GetString(config.Addons.TestHarnesses) != "" {
+	if viper.GetString(config.Addons.TestHarnesses) != "" || viper.GetString(config.Harness.Images) != "" {
 		secretsNamespace := "ci-secrets"
 		h := helper.NewOutsideGinkgo()
 		h.CreateProject(context.TODO(), secretsNamespace)

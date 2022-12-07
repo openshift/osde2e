@@ -493,6 +493,19 @@ var Addons = struct {
 	PollingTimeout:   "addons.pollingTimeout",
 }
 
+// test harness config keys.
+var Harness = struct {
+	Images         string
+	TestUser       string
+	SlackChannel   string
+	PollingTimeout string
+}{
+	Images:         "harness.images",
+	TestUser:       "harness.testUser",
+	SlackChannel:   "harness.slackChannel",
+	PollingTimeout: "harness.pollingTimeout",
+}
+
 // Scale config keys.
 var Scale = struct {
 	// WorkloadsRepository is the git repository where the openshift-scale workloads are located.
@@ -816,6 +829,18 @@ func InitOSDe2eViper() {
 
 	viper.SetDefault(Addons.PollingTimeout, 3600)
 	viper.BindEnv(Addons.PollingTimeout, "ADDON_POLLING_TIMEOUT")
+
+	// ----- Harnesses -----
+	viper.BindEnv(Harness.Images, "HARNESS_IMAGES")
+
+	viper.SetDefault(Harness.TestUser, "system:serviceaccount:%s:cluster-admin")
+	viper.BindEnv(Harness.TestUser, "HARNESS_TEST_USER")
+
+	viper.SetDefault(Harness.SlackChannel, "sd-cicd-alerts")
+	viper.BindEnv(Harness.SlackChannel, "HARNESS_SLACK_CHANNEL")
+
+	viper.SetDefault(Harness.PollingTimeout, 3600)
+	viper.BindEnv(Harness.PollingTimeout, "HARNESS_POLLING_TIMEOUT")
 
 	// ----- Scale -----
 	viper.SetDefault(Scale.WorkloadsRepository, "https://github.com/openshift-scale/workloads")

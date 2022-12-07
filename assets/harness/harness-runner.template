@@ -1,0 +1,69 @@
+cat <<WORKLOAD > workload.yaml
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{.JobName}}
+spec:
+  parallelism: 1
+  completions: 1
+  activeDeadlineSeconds: {{.Timeout}}
+  backoffLimit: 0
+  template:
+    spec:
+      serviceAccount: {{.ServiceAccount}}
+      containers:
+      - name: test-harness
+        image: {{.Image}}
+        imagePullPolicy: Always
+        {{ if .Arguments }}
+        args: {{.Arguments}}
+        {{ end }}
+        volumeMounts:
+        - mountPath: {{.OutputDir}}
+          name: test-output
+      - name: push-results
+        image: {{.PushResultsContainer}}
+        imagePullPolicy: Always
+        command: [/bin/sh, /push-results/push-results.sh]
+        volumeMounts:
+        - mountPath: {{.OutputDir}}
+          name: test-output
+        - mountPath: /push-results
+          name: push-results
+      volumes:
+      - name: test-output
+        emptyDir: {}
+      - name: push-results
+        configMap:
+          name: push-results-{{.Suffix}}
+      restartPolicy: Never
+WORKLOAD
+
+set -e
+
+cat <<PUSH_RESULTS > push-results.sh
+#!/usr/bin/env bash
+
+JOB_POD=\$(oc get pods -l job-name={{.JobName}} -o=jsonpath='{.items[0].metadata.name}')
+echo "Found Job Pod: \$JOB_POD"
+while ! oc get pod \$JOB_POD -o jsonpath='{.status.containerStatuses[?(@.name=="test-harness")].state}' | grep -q terminated; do sleep 1; done
+for i in {1..5}; do oc rsync {{.OutputDir}}/. $(hostname):{{.OutputDir}} && break; sleep 10; done
+PUSH_RESULTS
+
+cat workload.yaml
+cat push-results.sh
+
+oc create configmap push-results-{{.Suffix}} --from-file=push-results.sh
+
+oc apply -f workload.yaml
+
+sleep 5
+
+set +e
+
+while oc get job/{{.JobName}} -o=jsonpath='{.status}' | grep -q active; do sleep 1; done
+
+mkdir -p "{{.OutputDir}}/containerLogs"
+JOB_POD=$(oc get pods -l job-name={{.JobName}} -o=jsonpath='{.items[0].metadata.name}')
+oc logs $JOB_POD -c test-harness > "{{.OutputDir}}/containerLogs/${JOB_POD}-test-harness.log"
+oc logs $JOB_POD -c push-results > "{{.OutputDir}}/containerLogs/${JOB_POD}-push-results.log"
