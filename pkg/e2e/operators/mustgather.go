@@ -8,6 +8,7 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/openshift/osde2e/pkg/common/alert"
 	"github.com/openshift/osde2e/pkg/common/helper"
+	"github.com/openshift/osde2e/pkg/common/label"
 	"github.com/openshift/osde2e/pkg/common/util"
 	mustgatherv1alpha1 "github.com/redhat-cop/must-gather-operator/api/v1alpha1"
 	kv1 "k8s.io/api/core/v1"
@@ -25,7 +26,7 @@ func init() {
 	alert.RegisterGinkgoAlert(mustGatherOperatorTest, "SD-SREP", "@sd-sre-aurora-team", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
 }
 
-var _ = ginkgo.Describe(mustGatherOperatorTest, func() {
+var _ = ginkgo.Describe(mustGatherOperatorTest, label.Operators, func() {
 	operatorName := "must-gather-operator"
 	operatorNamespace := "openshift-must-gather-operator"
 	operatorLockFile := "must-gather-operator-lock"

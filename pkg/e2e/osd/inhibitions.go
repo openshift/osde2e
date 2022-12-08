@@ -11,6 +11,7 @@ import (
 	configV1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/osde2e/pkg/common/alert"
 	"github.com/openshift/osde2e/pkg/common/helper"
+	"github.com/openshift/osde2e/pkg/common/label"
 	osde2ePrometheus "github.com/openshift/osde2e/pkg/common/prometheus"
 	"github.com/openshift/osde2e/pkg/common/util"
 	alertmanagerConfig "github.com/prometheus/alertmanager/config"
@@ -36,7 +37,7 @@ func init() {
 var inhibitionsTestName string = "[Suite: operators] AlertmanagerInhibitions"
 
 // tests start here
-var _ = ginkgo.Describe(inhibitionsTestName, func() {
+var _ = ginkgo.Describe(inhibitionsTestName, label.Operators, func() {
 	h := helper.New()
 
 	util.GinkgoIt("should exist", func(ctx context.Context) {

@@ -4,6 +4,7 @@ import (
 	"github.com/onsi/ginkgo/v2"
 	"github.com/openshift/osde2e/pkg/common/alert"
 	"github.com/openshift/osde2e/pkg/common/helper"
+	"github.com/openshift/osde2e/pkg/common/label"
 )
 
 var (
@@ -15,7 +16,7 @@ func init() {
 	alert.RegisterGinkgoAlert(osdMetricsExporterBasicTest, "SD_SREP", "@sre-platform-team-v1alpha1", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
 }
 
-var _ = ginkgo.Describe(osdMetricsExporterBasicTest, func() {
+var _ = ginkgo.Describe(osdMetricsExporterBasicTest, label.Operators, func() {
 	var (
 		operatorNamespace = "openshift-osd-metrics"
 		operatorName      = "osd-metrics-exporter"

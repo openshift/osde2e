@@ -64,4 +64,7 @@ var (
 
 	// Azure tests support running on a cluster in Azure
 	Azure = ginkgo.Label("Azure")
+
+	// Operator tests supported on all cluster types
+	Operators = ginkgo.Label("Operators")
 )

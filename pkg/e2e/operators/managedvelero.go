@@ -10,6 +10,7 @@ import (
 	"github.com/openshift/osde2e/pkg/common/alert"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/helper"
+	"github.com/openshift/osde2e/pkg/common/label"
 	"github.com/openshift/osde2e/pkg/common/util"
 	velerov1 "github.com/vmware-tanzu/velero/pkg/apis/velero/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -26,7 +27,7 @@ func init() {
 	alert.RegisterGinkgoAlert(veleroOperatorTestName, "SD-SREP", "@managed-velero-operator", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
 }
 
-var _ = ginkgo.Describe(veleroOperatorTestName, func() {
+var _ = ginkgo.Describe(veleroOperatorTestName, label.Operators, func() {
 	ginkgo.BeforeEach(func() {
 		if viper.GetBool("rosa.STS") {
 			ginkgo.Skip("STS does not support MVO")

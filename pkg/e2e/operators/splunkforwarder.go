@@ -8,6 +8,7 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/openshift/osde2e/pkg/common/alert"
 	"github.com/openshift/osde2e/pkg/common/helper"
+	"github.com/openshift/osde2e/pkg/common/label"
 	"github.com/openshift/osde2e/pkg/common/util"
 	sfv1alpha1 "github.com/openshift/splunk-forwarder-operator/api/v1alpha1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -29,7 +30,7 @@ func init() {
 }
 
 // Blocking SplunkForwarder Signal
-var _ = ginkgo.Describe(splunkForwarderBlocking, func() {
+var _ = ginkgo.Describe(splunkForwarderBlocking, label.Operators, func() {
 	operatorName := "splunk-forwarder-operator"
 	var operatorNamespace string = "openshift-splunk-forwarder-operator"
 	var operatorLockFile string = "splunk-forwarder-operator-lock"
@@ -80,7 +81,7 @@ var _ = ginkgo.Describe(splunkForwarderBlocking, func() {
 })
 
 // Informing SplunkForwarder Signal
-var _ = ginkgo.Describe(splunkForwarderInforming, func() {
+var _ = ginkgo.Describe(splunkForwarderInforming, label.Operators, func() {
 	operatorName := "splunk-forwarder-operator"
 	var operatorNamespace string = "openshift-splunk-forwarder-operator"
 	var operatorLockFile string = "splunk-forwarder-operator-lock"

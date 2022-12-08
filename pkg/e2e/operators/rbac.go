@@ -10,6 +10,7 @@ import (
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/helper"
+	"github.com/openshift/osde2e/pkg/common/label"
 	"github.com/openshift/osde2e/pkg/common/util"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	unstruct "k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -28,7 +29,7 @@ func init() {
 	alert.RegisterGinkgoAlert(subjectPermissionsTestName, "SD-SREP", "@rbac-permissions-operator", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
 }
 
-var _ = ginkgo.Describe(rbacOperatorBlocking, func() {
+var _ = ginkgo.Describe(rbacOperatorBlocking, label.Operators, func() {
 	operatorLockFile := "rbac-permissions-operator-lock"
 	var defaultDesiredReplicas int32 = 1
 
@@ -48,7 +49,7 @@ var _ = ginkgo.Describe(rbacOperatorBlocking, func() {
 		"rbac-permissions-operator", "rbac-permissions-operator-registry")
 })
 
-var _ = ginkgo.Describe(subjectPermissionsTestName, func() {
+var _ = ginkgo.Describe(subjectPermissionsTestName, label.Operators, func() {
 	h := helper.New()
 	checkSubjectPermissions(h, "dedicated-admins")
 })

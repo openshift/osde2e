@@ -28,6 +28,7 @@ import (
 
 	"github.com/openshift/osde2e/pkg/common/alert"
 	"github.com/openshift/osde2e/pkg/common/helper"
+	"github.com/openshift/osde2e/pkg/common/label"
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -53,7 +54,7 @@ func init() {
 	alert.RegisterGinkgoAlert(customDomainsOperatorTestName, "SD-SREP", "@custom-domains-operator", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
 }
 
-var _ = ginkgo.Describe(customDomainsOperatorTestName, func() {
+var _ = ginkgo.Describe(customDomainsOperatorTestName, label.Operators, func() {
 	// custom dialer for use w/ resolver and http.client
 	dialer := &net.Dialer{
 		Resolver: &net.Resolver{
