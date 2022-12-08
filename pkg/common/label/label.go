@@ -67,4 +67,8 @@ var (
 
 	// Operator tests supported on all cluster types
 	Operators = ginkgo.Label("Operators")
+
+	// Service definition tests verifying openshift dedicated policies
+	// https://docs.openshift.com/dedicated/osd_architecture/osd_policy/osd-service-definition.html
+	ServiceDefinition = ginkgo.Label("ServiceDefinition")
 )

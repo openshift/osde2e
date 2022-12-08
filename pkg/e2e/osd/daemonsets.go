@@ -10,6 +10,7 @@ import (
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/helper"
+	"github.com/openshift/osde2e/pkg/common/label"
 	"github.com/openshift/osde2e/pkg/common/util"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
@@ -22,7 +23,7 @@ func init() {
 	alert.RegisterGinkgoAlert(daemonSetsTestName, "SD-CICD", "Diego Santamaria", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
 }
 
-var _ = ginkgo.Describe(daemonSetsTestName, func() {
+var _ = ginkgo.Describe(daemonSetsTestName, label.ServiceDefinition, func() {
 	ginkgo.Context("DaemonSets are not allowed", func() {
 		// setup helper
 		h := helper.New()
