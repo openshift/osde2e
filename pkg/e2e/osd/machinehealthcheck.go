@@ -10,6 +10,7 @@ import (
 	machineV1beta1 "github.com/openshift/api/machine/v1beta1"
 	"github.com/openshift/osde2e/pkg/common/alert"
 	"github.com/openshift/osde2e/pkg/common/helper"
+	"github.com/openshift/osde2e/pkg/common/label"
 	"github.com/openshift/osde2e/pkg/common/util"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -32,7 +33,7 @@ func init() {
 	)
 }
 
-var _ = ginkgo.Describe(machineHealthTestName, func() {
+var _ = ginkgo.Describe(machineHealthTestName, label.E2E, func() {
 	h := helper.New()
 
 	util.GinkgoIt("infra MHC should exist", func(ctx context.Context) {

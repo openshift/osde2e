@@ -12,6 +12,7 @@ import (
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/helper"
+	"github.com/openshift/osde2e/pkg/common/label"
 	"github.com/openshift/osde2e/pkg/common/util"
 
 	appsv1 "k8s.io/api/apps/v1"
@@ -31,7 +32,7 @@ func init() {
 	alert.RegisterGinkgoAlert(fipsTestName, "SD-SREP", "Trevor Nierman", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
 }
 
-var _ = ginkgo.Describe(fipsTestName, func() {
+var _ = ginkgo.Describe(fipsTestName, label.E2E, func() {
 	ginkgo.Context("is enabled", func() {
 		if !viper.GetBool(config.Tests.EnableFips) {
 			return

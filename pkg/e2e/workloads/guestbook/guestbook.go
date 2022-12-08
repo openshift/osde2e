@@ -17,6 +17,7 @@ import (
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/helper"
+	"github.com/openshift/osde2e/pkg/common/label"
 	"github.com/openshift/osde2e/pkg/common/util"
 	"k8s.io/apimachinery/pkg/util/wait"
 )
@@ -40,7 +41,7 @@ func init() {
 	alert.RegisterGinkgoAlert(testName, "SD-CICD", "Diego Santamaria", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
 }
 
-var _ = ginkgo.Describe(testName, func() {
+var _ = ginkgo.Describe(testName, label.E2E, func() {
 	defer ginkgo.GinkgoRecover()
 	// setup helper
 	h := helper.New()

@@ -10,6 +10,7 @@ import (
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/helper"
+	"github.com/openshift/osde2e/pkg/common/label"
 	clusterProviders "github.com/openshift/osde2e/pkg/common/providers"
 	"github.com/openshift/osde2e/pkg/common/providers/rosaprovider"
 	"github.com/openshift/osde2e/pkg/common/util"
@@ -22,7 +23,7 @@ func init() {
 	alert.RegisterGinkgoAlert(promExportersTestname, "SD-SREP", "Matt Bargenquast", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
 }
 
-var _ = ginkgo.Describe(promExportersTestname, func() {
+var _ = ginkgo.Describe(promExportersTestname, label.E2E, func() {
 	ginkgo.BeforeEach(func() {
 		if viper.GetBool(rosaprovider.STS) {
 			ginkgo.Skip("Prometheus Exporters (ebs-iops-reporter and stuck-ebs-vols) are not deployed to STS clusters")

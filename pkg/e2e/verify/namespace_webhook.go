@@ -11,6 +11,7 @@ import (
 	userv1 "github.com/openshift/api/user/v1"
 	"github.com/openshift/osde2e/pkg/common/alert"
 	"github.com/openshift/osde2e/pkg/common/config"
+	"github.com/openshift/osde2e/pkg/common/label"
 	"github.com/openshift/osde2e/pkg/common/util"
 	monv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	v1 "k8s.io/api/core/v1"
@@ -31,7 +32,7 @@ func init() {
 	alert.RegisterGinkgoAlert(namespaceWebhookTestName, "SD-SREP", "Matt Bargenquast", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
 }
 
-var _ = ginkgo.Describe(namespaceWebhookTestName, func() {
+var _ = ginkgo.Describe(namespaceWebhookTestName, label.E2E, func() {
 	const (
 		// Group to use for impersonation
 		DUMMY_GROUP = "random-group-name"

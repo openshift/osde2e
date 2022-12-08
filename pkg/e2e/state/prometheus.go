@@ -10,6 +10,7 @@ import (
 	. "github.com/onsi/gomega"
 
 	"github.com/openshift/osde2e/pkg/common/helper"
+	"github.com/openshift/osde2e/pkg/common/label"
 	"github.com/openshift/osde2e/pkg/common/runner"
 	"github.com/openshift/osde2e/pkg/common/util"
 	"github.com/openshift/osde2e/pkg/e2e/verify"
@@ -21,7 +22,7 @@ const (
 	clusterStateInformingName = "[Suite: e2e] Cluster state"
 )
 
-var _ = ginkgo.Describe(clusterStateInformingName, func() {
+var _ = ginkgo.Describe(clusterStateInformingName, label.E2E, func() {
 	defer ginkgo.GinkgoRecover()
 	h := helper.New()
 

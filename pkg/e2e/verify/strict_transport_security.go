@@ -8,13 +8,14 @@ import (
 	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/openshift/osde2e/pkg/common/helper"
+	"github.com/openshift/osde2e/pkg/common/label"
 	"github.com/openshift/osde2e/pkg/common/util"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 var hstsTestName string = "[Suite: e2e] [OSD] HTTP Strict Transport Security"
 
-var _ = ginkgo.Describe(hstsTestName, func() {
+var _ = ginkgo.Describe(hstsTestName, label.E2E, func() {
 	h := helper.New()
 
 	consoleNamespace := "openshift-console"

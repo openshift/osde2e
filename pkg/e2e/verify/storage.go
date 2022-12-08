@@ -14,6 +14,7 @@ import (
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/helper"
+	"github.com/openshift/osde2e/pkg/common/label"
 	"github.com/openshift/osde2e/pkg/common/util"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/api/storage/v1"
@@ -38,7 +39,7 @@ const (
 	poll = 1 * time.Second
 )
 
-var _ = ginkgo.Describe(storageTestName, func() {
+var _ = ginkgo.Describe(storageTestName, label.E2E, func() {
 	h := helper.New()
 
 	ginkgo.Context("storage", func() {
