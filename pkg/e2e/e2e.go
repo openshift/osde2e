@@ -756,7 +756,7 @@ func runTestsInPhase(
 		err := reporters.GenerateJUnitReportWithConfig(
 			report,
 			filepath.Join(phaseDirectory, fmt.Sprintf("junit_%v.xml", suffix)),
-			reporters.JunitReportConfig{OmitSpecLabels: true},
+			reporters.JunitReportConfig{OmitSpecLabels: true, OmitLeafNodeType: true},
 		)
 		if err != nil {
 			log.Printf("error creating junit report file %s", err.Error())
