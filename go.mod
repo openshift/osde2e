@@ -9,7 +9,7 @@ require (
 	github.com/PuerkitoBio/goquery v1.8.0
 	github.com/adamliesko/retry v0.0.0-20200123222335-86c8baac277d
 	github.com/antlr/antlr4/runtime/Go/antlr v0.0.0-20220626175859-9abda183db8e
-	github.com/aws/aws-sdk-go v1.44.151
+	github.com/aws/aws-sdk-go v1.44.156
 	github.com/fatih/color v1.13.0
 	github.com/fsnotify/fsnotify v1.6.0
 	github.com/golang-migrate/migrate/v4 v4.14.2-0.20210511063805-2e7358e012a6
@@ -23,8 +23,8 @@ require (
 	github.com/kylelemons/godebug v1.1.0
 	github.com/lib/pq v1.10.7
 	github.com/mitchellh/mapstructure v1.5.0
-	github.com/onsi/ginkgo/v2 v2.5.2-0.20221208044619-956e6d2efd6b
-	github.com/onsi/gomega v1.24.0
+	github.com/onsi/ginkgo/v2 v2.3.1
+	github.com/onsi/gomega v1.22.1
 	github.com/openshift-online/ocm-sdk-go v0.1.299
 	github.com/openshift/api v3.9.1-0.20190517100836-d5b34b957e91+incompatible
 	github.com/openshift/client-go v0.0.0-20220603133046-984ee5ebedcf
