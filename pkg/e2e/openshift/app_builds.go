@@ -12,6 +12,7 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/openshift/osde2e/pkg/common/alert"
 	"github.com/openshift/osde2e/pkg/common/helper"
+	"github.com/openshift/osde2e/pkg/common/label"
 	"github.com/openshift/osde2e/pkg/common/runner"
 	"github.com/openshift/osde2e/pkg/common/util"
 	kubev1 "k8s.io/api/core/v1"
@@ -47,7 +48,7 @@ func init() {
 	alert.RegisterGinkgoAlert(appBuildsTestName, "SD-CICD", "Diego Santamaria", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
 }
 
-var _ = ginkgo.Describe(appBuildsTestName, func() {
+var _ = ginkgo.Describe(appBuildsTestName, label.AppBuilds, func() {
 	defer ginkgo.GinkgoRecover()
 
 	h := helper.New()

@@ -71,4 +71,7 @@ var (
 	// Service definition tests verifying openshift dedicated policies
 	// https://docs.openshift.com/dedicated/osd_architecture/osd_policy/osd-service-definition.html
 	ServiceDefinition = ginkgo.Label("ServiceDefinition")
+
+	// Application build tests verify the ability to deploy applications
+	AppBuilds = ginkgo.Label("AppBuilds")
 )
