@@ -7,6 +7,8 @@ import (
 	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/openshift/osde2e/pkg/common/alert"
+	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
+	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/label"
 	"github.com/openshift/osde2e/pkg/common/util"
@@ -31,6 +33,12 @@ func init() {
 
 // Blocking SplunkForwarder Signal
 var _ = ginkgo.Describe(splunkForwarderBlocking, label.Operators, func() {
+	ginkgo.BeforeEach(func() {
+		if viper.GetBool(config.Hypershift) {
+			ginkgo.Skip("Splunk Forwarder Operator is not deployed to a ROSA hosted-cp cluster (OSD-11605)")
+		}
+	})
+
 	operatorName := "splunk-forwarder-operator"
 	var operatorNamespace string = "openshift-splunk-forwarder-operator"
 	var operatorLockFile string = "splunk-forwarder-operator-lock"
