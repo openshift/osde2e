@@ -10,6 +10,7 @@ import (
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/helper"
+	"github.com/openshift/osde2e/pkg/common/label"
 	"github.com/openshift/osde2e/pkg/common/util"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -41,7 +42,7 @@ func init() {
 	alert.RegisterGinkgoAlert(privilegedTestname, "SD-CICD", "Diego Santamaria", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
 }
 
-var _ = ginkgo.Describe(privilegedTestname, func() {
+var _ = ginkgo.Describe(privilegedTestname, label.ServiceDefinition, func() {
 	ginkgo.Context("Privileged containers are not allowed", func() {
 		// setup helper
 		h := helper.New()

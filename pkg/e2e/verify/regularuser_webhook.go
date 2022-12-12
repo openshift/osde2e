@@ -8,6 +8,7 @@ import (
 	v1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/osde2e/pkg/common/alert"
 	"github.com/openshift/osde2e/pkg/common/helper"
+	"github.com/openshift/osde2e/pkg/common/label"
 	"github.com/openshift/osde2e/pkg/common/util"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/rest"
@@ -19,7 +20,7 @@ func init() {
 	alert.RegisterGinkgoAlert(regularuserWebhookTestName, "SD-SREP", "Max Whittingham", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
 }
 
-var _ = ginkgo.Describe(regularuserWebhookTestName, func() {
+var _ = ginkgo.Describe(regularuserWebhookTestName, label.ServiceDefinition, func() {
 	h := helper.New()
 
 	ginkgo.Context("regularuser validating webhook", func() {
