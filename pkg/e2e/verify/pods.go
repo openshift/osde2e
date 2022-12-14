@@ -6,8 +6,6 @@ import (
 
 	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
-	"github.com/openshift/osde2e/pkg/common/config"
 
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -18,10 +16,7 @@ import (
 	"github.com/openshift/osde2e/pkg/common/util"
 )
 
-var (
-	podsTestName        string = "[Suite: e2e] Pods"
-	e2eTimeoutInSeconds int    = viper.GetInt(config.Tests.PollingTimeout)
-)
+var podsTestName string = "[Suite: e2e] Pods"
 
 func init() {
 	alert.RegisterGinkgoAlert(podsTestName, "SD-CICD", "Diego Santamaria", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)

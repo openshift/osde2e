@@ -40,7 +40,7 @@ func hstsManagedRoutes(ctx context.Context, h *helper.H, namespace string) (bool
 	oneYearInSeconds := "31536000"
 	hstsExists := false
 	annotationHsts := "hsts_header"
-	hstsSetting := "max-age="+oneYearInSeconds+";preload"
+	hstsSetting := "max-age=" + oneYearInSeconds + ";preload"
 
 	if err != nil || route == nil {
 		return false, fmt.Errorf("failed requesting routes: %v", err)
