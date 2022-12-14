@@ -9,6 +9,8 @@ import (
 	"github.com/Masterminds/semver"
 	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
+	"github.com/openshift/osde2e/pkg/common/config"
 )
 
 const (
@@ -40,6 +42,9 @@ func SemverToOpenshiftVersion(version *semver.Version) string {
 
 // GinkgoIt wraps the 2.0 Ginkgo It function to allow for additional functionality.
 func GinkgoIt(text string, body func(ctx context.Context), timeout ...float64) bool {
+	if len(timeout) == 0 {
+		timeout = append(timeout, viper.GetFloat64(config.Tests.PollingTimeout))
+	}
 	defer ginkgo.GinkgoRecover()
 	return ginkgo.It(text, ginkgo.Offset(1), func(ctx context.Context) {
 		done := make(chan interface{})
