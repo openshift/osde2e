@@ -4,3 +4,4 @@ tests:
   - '\[Suite\: operators\]'
   - '\[Suite\: service-definition\]'
   - '\[Suite\: app-builds\]'
+  - 'Managed Cluster Validating Webhooks'

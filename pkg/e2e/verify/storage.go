@@ -17,7 +17,7 @@ import (
 	"github.com/openshift/osde2e/pkg/common/label"
 	"github.com/openshift/osde2e/pkg/common/util"
 	corev1 "k8s.io/api/core/v1"
-	v1 "k8s.io/api/storage/v1"
+	storagev1 "k8s.io/api/storage/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -93,7 +93,7 @@ var _ = ginkgo.Describe(storageTestName, label.E2E, func() {
 })
 
 // Get Storage Class names and cloud provider
-func getScNames(list *v1.StorageClassList, h *helper.H) ([]string, string) {
+func getScNames(list *storagev1.StorageClassList, h *helper.H) ([]string, string) {
 	var scs []string
 	var provider string
 	var provisioner string
@@ -306,4 +306,77 @@ func waitForPodNameRunningInNamespace(ctx context.Context, h *helper.H, podName,
 // waitTimeoutForPodRunningInNamespace waits the given timeout duration for the specified pod to become running.
 func waitTimeoutForPodRunningInNamespace(ctx context.Context, h *helper.H, podName, namespace string, timeout time.Duration) error {
 	return wait.PollImmediate(poll, timeout, podRunning(ctx, h, podName, namespace))
+}
+
+func deletePod(ctx context.Context, name string, namespace string, h *helper.H) error {
+	_, err := h.Kube().CoreV1().Pods(namespace).Get(ctx, name, metav1.GetOptions{})
+	log.Printf("Check before deleting pod %s, error: %v", name, err)
+	if err == nil {
+		err = h.Kube().CoreV1().Pods(namespace).Delete(ctx, name, metav1.DeleteOptions{})
+		log.Printf("Deleting pod %s, error: %v", name, err)
+
+		// Wait for the pod to delete.
+		err = wait.PollImmediate(5*time.Second, 5*time.Minute, func() (bool, error) {
+			if _, err := h.Kube().CoreV1().Pods(namespace).Get(ctx, name, metav1.GetOptions{}); err != nil {
+				return true, nil
+			}
+			return false, nil
+		})
+
+	}
+	return err
+}
+
+func deleteNamespace(ctx context.Context, namespace string, waitForDelete bool, h *helper.H) error {
+	log.Printf("Deleting namespace for namespace validation webhook (%s)", namespace)
+	err := h.Kube().CoreV1().Namespaces().Delete(ctx, namespace, metav1.DeleteOptions{})
+	if err != nil {
+		return fmt.Errorf("failed to delete namespace '%s': %v", namespace, err)
+	}
+
+	// Deleting a namespace can take a while. If desired, wait for the namespace to delete before returning.
+	if waitForDelete {
+		err = wait.PollImmediate(2*time.Second, 1*time.Minute, func() (bool, error) {
+			ns, _ := h.Kube().CoreV1().Namespaces().Get(ctx, namespace, metav1.GetOptions{})
+			if ns != nil && ns.Status.Phase == "Terminating" {
+				return false, nil
+			}
+			return true, nil
+		})
+	}
+
+	return err
+}
+
+func createNamespace(ctx context.Context, namespace string, h *helper.H) (*corev1.Namespace, error) {
+	// If the namespace already exists, we don't need to create it. Just return.
+	ns, err := h.Kube().CoreV1().Namespaces().Get(ctx, namespace, metav1.GetOptions{})
+	if ns != nil && ns.Status.Phase != "Terminating" && err == nil {
+		return ns, err
+	}
+
+	log.Printf("Creating namespace for namespace validation webhook (%s)", namespace)
+	labels := map[string]string{
+		"pod-security.kubernetes.io/enforce":             "privileged",
+		"pod-security.kubernetes.io/audit":               "privileged",
+		"pod-security.kubernetes.io/warn":                "privileged",
+		"security.openshift.io/scc.podSecurityLabelSync": "false",
+	}
+	ns = &corev1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:   namespace,
+			Labels: labels,
+		},
+	}
+	h.Kube().CoreV1().Namespaces().Create(ctx, ns, metav1.CreateOptions{})
+
+	// Wait for the namespace to create. This is usually pretty quick.
+	err = wait.PollImmediate(5*time.Second, 2*time.Minute, func() (bool, error) {
+		if _, err := h.Kube().CoreV1().Namespaces().Get(ctx, namespace, metav1.GetOptions{}); err != nil {
+			return false, nil
+		}
+		return true, nil
+	})
+
+	return ns, err
 }

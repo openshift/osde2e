@@ -26,12 +26,13 @@ require (
 	github.com/onsi/ginkgo/v2 v2.6.1
 	github.com/onsi/gomega v1.24.1
 	github.com/openshift-online/ocm-sdk-go v0.1.300
-	github.com/openshift/api v3.9.1-0.20190517100836-d5b34b957e91+incompatible
+	github.com/openshift/api v3.9.1-0.20190924102528-32369d4db2ad+incompatible
 	github.com/openshift/client-go v0.0.0-20220603133046-984ee5ebedcf
 	github.com/openshift/cloud-credential-operator v0.0.0-20221027221249-3eb4889e9720
 	github.com/openshift/cloud-ingress-operator v0.0.0-20221102021309-ed3525c8ae22
 	github.com/openshift/custom-domains-operator v0.0.0-20221118201157-bd1052dac818
 	github.com/openshift/managed-upgrade-operator v0.0.0-20221004201436-ac05e85af861
+	github.com/openshift/must-gather-operator v0.1.2-0.20221011152618-7805956e1ded
 	github.com/openshift/rosa v1.2.10
 	github.com/openshift/route-monitor-operator v0.0.0-20221118160357-3df1ed1fa1d2
 	github.com/openshift/splunk-forwarder-operator v0.0.0-20221120204055-42afd88abb4c
@@ -63,6 +64,7 @@ require (
 	k8s.io/apimachinery v0.26.0
 	k8s.io/client-go v12.0.0+incompatible
 	k8s.io/utils v0.0.0-20221108210102-8e77b1f39fe2
+	sigs.k8s.io/e2e-framework v0.0.8
 )
 
 require (
@@ -84,6 +86,7 @@ require (
 	github.com/cenkalti/backoff/v4 v4.1.3 // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
 	github.com/containerd/continuity v0.2.2 // indirect
+	github.com/creack/pty v1.1.11 // indirect
 	github.com/cznic/mathutil v0.0.0-20181122101859-297441e03548 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dgryski/go-gk v0.0.0-20200319235926-a69029f61654 // indirect
@@ -92,6 +95,7 @@ require (
 	github.com/docker/go-units v0.4.0 // indirect
 	github.com/emicklei/go-restful/v3 v3.10.0 // indirect
 	github.com/evanphx/json-patch v5.6.0+incompatible // indirect
+	github.com/evanphx/json-patch/v5 v5.6.0 // indirect
 	github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32 // indirect
 	github.com/go-kit/log v0.2.1 // indirect
 	github.com/go-logfmt/logfmt v0.5.1 // indirect
@@ -168,6 +172,7 @@ require (
 	gitlab.com/c0b/go-ordered-json v0.0.0-20171130231205-49bbdab258c2 // indirect
 	go.opencensus.io v0.24.0 // indirect
 	go.uber.org/atomic v1.9.0 // indirect
+	go.uber.org/goleak v1.2.0 // indirect
 	go.uber.org/multierr v1.8.0 // indirect
 	go.uber.org/zap v1.21.0 // indirect
 	golang.org/x/crypto v0.1.0 // indirect

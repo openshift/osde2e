@@ -75,3 +75,7 @@ var (
 	// Application build tests verify the ability to deploy applications
 	AppBuilds = ginkgo.Label("AppBuilds")
 )
+
+func AllCloudProviders() []ginkgo.Labels {
+	return []ginkgo.Labels{AWS, GCP, Azure}
+}
