@@ -6,6 +6,8 @@ import (
 
 	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
+	"github.com/openshift/osde2e/pkg/common/config"
 
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -16,7 +18,10 @@ import (
 	"github.com/openshift/osde2e/pkg/common/util"
 )
 
-var podsTestName string = "[Suite: e2e] Pods"
+var (
+	podsTestName        = "[Suite: e2e] Pods"
+	e2eTimeoutInSeconds = viper.GetInt(config.Tests.PollingTimeout)
+)
 
 func init() {
 	alert.RegisterGinkgoAlert(podsTestName, "SD-CICD", "Diego Santamaria", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
@@ -48,5 +53,5 @@ var _ = ginkgo.Describe(podsTestName, label.E2E, func() {
 		Expect(err).NotTo(HaveOccurred(), "couldn't list Pods")
 		Expect(filteredList).NotTo(BeNil())
 		Expect(filteredList.Items).Should(HaveLen(0), "'%d' Pods are 'Failed'", len(filteredList.Items))
-	})
+	}, float64(e2eTimeoutInSeconds))
 })

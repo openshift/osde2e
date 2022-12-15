@@ -42,9 +42,6 @@ func SemverToOpenshiftVersion(version *semver.Version) string {
 
 // GinkgoIt wraps the 2.0 Ginkgo It function to allow for additional functionality.
 func GinkgoIt(text string, body func(ctx context.Context), timeout ...float64) bool {
-	if len(timeout) == 0 {
-		timeout = append(timeout, viper.GetFloat64(config.Tests.PollingTimeout))
-	}
 	defer ginkgo.GinkgoRecover()
 	return ginkgo.It(text, ginkgo.Offset(1), func(ctx context.Context) {
 		done := make(chan interface{})
@@ -54,9 +51,11 @@ func GinkgoIt(text string, body func(ctx context.Context), timeout ...float64) b
 			close(done)
 		}()
 		duration := time.Duration(5) * time.Second
-		if len(timeout) > 0 {
-			duration = time.Duration(timeout[0]) * time.Second
+		if len(timeout) == 0 {
+			timeout = append(timeout, viper.GetFloat64(config.Tests.PollingTimeout))
 		}
+		duration = time.Duration(timeout[0]) * time.Second
+
 		Eventually(done, duration).Should(BeClosed())
 	})
 }
