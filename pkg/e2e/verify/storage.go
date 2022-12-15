@@ -220,7 +220,6 @@ type Config struct {
 // makeTestPod returns a pod definition based on the namespace. The pod references the PVC's
 // name.
 func makeTestPod(ns string, pvclaims []*corev1.PersistentVolumeClaim, isPrivileged bool) *corev1.Pod {
-
 	timeout := viper.GetInt(config.Tests.PollingTimeout)
 	containerCmd := "echo 'hello' > /mnt/volume1/hello.txt && sleep 1 && sync && grep hello /mnt/volume1/hello.txt; sleep " + strconv.Itoa(timeout)
 	podSpec := &corev1.Pod{
@@ -238,7 +237,7 @@ func makeTestPod(ns string, pvclaims []*corev1.PersistentVolumeClaim, isPrivileg
 					Name:    "dummy",
 					Image:   "registry.access.redhat.com/ubi8/ubi-minimal",
 					Command: []string{"/bin/sh"},
-					Args:    []string{"-c",containerCmd },
+					Args:    []string{"-c", containerCmd},
 					Stdin:   true,
 					SecurityContext: &corev1.SecurityContext{
 						Privileged: &isPrivileged,
