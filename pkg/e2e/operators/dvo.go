@@ -13,6 +13,7 @@ import (
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/helper"
+	"github.com/openshift/osde2e/pkg/common/label"
 	"github.com/openshift/osde2e/pkg/common/util"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
@@ -26,7 +27,7 @@ func init() {
 	alert.RegisterGinkgoAlert(deploymentValidationOperatorTestName, "SD-SREP", "Ron Green", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
 }
 
-var _ = ginkgo.Describe(deploymentValidationOperatorTestName, ginkgo.Ordered, func() {
+var _ = ginkgo.Describe(deploymentValidationOperatorTestName, label.Informing, ginkgo.Ordered, func() {
 	const (
 		operatorNamespace      = "openshift-deployment-validation-operator"
 		operatorName           = "deployment-validation-operator"

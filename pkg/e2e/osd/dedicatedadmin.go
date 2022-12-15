@@ -12,6 +12,7 @@ import (
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/helper"
+	"github.com/openshift/osde2e/pkg/common/label"
 	"github.com/openshift/osde2e/pkg/common/util"
 	operatorv1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
@@ -29,7 +30,7 @@ func init() {
 	alert.RegisterGinkgoAlert(dedicatedAdminTestName, "SD-SREP", "@dedicated-admin-operator", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
 }
 
-var _ = ginkgo.Describe(dedicatedAdminTestName, func() {
+var _ = ginkgo.Describe(dedicatedAdminTestName, label.Informing, func() {
 	ginkgo.Context("dedicated-admin group permissions", func() {
 		// list of namespaces to loop through
 		namespaceList := []string{

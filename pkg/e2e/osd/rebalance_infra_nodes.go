@@ -13,6 +13,7 @@ import (
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/helper"
+	"github.com/openshift/osde2e/pkg/common/label"
 	"github.com/openshift/osde2e/pkg/common/util"
 	batchv1 "k8s.io/api/batch/v1"
 	v1 "k8s.io/api/core/v1"
@@ -35,7 +36,7 @@ func init() {
 	alert.RegisterGinkgoAlert(rebalanceInfraNodesTestName, "SD-SREP", "Jing Zhang", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
 }
 
-var _ = ginkgo.Describe(rebalanceInfraNodesTestName, func() {
+var _ = ginkgo.Describe(rebalanceInfraNodesTestName, label.Informing, func() {
 	h := helper.New()
 
 	ginkgo.Context("re-balance the infra nodes with cronjob", func() {

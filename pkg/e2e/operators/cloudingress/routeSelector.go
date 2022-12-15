@@ -9,6 +9,7 @@ import (
 	. "github.com/onsi/gomega"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/helper"
+	"github.com/openshift/osde2e/pkg/common/label"
 	"github.com/openshift/osde2e/pkg/common/providers/rosaprovider"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -16,7 +17,7 @@ import (
 )
 
 // tests
-var _ = ginkgo.Describe("[Suite: informing] "+TestPrefix, func() {
+var _ = ginkgo.Describe("[Suite: informing] "+TestPrefix, label.Informing, func() {
 	ginkgo.BeforeEach(func() {
 		if viper.GetBool(rosaprovider.STS) {
 			ginkgo.Skip("STS does not support CIO")
