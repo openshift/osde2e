@@ -3,11 +3,13 @@ package helper
 import (
 	"github.com/onsi/gomega"
 	configv1 "github.com/openshift/api/config/v1"
+
 	quotav1 "github.com/openshift/api/quota/v1"
 	route "github.com/openshift/api/route/v1"
 	securityv1 "github.com/openshift/api/security/v1"
 	customdomainv1alpha1 "github.com/openshift/custom-domains-operator/api/v1alpha1"
 	mustgatherv1alpha1 "github.com/openshift/must-gather-operator/api/v1alpha1"
+	operatorhubv1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/e2e-framework/klient/k8s/resources"
@@ -35,6 +37,7 @@ func (h *H) AsUser(username string, groups ...string) *resources.Resources {
 	mustgatherv1alpha1.AddToScheme(client.GetScheme())
 	customdomainv1alpha1.AddToScheme(client.GetScheme())
 	route.AddToScheme(client.GetScheme())
+	operatorhubv1.AddToScheme(client.GetScheme())
 
 	return client
 }

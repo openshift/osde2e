@@ -2,218 +2,225 @@ package operators
 
 import (
 	"context"
-	"fmt"
-	"time"
+	"strings"
 
 	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/openshift/osde2e/pkg/common/alert"
+	"github.com/openshift/osde2e/pkg/common/expect"
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/label"
-	"github.com/openshift/osde2e/pkg/common/util"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/util/wait"
+
+	operatorhubv1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
+	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
+	appsv1 "k8s.io/api/apps/v1"
+	v1 "k8s.io/api/core/v1"
+	networkingv1 "k8s.io/api/networking/v1"
+	"sigs.k8s.io/e2e-framework/klient/k8s"
+	"sigs.k8s.io/e2e-framework/klient/wait"
+	"sigs.k8s.io/e2e-framework/klient/wait/conditions"
 )
 
-var (
-	ocmAgentTestPrefix = "[Suite: informing] [OSD] OCM Agent Operator"
-	ocmAgentBasicTest  = ocmAgentTestPrefix + " Basic Test"
-)
+var suiteName = "OCM Agent Operator"
 
 func init() {
-	alert.RegisterGinkgoAlert(ocmAgentBasicTest, "SD_SREP", "@ocm-agent-operator", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+	alert.RegisterGinkgoAlert(suiteName, "SD_SREP", "@ocm-agent-operator", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
 }
 
-var _ = ginkgo.Describe(ocmAgentBasicTest, label.Informing, func() {
-	var (
-		operatorNamespace                = "openshift-ocm-agent-operator"
-		operatorName                     = "ocm-agent-operator"
-		operatorRegistry                 = "ocm-agent-operator-registry"
-		ocmAgentTokenRefName             = "ocm-access-token"
-		ocmAgentCofigRefName             = "ocm-agent-config"
-		ocmAgentDeploymentName           = "ocm-agent"
-		ocmAgentServiceMonitorName       = "ocm-agent-metrics"
-		ocmAgentServiceName              = "ocm-agent"
-		ocmAgentNetworkpolicyName        = "ocm-agent-allow-only-alertmanager"
-		ocmAgentDeploymentReplicas int32 = 1
-
-		clusterRoles = []string{
-			"ocm-agent-operator",
-		}
-		clusterRoleBindings = []string{
-			"ocm-agent-operator",
-		}
-		// servicePort = 8081
-	)
+// TODO: Separate PR to remove 'Informing' label from test suite
+var _ = ginkgo.Describe(suiteName, ginkgo.Ordered, label.Operators, label.Informing, func() {
 	h := helper.New()
-	checkClusterServiceVersion(h, operatorNamespace, operatorName)
-	checkDeployment(h, operatorNamespace, operatorName, 1)
-	checkClusterRoles(h, clusterRoles, true)
-	checkClusterRoleBindings(h, clusterRoleBindings, true)
-	checkDeployment(h, operatorNamespace, ocmAgentDeploymentName, ocmAgentDeploymentReplicas)
-	// checkService(h, operatorNamespace, operatorName, servicePort)
-	checkUpgrade(helper.New(), operatorNamespace, operatorName, operatorName, operatorRegistry)
-	checkPod(h, operatorNamespace, ocmAgentDeploymentName, 300, 3)
+	client := h.AsUser("")
 
-	ginkgo.Context("Reconcile resources", func() {
-		// Waiting period to wait for OAO resources to be appear once deleted
-		pollingDuration := 600 * time.Second
-		util.GinkgoIt("ocm-agent deployment should be restored when it gets deleted", func(ctx context.Context) {
-			err := deleteDeployment(ctx, ocmAgentDeploymentName, operatorNamespace, h)
-			Expect(err).NotTo(HaveOccurred())
+	var (
+		configMapName      = "ocm-agent-config"
+		clusterRolePrefix  = "ocm-agent-operator"
+		deploymentName     = "ocm-agent"
+		namespace          = "openshift-ocm-agent-operator"
+		networkPolicyName  = "ocm-agent-allow-only-alertmanager"
+		operatorName       = "ocm-agent-operator"
+		operatorRegistry   = "ocm-agent-operator-registry"
+		secretName         = "ocm-access-token"
+		serviceMonitorName = "ocm-agent-metrics"
+		serviceName        = "ocm-agent"
 
-			err = wait.Poll(30*time.Second, 5*time.Minute, func() (bool, error) {
-				obj, err := h.Dynamic().Resource(schema.GroupVersionResource{
-					Group: "apps", Version: "v1", Resource: "deployments",
-				}).Namespace(operatorNamespace).Get(ctx, ocmAgentDeploymentName, metav1.GetOptions{})
-				if err != nil {
-					return false, fmt.Errorf("unable to retrieve ocm-agent Deployment")
+		deployments = []string{
+			deploymentName,
+			deploymentName + "-operator",
+		}
+	)
+
+	ginkgo.It("cluster service version exists", label.Install, func(ctx context.Context) {
+		csvs, err := h.Operator().OperatorsV1alpha1().
+			ClusterServiceVersions(namespace).
+			List(ctx, metav1.ListOptions{})
+		expect.NoError(err)
+
+		for _, csv := range csvs.Items {
+			if csv.Spec.DisplayName == operatorName {
+				csv := &operatorhubv1.ClusterServiceVersion{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      csv.Name,
+						Namespace: namespace,
+					},
 				}
+				err = wait.For(conditions.New(client).ResourceMatch(
+					csv, func(object k8s.Object) bool {
+						obj := object.(*operatorhubv1.ClusterServiceVersion)
+						return obj.Status.Phase == "Succeeded"
+					}))
+				expect.NoError(err)
+				break
+			}
+		}
+	})
 
-				if obj.GetName() != ocmAgentDeploymentName {
-					return false, fmt.Errorf("ocm-agent deployment not found")
-				}
-				return true, nil
+	ginkgo.It("deployments exist", label.Install, func(ctx context.Context) {
+		for _, deployment := range deployments {
+			err := client.Get(ctx, deployment, namespace, &appsv1.Deployment{
+				Status: appsv1.DeploymentStatus{Replicas: 1, ReadyReplicas: 1},
 			})
-			Expect(err).NotTo(HaveOccurred())
-		}, pollingDuration.Seconds())
+			expect.NoError(err)
+		}
+	})
 
-		util.GinkgoIt("ocm-agent-config configmap should be restored when it gets deleted", func(ctx context.Context) {
-			err := deleteConfigMap(ctx, ocmAgentCofigRefName, operatorNamespace, h)
-			Expect(err).NotTo(HaveOccurred())
+	ginkgo.It("cluster roles exist", label.Install, func(ctx context.Context) {
+		clusterRoles, err := h.Kube().RbacV1().ClusterRoles().List(ctx, metav1.ListOptions{})
+		expect.NoError(err)
+		found := false
+		for _, clusterRole := range clusterRoles.Items {
+			if strings.HasPrefix(clusterRole.Name, clusterRolePrefix) {
+				found = true
+			}
+		}
+		Expect(found).To(BeTrue())
+	})
 
-			err = wait.Poll(30*time.Second, 5*time.Minute, func() (bool, error) {
-				obj, err := h.Dynamic().Resource(schema.GroupVersionResource{
-					Group: "", Version: "v1", Resource: "configmaps",
-				}).Namespace(operatorNamespace).Get(ctx, ocmAgentCofigRefName, metav1.GetOptions{})
-				if err != nil {
-					return false, fmt.Errorf("unable to retrieve ocm-agent-config configmap")
-				}
+	ginkgo.It("cluster role bindings exist", label.Install, func(ctx context.Context) {
+		clusterRoleBindings, err := h.Kube().RbacV1().ClusterRoleBindings().List(ctx, metav1.ListOptions{})
+		expect.NoError(err)
+		found := false
+		for _, clusterRoleBinding := range clusterRoleBindings.Items {
+			if strings.HasPrefix(clusterRoleBinding.Name, clusterRolePrefix) {
+				found = true
+			}
+		}
+		Expect(found).To(BeTrue())
+	})
 
-				if obj.GetName() != ocmAgentCofigRefName {
-					return false, fmt.Errorf("ocm-agent-config configmap not found")
-				}
-				return true, nil
-			})
-			Expect(err).NotTo(HaveOccurred())
-		}, pollingDuration.Seconds())
+	ginkgo.It("can be upgraded from previous version", label.Upgrade, func(ctx context.Context) {
+		performUpgrade(ctx, h, namespace, operatorName, operatorName, operatorRegistry, 5, 30)
+	})
 
-		util.GinkgoIt("ocm-agent-token secret should be restored when it gets deleted", func(ctx context.Context) {
-			err := deleteSecret(ctx, ocmAgentTokenRefName, operatorNamespace, h)
-			Expect(err).NotTo(HaveOccurred())
+	ginkgo.It("deployment is restored when removed", func(ctx context.Context) {
+		deployment := &appsv1.Deployment{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      deploymentName,
+				Namespace: namespace,
+			},
+		}
 
-			err = wait.Poll(30*time.Second, 5*time.Minute, func() (bool, error) {
-				obj, err := h.Dynamic().Resource(schema.GroupVersionResource{
-					Group: "", Version: "v1", Resource: "secrets",
-				}).Namespace(operatorNamespace).Get(ctx, ocmAgentTokenRefName, metav1.GetOptions{})
-				if err != nil {
-					return false, fmt.Errorf("unable to retrieve ocm-agent-token secret")
-				}
+		err := client.Delete(ctx, deployment)
+		expect.NoError(err)
 
-				if obj.GetName() != ocmAgentTokenRefName {
-					return false, fmt.Errorf("ocm-agent-token secret not found")
-				}
-				return true, nil
-			})
-			Expect(err).NotTo(HaveOccurred())
-		}, pollingDuration.Seconds())
+		err = wait.For(conditions.New(client).ResourceMatch(
+			deployment, func(object k8s.Object) bool {
+				obj := object.(*appsv1.Deployment)
+				return obj.Status.AvailableReplicas >= 1
+			}))
+		expect.NoError(err)
+	})
 
-		util.GinkgoIt("ocm-agent-metrics servicemonitor should be restored when it gets deleted", func(ctx context.Context) {
-			err := deleteServiceMonitor(ctx, ocmAgentServiceMonitorName, operatorNamespace, h)
-			Expect(err).NotTo(HaveOccurred())
+	ginkgo.It("config map is restored when removed", func(ctx context.Context) {
+		configMap := &v1.ConfigMap{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      configMapName,
+				Namespace: namespace,
+			},
+		}
 
-			err = wait.Poll(30*time.Second, 5*time.Minute, func() (bool, error) {
-				obj, err := h.Dynamic().Resource(schema.GroupVersionResource{
-					Group: "monitoring.coreos.com", Version: "v1", Resource: "servicemonitors",
-				}).Namespace(operatorNamespace).Get(ctx, ocmAgentServiceMonitorName, metav1.GetOptions{})
-				if err != nil {
-					return false, fmt.Errorf("unable to retrieve ocm-agent-metrics servicemonitor")
-				}
+		err := client.Delete(ctx, configMap)
+		expect.NoError(err)
 
-				if obj.GetName() != ocmAgentServiceMonitorName {
-					return false, fmt.Errorf("ocm-agent-metrics servicemonitor not found")
-				}
-				return true, nil
-			})
-			Expect(err).NotTo(HaveOccurred())
-		}, pollingDuration.Seconds())
+		err = wait.For(conditions.New(client).ResourceMatch(
+			configMap, func(object k8s.Object) bool {
+				obj := object.(*v1.ConfigMap)
+				return len(obj.Data) >= 1
+			}))
+		expect.NoError(err)
+	})
 
-		util.GinkgoIt("ocm-agent service should be restored when it gets deleted", func(ctx context.Context) {
-			err := deleteService(ctx, ocmAgentServiceName, operatorNamespace, h)
-			Expect(err).NotTo(HaveOccurred())
+	ginkgo.It("secret is restored when removed", func(ctx context.Context) {
+		secret := &v1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      secretName,
+				Namespace: namespace,
+			},
+		}
+		err := client.Delete(ctx, secret)
+		expect.NoError(err)
 
-			err = wait.Poll(30*time.Second, 5*time.Minute, func() (bool, error) {
-				obj, err := h.Dynamic().Resource(schema.GroupVersionResource{
-					Group: "", Version: "v1", Resource: "services",
-				}).Namespace(operatorNamespace).Get(ctx, ocmAgentServiceName, metav1.GetOptions{})
-				if err != nil {
-					return false, fmt.Errorf("unable to retrieve ocm-agent service")
-				}
+		err = wait.For(conditions.New(client).ResourceMatch(
+			secret, func(object k8s.Object) bool {
+				obj := object.(*v1.Secret)
+				return len(obj.Data) >= 1
+			}))
+		expect.NoError(err)
+	})
 
-				if obj.GetName() != ocmAgentServiceName {
-					return false, fmt.Errorf("ocm-agent service not found")
-				}
-				return true, nil
-			})
-			Expect(err).NotTo(HaveOccurred())
-		}, pollingDuration.Seconds())
+	ginkgo.It("service monitor is restored when removed", func(ctx context.Context) {
+		serviceMonitor := &monitoringv1.ServiceMonitor{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      serviceMonitorName,
+				Namespace: namespace,
+			},
+		}
+		err := client.Delete(ctx, serviceMonitor)
+		expect.NoError(err)
 
-		util.GinkgoIt("ocm-agent-allow-only-alertmanager  networkpolicy should restored when it gets deleted", func(ctx context.Context) {
-			err := deleteNetworkPolicy(ctx, ocmAgentNetworkpolicyName, operatorNamespace, h)
-			Expect(err).NotTo(HaveOccurred())
+		err = wait.For(conditions.New(client).ResourceMatch(
+			serviceMonitor, func(object k8s.Object) bool {
+				obj := object.(*monitoringv1.ServiceMonitor)
+				return obj.ObjectMeta.Generation == 1
+			}))
+		expect.NoError(err)
+	})
 
-			err = wait.Poll(30*time.Second, 5*time.Minute, func() (bool, error) {
-				obj, err := h.Dynamic().Resource(schema.GroupVersionResource{
-					Group: "networking.k8s.io", Version: "v1", Resource: "networkpolicies",
-				}).Namespace(operatorNamespace).Get(ctx, ocmAgentNetworkpolicyName, metav1.GetOptions{})
-				if err != nil {
-					return false, fmt.Errorf("unable to retrieve ocm-agent-allow-only-alertmanager  networkpolicy")
-				}
+	ginkgo.It("service is restored when removed", func(ctx context.Context) {
+		service := &v1.Service{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      serviceName,
+				Namespace: namespace,
+			},
+		}
+		err := client.Delete(ctx, service)
+		expect.NoError(err)
 
-				if obj.GetName() != ocmAgentNetworkpolicyName {
-					return false, fmt.Errorf("ocm-agent-allow-only-alertmanager  networkpolicy not found")
-				}
-				return true, nil
-			})
-			Expect(err).NotTo(HaveOccurred())
-		}, pollingDuration.Seconds())
+		err = wait.For(conditions.New(client).ResourceMatch(
+			service, func(object k8s.Object) bool {
+				obj := object.(*v1.Service)
+				return obj.ObjectMeta.Name == serviceName
+			}))
+		expect.NoError(err)
+	})
+
+	ginkgo.It("network policy is restored when removed", func(ctx context.Context) {
+		networkPolicy := &networkingv1.NetworkPolicy{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      networkPolicyName,
+				Namespace: namespace,
+			},
+		}
+		err := client.Delete(ctx, networkPolicy)
+		expect.NoError(err)
+
+		err = wait.For(conditions.New(client).ResourceMatch(
+			networkPolicy, func(object k8s.Object) bool {
+				obj := object.(*networkingv1.NetworkPolicy)
+				return obj.ObjectMeta.Name == networkPolicyName
+			}))
+		expect.NoError(err)
 	})
 })
-
-func deleteDeployment(ctx context.Context, resourceName string, namespace string, h *helper.H) error {
-	return h.Dynamic().Resource(schema.GroupVersionResource{
-		Group: "apps", Version: "v1", Resource: "deployments",
-	}).Namespace(namespace).Delete(ctx, resourceName, metav1.DeleteOptions{})
-}
-
-func deleteConfigMap(ctx context.Context, resourceName string, namespace string, h *helper.H) error {
-	return h.Dynamic().Resource(schema.GroupVersionResource{
-		Group: "", Version: "v1", Resource: "configmaps",
-	}).Namespace(namespace).Delete(ctx, resourceName, metav1.DeleteOptions{})
-}
-
-func deleteSecret(ctx context.Context, resourceName string, namespace string, h *helper.H) error {
-	return h.Dynamic().Resource(schema.GroupVersionResource{
-		Group: "", Version: "v1", Resource: "secrets",
-	}).Namespace(namespace).Delete(ctx, resourceName, metav1.DeleteOptions{})
-}
-
-func deleteService(ctx context.Context, resourceName string, namespace string, h *helper.H) error {
-	return h.Dynamic().Resource(schema.GroupVersionResource{
-		Group: "", Version: "v1", Resource: "services",
-	}).Namespace(namespace).Delete(ctx, resourceName, metav1.DeleteOptions{})
-}
-
-func deleteServiceMonitor(ctx context.Context, resourceName string, namespace string, h *helper.H) error {
-	return h.Dynamic().Resource(schema.GroupVersionResource{
-		Group: "monitoring.coreos.com", Version: "v1", Resource: "servicemonitors",
-	}).Namespace(namespace).Delete(ctx, resourceName, metav1.DeleteOptions{})
-}
-
-func deleteNetworkPolicy(ctx context.Context, resourceName string, namespace string, h *helper.H) error {
-	return h.Dynamic().Resource(schema.GroupVersionResource{
-		Group: "networking.k8s.io", Version: "v1", Resource: "networkpolicies",
-	}).Namespace(namespace).Delete(ctx, resourceName, metav1.DeleteOptions{})
-}
