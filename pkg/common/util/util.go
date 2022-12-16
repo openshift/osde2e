@@ -9,8 +9,6 @@ import (
 	"github.com/Masterminds/semver"
 	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
-	"github.com/openshift/osde2e/pkg/common/config"
 )
 
 const (
@@ -40,7 +38,8 @@ func SemverToOpenshiftVersion(version *semver.Version) string {
 	return VersionPrefix + version.String()
 }
 
-// GinkgoIt wraps the 2.0 Ginkgo It function to allow for additional functionality.
+// GinkgoIt wraps the 2.0 Ginkgo It functions to allow for additional functionality.
+// timeout defaults to 5 seconds if not provided
 func GinkgoIt(text string, body func(ctx context.Context), timeout ...float64) bool {
 	defer ginkgo.GinkgoRecover()
 	return ginkgo.It(text, ginkgo.Offset(1), func(ctx context.Context) {
@@ -51,11 +50,9 @@ func GinkgoIt(text string, body func(ctx context.Context), timeout ...float64) b
 			close(done)
 		}()
 		duration := time.Duration(5) * time.Second
-		if len(timeout) == 0 {
-			timeout = append(timeout, viper.GetFloat64(config.Tests.PollingTimeout))
+		if len(timeout) > 0 {
+			duration = time.Duration(timeout[0]) * time.Second
 		}
-		duration = time.Duration(timeout[0]) * time.Second
-
 		Eventually(done, duration).Should(BeClosed())
 	})
 }
