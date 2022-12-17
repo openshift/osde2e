@@ -12,6 +12,7 @@ import (
 
 	"github.com/openshift/osde2e/pkg/common/alert"
 	"github.com/openshift/osde2e/pkg/common/helper"
+	"github.com/openshift/osde2e/pkg/common/label"
 	"github.com/openshift/osde2e/pkg/common/util"
 
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -28,7 +29,7 @@ func init() {
 	alert.RegisterGinkgoAlert(routeMonitorOperatorTestName, "SD-SREP", "@sre-platform-team-orange", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
 }
 
-var _ = ginkgo.Describe(routeMonitorOperatorTestName, func() {
+var _ = ginkgo.Describe(routeMonitorOperatorTestName, label.Informing, func() {
 	const (
 		operatorNamespace      = "openshift-route-monitor-operator"
 		operatorName           = "route-monitor-operator"

@@ -89,7 +89,7 @@ var _ = ginkgo.Describe(splunkForwarderBlocking, label.Operators, func() {
 })
 
 // Informing SplunkForwarder Signal
-var _ = ginkgo.Describe(splunkForwarderInforming, label.Operators, func() {
+var _ = ginkgo.Describe(splunkForwarderInforming, label.Operators, label.Informing, func() {
 	operatorName := "splunk-forwarder-operator"
 	var operatorNamespace string = "openshift-splunk-forwarder-operator"
 	var operatorLockFile string = "splunk-forwarder-operator-lock"

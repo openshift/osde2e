@@ -11,6 +11,7 @@ import (
 	upgradev1alpha1 "github.com/openshift/managed-upgrade-operator/api/v1alpha1"
 	"github.com/openshift/osde2e/pkg/common/alert"
 	"github.com/openshift/osde2e/pkg/common/helper"
+	"github.com/openshift/osde2e/pkg/common/label"
 	"github.com/openshift/osde2e/pkg/common/prometheus"
 	"github.com/openshift/osde2e/pkg/common/util"
 	prometheusv1 "github.com/prometheus/client_golang/api/prometheus/v1"
@@ -30,7 +31,7 @@ func init() {
 	alert.RegisterGinkgoAlert(managedUpgradeOperatorTestName, "SD-SREP", "@managed-upgrade-operator", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
 }
 
-var _ = ginkgo.Describe(managedUpgradeOperatorTestName, func() {
+var _ = ginkgo.Describe(managedUpgradeOperatorTestName, label.Informing, func() {
 	operatorName := "managed-upgrade-operator"
 	var operatorNamespace string = "openshift-managed-upgrade-operator"
 	var operatorLockFile string = "managed-upgrade-operator-lock"

@@ -13,6 +13,7 @@ import (
 	cloudingressv1alpha1 "github.com/openshift/cloud-ingress-operator/api/v1alpha1"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/helper"
+	"github.com/openshift/osde2e/pkg/common/label"
 	"github.com/openshift/osde2e/pkg/common/providers/rosaprovider"
 	"github.com/openshift/osde2e/pkg/e2e/operators"
 
@@ -23,7 +24,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 )
 
-var _ = ginkgo.Describe("[Suite: informing] "+TestPrefix, func() {
+var _ = ginkgo.Describe("[Suite: informing] "+TestPrefix, label.Informing, func() {
 	ginkgo.BeforeEach(func() {
 		if viper.GetBool(rosaprovider.STS) {
 			ginkgo.Skip("STS does not support CIO")
