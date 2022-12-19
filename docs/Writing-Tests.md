@@ -11,7 +11,7 @@ We recommend the following basic principles in designing your e2e tests:
    - the execution paths and 
    - potential causes of failures  
    
-Kubernetes guide on the topic https://github.com/kubernetes/community/blob/master/contributors/devel/sig-testing/writing-good-e2e-tests.md 
+It is highly recommended to read over the [kubernetes best practices](https://github.com/kubernetes/community/blob/master/contributors/devel/sig-testing/writing-good-e2e-tests.md ) for writing e2e tests. These principles should be taken into consideration for every new or existing test modified.
 
 
 ## Writing first test
