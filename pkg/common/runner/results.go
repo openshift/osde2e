@@ -40,7 +40,7 @@ func ensurePassingXML(results map[string][]byte) (hadXML bool, err error) {
 			suites, e := junit.Ingest(data)
 			if e != nil {
 				err = fmt.Errorf("Failed parsing junit xml in %s: %w", filename, e)
-				log.Println("Failed parsing junit xml in %s: %w", filename, e)
+				log.Printf("Failed parsing junit xml in %s: %w\n", filename, e)
 				return
 			}
 			for _, suite := range suites {
