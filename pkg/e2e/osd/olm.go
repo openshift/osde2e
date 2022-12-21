@@ -10,6 +10,7 @@ import (
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/helper"
+	"github.com/openshift/osde2e/pkg/common/label"
 	"github.com/openshift/osde2e/pkg/common/util"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -22,7 +23,7 @@ func init() {
 	alert.RegisterGinkgoAlert(olmTestName, "SD-SREP", "Matt Bargenquast", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
 }
 
-var _ = ginkgo.Describe(olmTestName, func() {
+var _ = ginkgo.Describe(olmTestName, label.Informing, func() {
 	ginkgo.Context("Managed OpenShift Operators", func() {
 		// setup helper
 		h := helper.New()

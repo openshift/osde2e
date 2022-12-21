@@ -1,3 +1,4 @@
 tests:
   testsToRun:
   - '\[Suite\: service-definition\]'
+  - 'Managed Cluster Validating Webhooks'
