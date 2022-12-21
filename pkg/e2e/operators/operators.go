@@ -221,7 +221,7 @@ func checkRoleBindings(h *helper.H, namespace string, roleBindings []string) {
 	})
 }
 
-//nolint
+// nolint
 func checkSecrets(h *helper.H, namespace string, secrets []string) {
 	// Check that deployed secrets exist
 	ginkgo.Context("secrets", func() {
@@ -391,7 +391,7 @@ Loop:
 			return err
 		default:
 			if elapsed < timeoutDuration {
-				log.Printf("Waiting %v for %s clusterRoleBinding to exist", (timeoutDuration - elapsed), clusterRoleBindingName)
+				log.Printf("Waiting %v for %s clusterRoleBinding to exist", timeoutDuration-elapsed, clusterRoleBindingName)
 				time.Sleep(intervalDuration)
 			} else {
 				err = fmt.Errorf("Failed to get clusterRolebinding %s before timeout", clusterRoleBindingName)
@@ -432,7 +432,7 @@ Loop:
 			return err
 		default:
 			if elapsed < timeoutDuration {
-				log.Printf("Waiting %v for %s roleBinding to exist", (timeoutDuration - elapsed), roleBindingName)
+				log.Printf("Waiting %v for %s roleBinding to exist", timeoutDuration-elapsed, roleBindingName)
 				time.Sleep(intervalDuration)
 			} else {
 				err = fmt.Errorf("Failed to get rolebinding %s before timeout", roleBindingName)
@@ -474,7 +474,7 @@ Loop:
 			return err
 		default:
 			if elapsed < timeoutDuration {
-				log.Printf("Waiting %v for %s configMap to exist", (timeoutDuration - elapsed), operatorLockFile)
+				log.Printf("Waiting %v for %s configMap to exist", timeoutDuration-elapsed, operatorLockFile)
 				time.Sleep(intervalDuration)
 			} else {
 				err = fmt.Errorf("Failed to get configMap %s before timeout", operatorLockFile)
@@ -517,7 +517,7 @@ Loop:
 			return nil, err
 		default:
 			if elapsed < timeoutDuration {
-				log.Printf("Waiting %v for %s deployment to exist", (timeoutDuration - elapsed), deploymentName)
+				log.Printf("Waiting %v for %s deployment to exist", timeoutDuration-elapsed, deploymentName)
 				time.Sleep(intervalDuration)
 			} else {
 				deployment = nil
@@ -589,7 +589,7 @@ func getReplacesCSV(ctx context.Context, h *helper.H, subscriptionNS string, csv
 	Expect(err).NotTo(HaveOccurred())
 
 	// get results
-	results, err := r.RetrieveResults()
+	results, err := r.RetrieveTestResults()
 	Expect(err).NotTo(HaveOccurred())
 
 	var result map[string]interface{}

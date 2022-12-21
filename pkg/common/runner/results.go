@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	junit "github.com/joshdk/go-junit"
+	"github.com/joshdk/go-junit"
 	"golang.org/x/net/html"
 	"k8s.io/apimachinery/pkg/util/wait"
 	restclient "k8s.io/client-go/rest"
@@ -40,6 +40,7 @@ func ensurePassingXML(results map[string][]byte) (hadXML bool, err error) {
 			suites, e := junit.Ingest(data)
 			if e != nil {
 				err = fmt.Errorf("Failed parsing junit xml in %s: %w", filename, e)
+				log.Println("Failed parsing junit xml in %s: %w", filename, e)
 				return
 			}
 			for _, suite := range suites {
