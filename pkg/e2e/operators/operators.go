@@ -2,6 +2,7 @@ package operators
 
 import (
 	"context"
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -11,16 +12,22 @@ import (
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/providers"
-	"github.com/openshift/osde2e/pkg/common/runner"
-	"github.com/openshift/osde2e/pkg/common/templates"
 	"github.com/openshift/osde2e/pkg/common/util"
 
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
+
 	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
 	kerror "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/apimachinery/pkg/util/wait"
 
+	routev1 "github.com/openshift/api/route/v1"
+
 	operatorv1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
+	clientreg "github.com/operator-framework/operator-registry/pkg/client"
 
 	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -531,15 +538,54 @@ Loop:
 }
 
 func getReplacesCSV(ctx context.Context, h *helper.H, subscriptionNS string, csvDisplayName string, catalogSvcName string) (string, error) {
-	cmdTimeoutInSeconds := 60
-	cmdTestTemplate, err := templates.LoadTemplate("registry/replaces.template")
+	// Build the service that we'll use to GRPC-query the catalog
+	svc, err := buildQueryableCatalogService(ctx, h, catalogSvcName, subscriptionNS)
 	if err != nil {
-		panic(fmt.Sprintf("error while loading registry-replaces addon: %v", err))
+		return "", err
 	}
+	createdSvc, err := h.Kube().CoreV1().Services(subscriptionNS).Create(ctx, svc, metav1.CreateOptions{})
+	if err != nil && kerror.IsAlreadyExists(err) {
+		return "", err
+	}
+	defer func() {
+		// Clean up the service afterwards
+		h.Kube().CoreV1().Services(subscriptionNS).Delete(ctx, createdSvc.GetName(), metav1.DeleteOptions{})
+	}()
+	log.Printf("Created service to grpc query for catalog data: %v/%v", createdSvc.Namespace, createdSvc.Name)
 
-	// This is extremely crude, but saves making multiple grpcurl queries to know what
-	// channel the package is using
+	// Build the route that we'll use to access the service by
+	route := buildGRPCRoute(createdSvc.Name, subscriptionNS)
+	createdRoute, err := h.Route().RouteV1().Routes(subscriptionNS).Create(ctx, route, metav1.CreateOptions{})
+	if err != nil && kerror.IsAlreadyExists(err) {
+		return "", err
+	}
+	defer func() {
+		// Clean up the route afterwards
+		h.Route().RouteV1().Routes(subscriptionNS).Delete(ctx, createdRoute.GetName(), metav1.DeleteOptions{})
+	}()
+	log.Printf("Created route to grpc query for catalog data: %v/%v", createdRoute.Namespace, createdRoute.Name)
+
+	// We need to wait a little bit for the route to settle, this is a bit of an arbitrary sleep time..
+	time.Sleep(5 * time.Second)
+
+	// Build up the GRPC client
+	var tlsConf tls.Config
+	tlsConf.InsecureSkipVerify = true
+	creds := credentials.NewTLS(&tlsConf)
+	// We need to allow http/2 in order to GRPC query the catalog
+	tlsConf.NextProtos = []string{"h2"}
+	dialOpts := []grpc.DialOption{grpc.WithTransportCredentials(creds)}
+	grpcConn, err := grpc.Dial(fmt.Sprintf("%v:%v", createdRoute.Spec.Host, 443), dialOpts...)
+	if err != nil {
+		return "", err
+	}
+	rc := clientreg.NewClientFromConn(grpcConn)
+
+	// Map the cluster environment to the catalog environment (prod->production, stage&int both use staging)
 	clusterProvider, err := providers.ClusterProvider()
+	if err != nil {
+		return "", err
+	}
 	environment := clusterProvider.Environment()
 	var packageChannel string
 	if strings.HasPrefix(environment, "prod") {
@@ -547,63 +593,78 @@ func getReplacesCSV(ctx context.Context, h *helper.H, subscriptionNS string, csv
 	} else {
 		packageChannel = "staging"
 	}
-	registrySvcPort := "50051"
 
-	h.SetServiceAccount(ctx, "system:serviceaccount:%s:cluster-admin")
-	r := h.RunnerWithNoCommand()
-	r.Name = fmt.Sprintf("csvq-%s", csvDisplayName)
-
-	Expect(err).NotTo(HaveOccurred())
-	values := struct {
-		Name           string
-		OutputDir      string
-		Namespace      string
-		PackageName    string
-		PackageChannel string
-		ServiceName    string
-		ServicePort    string
-		CA             string
-		TokenFile      string
-		Server         string
-	}{
-		Name:           r.Name,
-		OutputDir:      runner.DefaultRunner.OutputDir,
-		Namespace:      subscriptionNS,
-		PackageName:    csvDisplayName,
-		PackageChannel: packageChannel,
-		ServiceName:    catalogSvcName,
-		ServicePort:    registrySvcPort,
-		Server:         "https://kubernetes.default",
-		CA:             "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt",
-		TokenFile:      "/var/run/secrets/kubernetes.io/serviceaccount/token",
+	// GRPC query the service to get details about the currently installed bundle
+	bundle, err := rc.GetBundleInPackageChannel(ctx, csvDisplayName, packageChannel)
+	if err != nil {
+		return "", err
 	}
 
-	registryQueryCmd, err := h.ConvertTemplateToString(cmdTestTemplate, values)
-	Expect(err).NotTo(HaveOccurred())
+	csv := &operatorv1.ClusterServiceVersion{}
+	err = json.Unmarshal([]byte(bundle.GetCsvJson()), &csv)
+	if err != nil {
+		return "", err
+	}
 
-	r.Cmd = registryQueryCmd
+	// Return the 'replaces'
+	return csv.Spec.Replaces, nil
+}
 
-	// run tests
-	stopCh := make(chan struct{})
-	err = r.Run(cmdTimeoutInSeconds, stopCh)
-	Expect(err).NotTo(HaveOccurred())
+// buildQueryableCatalogService constructs a gRPC over HTTP/2 clone of the specified
+// service/namespace, specifically used for issuing gRPC queries of operator catalogs
+func buildQueryableCatalogService(ctx context.Context, h *helper.H, serviceName string, serviceNamespace string) (*corev1.Service, error) {
+	origService, err := h.Kube().CoreV1().Services(serviceNamespace).Get(ctx, serviceName, metav1.GetOptions{})
+	if err != nil {
+		return nil, err
+	}
 
-	// get results
-	results, err := r.RetrieveResults()
-	Expect(err).NotTo(HaveOccurred())
+	newSpec := origService.Spec.DeepCopy()
+	newSpec.ClusterIP = ""
+	newSpec.ClusterIPs = make([]string, 0)
+	appProtocol := "h2c"
+	newSpec.Ports = []corev1.ServicePort{
+		{
+			Name:        "grpc",
+			Protocol:    "TCP",
+			AppProtocol: &appProtocol,
+			Port:        50051,
+			TargetPort:  intstr.FromInt(50051),
+		},
+	}
+	newService := corev1.Service{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      origService.Name + "-e2e",
+			Namespace: origService.Namespace,
+		},
+		Spec: *newSpec,
+	}
 
-	var result map[string]interface{}
-	err = json.Unmarshal(results["registry.json"], &result)
-	Expect(err).NotTo(HaveOccurred(), "error unmarshalling json from registry gatherer")
+	return &newService, nil
+}
 
-	var csvresult map[string]interface{}
-	err = json.Unmarshal([]byte(fmt.Sprintf("%v", result["csvJson"])), &csvresult)
-	Expect(err).NotTo(HaveOccurred(), "error unmarshalling csv json from registry gatherer")
+// buildGRPCRoute exposes the specified service/namespace via a gRPC route,
+// specifically used to be able to issue gRPC queries to operator catalogs.
+func buildGRPCRoute(service string, namespace string) *routev1.Route {
+	route := routev1.Route{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "grpc",
+			Namespace: namespace,
+		},
+		Spec: routev1.RouteSpec{
+			Port: &routev1.RoutePort{
+				TargetPort: intstr.FromString("grpc"),
+			},
+			To: routev1.RouteTargetReference{
+				Kind: "Service",
+				Name: service,
+			},
+			TLS: &routev1.TLSConfig{
+				Termination: "edge",
+			},
+		},
+	}
 
-	replacesCsv, ok := csvresult["spec"].(map[string]interface{})["replaces"]
-	Expect(ok).NotTo(BeFalse(), "cannot find 'replaces' clusterversion from registry gatherer")
-
-	return fmt.Sprintf("%v", replacesCsv), nil
+	return &route
 }
 
 func CheckUpgrade(h *helper.H, subNamespace string, subName string, packageName string, regServiceName string) {
