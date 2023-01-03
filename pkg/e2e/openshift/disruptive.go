@@ -6,6 +6,8 @@ import (
 
 	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
+	"github.com/openshift/osde2e/pkg/common/config"
 
 	"github.com/openshift/osde2e/pkg/common/alert"
 	"github.com/openshift/osde2e/pkg/common/helper"
@@ -23,7 +25,7 @@ var _ = ginkgo.Describe(disruptiveTestName, func() {
 	defer ginkgo.GinkgoRecover()
 	h := helper.New()
 
-	e2eTimeoutInSeconds := 3600
+	e2eTimeoutInSeconds := viper.GetInt(config.Tests.PollingTimeout)
 	util.GinkgoIt("should run until completion", func(ctx context.Context) {
 		// configure tests
 		cfg := DefaultE2EConfig

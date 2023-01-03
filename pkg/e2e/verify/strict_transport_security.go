@@ -37,9 +37,10 @@ var _ = ginkgo.Describe(hstsTestName, label.E2E, func() {
 
 func hstsManagedRoutes(ctx context.Context, h *helper.H, namespace string) (bool, error) {
 	route, err := h.Route().RouteV1().Routes(namespace).List(ctx, metav1.ListOptions{})
+	oneYearInSeconds := "31536000"
 	hstsExists := false
 	annotationHsts := "hsts_header"
-	hstsSetting := "max-age=31536000;preload"
+	hstsSetting := "max-age=" + oneYearInSeconds + ";preload"
 
 	if err != nil || route == nil {
 		return false, fmt.Errorf("failed requesting routes: %v", err)
