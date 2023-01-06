@@ -56,8 +56,8 @@ require (
 	golang.org/x/net v0.4.0
 	golang.org/x/oauth2 v0.3.0
 	golang.org/x/tools v0.4.0
-	google.golang.org/api v0.105.0
-	google.golang.org/genproto v0.0.0-20221206210731-b1a01be3a5f6
+	google.golang.org/api v0.106.0
+	google.golang.org/genproto v0.0.0-20221227171554-f9683d7f8bef
 	gopkg.in/yaml.v3 v3.0.1
 	gotest.tools/v3 v3.4.0
 	k8s.io/api v0.26.0
@@ -68,8 +68,8 @@ require (
 )
 
 require (
-	cloud.google.com/go/compute v1.13.0 // indirect
-	cloud.google.com/go/compute/metadata v0.2.2 // indirect
+	cloud.google.com/go/compute v1.14.0 // indirect
+	cloud.google.com/go/compute/metadata v0.2.3 // indirect
 	cloud.google.com/go/iam v0.8.0 // indirect
 	github.com/AlecAivazis/survey/v2 v2.3.2 // indirect
 	github.com/Azure/go-ansiterm v0.0.0-20210617225240-d185dfc1b5a1 // indirect
@@ -112,7 +112,7 @@ require (
 	github.com/google/go-cmp v0.5.9 // indirect
 	github.com/google/go-querystring v1.0.0 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
-	github.com/googleapis/enterprise-certificate-proxy v0.2.0 // indirect
+	github.com/googleapis/enterprise-certificate-proxy v0.2.1 // indirect
 	github.com/googleapis/gax-go/v2 v2.7.0 // indirect
 	github.com/gorilla/css v1.0.0 // indirect
 	github.com/gorilla/websocket v1.4.2 // indirect
