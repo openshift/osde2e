@@ -8,14 +8,16 @@ import (
 
 	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	"sigs.k8s.io/e2e-framework/klient/k8s/resources"
 
 	v1 "github.com/openshift/api/route/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/openshift/osde2e/pkg/common/alert"
+	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
+	"github.com/openshift/osde2e/pkg/common/config"
+	"github.com/openshift/osde2e/pkg/common/expect"
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/label"
-	"github.com/openshift/osde2e/pkg/common/util"
 )
 
 const (
@@ -31,57 +33,46 @@ func init() {
 	alert.RegisterGinkgoAlert(routesTestName, "SD-CICD", "Diego Santamaria", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
 }
 
-var _ = ginkgo.Describe(routesTestName, label.E2E, func() {
-	h := helper.New()
+var _ = ginkgo.Describe(routesTestName, ginkgo.Ordered, label.E2E, func() {
+	var h *helper.H
+	var client *resources.Resources
 
-	util.GinkgoIt("should be created for Console", func(ctx context.Context) {
-		consoleRoutes(ctx, h)
-	}, 300)
+	ginkgo.BeforeAll(func() {
+		h = helper.New()
+		client = h.AsUser("")
+	})
 
-	util.GinkgoIt("should be functioning for Console", func(ctx context.Context) {
-		for _, route := range consoleRoutes(ctx, h) {
-			testRouteIngresses(ctx, route, http.StatusOK)
+	ginkgo.It("exist for console and is operational", label.HyperShift, func(ctx context.Context) {
+		var consoleRoute v1.Route
+		err := client.Get(ctx, consoleLabel, consoleNamespace, &consoleRoute)
+		expect.NoError(err)
+
+		for _, ingress := range consoleRoute.Status.Ingress {
+			response, err := validateRoute(ctx, ingress)
+			Expect(err).NotTo(HaveOccurred(), "failed retrieving %s site", consoleRoute.Name)
+			Expect(response.StatusCode).To(Equal(http.StatusOK))
 		}
-	}, 300)
+	})
 
-	util.GinkgoIt("should be created for oauth", func(ctx context.Context) {
-		oauthRoute(ctx, h)
-	}, 300)
+	ginkgo.It("exist for oauth and is operational", func(ctx context.Context) {
+		if viper.GetBool(config.Hypershift) {
+			ginkgo.Skip("OAuth route is not deployed to a ROSA hosted-cp cluster")
+		}
 
-	util.GinkgoIt("should be functioning for oauth", func(ctx context.Context) {
-		testRouteIngresses(ctx, oauthRoute(ctx, h), http.StatusForbidden)
-	}, 300)
+		var oauthRoute v1.Route
+		err := client.Get(ctx, oauthName, oauthNamespace, &oauthRoute)
+		expect.NoError(err)
+
+		for _, ingress := range oauthRoute.Status.Ingress {
+			response, err := validateRoute(ctx, ingress)
+			Expect(err).NotTo(HaveOccurred(), "failed retrieving %s site", oauthRoute.Name)
+			Expect(response.StatusCode).To(Equal(http.StatusForbidden))
+		}
+	})
 })
 
-func consoleRoutes(ctx context.Context, h *helper.H) []v1.Route {
-	labelSelector := fmt.Sprintf("app=%s", consoleLabel)
-	list, err := h.Route().RouteV1().Routes(consoleNamespace).List(ctx, metav1.ListOptions{
-		LabelSelector: labelSelector,
-	})
-	if err != nil || list == nil {
-		err = fmt.Errorf("failed requesting routes: %v", err)
-	} else if len(list.Items) == 0 {
-		err = fmt.Errorf("no routes matching '%s' in namespace '%s'", labelSelector, consoleNamespace)
-	}
-
-	Expect(err).NotTo(HaveOccurred(), "failed getting routes for console")
-	return list.Items
-}
-
-func oauthRoute(ctx context.Context, h *helper.H) v1.Route {
-	route, err := h.Route().RouteV1().Routes(oauthNamespace).Get(ctx, oauthName, metav1.GetOptions{})
-	if err != nil || route == nil {
-		err = fmt.Errorf("failed requesting routes: %v", err)
-	}
-	Expect(err).NotTo(HaveOccurred(), "failed getting routes for oauth")
-	return *route
-}
-
-func testRouteIngresses(ctx context.Context, route v1.Route, status int) {
-	Expect(route.Status.Ingress).ShouldNot(HaveLen(0),
-		"no ingresses have been setup for the route '%s/%s'", route.Namespace, route.Name)
-
-	client := &http.Client{
+func validateRoute(ctx context.Context, ingress v1.RouteIngress) (http.Response, error) {
+	httpClient := &http.Client{
 		Transport: &http.Transport{
 			TLSClientConfig: &tls.Config{
 				InsecureSkipVerify: true,
@@ -89,14 +80,7 @@ func testRouteIngresses(ctx context.Context, route v1.Route, status int) {
 		},
 	}
 
-	for _, ingress := range route.Status.Ingress {
-		consoleURL := fmt.Sprintf("https://%s", ingress.Host)
-
-		resp, err := client.Get(consoleURL)
-		Expect(err).NotTo(HaveOccurred(), "failed retrieving Console site")
-		Expect(resp).NotTo(BeNil())
-		Expect(resp.StatusCode).To(Equal(status))
-		// By default all http request should be protocol HTTP/1.1, see details: https://bugzilla.redhat.com/show_bug.cgi?id=1825354
-		Expect(resp.Proto).To(Equal("HTTP/1.1"))
-	}
+	response, err := httpClient.Get(fmt.Sprintf("https://%s", ingress.Host))
+	ExpectWithOffset(1, response.Proto).To(Equal("HTTP/1.1"))
+	return *response, err
 }
