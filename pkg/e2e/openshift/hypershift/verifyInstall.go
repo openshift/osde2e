@@ -28,8 +28,12 @@ func init() {
 
 // Checks the installation of the hypershift worker nodes in CCS AWS account
 var _ = ginkgo.Describe(suiteName, ginkgo.Ordered, label.HyperShift, func() {
-	h := helper.New()
-	client = h.AsUser("")
+	var h *helper.H
+
+	ginkgo.BeforeAll(func() {
+		h = helper.New()
+		client = h.AsUser("")
+	})
 
 	ginkgo.It("worker nodes are available in aws ccs account", func(ctx context.Context) {
 		ginkgo.By("getting the list of worker nodes from the cluster")
