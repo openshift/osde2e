@@ -697,7 +697,7 @@ func InitOSDe2eViper() {
 	viper.SetDefault(Cluster.MultiAZ, false)
 	viper.BindEnv(Cluster.MultiAZ, "MULTI_AZ")
 
-	viper.SetDefault(Cluster.Channel, "candidate")
+	viper.SetDefault(Cluster.Channel, "stable")
 	viper.BindEnv(Cluster.Channel, "CHANNEL")
 
 	viper.SetDefault(Cluster.DestroyAfterTest, true)
