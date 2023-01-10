@@ -1,0 +1,9 @@
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: redmine
+spec:
+  to:
+    name: redmine-frontend
+  tls:
+    termination: edge
