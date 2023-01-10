@@ -102,7 +102,7 @@ func beforeSuite() bool {
 		log.Printf("CLUSTER_NAME set to %s from OCM.", viper.GetString(config.Cluster.Name))
 
 		viper.Set(config.Cluster.Version, cluster.Version())
-		log.Printf("CLUSTER_VERSION set to %s from OCM.", viper.GetString(config.Cluster.Version))
+		log.Printf("CLUSTER_VERSION set to %s from OCM, for channel group %s", viper.GetString(config.Cluster.Version), viper.GetString(config.Cluster.Channel))
 
 		viper.Set(config.CloudProvider.CloudProviderID, cluster.CloudProvider())
 		log.Printf("CLOUD_PROVIDER_ID set to %s from OCM.", viper.GetString(config.CloudProvider.CloudProviderID))
