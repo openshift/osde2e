@@ -133,11 +133,7 @@ var _ = ginkgo.Describe(suiteName, ginkgo.Ordered, label.Operators, label.Inform
 		err := client.Delete(ctx, deployment)
 		expect.NoError(err)
 
-		err = wait.For(conditions.New(client).ResourceMatch(
-			deployment, func(object k8s.Object) bool {
-				obj := object.(*appsv1.Deployment)
-				return obj.Status.AvailableReplicas >= 1
-			}))
+		err = wait.For(conditions.New(client).DeploymentConditionMatch(deployment, appsv1.DeploymentAvailable, v1.ConditionTrue))
 		expect.NoError(err)
 	})
 
