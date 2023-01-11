@@ -38,7 +38,8 @@ func SemverToOpenshiftVersion(version *semver.Version) string {
 	return VersionPrefix + version.String()
 }
 
-// GinkgoIt wraps the 2.0 Ginkgo It function to allow for additional functionality.
+// GinkgoIt wraps the 2.0 Ginkgo It functions to allow for additional functionality.
+// timeout defaults to 5 seconds if not provided
 func GinkgoIt(text string, body func(ctx context.Context), timeout ...float64) bool {
 	defer ginkgo.GinkgoRecover()
 	return ginkgo.It(text, ginkgo.Offset(1), func(ctx context.Context) {

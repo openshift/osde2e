@@ -77,18 +77,6 @@ func (m *ROSAProvider) LaunchCluster(clusterName string) (string, error) {
 
 	rosaClusterVersion := viper.GetString(config.Cluster.Version)
 
-	rosaClusterVersion = strings.Replace(rosaClusterVersion, "-fast", "", -1)
-	rosaClusterVersion = strings.Replace(rosaClusterVersion, "-candidate", "", -1)
-	if !strings.HasSuffix(rosaClusterVersion, "-nightly") {
-		rosaClusterVersion = fmt.Sprintf("%s-%s", rosaClusterVersion, viper.GetString(config.Cluster.Channel))
-	} else {
-		viper.Set(config.Cluster.Channel, "nightly")
-	}
-
-	// Refactor: Was this not redundant with the above?
-	rosaClusterVersion = strings.Replace(rosaClusterVersion, "-stable", "", -1)
-	rosaClusterVersion = strings.Replace(rosaClusterVersion, "openshift-v", "", -1)
-
 	log.Printf("ROSA cluster version: %s", rosaClusterVersion)
 
 	if viper.GetBool(config.Cluster.UseExistingCluster) && viper.GetString(config.Addons.IDs) == "" {

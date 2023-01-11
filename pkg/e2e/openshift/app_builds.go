@@ -11,6 +11,8 @@ import (
 	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/openshift/osde2e/pkg/common/alert"
+	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
+	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/label"
 	"github.com/openshift/osde2e/pkg/common/runner"
@@ -53,7 +55,7 @@ var _ = ginkgo.Describe(appBuildsTestName, label.AppBuilds, func() {
 
 	h := helper.New()
 
-	e2eTimeoutInSeconds := 3600
+	e2eTimeoutInSeconds := viper.GetInt(config.Tests.PollingTimeout)
 	util.GinkgoIt("should get created in the cluster", func(ctx context.Context) {
 		namespacesExist := false
 		for _, application := range testApplications {
