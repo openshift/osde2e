@@ -1,0 +1,9 @@
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: guestbook
+spec:
+  to:
+    name: frontend
+  tls:
+    termination: edge

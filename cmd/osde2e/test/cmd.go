@@ -26,8 +26,7 @@ import (
 	_ "github.com/openshift/osde2e/pkg/e2e/state"
 	_ "github.com/openshift/osde2e/pkg/e2e/verify"
 	_ "github.com/openshift/osde2e/pkg/e2e/webhooks"
-	_ "github.com/openshift/osde2e/pkg/e2e/workloads/guestbook"
-	_ "github.com/openshift/osde2e/pkg/e2e/workloads/redmine"
+	_ "github.com/openshift/osde2e/pkg/e2e/workloads"
 )
 
 var Cmd = &cobra.Command{
