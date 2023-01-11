@@ -32,7 +32,7 @@ var _ = ginkgo.Describe(nodeLabelsTestName, ginkgo.Ordered, label.ServiceDefinit
 
 		var nodes v1.NodeList
 		err := client.List(ctx, &nodes)
-		Expect(err).NotTo(HaveOccurred())
+		expect.NoError(err)
 		Expect(len(nodes.Items)).To(BeNumerically(">", 0), "no nodes found in cluster")
 
 		for _, node := range nodes.Items {
