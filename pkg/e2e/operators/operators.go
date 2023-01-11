@@ -241,7 +241,7 @@ func checkSecrets(h *helper.H, namespace string, secrets []string) {
 	})
 }
 
-func performUpgrade(ctx context.Context, h *helper.H, subNamespace string, subName string, packageName string, regServiceName string,
+func PerformUpgrade(ctx context.Context, h *helper.H, subNamespace string, subName string, packageName string, regServiceName string,
 	installPlanPollCount time.Duration, upgradePollCount time.Duration,
 ) {
 	installPlanPollingDuration := installPlanPollCount * time.Minute
@@ -353,7 +353,7 @@ func checkUpgrade(h *helper.H, subNamespace string, subName string, packageName 
 		upgradePollingDuration := 15 * time.Minute
 
 		util.GinkgoIt("should upgrade from the replaced version", func(ctx context.Context) {
-			performUpgrade(ctx, h, subNamespace, subName, packageName, regServiceName, 5, 15)
+			PerformUpgrade(ctx, h, subNamespace, subName, packageName, regServiceName, 5, 15)
 		}, upgradePollingDuration.Seconds()+installPlanPollingDuration.Seconds()+
 			float64(viper.GetFloat64(config.Tests.PollingTimeout)))
 	})

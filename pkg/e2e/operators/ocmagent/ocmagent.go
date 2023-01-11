@@ -10,15 +10,19 @@ import (
 	"github.com/openshift/osde2e/pkg/common/expect"
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/label"
+	"github.com/openshift/osde2e/pkg/e2e/operators"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 
 	operatorhubv1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
+	rbacv1 "k8s.io/api/rbac/v1"
 	"sigs.k8s.io/e2e-framework/klient/k8s"
+	"sigs.k8s.io/e2e-framework/klient/k8s/resources"
 	"sigs.k8s.io/e2e-framework/klient/wait"
 	"sigs.k8s.io/e2e-framework/klient/wait/conditions"
 )
@@ -31,8 +35,13 @@ func init() {
 
 // TODO: Separate PR to remove 'Informing' label from test suite
 var _ = ginkgo.Describe(suiteName, ginkgo.Ordered, label.Operators, label.Informing, func() {
-	h := helper.New()
-	client := h.AsUser("")
+	var h *helper.H
+	var client *resources.Resources
+
+	ginkgo.BeforeAll(func() {
+		h = helper.New()
+		client = h.AsUser("")
+	})
 
 	var (
 		configMapName      = "ocm-agent-config"
@@ -53,9 +62,8 @@ var _ = ginkgo.Describe(suiteName, ginkgo.Ordered, label.Operators, label.Inform
 	)
 
 	ginkgo.It("cluster service version exists", label.Install, func(ctx context.Context) {
-		csvs, err := h.Operator().OperatorsV1alpha1().
-			ClusterServiceVersions(namespace).
-			List(ctx, metav1.ListOptions{})
+		var csvs operatorhubv1.ClusterServiceVersionList
+		err := client.List(ctx, &csvs, resources.WithFieldSelector(labels.FormatLabels(map[string]string{"metadata.namespace": namespace})))
 		expect.NoError(err)
 
 		for _, csv := range csvs.Items {
@@ -78,16 +86,19 @@ var _ = ginkgo.Describe(suiteName, ginkgo.Ordered, label.Operators, label.Inform
 	})
 
 	ginkgo.It("deployments exist", label.Install, func(ctx context.Context) {
-		for _, deployment := range deployments {
-			err := client.Get(ctx, deployment, namespace, &appsv1.Deployment{
-				Status: appsv1.DeploymentStatus{Replicas: 1, ReadyReplicas: 1},
-			})
+		for _, deploymentName := range deployments {
+			deployment := &appsv1.Deployment{}
+			err := client.Get(ctx, deploymentName, namespace, deployment)
 			expect.NoError(err)
+			Expect(deployment.Status.Replicas).To(BeNumerically("==", 1))
+			Expect(deployment.Status.ReadyReplicas).To(BeNumerically("==", 1))
+			Expect(deployment.Status.AvailableReplicas).To(BeNumerically("==", 1))
 		}
 	})
 
 	ginkgo.It("cluster roles exist", label.Install, func(ctx context.Context) {
-		clusterRoles, err := h.Kube().RbacV1().ClusterRoles().List(ctx, metav1.ListOptions{})
+		var clusterRoles rbacv1.ClusterRoleList
+		err := client.List(ctx, &clusterRoles)
 		expect.NoError(err)
 		found := false
 		for _, clusterRole := range clusterRoles.Items {
@@ -99,7 +110,8 @@ var _ = ginkgo.Describe(suiteName, ginkgo.Ordered, label.Operators, label.Inform
 	})
 
 	ginkgo.It("cluster role bindings exist", label.Install, func(ctx context.Context) {
-		clusterRoleBindings, err := h.Kube().RbacV1().ClusterRoleBindings().List(ctx, metav1.ListOptions{})
+		var clusterRoleBindings rbacv1.ClusterRoleBindingList
+		err := client.List(ctx, &clusterRoleBindings)
 		expect.NoError(err)
 		found := false
 		for _, clusterRoleBinding := range clusterRoleBindings.Items {
@@ -108,10 +120,6 @@ var _ = ginkgo.Describe(suiteName, ginkgo.Ordered, label.Operators, label.Inform
 			}
 		}
 		Expect(found).To(BeTrue())
-	})
-
-	ginkgo.It("can be upgraded from previous version", label.Upgrade, func(ctx context.Context) {
-		performUpgrade(ctx, h, namespace, operatorName, operatorName, operatorRegistry, 5, 30)
 	})
 
 	ginkgo.It("deployment is restored when removed", func(ctx context.Context) {
@@ -222,5 +230,9 @@ var _ = ginkgo.Describe(suiteName, ginkgo.Ordered, label.Operators, label.Inform
 				return obj.ObjectMeta.Name == networkPolicyName
 			}))
 		expect.NoError(err)
+	})
+
+	ginkgo.It("can be upgraded from previous version", label.Upgrade, func(ctx context.Context) {
+		operators.PerformUpgrade(ctx, h, namespace, operatorName, operatorName, operatorRegistry, 5, 30)
 	})
 })
