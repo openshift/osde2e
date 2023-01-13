@@ -5,16 +5,17 @@ import (
 	"fmt"
 
 	"github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
 	"github.com/openshift/osde2e/pkg/common/alert"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
+	"github.com/openshift/osde2e/pkg/common/expect"
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/label"
-	"github.com/openshift/osde2e/pkg/common/util"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/e2e-framework/klient/k8s/resources"
+	"sigs.k8s.io/e2e-framework/klient/wait"
 )
 
 var daemonSetsTestName string = "[Suite: service-definition] [OSD] DaemonSets"
@@ -23,76 +24,66 @@ func init() {
 	alert.RegisterGinkgoAlert(daemonSetsTestName, "SD-CICD", "Diego Santamaria", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
 }
 
-var _ = ginkgo.Describe(daemonSetsTestName, label.ServiceDefinition, func() {
-	ginkgo.Context("DaemonSets are not allowed", func() {
-		// setup helper
-		h := helper.New()
-		nodeLabels := make(map[string]string)
+var _ = ginkgo.Describe(daemonSetsTestName, ginkgo.Ordered, label.HyperShift, label.ServiceDefinition, func() {
+	var h *helper.H
+	var client *resources.Resources
 
-		util.GinkgoIt("empty node-label daemonset should get created", func(ctx context.Context) {
-			// Set it to a wildcard dedicated-admin
-			h.SetServiceAccount(ctx, "system:serviceaccount:%s:dedicated-admin-project")
-
-			// Test creating a basic daemonset
-			ds := makeDaemonSet("empty-node-labels", h.GetNamespacedServiceAccount(), nodeLabels)
-			_, err := h.Kube().AppsV1().DaemonSets(h.CurrentProject()).Create(ctx, &ds, metav1.CreateOptions{})
-			Expect(err).NotTo(HaveOccurred())
-		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
-
-		util.GinkgoIt("worker node daemonset should get created", func(ctx context.Context) {
-			// Set it to a wildcard dedicated-admin
-			h.SetServiceAccount(ctx, "system:serviceaccount:%s:dedicated-admin-project")
-
-			// Test creating a worker daemonset
-			nodeLabels["role"] = "worker"
-			ds := makeDaemonSet("worker-node-labels", h.GetNamespacedServiceAccount(), nodeLabels)
-			_, err := h.Kube().AppsV1().DaemonSets(h.CurrentProject()).Create(ctx, &ds, metav1.CreateOptions{})
-			Expect(err).NotTo(HaveOccurred())
-		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
-
-		util.GinkgoIt("infra node daemonset should get created", func(ctx context.Context) {
-			// Set it to a wildcard dedicated-admin
-			h.SetServiceAccount(ctx, "system:serviceaccount:%s:dedicated-admin-project")
-
-			// Test creating an infra daemonset
-			nodeLabels["role"] = "infra"
-			ds := makeDaemonSet("infra-node-labels", h.GetNamespacedServiceAccount(), nodeLabels)
-			_, err := h.Kube().AppsV1().DaemonSets(h.CurrentProject()).Create(ctx, &ds, metav1.CreateOptions{})
-			Expect(err).NotTo(HaveOccurred())
-		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
+	ginkgo.BeforeAll(func(ctx context.Context) {
+		h = helper.New()
+		client = h.AsUser("")
 	})
-})
 
-// Test Helper Functions
-func makeDaemonSet(name, sa string, nodeLabels map[string]string) appsv1.DaemonSet {
-	matchLabels := make(map[string]string)
-	matchLabels["name"] = name
-	ds := appsv1.DaemonSet{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: fmt.Sprintf("%s-%s", name, util.RandomStr(5)),
-		},
-		Spec: appsv1.DaemonSetSpec{
-			Selector: &metav1.LabelSelector{
-				MatchLabels: matchLabels,
+	newDaemonSet := func(role string) *appsv1.DaemonSet {
+		labels := map[string]string{"app": "test"}
+		nodeSelectors := map[string]string{}
+		if role != "" {
+			nodeSelectors[fmt.Sprintf("node-role.kubernetes.io/%s", role)] = ""
+		}
+		return &appsv1.DaemonSet{
+			ObjectMeta: metav1.ObjectMeta{
+				GenerateName: "osde2e-",
+				Namespace:    h.CurrentProject(),
 			},
-			Template: v1.PodTemplateSpec{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:   name,
-					Labels: matchLabels,
-				},
-				Spec: v1.PodSpec{
-					NodeSelector:       nodeLabels,
-					ServiceAccountName: sa,
-					Containers: []v1.Container{
-						{
-							Name:  "test",
-							Image: "registry.access.redhat.com/ubi8/ubi-minimal",
+			Spec: appsv1.DaemonSetSpec{
+				Selector: &metav1.LabelSelector{MatchLabels: labels},
+				Template: v1.PodTemplateSpec{
+					ObjectMeta: metav1.ObjectMeta{Labels: labels},
+					Spec: v1.PodSpec{
+						NodeSelector: nodeSelectors,
+						Containers: []v1.Container{
+							{Name: "pause", Image: "registry.k8s.io/pause:latest"},
 						},
 					},
 				},
 			},
-		},
+		}
 	}
 
-	return ds
-}
+	ginkgo.DescribeTable("should get created", func(ctx context.Context, nodeRole string) {
+		if nodeRole == "infra" && viper.GetBool(config.Hypershift) {
+			ginkgo.Skip("HyperShift does not have infra nodes")
+		}
+
+		daemonset := newDaemonSet(nodeRole)
+		err := client.Create(ctx, daemonset)
+		expect.NoError(err)
+
+		err = wait.For(func() (bool, error) {
+			ds := &appsv1.DaemonSet{}
+			err = client.Get(ctx, daemonset.GetName(), daemonset.GetNamespace(), ds)
+			if err != nil {
+				return false, err
+			}
+			desired, scheduled, ready := ds.Status.DesiredNumberScheduled, ds.Status.CurrentNumberScheduled, ds.Status.NumberReady
+			return desired == scheduled && desired == ready, nil
+		})
+		expect.NoError(err)
+
+		err = client.Delete(ctx, daemonset)
+		expect.NoError(err)
+	},
+		ginkgo.Entry("with no node role", ""),
+		ginkgo.Entry("with worker role", "worker"),
+		ginkgo.Entry("with infra role", "infra"),
+	)
+})
