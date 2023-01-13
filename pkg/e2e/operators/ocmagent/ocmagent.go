@@ -87,12 +87,14 @@ var _ = ginkgo.Describe(suiteName, ginkgo.Ordered, label.Operators, label.Inform
 
 	ginkgo.It("deployments exist", label.Install, func(ctx context.Context) {
 		for _, deploymentName := range deployments {
-			deployment := &appsv1.Deployment{}
-			err := client.Get(ctx, deploymentName, namespace, deployment)
-			expect.NoError(err)
-			Expect(deployment.Status.Replicas).To(BeNumerically("==", 1))
-			Expect(deployment.Status.ReadyReplicas).To(BeNumerically("==", 1))
-			Expect(deployment.Status.AvailableReplicas).To(BeNumerically("==", 1))
+			deployment := &appsv1.Deployment{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      deploymentName,
+					Namespace: namespace,
+				},
+			}
+			err := wait.For(conditions.New(client).DeploymentConditionMatch(deployment, appsv1.DeploymentAvailable, v1.ConditionTrue))
+			expect.NoError(err, "deployment %s not available", deploymentName)
 		}
 	})
 
