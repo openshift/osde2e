@@ -7,6 +7,8 @@ import (
 	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/openshift/osde2e/pkg/common/alert"
+	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
+	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/expect"
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/label"
@@ -20,7 +22,7 @@ func init() {
 	alert.RegisterGinkgoAlert(nodeLabelsTestName, "SD-CICD", "Diego Santamaria", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
 }
 
-var _ = ginkgo.Describe(nodeLabelsTestName, ginkgo.Ordered, label.ServiceDefinition, label.HyperShift, func() {
+var _ = ginkgo.Describe(nodeLabelsTestName, ginkgo.Ordered, label.ServiceDefinition, func() {
 	var h *helper.H
 
 	ginkgo.BeforeAll(func() {
@@ -28,6 +30,10 @@ var _ = ginkgo.Describe(nodeLabelsTestName, ginkgo.Ordered, label.ServiceDefinit
 	})
 
 	ginkgo.It("cannot be modified after node creation", func(ctx context.Context) {
+		if viper.GetBool(config.Hypershift) {
+			ginkgo.Skip("Clusterrole 'dedicated-admin' is not deployed to ROSA hosted-cp clusters")
+		}
+
 		client := h.AsServiceAccount(fmt.Sprintf("system:serviceaccount:%s:dedicated-admin-cluster", h.CurrentProject()))
 
 		var nodes v1.NodeList
