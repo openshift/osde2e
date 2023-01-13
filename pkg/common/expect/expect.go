@@ -12,7 +12,7 @@ func Error(err error, explain ...any) {
 
 // NoError checks if "err" is set and raises an exception if so
 func NoError(err error, explain ...any) {
-	gomega.ExpectWithOffset(1, err, explain...).ShouldNot(gomega.HaveOccurred())
+	gomega.ExpectWithOffset(1, err).ShouldNot(gomega.HaveOccurred(), explain...)
 }
 
 // Forbidden checks if "err" is set a `metav1.StatusReasonForbidden` or `404`
