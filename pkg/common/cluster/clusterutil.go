@@ -22,6 +22,7 @@ import (
 	"github.com/openshift/osde2e/pkg/common/spi"
 	"github.com/openshift/osde2e/pkg/common/util"
 	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/dynamic"
@@ -104,6 +105,11 @@ func WaitForClusterReadyPostInstall(clusterID string, logger *log.Logger) error 
 	}
 	logger.Println("Cluster is provisioned in OCM")
 
+	cluster, err := provider.GetCluster(clusterID)
+	if err != nil {
+		return fmt.Errorf("failed getting cluster from provider: %w", err)
+	}
+
 	clusterConfig, _, err := ClusterConfig(clusterID)
 	if err != nil {
 		return fmt.Errorf("failed looking up cluster config for healthcheck: %w", err)
@@ -120,7 +126,29 @@ func WaitForClusterReadyPostInstall(clusterID string, logger *log.Logger) error 
 	}
 
 	if viper.GetBool(config.Hypershift) {
-		// Hypershift clusters are ready at this point and we can skip the rest of the checks.
+		logger.Println("Waiting for nodes to be ready (up to 10 minutes)")
+		err := wait.PollImmediate(30*time.Second, 10*time.Minute, func() (bool, error) {
+			nodes, err := kubeClient.CoreV1().Nodes().List(context.Background(), v1.ListOptions{})
+			if err != nil {
+				// if the api server is not ready yet
+				if apierrors.IsTimeout(err) {
+					logger.Println(err)
+					return false, nil
+				}
+				return false, err
+			}
+			for _, node := range nodes.Items {
+				for _, condition := range node.Status.Conditions {
+					if condition.Type == corev1.NodeReady && condition.Status != corev1.ConditionTrue {
+						return false, nil
+					}
+				}
+			}
+			return len(nodes.Items) == cluster.NumComputeNodes(), nil
+		})
+		if err != nil {
+			return fmt.Errorf("HyperShift healthcheck: %w", err)
+		}
 		return nil
 	}
 
@@ -129,11 +157,6 @@ func WaitForClusterReadyPostInstall(clusterID string, logger *log.Logger) error 
 	err = healthchecks.CheckHealthcheckJob(kubeClient, ctx, nil)
 	if err != nil {
 		return fmt.Errorf("cluster failed health check: %w", err)
-	}
-
-	cluster, err := provider.GetCluster(clusterID)
-	if err != nil {
-		return fmt.Errorf("failed getting cluster from provider: %w", err)
 	}
 
 	if err := provider.AddProperty(cluster, clusterproperties.Status, clusterproperties.StatusHealthy); err != nil {
