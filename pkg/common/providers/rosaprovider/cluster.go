@@ -76,6 +76,7 @@ func (m *ROSAProvider) LaunchCluster(clusterName string) (string, error) {
 	var awsCreator *aws.Creator
 
 	rosaClusterVersion := viper.GetString(config.Cluster.Version)
+	rosaClusterVersion = strings.ReplaceAll(rosaClusterVersion, "openshift-v", "")
 
 	log.Printf("ROSA cluster version: %s", rosaClusterVersion)
 
