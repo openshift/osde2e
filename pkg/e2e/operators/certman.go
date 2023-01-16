@@ -8,6 +8,8 @@ import (
 	. "github.com/onsi/gomega"
 	osv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/osde2e/pkg/common/alert"
+	"github.com/openshift/osde2e/pkg/common/concurrentviper"
+	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/label"
 	"github.com/openshift/osde2e/pkg/common/util"
@@ -23,6 +25,12 @@ func init() {
 }
 
 var _ = ginkgo.Describe(certmanOperatorTestName, label.Operators, func() {
+	ginkgo.BeforeEach(func() {
+		if concurrentviper.GetBool(config.Hypershift) {
+			ginkgo.Skip("Certman Operator is not supported on HyperShift")
+		}
+	})
+
 	h := helper.New()
 
 	ginkgo.Context("certificate secret should be applied when cluster installed", func() {

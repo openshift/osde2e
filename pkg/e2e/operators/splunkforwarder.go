@@ -90,6 +90,12 @@ var _ = ginkgo.Describe(splunkForwarderBlocking, label.Operators, func() {
 
 // Informing SplunkForwarder Signal
 var _ = ginkgo.Describe(splunkForwarderInforming, label.Operators, label.Informing, func() {
+	ginkgo.BeforeEach(func() {
+		if viper.GetBool(config.Hypershift) {
+			ginkgo.Skip("Splunk Forwarder Operator is not deployed to a ROSA hosted-cp cluster (OSD-11605)")
+		}
+	})
+
 	operatorName := "splunk-forwarder-operator"
 	var operatorNamespace string = "openshift-splunk-forwarder-operator"
 	var operatorLockFile string = "splunk-forwarder-operator-lock"
@@ -198,7 +204,6 @@ func deleteSplunkforwarder(ctx context.Context, name string, namespace string, h
 	_, err := h.Dynamic().Resource(schema.GroupVersionResource{
 		Group: "splunkforwarder.managed.openshift.io", Version: "v1alpha1", Resource: "splunkforwarders",
 	}).Namespace(namespace).Get(ctx, name, metav1.GetOptions{})
-	log.Printf("Get splunkforwarder %s in namespace %s; Error:(%v)", name, operatorNamespace, err)
 	if err == nil {
 		e := h.Dynamic().Resource(schema.GroupVersionResource{
 			Group: "splunkforwarder.managed.openshift.io", Version: "v1alpha1", Resource: "splunkforwarders",

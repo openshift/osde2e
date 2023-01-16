@@ -3,6 +3,8 @@ package operators
 import (
 	"github.com/onsi/ginkgo/v2"
 	"github.com/openshift/osde2e/pkg/common/alert"
+	"github.com/openshift/osde2e/pkg/common/concurrentviper"
+	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/label"
 )
@@ -17,6 +19,12 @@ func init() {
 }
 
 var _ = ginkgo.Describe(osdMetricsExporterBasicTest, label.Operators, func() {
+	ginkgo.BeforeEach(func() {
+		if concurrentviper.GetBool(config.Hypershift) {
+			ginkgo.Skip("OSD Metrics Exporter is not supported on HyperShift")
+		}
+	})
+
 	var (
 		operatorNamespace = "openshift-osd-metrics"
 		operatorName      = "osd-metrics-exporter"

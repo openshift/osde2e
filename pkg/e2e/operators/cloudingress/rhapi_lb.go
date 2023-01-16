@@ -37,6 +37,9 @@ var _ = ginkgo.Describe("[Suite: operators] "+TestPrefix, label.Operators, func(
 		if viper.GetBool("ocm.ccs") != true {
 			ginkgo.Skip("Cluster is non-CCS. For now we skip rh-api LB reconcile test for non-CCS.")
 		}
+		if viper.GetBool(config.Hypershift) {
+			ginkgo.Skip("Cloud Ingress Operator is not supported on HyperShift")
+		}
 	})
 
 	h := helper.New()

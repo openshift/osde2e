@@ -3,13 +3,13 @@ package operators
 import (
 	"context"
 	"fmt"
-	"log"
 	"strings"
 	"time"
 
 	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/openshift/osde2e/pkg/common/alert"
+	"github.com/openshift/osde2e/pkg/common/concurrentviper"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/helper"
@@ -28,6 +28,12 @@ func init() {
 }
 
 var _ = ginkgo.Describe(deploymentValidationOperatorTestName, label.Informing, ginkgo.Ordered, func() {
+	ginkgo.BeforeEach(func() {
+		if concurrentviper.GetBool(config.Hypershift) {
+			ginkgo.Skip("Deployment Validation Operator is not supported on HyperShift")
+		}
+	})
+
 	const (
 		operatorNamespace      = "openshift-deployment-validation-operator"
 		operatorName           = "deployment-validation-operator"
@@ -155,7 +161,6 @@ func checkPodLogs(h *helper.H, namespace string, testNamespace string, name stri
 
 // Delete Namespace
 func deleteNamespace(ctx context.Context, namespace string, waitForDelete bool, h *helper.H) error {
-	log.Printf("Deleting namespace for namespace validation webhook (%s)", namespace)
 	err := h.Kube().CoreV1().Namespaces().Delete(ctx, namespace, metav1.DeleteOptions{})
 	if err != nil {
 		return fmt.Errorf("failed to delete namespace '%s': %v", namespace, err)

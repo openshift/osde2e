@@ -3,6 +3,8 @@ package operators
 import (
 	"github.com/onsi/ginkgo/v2"
 	"github.com/openshift/osde2e/pkg/common/alert"
+	"github.com/openshift/osde2e/pkg/common/concurrentviper"
+	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/label"
 )
@@ -14,6 +16,12 @@ func init() {
 }
 
 var _ = ginkgo.Describe(configureAlertManagerOperators, label.Operators, func() {
+	ginkgo.BeforeEach(func() {
+		if concurrentviper.GetBool(config.Hypershift) {
+			ginkgo.Skip("Configure AlertManager Operator is not supported on HyperShift")
+		}
+	})
+
 	operatorName := "configure-alertmanager-operator"
 	var operatorNamespace string = "openshift-monitoring"
 	var operatorLockFile string = "configure-alertmanager-operator-lock"

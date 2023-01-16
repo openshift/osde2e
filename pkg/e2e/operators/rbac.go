@@ -7,6 +7,7 @@ import (
 	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/openshift/osde2e/pkg/common/alert"
+	"github.com/openshift/osde2e/pkg/common/concurrentviper"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/helper"
@@ -30,6 +31,12 @@ func init() {
 }
 
 var _ = ginkgo.Describe(rbacOperatorBlocking, label.Operators, func() {
+	ginkgo.BeforeEach(func() {
+		if concurrentviper.GetBool(config.Hypershift) {
+			ginkgo.Skip("RBAC Permissions Operator is not supported on HyperShift")
+		}
+	})
+
 	operatorLockFile := "rbac-permissions-operator-lock"
 	var defaultDesiredReplicas int32 = 1
 
@@ -50,6 +57,11 @@ var _ = ginkgo.Describe(rbacOperatorBlocking, label.Operators, func() {
 })
 
 var _ = ginkgo.Describe(subjectPermissionsTestName, label.Operators, func() {
+	ginkgo.BeforeEach(func() {
+		if concurrentviper.GetBool(config.Hypershift) {
+			ginkgo.Skip("RBAC Permissions Operator is not supported on HyperShift")
+		}
+	})
 	h := helper.New()
 	checkSubjectPermissions(h, "dedicated-admins")
 })
