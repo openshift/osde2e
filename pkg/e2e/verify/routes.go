@@ -16,9 +16,13 @@ import (
 	"github.com/openshift/osde2e/pkg/common/expect"
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/label"
+	appsv1 "k8s.io/api/apps/v1"
+	v1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/e2e-framework/klient/k8s/resources"
 	"sigs.k8s.io/e2e-framework/klient/wait"
+	"sigs.k8s.io/e2e-framework/klient/wait/conditions"
 )
 
 var routesTestName string = "[Suite: e2e] Routes"
@@ -48,7 +52,16 @@ var _ = ginkgo.Describe(routesTestName, ginkgo.Ordered, label.HyperShift, label.
 			ginkgo.Skip("OAuth route is not available on a HyperShift cluster")
 		}
 
-		err := wait.For(func() (bool, error) {
+		deployment := &appsv1.Deployment{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      name,
+				Namespace: namespace,
+			},
+		}
+		err := wait.For(conditions.New(client).DeploymentConditionMatch(deployment, appsv1.DeploymentAvailable, v1.ConditionTrue), wait.WithTimeout(3*time.Minute))
+		expect.NoError(err, "deployment %s never became available", name)
+
+		err = wait.For(func() (bool, error) {
 			err := client.Get(ctx, name, namespace, &routev1.Route{})
 			if apierrors.IsNotFound(err) {
 				return false, nil
@@ -57,7 +70,7 @@ var _ = ginkgo.Describe(routesTestName, ginkgo.Ordered, label.HyperShift, label.
 				return false, err
 			}
 			return true, nil
-		}, wait.WithTimeout(3*time.Minute))
+		})
 		expect.NoError(err)
 
 		var route routev1.Route
