@@ -5,14 +5,12 @@ import (
 
 	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
-	"github.com/openshift/osde2e/pkg/common/util"
-	kubev1 "k8s.io/api/core/v1"
-
 	"github.com/openshift/osde2e/pkg/common/alert"
 	"github.com/openshift/osde2e/pkg/common/cluster"
+	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/helper"
+	kubev1 "k8s.io/api/core/v1"
 )
 
 const (
@@ -26,11 +24,16 @@ func init() {
 }
 
 var _ = ginkgo.Describe(masterVerticalTestName, func() {
-	defer ginkgo.GinkgoRecover()
-	h := helper.New()
+	var h *helper.H
+	ginkgo.BeforeEach(func() {
+		if viper.GetBool(config.Hypershift) {
+			ginkgo.Skip("HyperShift does not have exposed masters to scale")
+		}
+		h = helper.New()
+	})
 
 	masterVerticalTimeoutInSeconds := 7200
-	util.GinkgoIt("should be tested with MasterVertical", func(ctx context.Context) {
+	ginkgo.It("should be tested with MasterVertical", func(ctx context.Context) {
 		var err error
 		// Before we do anything, scale the cluster.
 		err = cluster.ScaleCluster(viper.GetString(config.Cluster.ID), numNodesToScaleTo)

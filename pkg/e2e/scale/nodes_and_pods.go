@@ -6,11 +6,11 @@ import (
 
 	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	kubev1 "k8s.io/api/core/v1"
-
 	"github.com/openshift/osde2e/pkg/common/alert"
+	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
+	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/helper"
-	"github.com/openshift/osde2e/pkg/common/util"
+	kubev1 "k8s.io/api/core/v1"
 )
 
 const (
@@ -24,11 +24,16 @@ func init() {
 }
 
 var _ = ginkgo.Describe(nodesPodsTestName, func() {
-	defer ginkgo.GinkgoRecover()
-	h := helper.New()
+	var h *helper.H
+	ginkgo.BeforeEach(func() {
+		if viper.GetBool(config.Hypershift) {
+			ginkgo.Skip("HyperShift does not support machinesets")
+		}
+		h = helper.New()
+	})
 
 	nodeVerticalTimeoutInSeconds := 3600
-	util.GinkgoIt("should be tested with NodeVertical", func(ctx context.Context) {
+	ginkgo.It("should be tested with NodeVertical", func(ctx context.Context) {
 		h.SetServiceAccount(ctx, "system:serviceaccount:%s:cluster-admin")
 		// setup runner
 		scaleCfg := scaleRunnerConfig{
@@ -55,7 +60,7 @@ var _ = ginkgo.Describe(nodesPodsTestName, func() {
 	}, float64(nodeVerticalTimeoutInSeconds))
 
 	podVerticalTimeoutInSeconds := 3600
-	util.GinkgoIt("should be tested with PodVertical", func(ctx context.Context) {
+	ginkgo.It("should be tested with PodVertical", func(ctx context.Context) {
 		h.SetServiceAccount(ctx, "system:serviceaccount:%s:cluster-admin")
 		// setup runner
 		scaleCfg := scaleRunnerConfig{
