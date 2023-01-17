@@ -11,7 +11,7 @@ import (
 	. "github.com/onsi/gomega" // go-staticcheck ST1001  should not use dot imports
 
 	"github.com/openshift/osde2e/pkg/common/alert"
-	"github.com/openshift/osde2e/pkg/common/concurrentviper"
+	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/label"
@@ -33,7 +33,7 @@ func init() {
 
 var _ = ginkgo.Describe(routeMonitorOperatorTestName, label.Informing, func() {
 	ginkgo.BeforeEach(func() {
-		if concurrentviper.GetBool(config.Hypershift) {
+		if viper.GetBool(config.Hypershift) {
 			ginkgo.Skip("Route Monitor Operator is not supported on HyperShift")
 		}
 	})
