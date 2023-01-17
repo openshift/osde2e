@@ -21,6 +21,8 @@ import (
 	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
+	"github.com/openshift/osde2e/pkg/common/concurrentviper"
+	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/util"
 
 	routev1 "github.com/openshift/api/route/v1"
@@ -67,6 +69,12 @@ var _ = ginkgo.Describe(customDomainsOperatorTestName, label.Operators, func() {
 			},
 		},
 	}
+
+	ginkgo.BeforeEach(func() {
+		if concurrentviper.GetBool(config.Hypershift) {
+			ginkgo.Skip("CustomDomains Operator is not supported on HyperShift")
+		}
+	})
 
 	ginkgo.Context("Should allow dedicated-admins to", func() {
 		var (

@@ -32,6 +32,9 @@ var _ = ginkgo.Describe("[Suite: operators] "+TestPrefix, label.Operators, func(
 		if viper.GetBool(rosaprovider.STS) {
 			ginkgo.Skip("STS does not support CIO")
 		}
+		if viper.GetBool(config.Hypershift) {
+			ginkgo.Skip("Cloud Ingress Operator is not supported on HyperShift")
+		}
 	})
 
 	h := helper.New()

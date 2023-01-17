@@ -9,6 +9,7 @@ import (
 	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/openshift/osde2e/pkg/common/alert"
+	"github.com/openshift/osde2e/pkg/common/concurrentviper"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/helper"
@@ -28,6 +29,12 @@ func init() {
 }
 
 var _ = ginkgo.Describe(pruneJobsTestName, label.Operators, func() {
+	ginkgo.BeforeEach(func() {
+		if concurrentviper.GetBool(config.Hypershift) {
+			ginkgo.Skip("Jobs pruner is not deployed on HyperShift")
+		}
+	})
+
 	h := helper.New()
 	ginkgo.Context("pruner jobs should works", func() {
 		namespace := "openshift-sre-pruning"

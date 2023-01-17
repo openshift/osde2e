@@ -9,6 +9,7 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/openshift/osde2e/pkg/common/alert"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
+	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/label"
 	"github.com/openshift/osde2e/pkg/common/util"
@@ -31,6 +32,9 @@ var _ = ginkgo.Describe(veleroOperatorTestName, label.Operators, func() {
 	ginkgo.BeforeEach(func() {
 		if viper.GetBool("rosa.STS") {
 			ginkgo.Skip("STS does not support MVO")
+		}
+		if viper.GetBool(config.Hypershift) {
+			ginkgo.Skip("Managed Velero Operator is not supported on HyperShift")
 		}
 	})
 	operatorName := "managed-velero-operator"
