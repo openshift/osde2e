@@ -136,7 +136,6 @@ func (h *H) Setup() error {
 			Expect(err).NotTo(HaveOccurred())
 		}
 	} else {
-		log.Printf("Setting project name to %s", project)
 		h.proj, err = h.Project().ProjectV1().Projects().Get(ctx, project, metav1.GetOptions{})
 		if h.OutsideGinkgo && err != nil {
 			return fmt.Errorf("error retrieving project: %s", err.Error())
@@ -434,7 +433,6 @@ func (h *H) InspectState(ctx context.Context) {
 	project := viper.GetString(config.Project)
 
 	if h.proj == nil && project != "" {
-		log.Printf("Setting project name to %s", project)
 		h.proj, err = h.Project().ProjectV1().Projects().Get(ctx, project, metav1.GetOptions{})
 		Expect(err).ShouldNot(HaveOccurred(), "failed to retrieve project")
 		Expect(h.proj).ShouldNot(BeNil())
