@@ -8,8 +8,9 @@ import (
 	kubev1 "k8s.io/api/core/v1"
 
 	"github.com/openshift/osde2e/pkg/common/alert"
+	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
+	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/helper"
-	"github.com/openshift/osde2e/pkg/common/util"
 )
 
 var performanceTestName string = "[Suite: scale-performance] Scaling"
@@ -19,11 +20,16 @@ func init() {
 }
 
 var _ = ginkgo.Describe(performanceTestName, func() {
-	defer ginkgo.GinkgoRecover()
-	h := helper.New()
+	var h *helper.H
+	ginkgo.BeforeEach(func() {
+		if viper.GetBool(config.Hypershift) {
+			ginkgo.Skip("Not supported on HyperShift")
+		}
+		h = helper.New()
+	})
 
 	httpTimeoutInSeconds := 7200
-	util.GinkgoIt("should be tested with HTTP", func(ctx context.Context) {
+	ginkgo.It("should be tested with HTTP", func(ctx context.Context) {
 		h.SetServiceAccount(ctx, "system:serviceaccount:%s:cluster-admin")
 		// setup runner
 		scaleCfg := scaleRunnerConfig{
