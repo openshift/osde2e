@@ -115,7 +115,7 @@ There are many options to drive an osde2e run. Please refer to the [config packa
  
 ### Composable configs
  
-OSDe2e comes with a number of [configs] that can be passed to the `osde2e test` command using the -configs argument. These can be strung together in a comma separated list to create a more complex scenario for testing.
+OSDe2e comes with a number of [configs] that can be passed to the `osde2e test` command using the --configs argument. These can be strung together in a comma separated list to create a more complex scenario for testing.
  
 ```
 $ osde2e test --configs prod,e2e-suite,conformance-suite
@@ -157,6 +157,26 @@ The composable configs consist of a number of small YAML files that can all be l
 ```
 osde2e test --custom-config ./osde2e.yaml
 ```
+
+The custom config below is a basic example for deploying a ROSA STS cluster and running
+all of the OSD operators tests that do not have the informing label associated to them.
+
+```
+dryRun: false
+provider: rosa
+cloudProvider:
+  providerId: aws
+  region: us-east-1
+rosa:
+  env: stage
+  STS: true
+cluster:
+  name: osde2e
+tests:
+  ginkgoLabelFilter: Operators && !Informing
+```
+
+A list of existing config files that can be used are included in [Config variables].
  
 #### Via the command-line
  
@@ -178,28 +198,11 @@ POLLING_TIMEOUT=1     ./out/osde2e test --cluster-id=$CLUSTER_ID  --configs stag
 ```
  
 A list of commonly used CLI flags are included in [Config variables].
- 
-##### Full custom YAML config example
-```
-dryRun: false
-cluster:
-   name: jsica-test
-   multiAZ: true
-ocm:
-   debug: false
-   token: [Redacted]
-   env: stage
-tests:
-   testsToRun:
-   - '[Suite: e2e]'
-```
 
-A list of existing config files that can be used are included in [Config variables].
- 
 #### Order of precedence
  
 Config options are currently parsed by loading defaults, attempting to load environment variables, attempting to load composable configs, and finally attempting to load config data from the custom YAML file. There are instances where you may want to have most of your config in a custom YAML file while keeping one or two sensitive config options as environment variables (OCM Token)
- 
+
 ### Testing against non OSD clusters
  
 It is possible to test against non-OSD clusters by specifying a kubeconfig to test against.
@@ -211,24 +214,65 @@ osde2e test --configs prod --custom-config .osde2e.yaml
 ```
 *Note: You must skip certain Operator tests that only exist in a hosted OSD instance. This can be skipped by skipping the operators test suite.*
  
-## Different Test Types
-Core tests and Operator tests reside within the OSDe2e repo and are maintained by the CICD team. The tests are written and compiled as part of the OSDe2e project.
-* Core Tests
-* OpenShift Conformance
-* Scale testing
-* OC Must Gather
-* Verify
- * All pods are healthy or successful
- * ImageStreams exist
- * Project creation possible
- * Ingress to console possible
-* [Operator tests]
+## Tests
+
+### Selecting Tests To Run
+
+OSDe2e supports a couple different ways you can select which tests you would like to run. Below presents
+the commonly used methods for this:
+
+1. Using the label filter. Labels are ginkgos way to tag test cases. The examples below
+   will tell osde2e to run all tests that have the `E2E` label applied.
+
+```
+# Command line option
+osde2e test --label-filter E2E
+
+# Passed in using a custom config file
+tests:
+  ginkgoLabelFilter: E2E
+```
+
+2. Using focus strings. Focus strings are ginkos way to select test cases based on string regex.
+
+```
+# Command line option
+osde2e test --focus-tests "OCM Agent Operator"
+
+# Custom config file
+tests:
+  focus: "OCM Agent Operator"
+```
+
+3. Using a combination of labels and focus strings to fine tune your test selection.
+   The examples below tell osde2e to run all ocm agent operator tests and avoid running
+   the upgrade test case.
+
+```
+# Command line options
+osde2e test --label-filter "Operators && !Upgrade" --focus-tests "OCM Agent Operator"
+
+# Custom config file
+tests:
+  ginkgoLabelFilter: "Operators && !Upgrade"
+  focus: "OCM Agent Operator"
+```
+
+### Test Types
+
+OSDe2e currently holds all core and operator specific tests and are maintained by the CICD team.
+Test types range from core OSD verification, OSD operators to scale/conformance.
+
+### Writing Tests
+
+Refer to the [Writing Tests] document for guidelines and standards.
  
 Third-party (Addon) tests are built as containers that spin up and report back results to OSDe2e. These containers are built and maintained by external groups looking to get CI signal for their product within OSD. The definition of a third-party test is maintained within the `managed-tenants` repo and is returned via the Add-Ons API.
  
 For more information please see the [Addon Testing Guide]
  
-## Operator Testing
+### Operator Testing
+
 Much like the different phases of operators laid out on OperatorHub, Operator tests using OSDe2e falls under one of a few categories:
  
 **Basic Testing**
@@ -240,7 +284,8 @@ Flexing the actual purpose of the Operator. For example, if the operator created
 **Advanced Testing**
 Collecting metrics of the above tests as well as testing recovery of failures. Example: If the pod(s) the operator runs gets deleted, what happens? If the pods created by the operator get deleted does it recover? Testing at this level should be able to capture edge-cases even in the automated CI runs. It involves significant up front development and therefore is not likely the primary target of operator authors.
  
-## Anatomy Of A Test Run
+### Anatomy Of A Test Run
+
 There are several conditional checks (is this an upgrade test, is this a dry-run) that may impact what stages an OSDe2e run may contain, but the most complicated is an upgrade test:
  
 1. Load Config
@@ -290,14 +335,10 @@ If each job reported for the failures of all recent jobs, we'd create an enormou
 
 This is a heuristic designed to automatically close incidents when the underlying test problem has been dealt with. If we stop seeing failures for a testcase, it probably means that the testcase has stopped failing. This can backfire, and a more intelligent heuristic is certainly possible.
  
-## Writing tests
-To write your own test, see [Writing Tests].
- 
 [OpenShift Offline Token]:https://cloud.redhat.com/openshift/token
 [configs]:/configs/
 [config package]:/pkg/common/config/config.go
 [Makefile]:/Makefile
-[Operator tests]:/pkg/e2e/operators/
 [Addon Testing Guide]:/docs/Addons.md
 [Grafana dashboards]:https://grafana.datahub.redhat.com/dashboard/db/osd-health-metrics?orgId=1
 [Writing Tests]:/docs/Writing-Tests.md

@@ -1,4 +1,2 @@
 tests:
-    testsToRun:
-    - '\[Suite\: informing\]'
-    - 'OCM Agent Operator'
+  ginkgoLabelFilter: Informing
