@@ -5,7 +5,6 @@ import (
 	"crypto/tls"
 	"fmt"
 	"net/http"
-	"time"
 
 	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -19,10 +18,8 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/e2e-framework/klient/k8s/resources"
 	"sigs.k8s.io/e2e-framework/klient/wait"
-	"sigs.k8s.io/e2e-framework/klient/wait/conditions"
 )
 
 var routesTestName string = "[Suite: e2e] Routes"
@@ -52,13 +49,22 @@ var _ = ginkgo.Describe(routesTestName, ginkgo.Ordered, label.HyperShift, label.
 			ginkgo.Skip("OAuth route is not available on a HyperShift cluster")
 		}
 
-		deployment := &appsv1.Deployment{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      name,
-				Namespace: namespace,
-			},
-		}
-		err := wait.For(conditions.New(client).DeploymentConditionMatch(deployment, appsv1.DeploymentAvailable, v1.ConditionTrue), wait.WithTimeout(3*time.Minute))
+		err := wait.For(func() (bool, error) {
+			deployment := &appsv1.Deployment{}
+			err := client.Get(ctx, name, namespace, deployment)
+			if apierrors.IsNotFound(err) {
+				return false, nil
+			}
+			if err != nil {
+				return false, err
+			}
+			for _, cond := range deployment.Status.Conditions {
+				if cond.Type == appsv1.DeploymentAvailable && cond.Status == v1.ConditionTrue {
+					return true, nil
+				}
+			}
+			return false, nil
+		})
 		expect.NoError(err, "deployment %s never became available", name)
 
 		err = wait.For(func() (bool, error) {
@@ -77,12 +83,13 @@ var _ = ginkgo.Describe(routesTestName, ginkgo.Ordered, label.HyperShift, label.
 		err = client.Get(ctx, name, namespace, &route)
 		expect.NoError(err)
 
-		for _, ingress := range route.Status.Ingress {
+		ingress := route.Status.Ingress[0]
+		Eventually(func(g Gomega) {
 			response, err := httpClient.Get(fmt.Sprintf("https://%s", ingress.Host))
-			expect.NoError(err)
-			Expect(response.StatusCode).To(Equal(statusCode))
-			Expect(response.Proto).To(Equal("HTTP/1.1"))
-		}
+			g.Expect(err).To(BeNil())
+			g.Expect(response).To(HaveHTTPStatus(statusCode))
+			g.Expect(response.Proto).To(Equal("HTTP/1.1"))
+		}).Should(Succeed())
 	},
 		ginkgo.Entry("Console", "console", "openshift-console", http.StatusOK),
 		ginkgo.Entry("OAuth", "oauth-openshift", "openshift-authentication", http.StatusForbidden),
