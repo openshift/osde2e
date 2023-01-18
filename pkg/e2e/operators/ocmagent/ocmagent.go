@@ -7,13 +7,12 @@ import (
 	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/openshift/osde2e/pkg/common/alert"
-	"github.com/openshift/osde2e/pkg/common/concurrentviper"
+	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/expect"
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/label"
 	"github.com/openshift/osde2e/pkg/e2e/operators"
-
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 
@@ -38,7 +37,7 @@ func init() {
 // TODO: Separate PR to remove 'Informing' label from test suite
 var _ = ginkgo.Describe(suiteName, ginkgo.Ordered, label.Operators, label.Informing, func() {
 	ginkgo.BeforeEach(func() {
-		if concurrentviper.GetBool(config.Hypershift) {
+		if viper.GetBool(config.Hypershift) {
 			ginkgo.Skip("OCM Agent Operator is not supported on HyperShift")
 		}
 	})

@@ -9,7 +9,6 @@ import (
 	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/openshift/osde2e/pkg/common/alert"
-	"github.com/openshift/osde2e/pkg/common/concurrentviper"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/helper"
@@ -29,7 +28,7 @@ func init() {
 
 var _ = ginkgo.Describe(deploymentValidationOperatorTestName, label.Informing, ginkgo.Ordered, func() {
 	ginkgo.BeforeEach(func() {
-		if concurrentviper.GetBool(config.Hypershift) {
+		if viper.GetBool(config.Hypershift) {
 			ginkgo.Skip("Deployment Validation Operator is not supported on HyperShift")
 		}
 	})
