@@ -159,46 +159,43 @@ func (o *OCMProvider) LaunchCluster(clusterName string) (string, error) {
 		}
 
 		if viper.GetString(config.CloudProvider.CloudProviderID) == "aws" && awsAccount != "" && awsAccessKey != "" && awsSecretKey != "" {
+			awsBuilder := v1.NewAWS().
+				AccountID(awsAccount).
+				AccessKeyID(awsAccessKey).
+				SecretAccessKey(awsSecretKey)
 			if viper.GetString(config.AWSVPCSubnetIDs) != "" {
 				subnetIDs := strings.Split(viper.GetString(config.AWSVPCSubnetIDs), ",")
-				awsBuilder := v1.NewAWS().
-					AccountID(awsAccount).
-					AccessKeyID(awsAccessKey).
-					SecretAccessKey(awsSecretKey).
-					SubnetIDs(subnetIDs...)
-				newCluster = newCluster.CCS(v1.NewCCS().Enabled(true)).AWS(awsBuilder)
-				if len(subnetIDs) > 0 {
-					cloudProviderData, err := v1.NewCloudProviderData().
-						AWS(awsBuilder).
-						Region(v1.NewCloudRegion().ID(region)).
-						Build()
-					if err != nil {
-						return "", fmt.Errorf("error building AWS cloud provider data for retrieving Availability Zones: %v", err)
-					}
-					subnetworks, err := o.GetSubnetworks(cloudProviderData)
-					if err != nil {
-						return "", fmt.Errorf("error retrieving AWS subnetworks: %v", err)
-					}
-					availabilityZones := GetAvailabilityZones(subnetworks, subnetIDs)
-					nodeBuilder.AvailabilityZones(availabilityZones...)
+				awsBuilder = awsBuilder.SubnetIDs(subnetIDs...)
+				cloudProviderData, err := v1.NewCloudProviderData().
+					AWS(awsBuilder).
+					Region(v1.NewCloudRegion().ID(region)).
+					Build()
+				if err != nil {
+					return "", fmt.Errorf("error building AWS cloud provider data for retrieving Availability Zones: %v", err)
 				}
-				if viper.GetBool(config.Cluster.UseProxyForInstall) {
-					proxy := v1.NewProxy()
-					if userCaBundle := viper.GetString(config.Proxy.UserCABundle); userCaBundle != "" {
-						userCaBundleData, err := o.LoadUserCaBundleData(userCaBundle)
-						if err != nil {
-							return "", fmt.Errorf("error loading CA contents: %v", err)
-						}
-						newCluster = newCluster.AdditionalTrustBundle(userCaBundleData)
+				subnetworks, err := o.GetSubnetworks(cloudProviderData)
+				if err != nil {
+					return "", fmt.Errorf("error retrieving AWS subnetworks: %v", err)
+				}
+				availabilityZones := GetAvailabilityZones(subnetworks, subnetIDs)
+				nodeBuilder.AvailabilityZones(availabilityZones...)
+			}
+			if viper.GetBool(config.Cluster.UseProxyForInstall) {
+				proxy := v1.NewProxy()
+				if userCaBundle := viper.GetString(config.Proxy.UserCABundle); userCaBundle != "" {
+					userCaBundleData, err := o.LoadUserCaBundleData(userCaBundle)
+					if err != nil {
+						return "", fmt.Errorf("error loading CA contents: %v", err)
 					}
-					if httpProxy := viper.GetString(config.Proxy.HttpProxy); httpProxy != "" {
-						proxy = proxy.HTTPProxy(httpProxy)
-						newCluster = newCluster.Proxy(proxy)
-					}
-					if httpsProxy := viper.GetString(config.Proxy.HttpsProxy); httpsProxy != "" {
-						proxy = proxy.HTTPSProxy(httpsProxy)
-						newCluster = newCluster.Proxy(proxy)
-					}
+					newCluster = newCluster.AdditionalTrustBundle(userCaBundleData)
+				}
+				if httpProxy := viper.GetString(config.Proxy.HttpProxy); httpProxy != "" {
+					proxy = proxy.HTTPProxy(httpProxy)
+					newCluster = newCluster.Proxy(proxy)
+				}
+				if httpsProxy := viper.GetString(config.Proxy.HttpsProxy); httpsProxy != "" {
+					proxy = proxy.HTTPSProxy(httpsProxy)
+					newCluster = newCluster.Proxy(proxy)
 				}
 			}
 		} else if viper.GetString(config.CloudProvider.CloudProviderID) == "gcp" && viper.GetString(GCPProjectID) != "" {
