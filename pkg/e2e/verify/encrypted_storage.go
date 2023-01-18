@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"strings"
 	"time"
 
@@ -24,6 +25,7 @@ import (
 	rbacv1 "k8s.io/api/rbac/v1"
 	storagev1 "k8s.io/api/storage/v1"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -424,4 +426,35 @@ func deleteClusterRole(ctx context.Context, h *helper.H, name string) error {
 
 func deleteStorageClass(ctx context.Context, h *helper.H, name string) error {
 	return h.Kube().StorageV1().StorageClasses().Delete(ctx, name, metav1.DeleteOptions{})
+}
+
+func deletePod(ctx context.Context, name string, namespace string, h *helper.H) error {
+	_, err := h.Kube().CoreV1().Pods(namespace).Get(ctx, name, metav1.GetOptions{})
+	log.Printf("Check before deleting pod %s, error: %v", name, err)
+	if err == nil {
+		err = h.Kube().CoreV1().Pods(namespace).Delete(ctx, name, metav1.DeleteOptions{})
+		log.Printf("Deleting pod %s, error: %v", name, err)
+
+		// Wait for the pod to delete.
+		err = wait.PollImmediate(5*time.Second, 5*time.Minute, func() (bool, error) {
+			if _, err := h.Kube().CoreV1().Pods(namespace).Get(ctx, name, metav1.GetOptions{}); err != nil {
+				return true, nil
+			}
+			return false, nil
+		})
+
+	}
+	return err
+}
+
+// deletePersistentVolumeClaim deletes the PVC.
+func deletePersistentVolumeClaim(ctx context.Context, h *helper.H, pvcName string, ns string) error {
+	if h != nil && len(pvcName) > 0 {
+		log.Printf("Deleting PersistentVolumeClaim %q", pvcName)
+		err := h.Kube().CoreV1().PersistentVolumeClaims(ns).Delete(ctx, pvcName, metav1.DeleteOptions{})
+		if err != nil && !apierrors.IsNotFound(err) {
+			return fmt.Errorf("PVC Delete API error: %v", err)
+		}
+	}
+	return nil
 }
