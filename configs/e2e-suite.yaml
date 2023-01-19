@@ -1,7 +1,3 @@
 tests:
-  testsToRun:
-  - '\[Suite\: e2e\]'
-  - '\[Suite\: operators\]'
-  - '\[Suite\: service-definition\]'
-  - '\[Suite\: app-builds\]'
-  - 'Managed Cluster Validating Webhooks'
+  ginkgoLabelFilter: >
+    (E2E || Operators || ServiceDefinition || AppBuilds) && !Informing
