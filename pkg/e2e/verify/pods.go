@@ -6,34 +6,35 @@ import (
 
 	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
-	"github.com/openshift/osde2e/pkg/common/config"
-
-	v1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 	"github.com/openshift/osde2e/pkg/common/alert"
+	"github.com/openshift/osde2e/pkg/common/expect"
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/label"
-	"github.com/openshift/osde2e/pkg/common/util"
+	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/e2e-framework/klient/k8s/resources"
 )
 
 var (
-	podsTestName        = "[Suite: e2e] Pods"
-	e2eTimeoutInSeconds = viper.GetInt(config.Tests.PollingTimeout)
+	podsTestName = "[Suite: e2e] Pods"
 )
 
 func init() {
 	alert.RegisterGinkgoAlert(podsTestName, "SD-CICD", "Diego Santamaria", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
 }
 
-var _ = ginkgo.Describe(podsTestName, label.E2E, func() {
-	h := helper.New()
+var _ = ginkgo.Describe(podsTestName, ginkgo.Ordered, label.HyperShift, label.E2E, func() {
+	var h *helper.H
+	var client *resources.Resources
+	ginkgo.BeforeAll(func() {
+		h = helper.New()
+		client = h.AsUser("")
+	})
 
-	util.GinkgoIt("should not be Failed", func(ctx context.Context) {
-		list, err := h.Kube().CoreV1().Pods(metav1.NamespaceAll).List(ctx, metav1.ListOptions{})
+	ginkgo.It("should not be Failed", func(ctx context.Context) {
+		list := &v1.PodList{}
 		filteredList := &v1.PodList{}
-
+		expect.NoError(client.WithNamespace(metav1.NamespaceAll).List(ctx, list))
 		for _, pod := range list.Items {
 			if pod.Status.Phase == v1.PodFailed {
 				if len(pod.GetOwnerReferences()) > 0 {
@@ -46,12 +47,9 @@ var _ = ginkgo.Describe(podsTestName, label.E2E, func() {
 						continue
 					}
 				}
-
 				filteredList.Items = append(filteredList.Items, pod)
 			}
 		}
-		Expect(err).NotTo(HaveOccurred(), "couldn't list Pods")
-		Expect(filteredList).NotTo(BeNil())
 		Expect(filteredList.Items).Should(HaveLen(0), "'%d' Pods are 'Failed'", len(filteredList.Items))
-	}, float64(e2eTimeoutInSeconds))
+	})
 })
