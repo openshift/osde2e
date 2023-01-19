@@ -2,21 +2,26 @@ package verify
 
 import (
 	"context"
-	"fmt"
-	"log"
 	"time"
 
 	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	v1 "github.com/openshift/api/security/v1"
+	securityv1 "github.com/openshift/api/security/v1"
 	"github.com/openshift/osde2e/pkg/common/alert"
+	"github.com/openshift/osde2e/pkg/common/expect"
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/label"
-	"github.com/openshift/osde2e/pkg/common/util"
-	apiv1 "k8s.io/api/core/v1"
+	appsv1 "k8s.io/api/apps/v1"
+	v1 "k8s.io/api/core/v1"
+	rbacv1 "k8s.io/api/rbac/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/kubectl/pkg/util/slice"
+	"k8s.io/utils/pointer"
+	"sigs.k8s.io/e2e-framework/klient/k8s"
+	"sigs.k8s.io/e2e-framework/klient/k8s/resources"
+	"sigs.k8s.io/e2e-framework/klient/wait"
+	"sigs.k8s.io/e2e-framework/klient/wait/conditions"
 )
 
 var dedicatedAdminSccTestName = "[Suite: e2e] [OSD] RBAC Dedicated Admins SCC permissions"
@@ -25,243 +30,106 @@ func init() {
 	alert.RegisterGinkgoAlert(dedicatedAdminSccTestName, "SD-CICD", "Matt Bargenquast", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
 }
 
-var _ = ginkgo.Describe(dedicatedAdminSccTestName, label.E2E, func() {
-	h := helper.New()
-
-	workloadDir := "workloads/e2e/scc"
-	// How long to wait for prometheus pods to restart
-	prometheusRestartPollingDuration := 4 * time.Minute
-
-	ginkgo.Context("Dedicated Admin permissions", func() {
-		util.GinkgoIt("should include anyuid", func(ctx context.Context) {
-			checkSccPermissions(ctx, h, "dedicated-admins-cluster", "anyuid")
-		})
-
-		util.GinkgoIt("should include nonroot", func(ctx context.Context) {
-			checkSccPermissions(ctx, h, "dedicated-admins-cluster", "nonroot")
-		})
-
-		util.GinkgoIt("can create pods with SCCs", func(ctx context.Context) {
-			_, err := helper.ApplyYamlInFolder(workloadDir, h.CurrentProject(), h.Kube())
-			Expect(err).NotTo(HaveOccurred(), "couldn't apply workload yaml")
-		})
+var _ = ginkgo.Describe(dedicatedAdminSccTestName, ginkgo.Ordered, label.HyperShift, label.E2E, func() {
+	var h *helper.H
+	var client *resources.Resources
+	ginkgo.BeforeAll(func() {
+		h = helper.New()
+		client = h.AsUser("")
 	})
-	ginkgo.Context("scc-test", func() {
-		util.GinkgoIt("new SCC does not break pods", func(ctx context.Context) {
-			// Test to verify that creation of a permissive scc does not disrupt ability to run pods https://bugzilla.redhat.com/show_bug.cgi?id=1868976
-			newScc := makeMinimalSCC("scc-test")
-			log.Printf("SCC:(%v)", newScc)
-			err := createScc(ctx, newScc, h)
-			Expect(err).NotTo(HaveOccurred())
-			defer func() {
-				err = deleteScc(ctx, "scc-test", h)
-				Expect(err).NotTo(HaveOccurred())
-			}()
-			log.Printf("Error:(%v)", err)
 
-			// Reestarting the prometheus operator
-			err = restartOperator(ctx, h, "prometheus-operator", "openshift-monitoring")
-			Expect(err).NotTo(HaveOccurred())
-			log.Printf("Error:(%v)", err)
-			// Deleting all prometheus pods
-			list, _ := FilterPods(ctx, "openshift-monitoring", "app.kubernetes.io/name=prometheus", h)
-			names, _ := GetPodNames(list, h)
-			log.Printf("Names of pods:(%v)", names)
-			numPrometheusPods := deletePods(ctx, names, "openshift-monitoring", h)
-			// Verifying the same number of running prometheus pods has come up
-			err = wait.PollImmediate(2*time.Second, prometheusRestartPollingDuration, func() (bool, error) {
-				pollList, _ := FilterPods(ctx, "openshift-monitoring", "app.kubernetes.io/name=prometheus", h)
-				if !AllDifferentPods(list, pollList) {
-					return false, nil
-				}
-				_, newNamesNum := GetPodNames(pollList, h)
-				if numPrometheusPods == newNamesNum {
-					return true, nil
-				}
+	ginkgo.DescribeTable("should include", func(ctx context.Context, scc string) {
+		clusterRole := &rbacv1.ClusterRole{}
+		expect.NoError(client.Get(ctx, "dedicated-admins-cluster", "", clusterRole))
+		for _, rule := range clusterRole.Rules {
+			if slice.ContainsString(rule.Resources, "securitycontextconstraints", nil) && slice.ContainsString(rule.Verbs, "use", nil) {
+				Expect(slice.ContainsString(rule.ResourceNames, scc, nil)).To(BeTrue())
+			}
+		}
+	},
+		ginkgo.Entry("anyuid", "anyuid"),
+		ginkgo.Entry("nonroot", "nonroot"),
+	)
+
+	ginkgo.It("allow a pod to be created with a SecurityContext", func(ctx context.Context) {
+		pod := &v1.Pod{
+			ObjectMeta: metav1.ObjectMeta{
+				GenerateName: "osde2e-anyuid-",
+				Namespace:    h.CurrentProject(),
+			},
+			Spec: v1.PodSpec{
+				SecurityContext: &v1.PodSecurityContext{
+					RunAsUser:    pointer.Int64(987654321),
+					RunAsNonRoot: pointer.Bool(false),
+				},
+				Containers: []v1.Container{
+					{
+						Name:  "test",
+						Image: "openshift/hello-openshift",
+						SecurityContext: &v1.SecurityContext{
+							AllowPrivilegeEscalation: pointer.Bool(false),
+							Capabilities:             &v1.Capabilities{Drop: []v1.Capability{"ALL"}},
+							SeccompProfile:           &v1.SeccompProfile{Type: v1.SeccompProfileTypeRuntimeDefault},
+						},
+					},
+				},
+			},
+		}
+		expect.NoError(client.Create(ctx, pod))
+		expect.NoError(client.Delete(ctx, pod))
+	})
+
+	ginkgo.It("new SCCs do not break existing workloads", func(ctx context.Context) {
+		deploymentName := "prometheus-operator"
+		namespace := "openshift-monitoring"
+
+		err := wait.For(func() (bool, error) {
+			deployment := &appsv1.Deployment{}
+			err := client.Get(ctx, deploymentName, namespace, deployment)
+			if apierrors.IsNotFound(err) {
 				return false, nil
-			})
-			Expect(err).NotTo(HaveOccurred())
-		}, (prometheusRestartPollingDuration + 30*time.Second).Seconds())
+			}
+			if err != nil {
+				return false, err
+			}
+			return true, nil
+		})
+		expect.NoError(err)
+
+		deployment := &appsv1.Deployment{ObjectMeta: metav1.ObjectMeta{Name: deploymentName, Namespace: namespace}}
+		err = wait.For(conditions.New(client).DeploymentConditionMatch(deployment, appsv1.DeploymentAvailable, v1.ConditionTrue), wait.WithTimeout(60*time.Second))
+		expect.NoError(err)
+
+		scc := &securityv1.SecurityContextConstraints{
+			ObjectMeta:         metav1.ObjectMeta{GenerateName: "osde2e-scc-"},
+			Groups:             []string{"system:authenticated"},
+			SELinuxContext:     securityv1.SELinuxContextStrategyOptions{Type: securityv1.SELinuxStrategyRunAsAny},
+			RunAsUser:          securityv1.RunAsUserStrategyOptions{Type: securityv1.RunAsUserStrategyRunAsAny},
+			FSGroup:            securityv1.FSGroupStrategyOptions{Type: securityv1.FSGroupStrategyRunAsAny},
+			SupplementalGroups: securityv1.SupplementalGroupsStrategyOptions{Type: securityv1.SupplementalGroupsStrategyRunAsAny},
+		}
+		expect.NoError(client.Create(ctx, scc))
+
+		deployment = &appsv1.Deployment{}
+		expect.NoError(client.Get(ctx, deploymentName, namespace, deployment))
+
+		originalReplicaCount := deployment.Spec.DeepCopy().Replicas
+		deployment.Spec.Replicas = pointer.Int32(0)
+		expect.NoError(client.Update(ctx, deployment))
+
+		err = wait.For(conditions.New(client).ResourceScaled(deployment, func(object k8s.Object) int32 {
+			return object.(*appsv1.Deployment).Status.ReadyReplicas
+		}, 0))
+		expect.NoError(err, "deployment never scaled to 0")
+
+		deployment.Spec.Replicas = originalReplicaCount
+		expect.NoError(client.Update(ctx, deployment))
+
+		err = wait.For(conditions.New(client).ResourceScaled(deployment, func(object k8s.Object) int32 {
+			return object.(*appsv1.Deployment).Status.ReadyReplicas
+		}, *originalReplicaCount))
+		expect.NoError(err, "deployment never scaled back up")
+
+		expect.NoError(client.Delete(ctx, scc))
 	})
 })
-
-// AllDifferentPods returns whether or not the newPods contains a pod with
-// the same UID as a pod in originalPods. It is useful for ensureing that
-// all pods in a given deployment have been restarted (the new ones will
-// have different UIDs).
-func AllDifferentPods(originalPods, newPods *apiv1.PodList) bool {
-	orig := make(map[types.UID]struct{})
-	for _, p := range originalPods.Items {
-		orig[p.ObjectMeta.UID] = struct{}{}
-	}
-	for _, p := range newPods.Items {
-		if _, ok := orig[p.ObjectMeta.UID]; ok {
-			return false
-		}
-	}
-	return true
-}
-
-func checkSccPermissions(ctx context.Context, h *helper.H, clusterRole string, scc string) {
-	// Get the cluster role containing the definition
-	cr, err := h.Kube().RbacV1().ClusterRoles().Get(ctx, clusterRole, metav1.GetOptions{})
-	Expect(err).ToNot(HaveOccurred(), "failed to get clusterRole %s\n", clusterRole)
-
-	foundRule := false
-	for _, rule := range cr.Rules {
-
-		// Find rules relating to SCCs
-		isSccRule := false
-		for _, resource := range rule.Resources {
-			if resource == "securitycontextconstraints" {
-				isSccRule = true
-			}
-		}
-		if !isSccRule {
-			continue
-		}
-
-		// check for 'use' verb
-		for _, verb := range rule.Verbs {
-			if verb == "use" {
-				foundRule = true
-				break
-			}
-		}
-	}
-	Expect(foundRule).To(BeTrue())
-}
-
-func makeMinimalSCC(name string) v1.SecurityContextConstraints {
-	scc := v1.SecurityContextConstraints{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "SecurityContextConstraints",
-			APIVersion: "security.openshift.io/v1",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name: name,
-		},
-		Groups: []string{
-			"system:authenticated",
-		},
-
-		SELinuxContext: v1.SELinuxContextStrategyOptions{
-			Type: v1.SELinuxStrategyRunAsAny,
-		},
-		RunAsUser: v1.RunAsUserStrategyOptions{
-			Type: v1.RunAsUserStrategyRunAsAny,
-		},
-		FSGroup: v1.FSGroupStrategyOptions{
-			Type: v1.FSGroupStrategyRunAsAny,
-		},
-		SupplementalGroups: v1.SupplementalGroupsStrategyOptions{
-			Type: v1.SupplementalGroupsStrategyRunAsAny,
-		},
-	}
-	return scc
-}
-
-func createScc(ctx context.Context, scc v1.SecurityContextConstraints, h *helper.H) error {
-	_, err := h.Security().SecurityV1().SecurityContextConstraints().Create(ctx, &scc, metav1.CreateOptions{})
-	return err
-}
-
-func deleteScc(ctx context.Context, scc string, h *helper.H) error {
-	err := h.Security().SecurityV1().SecurityContextConstraints().Delete(ctx, scc, metav1.DeleteOptions{})
-	return err
-}
-
-// Filters pods based on namespace and label
-func FilterPods(ctx context.Context, namespace string, label string, h *helper.H) (*apiv1.PodList, error) {
-	list, err := h.Kube().CoreV1().Pods(namespace).List(ctx, metav1.ListOptions{
-		LabelSelector: label,
-	})
-	if err != nil {
-		log.Printf("Could not issue create command")
-		return list, err
-	}
-
-	return list, err
-}
-
-// Extracts pod names from a filtered list and counts how many are in running state
-func GetPodNames(list *apiv1.PodList, h *helper.H) ([]string, int) {
-	var notReady []apiv1.Pod
-	var ready []apiv1.Pod
-	var podNames []string
-	var total int
-	var numReady int
-
-podLoop:
-	for _, pod := range list.Items {
-		name := pod.Name
-		podNames = append(podNames, name)
-
-		phase := pod.Status.Phase
-		if phase != apiv1.PodRunning && phase != apiv1.PodSucceeded {
-			notReady = append(notReady, pod)
-		} else {
-			for _, status := range pod.Status.ContainerStatuses {
-				if !status.Ready {
-					notReady = append(notReady, pod)
-					continue podLoop
-				}
-			}
-			ready = append(ready, pod)
-
-		}
-	}
-	total = len(list.Items)
-	numReady = (total - len(notReady))
-
-	if total != numReady {
-		log.Printf(" %v out of %v pods were/was in Ready state.", numReady, total)
-	}
-	return podNames, numReady
-}
-
-// Scales down and scales up the operator deployment to initiate a pod restart
-func restartOperator(ctx context.Context, h *helper.H, operator string, ns string) error {
-	log.Printf("restarting %s operator to force re-initialize pods", operator)
-
-	err := wait.PollImmediate(5*time.Second, 2*time.Minute, func() (bool, error) {
-		// scale down
-		s, err := h.Kube().AppsV1().Deployments(ns).GetScale(ctx, operator, metav1.GetOptions{})
-		if err != nil {
-			return false, nil
-		}
-		sc := *s
-		sc.Spec.Replicas = 0
-		_, err = h.Kube().AppsV1().Deployments(ns).UpdateScale(ctx, operator, &sc, metav1.UpdateOptions{})
-		if err != nil {
-			return false, nil
-		}
-
-		// scale up
-		sc.Spec.Replicas = 1
-		_, err = h.Kube().AppsV1().Deployments(ns).UpdateScale(ctx, operator, &sc, metav1.UpdateOptions{})
-		if err != nil {
-			return false, nil
-		}
-		log.Printf(" %s operator restart complete..", operator)
-		return true, nil
-	})
-	if err != nil {
-		return fmt.Errorf("couldn't restart %s operator to re-initiate pods: %v", operator, err)
-	}
-	return nil
-}
-
-func deletePods(ctx context.Context, names []string, namespace string, h *helper.H) int {
-	numPods := 0
-	for _, name := range names {
-		numPods = numPods + 1
-		_, err := h.Kube().CoreV1().Pods(namespace).Get(ctx, name, metav1.GetOptions{})
-		log.Printf("Check before deleting pod %s, error: %v", name, err)
-		if err == nil {
-			err := h.Kube().CoreV1().Pods(namespace).Delete(ctx, name, metav1.DeleteOptions{})
-			log.Printf("Deleting pod %s, error: %v", name, err)
-		}
-	}
-	return numPods
-}
