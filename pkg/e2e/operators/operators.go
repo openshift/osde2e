@@ -29,6 +29,7 @@ import (
 	operatorv1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	clientreg "github.com/operator-framework/operator-registry/pkg/client"
 
+	"github.com/adamliesko/retry"
 	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
@@ -369,14 +370,10 @@ func PerformUpgrade(ctx context.Context, h *helper.H, subNamespace string, subNa
 
 func checkUpgrade(h *helper.H, subNamespace string, subName string, packageName string, regServiceName string) {
 	ginkgo.Context("Operator Upgrade", func() {
-		installPlanPollingDuration := 5 * time.Minute
-		upgradePollingDuration := 15 * time.Minute
-
-		util.GinkgoIt("should upgrade from the replaced version", func(ctx context.Context) {
+		ginkgo.It("should upgrade from the replaced version", func(ctx context.Context) {
 			errorMsg, err := PerformUpgrade(ctx, h, subNamespace, subName, packageName, regServiceName, 5, 15)
 			Expect(err).NotTo(HaveOccurred(), errorMsg)
-		}, upgradePollingDuration.Seconds()+installPlanPollingDuration.Seconds()+
-			float64(viper.GetFloat64(config.Tests.PollingTimeout)))
+		})
 	})
 }
 
@@ -624,14 +621,23 @@ func getReplacesCSV(ctx context.Context, h *helper.H, subscriptionNS string, csv
 		packageChannel = "staging"
 	}
 
-	// GRPC query the service to get details about the currently installed bundle
-	bundle, err := rc.GetBundleInPackageChannel(ctx, csvDisplayName, packageChannel)
-	if err != nil {
-		return "", err
-	}
-
 	csv := &operatorv1.ClusterServiceVersion{}
-	err = json.Unmarshal([]byte(bundle.GetCsvJson()), &csv)
+
+	r := retry.New(retry.Sleep(2), retry.Tries(3), retry.Recover())
+	err = r.Do(func() error {
+		bundle, err := rc.GetBundleInPackageChannel(ctx, csvDisplayName, packageChannel)
+		if err != nil {
+			return err
+		}
+
+		err = json.Unmarshal([]byte(bundle.GetCsvJson()), &csv)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
+
 	if err != nil {
 		return "", err
 	}
