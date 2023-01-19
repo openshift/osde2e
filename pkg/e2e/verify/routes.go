@@ -40,6 +40,10 @@ var _ = ginkgo.Describe(routesTestName, ginkgo.Ordered, label.HyperShift, label.
 	}
 
 	ginkgo.BeforeAll(func() {
+		if viper.GetBool(config.Hypershift) {
+			ginkgo.Skip("Console route is currently flakey on a new HyperShift cluster")
+		}
+
 		h = helper.New()
 		client = h.AsUser("")
 	})
