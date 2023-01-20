@@ -858,8 +858,8 @@ github.com/openshift/managed-upgrade-operator v0.0.0-20221202184850-b00c935a0af6
 github.com/openshift/managed-upgrade-operator v0.0.0-20221202184850-b00c935a0af6/go.mod h1:uB6QrG3Y6Y6Q2HjlOdTu15Bkwkln+XLr2HOwgLgznJA=
 github.com/openshift/must-gather-operator v0.1.2-0.20221011152618-7805956e1ded h1:ndSIrjtHq6DaEfQqtukaJ7PrX9f0X2V9WjnuiqBDGyw=
 github.com/openshift/must-gather-operator v0.1.2-0.20221011152618-7805956e1ded/go.mod h1:LHntdQf5jrwxpmyVMbwXUK491COBJ7buHvyi4YLlHho=
-github.com/openshift/rosa v1.2.11 h1:Mz1sW2+whiWOJkK3FTGNs7J9OpG6C9rMJroQsudJz6Q=
-github.com/openshift/rosa v1.2.11/go.mod h1:bIdQkNA6nBBD+a2/DNmMJ6G5Zks/lvRpsanHI3Qrsoc=
+github.com/openshift/rosa v1.2.12 h1:T+ZsNNCNtJ8z1C+4D5ZKhgyjrboh+x1oVA4dH4tQZuQ=
+github.com/openshift/rosa v1.2.12/go.mod h1:DuGZih9u6T+f0C71o5m/kWH9OEw42mOSTzdbtUaNp3Y=
 github.com/openshift/route-monitor-operator v0.0.0-20221118160357-3df1ed1fa1d2 h1:s97F2fQ5r+XGVfWDy5wgH611iIvIDusQcHtv5jJ36uw=
 github.com/openshift/route-monitor-operator v0.0.0-20221118160357-3df1ed1fa1d2/go.mod h1:I/8znbaxMGRub27brm57UnkR48QZEWO26j2HRscy5bQ=
 github.com/openshift/splunk-forwarder-operator v0.0.0-20230116050540-73a867f15a46 h1:uQzuBX3I10RStOqWPeWEKZ2ew9l/RoPIWzvHr7ad0mo=
