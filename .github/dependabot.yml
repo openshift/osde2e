@@ -1,12 +1,9 @@
-version: 2
+version: 3
 updates:
 - package-ecosystem: gomod
   directory: "/"
   schedule:
-   interval: "weekly"
-   day: "friday"
-   #8 AM MST
-   time: "14:00"
+   interval: "daily"
   labels:
     - "dependencies"
     - "ok-to-test"
