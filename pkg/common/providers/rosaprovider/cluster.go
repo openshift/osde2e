@@ -144,6 +144,10 @@ func (m *ROSAProvider) LaunchCluster(clusterName string) (string, error) {
 		}
 	}
 
+	if viper.GetBool(config.Tests.EnableFips) {
+		createClusterArgs = append(createClusterArgs, "--fips")
+	}
+
 	err = callAndSetAWSSession(func() error {
 		// Retrieve AWS Account info
 		logger := logging.NewLogger()
