@@ -34,7 +34,7 @@ func init() {
 
 var _ = ginkgo.Describe(fipsTestName, label.E2E, func() {
 	ginkgo.Context("is enabled", func() {
-		if !viper.GetBool(config.Tests.EnableFips) {
+		if !viper.GetBool(config.Cluster.EnableFips) {
 			return
 		}
 		h := helper.New()

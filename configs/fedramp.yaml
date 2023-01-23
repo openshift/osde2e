@@ -1,5 +1,6 @@
-tests:
+cluster:
   enableFips: true
+tests:
   testsToRun:
   - '\[Suite\: service-definition\]'
   - '\[Suite\: app-builds\]'

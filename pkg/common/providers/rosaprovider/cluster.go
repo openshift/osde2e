@@ -144,7 +144,7 @@ func (m *ROSAProvider) LaunchCluster(clusterName string) (string, error) {
 		}
 	}
 
-	if viper.GetBool(config.Tests.EnableFips) {
+	if viper.GetBool(config.Cluster.EnableFips) {
 		createClusterArgs = append(createClusterArgs, "--fips")
 	}
 
