@@ -198,6 +198,7 @@ func (o *OCMProvider) LaunchCluster(clusterName string) (string, error) {
 					newCluster = newCluster.Proxy(proxy)
 				}
 			}
+			newCluster = newCluster.CCS(v1.NewCCS().Enabled(true)).AWS(awsBuilder)
 		} else if viper.GetString(config.CloudProvider.CloudProviderID) == "gcp" && viper.GetString(GCPProjectID) != "" {
 			// If GCP credentials are set, this must be a GCP CCS cluster
 			newCluster = newCluster.CCS(v1.NewCCS().Enabled(true)).GCP(v1.NewGCP().
