@@ -10,7 +10,7 @@ require (
 	github.com/adamliesko/retry v0.0.0-20200123222335-86c8baac277d
 	github.com/antlr/antlr4/runtime/Go/antlr v1.4.10
 	github.com/aws/aws-sdk-go v1.44.184
-	github.com/fatih/color v1.13.0
+	github.com/fatih/color v1.14.1
 	github.com/fsnotify/fsnotify v1.6.0
 	github.com/golang-migrate/migrate/v4 v4.14.2-0.20210511063805-2e7358e012a6
 	github.com/google/go-github/v31 v31.0.0
@@ -142,8 +142,8 @@ require (
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
 	github.com/magiconair/properties v1.8.7 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
-	github.com/mattn/go-colorable v0.1.12 // indirect
-	github.com/mattn/go-isatty v0.0.14 // indirect
+	github.com/mattn/go-colorable v0.1.13 // indirect
+	github.com/mattn/go-isatty v0.0.17 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.4 // indirect
 	github.com/mgutz/ansi v0.0.0-20200706080929-d51e80ef957d // indirect
 	github.com/microcosm-cc/bluemonday v1.0.18 // indirect
