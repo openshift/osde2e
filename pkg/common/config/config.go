@@ -240,10 +240,6 @@ var Tests = struct {
 	// ServiceAccount defines what user the tests should run as. By default, osde2e uses system:admin
 	// Env: SERVICE_ACCOUNT
 	ServiceAccount string
-
-	// EnableFips enables the FIPS test suite
-	// Env: ENABLE_FIPS
-	EnableFips string
 }{
 	PollingTimeout:             "tests.pollingTimeout",
 	GinkgoSkip:                 "tests.ginkgoSkip",
@@ -258,7 +254,6 @@ var Tests = struct {
 	MetricsBucket:              "tests.metricsBucket",
 	ServiceAccount:             "tests.serviceAccount",
 	ClusterHealthChecksTimeout: "tests.clusterHealthChecksTimeout",
-	EnableFips:                 "tests.enableFips",
 }
 
 // Cluster config keys.
@@ -379,6 +374,10 @@ var Cluster = struct {
 
 	// UseProxyForInstall will attempt to use a cluster-wide proxy for cluster installation, provided that a cluster-wide proxy config is supplied
 	UseProxyForInstall string
+
+	// EnableFips enables the FIPS test suite
+	// Env: ENABLE_FIPS
+	EnableFips string
 }{
 	MultiAZ:                             "cluster.multiAZ",
 	Channel:                             "cluster.channel",
@@ -412,6 +411,7 @@ var Cluster = struct {
 	Passing:                             "cluster.passing",
 	Reused:                              "cluster.rused",
 	InspectNamespaces:                   "cluster.inspectNamespaces",
+	EnableFips:                          "cluster.enableFips",
 }
 
 // CloudProvider config keys.
@@ -690,9 +690,6 @@ func InitOSDe2eViper() {
 
 	viper.BindEnv(Tests.ServiceAccount, "SERVICE_ACCOUNT")
 
-	viper.SetDefault(Tests.EnableFips, false)
-	viper.BindEnv(Tests.EnableFips, "ENABLE_FIPS")
-
 	// ----- Cluster -----
 	viper.SetDefault(Cluster.MultiAZ, false)
 	viper.BindEnv(Cluster.MultiAZ, "MULTI_AZ")
@@ -782,6 +779,9 @@ func InitOSDe2eViper() {
 
 	viper.SetDefault(Cluster.InspectNamespaces, strings.Join(defaultInspectNamespaces, ","))
 	viper.BindEnv(Cluster.InspectNamespaces, "INSPECT_NAMESPACES")
+
+	viper.SetDefault(Cluster.EnableFips, false)
+	viper.BindEnv(Cluster.EnableFips, "ENABLE_FIPS")
 
 	// ----- Cloud Provider -----
 	viper.SetDefault(CloudProvider.CloudProviderID, "aws")
