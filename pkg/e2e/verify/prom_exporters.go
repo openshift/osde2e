@@ -28,6 +28,9 @@ var _ = ginkgo.Describe(promExportersTestname, label.E2E, func() {
 		if viper.GetBool(rosaprovider.STS) {
 			ginkgo.Skip("Prometheus Exporters (ebs-iops-reporter and stuck-ebs-vols) are not deployed to STS clusters")
 		}
+		if viper.GetBool(config.Hypershift) {
+			ginkgo.Skip("Prometheus Exporters (ebs-iops-reporter and stuck-ebs-vols) are not deployed to HyperShift clusters")
+		}
 	})
 
 	const (
