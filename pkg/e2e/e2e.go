@@ -260,7 +260,7 @@ func RunTests() int {
 
 	exitCode, err = runGinkgoTests()
 	if err != nil {
-		log.Printf("Tests failed: %v", err)
+		log.Printf("OSDE2E failed: %v", err)
 	}
 
 	return exitCode
@@ -537,11 +537,6 @@ func runGinkgoTests() (int, error) {
 
 	}
 
-	if !testsPassed || !upgradeTestsPassed {
-		viper.Set(config.Cluster.Passing, false)
-		return Failure, fmt.Errorf("please inspect logs for more details")
-	}
-
 	if viper.GetBool(config.Cluster.DestroyAfterTest) {
 		log.Printf("Destroying cluster '%s'...", viper.GetString(config.Cluster.ID))
 
@@ -553,6 +548,11 @@ func runGinkgoTests() (int, error) {
 		if provider != nil {
 			log.Printf("For debugging, please look for cluster ID %s in environment %s", viper.GetString(config.Cluster.ID), provider.Environment())
 		}
+	}
+
+	if !testsPassed || !upgradeTestsPassed {
+		viper.Set(config.Cluster.Passing, false)
+		return Failure, fmt.Errorf("tests failed, please inspect logs for more details")
 	}
 
 	return Success, nil
