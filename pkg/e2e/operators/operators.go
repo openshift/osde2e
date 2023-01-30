@@ -623,7 +623,7 @@ func getReplacesCSV(ctx context.Context, h *helper.H, subscriptionNS string, csv
 
 	csv := &operatorv1.ClusterServiceVersion{}
 
-	r := retry.New(retry.Sleep(2), retry.Tries(3), retry.Recover())
+	r := retry.New(retry.Sleep(5), retry.Tries(6), retry.Recover())
 	err = r.Do(func() error {
 		bundle, err := rc.GetBundleInPackageChannel(ctx, csvDisplayName, packageChannel)
 		if err != nil {
