@@ -1,6 +1,8 @@
 package aws
 
 import (
+	"fmt"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/ec2"
 )
@@ -30,4 +32,107 @@ func (CcsAwsSession *ccsAwsSession) CheckIfEC2ExistBasedOnNodeName(nodeName stri
 	}
 
 	return false, nil
+}
+
+// getSecurityGroups gets all security groups based on the security groups input struct
+func (CcsAwsSession *ccsAwsSession) getSecurityGroups(securityGroupsInput ec2.DescribeSecurityGroupsInput) (*ec2.DescribeSecurityGroupsOutput, error) {
+	err := CcsAwsSession.GetAWSSessions()
+	if err != nil {
+		return nil, err
+	}
+
+	securityGroups, err := CcsAwsSession.ec2.DescribeSecurityGroups(&securityGroupsInput)
+	if err != nil {
+		return nil, fmt.Errorf("error attempting to fetch security groups: %w", err)
+	}
+
+	if len(securityGroups.SecurityGroups) == 0 {
+		return nil, fmt.Errorf("no security groups found")
+	}
+
+	return securityGroups, nil
+}
+
+// DeleteHyperShiftELBSecurityGroup is a temporary solution to remove elb security group
+// created when HyperShift clusters are deleted. Bug: HOSTEDCP-656
+func (CcsAwsSession *ccsAwsSession) DeleteHyperShiftELBSecurityGroup(clusterID string) error {
+	var securityGroupId string
+	var defaultSecurityGroupId string
+	var securityGroupRuleId *string
+
+	err := CcsAwsSession.GetAWSSessions()
+	if err != nil {
+		return err
+	}
+
+	securityGroups, err := CcsAwsSession.getSecurityGroups(ec2.DescribeSecurityGroupsInput{
+		Filters: []*ec2.Filter{
+			{
+				Name:   aws.String("tag-key"),
+				Values: []*string{aws.String(fmt.Sprintf("kubernetes.io/cluster/%s", clusterID))},
+			},
+		},
+	})
+	if err != nil {
+		return err
+	}
+
+	// Only will be one security group entry
+	securityGroupId = *securityGroups.SecurityGroups[0].GroupId
+
+	defaultSecurityGroups, err := CcsAwsSession.getSecurityGroups(ec2.DescribeSecurityGroupsInput{
+		Filters: []*ec2.Filter{
+			{
+				Name:   aws.String("ip-permission.group-id"),
+				Values: []*string{aws.String(securityGroupId)},
+			},
+		},
+	})
+	if err != nil {
+		return err
+	}
+
+	// Only will be one security group entry
+	defaultSecurityGroupId = *defaultSecurityGroups.SecurityGroups[0].GroupId
+
+	securityGroupRules, err := CcsAwsSession.ec2.DescribeSecurityGroupRules(&ec2.DescribeSecurityGroupRulesInput{
+		Filters: []*ec2.Filter{
+			{
+				Name:   aws.String("group-id"),
+				Values: []*string{aws.String(defaultSecurityGroupId)},
+			},
+		},
+	})
+	if err != nil {
+		return fmt.Errorf("error getting security group: '%s' rules: %w", defaultSecurityGroupId, err)
+	}
+	if len(securityGroupRules.SecurityGroupRules) == 0 {
+		return fmt.Errorf("no rules found for security group: '%s'", defaultSecurityGroupId)
+	}
+
+	for _, securityGroupRule := range securityGroupRules.SecurityGroupRules {
+		if securityGroupRule.ReferencedGroupInfo == nil {
+			continue
+		}
+
+		if *securityGroupRule.ReferencedGroupInfo.GroupId == securityGroupId {
+			securityGroupRuleId = securityGroupRule.SecurityGroupRuleId
+			break
+		}
+	}
+
+	_, err = CcsAwsSession.ec2.RevokeSecurityGroupIngress(&ec2.RevokeSecurityGroupIngressInput{
+		GroupId:              &defaultSecurityGroupId,
+		SecurityGroupRuleIds: []*string{securityGroupRuleId},
+	})
+	if err != nil {
+		return fmt.Errorf("error revoking security group ingress rule: %w", err)
+	}
+
+	_, err = CcsAwsSession.ec2.DeleteSecurityGroup(&ec2.DeleteSecurityGroupInput{GroupId: &securityGroupId})
+	if err != nil {
+		return fmt.Errorf("error deleting security group '%s': %w", securityGroupId, err)
+	}
+
+	return nil
 }

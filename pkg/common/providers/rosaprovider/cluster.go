@@ -20,6 +20,7 @@ import (
 	"github.com/openshift/rosa/pkg/ocm"
 	"k8s.io/apimachinery/pkg/util/wait"
 
+	awshelper "github.com/openshift/osde2e/pkg/common/aws"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/spi"
@@ -248,7 +249,18 @@ func (m *ROSAProvider) DeleteCluster(clusterID string) error {
 	}
 
 	if viper.GetBool(STS) {
-		return m.stsClusterCleanup(clusterID)
+		err := m.stsClusterCleanup(clusterID)
+		if err != nil {
+			return err
+		}
+	}
+
+	if viper.GetBool(config.Hypershift) {
+		// TODO: Remove once HOSTEDCP-656 is resolved (temporary solution to remove elb security group/allow for deleting vpc)
+		err := awshelper.CcsAwsSession.DeleteHyperShiftELBSecurityGroup(viper.GetString(config.Cluster.ID))
+		if err != nil {
+			return fmt.Errorf("error deleting elb security group (HOSTEDCP-656): %v", err)
+		}
 	}
 
 	return nil
