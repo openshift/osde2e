@@ -75,6 +75,26 @@ func (m *ROSAProvider) LaunchCluster(clusterName string) (string, error) {
 	var expiration time.Time
 	var err error
 	var awsCreator *aws.Creator
+	var awsVPCSubnetIds string
+
+	clusterProperties, err := m.ocmProvider.GenerateProperties()
+	if err != nil {
+		return "", fmt.Errorf("error generating cluster properties: %v", err)
+	}
+
+	if viper.GetBool(config.AWSCreateVPCSubnetIDs) {
+		var vpc *HyperShiftVPC
+		vpc, err = createHyperShiftVPC()
+		if err != nil {
+			return "error creating aws vpc", err
+		}
+
+		awsVPCSubnetIds = fmt.Sprintf("%s,%s", vpc.PrivateSubnet, vpc.PublicSubnet)
+		log.Printf("AWS VPC created at runtime, subnet ids: %s", awsVPCSubnetIds)
+
+		// Save the report directory to cluster properties for later use when locating terraform state file to destroy vpc
+		clusterProperties["reportDir"] = viper.GetString(config.ReportDir)
+	}
 
 	rosaClusterVersion := viper.GetString(config.Cluster.Version)
 	rosaClusterVersion = strings.ReplaceAll(rosaClusterVersion, "openshift-v", "")
@@ -127,7 +147,10 @@ func (m *ROSAProvider) LaunchCluster(clusterName string) (string, error) {
 				createClusterArgs = append(createClusterArgs, "--additional-trust-bundle-file", userCaBundle)
 			}
 		}
+	} else if len(awsVPCSubnetIds) > 0 {
+		createClusterArgs = append(createClusterArgs, "--subnet-ids", awsVPCSubnetIds)
 	}
+
 	if viper.GetBool(config.Cluster.MultiAZ) {
 		createClusterArgs = append(createClusterArgs, "--multi-az")
 	}
@@ -140,7 +163,7 @@ func (m *ROSAProvider) LaunchCluster(clusterName string) (string, error) {
 
 	if viper.GetBool(config.Hypershift) {
 		createClusterArgs = append(createClusterArgs, "--hosted-cp")
-		if viper.GetString(config.AWSVPCSubnetIDs) == "" {
+		if viper.GetString(config.AWSVPCSubnetIDs) == "" && awsVPCSubnetIds == "" {
 			return "", fmt.Errorf("BYOVPC is required for ROSA hosted control plane.\n You can pass the subnet IDs using vault key 'subnet-ids' or setting the environment variable 'AWS_VPC_SUBNET_IDS'")
 		}
 	}
@@ -174,11 +197,6 @@ func (m *ROSAProvider) LaunchCluster(clusterName string) (string, error) {
 
 	if viper.GetBool(STS) {
 		createClusterArgs = append(createClusterArgs, "--sts")
-	}
-
-	clusterProperties, err := m.ocmProvider.GenerateProperties()
-	if err != nil {
-		return "", fmt.Errorf("error generating cluster properties: %v", err)
 	}
 
 	installConfig := ""
@@ -244,6 +262,16 @@ func (m *ROSAProvider) LaunchCluster(clusterName string) (string, error) {
 // DeleteCluster will call DeleteCluster from the OCM provider then delete
 // additional AWS resources if STS is in use.
 func (m *ROSAProvider) DeleteCluster(clusterID string) error {
+	var reportDir *string
+
+	if viper.GetBool(config.AWSCreateVPCSubnetIDs) {
+		var err error
+		reportDir, err = m.ocmProvider.GetProperty(clusterID, "reportDir")
+		if err != nil {
+			return fmt.Errorf("unable to delete auto-generated vpc, failed to locate directory with terraform state file: %v", err)
+		}
+	}
+
 	if err := m.ocmProvider.DeleteCluster(clusterID); err != nil {
 		return err
 	}
@@ -260,6 +288,13 @@ func (m *ROSAProvider) DeleteCluster(clusterID string) error {
 		err := awshelper.CcsAwsSession.DeleteHyperShiftELBSecurityGroup(viper.GetString(config.Cluster.ID))
 		if err != nil {
 			return fmt.Errorf("error deleting elb security group (HOSTEDCP-656): %v", err)
+		}
+
+		if viper.GetBool(config.AWSCreateVPCSubnetIDs) {
+			err = deleteHyperShiftVPC(*reportDir)
+			if err != nil {
+				return fmt.Errorf("error deleting aws vpc: %v", err)
+			}
 		}
 	}
 

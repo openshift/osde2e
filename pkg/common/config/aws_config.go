@@ -17,6 +17,8 @@ var (
 
 	// AWSVPCSubnetIDs is comma-separated list of strings to specify the subnets for cluster provision
 	AWSVPCSubnetIDs = "config.aws.vpcSubnetIDs"
+
+	AWSCreateVPCSubnetIDs = "config.aws.createVPCSubnetIDs"
 )
 
 func InitAWSViper() {
@@ -34,4 +36,7 @@ func InitAWSViper() {
 
 	viper.BindEnv(AWSVPCSubnetIDs, "AWS_VPC_SUBNET_IDS", "ROSA_SUBNET_IDS", "SUBNET_IDS")
 	RegisterSecret(AWSVPCSubnetIDs, "subnet-ids")
+
+	viper.SetDefault("AWSCreateVPCSubnetIDs", false)
+	viper.BindEnv("AWSCreateVPCSubnetIDs", "AWS_CREATE_VPC_SUBNET_IDS")
 }

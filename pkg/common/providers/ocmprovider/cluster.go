@@ -1288,6 +1288,25 @@ func (o *OCMProvider) AddProperty(cluster *spi.Cluster, tag string, value string
 	return nil
 }
 
+// Get a specific cluster property
+func (o *OCMProvider) GetProperty(clusterID string, property string) (*string, error) {
+	clusterClient := o.conn.ClustersMgmt().V1().Clusters().Cluster(clusterID)
+	response, err := clusterClient.Get().Send()
+	if err != nil {
+		return nil, err
+	}
+
+	cluster := response.Body()
+	properties, _ := cluster.GetProperties()
+	propertyValue, exist := properties[property]
+
+	if !exist {
+		return nil, fmt.Errorf(fmt.Sprintf("cluster property: %s is undefined", property))
+	}
+
+	return &propertyValue, nil
+}
+
 // Upgrade initiates a cluster upgrade to the given version
 func (o *OCMProvider) Upgrade(clusterID string, version string, t time.Time) error {
 	policy, err := v1.NewUpgradePolicy().Version(version).NextRun(t).ScheduleType("manual").Build()
