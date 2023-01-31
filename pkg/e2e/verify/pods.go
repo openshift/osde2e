@@ -15,9 +15,7 @@ import (
 	"sigs.k8s.io/e2e-framework/klient/k8s/resources"
 )
 
-var (
-	podsTestName = "[Suite: e2e] Pods"
-)
+var podsTestName = "[Suite: e2e] Pods"
 
 func init() {
 	alert.RegisterGinkgoAlert(podsTestName, "SD-CICD", "Diego Santamaria", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)

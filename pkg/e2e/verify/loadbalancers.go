@@ -45,7 +45,6 @@ var _ = ginkgo.Describe(loadBalancersTestName, ginkgo.Ordered, label.Informing, 
 		service := &v1.Service{}
 		expect.NoError(client.Get(ctx, name, namespace, service))
 		Expect(service.Spec.Type).To(Equal(v1.ServiceTypeLoadBalancer), "expected a load balancer service but got %s", service.Spec.Type)
-
 	},
 		ginkgo.Entry("router-default", routerIngressLoadBalancer, routerIngressLoadBalancerNamespace),
 		ginkgo.Entry("rh-api", externalLoadBalancer, externalLoadBalancerNamespace),
