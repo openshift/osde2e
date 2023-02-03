@@ -763,8 +763,8 @@ github.com/opencontainers/runc v1.1.4 h1:nRCz/8sKg6K6jgYAFLDlXzPeITBZJyX28DBVhWD
 github.com/opencontainers/runc v1.1.4/go.mod h1:1J5XiS+vdZ3wCyZybsuxXZWGrgSr8fFJHLXuG2PsnNg=
 github.com/opencontainers/runtime-spec v1.0.3-0.20210326190908-1c3f411f0417/go.mod h1:jwyrGlmzljRJv/Fgzds9SsS/C5hL+LL3ko9hs6T5lQ0=
 github.com/opencontainers/selinux v1.10.0/go.mod h1:2i0OySw99QjzBBQByd1Gr9gSjvuho1lHsJxIJ3gGbJI=
-github.com/openshift-online/ocm-sdk-go v0.1.312 h1:fK0iIDxvOG8ZSu9z3wLt8Dy++IcD08Hz438M2Dgmd7Y=
-github.com/openshift-online/ocm-sdk-go v0.1.312/go.mod h1:KYOw8kAKAHyPrJcQoVR82CneQ4ofC02Na4cXXaTq4Nw=
+github.com/openshift-online/ocm-sdk-go v0.1.314 h1:VWafDiNMTQzzyohlH4fIUGe+HQ/N0vMz2yq7Vih22fQ=
+github.com/openshift-online/ocm-sdk-go v0.1.314/go.mod h1:KYOw8kAKAHyPrJcQoVR82CneQ4ofC02Na4cXXaTq4Nw=
 github.com/openshift/api v0.0.0-20221013123534-96eec44e1979 h1:NkfbwN34Q/UtfKUFEO9pxmdY06A/jBk80YBua+mxwUc=
 github.com/openshift/api v0.0.0-20221013123534-96eec44e1979/go.mod h1:LEnw1IVscIxyDnltE3Wi7bQb/QzIM8BfPNKoGA1Qlxw=
 github.com/openshift/build-machinery-go v0.0.0-20211213093930-7e33a7eb4ce3/go.mod h1:b1BuldmJlbA/xYtdZvKi+7j5YGB44qJUJDZ9zwiNCfE=
