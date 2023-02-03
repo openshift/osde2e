@@ -3,17 +3,18 @@ package state
 import (
 	"context"
 	"errors"
+	"log"
 	"strings"
 	"time"
 
 	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/label"
 	"github.com/openshift/osde2e/pkg/common/runner"
 	"github.com/openshift/osde2e/pkg/common/util"
-	"github.com/openshift/osde2e/pkg/e2e/verify"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 )
 
@@ -41,11 +42,11 @@ var _ = ginkgo.Describe(clusterStateInformingName, label.E2E, func() {
 		// ensure prometheus pods are up before trying to extract data
 		poderr := wait.PollImmediate(2*time.Second, prometheusPodStartedDuration, func() (bool, error) {
 			podCount := 0
-			list, listerr := verify.FilterPods(ctx, "openshift-monitoring", "app.kubernetes.io/name=prometheus", h)
+			list, listerr := filterPods(ctx, "openshift-monitoring", "app.kubernetes.io/name=prometheus", h)
 			if listerr != nil {
 				return false, listerr
 			}
-			names, podNum := verify.GetPodNames(list, h)
+			names, podNum := getPodNames(list, h)
 			if podNum > 0 {
 				for _, value := range names {
 					if strings.HasPrefix(value, "prometheus-k8s-") {
@@ -78,3 +79,51 @@ var _ = ginkgo.Describe(clusterStateInformingName, label.E2E, func() {
 		h.WriteResults(results)
 	}, prometheusTimeout.Seconds()+prometheusPodStartedDuration.Seconds())
 })
+
+// Filters pods based on namespace and label
+func filterPods(ctx context.Context, namespace string, label string, h *helper.H) (*corev1.PodList, error) {
+	list, err := h.Kube().CoreV1().Pods(namespace).List(ctx, metav1.ListOptions{
+		LabelSelector: label,
+	})
+	if err != nil {
+		log.Printf("Could not issue create command")
+		return list, err
+	}
+
+	return list, err
+}
+
+// Extracts pod names from a filtered list and counts how many are in running state
+func getPodNames(list *corev1.PodList, h *helper.H) ([]string, int) {
+	var notReady []corev1.Pod
+	var ready []corev1.Pod
+	var podNames []string
+	var total int
+	var numReady int
+
+podLoop:
+	for _, pod := range list.Items {
+		name := pod.Name
+		podNames = append(podNames, name)
+
+		phase := pod.Status.Phase
+		if phase != corev1.PodRunning && phase != corev1.PodSucceeded {
+			notReady = append(notReady, pod)
+		} else {
+			for _, status := range pod.Status.ContainerStatuses {
+				if !status.Ready {
+					notReady = append(notReady, pod)
+					continue podLoop
+				}
+			}
+			ready = append(ready, pod)
+		}
+	}
+	total = len(list.Items)
+	numReady = (total - len(notReady))
+
+	if total != numReady {
+		log.Printf(" %v out of %v pods were/was in Ready state.", numReady, total)
+	}
+	return podNames, numReady
+}

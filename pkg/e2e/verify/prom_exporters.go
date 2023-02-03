@@ -28,6 +28,9 @@ var _ = ginkgo.Describe(promExportersTestname, label.E2E, func() {
 		if viper.GetBool(rosaprovider.STS) {
 			ginkgo.Skip("Prometheus Exporters (ebs-iops-reporter and stuck-ebs-vols) are not deployed to STS clusters")
 		}
+		if viper.GetBool(config.Hypershift) {
+			ginkgo.Skip("Prometheus Exporters (ebs-iops-reporter and stuck-ebs-vols) are not deployed to HyperShift clusters")
+		}
 	})
 
 	const (
@@ -85,7 +88,7 @@ var _ = ginkgo.Describe(promExportersTestname, label.E2E, func() {
 
 	h := helper.New()
 
-	util.GinkgoIt("should exist and be running in the cluster", func(ctx context.Context) {
+	ginkgo.It("should exist and be running in the cluster", func(ctx context.Context) {
 		envs := []string{allProviders, viper.GetString(config.CloudProvider.CloudProviderID)}
 
 		// Expect project to exist
@@ -106,7 +109,7 @@ var _ = ginkgo.Describe(promExportersTestname, label.E2E, func() {
 
 		// Ensure services are present
 		checkServices(ctx, promNamespace, servicesToCheck, h, envs...)
-	}, 300)
+	})
 })
 
 func checkConfigMaps(ctx context.Context, namespace string, configMaps map[string][]string, h *helper.H, providers ...string) {

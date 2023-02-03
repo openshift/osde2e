@@ -4,6 +4,7 @@ import (
 	"github.com/onsi/gomega"
 	configv1 "github.com/openshift/api/config/v1"
 
+	imagev1 "github.com/openshift/api/image/v1"
 	quotav1 "github.com/openshift/api/quota/v1"
 	route "github.com/openshift/api/route/v1"
 	securityv1 "github.com/openshift/api/security/v1"
@@ -38,6 +39,7 @@ func (h *H) AsUser(username string, groups ...string) *resources.Resources {
 	customdomainv1alpha1.AddToScheme(client.GetScheme())
 	route.AddToScheme(client.GetScheme())
 	operatorhubv1.AddToScheme(client.GetScheme())
+	imagev1.AddToScheme(client.GetScheme())
 
 	return client
 }

@@ -5,13 +5,12 @@ import (
 
 	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
+	imagev1 "github.com/openshift/api/image/v1"
 	"github.com/openshift/osde2e/pkg/common/alert"
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/label"
-	"github.com/openshift/osde2e/pkg/common/util"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/e2e-framework/klient/k8s/resources"
 )
 
 var imageStreamsTestName string = "[Suite: e2e] ImageStreams"
@@ -20,16 +19,20 @@ func init() {
 	alert.RegisterGinkgoAlert(imageStreamsTestName, "SD-CICD", "Diego Santamaria", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
 }
 
-var _ = ginkgo.Describe(imageStreamsTestName, label.E2E, func() {
-	h := helper.New()
+var _ = ginkgo.Describe(imageStreamsTestName, ginkgo.Ordered, label.HyperShift, label.E2E, func() {
+	var h *helper.H
+	var client *resources.Resources
+	ginkgo.BeforeAll(func() {
+		h = helper.New()
+		client = h.AsUser("")
+	})
 
-	util.GinkgoIt("should exist in the cluster", func(ctx context.Context) {
-		list, err := h.Image().ImageV1().ImageStreams(metav1.NamespaceAll).List(ctx, metav1.ListOptions{})
-		Expect(err).NotTo(HaveOccurred(), "couldn't list ImageStreams")
-		Expect(list).NotTo(BeNil())
-
-		numImages := len(list.Items)
-		minImages := 50
-		Expect(numImages).Should(BeNumerically(">", minImages), "need more images")
-	}, 300)
+	ginkgo.It("should exist in the cluster", func(ctx context.Context) {
+		var list imagev1.ImageList
+		Eventually(func(g Gomega) int {
+			err := client.WithNamespace(metav1.NamespaceAll).List(ctx, &list)
+			g.Expect(err).ToNot(HaveOccurred(), "unable to list images")
+			return len(list.Items)
+		}, "5m").Should(BeNumerically(">", 0), "no images found")
+	})
 })

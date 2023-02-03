@@ -28,6 +28,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	"k8s.io/kubectl/pkg/util/slice"
 	"sigs.k8s.io/e2e-framework/klient/k8s"
 	"sigs.k8s.io/e2e-framework/klient/k8s/resources"
 	"sigs.k8s.io/e2e-framework/klient/wait"
@@ -158,6 +159,49 @@ var _ = ginkgo.Describe(suiteName, ginkgo.Ordered, label.E2E, label.ROSA, label.
 			err = client.Delete(ctx, pod)
 			expect.NoError(err)
 		}, ginkgo.SpecTimeout(createPodWaitDuration.Seconds()+deletePodWaitDuration.Seconds()))
+
+		ginkgo.It("prevents workloads from being scheduled on worker nodes", func(ctx context.Context) {
+			client := h.AsUser("")
+			operators := map[string]string{
+				"cloud-ingress-operator":          "openshift-cloud-ingress-operator",
+				"configure-alertmanager-operator": "openshift-monitoring",
+				"custom-domains-operator":         "openshift-custom-domains-operator",
+				"managed-upgrade-operator":        "openshift-managed-upgrade-operator",
+				"managed-velero-operator":         "openshift-velero",
+				"must-gather-operator":            "openshift-must-gather-operator",
+				"osd-metrics-exporter":            "openshift-osd-metrics",
+				"rbac-permissions-operator":       "openshift-rbac-permissions",
+			}
+
+			var podList v1.PodList
+			expect.NoError(client.WithNamespace(metav1.NamespaceAll).List(ctx, &podList), "unable to list pods")
+			Expect(len(podList.Items)).To(BeNumerically(">", 0), "found no pods")
+
+			var nodeList v1.NodeList
+			selectInfraNodes := resources.WithLabelSelector(labels.FormatLabels(map[string]string{"node-role.kubernetes.io": "infra"}))
+			expect.NoError(client.List(ctx, &nodeList), selectInfraNodes)
+
+			nodeNames := []string{}
+			for _, node := range nodeList.Items {
+				nodeNames = append(nodeNames, node.GetName())
+			}
+
+			violators := []string{}
+			for _, pod := range podList.Items {
+				for operator, namespace := range operators {
+					if pod.GetNamespace() != namespace {
+						continue
+					}
+					if strings.HasPrefix(pod.GetName(), operator) && !strings.HasPrefix(pod.GetName(), operator+"-registry") {
+						if !slice.ContainsString(nodeNames, pod.Spec.NodeName, nil) {
+							violators = append(violators, pod.GetNamespace()+"/"+pod.GetName())
+						}
+					}
+				}
+			}
+
+			Expect(violators).To(HaveLen(0), "found pods in violation %v", violators)
+		})
 	})
 
 	ginkgo.Describe("sre-techpreviewnoupgrade-validation", func() {
