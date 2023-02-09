@@ -33,7 +33,7 @@ require (
 	github.com/openshift/custom-domains-operator v0.0.0-20221118201157-bd1052dac818
 	github.com/openshift/managed-upgrade-operator v0.0.0-20230128000023-b30cca4aa2af
 	github.com/openshift/must-gather-operator v0.1.2-0.20221011152618-7805956e1ded
-	github.com/openshift/rosa v1.2.13
+	github.com/openshift/rosa v1.2.14
 	github.com/openshift/route-monitor-operator v0.0.0-20221118160357-3df1ed1fa1d2
 	github.com/openshift/splunk-forwarder-operator v0.0.0-20230125212852-176d68d8c59b
 	github.com/operator-framework/api v0.17.2-0.20220915200120-ff2dbc53d381
