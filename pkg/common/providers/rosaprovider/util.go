@@ -12,7 +12,7 @@ import (
 
 // At the moment, rosa requires AWS sessions to be set globally. To get around that, we'll use this
 // helper method here so that we can set environment variables and restore them before returning from the function.
-func callAndSetAWSSession(f func() error) error {
+func CallAndSetAWSSession(f func() error) error {
 	var env []string
 	defer func() {
 		os.Clearenv()

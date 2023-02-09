@@ -190,7 +190,7 @@ func (m *ROSAProvider) LaunchCluster(clusterName string) (string, error) {
 		createClusterArgs = append(createClusterArgs, "--fips")
 	}
 
-	err = callAndSetAWSSession(func() error {
+	err = CallAndSetAWSSession(func() error {
 		// Retrieve AWS Account info
 		logger := logging.NewLogger()
 
@@ -256,7 +256,7 @@ func (m *ROSAProvider) LaunchCluster(clusterName string) (string, error) {
 
 	newCluster := createCluster.Cmd
 	newCluster.SetArgs(createClusterArgs)
-	err = callAndSetAWSSession(func() error {
+	err = CallAndSetAWSSession(func() error {
 		return newCluster.Execute()
 	})
 	if err != nil {
@@ -329,7 +329,7 @@ func (m *ROSAProvider) stsClusterCleanup(clusterID string) error {
 		return len(clusters) == 0, nil
 	})
 
-	return callAndSetAWSSession(func() error {
+	return CallAndSetAWSSession(func() error {
 		var err error
 		defaultArgs := []string{"--cluster", clusterID, "--mode", "auto", "--yes"}
 

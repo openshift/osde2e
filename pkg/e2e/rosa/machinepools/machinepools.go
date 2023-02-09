@@ -12,6 +12,7 @@ import (
 	"github.com/openshift/osde2e/pkg/common/expect"
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/label"
+	"github.com/openshift/osde2e/pkg/common/providers/rosaprovider"
 	machinepoolcreate "github.com/openshift/rosa/cmd/create/machinepool"
 	machinepooldelete "github.com/openshift/rosa/cmd/dlt/machinepool"
 	machinepooledit "github.com/openshift/rosa/cmd/edit/machinepool"
@@ -67,7 +68,7 @@ var _ = ginkgo.Describe("ROSA Machine Pools", ginkgo.Ordered, label.ROSA, label.
 		replicaCount := 3
 		cmd := machinepoolcreate.Cmd
 		cmd.SetArgs([]string{fmt.Sprintf("--name=%s", machinePoolName), fmt.Sprintf("--cluster=%s", clusterName), fmt.Sprintf("--replicas=%d", replicaCount)})
-		expect.NoError(cmd.Execute(), "failed to create machinepool")
+		expect.NoError(rosaprovider.CallAndSetAWSSession(cmd.Execute), "failed to create machinepool")
 		expect.NoError(wait.For(nodesScaledTo(ctx, replicaCount), wait.WithTimeout(10*time.Minute)), "nodes never scaled up")
 	})
 
@@ -75,14 +76,14 @@ var _ = ginkgo.Describe("ROSA Machine Pools", ginkgo.Ordered, label.ROSA, label.
 		replicaCount := 1
 		cmd := machinepooledit.Cmd
 		cmd.SetArgs([]string{fmt.Sprintf("--replicas=%d", replicaCount), fmt.Sprintf("--cluster=%s", clusterName), machinePoolName})
-		expect.NoError(cmd.Execute(), "failed to edit machinepool")
+		expect.NoError(rosaprovider.CallAndSetAWSSession(cmd.Execute), "failed to edit machinepool")
 		expect.NoError(wait.For(nodesScaledTo(ctx, replicaCount), wait.WithTimeout(10*time.Minute)), "machinepool never scaled down")
 	})
 
 	ginkgo.It("can be deleted", func(ctx context.Context) {
 		cmd := machinepooldelete.Cmd
 		cmd.SetArgs([]string{"--yes", fmt.Sprintf("--cluster=%s", clusterName), machinePoolName})
-		expect.NoError(cmd.Execute(), "failed to delete machinepool")
+		expect.NoError(rosaprovider.CallAndSetAWSSession(cmd.Execute), "failed to delete machinepool")
 		expect.NoError(wait.For(nodesScaledTo(ctx, 0), wait.WithTimeout(5*time.Minute)), "nodes weren't deleted")
 	})
 })
