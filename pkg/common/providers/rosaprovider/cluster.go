@@ -154,7 +154,7 @@ func (m *ROSAProvider) LaunchCluster(clusterName string) (string, error) {
 
 		awsClient, err := aws.NewClient().
 			Logger(logger).
-			Region(aws.DefaultRegion).
+			Region(viper.GetString(config.AWSRegion)).
 			Build()
 		if err != nil {
 			return err
