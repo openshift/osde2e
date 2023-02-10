@@ -20,7 +20,10 @@ const (
 	machineAPINamespace = "openshift-machine-api"
 )
 
-var machineHealthTestName string = "[Suite: e2e] MachineHealthChecks"
+var (
+	machineHealthTestName string = "[Suite: e2e] MachineHealthChecks"
+	metalInstanceTypes           = []string{"m5.metal", "m5d.metal", "m5n.metal", "m5dn.metal", "m5zn.metal", "m6a.metal", "m6i.metal", "m6id.metal", "r5.metal", "r5d.metal", "r5n.metal", "r5dn.metal", "r6a.metal", "r6i.metal", "r6id.metal", "x2iezn.metal", "z1d.metal", "c5.metal", "c5d.metal", "c5n.metal", "c6a.metal", "c6i.metal", "c6id.metal", "i3.metal", "i3en.metal"}
+)
 
 func init() {
 	alert.RegisterGinkgoAlert(
@@ -92,7 +95,7 @@ var _ = ginkgo.Describe(machineHealthTestName, label.E2E, func() {
 			metav1.LabelSelectorRequirement{
 				Key:      "machine.openshift.io/instance-type",
 				Operator: metav1.LabelSelectorOpNotIn,
-				Values:   []string{"m5.metal", "m5d.metal", "m5n.metal", "m5dn.metal", "m5zn.metal", "m6i.metal", "r5.metal", "r5d.metal", "r5n.metal", "r5dn.metal", "r6i.metal", "x2iezn.metal", "z1d.metal", "c5.metal", "c5d.metal", "c5n.metal", "c6i.metal", "i3.metal", "i3en.metal"},
+				Values:   metalInstanceTypes,
 			},
 		))
 
@@ -132,7 +135,7 @@ var _ = ginkgo.Describe(machineHealthTestName, label.E2E, func() {
 			metav1.LabelSelectorRequirement{
 				Key:      "machine.openshift.io/instance-type",
 				Operator: metav1.LabelSelectorOpIn,
-				Values:   []string{"m5.metal", "m5d.metal", "m5n.metal", "m5dn.metal", "m5zn.metal", "m6i.metal", "r5.metal", "r5d.metal", "r5n.metal", "r5dn.metal", "r6i.metal", "x2iezn.metal", "z1d.metal", "c5.metal", "c5d.metal", "c5n.metal", "c6i.metal", "i3.metal", "i3en.metal"},
+				Values:   metalInstanceTypes,
 			},
 		))
 
