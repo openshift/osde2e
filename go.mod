@@ -16,7 +16,7 @@ require (
 	github.com/google/go-github/v31 v31.0.0
 	github.com/google/uuid v1.3.0
 	github.com/hashicorp/go-multierror v1.1.1
-	github.com/jackc/pgtype v1.13.0
+	github.com/jackc/pgtype v1.14.0
 	github.com/jinzhu/inflection v1.0.0
 	github.com/joshdk/go-junit v1.0.0
 	github.com/kyleconroy/sqlc v1.16.0
