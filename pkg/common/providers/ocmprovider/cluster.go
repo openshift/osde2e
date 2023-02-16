@@ -1301,7 +1301,7 @@ func (o *OCMProvider) GetProperty(clusterID string, property string) (*string, e
 	propertyValue, exist := properties[property]
 
 	if !exist {
-		return nil, fmt.Errorf(fmt.Sprintf("cluster property: %s is undefined", property))
+		return nil, fmt.Errorf("cluster property: %s is undefined", property)
 	}
 
 	return &propertyValue, nil

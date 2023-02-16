@@ -1,6 +1,7 @@
 package rosaprovider
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"log"
@@ -24,22 +25,19 @@ type HyperShiftVPC struct {
 func copyFile(srcFile string, destFile string) error {
 	srcReader, err := assets.FS.Open(srcFile)
 	if err != nil {
-		log.Printf("error opening %s file: %s", srcFile, err)
-		return err
+		return fmt.Errorf("error opening %s file: %w", srcFile, err)
 	}
 	defer srcReader.Close()
 
 	destReader, err := os.Create(destFile)
 	if err != nil {
-		log.Printf("error creating runtime %s file: %s", destFile, err)
-		return err
+		return fmt.Errorf("error creating runtime %s file: %w", destFile, err)
 	}
 	defer destReader.Close()
 
 	_, err = io.Copy(destReader, srcReader)
 	if err != nil {
-		log.Printf("error copying source file to destination file: %s", err)
-		return err
+		return fmt.Errorf("error copying source file to destination file: %w", err)
 	}
 
 	return nil
@@ -47,6 +45,8 @@ func copyFile(srcFile string, destFile string) error {
 
 // createHyperShiftVPC creates the vpc to provision HyperShift clusters
 func createHyperShiftVPC() (*HyperShiftVPC, error) {
+	ctx := context.Background()
+
 	var vpc HyperShiftVPC
 	workingDir := viper.GetString(config.ReportDir)
 
@@ -59,15 +59,16 @@ func createHyperShiftVPC() (*HyperShiftVPC, error) {
 
 	tf, err := terraform.New(workingDir)
 	if err != nil {
-		return &vpc, err
+		return nil, err
 	}
 
-	err = tf.Init()
+	err = tf.Init(ctx)
 	if err != nil {
-		return &vpc, err
+		return nil, err
 	}
 
 	err = tf.Plan(
+		ctx,
 		tfexec.Var(fmt.Sprintf("aws_region=%s", viper.GetString(config.AWSRegion))),
 		tfexec.Var(fmt.Sprintf("cluster_name=%s", viper.GetString(config.Cluster.Name))),
 	)
@@ -75,14 +76,14 @@ func createHyperShiftVPC() (*HyperShiftVPC, error) {
 		return &vpc, err
 	}
 
-	err = tf.Apply()
+	err = tf.Apply(ctx)
 	if err != nil {
-		return &vpc, err
+		return nil, err
 	}
 
-	output, err := tf.Output()
+	output, err := tf.Output(ctx)
 	if err != nil {
-		return &vpc, err
+		return nil, err
 	}
 
 	vpc.PrivateSubnet = strings.ReplaceAll(string(output["cluster-private-subnet"].Value), "\"", "")
@@ -96,6 +97,8 @@ func createHyperShiftVPC() (*HyperShiftVPC, error) {
 
 // deleteHyperShiftVPC deletes the vpc created to provision HyperShift clusters
 func deleteHyperShiftVPC(workingDir string) error {
+	ctx := context.Background()
+
 	log.Println("Deleting ROSA HyperShift aws vpc")
 
 	tf, err := terraform.New(workingDir)
@@ -103,14 +106,14 @@ func deleteHyperShiftVPC(workingDir string) error {
 		return err
 	}
 
-	err = tf.Destroy()
+	err = tf.Destroy(ctx)
 	if err != nil {
 		return err
 	}
 
 	log.Println("ROSA HyperShift aws vpc deleted!")
 
-	err = tf.Uninstall()
+	err = tf.Uninstall(ctx)
 	if err != nil {
 		return err
 	}

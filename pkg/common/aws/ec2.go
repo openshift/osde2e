@@ -35,7 +35,9 @@ func (CcsAwsSession *ccsAwsSession) CheckIfEC2ExistBasedOnNodeName(nodeName stri
 }
 
 // getSecurityGroups gets all security groups based on the security groups input struct
-func (CcsAwsSession *ccsAwsSession) getSecurityGroups(securityGroupsInput ec2.DescribeSecurityGroupsInput) (*ec2.DescribeSecurityGroupsOutput, error) {
+func (CcsAwsSession *ccsAwsSession) getSecurityGroups(securityGroupsInput ec2.DescribeSecurityGroupsInput) ([]string, error) {
+	var securityGroupIds []string
+
 	err := CcsAwsSession.GetAWSSessions()
 	if err != nil {
 		return nil, err
@@ -50,7 +52,12 @@ func (CcsAwsSession *ccsAwsSession) getSecurityGroups(securityGroupsInput ec2.De
 		return nil, fmt.Errorf("no security groups found")
 	}
 
-	return securityGroups, nil
+	for _, securityGroup := range securityGroups.SecurityGroups {
+		securityGroupIds = append(securityGroupIds, *securityGroup.GroupId)
+		
+	}
+
+	return securityGroupIds, nil
 }
 
 // DeleteHyperShiftELBSecurityGroup is a temporary solution to remove elb security group
@@ -78,7 +85,7 @@ func (CcsAwsSession *ccsAwsSession) DeleteHyperShiftELBSecurityGroup(clusterID s
 	}
 
 	// Only will be one security group entry
-	securityGroupId = *securityGroups.SecurityGroups[0].GroupId
+	securityGroupId = securityGroups[0]
 
 	defaultSecurityGroups, err := CcsAwsSession.getSecurityGroups(ec2.DescribeSecurityGroupsInput{
 		Filters: []*ec2.Filter{
@@ -93,7 +100,7 @@ func (CcsAwsSession *ccsAwsSession) DeleteHyperShiftELBSecurityGroup(clusterID s
 	}
 
 	// Only will be one security group entry
-	defaultSecurityGroupId = *defaultSecurityGroups.SecurityGroups[0].GroupId
+	defaultSecurityGroupId = defaultSecurityGroups[0]
 
 	securityGroupRules, err := CcsAwsSession.ec2.DescribeSecurityGroupRules(&ec2.DescribeSecurityGroupRulesInput{
 		Filters: []*ec2.Filter{
