@@ -182,13 +182,14 @@ The following are the values that can be plugged in for the --configs flag when 
 
 
 ### AWS specific values:
-| Environment variable  | Usage                                                           |
-| --------------------- | --------------------------------------------------------------- |
-| AWS_ACCOUNT           | AWS account to use for testing.                                 |
-| AWS_ACCESS_KEY        | AWSAccessKeyID for provisioning clusters.                       |
-| AWS_SECRET_ACCESS_KEY | AWSSecretAccessKey for provisioning clusters.                   |
-| AWS_REGION            | AWSRegion for provisioning clusters.                            |
-| AWS_VPC_SUBNET_IDS    | AWSVPCSubnetIDs for provisioning clusters for BYO-VPC clusters. |
+| Environment variable  | Usage                                                                                |
+| --------------------- | ------------------------------------------------------------------------------------ |
+| AWS_ACCOUNT           | AWS account to use for testing.                                                      |
+| AWS_ACCESS_KEY        | AWSAccessKeyID for provisioning clusters.                                            |
+| AWS_SECRET_ACCESS_KEY | AWSSecretAccessKey for provisioning clusters.                                        |
+| AWS_REGION            | AWSRegion for provisioning clusters.                                                 |
+| AWS_VPC_SUBNET_IDS    | AWSVPCSubnetIDs for provisioning clusters for BYO-VPC clusters.                      |
+| AWS_PROFILE           | AWSProfile defines which profile in the aws credentials to use (ROSA provider only). |
 
 ### Cluster Provider values:
 
