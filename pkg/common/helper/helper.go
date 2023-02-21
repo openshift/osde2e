@@ -124,15 +124,15 @@ func (h *H) Setup() error {
 
 		h.CreateServiceAccounts(ctx)
 
-		err = wait.PollImmediate(1*time.Second, 1*time.Minute, func() (bool, error) {
-			_, err = h.Kube().RbacV1().RoleBindings(h.CurrentProject()).Get(ctx, "dedicated-admins-project-dedicated-admins", metav1.GetOptions{})
-			if apierrors.IsNotFound(err) {
-				return false, nil
-			}
-			return true, err
-		})
 		// Quick fix for Hypershift pipelines failing. Currently the RBAC is not being created in the projects.
 		if !viper.GetBool(config.Hypershift) {
+			err = wait.PollImmediate(1*time.Second, 1*time.Minute, func() (bool, error) {
+				_, err = h.Kube().RbacV1().RoleBindings(h.CurrentProject()).Get(ctx, "dedicated-admins-project-dedicated-admins", metav1.GetOptions{})
+				if apierrors.IsNotFound(err) {
+					return false, nil
+				}
+				return true, err
+			})
 			Expect(err).NotTo(HaveOccurred())
 		}
 	} else {
