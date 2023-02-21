@@ -44,7 +44,7 @@ func init() {
 	alert.RegisterGinkgoAlert(suiteName, "SD-SREP", "@sd-qe", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
 }
 
-var _ = ginkgo.Describe(suiteName, ginkgo.Ordered, label.E2E, label.ROSA, label.CCS, label.STS, label.AllCloudProviders(), func() {
+var _ = ginkgo.Describe(suiteName, ginkgo.Ordered, label.HyperShift, label.E2E, label.ROSA, label.CCS, label.STS, label.AllCloudProviders(), func() {
 	var h *helper.H
 
 	ginkgo.BeforeAll(func() {
