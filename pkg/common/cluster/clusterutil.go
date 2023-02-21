@@ -22,7 +22,6 @@ import (
 	"github.com/openshift/osde2e/pkg/common/spi"
 	"github.com/openshift/osde2e/pkg/common/util"
 	corev1 "k8s.io/api/core/v1"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/dynamic"
@@ -131,7 +130,7 @@ func WaitForClusterReadyPostInstall(clusterID string, logger *log.Logger) error 
 			nodes, err := kubeClient.CoreV1().Nodes().List(context.Background(), v1.ListOptions{})
 			if err != nil {
 				// if the api server is not ready yet
-				if apierrors.IsTimeout(err) {
+				if os.IsTimeout(err) {
 					logger.Println(err)
 					return false, nil
 				}
