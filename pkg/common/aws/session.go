@@ -28,9 +28,23 @@ func (CcsAwsSession *ccsAwsSession) GetAWSSessions() error {
 	var err error
 
 	CcsAwsSession.once.Do(func() {
-		CcsAwsSession.session, err = session.NewSession(aws.NewConfig().
-			WithCredentials(credentials.NewStaticCredentials(viper.GetString(config.AWSAccessKey), viper.GetString(config.AWSSecretAccessKey), "")).
-			WithRegion(viper.GetString(config.CloudProvider.Region)))
+		awsProfile := viper.GetString(config.AWSProfile)
+		awsAccessKey := viper.GetString(config.AWSAccessKey)
+		awsSecretAccessKey := viper.GetString(config.AWSSecretAccessKey)
+
+		options := session.Options{
+			Config: aws.Config{
+				Region: aws.String(viper.GetString(config.CloudProvider.Region)),
+			},
+		}
+
+		if awsProfile != "" {
+			options.Profile = awsProfile
+		} else if awsAccessKey != "" || awsSecretAccessKey != "" {
+			options.Config.Credentials = credentials.NewStaticCredentials(awsAccessKey, awsSecretAccessKey, "")
+		}
+
+		CcsAwsSession.session, err = session.NewSessionWithOptions(options)
 		CcsAwsSession.iam = iam.New(CcsAwsSession.session)
 		CcsAwsSession.ec2 = ec2.New(CcsAwsSession.session)
 	})

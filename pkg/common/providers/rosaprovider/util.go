@@ -22,27 +22,37 @@ func callAndSetAWSSession(f func() error) error {
 		}
 	}()
 
-	env = os.Environ()
-	os.Setenv("AWS_ACCESS_KEY_ID", viper.GetString(config.AWSAccessKey))
-	os.Setenv("AWS_SECRET_ACCESS_KEY", viper.GetString(config.AWSSecretAccessKey))
-	os.Setenv("AWS_REGION", viper.GetString(config.AWSRegion))
-	error := false
-	if os.Getenv("AWS_ACCESS_KEY_ID") == "" {
-		log.Println("AWS_ACCESS_KEY_ID is empty")
-		error = true
-	}
-	if os.Getenv("AWS_SECRET_ACCESS_KEY") == "" {
-		log.Println("AWS_SECRET_ACCESS_KEY is empty")
-		error = true
-	}
-	if os.Getenv("AWS_REGION") == "" {
-		log.Println("AWS_REGION is empty")
-		error = true
+	envVarCheck := func(envVars map[string]string) bool {
+		error := false
+		for key, value := range envVars {
+			os.Setenv(key, viper.GetString(value))
+
+			if os.Getenv(key) == "" {
+				log.Printf("%s is not set", key)
+				error = true
+			}
+		}
+		return error
 	}
 
-	if !error {
+	env = os.Environ()
+
+	accessKeyError := envVarCheck(
+		map[string]string{
+			"AWS_ACCESS_KEY_ID":     config.AWSAccessKey,
+			"AWS_SECRET_ACCESS_KEY": config.AWSSecretAccessKey,
+		},
+	)
+	regionError := envVarCheck(
+		map[string]string{"AWS_REGION": config.AWSRegion},
+	)
+	profileError := envVarCheck(
+		map[string]string{"AWS_PROFILE": config.AWSProfile},
+	)
+
+	if (!accessKeyError && !regionError) || (!profileError && !regionError) {
 		return f()
 	}
 
-	return fmt.Errorf("one or more required AWS variables were not set")
+	return fmt.Errorf("aws variables were not set (access key id, secret access key, region) or (aws profile, region)")
 }

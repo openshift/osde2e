@@ -8,11 +8,17 @@ import (
 var (
 	// AWSAccount is the AWS account
 	AWSAccount = "config.aws.account"
+
 	// AWSAccessKey is the AWS access key
 	AWSAccessKey = "config.aws.accessKey"
+
 	// AWSSecretKey is the AWS secret access key
 	AWSSecretAccessKey = "config.aws.secretAccessKey"
-	// AWSRegion sets the AWS region to use
+
+	// AWSProfile is the AWS profile to use
+	AWSProfile = "config.aws.profile"
+
+	// AWSRegion is the AWS region to use
 	AWSRegion = "config.aws.region"
 
 	// AWSVPCSubnetIDs is comma-separated list of strings to specify the subnets for cluster provision
@@ -28,6 +34,9 @@ func InitAWSViper() {
 
 	viper.BindEnv(AWSSecretAccessKey, "AWS_SECRET_ACCESS_KEY", "OCM_AWS_SECRET_KEY", "ROSA_AWS_SECRET_ACCESS_KEY")
 	RegisterSecret(AWSSecretAccessKey, "aws-secret-access-key")
+
+	viper.BindEnv(AWSProfile, "AWS_PROFILE")
+	RegisterSecret(AWSProfile, "aws-profile")
 
 	viper.BindEnv(AWSRegion, "AWS_REGION", "ROSA_AWS_REGION")
 	RegisterSecret(AWSRegion, "aws-region")
