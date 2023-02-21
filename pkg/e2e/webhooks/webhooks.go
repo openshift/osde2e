@@ -48,9 +48,6 @@ var _ = ginkgo.Describe(suiteName, ginkgo.Ordered, label.E2E, label.ROSA, label.
 	var h *helper.H
 
 	ginkgo.BeforeAll(func() {
-		if viper.GetBool(config.Hypershift) {
-			ginkgo.Skip(suiteName + " is not deployed to ROSA hosted-cp clusters (SDE-2252)")
-		}
 		h = helper.New()
 	})
 
@@ -135,6 +132,9 @@ var _ = ginkgo.Describe(suiteName, ginkgo.Ordered, label.E2E, label.ROSA, label.
 		}
 
 		ginkgo.BeforeAll(func() {
+			if viper.GetBool(config.Hypershift) {
+				ginkgo.Skip("sre-pod-validation is not deployed to ROSA hosted-cp clusters (SDE-2252)")
+			}
 			name := envconf.RandomName("osde2e", 12)
 			pod = newTestPod(name)
 		})
@@ -308,6 +308,9 @@ var _ = ginkgo.Describe(suiteName, ginkgo.Ordered, label.E2E, label.ROSA, label.
 		}
 
 		ginkgo.BeforeAll(func(ctx context.Context) {
+			if viper.GetBool(config.Hypershift) {
+				ginkgo.Skip("sre-hiveownership-validation is not deployed to ROSA hosted-cp clusters (SDE-2252)")
+			}
 			asAdmin := h.AsClusterAdmin()
 			managedCRQ = newTestCRQ("managed" + quotaName)
 			err := asAdmin.Create(ctx, managedCRQ)
