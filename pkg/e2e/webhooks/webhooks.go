@@ -52,6 +52,9 @@ var _ = ginkgo.Describe(suiteName, ginkgo.Ordered, label.HyperShift, label.E2E, 
 	})
 
 	ginkgo.It("exists and is running", label.Install, func(ctx context.Context) {
+		if viper.GetBool(config.Hypershift) {
+			ginkgo.Skip("MCVW deployment is not deployed to ROSA hosted-cp clusters (SDE-2252)")
+		}
 		const (
 			namespaceName = "openshift-validation-webhook"
 			serviceName   = "validation-webhook"
