@@ -119,6 +119,9 @@ type Provider interface {
 	// AddProperty adds a new property to the properties field of an existing cluster.
 	AddProperty(cluster *Cluster, tag string, value string) error
 
+	// GetProperty gets a property from the properties field of an existing cluster.
+	GetProperty(clusterID string, property string) (string, error)
+
 	// Upgrade requests the provider initiate a cluster upgrade to the given version
 	Upgrade(clusterID string, version string, t time.Time) error
 
