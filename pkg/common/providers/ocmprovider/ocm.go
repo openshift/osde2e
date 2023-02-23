@@ -3,6 +3,7 @@ package ocmprovider
 
 import (
 	"fmt"
+	"strings"
 
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/spi"
@@ -15,17 +16,21 @@ const (
 	// APIVersion is the version of the OSD API to use.
 	APIVersion = "v1"
 
-	// TokenURL specifies the endpoint used to create access tokens.
-	TokenURL = "https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token"
+	// commercialTokenURL specifies the endpoint used to create access tokens in the commercial environment.
+	commercialTokenURL     = "https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token"
+	// The following TokenURLs are specific to the FedRAMP environment
+	govintegrationTokenURL = "https://rh-ocm-appsre-integration.auth-fips.us-gov-west-1.amazoncognito.com/oauth2/token"
+	govstageTokenURL       = "https://ocm-ra-stage-domain.auth-fips.us-gov-west-1.amazoncognito.com/oauth2/token"
+	govproductionTokenURL  = "https://ocm-ra-production-domain.auth-fips.us-gov-west-1.amazoncognito.com/oauth2/token"
 
 	// ClientID is used to identify the client to OSD.
 	ClientID = "cloud-services"
 )
 
 type ocmConnectionKey struct {
-	token string
-	env   string
-	debug bool
+	token    string
+	env      string
+	debug    bool
 }
 
 var connectionCache = map[ocmConnectionKey]*ocm.Connection{}
@@ -46,6 +51,8 @@ func init() {
 
 // OCMConnection returns a raw OCM connection.
 func OCMConnection(token, env string, debug bool) (*ocm.Connection, error) {
+	TokenURL := ""
+
 	cacheKey := ocmConnectionKey{
 		token: token,
 		env:   env,
@@ -69,6 +76,16 @@ func OCMConnection(token, env string, debug bool) (*ocm.Connection, error) {
 
 	// select correct environment
 	url := Environments.Choose(env)
+	switch {
+	case strings.Contains(url, "api.int.openshiftusgov.com"):
+		TokenURL = govintegrationTokenURL
+	case strings.Contains(url, "api.stage.openshiftusgov.com"):
+		TokenURL = govstageTokenURL
+	case strings.Contains(url, "api.openshiftusgov.com"):
+		TokenURL = govproductionTokenURL
+	default:
+		TokenURL = commercialTokenURL
+	}
 
 	builder := ocm.NewConnectionBuilder().
 		URL(url).
