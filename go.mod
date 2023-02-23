@@ -30,22 +30,22 @@ require (
 	github.com/openshift-online/ocm-sdk-go v0.1.318
 	github.com/openshift/api v3.9.1-0.20190924102528-32369d4db2ad+incompatible
 	github.com/openshift/client-go v0.0.0-20220603133046-984ee5ebedcf
-	github.com/openshift/cloud-credential-operator v0.0.0-20230125000001-006e1c8ea7a1
-	github.com/openshift/cloud-ingress-operator v0.0.0-20230106174900-ec9d88777f75
+	github.com/openshift/cloud-credential-operator v0.0.0-20230210162952-a4819474e58d
+	github.com/openshift/cloud-ingress-operator v0.0.0-20230208115606-3198614cd87a
 	github.com/openshift/custom-domains-operator v0.0.0-20221118201157-bd1052dac818
 	github.com/openshift/managed-upgrade-operator v0.0.0-20230128000023-b30cca4aa2af
 	github.com/openshift/must-gather-operator v0.1.2-0.20221011152618-7805956e1ded
 	github.com/openshift/rosa v1.2.14
 	github.com/openshift/route-monitor-operator v0.0.0-20221118160357-3df1ed1fa1d2
-	github.com/openshift/splunk-forwarder-operator v0.0.0-20230125212852-176d68d8c59b
+	github.com/openshift/splunk-forwarder-operator v0.0.0-20230216205147-c051d56cd298
 	github.com/operator-framework/api v0.17.2-0.20220915200120-ff2dbc53d381
 	github.com/operator-framework/operator-lifecycle-manager v0.22.0
-	github.com/operator-framework/operator-registry v1.26.3
+	github.com/operator-framework/operator-registry v1.26.4
 	github.com/ory/dockertest v3.3.5+incompatible
 	github.com/pganalyze/pg_query_go/v2 v2.2.0
 	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.61.0
 	github.com/prometheus-operator/prometheus-operator/pkg/client v0.61.0
-	github.com/prometheus/alertmanager v0.25.0
+	github.com/prometheus/alertmanager v0.24.0
 	github.com/prometheus/client_golang v1.14.0
 	github.com/prometheus/common v0.40.0
 	github.com/redhat-cop/must-gather-operator v1.1.2
@@ -53,15 +53,15 @@ require (
 	github.com/spf13/afero v1.9.3
 	github.com/spf13/cobra v1.6.1
 	github.com/spf13/pflag v1.0.5
-	github.com/spf13/viper v1.15.0
+	github.com/spf13/viper v1.8.1
 	github.com/tsenart/vegeta v12.7.0+incompatible
 	github.com/vmware-tanzu/velero v1.7.2
 	golang.org/x/net v0.7.0
 	golang.org/x/oauth2 v0.5.0
 	golang.org/x/tools v0.6.0
-	google.golang.org/api v0.110.0
-	google.golang.org/genproto v0.0.0-20230209215440-0dfe4f8abfcc
-	google.golang.org/grpc v1.53.0
+	google.golang.org/api v0.103.0
+	google.golang.org/genproto v0.0.0-20221201164419-0e50fba7f41c
+	google.golang.org/grpc v1.52.0-dev
 	gopkg.in/yaml.v3 v3.0.1
 	gotest.tools/v3 v3.4.0
 	k8s.io/api v0.26.1
@@ -73,8 +73,8 @@ require (
 )
 
 require (
-	cloud.google.com/go/compute v1.18.0 // indirect
-	cloud.google.com/go/compute/metadata v0.2.3 // indirect
+	cloud.google.com/go/compute v1.12.1 // indirect
+	cloud.google.com/go/compute/metadata v0.2.1 // indirect
 	cloud.google.com/go/iam v0.8.0 // indirect
 	github.com/AlecAivazis/survey/v2 v2.3.2 // indirect
 	github.com/Azure/go-ansiterm v0.0.0-20210617225240-d185dfc1b5a1 // indirect
@@ -161,7 +161,7 @@ require (
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.0.3-0.20211202183452-c5a74bcca799 // indirect
 	github.com/opencontainers/runc v1.1.4 // indirect
-	github.com/pelletier/go-toml/v2 v2.0.6 // indirect
+	github.com/pelletier/go-toml v1.9.4 // indirect
 	github.com/pingcap/errors v0.11.5-0.20210425183316-da1aaba5fb63 // indirect
 	github.com/pingcap/log v0.0.0-20210906054005-afc726e70354 // indirect
 	github.com/pingcap/tidb/parser v0.0.0-20220725134311-c80026e61f00 // indirect
