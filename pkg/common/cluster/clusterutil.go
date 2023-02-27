@@ -2,6 +2,8 @@ package cluster
 
 import (
 	"context"
+	"crypto/x509"
+	"errors"
 	"fmt"
 	"log"
 	"math/rand"
@@ -130,7 +132,7 @@ func WaitForClusterReadyPostInstall(clusterID string, logger *log.Logger) error 
 			nodes, err := kubeClient.CoreV1().Nodes().List(context.Background(), v1.ListOptions{})
 			if err != nil {
 				// if the api server is not ready yet
-				if os.IsTimeout(err) {
+				if os.IsTimeout(err) || errors.As(err, &x509.UnknownAuthorityError{}) {
 					logger.Println(err)
 					return false, nil
 				}
