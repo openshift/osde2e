@@ -17,7 +17,7 @@ require (
 	github.com/google/uuid v1.3.0
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/hashicorp/hc-install v0.5.0
-	github.com/hashicorp/terraform-exec v0.18.0
+	github.com/hashicorp/terraform-exec v0.18.1
 	github.com/jackc/pgtype v1.14.0
 	github.com/jinzhu/inflection v1.0.0
 	github.com/joshdk/go-junit v1.0.0
@@ -81,6 +81,7 @@ require (
 	github.com/Microsoft/go-winio v0.5.1 // indirect
 	github.com/Nvveen/Gotty v0.0.0-20120604004816-cd527374f1e5 // indirect
 	github.com/andybalholm/cascadia v1.3.1 // indirect
+	github.com/apparentlymart/go-textseg/v13 v13.0.0 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
 	github.com/benbjohnson/clock v1.3.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
@@ -176,7 +177,7 @@ require (
 	github.com/streadway/quantile v0.0.0-20220407130108-4246515d968d // indirect
 	github.com/subosito/gotenv v1.4.2 // indirect
 	github.com/tsenart/go-tsz v0.0.0-20180814235614-0bd30b3df1c3 // indirect
-	github.com/zclconf/go-cty v1.12.1 // indirect
+	github.com/zclconf/go-cty v1.13.0 // indirect
 	github.com/zgalor/weberr v0.6.0 // indirect
 	gitlab.com/c0b/go-ordered-json v0.0.0-20171130231205-49bbdab258c2 // indirect
 	go.opencensus.io v0.24.0 // indirect
