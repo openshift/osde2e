@@ -3,7 +3,6 @@ package ocmprovider
 
 import (
 	"fmt"
-	"strings"
 
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/spi"
@@ -82,13 +81,13 @@ func OCMConnection(token, env string, debug bool) (*ocm.Connection, error) {
 	// select correct environment
 	url := Environments.Choose(env)
 	switch {
-	case strings.Contains(url, "api.int.openshiftusgov.com"):
+	case url == govintegration:
 		TokenURL = govintegrationTokenURL
 		ClientID = govintegrationClientID
-	case strings.Contains(url, "api.stage.openshiftusgov.com"):
+	case url == govstage:
 		TokenURL = govstageTokenURL
 		ClientID = govstageClientID
-	case strings.Contains(url, "api.openshiftusgov.com"):
+	case url == govprod:
 		TokenURL = govproductionTokenURL
 		ClientID = govproductionClientID
 	default:
