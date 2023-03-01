@@ -24,9 +24,9 @@ var Environments = environments{
 	"": integration,
 
 	// environments available
-	integration: integrationURL,
-	stage:       stageURL,
-	prod:        prodURL,
+	integration:    integrationURL,
+	stage:          stageURL,
+	prod:           prodURL,
 	govintegration: govintegrationURL,
 	govstage:       govstageURL,
 	govprod:        govprodURL,
