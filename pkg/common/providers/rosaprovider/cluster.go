@@ -381,6 +381,9 @@ func (m *ROSAProvider) ocmLogin() (*ocm.Client, error) {
 		"prod":  "https://api.openshift.com",
 		"stage": "https://api.stage.openshift.com",
 		"int":   "https://api.integration.openshift.com",
+		"govprod":  "https://api.openshiftusgov.com",
+		"govstage": "https://api.stage.openshiftusgov.com",
+		"govint":   "https://api.int.openshiftusgov.com",
 	}
 	url, ok := URLAliases[viper.GetString(Env)]
 	if !ok {
@@ -388,7 +391,13 @@ func (m *ROSAProvider) ocmLogin() (*ocm.Client, error) {
 	}
 
 	newLogin := rosaLogin.Cmd
-	newLogin.SetArgs([]string{"--token", viper.GetString("ocm.token"), "--env", url})
+
+	if strings.HasPrefix(url, "gov") {
+        newLogin.SetArgs([]string{"--token", viper.GetString("ocm.token"), "--env", url, "--govcloud"})
+    } else {
+        newLogin.SetArgs([]string{"--token", viper.GetString("ocm.token"), "--env", url})
+    }
+
 	err = newLogin.Execute()
 	if err != nil {
 		return nil, fmt.Errorf("unable to login to OCM: %s", err.Error())
