@@ -96,7 +96,6 @@ var _ = ginkgo.Describe(suiteName, ginkgo.Ordered, label.Operators, func() {
 				},
 			}, appsv1.DeploymentAvailable, v1.ConditionTrue))
 		expect.NoError(err, "deployment %s not available", operatorName)
-
 	})
 
 	ginkgo.It("roles exist", label.Install, func(ctx context.Context) {
