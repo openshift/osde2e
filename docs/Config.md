@@ -170,6 +170,9 @@ The following are the values that can be plugged in for the --configs flag when 
 | int          | To run osde2e in the integration environment.                                                     |
 | stage        | To run osde2e on stage.                                                                           |
 | prod         | To run osde2e in the production environment. (This is the default value if nothing is specified.) |
+| govint       | To run osde2e in the integration FedRAMP environment.                                             |
+| govstage     | To run osde2e in the stage FedRAMP environment.                                                   |
+| govprod      | To run osde2e in the production FedRAMP environment.                                              |
 | scale        | To set scale testing configurations for a cluster.                                                |
 
 
