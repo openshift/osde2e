@@ -146,10 +146,10 @@ CLI flags that are commonly used include:
 --cluster-id: Existing OCM cluster ID to run tests against.
 --configs:  A comma separated list of built in configs to use. (stage, prod, e2e-suite, etc.)
 --custom-config: Custom config file for osde2e.
---destroy-cluster: A flag to trigger cluster deletion after test completion.
 --environment: Cluster provider environment to use. (ocm, rosa, etc.).
 --kube-config: Path to local Kube config for running tests against.
---skip-health-check:  a flag to skip cluster health checks.
+--skip-destroy-cluster: Skip cluster deletion after test completion.
+--skip-health-check: Skip cluster health checks.
 --skip-tests: Skip any Ginkgo tests whose names match the regular expression.
 ``` 
 

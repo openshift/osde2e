@@ -537,7 +537,7 @@ func runGinkgoTests() (int, error) {
 
 	}
 
-	if viper.GetBool(config.Cluster.DestroyAfterTest) {
+	if !viper.GetBool(config.Cluster.SkipDestroyCluster) {
 		log.Printf("Destroying cluster '%s'...", viper.GetString(config.Cluster.ID))
 
 		if err = provider.DeleteCluster(viper.GetString(config.Cluster.ID)); err != nil {
@@ -699,7 +699,7 @@ func cleanupAfterE2E(ctx context.Context, h *helper.H) (errors []error) {
 	// We need a provider to hibernate
 	// We need a cluster to hibernate
 	// We need to check that the test run wants to hibernate after this run
-	if provider != nil && viper.GetString(config.Cluster.ID) != "" && viper.GetBool(config.Cluster.HibernateAfterUse) && !viper.GetBool(config.Cluster.DestroyAfterTest) {
+	if provider != nil && viper.GetString(config.Cluster.ID) != "" && viper.GetBool(config.Cluster.HibernateAfterUse) && viper.GetBool(config.Cluster.SkipDestroyCluster) {
 		msg := "Unable to hibernate %s"
 		if provider.Hibernate(viper.GetString(config.Cluster.ID)) {
 			msg = "Hibernating %s"

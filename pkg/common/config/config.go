@@ -268,9 +268,9 @@ var Cluster = struct {
 	// Env: CHANNEL
 	Channel string
 
-	// DestroyClusterAfterTest set to true if you want to the cluster to be explicitly deleted after the test.
-	// Env: DESTROY_CLUSTER
-	DestroyAfterTest string
+	// SkipDestroyCluster indicates whether cluster should be destroyed after test completion.
+	// Env: SKIP_DESTROY_CLUSTER
+	SkipDestroyCluster string
 
 	// ExpiryInMinutes is how long before a cluster expires and is deleted by OSD.
 	// Env: CLUSTER_EXPIRY_IN_MINUTES
@@ -383,7 +383,7 @@ var Cluster = struct {
 }{
 	MultiAZ:                             "cluster.multiAZ",
 	Channel:                             "cluster.channel",
-	DestroyAfterTest:                    "cluster.destroyAfterTest",
+	SkipDestroyCluster:                  "cluster.skipDestroyCluster",
 	ExpiryInMinutes:                     "cluster.expiryInMinutes",
 	AfterTestWait:                       "cluster.afterTestWait",
 	InstallTimeout:                      "cluster.installTimeout",
@@ -699,8 +699,7 @@ func InitOSDe2eViper() {
 	viper.SetDefault(Cluster.Channel, "stable")
 	viper.BindEnv(Cluster.Channel, "CHANNEL")
 
-	viper.SetDefault(Cluster.DestroyAfterTest, true)
-	viper.BindEnv(Cluster.DestroyAfterTest, "DESTROY_CLUSTER")
+	viper.BindEnv(Cluster.SkipDestroyCluster, "SKIP_DESTROY_CLUSTER")
 
 	viper.SetDefault(Cluster.ExpiryInMinutes, 360)
 	viper.BindEnv(Cluster.ExpiryInMinutes, "CLUSTER_EXPIRY_IN_MINUTES")
