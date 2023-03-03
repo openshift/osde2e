@@ -13,11 +13,18 @@ OSDe2e key features are:
 * Portable test framework that can run anywhere to validate end to end test workflows
   * Run locally from a developers workstation or from a CI application
 * Supports create/delete different cluster deployment types
-  * ROSA, ROSA Hosted Control Plane (e.g. HyperShift), OSD
+  * ROSA, ROSA Hosted Control Plane (e.g. HyperShift), OSD on AWS
+  * OSD on GCP
+  * Azure (Azure Red Hat OpenShift)
 * Performs cluster health checks to ensure cluster is operational prior to
   running tests
 * Perform cluster upgrades
-* Captures artifacts such as logs, metrics, metadata to be archived for later usage
+* Captures artifacts for later use, such as
+  * Cluster install/uninstall logs
+  * Test logs
+  * Metrics
+  * Metadata
+  * Must gather artifacts
 * Tests OSD operators along with other OpenShift features from a
   customer/SRE point of view
 * Provides a test harness to validate [Add Ons][OSDE2E Test Harness]
@@ -42,8 +49,8 @@ Prior to running osde2e, make sure you meet the minimal prerequisites defined be
 * Navigate to [OpenShift Cluster Manager (OCM)][OpenShift Offline Token] to obtain
   an OpenShift offline token.
   * Save your token into the environment variable `OCM_TOKEN` for later usage
-* Verify (submit a request if required) your Red Hat account has adequate quota for
-  deploying clusters based on your preferred deployment type
+* Verify (submit a request if required to [ocm resources]) your Red Hat account
+  has adequate quota for deploying clusters based on your preferred deployment type
 * A go workspace running the minimal version defined in the [go.mod](go.mod)
 
 ## Run
@@ -345,27 +352,14 @@ the database is unconventional. We have to write all of our database interaction
 logic with the understanding that any number of other prow jobs could be modifying
 the data at the same time that we are.
 
-We use the database to generate alerts for the CI Watcher to use, and we follow
-this algorithm to generate those alerts safely in our highly-concurrent usecase
-(at time of writing, implemented [here](https://github.com/openshift/osde2e/blob/cfd38c75532274d619840ad505c1232881eb417a/pkg/e2e/e2e.go#L1029)):
-
-1. At the end of each job, list all testcases that failed during the current job. Implemented by [`ListAlertableFailuresForJob`](https://github.com/openshift/osde2e/blob/cfd38c75532274d619840ad505c1232881eb417a/pkg/db/queries/queries.sql#L66).
-1. Generate a list of testcases (in any job) that have failed more than once during the last 48 hours. Implemented by [`ListProblematicTests`](https://github.com/openshift/osde2e/blob/cfd38c75532274d619840ad505c1232881eb417a/pkg/db/queries/queries.sql#L105).
-1. For each failing testcase in the current job, create a PD alert if the testcase is one of those that have failed more than once in the last 48 hours.
-1. After generating all alerts as above, merge all pagerduty alerts that indicate failures for the same testcase (this merge uses the title of the alert, which is the testcase name, to group the alerts).
-1. Finally, close any PD incident for a testcase that does not appear in the list of testcases failing during the last 48 hours.
-
 > Why does each job only report its own failures? The database is global, and a single job could report for all of them.
 
-If each job reported for the failures of all recent jobs, we'd create an enormous number of redundant alerts for no benefit. Having each job only report its own failures keeps the level of noise down *without* requiring us to build some kind of concensus mechanism between the jobs executing in parallel.
-
-> Why close the PD incidents for test cases that haven't failed in the last 48 hours?
-
-This is a heuristic designed to automatically close incidents when the underlying test problem has been dealt with. If we stop seeing failures for a testcase, it probably means that the testcase has stopped failing. This can backfire, and a more intelligent heuristic is certainly possible.
+If each job reported for the failures of all recent jobs, we'd create an enormous number of redundant alerts for no benefit. Having each job only report its own failures keeps the level of noise down *without* requiring us to build some kind of consensus mechanism between the jobs executing in parallel.
 
 [Config variables]:/docs/Config.md
 [configs]:/configs/
 [config package]:/pkg/common/config/config.go
+[ocm resources]: https://gitlab.cee.redhat.com/service/ocm-resources/
 [OSDE2E Quay Image]: quay.io/app-sre/osde2e
 [OpenShift Dedicated]: https://docs.openshift.com/dedicated/welcome/index.html
 [OSDE2E Test Harness]: https://github.com/openshift/osde2e-example-test-harness
