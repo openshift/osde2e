@@ -88,6 +88,8 @@ const (
 
 	// Hypershift enables the use of hypershift for cluster creation.
 	Hypershift = "Hypershift"
+
+	HypershiftIgnoreInvalidCert = "HypershiftIgnoreInvalidCert"
 )
 
 // This is a config key to secret file mapping. We will attempt to read in from secret files before loading anything else.
@@ -716,6 +718,9 @@ func InitOSDe2eViper() {
 
 	viper.SetDefault(Hypershift, false)
 	viper.BindEnv(Hypershift, "HYPERSHIFT")
+
+	viper.SetDefault(HypershiftIgnoreInvalidCert, false)
+	viper.BindEnv(HypershiftIgnoreInvalidCert, "HYPERSHIFT_IGNORE_INVALID_CERT")
 
 	viper.SetDefault(Cluster.UseLatestVersionForInstall, false)
 	viper.BindEnv(Cluster.UseLatestVersionForInstall, "USE_LATEST_VERSION_FOR_INSTALL")

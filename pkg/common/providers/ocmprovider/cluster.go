@@ -867,7 +867,16 @@ func (o *OCMProvider) ClusterKubeconfig(clusterID string) ([]byte, error) {
 	o.credentialCache[clusterID] = resp.Body().Kubeconfig()
 	viper.Set(config.Kubeconfig.Contents, resp.Body().Kubeconfig())
 
-	return []byte(resp.Body().Kubeconfig()), nil
+	kubeConfigBytes := []byte(resp.Body().Kubeconfig())
+
+	// TODO: Remove once https://issues.redhat.com/browse/OCPBUGS-8101 is fixed
+	if viper.GetBool(config.Hypershift) && viper.GetBool(config.HypershiftIgnoreInvalidCert) {
+		kubeConfigBytes, err = HyperShiftInvalidCertWorkaround(resp.Body().Kubeconfig())
+		viper.Set(config.Kubeconfig.Contents, string(kubeConfigBytes))
+		return kubeConfigBytes, err
+	}
+
+	return kubeConfigBytes, nil
 }
 
 // Loads and returns the supplied filepath
