@@ -113,18 +113,6 @@ func checkPod(h *helper.H, namespace string, name string, gracePeriod int, maxAc
 	})
 }
 
-func checkServiceAccounts(h *helper.H, operatorNamespace string, serviceAccounts []string) {
-	// Check that deployed serviceAccounts exist
-	ginkgo.Context("serviceAccounts", func() {
-		util.GinkgoIt("should exist", func(ctx context.Context) {
-			for _, serviceAccountName := range serviceAccounts {
-				_, err := h.Kube().CoreV1().ServiceAccounts(operatorNamespace).Get(ctx, serviceAccountName, metav1.GetOptions{})
-				Expect(err).NotTo(HaveOccurred(), "failed to get serviceAccount %v\n", serviceAccountName)
-			}
-		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
-	})
-}
-
 func checkClusterRoles(h *helper.H, clusterRoles []string, matchPrefix bool) {
 	// Check that the clusterRoles exist
 	ginkgo.Context("clusterRoles", func() {
@@ -181,42 +169,6 @@ func checkRole(h *helper.H, namespace string, roles []string) {
 	})
 }
 
-func checkRolesWithNamePrefix(h *helper.H, namespace string, prefix string, count int) {
-	ginkgo.Context("roles with prefix", func() {
-		util.GinkgoIt("should exist", func(ctx context.Context) {
-			Eventually(func() int {
-				rolesList, err := h.Kube().RbacV1().Roles(namespace).List(ctx, metav1.ListOptions{})
-				Expect(err).NotTo(HaveOccurred(), "failed to get roles in namespace %s", namespace)
-				var roleCount int
-				for _, r := range rolesList.Items {
-					if strings.HasPrefix(r.Name, prefix) {
-						roleCount++
-					}
-				}
-				return roleCount
-			}, "10m", "30s").Should(BeNumerically(">=", count))
-		}, viper.GetFloat64(config.Tests.PollingTimeout))
-	})
-}
-
-func checkRoleBindingsWithNamePrefix(h *helper.H, namespace string, prefix string, count int) {
-	ginkgo.Context("roles with prefix", func() {
-		util.GinkgoIt("should exist", func(ctx context.Context) {
-			Eventually(func() int {
-				roleBindings, err := h.Kube().RbacV1().RoleBindings(namespace).List(ctx, metav1.ListOptions{})
-				Expect(err).NotTo(HaveOccurred(), "failed to get roles in namespace %s", namespace)
-				var roleCount int
-				for _, r := range roleBindings.Items {
-					if strings.HasPrefix(r.Name, prefix) {
-						roleCount++
-					}
-				}
-				return roleCount
-			}, "10m", "30s").Should(BeNumerically(">=", count))
-		}, viper.GetFloat64(config.Tests.PollingTimeout))
-	})
-}
-
 func checkRoleBindings(h *helper.H, namespace string, roleBindings []string) {
 	// Check that deployed rolebindings exist
 	ginkgo.Context("roleBindings", func() {
@@ -224,19 +176,6 @@ func checkRoleBindings(h *helper.H, namespace string, roleBindings []string) {
 			for _, roleBindingName := range roleBindings {
 				err := pollRoleBinding(ctx, h, namespace, roleBindingName)
 				Expect(err).NotTo(HaveOccurred(), "failed to get roleBinding %v\n", roleBindingName)
-			}
-		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
-	})
-}
-
-// nolint
-func checkSecrets(h *helper.H, namespace string, secrets []string) {
-	// Check that deployed secrets exist
-	ginkgo.Context("secrets", func() {
-		util.GinkgoIt("should exist", func(ctx context.Context) {
-			for _, secretName := range secrets {
-				_, err := h.Kube().CoreV1().Secrets(namespace).Get(ctx, secretName, metav1.GetOptions{})
-				Expect(err).NotTo(HaveOccurred(), "failed to get secret %v\n", secretName)
 			}
 		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
 	})
