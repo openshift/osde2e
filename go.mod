@@ -45,7 +45,7 @@ require (
 	github.com/pganalyze/pg_query_go/v2 v2.2.0
 	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.61.0
 	github.com/prometheus-operator/prometheus-operator/pkg/client v0.61.0
-	github.com/prometheus/alertmanager v0.24.0
+	github.com/prometheus/alertmanager v0.25.0
 	github.com/prometheus/client_golang v1.14.0
 	github.com/prometheus/common v0.42.0
 	github.com/redhat-cop/must-gather-operator v1.1.2
