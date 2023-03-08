@@ -21,7 +21,7 @@ require (
 	github.com/jackc/pgtype v1.14.0
 	github.com/jinzhu/inflection v1.0.0
 	github.com/joshdk/go-junit v1.0.0
-	github.com/kyleconroy/sqlc v1.17.0
+	github.com/kyleconroy/sqlc v1.17.2
 	github.com/kylelemons/godebug v1.1.0
 	github.com/lib/pq v1.10.7
 	github.com/mitchellh/mapstructure v1.5.0
