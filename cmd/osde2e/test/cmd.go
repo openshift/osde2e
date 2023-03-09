@@ -40,18 +40,18 @@ var Cmd = &cobra.Command{
 }
 
 var args struct {
-	configString     string
-	customConfig     string
-	secretLocations  string
-	clusterID        string
-	environment      string
-	kubeConfig       string
-	destroyAfterTest bool
-	skipHealthChecks bool
-	mustGather       bool
-	focusTests       string
-	skipTests        string
-	labelFilter      string
+	configString       string
+	customConfig       string
+	secretLocations    string
+	clusterID          string
+	environment        string
+	kubeConfig         string
+	skipDestroyCluster bool
+	skipHealthChecks   bool
+	mustGather         bool
+	focusTests         string
+	skipTests          string
+	labelFilter        string
 }
 
 func init() {
@@ -98,10 +98,10 @@ func init() {
 		"Path to local Kube config for running tests against.",
 	)
 	pfs.BoolVar(
-		&args.destroyAfterTest,
-		"destroy-cluster",
+		&args.skipDestroyCluster,
+		"skip-destroy-cluster",
 		false,
-		"Destroy cluster after test completion.",
+		"Skip destroy cluster after test completion.",
 	)
 	pfs.BoolVar(
 		&args.skipHealthChecks,
@@ -137,7 +137,7 @@ func init() {
 	viper.BindPFlag(config.Cluster.ID, Cmd.PersistentFlags().Lookup("cluster-id"))
 	viper.BindPFlag(ocmprovider.Env, Cmd.PersistentFlags().Lookup("environment"))
 	viper.BindPFlag(config.Kubeconfig.Path, Cmd.PersistentFlags().Lookup("kube-config"))
-	viper.BindPFlag(config.Cluster.DestroyAfterTest, Cmd.PersistentFlags().Lookup("destroy-cluster"))
+	viper.BindPFlag(config.Cluster.SkipDestroyCluster, Cmd.PersistentFlags().Lookup("skip-destroy-cluster"))
 	viper.BindPFlag(config.Tests.SkipClusterHealthChecks, Cmd.PersistentFlags().Lookup("skip-health-check"))
 	viper.BindPFlag(config.Tests.GinkgoFocus, Cmd.PersistentFlags().Lookup("focus-tests"))
 	viper.BindPFlag(config.Tests.GinkgoSkip, Cmd.PersistentFlags().Lookup("skip-tests"))
