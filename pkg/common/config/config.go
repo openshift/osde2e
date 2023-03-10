@@ -88,6 +88,9 @@ const (
 
 	// Hypershift enables the use of hypershift for cluster creation.
 	Hypershift = "Hypershift"
+
+	// Specifies the cluster will be created in GovCloud
+	Fedramp = "FEDRAMP"
 )
 
 // This is a config key to secret file mapping. We will attempt to read in from secret files before loading anything else.
@@ -716,6 +719,9 @@ func InitOSDe2eViper() {
 
 	viper.SetDefault(Hypershift, false)
 	viper.BindEnv(Hypershift, "HYPERSHIFT")
+
+	viper.SetDefault(Fedramp, false)
+	viper.BindEnv(Fedramp, "FEDRAMP")
 
 	viper.SetDefault(Cluster.UseLatestVersionForInstall, false)
 	viper.BindEnv(Cluster.UseLatestVersionForInstall, "USE_LATEST_VERSION_FOR_INSTALL")

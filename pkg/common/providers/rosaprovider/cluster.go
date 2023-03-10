@@ -391,9 +391,21 @@ func (m *ROSAProvider) ocmLogin() (*ocm.Client, error) {
 	}
 
 	newLogin := rosaLogin.Cmd
+	if viper.GetBool(config.Fedramp) {
+		ClientIDAliases := map[string]string{
+			"govprod":  "72ekjh5laouap6qcfis521jlgi",
+			"govstage": "1lb687dlpsmsfuj53r3je06vpp",
+			"govint":   "20fbrpgl28f8oehp6709mk3nnr",
+		}
+		TokenURLAliases := map[string]string{
+			"govprod":  "https://ocm-ra-production-domain.auth-fips.us-gov-west-1.amazoncognito.com/oauth2/token",
+			"govstage": "https://ocm-ra-stage-domain.auth-fips.us-gov-west-1.amazoncognito.com/oauth2/token",
+			"govint":   "https://rh-ocm-appsre-integration.auth-fips.us-gov-west-1.amazoncognito.com/oauth2/token",
+		}
+		clientid := ClientIDAliases[viper.GetString(Env)]
+		tokenurl := TokenURLAliases[viper.GetString(Env)]
 
-	if strings.HasPrefix(url, "gov") {
-		newLogin.SetArgs([]string{"--token", viper.GetString("ocm.token"), "--env", url, "--govcloud"})
+		newLogin.SetArgs([]string{"--token", viper.GetString("ocm.token"), "--env", url, "--govcloud", "--client-id", clientid, "--token-url", tokenurl})
 	} else {
 		newLogin.SetArgs([]string{"--token", viper.GetString("ocm.token"), "--env", url})
 	}

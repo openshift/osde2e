@@ -40,6 +40,13 @@ Some environment variables commonly used for pipelines under osde2e are indicate
 | ROSA_STS             | Boolean value to indicate the cluster is STS enabled or not. |
 | ROSA_REPLICAS        | Compute node count for the rosa cluster, default is 2.       |
 
+### FedRAMP cluster related:-
+ 
+| Environment variable | Usage                                                              |
+| -------------------- | ------------------------------------------------------------------ |
+| FEDRAMP              | Boolean value to indicate the cluster will be created in GovCloud. |
+
+
 ### Hypershift cluster related:-
  
 | Environment variable | Usage                                                                       |

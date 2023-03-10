@@ -10,3 +10,5 @@ tests:
   - '\[Suite\: e2e\] \[OSD\] namespace validating webhook'
   - '\[Suite\: e2e\] \[OSD\] OAuth tokens'
   - '\[Suite: informing\] \[OSD\] pod validating webhook'
+provider: rosa
+Fedramp: True
