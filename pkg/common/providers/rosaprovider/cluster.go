@@ -77,6 +77,7 @@ func (m *ROSAProvider) LaunchCluster(clusterName string) (string, error) {
 
 	rosaClusterVersion := viper.GetString(config.Cluster.Version)
 	rosaClusterVersion = strings.ReplaceAll(rosaClusterVersion, "openshift-v", "")
+	rosaClusterVersion = strings.ReplaceAll(rosaClusterVersion, fmt.Sprintf("-%s", viper.GetString(config.Cluster.Channel)), "")
 
 	log.Printf("ROSA cluster version: %s", rosaClusterVersion)
 
@@ -412,17 +413,9 @@ func (m *ROSAProvider) Versions() (*spi.VersionList, error) {
 		return nil, err
 	}
 
-	versionResponse, err := ocmClient.GetVersions("")
+	versionResponse, err := ocmClient.GetVersions(viper.GetString(config.Cluster.Channel))
 	if err != nil {
 		return nil, err
-	}
-
-	if viper.GetString(config.Cluster.Channel) != "stable" {
-		versionResponseChannel, err := ocmClient.GetVersions(viper.GetString(config.Cluster.Channel))
-		if err != nil {
-			return nil, err
-		}
-		versionResponse = append(versionResponse, versionResponseChannel...)
 	}
 
 	spiVersions := []*spi.Version{}
