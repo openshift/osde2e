@@ -40,6 +40,12 @@ Some environment variables commonly used for pipelines under osde2e are indicate
 | ROSA_STS             | Boolean value to indicate the cluster is STS enabled or not. |
 | ROSA_REPLICAS        | Compute node count for the rosa cluster, default is 2.       |
 
+### FedRAMP cluster related:-
+ 
+| Environment variable | Usage                                                              |
+| -------------------- | ------------------------------------------------------------------ |
+| FEDRAMP              | Boolean value to indicate the cluster will be created in GovCloud. |
+
 ### Hypershift cluster related:-
  
 | Environment variable | Usage                                                                       |
@@ -170,6 +176,9 @@ The following are the values that can be plugged in for the --configs flag when 
 | int          | To run osde2e in the integration environment.                                                     |
 | stage        | To run osde2e on stage.                                                                           |
 | prod         | To run osde2e in the production environment. (This is the default value if nothing is specified.) |
+| govint       | To run osde2e in the integration FedRAMP environment.                                             |
+| govstage     | To run osde2e in the stage FedRAMP environment.                                                   |
+| govprod      | To run osde2e in the production FedRAMP environment.                                              |
 | scale        | To set scale testing configurations for a cluster.                                                |
 
 

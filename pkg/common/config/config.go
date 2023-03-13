@@ -90,6 +90,9 @@ const (
 	Hypershift = "Hypershift"
 
 	HypershiftIgnoreInvalidCert = "HypershiftIgnoreInvalidCert"
+
+	// Specifies the cluster will be created in GovCloud
+	Fedramp = "FEDRAMP"
 )
 
 // This is a config key to secret file mapping. We will attempt to read in from secret files before loading anything else.
@@ -786,6 +789,9 @@ func InitOSDe2eViper() {
 
 	viper.SetDefault(Cluster.EnableFips, false)
 	viper.BindEnv(Cluster.EnableFips, "ENABLE_FIPS")
+
+	viper.SetDefault(Fedramp, false)
+	viper.BindEnv(Fedramp, "FEDRAMP")
 
 	// ----- Cloud Provider -----
 	viper.SetDefault(CloudProvider.CloudProviderID, "aws")

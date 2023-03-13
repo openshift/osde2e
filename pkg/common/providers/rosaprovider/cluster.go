@@ -379,9 +379,12 @@ func (m *ROSAProvider) ocmLogin() (*ocm.Client, error) {
 
 	// URLAliases allows the value of the `--env` option to map to the various API URLs.
 	URLAliases := map[string]string{
-		"prod":  "https://api.openshift.com",
-		"stage": "https://api.stage.openshift.com",
-		"int":   "https://api.integration.openshift.com",
+		"prod":     "https://api.openshift.com",
+		"stage":    "https://api.stage.openshift.com",
+		"int":      "https://api.integration.openshift.com",
+		"govprod":  "https://api.openshiftusgov.com",
+		"govstage": "https://api.stage.openshiftusgov.com",
+		"govint":   "https://api.int.openshiftusgov.com",
 	}
 	url, ok := URLAliases[viper.GetString(Env)]
 	if !ok {
@@ -389,7 +392,25 @@ func (m *ROSAProvider) ocmLogin() (*ocm.Client, error) {
 	}
 
 	newLogin := rosaLogin.Cmd
-	newLogin.SetArgs([]string{"--token", viper.GetString("ocm.token"), "--env", url})
+	if viper.GetBool(config.Fedramp) {
+		ClientIDAliases := map[string]string{
+			"govprod":  "72ekjh5laouap6qcfis521jlgi",
+			"govstage": "1lb687dlpsmsfuj53r3je06vpp",
+			"govint":   "20fbrpgl28f8oehp6709mk3nnr",
+		}
+		TokenURLAliases := map[string]string{
+			"govprod":  "https://ocm-ra-production-domain.auth-fips.us-gov-west-1.amazoncognito.com/oauth2/token",
+			"govstage": "https://ocm-ra-stage-domain.auth-fips.us-gov-west-1.amazoncognito.com/oauth2/token",
+			"govint":   "https://rh-ocm-appsre-integration.auth-fips.us-gov-west-1.amazoncognito.com/oauth2/token",
+		}
+		clientid := ClientIDAliases[viper.GetString(Env)]
+		tokenurl := TokenURLAliases[viper.GetString(Env)]
+
+		newLogin.SetArgs([]string{"--token", viper.GetString("ocm.token"), "--env", url, "--govcloud", "--client-id", clientid, "--token-url", tokenurl})
+	} else {
+		newLogin.SetArgs([]string{"--token", viper.GetString("ocm.token"), "--env", url})
+	}
+
 	err = newLogin.Execute()
 	if err != nil {
 		return nil, fmt.Errorf("unable to login to OCM: %s", err.Error())

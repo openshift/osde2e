@@ -15,11 +15,19 @@ const (
 	// APIVersion is the version of the OSD API to use.
 	APIVersion = "v1"
 
-	// TokenURL specifies the endpoint used to create access tokens.
-	TokenURL = "https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token"
+	// commercialTokenURL specifies the endpoint used to create access tokens in the commercial environment.
+	commercialTokenURL = "https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token"
+	// The following TokenURLs are specific to the FedRAMP environment
+	govintegrationTokenURL = "https://rh-ocm-appsre-integration.auth-fips.us-gov-west-1.amazoncognito.com/oauth2/token"
+	govstageTokenURL       = "https://ocm-ra-stage-domain.auth-fips.us-gov-west-1.amazoncognito.com/oauth2/token"
+	govproductionTokenURL  = "https://ocm-ra-production-domain.auth-fips.us-gov-west-1.amazoncognito.com/oauth2/token"
 
 	// ClientID is used to identify the client to OSD.
-	ClientID = "cloud-services"
+	commercialClientID = "cloud-services"
+	// The following ClientIDs are specific to the FedRAMP environment
+	govintegrationClientID = "20fbrpgl28f8oehp6709mk3nnr"
+	govstageClientID       = "1lb687dlpsmsfuj53r3je06vpp"
+	govproductionClientID  = "72ekjh5laouap6qcfis521jlgi"
 )
 
 type ocmConnectionKey struct {
@@ -46,6 +54,9 @@ func init() {
 
 // OCMConnection returns a raw OCM connection.
 func OCMConnection(token, env string, debug bool) (*ocm.Connection, error) {
+	TokenURL := ""
+	ClientID := ""
+
 	cacheKey := ocmConnectionKey{
 		token: token,
 		env:   env,
@@ -69,6 +80,20 @@ func OCMConnection(token, env string, debug bool) (*ocm.Connection, error) {
 
 	// select correct environment
 	url := Environments.Choose(env)
+	switch {
+	case url == govintegration:
+		TokenURL = govintegrationTokenURL
+		ClientID = govintegrationClientID
+	case url == govstage:
+		TokenURL = govstageTokenURL
+		ClientID = govstageClientID
+	case url == govprod:
+		TokenURL = govproductionTokenURL
+		ClientID = govproductionClientID
+	default:
+		TokenURL = commercialTokenURL
+		ClientID = commercialClientID
+	}
 
 	builder := ocm.NewConnectionBuilder().
 		URL(url).

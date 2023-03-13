@@ -5,9 +5,17 @@ const (
 	stage       = "stage"
 	prod        = "prod"
 
+	govintegration = "govint"
+	govstage       = "govstage"
+	govprod        = "govprod"
+
 	integrationURL = "https://api.integration.openshift.com"
 	stageURL       = "https://api.stage.openshift.com"
 	prodURL        = "https://api.openshift.com"
+
+	govintegrationURL = "https://api.int.openshiftusgov.com"
+	govstageURL       = "https://api.stage.openshiftusgov.com"
+	govprodURL        = "https://api.openshiftusgov.com"
 )
 
 // Environments are known instance of OSD.
@@ -16,9 +24,12 @@ var Environments = environments{
 	"": integration,
 
 	// environments available
-	integration: integrationURL,
-	stage:       stageURL,
-	prod:        prodURL,
+	integration:    integrationURL,
+	stage:          stageURL,
+	prod:           prodURL,
+	govintegration: govintegrationURL,
+	govstage:       govstageURL,
+	govprod:        govprodURL,
 }
 
 type environments map[string]string
