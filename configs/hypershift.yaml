@@ -5,3 +5,4 @@ rosa:
   STS: True
 tests:
   ginkgoLabelFilter: HyperShift
+# aws-region: us-west-2 - Check for supported regions by using `rosa list regions````
