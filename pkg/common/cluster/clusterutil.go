@@ -16,6 +16,7 @@ import (
 	"github.com/openshift/osde2e/pkg/common/clusterproperties"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
+	"github.com/openshift/osde2e/pkg/common/customerrors"
 	"github.com/openshift/osde2e/pkg/common/logging"
 	"github.com/openshift/osde2e/pkg/common/metadata"
 	"github.com/openshift/osde2e/pkg/common/providers"
@@ -537,7 +538,10 @@ func ProvisionCluster(logger *log.Logger) (*spi.Cluster, error) {
 
 	provider, err := providers.ClusterProvider()
 	if err != nil {
-		return nil, fmt.Errorf("error getting cluster provisioning client: %v", err)
+		return nil, &customerrors.ProvisionClusterError{
+			Created: false,
+			Message: fmt.Sprintf("Error getting cluster provisioning client: %v", err),
+		}
 	}
 
 	var cluster *spi.Cluster
@@ -559,28 +563,43 @@ func ProvisionCluster(logger *log.Logger) (*spi.Cluster, error) {
 				}
 				fmt.Printf("retrying to validate cluster name. Attempt %d of %d\n", attempt, attemptLimit)
 				if attempt == attemptLimit {
-					return nil, fmt.Errorf("could not validate cluster name. timed out")
+					return nil, &customerrors.ProvisionClusterError{
+						Created: false,
+						Message: "Could not validate cluster name, max attempts reached",
+					}
 				}
 			}
 		}
 
 		if clusterID, err = provider.LaunchCluster(name); err != nil {
-			return nil, fmt.Errorf("could not launch cluster: %v", err)
+			return nil, &customerrors.ProvisionClusterError{
+				Created: true,
+				Message: fmt.Sprintf("Failed to launch cluster: %v", err),
+			}
 		}
 
 		if cluster, err = provider.GetCluster(clusterID); err != nil {
-			return nil, fmt.Errorf("could not get cluster after launching: %v", err)
+			return nil, &customerrors.ProvisionClusterError{
+				Created: true,
+				Message: fmt.Sprintf("Failed to get cluster after launching: %v", err),
+			}
 		}
 	} else {
 		logger.Printf("CLUSTER_ID of '%s' was provided, skipping cluster creation and using it instead", clusterID)
 
 		cluster, err = provider.GetCluster(clusterID)
 		if err != nil {
-			return nil, fmt.Errorf("could not retrieve cluster information from OCM: %v", err)
+			return nil, &customerrors.ProvisionClusterError{
+				Created: false,
+				Message: fmt.Sprintf("Failed to retrieve cluster information from OCM: %v", err),
+			}
 		}
 
 		if cluster.State() == spi.ClusterStateHibernating && !provider.Resume(cluster.ID()) {
-			return cluster, fmt.Errorf("cluster errored while resuming")
+			return nil, &customerrors.ProvisionClusterError{
+				Created: true,
+				Message: "Cluster errored while resuming",
+			}
 		}
 	}
 

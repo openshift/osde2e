@@ -42,6 +42,7 @@ import (
 	clusterutil "github.com/openshift/osde2e/pkg/common/cluster"
 	"github.com/openshift/osde2e/pkg/common/clusterproperties"
 	"github.com/openshift/osde2e/pkg/common/config"
+	"github.com/openshift/osde2e/pkg/common/customerrors"
 	"github.com/openshift/osde2e/pkg/common/events"
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/metadata"
@@ -74,7 +75,7 @@ var provider spi.Provider
 
 // beforeSuite attempts to populate several required cluster fields (either by provisioning a new cluster, or re-using an existing one)
 // If there is an issue with provisioning, retrieving, or getting the kubeconfig, this will return `false`.
-func beforeSuite() bool {
+func beforeSuite() error {
 	// Skip provisioning if we already have a kubeconfig
 	var err error
 
@@ -85,9 +86,8 @@ func beforeSuite() bool {
 		cluster, err := clusterutil.ProvisionCluster(nil)
 		events.HandleErrorWithEvents(err, events.InstallSuccessful, events.InstallFailed)
 		if err != nil {
-			log.Printf("Failed to set up or retrieve cluster: %v", err)
 			getLogs()
-			return false
+			return err
 		}
 
 		viper.Set(config.Cluster.ID, cluster.ID())
@@ -135,6 +135,9 @@ func beforeSuite() bool {
 				log.Printf("Cluster failed health check: %v", err)
 				log.Println("*******************")
 				getLogs()
+				return &customerrors.ClusterHealthCheckError{
+					Message: fmt.Sprintf("Cluster health check never became ready: %v", err),
+				}
 			} else {
 				log.Println("Cluster is healthy and ready for testing")
 			}
@@ -154,9 +157,10 @@ func beforeSuite() bool {
 
 		if clusterConfigerr != nil {
 			events.HandleErrorWithEvents(err, events.InstallKubeconfigRetrievalSuccess, events.InstallKubeconfigRetrievalFailure)
-			log.Printf("Failed retrieving kubeconfig: %v", clusterConfigerr)
 			getLogs()
-			return false
+			return &customerrors.KubeConfigLookupError{
+				Message: fmt.Sprintf("Failed retrieving kubeconfig: %v", clusterConfigerr),
+			}
 		}
 
 		getLogs()
@@ -172,7 +176,9 @@ func beforeSuite() bool {
 			if err != nil {
 				log.Printf("Cluster failed installing addons: %v", err)
 				getLogs()
-				return false
+				return &customerrors.AddOnInstallError{
+					Message: fmt.Sprintf("Failed to install cluster addons: %v", err),
+				}
 			}
 		} else {
 			log.Println("Skipping addon installation due to mock provider.")
@@ -198,7 +204,7 @@ func beforeSuite() bool {
 			log.Printf("Error creating Prow secrets in-cluster: %s", err.Error())
 		}
 	}
-	return true
+	return nil
 }
 
 func getLogs() {
@@ -537,17 +543,9 @@ func runGinkgoTests() (int, error) {
 
 	}
 
-	if !viper.GetBool(config.Cluster.SkipDestroyCluster) {
-		log.Printf("Destroying cluster '%s'...", viper.GetString(config.Cluster.ID))
-
-		if err = provider.DeleteCluster(viper.GetString(config.Cluster.ID)); err != nil {
-			return Failure, fmt.Errorf("error deleting cluster: %s", err.Error())
-		}
-	} else {
-		// When using a local kubeconfig, provider might not be set
-		if provider != nil {
-			log.Printf("For debugging, please look for cluster ID %s in environment %s", viper.GetString(config.Cluster.ID), provider.Environment())
-		}
+	result, err := destroyCluster()
+	if err != nil {
+		return result, err
 	}
 
 	if !testsPassed || !upgradeTestsPassed {
@@ -555,6 +553,24 @@ func runGinkgoTests() (int, error) {
 		return Failure, fmt.Errorf("tests failed, please inspect logs for more details")
 	}
 
+	return Success, nil
+}
+
+func destroyCluster() (int, error) {
+	clusterId := viper.GetString(config.Cluster.ID)
+
+	if !viper.GetBool(config.Cluster.SkipDestroyCluster) {
+		log.Printf("Destroying cluster '%s'...", clusterId)
+
+		if err := provider.DeleteCluster(clusterId); err != nil {
+			return Failure, fmt.Errorf("error deleting cluster: %s", err.Error())
+		}
+	} else {
+		// When using a local kubeconfig, provider might not be set
+		if provider != nil {
+			log.Printf("For debugging, please look for cluster ID %s in environment %s", clusterId, provider.Environment())
+		}
+	}
 	return Success, nil
 }
 
@@ -745,9 +761,45 @@ func runTestsInPhase(
 	ginkgoPassed := false
 
 	if !suiteConfig.DryRun {
-		if !beforeSuite() {
-			log.Println("Error getting kubeconfig from beforeSuite function")
-			return false, testCaseData
+		err := beforeSuite()
+		if err != nil {
+			log.Println(err)
+
+			var deleteCluster, runTests bool
+			var provisionClusterErr *customerrors.ProvisionClusterError
+			var clusterHealthCheckErr *customerrors.ClusterHealthCheckError
+			var kubeConfigLookupErr *customerrors.KubeConfigLookupError
+			var addOnInstallErr *customerrors.AddOnInstallError
+
+			switch {
+			case errors.As(err, &provisionClusterErr):
+				if !provisionClusterErr.Created {
+					deleteCluster = false
+					runTests = false
+				}
+			case
+				errors.As(err, &clusterHealthCheckErr),
+				errors.As(err, &kubeConfigLookupErr),
+				errors.As(err, &addOnInstallErr):
+				deleteCluster = true
+				runTests = false
+			default:
+				deleteCluster = false
+				runTests = true
+			}
+
+			if deleteCluster && !viper.GetBool(config.Cluster.SkipDestroyCluster) {
+				_, err := destroyCluster()
+				if err != nil {
+					log.Println(err)
+				}
+				return false, testCaseData
+			}
+
+			if !runTests {
+				log.Println("Test execution skipped due to test execution setup failures")
+				return false, testCaseData
+			}
 		}
 	}
 
