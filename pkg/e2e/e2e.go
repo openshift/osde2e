@@ -194,7 +194,7 @@ func beforeSuite() bool {
 
 	// If there are test harnesses present, we need to populate the
 	// secrets into the test cluster
-	if viper.GetString(config.Addons.TestHarnesses) != "" {
+	if viper.GetString(config.Tests.TestHarnesses) != "" {
 		secretsNamespace := "ci-secrets"
 		h := helper.NewOutsideGinkgo()
 		h.CreateProject(context.TODO(), secretsNamespace)
@@ -687,11 +687,11 @@ func cleanupAfterE2E(ctx context.Context, h *helper.H) (errors []error) {
 		log.Print("No cluster ID set. Skipping OCM Queries.")
 	}
 
-	// Do any addon cleanup if configured
-	log.Printf("Addon cleanup: %v", viper.GetBool(config.Addons.RunCleanup))
+	// Do any harness cleanup if configured
+	log.Printf("Harness cleanup: %v", viper.GetBool(config.Addons.RunCleanup))
 	if viper.GetBool(config.Addons.RunCleanup) {
 		// By default, use the existing test harnesses for cleanup
-		harnesses := strings.Split(viper.GetString(config.Addons.TestHarnesses), ",")
+		harnesses := strings.Split(viper.GetString(config.Tests.TestHarnesses), ",")
 		arguments := []string{"cleanup"}
 
 		// Check if cleanup harnesses exist and if so, use those instead
@@ -700,8 +700,8 @@ func cleanupAfterE2E(ctx context.Context, h *helper.H) (errors []error) {
 			harnesses = strings.Split(cleanupHarnesses, ",")
 			arguments = []string{}
 		}
-		log.Println("Running addon cleanup...")
-		h.RunAddonTests(ctx, "addon-cleanup", 300, harnesses, arguments)
+		log.Println("Running harness cleanup...")
+		h.RunTests(ctx, "harness-cleanup", 300, harnesses, arguments)
 	}
 
 	// We need to clean up our helper tests manually.

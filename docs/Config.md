@@ -33,7 +33,7 @@ Some environment variables commonly used for pipelines under osde2e are indicate
 | USE_PROXY_FOR_INSTALL                    | UseProxyForInstall will use a cluster-wide proxy for the cluster installation, provided that cluster proxy configuration is also supplied.       |
 
 ### ROSA cluster related:-
- 
+
 | Environment variable | Usage                                                        |
 | -------------------- | ------------------------------------------------------------ |
 | ROSA_ENV             | Environment for the e2e testing, default to prod.            |
@@ -41,13 +41,13 @@ Some environment variables commonly used for pipelines under osde2e are indicate
 | ROSA_REPLICAS        | Compute node count for the rosa cluster, default is 2.       |
 
 ### Hypershift cluster related:-
- 
+
 | Environment variable | Usage                                                                       |
 | -------------------- | --------------------------------------------------------------------------- |
 | Hypershift           | Boolean value to indicate the cluster should be created as a HostedCluster. |
- 
+
 ### OCM related:-
- 
+
 | Environment variable           | Usage                                                                                                                                 |
 | ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------- |
 | DEBUG_OSD                      | Debug shows debug level messages when enabled.                                                                                        |
@@ -60,7 +60,7 @@ Some environment variables commonly used for pipelines under osde2e are indicate
 | OCM_CCS                        | CCS defines whether the cluster should expect cloud credentials or not                                                                |
 | OCM_CCS_ADMIN                  | Overwrite Flag that will attempt to cycle osdCcsAdmin credentials for a CCS install when the osdCcsAdmin credentials were not passed. |
 | TEST_KUBECONFIG                | Path to a local kubeconfig; will override fetching Kubeconfig credentials from OCM if specified.                                      |
-  
+
 ### Upgrade variables:-
 
 | Environment variable            | Usage                                                                                                            |
@@ -75,8 +75,8 @@ Some environment variables commonly used for pipelines under osde2e are indicate
 | UPGRADE_MANAGED_TEST_PDBS       | Create disruptive Pod Disruption Budget workloads to test the Managed Upgrade Operator's ability to handle them. |
 | UPGRADE_MANAGED_TEST_RESCHEDULE | Test the managed upgrade when the upgrade schedule changed.                                                      |
 
- 
- 
+
+
 ### Job related:-
 
 | Environment variable | Usage                                                                                                                                                                                                                                                     |
@@ -90,13 +90,14 @@ Some environment variables commonly used for pipelines under osde2e are indicate
 | MUST_GATHER          | MustGather is a boolean flag that will run a Must-Gather process upon completion of the tests.                                                                                                                                                            |
 | BASE_JOB_URL         | BaseJobURL is the root location for all job artifacts. For example, https://storage.googleapis.com/origin-ci-test/logs/osde2e-prod-gcp-e2e-next/61/build-log.txt would be https://storage.googleapis.com/origin-ci-test/logs -- This is also our default. |
 | BASE_PROW_URL        | BaseProwURL is the root location of Prow.                                                                                                                                                                                                                 |
- 
- 
+
+
 ### General test related:-
 
 | Environment variable        | Usage                                                                                                           |
 | --------------------------- | --------------------------------------------------------------------------------------------------------------- |
 | POLLING_TIMEOUT             | PollingTimeout is how long (in seconds) to wait for an object to be created before failing the test.            |
+| TEST_HARNESSES:             | TestHarnesses is a comma separated list of container images with test harnesses to run.                         |
 | GINKGO_SKIP                 | GinkgoSkip is a regex passed to Ginkgo that skips any test suites matching the regex. ex. "Operator"            |
 | GINKGO_FOCUS                | GinkgoFocus is a regex passed to Ginkgo that focus on any test suites matching the regex. ex. "Operator"        |
 | GINKGO_LOG_LEVEL            | GinkgoLogLevel allows controlling the Ginkgo reporter output                                                    |
@@ -107,27 +108,24 @@ Some environment variables commonly used for pipelines under osde2e are indicate
 | SKIP_CLUSTER_HEALTH_CHECKS  | SkipClusterHealthChecks skips the cluster health checks. Useful when developing against a running cluster.      |
 | METRICS_BUCKET              | MetricsBucket is the bucket that metrics data will be uploaded to.                                              |
 | SERVICE_ACCOUNT             | ServiceAccount defines what user the tests should run as. By default, osde2e uses system:admin                  |
- 
 
 ### Addon test related:-
 
 | Environment variable    | Usage                                                                                                                                                                                                                                                                     |
 | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | ADDON_IDS_AT_CREATION   | Comma separated list of IDs to create at cluster creation time                                                                                                                                                                                                            |
-| ADDONS_IDS              | Comma separated list of IDs to install after a cluster is created.                                                                                                                                                                                                        |
-| ADDON_TEST_HARNESSES:   | TestHarnesses is a comma separated list of container images that will test the addon                                                                                                                                                                                      |
+| ADDONS_IDS              | Comma separated list of IDs to install after a cluster is created.                                                                                                                                                                                                        |                                                                                                                                                                                    |
 | ADDON_TEST_USER         | TestUser is the OpenShift user that the tests will run as. If "%s" is detected in the TestUser string, it will evaluate that as the project namespace. Ex. "system:serviceaccount:%s:dedicated-admin" . Evaluated : "system:serviceaccount:osde2e-abc123:dedicated-admin" |
 | ADDON_RUN_CLEANUP       | RunCleanup is a boolean to specify whether the testHarnesses should have a separate cleanup phase. This phase would run at the end of all e2e testing                                                                                                                     |
 | ADDON_CLEANUP_HARNESSES | CleanupHarnesses is a comma separated list of container images that will clean up any artifacts created after test harnesses have run                                                                                                                                     |
-| ADDON_POLLING_TIMEOUT   | PollingTimeout defines in seconds the amount of time to wait for an add-on test job to finish before timing it out                                                                                                                                                        |
- 
+
 ### Prometheus related:-
 
 | Environment variable    | Usage                                             |
 | ----------------------- | ------------------------------------------------- |
 | PROMETHEUS_ADDRESS      | Address of the Prometheus instance to connect to. |
 | PROMETHEUS_BEARER_TOKEN | Token needed for communicating with Prometheus.   |
- 
+
 ### Proxy related:-
 
 | Environment variable | Usage                                                                                                              |
@@ -140,7 +138,7 @@ Some environment variables commonly used for pipelines under osde2e are indicate
 ## Command Line Flags for osde2e
 
 CLI flags that are commonly used include:
- 
+
 ### For the test sub-command:
 ```
 --cluster-id: Existing OCM cluster ID to run tests against.
@@ -151,13 +149,13 @@ CLI flags that are commonly used include:
 --skip-destroy-cluster: Skip cluster deletion after test completion.
 --skip-health-check: Skip cluster health checks.
 --skip-tests: Skip any Ginkgo tests whose names match the regular expression.
-``` 
+```
 
 ### For the query sub-command:
 ```
 --output-format:  Output format for query results (json|prom). Defaults to json. (default "-")
 ```
- 
+
 ## Common config flag values
 
 The following are the values that can be plugged in for the --configs flag when running osde2e. The values correspond to existing YAML files in the /configs folder:-

@@ -198,9 +198,25 @@ var Tests = struct {
 	// Env: SUITE_TIMEOUT
 	SuiteTimeout string
 
+	// TestHarnesses is a list of test harnesses to run.
+	// Env: TEST_HARNESSES
+	TestHarnesses string
+
 	// PollingTimeout is how long (in seconds) to wait for an object to be created before failing the test.
 	// Env: POLLING_TIMEOUT
 	PollingTimeout string
+
+	// TestUser is the OpenShift user that the tests will run as
+	// If "%s" is detected in the TestUser string, it will evaluate that as the project namespace
+	// Example: "system:serviceaccount:%s:dedicated-admin"
+	// Evaluated: "system:serviceaccount:osde2e-abc123:dedicated-admin"
+	// Env: TEST_USER
+	TestUser string
+
+	// SlackChannel is the name of a slack channel in the Internal Red hat slack workspace that will
+	// receive an alert if the tests fail.
+	// Env: SLACK_CHANNEL
+	SlackChannel string
 
 	// GinkgoSkip is a regex passed to Ginkgo that skips any test suites matching the regex. ex. "Operator"
 	// Env: GINKGO_SKIP
@@ -252,8 +268,11 @@ var Tests = struct {
 	// Env: SERVICE_ACCOUNT
 	ServiceAccount string
 }{
+	TestHarnesses:              "tests.testHarnesses",
 	SuiteTimeout:               "tests.suiteTimeout",
 	PollingTimeout:             "tests.pollingTimeout",
+	ServiceAccount:             "tests.serviceAccount",
+	SlackChannel:               "tests.slackChannel",
 	GinkgoSkip:                 "tests.ginkgoSkip",
 	GinkgoFocus:                "tests.focus",
 	GinkgoLogLevel:             "tests.ginkgoLogLevel",
@@ -264,7 +283,6 @@ var Tests = struct {
 	OperatorSkip:               "tests.operatorSkip",
 	SkipClusterHealthChecks:    "tests.skipClusterHealthChecks",
 	MetricsBucket:              "tests.metricsBucket",
-	ServiceAccount:             "tests.serviceAccount",
 	ClusterHealthChecksTimeout: "tests.clusterHealthChecksTimeout",
 }
 
@@ -450,17 +468,6 @@ var Addons = struct {
 	// Env: ADDON_IDS
 	IDs string
 
-	// TestHarnesses is a comma separated list of container images that will test the addon
-	// Env: ADDON_TEST_HARNESSES
-	TestHarnesses string
-
-	// TestUser is the OpenShift user that the tests will run as
-	// If "%s" is detected in the TestUser string, it will evaluate that as the project namespace
-	// Example: "system:serviceaccount:%s:dedicated-admin"
-	// Evaluated: "system:serviceaccount:osde2e-abc123:dedicated-admin"
-	// Env: ADDON_TEST_USER
-	TestUser string
-
 	// RunCleanup is a boolean to specify whether the testHarnesses should have a separate
 	// cleanup phase. This phase would run at the end of all e2e testing
 	// Env: ADDON_RUN_CLEANUP
@@ -470,11 +477,6 @@ var Addons = struct {
 	// artifacts created after test harnesses have run
 	// Env: ADDON_CLEANUP_HARNESSES
 	CleanupHarnesses string
-
-	// SlackChannel is the name of a slack channel in the CoreOS slack workspace that will
-	// receive an alert if the tests fail.
-	// Env: ADDON_SLACK_CHANNEL
-	SlackChannel string
 
 	// Parameters is a nested json object. Top-level keys should be addon
 	// IDs provided in the IDs field. The values should be objects with
@@ -488,21 +490,13 @@ var Addons = struct {
 	// SkipAddonList is a boolean to indicate whether the listing of addons has to be disabled or not.
 	// Env: SKIP_ADDON_LIST
 	SkipAddonList string
-
-	// PollingTimeout is how long (in seconds) to wait for the add-on test to complete running.
-	// Env: ADDON_POLLING_TIMEOUT
-	PollingTimeout string
 }{
 	IDsAtCreation:    "addons.idsAtCreation",
 	IDs:              "addons.ids",
-	TestHarnesses:    "addons.testHarnesses",
-	TestUser:         "addons.testUser",
 	RunCleanup:       "addons.runCleanup",
 	CleanupHarnesses: "addons.cleanupHarnesses",
-	SlackChannel:     "addons.slackChannel",
 	SkipAddonList:    "addons.skipAddonlist",
 	Parameters:       "addons.parameters",
-	PollingTimeout:   "addons.pollingTimeout",
 }
 
 // Scale config keys.
@@ -672,11 +666,16 @@ func InitOSDe2eViper() {
 	viper.BindEnv(Kubeconfig.Path, "TEST_KUBECONFIG")
 
 	// ----- Tests -----
+	viper.BindEnv(Tests.TestHarnesses, "TEST_HARNESSES")
+
 	viper.SetDefault(Tests.SuiteTimeout, 6)
 	viper.BindEnv(Tests.SuiteTimeout, "SUITE_TIMEOUT")
 
 	viper.SetDefault(Tests.PollingTimeout, 300)
 	viper.BindEnv(Tests.PollingTimeout, "POLLING_TIMEOUT")
+
+	viper.SetDefault(Tests.TestUser, "system:serviceaccount:%s:cluster-admin")
+	viper.BindEnv(Tests.TestUser, "TEST_USER")
 
 	viper.BindEnv(Tests.GinkgoSkip, "GINKGO_SKIP")
 
@@ -706,6 +705,9 @@ func InitOSDe2eViper() {
 	viper.BindEnv(Tests.MetricsBucket, "METRICS_BUCKET")
 
 	viper.BindEnv(Tests.ServiceAccount, "SERVICE_ACCOUNT")
+
+	viper.SetDefault(Tests.SlackChannel, "sd-cicd-alerts")
+	viper.BindEnv(Tests.SlackChannel, "SLACK_CHANNEL")
 
 	// ----- Cluster -----
 	viper.SetDefault(Cluster.MultiAZ, false)
@@ -814,17 +816,11 @@ func InitOSDe2eViper() {
 
 	viper.BindEnv(Addons.IDs, "ADDON_IDS")
 
-	viper.BindEnv(Addons.TestHarnesses, "ADDON_TEST_HARNESSES")
+	//Flag this for deprecation
 	viper.BindEnv(Addons.CleanupHarnesses, "ADDON_CLEANUP_HARNESSES")
-
-	viper.SetDefault(Addons.TestUser, "system:serviceaccount:%s:cluster-admin")
-	viper.BindEnv(Addons.TestUser, "ADDON_TEST_USER")
 
 	viper.SetDefault(Addons.RunCleanup, false)
 	viper.BindEnv(Addons.RunCleanup, "ADDON_RUN_CLEANUP")
-
-	viper.SetDefault(Addons.SlackChannel, "sd-cicd-alerts")
-	viper.BindEnv(Addons.SlackChannel, "ADDON_SLACK_CHANNEL")
 
 	viper.SetDefault(Addons.Parameters, "{}")
 	viper.BindEnv(Addons.Parameters, "ADDON_PARAMETERS")
@@ -832,9 +828,6 @@ func InitOSDe2eViper() {
 
 	viper.SetDefault(Addons.SkipAddonList, false)
 	viper.BindEnv(Addons.SkipAddonList, "SKIP_ADDON_LIST")
-
-	viper.SetDefault(Addons.PollingTimeout, 3600)
-	viper.BindEnv(Addons.PollingTimeout, "ADDON_POLLING_TIMEOUT")
 
 	// ----- Scale -----
 	viper.SetDefault(Scale.WorkloadsRepository, "https://github.com/openshift-scale/workloads")
