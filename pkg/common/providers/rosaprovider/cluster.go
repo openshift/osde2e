@@ -271,6 +271,15 @@ func (m *ROSAProvider) LaunchCluster(clusterName string) (string, error) {
 // DeleteCluster will call DeleteCluster from the OCM provider then delete
 // additional AWS resources if STS is in use.
 func (m *ROSAProvider) DeleteCluster(clusterID string) error {
+	var reportDir *string
+	if viper.GetString(config.AWSVPCSubnetIDs) == "" && viper.GetBool(config.Hypershift) {
+		value, err := m.GetProperty(clusterID, "reportDir")
+		if err != nil {
+			return fmt.Errorf("unable to delete auto-generated vpc, failed to locate directory with terraform state file: %v", err)
+		}
+		reportDir = &value
+	}
+
 	if err := m.ocmProvider.DeleteCluster(clusterID); err != nil {
 		return err
 	}
@@ -283,12 +292,7 @@ func (m *ROSAProvider) DeleteCluster(clusterID string) error {
 	}
 
 	if viper.GetString(config.AWSVPCSubnetIDs) == "" && viper.GetBool(config.Hypershift) {
-		reportDir, err := m.GetProperty(clusterID, "reportDir")
-		if err != nil {
-			return fmt.Errorf("unable to delete auto-generated vpc, failed to locate directory with terraform state file: %v", err)
-		}
-
-		err = deleteHyperShiftVPC(reportDir)
+		err := deleteHyperShiftVPC(*reportDir)
 		if err != nil {
 			return fmt.Errorf("error deleting aws vpc: %v", err)
 		}
