@@ -392,31 +392,37 @@ func (m *ROSAProvider) DetermineRegion(cloudProvider string) (string, error) {
 
 // Determine whether the region provided is supported for hosted control plane clusters
 func (m *ROSAProvider) IsRegionValidForHCP(region string) (bool, error) {
-	ocmClient, err := m.ocmLogin()
+	err := callAndSetAWSSession(func() error {
+		ocmClient, err := m.ocmLogin()
+		if err != nil {
+			return fmt.Errorf("failed to login to ocm: %w", err)
+		}
+
+		availableRegions, err := ocmClient.GetRegions("", "")
+		if err != nil {
+			return fmt.Errorf("failed to get regions: %w", err)
+		}
+
+		var supportedRegions []string
+
+		for _, r := range availableRegions {
+			if r.SupportsHypershift() {
+				supportedRegions = append(supportedRegions, r.ID())
+			}
+		}
+
+		for _, r := range supportedRegions {
+			if region == r {
+				return nil
+			}
+		}
+		return fmt.Errorf("region '%s' does not support hosted-cp. valid regions '%s'", region, supportedRegions)
+	})
 	if err != nil {
 		return false, err
 	}
 
-	availableRegions, err := ocmClient.GetRegions("", "")
-	if err != nil {
-		return false, err
-	}
-
-	var supportedRegions []string
-
-	for _, r := range availableRegions {
-		if r.SupportsHypershift() {
-			supportedRegions = append(supportedRegions, r.ID())
-		}
-	}
-
-	for _, r := range supportedRegions {
-		if region == r {
-			return true, nil
-		}
-	}
-
-	return false, fmt.Errorf("region '%s' does not support hosted-cp. Valid regions '%s'", region, supportedRegions)
+	return true, nil
 }
 
 // ChooseRandomRegion chooses a random enabled region from the provided options. Its
