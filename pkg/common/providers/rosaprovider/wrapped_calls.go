@@ -78,6 +78,11 @@ func (m *ROSAProvider) AddProperty(cluster *spi.Cluster, tag string, value strin
 	return m.ocmProvider.AddProperty(cluster, tag, value)
 }
 
+// GetProperty will call GetProperty from the OCM provider.
+func (m *ROSAProvider) GetProperty(clusterID string, property string) (string, error) {
+	return m.ocmProvider.GetProperty(clusterID, property)
+}
+
 // Upgrade initiates a cluster upgrade from the OCM provider.
 func (m *ROSAProvider) Upgrade(clusterID string, version string, t time.Time) error {
 	return m.ocmProvider.Upgrade(clusterID, version, t)

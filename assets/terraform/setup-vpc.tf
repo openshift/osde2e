@@ -1,30 +1,23 @@
 variable "aws_region" {
   type        = string
   description = "The region to create the ROSA cluster in"
-  default     = "us-east-1"
-
-  validation {
-    condition     = contains(["us-east-1", "eu-west-1"], var.aws_region)
-    error_message = "HyperShift is currently only availble in these regions: us-east-1, eu-west-1."
-  }
 }
 
 variable "az_ids" {
   type = object({
-    us-east-1 = list(string)
-    eu-west-1 = list(string)
+    us-east-2 = list(string)
+    us-west-2 = list(string)
   })
   description = "A list of region-mapped AZ IDs that a subnet should get deployed into"
   default = {
-    us-east-1 = ["use1-az1", "use1-az2"]
-    eu-west-1 = ["euw1-az1", "euw1-az2"]
+    us-east-2 = ["use2-az1", "use2-az2"]
+    us-west-2 = ["usw2-az1", "usw2-az2"]
   }
 }
 
 variable "cluster_name" {
   type        = string
   description = "The name of the ROSA cluster to create"
-  default     = "rosa-cluster"
 
   validation {
     condition     = can(regex("^[a-z][-a-z0-9]{0,13}[a-z0-9]$", var.cluster_name))

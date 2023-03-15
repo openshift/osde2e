@@ -90,8 +90,11 @@ func (r *runner) Apply(ctx context.Context) error {
 }
 
 // Destroy performs a terraform destroy using the provided TerraformRunner receiver.
-func (r *runner) Destroy(ctx context.Context) error {
-	err := r.runner.Destroy(ctx)
+func (r *runner) Destroy(ctx context.Context, args ...tfexec.DestroyOption) error {
+	err := r.runner.Destroy(
+		ctx,
+		args...,
+	)
 	if err != nil {
 		return fmt.Errorf("error running terraform destroy: %w", err)
 	}

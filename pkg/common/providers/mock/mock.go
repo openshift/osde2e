@@ -277,6 +277,11 @@ func (m *MockProvider) AddProperty(cluster *spi.Cluster, tag string, value strin
 	return fmt.Errorf("AddProperty is unsupported by mock clusters")
 }
 
+// GetProperty mocks getting a property from the properties field of an existing cluster.
+func (m *MockProvider) GetProperty(clusterID string, property string) (string, error) {
+	return "GetProperty is unsupported by mock clusters", nil
+}
+
 // Upgrade mocks initiates a cluster upgrade to the given version
 func (m *MockProvider) Upgrade(clusterID string, version string, t time.Time) error {
 	return fmt.Errorf("Upgrade is unsupported by mock clusters")
