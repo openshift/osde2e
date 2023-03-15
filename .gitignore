@@ -21,3 +21,7 @@ out/
 
 # pkger artifact
 pkged.go
+
+# Custom configs
+configs/custom-*
+custom-*
