@@ -14,7 +14,6 @@ import (
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/label"
 	"github.com/openshift/osde2e/pkg/common/providers/rosaprovider"
-	"github.com/openshift/osde2e/pkg/common/util"
 	"github.com/openshift/osde2e/pkg/e2e/operators"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -37,7 +36,7 @@ var _ = ginkgo.Describe("[Suite: informing] "+TestPrefix, label.Informing, func(
 		// How long to wait for resources to be created
 		pollingDuration := 2 * time.Minute
 
-		util.GinkgoIt("should be created when added to publishingstrategy ", func(ctx context.Context) {
+		ginkgo.It("should be created when added to publishingstrategy ", func(ctx context.Context) {
 			secondaryIngress := secondaryIngress(ctx, h)
 
 			// only create the secondary ingress if it doesn't exist already in the publishing strategy
@@ -66,7 +65,7 @@ var _ = ginkgo.Describe("[Suite: informing] "+TestPrefix, label.Informing, func(
 			Expect(deployment.Status.ReadyReplicas).To(BeNumerically("==", deployment.Status.Replicas))
 		}, pollingDuration.Seconds()+viper.GetFloat64(config.Tests.PollingTimeout))
 
-		util.GinkgoIt("should be deleted when removed from publishingstrategy", func(ctx context.Context) {
+		ginkgo.It("should be deleted when removed from publishingstrategy", func(ctx context.Context) {
 			secondaryIngress := secondaryIngress(ctx, h)
 
 			_, exists, index := appIngressExits(ctx, h, false, secondaryIngress.DNSName)

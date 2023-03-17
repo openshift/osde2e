@@ -38,7 +38,7 @@ func OnSupportedVersionIt(constraints *semver.Constraints, helper ClusterVersion
 		return semver.MustParse(ver.Status.Desired.Version)
 	}
 
-	GinkgoIt(description, func(ctx context.Context) {
+	ginkgo.It(description, func(ctx context.Context) {
 		if !constraints.Check(getVersion(ctx)) {
 			ginkgo.Skip("unsupported version")
 		}

@@ -15,7 +15,6 @@ import (
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/label"
 	"github.com/openshift/osde2e/pkg/common/prometheus"
-	"github.com/openshift/osde2e/pkg/common/util"
 	prometheusv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/prometheus/common/model"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -73,7 +72,7 @@ var _ = ginkgo.Describe(managedUpgradeOperatorTestName, ginkgo.Ordered, label.In
 			clusterVersion, err = getClusterVersion(ctx, h)
 		})
 
-		util.GinkgoIt("should not upgrade if the upgrade time is in the future", func(ctx context.Context) {
+		ginkgo.It("should not upgrade if the upgrade time is in the future", func(ctx context.Context) {
 			// Validate clusterversion
 			Expect(err).NotTo(HaveOccurred())
 			Expect(clusterVersion).NotTo(BeNil())
@@ -135,7 +134,7 @@ var _ = ginkgo.Describe(managedUpgradeOperatorTestName, ginkgo.Ordered, label.In
 			Expect(err).NotTo(HaveOccurred())
 		})
 
-		util.GinkgoIt("should error if the upgrade time is too far in the past", func(ctx context.Context) {
+		ginkgo.It("should error if the upgrade time is too far in the past", func(ctx context.Context) {
 			// Validate clusterversion
 			Expect(err).NotTo(HaveOccurred())
 			Expect(clusterVersion).NotTo(BeNil())
@@ -190,7 +189,7 @@ var _ = ginkgo.Describe(managedUpgradeOperatorTestName, ginkgo.Ordered, label.In
 			Expect(err).NotTo(HaveOccurred())
 		})
 
-		util.GinkgoIt("should error if provided an invalid start time", func(ctx context.Context) {
+		ginkgo.It("should error if provided an invalid start time", func(ctx context.Context) {
 			// Validate clusterversion
 			Expect(err).NotTo(HaveOccurred())
 			Expect(clusterVersion).NotTo(BeNil())
@@ -243,7 +242,7 @@ var _ = ginkgo.Describe(managedUpgradeOperatorTestName, ginkgo.Ordered, label.In
 		})
 	})
 	ginkgo.Context("upgradeconfig", func() {
-		util.GinkgoIt("dedicated admin should not be able to manage the UpgradeConfig CR", func(ctx context.Context) {
+		ginkgo.It("dedicated admin should not be able to manage the UpgradeConfig CR", func(ctx context.Context) {
 			// Add the upgradeconfig to the cluster
 			uc := makeMinimalUpgradeConfig(upgradeConfigForDedicatedAdminTestName, operatorNamespace)
 			err := dedicatedAaddUpgradeConfig(ctx, uc, operatorNamespace, h)

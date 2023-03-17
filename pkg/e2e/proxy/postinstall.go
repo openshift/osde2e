@@ -22,7 +22,6 @@ import (
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/logging"
 	"github.com/openshift/osde2e/pkg/common/providers"
-	"github.com/openshift/osde2e/pkg/common/util"
 )
 
 var (
@@ -49,7 +48,7 @@ var _ = ginkgo.Describe(postInstallProxyTestName, func() {
 })
 
 func testAddProxy() {
-	util.GinkgoIt("can add a proxy to the cluster successfully", func(ctx context.Context) {
+	ginkgo.It("can add a proxy to the cluster successfully", func(ctx context.Context) {
 		// setup helper
 		h := helper.New()
 
@@ -133,7 +132,7 @@ func testAddProxy() {
 }
 
 func testRemoveProxy() {
-	util.GinkgoIt("can remove proxy from the cluster successfully", func(ctx context.Context) {
+	ginkgo.It("can remove proxy from the cluster successfully", func(ctx context.Context) {
 		// setup helper
 		h := helper.New()
 

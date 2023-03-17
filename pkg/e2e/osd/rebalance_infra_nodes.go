@@ -14,7 +14,6 @@ import (
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/label"
-	"github.com/openshift/osde2e/pkg/common/util"
 	batchv1 "k8s.io/api/batch/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -40,7 +39,7 @@ var _ = ginkgo.Describe(rebalanceInfraNodesTestName, label.Informing, func() {
 	h := helper.New()
 
 	ginkgo.Context("re-balance the infra nodes with cronjob", func() {
-		util.GinkgoIt("infra nodes should be rebalanced after executing the cronjob", func(ctx context.Context) {
+		ginkgo.It("infra nodes should be rebalanced after executing the cronjob", func(ctx context.Context) {
 			ginkgo.By("Putting the cluster into imbalanced state")
 			output, err := exec.Command("/bin/sh", imbalanceScriptPath).Output()
 			Expect(err).ToNot(HaveOccurred())

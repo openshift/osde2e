@@ -16,7 +16,6 @@ import (
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/label"
 	"github.com/openshift/osde2e/pkg/common/runner"
-	"github.com/openshift/osde2e/pkg/common/util"
 	kubev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -56,7 +55,7 @@ var _ = ginkgo.Describe(appBuildsTestName, label.AppBuilds, func() {
 	h := helper.New()
 
 	e2eTimeoutInSeconds := viper.GetInt(config.Tests.PollingTimeout)
-	util.GinkgoIt("should get created in the cluster", func(ctx context.Context) {
+	ginkgo.It("should get created in the cluster", func(ctx context.Context) {
 		namespacesExist := false
 		for _, application := range testApplications {
 			_, err := findAppNamespace(ctx, h, application)

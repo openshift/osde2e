@@ -11,7 +11,6 @@ import (
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/label"
-	"github.com/openshift/osde2e/pkg/common/util"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -28,7 +27,7 @@ var _ = ginkgo.Describe(olmTestName, label.Informing, func() {
 		// setup helper
 		h := helper.New()
 
-		util.GinkgoIt("subscriptions are satisfied", func(ctx context.Context) {
+		ginkgo.It("subscriptions are satisfied", func(ctx context.Context) {
 			subs, err := h.Operator().
 				OperatorsV1alpha1().
 				Subscriptions(metav1.NamespaceAll).

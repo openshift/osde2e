@@ -13,7 +13,6 @@ import (
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/label"
-	"github.com/openshift/osde2e/pkg/common/util"
 
 	batchv1 "k8s.io/api/batch/v1"
 
@@ -39,7 +38,7 @@ var _ = ginkgo.Describe(pruneJobsTestName, label.Operators, func() {
 		namespace := "openshift-sre-pruning"
 		cronJobs := []string{"builds-pruner", "deployments-pruner"}
 		for _, cronJob := range cronJobs {
-			util.GinkgoIt(cronJob+" should run successfully", func(ctx context.Context) {
+			ginkgo.It(cronJob+" should run successfully", func(ctx context.Context) {
 				getOpts := metav1.GetOptions{}
 				cjob, err := h.Kube().BatchV1().CronJobs(namespace).Get(ctx, cronJob, getOpts)
 				Expect(err).NotTo(HaveOccurred())

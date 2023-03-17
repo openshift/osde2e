@@ -15,7 +15,6 @@ import (
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/label"
-	"github.com/openshift/osde2e/pkg/common/util"
 
 	"k8s.io/apimachinery/pkg/util/wait"
 
@@ -73,7 +72,7 @@ var _ = ginkgo.Describe(routeMonitorOperatorTestName, ginkgo.Ordered, label.Info
 
 func verifyExistingRouteMonitorsAreValid(h *helper.H) {
 	ginkgo.Context("rmo Route Monitor Operator regression for console", func() {
-		util.GinkgoIt("has all of the required resouces", func(ctx context.Context) {
+		ginkgo.It("has all of the required resouces", func(ctx context.Context) {
 			const (
 				consoleNamespace = "openshift-route-monitor-operator"
 				consoleName      = "console"
@@ -93,7 +92,7 @@ func testRouteMonitorCreationWorks(h *helper.H) {
 	ginkgo.Context("rmo Route Monitor Operator integration test", func() {
 		// How long to wait for service monitors to be created
 		pollingDuration := 10 * time.Minute
-		util.GinkgoIt("Creates and deletes a RouteMonitor to see if it works accordingly", func(ctx context.Context) {
+		ginkgo.It("Creates and deletes a RouteMonitor to see if it works accordingly", func(ctx context.Context) {
 			var (
 				routeMonitorNamespace = h.CurrentProject()
 				err                   error

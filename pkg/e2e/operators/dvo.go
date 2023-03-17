@@ -60,7 +60,7 @@ var _ = ginkgo.Describe(deploymentValidationOperatorTestName, label.Informing, g
 	checkPod(h, operatorNamespace, operatorDeploymentName, 2, 3)
 	checkClusterRoles(h, clusterRoles, false)
 
-	util.GinkgoIt("Create and test deployment for DVO functionality", func(ctx context.Context) {
+	ginkgo.It("Create and test deployment for DVO functionality", func(ctx context.Context) {
 		// Create and check test deployment
 		h.CreateProject(ctx, "dvo-test")
 		h.SetProjectByName(ctx, "osde2e-dvo-test")
@@ -127,7 +127,7 @@ func checkPodLogs(h *helper.H, namespace string, testNamespace string, name stri
 	dvoCheck := false
 
 	ginkgo.Context("pods", func() {
-		util.GinkgoIt(fmt.Sprintf("Check logs in test namespace %s", testNamespace), func(ctx context.Context) {
+		ginkgo.It(fmt.Sprintf("Check logs in test namespace %s", testNamespace), func(ctx context.Context) {
 			// wait for graceperiod
 			fmt.Println("Waiting for grace period")
 			// Wait for graceperiod

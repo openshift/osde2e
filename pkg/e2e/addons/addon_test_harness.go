@@ -8,7 +8,6 @@ import (
 
 	"github.com/onsi/ginkgo/v2"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
-	"github.com/openshift/osde2e/pkg/common/util"
 
 	"github.com/openshift/osde2e/pkg/common/alert"
 	"github.com/openshift/osde2e/pkg/common/config"
@@ -21,7 +20,7 @@ var _ = ginkgo.Describe("[Suite: addons] Addon Test Harness", func() {
 	h := helper.New()
 
 	addonTimeoutInSeconds := float64(viper.GetFloat64(config.Addons.PollingTimeout))
-	util.GinkgoIt("should run until completion", func(ctx context.Context) {
+	ginkgo.It("should run until completion", func(ctx context.Context) {
 		log.Printf("addon timeout is %v", addonTimeoutInSeconds)
 		h.SetServiceAccount(ctx, viper.GetString(config.Addons.TestUser))
 		harnesses := strings.Split(viper.GetString(config.Addons.TestHarnesses), ",")

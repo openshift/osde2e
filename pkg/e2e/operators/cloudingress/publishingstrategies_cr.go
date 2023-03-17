@@ -12,7 +12,6 @@ import (
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/label"
 	"github.com/openshift/osde2e/pkg/common/providers/rosaprovider"
-	"github.com/openshift/osde2e/pkg/common/util"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -32,7 +31,7 @@ var _ = ginkgo.Describe("[Suite: operators] "+TestPrefix, label.Operators, func(
 	})
 	h := helper.New()
 	ginkgo.Context("publishingstrategies", func() {
-		util.GinkgoIt(
+		ginkgo.It(
 			"dedicated admin should not be allowed to manage publishingstrategies CR",
 			func(ctx context.Context) {
 				h.Impersonate(rest.ImpersonationConfig{

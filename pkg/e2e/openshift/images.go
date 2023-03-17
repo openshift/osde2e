@@ -11,7 +11,6 @@ import (
 
 	"github.com/openshift/osde2e/pkg/common/alert"
 	"github.com/openshift/osde2e/pkg/common/helper"
-	"github.com/openshift/osde2e/pkg/common/util"
 )
 
 var (
@@ -29,7 +28,7 @@ var _ = ginkgo.Describe(imageRegistryTestName, func() {
 	h := helper.New()
 
 	e2eTimeoutInSeconds := viper.GetInt(config.Tests.PollingTimeout)
-	util.GinkgoIt("should run until completion", func(ctx context.Context) {
+	ginkgo.It("should run until completion", func(ctx context.Context) {
 		h.SetServiceAccount(ctx, "system:serviceaccount:%s:cluster-admin")
 		// configure tests
 		cfg := DefaultE2EConfig
@@ -62,7 +61,7 @@ var _ = ginkgo.Describe(imageEcosystemTestName, func() {
 	h := helper.New()
 
 	e2eTimeoutInSeconds := viper.GetInt(config.Tests.PollingTimeout)
-	util.GinkgoIt("should run until completion", func(ctx context.Context) {
+	ginkgo.It("should run until completion", func(ctx context.Context) {
 		// configure tests
 		cfg := DefaultE2EConfig
 		cfg.Suite = "openshift/image-ecosystem"

@@ -12,7 +12,6 @@ import (
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/label"
-	"github.com/openshift/osde2e/pkg/common/util"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -40,7 +39,7 @@ var _ = ginkgo.Describe(certmanOperatorTestName, label.Operators, func() {
 
 		// Waiting period to wait for certman resources to appear
 		pollingDuration := 15 * time.Minute
-		util.GinkgoIt("certificate secret exist under openshift-config namespace", func(ctx context.Context) {
+		ginkgo.It("certificate secret exist under openshift-config namespace", func(ctx context.Context) {
 			err := wait.PollImmediate(30*time.Second, pollingDuration, func() (bool, error) {
 				listOpts := metav1.ListOptions{
 					LabelSelector: "certificate_request",
@@ -60,7 +59,7 @@ var _ = ginkgo.Describe(certmanOperatorTestName, label.Operators, func() {
 			Expect(len(secrets.Items)).Should(Equal(1))
 		}, pollingDuration.Seconds())
 
-		util.GinkgoIt("certificate secret should be applied to apiserver object", func(ctx context.Context) {
+		ginkgo.It("certificate secret should be applied to apiserver object", func(ctx context.Context) {
 			err := wait.PollImmediate(30*time.Second, pollingDuration, func() (bool, error) {
 				getOpts := metav1.GetOptions{}
 				var err error

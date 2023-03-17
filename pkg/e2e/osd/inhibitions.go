@@ -13,7 +13,6 @@ import (
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/label"
 	osde2ePrometheus "github.com/openshift/osde2e/pkg/common/prometheus"
-	"github.com/openshift/osde2e/pkg/common/util"
 	alertmanagerConfig "github.com/prometheus/alertmanager/config"
 	prometheusv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	prometheusModel "github.com/prometheus/common/model"
@@ -40,7 +39,7 @@ var inhibitionsTestName string = "[Suite: operators] AlertmanagerInhibitions"
 var _ = ginkgo.Describe(inhibitionsTestName, label.Operators, func() {
 	h := helper.New()
 
-	util.GinkgoIt("should exist", func(ctx context.Context) {
+	ginkgo.It("should exist", func(ctx context.Context) {
 		alertmanagerConfigSecret, err := h.Kube().CoreV1().Secrets(MonitoringNamespace).Get(ctx, AlertmanagerConfigSecretName, metav1.GetOptions{})
 		Expect(err).NotTo(HaveOccurred())
 
@@ -112,7 +111,7 @@ var _ = ginkgo.Describe(inhibitionsTestName, label.Operators, func() {
 		}
 	}, float64(30))
 
-	util.GinkgoIt("inhibits ClusterOperatorDegraded", func(ctx context.Context) {
+	ginkgo.It("inhibits ClusterOperatorDegraded", func(ctx context.Context) {
 		// define an IdP that will cause the authentication operator to degrade
 		degradingIdentityProvider := configV1.IdentityProvider{
 			Name:          IdentityProviderName,

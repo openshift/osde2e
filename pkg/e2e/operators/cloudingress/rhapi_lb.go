@@ -13,7 +13,6 @@ import (
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/label"
-	"github.com/openshift/osde2e/pkg/common/util"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -144,7 +143,7 @@ func deleteSecGroupReferencesToOrphans(ec2Svc *ec2.EC2, orphanSecGroupIds []*str
 func testLBDeletion(h *helper.H) {
 	ginkgo.Context("rh-api-lb-test", func() {
 		if viper.GetString(config.CloudProvider.CloudProviderID) == "aws" {
-			util.GinkgoIt("manually deleted LB should be recreated in AWS", func(ctx context.Context) {
+			ginkgo.It("manually deleted LB should be recreated in AWS", func(ctx context.Context) {
 				awsAccessKey := viper.GetString("ocm.aws.accessKey")
 				awsSecretKey := viper.GetString("ocm.aws.secretKey")
 				awsRegion := viper.GetString(config.CloudProvider.Region)
@@ -214,11 +213,11 @@ func testLBDeletion(h *helper.H) {
 						log.Printf("Deleted orphaned security group %s", *orphanSecGroupId)
 					}
 				}
-			}, 600)
+			}, ginkgo.SpecTimeout(600))
 		}
 
 		if viper.GetString(config.CloudProvider.CloudProviderID) == "gcp" {
-			util.GinkgoIt("manually deleted LB should be recreated in GCP", func(ctx context.Context) {
+			ginkgo.It("manually deleted LB should be recreated in GCP", func(ctx context.Context) {
 				region := viper.GetString("cloudProvider.region")
 
 				ginkgo.By("Getting rh-api IP")
@@ -339,7 +338,7 @@ func testLBDeletion(h *helper.H) {
 					return false, nil
 				})
 				Expect(err).NotTo(HaveOccurred())
-			}, 600)
+			}, ginkgo.SpecTimeout(600))
 		}
 	})
 }
