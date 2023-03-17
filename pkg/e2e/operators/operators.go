@@ -387,7 +387,7 @@ func pollRoleBinding(ctx context.Context, h *helper.H, projectName string, roleB
 	interval := 5
 
 	// convert time.Duration type
-	timeoutDuration := time.Duration(viper.GetFloat64(config.Tests.PollingTimeout)) * time.Minute
+	timeoutDuration := time.Duration(viper.GetFloat64(config.Tests.PollingTimeout)) * time.Second
 	intervalDuration := time.Duration(interval) * time.Second
 
 	start := time.Now()
@@ -429,7 +429,7 @@ func pollLockFile(ctx context.Context, h *helper.H, namespace, operatorLockFile 
 	interval := 30
 
 	// convert time.Duration type
-	timeoutDuration := time.Duration(viper.GetFloat64(config.Tests.PollingTimeout)) * time.Minute
+	timeoutDuration := time.Duration(viper.GetFloat64(config.Tests.PollingTimeout)) * time.Second
 	intervalDuration := time.Duration(interval) * time.Second
 
 	start := time.Now()
@@ -472,7 +472,7 @@ func pollDeployment(ctx context.Context, h *helper.H, namespace, deploymentName 
 	interval := 5
 
 	// convert time.Duration type
-	timeoutDuration := time.Duration(viper.GetFloat64(config.Tests.PollingTimeout)) * time.Minute
+	timeoutDuration := time.Duration(viper.GetFloat64(config.Tests.PollingTimeout)) * time.Second
 	intervalDuration := time.Duration(interval) * time.Second
 
 	start := time.Now()
