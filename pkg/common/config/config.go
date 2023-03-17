@@ -660,7 +660,7 @@ func InitOSDe2eViper() {
 	viper.BindEnv(Kubeconfig.Path, "TEST_KUBECONFIG")
 
 	// ----- Tests -----
-	viper.SetDefault(Tests.PollingTimeout, 500)
+	viper.SetDefault(Tests.PollingTimeout, 300)
 	viper.BindEnv(Tests.PollingTimeout, "POLLING_TIMEOUT")
 
 	viper.BindEnv(Tests.GinkgoSkip, "GINKGO_SKIP")
