@@ -173,8 +173,7 @@ Below is an example to spin up a OSD cluster and test it:
 OCM_TOKEN=<ocm-token> \
 OSD_ENV=prod \
 CLUSTER_NAME=my-cluster \
-MAJOR_TARGET=4 \
-MINOR_TARGET=12 \
+CLUSTER_VERSION=4.12.0 \
 osde2e test
 ```
 
@@ -182,15 +181,13 @@ These also can be combined with pre-canned default configs and custom configs:
 
 ```shell
 OCM_TOKEN=<ocm-token> \
-MAJOR_TARGET=4 \
-MINOR_TARGET=12 \
+CLUSTER_VERSION=4.12.0 \
 osde2e test --configs prod,e2e-suite
 ```
 
 ```shell
 OCM_TOKEN=<ocm-token> \
-MAJOR_TARGET=4 \
-MINOR_TARGET=12 \
+CLUSTER_VERSION=4.12.0 \
 osde2e test --configs prod,e2e-suite
 ```
 
