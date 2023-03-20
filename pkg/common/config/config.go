@@ -189,6 +189,10 @@ var Kubeconfig = struct {
 
 // Tests config keys.
 var Tests = struct {
+	// SuiteTimeout is how long (in hours) to wait for the entire suite to finish before timing out (default: 3)
+	// Env: SUITE_TIMEOUT
+	SuiteTimeout string
+
 	// PollingTimeout is how long (in seconds) to wait for an object to be created before failing the test.
 	// Env: POLLING_TIMEOUT
 	PollingTimeout string
@@ -243,6 +247,7 @@ var Tests = struct {
 	// Env: SERVICE_ACCOUNT
 	ServiceAccount string
 }{
+	SuiteTimeout:               "tests.suiteTimeout",
 	PollingTimeout:             "tests.pollingTimeout",
 	GinkgoSkip:                 "tests.ginkgoSkip",
 	GinkgoFocus:                "tests.focus",
@@ -660,6 +665,9 @@ func InitOSDe2eViper() {
 	viper.BindEnv(Kubeconfig.Path, "TEST_KUBECONFIG")
 
 	// ----- Tests -----
+	viper.SetDefault(Tests.SuiteTimeout, 3)
+	viper.BindEnv(Tests.SuiteTimeout, "SUITE_TIMEOUT")
+
 	viper.SetDefault(Tests.PollingTimeout, 300)
 	viper.BindEnv(Tests.PollingTimeout, "POLLING_TIMEOUT")
 
