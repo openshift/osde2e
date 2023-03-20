@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/hashicorp/go-multierror"
-	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/logging"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	appsv1 "k8s.io/client-go/kubernetes/typed/apps/v1"
@@ -16,7 +15,6 @@ import (
 // CheckReplicaCountForDaemonSets checks if all the daemonsets running on the cluster have expected replicas
 func CheckReplicaCountForDaemonSets(dsClient appsv1.AppsV1Interface, logger *log.Logger) (bool, error) {
 	allErrors := &multierror.Error{}
-	helper := helper.NewOutsideGinkgo()
 	logger = logging.CreateNewStdLoggerOrUseExistingLogger(logger)
 	logger.Print("Checking that all Daemonsets are running with expected replicas...")
 
@@ -29,7 +27,7 @@ func CheckReplicaCountForDaemonSets(dsClient appsv1.AppsV1Interface, logger *log
 	if dsTotalCount != 0 {
 		for _, ds := range dsList.Items {
 			// Ignore daemonsets in the OSDE2E project
-			if helper != nil && ds.Namespace == helper.CurrentProject() {
+			if strings.HasPrefix(ds.Namespace, "osde2e-") {
 				continue
 			}
 			// Ignore daemonsets not managed by OSD
@@ -51,7 +49,6 @@ func CheckReplicaCountForDaemonSets(dsClient appsv1.AppsV1Interface, logger *log
 
 // CheckReplicaCountForReplicaSets checks if all the replicasets running on the cluster have expected replicas
 func CheckReplicaCountForReplicaSets(dsClient appsv1.AppsV1Interface, logger *log.Logger) (bool, error) {
-	helper := helper.NewOutsideGinkgo()
 	allErrors := &multierror.Error{}
 	logger = logging.CreateNewStdLoggerOrUseExistingLogger(logger)
 	logger.Print("Checking that all Replicasets are running with expected replicas...")
@@ -65,7 +62,7 @@ func CheckReplicaCountForReplicaSets(dsClient appsv1.AppsV1Interface, logger *lo
 	if rsTotalCount != 0 {
 		for _, rs := range rsList.Items {
 			// Ignore replicasets in the OSDE2E project
-			if helper != nil && rs.Namespace == helper.CurrentProject() {
+			if strings.HasPrefix(rs.Namespace, "osde2e-") {
 				continue
 			}
 			// Ignore replicasets not managed by OSD
