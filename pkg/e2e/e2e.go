@@ -274,6 +274,7 @@ func runGinkgoTests() (int, error) {
 	gomega.RegisterFailHandler(ginkgo.Fail)
 	viper.Set(config.Cluster.Passing, false)
 	suiteConfig, reporterConfig := ginkgo.GinkgoConfiguration()
+	suiteConfig.Timeout = time.Hour * time.Duration(viper.GetInt(config.Tests.SuiteTimeout))
 
 	if skip := viper.GetString(config.Tests.GinkgoSkip); skip != "" {
 		suiteConfig.SkipStrings = append(suiteConfig.SkipStrings, skip)
