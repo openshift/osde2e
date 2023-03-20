@@ -70,14 +70,10 @@ func checkConfigMapLockfile(h *helper.H, namespace, operatorLockFile string) {
 func checkDeployment(h *helper.H, namespace string, name string, defaultDesiredReplicas int32) {
 	// Check that the operator deployment exists in the operator namespace
 	ginkgo.Context("deployment", func() {
-		util.GinkgoIt("should exist", func(ctx context.Context) {
+		util.GinkgoIt("should exist and be available", func(ctx context.Context) {
 			deployment, err := pollDeployment(ctx, h, namespace, name)
 			Expect(err).ToNot(HaveOccurred(), "failed fetching deployment")
 			Expect(deployment).NotTo(BeNil(), "deployment is nil")
-		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
-		util.GinkgoIt("should have all desired replicas ready", func(ctx context.Context) {
-			deployment, err := pollDeployment(ctx, h, namespace, name)
-			Expect(err).ToNot(HaveOccurred(), "failed fetching deployment")
 
 			readyReplicas := deployment.Status.ReadyReplicas
 			desiredReplicas := deployment.Status.Replicas
