@@ -37,10 +37,7 @@ func GetVersionForInstall(versionList *spi.VersionList) (*semver.Version, string
 
 	v, selector, err := selectedVersionSelector.SelectVersion(versionList)
 	if err != nil {
-		log.Printf("No valid install version found for selector `%s`", selector)
-		for _, vers := range versionList.AvailableVersions() {
-			log.Printf("%s - Default? %v", vers.Version().Original(), vers.Default())
-		}
+		log.Printf("Unable to find image using selector `%s`. Error: %v", selector, err)
 		return nil, selector, nil
 
 	}
