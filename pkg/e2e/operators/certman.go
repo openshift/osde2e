@@ -36,16 +36,16 @@ var _ = ginkgo.Describe(certmanOperatorTestName, label.Operators, func() {
 	ginkgo.Context("certificate secret should be applied when cluster installed", func() {
 		var secretName string
 		var secrets *v1.SecretList
-		var err error
 		var apiserver *osv1.APIServer
 
 		// Waiting period to wait for certman resources to appear
 		pollingDuration := 15 * time.Minute
 		util.GinkgoIt("certificate secret exist under openshift-config namespace", func(ctx context.Context) {
-			wait.PollImmediate(30*time.Second, pollingDuration, func() (bool, error) {
+			err := wait.PollImmediate(30*time.Second, pollingDuration, func() (bool, error) {
 				listOpts := metav1.ListOptions{
 					LabelSelector: "certificate_request",
 				}
+				var err error
 				secrets, err = h.Kube().CoreV1().Secrets("openshift-config").List(ctx, listOpts)
 				if err != nil {
 					return false, err
@@ -61,8 +61,9 @@ var _ = ginkgo.Describe(certmanOperatorTestName, label.Operators, func() {
 		}, pollingDuration.Seconds())
 
 		util.GinkgoIt("certificate secret should be applied to apiserver object", func(ctx context.Context) {
-			wait.PollImmediate(30*time.Second, pollingDuration, func() (bool, error) {
+			err := wait.PollImmediate(30*time.Second, pollingDuration, func() (bool, error) {
 				getOpts := metav1.GetOptions{}
+				var err error
 				apiserver, err = h.Cfg().ConfigV1().APIServers().Get(ctx, "cluster", getOpts)
 				if err != nil {
 					return false, err
