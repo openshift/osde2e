@@ -98,6 +98,10 @@ func beforeSuite() bool {
 			viper.Set(config.NonOSDe2eSecrets, passthruSecrets)
 		}
 
+		if err = os.WriteFile(fmt.Sprintf("%s/cluster-id", viper.GetString(config.SharedDir)), []byte(cluster.ID()), 0644); err != nil {
+			log.Printf("Error writing cluster ID to shared directory: %v", err)
+		}
+
 		viper.Set(config.Cluster.Name, cluster.Name())
 		log.Printf("CLUSTER_NAME set to %s from OCM.", viper.GetString(config.Cluster.Name))
 
@@ -157,6 +161,10 @@ func beforeSuite() bool {
 			log.Printf("Failed retrieving kubeconfig: %v", clusterConfigerr)
 			getLogs()
 			return false
+		}
+
+		if err = os.WriteFile(fmt.Sprintf("%s/kubeconfig", viper.GetString(config.SharedDir)), kubeconfigBytes, 0644); err != nil {
+			log.Printf("Error writing cluster kubeconfig to shared directory: %v", err)
 		}
 
 		getLogs()
@@ -313,19 +321,25 @@ func runGinkgoTests() (int, error) {
 		reporterConfig.Succinct = true
 	}
 
-	// setup reporter
 	reportDir := viper.GetString(config.ReportDir)
+	sharedDir := viper.GetString(config.SharedDir)
+	runtimeDir := fmt.Sprintf("%s/osde2e-%s", os.TempDir(), util.RandomStr(10))
+
 	if reportDir == "" {
-		reportDir, err = os.MkdirTemp("", "")
-
-		if err != nil {
-			return Failure, fmt.Errorf("error creating temporary directory: %v", err)
-		}
-
-		log.Printf("Writing files to temporary directory %s", reportDir)
+		reportDir = runtimeDir
 		viper.Set(config.ReportDir, reportDir)
-	} else if err = os.Mkdir(reportDir, os.ModePerm); err != nil {
-		log.Printf("Could not create reporter directory: %v", err)
+	}
+
+	if sharedDir == "" {
+		sharedDir = fmt.Sprintf("%s/shared-files", runtimeDir)
+		viper.Set(config.SharedDir, sharedDir)
+	}
+
+	for dirname, path := range map[string]string{"report": reportDir, "shared": sharedDir} {
+		if err = os.MkdirAll(path, os.ModePerm); err != nil {
+			log.Printf("Could not create %s directory %s: %v", dirname, path, err)
+		}
+		log.Printf("Writing files to %s directory: %s", dirname, path)
 	}
 
 	// Redirect stdout to where we want it to go

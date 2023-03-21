@@ -89,7 +89,12 @@ const (
 	// Hypershift enables the use of hypershift for cluster creation.
 	Hypershift = "Hypershift"
 
+	// Ignores invalid certificates within HyperShift kubeconfig
 	HypershiftIgnoreInvalidCert = "HypershiftIgnoreInvalidCert"
+
+	// SharedDir is the location where files to be used by other processes/programs are stored.
+	// This is primarily used when running within Prow and using additional steps after osde2e finishes.
+	SharedDir = "sharedDir"
 )
 
 // This is a config key to secret file mapping. We will attempt to read in from secret files before loading anything else.
@@ -619,6 +624,8 @@ func InitOSDe2eViper() {
 	viper.BindEnv(Artifacts, "ARTIFACTS")
 
 	viper.BindEnv(ReportDir, "REPORT_DIR")
+
+	viper.BindEnv(SharedDir, "SHARED_DIR")
 
 	viper.BindEnv(Suffix, "SUFFIX")
 
