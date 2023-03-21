@@ -98,7 +98,7 @@ func beforeSuite() bool {
 			viper.Set(config.NonOSDe2eSecrets, passthruSecrets)
 		}
 
-		if err = os.WriteFile(fmt.Sprintf("%s/cluster-id", viper.GetString(config.SharedDir)), []byte(cluster.ID()), 0644); err != nil {
+		if err = os.WriteFile(fmt.Sprintf("%s/cluster-id", viper.GetString(config.SharedDir)), []byte(cluster.ID()), 0o644); err != nil {
 			log.Printf("Error writing cluster ID to shared directory: %v", err)
 		}
 
@@ -163,7 +163,7 @@ func beforeSuite() bool {
 			return false
 		}
 
-		if err = os.WriteFile(fmt.Sprintf("%s/kubeconfig", viper.GetString(config.SharedDir)), kubeconfigBytes, 0644); err != nil {
+		if err = os.WriteFile(fmt.Sprintf("%s/kubeconfig", viper.GetString(config.SharedDir)), kubeconfigBytes, 0o644); err != nil {
 			log.Printf("Error writing cluster kubeconfig to shared directory: %v", err)
 		}
 
