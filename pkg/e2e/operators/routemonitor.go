@@ -31,7 +31,7 @@ func init() {
 	alert.RegisterGinkgoAlert(routeMonitorOperatorTestName, "SD-SREP", "@sre-platform-team-orange", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
 }
 
-var _ = ginkgo.Describe(routeMonitorOperatorTestName, label.Informing, func() {
+var _ = ginkgo.Describe(routeMonitorOperatorTestName, ginkgo.Ordered, label.Informing, func() {
 	ginkgo.BeforeEach(func() {
 		if viper.GetBool(config.Hypershift) {
 			ginkgo.Skip("Route Monitor Operator is not supported on HyperShift")
