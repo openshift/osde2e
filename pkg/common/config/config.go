@@ -189,7 +189,7 @@ var Kubeconfig = struct {
 
 // Tests config keys.
 var Tests = struct {
-	// SuiteTimeout is how long (in hours) to wait for the entire suite to finish before timing out (default: 3)
+	// SuiteTimeout is how long (in hours) to wait for the entire suite to finish before timing out
 	// Env: SUITE_TIMEOUT
 	SuiteTimeout string
 
@@ -665,7 +665,7 @@ func InitOSDe2eViper() {
 	viper.BindEnv(Kubeconfig.Path, "TEST_KUBECONFIG")
 
 	// ----- Tests -----
-	viper.SetDefault(Tests.SuiteTimeout, 3)
+	viper.SetDefault(Tests.SuiteTimeout, 6)
 	viper.BindEnv(Tests.SuiteTimeout, "SUITE_TIMEOUT")
 
 	viper.SetDefault(Tests.PollingTimeout, 300)
