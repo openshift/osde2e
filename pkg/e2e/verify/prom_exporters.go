@@ -6,14 +6,11 @@ import (
 	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/openshift/osde2e/pkg/common/alert"
-	"github.com/openshift/osde2e/pkg/common/cluster"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/label"
-	clusterProviders "github.com/openshift/osde2e/pkg/common/providers"
 	"github.com/openshift/osde2e/pkg/common/providers/rosaprovider"
-	"github.com/openshift/osde2e/pkg/common/util"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -140,25 +137,12 @@ func checkRoleBindings(ctx context.Context, namespace string, roleBindings map[s
 }
 
 func checkDaemonSets(ctx context.Context, namespace string, daemonSets map[string][]string, h *helper.H, providers ...string) {
-	provider, err := clusterProviders.ClusterProvider()
-	Expect(err).NotTo(HaveOccurred(), "error getting cluster provider")
-	currentClusterVersion, err := cluster.GetClusterVersion(provider, viper.GetString(config.Cluster.ID))
-	Expect(err).NotTo(HaveOccurred(), "error getting cluster version %s", viper.GetString(config.Cluster.Version))
-
 	for _, provider := range providers {
 		for _, daemonSetName := range daemonSets[provider] {
-			// Use appv1 for clusters 4.4.0 or later
-			if util.Version440.Check(currentClusterVersion) {
-				daemonSet, err := h.Kube().AppsV1().DaemonSets(namespace).Get(ctx, daemonSetName, metav1.GetOptions{})
-				Expect(err).NotTo(HaveOccurred(), "failed to get daemonset %v\n", daemonSetName)
-				Expect(daemonSet.Status.DesiredNumberScheduled).Should(Equal(daemonSet.Status.CurrentNumberScheduled),
-					"daemonset desired count should match currently running")
-			} else {
-				daemonSet, err := h.Kube().ExtensionsV1beta1().DaemonSets(namespace).Get(ctx, daemonSetName, metav1.GetOptions{})
-				Expect(err).NotTo(HaveOccurred(), "failed to get daemonset %v\n", daemonSetName)
-				Expect(daemonSet.Status.DesiredNumberScheduled).Should(Equal(daemonSet.Status.CurrentNumberScheduled),
-					"daemonset desired count should match currently running")
-			}
+			daemonSet, err := h.Kube().AppsV1().DaemonSets(namespace).Get(ctx, daemonSetName, metav1.GetOptions{})
+			Expect(err).NotTo(HaveOccurred(), "failed to get daemonset %v\n", daemonSetName)
+			Expect(daemonSet.Status.DesiredNumberScheduled).Should(Equal(daemonSet.Status.CurrentNumberScheduled),
+				"daemonset desired count should match currently running")
 		}
 	}
 }
