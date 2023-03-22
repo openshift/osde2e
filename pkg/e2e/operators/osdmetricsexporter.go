@@ -18,7 +18,7 @@ func init() {
 	alert.RegisterGinkgoAlert(osdMetricsExporterBasicTest, "SD_SREP", "@sre-platform-team-v1alpha1", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
 }
 
-var _ = ginkgo.Describe(osdMetricsExporterBasicTest, label.Operators, func() {
+var _ = ginkgo.Describe(osdMetricsExporterBasicTest, ginkgo.Ordered, label.Operators, func() {
 	ginkgo.BeforeEach(func() {
 		if viper.GetBool(config.Hypershift) {
 			ginkgo.Skip("OSD Metrics Exporter is not supported on HyperShift")

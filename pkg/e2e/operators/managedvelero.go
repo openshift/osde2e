@@ -28,7 +28,7 @@ func init() {
 	alert.RegisterGinkgoAlert(veleroOperatorTestName, "SD-SREP", "@managed-velero-operator", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
 }
 
-var _ = ginkgo.Describe(veleroOperatorTestName, label.Operators, func() {
+var _ = ginkgo.Describe(veleroOperatorTestName, ginkgo.Ordered, label.Operators, func() {
 	ginkgo.BeforeEach(func() {
 		if viper.GetBool("rosa.STS") {
 			ginkgo.Skip("STS does not support MVO")

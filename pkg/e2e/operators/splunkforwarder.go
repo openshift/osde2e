@@ -32,7 +32,7 @@ func init() {
 }
 
 // Blocking SplunkForwarder Signal
-var _ = ginkgo.Describe(splunkForwarderBlocking, label.Operators, func() {
+var _ = ginkgo.Describe(splunkForwarderBlocking, ginkgo.Ordered, label.Operators, func() {
 	ginkgo.BeforeEach(func() {
 		if viper.GetBool(config.Hypershift) {
 			ginkgo.Skip("Splunk Forwarder Operator is not deployed to a ROSA hosted-cp cluster (OSD-11605)")
@@ -89,7 +89,7 @@ var _ = ginkgo.Describe(splunkForwarderBlocking, label.Operators, func() {
 })
 
 // Informing SplunkForwarder Signal
-var _ = ginkgo.Describe(splunkForwarderInforming, label.Operators, label.Informing, func() {
+var _ = ginkgo.Describe(splunkForwarderInforming, ginkgo.Ordered, label.Operators, label.Informing, func() {
 	ginkgo.BeforeEach(func() {
 		if viper.GetBool(config.Hypershift) {
 			ginkgo.Skip("Splunk Forwarder Operator is not deployed to a ROSA hosted-cp cluster (OSD-11605)")

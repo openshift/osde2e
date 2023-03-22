@@ -29,7 +29,7 @@ func init() {
 	alert.RegisterGinkgoAlert(subjectPermissionsTestName, "SD-SREP", "@rbac-permissions-operator", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
 }
 
-var _ = ginkgo.Describe(rbacOperatorBlocking, label.Operators, func() {
+var _ = ginkgo.Describe(rbacOperatorBlocking, ginkgo.Ordered, label.Operators, func() {
 	ginkgo.BeforeEach(func() {
 		if viper.GetBool(config.Hypershift) {
 			ginkgo.Skip("RBAC Permissions Operator is not supported on HyperShift")
