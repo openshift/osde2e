@@ -44,9 +44,8 @@ func (m specificImage) SelectVersion(versionList *spi.VersionList) (*semver.Vers
 		versionFromImage += "-nightly"
 	}
 
-	versionToMatch := semver.MustParse(versionFromImage)
-
-	if versionToMatch == nil {
+	versionToMatch, err := semver.NewVersion(versionFromImage)
+	if err != nil {
 		return nil, versionType, fmt.Errorf("error parsing semver version for %s", specificImage)
 	}
 
