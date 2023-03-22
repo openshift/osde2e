@@ -98,8 +98,10 @@ func beforeSuite() bool {
 			viper.Set(config.NonOSDe2eSecrets, passthruSecrets)
 		}
 
-		if err = os.WriteFile(fmt.Sprintf("%s/cluster-id", viper.GetString(config.SharedDir)), []byte(cluster.ID()), 0o644); err != nil {
-			log.Printf("Error writing cluster ID to shared directory: %v", err)
+		if viper.GetString(config.SharedDir) != "" {
+			if err = os.WriteFile(fmt.Sprintf("%s/cluster-id", viper.GetString(config.SharedDir)), []byte(cluster.ID()), 0o644); err != nil {
+				log.Printf("Error writing cluster ID to shared directory: %v", err)
+			}
 		}
 
 		viper.Set(config.Cluster.Name, cluster.Name())
@@ -163,8 +165,10 @@ func beforeSuite() bool {
 			return false
 		}
 
-		if err = os.WriteFile(fmt.Sprintf("%s/kubeconfig", viper.GetString(config.SharedDir)), kubeconfigBytes, 0o644); err != nil {
-			log.Printf("Error writing cluster kubeconfig to shared directory: %v", err)
+		if viper.GetString(config.SharedDir) != "" {
+			if err = os.WriteFile(fmt.Sprintf("%s/kubeconfig", viper.GetString(config.SharedDir)), kubeconfigBytes, 0o644); err != nil {
+				log.Printf("Error writing cluster kubeconfig to shared directory: %v", err)
+			}
 		}
 
 		getLogs()
@@ -330,16 +334,16 @@ func runGinkgoTests() (int, error) {
 		viper.Set(config.ReportDir, reportDir)
 	}
 
-	if sharedDir == "" {
-		sharedDir = fmt.Sprintf("%s/shared-files", runtimeDir)
-		viper.Set(config.SharedDir, sharedDir)
+	log.Printf("Writing files to report directory: %s", reportDir)
+	if err = os.MkdirAll(reportDir, os.ModePerm); err != nil {
+		log.Printf("Could not create report directory: %s, %v", reportDir, err)
 	}
 
-	for dirname, path := range map[string]string{"report": reportDir, "shared": sharedDir} {
-		if err = os.MkdirAll(path, os.ModePerm); err != nil {
-			log.Printf("Could not create %s directory %s: %v", dirname, path, err)
+	if sharedDir != "" {
+		log.Printf("Writing shared files to directory: %s", sharedDir)
+		if err = os.MkdirAll(sharedDir, os.ModePerm); err != nil {
+			log.Printf("Could not create shared directory: %s, %v", sharedDir, err)
 		}
-		log.Printf("Writing files to %s directory: %s", dirname, path)
 	}
 
 	// Redirect stdout to where we want it to go
