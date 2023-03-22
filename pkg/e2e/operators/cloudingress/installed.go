@@ -10,7 +10,6 @@ import (
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/label"
 	"github.com/openshift/osde2e/pkg/common/providers/rosaprovider"
-	"github.com/openshift/osde2e/pkg/common/util"
 	"github.com/openshift/osde2e/pkg/e2e/operators"
 )
 
@@ -32,13 +31,13 @@ var _ = ginkgo.Describe("[Suite: operators] "+TestPrefix, label.Operators, func(
 
 	// Check that the operator deployment exists in the operator namespace
 	ginkgo.Context("deployment", func() {
-		util.GinkgoIt("should exist", func(ctx context.Context) {
+		ginkgo.It("should exist", func(ctx context.Context) {
 			deployment, err := operators.PollDeployment(ctx, h, OperatorNamespace, OperatorName)
 			Expect(err).ToNot(HaveOccurred(), "failed fetching deployment")
 			Expect(deployment).NotTo(BeNil(), "deployment is nil")
 		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
 
-		util.GinkgoIt("should have all desired replicas ready", func(ctx context.Context) {
+		ginkgo.It("should have all desired replicas ready", func(ctx context.Context) {
 			deployment, err := operators.PollDeployment(ctx, h, OperatorNamespace, OperatorName)
 			Expect(err).ToNot(HaveOccurred(), "failed fetching deployment")
 

@@ -12,7 +12,6 @@ import (
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/label"
 	"github.com/openshift/osde2e/pkg/common/runner"
-	"github.com/openshift/osde2e/pkg/common/util"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -32,7 +31,7 @@ var _ = ginkgo.Describe(clusterStateInformingName, label.E2E, func() {
 	// How long to wait for Prometheus pods to be running
 	prometheusPodStartedDuration := 5 * time.Minute
 
-	util.GinkgoIt("should include Prometheus data", func(ctx context.Context) {
+	ginkgo.It("should include Prometheus data", func(ctx context.Context) {
 		// setup runner
 		// this command is has specific code to capture and suppress an exit code of
 		// 1 as tar 1.26 will exit 1 if files change while the tar is running, as is

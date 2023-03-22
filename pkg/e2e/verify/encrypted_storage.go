@@ -19,7 +19,6 @@ import (
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/label"
 	"github.com/openshift/osde2e/pkg/common/providers/ocmprovider"
-	"github.com/openshift/osde2e/pkg/common/util"
 
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
@@ -60,7 +59,7 @@ var _ = ginkgo.Describe(encryptedStorageTestName, label.E2E, func() {
 		h := helper.New()
 		var testInstanceName string
 
-		util.GinkgoIt("can be created by dedicated admins", func(ctx context.Context) {
+		ginkgo.It("can be created by dedicated admins", func(ctx context.Context) {
 			testInstanceName = "test-" + time.Now().Format("20060102-150405-") + fmt.Sprint(time.Now().Nanosecond()/1000000) + "-" + fmt.Sprint(ginkgo.GinkgoParallelProcess())
 
 			ginkgo.By("Creating an encryption key in the cluster's gcp project")

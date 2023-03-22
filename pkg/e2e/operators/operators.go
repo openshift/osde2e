@@ -12,7 +12,6 @@ import (
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/providers"
-	"github.com/openshift/osde2e/pkg/common/util"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -38,7 +37,7 @@ import (
 func checkClusterServiceVersion(h *helper.H, namespace, name string) {
 	// Check that the operator clusterServiceVersion exists
 	ginkgo.Context(fmt.Sprintf("clusterServiceVersion %s/%s", namespace, name), func() {
-		util.GinkgoIt("should be present and in succeeded state", func(ctx context.Context) {
+		ginkgo.It("should be present and in succeeded state", func(ctx context.Context) {
 			Eventually(func() bool {
 				csvList, err := h.Operator().OperatorsV1alpha1().ClusterServiceVersions(namespace).List(ctx, metav1.ListOptions{})
 				if err != nil {
@@ -59,7 +58,7 @@ func checkClusterServiceVersion(h *helper.H, namespace, name string) {
 func checkConfigMapLockfile(h *helper.H, namespace, operatorLockFile string) {
 	// Check that the operator configmap has been deployed
 	ginkgo.Context("configmaps", func() {
-		util.GinkgoIt("should exist", func(ctx context.Context) {
+		ginkgo.It("should exist", func(ctx context.Context) {
 			// Wait for lockfile to signal operator is active
 			err := pollLockFile(ctx, h, namespace, operatorLockFile)
 			Expect(err).ToNot(HaveOccurred(), "failed fetching the configMap lockfile")
@@ -70,7 +69,7 @@ func checkConfigMapLockfile(h *helper.H, namespace, operatorLockFile string) {
 func checkDeployment(h *helper.H, namespace string, name string, defaultDesiredReplicas int32) {
 	// Check that the operator deployment exists in the operator namespace
 	ginkgo.Context("deployment", func() {
-		util.GinkgoIt("should exist and be available", func(ctx context.Context) {
+		ginkgo.It("should exist and be available", func(ctx context.Context) {
 			deployment, err := pollDeployment(ctx, h, namespace, name)
 			Expect(err).ToNot(HaveOccurred(), "failed fetching deployment")
 			Expect(deployment).NotTo(BeNil(), "deployment is nil")
@@ -91,7 +90,7 @@ func checkPod(h *helper.H, namespace string, name string, gracePeriod int, maxAc
 	// Checks that deployed pods have less than maxAcceptedRestart restarts
 
 	ginkgo.Context("pods", func() {
-		util.GinkgoIt(fmt.Sprintf("should have %v or less restart(s)", maxAcceptedRestart), func(ctx context.Context) {
+		ginkgo.It(fmt.Sprintf("should have %v or less restart(s)", maxAcceptedRestart), func(ctx context.Context) {
 			// wait for graceperiod
 			time.Sleep(time.Duration(gracePeriod) * time.Second)
 			// retrieve pods
@@ -112,7 +111,7 @@ func checkPod(h *helper.H, namespace string, name string, gracePeriod int, maxAc
 func checkClusterRoles(h *helper.H, clusterRoles []string, matchPrefix bool) {
 	// Check that the clusterRoles exist
 	ginkgo.Context("clusterRoles", func() {
-		util.GinkgoIt("should exist", func(ctx context.Context) {
+		ginkgo.It("should exist", func(ctx context.Context) {
 			allClusterRoles, err := h.Kube().RbacV1().ClusterRoles().List(ctx, metav1.ListOptions{})
 			Expect(err).ToNot(HaveOccurred(), "failed to list clusterRoles\n")
 
@@ -134,7 +133,7 @@ func checkClusterRoles(h *helper.H, clusterRoles []string, matchPrefix bool) {
 func checkClusterRoleBindings(h *helper.H, clusterRoleBindings []string, matchPrefix bool) {
 	// Check that the clusterRoles exist
 	ginkgo.Context("clusterRoleBindings", func() {
-		util.GinkgoIt("should exist", func(ctx context.Context) {
+		ginkgo.It("should exist", func(ctx context.Context) {
 			allClusterRoleBindings, err := h.Kube().RbacV1().ClusterRoleBindings().List(ctx, metav1.ListOptions{})
 			Expect(err).ToNot(HaveOccurred(), "failed to list clusterRoles\n")
 
@@ -156,7 +155,7 @@ func checkClusterRoleBindings(h *helper.H, clusterRoleBindings []string, matchPr
 func checkRole(h *helper.H, namespace string, roles []string) {
 	// Check that deployed roles exist
 	ginkgo.Context("roles", func() {
-		util.GinkgoIt("should exist", func(ctx context.Context) {
+		ginkgo.It("should exist", func(ctx context.Context) {
 			for _, roleName := range roles {
 				_, err := h.Kube().RbacV1().Roles(namespace).Get(ctx, roleName, metav1.GetOptions{})
 				Expect(err).NotTo(HaveOccurred(), "failed to get role %v\n", roleName)
@@ -168,7 +167,7 @@ func checkRole(h *helper.H, namespace string, roles []string) {
 func checkRoleBindings(h *helper.H, namespace string, roleBindings []string) {
 	// Check that deployed rolebindings exist
 	ginkgo.Context("roleBindings", func() {
-		util.GinkgoIt("should exist", func(ctx context.Context) {
+		ginkgo.It("should exist", func(ctx context.Context) {
 			for _, roleBindingName := range roleBindings {
 				err := pollRoleBinding(ctx, h, namespace, roleBindingName)
 				Expect(err).NotTo(HaveOccurred(), "failed to get roleBinding %v\n", roleBindingName)
@@ -315,7 +314,7 @@ func checkUpgrade(h *helper.H, subNamespace string, subName string, packageName 
 func checkService(h *helper.H, namespace string, name string, port int) {
 	pollTimeout := viper.GetFloat64(config.Tests.PollingTimeout)
 	ginkgo.Context("service", func() {
-		util.GinkgoIt(
+		ginkgo.It(
 			"should exist",
 			func(ctx context.Context) {
 				Eventually(func() bool {

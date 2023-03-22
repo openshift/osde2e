@@ -11,7 +11,6 @@ import (
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/label"
-	"github.com/openshift/osde2e/pkg/common/util"
 	sfv1alpha1 "github.com/openshift/splunk-forwarder-operator/api/v1alpha1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -79,7 +78,7 @@ var _ = ginkgo.Describe(splunkForwarderBlocking, ginkgo.Ordered, label.Operators
 	})
 
 	ginkgo.Context("splunkforwarders", func() {
-		util.GinkgoIt("admin should be able to manage SplunkForwarders CR", func(ctx context.Context) {
+		ginkgo.It("admin should be able to manage SplunkForwarders CR", func(ctx context.Context) {
 			name := "osde2e-splunkforwarder-test-2"
 			sf := makeMinimalSplunkforwarder("SplunkForwarder", "splunkforwarder.managed.openshift.io/v1alpha1", name)
 			err := addSplunkforwarder(ctx, sf, "openshift-splunk-forwarder-operator", h)
@@ -136,7 +135,7 @@ var _ = ginkgo.Describe(splunkForwarderInforming, ginkgo.Ordered, label.Operator
 	})
 
 	ginkgo.Context("splunkforwarders", func() {
-		util.GinkgoIt("dedicated admin should not be able to manage SplunkForwarders CR", func(ctx context.Context) {
+		ginkgo.It("dedicated admin should not be able to manage SplunkForwarders CR", func(ctx context.Context) {
 			name := "osde2e-dedicated-admin-splunkforwarder-x"
 			sf := makeMinimalSplunkforwarder("SplunkForwarder", "splunkforwarder.managed.openshift.io/v1alpha1", name)
 			err := dedicatedAaddSplunkforwarder(ctx, sf, "openshift-splunk-forwarder-operator", h)

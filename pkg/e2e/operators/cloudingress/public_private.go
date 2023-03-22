@@ -14,7 +14,6 @@ import (
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/label"
 	"github.com/openshift/osde2e/pkg/common/providers/rosaprovider"
-	"github.com/openshift/osde2e/pkg/common/util"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -40,7 +39,7 @@ var _ = ginkgo.Describe("[Suite: informing] "+TestPrefix, label.Informing, func(
 	pollingDuration := 5 * time.Minute
 
 	ginkgo.Context("publishingstrategy-public-private", func() {
-		util.GinkgoIt(
+		ginkgo.It(
 			"should be able to toggle the default applicationingress from public to private",
 			func(ctx context.Context) {
 				updateApplicationIngress(ctx, h, "internal")
@@ -67,7 +66,7 @@ var _ = ginkgo.Describe("[Suite: informing] "+TestPrefix, label.Informing, func(
 			pollingDuration.Seconds(),
 		)
 
-		util.GinkgoIt(
+		ginkgo.It(
 			"should be able to toggle the default applicationingress from private to public",
 			func(ctx context.Context) {
 				updateApplicationIngress(ctx, h, "external")

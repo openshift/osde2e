@@ -11,7 +11,6 @@ import (
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/label"
-	"github.com/openshift/osde2e/pkg/common/util"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	unstruct "k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -67,7 +66,7 @@ var _ = ginkgo.Describe(subjectPermissionsTestName, label.Operators, func() {
 
 func checkSubjectPermissions(h *helper.H, spName string) {
 	ginkgo.Context("SubjectPermission", func() {
-		util.GinkgoIt("should have the expected ClusterRoles, ClusterRoleBindings and RoleBindinsg", func(ctx context.Context) {
+		ginkgo.It("should have the expected ClusterRoles, ClusterRoleBindings and RoleBindinsg", func(ctx context.Context) {
 			clusterRoles, clusterRoleBindings, roleBindings, err := getSubjectPermissionRBACInfo(ctx, h, spName)
 			Expect(err).NotTo(HaveOccurred())
 

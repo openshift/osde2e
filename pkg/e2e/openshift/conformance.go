@@ -10,7 +10,6 @@ import (
 	"github.com/openshift/osde2e/pkg/common/alert"
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/runner"
-	"github.com/openshift/osde2e/pkg/common/util"
 )
 
 // DefaultE2EConfig is the base configuration for E2E runs.
@@ -43,7 +42,7 @@ var _ = ginkgo.Describe(conformanceK8sTestName, func() {
 	h := helper.New()
 
 	e2eTimeoutInSeconds := 7200
-	util.GinkgoIt("should run until completion", func(ctx context.Context) {
+	ginkgo.It("should run until completion", func(ctx context.Context) {
 		// configure tests
 		h.SetServiceAccount(ctx, "system:serviceaccount:%s:cluster-admin")
 
@@ -77,7 +76,7 @@ var _ = ginkgo.Describe(conformanceOpenshiftTestName, func() {
 	h := helper.New()
 
 	e2eTimeoutInSeconds := 7200
-	util.GinkgoIt("should run until completion", func(ctx context.Context) {
+	ginkgo.It("should run until completion", func(ctx context.Context) {
 		h.SetServiceAccount(ctx, "system:serviceaccount:%s:cluster-admin")
 		// configure tests
 		cfg := DefaultE2EConfig

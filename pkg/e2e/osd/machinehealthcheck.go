@@ -11,7 +11,6 @@ import (
 	"github.com/openshift/osde2e/pkg/common/alert"
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/label"
-	"github.com/openshift/osde2e/pkg/common/util"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -39,7 +38,7 @@ func init() {
 var _ = ginkgo.Describe(machineHealthTestName, label.E2E, func() {
 	h := helper.New()
 
-	util.GinkgoIt("infra MHC should exist", func(ctx context.Context) {
+	ginkgo.It("infra MHC should exist", func(ctx context.Context) {
 		mhc, err := h.Machine().
 			MachineV1beta1().
 			MachineHealthChecks(machineAPINamespace).
@@ -74,7 +73,7 @@ var _ = ginkgo.Describe(machineHealthTestName, label.E2E, func() {
 		))
 	}, float64(500))
 
-	util.GinkgoIt("worker MHC should exist", func(ctx context.Context) {
+	ginkgo.It("worker MHC should exist", func(ctx context.Context) {
 		mhc, err := h.Machine().
 			MachineV1beta1().
 			MachineHealthChecks(machineAPINamespace).
@@ -114,7 +113,7 @@ var _ = ginkgo.Describe(machineHealthTestName, label.E2E, func() {
 		))
 	}, float64(500))
 
-	util.GinkgoIt("metal worker MHC should exist", func(ctx context.Context) {
+	ginkgo.It("metal worker MHC should exist", func(ctx context.Context) {
 		mhc, err := h.Machine().
 			MachineV1beta1().
 			MachineHealthChecks(machineAPINamespace).

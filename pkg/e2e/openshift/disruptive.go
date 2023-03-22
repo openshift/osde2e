@@ -11,7 +11,6 @@ import (
 
 	"github.com/openshift/osde2e/pkg/common/alert"
 	"github.com/openshift/osde2e/pkg/common/helper"
-	"github.com/openshift/osde2e/pkg/common/util"
 )
 
 var disruptiveTestName = "[Suite: openshift][disruptive]"
@@ -26,7 +25,7 @@ var _ = ginkgo.Describe(disruptiveTestName, func() {
 	h := helper.New()
 
 	e2eTimeoutInSeconds := viper.GetInt(config.Tests.PollingTimeout)
-	util.GinkgoIt("should run until completion", func(ctx context.Context) {
+	ginkgo.It("should run until completion", func(ctx context.Context) {
 		// configure tests
 		cfg := DefaultE2EConfig
 		cfg.Suite = "openshift/disruptive"

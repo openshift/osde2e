@@ -10,7 +10,6 @@ import (
 	. "github.com/onsi/gomega"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/label"
-	"github.com/openshift/osde2e/pkg/common/util"
 	"k8s.io/apimachinery/pkg/util/wait"
 
 	"github.com/openshift/osde2e/pkg/common/alert"
@@ -40,7 +39,7 @@ var _ = ginkgo.Describe(clusterStateTestName, label.E2E, func() {
 	h := helper.New()
 
 	alertsTimeoutInSeconds := 900
-	util.GinkgoIt("should have no alerts", func(ctx context.Context) {
+	ginkgo.It("should have no alerts", func(ctx context.Context) {
 		// Set up prometheus client
 		h.SetServiceAccount(ctx, "system:serviceaccount:%s:cluster-admin")
 		promClient, err := prometheus.CreateClusterClient(h)

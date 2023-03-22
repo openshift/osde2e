@@ -95,7 +95,7 @@ var _ = ginkgo.Describe("[Suite: informing] ImageStreams", func() {
 var _ = ginkgo.Describe("[Suite: informing] ImageStreams", func() {
 	h := helper.New()
 
-	util.GinkgoIt("should exist in the cluster", func() {
+	ginkgo.It("should exist in the cluster", func() {
 		list, err := h.Image().ImageV1().ImageStreams(metav1.NamespaceAll).List(metav1.ListOptions{})
 		Expect(err).NotTo(HaveOccurred(), "couldn't list ImageStreams")
 		Expect(list).NotTo(BeNil())
@@ -127,7 +127,7 @@ import (
 var _ = ginkgo.Describe("[Suite: informing] ImageStreams", func() {
 	h := helper.New()
 
-	util.GinkgoIt("should exist in the cluster", func() {
+	ginkgo.It("should exist in the cluster", func() {
 		list, err := h.Image().ImageV1().ImageStreams(metav1.NamespaceAll).List(metav1.ListOptions{})
 		Expect(err).NotTo(HaveOccurred(), "couldn't list ImageStreams")
 		Expect(list).NotTo(BeNil())

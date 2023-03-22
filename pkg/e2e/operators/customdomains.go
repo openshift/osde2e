@@ -23,7 +23,6 @@ import (
 
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
-	"github.com/openshift/osde2e/pkg/common/util"
 
 	routev1 "github.com/openshift/api/route/v1"
 	customdomainv1alpha1 "github.com/openshift/custom-domains-operator/api/v1alpha1"
@@ -188,7 +187,7 @@ var _ = ginkgo.Describe(customDomainsOperatorTestName, label.Operators, func() {
 		}, float64(defaultTimeout.Seconds()*3))
 
 		// Now that the endpoint is stable, make sure it's resolvable and usable.
-		util.GinkgoIt("Create customdomains that are resolvable by external services", func(ctx context.Context) {
+		ginkgo.It("Create customdomains that are resolvable by external services", func(ctx context.Context) {
 			ginkgo.By("Logging in as a dedicated-admin")
 			h.Impersonate(rest.ImpersonationConfig{
 				UserName: "dummy-admin@redhat.com",
@@ -383,7 +382,7 @@ var _ = ginkgo.Describe(customDomainsOperatorTestName, label.Operators, func() {
 		}, float64(defaultTimeout.Seconds()*4))
 
 		// Ensure dedicated-admins can update CustomDomain certificates
-		util.GinkgoIt("Replace certificates", func(ctx context.Context) {
+		ginkgo.It("Replace certificates", func(ctx context.Context) {
 			ginkgo.By("Retrieving the original certificate")
 			h.Impersonate(rest.ImpersonationConfig{})
 			oldIngressSecret, err := getSecretForCustomDomain(ctx, h, testDomain)

@@ -11,7 +11,6 @@ import (
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/label"
-	"github.com/openshift/osde2e/pkg/common/util"
 	mustgatherv1alpha1 "github.com/redhat-cop/must-gather-operator/api/v1alpha1"
 	kv1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -57,7 +56,7 @@ var _ = ginkgo.Describe(mustGatherOperatorTest, ginkgo.Ordered, label.Operators,
 
 	ginkgo.Context("as Members of CEE", func() {
 		mg := generateMustGather(h, "foo-example")
-		util.GinkgoIt("can manage MustGather CRs in openshift-must-gather-operator namespace", func(ctx context.Context) {
+		ginkgo.It("can manage MustGather CRs in openshift-must-gather-operator namespace", func(ctx context.Context) {
 			err := createMustGather(ctx, h, mg, operatorNamespace, "a-dummy-service-account-name", "system:serviceaccounts:openshift-backplane-cee")
 			Expect(err).NotTo(HaveOccurred())
 			err = deleteMustGather(ctx, h, mg.Name, operatorNamespace, "a-dummy-service-account-name", "system:serviceaccounts:openshift-backplane-cee")
@@ -67,7 +66,7 @@ var _ = ginkgo.Describe(mustGatherOperatorTest, ginkgo.Ordered, label.Operators,
 
 	ginkgo.Context("as an elevated SRE", func() {
 		mg := generateMustGather(h, "bar-example")
-		util.GinkgoIt("can manage MustGather CRs in openshift-must-gather-operator namespace", func(ctx context.Context) {
+		ginkgo.It("can manage MustGather CRs in openshift-must-gather-operator namespace", func(ctx context.Context) {
 			err := createMustGather(ctx, h, mg, operatorNamespace, "backplane-cluster-admin", "")
 			Expect(err).NotTo(HaveOccurred())
 			err = deleteMustGather(ctx, h, mg.Name, operatorNamespace, "backplane-cluster-admin", "")

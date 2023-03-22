@@ -13,7 +13,6 @@ import (
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/label"
-	"github.com/openshift/osde2e/pkg/common/util"
 	operatorv1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
@@ -42,7 +41,7 @@ var _ = ginkgo.Describe(dedicatedAdminTestName, label.Informing, func() {
 		h := helper.New()
 
 		// dedicated-admin SA can create projectrequest object
-		util.GinkgoIt("ded-admin SA can create projectrequest", func(ctx context.Context) {
+		ginkgo.It("ded-admin SA can create projectrequest", func(ctx context.Context) {
 			// Impersonate ded-admin
 			h.Impersonate(rest.ImpersonationConfig{
 				UserName: "dummy-admin@redhat.com",
@@ -65,7 +64,7 @@ var _ = ginkgo.Describe(dedicatedAdminTestName, label.Informing, func() {
 		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
 
 		// regular dedicated-admin user can create 'admin' rolebinding
-		util.GinkgoIt("ded-admin user can create 'admin' rolebinding", func(ctx context.Context) {
+		ginkgo.It("ded-admin user can create 'admin' rolebinding", func(ctx context.Context) {
 			// Impersonate ded-admin
 			h.Impersonate(rest.ImpersonationConfig{
 				UserName: "dummy-admin@redhat.com",
@@ -92,7 +91,7 @@ var _ = ginkgo.Describe(dedicatedAdminTestName, label.Informing, func() {
 		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
 
 		// regular dedicated-admin user can create 'edit' rolebinding
-		util.GinkgoIt("ded-admin user can create edit rolebinding", func(ctx context.Context) {
+		ginkgo.It("ded-admin user can create edit rolebinding", func(ctx context.Context) {
 			// Impersonate ded-admin
 			h.Impersonate(rest.ImpersonationConfig{
 				UserName: "dummy-admin@redhat.com",
@@ -119,7 +118,7 @@ var _ = ginkgo.Describe(dedicatedAdminTestName, label.Informing, func() {
 		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
 
 		// dedicated-admin SA can create 'edit' rolebinding
-		util.GinkgoIt("ded-admin SA can create 'edit' rolebinding", func(ctx context.Context) {
+		ginkgo.It("ded-admin SA can create 'edit' rolebinding", func(ctx context.Context) {
 			// Impersonate ded-admin
 			h.Impersonate(rest.ImpersonationConfig{
 				UserName: "dummy-admin@redhat.com",
@@ -146,7 +145,7 @@ var _ = ginkgo.Describe(dedicatedAdminTestName, label.Informing, func() {
 		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
 
 		// dedicated-admin SA can create 'admin' rolebinding
-		util.GinkgoIt("ded-admin SA can create 'admin' rolebinding", func(ctx context.Context) {
+		ginkgo.It("ded-admin SA can create 'admin' rolebinding", func(ctx context.Context) {
 			// Impersonate ded-admin
 			h.Impersonate(rest.ImpersonationConfig{
 				UserName: "dummy-admin@redhat.com",
@@ -173,7 +172,7 @@ var _ = ginkgo.Describe(dedicatedAdminTestName, label.Informing, func() {
 		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
 
 		// dedicated-admin SA can delete project
-		util.GinkgoIt("ded-admin SA can delete project", func(ctx context.Context) {
+		ginkgo.It("ded-admin SA can delete project", func(ctx context.Context) {
 			// Impersonate ded-admin
 			h.Impersonate(rest.ImpersonationConfig{
 				UserName: "dummy-admin@redhat.com",
@@ -197,7 +196,7 @@ var _ = ginkgo.Describe(dedicatedAdminTestName, label.Informing, func() {
 
 		// dedicated-admin can manage secrets
 		// in selected namespaces
-		util.GinkgoIt("ded-admin can manage secrets in selected namespaces", func(ctx context.Context) {
+		ginkgo.It("ded-admin can manage secrets in selected namespaces", func(ctx context.Context) {
 			// Impersonate ded-admin
 			h.Impersonate(rest.ImpersonationConfig{
 				UserName: "dummy-admin@redhat.com",
@@ -215,7 +214,7 @@ var _ = ginkgo.Describe(dedicatedAdminTestName, label.Informing, func() {
 
 		// dedicated-admin can manage subscriptions
 		// in selected namespaces
-		util.GinkgoIt("ded-admin can manage subscriptions in selected namespaces", func(ctx context.Context) {
+		ginkgo.It("ded-admin can manage subscriptions in selected namespaces", func(ctx context.Context) {
 			// Impersonate ded-admin
 			h.Impersonate(rest.ImpersonationConfig{
 				UserName: "dummy-admin@redhat.com",
@@ -231,7 +230,7 @@ var _ = ginkgo.Describe(dedicatedAdminTestName, label.Informing, func() {
 			Expect(err).NotTo(HaveOccurred())
 		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
 
-		util.GinkgoIt("dedicated-admin user can patch consoles.operator.openshift.io CR", func(ctx context.Context) {
+		ginkgo.It("dedicated-admin user can patch consoles.operator.openshift.io CR", func(ctx context.Context) {
 			// Impersonate ded-admin
 			h.Impersonate(rest.ImpersonationConfig{
 				UserName: "dummy-admin@redhat.com",
