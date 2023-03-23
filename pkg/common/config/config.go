@@ -816,7 +816,6 @@ func InitOSDe2eViper() {
 
 	viper.BindEnv(Addons.IDs, "ADDON_IDS")
 
-	//Flag this for deprecation
 	viper.BindEnv(Addons.CleanupHarnesses, "ADDON_CLEANUP_HARNESSES")
 
 	viper.SetDefault(Addons.RunCleanup, false)
