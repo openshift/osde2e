@@ -270,7 +270,6 @@ var Tests = struct {
 }{
 	TestHarnesses:              "tests.testHarnesses",
 	SuiteTimeout:               "tests.suiteTimeout",
-	TestHarnesses:              "tests.testHarnesses",
 	PollingTimeout:             "tests.pollingTimeout",
 	ServiceAccount:             "tests.serviceAccount",
 	SlackChannel:               "tests.slackChannel",

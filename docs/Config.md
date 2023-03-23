@@ -76,7 +76,6 @@ Some environment variables commonly used for pipelines under osde2e are indicate
 | UPGRADE_MANAGED_TEST_RESCHEDULE | Test the managed upgrade when the upgrade schedule changed.                                                      |
 
 
-
 ### Job related:-
 
 | Environment variable | Usage                                                                                                                                                                                                                                                     |
@@ -91,13 +90,13 @@ Some environment variables commonly used for pipelines under osde2e are indicate
 | BASE_JOB_URL         | BaseJobURL is the root location for all job artifacts. For example, https://storage.googleapis.com/origin-ci-test/logs/osde2e-prod-gcp-e2e-next/61/build-log.txt would be https://storage.googleapis.com/origin-ci-test/logs -- This is also our default. |
 | BASE_PROW_URL        | BaseProwURL is the root location of Prow.                                                                                                                                                                                                                 |
 
-
 ### General test related:-
 
 | Environment variable        | Usage                                                                                                           |
 | --------------------------- | --------------------------------------------------------------------------------------------------------------- |
 | POLLING_TIMEOUT             | PollingTimeout is how long (in seconds) to wait for an object to be created before failing the test.            |
 | TEST_HARNESSES:             | TestHarnesses is a comma separated list of container images with test harnesses to run.                         |
+| TEST_USER         | TestUser is the OpenShift user that the tests will run as. If "%s" is detected in the TestUser string, it will evaluate that as the project namespace. Ex. "system:serviceaccount:%s:dedicated-admin" . Evaluated : "system:serviceaccount:osde2e-abc123:dedicated-admin" |
 | GINKGO_SKIP                 | GinkgoSkip is a regex passed to Ginkgo that skips any test suites matching the regex. ex. "Operator"            |
 | GINKGO_FOCUS                | GinkgoFocus is a regex passed to Ginkgo that focus on any test suites matching the regex. ex. "Operator"        |
 | GINKGO_LOG_LEVEL            | GinkgoLogLevel allows controlling the Ginkgo reporter output                                                    |
@@ -114,8 +113,7 @@ Some environment variables commonly used for pipelines under osde2e are indicate
 | Environment variable    | Usage                                                                                                                                                                                                                                                                     |
 | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | ADDON_IDS_AT_CREATION   | Comma separated list of IDs to create at cluster creation time                                                                                                                                                                                                            |
-| ADDONS_IDS              | Comma separated list of IDs to install after a cluster is created.                                                                                                                                                                                                        |                                                                                                                                                                                    |
-| ADDON_TEST_USER         | TestUser is the OpenShift user that the tests will run as. If "%s" is detected in the TestUser string, it will evaluate that as the project namespace. Ex. "system:serviceaccount:%s:dedicated-admin" . Evaluated : "system:serviceaccount:osde2e-abc123:dedicated-admin" |
+| ADDONS_IDS              | Comma separated list of IDs to install after a cluster is created.                                                                                                                                                                                                        |
 | ADDON_RUN_CLEANUP       | RunCleanup is a boolean to specify whether the testHarnesses should have a separate cleanup phase. This phase would run at the end of all e2e testing                                                                                                                     |
 | ADDON_CLEANUP_HARNESSES | CleanupHarnesses is a comma separated list of container images that will clean up any artifacts created after test harnesses have run                                                                                                                                     |
 
@@ -133,7 +131,6 @@ Some environment variables commonly used for pipelines under osde2e are indicate
 | TEST_HTTP_PROXY      | Address of the HTTP Proxy to be added to a cluster.                                                                |
 | TEST_HTTPS_PROXY     | Address of the HTTPS Proxy to be added to a cluster.                                                               |
 | USER_CA_BUNDLE       | A file contains a PEM-encoded X.509 certificate bundle that will be added to the nodes' trusted certificate store. |
-
 
 ## Command Line Flags for osde2e
 
@@ -161,7 +158,6 @@ CLI flags that are commonly used include:
 The following are the values that can be plugged in for the --configs flag when running osde2e. The values correspond to existing YAML files in the /configs folder:-
 
 ### OSD environment values:
-
 
 | Config Value | Usage                                                                                             |
 | ------------ | ------------------------------------------------------------------------------------------------- |

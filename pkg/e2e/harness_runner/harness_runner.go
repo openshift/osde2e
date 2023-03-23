@@ -8,7 +8,6 @@ import (
 
 	"github.com/onsi/ginkgo/v2"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
-	"github.com/openshift/osde2e/pkg/common/util"
 
 	"github.com/openshift/osde2e/pkg/common/alert"
 	"github.com/openshift/osde2e/pkg/common/config"
@@ -21,7 +20,7 @@ var _ = ginkgo.Describe("[Suite: harnessess] Test Harness", func() {
 	h := helper.New()
 
 	TimeoutInSeconds := float64(viper.GetFloat64(config.Tests.PollingTimeout))
-	util.GinkgoIt("should run until completion", func(ctx context.Context) {
+	ginkgo.It("should run until completion", func(ctx context.Context) {
 		log.Printf("Test harness timeout is %v", TimeoutInSeconds)
 		h.SetServiceAccount(ctx, viper.GetString(config.Tests.TestUser))
 		harnesses := strings.Split(viper.GetString(config.Tests.TestHarnesses), ",")
