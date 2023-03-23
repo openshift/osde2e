@@ -264,7 +264,7 @@ func TestWritePrometheusFile(t *testing.T) {
 		}
 	}
 }`
-	addonMetadataFileContents := metadataFileContents
+	testHarnessMetadataFileContents := metadataFileContents
 
 	jUnitExpectedOutput := `cicd_jUnitResult{cloud_provider="aws",cluster_id="1a2b3c",environment="prod",install_version="install-version",job_id="123",phase="install",region="us-east-1",result="passed",suite="test suite 1",testname="test 1",upgrade_version="upgrade-version"} 1
 cicd_jUnitResult{cloud_provider="aws",cluster_id="1a2b3c",environment="prod",install_version="install-version",job_id="123",phase="install",region="us-east-1",result="passed",suite="test suite 1",testname="test 2",upgrade_version="upgrade-version"} 2
@@ -275,11 +275,11 @@ cicd_jUnitResult{cloud_provider="aws",cluster_id="1a2b3c",environment="prod",ins
 `
 
 	tests := []struct {
-		testName                  string
-		jUnitFiles                []jUnitFile
-		metadataFileContents      string
-		addonMetadataFileContents string
-		expectedOutput            string
+		testName                        string
+		jUnitFiles                      []jUnitFile
+		metadataFileContents            string
+		testHarnessMetadataFileContents string
+		expectedOutput                  string
 	}{
 		{
 			testName: "regular parsing",
@@ -293,14 +293,14 @@ cicd_jUnitResult{cloud_provider="aws",cluster_id="1a2b3c",environment="prod",ins
 					directory:    "upgrade",
 				},
 			},
-			metadataFileContents:      metadataFileContents,
-			addonMetadataFileContents: addonMetadataFileContents,
+			metadataFileContents:            metadataFileContents,
+			testHarnessMetadataFileContents: testHarnessMetadataFileContents,
 			expectedOutput: jUnitExpectedOutput + `cicd_metadata{cloud_provider="aws",cluster_id="1a2b3c",environment="prod",install_version="install-version",job_id="123",metadata_name="test2",region="us-east-1",upgrade_version="upgrade-version"} 6
 cicd_addon_metadata{cloud_provider="aws",cluster_id="1a2b3c",environment="prod",install_version="install-version",job_id="123",metadata_name="test2",phase="install",region="us-east-1",upgrade_version="upgrade-version"} 6
 `,
 		},
 		{
-			testName: "no addon metadata",
+			testName: "no test harness metadata",
 			jUnitFiles: []jUnitFile{
 				{
 					fileContents: jUnitFile1Contents,
@@ -311,8 +311,8 @@ cicd_addon_metadata{cloud_provider="aws",cluster_id="1a2b3c",environment="prod",
 					directory:    "upgrade",
 				},
 			},
-			metadataFileContents:      metadataFileContents,
-			addonMetadataFileContents: "",
+			metadataFileContents:            metadataFileContents,
+			testHarnessMetadataFileContents: "",
 			expectedOutput: jUnitExpectedOutput + `cicd_metadata{cloud_provider="aws",cluster_id="1a2b3c",environment="prod",install_version="install-version",job_id="123",metadata_name="test2",region="us-east-1",upgrade_version="upgrade-version"} 6
 `,
 		},
@@ -328,9 +328,9 @@ cicd_addon_metadata{cloud_provider="aws",cluster_id="1a2b3c",environment="prod",
 					directory:    "upgrade",
 				},
 			},
-			metadataFileContents:      "",
-			addonMetadataFileContents: "",
-			expectedOutput:            jUnitExpectedOutput,
+			metadataFileContents:            "",
+			testHarnessMetadataFileContents: "",
+			expectedOutput:                  jUnitExpectedOutput,
 		},
 	}
 
@@ -371,8 +371,8 @@ cicd_addon_metadata{cloud_provider="aws",cluster_id="1a2b3c",environment="prod",
 			}
 		}
 
-		if test.addonMetadataFileContents != "" {
-			err = os.WriteFile(filepath.Join(tmpDir, "install", metadata.AddonMetadataFile), []byte(test.addonMetadataFileContents), os.FileMode(0o644))
+		if test.testHarnessMetadataFileContents != "" {
+			err = os.WriteFile(filepath.Join(tmpDir, "install", metadata.TestHarnessMetadataFile), []byte(test.testHarnessMetadataFileContents), os.FileMode(0o644))
 			if err != nil {
 				t.Errorf("error writing metadata file: %v", err)
 			}

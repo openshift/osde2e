@@ -39,7 +39,7 @@ func (m *AddonMetadata) WriteToJSONFile(outputFilename string) (err error) {
 		log.Println(err)
 	}
 	defer f.Close()
-	log.Println("writing addon metadata to ", outputFilePath)
+	log.Println("writing test harness metadata to ", outputFilePath)
 	if _, err := f.WriteString(string(data)); err != nil {
 		log.Println(err)
 	}

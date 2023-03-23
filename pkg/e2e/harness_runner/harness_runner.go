@@ -16,7 +16,7 @@ import (
 	"github.com/openshift/osde2e/pkg/common/prow"
 )
 
-var _ = ginkgo.Describe("[Suite: Tests] Test Harness", func() {
+var _ = ginkgo.Describe("[Suite: harnessess] Test Harness", func() {
 	defer ginkgo.GinkgoRecover()
 	h := helper.New()
 

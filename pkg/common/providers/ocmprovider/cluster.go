@@ -1008,7 +1008,7 @@ func (o *OCMProvider) writeAddonMetadata(client *v1.AddOnsClient, addonID string
 	}
 	addonMetadata.SetVersion(version)
 	addonMetadata.SetID(addonID)
-	err = addonMetadata.WriteToJSONFile(metadata.AddonMetadataFile)
+	err = addonMetadata.WriteToJSONFile(metadata.TestHarnessMetadataFile)
 	if err != nil {
 		log.Printf("couldn't write addon metadata for %v: %v", addonID, err)
 	}

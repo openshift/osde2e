@@ -137,7 +137,7 @@ func (m *Metrics) WritePrometheusFile(reportDir string) (string, error) {
 					if junitFileRegex.MatchString(phaseFile.Name()) {
 						// TODO: The addon metric prefix should reference the addon job being run to further avoid collision
 						m.processJUnitXMLFile(phase, filepath.Join(phaseDir, phaseFile.Name()))
-					} else if phaseFile.Name() == metadata.AddonMetadataFile {
+					} else if phaseFile.Name() == metadata.TestHarnessMetadataFile {
 						m.processJSONFile(m.addonGatherer, filepath.Join(phaseDir, phaseFile.Name()), phase)
 					}
 				}
