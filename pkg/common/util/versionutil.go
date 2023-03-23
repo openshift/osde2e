@@ -9,19 +9,8 @@ import (
 	v1 "github.com/openshift/api/config/v1"
 )
 
-var (
-	// NoVersionFound when no version can be found.
-	NoVersionFound = "NoVersionFound"
-
-	// Version420 represents Openshift version 4.2.0 and above
-	Version420 *semver.Constraints
-
-	// Version440 represents Openshift version 4.4.0 and above
-	Version440 *semver.Constraints
-
-	// Version460 represents Openshift version 4.6.0 and above
-	Version460 *semver.Constraints
-)
+// NoVersionFound when no version can be found.
+var NoVersionFound = "NoVersionFound"
 
 // ClusterVersionProvider is a type that can return cluster version
 // information. The *helper.H type implements this interface.
@@ -47,21 +36,5 @@ func OnSupportedVersionIt(constraints *semver.Constraints, helper ClusterVersion
 }
 
 func init() {
-	var err error
-
-	Version420, err = semver.NewConstraint(">= 4.2.0-0")
-	if err != nil {
-		panic(err)
-	}
-
-	Version440, err = semver.NewConstraint(">= 4.4.0-0")
-
-	if err != nil {
-		panic(err)
-	}
-
-	Version460, err = semver.NewConstraint(">= 4.6.0-0")
-	if err != nil {
-		panic(err)
-	}
+	// register new Versions here
 }
