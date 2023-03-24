@@ -14,9 +14,7 @@ import (
 	"github.com/openshift/osde2e/pkg/common/prow"
 )
 
-var (
-	h *helper.H
-)
+var h *helper.H
 
 var _ = ginkgo.Describe("[Suite: harnessess] Test Harness", func() {
 	ginkgo.BeforeAll(func() {
