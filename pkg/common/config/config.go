@@ -326,6 +326,9 @@ var Cluster = struct {
 	// InstallSpecificNightly will select a nightly using a specific nightly given an "X.Y" formatted string
 	InstallSpecificNightly string
 
+	// InstallLatestXY will select the latest version available given an "X.Y" formatted string
+	InstallLatestXY string
+
 	// CleanCheckRuns lets us set the number of osd-verify checks we want to run before deeming a cluster "healthy"
 	// Env: CLEAN_CHECK_RUNS
 	CleanCheckRuns string
@@ -407,6 +410,7 @@ var Cluster = struct {
 	LatestYReleaseAfterProdDefault:      "cluster.latestYReleaseAfterProdDefault",
 	LatestZReleaseAfterProdDefault:      "cluster.latestZReleaseAfterProdDefault",
 	InstallSpecificNightly:              "cluster.installLatestNightly",
+	InstallLatestXY:                     "cluster.installLatestXY",
 	CleanCheckRuns:                      "cluster.cleanCheckRuns",
 	ID:                                  "cluster.id",
 	Name:                                "cluster.name",
@@ -752,6 +756,8 @@ func InitOSDe2eViper() {
 	viper.BindEnv(Cluster.LatestZReleaseAfterProdDefault, "LATEST_Z_RELEASE_AFTER_PROD_DEFAULT")
 
 	viper.BindEnv(Cluster.InstallSpecificNightly, "INSTALL_LATEST_NIGHTLY")
+
+	viper.BindEnv(Cluster.InstallLatestXY, "INSTALL_LATEST_XY")
 
 	viper.SetDefault(Cluster.DeltaReleaseFromDefault, 0)
 	viper.BindEnv(Cluster.DeltaReleaseFromDefault, "DELTA_RELEASE_FROM_DEFAULT")
