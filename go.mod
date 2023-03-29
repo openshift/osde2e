@@ -29,7 +29,7 @@ require (
 	github.com/onsi/gomega v1.27.5
 	github.com/openshift-online/ocm-sdk-go v0.1.325
 	github.com/openshift/api v3.9.1-0.20190924102528-32369d4db2ad+incompatible
-	github.com/openshift/client-go v0.0.0-20220603133046-984ee5ebedcf
+	github.com/openshift/client-go v3.9.0+incompatible
 	github.com/openshift/cloud-credential-operator v0.0.0-20230210162952-a4819474e58d
 	github.com/openshift/cloud-ingress-operator v0.0.0-20230208115606-3198614cd87a
 	github.com/openshift/custom-domains-operator v0.0.0-20221118201157-bd1052dac818
