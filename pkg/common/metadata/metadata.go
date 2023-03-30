@@ -17,8 +17,8 @@ const (
 	// MetadataFile is the name of the custom metadata file generated for spyglass visualization.
 	MetadataFile string = "metadata.json"
 
-	// AddonMetadataFile he name of the addon metadata file
-	AddonMetadataFile string = "addon-metadata.json"
+	// TestHarnessMetadataFile is name of the test harness metadata file
+	TestHarnessMetadataFile string = "test-harness-metadata.json"
 )
 
 // Metadata houses the metadata that will be written to the report directory after
@@ -281,7 +281,7 @@ func (m *Metadata) WriteToJSON(reportDir string) (err error) {
 
 				for _, phaseFile := range phaseFiles {
 					// Process the jUnit XML result files
-					if phaseFile.Name() == AddonMetadataFile {
+					if phaseFile.Name() == TestHarnessMetadataFile {
 						// Unmarshal raw metadata to map
 						rawMetadataJSON := map[string]interface{}{}
 						if err := json.Unmarshal(data, &rawMetadataJSON); err != nil {
@@ -289,17 +289,17 @@ func (m *Metadata) WriteToJSON(reportDir string) (err error) {
 						}
 
 						// Unmarshal addon metadata to map
-						addonData, err := os.ReadFile(filepath.Join(phaseDir, phaseFile.Name()))
+						testHarnessData, err := os.ReadFile(filepath.Join(phaseDir, phaseFile.Name()))
 						if err != nil {
 							return err
 						}
 
-						rawAddonMetadataJSON := map[string]interface{}{}
-						if err := json.Unmarshal(addonData, &rawAddonMetadataJSON); err != nil {
+						rawTestHarnessMetadataJSON := map[string]interface{}{}
+						if err := json.Unmarshal(testHarnessData, &rawTestHarnessMetadataJSON); err != nil {
 							return err
 						}
 
-						rawMetadataJSON["addon."+phase] = rawAddonMetadataJSON
+						rawMetadataJSON["addon."+phase] = rawTestHarnessMetadataJSON
 
 						if data, err = json.Marshal(rawMetadataJSON); err != nil {
 							return err

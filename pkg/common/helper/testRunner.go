@@ -13,13 +13,13 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// RunAddonTests will attempt to run the configured addon tests for the current job.
+// RunTests will attempt to run the configured tests for the current job.
 // It allows you to specify a job name prefix and arguments to a test harness container.
 // It returns the names of test harnesses that failed (empty slice if none failed).
-func (h *H) RunAddonTests(ctx context.Context, name string, timeout int, harnesses, args []string) (failed []string) {
-	addonTestTemplate, err := templates.LoadTemplate("addons/addon-runner.template")
+func (h *H) RunTests(ctx context.Context, name string, timeout int, harnesses, args []string) (failed []string) {
+	testTemplate, err := templates.LoadTemplate("tests/tests-runner.template")
 	if err != nil {
-		panic(fmt.Sprintf("error while loading addon test runner: %v", err))
+		panic(fmt.Sprintf("error while loading test runner: %v", err))
 	}
 
 	// We don't know what a test harness may need so let's give them everything.
@@ -65,11 +65,11 @@ func (h *H) RunAddonTests(ctx context.Context, name string, timeout int, harness
 		if len(args) > 0 {
 			values.Arguments = fmt.Sprintf("[\"%s\"]", strings.Join(args, "\", \""))
 		}
-		addonTestCommand, err := h.ConvertTemplateToString(addonTestTemplate, values)
+		testCommand, err := h.ConvertTemplateToString(testTemplate, values)
 		Expect(err).NotTo(HaveOccurred())
 
-		r.Name = "addon-tests"
-		r.Cmd = addonTestCommand
+		r.Name = "test-harness"
+		r.Cmd = testCommand
 
 		// run tests
 		stopCh := make(chan struct{})
