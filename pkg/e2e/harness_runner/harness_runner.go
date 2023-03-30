@@ -11,10 +11,11 @@ import (
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/helper"
+	"github.com/openshift/osde2e/pkg/common/label"
 	"github.com/openshift/osde2e/pkg/common/prow"
 )
 
-var _ = ginkgo.Describe("[Suite: harnessess] Test Harness", ginkgo.Ordered, func() {
+var _ = ginkgo.Describe("Test Harness", ginkgo.Ordered, label.TestHarness, func() {
 	var h *helper.H
 	ginkgo.BeforeAll(func() {
 		h = helper.New()

@@ -1,3 +1,2 @@
 tests:
-  testsToRun:
-  - '\[Suite\: harnessess\]'
+  ginkgoLabelFilter: TestHarness
