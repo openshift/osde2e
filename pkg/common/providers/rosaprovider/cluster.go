@@ -15,7 +15,7 @@ import (
 	"github.com/openshift/rosa/cmd/dlt/oidcprovider"
 	"github.com/openshift/rosa/cmd/dlt/operatorrole"
 	rosaLogin "github.com/openshift/rosa/cmd/login"
-	"github.com/openshift/rosa/pkg/aws"
+	rosaAws "github.com/openshift/rosa/pkg/aws"
 	"github.com/openshift/rosa/pkg/logging"
 	"github.com/openshift/rosa/pkg/ocm"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -73,7 +73,7 @@ func (m *ROSAProvider) LaunchCluster(clusterName string) (string, error) {
 	// we happen to forget to do it:
 	var expiration time.Time
 	var err error
-	var awsCreator *aws.Creator
+	var awsCreator *rosaAws.Creator
 	var awsVPCSubnetIds string
 
 	clusterProperties, err := m.ocmProvider.GenerateProperties()
@@ -82,7 +82,7 @@ func (m *ROSAProvider) LaunchCluster(clusterName string) (string, error) {
 	}
 
 	if viper.GetBool(config.Hypershift) {
-		validRegion, err := m.IsRegionValidForHCP(viper.GetString(config.AWSRegion))
+		validRegion, err := m.IsRegionValidForHCP()
 		if err != nil || !validRegion {
 			return "", err
 		}
@@ -120,14 +120,14 @@ func (m *ROSAProvider) LaunchCluster(clusterName string) (string, error) {
 	}
 
 	// ROSA uses the AWS provider in the background, so we'll determine region this way.
-	region, err := m.DetermineRegion("aws")
+	_, err = m.DetermineRegion("aws")
 	if err != nil {
 		return "", fmt.Errorf("error determining region to use: %v", err)
 	}
 
 	createClusterArgs := []string{
 		"--cluster-name", clusterName,
-		"--region", region,
+		"--region", m.awsRegion,
 		"--channel-group", viper.GetString(config.Cluster.Channel),
 		"--version", rosaClusterVersion,
 		"--expiration-time", expiration.Format(time.RFC3339),
@@ -185,9 +185,9 @@ func (m *ROSAProvider) LaunchCluster(clusterName string) (string, error) {
 		// Retrieve AWS Account info
 		logger := logging.NewLogger()
 
-		awsClient, err := aws.NewClient().
+		awsClient, err := rosaAws.NewClient().
 			Logger(logger).
-			Region(viper.GetString(config.AWSRegion)).
+			Region(m.awsRegion).
 			Build()
 		if err != nil {
 			return err
@@ -345,21 +345,15 @@ func (m *ROSAProvider) stsClusterCleanup(clusterID string) error {
 // DetermineRegion will return the region provided by configs. This mainly wraps the random functionality for use
 // by the ROSA provider.
 func (m *ROSAProvider) DetermineRegion(cloudProvider string) (string, error) {
-	region := viper.GetString(config.AWSRegion)
-
 	// If a region is set to "random", it will poll OCM for all the regions available
 	// It then will pull a random entry from the list of regions and set the ID to that
-	if region == "random" {
+	if m.awsRegion == "random" {
 		var regions []*v1.CloudRegion
 		// We support multiple cloud providers....
 		if cloudProvider == "aws" {
-			if viper.GetString(config.AWSAccessKey) == "" || viper.GetString(config.AWSSecretAccessKey) == "" {
-				log.Println("Random region requested but cloud credentials not supplied. Defaulting to us-east-1")
-				return "us-east-1", nil
-			}
 			awsCredentials, err := v1.NewAWS().
-				AccessKeyID(viper.GetString(config.AWSAccessKey)).
-				SecretAccessKey(viper.GetString(config.AWSSecretAccessKey)).
+				AccessKeyID(m.awsCredentials.AccessKeyID).
+				SecretAccessKey(m.awsCredentials.SecretAccessKey).
 				Build()
 			if err != nil {
 				return "", err
@@ -383,19 +377,20 @@ func (m *ROSAProvider) DetermineRegion(cloudProvider string) (string, error) {
 			return "", fmt.Errorf("unable to choose a random enabled region")
 		}
 
-		region = cloudRegion.ID()
+		m.awsRegion = cloudRegion.ID()
 
-		log.Printf("Random region requested, selected %s region.", region)
+		log.Printf("Random region requested, selected %s region.", m.awsRegion)
 
 		// Update the Config with the selected random region
-		viper.Set(config.CloudProvider.Region, region)
+		viper.Set(config.CloudProvider.Region, m.awsRegion)
+		viper.Set(config.AWSRegion, m.awsRegion)
 	}
 
-	return region, nil
+	return m.awsRegion, nil
 }
 
 // Determine whether the region provided is supported for hosted control plane clusters
-func (m *ROSAProvider) IsRegionValidForHCP(region string) (bool, error) {
+func (m *ROSAProvider) IsRegionValidForHCP() (bool, error) {
 	err := callAndSetAWSSession(func() error {
 		ocmClient, err := m.ocmLogin()
 		if err != nil {
@@ -416,11 +411,11 @@ func (m *ROSAProvider) IsRegionValidForHCP(region string) (bool, error) {
 		}
 
 		for _, r := range supportedRegions {
-			if region == r {
+			if m.awsRegion == r {
 				return nil
 			}
 		}
-		return fmt.Errorf("region '%s' does not support hosted-cp. valid regions '%s'", region, supportedRegions)
+		return fmt.Errorf("region '%s' does not support hosted-cp. valid regions '%s'", m.awsRegion, supportedRegions)
 	})
 	if err != nil {
 		return false, err

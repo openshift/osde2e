@@ -135,10 +135,6 @@ func (o *OCMProvider) LaunchCluster(clusterName string) (string, error) {
 		Properties(clusterProperties)
 
 	if viper.GetBool(CCS) {
-		// If AWS credentials are set, this must be an AWS CCS cluster
-		awsAccount := viper.GetString(config.AWSAccount)
-		awsAccessKey := viper.GetString(config.AWSAccessKey)
-		awsSecretKey := viper.GetString(config.AWSSecretAccessKey)
 		// Refactor: This is a hack to get the AWS CCS cluster to work. In reality today we are loading too many secrets and need a better way to do this.
 		// IE: If aws keys are set but not awsAccount, we should mention it's an AWS execution but we are missing credentials.
 		if viper.GetString(GCPCredsJSON) != "" {
@@ -158,11 +154,18 @@ func (o *OCMProvider) LaunchCluster(clusterName string) (string, error) {
 			viper.Set(gcp.ClientX509CertURL(), gcp.ClientX509CertURL())
 		}
 
-		if viper.GetString(config.CloudProvider.CloudProviderID) == "aws" && awsAccount != "" && awsAccessKey != "" && awsSecretKey != "" {
+		if viper.GetString(config.CloudProvider.CloudProviderID) == "aws" {
+			awsCreds, err := aws.CcsAwsSession.GetCredentials()
+			if err != nil {
+				return "", err
+			} else if viper.GetString(config.AWSAccount) == "" {
+				return "", fmt.Errorf("aws account id is not set")
+			}
+
 			awsBuilder := v1.NewAWS().
-				AccountID(awsAccount).
-				AccessKeyID(awsAccessKey).
-				SecretAccessKey(awsSecretKey)
+				AccountID(viper.GetString(config.AWSAccount)).
+				AccessKeyID(awsCreds.AccessKeyID).
+				SecretAccessKey(awsCreds.SecretAccessKey)
 			if viper.GetString(config.AWSVPCSubnetIDs) != "" {
 				subnetIDs := strings.Split(viper.GetString(config.AWSVPCSubnetIDs), ",")
 				awsBuilder = awsBuilder.SubnetIDs(subnetIDs...)
@@ -397,13 +400,14 @@ func (o *OCMProvider) DetermineRegion(cloudProvider string) (string, error) {
 		var regions []*v1.CloudRegion
 		// We support multiple cloud providers....
 		if cloudProvider == "aws" {
-			if viper.GetString(config.AWSAccessKey) == "" || viper.GetString(config.AWSSecretAccessKey) == "" {
+			awsCreds, err := aws.CcsAwsSession.GetCredentials()
+			if err != nil {
 				log.Println("Random region requested but cloud credentials not supplied. Defaulting to us-east-1")
 				return "us-east-1", nil
 			}
 			awsCredentials, err := v1.NewAWS().
-				AccessKeyID(viper.GetString(config.AWSAccessKey)).
-				SecretAccessKey(viper.GetString(config.AWSSecretAccessKey)).
+				AccessKeyID(awsCreds.AccessKeyID).
+				SecretAccessKey(awsCreds.SecretAccessKey).
 				Build()
 			if err != nil {
 				return "", err
