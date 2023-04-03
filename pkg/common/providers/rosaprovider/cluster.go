@@ -503,7 +503,9 @@ func (m *ROSAProvider) Versions() (*spi.VersionList, error) {
 	var defaultVersionOverride *semver.Version = nil
 
 	for _, v := range versionResponse {
-		if version, err := util.OpenshiftVersionToSemver(v.ID()); err != nil {
+		if viper.GetBool(config.Hypershift) && !v.HostedControlPlaneEnabled() {
+			continue
+		} else if version, err := util.OpenshiftVersionToSemver(v.ID()); err != nil {
 			log.Printf("could not parse version '%s': %v", v.ID(), err)
 		} else if v.Enabled() {
 			if v.Default() {
