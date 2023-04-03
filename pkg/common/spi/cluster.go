@@ -37,6 +37,7 @@ type Cluster struct {
 	id                  string
 	name                string
 	version             string
+	channelGroup        string
 	cloudProvider       string
 	product             string
 	region              string
@@ -67,6 +68,11 @@ func (c *Cluster) Name() string {
 // Version returns the cluster version.
 func (c *Cluster) Version() string {
 	return c.version
+}
+
+// ChannelGroup returns the cluster channel group
+func (c *Cluster) ChannelGroup() string {
+	return c.channelGroup
 }
 
 // CloudProvider returns the cloud provider.
@@ -124,6 +130,7 @@ type ClusterBuilder struct {
 	id                  string
 	name                string
 	version             string
+	channelGroup        string
 	cloudProvider       string
 	product             string
 	region              string
@@ -159,6 +166,12 @@ func (cb *ClusterBuilder) Name(name string) *ClusterBuilder {
 // Version sets the version for a cluster builder.
 func (cb *ClusterBuilder) Version(version string) *ClusterBuilder {
 	cb.version = version
+	return cb
+}
+
+// ChannelGroup returns the cluster channel group
+func (cb *ClusterBuilder) ChannelGroup(channelGroup string) *ClusterBuilder {
+	cb.channelGroup = channelGroup
 	return cb
 }
 
@@ -235,6 +248,7 @@ func (cb *ClusterBuilder) Build() *Cluster {
 		id:                  cb.id,
 		name:                cb.name,
 		version:             cb.version,
+		channelGroup:        cb.channelGroup,
 		cloudProvider:       cb.cloudProvider,
 		product:             cb.product,
 		region:              cb.region,

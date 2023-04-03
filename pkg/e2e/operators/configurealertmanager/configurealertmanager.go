@@ -156,6 +156,11 @@ var _ = ginkgo.Describe(suiteName, ginkgo.Ordered, label.Operators, func() {
 	})
 
 	ginkgo.It("secrets exist", label.Install, func(ctx context.Context) {
+		if viper.GetString(config.Cluster.Channel) == "nightly" {
+			// https://github.com/openshift/pagerduty-operator/blob/master/hack/olm-registry/olm-artifacts-template.yaml
+			ginkgo.Skip("Secrets are not applied to nightly build clusters")
+		}
+
 		for _, secret := range secrets {
 			err := client.Get(ctx, secret, namespaceName, &v1.Secret{})
 			expect.NoError(err, "secret %s not found", secret)
