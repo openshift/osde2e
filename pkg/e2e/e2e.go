@@ -376,8 +376,8 @@ func runGinkgoTests() (int, error) {
 
 		// configure cluster and upgrade versions
 		if err = ChooseVersions(); err != nil {
-			// if we fail to choose versions, we should gracefully exit
-			return Success, err
+			// If we can't find a version to use, exit with an error code.
+			return Failure, err
 		}
 
 		switch {
