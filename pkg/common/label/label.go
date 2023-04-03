@@ -74,6 +74,9 @@ var (
 
 	// Application build tests verify the ability to deploy applications
 	AppBuilds = ginkgo.Label("AppBuilds")
+
+	// Runs tests that are using the test harness functionality
+	TestHarness = ginkgo.Label("TestHarness")
 )
 
 func AllCloudProviders() []ginkgo.Labels {
