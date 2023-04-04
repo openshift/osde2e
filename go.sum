@@ -1052,8 +1052,9 @@ github.com/maxbrunsfeld/counterfeiter/v6 v6.2.2/go.mod h1:eD9eIE7cdwcMi9rYluz88J
 github.com/mgutz/ansi v0.0.0-20170206155736-9520e82c474b/go.mod h1:01TrycV0kFyexm33Z7vhZRXopbI8J3TDReVlkTgMUxE=
 github.com/mgutz/ansi v0.0.0-20200706080929-d51e80ef957d h1:5PJl274Y63IEHC+7izoQE9x6ikvDFZS2mDVS3drnohI=
 github.com/mgutz/ansi v0.0.0-20200706080929-d51e80ef957d/go.mod h1:01TrycV0kFyexm33Z7vhZRXopbI8J3TDReVlkTgMUxE=
-github.com/microcosm-cc/bluemonday v1.0.18 h1:6HcxvXDAi3ARt3slx6nTesbvorIc3QeTzBNRvWktHBo=
 github.com/microcosm-cc/bluemonday v1.0.18/go.mod h1:Z0r70sCuXHig8YpBzCc5eGHAap2K7e/u082ZUpDRRqM=
+github.com/microcosm-cc/bluemonday v1.0.23 h1:SMZe2IGa0NuHvnVNAZ+6B38gsTbi5e4sViiWJyDDqFY=
+github.com/microcosm-cc/bluemonday v1.0.23/go.mod h1:mN70sk7UkkF8TUr2IGBpNN0jAgStuPzlK76QuruE/z4=
 github.com/miekg/dns v1.0.14/go.mod h1:W1PPwlIAgtquWBMBEV9nkV9Cazfe8ScdGz/Lj7v3Nrg=
 github.com/miekg/pkcs11 v1.0.3/go.mod h1:XsNlhZGX73bx86s2hdc/FuaLm2CPZJemRLMA+WTFxgs=
 github.com/mistifyio/go-zfs v2.1.2-0.20190413222219-f784269be439+incompatible/go.mod h1:8AuVvqP/mXw1px98n46wfvcGfQ4ci2FwoAjKYxuo3Z4=
@@ -1186,8 +1187,8 @@ github.com/opencontainers/selinux v1.6.0/go.mod h1:VVGKuOLlE7v4PJyT6h7mNWvq1rzqi
 github.com/opencontainers/selinux v1.8.0/go.mod h1:RScLhm78qiWa2gbVCcGkC7tCGdgk3ogry1nUQF8Evvo=
 github.com/opencontainers/selinux v1.8.2/go.mod h1:MUIHuUEvKB1wtJjQdOyYRgOnLD2xAPP8dBsCoU0KuF8=
 github.com/opencontainers/selinux v1.10.0/go.mod h1:2i0OySw99QjzBBQByd1Gr9gSjvuho1lHsJxIJ3gGbJI=
-github.com/openshift-online/ocm-sdk-go v0.1.325 h1:lw4FfKXtRmKPK5dZ8v+33BXnV/E6vcXD+9sYEU3T5xI=
-github.com/openshift-online/ocm-sdk-go v0.1.325/go.mod h1:KYOw8kAKAHyPrJcQoVR82CneQ4ofC02Na4cXXaTq4Nw=
+github.com/openshift-online/ocm-sdk-go v0.1.330 h1:FBH/iIzCvI9vrRzHfnzW6D6VH+u3tRcpm8d2YDB537I=
+github.com/openshift-online/ocm-sdk-go v0.1.330/go.mod h1:KYOw8kAKAHyPrJcQoVR82CneQ4ofC02Na4cXXaTq4Nw=
 github.com/openshift/api v0.0.0-20221013123534-96eec44e1979 h1:NkfbwN34Q/UtfKUFEO9pxmdY06A/jBk80YBua+mxwUc=
 github.com/openshift/api v0.0.0-20221013123534-96eec44e1979/go.mod h1:LEnw1IVscIxyDnltE3Wi7bQb/QzIM8BfPNKoGA1Qlxw=
 github.com/openshift/build-machinery-go v0.0.0-20211213093930-7e33a7eb4ce3/go.mod h1:b1BuldmJlbA/xYtdZvKi+7j5YGB44qJUJDZ9zwiNCfE=
@@ -1203,8 +1204,8 @@ github.com/openshift/managed-upgrade-operator v0.0.0-20230128000023-b30cca4aa2af
 github.com/openshift/managed-upgrade-operator v0.0.0-20230128000023-b30cca4aa2af/go.mod h1:uB6QrG3Y6Y6Q2HjlOdTu15Bkwkln+XLr2HOwgLgznJA=
 github.com/openshift/must-gather-operator v0.1.2-0.20221011152618-7805956e1ded h1:ndSIrjtHq6DaEfQqtukaJ7PrX9f0X2V9WjnuiqBDGyw=
 github.com/openshift/must-gather-operator v0.1.2-0.20221011152618-7805956e1ded/go.mod h1:LHntdQf5jrwxpmyVMbwXUK491COBJ7buHvyi4YLlHho=
-github.com/openshift/rosa v1.2.14 h1:CKhr5QbEkmk5BuQ+ctjHSMcLAb/9+/6wM/uxvEkICWU=
-github.com/openshift/rosa v1.2.14/go.mod h1:qwsOrRGX2xRjEtOpt0Xfxg8S4Ll8jF7iw3eHvALKKpc=
+github.com/openshift/rosa v1.2.16 h1:C4gEwj0gflfOrRuyPh3JjJnHjbJDOOxYdw1iUjrj7PM=
+github.com/openshift/rosa v1.2.16/go.mod h1:SdJEQg19qTNbgX1k4LcPWSllHW9QCTSIzalfO9FARh0=
 github.com/openshift/route-monitor-operator v0.0.0-20221118160357-3df1ed1fa1d2 h1:s97F2fQ5r+XGVfWDy5wgH611iIvIDusQcHtv5jJ36uw=
 github.com/openshift/route-monitor-operator v0.0.0-20221118160357-3df1ed1fa1d2/go.mod h1:I/8znbaxMGRub27brm57UnkR48QZEWO26j2HRscy5bQ=
 github.com/openshift/splunk-forwarder-operator v0.0.0-20230216205147-c051d56cd298 h1:LOaO/QdBKrrNWiviOH6vq45V3GHq4sezPc9HQlMZOKo=
