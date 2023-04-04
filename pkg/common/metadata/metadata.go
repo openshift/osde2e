@@ -22,7 +22,6 @@ const (
 
 	// AddonMetadataFile is created by some addons during execution
 	AddonMetadataFile string = "addon-metadata.json"
-	
 )
 
 // Metadata houses the metadata that will be written to the report directory after
@@ -285,7 +284,7 @@ func (m *Metadata) WriteToJSON(reportDir string) (err error) {
 
 				for _, phaseFile := range phaseFiles {
 					// Process the jUnit XML result files
-					if phaseFile.Name() == TestHarnessMetadataFile || phaseFile.Name() == AddonMetadataFile{
+					if phaseFile.Name() == TestHarnessMetadataFile || phaseFile.Name() == AddonMetadataFile {
 						// Unmarshal raw metadata to map
 						rawMetadataJSON := map[string]interface{}{}
 						if err := json.Unmarshal(data, &rawMetadataJSON); err != nil {
