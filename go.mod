@@ -38,9 +38,9 @@ require (
 	github.com/openshift/rosa v1.2.14
 	github.com/openshift/route-monitor-operator v0.0.0-20221118160357-3df1ed1fa1d2
 	github.com/openshift/splunk-forwarder-operator v0.0.0-20230216205147-c051d56cd298
-	github.com/operator-framework/api v0.17.2-0.20220915200120-ff2dbc53d381
+	github.com/operator-framework/api v0.17.4-0.20230223191600-0131a6301e42
 	github.com/operator-framework/operator-lifecycle-manager v0.22.0
-	github.com/operator-framework/operator-registry v1.26.4
+	github.com/operator-framework/operator-registry v1.26.5
 	github.com/ory/dockertest v3.3.5+incompatible
 	github.com/pganalyze/pg_query_go/v2 v2.2.0
 	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.61.0
@@ -197,10 +197,10 @@ require (
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
-	k8s.io/apiextensions-apiserver v0.26.0 // indirect
+	k8s.io/apiextensions-apiserver v0.26.1 // indirect
 	k8s.io/klog/v2 v2.80.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20221110221610-a28e98eb7c70 // indirect
-	sigs.k8s.io/controller-runtime v0.14.1 // indirect
+	sigs.k8s.io/controller-runtime v0.14.4 // indirect
 	sigs.k8s.io/json v0.0.0-20220713155537-f223a00ba0e2 // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.2.3 // indirect
 	sigs.k8s.io/yaml v1.3.0 // indirect
