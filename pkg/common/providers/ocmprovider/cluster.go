@@ -1029,6 +1029,7 @@ func (o *OCMProvider) ocmToSPICluster(ocmCluster *v1.Cluster) (*spi.Cluster, err
 
 	if version, ok := ocmCluster.GetVersion(); ok {
 		cluster.Version(version.ID())
+		cluster.ChannelGroup(version.ChannelGroup())
 	}
 
 	if cloudProvider, ok := ocmCluster.GetCloudProvider(); ok {
