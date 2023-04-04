@@ -353,6 +353,11 @@ the data at the same time that we are.
 
 If each job reported for the failures of all recent jobs, we'd create an enormous number of redundant alerts for no benefit. Having each job only report its own failures keeps the level of noise down *without* requiring us to build some kind of consensus mechanism between the jobs executing in parallel.
 
+## CI Jobs
+
+Periodic jobs are run daily validating Managed OpenShift clusters, using
+`osde2e`. Check out the [CI Jobs] page to learn more.
+
 [Config variables]:/docs/Config.md
 [configs]:/configs/
 [config package]:/pkg/common/config/config.go
@@ -364,3 +369,4 @@ If each job reported for the failures of all recent jobs, we'd create an enormou
 [OSDE2E ProwGen Job Config]: https://github.com/openshift/release/blob/master/ci-operator/config/openshift/osde2e/openshift-osde2e-main.yaml
 [TestGrid Dashboard]: https://testgrid.k8s.io/redhat-openshift-osd
 [Writing Tests]:/docs/Writing-Tests.md
+[CI Jobs]: /docs/CI-Jobs.md
