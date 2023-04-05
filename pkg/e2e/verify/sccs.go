@@ -40,7 +40,18 @@ var _ = ginkgo.Describe(dedicatedAdminSccTestName, ginkgo.Ordered, label.HyperSh
 
 	ginkgo.DescribeTable("should include", func(ctx context.Context, scc string) {
 		clusterRole := &rbacv1.ClusterRole{}
-		expect.NoError(client.Get(ctx, "dedicated-admins-cluster", "", clusterRole))
+		err := wait.For(func() (bool, error) {
+			err := client.Get(ctx, "dedicated-admins-cluster", "", clusterRole)
+			if apierrors.IsNotFound(err) {
+				return false, nil
+			}
+			if err != nil {
+				return false, err
+			}
+			return true, nil
+		})
+		expect.NoError(err, "clusterrole: dedicated-admins-cluster not found")
+
 		for _, rule := range clusterRole.Rules {
 			if slice.ContainsString(rule.Resources, "securitycontextconstraints", nil) && slice.ContainsString(rule.Verbs, "use", nil) {
 				Expect(slice.ContainsString(rule.ResourceNames, scc, nil)).To(BeTrue(), "ClusterRole resource did not contain %s", scc)
