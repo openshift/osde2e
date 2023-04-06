@@ -4,6 +4,8 @@ package rosaprovider
 import (
 	"fmt"
 
+	"github.com/aws/aws-sdk-go/aws/credentials"
+	"github.com/openshift/osde2e/pkg/common/aws"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/providers/ocmprovider"
 	"github.com/openshift/osde2e/pkg/common/spi"
@@ -15,7 +17,9 @@ func init() {
 
 // ROSAProvider will provision clusters via ROSA.
 type ROSAProvider struct {
-	ocmProvider *ocmprovider.OCMProvider
+	ocmProvider    *ocmprovider.OCMProvider
+	awsCredentials *credentials.Value
+	awsRegion      string
 }
 
 // New will create a new ROSAProvider.
@@ -25,8 +29,20 @@ func New() (*ROSAProvider, error) {
 		return nil, fmt.Errorf("error creating OCM provider for ROSA provider: %v", err)
 	}
 
+	awsCredentials, err := aws.CcsAwsSession.GetCredentials()
+	if err != nil {
+		return nil, fmt.Errorf("error creating aws session: %v", err)
+	}
+
+	region := *aws.CcsAwsSession.GetRegion()
+	if region == "" {
+		return nil, fmt.Errorf("aws region is undefined")
+	}
+
 	return &ROSAProvider{
-		ocmProvider: ocmProvider,
+		ocmProvider:    ocmProvider,
+		awsCredentials: awsCredentials,
+		awsRegion:      region,
 	}, nil
 }
 

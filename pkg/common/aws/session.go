@@ -1,6 +1,7 @@
 package aws
 
 import (
+	"fmt"
 	"log"
 	"sync"
 
@@ -34,7 +35,7 @@ func (CcsAwsSession *ccsAwsSession) GetAWSSessions() error {
 
 		options := session.Options{
 			Config: aws.Config{
-				Region: aws.String(viper.GetString(config.CloudProvider.Region)),
+				Region: aws.String(viper.GetString(config.AWSRegion)),
 			},
 		}
 
@@ -53,4 +54,22 @@ func (CcsAwsSession *ccsAwsSession) GetAWSSessions() error {
 	}
 
 	return nil
+}
+
+// GetCredentials returns the credentials for the current aws session
+func (CcsAwsSession *ccsAwsSession) GetCredentials() (*credentials.Value, error) {
+	if err := CcsAwsSession.GetAWSSessions(); err != nil {
+		return nil, fmt.Errorf("failed to create aws session to retrieve credentials: %v", err)
+	}
+
+	creds, err := CcsAwsSession.session.Config.Credentials.Get()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get aws credentials: %v", err)
+	}
+	return &creds, nil
+}
+
+// GetRegion returns the region set when the session was created
+func (CcsAwsSession *ccsAwsSession) GetRegion() *string {
+	return CcsAwsSession.session.Config.Region
 }
