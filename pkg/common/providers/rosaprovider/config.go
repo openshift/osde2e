@@ -2,6 +2,7 @@ package rosaprovider
 
 import (
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
+	"github.com/openshift/osde2e/pkg/common/config"
 )
 
 const (
@@ -31,6 +32,9 @@ const (
 
 	// STS is a boolean tracking whether or not this cluster should be provisioned using the STS workflow
 	STS = "rosa.STS"
+
+	// OIDCConfigID is the ID of the oidc-config created through ROSA CLI (required for HCP)
+	OIDCConfigID = "rosa.oidcConfigID"
 )
 
 func init() {
@@ -55,4 +59,8 @@ func init() {
 
 	viper.BindEnv(STS, "ROSA_STS")
 	viper.SetDefault(STS, false)
+
+	viper.SetDefault(OIDCConfigID, "")
+	viper.BindEnv(OIDCConfigID, "ROSA_OIDC_CONFIG_ID")
+	config.RegisterSecret(OIDCConfigID, "rosa-oidc-config-id")
 }

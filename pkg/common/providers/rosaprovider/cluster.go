@@ -175,6 +175,12 @@ func (m *ROSAProvider) LaunchCluster(clusterName string) (string, error) {
 				"You can BYOVPC by providing the subnet IDs using vault key 'subnet-ids'/set environment variable 'AWS_VPC_SUBNET_IDS' " +
 				"or have osde2e create it by not supplying any subnet ids")
 		}
+		if rosaOIDCConfigID := viper.GetString(OIDCConfigID); rosaOIDCConfigID != "" {
+			createClusterArgs = append(createClusterArgs, "--oidc-config-id", rosaOIDCConfigID)
+		} else {
+			// TODO: auto create the oidc-config
+			return "", fmt.Errorf("oidc-config-id is required for ROSA hosted control plane clusters")
+		}
 	}
 
 	if viper.GetBool(config.Cluster.EnableFips) {
