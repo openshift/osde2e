@@ -27,7 +27,7 @@ require (
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/onsi/ginkgo/v2 v2.9.2
 	github.com/onsi/gomega v1.27.6
-	github.com/openshift-online/ocm-sdk-go v0.1.325
+	github.com/openshift-online/ocm-sdk-go v0.1.330
 	github.com/openshift/api v3.9.1-0.20190924102528-32369d4db2ad+incompatible
 	github.com/openshift/client-go v0.0.0-20220603133046-984ee5ebedcf
 	github.com/openshift/cloud-credential-operator v0.0.0-20230210162952-a4819474e58d
@@ -35,7 +35,7 @@ require (
 	github.com/openshift/custom-domains-operator v0.0.0-20221118201157-bd1052dac818
 	github.com/openshift/managed-upgrade-operator v0.0.0-20230128000023-b30cca4aa2af
 	github.com/openshift/must-gather-operator v0.1.2-0.20221011152618-7805956e1ded
-	github.com/openshift/rosa v1.2.14
+	github.com/openshift/rosa v1.2.16
 	github.com/openshift/route-monitor-operator v0.0.0-20221118160357-3df1ed1fa1d2
 	github.com/openshift/splunk-forwarder-operator v0.0.0-20230216205147-c051d56cd298
 	github.com/operator-framework/api v0.17.4-0.20230223191600-0131a6301e42
@@ -153,7 +153,7 @@ require (
 	github.com/mattn/go-isatty v0.0.17 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.4 // indirect
 	github.com/mgutz/ansi v0.0.0-20200706080929-d51e80ef957d // indirect
-	github.com/microcosm-cc/bluemonday v1.0.18 // indirect
+	github.com/microcosm-cc/bluemonday v1.0.23 // indirect
 	github.com/moby/spdystream v0.2.0 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
