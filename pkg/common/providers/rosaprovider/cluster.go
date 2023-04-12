@@ -125,6 +125,15 @@ func (m *ROSAProvider) LaunchCluster(clusterName string) (string, error) {
 		return "", fmt.Errorf("error determining region to use: %v", err)
 	}
 
+	// Auto create account roles if required
+	version, err := util.OpenshiftVersionToSemver(rosaClusterVersion)
+	if err != nil {
+		return "", fmt.Errorf("error parsing %s to semantic version: %v", rosaClusterVersion, err)
+	}
+	if err = m.createAccountRoles(fmt.Sprintf("%d.%d", version.Major(), version.Minor())); err != nil {
+		return "", err
+	}
+
 	createClusterArgs := []string{
 		"--cluster-name", clusterName,
 		"--region", m.awsRegion,
