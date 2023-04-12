@@ -178,8 +178,11 @@ func (m *ROSAProvider) LaunchCluster(clusterName string) (string, error) {
 		if rosaOIDCConfigID := viper.GetString(OIDCConfigID); rosaOIDCConfigID != "" {
 			createClusterArgs = append(createClusterArgs, "--oidc-config-id", rosaOIDCConfigID)
 		} else {
-			// TODO: auto create the oidc-config
-			return "", fmt.Errorf("oidc-config-id is required for ROSA hosted control plane clusters")
+			oidcConfigID, err := m.createOIDCConfig(clusterName)
+			if err != nil {
+				return "", fmt.Errorf("failed to create oidc-config-id: %v", err)
+			}
+			createClusterArgs = append(createClusterArgs, "--oidc-config-id", oidcConfigID)
 		}
 	}
 
@@ -297,10 +300,18 @@ func (m *ROSAProvider) DeleteCluster(clusterID string) error {
 		}
 	}
 
-	if viper.GetString(config.AWSVPCSubnetIDs) == "" && viper.GetBool(config.Hypershift) {
-		err := deleteHyperShiftVPC(*reportDir)
-		if err != nil {
-			return fmt.Errorf("error deleting aws vpc: %v", err)
+	if viper.GetBool(config.Hypershift) {
+		if viper.GetString(OIDCConfigID) == "" {
+			if err := m.deleteOIDCConfig(viper.GetString(config.Cluster.Name)); err != nil {
+				return err
+			}
+		}
+
+		if viper.GetString(config.AWSVPCSubnetIDs) == "" {
+			err := deleteHyperShiftVPC(*reportDir)
+			if err != nil {
+				return fmt.Errorf("error deleting aws vpc: %v", err)
+			}
 		}
 	}
 
