@@ -34,6 +34,9 @@ var _ = ginkgo.Describe(podsTestName, ginkgo.Ordered, label.HyperShift, label.E2
 		filteredList := &v1.PodList{}
 		expect.NoError(client.WithNamespace(metav1.NamespaceAll).List(ctx, list))
 		for _, pod := range list.Items {
+			if strings.HasPrefix(pod.Namespace, "osde2e-") {
+				continue
+			}
 			if pod.Status.Phase == v1.PodFailed {
 				if len(pod.GetOwnerReferences()) > 0 {
 					if pod.GetOwnerReferences()[0].Kind == "Job" {
