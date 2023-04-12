@@ -28,7 +28,7 @@ func (m *ROSAProvider) createOIDCConfig(prefix string) (string, error) {
 		return "", fmt.Errorf("error creating odic-config: %v", err)
 	}
 
-	oidcConfigID, err := m.getOIDCConfig(prefix)
+	oidcConfigID, err := m.getOIDCConfigID(prefix)
 	if err != nil {
 		return "", fmt.Errorf("OIDC config created, %v", err)
 	}
@@ -36,8 +36,8 @@ func (m *ROSAProvider) createOIDCConfig(prefix string) (string, error) {
 	return oidcConfigID, nil
 }
 
-// getOIDCConfig gets an existing oidc config
-func (m *ROSAProvider) getOIDCConfig(prefix string) (string, error) {
+// getOIDCConfigID gets an existing oidc config id
+func (m *ROSAProvider) getOIDCConfigID(prefix string) (string, error) {
 	response, err := m.ocmProvider.GetConnection().ClustersMgmt().V1().OidcConfigs().List().Send()
 	if err != nil {
 		return "", fmt.Errorf("unable to get oidc configs from ocm: %v", err)
@@ -54,7 +54,7 @@ func (m *ROSAProvider) getOIDCConfig(prefix string) (string, error) {
 
 // deleteOIDCConfig deletes an existing oidc config that was used for cluster creation
 func (m *ROSAProvider) deleteOIDCConfig(prefix string) error {
-	oidcConfigID, err := m.getOIDCConfig(prefix)
+	oidcConfigID, err := m.getOIDCConfigID(prefix)
 	if err != nil {
 		return fmt.Errorf("unable to locate oidc config with prefix: %s", prefix)
 	}
