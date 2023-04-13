@@ -136,11 +136,18 @@ func (h *H) Setup() error {
 			Expect(err).NotTo(HaveOccurred())
 		}
 	} else {
-		h.proj, err = h.Project().ProjectV1().Projects().Get(ctx, project, metav1.GetOptions{})
+		_ = wait.PollImmediate(5*time.Second, 30*time.Second, func() (bool, error) {
+			h.proj, err = h.Project().ProjectV1().Projects().Get(ctx, project, metav1.GetOptions{})
+			if apierrors.IsNotFound(err) || apierrors.IsServiceUnavailable(err) {
+				return false, nil
+			}
+			return true, err
+		})
+
 		if h.OutsideGinkgo && err != nil {
-			return fmt.Errorf("error retrieving project: %s", err.Error())
+			return fmt.Errorf("error retrieving project: %s, %v", project, err.Error())
 		}
-		Expect(err).ShouldNot(HaveOccurred(), "failed to retrieve project")
+		Expect(err).ShouldNot(HaveOccurred(), "failed to retrieve project: %s", project)
 		Expect(h.proj).ShouldNot(BeNil())
 	}
 
