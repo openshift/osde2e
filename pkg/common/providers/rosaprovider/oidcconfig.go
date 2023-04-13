@@ -21,7 +21,7 @@ func (m *ROSAProvider) createOIDCConfig(prefix string) (string, error) {
 		"--installer-role-arn", fmt.Sprintf("arn:aws:iam::%s:role/ManagedOpenShift-Installer-Role", viper.GetString(config.AWSAccount)),
 		"--yes",
 	})
-	err := callAndSetAWSSession(func() error {
+	err := CallAndSetAWSSession(func() error {
 		return cmd.Execute()
 	})
 	if err != nil {
@@ -65,7 +65,7 @@ func (m *ROSAProvider) deleteOIDCConfig(prefix string) error {
 		"--oidc-config-id", oidcConfigID,
 		"--yes",
 	})
-	err = callAndSetAWSSession(func() error {
+	err = CallAndSetAWSSession(func() error {
 		return cmd.Execute()
 	})
 	if err != nil {

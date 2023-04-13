@@ -408,7 +408,7 @@ func (m *ROSAProvider) DetermineRegion(cloudProvider string) (string, error) {
 
 // Determine whether the region provided is supported for hosted control plane clusters
 func (m *ROSAProvider) IsRegionValidForHCP() (bool, error) {
-	err := callAndSetAWSSession(func() error {
+	err := CallAndSetAWSSession(func() error {
 		ocmClient, err := m.ocmLogin()
 		if err != nil {
 			return fmt.Errorf("failed to login to ocm: %w", err)
