@@ -209,6 +209,9 @@ var _ = ginkgo.Describe(suiteName, ginkgo.Ordered, label.HyperShift, label.E2E, 
 
 	ginkgo.Describe("sre-techpreviewnoupgrade-validation", func() {
 		ginkgo.It("blocks customers from setting TechPreviewNoUpgrade feature gate", func(ctx context.Context) {
+			if viper.GetBool(config.Hypershift) {
+				ginkgo.Skip("currently failing due to delay (up to 1h) in being enabled (OSD-15333)")
+			}
 			client := h.AsClusterAdmin()
 			clusterFeatureGate := &configv1.FeatureGate{}
 			err := client.Get(ctx, "cluster", "", clusterFeatureGate)
