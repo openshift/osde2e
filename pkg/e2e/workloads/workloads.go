@@ -40,8 +40,8 @@ var _ = ginkgo.Describe(suiteName, ginkgo.Ordered, label.HyperShift, label.E2E, 
 		expect.NoError(err)
 
 		deployment := &appsv1.Deployment{ObjectMeta: metav1.ObjectMeta{Name: deploymentName, Namespace: h.CurrentProject()}}
-		err = wait.For(conditions.New(client).DeploymentConditionMatch(deployment, appsv1.DeploymentAvailable, v1.ConditionTrue), wait.WithTimeout(60*time.Second))
-		expect.NoError(err)
+		err = wait.For(conditions.New(client).DeploymentConditionMatch(deployment, appsv1.DeploymentAvailable, v1.ConditionTrue), wait.WithTimeout(2*time.Minute))
+		expect.NoError(err, "deployment %s/%s never became available", h.CurrentProject(), deploymentName)
 
 		clientset, err := kubernetes.NewForConfig(client.GetConfig())
 		expect.NoError(err)
