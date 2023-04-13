@@ -18,5 +18,5 @@ func NoError(err error, explain ...any) {
 // Forbidden checks if "err" is set a `metav1.StatusReasonForbidden` or `404`
 // response using `apierrors` package, raising an exception otherwise
 func Forbidden(err error) {
-	gomega.ExpectWithOffset(1, apierrors.IsForbidden(err)).To(gomega.BeTrue(), "expected to be forbidden: %s", err)
+	gomega.ExpectWithOffset(1, apierrors.IsForbidden(err)).To(gomega.BeTrue(), "expected error to be forbidden, got %v", err)
 }
