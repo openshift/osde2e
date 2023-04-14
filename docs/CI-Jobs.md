@@ -22,7 +22,6 @@ of the osde2e test framework. Overall dashboard can be found
 | Job Name                              | OCP Version            | Results                                             |
 | ------------------------------------- | ---------------------- | --------------------------------------------------- |
 | ROSA STS                              | Latest GA              | [Test Grid][SD CICD ROSA STS]                       |
-| ROSA Non STS                          | Latest Pre-GA          | [Test Grid][SD CICD ROSA]                           |
 | ROSA HCP                              | Latest GA              | [Test Grid][SD CICD ROSA HCP]                       |
 | ROSA BYOVPC Proxy Install             | Latest Pre-GA          | [Test Grid][SD CICD ROSA BYOVPC Proxy Install]      |
 | ROSA BYOVPC Proxy Post Install        | Latest Pre-GA          | [Test Grid][SD CICD ROSA BYOVPC Proxy Post Install] |
@@ -63,7 +62,6 @@ These jobs send alerts to the following slack channel: [#sd-cicd-alerts].
 
 [SD CICD Test Grid Dashboard]: https://testgrid.k8s.io/redhat-openshift-osd
 [SD CICD ROSA STS]: https://testgrid.k8s.io/redhat-openshift-osd#periodic-ci-openshift-osde2e-main-rosa-stage-e2e-sts&width=90
-[SD CICD ROSA]: https://testgrid.k8s.io/redhat-openshift-osd#periodic-ci-openshift-osde2e-main-rosa-stage-e2e-default&width=90
 [SD CICD ROSA HCP]: https://testgrid.k8s.io/redhat-openshift-osd#periodic-ci-openshift-osde2e-main-hypershift-stage-e2e-default&width=90
 [SD CICD ROSA BYOVPC Proxy Install]: https://testgrid.k8s.io/redhat-openshift-osd#periodic-ci-openshift-osde2e-main-rosa-stage-e2e-byo-vpc-proxy-install&width=90
 [SD CICD ROSA BYOVPC Proxy Post Install]: https://testgrid.k8s.io/redhat-openshift-osd#periodic-ci-openshift-osde2e-main-rosa-stage-e2e-byo-vpc-proxy-postinstall&width=90
