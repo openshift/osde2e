@@ -163,6 +163,9 @@ var Upgrade = struct {
 
 	// Reschedule the upgrade via provider before commence
 	ManagedUpgradeRescheduled string
+
+	// Toggle on/off running post upgrade tests
+	RunPostUpgradeTests string
 }{
 	UpgradeToLatest:                        "upgrade.toLatest",
 	UpgradeToLatestZ:                       "upgrade.ToLatestZ",
@@ -175,6 +178,7 @@ var Upgrade = struct {
 	ManagedUpgradeTestPodDisruptionBudgets: "upgrade.managedUpgradeTestPodDisruptionBudgets",
 	ManagedUpgradeTestNodeDrain:            "upgrade.managedUpgradeTestNodeDrain",
 	ManagedUpgradeRescheduled:              "upgrade.managedUpgradeRescheduled",
+	RunPostUpgradeTests:                    "upgrade.runPostUpgradeTests",
 }
 
 // Kubeconfig configBUILD_NUMBER keys.
@@ -665,6 +669,9 @@ func InitOSDe2eViper() {
 
 	viper.BindEnv(Upgrade.ManagedUpgradeRescheduled, "UPGRADE_MANAGED_TEST_RESCHEDULE")
 	viper.SetDefault(Upgrade.ManagedUpgradeRescheduled, false)
+
+	viper.BindEnv(Upgrade.RunPostUpgradeTests, "UPGRADE_RUN_POST_TESTS")
+	viper.SetDefault(Upgrade.RunPostUpgradeTests, false)
 
 	// ----- Kubeconfig -----
 	viper.BindEnv(Kubeconfig.Path, "TEST_KUBECONFIG")

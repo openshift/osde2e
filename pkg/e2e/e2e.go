@@ -434,8 +434,7 @@ func runGinkgoTests() (int, error) {
 			}
 			events.RecordEvent(events.UpgradeSuccessful)
 
-			// test upgrade rescheduling if desired
-			if !viper.GetBool(config.Upgrade.ManagedUpgradeRescheduled) {
+			if viper.GetBool(config.Upgrade.RunPostUpgradeTests) {
 				log.Println("Running e2e tests POST-UPGRADE...")
 				viper.Set(config.Cluster.Passing, false)
 				upgradeTestsPassed, upgradeTestCaseData = runTestsInPhase(
@@ -446,7 +445,6 @@ func runGinkgoTests() (int, error) {
 				)
 				viper.Set(config.Cluster.Passing, upgradeTestsPassed)
 			}
-			log.Println("Upgrade rescheduled, skip the POST-UPGRADE testing")
 
 			// close route monitors
 			if viper.GetBool(config.Upgrade.MonitorRoutesDuringUpgrade) && !suiteConfig.DryRun {
