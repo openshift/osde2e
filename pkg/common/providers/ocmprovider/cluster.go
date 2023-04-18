@@ -158,12 +158,12 @@ func (o *OCMProvider) LaunchCluster(clusterName string) (string, error) {
 			awsCreds, err := aws.CcsAwsSession.GetCredentials()
 			if err != nil {
 				return "", err
-			} else if viper.GetString(config.AWSAccount) == "" {
+			} else if aws.CcsAwsSession.GetAccount() == "" {
 				return "", fmt.Errorf("aws account id is not set")
 			}
 
 			awsBuilder := v1.NewAWS().
-				AccountID(viper.GetString(config.AWSAccount)).
+				AccountID(aws.CcsAwsSession.GetAccount()).
 				AccessKeyID(awsCreds.AccessKeyID).
 				SecretAccessKey(awsCreds.SecretAccessKey)
 			if viper.GetString(config.AWSVPCSubnetIDs) != "" {

@@ -3,6 +3,7 @@ package aws
 import (
 	"fmt"
 	"log"
+	"os"
 	"sync"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -15,10 +16,11 @@ import (
 )
 
 type ccsAwsSession struct {
-	session *session.Session
-	iam     *iam.IAM
-	ec2     *ec2.EC2
-	once    sync.Once
+	session   *session.Session
+	accountId string
+	iam       *iam.IAM
+	ec2       *ec2.EC2
+	once      sync.Once
 }
 
 // CCSAWSSession is the global AWS session for interacting with AWS.
@@ -48,6 +50,13 @@ func (CcsAwsSession *ccsAwsSession) GetAWSSessions() error {
 		CcsAwsSession.session, err = session.NewSessionWithOptions(options)
 		CcsAwsSession.iam = iam.New(CcsAwsSession.session)
 		CcsAwsSession.ec2 = ec2.New(CcsAwsSession.session)
+		if viper.GetString(config.AWSAccount) != "" {
+			CcsAwsSession.accountId = viper.GetString(config.AWSAccount)
+		} else if os.Getenv("AWS_ACCOUNT_ID") != "" {
+			CcsAwsSession.accountId = os.Getenv("AWS_ACCOUNT_ID")
+		} else {
+			CcsAwsSession.accountId = ""
+		}
 	})
 	if err != nil {
 		log.Printf("error initializing AWS session: %v", err)
@@ -72,4 +81,9 @@ func (CcsAwsSession *ccsAwsSession) GetCredentials() (*credentials.Value, error)
 // GetRegion returns the region set when the session was created
 func (CcsAwsSession *ccsAwsSession) GetRegion() *string {
 	return CcsAwsSession.session.Config.Region
+}
+
+// GetAccount returns the aws account in session
+func (CcsAwsSession *ccsAwsSession) GetAccount() string {
+	return CcsAwsSession.accountId
 }
