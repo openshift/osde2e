@@ -978,7 +978,13 @@ func (o *OCMProvider) InstallAddons(clusterID string, addonIDs []spi.AddOnID, ad
 					return err
 				}
 
-				o.updateClusterCache(clusterID, aoar.Body().Cluster())
+				ocmCluster, err := o.getOCMCluster(clusterID)
+				if err != nil {
+					return err
+				}
+				if err = o.updateClusterCache(clusterID, ocmCluster); err != nil {
+					return fmt.Errorf("error updating cluster cache: %v", err)
+				}
 
 				return nil
 			})
