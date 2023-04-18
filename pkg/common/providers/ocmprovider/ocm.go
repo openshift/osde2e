@@ -32,12 +32,12 @@ var connectionCache = map[ocmConnectionKey]*ocm.Connection{}
 
 // OCMProvider will provision clusters using the OCM API.
 type OCMProvider struct {
-	env          string
-	conn         *ocm.Connection
-	prodProvider *OCMProvider
-
-	clusterCache    map[string]*spi.Cluster
-	credentialCache map[string]string
+	env              string
+	conn             *ocm.Connection
+	prodProvider     *OCMProvider
+	clusterCache     map[string]*spi.Cluster
+	credentialCache  map[string]string
+	versionGateLabel string
 }
 
 func init() {
@@ -116,11 +116,12 @@ func NewWithEnv(env string) (*OCMProvider, error) {
 	}
 
 	return &OCMProvider{
-		env:             env,
-		conn:            conn,
-		prodProvider:    prodProvider,
-		clusterCache:    make(map[string]*spi.Cluster),
-		credentialCache: make(map[string]string),
+		env:              env,
+		conn:             conn,
+		prodProvider:     prodProvider,
+		clusterCache:     make(map[string]*spi.Cluster),
+		credentialCache:  make(map[string]string),
+		versionGateLabel: "api.openshift.com/gate-ocp",
 	}, nil
 }
 
@@ -170,4 +171,9 @@ func errResp(resp *ocmerr.Error) error {
 // Type returns the provisioner type: ocm
 func (o *OCMProvider) Type() string {
 	return "ocm"
+}
+
+// VersionGateLabel returns the provider version gate label
+func (o *OCMProvider) VersionGateLabel() string {
+	return o.versionGateLabel
 }
