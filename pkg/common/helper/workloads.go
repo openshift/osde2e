@@ -10,7 +10,7 @@ import (
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
-	policyv1beta1 "k8s.io/api/policy/v1beta1"
+	policyv1 "k8s.io/api/policy/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -179,10 +179,10 @@ func CreateRuntimeObject(obj runtime.Object, ns string, kube kubernetes.Interfac
 		}
 		return newObj, nil
 	case "PodDisruptionBudget":
-		if _, ok = obj.(*policyv1beta1.PodDisruptionBudget); !ok {
+		if _, ok = obj.(*policyv1.PodDisruptionBudget); !ok {
 			return nil, fmt.Errorf("Error casting object to PodDisruptionBudget")
 		}
-		if newObj, err = kube.PolicyV1beta1().PodDisruptionBudgets(ns).Create(context.TODO(), obj.(*policyv1beta1.PodDisruptionBudget), metav1.CreateOptions{}); err != nil {
+		if newObj, err = kube.PolicyV1().PodDisruptionBudgets(ns).Create(context.TODO(), obj.(*policyv1.PodDisruptionBudget), metav1.CreateOptions{}); err != nil {
 			return nil, err
 		}
 		return newObj, nil
