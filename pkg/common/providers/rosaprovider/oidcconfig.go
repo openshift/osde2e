@@ -17,7 +17,7 @@ func (m *ROSAProvider) createOIDCConfig(prefix string) (string, error) {
 	cmd.SetArgs([]string{
 		"--mode", "auto",
 		"--prefix", prefix,
-		"--installer-role-arn", fmt.Sprintf("arn:aws:iam::%s:role/ManagedOpenShift-Installer-Role", aws.CcsAwsSession.GetAccountID()),
+		"--installer-role-arn", fmt.Sprintf("arn:aws:iam::%s:role/ManagedOpenShift-Installer-Role", aws.CcsAwsSession.GetAccountId()),
 		"--yes",
 	})
 	err := callAndSetAWSSession(func() error {
