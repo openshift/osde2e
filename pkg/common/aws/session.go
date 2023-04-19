@@ -76,7 +76,7 @@ func (CcsAwsSession *ccsAwsSession) GetRegion() *string {
 	return CcsAwsSession.session.Config.Region
 }
 
-// GetAccount returns the aws account in session
-func (CcsAwsSession *ccsAwsSession) GetAccount() string {
+// GetAccountID returns the aws account id in session
+func (CcsAwsSession *ccsAwsSession) GetAccountID() string {
 	return CcsAwsSession.accountId
 }
