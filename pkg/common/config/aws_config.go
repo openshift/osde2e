@@ -27,7 +27,7 @@ var (
 
 func InitAWSViper() {
 	viper.BindEnv(AWSAccountId, "AWS_ACCOUNT_ID")
-	RegisterSecret(AWSAccountId, "aws-account")
+	RegisterSecret(AWSAccountId, "aws-account-id")
 
 	viper.BindEnv(AWSAccessKey, "AWS_ACCESS_KEY", "OCM_AWS_ACCESS_KEY", "AWS_ACCESS_KEY_ID", "ROSA_AWS_ACCESS_KEY_ID")
 	RegisterSecret(AWSAccessKey, "aws-access-key")
