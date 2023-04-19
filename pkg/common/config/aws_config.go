@@ -7,7 +7,7 @@ import (
 
 var (
 	// AWSAccountId is the AWS account (Env var: AWS_ACCOUNT_ID)
-	AWSAccountId = "config.aws.account.id"
+	AWSAccountId = "config.aws.accountID"
 
 	// AWSAccessKey is the AWS access key
 	AWSAccessKey = "config.aws.accessKey"
