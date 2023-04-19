@@ -18,6 +18,11 @@ spec:
         {{ if .Arguments }}
         args: {{.Arguments}}
         {{ end }}
+        env:
+        {{- range $env := .EnvironmentVariables }}
+        - name: {{ $env.Name }}
+          value: {{ $env.Value }}
+        {{- end }}
         volumeMounts:
         - mountPath: {{.OutputDir}}
           name: test-output

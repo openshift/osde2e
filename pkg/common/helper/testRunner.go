@@ -7,6 +7,8 @@ import (
 
 	. "github.com/onsi/gomega"
 
+	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
+	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/runner"
 	"github.com/openshift/osde2e/pkg/common/templates"
 	"github.com/openshift/osde2e/pkg/common/util"
@@ -48,6 +50,10 @@ func (h *H) RunTests(ctx context.Context, name string, timeout int, harnesses, a
 			Server               string
 			CA                   string
 			TokenFile            string
+			EnvironmentVariables []struct {
+				Name  string
+				Value string
+			}
 		}{
 			Name:                 jobName,
 			JobName:              jobName,
@@ -60,6 +66,15 @@ func (h *H) RunTests(ctx context.Context, name string, timeout int, harnesses, a
 			Server:               "https://kubernetes.default",
 			CA:                   serviceAccountDir + "/ca.crt",
 			TokenFile:            serviceAccountDir + "/token",
+			EnvironmentVariables: []struct {
+				Name  string
+				Value string
+			}{
+				{
+					Name:  "OCM_CLUSTER_ID",
+					Value: viper.GetString(config.Cluster.ID),
+				},
+			},
 		}
 
 		if len(args) > 0 {
