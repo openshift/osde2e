@@ -6,8 +6,8 @@ import (
 )
 
 var (
-	// AWSAccount is the AWS account
-	AWSAccount = "config.aws.account"
+	// AWSAccountId is the AWS account (Env var: AWS_ACCOUNT_ID)
+	AWSAccountId = "config.aws.account.id"
 
 	// AWSAccessKey is the AWS access key
 	AWSAccessKey = "config.aws.accessKey"
@@ -26,8 +26,8 @@ var (
 )
 
 func InitAWSViper() {
-	viper.BindEnv(AWSAccount, "AWS_ACCOUNT")
-	RegisterSecret(AWSAccount, "aws-account")
+	viper.BindEnv(AWSAccountId, "AWS_ACCOUNT_ID")
+	RegisterSecret(AWSAccountId, "aws-account-id")
 
 	viper.BindEnv(AWSAccessKey, "AWS_ACCESS_KEY", "OCM_AWS_ACCESS_KEY", "AWS_ACCESS_KEY_ID", "ROSA_AWS_ACCESS_KEY_ID")
 	RegisterSecret(AWSAccessKey, "aws-access-key")

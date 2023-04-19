@@ -3,7 +3,6 @@ package aws
 import (
 	"fmt"
 	"log"
-	"os"
 	"sync"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -50,13 +49,7 @@ func (CcsAwsSession *ccsAwsSession) GetAWSSessions() error {
 		CcsAwsSession.session, err = session.NewSessionWithOptions(options)
 		CcsAwsSession.iam = iam.New(CcsAwsSession.session)
 		CcsAwsSession.ec2 = ec2.New(CcsAwsSession.session)
-		if viper.GetString(config.AWSAccount) != "" {
-			CcsAwsSession.accountId = viper.GetString(config.AWSAccount)
-		} else if os.Getenv("AWS_ACCOUNT_ID") != "" {
-			CcsAwsSession.accountId = os.Getenv("AWS_ACCOUNT_ID")
-		} else {
-			CcsAwsSession.accountId = ""
-		}
+		CcsAwsSession.accountId = viper.GetString(config.AWSAccountId)
 	})
 	if err != nil {
 		log.Printf("error initializing AWS session: %v", err)
