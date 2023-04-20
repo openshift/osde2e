@@ -17,9 +17,10 @@ func init() {
 
 // ROSAProvider will provision clusters via ROSA.
 type ROSAProvider struct {
-	ocmProvider    *ocmprovider.OCMProvider
-	awsCredentials *credentials.Value
-	awsRegion      string
+	ocmProvider      *ocmprovider.OCMProvider
+	awsCredentials   *credentials.Value
+	awsRegion        string
+	versionGateLabel string
 }
 
 // New will create a new ROSAProvider.
@@ -39,14 +40,25 @@ func New() (*ROSAProvider, error) {
 		return nil, fmt.Errorf("aws region is undefined")
 	}
 
+	versionGateLabel := "api.openshift.com/gate-ocp"
+	if viper.GetBool(STS) {
+		versionGateLabel = "api.openshift.com/gate-sts"
+	}
+
 	return &ROSAProvider{
-		ocmProvider:    ocmProvider,
-		awsCredentials: awsCredentials,
-		awsRegion:      region,
+		ocmProvider:      ocmProvider,
+		awsCredentials:   awsCredentials,
+		awsRegion:        region,
+		versionGateLabel: versionGateLabel,
 	}, nil
 }
 
 // Type returns the provisioner type: rosa
 func (m *ROSAProvider) Type() string {
 	return "rosa"
+}
+
+// VersionGateLabel returns the provider version gate label
+func (m *ROSAProvider) VersionGateLabel() string {
+	return m.versionGateLabel
 }

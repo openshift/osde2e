@@ -333,3 +333,18 @@ func (m *MockProvider) RemoveUserCABundle(clusterId string) error {
 func (m *MockProvider) LoadUserCaBundleData(file string) (string, error) {
 	return "", fmt.Errorf("proxies not supported in Mock Provider")
 }
+
+// VersionGateLabel returns the provider version gate label
+func (m *MockProvider) VersionGateLabel() string {
+	return "mock"
+}
+
+// GetVersionGateID checks to see if a version gate exists for the cluster version provided
+func (m *MockProvider) GetVersionGateID(version string, label string) (string, error) {
+	return "", fmt.Errorf("version gates not supported in Mock Provider")
+}
+
+// AddGateAgreement adds the gate agreement to the cluster for cluster upgrades
+func (m *MockProvider) AddGateAgreement(clusterID string, versionGateID string) error {
+	return fmt.Errorf("add gate agreement not supported in Mock Provider")
+}

@@ -155,4 +155,13 @@ type Provider interface {
 
 	// LoadUserCaBundleData loads CA contents from CA cert file
 	LoadUserCaBundleData(file string) (string, error)
+
+	// VersionGateLabel returns the provider version gate label
+	VersionGateLabel() string
+
+	// GetVersionGateID checks to see if a version gate exists for the cluster version provided
+	GetVersionGateID(version string, label string) (string, error)
+
+	// AddGateAgreement adds gate agreement to the cluster to acknowledge cluster upgrade
+	AddGateAgreement(clusterID string, versionGateID string) error
 }

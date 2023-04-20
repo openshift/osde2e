@@ -6,8 +6,10 @@ import (
 	"log"
 	"time"
 
+	"github.com/Masterminds/semver"
 	"github.com/openshift/osde2e/pkg/common/cluster/healthchecks"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
+	"github.com/openshift/osde2e/pkg/common/spi"
 	"github.com/openshift/osde2e/pkg/common/util"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -23,6 +25,7 @@ import (
 	"github.com/openshift/osde2e/pkg/common/providers"
 	"github.com/openshift/osde2e/pkg/common/providers/ocmprovider"
 	"github.com/openshift/osde2e/pkg/common/templates"
+	"github.com/openshift/osde2e/pkg/common/versions/common"
 )
 
 const (
@@ -495,25 +498,94 @@ func getProviderSource() string {
 	return providerOCM
 }
 
-func scheduleOCMUpgrade() error {
+type upgradeManager struct {
+	clusterID       string
+	clusterProvider spi.Provider
+	clusterVersion  *semver.Version
+	upgradeVersion  *semver.Version
+}
+
+// initUpgradeManager handles configuring an upgrade manager struct that contains
+// various bits of data used for initiating upgrades from ocm or local
+func initUpgradeManager() (*upgradeManager, error) {
+	// TODO: Figure out how to not require `ReleaseName` when using image digest.
+	// It is required when setting up cluster version gate agreement.
+	// Need to get release name from the image digest label or release controller?
 	releaseName := viper.GetString(config.Upgrade.ReleaseName)
 	if releaseName == "" {
-		return fmt.Errorf("missing release name used for upgrade")
+		return nil, fmt.Errorf("missing release name used for upgrade")
 	}
+
+	clusterVersion, err := util.OpenshiftVersionToSemver(viper.GetString(config.Cluster.Version))
+	if err != nil {
+		return nil, fmt.Errorf("unable to semantic-version parse cluster version: %v", err)
+	}
+
 	upgradeVersion, err := util.OpenshiftVersionToSemver(releaseName)
 	if err != nil {
-		return fmt.Errorf("unable to semantic-version parse release name: %v", releaseName)
+		return nil, fmt.Errorf("unable to semantic-version parse release name: %v", releaseName)
 	}
+
 	clusterID := viper.GetString(config.Cluster.ID)
 	clusterProvider, err := providers.ClusterProvider()
 	if err != nil {
-		return fmt.Errorf("error getting clusterprovider for upgrade: %v", err)
+		return nil, fmt.Errorf("error getting clusterprovider for upgrade: %v", err)
+	}
+
+	return &upgradeManager{
+		clusterID:       clusterID,
+		clusterProvider: clusterProvider,
+		clusterVersion:  clusterVersion,
+		upgradeVersion:  upgradeVersion,
+	}, nil
+}
+
+// applyVersionGateAgreement adds the cluster version gate agreement for certain
+// cluster upgrade paths
+func applyVersionGateAgreement(upgradeManager *upgradeManager) error {
+	clusterID := upgradeManager.clusterID
+	clusterProvider := upgradeManager.clusterProvider
+	clusterVersion := upgradeManager.clusterVersion
+	upgradeVersion := upgradeManager.upgradeVersion
+
+	if clusterVersion.Minor() < upgradeVersion.Minor() {
+		log.Println("Cluster upgrade type: y-stream. Attempting to apply cluster version gate agreement.")
+
+		majorMinor := common.CreateMajorMinorStringFromSemver(upgradeVersion)
+		versionGateID, err := clusterProvider.GetVersionGateID(majorMinor, clusterProvider.VersionGateLabel())
+		if err != nil {
+			log.Printf("Warning: version gate lookup failed: '%v'. Carrying on with the upgrade..", err)
+			return nil
+		}
+
+		log.Printf("Applying version gate id: %s to cluster", versionGateID)
+		err = clusterProvider.AddGateAgreement(clusterID, versionGateID)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	}
+
+	log.Println("Cluster upgrade type: z-stream. Skip applying cluster version gate agreement.")
+	return nil
+}
+
+func scheduleOCMUpgrade() error {
+	upgradeManager, err := initUpgradeManager()
+	if err != nil {
+		return err
+	}
+
+	err = applyVersionGateAgreement(upgradeManager)
+	if err != nil {
+		return err
 	}
 
 	// Our time will be as closely allowed as possible by the provider (now + 7 min)
 	t := time.Now().UTC().Add(7 * time.Minute)
 
-	err = clusterProvider.Upgrade(clusterID, upgradeVersion.String(), t)
+	err = upgradeManager.clusterProvider.Upgrade(upgradeManager.clusterID, upgradeManager.upgradeVersion.String(), t)
 	if err != nil {
 		return fmt.Errorf("error initiating upgrade from provider: %v", err)
 	}
@@ -531,6 +603,16 @@ func scheduleLocalUpgrade(h *helper.H) error {
 		upgradeType = upgradev1alpha1.ARO
 	default:
 		return fmt.Errorf("unsupported upgrade type: %v", viper.GetString(config.Upgrade.Type))
+	}
+
+	upgradeManager, err := initUpgradeManager()
+	if err != nil {
+		return err
+	}
+
+	err = applyVersionGateAgreement(upgradeManager)
+	if err != nil {
+		return err
 	}
 
 	localUpgradeConfig := upgradev1alpha1.UpgradeConfig{
