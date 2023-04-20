@@ -2,7 +2,7 @@
 
 set +e
 # ensure we have a clean environment
-docker rm -i osde2e-run
+docker rm osde2e-run
 
 # bind mounts run into permissions issues, this creates
 # the container and copies the secrets over to ensure it has perms
