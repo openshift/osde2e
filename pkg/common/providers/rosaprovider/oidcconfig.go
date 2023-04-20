@@ -4,8 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
-	"github.com/openshift/osde2e/pkg/common/config"
+	"github.com/openshift/osde2e/pkg/common/aws"
 	createOIDCConfig "github.com/openshift/rosa/cmd/create/oidcconfig"
 	deleteOIDCConfig "github.com/openshift/rosa/cmd/dlt/oidcconfig"
 )
@@ -18,7 +17,7 @@ func (m *ROSAProvider) createOIDCConfig(prefix string) (string, error) {
 	cmd.SetArgs([]string{
 		"--mode", "auto",
 		"--prefix", prefix,
-		"--installer-role-arn", fmt.Sprintf("arn:aws:iam::%s:role/ManagedOpenShift-Installer-Role", viper.GetString(config.AWSAccount)),
+		"--installer-role-arn", fmt.Sprintf("arn:aws:iam::%s:role/ManagedOpenShift-Installer-Role", aws.CcsAwsSession.GetAccountId()),
 		"--yes",
 	})
 	err := callAndSetAWSSession(func() error {
