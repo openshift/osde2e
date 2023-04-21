@@ -10,7 +10,8 @@ docker create --name osde2e-run -e OCM_TOKEN \
 	-e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY \
 	-e CLOUD_PROVIDER_REGION \
 	-e ROSA_AWS_REGION="${CLOUD_PROVIDER_REGION}" \
-	-e ROSA_ENV=stage \
+	-e ROSA_ENV="${ENVIRONMENT}" \
+	-e OCM_ENV="${ENVIRONMENT}" \
 	-e ROSA_STS="${STS}" \
 	-e INSTANCE_TYPE \
 	-e REPORT_DIR="${REPORT_DIR}" quay.io/app-sre/osde2e test --configs "${CONFIGS}"
