@@ -355,6 +355,12 @@ var Cluster = struct {
 	// InstallLatestXY will select the latest version available given an "X.Y" formatted string
 	InstallLatestXY string
 
+	// InstallLatestYFromDelta will select the latest Y from the delta (+/-) given
+	InstallLatestYFromDelta string
+
+	// InstallLatestZFromDelta will select the latest Z from the delta (+/-) given
+	InstallLatestZFromDelta string
+
 	// CleanCheckRuns lets us set the number of osd-verify checks we want to run before deeming a cluster "healthy"
 	// Env: CLEAN_CHECK_RUNS
 	CleanCheckRuns string
@@ -437,6 +443,8 @@ var Cluster = struct {
 	LatestZReleaseAfterProdDefault:      "cluster.latestZReleaseAfterProdDefault",
 	InstallSpecificNightly:              "cluster.installLatestNightly",
 	InstallLatestXY:                     "cluster.installLatestXY",
+	InstallLatestYFromDelta:             "cluster.installLatestYFromDelta",
+	InstallLatestZFromDelta:             "cluster.installLatestZFromDelta",
 	CleanCheckRuns:                      "cluster.cleanCheckRuns",
 	ID:                                  "cluster.id",
 	Name:                                "cluster.name",
@@ -774,6 +782,10 @@ func InitOSDe2eViper() {
 	viper.BindEnv(Cluster.InstallSpecificNightly, "INSTALL_LATEST_NIGHTLY")
 
 	viper.BindEnv(Cluster.InstallLatestXY, "INSTALL_LATEST_XY")
+
+	viper.BindEnv(Cluster.InstallLatestYFromDelta, "INSTALL_LATEST_Y_FROM_DELTA")
+
+	viper.BindEnv(Cluster.InstallLatestZFromDelta, "INSTALL_LATEST_Z_FROM_DELTA")
 
 	viper.SetDefault(Cluster.DeltaReleaseFromDefault, 0)
 	viper.BindEnv(Cluster.DeltaReleaseFromDefault, "DELTA_RELEASE_FROM_DEFAULT")
