@@ -97,7 +97,7 @@ func (o *OCMProvider) Versions() (*spi.VersionList, error) {
 	}
 
 	sort.Slice(versions, func(i, j int) bool {
-		return versions[i].Version().LessThan(versions[j].Version())
+		return versions[i].Version().GreaterThan(versions[j].Version())
 	})
 
 	var defaultVersionOverride *semver.Version = nil
