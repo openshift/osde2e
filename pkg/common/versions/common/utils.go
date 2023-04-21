@@ -19,7 +19,7 @@ func NextReleaseAfterGivenVersionFromVersionList(givenVersion *semver.Version, v
 	// Assemble a map that lists a release (x.y.0) to its latest version, with nightlies taking precedence over all else
 	for _, version := range versionList {
 		versionSemver := version.Version()
-		majorMinor := createMajorMinorStringFromSemver(versionSemver)
+		majorMinor := CreateMajorMinorStringFromSemver(versionSemver)
 		if _, ok := versionBuckets[majorMinor]; !ok {
 			versionBuckets[majorMinor] = versionSemver
 		} else {
@@ -53,7 +53,7 @@ func NextReleaseAfterGivenVersionFromVersionList(givenVersion *semver.Version, v
 	sort.Sort(semver.Collection(majorMinorList))
 
 	// Now that the list is sorted, we want to locate the major minor of the given version in the list.
-	givenMajorMinor, err := semver.NewVersion(createMajorMinorStringFromSemver(givenVersion))
+	givenMajorMinor, err := semver.NewVersion(CreateMajorMinorStringFromSemver(givenVersion))
 	if err != nil {
 		return nil, err
 	}
@@ -78,7 +78,7 @@ func NextReleaseAfterGivenVersionFromVersionList(givenVersion *semver.Version, v
 	if len(majorMinorList) <= nextMajorMinorIndex {
 		return nil, fmt.Errorf("there is no eligible next release from the list of available versions")
 	}
-	nextMajorMinor := createMajorMinorStringFromSemver(majorMinorList[nextMajorMinorIndex])
+	nextMajorMinor := CreateMajorMinorStringFromSemver(majorMinorList[nextMajorMinorIndex])
 
 	if _, ok := versionBuckets[nextMajorMinor]; !ok {
 		return nil, fmt.Errorf("no major/minor version found for %s", nextMajorMinor)
@@ -101,7 +101,7 @@ func SortVersions(availableVersions []*spi.Version) {
 	})
 }
 
-func createMajorMinorStringFromSemver(version *semver.Version) string {
+func CreateMajorMinorStringFromSemver(version *semver.Version) string {
 	if version == nil {
 		return ""
 	}

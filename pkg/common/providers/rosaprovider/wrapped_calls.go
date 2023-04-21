@@ -131,3 +131,13 @@ func (m *ROSAProvider) RemoveUserCABundle(clusterId string) error {
 func (m *ROSAProvider) LoadUserCaBundleData(file string) (string, error) {
 	return m.ocmProvider.LoadUserCaBundleData(file)
 }
+
+// GetVersionGateID checks to see if a version gate exists for the cluster version provided
+func (m *ROSAProvider) GetVersionGateID(version string, label string) (string, error) {
+	return m.ocmProvider.GetVersionGateID(version, m.versionGateLabel)
+}
+
+// AddGateAgreement adds the gate agreement to the cluster for cluster upgrades
+func (m *ROSAProvider) AddGateAgreement(clusterID string, versionGateID string) error {
+	return m.ocmProvider.AddGateAgreement(clusterID, versionGateID)
+}

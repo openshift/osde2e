@@ -404,20 +404,36 @@ func runGinkgoTests() (int, error) {
 	// Update the metadata object to use the report directory.
 	metadata.Instance.SetReportDir(reportDir)
 
-	log.Println("Running e2e tests...")
-
 	if viper.GetString(config.Suffix) == "" {
 		viper.Set(config.Suffix, util.RandomStr(5))
 	}
 
-	testsPassed, installTestCaseData := runTestsInPhase(phase.InstallPhase, "OSD e2e suite", suiteConfig, reporterConfig)
-	getLogs()
-	viper.Set(config.Cluster.Passing, testsPassed)
+	runInstallTests := true
+	upgradeCluster := false
+	if viper.GetString(config.Upgrade.Image) != "" || viper.GetString(config.Upgrade.ReleaseName) != "" {
+		upgradeCluster = true
+		if runInstallTests = viper.GetBool(config.Upgrade.RunPreUpgradeTests); !runInstallTests {
+			if !suiteConfig.DryRun {
+				if !beforeSuite() {
+					return Failure, fmt.Errorf("error occurred during beforeSuite function")
+				}
+			}
+		}
+	}
+
+	var testsPassed bool
+	var installTestCaseData []db.CreateTestcaseParams
+	if runInstallTests {
+		log.Println("Running e2e tests...")
+		testsPassed, installTestCaseData = runTestsInPhase(phase.InstallPhase, "OSD e2e suite", suiteConfig, reporterConfig)
+		getLogs()
+		viper.Set(config.Cluster.Passing, testsPassed)
+	}
 	upgradeTestsPassed := true
 	var upgradeTestCaseData []db.CreateTestcaseParams
 
 	// upgrade cluster if requested
-	if viper.GetString(config.Upgrade.Image) != "" || viper.GetString(config.Upgrade.ReleaseName) != "" {
+	if upgradeCluster {
 		if len(viper.GetString(config.Kubeconfig.Contents)) > 0 {
 			// create route monitors for the upgrade
 			var routeMonitorChan chan struct{}
@@ -452,9 +468,8 @@ func runGinkgoTests() (int, error) {
 				_ = <-closeMonitorChan
 				log.Println("Route monitors reconciled")
 			}
-
 		} else {
-			log.Println("No Kubeconfig found from initial cluster setup. Unable to run upgrade.")
+			log.Println("Unable to perform cluster upgrade, no kubeconfig found.")
 		}
 	}
 
