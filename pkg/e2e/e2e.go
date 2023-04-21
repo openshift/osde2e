@@ -146,6 +146,8 @@ func beforeSuite() bool {
 			} else {
 				log.Println("Cluster is healthy and ready for testing")
 			}
+		} else {
+			log.Println("Skipping health checks as requested")
 		}
 
 		var kubeconfigBytes []byte
@@ -176,7 +178,7 @@ func beforeSuite() bool {
 		getLogs()
 
 	} else {
-		log.Println("Skipping health checks as requested")
+		log.Println("Using provided kubeconfig")
 	}
 
 	if len(viper.GetString(config.Addons.IDs)) > 0 {

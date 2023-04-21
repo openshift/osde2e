@@ -9,8 +9,8 @@ docker rm osde2e-run
 docker create --name osde2e-run -e OCM_TOKEN \
 	-e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY \
 	-e CLOUD_PROVIDER_REGION -e ROSA_AWS_REGION="${CLOUD_PROVIDER_REGION}" \
-	-e ROSA_ENV=stage -e INSTANCE_TYPE \
-	-e REPORT_DIR=/tmp/osde2e-report quay.io/app-sre/osde2e test --configs rosa,stage,e2e-suite --skip-health-check
+	-e ROSA_ENV=stage -e ROSA_STS=true -e INSTANCE_TYPE \
+	-e REPORT_DIR="${REPORT_DIR}" quay.io/app-sre/osde2e test --configs rosa,stage,e2e-suite 
 
 docker start -a osde2e-run
 
