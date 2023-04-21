@@ -14,7 +14,7 @@ docker create --name osde2e-run -e OCM_TOKEN \
 	-e OCM_ENV="${ENVIRONMENT}" \
 	-e ROSA_STS="${STS}" \
 	-e INSTANCE_TYPE \
-	-e REPORT_DIR="${REPORT_DIR}" quay.io/app-sre/osde2e test --configs "${CONFIGS}"
+	-e REPORT_DIR="/tmp/${REPORT_DIR}" quay.io/app-sre/osde2e test --configs "${CONFIGS}"
 
 docker start -a osde2e-run
 
