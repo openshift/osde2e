@@ -1,6 +1,7 @@
 package test
 
 import (
+	"fmt"
 	"log"
 	"math/rand"
 	"os"
@@ -15,7 +16,6 @@ import (
 	"github.com/spf13/cobra"
 
 	// import suites to be tested
-	_ "github.com/openshift/osde2e/pkg/e2e/harness_runner"
 	_ "github.com/openshift/osde2e/pkg/e2e/openshift"
 	_ "github.com/openshift/osde2e/pkg/e2e/openshift/hypershift"
 	_ "github.com/openshift/osde2e/pkg/e2e/operators"
@@ -146,6 +146,7 @@ func init() {
 }
 
 func run(cmd *cobra.Command, argv []string) {
+	ctx := cmd.Context()
 	if err := common.LoadConfigs(args.configString, args.customConfig, args.secretLocations); err != nil {
 		log.Printf("error loading initial state: %v", err)
 		os.Exit(1)
@@ -162,6 +163,9 @@ func run(cmd *cobra.Command, argv []string) {
 		log.Println("Canary job won!")
 	}
 
-	exitCode := e2e.RunTests()
+	if ctx == nil {
+		fmt.Println("oh no!!")
+	}
+	exitCode := e2e.RunTests(ctx)
 	os.Exit(exitCode)
 }

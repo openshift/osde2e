@@ -48,8 +48,8 @@ func RunUpgrade() error {
 	var upgradeStarted time.Time
 
 	// setup helper
-	h := helper.NewOutsideGinkgo()
-	if h == nil {
+	h, err := helper.NewOutsideGinkgo()
+	if err != nil {
 		return fmt.Errorf("Unable to generate helper outside ginkgo")
 	}
 

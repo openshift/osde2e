@@ -13,6 +13,7 @@ import (
 	"github.com/openshift/osde2e/pkg/common/alert"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
+	"github.com/openshift/osde2e/pkg/common/expect"
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/label"
 	"github.com/openshift/osde2e/pkg/common/runner"
@@ -109,7 +110,7 @@ var _ = ginkgo.Describe(appBuildsTestName, label.AppBuilds, func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			// write results
-			h.WriteResults(results)
+			expect.NoError(h.WriteResults(results))
 		}
 	}, float64(e2eTimeoutInSeconds+30))
 })

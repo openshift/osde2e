@@ -8,6 +8,7 @@ import (
 	. "github.com/onsi/gomega"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
+	"github.com/openshift/osde2e/pkg/common/expect"
 
 	"github.com/openshift/osde2e/pkg/common/alert"
 	"github.com/openshift/osde2e/pkg/common/helper"
@@ -46,7 +47,7 @@ var _ = ginkgo.Describe(disruptiveTestName, func() {
 		results, err := r.RetrieveTestResults()
 
 		// write results
-		h.WriteResults(results)
+		expect.NoError(h.WriteResults(results))
 
 		// evaluate results
 		Expect(err).NotTo(HaveOccurred())

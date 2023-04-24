@@ -30,7 +30,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/rest"
-	"k8s.io/client-go/tools/clientcmd"
+	crconfig "sigs.k8s.io/controller-runtime/pkg/client/config"
 
 	cloudcredentialv1 "github.com/openshift/cloud-credential-operator/pkg/apis/cloudcredential/v1"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
@@ -62,17 +62,15 @@ func New() *H {
 }
 
 // NewOutsideGinkgo instantiates a helper function while not within a Ginkgo Test Block
-func NewOutsideGinkgo() *H {
-	defer ginkgo.GinkgoRecover()
-
+func NewOutsideGinkgo() (*H, error) {
 	h := Init()
 	h.OutsideGinkgo = true
 	err := h.Setup()
 	if err != nil {
-		return nil
+		return nil, err
 	}
 
-	return h
+	return h, nil
 }
 
 // H configures clients and sets up and destroys Projects for test isolation.
@@ -90,19 +88,13 @@ type H struct {
 func (h *H) Setup() error {
 	var err error
 
-	defer ginkgo.GinkgoRecover()
-
 	ctx := context.TODO()
-	if err = config.LoadKubeconfig(); err != nil {
-		return fmt.Errorf("failed to load kubeconfig: %w", err)
-	}
-
-	h.restConfig, err = clientcmd.RESTConfigFromKubeConfig([]byte(viper.GetString(config.Kubeconfig.Contents)))
+	h.restConfig, err = crconfig.GetConfig()
 	if h.OutsideGinkgo && err != nil {
 		return fmt.Errorf("error generating restconfig: %s", err.Error())
+	} else {
+		Expect(err).ShouldNot(HaveOccurred(), "failed to configure client")
 	}
-
-	Expect(err).ShouldNot(HaveOccurred(), "failed to configure client")
 
 	project := viper.GetString(config.Project)
 	if project == "" {
@@ -118,9 +110,10 @@ func (h *H) Setup() error {
 		h.proj, err = h.createProject(ctx, suffix)
 		if h.OutsideGinkgo && err != nil {
 			return fmt.Errorf("failed to create project: %s", err.Error())
+		} else {
+			Expect(err).ShouldNot(HaveOccurred(), "failed to create project")
+			Expect(h.proj).ShouldNot(BeNil())
 		}
-		Expect(err).ShouldNot(HaveOccurred(), "failed to create project")
-		Expect(h.proj).ShouldNot(BeNil())
 
 		h.CreateServiceAccounts(ctx)
 
@@ -146,9 +139,10 @@ func (h *H) Setup() error {
 
 		if h.OutsideGinkgo && err != nil {
 			return fmt.Errorf("error retrieving project: %s, %v", project, err.Error())
+		} else {
+			Expect(err).ShouldNot(HaveOccurred(), "failed to retrieve project: %s", project)
+			Expect(h.proj).ShouldNot(BeNil())
 		}
-		Expect(err).ShouldNot(HaveOccurred(), "failed to retrieve project: %s", project)
-		Expect(h.proj).ShouldNot(BeNil())
 	}
 
 	// Set the default service account for future helper-method-calls
@@ -161,7 +155,7 @@ func (h *H) Setup() error {
 func (h *H) Cleanup(ctx context.Context) {
 	var err error
 
-	h.restConfig, err = clientcmd.RESTConfigFromKubeConfig([]byte(viper.GetString(config.Kubeconfig.Contents)))
+	h.restConfig, err = crconfig.GetConfig()
 	if err != nil {
 		log.Printf("Error setting Cleanup() restConfig: %s", err.Error())
 		return
@@ -432,7 +426,7 @@ func (h *H) ConvertTemplateToString(template *template.Template, data interface{
 func (h *H) InspectState(ctx context.Context) {
 	var err error
 
-	h.restConfig, err = clientcmd.RESTConfigFromKubeConfig([]byte(viper.GetString(config.Kubeconfig.Contents)))
+	h.restConfig, err = crconfig.GetConfig()
 	Expect(err).ShouldNot(HaveOccurred(), "failed to configure client")
 
 	// Set the SA back to the default. This is required for inspection in case other helper calls switched SAs

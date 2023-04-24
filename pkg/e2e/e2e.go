@@ -76,10 +76,11 @@ var provider spi.Provider
 // If there is an issue with provisioning, retrieving, or getting the kubeconfig, this will return `false`.
 func beforeSuite() bool {
 	// Skip provisioning if we already have a kubeconfig
-	var err error
-
 	// We can capture this error if TEST_KUBECONFIG is set, but we can't use it to skip provisioning
-	config.LoadKubeconfig()
+	err := config.LoadKubeconfig()
+	if err != nil {
+		log.Printf("unable to load kubeconfig: %s", err.Error())
+	}
 
 	if viper.GetString(config.Kubeconfig.Contents) == "" {
 		cluster, err := clusterutil.ProvisionCluster(nil)
@@ -200,10 +201,14 @@ func beforeSuite() bool {
 	// secrets into the test cluster
 	if viper.GetString(config.Tests.TestHarnesses) != "" {
 		secretsNamespace := "ci-secrets"
-		h := helper.NewOutsideGinkgo()
+		h, err := helper.NewOutsideGinkgo()
+		if err != nil {
+			log.Printf("unable to create helper object: %s", err.Error())
+			return false
+		}
 		h.CreateProject(context.TODO(), secretsNamespace)
 
-		_, err := h.Kube().CoreV1().Secrets("osde2e-"+secretsNamespace).Create(context.TODO(), &v1.Secret{
+		_, err = h.Kube().CoreV1().Secrets("osde2e-"+secretsNamespace).Create(context.TODO(), &v1.Secret{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "ci-secrets",
 				Namespace: "osde2e-" + secretsNamespace,
@@ -268,13 +273,13 @@ func installAddons() (err error) {
 // -- END Ginkgo setup
 
 // RunTests initializes Ginkgo and runs the osde2e test suite.
-func RunTests() int {
+func RunTests(ctx context.Context) int {
 	var err error
 	var exitCode int
 
 	testing.Init()
 
-	exitCode, err = runGinkgoTests()
+	exitCode, err = runGinkgoTests(ctx)
 	if err != nil {
 		log.Printf("OSDE2E failed: %v", err)
 	}
@@ -284,7 +289,7 @@ func RunTests() int {
 
 // runGinkgoTests runs the osde2e test suite using Ginkgo.
 // nolint:gocyclo
-func runGinkgoTests() (int, error) {
+func runGinkgoTests(ctx context.Context) (int, error) {
 	var err error
 
 	gomega.RegisterFailHandler(ginkgo.Fail)
@@ -426,8 +431,33 @@ func runGinkgoTests() (int, error) {
 	var testsPassed bool
 	var installTestCaseData []db.CreateTestcaseParams
 	if runInstallTests {
+		if !suiteConfig.DryRun {
+			if !beforeSuite() {
+				return Failure, errors.New("failed before suite could start")
+			}
+		}
+
 		log.Println("Running e2e tests...")
-		testsPassed, installTestCaseData = runTestsInPhase(phase.InstallPhase, "OSD e2e suite", suiteConfig, reporterConfig)
+		// if no test-harnesses, run e2e-suite else lift harness to pod launcher
+		if viper.GetString(config.Tests.TestHarnesses) == "" {
+			testsPassed, installTestCaseData = runTestsInPhase(phase.InstallPhase, "OSD e2e suite", suiteConfig, reporterConfig)
+		} else {
+			// launch pods and gather results
+			h, err := helper.NewOutsideGinkgo()
+			if err != nil {
+				return Failure, err
+			}
+
+			h.SetServiceAccount(ctx, viper.GetString(config.Tests.TestUser))
+			_, err = h.RunTestHarnesses(
+				ctx,
+				viper.GetInt(config.Tests.PollingTimeout),
+				strings.Split(viper.GetString(config.Tests.TestHarnesses), ","),
+			)
+			if err != nil {
+				return Failure, fmt.Errorf("failed to run tests: %w", err)
+			}
+		}
 		getLogs()
 		viper.Set(config.Cluster.Passing, testsPassed)
 	}
@@ -563,13 +593,12 @@ func runGinkgoTests() (int, error) {
 	if !suiteConfig.DryRun {
 		getLogs()
 
-		h := helper.NewOutsideGinkgo()
-
-		if h == nil {
+		h, err := helper.NewOutsideGinkgo()
+		if err != nil {
 			return Failure, fmt.Errorf("Unable to generate helper object for cleanup")
 		}
 
-		cleanupAfterE2E(context.TODO(), h)
+		cleanupAfterE2E(ctx, h)
 
 	}
 
@@ -622,7 +651,9 @@ func cleanupAfterE2E(ctx context.Context, h *helper.H) (errors []error) {
 				log.Printf("Error retrieving must-gather results: %s", err.Error())
 				clusterStatus = clusterproperties.StatusCompletedError
 			} else {
-				h.WriteResults(gatherResults)
+				if err = h.WriteResults(gatherResults); err != nil {
+					errors = append(errors, err)
+				}
 			}
 		}
 
@@ -662,7 +693,8 @@ func cleanupAfterE2E(ctx context.Context, h *helper.H) (errors []error) {
 
 	// write results to disk
 	log.Println("Writing cluster state results")
-	h.WriteResults(stateResults)
+	err = h.WriteResults(stateResults)
+	errors = append(errors, err)
 
 	clusterID := viper.GetString(config.Cluster.ID)
 	if len(clusterID) > 0 {
@@ -718,7 +750,7 @@ func cleanupAfterE2E(ctx context.Context, h *helper.H) (errors []error) {
 			arguments = []string{}
 		}
 		log.Println("Running harness cleanup...")
-		h.RunTests(ctx, "harness-cleanup", 300, harnesses, arguments)
+		h.RunTestHarnesses(ctx, 300, harnesses, arguments...)
 	}
 
 	// We need to clean up our helper tests manually.
@@ -779,13 +811,6 @@ func runTestsInPhase(
 	}
 	suffix := viper.GetString(config.Suffix)
 	ginkgoPassed := false
-
-	if !suiteConfig.DryRun {
-		if !beforeSuite() {
-			log.Println("Error getting kubeconfig from beforeSuite function")
-			return false, testCaseData
-		}
-	}
 
 	// Generate JUnit report once all tests have finished with customized settings
 	_ = ginkgo.ReportAfterSuite("OSDE2E", func(report ginkgo.Report) {
@@ -1000,8 +1025,8 @@ func runTestsInPhase(
 		clusterState = cluster.State()
 	}
 	if !suiteConfig.DryRun && clusterState == spi.ClusterStateReady && viper.GetString(config.JobName) != "" {
-		h := helper.NewOutsideGinkgo()
-		if h == nil {
+		h, err := helper.NewOutsideGinkgo()
+		if err != nil {
 			log.Println("Unable to generate helper outside of ginkgo")
 			return ginkgoPassed, testCaseData
 		}

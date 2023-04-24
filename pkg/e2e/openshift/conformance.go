@@ -8,6 +8,7 @@ import (
 	. "github.com/onsi/gomega"
 
 	"github.com/openshift/osde2e/pkg/common/alert"
+	"github.com/openshift/osde2e/pkg/common/expect"
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/runner"
 )
@@ -64,7 +65,7 @@ var _ = ginkgo.Describe(conformanceK8sTestName, func() {
 		results, err := r.RetrieveTestResults()
 
 		// write results
-		h.WriteResults(results)
+		expect.NoError(h.WriteResults(results))
 
 		// evaluate results
 		Expect(err).NotTo(HaveOccurred())
@@ -98,7 +99,7 @@ var _ = ginkgo.Describe(conformanceOpenshiftTestName, func() {
 		results, err := r.RetrieveTestResults()
 
 		// write results
-		h.WriteResults(results)
+		expect.NoError(h.WriteResults(results))
 
 		// evaluate results
 		Expect(err).NotTo(HaveOccurred())

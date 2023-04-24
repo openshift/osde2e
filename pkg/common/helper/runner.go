@@ -4,9 +4,7 @@ import (
 	"os"
 	"path/filepath"
 
-	. "github.com/onsi/gomega"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
-
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/runner"
 )
@@ -34,12 +32,17 @@ func (h *H) Runner(cmd string) *runner.Runner {
 }
 
 // WriteResults dumps runner results into the ReportDir.
-func (h *H) WriteResults(results map[string][]byte) {
+func (h *H) WriteResults(results map[string][]byte) error {
 	for filename, data := range results {
 		dst := filepath.Join(viper.GetString(config.ReportDir), viper.GetString(config.Phase), filename)
 		err := os.MkdirAll(filepath.Dir(dst), os.FileMode(0o755))
-		Expect(err).NotTo(HaveOccurred())
+		if err != nil {
+			return err
+		}
 		err = os.WriteFile(dst, data, os.ModePerm)
-		Expect(err).NotTo(HaveOccurred())
+		if err != nil {
+			return err
+		}
 	}
+	return nil
 }

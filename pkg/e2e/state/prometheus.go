@@ -9,6 +9,7 @@ import (
 
 	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	"github.com/openshift/osde2e/pkg/common/expect"
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/label"
 	"github.com/openshift/osde2e/pkg/common/runner"
@@ -75,7 +76,7 @@ var _ = ginkgo.Describe(clusterStateInformingName, label.E2E, func() {
 		Expect(err).NotTo(HaveOccurred())
 
 		// write results
-		h.WriteResults(results)
+		expect.NoError(h.WriteResults(results))
 	}, prometheusTimeout.Seconds()+prometheusPodStartedDuration.Seconds())
 })
 
