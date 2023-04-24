@@ -19,14 +19,17 @@ The table below represents the periodic jobs the SD CICD team manages as part
 of the osde2e test framework. Overall dashboard can be found
 [here][SD CICD Test Grid Dashboard].
 
-| Job Name                              | OCP Version            | Results                                             |
-| ------------------------------------- | ---------------------- | --------------------------------------------------- |
-| ROSA STS                              | Latest GA              | [Test Grid][SD CICD ROSA STS]                       |
-| ROSA HCP                              | Latest GA              | [Test Grid][SD CICD ROSA HCP]                       |
-| ROSA BYOVPC Proxy Install             | Latest Pre-GA          | [Test Grid][SD CICD ROSA BYOVPC Proxy Install]      |
-| ROSA BYOVPC Proxy Post Install        | Latest Pre-GA          | [Test Grid][SD CICD ROSA BYOVPC Proxy Post Install] |
-| OSD AWS Upgrade                       | Latest Y-1 To Latest Y | [Test Grid][SD CICD OSD AWS Upgrade]                |
-| OSD AWS SREP Operator Informing Suite | Latest Pre-GA          | [Test Grid][SD CICD OSD AWS Informing Suite]        |
+| Job Name                                                     | OCP Version                         | Results                                             |
+| ------------------------------------------------------------ | ----------------------------------- | --------------------------------------------------- |
+| ROSA STS                                                     | Latest GA                           | [Test Grid][SD CICD ROSA STS]                       |
+| ROSA HCP                                                     | Latest GA                           | [Test Grid][SD CICD ROSA HCP]                       |
+| ROSA BYOVPC Proxy Install                                    | Latest Pre-GA                       | [Test Grid][SD CICD ROSA BYOVPC Proxy Install]      |
+| ROSA BYOVPC Proxy Post Install                               | Latest Pre-GA                       | [Test Grid][SD CICD ROSA BYOVPC Proxy Post Install] |
+| OSD AWS Upgrade Latest Default Y Minus 1 To Latest Default Y | Latest Default Y-1 to Latest Y      | [Test Grid][SD CICD OSD AWS Upgrade Y-1 To Y]       |
+| OSD AWS Upgrade Latest Default Z Minus 1 To Latest Default Z | Latest Default Z-1 to Latest Z      | [Test Grid][SD CICD OSD AWS Upgrade Z-1 To Z]       |
+| OSD AWS Upgrade Latest Default Y To Latest Default Y Plus 1  | Latest Default Y to Latest Y Plus 1 | [Test Grid][SD CICD OSD AWS Upgrade Y To Y+1]       |
+| OSD AWS Upgrade Latest Default Y Plus 1 To Latest Y          | Latest Default Y+1 to Latest Y      | [Test Grid][SD CICD OSD AWS Upgrade Y+1 To Y]       |
+| OSD AWS SREP Operator Informing Suite                        | Latest Pre-GA                       | [Test Grid][SD CICD OSD AWS Informing Suite]        |
 
 The `ROSA HCP 'HyperShift'` job sends alerts to the following slack channel: [#sd-hypershift-info].
 
@@ -38,11 +41,10 @@ regards to ROSA STS jobs. STS policies may not exist yet for the latest pre-GA
 version. Which means the job needs to install the latest GA'd version,
 until the policies are enabled for the latest pre-GA version.
 
-| OCP Version            | Definition                                                                           |
-| ---------------------- | ------------------------------------------------------------------------------------ |
-| Latest GA              | Installs the latest GA X.Y.Z version from the channel group specified by the job     |
-| Latest Pre-GA          | Installs the latest Pre-GA X.Y.Z version from the channel group specified by the job |
-| Latest Y-1 To Latest Y | Installs the latest GA Y-1 version and upgrades to latest Y                          |
+| OCP Version   | Definition                                                                           |
+| ------------- | ------------------------------------------------------------------------------------ |
+| Latest GA     | Installs the latest GA X.Y.Z version from the channel group specified by the job     |
+| Latest Pre-GA | Installs the latest Pre-GA X.Y.Z version from the channel group specified by the job |
 
 ## TRT Nightly Periodic Jobs
 
@@ -65,8 +67,12 @@ These jobs send alerts to the following slack channel: [#sd-cicd-alerts].
 [SD CICD ROSA HCP]: https://testgrid.k8s.io/redhat-openshift-osd#periodic-ci-openshift-osde2e-main-hypershift-stage-e2e-default&width=90
 [SD CICD ROSA BYOVPC Proxy Install]: https://testgrid.k8s.io/redhat-openshift-osd#periodic-ci-openshift-osde2e-main-rosa-stage-e2e-byo-vpc-proxy-install&width=90
 [SD CICD ROSA BYOVPC Proxy Post Install]: https://testgrid.k8s.io/redhat-openshift-osd#periodic-ci-openshift-osde2e-main-rosa-stage-e2e-byo-vpc-proxy-postinstall&width=90
-[SD CICD OSD AWS Upgrade]: https://testgrid.k8s.io/redhat-openshift-osd#periodic-ci-openshift-osde2e-main-aws-stage-e2e-upgrade-to-latest&width=90
 [SD CICD OSD AWS Informing Suite]: https://testgrid.k8s.io/redhat-openshift-osd#periodic-ci-openshift-osde2e-main-aws-stage-informing-default&width=90
+[SD CICD OSD AWS Upgrade Y-1 To Y]: https://testgrid.k8s.io/redhat-openshift-osd#periodic-ci-openshift-osde2e-main-osd-aws-upgrade-latest-default-y-minus-1-to-latest-default-y&width=90
+[SD CICD OSD AWS Upgrade Z-1 To Z]: https://testgrid.k8s.io/redhat-openshift-osd#periodic-ci-openshift-osde2e-main-osd-aws-upgrade-latest-default-z-minus-1-to-latest-default-z&width=90
+[SD CICD OSD AWS Upgrade Y To Y+1]: https://testgrid.k8s.io/redhat-openshift-osd#periodic-ci-openshift-osde2e-main-osd-aws-upgrade-latest-default-y-to-latest-y-plus-1&width=90
+[SD CICD OSD AWS Upgrade Y+1 To Y]: https://testgrid.k8s.io/redhat-openshift-osd#periodic-ci-openshift-osde2e-main-osd-aws-upgrade-latest-default-y-plus-1-to-latest-y&width=90
+
 
 [4.14 TRT OSD AWS]: https://testgrid.k8s.io/redhat-openshift-ocp-release-4.14-informing#release-openshift-ocp-osd-aws-nightly-4.14&width=90
 [4.14 TRT OSD GCP]: https://testgrid.k8s.io/redhat-openshift-ocp-release-4.14-informing#release-openshift-ocp-osd-gcp-nightly-4.14&width=90
