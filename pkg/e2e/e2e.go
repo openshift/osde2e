@@ -423,7 +423,7 @@ func runGinkgoTests() (int, error) {
 		}
 	}
 
-	var testsPassed bool
+	testsPassed := true
 	var installTestCaseData []db.CreateTestcaseParams
 	if runInstallTests {
 		log.Println("Running e2e tests...")
