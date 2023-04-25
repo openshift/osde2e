@@ -14,7 +14,12 @@ docker create --name osde2e-run -e OCM_TOKEN \
 	-e OCM_ENV="${ENVIRONMENT}" \
 	-e ROSA_STS="${STS}" \
 	-e INSTANCE_TYPE \
-	-e REPORT_DIR="/tmp/${REPORT_DIR}" quay.io/app-sre/osde2e test --configs "${CONFIGS}"
+	-e SKIP_DESTROY_CLUSTER \
+	-e SKIP_CLUSTER_HEALTH_CHECKS \
+	-e CLUSTER_ID \
+	-e MUST_GATHER \
+	-e INSTALL_LATEST_XY \
+	-e REPORT_DIR="/tmp/${REPORT_DIR}" quay.io/app-sre/osde2e test --configs "${CONFIGS}" "${ADDITIONAL_FLAGS}" 
 
 docker start -a osde2e-run
 
