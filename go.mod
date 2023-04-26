@@ -23,7 +23,7 @@ require (
 	github.com/joshdk/go-junit v1.0.0
 	github.com/kyleconroy/sqlc v1.17.2
 	github.com/kylelemons/godebug v1.1.0
-	github.com/lib/pq v1.10.8
+	github.com/lib/pq v1.10.9
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/onsi/ginkgo/v2 v2.9.2
 	github.com/onsi/gomega v1.27.6
