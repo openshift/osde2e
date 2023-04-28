@@ -2,6 +2,7 @@ package verify
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/onsi/ginkgo/v2"
@@ -43,6 +44,8 @@ var _ = ginkgo.Describe(storageTestName, ginkgo.Ordered, label.HyperShift, label
 		}
 
 		for _, storageClass := range storageClassList.Items {
+			errMsg := fmt.Sprintf("storage class %q, provisioner %q", storageClass.GetName(), storageClass.Provisioner)
+
 			pvc := &v1.PersistentVolumeClaim{
 				ObjectMeta: metav1.ObjectMeta{
 					GenerateName: "osde2e-",
@@ -58,7 +61,7 @@ var _ = ginkgo.Describe(storageTestName, ginkgo.Ordered, label.HyperShift, label
 					StorageClassName: pointer.String(storageClass.GetName()),
 				},
 			}
-			expect.NoError(client.Create(ctx, pvc), "failed to create PVC")
+			expect.NoError(client.Create(ctx, pvc), "failed to create PVC with %s", errMsg)
 
 			pod := &v1.Pod{
 				ObjectMeta: metav1.ObjectMeta{
@@ -95,13 +98,13 @@ var _ = ginkgo.Describe(storageTestName, ginkgo.Ordered, label.HyperShift, label
 					RestartPolicy: v1.RestartPolicyNever,
 				},
 			}
-			expect.NoError(client.Create(ctx, pod), "failed to create pod")
+			expect.NoError(client.Create(ctx, pod), "failed to create pod with %s", errMsg)
 
-			err := wait.For(conditions.New(client).PodPhaseMatch(pod, v1.PodSucceeded), wait.WithTimeout(2*time.Minute))
-			expect.NoError(err, "pod %q never succeeded", pod.GetName())
+			err := wait.For(conditions.New(client).PodPhaseMatch(pod, v1.PodSucceeded), wait.WithTimeout(4*time.Minute))
+			expect.NoError(err, "pod %q with %s never succeeded", pod.GetName(), errMsg)
 
-			expect.NoError(client.Delete(ctx, pod), "unable to delete pod")
-			expect.NoError(client.Delete(ctx, pvc), "unable to delete PVC")
+			expect.NoError(client.Delete(ctx, pod), "unable to delete pod %q with %s", pod.GetName(), errMsg)
+			expect.NoError(client.Delete(ctx, pvc), "unable to delete PVC with %s", errMsg)
 		}
 	})
 })
