@@ -53,6 +53,7 @@ import (
 	"github.com/openshift/osde2e/pkg/common/spi"
 	"github.com/openshift/osde2e/pkg/common/upgrade"
 	"github.com/openshift/osde2e/pkg/common/util"
+	"github.com/openshift/osde2e/pkg/common/versions"
 	"github.com/openshift/osde2e/pkg/debug"
 	"github.com/openshift/osde2e/pkg/e2e/routemonitors"
 )
@@ -379,7 +380,8 @@ func runGinkgoTests() (int, error) {
 		metadata.Instance.SetEnvironment(provider.Environment())
 
 		// configure cluster and upgrade versions
-		if err = ChooseVersions(); err != nil {
+		versionSelector := versions.VersionSelector{Provider: provider}
+		if err = versionSelector.SelectClusterVersions(); err != nil {
 			// If we can't find a version to use, exit with an error code.
 			return Failure, err
 		}

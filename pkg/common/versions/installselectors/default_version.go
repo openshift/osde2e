@@ -1,7 +1,11 @@
 package installselectors
 
 import (
+	"fmt"
+
 	"github.com/Masterminds/semver"
+	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
+	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/spi"
 )
 
@@ -21,5 +25,10 @@ func (d defaultVersion) Priority() int {
 }
 
 func (d defaultVersion) SelectVersion(versionList *spi.VersionList) (*semver.Version, string, error) {
-	return versionList.Default(), "current default", nil
+	versionType := "current default"
+	versionDefault := versionList.Default()
+	if versionDefault == nil {
+		return nil, versionType, fmt.Errorf("no default version set for channel group: %s", viper.GetString(config.Cluster.Channel))
+	}
+	return versionDefault, versionType, nil
 }

@@ -53,7 +53,7 @@ func TestDefaultVersionSelectVersion(t *testing.T) {
 		selector := defaultVersion{}
 
 		selectedVersion, descriptor, err := selector.SelectVersion(test.versions)
-		if err != nil {
+		if err != nil && selectedVersion != nil {
 			t.Errorf("test %s: error while selecting version: %v", test.name, err)
 		}
 
