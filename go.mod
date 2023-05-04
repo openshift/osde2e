@@ -46,7 +46,7 @@ require (
 	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.61.0
 	github.com/prometheus-operator/prometheus-operator/pkg/client v0.61.0
 	github.com/prometheus/alertmanager v0.25.0
-	github.com/prometheus/client_golang v1.15.0
+	github.com/prometheus/client_golang v1.15.1
 	github.com/prometheus/common v0.42.0
 	github.com/redhat-cop/must-gather-operator v1.1.2
 	github.com/slack-go/slack v0.12.2
