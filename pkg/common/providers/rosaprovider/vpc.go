@@ -71,16 +71,22 @@ func createHyperShiftVPC() (*HyperShiftVPC, error) {
 		return nil, err
 	}
 
-	err = tf.Plan(
-		ctx,
-		tfexec.Var(fmt.Sprintf("aws_region=%s", viper.GetString(config.AWSRegion))),
-		tfexec.Var(fmt.Sprintf("cluster_name=%s", viper.GetString(config.Cluster.Name))),
-	)
-	if err != nil {
-		return &vpc, err
-	}
+	err = callAndSetAWSSession(func() error {
+		err := tf.Plan(
+			ctx,
+			tfexec.Var(fmt.Sprintf("aws_region=%s", viper.GetString(config.AWSRegion))),
+			tfexec.Var(fmt.Sprintf("cluster_name=%s", viper.GetString(config.Cluster.Name))),
+		)
+		if err != nil {
+			return err
+		}
 
-	err = tf.Apply(ctx)
+		err = tf.Apply(ctx)
+		if err != nil {
+			return err
+		}
+		return nil
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -119,11 +125,13 @@ func deleteHyperShiftVPC(workingDir string) error {
 
 	log.Println("Deleting ROSA HyperShift aws vpc")
 
-	err = tf.Destroy(
-		ctx,
-		tfexec.Var(fmt.Sprintf("aws_region=%s", viper.GetString(config.AWSRegion))),
-		tfexec.Var(fmt.Sprintf("cluster_name=%s", viper.GetString(config.Cluster.Name))),
-	)
+	err = callAndSetAWSSession(func() error {
+		return tf.Destroy(
+			ctx,
+			tfexec.Var(fmt.Sprintf("aws_region=%s", viper.GetString(config.AWSRegion))),
+			tfexec.Var(fmt.Sprintf("cluster_name=%s", viper.GetString(config.Cluster.Name))),
+		)
+	})
 	if err != nil {
 		return err
 	}
