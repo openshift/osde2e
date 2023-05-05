@@ -1,0 +1,3 @@
+tests:
+  ginkgoLabelFilter: >
+    (E2E || Operators || TestHarness || ServiceDefinition || AppBuilds) && !Informing
