@@ -553,6 +553,8 @@ func ProvisionCluster(logger *log.Logger) (*spi.Cluster, error) {
 				if err != nil {
 					fmt.Printf("an error occurred validating the cluster name %v\n", err)
 				} else if validName {
+					viper.Set(config.Cluster.Name, name)
+					log.Printf("cluster name set to %s\n", name)
 					break
 				} else {
 					fmt.Printf("cluster name %s already exists.\n", name)
