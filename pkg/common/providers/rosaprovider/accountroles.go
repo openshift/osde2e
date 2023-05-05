@@ -26,7 +26,7 @@ func (m *ROSAProvider) createAccountRoles(version string) error {
 	log.Printf("Checking if account roles exist with prefix %q", prefix)
 
 	accountRoles, err := m.getAccountRoles(prefix, version)
-	if err != nil && accountRoles != nil {
+	if err != nil {
 		return fmt.Errorf("fetching account roles failed: %v", err)
 	}
 
@@ -63,6 +63,7 @@ func (m *ROSAProvider) createAccountRoles(version string) error {
 // getAccountRoles gets exact account roles based on prefix/version provided
 func (m *ROSAProvider) getAccountRoles(prefix string, version string) (*AccountRoles, error) {
 	accountRoles := &AccountRoles{}
+	accountRolesFound := 0
 
 	err := callAndSetAWSSession(func() error {
 		awsClient, err := rosaAws.NewClient().
@@ -78,7 +79,6 @@ func (m *ROSAProvider) getAccountRoles(prefix string, version string) (*AccountR
 			return fmt.Errorf("error listing account roles: %v", err)
 		}
 
-		count := 0
 		for _, role := range roles {
 			if !strings.HasPrefix(role.RoleName, prefix) {
 				continue
@@ -87,21 +87,17 @@ func (m *ROSAProvider) getAccountRoles(prefix string, version string) (*AccountR
 			switch role.RoleType {
 			case "Control plane":
 				accountRoles.ControlPlaneRoleARN = role.RoleARN
-				count += 1
+				accountRolesFound += 1
 			case "Installer":
 				accountRoles.InstallerRoleARN = role.RoleARN
-				count += 1
+				accountRolesFound += 1
 			case "Support":
 				accountRoles.SupportRoleARN = role.RoleARN
-				count += 1
+				accountRolesFound += 1
 			case "Worker":
 				accountRoles.WorkerRoleARN = role.RoleARN
-				count += 1
+				accountRolesFound += 1
 			}
-		}
-
-		if count != 4 {
-			return fmt.Errorf("error one or more prefixed %q account roles does not exist: %+v", prefix, accountRoles)
 		}
 
 		return nil
@@ -110,5 +106,12 @@ func (m *ROSAProvider) getAccountRoles(prefix string, version string) (*AccountR
 		return nil, err
 	}
 
-	return accountRoles, nil
+	switch {
+	case accountRolesFound == 0:
+		return nil, nil
+	case accountRolesFound != 4:
+		return nil, fmt.Errorf("error one or more prefixed %q account roles does not exist: %+v", prefix, accountRoles)
+	default:
+		return accountRoles, nil
+	}
 }
