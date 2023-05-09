@@ -51,7 +51,7 @@ var _ = ginkgo.Describe(suiteName, ginkgo.Ordered, label.Operators, label.Inform
 	})
 
 	var (
-		configMapName      = "ocm-agent-config"
+		configMapName      = "ocm-agent-cm"
 		clusterRolePrefix  = "ocm-agent-operator"
 		deploymentName     = "ocm-agent"
 		namespace          = "openshift-ocm-agent-operator"
