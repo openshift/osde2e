@@ -11,6 +11,7 @@ RUN make build
 
 FROM registry.access.redhat.com/ubi8/ubi-minimal:latest
 
+RUN microdnf install -y git && microdnf clean all
 RUN mkdir /osde2e-bin
 COPY --from=0 /go/src/github.com/openshift/osde2e/out/osde2e /osde2e-bin
 
