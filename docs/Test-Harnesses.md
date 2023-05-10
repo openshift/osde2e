@@ -50,7 +50,7 @@ Any dependency errors must be resolved to create the test binary.
 
 ## Generic Test Harness
 
-1. This method is recommended to be used for any component which does not use openshift operator boilerplate convention. This method requires manual creation of test structure in either the target repository or a standalone one.
+1. This method is recommended to be used for any component which does not use openshift operator boilerplate convention. It requires manual creation of test structure in either the target repository or a standalone one.
 
 2. Follow the [example test harness](https://github.com/openshift/osde2e-example-test-harness) structure to create a test harness in your component's repository or a standalone repository.
 
