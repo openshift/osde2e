@@ -4,7 +4,6 @@
 
 [Jenkins job link](https://ci.int.devshift.net/blue/organizations/jenkins/osde2e-parameterized-job/activity)
 
-
 Configurable parameters:
 - Cluster region (required)
 - Test configuration files (required)
