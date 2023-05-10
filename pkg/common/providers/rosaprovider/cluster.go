@@ -103,8 +103,9 @@ func (m *ROSAProvider) LaunchCluster(clusterName string) (string, error) {
 	}
 
 	rosaClusterVersion := viper.GetString(config.Cluster.Version)
+	channelGroup := viper.GetString(config.Cluster.Channel)
 	rosaClusterVersion = strings.ReplaceAll(rosaClusterVersion, "openshift-v", "")
-	rosaClusterVersion = strings.ReplaceAll(rosaClusterVersion, fmt.Sprintf("-%s", viper.GetString(config.Cluster.Channel)), "")
+	rosaClusterVersion = strings.ReplaceAll(rosaClusterVersion, fmt.Sprintf("-%s", channelGroup), "")
 
 	log.Printf("ROSA cluster version: %s", rosaClusterVersion)
 
@@ -131,7 +132,8 @@ func (m *ROSAProvider) LaunchCluster(clusterName string) (string, error) {
 		if err != nil {
 			return "", fmt.Errorf("error parsing %s to semantic version: %v", rosaClusterVersion, err)
 		}
-		if err = m.createAccountRoles(fmt.Sprintf("%d.%d", version.Major(), version.Minor())); err != nil {
+		majorMinor := fmt.Sprintf("%d.%d", version.Major(), version.Minor())
+		if err = m.createAccountRoles(majorMinor, channelGroup); err != nil {
 			return "", err
 		}
 	}

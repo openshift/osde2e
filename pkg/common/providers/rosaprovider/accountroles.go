@@ -18,7 +18,7 @@ type AccountRoles struct {
 }
 
 // createAccountRoles will create account roles if they do not already exist
-func (m *ROSAProvider) createAccountRoles(version string) error {
+func (m *ROSAProvider) createAccountRoles(version string, channelGroup string) error {
 	var accountRoles *AccountRoles
 
 	prefix := fmt.Sprintf("ManagedOpenShift-%s", version)
@@ -38,6 +38,7 @@ func (m *ROSAProvider) createAccountRoles(version string) error {
 			"--mode", "auto",
 			"--prefix", prefix,
 			"--version", version,
+			"--channel-group", channelGroup,
 			"--yes",
 		})
 
