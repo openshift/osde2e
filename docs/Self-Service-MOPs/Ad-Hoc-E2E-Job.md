@@ -1,4 +1,4 @@
-* Ad-Hoc e2e test run
+# Ad-Hoc e2e test run
 
 
 [Job definition](https://gitlab.cee.redhat.com/service/app-interface/-/blob/master/resources/jenkins/osde2e/job-templates.yaml?ref_type=heads#L67)
