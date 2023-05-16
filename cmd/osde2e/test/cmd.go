@@ -141,7 +141,8 @@ func init() {
 	viper.BindPFlag(config.Tests.SkipClusterHealthChecks, Cmd.PersistentFlags().Lookup("skip-health-check"))
 	viper.BindPFlag(config.Tests.GinkgoFocus, Cmd.PersistentFlags().Lookup("focus-tests"))
 	viper.BindPFlag(config.Tests.GinkgoSkip, Cmd.PersistentFlags().Lookup("skip-tests"))
-	viper.BindPFlag(config.MustGather, Cmd.PersistentFlags().Lookup("must-gather"))
+	// Cmd.PersistentFlags() fails to retrieve value of must-gather flag, the following line should be kept to Cmd.Flags() for accurate flag value
+	viper.BindPFlag(config.MustGather, Cmd.Flags().Lookup("must-gather"))
 	viper.BindPFlag(config.Tests.GinkgoLabelFilter, Cmd.PersistentFlags().Lookup("label-filter"))
 }
 
