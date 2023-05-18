@@ -2,6 +2,7 @@
 
 Test harnesses are standalone ginkgo e2e test images run on test pods on test clusters by osde2e framework. There are two types of test harnesses depending on the target component tested. SOPs to create and run both are as described below.
 - [Operator Test Harness](#operator-test-harness)
+- [Addon Test Harness](#addon-test-harness)
 - [Generic Test Harness](#generic-test-harness)
 
 ## Operator Test Harness
@@ -47,6 +48,12 @@ Any dependency errors must be resolved to create the test binary.
     - Commit updated job and create a PR against `openshift/release`  repo
 
 15. To run test harness as a periodic job : (todo  https://issues.redhat.com/browse/SDCICD-955)
+
+## Addon Test Harness
+
+1. This method is recommended when the target component is an openshift addon. 
+2. Follow the example harness SOP [here](https://github.com/openshift/osde2e-example-test-harness)
+   - Note the addon id environment parameter "ADDON_IDS" mentioned in the SOP. This should be provided to osde2e executable for it to install your addon prior to test run.
 
 ## Generic Test Harness
 
