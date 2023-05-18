@@ -52,7 +52,7 @@ Any dependency errors must be resolved to create the test binary.
 ## Addon Test Harness
 
 1. This method is recommended when the target component is an openshift addon. 
-2. Follow the example harness SOP here: https://github.com/openshift/osde2e-example-test-harness
+2. Follow the example harness SOP [here](https://github.com/openshift/osde2e-example-test-harness)
   - Note the addon id environment parameter "ADDON_IDS" mentioned in the SOP. This should be provided to osde2e executable for it to install your addon prior to test run.
 
 ## Generic Test Harness
