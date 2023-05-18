@@ -48,7 +48,7 @@ var _ = ginkgo.Describe(suiteName, ginkgo.Ordered, label.HyperShift, label.E2E, 
 
 		req := clientset.CoreV1().Services(h.CurrentProject()).ProxyGet("http", serviceName, "3000", "/", nil)
 		_, err = req.DoRaw(ctx)
-		expect.Error(err)
+		expect.NoError(err)
 
 		err = decoder.DecodeEachFile(ctx, workloadFS, "*", decoder.DeleteHandler(client), decoder.MutateNamespace(h.CurrentProject()))
 		expect.NoError(err)
