@@ -94,7 +94,6 @@ func (h *H) RunTests(ctx context.Context, name string, timeout int, harnesses, a
 
 		// get results
 		results, err := r.RetrieveTestResults()
-
 		if err != nil {
 			log.Print("error while reading test results: %v", err)
 		}
