@@ -13,6 +13,8 @@ part of the *[OCP TRT release informing signal][OpenShift Release Gates]*.
 
 *All periodic jobs are using OCM stage unless noted otherwise.*
 
+*All jobs send alerts to the following slack channel: [#sd-cicd-alerts].*
+
 ## SD CICD Periodic Jobs
 
 The table below represents the periodic jobs the SD CICD team manages as part
@@ -30,8 +32,6 @@ of the osde2e test framework. Overall dashboard can be found
 | OSD AWS Upgrade Latest Default Y To Latest Default Y Plus 1  | Latest Default Y to Latest Y Plus 1 | [Test Grid][SD CICD OSD AWS Upgrade Y To Y+1]       |
 | OSD AWS Upgrade Latest Default Y Plus 1 To Latest Y          | Latest Default Y+1 to Latest Y      | [Test Grid][SD CICD OSD AWS Upgrade Y+1 To Y]       |
 | OSD AWS SREP Operator Informing Suite                        | Latest Pre-GA                       | [Test Grid][SD CICD OSD AWS Informing Suite]        |
-
-The `ROSA HCP 'HyperShift'` job sends alerts to the following slack channel: [#sd-hypershift-info].
 
 ### OCP Versions
 
@@ -59,8 +59,6 @@ to the release.
 | 4.12        | [Test Grid][4.12 TRT OSD AWS] | [Test Grid][4.12 TRT OSD GCP] | [Test Grid][4.12 TRT ROSA CLASSIC STS] | -        |
 | 4.11        | [Test Grid][4.11 TRT OSD AWS] | [Test Grid][4.11 TRT OSD GCP] | [Test Grid][4.11 TRT ROSA CLASSIC STS] | -        |
 | 4.10        | [Test Grid][4.10 TRT OSD AWS] | [Test Grid][4.10 TRT OSD GCP] | [Test Grid][4.10 TRT ROSA CLASSIC STS] | -        |
-
-These jobs send alerts to the following slack channel: [#sd-cicd-alerts].
 
 [SD CICD Test Grid Dashboard]: https://testgrid.k8s.io/redhat-openshift-osd
 [SD CICD ROSA STS]: https://testgrid.k8s.io/redhat-openshift-osd#periodic-ci-openshift-osde2e-main-rosa-stage-e2e-sts&width=90
@@ -90,6 +88,5 @@ These jobs send alerts to the following slack channel: [#sd-cicd-alerts].
 [4.10 TRT ROSA CLASSIC STS]: https://testgrid.k8s.io/redhat-openshift-ocp-release-4.10-informing#release-openshift-ocp-rosa-classic-sts-nightly-4.10&width=90
 
 [#sd-cicd-alerts]: https://app.slack.com/client/T027F3GAJ/CNYM6PB6X
-[#sd-hypershift-info]: https://app.slack.com/client/T027F3GAJ/C04FGSFUHF1
 
 [OpenShift Release Gates]: https://docs.ci.openshift.org/docs/architecture/release-gating/
