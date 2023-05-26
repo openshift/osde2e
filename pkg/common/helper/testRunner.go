@@ -3,7 +3,6 @@ package helper
 import (
 	"context"
 	"fmt"
-	"log"
 	"strings"
 
 	. "github.com/onsi/gomega"
@@ -94,12 +93,12 @@ func (h *H) RunTests(ctx context.Context, name string, timeout int, harnesses, a
 
 		// get results
 		results, err := r.RetrieveTestResults()
+		verbose := false
 		if err != nil {
-			log.Printf("error while reading test results: %v", err)
+			verbose = true
 		}
-
 		// write results
-		h.WriteResults(results)
+		h.WriteResults(results, verbose)
 
 		// ensure job has not failed
 		job, err := h.Kube().BatchV1().Jobs(r.Namespace).Get(ctx, jobName, metav1.GetOptions{})

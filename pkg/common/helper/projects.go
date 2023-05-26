@@ -78,6 +78,6 @@ func (h *H) inspect(ctx context.Context, projects []string) error {
 		return fmt.Errorf("error retrieving project inspection results: %s", err.Error())
 	}
 
-	h.WriteResults(gatherResults)
+	h.WriteResults(gatherResults, false)
 	return nil
 }

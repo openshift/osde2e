@@ -624,7 +624,7 @@ func cleanupAfterE2E(ctx context.Context, h *helper.H) (errors []error) {
 				log.Printf("Error retrieving must-gather results: %s", err.Error())
 				clusterStatus = clusterproperties.StatusCompletedError
 			} else {
-				h.WriteResults(gatherResults)
+				h.WriteResults(gatherResults, false)
 			}
 		}
 
@@ -664,7 +664,7 @@ func cleanupAfterE2E(ctx context.Context, h *helper.H) (errors []error) {
 
 	// write results to disk
 	log.Println("Writing cluster state results")
-	h.WriteResults(stateResults)
+	h.WriteResults(stateResults, false)
 
 	clusterID := viper.GetString(config.Cluster.ID)
 	if len(clusterID) > 0 {

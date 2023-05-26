@@ -75,7 +75,7 @@ var _ = ginkgo.Describe(clusterStateInformingName, label.E2E, func() {
 		Expect(err).NotTo(HaveOccurred())
 
 		// write results
-		h.WriteResults(results)
+		h.WriteResults(results, false)
 	}, prometheusTimeout.Seconds()+prometheusPodStartedDuration.Seconds())
 })
 

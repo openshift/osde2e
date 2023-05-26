@@ -1,6 +1,7 @@
 package helper
 
 import (
+	"log"
 	"os"
 	"path/filepath"
 
@@ -34,12 +35,18 @@ func (h *H) Runner(cmd string) *runner.Runner {
 }
 
 // WriteResults dumps runner results into the ReportDir.
-func (h *H) WriteResults(results map[string][]byte) {
+func (h *H) WriteResults(results map[string][]byte, verbose bool) {
 	for filename, data := range results {
 		dst := filepath.Join(viper.GetString(config.ReportDir), viper.GetString(config.Phase), filename)
 		err := os.MkdirAll(filepath.Dir(dst), os.FileMode(0o755))
 		Expect(err).NotTo(HaveOccurred())
 		err = os.WriteFile(dst, data, os.ModePerm)
+		if verbose {
+			match, _ := filepath.Match("containerLogs/test-harness-*-test-harness.log", filename)
+			if match {
+				log.Printf("Error: test harness did not produce xml results. For test harness container log, see install/ %s", filename)
+			}
+		}
 		Expect(err).NotTo(HaveOccurred())
 	}
 }

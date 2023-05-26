@@ -26,6 +26,6 @@ func (h *H) InspectOLM(ctx context.Context) error {
 		return fmt.Errorf("Error retrieving OLM inspection results: %s", err.Error())
 	}
 
-	h.WriteResults(gatherResults)
+	h.WriteResults(gatherResults, false)
 	return nil
 }

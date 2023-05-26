@@ -109,7 +109,7 @@ var _ = ginkgo.Describe(appBuildsTestName, label.AppBuilds, func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			// write results
-			h.WriteResults(results)
+			h.WriteResults(results, false)
 		}
 	}, float64(e2eTimeoutInSeconds+30))
 })
