@@ -44,7 +44,7 @@ func (h *H) WriteResults(results map[string][]byte, verbose bool) {
 		if verbose {
 			match, _ := filepath.Match("containerLogs/test-harness-*-test-harness.log", filename)
 			if match {
-				log.Printf("Error: test harness did not produce xml results. For test harness container log, see install/ %s", filename)
+				log.Printf("Test harness container log : %s", data)
 			}
 		}
 		Expect(err).NotTo(HaveOccurred())
