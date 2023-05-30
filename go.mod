@@ -3,7 +3,7 @@ module github.com/openshift/osde2e
 go 1.19
 
 require (
-	cloud.google.com/go/kms v1.10.2
+	cloud.google.com/go/kms v1.11.0
 	github.com/Masterminds/semver v1.5.0
 	github.com/PagerDuty/go-pagerduty v1.7.0
 	github.com/PuerkitoBio/goquery v1.8.1
@@ -12,7 +12,7 @@ require (
 	github.com/aws/aws-sdk-go v1.44.271
 	github.com/fatih/color v1.15.0
 	github.com/fsnotify/fsnotify v1.6.0
-	github.com/golang-migrate/migrate/v4 v4.16.0
+	github.com/golang-migrate/migrate/v4 v4.15.0-beta.1
 	github.com/google/go-github/v31 v31.0.0
 	github.com/google/uuid v1.3.0
 	github.com/hashicorp/go-multierror v1.1.1
@@ -21,7 +21,7 @@ require (
 	github.com/jackc/pgtype v1.14.0
 	github.com/jinzhu/inflection v1.0.0
 	github.com/joshdk/go-junit v1.0.0
-	github.com/kyleconroy/sqlc v1.18.0
+	github.com/kyleconroy/sqlc v1.17.2
 	github.com/kylelemons/godebug v1.1.0
 	github.com/lib/pq v1.10.9
 	github.com/mitchellh/mapstructure v1.5.0
@@ -30,21 +30,21 @@ require (
 	github.com/openshift-online/ocm-sdk-go v0.1.342
 	github.com/openshift/api v3.9.1-0.20190924102528-32369d4db2ad+incompatible
 	github.com/openshift/client-go v0.0.0-20220603133046-984ee5ebedcf
-	github.com/openshift/cloud-credential-operator v0.0.0-20230210162952-a4819474e58d
-	github.com/openshift/cloud-ingress-operator v0.0.0-20230208115606-3198614cd87a
+	github.com/openshift/cloud-credential-operator v0.0.0-20230512001141-38e7f96bf730
+	github.com/openshift/cloud-ingress-operator v0.0.0-20230404185246-bd6aaf9bfd8d
 	github.com/openshift/custom-domains-operator v0.0.0-20221118201157-bd1052dac818
-	github.com/openshift/managed-upgrade-operator v0.0.0-20230128000023-b30cca4aa2af
+	github.com/openshift/managed-upgrade-operator v0.0.0-20230525042514-a9b8c1d2571c
 	github.com/openshift/must-gather-operator v0.1.2-0.20221011152618-7805956e1ded
 	github.com/openshift/rosa v1.2.17
 	github.com/openshift/route-monitor-operator v0.0.0-20221118160357-3df1ed1fa1d2
-	github.com/openshift/splunk-forwarder-operator v0.0.0-20230216205147-c051d56cd298
+	github.com/openshift/splunk-forwarder-operator v0.0.0-20230525060151-2dc403aa8ff9
 	github.com/operator-framework/api v0.17.4-0.20230223191600-0131a6301e42
 	github.com/operator-framework/operator-lifecycle-manager v0.22.0
-	github.com/operator-framework/operator-registry v1.26.5
+	github.com/operator-framework/operator-registry v1.27.1
 	github.com/ory/dockertest v3.3.5+incompatible
 	github.com/pganalyze/pg_query_go/v2 v2.2.0
-	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.61.0
-	github.com/prometheus-operator/prometheus-operator/pkg/client v0.61.0
+	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.64.0
+	github.com/prometheus-operator/prometheus-operator/pkg/client v0.64.0
 	github.com/prometheus/alertmanager v0.25.0
 	github.com/prometheus/client_golang v1.15.1
 	github.com/prometheus/common v0.44.0
@@ -53,14 +53,14 @@ require (
 	github.com/spf13/afero v1.9.5
 	github.com/spf13/cobra v1.7.0
 	github.com/spf13/pflag v1.0.5
-	github.com/spf13/viper v1.16.0
+	github.com/spf13/viper v1.8.1
 	github.com/tsenart/vegeta v12.7.0+incompatible
 	github.com/vmware-tanzu/velero v1.7.2
 	golang.org/x/net v0.10.0
 	golang.org/x/oauth2 v0.8.0
 	golang.org/x/tools v0.9.1
-	google.golang.org/api v0.124.0
-	google.golang.org/genproto v0.0.0-20230410155749-daa745c078e1
+	google.golang.org/api v0.125.0
+	google.golang.org/genproto v0.0.0-20230530153820-e85fd2cbaebc
 	google.golang.org/grpc v1.55.0
 	gopkg.in/yaml.v3 v3.0.1
 	gotest.tools/v3 v3.4.0
@@ -68,14 +68,14 @@ require (
 	k8s.io/apimachinery v0.27.2
 	k8s.io/client-go v12.0.0+incompatible
 	k8s.io/kubectl v0.27.2
-	k8s.io/utils v0.0.0-20230209194617-a36077c30491
+	k8s.io/utils v0.0.0-20230313181309-38a27ef9d749
 	sigs.k8s.io/e2e-framework v0.2.0
 )
 
 require (
-	cloud.google.com/go/compute v1.19.0 // indirect
+	cloud.google.com/go/compute v1.19.3 // indirect
 	cloud.google.com/go/compute/metadata v0.2.3 // indirect
-	cloud.google.com/go/iam v0.13.0 // indirect
+	cloud.google.com/go/iam v1.0.1 // indirect
 	github.com/AlecAivazis/survey/v2 v2.3.2 // indirect
 	github.com/Azure/go-ansiterm v0.0.0-20230124172434-306776ec8161 // indirect
 	github.com/Microsoft/go-winio v0.6.1 // indirect
@@ -93,14 +93,14 @@ require (
 	github.com/cenkalti/backoff/v4 v4.2.0 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/cloudflare/circl v1.3.3 // indirect
-	github.com/containerd/continuity v0.2.2 // indirect
+	github.com/containerd/continuity v0.3.0 // indirect
 	github.com/cznic/mathutil v0.0.0-20181122101859-297441e03548 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dgryski/go-gk v0.0.0-20200319235926-a69029f61654 // indirect
 	github.com/dgryski/go-lttb v0.0.0-20210302151804-4a713d71336c // indirect
 	github.com/docker/go-connections v0.4.0 // indirect
 	github.com/docker/go-units v0.5.0 // indirect
-	github.com/emicklei/go-restful/v3 v3.10.0 // indirect
+	github.com/emicklei/go-restful/v3 v3.10.1 // indirect
 	github.com/evanphx/json-patch v5.6.0+incompatible // indirect
 	github.com/evanphx/json-patch/v5 v5.6.0 // indirect
 	github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32 // indirect
@@ -108,7 +108,7 @@ require (
 	github.com/go-logfmt/logfmt v0.5.1 // indirect
 	github.com/go-logr/logr v1.2.4 // indirect
 	github.com/go-openapi/jsonpointer v0.19.6 // indirect
-	github.com/go-openapi/jsonreference v0.20.1 // indirect
+	github.com/go-openapi/jsonreference v0.20.2 // indirect
 	github.com/go-openapi/swag v0.22.3 // indirect
 	github.com/go-task/slim-sprig v0.0.0-20230315185526-52ccab3ef572 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
@@ -123,7 +123,7 @@ require (
 	github.com/google/pprof v0.0.0-20210720184732-4bb14d4b1be1 // indirect
 	github.com/google/s2a-go v0.1.4 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.2.3 // indirect
-	github.com/googleapis/gax-go/v2 v2.8.0 // indirect
+	github.com/googleapis/gax-go/v2 v2.10.0 // indirect
 	github.com/gorilla/css v1.0.0 // indirect
 	github.com/gorilla/websocket v1.4.2 // indirect
 	github.com/gotestyourself/gotestyourself v2.2.0+incompatible // indirect
@@ -165,7 +165,7 @@ require (
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.0.3-0.20211202183452-c5a74bcca799 // indirect
 	github.com/opencontainers/runc v1.1.5 // indirect
-	github.com/pelletier/go-toml/v2 v2.0.8 // indirect
+	github.com/pelletier/go-toml v1.9.4 // indirect
 	github.com/pingcap/errors v0.11.5-0.20210425183316-da1aaba5fb63 // indirect
 	github.com/pingcap/log v0.0.0-20210906054005-afc726e70354 // indirect
 	github.com/pingcap/tidb/parser v0.0.0-20220725134311-c80026e61f00 // indirect
@@ -178,6 +178,7 @@ require (
 	github.com/spf13/cast v1.5.1 // indirect
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
 	github.com/streadway/quantile v0.0.0-20220407130108-4246515d968d // indirect
+	github.com/stretchr/testify v1.8.3 // indirect
 	github.com/subosito/gotenv v1.4.2 // indirect
 	github.com/tsenart/go-tsz v0.0.0-20180814235614-0bd30b3df1c3 // indirect
 	github.com/zclconf/go-cty v1.13.0 // indirect
@@ -195,6 +196,8 @@ require (
 	golang.org/x/text v0.9.0 // indirect
 	golang.org/x/time v0.3.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20230530153820-e85fd2cbaebc // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20230530153820-e85fd2cbaebc // indirect
 	google.golang.org/protobuf v1.30.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
