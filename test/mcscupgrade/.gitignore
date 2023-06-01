@@ -1,0 +1,8 @@
+# XML files
+*.xml
+
+# Compiled test files
+*.test
+
+# Kubeconfig files
+*-kubeconfig
