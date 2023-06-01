@@ -22,6 +22,7 @@ docker create --name osde2e-run -e OCM_TOKEN \
 	-e TEST_HARNESSES \
 	-e POLLING_TIMEOUT \
 	-e OCM_CCS \
+	-e MULTI_AZ \
 	-e REPORT_DIR="/tmp/${REPORT_DIR}" quay.io/app-sre/osde2e test --configs "${CONFIGS}" "${ADDITIONAL_FLAGS}" 
 
 docker start -a osde2e-run
