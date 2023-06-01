@@ -48,7 +48,7 @@ var args struct {
 	kubeConfig         string
 	skipDestroyCluster bool
 	skipHealthChecks   bool
-	mustGather         bool
+	skipMustGather     bool
 	focusTests         string
 	skipTests          string
 	labelFilter        string
@@ -122,8 +122,8 @@ func init() {
 		"Skip any Ginkgo tests whose names match the regular expression.",
 	)
 	pfs.BoolVar(
-		&args.mustGather,
-		"must-gather",
+		&args.skipMustGather,
+		"skip-must-gather",
 		false,
 		"Control the Must Gather process at the end of a failed testing run.",
 	)
@@ -141,8 +141,7 @@ func init() {
 	viper.BindPFlag(config.Tests.SkipClusterHealthChecks, Cmd.PersistentFlags().Lookup("skip-health-check"))
 	viper.BindPFlag(config.Tests.GinkgoFocus, Cmd.PersistentFlags().Lookup("focus-tests"))
 	viper.BindPFlag(config.Tests.GinkgoSkip, Cmd.PersistentFlags().Lookup("skip-tests"))
-	// Cmd.PersistentFlags() fails to retrieve value of must-gather flag, the following line should be kept to Cmd.Flags() for accurate flag value
-	viper.BindPFlag(config.MustGather, Cmd.Flags().Lookup("must-gather"))
+	viper.BindPFlag(config.SkipMustGather, Cmd.PersistentFlags().Lookup("skip-must-gather"))
 	viper.BindPFlag(config.Tests.GinkgoLabelFilter, Cmd.PersistentFlags().Lookup("label-filter"))
 }
 

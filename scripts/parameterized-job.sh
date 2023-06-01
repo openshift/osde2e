@@ -3,7 +3,7 @@
 set +e
 # ensure we have a clean environment
 docker rm osde2e-run
-
+# TODO change jenkins template to provide "SKIP_MUST_GATHER" param instead of "MUST_GATHER"
 # bind mounts run into permissions issues, this creates
 # the container and copies the secrets over to ensure it has perms
 docker create --name osde2e-run -e OCM_TOKEN \
@@ -17,7 +17,7 @@ docker create --name osde2e-run -e OCM_TOKEN \
 	-e SKIP_DESTROY_CLUSTER \
 	-e SKIP_CLUSTER_HEALTH_CHECKS \
 	-e CLUSTER_ID \
-	-e MUST_GATHER \
+	-e SKIP_MUST_GATHER=$(( ! "${MUST_GATHER}" )) \
 	-e INSTALL_LATEST_XY \
 	-e REPORT_DIR="/tmp/${REPORT_DIR}" quay.io/app-sre/osde2e test --configs "${CONFIGS}" "${ADDITIONAL_FLAGS}" 
 
