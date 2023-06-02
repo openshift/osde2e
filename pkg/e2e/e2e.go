@@ -605,7 +605,7 @@ func cleanupAfterE2E(ctx context.Context, h *helper.H) (errors []error) {
 	clusterStatus := clusterproperties.StatusCompletedFailing
 	defer ginkgo.GinkgoRecover()
 
-	if viper.GetBool(config.MustGather) {
+	if !viper.GetBool(config.SkipMustGather) {
 		log.Print("Running Must Gather...")
 		mustGatherTimeoutInSeconds := 1800
 		h.SetServiceAccount(ctx, "system:serviceaccount:%s:cluster-admin")
@@ -633,6 +633,8 @@ func cleanupAfterE2E(ctx context.Context, h *helper.H) (errors []error) {
 
 		log.Print("Gathering OLM State...")
 		h.InspectOLM(ctx)
+	} else {
+		log.Print("Skipping must-gather as requested")
 	}
 
 	log.Print("Gathering Cluster State...")
