@@ -160,6 +160,14 @@ func (m *ROSAProvider) LaunchCluster(clusterName string) (string, error) {
 		createClusterArgs = append(createClusterArgs, "--worker-iam-role", accountRoles.WorkerRoleARN)
 	}
 
+	if viper.GetBool(PrivateLink) {
+		if viper.GetString(config.AWSVPCSubnetIDs) == "" {
+			return "", fmt.Errorf("privatelink specified without providing private ROSA_SUBNET_IDS. Ensure the subnet is private and belongs to a non-RH managed VPC.")
+		} else {
+			createClusterArgs = append(createClusterArgs, "--private-link")
+		}
+	}
+
 	if viper.GetString(config.AWSVPCSubnetIDs) != "" {
 		subnetIDs := viper.GetString(config.AWSVPCSubnetIDs)
 		createClusterArgs = append(createClusterArgs, "--subnet-ids", subnetIDs)

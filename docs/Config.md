@@ -39,6 +39,8 @@ Some environment variables commonly used for pipelines under osde2e are indicate
 | ROSA_ENV             | Environment for the e2e testing, default to prod.            |
 | ROSA_STS             | Boolean value to indicate the cluster is STS enabled or not. |
 | ROSA_REPLICAS        | Compute node count for the rosa cluster, default is 2.       |
+| ROSA_PRIVATELINK     | Boolean value to specify a privatelink cluster. If set true, a private subnet ID belonging to a non-RH managed VPC must be provided as ROSA_SUBNET_IDS") |
+| ROSA_SUBNET_IDS      | Subnet IDs to be used for the test cluster creation.  |                                                                                                     
 
 ### Hypershift cluster related:-
 
