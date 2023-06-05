@@ -134,7 +134,6 @@ func (m *ROSAProvider) LaunchCluster(clusterName string) (string, error) {
 		"--version", rosaClusterVersion,
 		"--expiration-time", expiration.Format(time.RFC3339),
 		"--compute-machine-type", viper.GetString(ComputeMachineType),
-		"--replicas", viper.GetString(Replicas),
 		"--machine-cidr", viper.GetString(MachineCIDR),
 		"--service-cidr", viper.GetString(ServiceCIDR),
 		"--pod-cidr", viper.GetString(PodCIDR),
@@ -180,6 +179,12 @@ func (m *ROSAProvider) LaunchCluster(clusterName string) (string, error) {
 
 	if viper.GetBool(config.Cluster.MultiAZ) {
 		createClusterArgs = append(createClusterArgs, "--multi-az")
+	}
+	// 3 minimum compute nodes are required for multi AZ. Osde2e default is 2 for all cluster types. Increase it unless greater is provided.
+	if viper.GetBool(config.Cluster.MultiAZ) && viper.GetInt(Replicas) < 3 {
+		createClusterArgs = append(createClusterArgs, "--replicas", "3")
+	} else {
+		createClusterArgs = append(createClusterArgs, "--replicas", viper.GetString(Replicas))
 	}
 	networkProvider := viper.GetString(config.Cluster.NetworkProvider)
 	if networkProvider != config.DefaultNetworkProvider {
