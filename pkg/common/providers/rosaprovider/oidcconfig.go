@@ -14,12 +14,16 @@ func (m *ROSAProvider) createOIDCConfig(prefix string) (string, error) {
 	cmd := createOIDCConfig.Cmd
 	// TODO: Get installer role ARN, prompts for one when multiple exist,
 	//	lets just automate the create/delete of account roles
-	cmd.SetArgs([]string{
+	args := []string{
 		"--mode", "auto",
 		"--prefix", prefix,
+		"--managed=false",
 		"--installer-role-arn", fmt.Sprintf("arn:aws:iam::%s:role/ManagedOpenShift-Installer-Role", aws.CcsAwsSession.GetAccountId()),
 		"--yes",
-	})
+	}
+
+	cmd.SetArgs(args)
+
 	err := callAndSetAWSSession(func() error {
 		return cmd.Execute()
 	})
