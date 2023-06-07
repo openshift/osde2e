@@ -15,6 +15,12 @@ part of the *[OCP TRT release informing signal][OpenShift Release Gates]*.
 
 *All jobs send alerts to the following slack channel: [#sd-cicd-alerts].*
 
+## SD CICD Self Service Jenkins Job
+
+The SD CICD team has a self service Jenkins job that allows users to run
+OSDe2e tests using parameters. The job can be found [https://ci.int.devshift.net/view/osde2e/job/osde2e-parameterized-job/][SD CICD Self Service Job].
+The job is using an AWS account for deployments. *******5153
+
 ## SD CICD Periodic Jobs
 
 The table below represents the periodic jobs the SD CICD team manages as part
