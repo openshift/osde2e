@@ -12,7 +12,7 @@ require (
 	github.com/aws/aws-sdk-go v1.44.275
 	github.com/fatih/color v1.15.0
 	github.com/fsnotify/fsnotify v1.6.0
-	github.com/golang-migrate/migrate/v4 v4.15.0-beta.1
+	github.com/golang-migrate/migrate/v4 v4.16.1
 	github.com/google/go-github/v31 v31.0.0
 	github.com/google/uuid v1.3.0
 	github.com/hashicorp/go-multierror v1.1.1
