@@ -18,7 +18,7 @@ type AccountRoles struct {
 }
 
 // createAccountRoles will create account roles if they do not already exist
-func (m *ROSAProvider) createAccountRoles(version string) error {
+func (m *ROSAProvider) createAccountRoles(version string, channelGroup string) (*AccountRoles, error) {
 	var accountRoles *AccountRoles
 
 	prefix := fmt.Sprintf("ManagedOpenShift-%s", version)
@@ -27,7 +27,7 @@ func (m *ROSAProvider) createAccountRoles(version string) error {
 
 	accountRoles, err := m.getAccountRoles(prefix, version)
 	if err != nil {
-		return fmt.Errorf("fetching account roles failed: %v", err)
+		return nil, fmt.Errorf("fetching account roles failed: %v", err)
 	}
 
 	if accountRoles == nil {
@@ -38,6 +38,7 @@ func (m *ROSAProvider) createAccountRoles(version string) error {
 			"--mode", "auto",
 			"--prefix", prefix,
 			"--version", version,
+			"--channel-group", channelGroup,
 			"--yes",
 		})
 
@@ -45,19 +46,19 @@ func (m *ROSAProvider) createAccountRoles(version string) error {
 			return cmd.Execute()
 		})
 		if err != nil {
-			return fmt.Errorf("error creating account roles with prefix %q, %v", prefix, err)
+			return nil, fmt.Errorf("error creating account roles with prefix %q, %v", prefix, err)
 		}
 
 		accountRoles, err = m.getAccountRoles(prefix, version)
 		if err != nil || accountRoles == nil {
-			return fmt.Errorf("fetching generated account roles with prefix failed %q, %v", prefix, err)
+			return nil, fmt.Errorf("fetching generated account roles with prefix failed %q, %v", prefix, err)
 		}
 
-		return nil
+		return accountRoles, nil
 	}
 
 	log.Printf("Account roles already exist with prefix %q", prefix)
-	return nil
+	return accountRoles, nil
 }
 
 // getAccountRoles gets exact account roles based on prefix/version provided

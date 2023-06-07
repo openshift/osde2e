@@ -214,7 +214,7 @@ as follows.
 POLLING_TIMEOUT=1 \
 ./out/osde2e test --cluster-id=<cluster-id> \
 --configs stage \
---must-gather=False \
+--skip-must-gather \
 --skip-health-check \
 --focus-tests="rh-api-lb-test"
 ```

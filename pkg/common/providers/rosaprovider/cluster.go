@@ -75,6 +75,7 @@ func (m *ROSAProvider) LaunchCluster(clusterName string) (string, error) {
 	var err error
 	var awsCreator *rosaAws.Creator
 	var awsVPCSubnetIds string
+	var accountRoles *AccountRoles
 
 	clusterProperties, err := m.ocmProvider.GenerateProperties()
 	if err != nil {
@@ -103,8 +104,9 @@ func (m *ROSAProvider) LaunchCluster(clusterName string) (string, error) {
 	}
 
 	rosaClusterVersion := viper.GetString(config.Cluster.Version)
+	channelGroup := viper.GetString(config.Cluster.Channel)
 	rosaClusterVersion = strings.ReplaceAll(rosaClusterVersion, "openshift-v", "")
-	rosaClusterVersion = strings.ReplaceAll(rosaClusterVersion, fmt.Sprintf("-%s", viper.GetString(config.Cluster.Channel)), "")
+	rosaClusterVersion = strings.ReplaceAll(rosaClusterVersion, fmt.Sprintf("-%s", channelGroup), "")
 
 	log.Printf("ROSA cluster version: %s", rosaClusterVersion)
 
@@ -125,17 +127,6 @@ func (m *ROSAProvider) LaunchCluster(clusterName string) (string, error) {
 		return "", fmt.Errorf("error determining region to use: %v", err)
 	}
 
-	// Auto create account roles if required
-	if viper.GetBool(STS) {
-		version, err := util.OpenshiftVersionToSemver(rosaClusterVersion)
-		if err != nil {
-			return "", fmt.Errorf("error parsing %s to semantic version: %v", rosaClusterVersion, err)
-		}
-		if err = m.createAccountRoles(fmt.Sprintf("%d.%d", version.Major(), version.Minor())); err != nil {
-			return "", err
-		}
-	}
-
 	createClusterArgs := []string{
 		"--cluster-name", clusterName,
 		"--region", m.awsRegion,
@@ -143,7 +134,6 @@ func (m *ROSAProvider) LaunchCluster(clusterName string) (string, error) {
 		"--version", rosaClusterVersion,
 		"--expiration-time", expiration.Format(time.RFC3339),
 		"--compute-machine-type", viper.GetString(ComputeMachineType),
-		"--replicas", viper.GetString(Replicas),
 		"--machine-cidr", viper.GetString(MachineCIDR),
 		"--service-cidr", viper.GetString(ServiceCIDR),
 		"--pod-cidr", viper.GetString(PodCIDR),
@@ -151,6 +141,24 @@ func (m *ROSAProvider) LaunchCluster(clusterName string) (string, error) {
 		"--mode", "auto",
 		"--yes",
 	}
+
+	// Auto create account roles if required
+	if viper.GetBool(STS) {
+		version, err := util.OpenshiftVersionToSemver(rosaClusterVersion)
+		if err != nil {
+			return "", fmt.Errorf("error parsing %s to semantic version: %v", rosaClusterVersion, err)
+		}
+		majorMinor := fmt.Sprintf("%d.%d", version.Major(), version.Minor())
+		if accountRoles, err = m.createAccountRoles(majorMinor, channelGroup); err != nil {
+			return "", err
+		}
+
+		createClusterArgs = append(createClusterArgs, "--controlplane-iam-role", accountRoles.ControlPlaneRoleARN)
+		createClusterArgs = append(createClusterArgs, "--role-arn", accountRoles.InstallerRoleARN)
+		createClusterArgs = append(createClusterArgs, "--support-role-arn", accountRoles.SupportRoleARN)
+		createClusterArgs = append(createClusterArgs, "--worker-iam-role", accountRoles.WorkerRoleARN)
+	}
+
 	if viper.GetString(config.AWSVPCSubnetIDs) != "" {
 		subnetIDs := viper.GetString(config.AWSVPCSubnetIDs)
 		createClusterArgs = append(createClusterArgs, "--subnet-ids", subnetIDs)
@@ -171,6 +179,12 @@ func (m *ROSAProvider) LaunchCluster(clusterName string) (string, error) {
 
 	if viper.GetBool(config.Cluster.MultiAZ) {
 		createClusterArgs = append(createClusterArgs, "--multi-az")
+	}
+	// 3 minimum compute nodes are required for multi AZ. Osde2e default is 2 for all cluster types. Increase it unless greater is provided.
+	if viper.GetBool(config.Cluster.MultiAZ) && viper.GetInt(Replicas) < 3 {
+		createClusterArgs = append(createClusterArgs, "--replicas", "3")
+	} else {
+		createClusterArgs = append(createClusterArgs, "--replicas", viper.GetString(Replicas))
 	}
 	networkProvider := viper.GetString(config.Cluster.NetworkProvider)
 	if networkProvider != config.DefaultNetworkProvider {

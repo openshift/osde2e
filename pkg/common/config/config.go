@@ -60,9 +60,9 @@ const (
 	// Env: DRY_RUN
 	DryRun = "dryRun"
 
-	// MustGather will run a Must-Gather process upon completion of the tests.
-	// Env: MUST_GATHER
-	MustGather = "mustGather"
+	// will skip the Must-Gather process upon completion of the tests.
+	// Env: SKIP_MUST_GATHER
+	SkipMustGather = "skipMustGather"
 
 	// InstalledWorkloads is an internal variable used to track currently installed workloads in this test run.
 	InstalledWorkloads = "installedWorkloads"
@@ -646,8 +646,8 @@ func InitOSDe2eViper() {
 	viper.SetDefault(DryRun, false)
 	viper.BindEnv(DryRun, "DRY_RUN")
 
-	viper.SetDefault(MustGather, true)
-	viper.BindEnv(MustGather, "MUST_GATHER")
+	viper.SetDefault(SkipMustGather, false)
+	viper.BindEnv(SkipMustGather, "SKIP_MUST_GATHER")
 
 	viper.BindEnv(CanaryChance, "CANARY_CHANCE")
 
@@ -722,7 +722,7 @@ func InitOSDe2eViper() {
 	viper.BindEnv(Tests.OperatorSkip, "OPERATOR_SKIP")
 
 	viper.SetDefault(Tests.SkipClusterHealthChecks, false)
-	viper.BindEnv(Tests.OperatorSkip, "SKIP_CLUSTER_HEALTH_CHECKS")
+	viper.BindEnv(Tests.SkipClusterHealthChecks, "SKIP_CLUSTER_HEALTH_CHECKS")
 
 	viper.SetDefault(Tests.ClusterHealthChecksTimeout, "2h")
 	viper.BindEnv(Tests.ClusterHealthChecksTimeout, "CLUSTER_HEALTH_CHECKS_TIMEOUT")
@@ -821,7 +821,7 @@ func InitOSDe2eViper() {
 	viper.SetDefault(Cluster.NetworkProvider, DefaultNetworkProvider)
 	viper.BindEnv(Cluster.NetworkProvider, "CLUSTER_NETWORK_PROVIDER")
 
-	viper.SetDefault(Cluster.HibernateAfterUse, true)
+	viper.SetDefault(Cluster.HibernateAfterUse, false)
 	viper.BindEnv(Cluster.HibernateAfterUse, "HIBERNATE_AFTER_USE")
 
 	viper.SetDefault(Cluster.UseExistingCluster, false)
