@@ -722,7 +722,7 @@ func InitOSDe2eViper() {
 	viper.BindEnv(Tests.OperatorSkip, "OPERATOR_SKIP")
 
 	viper.SetDefault(Tests.SkipClusterHealthChecks, false)
-	viper.BindEnv(Tests.OperatorSkip, "SKIP_CLUSTER_HEALTH_CHECKS")
+	viper.BindEnv(Tests.SkipClusterHealthChecks, "SKIP_CLUSTER_HEALTH_CHECKS")
 
 	viper.SetDefault(Tests.ClusterHealthChecksTimeout, "2h")
 	viper.BindEnv(Tests.ClusterHealthChecksTimeout, "CLUSTER_HEALTH_CHECKS_TIMEOUT")
