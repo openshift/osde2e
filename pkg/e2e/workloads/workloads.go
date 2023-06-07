@@ -16,6 +16,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"sigs.k8s.io/e2e-framework/klient/decoder"
+	"sigs.k8s.io/e2e-framework/klient/k8s"
 	"sigs.k8s.io/e2e-framework/klient/wait"
 	"sigs.k8s.io/e2e-framework/klient/wait/conditions"
 )
@@ -40,6 +41,13 @@ var _ = ginkgo.Describe(suiteName, ginkgo.Ordered, label.HyperShift, label.E2E, 
 		expect.NoError(err)
 
 		deployment := &appsv1.Deployment{ObjectMeta: metav1.ObjectMeta{Name: deploymentName, Namespace: h.CurrentProject()}}
+
+		err = wait.For(conditions.New(client).ResourceMatch(deployment, func(object k8s.Object) bool {
+			d := object.(*appsv1.Deployment)
+			return float64(d.Status.ReadyReplicas)/float64(*d.Spec.Replicas) >= 0.50
+		}), wait.WithTimeout(time.Minute*1))
+		expect.NoError(err, "%s never deployed", deploymentName)
+
 		err = wait.For(conditions.New(client).DeploymentConditionMatch(deployment, appsv1.DeploymentAvailable, v1.ConditionTrue), wait.WithTimeout(5*time.Minute))
 		expect.NoError(err, "deployment %s/%s never became available", h.CurrentProject(), deploymentName)
 
