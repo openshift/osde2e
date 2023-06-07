@@ -131,7 +131,7 @@ func beforeSuite() bool {
 			log.Printf("Error while adding upgrade version property to cluster via OCM: %v", err)
 		}
 
-		if viper.GetString(config.Tests.SkipClusterHealthChecks) != "true" {
+		if !viper.GetBool(config.Tests.SkipClusterHealthChecks) {
 			if viper.GetBool(config.Cluster.Reused) {
 				// We should manually run all our health checks if the cluster is waking up
 				err = clusterutil.WaitForClusterReadyPostWake(cluster.ID(), nil)
