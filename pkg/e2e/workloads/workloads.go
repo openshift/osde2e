@@ -53,7 +53,7 @@ var _ = ginkgo.Describe(suiteName, ginkgo.Ordered, label.HyperShift, label.E2E, 
 		err = decoder.DecodeEachFile(ctx, workloadFS, "*", decoder.DeleteHandler(client), decoder.MutateNamespace(h.CurrentProject()))
 		expect.NoError(err)
 	},
-		ginkgo.Entry("Redmine", os.DirFS("assets/workloads/e2e/redmine"), "redmine", "redmine-frontend"),
+		ginkgo.PEntry("Redmine", os.DirFS("assets/workloads/e2e/redmine"), "redmine", "redmine-frontend"),
 		ginkgo.Entry("Guestbook", os.DirFS("assets/workloads/e2e/guestbook"), "frontend", "frontend"),
 	)
 })
