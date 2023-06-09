@@ -15,23 +15,29 @@ part of the *[OCP TRT release informing signal][OpenShift Release Gates]*.
 
 *All jobs send alerts to the following slack channel: [#sd-cicd-alerts].*
 
+## SD CICD Self Service Jenkins Job
+
+The SD CICD team has a self service Jenkins job that allows users to run
+OSDe2e tests using parameters. The job can be found [here](https://ci.int.devshift.net/view/osde2e/job/osde2e-parameterized-job/)
+The job is using an AWS account for deployments. *******5153
+
 ## SD CICD Periodic Jobs
 
 The table below represents the periodic jobs the SD CICD team manages as part
 of the osde2e test framework. Overall dashboard can be found
 [here][SD CICD Test Grid Dashboard].
 
-| Job Name                                                     | OCP Version                         | Results                                             |
-| ------------------------------------------------------------ | ----------------------------------- | --------------------------------------------------- |
-| ROSA STS                                                     | Latest GA                           | [Test Grid][SD CICD ROSA STS]                       |
-| ROSA HCP                                                     | Latest GA                           | [Test Grid][SD CICD ROSA HCP]                       |
-| ROSA BYOVPC Proxy Install                                    | Latest Pre-GA                       | [Test Grid][SD CICD ROSA BYOVPC Proxy Install]      |
-| ROSA BYOVPC Proxy Post Install                               | Latest Pre-GA                       | [Test Grid][SD CICD ROSA BYOVPC Proxy Post Install] |
-| OSD AWS Upgrade Latest Default Y Minus 1 To Latest Default Y | Latest Default Y-1 to Latest Y      | [Test Grid][SD CICD OSD AWS Upgrade Y-1 To Y]       |
-| OSD AWS Upgrade Latest Default Z Minus 1 To Latest Default Z | Latest Default Z-1 to Latest Z      | [Test Grid][SD CICD OSD AWS Upgrade Z-1 To Z]       |
-| OSD AWS Upgrade Latest Default Y To Latest Default Y Plus 1  | Latest Default Y to Latest Y Plus 1 | [Test Grid][SD CICD OSD AWS Upgrade Y To Y+1]       |
-| OSD AWS Upgrade Latest Default Y Plus 1 To Latest Y          | Latest Default Y+1 to Latest Y      | [Test Grid][SD CICD OSD AWS Upgrade Y+1 To Y]       |
-| OSD AWS SREP Operator Informing Suite                        | Latest Pre-GA                       | [Test Grid][SD CICD OSD AWS Informing Suite]        |
+| Job Name                                                     | OCP Version                         | Results                                             | AWS Account |
+| ------------------------------------------------------------ | ----------------------------------- | --------------------------------------------------- | ----------- |
+| ROSA STS                                                     | Latest GA                           | [Test Grid][SD CICD ROSA STS]                       | *******3696 |
+| ROSA HCP                                                     | Latest GA                           | [Test Grid][SD CICD ROSA HCP]                       | *******4366 |
+| ROSA BYOVPC Proxy Install                                    | Latest Pre-GA                       | [Test Grid][SD CICD ROSA BYOVPC Proxy Install]      | *******3696 |
+| ROSA BYOVPC Proxy Post Install                               | Latest Pre-GA                       | [Test Grid][SD CICD ROSA BYOVPC Proxy Post Install] | *******3696 |
+| OSD AWS Upgrade Latest Default Y Minus 1 To Latest Default Y | Latest Default Y-1 to Latest Y      | [Test Grid][SD CICD OSD AWS Upgrade Y-1 To Y]       | *******3696 |
+| OSD AWS Upgrade Latest Default Z Minus 1 To Latest Default Z | Latest Default Z-1 to Latest Z      | [Test Grid][SD CICD OSD AWS Upgrade Z-1 To Z]       | *******3696 |
+| OSD AWS Upgrade Latest Default Y To Latest Default Y Plus 1  | Latest Default Y to Latest Y Plus 1 | [Test Grid][SD CICD OSD AWS Upgrade Y To Y+1]       | *******3696 |
+| OSD AWS Upgrade Latest Default Y Plus 1 To Latest Y          | Latest Default Y+1 to Latest Y      | [Test Grid][SD CICD OSD AWS Upgrade Y+1 To Y]       | *******3696 |
+| OSD AWS SREP Operator Informing Suite                        | Latest Pre-GA                       | [Test Grid][SD CICD OSD AWS Informing Suite]        | *******3696 |
 
 ### OCP Versions
 
@@ -52,13 +58,15 @@ The table below represents the periodic jobs that run to validate Managed
 OpenShift for new nightly OCP TRT builds and provide a *informing* signal
 to the release.
 
-| OCP Version | OSD AWS                       | OSD GCP                       | ROSA Classic STS                       | ROSA HCP |
-| ----------- | ----------------------------- | ----------------------------- | -------------------------------------- | -------- |
-| 4.14        | [Test Grid][4.14 TRT OSD AWS] | [Test Grid][4.14 TRT OSD GCP] | -                                      | -        |
-| 4.13        | [Test Grid][4.13 TRT OSD AWS] | [Test Grid][4.13 TRT OSD GCP] | [Test Grid][4.13 TRT ROSA CLASSIC STS] | -        |
-| 4.12        | [Test Grid][4.12 TRT OSD AWS] | [Test Grid][4.12 TRT OSD GCP] | [Test Grid][4.12 TRT ROSA CLASSIC STS] | -        |
-| 4.11        | [Test Grid][4.11 TRT OSD AWS] | [Test Grid][4.11 TRT OSD GCP] | [Test Grid][4.11 TRT ROSA CLASSIC STS] | -        |
-| 4.10        | [Test Grid][4.10 TRT OSD AWS] | [Test Grid][4.10 TRT OSD GCP] | [Test Grid][4.10 TRT ROSA CLASSIC STS] | -        |
+| OCP Version | OSD AWS                       | OSD GCP                       | ROSA STS                               | ROSA HCP | AWS Account |
+| ----------- | ----------------------------- | ----------------------------- | -------------------------------------- | -------- | ----------- |
+| 4.14        | [Test Grid][4.14 TRT OSD AWS] | [Test Grid][4.14 TRT OSD GCP] | _                                      | -        | *******0241 |
+| 4.13        | [Test Grid][4.13 TRT OSD AWS] | [Test Grid][4.13 TRT OSD GCP] | [Test Grid][4.13 TRT ROSA CLASSIC STS] | -        | *******0241 |
+| 4.12        | [Test Grid][4.12 TRT OSD AWS] | [Test Grid][4.12 TRT OSD GCP] | [Test Grid][4.12 TRT ROSA CLASSIC STS] | -        | *******0241 |
+| 4.11        | [Test Grid][4.11 TRT OSD AWS] | [Test Grid][4.11 TRT OSD GCP] | [Test Grid][4.11 TRT ROSA CLASSIC STS] | -        | *******0241 |
+| 4.10        | [Test Grid][4.10 TRT OSD AWS] | [Test Grid][4.10 TRT OSD GCP] | [Test Grid][4.10 TRT ROSA CLASSIC STS] | -        | *******0241 |
+
+These jobs send alerts to the following slack channel: [#sd-cicd-alerts].
 
 [SD CICD Test Grid Dashboard]: https://testgrid.k8s.io/redhat-openshift-osd
 [SD CICD ROSA STS]: https://testgrid.k8s.io/redhat-openshift-osd#periodic-ci-openshift-osde2e-main-rosa-stage-e2e-sts&width=90
