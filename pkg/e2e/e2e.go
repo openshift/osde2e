@@ -138,8 +138,10 @@ func beforeSuite() bool {
 				// We should manually run all our health checks if the cluster is waking up
 				err = clusterutil.WaitForClusterReadyPostWake(cluster.ID(), nil)
 			} else {
-				// This is a new cluster and we should check the OSD Ready job
-				err = clusterutil.WaitForClusterReadyPostInstall(cluster.ID(), nil)
+				if viper.GetString(config.Provider) != "rosa" {
+					// This is a new cluster and we should check the OSD Ready job
+					err = clusterutil.WaitForClusterReadyPostInstall(cluster.ID(), nil)
+				}
 			}
 			if err != nil {
 				log.Println("*******************")
