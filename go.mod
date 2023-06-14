@@ -3,7 +3,7 @@ module github.com/openshift/osde2e
 go 1.19
 
 require (
-	cloud.google.com/go/kms v1.11.0
+	cloud.google.com/go/kms v1.12.0
 	github.com/Masterminds/semver v1.5.0
 	github.com/PagerDuty/go-pagerduty v1.7.0
 	github.com/PuerkitoBio/goquery v1.8.1
@@ -75,7 +75,7 @@ require (
 require (
 	cloud.google.com/go/compute v1.19.3 // indirect
 	cloud.google.com/go/compute/metadata v0.2.3 // indirect
-	cloud.google.com/go/iam v1.0.1 // indirect
+	cloud.google.com/go/iam v1.1.0 // indirect
 	github.com/AlecAivazis/survey/v2 v2.3.2 // indirect
 	github.com/Azure/go-ansiterm v0.0.0-20230124172434-306776ec8161 // indirect
 	github.com/Microsoft/go-winio v0.6.1 // indirect
