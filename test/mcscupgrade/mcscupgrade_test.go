@@ -363,40 +363,37 @@ func queryPrometheusAlerts(ctx context.Context, client *openshiftclient.Client, 
 // osdClusterReadyHealthCheck verifies the osd-cluster-ready health check job is passing
 func osdClusterReadyHealthCheck(ctx context.Context, clusterClient *openshiftclient.Client, action, reportDir string) error {
 	var (
-		err        error
-		job        batchv1.Job
-		jobName    = "osd-cluster-ready"
-		namespace  = "openshift-monitoring"
-		newJobName = envconf.RandomName(fmt.Sprintf("%s-%s", jobName, action), 35)
+		err error
+		job batchv1.Job
 	)
 
-	if err = clusterClient.Get(ctx, jobName, namespace, &job); err != nil {
-		return fmt.Errorf("failed to get existing %s job %v", jobName, err)
+	if err = clusterClient.Get(ctx, osdClusterReadyJobName, "openshift-monitoring", &job); err != nil {
+		return fmt.Errorf("failed to get existing %s job %v", osdClusterReadyJobName, err)
 	}
 
 	newJob := &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:        newJobName,
-			Annotations: job.Annotations,
-			Namespace:   job.Namespace,
+			GenerateName: osdClusterReadyJobName,
+			Annotations:  job.Annotations,
+			Namespace:    job.Namespace,
 		},
 		Spec: job.Spec,
 	}
 
 	newJob.Spec.Selector.MatchLabels = map[string]string{}
-	newJob.Spec.Template.ObjectMeta.Name = newJobName
+	newJob.Spec.Template.ObjectMeta.Name = newJob.GetGenerateName()
 	newJob.Spec.Template.ObjectMeta.Labels = map[string]string{}
-	newJob.Spec.Template.Spec.Containers[0].Name = newJobName
+	newJob.Spec.Template.Spec.Containers[0].Name = newJob.GetGenerateName()
 
 	if err = clusterClient.Create(ctx, newJob); err != nil {
-		return fmt.Errorf("failed to create %s job: %v", newJobName, err)
+		return fmt.Errorf("failed to create %s job: %v", newJob.GetName(), err)
 	}
 
 	defer func() {
 		_ = clusterClient.Delete(ctx, newJob)
 	}()
 
-	return clusterClient.OSDClusterHealthy(ctx, newJobName, reportDir, osdClusterReadyJobTimeout)
+	return clusterClient.OSDClusterHealthy(ctx, newJob.GetName(), reportDir, osdClusterReadyJobTimeout)
 }
 
 // getEnvVar returns the env variable value and if unset returns default provided
