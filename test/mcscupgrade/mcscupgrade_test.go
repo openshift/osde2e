@@ -215,7 +215,7 @@ var _ = Describe("HyperShift", Ordered, func() {
 				Version:      hcpCluster.version,
 				ChannelGroup: hcpCluster.channelGroup,
 				HostedCP:     true,
-				Properties:   fmt.Sprintf("provision_shard_id:%s", hcpCluster.provisionShardID),
+				Properties:   map[string]string{"provision_shard_id": hcpCluster.provisionShardID},
 				WorkingDir:   hcpCluster.reportDir,
 			})
 			Expect(err).ShouldNot(HaveOccurred(), "failed to create hosted control plane cluster")
