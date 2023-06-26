@@ -1,0 +1,73 @@
+apiVersion: template.openshift.io/v1
+kind: Template
+metadata:
+  name: osde2e-acceptance-tests
+labels:
+  template: osde2e-acceptance-tests
+parameters:
+  - name: IMAGE_REGISTRY
+    displayName: Image Registry
+    value: quay.io/app-sre
+  - name: IMAGE_REPOSITORY
+    displayName: Image Repository
+    value: osde2e
+  - name: IMAGE_TAG
+    displayName: Image Tag
+    value: latest
+  - name: OSDE2E_CONFIGS
+    displayName: osde2e Configs
+    description: pre-baked configuration from the osde2e repository
+    value: rosa,stage,test-harness
+  - name: EXTRA_ARGS
+    displayName: Additonal args to supply to osde2e
+  - name: TEST_HARNESS_IMAGE
+    displayName: Test Harness Image(s)
+    required: true
+objects:
+  - apiVersion: batch/v1
+    kind: Job
+    metadata:
+      generateName: osde2e-acceptance-tests-
+    spec:
+      backoffLimit: 0
+      template:
+        spec:
+          restartPolicy: Never
+          containers:
+            - name: osde2e
+              image: ${IMAGE_REGISTRY}/${IMAGE_REPOSITORY}:${IMAGE_TAG}
+              command:
+                - /osde2e
+              args:
+                - test
+                - --configs
+                - ${OSDE2E_CONFIGS}
+                - ${EXTRA_ARGS}
+              securityContext:
+                runAsNonRoot: true
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop: ["ALL"]
+                seccompProfile:
+                  type: RuntimeDefault
+              env:
+                - name: TEST_HARNESSES
+                  value: ${TEST_HARNESS_IMAGE}
+                - name: OCM_TOKEN
+                  valueFrom:
+                    secretKeyRef:
+                      name: ocm
+                      key: ocm-token
+                - name: AWS_ACCESS_KEY_ID
+                  valueFrom:
+                    secretKeyRef:
+                      name: sdcicd-aws
+                      key: aws-access-key-id
+                - name: AWS_SECRET_ACCESS_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: sdcicd-aws
+                      key: aws-secret-access-key
+                # TODO: set this differently
+                - name: AWS_REGION
+                  value: us-east-1
