@@ -344,6 +344,19 @@ func (m *ROSAProvider) DeleteCluster(clusterID string) error {
 }
 
 func (m *ROSAProvider) stsClusterCleanup(clusterID string) error {
+	response, err := m.ocmProvider.GetConnection().ClustersMgmt().V1().Clusters().List().
+		Search(fmt.Sprintf("product.id = 'rosa' AND id = '%s'", clusterID)).
+		Page(1).
+		Size(1).
+		Send()
+	if response.Total() == 0 || err != nil {
+		return fmt.Errorf("failed to locate cluster in ocm: %v", err)
+	}
+
+	cluster := response.Items().Slice()[0]
+	operatorRolePrefix := cluster.AWS().STS().OperatorRolePrefix()
+	oidcConfigID := cluster.AWS().STS().OidcConfig().ID()
+
 	// wait for the cluster to no longer be available
 	wait.PollImmediate(2*time.Minute, 30*time.Minute, func() (bool, error) {
 		clusters, err := m.ocmProvider.ListClusters(fmt.Sprintf("id = '%s'", clusterID))
@@ -356,14 +369,28 @@ func (m *ROSAProvider) stsClusterCleanup(clusterID string) error {
 
 	return callAndSetAWSSession(func() error {
 		var err error
-		defaultArgs := []string{"--cluster", clusterID, "--mode", "auto", "--yes"}
+		defaultArgs := []string{"--mode", "auto", "--yes"}
 
 		deleteOperatorRolesArgs := append([]string{"operator-roles"}, defaultArgs...)
+
+		if oidcConfigID != "" {
+			deleteOperatorRolesArgs = append(deleteOperatorRolesArgs, "--prefix", operatorRolePrefix)
+		} else {
+			deleteOperatorRolesArgs = append(deleteOperatorRolesArgs, "--cluster", clusterID)
+		}
+
 		deleteOperatorRolesCmd := operatorrole.Cmd
 		deleteOperatorRolesCmd.SetArgs(deleteOperatorRolesArgs)
 		log.Printf("%v", deleteOperatorRolesArgs)
 
 		deleteOIDCProviderArgs := append([]string{"oidc-provider"}, defaultArgs...)
+
+		if oidcConfigID != "" {
+			deleteOIDCProviderArgs = append(deleteOIDCProviderArgs, "--oidc-config-id", oidcConfigID)
+		} else {
+			deleteOIDCProviderArgs = append(deleteOIDCProviderArgs, "--cluster", clusterID)
+		}
+
 		deleteOIDCProviderCmd := oidcprovider.Cmd
 		deleteOIDCProviderCmd.SetArgs(deleteOIDCProviderArgs)
 		log.Printf("%v", deleteOIDCProviderArgs)
