@@ -1,2 +1,4 @@
 ocm:
   env: stage
+rosa:
+  env: stage
