@@ -753,8 +753,8 @@ github.com/openshift/must-gather-operator v0.1.2-0.20221011152618-7805956e1ded h
 github.com/openshift/must-gather-operator v0.1.2-0.20221011152618-7805956e1ded/go.mod h1:LHntdQf5jrwxpmyVMbwXUK491COBJ7buHvyi4YLlHho=
 github.com/openshift/osde2e-common v0.0.0-20230621125319-93f8f034f3aa h1:qfj0cSkZ7Ja9+ahYmiQdXoT8lrH6tTcRV6jspyb5Q4I=
 github.com/openshift/osde2e-common v0.0.0-20230621125319-93f8f034f3aa/go.mod h1:qP+tI/gaFODlcRTSzD7IL3Z6Eh7C/eKdxK4z7J/bYNE=
-github.com/openshift/rosa v1.2.22 h1:9yJujtoHtlcKPxdb/XgmfZXNmbEoLv9k89/XQplWWkA=
-github.com/openshift/rosa v1.2.22/go.mod h1:DVAj0xmrKFiMzSln4M735Em5PrDNJO4fjjGZ6NXJObo=
+github.com/openshift/rosa v1.2.23 h1:0Q2kl3Bs1dKcrMn8SNtGSU0SYGYD16b/LS2z+sSxx1M=
+github.com/openshift/rosa v1.2.23/go.mod h1:nhEZMCq3aHx3uCPJdruCDge3xv+5Ir0ijdfEmhOFTCE=
 github.com/openshift/route-monitor-operator v0.0.0-20221118160357-3df1ed1fa1d2 h1:s97F2fQ5r+XGVfWDy5wgH611iIvIDusQcHtv5jJ36uw=
 github.com/openshift/route-monitor-operator v0.0.0-20221118160357-3df1ed1fa1d2/go.mod h1:I/8znbaxMGRub27brm57UnkR48QZEWO26j2HRscy5bQ=
 github.com/openshift/splunk-forwarder-operator v0.0.0-20230525060151-2dc403aa8ff9 h1:u7XXBdFB+uoA+YcvDjqmfhAJsZTGGGQOBqIXSBT4EUQ=
@@ -837,6 +837,8 @@ github.com/redhat-cop/must-gather-operator v1.1.2/go.mod h1:UXmCJd2pxsDDXcLVblnV
 github.com/redhat-cop/operator-utils v1.1.4/go.mod h1:gKtKExcEUSaso5yuePnzP/zXI7W46DLbCAhy9Eqj1C4=
 github.com/remyoudompheng/bigfft v0.0.0-20200410134404-eec4a21b6bb0 h1:OdAsTTz6OkFY5QxjkYwrChwuRruF69c169dPK26NUlk=
 github.com/remyoudompheng/bigfft v0.0.0-20200410134404-eec4a21b6bb0/go.mod h1:qqbHyh8v60DhA7CoWK5oRCqLrMHRGoxYCSS9EjAz6Eo=
+github.com/robfig/cron/v3 v3.0.1 h1:WdRxkvbJztn8LMz/QEvLN5sBU+xKpSqwwUO1Pjr4qDs=
+github.com/robfig/cron/v3 v3.0.1/go.mod h1:eQICP3HwyT7UooqI/z+Ov+PtYAWygg1TEWWzGIFLtro=
 github.com/rogpeppe/fastuuid v0.0.0-20150106093220-6724a57986af/go.mod h1:XWv6SoW27p1b0cqNHllgS5HIMJraePCO15w5zCzIWYg=
 github.com/rogpeppe/fastuuid v1.2.0/go.mod h1:jVj6XXZzXRy/MSR5jhDC/2q6DgLz+nrA6LYCDYWNEvQ=
 github.com/rogpeppe/go-internal v1.3.0/go.mod h1:M8bDsm7K2OlrFYOpmOWEs/qY81heoFRclV5y23lUDJ4=
