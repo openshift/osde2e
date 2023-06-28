@@ -203,7 +203,7 @@ func (m *ROSAProvider) LaunchCluster(clusterName string) (string, error) {
 		if rosaOIDCConfigID := viper.GetString(OIDCConfigID); rosaOIDCConfigID != "" {
 			createClusterArgs = append(createClusterArgs, "--oidc-config-id", rosaOIDCConfigID)
 		} else {
-			oidcConfigID, err := m.createOIDCConfig(clusterName)
+			oidcConfigID, err := m.createOIDCConfig(clusterName, accountRoles.InstallerRoleARN)
 			if err != nil {
 				return "", fmt.Errorf("failed to create oidc-config-id: %v", err)
 			}
