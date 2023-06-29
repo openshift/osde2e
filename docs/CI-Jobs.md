@@ -71,7 +71,7 @@ to the release.
 
 | OCP Version | ROSA Classic STS                       | AWS Account | ROSA HCP                       | AWS Account |
 | ----------- | -------------------------------------- | ----------- | ------------------------------ | ----------- |
-| 4.14        | -                                      | *******0241 | N/A                            | -           |
+| 4.14        | [Test Grid][4.14 TRT ROSA CLASSIC STS] | *******0241 | N/A                            | -           |
 | 4.13        | [Test Grid][4.13 TRT ROSA CLASSIC STS] | *******0241 | [Test Grid][4.13 TRT ROSA HCP] | *******4366 |
 | 4.12        | [Test Grid][4.12 TRT ROSA CLASSIC STS] | *******0241 | [Test Grid][4.12 TRT ROSA HCP] | *******4366 |
 | 4.11        | [Test Grid][4.11 TRT ROSA CLASSIC STS] | *******0241 | N/A                            | -           |
@@ -98,6 +98,7 @@ to the release.
 [4.10 TRT OSD AWS]: https://testgrid.k8s.io/redhat-openshift-ocp-release-4.10-informing#release-openshift-ocp-osd-aws-nightly-4.10&width=90
 [4.10 TRT OSD GCP]: https://testgrid.k8s.io/redhat-openshift-ocp-release-4.10-informing#release-openshift-ocp-osd-gcp-nightly-4.10&width=90
 
+[4.14 TRT ROSA CLASSIC STS]: https://testgrid.k8s.io/redhat-openshift-ocp-release-4.14-informing#release-openshift-ocp-rosa-classic-sts-nightly-4.14&width=90
 [4.13 TRT ROSA CLASSIC STS]: https://testgrid.k8s.io/redhat-openshift-ocp-release-4.13-informing#release-openshift-ocp-rosa-classic-sts-nightly-4.13&width=90
 [4.12 TRT ROSA CLASSIC STS]: https://testgrid.k8s.io/redhat-openshift-ocp-release-4.12-informing#release-openshift-ocp-rosa-classic-sts-nightly-4.12&width=90
 [4.11 TRT ROSA CLASSIC STS]: https://testgrid.k8s.io/redhat-openshift-ocp-release-4.11-informing#release-openshift-ocp-rosa-classic-sts-nightly-4.11&width=90
