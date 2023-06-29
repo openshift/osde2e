@@ -57,15 +57,25 @@ The table below represents the periodic jobs that run to validate Managed
 OpenShift for new nightly OCP TRT builds and provide a *informing* signal
 to the release.
 
-| OCP Version | OSD AWS                       | OSD GCP                       | ROSA STS                               | ROSA HCP | AWS Account |
-| ----------- | ----------------------------- | ----------------------------- | -------------------------------------- | -------- | ----------- |
-| 4.14        | [Test Grid][4.14 TRT OSD AWS] | [Test Grid][4.14 TRT OSD GCP] | _                                      | -        | *******0241 |
-| 4.13        | [Test Grid][4.13 TRT OSD AWS] | [Test Grid][4.13 TRT OSD GCP] | [Test Grid][4.13 TRT ROSA CLASSIC STS] | -        | *******0241 |
-| 4.12        | [Test Grid][4.12 TRT OSD AWS] | [Test Grid][4.12 TRT OSD GCP] | [Test Grid][4.12 TRT ROSA CLASSIC STS] | -        | *******0241 |
-| 4.11        | [Test Grid][4.11 TRT OSD AWS] | [Test Grid][4.11 TRT OSD GCP] | [Test Grid][4.11 TRT ROSA CLASSIC STS] | -        | *******0241 |
-| 4.10        | [Test Grid][4.10 TRT OSD AWS] | [Test Grid][4.10 TRT OSD GCP] | [Test Grid][4.10 TRT ROSA CLASSIC STS] | -        | *******0241 |
+### OSD
 
-These jobs send alerts to the following slack channel: [#sd-cicd-alerts].
+| OCP Version | AWS                           | GCP                           | AWS Account |
+| ----------- | ----------------------------- | ----------------------------- | ----------- |
+| 4.14        | [Test Grid][4.14 TRT OSD AWS] | [Test Grid][4.14 TRT OSD GCP] | *******0241 |
+| 4.13        | [Test Grid][4.13 TRT OSD AWS] | [Test Grid][4.13 TRT OSD GCP] | *******0241 |
+| 4.12        | [Test Grid][4.12 TRT OSD AWS] | [Test Grid][4.12 TRT OSD GCP] | *******0241 |
+| 4.11        | [Test Grid][4.11 TRT OSD AWS] | [Test Grid][4.11 TRT OSD GCP] | *******0241 |
+| 4.10        | [Test Grid][4.10 TRT OSD AWS] | [Test Grid][4.10 TRT OSD GCP] | *******0241 |
+
+### ROSA
+
+| OCP Version | ROSA Classic STS                       | AWS Account | ROSA HCP                       | AWS Account |
+| ----------- | -------------------------------------- | ----------- | ------------------------------ | ----------- |
+| 4.14        | -                                      | *******0241 | N/A                            | -           |
+| 4.13        | [Test Grid][4.13 TRT ROSA CLASSIC STS] | *******0241 | [Test Grid][4.13 TRT ROSA HCP] | *******4366 |
+| 4.12        | [Test Grid][4.12 TRT ROSA CLASSIC STS] | *******0241 | [Test Grid][4.12 TRT ROSA HCP] | *******4366 |
+| 4.11        | [Test Grid][4.11 TRT ROSA CLASSIC STS] | *******0241 | N/A                            | -           |
+| 4.10        | [Test Grid][4.10 TRT ROSA CLASSIC STS] | *******0241 | N/A                            | -           |
 
 [SD CICD Test Grid Dashboard]: https://testgrid.k8s.io/redhat-openshift-osd
 [SD CICD ROSA HCP]: https://testgrid.k8s.io/redhat-openshift-osd#periodic-ci-openshift-osde2e-main-hypershift-stage-e2e-default&width=90
@@ -92,6 +102,9 @@ These jobs send alerts to the following slack channel: [#sd-cicd-alerts].
 [4.12 TRT ROSA CLASSIC STS]: https://testgrid.k8s.io/redhat-openshift-ocp-release-4.12-informing#release-openshift-ocp-rosa-classic-sts-nightly-4.12&width=90
 [4.11 TRT ROSA CLASSIC STS]: https://testgrid.k8s.io/redhat-openshift-ocp-release-4.11-informing#release-openshift-ocp-rosa-classic-sts-nightly-4.11&width=90
 [4.10 TRT ROSA CLASSIC STS]: https://testgrid.k8s.io/redhat-openshift-ocp-release-4.10-informing#release-openshift-ocp-rosa-classic-sts-nightly-4.10&width=90
+
+[4.13 TRT ROSA HCP]: https://testgrid.k8s.io/redhat-openshift-ocp-release-4.13-informing#release-openshift-ocp-rosa-hcp-nightly-4.13&width=90
+[4.12 TRT ROSA HCP]: https://testgrid.k8s.io/redhat-openshift-ocp-release-4.12-informing#release-openshift-ocp-rosa-hcp-nightly-4.12&width=90
 
 [#sd-cicd-alerts]: https://app.slack.com/client/T027F3GAJ/CNYM6PB6X
 
