@@ -29,7 +29,6 @@ of the osde2e test framework. Overall dashboard can be found
 
 | Job Name                                                     | OCP Version                         | Results                                             | AWS Account |
 | ------------------------------------------------------------ | ----------------------------------- | --------------------------------------------------- | ----------- |
-| ROSA HCP                                                     | Latest GA                           | [Test Grid][SD CICD ROSA HCP]                       | *******4366 |
 | ROSA BYOVPC Proxy Install                                    | Latest Pre-GA                       | [Test Grid][SD CICD ROSA BYOVPC Proxy Install]      | *******3696 |
 | ROSA BYOVPC Proxy Post Install                               | Latest Pre-GA                       | [Test Grid][SD CICD ROSA BYOVPC Proxy Post Install] | *******3696 |
 | OSD AWS Upgrade Latest Default Y Minus 1 To Latest Default Y | Latest Default Y-1 to Latest Y      | [Test Grid][SD CICD OSD AWS Upgrade Y-1 To Y]       | *******3696 |
@@ -78,7 +77,6 @@ to the release.
 | 4.10        | [Test Grid][4.10 TRT ROSA CLASSIC STS] | *******0241 | N/A                            | -           |
 
 [SD CICD Test Grid Dashboard]: https://testgrid.k8s.io/redhat-openshift-osd
-[SD CICD ROSA HCP]: https://testgrid.k8s.io/redhat-openshift-osd#periodic-ci-openshift-osde2e-main-hypershift-stage-e2e-default&width=90
 [SD CICD ROSA BYOVPC Proxy Install]: https://testgrid.k8s.io/redhat-openshift-osd#periodic-ci-openshift-osde2e-main-rosa-stage-e2e-byo-vpc-proxy-install&width=90
 [SD CICD ROSA BYOVPC Proxy Post Install]: https://testgrid.k8s.io/redhat-openshift-osd#periodic-ci-openshift-osde2e-main-rosa-stage-e2e-byo-vpc-proxy-postinstall&width=90
 [SD CICD OSD AWS Informing Suite]: https://testgrid.k8s.io/redhat-openshift-osd#periodic-ci-openshift-osde2e-main-aws-stage-informing-default&width=90
