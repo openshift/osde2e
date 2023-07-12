@@ -14,8 +14,8 @@ import (
 
 var Cmd = &cobra.Command{
 	Use:   "cleanup",
-	Short: "Cleans up expired clusters.",
-	Long:  "Cleans up expired clusters.",
+	Short: "Cleans up expired clusters or a specific cluster.",
+	Long:  "Cleans up expired clusters or a specific cluster.",
 	Args:  cobra.OnlyValidArgs,
 	RunE:  run,
 }
@@ -24,6 +24,7 @@ var args struct {
 	configString    string
 	customConfig    string
 	secretLocations string
+	clusterID       string
 }
 
 func init() {
@@ -47,6 +48,12 @@ func init() {
 		"",
 		"A comma separated list of possible secret directory locations for loading secret configs.",
 	)
+	flags.StringVar(
+		&args.clusterID,
+		"cluster-id",
+		"",
+		"A specific cluster id to cleanup",
+	)
 
 	Cmd.RegisterFlagCompletionFunc("output-format", func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		return []string{"json", "prom"}, cobra.ShellCompDirectiveDefault
@@ -66,19 +73,33 @@ func run(cmd *cobra.Command, argv []string) error {
 
 	metadata.Instance.SetEnvironment(provider.Environment())
 
-	clusters, err := provider.ListClusters("properties.MadeByOSDe2e='true'")
-	if err != nil {
-		return err
-	}
+	if args.clusterID == "" {
+		clusters, err := provider.ListClusters("properties.MadeByOSDe2e='true'")
+		if err != nil {
+			return err
+		}
 
-	now := time.Now()
+		now := time.Now()
 
-	for _, cluster := range clusters {
-		if !cluster.ExpirationTimestamp().IsZero() && now.UTC().After(cluster.ExpirationTimestamp().UTC()) {
-			log.Printf("%s %s has expired. Deleting cluster...", cluster.ID(), cluster.Name())
-			if err := provider.DeleteCluster(cluster.ID()); err != nil {
-				log.Printf("Error deleting cluster: %s", err.Error())
+		for _, cluster := range clusters {
+			if !cluster.ExpirationTimestamp().IsZero() && now.UTC().After(cluster.ExpirationTimestamp().UTC()) {
+				log.Printf("%s %s has expired. Deleting cluster...", cluster.ID(), cluster.Name())
+				if err := provider.DeleteCluster(cluster.ID()); err != nil {
+					log.Printf("Error deleting cluster: %s", err.Error())
+				}
 			}
+		}
+	} else {
+		cluster, err := provider.GetCluster(args.clusterID)
+		if err != nil {
+			log.Printf("Cluster id: %s not found, unable to delete it", args.clusterID)
+			return err
+		}
+
+		log.Printf("Deleting cluster id: %s, name: %s", cluster.ID(), cluster.Name())
+		if err = provider.DeleteCluster(cluster.ID()); err != nil {
+			log.Printf("Failed to delete cluster id: %s, error: %v", cluster.ID(), err)
+			return err
 		}
 	}
 
