@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"path/filepath"
 	"strings"
 
 	"github.com/onsi/ginkgo/v2"
@@ -29,13 +30,13 @@ var (
 	suffix            string
 )
 
-var _ = ginkgo.Describe("Test Harness", ginkgo.Ordered, ginkgo.ContinueOnFailure, label.TestHarness, func() {
+var _ = ginkgo.Describe("Test harness", ginkgo.Ordered, ginkgo.ContinueOnFailure, label.TestHarness, func() {
 	for _, harness := range harnesses {
 		HarnessEntries = append(HarnessEntries, ginkgo.Entry("should run "+harness+" successfully", harness))
 	}
 
 	ginkgo.BeforeEach(func(ctx context.Context) {
-		// Run harness in a new project
+		ginkgo.By("Setting up new namespace")
 		viper.Set(config.Project, "")
 		h = helper.New()
 		h.SetServiceAccount(ctx, serviceAccount)
@@ -43,24 +44,33 @@ var _ = ginkgo.Describe("Test Harness", ginkgo.Ordered, ginkgo.ContinueOnFailure
 	})
 
 	ginkgo.AfterEach(func(ctx context.Context) {
-		// get results
+		ginkgo.By("Retrieving results from harness pod")
 		results, err := r.RetrieveTestResults()
 		Expect(err).NotTo(HaveOccurred(), "Could not read results")
-
-		// write results
+		ginkgo.By("Writing result files")
 		h.WriteResults(results)
+		for filename, data := range results {
+			match, err := filepath.Match("junit*.xml", filename)
+			if match {
+
+				ginkgo.AddReportEntry("Report", string(data))
+			}
+			Expect(err).NotTo(HaveOccurred())
+		}
+
+		ginkgo.By("Deleting harness namespace")
 		h.Cleanup(ctx)
 	})
 
-	ginkgo.DescribeTable("Executing Harness",
+	ginkgo.DescribeTable("execution",
 		func(ctx context.Context, harness string) {
-			ginkgo.By("======= RUNNING HARNESS: " + harness + " =======")
 			log.Printf("======= RUNNING HARNESS: %s =======", harness)
 			harnessImageIndex := strings.LastIndex(harness, "/")
 			harnessImage := harness[harnessImageIndex+1:]
 			jobName := fmt.Sprintf("%s-%s", harnessImage, suffix)
 
 			// Create templated runner pod
+			ginkgo.By("Creating templated runner pod")
 			r = h.RunnerWithNoCommand()
 			latestImageStream, err := r.GetLatestImageStreamTag()
 			Expect(err).NotTo(HaveOccurred(), "Could not get latest imagestream tag")
@@ -69,6 +79,7 @@ var _ = ginkgo.Describe("Test Harness", ginkgo.Ordered, ginkgo.ContinueOnFailure
 			r = h.Runner(cmd)
 
 			// run tests
+			ginkgo.By("Running harness pod")
 			stopCh := make(chan struct{})
 			err = r.Run(int(TimeoutInSeconds), stopCh)
 			Expect(err).NotTo(HaveOccurred(), "Could not run pod")
@@ -77,7 +88,6 @@ var _ = ginkgo.Describe("Test Harness", ginkgo.Ordered, ginkgo.ContinueOnFailure
 			_, err = h.Kube().BatchV1().Jobs(r.Namespace).Get(ctx, jobName, metav1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred(), "Harness job pods failed")
 
-			ginkgo.By("======= FINISHED HARNESS: " + harness + " =======")
 		},
 		HarnessEntries)
 })
