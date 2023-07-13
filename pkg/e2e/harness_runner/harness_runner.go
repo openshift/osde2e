@@ -47,17 +47,15 @@ var _ = ginkgo.Describe("Test harness", ginkgo.Ordered, ginkgo.ContinueOnFailure
 		ginkgo.By("Retrieving results from harness pod")
 		results, err := r.RetrieveTestResults()
 		Expect(err).NotTo(HaveOccurred(), "Could not read results")
-		ginkgo.By("Writing result files")
+		ginkgo.By("Writing results")
 		h.WriteResults(results)
 		for filename, data := range results {
 			match, err := filepath.Match("junit*.xml", filename)
 			if match {
-
 				ginkgo.AddReportEntry("Report", string(data))
 			}
 			Expect(err).NotTo(HaveOccurred())
 		}
-
 		ginkgo.By("Deleting harness namespace")
 		h.Cleanup(ctx)
 	})
@@ -87,7 +85,6 @@ var _ = ginkgo.Describe("Test harness", ginkgo.Ordered, ginkgo.ContinueOnFailure
 			// ensure job has not failed
 			_, err = h.Kube().BatchV1().Jobs(r.Namespace).Get(ctx, jobName, metav1.GetOptions{})
 			Expect(err).NotTo(HaveOccurred(), "Harness job pods failed")
-
 		},
 		HarnessEntries)
 })
