@@ -4,6 +4,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/templates"
@@ -59,6 +60,7 @@ func (h *H) WriteResults(results map[string][]byte) {
 
 // Generates templated command string to provide to test harness container
 func getCommandString(h *H, timeout float64, latestImageStream string, harness string, suffix string, jobName string, serviceAccountDir string) (string, error) {
+	ginkgo.GinkgoHelper()
 	values := struct {
 		Name                 string
 		JobName              string

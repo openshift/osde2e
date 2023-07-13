@@ -24,9 +24,7 @@ var (
 	harnesses         = strings.Split(viper.GetString(config.Tests.TestHarnesses), ",")
 	h                 *helper.H
 	HarnessEntries    []ginkgo.TableEntry
-	harness           string
 	r                 *runner.Runner
-	jobName           string
 	suffix            string
 )
 
