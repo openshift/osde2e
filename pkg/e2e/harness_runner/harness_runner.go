@@ -23,7 +23,6 @@ var (
 	TimeoutInSeconds  = viper.GetFloat64(config.Tests.PollingTimeout)
 	harnesses         = strings.Split(viper.GetString(config.Tests.TestHarnesses), ",")
 	h                 *helper.H
-	err               error
 	HarnessEntries    []ginkgo.TableEntry
 )
 
@@ -74,7 +73,7 @@ var _ = ginkgo.Describe("Test Harness", ginkgo.Ordered, label.TestHarness, func(
 func getCommandString(h *helper.H, harness string, r *runner.Runner, suffix string, jobName string) (string, error) {
 	// setup runner
 	latestImageStream, err := r.GetLatestImageStreamTag()
-	Expect(err).NotTo(HaveOccurred())
+	Expect(err).NotTo(HaveOccurred(), "Could not get latest imagestream tag")
 
 	values := struct {
 		Name                 string
@@ -116,5 +115,6 @@ func getCommandString(h *helper.H, harness string, r *runner.Runner, suffix stri
 		},
 	}
 	testTemplate, err := templates.LoadTemplate("tests/tests-runner.template")
+	Expect(err).NotTo(HaveOccurred(), "Could not load pod template")
 	return h.ConvertTemplateToString(testTemplate, values)
 }
