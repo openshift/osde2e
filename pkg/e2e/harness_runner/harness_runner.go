@@ -13,6 +13,7 @@ import (
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/label"
 	"github.com/openshift/osde2e/pkg/common/runner"
+	"github.com/openshift/osde2e/pkg/common/templates"
 	"github.com/openshift/osde2e/pkg/common/util"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -58,11 +59,18 @@ var _ = ginkgo.Describe("Test Harness", ginkgo.Ordered, ginkgo.ContinueOnFailure
 			harnessImageIndex := strings.LastIndex(harness, "/")
 			harnessImage := harness[harnessImageIndex+1:]
 			jobName := fmt.Sprintf("%s-%s", harnessImage, suffix)
-			r = h.RunnerWithTemplateCommand(TimeoutInSeconds, harness, suffix, jobName, serviceAccountDir)
+
+			// Create templated runner pod
+			r = h.RunnerWithNoCommand()
+			latestImageStream, err := r.GetLatestImageStreamTag()
+			Expect(err).NotTo(HaveOccurred(), "Could not get latest imagestream tag")
+			cmd, err := getCommandString(TimeoutInSeconds, latestImageStream, harness, suffix, jobName, serviceAccountDir)
+			Expect(err).NotTo(HaveOccurred(), "Could not create pod command from template")
+			r = h.Runner(cmd)
 
 			// run tests
 			stopCh := make(chan struct{})
-			err := r.Run(int(TimeoutInSeconds), stopCh)
+			err = r.Run(int(TimeoutInSeconds), stopCh)
 			Expect(err).NotTo(HaveOccurred(), "Could not run pod")
 
 			// ensure job has not failed
@@ -73,3 +81,50 @@ var _ = ginkgo.Describe("Test Harness", ginkgo.Ordered, ginkgo.ContinueOnFailure
 		},
 		HarnessEntries)
 })
+
+// Generates templated command string to provide to test harness container
+func getCommandString(timeout float64, latestImageStream string, harness string, suffix string, jobName string, serviceAccountDir string) (string, error) {
+	ginkgo.GinkgoHelper()
+	values := struct {
+		Name                 string
+		JobName              string
+		Arguments            string
+		Timeout              int
+		Image                string
+		OutputDir            string
+		ServiceAccount       string
+		PushResultsContainer string
+		Suffix               string
+		Server               string
+		CA                   string
+		TokenFile            string
+		EnvironmentVariables []struct {
+			Name  string
+			Value string
+		}
+	}{
+		Name:                 jobName,
+		JobName:              jobName,
+		Timeout:              int(timeout),
+		Image:                harness,
+		OutputDir:            runner.DefaultRunner.OutputDir,
+		ServiceAccount:       h.GetNamespacedServiceAccount(),
+		PushResultsContainer: latestImageStream,
+		Suffix:               suffix,
+		Server:               "https://kubernetes.default",
+		CA:                   serviceAccountDir + "/ca.crt",
+		TokenFile:            serviceAccountDir + "/token",
+		EnvironmentVariables: []struct {
+			Name  string
+			Value string
+		}{
+			{
+				Name:  "OCM_CLUSTER_ID",
+				Value: viper.GetString(config.Cluster.ID),
+			},
+		},
+	}
+	testTemplate, err := templates.LoadTemplate("tests/tests-runner.template")
+	Expect(err).NotTo(HaveOccurred(), "Could not load pod template")
+	return h.ConvertTemplateToString(testTemplate, values)
+}
