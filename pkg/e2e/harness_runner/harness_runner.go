@@ -89,6 +89,7 @@ var _ = ginkgo.Describe("Test harness", ginkgo.Ordered, ginkgo.ContinueOnFailure
 
 // Generates templated command string to provide to test harness container
 func getCommandString(timeout float64, latestImageStream string, harness string, suffix string, jobName string, serviceAccountDir string) string {
+	ginkgo.GinkgoHelper()
 	values := struct {
 		Name                 string
 		JobName              string
