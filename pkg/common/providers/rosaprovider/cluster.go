@@ -314,6 +314,11 @@ func (m *ROSAProvider) DeleteCluster(clusterID string) error {
 		reportDir = &value
 	}
 
+	_, err := m.ocmLogin()
+	if err != nil {
+		return err
+	}
+
 	if err := m.ocmProvider.DeleteCluster(clusterID); err != nil {
 		return err
 	}
