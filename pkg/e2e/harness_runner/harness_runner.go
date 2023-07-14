@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"path/filepath"
 	"strings"
 
 	"github.com/onsi/ginkgo/v2"
@@ -49,13 +48,6 @@ var _ = ginkgo.Describe("Test harness", ginkgo.Ordered, ginkgo.ContinueOnFailure
 		Expect(err).NotTo(HaveOccurred(), "Could not read results")
 		ginkgo.By("Writing results")
 		h.WriteResults(results)
-		for filename, data := range results {
-			match, err := filepath.Match("junit*.xml", filename)
-			if match {
-				ginkgo.AddReportEntry("Report", string(data))
-			}
-			Expect(err).NotTo(HaveOccurred())
-		}
 		ginkgo.By("Deleting test namespace")
 		h.Cleanup(ctx)
 	})
