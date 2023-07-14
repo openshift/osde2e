@@ -44,7 +44,7 @@ var _ = ginkgo.Describe("Test harness", ginkgo.Ordered, ginkgo.ContinueOnFailure
 	})
 
 	ginkgo.AfterEach(func(ctx context.Context) {
-		ginkgo.By("Retrieving results from harness pod")
+		ginkgo.By("Retrieving results from test pod")
 		results, err := r.RetrieveTestResults()
 		Expect(err).NotTo(HaveOccurred(), "Could not read results")
 		ginkgo.By("Writing results")
@@ -56,7 +56,7 @@ var _ = ginkgo.Describe("Test harness", ginkgo.Ordered, ginkgo.ContinueOnFailure
 			}
 			Expect(err).NotTo(HaveOccurred())
 		}
-		ginkgo.By("Deleting harness namespace")
+		ginkgo.By("Deleting test namespace")
 		h.Cleanup(ctx)
 	})
 
@@ -68,13 +68,11 @@ var _ = ginkgo.Describe("Test harness", ginkgo.Ordered, ginkgo.ContinueOnFailure
 			jobName := fmt.Sprintf("%s-%s", harnessImage, suffix)
 
 			// Create templated runner pod
-			ginkgo.By("Creating templated runner pod")
+			ginkgo.By("Creating test runner pod")
 			r = h.RunnerWithNoCommand()
 			latestImageStream, err := r.GetLatestImageStreamTag()
 			Expect(err).NotTo(HaveOccurred(), "Could not get latest imagestream tag")
-			cmd, err := getCommandString(TimeoutInSeconds, latestImageStream, harness, suffix, jobName, serviceAccountDir)
-			Expect(err).NotTo(HaveOccurred(), "Could not create pod command from template")
-			r = h.Runner(cmd)
+			r = h.Runner(getCommandString(TimeoutInSeconds, latestImageStream, harness, suffix, jobName, serviceAccountDir))
 
 			// run tests
 			ginkgo.By("Running harness pod")
@@ -90,8 +88,7 @@ var _ = ginkgo.Describe("Test harness", ginkgo.Ordered, ginkgo.ContinueOnFailure
 })
 
 // Generates templated command string to provide to test harness container
-func getCommandString(timeout float64, latestImageStream string, harness string, suffix string, jobName string, serviceAccountDir string) (string, error) {
-	ginkgo.GinkgoHelper()
+func getCommandString(timeout float64, latestImageStream string, harness string, suffix string, jobName string, serviceAccountDir string) string {
 	values := struct {
 		Name                 string
 		JobName              string
@@ -133,5 +130,7 @@ func getCommandString(timeout float64, latestImageStream string, harness string,
 	}
 	testTemplate, err := templates.LoadTemplate("tests/tests-runner.template")
 	Expect(err).NotTo(HaveOccurred(), "Could not load pod template")
-	return h.ConvertTemplateToString(testTemplate, values)
+	cmd, err := h.ConvertTemplateToString(testTemplate, values)
+	Expect(err).NotTo(HaveOccurred(), "Could not convert pod template")
+	return cmd
 }
