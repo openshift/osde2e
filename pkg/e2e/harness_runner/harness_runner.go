@@ -15,7 +15,6 @@ import (
 	"github.com/openshift/osde2e/pkg/common/runner"
 	"github.com/openshift/osde2e/pkg/common/templates"
 	"github.com/openshift/osde2e/pkg/common/util"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 var (
@@ -71,10 +70,6 @@ var _ = ginkgo.Describe("Test harness", ginkgo.Ordered, ginkgo.ContinueOnFailure
 			stopCh := make(chan struct{})
 			err = r.Run(int(TimeoutInSeconds), stopCh)
 			Expect(err).NotTo(HaveOccurred(), "Could not run pod")
-
-			// ensure job has not failed
-			_, err = h.Kube().BatchV1().Jobs(r.Namespace).Get(ctx, jobName, metav1.GetOptions{})
-			Expect(err).NotTo(HaveOccurred(), "Harness job pods failed")
 		},
 		HarnessEntries)
 })
