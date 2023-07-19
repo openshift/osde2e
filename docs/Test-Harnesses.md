@@ -39,7 +39,8 @@ Any dependency errors must be resolved to create the test binary.
 12. Create PR against operator repo, watch pr-checks.
 
 13. Automate test harness publishing:
-	Add  `make e2e-image-build-push`  target in the build pipeline for your operator in `app-interface` repo  similar to this in AVO:
+	- Configure operator test harness quay repo similar to these entries https://gitlab.cee.redhat.com/service/app-interface/-/blob/master/data/services/osd-operators/app.yml#L82-90  
+    - Add  `make e2e-image-build-push`  target in the build pipeline for your operator in `app-interface` repo  similar to this in AVO:
 	https://gitlab.cee.redhat.com/service/app-interface/-/blob/master/data/services/osd-operators/cicd/ci-int/jobs-aws-vpce-operator.yaml#L27
 
 14. Automate e2e test harness testing: To run `latest` harness image as a postsubmit job: Add a test step to the following to the prow config file in release repo using the example of [`stage-e2e-harness` job config in AVO](  https://github.com/openshift/release/blob/b6f9d2c0bffaa230a8097fb97d5abb4e91f96e4d/ci-operator/config/openshift/aws-vpce-operator/openshift-aws-vpce-operator-main.yaml). 
