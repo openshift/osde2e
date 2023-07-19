@@ -3,7 +3,7 @@ module github.com/openshift/osde2e
 go 1.19
 
 require (
-	cloud.google.com/go/kms v1.12.1
+	cloud.google.com/go/kms v1.14.0
 	github.com/Masterminds/semver v1.5.0
 	github.com/PagerDuty/go-pagerduty v1.7.0
 	github.com/PuerkitoBio/goquery v1.8.1
