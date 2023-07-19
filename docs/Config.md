@@ -8,7 +8,7 @@ Some environment variables commonly used for pipelines under osde2e are indicate
 ### Cluster related:
 
 | Environment variable                     | Usage                                                                                                                                            |
-| ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| ---------------------------------------- |--------------------------------------------------------------------------------------------------------------------------------------------------|
 | TEST_KUBECONFIG                          | This variable represents the filepath of an existing Kubeconfig. Will override fetching credentials from the OCM provider if specified.          |
 | OSD_ENV                                  | int, stage, prod                                                                                                                                 |
 | CLOUD_PROVIDER_ID                        | aws, gcp                                                                                                                                         |
@@ -20,7 +20,7 @@ Some environment variables commonly used for pipelines under osde2e are indicate
 | PROVIDER                                 | Provider is what provider to use to create/delete clusters. Ex. ocm, rosa, mock                                                                  |
 | PROVISION_SHARD_ID                       | ProvisionShardID is the shard ID that is set to provision a shard for the cluster.                                                               |
 | MULTI_AZ                                 | MultiAZ deploys a cluster across multiple availability zones.                                                                                    |
-| DESTROY_CLUSTER                          | Set to true if you want to the cluster to be explicitly deleted after the test.                                                                  |
+| SKIP_DESTROY_CLUSTER                     | Set to true if you want to the cluster to be retained after the test. Default value is false, i.e., cluster will be deleted.                     |
 | AFTER_TEST_CLUSTER_WAIT                  | AfterTestWait is how long to keep a cluster around after tests have run.                                                                         |
 | CLUSTER_UP_TIMEOUT                       | InstallTimeout is how long to wait before failing a cluster launch.                                                                              |
 | USE_LATEST_VERSION_FOR_INSTALL           | UseLatestVersionForInstall will select the latest cluster image set available for a fresh install.                                               |
@@ -210,9 +210,11 @@ The following are the values that can be plugged in for the --configs flag when 
 ### Other test flags:
 
 | Config Value       | Usage                                                                              |
-| ------------------ | ---------------------------------------------------------------------------------- |
+|--------------------|------------------------------------------------------------------------------------|
 | dry-run            | To run osde2e all the way up to the e2e tests then skips them.                     |
 | skip-health-checks | To run osde2e while skipping all the preliminary cluster health checks.            |
+| skip-must-gather   | To run osde2e while skipping must-gather collection after test.                    |
+| skip-destroy-cluster | Not to delete test cluster after test.                                             |
 | long-timeout       | To extend cluster expiry to about 8 hours.                                         |
 | log-metrics        | To set log metric configs for a couple of errors that pop up while running osde2e. |
 | region-random      | To set a random region for a cluster being created by the cloud provider.          |
