@@ -39,7 +39,7 @@ Any dependency errors must be resolved to create the test binary.
 12. Create PR against operator repo, watch pr-checks.
 
 13. Automate test harness publishing:
-	- Configure operator test harness quay repo similar to these entries https://gitlab.cee.redhat.com/service/app-interface/-/blob/master/data/services/osd-operators/app.yml#L82-90  
+    - Configure operator test harness quay repo similar to the `aws-vpce-operator-test-harness` entry here https://gitlab.cee.redhat.com/service/app-interface/-/blob/master/data/services/osd-operators/app.yml
     - Add  `make e2e-image-build-push`  target in the build pipeline for your operator in `app-interface` repo  similar to this in AVO:
 	https://gitlab.cee.redhat.com/service/app-interface/-/blob/master/data/services/osd-operators/cicd/ci-int/jobs-aws-vpce-operator.yaml#L27
 
