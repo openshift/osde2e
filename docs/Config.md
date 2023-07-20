@@ -210,14 +210,14 @@ The following are the values that can be plugged in for the --configs flag when 
 ### Other test flags:
 
 | Config Value       | Usage                                                                              |
-|--------------------|------------------------------------------------------------------------------------|
-| dry-run            | To run osde2e all the way up to the e2e tests then skips them.                     |
-| skip-health-checks | To run osde2e while skipping all the preliminary cluster health checks.            |
-| skip-must-gather   | To run osde2e while skipping must-gather collection after test.                    |
+| -------------------- | ---------------------------------------------------------------------------------- |
+| dry-run              | To run osde2e all the way up to the e2e tests then skips them.                     |
+| skip-health-checks   | To run osde2e while skipping all the preliminary cluster health checks.            |
+| skip-must-gather     | To run osde2e while skipping must-gather collection after test.                    |
 | skip-destroy-cluster | Not to delete test cluster after test.                                             |
-| long-timeout       | To extend cluster expiry to about 8 hours.                                         |
-| log-metrics        | To set log metric configs for a couple of errors that pop up while running osde2e. |
-| region-random      | To set a random region for a cluster being created by the cloud provider.          |
+| long-timeout         | To extend cluster expiry to about 8 hours.                                         |
+| log-metrics          | To set log metric configs for a couple of errors that pop up while running osde2e. |
+| region-random        | To set a random region for a cluster being created by the cloud provider.          |
 
 
 
