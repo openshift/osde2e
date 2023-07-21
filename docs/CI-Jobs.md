@@ -85,25 +85,25 @@ to the release.
 [SD CICD OSD AWS Upgrade Y To Y+1]: https://testgrid.k8s.io/redhat-openshift-osd#periodic-ci-openshift-osde2e-main-osd-aws-upgrade-latest-default-y-to-latest-y-plus-1&width=90
 [SD CICD OSD AWS Upgrade Y+1 To Y]: https://testgrid.k8s.io/redhat-openshift-osd#periodic-ci-openshift-osde2e-main-osd-aws-upgrade-latest-default-y-plus-1-to-latest-y&width=90
 
-[4.14 TRT OSD AWS]: https://testgrid.k8s.io/redhat-openshift-ocp-release-4.14-informing#release-openshift-ocp-osd-aws-nightly-4.14&width=90
-[4.14 TRT OSD GCP]: https://testgrid.k8s.io/redhat-openshift-ocp-release-4.14-informing#release-openshift-ocp-osd-gcp-nightly-4.14&width=90
-[4.13 TRT OSD AWS]: https://testgrid.k8s.io/redhat-openshift-ocp-release-4.13-informing#release-openshift-ocp-osd-aws-nightly-4.13&width=90
-[4.13 TRT OSD GCP]: https://testgrid.k8s.io/redhat-openshift-ocp-release-4.13-informing#release-openshift-ocp-osd-gcp-nightly-4.13&width=90
-[4.12 TRT OSD AWS]: https://testgrid.k8s.io/redhat-openshift-ocp-release-4.12-informing#release-openshift-ocp-osd-aws-nightly-4.12&width=90
-[4.12 TRT OSD GCP]: https://testgrid.k8s.io/redhat-openshift-ocp-release-4.12-informing#release-openshift-ocp-osd-gcp-nightly-4.12&width=90
-[4.11 TRT OSD AWS]: https://testgrid.k8s.io/redhat-openshift-ocp-release-4.11-informing#release-openshift-ocp-osd-aws-nightly-4.11&width=90
-[4.11 TRT OSD GCP]: https://testgrid.k8s.io/redhat-openshift-ocp-release-4.11-informing#release-openshift-ocp-osd-gcp-nightly-4.11&width=90
-[4.10 TRT OSD AWS]: https://testgrid.k8s.io/redhat-openshift-ocp-release-4.10-informing#release-openshift-ocp-osd-aws-nightly-4.10&width=90
-[4.10 TRT OSD GCP]: https://testgrid.k8s.io/redhat-openshift-ocp-release-4.10-informing#release-openshift-ocp-osd-gcp-nightly-4.10&width=90
+[4.14 TRT OSD AWS]: https://testgrid.k8s.io/redhat-openshift-ocp-release-4.14-informing#periodic-ci-openshift-osde2e-main-nightly-4.14-osd-aws&width=90
+[4.14 TRT OSD GCP]: https://testgrid.k8s.io/redhat-openshift-ocp-release-4.14-informing#periodic-ci-openshift-osde2e-main-nightly-4.14-osd-gcp&width=90
+[4.13 TRT OSD AWS]: https://testgrid.k8s.io/redhat-openshift-ocp-release-4.13-informing#periodic-ci-openshift-osde2e-main-nightly-4.13-osd-aws&width=90
+[4.13 TRT OSD GCP]: https://testgrid.k8s.io/redhat-openshift-ocp-release-4.13-informing#periodic-ci-openshift-osde2e-main-nightly-4.13-osd-gcp&width=90
+[4.12 TRT OSD AWS]: https://testgrid.k8s.io/redhat-openshift-ocp-release-4.12-informing#periodic-ci-openshift-osde2e-main-nightly-4.12-osd-aws&width=90
+[4.12 TRT OSD GCP]: https://testgrid.k8s.io/redhat-openshift-ocp-release-4.12-informing#periodic-ci-openshift-osde2e-main-nightly-4.12-osd-gcp&width=90
+[4.11 TRT OSD AWS]: https://testgrid.k8s.io/redhat-openshift-ocp-release-4.11-informing#periodic-ci-openshift-osde2e-main-nightly-4.11-osd-aws&width=90
+[4.11 TRT OSD GCP]: https://testgrid.k8s.io/redhat-openshift-ocp-release-4.11-informing#periodic-ci-openshift-osde2e-main-nightly-4.11-osd-gcp&width=90
+[4.10 TRT OSD AWS]: https://testgrid.k8s.io/redhat-openshift-ocp-release-4.10-informing#periodic-ci-openshift-osde2e-main-nightly-4.10-osd-aws&width=90
+[4.10 TRT OSD GCP]: https://testgrid.k8s.io/redhat-openshift-ocp-release-4.10-informing#periodic-ci-openshift-osde2e-main-nightly-4.10-osd-gcp&width=90
 
-[4.14 TRT ROSA CLASSIC STS]: https://testgrid.k8s.io/redhat-openshift-ocp-release-4.14-informing#release-openshift-ocp-rosa-classic-sts-nightly-4.14&width=90
-[4.13 TRT ROSA CLASSIC STS]: https://testgrid.k8s.io/redhat-openshift-ocp-release-4.13-informing#release-openshift-ocp-rosa-classic-sts-nightly-4.13&width=90
-[4.12 TRT ROSA CLASSIC STS]: https://testgrid.k8s.io/redhat-openshift-ocp-release-4.12-informing#release-openshift-ocp-rosa-classic-sts-nightly-4.12&width=90
-[4.11 TRT ROSA CLASSIC STS]: https://testgrid.k8s.io/redhat-openshift-ocp-release-4.11-informing#release-openshift-ocp-rosa-classic-sts-nightly-4.11&width=90
-[4.10 TRT ROSA CLASSIC STS]: https://testgrid.k8s.io/redhat-openshift-ocp-release-4.10-informing#release-openshift-ocp-rosa-classic-sts-nightly-4.10&width=90
+[4.14 TRT ROSA CLASSIC STS]: https://testgrid.k8s.io/redhat-openshift-ocp-release-4.14-informing#periodic-ci-openshift-osde2e-main-nightly-4.14-rosa-classic-sts&width=90
+[4.13 TRT ROSA CLASSIC STS]: https://testgrid.k8s.io/redhat-openshift-ocp-release-4.13-informing#periodic-ci-openshift-osde2e-main-nightly-4.13-rosa-classic-sts&width=90
+[4.12 TRT ROSA CLASSIC STS]: https://testgrid.k8s.io/redhat-openshift-ocp-release-4.12-informing#periodic-ci-openshift-osde2e-main-nightly-4.12-rosa-classic-sts&width=90
+[4.11 TRT ROSA CLASSIC STS]: https://testgrid.k8s.io/redhat-openshift-ocp-release-4.11-informing#periodic-ci-openshift-osde2e-main-nightly-4.11-rosa-classic-sts&width=90
+[4.10 TRT ROSA CLASSIC STS]: https://testgrid.k8s.io/redhat-openshift-ocp-release-4.10-informing#periodic-ci-openshift-osde2e-main-nightly-4.10-rosa-classic-sts&width=90
 
-[4.13 TRT ROSA HCP]: https://testgrid.k8s.io/redhat-openshift-ocp-release-4.13-informing#release-openshift-ocp-rosa-hcp-nightly-4.13&width=90
-[4.12 TRT ROSA HCP]: https://testgrid.k8s.io/redhat-openshift-ocp-release-4.12-informing#release-openshift-ocp-rosa-hcp-nightly-4.12&width=90
+[4.13 TRT ROSA HCP]: https://testgrid.k8s.io/redhat-openshift-ocp-release-4.13-informing#periodic-ci-openshift-osde2e-main-nightly-4.13-rosa-hcp&width=90
+[4.12 TRT ROSA HCP]: https://testgrid.k8s.io/redhat-openshift-ocp-release-4.12-informing#periodic-ci-openshift-osde2e-main-nightly-4.12-rosa-hcp&width=90
 
 [#sd-cicd-alerts]: https://app.slack.com/client/T027F3GAJ/CNYM6PB6X
 
