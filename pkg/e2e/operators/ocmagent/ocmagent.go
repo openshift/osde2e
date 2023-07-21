@@ -35,7 +35,7 @@ func init() {
 }
 
 // TODO: Separate PR to remove 'Informing' label from test suite
-var _ = ginkgo.Describe(suiteName, ginkgo.Ordered, label.Operators, label.Informing, func() {
+var _ = ginkgo.Describe(suiteName, ginkgo.Ordered, label.Operators, label.MigratedHarness, label.Informing, func() {
 	ginkgo.BeforeEach(func() {
 		if viper.GetBool(config.Hypershift) {
 			ginkgo.Skip("OCM Agent Operator is not supported on HyperShift")
