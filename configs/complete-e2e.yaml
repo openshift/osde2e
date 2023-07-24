@@ -2,7 +2,7 @@ tests:
   ginkgoLabelFilter: >
     (E2E || Operators || TestHarness || ServiceDefinition || AppBuilds) && !(Informing || MigratedHarness)
   testHarnesses:
-  #    For migrated harnesses, remember to add "SkipHarness" label to existing suite in this repo, until they are removed from here.
+  #    For migrated harnesses, remember to add "MigratedHarness" label to existing suite in this repo, until they are removed from here.
     - quay.io/app-sre/aws-vpce-operator-test-harness
     - quay.io/app-sre/splunk-forwarder-operator-test-harness
     - quay.io/app-sre/ocm-agent-operator-test-harness
