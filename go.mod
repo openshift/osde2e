@@ -59,6 +59,7 @@ require (
 	github.com/vmware-tanzu/velero v1.10.2
 	golang.org/x/net v0.12.0
 	golang.org/x/oauth2 v0.10.0
+	golang.org/x/sync v0.3.0
 	golang.org/x/tools v0.11.0
 	google.golang.org/api v0.134.0
 	google.golang.org/genproto v0.0.0-20230706204954-ccb25ca9f130
@@ -68,8 +69,10 @@ require (
 	k8s.io/api v0.27.3
 	k8s.io/apimachinery v0.27.3
 	k8s.io/client-go v12.0.0+incompatible
+	k8s.io/klog/v2 v2.90.1
 	k8s.io/kubectl v0.27.3
 	k8s.io/utils v0.0.0-20230313181309-38a27ef9d749
+	sigs.k8s.io/controller-runtime v0.15.0
 	sigs.k8s.io/e2e-framework v0.2.0
 )
 
@@ -206,9 +209,7 @@ require (
 	gopkg.in/square/go-jose.v2 v2.6.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	k8s.io/apiextensions-apiserver v0.27.2 // indirect
-	k8s.io/klog/v2 v2.90.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20230501164219-8b0f38b5fd1f // indirect
-	sigs.k8s.io/controller-runtime v0.15.0 // indirect
 	sigs.k8s.io/json v0.0.0-20221116044647-bc3834ca7abd // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.2.3 // indirect
 	sigs.k8s.io/yaml v1.3.0 // indirect
