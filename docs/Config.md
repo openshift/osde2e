@@ -92,21 +92,21 @@ Some environment variables commonly used for pipelines under osde2e are indicate
 
 ### General test related:-
 
-| Environment variable        | Usage                                                                                                           |
-| --------------------------- | --------------------------------------------------------------------------------------------------------------- |
-| POLLING_TIMEOUT             | PollingTimeout is how long (in seconds) to wait for an object to be created before failing the test.            |
-| TEST_HARNESSES:             | TestHarnesses is a comma separated list of container images with test harnesses to run.                         |
+| Environment variable        | Usage                                                                                                                                                                                                                                                                     |
+| --------------------------- |---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| POLLING_TIMEOUT             | PollingTimeout is how long (in seconds) to wait for an object to be created before failing the test.                                                                                                                                                                      |
+| TEST_HARNESSES:             | TestHarnesses is a *space* separated list of container images with test harnesses to run.                                                                                                                                                                                 |
 | TEST_USER         | TestUser is the OpenShift user that the tests will run as. If "%s" is detected in the TestUser string, it will evaluate that as the project namespace. Ex. "system:serviceaccount:%s:dedicated-admin" . Evaluated : "system:serviceaccount:osde2e-abc123:dedicated-admin" |
-| GINKGO_SKIP                 | GinkgoSkip is a regex passed to Ginkgo that skips any test suites matching the regex. ex. "Operator"            |
-| GINKGO_FOCUS                | GinkgoFocus is a regex passed to Ginkgo that focus on any test suites matching the regex. ex. "Operator"        |
-| GINKGO_LOG_LEVEL            | GinkgoLogLevel allows controlling the Ginkgo reporter output                                                    |
-| TESTS_TO_RUN                | TestsToRun is a list of files which should be executed as part of a test suite                                  |
-| SUPPRESS_SKIP_NOTIFICATIONS | SuppressSkipNotifications suppresses the notifications of skipped tests                                         |
-| CLEAN_RUNS                  | CleanRuns is the number of times the test-version is run before skipping.                                       |
-| OPERATOR_SKIP               | OperatorSkip is a comma-delimited list of operator names to ignore health checks from. ex. "insights,telemetry" |
-| SKIP_CLUSTER_HEALTH_CHECKS  | SkipClusterHealthChecks skips the cluster health checks. Useful when developing against a running cluster.      |
-| METRICS_BUCKET              | MetricsBucket is the bucket that metrics data will be uploaded to.                                              |
-| SERVICE_ACCOUNT             | ServiceAccount defines what user the tests should run as. By default, osde2e uses system:admin                  |
+| GINKGO_SKIP                 | GinkgoSkip is a regex passed to Ginkgo that skips any test suites matching the regex. ex. "Operator"                                                                                                                                                                      |
+| GINKGO_FOCUS                | GinkgoFocus is a regex passed to Ginkgo that focus on any test suites matching the regex. ex. "Operator"                                                                                                                                                                  |
+| GINKGO_LOG_LEVEL            | GinkgoLogLevel allows controlling the Ginkgo reporter output                                                                                                                                                                                                              |
+| TESTS_TO_RUN                | TestsToRun is a list of files which should be executed as part of a test suite                                                                                                                                                                                            |
+| SUPPRESS_SKIP_NOTIFICATIONS | SuppressSkipNotifications suppresses the notifications of skipped tests                                                                                                                                                                                                   |
+| CLEAN_RUNS                  | CleanRuns is the number of times the test-version is run before skipping.                                                                                                                                                                                                 |
+| OPERATOR_SKIP               | OperatorSkip is a comma-delimited list of operator names to ignore health checks from. ex. "insights,telemetry"                                                                                                                                                           |
+| SKIP_CLUSTER_HEALTH_CHECKS  | SkipClusterHealthChecks skips the cluster health checks. Useful when developing against a running cluster.                                                                                                                                                                |
+| METRICS_BUCKET              | MetricsBucket is the bucket that metrics data will be uploaded to.                                                                                                                                                                                                        |
+| SERVICE_ACCOUNT             | ServiceAccount defines what user the tests should run as. By default, osde2e uses system:admin                                                                                                                                                                            |
 
 ### Addon test related:-
 

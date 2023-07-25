@@ -31,7 +31,7 @@ func init() {
 }
 
 // Blocking SplunkForwarder Signal
-var _ = ginkgo.Describe(splunkForwarderBlocking, ginkgo.Ordered, label.Operators, func() {
+var _ = ginkgo.Describe(splunkForwarderBlocking, ginkgo.Ordered, label.Operators, label.MigratedHarness, func() {
 	ginkgo.BeforeEach(func() {
 		if viper.GetBool(config.Hypershift) {
 			ginkgo.Skip("Splunk Forwarder Operator is not deployed to a ROSA hosted-cp cluster (OSD-11605)")

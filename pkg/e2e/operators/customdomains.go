@@ -55,7 +55,7 @@ func init() {
 	alert.RegisterGinkgoAlert(customDomainsOperatorTestName, "SD-SREP", "@custom-domains-operator", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
 }
 
-var _ = ginkgo.Describe(customDomainsOperatorTestName, label.Operators, func() {
+var _ = ginkgo.Describe(customDomainsOperatorTestName, label.Operators, label.MigratedHarness, func() {
 	// custom dialer for use w/ resolver and http.client
 	dialer := &net.Dialer{
 		Resolver: &net.Resolver{

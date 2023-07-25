@@ -20,8 +20,7 @@ import (
 var (
 	serviceAccountDir = "/var/run/secrets/kubernetes.io/serviceaccount"
 	serviceAccount    = "system:serviceaccount:%s:cluster-admin"
-	TimeoutInSeconds  = viper.GetFloat64(config.Tests.PollingTimeout)
-	harnesses         = strings.Split(viper.GetString(config.Tests.TestHarnesses), ",")
+	TimeoutInSeconds  = viper.GetInt(config.Tests.SuiteTimeout)
 	h                 *helper.H
 	HarnessEntries    []ginkgo.TableEntry
 	r                 *runner.Runner
@@ -29,6 +28,8 @@ var (
 )
 
 var _ = ginkgo.Describe("Test harness", ginkgo.Ordered, ginkgo.ContinueOnFailure, label.TestHarness, func() {
+	harnesses := viper.GetStringSlice(config.Tests.TestHarnesses)
+	fmt.Println("Harnesses to run: ", harnesses)
 	for _, harness := range harnesses {
 		HarnessEntries = append(HarnessEntries, ginkgo.Entry("should run "+harness+" successfully", harness))
 	}
@@ -42,11 +43,6 @@ var _ = ginkgo.Describe("Test harness", ginkgo.Ordered, ginkgo.ContinueOnFailure
 	})
 
 	ginkgo.AfterEach(func(ctx context.Context) {
-		ginkgo.By("Retrieving results from test pod")
-		results, err := r.RetrieveTestResults()
-		Expect(err).NotTo(HaveOccurred(), "Could not read results")
-		ginkgo.By("Writing results")
-		h.WriteResults(results)
 		ginkgo.By("Deleting test namespace")
 		h.Cleanup(ctx)
 	})
@@ -68,14 +64,21 @@ var _ = ginkgo.Describe("Test harness", ginkgo.Ordered, ginkgo.ContinueOnFailure
 			// run tests
 			ginkgo.By("Running harness pod")
 			stopCh := make(chan struct{})
-			err = r.Run(int(TimeoutInSeconds), stopCh)
+			err = r.Run(TimeoutInSeconds, stopCh)
 			Expect(err).NotTo(HaveOccurred(), "Could not run pod")
+
+			// Retrieve and write results
+			ginkgo.By("Retrieving results from test pod")
+			results, err := r.RetrieveTestResults()
+			Expect(err).NotTo(HaveOccurred(), "Could not read results")
+			ginkgo.By("Writing results")
+			h.WriteResults(results)
 		},
 		HarnessEntries)
 })
 
 // Generates templated command string to provide to test harness container
-func getCommandString(timeout float64, latestImageStream string, harness string, suffix string, jobName string, serviceAccountDir string) string {
+func getCommandString(timeout int, latestImageStream string, harness string, suffix string, jobName string, serviceAccountDir string) string {
 	ginkgo.GinkgoHelper()
 	values := struct {
 		Name                 string
@@ -97,7 +100,7 @@ func getCommandString(timeout float64, latestImageStream string, harness string,
 	}{
 		Name:                 jobName,
 		JobName:              jobName,
-		Timeout:              int(timeout),
+		Timeout:              timeout,
 		Image:                harness,
 		OutputDir:            runner.DefaultRunner.OutputDir,
 		ServiceAccount:       h.GetNamespacedServiceAccount(),

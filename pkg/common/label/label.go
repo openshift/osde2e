@@ -77,6 +77,9 @@ var (
 
 	// Runs tests that are using the test harness functionality
 	TestHarness = ginkgo.Label("TestHarness")
+
+	// Excluding tests that are already moved to harness. Keeping through cutover to harness.
+	MigratedHarness = ginkgo.Label("MigratedHarness")
 )
 
 func AllCloudProviders() []ginkgo.Labels {
