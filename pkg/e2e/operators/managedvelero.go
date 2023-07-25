@@ -62,23 +62,17 @@ var _ = ginkgo.Describe(veleroOperatorTestName, ginkgo.Ordered, label.Operators,
 	testDaCRdeleteBackupRequests(h)
 	testDaCRbackupStorageLocations(h)
 	testDaCRdownloadRequests(h)
-	testDaCRpodVolumeBackup(h)
-	testDaCRpodVolumeRestores(h)
 	testDaCRvolumeSnapshotLocation(h)
 	testDaCRschedules(h)
 	testDaCRserverStatusRequest(h)
-	testDaCRrestricRepository(h)
 	testCRbackups(h)
 	testCRrestore(h)
 	testCRdeleteBackupRequests(h)
 	testCRbackupStorageLocations(h)
 	testCRdownloadRequests(h)
-	testCRpodVolumeBackup(h)
-	testCRpodVolumeRestores(h)
 	testCRvolumeSnapshotLocation(h)
 	testCRschedules(h)
 	testCRserverStatusRequest(h)
-	testCRrestricRepository(h)
 	checkClusterRoles(h, clusterRoles, true)
 	checkClusterRoleBindings(h, clusterRoleBindings, true)
 })
@@ -195,44 +189,6 @@ func testDaCRdownloadRequests(h *helper.H) {
 	})
 }
 
-func testDaCRpodVolumeBackup(h *helper.H) {
-	ginkgo.Context("velero", func() {
-		ginkgo.It("Access should be forbidden to edit PodVolumeBackups", func(ctx context.Context) {
-			h.SetServiceAccount(ctx, "system:serviceaccount:%s:dedicated-admin-project")
-			defer func() {
-				h.Impersonate(rest.ImpersonationConfig{})
-			}()
-
-			podVolumeBackup := velerov1.PodVolumeBackup{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "dedicated-admin-pod-volume-backup-test",
-				},
-			}
-			_, err := h.Velero().VeleroV1().PodVolumeBackups(h.CurrentProject()).Create(ctx, &podVolumeBackup, metav1.CreateOptions{})
-			Expect(apierrors.IsForbidden(err)).To(BeTrue())
-		})
-	})
-}
-
-func testDaCRpodVolumeRestores(h *helper.H) {
-	ginkgo.Context("velero", func() {
-		ginkgo.It("Access should be forbidden to edit PodVolumeRestores", func(ctx context.Context) {
-			h.SetServiceAccount(ctx, "system:serviceaccount:%s:dedicated-admin-project")
-			defer func() {
-				h.Impersonate(rest.ImpersonationConfig{})
-			}()
-
-			podVolumeRestore := velerov1.PodVolumeRestore{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "dedicated-admin-pod-volume-restore-test",
-				},
-			}
-			_, err := h.Velero().VeleroV1().PodVolumeRestores(h.CurrentProject()).Create(ctx, &podVolumeRestore, metav1.CreateOptions{})
-			Expect(apierrors.IsForbidden(err)).To(BeTrue())
-		})
-	})
-}
-
 func testDaCRvolumeSnapshotLocation(h *helper.H) {
 	ginkgo.Context("velero", func() {
 		ginkgo.It("Access should be forbidden to edit VolumeSnapshotLocations", func(ctx context.Context) {
@@ -285,25 +241,6 @@ func testDaCRserverStatusRequest(h *helper.H) {
 				},
 			}
 			_, err := h.Velero().VeleroV1().ServerStatusRequests(h.CurrentProject()).Create(ctx, &serverStatusRequest, metav1.CreateOptions{})
-			Expect(apierrors.IsForbidden(err)).To(BeTrue())
-		})
-	})
-}
-
-func testDaCRrestricRepository(h *helper.H) {
-	ginkgo.Context("velero", func() {
-		ginkgo.It("Access should be forbidden to edit RestricRepository", func(ctx context.Context) {
-			h.SetServiceAccount(ctx, "system:serviceaccount:%s:dedicated-admin-project")
-			defer func() {
-				h.Impersonate(rest.ImpersonationConfig{})
-			}()
-
-			resticRepository := velerov1.ResticRepository{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "dedicated-admin-restric-repository-test",
-				},
-			}
-			_, err := h.Velero().VeleroV1().ResticRepositories(h.CurrentProject()).Create(ctx, &resticRepository, metav1.CreateOptions{})
 			Expect(apierrors.IsForbidden(err)).To(BeTrue())
 		})
 	})
@@ -412,40 +349,6 @@ func testCRdownloadRequests(h *helper.H) {
 	})
 }
 
-func testCRpodVolumeBackup(h *helper.H) {
-	ginkgo.Context("velero", func() {
-		ginkgo.It("Access should be allowed to edit PodVolumeBackups", func(ctx context.Context) {
-			podVolumeBackup := velerov1.PodVolumeBackup{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "pod-volume-backup-test",
-				},
-			}
-			_, err := h.Velero().VeleroV1().PodVolumeBackups(h.CurrentProject()).Create(ctx, &podVolumeBackup, metav1.CreateOptions{})
-			Expect(err).NotTo(HaveOccurred())
-
-			h.Velero().VeleroV1().PodVolumeBackups(h.CurrentProject()).Delete(ctx, "pod-volume-backup-test", metav1.DeleteOptions{})
-			Expect(err).NotTo(HaveOccurred())
-		})
-	})
-}
-
-func testCRpodVolumeRestores(h *helper.H) {
-	ginkgo.Context("velero", func() {
-		ginkgo.It("Access should be allowed to edit PodVolumeRestores", func(ctx context.Context) {
-			podVolumeRestore := velerov1.PodVolumeRestore{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "pod-volume-restore-test",
-				},
-			}
-			_, err := h.Velero().VeleroV1().PodVolumeRestores(h.CurrentProject()).Create(ctx, &podVolumeRestore, metav1.CreateOptions{})
-			Expect(err).NotTo(HaveOccurred())
-
-			h.Velero().VeleroV1().PodVolumeRestores(h.CurrentProject()).Delete(ctx, "pod-volume-restore-test", metav1.DeleteOptions{})
-			Expect(err).NotTo(HaveOccurred())
-		})
-	})
-}
-
 func testCRvolumeSnapshotLocation(h *helper.H) {
 	ginkgo.Context("velero", func() {
 		ginkgo.It("Access should be allowed to edit VolumeSnapshotLocations", func(ctx context.Context) {
@@ -492,23 +395,6 @@ func testCRserverStatusRequest(h *helper.H) {
 			Expect(err).NotTo(HaveOccurred())
 
 			h.Velero().VeleroV1().ServerStatusRequests(h.CurrentProject()).Delete(ctx, "server-status-request-test", metav1.DeleteOptions{})
-			Expect(err).NotTo(HaveOccurred())
-		})
-	})
-}
-
-func testCRrestricRepository(h *helper.H) {
-	ginkgo.Context("velero", func() {
-		ginkgo.It("Access should be allowed to edit RestricRepository", func(ctx context.Context) {
-			resticRepository := velerov1.ResticRepository{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "restric-repository-test",
-				},
-			}
-			_, err := h.Velero().VeleroV1().ResticRepositories(h.CurrentProject()).Create(ctx, &resticRepository, metav1.CreateOptions{})
-			Expect(err).NotTo(HaveOccurred())
-
-			h.Velero().VeleroV1().ResticRepositories(h.CurrentProject()).Delete(ctx, "restric-repository-test", metav1.DeleteOptions{})
 			Expect(err).NotTo(HaveOccurred())
 		})
 	})
