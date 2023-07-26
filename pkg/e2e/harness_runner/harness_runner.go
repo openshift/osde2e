@@ -20,7 +20,7 @@ import (
 var (
 	serviceAccountDir = "/var/run/secrets/kubernetes.io/serviceaccount"
 	serviceAccount    = "system:serviceaccount:%s:cluster-admin"
-	TimeoutInSeconds  = viper.GetInt(config.Tests.SuiteTimeout)
+	timeoutInSeconds  int
 	h                 *helper.H
 	HarnessEntries    []ginkgo.TableEntry
 	r                 *runner.Runner
@@ -29,6 +29,11 @@ var (
 
 var _ = ginkgo.Describe("Test harness", ginkgo.Ordered, ginkgo.ContinueOnFailure, label.TestHarness, func() {
 	harnesses := viper.GetStringSlice(config.Tests.TestHarnesses)
+	if viper.IsSet(config.Tests.SuiteTimeout) {
+		timeoutInSeconds = viper.GetInt(config.Tests.SuiteTimeout)
+	} else {
+		timeoutInSeconds = viper.GetInt(config.Tests.PollingTimeout)
+	}
 	fmt.Println("Harnesses to run: ", harnesses)
 	for _, harness := range harnesses {
 		HarnessEntries = append(HarnessEntries, ginkgo.Entry("should run "+harness+" successfully", harness))
@@ -59,12 +64,12 @@ var _ = ginkgo.Describe("Test harness", ginkgo.Ordered, ginkgo.ContinueOnFailure
 			r = h.RunnerWithNoCommand()
 			latestImageStream, err := r.GetLatestImageStreamTag()
 			Expect(err).NotTo(HaveOccurred(), "Could not get latest imagestream tag")
-			r = h.Runner(getCommandString(TimeoutInSeconds, latestImageStream, harness, suffix, jobName, serviceAccountDir))
+			r = h.Runner(getCommandString(timeoutInSeconds, latestImageStream, harness, suffix, jobName, serviceAccountDir))
 
 			// run tests
 			ginkgo.By("Running harness pod")
 			stopCh := make(chan struct{})
-			err = r.Run(TimeoutInSeconds, stopCh)
+			err = r.Run(timeoutInSeconds, stopCh)
 			Expect(err).NotTo(HaveOccurred(), "Could not run pod")
 
 			// Retrieve and write results
