@@ -10,7 +10,6 @@ import (
 	"github.com/openshift/osde2e/pkg/common/alert"
 	"github.com/openshift/osde2e/pkg/common/expect"
 	"github.com/openshift/osde2e/pkg/common/helper"
-	"github.com/openshift/osde2e/pkg/common/label"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -26,7 +25,7 @@ func init() {
 	alert.RegisterGinkgoAlert(suiteName, "SD-SREP", "@sd-qe", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
 }
 
-var _ = ginkgo.Describe(suiteName, ginkgo.Ordered, label.HyperShift, label.E2E, func() {
+var _ = ginkgo.Describe(suiteName, ginkgo.Ordered, func() {
 	var h *helper.H
 
 	ginkgo.BeforeAll(func() {
