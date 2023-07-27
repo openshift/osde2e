@@ -306,6 +306,22 @@ func (h *H) CreateProject(ctx context.Context, name string) {
 	Expect(err).To(BeNil(), fmt.Sprintf("error creating project: %s", err))
 }
 
+// DeleteProject deletes the project provided
+func (h *H) DeleteProject(ctx context.Context, name string) error {
+	err := h.Project().ProjectV1().Projects().Delete(ctx, name, metav1.DeleteOptions{})
+	if err == nil {
+		return wait.PollImmediate(5*time.Second, 60*time.Second, func() (bool, error) {
+			project, err := h.Project().ProjectV1().Projects().Get(ctx, name, metav1.GetOptions{})
+			if err != nil && project.Name == "" {
+				return true, nil
+			}
+
+			return false, err
+		})
+	}
+	return err
+}
+
 // CurrentProject returns the project being used for testing.
 func (h *H) CurrentProject() string {
 	Expect(h.proj).NotTo(BeNil(), "no project is currently set")
