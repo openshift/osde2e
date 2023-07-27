@@ -51,7 +51,7 @@ var _ = ginkgo.Describe("Test harness", ginkgo.Ordered, ginkgo.ContinueOnFailure
 		func(ctx context.Context, harness string) {
 			log.Printf("======= RUNNING HARNESS: %s =======", harness)
 			harnessImageIndex := strings.LastIndex(harness, "/")
-			harnessImage := harness[harnessImageIndex+1:]
+			harnessImage := strings.Split(harness[harnessImageIndex+1:], ":")[0]
 			jobName := fmt.Sprintf("%s-%s", harnessImage, suffix)
 
 			// Create templated runner pod
