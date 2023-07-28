@@ -1,7 +1,7 @@
 package spi
 
 import (
-	"github.com/Masterminds/semver"
+	"github.com/Masterminds/semver/v3"
 )
 
 // Version represents an Openshift version.

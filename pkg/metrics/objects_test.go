@@ -5,7 +5,7 @@ import (
 	"sort"
 	"testing"
 
-	"github.com/Masterminds/semver"
+	"github.com/Masterminds/semver/v3"
 )
 
 func TestEventEqual(t *testing.T) {

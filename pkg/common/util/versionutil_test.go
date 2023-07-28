@@ -3,7 +3,7 @@ package util
 import (
 	"testing"
 
-	"github.com/Masterminds/semver"
+	"github.com/Masterminds/semver/v3"
 )
 
 func TestVersionConstraint(t *testing.T) {

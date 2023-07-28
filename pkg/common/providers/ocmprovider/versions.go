@@ -5,7 +5,7 @@ import (
 	"log"
 	"sort"
 
-	"github.com/Masterminds/semver"
+	"github.com/Masterminds/semver/v3"
 	v1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"

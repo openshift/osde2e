@@ -6,7 +6,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/Masterminds/semver"
+	"github.com/Masterminds/semver/v3"
 	"github.com/openshift/osde2e/pkg/common/cluster/healthchecks"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/spi"

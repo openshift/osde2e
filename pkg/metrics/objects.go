@@ -4,7 +4,7 @@ import (
 	"regexp"
 	"time"
 
-	"github.com/Masterminds/semver"
+	"github.com/Masterminds/semver/v3"
 )
 
 // AllJobs represents a regex that will collect results from all jobs.

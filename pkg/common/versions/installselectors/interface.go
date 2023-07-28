@@ -1,7 +1,7 @@
 package installselectors
 
 import (
-	"github.com/Masterminds/semver"
+	"github.com/Masterminds/semver/v3"
 	"github.com/openshift/osde2e/pkg/common/spi"
 )
 

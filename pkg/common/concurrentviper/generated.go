@@ -1,4 +1,4 @@
-//nolint
+// nolint
 package concurrentviper
 
 import (
@@ -20,10 +20,11 @@ var l sync.Mutex
 // DecodeHook returns a DecoderConfigOption which overrides the default
 // DecoderConfig.DecodeHook value, the default is:
 //
-//  mapstructure.ComposeDecodeHookFunc(
-//		mapstructure.StringToTimeDurationHookFunc(),
-//		mapstructure.StringToSliceHookFunc(","),
-//	)
+//	 mapstructure.ComposeDecodeHookFunc(
+//			mapstructure.StringToTimeDurationHookFunc(),
+//			mapstructure.StringToSliceHookFunc(","),
+//		)
+//
 // This function is safe for concurrent use.
 func DecodeHook(hook mapstructure.DecodeHookFunc) viper.DecoderConfigOption {
 	l.Lock()
@@ -143,11 +144,12 @@ func AddSecureRemoteProvider(provider, endpoint, path, secretkeyring string) err
 // would return a string slice for the key if the key's type is inferred by
 // the default value and the Get function would return:
 //
-//   []string {"a", "b", "c"}
+//	[]string {"a", "b", "c"}
 //
 // Otherwise the Get function would return:
 //
-//   "a b c"
+//	"a b c"
+//
 // This function is safe for concurrent use.
 func SetTypeByDefaultValue(enable bool) {
 	l.Lock()
@@ -297,8 +299,8 @@ func BindPFlags(flags *pflag.FlagSet) error {
 // BindPFlag binds a specific key to a pflag (as used by cobra).
 // Example (where serverCmd is a Cobra instance):
 //
-//	 serverCmd.Flags().Int("port", 1138, "Port to run Application server on")
-//	 Viper.BindPFlag("port", serverCmd.Flags().Lookup("port"))
+//	serverCmd.Flags().Int("port", 1138, "Port to run Application server on")
+//	Viper.BindPFlag("port", serverCmd.Flags().Lookup("port"))
 //
 // This function is safe for concurrent use.
 func BindPFlag(key string, flag *pflag.Flag) error {

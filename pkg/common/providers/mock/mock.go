@@ -8,7 +8,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/Masterminds/semver"
+	"github.com/Masterminds/semver/v3"
 	"github.com/google/uuid"
 
 	"github.com/openshift/osde2e/assets"

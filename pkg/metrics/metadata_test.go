@@ -3,7 +3,7 @@ package metrics
 import (
 	"testing"
 
-	"github.com/Masterminds/semver"
+	"github.com/Masterminds/semver/v3"
 	"github.com/prometheus/common/model"
 )
 

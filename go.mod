@@ -4,7 +4,7 @@ go 1.19
 
 require (
 	cloud.google.com/go/kms v1.12.1
-	github.com/Masterminds/semver v1.5.0
+	github.com/Masterminds/semver/v3 v3.2.1
 	github.com/PagerDuty/go-pagerduty v1.7.0
 	github.com/PuerkitoBio/goquery v1.8.1
 	github.com/adamliesko/retry v0.0.0-20200123222335-86c8baac277d
@@ -35,7 +35,7 @@ require (
 	github.com/openshift/custom-domains-operator v0.0.0-20221118201157-bd1052dac818
 	github.com/openshift/managed-upgrade-operator v0.0.0-20230525042514-a9b8c1d2571c
 	github.com/openshift/must-gather-operator v0.1.2-0.20221011152618-7805956e1ded
-	github.com/openshift/osde2e-common v0.0.0-20230621125319-93f8f034f3aa
+	github.com/openshift/osde2e-common v0.0.0-20230728144656-06a6e6cc590a
 	github.com/openshift/rosa v1.2.23
 	github.com/openshift/route-monitor-operator v0.0.0-20221118160357-3df1ed1fa1d2
 	github.com/openshift/splunk-forwarder-operator v0.0.0-20230525060151-2dc403aa8ff9
