@@ -40,7 +40,7 @@ func (m latestYFromDelta) SelectVersion(versionList *spi.VersionList) (*semver.V
 	versionType = fmt.Sprintf("latest Y '%s' from delta %d", defaultVersion.Version().String(), latestYFromDelta)
 
 	for _, version := range versions {
-		if defaultVersion.Version().Minor()+latestYFromDelta == version.Version().Minor() {
+		if int64(defaultVersion.Version().Minor())+latestYFromDelta == int64(version.Version().Minor()) {
 			return version.Version(), versionType, nil
 		}
 	}

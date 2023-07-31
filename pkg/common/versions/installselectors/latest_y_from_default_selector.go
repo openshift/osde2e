@@ -43,7 +43,7 @@ func (l latestYVersion) SelectVersion(versionList *spi.VersionList) (*semver.Ver
 	for _, version := range availableVersions {
 		if version.Default() {
 			defaultVersion = version
-			nextMinor = defaultVersion.Version().Minor() + 1
+			nextMinor = int64(defaultVersion.Version().Minor()) + 1
 			continue
 		}
 
@@ -51,7 +51,7 @@ func (l latestYVersion) SelectVersion(versionList *spi.VersionList) (*semver.Ver
 			continue
 		}
 
-		if version.Version().Minor() == nextMinor {
+		if int64(version.Version().Minor()) == nextMinor {
 			if latestYVersion == nil {
 				latestYVersion = version
 			}
