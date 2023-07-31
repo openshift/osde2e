@@ -29,8 +29,11 @@ var (
 
 var _ = ginkgo.Describe("Test harness", ginkgo.Ordered, ginkgo.ContinueOnFailure, label.TestHarness, func() {
 	harnesses := viper.GetStringSlice(config.Tests.TestHarnesses)
-	timeoutInSeconds = 3600 * viper.GetInt(config.Tests.SuiteTimeout)
-
+	if viper.IsSet(config.Tests.HarnessTimeout) {
+		timeoutInSeconds = viper.GetInt(config.Tests.HarnessTimeout)
+	} else {
+		timeoutInSeconds = viper.GetInt(config.Tests.PollingTimeout)
+	}
 	fmt.Println("Harnesses to run: ", harnesses)
 	for _, harness := range harnesses {
 		HarnessEntries = append(HarnessEntries, ginkgo.Entry("should run "+harness+" successfully", harness))

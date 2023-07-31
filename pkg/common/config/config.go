@@ -206,6 +206,10 @@ var Tests = struct {
 	// Env: SUITE_TIMEOUT
 	SuiteTimeout string
 
+	// HarnessTimeout is how long (in seconds) to wait for the individual harness to finish before timing out. If unspecified, POLLING_TIMEOUT is used.
+	// Env: HARNESS_TIMEOUT
+	HarnessTimeout string
+
 	// TestHarnesses is a list of test harnesses to run.
 	// Env: TEST_HARNESSES
 	TestHarnesses string
@@ -278,6 +282,7 @@ var Tests = struct {
 }{
 	TestHarnesses:              "tests.testHarnesses",
 	SuiteTimeout:               "tests.suiteTimeout",
+	HarnessTimeout:             "tests.harnessTimeout",
 	PollingTimeout:             "tests.pollingTimeout",
 	ServiceAccount:             "tests.serviceAccount",
 	SlackChannel:               "tests.slackChannel",
@@ -696,6 +701,8 @@ func InitOSDe2eViper() {
 
 	viper.SetDefault(Tests.SuiteTimeout, 6)
 	viper.BindEnv(Tests.SuiteTimeout, "SUITE_TIMEOUT")
+
+	viper.BindEnv(Tests.HarnessTimeout, "HARNESS_TIMEOUT")
 
 	viper.SetDefault(Tests.PollingTimeout, 300)
 	viper.BindEnv(Tests.PollingTimeout, "POLLING_TIMEOUT")
