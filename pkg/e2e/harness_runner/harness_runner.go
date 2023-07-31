@@ -29,11 +29,8 @@ var (
 
 var _ = ginkgo.Describe("Test harness", ginkgo.Ordered, ginkgo.ContinueOnFailure, label.TestHarness, func() {
 	harnesses := viper.GetStringSlice(config.Tests.TestHarnesses)
-	if viper.IsSet(config.Tests.SuiteTimeout) {
-		timeoutInSeconds = viper.GetInt(config.Tests.SuiteTimeout)
-	} else {
-		timeoutInSeconds = viper.GetInt(config.Tests.PollingTimeout)
-	}
+	timeoutInSeconds = 3600 * viper.GetInt(config.Tests.SuiteTimeout)
+
 	fmt.Println("Harnesses to run: ", harnesses)
 	for _, harness := range harnesses {
 		HarnessEntries = append(HarnessEntries, ginkgo.Entry("should run "+harness+" successfully", harness))
@@ -66,7 +63,11 @@ var _ = ginkgo.Describe("Test harness", ginkgo.Ordered, ginkgo.ContinueOnFailure
 			Expect(err).NotTo(HaveOccurred(), "Could not get latest imagestream tag")
 			r = h.Runner(getCommandString(timeoutInSeconds, latestImageStream, harness, suffix, jobName, serviceAccountDir))
 
-			// run tests
+			// TODO: Refactor the logic to determine whether the pod has finished or not
+			//	Would be nice to see the test suite handle exiting and osde2e can pick up
+			//	status of pod to decide pass/fail. Would then remove need to set individual
+			//	timeouts and just have one large suite timeout for ginkgo which osde2e defines
+			//	today
 			ginkgo.By("Running harness pod")
 			stopCh := make(chan struct{})
 			err = r.Run(timeoutInSeconds, stopCh)
