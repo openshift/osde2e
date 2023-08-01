@@ -566,7 +566,11 @@ func ProvisionCluster(logger *log.Logger) (*spi.Cluster, error) {
 			}
 		}
 
-		if clusterID, err = provider.LaunchCluster(name); err != nil {
+		clusterID, err = provider.LaunchCluster(name)
+		if clusterID != "" {
+			viper.Set(config.Cluster.ID, clusterID)
+		}
+		if err != nil {
 			return nil, fmt.Errorf("could not launch cluster: %v", err)
 		}
 

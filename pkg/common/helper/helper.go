@@ -62,17 +62,17 @@ func New() *H {
 }
 
 // NewOutsideGinkgo instantiates a helper function while not within a Ginkgo Test Block
-func NewOutsideGinkgo() *H {
+func NewOutsideGinkgo() (*H, error) {
 	defer ginkgo.GinkgoRecover()
 
 	h := Init()
 	h.OutsideGinkgo = true
 	err := h.Setup()
 	if err != nil {
-		return nil
+		return nil, err
 	}
 
-	return h
+	return h, nil
 }
 
 // H configures clients and sets up and destroys Projects for test isolation.
