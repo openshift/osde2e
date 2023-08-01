@@ -56,10 +56,9 @@ github.com/BurntSushi/toml v1.0.0 h1:dtDWrepsVPfW9H/4y7dDgFc2MBUSeJhlaDtK13CxFlU
 github.com/BurntSushi/xgb v0.0.0-20160522181843-27f122750802/go.mod h1:IVnqGOEym/WlBOVXweHU+Q+/VP0lqqI8lqeDx9IjBqo=
 github.com/MakeNowJust/heredoc v0.0.0-20170808103936-bb23615498cd/go.mod h1:64YHyfSL2R96J44Nlwm39UHepQbyR5q10x7iYa1ks2E=
 github.com/Masterminds/goutils v1.1.1/go.mod h1:8cTjp+g8YejhMuvIA5y2vz3BpJxksy863GQaJW2MFNU=
-github.com/Masterminds/semver v1.5.0 h1:H65muMkzWKEuNDnfl9d70GUjFniHKHRbFPGBuZ3QEww=
-github.com/Masterminds/semver v1.5.0/go.mod h1:MB6lktGJrhw8PrUyiEoblNEGEQ+RzHPF078ddwwvV3Y=
-github.com/Masterminds/semver/v3 v3.1.1 h1:hLg3sBzpNErnxhQtUy/mmLR2I9foDujNK030IGemrRc=
 github.com/Masterminds/semver/v3 v3.1.1/go.mod h1:VPu/7SZ7ePZ3QOrcuXROw5FAcLl4a0cBrbBpGY/8hQs=
+github.com/Masterminds/semver/v3 v3.2.1 h1:RN9w6+7QoMeJVGyfmbcgs28Br8cvmnucEXnY0rYXWg0=
+github.com/Masterminds/semver/v3 v3.2.1/go.mod h1:qvl/7zhW3nngYb5+80sSMF+FG2BjYrf8m9wsX0PNOMQ=
 github.com/Masterminds/sprig/v3 v3.2.2/go.mod h1:UoaO7Yp8KlPnJIYWTFkMaqPUYKTfGFPhxNuwnnxkKlk=
 github.com/Microsoft/go-winio v0.6.1 h1:9/kr64B9VUZrLm5YYwbGtUJnMgqWVOdUAXu6Migciow=
 github.com/Microsoft/go-winio v0.6.1/go.mod h1:LRdKpFKfdobln8UmuiYcKPot9D2v6svN5+sAH+4kjUM=
@@ -751,8 +750,8 @@ github.com/openshift/managed-upgrade-operator v0.0.0-20230525042514-a9b8c1d2571c
 github.com/openshift/managed-upgrade-operator v0.0.0-20230525042514-a9b8c1d2571c/go.mod h1:W/ajjexZ/T50ZRpk48HbgbtOXD4rt0/wHlwdXu8arQE=
 github.com/openshift/must-gather-operator v0.1.2-0.20221011152618-7805956e1ded h1:ndSIrjtHq6DaEfQqtukaJ7PrX9f0X2V9WjnuiqBDGyw=
 github.com/openshift/must-gather-operator v0.1.2-0.20221011152618-7805956e1ded/go.mod h1:LHntdQf5jrwxpmyVMbwXUK491COBJ7buHvyi4YLlHho=
-github.com/openshift/osde2e-common v0.0.0-20230621125319-93f8f034f3aa h1:qfj0cSkZ7Ja9+ahYmiQdXoT8lrH6tTcRV6jspyb5Q4I=
-github.com/openshift/osde2e-common v0.0.0-20230621125319-93f8f034f3aa/go.mod h1:qP+tI/gaFODlcRTSzD7IL3Z6Eh7C/eKdxK4z7J/bYNE=
+github.com/openshift/osde2e-common v0.0.0-20230728144656-06a6e6cc590a h1:x2QMSr/uWDBTUrWT23heThTCQF76vDOcLFrXVOxfwV0=
+github.com/openshift/osde2e-common v0.0.0-20230728144656-06a6e6cc590a/go.mod h1:bkreMB6T7SoOuEceXyXCvMHF4/9augfiWsixGaQ/Yo0=
 github.com/openshift/rosa v1.2.23 h1:0Q2kl3Bs1dKcrMn8SNtGSU0SYGYD16b/LS2z+sSxx1M=
 github.com/openshift/rosa v1.2.23/go.mod h1:nhEZMCq3aHx3uCPJdruCDge3xv+5Ir0ijdfEmhOFTCE=
 github.com/openshift/route-monitor-operator v0.0.0-20221118160357-3df1ed1fa1d2 h1:s97F2fQ5r+XGVfWDy5wgH611iIvIDusQcHtv5jJ36uw=

@@ -3,7 +3,7 @@ package installselectors
 import (
 	"testing"
 
-	"github.com/Masterminds/semver"
+	"github.com/Masterminds/semver/v3"
 )
 
 // Testing utility function for asserting two versions should be equal.

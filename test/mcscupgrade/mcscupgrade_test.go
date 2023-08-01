@@ -7,7 +7,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/Masterminds/semver"
+	"github.com/Masterminds/semver/v3"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
@@ -159,7 +159,7 @@ var _ = Describe("HyperShift", Ordered, func() {
 			}
 			Expect(scCluster.upgradeVersion).ToNot(BeNil(), "failed to identify service cluster %q upgrade version", scCluster.osdFleetMgmtID)
 
-			scCluster.kubeconfigFile, err = osdProvider.KubeconfigFile(ctx, scCluster.id)
+			scCluster.kubeconfigFile, err = osdProvider.KubeconfigFile(ctx, scCluster.id, os.TempDir())
 			Expect(err).ShouldNot(HaveOccurred(), "failed to get service cluster %q kubeconfig file", scCluster.osdFleetMgmtID)
 
 			scCluster.client, err = openshiftclient.NewFromKubeconfig(scCluster.kubeconfigFile, logger)
@@ -199,7 +199,7 @@ var _ = Describe("HyperShift", Ordered, func() {
 			}
 			Expect(mcCluster.upgradeVersion).ToNot(BeNil(), "failed to identify service cluster %q upgrade version", mcCluster.osdFleetMgmtID)
 
-			mcCluster.kubeconfigFile, err = osdProvider.KubeconfigFile(ctx, mcCluster.id)
+			mcCluster.kubeconfigFile, err = osdProvider.KubeconfigFile(ctx, mcCluster.id, os.TempDir())
 			Expect(err).ShouldNot(HaveOccurred(), "failed to get management cluster %q kubeconfig file", mcCluster.osdFleetMgmtID)
 
 			mcCluster.client, err = openshiftclient.NewFromKubeconfig(mcCluster.kubeconfigFile, logger)
@@ -220,7 +220,7 @@ var _ = Describe("HyperShift", Ordered, func() {
 			})
 			Expect(err).ShouldNot(HaveOccurred(), "failed to create hosted control plane cluster")
 
-			hcpCluster.kubeconfigFile, err = rosaProvider.KubeconfigFile(ctx, hcpCluster.id)
+			hcpCluster.kubeconfigFile, err = rosaProvider.KubeconfigFile(ctx, hcpCluster.id, os.TempDir())
 			Expect(err).ShouldNot(HaveOccurred(), "failed to get hosted control plane cluster %q kubeconfig file", hcpCluster.id)
 
 			hcpCluster.client, err = openshiftclient.NewFromKubeconfig(hcpCluster.kubeconfigFile, logger)
@@ -231,10 +231,12 @@ var _ = Describe("HyperShift", Ordered, func() {
 	_ = AfterAll(func(ctx context.Context) {
 		if removeHCPWorkloads.MatchesLabelFilter(GinkgoLabelFilter()) && hcpCluster.id != "" {
 			err := rosaProvider.DeleteCluster(ctx, &rosaprovider.DeleteClusterOptions{
-				ClusterName: hcpCluster.name,
-				ClusterID:   hcpCluster.id,
-				HostedCP:    true,
-				WorkingDir:  hcpCluster.reportDir,
+				ClusterName:        hcpCluster.name,
+				ClusterID:          hcpCluster.id,
+				HostedCP:           true,
+				WorkingDir:         hcpCluster.reportDir,
+				DeleteHostedCPVPC:  true,
+				DeleteOidcConfigID: true,
 			})
 			Expect(err).ShouldNot(HaveOccurred(), "failed to delete hosted control plane cluster")
 		}

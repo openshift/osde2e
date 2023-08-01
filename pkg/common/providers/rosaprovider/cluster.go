@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Masterminds/semver"
+	"github.com/Masterminds/semver/v3"
 	v1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 	createCluster "github.com/openshift/rosa/cmd/create/cluster"
 	"github.com/openshift/rosa/cmd/dlt/oidcprovider"

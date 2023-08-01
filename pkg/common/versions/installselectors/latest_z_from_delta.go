@@ -3,7 +3,7 @@ package installselectors
 import (
 	"fmt"
 
-	"github.com/Masterminds/semver"
+	"github.com/Masterminds/semver/v3"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/spi"
@@ -44,7 +44,7 @@ func (m latestZFromDelta) SelectVersion(versionList *spi.VersionList) (*semver.V
 			continue
 		}
 
-		if defaultVersion.Version().Patch()+latestZFromDelta == version.Version().Patch() {
+		if int64(defaultVersion.Version().Patch())+latestZFromDelta == int64(version.Version().Patch()) {
 			return version.Version(), versionType, nil
 		}
 	}
