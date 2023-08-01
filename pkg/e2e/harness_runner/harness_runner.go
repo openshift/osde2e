@@ -73,7 +73,6 @@ var _ = ginkgo.Describe("Test harness", ginkgo.Ordered, ginkgo.ContinueOnFailure
 			//	today
 			ginkgo.By("Running harness pod")
 			stopCh := make(chan struct{})
-			fmt.Println("Will timeout in", timeoutInSeconds, " seconds")
 			err = r.Run(timeoutInSeconds, stopCh)
 			Expect(err).NotTo(HaveOccurred(), "Could not run pod")
 
