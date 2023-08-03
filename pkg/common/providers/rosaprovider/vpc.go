@@ -44,11 +44,10 @@ func copyFile(srcFile string, destFile string) error {
 }
 
 // createHyperShiftVPC creates the vpc to provision HyperShift clusters
-func createHyperShiftVPC() (*HyperShiftVPC, error) {
+func createHyperShiftVPC(workingDir string) (*HyperShiftVPC, error) {
 	ctx := context.Background()
 
 	var vpc HyperShiftVPC
-	workingDir := viper.GetString(config.ReportDir)
 
 	tf, err := terraform.New(workingDir)
 	if err != nil {
