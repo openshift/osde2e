@@ -48,9 +48,9 @@ func RunUpgrade() error {
 	var upgradeStarted time.Time
 
 	// setup helper
-	h := helper.NewOutsideGinkgo()
+	h, err := helper.NewOutsideGinkgo()
 	if h == nil {
-		return fmt.Errorf("Unable to generate helper outside ginkgo")
+		return fmt.Errorf("unable to generate helper outside ginkgo: %v", err)
 	}
 
 	image := viper.GetString(config.Upgrade.Image)

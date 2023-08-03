@@ -204,13 +204,18 @@ func beforeSuite() bool {
 		var (
 			absNamespace = "osde2e-" + secretsNamespace
 			ctx          = context.TODO()
-			h            = helper.NewOutsideGinkgo()
 		)
+
+		h, err := helper.NewOutsideGinkgo()
+		if h == nil {
+			log.Println("Unable to generate helper outside of ginkgo: %w", err)
+			return false
+		}
 
 		_ = h.DeleteProject(ctx, absNamespace)
 		h.CreateProject(ctx, secretsNamespace)
 
-		_, err := h.Kube().CoreV1().Secrets(absNamespace).Create(context.TODO(), &v1.Secret{
+		_, err = h.Kube().CoreV1().Secrets(absNamespace).Create(context.TODO(), &v1.Secret{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "ci-secrets",
 				Namespace: absNamespace,
@@ -571,26 +576,18 @@ func runGinkgoTests() (int, error) {
 	if !suiteConfig.DryRun {
 		getLogs()
 
-		h := helper.NewOutsideGinkgo()
-
+		h, err := helper.NewOutsideGinkgo()
 		if h == nil {
-			return Failure, fmt.Errorf("Unable to generate helper object for cleanup")
+			log.Printf("Failed to generate helper object to perform cleanup operations, deleting cluster: %t", !viper.GetBool(config.Cluster.SkipDestroyCluster))
+			// Ignoring the error to return actual error which caused runtime to abort
+			_ = deleteCluster(provider)
+			return Failure, fmt.Errorf("unable to generate helper object for cleanup: %v", err)
 		}
 
 		cleanupAfterE2E(context.TODO(), h)
 
-	}
-
-	if !viper.GetBool(config.Cluster.SkipDestroyCluster) {
-		log.Printf("Destroying cluster '%s'...", viper.GetString(config.Cluster.ID))
-
-		if err = provider.DeleteCluster(viper.GetString(config.Cluster.ID)); err != nil {
-			return Failure, fmt.Errorf("error deleting cluster: %s", err.Error())
-		}
-	} else {
-		// When using a local kubeconfig, provider might not be set
-		if provider != nil {
-			log.Printf("For debugging, please look for cluster ID %s in environment %s", viper.GetString(config.Cluster.ID), provider.Environment())
+		if err = deleteCluster(provider); err != nil {
+			return Failure, err
 		}
 	}
 
@@ -600,6 +597,30 @@ func runGinkgoTests() (int, error) {
 	}
 
 	return Success, nil
+}
+
+// deleteCluster destroys the cluster based on defined settings
+func deleteCluster(provider spi.Provider) error {
+	clusterID := viper.GetString(config.Cluster.ID)
+
+	if clusterID == "" {
+		log.Printf("Cluster ID is empty, unable to destroy cluster")
+		return nil
+	}
+
+	if !viper.GetBool(config.Cluster.SkipDestroyCluster) {
+		log.Printf("Destroying cluster '%s'...", clusterID)
+
+		if err := provider.DeleteCluster(clusterID); err != nil {
+			return fmt.Errorf("error deleting cluster: %s", err.Error())
+		}
+	} else {
+		if provider != nil {
+			log.Printf("For debugging, please look for cluster ID %s in environment %s", clusterID, provider.Environment())
+		}
+	}
+
+	return nil
 }
 
 // ManyGroupedFailureName is the incident title assigned to incidents reperesenting a large
@@ -1022,9 +1043,9 @@ func runTestsInPhase(
 		clusterState = cluster.State()
 	}
 	if !suiteConfig.DryRun && clusterState == spi.ClusterStateReady && viper.GetString(config.JobName) != "" {
-		h := helper.NewOutsideGinkgo()
+		h, err := helper.NewOutsideGinkgo()
 		if h == nil {
-			log.Println("Unable to generate helper outside of ginkgo")
+			log.Println("Unable to generate helper outside of ginkgo: %w", err)
 			return ginkgoPassed, testCaseData
 		}
 		dependencies, err := debug.GenerateDependencies(h.Kube())
