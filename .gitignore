@@ -25,3 +25,5 @@ pkged.go
 # Custom configs
 configs/custom-*
 custom-*
+
+*-kubeconfig
