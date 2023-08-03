@@ -53,12 +53,7 @@ func (m *ROSAProvider) getOIDCConfigID(prefix string) (string, error) {
 }
 
 // deleteOIDCConfig deletes an existing oidc config that was used for cluster creation
-func (m *ROSAProvider) deleteOIDCConfig(prefix string) error {
-	oidcConfigID, err := m.getOIDCConfigID(prefix)
-	if err != nil {
-		return fmt.Errorf("unable to locate oidc config with prefix: %s", prefix)
-	}
-
+func (m *ROSAProvider) deleteOIDCConfig(oidcConfigID string) error {
 	cmd := deleteOIDCConfig.Cmd
 	cmd.SetArgs([]string{
 		"--mode", "auto",
@@ -66,7 +61,7 @@ func (m *ROSAProvider) deleteOIDCConfig(prefix string) error {
 		"--oidc-config-id", oidcConfigID,
 		"--yes",
 	})
-	err = callAndSetAWSSession(func() error {
+	err := callAndSetAWSSession(func() error {
 		return cmd.Execute()
 	})
 	if err != nil {
