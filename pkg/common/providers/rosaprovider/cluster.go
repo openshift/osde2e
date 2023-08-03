@@ -314,7 +314,12 @@ func (m *ROSAProvider) DeleteCluster(clusterID string) error {
 		reportDir = &value
 	}
 
-	_, err := m.ocmLogin()
+	cluster, err := m.ocmProvider.GetOCMCluster(clusterID)
+	if err != nil {
+		return fmt.Errorf("unable to get cluster %s from ocm: %v", clusterID, err)
+	}
+
+	_, err = m.ocmLogin()
 	if err != nil {
 		return err
 	}
@@ -332,7 +337,7 @@ func (m *ROSAProvider) DeleteCluster(clusterID string) error {
 
 	if viper.GetBool(config.Hypershift) {
 		if viper.GetString(OIDCConfigID) == "" {
-			if err := m.deleteOIDCConfig(viper.GetString(config.Cluster.Name)); err != nil {
+			if err := m.deleteOIDCConfig(cluster.AWS().STS().OidcConfig().ID()); err != nil {
 				return err
 			}
 		}

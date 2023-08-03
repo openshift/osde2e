@@ -684,7 +684,7 @@ func (o *OCMProvider) ScaleCluster(clusterID string, numComputeNodes int) error 
 	var resp *v1.ClusterUpdateResponse
 
 	// Get the current state of the cluster
-	ocmCluster, err := o.getOCMCluster(clusterID)
+	ocmCluster, err := o.GetOCMCluster(clusterID)
 	if err != nil {
 		return err
 	}
@@ -777,7 +777,7 @@ func (o *OCMProvider) ListClusters(query string) ([]*spi.Cluster, error) {
 
 // GetCluster returns a cluster from OCM.
 func (o *OCMProvider) GetCluster(clusterID string) (*spi.Cluster, error) {
-	ocmCluster, err := o.getOCMCluster(clusterID)
+	ocmCluster, err := o.GetOCMCluster(clusterID)
 	if err != nil {
 		return nil, err
 	}
@@ -791,7 +791,7 @@ func (o *OCMProvider) GetCluster(clusterID string) (*spi.Cluster, error) {
 	return cluster, nil
 }
 
-func (o *OCMProvider) getOCMCluster(clusterID string) (*v1.Cluster, error) {
+func (o *OCMProvider) GetOCMCluster(clusterID string) (*v1.Cluster, error) {
 	var resp *v1.ClusterGetResponse
 
 	err := retryer().Do(func() error {
@@ -978,7 +978,7 @@ func (o *OCMProvider) InstallAddons(clusterID string, addonIDs []spi.AddOnID, ad
 					return err
 				}
 
-				ocmCluster, err := o.getOCMCluster(clusterID)
+				ocmCluster, err := o.GetOCMCluster(clusterID)
 				if err != nil {
 					return err
 				}
@@ -1130,7 +1130,7 @@ func (o *OCMProvider) ExtendExpiry(clusterID string, hours uint64, minutes uint6
 	var resp *v1.ClusterUpdateResponse
 
 	// Get the current state of the cluster
-	ocmCluster, err := o.getOCMCluster(clusterID)
+	ocmCluster, err := o.GetOCMCluster(clusterID)
 	if err != nil {
 		return err
 	}
