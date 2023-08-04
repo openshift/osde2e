@@ -232,7 +232,6 @@ var _ = Describe("HyperShift", Ordered, func() {
 		if removeHCPWorkloads.MatchesLabelFilter(GinkgoLabelFilter()) && hcpCluster.id != "" {
 			err := rosaProvider.DeleteCluster(ctx, &rosaprovider.DeleteClusterOptions{
 				ClusterName:        hcpCluster.name,
-				ClusterID:          hcpCluster.id,
 				HostedCP:           true,
 				WorkingDir:         hcpCluster.reportDir,
 				DeleteHostedCPVPC:  true,
