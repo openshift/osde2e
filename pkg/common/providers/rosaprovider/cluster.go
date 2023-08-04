@@ -89,9 +89,14 @@ func (m *ROSAProvider) LaunchCluster(clusterName string) (string, error) {
 		}
 	}
 
+	terraformWorkingDir := viper.GetString(config.ReportDir)
+	if viper.GetString(config.SharedDir) != "" {
+		terraformWorkingDir = viper.GetString(config.SharedDir)
+	}
+
 	if viper.GetString(config.AWSVPCSubnetIDs) == "" && viper.GetBool(config.Hypershift) {
 		var vpc *HyperShiftVPC
-		vpc, err = createHyperShiftVPC()
+		vpc, err = createHyperShiftVPC(terraformWorkingDir)
 		if err != nil {
 			return "error creating aws vpc", err
 		}
@@ -99,8 +104,8 @@ func (m *ROSAProvider) LaunchCluster(clusterName string) (string, error) {
 		awsVPCSubnetIds = fmt.Sprintf("%s,%s", vpc.PrivateSubnet, vpc.PublicSubnet)
 		log.Printf("AWS VPC created at runtime, subnet ids: %s", awsVPCSubnetIds)
 
-		// Save the report directory to cluster properties for later use when locating terraform state file to destroy vpc
-		clusterProperties["reportDir"] = viper.GetString(config.ReportDir)
+		// Save the report or shared directory to cluster properties for later use when locating terraform state file to destroy vpc
+		clusterProperties["terraformWorkingDir"] = terraformWorkingDir
 	}
 
 	rosaClusterVersion := viper.GetString(config.Cluster.Version)
@@ -305,19 +310,22 @@ func (m *ROSAProvider) LaunchCluster(clusterName string) (string, error) {
 // DeleteCluster will call DeleteCluster from the OCM provider then delete
 // additional AWS resources if STS is in use.
 func (m *ROSAProvider) DeleteCluster(clusterID string) error {
-	var reportDir *string
+	var terraformWorkingDir *string
 	if viper.GetString(config.AWSVPCSubnetIDs) == "" && viper.GetBool(config.Hypershift) {
-		value, err := m.GetProperty(clusterID, "reportDir")
+		value, err := m.GetProperty(clusterID, "terraformWorkingDir")
 		if err != nil {
 			return fmt.Errorf("unable to delete auto-generated vpc, failed to locate directory with terraform state file: %v", err)
 		}
-		reportDir = &value
+		terraformWorkingDir = &value
 	}
 
 	cluster, err := m.ocmProvider.GetOCMCluster(clusterID)
 	if err != nil {
 		return fmt.Errorf("unable to get cluster %s from ocm: %v", clusterID, err)
 	}
+
+	// Set cluster name in viper for osde2e cleanup command (when deleting HCP AWS VPC)
+	viper.Set(config.Cluster.Name, cluster.Name())
 
 	_, err = m.ocmLogin()
 	if err != nil {
@@ -343,7 +351,7 @@ func (m *ROSAProvider) DeleteCluster(clusterID string) error {
 		}
 
 		if viper.GetString(config.AWSVPCSubnetIDs) == "" {
-			err := deleteHyperShiftVPC(*reportDir)
+			err := deleteHyperShiftVPC(*terraformWorkingDir)
 			if err != nil {
 				return fmt.Errorf("error deleting aws vpc: %v", err)
 			}
