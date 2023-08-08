@@ -576,7 +576,7 @@ func (m *ROSAProvider) Versions() (*spi.VersionList, error) {
 		return nil, err
 	}
 
-	versionResponse, err := ocmClient.GetVersions(viper.GetString(config.Cluster.Channel))
+	versionResponse, err := ocmClient.GetVersions(viper.GetString(config.Cluster.Channel), true)
 	if err != nil {
 		return nil, err
 	}
