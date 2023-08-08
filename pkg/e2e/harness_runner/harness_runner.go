@@ -84,6 +84,10 @@ var _ = ginkgo.Describe("Test harness", ginkgo.Ordered, ginkgo.ContinueOnFailure
 			h.WriteResults(results)
 		},
 		HarnessEntries)
+
+	ginkgo.AfterAll(func(ctx context.Context) {
+		viper.Set(config.Project, "")
+	})
 })
 
 // Generates templated command string to provide to test harness container
