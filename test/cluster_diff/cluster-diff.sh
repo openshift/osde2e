@@ -151,14 +151,14 @@ function Diff {
 
 if ! [ -x "$(command -v oc)" ]; then
 	echo "OpenShift CLI is not installed, downloading latest available"
-	curl -Ls https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/openshift-client-linux.tar.gz | tar -zxvf - oc && chmod +x oc
-	PATH="${PATH}:."
+	curl -Ls https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/openshift-client-linux.tar.gz | tar -zxf - oc && chmod +x oc
+	PATH="${PATH}:${PWD}"
 fi
 
 if ! [ -x "$(command -v ocm)" ]; then
 	echo "OCM CLI is not installed, downloading latest available"
 	curl -Ls https://github.com/openshift-online/ocm-cli/releases/latest/download/ocm-linux-amd64 -o ocm && chmod +x ocm
-	PATH="${PATH}:."
+	PATH="${PATH}:${PWD}"
 fi
 
 if [[ -z "${OLD_CLUSTER}" || -z "${NEW_CLUSTER}" ]]; then
