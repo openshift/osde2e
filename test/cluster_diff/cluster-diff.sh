@@ -153,12 +153,14 @@ if ! [ -x "$(command -v oc)" ]; then
 	echo "OpenShift CLI is not installed, downloading latest available"
 	curl -Ls https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/openshift-client-linux.tar.gz | tar -zxf - oc && chmod +x oc
 	PATH="${PATH}:${PWD}"
+	oc version
 fi
 
 if ! [ -x "$(command -v ocm)" ]; then
 	echo "OCM CLI is not installed, downloading latest available"
 	curl -Ls https://github.com/openshift-online/ocm-cli/releases/latest/download/ocm-linux-amd64 -o ocm && chmod +x ocm
 	PATH="${PATH}:${PWD}"
+	ocm login --url="https://api.stage.openshift.com" --token="${OCM_TOKEN}"
 fi
 
 if [[ -z "${OLD_CLUSTER}" || -z "${NEW_CLUSTER}" ]]; then
