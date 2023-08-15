@@ -19,13 +19,13 @@ To learn more about the test harness runner of osde2e, refer to the following
 When writing new tests or enhancing existing tests, every test should strive
 to comply to the following standards:
 
-* Follow the [kubernetes best practices guide] when writing end to end tests.
-* Review [Ginkgo] and [Gomega] as these are the core test frameworks when
-  writing OSD SREP operator tests.
+* Follow the [Kubernetes best practices guide] when writing end to end tests.
+* Review [Ginkgo] and [Gomega] documentation as these are the core test
+  frameworks when writing OSD SREP operator tests.
 * Use [osde2e-common] module as much as possible when writing test cases. This
-  module provides common modules when working with Managed OpenShift. Which
-  aim to reduce code duplication across tests. Examples of this are:
-  clients for interfacing with OCM, OpenShift/prometheus client and much more.
+  module provides common modules when working with Managed OpenShift which
+  aim to reduce code duplication across tests such as
+  clients for interfacing with OCM, OpenShift, Prometheus and more.
 * Use the [e2e-framework] as much as possible and become familiar with it
   when interfacing with OpenShift clusters.
 * Apply labels "tags" to your test cases allowing for easy classification
@@ -35,7 +35,8 @@ to comply to the following standards:
   mapped to a given feature/functionality for the product or OSD SREP operator.
 * Ensure both positive/negative cases are covered for your test case.
 * Ensure every test case has proper error messages logged with using [Gomega]
-  matchers. This helps when it comes to troubleshooting/debugging failing tests.
+  matchers. This helps when it comes to
+  [troubleshooting/debugging failing tests][debugging tests].
 
 ## Examples
 
@@ -47,16 +48,17 @@ for OSD SREP operator tests:
 * [OCM Agent Operator Tests][ocm-agent-operator-tests]
 * [RBAC Permissions Operator Tests][rbac-operator-tests]
 
-Another few examples can be found below:
+Additional examples can be found below:
 
 * [Cluster Difference Test Suite][cluster-diff-test-suite]
 * [Management/Service Cluster Upgrade Test Suite][mc-sc-upgrade-testsuite]
 
 [cluster-diff-test-suite]: https://github.com/openshift/osde2e/blob/main/test/cluster_diff/cluster_diff_test.go
+[debugging tests]: https://github.com/kubernetes/community/blob/master/contributors/devel/sig-testing/writing-good-e2e-tests.md#debuggability
 [e2e-framework]: https://github.com/kubernetes-sigs/e2e-framework
 [Ginkgo]:https://onsi.github.io/ginkgo/
 [Gomega]:https://onsi.github.io/gomega/
-[kubernetes best practices guide]: https://github.com/kubernetes/community/blob/master/contributors/devel/sig-testing/writing-good-e2e-tests.md
+[Kubernetes best practices guide]: https://github.com/kubernetes/community/blob/master/contributors/devel/sig-testing/writing-good-e2e-tests.md
 [managed-upgrade-operator-tests]: https://github.com/openshift/managed-upgrade-operator/blob/master/osde2e/managed_upgrade_operator_tests.go
 [mc-sc-upgrade-testsuite]: https://github.com/openshift/osde2e/blob/main/test/mcscupgrade/mcscupgrade_test.go
 [ocm-agent-operator-tests]: https://github.com/openshift/ocm-agent-operator/blob/master/osde2e/ocm_agent_operator_tests.go
