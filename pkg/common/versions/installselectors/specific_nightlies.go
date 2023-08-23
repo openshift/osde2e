@@ -2,6 +2,7 @@ package installselectors
 
 import (
 	"fmt"
+	"log"
 	"strings"
 
 	"github.com/Masterminds/semver/v3"
@@ -19,6 +20,7 @@ func init() {
 type specificNightlies struct{}
 
 func (m specificNightlies) ShouldUse() bool {
+	log.Printf("specific nightly value: %q", viper.GetString(config.Cluster.InstallSpecificNightly))
 	return viper.GetString(config.Cluster.InstallSpecificNightly) != ""
 }
 
@@ -51,4 +53,8 @@ func (m specificNightlies) SelectVersion(versionList *spi.VersionList) (*semver.
 	}
 
 	return nil, versionType, fmt.Errorf("no valid nightly found for version %s", specificNightly)
+}
+
+func (m specificNightlies) String() string {
+	return "specific nightly"
 }

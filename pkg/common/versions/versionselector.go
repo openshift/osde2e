@@ -161,6 +161,8 @@ func (v *VersionSelector) getInstallVersion() (*semver.Version, string, error) {
 		return nil, "", fmt.Errorf("unable to find an install version selector")
 	}
 
+	log.Printf("Using version selector %q", selectedVersionSelector)
+
 	version, selector, err := selectedVersionSelector.SelectVersion(v.versionList)
 	if err != nil {
 		log.Printf("Unable to find image using selector `%s`. Error: %v", selector, err)

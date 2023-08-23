@@ -41,3 +41,7 @@ func (m latestXYVersion) SelectVersion(versionList *spi.VersionList) (*semver.Ve
 
 	return nil, versionType, fmt.Errorf("unable to locate latest version for %s", latestXY)
 }
+
+func (m latestXYVersion) String() string {
+	return "latest XY"
+}

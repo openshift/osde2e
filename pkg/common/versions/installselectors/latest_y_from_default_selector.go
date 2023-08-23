@@ -67,3 +67,7 @@ func (l latestYVersion) SelectVersion(versionList *spi.VersionList) (*semver.Ver
 
 	return latestYVersion.Version(), versionType, nil
 }
+
+func (l latestYVersion) String() string {
+	return "latest Y from default"
+}
