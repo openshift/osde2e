@@ -32,3 +32,7 @@ func (d defaultVersion) SelectVersion(versionList *spi.VersionList) (*semver.Ver
 	}
 	return versionDefault, versionType, nil
 }
+
+func (d defaultVersion) String() string {
+	return "default"
+}

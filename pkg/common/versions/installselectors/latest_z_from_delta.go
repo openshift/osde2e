@@ -51,3 +51,7 @@ func (m latestZFromDelta) SelectVersion(versionList *spi.VersionList) (*semver.V
 
 	return nil, versionType, fmt.Errorf("no version found matching the selector")
 }
+
+func (m latestZFromDelta) String() string {
+	return "latest Z from delta"
+}

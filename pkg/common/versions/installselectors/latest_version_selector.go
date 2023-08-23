@@ -38,3 +38,7 @@ func (l latestVersion) SelectVersion(versionList *spi.VersionList) (*semver.Vers
 
 	return availableVersions[len(availableVersions)-1].Version(), versionType, nil
 }
+
+func (l latestVersion) String() string {
+	return "latest"
+}

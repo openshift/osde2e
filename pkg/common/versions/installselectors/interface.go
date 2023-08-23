@@ -16,4 +16,6 @@ type Interface interface {
 
 	// SelectVersion will select a version to install.
 	SelectVersion(versionList *spi.VersionList) (*semver.Version, string, error)
+
+	String() string
 }

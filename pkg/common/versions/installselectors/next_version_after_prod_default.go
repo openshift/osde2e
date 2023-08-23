@@ -31,3 +31,7 @@ func (n nextVersionAfterProdDefault) SelectVersion(versionList *spi.VersionList)
 	selectedVersion, err := common.NextReleaseAfterGivenVersionFromVersionList(defaultVersion, versionList.AvailableVersions(), numReleasesAfterProdDefault)
 	return selectedVersion, fmt.Sprintf("%d release(s) from the default version in prod", numReleasesAfterProdDefault), err
 }
+
+func (n nextVersionAfterProdDefault) String() string {
+	return "next version(s) after default"
+}

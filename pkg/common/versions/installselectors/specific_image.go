@@ -20,6 +20,7 @@ func init() {
 type specificImage struct{}
 
 func (m specificImage) ShouldUse() bool {
+	log.Printf("specific image value: %q", viper.GetString(config.Cluster.ReleaseImageLatest))
 	return viper.GetString(config.Cluster.ReleaseImageLatest) != ""
 }
 
@@ -58,4 +59,8 @@ func (m specificImage) SelectVersion(versionList *spi.VersionList) (*semver.Vers
 	}
 
 	return nil, versionType, fmt.Errorf("no valid nightly found for version %s", specificImage)
+}
+
+func (m specificImage) String() string {
+	return "specific image"
 }

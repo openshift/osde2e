@@ -47,3 +47,7 @@ func (m latestYFromDelta) SelectVersion(versionList *spi.VersionList) (*semver.V
 
 	return nil, versionType, fmt.Errorf("no version found matching the selector")
 }
+
+func (m latestYFromDelta) String() string {
+	return "latest Y from delta"
+}

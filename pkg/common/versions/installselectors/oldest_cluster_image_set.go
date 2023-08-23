@@ -39,3 +39,7 @@ func (o oldestClusterImageSet) SelectVersion(versionList *spi.VersionList) (*sem
 
 	return versionsWithoutDefault[0].Version(), versionType, nil
 }
+
+func (o oldestClusterImageSet) String() string {
+	return "oldest"
+}

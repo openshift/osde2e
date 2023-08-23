@@ -62,3 +62,7 @@ func (l latestZVersion) SelectVersion(versionList *spi.VersionList) (*semver.Ver
 
 	return latestZVersion.Version(), versionType, nil
 }
+
+func (l latestZVersion) String() string {
+	return "latest Z from default"
+}

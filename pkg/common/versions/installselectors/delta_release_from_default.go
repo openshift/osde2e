@@ -48,6 +48,10 @@ func (d deltaReleaseFromDefault) SelectVersion(versionList *spi.VersionList) (*s
 	return availableVersions[targetIndex].Version(), versionType, nil
 }
 
+func (d deltaReleaseFromDefault) String() string {
+	return "delta from default"
+}
+
 func findDefaultVersionIndex(versions []*spi.Version) int {
 	for index, version := range versions {
 		if version.Default() {

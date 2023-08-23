@@ -39,3 +39,7 @@ func (m middleClusterImageSet) SelectVersion(versionList *spi.VersionList) (*sem
 
 	return versionsWithoutDefault[numVersions/2].Version(), versionType, nil
 }
+
+func (m middleClusterImageSet) String() string {
+	return "middle"
+}
