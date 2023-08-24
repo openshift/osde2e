@@ -20,8 +20,13 @@ func init() {
 type specificImage struct{}
 
 func (m specificImage) ShouldUse() bool {
-	log.Printf("specific image value: %q", viper.GetString(config.Cluster.ReleaseImageLatest))
-	return viper.GetString(config.Cluster.ReleaseImageLatest) != ""
+	// When running a /pj-rehearse, the `RELEASE_IMAGE_LATEST` provided is not
+	// in a format that can be used by rosa so don't use this selector unless
+	// the image contains nightly in the name:
+	// `4.13.0-0.nightly-2023-08-24-052924`
+	releaseImageLatest := viper.GetString(config.Cluster.ReleaseImageLatest)
+	log.Printf("specific image value: %q", releaseImageLatest)
+	return releaseImageLatest != "" && strings.Contains(releaseImageLatest, "nightly")
 }
 
 func (m specificImage) Priority() int {
