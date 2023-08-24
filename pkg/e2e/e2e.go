@@ -27,6 +27,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
+	ctrlog "sigs.k8s.io/controller-runtime/pkg/log"
 
 	pd "github.com/PagerDuty/go-pagerduty"
 	"github.com/onsi/ginkgo/v2"
@@ -78,6 +79,7 @@ var provider spi.Provider
 // beforeSuite attempts to populate several required cluster fields (either by provisioning a new cluster, or re-using an existing one)
 // If there is an issue with provisioning, retrieving, or getting the kubeconfig, this will return `false`.
 func beforeSuite() bool {
+	ctrlog.SetLogger(ginkgo.GinkgoLogr)
 	// Skip provisioning if we already have a kubeconfig
 	var err error
 
