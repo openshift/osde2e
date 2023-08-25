@@ -268,7 +268,7 @@ func (m *MockProvider) ExtendExpiry(clusterID string, hours uint64, minutes uint
 }
 
 // Expire mocks an expire cluster expiry operation.
-func (m *MockProvider) Expire(clusterID string) error {
+func (m *MockProvider) Expire(clusterID string, duration time.Duration) error {
 	return fmt.Errorf("Expire is unsupported by mock clusters")
 }
 

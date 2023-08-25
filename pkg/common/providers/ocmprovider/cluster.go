@@ -322,7 +322,7 @@ func (o *OCMProvider) FindRecycledCluster(originalVersion, cloudProvider, produc
 				log.Printf("Error adding `expiring` to job name: %s", err.Error())
 				return ""
 			}
-			err = o.Expire(spiRecycledCluster.ID())
+			err = o.Expire(spiRecycledCluster.ID(), 1*time.Minute)
 			if err != nil {
 				log.Printf("Error expiring cluster %s: %s", spiRecycledCluster.ID(), err.Error())
 				return ""
@@ -1197,11 +1197,11 @@ func (o *OCMProvider) ExtendExpiry(clusterID string, hours uint64, minutes uint6
 	return nil
 }
 
-// Expire sets the expiration time of an existing cluster to the current time
-func (o *OCMProvider) Expire(clusterID string) error {
+// Expire sets the expiration time of an existing cluster to the current time + N minutes
+func (o *OCMProvider) Expire(clusterID string, duration time.Duration) error {
 	var resp *v1.ClusterUpdateResponse
 
-	now := time.Now().Add(1 * time.Minute)
+	now := time.Now().Add(duration)
 
 	extendexpiryCluster, err := v1.NewCluster().ExpirationTimestamp(now).Build()
 	if err != nil {
