@@ -114,7 +114,7 @@ type Provider interface {
 	ExtendExpiry(clusterID string, hours uint64, minutes uint64, seconds uint64) error
 
 	// Expire sets the expiration of an existing cluster to the current time.
-	Expire(clusterID string) error
+	Expire(clusterID string, duration time.Duration) error
 
 	// AddProperty adds a new property to the properties field of an existing cluster.
 	AddProperty(cluster *Cluster, tag string, value string) error
