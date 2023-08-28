@@ -8,3 +8,13 @@ updates:
     - "dependencies"
     - "ok-to-test"
   open-pull-requests-limit: 20
+- package-ecosystem: gomod
+  directory: "/"
+  schedule:
+   interval: "daily"
+  filter:
+    - name: "github.com/openshift/osde2e-common"
+  labels:
+    - "dependencies"
+    - "ok-to-test"
+  open-pull-requests-limit: 1
