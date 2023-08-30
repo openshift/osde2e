@@ -30,7 +30,7 @@ func (m specificImage) ShouldUse() bool {
 }
 
 func (m specificImage) Priority() int {
-	return 100
+	return 90
 }
 
 func (m specificImage) SelectVersion(versionList *spi.VersionList) (*semver.Version, string, error) {
