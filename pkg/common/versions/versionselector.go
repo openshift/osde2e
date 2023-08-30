@@ -48,7 +48,7 @@ func (v *VersionSelector) SelectClusterVersions() error {
 			if err != nil {
 				return false, err
 			}
-			if v.clusterVersion == nil && (versionSelector == "specific image" || versionSelector == "specific nightly") {
+			if v.clusterVersion == nil && (versionSelector == "specific image" || versionSelector == "specific nightly" || versionSelector == "triggered nightly") {
 				log.Println("Waiting for CIS to sync with the Release Controller")
 				return false, nil
 			}
