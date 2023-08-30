@@ -48,8 +48,8 @@ func (v *VersionSelector) SelectClusterVersions() error {
 			if err != nil {
 				return false, err
 			}
-			if v.clusterVersion == nil && versionSelector == "specific image" {
-				log.Printf("Waiting for %s CIS to sync with the Release Controller", viper.GetString(config.Cluster.ReleaseImageLatest))
+			if v.clusterVersion == nil && (versionSelector == "specific image" || versionSelector == "specific nightly") {
+				log.Println("Waiting for CIS to sync with the Release Controller")
 				return false, nil
 			}
 
