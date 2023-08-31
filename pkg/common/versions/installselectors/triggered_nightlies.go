@@ -28,6 +28,7 @@ func (t triggeredNightlies) SelectVersion(versionList *spi.VersionList) (*semver
 	prowJobID := os.Getenv("PROW_JOB_ID")
 	jobNameSafe := os.Getenv("JOB_NAME_SAFE")
 	payloadName := strings.ReplaceAll(prowJobID, "-"+jobNameSafe, "")
+	payloadName += "-nightly"
 
 	versionsWithoutDefault := removeDefaultVersion(versionList.AvailableVersions())
 
