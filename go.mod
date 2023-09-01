@@ -16,7 +16,7 @@ require (
 	github.com/google/go-github/v31 v31.0.0
 	github.com/google/uuid v1.3.1
 	github.com/hashicorp/go-multierror v1.1.1
-	github.com/hashicorp/hc-install v0.5.2
+	github.com/hashicorp/hc-install v0.6.0
 	github.com/hashicorp/terraform-exec v0.18.1
 	github.com/jackc/pgtype v1.14.0
 	github.com/jinzhu/inflection v1.0.0
@@ -82,7 +82,7 @@ require (
 	github.com/Azure/go-ansiterm v0.0.0-20230124172434-306776ec8161 // indirect
 	github.com/Microsoft/go-winio v0.6.1 // indirect
 	github.com/Nvveen/Gotty v0.0.0-20120604004816-cd527374f1e5 // indirect
-	github.com/ProtonMail/go-crypto v0.0.0-20230217124315-7d5c6f04bbb8 // indirect
+	github.com/ProtonMail/go-crypto v0.0.0-20230717121422-5aa5874ade95 // indirect
 	github.com/andybalholm/cascadia v1.3.1 // indirect
 	github.com/apparentlymart/go-textseg/v13 v13.0.0 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
@@ -134,7 +134,7 @@ require (
 	github.com/hashicorp/go-version v1.6.0 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/hashicorp/terraform-json v0.16.0 // indirect
-	github.com/imdario/mergo v0.3.13 // indirect
+	github.com/imdario/mergo v0.3.15 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/influxdata/tdigest v0.0.1 // indirect
 	github.com/jackc/chunkreader/v2 v2.0.1 // indirect
