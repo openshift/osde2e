@@ -18,23 +18,19 @@ import (
 	"net/url"
 	"time"
 
+	"github.com/Masterminds/semver/v3"
 	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-
-	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
-	"github.com/openshift/osde2e/pkg/common/config"
-
 	routev1 "github.com/openshift/api/route/v1"
 	customdomainv1alpha1 "github.com/openshift/custom-domains-operator/api/v1alpha1"
-
 	"github.com/openshift/osde2e/pkg/common/alert"
+	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
+	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/label"
-
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/rest"
@@ -55,7 +51,7 @@ func init() {
 	alert.RegisterGinkgoAlert(customDomainsOperatorTestName, "SD-SREP", "@custom-domains-operator", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
 }
 
-var _ = ginkgo.Describe(customDomainsOperatorTestName, label.Operators, label.MigratedHarness, func() {
+var _ = ginkgo.Describe(customDomainsOperatorTestName, ginkgo.Ordered, label.Operators, label.MigratedHarness, func() {
 	// custom dialer for use w/ resolver and http.client
 	dialer := &net.Dialer{
 		Resolver: &net.Resolver{
@@ -69,16 +65,30 @@ var _ = ginkgo.Describe(customDomainsOperatorTestName, label.Operators, label.Mi
 		},
 	}
 
-	ginkgo.BeforeEach(func() {
+	var h *helper.H
+
+	ginkgo.BeforeAll(func(ctx context.Context) {
 		if viper.GetBool(config.Hypershift) {
 			ginkgo.Skip("CustomDomains Operator is not supported on HyperShift")
+		}
+
+		h = helper.New()
+		clusterversionObject, err := h.GetClusterVersion(ctx)
+		Expect(err).ShouldNot(HaveOccurred(), "unable to get cluster version")
+		clusterversion, err := semver.NewVersion(clusterversionObject.Status.History[0].Version)
+		Expect(err).ShouldNot(HaveOccurred(), "failed to build semver clusterVersion object")
+
+		if clusterversion.Major() == 4 && clusterversion.Minor() >= 13 {
+			ns, err := h.Kube().CoreV1().Namespaces().Get(ctx, "openshift-custom-domains-operator", metav1.GetOptions{})
+			Expect(err).ShouldNot(HaveOccurred(), "unable to get namespace")
+			if ns.Labels["ext-managed.openshift.io/legacy-ingress-support"] == "false" {
+				ginkgo.Skip("CustomDomain Operator has been deprecated: https://github.com/openshift/custom-domains-operator#deprecation")
+			}
 		}
 	})
 
 	ginkgo.Context("Should allow dedicated-admins to", func() {
 		var (
-			h = helper.New()
-
 			testInstanceName = "test-" + time.Now().Format("20060102-150405-") + fmt.Sprint(time.Now().Nanosecond()/1000000) + "-" + fmt.Sprint(ginkgo.GinkgoParallelProcess())
 			testDomain       *customdomainv1alpha1.CustomDomain
 			testDomainSecret *corev1.Secret
