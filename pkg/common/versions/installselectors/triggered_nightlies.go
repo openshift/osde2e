@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"regexp"
 	"strings"
 
 	"github.com/Masterminds/semver/v3"
@@ -25,10 +26,14 @@ func (t triggeredNightlies) Priority() int {
 }
 
 func (t triggeredNightlies) SelectVersion(versionList *spi.VersionList) (*semver.Version, string, error) {
+	nightlyVersionRegex := regexp.MustCompile(`4.\d+.\d-\d.nightly-\d{4}-\d{2}-\d{2}-\d+`)
+
 	prowJobID := os.Getenv("PROW_JOB_ID")
-	jobNameSafe := os.Getenv("JOB_NAME_SAFE")
-	payloadName := strings.ReplaceAll(prowJobID, "-"+jobNameSafe, "")
-	payloadName += "-nightly"
+	matches := nightlyVersionRegex.FindStringSubmatch(prowJobID)
+	if len(matches) == 0 {
+		return nil, t.String(), fmt.Errorf("failed to find match for %q", prowJobID)
+	}
+	payloadName := matches[0] + "-nightly"
 
 	versionsWithoutDefault := removeDefaultVersion(versionList.AvailableVersions())
 
