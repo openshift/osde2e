@@ -748,7 +748,7 @@ func cleanupAfterE2E(ctx context.Context, h *helper.H) (errors []error) {
 	if viper.GetString(config.Cluster.InstallSpecificNightly) != "" || viper.GetString(config.Cluster.ReleaseImageLatest) != "" {
 		viper.Set(config.Cluster.HibernateAfterUse, false)
 		if viper.GetString(config.Cluster.ID) != "" {
-			provider.Expire(viper.GetString(config.Cluster.ID), 10*time.Minute)
+			provider.Expire(viper.GetString(config.Cluster.ID), 30*time.Minute)
 		}
 	}
 
