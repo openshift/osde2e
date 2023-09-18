@@ -62,7 +62,7 @@ require (
 	golang.org/x/tools v0.13.0
 	google.golang.org/api v0.138.0
 	google.golang.org/genproto v0.0.0-20230803162519-f966b187b2e5
-	google.golang.org/grpc v1.57.0
+	google.golang.org/grpc v1.58.1
 	gopkg.in/yaml.v3 v3.0.1
 	gotest.tools/v3 v3.5.0
 	k8s.io/api v0.27.4
