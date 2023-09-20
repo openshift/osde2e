@@ -2,8 +2,6 @@
 package e2e
 
 import (
-	"bytes"
-	"compress/gzip"
 	"context"
 	"database/sql"
 	"encoding/json"
@@ -667,37 +665,6 @@ func cleanupAfterE2E(ctx context.Context, h *helper.H) (errors []error) {
 	} else {
 		log.Print("Skipping must-gather as requested")
 	}
-
-	log.Print("Gathering Cluster State...")
-	clusterState := h.GetClusterState(ctx)
-	stateResults := make(map[string][]byte, len(clusterState))
-	for resource, list := range clusterState {
-		data, err := json.MarshalIndent(list, "", "    ")
-		if err != nil {
-			log.Printf("error marshalling JSON for %s/%s/%s", resource.Group, resource.Version, resource.Resource)
-			clusterStatus = clusterproperties.StatusCompletedError
-		} else {
-			var gbuf bytes.Buffer
-			zw := gzip.NewWriter(&gbuf)
-			_, err = zw.Write(data)
-			if err != nil {
-				log.Print("Error writing data to buffer")
-				clusterStatus = clusterproperties.StatusCompletedError
-			}
-			err = zw.Close()
-			if err != nil {
-				log.Print("Error closing writer to buffer")
-				clusterStatus = clusterproperties.StatusCompletedError
-			}
-			// include gzip in filename to mark compressed data
-			filename := fmt.Sprintf("%s-%s-%s.json.gzip", resource.Group, resource.Version, resource.Resource)
-			stateResults[filename] = gbuf.Bytes()
-		}
-	}
-
-	// write results to disk
-	log.Println("Writing cluster state results")
-	h.WriteResults(stateResults)
 
 	clusterID := viper.GetString(config.Cluster.ID)
 	if len(clusterID) > 0 {
