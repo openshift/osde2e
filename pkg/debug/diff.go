@@ -2,11 +2,13 @@ package debug
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"log"
 	"net/http"
 	"os"
+	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -154,9 +156,23 @@ func getLastJobID(baseProwURL, jobName string) (int, error) {
 		return 0, err
 	}
 
-	// Safe assumption that the latest job is the current-running job.
-	// Therefore we should also assume that the last job was the second row.
-	return strconv.Atoi(strings.TrimSpace(doc.Find("#history-table > tbody > tr:nth-child(2)").First().Children().First().Text()))
+	// Load the page and look for the JSON object containing the build
+	// information. Unmarshal it and look for the second build, assuming that
+	// the current running build (this process) is the first build.
+	expr := regexp.MustCompile(`var allBuilds = (.*);`)
+	scriptBlock := strings.TrimSpace(doc.Find("script").Last().Text())
+	exprMatches := expr.FindStringSubmatch(scriptBlock)
+	if len(exprMatches) == 0 {
+		return 0, fmt.Errorf("failed to find match for builds object in %s", scriptBlock)
+	}
+
+	values := []map[string]any{}
+	err = json.Unmarshal([]byte(exprMatches[1]), &values)
+	if err != nil {
+		return 0, fmt.Errorf("unable to unmarshal regex match to json object: %w", err)
+	}
+
+	return strconv.Atoi(values[1]["ID"].(string))
 }
 
 func appendUniqueContainers(name string, containers []v1.Container, images map[string]string) map[string]string {
