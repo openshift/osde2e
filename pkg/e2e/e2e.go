@@ -796,7 +796,6 @@ func runTestsInPhase(
 
 	if !suiteConfig.DryRun {
 		if !beforeSuite() {
-			log.Println("Error getting kubeconfig from beforeSuite function")
 			return false, testCaseData
 		}
 	}
