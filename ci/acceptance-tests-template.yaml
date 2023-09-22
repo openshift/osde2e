@@ -1,33 +1,34 @@
 apiVersion: template.openshift.io/v1
 kind: Template
 metadata:
-  name: osde2e-acceptance-tests
-labels:
-  template: osde2e-acceptance-tests
+  name: osde2e-focused-tests
+
 parameters:
-  - name: IMAGE_REGISTRY
-    displayName: Image Registry
-    value: quay.io/app-sre
-  - name: IMAGE_REPOSITORY
-    displayName: Image Repository
-    value: osde2e
-  - name: IMAGE_TAG
-    displayName: Image Tag
-    value: latest
+  - name: HARNESS_IMAGE_TAG
+    required: true
   - name: OSDE2E_CONFIGS
-    displayName: osde2e Configs
-    description: pre-baked configuration from the osde2e repository
-    value: rosa,stage,test-harness
-  - name: EXTRA_ARGS
-    displayName: Additonal args to supply to osde2e
+    required: true
   - name: TEST_HARNESS_IMAGE
-    displayName: Test Harness Image(s)
+    required: true
+  - name: OCM_TOKEN
+    required: true
+  - name: AWS_ACCESS_KEY_ID
+    required: true
+  - name: AWS_SECRET_ACCESS_KEY
+    required: true
+  - name: AWS_REGION
+    required: true
+  - name: JOBID
+    generate: expression
+    from: "[0-9a-z]{7}"
+  - name: IMAGE_TAG
+    value: ''
     required: true
 objects:
   - apiVersion: batch/v1
     kind: Job
     metadata:
-      generateName: osde2e-acceptance-tests-
+      name: osde2e-focused-test-job-${IMAGE_TAG}-${JOBID}
     spec:
       backoffLimit: 0
       template:
@@ -35,14 +36,13 @@ objects:
           restartPolicy: Never
           containers:
             - name: osde2e
-              image: ${IMAGE_REGISTRY}/${IMAGE_REPOSITORY}:${IMAGE_TAG}
+              image: quay.io/app-sre/osde2e:latest
               command:
                 - /osde2e
               args:
                 - test
                 - --configs
                 - ${OSDE2E_CONFIGS}
-                - ${EXTRA_ARGS}
               securityContext:
                 runAsNonRoot: true
                 allowPrivilegeEscalation: false
@@ -52,22 +52,12 @@ objects:
                   type: RuntimeDefault
               env:
                 - name: TEST_HARNESSES
-                  value: ${TEST_HARNESS_IMAGE}
+                  value: ${TEST_HARNESS_IMAGE}:${HARNESS_IMAGE_TAG}
                 - name: OCM_TOKEN
-                  valueFrom:
-                    secretKeyRef:
-                      name: ocm
-                      key: ocm-token
+                  value: ${OCM_TOKEN}
                 - name: AWS_ACCESS_KEY_ID
-                  valueFrom:
-                    secretKeyRef:
-                      name: sdcicd-aws
-                      key: aws-access-key-id
+                  value: ${AWS_ACCESS_KEY_ID}
                 - name: AWS_SECRET_ACCESS_KEY
-                  valueFrom:
-                    secretKeyRef:
-                      name: sdcicd-aws
-                      key: aws-secret-access-key
-                # TODO: set this differently
+                  value: ${AWS_SECRET_ACCESS_KEY}
                 - name: AWS_REGION
-                  value: us-east-1
+                  value: ${AWS_REGION}
