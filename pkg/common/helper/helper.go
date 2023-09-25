@@ -13,14 +13,16 @@ import (
 	"text/template"
 	"time"
 
-	"golang.org/x/oauth2/google"
-	computev1 "google.golang.org/api/compute/v1"
-
 	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-
 	configv1 "github.com/openshift/api/config/v1"
 	projectv1 "github.com/openshift/api/project/v1"
+	cloudcredentialv1 "github.com/openshift/cloud-credential-operator/pkg/apis/cloudcredential/v1"
+	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
+	"github.com/openshift/osde2e/pkg/common/config"
+	"github.com/openshift/osde2e/pkg/common/util"
+	"golang.org/x/oauth2/google"
+	computev1 "google.golang.org/api/compute/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -31,11 +33,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
-
-	cloudcredentialv1 "github.com/openshift/cloud-credential-operator/pkg/apis/cloudcredential/v1"
-	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
-	"github.com/openshift/osde2e/pkg/common/config"
-	"github.com/openshift/osde2e/pkg/common/util"
 )
 
 func init() {
@@ -113,7 +110,7 @@ func (h *H) Setup() error {
 		project = "osde2e-" + suffix
 
 		viper.Set(config.Project, project)
-		log.Printf("Setup called for %s", project)
+		ginkgo.GinkgoLogr.Info("Setup called for %s", project)
 
 		h.proj, err = h.createProject(ctx, suffix)
 		if h.OutsideGinkgo && err != nil {
@@ -163,7 +160,7 @@ func (h *H) Cleanup(ctx context.Context) {
 
 	h.restConfig, err = clientcmd.RESTConfigFromKubeConfig([]byte(viper.GetString(config.Kubeconfig.Contents)))
 	if err != nil {
-		log.Printf("Error setting Cleanup() restConfig: %s", err.Error())
+		ginkgo.GinkgoLogr.Error(err, "error setting Cleanup() restConfig")
 		return
 	}
 
@@ -171,14 +168,14 @@ func (h *H) Cleanup(ctx context.Context) {
 	h.SetServiceAccount(ctx, viper.GetString(config.Tests.ServiceAccount))
 	projects, err := h.Project().ProjectV1().Projects().List(ctx, metav1.ListOptions{})
 	if err != nil {
-		log.Printf("Error listing existing projects in Cleanup(): %s", err.Error())
+		ginkgo.GinkgoLogr.Error(err, "error listing existing projects")
 	}
 	for _, project := range projects.Items {
 		if h.proj.Name == project.Name {
-			log.Printf("Deleting project `%s`", project.Name)
+			ginkgo.GinkgoLogr.Info(fmt.Sprintf("Deleting project `%s`", project.Name))
 			err = h.Project().ProjectV1().Projects().Delete(ctx, project.Name, metav1.DeleteOptions{})
 			if err != nil {
-				log.Printf("Error deleting project `%s` in Cleanup(): %s", project.Name, err.Error())
+				ginkgo.GinkgoLogr.Error(err, fmt.Sprintf("error deleting project %q", project.Name))
 			}
 		}
 	}
@@ -199,7 +196,7 @@ func (h *H) CreateServiceAccounts(ctx context.Context) *H {
 	}, metav1.CreateOptions{})
 	Expect(err).NotTo(HaveOccurred())
 	h.CreateClusterRoleBinding(ctx, sa, "dedicated-admins-project")
-	log.Printf("Created SA: %v", sa.GetName())
+	ginkgo.GinkgoLogr.Info(fmt.Sprintf("Created SA: %v", sa.GetName()))
 
 	// Create cluster dedicated-admin account
 	sa, err = h.Kube().CoreV1().ServiceAccounts(h.CurrentProject()).Create(ctx, &corev1.ServiceAccount{
@@ -209,7 +206,7 @@ func (h *H) CreateServiceAccounts(ctx context.Context) *H {
 	}, metav1.CreateOptions{})
 	Expect(err).NotTo(HaveOccurred())
 	h.CreateClusterRoleBinding(ctx, sa, "dedicated-admins-cluster")
-	log.Printf("Created SA: %v", sa.GetName())
+	ginkgo.GinkgoLogr.Info(fmt.Sprintf("Created SA: %v", sa.GetName()))
 
 	// Create cluster-admin account
 	sa, err = h.Kube().CoreV1().ServiceAccounts(h.CurrentProject()).Create(ctx, &corev1.ServiceAccount{
@@ -219,7 +216,7 @@ func (h *H) CreateServiceAccounts(ctx context.Context) *H {
 	}, metav1.CreateOptions{})
 	Expect(err).NotTo(HaveOccurred())
 	h.CreateClusterRoleBinding(ctx, sa, "cluster-admin")
-	log.Printf("Created SA: %v", sa.GetName())
+	ginkgo.GinkgoLogr.Info(fmt.Sprintf("Created SA: %v", sa.GetName()))
 
 	return h
 }
@@ -257,7 +254,7 @@ func (h *H) CreateClusterRoleBinding(ctx context.Context, sa *corev1.ServiceAcco
 // SetServiceAccount sets the serviceAccount you want all helper commands to run as
 func (h *H) SetServiceAccount(ctx context.Context, sa string) *H {
 	if h.restConfig == nil {
-		log.Print("No restconfig found in SetServiceAccount")
+		ginkgo.GinkgoLogr.Info("No restconfig found in SetServiceAccount")
 		return nil
 	}
 

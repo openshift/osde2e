@@ -3,9 +3,9 @@ package runner
 
 import (
 	"fmt"
-	"log"
-	"os"
 
+	"github.com/go-logr/logr"
+	"github.com/onsi/ginkgo/v2"
 	image "github.com/openshift/client-go/image/clientset/versioned"
 	"github.com/openshift/osde2e/pkg/common/util"
 	kubev1 "k8s.io/api/core/v1"
@@ -35,7 +35,7 @@ var DefaultRunner = &Runner{
 	Server:    "https://kubernetes.default",
 	CA:        serviceAccountDir + "/ca.crt",
 	TokenFile: serviceAccountDir + "/token",
-	Logger:    log.New(os.Stderr, "", log.LstdFlags|log.Lshortfile),
+	Logger:    ginkgo.GinkgoLogr,
 }
 
 // Runner runs the OpenShift extended test suite within a cluster.
@@ -89,7 +89,7 @@ type Runner struct {
 	Repos
 
 	// Logger receives all messages.
-	*log.Logger
+	logr.Logger
 
 	// internal
 	stopCh <-chan struct{}
@@ -108,43 +108,43 @@ func (r *Runner) Run(timeoutInSeconds int, stopCh <-chan struct{}) (err error) {
 			return
 		}
 	}
-	log.Printf("Using '%s' as image for runner", r.ImageName)
+	r.Info(fmt.Sprintf("Using '%s' as image for runner", r.ImageName))
 
-	log.Printf("Creating %s runner Pod...", r.Name)
+	r.Info(fmt.Sprintf("Creating %s runner Pod...", r.Name))
 	var pod *kubev1.Pod
 	if pod, err = r.createPod(); err != nil {
 		return
 	}
 
-	log.Printf("Waiting for %s runner Pod to start...", r.Name)
+	r.Info(fmt.Sprintf("Waiting for %s runner Pod to start...", r.Name))
 	if err = r.waitForPodRunning(pod); err != nil {
 		return
 	}
 	r.status = StatusRunning
 
-	log.Printf("Creating service for %s runner Pod...", r.Name)
+	r.Info(fmt.Sprintf("Creating service for %s runner Pod...", r.Name))
 	if r.svc, err = r.createService(pod); err != nil {
 		return
 	}
 
-	log.Printf("Waiting for endpoints of %s runner Pod with a timeout of %d seconds...", r.Name, timeoutInSeconds)
+	r.Info(fmt.Sprintf("Waiting for endpoints of %s runner Pod with a timeout of %d seconds...", r.Name, timeoutInSeconds))
 	var completionErr error
 	completionErr = r.waitForCompletion(pod.Name, timeoutInSeconds)
 
 	if !r.SkipLogsFromPod {
-		log.Printf("Collecting logs from containers on %s runner Pod...", r.Name)
+		r.Info(fmt.Sprintf("Collecting logs from containers on %s runner Pod...", r.Name))
 		if err = r.getAllLogsFromPod(pod.Name); err != nil {
 			return
 		}
 	} else {
-		log.Printf("Skipping logs from pod %s", r.Name)
+		r.Info(fmt.Sprintf("Skipping logs from pod %s", r.Name))
 	}
 
 	if completionErr != nil {
 		return completionErr
 	}
 
-	log.Printf("%s runner is done", r.Name)
+	r.Info(fmt.Sprintf("%s runner is done", r.Name))
 	r.status = StatusDone
 	return nil
 }

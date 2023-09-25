@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"path/filepath"
 	"time"
@@ -52,7 +51,7 @@ func (r *Runner) waitForCompletion(podName string, timeoutInSeconds int) error {
 	return wait.PollImmediate(slowPoll, time.Duration(timeoutInSeconds)*time.Second, func() (done bool, err error) {
 		endpoints, err = r.Kube.CoreV1().Endpoints(r.svc.Namespace).Get(context.TODO(), r.svc.Name, metav1.GetOptions{})
 		if err != nil && !kerror.IsNotFound(err) {
-			r.Printf("Encountered error getting endpoint '%s/%s': %v", r.svc.Namespace, r.svc.Name, err)
+			r.Error(err, fmt.Sprintf("unable to get endpoint '%s/%s'", r.svc.Namespace, r.svc.Name))
 		} else if endpoints != nil {
 			for _, subset := range endpoints.Subsets {
 				if len(subset.Addresses) > 0 {
@@ -62,12 +61,12 @@ func (r *Runner) waitForCompletion(podName string, timeoutInSeconds int) error {
 		}
 		pod, err := r.Kube.CoreV1().Pods(r.svc.Namespace).Get(context.TODO(), podName, metav1.GetOptions{})
 		if err != nil {
-			r.Printf("Encountered error getting pod: %v", err)
+			r.Error(err, fmt.Sprintf("unable to get pod %s/%s", r.svc.Namespace, podName))
 			return false, err
 		}
 
 		if pod.Status.Phase == kubev1.PodFailed || pod.Status.Phase == kubev1.PodUnknown {
-			r.Printf("Pod entered error state while waiting for endpoint: %+v", pod.Status)
+			r.Info(fmt.Sprintf("Pod entered error state while waiting for endpoint: %+v", pod.Status))
 			return false, fmt.Errorf("pod failed while waiting for endpoints")
 		} else if pod.Status.Phase == kubev1.PodSucceeded {
 			var err *multierror.Error
@@ -86,7 +85,7 @@ func (r *Runner) waitForCompletion(podName string, timeoutInSeconds int) error {
 			}
 		}
 
-		r.Printf("Waiting for test results using Endpoint '%s/%s'...", endpoints.Namespace, endpoints.Name)
+		r.Info(fmt.Sprintf("Waiting for test results using Endpoint '%s/%s'...", endpoints.Namespace, endpoints.Name))
 		return false, nil
 	})
 }
@@ -100,7 +99,7 @@ func (r *Runner) getAllLogsFromPod(podName string) error {
 	var allErrors *multierror.Error
 	for _, containerStatus := range pod.Status.ContainerStatuses {
 		func() {
-			log.Printf("Trying to get logs for %s:%s", podName, containerStatus.Name)
+			r.Info(fmt.Sprintf("Trying to get logs for %s:%s", podName, containerStatus.Name))
 			request := r.Kube.CoreV1().Pods(r.svc.Namespace).GetLogs(podName, &kubev1.PodLogOptions{Container: containerStatus.Name})
 
 			logStream, err := request.Stream(context.TODO())

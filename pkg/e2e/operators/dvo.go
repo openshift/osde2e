@@ -129,7 +129,7 @@ func checkPodLogs(h *helper.H, namespace string, testNamespace string, name stri
 	ginkgo.Context("pods", func() {
 		ginkgo.It(fmt.Sprintf("Check logs in test namespace %s", testNamespace), func(ctx context.Context) {
 			// wait for graceperiod
-			fmt.Println("Waiting for grace period")
+			ginkgo.GinkgoLogr.Info("Waiting for grace period")
 			// Wait for graceperiod
 			time.Sleep(time.Duration(gracePeriod) * time.Second)
 			// Retrieve pods
@@ -137,7 +137,7 @@ func checkPodLogs(h *helper.H, namespace string, testNamespace string, name stri
 			Expect(err).ToNot(HaveOccurred(), "failed fetching pods")
 
 			// Grab logs of pods
-			fmt.Println("Grabbing Logs for pod")
+			ginkgo.GinkgoLogr.Info("Grabbing Logs for pod")
 
 			for _, pod := range pods.Items {
 				logs := h.Kube().CoreV1().Pods(namespace).GetLogs(pod.Name, &podLogOptions)
