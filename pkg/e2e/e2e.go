@@ -711,14 +711,6 @@ func cleanupAfterE2E(ctx context.Context, h *helper.H) (errors []error) {
 	// We need to clean up our helper tests manually.
 	h.Cleanup(ctx)
 
-	// If this is a nightly test, we don't want to expire this immediately
-	if viper.GetString(config.Cluster.InstallSpecificNightly) != "" || viper.GetString(config.Cluster.ReleaseImageLatest) != "" {
-		viper.Set(config.Cluster.HibernateAfterUse, false)
-		if viper.GetString(config.Cluster.ID) != "" {
-			provider.Expire(viper.GetString(config.Cluster.ID), 30*time.Minute)
-		}
-	}
-
 	// We need a provider to hibernate
 	// We need a cluster to hibernate
 	// We need to check that the test run wants to hibernate after this run
