@@ -2,9 +2,11 @@ package helper
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"time"
 
+	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
 	kubev1 "k8s.io/api/core/v1"
@@ -26,7 +28,7 @@ func (h *H) WaitForPodPhase(ctx context.Context, pod *kubev1.Pod, target kubev1.
 			}
 		}
 
-		log.Printf("Waiting for Pod '%s/%s' to be %s, currently %s...", pod.Namespace, pod.Name, target, phase)
+		ginkgo.GinkgoLogr.Info(fmt.Sprintf("Waiting for Pod '%s/%s' to be %s, currently %s...", pod.Namespace, pod.Name, target, phase))
 		time.Sleep(dur)
 	}
 

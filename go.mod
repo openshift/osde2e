@@ -12,6 +12,7 @@ require (
 	github.com/aws/aws-sdk-go v1.45.3
 	github.com/fatih/color v1.15.0
 	github.com/fsnotify/fsnotify v1.6.0
+	github.com/go-logr/logr v1.2.4
 	github.com/golang-migrate/migrate/v4 v4.16.2
 	github.com/google/go-github/v31 v31.0.0
 	github.com/google/uuid v1.3.1
@@ -106,7 +107,6 @@ require (
 	github.com/evanphx/json-patch/v5 v5.6.0 // indirect
 	github.com/go-kit/log v0.2.1 // indirect
 	github.com/go-logfmt/logfmt v0.5.1 // indirect
-	github.com/go-logr/logr v1.2.4 // indirect
 	github.com/go-openapi/jsonpointer v0.19.6 // indirect
 	github.com/go-openapi/jsonreference v0.20.2 // indirect
 	github.com/go-openapi/swag v0.22.3 // indirect

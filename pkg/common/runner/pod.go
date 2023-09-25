@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"path/filepath"
 	"time"
 
@@ -119,7 +118,7 @@ func (r *Runner) createPod() (pod *kubev1.Pod, err error) {
 		// Verify the configMap has been created before proceeding
 		err = wait.PollImmediate(fastPoll, configMapCreateTimeout, func() (done bool, err error) {
 			if configMap, err = r.Kube.CoreV1().ConfigMaps(r.Namespace).Get(context.TODO(), configMap.Name, metav1.GetOptions{}); err != nil {
-				log.Printf("Error creating %s config map: %v", configMap.Name, err)
+				r.Error(err, fmt.Sprintf("error creating %s config map", configMap.Name))
 			}
 			return err == nil, nil
 		})
@@ -157,7 +156,7 @@ func (r *Runner) createPod() (pod *kubev1.Pod, err error) {
 	var createdPod *kubev1.Pod
 	err = wait.PollImmediate(fastPoll, podCreateTimeout, func() (done bool, err error) {
 		if createdPod, err = r.Kube.CoreV1().Pods(r.Namespace).Create(context.TODO(), pod, metav1.CreateOptions{}); err != nil {
-			log.Printf("Error creating %s runner Pod: %v", r.Name, err)
+			r.Error(err, fmt.Sprintf("error creating %s/%s runner Pod", r.Namespace, r.Name))
 		}
 		return err == nil, nil
 	})
@@ -182,7 +181,7 @@ func (r *Runner) waitForPodRunning(pod *kubev1.Pod) error {
 			if pendingCount > podPendingTimeout {
 				err = errors.New("timed out waiting for pod to start")
 			}
-			r.Printf("Waiting for Pod '%s/%s' to start Running...", pod.Namespace, pod.Name)
+			r.Info(fmt.Sprintf("Waiting for Pod '%s/%s' to start Running...", pod.Namespace, pod.Name))
 		}
 		return
 	})
