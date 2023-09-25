@@ -561,19 +561,9 @@ var Alert = struct {
 	// SlackAPIToken is a bot slack token
 	// Env: SLACK_API_TOKEN
 	SlackAPIToken string
-
-	// PagerDutyAPIToken is a pagerduty token
-	// Env: PAGERDUTY_API_TOKEN
-	PagerDutyAPIToken string
-
-	// PagerDutyUserToken is a pagerduty token for a user account with full access to the v2 API
-	// Env: PAGERDUTY_API_TOKEN
-	PagerDutyUserToken string
 }{
-	EnableAlerts:       "alert.EnableAlerts",
-	SlackAPIToken:      "alert.slackAPIToken",
-	PagerDutyAPIToken:  "alert.pagerDutyAPIToken",
-	PagerDutyUserToken: "alert.pagerDutyUserToken",
+	EnableAlerts:  "alert.EnableAlerts",
+	SlackAPIToken: "alert.slackAPIToken",
 }
 
 // Database config keys.
@@ -885,13 +875,6 @@ func InitOSDe2eViper() {
 
 	viper.BindEnv(Alert.SlackAPIToken, "SLACK_API_TOKEN")
 	RegisterSecret(Alert.SlackAPIToken, "slack-api-token")
-
-	// Support Legacy ENV Reference
-	viper.BindEnv(Alert.PagerDutyAPIToken, "PAGERDUTY_API_TOKEN", "PAGERDUTY_TOKEN")
-	RegisterSecret(Alert.PagerDutyAPIToken, "pagerduty-api-token")
-
-	viper.BindEnv(Alert.PagerDutyUserToken, "PAGERDUTY_USER_TOKEN")
-	RegisterSecret(Alert.PagerDutyUserToken, "pagerduty-user-token")
 
 	// ----- Database -----
 	viper.SetDefault(Database.User, "postgres")
