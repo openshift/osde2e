@@ -51,7 +51,7 @@ require (
 	github.com/prometheus/common v0.44.0
 	github.com/redhat-cop/must-gather-operator v1.1.2
 	github.com/slack-go/slack v0.12.3
-	github.com/spf13/afero v1.9.5
+	github.com/spf13/afero v1.10.0
 	github.com/spf13/cobra v1.7.0
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.16.0
