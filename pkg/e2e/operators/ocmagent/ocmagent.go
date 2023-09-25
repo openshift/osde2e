@@ -238,7 +238,7 @@ var _ = ginkgo.Describe(suiteName, ginkgo.Ordered, label.Operators, label.Migrat
 	})
 
 	ginkgo.It("can be upgraded from previous version", label.Upgrade, func(ctx context.Context) {
-		errorMsg, err := operators.PerformUpgrade(ctx, h, namespace, operatorName, operatorName, operatorRegistry, 5, 30)
-		expect.NoError(err, errorMsg)
+		err := operators.PerformUpgrade(ctx, h, namespace, operatorName, operatorName, operatorRegistry, 5, 30)
+		expect.NoError(err)
 	})
 })
