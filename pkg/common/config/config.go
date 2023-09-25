@@ -35,8 +35,8 @@ const (
 	JobType = "jobType"
 
 	// BaseJobURL is the root location for all job artifacts
-	// For example, https://storage.googleapis.com/origin-ci-test/logs/osde2e-prod-gcp-e2e-next/61/build-log.txt would be
-	// https://storage.googleapis.com/origin-ci-test/logs -- This is also our default
+	// For example, https://gcsweb-ci.apps.ci.l2s4.p1.openshiftapps.com/gcs/origin-ci-test/logs/osde2e-prod-gcp-e2e-next/61/build-log.txt would be
+	// https://gcsweb-ci.apps.ci.l2s4.p1.openshiftapps.com/gcs/origin-ci-test/logs -- This is also our default
 	// Env: BASE_JOB_URL
 	BaseJobURL = "baseJobURL"
 
@@ -633,7 +633,7 @@ func InitOSDe2eViper() {
 	viper.SetDefault(JobID, -1)
 	viper.BindEnv(JobID, "BUILD_NUMBER")
 
-	viper.SetDefault(BaseJobURL, "https://storage.googleapis.com/origin-ci-test/logs")
+	viper.SetDefault(BaseJobURL, "https://gcsweb-ci.apps.ci.l2s4.p1.openshiftapps.com/gcs/origin-ci-test/logs")
 	viper.BindEnv(BaseJobURL, "BASE_JOB_URL")
 
 	viper.SetDefault(BaseProwURL, "https://deck-ci.apps.ci.l2s4.p1.openshiftapps.com")
