@@ -101,7 +101,6 @@ var _ = ginkgo.Describe(ocmTestName, label.E2E, func() {
 			const provisionPodTimeoutSeconds = 180
 
 			// run this script in a pod across the whole cluster
-			log.Println("Create firewall command:", createCmd)
 			runner := h.Runner(createCmd)
 			runner.Name = "create-firewall"
 			runner.ImageName = quayFirewallTestImageName
