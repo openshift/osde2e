@@ -51,7 +51,6 @@ var _ = ginkgo.Describe(suiteName, ginkgo.Ordered, label.Operators, func() {
 		configMapLockFile = "configure-alertmanager-operator-lock"
 		namespaceName     = "openshift-monitoring"
 		operatorName      = "configure-alertmanager-operator"
-		operatorRegistry  = "configure-alertmanager-operator-registry"
 		secrets           = []string{"pd-secret", "dms-secret"}
 		serviceAccounts   = []string{"configure-alertmanager-operator"}
 	)
@@ -168,7 +167,7 @@ var _ = ginkgo.Describe(suiteName, ginkgo.Ordered, label.Operators, func() {
 	})
 
 	ginkgo.It("can be upgraded from previous version", label.Upgrade, func(ctx context.Context) {
-		err := operators.PerformUpgrade(ctx, h, namespaceName, operatorName, operatorName, operatorRegistry, 5, 30)
+		err := operators.PerformUpgrade(ctx, h, namespaceName, operatorName)
 		expect.NoError(err)
 	})
 })
