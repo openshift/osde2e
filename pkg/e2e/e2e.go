@@ -12,7 +12,6 @@ import (
 	"math"
 	"os"
 	"path/filepath"
-	"sort"
 	"strconv"
 	"strings"
 	"testing"
@@ -27,11 +26,9 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 	ctrlog "sigs.k8s.io/controller-runtime/pkg/log"
 
-	pd "github.com/PagerDuty/go-pagerduty"
 	"github.com/onsi/ginkgo/v2"
 	"github.com/onsi/ginkgo/v2/types"
 	"github.com/onsi/gomega"
-	"github.com/openshift/osde2e/pkg/common/alert"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/db"
 
@@ -44,7 +41,6 @@ import (
 	"github.com/openshift/osde2e/pkg/common/events"
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/metadata"
-	"github.com/openshift/osde2e/pkg/common/pagerduty"
 	"github.com/openshift/osde2e/pkg/common/phase"
 	"github.com/openshift/osde2e/pkg/common/providers"
 	"github.com/openshift/osde2e/pkg/common/prow"
@@ -541,7 +537,7 @@ func runGinkgoTests() (int, error) {
 			}(),
 		}
 		testData := append(installTestCaseData, upgradeTestCaseData...)
-		if err := updateDatabaseAndPagerduty(dbURL, jobData, testData...); err != nil {
+		if err := updateDatabase(dbURL, jobData, testData...); err != nil {
 			log.Printf("failed updating database or pagerduty: %v", err)
 		}
 	}
@@ -891,13 +887,6 @@ func runTestsInPhase(
 			}
 		}
 	}
-	// If we could have opened new alerts, consolidate them
-	if viper.GetString(config.JobType) == "periodic" {
-		err := pagerduty.ProcessCICDIncidents(pd.NewClient(viper.GetString(config.Alert.PagerDutyUserToken)))
-		if err != nil {
-			log.Printf("Failed merging PD incidents: %v", err)
-		}
-	}
 
 	passRate := float64(numPassingTests) / float64(numTests)
 
@@ -1112,12 +1101,10 @@ func setupRouteMonitors(ctx context.Context, closeChannel chan struct{}) chan st
 	return routeMonitorChan
 }
 
-func updateDatabaseAndPagerduty(dbURL string, jobData db.CreateJobParams, testData ...db.CreateTestcaseParams) error {
+func updateDatabase(dbURL string, jobData db.CreateJobParams, testData ...db.CreateTestcaseParams) error {
 	var (
-		problematicSet = make(map[string]db.ListProblematicTestsRow)
-		alertData      map[string][]db.ListAlertableRecentTestFailuresRow
-		jobID          int64
-		err            error
+		jobID int64
+		err   error
 	)
 
 	// Record data from this job and extract data that we need to operate on PD.
@@ -1151,122 +1138,10 @@ func updateDatabaseAndPagerduty(dbURL string, jobData db.CreateJobParams, testDa
 			}
 		}
 
-		alertData, err = q.AlertDataForJob(context.TODO(), jobID)
-		if err != nil {
-			return fmt.Errorf("failed creating alert data: %w", err)
-		}
-
-		problems, err := q.ListProblematicTests(context.TODO())
-		if err != nil {
-			return fmt.Errorf("failed listing problematic tests: %w", err)
-		}
-
-		for _, p := range problems {
-			problematicSet[p.Name] = p
-		}
 		return nil
 	}); err != nil {
 		return fmt.Errorf("failed communicating with database: %w", err)
 	}
 
-	// Extract useful data into PD alerts and create the PD alerts.
-	pdAlertClient := pagerduty.Config{
-		IntegrationKey: viper.GetString(config.Alert.PagerDutyAPIToken),
-	}
-	alertSource := fmt.Sprintf("job %d", jobID)
-	log.Println("Creating pagerduty alerts for job (if any)")
-	// if too many things failed, open a single alert that isn't grouped with the others.
-	if len(alertData) > 10 {
-		event, err := pdAlertClient.FireAlert(pd.V2Payload{
-			Summary:  ManyGroupedFailureName,
-			Severity: "info",
-			Source:   alertSource,
-			Group:    "", // do not group
-			Details:  alertData,
-		})
-		if err != nil {
-			log.Printf("Failed creating pagerduty incident for failure: %v", err)
-		}
-		if err := alert.SendSlackMessage("sd-cicd-alerts", fmt.Sprintf(`@osde2e A bunch of tests failed at once:
-pipeline: %s
-URL: %s
-PD info: %v`, jobData.JobName, jobData.Url, event)); err != nil {
-			log.Printf("Failed sending slack message to CICD team: %v", err)
-		}
-	} else {
-		// open many alerts
-		for name, instances := range alertData {
-			sort.Slice(instances, func(i, j int) bool {
-				return instances[i].Started.Before(instances[j].Started)
-			})
-			var oldest, current db.ListAlertableRecentTestFailuresRow
-			oldest = instances[0]
-			for _, instance := range instances {
-				if instance.ID == jobID {
-					current = instance
-					break
-				}
-			}
-			if _, err := pdAlertClient.FireAlert(pd.V2Payload{
-				Summary:  name + " failed",
-				Severity: "info",
-				Source:   alertSource,
-				Group:    name, // group by test case
-				Details: map[string]db.ListAlertableRecentTestFailuresRow{
-					"oldest":  oldest,
-					"current": current,
-				},
-			}); err != nil {
-				return fmt.Errorf("failed creating PD alert: %w", err)
-			}
-		}
-	}
-
-	log.Println("Deduplicating pagerduty incidents")
-	// Deduplicate incidents.
-	pdClient := pd.NewClient(viper.GetString(config.Alert.PagerDutyUserToken))
-	listOptions := pd.ListIncidentsOptions{
-		ServiceIDs: []string{"P7VT2V5"},
-		Statuses:   []string{"triggered", "acknowledged"},
-		Limit:      100,
-	}
-	if err := pagerduty.EnsureIncidentsMerged(pdClient); err != nil {
-		return fmt.Errorf("failed merging incidents: %w", err)
-	}
-
-	log.Println("Closing old pagerduty incidents")
-	// Find all active PD incidents that aren't in our problem list. We
-	// list them again since we just tried to merge some of them.
-	var needsClose []pd.ManageIncidentsOptions
-	if err := pagerduty.Incidents(
-		pdClient,
-		listOptions,
-		func(incident pd.Incident) error {
-			// convert the name to the notation we expect from the database
-			name := strings.TrimPrefix(incident.Title, "[install] ")
-			name = strings.TrimPrefix(name, "[upgrade] ")
-			name = strings.TrimSuffix(name, " failed")
-			if name == ManyGroupedFailureName {
-				return nil
-			}
-			if _, ok := problematicSet[name]; !ok {
-				// mark this PD incident as needing to be closed
-				needsClose = append(needsClose, pd.ManageIncidentsOptions{
-					ID:         incident.ID,
-					Type:       incident.Type,
-					Status:     "resolved",
-					Resolution: fmt.Sprintf("Resolved by job %d", jobID),
-				})
-			}
-			return nil
-		},
-	); err != nil {
-		return fmt.Errorf("failed listing open PD incidents: %w", err)
-	}
-
-	// Resolve all of the incidents that aren't on our problem list.
-	if _, err := pdClient.ManageIncidentsWithContext(context.TODO(), "", needsClose); err != nil {
-		return fmt.Errorf("failed resolving incidents: %w", err)
-	}
 	return nil
 }
