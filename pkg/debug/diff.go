@@ -28,13 +28,14 @@ func GenerateDiff(phase, dependencies string) error {
 	baseJobURL := viper.GetString(config.BaseJobURL)
 	baseProwURL := viper.GetString(config.BaseProwURL)
 	jobName := viper.GetString(config.JobName)
+	jobNameSafe := os.Getenv("JOB_NAME_SAFE")
 
 	jobID, err := getLastJobID(baseProwURL, jobName)
 	if err != nil {
 		return err
 	}
 
-	url := fmt.Sprintf("%s/%s/%d/artifacts/%s/dependencies.txt", baseJobURL, jobName, jobID, phase)
+	url := fmt.Sprintf("%s/%s/%d/artifacts/%s/osde2e-test/artifacts/%s/dependencies.txt", baseJobURL, jobName, jobID, jobNameSafe, phase)
 	log.Printf("Grabbing diff from %s", url)
 	resp, err := http.Get(url)
 	if err != nil {
