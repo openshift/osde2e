@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"log"
 	"net"
 	"strings"
 	"text/template"
@@ -111,7 +110,6 @@ var _ = ginkgo.Describe(ocmTestName, label.E2E, func() {
 
 			defer func() {
 				// remove the firewall rules we created for the test
-				log.Println("Destroy firewall command:", destroyCmd)
 				runner := h.Runner(destroyCmd)
 				runner.Name = "destroy-firewall"
 				runner.ImageName = quayFirewallTestImageName
