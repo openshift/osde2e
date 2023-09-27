@@ -1002,7 +1002,7 @@ func runTestsInPhase(
 		}
 		clusterState = cluster.State()
 	}
-	if !suiteConfig.DryRun && clusterState == spi.ClusterStateReady && viper.GetString(config.JobName) != "" {
+	if !suiteConfig.DryRun && clusterState == spi.ClusterStateReady && viper.GetString(config.JobName) != "" && viper.GetString(config.JobType) == "periodic" {
 		h, err := helper.NewOutsideGinkgo()
 		if h == nil {
 			log.Println("Unable to generate helper outside of ginkgo: %w", err)
