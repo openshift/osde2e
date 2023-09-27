@@ -57,7 +57,6 @@ var _ = ginkgo.Describe(suiteName, ginkgo.Ordered, label.Operators, label.Migrat
 		namespace          = "openshift-ocm-agent-operator"
 		networkPolicyName  = "ocm-agent-allow-only-alertmanager"
 		operatorName       = "ocm-agent-operator"
-		operatorRegistry   = "ocm-agent-operator-registry"
 		secretName         = "ocm-access-token"
 		serviceMonitorName = "ocm-agent-metrics"
 		serviceName        = "ocm-agent"
@@ -238,7 +237,7 @@ var _ = ginkgo.Describe(suiteName, ginkgo.Ordered, label.Operators, label.Migrat
 	})
 
 	ginkgo.It("can be upgraded from previous version", label.Upgrade, func(ctx context.Context) {
-		err := operators.PerformUpgrade(ctx, h, namespace, operatorName, operatorName, operatorRegistry, 5, 30)
+		err := operators.PerformUpgrade(ctx, h, namespace, operatorName)
 		expect.NoError(err)
 	})
 })

@@ -18,6 +18,7 @@ import (
 	configv1 "github.com/openshift/api/config/v1"
 	projectv1 "github.com/openshift/api/project/v1"
 	cloudcredentialv1 "github.com/openshift/cloud-credential-operator/pkg/apis/cloudcredential/v1"
+	"github.com/openshift/osde2e-common/pkg/clients/openshift"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/util"
@@ -78,6 +79,7 @@ type H struct {
 	OutsideGinkgo  bool
 
 	// internal
+	client     *openshift.Client
 	restConfig *rest.Config
 	proj       *projectv1.Project
 	mutex      sync.Mutex
@@ -100,6 +102,12 @@ func (h *H) Setup() error {
 	}
 
 	Expect(err).ShouldNot(HaveOccurred(), "failed to configure client")
+
+	h.client, err = openshift.NewFromRestConfig(h.restConfig, ginkgo.GinkgoLogr)
+	if h.OutsideGinkgo && err != nil {
+		return fmt.Errorf("failed to create openshift client: %w", err)
+	}
+	Expect(err).ShouldNot(HaveOccurred(), "failed to configure openshift client")
 
 	project := viper.GetString(config.Project)
 	if project == "" {
@@ -493,4 +501,8 @@ func (h *H) WithToken(token string) *H {
 
 func (h *H) GetConfig() *rest.Config {
 	return h.restConfig
+}
+
+func (h *H) GetClient() *openshift.Client {
+	return h.client
 }

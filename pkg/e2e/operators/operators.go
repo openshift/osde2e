@@ -9,7 +9,6 @@ import (
 
 	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	"github.com/openshift/osde2e-common/pkg/clients/openshift"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/helper"
@@ -160,22 +159,14 @@ func checkRoleBindings(h *helper.H, namespace string, roleBindings []string) {
 	})
 }
 
-func PerformUpgrade(
-	ctx context.Context, h *helper.H,
-	subNamespace string, subName string, packageName string, regServiceName string,
-	installPlanPollCount time.Duration, upgradePollCount time.Duration,
-) error {
-	client, err := openshift.New(ginkgo.GinkgoLogr)
-	if err != nil {
-		return err
-	}
-	return client.UpgradeOperator(ctx, subName, subNamespace)
+func PerformUpgrade(ctx context.Context, h *helper.H, subNamespace string, subName string) error {
+	return h.GetClient().UpgradeOperator(ctx, subName, subNamespace)
 }
 
 func checkUpgrade(h *helper.H, subNamespace string, subName string, packageName string, regServiceName string) {
 	ginkgo.Context("Operator Upgrade", func() {
 		ginkgo.It("should upgrade from the replaced version", func(ctx context.Context) {
-			err := PerformUpgrade(ctx, h, subNamespace, subName, packageName, regServiceName, 5, 15)
+			err := PerformUpgrade(ctx, h, subNamespace, subName)
 			Expect(err).NotTo(HaveOccurred(), "unable to upgrade operator %s", subName)
 		})
 	})
