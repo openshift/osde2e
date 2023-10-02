@@ -79,11 +79,7 @@ var _ = ginkgo.Describe(customDomainsOperatorTestName, ginkgo.Ordered, label.Ope
 		Expect(err).ShouldNot(HaveOccurred(), "failed to build semver clusterVersion object")
 
 		if clusterversion.Major() == 4 && clusterversion.Minor() >= 13 {
-			ns, err := h.Kube().CoreV1().Namespaces().Get(ctx, "openshift-custom-domains-operator", metav1.GetOptions{})
-			Expect(err).ShouldNot(HaveOccurred(), "unable to get namespace")
-			if ns.Labels["ext-managed.openshift.io/legacy-ingress-support"] == "false" {
-				ginkgo.Skip("CustomDomain Operator has been deprecated: https://github.com/openshift/custom-domains-operator#deprecation")
-			}
+			ginkgo.Skip("CustomDomain Operator has been deprecated: https://github.com/openshift/custom-domains-operator#deprecation")
 		}
 	})
 
