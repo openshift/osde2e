@@ -3,22 +3,20 @@ package state
 import (
 	"context"
 	"encoding/json"
-	"log"
+	"fmt"
 	"time"
 
 	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
-	"github.com/openshift/osde2e/pkg/common/label"
-	"k8s.io/apimachinery/pkg/util/wait"
-
 	"github.com/openshift/osde2e/pkg/common/alert"
+	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/helper"
-	"github.com/openshift/osde2e/pkg/common/providers"
-
+	"github.com/openshift/osde2e/pkg/common/label"
 	"github.com/openshift/osde2e/pkg/common/prometheus"
+	"github.com/openshift/osde2e/pkg/common/providers"
 	promv1 "github.com/prometheus/client_golang/api/prometheus/v1"
+	"k8s.io/apimachinery/pkg/util/wait"
 )
 
 // A mapping of alerts to ignore by cluster provider and environment.
@@ -55,13 +53,13 @@ var _ = ginkgo.Describe(clusterStateTestName, label.E2E, func() {
 			defer cancel()
 			value, _, err := promAPI.Query(context, query, time.Now())
 			if err != nil {
-				log.Printf("Unable to query prom API: %v", err)
+				ginkgo.GinkgoLogr.Error(err, "Unable to query prom API")
 				// try again
 				return false, nil
 			}
 			queryresult, err = json.MarshalIndent(value, "", "  ")
 			if err != nil {
-				log.Printf("Error marshaling results: %v", err)
+				ginkgo.GinkgoLogr.Error(err, "Error marshaling results")
 				// try again
 				return false, nil
 			}
@@ -82,7 +80,6 @@ var _ = ginkgo.Describe(clusterStateTestName, label.E2E, func() {
 })
 
 func findCriticalAlerts(results []result, provider, environment string) bool {
-	log.Printf("Alerts found: %v", results)
 	foundCritical := false
 	for _, result := range results {
 		ignoredCritical := false
@@ -108,9 +105,9 @@ func findCriticalAlerts(results []result, provider, environment string) bool {
 		}
 
 		if ignoredCritical {
-			log.Printf("Active alert: %s, Severity: %s (known to be consistently critical, ignoring)", result.Metric.AlertName, result.Metric.Severity)
+			ginkgo.GinkgoLogr.Info(fmt.Sprintf("Active alert: %s, Severity: %s (known to be consistently critical, ignoring)", result.Metric.AlertName, result.Metric.Severity))
 		} else {
-			log.Printf("Active alert: %s, Severity: %s", result.Metric.AlertName, result.Metric.Severity)
+			ginkgo.GinkgoLogr.Info(fmt.Sprintf("Active alert: %s, Severity: %s", result.Metric.AlertName, result.Metric.Severity))
 		}
 	}
 
