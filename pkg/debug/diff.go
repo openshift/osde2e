@@ -99,7 +99,6 @@ func GenerateDependencies(kube kubernetes.Interface) (dependencies string, err e
 // GetImageList gathers all images used in a PodList
 func GetImageList(list *v1.PodList) (images map[string]string, err error) {
 	tmp := make(map[string]string)
-	images = make(map[string]string)
 
 	for _, pod := range list.Items {
 		// Default to Unknown for the name
