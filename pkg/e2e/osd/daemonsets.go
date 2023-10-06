@@ -68,7 +68,7 @@ var _ = ginkgo.Describe(daemonSetsTestName, ginkgo.Ordered, label.HyperShift, la
 		err := client.Create(ctx, daemonset)
 		expect.NoError(err)
 
-		err = wait.For(func() (bool, error) {
+		err = wait.For(func(ctx context.Context) (bool, error) {
 			ds := &appsv1.DaemonSet{}
 			err = client.Get(ctx, daemonset.GetName(), daemonset.GetNamespace(), ds)
 			if err != nil {

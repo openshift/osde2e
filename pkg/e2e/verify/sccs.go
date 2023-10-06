@@ -40,7 +40,7 @@ var _ = ginkgo.Describe(dedicatedAdminSccTestName, ginkgo.Ordered, label.HyperSh
 
 	ginkgo.DescribeTable("should include", func(ctx context.Context, scc string) {
 		clusterRole := &rbacv1.ClusterRole{}
-		err := wait.For(func() (bool, error) {
+		err := wait.For(func(ctx context.Context) (bool, error) {
 			err := client.Get(ctx, "dedicated-admins-cluster", "", clusterRole)
 			if apierrors.IsNotFound(err) {
 				return false, nil
@@ -94,7 +94,7 @@ var _ = ginkgo.Describe(dedicatedAdminSccTestName, ginkgo.Ordered, label.HyperSh
 		deploymentName := "prometheus-operator"
 		namespace := "openshift-monitoring"
 
-		err := wait.For(func() (bool, error) {
+		err := wait.For(func(ctx context.Context) (bool, error) {
 			deployment := &appsv1.Deployment{}
 			err := client.Get(ctx, deploymentName, namespace, deployment)
 			if apierrors.IsNotFound(err) {

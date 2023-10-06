@@ -108,7 +108,7 @@ var _ = ginkgo.Describe(fipsTestName, ginkgo.Ordered, label.E2E, func() {
 
 		expect.NoError(client.Create(ctx, ds))
 
-		err := wait.For(func() (bool, error) {
+		err := wait.For(func(ctx context.Context) (bool, error) {
 			daemonset := &appsv1.DaemonSet{}
 			err := client.Get(ctx, ds.GetName(), ds.GetNamespace(), daemonset)
 			if err != nil {
