@@ -106,7 +106,7 @@ func (m *ROSAProvider) LaunchCluster(clusterName string) (string, error) {
 			MultiAZ:                      viper.GetBool(config.Cluster.MultiAZ),
 			ExpirationDuration:           viper.GetDuration(config.Cluster.ExpiryInMinutes),
 			SkipHealthCheck:              viper.GetBool(config.Tests.SkipClusterHealthChecks),
-			UseDefaultAccountRolesPrefix: true,
+			UseDefaultAccountRolesPrefix: viper.GetBool(STSUseDefaultAccountRolesPrefix),
 			InstallTimeout:               time.Duration(installTimeout) * time.Minute,
 			HealthCheckTimeout:           healthCheckTimeout,
 		},

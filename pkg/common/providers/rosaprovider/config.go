@@ -35,6 +35,11 @@ const (
 
 	// OIDCConfigID is the ID of the oidc-config created through ROSA CLI (required for HCP)
 	OIDCConfigID = "rosa.oidcConfigID"
+
+	// STSUseDefaultAccountRolesPrefix controls whether to use the default
+	// "Managed-*" account roles or create unique roles based on the cluster
+	// name
+	STSUseDefaultAccountRolesPrefix = "rosa.stsUseDefaultAccountRolesPrefix"
 )
 
 func init() {
@@ -63,4 +68,7 @@ func init() {
 	viper.SetDefault(OIDCConfigID, "")
 	viper.BindEnv(OIDCConfigID, "ROSA_OIDC_CONFIG_ID")
 	config.RegisterSecret(OIDCConfigID, "rosa-oidc-config-id")
+
+	viper.BindEnv(STSUseDefaultAccountRolesPrefix, "ROSA_STS_USE_DEFAULT_ACCOUNT_ROLES_PREFIX")
+	viper.SetDefault(STSUseDefaultAccountRolesPrefix, true)
 }
