@@ -53,7 +53,7 @@ var _ = ginkgo.Describe(routesTestName, ginkgo.Ordered, label.HyperShift, label.
 			ginkgo.Skip("OAuth route is not available on a HyperShift cluster")
 		}
 
-		err := wait.For(func() (bool, error) {
+		err := wait.For(func(ctx context.Context) (bool, error) {
 			deployment := &appsv1.Deployment{}
 			err := client.Get(ctx, name, namespace, deployment)
 			if apierrors.IsNotFound(err) {
@@ -71,7 +71,7 @@ var _ = ginkgo.Describe(routesTestName, ginkgo.Ordered, label.HyperShift, label.
 		})
 		expect.NoError(err, "deployment %s never became available", name)
 
-		err = wait.For(func() (bool, error) {
+		err = wait.For(func(ctx context.Context) (bool, error) {
 			err := client.Get(ctx, name, namespace, &routev1.Route{})
 			if apierrors.IsNotFound(err) {
 				return false, nil

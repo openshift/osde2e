@@ -34,7 +34,7 @@ require (
 	github.com/openshift/custom-domains-operator v0.0.0-20221118201157-bd1052dac818
 	github.com/openshift/managed-upgrade-operator v0.0.0-20230525042514-a9b8c1d2571c
 	github.com/openshift/must-gather-operator v0.1.2-0.20221011152618-7805956e1ded
-	github.com/openshift/osde2e-common v0.0.0-20231001194517-f7307c95ca23
+	github.com/openshift/osde2e-common v0.0.0-20231010150014-8a4449a371e6
 	github.com/openshift/route-monitor-operator v0.0.0-20221118160357-3df1ed1fa1d2
 	github.com/openshift/splunk-forwarder-operator v0.0.0-20230525060151-2dc403aa8ff9
 	github.com/operator-framework/api v0.17.7
@@ -62,14 +62,14 @@ require (
 	google.golang.org/genproto v0.0.0-20230913181813-007df8e322eb
 	gopkg.in/yaml.v3 v3.0.1
 	gotest.tools/v3 v3.5.1
-	k8s.io/api v0.27.4
-	k8s.io/apimachinery v0.27.4
+	k8s.io/api v0.28.2
+	k8s.io/apimachinery v0.28.2
 	k8s.io/client-go v12.0.0+incompatible
 	k8s.io/klog/v2 v2.100.1
 	k8s.io/kubectl v0.27.4
-	k8s.io/utils v0.0.0-20230313181309-38a27ef9d749
+	k8s.io/utils v0.0.0-20230406110748-d93618cff8a2
 	sigs.k8s.io/controller-runtime v0.15.1
-	sigs.k8s.io/e2e-framework v0.2.0
+	sigs.k8s.io/e2e-framework v0.3.0
 )
 
 require (
@@ -113,7 +113,7 @@ require (
 	github.com/golang/glog v1.1.0 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
-	github.com/google/gnostic v0.6.9 // indirect
+	github.com/google/gnostic-models v0.6.8 // indirect
 	github.com/google/go-cmp v0.5.9 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
@@ -196,7 +196,7 @@ require (
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	k8s.io/apiextensions-apiserver v0.27.2 // indirect
-	k8s.io/kube-openapi v0.0.0-20230501164219-8b0f38b5fd1f // indirect
+	k8s.io/kube-openapi v0.0.0-20230717233707-2695361300d9 // indirect
 	sigs.k8s.io/json v0.0.0-20221116044647-bc3834ca7abd // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.2.3 // indirect
 	sigs.k8s.io/yaml v1.3.0 // indirect
@@ -207,5 +207,5 @@ replace (
 	github.com/openshift/api => github.com/openshift/api v0.0.0-20221013123534-96eec44e1979
 
 	// pin the client-go version
-	k8s.io/client-go => k8s.io/client-go v0.27.1
+	k8s.io/client-go => k8s.io/client-go v0.28.2
 )
