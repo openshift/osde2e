@@ -58,7 +58,7 @@ require (
 	golang.org/x/oauth2 v0.13.0
 	golang.org/x/sync v0.4.0
 	golang.org/x/tools v0.14.0
-	google.golang.org/api v0.143.0
+	google.golang.org/api v0.146.0
 	google.golang.org/genproto v0.0.0-20230913181813-007df8e322eb
 	gopkg.in/yaml.v3 v3.0.1
 	gotest.tools/v3 v3.5.1
