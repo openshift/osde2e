@@ -15,7 +15,7 @@ require (
 	github.com/google/go-github/v31 v31.0.0
 	github.com/google/uuid v1.3.1
 	github.com/hashicorp/go-multierror v1.1.1
-	github.com/hashicorp/hc-install v0.6.0
+	github.com/hashicorp/hc-install v0.6.1
 	github.com/hashicorp/terraform-exec v0.19.0
 	github.com/jackc/pgtype v1.14.0
 	github.com/jinzhu/inflection v1.0.0
@@ -79,7 +79,7 @@ require (
 	github.com/Azure/go-ansiterm v0.0.0-20230124172434-306776ec8161 // indirect
 	github.com/Microsoft/go-winio v0.6.1 // indirect
 	github.com/Nvveen/Gotty v0.0.0-20120604004816-cd527374f1e5 // indirect
-	github.com/ProtonMail/go-crypto v0.0.0-20230717121422-5aa5874ade95 // indirect
+	github.com/ProtonMail/go-crypto v0.0.0-20230828082145-3c4c8a2d2371 // indirect
 	github.com/andybalholm/cascadia v1.3.1 // indirect
 	github.com/apparentlymart/go-textseg/v15 v15.0.0 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
