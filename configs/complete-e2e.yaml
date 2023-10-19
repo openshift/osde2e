@@ -9,6 +9,7 @@ tests:
     - quay.io/app-sre/managed-upgrade-operator-test-harness
     - quay.io/app-sre/must-gather-operator-test-harness
     - quay.io/app-sre/ocm-agent-operator-test-harness
+    - quay.io/app-sre/osd-metrics-exporter-test-harness
     - quay.io/app-sre/rbac-permissions-operator-test-harness
     - quay.io/app-sre/splunk-forwarder-operator-test-harness
   suiteTimeout: 900
