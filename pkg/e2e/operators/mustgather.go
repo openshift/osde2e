@@ -27,7 +27,7 @@ func init() {
 	alert.RegisterGinkgoAlert(mustGatherOperatorTest, "SD-SREP", "@sd-sre-aurora-team", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
 }
 
-var _ = ginkgo.Describe(mustGatherOperatorTest, ginkgo.Ordered, label.Operators, func() {
+var _ = ginkgo.Describe(mustGatherOperatorTest, ginkgo.Ordered, label.Operators, label.MigratedHarness, func() {
 	ginkgo.BeforeEach(func() {
 		if viper.GetBool(config.Hypershift) {
 			ginkgo.Skip("Must Gather Operator is not supported on HyperShift")
