@@ -34,7 +34,7 @@ func checkClusterServiceVersion(h *helper.H, namespace, name string) {
 				}
 				return false
 			}, "30m", "15s").Should(BeTrue())
-		}, viper.GetFloat64(config.Tests.PollingTimeout))
+		})
 	})
 }
 
@@ -45,7 +45,7 @@ func checkConfigMapLockfile(h *helper.H, namespace, operatorLockFile string) {
 			// Wait for lockfile to signal operator is active
 			err := pollLockFile(ctx, h, namespace, operatorLockFile)
 			Expect(err).ToNot(HaveOccurred(), "failed fetching the configMap lockfile")
-		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
+		})
 	})
 }
 
@@ -65,7 +65,7 @@ func checkDeployment(h *helper.H, namespace string, name string, defaultDesiredR
 
 			// Desired replica count should match ready replica count
 			Expect(readyReplicas).To(BeNumerically("==", desiredReplicas), "All desired replicas should be ready.")
-		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
+		})
 	})
 }
 
@@ -87,7 +87,7 @@ func checkPod(h *helper.H, namespace string, name string, gracePeriod int, maxAc
 				}
 			}
 			Expect(restartSum).To(BeNumerically("<=", maxAcceptedRestart))
-		}, float64(gracePeriod)+viper.GetFloat64(config.Tests.PollingTimeout))
+		})
 	})
 }
 
@@ -109,7 +109,7 @@ func checkClusterRoles(h *helper.H, clusterRoles []string, matchPrefix bool) {
 				}
 				Expect(found).To(BeTrue(), "failed to find ClusterRole %s\n", clusterRoleToFind)
 			}
-		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
+		})
 	})
 }
 
@@ -131,7 +131,7 @@ func checkClusterRoleBindings(h *helper.H, clusterRoleBindings []string, matchPr
 				}
 				Expect(found).To(BeTrue(), "failed to find ClusterRoleBinding %s\n", clusterRoleBindingToFind)
 			}
-		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
+		})
 	})
 }
 
@@ -143,7 +143,7 @@ func checkRole(h *helper.H, namespace string, roles []string) {
 				_, err := h.Kube().RbacV1().Roles(namespace).Get(ctx, roleName, metav1.GetOptions{})
 				Expect(err).NotTo(HaveOccurred(), "failed to get role %v\n", roleName)
 			}
-		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
+		})
 	})
 }
 
@@ -155,7 +155,7 @@ func checkRoleBindings(h *helper.H, namespace string, roleBindings []string) {
 				err := pollRoleBinding(ctx, h, namespace, roleBindingName)
 				Expect(err).NotTo(HaveOccurred(), "failed to get roleBinding %v\n", roleBindingName)
 			}
-		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
+		})
 	})
 }
 
@@ -173,7 +173,6 @@ func checkUpgrade(h *helper.H, subNamespace string, subName string, packageName 
 }
 
 func checkService(h *helper.H, namespace string, name string, port int) {
-	pollTimeout := viper.GetFloat64(config.Tests.PollingTimeout)
 	ginkgo.Context("service", func() {
 		ginkgo.It(
 			"should exist",
@@ -186,7 +185,6 @@ func checkService(h *helper.H, namespace string, name string, port int) {
 					return true
 				}, "30m", "1m").Should(BeTrue())
 			},
-			pollTimeout,
 		)
 	})
 }

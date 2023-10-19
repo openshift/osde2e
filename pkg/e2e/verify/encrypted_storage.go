@@ -208,7 +208,7 @@ var _ = ginkgo.Describe(encryptedStorageTestName, label.E2E, func() {
 			disk, err := computeService.Disks.Get(clusterInfra.Status.PlatformStatus.GCP.ProjectID, node.Labels["topology.kubernetes.io/zone"], pvc.Spec.VolumeName).Context(ctx).Do()
 			Expect(err).ToNot(HaveOccurred(), "Error retrieving encrypted disk from gcp: ")
 			Expect(strings.Contains(disk.DiskEncryptionKey.KmsKeyName, testKey), "Disk '"+disk.Name+"' not using a customer managed key as expected!")
-		}, float64(encryptedStoragePollTimeout*2))
+		})
 
 		// Cleanup
 		ginkgo.AfterEach(func(ctx context.Context) {
@@ -230,7 +230,7 @@ var _ = ginkgo.Describe(encryptedStorageTestName, label.E2E, func() {
 				err = deleteClusterRole(ctx, h, testInstanceName)
 				Expect(err).ToNot(HaveOccurred())
 			}
-		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
+		})
 	})
 })
 

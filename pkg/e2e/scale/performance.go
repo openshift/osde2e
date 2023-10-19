@@ -47,7 +47,7 @@ var _ = ginkgo.Describe(performanceTestName, func() {
 		stopCh := make(chan struct{})
 		err := r.Run(httpTimeoutInSeconds, stopCh)
 		Expect(err).NotTo(HaveOccurred())
-	}, float64(httpTimeoutInSeconds))
+	})
 
 	// TODO: Enable once the network test is fixed. Currently running into UPERF_SSHD_PORT not defined
 	// networkTimeoutInSeconds := 7200

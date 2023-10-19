@@ -68,7 +68,7 @@ var _ = ginkgo.Describe(conformanceK8sTestName, func() {
 
 		// evaluate results
 		Expect(err).NotTo(HaveOccurred())
-	}, float64(e2eTimeoutInSeconds+30))
+	})
 })
 
 var _ = ginkgo.Describe(conformanceOpenshiftTestName, func() {
@@ -102,5 +102,5 @@ var _ = ginkgo.Describe(conformanceOpenshiftTestName, func() {
 
 		// evaluate results
 		Expect(err).NotTo(HaveOccurred())
-	}, float64(e2eTimeoutInSeconds+30))
+	})
 })

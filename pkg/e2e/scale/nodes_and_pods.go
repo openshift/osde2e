@@ -57,7 +57,7 @@ var _ = ginkgo.Describe(nodesPodsTestName, func() {
 		stopCh := make(chan struct{})
 		err := r.Run(nodeVerticalTimeoutInSeconds, stopCh)
 		Expect(err).NotTo(HaveOccurred())
-	}, float64(nodeVerticalTimeoutInSeconds))
+	})
 
 	podVerticalTimeoutInSeconds := 3600
 	ginkgo.It("should be tested with PodVertical", func(ctx context.Context) {
@@ -73,5 +73,5 @@ var _ = ginkgo.Describe(nodesPodsTestName, func() {
 		stopCh := make(chan struct{})
 		err := r.Run(podVerticalTimeoutInSeconds, stopCh)
 		Expect(err).NotTo(HaveOccurred())
-	}, float64(podVerticalTimeoutInSeconds))
+	})
 })

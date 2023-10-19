@@ -54,7 +54,7 @@ var _ = ginkgo.Describe(pruneJobsTestName, label.Operators, func() {
 				Expect(err).NotTo(HaveOccurred())
 				err = waitJobComplete(ctx, h, namespace, job.Name)
 				Expect(err).NotTo(HaveOccurred())
-			}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
+			})
 		}
 	})
 })

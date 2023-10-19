@@ -83,7 +83,7 @@ func checkSubjectPermissions(h *helper.H, spName string) {
 				err := pollRoleBinding(ctx, h, h.CurrentProject(), roleBindingName)
 				Expect(err).NotTo(HaveOccurred(), "failed to get roleBinding %v\n", roleBindingName)
 			}
-		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
+		})
 	})
 }
 

@@ -111,7 +111,7 @@ var _ = ginkgo.Describe(appBuildsTestName, label.AppBuilds, func() {
 			// write results
 			h.WriteResults(results)
 		}
-	}, float64(e2eTimeoutInSeconds+30))
+	})
 })
 
 func findAppNamespace(ctx context.Context, h *helper.H, appName string) (string, error) {

@@ -79,7 +79,7 @@ var _ = ginkgo.Describe(ocmTestName, label.E2E, func() {
 
 			Expect(err).NotTo(HaveOccurred())
 			Expect(metrics).To(BeTrue())
-		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
+		})
 	})
 	ginkgo.Context("Quay Fallback", func() {
 		h := helper.New()
@@ -161,6 +161,6 @@ var _ = ginkgo.Describe(ocmTestName, label.E2E, func() {
 				return false, nil
 			})
 			Expect(err).NotTo(HaveOccurred())
-		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
+		})
 	})
 })

@@ -63,7 +63,7 @@ var _ = ginkgo.Describe("[Suite: informing] "+TestPrefix, label.Informing, func(
 			Expect(err).ToNot(HaveOccurred(), "failed fetching deployment")
 			Expect(deployment).NotTo(BeNil(), "deployment is nil")
 			Expect(deployment.Status.ReadyReplicas).To(BeNumerically("==", deployment.Status.Replicas))
-		}, pollingDuration.Seconds()+viper.GetFloat64(config.Tests.PollingTimeout))
+		})
 
 		ginkgo.It("should be deleted when removed from publishingstrategy", func(ctx context.Context) {
 			secondaryIngress := secondaryIngress(ctx, h)
@@ -79,7 +79,7 @@ var _ = ginkgo.Describe("[Suite: informing] "+TestPrefix, label.Informing, func(
 			ingressControllerName := strings.Split(secondaryIngress.DNSName, ".")[1]
 			// check that the ingresscontroller app-e2e-apps was deleted
 			ingressControllerExists(ctx, h, ingressControllerName, false)
-		}, pollingDuration.Seconds()+viper.GetFloat64(config.Tests.PollingTimeout))
+		})
 	})
 })
 

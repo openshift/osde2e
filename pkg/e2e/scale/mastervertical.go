@@ -56,5 +56,5 @@ var _ = ginkgo.Describe(masterVerticalTestName, func() {
 		stopCh := make(chan struct{})
 		err = r.Run(masterVerticalTimeoutInSeconds, stopCh)
 		Expect(err).NotTo(HaveOccurred())
-	}, float64(masterVerticalTimeoutInSeconds))
+	})
 })

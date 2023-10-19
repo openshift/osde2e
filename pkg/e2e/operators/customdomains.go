@@ -190,7 +190,7 @@ var _ = ginkgo.Describe(customDomainsOperatorTestName, ginkgo.Ordered, label.Ope
 				return true, err
 			})
 			Expect(err).ToNot(HaveOccurred(), "Time out or error waiting for customdomain endpoint '"+testDomain.Status.Endpoint+"' to resolve.")
-		}, float64(defaultTimeout.Seconds()*3))
+		})
 
 		// Now that the endpoint is stable, make sure it's resolvable and usable.
 		ginkgo.It("Create customdomains that are resolvable by external services", func(ctx context.Context) {
@@ -385,7 +385,7 @@ var _ = ginkgo.Describe(customDomainsOperatorTestName, ginkgo.Ordered, label.Ope
 				return false, nil
 			})
 			Expect(err).ToNot(HaveOccurred(), "Timed out or error requesting hello-openshift service via custom domain (customdomain endpoint: '"+testDomain.Status.Endpoint+"').")
-		}, float64(defaultTimeout.Seconds()*4))
+		})
 
 		// Ensure dedicated-admins can update CustomDomain certificates
 		ginkgo.It("Replace certificates", func(ctx context.Context) {
@@ -441,7 +441,7 @@ var _ = ginkgo.Describe(customDomainsOperatorTestName, ginkgo.Ordered, label.Ope
 			Expect(currentIngressSecret.Data["tls.crt"]).To(Equal(newSecret.Data["tls.crt"]))
 			Expect(currentIngressSecret.Data["tls.key"]).To(Equal(newSecret.Data["tls.key"]))
 			log.Printf("Verified that new secret is being used as expected")
-		}, float64(defaultTimeout.Seconds()*2))
+		})
 
 		// AfterEach deletes resources created by BeforeEach
 		ginkgo.AfterEach(func(ctx context.Context) {
@@ -457,7 +457,7 @@ var _ = ginkgo.Describe(customDomainsOperatorTestName, ginkgo.Ordered, label.Ope
 			Expect(err).ToNot(HaveOccurred())
 
 			h.Impersonate(rest.ImpersonationConfig{})
-		}, float64(defaultTimeout.Seconds()))
+		})
 	})
 })
 

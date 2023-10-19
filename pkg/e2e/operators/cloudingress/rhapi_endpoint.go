@@ -131,7 +131,7 @@ func testCIDRBlockUpdates(h *helper.H) {
 			// If they are then the APIScheme update also updated the service.
 			res := reflect.DeepEqual(CIDRBlock, rhAPIService.Spec.LoadBalancerSourceRanges)
 			Expect(res).Should(BeTrue())
-		}, viper.GetFloat64(config.Tests.PollingTimeout))
+		})
 	})
 }
 
