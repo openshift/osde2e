@@ -36,7 +36,6 @@ var _ = ginkgo.Describe(clusterStateTestName, label.E2E, func() {
 	defer ginkgo.GinkgoRecover()
 	h := helper.New()
 
-	alertsTimeoutInSeconds := 900
 	ginkgo.It("should have no alerts", func(ctx context.Context) {
 		// Set up prometheus client
 		h.SetServiceAccount(ctx, "system:serviceaccount:%s:cluster-admin")
@@ -76,7 +75,7 @@ var _ = ginkgo.Describe(clusterStateTestName, label.E2E, func() {
 		Expect(err).NotTo(HaveOccurred(), "error retrieving cluster provider")
 
 		Expect(!findCriticalAlerts(queryJSON, viper.GetString(config.Provider), clusterProvider.Environment())).Should(BeTrue(), "never able to find zero alerts")
-	}, float64(alertsTimeoutInSeconds+30))
+	})
 })
 
 func findCriticalAlerts(results []result, provider, environment string) bool {

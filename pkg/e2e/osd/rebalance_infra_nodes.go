@@ -10,8 +10,6 @@ import (
 	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/openshift/osde2e/pkg/common/alert"
-	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
-	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/label"
 	batchv1 "k8s.io/api/batch/v1"
@@ -168,7 +166,7 @@ var _ = ginkgo.Describe(rebalanceInfraNodesTestName, label.Informing, func() {
 				podsNumber = checkPodsBalance(ctx, h, splunkNamespace, "name", "splunk-heavy-forwarder", node.Name)
 				Expect(podsNumber).To(BeNumerically("<=", 1))
 			}
-		}, podSucceededTimeout.Seconds()+viper.GetFloat64(config.Tests.PollingTimeout))
+		})
 	})
 })
 

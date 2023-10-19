@@ -7,8 +7,6 @@ import (
 	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/openshift/osde2e/pkg/common/alert"
-	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
-	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/label"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -41,6 +39,6 @@ var _ = ginkgo.Describe(olmTestName, label.Informing, func() {
 					Expect(sub.Status.InstalledCSV).NotTo(BeEmpty(), fmt.Sprintf("subscription %s installedCSV is empty", sub.Name))
 				}
 			}
-		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
+		})
 	})
 })
