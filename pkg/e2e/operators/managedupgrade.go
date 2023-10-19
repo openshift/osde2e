@@ -32,7 +32,7 @@ func init() {
 	alert.RegisterGinkgoAlert(managedUpgradeOperatorTestName, "SD-SREP", "@managed-upgrade-operator", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
 }
 
-var _ = ginkgo.Describe(managedUpgradeOperatorTestName, ginkgo.Ordered, label.Operators, func() {
+var _ = ginkgo.Describe(managedUpgradeOperatorTestName, ginkgo.Ordered, label.Operators, label.MigratedHarness, func() {
 	ginkgo.BeforeEach(func() {
 		if viper.GetBool(config.Hypershift) {
 			ginkgo.Skip("Managed Upgrade Operator is not supported on HyperShift")
