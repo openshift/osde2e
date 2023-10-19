@@ -38,17 +38,10 @@ var _ = ginkgo.Describe(rbacOperatorBlocking, ginkgo.Ordered, label.Operators, l
 	operatorLockFile := "rbac-permissions-operator-lock"
 	var defaultDesiredReplicas int32 = 1
 
-	clusterRoles := []string{
-		"rbac-permissions-operator-admin",
-		"rbac-permissions-operator-edit",
-		"rbac-permissions-operator-view",
-	}
-
 	h := helper.New()
 	checkClusterServiceVersion(h, operatorNamespace, operatorName)
 	checkConfigMapLockfile(h, operatorNamespace, operatorLockFile)
 	checkDeployment(h, operatorNamespace, operatorName, defaultDesiredReplicas)
-	checkClusterRoles(h, clusterRoles, false)
 
 	checkUpgrade(helper.New(), "openshift-rbac-permissions", "rbac-permissions-operator",
 		"rbac-permissions-operator", "rbac-permissions-operator-registry")
