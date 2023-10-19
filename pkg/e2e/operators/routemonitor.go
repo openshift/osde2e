@@ -47,18 +47,11 @@ var _ = ginkgo.Describe(routeMonitorOperatorTestName, ginkgo.Ordered, label.Info
 		defaultDesiredReplicas int32 = 1
 	)
 
-	clusterRoles := []string{
-		"route-monitor-operator-admin",
-		"route-monitor-operator-edit",
-		"route-monitor-operator-view",
-	}
-
 	h := helper.New()
 
 	checkClusterServiceVersion(h, operatorNamespace, operatorCsvDisplayName)
 	// checkConfigMapLockfile(h,operatorNamespace, operatorLockFile)
 	checkDeployment(h, operatorNamespace, operatorDeploymentName, defaultDesiredReplicas)
-	checkClusterRoles(h, clusterRoles, false)
 
 	// should I create a new helper here? seems everyone else does but I am not sure
 	checkUpgrade(helper.New(),

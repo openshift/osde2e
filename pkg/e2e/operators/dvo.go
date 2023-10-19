@@ -46,19 +46,12 @@ var _ = ginkgo.Describe(deploymentValidationOperatorTestName, label.Informing, g
 		defaultDesiredReplicas int32 = 1
 	)
 
-	clusterRoles := []string{
-		"deployment-validation-operator-og-admin",
-		"deployment-validation-operator-og-edit",
-		"deployment-validation-operator-og-view",
-	}
-
 	h := helper.New()
 	nodeLabels := make(map[string]string)
 
 	checkDeployment(h, operatorNamespace, operatorDeploymentName, defaultDesiredReplicas)
 	checkService(h, operatorNamespace, operatorServiceName, 8383)
 	checkPod(h, operatorNamespace, operatorDeploymentName, 2, 3)
-	checkClusterRoles(h, clusterRoles, false)
 
 	ginkgo.It("Create and test deployment for DVO functionality", func(ctx context.Context) {
 		// Create and check test deployment

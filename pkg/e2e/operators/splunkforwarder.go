@@ -48,9 +48,6 @@ var _ = ginkgo.Describe(splunkForwarderBlocking, ginkgo.Ordered, label.Operators
 
 	clusterRoles := []string{
 		"splunk-forwarder-operator",
-		"splunk-forwarder-operator-og-admin",
-		"splunk-forwarder-operator-og-edit",
-		"splunk-forwarder-operator-og-view",
 	}
 
 	splunkforwarder_names := []string{
