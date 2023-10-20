@@ -35,7 +35,7 @@ var _ = ginkgo.Describe("[Suite: operators] "+TestPrefix, label.Operators, func(
 			deployment, err := operators.PollDeployment(ctx, h, OperatorNamespace, OperatorName)
 			Expect(err).ToNot(HaveOccurred(), "failed fetching deployment")
 			Expect(deployment).NotTo(BeNil(), "deployment is nil")
-		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
+		})
 
 		ginkgo.It("should have all desired replicas ready", func(ctx context.Context) {
 			deployment, err := operators.PollDeployment(ctx, h, OperatorNamespace, OperatorName)
@@ -49,6 +49,6 @@ var _ = ginkgo.Describe("[Suite: operators] "+TestPrefix, label.Operators, func(
 
 			// Desired replica count should match ready replica count
 			Expect(readyReplicas).To(BeNumerically("==", desiredReplicas), "All desired replicas should be ready.")
-		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
+		})
 	})
 })

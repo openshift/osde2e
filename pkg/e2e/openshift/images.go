@@ -53,7 +53,7 @@ var _ = ginkgo.Describe(imageRegistryTestName, func() {
 
 		// evaluate results
 		Expect(err).NotTo(HaveOccurred())
-	}, float64(e2eTimeoutInSeconds+30))
+	})
 })
 
 var _ = ginkgo.Describe(imageEcosystemTestName, func() {
@@ -86,5 +86,5 @@ var _ = ginkgo.Describe(imageEcosystemTestName, func() {
 
 		// evaluate results
 		Expect(err).NotTo(HaveOccurred())
-	}, float64(e2eTimeoutInSeconds+30))
+	})
 })

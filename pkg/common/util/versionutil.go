@@ -20,7 +20,7 @@ type ClusterVersionProvider interface {
 
 // OnSupportedVersionIt runs a ginkgo It() if and only if the cluster version meets the provided constraint.
 // The cluster version is looked up using the provided helper.H.
-func OnSupportedVersionIt(constraints *semver.Constraints, helper ClusterVersionProvider, description string, f func(context.Context), timeout float64) {
+func OnSupportedVersionIt(constraints *semver.Constraints, helper ClusterVersionProvider, description string, f func(context.Context)) {
 	getVersion := func(ctx context.Context) *semver.Version {
 		ver, err := helper.GetClusterVersion(ctx)
 		Expect(err).ToNot(HaveOccurred())
@@ -32,7 +32,7 @@ func OnSupportedVersionIt(constraints *semver.Constraints, helper ClusterVersion
 			ginkgo.Skip("unsupported version")
 		}
 		f(ctx)
-	}, timeout)
+	})
 }
 
 func init() {

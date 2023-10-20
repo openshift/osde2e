@@ -9,8 +9,6 @@ import (
 	projectv1 "github.com/openshift/api/project/v1"
 	userv1 "github.com/openshift/api/user/v1"
 	"github.com/openshift/osde2e/pkg/common/alert"
-	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
-	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/label"
 	operatorv1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
@@ -61,7 +59,7 @@ var _ = ginkgo.Describe(dedicatedAdminTestName, label.Informing, func() {
 			}
 			_, err := h.Project().ProjectV1().ProjectRequests().Create(ctx, proj, metav1.CreateOptions{})
 			Expect(err).NotTo(HaveOccurred())
-		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
+		})
 
 		// regular dedicated-admin user can create 'admin' rolebinding
 		ginkgo.It("ded-admin user can create 'admin' rolebinding", func(ctx context.Context) {
@@ -88,7 +86,7 @@ var _ = ginkgo.Describe(dedicatedAdminTestName, label.Informing, func() {
 			dummyKindName := "admin"
 			_, err := createRolebinding(ctx, dummyNs, user, dummyKind, dummyKindName, h)
 			Expect(err).NotTo(HaveOccurred())
-		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
+		})
 
 		// regular dedicated-admin user can create 'edit' rolebinding
 		ginkgo.It("ded-admin user can create edit rolebinding", func(ctx context.Context) {
@@ -115,7 +113,7 @@ var _ = ginkgo.Describe(dedicatedAdminTestName, label.Informing, func() {
 			dummyKindName := "edit"
 			_, err := createRolebinding(ctx, dummyNs, user, dummyKind, dummyKindName, h)
 			Expect(err).NotTo(HaveOccurred())
-		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
+		})
 
 		// dedicated-admin SA can create 'edit' rolebinding
 		ginkgo.It("ded-admin SA can create 'edit' rolebinding", func(ctx context.Context) {
@@ -142,7 +140,7 @@ var _ = ginkgo.Describe(dedicatedAdminTestName, label.Informing, func() {
 			dummyKindName := "edit"
 			_, err := createRolebinding(ctx, dummyNs, user, dummyKind, dummyKindName, h)
 			Expect(err).NotTo(HaveOccurred())
-		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
+		})
 
 		// dedicated-admin SA can create 'admin' rolebinding
 		ginkgo.It("ded-admin SA can create 'admin' rolebinding", func(ctx context.Context) {
@@ -169,7 +167,7 @@ var _ = ginkgo.Describe(dedicatedAdminTestName, label.Informing, func() {
 			dummyKindName := "admin"
 			_, err := createRolebinding(ctx, dummyNs, user, dummyKind, dummyKindName, h)
 			Expect(err).NotTo(HaveOccurred())
-		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
+		})
 
 		// dedicated-admin SA can delete project
 		ginkgo.It("ded-admin SA can delete project", func(ctx context.Context) {
@@ -192,7 +190,7 @@ var _ = ginkgo.Describe(dedicatedAdminTestName, label.Informing, func() {
 			}
 			err := h.Project().ProjectV1().Projects().Delete(ctx, proj.Name, metav1.DeleteOptions{})
 			Expect(err).NotTo(HaveOccurred())
-		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
+		})
 
 		// dedicated-admin can manage secrets
 		// in selected namespaces
@@ -210,7 +208,7 @@ var _ = ginkgo.Describe(dedicatedAdminTestName, label.Informing, func() {
 
 			err := manageSecrets(ctx, namespaceList, h)
 			Expect(err).NotTo(HaveOccurred())
-		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
+		})
 
 		// dedicated-admin can manage subscriptions
 		// in selected namespaces
@@ -228,7 +226,7 @@ var _ = ginkgo.Describe(dedicatedAdminTestName, label.Informing, func() {
 
 			err := manageSubscriptions(ctx, namespaceList, h)
 			Expect(err).NotTo(HaveOccurred())
-		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
+		})
 
 		ginkgo.It("dedicated-admin user can patch consoles.operator.openshift.io CR", func(ctx context.Context) {
 			// Impersonate ded-admin
@@ -257,7 +255,7 @@ var _ = ginkgo.Describe(dedicatedAdminTestName, label.Informing, func() {
 				Resource: "consoles",
 			}).Patch(ctx, "cluster", types.MergePatchType, patchEmpty, metav1.PatchOptions{})
 			Expect(err).NotTo(HaveOccurred())
-		}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
+		})
 	})
 })
 

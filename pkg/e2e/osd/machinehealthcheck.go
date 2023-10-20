@@ -71,7 +71,7 @@ var _ = ginkgo.Describe(machineHealthTestName, label.E2E, func() {
 				Timeout: metav1.Duration{Duration: 480 * time.Second},
 			},
 		))
-	}, float64(500))
+	})
 
 	ginkgo.It("worker MHC should exist", func(ctx context.Context) {
 		mhc, err := h.Machine().
@@ -111,7 +111,7 @@ var _ = ginkgo.Describe(machineHealthTestName, label.E2E, func() {
 				Timeout: metav1.Duration{Duration: 480 * time.Second},
 			},
 		))
-	}, float64(500))
+	})
 
 	ginkgo.It("metal worker MHC should exist", func(ctx context.Context) {
 		mhc, err := h.Machine().
@@ -151,5 +151,5 @@ var _ = ginkgo.Describe(machineHealthTestName, label.E2E, func() {
 				Timeout: metav1.Duration{Duration: 15 * time.Minute},
 			},
 		))
-	}, float64(500))
+	})
 })

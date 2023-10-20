@@ -83,7 +83,7 @@ var _ = ginkgo.Describe(splunkForwarderBlocking, ginkgo.Ordered, label.Operators
 			sf := makeMinimalSplunkforwarder("SplunkForwarder", "splunkforwarder.managed.openshift.io/v1alpha1", name)
 			err := addSplunkforwarder(ctx, sf, "openshift-splunk-forwarder-operator", h)
 			Expect(err).NotTo(HaveOccurred())
-		}, float64(defaultTimeout))
+		})
 	})
 })
 
@@ -140,7 +140,7 @@ var _ = ginkgo.Describe(splunkForwarderInforming, ginkgo.Ordered, label.Operator
 			sf := makeMinimalSplunkforwarder("SplunkForwarder", "splunkforwarder.managed.openshift.io/v1alpha1", name)
 			err := dedicatedAaddSplunkforwarder(ctx, sf, "openshift-splunk-forwarder-operator", h)
 			Expect(apierrors.IsForbidden(err)).To(BeTrue())
-		}, float64(defaultTimeout))
+		})
 	})
 })
 

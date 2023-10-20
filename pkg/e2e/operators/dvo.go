@@ -73,7 +73,7 @@ var _ = ginkgo.Describe(deploymentValidationOperatorTestName, label.Informing, g
 		ds := makeDeployment("dvo-test-case", h.GetNamespacedServiceAccount(), nodeLabels)
 		_, err := h.Kube().AppsV1().Deployments(h.CurrentProject()).Create(ctx, &ds, metav1.CreateOptions{})
 		Expect(err).NotTo(HaveOccurred())
-	}, float64(viper.GetFloat64(config.Tests.PollingTimeout)))
+	})
 
 	// Check the logs of DVO to assert the right test is flagging for test deployment
 	checkPodLogs(h, operatorNamespace, testNamespace, operatorDeploymentName, operatorName, dvoString, 300)
@@ -154,7 +154,7 @@ func checkPodLogs(h *helper.H, namespace string, testNamespace string, name stri
 					Expect(dvoCheck).NotTo(HaveOccurred())
 				}
 			}
-		}, float64(gracePeriod)+viper.GetFloat64(config.Tests.PollingTimeout))
+		})
 	})
 }
 
