@@ -41,17 +41,11 @@ var (
 )
 
 // RunUpgrade uses the OpenShift extended suite to upgrade a cluster to the image provided in cfg.
-func RunUpgrade() error {
+func RunUpgrade(h *helper.H) error {
 	var done bool
 	var msg string
 	var err error
 	var upgradeStarted time.Time
-
-	// setup helper
-	h, err := helper.NewOutsideGinkgo()
-	if h == nil {
-		return fmt.Errorf("unable to generate helper outside ginkgo: %v", err)
-	}
 
 	image := viper.GetString(config.Upgrade.Image)
 	if image != "" {

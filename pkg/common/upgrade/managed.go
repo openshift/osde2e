@@ -587,7 +587,7 @@ func scheduleOCMUpgrade() error {
 
 	err = upgradeManager.clusterProvider.Upgrade(upgradeManager.clusterID, upgradeManager.upgradeVersion.String(), t)
 	if err != nil {
-		return fmt.Errorf("error initiating upgrade from provider: %v", err)
+		return fmt.Errorf("error initiating upgrade from provider: %w", err)
 	}
 
 	return nil
