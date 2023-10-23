@@ -1,16 +1,13 @@
 reviewers:
-  - cblecker
   - dustman9000
   - mrsantamaria
-  - aweiteka
   - ritmun
   - jbpratt
   - yiqinzhang
   - gaikanomer9
 approvers:
-  - cblecker
+  - mmazur
   - dustman9000
   - mrsantamaria
-  - aweiteka
   - ritmun
   - jbpratt
