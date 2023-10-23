@@ -62,16 +62,12 @@ var _ = ginkgo.Describe(deploymentValidationOperatorTestName, label.Informing, g
 
 	ginkgo.It("Create and test deployment for DVO functionality", func(ctx context.Context) {
 		// Create and check test deployment
-		h.CreateProject(ctx, "dvo-test")
-		h.SetProjectByName(ctx, "osde2e-dvo-test")
-
-		// Set it to a wildcard dedicated-admin
-		h.CreateServiceAccounts(ctx)
-		h.SetServiceAccount(ctx, "system:serviceaccount:osde2e-dvo-test:cluster-admin")
+		_, err := h.SetupNewProject(ctx, "dvo-test")
+		Expect(err).NotTo(HaveOccurred(), "error creating project")
 
 		// Test creating a basic deployment
-		ds := makeDeployment("dvo-test-case", h.GetNamespacedServiceAccount(), nodeLabels)
-		_, err := h.Kube().AppsV1().Deployments(h.CurrentProject()).Create(ctx, &ds, metav1.CreateOptions{})
+		ds := makeDeployment("dvo-test-case", "cluster-admin", nodeLabels)
+		_, err = h.Kube().AppsV1().Deployments("osde2e-dvo-test").Create(ctx, &ds, metav1.CreateOptions{})
 		Expect(err).NotTo(HaveOccurred())
 	})
 

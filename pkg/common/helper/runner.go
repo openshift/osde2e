@@ -25,6 +25,18 @@ func (h *H) RunnerWithNoCommand() *runner.Runner {
 	return r
 }
 
+// SetRunnerProject sets namespace for runner pod
+func (h *H) SetRunnerProject(project string, r *runner.Runner) *runner.Runner {
+	r.Namespace = project
+	return r
+}
+
+// SetRunnerCommand sets given command to a pod runner
+func (h *H) SetRunnerCommand(cmd string, r *runner.Runner) *runner.Runner {
+	r.Cmd = cmd
+	return r
+}
+
 // Runner creates an extended test suite runner and configure RBAC for it and runs cmd in it.
 func (h *H) Runner(cmd string) *runner.Runner {
 	r := h.RunnerWithNoCommand()

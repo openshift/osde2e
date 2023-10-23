@@ -8,6 +8,7 @@ import (
 
 	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	projectv1 "github.com/openshift/api/project/v1"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/helper"
@@ -18,13 +19,16 @@ import (
 )
 
 var (
-	serviceAccountDir = "/var/run/secrets/kubernetes.io/serviceaccount"
-	serviceAccount    = "system:serviceaccount:%s:cluster-admin"
-	timeoutInSeconds  int
-	h                 *helper.H
-	HarnessEntries    []ginkgo.TableEntry
-	r                 *runner.Runner
-	suffix            string
+	serviceAccountDir            = "/var/run/secrets/kubernetes.io/serviceaccount"
+	serviceAccount               = "system:serviceaccount:%s:cluster-admin"
+	serviceAccountNamespacedName = "cluster-admin"
+	timeoutInSeconds             int
+	h                            *helper.H
+	HarnessEntries               []ginkgo.TableEntry
+	r                            *runner.Runner
+	suffix                       string
+	subProject                   *projectv1.Project
+	err                          error
 )
 
 var _ = ginkgo.Describe("Test harness", ginkgo.Ordered, ginkgo.ContinueOnFailure, label.TestHarness, func() {
@@ -39,17 +43,14 @@ var _ = ginkgo.Describe("Test harness", ginkgo.Ordered, ginkgo.ContinueOnFailure
 		HarnessEntries = append(HarnessEntries, ginkgo.Entry("should run "+harness+" successfully", harness))
 	}
 
+	ginkgo.BeforeAll(func(ctx context.Context) {
+		h = helper.New()
+	})
 	ginkgo.BeforeEach(func(ctx context.Context) {
 		ginkgo.By("Setting up new namespace")
-		viper.Set(config.Project, "")
-		h = helper.New()
-		h.SetServiceAccount(ctx, serviceAccount)
-		suffix = util.RandomStr(5)
-	})
-
-	ginkgo.AfterEach(func(ctx context.Context) {
-		ginkgo.By("Deleting test namespace")
-		h.Cleanup(ctx)
+		suffix = "h-" + util.RandomStr(5)
+		subProject, err = h.SetupNewProject(ctx, suffix)
+		Expect(err).NotTo(HaveOccurred(), "Could not set up harness namespace")
 	})
 
 	ginkgo.DescribeTable("execution",
@@ -61,11 +62,13 @@ var _ = ginkgo.Describe("Test harness", ginkgo.Ordered, ginkgo.ContinueOnFailure
 
 			// Create templated runner pod
 			ginkgo.By("Creating test runner pod")
+			h.SetServiceAccount(ctx, serviceAccount)
 			r = h.RunnerWithNoCommand()
+			h.SetRunnerProject(subProject.Name, r)
 			latestImageStream, err := r.GetLatestImageStreamTag()
 			Expect(err).NotTo(HaveOccurred(), "Could not get latest imagestream tag")
-			r = h.Runner(getCommandString(timeoutInSeconds, latestImageStream, harness, suffix, jobName, serviceAccountDir))
-
+			cmd := getCommandString(timeoutInSeconds, latestImageStream, harness, suffix, jobName, serviceAccountDir)
+			r = h.SetRunnerCommand(cmd, r)
 			// TODO: Refactor the logic to determine whether the pod has finished or not
 			//	Would be nice to see the test suite handle exiting and osde2e can pick up
 			//	status of pod to decide pass/fail. Would then remove need to set individual
@@ -85,8 +88,12 @@ var _ = ginkgo.Describe("Test harness", ginkgo.Ordered, ginkgo.ContinueOnFailure
 		},
 		HarnessEntries)
 
-	ginkgo.AfterAll(func(ctx context.Context) {
-		viper.Set(config.Project, "")
+	ginkgo.AfterEach(func(ctx context.Context) {
+		ginkgo.By("Deleting harness namespace")
+		err := h.DeleteProject(ctx, subProject.Name)
+		if err != nil {
+			ginkgo.GinkgoLogr.Error(err, fmt.Sprintf("error deleting project %q", subProject.Name))
+		}
 	})
 })
 
@@ -116,7 +123,7 @@ func getCommandString(timeout int, latestImageStream string, harness string, suf
 		Timeout:              timeout,
 		Image:                harness,
 		OutputDir:            runner.DefaultRunner.OutputDir,
-		ServiceAccount:       h.GetNamespacedServiceAccount(),
+		ServiceAccount:       serviceAccountNamespacedName,
 		PushResultsContainer: latestImageStream,
 		Suffix:               suffix,
 		Server:               "https://kubernetes.default",
