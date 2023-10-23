@@ -448,16 +448,22 @@ func runGinkgoTests() (int, error) {
 	// upgrade cluster if requested
 	if upgradeCluster {
 		if len(viper.GetString(config.Kubeconfig.Contents)) > 0 {
+			// setup helper
+			h, err := helper.NewOutsideGinkgo()
+			if h == nil || err != nil {
+				return Failure, fmt.Errorf("unable to generate helper outside ginkgo: %v", err)
+			}
+
 			// create route monitors for the upgrade
 			var routeMonitorChan chan struct{}
 			closeMonitorChan := make(chan struct{})
 			if viper.GetBool(config.Upgrade.MonitorRoutesDuringUpgrade) && !suiteConfig.DryRun {
-				routeMonitorChan = setupRouteMonitors(context.TODO(), closeMonitorChan)
+				routeMonitorChan = setupRouteMonitors(context.TODO(), h, closeMonitorChan)
 				log.Println("Route Monitors created.")
 			}
 
 			// run the upgrade
-			if err = upgrade.RunUpgrade(); err != nil {
+			if err = upgrade.RunUpgrade(h); err != nil {
 				events.RecordEvent(events.UpgradeFailed)
 				return Failure, fmt.Errorf("error performing upgrade: %v", err)
 			}
@@ -1047,11 +1053,11 @@ func uploadFileToMetricsBucket(filename string) error {
 
 // setupRouteMonitors initializes performance+availability monitoring of cluster routes,
 // returning a channel which can be used to terminate the monitoring.
-func setupRouteMonitors(ctx context.Context, closeChannel chan struct{}) chan struct{} {
+func setupRouteMonitors(ctx context.Context, h *helper.H, closeChannel chan struct{}) chan struct{} {
 	routeMonitorChan := make(chan struct{})
 	go func() {
 		// Set up the route monitors
-		routeMonitors, err := routemonitors.Create(ctx)
+		routeMonitors, err := routemonitors.Create(ctx, h)
 		if err != nil {
 			log.Printf("Error creating route monitors: %v\n", err)
 			close(closeChannel)

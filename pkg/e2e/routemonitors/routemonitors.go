@@ -50,13 +50,7 @@ type RouteMonData struct {
 }
 
 // Detects the available routes in the cluster and initializes monitors for their availability
-func Create(ctx context.Context) (*RouteMonitors, error) {
-	h, err := helper.NewOutsideGinkgo()
-
-	if h == nil {
-		return nil, fmt.Errorf("unable to generate helper outside ginkgo: %v", err)
-	}
-
+func Create(ctx context.Context, h *helper.H) (*RouteMonitors, error) {
 	// record all targeters created in a map, accessible via a key which is their URL
 	targeters := make(map[string]vegeta.Targeter, 0)
 
