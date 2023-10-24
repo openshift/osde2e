@@ -28,7 +28,8 @@ require (
 	github.com/onsi/gomega v1.28.0
 	github.com/openshift-online/ocm-sdk-go v0.1.373
 	github.com/openshift/api v3.9.1-0.20190924102528-32369d4db2ad+incompatible
-	github.com/openshift/client-go v0.0.0-20220603133046-984ee5ebedcf
+	// go get -u github.com/openshift/client-go@release-4.14
+	github.com/openshift/client-go v0.0.0-20230807132528-be5346fb33cb
 	github.com/openshift/cloud-credential-operator v0.0.0-20230512001141-38e7f96bf730
 	github.com/openshift/cloud-ingress-operator v0.0.0-20230404185246-bd6aaf9bfd8d
 	github.com/openshift/custom-domains-operator v0.0.0-20221118201157-bd1052dac818
@@ -66,8 +67,8 @@ require (
 	k8s.io/apimachinery v0.28.3
 	k8s.io/client-go v12.0.0+incompatible
 	k8s.io/klog/v2 v2.100.1
-	k8s.io/kubectl v0.27.4
-	k8s.io/utils v0.0.0-20230406110748-d93618cff8a2
+	k8s.io/kubectl v0.28.3
+	k8s.io/utils v0.0.0-20230505201702-9f6742963106
 	sigs.k8s.io/controller-runtime v0.16.2
 	sigs.k8s.io/e2e-framework v0.3.0
 )
@@ -204,8 +205,9 @@ require (
 
 replace (
 	// pin the openshift-api version
-	github.com/openshift/api => github.com/openshift/api v0.0.0-20221013123534-96eec44e1979
+	// go get -u github.com/openshift/api@release-4.14
+	github.com/openshift/api => github.com/openshift/api v0.0.0-20231012190404-7b36cb38c7d0
 
 	// pin the client-go version
-	k8s.io/client-go => k8s.io/client-go v0.28.2
+	k8s.io/client-go => k8s.io/client-go v0.28.3
 )
