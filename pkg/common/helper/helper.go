@@ -111,35 +111,13 @@ func (h *H) Setup() error {
 
 	project := viper.GetString(config.Project)
 	if project == "" {
-		// setup project and dedicated-admin account to run tests
-		// the service account is provisioned but only used when specified
-		// also generates a unique name for the osde2e test run project
 		suffix := util.RandomStr(5)
-		project = "osde2e-" + suffix
-
-		viper.Set(config.Project, project)
-		ginkgo.GinkgoLogr.Info("Setup called for %s", project)
-
-		h.proj, err = h.createProject(ctx, suffix)
+		h.proj, err = h.SetupNewProject(ctx, suffix)
 		if h.OutsideGinkgo && err != nil {
-			return fmt.Errorf("failed to create project: %s", err.Error())
+			return fmt.Errorf("failed to set up project: %s", err.Error())
 		}
-		Expect(err).ShouldNot(HaveOccurred(), "failed to create project")
-		Expect(h.proj).ShouldNot(BeNil())
-
-		h.CreateServiceAccounts(ctx)
-
-		// Quick fix for Hypershift pipelines failing. Currently the RBAC is not being created in the projects.
-		if !viper.GetBool(config.Hypershift) {
-			err = wait.PollImmediate(1*time.Second, 1*time.Minute, func() (bool, error) {
-				_, err = h.Kube().RbacV1().RoleBindings(h.CurrentProject()).Get(ctx, "dedicated-admins-project-dedicated-admins", metav1.GetOptions{})
-				if apierrors.IsNotFound(err) {
-					return false, nil
-				}
-				return true, err
-			})
-			Expect(err).NotTo(HaveOccurred())
-		}
+		Expect(err).ShouldNot(HaveOccurred(), "failed to set up project")
+		viper.Set(config.Project, h.proj.Name)
 	} else {
 		_ = wait.PollImmediate(5*time.Second, 30*time.Second, func() (bool, error) {
 			h.proj, err = h.Project().ProjectV1().Projects().Get(ctx, project, metav1.GetOptions{})
@@ -160,6 +138,38 @@ func (h *H) Setup() error {
 	h.SetServiceAccount(ctx, viper.GetString(config.Tests.ServiceAccount))
 
 	return nil
+}
+
+// SetupNewProject creates new project prefixed with osde2e-. Also creates essential serviceaccounts and rolebindings in the project.
+func (h *H) SetupNewProject(ctx context.Context, suffix string) (*projectv1.Project, error) {
+	var err error
+	// setup project and dedicated-admin account to run tests
+	// the service account is provisioned but only used when specified
+	var v1project *projectv1.Project
+	ginkgo.GinkgoLogr.Info("Setup called for %s", "osde2e-"+suffix)
+	v1project, err = h.createProject(ctx, suffix)
+	if h.OutsideGinkgo && err != nil {
+		return nil, fmt.Errorf("failed to create project: %s", err.Error())
+	}
+	Expect(err).ShouldNot(HaveOccurred(), "failed to create project")
+	Expect(v1project).ShouldNot(BeNil())
+
+	h.CreateServiceAccountsInProject(ctx, v1project)
+
+	// Quick fix for Hypershift pipelines failing. Currently the RBAC is not being created in the projects.
+	if !viper.GetBool(config.Hypershift) {
+		err = wait.PollImmediate(1*time.Second, 1*time.Minute, func() (bool, error) {
+			_, err = h.Kube().RbacV1().RoleBindings(v1project.Name).Get(ctx, "dedicated-admins-project-dedicated-admins", metav1.GetOptions{})
+			if apierrors.IsNotFound(err) {
+				return false, nil
+			}
+			return true, err
+		})
+		if h.OutsideGinkgo && err != nil {
+			return nil, fmt.Errorf("failed to create role bindings: %s", err.Error())
+		}
+	}
+	return v1project, nil
 }
 
 // Cleanup deletes a Project after tests have been ran.
@@ -192,62 +202,64 @@ func (h *H) Cleanup(ctx context.Context) {
 	h.proj = nil
 }
 
-// CreateServiceAccounts creates a set of serviceaccounts for test usage
-func (h *H) CreateServiceAccounts(ctx context.Context) *H {
-	Expect(h.proj).NotTo(BeNil(), "no project is currently set")
-
+// CreateServiceAccountsInProject creates a set of serviceaccounts for test usage in given namespace
+func (h *H) CreateServiceAccountsInProject(ctx context.Context, project *projectv1.Project) *H {
 	// Create project-specific dedicated-admin account
-	sa, err := h.Kube().CoreV1().ServiceAccounts(h.CurrentProject()).Create(ctx, &corev1.ServiceAccount{
+	err := h.client.Create(ctx, &corev1.ServiceAccount{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: "dedicated-admin-project",
+			Name:      "dedicated-admin-project",
+			Namespace: project.Name,
 		},
-	}, metav1.CreateOptions{})
-	Expect(err).NotTo(HaveOccurred())
-	h.CreateClusterRoleBinding(ctx, sa, "dedicated-admins-project")
-	ginkgo.GinkgoLogr.Info(fmt.Sprintf("Created SA: %v", sa.GetName()))
+	})
+	Expect(err).NotTo(HaveOccurred(), "failed to create SA: dedicated-admin-project")
+	h.CreateClusterRoleBindingInProject(ctx, "dedicated-admin-project", "dedicated-admins-project", project)
+	ginkgo.GinkgoLogr.Info(fmt.Sprintf("Created SA: %v", "dedicated-admin-project"))
 
 	// Create cluster dedicated-admin account
-	sa, err = h.Kube().CoreV1().ServiceAccounts(h.CurrentProject()).Create(ctx, &corev1.ServiceAccount{
+	err = h.client.Create(ctx, &corev1.ServiceAccount{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: "dedicated-admin-cluster",
+			Name:      "dedicated-admin-cluster",
+			Namespace: project.Name,
 		},
-	}, metav1.CreateOptions{})
-	Expect(err).NotTo(HaveOccurred())
-	h.CreateClusterRoleBinding(ctx, sa, "dedicated-admins-cluster")
-	ginkgo.GinkgoLogr.Info(fmt.Sprintf("Created SA: %v", sa.GetName()))
+	})
+	Expect(err).NotTo(HaveOccurred(), "failed to create SA: dedicated-admin-cluster")
+	h.CreateClusterRoleBindingInProject(ctx, "dedicated-admin-cluster", "dedicated-admins-cluster", project)
+	ginkgo.GinkgoLogr.Info(fmt.Sprintf("Created SA: %v", "dedicated-admin-cluster"))
 
 	// Create cluster-admin account
-	sa, err = h.Kube().CoreV1().ServiceAccounts(h.CurrentProject()).Create(ctx, &corev1.ServiceAccount{
+	err = h.client.Create(ctx, &corev1.ServiceAccount{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: "cluster-admin",
+			Name:      "cluster-admin",
+			Namespace: project.Name,
 		},
-	}, metav1.CreateOptions{})
-	Expect(err).NotTo(HaveOccurred())
-	h.CreateClusterRoleBinding(ctx, sa, "cluster-admin")
-	ginkgo.GinkgoLogr.Info(fmt.Sprintf("Created SA: %v", sa.GetName()))
+	})
+	Expect(err).NotTo(HaveOccurred(), "failed to create SA: cluster-admin")
+	h.CreateClusterRoleBindingInProject(ctx, "cluster-admin", "cluster-admin", project)
+	ginkgo.GinkgoLogr.Info(fmt.Sprintf("Created SA: %v", "cluster-admin"))
 
 	return h
 }
 
-// CreateClusterRoleBinding takes an sa (presumably created by us) and applies a clusterRole to it
-// The cr is bound to the project and, thus, cleaned up when the project gets removed.
-func (h *H) CreateClusterRoleBinding(ctx context.Context, sa *corev1.ServiceAccount, clusterRole string) {
+// CreateClusterRoleBindingInProject takes an sa (presumably created by us) and applies a clusterRole to it
+// The cr is bound to the given project and, thus, cleaned up when the project gets removed.
+func (h *H) CreateClusterRoleBindingInProject(ctx context.Context, saName string, clusterRole string, project *projectv1.Project) {
 	gvk := schema.FromAPIVersionAndKind("project.openshift.io/v1", "Project")
-	projRef := *metav1.NewControllerRef(h.proj, gvk)
+	projRef := *metav1.NewControllerRef(project.DeepCopy(), gvk)
 
 	// create binding with OwnerReference
-	_, err := h.Kube().RbacV1().ClusterRoleBindings().Create(ctx, &rbacv1.ClusterRoleBinding{
+	err := h.client.Create(ctx, &rbacv1.ClusterRoleBinding{
 		ObjectMeta: metav1.ObjectMeta{
 			GenerateName: "osde2e-test-access-",
 			OwnerReferences: []metav1.OwnerReference{
 				projRef,
 			},
+			Namespace: project.Name,
 		},
 		Subjects: []rbacv1.Subject{
 			{
 				Kind:      rbacv1.ServiceAccountKind,
-				Name:      sa.GetName(),
-				Namespace: h.CurrentProject(),
+				Name:      saName,
+				Namespace: project.Name,
 			},
 		},
 		RoleRef: rbacv1.RoleRef{
@@ -255,7 +267,7 @@ func (h *H) CreateClusterRoleBinding(ctx context.Context, sa *corev1.ServiceAcco
 			Kind:     "ClusterRole",
 			Name:     clusterRole,
 		},
-	}, metav1.CreateOptions{})
+	})
 	Expect(err).NotTo(HaveOccurred(), "couldn't set correct permissions for OpenShift E2E")
 }
 
