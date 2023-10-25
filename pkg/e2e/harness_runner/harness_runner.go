@@ -81,7 +81,7 @@ var _ = ginkgo.Describe("Test harness", ginkgo.Ordered, ginkgo.ContinueOnFailure
 
 			// Retrieve and write results
 			ginkgo.By("Retrieving results from test pod")
-			results, err := r.RetrieveTestResults()
+			results, err := r.RetrieveResults()
 			Expect(err).NotTo(HaveOccurred(), "Could not read results")
 			ginkgo.By("Writing results")
 			h.WriteResults(results)
