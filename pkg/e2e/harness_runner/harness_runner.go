@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"os"
 	"strings"
 
 	"github.com/onsi/ginkgo/v2"
@@ -14,6 +13,7 @@ import (
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/label"
+	"github.com/openshift/osde2e/pkg/common/providers/ocmprovider"
 	"github.com/openshift/osde2e/pkg/common/runner"
 	"github.com/openshift/osde2e/pkg/common/templates"
 	"github.com/openshift/osde2e/pkg/common/util"
@@ -140,7 +140,7 @@ func getCommandString(timeout int, latestImageStream string, harness string, suf
 			},
 			{
 				Name:  "OCM_TOKEN",
-				Value: os.Getenv("OCM_TOKEN"),
+				Value: viper.GetString(ocmprovider.Token),
 			},
 		},
 	}
