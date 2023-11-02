@@ -70,8 +70,8 @@ func Configs(configs []string, customConfig string, secretLocations []string) er
 			passthruSecrets := viper.GetStringMapString(config.NonOSDe2eSecrets)
 			// Omit the osde2e secrets from going to the pass through secrets.
 			if strings.Contains(folder, "osde2e-credentials") || strings.Contains(folder, "osde2e-common") {
-				// If this is an addon test we will want to pass the ocm-token through.
-				if viper.Get(config.Addons.IDs) != nil {
+				// If this is a test harness, we will want to pass the ocm-token through.
+				if viper.Get(config.Tests.TestHarnesses) != nil {
 					_, exist := passthruSecrets["ocm-token-refresh"]
 					if !exist {
 						passthruSecrets["ocm-token-refresh"] = viper.GetString("ocm.token")

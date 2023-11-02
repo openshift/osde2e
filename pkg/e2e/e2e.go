@@ -93,7 +93,7 @@ func beforeSuite() bool {
 		viper.Set(config.Cluster.Channel, cluster.ChannelGroup())
 
 		log.Printf("CLUSTER_ID set to %s from OCM.", viper.GetString(config.Cluster.ID))
-		if viper.Get(config.Addons.IDs) != nil {
+		if viper.Get(config.Tests.TestHarnesses) != nil {
 			passthruSecrets := viper.GetStringMapString(config.NonOSDe2eSecrets)
 			passthruSecrets["CLUSTER_ID"] = viper.GetString(config.Cluster.ID)
 			viper.Set(config.NonOSDe2eSecrets, passthruSecrets)
