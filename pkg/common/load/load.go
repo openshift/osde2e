@@ -60,6 +60,16 @@ func Configs(configs []string, customConfig string, secretLocations []string) er
 	}
 
 	// 4. Secrets. These will override all previous entries.
+	passthruSecrets := viper.GetStringMapString(config.NonOSDe2eSecrets)
+	// Load ocm-token and ENV from viper for harnesses
+	if viper.Get(config.Tests.TestHarnesses) != nil {
+		_, exist := passthruSecrets["ocm-token-refresh"]
+		if !exist {
+			passthruSecrets["ocm-token-refresh"] = viper.GetString("ocm.token")
+			passthruSecrets["ENV"] = viper.GetString("ocm.env")
+		}
+	}
+	// Load secrets from folders
 	if len(secretLocations) > 0 {
 		secrets := config.GetAllSecrets()
 		for _, secret := range secrets {
@@ -67,21 +77,10 @@ func Configs(configs []string, customConfig string, secretLocations []string) er
 		}
 
 		for _, folder := range secretLocations {
-			passthruSecrets := viper.GetStringMapString(config.NonOSDe2eSecrets)
 			// Omit the osde2e secrets from going to the pass through secrets.
 			if strings.Contains(folder, "osde2e-credentials") || strings.Contains(folder, "osde2e-common") {
-				// If this is a test harness, we will want to pass the ocm-token through.
-				if viper.Get(config.Tests.TestHarnesses) != nil {
-					_, exist := passthruSecrets["ocm-token-refresh"]
-					if !exist {
-						passthruSecrets["ocm-token-refresh"] = viper.GetString("ocm.token")
-						passthruSecrets["ENV"] = viper.GetString("ocm.env")
-						viper.Set(config.NonOSDe2eSecrets, passthruSecrets)
-					}
-				}
 				continue
 			}
-
 			err := filepath.Walk(folder, func(path string, info os.FileInfo, err error) error {
 				if info.IsDir() {
 					return nil
@@ -99,9 +98,10 @@ func Configs(configs []string, customConfig string, secretLocations []string) er
 			if err != nil {
 				log.Printf("Error loading secret: %s", err.Error())
 			}
-			viper.Set(config.NonOSDe2eSecrets, passthruSecrets)
 		}
-
+	}
+	if len(passthruSecrets) > 0 {
+		viper.Set(config.NonOSDe2eSecrets, passthruSecrets)
 	}
 
 	// 4. Config post-processing.
