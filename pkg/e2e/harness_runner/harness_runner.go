@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"os"
 	"strings"
 
 	"github.com/onsi/ginkgo/v2"
@@ -137,10 +136,6 @@ func getCommandString(timeout int, latestImageStream string, harness string, suf
 			{
 				Name:  "OCM_CLUSTER_ID",
 				Value: viper.GetString(config.Cluster.ID),
-			},
-			{
-				Name:  "OCM_TOKEN",
-				Value: os.Getenv("OCM_TOKEN"),
 			},
 		},
 	}
