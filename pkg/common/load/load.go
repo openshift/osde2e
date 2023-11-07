@@ -61,14 +61,6 @@ func Configs(configs []string, customConfig string, secretLocations []string) er
 
 	// 4. Secrets. These will override all previous entries.
 	passthruSecrets := viper.GetStringMapString(config.NonOSDe2eSecrets)
-	// Load ocm-token and ENV from viper for harnesses
-	if viper.Get(config.Tests.TestHarnesses) != nil {
-		_, exist := passthruSecrets["ocm-token-refresh"]
-		if !exist {
-			passthruSecrets["ocm-token-refresh"] = viper.GetString("ocm.token")
-			passthruSecrets["ENV"] = viper.GetString("ocm.env")
-		}
-	}
 	// Load secrets from folders
 	if len(secretLocations) > 0 {
 		secrets := config.GetAllSecrets()
@@ -98,6 +90,14 @@ func Configs(configs []string, customConfig string, secretLocations []string) er
 			if err != nil {
 				log.Printf("Error loading secret: %s", err.Error())
 			}
+		}
+	}
+	// Load ocm-token and ENV as passthrough secrets for harnesses
+	if viper.Get(config.Tests.TestHarnesses) != nil {
+		_, exist := passthruSecrets["ocm-token-refresh"]
+		if !exist {
+			passthruSecrets["ocm-token-refresh"] = viper.GetString("ocm.token")
+			passthruSecrets["ENV"] = viper.GetString("ocm.env")
 		}
 	}
 	if len(passthruSecrets) > 0 {
