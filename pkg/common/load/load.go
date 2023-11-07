@@ -24,19 +24,22 @@ const (
 	DefaultTag = "default"
 )
 
-// This is a set of pre-canned configs that will always be loaded at startup.
-var defaultConfigs = []string{
-	"log-metrics",
-	"before-suite-metrics",
-	"aws-log-metrics",
-	"aws-before-suite-metrics",
-	"gcp-before-suite-metrics",
-	"gcp-log-metrics",
-}
+var (
+	passthruSecrets map[string]string
+	// This is a set of pre-canned configs that will always be loaded at startup.
+	defaultConfigs = []string{
+		"log-metrics",
+		"before-suite-metrics",
+		"aws-log-metrics",
+		"aws-before-suite-metrics",
+		"gcp-before-suite-metrics",
+		"gcp-log-metrics",
+	}
+)
 
 // Configs will populate viper with specified configs.
 func Configs(configs []string, customConfig string, secretLocations []string) error {
-	// This used to be complicated, but now we just lean on Viper for everything.
+	// We currently lean on Viper to track configs.
 	// 1. Load default configs. These are configs that will always be enabled for every run.
 	for _, config := range defaultConfigs {
 		if err := loadYAMLFromConfigs(config); err != nil {
@@ -59,7 +62,18 @@ func Configs(configs []string, customConfig string, secretLocations []string) er
 		}
 	}
 
-	// 4. Secrets. These will override all previous entries.
+	// 4. Passthrough Secrets. These will override all previous entries.
+	loadPassthruSecrets(secretLocations)
+
+	// 4. Config post-processing.
+	config.PostProcess()
+
+	return nil
+}
+
+func loadPassthruSecrets(secretLocations []string) {
+	passthruSecrets = viper.GetStringMapString(config.NonOSDe2eSecrets)
+	// Load secrets from folders
 	if len(secretLocations) > 0 {
 		secrets := config.GetAllSecrets()
 		for _, secret := range secrets {
@@ -67,47 +81,34 @@ func Configs(configs []string, customConfig string, secretLocations []string) er
 		}
 
 		for _, folder := range secretLocations {
-			passthruSecrets := viper.GetStringMapString(config.NonOSDe2eSecrets)
 			// Omit the osde2e secrets from going to the pass through secrets.
 			if strings.Contains(folder, "osde2e-credentials") || strings.Contains(folder, "osde2e-common") {
-				// If this is a test harness, we will want to pass the ocm-token through.
-				if viper.Get(config.Tests.TestHarnesses) != nil {
-					_, exist := passthruSecrets["ocm-token-refresh"]
-					if !exist {
-						passthruSecrets["ocm-token-refresh"] = viper.GetString("ocm.token")
-						passthruSecrets["ENV"] = viper.GetString("ocm.env")
-						viper.Set(config.NonOSDe2eSecrets, passthruSecrets)
-					}
-				}
 				continue
 			}
-
 			err := filepath.Walk(folder, func(path string, info os.FileInfo, err error) error {
 				if info.IsDir() {
 					return nil
 				}
-				if err != nil {
-					return fmt.Errorf("Error walking folder %s: %s", folder, err.Error())
-				}
 				data, err := os.ReadFile(path)
 				if err != nil {
-					return fmt.Errorf("error loading passthru-secret file %s", path)
+					return fmt.Errorf("error loading passthru-secret file %s: %s", path, err.Error())
 				}
 				passthruSecrets[info.Name()] = strings.TrimSpace(string(data))
 				return nil
 			})
 			if err != nil {
-				log.Printf("Error loading secret: %s", err.Error())
+				log.Printf("Error loading passthru-secret folder %s: %s", folder, err.Error())
 			}
-			viper.Set(config.NonOSDe2eSecrets, passthruSecrets)
 		}
-
 	}
-
-	// 4. Config post-processing.
-	config.PostProcess()
-
-	return nil
+	// Load ocm-token and ENV as passthrough secrets for harnesses
+	if viper.Get(config.Tests.TestHarnesses) != nil {
+		passthruSecrets["ocm-token-refresh"] = viper.GetString("ocm.token")
+		passthruSecrets["ENV"] = viper.GetString("ocm.env")
+	}
+	if len(passthruSecrets) > 0 {
+		viper.Set(config.NonOSDe2eSecrets, passthruSecrets)
+	}
 }
 
 // loadYAMLFromConfigs accepts a config name and attempts to unmarshal the config from the /configs directory.
