@@ -693,6 +693,8 @@ github.com/openshift/must-gather-operator v0.1.2-0.20221011152618-7805956e1ded h
 github.com/openshift/must-gather-operator v0.1.2-0.20221011152618-7805956e1ded/go.mod h1:LHntdQf5jrwxpmyVMbwXUK491COBJ7buHvyi4YLlHho=
 github.com/openshift/osde2e-common v0.0.0-20231023161452-5bf9f3f99df2 h1:vFYU3Yi5P0YbLCJrJa7tH0DQomhJ/ArAWzPmqaZnZUk=
 github.com/openshift/osde2e-common v0.0.0-20231023161452-5bf9f3f99df2/go.mod h1:lzmkYjtdf0EgPnoujLNAzorq/7vygGCcgceo/dQI1d0=
+github.com/openshift/osde2e-common v0.0.0-20231107150136-c29fe617fe0d h1:LxbvGOhIOF9EcN481gaJBZPo/tDwCi/W8UVzhqIteS0=
+github.com/openshift/osde2e-common v0.0.0-20231107150136-c29fe617fe0d/go.mod h1:lzmkYjtdf0EgPnoujLNAzorq/7vygGCcgceo/dQI1d0=
 github.com/openshift/route-monitor-operator v0.0.0-20221118160357-3df1ed1fa1d2 h1:s97F2fQ5r+XGVfWDy5wgH611iIvIDusQcHtv5jJ36uw=
 github.com/openshift/route-monitor-operator v0.0.0-20221118160357-3df1ed1fa1d2/go.mod h1:I/8znbaxMGRub27brm57UnkR48QZEWO26j2HRscy5bQ=
 github.com/openshift/splunk-forwarder-operator v0.0.0-20230525060151-2dc403aa8ff9 h1:u7XXBdFB+uoA+YcvDjqmfhAJsZTGGGQOBqIXSBT4EUQ=
