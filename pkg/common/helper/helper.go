@@ -172,6 +172,20 @@ func (h *H) SetupNewProject(ctx context.Context, suffix string) (*projectv1.Proj
 	return v1project, nil
 }
 
+// Adds essential secrets to harness namespace
+func (h *H) SetPassthruSecretInProject(ctx context.Context, project *projectv1.Project) error {
+	passthruSecrets := make(map[string]string)
+	passthruSecrets["OCM_TOKEN"] = viper.GetString("ocm.token")
+	err := h.GetClient().Create(ctx, &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "ci-secrets",
+			Namespace: project.Name,
+		},
+		StringData: passthruSecrets,
+	})
+	return err
+}
+
 // Cleanup deletes a Project after tests have been ran.
 func (h *H) Cleanup(ctx context.Context) {
 	var err error
