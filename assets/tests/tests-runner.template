@@ -23,6 +23,13 @@ spec:
         - name: {{ $env.Name }}
           value: {{ $env.Value }}
         {{- end }}
+        {{- range $envSec := .EnvironmentVariablesFromSecret }}
+        - name: {{ $envSec.SecretKey }}
+          valueFrom: 
+            secretKeyRef:
+              name: {{ $envSec.SecretName }}
+              key: {{ $envSec.SecretKey }}
+        {{- end }}
         volumeMounts:
         - mountPath: {{.OutputDir}}
           name: test-output

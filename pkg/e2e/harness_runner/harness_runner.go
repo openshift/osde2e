@@ -51,6 +51,8 @@ var _ = ginkgo.Describe("Test harness", ginkgo.Ordered, ginkgo.ContinueOnFailure
 		suffix = "h-" + util.RandomStr(5)
 		subProject, err = h.SetupNewProject(ctx, suffix)
 		Expect(err).NotTo(HaveOccurred(), "Could not set up harness namespace")
+		err = h.SetPassthruSecretInProject(ctx, subProject)
+		Expect(err).NotTo(HaveOccurred(), "Could not set up passthru secrets")
 	})
 
 	ginkgo.DescribeTable("execution",
@@ -117,6 +119,10 @@ func getCommandString(timeout int, latestImageStream string, harness string, suf
 			Name  string
 			Value string
 		}
+		EnvironmentVariablesFromSecret []struct {
+			SecretName string
+			SecretKey  string
+		}
 	}{
 		Name:                 jobName,
 		JobName:              jobName,
@@ -136,6 +142,15 @@ func getCommandString(timeout int, latestImageStream string, harness string, suf
 			{
 				Name:  "OCM_CLUSTER_ID",
 				Value: viper.GetString(config.Cluster.ID),
+			},
+		},
+		EnvironmentVariablesFromSecret: []struct {
+			SecretName string
+			SecretKey  string
+		}{
+			{
+				SecretName: "ci-secrets",
+				SecretKey:  "OCM_TOKEN",
 			},
 		},
 	}
