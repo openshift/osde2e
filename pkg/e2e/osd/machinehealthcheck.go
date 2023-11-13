@@ -108,7 +108,7 @@ var _ = ginkgo.Describe(machineHealthTestName, label.E2E, func() {
 			machineV1beta1.UnhealthyCondition{
 				Type:    corev1.NodeReady,
 				Status:  corev1.ConditionUnknown,
-				Timeout: metav1.Duration{Duration: 480 * time.Second},
+				Timeout: metav1.Duration{Duration: 600 * time.Second},
 			},
 		))
 	})
