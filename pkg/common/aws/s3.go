@@ -8,20 +8,16 @@ import (
 	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 )
 
-// ReadFromS3 reads a key from S3 using the global AWS context.
-func ReadFromS3(inputKey string) ([]byte, error) {
+// ReadFromS3Session reads a key from S3 using given AWS context.
+func ReadFromS3Session(session *session.Session, inputKey string) ([]byte, error) {
 	bucket, key, err := ParseS3URL(inputKey)
 	if err != nil {
 		return nil, fmt.Errorf("error trying to parse S3 URL: %v", err)
-	}
-
-	session, err := MetricsAWSSession.getSession()
-	if err != nil {
-		return nil, err
 	}
 
 	downloader := s3manager.NewDownloader(session)
@@ -40,16 +36,11 @@ func ReadFromS3(inputKey string) ([]byte, error) {
 	return buffer.Bytes(), nil
 }
 
-// WriteToS3 writes the given byte array to S3.
-func WriteToS3(outputKey string, data []byte) error {
+// WriteToS3Session writes the given byte array to S3.
+func WriteToS3Session(session *session.Session, outputKey string, data []byte) error {
 	bucket, key, err := ParseS3URL(outputKey)
 	if err != nil {
 		return fmt.Errorf("error trying to parse S3 URL: %v", err)
-	}
-
-	session, err := MetricsAWSSession.getSession()
-	if err != nil {
-		return err
 	}
 
 	uploader := s3manager.NewUploader(session)
