@@ -1,3 +1,15 @@
 tests:
   ginkgoLabelFilter: >
-    (E2E || Operators || ServiceDefinition || AppBuilds) && !Informing
+    (E2E || Operators || TestHarness || ServiceDefinition || AppBuilds) && !Informing && !MigratedHarness
+  testHarnesses:
+  #    For migrated harnesses, remember to add "MigratedHarness" label to existing suite in this repo, until they are removed from here.
+    - quay.io/app-sre/aws-vpce-operator-test-harness
+    - quay.io/app-sre/custom-domains-operator-test-harness
+    - quay.io/app-sre/managed-node-metadata-operator-test-harness
+    - quay.io/app-sre/managed-upgrade-operator-test-harness
+    - quay.io/app-sre/must-gather-operator-test-harness
+    - quay.io/app-sre/ocm-agent-operator-test-harness
+    - quay.io/app-sre/osd-metrics-exporter-test-harness
+    - quay.io/app-sre/rbac-permissions-operator-test-harness
+    - quay.io/app-sre/splunk-forwarder-operator-test-harness
+  suiteTimeout: 900
