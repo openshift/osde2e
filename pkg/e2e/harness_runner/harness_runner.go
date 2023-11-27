@@ -89,7 +89,7 @@ var _ = ginkgo.Describe("Test harness", ginkgo.Ordered, ginkgo.ContinueOnFailure
 			ginkgo.By("Writing results")
 			h.WriteResults(results)
 			if config.Tests.LogBucket != "" {
-				err = h.UploadResultsToS3(results, harnessImage+time.DateTime)
+				err = h.UploadResultsToS3(results, harnessImage+time.Now().Format(time.DateOnly+"_"+time.TimeOnly))
 				if err != nil {
 					ginkgo.GinkgoLogr.Error(err, fmt.Sprintf("reporting error"))
 				}
