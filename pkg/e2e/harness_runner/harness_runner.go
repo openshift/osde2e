@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"strings"
+	"time"
 
 	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -87,6 +88,12 @@ var _ = ginkgo.Describe("Test harness", ginkgo.Ordered, ginkgo.ContinueOnFailure
 			Expect(err).NotTo(HaveOccurred(), "Could not read results")
 			ginkgo.By("Writing results")
 			h.WriteResults(results)
+			if config.Tests.LogBucket != "" {
+				err = h.UploadResultsToS3(results, harnessImage+time.Now().Format(time.DateOnly+"_"+time.TimeOnly))
+				if err != nil {
+					ginkgo.GinkgoLogr.Error(err, fmt.Sprintf("reporting error"))
+				}
+			}
 		},
 		HarnessEntries)
 

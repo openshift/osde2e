@@ -276,6 +276,10 @@ var Tests = struct {
 	// Env: METRICS_BUCKET
 	MetricsBucket string
 
+	// LogBucket is the s3 bucket that log file/s will be uploaded to.
+	// Env: LOG_BUCKET
+	LogBucket string
+
 	// ServiceAccount defines what user the tests should run as. By default, osde2e uses system:admin
 	// Env: SERVICE_ACCOUNT
 	ServiceAccount string
@@ -296,6 +300,7 @@ var Tests = struct {
 	OperatorSkip:               "tests.operatorSkip",
 	SkipClusterHealthChecks:    "tests.skipClusterHealthChecks",
 	MetricsBucket:              "tests.metricsBucket",
+	LogBucket:                  "tests.logBucket",
 	ClusterHealthChecksTimeout: "tests.clusterHealthChecksTimeout",
 }
 
@@ -726,6 +731,8 @@ func InitOSDe2eViper() {
 
 	viper.SetDefault(Tests.MetricsBucket, "osde2e-metrics")
 	viper.BindEnv(Tests.MetricsBucket, "METRICS_BUCKET")
+
+	viper.BindEnv(Tests.LogBucket, "LOG_BUCKET")
 
 	viper.BindEnv(Tests.ServiceAccount, "SERVICE_ACCOUNT")
 

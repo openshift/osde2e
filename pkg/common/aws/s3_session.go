@@ -41,7 +41,7 @@ func init() {
 	config.RegisterSecret(metricsAWSRegion, "metrics-aws-region")
 }
 
-func (a *metricsAWSSession) getSession() (*session.Session, error) {
+func (a *metricsAWSSession) GetSession() (*session.Session, error) {
 	var err error
 
 	// Initialize this once, and initialize it in getSession so that osde2e capabilities that don't use S3

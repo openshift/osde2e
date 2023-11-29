@@ -58,6 +58,11 @@ func (CcsAwsSession *ccsAwsSession) GetAWSSessions() error {
 	return nil
 }
 
+func (CcsAwsSession *ccsAwsSession) GetSession() (*session.Session, error) {
+	err := CcsAwsSession.GetAWSSessions()
+	return CcsAwsSession.session, err
+}
+
 // GetCredentials returns the credentials for the current aws session
 func (CcsAwsSession *ccsAwsSession) GetCredentials() (*credentials.Value, error) {
 	if err := CcsAwsSession.GetAWSSessions(); err != nil {

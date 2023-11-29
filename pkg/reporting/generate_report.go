@@ -55,8 +55,12 @@ func GenerateReport(reporterName string, reportType string) ([]byte, error) {
 
 // WriteReport will write the raw report to a given output.
 func WriteReport(report []byte, output string) error {
+	session, err := aws.MetricsAWSSession.GetSession()
+	if err != nil {
+		return fmt.Errorf("failed to create metrics s3 session: %v", err)
+	}
 	if strings.HasPrefix(output, "s3") {
-		aws.WriteToS3(output, report)
+		aws.WriteToS3Session(session, output, report)
 	} else {
 		writer, err := createWriter(output)
 		if err != nil {

@@ -1043,12 +1043,17 @@ func checkBeforeMetricsGeneration() error {
 
 // uploadFileToMetricsBucket uploads the given file (with absolute path) to the metrics S3 bucket "incoming" directory.
 func uploadFileToMetricsBucket(filename string) error {
+	session, err := aws.MetricsAWSSession.GetSession()
+	if err != nil {
+		return fmt.Errorf("failed to create metrics s3 session: %v", err)
+	}
+
 	data, err := os.ReadFile(filename)
 	if err != nil {
 		return err
 	}
 
-	return aws.WriteToS3(aws.CreateS3URL(viper.GetString(config.Tests.MetricsBucket), "incoming", filepath.Base(filename)), data)
+	return aws.WriteToS3Session(session, aws.CreateS3URL(viper.GetString(config.Tests.MetricsBucket), "incoming", filepath.Base(filename)), data)
 }
 
 // setupRouteMonitors initializes performance+availability monitoring of cluster routes,
