@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/joshdk/go-junit"
 	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	projectv1 "github.com/openshift/api/project/v1"
@@ -41,7 +42,7 @@ var _ = ginkgo.Describe("Test harness", ginkgo.Ordered, ginkgo.ContinueOnFailure
 	}
 	fmt.Println("Harnesses to run: ", harnesses)
 	for _, harness := range harnesses {
-		HarnessEntries = append(HarnessEntries, ginkgo.Entry("should run "+harness+" successfully", harness))
+		HarnessEntries = append(HarnessEntries, ginkgo.Entry(harness+" should pass", harness))
 	}
 
 	ginkgo.BeforeAll(func(ctx context.Context) {
@@ -86,6 +87,15 @@ var _ = ginkgo.Describe("Test harness", ginkgo.Ordered, ginkgo.ContinueOnFailure
 			ginkgo.By("Retrieving results from test pod")
 			results, err := r.RetrieveResults()
 			Expect(err).NotTo(HaveOccurred(), "Could not read results")
+			// Adding harness report failures to top level junit report
+			for _, data := range results {
+				suites, _ := junit.Ingest(data)
+				for _, suite := range suites {
+					for _, testcase := range suite.Tests {
+						Expect(testcase.Error).To(BeNil(), "Assertion failed: "+testcase.Name)
+					}
+				}
+			}
 			ginkgo.By("Writing results")
 			h.WriteResults(results)
 			if config.Tests.LogBucket != "" {
