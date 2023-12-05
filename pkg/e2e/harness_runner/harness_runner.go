@@ -87,6 +87,14 @@ var _ = ginkgo.Describe("Test harness", ginkgo.Ordered, ginkgo.ContinueOnFailure
 			ginkgo.By("Retrieving results from test pod")
 			results, err := r.RetrieveResults()
 			Expect(err).NotTo(HaveOccurred(), "Could not read results")
+			ginkgo.By("Writing results")
+			h.WriteResults(results)
+			if config.Tests.LogBucket != "" {
+				err = h.UploadResultsToS3(results, harnessImage+time.Now().Format(time.DateOnly+"_"+time.TimeOnly))
+				if err != nil {
+					ginkgo.GinkgoLogr.Error(err, fmt.Sprintf("reporting error"))
+				}
+			}
 			// Adding harness report failures to top level junit report
 			for _, data := range results {
 				suites, _ := junit.Ingest(data)
@@ -94,14 +102,6 @@ var _ = ginkgo.Describe("Test harness", ginkgo.Ordered, ginkgo.ContinueOnFailure
 					for _, testcase := range suite.Tests {
 						Expect(testcase.Error).To(BeNil(), "Assertion failed: "+testcase.Name)
 					}
-				}
-			}
-			ginkgo.By("Writing results")
-			h.WriteResults(results)
-			if config.Tests.LogBucket != "" {
-				err = h.UploadResultsToS3(results, harnessImage+time.Now().Format(time.DateOnly+"_"+time.TimeOnly))
-				if err != nil {
-					ginkgo.GinkgoLogr.Error(err, fmt.Sprintf("reporting error"))
 				}
 			}
 		},
