@@ -708,8 +708,6 @@ func cleanupAfterE2E(ctx context.Context, h *helper.H) (errors []error) {
 		log.Print("No cluster ID set. Skipping OCM Queries.")
 	}
 
-	harnessCleanup(ctx, h)
-
 	// We need to clean up our helper tests manually.
 	h.Cleanup(ctx)
 
@@ -747,33 +745,6 @@ func cleanupAfterE2E(ctx context.Context, h *helper.H) (errors []error) {
 		}
 	}
 	return errors
-}
-
-// harnessCleanup performs clean up operations post test execution
-func harnessCleanup(ctx context.Context, h *helper.H) {
-	log.Printf("Harness cleanup: %v", viper.GetBool(config.Addons.RunCleanup))
-	if viper.GetBool(config.Addons.RunCleanup) {
-		// By default, use the existing test harnesses for cleanup
-		harnesses := strings.Split(viper.GetString(config.Tests.TestHarnesses), ",")
-		arguments := []string{"cleanup"}
-
-		// Check if cleanup harnesses exist and if so, use those instead
-		cleanupHarnesses := viper.GetString(config.Addons.CleanupHarnesses)
-		if len(cleanupHarnesses) > 0 {
-			harnesses = strings.Split(cleanupHarnesses, ",")
-			arguments = []string{}
-		}
-		log.Println("Running harness cleanup...")
-		h.RunTests(ctx, "harness-cleanup", 300, harnesses, arguments)
-	}
-
-	if viper.GetString(config.Tests.TestHarnesses) != "" {
-		absNamespace := "osde2e-" + secretsNamespace
-		err := h.DeleteProject(ctx, absNamespace)
-		if err != nil {
-			log.Printf("Failed to delete namespace: %s, error: %v", absNamespace, err)
-		}
-	}
 }
 
 // nolint:gocyclo
