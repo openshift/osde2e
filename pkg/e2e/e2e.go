@@ -751,21 +751,7 @@ func cleanupAfterE2E(ctx context.Context, h *helper.H) (errors []error) {
 
 // harnessCleanup performs clean up operations post test execution
 func harnessCleanup(ctx context.Context, h *helper.H) {
-	log.Printf("Harness cleanup: %v", viper.GetBool(config.Addons.RunCleanup))
-	if viper.GetBool(config.Addons.RunCleanup) {
-		// By default, use the existing test harnesses for cleanup
-		harnesses := strings.Split(viper.GetString(config.Tests.TestHarnesses), ",")
-		arguments := []string{"cleanup"}
-
-		// Check if cleanup harnesses exist and if so, use those instead
-		cleanupHarnesses := viper.GetString(config.Addons.CleanupHarnesses)
-		if len(cleanupHarnesses) > 0 {
-			harnesses = strings.Split(cleanupHarnesses, ",")
-			arguments = []string{}
-		}
-		log.Println("Running harness cleanup...")
-		h.RunTests(ctx, "harness-cleanup", 300, harnesses, arguments)
-	}
+	log.Printf("Deleting osde2e-%v namespace", secretsNamespace)
 
 	if viper.GetString(config.Tests.TestHarnesses) != "" {
 		absNamespace := "osde2e-" + secretsNamespace
