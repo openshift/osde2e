@@ -99,7 +99,7 @@ var _ = ginkgo.Describe(suiteName, ginkgo.Ordered, label.Operators, func() {
 
 	ginkgo.It("roles exist", label.Install, func(ctx context.Context) {
 		var roles rbacv1.RoleList
-		err := client.List(ctx, &roles)
+		err := client.WithNamespace(namespaceName).List(ctx, &roles)
 		expect.NoError(err, "failed to get roles")
 		found := false
 		for _, role := range roles.Items {
@@ -125,11 +125,12 @@ var _ = ginkgo.Describe(suiteName, ginkgo.Ordered, label.Operators, func() {
 
 	ginkgo.It("cluster roles exist", label.Install, func(ctx context.Context) {
 		var clusterRoles rbacv1.ClusterRoleList
-		err := client.List(ctx, &clusterRoles)
+		err := client.WithNamespace(namespaceName).List(ctx, &clusterRoles)
 		expect.NoError(err, "failed to get cluster roles")
 		found := false
 		for _, clusterRole := range clusterRoles.Items {
-			if strings.HasPrefix(clusterRole.Name, operatorName) {
+			olmOwner := clusterRole.Labels["olm.owner"]
+			if strings.HasPrefix(olmOwner, operatorName) {
 				found = true
 			}
 		}
