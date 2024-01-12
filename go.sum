@@ -676,8 +676,8 @@ github.com/openshift/managed-upgrade-operator v0.0.0-20230525042514-a9b8c1d2571c
 github.com/openshift/managed-upgrade-operator v0.0.0-20230525042514-a9b8c1d2571c/go.mod h1:W/ajjexZ/T50ZRpk48HbgbtOXD4rt0/wHlwdXu8arQE=
 github.com/openshift/must-gather-operator v0.1.2-0.20221011152618-7805956e1ded h1:ndSIrjtHq6DaEfQqtukaJ7PrX9f0X2V9WjnuiqBDGyw=
 github.com/openshift/must-gather-operator v0.1.2-0.20221011152618-7805956e1ded/go.mod h1:LHntdQf5jrwxpmyVMbwXUK491COBJ7buHvyi4YLlHho=
-github.com/openshift/osde2e-common v0.0.0-20231115164123-239388d813a8 h1:H0Dn36DnfE9D6Lc51NKhpq2H0IuxxsKQNFgrIw2ykpc=
-github.com/openshift/osde2e-common v0.0.0-20231115164123-239388d813a8/go.mod h1:lzmkYjtdf0EgPnoujLNAzorq/7vygGCcgceo/dQI1d0=
+github.com/openshift/osde2e-common v0.0.0-20240111205449-2d6094e0e389 h1:RuqZWven2AKLwOCWGBagVEv/4adWbmYIyZNE8eUPxCs=
+github.com/openshift/osde2e-common v0.0.0-20240111205449-2d6094e0e389/go.mod h1:lzmkYjtdf0EgPnoujLNAzorq/7vygGCcgceo/dQI1d0=
 github.com/openshift/route-monitor-operator v0.0.0-20221118160357-3df1ed1fa1d2 h1:s97F2fQ5r+XGVfWDy5wgH611iIvIDusQcHtv5jJ36uw=
 github.com/openshift/route-monitor-operator v0.0.0-20221118160357-3df1ed1fa1d2/go.mod h1:I/8znbaxMGRub27brm57UnkR48QZEWO26j2HRscy5bQ=
 github.com/openshift/splunk-forwarder-operator v0.0.0-20230525060151-2dc403aa8ff9 h1:u7XXBdFB+uoA+YcvDjqmfhAJsZTGGGQOBqIXSBT4EUQ=
