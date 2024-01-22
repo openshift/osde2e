@@ -27,7 +27,6 @@ func (CcsAwsSession *ccsAwsSession) CleanupOpenIDConnectProviders(olderthan time
 	}
 
 	for _, provider := range result.OpenIDConnectProviderList {
-		// Create GetOpenIDConnectProviderInput struct
 		input := &iam.GetOpenIDConnectProviderInput{
 			OpenIDConnectProviderArn: provider.Arn,
 		}
@@ -43,7 +42,6 @@ func (CcsAwsSession *ccsAwsSession) CleanupOpenIDConnectProviders(olderthan time
 			fmt.Printf("Provider will be deleted: %s\n", *provider.Arn)
 
 			if !dryrun {
-				// Create DeleteOpenIDConnectProviderInput struct
 				input := &iam.DeleteOpenIDConnectProviderInput{
 					OpenIDConnectProviderArn: provider.Arn,
 				}
@@ -91,7 +89,6 @@ func (CcsAwsSession *ccsAwsSession) CleanupRoles(olderthan time.Duration, dryrun
 				fmt.Println("Removing role from instance profile: ", *instanceProfile.InstanceProfileName)
 
 				if !dryrun {
-					// Create RemoveRoleFromInstanceProfileInput struct
 					removeRoleFromInstanceProfileInput := &iam.RemoveRoleFromInstanceProfileInput{
 						InstanceProfileName: instanceProfile.InstanceProfileName,
 						RoleName:            role.RoleName,
