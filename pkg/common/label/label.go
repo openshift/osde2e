@@ -32,6 +32,9 @@ var (
 	// Blocking tests are stable and important enough to block a new release
 	Blocking = ginkgo.Label("Blocking")
 
+	// OCP Nightly Blocking tests are minimal and highly reliable. They're used by nightly version jobs.
+	OCPNightlyBlocking = ginkgo.Label("OCPNightlyBlocking")
+
 	// Install tests cover validating the component is available and ready
 	Install = ginkgo.Label("Install")
 
