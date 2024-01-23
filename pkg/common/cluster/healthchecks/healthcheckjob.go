@@ -29,24 +29,24 @@ func CheckHealthcheckJob(k8sClient *kubernetes.Clientset, ctx context.Context, l
 		return fmt.Errorf("Unable to setup k8s client: %w", err)
 	}
 
-	err = k8s.WatchJob(ctx, namespace, name)
+	joberr := k8s.WatchJob(ctx, namespace, name)
 
-	if err == nil {
+	if joberr == nil {
 		logger.Println("Healthcheck job passed")
 		return nil
+	}
+
+	filename := filepath.Join(viper.GetString(config.ReportDir), fmt.Sprintf("%s.log", name))
+	file, err := os.Create(filename)
+	if err != nil {
+		fmt.Print("could not create osd-cluster-ready log file: ", err)
 	} else {
-		filename := filepath.Join(viper.GetString(config.ReportDir), fmt.Sprintf("%s.log", name))
-		file, err := os.Create(filename)
+		logs, err := k8s.GetJobLogs(ctx, name, namespace)
 		if err != nil {
-			fmt.Printf("could not create osd-cluster-ready log file:  %w", err)
+			fmt.Print("could not get job logs: ", err)
 		} else {
-			logs, err := k8s.GetJobLogs(ctx, name, namespace)
-			if err != nil {
-				fmt.Printf("could not get job logs:  %w", err)
-			} else {
-				file.WriteString(logs)
-			}
+			file.WriteString(logs)
 		}
 	}
-	return nil
+	return joberr
 }

@@ -36,9 +36,9 @@ var _ = ginkgo.Describe(suiteName, ginkgo.Ordered, label.OCPNightlyBlocking, fun
 		if joberr != nil {
 			logs, err := k8s.GetJobLogs(ctx, jobname, namespace)
 			if err != nil {
-				fmt.Print("could not get osd-cluster-ready logs", err)
+				ginkgo.GinkgoLogr.Error(fmt.Errorf("could not get osd-cluster-ready logs"), err.Error())
 			} else {
-				fmt.Print("job log:", logs)
+				ginkgo.GinkgoLogr.Info("job log:", logs)
 			}
 		}
 		Expect(joberr).ShouldNot(HaveOccurred(), "osd-cluster-ready job did not succeed")
