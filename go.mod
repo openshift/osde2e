@@ -8,7 +8,7 @@ require (
 	github.com/PuerkitoBio/goquery v1.8.1
 	github.com/adamliesko/retry v0.0.0-20200123222335-86c8baac277d
 	github.com/antlr/antlr4/runtime/Go/antlr v1.4.10
-	github.com/aws/aws-sdk-go v1.48.16
+	github.com/aws/aws-sdk-go v1.50.0
 	github.com/fsnotify/fsnotify v1.7.0
 	github.com/go-logr/logr v1.4.1
 	github.com/golang-migrate/migrate/v4 v4.16.2
