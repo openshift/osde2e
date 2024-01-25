@@ -786,6 +786,9 @@ func runTestsInPhase(
 		if !beforeSuite() {
 			return false, testCaseData
 		}
+		if viper.GetBool(config.Cluster.ProvisionOnly) {
+			return true, nil
+		}
 	}
 
 	// Generate JUnit report once all tests have finished with customized settings
