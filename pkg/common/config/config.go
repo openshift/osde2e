@@ -306,6 +306,10 @@ var Tests = struct {
 
 // Cluster config keys.
 var Cluster = struct {
+	// ProvisionOnly only provisions testing-ready cluster and skips all tests.
+	// Env: PROVISION_ONLY
+	ProvisionOnly string
+
 	// MultiAZ deploys a cluster across multiple availability zones.
 	// Env: MULTI_AZ
 	MultiAZ string
@@ -439,6 +443,7 @@ var Cluster = struct {
 	MultiAZ:                             "cluster.multiAZ",
 	Channel:                             "cluster.channel",
 	SkipDestroyCluster:                  "cluster.skipDestroyCluster",
+	ProvisionOnly:                       "cluster.provisionOnly",
 	ExpiryInMinutes:                     "cluster.expiryInMinutes",
 	AfterTestWait:                       "cluster.afterTestWait",
 	InstallTimeout:                      "cluster.installTimeout",
@@ -747,6 +752,8 @@ func InitOSDe2eViper() {
 	viper.BindEnv(Cluster.Channel, "CHANNEL")
 
 	viper.BindEnv(Cluster.SkipDestroyCluster, "SKIP_DESTROY_CLUSTER")
+
+	viper.BindEnv(Cluster.ProvisionOnly, "PROVISION_ONLY")
 
 	viper.SetDefault(Cluster.ExpiryInMinutes, 360)
 	viper.BindEnv(Cluster.ExpiryInMinutes, "CLUSTER_EXPIRY_IN_MINUTES")
