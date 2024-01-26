@@ -442,6 +442,10 @@ func runGinkgoTests() (int, error) {
 		getLogs()
 		viper.Set(config.Cluster.Passing, testsPassed)
 	}
+	if viper.GetBool(config.Cluster.ProvisionOnly) {
+		log.Println("Provision only execution finished, exiting.")
+		return Success, nil
+	}
 	upgradeTestsPassed := true
 	var upgradeTestCaseData []db.CreateTestcaseParams
 
@@ -576,7 +580,7 @@ func runGinkgoTests() (int, error) {
 			}
 		}
 	}
-
+	// Cleanup
 	if !suiteConfig.DryRun {
 		getLogs()
 
