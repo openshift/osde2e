@@ -541,8 +541,22 @@ func ProvisionCluster(logger *log.Logger) (*spi.Cluster, error) {
 	}
 
 	var cluster *spi.Cluster
-	// create a new cluster if no ID is specified
+	// get cluster ID from env
 	clusterID := viper.GetString(config.Cluster.ID)
+	// get cluster id from shared_dir (used in prow multi-step jobs
+	if clusterID != "" && viper.GetString(config.SharedDir) != "" {
+		sharedClusterIdPath := viper.GetString(config.SharedDir) + "/cluster-id"
+		_, err := os.Stat(sharedClusterIdPath)
+		if err == nil {
+			clusteridbytes, err := os.ReadFile(sharedClusterIdPath)
+			if err == nil {
+				fmt.Printf("cluster-id found in SHARED_DIR")
+				clusterID = string(clusteridbytes)
+				viper.Set(config.Cluster.ID, clusterID)
+			}
+		}
+	}
+	// create a new cluster if no ID is specified
 	if clusterID == "" {
 		name := viper.GetString(config.Cluster.Name)
 		if name == "" || name == "random" {
