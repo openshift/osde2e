@@ -545,7 +545,7 @@ func ProvisionCluster(logger *log.Logger) (*spi.Cluster, error) {
 	clusterID := viper.GetString(config.Cluster.ID)
 	// get cluster id from shared_dir (used in prow multi-step jobs
 	log.Printf("cluster id:%s shared dir:%s", clusterID, viper.GetString(config.SharedDir))
-	if clusterID != "" && viper.GetString(config.SharedDir) != "" {
+	if clusterID == "" && viper.GetString(config.SharedDir) != "" {
 		sharedClusterIdPath := viper.GetString(config.SharedDir) + "/cluster-id"
 		_, err := os.Stat(sharedClusterIdPath)
 		if err == nil {
