@@ -102,7 +102,11 @@ func beforeSuite() bool {
 		if viper.GetString(config.SharedDir) != "" {
 			if err = os.WriteFile(fmt.Sprintf("%s/cluster-id", viper.GetString(config.SharedDir)), []byte(cluster.ID()), 0o644); err != nil {
 				log.Printf("Error writing cluster ID to shared directory: %v", err)
+			} else {
+				log.Printf("Wrote cluster ID to shared dir: %v", cluster.ID())
 			}
+		} else {
+			log.Printf("No shared directory provided, skip writing cluster ID")
 		}
 
 		viper.Set(config.Cluster.Name, cluster.Name())
