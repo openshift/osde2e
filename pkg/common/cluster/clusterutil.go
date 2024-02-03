@@ -119,11 +119,6 @@ func WaitForClusterReadyPostInstall(clusterID string, logger *log.Logger) error 
 		return fmt.Errorf("error generating Kube Clientset: %w", err)
 	}
 
-	duration, err := time.ParseDuration(viper.GetString(config.Tests.ClusterHealthChecksTimeout))
-	if err != nil {
-		return fmt.Errorf("failed parsing health check timeout: %w", err)
-	}
-
 	if viper.GetBool(config.Hypershift) {
 		logger.Println("Waiting for nodes to be ready (up to 10 minutes)")
 		err := wait.PollImmediate(30*time.Second, 10*time.Minute, func() (bool, error) {
@@ -151,9 +146,7 @@ func WaitForClusterReadyPostInstall(clusterID string, logger *log.Logger) error 
 		return nil
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), duration)
-	defer cancel()
-	err = healthchecks.CheckHealthcheckJob(kubeClient, ctx, nil)
+	err = healthchecks.CheckHealthcheckJob(kubeClient, context.Background(), nil)
 	if err != nil {
 		return fmt.Errorf("cluster failed health check: %w", err)
 	}
