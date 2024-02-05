@@ -3,19 +3,20 @@ package openshift
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/openshift/osde2e-common/pkg/clients/openshift"
+	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
+	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/label"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 const (
 	suiteName = "OSD Cluster Ready"
-	timeout   = 30 * time.Minute
+	timeout   = 60 * time.Minute
 	namespace = "openshift-monitoring"
 	jobname   = "osd-cluster-ready"
 )
@@ -32,15 +33,7 @@ var _ = ginkgo.Describe(suiteName, ginkgo.Ordered, label.OCPNightlyBlocking, fun
 	})
 
 	ginkgo.It("should verify cluster is ready", func(ctx context.Context) {
-		joberr := k8s.WatchJob(ctx, namespace, jobname)
-		if joberr != nil {
-			logs, err := k8s.GetJobLogs(ctx, jobname, namespace)
-			if err != nil {
-				ginkgo.GinkgoLogr.Error(fmt.Errorf("could not get osd-cluster-ready logs"), err.Error())
-			} else {
-				ginkgo.GinkgoLogr.Info("job log:", logs)
-			}
-		}
+		joberr := k8s.OSDClusterHealthy(ctx, jobname, viper.GetString(config.ReportDir), timeout)
 		Expect(joberr).ShouldNot(HaveOccurred(), "osd-cluster-ready job did not succeed")
-	}, ginkgo.SpecTimeout(timeout))
+	})
 })

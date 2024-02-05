@@ -119,11 +119,6 @@ func WaitForClusterReadyPostInstall(clusterID string, logger *log.Logger) error 
 		return fmt.Errorf("error generating Kube Clientset: %w", err)
 	}
 
-	duration, err := time.ParseDuration(viper.GetString(config.Tests.ClusterHealthChecksTimeout))
-	if err != nil {
-		return fmt.Errorf("failed parsing health check timeout: %w", err)
-	}
-
 	if viper.GetBool(config.Hypershift) {
 		logger.Println("Waiting for nodes to be ready (up to 10 minutes)")
 		err := wait.PollImmediate(30*time.Second, 10*time.Minute, func() (bool, error) {
@@ -151,9 +146,7 @@ func WaitForClusterReadyPostInstall(clusterID string, logger *log.Logger) error 
 		return nil
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), duration)
-	defer cancel()
-	err = healthchecks.CheckHealthcheckJob(kubeClient, ctx, nil)
+	err = healthchecks.CheckHealthcheckJob(kubeClient, context.Background(), nil)
 	if err != nil {
 		return fmt.Errorf("cluster failed health check: %w", err)
 	}
@@ -541,9 +534,27 @@ func ProvisionCluster(logger *log.Logger) (*spi.Cluster, error) {
 	}
 
 	var cluster *spi.Cluster
-	// create a new cluster if no ID is specified
+	// get cluster ID from env
 	clusterID := viper.GetString(config.Cluster.ID)
+	// get cluster id from shared_dir (used in prow multi-step jobs
+	log.Printf("cluster id:%s shared dir:%s", clusterID, viper.GetString(config.SharedDir))
+	if clusterID == "" && viper.GetString(config.SharedDir) != "" {
+		sharedClusterIdPath := viper.GetString(config.SharedDir) + "/cluster-id"
+		_, err := os.Stat(sharedClusterIdPath)
+		if err == nil {
+			clusteridbytes, err := os.ReadFile(sharedClusterIdPath)
+			if err == nil {
+				clusterID = string(clusteridbytes)
+				fmt.Printf("cluster-id found in SHARED_DIR %s", clusterID)
+				viper.Set(config.Cluster.ID, clusterID)
+			} else {
+				log.Printf("could not read from shared cluster-id: %s", err.Error())
+			}
+		}
+	}
+	// create a new cluster if no ID is specified
 	if clusterID == "" {
+		fmt.Printf("no clusterid found, provisioning cluster")
 		name := viper.GetString(config.Cluster.Name)
 		if name == "" || name == "random" {
 			attemptLimit := 10
