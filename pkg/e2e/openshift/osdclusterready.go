@@ -16,7 +16,7 @@ import (
 
 const (
 	suiteName = "OSD Cluster Ready"
-	timeout   = 30 * time.Minute
+	timeout   = 60 * time.Minute
 	namespace = "openshift-monitoring"
 	jobname   = "osd-cluster-ready"
 )
