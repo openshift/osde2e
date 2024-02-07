@@ -3,7 +3,6 @@ package cleanup
 import (
 	"fmt"
 	"log"
-	"strconv"
 	"time"
 
 	"github.com/openshift/osde2e/cmd/osde2e/common"
@@ -28,7 +27,7 @@ var args struct {
 	secretLocations string
 	clusterID       string
 	iam             bool
-	iamOlderThan    int
+	iamOlderThan    string
 	iamDryRun       bool
 }
 
@@ -65,11 +64,11 @@ func init() {
 		false,
 		"Cleanup iam resources",
 	)
-	flags.IntVar(
+	flags.StringVar(
 		&args.iamOlderThan,
 		"iam-older-than",
-		1,
-		"Cleanup iam resources older than this number of days",
+		"24h",
+		"Cleanup iam resources older than this duration. Accepts a sequence of decimal numbers with a unit suffix, such as '2h45m'",
 	)
 	flags.BoolVar(
 		&args.iamDryRun,
@@ -126,20 +125,19 @@ func run(cmd *cobra.Command, argv []string) error {
 			}
 		}
 	} else {
-		hours := strconv.Itoa(args.iamOlderThan * 24)
-		fmthours, err := time.ParseDuration(hours + "h")
+		fmtDuration, err := time.ParseDuration(args.iamOlderThan)
 		if err != nil {
-			return fmt.Errorf("Could not parse older-than value to time duration. Please provide a number.")
+			return fmt.Errorf("Please provide a valid duration string. Valid units are 'm', 'h':  %s", err.Error())
 		}
-		err = aws.CcsAwsSession.CleanupOpenIDConnectProviders(fmthours, args.iamDryRun)
+		err = aws.CcsAwsSession.CleanupOpenIDConnectProviders(fmtDuration, args.iamDryRun)
 		if err != nil {
 			return fmt.Errorf("Could not delete OIDC providers: %s", err.Error())
 		}
-		err = aws.CcsAwsSession.CleanupRoles(fmthours, args.iamDryRun)
+		err = aws.CcsAwsSession.CleanupRoles(fmtDuration, args.iamDryRun)
 		if err != nil {
 			return fmt.Errorf("Could not delete IAM roles: %s", err.Error())
 		}
-		err = aws.CcsAwsSession.CleanupPolicies(fmthours, args.iamDryRun)
+		err = aws.CcsAwsSession.CleanupPolicies(fmtDuration, args.iamDryRun)
 		if err != nil {
 			return fmt.Errorf("Could not delete IAM policies: %s", err.Error())
 		}
