@@ -82,13 +82,12 @@ func init() {
 }
 
 func run(cmd *cobra.Command, argv []string) error {
+	var err error
+	if err = common.LoadConfigs(args.configString, args.customConfig, args.secretLocations); err != nil {
+		return fmt.Errorf("error loading initial state: %v", err)
+	}
 	if !args.iam {
 		var provider spi.Provider
-		var err error
-		if err = common.LoadConfigs(args.configString, args.customConfig, args.secretLocations); err != nil {
-			return fmt.Errorf("error loading initial state: %v", err)
-		}
-
 		if provider, err = providers.ClusterProvider(); err != nil {
 			return fmt.Errorf("could not setup cluster provider: %v", err)
 		}
