@@ -250,6 +250,11 @@ var Tests = struct {
 	// Env: TESTS_TO_RUN
 	TestsToRun string
 
+	// OCPTestSuite Is the conformance suite to pass to "openshift-test" command. ex. "Operator"
+	// Env: OCP_TEST_SUITE
+	// arg --ocp-test-suite
+	OCPTestSuite string
+
 	// SuppressSkipNotifications suppresses the notifications of skipped tests
 	// Env: SUPPRESS_SKIP_NOTIFICATIONS
 	SuppressSkipNotifications string
@@ -295,6 +300,7 @@ var Tests = struct {
 	GinkgoLogLevel:             "tests.ginkgoLogLevel",
 	GinkgoLabelFilter:          "tests.ginkgoLabelFilter",
 	TestsToRun:                 "tests.testsToRun",
+	OCPTestSuite:               "tests.ocpTestSuite",
 	SuppressSkipNotifications:  "tests.suppressSkipNotifications",
 	CleanRuns:                  "tests.cleanRuns",
 	OperatorSkip:               "tests.operatorSkip",
@@ -719,6 +725,8 @@ func InitOSDe2eViper() {
 	viper.BindEnv(Tests.GinkgoLabelFilter, "GINKGO_LABEL_FILTER")
 
 	viper.BindEnv(Tests.TestsToRun, "TESTS_TO_RUN")
+
+	viper.BindEnv(Tests.OCPTestSuite, "OCP_TEST_SUITE")
 
 	viper.SetDefault(Tests.SuppressSkipNotifications, true)
 	viper.BindEnv(Tests.SuppressSkipNotifications, "SUPPRESS_SKIP_NOTIFICATIONS")
