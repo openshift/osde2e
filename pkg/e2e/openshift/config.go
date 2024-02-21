@@ -7,17 +7,14 @@ import (
 	"text/template"
 
 	. "github.com/onsi/gomega"
+	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
+	"github.com/openshift/osde2e/pkg/common/config"
 )
 
 const testCmd = `
-oc config set-cluster cluster --server=https://kubernetes.default.svc --certificate-authority=/var/run/secrets/kubernetes.io/serviceaccount/ca.crt
-oc config set-credentials user --token=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
-oc config set-context cluster --cluster=cluster --user=user
-oc config use-context cluster
-oc config view --raw=true > /tmp/kubeconfig
 export KUBECONFIG=/tmp/kubeconfig
 
-REGION="$(oc get -o jsonpath='{.status.platformStatus.aws.region}' infrastructure cluster)"
+REGION={{region}}
 ZONE="$(oc get -o jsonpath='{.items[0].metadata.labels.failure-domain\.beta\.kubernetes\.io/zone}' nodes)"
 export TEST_PROVIDER="{\"type\":\"aws\",\"region\":\"${REGION}\",\"zone\":\"${ZONE}\",\"multizone\":true,\"multimaster\":true}"
 
@@ -31,20 +28,6 @@ export TEST_PROVIDER="{\"type\":\"aws\",\"region\":\"${REGION}\",\"zone\":\"${ZO
 	tar cvfz {{$outDir}}/{{.Name}}.tgz {{.OutputDir}}
 {{end}}
 
-case $(rpm -qa python) in
-python-2*)
-	MODULE="SimpleHTTPServer"
-	;;
-python-3*)
-	MODULE="http.server"
-	;;
-*)
-	MODULE="http.server"
-	;;
-esac
-
-# make results available using HTTP
-cd {{$outDir}} && echo "Starting server" && python -m "${MODULE}"
 `
 
 var cmdTemplate = template.Must(template.New("testCmd").
@@ -52,6 +35,7 @@ var cmdTemplate = template.Must(template.New("testCmd").
 		"printTests":  printTests,
 		"selectTests": selectTests,
 		"unwrap":      unwrap,
+		"region":      region,
 	}).Parse(testCmd))
 
 // E2EConfig defines the behavior of the extended test suite.
@@ -93,6 +77,10 @@ func (c E2EConfig) Cmd() string {
 func printTests(strs []string) string {
 	testList := strings.Join(strs, "\"\n\"")
 	return fmt.Sprintf("printf '\"%s\"'", testList)
+}
+
+func region() string {
+	return viper.GetString(config.CloudProvider.Region)
 }
 
 // runs a suite unless tests are specified
