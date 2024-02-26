@@ -35,7 +35,7 @@ require (
 	github.com/openshift/custom-domains-operator v0.0.0-20221118201157-bd1052dac818
 	github.com/openshift/managed-upgrade-operator v0.0.0-20230525042514-a9b8c1d2571c
 	github.com/openshift/must-gather-operator v0.1.2-0.20221011152618-7805956e1ded
-	github.com/openshift/osde2e-common v0.0.0-20240123175411-5002d195f990
+	github.com/openshift/osde2e-common v0.0.0-20240226175238-844467013337
 	github.com/openshift/route-monitor-operator v0.0.0-20221118160357-3df1ed1fa1d2
 	github.com/openshift/splunk-forwarder-operator v0.0.0-20230525060151-2dc403aa8ff9
 	github.com/operator-framework/api v0.17.7
