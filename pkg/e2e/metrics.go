@@ -29,11 +29,11 @@ const (
 
 	cicdPrefix string = "cicd_"
 
-	jUnitMetricName    string = cicdPrefix + "jUnitResult"
-	metadataMetricName string = cicdPrefix + "metadata"
-	addonMetricName    string = cicdPrefix + "addon_metadata"
-	eventMetricName    string = cicdPrefix + "event"
-	routeMetricName    string = cicdPrefix + "route"
+	jUnitMetricName    = cicdPrefix + "jUnitResult"
+	metadataMetricName = cicdPrefix + "metadata"
+	addonMetricName    = cicdPrefix + "addon_metadata"
+	eventMetricName    = cicdPrefix + "event"
+	routeMetricName    = cicdPrefix + "route"
 )
 
 var junitFileRegex, logFileRegex *regexp.Regexp
@@ -355,7 +355,7 @@ func (m *Metrics) processRoutes(gatherer *prometheus.GaugeVec) {
 // registryToExpositionFormat takes all of the gathered metrics and writes them out in the exposition format
 func (m *Metrics) registryToExpositionFormat() ([]byte, error) {
 	buf := &bytes.Buffer{}
-	encoder := expfmt.NewEncoder(buf, expfmt.FmtText)
+	encoder := expfmt.NewEncoder(buf, expfmt.NewFormat(expfmt.TypeTextPlain))
 	metricFamilies, err := m.metricRegistry.Gather()
 	if err != nil {
 		return []byte{}, fmt.Errorf("error while gathering metrics: %v", err)
