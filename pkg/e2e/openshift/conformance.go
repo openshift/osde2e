@@ -6,6 +6,9 @@ import (
 
 	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
+	"github.com/openshift/osde2e/pkg/common/config"
+	"github.com/openshift/osde2e/pkg/common/label"
 
 	"github.com/openshift/osde2e/pkg/common/alert"
 	"github.com/openshift/osde2e/pkg/common/helper"
@@ -71,16 +74,21 @@ var _ = ginkgo.Describe(conformanceK8sTestName, func() {
 	})
 })
 
-var _ = ginkgo.Describe(conformanceOpenshiftTestName, func() {
+var _ = ginkgo.Describe(conformanceOpenshiftTestName, ginkgo.Ordered, label.OCPNightlyBlocking, func() {
 	defer ginkgo.GinkgoRecover()
 	h := helper.New()
 
 	e2eTimeoutInSeconds := 7200
 	ginkgo.It("should run until completion", func(ctx context.Context) {
+		suite := "suite"
+		testType := "openshift/conformance/parallel"
 		h.SetServiceAccount(ctx, "system:serviceaccount:%s:cluster-admin")
 		// configure tests
 		cfg := DefaultE2EConfig
-		cfg.Suite = "openshift/conformance/parallel suite"
+		if viper.GetString(config.Tests.OCPTestSuite) != "" {
+			suite = viper.GetString(config.Tests.OCPTestSuite)
+		}
+		cfg.Suite = testType + " " + suite
 		cfg.Name = "openshift-conformance"
 		cmd := cfg.Cmd()
 

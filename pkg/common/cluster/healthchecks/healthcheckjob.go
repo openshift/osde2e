@@ -4,8 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"os"
-	"path/filepath"
+	"time"
 
 	"github.com/onsi/ginkgo/v2"
 	"github.com/openshift/osde2e-common/pkg/clients/openshift"
@@ -21,7 +20,6 @@ func CheckHealthcheckJob(k8sClient *kubernetes.Clientset, ctx context.Context, l
 	logger = logging.CreateNewStdLoggerOrUseExistingLogger(logger)
 	var k8s *openshift.Client
 
-	namespace := "openshift-monitoring"
 	name := "osd-cluster-ready"
 
 	k8s, err := openshift.New(ginkgo.GinkgoLogr)
@@ -29,24 +27,16 @@ func CheckHealthcheckJob(k8sClient *kubernetes.Clientset, ctx context.Context, l
 		return fmt.Errorf("Unable to setup k8s client: %w", err)
 	}
 
-	joberr := k8s.WatchJob(ctx, namespace, name)
+	timeout, err := time.ParseDuration(viper.GetString(config.Tests.ClusterHealthChecksTimeout))
+	if err != nil {
+		return fmt.Errorf("failed parsing health check timeout: %w", err)
+	}
+	joberr := k8s.OSDClusterHealthy(ctx, name, viper.GetString(config.ReportDir), timeout)
 
 	if joberr == nil {
 		logger.Println("Healthcheck job passed")
 		return nil
 	}
 
-	filename := filepath.Join(viper.GetString(config.ReportDir), fmt.Sprintf("%s.log", name))
-	file, err := os.Create(filename)
-	if err != nil {
-		fmt.Print("could not create osd-cluster-ready log file: ", err)
-	} else {
-		logs, err := k8s.GetJobLogs(ctx, name, namespace)
-		if err != nil {
-			fmt.Print("could not get job logs: ", err)
-		} else {
-			file.WriteString(logs)
-		}
-	}
 	return joberr
 }

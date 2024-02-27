@@ -37,8 +37,8 @@ func (CcsAwsSession *ccsAwsSession) CleanupOpenIDConnectProviders(olderthan time
 			return err
 		}
 
-		// If provider name contains "cloudfront" and is older than given days, delete it
-		if strings.Contains(*result.Url, providersubstr) && time.Since(*result.CreateDate) > olderthan {
+		// If provider url contains "cloudfront" or "osde2e-" and is older than given days, delete it
+		if (strings.Contains(*result.Url, providersubstr) || strings.Contains(*result.Url, rolesubstr)) && time.Since(*result.CreateDate) > olderthan {
 			fmt.Printf("Provider will be deleted: %s\n", *provider.Arn)
 
 			if !dryrun {

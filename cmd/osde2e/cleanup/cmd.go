@@ -3,7 +3,6 @@ package cleanup
 import (
 	"fmt"
 	"log"
-	"strconv"
 	"time"
 
 	"github.com/openshift/osde2e/cmd/osde2e/common"
@@ -28,8 +27,9 @@ var args struct {
 	secretLocations string
 	clusterID       string
 	iam             bool
-	iamOlderThan    int
-	iamDryRun       bool
+	s3              bool
+	olderThan       string
+	dryRun          bool
 }
 
 func init() {
@@ -65,15 +65,21 @@ func init() {
 		false,
 		"Cleanup iam resources",
 	)
-	flags.IntVar(
-		&args.iamOlderThan,
-		"iam-older-than",
-		1,
-		"Cleanup iam resources older than this number of days",
+	flags.BoolVar(
+		&args.s3,
+		"s3",
+		false,
+		"Cleanup s3 buckets",
+	)
+	flags.StringVar(
+		&args.olderThan,
+		"older-than",
+		"24h",
+		"Cleanup iam resources older than this duration. Accepts a sequence of decimal numbers with a unit suffix, such as '2h45m'",
 	)
 	flags.BoolVar(
-		&args.iamDryRun,
-		"iam-dry-run",
+		&args.dryRun,
+		"dry-run",
 		true,
 		"Show dry run log of deleting iam resources",
 	)
@@ -83,13 +89,14 @@ func init() {
 }
 
 func run(cmd *cobra.Command, argv []string) error {
-	if !args.iam {
+	var err error
+	if err = common.LoadConfigs(args.configString, args.customConfig, args.secretLocations); err != nil {
+		return fmt.Errorf("error loading initial state: %v", err)
+	}
+	// If neither s3 nor iam resources are specified, cluster cleanup is done as follows:
+	// If cluster-id is provided, deletes given cluster. If not, deletes all expired, osde2e owned clusters.
+	if !args.iam && !args.s3 {
 		var provider spi.Provider
-		var err error
-		if err = common.LoadConfigs(args.configString, args.customConfig, args.secretLocations); err != nil {
-			return fmt.Errorf("error loading initial state: %v", err)
-		}
-
 		if provider, err = providers.ClusterProvider(); err != nil {
 			return fmt.Errorf("could not setup cluster provider: %v", err)
 		}
@@ -126,22 +133,29 @@ func run(cmd *cobra.Command, argv []string) error {
 			}
 		}
 	} else {
-		hours := strconv.Itoa(args.iamOlderThan * 24)
-		fmthours, err := time.ParseDuration(hours + "h")
+		fmtDuration, err := time.ParseDuration(args.olderThan)
 		if err != nil {
-			return fmt.Errorf("Could not parse older-than value to time duration. Please provide a number.")
+			return fmt.Errorf("Please provide a valid duration string. Valid units are 'm', 'h':  %s", err.Error())
 		}
-		err = aws.CcsAwsSession.CleanupOpenIDConnectProviders(fmthours, args.iamDryRun)
-		if err != nil {
-			return fmt.Errorf("Could not delete OIDC providers: %s", err.Error())
+		if args.iam {
+			err = aws.CcsAwsSession.CleanupOpenIDConnectProviders(fmtDuration, args.dryRun)
+			if err != nil {
+				return fmt.Errorf("Could not delete OIDC providers: %s", err.Error())
+			}
+			err = aws.CcsAwsSession.CleanupRoles(fmtDuration, args.dryRun)
+			if err != nil {
+				return fmt.Errorf("Could not delete IAM roles: %s", err.Error())
+			}
+			err = aws.CcsAwsSession.CleanupPolicies(fmtDuration, args.dryRun)
+			if err != nil {
+				return fmt.Errorf("Could not delete IAM policies: %s", err.Error())
+			}
 		}
-		err = aws.CcsAwsSession.CleanupRoles(fmthours, args.iamDryRun)
-		if err != nil {
-			return fmt.Errorf("Could not delete IAM roles: %s", err.Error())
-		}
-		err = aws.CcsAwsSession.CleanupPolicies(fmthours, args.iamDryRun)
-		if err != nil {
-			return fmt.Errorf("Could not delete IAM policies: %s", err.Error())
+		if args.s3 {
+			err = aws.CcsAwsSession.CleanupS3Buckets(fmtDuration, args.dryRun)
+			if err != nil {
+				return fmt.Errorf("Could not delete s3 buckets: %s", err.Error())
+			}
 		}
 	}
 	return nil

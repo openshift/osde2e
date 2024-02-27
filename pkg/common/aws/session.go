@@ -10,6 +10,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/iam"
+	"github.com/aws/aws-sdk-go/service/s3"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
 )
@@ -18,6 +19,7 @@ type ccsAwsSession struct {
 	session   *session.Session
 	accountId string
 	iam       *iam.IAM
+	s3        *s3.S3
 	ec2       *ec2.EC2
 	once      sync.Once
 }
@@ -48,6 +50,7 @@ func (CcsAwsSession *ccsAwsSession) GetAWSSessions() error {
 
 		CcsAwsSession.session, err = session.NewSessionWithOptions(options)
 		CcsAwsSession.iam = iam.New(CcsAwsSession.session)
+		CcsAwsSession.s3 = s3.New(CcsAwsSession.session)
 		CcsAwsSession.ec2 = ec2.New(CcsAwsSession.session)
 		CcsAwsSession.accountId = viper.GetString(config.AWSAccountId)
 	})
