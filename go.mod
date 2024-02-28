@@ -17,7 +17,7 @@ require (
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/hashicorp/hc-install v0.6.3
 	github.com/hashicorp/terraform-exec v0.20.0
-	github.com/jackc/pgtype v1.14.1
+	github.com/jackc/pgtype v1.14.2
 	github.com/jinzhu/inflection v1.0.0
 	github.com/joshdk/go-junit v1.0.0
 	github.com/kyleconroy/sqlc v1.19.1
