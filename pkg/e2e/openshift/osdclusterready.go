@@ -28,7 +28,7 @@ var _ = ginkgo.Describe(suiteName, ginkgo.Ordered, label.OCPNightlyBlocking, fun
 	ginkgo.BeforeAll(func(ctx context.Context) {
 		log.SetLogger(ginkgo.GinkgoLogr)
 		var err error
-		k8s, err = openshift.New(ginkgo.GinkgoLogr)
+		k8s, err = openshift.NewFromKubeconfig(viper.GetString(config.Kubeconfig.Path), ginkgo.GinkgoLogr)
 		Expect(err).ShouldNot(HaveOccurred(), "Unable to setup k8s client")
 	})
 
