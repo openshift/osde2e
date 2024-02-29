@@ -19,7 +19,7 @@ import (
 
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/jackc/pgtype"
-	junit "github.com/joshdk/go-junit"
+	"github.com/joshdk/go-junit"
 	vegeta "github.com/tsenart/vegeta/lib"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -78,7 +78,9 @@ func beforeSuite() bool {
 	var err error
 
 	// We can capture this error if TEST_KUBECONFIG is set, but we can't use it to skip provisioning
-	config.LoadKubeconfig()
+	if err := config.LoadKubeconfig(); err != nil {
+		log.Printf("Not loading kubeconfig: %v", err)
+	}
 
 	if viper.GetString(config.Kubeconfig.Contents) == "" {
 		cluster, err := clusterutil.ProvisionCluster(nil)
@@ -156,12 +158,13 @@ func beforeSuite() bool {
 		}
 
 		var kubeconfigBytes []byte
-		clusterConfigerr := wait.PollImmediate(2*time.Second, 5*time.Minute, func() (bool, error) {
+		clusterConfigerr := wait.PollUntilContextTimeout(context.Background(), 2*time.Second, 5*time.Minute, false, func(ctx context.Context) (bool, error) {
 			kubeconfigBytes, err = provider.ClusterKubeconfig(viper.GetString(config.Cluster.ID))
 			if err != nil {
 				log.Printf("Failed to get kubeconfig from OCM: %v\nWaiting two seconds before retrying", err)
-				return false, err
+				return false, nil
 			} else {
+				log.Printf("Successfully retrieved kubeconfig from OCM.")
 				viper.Set(config.Kubeconfig.Contents, string(kubeconfigBytes))
 				return true, nil
 			}
@@ -177,6 +180,8 @@ func beforeSuite() bool {
 		if viper.GetString(config.SharedDir) != "" {
 			if err = os.WriteFile(fmt.Sprintf("%s/kubeconfig", viper.GetString(config.SharedDir)), kubeconfigBytes, 0o644); err != nil {
 				log.Printf("Error writing cluster kubeconfig to shared directory: %v", err)
+			} else {
+				log.Printf("Passed kubeconfig to prow steps.")
 			}
 		}
 
