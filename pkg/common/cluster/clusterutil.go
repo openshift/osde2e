@@ -98,7 +98,7 @@ func WaitForClusterReadyPostInstall(clusterID string, logger *log.Logger) error 
 	}
 	logger.Printf("Waiting %v minutes for cluster '%s' to be ready...\n", installTimeout, clusterID)
 
-	_, err = waitForOCMProvisioning(provider, clusterID, installTimeout, logger, false)
+	_, err = WaitForOCMProvisioning(provider, clusterID, installTimeout, logger, false)
 	if err != nil {
 		return fmt.Errorf("OCM never became ready: %w", err)
 	}
@@ -236,7 +236,7 @@ func WaitForClusterReadyPostWake(clusterID string, logger *log.Logger) error {
 	return waitForClusterReadyWithOverrideAndExpectedNumberOfNodes(clusterID, logger, false, false)
 }
 
-func waitForOCMProvisioning(provider spi.Provider, clusterID string, installTimeout int64, logger *log.Logger, isUpgrade bool) (becameReadyAt time.Time, err error) {
+func WaitForOCMProvisioning(provider spi.Provider, clusterID string, installTimeout int64, logger *log.Logger, isUpgrade bool) (becameReadyAt time.Time, err error) {
 	logger = logging.CreateNewStdLoggerOrUseExistingLogger(logger)
 	readinessSet := false
 	var readinessStarted time.Time
@@ -311,7 +311,7 @@ func waitForClusterReadyWithOverrideAndExpectedNumberOfNodes(clusterID string, l
 	cleanRuns := 0
 	errRuns := 0
 
-	readinessStarted, err := waitForOCMProvisioning(provider, clusterID, installTimeout, logger, isUpgrade)
+	readinessStarted, err := WaitForOCMProvisioning(provider, clusterID, installTimeout, logger, isUpgrade)
 	if err != nil {
 		return fmt.Errorf("OCM never became ready: %w", err)
 	}

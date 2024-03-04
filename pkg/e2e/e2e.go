@@ -452,7 +452,18 @@ func runGinkgoTests() (int, error) {
 		viper.Set(config.Cluster.Passing, testsPassed)
 	}
 	if viper.GetBool(config.Cluster.ProvisionOnly) {
-		log.Println("Provision only execution finished, exiting.")
+		installTimeout := viper.GetInt64(config.Cluster.InstallTimeout)
+		if viper.GetBool(config.Hypershift) {
+			// Install timeout 30 minutes for hypershift
+			installTimeout = 30
+		}
+		fmt.Printf("Waiting %v minutes for cluster to be ready...\n", installTimeout)
+
+		_, err = clusterutil.WaitForOCMProvisioning(provider, viper.GetString(config.Cluster.ID), installTimeout, nil, false)
+		if err != nil {
+			return Failure, fmt.Errorf("OCM never became ready: %w", err)
+		}
+		fmt.Println("Cluster is provision complete, exiting.")
 		return Success, nil
 	}
 	upgradeTestsPassed := true
