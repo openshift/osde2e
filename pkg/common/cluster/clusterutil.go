@@ -91,12 +91,6 @@ func WaitForClusterReadyPostInstall(clusterID string, logger *log.Logger) error 
 		return fmt.Errorf("error getting cluster provisioning client: %v", err)
 	}
 
-	_, err = WaitForOCMProvisioning(provider, clusterID, logger, false)
-	if err != nil {
-		return fmt.Errorf("OCM never became ready: %w", err)
-	}
-	logger.Println("Cluster is provisioned in OCM")
-
 	cluster, err := provider.GetCluster(clusterID)
 	if err != nil {
 		return fmt.Errorf("failed getting cluster from provider: %w", err)

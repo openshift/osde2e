@@ -95,6 +95,14 @@ func beforeSuite() bool {
 		viper.Set(config.Cluster.Channel, cluster.ChannelGroup())
 
 		log.Printf("CLUSTER_ID set to %s from OCM.", viper.GetString(config.Cluster.ID))
+		_, err = clusterutil.WaitForOCMProvisioning(provider, viper.GetString(config.Cluster.ID), nil, false)
+		if err != nil {
+			log.Printf("Cluster never became ready: %v", err)
+			getLogs()
+			return false
+		}
+		log.Printf("Cluster status is ready")
+
 		if viper.Get(config.Tests.TestHarnesses) != nil {
 			passthruSecrets := viper.GetStringMapString(config.NonOSDe2eSecrets)
 			passthruSecrets["CLUSTER_ID"] = viper.GetString(config.Cluster.ID)
@@ -452,11 +460,7 @@ func runGinkgoTests() (int, error) {
 		viper.Set(config.Cluster.Passing, testsPassed)
 	}
 	if viper.GetBool(config.Cluster.ProvisionOnly) {
-		_, err = clusterutil.WaitForOCMProvisioning(provider, viper.GetString(config.Cluster.ID), nil, false)
-		if err != nil {
-			return Failure, fmt.Errorf("OCM never became ready: %w", err)
-		}
-		fmt.Println("Cluster is provision complete, exiting.")
+		log.Println("Provision only execution finished, exiting.")
 		return Success, nil
 	}
 	upgradeTestsPassed := true
