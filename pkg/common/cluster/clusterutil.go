@@ -91,14 +91,7 @@ func WaitForClusterReadyPostInstall(clusterID string, logger *log.Logger) error 
 		return fmt.Errorf("error getting cluster provisioning client: %v", err)
 	}
 
-	installTimeout := viper.GetInt64(config.Cluster.InstallTimeout)
-	if viper.GetBool(config.Hypershift) {
-		// Install timeout 30 minutes for hypershift
-		installTimeout = 30
-	}
-	logger.Printf("Waiting %v minutes for cluster '%s' to be ready...\n", installTimeout, clusterID)
-
-	_, err = WaitForOCMProvisioning(provider, clusterID, installTimeout, logger, false)
+	_, err = WaitForOCMProvisioning(provider, clusterID, logger, false)
 	if err != nil {
 		return fmt.Errorf("OCM never became ready: %w", err)
 	}
@@ -146,7 +139,7 @@ func WaitForClusterReadyPostInstall(clusterID string, logger *log.Logger) error 
 		return nil
 	}
 
-	err = healthchecks.CheckHealthcheckJob(kubeClient, context.Background(), nil)
+	err = healthchecks.CheckHealthcheckJob(context.Background(), nil)
 	if err != nil {
 		return fmt.Errorf("cluster failed health check: %w", err)
 	}
@@ -236,7 +229,14 @@ func WaitForClusterReadyPostWake(clusterID string, logger *log.Logger) error {
 	return waitForClusterReadyWithOverrideAndExpectedNumberOfNodes(clusterID, logger, false, false)
 }
 
-func WaitForOCMProvisioning(provider spi.Provider, clusterID string, installTimeout int64, logger *log.Logger, isUpgrade bool) (becameReadyAt time.Time, err error) {
+func WaitForOCMProvisioning(provider spi.Provider, clusterID string, logger *log.Logger, isUpgrade bool) (becameReadyAt time.Time, err error) {
+	installTimeout := viper.GetInt64(config.Cluster.InstallTimeout)
+	if viper.GetBool(config.Hypershift) {
+		// Install timeout 30 minutes for hypershift
+		installTimeout = 30
+	}
+	fmt.Printf("Waiting %v minutes for cluster to be ready...\n", installTimeout)
+
 	logger = logging.CreateNewStdLoggerOrUseExistingLogger(logger)
 	readinessSet := false
 	var readinessStarted time.Time
@@ -306,12 +306,11 @@ func waitForClusterReadyWithOverrideAndExpectedNumberOfNodes(clusterID string, l
 	}
 
 	installTimeout := viper.GetInt64(config.Cluster.InstallTimeout)
-	logger.Printf("Waiting %v minutes for cluster '%s' to be ready...\n", installTimeout, clusterID)
 	cleanRunsNeeded := viper.GetInt(config.Cluster.CleanCheckRuns)
 	cleanRuns := 0
 	errRuns := 0
 
-	readinessStarted, err := WaitForOCMProvisioning(provider, clusterID, installTimeout, logger, isUpgrade)
+	readinessStarted, err := WaitForOCMProvisioning(provider, clusterID, logger, isUpgrade)
 	if err != nil {
 		return fmt.Errorf("OCM never became ready: %w", err)
 	}
