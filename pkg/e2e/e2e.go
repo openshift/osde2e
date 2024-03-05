@@ -169,7 +169,7 @@ func beforeSuite() bool {
 		clusterConfigerr := wait.PollUntilContextTimeout(context.Background(), 2*time.Second, 5*time.Minute, false, func(ctx context.Context) (bool, error) {
 			kubeconfigBytes, err = provider.ClusterKubeconfig(viper.GetString(config.Cluster.ID))
 			if err != nil {
-				log.Printf("Failed to get kubeconfig from OCM: %v\nWaiting two seconds before retrying", err)
+				log.Printf("Failed to retrieve kubeconfig: %v\nWaiting two seconds before retrying", err)
 				return false, nil
 			} else {
 				log.Printf("Successfully retrieved kubeconfig from OCM.")
