@@ -11,7 +11,6 @@ import (
 
 	"github.com/Masterminds/semver/v3"
 	"github.com/hashicorp/go-multierror"
-	"github.com/onsi/ginkgo/v2"
 	osconfig "github.com/openshift/client-go/config/clientset/versioned"
 	"github.com/openshift/osde2e/pkg/common/cluster/healthchecks"
 	"github.com/openshift/osde2e/pkg/common/clusterproperties"
@@ -230,9 +229,11 @@ func WaitForOCMProvisioning(provider spi.Provider, clusterID string, logger *log
 		// Install timeout 30 minutes for hypershift
 		installTimeout = 30
 	}
-	ginkgo.GinkgoLogr.Info("Waiting %v minutes for cluster to be ready...\n", installTimeout)
 
 	logger = logging.CreateNewStdLoggerOrUseExistingLogger(logger)
+
+	logger.Printf("Waiting %v minutes for cluster to be ready...\n", installTimeout)
+
 	readinessSet := false
 	var readinessStarted time.Time
 	clusterStarted := time.Now()
@@ -274,7 +275,7 @@ func WaitForOCMProvisioning(provider spi.Provider, clusterID string, logger *log
 			readinessStarted = time.Now()
 			return true, nil
 		} else if cluster.State() == spi.ClusterStateError {
-			log.Print("cluster is in error state, check cloud provider for more details")
+			logger.Print("cluster is in error state, check cloud provider for more details")
 		}
 		logger.Printf("cluster is not ready, state is: %v", cluster.State())
 		return false, nil
