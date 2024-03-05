@@ -12,7 +12,6 @@ import (
 )
 
 const testCmd = `
-export KUBECONFIG=/tmp/kubeconfig
 
 REGION={{region}}
 ZONE="$(oc get -o jsonpath='{.items[0].metadata.labels.failure-domain\.beta\.kubernetes\.io/zone}' nodes)"
