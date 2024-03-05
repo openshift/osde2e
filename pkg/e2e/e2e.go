@@ -95,6 +95,14 @@ func beforeSuite() bool {
 		viper.Set(config.Cluster.Channel, cluster.ChannelGroup())
 
 		log.Printf("CLUSTER_ID set to %s from OCM.", viper.GetString(config.Cluster.ID))
+		_, err = clusterutil.WaitForOCMProvisioning(provider, viper.GetString(config.Cluster.ID), nil, false)
+		if err != nil {
+			log.Printf("Cluster never became ready: %v", err)
+			getLogs()
+			return false
+		}
+		log.Printf("Cluster status is ready")
+
 		if viper.Get(config.Tests.TestHarnesses) != nil {
 			passthruSecrets := viper.GetStringMapString(config.NonOSDe2eSecrets)
 			passthruSecrets["CLUSTER_ID"] = viper.GetString(config.Cluster.ID)
@@ -161,7 +169,7 @@ func beforeSuite() bool {
 		clusterConfigerr := wait.PollUntilContextTimeout(context.Background(), 2*time.Second, 5*time.Minute, false, func(ctx context.Context) (bool, error) {
 			kubeconfigBytes, err = provider.ClusterKubeconfig(viper.GetString(config.Cluster.ID))
 			if err != nil {
-				log.Printf("Failed to get kubeconfig from OCM: %v\nWaiting two seconds before retrying", err)
+				log.Printf("Failed to retrieve kubeconfig: %v\nWaiting two seconds before retrying", err)
 				return false, nil
 			} else {
 				log.Printf("Successfully retrieved kubeconfig from OCM.")

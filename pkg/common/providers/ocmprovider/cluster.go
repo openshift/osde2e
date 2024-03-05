@@ -887,11 +887,11 @@ func (o *OCMProvider) ClusterKubeconfig(clusterID string) ([]byte, error) {
 func getLocalKubeConfig(path string) ([]byte, error) {
 	fileReader, err := os.Open(path)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error opening provided kubeconfig: %v", err)
 	}
 	f, err := io.ReadAll(fileReader)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error reading provided kubeconfig: %v", err)
 	}
 	return []byte(f), nil
 }
