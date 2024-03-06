@@ -39,8 +39,10 @@ const (
 	// CCS defines whether the cluster should expect cloud credentials or not
 	CCS = "ocm.ccs"
 
-	// GCP CCS Credentials
-	GCPCredsJSON               = "ocm.gcp.credsJSON"
+	// GCP CCS Credential json
+	// Env: GCP_CREDS_JSON, OCM_GCP_CREDS_JSON
+	GCPCredsJSON = "ocm.gcp.credsJSON"
+	// GCP creds json internals
 	GCPCredsType               = "ocm.gcp.credsType"
 	GCPProjectID               = "ocm.gcp.projectID"
 	GCPPrivateKey              = "ocm.gcp.privateKey"
@@ -86,6 +88,7 @@ func init() {
 	viper.SetDefault(CCS, false)
 	viper.BindEnv(CCS, "OCM_CCS", "CCS")
 
+	viper.BindEnv(GCPCredsJSON, "OCM_GCP_CREDS_JSON", "GCP_CREDS_JSON")
 	viper.BindEnv(GCPCredsType, "OCM_GCP_CREDS_TYPE", "GCP_CREDS_TYPE")
 	viper.BindEnv(GCPProjectID, "OCM_GCP_PROJECT_ID", "GCP_PROJECT_ID")
 	viper.BindEnv(GCPPrivateKey, "OCM_GCP_PRIVATE_KEY", "GCP_PRIVATE_KEY")

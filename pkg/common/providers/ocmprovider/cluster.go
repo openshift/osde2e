@@ -142,7 +142,7 @@ func (o *OCMProvider) LaunchCluster(clusterName string) (string, error) {
 			if err != nil {
 				return "", fmt.Errorf("error unmarshalling GCP credentials: %v", err)
 			}
-			viper.Set(GCPCredsJSON, gcp.Type())
+			viper.Set(GCPCredsType, gcp.Type())
 			viper.Set(GCPProjectID, gcp.ProjectID())
 			viper.Set(GCPPrivateKeyID, gcp.PrivateKeyID())
 			viper.Set(GCPPrivateKey, gcp.PrivateKey())
