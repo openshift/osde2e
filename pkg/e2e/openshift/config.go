@@ -12,6 +12,7 @@ import (
 )
 
 const testCmd = `
+export KUBECONFIG={{kubeconfigPath}}
 
 REGION={{region}}
 ZONE="$(oc get -o jsonpath='{.items[0].metadata.labels.failure-domain\.beta\.kubernetes\.io/zone}' nodes)"
@@ -31,10 +32,11 @@ export TEST_PROVIDER="{\"type\":\"aws\",\"region\":\"${REGION}\",\"zone\":\"${ZO
 
 var cmdTemplate = template.Must(template.New("testCmd").
 	Funcs(template.FuncMap{
-		"printTests":  printTests,
-		"selectTests": selectTests,
-		"unwrap":      unwrap,
-		"region":      region,
+		"kubeconfigPath": kubeconfigPath,
+		"printTests":     printTests,
+		"selectTests":    selectTests,
+		"unwrap":         unwrap,
+		"region":         region,
 	}).Parse(testCmd))
 
 // E2EConfig defines the behavior of the extended test suite.
@@ -76,6 +78,13 @@ func (c E2EConfig) Cmd() string {
 func printTests(strs []string) string {
 	testList := strings.Join(strs, "\"\n\"")
 	return fmt.Sprintf("printf '\"%s\"'", testList)
+}
+
+func kubeconfigPath() string {
+	if viper.GetString(config.SharedDir) != "" {
+		return viper.GetString(config.SharedDir) + "/kubeconfig"
+	}
+	return ""
 }
 
 func region() string {
