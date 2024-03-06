@@ -82,6 +82,13 @@ func beforeSuite() bool {
 		log.Printf("Not loading kubeconfig: %v", err)
 	}
 
+	// populate viper clusterID if shared dir contains one.
+	// Important to do this beforeSuite for multi step jobs.
+	if err := config.LoadClusterId(); err != nil {
+		log.Printf("Not loading cluster id: %v", err)
+		return false
+	}
+
 	if viper.GetString(config.Kubeconfig.Contents) == "" {
 		cluster, err := clusterutil.ProvisionCluster(nil)
 		events.HandleErrorWithEvents(err, events.InstallSuccessful, events.InstallFailed)
