@@ -12,7 +12,12 @@ import (
 )
 
 const testCmd = `
-export KUBECONFIG={{kubeconfigPath}}
+oc config set-cluster cluster --server=https://kubernetes.default.svc --certificate-authority=/var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+oc config set-credentials user --token=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
+oc config set-context cluster --cluster=cluster --user=user
+oc config use-context cluster
+oc config view --raw=true > /tmp/kubeconfig
+export KUBECONFIG=/tmp/kubeconfig
 
 REGION={{region}}
 ZONE="$(oc get -o jsonpath='{.items[0].metadata.labels.failure-domain\.beta\.kubernetes\.io/zone}' nodes)"
