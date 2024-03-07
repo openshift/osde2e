@@ -31,8 +31,8 @@ var DefaultE2EConfig = E2EConfig{
 }
 
 var (
-	conformanceK8sTestName       string = "[Suite: conformance][k8s]"
-	conformanceOpenshiftTestName string = "[Suite: conformance][openshift]"
+	conformanceK8sTestName       = "[Suite: conformance][k8s]"
+	conformanceOpenshiftTestName = "[Suite: conformance][openshift]"
 )
 
 func init() {
@@ -105,10 +105,9 @@ var _ = ginkgo.Describe(conformanceOpenshiftTestName, ginkgo.Ordered, label.OCPN
 		// get results
 		results, err := r.RetrieveTestResults()
 
-		// write results
+		// write results, including non-xml log files
 		h.WriteResults(results)
 
-		// evaluate results
-		Expect(err).NotTo(HaveOccurred())
+		Expect(err).NotTo(HaveOccurred(), "Error reading xml results, test may have exited abruptly. Check conformance logs for errors")
 	})
 })
