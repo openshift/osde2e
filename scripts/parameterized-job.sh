@@ -8,6 +8,7 @@ docker rm osde2e-run
 # the container and copies the secrets over to ensure it has perms
 docker create --name osde2e-run -e OCM_TOKEN \
 	-e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY \
+	-e GCP_CREDS_JSON \
 	-e CLOUD_PROVIDER_REGION \
 	-e ROSA_AWS_REGION="${CLOUD_PROVIDER_REGION}" \
 	-e ROSA_ENV="${ENVIRONMENT}" \
