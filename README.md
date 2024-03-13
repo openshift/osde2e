@@ -327,32 +327,6 @@ that ran and statistics about them (e.g. pass/fail, duration). These XML files w
 used by external applications to present metrics and data for others to see into. An example of
 this is they are used to present data in [TestGrid Dashboards][TestGrid Dashboard].
 
-### CI/CD Job Results Database
-
-We have provisioned an AWS RDS Postgres database to store information about our CI jobs
-and the tests that they execute. We used to store our data only within prometheus,
-but prometheus's timeseries paradigm prevented us from being able to express certain
-queries (even simple ones like "when was the last time this test failed").
-
-The test results database (at time of writing) stores data about each job and its configuration,
-as well as about each test case reported by the Junit XML output of the job.
-
-This data allows us to answer questions about frequency of job/test failure,
-relationships between failures, and more. The code responsible for managing the
-database can be found in the [`./pkg/db/`](pkg/db) directory,
-along with a README describing how to develop against it.
-
-### Database usage from OSDe2e
-
-Because `osde2e` runs a a cluster of parallel, ephemeral prow jobs, our usage of
-the database is unconventional. We have to write all of our database interaction
-logic with the understanding that any number of other prow jobs could be modifying
-the data at the same time that we are.
-
-> Why does each job only report its own failures? The database is global, and a single job could report for all of them.
-
-If each job reported for the failures of all recent jobs, we'd create an enormous number of redundant alerts for no benefit. Having each job only report its own failures keeps the level of noise down *without* requiring us to build some kind of consensus mechanism between the jobs executing in parallel.
-
 ## CI Jobs
 
 Periodic jobs are run daily validating Managed OpenShift clusters, using

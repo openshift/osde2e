@@ -533,7 +533,7 @@ func ProvisionCluster(logger *log.Logger) (*spi.Cluster, error) {
 	clusterID := viper.GetString(config.Cluster.ID)
 	// create a new cluster if no ID is specified
 	if clusterID == "" {
-		fmt.Printf("no clusterid found, provisioning cluster")
+		log.Printf("no clusterid found, provisioning cluster")
 		name := viper.GetString(config.Cluster.Name)
 		if name == "" || name == "random" {
 			attemptLimit := 10
