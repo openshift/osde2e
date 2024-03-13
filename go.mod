@@ -19,7 +19,7 @@ require (
 	github.com/joshdk/go-junit v1.0.0
 	github.com/kylelemons/godebug v1.1.0
 	github.com/mitchellh/mapstructure v1.5.0
-	github.com/onsi/ginkgo/v2 v2.15.0
+	github.com/onsi/ginkgo/v2 v2.16.0
 	github.com/onsi/gomega v1.31.1
 	github.com/openshift-online/ocm-sdk-go v0.1.406
 	github.com/openshift/api v3.9.1-0.20190924102528-32369d4db2ad+incompatible
