@@ -86,7 +86,9 @@ func loadPassthruSecrets(secretLocations []string) {
 				continue
 			}
 			err := filepath.Walk(folder, func(path string, info os.FileInfo, err error) error {
-				if info.IsDir() {
+				// exclude directories and hidden paths. Hidden directory `/..data` is created from vault's hidden key `...data`.
+				// IsDir() does not exclude it as directory, and we get error messages.
+				if info.IsDir() || strings.HasPrefix(strings.TrimSpace(info.Name()), ".") {
 					return nil
 				}
 				data, err := os.ReadFile(path)
