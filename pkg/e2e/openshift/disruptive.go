@@ -8,6 +8,7 @@ import (
 	. "github.com/onsi/gomega"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
+	"github.com/openshift/osde2e/pkg/common/label"
 
 	"github.com/openshift/osde2e/pkg/common/alert"
 	"github.com/openshift/osde2e/pkg/common/helper"
@@ -20,7 +21,7 @@ func init() {
 }
 
 // Disruptive tests require SSH access to nodes.
-var _ = ginkgo.Describe(disruptiveTestName, func() {
+var _ = ginkgo.Describe(disruptiveTestName, ginkgo.Ordered, label.Origin, func() {
 	defer ginkgo.GinkgoRecover()
 	h := helper.New()
 

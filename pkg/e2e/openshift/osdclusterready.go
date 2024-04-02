@@ -22,7 +22,7 @@ const (
 )
 
 // Assert osd-cluster-ready status
-var _ = ginkgo.Describe(suiteName, ginkgo.Ordered, label.OCPNightlyBlocking, func() {
+var _ = ginkgo.Describe(suiteName, ginkgo.Ordered, label.OCPNightlyBlocking, label.Origin, func() {
 	var k8s *openshift.Client
 
 	ginkgo.BeforeAll(func(ctx context.Context) {
