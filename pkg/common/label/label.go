@@ -75,9 +75,6 @@ var (
 	// https://docs.openshift.com/dedicated/osd_architecture/osd_policy/osd-service-definition.html
 	ServiceDefinition = ginkgo.Label("ServiceDefinition")
 
-	// Application build tests verify the ability to deploy applications
-	AppBuilds = ginkgo.Label("AppBuilds")
-
 	// Runs tests that are using the test harness functionality
 	TestHarness = ginkgo.Label("TestHarness")
 
