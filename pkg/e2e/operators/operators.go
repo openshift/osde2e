@@ -189,47 +189,6 @@ func checkService(h *helper.H, namespace string, name string, port int) {
 	})
 }
 
-func pollClusterRoleBinding(ctx context.Context, h *helper.H, clusterRoleBindingName string) error {
-	// pollRoleBinding will check for the existence of a clusterRole
-	// in the specified project, and wait for it to exist, until a timeout
-
-	var err error
-	// interval is the duration in seconds between polls
-	// values here for humans
-
-	interval := 5
-
-	// convert time.Duration type
-	timeoutDuration := time.Duration(viper.GetFloat64(config.Tests.PollingTimeout)) * time.Second
-	intervalDuration := time.Duration(interval) * time.Second
-
-	start := time.Now()
-
-Loop:
-	for {
-		_, err = h.Kube().RbacV1().ClusterRoleBindings().Get(ctx, clusterRoleBindingName, metav1.GetOptions{})
-		elapsed := time.Since(start)
-
-		switch {
-		case err == nil:
-			// Success
-			break Loop
-		case strings.Contains(err.Error(), "forbidden"):
-			return err
-		default:
-			if elapsed < timeoutDuration {
-				log.Printf("Waiting %v for %s clusterRoleBinding to exist", (timeoutDuration - elapsed), clusterRoleBindingName)
-				time.Sleep(intervalDuration)
-			} else {
-				err = fmt.Errorf("Failed to get clusterRolebinding %s before timeout", clusterRoleBindingName)
-				break Loop
-			}
-		}
-	}
-
-	return err
-}
-
 func pollRoleBinding(ctx context.Context, h *helper.H, projectName string, roleBindingName string) error {
 	// pollRoleBinding will check for the existence of a roleBinding
 	// in the specified project, and wait for it to exist, until a timeout

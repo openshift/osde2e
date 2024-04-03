@@ -56,7 +56,7 @@ var _ = ginkgo.Describe(veleroOperatorTestName, ginkgo.Ordered, label.Operators,
 	checkRoleBindings(h,
 		"kube-system",
 		[]string{"managed-velero-operator-cluster-config-v1-reader"})
-	checkVeleroBackups(h)
+	checkVeleroBackups(h, operatorNamespace)
 	testDaCRbackups(h)
 	testDaCRrestore(h)
 	testDaCRdeleteBackupRequests(h)
@@ -400,7 +400,7 @@ func testCRserverStatusRequest(h *helper.H) {
 	})
 }
 
-func checkVeleroBackups(h *helper.H) {
+func checkVeleroBackups(h *helper.H, operatorNamespace string) {
 	ginkgo.Context("velero", func() {
 		ginkgo.It("backups should be complete", func(ctx context.Context) {
 			err := wait.PollImmediate(5*time.Second, 5*time.Minute, func() (bool, error) {
