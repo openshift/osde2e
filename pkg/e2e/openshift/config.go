@@ -20,8 +20,9 @@ oc config view --raw=true > /tmp/kubeconfig
 export KUBECONFIG=/tmp/kubeconfig
 
 REGION={{region}}
+CLOUD={{cloud}}
 ZONE="$(oc get -o jsonpath='{.items[0].metadata.labels.failure-domain\.beta\.kubernetes\.io/zone}' nodes)"
-export TEST_PROVIDER="{\"type\":\"aws\",\"region\":\"${REGION}\",\"zone\":\"${ZONE}\",\"multizone\":true,\"multimaster\":true}"
+export TEST_PROVIDER="{\"type\":\"${CLOUD}\",\"region\":\"${REGION}\",\"zone\":\"${ZONE}\",\"multizone\":true,\"multimaster\":true}"
 
 {{printTests .TestNames}} | {{unwrap .Env}} openshift-tests {{.TestCmd}} {{selectTests .Suite .TestNames}} {{unwrap .Flags}} --provider "${TEST_PROVIDER}"
 
@@ -42,6 +43,7 @@ var cmdTemplate = template.Must(template.New("testCmd").
 		"selectTests":    selectTests,
 		"unwrap":         unwrap,
 		"region":         region,
+		"cloud":          cloud,
 	}).Parse(testCmd))
 
 // E2EConfig defines the behavior of the extended test suite.
@@ -94,6 +96,10 @@ func kubeconfigPath() string {
 
 func region() string {
 	return viper.GetString(config.CloudProvider.Region)
+}
+
+func cloud() string {
+	return viper.GetString(config.CloudProvider.CloudProviderID)
 }
 
 // runs a suite unless tests are specified
