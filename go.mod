@@ -3,7 +3,7 @@ module github.com/openshift/osde2e
 go 1.20
 
 require (
-	cloud.google.com/go/kms v1.15.7
+	cloud.google.com/go/kms v1.15.8
 	github.com/Masterminds/semver/v3 v3.2.1
 	github.com/PuerkitoBio/goquery v1.9.1
 	github.com/adamliesko/retry v0.0.0-20200123222335-86c8baac277d
@@ -51,7 +51,7 @@ require (
 	golang.org/x/sync v0.6.0
 	golang.org/x/tools v0.19.0
 	google.golang.org/api v0.172.0
-	google.golang.org/genproto v0.0.0-20240205150955-31a09d347014
+	google.golang.org/genproto v0.0.0-20240213162025-012b6fc9bca9
 	gopkg.in/yaml.v3 v3.0.1
 	gotest.tools/v3 v3.5.1
 	k8s.io/api v0.28.4
@@ -65,7 +65,7 @@ require (
 )
 
 require (
-	cloud.google.com/go/compute v1.23.4 // indirect
+	cloud.google.com/go/compute v1.24.0 // indirect
 	cloud.google.com/go/compute/metadata v0.2.3 // indirect
 	cloud.google.com/go/iam v1.1.6 // indirect
 	github.com/ProtonMail/go-crypto v1.1.0-alpha.0 // indirect
