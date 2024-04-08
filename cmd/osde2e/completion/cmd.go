@@ -25,7 +25,7 @@ To configure your bash shell to load completions for each session add to your ba
 func run(cmd *cobra.Command, argv []string) error {
 	err := cmd.Root().GenBashCompletion(os.Stdout)
 	if err != nil {
-		return fmt.Errorf("Unable to generate bash completions: %v", err)
+		return fmt.Errorf("unable to generate bash completions: %v", err)
 	}
 
 	return nil
