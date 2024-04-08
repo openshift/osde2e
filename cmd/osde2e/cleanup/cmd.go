@@ -135,26 +135,26 @@ func run(cmd *cobra.Command, argv []string) error {
 	} else {
 		fmtDuration, err := time.ParseDuration(args.olderThan)
 		if err != nil {
-			return fmt.Errorf("Please provide a valid duration string. Valid units are 'm', 'h':  %s", err.Error())
+			return fmt.Errorf("please provide a valid duration string. Valid units are 'm', 'h':  %s", err.Error())
 		}
 		if args.iam {
 			err = aws.CcsAwsSession.CleanupOpenIDConnectProviders(fmtDuration, args.dryRun)
 			if err != nil {
-				return fmt.Errorf("Could not delete OIDC providers: %s", err.Error())
+				return fmt.Errorf("could not delete OIDC providers: %s", err.Error())
 			}
 			err = aws.CcsAwsSession.CleanupRoles(fmtDuration, args.dryRun)
 			if err != nil {
-				return fmt.Errorf("Could not delete IAM roles: %s", err.Error())
+				return fmt.Errorf("could not delete IAM roles: %s", err.Error())
 			}
 			err = aws.CcsAwsSession.CleanupPolicies(fmtDuration, args.dryRun)
 			if err != nil {
-				return fmt.Errorf("Could not delete IAM policies: %s", err.Error())
+				return fmt.Errorf("could not delete IAM policies: %s", err.Error())
 			}
 		}
 		if args.s3 {
 			err = aws.CcsAwsSession.CleanupS3Buckets(fmtDuration, args.dryRun)
 			if err != nil {
-				return fmt.Errorf("Could not delete s3 buckets: %s", err.Error())
+				return fmt.Errorf("could not delete s3 buckets: %s", err.Error())
 			}
 		}
 	}
