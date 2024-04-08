@@ -73,7 +73,7 @@ func updateMatchLabels(ctx context.Context, h *helper.H, tier string, routeS str
 	}
 	// Find the default router and update its scheme
 	for i, v := range AppIngress {
-		if v.Default == true {
+		if v.Default {
 			AppIngress[i].RouteSelector.MatchLabels = temp
 		}
 	}
@@ -101,7 +101,7 @@ func updateMatchExpressions(ctx context.Context, h *helper.H, key string, operat
 	tempOp := metav1.LabelSelectorOperator(operator)
 	temp := metav1.LabelSelectorRequirement{key, tempOp, tempVal}
 	for i, v := range AppIngress {
-		if v.Default == true {
+		if v.Default {
 			AppIngress[i].RouteSelector.MatchExpressions = []metav1.LabelSelectorRequirement{temp}
 		}
 	}
@@ -124,7 +124,7 @@ func resetRouteSelector(ctx context.Context, h *helper.H) {
 	AppIngress := PublishingStrategyInstance.Spec.ApplicationIngress
 	// Find the default router and update its scheme
 	for i, v := range AppIngress {
-		if v.Default == true {
+		if v.Default {
 			AppIngress[i].RouteSelector.MatchExpressions = append(AppIngress[i].RouteSelector.MatchExpressions[:i], AppIngress[i].RouteSelector.MatchExpressions[i+1:]...)
 			delete(AppIngress[i].RouteSelector.MatchLabels, "tier")
 		}

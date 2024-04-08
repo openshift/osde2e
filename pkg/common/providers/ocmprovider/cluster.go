@@ -1013,7 +1013,7 @@ func (o *OCMProvider) writeAddonMetadata(client *v1.AddOnsClient, addonID string
 		return
 	}
 	version, ok := response.Body().Version().GetID()
-	if ok != true {
+	if !ok {
 		log.Printf("couldn't retrieve addon version for %v: %v", addonID, err)
 	}
 	addonMetadata.SetVersion(version)

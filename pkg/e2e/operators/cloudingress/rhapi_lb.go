@@ -33,7 +33,7 @@ var _ = ginkgo.Describe("[Suite: operators] "+TestPrefix, label.Operators, func(
 		if viper.GetBool("rosa.STS") {
 			ginkgo.Skip("Cluster is STS. For now we skip rh-api LB reconcile test for STS")
 		}
-		if viper.GetBool("ocm.ccs") != true {
+		if !viper.GetBool("ocm.ccs") {
 			ginkgo.Skip("Cluster is non-CCS. For now we skip rh-api LB reconcile test for non-CCS.")
 		}
 		if viper.GetBool(config.Hypershift) {
