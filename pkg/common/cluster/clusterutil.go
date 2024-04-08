@@ -91,19 +91,6 @@ func WaitForClusterReadyPostInstall(clusterID string, logger *log.Logger) error 
 		return fmt.Errorf("error getting cluster provisioning client: %v", err)
 	}
 
-	installTimeout := viper.GetInt64(config.Cluster.InstallTimeout)
-	if viper.GetBool(config.Hypershift) {
-		// Install timeout 30 minutes for hypershift
-		installTimeout = 30
-	}
-	logger.Printf("Waiting %v minutes for cluster '%s' to be ready...\n", installTimeout, clusterID)
-
-	_, err = waitForOCMProvisioning(provider, clusterID, installTimeout, logger, false)
-	if err != nil {
-		return fmt.Errorf("OCM never became ready: %w", err)
-	}
-	logger.Println("Cluster is provisioned in OCM")
-
 	cluster, err := provider.GetCluster(clusterID)
 	if err != nil {
 		return fmt.Errorf("failed getting cluster from provider: %w", err)
@@ -146,7 +133,7 @@ func WaitForClusterReadyPostInstall(clusterID string, logger *log.Logger) error 
 		return nil
 	}
 
-	err = healthchecks.CheckHealthcheckJob(kubeClient, context.Background(), nil)
+	err = healthchecks.CheckHealthcheckJob(context.Background(), nil)
 	if err != nil {
 		return fmt.Errorf("cluster failed health check: %w", err)
 	}
@@ -236,8 +223,17 @@ func WaitForClusterReadyPostWake(clusterID string, logger *log.Logger) error {
 	return waitForClusterReadyWithOverrideAndExpectedNumberOfNodes(clusterID, logger, false, false)
 }
 
-func waitForOCMProvisioning(provider spi.Provider, clusterID string, installTimeout int64, logger *log.Logger, isUpgrade bool) (becameReadyAt time.Time, err error) {
+func WaitForOCMProvisioning(provider spi.Provider, clusterID string, logger *log.Logger, isUpgrade bool) (becameReadyAt time.Time, err error) {
+	installTimeout := viper.GetInt64(config.Cluster.InstallTimeout)
+	if viper.GetBool(config.Hypershift) {
+		// Install timeout 30 minutes for hypershift
+		installTimeout = 30
+	}
+
 	logger = logging.CreateNewStdLoggerOrUseExistingLogger(logger)
+
+	logger.Printf("Waiting %v minutes for cluster to be ready...\n", installTimeout)
+
 	readinessSet := false
 	var readinessStarted time.Time
 	clusterStarted := time.Now()
@@ -279,7 +275,7 @@ func waitForOCMProvisioning(provider spi.Provider, clusterID string, installTime
 			readinessStarted = time.Now()
 			return true, nil
 		} else if cluster.State() == spi.ClusterStateError {
-			log.Print("cluster is in error state, check AWS for more details")
+			logger.Print("cluster is in error state, check cloud provider for more details")
 		}
 		logger.Printf("cluster is not ready, state is: %v", cluster.State())
 		return false, nil
@@ -306,12 +302,11 @@ func waitForClusterReadyWithOverrideAndExpectedNumberOfNodes(clusterID string, l
 	}
 
 	installTimeout := viper.GetInt64(config.Cluster.InstallTimeout)
-	logger.Printf("Waiting %v minutes for cluster '%s' to be ready...\n", installTimeout, clusterID)
 	cleanRunsNeeded := viper.GetInt(config.Cluster.CleanCheckRuns)
 	cleanRuns := 0
 	errRuns := 0
 
-	readinessStarted, err := waitForOCMProvisioning(provider, clusterID, installTimeout, logger, isUpgrade)
+	readinessStarted, err := WaitForOCMProvisioning(provider, clusterID, logger, isUpgrade)
 	if err != nil {
 		return fmt.Errorf("OCM never became ready: %w", err)
 	}
@@ -536,25 +531,9 @@ func ProvisionCluster(logger *log.Logger) (*spi.Cluster, error) {
 	var cluster *spi.Cluster
 	// get cluster ID from env
 	clusterID := viper.GetString(config.Cluster.ID)
-	// get cluster id from shared_dir (used in prow multi-step jobs
-	log.Printf("cluster id:%s shared dir:%s", clusterID, viper.GetString(config.SharedDir))
-	if clusterID == "" && viper.GetString(config.SharedDir) != "" {
-		sharedClusterIdPath := viper.GetString(config.SharedDir) + "/cluster-id"
-		_, err := os.Stat(sharedClusterIdPath)
-		if err == nil {
-			clusteridbytes, err := os.ReadFile(sharedClusterIdPath)
-			if err == nil {
-				clusterID = string(clusteridbytes)
-				fmt.Printf("cluster-id found in SHARED_DIR %s", clusterID)
-				viper.Set(config.Cluster.ID, clusterID)
-			} else {
-				log.Printf("could not read from shared cluster-id: %s", err.Error())
-			}
-		}
-	}
 	// create a new cluster if no ID is specified
 	if clusterID == "" {
-		fmt.Printf("no clusterid found, provisioning cluster")
+		log.Printf("no clusterid found, provisioning cluster")
 		name := viper.GetString(config.Cluster.Name)
 		if name == "" || name == "random" {
 			attemptLimit := 10

@@ -61,7 +61,7 @@ func updateCertificate(ctx context.Context, h *helper.H, newName string) {
 	name := newName
 	// Find the default router and update its scheme
 	for i, v := range AppIngress {
-		if v.Default == true {
+		if v.Default {
 			AppIngress[i].Certificate.Name = name
 		}
 	}

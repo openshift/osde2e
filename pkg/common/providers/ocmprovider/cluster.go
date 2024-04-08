@@ -142,7 +142,7 @@ func (o *OCMProvider) LaunchCluster(clusterName string) (string, error) {
 			if err != nil {
 				return "", fmt.Errorf("error unmarshalling GCP credentials: %v", err)
 			}
-			viper.Set(GCPCredsJSON, gcp.Type())
+			viper.Set(GCPCredsType, gcp.Type())
 			viper.Set(GCPProjectID, gcp.ProjectID())
 			viper.Set(GCPPrivateKeyID, gcp.PrivateKeyID())
 			viper.Set(GCPPrivateKey, gcp.PrivateKey())
@@ -887,11 +887,11 @@ func (o *OCMProvider) ClusterKubeconfig(clusterID string) ([]byte, error) {
 func getLocalKubeConfig(path string) ([]byte, error) {
 	fileReader, err := os.Open(path)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error opening provided kubeconfig: %v", err)
 	}
 	f, err := io.ReadAll(fileReader)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error reading provided kubeconfig: %v", err)
 	}
 	return []byte(f), nil
 }
@@ -1013,7 +1013,7 @@ func (o *OCMProvider) writeAddonMetadata(client *v1.AddOnsClient, addonID string
 		return
 	}
 	version, ok := response.Body().Version().GetID()
-	if ok != true {
+	if !ok {
 		log.Printf("couldn't retrieve addon version for %v: %v", addonID, err)
 	}
 	addonMetadata.SetVersion(version)

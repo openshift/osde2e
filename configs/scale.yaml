@@ -1,7 +1,0 @@
-cloudProvider:
-  providerId: aws
-  region: us-east-1
-ocm:
-  env: stage
-  additionalLabels: scaleTestCluster
-  flavour: osd-4,scale-test-r

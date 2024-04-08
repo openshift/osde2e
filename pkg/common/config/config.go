@@ -976,3 +976,24 @@ func LoadKubeconfig() error {
 	})
 	return err
 }
+
+// LoadClusterId  given a path to a shared directoru, if a cluster id is written to it, will attempt to load it into the Viper config.
+// No error if shared cluster-id file doesn't exist.
+func LoadClusterId() error {
+	// get cluster id from shared_dir (used in prow multi-step jobs
+	if viper.GetString(Cluster.ID) == "" && viper.GetString(SharedDir) != "" {
+		sharedClusterIdPath := viper.GetString(SharedDir) + "/cluster-id"
+		_, err := os.Stat(sharedClusterIdPath)
+		if err == nil {
+			clusteridbytes, err := os.ReadFile(sharedClusterIdPath)
+			if err == nil {
+				clusterID := string(clusteridbytes)
+				fmt.Printf("cluster-id found in SHARED_DIR %s", clusterID)
+				viper.Set(Cluster.ID, clusterID)
+			} else {
+				return fmt.Errorf("will not load shared cluster-id: %s", err.Error())
+			}
+		}
+	}
+	return nil
+}

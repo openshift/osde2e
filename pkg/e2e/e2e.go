@@ -3,47 +3,39 @@ package e2e
 
 import (
 	"context"
-	"database/sql"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"log"
 	"math"
 	"os"
 	"path/filepath"
-	"strconv"
 	"strings"
 	"testing"
 	"time"
 
-	"github.com/golang-migrate/migrate/v4"
-	"github.com/jackc/pgtype"
 	junit "github.com/joshdk/go-junit"
+	"github.com/onsi/ginkgo/v2"
+	"github.com/onsi/ginkgo/v2/types"
+	"github.com/onsi/gomega"
 	vegeta "github.com/tsenart/vegeta/lib"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 	ctrlog "sigs.k8s.io/controller-runtime/pkg/log"
 
-	"github.com/onsi/ginkgo/v2"
-	"github.com/onsi/ginkgo/v2/types"
-	"github.com/onsi/gomega"
-	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
-	"github.com/openshift/osde2e/pkg/db"
-
 	"github.com/onsi/ginkgo/v2/reporters"
 	"github.com/openshift/osde2e/pkg/common/aws"
 	"github.com/openshift/osde2e/pkg/common/cluster"
 	clusterutil "github.com/openshift/osde2e/pkg/common/cluster"
 	"github.com/openshift/osde2e/pkg/common/clusterproperties"
+	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/events"
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/metadata"
 	"github.com/openshift/osde2e/pkg/common/phase"
 	"github.com/openshift/osde2e/pkg/common/providers"
-	"github.com/openshift/osde2e/pkg/common/prow"
 	"github.com/openshift/osde2e/pkg/common/runner"
 	"github.com/openshift/osde2e/pkg/common/spi"
 	"github.com/openshift/osde2e/pkg/common/upgrade"
@@ -78,7 +70,16 @@ func beforeSuite() bool {
 	var err error
 
 	// We can capture this error if TEST_KUBECONFIG is set, but we can't use it to skip provisioning
-	config.LoadKubeconfig()
+	if err := config.LoadKubeconfig(); err != nil {
+		log.Printf("Not loading kubeconfig: %v", err)
+	}
+
+	// populate viper clusterID if shared dir contains one.
+	// Important to do this beforeSuite for multi step jobs.
+	if err := config.LoadClusterId(); err != nil {
+		log.Printf("Not loading cluster id: %v", err)
+		return false
+	}
 
 	if viper.GetString(config.Kubeconfig.Contents) == "" {
 		cluster, err := clusterutil.ProvisionCluster(nil)
@@ -93,6 +94,14 @@ func beforeSuite() bool {
 		viper.Set(config.Cluster.Channel, cluster.ChannelGroup())
 
 		log.Printf("CLUSTER_ID set to %s from OCM.", viper.GetString(config.Cluster.ID))
+		_, err = clusterutil.WaitForOCMProvisioning(provider, viper.GetString(config.Cluster.ID), nil, false)
+		if err != nil {
+			log.Printf("Cluster never became ready: %v", err)
+			getLogs()
+			return false
+		}
+		log.Printf("Cluster status is ready")
+
 		if viper.Get(config.Tests.TestHarnesses) != nil {
 			passthruSecrets := viper.GetStringMapString(config.NonOSDe2eSecrets)
 			passthruSecrets["CLUSTER_ID"] = viper.GetString(config.Cluster.ID)
@@ -156,12 +165,13 @@ func beforeSuite() bool {
 		}
 
 		var kubeconfigBytes []byte
-		clusterConfigerr := wait.PollImmediate(2*time.Second, 5*time.Minute, func() (bool, error) {
+		clusterConfigerr := wait.PollUntilContextTimeout(context.Background(), 2*time.Second, 5*time.Minute, false, func(ctx context.Context) (bool, error) {
 			kubeconfigBytes, err = provider.ClusterKubeconfig(viper.GetString(config.Cluster.ID))
 			if err != nil {
-				log.Printf("Failed to get kubeconfig from OCM: %v\nWaiting two seconds before retrying", err)
-				return false, err
+				log.Printf("Failed to retrieve kubeconfig: %v\nWaiting two seconds before retrying", err)
+				return false, nil
 			} else {
+				log.Printf("Successfully retrieved kubeconfig from OCM.")
 				viper.Set(config.Kubeconfig.Contents, string(kubeconfigBytes))
 				return true, nil
 			}
@@ -177,6 +187,8 @@ func beforeSuite() bool {
 		if viper.GetString(config.SharedDir) != "" {
 			if err = os.WriteFile(fmt.Sprintf("%s/kubeconfig", viper.GetString(config.SharedDir)), kubeconfigBytes, 0o644); err != nil {
 				log.Printf("Error writing cluster kubeconfig to shared directory: %v", err)
+			} else {
+				log.Printf("Passed kubeconfig to prow steps.")
 			}
 		}
 
@@ -439,10 +451,9 @@ func runGinkgoTests() (int, error) {
 	}
 
 	testsPassed := true
-	var installTestCaseData []db.CreateTestcaseParams
 	if runInstallTests {
 		log.Println("Running e2e tests...")
-		testsPassed, installTestCaseData = runTestsInPhase(phase.InstallPhase, "OSD e2e suite", suiteConfig, reporterConfig)
+		testsPassed = runTestsInPhase(phase.InstallPhase, "OSD e2e suite", suiteConfig, reporterConfig)
 		getLogs()
 		viper.Set(config.Cluster.Passing, testsPassed)
 	}
@@ -451,7 +462,6 @@ func runGinkgoTests() (int, error) {
 		return Success, nil
 	}
 	upgradeTestsPassed := true
-	var upgradeTestCaseData []db.CreateTestcaseParams
 
 	// upgrade cluster if requested
 	if upgradeCluster {
@@ -480,7 +490,7 @@ func runGinkgoTests() (int, error) {
 			if viper.GetBool(config.Upgrade.RunPostUpgradeTests) {
 				log.Println("Running e2e tests POST-UPGRADE...")
 				viper.Set(config.Cluster.Passing, false)
-				upgradeTestsPassed, upgradeTestCaseData = runTestsInPhase(
+				upgradeTestsPassed = runTestsInPhase(
 					phase.UpgradePhase,
 					"OSD e2e suite post-upgrade",
 					suiteConfig,
@@ -497,62 +507,6 @@ func runGinkgoTests() (int, error) {
 			}
 		} else {
 			log.Println("Unable to perform cluster upgrade, no kubeconfig found.")
-		}
-	}
-
-	testsFinished := time.Now().UTC()
-
-	dbURL := fmt.Sprintf("postgres://%s:%s@%s:%s/%s",
-		viper.GetString(config.Database.User),
-		viper.GetString(config.Database.Pass),
-		viper.GetString(config.Database.Host),
-		viper.GetString(config.Database.Port),
-		viper.GetString(config.Database.DatabaseName),
-	)
-	// connect to the db
-	if viper.GetInt(config.JobID) > 0 {
-		log.Printf("Storing data for Job ID: %s", viper.GetString(config.JobID))
-		jobData := db.CreateJobParams{
-			Provider: viper.GetString(config.Provider),
-			JobName:  viper.GetString(config.JobName),
-			JobID:    viper.GetString(config.JobID),
-			Url: func() string {
-				url, _ := prow.JobURL()
-				return url
-			}(),
-			Started: func() time.Time {
-				t, _ := time.Parse(time.RFC3339, viper.GetString(config.JobStartedAt))
-				return t
-			}(),
-			Finished:       testsFinished,
-			ClusterVersion: viper.GetString(config.Cluster.Version),
-			UpgradeVersion: viper.GetString(config.Upgrade.ReleaseName),
-			ClusterName:    viper.GetString(config.Cluster.Name),
-			ClusterID:      viper.GetString(config.Cluster.ID),
-			MultiAz:        viper.GetString(config.Cluster.MultiAZ),
-			Channel:        viper.GetString(config.Cluster.Channel),
-			Environment:    provider.Environment(),
-			Region:         viper.GetString(config.CloudProvider.Region),
-			NumbWorkerNodes: func() int32 {
-				asString := viper.GetString(config.Cluster.NumWorkerNodes)
-				asInt, _ := strconv.Atoi(asString)
-				return int32(asInt)
-			}(),
-			NetworkProvider:    viper.GetString(config.Cluster.NetworkProvider),
-			ImageContentSource: viper.GetString(config.Cluster.ImageContentSource),
-			InstallConfig:      viper.GetString(config.Cluster.InstallConfig),
-			HibernateAfterUse:  viper.GetString(config.Cluster.HibernateAfterUse) == "true",
-			Reused:             viper.GetString(config.Cluster.Reused) == "true",
-			Result: func() db.JobResult {
-				if upgradeTestsPassed && testsPassed {
-					return db.JobResultPassed
-				}
-				return db.JobResultFailed
-			}(),
-		}
-		testData := append(installTestCaseData, upgradeTestCaseData...)
-		if err := updateDatabase(dbURL, jobData, testData...); err != nil {
-			log.Printf("failed updating database or pagerduty: %v", err)
 		}
 	}
 
@@ -776,15 +730,14 @@ func runTestsInPhase(
 	description string,
 	suiteConfig types.SuiteConfig,
 	reporterConfig types.ReporterConfig,
-) (bool, []db.CreateTestcaseParams) {
-	var testCaseData []db.CreateTestcaseParams
+) bool {
 	viper.Set(config.Phase, phase)
 	reportDir := viper.GetString(config.ReportDir)
 	phaseDirectory := filepath.Join(reportDir, phase)
 	if _, err := os.Stat(phaseDirectory); os.IsNotExist(err) {
 		if err := os.Mkdir(phaseDirectory, os.FileMode(0o755)); err != nil {
 			log.Printf("error while creating phase directory %s", phaseDirectory)
-			return false, testCaseData
+			return false
 		}
 	}
 	suffix := viper.GetString(config.Suffix)
@@ -792,10 +745,10 @@ func runTestsInPhase(
 
 	if !suiteConfig.DryRun {
 		if !beforeSuite() {
-			return false, testCaseData
+			return false
 		}
 		if viper.GetBool(config.Cluster.ProvisionOnly) {
-			return true, nil
+			return true
 		}
 	}
 
@@ -822,7 +775,7 @@ func runTestsInPhase(
 	files, err := os.ReadDir(phaseDirectory)
 	if err != nil {
 		log.Printf("error reading phase directory: %s", err.Error())
-		return false, testCaseData
+		return false
 	}
 
 	numTests := 0
@@ -835,7 +788,7 @@ func runTestsInPhase(
 				suites, err := junit.IngestFile(filepath.Join(phaseDirectory, file.Name()))
 				if err != nil {
 					log.Printf("error reading junit xml file %s: %s", file.Name(), err.Error())
-					return false, testCaseData
+					return false
 				}
 
 				for _, testSuite := range suites {
@@ -849,41 +802,6 @@ func runTestsInPhase(
 						if !isFail && !isSkipped {
 							numPassingTests++
 						}
-					}
-				}
-
-				// record each test case
-				for _, suite := range suites {
-					for _, test := range suite.Tests {
-						testCaseData = append(testCaseData, db.CreateTestcaseParams{
-							Result: func(s junit.Status) db.TestResult {
-								switch s {
-								case "passed":
-									return db.TestResultPassed
-								case "failure":
-									return db.TestResultFailure
-								case "skipped":
-									return db.TestResultSkipped
-								case "error":
-									fallthrough
-								default:
-									return db.TestResultError
-								}
-							}(test.Status),
-							Name: test.Name,
-							Duration: pgtype.Interval{
-								Microseconds: test.Duration.Microseconds(),
-								Status:       pgtype.Present,
-							},
-							Error: func() string {
-								if test.Error != nil {
-									return test.Error.Error()
-								}
-								return ""
-							}(),
-							Stdout: test.SystemOut,
-							Stderr: test.SystemErr,
-						})
 					}
 				}
 			}
@@ -901,7 +819,7 @@ func runTestsInPhase(
 	files, err = os.ReadDir(reportDir)
 	if err != nil {
 		log.Printf("error reading phase directory: %s", err.Error())
-		return false, testCaseData
+		return false
 	}
 
 	// Ensure all log metrics are zeroed out before running again
@@ -915,7 +833,7 @@ func runTestsInPhase(
 			data, err := os.ReadFile(filepath.Join(reportDir, file.Name()))
 			if err != nil {
 				log.Printf("error opening log file %s: %s", file.Name(), err.Error())
-				return false, testCaseData
+				return false
 			}
 			for _, metric := range config.GetLogMetrics() {
 				metadata.Instance.IncrementLogMetric(metric.Name, metric.HasMatches(data))
@@ -1000,7 +918,7 @@ func runTestsInPhase(
 		cluster, err := provider.GetCluster(clusterID)
 		if err != nil {
 			log.Printf("error getting cluster state after a test run: %v", err)
-			return false, testCaseData
+			return false
 		}
 		clusterState = cluster.State()
 	}
@@ -1008,7 +926,7 @@ func runTestsInPhase(
 		h, err := helper.NewOutsideGinkgo()
 		if h == nil {
 			log.Println("Unable to generate helper outside of ginkgo: %w", err)
-			return ginkgoPassed, testCaseData
+			return ginkgoPassed
 		}
 		dependencies, err := debug.GenerateDependencies(h.Kube())
 		if err != nil {
@@ -1025,7 +943,7 @@ func runTestsInPhase(
 
 		}
 	}
-	return ginkgoPassed, testCaseData
+	return ginkgoPassed
 }
 
 // checkBeforeMetricsGeneration runs a variety of checks before generating metrics.
@@ -1106,49 +1024,4 @@ func setupRouteMonitors(ctx context.Context, h *helper.H, closeChannel chan stru
 		}
 	}()
 	return routeMonitorChan
-}
-
-func updateDatabase(dbURL string, jobData db.CreateJobParams, testData ...db.CreateTestcaseParams) error {
-	var (
-		jobID int64
-		err   error
-	)
-
-	// Record data from this job and extract data that we need to operate on PD.
-	log.Printf("Storing data for Job ID: %s", viper.GetString(config.JobID))
-	if err := db.WithDB(dbURL, func(pg *sql.DB) error {
-		// ensure it's on the latest schema
-		if err := db.WithMigrator(pg, func(m *migrate.Migrate) error {
-			if err := m.Up(); err != nil && !errors.Is(err, migrate.ErrNoChange) {
-				return err
-			}
-			return nil
-		}); err != nil {
-			return err
-		}
-
-		q := db.New(pg)
-
-		// insert this job's info
-		jobID, err = q.CreateJob(context.TODO(), jobData)
-		if err != nil {
-			return fmt.Errorf("failed creating job: %w", err)
-		}
-
-		log.Printf("This job has Database ID %d", jobID)
-
-		for _, tc := range testData {
-			tc.JobID = jobID
-			_, err := q.CreateTestcase(context.TODO(), tc)
-			if err != nil {
-				return fmt.Errorf("failed creating test case: %w", err)
-			}
-		}
-
-		return nil
-	}); err != nil {
-		return fmt.Errorf("failed communicating with database: %w", err)
-	}
-
-	return nil
 }

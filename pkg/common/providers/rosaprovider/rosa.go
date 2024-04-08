@@ -14,7 +14,7 @@ import (
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/providers/ocmprovider"
 	"github.com/openshift/osde2e/pkg/common/spi"
-	"k8s.io/klog/v2/klogr"
+	"k8s.io/klog/v2/textlogger"
 )
 
 var rosaProvider *rosaprovider.Provider
@@ -60,7 +60,7 @@ func New() (*ROSAProvider, error) {
 				ctx,
 				viper.GetString("ocm.token"),
 				ocmEnv,
-				klogr.New(),
+				textlogger.NewLogger(textlogger.NewConfig()),
 			)
 			return err
 		})

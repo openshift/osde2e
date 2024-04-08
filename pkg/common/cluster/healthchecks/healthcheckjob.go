@@ -11,12 +11,11 @@ import (
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/logging"
-	"k8s.io/client-go/kubernetes"
 )
 
 // CheckHealthcheckJob uses the `osd-cluster-ready` healthcheck job to determine cluster readiness. If the cluster
 // is not ready, it will return an error.
-func CheckHealthcheckJob(k8sClient *kubernetes.Clientset, ctx context.Context, logger *log.Logger) error {
+func CheckHealthcheckJob(ctx context.Context, logger *log.Logger) error {
 	logger = logging.CreateNewStdLoggerOrUseExistingLogger(logger)
 	var k8s *openshift.Client
 

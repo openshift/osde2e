@@ -58,7 +58,7 @@ func updateDnsName(ctx context.Context, h *helper.H, newName string) {
 	AppIngress := PublishingStrategyInstance.Spec.ApplicationIngress
 
 	for i, v := range AppIngress {
-		if v.Default == true {
+		if v.Default {
 			AppIngress[i].DNSName = newName
 		}
 	}

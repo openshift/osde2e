@@ -53,7 +53,7 @@ var _ = ginkgo.Describe("[Suite: informing] "+TestPrefix, label.Informing, func(
 					if err != nil {
 						return false, nil
 					}
-					if _, ok := service.Annotations["service.beta.kubernetes.io/aws-load-balancer-internal"]; ok == true {
+					if _, ok := service.Annotations["service.beta.kubernetes.io/aws-load-balancer-internal"]; ok {
 						return true, nil
 					}
 					return false, nil
@@ -79,7 +79,7 @@ var _ = ginkgo.Describe("[Suite: informing] "+TestPrefix, label.Informing, func(
 					if err != nil {
 						return false, nil
 					}
-					if _, ok := service.Annotations["service.beta.kubernetes.io/aws-load-balancer-internal"]; ok == false {
+					if _, ok := service.Annotations["service.beta.kubernetes.io/aws-load-balancer-internal"]; !ok {
 						return true, nil
 					}
 
@@ -116,7 +116,7 @@ func updateApplicationIngress(ctx context.Context, h *helper.H, lbscheme string)
 
 	// Find the default router and update its scheme
 	for i, v := range AppIngress {
-		if v.Default == true {
+		if v.Default {
 			AppIngress[i].Listening = cloudingressv1alpha1.Listening(lbscheme)
 		}
 	}

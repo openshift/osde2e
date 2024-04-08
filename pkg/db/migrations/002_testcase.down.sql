@@ -1,2 +1,0 @@
-DROP TABLE IF EXISTS testcases;
-DROP TYPE IF EXISTS test_result;
