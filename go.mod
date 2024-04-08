@@ -13,7 +13,7 @@ require (
 	github.com/google/go-github/v31 v31.0.0
 	github.com/google/uuid v1.6.0
 	github.com/hashicorp/go-multierror v1.1.1
-	github.com/hashicorp/hc-install v0.6.3
+	github.com/hashicorp/hc-install v0.6.4
 	github.com/hashicorp/terraform-exec v0.20.0
 	github.com/jackc/pgtype v1.14.2 // indirect
 	github.com/joshdk/go-junit v1.0.0
@@ -21,7 +21,7 @@ require (
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/onsi/ginkgo/v2 v2.17.1
 	github.com/onsi/gomega v1.32.0
-	github.com/openshift-online/ocm-sdk-go v0.1.410
+	github.com/openshift-online/ocm-sdk-go v0.1.413
 	github.com/openshift/api v3.9.1-0.20190924102528-32369d4db2ad+incompatible
 	// go get -u github.com/openshift/client-go@release-4.14
 	github.com/openshift/client-go v0.0.0-20230807132528-be5346fb33cb
@@ -30,7 +30,7 @@ require (
 	github.com/openshift/custom-domains-operator v0.0.0-20221118201157-bd1052dac818
 	github.com/openshift/managed-upgrade-operator v0.0.0-20230525042514-a9b8c1d2571c
 	github.com/openshift/must-gather-operator v0.1.2-0.20221011152618-7805956e1ded
-	github.com/openshift/osde2e-common v0.0.0-20240226175238-844467013337
+	github.com/openshift/osde2e-common v0.0.0-20240404214304-9eefff9c607b
 	github.com/openshift/route-monitor-operator v0.0.0-20221118160357-3df1ed1fa1d2
 	github.com/operator-framework/api v0.17.7
 	github.com/operator-framework/operator-lifecycle-manager v0.22.0
@@ -68,7 +68,7 @@ require (
 	cloud.google.com/go/compute v1.24.0 // indirect
 	cloud.google.com/go/compute/metadata v0.2.3 // indirect
 	cloud.google.com/go/iam v1.1.6 // indirect
-	github.com/ProtonMail/go-crypto v1.1.0-alpha.0 // indirect
+	github.com/ProtonMail/go-crypto v1.1.0-alpha.2 // indirect
 	github.com/andybalholm/cascadia v1.3.2 // indirect
 	github.com/apparentlymart/go-textseg/v15 v15.0.0 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
@@ -109,7 +109,7 @@ require (
 	github.com/gorilla/websocket v1.4.2 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
-	github.com/hashicorp/go-retryablehttp v0.7.4 // indirect
+	github.com/hashicorp/go-retryablehttp v0.7.5 // indirect
 	github.com/hashicorp/go-version v1.6.0 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/hashicorp/terraform-json v0.19.0 // indirect
