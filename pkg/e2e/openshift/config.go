@@ -110,7 +110,7 @@ func cloud() string {
 
 func gcpproject() string {
 	if viper.GetString(config.CloudProvider.CloudProviderID) == "gcp" {
-		return ",\"projectid\":\"" + viper.GetString(ocmprovider.GCPProjectID) + "\""
+		return fmt.Sprintf(`,"projectid":"%q"`, viper.GetString(ocmprovider.GCPProjectID))
 	}
 	return ""
 }
