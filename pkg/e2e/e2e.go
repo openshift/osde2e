@@ -533,9 +533,7 @@ func runGinkgoTests() (int, error) {
 		} else if strings.HasPrefix(jobName, "rehearse-") {
 			log.Printf("Job %s is a rehearsal, so metrics upload is being skipped.", jobName)
 		} else {
-			if err := uploadFileToMetricsBucket(filepath.Join(reportDir, prometheusFilename)); err != nil {
-				return Failure, fmt.Errorf("error while uploading prometheus metrics: %v", err)
-			}
+			uploadFileToMetricsBucket(filepath.Join(reportDir, prometheusFilename))
 		}
 	}
 	// Cleanup
@@ -957,18 +955,18 @@ func checkBeforeMetricsGeneration() error {
 }
 
 // uploadFileToMetricsBucket uploads the given file (with absolute path) to the metrics S3 bucket "incoming" directory.
-func uploadFileToMetricsBucket(filename string) error {
+func uploadFileToMetricsBucket(filename string) {
 	session, err := aws.MetricsAWSSession.GetSession()
 	if err != nil {
-		return fmt.Errorf("failed to create metrics s3 session: %v", err)
+		log.Printf("failed to create metrics s3 session: %v", err)
 	}
 
 	data, err := os.ReadFile(filename)
 	if err != nil {
-		return err
+		log.Printf("failed to read metrics s3 filename %s: %v", filename, err)
 	}
-
-	return aws.WriteToS3Session(session, aws.CreateS3URL(viper.GetString(config.Tests.MetricsBucket), "incoming", filepath.Base(filename)), data)
+	aws.WriteToS3Session(session, aws.CreateS3URL(viper.GetString(config.Tests.MetricsBucket), "incoming", filepath.Base(filename)), data)
+	return
 }
 
 // setupRouteMonitors initializes performance+availability monitoring of cluster routes,
