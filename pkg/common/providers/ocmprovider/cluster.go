@@ -1269,10 +1269,8 @@ func (o *OCMProvider) AddProperty(cluster *spi.Cluster, tag string, value string
 		}
 		propertyFilename := fmt.Sprintf("%s.osde2e-cluster-property-update.metrics.prom", cluster.ID())
 		data := fmt.Sprintf("# TYPE cicd_cluster_properties gauge\ncicd_cluster_properties{cluster_id=\"%s\",environment=\"%s\",job_id=\"%s\",property=\"%s\",region=\"%s\",value=\"%s\",version=\"%s\"} 0\n", cluster.ID(), o.Environment(), viper.GetString(config.JobID), tag, cluster.Region(), value, cluster.Version())
-		err = aws.WriteToS3Session(session, aws.CreateS3URL(viper.GetString(config.Tests.MetricsBucket), "incoming", propertyFilename), []byte(data))
-		if err != nil {
-			return fmt.Errorf("failed to upload cluster property metrics: %v", err)
-		}
+		aws.WriteToS3Session(session, aws.CreateS3URL(viper.GetString(config.Tests.MetricsBucket), "incoming", propertyFilename), []byte(data))
+
 		log.Println(data)
 	}
 
