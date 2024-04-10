@@ -277,10 +277,6 @@ var Tests = struct {
 	// Env: CLUSTER_HEALTH_CHECKS_TIMEOUT
 	ClusterHealthChecksTimeout string
 
-	// MetricsBucket is the bucket that metrics data will be uploaded to.
-	// Env: METRICS_BUCKET
-	MetricsBucket string
-
 	// LogBucket is the s3 bucket that log file/s will be uploaded to.
 	// Env: LOG_BUCKET
 	LogBucket string
@@ -305,7 +301,6 @@ var Tests = struct {
 	CleanRuns:                  "tests.cleanRuns",
 	OperatorSkip:               "tests.operatorSkip",
 	SkipClusterHealthChecks:    "tests.skipClusterHealthChecks",
-	MetricsBucket:              "tests.metricsBucket",
 	LogBucket:                  "tests.logBucket",
 	ClusterHealthChecksTimeout: "tests.clusterHealthChecksTimeout",
 }
@@ -741,9 +736,6 @@ func InitOSDe2eViper() {
 
 	viper.SetDefault(Tests.ClusterHealthChecksTimeout, "2h")
 	viper.BindEnv(Tests.ClusterHealthChecksTimeout, "CLUSTER_HEALTH_CHECKS_TIMEOUT")
-
-	viper.SetDefault(Tests.MetricsBucket, "osde2e-metrics")
-	viper.BindEnv(Tests.MetricsBucket, "METRICS_BUCKET")
 
 	viper.BindEnv(Tests.LogBucket, "LOG_BUCKET")
 

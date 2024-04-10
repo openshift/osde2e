@@ -58,7 +58,7 @@ func (h *H) WriteResults(results map[string][]byte) {
 	}
 }
 
-// UploadResultsToS3 dumps runner results into the s3 bucket in given aws session. Session provided as metrics uploader uses different aws session than log uploads which use test aws session.
+// UploadResultsToS3 dumps runner results into the s3 bucket in given aws session.
 func (h *H) UploadResultsToS3(results map[string][]byte, key string) error {
 	for filename, data := range results {
 		session, err := aws.CcsAwsSession.GetSession()
