@@ -21,7 +21,7 @@ require (
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/onsi/ginkgo/v2 v2.17.1
 	github.com/onsi/gomega v1.32.0
-	github.com/openshift-online/ocm-sdk-go v0.1.410
+	github.com/openshift-online/ocm-sdk-go v0.1.378
 	github.com/openshift/api v3.9.1-0.20190924102528-32369d4db2ad+incompatible
 	// go get -u github.com/openshift/client-go@release-4.14
 	github.com/openshift/client-go v0.0.0-20230807132528-be5346fb33cb
@@ -136,7 +136,6 @@ require (
 	github.com/sagikazarmark/locafero v0.4.0 // indirect
 	github.com/sagikazarmark/slog-shim v0.1.0 // indirect
 	github.com/sirupsen/logrus v1.9.2 // indirect
-	github.com/skratchdot/open-golang v0.0.0-20200116055534-eef842397966 // indirect
 	github.com/sourcegraph/conc v0.3.0 // indirect
 	github.com/spf13/cast v1.6.0 // indirect
 	github.com/streadway/quantile v0.0.0-20220407130108-4246515d968d // indirect
