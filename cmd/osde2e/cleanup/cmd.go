@@ -8,9 +8,9 @@ import (
 	"github.com/openshift/osde2e/cmd/osde2e/common"
 	"github.com/openshift/osde2e/pkg/common/aws"
 	"github.com/openshift/osde2e/pkg/common/metadata"
-	"github.com/openshift/osde2e/pkg/common/providers"
-	"github.com/openshift/osde2e/pkg/common/spi"
+	"github.com/openshift/osde2e/pkg/common/providers/ocmprovider"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 var Cmd = &cobra.Command{
@@ -30,6 +30,7 @@ var args struct {
 	s3              bool
 	olderThan       string
 	dryRun          bool
+	clusters        bool
 }
 
 func init() {
@@ -71,6 +72,14 @@ func init() {
 		false,
 		"Cleanup s3 buckets",
 	)
+
+	flags.BoolVar(
+		&args.clusters,
+		"clusters",
+		true,
+		"Cleanup clusters",
+	)
+
 	flags.StringVar(
 		&args.olderThan,
 		"older-than",
@@ -93,29 +102,39 @@ func run(cmd *cobra.Command, argv []string) error {
 	if err = common.LoadConfigs(args.configString, args.customConfig, args.secretLocations); err != nil {
 		return fmt.Errorf("error loading initial state: %v", err)
 	}
-	// If neither s3 nor iam resources are specified, cluster cleanup is done as follows:
+	fmtDuration, err := time.ParseDuration(args.olderThan)
+	if err != nil {
+		return fmt.Errorf("error parsing --older-than: %v", err)
+	}
+	// delete clusters older than cutoffTime
+	cutoffTime := time.Now().UTC().Add(-fmtDuration)
+
+	// Setup stage env and cluster provider
+	env := viper.GetString(ocmprovider.Env)
+	provider, err := ocmprovider.NewWithEnv(env)
+	if err != nil {
+		return fmt.Errorf("could not setup cluster provider: %v", err)
+	}
+	metadata.Instance.SetEnvironment(provider.Environment())
+
 	// If cluster-id is provided, deletes given cluster. If not, deletes all expired, osde2e owned clusters.
-	if !args.iam && !args.s3 {
-		var provider spi.Provider
-		if provider, err = providers.ClusterProvider(); err != nil {
-			return fmt.Errorf("could not setup cluster provider: %v", err)
-		}
-
-		metadata.Instance.SetEnvironment(provider.Environment())
-
+	if args.clusters {
 		if args.clusterID == "" {
 			clusters, err := provider.ListClusters("properties.MadeByOSDe2e='true'")
 			if err != nil {
 				return err
 			}
 
-			now := time.Now()
-
 			for _, cluster := range clusters {
-				if !cluster.ExpirationTimestamp().IsZero() && now.UTC().After(cluster.ExpirationTimestamp().UTC()) {
-					log.Printf("%s %s has expired. Deleting cluster...", cluster.ID(), cluster.Name())
-					if err := provider.DeleteCluster(cluster.ID()); err != nil {
-						log.Printf("Error deleting cluster: %s", err.Error())
+				creationTime := cluster.CreationTimestamp().UTC()
+				if creationTime.Before(cutoffTime) {
+					log.Printf("Deleting cluster id: %s, name: %s, created at %v", cluster.ID(), cluster.Name(), creationTime)
+					if !args.dryRun {
+						if err := provider.DeleteCluster(cluster.ID()); err != nil {
+							log.Printf("Error deleting cluster: %s", err.Error())
+						} else {
+							fmt.Printf("Cluster %s Deleted\n", cluster.ID())
+						}
 					}
 				}
 			}
@@ -127,16 +146,15 @@ func run(cmd *cobra.Command, argv []string) error {
 			}
 
 			log.Printf("Deleting cluster id: %s, name: %s", cluster.ID(), cluster.Name())
-			if err = provider.DeleteCluster(cluster.ID()); err != nil {
-				log.Printf("Failed to delete cluster id: %s, error: %v", cluster.ID(), err)
-				return err
+
+			if !args.dryRun {
+				if err = provider.DeleteCluster(cluster.ID()); err != nil {
+					log.Printf("Failed to delete cluster id: %s, error: %v", cluster.ID(), err)
+					return err
+				}
 			}
 		}
 	} else {
-		fmtDuration, err := time.ParseDuration(args.olderThan)
-		if err != nil {
-			return fmt.Errorf("please provide a valid duration string. Valid units are 'm', 'h':  %s", err.Error())
-		}
 		if args.iam {
 			err = aws.CcsAwsSession.CleanupOpenIDConnectProviders(fmtDuration, args.dryRun)
 			if err != nil {
