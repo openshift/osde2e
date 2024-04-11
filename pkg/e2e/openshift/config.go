@@ -9,6 +9,7 @@ import (
 	. "github.com/onsi/gomega"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
+	"github.com/openshift/osde2e/pkg/common/providers/ocmprovider"
 )
 
 const testCmd = `
@@ -21,8 +22,9 @@ export KUBECONFIG=/tmp/kubeconfig
 
 REGION={{region}}
 CLOUD={{cloud}}
+GCPPROJECT={{gcpproject}}
 ZONE="$(oc get -o jsonpath='{.items[0].metadata.labels.failure-domain\.beta\.kubernetes\.io/zone}' nodes)"
-export TEST_PROVIDER="{\"type\":\"${CLOUD}\",\"region\":\"${REGION}\",\"zone\":\"${ZONE}\",\"multizone\":true,\"multimaster\":true}"
+export TEST_PROVIDER="{\"type\":\"${CLOUD}\",\"region\":\"${REGION}\",\"zone\":\"${ZONE}\",\"multizone\":true,\"multimaster\":true ${GCPPROJECT}}"
 
 {{printTests .TestNames}} | {{unwrap .Env}} openshift-tests {{.TestCmd}} {{selectTests .Suite .TestNames}} {{unwrap .Flags}} --provider "${TEST_PROVIDER}"
 
@@ -44,6 +46,7 @@ var cmdTemplate = template.Must(template.New("testCmd").
 		"unwrap":         unwrap,
 		"region":         region,
 		"cloud":          cloud,
+		"gcpproject":     gcpproject,
 	}).Parse(testCmd))
 
 // E2EConfig defines the behavior of the extended test suite.
@@ -99,7 +102,17 @@ func region() string {
 }
 
 func cloud() string {
+	if viper.GetString(config.CloudProvider.CloudProviderID) == "gcp" {
+		return "gce"
+	}
 	return viper.GetString(config.CloudProvider.CloudProviderID)
+}
+
+func gcpproject() string {
+	if viper.GetString(config.CloudProvider.CloudProviderID) == "gcp" {
+		return fmt.Sprintf(`,"projectid":%q`, viper.GetString(ocmprovider.GCPProjectID))
+	}
+	return ""
 }
 
 // runs a suite unless tests are specified
