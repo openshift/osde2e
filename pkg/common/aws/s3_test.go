@@ -13,27 +13,27 @@ func TestCreateS3URLs(t *testing.T) {
 	}{
 		{
 			name:          "happy path",
-			bucket:        "osde2e-metrics",
+			bucket:        "osde2e-bucket",
 			keys:          []string{"incoming", "blah.prom"},
-			expectedS3URL: "s3://osde2e-metrics/incoming/blah.prom",
+			expectedS3URL: "s3://osde2e-bucket/incoming/blah.prom",
 		},
 		{
 			name:          "slashes in bucket",
-			bucket:        "/osde2e-metrics/",
+			bucket:        "/osde2e-bucket/",
 			keys:          []string{"incoming", "blah.prom"},
-			expectedS3URL: "s3://osde2e-metrics/incoming/blah.prom",
+			expectedS3URL: "s3://osde2e-bucket/incoming/blah.prom",
 		},
 		{
 			name:          "slashes in keys",
-			bucket:        "osde2e-metrics",
+			bucket:        "osde2e-bucket",
 			keys:          []string{"/incoming/", "/blah.prom"},
-			expectedS3URL: "s3://osde2e-metrics/incoming/blah.prom",
+			expectedS3URL: "s3://osde2e-bucket/incoming/blah.prom",
 		},
 		{
 			name:          "slashes in bucket and keys",
-			bucket:        "/osde2e-metrics/",
+			bucket:        "/osde2e-bucket/",
 			keys:          []string{"/incoming/", "/blah.prom"},
-			expectedS3URL: "s3://osde2e-metrics/incoming/blah.prom",
+			expectedS3URL: "s3://osde2e-bucket/incoming/blah.prom",
 		},
 	}
 
