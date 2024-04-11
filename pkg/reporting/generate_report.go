@@ -34,7 +34,7 @@ func ListReportTypes(reportName string) ([]string, error) {
 	// We always support JSON.
 	reportTypes := append(templates.ListTemplates(reportName), "json")
 
-	sort.Sort(sort.StringSlice(reportTypes))
+	sort.Strings(reportTypes)
 	return reportTypes, nil
 }
 

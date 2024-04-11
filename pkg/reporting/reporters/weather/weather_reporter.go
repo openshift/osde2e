@@ -308,7 +308,7 @@ func generateSummaryTable(summary map[string]*summaryReportData) string {
 		environments = append(environments, environment)
 	}
 
-	sort.Sort(sort.StringSlice(environments))
+	sort.Strings(environments)
 
 	summaryTable := strings.Builder{}
 
