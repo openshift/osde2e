@@ -603,6 +603,10 @@ func (o *OCMProvider) DeleteCluster(clusterID string) error {
 		return fmt.Errorf("error retrieving cluster for deletion: %v", err)
 	}
 
+	if cluster.State() == spi.ClusterStateUninstalling {
+		return fmt.Errorf("cluster already uninstalling, skipped")
+	}
+
 	// If the cluster is hibernating according to OCM, wake it up
 	if cluster.State() == spi.ClusterStateHibernating {
 		if err = retryer().Do(func() error {
@@ -625,7 +629,7 @@ func (o *OCMProvider) DeleteCluster(clusterID string) error {
 		}
 	}
 
-	wait.PollImmediate(1*time.Minute, 15*time.Minute, func() (bool, error) {
+	err = wait.PollUntilContextTimeout(context.Background(), 1*time.Minute, 15*time.Minute, false, func(ctx context.Context) (bool, error) {
 		// If the cluster state is anything but Hibernating or Ready, poll the state again
 		if cluster.State() == spi.ClusterStateHibernating || cluster.State() == spi.ClusterStateReady {
 			cluster, err = o.GetCluster(clusterID)
@@ -636,7 +640,7 @@ func (o *OCMProvider) DeleteCluster(clusterID string) error {
 		}
 		// A cluster errored in OCM is unlikely to recover so we should fail fast
 		if cluster.State() == spi.ClusterStateError {
-			return false, fmt.Errorf("Cluster %s is in an errored state.", cluster.ID())
+			return false, fmt.Errorf("cluster %s is in an errored state", cluster.ID())
 		}
 
 		// We have a ready cluster, hooray
@@ -647,6 +651,9 @@ func (o *OCMProvider) DeleteCluster(clusterID string) error {
 		// The cluster isn't ready so we should loop again
 		return false, nil
 	})
+	if err != nil {
+		return err
+	}
 
 	err = o.AddProperty(cluster, clusterproperties.Status, clusterproperties.StatusUninstalling)
 	if err != nil {
