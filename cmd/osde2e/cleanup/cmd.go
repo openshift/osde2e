@@ -148,7 +148,7 @@ func run(cmd *cobra.Command, argv []string) error {
 			if err = provider.DeleteCluster(cluster.ID()); err != nil {
 				return fmt.Errorf("failed to delete cluster: %v", err)
 			} else {
-				fmt.Println("Deleted")
+				fmt.Println("Uninstall started successfully")
 			}
 		}
 	}
