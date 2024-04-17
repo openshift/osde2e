@@ -1,13 +1,13 @@
 module github.com/openshift/osde2e
 
-go 1.20
+go 1.21
 
 require (
 	cloud.google.com/go/kms v1.15.8
 	github.com/Masterminds/semver/v3 v3.2.1
 	github.com/PuerkitoBio/goquery v1.9.1
 	github.com/adamliesko/retry v0.0.0-20200123222335-86c8baac277d
-	github.com/aws/aws-sdk-go v1.51.16
+	github.com/aws/aws-sdk-go v1.51.21
 	github.com/fsnotify/fsnotify v1.7.0
 	github.com/go-logr/logr v1.4.1
 	github.com/google/go-github/v31 v31.0.0
@@ -21,7 +21,7 @@ require (
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/onsi/ginkgo/v2 v2.17.1
 	github.com/onsi/gomega v1.32.0
-	github.com/openshift-online/ocm-sdk-go v0.1.410
+	github.com/openshift-online/ocm-sdk-go v0.1.415
 	github.com/openshift/api v3.9.1-0.20190924102528-32369d4db2ad+incompatible
 	// go get -u github.com/openshift/client-go@release-4.14
 	github.com/openshift/client-go v0.0.0-20230807132528-be5346fb33cb
@@ -38,7 +38,7 @@ require (
 	github.com/prometheus-operator/prometheus-operator/pkg/client v0.64.0
 	github.com/prometheus/alertmanager v0.26.0
 	github.com/prometheus/client_golang v1.19.0
-	github.com/prometheus/common v0.48.0
+	github.com/prometheus/common v0.52.3
 	github.com/slack-go/slack v0.12.5
 	github.com/spf13/afero v1.11.0
 	github.com/spf13/cobra v1.8.0
@@ -131,7 +131,7 @@ require (
 	github.com/mxk/go-flowrate v0.0.0-20140419014527-cca7078d478f // indirect
 	github.com/pelletier/go-toml/v2 v2.1.0 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
-	github.com/prometheus/client_model v0.5.0 // indirect
+	github.com/prometheus/client_model v0.6.0 // indirect
 	github.com/prometheus/common/sigv4 v0.1.0 // indirect
 	github.com/prometheus/procfs v0.12.0 // indirect
 	github.com/sagikazarmark/locafero v0.4.0 // indirect
