@@ -40,10 +40,11 @@ func ReadFromS3Session(session *session.Session, inputKey string) ([]byte, error
 }
 
 // WriteToS3Session writes the given byte array to S3.
-func WriteToS3Session(session *session.Session, outputKey string, data []byte) error {
+func WriteToS3Session(session *session.Session, outputKey string, data []byte) {
 	bucket, key, err := ParseS3URL(outputKey)
 	if err != nil {
-		return fmt.Errorf("error trying to parse S3 URL: %v", err)
+		log.Printf("error trying to parse S3 URL %s: %v", outputKey, err)
+		return
 	}
 
 	uploader := s3manager.NewUploader(session)
@@ -56,12 +57,11 @@ func WriteToS3Session(session *session.Session, outputKey string, data []byte) e
 	})
 
 	if err != nil {
-		return err
+		log.Printf("Failed to upload to s3 %s", err.Error())
+		return
 	}
-
 	log.Printf("Uploaded to %s", outputKey)
-
-	return nil
+	return
 }
 
 // CreateS3URL creates an S3 URL from a bucket and a key string.

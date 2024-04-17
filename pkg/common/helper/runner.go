@@ -58,17 +58,14 @@ func (h *H) WriteResults(results map[string][]byte) {
 	}
 }
 
-// UploadResultsToS3 dumps runner results into the s3 bucket in given aws session. Session provided as metrics uploader uses different aws session than log uploads which use test aws session.
+// UploadResultsToS3 dumps runner results into the s3 bucket in given aws session.
 func (h *H) UploadResultsToS3(results map[string][]byte, key string) error {
 	for filename, data := range results {
 		session, err := aws.CcsAwsSession.GetSession()
 		if err != nil {
 			return fmt.Errorf("error getting aws session: %v", err)
 		}
-		err = aws.WriteToS3Session(session, aws.CreateS3URL(viper.GetString(config.Tests.LogBucket), key, filepath.Base(filename)), data)
-		if err != nil {
-			return fmt.Errorf("error while uploading log files to s3: %v", err)
-		}
+		aws.WriteToS3Session(session, aws.CreateS3URL(viper.GetString(config.Tests.LogBucket), key, filepath.Base(filename)), data)
 	}
 	return nil
 }

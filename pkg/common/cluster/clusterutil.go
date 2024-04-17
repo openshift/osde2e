@@ -108,8 +108,8 @@ func WaitForClusterReadyPostInstall(clusterID string, logger *log.Logger) error 
 
 	if viper.GetBool(config.Hypershift) {
 		logger.Println("Waiting for nodes to be ready (up to 10 minutes)")
-		err := wait.PollImmediate(30*time.Second, 10*time.Minute, func() (bool, error) {
-			nodes, err := kubeClient.CoreV1().Nodes().List(context.Background(), v1.ListOptions{})
+		err := wait.PollUntilContextTimeout(context.TODO(), 30*time.Second, 10*time.Minute, false, func(ctx context.Context) (bool, error) {
+			nodes, err := kubeClient.CoreV1().Nodes().List(ctx, v1.ListOptions{})
 			if err != nil {
 				// if the api server is not ready yet
 				if os.IsTimeout(err) {
@@ -243,7 +243,7 @@ func WaitForOCMProvisioning(provider spi.Provider, clusterID string, logger *log
 		healthcheckStatus = clusterproperties.StatusUpgradeHealthCheck
 	}
 
-	return readinessStarted, wait.PollImmediate(30*time.Second, time.Duration(installTimeout)*time.Minute, func() (bool, error) {
+	return readinessStarted, wait.PollUntilContextTimeout(context.TODO(), 30*time.Second, time.Duration(installTimeout)*time.Minute, false, func(_ context.Context) (bool, error) {
 		cluster, err := provider.GetCluster(clusterID)
 		if err != nil {
 			logger.Printf("Error fetching cluster details from provider: %s", err)
@@ -316,7 +316,7 @@ func waitForClusterReadyWithOverrideAndExpectedNumberOfNodes(clusterID string, l
 		return fmt.Errorf("Error fetching cluster details from provider: %w", err)
 	}
 
-	if pollErr := wait.PollImmediate(30*time.Second, time.Duration(installTimeout)*time.Minute, func() (bool, error) {
+	if pollErr := wait.PollUntilContextTimeout(context.TODO(), 30*time.Second, time.Duration(installTimeout)*time.Minute, false, func(_ context.Context) (bool, error) {
 		if cluster.State() != spi.ClusterStateReady {
 			logger.Printf("Cluster is not ready, current status '%s'.", cluster.State())
 			return false, nil

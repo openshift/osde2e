@@ -21,7 +21,7 @@ func SendReportToSlack(title string, report []byte) error {
 
 	msg := &slack.WebhookMessage{
 		Text:        title,
-		Attachments: append([]slack.Attachment{summaryAttachment}),
+		Attachments: []slack.Attachment{summaryAttachment},
 	}
 	return slack.PostWebhook(slackWebhook, msg)
 }
