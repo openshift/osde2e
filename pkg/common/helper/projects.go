@@ -25,7 +25,7 @@ func (h *H) createProject(ctx context.Context, suffix string) (*projectv1.Projec
 		return project, err
 	}
 
-	wait.PollImmediate(5*time.Second, 60*time.Second, func() (done bool, err error) {
+	err = wait.PollUntilContextTimeout(ctx, 5*time.Second, 60*time.Second, false, func(ctx context.Context) (done bool, err error) {
 		ns, err := h.Kube().CoreV1().Namespaces().Get(ctx, project.Name, metav1.GetOptions{})
 		if err != nil {
 			return false, err

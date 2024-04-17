@@ -108,8 +108,8 @@ func CreateRuntimeObject(obj runtime.Object, ns string, kube kubernetes.Interfac
 		// Need to wait till the namespace is actually created/active before proceeding
 		// Namespace creation is fairly swift, so these numbers are arbitrary.
 		// If this times out, there's something wrong.
-		wait.PollImmediate(2*time.Second, 1*time.Minute, func() (bool, error) {
-			if _, err := kube.CoreV1().Namespaces().Get(context.TODO(), ns, metav1.GetOptions{}); err != nil {
+		_ = wait.PollUntilContextTimeout(context.TODO(), 2*time.Second, 1*time.Minute, false, func(ctx context.Context) (bool, error) {
+			if _, err := kube.CoreV1().Namespaces().Get(ctx, ns, metav1.GetOptions{}); err != nil {
 				return false, nil
 			}
 			return true, nil

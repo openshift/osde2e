@@ -70,7 +70,7 @@ func CreateRouteMonitor(ctx context.Context, routeMonitor *routemonitorv1alpha1.
 	}
 
 	// Wait for the pod to create.
-	err = wait.PollImmediate(5*time.Second, 1*time.Minute, func() (bool, error) {
+	err = wait.PollUntilContextTimeout(ctx, 5*time.Second, 1*time.Minute, false, func(ctx context.Context) (bool, error) {
 		if _, err := RouteMonitorResource(h).Namespace(namespace).Get(ctx, routeMonitor.Name, metav1.GetOptions{}); err != nil {
 			return false, nil
 		}
@@ -88,7 +88,7 @@ func DeleteRouteMonitor(ctx context.Context, nsName types.NamespacedName, waitFo
 
 	// Deleting a namespace can take a while. If desired, wait for the namespace to delete before returning.
 	if waitForDelete {
-		err = wait.PollImmediate(2*time.Second, 1*time.Minute, func() (bool, error) {
+		err = wait.PollUntilContextTimeout(ctx, 2*time.Second, 1*time.Minute, false, func(ctx context.Context) (bool, error) {
 			rmo, err := RouteMonitorResource(h).Namespace(namespace).Get(ctx, name, metav1.GetOptions{})
 			// not sure on that
 			if rmo != nil && err == nil {
@@ -139,7 +139,7 @@ func CreateRoute(ctx context.Context, route *routev1.Route, namespace string, h 
 	}
 
 	// Wait for the pod to create.
-	err = wait.PollImmediate(5*time.Second, 1*time.Minute, func() (bool, error) {
+	err = wait.PollUntilContextTimeout(ctx, 5*time.Second, 1*time.Minute, false, func(ctx context.Context) (bool, error) {
 		if _, err := h.Route().RouteV1().Routes(namespace).Get(ctx, uwm.Name, metav1.GetOptions{}); err != nil {
 			return false, nil
 		}
@@ -172,7 +172,7 @@ func CreatePod(ctx context.Context, pod *kv1.Pod, namespace string, h *H) error 
 	}
 
 	// Wait for the pod to create.
-	err = wait.PollImmediate(5*time.Second, 1*time.Minute, func() (bool, error) {
+	err = wait.PollUntilContextTimeout(ctx, 5*time.Second, 1*time.Minute, false, func(ctx context.Context) (bool, error) {
 		if _, err := h.Kube().CoreV1().Pods(namespace).Get(ctx, uwm.Name, metav1.GetOptions{}); err != nil {
 			return false, nil
 		}
@@ -232,7 +232,7 @@ func CreateService(ctx context.Context, svc *kv1.Service, h *H) error {
 	}
 
 	// Wait for the pod to create.
-	err = wait.PollImmediate(5*time.Second, 1*time.Minute, func() (bool, error) {
+	err = wait.PollUntilContextTimeout(ctx, 5*time.Second, 1*time.Minute, false, func(ctx context.Context) (bool, error) {
 		if _, err := h.Kube().CoreV1().Services(uwm.Namespace).Get(ctx, uwm.Name, metav1.GetOptions{}); err != nil {
 			return false, nil
 		}
@@ -257,7 +257,7 @@ func CreateNamespace(ctx context.Context, namespace string, h *H) (*kv1.Namespac
 	h.Kube().CoreV1().Namespaces().Create(ctx, ns, metav1.CreateOptions{})
 
 	// Wait for the namespace to create. This is usually pretty quick.
-	err = wait.PollImmediate(5*time.Second, 2*time.Minute, func() (bool, error) {
+	err = wait.PollUntilContextTimeout(ctx, 5*time.Second, 2*time.Minute, false, func(ctx context.Context) (bool, error) {
 		if _, err := h.Kube().CoreV1().Namespaces().Get(ctx, namespace, metav1.GetOptions{}); err != nil {
 			return false, nil
 		}
@@ -276,7 +276,7 @@ func DeleteNamespace(ctx context.Context, namespace string, waitForDelete bool, 
 
 	// Deleting a namespace can take a while. If desired, wait for the namespace to delete before returning.
 	if waitForDelete {
-		err = wait.PollImmediate(2*time.Second, 1*time.Minute, func() (bool, error) {
+		err = wait.PollUntilContextTimeout(ctx, 2*time.Second, 1*time.Minute, false, func(ctx context.Context) (bool, error) {
 			ns, _ := h.Kube().CoreV1().Namespaces().Get(ctx, namespace, metav1.GetOptions{})
 			if ns != nil && ns.Status.Phase == "Terminating" {
 				return false, nil
