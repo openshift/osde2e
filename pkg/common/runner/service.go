@@ -47,9 +47,9 @@ func (r *Runner) createService(pod *kubev1.Pod) (svc *kubev1.Service, err error)
 // waitForCompletion will wait for a runner's pod to have a valid v1.Endpoint available
 func (r *Runner) waitForCompletion(podName string, timeoutInSeconds int) error {
 	var endpoints *kubev1.Endpoints
-	var pendingCount int = 0
-	return wait.PollImmediate(slowPoll, time.Duration(timeoutInSeconds)*time.Second, func() (done bool, err error) {
-		endpoints, err = r.Kube.CoreV1().Endpoints(r.svc.Namespace).Get(context.TODO(), r.svc.Name, metav1.GetOptions{})
+	pendingCount := 0
+	return wait.PollUntilContextTimeout(context.TODO(), slowPoll, time.Duration(timeoutInSeconds)*time.Second, false, func(ctx context.Context) (done bool, err error) {
+		endpoints, err = r.Kube.CoreV1().Endpoints(r.svc.Namespace).Get(ctx, r.svc.Name, metav1.GetOptions{})
 		if err != nil && !kerror.IsNotFound(err) {
 			r.Error(err, fmt.Sprintf("unable to get endpoint '%s/%s'", r.svc.Namespace, r.svc.Name))
 		} else if endpoints != nil {
@@ -59,7 +59,7 @@ func (r *Runner) waitForCompletion(podName string, timeoutInSeconds int) error {
 				}
 			}
 		}
-		pod, err := r.Kube.CoreV1().Pods(r.svc.Namespace).Get(context.TODO(), podName, metav1.GetOptions{})
+		pod, err := r.Kube.CoreV1().Pods(r.svc.Namespace).Get(ctx, podName, metav1.GetOptions{})
 		if err != nil {
 			r.Error(err, fmt.Sprintf("unable to get pod %s/%s", r.svc.Namespace, podName))
 			return false, err
