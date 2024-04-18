@@ -57,7 +57,7 @@ var DefaultContainer = kubev1.Container{
 		PeriodSeconds: 7,
 	},
 	SecurityContext: &kubev1.SecurityContext{
-		RunAsUser: pointer.Int64Ptr(0),
+		RunAsUser: pointer.Int64(0),
 	},
 }
 
@@ -81,7 +81,7 @@ func volumes(name string) []kubev1.Volume {
 					LocalObjectReference: kubev1.LocalObjectReference{
 						Name: name,
 					},
-					DefaultMode: pointer.Int32Ptr(0o755),
+					DefaultMode: pointer.Int32(0o755),
 				},
 			},
 		},
