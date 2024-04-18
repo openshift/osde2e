@@ -39,7 +39,7 @@ func (l latestVersion) SelectVersion(installVersion *spi.Version, versionList *s
 	}
 
 	if !newestVersion.Version().GreaterThan(installVersion.Version()) {
-		return nil, "latest version", fmt.Errorf("No available upgrade path for version %s", installVersion.Version().Original())
+		return nil, "latest version", fmt.Errorf("no available upgrade path for version %s", installVersion.Version().Original())
 	}
 	return newestVersion, "latest version", nil
 }

@@ -18,12 +18,12 @@ func (h *H) InspectOLM(ctx context.Context) error {
 
 	err := r.Run(inspectTimeoutInSeconds, stopCh)
 	if err != nil {
-		return fmt.Errorf("Error running OLM inspection: %s", err.Error())
+		return fmt.Errorf("error running OLM inspection: %s", err.Error())
 	}
 
 	gatherResults, err := r.RetrieveResults()
 	if err != nil {
-		return fmt.Errorf("Error retrieving OLM inspection results: %s", err.Error())
+		return fmt.Errorf("error retrieving OLM inspection results: %s", err.Error())
 	}
 
 	h.WriteResults(gatherResults)

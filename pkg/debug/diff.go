@@ -130,7 +130,7 @@ func GetCurrentMCCHash() (hash string, err error) {
 		return commits[0].GetSHA(), nil
 	}
 
-	return "", fmt.Errorf("No commits found for openshift/machine-cluster-config")
+	return "", fmt.Errorf("no commits found for openshift/machine-cluster-config")
 }
 
 func getLastJobID(baseProwURL, jobName string) (int, error) {
