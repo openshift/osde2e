@@ -34,11 +34,11 @@ import (
 	"k8s.io/client-go/rest"
 
 	kmsv1 "cloud.google.com/go/kms/apiv1"
+	kmsprotov1 "cloud.google.com/go/kms/apiv1/kmspb"
 	cloudresourcemanagerv1 "google.golang.org/api/cloudresourcemanager/v1"
 	computev1 "google.golang.org/api/compute/v1"
 	"google.golang.org/api/option"
 	serviceusagev1 "google.golang.org/api/serviceusage/v1"
-	kmsprotov1 "google.golang.org/genproto/googleapis/cloud/kms/v1"
 )
 
 const (
