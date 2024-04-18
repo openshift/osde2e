@@ -17,7 +17,7 @@ func (o *OCMProvider) CheckQuota(skuRuleID string) (bool, error) {
 	err := retryer().Do(func() error {
 		var err error
 		if skuRuleID == "" {
-			return fmt.Errorf("No valid SKU selected")
+			return fmt.Errorf("no valid SKU selected")
 		}
 		skuResp, err = o.conn.AccountsMgmt().V1().SkuRules().SkuRule(skuRuleID).Get().Send()
 
@@ -100,7 +100,7 @@ func (o *OCMProvider) currentAccountQuota() (*accounts.QuotaCostList, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error getting quota list: %v", err)
 	} else if quotaList == nil {
-		return nil, errors.New("QuotaList can't be nil")
+		return nil, errors.New("quotaList can't be nil")
 	}
 
 	return quotaList.Items(), nil

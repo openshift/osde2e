@@ -31,7 +31,7 @@ func ensurePassingXML(results map[string][]byte) (hadXML bool, err error) {
 		log.Println("checking", filename)
 		match, err = filepath.Match("junit*.xml", filename)
 		if err != nil {
-			err = fmt.Errorf("Failed matching filename %s: %w", filename, err)
+			err = fmt.Errorf("failed matching filename %s: %w", filename, err)
 			return
 		}
 		if match {
@@ -39,7 +39,7 @@ func ensurePassingXML(results map[string][]byte) (hadXML bool, err error) {
 			// Use Ginkgo's JUnitTestSuite to unmarshal the JUnit XML file
 			suites, e := junit.Ingest(data)
 			if e != nil {
-				err = fmt.Errorf("Failed parsing junit xml in %s: %w", filename, e)
+				err = fmt.Errorf("failed parsing junit xml in %s: %w", filename, e)
 				return
 			}
 			for _, suite := range suites {

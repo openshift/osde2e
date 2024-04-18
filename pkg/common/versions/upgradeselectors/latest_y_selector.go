@@ -43,7 +43,7 @@ func (l latestYVersion) SelectVersion(installVersion *spi.Version, versionList *
 	}
 
 	if !newestVersion.Version().GreaterThan(installVersion.Version()) {
-		return nil, "latest y version", fmt.Errorf("No available upgrade path for version %s", installVersion.Version().Original())
+		return nil, "latest y version", fmt.Errorf("no available upgrade path for version %s", installVersion.Version().Original())
 	}
 	return newestVersion, "latest y version", nil
 }
