@@ -150,7 +150,7 @@ func TestRetrieveTestResults(t *testing.T) {
 			r.Kube = client
 
 			// create results service
-			svc, err := r.createService(new(kubev1.Pod))
+			svc, err := r.createService(context.Background(), new(kubev1.Pod))
 			if err != nil {
 				t.Fatalf("Failed to create example service: %v", err)
 			}

@@ -2,6 +2,7 @@
 package runner
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/go-logr/logr"
@@ -99,6 +100,9 @@ type Runner struct {
 
 // Run deploys the suite into a cluster, waits for it to finish, and gathers the results.
 func (r *Runner) Run(timeoutInSeconds int, stopCh <-chan struct{}) (err error) {
+	// TODO: pass this in
+	ctx := context.TODO()
+
 	r.stopCh = stopCh
 	r.status = StatusSetup
 
@@ -112,28 +116,28 @@ func (r *Runner) Run(timeoutInSeconds int, stopCh <-chan struct{}) (err error) {
 
 	r.Info(fmt.Sprintf("Creating %s runner Pod...", r.Name))
 	var pod *kubev1.Pod
-	if pod, err = r.createPod(); err != nil {
+	if pod, err = r.createPod(ctx); err != nil {
 		return
 	}
 
 	r.Info(fmt.Sprintf("Waiting for %s runner Pod to start...", r.Name))
-	if err = r.waitForPodRunning(pod); err != nil {
+	if err = r.waitForPodRunning(ctx, pod); err != nil {
 		return
 	}
 	r.status = StatusRunning
 
 	r.Info(fmt.Sprintf("Creating service for %s runner Pod...", r.Name))
-	if r.svc, err = r.createService(pod); err != nil {
+	if r.svc, err = r.createService(ctx, pod); err != nil {
 		return
 	}
 
 	r.Info(fmt.Sprintf("Waiting for endpoints of %s runner Pod with a timeout of %d seconds...", r.Name, timeoutInSeconds))
 	var completionErr error
-	completionErr = r.waitForCompletion(pod.Name, timeoutInSeconds)
+	completionErr = r.waitForCompletion(ctx, pod.Name, timeoutInSeconds)
 
 	if !r.SkipLogsFromPod {
 		r.Info(fmt.Sprintf("Collecting logs from containers on %s runner Pod...", r.Name))
-		if err = r.getAllLogsFromPod(pod.Name); err != nil {
+		if err = r.getAllLogsFromPod(ctx, pod.Name); err != nil {
 			return
 		}
 	} else {
