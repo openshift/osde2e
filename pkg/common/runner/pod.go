@@ -116,8 +116,8 @@ func (r *Runner) createPod() (pod *kubev1.Pod, err error) {
 		}
 
 		// Verify the configMap has been created before proceeding
-		err = wait.PollImmediate(fastPoll, configMapCreateTimeout, func() (done bool, err error) {
-			if configMap, err = r.Kube.CoreV1().ConfigMaps(r.Namespace).Get(context.TODO(), configMap.Name, metav1.GetOptions{}); err != nil {
+		err = wait.PollUntilContextTimeout(context.TODO(), fastPoll, configMapCreateTimeout, false, func(ctx context.Context) (done bool, err error) {
+			if configMap, err = r.Kube.CoreV1().ConfigMaps(r.Namespace).Get(ctx, configMap.Name, metav1.GetOptions{}); err != nil {
 				r.Error(err, fmt.Sprintf("error creating %s config map", configMap.Name))
 			}
 			return err == nil, nil
@@ -154,8 +154,8 @@ func (r *Runner) createPod() (pod *kubev1.Pod, err error) {
 
 	// retry until Pod can be created or timeout occurs
 	var createdPod *kubev1.Pod
-	err = wait.PollImmediate(fastPoll, podCreateTimeout, func() (done bool, err error) {
-		if createdPod, err = r.Kube.CoreV1().Pods(r.Namespace).Create(context.TODO(), pod, metav1.CreateOptions{}); err != nil {
+	err = wait.PollUntilContextTimeout(context.TODO(), fastPoll, podCreateTimeout, false, func(ctx context.Context) (done bool, err error) {
+		if createdPod, err = r.Kube.CoreV1().Pods(r.Namespace).Create(ctx, pod, metav1.CreateOptions{}); err != nil {
 			r.Error(err, fmt.Sprintf("error creating %s/%s runner Pod", r.Namespace, r.Name))
 		}
 		return err == nil, nil
@@ -165,9 +165,9 @@ func (r *Runner) createPod() (pod *kubev1.Pod, err error) {
 
 // waitForRunningPod, given a v1.Pod, will wait for 3 minutes for a pod to enter the running phase or return an error.
 func (r *Runner) waitForPodRunning(pod *kubev1.Pod) error {
-	var pendingCount int = 0
-	return wait.PollImmediate(fastPoll, 3*time.Minute, func() (done bool, err error) {
-		pod, err = r.Kube.CoreV1().Pods(pod.Namespace).Get(context.TODO(), pod.Name, metav1.GetOptions{})
+	pendingCount := 0
+	return wait.PollUntilContextTimeout(context.TODO(), fastPoll, 3*time.Minute, false, func(ctx context.Context) (done bool, err error) {
+		pod, err = r.Kube.CoreV1().Pods(pod.Namespace).Get(ctx, pod.Name, metav1.GetOptions{})
 		if err != nil && !kerror.IsNotFound(err) {
 			return
 		} else if pod == nil {
