@@ -1,6 +1,8 @@
 package aws
 
 import (
+	"fmt"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/ec2"
 )
@@ -30,4 +32,47 @@ func (CcsAwsSession *ccsAwsSession) CheckIfEC2ExistBasedOnNodeName(nodeName stri
 	}
 
 	return false, nil
+}
+
+// ReleaseElasticIPs releases elastic IPs from loaded aws session. If an instance is
+// associated with it, we skip its deletion and log tag name. Dryrun returns aws Error
+// from AWS api and is logged.
+func (CcsAwsSession *ccsAwsSession) ReleaseElasticIPs(dryrun bool) error {
+	err := CcsAwsSession.GetAWSSessions()
+	if err != nil {
+		return err
+	}
+
+	results, err := CcsAwsSession.ec2.DescribeAddresses(&ec2.DescribeAddressesInput{})
+	if err != nil {
+		return err
+	}
+	fmt.Printf("Addresses found: %d\n", len(results.Addresses))
+	deleted := 0
+	name := ""
+
+	for _, address := range results.Addresses {
+		if address.AssociationId == nil {
+			_, err := CcsAwsSession.ec2.ReleaseAddress(&ec2.ReleaseAddressInput{
+				AllocationId: address.AllocationId,
+				DryRun:       &dryrun,
+			})
+			if err == nil {
+				deleted++
+				fmt.Printf("Address deleted: %s\n", *address.PublicIp)
+			} else {
+				fmt.Printf("Address %s not deleted: %s\n", *address.PublicIp, err.Error())
+			}
+		} else {
+			for _, v := range address.Tags {
+				if *v.Key == "Name" {
+					name = *v.Value
+				}
+			}
+			fmt.Printf("Skipping address %s still allocated to cluster [Tag: %s].\n", *address.PublicIp, name)
+		}
+	}
+	fmt.Printf("Finished elastic IP cleanup. Deleted %d addresses.", deleted)
+
+	return nil
 }
