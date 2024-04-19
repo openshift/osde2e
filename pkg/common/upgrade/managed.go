@@ -275,7 +275,7 @@ func isManagedUpgradeDone(h *helper.H) (done bool, msg string, err error) {
 		}
 		if policyID != "" {
 			// The provider has an upgrade policy. MUO might be waiting to sync it into an upgradeconfig
-			return false, fmt.Sprintf("cluster provider has an upgrade policy, but cluster has no upgradeconfig yet"), nil
+			return false, "cluster provider has an upgrade policy, but cluster has no upgradeconfig yet", nil
 		}
 		if policyID == "" {
 			// The provider successfully returned that it contains no upgrade policies.
@@ -306,7 +306,7 @@ func isManagedUpgradeDone(h *helper.H) (done bool, msg string, err error) {
 
 	// If the Upgrade History is empty, the upgrade hasn't started, try again later
 	if upgradeHistory == nil {
-		return false, fmt.Sprintf("upgrade yet to commence"), nil
+		return false, "upgrade yet to commence", nil
 	}
 
 	// If the Upgrade History phase indicates the upgrade has failed, we can bail out here
@@ -322,7 +322,7 @@ func isManagedUpgradeDone(h *helper.H) (done bool, msg string, err error) {
 	// Otherwise, report back what current phase and upgrade condition the upgrade is at
 	upgradeConditions := upgradeHistory.Conditions
 	if len(upgradeConditions) == 0 {
-		return false, fmt.Sprintf("current upgrade status is pending"), nil
+		return false, "current upgrade status is pending", nil
 	}
 	statusMsg := upgradeConditions[0].Message
 	statusTimeStr := "unknown"

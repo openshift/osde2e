@@ -500,7 +500,7 @@ func runGinkgoTests() (int, error) {
 			// close route monitors
 			if viper.GetBool(config.Upgrade.MonitorRoutesDuringUpgrade) && !suiteConfig.DryRun {
 				close(routeMonitorChan)
-				_ = <-closeMonitorChan
+				<-closeMonitorChan
 				log.Println("Route monitors reconciled")
 			}
 		} else {
