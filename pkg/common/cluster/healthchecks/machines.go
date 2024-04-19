@@ -33,7 +33,7 @@ func CheckMachinesObjectState(dynamicClient dynamic.Interface, logger *log.Logge
 		return false, err
 	}
 	if len(obj.Items) == 0 {
-		return false, fmt.Errorf("No machines found in the %s namespace", machinesNamespace)
+		return false, fmt.Errorf("no machines found in the %s namespace", machinesNamespace)
 	}
 
 	var metadataState []string
@@ -43,7 +43,7 @@ func CheckMachinesObjectState(dynamicClient dynamic.Interface, logger *log.Logge
 		err = runtime.DefaultUnstructuredConverter.
 			FromUnstructured(item.UnstructuredContent(), &machine)
 		if err != nil {
-			return false, fmt.Errorf("Error casting object: %s", err.Error())
+			return false, fmt.Errorf("error casting object: %s", err.Error())
 		}
 
 		if machine.Status.Phase == nil || *machine.Status.Phase != runningPhase {

@@ -123,7 +123,7 @@ func RunUpgrade(h *helper.H) error {
 	if viper.GetBool(config.Upgrade.ManagedUpgradeTestNodeDrain) {
 		list, err := h.Kube().CoreV1().Pods(h.CurrentProject()).List(context.TODO(), metav1.ListOptions{LabelSelector: "app=node-drain-test"})
 		if err != nil {
-			return fmt.Errorf("Error listing pods: %s", err.Error())
+			return fmt.Errorf("error listing pods: %s", err.Error())
 		}
 		if len(list.Items) != 0 {
 			for _, item := range list.Items {

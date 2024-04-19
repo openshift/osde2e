@@ -23,7 +23,7 @@ const (
 )
 
 // createService returns a v1.Service pointing to a given v1.Pod object
-func (r *Runner) createService(pod *kubev1.Pod) (svc *kubev1.Service, err error) {
+func (r *Runner) createService(ctx context.Context, pod *kubev1.Pod) (svc *kubev1.Service, err error) {
 	var ports []kubev1.ServicePort
 	for _, c := range pod.Spec.Containers {
 		for _, p := range c.Ports {
@@ -35,7 +35,7 @@ func (r *Runner) createService(pod *kubev1.Pod) (svc *kubev1.Service, err error)
 		}
 	}
 
-	return r.Kube.CoreV1().Services(r.Namespace).Create(context.TODO(), &kubev1.Service{
+	return r.Kube.CoreV1().Services(r.Namespace).Create(ctx, &kubev1.Service{
 		ObjectMeta: r.meta(),
 		Spec: kubev1.ServiceSpec{
 			Selector: pod.Labels,
@@ -45,11 +45,11 @@ func (r *Runner) createService(pod *kubev1.Pod) (svc *kubev1.Service, err error)
 }
 
 // waitForCompletion will wait for a runner's pod to have a valid v1.Endpoint available
-func (r *Runner) waitForCompletion(podName string, timeoutInSeconds int) error {
+func (r *Runner) waitForCompletion(ctx context.Context, podName string, timeoutInSeconds int) error {
 	var endpoints *kubev1.Endpoints
-	var pendingCount int = 0
-	return wait.PollImmediate(slowPoll, time.Duration(timeoutInSeconds)*time.Second, func() (done bool, err error) {
-		endpoints, err = r.Kube.CoreV1().Endpoints(r.svc.Namespace).Get(context.TODO(), r.svc.Name, metav1.GetOptions{})
+	pendingCount := 0
+	return wait.PollUntilContextTimeout(ctx, slowPoll, time.Duration(timeoutInSeconds)*time.Second, false, func(ctx context.Context) (done bool, err error) {
+		endpoints, err = r.Kube.CoreV1().Endpoints(r.svc.Namespace).Get(ctx, r.svc.Name, metav1.GetOptions{})
 		if err != nil && !kerror.IsNotFound(err) {
 			r.Error(err, fmt.Sprintf("unable to get endpoint '%s/%s'", r.svc.Namespace, r.svc.Name))
 		} else if endpoints != nil {
@@ -59,7 +59,7 @@ func (r *Runner) waitForCompletion(podName string, timeoutInSeconds int) error {
 				}
 			}
 		}
-		pod, err := r.Kube.CoreV1().Pods(r.svc.Namespace).Get(context.TODO(), podName, metav1.GetOptions{})
+		pod, err := r.Kube.CoreV1().Pods(r.svc.Namespace).Get(ctx, podName, metav1.GetOptions{})
 		if err != nil {
 			r.Error(err, fmt.Sprintf("unable to get pod %s/%s", r.svc.Namespace, podName))
 			return false, err
@@ -90,8 +90,8 @@ func (r *Runner) waitForCompletion(podName string, timeoutInSeconds int) error {
 	})
 }
 
-func (r *Runner) getAllLogsFromPod(podName string) error {
-	pod, err := r.Kube.CoreV1().Pods(r.svc.Namespace).Get(context.TODO(), podName, metav1.GetOptions{})
+func (r *Runner) getAllLogsFromPod(ctx context.Context, podName string) error {
+	pod, err := r.Kube.CoreV1().Pods(r.svc.Namespace).Get(ctx, podName, metav1.GetOptions{})
 	if err != nil {
 		return err
 	}
@@ -102,7 +102,7 @@ func (r *Runner) getAllLogsFromPod(podName string) error {
 			r.Info(fmt.Sprintf("Trying to get logs for %s:%s", podName, containerStatus.Name))
 			request := r.Kube.CoreV1().Pods(r.svc.Namespace).GetLogs(podName, &kubev1.PodLogOptions{Container: containerStatus.Name})
 
-			logStream, err := request.Stream(context.TODO())
+			logStream, err := request.Stream(ctx)
 			if err != nil {
 				allErrors = multierror.Append(allErrors, err)
 				return

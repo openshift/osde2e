@@ -73,7 +73,7 @@ func ReadK8sYaml(file string) (runtime.Object, error) {
 	decode := scheme.Codecs.UniversalDeserializer().Decode
 	obj, _, err := decode([]byte(f), nil, nil)
 	if err != nil {
-		return nil, fmt.Errorf("Error while decoding YAML object. Err was: %s", err)
+		return nil, fmt.Errorf("error while decoding YAML object. Err was: %s", err)
 	}
 
 	return obj, nil
@@ -87,7 +87,7 @@ func CreateRuntimeObject(obj runtime.Object, ns string, kube kubernetes.Interfac
 		err    error
 	)
 	if obj == nil {
-		return nil, fmt.Errorf("Nil object passed in")
+		return nil, fmt.Errorf("nil object passed in")
 	}
 
 	if _, err := kube.CoreV1().Namespaces().Get(context.TODO(), ns, metav1.GetOptions{}); err != nil {
@@ -102,14 +102,14 @@ func CreateRuntimeObject(obj runtime.Object, ns string, kube kubernetes.Interfac
 			Spec: corev1.NamespaceSpec{},
 		}, metav1.CreateOptions{})
 		if err != nil {
-			return nil, fmt.Errorf("Error creating namespace: %s", err.Error())
+			return nil, fmt.Errorf("error creating namespace: %s", err.Error())
 		}
 
 		// Need to wait till the namespace is actually created/active before proceeding
 		// Namespace creation is fairly swift, so these numbers are arbitrary.
 		// If this times out, there's something wrong.
-		wait.PollImmediate(2*time.Second, 1*time.Minute, func() (bool, error) {
-			if _, err := kube.CoreV1().Namespaces().Get(context.TODO(), ns, metav1.GetOptions{}); err != nil {
+		_ = wait.PollUntilContextTimeout(context.TODO(), 2*time.Second, 1*time.Minute, false, func(ctx context.Context) (bool, error) {
+			if _, err := kube.CoreV1().Namespaces().Get(ctx, ns, metav1.GetOptions{}); err != nil {
 				return false, nil
 			}
 			return true, nil
@@ -120,7 +120,7 @@ func CreateRuntimeObject(obj runtime.Object, ns string, kube kubernetes.Interfac
 	switch obj.GetObjectKind().GroupVersionKind().Kind {
 	case "Pod":
 		if _, ok = obj.(*corev1.Pod); !ok {
-			return nil, fmt.Errorf("Error casting object to pod")
+			return nil, fmt.Errorf("error casting object to pod")
 		}
 
 		if newObj, err = kube.CoreV1().Pods(ns).Create(context.TODO(), obj.(*corev1.Pod), metav1.CreateOptions{}); err != nil {
@@ -129,7 +129,7 @@ func CreateRuntimeObject(obj runtime.Object, ns string, kube kubernetes.Interfac
 		return newObj, nil
 	case "Service":
 		if _, ok = obj.(*corev1.Service); !ok {
-			return nil, fmt.Errorf("Error casting object to service")
+			return nil, fmt.Errorf("error casting object to service")
 		}
 		if newObj, err = kube.CoreV1().Services(ns).Create(context.TODO(), obj.(*corev1.Service), metav1.CreateOptions{}); err != nil {
 			return nil, err
@@ -153,7 +153,7 @@ func CreateRuntimeObject(obj runtime.Object, ns string, kube kubernetes.Interfac
 		return newObj, nil
 	case "PersistentVolume":
 		if _, ok = obj.(*corev1.PersistentVolume); !ok {
-			return nil, fmt.Errorf("Error casting object to PersistentVolume")
+			return nil, fmt.Errorf("error casting object to PersistentVolume")
 		}
 
 		if newObj, err = kube.CoreV1().PersistentVolumes().Create(context.TODO(), obj.(*corev1.PersistentVolume), metav1.CreateOptions{}); err != nil {
@@ -162,7 +162,7 @@ func CreateRuntimeObject(obj runtime.Object, ns string, kube kubernetes.Interfac
 		return newObj, nil
 	case "PersistentVolumeClaim":
 		if _, ok = obj.(*corev1.PersistentVolumeClaim); !ok {
-			return nil, fmt.Errorf("Error casting object to PersistentVolumeClaim")
+			return nil, fmt.Errorf("error casting object to PersistentVolumeClaim")
 		}
 
 		if newObj, err = kube.CoreV1().PersistentVolumeClaims(ns).Create(context.TODO(), obj.(*corev1.PersistentVolumeClaim), metav1.CreateOptions{}); err != nil {
@@ -171,7 +171,7 @@ func CreateRuntimeObject(obj runtime.Object, ns string, kube kubernetes.Interfac
 		return newObj, nil
 	case "Secret":
 		if _, ok = obj.(*corev1.Secret); !ok {
-			return nil, fmt.Errorf("Error casting object to Secret")
+			return nil, fmt.Errorf("error casting object to Secret")
 		}
 
 		if newObj, err = kube.CoreV1().Secrets(ns).Create(context.TODO(), obj.(*corev1.Secret), metav1.CreateOptions{}); err != nil {
@@ -180,7 +180,7 @@ func CreateRuntimeObject(obj runtime.Object, ns string, kube kubernetes.Interfac
 		return newObj, nil
 	case "PodDisruptionBudget":
 		if _, ok = obj.(*policyv1.PodDisruptionBudget); !ok {
-			return nil, fmt.Errorf("Error casting object to PodDisruptionBudget")
+			return nil, fmt.Errorf("error casting object to PodDisruptionBudget")
 		}
 		if newObj, err = kube.PolicyV1().PodDisruptionBudgets(ns).Create(context.TODO(), obj.(*policyv1.PodDisruptionBudget), metav1.CreateOptions{}); err != nil {
 			return nil, err
@@ -188,6 +188,6 @@ func CreateRuntimeObject(obj runtime.Object, ns string, kube kubernetes.Interfac
 		return newObj, nil
 
 	default:
-		return nil, fmt.Errorf("Unable to handle object type %s", obj.GetObjectKind().GroupVersionKind().Kind)
+		return nil, fmt.Errorf("unable to handle object type %s", obj.GetObjectKind().GroupVersionKind().Kind)
 	}
 }

@@ -49,7 +49,7 @@ func (l latestZVersion) SelectVersion(installVersion *spi.Version, versionList *
 		}
 	}
 	if newestVersion.Version().Equal(installVersion.Version()) {
-		return nil, "latest z version", fmt.Errorf("No available upgrade path for version %s", installVersion.Version().Original())
+		return nil, "latest z version", fmt.Errorf("no available upgrade path for version %s", installVersion.Version().Original())
 	}
 	return newestVersion, "latest z version", nil
 }

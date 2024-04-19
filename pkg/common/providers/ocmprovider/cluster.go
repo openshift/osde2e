@@ -45,7 +45,7 @@ func (o *OCMProvider) IsValidClusterName(clusterName string) (bool, error) {
 			Page(page).
 			SendContext(ctx)
 		if err != nil {
-			return false, fmt.Errorf("Can't retrieve page %d: %s\n", page, err)
+			return false, fmt.Errorf("can't retrieve page %d: %w", page, err)
 		}
 
 		if response.Total() != 0 {

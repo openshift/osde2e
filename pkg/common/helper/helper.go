@@ -119,7 +119,7 @@ func (h *H) Setup() error {
 		Expect(err).ShouldNot(HaveOccurred(), "failed to set up project")
 		viper.Set(config.Project, h.proj.Name)
 	} else {
-		_ = wait.PollImmediate(5*time.Second, 30*time.Second, func() (bool, error) {
+		_ = wait.PollUntilContextTimeout(ctx, 5*time.Second, 30*time.Second, false, func(ctx context.Context) (bool, error) {
 			h.proj, err = h.Project().ProjectV1().Projects().Get(ctx, project, metav1.GetOptions{})
 			if apierrors.IsNotFound(err) || apierrors.IsServiceUnavailable(err) {
 				return false, nil
@@ -158,7 +158,7 @@ func (h *H) SetupNewProject(ctx context.Context, suffix string) (*projectv1.Proj
 
 	// Quick fix for Hypershift pipelines failing. Currently the RBAC is not being created in the projects.
 	if !viper.GetBool(config.Hypershift) {
-		err = wait.PollImmediate(1*time.Second, 1*time.Minute, func() (bool, error) {
+		err = wait.PollUntilContextTimeout(ctx, 1*time.Second, 1*time.Minute, false, func(ctx context.Context) (bool, error) {
 			_, err = h.Kube().RbacV1().RoleBindings(v1project.Name).Get(ctx, "dedicated-admins-project-dedicated-admins", metav1.GetOptions{})
 			if apierrors.IsNotFound(err) {
 				return false, nil
@@ -341,7 +341,7 @@ func (h *H) CreateProject(ctx context.Context, name string) {
 func (h *H) DeleteProject(ctx context.Context, name string) error {
 	err := h.Project().ProjectV1().Projects().Delete(ctx, name, metav1.DeleteOptions{})
 	if err == nil {
-		return wait.PollImmediate(5*time.Second, 60*time.Second, func() (bool, error) {
+		return wait.PollUntilContextTimeout(ctx, 5*time.Second, 60*time.Second, false, func(ctx context.Context) (bool, error) {
 			project, err := h.Project().ProjectV1().Projects().Get(ctx, name, metav1.GetOptions{})
 			if err != nil && project.Name == "" {
 				return true, nil
@@ -426,7 +426,7 @@ func (h *H) GetGCPCreds(ctx context.Context) (*google.Credentials, bool) {
 		Resource: "credentialsrequests",
 	}).Namespace(saCredentialReq.GetNamespace()).Create(ctx, &unstructured.Unstructured{Object: credentialReqObj}, metav1.CreateOptions{})
 
-	wait.PollImmediate(15*time.Second, 5*time.Minute, func() (bool, error) {
+	_ = wait.PollUntilContextTimeout(ctx, 15*time.Second, 5*time.Minute, false, func(ctx context.Context) (bool, error) {
 		unstructCredentialReq, _ := h.Dynamic().Resource(schema.GroupVersionResource{
 			Group:    "cloudcredential.openshift.io",
 			Version:  "v1",

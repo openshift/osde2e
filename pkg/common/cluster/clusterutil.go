@@ -313,7 +313,7 @@ func waitForClusterReadyWithOverrideAndExpectedNumberOfNodes(clusterID string, l
 
 	cluster, err := provider.GetCluster(clusterID)
 	if err != nil {
-		return fmt.Errorf("Error fetching cluster details from provider: %w", err)
+		return fmt.Errorf("error fetching cluster details from provider: %w", err)
 	}
 
 	if pollErr := wait.PollUntilContextTimeout(context.TODO(), 30*time.Second, time.Duration(installTimeout)*time.Minute, false, func(_ context.Context) (bool, error) {

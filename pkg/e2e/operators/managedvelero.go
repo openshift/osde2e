@@ -410,17 +410,17 @@ func checkVeleroBackups(h *helper.H, operatorNamespace string) {
 					Resource: "backups",
 				}).Namespace(operatorNamespace).List(ctx, metav1.ListOptions{})
 				if err != nil {
-					return false, fmt.Errorf("Error getting backups: %s", err.Error())
+					return false, fmt.Errorf("error getting backups: %s", err.Error())
 				}
 				for _, item := range us.Items {
 					var backup velerov1.Backup
 					err = runtime.DefaultUnstructuredConverter.
 						FromUnstructured(item.UnstructuredContent(), &backup)
 					if err != nil {
-						return false, fmt.Errorf("Error casting object: %s", err.Error())
+						return false, fmt.Errorf("error casting object: %s", err.Error())
 					}
 					if backup.Status.Phase == velerov1.BackupPhaseFailed {
-						return false, fmt.Errorf("Backup failed for %s", backup.Name)
+						return false, fmt.Errorf("backup failed for %s", backup.Name)
 					}
 					if backup.Status.Phase != velerov1.BackupPhaseCompleted {
 						return false, nil

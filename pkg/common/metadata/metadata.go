@@ -210,11 +210,7 @@ func (m *Metadata) ResetLogMetrics() {
 // IncrementLogMetric adds a supplied number to a log metric or sets the metric to
 // the value if it doesn't exist already
 func (m *Metadata) IncrementLogMetric(metric string, value int) {
-	if _, ok := m.LogMetrics[metric]; ok {
-		m.LogMetrics[metric] += value
-	} else {
-		m.LogMetrics[metric] = value
-	}
+	m.LogMetrics[metric] += value
 
 	m.WriteToJSON(m.ReportDir)
 }
@@ -229,11 +225,7 @@ func (m *Metadata) ResetBeforeSuiteMetrics() {
 // IncrementBeforeSuiteMetric adds a supplied number to a before suite metric or sets the metric to
 // the value if it doesn't exist already
 func (m *Metadata) IncrementBeforeSuiteMetric(metric string, value int) {
-	if _, ok := m.BeforeSuiteMetrics[metric]; ok {
-		m.BeforeSuiteMetrics[metric] += value
-	} else {
-		m.BeforeSuiteMetrics[metric] = value
-	}
+	m.BeforeSuiteMetrics[metric] += value
 
 	m.WriteToJSON(m.ReportDir)
 }

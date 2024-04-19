@@ -23,7 +23,7 @@ func CheckHealthcheckJob(ctx context.Context, logger *log.Logger) error {
 
 	k8s, err := openshift.New(ginkgo.GinkgoLogr)
 	if err != nil {
-		return fmt.Errorf("Unable to setup k8s client: %w", err)
+		return fmt.Errorf("unable to setup k8s client: %w", err)
 	}
 
 	timeout, err := time.ParseDuration(viper.GetString(config.Tests.ClusterHealthChecksTimeout))

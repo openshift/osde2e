@@ -25,7 +25,6 @@ import (
 	ctrlog "sigs.k8s.io/controller-runtime/pkg/log"
 
 	"github.com/onsi/ginkgo/v2/reporters"
-	"github.com/openshift/osde2e/pkg/common/cluster"
 	clusterutil "github.com/openshift/osde2e/pkg/common/cluster"
 	"github.com/openshift/osde2e/pkg/common/clusterproperties"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
@@ -282,7 +281,7 @@ func installAddons() (err error) {
 		return fmt.Errorf("could not install addons: %s", err.Error())
 	}
 	if num > 0 {
-		if err = cluster.WaitForClusterReadyPostInstall(clusterID, nil); err != nil {
+		if err = clusterutil.WaitForClusterReadyPostInstall(clusterID, nil); err != nil {
 			return fmt.Errorf("failed waiting for cluster ready: %v", err)
 		}
 	}
@@ -501,7 +500,7 @@ func runGinkgoTests() (int, error) {
 			// close route monitors
 			if viper.GetBool(config.Upgrade.MonitorRoutesDuringUpgrade) && !suiteConfig.DryRun {
 				close(routeMonitorChan)
-				_ = <-closeMonitorChan
+				<-closeMonitorChan
 				log.Println("Route monitors reconciled")
 			}
 		} else {

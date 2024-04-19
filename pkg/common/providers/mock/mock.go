@@ -75,7 +75,7 @@ func (m *MockProvider) IsValidClusterName(clusterName string) (bool, error) {
 	if m.env == "fail" {
 		switch clusterName {
 		case "error":
-			return false, fmt.Errorf("Fake IsValidClusterName error")
+			return false, fmt.Errorf("fake IsValidClusterName error")
 		case "false":
 			return false, nil
 		}
@@ -189,7 +189,7 @@ func (m *MockProvider) InstallAddons(clusterID string, addonIDs []spi.AddOnID, p
 
 	cluster, err := m.GetCluster(clusterID)
 	if err != nil {
-		return 0, fmt.Errorf("Unable to retrieve cluster: %s", err.Error())
+		return 0, fmt.Errorf("unable to retrieve cluster: %s", err.Error())
 	}
 	// We can't access the addons field directly so we have to rebuild the cluster object from scratch
 	// This is fine as any real provider would call an external API to update or retrieve addons and
@@ -212,7 +212,7 @@ func (m *MockProvider) InstallAddons(clusterID string, addonIDs []spi.AddOnID, p
 // Versions mocks a versions operation.
 func (m *MockProvider) Versions() (*spi.VersionList, error) {
 	if m.env == "fail" {
-		return nil, fmt.Errorf("Fake error returning version list")
+		return nil, fmt.Errorf("fake error returning version list")
 	}
 
 	return m.versions, nil
@@ -264,42 +264,42 @@ func (m *MockProvider) Type() string {
 
 // ExtendExpiry mocks an extend cluster expiry operation.
 func (m *MockProvider) ExtendExpiry(clusterID string, hours uint64, minutes uint64, seconds uint64) error {
-	return fmt.Errorf("ExtendExpiry is unsupported by mock clusters")
+	return fmt.Errorf("unsupported by mock clusters")
 }
 
 // Expire mocks an expire cluster expiry operation.
 func (m *MockProvider) Expire(clusterID string, duration time.Duration) error {
-	return fmt.Errorf("Expire is unsupported by mock clusters")
+	return fmt.Errorf("unsupported by mock clusters")
 }
 
 // AddProperty mocks an add new cluster property operation.
 func (m *MockProvider) AddProperty(cluster *spi.Cluster, tag string, value string) error {
-	return fmt.Errorf("AddProperty is unsupported by mock clusters")
+	return fmt.Errorf("unsupported by mock clusters")
 }
 
 // GetProperty mocks getting a property from the properties field of an existing cluster.
 func (m *MockProvider) GetProperty(clusterID string, property string) (string, error) {
-	return "GetProperty is unsupported by mock clusters", nil
+	return "unsupported by mock clusters", nil
 }
 
 // Upgrade mocks initiates a cluster upgrade to the given version
 func (m *MockProvider) Upgrade(clusterID string, version string, t time.Time) error {
-	return fmt.Errorf("Upgrade is unsupported by mock clusters")
+	return fmt.Errorf("unsupported by mock clusters")
 }
 
 // Get upgrade policy ID mocks fetch the upgrade policy for a cluster
 func (m *MockProvider) GetUpgradePolicyID(clusterID string) (string, error) {
-	return "mock", fmt.Errorf("Get mock upgrade policy failed")
+	return "mock", fmt.Errorf("get mock upgrade policy failed")
 }
 
 // UpdateSchedule mocks reschedule the upgrade
 func (m *MockProvider) UpdateSchedule(clusterID string, version string, t time.Time, policyID string) error {
-	return fmt.Errorf("Upgrade Schedule is not supported by mock clusters")
+	return fmt.Errorf("not supported by mock clusters")
 }
 
 // DetermineMachineType returns a random machine type for a given cluster
 func (m *MockProvider) DetermineMachineType(cloudProvider string) (string, error) {
-	return "mock", fmt.Errorf("DetermineMachineType is not supported by mock clusters")
+	return "mock", fmt.Errorf("not supported by mock clusters")
 }
 
 // Resume resumes a cluster via OCM

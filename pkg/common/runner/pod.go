@@ -57,7 +57,7 @@ var DefaultContainer = kubev1.Container{
 		PeriodSeconds: 7,
 	},
 	SecurityContext: &kubev1.SecurityContext{
-		RunAsUser: pointer.Int64Ptr(0),
+		RunAsUser: pointer.Int64(0),
 	},
 }
 
@@ -81,7 +81,7 @@ func volumes(name string) []kubev1.Volume {
 					LocalObjectReference: kubev1.LocalObjectReference{
 						Name: name,
 					},
-					DefaultMode: pointer.Int32Ptr(0o755),
+					DefaultMode: pointer.Int32(0o755),
 				},
 			},
 		},
@@ -89,7 +89,7 @@ func volumes(name string) []kubev1.Volume {
 }
 
 // createPod for creates a runner-based pod and typically collects generated artifacts from it.
-func (r *Runner) createPod() (pod *kubev1.Pod, err error) {
+func (r *Runner) createPod(ctx context.Context) (pod *kubev1.Pod, err error) {
 	// configure pod to run workload
 	cmName := fmt.Sprintf("%s-%s", osde2ePayload, util.RandomStr(5))
 	pod = &kubev1.Pod{
@@ -103,7 +103,7 @@ func (r *Runner) createPod() (pod *kubev1.Pod, err error) {
 			return nil, fmt.Errorf("couldn't template cmd: %v", err)
 		}
 
-		configMap, err := r.Kube.CoreV1().ConfigMaps(r.Namespace).Create(context.TODO(), &kubev1.ConfigMap{
+		configMap, err := r.Kube.CoreV1().ConfigMaps(r.Namespace).Create(ctx, &kubev1.ConfigMap{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: cmName,
 			},
@@ -116,8 +116,8 @@ func (r *Runner) createPod() (pod *kubev1.Pod, err error) {
 		}
 
 		// Verify the configMap has been created before proceeding
-		err = wait.PollImmediate(fastPoll, configMapCreateTimeout, func() (done bool, err error) {
-			if configMap, err = r.Kube.CoreV1().ConfigMaps(r.Namespace).Get(context.TODO(), configMap.Name, metav1.GetOptions{}); err != nil {
+		err = wait.PollUntilContextTimeout(ctx, fastPoll, configMapCreateTimeout, false, func(ctx context.Context) (done bool, err error) {
+			if configMap, err = r.Kube.CoreV1().ConfigMaps(r.Namespace).Get(ctx, configMap.Name, metav1.GetOptions{}); err != nil {
 				r.Error(err, fmt.Sprintf("error creating %s config map", configMap.Name))
 			}
 			return err == nil, nil
@@ -154,8 +154,8 @@ func (r *Runner) createPod() (pod *kubev1.Pod, err error) {
 
 	// retry until Pod can be created or timeout occurs
 	var createdPod *kubev1.Pod
-	err = wait.PollImmediate(fastPoll, podCreateTimeout, func() (done bool, err error) {
-		if createdPod, err = r.Kube.CoreV1().Pods(r.Namespace).Create(context.TODO(), pod, metav1.CreateOptions{}); err != nil {
+	err = wait.PollUntilContextTimeout(ctx, fastPoll, podCreateTimeout, false, func(ctx context.Context) (done bool, err error) {
+		if createdPod, err = r.Kube.CoreV1().Pods(r.Namespace).Create(ctx, pod, metav1.CreateOptions{}); err != nil {
 			r.Error(err, fmt.Sprintf("error creating %s/%s runner Pod", r.Namespace, r.Name))
 		}
 		return err == nil, nil
@@ -164,10 +164,10 @@ func (r *Runner) createPod() (pod *kubev1.Pod, err error) {
 }
 
 // waitForRunningPod, given a v1.Pod, will wait for 3 minutes for a pod to enter the running phase or return an error.
-func (r *Runner) waitForPodRunning(pod *kubev1.Pod) error {
-	var pendingCount int = 0
-	return wait.PollImmediate(fastPoll, 3*time.Minute, func() (done bool, err error) {
-		pod, err = r.Kube.CoreV1().Pods(pod.Namespace).Get(context.TODO(), pod.Name, metav1.GetOptions{})
+func (r *Runner) waitForPodRunning(ctx context.Context, pod *kubev1.Pod) error {
+	pendingCount := 0
+	return wait.PollUntilContextTimeout(ctx, fastPoll, 3*time.Minute, false, func(ctx context.Context) (done bool, err error) {
+		pod, err = r.Kube.CoreV1().Pods(pod.Namespace).Get(ctx, pod.Name, metav1.GetOptions{})
 		if err != nil && !kerror.IsNotFound(err) {
 			return
 		} else if pod == nil {

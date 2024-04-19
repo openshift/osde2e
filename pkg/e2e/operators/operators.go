@@ -221,7 +221,7 @@ Loop:
 				log.Printf("Waiting %v for %s roleBinding to exist", (timeoutDuration - elapsed), roleBindingName)
 				time.Sleep(intervalDuration)
 			} else {
-				err = fmt.Errorf("Failed to get rolebinding %s before timeout", roleBindingName)
+				err = fmt.Errorf("failed to get rolebinding %s before timeout", roleBindingName)
 				break Loop
 			}
 		}
@@ -263,7 +263,7 @@ Loop:
 				log.Printf("Waiting %v for %s configMap to exist", (timeoutDuration - elapsed), operatorLockFile)
 				time.Sleep(intervalDuration)
 			} else {
-				err = fmt.Errorf("Failed to get configMap %s before timeout", operatorLockFile)
+				err = fmt.Errorf("failed to get configMap %s before timeout", operatorLockFile)
 				break Loop
 			}
 		}
@@ -307,7 +307,7 @@ Loop:
 				time.Sleep(intervalDuration)
 			} else {
 				deployment = nil
-				err = fmt.Errorf("Failed to get %s Deployment before timeout", deploymentName)
+				err = fmt.Errorf("failed to get %s Deployment before timeout", deploymentName)
 				break Loop
 			}
 		}
