@@ -240,7 +240,7 @@ var _ = ginkgo.Describe(dedicatedAdminTestName, label.Informing, func() {
 				h.Impersonate(rest.ImpersonationConfig{})
 			}()
 
-			patchData := []byte(fmt.Sprintf(`{"spec":{"plugins":["test"]}}`))
+			patchData := []byte(`{"spec":{"plugins":["test"]}}`)
 
 			_, err := h.Dynamic().Resource(schema.GroupVersionResource{
 				Group: "operator.openshift.io", Version: "v1",
@@ -248,7 +248,7 @@ var _ = ginkgo.Describe(dedicatedAdminTestName, label.Informing, func() {
 			}).Patch(ctx, "cluster", types.MergePatchType, patchData, metav1.PatchOptions{})
 			Expect(err).NotTo(HaveOccurred())
 			// revret the changes
-			patchEmpty := []byte(fmt.Sprintf(`{"spec":{"plugins":[""]}}`))
+			patchEmpty := []byte(`{"spec":{"plugins":[""]}}`)
 
 			_, err = h.Dynamic().Resource(schema.GroupVersionResource{
 				Group: "operator.openshift.io", Version: "v1",

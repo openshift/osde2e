@@ -92,7 +92,7 @@ var _ = ginkgo.Describe("Test harness", ginkgo.Ordered, ginkgo.ContinueOnFailure
 			if config.Tests.LogBucket != "" {
 				err = h.UploadResultsToS3(results, harnessImage+time.Now().Format(time.DateOnly+"_"+time.TimeOnly))
 				if err != nil {
-					ginkgo.GinkgoLogr.Error(err, fmt.Sprintf("reporting error"))
+					ginkgo.GinkgoLogr.Error(err, "reporting error")
 				}
 			}
 			// Adding harness report failures to top level junit report
