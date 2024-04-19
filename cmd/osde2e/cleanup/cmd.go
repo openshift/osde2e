@@ -25,6 +25,7 @@ var args struct {
 	secretLocations string
 	clusterID       string
 	iam             bool
+	elasticIP       bool
 	s3              bool
 	olderThan       string
 	dryRun          bool
@@ -63,6 +64,12 @@ func init() {
 		"iam",
 		false,
 		"Cleanup iam resources",
+	)
+	flags.BoolVar(
+		&args.elasticIP,
+		"elastic-ip",
+		false,
+		"Cleanup elastic IPs",
 	)
 	flags.BoolVar(
 		&args.s3,
@@ -172,6 +179,13 @@ func run(cmd *cobra.Command, argv []string) error {
 		err = aws.CcsAwsSession.CleanupS3Buckets(fmtDuration, args.dryRun)
 		if err != nil {
 			return fmt.Errorf("could not delete s3 buckets: %s", err.Error())
+		}
+	}
+
+	if args.elasticIP {
+		err = aws.CcsAwsSession.ReleaseElasticIPs(args.dryRun)
+		if err != nil {
+			return fmt.Errorf("could not release ips: %s", err.Error())
 		}
 	}
 
