@@ -8,3 +8,8 @@ updates:
     - "dependencies"
     - "ok-to-test"
   open-pull-requests-limit: 20
+  groups:
+    kubernetes:
+      patterns:
+        - "k8s.io/*"
+        - "sigs.k8s.io/*"
