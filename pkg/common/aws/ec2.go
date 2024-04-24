@@ -49,7 +49,6 @@ func (CcsAwsSession *ccsAwsSession) ReleaseElasticIPs(dryrun bool) error {
 	}
 	fmt.Printf("Addresses found: %d\n", len(results.Addresses))
 	deleted := 0
-	name := ""
 
 	for _, address := range results.Addresses {
 		if address.AssociationId == nil {
@@ -64,12 +63,7 @@ func (CcsAwsSession *ccsAwsSession) ReleaseElasticIPs(dryrun bool) error {
 				fmt.Printf("Address %s not deleted: %s\n", *address.PublicIp, err.Error())
 			}
 		} else {
-			for _, v := range address.Tags {
-				if *v.Key == "Name" {
-					name = *v.Value
-				}
-			}
-			fmt.Printf("Skipping address %s still allocated to cluster [Tag: %s].\n", *address.PublicIp, name)
+			fmt.Printf("Skipping address %s still allocated to network interface id %s \n", *address.PublicIp, *address.NetworkInterfaceId)
 		}
 	}
 	fmt.Printf("Finished elastic IP cleanup. Deleted %d addresses.", deleted)
