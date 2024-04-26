@@ -12,6 +12,7 @@ import (
 	"github.com/openshift/osde2e/pkg/common/providers/ocmprovider"
 )
 
+// Returns go template https://pkg.go.dev/text/template
 const testCmd = `
 oc config set-cluster cluster --server=https://kubernetes.default.svc --certificate-authority=/var/run/secrets/kubernetes.io/serviceaccount/ca.crt
 oc config set-credentials user --token=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
@@ -19,14 +20,19 @@ oc config set-context cluster --cluster=cluster --user=user
 oc config use-context cluster
 oc config view --raw=true > /tmp/kubeconfig
 export KUBECONFIG=/tmp/kubeconfig
+oc registry login
 
 REGION={{region}}
 CLOUD={{cloud}}
 GCPPROJECT={{gcpproject}}
 ZONE="$(oc get -o jsonpath='{.items[0].metadata.labels.failure-domain\.beta\.kubernetes\.io/zone}' nodes)"
 export TEST_PROVIDER="{\"type\":\"${CLOUD}\",\"region\":\"${REGION}\",\"zone\":\"${ZONE}\",\"multizone\":true,\"multimaster\":true ${GCPPROJECT}}"
-
-{{printTests .TestNames}} | {{unwrap .Env}} openshift-tests {{.TestCmd}} {{selectTests .Suite .TestNames}} {{unwrap .Flags}} --provider "${TEST_PROVIDER}"
+{{if testSkipRegex}}
+	openshift-tests run --dry-run --provider "${TEST_PROVIDER}" openshift/conformance/parallel suite  | grep -v "{{testSkipRegex}}" > /tmp/tests
+	{{printTests .TestNames}} | {{unwrap .Env}} openshift-tests {{.TestCmd}} --file=/tmp/tests {{unwrap .Flags}} --provider "${TEST_PROVIDER}"
+{{else}}
+	{{printTests .TestNames}} | {{unwrap .Env}} openshift-tests {{.TestCmd}} {{selectTests .Suite .TestNames}} {{unwrap .Flags}} --provider "${TEST_PROVIDER}"
+{{end}}
 
 # create a Tarball of OutputDir if requested
 {{$outDir := .OutputDir}}
@@ -46,6 +52,7 @@ var cmdTemplate = template.Must(template.New("testCmd").
 		"unwrap":         unwrap,
 		"region":         region,
 		"cloud":          cloud,
+		"testSkipRegex":  testSkipRegex,
 		"gcpproject":     gcpproject,
 	}).Parse(testCmd))
 
@@ -106,6 +113,10 @@ func cloud() string {
 		return "gce"
 	}
 	return viper.GetString(config.CloudProvider.CloudProviderID)
+}
+
+func testSkipRegex() string {
+	return viper.GetString(config.Tests.OCPTestSkipRegex)
 }
 
 func gcpproject() string {
