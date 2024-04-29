@@ -255,6 +255,11 @@ var Tests = struct {
 	// arg --ocp-test-suite
 	OCPTestSuite string
 
+	// OCPTestSkipRegex Regex to skip ocp test specs.
+	// Env: OCP_TEST_SKIP_REGEX
+	// arg --ocp-test-skip-regex
+	OCPTestSkipRegex string
+
 	// SuppressSkipNotifications suppresses the notifications of skipped tests
 	// Env: SUPPRESS_SKIP_NOTIFICATIONS
 	SuppressSkipNotifications string
@@ -297,6 +302,7 @@ var Tests = struct {
 	GinkgoLabelFilter:          "tests.ginkgoLabelFilter",
 	TestsToRun:                 "tests.testsToRun",
 	OCPTestSuite:               "tests.ocpTestSuite",
+	OCPTestSkipRegex:           "tests.ocpTestSkipRegex",
 	SuppressSkipNotifications:  "tests.suppressSkipNotifications",
 	CleanRuns:                  "tests.cleanRuns",
 	OperatorSkip:               "tests.operatorSkip",
@@ -722,6 +728,7 @@ func InitOSDe2eViper() {
 	viper.BindEnv(Tests.TestsToRun, "TESTS_TO_RUN")
 
 	viper.BindEnv(Tests.OCPTestSuite, "OCP_TEST_SUITE")
+	viper.BindEnv(Tests.OCPTestSkipRegex, "OCP_TEST_SKIP_REGEX")
 
 	viper.SetDefault(Tests.SuppressSkipNotifications, true)
 	viper.BindEnv(Tests.SuppressSkipNotifications, "SUPPRESS_SKIP_NOTIFICATIONS")

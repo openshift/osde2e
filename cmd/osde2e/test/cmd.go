@@ -52,6 +52,7 @@ var args struct {
 	skipTests          string
 	labelFilter        string
 	ocpTestSuite       string
+	ocpTestSkipRegex   string
 }
 
 func init() {
@@ -128,6 +129,12 @@ func init() {
 		"The type of openshift-test conformance suite to run.",
 	)
 	pfs.StringVar(
+		&args.ocpTestSkipRegex,
+		"ocp-test-skip-regex",
+		"",
+		"Regex for openshift-test conformance test specs to skip.",
+	)
+	pfs.StringVar(
 		&args.skipTests,
 		"skip-tests",
 		"",
@@ -154,6 +161,7 @@ func init() {
 	viper.BindPFlag(config.Tests.SkipClusterHealthChecks, Cmd.PersistentFlags().Lookup("skip-health-check"))
 	viper.BindPFlag(config.Tests.GinkgoFocus, Cmd.PersistentFlags().Lookup("focus-tests"))
 	viper.BindPFlag(config.Tests.OCPTestSuite, Cmd.PersistentFlags().Lookup("ocp-test-suite"))
+	viper.BindPFlag(config.Tests.OCPTestSkipRegex, Cmd.PersistentFlags().Lookup("ocp-test-skip-regex"))
 	viper.BindPFlag(config.Tests.GinkgoSkip, Cmd.PersistentFlags().Lookup("skip-tests"))
 	viper.BindPFlag(config.SkipMustGather, Cmd.PersistentFlags().Lookup("skip-must-gather"))
 	viper.BindPFlag(config.Tests.GinkgoLabelFilter, Cmd.PersistentFlags().Lookup("label-filter"))
