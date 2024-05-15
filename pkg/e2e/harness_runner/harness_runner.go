@@ -16,7 +16,6 @@ import (
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/label"
 	"github.com/openshift/osde2e/pkg/common/runner"
-	"github.com/openshift/osde2e/pkg/common/templates"
 	"github.com/openshift/osde2e/pkg/common/util"
 )
 
@@ -71,13 +70,9 @@ var _ = ginkgo.Describe("Test harness", ginkgo.Ordered, ginkgo.ContinueOnFailure
 			h.SetRunnerProject(subProject.Name, r)
 			latestImageStream, err := r.GetLatestImageStreamTag()
 			Expect(err).NotTo(HaveOccurred(), "Could not get latest imagestream tag")
-			cmd := getCommandString(timeoutInSeconds, latestImageStream, harness, suffix, jobName, serviceAccountDir)
+			cmd := h.GetRunnerCommandString("tests/tests-runner.template", timeoutInSeconds, latestImageStream, harness, suffix, jobName, serviceAccountDir, "", serviceAccountNamespacedName)
 			r = h.SetRunnerCommand(cmd, r)
-			// TODO: Refactor the logic to determine whether the pod has finished or not
-			//	Would be nice to see the test suite handle exiting and osde2e can pick up
-			//	status of pod to decide pass/fail. Would then remove need to set individual
-			//	timeouts and just have one large suite timeout for ginkgo which osde2e defines
-			//	today
+
 			ginkgo.By("Running harness pod")
 			stopCh := make(chan struct{})
 			err = r.Run(timeoutInSeconds, stopCh)
@@ -115,65 +110,3 @@ var _ = ginkgo.Describe("Test harness", ginkgo.Ordered, ginkgo.ContinueOnFailure
 		}
 	})
 })
-
-// Generates templated command string to provide to test harness container
-func getCommandString(timeout int, latestImageStream string, harness string, suffix string, jobName string, serviceAccountDir string) string {
-	ginkgo.GinkgoHelper()
-	values := struct {
-		Name                 string
-		JobName              string
-		Arguments            string
-		Timeout              int
-		Image                string
-		OutputDir            string
-		ServiceAccount       string
-		PushResultsContainer string
-		Suffix               string
-		Server               string
-		CA                   string
-		TokenFile            string
-		EnvironmentVariables []struct {
-			Name  string
-			Value string
-		}
-		EnvironmentVariablesFromSecret []struct {
-			SecretName string
-			SecretKey  string
-		}
-	}{
-		Name:                 jobName,
-		JobName:              jobName,
-		Timeout:              timeout,
-		Image:                harness,
-		OutputDir:            runner.DefaultRunner.OutputDir,
-		ServiceAccount:       serviceAccountNamespacedName,
-		PushResultsContainer: latestImageStream,
-		Suffix:               suffix,
-		Server:               "https://kubernetes.default",
-		CA:                   serviceAccountDir + "/ca.crt",
-		TokenFile:            serviceAccountDir + "/token",
-		EnvironmentVariables: []struct {
-			Name  string
-			Value string
-		}{
-			{
-				Name:  "OCM_CLUSTER_ID",
-				Value: viper.GetString(config.Cluster.ID),
-			},
-		},
-		EnvironmentVariablesFromSecret: []struct {
-			SecretName string
-			SecretKey  string
-		}{
-			{
-				SecretName: "ci-secrets",
-				SecretKey:  "OCM_TOKEN",
-			},
-		},
-	}
-	testTemplate, err := templates.LoadTemplate("tests/tests-runner.template")
-	Expect(err).NotTo(HaveOccurred(), "Could not load pod template")
-	cmd, err := h.ConvertTemplateToString(testTemplate, values)
-	Expect(err).NotTo(HaveOccurred(), "Could not convert pod template")
-	return cmd
-}
