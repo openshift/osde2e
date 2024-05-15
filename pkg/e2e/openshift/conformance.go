@@ -18,16 +18,12 @@ import (
 // DefaultE2EConfig is the base configuration for E2E runs.
 var DefaultE2EConfig = E2EConfig{
 	OutputDir: "/test-run-results",
-	TestCmd:   "run",
 	Tarball:   false,
 	Suite:     "kubernetes/conformance",
 	Flags: []string{
 		"--include-success",
 		"--junit-dir=" + runner.DefaultRunner.OutputDir,
 	},
-	Name:      "kubernetes-conformance",
-	CA:        "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt",
-	TokenFile: "/var/run/secrets/kubernetes.io/serviceaccount/token",
 }
 
 var (
@@ -50,7 +46,7 @@ var _ = ginkgo.Describe(conformanceK8sTestName, func() {
 		h.SetServiceAccount(ctx, "system:serviceaccount:%s:cluster-admin")
 
 		cfg := DefaultE2EConfig
-		cmd := cfg.Cmd()
+		cmd := cfg.GenerateOcpTestCmdBlock()
 
 		// setup runner
 		r := h.Runner(cmd)
@@ -89,8 +85,7 @@ var _ = ginkgo.Describe(conformanceOpenshiftTestName, ginkgo.Ordered, label.OCPN
 			suite = viper.GetString(config.Tests.OCPTestSuite)
 		}
 		cfg.Suite = testType + " " + suite
-		cfg.Name = "openshift-conformance"
-		cmd := cfg.Cmd()
+		cmd := cfg.GenerateOcpTestCmdBlock()
 
 		// setup runner
 		r := h.Runner(cmd)

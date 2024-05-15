@@ -33,7 +33,7 @@ var _ = ginkgo.Describe(imageRegistryTestName, func() {
 		// configure tests
 		cfg := DefaultE2EConfig
 		cfg.Suite = "openshift/image-registry"
-		cmd := cfg.Cmd()
+		cmd := cfg.GenerateOcpTestCmdBlock()
 
 		// setup runner
 		r := h.Runner(cmd)
@@ -65,7 +65,7 @@ var _ = ginkgo.Describe(imageEcosystemTestName, func() {
 		// configure tests
 		cfg := DefaultE2EConfig
 		cfg.Suite = "openshift/image-ecosystem"
-		cmd := cfg.Cmd()
+		cmd := cfg.GenerateOcpTestCmdBlock()
 
 		h.SetServiceAccount(ctx, "system:serviceaccount:%s:cluster-admin")
 		// setup runner
