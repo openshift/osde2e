@@ -17,16 +17,12 @@ import (
 // DefaultE2EConfig is the base configuration for E2E runs.
 var DefaultE2EConfig = E2EConfig{
 	OutputDir: "/test-run-results",
-	TestCmd:   "run",
 	Tarball:   false,
 	Suite:     "kubernetes/conformance",
 	Flags: []string{
 		"--include-success",
 		"--junit-dir=" + runner.DefaultRunner.OutputDir,
 	},
-	Name:      "kubernetes-conformance",
-	CA:        "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt",
-	TokenFile: "/var/run/secrets/kubernetes.io/serviceaccount/token",
 }
 
 var (
@@ -44,7 +40,7 @@ var _ = ginkgo.Describe(conformanceK8sTestName, func() {
 		h.SetServiceAccount(ctx, "system:serviceaccount:%s:cluster-admin")
 
 		cfg := DefaultE2EConfig
-		cmd := cfg.Cmd()
+		cmd := cfg.GenerateOcpTestCmdBlock()
 
 		// setup runner
 		r := h.Runner(cmd)
@@ -88,7 +84,7 @@ var _ = ginkgo.Describe(conformanceOpenshiftTestName, ginkgo.Ordered, label.OCPN
 		r.Name = "openshift-conformance"
 		latestImageStream, err := r.GetLatestImageStreamTag()
 		Expect(err).NotTo(HaveOccurred(), "Could not get latest imagestream tag")
-		testcmd := cfg.Cmd()
+		testcmd := cfg.GenerateOcpTestCmdBlock()
 		cmd := h.GetRunnerCommandString("tests/ocp-tests-runner.template",
 			e2eTimeoutInSeconds,
 			latestImageStream,

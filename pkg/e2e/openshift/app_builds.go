@@ -23,8 +23,6 @@ import (
 // BuildE2EConfig is the base configuration for the E2E run.
 var BuildE2EConfig = E2EConfig{
 	OutputDir: "/test-run-results",
-	TestCmd:   "run",
-	Tarball:   true,
 	Suite:     "openshift/image-ecosystem",
 	Env: []string{
 		"DELETE_NAMESPACE=false",
@@ -92,7 +90,7 @@ var _ = ginkgo.Describe(appBuildsTestName, label.AppBuilds, func() {
 			// Add run flags for the testing apps
 			cfg.Flags = append(cfg.Flags, "--run \"Building ("+strings.Join(testApplications, "|")+") app\"")
 
-			cmd := cfg.Cmd()
+			cmd := cfg.GenerateOcpTestCmdBlock()
 
 			// setup runner
 			r := h.Runner(cmd)
