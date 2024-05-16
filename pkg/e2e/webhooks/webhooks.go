@@ -151,8 +151,8 @@ var _ = ginkgo.Describe(suiteName, ginkgo.Ordered, label.E2E, label.ROSA, label.
 			expect.Forbidden(err)
 		}, ginkgo.SpecTimeout(createPodWaitDuration.Seconds()+deletePodWaitDuration.Seconds()))
 
-		ginkgo.It("allows cluster-admin to schedule pods onto master/infra nodes", func(ctx context.Context) {
-			client := h.AsServiceAccount(fmt.Sprintf("system:serviceaccount:%s:dedicated-admin-project", h.CurrentProject()))
+		ginkgo.It("allows backplane-cluster-admin to schedule pods onto privileged namespace", func(ctx context.Context) {
+			client := h.AsServiceAccount(fmt.Sprintf("system:serviceaccount:%s:backplane-cluster-admin", h.CurrentProject()))
 			pod = withNamespace(pod, privilegedNamespace)
 			err := client.Create(ctx, pod)
 			expect.NoError(err)
