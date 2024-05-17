@@ -23,6 +23,7 @@ var DefaultE2EConfig = E2EConfig{
 		"--include-success",
 		"--junit-dir=" + runner.DefaultRunner.OutputDir,
 	},
+	ServiceAccountDir: "/var/run/secrets/kubernetes.io/serviceaccount",
 }
 
 var (
@@ -81,7 +82,8 @@ var _ = ginkgo.Describe(conformanceOpenshiftTestName, ginkgo.Ordered, label.OCPN
 
 		// setup runner
 		r := h.RunnerWithNoCommand()
-		r.Name = "openshift-conformance"
+		suffix := util.RandomStr(5)
+		r.Name = "osde2e-main-" + suffix
 		latestImageStream, err := r.GetLatestImageStreamTag()
 		Expect(err).NotTo(HaveOccurred(), "Could not get latest imagestream tag")
 		testcmd := cfg.GenerateOcpTestCmdBlock()
@@ -89,7 +91,7 @@ var _ = ginkgo.Describe(conformanceOpenshiftTestName, ginkgo.Ordered, label.OCPN
 			e2eTimeoutInSeconds,
 			latestImageStream,
 			latestImageStream,
-			util.RandomStr(5),
+			suffix,
 			"openshift-conformance",
 			"/var/run/secrets/kubernetes.io/serviceaccount",
 			testcmd,

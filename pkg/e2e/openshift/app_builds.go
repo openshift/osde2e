@@ -31,6 +31,7 @@ var BuildE2EConfig = E2EConfig{
 		"--include-success",
 		"--junit-dir=" + runner.DefaultRunner.OutputDir,
 	},
+	ServiceAccountDir: "/var/run/secrets/kubernetes.io/serviceaccount",
 }
 
 var testApplications = []string{
