@@ -70,7 +70,7 @@ PUSH_RESULTS
 
 cat workload.yaml
 cat push-results.sh
-cat test-cmd.sh
+ 
 
 oc create configmap push-results-{{.Suffix}} --from-file=push-results.sh
 oc create configmap test-cmd-{{.Suffix}} --from-file=test-cmd.sh

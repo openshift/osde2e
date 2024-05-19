@@ -102,7 +102,7 @@ var _ = ginkgo.Describe(conformanceOpenshiftTestName, ginkgo.Ordered, label.OCPN
 		Expect(err).NotTo(HaveOccurred())
 
 		// get results
-		results, err := r.RetrieveTestResults()
+		results, err := r.RetrieveResults()
 
 		// write results, including non-xml log files
 		h.WriteResults(results)
