@@ -93,7 +93,7 @@ var _ = ginkgo.Describe(conformanceOpenshiftTestName, ginkgo.Ordered, label.OCPN
 			latestImageStream,
 			suffix,
 			"openshift-conformance",
-			"/var/run/secrets/kubernetes.io/serviceaccount",
+			cfg.ServiceAccountDir,
 			testcmd,
 			"cluster-admin")
 		r = h.SetRunnerCommand(cmd, r)

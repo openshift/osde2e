@@ -18,7 +18,7 @@ func init() {
 type triggeredNightlies struct{}
 
 func (t triggeredNightlies) ShouldUse() bool {
-	return strings.Contains(os.Getenv("PROW_JOB_ID"), "nightly")
+	return strings.Contains(os.Getenv("JOB_NAME"), "nightly")
 }
 
 func (t triggeredNightlies) Priority() int {
@@ -28,7 +28,7 @@ func (t triggeredNightlies) Priority() int {
 func (t triggeredNightlies) SelectVersion(versionList *spi.VersionList) (*semver.Version, string, error) {
 	nightlyVersionRegex := regexp.MustCompile(`4.\d+.\d-\d.nightly-\d{4}-\d{2}-\d{2}-\d+`)
 
-	prowJobID := os.Getenv("PROW_JOB_ID")
+	prowJobID := os.Getenv("JOB_NAME")
 	matches := nightlyVersionRegex.FindStringSubmatch(prowJobID)
 	if len(matches) == 0 {
 		return nil, t.String(), fmt.Errorf("failed to find match for %q", prowJobID)
