@@ -43,19 +43,27 @@ oc config use-context cluster
 oc config view --raw=true > %s
 export KUBECONFIG=%s
 oc registry login
- 
-openshift-tests run --dry-run --provider "%s" openshift/conformance/parallel suite  | grep -v "%s" > /tmp/tests
-
-%s openshift-tests run --provider "%s" --file=/tmp/tests %s
 `, c.ServiceAccountDir,
 		c.ServiceAccountDir,
 		getKubeconfigPath(),
-		getKubeconfigPath(),
-		getTestProvider(),
-		getTestSkipRegex(),
-		unwrap(c.Env),
-		getTestProvider(),
-		unwrap(c.Flags))
+		getKubeconfigPath())
+	if getTestSkipRegex() != "" {
+		cmd = cmd + fmt.Sprintf(`openshift-tests run --dry-run --provider "%s" %s  | grep -v "%s" > /tmp/tests
+		%s openshift-tests run --provider "%s" --file=/tmp/tests %s
+`,
+			getTestProvider(),
+			c.Suite,
+			getTestSkipRegex(),
+			unwrap(c.Env),
+			getTestProvider(),
+			unwrap(c.Flags))
+	} else {
+		cmd = cmd + fmt.Sprintf(`%s openshift-tests run --provider "%s" %s %s`,
+			unwrap(c.Env),
+			getTestProvider(),
+			c.Suite,
+			unwrap(c.Flags))
+	}
 	return cmd
 }
 
