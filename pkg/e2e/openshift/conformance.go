@@ -103,8 +103,9 @@ var _ = ginkgo.Describe(conformanceOpenshiftTestName, ginkgo.Ordered, label.OCPN
 		err = r.Run(e2eTimeoutInSeconds, stopCh)
 		Expect(err).NotTo(HaveOccurred())
 
-		// get results
-		results, err := r.RetrieveResults()
+		// get results - also returns error if no xml file found
+		// keeps tests from showing green if they didn't produce xml output.
+		results, err := r.RetrieveTestResults()
 
 		// write results, including non-xml log files
 		h.WriteResults(results)
