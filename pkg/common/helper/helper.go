@@ -121,19 +121,21 @@ func (h *H) Setup() error {
 		Expect(err).ShouldNot(HaveOccurred(), "failed to set up project")
 		viper.Set(config.Project, h.proj.Name)
 	} else {
-		_ = wait.PollUntilContextTimeout(ctx, 5*time.Second, 30*time.Second, false, func(ctx context.Context) (bool, error) {
-			h.proj, err = h.Project().ProjectV1().Projects().Get(ctx, project, metav1.GetOptions{})
-			if apierrors.IsNotFound(err) || apierrors.IsServiceUnavailable(err) {
-				return false, nil
-			}
-			return true, err
-		})
+		if h.proj == nil {
+			_ = wait.PollUntilContextTimeout(ctx, 1*time.Second, 30*time.Second, true, func(ctx context.Context) (bool, error) {
+				h.proj, err = h.Project().ProjectV1().Projects().Get(ctx, project, metav1.GetOptions{})
+				if err != nil && (apierrors.IsNotFound(err) || apierrors.IsServiceUnavailable(err)) {
+					return false, nil
+				}
+				return true, err
+			})
 
-		if h.OutsideGinkgo && err != nil {
-			return fmt.Errorf("error retrieving project: %s, %v", project, err.Error())
+			if h.OutsideGinkgo && err != nil {
+				return fmt.Errorf("error retrieving project: %s, %v", project, err.Error())
+			}
+			Expect(err).ShouldNot(HaveOccurred(), "failed to retrieve project: %s", project)
+			Expect(h.proj).ShouldNot(BeNil())
 		}
-		Expect(err).ShouldNot(HaveOccurred(), "failed to retrieve project: %s", project)
-		Expect(h.proj).ShouldNot(BeNil())
 	}
 
 	// Set the default service account for future helper-method-calls
