@@ -18,7 +18,9 @@ func init() {
 type triggeredNightlies struct{}
 
 func (t triggeredNightlies) ShouldUse() bool {
-	return strings.Contains(os.Getenv("RELEASE_IMAGE_LATEST"), "nightly")
+	log.Printf("PROW_JOB_ID: %q", os.Getenv("PROW_JOB_ID"))
+	log.Printf("RELEASE_IMAGE_LATEST: %q", os.Getenv("RELEASE_IMAGE_LATEST"))
+	return strings.Contains(os.Getenv("PROW_JOB_ID"), "nightly") || strings.Contains(os.Getenv("RELEASE_IMAGE_LATEST"), "nightly")
 }
 
 func (t triggeredNightlies) Priority() int {
@@ -26,16 +28,21 @@ func (t triggeredNightlies) Priority() int {
 }
 
 func (t triggeredNightlies) SelectVersion(versionList *spi.VersionList) (*semver.Version, string, error) {
-	// RELEASE_IMAGE_LATEST is a tag populated in release controller jobs.
-	// It has the following form.
+	// PROW_JOB_ID is an env var populated in release controller prow jobs in the following form.
+	// 4.15.0-0.nightly-2024-05-22-165653-<jobname>
+	// RELEASE_IMAGE_LATEST is an env var populated in release controller jobs in the following form.
 	// registry.ci.openshift.org/ocp/release:4.15.0-0.nightly-2024-05-15-103159
-	// Extract the version tag from it.
-	releaseImageLatestRegex := regexp.MustCompile(`\d.\d+.\d-\d.nightly-\d{4}-\d{2}-\d{2}-\d+`)
+	// we will use whichever of these two vars is available to get version tag
+	matchTag := os.Getenv("RELEASE_IMAGE_LATEST")
+	if matchTag == "" {
+		matchTag = os.Getenv("PROW_JOB_ID")
+	}
 
-	releaseImageLatest := os.Getenv("RELEASE_IMAGE_LATEST")
-	matches := releaseImageLatestRegex.FindStringSubmatch(releaseImageLatest)
+	versionRegex := regexp.MustCompile(`\d.\d+.\d-\d.nightly-\d{4}-\d{2}-\d{2}-\d+`)
+	matches := versionRegex.FindStringSubmatch(matchTag)
+
 	if len(matches) == 0 {
-		return nil, t.String(), fmt.Errorf("failed to match regular expression with RELEASE_IMAGE_LATEST: %q", releaseImageLatest)
+		return nil, t.String(), fmt.Errorf("failed to match nightly version tag: %q", matchTag)
 	}
 	payloadName := matches[0] + "-nightly"
 
