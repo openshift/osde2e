@@ -3,11 +3,12 @@ package installselectors
 import (
 	"fmt"
 	"log"
-	"os"
 	"regexp"
 	"strings"
 
 	"github.com/Masterminds/semver/v3"
+	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
+	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/spi"
 )
 
@@ -18,9 +19,8 @@ func init() {
 type triggeredNightlies struct{}
 
 func (t triggeredNightlies) ShouldUse() bool {
-	log.Printf("PROW_JOB_ID: %q", os.Getenv("PROW_JOB_ID"))
-	log.Printf("RELEASE_IMAGE_LATEST: %q", os.Getenv("RELEASE_IMAGE_LATEST"))
-	return strings.Contains(os.Getenv("PROW_JOB_ID"), "nightly") || strings.Contains(os.Getenv("RELEASE_IMAGE_LATEST"), "nightly")
+	log.Printf("PROW_JOB_ID: %q", viper.GetString(config.ProwJobId))
+	return strings.Contains(viper.GetString(config.ProwJobId), "nightly")
 }
 
 func (t triggeredNightlies) Priority() int {
@@ -30,13 +30,8 @@ func (t triggeredNightlies) Priority() int {
 func (t triggeredNightlies) SelectVersion(versionList *spi.VersionList) (*semver.Version, string, error) {
 	// PROW_JOB_ID is an env var populated in release controller prow jobs in the following form.
 	// 4.15.0-0.nightly-2024-05-22-165653-<jobname>
-	// RELEASE_IMAGE_LATEST is an env var populated in release controller jobs in the following form.
-	// registry.ci.openshift.org/ocp/release:4.15.0-0.nightly-2024-05-15-103159
-	// we will use whichever of these two vars is available to get version tag
-	matchTag := os.Getenv("RELEASE_IMAGE_LATEST")
-	if matchTag == "" {
-		matchTag = os.Getenv("PROW_JOB_ID")
-	}
+	// we will use this as a hack to get version tag
+	matchTag := viper.GetString(config.ProwJobId)
 
 	versionRegex := regexp.MustCompile(`\d.\d+.\d-\d.nightly-\d{4}-\d{2}-\d{2}-\d+`)
 	matches := versionRegex.FindStringSubmatch(matchTag)
