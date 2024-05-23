@@ -30,6 +30,10 @@ const (
 	// Env: BUILD_NUMBER
 	JobID = "jobID"
 
+	// ProwJobId is the ID designated by prow for this run
+	// Env: PROW_JOB_ID
+	ProwJobId = "prowJobId"
+
 	// JobType is the type of job according to prow for this run
 	// Env: JOB_TYPE
 	JobType = "jobType"
@@ -772,6 +776,8 @@ func InitOSDe2eViper() {
 	viper.BindEnv(Cluster.InstallTimeout, "CLUSTER_UP_TIMEOUT")
 
 	viper.BindEnv(Cluster.ReleaseImageLatest, "RELEASE_IMAGE_LATEST")
+
+	viper.BindEnv(ProwJobId, "PROW_JOB_ID")
 
 	viper.SetDefault(Cluster.UseProxyForInstall, false)
 	viper.BindEnv(Cluster.UseProxyForInstall, "USE_PROXY_FOR_INSTALL")
