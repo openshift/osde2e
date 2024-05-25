@@ -127,12 +127,7 @@ func (r *Runner) downloadLinks(n *html.Node, results map[string][]byte, director
 		for _, a := range n.Attr {
 			if a.Key == "href" {
 				if strings.HasSuffix(a.Val, "/") {
-					var newDirectory string
-					if directory != "" {
-						newDirectory = a.Val
-					} else {
-						newDirectory = path.Join(directory, a.Val)
-					}
+					newDirectory := path.Join(directory, a.Val)
 
 					log.Println("Downloading directory " + newDirectory)
 					directoryResults, err := r.retrieveResultsForDirectory(newDirectory)
