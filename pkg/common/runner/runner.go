@@ -116,7 +116,7 @@ func (r *Runner) Run(timeoutInSeconds int, stopCh <-chan struct{}) (err error) {
 
 	r.Info(fmt.Sprintf("Creating %s runner Pod...", r.Name))
 	var pod *kubev1.Pod
-	if pod, err = r.createPod(ctx); err != nil {
+	if pod, err = r.createJobPod(ctx); err != nil {
 		return
 	}
 

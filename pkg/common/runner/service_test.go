@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 
+	corev1 "k8s.io/api/core/v1"
+
 	kubev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes/fake"
@@ -13,7 +15,18 @@ import (
 
 func TestResultsService(t *testing.T) {
 	// setup mock client
-	client := fake.NewSimpleClientset()
+	client := fake.NewSimpleClientset(&corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test",
+			Namespace: "default",
+			Labels: map[string]string{
+				"job-name": "osde2e-runner",
+			},
+		},
+		Status: corev1.PodStatus{
+			PodIP: "172.1.0.3",
+		},
+	})
 
 	// setup runner
 	def := *DefaultRunner
@@ -22,7 +35,7 @@ func TestResultsService(t *testing.T) {
 	ctx := context.Background()
 
 	// create pod
-	pod, err := r.createPod(ctx)
+	pod, err := r.createJobPod(ctx)
 	if err != nil {
 		t.Fatalf("Failed to create example  pod: %v", err)
 	}
