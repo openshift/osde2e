@@ -133,7 +133,7 @@ func WaitForClusterReadyPostInstall(clusterID string, logger *log.Logger) error 
 		return nil
 	}
 
-	err = healthchecks.CheckHealthcheckJob(context.Background(), nil)
+	err = healthchecks.CheckHealthcheckJob(context.Background(), clusterConfig, logger)
 	if err != nil {
 		return fmt.Errorf("cluster failed health check: %w", err)
 	}
