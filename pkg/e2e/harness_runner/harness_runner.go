@@ -39,13 +39,13 @@ var _ = ginkgo.Describe("Test harness", ginkgo.Ordered, ginkgo.ContinueOnFailure
 	} else {
 		timeoutInSeconds = viper.GetInt(config.Tests.PollingTimeout)
 	}
-	fmt.Println("Harnesses to run: ", harnesses)
 	for _, harness := range harnesses {
 		HarnessEntries = append(HarnessEntries, ginkgo.Entry(harness+" should pass", harness))
 	}
 
 	ginkgo.BeforeAll(func(ctx context.Context) {
 		h = helper.New()
+		log.Println("Harnesses to run: ", harnesses)
 	})
 	ginkgo.BeforeEach(func(ctx context.Context) {
 		ginkgo.By("Setting up new namespace")
