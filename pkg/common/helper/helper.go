@@ -21,6 +21,8 @@ import (
 	"github.com/openshift/osde2e-common/pkg/clients/openshift"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
+	"github.com/openshift/osde2e/pkg/common/runner"
+	"github.com/openshift/osde2e/pkg/common/templates"
 	"github.com/openshift/osde2e/pkg/common/util"
 	"golang.org/x/oauth2/google"
 	computev1 "google.golang.org/api/compute/v1"
@@ -119,19 +121,21 @@ func (h *H) Setup() error {
 		Expect(err).ShouldNot(HaveOccurred(), "failed to set up project")
 		viper.Set(config.Project, h.proj.Name)
 	} else {
-		_ = wait.PollUntilContextTimeout(ctx, 5*time.Second, 30*time.Second, false, func(ctx context.Context) (bool, error) {
-			h.proj, err = h.Project().ProjectV1().Projects().Get(ctx, project, metav1.GetOptions{})
-			if apierrors.IsNotFound(err) || apierrors.IsServiceUnavailable(err) {
-				return false, nil
-			}
-			return true, err
-		})
+		if h.proj == nil {
+			_ = wait.PollUntilContextTimeout(ctx, 1*time.Second, 30*time.Second, true, func(ctx context.Context) (bool, error) {
+				h.proj, err = h.Project().ProjectV1().Projects().Get(ctx, project, metav1.GetOptions{})
+				if err != nil && (apierrors.IsNotFound(err) || apierrors.IsServiceUnavailable(err)) {
+					return false, nil
+				}
+				return true, err
+			})
 
-		if h.OutsideGinkgo && err != nil {
-			return fmt.Errorf("error retrieving project: %s, %v", project, err.Error())
+			if h.OutsideGinkgo && err != nil {
+				return fmt.Errorf("error retrieving project: %s, %v", project, err.Error())
+			}
+			Expect(err).ShouldNot(HaveOccurred(), "failed to retrieve project: %s", project)
+			Expect(h.proj).ShouldNot(BeNil())
 		}
-		Expect(err).ShouldNot(HaveOccurred(), "failed to retrieve project: %s", project)
-		Expect(h.proj).ShouldNot(BeNil())
 	}
 
 	// Set the default service account for future helper-method-calls
@@ -531,4 +535,69 @@ func (h *H) GetConfig() *rest.Config {
 
 func (h *H) GetClient() *openshift.Client {
 	return h.client
+}
+
+// GetRunnerCommandString Generates templated command string to provide to test harness container
+func (h *H) GetRunnerCommandString(templatePath string, timeout int, latestImageStream string, harness string, suffix string, jobName string, serviceAccountDir string, command string, serviceAccountNamespacedName string) string {
+	ginkgo.GinkgoHelper()
+	values := struct {
+		Name                 string
+		JobName              string
+		Arguments            string
+		Timeout              int
+		Image                string
+		Command              string
+		OutputDir            string
+		ServiceAccount       string
+		PushResultsContainer string
+		Suffix               string
+		Server               string
+		CA                   string
+		TokenFile            string
+		EnvironmentVariables []struct {
+			Name  string
+			Value string
+		}
+		EnvironmentVariablesFromSecret []struct {
+			SecretName string
+			SecretKey  string
+		}
+	}{
+		Name:                 jobName,
+		JobName:              jobName,
+		Timeout:              timeout,
+		Image:                harness,
+		OutputDir:            runner.DefaultRunner.OutputDir,
+		ServiceAccount:       serviceAccountNamespacedName,
+		PushResultsContainer: latestImageStream,
+		Suffix:               suffix,
+		Server:               "https://kubernetes.default",
+		CA:                   serviceAccountDir + "/ca.crt",
+		TokenFile:            serviceAccountDir + "/token",
+		EnvironmentVariables: []struct {
+			Name  string
+			Value string
+		}{
+			{
+				Name:  "OCM_CLUSTER_ID",
+				Value: viper.GetString(config.Cluster.ID),
+			},
+		},
+
+		EnvironmentVariablesFromSecret: []struct {
+			SecretName string
+			SecretKey  string
+		}{
+			{
+				SecretName: "ci-secrets",
+				SecretKey:  "OCM_TOKEN",
+			},
+		},
+		Command: command,
+	}
+	testTemplate, err := templates.LoadTemplate(templatePath)
+	Expect(err).NotTo(HaveOccurred(), "Could not load pod template")
+	cmd, err := h.ConvertTemplateToString(testTemplate, values)
+	Expect(err).NotTo(HaveOccurred(), "Could not convert pod template")
+	return cmd
 }

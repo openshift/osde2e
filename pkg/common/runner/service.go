@@ -45,6 +45,7 @@ func (r *Runner) createService(ctx context.Context, pod *kubev1.Pod) (svc *kubev
 }
 
 // waitForCompletion will wait for a runner's pod to have a valid v1.Endpoint available
+// otherwise waits for pod to be running
 func (r *Runner) waitForCompletion(ctx context.Context, podName string, timeoutInSeconds int) error {
 	var endpoints *kubev1.Endpoints
 	pendingCount := 0
@@ -65,7 +66,7 @@ func (r *Runner) waitForCompletion(ctx context.Context, podName string, timeoutI
 			return false, err
 		}
 
-		if pod.Status.Phase == kubev1.PodFailed || pod.Status.Phase == kubev1.PodUnknown {
+		if pod.Status.Phase == kubev1.PodFailed {
 			r.Info(fmt.Sprintf("Pod entered error state while waiting for endpoint: %+v", pod.Status))
 			return false, fmt.Errorf("pod failed while waiting for endpoints")
 		} else if pod.Status.Phase == kubev1.PodSucceeded {
@@ -85,7 +86,7 @@ func (r *Runner) waitForCompletion(ctx context.Context, podName string, timeoutI
 			}
 		}
 
-		r.Info(fmt.Sprintf("Waiting for test results using Endpoint '%s/%s'...", endpoints.Namespace, endpoints.Name))
+		r.Info(fmt.Sprintf("Pod state: %s; polling endpoint '%s'...", pod.Status.Phase, endpoints.Name))
 		return false, nil
 	})
 }

@@ -30,6 +30,10 @@ const (
 	// Env: BUILD_NUMBER
 	JobID = "jobID"
 
+	// ProwJobId is the ID designated by prow for this run
+	// Env: PROW_JOB_ID
+	ProwJobId = "prowJobId"
+
 	// JobType is the type of job according to prow for this run
 	// Env: JOB_TYPE
 	JobType = "jobType"
@@ -255,6 +259,11 @@ var Tests = struct {
 	// arg --ocp-test-suite
 	OCPTestSuite string
 
+	// OCPTestSkipRegex Regex to skip ocp test specs.
+	// Env: OCP_TEST_SKIP_REGEX
+	// arg --ocp-test-skip-regex
+	OCPTestSkipRegex string
+
 	// SuppressSkipNotifications suppresses the notifications of skipped tests
 	// Env: SUPPRESS_SKIP_NOTIFICATIONS
 	SuppressSkipNotifications string
@@ -297,6 +306,7 @@ var Tests = struct {
 	GinkgoLabelFilter:          "tests.ginkgoLabelFilter",
 	TestsToRun:                 "tests.testsToRun",
 	OCPTestSuite:               "tests.ocpTestSuite",
+	OCPTestSkipRegex:           "tests.ocpTestSkipRegex",
 	SuppressSkipNotifications:  "tests.suppressSkipNotifications",
 	CleanRuns:                  "tests.cleanRuns",
 	OperatorSkip:               "tests.operatorSkip",
@@ -722,6 +732,7 @@ func InitOSDe2eViper() {
 	viper.BindEnv(Tests.TestsToRun, "TESTS_TO_RUN")
 
 	viper.BindEnv(Tests.OCPTestSuite, "OCP_TEST_SUITE")
+	viper.BindEnv(Tests.OCPTestSkipRegex, "OCP_TEST_SKIP_REGEX")
 
 	viper.SetDefault(Tests.SuppressSkipNotifications, true)
 	viper.BindEnv(Tests.SuppressSkipNotifications, "SUPPRESS_SKIP_NOTIFICATIONS")
@@ -765,6 +776,8 @@ func InitOSDe2eViper() {
 	viper.BindEnv(Cluster.InstallTimeout, "CLUSTER_UP_TIMEOUT")
 
 	viper.BindEnv(Cluster.ReleaseImageLatest, "RELEASE_IMAGE_LATEST")
+
+	viper.BindEnv(ProwJobId, "PROW_JOB_ID")
 
 	viper.SetDefault(Cluster.UseProxyForInstall, false)
 	viper.BindEnv(Cluster.UseProxyForInstall, "USE_PROXY_FOR_INSTALL")

@@ -3,11 +3,12 @@ package installselectors
 import (
 	"fmt"
 	"log"
-	"os"
 	"regexp"
 	"strings"
 
 	"github.com/Masterminds/semver/v3"
+	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
+	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/spi"
 )
 
@@ -18,7 +19,8 @@ func init() {
 type triggeredNightlies struct{}
 
 func (t triggeredNightlies) ShouldUse() bool {
-	return strings.Contains(os.Getenv("PROW_JOB_ID"), "nightly")
+	log.Printf("PROW_JOB_ID: %q", viper.GetString(config.ProwJobId))
+	return strings.Contains(viper.GetString(config.ProwJobId), "nightly")
 }
 
 func (t triggeredNightlies) Priority() int {
@@ -26,12 +28,16 @@ func (t triggeredNightlies) Priority() int {
 }
 
 func (t triggeredNightlies) SelectVersion(versionList *spi.VersionList) (*semver.Version, string, error) {
-	nightlyVersionRegex := regexp.MustCompile(`4.\d+.\d-\d.nightly-\d{4}-\d{2}-\d{2}-\d+`)
+	// PROW_JOB_ID is an env var populated in release controller prow jobs in the following form.
+	// 4.15.0-0.nightly-2024-05-22-165653-<jobname>
+	// we will use this as a hack to get version tag
+	matchTag := viper.GetString(config.ProwJobId)
 
-	prowJobID := os.Getenv("PROW_JOB_ID")
-	matches := nightlyVersionRegex.FindStringSubmatch(prowJobID)
+	versionRegex := regexp.MustCompile(`\d.\d+.\d-\d.nightly-\d{4}-\d{2}-\d{2}-\d+`)
+	matches := versionRegex.FindStringSubmatch(matchTag)
+
 	if len(matches) == 0 {
-		return nil, t.String(), fmt.Errorf("failed to find match for %q", prowJobID)
+		return nil, t.String(), fmt.Errorf("failed to match nightly version tag: %q", matchTag)
 	}
 	payloadName := matches[0] + "-nightly"
 
