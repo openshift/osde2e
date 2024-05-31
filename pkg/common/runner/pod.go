@@ -7,6 +7,9 @@ import (
 	"path/filepath"
 	"time"
 
+	batchv1 "k8s.io/api/batch/v1"
+	corev1 "k8s.io/api/core/v1"
+
 	"github.com/openshift/osde2e/pkg/common/util"
 	kubev1 "k8s.io/api/core/v1"
 	kerror "k8s.io/apimachinery/pkg/api/errors"
@@ -88,8 +91,9 @@ func volumes(name string) []kubev1.Volume {
 	}
 }
 
-// createPod for creates a runner-based pod and typically collects generated artifacts from it.
-func (r *Runner) createPod(ctx context.Context) (pod *kubev1.Pod, err error) {
+// createJobPod for creates an osde2e runner Job and returns the singular job pod for further processing.
+// Opting for Job creation instead of direct Pod creation to avoid orphan workloads.
+func (r *Runner) createJobPod(ctx context.Context) (pod *kubev1.Pod, err error) {
 	// configure pod to run workload
 	cmName := fmt.Sprintf("%s-%s", osde2ePayload, util.RandomStr(5))
 	pod = &kubev1.Pod{
@@ -152,15 +156,39 @@ func (r *Runner) createPod(ctx context.Context) (pod *kubev1.Pod, err error) {
 	// setup git repos to be cloned in init containers
 	r.Repos.ConfigurePod(&pod.Spec)
 
-	// retry until Pod can be created or timeout occurs
-	var createdPod *kubev1.Pod
-	err = wait.PollUntilContextTimeout(ctx, fastPoll, podCreateTimeout, false, func(ctx context.Context) (done bool, err error) {
-		if createdPod, err = r.Kube.CoreV1().Pods(r.Namespace).Create(ctx, pod, metav1.CreateOptions{}); err != nil {
-			r.Error(err, fmt.Sprintf("error creating %s/%s runner Pod", r.Namespace, r.Name))
+	job := &batchv1.Job{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: r.Name,
+		},
+		Spec: batchv1.JobSpec{
+			Template: kubev1.PodTemplateSpec{
+				Spec: pod.Spec,
+			},
+		},
+	}
+	// retry until Job can be created or timeout occurs
+	if err = wait.PollUntilContextTimeout(ctx, fastPoll, podCreateTimeout, false, func(ctx context.Context) (done bool, err error) {
+		if job, err = r.Kube.BatchV1().Jobs(r.Namespace).Create(ctx, job, metav1.CreateOptions{}); err != nil {
+			r.Error(err, fmt.Sprintf("error creating %s/%s runner Job", r.Namespace, r.Name))
 		}
 		return err == nil, nil
-	})
-	return createdPod, err
+	}); err != nil {
+		return nil, err
+	}
+	pods := new(corev1.PodList)
+	// retry until Pod can be found or timeout occurs
+	if err = wait.PollUntilContextTimeout(ctx, fastPoll, podCreateTimeout, false, func(ctx context.Context) (done bool, err error) {
+		labelSelector := fmt.Sprintf("%s=%s", "job-name", job.Name)
+		pods, err = r.Kube.CoreV1().Pods(r.Namespace).List(ctx, metav1.ListOptions{LabelSelector: labelSelector})
+		if err != nil || len(pods.Items) < 1 {
+			err = fmt.Errorf("failed to list pods for job %s in %s namespace: %w", r.Name, r.Namespace, err)
+		}
+		return err == nil, nil
+	}); err != nil {
+		return nil, err
+	}
+	// return first job pod; test job has single runner pod
+	return &pods.Items[0], err
 }
 
 // waitForRunningPod, given a v1.Pod, will wait for 3 minutes for a pod to enter the running phase or return an error.
