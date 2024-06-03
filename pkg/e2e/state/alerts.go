@@ -8,11 +8,11 @@ import (
 
 	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	"github.com/openshift/osde2e-common/pkg/clients/openshift"
 	"github.com/openshift/osde2e-common/pkg/clients/prometheus"
 	"github.com/openshift/osde2e/pkg/common/alert"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
+	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/label"
 	"github.com/openshift/osde2e/pkg/common/providers"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -32,17 +32,13 @@ func init() {
 }
 
 var _ = ginkgo.Describe(clusterStateTestName, ginkgo.Ordered, label.E2E, func() {
-	var (
-		oc   *openshift.Client
-		prom *prometheus.Client
-	)
+	var prom *prometheus.Client
 
 	ginkgo.BeforeAll(func(ctx context.Context) {
-		var err error
-		oc, err = openshift.New(ginkgo.GinkgoLogr)
-		Expect(err).NotTo(HaveOccurred(), "unable to create openshift client")
+		h := helper.New()
 
-		prom, err = prometheus.New(ctx, oc)
+		var err error
+		prom, err = prometheus.New(ctx, h.GetClient())
 		Expect(err).NotTo(HaveOccurred(), "unable to create prometheus client")
 	})
 
