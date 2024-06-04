@@ -582,6 +582,10 @@ func (h *H) GetRunnerCommandString(templatePath string, timeout int, latestImage
 				Name:  "OCM_CLUSTER_ID",
 				Value: viper.GetString(config.Cluster.ID),
 			},
+			{
+				Name:  "CLOUD_PROVIDER_ID",
+				Value: viper.GetString(config.CloudProvider.CloudProviderID),
+			},
 		},
 
 		EnvironmentVariablesFromSecret: []struct {
