@@ -102,14 +102,21 @@ func getZone() string {
 // Creates testprovider arg string for ocp test command
 func getTestProvider() string {
 	cloud := viper.GetString(config.CloudProvider.CloudProviderID)
-	if viper.GetString(config.CloudProvider.CloudProviderID) == "gcp" {
-		cloud = "gce"
-	}
-	region := viper.GetString(config.CloudProvider.Region)
 	gcpproject := ""
-	if viper.GetString(config.CloudProvider.CloudProviderID) == "gcp" {
+	if cloud == "gcp" {
+		cloud = "gce"
+		provider, err := ocmprovider.New()
+		if err != nil {
+			println("could not get gcp ocm provider")
+		}
+		if err = provider.RetrieveGCPConfigs(); err != nil {
+			println("could not retrieve gcp creds")
+		}
 		gcpproject = fmt.Sprintf(`,\"projectid\":\"%s\"`, viper.GetString(ocmprovider.GCPProjectID))
 	}
+
+	region := viper.GetString(config.CloudProvider.Region)
+
 	c := fmt.Sprintf(`{\"type\":\"%s\",\"region\":\"%s\",\"zone\":\"%s\",\"multizone\":false,\"multimaster\":true %s}`, cloud, region, getZone(), gcpproject)
 	return c
 }

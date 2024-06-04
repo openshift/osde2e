@@ -19,6 +19,7 @@ import (
 	"github.com/openshift/osde2e/pkg/common/clusterproperties"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
+	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/metadata"
 	"github.com/openshift/osde2e/pkg/common/spi"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -135,25 +136,13 @@ func (o *OCMProvider) LaunchCluster(clusterName string) (string, error) {
 		Properties(clusterProperties)
 
 	if viper.GetBool(CCS) {
+		if viper.GetString(config.CloudProvider.CloudProviderID) == "gcp" {
+			if err = o.RetrieveGCPConfigs(); err != nil {
+				return "", err
+			}
+		}
 		// Refactor: This is a hack to get the AWS CCS cluster to work. In reality today we are loading too many secrets and need a better way to do this.
 		// IE: If aws keys are set but not awsAccount, we should mention it's an AWS execution but we are missing credentials.
-		if viper.GetString(GCPCredsJSON) != "" {
-			gcp, err := v1.UnmarshalGCP(viper.GetString(GCPCredsJSON))
-			if err != nil {
-				return "", fmt.Errorf("error unmarshalling GCP credentials: %v", err)
-			}
-			viper.Set(GCPCredsType, gcp.Type())
-			viper.Set(GCPProjectID, gcp.ProjectID())
-			viper.Set(GCPPrivateKeyID, gcp.PrivateKeyID())
-			viper.Set(GCPPrivateKey, gcp.PrivateKey())
-			viper.Set(GCPClientEmail, gcp.ClientEmail())
-			viper.Set(GCPClientID, gcp.ClientID())
-			viper.Set(GCPAuthURI, gcp.AuthURI())
-			viper.Set(GCPTokenURI, gcp.TokenURI())
-			viper.Set(GCPAuthProviderX509CertURL, gcp.AuthProviderX509CertURL())
-			viper.Set(gcp.ClientX509CertURL(), gcp.ClientX509CertURL())
-		}
-
 		if viper.GetString(config.CloudProvider.CloudProviderID) == "aws" {
 			awsCreds, err := aws.CcsAwsSession.GetCredentials()
 			if err != nil {
@@ -296,6 +285,30 @@ func (o *OCMProvider) LaunchCluster(clusterName string) (string, error) {
 		return "", fmt.Errorf("couldn't create cluster: %v", err)
 	}
 	return resp.Body().ID(), nil
+}
+
+func (o *OCMProvider) RetrieveGCPConfigs() error {
+	h := helper.New()
+	gcpCreds, status := h.GetGCPCreds(context.Background())
+	if !status {
+		return fmt.Errorf("could not retrieve GCP creds")
+	}
+
+	gcpjson, err := v1.UnmarshalGCP(gcpCreds.JSON)
+	if err != nil {
+		return fmt.Errorf("error unmarshalling GCP credentials: %v", err)
+	}
+	viper.Set(GCPCredsType, gcpjson.Type())
+	viper.Set(GCPProjectID, gcpCreds.ProjectID)
+	viper.Set(GCPPrivateKeyID, gcpjson.PrivateKeyID())
+	viper.Set(GCPPrivateKey, gcpjson.PrivateKey())
+	viper.Set(GCPClientEmail, gcpjson.ClientEmail())
+	viper.Set(GCPClientID, gcpjson.ClientID())
+	viper.Set(GCPAuthURI, gcpjson.AuthURI())
+	viper.Set(GCPTokenURI, gcpjson.TokenURI())
+	viper.Set(GCPAuthProviderX509CertURL, gcpjson.AuthProviderX509CertURL())
+	viper.Set(GCPClientX509CertURL, gcpjson.ClientX509CertURL())
+	return nil
 }
 
 func (o *OCMProvider) FindRecycledCluster(originalVersion, cloudProvider, product string) string {
