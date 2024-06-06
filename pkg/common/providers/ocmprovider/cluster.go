@@ -19,7 +19,6 @@ import (
 	"github.com/openshift/osde2e/pkg/common/clusterproperties"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
-	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/metadata"
 	"github.com/openshift/osde2e/pkg/common/spi"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -136,11 +135,6 @@ func (o *OCMProvider) LaunchCluster(clusterName string) (string, error) {
 		Properties(clusterProperties)
 
 	if viper.GetBool(CCS) {
-		if viper.GetString(config.CloudProvider.CloudProviderID) == "gcp" {
-			if err = o.RetrieveGCPConfigs(); err != nil {
-				return "", err
-			}
-		}
 		// Refactor: This is a hack to get the AWS CCS cluster to work. In reality today we are loading too many secrets and need a better way to do this.
 		// IE: If aws keys are set but not awsAccount, we should mention it's an AWS execution but we are missing credentials.
 		if viper.GetString(config.CloudProvider.CloudProviderID) == "aws" {
@@ -191,19 +185,26 @@ func (o *OCMProvider) LaunchCluster(clusterName string) (string, error) {
 				}
 			}
 			newCluster = newCluster.CCS(v1.NewCCS().Enabled(true)).AWS(awsBuilder)
-		} else if viper.GetString(config.CloudProvider.CloudProviderID) == "gcp" && viper.GetString(GCPProjectID) != "" {
-			// If GCP credentials are set, this must be a GCP CCS cluster
-			newCluster = newCluster.CCS(v1.NewCCS().Enabled(true)).GCP(v1.NewGCP().
-				Type(viper.GetString(GCPCredsType)).
-				ProjectID(viper.GetString(GCPProjectID)).
-				PrivateKey(viper.GetString(GCPPrivateKey)).
-				PrivateKeyID(viper.GetString(GCPPrivateKeyID)).
-				ClientEmail(viper.GetString(GCPClientEmail)).
-				ClientID(viper.GetString(GCPClientID)).
-				AuthURI(viper.GetString(GCPAuthURI)).
-				TokenURI(viper.GetString(GCPTokenURI)).
-				AuthProviderX509CertURL(viper.GetString(GCPAuthProviderX509CertURL)).
-				ClientX509CertURL(viper.GetString(GCPClientX509CertURL)))
+		} else if viper.GetString(config.CloudProvider.CloudProviderID) == "gcp" {
+			if err = o.RetrieveGCPConfigs(); err != nil {
+				return "", err
+			}
+			if viper.GetString(config.GCPProjectID) != "" {
+				// If GCP credentials are set, this must be a GCP CCS cluster
+				newCluster = newCluster.CCS(v1.NewCCS().Enabled(true)).GCP(v1.NewGCP().
+					Type(viper.GetString(config.GCPCredsType)).
+					ProjectID(viper.GetString(config.GCPProjectID)).
+					PrivateKey(viper.GetString(config.GCPPrivateKey)).
+					PrivateKeyID(viper.GetString(config.GCPPrivateKeyID)).
+					ClientEmail(viper.GetString(config.GCPClientEmail)).
+					ClientID(viper.GetString(config.GCPClientID)).
+					AuthURI(viper.GetString(config.GCPAuthURI)).
+					TokenURI(viper.GetString(config.GCPTokenURI)).
+					AuthProviderX509CertURL(viper.GetString(config.GCPAuthProviderX509CertURL)).
+					ClientX509CertURL(viper.GetString(config.GCPClientX509CertURL)))
+			} else {
+				return "", fmt.Errorf("no gcp project found")
+			}
 		} else {
 			return "", fmt.Errorf("invalid or no CCS Credentials provided for CCS cluster")
 		}
@@ -288,26 +289,20 @@ func (o *OCMProvider) LaunchCluster(clusterName string) (string, error) {
 }
 
 func (o *OCMProvider) RetrieveGCPConfigs() error {
-	h := helper.New()
-	gcpCreds, status := h.GetGCPCreds(context.Background())
-	if !status {
-		return fmt.Errorf("could not retrieve GCP creds")
-	}
-
-	gcpjson, err := v1.UnmarshalGCP(gcpCreds.JSON)
+	gcpjson, err := v1.UnmarshalGCP(viper.GetString(config.GCPCredsJSON))
 	if err != nil {
 		return fmt.Errorf("error unmarshalling GCP credentials: %v", err)
 	}
-	viper.Set(GCPCredsType, gcpjson.Type())
-	viper.Set(GCPProjectID, gcpCreds.ProjectID)
-	viper.Set(GCPPrivateKeyID, gcpjson.PrivateKeyID())
-	viper.Set(GCPPrivateKey, gcpjson.PrivateKey())
-	viper.Set(GCPClientEmail, gcpjson.ClientEmail())
-	viper.Set(GCPClientID, gcpjson.ClientID())
-	viper.Set(GCPAuthURI, gcpjson.AuthURI())
-	viper.Set(GCPTokenURI, gcpjson.TokenURI())
-	viper.Set(GCPAuthProviderX509CertURL, gcpjson.AuthProviderX509CertURL())
-	viper.Set(GCPClientX509CertURL, gcpjson.ClientX509CertURL())
+	viper.Set(config.GCPCredsType, gcpjson.Type())
+	viper.Set(config.GCPProjectID, gcpjson.ProjectID())
+	viper.Set(config.GCPPrivateKeyID, gcpjson.PrivateKeyID())
+	viper.Set(config.GCPPrivateKey, gcpjson.PrivateKey())
+	viper.Set(config.GCPClientEmail, gcpjson.ClientEmail())
+	viper.Set(config.GCPClientID, gcpjson.ClientID())
+	viper.Set(config.GCPAuthURI, gcpjson.AuthURI())
+	viper.Set(config.GCPTokenURI, gcpjson.TokenURI())
+	viper.Set(config.GCPAuthProviderX509CertURL, gcpjson.AuthProviderX509CertURL())
+	viper.Set(config.GCPClientX509CertURL, gcpjson.ClientX509CertURL())
 	return nil
 }
 

@@ -112,7 +112,7 @@ func getTestProvider() string {
 		if err = provider.RetrieveGCPConfigs(); err != nil {
 			println("could not retrieve gcp creds")
 		}
-		gcpproject = fmt.Sprintf(`,\"projectid\":\"%s\"`, viper.GetString(ocmprovider.GCPProjectID))
+		gcpproject = fmt.Sprintf(`,\"projectid\":\"%s\"`, viper.GetString(config.GCPProjectID))
 	}
 
 	region := viper.GetString(config.CloudProvider.Region)
