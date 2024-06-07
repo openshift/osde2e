@@ -18,9 +18,8 @@ import (
 	"github.com/onsi/ginkgo/v2"
 	"github.com/onsi/ginkgo/v2/types"
 	"github.com/onsi/gomega"
+	"github.com/openshift/osde2e/pkg/common/versions"
 	vegeta "github.com/tsenart/vegeta/lib"
-	v1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 	ctrlog "sigs.k8s.io/controller-runtime/pkg/log"
 
@@ -38,7 +37,6 @@ import (
 	"github.com/openshift/osde2e/pkg/common/spi"
 	"github.com/openshift/osde2e/pkg/common/upgrade"
 	"github.com/openshift/osde2e/pkg/common/util"
-	"github.com/openshift/osde2e/pkg/common/versions"
 	"github.com/openshift/osde2e/pkg/debug"
 	"github.com/openshift/osde2e/pkg/e2e/routemonitors"
 )
@@ -53,8 +51,6 @@ const (
 	Success = 0
 	Failure = 1
 	Aborted = 130
-
-	secretsNamespace = "ci-secrets"
 )
 
 // provisioner is used to deploy and manage clusters.
@@ -99,12 +95,6 @@ func beforeSuite() bool {
 			return false
 		}
 		log.Printf("Cluster status is ready")
-
-		if viper.Get(config.Tests.TestHarnesses) != nil {
-			passthruSecrets := viper.GetStringMapString(config.NonOSDe2eSecrets)
-			passthruSecrets["CLUSTER_ID"] = viper.GetString(config.Cluster.ID)
-			viper.Set(config.NonOSDe2eSecrets, passthruSecrets)
-		}
 
 		if viper.GetString(config.SharedDir) != "" {
 			if err = os.WriteFile(fmt.Sprintf("%s/cluster-id", viper.GetString(config.SharedDir)), []byte(cluster.ID()), 0o644); err != nil {
@@ -211,33 +201,6 @@ func beforeSuite() bool {
 		}
 	}
 
-	// Populate cluster with secrets for test harnesses
-	if viper.GetString(config.Tests.TestHarnesses) != "" {
-		var (
-			absNamespace = "osde2e-" + secretsNamespace
-			ctx          = context.TODO()
-		)
-
-		h, err := helper.NewOutsideGinkgo()
-		if h == nil {
-			log.Println("Unable to generate helper outside of ginkgo: %w", err)
-			return false
-		}
-
-		_ = h.DeleteProject(ctx, absNamespace)
-		h.CreateProject(ctx, secretsNamespace)
-
-		_, err = h.Kube().CoreV1().Secrets(absNamespace).Create(context.TODO(), &v1.Secret{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "ci-secrets",
-				Namespace: absNamespace,
-			},
-			StringData: viper.GetStringMapString(config.NonOSDe2eSecrets),
-		}, metav1.CreateOptions{})
-		if err != nil {
-			log.Printf("Error creating Prow secrets in-cluster: %s", err.Error())
-		}
-	}
 	return true
 }
 
@@ -645,8 +608,6 @@ func cleanupAfterE2E(ctx context.Context, h *helper.H) (errors []error) {
 		log.Print("No cluster ID set. Skipping OCM Queries.")
 	}
 
-	harnessCleanup(ctx, h)
-
 	// We need to clean up our helper tests manually.
 	h.Cleanup(ctx)
 
@@ -684,19 +645,6 @@ func cleanupAfterE2E(ctx context.Context, h *helper.H) (errors []error) {
 		}
 	}
 	return errors
-}
-
-// harnessCleanup performs clean up operations post test execution
-func harnessCleanup(ctx context.Context, h *helper.H) {
-	log.Printf("Deleting osde2e-%v namespace", secretsNamespace)
-
-	if viper.GetString(config.Tests.TestHarnesses) != "" {
-		absNamespace := "osde2e-" + secretsNamespace
-		err := h.DeleteProject(ctx, absNamespace)
-		if err != nil {
-			log.Printf("Failed to delete namespace: %s, error: %v", absNamespace, err)
-		}
-	}
 }
 
 // nolint:gocyclo

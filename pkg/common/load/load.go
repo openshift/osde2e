@@ -11,6 +11,7 @@ import (
 	"github.com/openshift/osde2e/configs"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
+	"github.com/openshift/osde2e/pkg/common/providers/ocmprovider"
 )
 
 const (
@@ -103,14 +104,16 @@ func loadPassthruSecrets(secretLocations []string) {
 			}
 		}
 	}
-	// Load ocm-token and ENV as passthrough secrets for harnesses
-	if viper.Get(config.Tests.TestHarnesses) != nil {
-		passthruSecrets["ocm-token-refresh"] = viper.GetString("ocm.token")
-		passthruSecrets["ENV"] = viper.GetString("ocm.env")
-	}
-	if len(passthruSecrets) > 0 {
-		viper.Set(config.NonOSDe2eSecrets, passthruSecrets)
-	}
+
+	passthruSecrets["OCM_TOKEN"] = viper.GetString(ocmprovider.Token)
+	passthruSecrets["CLUSTER_ID"] = viper.GetString(config.Cluster.ID)
+	passthruSecrets["GCP_CREDS_JSON"] = viper.GetString(config.GCPCredsJSON)
+	passthruSecrets["AWS_SECRET_ACCESS_KEY"] = viper.GetString(config.AWSSecretAccessKey)
+	passthruSecrets["AWS_REGION"] = viper.GetString(config.AWSRegion)
+	passthruSecrets["AWS_PROFILE"] = viper.GetString(config.AWSProfile)
+	passthruSecrets["AWS_ACCESS_KEY_ID"] = viper.GetString(config.AWSAccessKey)
+
+	viper.Set(config.NonOSDe2eSecrets, passthruSecrets)
 }
 
 // loadYAMLFromConfigs accepts a config name and attempts to unmarshal the config from the /configs directory.
