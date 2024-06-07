@@ -936,6 +936,7 @@ func InitOSDe2eViper() {
 func init() {
 	InitOSDe2eViper()
 	InitAWSViper()
+	InitGCPViper()
 }
 
 // PostProcess is a variety of post-processing commands that is intended to be run after a config is loaded.

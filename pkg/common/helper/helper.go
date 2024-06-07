@@ -430,7 +430,7 @@ func (h *H) GetGCPCreds(ctx context.Context) (*google.Credentials, bool) {
 		Resource: "credentialsrequests",
 	}).Namespace(saCredentialReq.GetNamespace()).Create(ctx, &unstructured.Unstructured{Object: credentialReqObj}, metav1.CreateOptions{})
 
-	_ = wait.PollUntilContextTimeout(ctx, 15*time.Second, 5*time.Minute, false, func(ctx context.Context) (bool, error) {
+	_ = wait.PollUntilContextTimeout(ctx, 15*time.Second, 5*time.Minute, true, func(ctx context.Context) (bool, error) {
 		unstructCredentialReq, _ := h.Dynamic().Resource(schema.GroupVersionResource{
 			Group:    "cloudcredential.openshift.io",
 			Version:  "v1",
