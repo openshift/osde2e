@@ -53,7 +53,7 @@ func init() {
 
 var _ = ginkgo.Describe(encryptedStorageTestName, label.E2E, func() {
 	ginkgo.Context("in GCP clusters", func() {
-		if viper.GetString(config.CloudProvider.CloudProviderID) != "gcp" {
+		if viper.GetString(config.CloudProvider.CloudProviderID) != "gcp" || !viper.GetBool(ocmprovider.CCS) {
 			return
 		}
 		h := helper.New()
