@@ -739,6 +739,42 @@ func runTestsInPhase(
 		}
 	})
 
+	// https://github.com/konflux-ci/architecture/blob/cd41772b27bb89cd061e85cdaa7488afc4e29a2e/ADR/0030-tekton-results-naming-convention.md
+	if konfluxTestOutputFile := viper.GetString(config.KonfluxTestOutputFile); konfluxTestOutputFile != "" {
+		ginkgo.ReportAfterSuite("OSDE2E konflux results", func(report ginkgo.Report) {
+			konfluxResults := map[string]any{
+				"result":    "FAILURE",
+				"timestamp": report.EndTime.Format(time.RFC3339),
+				// TODO: do something with warnings
+				"warnings": 0,
+			}
+
+			if report.SuiteSucceeded {
+				konfluxResults["result"] = "SUCCESS"
+			}
+
+			var successes, failures int
+			for _, report := range report.SpecReports {
+				switch report.State {
+				case types.SpecStatePassed:
+					successes++
+				case types.SpecStateFailed:
+					failures++
+				}
+			}
+			konfluxResults["successes"] = successes
+			konfluxResults["failures"] = failures
+
+			bits, err := json.Marshal(konfluxResults)
+			if err != nil {
+				log.Printf("unable to marshal konflux results: %s", err)
+			}
+			if err = os.WriteFile(konfluxTestOutputFile, bits, os.ModePerm); err != nil {
+				log.Printf("failed to write konflux results to %s: %s", "", err)
+			}
+		})
+	}
+
 	// We need this anonymous function to make sure GinkgoRecover runs where we want it to
 	// and will still execute the rest of the function regardless whether the tests pass or fail.
 	func() {
