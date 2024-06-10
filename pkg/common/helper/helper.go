@@ -21,6 +21,7 @@ import (
 	"github.com/openshift/osde2e-common/pkg/clients/openshift"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
+	"github.com/openshift/osde2e/pkg/common/providers/ocmprovider"
 	"github.com/openshift/osde2e/pkg/common/runner"
 	"github.com/openshift/osde2e/pkg/common/templates"
 	"github.com/openshift/osde2e/pkg/common/util"
@@ -176,16 +177,14 @@ func (h *H) SetupNewProject(ctx context.Context, suffix string) (*projectv1.Proj
 	return v1project, nil
 }
 
-// Adds essential secrets to harness namespace
+// Adds essential secrets to harness namespace to load onto harness pod
 func (h *H) SetPassthruSecretInProject(ctx context.Context, project *projectv1.Project) error {
-	passthruSecrets := make(map[string]string)
-	passthruSecrets["OCM_TOKEN"] = viper.GetString("ocm.token")
 	err := h.GetClient().Create(ctx, &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "ci-secrets",
 			Namespace: project.Name,
 		},
-		StringData: passthruSecrets,
+		StringData: viper.GetStringMapString(config.NonOSDe2eSecrets),
 	})
 	return err
 }
@@ -586,6 +585,10 @@ func (h *H) GetRunnerCommandString(templatePath string, timeout int, latestImage
 				Name:  "CLOUD_PROVIDER_ID",
 				Value: viper.GetString(config.CloudProvider.CloudProviderID),
 			},
+			{
+				Name:  "OCM_ENV",
+				Value: viper.GetString(ocmprovider.Env),
+			},
 		},
 
 		EnvironmentVariablesFromSecret: []struct {
@@ -595,6 +598,26 @@ func (h *H) GetRunnerCommandString(templatePath string, timeout int, latestImage
 			{
 				SecretName: "ci-secrets",
 				SecretKey:  "OCM_TOKEN",
+			},
+			{
+				SecretName: "ci-secrets",
+				SecretKey:  "AWS_ACCESS_KEY_ID",
+			},
+			{
+				SecretName: "ci-secrets",
+				SecretKey:  "AWS_PROFILE",
+			},
+			{
+				SecretName: "ci-secrets",
+				SecretKey:  "AWS_REGION",
+			},
+			{
+				SecretName: "ci-secrets",
+				SecretKey:  "AWS_SECRET_ACCESS_KEY",
+			},
+			{
+				SecretName: "ci-secrets",
+				SecretKey:  "GCP_CREDS_JSON",
 			},
 		},
 		Command: command,
