@@ -99,6 +99,8 @@ const (
 	// SharedDir is the location where files to be used by other processes/programs are stored.
 	// This is primarily used when running within Prow and using additional steps after osde2e finishes.
 	SharedDir = "sharedDir"
+
+	KonfluxTestOutputFile = "konfluxResultsPath"
 )
 
 // This is a config key to secret file mapping. We will attempt to read in from secret files before loading anything else.
@@ -656,6 +658,8 @@ func InitOSDe2eViper() {
 	viper.BindEnv(ReportDir, "REPORT_DIR")
 
 	viper.BindEnv(SharedDir, "SHARED_DIR")
+
+	viper.BindEnv(KonfluxTestOutputFile, "KONFLUX_TEST_OUTPUT_FILE")
 
 	viper.BindEnv(Suffix, "SUFFIX")
 
