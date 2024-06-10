@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
+	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/spi"
 
 	ocm "github.com/openshift-online/ocm-sdk-go"
@@ -18,14 +19,19 @@ const (
 	// TokenURL specifies the endpoint used to create access tokens.
 	TokenURL = "https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token"
 
+	// FRTokenURL specifies the endpoint used to create access tokens for FedRamp.
+	FRTokenURL = "https://sso.int.openshiftusgov.com/realms/redhat-external/protocol/openid-connect/token"
+
 	// ClientID is used to identify the client to OSD.
 	ClientID = "cloud-services"
 )
 
 type ocmConnectionKey struct {
-	token string
-	env   string
-	debug bool
+	token        string
+	clientID     string
+	clientSecret string
+	env          string
+	debug        bool
 }
 
 var connectionCache = map[ocmConnectionKey]*ocm.Connection{}
@@ -45,11 +51,13 @@ func init() {
 }
 
 // OCMConnection returns a raw OCM connection.
-func OCMConnection(token, env string, debug bool) (*ocm.Connection, error) {
+func OCMConnection(token, clientID, clientSecret, env string, debug bool) (*ocm.Connection, error) {
 	cacheKey := ocmConnectionKey{
-		token: token,
-		env:   env,
-		debug: debug,
+		token:        token,
+		clientID:     clientID,
+		clientSecret: clientSecret,
+		env:          env,
+		debug:        debug,
 	}
 
 	// Use the cached connection if possible
@@ -70,14 +78,16 @@ func OCMConnection(token, env string, debug bool) (*ocm.Connection, error) {
 	// select correct environment
 	url := Environments.Choose(env)
 
-	builder := ocm.NewConnectionBuilder().
-		URL(url).
-		TokenURL(TokenURL).
-		Client(ClientID, "").
-		Logger(logger).
-		Tokens(token)
+	connectionBuilder := ocm.NewConnectionBuilder().URL(url).Logger(logger)
+	if clientID != "" && clientSecret != "" {
+		// Use the FedRamp tokenURL if we're using a clientID and clientSecret for Keycloack Client Auth.
+		connectionBuilder.Client(clientID, clientSecret).TokenURL(FRTokenURL)
+	} else {
+		// Default commercial flow
+		connectionBuilder.TokenURL(TokenURL).Client(ClientID, "").Tokens(token)
+	}
 
-	connection, err := builder.Build()
+	connection, err := connectionBuilder.Build()
 	if err != nil {
 		connectionCache[cacheKey] = nil
 		return nil, err
@@ -95,9 +105,11 @@ func New() (*OCMProvider, error) {
 // NewWithEnv creates a new provider with a specific environment.
 func NewWithEnv(env string) (*OCMProvider, error) {
 	token := viper.GetString(Token)
+	clientID := viper.GetString(FedRampClientID)
+	clientSecret := viper.GetString(FedRampClientSecret)
 	debug := viper.GetBool(Debug)
 
-	conn, err := OCMConnection(token, env, debug)
+	conn, err := OCMConnection(token, clientID, clientSecret, env, debug)
 	if err != nil {
 		return nil, err
 	}
@@ -108,8 +120,7 @@ func NewWithEnv(env string) (*OCMProvider, error) {
 	// able to get the default version in production. This will allow us to make relative version
 	// upgrades by measuring against the current production default.
 	if env != prod {
-		prodProvider, err = NewWithEnv(prod)
-
+		prodProvider, err = createProdProvider()
 		if err != nil {
 			return nil, err
 		}
@@ -138,6 +149,7 @@ func (o *OCMProvider) Metrics(clusterID string) (bool, error) {
 // UpgradeSource indicates that for stage/production clusters, we should use Cincinnati.
 // For integration clusters, we should use the release controller.
 func (o *OCMProvider) UpgradeSource() spi.UpgradeSource {
+	// TODO: Is this different for FedRamp? I think it uses a different channel since they are behind commercial - Diego S.
 	if o.env == stage || o.env == prod {
 		return spi.CincinnatiSource
 	}
@@ -176,4 +188,13 @@ func (o *OCMProvider) Type() string {
 // VersionGateLabel returns the provider version gate label
 func (o *OCMProvider) VersionGateLabel() string {
 	return o.versionGateLabel
+}
+
+func createProdProvider() (*OCMProvider, error) {
+	prodEnv := prod
+	if viper.GetBool(config.Cluster.FedRamp) {
+		prodEnv = frProd
+	}
+
+	return NewWithEnv(prodEnv)
 }

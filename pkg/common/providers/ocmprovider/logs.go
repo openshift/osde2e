@@ -26,7 +26,6 @@ func (o *OCMProvider) Logs(clusterID string) (logs map[string][]byte, err error)
 				Logs().Install().
 				Get().Parameter("tail", math.MaxInt32-1).
 				Send()
-
 			if err != nil {
 				// Log is just not found, so skip this log
 				if strings.Contains(err.Error(), "'404'") {
@@ -47,7 +46,6 @@ func (o *OCMProvider) Logs(clusterID string) (logs map[string][]byte, err error)
 			found = true
 			return nil
 		})
-
 		if err != nil {
 			return logs, fmt.Errorf("the contents of log '%s' couldn't be retrieved: %v", logID, err)
 		}
@@ -68,7 +66,6 @@ func (o *OCMProvider) getLogList(clusterID string) ([]string, error) {
 			Logs().
 			List().
 			Send()
-
 		if err != nil {
 			return err
 		}

@@ -56,7 +56,6 @@ func (v *VersionSelector) SelectClusterVersions() error {
 
 			return true, nil
 		})
-
 		if err != nil {
 			return fmt.Errorf("error while selecting install version: %v", err)
 		}
@@ -95,7 +94,6 @@ func (v *VersionSelector) setInstallVersion() (*semver.Version, string, error) {
 		var err error
 		// Make sure the cluster version is valid
 		selectedVersion, err = util.OpenshiftVersionToSemver(clusterVersion)
-
 		if err != nil {
 			return nil, versionType, fmt.Errorf("supplied version %s is invalid: %v", clusterVersion, err)
 		}

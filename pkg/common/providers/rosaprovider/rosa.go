@@ -12,6 +12,7 @@ import (
 	rosaprovider "github.com/openshift/osde2e-common/pkg/openshift/rosa"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
+
 	"github.com/openshift/osde2e/pkg/common/providers/ocmprovider"
 	"github.com/openshift/osde2e/pkg/common/spi"
 	"k8s.io/klog/v2/textlogger"
@@ -33,21 +34,36 @@ type ROSAProvider struct {
 
 // New will create a new ROSAProvider.
 func New() (*ROSAProvider, error) {
+	fedramp := viper.GetBool(config.Cluster.FedRamp)
 	rosaEnv := viper.GetString(Env)
+	var ocmEnv ocmclient.Environment
+	var ocmProvider *ocmprovider.OCMProvider
+	var err error
 
-	ocmProvider, err := ocmprovider.NewWithEnv(rosaEnv)
+	ocmProvider, err = ocmprovider.NewWithEnv(rosaEnv)
 	if err != nil {
 		return nil, fmt.Errorf("error creating OCM provider for ROSA provider: %v", err)
 	}
 
-	var ocmEnv ocmclient.Environment
 	switch rosaEnv {
 	case "prod":
-		ocmEnv = ocmclient.Production
+		if fedramp {
+			ocmEnv = ocmclient.FedRampProduction
+		} else {
+			ocmEnv = ocmclient.Production
+		}
 	case "stage":
-		ocmEnv = ocmclient.Stage
+		if fedramp {
+			ocmEnv = ocmclient.FedRampStage
+		} else {
+			ocmEnv = ocmclient.Stage
+		}
 	case "int":
-		ocmEnv = ocmclient.Integration
+		if fedramp {
+			ocmEnv = ocmclient.FedRampIntegration
+		} else {
+			ocmEnv = ocmclient.Integration
+		}
 	default:
 		return nil, fmt.Errorf("error selecting ocm environment for %s", rosaEnv)
 	}
@@ -59,6 +75,8 @@ func New() (*ROSAProvider, error) {
 			rosaProvider, err = rosaprovider.New(
 				ctx,
 				viper.GetString("ocm.token"),
+				viper.GetString("fedRamp.clientID"),
+				viper.GetString("fedRamp.clientSecret"),
 				ocmEnv,
 				textlogger.NewLogger(textlogger.NewConfig()),
 			)

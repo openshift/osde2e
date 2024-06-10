@@ -199,7 +199,6 @@ func extractInstallAndUpgradeVersionsFromSample(sample *model.SampleStream) (*se
 	}
 
 	installVersion, err = util.OpenshiftVersionToSemver(installVersionString)
-
 	if err != nil {
 		return nil, nil, fmt.Errorf("error parsing install version: %v", err)
 	}
@@ -209,7 +208,6 @@ func extractInstallAndUpgradeVersionsFromSample(sample *model.SampleStream) (*se
 
 	if upgradeVersionString != "" {
 		upgradeVersion, err = util.OpenshiftVersionToSemver(upgradeVersionString)
-
 		if err != nil {
 			return nil, nil, fmt.Errorf("error parsing upgrade version: %v", err)
 		}

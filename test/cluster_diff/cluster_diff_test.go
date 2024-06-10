@@ -39,7 +39,7 @@ var _ = Describe("Gap Analysis - Cluster Diff", Ordered, func() {
 		klog.SetOutput(GinkgoWriter)
 
 		var err error
-		rosa, err = rosaprovider.New(ctx, os.Getenv("OCM_TOKEN"), ocm.Stage, klog.NewKlogr())
+		rosa, err = rosaprovider.New(ctx, os.Getenv("OCM_TOKEN"), os.Getenv("CLIENT_ID"), os.Getenv("CLIENT_SECRET"), ocm.Stage, klog.NewKlogr())
 		Expect(err).ShouldNot(HaveOccurred(), "failed to create rosa provider")
 
 		if nightlyVersion == "" {

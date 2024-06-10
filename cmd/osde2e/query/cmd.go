@@ -145,7 +145,6 @@ func run(cmd *cobra.Command, argv []string) error {
 	switch args.outputFormat {
 	case "json":
 		data, err = json.MarshalIndent(value, "", "  ")
-
 		if err != nil {
 			return fmt.Errorf("error marshaling results: %v", err)
 		}
@@ -154,7 +153,6 @@ func run(cmd *cobra.Command, argv []string) error {
 	}
 
 	_, err = os.Stdout.Write(data)
-
 	if err != nil {
 		return fmt.Errorf("error writing output: %v", err)
 	}

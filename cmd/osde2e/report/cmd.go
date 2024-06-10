@@ -139,13 +139,11 @@ func run(cmd *cobra.Command, argv []string) error {
 
 	if args.toSlack {
 		err = reporting.SendReportToSlack(reportName, report)
-
 		if err != nil {
 			return fmt.Errorf("error sending report to slack: %v", err)
 		}
 	} else {
 		err = reporting.WriteReport(report, args.output)
-
 		if err != nil {
 			return fmt.Errorf("error writing report: %v", err)
 		}

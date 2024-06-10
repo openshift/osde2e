@@ -20,7 +20,6 @@ func (o *OCMProvider) CheckQuota(skuRuleID string) (bool, error) {
 			return fmt.Errorf("no valid SKU selected")
 		}
 		skuResp, err = o.conn.AccountsMgmt().V1().SkuRules().SkuRule(skuRuleID).Get().Send()
-
 		if err != nil {
 			return err
 		}
@@ -86,7 +85,6 @@ func (o *OCMProvider) currentAccountQuota() (*accounts.QuotaCostList, error) {
 	err = retryer().Do(func() error {
 		var err error
 		quotaList, err = o.conn.AccountsMgmt().V1().Organizations().Organization(orgID).QuotaCost().List().Send()
-
 		if err != nil {
 			return err
 		}

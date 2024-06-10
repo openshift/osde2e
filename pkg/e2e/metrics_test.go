@@ -96,7 +96,6 @@ cicd_jUnitResult{cloud_provider="aws",cluster_id="1a2b3c",environment="prod",ins
 		tmpFile.Close()
 
 		err = m.processJUnitXMLFile(test.phase, tmpFile.Name())
-
 		if err != nil {
 			t.Errorf("error while processing junit file: %v", err)
 		}
@@ -203,7 +202,6 @@ cicd_addon_metadata{cloud_provider="aws",cluster_id="1a2b3c",environment="prod",
 			gatherer = m.metadataGatherer
 		}
 		err = m.processJSONFile(gatherer, tmpFile.Name(), test.phase)
-
 		if err != nil {
 			t.Errorf("error while processing JSON file: %v", err)
 		}
