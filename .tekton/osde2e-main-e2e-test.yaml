@@ -33,6 +33,7 @@ spec:
                 value: $(params.SNAPSHOT)
             script: |
               microdnf -y install jq
+
               COMPONENT_IMAGE=$(echo ${SNAPSHOT} | jq -r '.components[] | select(.name=="osde2e-main") | .containerImage')
               echo -n "${COMPONENT_IMAGE}" | tee $(results.COMPONENT_IMAGE.path)
     - name: execute-osde2e
