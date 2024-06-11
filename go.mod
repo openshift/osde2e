@@ -21,12 +21,12 @@ require (
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/onsi/ginkgo/v2 v2.19.0
 	github.com/onsi/gomega v1.33.1
-	github.com/openshift-online/ocm-sdk-go v0.1.420
+	github.com/openshift-online/ocm-sdk-go v0.1.422
 	github.com/openshift/client-go v0.0.0-20240510131258-f646d5f29250
 	github.com/openshift/cloud-credential-operator v0.0.0-20230512001141-38e7f96bf730
 	github.com/openshift/custom-domains-operator v0.0.0-20221118201157-bd1052dac818
 	github.com/openshift/managed-upgrade-operator v0.0.0-20230525042514-a9b8c1d2571c
-	github.com/openshift/osde2e-common v0.0.0-20240530190614-a1a58e5324fc
+	github.com/openshift/osde2e-common v0.0.0-20240611060429-ab4359c129ca
 	github.com/openshift/route-monitor-operator v0.0.0-20221118160357-3df1ed1fa1d2
 	github.com/operator-framework/api v0.17.7
 	github.com/operator-framework/operator-lifecycle-manager v0.22.0
@@ -34,7 +34,7 @@ require (
 	github.com/prometheus-operator/prometheus-operator/pkg/client v0.64.0
 	github.com/prometheus/alertmanager v0.26.0
 	github.com/prometheus/client_golang v1.19.1
-	github.com/prometheus/common v0.53.0
+	github.com/prometheus/common v0.54.0
 	github.com/slack-go/slack v0.13.0
 	github.com/spf13/afero v1.11.0
 	github.com/spf13/cobra v1.8.0
@@ -114,7 +114,7 @@ require (
 	github.com/gorilla/websocket v1.5.0 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
-	github.com/hashicorp/go-retryablehttp v0.7.6 // indirect
+	github.com/hashicorp/go-retryablehttp v0.7.7 // indirect
 	github.com/hashicorp/go-version v1.6.0 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/hashicorp/terraform-json v0.22.1 // indirect
@@ -137,7 +137,7 @@ require (
 	github.com/openshift/library-go v0.0.0-20240517135010-e93e442c2b18 // indirect
 	github.com/pelletier/go-toml/v2 v2.2.2 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
-	github.com/prometheus/client_model v0.6.0 // indirect
+	github.com/prometheus/client_model v0.6.1 // indirect
 	github.com/prometheus/common/sigv4 v0.1.0 // indirect
 	github.com/prometheus/procfs v0.12.0 // indirect
 	github.com/sagikazarmark/locafero v0.4.0 // indirect
