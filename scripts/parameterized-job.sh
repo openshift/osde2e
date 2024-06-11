@@ -14,6 +14,7 @@ docker create --name osde2e-run -e OCM_TOKEN \
 	-e ROSA_ENV="${ENVIRONMENT}" \
 	-e OCM_ENV="${ENVIRONMENT}" \
 	-e ROSA_STS="${STS}" \
+	-e ROSA_MINT_MODE="${MINT_MODE}" \
 	-e INSTANCE_TYPE \
 	-e SKIP_DESTROY_CLUSTER \
 	-e SKIP_CLUSTER_HEALTH_CHECKS \
@@ -24,7 +25,7 @@ docker create --name osde2e-run -e OCM_TOKEN \
 	-e POLLING_TIMEOUT \
 	-e OCM_CCS \
 	-e MULTI_AZ \
-	-e REPORT_DIR="/tmp/${REPORT_DIR}" quay.io/app-sre/osde2e test --configs "${CONFIGS}" "${ADDITIONAL_FLAGS}" 
+	-e REPORT_DIR="/tmp/${REPORT_DIR}" quay.io/app-sre/osde2e test --configs "${CONFIGS}" "${ADDITIONAL_FLAGS}"
 
 docker start -a osde2e-run
 
