@@ -1,0 +1,70 @@
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  name: osde2e-e2e
+  labels:
+    build.appstudio.redhat.com/pipeline: osde2e-e2e
+spec:
+  params:
+    - description: Snapshot of the application
+      name: SNAPSHOT
+      default: '{"components": [{"name":"osde2e-main", "containerImage": "quay.io/app-sre/osde2e:latest"}]}'
+      type: string
+    - description: osde2e configs (comma delimited string of configurations)
+      name: OSDE2E_CONFIGS
+      default: aws,stage,sts
+      type: string
+  tasks:
+    - name: parse-component-image-spec
+      description: Task parses the specific component image spec from the snapshot parameter
+      params:
+        - name: SNAPSHOT
+          value: $(params.SNAPSHOT)
+      taskSpec:
+        params:
+          - name: SNAPSHOT
+        results:
+          - name: COMPONENT_IMAGE
+            description: parsed component image spec
+        steps:
+          - image: "registry.access.redhat.com/ubi8/ubi-minimal:latest"
+            env:
+              - name: SNAPSHOT
+                value: $(params.SNAPSHOT)
+            script: |
+              microdnf -y install jq
+              COMPONENT_IMAGE=$(echo ${SNAPSHOT} | jq -r '.components[] | select(.name=="osde2e-main") | .containerImage')
+              echo -n "${COMPONENT_IMAGE}" | tee $(results.COMPONENT_IMAGE.path)
+    - name: execute-osde2e
+      description: Execute osde2e image
+      runAfter:
+        - parse-component-image-spec
+      timeout: "4h"
+      params:
+        - name: COMPONENT_IMAGE
+          value: $(tasks.parse-component-image-spec.results.COMPONENT_IMAGE)
+        - name: OSDE2E_CONFIGS
+          value: $(params.OSDE2E_CONFIGS)
+      taskSpec:
+        params:
+          - name: COMPONENT_IMAGE
+          - name: OSDE2E_CONFIGS
+        results:
+          - name: TEST_OUTPUT
+            description: parsed component image spec
+        steps:
+          - image: $(params.COMPONENT_IMAGE)
+            command:
+              - /osde2e
+            args:
+              - test
+              - --configs
+              - $(params.OSDE2E_CONFIGS)
+            env:
+              - name: KONFLUX_RESULTS_PATH
+                value: $(results.TEST_OUTPUT.path)
+            envFrom:
+              - secretRef:
+                  name: ocm-token
+              - secretRef:
+                  name: aws-credentials
