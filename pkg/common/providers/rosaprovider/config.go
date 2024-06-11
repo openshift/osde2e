@@ -33,6 +33,9 @@ const (
 	// STS is a boolean tracking whether or not this cluster should be provisioned using the STS workflow
 	STS = "rosa.STS"
 
+	// MintMode is a boolean tracking whether or not this cluster should be provisioned using the non-STS(Mint) workflow
+	MintMode = "rosa.mintMode"
+
 	// OIDCConfigID is the ID of the oidc-config created through ROSA CLI (required for HCP)
 	OIDCConfigID = "rosa.oidcConfigID"
 
@@ -64,6 +67,11 @@ func init() {
 
 	viper.BindEnv(STS, "ROSA_STS")
 	viper.SetDefault(STS, false)
+	config.RegisterSecret(STS, "rosa-sts")
+
+	viper.BindEnv(MintMode, "ROSA_MINT_MODE")
+	viper.SetDefault(MintMode, false)
+	config.RegisterSecret(MintMode, "rosa-mint-mode")
 
 	viper.SetDefault(OIDCConfigID, "")
 	viper.BindEnv(OIDCConfigID, "ROSA_OIDC_CONFIG_ID")
