@@ -80,12 +80,13 @@ func beforeSuite() bool {
 		return false
 	}
 	if viper.GetString(config.Kubeconfig.Contents) == "" {
-		cluster, err = clusterutil.ProvisionCluster(nil)
-		status, err := configureVersion(&provider)
+		status, err := configureVersion()
 		if status != Success {
 			log.Printf("Failed configure cluster version: %v", err)
 			return false
 		}
+		cluster, err = clusterutil.ProvisionCluster(nil)
+
 		events.HandleErrorWithEvents(err, events.InstallSuccessful, events.InstallFailed)
 		if err != nil {
 			log.Printf("Failed to set up or retrieve cluster: %v", err)
@@ -197,7 +198,7 @@ func beforeSuite() bool {
 	return true
 }
 
-func configureVersion(provider2 *spi.Provider) (int, error) {
+func configureVersion() (int, error) {
 	// configure cluster and upgrade versions
 	versionSelector := versions.VersionSelector{Provider: provider}
 	if err := versionSelector.SelectClusterVersions(); err != nil {
