@@ -19,15 +19,16 @@ import (
 	configv1 "github.com/openshift/api/config/v1"
 	quotav1 "github.com/openshift/api/quota/v1"
 	securityv1 "github.com/openshift/api/security/v1"
-	customdomainv1alpha1 "github.com/openshift/custom-domains-operator/api/v1alpha1"
-	mustgatherv1alpha1 "github.com/openshift/must-gather-operator/api/v1alpha1"
 	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	labels "k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	"k8s.io/client-go/dynamic"
 	"k8s.io/kubectl/pkg/util/slice"
 	"sigs.k8s.io/e2e-framework/klient/k8s"
 	"sigs.k8s.io/e2e-framework/klient/k8s/resources"
@@ -272,19 +273,53 @@ var _ = ginkgo.Describe(suiteName, ginkgo.Ordered, label.E2E, label.ROSA, label.
 
 		ginkgo.It("allows dedicated-admin to manage CustomDomain CRs", func(ctx context.Context) {
 			client := h.AsDedicatedAdmin()
-			cd := &customdomainv1alpha1.CustomDomain{ObjectMeta: metav1.ObjectMeta{Name: "test-cd", Namespace: h.CurrentProject()}}
-			err := client.Create(ctx, cd)
+			dc, err := dynamic.NewForConfig(client.GetConfig())
 			expect.NoError(err)
-			err = client.Delete(ctx, cd)
+
+			cdc := dc.Resource(schema.GroupVersionResource{
+				Group:    "managed.openshift.io",
+				Version:  "v1alpha1",
+				Resource: "customdomains",
+			})
+
+			newCustomDomainObject := new(unstructured.Unstructured)
+			newCustomDomainObject.SetUnstructuredContent(map[string]any{
+				"apiVersion": "managed.openshift.io/v1alpha1",
+				"kind":       "CustomDomain",
+				"metadata": map[string]string{
+					"name": "test-cd",
+				},
+			})
+
+			_, err = cdc.Create(ctx, newCustomDomainObject, metav1.CreateOptions{})
+			expect.NoError(err)
+			err = cdc.Delete(ctx, "test-cd", metav1.DeleteOptions{})
 			expect.NoError(err)
 		})
 
 		ginkgo.It("allows backplane-cluster-admin to manage MustGather CRs", func(ctx context.Context) {
 			client := h.AsUser("backplane-cluster-admin", "system:serviceaccounts:backplane-cluster-admin")
-			mg := &mustgatherv1alpha1.MustGather{ObjectMeta: metav1.ObjectMeta{Name: "test-mg", Namespace: h.CurrentProject()}}
-			err := client.Create(ctx, mg)
+			dc, err := dynamic.NewForConfig(client.GetConfig())
 			expect.NoError(err)
-			err = client.Delete(ctx, mg)
+
+			mgc := dc.Resource(schema.GroupVersionResource{
+				Group:    "managed.openshift.io",
+				Version:  "v1alpha1",
+				Resource: "mustgathers",
+			}).Namespace(h.CurrentProject())
+
+			newMustGatherObject := new(unstructured.Unstructured)
+			newMustGatherObject.SetUnstructuredContent(map[string]any{
+				"apiVersion": "managed.openshift.io/v1alpha1",
+				"kind":       "MustGather",
+				"metadata": map[string]string{
+					"name": "test-mg",
+				},
+			})
+
+			_, err = mgc.Create(ctx, newMustGatherObject, metav1.CreateOptions{})
+			expect.NoError(err)
+			err = mgc.Delete(ctx, "test-mg", metav1.DeleteOptions{})
 			expect.NoError(err)
 		})
 	})

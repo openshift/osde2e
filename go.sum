@@ -437,14 +437,10 @@ github.com/openshift/cloud-credential-operator v0.0.0-20230512001141-38e7f96bf73
 github.com/openshift/cloud-credential-operator v0.0.0-20230512001141-38e7f96bf730/go.mod h1:H38l/QxcO9xR32fBIOvJgkyPwdKv0snFUdzMwhCeXX0=
 github.com/openshift/cloud-ingress-operator v0.0.0-20240513131409-8957bf674c69 h1:6Iak88503V3Zzz8VEo8ciHt2ccl1kVAcpxASzKnxThU=
 github.com/openshift/cloud-ingress-operator v0.0.0-20240513131409-8957bf674c69/go.mod h1:b+PYtdqSwHjBuVssUuwJdKTapHDExUKCxYlwr7DCoyM=
-github.com/openshift/custom-domains-operator v0.0.0-20221118201157-bd1052dac818 h1:yJFprjRR4TC5QGJIVOuI2GK44QE+3MV1xQnd4Km9t8Y=
-github.com/openshift/custom-domains-operator v0.0.0-20221118201157-bd1052dac818/go.mod h1:doRZPfKZ/dOkq6LGvtkCC4l2V8RJAbpc2cqYn5BYYcs=
 github.com/openshift/library-go v0.0.0-20240517135010-e93e442c2b18 h1:aUFgWf2nsvxzHcyYFpY8OpVncJgZWc4bZsy5vncjgP0=
 github.com/openshift/library-go v0.0.0-20240517135010-e93e442c2b18/go.mod h1:lFwyRj0XjUf25Da3Q00y+KuaxCWTJ6YzYPDX1+96nco=
 github.com/openshift/managed-upgrade-operator v0.0.0-20230525042514-a9b8c1d2571c h1:2Vy855A5z3zQgUumH6PORqbUTNtKZ5SlSgzvq3iQBig=
 github.com/openshift/managed-upgrade-operator v0.0.0-20230525042514-a9b8c1d2571c/go.mod h1:W/ajjexZ/T50ZRpk48HbgbtOXD4rt0/wHlwdXu8arQE=
-github.com/openshift/must-gather-operator v0.1.2-0.20240528212058-2dab3484f2bd h1:FlhwvhVRs2RmfnKZpp+yVLn8iFEdF5DkN6T+LajeEFg=
-github.com/openshift/must-gather-operator v0.1.2-0.20240528212058-2dab3484f2bd/go.mod h1:23q86nyQ0IBWgCskyRbdCNpZo/dEWYb0gjkj2QqRhR0=
 github.com/openshift/osde2e-common v0.0.0-20240611060429-ab4359c129ca h1:DQSFe4AXhvtsEFCJOkUYP6efp7aORAOFtzVMoWkdvUc=
 github.com/openshift/osde2e-common v0.0.0-20240611060429-ab4359c129ca/go.mod h1:oA2+sZPgApVQHbLLWFInDMzheCovGpnWg9ABXppFQpQ=
 github.com/openshift/route-monitor-operator v0.0.0-20221118160357-3df1ed1fa1d2 h1:s97F2fQ5r+XGVfWDy5wgH611iIvIDusQcHtv5jJ36uw=
