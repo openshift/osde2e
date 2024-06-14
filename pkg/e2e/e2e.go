@@ -74,17 +74,18 @@ func beforeSuite() bool {
 		log.Printf("Not loading cluster id: %v", err)
 		return false
 	}
+	var cluster *spi.Cluster
 	if provider, err = providers.ClusterProvider(); err != nil {
 		log.Printf("Error getting cluster provider: %s", err.Error())
 		return false
 	}
 	if viper.GetString(config.Kubeconfig.Contents) == "" {
+		cluster, err = clusterutil.ProvisionCluster(nil)
 		status, err := configureVersion(&provider)
 		if status != Success {
 			log.Printf("Failed configure cluster version: %v", err)
 			return false
 		}
-		cluster, err := clusterutil.ProvisionCluster(nil)
 		events.HandleErrorWithEvents(err, events.InstallSuccessful, events.InstallFailed)
 		if err != nil {
 			log.Printf("Failed to set up or retrieve cluster: %v", err)
@@ -93,8 +94,6 @@ func beforeSuite() bool {
 		}
 
 		viper.Set(config.Cluster.ID, cluster.ID())
-		viper.Set(config.Cluster.Channel, cluster.ChannelGroup())
-
 		log.Printf("CLUSTER_ID set to %s from OCM.", viper.GetString(config.Cluster.ID))
 		_, err = clusterutil.WaitForOCMProvisioning(provider, viper.GetString(config.Cluster.ID), nil, false)
 		if err != nil {
@@ -114,25 +113,9 @@ func beforeSuite() bool {
 			log.Printf("No shared directory provided, skip writing cluster ID")
 		}
 
-		viper.Set(config.Cluster.Name, cluster.Name())
-		log.Printf("CLUSTER_NAME set to %s from OCM.", viper.GetString(config.Cluster.Name))
-
-		viper.Set(config.Cluster.Version, cluster.Version())
-		log.Printf("CLUSTER_VERSION set to %s from OCM, for channel group %s", viper.GetString(config.Cluster.Version), viper.GetString(config.Cluster.Channel))
-
-		viper.Set(config.CloudProvider.CloudProviderID, cluster.CloudProvider())
-		log.Printf("CLOUD_PROVIDER_ID set to %s from OCM.", viper.GetString(config.CloudProvider.CloudProviderID))
-
-		viper.Set(config.CloudProvider.Region, cluster.Region())
-		log.Printf("CLOUD_PROVIDER_REGION set to %s from OCM.", viper.GetString(config.CloudProvider.Region))
-
 		if (!viper.GetBool(config.Addons.SkipAddonList) || viper.GetString(config.Provider) != "mock") && len(cluster.Addons()) > 0 {
 			log.Printf("Found addons: %s", strings.Join(cluster.Addons(), ","))
 		}
-
-		metadata.Instance.SetClusterName(cluster.Name())
-		metadata.Instance.SetClusterID(cluster.ID())
-		metadata.Instance.SetRegion(cluster.Region())
 
 		if err = provider.AddProperty(cluster, "UpgradeVersion", viper.GetString(config.Upgrade.ReleaseName)); err != nil {
 			log.Printf("Error while adding upgrade version property to cluster via OCM: %v", err)
@@ -192,7 +175,9 @@ func beforeSuite() bool {
 
 	} else {
 		log.Println("Using provided kubeconfig")
+		cluster, err = provider.GetCluster(viper.GetString(config.Cluster.ID))
 	}
+	clusterutil.SetClusterIntoViperConfig(cluster)
 
 	if len(viper.GetString(config.Addons.IDs)) > 0 {
 		if viper.GetString(config.Provider) != "mock" {
