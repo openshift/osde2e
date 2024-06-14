@@ -128,7 +128,7 @@ func run(cmd *cobra.Command, argv []string) error {
 		for _, cluster := range clusters {
 			creationTime := cluster.CreationTimestamp().UTC()
 			if creationTime.Before(cutoffTime) {
-				fmt.Printf("Cluster will be deleted: %s (created %v)\n", cluster.ID(), creationTime.Format("2006-01-20"))
+				fmt.Printf("Cluster will be deleted: %s (created %v)\n", cluster.ID(), creationTime.Format("2006-01-02"))
 				if !args.dryRun {
 					if err := provider.DeleteCluster(cluster.ID()); err != nil {
 						fmt.Printf("Error deleting cluster: %s\n", err.Error())
