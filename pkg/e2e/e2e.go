@@ -75,8 +75,19 @@ func beforeSuite() bool {
 		return false
 	}
 	var cluster *spi.Cluster
+	if provider, err = providers.ClusterProvider(); err != nil {
+		log.Printf("Error getting cluster provider: %s", err.Error())
+		return false
+	}
+	metadata.Instance.SetEnvironment(provider.Environment())
 	if viper.GetString(config.Kubeconfig.Contents) == "" {
+		status, err := configureVersion()
+		if status != Success {
+			log.Printf("Failed configure cluster version: %v", err)
+			return false
+		}
 		cluster, err = clusterutil.ProvisionCluster(nil)
+
 		events.HandleErrorWithEvents(err, events.InstallSuccessful, events.InstallFailed)
 		if err != nil {
 			log.Printf("Failed to set up or retrieve cluster: %v", err)
@@ -186,6 +197,34 @@ func beforeSuite() bool {
 	}
 
 	return true
+}
+
+func configureVersion() (int, error) {
+	// configure cluster and upgrade versions
+	versionSelector := versions.VersionSelector{Provider: provider}
+	if err := versionSelector.SelectClusterVersions(); err != nil {
+		// If we can't find a version to use, exit with an error code.
+		return Failure, err
+	}
+
+	switch {
+	case !viper.GetBool(config.Cluster.EnoughVersionsForOldestOrMiddleTest):
+		return Aborted, fmt.Errorf("there were not enough available cluster image sets to choose and oldest or middle cluster image set to test against -- skipping tests")
+	case !viper.GetBool(config.Cluster.PreviousVersionFromDefaultFound):
+		return Aborted, fmt.Errorf("no previous version from default found with the given arguments")
+	case viper.GetBool(config.Upgrade.UpgradeVersionEqualToInstallVersion):
+		return Aborted, fmt.Errorf("install version and upgrade version are the same -- skipping tests")
+	case viper.GetString(config.Upgrade.ReleaseName) == util.NoVersionFound:
+		return Aborted, fmt.Errorf("no valid upgrade versions were found. Skipping tests")
+	case viper.GetString(config.Cluster.Version) == "":
+		returnState := Aborted
+		if viper.GetBool(config.Cluster.LatestYReleaseAfterProdDefault) || viper.GetBool(config.Cluster.LatestZReleaseAfterProdDefault) {
+			log.Println("At the latest available version with no newer targets. Exiting...")
+			returnState = Success
+		}
+		return returnState, fmt.Errorf("no valid install version found")
+	}
+	return Success, nil
 }
 
 func getLogs() {
@@ -333,42 +372,6 @@ func runGinkgoTests() (int, error) {
 
 	log.Printf("Outputting log to build log at %s", buildLogPath)
 
-	// Get the cluster ID now to test against later
-	providerCfg := viper.GetString(config.Provider)
-	if provider, err = providers.ClusterProvider(); err != nil {
-		return Failure, fmt.Errorf("could not setup cluster provider: %v", err)
-	}
-	metadata.Instance.SetEnvironment(provider.Environment())
-	// setup OSD unless mock provider with given kubeconfig
-	if (len(viper.GetString(config.Kubeconfig.Path)) > 0 && providerCfg == "mock") || viper.GetString(config.Cluster.ID) != "" {
-		log.Print("Found an existing Kubeconfig for mock provider!")
-	} else {
-		// configure cluster and upgrade versions
-		versionSelector := versions.VersionSelector{Provider: provider}
-		if err = versionSelector.SelectClusterVersions(); err != nil {
-			// If we can't find a version to use, exit with an error code.
-			return Failure, err
-		}
-
-		switch {
-		case !viper.GetBool(config.Cluster.EnoughVersionsForOldestOrMiddleTest):
-			return Aborted, fmt.Errorf("there were not enough available cluster image sets to choose and oldest or middle cluster image set to test against -- skipping tests")
-		case !viper.GetBool(config.Cluster.PreviousVersionFromDefaultFound):
-			return Aborted, fmt.Errorf("no previous version from default found with the given arguments")
-		case viper.GetBool(config.Upgrade.UpgradeVersionEqualToInstallVersion):
-			return Aborted, fmt.Errorf("install version and upgrade version are the same -- skipping tests")
-		case viper.GetString(config.Upgrade.ReleaseName) == util.NoVersionFound:
-			return Aborted, fmt.Errorf("no valid upgrade versions were found. Skipping tests")
-		case viper.GetString(config.Cluster.Version) == "":
-			returnState := Aborted
-			if viper.GetBool(config.Cluster.LatestYReleaseAfterProdDefault) || viper.GetBool(config.Cluster.LatestZReleaseAfterProdDefault) {
-				log.Println("At the latest available version with no newer targets. Exiting...")
-				returnState = Success
-			}
-			return returnState, fmt.Errorf("no valid install version found")
-		}
-	}
-
 	// Update the metadata object to use the report directory.
 	metadata.Instance.SetReportDir(reportDir)
 
@@ -510,7 +513,6 @@ func deleteCluster(provider spi.Provider) error {
 const ManyGroupedFailureName = "A lot of tests failed together"
 
 func cleanupAfterE2E(ctx context.Context, h *helper.H) (errors []error) {
-	var err error
 	clusterStatus := clusterproperties.StatusCompletedFailing
 	defer ginkgo.GinkgoRecover()
 
@@ -548,10 +550,6 @@ func cleanupAfterE2E(ctx context.Context, h *helper.H) (errors []error) {
 
 	clusterID := viper.GetString(config.Cluster.ID)
 	if len(clusterID) > 0 {
-		if provider, err = providers.ClusterProvider(); err != nil {
-			log.Printf("Error getting cluster provider: %s", err.Error())
-			clusterStatus = clusterproperties.StatusCompletedError
-		}
 
 		// Get state from Provisioner
 		log.Printf("Gathering cluster state from %s", provider.Type())
