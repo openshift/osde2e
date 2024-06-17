@@ -79,6 +79,7 @@ func beforeSuite() bool {
 		log.Printf("Error getting cluster provider: %s", err.Error())
 		return false
 	}
+	metadata.Instance.SetEnvironment(provider.Environment())
 	if viper.GetString(config.Kubeconfig.Contents) == "" {
 		status, err := configureVersion()
 		if status != Success {

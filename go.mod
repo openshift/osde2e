@@ -7,7 +7,7 @@ require (
 	github.com/Masterminds/semver/v3 v3.2.1
 	github.com/PuerkitoBio/goquery v1.9.2
 	github.com/adamliesko/retry v0.0.0-20200123222335-86c8baac277d
-	github.com/aws/aws-sdk-go v1.53.10
+	github.com/aws/aws-sdk-go v1.54.1
 	github.com/fsnotify/fsnotify v1.7.0
 	github.com/go-logr/logr v1.4.2
 	github.com/google/go-github/v31 v31.0.0
@@ -24,7 +24,6 @@ require (
 	github.com/openshift-online/ocm-sdk-go v0.1.422
 	github.com/openshift/client-go v0.0.0-20240510131258-f646d5f29250
 	github.com/openshift/cloud-credential-operator v0.0.0-20230512001141-38e7f96bf730
-	github.com/openshift/custom-domains-operator v0.0.0-20221118201157-bd1052dac818
 	github.com/openshift/managed-upgrade-operator v0.0.0-20230525042514-a9b8c1d2571c
 	github.com/openshift/osde2e-common v0.0.0-20240611060429-ab4359c129ca
 	github.com/openshift/route-monitor-operator v0.0.0-20221118160357-3df1ed1fa1d2
@@ -63,7 +62,6 @@ require (
 require (
 	github.com/openshift/api v0.0.0-20240530151505-37be9ab109d3
 	github.com/openshift/cloud-ingress-operator v0.0.0-20240513131409-8957bf674c69
-	github.com/openshift/must-gather-operator v0.1.2-0.20240528212058-2dab3484f2bd
 )
 
 require (
