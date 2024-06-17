@@ -36,7 +36,7 @@ require (
 	github.com/prometheus/common v0.54.0
 	github.com/slack-go/slack v0.13.0
 	github.com/spf13/afero v1.11.0
-	github.com/spf13/cobra v1.8.0
+	github.com/spf13/cobra v1.8.1
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.19.0
 	github.com/tsenart/vegeta v12.7.0+incompatible
