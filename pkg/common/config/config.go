@@ -547,20 +547,6 @@ var Addons = struct {
 	Parameters:       "addons.parameters",
 }
 
-// Scale config keys.
-var Scale = struct {
-	// WorkloadsRepository is the git repository where the openshift-scale workloads are located.
-	// Env: WORKLOADS_REPO
-	WorkloadsRepository string
-
-	// WorkloadsRepositoryBranch is the branch of the git repository to use.
-	// Env: WORKLOADS_REPO_BRANCH
-	WorkloadsRepositoryBranch string
-}{
-	WorkloadsRepository:       "scale.workloadsRepository",
-	WorkloadsRepositoryBranch: "scale.workloadsRepositoryBranch",
-}
-
 // Prometheus config keys.
 var Prometheus = struct {
 	// Address is the address of the Prometheus instance to connect to.
@@ -887,13 +873,6 @@ func InitOSDe2eViper() {
 
 	viper.SetDefault(Addons.SkipAddonList, false)
 	viper.BindEnv(Addons.SkipAddonList, "SKIP_ADDON_LIST")
-
-	// ----- Scale -----
-	viper.SetDefault(Scale.WorkloadsRepository, "https://github.com/openshift-scale/workloads")
-	viper.BindEnv(Scale.WorkloadsRepository, "WORKLOADS_REPO")
-
-	viper.SetDefault(Scale.WorkloadsRepositoryBranch, "master")
-	viper.BindEnv(Scale.WorkloadsRepositoryBranch, "WORKLOADS_REPO_BRANCH")
 
 	// ----- Prometheus -----
 	viper.BindEnv(Prometheus.Address, "PROMETHEUS_ADDRESS")
