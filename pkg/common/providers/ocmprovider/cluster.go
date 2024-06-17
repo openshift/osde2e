@@ -281,7 +281,6 @@ func (o *OCMProvider) LaunchCluster(clusterName string) (string, error) {
 
 		return err
 	})
-
 	if err != nil {
 		return "", fmt.Errorf("couldn't create cluster: %v", err)
 	}
@@ -620,7 +619,6 @@ func (o *OCMProvider) DeleteCluster(clusterID string) error {
 		if err = retryer().Do(func() error {
 			var err error
 			resumeResp, err = o.conn.ClustersMgmt().V1().Clusters().Cluster(clusterID).Resume().Send()
-
 			if err != nil {
 				return fmt.Errorf("couldn't resume cluster '%s': %v", clusterID, err)
 			}
@@ -673,7 +671,6 @@ func (o *OCMProvider) DeleteCluster(clusterID string) error {
 		deleteResp, err = o.conn.ClustersMgmt().V1().Clusters().Cluster(clusterID).
 			Delete().
 			Send()
-
 		if err != nil {
 			return fmt.Errorf("couldn't delete cluster '%s': %v", clusterID, err)
 		}
@@ -686,68 +683,9 @@ func (o *OCMProvider) DeleteCluster(clusterID string) error {
 
 		return nil
 	})
-
 	if err != nil {
 		return fmt.Errorf("couldn't delete cluster '%s': %v", clusterID, err)
 	}
-
-	return nil
-}
-
-// ScaleCluster will grow or shink the cluster to the desired number of compute nodes.
-func (o *OCMProvider) ScaleCluster(clusterID string, numComputeNodes int) error {
-	var resp *v1.ClusterUpdateResponse
-
-	// Get the current state of the cluster
-	ocmCluster, err := o.GetOCMCluster(clusterID)
-	if err != nil {
-		return err
-	}
-
-	if numComputeNodes == ocmCluster.Nodes().Compute() {
-		log.Printf("cluster already at desired size (%d)", numComputeNodes)
-		return nil
-	}
-
-	scaledCluster, err := v1.NewCluster().
-		Nodes(v1.NewClusterNodes().
-			Compute(numComputeNodes)).
-		Build()
-	if err != nil {
-		return fmt.Errorf("error while building scaled cluster object: %v", err)
-	}
-
-	err = retryer().Do(func() error {
-		var err error
-		resp, err = o.conn.ClustersMgmt().V1().Clusters().Cluster(clusterID).Update().
-			Body(scaledCluster).
-			Send()
-
-		if err != nil {
-			err = fmt.Errorf("couldn't update cluster '%s': %v", clusterID, err)
-			log.Printf("%v", err)
-			return err
-		}
-
-		if resp != nil && resp.Error() != nil {
-			log.Printf("error while trying to update cluster: %v", err)
-			return errResp(resp.Error())
-		}
-
-		o.updateClusterCache(clusterID, resp.Body())
-
-		return nil
-	})
-
-	if err != nil {
-		return err
-	}
-
-	if resp.Error() != nil {
-		return resp.Error()
-	}
-
-	log.Printf("Cluster successfully scaled to %d nodes", numComputeNodes)
 
 	return nil
 }
@@ -814,7 +752,6 @@ func (o *OCMProvider) GetOCMCluster(clusterID string) (*v1.Cluster, error) {
 		resp, err = o.conn.ClustersMgmt().V1().Clusters().Cluster(clusterID).
 			Get().
 			Send()
-
 		if err != nil {
 			err = fmt.Errorf("couldn't retrieve cluster '%s': %v", clusterID, err)
 			return err
@@ -865,7 +802,6 @@ func (o *OCMProvider) ClusterKubeconfig(clusterID string) ([]byte, error) {
 			Credentials().
 			Get().
 			Send()
-
 		if err != nil {
 			log.Printf("couldn't get credentials: %v", err)
 			return err
@@ -924,7 +860,6 @@ func (o *OCMProvider) InstallAddons(clusterID string, addonIDs []spi.AddOnID, ad
 		err = retryer().Do(func() error {
 			var err error
 			addonResp, err = addonsClient.Addon(addonID).Get().Send()
-
 			if err != nil {
 				return err
 			}
@@ -935,7 +870,6 @@ func (o *OCMProvider) InstallAddons(clusterID string, addonIDs []spi.AddOnID, ad
 
 			return nil
 		})
-
 		if err != nil {
 			return 0, err
 		}
@@ -1003,7 +937,6 @@ func (o *OCMProvider) InstallAddons(clusterID string, addonIDs []spi.AddOnID, ad
 
 				return nil
 			})
-
 			if err != nil {
 				return 0, err
 			}
@@ -1080,7 +1013,6 @@ func (o *OCMProvider) ocmToSPICluster(ocmCluster *v1.Cluster) (*spi.Cluster, err
 			addonsResp, err = o.conn.ClustersMgmt().V1().Clusters().Cluster(ocmCluster.ID()).Addons().
 				List().
 				Send()
-
 			if err != nil {
 				err = fmt.Errorf("couldn't retrieve addons for cluster '%s': %v", ocmCluster.ID(), err)
 				log.Printf("%v", err)
@@ -1094,7 +1026,6 @@ func (o *OCMProvider) ocmToSPICluster(ocmCluster *v1.Cluster) (*spi.Cluster, err
 
 			return nil
 		})
-
 		if err != nil {
 			return nil, err
 		}
@@ -1182,7 +1113,6 @@ func (o *OCMProvider) ExtendExpiry(clusterID string, hours uint64, minutes uint6
 		resp, err = o.conn.ClustersMgmt().V1().Clusters().Cluster(clusterID).Update().
 			Body(extendexpiryCluster).
 			Send()
-
 		if err != nil {
 			err = fmt.Errorf("couldn't update cluster '%s': %v", clusterID, err)
 			log.Printf("%v", err)
@@ -1198,7 +1128,6 @@ func (o *OCMProvider) ExtendExpiry(clusterID string, hours uint64, minutes uint6
 
 		return nil
 	})
-
 	if err != nil {
 		return err
 	}
@@ -1228,7 +1157,6 @@ func (o *OCMProvider) Expire(clusterID string, duration time.Duration) error {
 		resp, err = o.conn.ClustersMgmt().V1().Clusters().Cluster(clusterID).Update().
 			Body(extendexpiryCluster).
 			Send()
-
 		if err != nil {
 			err = fmt.Errorf("couldn't update cluster '%s': %v", clusterID, err)
 			log.Printf("%v", err)
@@ -1244,7 +1172,6 @@ func (o *OCMProvider) Expire(clusterID string, duration time.Duration) error {
 
 		return nil
 	})
-
 	if err != nil {
 		return err
 	}
@@ -1282,7 +1209,6 @@ func (o *OCMProvider) AddProperty(cluster *spi.Cluster, tag string, value string
 		resp, err = o.conn.ClustersMgmt().V1().Clusters().Cluster(cluster.ID()).Update().
 			Body(modifiedCluster).
 			Send()
-
 		if err != nil {
 			err = fmt.Errorf("couldn't update cluster '%s': %v", cluster.ID(), err)
 			log.Printf("%v", err)
@@ -1296,7 +1222,6 @@ func (o *OCMProvider) AddProperty(cluster *spi.Cluster, tag string, value string
 
 		return nil
 	})
-
 	if err != nil {
 		return err
 	}
