@@ -340,7 +340,7 @@ func runGinkgoTests() (int, error) {
 	}
 	metadata.Instance.SetEnvironment(provider.Environment())
 	// setup OSD unless mock provider with given kubeconfig
-	if len(viper.GetString(config.Kubeconfig.Path)) > 0 && providerCfg == "mock" {
+	if (len(viper.GetString(config.Kubeconfig.Path)) > 0 && providerCfg == "mock") || viper.GetString(config.Cluster.ID) != "" {
 		log.Print("Found an existing Kubeconfig for mock provider!")
 	} else {
 		// configure cluster and upgrade versions
