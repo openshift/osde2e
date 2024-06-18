@@ -12,31 +12,9 @@ import (
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/helper"
-	operatorv1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
-
-func checkClusterServiceVersion(h *helper.H, namespace, name string) {
-	// Check that the operator clusterServiceVersion exists
-	ginkgo.Context(fmt.Sprintf("clusterServiceVersion %s/%s", namespace, name), func() {
-		ginkgo.It("should be present and in succeeded state", func(ctx context.Context) {
-			Eventually(func() bool {
-				csvList, err := h.Operator().OperatorsV1alpha1().ClusterServiceVersions(namespace).List(ctx, metav1.ListOptions{})
-				if err != nil {
-					log.Printf("failed to get CSVs in namespace %s: %v", namespace, err)
-					return false
-				}
-				for _, csv := range csvList.Items {
-					if csv.Spec.DisplayName == name && csv.Status.Phase == operatorv1.CSVPhaseSucceeded {
-						return true
-					}
-				}
-				return false
-			}, "30m", "15s").Should(BeTrue())
-		})
-	})
-}
 
 func checkConfigMapLockfile(h *helper.H, namespace, operatorLockFile string) {
 	// Check that the operator configmap has been deployed
