@@ -26,7 +26,6 @@ require (
 	github.com/openshift/cloud-credential-operator v0.0.0-20230512001141-38e7f96bf730
 	github.com/openshift/managed-upgrade-operator v0.0.0-20230525042514-a9b8c1d2571c
 	github.com/openshift/osde2e-common v0.0.0-20240611060429-ab4359c129ca
-	github.com/openshift/route-monitor-operator v0.0.0-20221118160357-3df1ed1fa1d2
 	github.com/operator-framework/api v0.17.7
 	github.com/operator-framework/operator-lifecycle-manager v0.22.0
 	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.64.0

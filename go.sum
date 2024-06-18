@@ -443,8 +443,6 @@ github.com/openshift/managed-upgrade-operator v0.0.0-20230525042514-a9b8c1d2571c
 github.com/openshift/managed-upgrade-operator v0.0.0-20230525042514-a9b8c1d2571c/go.mod h1:W/ajjexZ/T50ZRpk48HbgbtOXD4rt0/wHlwdXu8arQE=
 github.com/openshift/osde2e-common v0.0.0-20240611060429-ab4359c129ca h1:DQSFe4AXhvtsEFCJOkUYP6efp7aORAOFtzVMoWkdvUc=
 github.com/openshift/osde2e-common v0.0.0-20240611060429-ab4359c129ca/go.mod h1:oA2+sZPgApVQHbLLWFInDMzheCovGpnWg9ABXppFQpQ=
-github.com/openshift/route-monitor-operator v0.0.0-20221118160357-3df1ed1fa1d2 h1:s97F2fQ5r+XGVfWDy5wgH611iIvIDusQcHtv5jJ36uw=
-github.com/openshift/route-monitor-operator v0.0.0-20221118160357-3df1ed1fa1d2/go.mod h1:I/8znbaxMGRub27brm57UnkR48QZEWO26j2HRscy5bQ=
 github.com/operator-framework/api v0.17.7 h1:NLn+Ieg+HaPrw75KbX4efllN21ofFArQzS3q8TDbQY0=
 github.com/operator-framework/api v0.17.7/go.mod h1:lnurXgadLnoZ7pufKMHkErr2BVOIZSpHtvEkHBcKvdk=
 github.com/operator-framework/operator-lifecycle-manager v0.22.0 h1:7DEWOq24HQ0l5xPOXMhn17XaJACgwoipz+JfQ7QCXZw=
