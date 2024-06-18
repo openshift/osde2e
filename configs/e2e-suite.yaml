@@ -12,4 +12,5 @@ tests:
     - quay.io/app-sre/osd-metrics-exporter-test-harness
     - quay.io/app-sre/rbac-permissions-operator-test-harness
     - quay.io/app-sre/splunk-forwarder-operator-test-harness
+    - quay.io/app-sre/route-monitor-operator-test-harness
   harnessTimeout: 900
