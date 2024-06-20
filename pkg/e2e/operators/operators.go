@@ -150,23 +150,6 @@ func checkUpgrade(h *helper.H, subNamespace string, subName string, packageName 
 	})
 }
 
-func checkService(h *helper.H, namespace string, name string, port int) {
-	ginkgo.Context("service", func() {
-		ginkgo.It(
-			"should exist",
-			func(ctx context.Context) {
-				Eventually(func() bool {
-					_, err := h.Kube().CoreV1().Services(namespace).Get(ctx, name, metav1.GetOptions{})
-					if err != nil {
-						return false
-					}
-					return true
-				}, "30m", "1m").Should(BeTrue())
-			},
-		)
-	})
-}
-
 func pollRoleBinding(ctx context.Context, h *helper.H, projectName string, roleBindingName string) error {
 	// pollRoleBinding will check for the existence of a roleBinding
 	// in the specified project, and wait for it to exist, until a timeout
