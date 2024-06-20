@@ -14,7 +14,10 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 )
 
-const velerosubstr = "managed-velero"
+const (
+	velerosubstr = "managed-velero"
+	logsBucket   = "osde2e-logs"
+)
 
 // ReadFromS3Session reads a key from S3 using given AWS context.
 func ReadFromS3Session(session *session.Session, inputKey string) ([]byte, error) {
@@ -105,7 +108,7 @@ func (CcsAwsSession *ccsAwsSession) CleanupS3Buckets(olderthan time.Duration, dr
 	batchDeleteClient := s3manager.NewBatchDeleteWithClient(CcsAwsSession.s3)
 
 	for _, bucket := range result.Buckets {
-		if (strings.Contains(*bucket.Name, rolesubstr) || strings.Contains(*bucket.Name, velerosubstr)) && time.Since(*bucket.CreationDate) > olderthan {
+		if (strings.Contains(*bucket.Name, rolesubstr) || strings.Contains(*bucket.Name, velerosubstr)) && *bucket.Name != logsBucket && time.Since(*bucket.CreationDate) > olderthan {
 			fmt.Printf("Bucket will be deleted: %s\n", bucket)
 			if !dryrun {
 				iter := s3manager.NewDeleteListIterator(CcsAwsSession.s3, &s3.ListObjectsInput{
