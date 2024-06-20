@@ -1,4 +1,4 @@
-FROM brew.registry.redhat.io/rh-osbs/openshift-golang-builder:rhel_9_1.22
+FROM brew.registry.redhat.io/rh-osbs/openshift-golang-builder:rhel_9_1.22 as builder
 
 ENV GOFLAGS=
 ENV PKG=/go/src/github.com/openshift/osde2e/
@@ -8,17 +8,11 @@ COPY . .
 RUN go env
 RUN make build
 
-FROM registry.access.redhat.com/ubi8/ubi-minimal:latest
+FROM registry.redhat.io/rhel9-2-els/rhel:9.2
+WORKDIR /
+COPY --from=builder /go/src/github.com/openshift/osde2e/out/osde2e .
 
-RUN microdnf install -y git && microdnf clean all
-RUN mkdir /osde2e-bin
-COPY --from=0 /go/src/github.com/openshift/osde2e/out/osde2e /osde2e-bin
-
-# Restore the /osde2e path for backwards compatibility
-RUN ln -s /osde2e-bin/osde2e /osde2e
-ENV PATH "/osde2e-bin:$PATH"
-
-ENTRYPOINT [ "osde2e" ]
+ENTRYPOINT ["/osde2e"]
 
 LABEL name="osde2e"
 LABEL description="A comprehensive test framework used for Service Delivery to test all aspects of Managed OpenShift Clusters"
