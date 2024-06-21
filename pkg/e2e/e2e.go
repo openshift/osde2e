@@ -115,7 +115,7 @@ func beforeSuite() bool {
 			log.Printf("No shared directory provided, skip writing cluster ID")
 		}
 
-		if (!viper.GetBool(config.Addons.SkipAddonList) || viper.GetString(config.Provider) != "mock") && len(cluster.Addons()) > 0 {
+		if !viper.GetBool(config.Addons.SkipAddonList) && len(cluster.Addons()) > 0 {
 			log.Printf("Found addons: %s", strings.Join(cluster.Addons(), ","))
 		}
 
@@ -182,17 +182,12 @@ func beforeSuite() bool {
 	clusterutil.SetClusterIntoViperConfig(cluster)
 
 	if len(viper.GetString(config.Addons.IDs)) > 0 {
-		if viper.GetString(config.Provider) != "mock" {
-			err = installAddons()
-			events.HandleErrorWithEvents(err, events.InstallAddonsSuccessful, events.InstallAddonsFailed)
-			if err != nil {
-				log.Printf("Cluster failed installing addons: %v", err)
-				getLogs()
-				return false
-			}
-		} else {
-			log.Println("Skipping addon installation due to mock provider.")
-			log.Println("If you are running local addon tests, please ensure the addon components are already installed.")
+		err = installAddons()
+		events.HandleErrorWithEvents(err, events.InstallAddonsSuccessful, events.InstallAddonsFailed)
+		if err != nil {
+			log.Printf("Cluster failed installing addons: %v", err)
+			getLogs()
+			return false
 		}
 	}
 
