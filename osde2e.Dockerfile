@@ -10,9 +10,12 @@ RUN make build
 
 FROM registry.redhat.io/rhel9-2-els/rhel:9.2
 WORKDIR /
+RUN mkdir /licenses
 COPY --from=builder /go/src/github.com/openshift/osde2e/out/osde2e .
+COPY --from=builder /go/src/github.com/openshift/osde2e/LICENSE /licenses/.
 
 ENTRYPOINT ["/osde2e"]
+USER 65532:65532
 
 LABEL name="osde2e"
 LABEL description="A comprehensive test framework used for Service Delivery to test all aspects of Managed OpenShift Clusters"
