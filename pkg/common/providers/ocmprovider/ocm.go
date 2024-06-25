@@ -19,8 +19,8 @@ const (
 	// TokenURL specifies the endpoint used to create access tokens.
 	TokenURL = "https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token"
 
-	// FRTokenURL specifies the endpoint used to create access tokens for FedRamp.
-	FRTokenURL = "https://sso.int.openshiftusgov.com/realms/redhat-external/protocol/openid-connect/token"
+	// fRTokenURL specifies the endpoint used to create access tokens for FedRamp.
+	fRTokenURL = "https://sso.int.openshiftusgov.com/realms/redhat-external/protocol/openid-connect/token"
 
 	// ClientID is used to identify the client to OSD.
 	ClientID = "cloud-services"
@@ -81,7 +81,7 @@ func OCMConnection(token, clientID, clientSecret, env string, debug bool) (*ocm.
 	connectionBuilder := ocm.NewConnectionBuilder().URL(url).Logger(logger)
 	if clientID != "" && clientSecret != "" {
 		// Use the FedRamp tokenURL if we're using a clientID and clientSecret for Keycloack Client Auth.
-		connectionBuilder.Client(clientID, clientSecret).TokenURL(FRTokenURL)
+		connectionBuilder.Client(clientID, clientSecret).TokenURL(fRTokenURL)
 	} else {
 		// Default commercial flow
 		connectionBuilder.TokenURL(TokenURL).Client(ClientID, "").Tokens(token)
