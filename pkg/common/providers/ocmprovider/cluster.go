@@ -211,9 +211,10 @@ func (o *OCMProvider) LaunchCluster(clusterName string) (string, error) {
 	}
 
 	expiryInMinutes := viper.GetDuration(config.Cluster.ExpiryInMinutes)
-	if expiryInMinutes > 0 {
-		// Calculate an expiration date for the cluster so that it will be automatically deleted if
-		// we happen to forget to do it:
+	if expiryInMinutes > 0 && o.Environment() != "prod" {
+		// Expiration can not be set on prod clusters.
+		// Calculate an expiration date for the cluster so that it will be
+		// automatically deleted if we happen to forget to do it:
 		expiration := time.Now().Add(expiryInMinutes * time.Minute).UTC() // UTC() to workaround SDA-1567.
 		newCluster = newCluster.ExpirationTimestamp(expiration)
 	}
@@ -1042,8 +1043,9 @@ func (o *OCMProvider) ocmToSPICluster(ocmCluster *v1.Cluster) (*spi.Cluster, err
 		}
 
 	}
-
-	cluster.ExpirationTimestamp(ocmCluster.ExpirationTimestamp())
+	if o.Environment() != "prod" { // expiration can not be modified on prod
+		cluster.ExpirationTimestamp(ocmCluster.ExpirationTimestamp())
+	}
 	cluster.CreationTimestamp(ocmCluster.CreationTimestamp())
 	cluster.NumComputeNodes(ocmCluster.Nodes().Compute())
 
@@ -1073,6 +1075,10 @@ func ocmStateToInternalState(state v1.ClusterState) spi.ClusterState {
 
 // ExtendExpiry extends the expiration time of an existing cluster
 func (o *OCMProvider) ExtendExpiry(clusterID string, hours uint64, minutes uint64, seconds uint64) error {
+	if o.Environment() != "prod" {
+		log.Printf("Setting expiration on prod clusters is not allowed. Skipping...")
+		return nil
+	}
 	var resp *v1.ClusterUpdateResponse
 
 	// Get the current state of the cluster
@@ -1143,6 +1149,10 @@ func (o *OCMProvider) ExtendExpiry(clusterID string, hours uint64, minutes uint6
 
 // Expire sets the expiration time of an existing cluster to the current time + N minutes
 func (o *OCMProvider) Expire(clusterID string, duration time.Duration) error {
+	if o.Environment() != "prod" {
+		log.Printf("Setting expiration on prod clusters is not allowed. Skipping...")
+		return nil
+	}
 	var resp *v1.ClusterUpdateResponse
 
 	now := time.Now().Add(duration)
