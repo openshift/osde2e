@@ -37,10 +37,8 @@ func New() (*ROSAProvider, error) {
 	fedramp := viper.GetBool(config.Cluster.FedRamp)
 	rosaEnv := viper.GetString(Env)
 	var ocmEnv ocmclient.Environment
-	var ocmProvider *ocmprovider.OCMProvider
-	var err error
 
-	ocmProvider, err = ocmprovider.NewWithEnv(rosaEnv)
+	ocmProvider, err := ocmprovider.NewWithEnv(rosaEnv)
 	if err != nil {
 		return nil, fmt.Errorf("error creating OCM provider for ROSA provider: %v", err)
 	}
