@@ -586,6 +586,10 @@ func (h *H) GetRunnerCommandString(templatePath string, timeout int, latestImage
 				Value: viper.GetString(config.CloudProvider.CloudProviderID),
 			},
 			{
+				Name:  "CLOUD_PROVIDER_REGION",
+				Value: viper.GetString(config.CloudProvider.Region),
+			},
+			{
 				Name:  "OCM_ENV",
 				Value: viper.GetString(ocmprovider.Env),
 			},
