@@ -38,6 +38,15 @@ const (
 
 	// CCS defines whether the cluster should expect cloud credentials or not
 	CCS = "ocm.ccs"
+
+	// FedRamp Keycloack Client ID
+	FedRampClientID = "fedRamp.clientID"
+
+	// FedRamp Keycloack Client Secret
+	FedRampClientSecret = "fedRamp.clientSecret"
+
+	// HTTPS_PROXY - Currently only used for FedRamp
+	HTTPSProxy = "ocm.https_proxy"
 )
 
 func init() {
@@ -72,4 +81,18 @@ func init() {
 
 	viper.SetDefault(CCS, false)
 	viper.BindEnv(CCS, "OCM_CCS", "CCS")
+
+	// ----- FedRamp -----
+	viper.SetDefault(FedRampClientID, "")
+	viper.BindEnv(FedRampClientID, "FEDRAMP_CLIENT_ID")
+
+	viper.SetDefault(FedRampClientSecret, "")
+	viper.BindEnv(FedRampClientSecret, "FEDRAMP_CLIENT_SECRET")
+
+	viper.SetDefault(HTTPSProxy, "")
+	viper.BindEnv(HTTPSProxy, "HTTPS_PROXY")
+
+	config.RegisterSecret(FedRampClientID, "fedramp-client-id")
+	config.RegisterSecret(FedRampClientSecret, "fedramp-client-secret")
+	config.RegisterSecret(HTTPSProxy, "https-proxy")
 }

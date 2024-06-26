@@ -148,7 +148,6 @@ func VersionToChannel(version *semver.Version) (string, error) {
 	if viper.GetBool(config.Upgrade.UpgradeToLatestZ) {
 		var err error
 		useVersion, err = util.OpenshiftVersionToSemver(viper.GetString(config.Cluster.Version))
-
 		if err != nil {
 			panic("cluster version stored in state object is invalid")
 		}

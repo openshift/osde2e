@@ -60,7 +60,6 @@ func WriteReport(report []byte, output string) error {
 	defer writer.Close()
 
 	_, err = writer.Write(append(report, '\n'))
-
 	if err != nil {
 		return fmt.Errorf("error while writing report to output: %v", err)
 	}

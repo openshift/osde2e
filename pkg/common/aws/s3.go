@@ -34,7 +34,6 @@ func ReadFromS3Session(session *session.Session, inputKey string) ([]byte, error
 		Bucket: aws.String(bucket),
 		Key:    aws.String(key),
 	})
-
 	if err != nil {
 		return nil, err
 	}
@@ -58,7 +57,6 @@ func WriteToS3Session(session *session.Session, outputKey string, data []byte) {
 		Key:    aws.String(key),
 		Body:   reader,
 	})
-
 	if err != nil {
 		log.Printf("Failed to upload to s3 %s", err.Error())
 		return

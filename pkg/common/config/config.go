@@ -452,6 +452,10 @@ var Cluster = struct {
 	// EnableFips enables the FIPS test suite
 	// Env: ENABLE_FIPS
 	EnableFips string
+
+	// FedRamp will enable OSDe2e to run in a FedRamp environment
+	// Env: FEDRAMP
+	FedRamp string
 }{
 	MultiAZ:                             "cluster.multiAZ",
 	Channel:                             "cluster.channel",
@@ -490,6 +494,7 @@ var Cluster = struct {
 	Reused:                              "cluster.rused",
 	InspectNamespaces:                   "cluster.inspectNamespaces",
 	EnableFips:                          "cluster.enableFips",
+	FedRamp:                             "cluster.fedRamp",
 }
 
 // CloudProvider config keys.
@@ -849,6 +854,10 @@ func InitOSDe2eViper() {
 
 	viper.SetDefault(Cluster.EnableFips, false)
 	viper.BindEnv(Cluster.EnableFips, "ENABLE_FIPS")
+
+	viper.SetDefault(Cluster.FedRamp, false)
+	viper.BindEnv(Cluster.FedRamp, "FEDRAMP")
+	RegisterSecret(Cluster.FedRamp, "fedramp")
 
 	// ----- Cloud Provider -----
 	viper.SetDefault(CloudProvider.CloudProviderID, "aws")
