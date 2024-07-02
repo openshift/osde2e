@@ -1,9 +1,9 @@
 tests:
   ginkgoLabelFilter: >
-    (E2E || Operators || TestHarness || ServiceDefinition) && !Informing && !MigratedHarness
+    (E2E || Operators || TestHarness || ServiceDefinition) && !Informing
   testHarnesses:
-  #    For migrated harnesses, remember to add "MigratedHarness" label to existing suite in this repo, until they are removed from here.
     - quay.io/app-sre/aws-vpce-operator-test-harness
+    - quay.io/app-sre/cloud-ingress-operator-test-harness
     - quay.io/app-sre/custom-domains-operator-test-harness
     - quay.io/app-sre/managed-node-metadata-operator-test-harness
     - quay.io/app-sre/managed-upgrade-operator-test-harness
