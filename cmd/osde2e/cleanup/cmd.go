@@ -96,7 +96,7 @@ func init() {
 	flags.StringVar(
 		&args.olderThan,
 		"older-than",
-		"48h",
+		"24h",
 		"Cleanup iam resources older than this duration. Accepts a sequence of decimal numbers with a unit suffix, such as '2h45m'",
 	)
 	flags.BoolVar(
