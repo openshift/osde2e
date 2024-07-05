@@ -101,6 +101,8 @@ const (
 	SharedDir = "sharedDir"
 
 	KonfluxTestOutputFile = "konfluxResultsPath"
+
+	SlackMessageLength int = 4000
 )
 
 // This is a config key to secret file mapping. We will attempt to read in from secret files before loading anything else.
@@ -236,6 +238,10 @@ var Tests = struct {
 	// Env: SLACK_CHANNEL
 	SlackChannel string
 
+	// Slack Webhook is the URL for Cloud Account Cleanup Report workflow to send notifications.
+	// Env: SLACK_WEBHOOK
+	SlackWebhook string
+
 	// GinkgoSkip is a regex passed to Ginkgo that skips any test suites matching the regex. ex. "Operator"
 	// Env: GINKGO_SKIP
 	GinkgoSkip string
@@ -302,6 +308,7 @@ var Tests = struct {
 	PollingTimeout:             "tests.pollingTimeout",
 	ServiceAccount:             "tests.serviceAccount",
 	SlackChannel:               "tests.slackChannel",
+	SlackWebhook:               "tests.slackWebhook",
 	GinkgoSkip:                 "tests.ginkgoSkip",
 	GinkgoFocus:                "tests.focus",
 	GinkgoLogLevel:             "tests.ginkgoLogLevel",
@@ -637,7 +644,7 @@ func InitOSDe2eViper() {
 	viper.SetDefault(JobID, -1)
 	viper.BindEnv(JobID, "BUILD_NUMBER")
 
-	viper.SetDefault(BaseJobURL, "https://gcsweb-ci.apps.ci.l2s4.p1.openshiftapps.com/gcs/origin-ci-test/logs")
+	viper.SetDefault(BaseJobURL, "https://gcsweb-ci.apps.ci.l2s4.p1.openshiftapps.com/gcs/test-platform-results/logs")
 	viper.BindEnv(BaseJobURL, "BASE_JOB_URL")
 
 	viper.SetDefault(BaseProwURL, "https://deck-ci.apps.ci.l2s4.p1.openshiftapps.com")
@@ -749,6 +756,8 @@ func InitOSDe2eViper() {
 
 	viper.SetDefault(Tests.SlackChannel, "sd-cicd-alerts")
 	viper.BindEnv(Tests.SlackChannel, "SLACK_CHANNEL")
+
+	viper.BindEnv(Tests.SlackWebhook, "SLACK_WEBHOOK")
 
 	// ----- Cluster -----
 	viper.SetDefault(Cluster.MultiAZ, false)

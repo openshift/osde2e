@@ -2,6 +2,7 @@ package aws
 
 import (
 	"fmt"
+	"github.com/openshift/osde2e/pkg/common/config"
 	"strings"
 	"time"
 
@@ -14,7 +15,8 @@ var (
 	providersubstr = "cloudfront"
 )
 
-func (CcsAwsSession *ccsAwsSession) CleanupOpenIDConnectProviders(olderthan time.Duration, dryrun bool) error {
+func (CcsAwsSession *ccsAwsSession) CleanupOpenIDConnectProviders(olderthan time.Duration, dryrun bool, sendSummary bool,
+	deletedCounter *int, failedCounter *int, errorBuilder *strings.Builder) error {
 	err := CcsAwsSession.GetAWSSessions()
 	if err != nil {
 		return err
@@ -47,8 +49,15 @@ func (CcsAwsSession *ccsAwsSession) CleanupOpenIDConnectProviders(olderthan time
 				}
 				_, err := CcsAwsSession.iam.DeleteOpenIDConnectProvider(input)
 				if err != nil {
+					*failedCounter++
+					errorMsg := fmt.Sprintf("OIDC provider %s not deleted: %s\n", *provider.Arn, err.Error())
+					fmt.Println(errorMsg)
+					if sendSummary && errorBuilder.Len() < config.SlackMessageLength {
+						errorBuilder.WriteString(errorMsg)
+					}
 					return err
 				}
+				*deletedCounter++
 				fmt.Println("Deleted")
 			}
 		}
@@ -57,7 +66,8 @@ func (CcsAwsSession *ccsAwsSession) CleanupOpenIDConnectProviders(olderthan time
 	return nil
 }
 
-func (CcsAwsSession *ccsAwsSession) CleanupRoles(olderthan time.Duration, dryrun bool) error {
+func (CcsAwsSession *ccsAwsSession) CleanupRoles(olderthan time.Duration, dryrun bool, sendSummary bool,
+	deletedCounter *int, failedCounter *int, errorBuilder *strings.Builder) error {
 	err := CcsAwsSession.GetAWSSessions()
 	if err != nil {
 		return err
@@ -95,8 +105,14 @@ func (CcsAwsSession *ccsAwsSession) CleanupRoles(olderthan time.Duration, dryrun
 					}
 					_, errRemoveRoleFromInstanceProfile := CcsAwsSession.iam.RemoveRoleFromInstanceProfile(removeRoleFromInstanceProfileInput)
 					if errRemoveRoleFromInstanceProfile != nil {
-						return fmt.Errorf("error removing role from instance profile: %s", errRemoveRoleFromInstanceProfile)
+						*failedCounter++
+						errorMsg := fmt.Sprintf("error removing role from instance profile: %s", errRemoveRoleFromInstanceProfile)
+						if sendSummary && errorBuilder.Len() < config.SlackMessageLength {
+							errorBuilder.WriteString(errorMsg)
+						}
+						return fmt.Errorf(errorMsg)
 					}
+					*deletedCounter++
 					fmt.Println("Removed")
 				}
 
@@ -171,7 +187,8 @@ func (CcsAwsSession *ccsAwsSession) CleanupRoles(olderthan time.Duration, dryrun
 	return nil
 }
 
-func (CcsAwsSession *ccsAwsSession) CleanupPolicies(olderthan time.Duration, dryrun bool) error {
+func (CcsAwsSession *ccsAwsSession) CleanupPolicies(olderthan time.Duration, dryrun bool, sendSummary bool,
+	deletedCounter *int, failedCounter *int, errorBuilder *strings.Builder) error {
 	err := CcsAwsSession.GetAWSSessions()
 	if err != nil {
 		return err
@@ -195,8 +212,14 @@ func (CcsAwsSession *ccsAwsSession) CleanupPolicies(olderthan time.Duration, dry
 				// Delete the policy
 				_, err := CcsAwsSession.iam.DeletePolicy(input)
 				if err != nil {
+					*failedCounter++
+					errorMsg := fmt.Sprintf("Plolicy %s not deleted: %s\n", *policy.PolicyName, err.Error())
+					if sendSummary && errorBuilder.Len() < config.SlackMessageLength {
+						errorBuilder.WriteString(errorMsg)
+					}
 					return err
 				}
+				*deletedCounter++
 				fmt.Println("Deleted")
 			}
 		}

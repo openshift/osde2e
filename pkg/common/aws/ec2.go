@@ -2,6 +2,8 @@ package aws
 
 import (
 	"fmt"
+	"github.com/openshift/osde2e/pkg/common/config"
+	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/ec2"
@@ -37,7 +39,8 @@ func (CcsAwsSession *ccsAwsSession) CheckIfEC2ExistBasedOnNodeName(nodeName stri
 // ReleaseElasticIPs releases elastic IPs from loaded aws session. If an instance is
 // associated with it, we skip its deletion and log tag name. Dryrun returns aws Error
 // from AWS api and is logged.
-func (CcsAwsSession *ccsAwsSession) ReleaseElasticIPs(dryrun bool) error {
+func (CcsAwsSession *ccsAwsSession) ReleaseElasticIPs(dryrun bool, sendSummary bool,
+	deletedCounter *int, failedCounter *int, errorBuilder *strings.Builder) error {
 	err := CcsAwsSession.GetAWSSessions()
 	if err != nil {
 		return err
@@ -48,7 +51,6 @@ func (CcsAwsSession *ccsAwsSession) ReleaseElasticIPs(dryrun bool) error {
 		return err
 	}
 	fmt.Printf("Addresses found: %d\n", len(results.Addresses))
-	deleted := 0
 
 	for _, address := range results.Addresses {
 		if address.AssociationId == nil {
@@ -57,16 +59,21 @@ func (CcsAwsSession *ccsAwsSession) ReleaseElasticIPs(dryrun bool) error {
 				DryRun:       &dryrun,
 			})
 			if err == nil {
-				deleted++
+				*deletedCounter++
 				fmt.Printf("Address deleted: %s\n", *address.PublicIp)
 			} else {
-				fmt.Printf("Address %s not deleted: %s\n", *address.PublicIp, err.Error())
+				*failedCounter++
+				errorMsg := fmt.Sprintf("Address %s not deleted: %s\n", *address.PublicIp, err.Error())
+				fmt.Println(errorMsg)
+				if sendSummary && errorBuilder.Len() < config.SlackMessageLength {
+					errorBuilder.WriteString(errorMsg)
+				}
 			}
 		} else {
 			fmt.Printf("Skipping address %s still allocated to network interface id %s \n", *address.PublicIp, *address.NetworkInterfaceId)
 		}
 	}
-	fmt.Printf("Finished elastic IP cleanup. Deleted %d addresses.", deleted)
+	fmt.Printf("Finished elastic IP cleanup. Deleted %d addresses.", *deletedCounter)
 
 	return nil
 }

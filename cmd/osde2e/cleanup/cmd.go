@@ -1,12 +1,17 @@
 package cleanup
 
 import (
+	"bytes"
 	"fmt"
+	"net/http"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/openshift/osde2e/cmd/osde2e/common"
 	"github.com/openshift/osde2e/pkg/common/aws"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
+	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/providers/ocmprovider"
 	"github.com/spf13/cobra"
 )
@@ -30,6 +35,7 @@ var args struct {
 	olderThan       string
 	dryRun          bool
 	clusters        bool
+	sendSummary     bool
 }
 
 func init() {
@@ -97,6 +103,14 @@ func init() {
 		true,
 		"Show dry run log of deleting iam resources",
 	)
+
+	flags.BoolVar(
+		&args.sendSummary,
+		"send-cleanup-summary",
+		false,
+		"Send cleanup summary to webhook",
+	)
+
 	Cmd.RegisterFlagCompletionFunc("output-format", func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		return []string{"json", "prom"}, cobra.ShellCompDirectiveDefault
 	})
@@ -111,6 +125,10 @@ func run(cmd *cobra.Command, argv []string) error {
 	if err != nil {
 		return fmt.Errorf("error parsing --older-than: %v", err)
 	}
+
+	// message format: `{"summary":"<summary>", "full":"<details>"}`
+	var summaryBuilder strings.Builder
+	var errorBuilder strings.Builder
 
 	if args.clusters {
 		provider, err := ocmprovider.NewWithEnv(viper.GetString(ocmprovider.Env))
@@ -161,32 +179,73 @@ func run(cmd *cobra.Command, argv []string) error {
 	}
 
 	if args.iam {
-		err = aws.CcsAwsSession.CleanupOpenIDConnectProviders(fmtDuration, args.dryRun)
+		oidcDeletedCounter := 0
+		oidcFailedCounter := 0
+		err = aws.CcsAwsSession.CleanupOpenIDConnectProviders(fmtDuration, args.dryRun, args.sendSummary, &oidcDeletedCounter, &oidcFailedCounter, &errorBuilder)
+		summaryBuilder.WriteString("OIDC providers: " + strconv.Itoa(oidcDeletedCounter) + "/" + strconv.Itoa(oidcFailedCounter) + "\n")
 		if err != nil {
 			return fmt.Errorf("could not delete OIDC providers: %s", err.Error())
 		}
-		err = aws.CcsAwsSession.CleanupRoles(fmtDuration, args.dryRun)
+		rolesDeletedCounter := 0
+		rolesFailedCounter := 0
+		err = aws.CcsAwsSession.CleanupRoles(fmtDuration, args.dryRun, args.sendSummary, &rolesDeletedCounter, &rolesFailedCounter, &errorBuilder)
+		summaryBuilder.WriteString("Roles: " + strconv.Itoa(rolesDeletedCounter) + "/" + strconv.Itoa(rolesFailedCounter) + "\n")
 		if err != nil {
 			return fmt.Errorf("could not delete IAM roles: %s", err.Error())
 		}
-		err = aws.CcsAwsSession.CleanupPolicies(fmtDuration, args.dryRun)
+		policiesDeletedCounter := 0
+		policiesFailedCounter := 0
+		err = aws.CcsAwsSession.CleanupPolicies(fmtDuration, args.dryRun, args.sendSummary, &policiesDeletedCounter, &policiesFailedCounter, &errorBuilder)
+		summaryBuilder.WriteString("Policies: " + strconv.Itoa(policiesDeletedCounter) + "/" + strconv.Itoa(policiesFailedCounter) + "\n")
 		if err != nil {
 			return fmt.Errorf("could not delete IAM policies: %s", err.Error())
 		}
 	}
 
 	if args.s3 {
-		err = aws.CcsAwsSession.CleanupS3Buckets(fmtDuration, args.dryRun)
+		s3BucketDeletedCounter := 0
+		s3BucketFailedCounter := 0
+		err = aws.CcsAwsSession.CleanupS3Buckets(fmtDuration, args.dryRun, args.sendSummary, &s3BucketDeletedCounter, &s3BucketFailedCounter, &errorBuilder)
+		summaryBuilder.WriteString("s3 Buckets: " + strconv.Itoa(s3BucketDeletedCounter) + "/" + strconv.Itoa(s3BucketFailedCounter) + "\n")
 		if err != nil {
 			return fmt.Errorf("could not delete s3 buckets: %s", err.Error())
 		}
 	}
 
 	if args.elasticIP {
-		err = aws.CcsAwsSession.ReleaseElasticIPs(args.dryRun)
+		elasticIpDeletedCounter := 0
+		elasticIpFailedCounter := 0
+		err = aws.CcsAwsSession.ReleaseElasticIPs(args.dryRun, args.sendSummary, &elasticIpDeletedCounter, &elasticIpFailedCounter, &errorBuilder)
+		summaryBuilder.WriteString("Elastic IPs: " + strconv.Itoa(elasticIpDeletedCounter) + "/" + strconv.Itoa(elasticIpFailedCounter) + "\n")
 		if err != nil {
 			return fmt.Errorf("could not release ips: %s", err.Error())
 		}
+	}
+
+	if args.sendSummary {
+
+		webhook := viper.GetString(config.Tests.SlackWebhook)
+		buildFile := "Build file: " + viper.GetString(config.BaseJobURL) + "/logs/" + viper.GetString(config.JobName) +
+			"/" + viper.GetString(config.JobID) + "/" + viper.GetString(config.Artifacts) + "/test/build-log.txt"
+
+		summaryMessage := `{"summary":"` + summaryBuilder.String() + `",`
+		errorMessage := `"full":"` + buildFile + "\n" + errorBuilder.String() + `"}`
+
+		req, err := http.NewRequest("POST", webhook, bytes.NewBuffer([]byte(summaryMessage+errorMessage)))
+		if err != nil {
+			fmt.Printf("Error creating request: %v\n", err)
+		}
+
+		req.Header.Set("Content-Type", "application/json; charset=utf-8")
+
+		client := &http.Client{}
+		resp, err := client.Do(req)
+		if err != nil {
+			fmt.Printf("Error making request: %v\n", err)
+		}
+		defer resp.Body.Close()
+
+		fmt.Printf("Slack Notification Response status: %s\n", resp.Status)
 	}
 
 	return nil
