@@ -225,8 +225,8 @@ func run(cmd *cobra.Command, argv []string) error {
 	if args.sendSummary {
 
 		webhook := viper.GetString(config.Tests.SlackWebhook)
-		buildFile := "Build file: " + viper.GetString(config.BaseJobURL) + "/logs/" + viper.GetString(config.JobName) +
-			"/" + viper.GetString(config.JobID) + "/" + viper.GetString(config.Artifacts) + "/test/build-log.txt"
+		buildFile := "Build file: " + viper.GetString(config.BaseJobURL) + viper.GetString(config.JobName) +
+			"/" + viper.GetString(config.JobID) + "/artifacts/test/build-log.txt"
 
 		summaryMessage := `{"summary":"` + summaryBuilder.String() + `",`
 		errorMessage := `"full":"` + buildFile + "\n" + errorBuilder.String() + `"}`
