@@ -8,6 +8,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/openshift/osde2e/pkg/common/config"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
@@ -92,7 +94,9 @@ func ParseS3URL(s3URL string) (string, string, error) {
 
 // CleanupS3Buckets finds buckets with substring "osde2e-" or "managed-velero",
 // older than given duration, then deletes bucket objects and then buckets
-func (CcsAwsSession *ccsAwsSession) CleanupS3Buckets(olderthan time.Duration, dryrun bool) error {
+func (CcsAwsSession *ccsAwsSession) CleanupS3Buckets(olderthan time.Duration, dryrun bool, sendSummary bool,
+	deletedCounter *int, failedCounter *int, errorBuilder *strings.Builder,
+) error {
 	err := CcsAwsSession.GetAWSSessions()
 	if err != nil {
 		return err
@@ -113,17 +117,28 @@ func (CcsAwsSession *ccsAwsSession) CleanupS3Buckets(olderthan time.Duration, dr
 					Bucket: bucket.Name,
 				})
 				if err := batchDeleteClient.Delete(aws.BackgroundContext(), iter); err != nil {
-					fmt.Printf("error deleting objects from bucket %s, skipping: %s", *bucket.Name, err)
+					errorMsg := fmt.Sprintf("error deleting objects from bucket %s, skipping: %s", *bucket.Name, err)
+					fmt.Println(errorMsg)
+					*failedCounter++
+					if sendSummary && errorBuilder.Len() < 10000 {
+						errorBuilder.WriteString(strings.Replace(errorMsg, `""`, "", -1))
+					}
 					continue
 				}
 				fmt.Println("Deleted object(s) from bucket")
 				if _, err := CcsAwsSession.s3.DeleteBucket(&s3.DeleteBucketInput{
 					Bucket: bucket.Name,
 				}); err != nil {
-					fmt.Printf("error deleting bucket: %s: %s", *bucket.Name, err)
+					errorMsg := fmt.Sprintf("error deleting bucket: %s: %s", *bucket.Name, err)
+					fmt.Println(errorMsg)
+					*failedCounter++
+					if sendSummary && errorBuilder.Len() < config.SlackMessageLength {
+						errorBuilder.WriteString(strings.Replace(errorMsg, `""`, "", -1))
+					}
 					continue
 				}
 				fmt.Println("Deleted bucket")
+				*deletedCounter++
 			}
 		}
 	}
