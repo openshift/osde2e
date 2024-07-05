@@ -96,10 +96,6 @@ func loadPassthruSecrets(secretLocations []string) {
 				if err != nil {
 					return fmt.Errorf("error loading passthru-secret file %s: %s", path, err.Error())
 				}
-				if info.Name() == "cleanup-job-notification-webhook" {
-					viper.Set(config.Tests.SlackWebhook, strings.TrimSpace(string(data)))
-					return nil
-				}
 				passthruSecrets[info.Name()] = strings.TrimSpace(string(data))
 				return nil
 			})

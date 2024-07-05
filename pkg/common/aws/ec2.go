@@ -2,8 +2,9 @@ package aws
 
 import (
 	"fmt"
-	"github.com/openshift/osde2e/pkg/common/config"
 	"strings"
+
+	"github.com/openshift/osde2e/pkg/common/config"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/ec2"
@@ -40,7 +41,8 @@ func (CcsAwsSession *ccsAwsSession) CheckIfEC2ExistBasedOnNodeName(nodeName stri
 // associated with it, we skip its deletion and log tag name. Dryrun returns aws Error
 // from AWS api and is logged.
 func (CcsAwsSession *ccsAwsSession) ReleaseElasticIPs(dryrun bool, sendSummary bool,
-	deletedCounter *int, failedCounter *int, errorBuilder *strings.Builder) error {
+	deletedCounter *int, failedCounter *int, errorBuilder *strings.Builder,
+) error {
 	err := CcsAwsSession.GetAWSSessions()
 	if err != nil {
 		return err

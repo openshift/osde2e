@@ -758,6 +758,7 @@ func InitOSDe2eViper() {
 	viper.BindEnv(Tests.SlackChannel, "SLACK_CHANNEL")
 
 	viper.BindEnv(Tests.SlackWebhook, "SLACK_WEBHOOK")
+	RegisterSecret(Tests.SlackWebhook, "cleanup-job-notification-webhook")
 
 	// ----- Cluster -----
 	viper.SetDefault(Cluster.MultiAZ, false)

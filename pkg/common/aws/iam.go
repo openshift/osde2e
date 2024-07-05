@@ -2,9 +2,10 @@ package aws
 
 import (
 	"fmt"
-	"github.com/openshift/osde2e/pkg/common/config"
 	"strings"
 	"time"
+
+	"github.com/openshift/osde2e/pkg/common/config"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/iam"
@@ -16,7 +17,8 @@ var (
 )
 
 func (CcsAwsSession *ccsAwsSession) CleanupOpenIDConnectProviders(olderthan time.Duration, dryrun bool, sendSummary bool,
-	deletedCounter *int, failedCounter *int, errorBuilder *strings.Builder) error {
+	deletedCounter *int, failedCounter *int, errorBuilder *strings.Builder,
+) error {
 	err := CcsAwsSession.GetAWSSessions()
 	if err != nil {
 		return err
@@ -67,7 +69,8 @@ func (CcsAwsSession *ccsAwsSession) CleanupOpenIDConnectProviders(olderthan time
 }
 
 func (CcsAwsSession *ccsAwsSession) CleanupRoles(olderthan time.Duration, dryrun bool, sendSummary bool,
-	deletedCounter *int, failedCounter *int, errorBuilder *strings.Builder) error {
+	deletedCounter *int, failedCounter *int, errorBuilder *strings.Builder,
+) error {
 	err := CcsAwsSession.GetAWSSessions()
 	if err != nil {
 		return err
@@ -188,7 +191,8 @@ func (CcsAwsSession *ccsAwsSession) CleanupRoles(olderthan time.Duration, dryrun
 }
 
 func (CcsAwsSession *ccsAwsSession) CleanupPolicies(olderthan time.Duration, dryrun bool, sendSummary bool,
-	deletedCounter *int, failedCounter *int, errorBuilder *strings.Builder) error {
+	deletedCounter *int, failedCounter *int, errorBuilder *strings.Builder,
+) error {
 	err := CcsAwsSession.GetAWSSessions()
 	if err != nil {
 		return err

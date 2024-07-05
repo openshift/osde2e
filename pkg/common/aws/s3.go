@@ -3,11 +3,12 @@ package aws
 import (
 	"bytes"
 	"fmt"
-	"github.com/openshift/osde2e/pkg/common/config"
 	"log"
 	"net/url"
 	"strings"
 	"time"
+
+	"github.com/openshift/osde2e/pkg/common/config"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -94,8 +95,8 @@ func ParseS3URL(s3URL string) (string, string, error) {
 // CleanupS3Buckets finds buckets with substring "osde2e-" or "managed-velero",
 // older than given duration, then deletes bucket objects and then buckets
 func (CcsAwsSession *ccsAwsSession) CleanupS3Buckets(olderthan time.Duration, dryrun bool, sendSummary bool,
-	deletedCounter *int, failedCounter *int, errorBuilder *strings.Builder) error {
-
+	deletedCounter *int, failedCounter *int, errorBuilder *strings.Builder,
+) error {
 	err := CcsAwsSession.GetAWSSessions()
 	if err != nil {
 		return err
