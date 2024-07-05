@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"fmt"
 	"net/http"
+	"os"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -94,7 +96,7 @@ func init() {
 	flags.StringVar(
 		&args.olderThan,
 		"older-than",
-		"24h",
+		"48h",
 		"Cleanup iam resources older than this duration. Accepts a sequence of decimal numbers with a unit suffix, such as '2h45m'",
 	)
 	flags.BoolVar(
@@ -128,7 +130,18 @@ func run(cmd *cobra.Command, argv []string) error {
 
 	// message format: `{"summary":"<summary>", "full":"<details>"}`
 	var summaryBuilder strings.Builder
-	var errorBuilder strings.Builder
+	var iamErrorBuilder strings.Builder
+	var s3ErrorBuilder strings.Builder
+	var ipErrorBuilder strings.Builder
+
+	if args.dryRun {
+		summaryBuilder.WriteString("-- Cleanup dry run --\n")
+	}
+	if os.Getenv("JOB_NAME") != "" {
+		r, _ := regexp.Compile("cleanup-([a-z]+)-aws")
+		act := r.FindStringSubmatch(os.Getenv("JOB_NAME"))
+		summaryBuilder.WriteString("Account: " + act[1] + "\n")
+	}
 
 	if args.clusters {
 		provider, err := ocmprovider.NewWithEnv(viper.GetString(ocmprovider.Env))
@@ -181,21 +194,21 @@ func run(cmd *cobra.Command, argv []string) error {
 	if args.iam {
 		oidcDeletedCounter := 0
 		oidcFailedCounter := 0
-		err = aws.CcsAwsSession.CleanupOpenIDConnectProviders(fmtDuration, args.dryRun, args.sendSummary, &oidcDeletedCounter, &oidcFailedCounter, &errorBuilder)
+		err = aws.CcsAwsSession.CleanupOpenIDConnectProviders(fmtDuration, args.dryRun, args.sendSummary, &oidcDeletedCounter, &oidcFailedCounter, &iamErrorBuilder)
 		summaryBuilder.WriteString("OIDC providers: " + strconv.Itoa(oidcDeletedCounter) + "/" + strconv.Itoa(oidcFailedCounter) + "\n")
 		if err != nil {
 			return fmt.Errorf("could not delete OIDC providers: %s", err.Error())
 		}
 		rolesDeletedCounter := 0
 		rolesFailedCounter := 0
-		err = aws.CcsAwsSession.CleanupRoles(fmtDuration, args.dryRun, args.sendSummary, &rolesDeletedCounter, &rolesFailedCounter, &errorBuilder)
+		err = aws.CcsAwsSession.CleanupRoles(fmtDuration, args.dryRun, args.sendSummary, &rolesDeletedCounter, &rolesFailedCounter, &iamErrorBuilder)
 		summaryBuilder.WriteString("Roles: " + strconv.Itoa(rolesDeletedCounter) + "/" + strconv.Itoa(rolesFailedCounter) + "\n")
 		if err != nil {
 			return fmt.Errorf("could not delete IAM roles: %s", err.Error())
 		}
 		policiesDeletedCounter := 0
 		policiesFailedCounter := 0
-		err = aws.CcsAwsSession.CleanupPolicies(fmtDuration, args.dryRun, args.sendSummary, &policiesDeletedCounter, &policiesFailedCounter, &errorBuilder)
+		err = aws.CcsAwsSession.CleanupPolicies(fmtDuration, args.dryRun, args.sendSummary, &policiesDeletedCounter, &policiesFailedCounter, &iamErrorBuilder)
 		summaryBuilder.WriteString("Policies: " + strconv.Itoa(policiesDeletedCounter) + "/" + strconv.Itoa(policiesFailedCounter) + "\n")
 		if err != nil {
 			return fmt.Errorf("could not delete IAM policies: %s", err.Error())
@@ -205,7 +218,7 @@ func run(cmd *cobra.Command, argv []string) error {
 	if args.s3 {
 		s3BucketDeletedCounter := 0
 		s3BucketFailedCounter := 0
-		err = aws.CcsAwsSession.CleanupS3Buckets(fmtDuration, args.dryRun, args.sendSummary, &s3BucketDeletedCounter, &s3BucketFailedCounter, &errorBuilder)
+		err = aws.CcsAwsSession.CleanupS3Buckets(fmtDuration, args.dryRun, args.sendSummary, &s3BucketDeletedCounter, &s3BucketFailedCounter, &s3ErrorBuilder)
 		summaryBuilder.WriteString("s3 Buckets: " + strconv.Itoa(s3BucketDeletedCounter) + "/" + strconv.Itoa(s3BucketFailedCounter) + "\n")
 		if err != nil {
 			return fmt.Errorf("could not delete s3 buckets: %s", err.Error())
@@ -215,7 +228,7 @@ func run(cmd *cobra.Command, argv []string) error {
 	if args.elasticIP {
 		elasticIpDeletedCounter := 0
 		elasticIpFailedCounter := 0
-		err = aws.CcsAwsSession.ReleaseElasticIPs(args.dryRun, args.sendSummary, &elasticIpDeletedCounter, &elasticIpFailedCounter, &errorBuilder)
+		err = aws.CcsAwsSession.ReleaseElasticIPs(args.dryRun, args.sendSummary, &elasticIpDeletedCounter, &elasticIpFailedCounter, &ipErrorBuilder)
 		summaryBuilder.WriteString("Elastic IPs: " + strconv.Itoa(elasticIpDeletedCounter) + "/" + strconv.Itoa(elasticIpFailedCounter) + "\n")
 		if err != nil {
 			return fmt.Errorf("could not release ips: %s", err.Error())
@@ -223,15 +236,17 @@ func run(cmd *cobra.Command, argv []string) error {
 	}
 
 	if args.sendSummary {
-
 		webhook := viper.GetString(config.Tests.SlackWebhook)
 		buildFile := "Build file: " + viper.GetString(config.BaseJobURL) + "/" + viper.GetString(config.JobName) +
 			"/" + viper.GetString(config.JobID) + "/artifacts/test/build-log.txt"
 
 		summaryMessage := `{"summary":"` + summaryBuilder.String() + `",`
-		errorMessage := `"full":"` + buildFile + "\n" + errorBuilder.String() + `"}`
+		errorMessage := `"full":"` + buildFile + `",`
+		s3ErrorMessage := `"s3":" S3 Errors: \n ` + s3ErrorBuilder.String() + `",`
+		iamErrorMessage := `"iam":" IAM Errors: \n` + iamErrorBuilder.String() + `",`
+		ipErrorMessage := `"ip":" ElasticIP Errors: \n` + ipErrorBuilder.String() + `"}`
 
-		req, err := http.NewRequest("POST", webhook, bytes.NewBuffer([]byte(summaryMessage+errorMessage)))
+		req, err := http.NewRequest("POST", webhook, bytes.NewBuffer([]byte(summaryMessage+errorMessage+s3ErrorMessage+iamErrorMessage+ipErrorMessage)))
 		if err != nil {
 			fmt.Printf("Error creating request: %v\n", err)
 		}

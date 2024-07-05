@@ -217,7 +217,7 @@ func (CcsAwsSession *ccsAwsSession) CleanupPolicies(olderthan time.Duration, dry
 				_, err := CcsAwsSession.iam.DeletePolicy(input)
 				if err != nil {
 					*failedCounter++
-					errorMsg := fmt.Sprintf("Plolicy %s not deleted: %s\n", *policy.PolicyName, err.Error())
+					errorMsg := fmt.Sprintf("Policy %s not deleted: %s\n", *policy.PolicyName, err.Error())
 					if sendSummary && errorBuilder.Len() < config.SlackMessageLength {
 						errorBuilder.WriteString(errorMsg)
 					}
