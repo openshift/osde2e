@@ -83,7 +83,7 @@ func loadPassthruSecrets(secretLocations []string) {
 
 		for _, folder := range secretLocations {
 			// Omit the osde2e secrets from going to the pass through secrets.
-			if strings.Contains(folder, "osde2e-credentials") || strings.Contains(folder, "osde2e-common") {
+			if strings.Contains(folder, "osde2e-credentials") {
 				continue
 			}
 			err := filepath.Walk(folder, func(path string, info os.FileInfo, err error) error {
