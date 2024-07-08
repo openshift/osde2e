@@ -237,6 +237,10 @@ func run(cmd *cobra.Command, argv []string) error {
 
 	if args.sendSummary {
 		webhook := viper.GetString(config.Tests.SlackWebhook)
+		if webhook == "" {
+			fmt.Println("Slack Webhook is not set, skipping notification.")
+			return nil
+		}
 		buildFile := "Build file: " + viper.GetString(config.BaseJobURL) + "/" + viper.GetString(config.JobName) +
 			"/" + viper.GetString(config.JobID) + "/artifacts/test/build-log.txt"
 
