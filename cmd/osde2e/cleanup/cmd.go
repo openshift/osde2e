@@ -241,8 +241,15 @@ func run(cmd *cobra.Command, argv []string) error {
 			fmt.Println("Slack Webhook is not set, skipping notification.")
 			return nil
 		}
-		buildFile := "Build file: " + viper.GetString(config.BaseJobURL) + "/" + viper.GetString(config.JobName) +
-			"/" + os.Getenv("BUILD_NUMBER") + "/artifacts/test/build-log.txt"
+		buildFile := "Build file: "
+		if strings.Contains(viper.GetString(config.JobName), "rehearse") {
+			basePRJobURL := "https://gcsweb-ci.apps.ci.l2s4.p1.openshiftapps.com/gcs/test-platform-results/pr-logs/pull/openshift_release"
+			buildFile += basePRJobURL + "/" + os.Getenv("PULL_NUMBER")
+		} else {
+			buildFile += viper.GetString(config.BaseJobURL)
+		}
+		buildFile += "/" + viper.GetString(config.JobName) +
+			"/" + os.Getenv("BUILD_ID") + "/artifacts/test/build-log.txt"
 
 		summaryMessage := `{"summary":"` + summaryBuilder.String() + `",`
 		errorMessage := `"full":"` + buildFile + `",`
