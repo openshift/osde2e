@@ -249,7 +249,7 @@ func run(cmd *cobra.Command, argv []string) error {
 			buildFile += viper.GetString(config.BaseJobURL)
 		}
 		buildFile += "/" + viper.GetString(config.JobName) +
-			"/" + os.Getenv("BUILD_ID") + "/artifacts/test/build-log.txt"
+			"/" + viper.GetString(config.JobID) + "/artifacts/test/build-log.txt"
 
 		summaryMessage := `{"summary":"` + summaryBuilder.String() + `",`
 		errorMessage := `"full":"` + buildFile + `",`

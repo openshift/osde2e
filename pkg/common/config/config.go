@@ -27,7 +27,7 @@ const (
 	JobName = "jobName"
 
 	// JobID is the ID designated by prow for this run
-	// Env: BUILD_NUMBER
+	// Env: BUILD_ID
 	JobID = "jobID"
 
 	// ProwJobId is the ID designated by prow for this run
@@ -642,7 +642,7 @@ func InitOSDe2eViper() {
 	viper.BindEnv(JobType, "JOB_TYPE")
 
 	viper.SetDefault(JobID, -1)
-	viper.BindEnv(JobID, "BUILD_NUMBER")
+	viper.BindEnv(JobID, "BUILD_ID")
 
 	viper.SetDefault(BaseJobURL, "https://gcsweb-ci.apps.ci.l2s4.p1.openshiftapps.com/gcs/test-platform-results/logs")
 	viper.BindEnv(BaseJobURL, "BASE_JOB_URL")
