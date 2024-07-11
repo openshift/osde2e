@@ -102,7 +102,11 @@ const (
 
 	KonfluxTestOutputFile = "konfluxResultsPath"
 
-	SlackMessageLength int = 4000
+	// TotalSlackMessageLength is about 10000 characters
+	// Summary: 1500 Characters
+	// Build file comment: 500 Characters
+	// Other comments(s3, ec2, elasticIP, iam): 2000 * 4 = 8000
+	SlackMessageLength int = 2000
 )
 
 // This is a config key to secret file mapping. We will attempt to read in from secret files before loading anything else.
