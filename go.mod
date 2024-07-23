@@ -3,7 +3,7 @@ module github.com/openshift/osde2e
 go 1.21
 
 require (
-	cloud.google.com/go/kms v1.18.2
+	cloud.google.com/go/kms v1.18.3
 	github.com/Masterminds/semver/v3 v3.2.1
 	github.com/PuerkitoBio/goquery v1.9.2
 	github.com/adamliesko/retry v0.0.0-20200123222335-86c8baac277d
@@ -39,7 +39,6 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.19.0
 	github.com/tsenart/vegeta v12.7.0+incompatible
-	github.com/vmware-tanzu/velero v1.10.2
 	golang.org/x/net v0.27.0
 	golang.org/x/oauth2 v0.21.0
 	golang.org/x/sync v0.7.0
