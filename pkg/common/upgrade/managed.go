@@ -204,7 +204,6 @@ func overrideUpgradeConfig(uc upgradev1alpha1.UpgradeConfig, h *helper.H) error 
 		Version:  "v1alpha1",
 		Resource: "upgradeconfigs",
 	}).Namespace(muoNamespace).Update(context.TODO(), &uobj, metav1.UpdateOptions{})
-
 	if err != nil {
 		return err
 	}

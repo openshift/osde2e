@@ -38,7 +38,6 @@ func (o *OCMProvider) Versions() (*spi.VersionList, error) {
 			var err error
 
 			resp, err = o.conn.ClustersMgmt().V1().Versions().List().Page(page).Size(PageSize).Send()
-
 			if err != nil {
 				return err
 			}
@@ -105,7 +104,6 @@ func (o *OCMProvider) Versions() (*spi.VersionList, error) {
 	if o.env != prod {
 		var versionList *spi.VersionList
 		versionList, err = o.prodProvider.Versions()
-
 		if err != nil {
 			return nil, fmt.Errorf("error getting production default: %v", err)
 		}

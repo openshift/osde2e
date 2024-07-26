@@ -65,22 +65,6 @@ func GetClusterVersion(provider spi.Provider, clusterID string) (*semver.Version
 	return version, err
 }
 
-// ScaleCluster will scale the cluster up to the provided size.
-func ScaleCluster(clusterID string, numComputeNodes int) error {
-	provider, err := providers.ClusterProvider()
-	if err != nil {
-		return fmt.Errorf("error getting cluster provisioning client: %v", err)
-	}
-
-	err = provider.ScaleCluster(clusterID, numComputeNodes)
-	if err != nil {
-		return fmt.Errorf("error trying to scale cluster: %v", err)
-	}
-
-	podErrorTracker.NewPodErrorTracker(pendingPodThreshold)
-	return waitForClusterReadyWithOverrideAndExpectedNumberOfNodes(clusterID, nil, false, true)
-}
-
 // WaitForClusterReadyPostInstall blocks until the cluster is ready for testing using mechanisms appropriate
 // for a newly-installed cluster.
 func WaitForClusterReadyPostInstall(clusterID string, logger *log.Logger) error {
@@ -149,13 +133,6 @@ func WaitForClusterReadyPostInstall(clusterID string, logger *log.Logger) error 
 func WaitForClusterReadyPostUpgrade(clusterID string, logger *log.Logger) error {
 	podErrorTracker.NewPodErrorTracker(pendingPodThreshold)
 	return waitForClusterReadyWithOverrideAndExpectedNumberOfNodes(clusterID, logger, true, false)
-}
-
-// WaitForClusterReadyPostScale blocks until the cluster is ready for testing and uses healthcheck mechanisms appropriate
-// for after the cluster has been scaled.
-func WaitForClusterReadyPostScale(clusterID string, logger *log.Logger) error {
-	podErrorTracker.NewPodErrorTracker(pendingPodThreshold)
-	return waitForClusterReadyWithOverrideAndExpectedNumberOfNodes(clusterID, logger, false, false)
 }
 
 // WaitForClusterReadyPostWake blocks until the cluster is ready for testing, deletes errored pods, and then uses
@@ -622,4 +599,24 @@ func clusterName() string {
 	}
 
 	return "osde2e-" + suffix
+}
+
+// set cluster infor into viper and metadata
+func SetClusterIntoViperConfig(cluster *spi.Cluster) {
+	viper.Set(config.Cluster.Channel, cluster.ChannelGroup())
+	viper.Set(config.Cluster.Name, cluster.Name())
+	log.Printf("CLUSTER_NAME set to %s from OCM.", viper.GetString(config.Cluster.Name))
+
+	viper.Set(config.Cluster.Version, cluster.Version())
+	log.Printf("CLUSTER_VERSION set to %s from OCM, for channel group %s", viper.GetString(config.Cluster.Version), viper.GetString(config.Cluster.Channel))
+
+	viper.Set(config.CloudProvider.CloudProviderID, cluster.CloudProvider())
+	log.Printf("CLOUD_PROVIDER_ID set to %s from OCM.", viper.GetString(config.CloudProvider.CloudProviderID))
+
+	viper.Set(config.CloudProvider.Region, cluster.Region())
+	log.Printf("CLOUD_PROVIDER_REGION set to %s from OCM.", viper.GetString(config.CloudProvider.Region))
+
+	metadata.Instance.SetClusterName(cluster.Name())
+	metadata.Instance.SetClusterID(cluster.ID())
+	metadata.Instance.SetRegion(cluster.Region())
 }

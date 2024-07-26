@@ -101,6 +101,7 @@ func (m *ROSAProvider) LaunchCluster(clusterName string) (string, error) {
 			HostPrefix:                   hostPrefix,
 			Replicas:                     replicas,
 			STS:                          viper.GetBool(STS),
+			MintMode:                     viper.GetBool(MintMode),
 			HostedCP:                     viper.GetBool(config.Hypershift),
 			FIPS:                         viper.GetBool(config.Cluster.EnableFips),
 			MultiAZ:                      viper.GetBool(config.Cluster.MultiAZ),

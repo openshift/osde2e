@@ -1,4 +1,5 @@
 cluster:
+  fedRamp: true
   enableFips: true
 tests:
   testsToRun:

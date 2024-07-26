@@ -92,9 +92,11 @@ var _ = Describe("HyperShift", Ordered, func() {
 		var (
 			ocmEnv = ocmclient.Integration
 
-			ocmToken    = os.Getenv("OCM_TOKEN")
-			upgradeType = os.Getenv("UPGRADE_TYPE")
-			reportDir   = getEnvVar("REPORT_DIR", envconf.RandomName(fmt.Sprintf("%s/mcscupgrade", os.TempDir()), 25))
+			ocmToken     = os.Getenv("OCM_TOKEN")
+			clientID     = os.Getenv("CLIENT_ID")
+			clientSecret = os.Getenv("CLIENT_SECRET")
+			upgradeType  = os.Getenv("UPGRADE_TYPE")
+			reportDir    = getEnvVar("REPORT_DIR", envconf.RandomName(fmt.Sprintf("%s/mcscupgrade", os.TempDir()), 25))
 		)
 
 		hcpCluster = &rosaHCPCluster{
@@ -122,10 +124,10 @@ var _ = Describe("HyperShift", Ordered, func() {
 		Expect(hcpCluster.provisionShardID).ShouldNot(BeEmpty(), "osd fleet manager service cluster provision shard id is undefined")
 		Expect(upgradeType).Should(BeElementOf([]string{"Y", "Z"}), "upgrade type is invalid")
 
-		rosaProvider, err = rosaprovider.New(ctx, ocmToken, ocmEnv, logger)
+		rosaProvider, err = rosaprovider.New(ctx, ocmToken, clientID, clientSecret, ocmEnv, logger)
 		Expect(err).ShouldNot(HaveOccurred(), "failed to construct rosa provider")
 
-		osdProvider, err = osdprovider.New(ctx, ocmToken, ocmEnv, logger)
+		osdProvider, err = osdprovider.New(ctx, ocmToken, clientID, clientSecret, ocmEnv, logger)
 		Expect(err).ShouldNot(HaveOccurred(), "failed to construct osd provider")
 		DeferCleanup(osdProvider.Client.Close)
 

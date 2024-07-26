@@ -84,7 +84,6 @@ func selfUpdate() {
 	// compile the osde2e command is negligible.
 	updateCmd := exec.Command("go", "get", "github.com/openshift/osde2e/cmd/osde2e")
 	err = updateCmd.Run()
-
 	if err != nil {
 		panic(fmt.Sprintf("error while trying to update command: %v", err))
 	}
@@ -104,7 +103,6 @@ func selfUpdate() {
 		}
 	}
 	err = syscall.Exec(binary, filteredCmdArgs, filteredEnv)
-
 	if err != nil {
 		panic(fmt.Sprintf("error while execing process: %v", err))
 	}

@@ -137,23 +137,6 @@ func (o *OCMProvider) LaunchCluster(clusterName string) (string, error) {
 	if viper.GetBool(CCS) {
 		// Refactor: This is a hack to get the AWS CCS cluster to work. In reality today we are loading too many secrets and need a better way to do this.
 		// IE: If aws keys are set but not awsAccount, we should mention it's an AWS execution but we are missing credentials.
-		if viper.GetString(GCPCredsJSON) != "" {
-			gcp, err := v1.UnmarshalGCP(viper.GetString(GCPCredsJSON))
-			if err != nil {
-				return "", fmt.Errorf("error unmarshalling GCP credentials: %v", err)
-			}
-			viper.Set(GCPCredsType, gcp.Type())
-			viper.Set(GCPProjectID, gcp.ProjectID())
-			viper.Set(GCPPrivateKeyID, gcp.PrivateKeyID())
-			viper.Set(GCPPrivateKey, gcp.PrivateKey())
-			viper.Set(GCPClientEmail, gcp.ClientEmail())
-			viper.Set(GCPClientID, gcp.ClientID())
-			viper.Set(GCPAuthURI, gcp.AuthURI())
-			viper.Set(GCPTokenURI, gcp.TokenURI())
-			viper.Set(GCPAuthProviderX509CertURL, gcp.AuthProviderX509CertURL())
-			viper.Set(gcp.ClientX509CertURL(), gcp.ClientX509CertURL())
-		}
-
 		if viper.GetString(config.CloudProvider.CloudProviderID) == "aws" {
 			awsCreds, err := aws.CcsAwsSession.GetCredentials()
 			if err != nil {
@@ -202,28 +185,36 @@ func (o *OCMProvider) LaunchCluster(clusterName string) (string, error) {
 				}
 			}
 			newCluster = newCluster.CCS(v1.NewCCS().Enabled(true)).AWS(awsBuilder)
-		} else if viper.GetString(config.CloudProvider.CloudProviderID) == "gcp" && viper.GetString(GCPProjectID) != "" {
-			// If GCP credentials are set, this must be a GCP CCS cluster
-			newCluster = newCluster.CCS(v1.NewCCS().Enabled(true)).GCP(v1.NewGCP().
-				Type(viper.GetString(GCPCredsType)).
-				ProjectID(viper.GetString(GCPProjectID)).
-				PrivateKey(viper.GetString(GCPPrivateKey)).
-				PrivateKeyID(viper.GetString(GCPPrivateKeyID)).
-				ClientEmail(viper.GetString(GCPClientEmail)).
-				ClientID(viper.GetString(GCPClientID)).
-				AuthURI(viper.GetString(GCPAuthURI)).
-				TokenURI(viper.GetString(GCPTokenURI)).
-				AuthProviderX509CertURL(viper.GetString(GCPAuthProviderX509CertURL)).
-				ClientX509CertURL(viper.GetString(GCPClientX509CertURL)))
+		} else if viper.GetString(config.CloudProvider.CloudProviderID) == "gcp" {
+			if err = o.RetrieveGCPConfigs(); err != nil {
+				return "", err
+			}
+			if viper.GetString(config.GCPProjectID) != "" {
+				// If GCP credentials are set, this must be a GCP CCS cluster
+				newCluster = newCluster.CCS(v1.NewCCS().Enabled(true)).GCP(v1.NewGCP().
+					Type(viper.GetString(config.GCPCredsType)).
+					ProjectID(viper.GetString(config.GCPProjectID)).
+					PrivateKey(viper.GetString(config.GCPPrivateKey)).
+					PrivateKeyID(viper.GetString(config.GCPPrivateKeyID)).
+					ClientEmail(viper.GetString(config.GCPClientEmail)).
+					ClientID(viper.GetString(config.GCPClientID)).
+					AuthURI(viper.GetString(config.GCPAuthURI)).
+					TokenURI(viper.GetString(config.GCPTokenURI)).
+					AuthProviderX509CertURL(viper.GetString(config.GCPAuthProviderX509CertURL)).
+					ClientX509CertURL(viper.GetString(config.GCPClientX509CertURL)))
+			} else {
+				return "", fmt.Errorf("no gcp project found")
+			}
 		} else {
 			return "", fmt.Errorf("invalid or no CCS Credentials provided for CCS cluster")
 		}
 	}
 
 	expiryInMinutes := viper.GetDuration(config.Cluster.ExpiryInMinutes)
-	if expiryInMinutes > 0 {
-		// Calculate an expiration date for the cluster so that it will be automatically deleted if
-		// we happen to forget to do it:
+	if expiryInMinutes > 0 && o.Environment() != "prod" {
+		// Expiration can not be set on prod clusters.
+		// Calculate an expiration date for the cluster so that it will be
+		// automatically deleted if we happen to forget to do it:
 		expiration := time.Now().Add(expiryInMinutes * time.Minute).UTC() // UTC() to workaround SDA-1567.
 		newCluster = newCluster.ExpirationTimestamp(expiration)
 	}
@@ -291,11 +282,28 @@ func (o *OCMProvider) LaunchCluster(clusterName string) (string, error) {
 
 		return err
 	})
-
 	if err != nil {
 		return "", fmt.Errorf("couldn't create cluster: %v", err)
 	}
 	return resp.Body().ID(), nil
+}
+
+func (o *OCMProvider) RetrieveGCPConfigs() error {
+	gcpjson, err := v1.UnmarshalGCP(viper.GetString(config.GCPCredsJSON))
+	if err != nil {
+		return fmt.Errorf("error unmarshalling GCP credentials: %v", err)
+	}
+	viper.Set(config.GCPCredsType, gcpjson.Type())
+	viper.Set(config.GCPProjectID, gcpjson.ProjectID())
+	viper.Set(config.GCPPrivateKeyID, gcpjson.PrivateKeyID())
+	viper.Set(config.GCPPrivateKey, gcpjson.PrivateKey())
+	viper.Set(config.GCPClientEmail, gcpjson.ClientEmail())
+	viper.Set(config.GCPClientID, gcpjson.ClientID())
+	viper.Set(config.GCPAuthURI, gcpjson.AuthURI())
+	viper.Set(config.GCPTokenURI, gcpjson.TokenURI())
+	viper.Set(config.GCPAuthProviderX509CertURL, gcpjson.AuthProviderX509CertURL())
+	viper.Set(config.GCPClientX509CertURL, gcpjson.ClientX509CertURL())
+	return nil
 }
 
 func (o *OCMProvider) FindRecycledCluster(originalVersion, cloudProvider, product string) string {
@@ -612,7 +620,6 @@ func (o *OCMProvider) DeleteCluster(clusterID string) error {
 		if err = retryer().Do(func() error {
 			var err error
 			resumeResp, err = o.conn.ClustersMgmt().V1().Clusters().Cluster(clusterID).Resume().Send()
-
 			if err != nil {
 				return fmt.Errorf("couldn't resume cluster '%s': %v", clusterID, err)
 			}
@@ -665,7 +672,6 @@ func (o *OCMProvider) DeleteCluster(clusterID string) error {
 		deleteResp, err = o.conn.ClustersMgmt().V1().Clusters().Cluster(clusterID).
 			Delete().
 			Send()
-
 		if err != nil {
 			return fmt.Errorf("couldn't delete cluster '%s': %v", clusterID, err)
 		}
@@ -678,68 +684,9 @@ func (o *OCMProvider) DeleteCluster(clusterID string) error {
 
 		return nil
 	})
-
 	if err != nil {
 		return fmt.Errorf("couldn't delete cluster '%s': %v", clusterID, err)
 	}
-
-	return nil
-}
-
-// ScaleCluster will grow or shink the cluster to the desired number of compute nodes.
-func (o *OCMProvider) ScaleCluster(clusterID string, numComputeNodes int) error {
-	var resp *v1.ClusterUpdateResponse
-
-	// Get the current state of the cluster
-	ocmCluster, err := o.GetOCMCluster(clusterID)
-	if err != nil {
-		return err
-	}
-
-	if numComputeNodes == ocmCluster.Nodes().Compute() {
-		log.Printf("cluster already at desired size (%d)", numComputeNodes)
-		return nil
-	}
-
-	scaledCluster, err := v1.NewCluster().
-		Nodes(v1.NewClusterNodes().
-			Compute(numComputeNodes)).
-		Build()
-	if err != nil {
-		return fmt.Errorf("error while building scaled cluster object: %v", err)
-	}
-
-	err = retryer().Do(func() error {
-		var err error
-		resp, err = o.conn.ClustersMgmt().V1().Clusters().Cluster(clusterID).Update().
-			Body(scaledCluster).
-			Send()
-
-		if err != nil {
-			err = fmt.Errorf("couldn't update cluster '%s': %v", clusterID, err)
-			log.Printf("%v", err)
-			return err
-		}
-
-		if resp != nil && resp.Error() != nil {
-			log.Printf("error while trying to update cluster: %v", err)
-			return errResp(resp.Error())
-		}
-
-		o.updateClusterCache(clusterID, resp.Body())
-
-		return nil
-	})
-
-	if err != nil {
-		return err
-	}
-
-	if resp.Error() != nil {
-		return resp.Error()
-	}
-
-	log.Printf("Cluster successfully scaled to %d nodes", numComputeNodes)
 
 	return nil
 }
@@ -806,7 +753,6 @@ func (o *OCMProvider) GetOCMCluster(clusterID string) (*v1.Cluster, error) {
 		resp, err = o.conn.ClustersMgmt().V1().Clusters().Cluster(clusterID).
 			Get().
 			Send()
-
 		if err != nil {
 			err = fmt.Errorf("couldn't retrieve cluster '%s': %v", clusterID, err)
 			return err
@@ -857,7 +803,6 @@ func (o *OCMProvider) ClusterKubeconfig(clusterID string) ([]byte, error) {
 			Credentials().
 			Get().
 			Send()
-
 		if err != nil {
 			log.Printf("couldn't get credentials: %v", err)
 			return err
@@ -916,7 +861,6 @@ func (o *OCMProvider) InstallAddons(clusterID string, addonIDs []spi.AddOnID, ad
 		err = retryer().Do(func() error {
 			var err error
 			addonResp, err = addonsClient.Addon(addonID).Get().Send()
-
 			if err != nil {
 				return err
 			}
@@ -927,7 +871,6 @@ func (o *OCMProvider) InstallAddons(clusterID string, addonIDs []spi.AddOnID, ad
 
 			return nil
 		})
-
 		if err != nil {
 			return 0, err
 		}
@@ -995,7 +938,6 @@ func (o *OCMProvider) InstallAddons(clusterID string, addonIDs []spi.AddOnID, ad
 
 				return nil
 			})
-
 			if err != nil {
 				return 0, err
 			}
@@ -1072,7 +1014,6 @@ func (o *OCMProvider) ocmToSPICluster(ocmCluster *v1.Cluster) (*spi.Cluster, err
 			addonsResp, err = o.conn.ClustersMgmt().V1().Clusters().Cluster(ocmCluster.ID()).Addons().
 				List().
 				Send()
-
 			if err != nil {
 				err = fmt.Errorf("couldn't retrieve addons for cluster '%s': %v", ocmCluster.ID(), err)
 				log.Printf("%v", err)
@@ -1086,7 +1027,6 @@ func (o *OCMProvider) ocmToSPICluster(ocmCluster *v1.Cluster) (*spi.Cluster, err
 
 			return nil
 		})
-
 		if err != nil {
 			return nil, err
 		}
@@ -1103,8 +1043,9 @@ func (o *OCMProvider) ocmToSPICluster(ocmCluster *v1.Cluster) (*spi.Cluster, err
 		}
 
 	}
-
-	cluster.ExpirationTimestamp(ocmCluster.ExpirationTimestamp())
+	if o.Environment() != "prod" { // expiration can not be modified on prod
+		cluster.ExpirationTimestamp(ocmCluster.ExpirationTimestamp())
+	}
 	cluster.CreationTimestamp(ocmCluster.CreationTimestamp())
 	cluster.NumComputeNodes(ocmCluster.Nodes().Compute())
 
@@ -1134,6 +1075,10 @@ func ocmStateToInternalState(state v1.ClusterState) spi.ClusterState {
 
 // ExtendExpiry extends the expiration time of an existing cluster
 func (o *OCMProvider) ExtendExpiry(clusterID string, hours uint64, minutes uint64, seconds uint64) error {
+	if o.Environment() != "prod" {
+		log.Printf("Setting expiration on prod clusters is not allowed. Skipping...")
+		return nil
+	}
 	var resp *v1.ClusterUpdateResponse
 
 	// Get the current state of the cluster
@@ -1174,7 +1119,6 @@ func (o *OCMProvider) ExtendExpiry(clusterID string, hours uint64, minutes uint6
 		resp, err = o.conn.ClustersMgmt().V1().Clusters().Cluster(clusterID).Update().
 			Body(extendexpiryCluster).
 			Send()
-
 		if err != nil {
 			err = fmt.Errorf("couldn't update cluster '%s': %v", clusterID, err)
 			log.Printf("%v", err)
@@ -1190,7 +1134,6 @@ func (o *OCMProvider) ExtendExpiry(clusterID string, hours uint64, minutes uint6
 
 		return nil
 	})
-
 	if err != nil {
 		return err
 	}
@@ -1206,6 +1149,10 @@ func (o *OCMProvider) ExtendExpiry(clusterID string, hours uint64, minutes uint6
 
 // Expire sets the expiration time of an existing cluster to the current time + N minutes
 func (o *OCMProvider) Expire(clusterID string, duration time.Duration) error {
+	if o.Environment() != "prod" {
+		log.Printf("Setting expiration on prod clusters is not allowed. Skipping...")
+		return nil
+	}
 	var resp *v1.ClusterUpdateResponse
 
 	now := time.Now().Add(duration)
@@ -1220,7 +1167,6 @@ func (o *OCMProvider) Expire(clusterID string, duration time.Duration) error {
 		resp, err = o.conn.ClustersMgmt().V1().Clusters().Cluster(clusterID).Update().
 			Body(extendexpiryCluster).
 			Send()
-
 		if err != nil {
 			err = fmt.Errorf("couldn't update cluster '%s': %v", clusterID, err)
 			log.Printf("%v", err)
@@ -1236,7 +1182,6 @@ func (o *OCMProvider) Expire(clusterID string, duration time.Duration) error {
 
 		return nil
 	})
-
 	if err != nil {
 		return err
 	}
@@ -1274,7 +1219,6 @@ func (o *OCMProvider) AddProperty(cluster *spi.Cluster, tag string, value string
 		resp, err = o.conn.ClustersMgmt().V1().Clusters().Cluster(cluster.ID()).Update().
 			Body(modifiedCluster).
 			Send()
-
 		if err != nil {
 			err = fmt.Errorf("couldn't update cluster '%s': %v", cluster.ID(), err)
 			log.Printf("%v", err)
@@ -1288,7 +1232,6 @@ func (o *OCMProvider) AddProperty(cluster *spi.Cluster, tag string, value string
 
 		return nil
 	})
-
 	if err != nil {
 		return err
 	}

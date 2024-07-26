@@ -126,7 +126,6 @@ func (r *Runner) createJobPod(ctx context.Context) (pod *kubev1.Pod, err error) 
 			}
 			return err == nil, nil
 		})
-
 		if err != nil {
 			return nil, err
 		}

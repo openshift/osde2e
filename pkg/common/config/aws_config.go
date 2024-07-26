@@ -38,7 +38,7 @@ func InitAWSViper() {
 	viper.BindEnv(AWSProfile, "AWS_PROFILE")
 	RegisterSecret(AWSProfile, "aws-profile")
 
-	viper.BindEnv(AWSRegion, "AWS_REGION", "ROSA_AWS_REGION")
+	viper.BindEnv(AWSRegion, "AWS_REGION", "ROSA_AWS_REGION", "CLOUD_PROVIDER_REGION")
 	RegisterSecret(AWSRegion, "aws-region")
 
 	viper.BindEnv(AWSVPCSubnetIDs, "AWS_VPC_SUBNET_IDS", "ROSA_SUBNET_IDS", "SUBNET_IDS")

@@ -18,9 +18,8 @@ import (
 	"github.com/onsi/ginkgo/v2"
 	"github.com/onsi/ginkgo/v2/types"
 	"github.com/onsi/gomega"
+	"github.com/openshift/osde2e/pkg/common/versions"
 	vegeta "github.com/tsenart/vegeta/lib"
-	v1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 	ctrlog "sigs.k8s.io/controller-runtime/pkg/log"
 
@@ -38,7 +37,6 @@ import (
 	"github.com/openshift/osde2e/pkg/common/spi"
 	"github.com/openshift/osde2e/pkg/common/upgrade"
 	"github.com/openshift/osde2e/pkg/common/util"
-	"github.com/openshift/osde2e/pkg/common/versions"
 	"github.com/openshift/osde2e/pkg/debug"
 	"github.com/openshift/osde2e/pkg/e2e/routemonitors"
 )
@@ -53,8 +51,6 @@ const (
 	Success = 0
 	Failure = 1
 	Aborted = 130
-
-	secretsNamespace = "ci-secrets"
 )
 
 // provisioner is used to deploy and manage clusters.
@@ -78,9 +74,20 @@ func beforeSuite() bool {
 		log.Printf("Not loading cluster id: %v", err)
 		return false
 	}
-
+	var cluster *spi.Cluster
+	if provider, err = providers.ClusterProvider(); err != nil {
+		log.Printf("Error getting cluster provider: %s", err.Error())
+		return false
+	}
+	metadata.Instance.SetEnvironment(provider.Environment())
 	if viper.GetString(config.Kubeconfig.Contents) == "" {
-		cluster, err := clusterutil.ProvisionCluster(nil)
+		status, err := configureVersion()
+		if status != Success {
+			log.Printf("Failed configure cluster version: %v", err)
+			return false
+		}
+		cluster, err = clusterutil.ProvisionCluster(nil)
+
 		events.HandleErrorWithEvents(err, events.InstallSuccessful, events.InstallFailed)
 		if err != nil {
 			log.Printf("Failed to set up or retrieve cluster: %v", err)
@@ -89,8 +96,6 @@ func beforeSuite() bool {
 		}
 
 		viper.Set(config.Cluster.ID, cluster.ID())
-		viper.Set(config.Cluster.Channel, cluster.ChannelGroup())
-
 		log.Printf("CLUSTER_ID set to %s from OCM.", viper.GetString(config.Cluster.ID))
 		_, err = clusterutil.WaitForOCMProvisioning(provider, viper.GetString(config.Cluster.ID), nil, false)
 		if err != nil {
@@ -99,12 +104,6 @@ func beforeSuite() bool {
 			return false
 		}
 		log.Printf("Cluster status is ready")
-
-		if viper.Get(config.Tests.TestHarnesses) != nil {
-			passthruSecrets := viper.GetStringMapString(config.NonOSDe2eSecrets)
-			passthruSecrets["CLUSTER_ID"] = viper.GetString(config.Cluster.ID)
-			viper.Set(config.NonOSDe2eSecrets, passthruSecrets)
-		}
 
 		if viper.GetString(config.SharedDir) != "" {
 			if err = os.WriteFile(fmt.Sprintf("%s/cluster-id", viper.GetString(config.SharedDir)), []byte(cluster.ID()), 0o644); err != nil {
@@ -116,25 +115,9 @@ func beforeSuite() bool {
 			log.Printf("No shared directory provided, skip writing cluster ID")
 		}
 
-		viper.Set(config.Cluster.Name, cluster.Name())
-		log.Printf("CLUSTER_NAME set to %s from OCM.", viper.GetString(config.Cluster.Name))
-
-		viper.Set(config.Cluster.Version, cluster.Version())
-		log.Printf("CLUSTER_VERSION set to %s from OCM, for channel group %s", viper.GetString(config.Cluster.Version), viper.GetString(config.Cluster.Channel))
-
-		viper.Set(config.CloudProvider.CloudProviderID, cluster.CloudProvider())
-		log.Printf("CLOUD_PROVIDER_ID set to %s from OCM.", viper.GetString(config.CloudProvider.CloudProviderID))
-
-		viper.Set(config.CloudProvider.Region, cluster.Region())
-		log.Printf("CLOUD_PROVIDER_REGION set to %s from OCM.", viper.GetString(config.CloudProvider.Region))
-
 		if (!viper.GetBool(config.Addons.SkipAddonList) || viper.GetString(config.Provider) != "mock") && len(cluster.Addons()) > 0 {
 			log.Printf("Found addons: %s", strings.Join(cluster.Addons(), ","))
 		}
-
-		metadata.Instance.SetClusterName(cluster.Name())
-		metadata.Instance.SetClusterID(cluster.ID())
-		metadata.Instance.SetRegion(cluster.Region())
 
 		if err = provider.AddProperty(cluster, "UpgradeVersion", viper.GetString(config.Upgrade.ReleaseName)); err != nil {
 			log.Printf("Error while adding upgrade version property to cluster via OCM: %v", err)
@@ -194,7 +177,9 @@ func beforeSuite() bool {
 
 	} else {
 		log.Println("Using provided kubeconfig")
+		cluster, err = provider.GetCluster(viper.GetString(config.Cluster.ID))
 	}
+	clusterutil.SetClusterIntoViperConfig(cluster)
 
 	if len(viper.GetString(config.Addons.IDs)) > 0 {
 		if viper.GetString(config.Provider) != "mock" {
@@ -211,34 +196,35 @@ func beforeSuite() bool {
 		}
 	}
 
-	// Populate cluster with secrets for test harnesses
-	if viper.GetString(config.Tests.TestHarnesses) != "" {
-		var (
-			absNamespace = "osde2e-" + secretsNamespace
-			ctx          = context.TODO()
-		)
-
-		h, err := helper.NewOutsideGinkgo()
-		if h == nil {
-			log.Println("Unable to generate helper outside of ginkgo: %w", err)
-			return false
-		}
-
-		_ = h.DeleteProject(ctx, absNamespace)
-		h.CreateProject(ctx, secretsNamespace)
-
-		_, err = h.Kube().CoreV1().Secrets(absNamespace).Create(context.TODO(), &v1.Secret{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "ci-secrets",
-				Namespace: absNamespace,
-			},
-			StringData: viper.GetStringMapString(config.NonOSDe2eSecrets),
-		}, metav1.CreateOptions{})
-		if err != nil {
-			log.Printf("Error creating Prow secrets in-cluster: %s", err.Error())
-		}
-	}
 	return true
+}
+
+func configureVersion() (int, error) {
+	// configure cluster and upgrade versions
+	versionSelector := versions.VersionSelector{Provider: provider}
+	if err := versionSelector.SelectClusterVersions(); err != nil {
+		// If we can't find a version to use, exit with an error code.
+		return Failure, err
+	}
+
+	switch {
+	case !viper.GetBool(config.Cluster.EnoughVersionsForOldestOrMiddleTest):
+		return Aborted, fmt.Errorf("there were not enough available cluster image sets to choose and oldest or middle cluster image set to test against -- skipping tests")
+	case !viper.GetBool(config.Cluster.PreviousVersionFromDefaultFound):
+		return Aborted, fmt.Errorf("no previous version from default found with the given arguments")
+	case viper.GetBool(config.Upgrade.UpgradeVersionEqualToInstallVersion):
+		return Aborted, fmt.Errorf("install version and upgrade version are the same -- skipping tests")
+	case viper.GetString(config.Upgrade.ReleaseName) == util.NoVersionFound:
+		return Aborted, fmt.Errorf("no valid upgrade versions were found. Skipping tests")
+	case viper.GetString(config.Cluster.Version) == "":
+		returnState := Aborted
+		if viper.GetBool(config.Cluster.LatestYReleaseAfterProdDefault) || viper.GetBool(config.Cluster.LatestZReleaseAfterProdDefault) {
+			log.Println("At the latest available version with no newer targets. Exiting...")
+			returnState = Success
+		}
+		return returnState, fmt.Errorf("no valid install version found")
+	}
+	return Success, nil
 }
 
 func getLogs() {
@@ -386,48 +372,6 @@ func runGinkgoTests() (int, error) {
 
 	log.Printf("Outputting log to build log at %s", buildLogPath)
 
-	// Get the cluster ID now to test against later
-	providerCfg := viper.GetString(config.Provider)
-	// setup OSD unless Kubeconfig is present
-	if len(viper.GetString(config.Kubeconfig.Path)) > 0 && providerCfg == "mock" {
-		log.Print("Found an existing Kubeconfig!")
-		if provider, err = providers.ClusterProvider(); err != nil {
-			return Failure, fmt.Errorf("could not setup cluster provider: %v", err)
-		}
-		metadata.Instance.SetEnvironment(provider.Environment())
-	} else {
-		if provider, err = providers.ClusterProvider(); err != nil {
-			return Failure, fmt.Errorf("could not setup cluster provider: %v", err)
-		}
-
-		metadata.Instance.SetEnvironment(provider.Environment())
-
-		// configure cluster and upgrade versions
-		versionSelector := versions.VersionSelector{Provider: provider}
-		if err = versionSelector.SelectClusterVersions(); err != nil {
-			// If we can't find a version to use, exit with an error code.
-			return Failure, err
-		}
-
-		switch {
-		case !viper.GetBool(config.Cluster.EnoughVersionsForOldestOrMiddleTest):
-			return Aborted, fmt.Errorf("there were not enough available cluster image sets to choose and oldest or middle cluster image set to test against -- skipping tests")
-		case !viper.GetBool(config.Cluster.PreviousVersionFromDefaultFound):
-			return Aborted, fmt.Errorf("no previous version from default found with the given arguments")
-		case viper.GetBool(config.Upgrade.UpgradeVersionEqualToInstallVersion):
-			return Aborted, fmt.Errorf("install version and upgrade version are the same -- skipping tests")
-		case viper.GetString(config.Upgrade.ReleaseName) == util.NoVersionFound:
-			return Aborted, fmt.Errorf("no valid upgrade versions were found. Skipping tests")
-		case viper.GetString(config.Cluster.Version) == "":
-			returnState := Aborted
-			if viper.GetBool(config.Cluster.LatestYReleaseAfterProdDefault) || viper.GetBool(config.Cluster.LatestZReleaseAfterProdDefault) {
-				log.Println("At the latest available version with no newer targets. Exiting...")
-				returnState = Success
-			}
-			return returnState, fmt.Errorf("no valid install version found")
-		}
-	}
-
 	// Update the metadata object to use the report directory.
 	metadata.Instance.SetReportDir(reportDir)
 
@@ -569,7 +513,6 @@ func deleteCluster(provider spi.Provider) error {
 const ManyGroupedFailureName = "A lot of tests failed together"
 
 func cleanupAfterE2E(ctx context.Context, h *helper.H) (errors []error) {
-	var err error
 	clusterStatus := clusterproperties.StatusCompletedFailing
 	defer ginkgo.GinkgoRecover()
 
@@ -607,10 +550,6 @@ func cleanupAfterE2E(ctx context.Context, h *helper.H) (errors []error) {
 
 	clusterID := viper.GetString(config.Cluster.ID)
 	if len(clusterID) > 0 {
-		if provider, err = providers.ClusterProvider(); err != nil {
-			log.Printf("Error getting cluster provider: %s", err.Error())
-			clusterStatus = clusterproperties.StatusCompletedError
-		}
 
 		// Get state from Provisioner
 		log.Printf("Gathering cluster state from %s", provider.Type())
@@ -644,8 +583,6 @@ func cleanupAfterE2E(ctx context.Context, h *helper.H) (errors []error) {
 	} else {
 		log.Print("No cluster ID set. Skipping OCM Queries.")
 	}
-
-	harnessCleanup(ctx, h)
 
 	// We need to clean up our helper tests manually.
 	h.Cleanup(ctx)
@@ -684,19 +621,6 @@ func cleanupAfterE2E(ctx context.Context, h *helper.H) (errors []error) {
 		}
 	}
 	return errors
-}
-
-// harnessCleanup performs clean up operations post test execution
-func harnessCleanup(ctx context.Context, h *helper.H) {
-	log.Printf("Deleting osde2e-%v namespace", secretsNamespace)
-
-	if viper.GetString(config.Tests.TestHarnesses) != "" {
-		absNamespace := "osde2e-" + secretsNamespace
-		err := h.DeleteProject(ctx, absNamespace)
-		if err != nil {
-			log.Printf("Failed to delete namespace: %s, error: %v", absNamespace, err)
-		}
-	}
 }
 
 // nolint:gocyclo
@@ -738,6 +662,42 @@ func runTestsInPhase(
 			log.Printf("error creating junit report file %s", err.Error())
 		}
 	})
+
+	// https://github.com/konflux-ci/architecture/blob/cd41772b27bb89cd061e85cdaa7488afc4e29a2e/ADR/0030-tekton-results-naming-convention.md
+	if konfluxTestOutputFile := viper.GetString(config.KonfluxTestOutputFile); konfluxTestOutputFile != "" {
+		ginkgo.ReportAfterSuite("OSDE2E konflux results", func(report ginkgo.Report) {
+			konfluxResults := map[string]any{
+				"result":    "FAILURE",
+				"timestamp": report.EndTime.Format(time.RFC3339),
+				// TODO: do something with warnings
+				"warnings": 0,
+			}
+
+			if report.SuiteSucceeded {
+				konfluxResults["result"] = "SUCCESS"
+			}
+
+			var successes, failures int
+			for _, report := range report.SpecReports {
+				switch report.State {
+				case types.SpecStatePassed:
+					successes++
+				case types.SpecStateFailed:
+					failures++
+				}
+			}
+			konfluxResults["successes"] = successes
+			konfluxResults["failures"] = failures
+
+			bits, err := json.Marshal(konfluxResults)
+			if err != nil {
+				log.Printf("unable to marshal konflux results: %s", err)
+			}
+			if err = os.WriteFile(konfluxTestOutputFile, bits, os.ModePerm); err != nil {
+				log.Printf("failed to write konflux results to %s: %s", "", err)
+			}
+		})
+	}
 
 	// We need this anonymous function to make sure GinkgoRecover runs where we want it to
 	// and will still execute the rest of the function regardless whether the tests pass or fail.

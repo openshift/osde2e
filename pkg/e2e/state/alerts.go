@@ -8,14 +8,13 @@ import (
 
 	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	"github.com/openshift/osde2e-common/pkg/clients/prometheus"
 	"github.com/openshift/osde2e/pkg/common/alert"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/label"
-	"github.com/openshift/osde2e/pkg/common/prometheus"
 	"github.com/openshift/osde2e/pkg/common/providers"
-	promv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 )
 
@@ -32,25 +31,26 @@ func init() {
 	alert.RegisterGinkgoAlert(clusterStateTestName, "SD-CICD", "Diego Santamaria", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
 }
 
-var _ = ginkgo.Describe(clusterStateTestName, label.E2E, func() {
-	defer ginkgo.GinkgoRecover()
-	h := helper.New()
+var _ = ginkgo.Describe(clusterStateTestName, ginkgo.Ordered, label.E2E, func() {
+	var prom *prometheus.Client
+
+	ginkgo.BeforeAll(func(ctx context.Context) {
+		h := helper.New()
+
+		var err error
+		prom, err = prometheus.New(ctx, h.GetClient())
+		Expect(err).NotTo(HaveOccurred(), "unable to create prometheus client")
+	})
 
 	ginkgo.It("should have no alerts", func(ctx context.Context) {
-		// Set up prometheus client
-		h.SetServiceAccount(ctx, "system:serviceaccount:%s:cluster-admin")
-		promClient, err := prometheus.CreateClusterClient(h)
-		Expect(err).NotTo(HaveOccurred(), "error creating a prometheus client")
-		promAPI := promv1.NewAPI(promClient)
-
 		var queryresult []byte
 
 		// Query for alerts with a retry count of 40 and timeout of 20 minutes
-		err = wait.PollImmediate(30*time.Second, 20*time.Minute, func() (bool, error) {
+		err := wait.PollImmediate(30*time.Second, 20*time.Minute, func() (bool, error) {
 			query := "ALERTS{alertstate!=\"pending\",alertname!=\"Watchdog\"}"
 			context, cancel := context.WithTimeout(ctx, 1*time.Minute)
 			defer cancel()
-			value, _, err := promAPI.Query(context, query, time.Now())
+			value, err := prom.InstantQuery(context, query)
 			if err != nil {
 				ginkgo.GinkgoLogr.Error(err, "Unable to query prom API")
 				// try again

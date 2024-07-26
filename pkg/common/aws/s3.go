@@ -8,13 +8,18 @@ import (
 	"strings"
 	"time"
 
+	"github.com/openshift/osde2e/pkg/common/config"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 )
 
-const velerosubstr = "managed-velero"
+const (
+	velerosubstr = "managed-velero"
+	logsBucket   = "osde2e-logs"
+)
 
 // ReadFromS3Session reads a key from S3 using given AWS context.
 func ReadFromS3Session(session *session.Session, inputKey string) ([]byte, error) {
@@ -31,7 +36,6 @@ func ReadFromS3Session(session *session.Session, inputKey string) ([]byte, error
 		Bucket: aws.String(bucket),
 		Key:    aws.String(key),
 	})
-
 	if err != nil {
 		return nil, err
 	}
@@ -55,7 +59,6 @@ func WriteToS3Session(session *session.Session, outputKey string, data []byte) {
 		Key:    aws.String(key),
 		Body:   reader,
 	})
-
 	if err != nil {
 		log.Printf("Failed to upload to s3 %s", err.Error())
 		return
@@ -91,7 +94,9 @@ func ParseS3URL(s3URL string) (string, string, error) {
 
 // CleanupS3Buckets finds buckets with substring "osde2e-" or "managed-velero",
 // older than given duration, then deletes bucket objects and then buckets
-func (CcsAwsSession *ccsAwsSession) CleanupS3Buckets(olderthan time.Duration, dryrun bool) error {
+func (CcsAwsSession *ccsAwsSession) CleanupS3Buckets(olderthan time.Duration, dryrun bool, sendSummary bool,
+	deletedCounter *int, failedCounter *int, errorBuilder *strings.Builder,
+) error {
 	err := CcsAwsSession.GetAWSSessions()
 	if err != nil {
 		return err
@@ -105,24 +110,35 @@ func (CcsAwsSession *ccsAwsSession) CleanupS3Buckets(olderthan time.Duration, dr
 	batchDeleteClient := s3manager.NewBatchDeleteWithClient(CcsAwsSession.s3)
 
 	for _, bucket := range result.Buckets {
-		if (strings.Contains(*bucket.Name, rolesubstr) || strings.Contains(*bucket.Name, velerosubstr)) && time.Since(*bucket.CreationDate) > olderthan {
+		if (strings.Contains(*bucket.Name, rolesubstr) || strings.Contains(*bucket.Name, velerosubstr)) && *bucket.Name != logsBucket && time.Since(*bucket.CreationDate) > olderthan {
 			fmt.Printf("Bucket will be deleted: %s\n", bucket)
 			if !dryrun {
 				iter := s3manager.NewDeleteListIterator(CcsAwsSession.s3, &s3.ListObjectsInput{
 					Bucket: bucket.Name,
 				})
 				if err := batchDeleteClient.Delete(aws.BackgroundContext(), iter); err != nil {
-					fmt.Printf("error deleting objects from bucket %s, skipping: %s", *bucket.Name, err)
+					errorMsg := fmt.Sprintf("error deleting objects from bucket %s, skipping: %s", *bucket.Name, err)
+					fmt.Println(errorMsg)
+					*failedCounter++
+					if sendSummary && errorBuilder.Len() < 10000 {
+						errorBuilder.WriteString(strings.Replace(errorMsg, `""`, "", -1))
+					}
 					continue
 				}
 				fmt.Println("Deleted object(s) from bucket")
 				if _, err := CcsAwsSession.s3.DeleteBucket(&s3.DeleteBucketInput{
 					Bucket: bucket.Name,
 				}); err != nil {
-					fmt.Printf("error deleting bucket: %s: %s", *bucket.Name, err)
+					errorMsg := fmt.Sprintf("error deleting bucket: %s: %s", *bucket.Name, err)
+					fmt.Println(errorMsg)
+					*failedCounter++
+					if sendSummary && errorBuilder.Len() < config.SlackMessageLength {
+						errorBuilder.WriteString(strings.Replace(errorMsg, `""`, "", -1))
+					}
 					continue
 				}
 				fmt.Println("Deleted bucket")
+				*deletedCounter++
 			}
 		}
 	}

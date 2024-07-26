@@ -8,11 +8,6 @@ import (
 
 // The rest of the SPI functions will be wrapped by the OCM provider until the ROSA provider can be adequately refactored.
 
-// ScaleCluster will call ScaleCluster from the OCM provider.
-func (m *ROSAProvider) ScaleCluster(clusterID string, numComputeNodes int) error {
-	return m.ocmProvider.ScaleCluster(clusterID, numComputeNodes)
-}
-
 // ListClusters will call ListClusters from the OCM provider.
 func (m *ROSAProvider) ListClusters(query string) ([]*spi.Cluster, error) {
 	return m.ocmProvider.ListClusters(query)

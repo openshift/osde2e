@@ -27,7 +27,7 @@ const (
 	JobName = "jobName"
 
 	// JobID is the ID designated by prow for this run
-	// Env: BUILD_NUMBER
+	// Env: BUILD_ID
 	JobID = "jobID"
 
 	// ProwJobId is the ID designated by prow for this run
@@ -99,6 +99,10 @@ const (
 	// SharedDir is the location where files to be used by other processes/programs are stored.
 	// This is primarily used when running within Prow and using additional steps after osde2e finishes.
 	SharedDir = "sharedDir"
+
+	KonfluxTestOutputFile = "konfluxResultsPath"
+
+	SlackMessageLength int = 4000
 )
 
 // This is a config key to secret file mapping. We will attempt to read in from secret files before loading anything else.
@@ -234,6 +238,10 @@ var Tests = struct {
 	// Env: SLACK_CHANNEL
 	SlackChannel string
 
+	// Slack Webhook is the URL for Cloud Account Cleanup Report workflow to send notifications.
+	// Env: SLACK_WEBHOOK
+	SlackWebhook string
+
 	// GinkgoSkip is a regex passed to Ginkgo that skips any test suites matching the regex. ex. "Operator"
 	// Env: GINKGO_SKIP
 	GinkgoSkip string
@@ -300,6 +308,7 @@ var Tests = struct {
 	PollingTimeout:             "tests.pollingTimeout",
 	ServiceAccount:             "tests.serviceAccount",
 	SlackChannel:               "tests.slackChannel",
+	SlackWebhook:               "tests.slackWebhook",
 	GinkgoSkip:                 "tests.ginkgoSkip",
 	GinkgoFocus:                "tests.focus",
 	GinkgoLogLevel:             "tests.ginkgoLogLevel",
@@ -450,6 +459,10 @@ var Cluster = struct {
 	// EnableFips enables the FIPS test suite
 	// Env: ENABLE_FIPS
 	EnableFips string
+
+	// FedRamp will enable OSDe2e to run in a FedRamp environment
+	// Env: FEDRAMP
+	FedRamp string
 }{
 	MultiAZ:                             "cluster.multiAZ",
 	Channel:                             "cluster.channel",
@@ -488,6 +501,7 @@ var Cluster = struct {
 	Reused:                              "cluster.rused",
 	InspectNamespaces:                   "cluster.inspectNamespaces",
 	EnableFips:                          "cluster.enableFips",
+	FedRamp:                             "cluster.fedRamp",
 }
 
 // CloudProvider config keys.
@@ -543,20 +557,6 @@ var Addons = struct {
 	CleanupHarnesses: "addons.cleanupHarnesses",
 	SkipAddonList:    "addons.skipAddonlist",
 	Parameters:       "addons.parameters",
-}
-
-// Scale config keys.
-var Scale = struct {
-	// WorkloadsRepository is the git repository where the openshift-scale workloads are located.
-	// Env: WORKLOADS_REPO
-	WorkloadsRepository string
-
-	// WorkloadsRepositoryBranch is the branch of the git repository to use.
-	// Env: WORKLOADS_REPO_BRANCH
-	WorkloadsRepositoryBranch string
-}{
-	WorkloadsRepository:       "scale.workloadsRepository",
-	WorkloadsRepositoryBranch: "scale.workloadsRepositoryBranch",
 }
 
 // Prometheus config keys.
@@ -642,9 +642,9 @@ func InitOSDe2eViper() {
 	viper.BindEnv(JobType, "JOB_TYPE")
 
 	viper.SetDefault(JobID, -1)
-	viper.BindEnv(JobID, "BUILD_NUMBER")
+	viper.BindEnv(JobID, "BUILD_ID")
 
-	viper.SetDefault(BaseJobURL, "https://gcsweb-ci.apps.ci.l2s4.p1.openshiftapps.com/gcs/origin-ci-test/logs")
+	viper.SetDefault(BaseJobURL, "https://gcsweb-ci.apps.ci.l2s4.p1.openshiftapps.com/gcs/test-platform-results/logs")
 	viper.BindEnv(BaseJobURL, "BASE_JOB_URL")
 
 	viper.SetDefault(BaseProwURL, "https://deck-ci.apps.ci.l2s4.p1.openshiftapps.com")
@@ -656,6 +656,8 @@ func InitOSDe2eViper() {
 	viper.BindEnv(ReportDir, "REPORT_DIR")
 
 	viper.BindEnv(SharedDir, "SHARED_DIR")
+
+	viper.BindEnv(KonfluxTestOutputFile, "KONFLUX_TEST_OUTPUT_FILE")
 
 	viper.BindEnv(Suffix, "SUFFIX")
 
@@ -754,6 +756,9 @@ func InitOSDe2eViper() {
 
 	viper.SetDefault(Tests.SlackChannel, "sd-cicd-alerts")
 	viper.BindEnv(Tests.SlackChannel, "SLACK_CHANNEL")
+
+	viper.BindEnv(Tests.SlackWebhook, "SLACK_WEBHOOK")
+	RegisterSecret(Tests.SlackWebhook, "cleanup-job-notification-webhook")
 
 	// ----- Cluster -----
 	viper.SetDefault(Cluster.MultiAZ, false)
@@ -860,6 +865,10 @@ func InitOSDe2eViper() {
 	viper.SetDefault(Cluster.EnableFips, false)
 	viper.BindEnv(Cluster.EnableFips, "ENABLE_FIPS")
 
+	viper.SetDefault(Cluster.FedRamp, false)
+	viper.BindEnv(Cluster.FedRamp, "FEDRAMP")
+	RegisterSecret(Cluster.FedRamp, "fedramp")
+
 	// ----- Cloud Provider -----
 	viper.SetDefault(CloudProvider.CloudProviderID, "aws")
 	viper.BindEnv(CloudProvider.CloudProviderID, "CLOUD_PROVIDER_ID")
@@ -883,13 +892,6 @@ func InitOSDe2eViper() {
 
 	viper.SetDefault(Addons.SkipAddonList, false)
 	viper.BindEnv(Addons.SkipAddonList, "SKIP_ADDON_LIST")
-
-	// ----- Scale -----
-	viper.SetDefault(Scale.WorkloadsRepository, "https://github.com/openshift-scale/workloads")
-	viper.BindEnv(Scale.WorkloadsRepository, "WORKLOADS_REPO")
-
-	viper.SetDefault(Scale.WorkloadsRepositoryBranch, "master")
-	viper.BindEnv(Scale.WorkloadsRepositoryBranch, "WORKLOADS_REPO_BRANCH")
 
 	// ----- Prometheus -----
 	viper.BindEnv(Prometheus.Address, "PROMETHEUS_ADDRESS")
@@ -936,6 +938,7 @@ func InitOSDe2eViper() {
 func init() {
 	InitOSDe2eViper()
 	InitAWSViper()
+	InitGCPViper()
 }
 
 // PostProcess is a variety of post-processing commands that is intended to be run after a config is loaded.

@@ -9,12 +9,12 @@ import (
 	. "github.com/onsi/gomega"
 
 	configV1 "github.com/openshift/api/config/v1"
+	"github.com/openshift/osde2e-common/pkg/clients/openshift"
+	"github.com/openshift/osde2e-common/pkg/clients/prometheus"
 	"github.com/openshift/osde2e/pkg/common/alert"
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/label"
-	osde2ePrometheus "github.com/openshift/osde2e/pkg/common/prometheus"
 	alertmanagerConfig "github.com/prometheus/alertmanager/config"
-	prometheusv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	prometheusModel "github.com/prometheus/common/model"
 	"gopkg.in/yaml.v3"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -168,10 +168,11 @@ var _ = ginkgo.Describe(inhibitionsTestName, label.Operators, func() {
 		// the clusteroperatordown/degraded alerts take 10 minutes to trip
 		time.Sleep(10 * time.Minute)
 
-		// connect to prometheus
-		prometheusClient, err := osde2ePrometheus.CreateClusterClient(h)
-		Expect(err).To(BeNil())
-		prometheusApiClient := prometheusv1.NewAPI(prometheusClient)
+		oc, err := openshift.NewFromRestConfig(h.GetConfig(), ginkgo.GinkgoLogr)
+		Expect(err).NotTo(HaveOccurred(), "unable to create openshift client")
+		prom, err := prometheus.New(ctx, oc)
+		Expect(err).NotTo(HaveOccurred(), "unable to create prometheus client")
+		prometheusApiClient := prom.GetClient()
 
 		timeout, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
