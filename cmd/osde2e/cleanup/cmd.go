@@ -137,6 +137,7 @@ func init() {
 	})
 }
 
+//nolint:gocyclo
 func run(cmd *cobra.Command, argv []string) error {
 	var err error
 	if err = common.LoadConfigs(args.configString, args.customConfig, args.secretLocations); err != nil {
