@@ -13,7 +13,7 @@ const (
 	VersionPrefix = "openshift-v"
 )
 
-// RandomStr returns a random varchar string given a specified length
+// RandomStr returns a random varchar string given a specified length - brady was here
 func RandomStr(length int) (str string) {
 	rand.Seed(time.Now().UnixNano())
 	chars := "0123456789abcdefghijklmnopqrstuvwxyz"
