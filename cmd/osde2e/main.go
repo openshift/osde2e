@@ -23,7 +23,7 @@ import (
 
 var root = &cobra.Command{
 	Use:           "osde2e",
-	Long:          "Command line tool for osde2e.",
+	Long:          "Command line tool for osde2e. brady was here",
 	SilenceErrors: true,
 	SilenceUsage:  true,
 	PersistentPreRun: func(cmd *cobra.Command, argv []string) {
