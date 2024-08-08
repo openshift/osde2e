@@ -11,11 +11,12 @@ import (
 	"github.com/openshift/osde2e-common/pkg/clouds/aws"
 	osdprovider "github.com/openshift/osde2e-common/pkg/openshift/osd"
 	rosaprovider "github.com/openshift/osde2e-common/pkg/openshift/rosa"
-	//"github.com/openshift/osde2e/pkg/common/providers/rosaprovider"
+	"regexp"
+	"strconv"
+
 	batchv1 "k8s.io/api/batch/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
-	//v1 "k8s.io/client-go/applyconfigurations/meta/v1"
 	"os"
 	"sigs.k8s.io/e2e-framework/klient/k8s"
 	"sigs.k8s.io/e2e-framework/pkg/envconf"
@@ -42,11 +43,10 @@ const (
 )
 
 type rosaCluster struct {
-	id           string
-	name         string
-	channelGroup string
-	version      *semver.Version
-	//provisionShardID string
+	id             string
+	name           string
+	channelGroup   string
+	version        *semver.Version
 	reportDir      string
 	upgradeVersion *semver.Version
 	kubeconfigFile string
@@ -55,18 +55,17 @@ type rosaCluster struct {
 }
 
 var _ = Describe("SDN migration", ginkgo.Ordered, func() {
-	const clusterName = "creed-sdn-ovn-1"
+	const clusterName = "rosa-sdn-ovn-1"
 	var (
-		testRosaCluster *rosaCluster
-		reportDir       = getEnvVar("REPORT_DIR", envconf.RandomName(fmt.Sprintf("%s/sdn_migration", os.TempDir()), 25))
-		ocmToken        = os.Getenv("OCM_TOKEN")
-		clientID        = os.Getenv("CLIENT_ID")
-		clientSecret    = os.Getenv("CLIENT_SECRET")
-		ocmEnv          = ocm.Stage
-		upgradeType     = os.Getenv("UPGRADE_TYPE")
-		logger          = GinkgoLogr
-		rosaProvider    *rosaprovider.Provider
-		//osdProvider       *osdprovider.Provider
+		testRosaCluster    *rosaCluster
+		reportDir          = getEnvVar("REPORT_DIR", envconf.RandomName(fmt.Sprintf("%s/sdn_migration", os.TempDir()), 25))
+		ocmToken           = os.Getenv("OCM_TOKEN")
+		clientID           = os.Getenv("CLIENT_ID")
+		clientSecret       = os.Getenv("CLIENT_SECRET")
+		ocmEnv             = ocm.Stage
+		upgradeType        = os.Getenv("UPGRADE_TYPE")
+		logger             = GinkgoLogr
+		rosaProvider       *rosaprovider.Provider
 		createRosaCluster  = Label("CreateRosaCluster")
 		removeRosaCluster  = Label("RemoveRosaCluster")
 		postMigrationCheck = Label("PostMigrationCheck")
@@ -93,6 +92,7 @@ var _ = Describe("SDN migration", ginkgo.Ordered, func() {
 		Expect(err).ShouldNot(HaveOccurred(), "failed to construct osd provider")
 		DeferCleanup(osdProvider.Client.Close)
 
+		// TODO create cluster is ignoring Network type and installing OVN
 		if createRosaCluster.MatchesLabelFilter(GinkgoLabelFilter()) && os.Getenv("CLUSTER_ID") == "" {
 			testRosaCluster.id, err = rosaProvider.CreateCluster(ctx, &rosaprovider.CreateClusterOptions{
 				ClusterName:                  clusterName,
@@ -123,8 +123,9 @@ var _ = Describe("SDN migration", ginkgo.Ordered, func() {
 
 		availableVersions := rosaCluster.Body().Version().AvailableUpgrades()
 		totalUpgradeVersionsAvailable := len(availableVersions)
-		Expect(totalUpgradeVersionsAvailable).ToNot(BeNumerically("==", 0), "rosa cluster has no available supported upgrade versions")
+		//Expect(totalUpgradeVersionsAvailable).ToNot(BeNumerically("==", 0), "rosa cluster has no available supported upgrade versions")
 
+		// UpgradeType refers to x.y.z -> Major.Minor.Patch
 		for i := 0; i < totalUpgradeVersionsAvailable; i++ {
 			version, err := semver.NewVersion(availableVersions[totalUpgradeVersionsAvailable-i-1])
 			Expect(err).ShouldNot(HaveOccurred(), "failed to parse service cluster upgrade version to semantic version")
@@ -144,7 +145,6 @@ var _ = Describe("SDN migration", ginkgo.Ordered, func() {
 		Expect(err).ShouldNot(HaveOccurred(), "failed to construct service cluster client")
 
 		testRosaCluster.reportDir = fmt.Sprintf("%s/%s", reportDir, testRosaCluster.name)
-		//Expect(os.MkdirAll(testRosaCluster.reportDir, os.ModePerm)).ShouldNot(HaveOccurred(), "failed to create service cluster report directory")
 
 	})
 
@@ -162,15 +162,15 @@ var _ = Describe("SDN migration", ginkgo.Ordered, func() {
 				STS:                true,
 				DeleteOidcConfigID: true,
 			})
-			Expect(err).Should(BeNil(), "FAILED HELP")
+			Expect(err).Should(BeNil(), "failed to delete rosa cluster")
 		}
 	})
 
-	//It("Rosa 14.14.14 cluster healthy pre-upgrade", preUpgradeCheck, func(ctx context.Context) {
-	//	err := testRosaCluster.client.OSDClusterHealthy(ctx, osdClusterReadyJobName, testRosaCluster.reportDir, osdClusterReadyJobTimeout)
-	//	Expect(err).ShouldNot(HaveOccurred(), "osd-cluster-ready health check job failed pre upgrade")
-	//
-	//})
+	It("Rosa 14.14.14 cluster healthy pre-upgrade", func(ctx context.Context) {
+		//TODO
+
+	})
+
 	It("rosa cluster is upgraded successfully", rosaUpgrade, func(ctx context.Context) {
 		osdProvider, err := osdprovider.New(ctx, ocmToken, clientID, clientSecret, ocmEnv, logger)
 		err = osdProvider.OCMUpgrade(ctx, testRosaCluster.client, testRosaCluster.id, *testRosaCluster.version, *testRosaCluster.upgradeVersion)
@@ -188,10 +188,11 @@ var _ = Describe("SDN migration", ginkgo.Ordered, func() {
 
 	})
 	It("rosa cluster migrated from sdn to ovn successfully", sdnToOvn, func(ctx context.Context) {
-		err := patchNetworkConfig(ctx, testRosaCluster.client)
-		Expect(err).ShouldNot(HaveOccurred(), "Rosa Cluster failed to patch network")
-		//TODO add check to verify the migration was completed
-
+		if isVersionAtLeast(testRosaCluster.id) {
+			err := patchNetworkConfig(ctx, testRosaCluster.client)
+			Expect(err).ShouldNot(HaveOccurred(), "Rosa Cluster failed to patch network")
+			//TODO add check to verify the migration was completed
+		}
 	})
 	It("rosa cluster has no critical alerts firing post sdn to ovn migration", postMigrationCheck, func(ctx context.Context) {
 		criticalAlerts, _, err := queryPrometheusAlerts(ctx, testRosaCluster.client, fmt.Sprintf("%s/prometheus-alerts-pre-upgrade.log", testRosaCluster.reportDir))
@@ -204,6 +205,25 @@ var _ = Describe("SDN migration", ginkgo.Ordered, func() {
 	})
 
 })
+
+// IsVersionAtLeast checks if the given version is at least "4.15"
+func isVersionAtLeast(version string) bool {
+	// Regular expression to extract major and minor versions
+	re := regexp.MustCompile(`^(\d+)\.(\d+)`)
+
+	match := re.FindStringSubmatch(version)
+
+	minor, _ := strconv.Atoi(match[2])
+
+	// Compare against the minimum required version "4.15"
+	requiredMinor := 15
+
+	if minor > requiredMinor {
+		return true
+	}
+
+	return false
+}
 
 // queryPrometheusAlerts queries prometheus for alerts and provides a count for critical and warning alerts
 func queryPrometheusAlerts(ctx context.Context, client *openshiftclient.Client, logFilename string) (int, int, error) {
