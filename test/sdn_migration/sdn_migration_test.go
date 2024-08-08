@@ -125,7 +125,7 @@ var _ = Describe("SDN migration", ginkgo.Ordered, func() {
 		totalUpgradeVersionsAvailable := len(availableVersions)
 		//Expect(totalUpgradeVersionsAvailable).ToNot(BeNumerically("==", 0), "rosa cluster has no available supported upgrade versions")
 
-		// UpgradeType refers to x.y.z -> Major.Minor.Patch
+		// UpgradeType corresponds to x.y.z in the format Major.Minor.Patch.
 		for i := 0; i < totalUpgradeVersionsAvailable; i++ {
 			version, err := semver.NewVersion(availableVersions[totalUpgradeVersionsAvailable-i-1])
 			Expect(err).ShouldNot(HaveOccurred(), "failed to parse service cluster upgrade version to semantic version")

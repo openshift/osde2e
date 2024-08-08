@@ -44,7 +44,8 @@ performed. For example:
 * RH OCM account with long-lived token
 
 ### Run Ginkgo
-*NOTE: CLUSTER_ID is optional (internal ID)
+*NOTE: CLUSTER_ID is optional (internal ID) and UPGRADE_TYPE can be either "Z" or "Y". 
+It corresponds to x.y.z in the format Major.Minor.Patch.
 ```shell
 AWS_REGION=<AWS_REGION> \
 AWS_SECRET_ACCESS_KEY=<AWS_SECRET_ACCESS_KEY> \
