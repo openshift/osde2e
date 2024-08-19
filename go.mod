@@ -33,7 +33,7 @@ require (
 	github.com/prometheus/alertmanager v0.27.0
 	github.com/prometheus/client_golang v1.20.0
 	github.com/prometheus/common v0.55.0
-	github.com/slack-go/slack v0.13.1
+	github.com/slack-go/slack v0.14.0
 	github.com/spf13/afero v1.11.0
 	github.com/spf13/cobra v1.8.1
 	github.com/spf13/pflag v1.0.5
