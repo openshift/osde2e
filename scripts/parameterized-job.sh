@@ -25,7 +25,8 @@ docker create --name osde2e-run -e OCM_TOKEN \
 	-e POLLING_TIMEOUT \
 	-e OCM_CCS \
 	-e MULTI_AZ \
-	-e REPORT_DIR="/tmp/${REPORT_DIR}" quay.io/app-sre/osde2e test --configs "${CONFIGS}" "${ADDITIONAL_FLAGS}"
+	-e REPORT_DIR="/tmp/${REPORT_DIR}" \
+	quay.io/redhat-services-prod/osde2e-cicada-tenant/osde2e:latest test --configs "${CONFIGS}" "${ADDITIONAL_FLAGS}"
 
 docker start -a osde2e-run
 

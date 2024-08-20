@@ -84,11 +84,11 @@ export CONTAINER_ENGINE=<docker|podman>
 
 # Build Image
 make build-image
-$CONTAINER_ENGINE run quay.io/app-sre/osde2e:latest <args>
+$CONTAINER_ENGINE run quay.io/redhat-services-prod/osde2e-cicada-tenant/osde2e:latest <args>
 
 # Pull Image
-$CONTAINER_ENGINE pull quay.io/app-sre/osde2e:latest
-$CONTAINER_ENGINE run quay.io/app-sre/osde2e:latest <args>
+$CONTAINER_ENGINE pull quay.io/redhat-services-prod/osde2e-cicada-tenant/osde2e:latest
+$CONTAINER_ENGINE run quay.io/redhat-services-prod/osde2e-cicada-tenant/osde2e:latest <args>
 ```
 
 ## Config Input
@@ -336,7 +336,7 @@ Periodic jobs are run daily validating Managed OpenShift clusters, using
 [configs]:/configs/
 [config package]:/pkg/common/config/config.go
 [ocm resources]: https://gitlab.cee.redhat.com/service/ocm-resources/
-[OSDE2E Quay Image]: quay.io/app-sre/osde2e
+[OSDE2E Quay Image]: quay.io/redhat-services-prod/osde2e-cicada-tenant/osde2e
 [OpenShift Dedicated]: https://docs.openshift.com/dedicated/welcome/index.html
 [OSDE2E Test Harness]: https://github.com/openshift/osde2e-example-test-harness
 [OpenShift Offline Token]:https://cloud.redhat.com/openshift/token
