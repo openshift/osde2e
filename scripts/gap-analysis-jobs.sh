@@ -18,7 +18,8 @@ docker create --name "${CONTAINER_NAME}" -e OCM_TOKEN \
 	-e AWS_REGION \
 	-e GCP_CREDS_JSON \
 	-e INSTALL_LATEST_NIGHTLY \
-	-e REPORT_DIR='/tmp/osde2e-report' quay.io/app-sre/osde2e test --configs "${CONFIGS}"
+	-e REPORT_DIR='/tmp/osde2e-report' \
+	quay.io/redhat-services-prod/osde2e-cicada-tenant/osde2e:latest test --configs "${CONFIGS}"
 
 # Start the container
 docker start -a "${CONTAINER_NAME}"

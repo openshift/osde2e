@@ -13,7 +13,7 @@ BUILD_ID = os.environ['BUILD_ID']
 JENKINS_URL = os.environ['JENKINS_URL']
 CWD = pathlib.Path(__file__).parent.absolute()
 UID = os.getuid()
-OSDe2eImage = "quay.io/app-sre/osde2e:latest"
+OSDe2eImage = "quay.io/redhat-services-prod/osde2e-cicada-tenant/osde2e:latest"
 
 UPSTREAM_JOBS = {
     "openshift-saas-deploy-saas-clusterimagesets-stage-osd-stage-hives02ue1": "stage",
