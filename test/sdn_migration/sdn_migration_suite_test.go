@@ -1,6 +1,7 @@
 package sdn_migration_test
 
 import (
+	"fmt"
 	"os"
 	"testing"
 	"time"
@@ -21,11 +22,21 @@ func TestSdnMigration(t *testing.T) {
 	}
 
 	if suiteConfig.LabelFilter == "" {
-		suiteConfig.LabelFilter = "CreateRosaCluster|| PostMigrationCheck || " +
-			"RosaUpgrade || PostUpgradeCheck || SdnToOvn || RemoveRosaCluster "
+		suiteConfig.LabelFilter = "CreateRosaCluster || PostMigrationCheck || " +
+			"RosaUpgrade || PostUpgradeCheck || SdnToOvn || RemoveRosaCluster"
 	}
 
-	reporterConfig.JUnitReport = "junit.xml"
+	prefix := "sdn_migration-"
+
+	// Get the current date and time
+	now := time.Now()
+
+	// Format the date and time
+	dateTime := now.Format("20060102_150405")
+
+	// Construct the filename
+	filename := fmt.Sprintf("%s%s.xml", prefix, dateTime)
+	reporterConfig.JUnitReport = filename //"junit.xml"
 
 	RunSpecs(t, "SdnMigration Suite", suiteConfig, reporterConfig)
 }
