@@ -12,7 +12,7 @@ spec:
       type: string
     - description: osde2e configs (comma delimited string of configurations)
       name: OSDE2E_CONFIGS
-      default: aws,stage,sts,pr-check
+      default: rosa,stage,pr-check
       type: string
   tasks:
     - name: parse-component-image-spec
