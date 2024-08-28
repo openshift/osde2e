@@ -15,6 +15,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 	"log"
+	"strconv"
 	"strings"
 
 	batchv1 "k8s.io/api/batch/v1"
@@ -66,17 +67,24 @@ type rosaCluster struct {
 }
 
 var _ = Describe("SDN migration", ginkgo.Ordered, func() {
-	const clusterName = "rosa-sdn-ovn-1"
 	var (
+		clusterName        = os.Getenv("CLUSTER_NAME")
 		testRosaCluster    *rosaCluster
+		clusterOptions     *rosaprovider.CreateClusterOptions
 		reportDir          = getEnvVar("REPORT_DIR", envconf.RandomName(fmt.Sprintf("%s/sdn_migration", os.TempDir()), 25))
 		ocmToken           = os.Getenv("OCM_TOKEN")
 		clientID           = os.Getenv("CLIENT_ID")
 		clientSecret       = os.Getenv("CLIENT_SECRET")
+		region             = os.Getenv("REGION")
+		minReplicas, _     = strconv.Atoi(os.Getenv("MIN_REPLICAS"))
+		maxReplicas, _     = strconv.Atoi(os.Getenv("MAX_REPLICAS"))
+		replicas, _        = strconv.Atoi(os.Getenv("REPLICAS"))
 		ocmEnv             = ocm.Stage
 		logger             = GinkgoLogr
 		rosaProvider       *rosaprovider.Provider
 		createRosaCluster  = Label("CreateRosaCluster")
+		enableAutoScaling  = Label("EnableAutoScaling")
+		enableClusterProxy = Label("EnableClusterProxy")
 		removeRosaCluster  = Label("RemoveRosaCluster")
 		postMigrationCheck = Label("PostMigrationCheck")
 		rosaUpgrade        = Label("RosaUpgrade")
@@ -93,7 +101,7 @@ var _ = Describe("SDN migration", ginkgo.Ordered, func() {
 		Expect(ocmToken).ShouldNot(BeEmpty(), "ocm token is undefined")
 
 		rosaProvider, err = rosaprovider.New(ctx, ocmToken, clientID, clientSecret, ocmEnv, logger, &aws.AWSCredentials{
-			Region:          "us-east-1",
+			Region:          region,
 			SecretAccessKey: secretAccessKey,
 			AccessKeyID:     accessKeyID,
 		})
@@ -102,7 +110,22 @@ var _ = Describe("SDN migration", ginkgo.Ordered, func() {
 		Expect(err).ShouldNot(HaveOccurred(), "failed to construct osd provider")
 		DeferCleanup(osdProvider.Client.Close)
 
-		if createRosaCluster.MatchesLabelFilter(GinkgoLabelFilter()) && os.Getenv("CLUSTER_ID") == "" {
+		if createRosaCluster.MatchesLabelFilter(GinkgoLabelFilter()) && !enableAutoScaling.MatchesLabelFilter(GinkgoLabelFilter()) {
+			clusterOptions = &rosaprovider.CreateClusterOptions{
+				ClusterName:                  clusterName,
+				Version:                      "4.14.14",
+				UseDefaultAccountRolesPrefix: true,
+				STS:                          true,
+				Mode:                         "auto",
+				ChannelGroup:                 "stable",
+				ComputeMachineType:           "m5.xlarge",
+				Replicas:                     replicas,
+				MultiAZ:                      true,
+				ETCDEncryption:               true,
+				NetworkType:                  "OpenShiftSDN",
+				SkipHealthCheck:              true,
+			}
+		} else {
 			testRosaCluster.id, err = rosaProvider.CreateCluster(ctx, &rosaprovider.CreateClusterOptions{
 				ClusterName:                  clusterName,
 				Version:                      "4.14.14",
@@ -111,14 +134,24 @@ var _ = Describe("SDN migration", ginkgo.Ordered, func() {
 				Mode:                         "auto",
 				ChannelGroup:                 "stable",
 				ComputeMachineType:           "m5.xlarge",
-				MinReplicas:                  3,
-				MaxReplicas:                  24,
+				MinReplicas:                  minReplicas,
+				MaxReplicas:                  maxReplicas,
 				MultiAZ:                      true,
 				EnableAutoscaling:            true,
 				ETCDEncryption:               true,
 				NetworkType:                  "OpenShiftSDN",
 				SkipHealthCheck:              true,
 			})
+		}
+
+		if os.Getenv("CLUSTER_ID") == "" {
+			if enableClusterProxy.MatchesLabelFilter(GinkgoLabelFilter()) {
+				clusterOptions.HTTPSProxy = os.Getenv("HTTPS_PROXY")
+				clusterOptions.HTTPProxy = os.Getenv("HTTP_PROXY")
+				clusterOptions.AdditionalTrustBundleFile = os.Getenv("CA_BUNDLE")
+				clusterOptions.SubnetIDs = os.Getenv("SUBNETS")
+			}
+			testRosaCluster.id, err = rosaProvider.CreateCluster(ctx, clusterOptions)
 			Expect(err).ShouldNot(HaveOccurred(), "failed to create rosa cluster")
 		} else {
 			testRosaCluster.id = os.Getenv("CLUSTER_ID")
@@ -145,10 +178,9 @@ var _ = Describe("SDN migration", ginkgo.Ordered, func() {
 	AfterAll(func(ctx context.Context) {
 		if removeRosaCluster.MatchesLabelFilter(GinkgoLabelFilter()) {
 			rosaProvider, err := rosaprovider.New(ctx, ocmToken, clientID, clientSecret, ocmEnv, logger, &aws.AWSCredentials{
-				Profile:         "",
-				Region:          "us-east-1",
-				SecretAccessKey: os.Getenv("AWS_SECRET_ACCESS_KEY"),
-				AccessKeyID:     os.Getenv("AWS_ACCESS_KEY_ID"),
+				Region:          region,
+				SecretAccessKey: secretAccessKey,
+				AccessKeyID:     accessKeyID,
 			})
 			err = rosaProvider.DeleteCluster(ctx, &rosaprovider.DeleteClusterOptions{
 				ClusterName:        testRosaCluster.name,
@@ -192,6 +224,11 @@ var _ = Describe("SDN migration", ginkgo.Ordered, func() {
 		Expect(criticalAlerts).ToNot(BeNumerically(">", 0), "critical alerts are firing pre upgrade")
 		err = osdClusterReadyHealthCheck(ctx, testRosaCluster.client, "post-upgrade", testRosaCluster.reportDir)
 		Expect(err).ShouldNot(HaveOccurred(), "osd-cluster-ready health check job failed post upgrade")
+
+	})
+
+	It("rosa cluster scales node count", enableAutoScaling, func(ctx context.Context) {
+		//TODO
 
 	})
 
