@@ -146,8 +146,8 @@ var _ = Describe("SDN migration", ginkgo.Ordered, func() {
 
 		if os.Getenv("CLUSTER_ID") == "" {
 			if enableClusterProxy.MatchesLabelFilter(GinkgoLabelFilter()) {
-				clusterOptions.HTTPSProxy = os.Getenv("HTTPS_PROXY")
-				clusterOptions.HTTPProxy = os.Getenv("HTTP_PROXY")
+				clusterOptions.HTTPSProxy = os.Getenv("AWS_HTTPS_PROXY")
+				clusterOptions.HTTPProxy = os.Getenv("AWS_HTTP_PROXY")
 				clusterOptions.AdditionalTrustBundleFile = os.Getenv("CA_BUNDLE")
 				clusterOptions.SubnetIDs = os.Getenv("SUBNETS")
 			}
@@ -193,6 +193,10 @@ var _ = Describe("SDN migration", ginkgo.Ordered, func() {
 	})
 
 	It("rosa cluster is upgraded to 4.15.8 successfully", rosaUpgrade, func(ctx context.Context) {
+		if enableClusterProxy.MatchesLabelFilter(GinkgoLabelFilter()) {
+			err := patchProxyConfigv1(ctx, testRosaCluster.client)
+			Expect(err).ShouldNot(HaveOccurred(), "Failed to patch cluster proxy")
+		}
 		err := patchVersionConfig(ctx, testRosaCluster.client, channel4_15, image4_15, version4_15)
 		Expect(err).ShouldNot(HaveOccurred(), "rosa cluster upgrade failed")
 		err = checkUpgradeStatus(ctx, testRosaCluster.client, version4_15)
@@ -641,6 +645,30 @@ func patchNetworkConfigv1(ctx context.Context, client *openshiftclient.Client) e
 			"annotations": map[string]interface{}{
 				"unsupported-red-hat-internal-testing": "true",
 			},
+		},
+	})
+
+	if err != nil {
+		panic(err)
+	}
+
+	if err = client.Patch(
+		ctx,
+		&networkConfig,
+		k8s.Patch{PatchType: types.MergePatchType, Data: mergePatch},
+	); err != nil {
+		panic(err)
+	}
+	return nil
+}
+
+func patchProxyConfigv1(ctx context.Context, client *openshiftclient.Client) error {
+
+	networkConfig := configv1.Proxy{ObjectMeta: v1.ObjectMeta{Name: "cluster"}}
+
+	mergePatch, err := json.Marshal(map[string]interface{}{
+		"spec": map[string]interface{}{
+			"noProxy": "api.stage.openshift.com",
 		},
 	})
 
