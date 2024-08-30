@@ -58,10 +58,7 @@ require (
 	sigs.k8s.io/e2e-framework v0.3.0
 )
 
-require (
-	github.com/openshift/api v0.0.0-20240530151505-37be9ab109d3
-	github.com/openshift/cloud-ingress-operator v0.0.0-20240513131409-8957bf674c69
-)
+require github.com/openshift/api v0.0.0-20240530151505-37be9ab109d3
 
 require (
 	cloud.google.com/go v0.115.1 // indirect
