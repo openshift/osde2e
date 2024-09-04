@@ -1,12 +1,11 @@
 # Rosa SDN to OVN Migration Test Suite
 
-
 This folder contains the test suite to validate rosa cluster upgrades and network
 migration from SDN to OVN for 14.14.x cluster.
 
-
 The test suite can be easily run by invoking `ginkgo run` directly,
 from a `compiled binary`
+
 ## Test Suite Model
 
 Below outlines what the test suite is capable of:
