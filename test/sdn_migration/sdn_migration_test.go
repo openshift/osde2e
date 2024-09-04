@@ -545,7 +545,6 @@ func checkUpgradeStatus(ctx context.Context, client *openshiftclient.Client, upg
 // patchVersionConfig updates the version config to the desired version to initiate an upgrade
 func patchVersionConfig(ctx context.Context, client *openshiftclient.Client, channel string, image string, version string) error {
 	clusterVersionConfing := configv1.ClusterVersion{
-		TypeMeta:   v1.TypeMeta{},
 		ObjectMeta: v1.ObjectMeta{Name: "version"}}
 
 	mergePatch, err := json.Marshal(map[string]interface{}{
