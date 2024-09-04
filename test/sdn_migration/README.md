@@ -30,10 +30,10 @@ Below outlines what the test suite is capable of:
 The test suite is ordered and has labels which allow you to customize what is
 performed. For example:
 
-* `ginkgo run`
+* `ginkgo run --label-filter="DefaultBuild"`
     * Will run through the entire test suite mentioned above
-* `ginkgo run --label-filter="PostMigrationCheck || RosaUpgrade || PostUpgradeCheck || SdnToOvn || RemoveRosaCluster ""`
-    * Will do everything except create a cluster
+* `ginkgo run --label-filter="DefaultBuildWithProxy"`
+    * Will run through the entire test suite against a cluster with a cluster wide proxy
 * `ginkgo run --label-filter="SdnToOvn"`
     * Will only do the sdn to ovn migration
 
@@ -42,16 +42,22 @@ performed. For example:
 ### Prerequisites
 
 * RH OCM account with long-lived token
+* The proxy needs to be created manually if end-to-end tests are going to be run against a cluster with a cluster-wide proxy
 
 ### Run Ginkgo
-*NOTE: CLUSTER_ID is optional (internal ID) and UPGRADE_TYPE can be either "Z" or "Y". 
-It corresponds to x.y.z in the format Major.Minor.Patch.
+*NOTE:CLUSTER_ID is optional (internal ID), and AWS_HTTP_PROXY, AWS_HTTP_PROXYS, CA_BUNDLE, and 
+SUBNETS are also optional unless end-to-end tests need to be run against a cluster with a cluster-wide proxy
 ```shell
 AWS_REGION=<AWS_REGION> \
 AWS_SECRET_ACCESS_KEY=<AWS_SECRET_ACCESS_KEY> \
 AWS_ACCESS_KEY_ID=<AWS_ACCESS_KEY_ID> \
 OCM_TOKEN=<OCM_TOKEN> \
 CLUSTER_ID=<CLUSTER_ID> \
-UPGRADE_TYPE=<UPGRADE_TYPE> \
+CLUSTER_NAME = <CLUSTER_NAME> \
+REPLICAS=<REPLICAS>\
+AWS_HTTP_PROXY=<AWS_HTTP_PROXY>\
+AWS_HTTPs_PROXY=<AWS_HTTP_PROXY> \
+CA_BUNDLE=<CA_BUNDLE> \
+SUBNETS=<SUBNETS> \
 ginkgo run 
 ```

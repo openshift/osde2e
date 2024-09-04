@@ -25,10 +25,8 @@ func TestSdnMigration(t *testing.T) {
 
 	// Define the filter values in a map
 	labelFilters := map[string]string{
-		"DefaultBuild":            "CreateRosaCluster || PostMigrationCheck || RosaUpgrade || PostUpgradeCheck || SdnToOvn || RemoveRosaCluster",
-		"DefaultBuildWithProxy":   "CreateRosaCluster || PostMigrationCheck || RosaUpgrade || PostUpgradeCheck || SdnToOvn || RemoveRosaCluster || EnableClusterProxy",
-		"AutoScaleBuild":          "CreateRosaCluster || PostMigrationCheck || RosaUpgrade || PostUpgradeCheck || SdnToOvn || RemoveRosaCluster || EnableAutoScaling",
-		"AutoScaleBuildWithProxy": "CreateRosaCluster || PostMigrationCheck || RosaUpgrade || PostUpgradeCheck || SdnToOvn || RemoveRosaCluster || EnableAutoScaling || EnableClusterProxy",
+		"DefaultBuild":          "CreateRosaCluster || PostMigrationCheck || RosaUpgrade || PostUpgradeCheck || SdnToOvn || RemoveRosaCluster",
+		"DefaultBuildWithProxy": "CreateRosaCluster || PostMigrationCheck || RosaUpgrade || PostUpgradeCheck || SdnToOvn || RemoveRosaCluster || EnableClusterProxy",
 	}
 
 	if filter, exists := labelFilters[labelFilter]; exists {
@@ -43,7 +41,7 @@ func TestSdnMigration(t *testing.T) {
 
 	// Construct the filename
 	filename := fmt.Sprintf("%s%s.xml", prefix, dateTime)
-	reporterConfig.JUnitReport = filename //"junit.xml"
+	reporterConfig.JUnitReport = filename
 
 	RunSpecs(t, "SdnMigration Suite", suiteConfig, reporterConfig)
 }

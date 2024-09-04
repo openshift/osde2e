@@ -75,15 +75,12 @@ var _ = Describe("SDN migration", ginkgo.Ordered, func() {
 		ocmToken           = os.Getenv("OCM_TOKEN")
 		clientID           = os.Getenv("CLIENT_ID")
 		clientSecret       = os.Getenv("CLIENT_SECRET")
-		region             = os.Getenv("REGION")
-		minReplicas, _     = strconv.Atoi(os.Getenv("MIN_REPLICAS"))
-		maxReplicas, _     = strconv.Atoi(os.Getenv("MAX_REPLICAS"))
+		region             = os.Getenv("AWS_REGION")
 		replicas, _        = strconv.Atoi(os.Getenv("REPLICAS"))
 		ocmEnv             = ocm.Stage
 		logger             = GinkgoLogr
 		rosaProvider       *rosaprovider.Provider
 		createRosaCluster  = Label("CreateRosaCluster")
-		enableAutoScaling  = Label("EnableAutoScaling")
 		enableClusterProxy = Label("EnableClusterProxy")
 		removeRosaCluster  = Label("RemoveRosaCluster")
 		postMigrationCheck = Label("PostMigrationCheck")
@@ -110,7 +107,7 @@ var _ = Describe("SDN migration", ginkgo.Ordered, func() {
 		Expect(err).ShouldNot(HaveOccurred(), "failed to construct osd provider")
 		DeferCleanup(osdProvider.Client.Close)
 
-		if createRosaCluster.MatchesLabelFilter(GinkgoLabelFilter()) && !enableAutoScaling.MatchesLabelFilter(GinkgoLabelFilter()) {
+		if createRosaCluster.MatchesLabelFilter(GinkgoLabelFilter()) {
 			clusterOptions = &rosaprovider.CreateClusterOptions{
 				ClusterName:                  clusterName,
 				Version:                      "4.14.14",
@@ -125,31 +122,14 @@ var _ = Describe("SDN migration", ginkgo.Ordered, func() {
 				NetworkType:                  "OpenShiftSDN",
 				SkipHealthCheck:              true,
 			}
-		} else {
-			testRosaCluster.id, err = rosaProvider.CreateCluster(ctx, &rosaprovider.CreateClusterOptions{
-				ClusterName:                  clusterName,
-				Version:                      "4.14.14",
-				UseDefaultAccountRolesPrefix: true,
-				STS:                          true,
-				Mode:                         "auto",
-				ChannelGroup:                 "stable",
-				ComputeMachineType:           "m5.xlarge",
-				MinReplicas:                  minReplicas,
-				MaxReplicas:                  maxReplicas,
-				MultiAZ:                      true,
-				EnableAutoscaling:            true,
-				ETCDEncryption:               true,
-				NetworkType:                  "OpenShiftSDN",
-				SkipHealthCheck:              true,
-			})
 		}
-
 		if os.Getenv("CLUSTER_ID") == "" {
 			if enableClusterProxy.MatchesLabelFilter(GinkgoLabelFilter()) {
 				clusterOptions.HTTPSProxy = os.Getenv("AWS_HTTPS_PROXY")
 				clusterOptions.HTTPProxy = os.Getenv("AWS_HTTP_PROXY")
 				clusterOptions.AdditionalTrustBundleFile = os.Getenv("CA_BUNDLE")
 				clusterOptions.SubnetIDs = os.Getenv("SUBNETS")
+				clusterOptions.NoProxy = "api.stage.openshift.com"
 			}
 			testRosaCluster.id, err = rosaProvider.CreateCluster(ctx, clusterOptions)
 			Expect(err).ShouldNot(HaveOccurred(), "failed to create rosa cluster")
@@ -193,10 +173,6 @@ var _ = Describe("SDN migration", ginkgo.Ordered, func() {
 	})
 
 	It("rosa cluster is upgraded to 4.15.8 successfully", rosaUpgrade, func(ctx context.Context) {
-		if enableClusterProxy.MatchesLabelFilter(GinkgoLabelFilter()) {
-			err := patchProxyConfigv1(ctx, testRosaCluster.client)
-			Expect(err).ShouldNot(HaveOccurred(), "Failed to patch cluster proxy")
-		}
 		err := patchVersionConfig(ctx, testRosaCluster.client, channel4_15, image4_15, version4_15)
 		Expect(err).ShouldNot(HaveOccurred(), "rosa cluster upgrade failed")
 		err = checkUpgradeStatus(ctx, testRosaCluster.client, version4_15)
@@ -231,13 +207,8 @@ var _ = Describe("SDN migration", ginkgo.Ordered, func() {
 
 	})
 
-	It("rosa cluster scales node count", enableAutoScaling, func(ctx context.Context) {
-		//TODO
-
-	})
-
 	It("rosa cluster migrated from sdn to ovn successfully", sdnToOvn, func(ctx context.Context) {
-		err := patchNetworkConfigv1(ctx, testRosaCluster.client)
+		err := addIntenalTestingAnnotation(ctx, testRosaCluster.client)
 		Expect(err).ShouldNot(HaveOccurred(), "Rosa Cluster failed to patch network")
 		err = patchNetworkConfig(ctx, testRosaCluster.client)
 		Expect(err).ShouldNot(HaveOccurred(), "Rosa Cluster failed to patch network")
@@ -380,6 +351,7 @@ func getOpenshiftConfig(ctx context.Context, dynamicClient *dynamic.DynamicClien
 	return dynamicClient.Resource(gvr).Get(ctx, name, metav1.GetOptions{})
 }
 
+// checkMigrationStatus probes the status of the SDN-to-OVN migration
 func checkMigrationStatus(ctx context.Context, client *openshiftclient.Client) error {
 	var (
 		dynamicClient *dynamic.DynamicClient
@@ -458,7 +430,7 @@ func checkMigrationStatus(ctx context.Context, client *openshiftclient.Client) e
 
 }
 
-// checkUpgradeStatus
+// checkUpgradeStatus probes the status of the cluster upgrade
 func checkUpgradeStatus(ctx context.Context, client *openshiftclient.Client, upgradeVersion string) error {
 	var (
 		conditionMessage string
@@ -577,6 +549,7 @@ func checkUpgradeStatus(ctx context.Context, client *openshiftclient.Client, upg
 	return fmt.Errorf("upgrade is still in progress, failed to finish within max wait attempts")
 }
 
+// patchVersionConfig updates the version config to the desired version to initiate an upgrade
 func patchVersionConfig(ctx context.Context, client *openshiftclient.Client, channel string, image string, version string) error {
 	clusterVersionConfing := configv1.ClusterVersion{
 		TypeMeta:   v1.TypeMeta{},
@@ -608,6 +581,7 @@ func patchVersionConfig(ctx context.Context, client *openshiftclient.Client, cha
 
 }
 
+// patchNetworkConfig updates network type to OVN
 func patchNetworkConfig(ctx context.Context, client *openshiftclient.Client) error {
 
 	networkConfig := configv1.Network{ObjectMeta: v1.ObjectMeta{Name: "cluster"}}
@@ -636,7 +610,9 @@ func patchNetworkConfig(ctx context.Context, client *openshiftclient.Client) err
 	}
 	return nil
 }
-func patchNetworkConfigv1(ctx context.Context, client *openshiftclient.Client) error {
+
+// addAnnotation adds the internal testing annotation to the network config
+func addIntenalTestingAnnotation(ctx context.Context, client *openshiftclient.Client) error {
 
 	networkConfig := configv1.Network{ObjectMeta: v1.ObjectMeta{Name: "cluster"}}
 
@@ -645,30 +621,6 @@ func patchNetworkConfigv1(ctx context.Context, client *openshiftclient.Client) e
 			"annotations": map[string]interface{}{
 				"unsupported-red-hat-internal-testing": "true",
 			},
-		},
-	})
-
-	if err != nil {
-		panic(err)
-	}
-
-	if err = client.Patch(
-		ctx,
-		&networkConfig,
-		k8s.Patch{PatchType: types.MergePatchType, Data: mergePatch},
-	); err != nil {
-		panic(err)
-	}
-	return nil
-}
-
-func patchProxyConfigv1(ctx context.Context, client *openshiftclient.Client) error {
-
-	networkConfig := configv1.Proxy{ObjectMeta: v1.ObjectMeta{Name: "cluster"}}
-
-	mergePatch, err := json.Marshal(map[string]interface{}{
-		"spec": map[string]interface{}{
-			"noProxy": "api.stage.openshift.com",
 		},
 	})
 
