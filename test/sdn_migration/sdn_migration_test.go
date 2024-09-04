@@ -33,13 +33,6 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-/*
-- before all create clients
-- test cluster creation
-- test cluster upgrade
-- test cluster migration<
-	- test apply manifests
-*/
 
 const (
 	osdClusterReadyJobName    = "osd-cluster-ready"
