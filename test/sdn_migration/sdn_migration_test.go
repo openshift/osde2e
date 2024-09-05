@@ -4,6 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
+	"os"
+	"strconv"
+	"strings"
+	"time"
+
 	"github.com/Masterminds/semver/v3"
 	configv1 "github.com/openshift/api/config/v1"
 	openshiftclient "github.com/openshift/osde2e-common/pkg/clients/openshift"
@@ -14,17 +20,13 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
-	"log"
-	"strconv"
-	"strings"
 
 	batchv1 "k8s.io/api/batch/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
-	"os"
+
 	"sigs.k8s.io/e2e-framework/klient/k8s"
 	"sigs.k8s.io/e2e-framework/pkg/envconf"
-	"time"
 
 	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/ginkgo/v2"
@@ -32,7 +34,6 @@ import (
 	"github.com/openshift/osde2e-common/pkg/clients/ocm"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
-
 
 const (
 	osdClusterReadyJobName    = "osd-cluster-ready"
@@ -145,17 +146,11 @@ var _ = Describe("SDN migration", ginkgo.Ordered, func() {
 		testRosaCluster.reportDir = fmt.Sprintf("%s/%s", reportDir, testRosaCluster.name)
 		Expect(os.MkdirAll(reportDir, os.ModePerm)).ShouldNot(HaveOccurred(), "failed to create report directory")
 		Expect(os.MkdirAll(testRosaCluster.reportDir, os.ModePerm)).ShouldNot(HaveOccurred(), "failed to create rosa cluster report directory")
-
 	})
 
 	AfterAll(func(ctx context.Context) {
 		if removeRosaCluster.MatchesLabelFilter(GinkgoLabelFilter()) {
-			rosaProvider, err := rosaprovider.New(ctx, ocmToken, clientID, clientSecret, ocmEnv, logger, &aws.AWSCredentials{
-				Region:          region,
-				SecretAccessKey: secretAccessKey,
-				AccessKeyID:     accessKeyID,
-			})
-			err = rosaProvider.DeleteCluster(ctx, &rosaprovider.DeleteClusterOptions{
+			err := rosaProvider.DeleteCluster(ctx, &rosaprovider.DeleteClusterOptions{
 				ClusterName:        testRosaCluster.name,
 				WorkingDir:         testRosaCluster.reportDir,
 				STS:                true,
@@ -170,7 +165,6 @@ var _ = Describe("SDN migration", ginkgo.Ordered, func() {
 		Expect(err).ShouldNot(HaveOccurred(), "rosa cluster upgrade failed")
 		err = checkUpgradeStatus(ctx, testRosaCluster.client, version4_15)
 		Expect(err).ShouldNot(HaveOccurred(), err)
-
 	})
 
 	It("rosa cluster is healthy post 4.15.8 upgrade", postUpgradeCheck, func(ctx context.Context) {
@@ -180,7 +174,6 @@ var _ = Describe("SDN migration", ginkgo.Ordered, func() {
 
 		err = osdClusterReadyHealthCheck(ctx, testRosaCluster.client, "post-upgrade", testRosaCluster.reportDir)
 		Expect(err).ShouldNot(HaveOccurred(), "osd-cluster-ready health check job failed post upgrade")
-
 	})
 
 	It("rosa cluster is upgraded to 4.16.0-rc.0 successfully", rosaUpgrade, func(ctx context.Context) {
@@ -188,7 +181,6 @@ var _ = Describe("SDN migration", ginkgo.Ordered, func() {
 		Expect(err).ShouldNot(HaveOccurred(), "rosa cluster upgrade failed")
 		err = checkUpgradeStatus(ctx, testRosaCluster.client, version4_16)
 		Expect(err).ShouldNot(HaveOccurred(), err)
-
 	})
 
 	It("rosa cluster is healthy post 4.16.0-rc.0 upgrade", postUpgradeCheck, func(ctx context.Context) {
@@ -197,7 +189,6 @@ var _ = Describe("SDN migration", ginkgo.Ordered, func() {
 		Expect(criticalAlerts).ToNot(BeNumerically(">", 0), "critical alerts are firing pre upgrade")
 		err = osdClusterReadyHealthCheck(ctx, testRosaCluster.client, "post-upgrade", testRosaCluster.reportDir)
 		Expect(err).ShouldNot(HaveOccurred(), "osd-cluster-ready health check job failed post upgrade")
-
 	})
 
 	It("rosa cluster migrated from sdn to ovn successfully", sdnToOvn, func(ctx context.Context) {
@@ -207,7 +198,6 @@ var _ = Describe("SDN migration", ginkgo.Ordered, func() {
 		Expect(err).ShouldNot(HaveOccurred(), "Rosa Cluster failed to patch network")
 		err = checkMigrationStatus(ctx, testRosaCluster.client)
 		Expect(err).ShouldNot(HaveOccurred(), "Rosa Cluster failed to patch network")
-
 	})
 	It("rosa cluster has no critical alerts firing post sdn to ovn migration", postMigrationCheck, func(ctx context.Context) {
 		criticalAlerts, _, err := queryPrometheusAlerts(ctx, testRosaCluster.client, fmt.Sprintf("%s/prometheus-alerts-pre-upgrade.log", testRosaCluster.reportDir))
@@ -215,7 +205,6 @@ var _ = Describe("SDN migration", ginkgo.Ordered, func() {
 		Expect(criticalAlerts).ToNot(BeNumerically(">", 0), "critical alerts are firing pre upgrade")
 		err = osdClusterReadyHealthCheck(ctx, testRosaCluster.client, "post-upgrade", testRosaCluster.reportDir)
 		Expect(err).ShouldNot(HaveOccurred(), "osd-cluster-ready health check job failed post upgrade")
-
 	})
 })
 
@@ -317,15 +306,6 @@ func osdClusterReadyHealthCheck(ctx context.Context, clusterClient *openshiftcli
 	return clusterClient.OSDClusterHealthy(ctx, newJob.GetName(), reportDir, osdClusterReadyJobTimeout)
 }
 
-// getKubernetesDynamicClient returns the kubernetes dynamic client
-func getKubernetesDynamicClient(client *openshiftclient.Client) (*dynamic.DynamicClient, error) {
-	dynamicClient, err := dynamic.NewForConfig(client.GetConfig())
-	if err != nil {
-		return nil, fmt.Errorf("failed to create kubernetes dynamic client: %w", err)
-	}
-	return dynamicClient, nil
-}
-
 type upgradeError struct {
 	err error
 }
@@ -347,63 +327,27 @@ func getOpenshiftConfig(ctx context.Context, dynamicClient *dynamic.DynamicClien
 // checkMigrationStatus probes the status of the SDN-to-OVN migration
 func checkMigrationStatus(ctx context.Context, client *openshiftclient.Client) error {
 	var (
-		dynamicClient *dynamic.DynamicClient
-		err           error
+		err     error
+		network configv1.Network
 	)
 
-	if dynamicClient, err = getKubernetesDynamicClient(client); err != nil {
-		return &upgradeError{err: err}
-	}
 	for i := 1; i <= upgradeMaxAttempts; i++ {
 		// Get the current network configuration
-		networkConfig, err := getOpenshiftConfig(ctx, dynamicClient, "networks", "cluster")
+		err = client.Get(ctx, "cluster", "", &network)
 		if err != nil {
 			return fmt.Errorf("failed to get network configuration: %v", err)
 		}
 
-		// Extract the status conditions
-		status, found, err := unstructured.NestedMap(networkConfig.Object, "status")
-		if err != nil || !found {
-			return fmt.Errorf("failed to find status in network configuration: %v", err)
-		}
-
-		conditions, found, err := unstructured.NestedSlice(status, "conditions")
-		if err != nil || !found {
-			return fmt.Errorf("failed to find conditions in status: %v", err)
-		}
-
 		// Check for the migration condition
 		migrationInProgress := false
-		for _, cond := range conditions {
-			conditionMap, ok := cond.(map[string]interface{})
-			if !ok {
-				return fmt.Errorf("invalid type for condition entry")
-			}
-
-			conditionType, found, err := unstructured.NestedString(conditionMap, "type")
-			if err != nil || !found {
-				return fmt.Errorf("failed to find condition type: %v", err)
-			}
-
-			if conditionType == "NetworkTypeMigrationInProgress" {
-				status, found, err := unstructured.NestedString(conditionMap, "status")
-				if err != nil || !found {
-					return fmt.Errorf("failed to find condition status: %v", err)
-				}
-
-				reason, found, err := unstructured.NestedString(conditionMap, "reason")
-				if err != nil || !found {
-					return fmt.Errorf("failed to find condition reason: %v", err)
-				}
-
-				// Check if the migration is in progress
-				if status == "True" && reason == "NetworkTypeMigrationStarted" {
+		for _, cond := range network.Status.Conditions {
+			if cond.Type == "NetworkTypeMigrationInProgress" {
+				if cond.Status == "True" && cond.Reason == "NetworkTypeMigrationStarted" {
 					migrationInProgress = true
 					break
 				}
 
-				// Check if the migration is complete
-				if status == "False" && reason == "NetworkTypeMigrationCompleted" {
+				if cond.Status == "False" && cond.Reason == "NetworkTypeMigrationCompleted" {
 					fmt.Println("Network migration completed successfully!")
 					return nil
 				}
@@ -420,98 +364,53 @@ func checkMigrationStatus(ctx context.Context, client *openshiftclient.Client) e
 	}
 
 	return fmt.Errorf("network migration is still in progress after %d attempts", upgradeMaxAttempts)
-
 }
 
 // checkUpgradeStatus probes the status of the cluster upgrade
 func checkUpgradeStatus(ctx context.Context, client *openshiftclient.Client, upgradeVersion string) error {
 	var (
 		conditionMessage string
-		dynamicClient    *dynamic.DynamicClient
-		upgradeState     string
 		err              error
+		cv               configv1.ClusterVersion
 	)
 
 	for i := 1; i <= upgradeMaxAttempts; i++ {
-		if dynamicClient, err = getKubernetesDynamicClient(client); err != nil {
-			log.Printf("here")
-			time.Sleep(upgradeDelay * time.Second)
-			continue
-		}
-		// Get the current cluster version configuration
-		upgradeConfig, err := getOpenshiftConfig(ctx, dynamicClient, "clusterversions", "version")
+
+		err = client.Get(ctx, "version", "", &cv)
 		if err != nil {
 			log.Printf("Failed to get cluster version config: %v", err)
 			time.Sleep(upgradeDelay * time.Second)
 			continue
 		}
 
-		// Extract the status map from the configuration
-		status, found, err := unstructured.NestedMap(upgradeConfig.Object, "status")
-		if err != nil || !found {
-			log.Printf("Failed to find status in cluster version config: %v", err)
+		// Extract the status map from the ClusterVersion configuration
+		status := cv.Status
+		if status.History == nil {
+			log.Printf("Failed to find history in cluster version config: status history is nil")
 			time.Sleep(upgradeDelay * time.Second)
 			continue
 		}
 
 		// Extract the history slice from the status
-		histories, found, err := unstructured.NestedSlice(status, "history")
-		if err != nil || !found {
-			log.Printf("Failed to find history in status")
-			time.Sleep(upgradeDelay * time.Second)
-			continue
-		}
-
-		for _, h := range histories {
-			historyMap, ok := h.(map[string]interface{})
-			if !ok {
-				err = fmt.Errorf("invalid type for history entry")
-				log.Printf(err.Error(), "Invalid history entry type")
-				continue
-			}
-
-			// Extract the version for each history entry
-			version, found, err := unstructured.NestedString(historyMap, "version")
-			if err != nil || !found {
-				log.Printf("Failed to find version in history entry")
-				continue
-			}
-
+		var upgradeState string
+		for _, h := range status.History {
 			// Check if the version matches the desired upgrade version
-			if version == upgradeVersion {
+			if h.Version == upgradeVersion {
 				// Extract the state for the matching version
-				state, found, err := unstructured.NestedString(historyMap, "state")
-				if err != nil || !found {
-					log.Printf("Failed to find state in history entry")
-					continue
-				}
-
-				upgradeState = state
+				upgradeState = string(h.State)
 				break
 			}
 		}
 
 		// Extract the conditions from the status
-		conditions, found, err := unstructured.NestedSlice(status, "conditions")
-		if err != nil || !found {
-			log.Printf("Failed to find conditions in status")
+		conditions := status.Conditions
+		if conditions == nil {
+			log.Printf("Failed to find conditions in status: conditions are nil")
 		} else {
 			// Filter for the condition message that starts with "Working towards"
 			for _, cond := range conditions {
-				conditionMap, ok := cond.(map[string]interface{})
-				if !ok {
-					err = fmt.Errorf("invalid type for condition entry")
-					log.Printf(err.Error(), "Invalid condition entry type")
-					continue
-				}
-
 				// Extract the condition message
-				message, found, err := unstructured.NestedString(conditionMap, "message")
-				if err != nil || !found {
-					continue
-				}
-
-				// Check if the message starts with "Working towards"
+				message := cond.Message
 				if strings.HasPrefix(message, "Working towards") {
 					conditionMessage = message
 					break
@@ -545,7 +444,8 @@ func checkUpgradeStatus(ctx context.Context, client *openshiftclient.Client, upg
 // patchVersionConfig updates the version config to the desired version to initiate an upgrade
 func patchVersionConfig(ctx context.Context, client *openshiftclient.Client, channel string, image string, version string) error {
 	clusterVersionConfing := configv1.ClusterVersion{
-		ObjectMeta: v1.ObjectMeta{Name: "version"}}
+		ObjectMeta: v1.ObjectMeta{Name: "version"},
+	}
 
 	mergePatch, err := json.Marshal(map[string]interface{}{
 		"spec": map[string]interface{}{
@@ -557,9 +457,8 @@ func patchVersionConfig(ctx context.Context, client *openshiftclient.Client, cha
 			},
 		},
 	})
-
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	if err = client.Patch(
@@ -567,15 +466,13 @@ func patchVersionConfig(ctx context.Context, client *openshiftclient.Client, cha
 		&clusterVersionConfing,
 		k8s.Patch{PatchType: types.MergePatchType, Data: mergePatch},
 	); err != nil {
-		panic(err)
+		return err
 	}
 	return nil
-
 }
 
 // patchNetworkConfig updates network type to OVN
 func patchNetworkConfig(ctx context.Context, client *openshiftclient.Client) error {
-
 	networkConfig := configv1.Network{ObjectMeta: v1.ObjectMeta{Name: "cluster"}}
 
 	mergePatch, err := json.Marshal(map[string]interface{}{
@@ -588,9 +485,8 @@ func patchNetworkConfig(ctx context.Context, client *openshiftclient.Client) err
 			"networkType": "OVNKubernetes",
 		},
 	})
-
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	if err = client.Patch(
@@ -598,14 +494,13 @@ func patchNetworkConfig(ctx context.Context, client *openshiftclient.Client) err
 		&networkConfig,
 		k8s.Patch{PatchType: types.MergePatchType, Data: mergePatch},
 	); err != nil {
-		panic(err)
+		return err
 	}
 	return nil
 }
 
 // addAnnotation adds the internal testing annotation to the network config
 func addIntenalTestingAnnotation(ctx context.Context, client *openshiftclient.Client) error {
-
 	networkConfig := configv1.Network{ObjectMeta: v1.ObjectMeta{Name: "cluster"}}
 
 	mergePatch, err := json.Marshal(map[string]interface{}{
@@ -615,9 +510,8 @@ func addIntenalTestingAnnotation(ctx context.Context, client *openshiftclient.Cl
 			},
 		},
 	})
-
 	if err != nil {
-		panic(err)
+		return (err)
 	}
 
 	if err = client.Patch(
@@ -625,7 +519,7 @@ func addIntenalTestingAnnotation(ctx context.Context, client *openshiftclient.Cl
 		&networkConfig,
 		k8s.Patch{PatchType: types.MergePatchType, Data: mergePatch},
 	); err != nil {
-		panic(err)
+		return err
 	}
 	return nil
 }
