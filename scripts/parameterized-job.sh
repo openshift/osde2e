@@ -21,6 +21,7 @@ docker create --name osde2e-run -e OCM_TOKEN \
 	-e CLUSTER_ID \
 	-e SKIP_MUST_GATHER \
 	-e INSTALL_LATEST_XY \
+	-e INSTALL_LATEST_NIGHTLY \
 	-e TEST_HARNESSES \
 	-e POLLING_TIMEOUT \
 	-e OCM_CCS \
