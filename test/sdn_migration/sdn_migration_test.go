@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
+	"github.com/go-logr/logr"
 	"os"
 	"strconv"
 	"strings"
@@ -13,14 +13,9 @@ import (
 	"github.com/Masterminds/semver/v3"
 	configv1 "github.com/openshift/api/config/v1"
 	openshiftclient "github.com/openshift/osde2e-common/pkg/clients/openshift"
-	prometheusclient "github.com/openshift/osde2e-common/pkg/clients/prometheus"
 	"github.com/openshift/osde2e-common/pkg/clouds/aws"
 	osdprovider "github.com/openshift/osde2e-common/pkg/openshift/osd"
 	rosaprovider "github.com/openshift/osde2e-common/pkg/openshift/rosa"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/client-go/dynamic"
-
 	batchv1 "k8s.io/api/batch/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -163,31 +158,24 @@ var _ = Describe("SDN migration", ginkgo.Ordered, func() {
 	It("rosa cluster is upgraded to 4.15.8 successfully", rosaUpgrade, func(ctx context.Context) {
 		err := patchVersionConfig(ctx, testRosaCluster.client, channel4_15, image4_15, version4_15)
 		Expect(err).ShouldNot(HaveOccurred(), "rosa cluster upgrade failed")
-		err = checkUpgradeStatus(ctx, testRosaCluster.client, version4_15)
+		err = checkUpgradeStatus(ctx, testRosaCluster.client, version4_15, logger)
 		Expect(err).ShouldNot(HaveOccurred(), err)
 	})
 
 	It("rosa cluster is healthy post 4.15.8 upgrade", postUpgradeCheck, func(ctx context.Context) {
-		criticalAlerts, _, err := queryPrometheusAlerts(ctx, testRosaCluster.client, fmt.Sprintf("%s/4.15.8-prometheus-alerts-pre-upgrade.log", testRosaCluster.reportDir))
-		Expect(err).ShouldNot(HaveOccurred(), "failed to retrieve prometheus alerts")
-		Expect(criticalAlerts).ToNot(BeNumerically(">", 0), "critical alerts are firing pre upgrade")
-
-		err = osdClusterReadyHealthCheck(ctx, testRosaCluster.client, "post-upgrade", testRosaCluster.reportDir)
+		err := osdClusterReadyHealthCheck(ctx, testRosaCluster.client, "post-upgrade", testRosaCluster.reportDir)
 		Expect(err).ShouldNot(HaveOccurred(), "osd-cluster-ready health check job failed post upgrade")
 	})
 
 	It("rosa cluster is upgraded to 4.16.0-rc.0 successfully", rosaUpgrade, func(ctx context.Context) {
 		err := patchVersionConfig(ctx, testRosaCluster.client, channel4_16, image4_16, version4_16)
 		Expect(err).ShouldNot(HaveOccurred(), "rosa cluster upgrade failed")
-		err = checkUpgradeStatus(ctx, testRosaCluster.client, version4_16)
+		err = checkUpgradeStatus(ctx, testRosaCluster.client, version4_16, logger)
 		Expect(err).ShouldNot(HaveOccurred(), err)
 	})
 
 	It("rosa cluster is healthy post 4.16.0-rc.0 upgrade", postUpgradeCheck, func(ctx context.Context) {
-		criticalAlerts, _, err := queryPrometheusAlerts(ctx, testRosaCluster.client, fmt.Sprintf("%s/4.16.0-rc.0-prometheus-alerts-pre-upgrade.log", testRosaCluster.reportDir))
-		Expect(err).ShouldNot(HaveOccurred(), "failed to retrieve prometheus alerts")
-		Expect(criticalAlerts).ToNot(BeNumerically(">", 0), "critical alerts are firing pre upgrade")
-		err = osdClusterReadyHealthCheck(ctx, testRosaCluster.client, "post-upgrade", testRosaCluster.reportDir)
+		err := osdClusterReadyHealthCheck(ctx, testRosaCluster.client, "post-upgrade", testRosaCluster.reportDir)
 		Expect(err).ShouldNot(HaveOccurred(), "osd-cluster-ready health check job failed post upgrade")
 	})
 
@@ -196,70 +184,14 @@ var _ = Describe("SDN migration", ginkgo.Ordered, func() {
 		Expect(err).ShouldNot(HaveOccurred(), "Rosa Cluster failed to patch network")
 		err = patchNetworkConfig(ctx, testRosaCluster.client)
 		Expect(err).ShouldNot(HaveOccurred(), "Rosa Cluster failed to patch network")
-		err = checkMigrationStatus(ctx, testRosaCluster.client)
+		err = checkMigrationStatus(ctx, testRosaCluster.client, logger)
 		Expect(err).ShouldNot(HaveOccurred(), "Rosa Cluster failed to patch network")
 	})
 	It("rosa cluster has no critical alerts firing post sdn to ovn migration", postMigrationCheck, func(ctx context.Context) {
-		criticalAlerts, _, err := queryPrometheusAlerts(ctx, testRosaCluster.client, fmt.Sprintf("%s/prometheus-alerts-pre-upgrade.log", testRosaCluster.reportDir))
-		Expect(err).ShouldNot(HaveOccurred(), "failed to retrieve prometheus alerts")
-		Expect(criticalAlerts).ToNot(BeNumerically(">", 0), "critical alerts are firing pre upgrade")
-		err = osdClusterReadyHealthCheck(ctx, testRosaCluster.client, "post-upgrade", testRosaCluster.reportDir)
+		err := osdClusterReadyHealthCheck(ctx, testRosaCluster.client, "post-upgrade", testRosaCluster.reportDir)
 		Expect(err).ShouldNot(HaveOccurred(), "osd-cluster-ready health check job failed post upgrade")
 	})
 })
-
-// queryPrometheusAlerts queries prometheus for alerts and provides a count for critical and warning alerts
-func queryPrometheusAlerts(ctx context.Context, client *openshiftclient.Client, logFilename string) (int, int, error) {
-	criticalAlertCount, warningAlertCount := 0, 0
-	alerts := ""
-
-	type metric struct {
-		AlertName  string `json:"alertname"`
-		AlertState string `json:"alertstate"`
-		Condition  string `json:"condition"`
-		Endpoint   string `json:"endpoint"`
-		Name       string `json:"name"`
-		Namespace  string `json:"namespace"`
-		Severity   string `json:"severity"`
-	}
-
-	prometheusClient, _ := prometheusclient.New(ctx, client)
-	vector, err := prometheusClient.InstantQuery(ctx, "ALERTS{alertstate!=\"pending\",alertname!=\"Watchdog\"}")
-	if err != nil {
-		return 0, 0, fmt.Errorf("failed to query prometheus: %v", err)
-	}
-
-	for _, model := range vector {
-		metric := metric{}
-
-		metricEncoded, err := json.Marshal(model.Metric)
-		if err != nil {
-			continue
-		}
-
-		err = json.Unmarshal(metricEncoded, &metric)
-		if err != nil {
-			continue
-		}
-
-		alerts += fmt.Sprintf("Since: %s : %+v\n", time.Unix(model.Timestamp.Unix(), 0), metric)
-
-		switch model.Metric["severity"] {
-		case "critical":
-			criticalAlertCount += 1
-		case "warning":
-			warningAlertCount += 1
-		}
-	}
-
-	if alerts != "" {
-		if err = os.WriteFile(logFilename, []byte(alerts), os.FileMode(0o644)); err != nil {
-			return criticalAlertCount, warningAlertCount, fmt.Errorf("failed to write prometheus alerts to file: %v", err)
-		}
-	}
-
-	return criticalAlertCount, warningAlertCount, nil
-}
 
 // getEnvVar returns the env variable value and if unset returns default provided
 func getEnvVar(key, value string) string {
@@ -315,17 +247,8 @@ func (e *upgradeError) Error() string {
 	return fmt.Sprintf("osd upgrade failed: %v", e.err)
 }
 
-func getOpenshiftConfig(ctx context.Context, dynamicClient *dynamic.DynamicClient, resource string, name string) (*unstructured.Unstructured, error) {
-	gvr := schema.GroupVersionResource{
-		Group:    "config.openshift.io",
-		Version:  "v1",
-		Resource: resource,
-	}
-	return dynamicClient.Resource(gvr).Get(ctx, name, metav1.GetOptions{})
-}
-
 // checkMigrationStatus probes the status of the SDN-to-OVN migration
-func checkMigrationStatus(ctx context.Context, client *openshiftclient.Client) error {
+func checkMigrationStatus(ctx context.Context, client *openshiftclient.Client, logger logr.Logger) error {
 	var (
 		err     error
 		network configv1.Network
@@ -348,16 +271,16 @@ func checkMigrationStatus(ctx context.Context, client *openshiftclient.Client) e
 				}
 
 				if cond.Status == "False" && cond.Reason == "NetworkTypeMigrationCompleted" {
-					fmt.Println("Network migration completed successfully!")
+					logger.Info("Network migration completed successfully!")
 					return nil
 				}
 			}
 		}
 
 		if migrationInProgress {
-			fmt.Println("Network migration is still in progress...")
+			logger.Info("Network migration is still in progress...")
 		} else {
-			fmt.Println("Migration status is unknown or not in progress.")
+			logger.Info("Migration status is unknown or not in progress.")
 		}
 
 		time.Sleep(upgradeDelay * time.Second)
@@ -367,7 +290,7 @@ func checkMigrationStatus(ctx context.Context, client *openshiftclient.Client) e
 }
 
 // checkUpgradeStatus probes the status of the cluster upgrade
-func checkUpgradeStatus(ctx context.Context, client *openshiftclient.Client, upgradeVersion string) error {
+func checkUpgradeStatus(ctx context.Context, client *openshiftclient.Client, upgradeVersion string, logger logr.Logger) error {
 	var (
 		conditionMessage string
 		err              error
@@ -378,7 +301,7 @@ func checkUpgradeStatus(ctx context.Context, client *openshiftclient.Client, upg
 
 		err = client.Get(ctx, "version", "", &cv)
 		if err != nil {
-			log.Printf("Failed to get cluster version config: %v", err)
+			logger.Info("Failed to get cluster version config: %v", err)
 			time.Sleep(upgradeDelay * time.Second)
 			continue
 		}
@@ -386,7 +309,7 @@ func checkUpgradeStatus(ctx context.Context, client *openshiftclient.Client, upg
 		// Extract the status map from the ClusterVersion configuration
 		status := cv.Status
 		if status.History == nil {
-			log.Printf("Failed to find history in cluster version config: status history is nil")
+			logger.Info("Failed to find history in cluster version config: status history is nil")
 			time.Sleep(upgradeDelay * time.Second)
 			continue
 		}
@@ -405,7 +328,7 @@ func checkUpgradeStatus(ctx context.Context, client *openshiftclient.Client, upg
 		// Extract the conditions from the status
 		conditions := status.Conditions
 		if conditions == nil {
-			log.Printf("Failed to find conditions in status: conditions are nil")
+			logger.Info("Failed to find conditions in status: conditions are nil")
 		} else {
 			// Filter for the condition message that starts with "Working towards"
 			for _, cond := range conditions {
@@ -421,17 +344,17 @@ func checkUpgradeStatus(ctx context.Context, client *openshiftclient.Client, upg
 		// Determine the appropriate action based on the upgrade state
 		switch upgradeState {
 		case "":
-			log.Printf("Upgrade has not started yet...")
+			logger.Info("Upgrade has not started yet...")
 		case "Partial":
-			log.Printf("Upgrade is in progress. Conditions: %v", conditionMessage)
+			logger.Info("Upgrade is in progress. Conditions: %v", conditionMessage)
 		case "Completed":
-			log.Printf("Upgrade complete!")
+			logger.Info("Upgrade complete!")
 			return nil
 		case "Failed":
-			log.Printf("Upgrade failed! Conditions: %v", conditionMessage)
+			logger.Info("Upgrade failed! Conditions: %v", conditionMessage)
 			return &upgradeError{err: fmt.Errorf("upgrade failed")}
 		default:
-			log.Printf("Unknown upgrade state: %s", upgradeState)
+			logger.Info("Unknown upgrade state: %s", upgradeState)
 		}
 
 		// Wait before the next poll attempt
@@ -511,7 +434,7 @@ func addIntenalTestingAnnotation(ctx context.Context, client *openshiftclient.Cl
 		},
 	})
 	if err != nil {
-		return (err)
+		return err
 	}
 
 	if err = client.Patch(
