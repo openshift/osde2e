@@ -1,7 +1,6 @@
 package sdn_migration_test
 
 import (
-	"fmt"
 	"os"
 	"testing"
 	"time"
@@ -12,12 +11,6 @@ import (
 
 func TestSdnMigration(t *testing.T) {
 	RegisterFailHandler(Fail)
-	// Get the current date and time
-	now := time.Now()
-
-	// Format the date and time
-	dateTime := now.Format("20060102_150405")
-
 	suiteConfig, reporterConfig := GinkgoConfiguration()
 	suiteConfig.Timeout = 10 * time.Hour
 
@@ -37,11 +30,7 @@ func TestSdnMigration(t *testing.T) {
 		suiteConfig.LabelFilter = labelFilter
 	}
 
-	prefix := "sdn_migration-"
-
-	// Construct the filename
-	filename := fmt.Sprintf("%s%s.xml", prefix, dateTime)
-	reporterConfig.JUnitReport = filename
+	reporterConfig.JUnitReport = "junit.xml"
 
 	RunSpecs(t, "SdnMigration Suite", suiteConfig, reporterConfig)
 }
