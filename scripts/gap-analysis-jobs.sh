@@ -15,6 +15,7 @@ fi
 docker create --name "${CONTAINER_NAME}" -e OCM_TOKEN \
 	-e AWS_ACCESS_KEY_ID \
 	-e AWS_SECRET_ACCESS_KEY \
+	-e AWS_ACCOUNT_ID \
 	-e AWS_REGION \
 	-e OCM_CCS \
 	-e SKIP_DESTROY_CLUSTER \

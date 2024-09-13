@@ -7,7 +7,7 @@ docker rm osde2e-run
 # bind mounts run into permissions issues, this creates
 # the container and copies the secrets over to ensure it has perms
 docker create --name osde2e-run -e OCM_TOKEN \
-	-e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY \
+	-e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY -e AWS_ACCOUNT_ID \
 	-e GCP_CREDS_JSON \
 	-e CLOUD_PROVIDER_REGION \
 	-e ROSA_AWS_REGION="${CLOUD_PROVIDER_REGION}" \
