@@ -4,7 +4,7 @@ go 1.21
 
 require (
 	cloud.google.com/go/kms v1.19.0
-	github.com/Masterminds/semver/v3 v3.2.1
+	github.com/Masterminds/semver/v3 v3.3.0
 	github.com/PuerkitoBio/goquery v1.9.2
 	github.com/adamliesko/retry v0.0.0-20200123222335-86c8baac277d
 	github.com/aws/aws-sdk-go v1.55.5
@@ -21,18 +21,18 @@ require (
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/onsi/ginkgo/v2 v2.20.1
 	github.com/onsi/gomega v1.34.1
-	github.com/openshift-online/ocm-sdk-go v0.1.436
+	github.com/openshift-online/ocm-sdk-go v0.1.441
 	github.com/openshift/client-go v0.0.0-20240510131258-f646d5f29250
 	github.com/openshift/cloud-credential-operator v0.0.0-20230512001141-38e7f96bf730
 	github.com/openshift/managed-upgrade-operator v0.0.0-20230525042514-a9b8c1d2571c
-	github.com/openshift/osde2e-common v0.0.0-20240625061828-95551028959c
+	github.com/openshift/osde2e-common v0.0.0-20240913051955-f5206c53c976
 	github.com/operator-framework/api v0.17.7
 	github.com/operator-framework/operator-lifecycle-manager v0.22.0
 	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.64.0
 	github.com/prometheus-operator/prometheus-operator/pkg/client v0.64.0
 	github.com/prometheus/alertmanager v0.27.0
-	github.com/prometheus/client_golang v1.20.2
-	github.com/prometheus/common v0.55.0
+	github.com/prometheus/client_golang v1.20.3
+	github.com/prometheus/common v0.59.1
 	github.com/slack-go/slack v0.14.0
 	github.com/spf13/afero v1.11.0
 	github.com/spf13/cobra v1.8.1

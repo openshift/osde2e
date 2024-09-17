@@ -4,30 +4,27 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/go-logr/logr"
 	"os"
 	"strconv"
 	"strings"
 	"time"
 
-	"github.com/Masterminds/semver/v3"
+	"github.com/go-logr/logr"
+	"github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
 	configv1 "github.com/openshift/api/config/v1"
+	"github.com/openshift/osde2e-common/pkg/clients/ocm"
 	openshiftclient "github.com/openshift/osde2e-common/pkg/clients/openshift"
 	"github.com/openshift/osde2e-common/pkg/clouds/aws"
 	osdprovider "github.com/openshift/osde2e-common/pkg/openshift/osd"
 	rosaprovider "github.com/openshift/osde2e-common/pkg/openshift/rosa"
 	batchv1 "k8s.io/api/batch/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
-
 	"sigs.k8s.io/e2e-framework/klient/k8s"
 	"sigs.k8s.io/e2e-framework/pkg/envconf"
-
-	"github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
-	"github.com/openshift/osde2e-common/pkg/clients/ocm"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 const (
@@ -49,7 +46,6 @@ type rosaCluster struct {
 	channelGroup   string
 	version        string
 	reportDir      string
-	upgradeVersion *semver.Version
 	kubeconfigFile string
 
 	client *openshiftclient.Client
