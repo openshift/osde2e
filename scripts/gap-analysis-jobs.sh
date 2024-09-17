@@ -17,6 +17,9 @@ docker create --name "${CONTAINER_NAME}" -e OCM_TOKEN \
 	-e AWS_SECRET_ACCESS_KEY \
 	-e AWS_REGION \
 	-e AWS_VPC_SUBNET_IDS \
+	-e HARNESS_TIMEOUT='600' \
+	-e CHANNEL \
+	-e CLUSTER_VERSION \
 	-e GCP_CREDS_JSON \
 	-e INSTALL_LATEST_NIGHTLY \
 	-e REPORT_DIR='/tmp/osde2e-report' \
