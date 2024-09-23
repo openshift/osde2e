@@ -30,7 +30,7 @@ func TestSdnMigration(t *testing.T) {
 		suiteConfig.LabelFilter = labelFilter
 	}
 
-	reporterConfig.JUnitReport = "junit.xml"
+	reporterConfig.JUnitReport = os.Getenv("REPORT_DIR") + "/" + "junit.xml"
 
 	RunSpecs(t, "SdnMigration Suite", suiteConfig, reporterConfig)
 }

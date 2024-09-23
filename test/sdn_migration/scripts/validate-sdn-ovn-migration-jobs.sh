@@ -2,8 +2,6 @@
 
 set +e
 
-#make build-image
-
 UNIQUE_ID=$(date +%s%N) # Generate a unique identifier for this instance
 CONTAINER_NAME="sdn-ovn-migration-${UNIQUE_ID}" # Name of the container based on the unique identifier
 
