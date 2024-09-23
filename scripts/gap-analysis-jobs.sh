@@ -15,12 +15,16 @@ fi
 docker create --name "${CONTAINER_NAME}" -e OCM_TOKEN \
 	-e AWS_ACCESS_KEY_ID \
 	-e AWS_SECRET_ACCESS_KEY \
+	-e AWS_ACCOUNT_ID \
 	-e AWS_REGION \
 	-e OCM_CCS \
 	-e SKIP_DESTROY_CLUSTER \
 	-e OCM_ENV="${ENVIRONMENT}" \
 	-e ROSA_STS="${STS}" \
 	-e AWS_VPC_SUBNET_IDS \
+	-e HARNESS_TIMEOUT='600' \
+	-e CHANNEL \
+	-e INSTALL_LATEST_XY \
 	-e GCP_CREDS_JSON \
 	-e INSTALL_LATEST_NIGHTLY \
 	-e REPORT_DIR='/tmp/osde2e-report' \
