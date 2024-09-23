@@ -10,7 +10,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Masterminds/semver/v3"
 	configv1 "github.com/openshift/api/config/v1"
 	openshiftclient "github.com/openshift/osde2e-common/pkg/clients/openshift"
 	"github.com/openshift/osde2e-common/pkg/clouds/aws"
@@ -47,7 +46,6 @@ type rosaCluster struct {
 	channelGroup   string
 	version        string
 	reportDir      string
-	upgradeVersion *semver.Version
 	kubeconfigFile string
 
 	client *openshiftclient.Client
