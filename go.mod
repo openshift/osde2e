@@ -25,7 +25,6 @@ require (
 	github.com/onsi/gomega v1.34.1
 	github.com/openshift-online/ocm-sdk-go v0.1.441
 	github.com/openshift/client-go v0.0.0-20240510131258-f646d5f29250
-	github.com/openshift/cloud-credential-operator v0.0.0-20230512001141-38e7f96bf730
 	github.com/openshift/managed-upgrade-operator v0.0.0-20230525042514-a9b8c1d2571c
 	github.com/openshift/osde2e-common v0.0.0-20240913051955-f5206c53c976
 	github.com/operator-framework/api v0.17.7
@@ -43,7 +42,7 @@ require (
 	github.com/tsenart/vegeta v12.7.0+incompatible
 	github.com/vmware-tanzu/velero v1.10.2
 	golang.org/x/net v0.28.0
-	golang.org/x/oauth2 v0.22.0
+	golang.org/x/oauth2 v0.22.0 // indirect
 	golang.org/x/sync v0.8.0
 	golang.org/x/tools v0.24.0
 	google.golang.org/api v0.194.0

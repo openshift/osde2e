@@ -1,9 +1,7 @@
 package verify
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"log"
 	"strings"
@@ -12,7 +10,6 @@ import (
 	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	cloudcredentialv1 "github.com/openshift/cloud-credential-operator/pkg/apis/cloudcredential/v1"
 	"github.com/openshift/osde2e/pkg/common/alert"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
@@ -28,7 +25,6 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/rest"
@@ -337,78 +333,59 @@ func enableGCPKMS(ctx context.Context, projectID string, serviceAccountJson []by
 // Creates a unique service account with owner privileges in GCP for the current test instance
 // Returns the service-account.json file for the newly created account
 func createGCPServiceAccount(ctx context.Context, h *helper.H, saName string, saNamespace string) ([]byte, error) {
-	providerBytes := bytes.Buffer{}
-	encoder := json.NewEncoder(&providerBytes)
-	encoder.Encode(cloudcredentialv1.GCPProviderSpec{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "GCPProviderSpec",
-			APIVersion: "cloudcredential.openshift.io/v1",
-		},
-		PredefinedRoles: []string{
-			"roles/owner",
-		},
-		SkipServiceCheck: true,
-	})
-	saCredentialReq := &cloudcredentialv1.CredentialsRequest{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "CredentialsRequest",
-			APIVersion: "cloudcredential.openshift.io/v1",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      saName,
-			Namespace: saNamespace,
-		},
-		Spec: cloudcredentialv1.CredentialsRequestSpec{
-			SecretRef: corev1.ObjectReference{
-				Name:      saName,
-				Namespace: saNamespace,
-			},
-			ProviderSpec: &runtime.RawExtension{
-				Raw:    providerBytes.Bytes(),
-				Object: &cloudcredentialv1.GCPProviderSpec{},
-			},
-		},
-	}
-
-	credentialReqObj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(saCredentialReq)
-	if err != nil {
-		return nil, err
-	}
-
-	_, err = h.Dynamic().Resource(schema.GroupVersionResource{
+	credentialsRequestsClient := h.Dynamic().Resource(schema.GroupVersionResource{
 		Group:    "cloudcredential.openshift.io",
 		Version:  "v1",
 		Resource: "credentialsrequests",
-	}).Namespace(saCredentialReq.GetNamespace()).Create(ctx, &unstructured.Unstructured{Object: credentialReqObj}, metav1.CreateOptions{})
+	}).Namespace(saNamespace)
+
+	newCredentialsRequestObject := new(unstructured.Unstructured)
+	newCredentialsRequestObject.SetUnstructuredContent(map[string]any{
+		"apiVersion": "cloudcredential.openshift.io/v1",
+		"kind":       "CredentialsRequest",
+		"metadata": map[string]any{
+			"name":      saName,
+			"namespace": saNamespace,
+		},
+		"spec": map[string]any{
+			"secretRef": map[string]any{
+				"name":      saName,
+				"namespace": saNamespace,
+			},
+			"providerSpec": map[string]any{
+				"apiVersion":       "cloudcredential.openshift.io/v1",
+				"kind":             "GCPProviderSpec",
+				"predefinedRoles":  []string{"roles/owner"},
+				"skipServiceCheck": true,
+			},
+		},
+	})
+
+	_, err := credentialsRequestsClient.Create(ctx, newCredentialsRequestObject, metav1.CreateOptions{})
 	if err != nil {
 		return nil, err
 	}
 
-	wait.PollImmediate(encryptedStoragePollInterval, encryptedStoragePollTimeout, func() (bool, error) {
-		unstructCredentialReq, err := h.Dynamic().Resource(schema.GroupVersionResource{
-			Group:    "cloudcredential.openshift.io",
-			Version:  "v1",
-			Resource: "credentialsrequests",
-		}).Namespace(saNamespace).Get(ctx, saCredentialReq.GetName(), metav1.GetOptions{})
+	err = wait.PollUntilContextTimeout(ctx, 15*time.Second, 5*time.Minute, true, func(ctx context.Context) (bool, error) {
+		unstructCredentialReq, err := credentialsRequestsClient.Get(ctx, saName, metav1.GetOptions{})
 		if err != nil {
 			return false, err
 		}
-
-		err = runtime.DefaultUnstructuredConverter.FromUnstructured(unstructCredentialReq.UnstructuredContent(), saCredentialReq)
-		if err != nil || !saCredentialReq.Status.Provisioned {
+		provisioned, _, err := unstructured.NestedBool(unstructCredentialReq.Object, "status", "provisioned")
+		if err != nil {
 			return false, err
 		}
-		return true, err
+		return provisioned, nil
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	saSecret, err := h.Kube().CoreV1().Secrets(saCredentialReq.Spec.SecretRef.Namespace).Get(ctx, saCredentialReq.Spec.SecretRef.Name, metav1.GetOptions{})
+	secret, err := h.Kube().CoreV1().Secrets(h.CurrentProject()).Get(ctx, saName, metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
-	return saSecret.Data["service_account.json"], err
+	return secret.Data["service_account.json"], err
 }
 
 func deleteGCPServiceAccount(ctx context.Context, h *helper.H, name string) error {
