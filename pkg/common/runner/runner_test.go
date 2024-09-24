@@ -2,12 +2,9 @@ package runner
 
 import (
 	"fmt"
-	"math/rand"
 	"testing"
-	"time"
 
 	. "github.com/onsi/gomega"
-
 	image "github.com/openshift/client-go/image/clientset/versioned"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
@@ -19,10 +16,6 @@ const (
 	// TestKubeconfigVar is the environment variable that is used for a kubeconfig.
 	TestKubeconfigVar = "TEST_KUBECONFIG"
 )
-
-func init() {
-	rand.Seed(time.Now().Unix())
-}
 
 func TestRunner(t *testing.T) {
 	g := NewGomegaWithT(t)

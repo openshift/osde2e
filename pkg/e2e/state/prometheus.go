@@ -45,7 +45,7 @@ var _ = ginkgo.Describe(clusterStateInformingName, label.E2E, func() {
 			if listerr != nil {
 				return false, listerr
 			}
-			names, podNum := getPodNames(list, h)
+			names, podNum := getPodNames(list)
 			if podNum > 0 {
 				for _, value := range names {
 					if strings.HasPrefix(value, "prometheus-k8s-") {
@@ -93,9 +93,8 @@ func filterPods(ctx context.Context, namespace string, label string, h *helper.H
 }
 
 // Extracts pod names from a filtered list and counts how many are in running state
-func getPodNames(list *corev1.PodList, h *helper.H) ([]string, int) {
+func getPodNames(list *corev1.PodList) ([]string, int) {
 	var notReady []corev1.Pod
-	var ready []corev1.Pod
 	var podNames []string
 	var total int
 	var numReady int
@@ -115,7 +114,6 @@ podLoop:
 					continue podLoop
 				}
 			}
-			ready = append(ready, pod)
 		}
 	}
 	total = len(list.Items)

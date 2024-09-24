@@ -92,8 +92,8 @@ cicd_jUnitResult{cloud_provider="aws",cluster_id="1a2b3c",environment="prod",ins
 			t.Errorf("error writing temporary file: %v", err)
 		}
 
-		tmpFile.WriteString(test.fileContents)
-		tmpFile.Close()
+		_, _ = tmpFile.WriteString(test.fileContents)
+		_ = tmpFile.Close()
 
 		err = m.processJUnitXMLFile(test.phase, tmpFile.Name())
 		if err != nil {
@@ -192,8 +192,8 @@ cicd_addon_metadata{cloud_provider="aws",cluster_id="1a2b3c",environment="prod",
 			t.Errorf("error writing temporary file: %v", err)
 		}
 
-		tmpFile.WriteString(test.fileContents)
-		tmpFile.Close()
+		_, _ = tmpFile.WriteString(test.fileContents)
+		_ = tmpFile.Close()
 
 		var gatherer *prometheus.GaugeVec
 		if test.useAddonGatherer {
@@ -358,8 +358,8 @@ cicd_addon_metadata{cloud_provider="aws",cluster_id="1a2b3c",environment="prod",
 			}
 			fmt.Printf("Writing file %s\n", tmpFile.Name())
 
-			tmpFile.WriteString(jUnitFile.fileContents)
-			tmpFile.Close()
+			_, _ = tmpFile.WriteString(jUnitFile.fileContents)
+			_ = tmpFile.Close()
 		}
 
 		if test.metadataFileContents != "" {

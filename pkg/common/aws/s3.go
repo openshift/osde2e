@@ -64,7 +64,6 @@ func WriteToS3Session(session *session.Session, outputKey string, data []byte) {
 		return
 	}
 	log.Printf("Uploaded to %s", outputKey)
-	return
 }
 
 // CreateS3URL creates an S3 URL from a bucket and a key string.

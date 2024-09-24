@@ -104,7 +104,10 @@ func CreateNamespace(ctx context.Context, namespace string, h *H) (*kv1.Namespac
 			Name: namespace,
 		},
 	}
-	h.Kube().CoreV1().Namespaces().Create(ctx, ns, metav1.CreateOptions{})
+	ns, err = h.Kube().CoreV1().Namespaces().Create(ctx, ns, metav1.CreateOptions{})
+	if err != nil {
+		return nil, err
+	}
 
 	// Wait for the namespace to create. This is usually pretty quick.
 	err = wait.PollUntilContextTimeout(ctx, 5*time.Second, 2*time.Minute, false, func(ctx context.Context) (bool, error) {

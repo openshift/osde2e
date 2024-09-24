@@ -18,7 +18,7 @@ import (
 
 func resultString(files ...string) string {
 	var b bytes.Buffer
-	resultTemplate.Execute(&b, struct{ Files []string }{files})
+	_ = resultTemplate.Execute(&b, struct{ Files []string }{files})
 	return b.String()
 }
 

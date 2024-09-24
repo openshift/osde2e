@@ -210,7 +210,9 @@ func (rm *RouteMonitors) SaveReports(baseDir string) error {
 		if err != nil {
 			return fmt.Errorf("error while creating route monitor report: %v", err)
 		}
-		reporter.Report(out)
+		if err = reporter.Report(out); err != nil {
+			return err
+		}
 		log.Printf("Wrote route monitor histogram: %s\n", histoPath)
 	}
 	return nil
@@ -230,7 +232,9 @@ func (rm *RouteMonitors) SavePlots(baseDir string) error {
 		if err != nil {
 			return fmt.Errorf("error while creating route monitor report: %v", err)
 		}
-		pl.WriteTo(out)
+		if _, err = pl.WriteTo(out); err != nil {
+			return err
+		}
 		log.Printf("Wrote route monitor plot: %s\n", plotPath)
 
 	}

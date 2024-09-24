@@ -48,7 +48,7 @@ var _ = ginkgo.Describe(inhibitionsTestName, label.Operators, func() {
 		Expect(string(alertmanagerConfigData)).To(ContainSubstring("inhibit_rules"))
 
 		config := alertmanagerConfig.Config{}
-		yaml.Unmarshal(alertmanagerConfigData, &config)
+		Expect(yaml.Unmarshal(alertmanagerConfigData, &config)).Should(Succeed())
 
 		// look for all the inhibition rules we expect
 		tests := []struct {

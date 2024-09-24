@@ -16,14 +16,9 @@ import (
 
 	junit "github.com/joshdk/go-junit"
 	"github.com/onsi/ginkgo/v2"
+	"github.com/onsi/ginkgo/v2/reporters"
 	"github.com/onsi/ginkgo/v2/types"
 	"github.com/onsi/gomega"
-	"github.com/openshift/osde2e/pkg/common/versions"
-	vegeta "github.com/tsenart/vegeta/lib"
-	"k8s.io/apimachinery/pkg/util/wait"
-	ctrlog "sigs.k8s.io/controller-runtime/pkg/log"
-
-	"github.com/onsi/ginkgo/v2/reporters"
 	clusterutil "github.com/openshift/osde2e/pkg/common/cluster"
 	"github.com/openshift/osde2e/pkg/common/clusterproperties"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
@@ -37,8 +32,12 @@ import (
 	"github.com/openshift/osde2e/pkg/common/spi"
 	"github.com/openshift/osde2e/pkg/common/upgrade"
 	"github.com/openshift/osde2e/pkg/common/util"
+	"github.com/openshift/osde2e/pkg/common/versions"
 	"github.com/openshift/osde2e/pkg/debug"
 	"github.com/openshift/osde2e/pkg/e2e/routemonitors"
+	vegeta "github.com/tsenart/vegeta/lib"
+	"k8s.io/apimachinery/pkg/util/wait"
+	ctrlog "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 const (
@@ -178,6 +177,10 @@ func beforeSuite() bool {
 	} else {
 		log.Println("Using provided kubeconfig")
 		cluster, err = provider.GetCluster(viper.GetString(config.Cluster.ID))
+		if err != nil {
+			log.Printf("Failed to get cluster %s: %s", viper.GetString(config.Cluster.ID), err)
+			return false
+		}
 	}
 	clusterutil.SetClusterIntoViperConfig(cluster)
 
@@ -543,7 +546,9 @@ func cleanupAfterE2E(ctx context.Context, h *helper.H) (errors []error) {
 		h.InspectState(ctx)
 
 		log.Print("Gathering OLM State...")
-		h.InspectOLM(ctx)
+		if err = h.InspectOLM(ctx); err != nil {
+			errors = append(errors, err)
+		}
 	} else {
 		log.Print("Skipping must-gather as requested")
 	}
@@ -591,7 +596,9 @@ func cleanupAfterE2E(ctx context.Context, h *helper.H) (errors []error) {
 	if viper.GetString(config.Cluster.InstallSpecificNightly) != "" || viper.GetString(config.Cluster.ReleaseImageLatest) != "" {
 		viper.Set(config.Cluster.HibernateAfterUse, false)
 		if viper.GetString(config.Cluster.ID) != "" {
-			provider.Expire(viper.GetString(config.Cluster.ID), 30*time.Minute)
+			if err := provider.Expire(viper.GetString(config.Cluster.ID), 30*time.Minute); err != nil {
+				errors = append(errors, err)
+			}
 		}
 	}
 
@@ -923,7 +930,7 @@ func setupRouteMonitors(ctx context.Context, h *helper.H, closeChannel chan stru
 				// A metric is waiting for storage
 				case msg := <-agg:
 					routeMonitors.Metrics[msg.Attack].Add(msg)
-					routeMonitors.Plots[msg.Attack].Add(msg)
+					_ = routeMonitors.Plots[msg.Attack].Add(msg)
 				}
 			}
 		}()
@@ -934,9 +941,9 @@ func setupRouteMonitors(ctx context.Context, h *helper.H, closeChannel chan stru
 			case <-routeMonitorChan:
 				log.Println("Closing route monitors...")
 				routeMonitors.End()
-				routeMonitors.SaveReports(viper.GetString(config.ReportDir))
-				routeMonitors.SavePlots(viper.GetString(config.ReportDir))
-				routeMonitors.ExtractData(viper.GetString(config.ReportDir))
+				_ = routeMonitors.SaveReports(viper.GetString(config.ReportDir))
+				_ = routeMonitors.SavePlots(viper.GetString(config.ReportDir))
+				_ = routeMonitors.ExtractData(viper.GetString(config.ReportDir))
 				routeMonitors.StoreMetadata()
 				close(closeChannel)
 				return

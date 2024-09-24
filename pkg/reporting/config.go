@@ -8,5 +8,5 @@ const (
 )
 
 func init() {
-	viper.BindEnv(SlackWebhook, "SLACK_WEBHOOK")
+	_ = viper.BindEnv(SlackWebhook, "SLACK_WEBHOOK")
 }

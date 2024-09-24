@@ -26,21 +26,21 @@ var (
 )
 
 func InitAWSViper() {
-	viper.BindEnv(AWSAccountId, "AWS_ACCOUNT_ID")
+	_ = viper.BindEnv(AWSAccountId, "AWS_ACCOUNT_ID")
 	RegisterSecret(AWSAccountId, "aws-account")
 
-	viper.BindEnv(AWSAccessKey, "AWS_ACCESS_KEY", "OCM_AWS_ACCESS_KEY", "AWS_ACCESS_KEY_ID", "ROSA_AWS_ACCESS_KEY_ID")
+	_ = viper.BindEnv(AWSAccessKey, "AWS_ACCESS_KEY", "OCM_AWS_ACCESS_KEY", "AWS_ACCESS_KEY_ID", "ROSA_AWS_ACCESS_KEY_ID")
 	RegisterSecret(AWSAccessKey, "aws-access-key")
 
-	viper.BindEnv(AWSSecretAccessKey, "AWS_SECRET_ACCESS_KEY", "OCM_AWS_SECRET_KEY", "ROSA_AWS_SECRET_ACCESS_KEY")
+	_ = viper.BindEnv(AWSSecretAccessKey, "AWS_SECRET_ACCESS_KEY", "OCM_AWS_SECRET_KEY", "ROSA_AWS_SECRET_ACCESS_KEY")
 	RegisterSecret(AWSSecretAccessKey, "aws-secret-access-key")
 
-	viper.BindEnv(AWSProfile, "AWS_PROFILE")
+	_ = viper.BindEnv(AWSProfile, "AWS_PROFILE")
 	RegisterSecret(AWSProfile, "aws-profile")
 
-	viper.BindEnv(AWSRegion, "AWS_REGION", "ROSA_AWS_REGION", "CLOUD_PROVIDER_REGION")
+	_ = viper.BindEnv(AWSRegion, "AWS_REGION", "ROSA_AWS_REGION", "CLOUD_PROVIDER_REGION")
 	RegisterSecret(AWSRegion, "aws-region")
 
-	viper.BindEnv(AWSVPCSubnetIDs, "AWS_VPC_SUBNET_IDS", "ROSA_SUBNET_IDS", "SUBNET_IDS")
+	_ = viper.BindEnv(AWSVPCSubnetIDs, "AWS_VPC_SUBNET_IDS", "ROSA_SUBNET_IDS", "SUBNET_IDS")
 	RegisterSecret(AWSVPCSubnetIDs, "subnet-ids")
 }

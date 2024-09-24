@@ -21,17 +21,17 @@ var (
 )
 
 func InitGCPViper() {
-	viper.BindEnv(GCPCredsJSON, "GCP_CREDS_JSON")
-	viper.BindEnv(GCPCredsType, "GCP_CREDS_TYPE")
-	viper.BindEnv(GCPProjectID, "GCP_PROJECT_ID")
-	viper.BindEnv(GCPPrivateKey, "GCP_PRIVATE_KEY")
-	viper.BindEnv(GCPPrivateKeyID, "GCP_PRIVATE_KEY_ID")
-	viper.BindEnv(GCPClientEmail, "GCP_CLIENT_EMAIL")
-	viper.BindEnv(GCPClientID, "GCP_CLIENT_ID")
-	viper.BindEnv(GCPAuthURI, "GCP_AUTH_URI")
-	viper.BindEnv(GCPTokenURI, "GCP_TOKEN_URI")
-	viper.BindEnv(GCPAuthProviderX509CertURL, "GCP_AUTH_PROVIDER_X509_CERT_URL")
-	viper.BindEnv(GCPClientX509CertURL, "GCP_CLIENT_X509_CERT_URL")
+	_ = viper.BindEnv(GCPCredsJSON, "GCP_CREDS_JSON")
+	_ = viper.BindEnv(GCPCredsType, "GCP_CREDS_TYPE")
+	_ = viper.BindEnv(GCPProjectID, "GCP_PROJECT_ID")
+	_ = viper.BindEnv(GCPPrivateKey, "GCP_PRIVATE_KEY")
+	_ = viper.BindEnv(GCPPrivateKeyID, "GCP_PRIVATE_KEY_ID")
+	_ = viper.BindEnv(GCPClientEmail, "GCP_CLIENT_EMAIL")
+	_ = viper.BindEnv(GCPClientID, "GCP_CLIENT_ID")
+	_ = viper.BindEnv(GCPAuthURI, "GCP_AUTH_URI")
+	_ = viper.BindEnv(GCPTokenURI, "GCP_TOKEN_URI")
+	_ = viper.BindEnv(GCPAuthProviderX509CertURL, "GCP_AUTH_PROVIDER_X509_CERT_URL")
+	_ = viper.BindEnv(GCPClientX509CertURL, "GCP_CLIENT_X509_CERT_URL")
 
 	RegisterSecret(GCPCredsJSON, "gcp-creds.json")
 

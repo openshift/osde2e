@@ -51,46 +51,46 @@ const (
 
 func init() {
 	// ----- OCM -----
-	viper.BindEnv(Token, "OCM_TOKEN")
+	_ = viper.BindEnv(Token, "OCM_TOKEN")
 	config.RegisterSecret(Token, "ocm-refresh-token")
 
 	viper.SetDefault(Env, "prod")
-	viper.BindEnv(Env, "OSD_ENV")
+	_ = viper.BindEnv(Env, "OSD_ENV")
 
 	viper.SetDefault(Debug, false)
-	viper.BindEnv(Debug, "DEBUG_OSD")
+	_ = viper.BindEnv(Debug, "DEBUG_OSD")
 
 	viper.SetDefault(NumRetries, 3)
-	viper.BindEnv(NumRetries, "NUM_RETRIES")
+	_ = viper.BindEnv(NumRetries, "NUM_RETRIES")
 
 	viper.SetDefault(ComputeMachineType, "")
-	viper.BindEnv(ComputeMachineType, "OCM_COMPUTE_MACHINE_TYPE")
+	_ = viper.BindEnv(ComputeMachineType, "OCM_COMPUTE_MACHINE_TYPE")
 
 	viper.SetDefault(ComputeMachineTypeRegex, "")
-	viper.BindEnv(ComputeMachineTypeRegex, "OCM_COMPUTE_MACHINE_TYPE_REGEX")
+	_ = viper.BindEnv(ComputeMachineTypeRegex, "OCM_COMPUTE_MACHINE_TYPE_REGEX")
 
-	viper.BindEnv(UserOverride, "OCM_USER_OVERRIDE")
+	_ = viper.BindEnv(UserOverride, "OCM_USER_OVERRIDE")
 
 	viper.SetDefault(Flavour, "osd-4")
-	viper.BindEnv(Flavour, "OCM_FLAVOUR")
+	_ = viper.BindEnv(Flavour, "OCM_FLAVOUR")
 
 	viper.SetDefault(Sku, "")
-	viper.BindEnv(Sku, "OCM_SKU")
+	_ = viper.BindEnv(Sku, "OCM_SKU")
 
-	viper.BindEnv(AdditionalLabels, "OCM_ADDITIONAL_LABELS")
+	_ = viper.BindEnv(AdditionalLabels, "OCM_ADDITIONAL_LABELS")
 
 	viper.SetDefault(CCS, false)
-	viper.BindEnv(CCS, "OCM_CCS", "CCS")
+	_ = viper.BindEnv(CCS, "OCM_CCS", "CCS")
 
 	// ----- FedRamp -----
 	viper.SetDefault(FedRampClientID, "")
-	viper.BindEnv(FedRampClientID, "FEDRAMP_CLIENT_ID")
+	_ = viper.BindEnv(FedRampClientID, "FEDRAMP_CLIENT_ID")
 
 	viper.SetDefault(FedRampClientSecret, "")
-	viper.BindEnv(FedRampClientSecret, "FEDRAMP_CLIENT_SECRET")
+	_ = viper.BindEnv(FedRampClientSecret, "FEDRAMP_CLIENT_SECRET")
 
 	viper.SetDefault(HTTPSProxy, "")
-	viper.BindEnv(HTTPSProxy, "HTTPS_PROXY")
+	_ = viper.BindEnv(HTTPSProxy, "HTTPS_PROXY")
 
 	config.RegisterSecret(FedRampClientID, "fedramp-client-id")
 	config.RegisterSecret(FedRampClientSecret, "fedramp-client-secret")
