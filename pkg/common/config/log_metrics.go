@@ -28,7 +28,7 @@ func GetLogMetrics() LogMetrics {
 		err := viper.UnmarshalKey(fmt.Sprintf("%slogMetrics", CloudProvider.CloudProviderID), &logMetrics)
 		if err != nil {
 			log.Printf("Log Metric Thresholds not set for the provider %s, defaulting to AWS settings", CloudProvider.CloudProviderID)
-			viper.UnmarshalKey("awslogMetrics", &logMetrics)
+			_ = viper.UnmarshalKey("awslogMetrics", &logMetrics)
 		}
 	})
 	return logMetrics
@@ -39,7 +39,7 @@ func GetBeforeSuiteMetrics() LogMetrics {
 	err := viper.UnmarshalKey(fmt.Sprintf("%sbeforeSuiteMetrics", CloudProvider.CloudProviderID), &beforeSuiteMetrics)
 	if err != nil {
 		log.Printf("Before Suite Metric Thresholds not set for the provider %s, defaulting to AWS settings", CloudProvider.CloudProviderID)
-		viper.UnmarshalKey("awsbeforeSuiteMetrics", &beforeSuiteMetrics)
+		_ = viper.UnmarshalKey("awsbeforeSuiteMetrics", &beforeSuiteMetrics)
 	}
 	return beforeSuiteMetrics
 }

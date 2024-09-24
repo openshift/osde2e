@@ -917,7 +917,7 @@ func (o *OCMProvider) InstallAddons(clusterID string, addonIDs []spi.AddOnID, ad
 				if err != nil {
 					return err
 				}
-				if err = o.updateClusterCache(clusterID, ocmCluster); err != nil {
+				if err = o.updateClusterCache(ocmCluster); err != nil {
 					return fmt.Errorf("error updating cluster cache: %v", err)
 				}
 
@@ -1115,9 +1115,7 @@ func (o *OCMProvider) ExtendExpiry(clusterID string, hours uint64, minutes uint6
 			return errResp(resp.Error())
 		}
 
-		o.updateClusterCache(clusterID, resp.Body())
-
-		return nil
+		return o.updateClusterCache(resp.Body())
 	})
 	if err != nil {
 		return err
@@ -1162,10 +1160,7 @@ func (o *OCMProvider) Expire(clusterID string, duration time.Duration) error {
 			log.Printf("error while trying to update cluster: %v", err)
 			return errResp(resp.Error())
 		}
-
-		o.updateClusterCache(clusterID, resp.Body())
-
-		return nil
+		return o.updateClusterCache(resp.Body())
 	})
 	if err != nil {
 		return err
@@ -1225,12 +1220,10 @@ func (o *OCMProvider) AddProperty(cluster *spi.Cluster, tag string, value string
 		return resp.Error()
 	}
 
-	// We need to update the cache post-update
-	o.updateClusterCache(cluster.ID(), resp.Body())
-
 	log.Printf("Successfully added property[%s] - %s \n", tag, resp.Body().Properties()[tag])
 
-	return nil
+	// We need to update the cache post-update
+	return o.updateClusterCache(resp.Body())
 }
 
 // Get a specific cluster property
@@ -1352,7 +1345,7 @@ func (o *OCMProvider) Hibernate(id string) bool {
 }
 
 // This assumes cluster is a resp.Body() response from an OCM update
-func (o *OCMProvider) updateClusterCache(id string, cluster *v1.Cluster) error {
+func (o *OCMProvider) updateClusterCache(cluster *v1.Cluster) error {
 	c, err := o.ocmToSPICluster(cluster)
 	if err != nil {
 		return err

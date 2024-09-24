@@ -7,16 +7,14 @@ import (
 	"path/filepath"
 	"time"
 
-	batchv1 "k8s.io/api/batch/v1"
-	corev1 "k8s.io/api/core/v1"
-
 	"github.com/openshift/osde2e/pkg/common/util"
+	batchv1 "k8s.io/api/batch/v1"
 	kubev1 "k8s.io/api/core/v1"
 	kerror "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/apimachinery/pkg/util/wait"
-	"k8s.io/utils/pointer"
+	"k8s.io/utils/ptr"
 )
 
 const (
@@ -60,7 +58,7 @@ var DefaultContainer = kubev1.Container{
 		PeriodSeconds: 7,
 	},
 	SecurityContext: &kubev1.SecurityContext{
-		RunAsUser: pointer.Int64(0),
+		RunAsUser: ptr.To[int64](0),
 	},
 }
 
@@ -84,7 +82,7 @@ func volumes(name string) []kubev1.Volume {
 					LocalObjectReference: kubev1.LocalObjectReference{
 						Name: name,
 					},
-					DefaultMode: pointer.Int32(0o755),
+					DefaultMode: ptr.To[int32](0o755),
 				},
 			},
 		},
@@ -174,7 +172,7 @@ func (r *Runner) createJobPod(ctx context.Context) (pod *kubev1.Pod, err error) 
 	}); err != nil {
 		return nil, err
 	}
-	pods := new(corev1.PodList)
+	pods := new(kubev1.PodList)
 	// retry until Pod can be found or timeout occurs
 	if err = wait.PollUntilContextTimeout(ctx, fastPoll, podCreateTimeout, false, func(ctx context.Context) (done bool, err error) {
 		labelSelector := fmt.Sprintf("%s=%s", "job-name", job.Name)

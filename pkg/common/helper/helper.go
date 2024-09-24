@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"math/rand"
 	"strings"
 	"sync"
 	"text/template"
@@ -38,10 +37,6 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 )
-
-func init() {
-	rand.Seed(time.Now().Unix())
-}
 
 // Init is a common helper function to import the run state into Helper
 func Init() *H {
@@ -388,7 +383,7 @@ func (h *H) GetGCPCreds(ctx context.Context) (*google.Credentials, bool) {
 	testInstanceName := "test-" + time.Now().Format("20060102-150405-") + fmt.Sprint(time.Now().Nanosecond()/1000000) + "-" + fmt.Sprint(ginkgo.GinkgoParallelProcess())
 	providerBytes := bytes.Buffer{}
 	encoder := json.NewEncoder(&providerBytes)
-	encoder.Encode(cloudcredentialv1.GCPProviderSpec{
+	_ = encoder.Encode(cloudcredentialv1.GCPProviderSpec{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "GCPProviderSpec",
 			APIVersion: "cloudcredential.openshift.io/v1",

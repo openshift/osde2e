@@ -7,8 +7,6 @@ import (
 	"time"
 
 	corev1 "k8s.io/api/core/v1"
-
-	kubev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes/fake"
 )
@@ -59,7 +57,7 @@ func TestResultsService(t *testing.T) {
 	}()
 
 	// create endpoint
-	endpoints, err := client.CoreV1().Endpoints(r.Namespace).Create(context.TODO(), &kubev1.Endpoints{
+	endpoints, err := client.CoreV1().Endpoints(r.Namespace).Create(context.TODO(), &corev1.Endpoints{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: r.svc.Name,
 		},
@@ -70,13 +68,13 @@ func TestResultsService(t *testing.T) {
 
 	// wait some time and add address
 	time.Sleep(10 * time.Second)
-	address := kubev1.EndpointAddress{
+	address := corev1.EndpointAddress{
 		IP:       "127.0.0.1",
 		Hostname: "localhost",
 	}
-	endpoints.Subsets = []kubev1.EndpointSubset{
+	endpoints.Subsets = []corev1.EndpointSubset{
 		{
-			Addresses: []kubev1.EndpointAddress{address},
+			Addresses: []corev1.EndpointAddress{address},
 		},
 	}
 	_, err = r.Kube.CoreV1().Endpoints(r.Namespace).Update(context.TODO(), endpoints, metav1.UpdateOptions{})

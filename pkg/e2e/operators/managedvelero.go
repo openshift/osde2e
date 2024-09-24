@@ -259,7 +259,7 @@ func testCRbackups(h *helper.H) {
 			_, err := h.Velero().VeleroV1().Backups(h.CurrentProject()).Create(ctx, &backup, metav1.CreateOptions{})
 			Expect(err).NotTo(HaveOccurred())
 
-			h.Velero().VeleroV1().Backups(h.CurrentProject()).Delete(ctx, "admin-backup-test", metav1.DeleteOptions{})
+			err = h.Velero().VeleroV1().Backups(h.CurrentProject()).Delete(ctx, "admin-backup-test", metav1.DeleteOptions{})
 			Expect(err).NotTo(HaveOccurred())
 		})
 	})
@@ -276,7 +276,7 @@ func testCRrestore(h *helper.H) {
 			_, err := h.Velero().VeleroV1().Restores(h.CurrentProject()).Create(ctx, &restore, metav1.CreateOptions{})
 			Expect(err).NotTo(HaveOccurred())
 
-			h.Velero().VeleroV1().Restores(h.CurrentProject()).Delete(ctx, "restore-test", metav1.DeleteOptions{})
+			err = h.Velero().VeleroV1().Restores(h.CurrentProject()).Delete(ctx, "restore-test", metav1.DeleteOptions{})
 			Expect(err).NotTo(HaveOccurred())
 		})
 	})
@@ -293,7 +293,7 @@ func testCRdeleteBackupRequests(h *helper.H) {
 			_, err := h.Velero().VeleroV1().DeleteBackupRequests(h.CurrentProject()).Create(ctx, &deleteBackupRequest, metav1.CreateOptions{})
 			Expect(err).NotTo(HaveOccurred())
 
-			h.Velero().VeleroV1().DeleteBackupRequests(h.CurrentProject()).Delete(ctx, "delete-backup-request-test", metav1.DeleteOptions{})
+			err = h.Velero().VeleroV1().DeleteBackupRequests(h.CurrentProject()).Delete(ctx, "delete-backup-request-test", metav1.DeleteOptions{})
 			Expect(err).NotTo(HaveOccurred())
 		})
 	})
@@ -319,7 +319,7 @@ func testCRbackupStorageLocations(h *helper.H) {
 			_, err := h.Velero().VeleroV1().BackupStorageLocations(h.CurrentProject()).Create(ctx, &backupStorageLocation, metav1.CreateOptions{})
 			Expect(err).NotTo(HaveOccurred())
 
-			h.Velero().VeleroV1().BackupStorageLocations(h.CurrentProject()).Delete(ctx, "backup-storage-location-test", metav1.DeleteOptions{})
+			err = h.Velero().VeleroV1().BackupStorageLocations(h.CurrentProject()).Delete(ctx, "backup-storage-location-test", metav1.DeleteOptions{})
 			Expect(err).NotTo(HaveOccurred())
 		})
 	})
@@ -343,7 +343,7 @@ func testCRdownloadRequests(h *helper.H) {
 			_, err := h.Velero().VeleroV1().DownloadRequests(h.CurrentProject()).Create(ctx, &downloadRequest, metav1.CreateOptions{})
 			Expect(err).NotTo(HaveOccurred())
 
-			h.Velero().VeleroV1().DownloadRequests(h.CurrentProject()).Delete(ctx, "download-request-test", metav1.DeleteOptions{})
+			err = h.Velero().VeleroV1().DownloadRequests(h.CurrentProject()).Delete(ctx, "download-request-test", metav1.DeleteOptions{})
 			Expect(err).NotTo(HaveOccurred())
 		})
 	})
@@ -360,7 +360,7 @@ func testCRvolumeSnapshotLocation(h *helper.H) {
 			_, err := h.Velero().VeleroV1().VolumeSnapshotLocations(h.CurrentProject()).Create(ctx, &volumeSnapshotLocation, metav1.CreateOptions{})
 			Expect(err).NotTo(HaveOccurred())
 
-			h.Velero().VeleroV1().VolumeSnapshotLocations(h.CurrentProject()).Delete(ctx, "volume-snapshot-locations-test", metav1.DeleteOptions{})
+			err = h.Velero().VeleroV1().VolumeSnapshotLocations(h.CurrentProject()).Delete(ctx, "volume-snapshot-locations-test", metav1.DeleteOptions{})
 			Expect(err).NotTo(HaveOccurred())
 		})
 	})
@@ -377,7 +377,7 @@ func testCRschedules(h *helper.H) {
 			_, err := h.Velero().VeleroV1().Schedules(h.CurrentProject()).Create(ctx, &schedules, metav1.CreateOptions{})
 			Expect(err).NotTo(HaveOccurred())
 
-			h.Velero().VeleroV1().Schedules(h.CurrentProject()).Delete(ctx, "schedules-test", metav1.DeleteOptions{})
+			err = h.Velero().VeleroV1().Schedules(h.CurrentProject()).Delete(ctx, "schedules-test", metav1.DeleteOptions{})
 			Expect(err).NotTo(HaveOccurred())
 		})
 	})
@@ -394,7 +394,7 @@ func testCRserverStatusRequest(h *helper.H) {
 			_, err := h.Velero().VeleroV1().ServerStatusRequests(h.CurrentProject()).Create(ctx, &serverStatusRequest, metav1.CreateOptions{})
 			Expect(err).NotTo(HaveOccurred())
 
-			h.Velero().VeleroV1().ServerStatusRequests(h.CurrentProject()).Delete(ctx, "server-status-request-test", metav1.DeleteOptions{})
+			err = h.Velero().VeleroV1().ServerStatusRequests(h.CurrentProject()).Delete(ctx, "server-status-request-test", metav1.DeleteOptions{})
 			Expect(err).NotTo(HaveOccurred())
 		})
 	})

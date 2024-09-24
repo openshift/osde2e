@@ -15,7 +15,7 @@ import (
 	storagev1 "k8s.io/api/storage/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/utils/pointer"
+	"k8s.io/utils/ptr"
 	"sigs.k8s.io/e2e-framework/klient/k8s/resources"
 	"sigs.k8s.io/e2e-framework/klient/wait"
 	"sigs.k8s.io/e2e-framework/klient/wait/conditions"
@@ -40,7 +40,7 @@ var _ = ginkgo.Describe(storageTestName, ginkgo.Ordered, label.HyperShift, label
 		expect.NoError(client.List(ctx, &storageClassList))
 
 		for _, sc := range storageClassList.Items {
-			Expect(sc.AllowVolumeExpansion).To(Equal(pointer.Bool(true)))
+			Expect(sc.AllowVolumeExpansion).To(Equal(ptr.To(true)))
 		}
 
 		for _, storageClass := range storageClassList.Items {
@@ -58,7 +58,7 @@ var _ = ginkgo.Describe(storageTestName, ginkgo.Ordered, label.HyperShift, label
 							v1.ResourceStorage: resource.MustParse("2Gi"),
 						},
 					},
-					StorageClassName: pointer.String(storageClass.GetName()),
+					StorageClassName: ptr.To(storageClass.GetName()),
 				},
 			}
 			expect.NoError(client.Create(ctx, pvc), "failed to create PVC with %s", errMsg)

@@ -132,8 +132,7 @@ func (r *Runner) Run(timeoutInSeconds int, stopCh <-chan struct{}) (err error) {
 	}
 
 	r.Info(fmt.Sprintf("Waiting for endpoints of %s runner Pod with a timeout of %d seconds...", r.Name, timeoutInSeconds))
-	var completionErr error
-	completionErr = r.waitForCompletion(ctx, pod.Name, timeoutInSeconds)
+	completionErr := r.waitForCompletion(ctx, pod.Name, timeoutInSeconds)
 
 	if !r.SkipLogsFromPod {
 		r.Info(fmt.Sprintf("Collecting logs from containers on %s runner Pod...", r.Name))

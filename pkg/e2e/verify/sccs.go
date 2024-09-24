@@ -17,7 +17,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/kubectl/pkg/util/slice"
-	"k8s.io/utils/pointer"
+	"k8s.io/utils/ptr"
 	"sigs.k8s.io/e2e-framework/klient/k8s"
 	"sigs.k8s.io/e2e-framework/klient/k8s/resources"
 	"sigs.k8s.io/e2e-framework/klient/wait"
@@ -70,15 +70,15 @@ var _ = ginkgo.Describe(dedicatedAdminSccTestName, ginkgo.Ordered, label.HyperSh
 			},
 			Spec: v1.PodSpec{
 				SecurityContext: &v1.PodSecurityContext{
-					RunAsUser:    pointer.Int64(987654321),
-					RunAsNonRoot: pointer.Bool(false),
+					RunAsUser:    ptr.To[int64](987654321),
+					RunAsNonRoot: ptr.To(false),
 				},
 				Containers: []v1.Container{
 					{
 						Name:  "test",
 						Image: "openshift/hello-openshift",
 						SecurityContext: &v1.SecurityContext{
-							AllowPrivilegeEscalation: pointer.Bool(false),
+							AllowPrivilegeEscalation: ptr.To(false),
 							Capabilities:             &v1.Capabilities{Drop: []v1.Capability{"ALL"}},
 							SeccompProfile:           &v1.SeccompProfile{Type: v1.SeccompProfileTypeRuntimeDefault},
 						},
@@ -125,7 +125,7 @@ var _ = ginkgo.Describe(dedicatedAdminSccTestName, ginkgo.Ordered, label.HyperSh
 		expect.NoError(client.Get(ctx, deploymentName, namespace, deployment))
 
 		originalReplicaCount := deployment.Spec.DeepCopy().Replicas
-		deployment.Spec.Replicas = pointer.Int32(0)
+		deployment.Spec.Replicas = ptr.To[int32](0)
 		expect.NoError(client.Update(ctx, deployment))
 
 		err = wait.For(conditions.New(client).ResourceScaled(deployment, func(object k8s.Object) int32 {
