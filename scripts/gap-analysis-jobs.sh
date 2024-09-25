@@ -28,6 +28,11 @@ docker create --name "${CONTAINER_NAME}" -e OCM_TOKEN \
 	-e GCP_CREDS_JSON \
 	-e INSTALL_LATEST_NIGHTLY \
 	-e REPORT_DIR='/tmp/osde2e-report' \
+	-e USE_PROXY_FOR_INSTALL \
+	-e SUBNET_IDS \
+	-e TEST_HTTP_PROXY \
+	-e TEST_HTTPS_PROXY \
+	-e USER_CA_BUNDLE \
 	quay.io/redhat-services-prod/osde2e-cicada-tenant/osde2e:latest test --configs "${CONFIGS}"
 
 # Start the container
