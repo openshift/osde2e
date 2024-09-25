@@ -25,7 +25,7 @@ podman create --name "${CONTAINER_NAME}" -e OCM_TOKEN \
 	-e CA_BUNDLE\
 	-e SUBNETS\
 	-e REPORT_DIR='/tmp/osde2e-report' \
-	quay.io/creed/osde2e-sdn-ovn/validate-sdn-ovn-migration:latest
+	quay.io/redhat-user-workloads/osde2e-cicada-tenant/test-suites/sdn-migration:latest
 
 
 # Start the container
