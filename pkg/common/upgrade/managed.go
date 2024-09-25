@@ -198,7 +198,7 @@ func overrideUpgradeConfig(uc upgradev1alpha1.UpgradeConfig, h *helper.H) error 
 	if err != nil {
 		return fmt.Errorf("can't convert UpgradeConfig to unstructured resource: %v", err)
 	}
-	uobj := unstructured.Unstructured{obj}
+	uobj := unstructured.Unstructured{Object: obj}
 	_, err = h.Dynamic().Resource(schema.GroupVersionResource{
 		Group:    "upgrade.managed.openshift.io",
 		Version:  "v1alpha1",
@@ -640,7 +640,7 @@ func scheduleLocalUpgrade(h *helper.H) error {
 	if err != nil {
 		return fmt.Errorf("can't convert UpgradeConfig to unstructured resource: %v", err)
 	}
-	uobj := unstructured.Unstructured{obj}
+	uobj := unstructured.Unstructured{Object: obj}
 	_, err = h.Dynamic().Resource(schema.GroupVersionResource{
 		Group:    "upgrade.managed.openshift.io",
 		Version:  "v1alpha1",

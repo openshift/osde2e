@@ -17,3 +17,4 @@ linters:
 issues:
   exclude:
     - composites
+    - "ST1001: should not use dot imports"

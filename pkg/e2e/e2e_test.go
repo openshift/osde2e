@@ -25,7 +25,7 @@ func TestNoHiveLogs(t *testing.T) {
 
 	viper.Set(config.ReportDir, tmpDir)
 
-	checkBeforeMetricsGeneration()
+	_ = checkBeforeMetricsGeneration()
 	if !reflect.DeepEqual(events.GetListOfEvents(), []string{string(events.NoHiveLogs)}) {
 		t.Errorf("the NoHiveLogs event was not detected")
 	}
@@ -40,8 +40,7 @@ func TestNoHiveLogs(t *testing.T) {
 		t.Errorf("error creating dummy hive log: %v", err)
 	}
 
-	checkBeforeMetricsGeneration()
-
+	_ = checkBeforeMetricsGeneration()
 	if !reflect.DeepEqual(events.GetListOfEvents(), []string{}) {
 		t.Errorf("the NoHiveLogs event should not have been detected")
 	}

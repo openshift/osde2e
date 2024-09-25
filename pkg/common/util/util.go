@@ -3,7 +3,6 @@ package util
 import (
 	"math/rand"
 	"strings"
-	"time"
 
 	"github.com/Masterminds/semver/v3"
 )
@@ -15,7 +14,6 @@ const (
 
 // RandomStr returns a random varchar string given a specified length
 func RandomStr(length int) (str string) {
-	rand.Seed(time.Now().UnixNano())
 	chars := "0123456789abcdefghijklmnopqrstuvwxyz"
 	for i := 0; i < length; i++ {
 		c := string(chars[rand.Intn(len(chars))])

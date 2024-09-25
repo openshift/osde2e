@@ -109,8 +109,8 @@ func NewMetrics() *Metrics {
 }
 
 func init() {
-	junitFileRegex = regexp.MustCompile("^junit.*\\.xml$")
-	logFileRegex = regexp.MustCompile("^.*\\.(log|txt)$")
+	junitFileRegex = regexp.MustCompile(`^junit.*\.xml$`)
+	logFileRegex = regexp.MustCompile(`^.*\.(log|txt)$`)
 }
 
 // WritePrometheusFile collects data and writes it out in the prometheus export file format (https://github.com/prometheus/docs/blob/master/content/docs/instrumenting/exposition_formats.md)
@@ -136,13 +136,19 @@ func (m *Metrics) WritePrometheusFile(reportDir string) (string, error) {
 					// Process the jUnit XML result files
 					if junitFileRegex.MatchString(phaseFile.Name()) {
 						// TODO: The addon metric prefix should reference the addon job being run to further avoid collision
-						m.processJUnitXMLFile(phase, filepath.Join(phaseDir, phaseFile.Name()))
+						if err = m.processJUnitXMLFile(phase, filepath.Join(phaseDir, phaseFile.Name())); err != nil {
+							return "", fmt.Errorf("unable to process junit file %s: %w", phaseFile.Name(), err)
+						}
 					} else if phaseFile.Name() == metadata.TestHarnessMetadataFile {
-						m.processJSONFile(m.addonGatherer, filepath.Join(phaseDir, phaseFile.Name()), phase)
+						if err = m.processJSONFile(m.addonGatherer, filepath.Join(phaseDir, phaseFile.Name()), phase); err != nil {
+							return "", fmt.Errorf("unable to process json file %s: %w", phaseFile.Name(), err)
+						}
 					}
 				}
 			} else if file.Name() == metadata.CustomMetadataFile {
-				m.processJSONFile(m.metadataGatherer, filepath.Join(reportDir, file.Name()), "")
+				if err = m.processJSONFile(m.metadataGatherer, filepath.Join(reportDir, file.Name()), ""); err != nil {
+					return "", fmt.Errorf("unable to process file %s: %w", file.Name(), err)
+				}
 			}
 		}
 	}

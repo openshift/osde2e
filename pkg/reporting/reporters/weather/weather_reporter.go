@@ -87,7 +87,7 @@ func (w weatherReport) ToJSON() ([]byte, error) {
 type Reporter struct{}
 
 func init() {
-	spi.RegisterReporter(Reporter{})
+	_ = spi.RegisterReporter(Reporter{})
 }
 
 // Name will return the name of the weather reporter.

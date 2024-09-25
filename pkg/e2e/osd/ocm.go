@@ -62,7 +62,7 @@ var (
 // cmdFromIPs renders a firewall command template to act against the provided ip address list.
 func cmdFromIPs(ips []string, templ *template.Template) string {
 	var buf bytes.Buffer
-	templ.Execute(&buf, struct{ IPs []string }{
+	_ = templ.Execute(&buf, struct{ IPs []string }{
 		IPs: ips,
 	})
 	return buf.String()

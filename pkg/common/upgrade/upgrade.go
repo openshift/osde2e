@@ -129,9 +129,15 @@ func RunUpgrade(h *helper.H) error {
 			for _, item := range list.Items {
 				log.Printf("Removing finalizers from %s", item.Name)
 				item.Finalizers = []string{}
-				h.Kube().CoreV1().Pods(h.CurrentProject()).Update(context.TODO(), &item, metav1.UpdateOptions{})
+				_, err = h.Kube().CoreV1().Pods(h.CurrentProject()).Update(context.TODO(), &item, metav1.UpdateOptions{})
+				if err != nil {
+					return err
+				}
 				log.Printf("Deleting pod %s", item.Name)
-				h.Kube().CoreV1().Pods(h.CurrentProject()).Delete(context.TODO(), item.Name, metav1.DeleteOptions{})
+				err = h.Kube().CoreV1().Pods(h.CurrentProject()).Delete(context.TODO(), item.Name, metav1.DeleteOptions{})
+				if err != nil {
+					return err
+				}
 			}
 		}
 	}
