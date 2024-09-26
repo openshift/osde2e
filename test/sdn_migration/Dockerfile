@@ -5,6 +5,7 @@ WORKDIR ${PKG}
 
 # Copy go.mod and go.sum to the working directory
 COPY ../../go.mod ../../go.sum ./
+COPY ../../LICENSE ./
 
 COPY ./test/sdn_migration/ .
 RUN go mod vendor
@@ -14,6 +15,7 @@ FROM registry.redhat.io/rhel9-2-els/rhel:9.2
 WORKDIR /
 
 COPY --from=builder /go/src/github.com/openshift/osde2e/test/sdn_migration/out/sdn_migration .
+COPY --from=builder /go/src/github.com/openshift/osde2e/test/sdn_migration/LICENSE /licenses/.
 ENTRYPOINT [ "/sdn_migration" ]
 USER 65532:65532
 
