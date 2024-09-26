@@ -7,7 +7,7 @@ WORKDIR ${PKG}
 COPY ../../go.mod ../../go.sum ./
 
 COPY ./test/sdn_migration/ .
-RUN go mod tidy
+RUN go mod vendor
 RUN make build
 
 FROM registry.redhat.io/rhel9-2-els/rhel:9.2
