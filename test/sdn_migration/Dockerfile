@@ -13,9 +13,10 @@ RUN make build
 
 FROM registry.redhat.io/rhel9-2-els/rhel:9.2
 WORKDIR /
-
+RUN mkdir /licenses
 COPY --from=builder /go/src/github.com/openshift/osde2e/test/sdn_migration/out/sdn_migration .
 COPY --from=builder /go/src/github.com/openshift/osde2e/test/sdn_migration/LICENSE /licenses/.
+
 ENTRYPOINT [ "/sdn_migration" ]
 USER 65532:65532
 
