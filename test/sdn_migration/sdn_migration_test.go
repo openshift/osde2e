@@ -24,7 +24,6 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/e2e-framework/klient/k8s"
-	"sigs.k8s.io/e2e-framework/pkg/envconf"
 )
 
 const (
@@ -56,7 +55,7 @@ var _ = Describe("SDN migration", ginkgo.Ordered, func() {
 		clusterName        = os.Getenv("CLUSTER_NAME")
 		testRosaCluster    *rosaCluster
 		clusterOptions     *rosaprovider.CreateClusterOptions
-		reportDir          = getEnvVar("REPORT_DIR", envconf.RandomName(fmt.Sprintf("%s/sdn_migration", os.TempDir()), 25))
+		reportDir          = os.Getenv("REPORT_DIR")
 		ocmToken           = os.Getenv("OCM_TOKEN")
 		clientID           = os.Getenv("CLIENT_ID")
 		clientSecret       = os.Getenv("CLIENT_SECRET")
