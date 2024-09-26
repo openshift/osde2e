@@ -126,7 +126,7 @@ func (CcsAwsSession *ccsAwsSession) TerminateEC2Instances(olderthan time.Duratio
 			if err != nil {
 				errorMessage := fmt.Sprintf("Error terminating instance %s: %s\n", instanceId, err.Error())
 				ec2ErrorBuilder.WriteString(errorMessage)
-				fmt.Printf(errorMessage)
+				fmt.Print(errorMessage)
 				instancesFailedToDelete++
 			} else {
 				instancesDeleted++

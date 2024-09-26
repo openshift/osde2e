@@ -182,7 +182,7 @@ func main() {
 	}()
 
 	// configure and parse input package
-	cfg := &packages.Config{Mode: packages.NeedName | packages.NeedFiles | packages.NeedCompiledGoFiles | packages.NeedImports | packages.NeedDeps | packages.NeedExportsFile | packages.NeedTypes | packages.NeedSyntax | packages.NeedTypesInfo | packages.NeedTypesSizes | packages.NeedModule}
+	cfg := &packages.Config{Mode: packages.NeedName | packages.NeedFiles | packages.NeedCompiledGoFiles | packages.NeedImports | packages.NeedDeps | packages.NeedExportFile | packages.NeedTypes | packages.NeedSyntax | packages.NeedTypesInfo | packages.NeedTypesSizes | packages.NeedModule}
 	pkgs, err := packages.Load(cfg, "github.com/spf13/viper")
 	if err != nil {
 		panic(err)
@@ -272,7 +272,7 @@ func main() {
 	outputFileNode.Decls[0].(*ast.GenDecl).Specs = tracker.Imports()
 
 	// format our source code into out
-	format.Node(out, pkg.Fset, outputFileNode)
+	_ = format.Node(out, pkg.Fset, outputFileNode)
 }
 
 // packageDefinesType checks whether pkg defines a type with the name typeName.

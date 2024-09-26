@@ -85,80 +85,80 @@ func (m *Metadata) SetReportDir(reportDir string) {
 // SetClusterID sets the cluster id
 func (m *Metadata) SetClusterID(id string) {
 	m.ClusterID = id
-	m.WriteToJSON(m.ReportDir)
+	_ = m.WriteToJSON(m.ReportDir)
 }
 
 // SetClusterName sets the cluster name
 func (m *Metadata) SetClusterName(name string) {
 	m.ClusterName = name
-	m.WriteToJSON(m.ReportDir)
+	_ = m.WriteToJSON(m.ReportDir)
 }
 
 // SetClusterVersion sets the cluster version
 func (m *Metadata) SetClusterVersion(version string) {
 	m.ClusterVersion = version
-	m.WriteToJSON(m.ReportDir)
+	_ = m.WriteToJSON(m.ReportDir)
 }
 
 // SetEnvironment sets the cluster environment
 func (m *Metadata) SetEnvironment(env string) {
 	m.Environment = env
-	m.WriteToJSON(m.ReportDir)
+	_ = m.WriteToJSON(m.ReportDir)
 }
 
 // SetRegion sets the cluster environment
 func (m *Metadata) SetRegion(region string) {
 	m.Region = region
-	m.WriteToJSON(m.ReportDir)
+	_ = m.WriteToJSON(m.ReportDir)
 }
 
 // SetUpgradeVersion sets the cluster upgrade version
 func (m *Metadata) SetUpgradeVersion(ver string) {
 	m.UpgradeVersion = ver
-	m.WriteToJSON(m.ReportDir)
+	_ = m.WriteToJSON(m.ReportDir)
 }
 
 // SetUpgradeVersionSource sets the cluster upgrade version source
 func (m *Metadata) SetUpgradeVersionSource(src string) {
 	m.UpgradeVersionSource = src
-	m.WriteToJSON(m.ReportDir)
+	_ = m.WriteToJSON(m.ReportDir)
 }
 
 // SetTimeToOCMReportingInstalled sets the time it took for OCM to report a cluster provisioned
 func (m *Metadata) SetTimeToOCMReportingInstalled(timeToOCMReportingInstalled float64) {
 	m.TimeToOCMReportingInstalled = timeToOCMReportingInstalled
-	m.WriteToJSON(m.ReportDir)
+	_ = m.WriteToJSON(m.ReportDir)
 }
 
 // SetTimeToClusterReady sets the time it took for the cluster to appear healthy on install
 func (m *Metadata) SetTimeToClusterReady(timeToClusterReady float64) {
 	m.TimeToClusterReady = timeToClusterReady
-	m.WriteToJSON(m.ReportDir)
+	_ = m.WriteToJSON(m.ReportDir)
 }
 
 // SetTimeToUpgradedCluster sets the time it took for the cluster to install an upgrade
 func (m *Metadata) SetTimeToUpgradedCluster(timeToUpgradedCluster float64) {
 	m.TimeToUpgradedCluster = timeToUpgradedCluster
-	m.WriteToJSON(m.ReportDir)
+	_ = m.WriteToJSON(m.ReportDir)
 }
 
 // SetTimeToUpgradedClusterReady sets the time it took for the cluster to appear healthy on upgrade
 func (m *Metadata) SetTimeToUpgradedClusterReady(timeToUpgradedClusterReady float64) {
 	m.TimeToUpgradedClusterReady = timeToUpgradedClusterReady
-	m.WriteToJSON(m.ReportDir)
+	_ = m.WriteToJSON(m.ReportDir)
 }
 
 // SetTimeToCertificateIssued sets the time it took for a certificate to be issued to the cluster
 func (m *Metadata) SetTimeToCertificateIssued(timeToCertificateIssued float64) {
 	m.TimeToCertificateIssued = timeToCertificateIssued
-	m.WriteToJSON(m.ReportDir)
+	_ = m.WriteToJSON(m.ReportDir)
 }
 
 // SetHealthcheckValue sets an arbitrary string value to a healthcheck
 func (m *Metadata) SetHealthcheckValue(key string, value []string) {
 	if !reflect.DeepEqual(m.HealthChecks[key], value) {
 		m.HealthChecks[key] = value
-		m.WriteToJSON(m.ReportDir)
+		_ = m.WriteToJSON(m.ReportDir)
 	}
 }
 
@@ -166,26 +166,26 @@ func (m *Metadata) SetHealthcheckValue(key string, value []string) {
 func (m *Metadata) ClearHealthcheckValue(key string) {
 	if _, ok := m.HealthChecks[key]; ok {
 		delete(m.HealthChecks, key)
-		m.WriteToJSON(m.ReportDir)
+		_ = m.WriteToJSON(m.ReportDir)
 	}
 }
 
 // IncrementHealthcheckIteration increments the healthcheck counter
 func (m *Metadata) IncrementHealthcheckIteration() {
 	m.HealthCheckIteration++
-	m.WriteToJSON(m.ReportDir)
+	_ = m.WriteToJSON(m.ReportDir)
 }
 
 // ZeroHealthcheckIteration zeroes out the healthcheck counter
 func (m *Metadata) ZeroHealthcheckIteration() {
 	m.HealthCheckIteration = 0
-	m.WriteToJSON(m.ReportDir)
+	_ = m.WriteToJSON(m.ReportDir)
 }
 
 // SetStatus stores the status of an osde2e cluster
 func (m *Metadata) SetStatus(status string) {
 	m.Status = status
-	m.WriteToJSON(m.ReportDir)
+	_ = m.WriteToJSON(m.ReportDir)
 }
 
 // SetPassRate sets the passrate metadata metric for the given phase
@@ -212,7 +212,7 @@ func (m *Metadata) ResetLogMetrics() {
 func (m *Metadata) IncrementLogMetric(metric string, value int) {
 	m.LogMetrics[metric] += value
 
-	m.WriteToJSON(m.ReportDir)
+	_ = m.WriteToJSON(m.ReportDir)
 }
 
 // ResetBeforeSuiteMetrics zeroes out old results to be used before a new run.
@@ -227,28 +227,28 @@ func (m *Metadata) ResetBeforeSuiteMetrics() {
 func (m *Metadata) IncrementBeforeSuiteMetric(metric string, value int) {
 	m.BeforeSuiteMetrics[metric] += value
 
-	m.WriteToJSON(m.ReportDir)
+	_ = m.WriteToJSON(m.ReportDir)
 }
 
 // SetRouteLatency sets the mean latency for the given route
 // (measured in milliseconds)
 func (m *Metadata) SetRouteLatency(route string, latency float64) {
 	m.RouteLatencies[route] = latency
-	m.WriteToJSON(m.ReportDir)
+	_ = m.WriteToJSON(m.ReportDir)
 }
 
 // SetRouteThroughput sets the throughput for the given route
 // (rate of successful requests per second)
 func (m *Metadata) SetRouteThroughput(route string, throughput float64) {
 	m.RouteThroughputs[route] = throughput
-	m.WriteToJSON(m.ReportDir)
+	_ = m.WriteToJSON(m.ReportDir)
 }
 
 // SetRouteAvailability sets the availability for the given route
 // (ratio of successful requests)
 func (m *Metadata) SetRouteAvailability(route string, availability float64) {
 	m.RouteAvailabilities[route] = availability
-	m.WriteToJSON(m.ReportDir)
+	_ = m.WriteToJSON(m.ReportDir)
 }
 
 // WriteToJSON will marshall the metadata struct and write it into the given file.

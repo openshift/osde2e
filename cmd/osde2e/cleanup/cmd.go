@@ -132,7 +132,7 @@ func init() {
 		"Terminate ec2 instances",
 	)
 
-	Cmd.RegisterFlagCompletionFunc("output-format", func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+	_ = Cmd.RegisterFlagCompletionFunc("output-format", func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		return []string{"json", "prom"}, cobra.ShellCompDirectiveDefault
 	})
 }
@@ -298,12 +298,12 @@ func run(cmd *cobra.Command, argv []string) error {
 
 		jsonDataMessage, err := json.Marshal(message)
 		if err != nil {
-			return fmt.Errorf("Error marshalling summary to JSON: %v\n", err)
+			return fmt.Errorf("marshalling summary to JSON: %w", err)
 		}
 
 		req, err := http.NewRequest("POST", webhook, bytes.NewBuffer(jsonDataMessage))
 		if err != nil {
-			return fmt.Errorf("Error creating request: %v\n", err)
+			return fmt.Errorf("creating request: %w", err)
 		}
 
 		req.Header.Set("Content-Type", "application/json; charset=utf-8")
@@ -311,7 +311,7 @@ func run(cmd *cobra.Command, argv []string) error {
 		client := &http.Client{}
 		resp, err := client.Do(req)
 		if err != nil {
-			return fmt.Errorf("Error making request: %v\n", err)
+			return fmt.Errorf("making request: %w", err)
 		}
 		defer resp.Body.Close()
 

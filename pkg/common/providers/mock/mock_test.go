@@ -49,7 +49,9 @@ func TestClusterInteraction(t *testing.T) {
 		t.Errorf("cluster IDs did not match for cluster 2. Expected %s, got %s", clusterID2, cluster2.ID())
 	}
 
-	mockProvider.DeleteCluster(clusterID1)
+	if err = mockProvider.DeleteCluster(clusterID1); err != nil {
+		t.Errorf("unable to delete cluster: %s", err)
+	}
 
 	_, err = mockProvider.GetCluster(clusterID1)
 

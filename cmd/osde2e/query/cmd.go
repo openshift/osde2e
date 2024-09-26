@@ -88,7 +88,7 @@ func init() {
 		"The cluster upgrade version input for upgrade query",
 	)
 
-	Cmd.RegisterFlagCompletionFunc("output-format", func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+	_ = Cmd.RegisterFlagCompletionFunc("output-format", func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		return []string{"json", "prom"}, cobra.ShellCompDirectiveDefault
 	})
 }
@@ -164,7 +164,7 @@ func run(cmd *cobra.Command, argv []string) error {
 		}
 		encoded := []rune(string(data))
 		data = []byte(string(encoded[1:(len(string(data)) - 1)]))
-		count.UnmarshalJSON(data)
+		_ = count.UnmarshalJSON(data)
 		log.Printf("Valid version check count ratio - %v", count.Value)
 	}
 
