@@ -955,7 +955,7 @@ func init() {
 
 func WriteSecret(name string) string {
 	tmpDir, _ := os.MkdirTemp("", "")
-	tmpFile, _ := os.CreateTemp(tmpDir, "*")
+	tmpFile, _ := os.CreateTemp(tmpDir, name+"-*")
 	_, _ = tmpFile.WriteString(viper.GetString(name))
 	_ = tmpFile.Close()
 	return tmpFile.Name()
