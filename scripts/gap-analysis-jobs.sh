@@ -33,7 +33,7 @@ docker create --name "${CONTAINER_NAME}" -e OCM_TOKEN \
 	-e SUBNET_IDS \
 	-e TEST_HTTP_PROXY \
 	-e TEST_HTTPS_PROXY \
-	-e USER_CA_BUNDLE \
+	-e USER_CA_BUNDLE_DATA \
 	quay.io/redhat-services-prod/osde2e-cicada-tenant/osde2e:latest test --configs "${CONFIGS}"  "${ADDITIONAL_ARGS}"
 
 # Start the container

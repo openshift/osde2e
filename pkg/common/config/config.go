@@ -622,12 +622,15 @@ var Proxy = struct {
 	HttpsProxy string
 	// The HTTP Proxy address to use for proxy tests.
 	HttpProxy string
-	// The User CA Bundle to use for proxy tests.
+	// Path to User CA Bundle to use for proxy tests.
 	UserCABundle string
+	// User CA Bundle to use for proxy tests.
+	UserCABundleData string
 }{
-	HttpsProxy:   "proxy.https_proxy",
-	HttpProxy:    "proxy.http_proxy",
-	UserCABundle: "proxy.user_ca_bundle",
+	HttpsProxy:       "proxy.https_proxy",
+	HttpProxy:        "proxy.http_proxy",
+	UserCABundle:     "proxy.user_ca_bundle",
+	UserCABundleData: "proxy.user_ca_bundle_data",
 }
 
 func InitOSDe2eViper() {
@@ -937,12 +940,25 @@ func InitOSDe2eViper() {
 
 	_ = viper.BindEnv(Proxy.UserCABundle, "USER_CA_BUNDLE")
 	RegisterSecret(Proxy.UserCABundle, "user-ca-bundle")
+
+	// If ca bundle is provided directly, save it in a temp file to provide to rosa create cluster.
+	_ = viper.BindEnv(Proxy.UserCABundleData, "USER_CA_BUNDLE_DATA")
+	filepath := WriteSecret(Proxy.UserCABundleData)
+	viper.Set(Proxy.UserCABundle, filepath)
 }
 
 func init() {
 	InitOSDe2eViper()
 	InitAWSViper()
 	InitGCPViper()
+}
+
+func WriteSecret(name string) string {
+	tmpDir, _ := os.MkdirTemp("", "")
+	tmpFile, _ := os.CreateTemp(tmpDir, "*")
+	_, _ = tmpFile.WriteString(viper.GetString(name))
+	_ = tmpFile.Close()
+	return tmpFile.Name()
 }
 
 // PostProcess is a variety of post-processing commands that is intended to be run after a config is loaded.
