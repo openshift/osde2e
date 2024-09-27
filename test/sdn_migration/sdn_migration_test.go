@@ -188,15 +188,6 @@ var _ = Describe("SDN migration", ginkgo.Ordered, func() {
 	})
 })
 
-// getEnvVar returns the env variable value and if unset returns default provided
-func getEnvVar(key, value string) string {
-	result, exist := os.LookupEnv(key)
-	if exist {
-		return result
-	}
-	return value
-}
-
 // osdClusterReadyHealthCheck verifies the osd-cluster-ready health check job is passing
 func osdClusterReadyHealthCheck(ctx context.Context, clusterClient *openshiftclient.Client, action, reportDir string) error {
 	var (
