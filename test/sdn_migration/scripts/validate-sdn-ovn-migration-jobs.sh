@@ -19,7 +19,7 @@ docker create --name "${CONTAINER_NAME}" -e OCM_TOKEN \
 	-e CA_BUNDLE\
 	-e SUBNETS\
 	-e REPORT_DIR='/tmp/osde2e-report' \
-	quay.io/redhat-user-workloads/osde2e-cicada-tenant/test-suites/sdn-migration:latest
+	quay.io/redhat-services-prod/osde2e-cicada-tenant/osde2e/sdn-migration:latest
 
 
 # Start the container
