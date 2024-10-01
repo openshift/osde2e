@@ -132,7 +132,7 @@ func getClusterVersion(ctx context.Context, provider *rosa.Provider, clusterChan
 	}
 
 	if len(versions) == 0 {
-		return "", fmt.Errorf("no ROSA versions found")
+		return "", fmt.Errorf("no ROSA versions found in channel %s", clusterChannel)
 	}
 
 	// Find the version where Default is true
@@ -142,5 +142,5 @@ func getClusterVersion(ctx context.Context, provider *rosa.Provider, clusterChan
 		}
 	}
 
-	return "", fmt.Errorf("no default ROSA version found")
+	return "", fmt.Errorf("no default ROSA version found in channel %s", clusterChannel)
 }
