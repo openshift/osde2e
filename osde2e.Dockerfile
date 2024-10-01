@@ -13,6 +13,7 @@ WORKDIR /
 RUN mkdir /licenses
 COPY --from=builder /go/src/github.com/openshift/osde2e/out/osde2e .
 COPY --from=builder /go/src/github.com/openshift/osde2e/LICENSE /licenses/.
+COPY --from=builder /usr/bin/git /usr/bin/git
 
 ENTRYPOINT ["/osde2e"]
 USER 65532:65532
