@@ -236,7 +236,7 @@ var _ = Describe("HyperShift", Ordered, func() {
 				ClusterName:        hcpCluster.name,
 				HostedCP:           true,
 				WorkingDir:         hcpCluster.reportDir,
-				DeleteHostedCPVPC:  true,
+				DeleteHostedVPC:    true,
 				DeleteOidcConfigID: true,
 			})
 			Expect(err).ShouldNot(HaveOccurred(), "failed to delete hosted control plane cluster")
