@@ -7,7 +7,7 @@ WORKDIR ${PKG}
 # Copy go.mod and go.sum to the working directory
 COPY ../../go.mod ../../go.sum ./
 COPY ../../LICENSE .
-COPY . .
+COPY ./test/fedramp/ .
 RUN go mod download
 
 # Install the Ginkgo command-line tool
@@ -24,11 +24,11 @@ COPY --from=builder /go/src/github.com/openshift/osde2e/test/fedramp/osde2e-fedr
 COPY --from=builder /go/src/github.com/openshift/osde2e/test/fedramp/LICENSE /licenses/.
 
 # Set the entry point to 'ginkgo'
-ENTRYPOINT ["ginkgo"]
+ENTRYPOINT ["/usr/local/bin/ginkgo"]
 USER 65532:65532
 
 # Provide default arguments
-CMD ["-v", "--label-filter=Fedramp", "--junit-report=junit.xml", "./fedramp.test"]
+CMD ["-v", "--label-filter=Fedramp", "--junit-report=junit.xml", "./osde2e-fedramp.test"]
 
 LABEL name="osde2e-fedramp-tests"
 LABEL description="A test framework for testing ROSA clusters on the FedRAMP environment"
