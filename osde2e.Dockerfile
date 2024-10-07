@@ -11,11 +11,15 @@ RUN make build
 FROM registry.redhat.io/rhel9-2-els/rhel:9.2
 WORKDIR /
 RUN mkdir /licenses
-COPY --from=builder /go/src/github.com/openshift/osde2e/out/osde2e .
+RUN mkdir /osde2e-bin
+COPY --from=builder /go/src/github.com/openshift/osde2e/out/osde2e /osde2e-bin
 COPY --from=builder /go/src/github.com/openshift/osde2e/LICENSE /licenses/.
 COPY --from=builder /usr/bin/git /usr/bin/git
 COPY --from=builder /usr/libexec/git-core/* /usr/libexec/git-core/
 COPY --from=builder /usr/share/git-core/* /usr/share/git-core/
+
+RUN ln -s /osde2e-bin/osde2e /osde2e
+ENV PATH "/osde2e-bin:$PATH"
 
 ENTRYPOINT ["/osde2e"]
 USER 65532:65532
