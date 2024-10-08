@@ -4,6 +4,8 @@ ENV GOFLAGS=
 ENV PKG=/go/src/github.com/openshift/osde2e/
 WORKDIR ${PKG}
 
+COPY go.* .
+RUN go mod download
 COPY . .
 RUN go env
 RUN make build
