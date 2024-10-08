@@ -39,7 +39,7 @@ func (v *VersionSelector) SelectClusterVersions() error {
 			viper.Set(config.Cluster.Channel, "nightly")
 		}
 
-		err = wait.PollUntilContextTimeout(context.Background(), 1*time.Minute, 30*time.Minute, true, func(ctx context.Context) (bool, error) {
+		err = wait.PollUntilContextTimeout(context.Background(), 1*time.Minute, 60*time.Minute, true, func(ctx context.Context) (bool, error) {
 			v.versionList, err = v.Provider.Versions()
 			if err != nil {
 				return false, fmt.Errorf("error getting versions: %v", err)
