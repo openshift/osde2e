@@ -4,6 +4,8 @@ ENV GOFLAGS=
 ENV PKG=/go/src/github.com/openshift/osde2e/
 WORKDIR ${PKG}
 
+COPY go.* .
+RUN go mod download
 COPY . .
 RUN go env
 RUN make build
@@ -17,6 +19,7 @@ COPY --from=builder /usr/bin/git /usr/bin/git
 COPY --from=builder /usr/libexec/git-core/* /usr/libexec/git-core/
 COPY --from=builder /usr/share/git-core/* /usr/share/git-core/
 
+ENV PATH="${PATH}:/"
 ENTRYPOINT ["/osde2e"]
 USER 65532:65532
 
