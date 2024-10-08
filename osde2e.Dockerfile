@@ -17,6 +17,7 @@ COPY --from=builder /usr/bin/git /usr/bin/git
 COPY --from=builder /usr/libexec/git-core/* /usr/libexec/git-core/
 COPY --from=builder /usr/share/git-core/* /usr/share/git-core/
 
+ENV PATH="${PATH}:/"
 ENTRYPOINT ["/osde2e"]
 USER 65532:65532
 
