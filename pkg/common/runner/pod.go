@@ -55,7 +55,8 @@ var DefaultContainer = kubev1.Container{
 				Port: intstr.FromInt(resultsPort),
 			},
 		},
-		PeriodSeconds: 7,
+		PeriodSeconds:       7,
+		InitialDelaySeconds: 10,
 	},
 	SecurityContext: &kubev1.SecurityContext{
 		RunAsUser: ptr.To[int64](0),
@@ -149,6 +150,11 @@ func (r *Runner) createJobPod(ctx context.Context) (pod *kubev1.Pod, err error) 
 			pod.Spec.Volumes = volumes(cmName)
 		}
 	}
+	// result collector and waitForCompletion may exit without logs if pod is removed abruptly.
+	// Keep it alive to log gracefully if failed.
+	// Default is 30
+	var keepPodUpFor int64 = 60
+	pod.Spec.TerminationGracePeriodSeconds = &keepPodUpFor
 
 	// setup git repos to be cloned in init containers
 	r.Repos.ConfigurePod(&pod.Spec)
