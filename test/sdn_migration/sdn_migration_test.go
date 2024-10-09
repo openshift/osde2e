@@ -109,10 +109,10 @@ var _ = Describe("SDN migration", ginkgo.Ordered, func() {
 		}
 		if os.Getenv("CLUSTER_ID") == "" {
 			if enableClusterProxy.MatchesLabelFilter(GinkgoLabelFilter()) {
-				clusterOptions.HTTPSProxy = os.Getenv("AWS_HTTPS_PROXY")
-				clusterOptions.HTTPProxy = os.Getenv("AWS_HTTP_PROXY")
-				clusterOptions.AdditionalTrustBundleFile = os.Getenv("CA_BUNDLE")
-				clusterOptions.SubnetIDs = os.Getenv("SUBNETS")
+				clusterOptions.HTTPSProxy = os.Getenv("TEST_HTTPS_PROXY")
+				clusterOptions.HTTPProxy = os.Getenv("TEST_HTTP_PROXY")
+				clusterOptions.AdditionalTrustBundleFile = os.Getenv("USER_CA_BUNDLE")
+				clusterOptions.SubnetIDs = os.Getenv("SUBNET_IDS")
 				clusterOptions.NoProxy = "api.stage.openshift.com"
 			}
 			testRosaCluster.id, err = rosaProvider.CreateCluster(ctx, clusterOptions)
