@@ -427,8 +427,8 @@ github.com/onsi/ginkgo/v2 v2.20.2 h1:7NVCeyIWROIAheY21RLS+3j2bb52W0W82tkberYytp4
 github.com/onsi/ginkgo/v2 v2.20.2/go.mod h1:K9gyxPIlb+aIvnZ8bd9Ak+YP18w3APlR+5coaZoE2ag=
 github.com/onsi/gomega v1.34.2 h1:pNCwDkzrsv7MS9kpaQvVb1aVLahQXyJ/Tv5oAZMI3i8=
 github.com/onsi/gomega v1.34.2/go.mod h1:v1xfxRgk0KIsG+QOdm7p8UosrOzPYRo60fd3B/1Dukc=
-github.com/openshift-online/ocm-sdk-go v0.1.444 h1:ivk5YKpgKfblJu3HzrZ7FyJD5FSdNySl+r/Tw0I9sjs=
-github.com/openshift-online/ocm-sdk-go v0.1.444/go.mod h1:CiAu2jwl3ITKOxkeV0Qnhzv4gs35AmpIzVABQLtcI2Y=
+github.com/openshift-online/ocm-sdk-go v0.1.445 h1:NfaY+biXaREPnGYxa8G2zS2OZpN06yNnDR95sZoqKUQ=
+github.com/openshift-online/ocm-sdk-go v0.1.445/go.mod h1:CiAu2jwl3ITKOxkeV0Qnhzv4gs35AmpIzVABQLtcI2Y=
 github.com/openshift/api v0.0.0-20240530151505-37be9ab109d3 h1:Irqrkp2eFX9At+OAP772S9o4qv5qimGlk5Rt2jyThvc=
 github.com/openshift/api v0.0.0-20240530151505-37be9ab109d3/go.mod h1:CxgbWAlvu2iQB0UmKTtRu1YfepRg1/vJ64n2DlIEVz4=
 github.com/openshift/client-go v0.0.0-20240510131258-f646d5f29250 h1:WQ0e89xebsNeChdYw8QrxggYkFtEQOaLBEKJDkMmcUk=
