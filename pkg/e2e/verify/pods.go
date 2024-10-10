@@ -18,7 +18,7 @@ import (
 var podsTestName = "[Suite: e2e] Pods"
 
 func init() {
-	alert.RegisterGinkgoAlert(podsTestName, "SD-CICD", "Diego Santamaria", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+	alert.RegisterGinkgoAlert(podsTestName, "SD-CICD", "Diego Santamaria", "hcm-cicd-alerts", "sd-cicd@redhat.com", 4)
 }
 
 var _ = ginkgo.Describe(podsTestName, ginkgo.Ordered, label.HyperShift, label.E2E, func() {

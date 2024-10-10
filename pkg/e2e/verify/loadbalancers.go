@@ -26,7 +26,7 @@ const (
 var loadBalancersTestName string = "[Suite: informing] Load Balancers"
 
 func init() {
-	alert.RegisterGinkgoAlert(loadBalancersTestName, "SD-CICD", "Diego Santamaria", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+	alert.RegisterGinkgoAlert(loadBalancersTestName, "SD-CICD", "Diego Santamaria", "hcm-cicd-alerts", "sd-cicd@redhat.com", 4)
 }
 
 var _ = ginkgo.Describe(loadBalancersTestName, ginkgo.Ordered, label.Informing, func() {

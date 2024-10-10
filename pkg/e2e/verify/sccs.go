@@ -27,7 +27,7 @@ import (
 var dedicatedAdminSccTestName = "[Suite: e2e] [OSD] RBAC Dedicated Admins SCC permissions"
 
 func init() {
-	alert.RegisterGinkgoAlert(dedicatedAdminSccTestName, "SD-CICD", "Matt Bargenquast", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+	alert.RegisterGinkgoAlert(dedicatedAdminSccTestName, "SD-CICD", "Matt Bargenquast", "hcm-cicd-alerts", "sd-cicd@redhat.com", 4)
 }
 
 var _ = ginkgo.Describe(dedicatedAdminSccTestName, ginkgo.Ordered, label.HyperShift, label.E2E, func() {

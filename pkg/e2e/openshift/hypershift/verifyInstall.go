@@ -23,7 +23,7 @@ var (
 )
 
 func init() {
-	alert.RegisterGinkgoAlert(suiteName, "SD-CICD", "Diego Santamaria", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+	alert.RegisterGinkgoAlert(suiteName, "SD-CICD", "Diego Santamaria", "hcm-cicd-alerts", "sd-cicd@redhat.com", 4)
 }
 
 // Checks the installation of the hypershift worker nodes in CCS AWS account

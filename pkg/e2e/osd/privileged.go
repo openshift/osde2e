@@ -19,7 +19,7 @@ import (
 var privilegedTestname string = "[Suite: service-definition] [OSD] Privileged Containers"
 
 func init() {
-	alert.RegisterGinkgoAlert(privilegedTestname, "SD-CICD", "Diego Santamaria", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+	alert.RegisterGinkgoAlert(privilegedTestname, "SD-CICD", "Diego Santamaria", "hcm-cicd-alerts", "sd-cicd@redhat.com", 4)
 }
 
 var _ = ginkgo.Describe(privilegedTestname, ginkgo.Ordered, label.ServiceDefinition, label.HyperShift, func() {

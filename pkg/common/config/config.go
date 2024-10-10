@@ -758,7 +758,7 @@ func InitOSDe2eViper() {
 
 	_ = viper.BindEnv(Tests.ServiceAccount, "SERVICE_ACCOUNT")
 
-	viper.SetDefault(Tests.SlackChannel, "sd-cicd-alerts")
+	viper.SetDefault(Tests.SlackChannel, "hcm-cicd-alerts")
 	_ = viper.BindEnv(Tests.SlackChannel, "SLACK_CHANNEL")
 
 	_ = viper.BindEnv(Tests.SlackWebhook, "SLACK_WEBHOOK")

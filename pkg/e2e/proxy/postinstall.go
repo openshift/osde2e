@@ -37,7 +37,7 @@ const (
 )
 
 func init() {
-	alert.RegisterGinkgoAlert(postInstallProxyTestName, "SD-SREP", "@sd-srep-team-hulk", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+	alert.RegisterGinkgoAlert(postInstallProxyTestName, "SD-SREP", "@sd-srep-team-hulk", "hcm-cicd-alerts", "sd-cicd@redhat.com", 4)
 }
 
 var _ = ginkgo.Describe(postInstallProxyTestName, func() {

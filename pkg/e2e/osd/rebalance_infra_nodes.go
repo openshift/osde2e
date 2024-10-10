@@ -30,7 +30,7 @@ const (
 )
 
 func init() {
-	alert.RegisterGinkgoAlert(rebalanceInfraNodesTestName, "SD-SREP", "Jing Zhang", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+	alert.RegisterGinkgoAlert(rebalanceInfraNodesTestName, "SD-SREP", "Jing Zhang", "hcm-cicd-alerts", "sd-cicd@redhat.com", 4)
 }
 
 var _ = ginkgo.Describe(rebalanceInfraNodesTestName, label.Informing, func() {

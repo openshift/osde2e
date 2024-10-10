@@ -24,7 +24,7 @@ import (
 var userWorkloadMonitoringTestName string = "[Suite: informing] [OSD] User Workload Monitoring"
 
 func init() {
-	alert.RegisterGinkgoAlert(userWorkloadMonitoringTestName, "SD-SREP", "Max Whittingham", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+	alert.RegisterGinkgoAlert(userWorkloadMonitoringTestName, "SD-SREP", "Max Whittingham", "hcm-cicd-alerts", "sd-cicd@redhat.com", 4)
 }
 
 var _ = ginkgo.Describe(userWorkloadMonitoringTestName, ginkgo.Ordered, label.Informing, func() {

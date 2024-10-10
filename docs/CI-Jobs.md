@@ -13,7 +13,7 @@ part of the *[OCP TRT release informing signal][OpenShift Release Gates]*.
 
 *All periodic jobs are using OCM stage unless noted otherwise.*
 
-*All jobs send alerts to the following slack channel: [#sd-cicd-alerts].*
+*All jobs send alerts to the following slack channel: [#hcm-cicd-alerts].*
 
 ## SD CICD Self Service Jenkins Job
 
@@ -105,6 +105,6 @@ to the release.
 [4.13 TRT ROSA HCP]: https://testgrid.k8s.io/redhat-openshift-ocp-release-4.13-informing#periodic-ci-openshift-osde2e-main-nightly-4.13-rosa-hcp&width=90
 [4.12 TRT ROSA HCP]: https://testgrid.k8s.io/redhat-openshift-ocp-release-4.12-informing#periodic-ci-openshift-osde2e-main-nightly-4.12-rosa-hcp&width=90
 
-[#sd-cicd-alerts]: https://app.slack.com/client/T027F3GAJ/CNYM6PB6X
+[#hcm-cicd-alerts]: https://app.slack.com/client/T027F3GAJ/CNYM6PB6X
 
 [OpenShift Release Gates]: https://docs.ci.openshift.org/docs/architecture/release-gating/

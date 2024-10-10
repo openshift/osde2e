@@ -25,7 +25,7 @@ import (
 var routesTestName string = "[Suite: e2e] Routes"
 
 func init() {
-	alert.RegisterGinkgoAlert(routesTestName, "SD-CICD", "Diego Santamaria", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+	alert.RegisterGinkgoAlert(routesTestName, "SD-CICD", "Diego Santamaria", "hcm-cicd-alerts", "sd-cicd@redhat.com", 4)
 }
 
 var _ = ginkgo.Describe(routesTestName, ginkgo.Ordered, label.HyperShift, label.E2E, func() {
