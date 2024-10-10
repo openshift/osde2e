@@ -44,7 +44,7 @@ performed. For example:
 * The proxy needs to be created manually if end-to-end tests are going to be run against a cluster with a cluster-wide proxy
 
 ### Run Ginkgo
-*NOTE:CLUSTER_ID is optional (internal ID), and AWS_HTTP_PROXY, AWS_HTTP_PROXYS, CA_BUNDLE, and 
+*NOTE:CLUSTER_ID is optional (internal ID), and TEST_HTTP_PROXY, TEST_HTTPS_PROXY, USER_CA_BUNDLE, and 
 SUBNETS are also optional unless end-to-end tests need to be run against a cluster with a cluster-wide proxy
 ```shell
 AWS_REGION=<AWS_REGION> \
@@ -54,9 +54,10 @@ OCM_TOKEN=<OCM_TOKEN> \
 CLUSTER_ID=<CLUSTER_ID> \
 CLUSTER_NAME = <CLUSTER_NAME> \
 REPLICAS=<REPLICAS>\
-AWS_HTTP_PROXY=<AWS_HTTP_PROXY>\
-AWS_HTTPs_PROXY=<AWS_HTTP_PROXY> \
-CA_BUNDLE=<CA_BUNDLE> \
-SUBNETS=<SUBNETS> \
+TEST_HTTP_PROXY=<TEST_HTTP_PROXY>\
+TEST_HTTPS_PROXY=<TEST_HTTPS_PROXY> \
+USER_CA_BUNDLE=<USER_CA_BUNDLE> \
+SUBNET_IDS=<SUBNET_IDS> \
+REPORT_DIR='/tmp/osde2e-report' \
 ginkgo run 
 ```
