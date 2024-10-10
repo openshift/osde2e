@@ -30,7 +30,7 @@ const (
 
 // utils
 func init() {
-	alert.RegisterGinkgoAlert(inhibitionsTestName, "SD-SRE", "Alex Chvatal", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+	alert.RegisterGinkgoAlert(inhibitionsTestName, "SD-SRE", "Alex Chvatal", "hcm-cicd-alerts", "sd-cicd@redhat.com", 4)
 }
 
 var inhibitionsTestName string = "[Suite: operators] AlertmanagerInhibitions"

@@ -17,7 +17,7 @@ var olmTestName string = "[Suite: informing] [OSD] OLM"
 const hiveManagedLabel = "hive.openshift.io/managed"
 
 func init() {
-	alert.RegisterGinkgoAlert(olmTestName, "SD-SREP", "Matt Bargenquast", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+	alert.RegisterGinkgoAlert(olmTestName, "SD-SREP", "Matt Bargenquast", "hcm-cicd-alerts", "sd-cicd@redhat.com", 4)
 }
 
 var _ = ginkgo.Describe(olmTestName, label.Informing, func() {

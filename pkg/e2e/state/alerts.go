@@ -28,7 +28,7 @@ var ignoreAlerts = map[string]map[string][]string{
 var clusterStateTestName string = "[Suite: e2e] Cluster state"
 
 func init() {
-	alert.RegisterGinkgoAlert(clusterStateTestName, "SD-CICD", "Diego Santamaria", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+	alert.RegisterGinkgoAlert(clusterStateTestName, "SD-CICD", "Diego Santamaria", "hcm-cicd-alerts", "sd-cicd@redhat.com", 4)
 }
 
 var _ = ginkgo.Describe(clusterStateTestName, ginkgo.Ordered, label.E2E, func() {
