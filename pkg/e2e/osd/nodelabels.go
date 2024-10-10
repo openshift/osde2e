@@ -19,7 +19,7 @@ import (
 var nodeLabelsTestName string = "[Suite: service-definition] [OSD] Node labels"
 
 func init() {
-	alert.RegisterGinkgoAlert(nodeLabelsTestName, "SD-CICD", "Diego Santamaria", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+	alert.RegisterGinkgoAlert(nodeLabelsTestName, "SD-CICD", "Diego Santamaria", "hcm-cicd-alerts", "sd-cicd@redhat.com", 4)
 }
 
 var _ = ginkgo.Describe(nodeLabelsTestName, ginkgo.Ordered, label.ServiceDefinition, func() {

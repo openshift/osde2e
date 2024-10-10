@@ -24,7 +24,7 @@ import (
 var storageTestName string = "[Suite: e2e] Storage"
 
 func init() {
-	alert.RegisterGinkgoAlert(storageTestName, "SD-SREP", "Christoph Blecker", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+	alert.RegisterGinkgoAlert(storageTestName, "SD-SREP", "Christoph Blecker", "hcm-cicd-alerts", "sd-cicd@redhat.com", 4)
 }
 
 var _ = ginkgo.Describe(storageTestName, ginkgo.Ordered, label.HyperShift, label.E2E, func() {
