@@ -14,10 +14,10 @@ docker create --name "${CONTAINER_NAME}" -e OCM_TOKEN \
 	-e CLUSTER_NAME \
 	-e REPLICAS \
 	-e GINKGO_LABEL_FILTER \
-	-e AWS_HTTPS_PROXY \
-	-e AWS_HTTP_PROXY \
-	-e CA_BUNDLE\
-	-e SUBNETS\
+	-e TEST_HTTPS_PROXY \
+	-e TEST_HTTP_PROXY \
+	-e USER_CA_BUNDLE\
+	-e SUBNET_IDS\
 	-e REPORT_DIR='/tmp/osde2e-report' \
 	quay.io/redhat-services-prod/osde2e-cicada-tenant/osde2e/sdn-migration:latest
 
