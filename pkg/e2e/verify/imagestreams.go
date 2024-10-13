@@ -16,7 +16,7 @@ import (
 var imageStreamsTestName string = "[Suite: e2e] ImageStreams"
 
 func init() {
-	alert.RegisterGinkgoAlert(imageStreamsTestName, "SD-CICD", "Diego Santamaria", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+	alert.RegisterGinkgoAlert(imageStreamsTestName, "SD-CICD", "Diego Santamaria", "hcm-cicd-alerts", "sd-cicd@redhat.com", 4)
 }
 
 var _ = ginkgo.Describe(imageStreamsTestName, ginkgo.Ordered, label.HyperShift, label.E2E, func() {

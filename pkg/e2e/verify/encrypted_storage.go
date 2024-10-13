@@ -48,7 +48,7 @@ const (
 )
 
 func init() {
-	alert.RegisterGinkgoAlert(encryptedStorageTestName, "SD-SREP", "Trevor Nierman", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+	alert.RegisterGinkgoAlert(encryptedStorageTestName, "SD-SREP", "Trevor Nierman", "hcm-cicd-alerts", "sd-cicd@redhat.com", 4)
 }
 
 var _ = ginkgo.Describe(encryptedStorageTestName, label.E2E, func() {

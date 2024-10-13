@@ -21,7 +21,7 @@ import (
 var daemonSetsTestName string = "[Suite: service-definition] [OSD] DaemonSets"
 
 func init() {
-	alert.RegisterGinkgoAlert(daemonSetsTestName, "SD-CICD", "Diego Santamaria", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+	alert.RegisterGinkgoAlert(daemonSetsTestName, "SD-CICD", "Diego Santamaria", "hcm-cicd-alerts", "sd-cicd@redhat.com", 4)
 }
 
 var _ = ginkgo.Describe(daemonSetsTestName, ginkgo.Ordered, label.HyperShift, label.ServiceDefinition, func() {

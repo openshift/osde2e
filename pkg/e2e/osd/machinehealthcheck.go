@@ -30,7 +30,7 @@ func init() {
 		machineHealthTestName,
 		"SD-SRE",
 		"Alex Chvatal",
-		"sd-cicd-alerts",
+		"hcm-cicd-alerts",
 		"sd-cicd@redhat.com",
 		4,
 	)

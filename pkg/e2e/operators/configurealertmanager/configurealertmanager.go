@@ -29,7 +29,7 @@ import (
 var suiteName = "Configure AlertManager Operator"
 
 func init() {
-	alert.RegisterGinkgoAlert(suiteName, "SD-SREP", "@sd-srep-team-thor", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+	alert.RegisterGinkgoAlert(suiteName, "SD-SREP", "@sd-srep-team-thor", "hcm-cicd-alerts", "sd-cicd@redhat.com", 4)
 }
 
 var _ = ginkgo.Describe(suiteName, ginkgo.Ordered, label.Operators, func() {
