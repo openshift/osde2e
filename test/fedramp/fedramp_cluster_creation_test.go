@@ -26,6 +26,7 @@ var _ = Describe("Fedramp Rosa Cluster Creation", Ordered, Label("Fedramp"), fun
 		privatelink    bool
 		sts            bool
 		clusterID      string
+		reportDir      string
 	)
 
 	BeforeAll(func(ctx context.Context) {
@@ -44,6 +45,12 @@ var _ = Describe("Fedramp Rosa Cluster Creation", Ordered, Label("Fedramp"), fun
 		)
 		Expect(err).NotTo(HaveOccurred(), "Failed to create ROSA provider")
 		logger.Info("ROSA provider initialized successfully")
+
+		// Create report directory in the pod. This is used by the junit reporter.
+		reportDir = os.Getenv("REPORT_DIR")
+		Expect(os.MkdirAll(reportDir, os.ModePerm)).ShouldNot(HaveOccurred(), "failed to create report directory")
+		logger.Info(fmt.Sprintf("Report directory created successfully: %s", reportDir))
+
 	})
 
 	AfterAll(func(ctx context.Context) {

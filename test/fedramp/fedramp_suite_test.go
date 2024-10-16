@@ -13,7 +13,7 @@ func TestFedrampSuite(t *testing.T) {
 	RegisterFailHandler(Fail)
 
 	suiteConfig, reporterConfig := GinkgoConfiguration()
-	reporterConfig.JUnitReport = "junit.xml"
+	reporterConfig.JUnitReport = os.Getenv("REPORT_DIR") + "/" + "junit.xml"
 	suiteConfig.Timeout = 3 * time.Hour
 
 	labelFilter := os.Getenv("GINKGO_LABEL_FILTER")
