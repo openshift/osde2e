@@ -18,6 +18,9 @@ RUN go test -c -o osde2e-fedramp.test
 
 FROM registry.redhat.io/rhel9-2-els/rhel:9.2
 WORKDIR /
+
+# Create the necessary config directory for ocm
+RUN mkdir -p /.config && chown -R 65532:65532 /.config
 RUN mkdir /licenses
 COPY --from=builder /go/bin/ginkgo /usr/local/bin/
 COPY --from=builder /go/src/github.com/openshift/osde2e/test/fedramp/osde2e-fedramp.test .
