@@ -1,13 +1,12 @@
 module github.com/openshift/osde2e
 
 go 1.22
-
-toolchain go1.22.3
+toolchain go1.23.2
 
 require (
 	cloud.google.com/go/kms v1.20.0
 	github.com/Masterminds/semver/v3 v3.3.0
-	github.com/PuerkitoBio/goquery v1.9.2
+	github.com/PuerkitoBio/goquery v1.10.0
 	github.com/adamliesko/retry v0.0.0-20200123222335-86c8baac277d
 	github.com/aws/aws-sdk-go v1.55.5
 	github.com/fsnotify/fsnotify v1.7.0
