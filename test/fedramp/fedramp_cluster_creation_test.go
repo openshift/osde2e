@@ -1,12 +1,9 @@
 package fedramp
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"os"
-	"os/exec"
 	"strings"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -82,8 +79,17 @@ var _ = Describe("Fedramp Rosa Cluster Creation", Ordered, Label("Fedramp"), fun
 		logger.Info("Fetching cluster version")
 		clusterVersion = os.Getenv("CLUSTER_VERSION")
 		if clusterVersion == "" {
-			clusterVersion, err = getClusterVersion(ctx, provider, clusterChannel)
-			Expect(err).NotTo(HaveOccurred())
+			// Use provider.Versions to get the list of versions
+			versions, err := provider.Versions(ctx, clusterChannel, false)
+			Expect(err).NotTo(HaveOccurred(), "Failed to get ROSA versions")
+			// Find the default version
+			for _, version := range versions {
+				if version.Default {
+					clusterVersion = strings.TrimSpace(version.RawID)
+					break
+				}
+			}
+			Expect(clusterVersion).NotTo(BeEmpty(), "No default ROSA version found in channel group")
 		}
 		logger.Info(fmt.Sprintf("Cluster version fetched: %s", clusterVersion))
 
@@ -92,6 +98,7 @@ var _ = Describe("Fedramp Rosa Cluster Creation", Ordered, Label("Fedramp"), fun
 		logger.Info("Creating ROSA cluster with the following options:")
 		logger.Info(fmt.Sprintf("PrivateLink: %t, STS: %t, Version: %s", privatelink, sts, clusterVersion))
 
+		// Privatelink Cluster Option enables the VPC creation in the customer account.
 		// Create ROSA cluster
 		clusterID, err = provider.CreateCluster(
 			ctx,
@@ -101,6 +108,7 @@ var _ = Describe("Fedramp Rosa Cluster Creation", Ordered, Label("Fedramp"), fun
 				PrivateLink:     privatelink,
 				STS:             sts,
 				Version:         clusterVersion,
+				InstallTimeout:  180,  // 3 hours since this includes the time to create the VPC and subnets
 				SkipHealthCheck: true, // TODO: Remove this once we have a way to access a privatelink cluster
 			},
 		)
@@ -108,46 +116,3 @@ var _ = Describe("Fedramp Rosa Cluster Creation", Ordered, Label("Fedramp"), fun
 		logger.Info(fmt.Sprintf("Cluster created successfully! ClusterID: %s", clusterID))
 	})
 })
-
-// getClusterVersion gets the default ROSA version for the given channel group
-// This is a hacky way to get the default ROSA version, but it works for now
-// TODO: Find a better way to get the default ROSA version
-// Latest rosa version is not available in fedramp rosa as they lag behind commercial.
-// Note the Provider isn't being used here, this function could be moved to osde2e-common after a review.
-func getClusterVersion(ctx context.Context, provider *rosa.Provider, clusterChannel string) (string, error) {
-	// Construct the command to list ROSA versions in JSON format
-	cmd := exec.CommandContext(ctx, "rosa", "list", "versions", "--channel-group", clusterChannel, "--output", "json")
-
-	var stdoutBuf, stderrBuf bytes.Buffer
-	cmd.Stdout = &stdoutBuf
-	cmd.Stderr = &stderrBuf
-
-	err := cmd.Run()
-	if err != nil {
-		return "", fmt.Errorf("failed to list ROSA versions: %w\n%s", err, stderrBuf.String())
-	}
-
-	type VersionInfo struct {
-		RawID   string `json:"raw_id"`
-		Default bool   `json:"default"`
-	}
-
-	var versions []VersionInfo
-	err = json.Unmarshal(stdoutBuf.Bytes(), &versions)
-	if err != nil {
-		return "", fmt.Errorf("failed to parse JSON output: %w", err)
-	}
-
-	if len(versions) == 0 {
-		return "", fmt.Errorf("no ROSA versions found in channel %s", clusterChannel)
-	}
-
-	// Find the version where Default is true
-	for _, version := range versions {
-		if version.Default {
-			return strings.TrimSpace(version.RawID), nil
-		}
-	}
-
-	return "", fmt.Errorf("no default ROSA version found in channel %s", clusterChannel)
-}
