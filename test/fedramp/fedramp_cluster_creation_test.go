@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -108,8 +109,8 @@ var _ = Describe("Fedramp Rosa Cluster Creation", Ordered, Label("Fedramp"), fun
 				PrivateLink:     privatelink,
 				STS:             sts,
 				Version:         clusterVersion,
-				InstallTimeout:  180,  // 3 hours since this includes the time to create the VPC and subnets
-				SkipHealthCheck: true, // TODO: Remove this once we have a way to access a privatelink cluster
+				InstallTimeout:  180 * time.Minute, // 3 hours since this includes the time to create the VPC and subnets, https://github.com/openshift/osde2e-common/blob/main/pkg/openshift/rosa/cluster.go
+				SkipHealthCheck: true,              // TODO: Remove this once we have a way to access a privatelink cluster
 			},
 		)
 		Expect(err).NotTo(HaveOccurred(), "Failed to create ROSA cluster")
