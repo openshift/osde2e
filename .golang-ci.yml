@@ -14,6 +14,10 @@ linters:
     - misspell
     - unused
     - gofumpt
+    - ginkgolinter
+    - goconst
+    - whitespace
+    - staticcheck
 issues:
   exclude:
     - composites
