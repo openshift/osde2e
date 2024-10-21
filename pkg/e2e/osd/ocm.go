@@ -143,7 +143,7 @@ var _ = ginkgo.Describe(ocmTestName, label.E2E, func() {
 			Expect(err).NotTo(HaveOccurred())
 
 			// make sure that the pull succeeded in spite of quay being unreachable
-			err = wait.PollImmediate(10*time.Second, 5*time.Minute, func() (bool, error) {
+			err = wait.PollUntilContextTimeout(ctx, 10*time.Second, 5*time.Minute, true, func(ctx context.Context) (bool, error) {
 				pod, err := podAPI.Get(ctx, pod.Name, metav1.GetOptions{})
 				if err != nil {
 					return false, nil

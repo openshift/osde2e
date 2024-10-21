@@ -101,7 +101,7 @@ var _ = ginkgo.Describe(encryptedStorageTestName, label.E2E, func() {
 
 			// Updated RBAC rules may take time to apply -> poll until we can successfully create a storageclass
 			volumeBindingMode := storagev1.VolumeBindingWaitForFirstConsumer
-			err = wait.PollImmediate(encryptedStoragePollInterval, encryptedStoragePollTimeout, func() (bool, error) {
+			err = wait.PollUntilContextTimeout(ctx, encryptedStoragePollInterval, encryptedStoragePollTimeout, true, func(ctx context.Context) (bool, error) {
 				_, err = h.Kube().StorageV1().StorageClasses().Create(ctx, &storagev1.StorageClass{
 					TypeMeta: metav1.TypeMeta{
 						Kind:       "StorageClass",
@@ -183,7 +183,7 @@ var _ = ginkgo.Describe(encryptedStorageTestName, label.E2E, func() {
 			}, metav1.CreateOptions{})
 			Expect(err).ToNot(HaveOccurred(), "Error creating pod '"+pod.GetName()+"':")
 
-			err = wait.PollImmediate(encryptedStoragePollInterval, encryptedStoragePollTimeout, func() (bool, error) {
+			err = wait.PollUntilContextTimeout(ctx, encryptedStoragePollInterval, encryptedStoragePollTimeout, true, func(ctx context.Context) (bool, error) {
 				pod, err = h.Kube().CoreV1().Pods(pod.GetNamespace()).Get(ctx, pod.GetName(), metav1.GetOptions{})
 				if err != nil || pod.Status.Phase != corev1.PodSucceeded {
 					return false, err
@@ -259,7 +259,7 @@ func createGCPKey(ctx context.Context, h *helper.H, serviceAccountJson []byte, k
 	if err != nil {
 		// keyRing does not exist yet, & KMS was likely just enabled for the project.
 		// KMS may not be ready immediately after enabling, poll until we are able to successfully create a keyring, indicating it is fully available for this project
-		err = wait.PollImmediate(encryptedStoragePollInterval, encryptedStoragePollTimeout, func() (bool, error) {
+		err = wait.PollUntilContextTimeout(ctx, encryptedStoragePollInterval, encryptedStoragePollTimeout, true, func(ctx context.Context) (bool, error) {
 			keyRing, err = kmsClient.CreateKeyRing(ctx, &kmsprotov1.CreateKeyRingRequest{
 				Parent:    "projects/" + clusterInfra.Status.PlatformStatus.GCP.ProjectID + "/locations/" + clusterInfra.Status.PlatformStatus.GCP.Region,
 				KeyRingId: keyName,
@@ -384,7 +384,7 @@ func createGCPServiceAccount(ctx context.Context, h *helper.H, saName string, sa
 		return nil, err
 	}
 
-	err = wait.PollImmediate(encryptedStoragePollInterval, encryptedStoragePollTimeout, func() (bool, error) {
+	err = wait.PollUntilContextTimeout(ctx, encryptedStoragePollInterval, encryptedStoragePollTimeout, true, func(ctx context.Context) (bool, error) {
 		unstructCredentialReq, err := h.Dynamic().Resource(schema.GroupVersionResource{
 			Group:    "cloudcredential.openshift.io",
 			Version:  "v1",
@@ -435,7 +435,7 @@ func deletePod(ctx context.Context, name string, namespace string, h *helper.H) 
 		log.Printf("Deleting pod %s, error: %v", name, err)
 
 		// Wait for the pod to delete.
-		err = wait.PollImmediate(5*time.Second, 5*time.Minute, func() (bool, error) {
+		err = wait.PollUntilContextTimeout(ctx, 5*time.Second, 5*time.Minute, true, func(ctx context.Context) (bool, error) {
 			if _, err := h.Kube().CoreV1().Pods(namespace).Get(ctx, name, metav1.GetOptions{}); err != nil {
 				return true, nil
 			}

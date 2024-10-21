@@ -91,9 +91,9 @@ func (r *Runner) retrieveResultsForDirectory(directory string) (map[string][]byt
 	// request result list
 	// sometimes it is possible for the service/endpoint to not be ready before the results are finished.
 	// we loop through here five times with a sleep statement to check.
-	err = wait.PollImmediate(5*time.Second, 1*time.Minute, func() (bool, error) {
+	err = wait.PollUntilContextTimeout(context.TODO(), 5*time.Second, 1*time.Minute, true, func(ctx context.Context) (bool, error) {
 		resp = r.Kube.CoreV1().Services(r.Namespace).ProxyGet("http", r.svc.Name, resultsPortStr, directory, nil)
-		rdr, err = resp.Stream(context.TODO())
+		rdr, err = resp.Stream(ctx)
 		if err != nil {
 			return false, nil
 		}
