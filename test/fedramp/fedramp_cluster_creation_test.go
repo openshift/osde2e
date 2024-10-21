@@ -48,7 +48,6 @@ var _ = Describe("Fedramp Rosa Cluster Creation", Ordered, Label("Fedramp"), fun
 		reportDir = os.Getenv("REPORT_DIR")
 		Expect(os.MkdirAll(reportDir, os.ModePerm)).ShouldNot(HaveOccurred(), "failed to create report directory")
 		logger.Info(fmt.Sprintf("Report directory created successfully: %s", reportDir))
-
 	})
 
 	AfterAll(func(ctx context.Context) {
