@@ -114,7 +114,7 @@ var _ = ginkgo.Describe(userWorkloadMonitoringTestName, ginkgo.Ordered, label.In
 			})
 			// Create ServiceMonitor
 			uwme2esm := newServiceMonitor(prometheusName, uwmtestns)
-			err := wait.PollImmediate(time.Second*15, uwmPollingDuration, func() (bool, error) {
+			err := wait.PollUntilContextTimeout(ctx, time.Second*15, uwmPollingDuration, true, func(ctx context.Context) (bool, error) {
 				_, err := h.Prometheusop().MonitoringV1().ServiceMonitors(uwmtestns).Create(ctx, uwme2esm, metav1.CreateOptions{})
 				if err != nil {
 					log.Printf("failed creating service monitor: %v", err)
@@ -132,7 +132,7 @@ var _ = ginkgo.Describe(userWorkloadMonitoringTestName, ginkgo.Ordered, label.In
 				Groups:   []string{"system:authenticated", "system:authenticated:oauth", "dedicated-admins"},
 			})
 			uwme2etestrule := newPrometheusRule(prometheusName, uwmtestns)
-			err := wait.PollImmediate(time.Second*15, uwmPollingDuration, func() (bool, error) {
+			err := wait.PollUntilContextTimeout(ctx, time.Second*15, uwmPollingDuration, true, func(ctx context.Context) (bool, error) {
 				_, err := h.Prometheusop().MonitoringV1().PrometheusRules(uwmtestns).Create(ctx, uwme2etestrule, metav1.CreateOptions{})
 				if err != nil {
 					log.Printf("failed creating prometheus rules: %v", err)

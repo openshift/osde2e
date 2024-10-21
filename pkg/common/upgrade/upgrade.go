@@ -91,7 +91,7 @@ func RunUpgrade(h *helper.H) error {
 
 	log.Println("Upgrading...")
 	done = false
-	if err = wait.PollImmediate(10*time.Second, MaxDuration, func() (bool, error) {
+	if err = wait.PollUntilContextTimeout(context.TODO(), 10*time.Second, MaxDuration, true, func(ctx context.Context) (bool, error) {
 		// Keep the managed upgrade's configuration overrides in place, in case Hive has replaced them
 		err = overrideOperatorConfig(h)
 		// Log if it errored, but don't cancel the upgrade because of it

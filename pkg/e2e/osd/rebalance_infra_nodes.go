@@ -125,7 +125,7 @@ var _ = ginkgo.Describe(rebalanceInfraNodesTestName, label.Informing, func() {
 			Expect(podName).NotTo(BeNil())
 
 			var pod *v1.Pod
-			err = wait.PollImmediate(pollInterval, podSucceededTimeout, func() (bool, error) {
+			err = wait.PollUntilContextTimeout(ctx, pollInterval, podSucceededTimeout, true, func(ctx context.Context) (bool, error) {
 				pod, err = h.Kube().
 					CoreV1().
 					Pods(rebalanceInfraNodesNamespace).
