@@ -403,7 +403,7 @@ func testCRserverStatusRequest(h *helper.H) {
 func checkVeleroBackups(h *helper.H, operatorNamespace string) {
 	ginkgo.Context("velero", func() {
 		ginkgo.It("backups should be complete", func(ctx context.Context) {
-			err := wait.PollImmediate(5*time.Second, 5*time.Minute, func() (bool, error) {
+			err := wait.PollUntilContextTimeout(ctx, 5*time.Second, 5*time.Minute, true, func(ctx context.Context) (bool, error) {
 				us, err := h.Dynamic().Resource(schema.GroupVersionResource{
 					Group:    "velero.io",
 					Version:  "v1",

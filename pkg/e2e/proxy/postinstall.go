@@ -69,7 +69,7 @@ func testAddProxy() {
 
 		// Wait to see proxy reflected on the cluster
 		logger.Printf("Validating state of proxy on cluster within %v minutes", proxyConfigSyncDuration.Minutes())
-		err = wait.Poll(30*time.Second, proxyConfigSyncDuration, func() (bool, error) {
+		err = wait.PollUntilContextTimeout(ctx, 30*time.Second, proxyConfigSyncDuration, true, func(ctx context.Context) (bool, error) {
 			var proxy *configv1.Proxy
 			var cabundle *v1.ConfigMap
 
@@ -115,7 +115,7 @@ func testAddProxy() {
 		// The cluster's proxy and configmap state reflects what we expect
 		// So now, is the cluster still healthy?
 		logger.Printf("Verifying cluster health after proxy addition..")
-		err = wait.PollImmediate(30*time.Second, proxyHealthCheckWaitDuration, func() (bool, error) {
+		err = wait.PollUntilContextTimeout(ctx, 30*time.Second, proxyHealthCheckWaitDuration, true, func(ctx context.Context) (bool, error) {
 			isHealthy, failures, _ := cluster.PollClusterHealth(clusterID, logger)
 			if isHealthy {
 				logger.Printf("cluster is healthy after proxy addition\n")
@@ -145,7 +145,7 @@ func testRemoveProxy() {
 
 		// Wait to see proxy reflected on the cluster
 		logger.Printf("Validating state of proxy on cluster within %v minutes", proxyConfigSyncDuration.Minutes())
-		err = wait.Poll(30*time.Second, proxyConfigSyncDuration, func() (bool, error) {
+		err = wait.PollUntilContextTimeout(ctx, 30*time.Second, proxyConfigSyncDuration, true, func(ctx context.Context) (bool, error) {
 			var proxy *configv1.Proxy
 
 			// Validate state of proxy on-cluster vs what values it should have
@@ -173,7 +173,7 @@ func testRemoveProxy() {
 		// The cluster's proxy and configmap state reflects what we expect
 		// So now, is the cluster still healthy?
 		logger.Printf("Verifying cluster health after proxy removed..")
-		err = wait.PollImmediate(30*time.Second, proxyHealthCheckWaitDuration, func() (bool, error) {
+		err = wait.PollUntilContextTimeout(ctx, 30*time.Second, proxyHealthCheckWaitDuration, true, func(ctx context.Context) (bool, error) {
 			isHealthy, failures, _ := cluster.PollClusterHealth(clusterID, logger)
 			if isHealthy {
 				logger.Printf("cluster is healthy after proxy removed\n")
