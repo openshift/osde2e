@@ -31,7 +31,7 @@ ENTRYPOINT ["/usr/local/bin/ginkgo"]
 USER 65532:65532
 
 # Provide default arguments
-CMD ["-v", "--label-filter=Fedramp", "--junit-report=junit.xml", "./osde2e-fedramp.test"]
+CMD ["-v", "--label-filter=Fedramp", "--junit-report=/tmp/osde2e-report/junit.xml", "./osde2e-fedramp.test"]
 
 LABEL name="osde2e-fedramp-tests"
 LABEL description="A test framework for testing ROSA clusters on the FedRAMP environment"
