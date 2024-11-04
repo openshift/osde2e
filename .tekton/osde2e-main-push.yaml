@@ -5,11 +5,12 @@ metadata:
     build.appstudio.openshift.io/repo: https://github.com/openshift/osde2e?rev={{revision}}
     build.appstudio.redhat.com/commit_sha: '{{revision}}'
     build.appstudio.redhat.com/target_branch: '{{target_branch}}'
-    pipelinesascode.tekton.dev/max-keep-runs: "3"
+    pipelinesascode.tekton.dev/max-keep-runs: "10"
     pipelinesascode.tekton.dev/on-cel-expression: |
       event == "push"
       && target_branch == "main"
-      && files.all.exists(x, !x.matches('^(?:docs|\\.github|scripts|test)/|\\.md$|^(?:\\.gitignore|.golang-ci.yml|OWNERS|LICENSE)$'))
+      && (files.all.exists(x, !x.matches('^(?:docs|\\.github|scripts|test)/|\\.md$|^(?:\\.gitignore|.golang-ci.yml|OWNERS|LICENSE)$'))
+          || ".tekton/osde2e-main-push.yaml".pathChanged())
   creationTimestamp: null
   labels:
     appstudio.openshift.io/application: osde2e
@@ -390,6 +391,28 @@ spec:
         - name: kind
           value: task
         resolver: bundles
+    - name: rpms-signature-scan
+      params:
+        - name: image-url
+          value: $(tasks.build-image-index.results.IMAGE_URL)
+        - name: image-digest
+          value: $(tasks.build-image-index.results.IMAGE_DIGEST)
+      runAfter:
+        - build-container
+      taskRef:
+        params:
+          - name: name
+            value: rpms-signature-scan
+          - name: bundle
+            value: quay.io/konflux-ci/tekton-catalog/task-rpms-signature-scan:0.2@sha256:7aa4d3c95e2b963e82fdda392f7cb3d61e3dab035416cf4a3a34e43cf3c9c9b8
+          - name: kind
+            value: task
+        resolver: bundles
+      when:
+        - input: $(params.skip-checks)
+          operator: in
+          values:
+            - "false"
     workspaces:
     - name: workspace
     - name: git-auth
