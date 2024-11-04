@@ -10,7 +10,8 @@ metadata:
     pipelinesascode.tekton.dev/on-cel-expression: |
       event == "pull_request"
       && target_branch == "main"
-      && files.all.exists(x, !x.matches('^(?:docs|\\.github|scripts|test)/|\\.md$|^(?:\\.gitignore|.golang-ci.yml|OWNERS|LICENSE)$'))
+      && (files.all.exists(x, !x.matches('^(?:docs|\\.github|scripts|test)/|\\.md$|^(?:\\.gitignore|.golang-ci.yml|OWNERS|LICENSE)$'))
+          || ".tekton/osde2e-main-pull-request.yaml".pathChanged() )
   creationTimestamp: null
   labels:
     appstudio.openshift.io/application: osde2e
