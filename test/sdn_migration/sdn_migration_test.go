@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/go-logr/logr"
-	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	configv1 "github.com/openshift/api/config/v1"
@@ -21,7 +20,6 @@ import (
 	rosaprovider "github.com/openshift/osde2e-common/pkg/openshift/rosa"
 	batchv1 "k8s.io/api/batch/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/e2e-framework/klient/k8s"
 )
@@ -50,7 +48,7 @@ type rosaCluster struct {
 	client *openshiftclient.Client
 }
 
-var _ = Describe("SDN migration", ginkgo.Ordered, func() {
+var _ = Describe("SDN migration", Ordered, func() {
 	var (
 		clusterName        = os.Getenv("CLUSTER_NAME")
 		testRosaCluster    *rosaCluster
@@ -353,7 +351,7 @@ func checkUpgradeStatus(ctx context.Context, client *openshiftclient.Client, upg
 // patchVersionConfig updates the version config to the desired version to initiate an upgrade
 func patchVersionConfig(ctx context.Context, client *openshiftclient.Client, channel string, image string, version string) error {
 	clusterVersionConfing := configv1.ClusterVersion{
-		ObjectMeta: v1.ObjectMeta{Name: "version"},
+		ObjectMeta: metav1.ObjectMeta{Name: "version"},
 	}
 
 	mergePatch, err := json.Marshal(map[string]interface{}{
@@ -382,7 +380,7 @@ func patchVersionConfig(ctx context.Context, client *openshiftclient.Client, cha
 
 // patchNetworkConfig updates network type to OVN
 func patchNetworkConfig(ctx context.Context, client *openshiftclient.Client) error {
-	networkConfig := configv1.Network{ObjectMeta: v1.ObjectMeta{Name: "cluster"}}
+	networkConfig := configv1.Network{ObjectMeta: metav1.ObjectMeta{Name: "cluster"}}
 
 	mergePatch, err := json.Marshal(map[string]interface{}{
 		"metadata": map[string]interface{}{
@@ -410,7 +408,7 @@ func patchNetworkConfig(ctx context.Context, client *openshiftclient.Client) err
 
 // addAnnotation adds the internal testing annotation to the network config
 func addIntenalTestingAnnotation(ctx context.Context, client *openshiftclient.Client) error {
-	networkConfig := configv1.Network{ObjectMeta: v1.ObjectMeta{Name: "cluster"}}
+	networkConfig := configv1.Network{ObjectMeta: metav1.ObjectMeta{Name: "cluster"}}
 
 	mergePatch, err := json.Marshal(map[string]interface{}{
 		"metadata": map[string]interface{}{
