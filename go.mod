@@ -1,8 +1,7 @@
 module github.com/openshift/osde2e
 
 go 1.22
-
-toolchain go1.22.3
+toolchain go1.22.5
 
 require (
 	cloud.google.com/go/kms v1.20.1
@@ -15,7 +14,7 @@ require (
 	github.com/google/go-github/v31 v31.0.0
 	github.com/google/uuid v1.6.0
 	github.com/hashicorp/go-multierror v1.1.1
-	github.com/hashicorp/hc-install v0.8.0
+	github.com/hashicorp/hc-install v0.9.0
 	github.com/hashicorp/terraform-exec v0.21.0
 	github.com/jackc/pgtype v1.14.2 // indirect
 	github.com/joshdk/go-junit v1.0.0
@@ -155,7 +154,7 @@ require (
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/crypto v0.28.0 // indirect
 	golang.org/x/exp v0.0.0-20240719175910-8a7402abbf56 // indirect
-	golang.org/x/mod v0.20.0 // indirect
+	golang.org/x/mod v0.21.0 // indirect
 	golang.org/x/sys v0.26.0 // indirect
 	golang.org/x/term v0.25.0 // indirect
 	golang.org/x/text v0.19.0 // indirect
