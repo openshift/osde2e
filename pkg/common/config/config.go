@@ -941,7 +941,9 @@ func InitOSDe2eViper() {
 
 func init() {
 	InitOSDe2eViper()
-	InitAWSViper()
+	if err := InitAWSViper(); err != nil {
+		log.Fatalf("Could not init AWS config: %v", err)
+	}
 	InitGCPViper()
 }
 
