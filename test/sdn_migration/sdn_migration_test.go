@@ -219,7 +219,7 @@ func osdClusterReadyHealthCheck(ctx context.Context, clusterClient *openshiftcli
 		_ = clusterClient.Delete(ctx, newJob)
 	}()
 
-	return clusterClient.OSDClusterHealthy(ctx, newJob.GetName(), reportDir, osdClusterReadyJobTimeout)
+	return clusterClient.OSDClusterHealthy(ctx, reportDir, osdClusterReadyJobTimeout)
 }
 
 type upgradeError struct {
