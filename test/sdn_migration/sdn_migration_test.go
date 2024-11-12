@@ -3,8 +3,8 @@ package sdn_migration_test
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
-	corev1 "k8s.io/api/core/v1"
 	"os"
 	"strconv"
 	"strings"
@@ -20,6 +20,7 @@ import (
 	osdprovider "github.com/openshift/osde2e-common/pkg/openshift/osd"
 	rosaprovider "github.com/openshift/osde2e-common/pkg/openshift/rosa"
 	batchv1 "k8s.io/api/batch/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/e2e-framework/klient/k8s"
@@ -164,7 +165,6 @@ var _ = Describe("SDN migration", Ordered, func() {
 	It("rosa cluster is upgraded to 4.16.0-rc.0 successfully", rosaUpgrade, func(ctx context.Context) {
 		err := patchVersionConfig(ctx, testRosaCluster.client, channel4_16, image4_16, version4_16)
 		Expect(err).ShouldNot(HaveOccurred(), "rosa cluster upgrade failed")
-		Expect(err).ShouldNot(HaveOccurred(), err)
 	})
 
 	It("rosa cluster is healthy post 4.16.0-rc.0 upgrade", postUpgradeCheck, func(ctx context.Context) {
@@ -182,6 +182,7 @@ var _ = Describe("SDN migration", Ordered, func() {
 	})
 	It("rosa cluster has no critical alerts firing post sdn to ovn migration", postMigrationCheck, func(ctx context.Context) {
 		err := cluterOperatorHealthCheck(ctx, testRosaCluster.client, logger)
+		Expect(err).ShouldNot(HaveOccurred(), err)
 		err = osdClusterReadyHealthCheck(ctx, testRosaCluster.client, "post-upgrade", testRosaCluster.reportDir)
 		Expect(err).ShouldNot(HaveOccurred(), "osd-cluster-ready health check job failed post upgrade")
 	})
@@ -201,7 +202,7 @@ func cluterOperatorHealthCheck(ctx context.Context, clusterClient *openshiftclie
 			return fmt.Errorf("failed to get cluster operators: %v", err)
 		}
 
-		//Iterate over the list of ClusterOperators
+		// Iterate over the list of ClusterOperators
 		if coList.Items == nil {
 			logger.Info("Failed to find cluster operators")
 		} else {
@@ -213,7 +214,6 @@ func cluterOperatorHealthCheck(ctx context.Context, clusterClient *openshiftclie
 					logger.Info("waiting for cluster operators to be healthy")
 					state = "unhealthy"
 					break
-
 				}
 			}
 		}
@@ -232,7 +232,6 @@ func cluterOperatorHealthCheck(ctx context.Context, clusterClient *openshiftclie
 					state = "unhealthy"
 					break
 				}
-
 			}
 		}
 		switch state {
@@ -247,7 +246,7 @@ func cluterOperatorHealthCheck(ctx context.Context, clusterClient *openshiftclie
 		time.Sleep(upgradeDelay * time.Second)
 
 	}
-	return fmt.Errorf("cluster failed health check and did not become healthy within the maximum wait attempts")
+	return errors.New("cluster failed health check and did not become healthy within the maximum wait attempts")
 }
 
 // osdClusterReadyHealthCheck verifies the osd-cluster-ready health check job is passing
