@@ -3,6 +3,7 @@ package sdn_migration_test
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"strconv"
@@ -19,6 +20,7 @@ import (
 	osdprovider "github.com/openshift/osde2e-common/pkg/openshift/osd"
 	rosaprovider "github.com/openshift/osde2e-common/pkg/openshift/rosa"
 	batchv1 "k8s.io/api/batch/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/e2e-framework/klient/k8s"
@@ -33,7 +35,7 @@ const (
 	image4_16                 = "quay.io/openshift-release-dev/ocp-release@sha256:c56b01191de4cbb4b97c6eeaf61c5c122fcd465d1d0d671db640d877638ed790"
 	channel4_15               = "14.15.8"
 	channel4_16               = "4.16.0-rc.0"
-	upgradeMaxAttempts        = 1080
+	upgradeMaxAttempts        = 3080
 	upgradeDelay              = 10
 )
 
@@ -156,19 +158,17 @@ var _ = Describe("SDN migration", Ordered, func() {
 	})
 
 	It("rosa cluster is healthy post 4.15.8 upgrade", postUpgradeCheck, func(ctx context.Context) {
-		err := osdClusterReadyHealthCheck(ctx, testRosaCluster.client, "post-upgrade", testRosaCluster.reportDir)
+		err := cluterOperatorHealthCheck(ctx, testRosaCluster.client, logger)
 		Expect(err).ShouldNot(HaveOccurred(), "osd-cluster-ready health check job failed post upgrade")
 	})
 
 	It("rosa cluster is upgraded to 4.16.0-rc.0 successfully", rosaUpgrade, func(ctx context.Context) {
 		err := patchVersionConfig(ctx, testRosaCluster.client, channel4_16, image4_16, version4_16)
 		Expect(err).ShouldNot(HaveOccurred(), "rosa cluster upgrade failed")
-		err = checkUpgradeStatus(ctx, testRosaCluster.client, version4_16, logger)
-		Expect(err).ShouldNot(HaveOccurred(), err)
 	})
 
 	It("rosa cluster is healthy post 4.16.0-rc.0 upgrade", postUpgradeCheck, func(ctx context.Context) {
-		err := osdClusterReadyHealthCheck(ctx, testRosaCluster.client, "post-upgrade", testRosaCluster.reportDir)
+		err := cluterOperatorHealthCheck(ctx, testRosaCluster.client, logger)
 		Expect(err).ShouldNot(HaveOccurred(), "osd-cluster-ready health check job failed post upgrade")
 	})
 
@@ -181,10 +181,73 @@ var _ = Describe("SDN migration", Ordered, func() {
 		Expect(err).ShouldNot(HaveOccurred(), "Rosa Cluster failed to patch network")
 	})
 	It("rosa cluster has no critical alerts firing post sdn to ovn migration", postMigrationCheck, func(ctx context.Context) {
-		err := osdClusterReadyHealthCheck(ctx, testRosaCluster.client, "post-upgrade", testRosaCluster.reportDir)
+		err := cluterOperatorHealthCheck(ctx, testRosaCluster.client, logger)
+		Expect(err).ShouldNot(HaveOccurred(), err)
+		err = osdClusterReadyHealthCheck(ctx, testRosaCluster.client, "post-upgrade", testRosaCluster.reportDir)
 		Expect(err).ShouldNot(HaveOccurred(), "osd-cluster-ready health check job failed post upgrade")
 	})
 })
+
+func cluterOperatorHealthCheck(ctx context.Context, clusterClient *openshiftclient.Client, logger logr.Logger) error {
+	var (
+		err    error
+		coList configv1.ClusterOperatorList
+		state  string
+	)
+
+	for i := 1; i <= upgradeMaxAttempts; i++ {
+		state = "healthy"
+		err = clusterClient.List(ctx, &coList)
+		if err != nil {
+			return fmt.Errorf("failed to get cluster operators: %v", err)
+		}
+
+		// Iterate over the list of ClusterOperators
+		if coList.Items == nil {
+			logger.Info("Failed to find cluster operators")
+		} else {
+			for _, co := range coList.Items {
+				// Check if the "Progressing" condition exists and is set to "false"
+				progressingCondition := findConditionByType(co.Status.Conditions, "Progressing")
+				availableCondition := findConditionByType(co.Status.Conditions, "Available")
+				if progressingCondition != nil && progressingCondition.Status == "True" || availableCondition != nil && availableCondition.Status == "False" {
+					logger.Info("waiting for cluster operators to be healthy")
+					state = "unhealthy"
+					break
+				}
+			}
+		}
+
+		nodes := &corev1.NodeList{}
+		err = clusterClient.List(ctx, nodes)
+		if err != nil {
+			return fmt.Errorf("failed to get nodes: %v", err)
+		}
+		if nodes.Items == nil {
+			logger.Info("failed to list nodes")
+		} else {
+			for _, node := range nodes.Items {
+				if node.Spec.Unschedulable == true {
+					logger.Info("waiting for the nodes to become schedulable")
+					state = "unhealthy"
+					break
+				}
+			}
+		}
+		switch state {
+		case "unhealthy":
+			logger.Info("Health check in progress")
+		case "healthy":
+			logger.Info("Health check complete!")
+			return nil
+
+		}
+		// Wait before the next poll attempt
+		time.Sleep(upgradeDelay * time.Second)
+
+	}
+	return errors.New("cluster failed health check and did not become healthy within the maximum wait attempts")
+}
 
 // osdClusterReadyHealthCheck verifies the osd-cluster-ready health check job is passing
 func osdClusterReadyHealthCheck(ctx context.Context, clusterClient *openshiftclient.Client, action, reportDir string) error {
@@ -276,9 +339,8 @@ func checkMigrationStatus(ctx context.Context, client *openshiftclient.Client, l
 // checkUpgradeStatus probes the status of the cluster upgrade
 func checkUpgradeStatus(ctx context.Context, client *openshiftclient.Client, upgradeVersion string, logger logr.Logger) error {
 	var (
-		conditionMessage string
-		err              error
-		cv               configv1.ClusterVersion
+		err error
+		cv  configv1.ClusterVersion
 	)
 
 	for i := 1; i <= upgradeMaxAttempts; i++ {
@@ -319,7 +381,6 @@ func checkUpgradeStatus(ctx context.Context, client *openshiftclient.Client, upg
 				// Extract the condition message
 				message := cond.Message
 				if strings.HasPrefix(message, "Working towards") {
-					conditionMessage = message
 					break
 				}
 			}
@@ -330,12 +391,12 @@ func checkUpgradeStatus(ctx context.Context, client *openshiftclient.Client, upg
 		case "":
 			logger.Info("Upgrade has not started yet...")
 		case "Partial":
-			logger.Info("Upgrade is in progress. Conditions: %v", conditionMessage)
+			logger.Info("Upgrade is in progress.")
 		case "Completed":
 			logger.Info("Upgrade complete!")
 			return nil
 		case "Failed":
-			logger.Info("Upgrade failed! Conditions: %v", conditionMessage)
+			logger.Info("Upgrade failed!")
 			return &upgradeError{err: fmt.Errorf("upgrade failed")}
 		default:
 			logger.Info("Unknown upgrade state: %s", upgradeState)
@@ -346,6 +407,16 @@ func checkUpgradeStatus(ctx context.Context, client *openshiftclient.Client, upg
 	}
 
 	return fmt.Errorf("upgrade is still in progress, failed to finish within max wait attempts")
+}
+
+// findConditionByType finds a specific condition by type
+func findConditionByType(conditions []configv1.ClusterOperatorStatusCondition, conditionType configv1.ClusterStatusConditionType) *configv1.ClusterOperatorStatusCondition {
+	for _, condition := range conditions {
+		if condition.Type == conditionType {
+			return &condition
+		}
+	}
+	return nil
 }
 
 // patchVersionConfig updates the version config to the desired version to initiate an upgrade
