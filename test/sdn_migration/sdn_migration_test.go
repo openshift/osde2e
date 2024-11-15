@@ -11,6 +11,10 @@ import (
 	"time"
 
 	"github.com/go-logr/logr"
+	"github.com/hashicorp/go-version"
+	"github.com/hashicorp/hc-install/product"
+	"github.com/hashicorp/hc-install/releases"
+	"github.com/hashicorp/terraform-exec/tfexec"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	configv1 "github.com/openshift/api/config/v1"
@@ -109,10 +113,33 @@ var _ = Describe("SDN migration", Ordered, func() {
 		}
 		if os.Getenv("CLUSTER_ID") == "" {
 			if enableClusterProxy.MatchesLabelFilter(GinkgoLabelFilter()) {
-				clusterOptions.HTTPSProxy = os.Getenv("TEST_HTTPS_PROXY")
-				clusterOptions.HTTPProxy = os.Getenv("TEST_HTTP_PROXY")
-				clusterOptions.AdditionalTrustBundleFile = os.Getenv("USER_CA_BUNDLE")
-				clusterOptions.SubnetIDs = os.Getenv("SUBNET_IDS")
+				var (
+					httpProxyVar  string
+					httpsProxyVar string
+					subnets       string
+				)
+				err = os.Setenv("TF_VAR_aws_access_key_id", accessKeyID)
+				Expect(err).ShouldNot(HaveOccurred(), "failed to set TF_VAR_aws_access_key_id")
+				err = os.Setenv("TF_VAR_aws_secret_access_key", secretAccessKey)
+				Expect(err).ShouldNot(HaveOccurred(), "failed to set TF_VAR_aws_secret_access_key")
+				err = os.Setenv("TF_VAR_region", region)
+				Expect(err).ShouldNot(HaveOccurred(), "failed to set TF_VAR_region")
+
+				out, err := runTerraformCommand("apply")
+				Expect(err).ShouldNot(HaveOccurred(), "failed to apply terraform")
+				httpProxyVarMeta, httpsProxyVarMeta, subnetsMeta := out["http_proxy_var"], out["https_proxy_var"], out["subnets"]
+
+				err = json.Unmarshal(httpProxyVarMeta.Value, &httpProxyVar)
+				Expect(err).ShouldNot(HaveOccurred(), "failed to unmarshal terraform output http_proxy_var")
+				err = json.Unmarshal(httpsProxyVarMeta.Value, &httpsProxyVar)
+				Expect(err).ShouldNot(HaveOccurred(), "failed to unmarshal terraform output https_proxy_var")
+				err = json.Unmarshal(subnetsMeta.Value, &subnets)
+				Expect(err).ShouldNot(HaveOccurred(), "failed to unmarshal terraform output subnets")
+
+				clusterOptions.HTTPSProxy = httpsProxyVar
+				clusterOptions.HTTPProxy = httpProxyVar
+				clusterOptions.AdditionalTrustBundleFile = "terraform/ca.pem"
+				clusterOptions.SubnetIDs = subnets
 				clusterOptions.NoProxy = "api.stage.openshift.com"
 			}
 			testRosaCluster.id, err = rosaProvider.CreateCluster(ctx, clusterOptions)
@@ -147,6 +174,11 @@ var _ = Describe("SDN migration", Ordered, func() {
 				DeleteOidcConfigID: true,
 			})
 			Expect(err).Should(BeNil(), "failed to delete rosa cluster")
+			if enableClusterProxy.MatchesLabelFilter(GinkgoLabelFilter()) {
+				_, err = runTerraformCommand("destroy")
+				Expect(err).Should(BeNil(), "failed to delete proxy resources in AWS")
+			}
+
 		}
 	})
 
@@ -187,6 +219,56 @@ var _ = Describe("SDN migration", Ordered, func() {
 		Expect(err).ShouldNot(HaveOccurred(), "osd-cluster-ready health check job failed post upgrade")
 	})
 })
+
+func runTerraformCommand(command string) (map[string]tfexec.OutputMeta, error) {
+	installer := &releases.ExactVersion{
+		Product: product.Terraform,
+		Version: version.Must(version.NewVersion("1.2.1")),
+	}
+
+	execPath, err := installer.Install(context.Background())
+	if err != nil {
+		return nil, fmt.Errorf("error installing Terraform: %s", err.Error())
+	}
+
+	// Initialize the Terraform executable
+	tf, err := tfexec.NewTerraform("terraform", execPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to initialize Terraform: %v", err.Error())
+	}
+
+	switch command {
+	case "apply":
+		err = tf.Init(context.Background(), tfexec.Reconfigure(true))
+		if err != nil {
+			return nil, fmt.Errorf("error running Init: %s", err.Error())
+		}
+		err = tf.Apply(context.Background())
+		if err != nil {
+			cleanupErr := tf.Destroy(context.Background())
+			if cleanupErr != nil {
+				return nil, fmt.Errorf("failed to cleanup resources after failed apply: %v", err.Error())
+			}
+
+			return nil, fmt.Errorf("terraform apply failed: %v", err.Error())
+		}
+
+		outputs, err := tf.Output(context.Background())
+		if err != nil {
+			return nil, fmt.Errorf("failed to get Terraform output: %v", err.Error())
+		}
+		return outputs, nil
+
+	case "destroy":
+		err = tf.Destroy(context.Background())
+		if err != nil {
+			return nil, fmt.Errorf("terraform destroy failed: %v", err.Error())
+		}
+	default:
+		return nil, fmt.Errorf("unknown command: %s", command)
+	}
+	return nil, nil
+}
 
 func cluterOperatorHealthCheck(ctx context.Context, clusterClient *openshiftclient.Client, logger logr.Logger) error {
 	var (

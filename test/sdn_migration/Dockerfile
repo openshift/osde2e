@@ -16,6 +16,8 @@ WORKDIR /
 RUN mkdir /licenses
 COPY --from=builder /go/src/github.com/openshift/osde2e/test/sdn_migration/out/sdn_migration .
 COPY --from=builder /go/src/github.com/openshift/osde2e/test/sdn_migration/LICENSE /licenses/.
+COPY --from=builder /go/src/github.com/openshift/osde2e/test/sdn_migration/terraform /terraform/.
+RUN chmod 777 terraform
 
 ENTRYPOINT [ "/sdn_migration" ]
 USER 65532:65532
