@@ -18,6 +18,7 @@ COPY --from=builder /go/src/github.com/openshift/osde2e/test/sdn_migration/out/s
 COPY --from=builder /go/src/github.com/openshift/osde2e/test/sdn_migration/LICENSE /licenses/.
 COPY --from=builder /go/src/github.com/openshift/osde2e/test/sdn_migration/terraform /terraform/.
 RUN chmod 777 terraform
+RUN chmod -R 755 terraform/assets
 
 ENTRYPOINT [ "/sdn_migration" ]
 USER 65532:65532
