@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export GIT_ROOT=$(git rev-parse --show-toplevel)/$(git rev-parse --show-prefix)
+export GIT_ROOT=$(pwd)
 
 openssl genrsa -out ${GIT_ROOT}/ca.key 4096
 openssl req -new -newkey rsa:4096 -nodes -keyout ${GIT_ROOT}/ca.key -out ${GIT_ROOT}/ca.csr -subj "/C=XX/ST=XX/L=squid/O=squid/CN=squid"
