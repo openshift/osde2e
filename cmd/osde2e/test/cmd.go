@@ -22,7 +22,6 @@ import (
 	_ "github.com/openshift/osde2e/pkg/e2e/proxy"
 	_ "github.com/openshift/osde2e/pkg/e2e/state"
 	_ "github.com/openshift/osde2e/pkg/e2e/verify"
-	_ "github.com/openshift/osde2e/pkg/e2e/webhooks"
 	_ "github.com/openshift/osde2e/pkg/e2e/workloads"
 )
 
