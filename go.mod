@@ -44,7 +44,7 @@ require (
 	github.com/vmware-tanzu/velero v1.10.2
 	golang.org/x/net v0.31.0
 	golang.org/x/oauth2 v0.24.0
-	golang.org/x/sync v0.9.0
+	golang.org/x/sync v0.10.0
 	golang.org/x/tools v0.27.0
 	google.golang.org/api v0.206.0
 	google.golang.org/genproto v0.0.0-20241104194629-dd2ea8efbc28 // indirect
