@@ -21,8 +21,8 @@ require (
 	github.com/joshdk/go-junit v1.0.0
 	github.com/kylelemons/godebug v1.1.0
 	github.com/mitchellh/mapstructure v1.5.0
-	github.com/onsi/ginkgo/v2 v2.22.0
-	github.com/onsi/gomega v1.36.0
+	github.com/onsi/ginkgo/v2 v2.22.1
+	github.com/onsi/gomega v1.36.2
 	github.com/openshift-online/ocm-sdk-go v0.1.448
 	github.com/openshift/client-go v0.0.0-20240510131258-f646d5f29250
 	github.com/openshift/cloud-credential-operator v0.0.0-20230512001141-38e7f96bf730
@@ -45,7 +45,7 @@ require (
 	golang.org/x/net v0.33.0
 	golang.org/x/oauth2 v0.25.0
 	golang.org/x/sync v0.10.0
-	golang.org/x/tools v0.27.0
+	golang.org/x/tools v0.28.0
 	google.golang.org/api v0.216.0
 	google.golang.org/genproto v0.0.0-20241104194629-dd2ea8efbc28 // indirect
 	gopkg.in/yaml.v3 v3.0.1
@@ -105,7 +105,7 @@ require (
 	github.com/google/go-cmp v0.6.0 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
-	github.com/google/pprof v0.0.0-20241029153458-d1b30febd7db // indirect
+	github.com/google/pprof v0.0.0-20241210010833-40e02aabc2ad // indirect
 	github.com/google/s2a-go v0.1.8 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.3.4 // indirect
 	github.com/googleapis/gax-go/v2 v2.14.1 // indirect
