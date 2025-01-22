@@ -12,12 +12,15 @@ RUN make build
 
 FROM registry.redhat.io/rhel9-2-els/rhel:9.2
 WORKDIR /
-RUN mkdir /licenses
+# Create a writeable directory for licenses used by Tekton.
+# Create a writable directory for configuration used for ocm connection.
+RUN mkdir /licenses && mkdir -p /.config/ocm
 COPY --from=builder /go/src/github.com/openshift/osde2e/out/osde2e .
 COPY --from=builder /go/src/github.com/openshift/osde2e/LICENSE /licenses/.
 COPY --from=builder /usr/bin/git /usr/bin/git
 COPY --from=builder /usr/libexec/git-core/* /usr/libexec/git-core/
 COPY --from=builder /usr/share/git-core/* /usr/share/git-core/
+
 
 ENV PATH="${PATH}:/"
 ENTRYPOINT ["/osde2e"]
