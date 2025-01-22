@@ -3,9 +3,9 @@ package ocmprovider
 
 import (
 	"fmt"
+	"strings"
 
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
-	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/spi"
 
 	ocm "github.com/openshift-online/ocm-sdk-go"
@@ -21,9 +21,6 @@ const (
 
 	// fRTokenURL specifies the endpoint used to create access tokens for FedRamp.
 	fRTokenURL = "https://sso.int.openshiftusgov.com/realms/redhat-external/protocol/openid-connect/token"
-
-	// ClientID is used to identify the client to OSD.
-	ClientID = "cloud-services"
 )
 
 type ocmConnectionKey struct {
@@ -40,7 +37,6 @@ var connectionCache = map[ocmConnectionKey]*ocm.Connection{}
 type OCMProvider struct {
 	env              string
 	conn             *ocm.Connection
-	prodProvider     *OCMProvider
 	clusterCache     map[string]*spi.Cluster
 	credentialCache  map[string]string
 	versionGateLabel string
@@ -79,12 +75,13 @@ func OCMConnection(token, clientID, clientSecret, env string, debug bool) (*ocm.
 	url := Environments.Choose(env)
 
 	connectionBuilder := ocm.NewConnectionBuilder().URL(url).Logger(logger)
-	if clientID != "" && clientSecret != "" {
-		// Use the FedRamp tokenURL if we're using a clientID and clientSecret for Keycloack Client Auth.
+	// FedRamp uses a different tokenURL, so we need to check if url contains fr
+	if strings.Contains(url, "fr") {
 		connectionBuilder.Client(clientID, clientSecret).TokenURL(fRTokenURL)
+	} else if clientID != "" && clientSecret != "" {
+		connectionBuilder.Client(clientID, clientSecret)
 	} else {
-		// Default commercial flow
-		connectionBuilder.TokenURL(TokenURL).Client(ClientID, "").Tokens(token)
+		connectionBuilder.TokenURL(TokenURL).Client("cloud-services", "").Tokens(token)
 	}
 
 	connection, err := connectionBuilder.Build()
@@ -105,8 +102,8 @@ func New() (*OCMProvider, error) {
 // NewWithEnv creates a new provider with a specific environment.
 func NewWithEnv(env string) (*OCMProvider, error) {
 	token := viper.GetString(Token)
-	clientID := viper.GetString(FedRampClientID)
-	clientSecret := viper.GetString(FedRampClientSecret)
+	clientID := viper.GetString(ClientID)
+	clientSecret := viper.GetString(ClientSecret)
 	debug := viper.GetBool(Debug)
 
 	conn, err := OCMConnection(token, clientID, clientSecret, env, debug)
@@ -114,22 +111,9 @@ func NewWithEnv(env string) (*OCMProvider, error) {
 		return nil, err
 	}
 
-	var prodProvider *OCMProvider = nil
-
-	// For integration/stage environments, we need a connection to production so that we're
-	// able to get the default version in production. This will allow us to make relative version
-	// upgrades by measuring against the current production default.
-	if env != prod {
-		prodProvider, err = createProdProvider()
-		if err != nil {
-			return nil, err
-		}
-	}
-
 	return &OCMProvider{
 		env:              env,
 		conn:             conn,
-		prodProvider:     prodProvider,
 		clusterCache:     make(map[string]*spi.Cluster),
 		credentialCache:  make(map[string]string),
 		versionGateLabel: "api.openshift.com/gate-ocp",
@@ -188,13 +172,4 @@ func (o *OCMProvider) Type() string {
 // VersionGateLabel returns the provider version gate label
 func (o *OCMProvider) VersionGateLabel() string {
 	return o.versionGateLabel
-}
-
-func createProdProvider() (*OCMProvider, error) {
-	prodEnv := prod
-	if viper.GetBool(config.Cluster.FedRamp) {
-		prodEnv = frProd
-	}
-
-	return NewWithEnv(prodEnv)
 }
