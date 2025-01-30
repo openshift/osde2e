@@ -2,6 +2,8 @@ package cleanup
 
 import (
 	"bytes"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
@@ -38,6 +40,16 @@ var args struct {
 	dryRun          bool
 	clusters        bool
 	sendSummary     bool
+	ec2             bool
+}
+
+type Message struct {
+	Summary   string `json:"summary"`
+	BuildFile string `json:"buildfile"`
+	S3Errors  string `json:"s3"`
+	IAMErrors string `json:"iam"`
+	IPErrors  string `json:"ip"`
+	EC2Errors string `json:"ec2"`
 }
 
 func init() {
@@ -113,11 +125,19 @@ func init() {
 		"Send cleanup summary to webhook",
 	)
 
-	Cmd.RegisterFlagCompletionFunc("output-format", func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+	flags.BoolVar(
+		&args.ec2,
+		"ec2",
+		false,
+		"Terminate ec2 instances",
+	)
+
+	_ = Cmd.RegisterFlagCompletionFunc("output-format", func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		return []string{"json", "prom"}, cobra.ShellCompDirectiveDefault
 	})
 }
 
+//nolint:gocyclo
 func run(cmd *cobra.Command, argv []string) error {
 	var err error
 	if err = common.LoadConfigs(args.configString, args.customConfig, args.secretLocations); err != nil {
@@ -133,9 +153,10 @@ func run(cmd *cobra.Command, argv []string) error {
 	var iamErrorBuilder strings.Builder
 	var s3ErrorBuilder strings.Builder
 	var ipErrorBuilder strings.Builder
+	var ec2ErrorBuilder strings.Builder
 
 	if args.dryRun {
-		summaryBuilder.WriteString("-- Cleanup dry run --\n")
+		summaryBuilder.WriteString("-- Cleanup dry run -- \n")
 	}
 	if os.Getenv("JOB_NAME") != "" {
 		r, _ := regexp.Compile("cleanup-([a-z]+)-aws")
@@ -219,9 +240,24 @@ func run(cmd *cobra.Command, argv []string) error {
 		s3BucketDeletedCounter := 0
 		s3BucketFailedCounter := 0
 		err = aws.CcsAwsSession.CleanupS3Buckets(fmtDuration, args.dryRun, args.sendSummary, &s3BucketDeletedCounter, &s3BucketFailedCounter, &s3ErrorBuilder)
-		summaryBuilder.WriteString("s3 Buckets: " + strconv.Itoa(s3BucketDeletedCounter) + "/" + strconv.Itoa(s3BucketFailedCounter) + "\n")
+		summaryBuilder.WriteString("S3 Buckets: " + strconv.Itoa(s3BucketDeletedCounter) + "/" + strconv.Itoa(s3BucketFailedCounter) + "\n")
 		if err != nil {
 			return fmt.Errorf("could not delete s3 buckets: %s", err.Error())
+		}
+	}
+
+	if args.ec2 {
+		instancesDeleted, instancesFailedToDelete, err := aws.CcsAwsSession.TerminateEC2Instances(fmtDuration, args.dryRun)
+		summaryBuilder.WriteString("EC2 Instances: " + strconv.Itoa(instancesDeleted) + "/" + strconv.Itoa(instancesFailedToDelete) + "\n")
+		if err != nil {
+			if !errors.Is(err, aws.ErrTerminateEC2Instances) {
+				return fmt.Errorf("could not terminate ec2 instances: %s", err.Error())
+			}
+			ec2ErrorMessage := err.Error()
+			if len(ec2ErrorMessage) > config.SlackMessageLength {
+				ec2ErrorMessage = ec2ErrorMessage[:config.SlackMessageLength]
+			}
+			ec2ErrorBuilder.WriteString(ec2ErrorMessage)
 		}
 	}
 
@@ -241,7 +277,7 @@ func run(cmd *cobra.Command, argv []string) error {
 			fmt.Println("Slack Webhook is not set, skipping notification.")
 			return nil
 		}
-		buildFile := "Build file: "
+		buildFile := ""
 		if strings.Contains(viper.GetString(config.JobName), "rehearse") {
 			basePRJobURL := "https://gcsweb-ci.apps.ci.l2s4.p1.openshiftapps.com/gcs/test-platform-results/pr-logs/pull/openshift_release"
 			buildFile += basePRJobURL + "/" + os.Getenv("PULL_NUMBER")
@@ -251,15 +287,23 @@ func run(cmd *cobra.Command, argv []string) error {
 		buildFile += "/" + viper.GetString(config.JobName) +
 			"/" + viper.GetString(config.JobID) + "/artifacts/test/build-log.txt"
 
-		summaryMessage := `{"summary":"` + summaryBuilder.String() + `",`
-		errorMessage := `"full":"` + buildFile + `",`
-		s3ErrorMessage := `"s3":" S3 Errors: \n ` + s3ErrorBuilder.String() + `",`
-		iamErrorMessage := `"iam":" IAM Errors: \n` + iamErrorBuilder.String() + `",`
-		ipErrorMessage := `"ip":" ElasticIP Errors: \n` + ipErrorBuilder.String() + `"}`
+		message := Message{
+			Summary:   summaryBuilder.String(),
+			BuildFile: "Build Logs: " + buildFile,
+			S3Errors:  "S3 Errors: " + s3ErrorBuilder.String(),
+			IAMErrors: "IAM Errors: " + iamErrorBuilder.String(),
+			IPErrors:  "IP Errors: " + ipErrorBuilder.String(),
+			EC2Errors: "EC2 Errors: " + ec2ErrorBuilder.String(),
+		}
 
-		req, err := http.NewRequest("POST", webhook, bytes.NewBuffer([]byte(summaryMessage+errorMessage+s3ErrorMessage+iamErrorMessage+ipErrorMessage)))
+		jsonDataMessage, err := json.Marshal(message)
 		if err != nil {
-			fmt.Printf("Error creating request: %v\n", err)
+			return fmt.Errorf("marshalling summary to JSON: %w", err)
+		}
+
+		req, err := http.NewRequest("POST", webhook, bytes.NewBuffer(jsonDataMessage))
+		if err != nil {
+			return fmt.Errorf("creating request: %w", err)
 		}
 
 		req.Header.Set("Content-Type", "application/json; charset=utf-8")
@@ -267,7 +311,7 @@ func run(cmd *cobra.Command, argv []string) error {
 		client := &http.Client{}
 		resp, err := client.Do(req)
 		if err != nil {
-			fmt.Printf("Error making request: %v\n", err)
+			return fmt.Errorf("making request: %w", err)
 		}
 		defer resp.Body.Close()
 

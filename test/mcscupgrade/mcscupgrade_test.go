@@ -236,7 +236,7 @@ var _ = Describe("HyperShift", Ordered, func() {
 				ClusterName:        hcpCluster.name,
 				HostedCP:           true,
 				WorkingDir:         hcpCluster.reportDir,
-				DeleteHostedCPVPC:  true,
+				DeleteHostedVPC:    true,
 				DeleteOidcConfigID: true,
 			})
 			Expect(err).ShouldNot(HaveOccurred(), "failed to delete hosted control plane cluster")
@@ -248,7 +248,7 @@ var _ = Describe("HyperShift", Ordered, func() {
 		Expect(err).ShouldNot(HaveOccurred(), "failed to retrieve prometheus alerts")
 		Expect(criticalAlerts).ToNot(BeNumerically(">", 0), "critical alerts are firing pre upgrade")
 
-		err = scCluster.client.OSDClusterHealthy(ctx, osdClusterReadyJobName, scCluster.reportDir, osdClusterReadyJobTimeout)
+		err = scCluster.client.OSDClusterHealthy(ctx, scCluster.reportDir, osdClusterReadyJobTimeout)
 		Expect(err).ShouldNot(HaveOccurred(), "osd-cluster-ready health check job failed pre upgrade")
 	})
 
@@ -281,7 +281,7 @@ var _ = Describe("HyperShift", Ordered, func() {
 		Expect(err).ShouldNot(HaveOccurred(), "failed to retrieve prometheus alerts")
 		Expect(criticalAlerts).ToNot(BeNumerically(">", 0), "critical alerts are firing pre upgrade")
 
-		err = mcCluster.client.OSDClusterHealthy(ctx, osdClusterReadyJobName, mcCluster.reportDir, osdClusterReadyJobTimeout)
+		err = mcCluster.client.OSDClusterHealthy(ctx, mcCluster.reportDir, osdClusterReadyJobTimeout)
 		Expect(err).ShouldNot(HaveOccurred(), "osd-cluster-ready health check job failed pre upgrade")
 	})
 
@@ -396,7 +396,7 @@ func osdClusterReadyHealthCheck(ctx context.Context, clusterClient *openshiftcli
 		_ = clusterClient.Delete(ctx, newJob)
 	}()
 
-	return clusterClient.OSDClusterHealthy(ctx, newJob.GetName(), reportDir, osdClusterReadyJobTimeout)
+	return clusterClient.OSDClusterHealthy(ctx, reportDir, osdClusterReadyJobTimeout)
 }
 
 // getEnvVar returns the env variable value and if unset returns default provided

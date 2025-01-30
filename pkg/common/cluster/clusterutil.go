@@ -147,7 +147,7 @@ func WaitForClusterReadyPostWake(clusterID string, logger *log.Logger) error {
 	if err != nil {
 		return fmt.Errorf("error getting cluster from provider: %s", err.Error())
 	}
-	provider.AddProperty(cluster, clusterproperties.Status, clusterproperties.StatusHealthCheck)
+	_ = provider.AddProperty(cluster, clusterproperties.Status, clusterproperties.StatusHealthCheck)
 	time.Sleep(10 * time.Minute)
 
 	restConfig, _, err := ClusterConfig(clusterID)
@@ -174,7 +174,10 @@ func WaitForClusterReadyPostWake(clusterID string, logger *log.Logger) error {
 				if len(pod.Finalizers) > 0 {
 					log.Printf("Removing finalizers from %s", pod.Name)
 					pod.Finalizers = []string{}
-					kubeClient.CoreV1().Pods(pod.Namespace).Update(context.TODO(), &pod, v1.UpdateOptions{})
+					_, err = kubeClient.CoreV1().Pods(pod.Namespace).Update(context.TODO(), &pod, v1.UpdateOptions{})
+					if err != nil {
+						return err
+					}
 				}
 				log.Printf("Deleting pod %s", pod.Name)
 				err = kubeClient.CoreV1().Pods(pod.Namespace).Delete(context.TODO(), pod.Name, v1.DeleteOptions{})
@@ -566,8 +569,6 @@ func clusterName() string {
 	name := viper.GetString(config.Cluster.Name)
 
 	if name == "random" {
-		seed := time.Now().UTC().UnixNano()
-		rand.Seed(seed)
 		newName := ""
 		prefixes := []string{"prod", "stg", "int", "p", "i", "s", "pre"}
 		names := []string{"app", "db", "cache", "ocp", "openshift", "store", "control", "swap", "testing", "application", "user", "customer", "cust", "osd", "dedicated"}
@@ -576,7 +577,7 @@ func clusterName() string {
 		doPrefix := rand.Intn(3)
 		doSuffix := rand.Intn(3)
 
-		newName = fmt.Sprintf("%s", names[rand.Intn(len(names))])
+		newName = names[rand.Intn(len(names))]
 
 		if doPrefix > 0 && len(newName) <= 10 {
 			newName = fmt.Sprintf("%s-%s", prefixes[rand.Intn(len(prefixes))], newName)

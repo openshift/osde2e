@@ -13,4 +13,6 @@ tests:
     - quay.io/app-sre/rbac-permissions-operator-test-harness
     - quay.io/app-sre/splunk-forwarder-operator-test-harness
     - quay.io/app-sre/route-monitor-operator-test-harness
+    - quay.io/app-sre/cloud-ingress-operator-test-harness
+    - quay.io/app-sre/managed-cluster-validating-webhooks-test-harness
   harnessTimeout: 900

@@ -4,7 +4,6 @@ import (
 	"log"
 	"math/rand"
 	"os"
-	"time"
 
 	"github.com/openshift/osde2e/cmd/osde2e/common"
 	"github.com/openshift/osde2e/cmd/osde2e/helpers"
@@ -19,13 +18,10 @@ import (
 	_ "github.com/openshift/osde2e/pkg/e2e/openshift"
 	_ "github.com/openshift/osde2e/pkg/e2e/openshift/hypershift"
 	_ "github.com/openshift/osde2e/pkg/e2e/operators"
-	_ "github.com/openshift/osde2e/pkg/e2e/operators/cloudingress"
-	_ "github.com/openshift/osde2e/pkg/e2e/operators/configurealertmanager"
 	_ "github.com/openshift/osde2e/pkg/e2e/osd"
 	_ "github.com/openshift/osde2e/pkg/e2e/proxy"
 	_ "github.com/openshift/osde2e/pkg/e2e/state"
 	_ "github.com/openshift/osde2e/pkg/e2e/verify"
-	_ "github.com/openshift/osde2e/pkg/e2e/webhooks"
 	_ "github.com/openshift/osde2e/pkg/e2e/workloads"
 )
 
@@ -63,7 +59,7 @@ func init() {
 		"",
 		"A comma separated list of built in configs to use",
 	)
-	Cmd.RegisterFlagCompletionFunc("configs", helpers.ConfigComplete)
+	_ = Cmd.RegisterFlagCompletionFunc("configs", helpers.ConfigComplete)
 	pfs.StringVar(
 		&args.customConfig,
 		"custom-config",
@@ -153,18 +149,18 @@ func init() {
 		"Only run any Ginkgo tests matching the ginkgo label filter",
 	)
 
-	viper.BindPFlag(config.Cluster.ID, Cmd.PersistentFlags().Lookup("cluster-id"))
-	viper.BindPFlag(ocmprovider.Env, Cmd.PersistentFlags().Lookup("environment"))
-	viper.BindPFlag(config.Kubeconfig.Path, Cmd.PersistentFlags().Lookup("kube-config"))
-	viper.BindPFlag(config.Cluster.SkipDestroyCluster, Cmd.PersistentFlags().Lookup("skip-destroy-cluster"))
-	viper.BindPFlag(config.Cluster.ProvisionOnly, Cmd.PersistentFlags().Lookup("provision-only"))
-	viper.BindPFlag(config.Tests.SkipClusterHealthChecks, Cmd.PersistentFlags().Lookup("skip-health-check"))
-	viper.BindPFlag(config.Tests.GinkgoFocus, Cmd.PersistentFlags().Lookup("focus-tests"))
-	viper.BindPFlag(config.Tests.OCPTestSuite, Cmd.PersistentFlags().Lookup("ocp-test-suite"))
-	viper.BindPFlag(config.Tests.OCPTestSkipRegex, Cmd.PersistentFlags().Lookup("ocp-test-skip-regex"))
-	viper.BindPFlag(config.Tests.GinkgoSkip, Cmd.PersistentFlags().Lookup("skip-tests"))
-	viper.BindPFlag(config.SkipMustGather, Cmd.PersistentFlags().Lookup("skip-must-gather"))
-	viper.BindPFlag(config.Tests.GinkgoLabelFilter, Cmd.PersistentFlags().Lookup("label-filter"))
+	_ = viper.BindPFlag(config.Cluster.ID, Cmd.PersistentFlags().Lookup("cluster-id"))
+	_ = viper.BindPFlag(ocmprovider.Env, Cmd.PersistentFlags().Lookup("environment"))
+	_ = viper.BindPFlag(config.Kubeconfig.Path, Cmd.PersistentFlags().Lookup("kube-config"))
+	_ = viper.BindPFlag(config.Cluster.SkipDestroyCluster, Cmd.PersistentFlags().Lookup("skip-destroy-cluster"))
+	_ = viper.BindPFlag(config.Cluster.ProvisionOnly, Cmd.PersistentFlags().Lookup("provision-only"))
+	_ = viper.BindPFlag(config.Tests.SkipClusterHealthChecks, Cmd.PersistentFlags().Lookup("skip-health-check"))
+	_ = viper.BindPFlag(config.Tests.GinkgoFocus, Cmd.PersistentFlags().Lookup("focus-tests"))
+	_ = viper.BindPFlag(config.Tests.OCPTestSuite, Cmd.PersistentFlags().Lookup("ocp-test-suite"))
+	_ = viper.BindPFlag(config.Tests.OCPTestSkipRegex, Cmd.PersistentFlags().Lookup("ocp-test-skip-regex"))
+	_ = viper.BindPFlag(config.Tests.GinkgoSkip, Cmd.PersistentFlags().Lookup("skip-tests"))
+	_ = viper.BindPFlag(config.SkipMustGather, Cmd.PersistentFlags().Lookup("skip-must-gather"))
+	_ = viper.BindPFlag(config.Tests.GinkgoLabelFilter, Cmd.PersistentFlags().Lookup("label-filter"))
 }
 
 func run(cmd *cobra.Command, argv []string) {
@@ -176,7 +172,6 @@ func run(cmd *cobra.Command, argv []string) {
 	canaryChance := viper.GetInt(config.CanaryChance)
 	if canaryChance > 0 {
 		log.Printf("Canary job detected with %d chance", canaryChance)
-		rand.Seed(time.Now().UTC().UnixNano())
 		outcome := rand.Intn(canaryChance)
 		if outcome != 0 {
 			log.Printf("Canary job lost with a value of %d", outcome)

@@ -29,13 +29,13 @@ func (h *H) AsUser(username string, groups ...string) *resources.Resources {
 	gomega.ExpectWithOffset(1, err).ShouldNot(gomega.HaveOccurred(), "failed to create resources client object")
 
 	// register schemas here
-	configv1.AddToScheme(client.GetScheme())
-	quotav1.AddToScheme(client.GetScheme())
-	securityv1.AddToScheme(client.GetScheme())
-	monitoringv1.AddToScheme(client.GetScheme())
-	route.AddToScheme(client.GetScheme())
-	operatorhubv1.AddToScheme(client.GetScheme())
-	imagev1.AddToScheme(client.GetScheme())
+	_ = configv1.AddToScheme(client.GetScheme())
+	_ = quotav1.AddToScheme(client.GetScheme())
+	_ = securityv1.AddToScheme(client.GetScheme())
+	_ = monitoringv1.AddToScheme(client.GetScheme())
+	_ = route.AddToScheme(client.GetScheme())
+	_ = operatorhubv1.AddToScheme(client.GetScheme())
+	_ = imagev1.AddToScheme(client.GetScheme())
 
 	return client
 }

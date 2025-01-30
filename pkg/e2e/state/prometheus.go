@@ -39,13 +39,13 @@ var _ = ginkgo.Describe(clusterStateInformingName, label.E2E, func() {
 		cmd := "oc cp -c prometheus openshift-monitoring/prometheus-k8s-0:/prometheus /tmp/prometheus && tar -cvzf " + runner.DefaultRunner.OutputDir + "/prometheus.tar.gz -C /tmp/prometheus .; err=$? ; if (( $err != 0 )) ; then exit $err ; fi"
 
 		// ensure prometheus pods are up before trying to extract data
-		poderr := wait.PollImmediate(2*time.Second, prometheusPodStartedDuration, func() (bool, error) {
+		poderr := wait.PollUntilContextTimeout(ctx, 2*time.Second, prometheusPodStartedDuration, true, func(ctx context.Context) (bool, error) {
 			podCount := 0
 			list, listerr := filterPods(ctx, "openshift-monitoring", "app.kubernetes.io/name=prometheus", h)
 			if listerr != nil {
 				return false, listerr
 			}
-			names, podNum := getPodNames(list, h)
+			names, podNum := getPodNames(list)
 			if podNum > 0 {
 				for _, value := range names {
 					if strings.HasPrefix(value, "prometheus-k8s-") {
@@ -93,9 +93,8 @@ func filterPods(ctx context.Context, namespace string, label string, h *helper.H
 }
 
 // Extracts pod names from a filtered list and counts how many are in running state
-func getPodNames(list *corev1.PodList, h *helper.H) ([]string, int) {
+func getPodNames(list *corev1.PodList) ([]string, int) {
 	var notReady []corev1.Pod
-	var ready []corev1.Pod
 	var podNames []string
 	var total int
 	var numReady int
@@ -115,7 +114,6 @@ podLoop:
 					continue podLoop
 				}
 			}
-			ready = append(ready, pod)
 		}
 	}
 	total = len(list.Items)

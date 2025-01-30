@@ -28,7 +28,7 @@ var ignoreAlerts = map[string]map[string][]string{
 var clusterStateTestName string = "[Suite: e2e] Cluster state"
 
 func init() {
-	alert.RegisterGinkgoAlert(clusterStateTestName, "SD-CICD", "Diego Santamaria", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+	alert.RegisterGinkgoAlert(clusterStateTestName, "SD-CICD", "Diego Santamaria", "hcm-cicd-alerts", "sd-cicd@redhat.com", 4)
 }
 
 var _ = ginkgo.Describe(clusterStateTestName, ginkgo.Ordered, label.E2E, func() {
@@ -46,7 +46,7 @@ var _ = ginkgo.Describe(clusterStateTestName, ginkgo.Ordered, label.E2E, func() 
 		var queryresult []byte
 
 		// Query for alerts with a retry count of 40 and timeout of 20 minutes
-		err := wait.PollImmediate(30*time.Second, 20*time.Minute, func() (bool, error) {
+		err := wait.PollUntilContextTimeout(ctx, 30*time.Second, 20*time.Minute, true, func(ctx context.Context) (bool, error) {
 			query := "ALERTS{alertstate!=\"pending\",alertname!=\"Watchdog\"}"
 			context, cancel := context.WithTimeout(ctx, 1*time.Minute)
 			defer cancel()

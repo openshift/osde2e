@@ -30,7 +30,7 @@ const (
 
 // utils
 func init() {
-	alert.RegisterGinkgoAlert(inhibitionsTestName, "SD-SRE", "Alex Chvatal", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+	alert.RegisterGinkgoAlert(inhibitionsTestName, "SD-SRE", "Alex Chvatal", "hcm-cicd-alerts", "sd-cicd@redhat.com", 4)
 }
 
 var inhibitionsTestName string = "[Suite: operators] AlertmanagerInhibitions"
@@ -48,7 +48,7 @@ var _ = ginkgo.Describe(inhibitionsTestName, label.Operators, func() {
 		Expect(string(alertmanagerConfigData)).To(ContainSubstring("inhibit_rules"))
 
 		config := alertmanagerConfig.Config{}
-		yaml.Unmarshal(alertmanagerConfigData, &config)
+		Expect(yaml.Unmarshal(alertmanagerConfigData, &config)).Should(Succeed())
 
 		// look for all the inhibition rules we expect
 		tests := []struct {

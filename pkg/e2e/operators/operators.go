@@ -47,28 +47,6 @@ func checkDeployment(h *helper.H, namespace string, name string, defaultDesiredR
 	})
 }
 
-func checkPod(h *helper.H, namespace string, name string, gracePeriod int, maxAcceptedRestart int) {
-	// Checks that deployed pods have less than maxAcceptedRestart restarts
-
-	ginkgo.Context("pods", func() {
-		ginkgo.It(fmt.Sprintf("should have %v or less restart(s)", maxAcceptedRestart), func(ctx context.Context) {
-			// wait for graceperiod
-			time.Sleep(time.Duration(gracePeriod) * time.Second)
-			// retrieve pods
-			pods, err := h.Kube().CoreV1().Pods(namespace).List(ctx, metav1.ListOptions{LabelSelector: "name=" + name})
-			Expect(err).ToNot(HaveOccurred(), "failed fetching pods")
-
-			var restartSum int32 = 0
-			for _, pod := range pods.Items {
-				for _, status := range pod.Status.ContainerStatuses {
-					restartSum += status.RestartCount
-				}
-			}
-			Expect(restartSum).To(BeNumerically("<=", maxAcceptedRestart))
-		})
-	})
-}
-
 func checkClusterRoles(h *helper.H, clusterRoles []string, matchPrefix bool) {
 	// Check that the clusterRoles exist
 	ginkgo.Context("clusterRoles", func() {
@@ -133,19 +111,6 @@ func checkRoleBindings(h *helper.H, namespace string, roleBindings []string) {
 				err := pollRoleBinding(ctx, h, namespace, roleBindingName)
 				Expect(err).NotTo(HaveOccurred(), "failed to get roleBinding %v\n", roleBindingName)
 			}
-		})
-	})
-}
-
-func PerformUpgrade(ctx context.Context, h *helper.H, subNamespace string, subName string) error {
-	return h.GetClient().UpgradeOperator(ctx, subName, subNamespace)
-}
-
-func checkUpgrade(h *helper.H, subNamespace string, subName string, packageName string, regServiceName string) {
-	ginkgo.Context("Operator Upgrade", func() {
-		ginkgo.It("should upgrade from the replaced version", func(ctx context.Context) {
-			err := PerformUpgrade(ctx, h, subNamespace, subName)
-			Expect(err).NotTo(HaveOccurred(), "unable to upgrade operator %s", subName)
 		})
 	})
 }
@@ -275,16 +240,4 @@ Loop:
 	}
 
 	return deployment, err
-}
-
-func CheckUpgrade(h *helper.H, subNamespace string, subName string, packageName string, regServiceName string) {
-	checkUpgrade(h, subNamespace, subName, packageName, regServiceName)
-}
-
-func CheckPod(h *helper.H, namespace string, name string, gracePeriod int, maxAcceptedRestart int) {
-	checkPod(h, namespace, name, gracePeriod, maxAcceptedRestart)
-}
-
-func PollDeployment(ctx context.Context, h *helper.H, namespace, deploymentName string) (*appsv1.Deployment, error) {
-	return pollDeployment(ctx, h, namespace, deploymentName)
 }

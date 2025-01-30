@@ -40,7 +40,7 @@ func init() {
 		"",
 		"A comma separated list of built in configs to use",
 	)
-	Cmd.RegisterFlagCompletionFunc("configs", helpers.ConfigComplete)
+	_ = Cmd.RegisterFlagCompletionFunc("configs", helpers.ConfigComplete)
 	pfs.StringVar(
 		&args.customConfig,
 		"custom-config",
@@ -76,9 +76,9 @@ func init() {
 		"Path to local Kube config for running tests against.",
 	)
 
-	viper.BindPFlag(config.Cluster.ID, Cmd.PersistentFlags().Lookup("cluster-id"))
-	viper.BindPFlag(ocmprovider.Env, Cmd.PersistentFlags().Lookup("environment"))
-	viper.BindPFlag(config.Kubeconfig.Path, Cmd.PersistentFlags().Lookup("kube-config"))
+	_ = viper.BindPFlag(config.Cluster.ID, Cmd.PersistentFlags().Lookup("cluster-id"))
+	_ = viper.BindPFlag(ocmprovider.Env, Cmd.PersistentFlags().Lookup("environment"))
+	_ = viper.BindPFlag(config.Kubeconfig.Path, Cmd.PersistentFlags().Lookup("kube-config"))
 }
 
 func run(cmd *cobra.Command, argv []string) error {

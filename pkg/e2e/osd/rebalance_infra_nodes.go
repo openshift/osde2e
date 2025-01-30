@@ -16,7 +16,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
-	"k8s.io/utils/pointer"
+	"k8s.io/utils/ptr"
 )
 
 const (
@@ -30,7 +30,7 @@ const (
 )
 
 func init() {
-	alert.RegisterGinkgoAlert(rebalanceInfraNodesTestName, "SD-SREP", "Jing Zhang", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+	alert.RegisterGinkgoAlert(rebalanceInfraNodesTestName, "SD-SREP", "Jing Zhang", "hcm-cicd-alerts", "sd-cicd@redhat.com", 4)
 }
 
 var _ = ginkgo.Describe(rebalanceInfraNodesTestName, label.Informing, func() {
@@ -92,7 +92,7 @@ var _ = ginkgo.Describe(rebalanceInfraNodesTestName, label.Informing, func() {
 											LocalObjectReference: v1.LocalObjectReference{
 												Name: rebalanceInfraNodesCronJob,
 											},
-											DefaultMode: pointer.Int32Ptr(0o755),
+											DefaultMode: ptr.To[int32](0o755),
 										},
 									},
 								},
@@ -125,7 +125,7 @@ var _ = ginkgo.Describe(rebalanceInfraNodesTestName, label.Informing, func() {
 			Expect(podName).NotTo(BeNil())
 
 			var pod *v1.Pod
-			wait.PollImmediate(pollInterval, podSucceededTimeout, func() (bool, error) {
+			err = wait.PollUntilContextTimeout(ctx, pollInterval, podSucceededTimeout, true, func(ctx context.Context) (bool, error) {
 				pod, err = h.Kube().
 					CoreV1().
 					Pods(rebalanceInfraNodesNamespace).

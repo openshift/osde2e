@@ -198,7 +198,7 @@ func overrideUpgradeConfig(uc upgradev1alpha1.UpgradeConfig, h *helper.H) error 
 	if err != nil {
 		return fmt.Errorf("can't convert UpgradeConfig to unstructured resource: %v", err)
 	}
-	uobj := unstructured.Unstructured{obj}
+	uobj := unstructured.Unstructured{Object: obj}
 	_, err = h.Dynamic().Resource(schema.GroupVersionResource{
 		Group:    "upgrade.managed.openshift.io",
 		Version:  "v1alpha1",
@@ -229,7 +229,7 @@ func createManagedUpgradeWorkload(workLoadName string, workLoadDir string, podPr
 	time.Sleep(workloadCreationWaitTime * time.Second)
 
 	// Wait for all pods to come up healthy
-	err = wait.PollImmediate(5*time.Second, 2*time.Minute, func() (bool, error) {
+	err = wait.PollUntilContextTimeout(context.TODO(), 5*time.Second, 2*time.Minute, true, func(ctx context.Context) (bool, error) {
 		if check, err := healthchecks.CheckPodHealth(h.Kube().CoreV1(), nil, h.CurrentProject(), podPrefixes...); !check || err != nil {
 			return false, nil
 		}
@@ -384,27 +384,27 @@ func updateUpgradeWithProvider() error {
 func restartOperator(h *helper.H, ns string) error {
 	log.Printf("restarting managed-upgrade-operator to force upgrade resync..")
 
-	err := wait.PollImmediate(5*time.Second, 2*time.Minute, func() (bool, error) {
+	err := wait.PollUntilContextTimeout(context.TODO(), 5*time.Second, 2*time.Minute, true, func(ctx context.Context) (bool, error) {
 		// scale down
-		s, err := h.Kube().AppsV1().Deployments(ns).GetScale(context.TODO(), "managed-upgrade-operator", metav1.GetOptions{})
+		s, err := h.Kube().AppsV1().Deployments(ns).GetScale(ctx, "managed-upgrade-operator", metav1.GetOptions{})
 		if err != nil {
 			return false, nil
 		}
 		sc := *s
 		sc.Spec.Replicas = 0
-		_, err = h.Kube().AppsV1().Deployments(ns).UpdateScale(context.TODO(), "managed-upgrade-operator", &sc, metav1.UpdateOptions{})
+		_, err = h.Kube().AppsV1().Deployments(ns).UpdateScale(ctx, "managed-upgrade-operator", &sc, metav1.UpdateOptions{})
 		if err != nil {
 			return false, nil
 		}
 
 		// scale up
-		s, err = h.Kube().AppsV1().Deployments(ns).GetScale(context.TODO(), "managed-upgrade-operator", metav1.GetOptions{})
+		s, err = h.Kube().AppsV1().Deployments(ns).GetScale(ctx, "managed-upgrade-operator", metav1.GetOptions{})
 		if err != nil {
 			return false, nil
 		}
 		sc = *s
 		sc.Spec.Replicas = 1
-		_, err = h.Kube().AppsV1().Deployments(ns).UpdateScale(context.TODO(), "managed-upgrade-operator", &sc, metav1.UpdateOptions{})
+		_, err = h.Kube().AppsV1().Deployments(ns).UpdateScale(ctx, "managed-upgrade-operator", &sc, metav1.UpdateOptions{})
 		if err != nil {
 			return false, nil
 		}
@@ -640,7 +640,7 @@ func scheduleLocalUpgrade(h *helper.H) error {
 	if err != nil {
 		return fmt.Errorf("can't convert UpgradeConfig to unstructured resource: %v", err)
 	}
-	uobj := unstructured.Unstructured{obj}
+	uobj := unstructured.Unstructured{Object: obj}
 	_, err = h.Dynamic().Resource(schema.GroupVersionResource{
 		Group:    "upgrade.managed.openshift.io",
 		Version:  "v1alpha1",

@@ -29,12 +29,12 @@ const (
 func init() {
 	// Set our max query timeout to 2 minutes for now.
 	viper.SetDefault(maxQueryTimeoutInSeconds, 120)
-	viper.BindEnv(maxQueryTimeoutInSeconds, "OSDE2E_METRICSLIB_MAX_QUERY_TIMEOUT_IN_SECONDS")
+	_ = viper.BindEnv(maxQueryTimeoutInSeconds, "OSDE2E_METRICSLIB_MAX_QUERY_TIMEOUT_IN_SECONDS")
 
 	// Hard code our step duration to 4 for now. Our jobs are pretty coarse -- running every 4+ hours.
 	// We'll bake this into our client to prevent our users from getting oversampled data.
 	viper.SetDefault(stepDurationInHours, 4)
-	viper.BindEnv(stepDurationInHours, "OSDE2E_METRICSLIB_STEP_DURATION_IN_HOURS")
+	_ = viper.BindEnv(stepDurationInHours, "OSDE2E_METRICSLIB_STEP_DURATION_IN_HOURS")
 }
 
 // Client is a metrics client that can be used to query osde2e's metrics.

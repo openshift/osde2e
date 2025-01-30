@@ -407,36 +407,21 @@ func (o *OCMProvider) DetermineRegion(cloudProvider string) (string, error) {
 	if region == "random" {
 		var regions []*v1.CloudRegion
 		// We support multiple cloud providers....
-		if cloudProvider == "aws" {
-			awsCreds, err := aws.CcsAwsSession.GetCredentials()
-			if err != nil {
-				log.Println("Random region requested but cloud credentials not supplied. Defaulting to us-east-1")
-				return "us-east-1", nil
+		response, err := o.conn.ClustersMgmt().V1().CloudProviders().CloudProvider(cloudProvider).Regions().List().Send()
+		if err != nil {
+			log.Printf("Error selecting region: %s", err.Error())
+			if cloudProvider == "aws" {
+				region = "us-east-1"
 			}
-			awsCredentials, err := v1.NewAWS().
-				AccessKeyID(awsCreds.AccessKeyID).
-				SecretAccessKey(awsCreds.SecretAccessKey).
-				Build()
-			if err != nil {
-				return "", err
+			if cloudProvider == "gcp" {
+				region = "us-east1"
 			}
-
-			response, err := o.conn.ClustersMgmt().V1().CloudProviders().CloudProvider(cloudProvider).AvailableRegions().Search().Body(awsCredentials).Send()
-			if err != nil {
-				log.Printf("Error selecting region: %s", err.Error())
-				log.Println("Defaulting to us-east-1")
-				region := "us-east-1"
-				viper.Set(config.CloudProvider.Region, region)
-				return region, nil
-			}
-			regions = response.Items().Slice()
+			viper.Set(config.CloudProvider.Region, region)
+			log.Printf("Selecting default region: %s", region)
+			return region, nil
 		}
 
-		// But we don't support passing GCP credentials yet :)
-		if cloudProvider == "gcp" {
-			log.Println("Random GCP region not supported yet. Setting region to us-east1")
-			return "us-east1", nil
-		}
+		regions = response.Items().Slice()
 
 		cloudRegion, found := ChooseRandomRegion(toCloudRegions(regions)...)
 		if !found {
@@ -932,7 +917,7 @@ func (o *OCMProvider) InstallAddons(clusterID string, addonIDs []spi.AddOnID, ad
 				if err != nil {
 					return err
 				}
-				if err = o.updateClusterCache(clusterID, ocmCluster); err != nil {
+				if err = o.updateClusterCache(ocmCluster); err != nil {
 					return fmt.Errorf("error updating cluster cache: %v", err)
 				}
 
@@ -1130,9 +1115,7 @@ func (o *OCMProvider) ExtendExpiry(clusterID string, hours uint64, minutes uint6
 			return errResp(resp.Error())
 		}
 
-		o.updateClusterCache(clusterID, resp.Body())
-
-		return nil
+		return o.updateClusterCache(resp.Body())
 	})
 	if err != nil {
 		return err
@@ -1177,10 +1160,7 @@ func (o *OCMProvider) Expire(clusterID string, duration time.Duration) error {
 			log.Printf("error while trying to update cluster: %v", err)
 			return errResp(resp.Error())
 		}
-
-		o.updateClusterCache(clusterID, resp.Body())
-
-		return nil
+		return o.updateClusterCache(resp.Body())
 	})
 	if err != nil {
 		return err
@@ -1240,12 +1220,10 @@ func (o *OCMProvider) AddProperty(cluster *spi.Cluster, tag string, value string
 		return resp.Error()
 	}
 
-	// We need to update the cache post-update
-	o.updateClusterCache(cluster.ID(), resp.Body())
-
 	log.Printf("Successfully added property[%s] - %s \n", tag, resp.Body().Properties()[tag])
 
-	return nil
+	// We need to update the cache post-update
+	return o.updateClusterCache(resp.Body())
 }
 
 // Get a specific cluster property
@@ -1367,7 +1345,7 @@ func (o *OCMProvider) Hibernate(id string) bool {
 }
 
 // This assumes cluster is a resp.Body() response from an OCM update
-func (o *OCMProvider) updateClusterCache(id string, cluster *v1.Cluster) error {
+func (o *OCMProvider) updateClusterCache(cluster *v1.Cluster) error {
 	c, err := o.ocmToSPICluster(cluster)
 	if err != nil {
 		return err

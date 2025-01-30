@@ -102,7 +102,11 @@ const (
 
 	KonfluxTestOutputFile = "konfluxResultsPath"
 
-	SlackMessageLength int = 4000
+	// TotalSlackMessageLength is about 10000 characters
+	// Summary: 1500 Characters
+	// Build file comment: 500 Characters
+	// Other comments(s3, ec2, elasticIP, iam): 2000 * 4 = 8000
+	SlackMessageLength int = 2000
 )
 
 // This is a config key to secret file mapping. We will attempt to read in from secret files before loading anything else.
@@ -636,308 +640,310 @@ func InitOSDe2eViper() {
 
 	// ----- Top Level Configs -----
 	viper.SetDefault(Provider, "ocm")
-	viper.BindEnv(Provider, "PROVIDER")
+	_ = viper.BindEnv(Provider, "PROVIDER")
 
-	viper.BindEnv(JobName, "JOB_NAME")
-	viper.BindEnv(JobType, "JOB_TYPE")
+	_ = viper.BindEnv(JobName, "JOB_NAME")
+	_ = viper.BindEnv(JobType, "JOB_TYPE")
 
 	viper.SetDefault(JobID, -1)
-	viper.BindEnv(JobID, "BUILD_ID")
+	_ = viper.BindEnv(JobID, "BUILD_ID")
 
 	viper.SetDefault(BaseJobURL, "https://gcsweb-ci.apps.ci.l2s4.p1.openshiftapps.com/gcs/test-platform-results/logs")
-	viper.BindEnv(BaseJobURL, "BASE_JOB_URL")
+	_ = viper.BindEnv(BaseJobURL, "BASE_JOB_URL")
 
 	viper.SetDefault(BaseProwURL, "https://deck-ci.apps.ci.l2s4.p1.openshiftapps.com")
-	viper.BindEnv(BaseProwURL, "BASE_PROW_URL")
+	_ = viper.BindEnv(BaseProwURL, "BASE_PROW_URL")
 
 	// ARTIFACTS and REPORT_DIR are basically the same, but ARTIFACTS is used on prow.
-	viper.BindEnv(Artifacts, "ARTIFACTS")
+	_ = viper.BindEnv(Artifacts, "ARTIFACTS")
 
-	viper.BindEnv(ReportDir, "REPORT_DIR")
+	_ = viper.BindEnv(ReportDir, "REPORT_DIR")
 
-	viper.BindEnv(SharedDir, "SHARED_DIR")
+	_ = viper.BindEnv(SharedDir, "SHARED_DIR")
 
-	viper.BindEnv(KonfluxTestOutputFile, "KONFLUX_TEST_OUTPUT_FILE")
+	_ = viper.BindEnv(KonfluxTestOutputFile, "KONFLUX_TEST_OUTPUT_FILE")
 
-	viper.BindEnv(Suffix, "SUFFIX")
+	_ = viper.BindEnv(Suffix, "SUFFIX")
 
 	viper.SetDefault(DryRun, false)
-	viper.BindEnv(DryRun, "DRY_RUN")
+	_ = viper.BindEnv(DryRun, "DRY_RUN")
 
 	viper.SetDefault(SkipMustGather, false)
-	viper.BindEnv(SkipMustGather, "SKIP_MUST_GATHER")
+	_ = viper.BindEnv(SkipMustGather, "SKIP_MUST_GATHER")
 
-	viper.BindEnv(CanaryChance, "CANARY_CHANCE")
+	_ = viper.BindEnv(CanaryChance, "CANARY_CHANCE")
 
 	// ----- Upgrade -----
-	viper.BindEnv(Upgrade.UpgradeToLatest, "UPGRADE_TO_LATEST")
+	_ = viper.BindEnv(Upgrade.UpgradeToLatest, "UPGRADE_TO_LATEST")
 	viper.SetDefault(Upgrade.UpgradeToLatest, false)
 
-	viper.BindEnv(Upgrade.UpgradeToLatestZ, "UPGRADE_TO_LATEST_Z")
+	_ = viper.BindEnv(Upgrade.UpgradeToLatestZ, "UPGRADE_TO_LATEST_Z")
 	viper.SetDefault(Upgrade.UpgradeToLatestZ, false)
 
-	viper.BindEnv(Upgrade.UpgradeToLatestY, "UPGRADE_TO_LATEST_Y")
+	_ = viper.BindEnv(Upgrade.UpgradeToLatestY, "UPGRADE_TO_LATEST_Y")
 	viper.SetDefault(Upgrade.UpgradeToLatestY, false)
 
-	viper.BindEnv(Upgrade.ReleaseName, "UPGRADE_RELEASE_NAME")
+	_ = viper.BindEnv(Upgrade.ReleaseName, "UPGRADE_RELEASE_NAME")
 
-	viper.BindEnv(Upgrade.Image, "UPGRADE_IMAGE")
+	_ = viper.BindEnv(Upgrade.Image, "UPGRADE_IMAGE")
 
 	viper.SetDefault(Upgrade.Type, "OSD")
-	viper.BindEnv(Upgrade.Type, "UPGRADE_TYPE")
+	_ = viper.BindEnv(Upgrade.Type, "UPGRADE_TYPE")
 
 	viper.SetDefault(Upgrade.UpgradeVersionEqualToInstallVersion, false)
 
-	viper.BindEnv(Upgrade.MonitorRoutesDuringUpgrade, "UPGRADE_MONITOR_ROUTES")
+	_ = viper.BindEnv(Upgrade.MonitorRoutesDuringUpgrade, "UPGRADE_MONITOR_ROUTES")
 	viper.SetDefault(Upgrade.MonitorRoutesDuringUpgrade, true)
 
-	viper.BindEnv(Upgrade.ManagedUpgradeTestPodDisruptionBudgets, "UPGRADE_MANAGED_TEST_PDBS")
+	_ = viper.BindEnv(Upgrade.ManagedUpgradeTestPodDisruptionBudgets, "UPGRADE_MANAGED_TEST_PDBS")
 	viper.SetDefault(Upgrade.ManagedUpgradeTestPodDisruptionBudgets, true)
 
-	viper.BindEnv(Upgrade.ManagedUpgradeTestNodeDrain, "UPGRADE_MANAGED_TEST_DRAIN")
+	_ = viper.BindEnv(Upgrade.ManagedUpgradeTestNodeDrain, "UPGRADE_MANAGED_TEST_DRAIN")
 	viper.SetDefault(Upgrade.ManagedUpgradeTestNodeDrain, true)
 
-	viper.BindEnv(Upgrade.ManagedUpgradeRescheduled, "UPGRADE_MANAGED_TEST_RESCHEDULE")
+	_ = viper.BindEnv(Upgrade.ManagedUpgradeRescheduled, "UPGRADE_MANAGED_TEST_RESCHEDULE")
 	viper.SetDefault(Upgrade.ManagedUpgradeRescheduled, false)
 
-	viper.BindEnv(Upgrade.RunPreUpgradeTests, "UPGRADE_RUN_PRE_TESTS")
+	_ = viper.BindEnv(Upgrade.RunPreUpgradeTests, "UPGRADE_RUN_PRE_TESTS")
 	viper.SetDefault(Upgrade.RunPreUpgradeTests, false)
 
-	viper.BindEnv(Upgrade.RunPostUpgradeTests, "UPGRADE_RUN_POST_TESTS")
+	_ = viper.BindEnv(Upgrade.RunPostUpgradeTests, "UPGRADE_RUN_POST_TESTS")
 	viper.SetDefault(Upgrade.RunPostUpgradeTests, true)
 
 	// ----- Kubeconfig -----
-	viper.BindEnv(Kubeconfig.Path, "TEST_KUBECONFIG")
+	_ = viper.BindEnv(Kubeconfig.Path, "TEST_KUBECONFIG")
 
 	// ----- Tests -----
-	viper.BindEnv(Tests.TestHarnesses, "TEST_HARNESSES")
+	_ = viper.BindEnv(Tests.TestHarnesses, "TEST_HARNESSES")
 
 	viper.SetDefault(Tests.SuiteTimeout, 6)
-	viper.BindEnv(Tests.SuiteTimeout, "SUITE_TIMEOUT")
+	_ = viper.BindEnv(Tests.SuiteTimeout, "SUITE_TIMEOUT")
 
-	viper.BindEnv(Tests.HarnessTimeout, "HARNESS_TIMEOUT")
+	_ = viper.BindEnv(Tests.HarnessTimeout, "HARNESS_TIMEOUT")
 
 	viper.SetDefault(Tests.PollingTimeout, 300)
-	viper.BindEnv(Tests.PollingTimeout, "POLLING_TIMEOUT")
+	_ = viper.BindEnv(Tests.PollingTimeout, "POLLING_TIMEOUT")
 
 	viper.SetDefault(Tests.TestUser, "system:serviceaccount:%s:cluster-admin")
-	viper.BindEnv(Tests.TestUser, "TEST_USER")
+	_ = viper.BindEnv(Tests.TestUser, "TEST_USER")
 
-	viper.BindEnv(Tests.GinkgoSkip, "GINKGO_SKIP")
+	_ = viper.BindEnv(Tests.GinkgoSkip, "GINKGO_SKIP")
 
-	viper.BindEnv(Tests.GinkgoFocus, "GINKGO_FOCUS")
+	_ = viper.BindEnv(Tests.GinkgoFocus, "GINKGO_FOCUS")
 
-	viper.BindEnv(Tests.GinkgoLogLevel, "GINKGO_LOG_LEVEL")
+	_ = viper.BindEnv(Tests.GinkgoLogLevel, "GINKGO_LOG_LEVEL")
 
-	viper.BindEnv(Tests.GinkgoLabelFilter, "GINKGO_LABEL_FILTER")
+	_ = viper.BindEnv(Tests.GinkgoLabelFilter, "GINKGO_LABEL_FILTER")
 
-	viper.BindEnv(Tests.TestsToRun, "TESTS_TO_RUN")
+	_ = viper.BindEnv(Tests.TestsToRun, "TESTS_TO_RUN")
 
-	viper.BindEnv(Tests.OCPTestSuite, "OCP_TEST_SUITE")
-	viper.BindEnv(Tests.OCPTestSkipRegex, "OCP_TEST_SKIP_REGEX")
+	_ = viper.BindEnv(Tests.OCPTestSuite, "OCP_TEST_SUITE")
+	_ = viper.BindEnv(Tests.OCPTestSkipRegex, "OCP_TEST_SKIP_REGEX")
 
 	viper.SetDefault(Tests.SuppressSkipNotifications, true)
-	viper.BindEnv(Tests.SuppressSkipNotifications, "SUPPRESS_SKIP_NOTIFICATIONS")
+	_ = viper.BindEnv(Tests.SuppressSkipNotifications, "SUPPRESS_SKIP_NOTIFICATIONS")
 
-	viper.BindEnv(Tests.CleanRuns, "CLEAN_RUNS")
+	_ = viper.BindEnv(Tests.CleanRuns, "CLEAN_RUNS")
 
 	viper.SetDefault(Tests.OperatorSkip, "insights")
-	viper.BindEnv(Tests.OperatorSkip, "OPERATOR_SKIP")
+	_ = viper.BindEnv(Tests.OperatorSkip, "OPERATOR_SKIP")
 
 	viper.SetDefault(Tests.SkipClusterHealthChecks, false)
-	viper.BindEnv(Tests.SkipClusterHealthChecks, "SKIP_CLUSTER_HEALTH_CHECKS")
+	_ = viper.BindEnv(Tests.SkipClusterHealthChecks, "SKIP_CLUSTER_HEALTH_CHECKS")
 
 	viper.SetDefault(Tests.ClusterHealthChecksTimeout, "2h")
-	viper.BindEnv(Tests.ClusterHealthChecksTimeout, "CLUSTER_HEALTH_CHECKS_TIMEOUT")
+	_ = viper.BindEnv(Tests.ClusterHealthChecksTimeout, "CLUSTER_HEALTH_CHECKS_TIMEOUT")
 
-	viper.BindEnv(Tests.LogBucket, "LOG_BUCKET")
+	_ = viper.BindEnv(Tests.LogBucket, "LOG_BUCKET")
 
-	viper.BindEnv(Tests.ServiceAccount, "SERVICE_ACCOUNT")
+	_ = viper.BindEnv(Tests.ServiceAccount, "SERVICE_ACCOUNT")
 
-	viper.SetDefault(Tests.SlackChannel, "sd-cicd-alerts")
-	viper.BindEnv(Tests.SlackChannel, "SLACK_CHANNEL")
+	viper.SetDefault(Tests.SlackChannel, "hcm-cicd-alerts")
+	_ = viper.BindEnv(Tests.SlackChannel, "SLACK_CHANNEL")
 
-	viper.BindEnv(Tests.SlackWebhook, "SLACK_WEBHOOK")
+	_ = viper.BindEnv(Tests.SlackWebhook, "SLACK_WEBHOOK")
 	RegisterSecret(Tests.SlackWebhook, "cleanup-job-notification-webhook")
 
 	// ----- Cluster -----
 	viper.SetDefault(Cluster.MultiAZ, false)
-	viper.BindEnv(Cluster.MultiAZ, "MULTI_AZ")
+	_ = viper.BindEnv(Cluster.MultiAZ, "MULTI_AZ")
 
 	viper.SetDefault(Cluster.Channel, "stable")
-	viper.BindEnv(Cluster.Channel, "CHANNEL")
+	_ = viper.BindEnv(Cluster.Channel, "CHANNEL")
 
-	viper.BindEnv(Cluster.SkipDestroyCluster, "SKIP_DESTROY_CLUSTER")
+	_ = viper.BindEnv(Cluster.SkipDestroyCluster, "SKIP_DESTROY_CLUSTER")
 
-	viper.BindEnv(Cluster.ProvisionOnly, "PROVISION_ONLY")
+	_ = viper.BindEnv(Cluster.ProvisionOnly, "PROVISION_ONLY")
 
 	viper.SetDefault(Cluster.ExpiryInMinutes, 360)
-	viper.BindEnv(Cluster.ExpiryInMinutes, "CLUSTER_EXPIRY_IN_MINUTES")
+	_ = viper.BindEnv(Cluster.ExpiryInMinutes, "CLUSTER_EXPIRY_IN_MINUTES")
 
 	viper.SetDefault(Cluster.AfterTestWait, 60)
-	viper.BindEnv(Cluster.AfterTestWait, "AFTER_TEST_CLUSTER_WAIT")
+	_ = viper.BindEnv(Cluster.AfterTestWait, "AFTER_TEST_CLUSTER_WAIT")
 
 	viper.SetDefault(Cluster.InstallTimeout, 135)
-	viper.BindEnv(Cluster.InstallTimeout, "CLUSTER_UP_TIMEOUT")
+	_ = viper.BindEnv(Cluster.InstallTimeout, "CLUSTER_UP_TIMEOUT")
 
-	viper.BindEnv(Cluster.ReleaseImageLatest, "RELEASE_IMAGE_LATEST")
+	_ = viper.BindEnv(Cluster.ReleaseImageLatest, "RELEASE_IMAGE_LATEST")
 
-	viper.BindEnv(ProwJobId, "PROW_JOB_ID")
+	_ = viper.BindEnv(ProwJobId, "PROW_JOB_ID")
 
 	viper.SetDefault(Cluster.UseProxyForInstall, false)
-	viper.BindEnv(Cluster.UseProxyForInstall, "USE_PROXY_FOR_INSTALL")
+	_ = viper.BindEnv(Cluster.UseProxyForInstall, "USE_PROXY_FOR_INSTALL")
 
 	viper.SetDefault(Hypershift, false)
-	viper.BindEnv(Hypershift, "HYPERSHIFT")
+	_ = viper.BindEnv(Hypershift, "HYPERSHIFT")
 
 	viper.SetDefault(HypershiftIgnoreInvalidCert, false)
-	viper.BindEnv(HypershiftIgnoreInvalidCert, "HYPERSHIFT_IGNORE_INVALID_CERT")
+	_ = viper.BindEnv(HypershiftIgnoreInvalidCert, "HYPERSHIFT_IGNORE_INVALID_CERT")
 
 	viper.SetDefault(Cluster.UseLatestVersionForInstall, false)
-	viper.BindEnv(Cluster.UseLatestVersionForInstall, "USE_LATEST_VERSION_FOR_INSTALL")
+	_ = viper.BindEnv(Cluster.UseLatestVersionForInstall, "USE_LATEST_VERSION_FOR_INSTALL")
 
 	viper.SetDefault(Cluster.UseMiddleClusterImageSetForInstall, false)
-	viper.BindEnv(Cluster.UseMiddleClusterImageSetForInstall, "USE_MIDDLE_CLUSTER_IMAGE_SET_FOR_INSTALL")
+	_ = viper.BindEnv(Cluster.UseMiddleClusterImageSetForInstall, "USE_MIDDLE_CLUSTER_IMAGE_SET_FOR_INSTALL")
 
 	viper.SetDefault(Cluster.UseOldestClusterImageSetForInstall, false)
-	viper.BindEnv(Cluster.UseOldestClusterImageSetForInstall, "USE_OLDEST_CLUSTER_IMAGE_SET_FOR_INSTALL")
+	_ = viper.BindEnv(Cluster.UseOldestClusterImageSetForInstall, "USE_OLDEST_CLUSTER_IMAGE_SET_FOR_INSTALL")
 
 	viper.SetDefault(Cluster.LatestYReleaseAfterProdDefault, false)
-	viper.BindEnv(Cluster.LatestYReleaseAfterProdDefault, "LATEST_Y_RELEASE_AFTER_PROD_DEFAULT")
+	_ = viper.BindEnv(Cluster.LatestYReleaseAfterProdDefault, "LATEST_Y_RELEASE_AFTER_PROD_DEFAULT")
 
 	viper.SetDefault(Cluster.LatestZReleaseAfterProdDefault, false)
-	viper.BindEnv(Cluster.LatestZReleaseAfterProdDefault, "LATEST_Z_RELEASE_AFTER_PROD_DEFAULT")
+	_ = viper.BindEnv(Cluster.LatestZReleaseAfterProdDefault, "LATEST_Z_RELEASE_AFTER_PROD_DEFAULT")
 
-	viper.BindEnv(Cluster.InstallSpecificNightly, "INSTALL_LATEST_NIGHTLY")
+	_ = viper.BindEnv(Cluster.InstallSpecificNightly, "INSTALL_LATEST_NIGHTLY")
 
-	viper.BindEnv(Cluster.InstallLatestXY, "INSTALL_LATEST_XY")
+	_ = viper.BindEnv(Cluster.InstallLatestXY, "INSTALL_LATEST_XY")
 
-	viper.BindEnv(Cluster.InstallLatestYFromDelta, "INSTALL_LATEST_Y_FROM_DELTA")
+	_ = viper.BindEnv(Cluster.InstallLatestYFromDelta, "INSTALL_LATEST_Y_FROM_DELTA")
 
-	viper.BindEnv(Cluster.InstallLatestZFromDelta, "INSTALL_LATEST_Z_FROM_DELTA")
+	_ = viper.BindEnv(Cluster.InstallLatestZFromDelta, "INSTALL_LATEST_Z_FROM_DELTA")
 
 	viper.SetDefault(Cluster.DeltaReleaseFromDefault, 0)
-	viper.BindEnv(Cluster.DeltaReleaseFromDefault, "DELTA_RELEASE_FROM_DEFAULT")
+	_ = viper.BindEnv(Cluster.DeltaReleaseFromDefault, "DELTA_RELEASE_FROM_DEFAULT")
 
 	viper.SetDefault(Cluster.NextReleaseAfterProdDefault, -1)
-	viper.BindEnv(Cluster.NextReleaseAfterProdDefault, "NEXT_RELEASE_AFTER_PROD_DEFAULT")
+	_ = viper.BindEnv(Cluster.NextReleaseAfterProdDefault, "NEXT_RELEASE_AFTER_PROD_DEFAULT")
 
 	viper.SetDefault(Cluster.CleanCheckRuns, 20)
-	viper.BindEnv(Cluster.CleanCheckRuns, "CLEAN_CHECK_RUNS")
+	_ = viper.BindEnv(Cluster.CleanCheckRuns, "CLEAN_CHECK_RUNS")
 
 	viper.SetDefault(Cluster.ID, "")
-	viper.BindEnv(Cluster.ID, "CLUSTER_ID")
+	_ = viper.BindEnv(Cluster.ID, "CLUSTER_ID")
 
 	viper.SetDefault(Cluster.Name, "")
-	viper.BindEnv(Cluster.Name, "CLUSTER_NAME")
+	_ = viper.BindEnv(Cluster.Name, "CLUSTER_NAME")
 
 	viper.SetDefault(Cluster.Version, "")
-	viper.BindEnv(Cluster.Version, "CLUSTER_VERSION")
+	_ = viper.BindEnv(Cluster.Version, "CLUSTER_VERSION")
 
 	viper.SetDefault(Cluster.EnoughVersionsForOldestOrMiddleTest, true)
 
 	viper.SetDefault(Cluster.PreviousVersionFromDefaultFound, true)
 
 	viper.SetDefault(Cluster.ProvisionShardID, "")
-	viper.BindEnv(Cluster.ProvisionShardID, "PROVISION_SHARD_ID")
+	_ = viper.BindEnv(Cluster.ProvisionShardID, "PROVISION_SHARD_ID")
 
 	viper.SetDefault(Cluster.NumWorkerNodes, "")
-	viper.BindEnv(Cluster.NumWorkerNodes, "NUM_WORKER_NODES")
+	_ = viper.BindEnv(Cluster.NumWorkerNodes, "NUM_WORKER_NODES")
 
-	viper.BindEnv(Cluster.ImageContentSource, "CLUSTER_IMAGE_CONTENT_SOURCE")
-	viper.BindEnv(Cluster.InstallConfig, "CLUSTER_INSTALL_CONFIG")
+	_ = viper.BindEnv(Cluster.ImageContentSource, "CLUSTER_IMAGE_CONTENT_SOURCE")
+	_ = viper.BindEnv(Cluster.InstallConfig, "CLUSTER_INSTALL_CONFIG")
 
 	viper.SetDefault(Cluster.NetworkProvider, DefaultNetworkProvider)
-	viper.BindEnv(Cluster.NetworkProvider, "CLUSTER_NETWORK_PROVIDER")
+	_ = viper.BindEnv(Cluster.NetworkProvider, "CLUSTER_NETWORK_PROVIDER")
 
 	viper.SetDefault(Cluster.HibernateAfterUse, false)
-	viper.BindEnv(Cluster.HibernateAfterUse, "HIBERNATE_AFTER_USE")
+	_ = viper.BindEnv(Cluster.HibernateAfterUse, "HIBERNATE_AFTER_USE")
 
 	viper.SetDefault(Cluster.UseExistingCluster, false)
-	viper.BindEnv(Cluster.UseExistingCluster, "USE_EXISTING_CLUSTER")
+	_ = viper.BindEnv(Cluster.UseExistingCluster, "USE_EXISTING_CLUSTER")
 
 	viper.SetDefault(Cluster.Reused, false)
 	viper.SetDefault(Cluster.Passing, false)
 
 	viper.SetDefault(Cluster.InspectNamespaces, strings.Join(defaultInspectNamespaces, ","))
-	viper.BindEnv(Cluster.InspectNamespaces, "INSPECT_NAMESPACES")
+	_ = viper.BindEnv(Cluster.InspectNamespaces, "INSPECT_NAMESPACES")
 
 	viper.SetDefault(Cluster.EnableFips, false)
-	viper.BindEnv(Cluster.EnableFips, "ENABLE_FIPS")
+	_ = viper.BindEnv(Cluster.EnableFips, "ENABLE_FIPS")
 
 	viper.SetDefault(Cluster.FedRamp, false)
-	viper.BindEnv(Cluster.FedRamp, "FEDRAMP")
+	_ = viper.BindEnv(Cluster.FedRamp, "FEDRAMP")
 	RegisterSecret(Cluster.FedRamp, "fedramp")
 
 	// ----- Cloud Provider -----
 	viper.SetDefault(CloudProvider.CloudProviderID, "aws")
-	viper.BindEnv(CloudProvider.CloudProviderID, "CLOUD_PROVIDER_ID")
+	_ = viper.BindEnv(CloudProvider.CloudProviderID, "CLOUD_PROVIDER_ID")
 
 	viper.SetDefault(CloudProvider.Region, "us-east-1")
-	viper.BindEnv(CloudProvider.Region, "CLOUD_PROVIDER_REGION")
+	_ = viper.BindEnv(CloudProvider.Region, "CLOUD_PROVIDER_REGION")
 
 	// ----- Addons -----
-	viper.BindEnv(Addons.IDsAtCreation, "ADDON_IDS_AT_CREATION")
+	_ = viper.BindEnv(Addons.IDsAtCreation, "ADDON_IDS_AT_CREATION")
 
-	viper.BindEnv(Addons.IDs, "ADDON_IDS")
+	_ = viper.BindEnv(Addons.IDs, "ADDON_IDS")
 
-	viper.BindEnv(Addons.CleanupHarnesses, "ADDON_CLEANUP_HARNESSES")
+	_ = viper.BindEnv(Addons.CleanupHarnesses, "ADDON_CLEANUP_HARNESSES")
 
 	viper.SetDefault(Addons.RunCleanup, false)
-	viper.BindEnv(Addons.RunCleanup, "ADDON_RUN_CLEANUP")
+	_ = viper.BindEnv(Addons.RunCleanup, "ADDON_RUN_CLEANUP")
 
 	viper.SetDefault(Addons.Parameters, "{}")
-	viper.BindEnv(Addons.Parameters, "ADDON_PARAMETERS")
+	_ = viper.BindEnv(Addons.Parameters, "ADDON_PARAMETERS")
 	RegisterSecret(Addons.Parameters, "addon-parameters")
 
 	viper.SetDefault(Addons.SkipAddonList, false)
-	viper.BindEnv(Addons.SkipAddonList, "SKIP_ADDON_LIST")
+	_ = viper.BindEnv(Addons.SkipAddonList, "SKIP_ADDON_LIST")
 
 	// ----- Prometheus -----
-	viper.BindEnv(Prometheus.Address, "PROMETHEUS_ADDRESS")
+	_ = viper.BindEnv(Prometheus.Address, "PROMETHEUS_ADDRESS")
 
-	viper.BindEnv(Prometheus.BearerToken, "PROMETHEUS_BEARER_TOKEN")
+	_ = viper.BindEnv(Prometheus.BearerToken, "PROMETHEUS_BEARER_TOKEN")
 
 	// ----- Alert ----
-	viper.BindEnv(Alert.EnableAlerts, "ENABLE_ALERTS")
+	_ = viper.BindEnv(Alert.EnableAlerts, "ENABLE_ALERTS")
 	viper.SetDefault(Alert.EnableAlerts, false)
 
-	viper.BindEnv(Alert.SlackAPIToken, "SLACK_API_TOKEN")
+	_ = viper.BindEnv(Alert.SlackAPIToken, "SLACK_API_TOKEN")
 	RegisterSecret(Alert.SlackAPIToken, "slack-api-token")
 
 	// ----- Database -----
 	viper.SetDefault(Database.User, "postgres")
-	viper.BindEnv(Database.User, "PG_USER")
+	_ = viper.BindEnv(Database.User, "PG_USER")
 	RegisterSecret(Database.User, "rds-user")
 
-	viper.BindEnv(Database.Pass, "PG_PASS")
+	_ = viper.BindEnv(Database.Pass, "PG_PASS")
 
 	RegisterSecret(Database.Pass, "rds-pass")
 
-	viper.BindEnv(Database.Host, "PG_HOST")
+	_ = viper.BindEnv(Database.Host, "PG_HOST")
 	RegisterSecret(Database.Host, "rds-host")
 
 	viper.SetDefault(Database.Port, "5432")
-	viper.BindEnv(Database.Port, "PG_PORT")
+	_ = viper.BindEnv(Database.Port, "PG_PORT")
 
 	viper.SetDefault(Database.DatabaseName, "cicd_test_data")
-	viper.BindEnv(Database.DatabaseName, "PG_DATABASE")
+	_ = viper.BindEnv(Database.DatabaseName, "PG_DATABASE")
 	RegisterSecret(Database.DatabaseName, "rds-database")
 
 	// ----- Proxy ------
-	viper.BindEnv(Proxy.HttpProxy, "TEST_HTTP_PROXY")
+	_ = viper.BindEnv(Proxy.HttpProxy, "TEST_HTTP_PROXY")
 	RegisterSecret(Proxy.HttpProxy, "test-http-proxy")
 
-	viper.BindEnv(Proxy.HttpsProxy, "TEST_HTTPS_PROXY")
+	_ = viper.BindEnv(Proxy.HttpsProxy, "TEST_HTTPS_PROXY")
 	RegisterSecret(Proxy.HttpsProxy, "test-https-proxy")
 
-	viper.BindEnv(Proxy.UserCABundle, "USER_CA_BUNDLE")
+	_ = viper.BindEnv(Proxy.UserCABundle, "USER_CA_BUNDLE")
 	RegisterSecret(Proxy.UserCABundle, "user-ca-bundle")
 }
 
 func init() {
 	InitOSDe2eViper()
-	InitAWSViper()
+	if err := InitAWSViper(); err != nil {
+		log.Fatalf("Could not init AWS config: %v", err)
+	}
 	InitGCPViper()
 }
 

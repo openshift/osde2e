@@ -17,8 +17,6 @@ import (
 const (
 	suiteName = "OSD Cluster Ready"
 	timeout   = 60 * time.Minute
-	namespace = "openshift-monitoring"
-	jobname   = "osd-cluster-ready"
 )
 
 // Assert osd-cluster-ready status
@@ -33,7 +31,7 @@ var _ = ginkgo.Describe(suiteName, ginkgo.Ordered, label.OCPNightlyBlocking, fun
 	})
 
 	ginkgo.It("should verify cluster is ready", func(ctx context.Context) {
-		joberr := k8s.OSDClusterHealthy(ctx, jobname, viper.GetString(config.ReportDir), timeout)
+		joberr := k8s.OSDClusterHealthy(ctx, viper.GetString(config.ReportDir), timeout)
 		Expect(joberr).ShouldNot(HaveOccurred(), "osd-cluster-ready job did not succeed")
 	})
 })

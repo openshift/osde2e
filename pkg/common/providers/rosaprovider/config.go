@@ -48,35 +48,35 @@ const (
 func init() {
 	// ----- ROSA -----
 	viper.SetDefault(Env, "prod")
-	viper.BindEnv(Env, "ROSA_ENV")
+	_ = viper.BindEnv(Env, "ROSA_ENV")
 
-	viper.BindEnv(MachineCIDR, "ROSA_MACHINE_CIDR")
+	_ = viper.BindEnv(MachineCIDR, "ROSA_MACHINE_CIDR")
 
-	viper.BindEnv(ServiceCIDR, "ROSA_SERVICE_CIDR")
+	_ = viper.BindEnv(ServiceCIDR, "ROSA_SERVICE_CIDR")
 
-	viper.BindEnv(PodCIDR, "ROSA_POD_CIDR")
+	_ = viper.BindEnv(PodCIDR, "ROSA_POD_CIDR")
 
-	viper.BindEnv(ComputeMachineType, "ROSA_COMPUTE_MACHINE_TYPE")
-	viper.BindEnv(ComputeMachineTypeRegex, "ROSA_COMPUTE_MACHINE_TYPE")
+	_ = viper.BindEnv(ComputeMachineType, "ROSA_COMPUTE_MACHINE_TYPE")
+	_ = viper.BindEnv(ComputeMachineTypeRegex, "ROSA_COMPUTE_MACHINE_TYPE")
 
-	viper.BindEnv(Replicas, "ROSA_REPLICAS")
+	_ = viper.BindEnv(Replicas, "ROSA_REPLICAS")
 	viper.SetDefault(Replicas, 2)
 
-	viper.BindEnv(HostPrefix, "ROSA_HOST_PREFIX")
+	_ = viper.BindEnv(HostPrefix, "ROSA_HOST_PREFIX")
 	viper.SetDefault(HostPrefix, 0)
 
-	viper.BindEnv(STS, "ROSA_STS")
+	_ = viper.BindEnv(STS, "ROSA_STS")
 	viper.SetDefault(STS, false)
 	config.RegisterSecret(STS, "rosa-sts")
 
-	viper.BindEnv(MintMode, "ROSA_MINT_MODE")
+	_ = viper.BindEnv(MintMode, "ROSA_MINT_MODE")
 	viper.SetDefault(MintMode, false)
 	config.RegisterSecret(MintMode, "rosa-mint-mode")
 
 	viper.SetDefault(OIDCConfigID, "")
-	viper.BindEnv(OIDCConfigID, "ROSA_OIDC_CONFIG_ID")
+	_ = viper.BindEnv(OIDCConfigID, "ROSA_OIDC_CONFIG_ID")
 	config.RegisterSecret(OIDCConfigID, "rosa-oidc-config-id")
 
-	viper.BindEnv(STSUseDefaultAccountRolesPrefix, "ROSA_STS_USE_DEFAULT_ACCOUNT_ROLES_PREFIX")
+	_ = viper.BindEnv(STSUseDefaultAccountRolesPrefix, "ROSA_STS_USE_DEFAULT_ACCOUNT_ROLES_PREFIX")
 	viper.SetDefault(STSUseDefaultAccountRolesPrefix, true)
 }

@@ -24,7 +24,7 @@ import (
 var veleroOperatorTestName string = "[Suite: operators] [OSD] Managed Velero Operator"
 
 func init() {
-	alert.RegisterGinkgoAlert(veleroOperatorTestName, "SD-SREP", "@managed-velero-operator", "sd-cicd-alerts", "sd-cicd@redhat.com", 4)
+	alert.RegisterGinkgoAlert(veleroOperatorTestName, "SD-SREP", "@managed-velero-operator", "hcm-cicd-alerts", "sd-cicd@redhat.com", 4)
 }
 
 var _ = ginkgo.Describe(veleroOperatorTestName, ginkgo.Ordered, label.Operators, func() {
@@ -259,7 +259,7 @@ func testCRbackups(h *helper.H) {
 			_, err := h.Velero().VeleroV1().Backups(h.CurrentProject()).Create(ctx, &backup, metav1.CreateOptions{})
 			Expect(err).NotTo(HaveOccurred())
 
-			h.Velero().VeleroV1().Backups(h.CurrentProject()).Delete(ctx, "admin-backup-test", metav1.DeleteOptions{})
+			err = h.Velero().VeleroV1().Backups(h.CurrentProject()).Delete(ctx, "admin-backup-test", metav1.DeleteOptions{})
 			Expect(err).NotTo(HaveOccurred())
 		})
 	})
@@ -276,7 +276,7 @@ func testCRrestore(h *helper.H) {
 			_, err := h.Velero().VeleroV1().Restores(h.CurrentProject()).Create(ctx, &restore, metav1.CreateOptions{})
 			Expect(err).NotTo(HaveOccurred())
 
-			h.Velero().VeleroV1().Restores(h.CurrentProject()).Delete(ctx, "restore-test", metav1.DeleteOptions{})
+			err = h.Velero().VeleroV1().Restores(h.CurrentProject()).Delete(ctx, "restore-test", metav1.DeleteOptions{})
 			Expect(err).NotTo(HaveOccurred())
 		})
 	})
@@ -293,7 +293,7 @@ func testCRdeleteBackupRequests(h *helper.H) {
 			_, err := h.Velero().VeleroV1().DeleteBackupRequests(h.CurrentProject()).Create(ctx, &deleteBackupRequest, metav1.CreateOptions{})
 			Expect(err).NotTo(HaveOccurred())
 
-			h.Velero().VeleroV1().DeleteBackupRequests(h.CurrentProject()).Delete(ctx, "delete-backup-request-test", metav1.DeleteOptions{})
+			err = h.Velero().VeleroV1().DeleteBackupRequests(h.CurrentProject()).Delete(ctx, "delete-backup-request-test", metav1.DeleteOptions{})
 			Expect(err).NotTo(HaveOccurred())
 		})
 	})
@@ -319,7 +319,7 @@ func testCRbackupStorageLocations(h *helper.H) {
 			_, err := h.Velero().VeleroV1().BackupStorageLocations(h.CurrentProject()).Create(ctx, &backupStorageLocation, metav1.CreateOptions{})
 			Expect(err).NotTo(HaveOccurred())
 
-			h.Velero().VeleroV1().BackupStorageLocations(h.CurrentProject()).Delete(ctx, "backup-storage-location-test", metav1.DeleteOptions{})
+			err = h.Velero().VeleroV1().BackupStorageLocations(h.CurrentProject()).Delete(ctx, "backup-storage-location-test", metav1.DeleteOptions{})
 			Expect(err).NotTo(HaveOccurred())
 		})
 	})
@@ -343,7 +343,7 @@ func testCRdownloadRequests(h *helper.H) {
 			_, err := h.Velero().VeleroV1().DownloadRequests(h.CurrentProject()).Create(ctx, &downloadRequest, metav1.CreateOptions{})
 			Expect(err).NotTo(HaveOccurred())
 
-			h.Velero().VeleroV1().DownloadRequests(h.CurrentProject()).Delete(ctx, "download-request-test", metav1.DeleteOptions{})
+			err = h.Velero().VeleroV1().DownloadRequests(h.CurrentProject()).Delete(ctx, "download-request-test", metav1.DeleteOptions{})
 			Expect(err).NotTo(HaveOccurred())
 		})
 	})
@@ -360,7 +360,7 @@ func testCRvolumeSnapshotLocation(h *helper.H) {
 			_, err := h.Velero().VeleroV1().VolumeSnapshotLocations(h.CurrentProject()).Create(ctx, &volumeSnapshotLocation, metav1.CreateOptions{})
 			Expect(err).NotTo(HaveOccurred())
 
-			h.Velero().VeleroV1().VolumeSnapshotLocations(h.CurrentProject()).Delete(ctx, "volume-snapshot-locations-test", metav1.DeleteOptions{})
+			err = h.Velero().VeleroV1().VolumeSnapshotLocations(h.CurrentProject()).Delete(ctx, "volume-snapshot-locations-test", metav1.DeleteOptions{})
 			Expect(err).NotTo(HaveOccurred())
 		})
 	})
@@ -377,7 +377,7 @@ func testCRschedules(h *helper.H) {
 			_, err := h.Velero().VeleroV1().Schedules(h.CurrentProject()).Create(ctx, &schedules, metav1.CreateOptions{})
 			Expect(err).NotTo(HaveOccurred())
 
-			h.Velero().VeleroV1().Schedules(h.CurrentProject()).Delete(ctx, "schedules-test", metav1.DeleteOptions{})
+			err = h.Velero().VeleroV1().Schedules(h.CurrentProject()).Delete(ctx, "schedules-test", metav1.DeleteOptions{})
 			Expect(err).NotTo(HaveOccurred())
 		})
 	})
@@ -394,7 +394,7 @@ func testCRserverStatusRequest(h *helper.H) {
 			_, err := h.Velero().VeleroV1().ServerStatusRequests(h.CurrentProject()).Create(ctx, &serverStatusRequest, metav1.CreateOptions{})
 			Expect(err).NotTo(HaveOccurred())
 
-			h.Velero().VeleroV1().ServerStatusRequests(h.CurrentProject()).Delete(ctx, "server-status-request-test", metav1.DeleteOptions{})
+			err = h.Velero().VeleroV1().ServerStatusRequests(h.CurrentProject()).Delete(ctx, "server-status-request-test", metav1.DeleteOptions{})
 			Expect(err).NotTo(HaveOccurred())
 		})
 	})
@@ -403,7 +403,7 @@ func testCRserverStatusRequest(h *helper.H) {
 func checkVeleroBackups(h *helper.H, operatorNamespace string) {
 	ginkgo.Context("velero", func() {
 		ginkgo.It("backups should be complete", func(ctx context.Context) {
-			err := wait.PollImmediate(5*time.Second, 5*time.Minute, func() (bool, error) {
+			err := wait.PollUntilContextTimeout(ctx, 5*time.Second, 5*time.Minute, true, func(ctx context.Context) (bool, error) {
 				us, err := h.Dynamic().Resource(schema.GroupVersionResource{
 					Group:    "velero.io",
 					Version:  "v1",

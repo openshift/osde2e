@@ -146,7 +146,7 @@ func (m *ROSAProvider) DeleteCluster(clusterID string) error {
 			ClusterName:        clusterID,
 			HostedCP:           viper.GetBool(config.Hypershift),
 			STS:                viper.GetBool(STS),
-			DeleteHostedCPVPC:  deleteHostedCPVPC,
+			DeleteHostedVPC:    deleteHostedCPVPC,
 			DeleteOidcConfigID: deleteOidcConfigID,
 		},
 	)
