@@ -161,7 +161,9 @@ func run(cmd *cobra.Command, argv []string) error {
 	if os.Getenv("JOB_NAME") != "" {
 		r, _ := regexp.Compile("cleanup-([a-z]+)-aws")
 		act := r.FindStringSubmatch(os.Getenv("JOB_NAME"))
-		summaryBuilder.WriteString("Account: " + act[1] + "\n")
+		if len(act) == 2 {
+			summaryBuilder.WriteString("Account: " + act[1] + "\n")
+		}
 	}
 
 	if args.clusters {
