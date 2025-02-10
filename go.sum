@@ -420,8 +420,8 @@ github.com/onsi/ginkgo/v2 v2.22.2 h1:/3X8Panh8/WwhU/3Ssa6rCKqPLuAkVY2I0RoyDLySlU
 github.com/onsi/ginkgo/v2 v2.22.2/go.mod h1:oeMosUL+8LtarXBHu/c0bx2D/K9zyQ6uX3cTyztHwsk=
 github.com/onsi/gomega v1.36.2 h1:koNYke6TVk6ZmnyHrCXba/T/MoLBXFjeC1PtvYgw0A8=
 github.com/onsi/gomega v1.36.2/go.mod h1:DdwyADRjrc825LhMEkD76cHR5+pUnjhUN8GlHlRPHzY=
-github.com/openshift-online/ocm-sdk-go v0.1.458 h1:hC/10CxcegR2FTee8fGZx5K7ROaRZ5NHEHlTVP0S0gA=
-github.com/openshift-online/ocm-sdk-go v0.1.458/go.mod h1:CiAu2jwl3ITKOxkeV0Qnhzv4gs35AmpIzVABQLtcI2Y=
+github.com/openshift-online/ocm-sdk-go v0.1.459 h1:n56ErJL8S2RPfpX6HGp2CmVyJ7k0GC4xnVYdO8Ky8XI=
+github.com/openshift-online/ocm-sdk-go v0.1.459/go.mod h1:CiAu2jwl3ITKOxkeV0Qnhzv4gs35AmpIzVABQLtcI2Y=
 github.com/openshift/api v0.0.0-20240530151505-37be9ab109d3 h1:Irqrkp2eFX9At+OAP772S9o4qv5qimGlk5Rt2jyThvc=
 github.com/openshift/api v0.0.0-20240530151505-37be9ab109d3/go.mod h1:CxgbWAlvu2iQB0UmKTtRu1YfepRg1/vJ64n2DlIEVz4=
 github.com/openshift/client-go v0.0.0-20240510131258-f646d5f29250 h1:WQ0e89xebsNeChdYw8QrxggYkFtEQOaLBEKJDkMmcUk=
@@ -432,10 +432,6 @@ github.com/openshift/library-go v0.0.0-20240517135010-e93e442c2b18 h1:aUFgWf2nsv
 github.com/openshift/library-go v0.0.0-20240517135010-e93e442c2b18/go.mod h1:lFwyRj0XjUf25Da3Q00y+KuaxCWTJ6YzYPDX1+96nco=
 github.com/openshift/managed-upgrade-operator v0.0.0-20230525042514-a9b8c1d2571c h1:2Vy855A5z3zQgUumH6PORqbUTNtKZ5SlSgzvq3iQBig=
 github.com/openshift/managed-upgrade-operator v0.0.0-20230525042514-a9b8c1d2571c/go.mod h1:W/ajjexZ/T50ZRpk48HbgbtOXD4rt0/wHlwdXu8arQE=
-github.com/openshift/osde2e-common v0.0.0-20250203194843-375bf8249ef2 h1:A6jUsIzl48Q0HElJydv6LLUi5YzDweXHwhgCP+j1tUA=
-github.com/openshift/osde2e-common v0.0.0-20250203194843-375bf8249ef2/go.mod h1:x8nTILIaszQ9/lC4smttb6TBRmcAQWwzRDuhBUnP/Qs=
-github.com/openshift/osde2e-common v0.0.0-20250204120456-6d8ffdf1ac4e h1:y/SxudgVN+OkkRquSw9MmXMgPfGOy4pyl7b4cEtnNns=
-github.com/openshift/osde2e-common v0.0.0-20250204120456-6d8ffdf1ac4e/go.mod h1:JKH+EpD9+2NFN05d13AAxtLditjeRBEKaJpQJleOjyc=
 github.com/openshift/osde2e-common v0.0.0-20250204192737-8050d2fe899c h1:lWdM+pleVZTi5rjhd7+c/MDqydvW1yJFhUhVMD4dl0s=
 github.com/openshift/osde2e-common v0.0.0-20250204192737-8050d2fe899c/go.mod h1:JKH+EpD9+2NFN05d13AAxtLditjeRBEKaJpQJleOjyc=
 github.com/operator-framework/api v0.17.7 h1:NLn+Ieg+HaPrw75KbX4efllN21ofFArQzS3q8TDbQY0=
