@@ -22,6 +22,10 @@ const (
 	// Env: PROVIDER
 	Provider = "provider"
 
+	// OCM_CONFIG is the path for the ocm.json file.
+	// Env: OCM_CONFIG
+	OcmConfig = "ocmConfig"
+
 	// JobName lets you name the current e2e job run
 	// Env: JOB_NAME
 	JobName = "jobName"
@@ -641,6 +645,10 @@ func InitOSDe2eViper() {
 	// ----- Top Level Configs -----
 	viper.SetDefault(Provider, "ocm")
 	_ = viper.BindEnv(Provider, "PROVIDER")
+
+	viper.SetDefault(OcmConfig, fmt.Sprintf("%s/ocm.json", os.TempDir()))
+	_ = viper.BindEnv(OcmConfig, "OCM_CONFIG")
+	os.Setenv("OCM_CONFIG", viper.GetString(OcmConfig))
 
 	_ = viper.BindEnv(JobName, "JOB_NAME")
 	_ = viper.BindEnv(JobType, "JOB_TYPE")

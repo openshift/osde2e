@@ -13,6 +13,7 @@ fi
 
 # Create the container with environment variables and unique name
 docker create --name "${CONTAINER_NAME}" -e OCM_TOKEN \
+	-e OCM_CLIENT_ID -e OCM_CLIENT_SECRET \
 	-e AWS_ACCESS_KEY_ID \
 	-e AWS_SECRET_ACCESS_KEY \
 	-e AWS_ACCOUNT_ID \

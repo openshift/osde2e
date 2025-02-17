@@ -31,7 +31,7 @@ provider "aws" {
 
 module "vpc" {
   source  = "terraform-aws-modules/vpc/aws"
-  version = "~> 5.15.0"
+  version = "~> 5.18.0"
 
   name = "${var.cluster_name}-vpc"
   cidr = "10.0.0.0/16"

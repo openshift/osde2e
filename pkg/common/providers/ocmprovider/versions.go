@@ -101,16 +101,6 @@ func (o *OCMProvider) Versions() (*spi.VersionList, error) {
 
 	var defaultVersionOverride *semver.Version = nil
 
-	if o.env != prod {
-		var versionList *spi.VersionList
-		versionList, err = o.prodProvider.Versions()
-		if err != nil {
-			return nil, fmt.Errorf("error getting production default: %v", err)
-		}
-
-		defaultVersionOverride = versionList.Default()
-	}
-
 	return spi.NewVersionListBuilder().
 		AvailableVersions(versions).
 		DefaultVersionOverride(defaultVersionOverride).
