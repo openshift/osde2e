@@ -17,13 +17,13 @@ Test harnesses are standalone ginkgo e2e test images run on test pods on test cl
 
 5. Update package names in each test file appropriately for the new directory structure.
 
-5. Write tests under osde2e/ generated test files.
+5. Add tests under the generated scaffolding in test/e2e/.
 
-6. If you're migrating an existing tests from osde2e repo: Copy test files from osde2e/pkg/e2e/operators/<your-operator> to  the newly generated /osde2e directory in your operator.
+6. If you're migrating an existing tests from osde2e repo: Copy test files from osde2e/pkg/e2e/operators/<your-operator> to  the newly generated /test/e2e directory in your operator.
 
 7. Run `make e2e-harness-build`
    If you have go mod errors, `make e2e-harness-build` target won't work as it includes go mod tidy. If your repo uses go versions prior to 1.18, you’d need to manually run the following to build a test file
-   `go test ./osde2e -v -c --tags=integration -o harness.test`
+   `go test ./test/e2e -v -c --tags=osde2e -o harness.test`
 
 Any dependency errors must be resolved to create the test binary.
 
