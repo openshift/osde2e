@@ -70,10 +70,10 @@ func init() {
 	_ = viper.BindEnv(NumRetries, "NUM_RETRIES")
 
 	viper.SetDefault(ComputeMachineType, "")
-	_ = viper.BindEnv(ComputeMachineType, "OCM_COMPUTE_MACHINE_TYPE")
+	_ = viper.BindEnv(ComputeMachineType, "OCM_COMPUTE_MACHINE_TYPE", "INSTANCE_TYPE")
 
 	viper.SetDefault(ComputeMachineTypeRegex, "")
-	_ = viper.BindEnv(ComputeMachineTypeRegex, "OCM_COMPUTE_MACHINE_TYPE_REGEX")
+	_ = viper.BindEnv(ComputeMachineTypeRegex, "OCM_COMPUTE_MACHINE_TYPE_REGEX", "INSTANCE_TYPE")
 
 	_ = viper.BindEnv(UserOverride, "OCM_USER_OVERRIDE")
 
