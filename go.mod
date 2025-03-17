@@ -1,8 +1,7 @@
 module github.com/openshift/osde2e
 
 go 1.23
-
-toolchain go1.23.7
+toolchain go1.24.1
 
 require (
 	cloud.google.com/go/kms v1.20.5
@@ -44,7 +43,7 @@ require (
 	github.com/vmware-tanzu/velero v1.10.2
 	golang.org/x/net v0.35.0
 	golang.org/x/oauth2 v0.25.0
-	golang.org/x/sync v0.11.0
+	golang.org/x/sync v0.12.0
 	golang.org/x/tools v0.28.0
 	google.golang.org/api v0.219.0
 	google.golang.org/genproto v0.0.0-20241118233622-e639e219e697 // indirect
