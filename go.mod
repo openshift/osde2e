@@ -21,8 +21,8 @@ require (
 	github.com/joshdk/go-junit v1.0.0
 	github.com/kylelemons/godebug v1.1.0
 	github.com/mitchellh/mapstructure v1.5.0
-	github.com/onsi/ginkgo/v2 v2.22.2
-	github.com/onsi/gomega v1.36.2
+	github.com/onsi/ginkgo/v2 v2.23.3
+	github.com/onsi/gomega v1.36.3
 	github.com/openshift-online/ocm-sdk-go v0.1.461
 	github.com/openshift/client-go v0.0.0-20250320110000-c1107ae03533
 	github.com/openshift/cloud-credential-operator v0.0.0-20230512001141-38e7f96bf730
@@ -45,7 +45,7 @@ require (
 	golang.org/x/net v0.37.0
 	golang.org/x/oauth2 v0.25.0
 	golang.org/x/sync v0.12.0
-	golang.org/x/tools v0.28.0
+	golang.org/x/tools v0.30.0
 	google.golang.org/api v0.219.0
 	google.golang.org/genproto v0.0.0-20241118233622-e639e219e697 // indirect
 	gopkg.in/yaml.v3 v3.0.1
@@ -154,7 +154,7 @@ require (
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/crypto v0.36.0 // indirect
 	golang.org/x/exp v0.0.0-20240719175910-8a7402abbf56 // indirect
-	golang.org/x/mod v0.22.0 // indirect
+	golang.org/x/mod v0.23.0 // indirect
 	golang.org/x/sys v0.31.0 // indirect
 	golang.org/x/term v0.30.0 // indirect
 	golang.org/x/text v0.23.0 // indirect
