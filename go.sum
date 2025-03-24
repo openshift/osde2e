@@ -418,8 +418,8 @@ github.com/onsi/ginkgo/v2 v2.23.3 h1:edHxnszytJ4lD9D5Jjc4tiDkPBZ3siDeJJkUZJJVkp0
 github.com/onsi/ginkgo/v2 v2.23.3/go.mod h1:zXTP6xIp3U8aVuXN8ENK9IXRaTjFnpVB9mGmaSRvxnM=
 github.com/onsi/gomega v1.36.3 h1:hID7cr8t3Wp26+cYnfcjR6HpJ00fdogN6dqZ1t6IylU=
 github.com/onsi/gomega v1.36.3/go.mod h1:8D9+Txp43QWKhM24yyOBEdpkzN8FvJyAwecBgsU4KU0=
-github.com/openshift-online/ocm-sdk-go v0.1.461 h1:cU+5nprjo1zNvLAFrMcYAoEMbQ0ae5Yy7mK1R5HQcUY=
-github.com/openshift-online/ocm-sdk-go v0.1.461/go.mod h1:CiAu2jwl3ITKOxkeV0Qnhzv4gs35AmpIzVABQLtcI2Y=
+github.com/openshift-online/ocm-sdk-go v0.1.462 h1:Z0BIDhN+qy7BJzp86LWKrbmjVNaDSL9YS/gK1q4Tdws=
+github.com/openshift-online/ocm-sdk-go v0.1.462/go.mod h1:CiAu2jwl3ITKOxkeV0Qnhzv4gs35AmpIzVABQLtcI2Y=
 github.com/openshift/api v0.0.0-20250320170726-75d64d71980b h1:GGuFSHESP0BSOu70AqV4u9IVrjYdaeu4Id+HXRIOvkw=
 github.com/openshift/api v0.0.0-20250320170726-75d64d71980b/go.mod h1:yk60tHAmHhtVpJQo3TwVYq2zpuP70iJIFDCmeKMIzPw=
 github.com/openshift/client-go v0.0.0-20250320110000-c1107ae03533 h1:XqAJAA6TgxBr+gulXMt23MgIH7qtIPQUO/IHj8kRJ7g=
@@ -430,8 +430,8 @@ github.com/openshift/library-go v0.0.0-20240517135010-e93e442c2b18 h1:aUFgWf2nsv
 github.com/openshift/library-go v0.0.0-20240517135010-e93e442c2b18/go.mod h1:lFwyRj0XjUf25Da3Q00y+KuaxCWTJ6YzYPDX1+96nco=
 github.com/openshift/managed-upgrade-operator v0.0.0-20230525042514-a9b8c1d2571c h1:2Vy855A5z3zQgUumH6PORqbUTNtKZ5SlSgzvq3iQBig=
 github.com/openshift/managed-upgrade-operator v0.0.0-20230525042514-a9b8c1d2571c/go.mod h1:W/ajjexZ/T50ZRpk48HbgbtOXD4rt0/wHlwdXu8arQE=
-github.com/openshift/osde2e-common v0.0.0-20250314132533-ec8093d9df00 h1:2nNDoxsNu9+7BKemg8AF80v8P6O7P40/ktVg0rpPeFU=
-github.com/openshift/osde2e-common v0.0.0-20250314132533-ec8093d9df00/go.mod h1:iqFJJqFCgMSSrG0SYN9RwemB1rE1f+uwRo0uqMoPqDU=
+github.com/openshift/osde2e-common v0.0.0-20250322124525-b4c45d21ce7b h1:oR9RZhSR4sdjQ+aC3p8LcB+z37wRYyn+Rfh8R7Sg8Do=
+github.com/openshift/osde2e-common v0.0.0-20250322124525-b4c45d21ce7b/go.mod h1:8xH86NxYl4nQHSZPBZOd+4feknusHfUrYRG8YpDLctA=
 github.com/operator-framework/api v0.17.7 h1:NLn+Ieg+HaPrw75KbX4efllN21ofFArQzS3q8TDbQY0=
 github.com/operator-framework/api v0.17.7/go.mod h1:lnurXgadLnoZ7pufKMHkErr2BVOIZSpHtvEkHBcKvdk=
 github.com/operator-framework/operator-lifecycle-manager v0.22.0 h1:7DEWOq24HQ0l5xPOXMhn17XaJACgwoipz+JfQ7QCXZw=
