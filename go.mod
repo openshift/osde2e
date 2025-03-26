@@ -140,7 +140,7 @@ require (
 	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/skratchdot/open-golang v0.0.0-20200116055534-eef842397966 // indirect
 	github.com/sourcegraph/conc v0.3.0 // indirect
-	github.com/spf13/cast v1.6.0 // indirect
+	github.com/spf13/cast v1.7.1 // indirect
 	github.com/streadway/quantile v0.0.0-20220407130108-4246515d968d // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
 	github.com/tsenart/go-tsz v0.0.0-20180814235614-0bd30b3df1c3 // indirect
