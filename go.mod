@@ -24,7 +24,7 @@ require (
 	github.com/onsi/ginkgo/v2 v2.23.3
 	github.com/onsi/gomega v1.36.3
 	github.com/openshift-online/ocm-sdk-go v0.1.463
-	github.com/openshift/client-go v0.0.0-20250320110000-c1107ae03533
+	github.com/openshift/client-go v0.0.0-20250324153519-f0faeb0f2f2e
 	github.com/openshift/cloud-credential-operator v0.0.0-20250319011747-90b793848d80
 	github.com/openshift/managed-upgrade-operator v0.0.0-20230525042514-a9b8c1d2571c
 	github.com/openshift/osde2e-common v0.0.0-20250322124525-b4c45d21ce7b
