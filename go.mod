@@ -7,7 +7,7 @@ toolchain go1.23.7
 require (
 	cloud.google.com/go/kms v1.21.1
 	github.com/Masterminds/semver/v3 v3.3.1
-	github.com/PuerkitoBio/goquery v1.9.2
+	github.com/PuerkitoBio/goquery v1.10.2
 	github.com/adamliesko/retry v0.0.0-20200123222335-86c8baac277d
 	github.com/aws/aws-sdk-go v1.55.6
 	github.com/fsnotify/fsnotify v1.8.0
@@ -73,7 +73,7 @@ require (
 	cloud.google.com/go/iam v1.4.1 // indirect
 	cloud.google.com/go/longrunning v0.6.5 // indirect
 	github.com/ProtonMail/go-crypto v1.1.3 // indirect
-	github.com/andybalholm/cascadia v1.3.2 // indirect
+	github.com/andybalholm/cascadia v1.3.3 // indirect
 	github.com/apparentlymart/go-textseg/v15 v15.0.0 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
