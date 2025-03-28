@@ -26,12 +26,12 @@ require (
 	github.com/openshift-online/ocm-sdk-go v0.1.463
 	github.com/openshift/client-go v0.0.0-20250320110000-c1107ae03533
 	github.com/openshift/cloud-credential-operator v0.0.0-20250319011747-90b793848d80
-	github.com/openshift/managed-upgrade-operator v0.0.0-20230525042514-a9b8c1d2571c
+	github.com/openshift/managed-upgrade-operator v0.0.0-20250325040603-118c1786ccc0
 	github.com/openshift/osde2e-common v0.0.0-20250322124525-b4c45d21ce7b
 	github.com/operator-framework/api v0.30.0
 	github.com/operator-framework/operator-lifecycle-manager v0.22.0
-	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.64.0
-	github.com/prometheus-operator/prometheus-operator/pkg/client v0.64.0
+	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.71.0
+	github.com/prometheus-operator/prometheus-operator/pkg/client v0.71.0
 	github.com/prometheus/alertmanager v0.28.1
 	github.com/prometheus/client_golang v1.21.1
 	github.com/prometheus/common v0.63.0
@@ -98,7 +98,7 @@ require (
 	github.com/golang-jwt/jwt/v4 v4.5.2 // indirect
 	github.com/golang/glog v1.2.4 // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
-	github.com/google/gnostic-models v0.6.8 // indirect
+	github.com/google/gnostic-models v0.6.9-0.20230804172637-c7be7c783f49 // indirect
 	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
