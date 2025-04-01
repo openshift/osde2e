@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/onsi/ginkgo/v2"
-	"github.com/openshift/osde2e/pkg/common/alert"
 
 	"github.com/openshift/osde2e/pkg/common/expect"
 	"github.com/openshift/osde2e/pkg/common/helper"
@@ -17,10 +16,6 @@ import (
 )
 
 var privilegedTestname string = "[Suite: service-definition] [OSD] Privileged Containers"
-
-func init() {
-	alert.RegisterGinkgoAlert(privilegedTestname, "SD-CICD", "Diego Santamaria", "hcm-cicd-alerts", "sd-cicd@redhat.com", 4)
-}
 
 var _ = ginkgo.Describe(privilegedTestname, ginkgo.Ordered, label.ServiceDefinition, label.HyperShift, func() {
 	var h *helper.H

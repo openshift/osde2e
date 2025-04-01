@@ -11,7 +11,6 @@ import (
 	configV1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/osde2e-common/pkg/clients/openshift"
 	"github.com/openshift/osde2e-common/pkg/clients/prometheus"
-	"github.com/openshift/osde2e/pkg/common/alert"
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/label"
 	alertmanagerConfig "github.com/prometheus/alertmanager/config"
@@ -27,11 +26,6 @@ const (
 	MonitoringNamespace          = "openshift-monitoring"
 	IdentityProviderName         = "oidcidp"
 )
-
-// utils
-func init() {
-	alert.RegisterGinkgoAlert(inhibitionsTestName, "SD-SRE", "Alex Chvatal", "hcm-cicd-alerts", "sd-cicd@redhat.com", 4)
-}
 
 var inhibitionsTestName string = "[Suite: operators] AlertmanagerInhibitions"
 

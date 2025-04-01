@@ -8,7 +8,6 @@ import (
 	. "github.com/onsi/gomega"
 
 	machineV1beta1 "github.com/openshift/api/machine/v1beta1"
-	"github.com/openshift/osde2e/pkg/common/alert"
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/label"
 	corev1 "k8s.io/api/core/v1"
@@ -24,17 +23,6 @@ var (
 	// metalInstanceTypes should match what's specified in MCC in hack/00-osd-managed-cluster-config-stage.yaml.tmpl and prod.yaml.tmpl, depending
 	metalInstanceTypes = []string{"m5.metal", "m5d.metal", "m5n.metal", "m5dn.metal", "m5zn.metal", "m6a.metal", "m6i.metal", "m6id.metal", "r5.metal", "r5d.metal", "r5n.metal", "r5dn.metal", "r6a.metal", "r6i.metal", "r6id.metal", "x2iezn.metal", "z1d.metal", "c5.metal", "c5d.metal", "c5n.metal", "c6a.metal", "c6i.metal", "c6id.metal", "i3.metal", "i3en.metal", "r7i.48xlarge"}
 )
-
-func init() {
-	alert.RegisterGinkgoAlert(
-		machineHealthTestName,
-		"SD-SRE",
-		"Alex Chvatal",
-		"hcm-cicd-alerts",
-		"sd-cicd@redhat.com",
-		4,
-	)
-}
 
 var _ = ginkgo.Describe(machineHealthTestName, label.E2E, func() {
 	h := helper.New()

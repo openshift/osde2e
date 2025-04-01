@@ -9,7 +9,6 @@ import (
 	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	routev1 "github.com/openshift/api/route/v1"
-	"github.com/openshift/osde2e/pkg/common/alert"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/expect"
@@ -23,10 +22,6 @@ import (
 )
 
 var routesTestName string = "[Suite: e2e] Routes"
-
-func init() {
-	alert.RegisterGinkgoAlert(routesTestName, "SD-CICD", "Diego Santamaria", "hcm-cicd-alerts", "sd-cicd@redhat.com", 4)
-}
 
 var _ = ginkgo.Describe(routesTestName, ginkgo.Ordered, label.HyperShift, label.E2E, func() {
 	var h *helper.H

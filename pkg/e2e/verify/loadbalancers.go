@@ -5,7 +5,6 @@ import (
 
 	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	"github.com/openshift/osde2e/pkg/common/alert"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/expect"
@@ -24,10 +23,6 @@ const (
 )
 
 var loadBalancersTestName string = "[Suite: informing] Load Balancers"
-
-func init() {
-	alert.RegisterGinkgoAlert(loadBalancersTestName, "SD-CICD", "Diego Santamaria", "hcm-cicd-alerts", "sd-cicd@redhat.com", 4)
-}
 
 var _ = ginkgo.Describe(loadBalancersTestName, ginkgo.Ordered, label.Informing, func() {
 	var h *helper.H

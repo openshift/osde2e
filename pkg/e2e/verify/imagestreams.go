@@ -6,7 +6,6 @@ import (
 	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	imagev1 "github.com/openshift/api/image/v1"
-	"github.com/openshift/osde2e/pkg/common/alert"
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/label"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -14,10 +13,6 @@ import (
 )
 
 var imageStreamsTestName string = "[Suite: e2e] ImageStreams"
-
-func init() {
-	alert.RegisterGinkgoAlert(imageStreamsTestName, "SD-CICD", "Diego Santamaria", "hcm-cicd-alerts", "sd-cicd@redhat.com", 4)
-}
 
 var _ = ginkgo.Describe(imageStreamsTestName, ginkgo.Ordered, label.HyperShift, label.E2E, func() {
 	var h *helper.H
