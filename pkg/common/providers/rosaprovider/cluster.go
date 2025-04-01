@@ -106,7 +106,7 @@ func (m *ROSAProvider) LaunchCluster(clusterName string) (string, error) {
 			FIPS:                         viper.GetBool(config.Cluster.EnableFips),
 			MultiAZ:                      viper.GetBool(config.Cluster.MultiAZ),
 			ExpirationDuration:           viper.GetDuration(config.Cluster.ExpiryInMinutes) * time.Minute,
-			SkipHealthCheck:              viper.GetBool(config.Tests.SkipClusterHealthChecks),
+			SkipHealthCheck:              true, // Fall back to osde2e healthchecks
 			UseDefaultAccountRolesPrefix: viper.GetBool(STSUseDefaultAccountRolesPrefix),
 			InstallTimeout:               time.Duration(installTimeout) * time.Minute,
 			HealthCheckTimeout:           healthCheckTimeout,

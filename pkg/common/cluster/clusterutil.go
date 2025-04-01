@@ -116,6 +116,17 @@ func WaitForClusterReadyPostInstall(clusterID string, logger *log.Logger) error 
 		return nil
 	}
 
+	if viper.GetBool(config.Tests.OnlyHealthCheckNodes) {
+		logger.Println("Waiting up to 30 minutes for all nodes to be ready")
+		err := wait.PollUntilContextTimeout(context.TODO(), 30*time.Second, 30*time.Minute, false, func(_ context.Context) (bool, error) {
+			return healthchecks.CheckNodeHealth(kubeClient.CoreV1(), logger)
+		})
+		if err != nil {
+			return fmt.Errorf("node health check failed: %w", err)
+		}
+		return nil
+	}
+
 	err = healthchecks.CheckHealthcheckJob(context.Background(), clusterConfig, logger)
 	if err != nil {
 		return fmt.Errorf("cluster failed health check: %w", err)
