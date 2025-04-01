@@ -9,7 +9,6 @@ import (
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
 
-	"github.com/openshift/osde2e/pkg/common/alert"
 	"github.com/openshift/osde2e/pkg/common/helper"
 )
 
@@ -17,11 +16,6 @@ var (
 	imageRegistryTestName  string = "[Suite: openshift][image-registry]"
 	imageEcosystemTestName string = "[Suite: openshift][image-ecosystem]"
 )
-
-func init() {
-	alert.RegisterGinkgoAlert(imageRegistryTestName, "SD-CICD", "Diego Santamaria", "hcm-cicd-alerts", "sd-cicd@redhat.com", 4)
-	alert.RegisterGinkgoAlert(imageEcosystemTestName, "SD-CICD", "Diego Santamaria", "hcm-cicd-alerts", "sd-cicd@redhat.com", 4)
-}
 
 var _ = ginkgo.Describe(imageRegistryTestName, func() {
 	defer ginkgo.GinkgoRecover()

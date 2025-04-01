@@ -10,7 +10,6 @@ import (
 
 	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	"github.com/openshift/osde2e/pkg/common/alert"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/helper"
@@ -43,10 +42,6 @@ var testApplications = []string{
 }
 
 var appBuildsTestName string = "[Suite: app-builds] OpenShift Application Build E2E"
-
-func init() {
-	alert.RegisterGinkgoAlert(appBuildsTestName, "SD-CICD", "Diego Santamaria", "hcm-cicd-alerts", "sd-cicd@redhat.com", 4)
-}
 
 var _ = ginkgo.Describe(appBuildsTestName, label.AppBuilds, func() {
 	defer ginkgo.GinkgoRecover()

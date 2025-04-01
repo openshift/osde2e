@@ -9,7 +9,6 @@ import (
 
 	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	"github.com/openshift/osde2e/pkg/common/alert"
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/label"
 	batchv1 "k8s.io/api/batch/v1"
@@ -28,10 +27,6 @@ const (
 	pollInterval                 = 10 * time.Second
 	podSucceededTimeout          = 5 * time.Minute
 )
-
-func init() {
-	alert.RegisterGinkgoAlert(rebalanceInfraNodesTestName, "SD-SREP", "Jing Zhang", "hcm-cicd-alerts", "sd-cicd@redhat.com", 4)
-}
 
 var _ = ginkgo.Describe(rebalanceInfraNodesTestName, label.Informing, func() {
 	h := helper.New()

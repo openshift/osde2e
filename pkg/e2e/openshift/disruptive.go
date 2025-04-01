@@ -9,15 +9,10 @@ import (
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
 
-	"github.com/openshift/osde2e/pkg/common/alert"
 	"github.com/openshift/osde2e/pkg/common/helper"
 )
 
 var disruptiveTestName = "[Suite: openshift][disruptive]"
-
-func init() {
-	alert.RegisterGinkgoAlert(disruptiveTestName, "SD-CICD", "Diego Santamaria", "hcm-cicd-alerts", "sd-cicd@redhat.com", 4)
-}
 
 // Disruptive tests require SSH access to nodes.
 var _ = ginkgo.Describe(disruptiveTestName, func() {

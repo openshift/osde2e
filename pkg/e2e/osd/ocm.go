@@ -11,7 +11,6 @@ import (
 
 	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	"github.com/openshift/osde2e/pkg/common/alert"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/helper"
@@ -23,10 +22,6 @@ import (
 )
 
 var ocmTestName string = "[Suite: e2e] [OSD] OCM"
-
-func init() {
-	alert.RegisterGinkgoAlert(ocmTestName, "SD-CICD", "Diego Santamaria", "hcm-cicd-alerts", "sd-cicd@redhat.com", 4)
-}
 
 const (
 	firewallCreateTemplText = `

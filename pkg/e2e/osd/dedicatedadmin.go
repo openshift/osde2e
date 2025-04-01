@@ -8,7 +8,6 @@ import (
 	. "github.com/onsi/gomega"
 	projectv1 "github.com/openshift/api/project/v1"
 	userv1 "github.com/openshift/api/user/v1"
-	"github.com/openshift/osde2e/pkg/common/alert"
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/label"
 	operatorv1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
@@ -22,10 +21,6 @@ import (
 )
 
 var dedicatedAdminTestName string = "[Suite: informing] [OSD] dedicated-admin permissions"
-
-func init() {
-	alert.RegisterGinkgoAlert(dedicatedAdminTestName, "SD-SREP", "@dedicated-admin-operator", "hcm-cicd-alerts", "sd-cicd@redhat.com", 4)
-}
 
 var _ = ginkgo.Describe(dedicatedAdminTestName, label.Informing, func() {
 	ginkgo.Context("dedicated-admin group permissions", func() {

@@ -13,7 +13,6 @@ import (
 	. "github.com/onsi/gomega"
 
 	cloudcredentialv1 "github.com/openshift/cloud-credential-operator/pkg/apis/cloudcredential/v1"
-	"github.com/openshift/osde2e/pkg/common/alert"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/helper"
@@ -46,10 +45,6 @@ const (
 	encryptedStoragePollInterval        = 30 * time.Second
 	encryptedStoragePollTimeout         = 10 * time.Minute
 )
-
-func init() {
-	alert.RegisterGinkgoAlert(encryptedStorageTestName, "SD-SREP", "Trevor Nierman", "hcm-cicd-alerts", "sd-cicd@redhat.com", 4)
-}
 
 var _ = ginkgo.Describe(encryptedStorageTestName, label.E2E, func() {
 	ginkgo.Context("in GCP clusters", func() {

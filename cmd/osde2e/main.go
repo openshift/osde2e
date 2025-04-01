@@ -10,7 +10,6 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/openshift/osde2e/cmd/osde2e/alert"
 	"github.com/openshift/osde2e/cmd/osde2e/arguments"
 	"github.com/openshift/osde2e/cmd/osde2e/cleanup"
 	"github.com/openshift/osde2e/cmd/osde2e/completion"
@@ -44,7 +43,6 @@ func init() {
 	root.AddCommand(healthcheck.Cmd)
 	root.AddCommand(query.Cmd)
 	root.AddCommand(completion.Cmd)
-	root.AddCommand(alert.Cmd)
 	root.AddCommand(cleanup.Cmd)
 }
 

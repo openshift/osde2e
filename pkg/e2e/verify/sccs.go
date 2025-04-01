@@ -7,7 +7,6 @@ import (
 	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	securityv1 "github.com/openshift/api/security/v1"
-	"github.com/openshift/osde2e/pkg/common/alert"
 	"github.com/openshift/osde2e/pkg/common/expect"
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/label"
@@ -25,10 +24,6 @@ import (
 )
 
 var dedicatedAdminSccTestName = "[Suite: e2e] [OSD] RBAC Dedicated Admins SCC permissions"
-
-func init() {
-	alert.RegisterGinkgoAlert(dedicatedAdminSccTestName, "SD-CICD", "Matt Bargenquast", "hcm-cicd-alerts", "sd-cicd@redhat.com", 4)
-}
 
 var _ = ginkgo.Describe(dedicatedAdminSccTestName, ginkgo.Ordered, label.HyperShift, label.E2E, func() {
 	var h *helper.H

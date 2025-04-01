@@ -9,7 +9,6 @@ import (
 	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/openshift/osde2e-common/pkg/clients/prometheus"
-	"github.com/openshift/osde2e/pkg/common/alert"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/helper"
@@ -26,10 +25,6 @@ var ignoreAlerts = map[string]map[string][]string{
 }
 
 var clusterStateTestName string = "[Suite: e2e] Cluster state"
-
-func init() {
-	alert.RegisterGinkgoAlert(clusterStateTestName, "SD-CICD", "Diego Santamaria", "hcm-cicd-alerts", "sd-cicd@redhat.com", 4)
-}
 
 var _ = ginkgo.Describe(clusterStateTestName, ginkgo.Ordered, label.E2E, func() {
 	var prom *prometheus.Client

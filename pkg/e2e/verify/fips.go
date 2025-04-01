@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/onsi/ginkgo/v2"
-	"github.com/openshift/osde2e/pkg/common/alert"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/expect"
@@ -21,10 +20,6 @@ import (
 const (
 	fipsTestName = "[Suite: e2e] FIPS"
 )
-
-func init() {
-	alert.RegisterGinkgoAlert(fipsTestName, "SD-SREP", "Trevor Nierman", "hcm-cicd-alerts", "sd-cicd@redhat.com", 4)
-}
 
 var _ = ginkgo.Describe(fipsTestName, ginkgo.Ordered, label.E2E, func() {
 	var h *helper.H
