@@ -5,7 +5,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"math"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -15,7 +14,6 @@ import (
 	"time"
 
 	"github.com/openshift/osde2e/pkg/common/helper"
-	"github.com/openshift/osde2e/pkg/common/metadata"
 	vegeta "github.com/tsenart/vegeta/lib"
 	"github.com/tsenart/vegeta/lib/plot"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -173,25 +171,6 @@ func (rm *RouteMonitors) End() {
 	}
 	for _, metric := range rm.Metrics {
 		metric.Close()
-	}
-}
-
-// Stores the measured RouteMonitor metrics inside osde2e metadata for DataHub
-func (rm *RouteMonitors) StoreMetadata() {
-	for title, metric := range rm.Metrics {
-		latency := float64(metric.Latencies.Mean / time.Millisecond)
-		if latency < 0 {
-			latency = 0
-		}
-		if math.IsNaN(metric.Throughput) {
-			metric.Throughput = 0
-		}
-		if math.IsNaN(metric.Success) {
-			metric.Success = 0
-		}
-		metadata.Instance.SetRouteLatency(title, latency)
-		metadata.Instance.SetRouteThroughput(title, metric.Throughput)
-		metadata.Instance.SetRouteAvailability(title, metric.Success)
 	}
 }
 

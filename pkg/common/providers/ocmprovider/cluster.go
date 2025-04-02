@@ -19,7 +19,6 @@ import (
 	"github.com/openshift/osde2e/pkg/common/clusterproperties"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
-	"github.com/openshift/osde2e/pkg/common/metadata"
 	"github.com/openshift/osde2e/pkg/common/spi"
 	"k8s.io/apimachinery/pkg/util/wait"
 )
@@ -877,7 +876,6 @@ func (o *OCMProvider) InstallAddons(clusterID string, addonIDs []spi.AddOnID, ad
 
 		if alreadyInstalled {
 			log.Printf("Addon %s is already installed. Skipping.", addonID)
-			o.writeAddonMetadata(addonsClient, addonID)
 			continue
 		}
 
@@ -931,31 +929,9 @@ func (o *OCMProvider) InstallAddons(clusterID string, addonIDs []spi.AddOnID, ad
 
 			num++
 		}
-		o.writeAddonMetadata(addonsClient, addonID)
 	}
 
 	return num, nil
-}
-
-// Write addon metadata
-func (o *OCMProvider) writeAddonMetadata(client *v1.AddOnsClient, addonID string) {
-	addonMetadata := &metadata.AddonMetadata{}
-	// Send the request to retrieve addon:
-	response, err := client.Addon(addonID).Get().Send()
-	if err != nil {
-		log.Printf("error while getting addon from oc client: %v", err)
-		return
-	}
-	version, ok := response.Body().Version().GetID()
-	if !ok {
-		log.Printf("couldn't retrieve addon version for %v: %v", addonID, err)
-	}
-	addonMetadata.SetVersion(version)
-	addonMetadata.SetID(addonID)
-	err = addonMetadata.WriteToJSONFile(metadata.TestHarnessMetadataFile)
-	if err != nil {
-		log.Printf("couldn't write addon metadata for %v: %v", addonID, err)
-	}
 }
 
 func (o *OCMProvider) ocmToSPICluster(ocmCluster *v1.Cluster) (*spi.Cluster, error) {
