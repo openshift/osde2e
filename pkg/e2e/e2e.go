@@ -7,14 +7,12 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"math"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 	"time"
 
-	junit "github.com/joshdk/go-junit"
 	"github.com/onsi/ginkgo/v2"
 	"github.com/onsi/ginkgo/v2/reporters"
 	"github.com/onsi/ginkgo/v2/types"
@@ -25,7 +23,6 @@ import (
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/events"
 	"github.com/openshift/osde2e/pkg/common/helper"
-	"github.com/openshift/osde2e/pkg/common/metadata"
 	"github.com/openshift/osde2e/pkg/common/phase"
 	"github.com/openshift/osde2e/pkg/common/providers"
 	"github.com/openshift/osde2e/pkg/common/runner"
@@ -78,7 +75,6 @@ func beforeSuite() bool {
 		log.Printf("Error getting cluster provider: %s", err.Error())
 		return false
 	}
-	metadata.Instance.SetEnvironment(provider.Environment())
 	if viper.GetString(config.Kubeconfig.Contents) == "" {
 		status, err := configureVersion()
 		if status != Success {
@@ -375,9 +371,6 @@ func runGinkgoTests() (int, error) {
 
 	log.Printf("Outputting log to build log at %s", buildLogPath)
 
-	// Update the metadata object to use the report directory.
-	metadata.Instance.SetReportDir(reportDir)
-
 	if viper.GetString(config.Suffix) == "" {
 		viper.Set(config.Suffix, util.RandomStr(5))
 	}
@@ -455,11 +448,6 @@ func runGinkgoTests() (int, error) {
 		}
 	}
 
-	if reportDir != "" {
-		if err = metadata.Instance.WriteToJSON(reportDir); err != nil {
-			return Failure, fmt.Errorf("error while writing the custom metadata: %v", err)
-		}
-	}
 	// Cleanup
 	if !suiteConfig.DryRun {
 		getLogs()
@@ -714,78 +702,6 @@ func runTestsInPhase(
 		ginkgoPassed = ginkgo.RunSpecs(ginkgo.GinkgoT(), description, suiteConfig, reporterConfig)
 	}()
 
-	files, err := os.ReadDir(phaseDirectory)
-	if err != nil {
-		log.Printf("error reading phase directory: %s", err.Error())
-		return false
-	}
-
-	numTests := 0
-	numPassingTests := 0
-
-	for _, file := range files {
-		if file != nil {
-			// Process the jUnit XML result files
-			if junitFileRegex.MatchString(file.Name()) {
-				suites, err := junit.IngestFile(filepath.Join(phaseDirectory, file.Name()))
-				if err != nil {
-					log.Printf("error reading junit xml file %s: %s", file.Name(), err.Error())
-					return false
-				}
-
-				for _, testSuite := range suites {
-					for _, testcase := range testSuite.Tests {
-						isSkipped := testcase.Status == junit.StatusSkipped
-						isFail := testcase.Status == junit.StatusFailed
-
-						if !isSkipped {
-							numTests++
-						}
-						if !isFail && !isSkipped {
-							numPassingTests++
-						}
-					}
-				}
-			}
-		}
-	}
-
-	passRate := float64(numPassingTests) / float64(numTests)
-
-	if math.IsNaN(passRate) {
-		log.Printf("Pass rate is NaN: numPassingTests = %d, numTests = %d", numPassingTests, numTests)
-	} else {
-		metadata.Instance.SetPassRate(phase, passRate)
-	}
-
-	files, err = os.ReadDir(reportDir)
-	if err != nil {
-		log.Printf("error reading phase directory: %s", err.Error())
-		return false
-	}
-
-	// Ensure all log metrics are zeroed out before running again
-	metadata.Instance.ResetLogMetrics()
-
-	// Ensure all before suite metrics are zeroed out before running again
-	metadata.Instance.ResetBeforeSuiteMetrics()
-
-	for _, file := range files {
-		if logFileRegex.MatchString(file.Name()) {
-			data, err := os.ReadFile(filepath.Join(reportDir, file.Name()))
-			if err != nil {
-				log.Printf("error opening log file %s: %s", file.Name(), err.Error())
-				return false
-			}
-			for _, metric := range config.GetLogMetrics() {
-				metadata.Instance.IncrementLogMetric(metric.Name, metric.HasMatches(data))
-			}
-			for _, metric := range config.GetBeforeSuiteMetrics() {
-				metadata.Instance.IncrementBeforeSuiteMetric(metric.Name, metric.HasMatches(data))
-			}
-		}
-	}
-
 	clusterID := viper.GetString(config.Cluster.ID)
 
 	clusterState := spi.ClusterStateUnknown
@@ -878,7 +794,6 @@ func setupRouteMonitors(ctx context.Context, h *helper.H, closeChannel chan stru
 				_ = routeMonitors.SaveReports(viper.GetString(config.ReportDir))
 				_ = routeMonitors.SavePlots(viper.GetString(config.ReportDir))
 				_ = routeMonitors.ExtractData(viper.GetString(config.ReportDir))
-				routeMonitors.StoreMetadata()
 				close(closeChannel)
 				return
 			}

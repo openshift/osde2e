@@ -2,8 +2,6 @@ package spi
 
 import (
 	"time"
-
-	"github.com/openshift/osde2e/pkg/common/metadata"
 )
 
 // ClusterState is the state of the cluster.
@@ -208,7 +206,6 @@ func (cb *ClusterBuilder) CreationTimestamp(creationTimestamp time.Time) *Cluste
 // State sets the state for a cluster builder.
 func (cb *ClusterBuilder) State(state ClusterState) *ClusterBuilder {
 	cb.state = state
-	metadata.Instance.SetStatus(string(state))
 	return cb
 }
 

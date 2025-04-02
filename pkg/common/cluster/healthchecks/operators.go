@@ -10,7 +10,6 @@ import (
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/logging"
-	"github.com/openshift/osde2e/pkg/common/metadata"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -41,36 +40,25 @@ func CheckOperatorReadiness(configClient configclient.ConfigV1Interface, logger 
 		}
 	}
 
-	var metadataState []string
-
 	for _, co := range list.Items {
 		if _, ok := operatorSkipList[co.GetName()]; !ok {
 			for _, cos := range co.Status.Conditions {
 				if cos.Type == "Available" && cos.Status == "False" {
-					metadataState = append(metadataState, fmt.Sprintf("%v", co))
 					logger.Printf("Operator %v not available: Condition %v has status %v: %v", co.ObjectMeta.Name, cos.Type, cos.Status, cos.Message)
 					success = false
 				}
 
 				if cos.Type == "Progressing" && cos.Status == "True" {
-					metadataState = append(metadataState, fmt.Sprintf("%v", co))
 					logger.Printf("Operator %v is progressing: Condition %v has status %v: %v", co.ObjectMeta.Name, cos.Type, cos.Status, cos.Message)
 					success = false
 				}
 
 				if cos.Type == "Degraded" && cos.Status == "True" {
-					metadataState = append(metadataState, fmt.Sprintf("%v", co))
 					logger.Printf("Operator %v is degraded: Condition %v has status %v: %v", co.ObjectMeta.Name, cos.Type, cos.Status, cos.Message)
 					success = false
 				}
 			}
 		}
-	}
-
-	if len(metadataState) > 0 {
-		metadata.Instance.SetHealthcheckValue("operators", metadataState)
-	} else {
-		metadata.Instance.ClearHealthcheckValue("operators")
 	}
 
 	return success, nil
