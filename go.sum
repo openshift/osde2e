@@ -301,8 +301,8 @@ github.com/openshift/client-go v0.0.0-20250402181141-b3bad3b645f2 h1:bPXR0R8zp1o
 github.com/openshift/client-go v0.0.0-20250402181141-b3bad3b645f2/go.mod h1:dT1cJyVTperQ53GvVRa+GZ27r02fDZy2k5j+9QoQsCo=
 github.com/openshift/cloud-credential-operator v0.0.0-20250319011747-90b793848d80 h1:/Kdc/vsr3VbRvhl/vyVEFjHQmoHqCB72S+y06OeQsV4=
 github.com/openshift/cloud-credential-operator v0.0.0-20250319011747-90b793848d80/go.mod h1:nyo43HPA8I0LD3Szevl4j1X9WsuxguT7M0LYOXIa3R0=
-github.com/openshift/library-go v0.0.0-20240517135010-e93e442c2b18 h1:aUFgWf2nsvxzHcyYFpY8OpVncJgZWc4bZsy5vncjgP0=
-github.com/openshift/library-go v0.0.0-20240517135010-e93e442c2b18/go.mod h1:lFwyRj0XjUf25Da3Q00y+KuaxCWTJ6YzYPDX1+96nco=
+github.com/openshift/library-go v0.0.0-20250402180609-ce2ba53fb2a4 h1:MDnTCGqFUULZ4+0fr0sQYlB80yTun8nEZ062azvFSCk=
+github.com/openshift/library-go v0.0.0-20250402180609-ce2ba53fb2a4/go.mod h1:DAa3BGl0CFtkfJn/g5rU8kDDTErfMVA/QlFm4cvU+MI=
 github.com/openshift/managed-upgrade-operator v0.0.0-20230525042514-a9b8c1d2571c h1:2Vy855A5z3zQgUumH6PORqbUTNtKZ5SlSgzvq3iQBig=
 github.com/openshift/managed-upgrade-operator v0.0.0-20230525042514-a9b8c1d2571c/go.mod h1:W/ajjexZ/T50ZRpk48HbgbtOXD4rt0/wHlwdXu8arQE=
 github.com/openshift/osde2e-common v0.0.0-20250322124525-b4c45d21ce7b h1:oR9RZhSR4sdjQ+aC3p8LcB+z37wRYyn+Rfh8R7Sg8Do=
@@ -323,8 +323,8 @@ github.com/pkg/errors v0.9.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINE
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 h1:Jamvg5psRIccs7FGNTlIRMkT8wgtp5eCXdBlqhYGL6U=
 github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
-github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.64.0 h1:bqFOzWYCuSZEcuFx/ez8DFW+fqGiUEATrgezynCjpP4=
-github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.64.0/go.mod h1:cfNgxpCPGyIydmt3HcwDqKDt0nYdlGRhzftl+DZH7WA=
+github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.74.0 h1:AHzMWDxNiAVscJL6+4wkvFRTpMnJqiaZFEKA/osaBXE=
+github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.74.0/go.mod h1:wAR5JopumPtAZnu0Cjv2PSqV4p4QB09LMhc6fZZTXuA=
 github.com/prometheus-operator/prometheus-operator/pkg/client v0.64.0 h1:bMvSvfmfL9NAuWnUyZoFSyb0jzzcTI3LCMs5vVnBfZ4=
 github.com/prometheus-operator/prometheus-operator/pkg/client v0.64.0/go.mod h1:J51EiS4fKYZkSHLWo1t8Ad0iEw8RhhC6LLvYarM/+30=
 github.com/prometheus/alertmanager v0.28.1 h1:BK5pCoAtaKg01BYRUJhEDV1tqJMEtYBGzPw8QdvnnvA=

@@ -30,7 +30,7 @@ require (
 	github.com/openshift/osde2e-common v0.0.0-20250403140610-86681450f426
 	github.com/operator-framework/api v0.30.0
 	github.com/operator-framework/operator-lifecycle-manager v0.22.0
-	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.64.0
+	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.74.0
 	github.com/prometheus-operator/prometheus-operator/pkg/client v0.64.0
 	github.com/prometheus/alertmanager v0.28.1
 	github.com/prometheus/client_golang v1.21.1
@@ -128,7 +128,7 @@ require (
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/mwitkow/go-conntrack v0.0.0-20190716064945-2f068394615f // indirect
 	github.com/mxk/go-flowrate v0.0.0-20140419014527-cca7078d478f // indirect
-	github.com/openshift/library-go v0.0.0-20240517135010-e93e442c2b18 // indirect
+	github.com/openshift/library-go v0.0.0-20250402180609-ce2ba53fb2a4 // indirect
 	github.com/pelletier/go-toml/v2 v2.2.2 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/prometheus/client_model v0.6.1 // indirect
