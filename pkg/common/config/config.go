@@ -572,20 +572,6 @@ var Addons = struct {
 	Parameters:       "addons.parameters",
 }
 
-// Prometheus config keys.
-var Prometheus = struct {
-	// Address is the address of the Prometheus instance to connect to.
-	// Env: PROMETHEUS_ADDRESS
-	Address string
-
-	// BearerToken is the token needed for communicating with Prometheus.
-	// Env: PROMETHEUS_BEARER_TOKEN
-	BearerToken string
-}{
-	Address:     "prometheus.address",
-	BearerToken: "prometheus.bearerToken",
-}
-
 // Alert config keys.
 var Alert = struct {
 	// EnableAlerts is a boolean to indicate whether alerts should be enabled or not.
@@ -598,31 +584,6 @@ var Alert = struct {
 }{
 	EnableAlerts:  "alert.EnableAlerts",
 	SlackAPIToken: "alert.slackAPIToken",
-}
-
-// Database config keys.
-var Database = struct {
-	// The Postgres user used to access the database.
-	// Env: PG_USER
-	User string
-	// The Postgres password for the user.
-	// Env: PG_PASS
-	Pass string
-	// The Postgres instance's hostname.
-	// Env: PG_HOST
-	Host string
-	// The Postgres instance's listen port.
-	// Env: PG_PORT
-	Port string
-	// The Postgres database name to connect to.
-	// Env: PG_DATABASE
-	DatabaseName string
-}{
-	User:         "database.user",
-	Pass:         "database.pass",
-	Host:         "database.host",
-	Port:         "database.port",
-	DatabaseName: "database.name",
 }
 
 // Proxy config keys
@@ -912,36 +873,12 @@ func InitOSDe2eViper() {
 	viper.SetDefault(Addons.SkipAddonList, false)
 	_ = viper.BindEnv(Addons.SkipAddonList, "SKIP_ADDON_LIST")
 
-	// ----- Prometheus -----
-	_ = viper.BindEnv(Prometheus.Address, "PROMETHEUS_ADDRESS")
-
-	_ = viper.BindEnv(Prometheus.BearerToken, "PROMETHEUS_BEARER_TOKEN")
-
 	// ----- Alert ----
 	_ = viper.BindEnv(Alert.EnableAlerts, "ENABLE_ALERTS")
 	viper.SetDefault(Alert.EnableAlerts, false)
 
 	_ = viper.BindEnv(Alert.SlackAPIToken, "SLACK_API_TOKEN")
 	RegisterSecret(Alert.SlackAPIToken, "slack-api-token")
-
-	// ----- Database -----
-	viper.SetDefault(Database.User, "postgres")
-	_ = viper.BindEnv(Database.User, "PG_USER")
-	RegisterSecret(Database.User, "rds-user")
-
-	_ = viper.BindEnv(Database.Pass, "PG_PASS")
-
-	RegisterSecret(Database.Pass, "rds-pass")
-
-	_ = viper.BindEnv(Database.Host, "PG_HOST")
-	RegisterSecret(Database.Host, "rds-host")
-
-	viper.SetDefault(Database.Port, "5432")
-	_ = viper.BindEnv(Database.Port, "PG_PORT")
-
-	viper.SetDefault(Database.DatabaseName, "cicd_test_data")
-	_ = viper.BindEnv(Database.DatabaseName, "PG_DATABASE")
-	RegisterSecret(Database.DatabaseName, "rds-database")
 
 	// ----- Proxy ------
 	_ = viper.BindEnv(Proxy.HttpProxy, "TEST_HTTP_PROXY")

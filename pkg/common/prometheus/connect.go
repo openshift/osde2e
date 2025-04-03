@@ -10,43 +10,11 @@ import (
 	"strings"
 	"time"
 
-	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
-	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
-	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/prometheus/client_golang/api"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
-
-// CreateClient will create a Prometheus client.
-// If no arguments are supplied, the global config will be used.
-// If one argument is supplied, it will be used as the address for Prometheus, but will use the global config for the bearer token.
-// If two arguments are supplied, the first will be used as the address for Prometheus and the second will be used as the bearer token.
-func CreateClient(args ...string) (api.Client, error) {
-	numArgs := len(args)
-	if numArgs > 2 {
-		return nil, fmt.Errorf("unexpected number of arguments, only 2 are supported")
-	}
-
-	var address, bearerToken string
-
-	if numArgs == 0 {
-		address = viper.GetString(config.Prometheus.Address)
-		bearerToken = viper.GetString(config.Prometheus.BearerToken)
-	} else if numArgs == 1 {
-		address = args[0]
-		bearerToken = viper.GetString(config.Prometheus.BearerToken)
-	} else if numArgs == 2 {
-		address = args[0]
-		bearerToken = args[1]
-	}
-
-	return api.NewClient(api.Config{
-		Address:      address,
-		RoundTripper: createRoundTripper(bearerToken),
-	})
-}
 
 // createRoundTripper will create a RoundTripper like api.DefaultRoundTripper with an added stripping
 // of cert verification and adding the bearer token to the HTTP request
