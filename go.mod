@@ -27,7 +27,7 @@ require (
 	github.com/openshift/client-go v0.0.0-20250402181141-b3bad3b645f2
 	github.com/openshift/cloud-credential-operator v0.0.0-20250319011747-90b793848d80
 	github.com/openshift/managed-upgrade-operator v0.0.0-20230525042514-a9b8c1d2571c
-	github.com/openshift/osde2e-common v0.0.0-20250322124525-b4c45d21ce7b
+	github.com/openshift/osde2e-common v0.0.0-20250403140610-86681450f426
 	github.com/operator-framework/api v0.30.0
 	github.com/operator-framework/operator-lifecycle-manager v0.22.0
 	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.64.0

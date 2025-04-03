@@ -309,6 +309,10 @@ var Tests = struct {
 	// ServiceAccount defines what user the tests should run as. By default, osde2e uses system:admin
 	// Env: SERVICE_ACCOUNT
 	ServiceAccount string
+
+	// OnlyHealthcheckNodes focuses pre-install validation only on the nodes
+	// Env: ONLY_HEALTH_CHECK_NODES
+	OnlyHealthCheckNodes string
 }{
 	TestHarnesses:              "tests.testHarnesses",
 	SuiteTimeout:               "tests.suiteTimeout",
@@ -330,6 +334,7 @@ var Tests = struct {
 	SkipClusterHealthChecks:    "tests.skipClusterHealthChecks",
 	LogBucket:                  "tests.logBucket",
 	ClusterHealthChecksTimeout: "tests.clusterHealthChecksTimeout",
+	OnlyHealthCheckNodes:       "tests.onlyHealthCheckNodes",
 }
 
 // Cluster config keys.
@@ -765,6 +770,8 @@ func InitOSDe2eViper() {
 	_ = viper.BindEnv(Tests.LogBucket, "LOG_BUCKET")
 
 	_ = viper.BindEnv(Tests.ServiceAccount, "SERVICE_ACCOUNT")
+
+	_ = viper.BindEnv(Tests.OnlyHealthCheckNodes, "ONLY_HEALTH_CHECK_NODES")
 
 	viper.SetDefault(Tests.SlackChannel, "hcm-cicd-alerts")
 	_ = viper.BindEnv(Tests.SlackChannel, "SLACK_CHANNEL")

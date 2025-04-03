@@ -34,21 +34,22 @@ var Cmd = &cobra.Command{
 }
 
 var args struct {
-	configString       string
-	customConfig       string
-	secretLocations    string
-	clusterID          string
-	environment        string
-	kubeConfig         string
-	skipDestroyCluster bool
-	provisionOnly      bool
-	skipHealthChecks   bool
-	skipMustGather     bool
-	focusTests         string
-	skipTests          string
-	labelFilter        string
-	ocpTestSuite       string
-	ocpTestSkipRegex   string
+	configString         string
+	customConfig         string
+	secretLocations      string
+	clusterID            string
+	environment          string
+	kubeConfig           string
+	skipDestroyCluster   bool
+	provisionOnly        bool
+	skipHealthChecks     bool
+	skipMustGather       bool
+	focusTests           string
+	skipTests            string
+	labelFilter          string
+	ocpTestSuite         string
+	ocpTestSkipRegex     string
+	onlyHealthCheckNodes bool
 }
 
 func init() {
@@ -112,6 +113,12 @@ func init() {
 		false,
 		"Skip cluster health checks.",
 	)
+	pfs.BoolVar(
+		&args.onlyHealthCheckNodes,
+		"only-health-check-nodes",
+		false,
+		"Only wait for the cluster nodes to be ready",
+	)
 	pfs.StringVar(
 		&args.focusTests,
 		"focus-tests",
@@ -155,6 +162,7 @@ func init() {
 	_ = viper.BindPFlag(config.Cluster.SkipDestroyCluster, Cmd.PersistentFlags().Lookup("skip-destroy-cluster"))
 	_ = viper.BindPFlag(config.Cluster.ProvisionOnly, Cmd.PersistentFlags().Lookup("provision-only"))
 	_ = viper.BindPFlag(config.Tests.SkipClusterHealthChecks, Cmd.PersistentFlags().Lookup("skip-health-check"))
+	_ = viper.BindPFlag(config.Tests.OnlyHealthCheckNodes, Cmd.PersistentFlags().Lookup("only-health-check-nodes"))
 	_ = viper.BindPFlag(config.Tests.GinkgoFocus, Cmd.PersistentFlags().Lookup("focus-tests"))
 	_ = viper.BindPFlag(config.Tests.OCPTestSuite, Cmd.PersistentFlags().Lookup("ocp-test-suite"))
 	_ = viper.BindPFlag(config.Tests.OCPTestSkipRegex, Cmd.PersistentFlags().Lookup("ocp-test-skip-regex"))

@@ -105,6 +105,7 @@ Some environment variables commonly used for pipelines under osde2e are indicate
 | CLEAN_RUNS                  | CleanRuns is the number of times the test-version is run before skipping.                                                                                                                                                                                                 |
 | OPERATOR_SKIP               | OperatorSkip is a comma-delimited list of operator names to ignore health checks from. ex. "insights,telemetry"                                                                                                                                                           |
 | SKIP_CLUSTER_HEALTH_CHECKS  | SkipClusterHealthChecks skips the cluster health checks. Useful when developing against a running cluster.                                                                                                                                                                |
+| ONLY_HEALTH_CHECK_NODES     | Only validate the nodes are ready                                                                                                                                                                                                                                         |
 | METRICS_BUCKET              | MetricsBucket is the bucket that metrics data will be uploaded to.                                                                                                                                                                                                        |
 | SERVICE_ACCOUNT             | ServiceAccount defines what user the tests should run as. By default, osde2e uses system:admin                                                                                                                                                                            |
 
@@ -146,6 +147,7 @@ CLI flags that are commonly used include:
 --skip-destroy-cluster: Skip cluster deletion after test completion.
 --skip-health-check: Skip cluster health checks.
 --skip-tests: Skip any Ginkgo tests whose names match the regular expression.
+--only-health-check-nodes: Only validate the nodes are ready
 ```
 
 ### For the query sub-command:
@@ -215,6 +217,7 @@ The following are the values that can be plugged in for the --configs flag when 
 | skip-health-checks   | To run osde2e while skipping all the preliminary cluster health checks.            |
 | skip-must-gather     | To run osde2e while skipping must-gather collection after test.                    |
 | skip-destroy-cluster | Not to delete test cluster after test.                                             |
+| only-health-check-nodes | Only validate the nodes are ready |
 | long-timeout         | To extend cluster expiry to about 8 hours.                                         |
 | log-metrics          | To set log metric configs for a couple of errors that pop up while running osde2e. |
 | region-random        | To set a random region for a cluster being created by the cloud provider.          |
