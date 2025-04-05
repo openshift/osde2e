@@ -61,7 +61,7 @@ require (
 
 require (
 	github.com/hashicorp/go-version v1.7.0
-	github.com/openshift/api v0.0.0-20250402094343-3d7abe90f97e
+	github.com/openshift/api v0.0.0-20250405052455-aa882942241d
 )
 
 require (
