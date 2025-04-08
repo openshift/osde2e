@@ -71,7 +71,6 @@ Some environment variables commonly used for pipelines under osde2e are indicate
 | UPGRADE_TO_LATEST_Y             | UpgradeToLatestY looks for the newest valid minor release upgrade path and selects it.                           |
 | UPGRADE_RELEASE_NAME            | ReleaseName is the name of the release in a release stream.                                                      |
 | UPGRADE_IMAGE                   | Image is the release image a cluster is upgraded to. If set, it overrides the release stream and upgrades.       |
-| UPGRADE_MONITOR_ROUTES          | MonitorRoutesDuringUpgrade will monitor the availability of routes whilst an upgrade takes place.                |
 | UPGRADE_MANAGED_TEST_PDBS       | Create disruptive Pod Disruption Budget workloads to test the Managed Upgrade Operator's ability to handle them. |
 | UPGRADE_MANAGED_TEST_RESCHEDULE | Test the managed upgrade when the upgrade schedule changed.                                                      |
 
