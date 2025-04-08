@@ -41,7 +41,7 @@ require (
 	github.com/spf13/viper v1.19.0
 	github.com/vmware-tanzu/velero v1.10.2
 	golang.org/x/net v0.37.0
-	golang.org/x/oauth2 v0.28.0
+	golang.org/x/oauth2 v0.28.0 // indirect
 	golang.org/x/sync v0.12.0
 	golang.org/x/tools v0.31.0
 	google.golang.org/api v0.224.0
