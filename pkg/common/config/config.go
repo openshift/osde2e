@@ -167,10 +167,6 @@ var Upgrade = struct {
 	// UpgradeVersionEqualToInstallVersion is true if the install version and upgrade versions are the same.
 	UpgradeVersionEqualToInstallVersion string
 
-	// MonitorRoutesDuringUpgrade will monitor the availability of routes whilst an upgrade takes place
-	// Env: UPGRADE_MONITOR_ROUTES
-	MonitorRoutesDuringUpgrade string
-
 	// Create disruptive Pod Disruption Budget workloads to test the Managed Upgrade Operator's ability to handle them.
 	ManagedUpgradeTestPodDisruptionBudgets string
 
@@ -193,7 +189,6 @@ var Upgrade = struct {
 	Image:                                  "upgrade.image",
 	Type:                                   "upgrade.type",
 	UpgradeVersionEqualToInstallVersion:    "upgrade.upgradeVersionEqualToInstallVersion",
-	MonitorRoutesDuringUpgrade:             "upgrade.monitorRoutesDuringUpgrade",
 	ManagedUpgradeTestPodDisruptionBudgets: "upgrade.managedUpgradeTestPodDisruptionBudgets",
 	ManagedUpgradeTestNodeDrain:            "upgrade.managedUpgradeTestNodeDrain",
 	ManagedUpgradeRescheduled:              "upgrade.managedUpgradeRescheduled",
@@ -665,9 +660,6 @@ func InitOSDe2eViper() {
 	_ = viper.BindEnv(Upgrade.Type, "UPGRADE_TYPE")
 
 	viper.SetDefault(Upgrade.UpgradeVersionEqualToInstallVersion, false)
-
-	_ = viper.BindEnv(Upgrade.MonitorRoutesDuringUpgrade, "UPGRADE_MONITOR_ROUTES")
-	viper.SetDefault(Upgrade.MonitorRoutesDuringUpgrade, true)
 
 	_ = viper.BindEnv(Upgrade.ManagedUpgradeTestPodDisruptionBudgets, "UPGRADE_MANAGED_TEST_PDBS")
 	viper.SetDefault(Upgrade.ManagedUpgradeTestPodDisruptionBudgets, true)

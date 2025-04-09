@@ -21,7 +21,6 @@ import (
 	"github.com/openshift/osde2e/pkg/common/clusterproperties"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
-	"github.com/openshift/osde2e/pkg/common/events"
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/phase"
 	"github.com/openshift/osde2e/pkg/common/providers"
@@ -31,16 +30,11 @@ import (
 	"github.com/openshift/osde2e/pkg/common/util"
 	"github.com/openshift/osde2e/pkg/common/versions"
 	"github.com/openshift/osde2e/pkg/debug"
-	"github.com/openshift/osde2e/pkg/e2e/routemonitors"
-	vegeta "github.com/tsenart/vegeta/lib"
 	"k8s.io/apimachinery/pkg/util/wait"
 	ctrlog "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 const (
-	// hiveLog is the name of the hive log file.
-	hiveLog string = "hive-log.txt"
-
 	// buildLog is the name of the build log file.
 	buildLog string = "test_output.log"
 
@@ -82,8 +76,6 @@ func beforeSuite() bool {
 			return false
 		}
 		cluster, err = clusterutil.ProvisionCluster(nil)
-
-		events.HandleErrorWithEvents(err, events.InstallSuccessful, events.InstallFailed)
 		if err != nil {
 			log.Printf("Failed to set up or retrieve cluster: %v", err)
 			getLogs()
@@ -152,7 +144,6 @@ func beforeSuite() bool {
 		})
 
 		if clusterConfigerr != nil {
-			events.HandleErrorWithEvents(err, events.InstallKubeconfigRetrievalSuccess, events.InstallKubeconfigRetrievalFailure)
 			log.Printf("Failed retrieving kubeconfig: %v", clusterConfigerr)
 			getLogs()
 			return false
@@ -181,7 +172,6 @@ func beforeSuite() bool {
 	if len(viper.GetString(config.Addons.IDs)) > 0 {
 		if viper.GetString(config.Provider) != "mock" {
 			err = installAddons()
-			events.HandleErrorWithEvents(err, events.InstallAddonsSuccessful, events.InstallAddonsFailed)
 			if err != nil {
 				log.Printf("Cluster failed installing addons: %v", err)
 				getLogs()
@@ -308,10 +298,7 @@ func runGinkgoTests() (int, error) {
 	}
 
 	if testsToRun := viper.GetStringSlice(config.Tests.TestsToRun); len(testsToRun) > 0 {
-		// Flag to delete sice these Print statements are duplicated, all we really are doing is setting an array to be passed to the Ginkgo suite.
-		log.Printf("%v", testsToRun)
 		suiteConfig.FocusStrings = testsToRun
-		log.Printf("%v", suiteConfig.FocusStrings)
 	}
 
 	if focus := viper.GetString(config.Tests.GinkgoFocus); focus != "" {
@@ -408,20 +395,10 @@ func runGinkgoTests() (int, error) {
 				return Failure, fmt.Errorf("unable to generate helper outside ginkgo: %v", err)
 			}
 
-			// create route monitors for the upgrade
-			var routeMonitorChan chan struct{}
-			closeMonitorChan := make(chan struct{})
-			if viper.GetBool(config.Upgrade.MonitorRoutesDuringUpgrade) && !suiteConfig.DryRun {
-				routeMonitorChan = setupRouteMonitors(context.TODO(), h, closeMonitorChan)
-				log.Println("Route Monitors created.")
-			}
-
 			// run the upgrade
 			if err = upgrade.RunUpgrade(h); err != nil {
-				events.RecordEvent(events.UpgradeFailed)
 				return Failure, fmt.Errorf("error performing upgrade: %v", err)
 			}
-			events.RecordEvent(events.UpgradeSuccessful)
 
 			if viper.GetBool(config.Upgrade.RunPostUpgradeTests) {
 				log.Println("Running e2e tests POST-UPGRADE...")
@@ -433,13 +410,6 @@ func runGinkgoTests() (int, error) {
 					reporterConfig,
 				)
 				viper.Set(config.Cluster.Passing, upgradeTestsPassed)
-			}
-
-			// close route monitors
-			if viper.GetBool(config.Upgrade.MonitorRoutesDuringUpgrade) && !suiteConfig.DryRun {
-				close(routeMonitorChan)
-				<-closeMonitorChan
-				log.Println("Route monitors reconciled")
 			}
 		} else {
 			log.Println("Unable to perform cluster upgrade, no kubeconfig found.")
@@ -734,68 +704,4 @@ func runTestsInPhase(
 		}
 	}
 	return ginkgoPassed
-}
-
-// checkBeforeMetricsGeneration runs a variety of checks before generating metrics.
-func checkBeforeMetricsGeneration() error {
-	// Check for hive-log.txt
-	if _, err := os.Stat(filepath.Join(viper.GetString(config.ReportDir), hiveLog)); os.IsNotExist(err) {
-		events.RecordEvent(events.NoHiveLogs)
-	}
-
-	return nil
-}
-
-// setupRouteMonitors initializes performance+availability monitoring of cluster routes,
-// returning a channel which can be used to terminate the monitoring.
-func setupRouteMonitors(ctx context.Context, h *helper.H, closeChannel chan struct{}) chan struct{} {
-	routeMonitorChan := make(chan struct{})
-	go func() {
-		// Set up the route monitors
-		routeMonitors, err := routemonitors.Create(ctx, h)
-		if err != nil {
-			log.Printf("Error creating route monitors: %v\n", err)
-			close(closeChannel)
-			return
-		}
-
-		// Set the route monitors to become active
-		routeMonitors.Start()
-
-		// Set up ongoing monitoring of metric gathering from the monitors
-		go func() {
-			// Create an aggregate channel of all individual metric channels
-			agg := make(chan *vegeta.Result)
-			for _, ch := range routeMonitors.Monitors {
-				go func(c <-chan *vegeta.Result) {
-					for msg := range c {
-						agg <- msg
-					}
-				}(ch)
-			}
-			for {
-				select {
-				// A metric is waiting for storage
-				case msg := <-agg:
-					routeMonitors.Metrics[msg.Attack].Add(msg)
-					_ = routeMonitors.Plots[msg.Attack].Add(msg)
-				}
-			}
-		}()
-
-		// Close down route monitoring when signalled to
-		for {
-			select {
-			case <-routeMonitorChan:
-				log.Println("Closing route monitors...")
-				routeMonitors.End()
-				_ = routeMonitors.SaveReports(viper.GetString(config.ReportDir))
-				_ = routeMonitors.SavePlots(viper.GetString(config.ReportDir))
-				_ = routeMonitors.ExtractData(viper.GetString(config.ReportDir))
-				close(closeChannel)
-				return
-			}
-		}
-	}()
-	return routeMonitorChan
 }
