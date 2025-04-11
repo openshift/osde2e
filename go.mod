@@ -26,12 +26,12 @@ require (
 	github.com/openshift-online/ocm-sdk-go v0.1.465
 	github.com/openshift/client-go v0.0.0-20250402181141-b3bad3b645f2
 	github.com/openshift/cloud-credential-operator v0.0.0-20250326174647-d66761c09842
-	github.com/openshift/managed-upgrade-operator v0.0.0-20230525042514-a9b8c1d2571c
+	github.com/openshift/managed-upgrade-operator v0.0.0-20250408085518-816604ef7f1a
 	github.com/openshift/osde2e-common v0.0.0-20250410141311-7d13c0222fee
 	github.com/operator-framework/api v0.30.0
 	github.com/operator-framework/operator-lifecycle-manager v0.22.0
-	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.64.0
-	github.com/prometheus-operator/prometheus-operator/pkg/client v0.64.0
+	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.71.0
+	github.com/prometheus-operator/prometheus-operator/pkg/client v0.71.0
 	github.com/prometheus/alertmanager v0.28.1
 	github.com/prometheus/client_golang v1.22.0
 	github.com/prometheus/common v0.63.0
