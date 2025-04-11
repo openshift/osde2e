@@ -14,7 +14,7 @@ import (
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
-	"github.com/google/go-github/v31/github"
+	"github.com/google/go-github/v71/github"
 	"github.com/kylelemons/godebug/diff"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
