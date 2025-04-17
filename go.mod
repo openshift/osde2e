@@ -30,7 +30,7 @@ require (
 	github.com/openshift/osde2e-common v0.0.0-20250410141311-7d13c0222fee
 	github.com/operator-framework/api v0.30.0
 	github.com/operator-framework/operator-lifecycle-manager v0.22.0
-	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.64.0
+	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.82.0
 	github.com/prometheus-operator/prometheus-operator/pkg/client v0.64.0
 	github.com/prometheus/alertmanager v0.28.1
 	github.com/prometheus/client_golang v1.22.0
