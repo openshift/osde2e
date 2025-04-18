@@ -508,7 +508,6 @@ var Cluster = struct {
 	NetworkProvider:                     "cluster.networkProvider",
 	ImageContentSource:                  "cluster.imageContentSource",
 	InstallConfig:                       "cluster.installConfig",
-	HibernateAfterUse:                   "cluster.hibernateAfterUse",
 	UseExistingCluster:                  "cluster.useExistingCluster",
 	Passing:                             "cluster.passing",
 	Reused:                              "cluster.rused",
@@ -829,9 +828,6 @@ func InitOSDe2eViper() {
 
 	viper.SetDefault(Cluster.NetworkProvider, DefaultNetworkProvider)
 	_ = viper.BindEnv(Cluster.NetworkProvider, "CLUSTER_NETWORK_PROVIDER")
-
-	viper.SetDefault(Cluster.HibernateAfterUse, false)
-	_ = viper.BindEnv(Cluster.HibernateAfterUse, "HIBERNATE_AFTER_USE")
 
 	viper.SetDefault(Cluster.UseExistingCluster, false)
 	_ = viper.BindEnv(Cluster.UseExistingCluster, "USE_EXISTING_CLUSTER")

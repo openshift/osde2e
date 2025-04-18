@@ -98,16 +98,6 @@ func (m *ROSAProvider) DetermineMachineType(cloudProvider string) (string, error
 	return m.ocmProvider.DetermineMachineType(cloudProvider)
 }
 
-// Resume calls DetermineMachineType from the OCM provider
-func (m *ROSAProvider) Resume(id string) bool {
-	return m.ocmProvider.Resume(id)
-}
-
-// Hibernate calls DetermineMachineType from the OCM provider
-func (m *ROSAProvider) Hibernate(id string) bool {
-	return m.ocmProvider.Hibernate(id)
-}
-
 // AddClusterProxy sets the cluster proxy configuration for the supplied cluster
 func (m *ROSAProvider) AddClusterProxy(clusterId string, httpsProxy string, httpProxy string, userCABundle string) error {
 	return m.ocmProvider.AddClusterProxy(clusterId, httpsProxy, httpProxy, userCABundle)
