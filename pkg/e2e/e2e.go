@@ -7,14 +7,12 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"math"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 	"time"
 
-	junit "github.com/joshdk/go-junit"
 	"github.com/onsi/ginkgo/v2"
 	"github.com/onsi/ginkgo/v2/reporters"
 	"github.com/onsi/ginkgo/v2/types"
@@ -23,9 +21,7 @@ import (
 	"github.com/openshift/osde2e/pkg/common/clusterproperties"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
-	"github.com/openshift/osde2e/pkg/common/events"
 	"github.com/openshift/osde2e/pkg/common/helper"
-	"github.com/openshift/osde2e/pkg/common/metadata"
 	"github.com/openshift/osde2e/pkg/common/phase"
 	"github.com/openshift/osde2e/pkg/common/providers"
 	"github.com/openshift/osde2e/pkg/common/runner"
@@ -34,16 +30,11 @@ import (
 	"github.com/openshift/osde2e/pkg/common/util"
 	"github.com/openshift/osde2e/pkg/common/versions"
 	"github.com/openshift/osde2e/pkg/debug"
-	"github.com/openshift/osde2e/pkg/e2e/routemonitors"
-	vegeta "github.com/tsenart/vegeta/lib"
 	"k8s.io/apimachinery/pkg/util/wait"
 	ctrlog "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 const (
-	// hiveLog is the name of the hive log file.
-	hiveLog string = "hive-log.txt"
-
 	// buildLog is the name of the build log file.
 	buildLog string = "test_output.log"
 
@@ -78,7 +69,6 @@ func beforeSuite() bool {
 		log.Printf("Error getting cluster provider: %s", err.Error())
 		return false
 	}
-	metadata.Instance.SetEnvironment(provider.Environment())
 	if viper.GetString(config.Kubeconfig.Contents) == "" {
 		status, err := configureVersion()
 		if status != Success {
@@ -86,8 +76,6 @@ func beforeSuite() bool {
 			return false
 		}
 		cluster, err = clusterutil.ProvisionCluster(nil)
-
-		events.HandleErrorWithEvents(err, events.InstallSuccessful, events.InstallFailed)
 		if err != nil {
 			log.Printf("Failed to set up or retrieve cluster: %v", err)
 			getLogs()
@@ -127,10 +115,8 @@ func beforeSuite() bool {
 				// We should manually run all our health checks if the cluster is waking up
 				err = clusterutil.WaitForClusterReadyPostWake(cluster.ID(), nil)
 			} else {
-				if viper.GetString(config.Provider) != "rosa" {
-					// This is a new cluster and we should check the OSD Ready job
-					err = clusterutil.WaitForClusterReadyPostInstall(cluster.ID(), nil)
-				}
+				// This is a new cluster and we should check the OSD Ready job
+				err = clusterutil.WaitForClusterReadyPostInstall(cluster.ID(), nil)
 			}
 			if err != nil {
 				log.Println("*******************")
@@ -158,7 +144,6 @@ func beforeSuite() bool {
 		})
 
 		if clusterConfigerr != nil {
-			events.HandleErrorWithEvents(err, events.InstallKubeconfigRetrievalSuccess, events.InstallKubeconfigRetrievalFailure)
 			log.Printf("Failed retrieving kubeconfig: %v", clusterConfigerr)
 			getLogs()
 			return false
@@ -187,7 +172,6 @@ func beforeSuite() bool {
 	if len(viper.GetString(config.Addons.IDs)) > 0 {
 		if viper.GetString(config.Provider) != "mock" {
 			err = installAddons()
-			events.HandleErrorWithEvents(err, events.InstallAddonsSuccessful, events.InstallAddonsFailed)
 			if err != nil {
 				log.Printf("Cluster failed installing addons: %v", err)
 				getLogs()
@@ -314,10 +298,7 @@ func runGinkgoTests() (int, error) {
 	}
 
 	if testsToRun := viper.GetStringSlice(config.Tests.TestsToRun); len(testsToRun) > 0 {
-		// Flag to delete sice these Print statements are duplicated, all we really are doing is setting an array to be passed to the Ginkgo suite.
-		log.Printf("%v", testsToRun)
 		suiteConfig.FocusStrings = testsToRun
-		log.Printf("%v", suiteConfig.FocusStrings)
 	}
 
 	if focus := viper.GetString(config.Tests.GinkgoFocus); focus != "" {
@@ -375,9 +356,6 @@ func runGinkgoTests() (int, error) {
 
 	log.Printf("Outputting log to build log at %s", buildLogPath)
 
-	// Update the metadata object to use the report directory.
-	metadata.Instance.SetReportDir(reportDir)
-
 	if viper.GetString(config.Suffix) == "" {
 		viper.Set(config.Suffix, util.RandomStr(5))
 	}
@@ -417,20 +395,10 @@ func runGinkgoTests() (int, error) {
 				return Failure, fmt.Errorf("unable to generate helper outside ginkgo: %v", err)
 			}
 
-			// create route monitors for the upgrade
-			var routeMonitorChan chan struct{}
-			closeMonitorChan := make(chan struct{})
-			if viper.GetBool(config.Upgrade.MonitorRoutesDuringUpgrade) && !suiteConfig.DryRun {
-				routeMonitorChan = setupRouteMonitors(context.TODO(), h, closeMonitorChan)
-				log.Println("Route Monitors created.")
-			}
-
 			// run the upgrade
 			if err = upgrade.RunUpgrade(h); err != nil {
-				events.RecordEvent(events.UpgradeFailed)
 				return Failure, fmt.Errorf("error performing upgrade: %v", err)
 			}
-			events.RecordEvent(events.UpgradeSuccessful)
 
 			if viper.GetBool(config.Upgrade.RunPostUpgradeTests) {
 				log.Println("Running e2e tests POST-UPGRADE...")
@@ -443,23 +411,11 @@ func runGinkgoTests() (int, error) {
 				)
 				viper.Set(config.Cluster.Passing, upgradeTestsPassed)
 			}
-
-			// close route monitors
-			if viper.GetBool(config.Upgrade.MonitorRoutesDuringUpgrade) && !suiteConfig.DryRun {
-				close(routeMonitorChan)
-				<-closeMonitorChan
-				log.Println("Route monitors reconciled")
-			}
 		} else {
 			log.Println("Unable to perform cluster upgrade, no kubeconfig found.")
 		}
 	}
 
-	if reportDir != "" {
-		if err = metadata.Instance.WriteToJSON(reportDir); err != nil {
-			return Failure, fmt.Errorf("error while writing the custom metadata: %v", err)
-		}
-	}
 	// Cleanup
 	if !suiteConfig.DryRun {
 		getLogs()
@@ -714,144 +670,6 @@ func runTestsInPhase(
 		ginkgoPassed = ginkgo.RunSpecs(ginkgo.GinkgoT(), description, suiteConfig, reporterConfig)
 	}()
 
-	files, err := os.ReadDir(phaseDirectory)
-	if err != nil {
-		log.Printf("error reading phase directory: %s", err.Error())
-		return false
-	}
-
-	numTests := 0
-	numPassingTests := 0
-
-	for _, file := range files {
-		if file != nil {
-			// Process the jUnit XML result files
-			if junitFileRegex.MatchString(file.Name()) {
-				suites, err := junit.IngestFile(filepath.Join(phaseDirectory, file.Name()))
-				if err != nil {
-					log.Printf("error reading junit xml file %s: %s", file.Name(), err.Error())
-					return false
-				}
-
-				for _, testSuite := range suites {
-					for _, testcase := range testSuite.Tests {
-						isSkipped := testcase.Status == junit.StatusSkipped
-						isFail := testcase.Status == junit.StatusFailed
-
-						if !isSkipped {
-							numTests++
-						}
-						if !isFail && !isSkipped {
-							numPassingTests++
-						}
-					}
-				}
-			}
-		}
-	}
-
-	passRate := float64(numPassingTests) / float64(numTests)
-
-	if math.IsNaN(passRate) {
-		log.Printf("Pass rate is NaN: numPassingTests = %d, numTests = %d", numPassingTests, numTests)
-	} else {
-		metadata.Instance.SetPassRate(phase, passRate)
-	}
-
-	files, err = os.ReadDir(reportDir)
-	if err != nil {
-		log.Printf("error reading phase directory: %s", err.Error())
-		return false
-	}
-
-	// Ensure all log metrics are zeroed out before running again
-	metadata.Instance.ResetLogMetrics()
-
-	// Ensure all before suite metrics are zeroed out before running again
-	metadata.Instance.ResetBeforeSuiteMetrics()
-
-	for _, file := range files {
-		if logFileRegex.MatchString(file.Name()) {
-			data, err := os.ReadFile(filepath.Join(reportDir, file.Name()))
-			if err != nil {
-				log.Printf("error opening log file %s: %s", file.Name(), err.Error())
-				return false
-			}
-			for _, metric := range config.GetLogMetrics() {
-				metadata.Instance.IncrementLogMetric(metric.Name, metric.HasMatches(data))
-			}
-			for _, metric := range config.GetBeforeSuiteMetrics() {
-				metadata.Instance.IncrementBeforeSuiteMetric(metric.Name, metric.HasMatches(data))
-			}
-		}
-	}
-
-	// Flagging this block for deletion.
-	// Delete, Refactor, broken
-	// logMetricTestSuite := reporters.JUnitTestSuite{
-	// 	Name: "Log Metrics",
-	// }
-
-	// for name, value := range metadata.Instance.LogMetrics {
-	// 	testCase := reporters.JUnitTestCase{
-	// 		Classname: "Log Metrics",
-	// 		Name:      fmt.Sprintf("[Log Metrics] %s", name),
-	// 		Time:      float64(value),
-	// 	}
-
-	// 	if config.GetLogMetrics().GetMetricByName(name).IsPassing(value) {
-	// 		testCase.SystemOut = fmt.Sprintf("Passed with %d matches", value)
-	// 	} else {
-	// 		testCase.Failure = &reporters.JUnitFailure{
-	// 			Message: fmt.Sprintf("Failed with %d matches", value),
-	// 		}
-	// 		logMetricTestSuite.Failures++
-	// 	}
-	// 	logMetricTestSuite.Tests++
-
-	// 	logMetricTestSuite.TestCases = append(logMetricTestSuite.TestCases, testCase)
-	// }
-
-	// data, err := xml.Marshal(&logMetricTestSuite)
-
-	// err = ioutil.WriteFile(filepath.Join(phaseDirectory, "junit_logmetrics.xml"), data, 0644)
-	// if err != nil {
-	// 	log.Printf("error writing to junit file: %s", err.Error())
-	// 	return false, testCaseData
-	// }
-
-	// beforeSuiteMetricTestSuite := reporters.JUnitTestSuite{
-	// 	Name: "Before Suite Metrics",
-	// }
-
-	// for name, value := range metadata.Instance.BeforeSuiteMetrics {
-	// 	testCase := reporters.JUnitTestCase{
-	// 		Classname: "Before Suite Metrics",
-	// 		Name:      fmt.Sprintf("[BeforeSuite] %s", name),
-	// 		Time:      float64(value),
-	// 	}
-
-	// 	if config.GetBeforeSuiteMetrics().GetMetricByName(name).IsPassing(value) {
-	// 		testCase.SystemOut = fmt.Sprintf("Passed with %d matches", value)
-	// 	} else {
-	// 		testCase.Failure = &reporters.JUnitFailure{
-	// 			Message: fmt.Sprintf("Failed with %d matches", value),
-	// 		}
-	// 		beforeSuiteMetricTestSuite.Failures++
-	// 	}
-	// 	beforeSuiteMetricTestSuite.Tests++
-
-	// 	beforeSuiteMetricTestSuite.TestCases = append(beforeSuiteMetricTestSuite.TestCases, testCase)
-	// }
-
-	// newdata, err := xml.Marshal(&beforeSuiteMetricTestSuite)
-
-	// err = ioutil.WriteFile(filepath.Join(phaseDirectory, "junit_beforesuite.xml"), newdata, 0644)
-	// if err != nil {
-	// 	log.Printf("error writing to junit file: %s", err.Error())
-	// 	return false, testCaseData
-	// }
-
 	clusterID := viper.GetString(config.Cluster.ID)
 
 	clusterState := spi.ClusterStateUnknown
@@ -886,69 +704,4 @@ func runTestsInPhase(
 		}
 	}
 	return ginkgoPassed
-}
-
-// checkBeforeMetricsGeneration runs a variety of checks before generating metrics.
-func checkBeforeMetricsGeneration() error {
-	// Check for hive-log.txt
-	if _, err := os.Stat(filepath.Join(viper.GetString(config.ReportDir), hiveLog)); os.IsNotExist(err) {
-		events.RecordEvent(events.NoHiveLogs)
-	}
-
-	return nil
-}
-
-// setupRouteMonitors initializes performance+availability monitoring of cluster routes,
-// returning a channel which can be used to terminate the monitoring.
-func setupRouteMonitors(ctx context.Context, h *helper.H, closeChannel chan struct{}) chan struct{} {
-	routeMonitorChan := make(chan struct{})
-	go func() {
-		// Set up the route monitors
-		routeMonitors, err := routemonitors.Create(ctx, h)
-		if err != nil {
-			log.Printf("Error creating route monitors: %v\n", err)
-			close(closeChannel)
-			return
-		}
-
-		// Set the route monitors to become active
-		routeMonitors.Start()
-
-		// Set up ongoing monitoring of metric gathering from the monitors
-		go func() {
-			// Create an aggregate channel of all individual metric channels
-			agg := make(chan *vegeta.Result)
-			for _, ch := range routeMonitors.Monitors {
-				go func(c <-chan *vegeta.Result) {
-					for msg := range c {
-						agg <- msg
-					}
-				}(ch)
-			}
-			for {
-				select {
-				// A metric is waiting for storage
-				case msg := <-agg:
-					routeMonitors.Metrics[msg.Attack].Add(msg)
-					_ = routeMonitors.Plots[msg.Attack].Add(msg)
-				}
-			}
-		}()
-
-		// Close down route monitoring when signalled to
-		for {
-			select {
-			case <-routeMonitorChan:
-				log.Println("Closing route monitors...")
-				routeMonitors.End()
-				_ = routeMonitors.SaveReports(viper.GetString(config.ReportDir))
-				_ = routeMonitors.SavePlots(viper.GetString(config.ReportDir))
-				_ = routeMonitors.ExtractData(viper.GetString(config.ReportDir))
-				routeMonitors.StoreMetadata()
-				close(closeChannel)
-				return
-			}
-		}
-	}()
-	return routeMonitorChan
 }

@@ -1,0 +1,92 @@
+#!/bin/bash
+set -x
+
+# Use IP Address for Squid configuration and certs
+export IPADDRESS=$(hostname -i)
+
+# Update DNF packages and install packages
+dnf install squid policycoreutils-python-utils -y
+
+# Create squid configuration
+cat <<EOF >/etc/squid/squid.conf
+acl intermediate_fetching transaction_initiator certificate-fetching
+acl localnet src 10.0.0.0/8 # RFC1918 possible internal network
+acl localnet src 172.16.0.0/12  # RFC1918 possible internal network
+acl localnet src 192.168.0.0/16 # RFC1918 possible internal network
+acl localnet src fc00::/7       # RFC 4193 local private network range
+acl localnet src fe80::/10      # RFC 4291 link-local (directly plugged) machines
+acl SSL_ports port 443
+acl Safe_ports port 80      # http
+acl Safe_ports port 21      # ftp
+acl Safe_ports port 443     # https
+acl Safe_ports port 70      # gopher
+acl Safe_ports port 210     # wais
+acl Safe_ports port 1025-65535  # unregistered ports
+acl Safe_ports port 280     # http-mgmt
+acl Safe_ports port 488     # gss-http
+acl Safe_ports port 591     # filemaker
+acl Safe_ports port 777     # multiling http
+acl CONNECT method CONNECT
+http_access allow intermediate_fetching
+http_access deny !Safe_ports
+http_access deny CONNECT !SSL_ports
+http_access allow localhost manager
+http_access deny manager
+http_access allow localnet
+http_access allow localhost
+http_access deny all
+http_port $${IPADDRESS}:3128 \
+  ssl-bump \
+  generate-host-certificates=on \
+  dynamic_cert_mem_cache_size=4MB \
+  cert=/etc/squid/certs/squid.pem
+
+https_port $${IPADDRESS}:3129 cert=/etc/squid/certs/squid.pem key=/etc/squid/certs/squid.pem
+
+sslproxy_cert_error allow all
+
+ssl_bump stare all
+acl step1 at_step SslBump1
+ssl_bump peek step1
+ssl_bump bump all
+ssl_bump splice all
+coredump_dir /var/spool/squid
+refresh_pattern ^ftp:       1440    20% 10080
+refresh_pattern ^gopher:    1440    0%  1440
+refresh_pattern -i (/cgi-bin/|\?) 0 0%  0
+refresh_pattern .       0   20% 4320
+EOF
+
+mkdir /etc/squid/certs && cd /etc/squid/certs
+
+# Create the CA bundle file using Terraform template
+cat <<EOF >/etc/squid/certs/ca.pem
+${CA_BUNDLE_FILE}
+EOF
+
+# Creating Squid's Certificate and Key
+openssl genrsa -out squid.key 4096
+openssl req -new -key squid.key -nodes -days 365 -out squid.csr -subj "/C=XX/ST=XX/L=squid/O=squid/CN=squid"
+
+cat <<EOF >squid.cnf
+[server]
+authorityKeyIdentifier=keyid,issuer
+basicConstraints = critical,CA:FALSE
+extendedKeyUsage=serverAuth
+keyUsage = critical, digitalSignature, keyEncipherment
+subjectAltName = IP:$${IPADDRESS}
+subjectKeyIdentifier=hash
+EOF
+
+openssl x509 -req -days 365 -set_serial 01 -in squid.csr -out squid.crt -CA ca.pem -CAkey ca.pem -extfile squid.cnf -extensions server
+openssl verify -CAfile ca.pem squid.crt
+
+cat squid.key squid.crt > squid.pem
+
+/usr/lib64/squid/security_file_certgen -c -s /var/spool/squid/ssl_db -M 20MB
+chown squid:squid -R /var/spool/squid/ssl_db
+
+semanage permissive -a squid_t
+
+systemctl enable squid
+systemctl start squid

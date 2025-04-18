@@ -15,7 +15,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 
-	"github.com/openshift/osde2e/pkg/common/alert"
 	"github.com/openshift/osde2e/pkg/common/cluster"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
@@ -35,10 +34,6 @@ const (
 	// How long to wait for proxy changes to be applied and cluster to return to health
 	proxyHealthCheckWaitDuration = 45 * time.Minute
 )
-
-func init() {
-	alert.RegisterGinkgoAlert(postInstallProxyTestName, "SD-SREP", "@sd-srep-team-hulk", "hcm-cicd-alerts", "sd-cicd@redhat.com", 4)
-}
 
 var _ = ginkgo.Describe(postInstallProxyTestName, func() {
 	ginkgo.Context("Day 2 Configuration", func() {

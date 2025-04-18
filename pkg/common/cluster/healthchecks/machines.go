@@ -7,7 +7,6 @@ import (
 
 	machineapi "github.com/openshift/api/machine/v1beta1"
 	"github.com/openshift/osde2e/pkg/common/logging"
-	"github.com/openshift/osde2e/pkg/common/metadata"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -51,11 +50,6 @@ func CheckMachinesObjectState(dynamicClient dynamic.Interface, logger *log.Logge
 			logger.Printf("machine %s not ready", machine.Name)
 		}
 	}
-	if len(metadataState) > 0 {
-		metadata.Instance.SetHealthcheckValue("machines", metadataState)
-		return false, nil
-	}
 
-	metadata.Instance.ClearHealthcheckValue("machines")
 	return true, nil
 }

@@ -17,7 +17,6 @@ import (
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/logging"
-	"github.com/openshift/osde2e/pkg/common/metadata"
 	"github.com/openshift/osde2e/pkg/common/providers"
 	"github.com/openshift/osde2e/pkg/common/spi"
 	"github.com/openshift/osde2e/pkg/common/util"
@@ -113,6 +112,17 @@ func WaitForClusterReadyPostInstall(clusterID string, logger *log.Logger) error 
 		})
 		if err != nil {
 			return fmt.Errorf("HyperShift healthcheck: %w", err)
+		}
+		return nil
+	}
+
+	if viper.GetBool(config.Tests.OnlyHealthCheckNodes) {
+		logger.Println("Waiting up to 30 minutes for all nodes to be ready")
+		err := wait.PollUntilContextTimeout(context.TODO(), 30*time.Second, 30*time.Minute, false, func(_ context.Context) (bool, error) {
+			return healthchecks.CheckNodeHealth(kubeClient.CoreV1(), logger)
+		})
+		if err != nil {
+			return fmt.Errorf("node health check failed: %w", err)
 		}
 		return nil
 	}
@@ -216,7 +226,6 @@ func WaitForOCMProvisioning(provider spi.Provider, clusterID string, logger *log
 
 	readinessSet := false
 	var readinessStarted time.Time
-	clusterStarted := time.Now()
 
 	healthcheckStatus := clusterproperties.StatusHealthCheck
 	if isUpgrade {
@@ -230,7 +239,6 @@ func WaitForOCMProvisioning(provider spi.Provider, clusterID string, logger *log
 			return false, nil
 		}
 
-		metadata.Instance.IncrementHealthcheckIteration()
 		properties := cluster.Properties()
 		currentStatus := properties[clusterproperties.Status]
 
@@ -243,10 +251,6 @@ func WaitForOCMProvisioning(provider spi.Provider, clusterID string, logger *log
 		}
 
 		if cluster.State() == spi.ClusterStateReady {
-			if metadata.Instance.TimeToOCMReportingInstalled == 0 {
-				metadata.Instance.SetTimeToOCMReportingInstalled(time.Since(clusterStarted).Seconds())
-			}
-
 			if err := provider.AddProperty(cluster, clusterproperties.Status, healthcheckStatus); err != nil {
 				logger.Printf("error trying to add health-check property to cluster ID %s: %v", cluster.ID(), err)
 				return false, nil
@@ -286,7 +290,7 @@ func waitForClusterReadyWithOverrideAndExpectedNumberOfNodes(clusterID string, l
 	cleanRuns := 0
 	errRuns := 0
 
-	readinessStarted, err := WaitForOCMProvisioning(provider, clusterID, logger, isUpgrade)
+	_, err = WaitForOCMProvisioning(provider, clusterID, logger, isUpgrade)
 	if err != nil {
 		return fmt.Errorf("OCM never became ready: %w", err)
 	}
@@ -302,7 +306,6 @@ func waitForClusterReadyWithOverrideAndExpectedNumberOfNodes(clusterID string, l
 			return false, nil
 		}
 
-		metadata.Instance.IncrementHealthcheckIteration()
 		properties := cluster.Properties()
 		currentStatus := properties[clusterproperties.Status]
 
@@ -339,12 +342,6 @@ func waitForClusterReadyWithOverrideAndExpectedNumberOfNodes(clusterID string, l
 		}
 	}); pollErr != nil {
 		return fmt.Errorf("failed polling for cluster health: %w", err)
-	}
-	// polling succeeded and the cluster is healthy
-	if metadata.Instance.TimeToClusterReady == 0 {
-		metadata.Instance.SetTimeToClusterReady(time.Since(readinessStarted).Seconds())
-	} else {
-		metadata.Instance.SetTimeToUpgradedClusterReady(time.Since(readinessStarted).Seconds())
 	}
 
 	if err := provider.AddProperty(cluster, clusterproperties.Status, healthyStatus); err != nil {
@@ -616,8 +613,4 @@ func SetClusterIntoViperConfig(cluster *spi.Cluster) {
 
 	viper.Set(config.CloudProvider.Region, cluster.Region())
 	log.Printf("CLOUD_PROVIDER_REGION set to %s from OCM.", viper.GetString(config.CloudProvider.Region))
-
-	metadata.Instance.SetClusterName(cluster.Name())
-	metadata.Instance.SetClusterID(cluster.ID())
-	metadata.Instance.SetRegion(cluster.Region())
 }

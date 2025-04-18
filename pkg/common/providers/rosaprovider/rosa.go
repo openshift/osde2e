@@ -73,8 +73,8 @@ func New() (*ROSAProvider, error) {
 			rosaProvider, err = rosaprovider.New(
 				ctx,
 				viper.GetString("ocm.token"),
-				viper.GetString("fedRamp.clientID"),
-				viper.GetString("fedRamp.clientSecret"),
+				viper.GetString("ocm.clientID"),
+				viper.GetString("ocm.clientSecret"),
 				ocmEnv,
 				textlogger.NewLogger(textlogger.NewConfig()),
 			)

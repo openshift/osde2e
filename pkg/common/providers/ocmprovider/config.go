@@ -9,6 +9,12 @@ const (
 	// Token is used to authenticate with OCM.
 	Token = "ocm.token"
 
+	// ClientID is used to authenticate with OCM.
+	ClientID = "ocm.clientID"
+
+	// ClientSecret is used to authenticate with OCM.
+	ClientSecret = "ocm.clientSecret"
+
 	// Env is the OpenShift Dedicated environment used to provision clusters.
 	Env = "ocm.env"
 
@@ -39,12 +45,6 @@ const (
 	// CCS defines whether the cluster should expect cloud credentials or not
 	CCS = "ocm.ccs"
 
-	// FedRamp Keycloack Client ID
-	FedRampClientID = "fedRamp.clientID"
-
-	// FedRamp Keycloack Client Secret
-	FedRampClientSecret = "fedRamp.clientSecret"
-
 	// HTTPS_PROXY - Currently only used for FedRamp
 	HTTPSProxy = "ocm.https_proxy"
 )
@@ -53,6 +53,12 @@ func init() {
 	// ----- OCM -----
 	_ = viper.BindEnv(Token, "OCM_TOKEN")
 	config.RegisterSecret(Token, "ocm-refresh-token")
+
+	_ = viper.BindEnv(ClientID, "OCM_CLIENT_ID")
+	config.RegisterSecret(ClientID, "ocm-client-id")
+
+	_ = viper.BindEnv(ClientSecret, "OCM_CLIENT_SECRET")
+	config.RegisterSecret(ClientSecret, "ocm-client-secret")
 
 	viper.SetDefault(Env, "prod")
 	_ = viper.BindEnv(Env, "OSD_ENV")
@@ -64,10 +70,10 @@ func init() {
 	_ = viper.BindEnv(NumRetries, "NUM_RETRIES")
 
 	viper.SetDefault(ComputeMachineType, "")
-	_ = viper.BindEnv(ComputeMachineType, "OCM_COMPUTE_MACHINE_TYPE")
+	_ = viper.BindEnv(ComputeMachineType, "OCM_COMPUTE_MACHINE_TYPE", "INSTANCE_TYPE")
 
 	viper.SetDefault(ComputeMachineTypeRegex, "")
-	_ = viper.BindEnv(ComputeMachineTypeRegex, "OCM_COMPUTE_MACHINE_TYPE_REGEX")
+	_ = viper.BindEnv(ComputeMachineTypeRegex, "OCM_COMPUTE_MACHINE_TYPE_REGEX", "INSTANCE_TYPE")
 
 	_ = viper.BindEnv(UserOverride, "OCM_USER_OVERRIDE")
 
@@ -83,16 +89,8 @@ func init() {
 	_ = viper.BindEnv(CCS, "OCM_CCS", "CCS")
 
 	// ----- FedRamp -----
-	viper.SetDefault(FedRampClientID, "")
-	_ = viper.BindEnv(FedRampClientID, "FEDRAMP_CLIENT_ID")
-
-	viper.SetDefault(FedRampClientSecret, "")
-	_ = viper.BindEnv(FedRampClientSecret, "FEDRAMP_CLIENT_SECRET")
-
 	viper.SetDefault(HTTPSProxy, "")
 	_ = viper.BindEnv(HTTPSProxy, "HTTPS_PROXY")
 
-	config.RegisterSecret(FedRampClientID, "fedramp-client-id")
-	config.RegisterSecret(FedRampClientSecret, "fedramp-client-secret")
 	config.RegisterSecret(HTTPSProxy, "https-proxy")
 }

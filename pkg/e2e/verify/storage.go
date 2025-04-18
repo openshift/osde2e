@@ -7,7 +7,6 @@ import (
 
 	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	"github.com/openshift/osde2e/pkg/common/alert"
 	"github.com/openshift/osde2e/pkg/common/expect"
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/label"
@@ -22,10 +21,6 @@ import (
 )
 
 var storageTestName string = "[Suite: e2e] Storage"
-
-func init() {
-	alert.RegisterGinkgoAlert(storageTestName, "SD-SREP", "Christoph Blecker", "hcm-cicd-alerts", "sd-cicd@redhat.com", 4)
-}
 
 var _ = ginkgo.Describe(storageTestName, ginkgo.Ordered, label.HyperShift, label.E2E, func() {
 	var h *helper.H

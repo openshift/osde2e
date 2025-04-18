@@ -7,7 +7,6 @@ import (
 
 	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	"github.com/openshift/osde2e/pkg/common/alert"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/helper"
@@ -22,10 +21,6 @@ import (
 )
 
 var userWorkloadMonitoringTestName string = "[Suite: informing] [OSD] User Workload Monitoring"
-
-func init() {
-	alert.RegisterGinkgoAlert(userWorkloadMonitoringTestName, "SD-SREP", "Max Whittingham", "hcm-cicd-alerts", "sd-cicd@redhat.com", 4)
-}
 
 var _ = ginkgo.Describe(userWorkloadMonitoringTestName, ginkgo.Ordered, label.Informing, func() {
 	var h *helper.H

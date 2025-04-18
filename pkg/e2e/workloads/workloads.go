@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/onsi/ginkgo/v2"
-	"github.com/openshift/osde2e/pkg/common/alert"
 	"github.com/openshift/osde2e/pkg/common/expect"
 	"github.com/openshift/osde2e/pkg/common/helper"
 	appsv1 "k8s.io/api/apps/v1"
@@ -20,10 +19,6 @@ import (
 )
 
 const suiteName = "[Suite: e2e] Workloads"
-
-func init() {
-	alert.RegisterGinkgoAlert(suiteName, "SD-SREP", "@sd-qe", "hcm-cicd-alerts", "sd-cicd@redhat.com", 4)
-}
 
 var _ = ginkgo.Describe(suiteName, ginkgo.Ordered, func() {
 	var h *helper.H

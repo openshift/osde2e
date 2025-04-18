@@ -12,7 +12,6 @@ import (
 	"github.com/Masterminds/semver/v3"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
-	"github.com/openshift/osde2e/pkg/common/metadata"
 	"github.com/openshift/osde2e/pkg/common/spi"
 	"github.com/openshift/osde2e/pkg/common/util"
 	"github.com/openshift/osde2e/pkg/common/versions/installselectors"
@@ -64,10 +63,6 @@ func (v *VersionSelector) SelectClusterVersions() error {
 			return fmt.Errorf("error while selecting upgrade version: %v", err)
 		}
 	}
-
-	// Set the versions in metadata. If upgrade hasn't been chosen, it should still be omitted from the end result.
-	metadata.Instance.SetClusterVersion(viper.GetString(config.Cluster.Version))
-	metadata.Instance.SetUpgradeVersion(viper.GetString(config.Upgrade.ReleaseName))
 
 	return nil
 }

@@ -20,8 +20,6 @@ func CheckHealthcheckJob(ctx context.Context, restconfig *rest.Config, logger *l
 	logger = logging.CreateNewStdLoggerOrUseExistingLogger(logger)
 	var k8s *openshift.Client
 
-	name := "osd-cluster-ready"
-
 	k8s, err := openshift.NewFromRestConfig(restconfig, ginkgo.GinkgoLogr)
 	if err != nil {
 		return fmt.Errorf("unable to setup k8s client: %w", err)
@@ -31,7 +29,7 @@ func CheckHealthcheckJob(ctx context.Context, restconfig *rest.Config, logger *l
 	if err != nil {
 		return fmt.Errorf("failed parsing health check timeout: %w", err)
 	}
-	joberr := k8s.OSDClusterHealthy(ctx, name, viper.GetString(config.ReportDir), timeout)
+	joberr := k8s.OSDClusterHealthy(ctx, viper.GetString(config.ReportDir), timeout)
 
 	if joberr == nil {
 		logger.Println("Healthcheck job passed")

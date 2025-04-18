@@ -56,8 +56,8 @@ func init() {
 
 	_ = viper.BindEnv(PodCIDR, "ROSA_POD_CIDR")
 
-	_ = viper.BindEnv(ComputeMachineType, "ROSA_COMPUTE_MACHINE_TYPE")
-	_ = viper.BindEnv(ComputeMachineTypeRegex, "ROSA_COMPUTE_MACHINE_TYPE")
+	_ = viper.BindEnv(ComputeMachineType, "ROSA_COMPUTE_MACHINE_TYPE", "INSTANCE_TYPE")
+	_ = viper.BindEnv(ComputeMachineTypeRegex, "ROSA_COMPUTE_MACHINE_TYPE", "INSTANCE_TYPE")
 
 	_ = viper.BindEnv(Replicas, "ROSA_REPLICAS")
 	viper.SetDefault(Replicas, 2)

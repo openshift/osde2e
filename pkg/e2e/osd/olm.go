@@ -6,7 +6,6 @@ import (
 
 	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	"github.com/openshift/osde2e/pkg/common/alert"
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/label"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -15,10 +14,6 @@ import (
 var olmTestName string = "[Suite: informing] [OSD] OLM"
 
 const hiveManagedLabel = "hive.openshift.io/managed"
-
-func init() {
-	alert.RegisterGinkgoAlert(olmTestName, "SD-SREP", "Matt Bargenquast", "hcm-cicd-alerts", "sd-cicd@redhat.com", 4)
-}
 
 var _ = ginkgo.Describe(olmTestName, label.Informing, func() {
 	ginkgo.Context("Managed OpenShift Operators", func() {

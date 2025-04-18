@@ -18,7 +18,6 @@ import (
 	"github.com/openshift/osde2e/pkg/common/cluster"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/helper"
-	"github.com/openshift/osde2e/pkg/common/metadata"
 	"github.com/openshift/osde2e/pkg/common/providers"
 	"github.com/openshift/osde2e/pkg/common/util"
 )
@@ -113,7 +112,7 @@ func RunUpgrade(h *helper.H) error {
 		return fmt.Errorf("failed to upgrade cluster: timed out after %d min waiting for upgrade", MaxDuration)
 	}
 
-	metadata.Instance.SetTimeToUpgradedCluster(time.Since(upgradeStarted).Seconds())
+	log.Printf("Finished upgrading in %s, waiting for cluster to be ready", time.Since(upgradeStarted))
 
 	if err = cluster.WaitForClusterReadyPostUpgrade(viper.GetString(config.Cluster.ID), nil); err != nil {
 		return fmt.Errorf("failed waiting for cluster ready: %v", err)

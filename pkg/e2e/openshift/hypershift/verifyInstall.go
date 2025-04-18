@@ -8,7 +8,6 @@ import (
 	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	"github.com/openshift/osde2e/pkg/common/alert"
 	"github.com/openshift/osde2e/pkg/common/aws"
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/label"
@@ -21,10 +20,6 @@ var (
 	suiteName = "HyperShift"
 	client    *resources.Resources
 )
-
-func init() {
-	alert.RegisterGinkgoAlert(suiteName, "SD-CICD", "Diego Santamaria", "hcm-cicd-alerts", "sd-cicd@redhat.com", 4)
-}
 
 // Checks the installation of the hypershift worker nodes in CCS AWS account
 var _ = ginkgo.Describe(suiteName, ginkgo.Ordered, label.HyperShift, func() {
