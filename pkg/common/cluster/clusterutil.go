@@ -552,9 +552,6 @@ func ProvisionCluster(logger *log.Logger) (*spi.Cluster, error) {
 			return nil, fmt.Errorf("could not retrieve cluster information from OCM: %v", err)
 		}
 
-		if cluster.State() == spi.ClusterStateHibernating && !provider.Resume(cluster.ID()) {
-			return cluster, fmt.Errorf("cluster errored while resuming")
-		}
 	}
 
 	return cluster, nil

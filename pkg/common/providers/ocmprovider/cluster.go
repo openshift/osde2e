@@ -375,19 +375,6 @@ func (o *OCMProvider) FindRecycledCluster(originalVersion, cloudProvider, produc
 
 			return recycledCluster.ID()
 		}
-		if recycledCluster.State() == "hibernating" && o.Resume(recycledCluster.ID()) {
-			log.Println("Resuming cluster to use...")
-			err = o.AddProperty(spiRecycledCluster, clusterproperties.Status, clusterproperties.StatusResuming)
-			if err != nil {
-				log.Printf("Error adding property to cluster: %s", err.Error())
-				return ""
-			}
-			viper.Set(config.Cluster.Reused, true)
-			if recycledCluster.AWS().STS().RoleARN() != "" {
-				viper.Set("rosa.STS", true)
-			}
-			return recycledCluster.ID()
-		}
 		log.Printf("Failed to recycle cluster %s", recycledCluster.ID())
 	}
 
@@ -586,7 +573,6 @@ func (o *OCMProvider) GenerateProperties() (map[string]string, error) {
 // DeleteCluster requests the deletion of clusterID.
 func (o *OCMProvider) DeleteCluster(clusterID string) error {
 	var deleteResp *v1.ClusterDeleteResponse
-	var resumeResp *v1.ClusterResumeResponse
 	var cluster *spi.Cluster
 	var err error
 
@@ -599,30 +585,9 @@ func (o *OCMProvider) DeleteCluster(clusterID string) error {
 		return fmt.Errorf("cluster already uninstalling, skipped")
 	}
 
-	// If the cluster is hibernating according to OCM, wake it up
-	if cluster.State() == spi.ClusterStateHibernating {
-		if err = retryer().Do(func() error {
-			var err error
-			resumeResp, err = o.conn.ClustersMgmt().V1().Clusters().Cluster(clusterID).Resume().Send()
-			if err != nil {
-				return fmt.Errorf("couldn't resume cluster '%s': %v", clusterID, err)
-			}
-
-			if resumeResp != nil && resumeResp.Error() != nil {
-				err = errResp(resumeResp.Error())
-				log.Printf("%v", err)
-				return err
-			}
-
-			return nil
-		}); err != nil {
-			return err
-		}
-	}
-
 	err = wait.PollUntilContextTimeout(context.Background(), 1*time.Minute, 15*time.Minute, false, func(ctx context.Context) (bool, error) {
 		// If the cluster state is anything but Hibernating or Ready, poll the state again
-		if cluster.State() == spi.ClusterStateHibernating || cluster.State() == spi.ClusterStateReady {
+		if cluster.State() == spi.ClusterStateReady {
 			cluster, err = o.GetCluster(clusterID)
 			if err != nil {
 				log.Printf("error retrieving cluster for deletion: %v", err)
@@ -1284,40 +1249,6 @@ func (o *OCMProvider) UpdateSchedule(clusterID string, version string, t time.Ti
 
 	log.Printf("Update the upgrade schedule for cluster %s to %s", clusterID, t)
 	return nil
-}
-
-// Resume resumes a cluster via OCM
-func (o *OCMProvider) Resume(id string) bool {
-	resp, err := o.conn.ClustersMgmt().V1().Clusters().Cluster(id).Resume().Send()
-	if err != nil {
-		err = fmt.Errorf("couldn't resume cluster '%s': %v", id, err)
-		log.Printf("%v", err)
-		return false
-	}
-
-	if resp != nil && resp.Error() != nil {
-		log.Printf("error while trying to resume cluster: %v", err)
-		return false
-	}
-
-	return true
-}
-
-// Hibernate resumes a cluster via OCM
-func (o *OCMProvider) Hibernate(id string) bool {
-	resp, err := o.conn.ClustersMgmt().V1().Clusters().Cluster(id).Hibernate().Send()
-	if err != nil {
-		err = fmt.Errorf("couldn't hibernate cluster '%s': %v", id, err)
-		log.Printf("%v", err)
-		return false
-	}
-
-	if resp != nil && resp.Error() != nil {
-		log.Printf("error while trying to hibernate cluster: %v", err)
-		return false
-	}
-
-	return true
 }
 
 // This assumes cluster is a resp.Body() response from an OCM update

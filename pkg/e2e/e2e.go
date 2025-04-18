@@ -550,7 +550,6 @@ func cleanupAfterE2E(ctx context.Context, h *helper.H) (errors []error) {
 
 	// If this is a nightly test, we don't want to expire this immediately
 	if viper.GetString(config.Cluster.InstallSpecificNightly) != "" || viper.GetString(config.Cluster.ReleaseImageLatest) != "" {
-		viper.Set(config.Cluster.HibernateAfterUse, false)
 		if viper.GetString(config.Cluster.ID) != "" {
 			if err := provider.Expire(viper.GetString(config.Cluster.ID), 30*time.Minute); err != nil {
 				errors = append(errors, err)
@@ -561,13 +560,7 @@ func cleanupAfterE2E(ctx context.Context, h *helper.H) (errors []error) {
 	// We need a provider to hibernate
 	// We need a cluster to hibernate
 	// We need to check that the test run wants to hibernate after this run
-	if provider != nil && viper.GetString(config.Cluster.ID) != "" && viper.GetBool(config.Cluster.HibernateAfterUse) && viper.GetBool(config.Cluster.SkipDestroyCluster) {
-		msg := "Unable to hibernate %s"
-		if provider.Hibernate(viper.GetString(config.Cluster.ID)) {
-			msg = "Hibernating %s"
-		}
-		log.Printf(msg, viper.GetString(config.Cluster.ID))
-
+	if provider != nil && viper.GetString(config.Cluster.ID) != "" && viper.GetBool(config.Cluster.SkipDestroyCluster) {
 		// Current default expiration is 6 hours.
 		// If this cluster has addons, we don't want to extend the expiration
 
