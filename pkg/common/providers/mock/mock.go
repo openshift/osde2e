@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
-	"log"
 	"os"
 	"time"
 
@@ -295,18 +294,6 @@ func (m *MockProvider) UpdateSchedule(clusterID string, version string, t time.T
 // DetermineMachineType returns a random machine type for a given cluster
 func (m *MockProvider) DetermineMachineType(cloudProvider string) (string, error) {
 	return "mock", fmt.Errorf("not supported by mock clusters")
-}
-
-// Resume resumes a cluster via OCM
-func (o *MockProvider) Resume(id string) bool {
-	log.Println("Hibernation not supported in Mock Provider")
-	return true
-}
-
-// Hibernate resumes a cluster via OCM
-func (o *MockProvider) Hibernate(id string) bool {
-	log.Println("Hibernation not supported in Mock Provider")
-	return true
 }
 
 // AddClusterProxy adds a proxy to a cluster
