@@ -45,7 +45,7 @@ require (
 	golang.org/x/sync v0.13.0
 	golang.org/x/tools v0.32.0
 	google.golang.org/api v0.227.0
-	google.golang.org/genproto v0.0.0-20250409194420-de1ac958c67a // indirect
+	google.golang.org/genproto 61c742ae3ef0 // indirect
 	gopkg.in/yaml.v3 v3.0.1
 	gotest.tools/v3 v3.5.2
 	k8s.io/api v0.32.3
