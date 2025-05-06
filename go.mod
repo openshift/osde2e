@@ -40,10 +40,10 @@ require (
 	github.com/spf13/pflag v1.0.6
 	github.com/spf13/viper v1.19.0
 	github.com/vmware-tanzu/velero v1.10.2
-	golang.org/x/net v0.39.0
+	golang.org/x/net v0.40.0
 	golang.org/x/oauth2 v0.28.0 // indirect
-	golang.org/x/sync v0.13.0
-	golang.org/x/tools v0.32.0
+	golang.org/x/sync v0.14.0
+	golang.org/x/tools v0.33.0
 	google.golang.org/api v0.227.0
 	google.golang.org/genproto v0.0.0-20250409194420-de1ac958c67a // indirect
 	gopkg.in/yaml.v3 v3.0.1
