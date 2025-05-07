@@ -2,7 +2,7 @@ module github.com/openshift/osde2e
 
 go 1.23.0
 
-toolchain go1.23.7
+toolchain go1.24.3
 
 require (
 	cloud.google.com/go/kms v1.21.1
