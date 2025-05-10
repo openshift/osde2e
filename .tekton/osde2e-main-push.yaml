@@ -11,7 +11,7 @@ metadata:
       && target_branch == "main"
       && (files.all.exists(x, !x.matches('^(?:docs|\\.github|scripts|test)/|\\.md$|^(?:\\.gitignore|.golang-ci.yml|OWNERS|LICENSE|renovate.json)$'))
           || ".tekton/osde2e-main-push.yaml".pathChanged())
-  creationTimestamp:
+  creationTimestamp: null
   labels:
     appstudio.openshift.io/application: osde2e
     appstudio.openshift.io/component: osde2e-main
@@ -31,7 +31,6 @@ spec:
   - name: build-source-image
     value: "true"
   pipelineRef:
-    resolver: bundles
     params:
     - name: name
       value: docker-build-oci-ta
@@ -39,7 +38,9 @@ spec:
       value: quay.io/konflux-ci/tekton-catalog/pipeline-docker-build-oci-ta@sha256:77c56b52c0ec517be3c2f84fe719a25dec46a2322dbbc8421866a22c2c484c77
     - name: kind
       value: pipeline
-  taskRunTemplate: {}
+    resolver: bundles
+  taskRunTemplate:
+    serviceAccountName: build-pipeline-osde2e-main
   workspaces:
   - name: git-auth
     secret:
