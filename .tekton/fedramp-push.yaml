@@ -6,8 +6,10 @@ metadata:
     build.appstudio.redhat.com/commit_sha: '{{revision}}'
     build.appstudio.redhat.com/target_branch: '{{target_branch}}'
     pipelinesascode.tekton.dev/max-keep-runs: "10"
-    pipelinesascode.tekton.dev/on-cel-expression: event == "push" && target_branch == "main" && ( "test/fedramp/***".pathChanged() || ".tekton/fedramp-push.yaml".pathChanged() || "go.*".pathChanged() )
-  creationTimestamp:
+    pipelinesascode.tekton.dev/on-cel-expression: event == "push" && target_branch
+      == "main" && ( "test/fedramp/***".pathChanged() || ".tekton/fedramp-push.yaml".pathChanged()
+      || "go.*".pathChanged() )
+  creationTimestamp: null
   labels:
     appstudio.openshift.io/application: test-suites
     appstudio.openshift.io/component: fedramp
@@ -27,7 +29,6 @@ spec:
   - name: build-source-image
     value: "true"
   pipelineRef:
-    resolver: bundles
     params:
     - name: name
       value: docker-build-oci-ta
@@ -35,7 +36,9 @@ spec:
       value: quay.io/konflux-ci/tekton-catalog/pipeline-docker-build-oci-ta@sha256:77c56b52c0ec517be3c2f84fe719a25dec46a2322dbbc8421866a22c2c484c77
     - name: kind
       value: pipeline
-  taskRunTemplate: {}
+    resolver: bundles
+  taskRunTemplate:
+    serviceAccountName: build-pipeline-fedramp
   workspaces:
   - name: git-auth
     secret:
