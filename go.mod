@@ -39,7 +39,7 @@ require (
 	github.com/spf13/cobra v1.9.1
 	github.com/spf13/pflag v1.0.6
 	github.com/spf13/viper v1.19.0
-	github.com/vmware-tanzu/velero v1.10.2
+	github.com/vmware-tanzu/velero v1.16.1
 	golang.org/x/net v0.39.0
 	golang.org/x/oauth2 v0.28.0 // indirect
 	golang.org/x/sync v0.13.0
