@@ -5,7 +5,7 @@ go 1.23.0
 toolchain go1.23.7
 
 require (
-	cloud.google.com/go/kms v1.21.1
+	cloud.google.com/go/kms v1.22.0
 	github.com/Masterminds/semver/v3 v3.3.1
 	github.com/PuerkitoBio/goquery v1.10.2
 	github.com/adamliesko/retry v0.0.0-20200123222335-86c8baac277d
