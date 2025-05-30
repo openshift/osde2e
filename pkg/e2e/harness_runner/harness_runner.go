@@ -71,7 +71,10 @@ var _ = ginkgo.Describe("Test harness", ginkgo.Ordered, ginkgo.ContinueOnFailure
 			h.SetRunnerProject(subProject.Name, r)
 			latestImageStream, err := r.GetLatestImageStreamTag()
 			Expect(err).NotTo(HaveOccurred(), "Could not get latest imagestream tag")
-			cmd := h.GetRunnerCommandString(harnessTestTemplate, timeoutInSeconds, latestImageStream, harness, suffix, jobName, serviceAccountDir, "", serviceAccountNamespacedName)
+			envVars := map[string]string{
+				"CLUSTER_ID": viper.GetString(config.Cluster.ID),
+			}
+			cmd := h.GetRunnerCommandStringWithEnv(harnessTestTemplate, timeoutInSeconds, latestImageStream, harness, suffix, jobName, serviceAccountDir, envVars, serviceAccountNamespacedName)
 			r = h.SetRunnerCommand(cmd, r)
 
 			ginkgo.By("Running harness pod")

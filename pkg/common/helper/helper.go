@@ -545,3 +545,23 @@ func (h *H) GetRunnerCommandString(templatePath string, timeout int, latestImage
 	Expect(err).NotTo(HaveOccurred(), "Could not convert pod template")
 	return cmd
 }
+
+func (h *H) GetRunnerCommandStringWithEnv(
+	template string,
+	timeout int,
+	image string,
+	harness string,
+	suffix string,
+	jobName string,
+	serviceAccountDir string,
+	envVars map[string]string,
+	serviceAccount string,
+) string {
+	envString := ""
+	for k, v := range envVars {
+		envString += fmt.Sprintf("export %s=%q && ", k, v)
+	}
+	cmd := h.GetRunnerCommandString(template, timeout, image, harness, suffix, jobName, serviceAccountDir, envString, serviceAccount)
+	return cmd
+}
+
