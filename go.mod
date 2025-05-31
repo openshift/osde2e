@@ -24,10 +24,10 @@ require (
 	github.com/onsi/ginkgo/v2 v2.23.3
 	github.com/onsi/gomega v1.36.3
 	github.com/openshift-online/ocm-sdk-go v0.1.465
-	github.com/openshift/client-go v0.0.0-20250402181141-b3bad3b645f2
-	github.com/openshift/cloud-credential-operator v0.0.0-20250326174647-d66761c09842
-	github.com/openshift/managed-upgrade-operator v0.0.0-20230525042514-a9b8c1d2571c
-	github.com/openshift/osde2e-common v0.0.0-20250508181513-627144b7607a
+	github.com/openshift/client-go 32d171ea30dc
+	github.com/openshift/cloud-credential-operator f95f61d76309
+	github.com/openshift/managed-upgrade-operator a69655bdea21
+	github.com/openshift/osde2e-common a85ae6e892ec
 	github.com/operator-framework/api v0.30.0
 	github.com/operator-framework/operator-lifecycle-manager v0.22.0
 	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.64.0
@@ -60,7 +60,7 @@ require (
 
 require (
 	github.com/hashicorp/go-version v1.7.0
-	github.com/openshift/api v0.0.0-20250409155250-8fcc4e71758a
+	github.com/openshift/api e041b5efb8e4
 )
 
 require (
