@@ -6,9 +6,12 @@ metadata:
     build.appstudio.redhat.com/commit_sha: '{{revision}}'
     build.appstudio.redhat.com/target_branch: '{{target_branch}}'
     pipelinesascode.tekton.dev/cancel-in-progress: "false"
-    pipelinesascode.tekton.dev/max-keep-runs: "3"
-    pipelinesascode.tekton.dev/on-cel-expression: event == "push" && target_branch
-      == "main"
+    pipelinesascode.tekton.dev/max-keep-runs: "25"
+    pipelinesascode.tekton.dev/on-cel-expression: |
+      event == "push"
+      && target_branch == "main"
+      && (files.all.exists(x, !x.matches('^(?:docs|\\.github|scripts|test)/|\\.md$|^(?:\\.gitignore|.golang-ci.yml|OWNERS|LICENSE|renovate.json)$'))
+          || ".tekton/osde2e-main-push.yaml".pathChanged())
   creationTimestamp: null
   labels:
     appstudio.openshift.io/application: osde2e
@@ -26,6 +29,8 @@ spec:
     value: quay.io/redhat-user-workloads/osde2e-cicada-tenant/osde2e/osde2e-main:{{revision}}
   - name: dockerfile
     value: osde2e.Dockerfile
+  - name: build-source-image
+    value: "true"
   pipelineSpec:
     description: |
       This pipeline is ideal for building container images from a Containerfile while maintaining trust after pipeline customization.
