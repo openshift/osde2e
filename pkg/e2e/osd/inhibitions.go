@@ -153,8 +153,8 @@ var _ = ginkgo.Describe("[Suite: operators] AlertmanagerInhibitions", label.Oper
 			cleanup(ctx, h)
 		}()
 
-		// the clusteroperatordown/degraded alerts take 10 minutes to trip
-		time.Sleep(10 * time.Minute)
+		// the clusteroperatordown/degraded alerts take several minutes to trip
+		time.Sleep(3 * time.Minute)
 
 		oc, err := openshift.NewFromRestConfig(h.GetConfig(), ginkgo.GinkgoLogr)
 		Expect(err).NotTo(HaveOccurred(), "unable to create openshift client")
