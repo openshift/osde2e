@@ -14,7 +14,6 @@ import (
 	"github.com/openshift/osde2e/pkg/common/helper"
 	"github.com/openshift/osde2e/pkg/common/label"
 	alertmanagerConfig "github.com/prometheus/alertmanager/config"
-	prometheusModel "github.com/prometheus/common/model"
 	"gopkg.in/yaml.v3"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/util/retry"
@@ -27,10 +26,7 @@ const (
 	IdentityProviderName         = "oidcidp"
 )
 
-var inhibitionsTestName string = "[Suite: operators] AlertmanagerInhibitions"
-
-// tests start here
-var _ = ginkgo.Describe(inhibitionsTestName, label.Operators, func() {
+var _ = ginkgo.Describe("[Suite: operators] AlertmanagerInhibitions", label.Operators, func() {
 	h := helper.New()
 
 	ginkgo.It("should exist", func(ctx context.Context) {
@@ -49,14 +45,14 @@ var _ = ginkgo.Describe(inhibitionsTestName, label.Operators, func() {
 			name            string
 			expectedTarget  string
 			expectedSource  string
-			expectedEqual   prometheusModel.LabelNames
+			expectedEqual   []string
 			expectedPresent bool
 		}{
 			{
 				name:           "negative test",
 				expectedSource: "FakeSource",
 				expectedTarget: "ImaginaryTarget",
-				expectedEqual: prometheusModel.LabelNames{
+				expectedEqual: []string{
 					"namespace",
 				},
 				expectedPresent: false,
@@ -65,7 +61,7 @@ var _ = ginkgo.Describe(inhibitionsTestName, label.Operators, func() {
 				name:           "ClusterOperatorDegraded inhibits ClusterOperatorDown",
 				expectedSource: "ClusterOperatorDegraded",
 				expectedTarget: "ClusterOperatorDown",
-				expectedEqual: prometheusModel.LabelNames{
+				expectedEqual: []string{
 					"namespace",
 					"name",
 				},
@@ -75,7 +71,7 @@ var _ = ginkgo.Describe(inhibitionsTestName, label.Operators, func() {
 				name:           "KubeNodeNotReady inhibits KubeNodeUnreachable",
 				expectedSource: "KubeNodeNotReady",
 				expectedTarget: "KubeNodeUnreachable",
-				expectedEqual: prometheusModel.LabelNames{
+				expectedEqual: []string{
 					"node",
 					"instance",
 				},
@@ -84,23 +80,21 @@ var _ = ginkgo.Describe(inhibitionsTestName, label.Operators, func() {
 		}
 
 		for _, test := range tests {
-			rulePresent := false
-
 			// confirm there's a single rule that:
 			// * matches the target
 			// * matches the source
 			// * matches the equals
+			var rulePresent bool
 			for _, rule := range config.InhibitRules {
 				// match the equals
 				if reflect.DeepEqual(rule.Equal, test.expectedEqual) {
 					// match the source
 					if rule.SourceMatch["alertname"] == test.expectedSource {
 						// match the target
-						rulePresent = rulePresent || rule.TargetMatchRE["alertname"].Regexp.Match([]byte(test.expectedTarget))
+						rulePresent = rule.TargetMatchRE["alertname"].Regexp.Match([]byte(test.expectedTarget))
 					}
 				}
 			}
-
 			Expect(rulePresent).To(Equal(test.expectedPresent), test.name)
 		}
 	})
