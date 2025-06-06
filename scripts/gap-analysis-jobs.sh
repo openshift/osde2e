@@ -23,7 +23,7 @@ docker create --name "${CONTAINER_NAME}" -e OCM_TOKEN \
 	-e OCM_ENV="${ENVIRONMENT}" \
 	-e ROSA_STS="${STS}" \
 	-e AWS_VPC_SUBNET_IDS \
-	-e HARNESS_TIMEOUT='600' \
+	-e HARNESS_TIMEOUT='900' \
 	-e CHANNEL \
 	-e INSTALL_LATEST_XY \
 	-e CLUSTER_VERSION \
