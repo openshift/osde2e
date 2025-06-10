@@ -507,7 +507,7 @@ func (h *H) GetRunnerCommandString(templatePath string, timeout int, latestImage
 				Value: viper.GetString(ocmprovider.Env),
 			},
 		},
-
+		// loaded as secrets to pod from env vars
 		EnvironmentVariablesFromSecret: []struct {
 			SecretName string
 			SecretKey  string
@@ -515,6 +515,14 @@ func (h *H) GetRunnerCommandString(templatePath string, timeout int, latestImage
 			{
 				SecretName: "ci-secrets",
 				SecretKey:  "OCM_TOKEN",
+			},
+			{
+				SecretName: "ci-secrets",
+				SecretKey:  "OCM_CLIENT_SECRET",
+			},
+			{
+				SecretName: "ci-secrets",
+				SecretKey:  "OCM_CLIENT_ID",
 			},
 			{
 				SecretName: "ci-secrets",
