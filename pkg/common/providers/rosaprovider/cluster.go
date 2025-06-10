@@ -103,6 +103,7 @@ func (m *ROSAProvider) LaunchCluster(clusterName string) (string, error) {
 			STS:                          viper.GetBool(STS),
 			MintMode:                     viper.GetBool(MintMode),
 			HostedCP:                     viper.GetBool(config.Hypershift),
+			BillingAccountID:             viper.GetString(BillingAccountID),
 			FIPS:                         viper.GetBool(config.Cluster.EnableFips),
 			MultiAZ:                      viper.GetBool(config.Cluster.MultiAZ),
 			ExpirationDuration:           viper.GetDuration(config.Cluster.ExpiryInMinutes) * time.Minute,
