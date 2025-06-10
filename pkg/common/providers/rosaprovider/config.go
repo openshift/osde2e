@@ -83,6 +83,6 @@ func init() {
 	_ = viper.BindEnv(STSUseDefaultAccountRolesPrefix, "ROSA_STS_USE_DEFAULT_ACCOUNT_ROLES_PREFIX")
 	viper.SetDefault(STSUseDefaultAccountRolesPrefix, true)
 
-	_ = viper.BindEnv(BillingAccountID, "ROSA_BILLING_ACCOUNT_ID")
+	_ = viper.BindEnv(BillingAccountID, "ROSA_BILLING_ACCOUNT_ID", "AWS_ACCOUNT_ID")
 	viper.SetDefault(BillingAccountID, "")
 }
