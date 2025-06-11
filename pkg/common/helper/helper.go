@@ -506,6 +506,11 @@ func (h *H) GetRunnerCommandString(templatePath string, timeout int, latestImage
 				Name:  "OCM_ENV",
 				Value: viper.GetString(ocmprovider.Env),
 			},
+			{
+				// https://onsi.github.io/ginkgo/#other-settings
+				Name:  "GINKGO_NO_COLOR",
+				Value: "TRUE",
+			},
 		},
 		// loaded as secrets to pod from env vars
 		EnvironmentVariablesFromSecret: []struct {
