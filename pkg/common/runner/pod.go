@@ -163,6 +163,7 @@ func (r *Runner) createJobPod(ctx context.Context) (pod *kubev1.Pod, err error) 
 			},
 		},
 	}
+	job.Spec.BackoffLimit = ptr.To[int32](0)
 	// retry until Job can be created or timeout occurs
 	if err = wait.PollUntilContextTimeout(ctx, fastPoll, podCreateTimeout, false, func(ctx context.Context) (done bool, err error) {
 		if job, err = r.Kube.BatchV1().Jobs(r.Namespace).Create(ctx, job, metav1.CreateOptions{}); err != nil {
