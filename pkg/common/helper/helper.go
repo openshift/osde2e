@@ -194,6 +194,7 @@ func (h *H) Cleanup(ctx context.Context) {
 	if err != nil {
 		ginkgo.GinkgoLogr.Error(err, "error listing existing projects")
 	}
+	// todo use k8s client to get namespace object and delete instead of for looping
 	for _, project := range projects.Items {
 		if h.proj.Name == project.Name {
 			ginkgo.GinkgoLogr.Info(fmt.Sprintf("Deleting project `%s`", project.Name))
@@ -505,11 +506,6 @@ func (h *H) GetRunnerCommandString(templatePath string, timeout int, latestImage
 			{
 				Name:  "OCM_ENV",
 				Value: viper.GetString(ocmprovider.Env),
-			},
-			{
-				// https://onsi.github.io/ginkgo/#other-settings
-				Name:  "GINKGO_NO_COLOR",
-				Value: "TRUE",
 			},
 		},
 		// loaded as secrets to pod from env vars

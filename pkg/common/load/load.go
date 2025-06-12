@@ -107,7 +107,8 @@ func loadPassthruSecrets(secretLocations []string) {
 			}
 		}
 	}
-
+	passthruSecrets["OCM_CLIENT_ID"] = viper.GetString(ocmprovider.ClientID)
+	passthruSecrets["OCM_CLIENT_SECRET"] = viper.GetString(ocmprovider.ClientSecret)
 	passthruSecrets["OCM_TOKEN"] = viper.GetString(ocmprovider.Token)
 	passthruSecrets["CLUSTER_ID"] = viper.GetString(config.Cluster.ID)
 	passthruSecrets["GCP_CREDS_JSON"] = viper.GetString(config.GCPCredsJSON)
