@@ -104,10 +104,14 @@ var _ = ginkgo.Describe("Test harness", ginkgo.Ordered, ginkgo.ContinueOnFailure
 		HarnessEntries)
 
 	ginkgo.AfterEach(func(ctx context.Context) {
-		ginkgo.By("Deleting harness namespace")
-		err := h.DeleteProject(ctx, subProject.Name)
-		if err != nil {
-			ginkgo.GinkgoLogr.Error(err, fmt.Sprintf("error deleting project %q", subProject.Name))
+		if !viper.GetBool(config.Cluster.SkipDestroyCluster) {
+			ginkgo.By("Deleting harness namespace")
+			err := h.DeleteProject(ctx, subProject.Name)
+			if err != nil {
+				ginkgo.GinkgoLogr.Error(err, fmt.Sprintf("error deleting project %q", subProject.Name))
+			}
+		} else {
+			log.Printf("For debugging, see test harness namespace: %s", subProject.Name)
 		}
 	})
 })
