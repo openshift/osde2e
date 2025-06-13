@@ -13,6 +13,7 @@ import (
 
 	"github.com/go-logr/logr"
 	projectv1 "github.com/openshift/api/project/v1"
+	"github.com/openshift/osde2e-common/pkg/clients/ocm"
 	"github.com/openshift/osde2e-common/pkg/clients/openshift"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -23,6 +24,14 @@ import (
 	"k8s.io/client-go/tools/remotecommand"
 	"k8s.io/utils/ptr"
 )
+
+type Config struct {
+	ClusterID           string
+	Environment         ocm.Environment
+	CloudProviderID     string
+	CloudProviderRegion string
+	Timeout             time.Duration
+}
 
 type executioner struct {
 	oc        *openshift.Client
@@ -39,7 +48,7 @@ func New(logger logr.Logger, image string) (*executioner, error) {
 	return &executioner{oc: oc, image: image}, nil
 }
 
-func (e *executioner) Execute(ctx context.Context, timeout time.Duration) error {
+func (e *executioner) Execute(ctx context.Context, cfg *Config) error {
 	project := &projectv1.Project{}
 	if err := e.oc.Create(ctx, project); err != nil {
 		return fmt.Errorf("creating namespace: %w", err)
@@ -86,14 +95,14 @@ func (e *executioner) Execute(ctx context.Context, timeout time.Duration) error 
 
 	job := &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
-			GenerateName: "",
+			GenerateName: "osde2e-executioner-",
 			Namespace:    project.Name,
 		},
 		Spec: batchv1.JobSpec{
 			Parallelism:           ptr.To[int32](1),
 			Completions:           ptr.To[int32](1),
 			BackoffLimit:          ptr.To[int32](0),
-			ActiveDeadlineSeconds: ptr.To(int64(timeout.Seconds())),
+			ActiveDeadlineSeconds: ptr.To(int64(cfg.Timeout.Seconds())),
 			Template: corev1.PodTemplateSpec{
 				Spec: corev1.PodSpec{
 					ServiceAccountName: sa.Name,
@@ -105,19 +114,19 @@ func (e *executioner) Execute(ctx context.Context, timeout time.Duration) error 
 							Env: []corev1.EnvVar{
 								{
 									Name:  "OCM_CLUSTER_ID",
-									Value: "",
+									Value: cfg.ClusterID,
 								},
 								{
 									Name:  "OCM_ENV",
-									Value: "",
+									Value: string(cfg.Environment),
 								},
 								{
 									Name:  "CLOUD_PROVIDER_ID",
-									Value: "",
+									Value: cfg.CloudProviderID,
 								},
 								{
 									Name:  "CLOUD_PROVIDER_REGION",
-									Value: "",
+									Value: cfg.CloudProviderRegion,
 								},
 							},
 							EnvFrom: []corev1.EnvFromSource{
@@ -191,7 +200,7 @@ func (e *executioner) fetchArtifacts(ctx context.Context, name, namespace string
 		SubResource("exec").
 		VersionedParams(&corev1.PodExecOptions{
 			Command:   []string{"tar", "cf", "-", "-C", "/artifacts", "/artifacts"},
-			Container: "pause-for-artifacts",
+			Container: "e2e-suite",
 			Stdin:     false,
 			Stdout:    true,
 			Stderr:    true,
