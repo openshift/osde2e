@@ -18,6 +18,8 @@ import (
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/logging"
 	"github.com/openshift/osde2e/pkg/common/providers"
+	"github.com/openshift/osde2e/pkg/common/providers/ocmprovider"
+	"github.com/openshift/osde2e/pkg/common/providers/rosaprovider"
 	"github.com/openshift/osde2e/pkg/common/spi"
 	"github.com/openshift/osde2e/pkg/common/util"
 	corev1 "k8s.io/api/core/v1"
@@ -508,6 +510,11 @@ func ProvisionCluster(logger *log.Logger) (*spi.Cluster, error) {
 	var cluster *spi.Cluster
 	// get cluster ID from env
 	clusterID := viper.GetString(config.Cluster.ID)
+	// Only enable cluster reserve claiming for ROSA STS classic for now
+	if viper.GetBool(config.Cluster.UseExistingCluster) && viper.GetString(config.Provider) == "rosa" && !viper.GetBool(config.Hypershift) && viper.GetBool(rosaprovider.STS) {
+		ocmProvider, _ := ocmprovider.New()
+		clusterID = ocmProvider.ClaimClusterFromReserve(viper.GetString(config.Cluster.Version), "aws", "rosa")
+	}
 	// create a new cluster if no ID is specified
 	if clusterID == "" {
 		log.Printf("no clusterid found, provisioning cluster")
