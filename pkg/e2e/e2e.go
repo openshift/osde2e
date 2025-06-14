@@ -111,13 +111,8 @@ func beforeSuite() bool {
 		}
 
 		if !viper.GetBool(config.Tests.SkipClusterHealthChecks) {
-			if viper.GetBool(config.Cluster.Reused) {
-				// We should manually run all our health checks if the cluster is waking up
-				err = clusterutil.WaitForClusterReadyPostWake(cluster.ID(), nil)
-			} else {
-				// This is a new cluster and we should check the OSD Ready job
-				err = clusterutil.WaitForClusterReadyPostInstall(cluster.ID(), nil)
-			}
+			// If this is a new cluster, we should check the OSD Ready job unless skipped
+			err = clusterutil.WaitForClusterReadyPostInstall(cluster.ID(), nil)
 			if err != nil {
 				log.Println("*******************")
 				log.Printf("Cluster failed health check: %v", err)
@@ -381,6 +376,17 @@ func runGinkgoTests() (int, error) {
 		viper.Set(config.Cluster.Passing, testsPassed)
 	}
 	if viper.GetBool(config.Cluster.ProvisionOnly) {
+		if viper.GetBool(config.Cluster.AddClusterToReserve) {
+			cluster, err := provider.GetCluster(viper.GetString(config.Cluster.ID))
+			if err != nil {
+				log.Printf("error initializing cluster object, could not add to cluster reserve: %s", err.Error())
+			} else {
+				err := provider.AddProperty(cluster, clusterproperties.Status, clusterproperties.StatusReserved)
+				if err != nil {
+					log.Printf("could not add cluster to reserve: %s", err.Error())
+				}
+			}
+		}
 		log.Println("Provision only execution finished, exiting.")
 		return Success, nil
 	}
@@ -557,14 +563,11 @@ func cleanupAfterE2E(ctx context.Context, h *helper.H) (errors []error) {
 		}
 	}
 
-	// We need a provider to hibernate
-	// We need a cluster to hibernate
-	// We need to check that the test run wants to hibernate after this run
 	if provider != nil && viper.GetString(config.Cluster.ID) != "" && viper.GetBool(config.Cluster.SkipDestroyCluster) {
 		// Current default expiration is 6 hours.
 		// If this cluster has addons, we don't want to extend the expiration
 
-		if !viper.GetBool(config.Cluster.Reused) && clusterStatus != clusterproperties.StatusCompletedError && viper.GetString(config.Addons.IDs) == "" {
+		if !viper.GetBool(config.Cluster.ClaimedFromReserve) && clusterStatus != clusterproperties.StatusCompletedError && viper.GetString(config.Addons.IDs) == "" {
 			cluster, err := provider.GetCluster(viper.GetString(config.Cluster.ID))
 			if err != nil {
 				log.Printf("Error getting cluster from provider: %s", err.Error())

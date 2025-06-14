@@ -161,6 +161,7 @@ func init() {
 	_ = viper.BindPFlag(config.Kubeconfig.Path, Cmd.PersistentFlags().Lookup("kube-config"))
 	_ = viper.BindPFlag(config.Cluster.SkipDestroyCluster, Cmd.PersistentFlags().Lookup("skip-destroy-cluster"))
 	_ = viper.BindPFlag(config.Cluster.ProvisionOnly, Cmd.PersistentFlags().Lookup("provision-only"))
+	_ = viper.BindPFlag(config.Cluster.AddClusterToReserve, Cmd.PersistentFlags().Lookup("add-cluster-to-reserve"))
 	_ = viper.BindPFlag(config.Tests.SkipClusterHealthChecks, Cmd.PersistentFlags().Lookup("skip-health-check"))
 	_ = viper.BindPFlag(config.Tests.OnlyHealthCheckNodes, Cmd.PersistentFlags().Lookup("only-health-check-nodes"))
 	_ = viper.BindPFlag(config.Tests.GinkgoFocus, Cmd.PersistentFlags().Lookup("focus-tests"))

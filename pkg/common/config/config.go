@@ -338,6 +338,10 @@ var Cluster = struct {
 	// Env: PROVISION_ONLY
 	ProvisionOnly string
 
+	// AddClusterToReserve only provisions testing-ready cluster and skips all tests.
+	// Env: ADD_CLUSTER_TO_RESERVE
+	AddClusterToReserve string
+
 	// MultiAZ deploys a cluster across multiple availability zones.
 	// Env: MULTI_AZ
 	MultiAZ string
@@ -455,8 +459,8 @@ var Cluster = struct {
 	// Passing tracks the internal status of the tests: Pass or Fail
 	Passing string
 
-	// Reused tracks whether this cluster's test run used a new or recycled cluster
-	Reused string
+	// ClaimedFromReserve tracks whether this cluster's test run used a new or recycled cluster
+	ClaimedFromReserve string
 
 	// InspectNamespaces is a comma-delimited list of namespaces to perform an inspect on during test cleanup
 	InspectNamespaces string
@@ -476,6 +480,7 @@ var Cluster = struct {
 	Channel:                             "cluster.channel",
 	SkipDestroyCluster:                  "cluster.skipDestroyCluster",
 	ProvisionOnly:                       "cluster.provisionOnly",
+	AddClusterToReserve:                 "cluster.addClusterToReserve",
 	ExpiryInMinutes:                     "cluster.expiryInMinutes",
 	AfterTestWait:                       "cluster.afterTestWait",
 	InstallTimeout:                      "cluster.installTimeout",
@@ -505,7 +510,7 @@ var Cluster = struct {
 	InstallConfig:                       "cluster.installConfig",
 	UseExistingCluster:                  "cluster.useExistingCluster",
 	Passing:                             "cluster.passing",
-	Reused:                              "cluster.rused",
+	ClaimedFromReserve:                  "cluster.claimedFromReserve",
 	InspectNamespaces:                   "cluster.inspectNamespaces",
 	EnableFips:                          "cluster.enableFips",
 	FedRamp:                             "cluster.fedRamp",
@@ -742,6 +747,11 @@ func InitOSDe2eViper() {
 
 	_ = viper.BindEnv(Cluster.ProvisionOnly, "PROVISION_ONLY")
 
+	_ = viper.BindEnv(Cluster.AddClusterToReserve, "ADD_CLUSTER_TO_RESERVE")
+	if viper.GetBool(Cluster.AddClusterToReserve) && !viper.GetBool(Cluster.ProvisionOnly) {
+		log.Printf("--add-cluster-to-reserve flag has no effect unless --provision-only is provided! Ignoring.")
+	}
+
 	viper.SetDefault(Cluster.ExpiryInMinutes, 360)
 	_ = viper.BindEnv(Cluster.ExpiryInMinutes, "CLUSTER_EXPIRY_IN_MINUTES")
 
@@ -824,7 +834,7 @@ func InitOSDe2eViper() {
 	viper.SetDefault(Cluster.UseExistingCluster, false)
 	_ = viper.BindEnv(Cluster.UseExistingCluster, "USE_EXISTING_CLUSTER")
 
-	viper.SetDefault(Cluster.Reused, false)
+	viper.SetDefault(Cluster.ClaimedFromReserve, false)
 	viper.SetDefault(Cluster.Passing, false)
 
 	viper.SetDefault(Cluster.InspectNamespaces, strings.Join(defaultInspectNamespaces, ","))
