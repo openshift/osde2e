@@ -4,7 +4,6 @@ import (
 	"archive/tar"
 	"bytes"
 	"context"
-	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -26,29 +25,31 @@ import (
 )
 
 type Config struct {
-	ClusterID           string
+	Image               string
 	Environment         ocm.Environment
+	ClusterID           string
 	CloudProviderID     string
 	CloudProviderRegion string
+	PassthruSecrets     map[string]string
 	Timeout             time.Duration
 }
 
 type executioner struct {
 	oc        *openshift.Client
-	image     string
 	outputDir string
+	cfg       *Config
 }
 
 // New sets up a new executioner to run a given test suite image
-func New(logger logr.Logger, image string) (*executioner, error) {
+func New(logger logr.Logger, cfg *Config) (*executioner, error) {
 	oc, err := openshift.New(logger)
 	if err != nil {
 		return nil, fmt.Errorf("openshift client creation: %w", err)
 	}
-	return &executioner{oc: oc, image: image}, nil
+	return &executioner{oc: oc, cfg: cfg}, nil
 }
 
-func (e *executioner) Execute(ctx context.Context, cfg *Config) error {
+func (e *executioner) Execute(ctx context.Context) error {
 	project := &projectv1.Project{}
 	if err := e.oc.Create(ctx, project); err != nil {
 		return fmt.Errorf("creating namespace: %w", err)
@@ -90,8 +91,17 @@ func (e *executioner) Execute(ctx context.Context, cfg *Config) error {
 		return fmt.Errorf("creating cluster-admin clusterrolebinding: %w", err)
 	}
 
-	// TODO: can we do this stuff without viper?
-	// create secrets for job
+	passthruSercret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "ci-secrets",
+			Namespace: project.Name,
+		},
+		StringData: e.cfg.PassthruSecrets,
+	}
+
+	if err := e.oc.Create(ctx, passthruSercret); err != nil {
+		return fmt.Errorf("creating passthru secrets: %w", err)
+	}
 
 	job := &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
@@ -102,31 +112,31 @@ func (e *executioner) Execute(ctx context.Context, cfg *Config) error {
 			Parallelism:           ptr.To[int32](1),
 			Completions:           ptr.To[int32](1),
 			BackoffLimit:          ptr.To[int32](0),
-			ActiveDeadlineSeconds: ptr.To(int64(cfg.Timeout.Seconds())),
+			ActiveDeadlineSeconds: ptr.To(int64(e.cfg.Timeout.Seconds())),
 			Template: corev1.PodTemplateSpec{
 				Spec: corev1.PodSpec{
 					ServiceAccountName: sa.Name,
 					Containers: []corev1.Container{
 						{
 							Name:            "e2e-suite",
-							Image:           e.image,
+							Image:           e.cfg.Image,
 							ImagePullPolicy: corev1.PullAlways,
 							Env: []corev1.EnvVar{
 								{
 									Name:  "OCM_CLUSTER_ID",
-									Value: cfg.ClusterID,
+									Value: e.cfg.ClusterID,
 								},
 								{
 									Name:  "OCM_ENV",
-									Value: string(cfg.Environment),
+									Value: string(e.cfg.Environment),
 								},
 								{
 									Name:  "CLOUD_PROVIDER_ID",
-									Value: cfg.CloudProviderID,
+									Value: e.cfg.CloudProviderID,
 								},
 								{
 									Name:  "CLOUD_PROVIDER_REGION",
-									Value: cfg.CloudProviderRegion,
+									Value: e.cfg.CloudProviderRegion,
 								},
 							},
 							EnvFrom: []corev1.EnvFromSource{
@@ -181,9 +191,10 @@ func (e *executioner) Execute(ctx context.Context, cfg *Config) error {
 		return fmt.Errorf("fetching artifacts: %w", err)
 	}
 
+	// TODO: write logs to a report directory
 	_ = logs
 
-	return errors.New("unimplemented")
+	return nil
 }
 
 func (e *executioner) fetchArtifacts(ctx context.Context, name, namespace string) error {
