@@ -1,4 +1,4 @@
-package harness_runner
+package adhoctestimages
 
 import (
 	"context"
@@ -25,44 +25,44 @@ var (
 	serviceAccountNamespacedName = "cluster-admin"
 	timeoutInSeconds             int
 	h                            *helper.H
-	HarnessEntries               []ginkgo.TableEntry
+	AdHocTestImageEntries        []ginkgo.TableEntry
 	r                            *runner.Runner
 	suffix                       string
 	subProject                   *projectv1.Project
 	err                          error
 )
 
-var _ = ginkgo.Describe("Test harness", ginkgo.Ordered, ginkgo.ContinueOnFailure, label.TestHarness, func() {
-	harnesses := viper.GetStringSlice(config.Tests.TestHarnesses)
-	if viper.IsSet(config.Tests.HarnessTimeout) {
-		timeoutInSeconds = viper.GetInt(config.Tests.HarnessTimeout)
+var _ = ginkgo.Describe("Ad Hoc Test Images", ginkgo.Ordered, ginkgo.ContinueOnFailure, label.AdHocTestImages, func() {
+	adHocTestImages := viper.GetStringSlice(config.Tests.AdHocTestImages)
+	if viper.IsSet(config.Tests.AdHocTestContainerTimeout) {
+		timeoutInSeconds = viper.GetInt(config.Tests.AdHocTestContainerTimeout)
 	} else {
 		timeoutInSeconds = viper.GetInt(config.Tests.PollingTimeout)
 	}
-	for _, harness := range harnesses {
-		HarnessEntries = append(HarnessEntries, ginkgo.Entry(harness+" should pass", harness))
+	for _, adHocTestImage := range adHocTestImages {
+		AdHocTestImageEntries = append(AdHocTestImageEntries, ginkgo.Entry(adHocTestImage+" should pass", adHocTestImage))
 	}
 
 	ginkgo.BeforeAll(func(ctx context.Context) {
 		h = helper.New()
-		log.Println("Harnesses to run: ", harnesses)
+		log.Println("Test images to run: ", adHocTestImages)
 	})
 	ginkgo.BeforeEach(func(ctx context.Context) {
 		ginkgo.By("Setting up new namespace")
 		suffix = "h-" + util.RandomStr(5)
 		subProject, err = h.SetupNewProject(ctx, suffix)
-		Expect(err).NotTo(HaveOccurred(), "Could not set up harness namespace")
+		Expect(err).NotTo(HaveOccurred(), "Could not set up test namespace")
 		err = h.SetPassthruSecretInProject(ctx, subProject)
 		Expect(err).NotTo(HaveOccurred(), "Could not set up passthru secrets")
 	})
 
 	ginkgo.DescribeTable("execution",
-		func(ctx context.Context, harness string) {
-			log.Printf("======= RUNNING HARNESS: %s =======", harness)
-			harnessImageIndex := strings.LastIndex(harness, "/")
-			harnessImage := strings.Split(harness[harnessImageIndex+1:], ":")[0]
-			harnessTestTemplate := "tests/tests-runner.template"
-			jobName := fmt.Sprintf("%s-%s", harnessImage, suffix)
+		func(ctx context.Context, adHocTestImage string) {
+			log.Printf("======= RUNNING AD_HOC_TEST_IMAGE: %s =======", adHocTestImage)
+			adHocTestImageIndex := strings.LastIndex(adHocTestImage, "/")
+			adHocTestImageName := strings.Split(adHocTestImage[adHocTestImageIndex+1:], ":")[0]
+			adHocTestImageTestTemplate := "tests/tests-runner.template"
+			jobName := fmt.Sprintf("%s-%s", adHocTestImageName, suffix)
 
 			// Create templated runner pod
 			ginkgo.By("Creating test runner pod")
@@ -71,10 +71,10 @@ var _ = ginkgo.Describe("Test harness", ginkgo.Ordered, ginkgo.ContinueOnFailure
 			h.SetRunnerProject(subProject.Name, r)
 			latestImageStream, err := r.GetLatestImageStreamTag()
 			Expect(err).NotTo(HaveOccurred(), "Could not get latest imagestream tag")
-			cmd := h.GetRunnerCommandString(harnessTestTemplate, timeoutInSeconds, latestImageStream, harness, suffix, jobName, serviceAccountDir, "", serviceAccountNamespacedName)
+			cmd := h.GetRunnerCommandString(adHocTestImageTestTemplate, timeoutInSeconds, latestImageStream, adHocTestImage, suffix, jobName, serviceAccountDir, "", serviceAccountNamespacedName)
 			r = h.SetRunnerCommand(cmd, r)
 
-			ginkgo.By("Running harness pod")
+			ginkgo.By("Running test pod")
 			stopCh := make(chan struct{})
 			err = r.Run(timeoutInSeconds, stopCh)
 			Expect(err).NotTo(HaveOccurred(), "Could not run pod")
@@ -86,12 +86,12 @@ var _ = ginkgo.Describe("Test harness", ginkgo.Ordered, ginkgo.ContinueOnFailure
 			ginkgo.By("Writing results")
 			h.WriteResults(results)
 			if config.Tests.LogBucket != "" {
-				err = h.UploadResultsToS3(results, harnessImage+time.Now().Format(time.DateOnly+"_"+time.TimeOnly))
+				err = h.UploadResultsToS3(results, adHocTestImageName+time.Now().Format(time.DateOnly+"_"+time.TimeOnly))
 				if err != nil {
 					ginkgo.GinkgoLogr.Error(err, "reporting error")
 				}
 			}
-			// Adding harness report failures to top level junit report
+			// Adding test report failures to top level junit report
 			for _, data := range results {
 				suites, _ := junit.Ingest(data)
 				for _, suite := range suites {
@@ -101,17 +101,17 @@ var _ = ginkgo.Describe("Test harness", ginkgo.Ordered, ginkgo.ContinueOnFailure
 				}
 			}
 		},
-		HarnessEntries)
+		AdHocTestImageEntries)
 
 	ginkgo.AfterEach(func(ctx context.Context) {
 		if !viper.GetBool(config.Cluster.SkipDestroyCluster) {
-			ginkgo.By("Deleting harness namespace")
+			ginkgo.By("Deleting test namespace")
 			err := h.DeleteProject(ctx, subProject.Name)
 			if err != nil {
 				ginkgo.GinkgoLogr.Error(err, fmt.Sprintf("error deleting project %q", subProject.Name))
 			}
 		} else {
-			log.Printf("For debugging, see test harness namespace: %s", subProject.Name)
+			log.Printf("For debugging, see test namespace: %s", subProject.Name)
 		}
 	})
 })

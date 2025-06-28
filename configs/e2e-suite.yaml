@@ -1,7 +1,7 @@
 tests:
   ginkgoLabelFilter: >
-    (E2E || Operators || TestHarness || ServiceDefinition) && !Informing
-  testHarnesses:
+    (E2E || Operators || AdHocTestImages || ServiceDefinition) && !Informing
+  adHocTestImages:
     - quay.io/app-sre/aws-vpce-operator-e2e
     - quay.io/app-sre/cloud-ingress-operator-e2e
     - quay.io/app-sre/custom-domains-operator-e2e
@@ -15,4 +15,4 @@ tests:
     - quay.io/app-sre/route-monitor-operator-e2e
     - quay.io/app-sre/managed-cluster-validating-webhooks-e2e
     - quay.io/app-sre/configuration-anomaly-detection-e2e
-  harnessTimeout: 900
+  adHocTestContainerTimeout: 900
