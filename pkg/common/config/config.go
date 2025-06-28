@@ -455,8 +455,8 @@ var Cluster = struct {
 	// Passing tracks the internal status of the tests: Pass or Fail
 	Passing string
 
-	// Reused tracks whether this cluster's test run used a new or recycled cluster
-	Reused string
+	// ClaimedFromReserve tracks whether this cluster's test run used a new or recycled cluster
+	ClaimedFromReserve string
 
 	// InspectNamespaces is a comma-delimited list of namespaces to perform an inspect on during test cleanup
 	InspectNamespaces string
@@ -505,7 +505,7 @@ var Cluster = struct {
 	InstallConfig:                       "cluster.installConfig",
 	UseExistingCluster:                  "cluster.useExistingCluster",
 	Passing:                             "cluster.passing",
-	Reused:                              "cluster.rused",
+	ClaimedFromReserve:                  "cluster.claimedFromReserve",
 	InspectNamespaces:                   "cluster.inspectNamespaces",
 	EnableFips:                          "cluster.enableFips",
 	FedRamp:                             "cluster.fedRamp",
@@ -824,7 +824,7 @@ func InitOSDe2eViper() {
 	viper.SetDefault(Cluster.UseExistingCluster, false)
 	_ = viper.BindEnv(Cluster.UseExistingCluster, "USE_EXISTING_CLUSTER")
 
-	viper.SetDefault(Cluster.Reused, false)
+	viper.SetDefault(Cluster.ClaimedFromReserve, false)
 	viper.SetDefault(Cluster.Passing, false)
 
 	viper.SetDefault(Cluster.InspectNamespaces, strings.Join(defaultInspectNamespaces, ","))
