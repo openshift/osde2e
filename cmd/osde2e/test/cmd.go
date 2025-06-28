@@ -14,7 +14,7 @@ import (
 	"github.com/spf13/cobra"
 
 	// import suites to be tested
-	_ "github.com/openshift/osde2e/pkg/e2e/harness_runner"
+	_ "github.com/openshift/osde2e/pkg/e2e/adhoctestimages"
 	_ "github.com/openshift/osde2e/pkg/e2e/openshift"
 	_ "github.com/openshift/osde2e/pkg/e2e/openshift/hypershift"
 	_ "github.com/openshift/osde2e/pkg/e2e/operators"
