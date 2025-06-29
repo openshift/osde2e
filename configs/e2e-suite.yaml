@@ -4,7 +4,6 @@ tests:
   testHarnesses:
     - quay.io/app-sre/aws-vpce-operator-test-harness
     - quay.io/app-sre/cloud-ingress-operator-test-harness
-    - quay.io/app-sre/custom-domains-operator-test-harness
     - quay.io/app-sre/managed-node-metadata-operator-test-harness
     - quay.io/app-sre/managed-upgrade-operator-test-harness
     - quay.io/app-sre/must-gather-operator-test-harness
