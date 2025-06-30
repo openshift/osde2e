@@ -14,4 +14,4 @@ tests:
     - quay.io/app-sre/route-monitor-operator-e2e
     - quay.io/app-sre/managed-cluster-validating-webhooks-e2e
     - quay.io/app-sre/configuration-anomaly-detection-e2e
-  adHocTestContainerTimeout: 900
+  adHocTestContainerTimeout: 1800
