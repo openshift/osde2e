@@ -4,7 +4,6 @@ tests:
   adHocTestImages:
     - quay.io/app-sre/aws-vpce-operator-e2e
     - quay.io/app-sre/cloud-ingress-operator-e2e
-    - quay.io/app-sre/custom-domains-operator-e2e
     - quay.io/app-sre/managed-node-metadata-operator-e2e
     - quay.io/app-sre/managed-upgrade-operator-e2e
     - quay.io/app-sre/must-gather-operator-e2e

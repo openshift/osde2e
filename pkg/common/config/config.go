@@ -132,7 +132,6 @@ var defaultInspectNamespaces = []string{
 	"openshift-route-monitor-operator",
 	"openshift-validation-webhook",
 	"openshift-backplane",
-	"openshift-custom-domains-operator",
 	"openshift-must-gather-operator",
 	"openshift-splunk-forwarder-operator",
 	"openshift-rbac-permissions",
