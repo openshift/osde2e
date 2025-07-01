@@ -1,17 +1,17 @@
 tests:
   ginkgoLabelFilter: >
-    (E2E || Operators || TestHarness || ServiceDefinition) && !Informing
-  testHarnesses:
-    - quay.io/app-sre/aws-vpce-operator-test-harness
-    - quay.io/app-sre/cloud-ingress-operator-test-harness
-    - quay.io/app-sre/managed-node-metadata-operator-test-harness
-    - quay.io/app-sre/managed-upgrade-operator-test-harness
-    - quay.io/app-sre/must-gather-operator-test-harness
-    - quay.io/app-sre/ocm-agent-operator-test-harness
-    - quay.io/app-sre/osd-metrics-exporter-test-harness
-    - quay.io/app-sre/rbac-permissions-operator-test-harness
-    - quay.io/app-sre/splunk-forwarder-operator-test-harness
-    - quay.io/app-sre/route-monitor-operator-test-harness
-    - quay.io/app-sre/managed-cluster-validating-webhooks-test-harness
+    (E2E || Operators || AdHocTestImages || ServiceDefinition) && !Informing
+  adHocTestImages:
+    - quay.io/app-sre/aws-vpce-operator-e2e
+    - quay.io/app-sre/cloud-ingress-operator-e2e
+    - quay.io/app-sre/managed-node-metadata-operator-e2e
+    - quay.io/app-sre/managed-upgrade-operator-e2e
+    - quay.io/app-sre/must-gather-operator-e2e
+    - quay.io/app-sre/ocm-agent-operator-e2e
+    - quay.io/app-sre/osd-metrics-exporter-e2e
+    - quay.io/app-sre/rbac-permissions-operator-e2e
+    - quay.io/app-sre/splunk-forwarder-operator-e2e
+    - quay.io/app-sre/route-monitor-operator-e2e
+    - quay.io/app-sre/managed-cluster-validating-webhooks-e2e
     - quay.io/app-sre/configuration-anomaly-detection-e2e
-  harnessTimeout: 900
+  adHocTestContainerTimeout: 900
