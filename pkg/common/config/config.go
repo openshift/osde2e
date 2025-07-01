@@ -210,20 +210,18 @@ var Kubeconfig = struct {
 }
 
 // Tests config keys
-
-// Tests config keys.
 var Tests = struct {
 	// SuiteTimeout is how long (in hours) to wait for the entire suite to finish before timing out
 	// Env: SUITE_TIMEOUT
 	SuiteTimeout string
 
-	// HarnessTimeout is how long (in seconds) to wait for the individual harness to finish before timing out. If unspecified, POLLING_TIMEOUT is used.
-	// Env: HARNESS_TIMEOUT
-	HarnessTimeout string
+	// AdHocTestContainerTimeout is how long (in seconds) to wait for the individual adHocTestImage to finish before timing out. If unspecified, POLLING_TIMEOUT is used.
+	// Env: AD_HOC_TEST_CONTAINER_TIMEOUT
+	AdHocTestContainerTimeout string
 
-	// TestHarnesses is a list of test harnesses to run.
-	// Env: TEST_HARNESSES
-	TestHarnesses string
+	// AdHocTestImages is a list of test adHocTestImages to run.
+	// Env: AD_HOC_TEST_IMAGES
+	AdHocTestImages string
 
 	// PollingTimeout is how long (in seconds) to wait for an object to be created before failing the test.
 	// Env: POLLING_TIMEOUT
@@ -291,7 +289,7 @@ var Tests = struct {
 	// Env: SKIP_CLUSTER_HEALTH_CHECKS
 	SkipClusterHealthChecks string
 
-	// ClusterHealthChecksTimeout defines the duration for which the harness will
+	// ClusterHealthChecksTimeout defines the duration for which the test will
 	// wait for the cluster to indicate it is healthy before cancelling the test
 	// run. This value should be formatted for use with time.ParseDuration.
 	// Env: CLUSTER_HEALTH_CHECKS_TIMEOUT
@@ -309,9 +307,9 @@ var Tests = struct {
 	// Env: ONLY_HEALTH_CHECK_NODES
 	OnlyHealthCheckNodes string
 }{
-	TestHarnesses:              "tests.testHarnesses",
+	AdHocTestImages:            "tests.adHocTestImages",
 	SuiteTimeout:               "tests.suiteTimeout",
-	HarnessTimeout:             "tests.harnessTimeout",
+	AdHocTestContainerTimeout:  "tests.adHocTestContainerTimeout",
 	PollingTimeout:             "tests.pollingTimeout",
 	ServiceAccount:             "tests.serviceAccount",
 	SlackChannel:               "tests.slackChannel",
@@ -535,11 +533,13 @@ var Addons = struct {
 	// Env: ADDON_IDS
 	IDs string
 
+	// todo: unused, remove
 	// RunCleanup is a boolean to specify whether the testHarnesses should have a separate
 	// cleanup phase. This phase would run at the end of all e2e testing
 	// Env: ADDON_RUN_CLEANUP
 	RunCleanup string
 
+	// todo: unused, remove
 	// CleanupHarnesses is a comma separated list of container images that will clean up any
 	// artifacts created after test harnesses have run
 	// Env: ADDON_CLEANUP_HARNESSES
@@ -679,12 +679,12 @@ func InitOSDe2eViper() {
 	_ = viper.BindEnv(Kubeconfig.Path, "TEST_KUBECONFIG")
 
 	// ----- Tests -----
-	_ = viper.BindEnv(Tests.TestHarnesses, "TEST_HARNESSES")
+	_ = viper.BindEnv(Tests.AdHocTestImages, "AD_HOC_TEST_IMAGES")
 
 	viper.SetDefault(Tests.SuiteTimeout, 6)
 	_ = viper.BindEnv(Tests.SuiteTimeout, "SUITE_TIMEOUT")
 
-	_ = viper.BindEnv(Tests.HarnessTimeout, "HARNESS_TIMEOUT")
+	_ = viper.BindEnv(Tests.AdHocTestContainerTimeout, "AD_HOC_TEST_CONTAINER_TIMEOUT")
 
 	viper.SetDefault(Tests.PollingTimeout, 300)
 	_ = viper.BindEnv(Tests.PollingTimeout, "POLLING_TIMEOUT")

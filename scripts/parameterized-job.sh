@@ -23,7 +23,7 @@ docker create --pull=always --name osde2e-run -e OCM_TOKEN \
 	-e SKIP_MUST_GATHER \
 	-e INSTALL_LATEST_XY \
 	-e INSTALL_LATEST_NIGHTLY \
-	-e TEST_HARNESSES \
+	-e AD_HOC_TEST_IMAGES \
 	-e POLLING_TIMEOUT \
 	-e OCM_CCS \
 	-e MULTI_AZ \
