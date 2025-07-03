@@ -264,7 +264,7 @@ func (o *OCMProvider) LaunchCluster(clusterName string) (string, error) {
 		if product == "" {
 			product = "osd"
 		}
-		if clusterID := o.FindRecycledCluster(cluster.Version().ID(), cluster.CloudProvider().ID(), product); clusterID != "" {
+		if clusterID := o.ClaimClusterFromReserve(cluster.Version().ID(), cluster.CloudProvider().ID(), product); clusterID != "" {
 			return clusterID, nil
 		}
 	}
@@ -305,45 +305,62 @@ func (o *OCMProvider) RetrieveGCPConfigs() error {
 	return nil
 }
 
-func (o *OCMProvider) FindRecycledCluster(originalVersion, cloudProvider, product string) string {
+func (o *OCMProvider) ClaimClusterFromReserve(originalVersion string, cloudProvider string, product string) string {
 	version := semver.MustParse(strings.TrimPrefix(originalVersion, "openshift-"))
-	query := fmt.Sprintf("cloud_provider.id='%s' and properties.JobName='' and properties.JobID='' and product.id='%s' and properties.Status like '%s%%' and version.id like 'openshift-v%s%%'",
-		cloudProvider, product, "completed-", version.String())
-
+	query := fmt.Sprintf("cloud_provider.id=%q"+
+		" and  "+
+		"region.id=%q"+
+		" and "+
+		"properties.MadeByOSDe2e=%q"+
+		" and "+
+		"product.id=%q"+
+		" and "+
+		"properties.Status like '%s%%'"+
+		" and "+
+		"version.id like 'openshift-v%s%%'"+
+		" and "+
+		"state=%q",
+		cloudProvider,
+		viper.GetString(config.CloudProvider.Region),
+		"true",
+		product,
+		clusterproperties.StatusReserved,
+		version.String(),
+		"ready")
 	log.Println(query)
 
 	listResponse, err := o.conn.ClustersMgmt().V1().Clusters().List().Search(query).Send()
 	if err == nil && listResponse.Total() > 0 {
-		log.Printf("We've found %d matching clusters to reuse", listResponse.Total())
-		recycledCluster := listResponse.Items().Slice()[rand.Intn(listResponse.Total())]
-		spiRecycledCluster, err := o.ocmToSPICluster(recycledCluster)
+		log.Printf("We've found %d matching clusters to claim", listResponse.Total())
+		candidateCluster := listResponse.Items().Slice()[rand.Intn(listResponse.Total())]
+		spiCandidateCluster, err := o.ocmToSPICluster(candidateCluster)
 		if err != nil {
 			log.Printf("Error converting recycled cluster to an SPI Cluster: %s", err.Error())
 			return ""
 		}
 
-		if recycledCluster.ExpirationTimestamp().Before(time.Now().Add(4 * time.Hour)) {
+		if candidateCluster.ExpirationTimestamp().Before(time.Now().Add(4 * time.Hour)) {
 			// Let's just expire this cluster immediately
-			err = o.AddProperty(spiRecycledCluster, clusterproperties.JobName, "expiring")
+			err = o.AddProperty(spiCandidateCluster, clusterproperties.JobName, "expiring")
 			if err != nil {
 				log.Printf("Error adding `expiring` to job name: %s", err.Error())
 				return ""
 			}
-			err = o.Expire(spiRecycledCluster.ID(), 1*time.Minute)
+			err = o.Expire(spiCandidateCluster.ID(), 1*time.Minute)
 			if err != nil {
-				log.Printf("Error expiring cluster %s: %s", spiRecycledCluster.ID(), err.Error())
+				log.Printf("Error expiring cluster %s: %s", spiCandidateCluster.ID(), err.Error())
 				return ""
 			}
 			// Now try and grab a different existing cluster
-			return o.FindRecycledCluster(originalVersion, cloudProvider, product)
+			return o.ClaimClusterFromReserve(originalVersion, cloudProvider, product)
 		}
 
-		err = o.AddProperty(spiRecycledCluster, clusterproperties.JobID, viper.GetString(config.JobID))
+		err = o.AddProperty(spiCandidateCluster, clusterproperties.JobID, viper.GetString(config.JobID))
 		if err != nil {
 			log.Printf("Error adding property to cluster: %s", err.Error())
 			return ""
 		}
-		err = o.AddProperty(spiRecycledCluster, clusterproperties.JobName, viper.GetString(config.JobName))
+		err = o.AddProperty(spiCandidateCluster, clusterproperties.JobName, viper.GetString(config.JobName))
 		if err != nil {
 			log.Printf("Error adding property to cluster: %s", err.Error())
 			return ""
@@ -351,31 +368,31 @@ func (o *OCMProvider) FindRecycledCluster(originalVersion, cloudProvider, produc
 
 		time.Sleep(5 * time.Second)
 
-		spiRecycledCluster, err = o.GetCluster(spiRecycledCluster.ID())
+		spiCandidateCluster, err = o.GetCluster(spiCandidateCluster.ID())
 		if err != nil {
 			log.Printf("Error retrieving cluster during job ID check: %s", err.Error())
 			return ""
 		}
-		if jobID, ok := spiRecycledCluster.Properties()["JobID"]; ok && jobID != viper.GetString(config.JobID) {
-			log.Printf("Cluster already recycled by %s", spiRecycledCluster.Properties()["JobID"])
-			return o.FindRecycledCluster(originalVersion, cloudProvider, product)
+		if jobID, ok := spiCandidateCluster.Properties()["JobID"]; ok && jobID != viper.GetString(config.JobID) {
+			log.Printf("Cluster already claimed by job %s", spiCandidateCluster.Properties()["JobID"])
+			return o.ClaimClusterFromReserve(originalVersion, cloudProvider, product)
 		}
 
-		if recycledCluster.State() == v1.ClusterStateReady {
-			err = o.AddProperty(spiRecycledCluster, clusterproperties.Status, clusterproperties.StatusHealthy)
+		if candidateCluster.State() == v1.ClusterStateReady {
+			log.Printf("Claiming reserved cluster: %s\n", spiCandidateCluster.ID())
+			err = o.AddProperty(spiCandidateCluster, clusterproperties.Status, clusterproperties.StatusClaimed)
 			if err != nil {
-				log.Printf("Error adding property to cluster: %s", err.Error())
+				log.Printf("Error claiming cluster: %s", err.Error())
 				return ""
 			}
-			viper.Set(config.Cluster.Reused, true)
-			if recycledCluster.AWS().STS().RoleARN() != "" {
+			viper.Set(config.Cluster.ClaimedFromReserve, true)
+			if candidateCluster.AWS().STS().RoleARN() != "" {
 				viper.Set("rosa.STS", true)
 			}
-			log.Println("Hot cluster ready, moving on...")
 
-			return recycledCluster.ID()
+			return candidateCluster.ID()
 		}
-		log.Printf("Failed to recycle cluster %s", recycledCluster.ID())
+		log.Printf("Cluster %s not ready, continuing... ", candidateCluster.ID())
 	}
 
 	// We couldn't resume the cluster. We'll log that we failed but continue the test with a new cluster

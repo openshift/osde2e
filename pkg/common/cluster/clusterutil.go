@@ -18,6 +18,8 @@ import (
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/logging"
 	"github.com/openshift/osde2e/pkg/common/providers"
+	"github.com/openshift/osde2e/pkg/common/providers/ocmprovider"
+	"github.com/openshift/osde2e/pkg/common/providers/rosaprovider"
 	"github.com/openshift/osde2e/pkg/common/spi"
 	"github.com/openshift/osde2e/pkg/common/util"
 	corev1 "k8s.io/api/core/v1"
@@ -143,74 +145,6 @@ func WaitForClusterReadyPostInstall(clusterID string, logger *log.Logger) error 
 func WaitForClusterReadyPostUpgrade(clusterID string, logger *log.Logger) error {
 	podErrorTracker.NewPodErrorTracker(pendingPodThreshold)
 	return waitForClusterReadyWithOverrideAndExpectedNumberOfNodes(clusterID, logger, true, false)
-}
-
-// WaitForClusterReadyPostWake blocks until the cluster is ready for testing, deletes errored pods, and then uses
-// healthcheck mechanisms appropriate for after the cluster resumed from hibernation.
-func WaitForClusterReadyPostWake(clusterID string, logger *log.Logger) error {
-	log.Printf("Cluster %s just woke up, waiting for 10 minutes...", clusterID)
-	provider, err := providers.ClusterProvider()
-	if err != nil {
-		return fmt.Errorf("error getting cluster provider: %s", err.Error())
-	}
-	cluster, err := provider.GetCluster(clusterID)
-	if err != nil {
-		return fmt.Errorf("error getting cluster from provider: %s", err.Error())
-	}
-	_ = provider.AddProperty(cluster, clusterproperties.Status, clusterproperties.StatusHealthCheck)
-	time.Sleep(10 * time.Minute)
-
-	restConfig, _, err := ClusterConfig(clusterID)
-	if err != nil {
-		return fmt.Errorf("error getting cluster config: %s", err.Error())
-	}
-
-	kubeClient, err := kubernetes.NewForConfig(restConfig)
-	if err != nil {
-		return fmt.Errorf("error generating Kube Clientset: %s", err.Error())
-	}
-
-	var continueToken string
-	nextPods := func() (*corev1.PodList, error) {
-		return kubeClient.CoreV1().Pods("").List(context.TODO(), v1.ListOptions{Continue: continueToken})
-	}
-	for list, err := nextPods(); len(list.Items) > 0; list, err = nextPods() {
-		if err != nil {
-			return fmt.Errorf("error retrieving pod list: %s", err.Error())
-		}
-		for _, pod := range list.Items {
-			if pod.Status.Phase == corev1.PodFailed || pod.Status.Phase == corev1.PodPending {
-				log.Printf("Cleaning up stale pod: %s", pod.Name)
-				if len(pod.Finalizers) > 0 {
-					log.Printf("Removing finalizers from %s", pod.Name)
-					pod.Finalizers = []string{}
-					_, err = kubeClient.CoreV1().Pods(pod.Namespace).Update(context.TODO(), &pod, v1.UpdateOptions{})
-					if err != nil {
-						return err
-					}
-				}
-				log.Printf("Deleting pod %s", pod.Name)
-				err = kubeClient.CoreV1().Pods(pod.Namespace).Delete(context.TODO(), pod.Name, v1.DeleteOptions{})
-				if err != nil {
-					log.Printf("Error deleting stale pod: %s", err.Error())
-				}
-			}
-			if len(pod.OwnerReferences) > 0 && pod.OwnerReferences[0].Kind == "Job" {
-				err = kubeClient.BatchV1().Jobs(pod.Namespace).Delete(context.TODO(), pod.OwnerReferences[0].Name, v1.DeleteOptions{})
-				if err != nil {
-					log.Printf("Error deleting stale job: %s", err.Error())
-				}
-			}
-		}
-		if list.Continue == "" {
-			break
-		}
-		continueToken = list.Continue
-	}
-
-	podErrorTracker.NewPodErrorTracker(pendingPodThreshold)
-	viper.Set(config.Cluster.CleanCheckRuns, 5)
-	return waitForClusterReadyWithOverrideAndExpectedNumberOfNodes(clusterID, logger, false, false)
 }
 
 func WaitForOCMProvisioning(provider spi.Provider, clusterID string, logger *log.Logger, isUpgrade bool) (becameReadyAt time.Time, err error) {
@@ -508,6 +442,11 @@ func ProvisionCluster(logger *log.Logger) (*spi.Cluster, error) {
 	var cluster *spi.Cluster
 	// get cluster ID from env
 	clusterID := viper.GetString(config.Cluster.ID)
+	// Only enable cluster reserve claiming for ROSA STS classic for now
+	if viper.GetBool(config.Cluster.UseExistingCluster) && viper.GetString(config.Provider) == "rosa" && !viper.GetBool(config.Hypershift) && viper.GetBool(rosaprovider.STS) {
+		ocmProvider, _ := ocmprovider.New()
+		clusterID = ocmProvider.ClaimClusterFromReserve(viper.GetString(config.Cluster.Version), "aws", "rosa")
+	}
 	// create a new cluster if no ID is specified
 	if clusterID == "" {
 		log.Printf("no clusterid found, provisioning cluster")
