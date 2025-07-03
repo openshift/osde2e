@@ -598,6 +598,14 @@ var Proxy = struct {
 	UserCABundle: "proxy.user_ca_bundle",
 }
 
+// Configuration Anomaly Detection keys
+var Cad = struct {
+	// Env: CAD_PAGERDUTY_ROUTING_KEY
+	CADPagerDutyRoutingKey string
+}{
+	CADPagerDutyRoutingKey: "cad.pagerDutyRoutingKey",
+}
+
 func InitOSDe2eViper() {
 	// Here's where we bind environment variables to config options and set defaults
 
@@ -886,6 +894,10 @@ func InitOSDe2eViper() {
 
 	_ = viper.BindEnv(Proxy.UserCABundle, "USER_CA_BUNDLE")
 	RegisterSecret(Proxy.UserCABundle, "user-ca-bundle")
+
+	// ------- Configuration Anomaly Detection ------
+	_ = viper.BindEnv(Cad.CADPagerDutyRoutingKey, "CAD_PAGERDUTY_ROUTING_KEY")
+	RegisterSecret(Cad.CADPagerDutyRoutingKey, "pagerduty-routing-key")
 }
 
 func init() {

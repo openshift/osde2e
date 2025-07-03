@@ -43,9 +43,6 @@ const (
 	// "Managed-*" account roles or create unique roles based on the cluster
 	// name
 	STSUseDefaultAccountRolesPrefix = "rosa.stsUseDefaultAccountRolesPrefix"
-
-	// BillingAccountID is the billing account ID used for Hosted Control Plane clusters.
-	BillingAccountID = "rosa.billingAccountID"
 )
 
 func init() {
@@ -82,7 +79,4 @@ func init() {
 
 	_ = viper.BindEnv(STSUseDefaultAccountRolesPrefix, "ROSA_STS_USE_DEFAULT_ACCOUNT_ROLES_PREFIX")
 	viper.SetDefault(STSUseDefaultAccountRolesPrefix, true)
-
-	_ = viper.BindEnv(BillingAccountID, "ROSA_BILLING_ACCOUNT_ID", "AWS_ACCOUNT_ID")
-	viper.SetDefault(BillingAccountID, "")
 }
