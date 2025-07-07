@@ -305,31 +305,36 @@ func (o *OCMProvider) RetrieveGCPConfigs() error {
 	return nil
 }
 
-func (o *OCMProvider) ClaimClusterFromReserve(originalVersion string, cloudProvider string, product string) string {
+func (o *OCMProvider) QueryReserve(originalVersion string, cloudProvider string, product string) (*v1.ClustersListResponse, error) {
 	version := semver.MustParse(strings.TrimPrefix(originalVersion, "openshift-"))
-	query := fmt.Sprintf("cloud_provider.id=%q"+
+	query := fmt.Sprintf("cloud_provider.id='%s'"+
 		" and  "+
-		"region.id=%q"+
+		"region.id='%s'"+
 		" and "+
-		"properties.MadeByOSDe2e=%q"+
+		"properties.MadeByOSDe2e='%s'"+
 		" and "+
-		"product.id=%q"+
+		"product.id='%s'"+
 		" and "+
 		"properties.Status like '%s%%'"+
 		" and "+
 		"version.id like 'openshift-v%s%%'"+
 		" and "+
-		"state=%q",
+		"state in (%s)",
 		cloudProvider,
 		viper.GetString(config.CloudProvider.Region),
 		"true",
 		product,
 		clusterproperties.StatusReserved,
 		version.String(),
-		"ready")
+		"'ready','pending','installing'")
+
 	log.Println(query)
 
-	listResponse, err := o.conn.ClustersMgmt().V1().Clusters().List().Search(query).Send()
+	return o.conn.ClustersMgmt().V1().Clusters().List().Search(query).Send()
+}
+
+func (o *OCMProvider) ClaimClusterFromReserve(originalVersion string, cloudProvider string, product string) string {
+	listResponse, err := o.QueryReserve(originalVersion, cloudProvider, product)
 	if err == nil && listResponse.Total() > 0 {
 		log.Printf("We've found %d matching clusters to claim", listResponse.Total())
 		candidateCluster := listResponse.Items().Slice()[rand.Intn(listResponse.Total())]
@@ -551,6 +556,10 @@ func (o *OCMProvider) GenerateProperties() (map[string]string, error) {
 	installedversion := viper.GetString(config.Cluster.Version)
 
 	provisionshardID := viper.GetString(config.Cluster.ProvisionShardID)
+	status := clusterproperties.StatusProvisioning
+	if viper.GetBool(config.Cluster.Reserve) {
+		status = clusterproperties.StatusReserved
+	}
 
 	properties := map[string]string{
 		clusterproperties.JobName:          viper.GetString(config.JobName),
@@ -559,7 +568,7 @@ func (o *OCMProvider) GenerateProperties() (map[string]string, error) {
 		clusterproperties.OwnedBy:          username,
 		clusterproperties.InstalledVersion: installedversion,
 		clusterproperties.UpgradeVersion:   "--",
-		clusterproperties.Status:           clusterproperties.StatusProvisioning,
+		clusterproperties.Status:           status,
 	}
 
 	if provisionshardID != "" {

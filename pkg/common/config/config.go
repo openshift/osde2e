@@ -18,6 +18,9 @@ type Secret struct {
 }
 
 const (
+	Success = 0
+	Failure = 1
+	Aborted = 130
 	// Provider is what provider to use to create/delete clusters.
 	// Env: PROVIDER
 	Provider = "provider"
@@ -331,13 +334,10 @@ var Tests = struct {
 
 // Cluster config keys.
 var Cluster = struct {
-	// ProvisionOnly only provisions testing-ready cluster and skips all tests.
-	// Env: PROVISION_ONLY
-	ProvisionOnly string
-
-	// AddClusterToReserve only provisions testing-ready cluster and skips all tests.
-	// Env: ADD_CLUSTER_TO_RESERVE
-	AddClusterToReserve string
+	// Reserve  creates a reserve of testing-ready cluster and skips all tests.
+	// Env: RESERVE
+	// Arg --reserve
+	Reserve string
 
 	// MultiAZ deploys a cluster across multiple availability zones.
 	// Env: MULTI_AZ
@@ -476,8 +476,7 @@ var Cluster = struct {
 	MultiAZ:                             "cluster.multiAZ",
 	Channel:                             "cluster.channel",
 	SkipDestroyCluster:                  "cluster.skipDestroyCluster",
-	ProvisionOnly:                       "cluster.provisionOnly",
-	AddClusterToReserve:                 "cluster.addClusterToReserve",
+	Reserve:                             "cluster.reserve",
 	ExpiryInMinutes:                     "cluster.expiryInMinutes",
 	AfterTestWait:                       "cluster.afterTestWait",
 	InstallTimeout:                      "cluster.installTimeout",
@@ -752,12 +751,7 @@ func InitOSDe2eViper() {
 
 	_ = viper.BindEnv(Cluster.SkipDestroyCluster, "SKIP_DESTROY_CLUSTER")
 
-	_ = viper.BindEnv(Cluster.ProvisionOnly, "PROVISION_ONLY")
-
-	_ = viper.BindEnv(Cluster.AddClusterToReserve, "ADD_CLUSTER_TO_RESERVE")
-	if viper.GetBool(Cluster.AddClusterToReserve) && !viper.GetBool(Cluster.ProvisionOnly) {
-		log.Printf("--add-cluster-to-reserve flag has no effect unless --provision-only is provided! Ignoring.")
-	}
+	_ = viper.BindEnv(Cluster.Reserve, "RESERVE")
 
 	viper.SetDefault(Cluster.ExpiryInMinutes, 360)
 	_ = viper.BindEnv(Cluster.ExpiryInMinutes, "CLUSTER_EXPIRY_IN_MINUTES")
