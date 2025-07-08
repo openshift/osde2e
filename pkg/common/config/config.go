@@ -896,6 +896,7 @@ func InitOSDe2eViper() {
 	RegisterSecret(Proxy.UserCABundle, "user-ca-bundle")
 
 	// ------- Configuration Anomaly Detection ------
+	viper.SetDefault(Cad.CADPagerDutyRoutingKey, "notprovided")
 	_ = viper.BindEnv(Cad.CADPagerDutyRoutingKey, "CAD_PAGERDUTY_ROUTING_KEY")
 	RegisterSecret(Cad.CADPagerDutyRoutingKey, "pagerduty-routing-key")
 }
