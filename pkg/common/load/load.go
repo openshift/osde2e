@@ -116,6 +116,7 @@ func loadPassthruSecrets(secretLocations []string) {
 	passthruSecrets["AWS_REGION"] = viper.GetString(config.AWSRegion)
 	passthruSecrets["AWS_PROFILE"] = viper.GetString(config.AWSProfile)
 	passthruSecrets["AWS_ACCESS_KEY_ID"] = viper.GetString(config.AWSAccessKey)
+	passthruSecrets["CAD_PAGERDUTY_ROUTING_KEY"] = viper.GetString(config.Cad.CADPagerDutyRoutingKey)
 
 	viper.Set(config.NonOSDe2eSecrets, passthruSecrets)
 }
