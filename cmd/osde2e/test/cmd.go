@@ -40,7 +40,6 @@ var args struct {
 	environment          string
 	kubeConfig           string
 	skipDestroyCluster   bool
-	provisionOnly        bool
 	skipHealthChecks     bool
 	skipMustGather       bool
 	focusTests           string
@@ -100,12 +99,7 @@ func init() {
 		false,
 		"Skip destroy cluster after test completion.",
 	)
-	pfs.BoolVar(
-		&args.provisionOnly,
-		"provision-only",
-		false,
-		"Skip all tests, only provision cluster.",
-	)
+
 	pfs.BoolVar(
 		&args.skipHealthChecks,
 		"skip-health-check",
@@ -147,8 +141,6 @@ func init() {
 	_ = viper.BindPFlag(ocmprovider.Env, Cmd.PersistentFlags().Lookup("environment"))
 	_ = viper.BindPFlag(config.Kubeconfig.Path, Cmd.PersistentFlags().Lookup("kube-config"))
 	_ = viper.BindPFlag(config.Cluster.SkipDestroyCluster, Cmd.PersistentFlags().Lookup("skip-destroy-cluster"))
-	_ = viper.BindPFlag(config.Cluster.ProvisionOnly, Cmd.PersistentFlags().Lookup("provision-only"))
-	_ = viper.BindPFlag(config.Cluster.AddClusterToReserve, Cmd.PersistentFlags().Lookup("add-cluster-to-reserve"))
 	_ = viper.BindPFlag(config.Tests.SkipClusterHealthChecks, Cmd.PersistentFlags().Lookup("skip-health-check"))
 	_ = viper.BindPFlag(config.Tests.OnlyHealthCheckNodes, Cmd.PersistentFlags().Lookup("only-health-check-nodes"))
 	_ = viper.BindPFlag(config.Tests.GinkgoFocus, Cmd.PersistentFlags().Lookup("focus-tests"))

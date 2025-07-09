@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 
+	"github.com/openshift/osde2e/cmd/osde2e/provision"
 	"github.com/spf13/cobra"
 
 	"github.com/openshift/osde2e/cmd/osde2e/arguments"
@@ -26,6 +27,7 @@ func init() {
 	pfs := root.PersistentFlags()
 	arguments.AddDebugFlag(pfs)
 
+	root.AddCommand(provision.Cmd)
 	root.AddCommand(test.Cmd)
 	root.AddCommand(healthcheck.Cmd)
 	root.AddCommand(completion.Cmd)
