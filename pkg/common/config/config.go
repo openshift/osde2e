@@ -262,16 +262,6 @@ var Tests = struct {
 	// Env: TESTS_TO_RUN
 	TestsToRun string
 
-	// OCPTestSuite Is the conformance suite to pass to "openshift-test" command. ex. "Operator"
-	// Env: OCP_TEST_SUITE
-	// arg --ocp-test-suite
-	OCPTestSuite string
-
-	// OCPTestSkipRegex Regex to skip ocp test specs.
-	// Env: OCP_TEST_SKIP_REGEX
-	// arg --ocp-test-skip-regex
-	OCPTestSkipRegex string
-
 	// SuppressSkipNotifications suppresses the notifications of skipped tests
 	// Env: SUPPRESS_SKIP_NOTIFICATIONS
 	SuppressSkipNotifications string
@@ -318,8 +308,6 @@ var Tests = struct {
 	GinkgoLogLevel:             "tests.ginkgoLogLevel",
 	GinkgoLabelFilter:          "tests.ginkgoLabelFilter",
 	TestsToRun:                 "tests.testsToRun",
-	OCPTestSuite:               "tests.ocpTestSuite",
-	OCPTestSkipRegex:           "tests.ocpTestSkipRegex",
 	SuppressSkipNotifications:  "tests.suppressSkipNotifications",
 	CleanRuns:                  "tests.cleanRuns",
 	OperatorSkip:               "tests.operatorSkip",
@@ -713,9 +701,6 @@ func InitOSDe2eViper() {
 	_ = viper.BindEnv(Tests.GinkgoLabelFilter, "GINKGO_LABEL_FILTER")
 
 	_ = viper.BindEnv(Tests.TestsToRun, "TESTS_TO_RUN")
-
-	_ = viper.BindEnv(Tests.OCPTestSuite, "OCP_TEST_SUITE")
-	_ = viper.BindEnv(Tests.OCPTestSkipRegex, "OCP_TEST_SKIP_REGEX")
 
 	viper.SetDefault(Tests.SuppressSkipNotifications, true)
 	_ = viper.BindEnv(Tests.SuppressSkipNotifications, "SUPPRESS_SKIP_NOTIFICATIONS")
