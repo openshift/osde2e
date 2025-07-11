@@ -27,7 +27,6 @@ var _ = Describe("Executor", func() {
 
 		logger := textlogger.NewLogger(textlogger.NewConfig())
 		cfg := &executor.Config{
-			Image:               "quay.io/app-sre/route-monitor-operator-test-harness",
 			OutputDir:           outputDir,
 			Environment:         ocm.Stage,
 			ClusterID:           "test-cluster",
@@ -42,7 +41,7 @@ var _ = Describe("Executor", func() {
 		exe, err := executor.New(logger, cfg)
 		Expect(err).NotTo(HaveOccurred())
 
-		results, err := exe.Execute(ctx)
+		results, err := exe.Execute(ctx, "quay.io/app-sre/route-monitor-operator-test-harness")
 		Expect(err).NotTo(HaveOccurred())
 		Expect(results).NotTo(BeNil())
 
