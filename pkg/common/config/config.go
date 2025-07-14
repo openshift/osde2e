@@ -684,6 +684,7 @@ func InitOSDe2eViper() {
 	viper.SetDefault(Tests.SuiteTimeout, 6)
 	_ = viper.BindEnv(Tests.SuiteTimeout, "SUITE_TIMEOUT")
 
+	viper.SetDefault(Tests.AdHocTestContainerTimeout, "30m")
 	_ = viper.BindEnv(Tests.AdHocTestContainerTimeout, "AD_HOC_TEST_CONTAINER_TIMEOUT")
 
 	viper.SetDefault(Tests.PollingTimeout, 300)
