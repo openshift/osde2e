@@ -15,4 +15,3 @@ tests:
     - quay.io/app-sre/managed-cluster-validating-webhooks-e2e
     - quay.io/app-sre/configuration-anomaly-detection-e2e
     - quay.io/app-sre/ocm-agent-e2e
-  adHocTestContainerTimeout: 1800
