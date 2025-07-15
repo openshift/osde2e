@@ -49,7 +49,7 @@ var _ = ginkgo.Describe("Ad Hoc Test Images", ginkgo.Ordered, ginkgo.ContinueOnF
 			baseImageName := strings.Split(testImage[strings.LastIndex(testImage, "/")+1:], ":")[0]
 			exeConfig.OutputDir = filepath.Join(viper.GetString(config.ReportDir), viper.GetString(config.Phase), baseImageName)
 
-			logger.Info("running test suite", "suite", testImage)
+			logger.Info("running test suite", "suite", testImage, "timeout", exeConfig.Timeout)
 			results, err := exe.Execute(ctx, testImage)
 			Expect(err).NotTo(HaveOccurred(), "failed to run test suite")
 
