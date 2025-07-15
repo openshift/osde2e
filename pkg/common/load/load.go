@@ -72,9 +72,24 @@ func Configs(configs []string, customConfig string, secretLocations []string) er
 	return nil
 }
 
+func GetPassthruSecrets(passthruSecrets map[string]string) map[string]string {
+	// set secrets from env into array
+	passthruSecrets["OCM_CLIENT_ID"] = viper.GetString(ocmprovider.ClientID)
+	passthruSecrets["OCM_CLIENT_SECRET"] = viper.GetString(ocmprovider.ClientSecret)
+	passthruSecrets["OCM_TOKEN"] = viper.GetString(ocmprovider.Token)
+	passthruSecrets["CLUSTER_ID"] = viper.GetString(config.Cluster.ID)
+	passthruSecrets["GCP_CREDS_JSON"] = viper.GetString(config.GCPCredsJSON)
+	passthruSecrets["AWS_SECRET_ACCESS_KEY"] = viper.GetString(config.AWSSecretAccessKey)
+	passthruSecrets["AWS_REGION"] = viper.GetString(config.AWSRegion)
+	passthruSecrets["AWS_PROFILE"] = viper.GetString(config.AWSProfile)
+	passthruSecrets["AWS_ACCESS_KEY_ID"] = viper.GetString(config.AWSAccessKey)
+	passthruSecrets["CAD_PAGERDUTY_ROUTING_KEY"] = viper.GetString(config.Cad.CADPagerDutyRoutingKey)
+	return passthruSecrets
+}
+
 func loadPassthruSecrets(secretLocations []string) {
 	passthruSecrets = viper.GetStringMapString(config.NonOSDe2eSecrets)
-	// Load secrets from folders
+	// Load secrets from shared secret files eg on prow
 	if len(secretLocations) > 0 {
 		secrets := config.GetAllSecrets()
 		for _, secret := range secrets {
@@ -107,16 +122,7 @@ func loadPassthruSecrets(secretLocations []string) {
 			}
 		}
 	}
-	passthruSecrets["OCM_CLIENT_ID"] = viper.GetString(ocmprovider.ClientID)
-	passthruSecrets["OCM_CLIENT_SECRET"] = viper.GetString(ocmprovider.ClientSecret)
-	passthruSecrets["OCM_TOKEN"] = viper.GetString(ocmprovider.Token)
-	passthruSecrets["CLUSTER_ID"] = viper.GetString(config.Cluster.ID)
-	passthruSecrets["GCP_CREDS_JSON"] = viper.GetString(config.GCPCredsJSON)
-	passthruSecrets["AWS_SECRET_ACCESS_KEY"] = viper.GetString(config.AWSSecretAccessKey)
-	passthruSecrets["AWS_REGION"] = viper.GetString(config.AWSRegion)
-	passthruSecrets["AWS_PROFILE"] = viper.GetString(config.AWSProfile)
-	passthruSecrets["AWS_ACCESS_KEY_ID"] = viper.GetString(config.AWSAccessKey)
-	passthruSecrets["CAD_PAGERDUTY_ROUTING_KEY"] = viper.GetString(config.Cad.CADPagerDutyRoutingKey)
+	GetPassthruSecrets(passthruSecrets)
 
 	viper.Set(config.NonOSDe2eSecrets, passthruSecrets)
 }

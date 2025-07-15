@@ -12,11 +12,13 @@ import (
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/label"
+	"github.com/openshift/osde2e/pkg/common/load"
 	"github.com/openshift/osde2e/pkg/common/providers/ocmprovider"
 	"github.com/openshift/osde2e/pkg/e2e/executor"
 )
 
 var _ = ginkgo.Describe("Ad Hoc Test Images", ginkgo.Ordered, ginkgo.ContinueOnFailure, label.AdHocTestImages, func() {
+	passthruSecrets := viper.GetStringMapString(config.NonOSDe2eSecrets)
 	var (
 		logger           = ginkgo.GinkgoLogr
 		testImageEntries = []ginkgo.TableEntry{}
@@ -26,7 +28,7 @@ var _ = ginkgo.Describe("Ad Hoc Test Images", ginkgo.Ordered, ginkgo.ContinueOnF
 			CloudProviderRegion: viper.GetString(config.CloudProvider.Region),
 			ClusterID:           viper.GetString(config.Cluster.ID),
 			Environment:         ocm.Environment(viper.GetString(ocmprovider.Env)),
-			PassthruSecrets:     viper.GetStringMapString(config.NonOSDe2eSecrets),
+			PassthruSecrets:     load.GetPassthruSecrets(passthruSecrets),
 			SkipCleanup:         viper.GetBool(config.Cluster.SkipDestroyCluster),
 			Timeout:             viper.GetDuration(config.Tests.AdHocTestContainerTimeout),
 		}
