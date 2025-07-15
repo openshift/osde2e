@@ -14,6 +14,7 @@ import (
 	"github.com/openshift/osde2e/pkg/common/label"
 	"github.com/openshift/osde2e/pkg/common/providers/ocmprovider"
 	"github.com/openshift/osde2e/pkg/e2e/executor"
+	"k8s.io/client-go/tools/clientcmd"
 )
 
 var _ = ginkgo.Describe("Ad Hoc Test Images", ginkgo.Ordered, ginkgo.ContinueOnFailure, label.AdHocTestImages, func() {
@@ -39,6 +40,9 @@ var _ = ginkgo.Describe("Ad Hoc Test Images", ginkgo.Ordered, ginkgo.ContinueOnF
 
 	ginkgo.BeforeAll(func(ctx context.Context) {
 		var err error
+		exeConfig.RestConfig, err = clientcmd.RESTConfigFromKubeConfig([]byte(viper.GetString(config.Kubeconfig.Contents)))
+		Expect(err).NotTo(HaveOccurred())
+
 		exe, err = executor.New(logger, exeConfig)
 		Expect(err).NotTo(HaveOccurred())
 		logger.Info("executing test suites", "suites", testImages)

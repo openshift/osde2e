@@ -26,6 +26,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/scheme"
+	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/remotecommand"
 	"k8s.io/utils/ptr"
 	"sigs.k8s.io/e2e-framework/klient/k8s/resources"
@@ -40,6 +41,7 @@ type Config struct {
 	Timeout             time.Duration
 	OutputDir           string
 	SkipCleanup         bool
+	RestConfig          *rest.Config
 }
 
 type Executor struct {
@@ -50,7 +52,13 @@ type Executor struct {
 
 // New sets up a new executor to run a given test suite image
 func New(logger logr.Logger, cfg *Config) (*Executor, error) {
-	oc, err := openshift.New(logger)
+	var oc *openshift.Client
+	var err error
+	if cfg.RestConfig != nil {
+		oc, err = openshift.NewFromRestConfig(cfg.RestConfig, logger)
+	} else {
+		oc, err = openshift.New(logger)
+	}
 	if err != nil {
 		return nil, fmt.Errorf("openshift client creation: %w", err)
 	}
