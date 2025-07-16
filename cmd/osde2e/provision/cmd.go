@@ -91,5 +91,6 @@ func run(cmd *cobra.Command, argv []string) error {
 		return fmt.Errorf("error getting cluster provider: %s", err.Error())
 	}
 
-	return clusterutil.Provision(provider)
+	_, err = clusterutil.Provision(provider)
+	return err
 }

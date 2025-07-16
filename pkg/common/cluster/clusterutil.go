@@ -552,22 +552,22 @@ func clusterName() string {
 	return "osde2e-" + suffix
 }
 
-func Provision(provider spi.Provider) error {
+func Provision(provider spi.Provider) (*spi.Cluster, error) {
 	status, err := ConfigureVersion(provider)
 	if status != config.Success {
-		return fmt.Errorf("failed configure cluster version: %v", err)
+		return nil, fmt.Errorf("failed configure cluster version: %v", err)
 	}
 
 	cluster, err := ProvisionCluster(nil)
 	if err != nil {
-		return fmt.Errorf("failed to set up or retrieve cluster: %v", err)
+		return nil, fmt.Errorf("failed to set up or retrieve cluster: %v", err)
 	}
 
 	viper.Set(config.Cluster.ID, cluster.ID())
 	log.Printf("CLUSTER_ID set to %s from OCM.", viper.GetString(config.Cluster.ID))
 	_, err = WaitForOCMProvisioning(provider, viper.GetString(config.Cluster.ID), nil, false)
 	if err != nil {
-		return fmt.Errorf("cluster never became ready: %v", err)
+		return nil, fmt.Errorf("cluster never became ready: %v", err)
 	}
 	log.Printf("Cluster status is ready")
 
@@ -617,7 +617,7 @@ func Provision(provider spi.Provider) error {
 	})
 
 	if clusterConfigerr != nil {
-		return fmt.Errorf("failed retrieving kubeconfig: %v", clusterConfigerr)
+		return nil, fmt.Errorf("failed retrieving kubeconfig: %v", clusterConfigerr)
 	}
 
 	if viper.GetString(config.SharedDir) != "" {
@@ -628,7 +628,7 @@ func Provision(provider spi.Provider) error {
 		}
 	}
 
-	return nil
+	return cluster, nil
 }
 
 // set cluster infor into viper and metadata
