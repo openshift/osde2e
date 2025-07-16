@@ -64,7 +64,7 @@ func beforeSuite() bool {
 		return false
 	}
 	if viper.GetString(config.Kubeconfig.Contents) == "" {
-		err = clusterutil.Provision(provider)
+		cluster, err = clusterutil.Provision(provider)
 		getLogs()
 		if err != nil {
 			return false
