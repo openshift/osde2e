@@ -202,7 +202,6 @@ The following are the values that can be plugged in for the --configs flag when 
 | informing-suite            | To run informing tests on osde2e clusters.                                                             |
 | openshift-suite            | To run the openshift test suite on osde2e clusters.                                                    |
 | test-harness               | To include test harness based testing for osde2e clusters.                                             |
-| conformance-suite          | To run conformance tests on osde2e clusters.                                                           |
 | scale-mastervertical-suite | To run the scale:master vertical suite on osde2e clusters.                                             |
 | scale-nodes-and-pods-suite | To run the scale:nodes and pods suite on osde2e clusters.                                              |
 | scale-performance-suite    | To run the scale:performance suite on osde2e clusters.                                                 |

@@ -1,6 +1,41 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "github>openshift/boilerplate//.github/renovate.json"
+  ],
   "gomod": {
-    "schedule": ["at any time"]
+    "schedule": [
+      "at any time"
+    ],
+    "packageRules": [
+      {
+        "matchManagers": [
+          "gomod"
+        ],
+        "matchDepTypes": [
+          "indirect"
+        ],
+        "enabled": false
+      },
+      {
+        "groupName": "golang.org/x modules",
+        "matchPackageNames": [
+          "golang.org/x/{/,}**"
+        ]
+      },
+      {
+        "groupName": "Kubernetes modules",
+        "matchPackageNames": [
+          "k8s.io/{/,}**"
+        ]
+      },
+      {
+        "groupName": "OpenShift modules",
+        "matchPackageNames": [
+          "/^github\\.com/openshift//",
+          "/^github\\.com/openshift-/"
+        ]
+      }
+    ]
   }
 }

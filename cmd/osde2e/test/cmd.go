@@ -14,8 +14,7 @@ import (
 	"github.com/spf13/cobra"
 
 	// import suites to be tested
-	_ "github.com/openshift/osde2e/pkg/e2e/harness_runner"
-	_ "github.com/openshift/osde2e/pkg/e2e/openshift"
+	_ "github.com/openshift/osde2e/pkg/e2e/adhoctestimages"
 	_ "github.com/openshift/osde2e/pkg/e2e/openshift/hypershift"
 	_ "github.com/openshift/osde2e/pkg/e2e/operators"
 	_ "github.com/openshift/osde2e/pkg/e2e/osd"
@@ -41,7 +40,6 @@ var args struct {
 	environment          string
 	kubeConfig           string
 	skipDestroyCluster   bool
-	provisionOnly        bool
 	skipHealthChecks     bool
 	skipMustGather       bool
 	focusTests           string
@@ -101,12 +99,7 @@ func init() {
 		false,
 		"Skip destroy cluster after test completion.",
 	)
-	pfs.BoolVar(
-		&args.provisionOnly,
-		"provision-only",
-		false,
-		"Skip all tests, only provision cluster.",
-	)
+
 	pfs.BoolVar(
 		&args.skipHealthChecks,
 		"skip-health-check",
@@ -124,18 +117,6 @@ func init() {
 		"focus-tests",
 		"",
 		"Only run any Ginkgo tests whose names matching the regular expression",
-	)
-	pfs.StringVar(
-		&args.ocpTestSuite,
-		"ocp-test-suite",
-		"",
-		"The type of openshift-test conformance suite to run.",
-	)
-	pfs.StringVar(
-		&args.ocpTestSkipRegex,
-		"ocp-test-skip-regex",
-		"",
-		"Regex for openshift-test conformance test specs to skip.",
 	)
 	pfs.StringVar(
 		&args.skipTests,
@@ -160,12 +141,9 @@ func init() {
 	_ = viper.BindPFlag(ocmprovider.Env, Cmd.PersistentFlags().Lookup("environment"))
 	_ = viper.BindPFlag(config.Kubeconfig.Path, Cmd.PersistentFlags().Lookup("kube-config"))
 	_ = viper.BindPFlag(config.Cluster.SkipDestroyCluster, Cmd.PersistentFlags().Lookup("skip-destroy-cluster"))
-	_ = viper.BindPFlag(config.Cluster.ProvisionOnly, Cmd.PersistentFlags().Lookup("provision-only"))
 	_ = viper.BindPFlag(config.Tests.SkipClusterHealthChecks, Cmd.PersistentFlags().Lookup("skip-health-check"))
 	_ = viper.BindPFlag(config.Tests.OnlyHealthCheckNodes, Cmd.PersistentFlags().Lookup("only-health-check-nodes"))
 	_ = viper.BindPFlag(config.Tests.GinkgoFocus, Cmd.PersistentFlags().Lookup("focus-tests"))
-	_ = viper.BindPFlag(config.Tests.OCPTestSuite, Cmd.PersistentFlags().Lookup("ocp-test-suite"))
-	_ = viper.BindPFlag(config.Tests.OCPTestSkipRegex, Cmd.PersistentFlags().Lookup("ocp-test-skip-regex"))
 	_ = viper.BindPFlag(config.Tests.GinkgoSkip, Cmd.PersistentFlags().Lookup("skip-tests"))
 	_ = viper.BindPFlag(config.SkipMustGather, Cmd.PersistentFlags().Lookup("skip-must-gather"))
 	_ = viper.BindPFlag(config.Tests.GinkgoLabelFilter, Cmd.PersistentFlags().Lookup("label-filter"))
