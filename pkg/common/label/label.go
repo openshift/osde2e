@@ -32,9 +32,6 @@ var (
 	// Blocking tests are stable and important enough to block a new release
 	Blocking = ginkgo.Label("Blocking")
 
-	// OCP Nightly Blocking tests are minimal and highly reliable. They're used by nightly version jobs.
-	OCPNightlyBlocking = ginkgo.Label("OCPNightlyBlocking")
-
 	// Install tests cover validating the component is available and ready
 	Install = ginkgo.Label("Install")
 
@@ -75,11 +72,8 @@ var (
 	// https://docs.openshift.com/dedicated/osd_architecture/osd_policy/osd-service-definition.html
 	ServiceDefinition = ginkgo.Label("ServiceDefinition")
 
-	// Application build tests verify the ability to deploy applications
-	AppBuilds = ginkgo.Label("AppBuilds")
-
-	// Runs tests that are using the test harness functionality
-	TestHarness = ginkgo.Label("TestHarness")
+	// Runs tests that are using the ad-hoc image testing functionality
+	AdHocTestImages = ginkgo.Label("AdHocTestImages")
 )
 
 func AllCloudProviders() []ginkgo.Labels {

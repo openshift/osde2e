@@ -1,0 +1,3 @@
+tests:
+  ginkgoLabelFilter: AdHocTestImages
+  adHocTestContainerTimeout: 30m
