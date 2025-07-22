@@ -41,6 +41,7 @@ var args struct {
 	clusters        bool
 	sendSummary     bool
 	ec2             bool
+	vpc             bool
 }
 
 type Message struct {
@@ -50,6 +51,7 @@ type Message struct {
 	IAMErrors string `json:"iam"`
 	IPErrors  string `json:"ip"`
 	EC2Errors string `json:"ec2"`
+	VPCErrors string `json:"vpc"`
 }
 
 func init() {
@@ -132,6 +134,13 @@ func init() {
 		"Terminate ec2 instances",
 	)
 
+	flags.BoolVar(
+		&args.vpc,
+		"vpc",
+		false,
+		"Cleanup vpc resources",
+	)
+
 	_ = Cmd.RegisterFlagCompletionFunc("output-format", func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		return []string{"json", "prom"}, cobra.ShellCompDirectiveDefault
 	})
@@ -148,12 +157,14 @@ func run(cmd *cobra.Command, argv []string) error {
 		return fmt.Errorf("error parsing --older-than: %v", err)
 	}
 
-	// message format: `{"summary":"<summary>", "full":"<details>"}`
+	// message format: `{"summary":"<summary>", "buildfile":"<buildfile>", "s3":"<s3 errors>",
+	// "iam":"<iam errors>", "ip":"<ip errors>", "ec2":"<ec2 errors>", "vpc":"<vpc errors>"}`
 	var summaryBuilder strings.Builder
 	var iamErrorBuilder strings.Builder
 	var s3ErrorBuilder strings.Builder
 	var ipErrorBuilder strings.Builder
 	var ec2ErrorBuilder strings.Builder
+	var vpcErrorBuilder strings.Builder
 
 	if args.dryRun {
 		summaryBuilder.WriteString("-- Cleanup dry run -- \n")
@@ -273,6 +284,16 @@ func run(cmd *cobra.Command, argv []string) error {
 		}
 	}
 
+	if args.vpc {
+		vpcDeletedCounter := 0
+		vpcFailedCounter := 0
+		err = aws.CcsAwsSession.CleanupVPCs(args.dryRun, args.sendSummary, &vpcDeletedCounter, &vpcFailedCounter, &vpcErrorBuilder)
+		summaryBuilder.WriteString("VPCs: " + strconv.Itoa(vpcDeletedCounter) + "/" + strconv.Itoa(vpcFailedCounter) + "\n")
+		if err != nil {
+			return fmt.Errorf("could not cleanup vpc resources: %s", err.Error())
+		}
+	}
+
 	if args.sendSummary {
 		webhook := viper.GetString(config.Tests.SlackWebhook)
 		if webhook == "" {
@@ -296,6 +317,7 @@ func run(cmd *cobra.Command, argv []string) error {
 			IAMErrors: "IAM Errors: " + iamErrorBuilder.String(),
 			IPErrors:  "IP Errors: " + ipErrorBuilder.String(),
 			EC2Errors: "EC2 Errors: " + ec2ErrorBuilder.String(),
+			VPCErrors: "VPC Errors: " + vpcErrorBuilder.String(),
 		}
 
 		jsonDataMessage, err := json.Marshal(message)
