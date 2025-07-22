@@ -28,19 +28,13 @@ import (
 	"github.com/openshift/osde2e/pkg/common/spi"
 	"github.com/openshift/osde2e/pkg/common/upgrade"
 	"github.com/openshift/osde2e/pkg/common/util"
-	"github.com/openshift/osde2e/pkg/common/versions"
 	"github.com/openshift/osde2e/pkg/debug"
-	"k8s.io/apimachinery/pkg/util/wait"
 	ctrlog "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 const (
 	// buildLog is the name of the build log file.
 	buildLog string = "test_output.log"
-
-	Success = 0
-	Failure = 1
-	Aborted = 130
 )
 
 // provisioner is used to deploy and manage clusters.
@@ -70,95 +64,11 @@ func beforeSuite() bool {
 		return false
 	}
 	if viper.GetString(config.Kubeconfig.Contents) == "" {
-		status, err := configureVersion()
-		if status != Success {
-			log.Printf("Failed configure cluster version: %v", err)
-			return false
-		}
-		cluster, err = clusterutil.ProvisionCluster(nil)
-		if err != nil {
-			log.Printf("Failed to set up or retrieve cluster: %v", err)
-			getLogs()
-			return false
-		}
-
-		viper.Set(config.Cluster.ID, cluster.ID())
-		log.Printf("CLUSTER_ID set to %s from OCM.", viper.GetString(config.Cluster.ID))
-		_, err = clusterutil.WaitForOCMProvisioning(provider, viper.GetString(config.Cluster.ID), nil, false)
-		if err != nil {
-			log.Printf("Cluster never became ready: %v", err)
-			getLogs()
-			return false
-		}
-		log.Printf("Cluster status is ready")
-
-		if viper.GetString(config.SharedDir) != "" {
-			if err = os.WriteFile(fmt.Sprintf("%s/cluster-id", viper.GetString(config.SharedDir)), []byte(cluster.ID()), 0o644); err != nil {
-				log.Printf("Error writing cluster ID to shared directory: %v", err)
-			} else {
-				log.Printf("Wrote cluster ID to shared dir: %v", cluster.ID())
-			}
-		} else {
-			log.Printf("No shared directory provided, skip writing cluster ID")
-		}
-
-		if (!viper.GetBool(config.Addons.SkipAddonList) || viper.GetString(config.Provider) != "mock") && len(cluster.Addons()) > 0 {
-			log.Printf("Found addons: %s", strings.Join(cluster.Addons(), ","))
-		}
-
-		if err = provider.AddProperty(cluster, "UpgradeVersion", viper.GetString(config.Upgrade.ReleaseName)); err != nil {
-			log.Printf("Error while adding upgrade version property to cluster via OCM: %v", err)
-		}
-
-		if !viper.GetBool(config.Tests.SkipClusterHealthChecks) {
-			if viper.GetBool(config.Cluster.Reused) {
-				// We should manually run all our health checks if the cluster is waking up
-				err = clusterutil.WaitForClusterReadyPostWake(cluster.ID(), nil)
-			} else {
-				// This is a new cluster and we should check the OSD Ready job
-				err = clusterutil.WaitForClusterReadyPostInstall(cluster.ID(), nil)
-			}
-			if err != nil {
-				log.Println("*******************")
-				log.Printf("Cluster failed health check: %v", err)
-				log.Println("*******************")
-				getLogs()
-			} else {
-				log.Println("Cluster is healthy and ready for testing")
-			}
-		} else {
-			log.Println("Skipping health checks as requested")
-		}
-
-		var kubeconfigBytes []byte
-		clusterConfigerr := wait.PollUntilContextTimeout(context.Background(), 2*time.Second, 5*time.Minute, false, func(ctx context.Context) (bool, error) {
-			kubeconfigBytes, err = provider.ClusterKubeconfig(viper.GetString(config.Cluster.ID))
-			if err != nil {
-				log.Printf("Failed to retrieve kubeconfig: %v\nWaiting two seconds before retrying", err)
-				return false, nil
-			} else {
-				log.Printf("Successfully retrieved kubeconfig from OCM.")
-				viper.Set(config.Kubeconfig.Contents, string(kubeconfigBytes))
-				return true, nil
-			}
-		})
-
-		if clusterConfigerr != nil {
-			log.Printf("Failed retrieving kubeconfig: %v", clusterConfigerr)
-			getLogs()
-			return false
-		}
-
-		if viper.GetString(config.SharedDir) != "" {
-			if err = os.WriteFile(fmt.Sprintf("%s/kubeconfig", viper.GetString(config.SharedDir)), kubeconfigBytes, 0o644); err != nil {
-				log.Printf("Error writing cluster kubeconfig to shared directory: %v", err)
-			} else {
-				log.Printf("Passed kubeconfig to prow steps.")
-			}
-		}
-
+		cluster, err = clusterutil.Provision(provider)
 		getLogs()
-
+		if err != nil {
+			return false
+		}
 	} else {
 		log.Println("Using provided kubeconfig")
 		cluster, err = provider.GetCluster(viper.GetString(config.Cluster.ID))
@@ -184,34 +94,6 @@ func beforeSuite() bool {
 	}
 
 	return true
-}
-
-func configureVersion() (int, error) {
-	// configure cluster and upgrade versions
-	versionSelector := versions.VersionSelector{Provider: provider}
-	if err := versionSelector.SelectClusterVersions(); err != nil {
-		// If we can't find a version to use, exit with an error code.
-		return Failure, err
-	}
-
-	switch {
-	case !viper.GetBool(config.Cluster.EnoughVersionsForOldestOrMiddleTest):
-		return Aborted, fmt.Errorf("there were not enough available cluster image sets to choose and oldest or middle cluster image set to test against -- skipping tests")
-	case !viper.GetBool(config.Cluster.PreviousVersionFromDefaultFound):
-		return Aborted, fmt.Errorf("no previous version from default found with the given arguments")
-	case viper.GetBool(config.Upgrade.UpgradeVersionEqualToInstallVersion):
-		return Aborted, fmt.Errorf("install version and upgrade version are the same -- skipping tests")
-	case viper.GetString(config.Upgrade.ReleaseName) == util.NoVersionFound:
-		return Aborted, fmt.Errorf("no valid upgrade versions were found. Skipping tests")
-	case viper.GetString(config.Cluster.Version) == "":
-		returnState := Aborted
-		if viper.GetBool(config.Cluster.LatestYReleaseAfterProdDefault) || viper.GetBool(config.Cluster.LatestZReleaseAfterProdDefault) {
-			log.Println("At the latest available version with no newer targets. Exiting...")
-			returnState = Success
-		}
-		return returnState, fmt.Errorf("no valid install version found")
-	}
-	return Success, nil
 }
 
 func getLogs() {
@@ -348,7 +230,7 @@ func runGinkgoTests() (int, error) {
 	buildLogPath := filepath.Join(reportDir, buildLog)
 	buildLogWriter, err := os.Create(buildLogPath)
 	if err != nil {
-		return Failure, fmt.Errorf("unable to create build log in report directory: %v", err)
+		return config.Failure, fmt.Errorf("unable to create build log in report directory: %v", err)
 	}
 
 	mw := io.MultiWriter(os.Stdout, buildLogWriter)
@@ -367,7 +249,7 @@ func runGinkgoTests() (int, error) {
 		if runInstallTests = viper.GetBool(config.Upgrade.RunPreUpgradeTests); !runInstallTests {
 			if !suiteConfig.DryRun {
 				if !beforeSuite() {
-					return Failure, fmt.Errorf("error occurred during beforeSuite function")
+					return config.Failure, fmt.Errorf("error occurred during beforeSuite function")
 				}
 			}
 		}
@@ -380,10 +262,7 @@ func runGinkgoTests() (int, error) {
 		getLogs()
 		viper.Set(config.Cluster.Passing, testsPassed)
 	}
-	if viper.GetBool(config.Cluster.ProvisionOnly) {
-		log.Println("Provision only execution finished, exiting.")
-		return Success, nil
-	}
+
 	upgradeTestsPassed := true
 
 	// upgrade cluster if requested
@@ -392,12 +271,12 @@ func runGinkgoTests() (int, error) {
 			// setup helper
 			h, err := helper.NewOutsideGinkgo()
 			if h == nil || err != nil {
-				return Failure, fmt.Errorf("unable to generate helper outside ginkgo: %v", err)
+				return config.Failure, fmt.Errorf("unable to generate helper outside ginkgo: %v", err)
 			}
 
 			// run the upgrade
 			if err = upgrade.RunUpgrade(h); err != nil {
-				return Failure, fmt.Errorf("error performing upgrade: %v", err)
+				return config.Failure, fmt.Errorf("error performing upgrade: %v", err)
 			}
 
 			if viper.GetBool(config.Upgrade.RunPostUpgradeTests) {
@@ -425,22 +304,22 @@ func runGinkgoTests() (int, error) {
 			log.Printf("Failed to generate helper object to perform cleanup operations, deleting cluster: %t", !viper.GetBool(config.Cluster.SkipDestroyCluster))
 			// Ignoring the error to return actual error which caused runtime to abort
 			_ = deleteCluster(provider)
-			return Failure, fmt.Errorf("unable to generate helper object for cleanup: %v", err)
+			return config.Failure, fmt.Errorf("unable to generate helper object for cleanup: %v", err)
 		}
 
 		cleanupAfterE2E(context.TODO(), h)
 
 		if err = deleteCluster(provider); err != nil {
-			return Failure, err
+			return config.Failure, err
 		}
 	}
 
 	if !testsPassed || !upgradeTestsPassed {
 		viper.Set(config.Cluster.Passing, false)
-		return Failure, fmt.Errorf("tests failed, please inspect logs for more details")
+		return config.Failure, fmt.Errorf("tests failed, please inspect logs for more details")
 	}
 
-	return Success, nil
+	return config.Success, nil
 }
 
 // deleteCluster destroys the cluster based on defined settings
@@ -557,14 +436,11 @@ func cleanupAfterE2E(ctx context.Context, h *helper.H) (errors []error) {
 		}
 	}
 
-	// We need a provider to hibernate
-	// We need a cluster to hibernate
-	// We need to check that the test run wants to hibernate after this run
 	if provider != nil && viper.GetString(config.Cluster.ID) != "" && viper.GetBool(config.Cluster.SkipDestroyCluster) {
 		// Current default expiration is 6 hours.
 		// If this cluster has addons, we don't want to extend the expiration
 
-		if !viper.GetBool(config.Cluster.Reused) && clusterStatus != clusterproperties.StatusCompletedError && viper.GetString(config.Addons.IDs) == "" {
+		if !viper.GetBool(config.Cluster.ClaimedFromReserve) && clusterStatus != clusterproperties.StatusCompletedError && viper.GetString(config.Addons.IDs) == "" {
 			cluster, err := provider.GetCluster(viper.GetString(config.Cluster.ID))
 			if err != nil {
 				log.Printf("Error getting cluster from provider: %s", err.Error())
@@ -601,9 +477,6 @@ func runTestsInPhase(
 	if !suiteConfig.DryRun {
 		if !beforeSuite() {
 			return false
-		}
-		if viper.GetBool(config.Cluster.ProvisionOnly) {
-			return true
 		}
 	}
 

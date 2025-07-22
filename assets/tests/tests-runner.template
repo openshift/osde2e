@@ -12,7 +12,7 @@ spec:
     spec:
       serviceAccount: {{.ServiceAccount}}
       containers:
-      - name: test-harness
+      - name: test-container
         image: {{.Image}}
         imagePullPolicy: Always
         {{ if .Arguments }}
@@ -58,7 +58,7 @@ cat <<PUSH_RESULTS > push-results.sh
 
 JOB_POD=\$(oc get pods -l job-name={{.JobName}} -o=jsonpath='{.items[0].metadata.name}')
 echo "Found Job Pod: \$JOB_POD"
-while ! oc get pod \$JOB_POD -o jsonpath='{.status.containerStatuses[?(@.name=="test-harness")].state}' | grep -q terminated; do sleep 1; done
+while ! oc get pod \$JOB_POD -o jsonpath='{.status.containerStatuses[?(@.name=="test-container")].state}' | grep -q terminated; do sleep 1; done
 for i in {1..5}; do oc rsync {{.OutputDir}}/. $(hostname):{{.OutputDir}} && break; sleep 10; done
 PUSH_RESULTS
 
@@ -77,5 +77,5 @@ while oc get job/{{.JobName}} -o=jsonpath='{.status}' | grep -q active; do sleep
 
 mkdir -p "{{.OutputDir}}/containerLogs"
 JOB_POD=$(oc get pods -l job-name={{.JobName}} -o=jsonpath='{.items[0].metadata.name}')
-oc logs $JOB_POD -c test-harness > "{{.OutputDir}}/containerLogs/${JOB_POD}-test-harness.log"
+oc logs $JOB_POD -c test-container > "{{.OutputDir}}/containerLogs/${JOB_POD}-test-adHocTestImage.log"
 oc logs $JOB_POD -c push-results > "{{.OutputDir}}/containerLogs/${JOB_POD}-push-results.log"

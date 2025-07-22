@@ -18,8 +18,11 @@ import (
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/logging"
 	"github.com/openshift/osde2e/pkg/common/providers"
+	"github.com/openshift/osde2e/pkg/common/providers/ocmprovider"
+	"github.com/openshift/osde2e/pkg/common/providers/rosaprovider"
 	"github.com/openshift/osde2e/pkg/common/spi"
 	"github.com/openshift/osde2e/pkg/common/util"
+	"github.com/openshift/osde2e/pkg/common/versions"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -30,6 +33,7 @@ import (
 )
 
 const (
+	RESERVE_COUNT = 2
 	// errorWindow is the number of checks made to determine if a cluster has truly failed.
 	errorWindow = 20
 	// pendingPodThreshold is the maximum number of times a pod is allowed to be in pending state before erroring out in PollClusterHealth.
@@ -143,74 +147,6 @@ func WaitForClusterReadyPostInstall(clusterID string, logger *log.Logger) error 
 func WaitForClusterReadyPostUpgrade(clusterID string, logger *log.Logger) error {
 	podErrorTracker.NewPodErrorTracker(pendingPodThreshold)
 	return waitForClusterReadyWithOverrideAndExpectedNumberOfNodes(clusterID, logger, true, false)
-}
-
-// WaitForClusterReadyPostWake blocks until the cluster is ready for testing, deletes errored pods, and then uses
-// healthcheck mechanisms appropriate for after the cluster resumed from hibernation.
-func WaitForClusterReadyPostWake(clusterID string, logger *log.Logger) error {
-	log.Printf("Cluster %s just woke up, waiting for 10 minutes...", clusterID)
-	provider, err := providers.ClusterProvider()
-	if err != nil {
-		return fmt.Errorf("error getting cluster provider: %s", err.Error())
-	}
-	cluster, err := provider.GetCluster(clusterID)
-	if err != nil {
-		return fmt.Errorf("error getting cluster from provider: %s", err.Error())
-	}
-	_ = provider.AddProperty(cluster, clusterproperties.Status, clusterproperties.StatusHealthCheck)
-	time.Sleep(10 * time.Minute)
-
-	restConfig, _, err := ClusterConfig(clusterID)
-	if err != nil {
-		return fmt.Errorf("error getting cluster config: %s", err.Error())
-	}
-
-	kubeClient, err := kubernetes.NewForConfig(restConfig)
-	if err != nil {
-		return fmt.Errorf("error generating Kube Clientset: %s", err.Error())
-	}
-
-	var continueToken string
-	nextPods := func() (*corev1.PodList, error) {
-		return kubeClient.CoreV1().Pods("").List(context.TODO(), v1.ListOptions{Continue: continueToken})
-	}
-	for list, err := nextPods(); len(list.Items) > 0; list, err = nextPods() {
-		if err != nil {
-			return fmt.Errorf("error retrieving pod list: %s", err.Error())
-		}
-		for _, pod := range list.Items {
-			if pod.Status.Phase == corev1.PodFailed || pod.Status.Phase == corev1.PodPending {
-				log.Printf("Cleaning up stale pod: %s", pod.Name)
-				if len(pod.Finalizers) > 0 {
-					log.Printf("Removing finalizers from %s", pod.Name)
-					pod.Finalizers = []string{}
-					_, err = kubeClient.CoreV1().Pods(pod.Namespace).Update(context.TODO(), &pod, v1.UpdateOptions{})
-					if err != nil {
-						return err
-					}
-				}
-				log.Printf("Deleting pod %s", pod.Name)
-				err = kubeClient.CoreV1().Pods(pod.Namespace).Delete(context.TODO(), pod.Name, v1.DeleteOptions{})
-				if err != nil {
-					log.Printf("Error deleting stale pod: %s", err.Error())
-				}
-			}
-			if len(pod.OwnerReferences) > 0 && pod.OwnerReferences[0].Kind == "Job" {
-				err = kubeClient.BatchV1().Jobs(pod.Namespace).Delete(context.TODO(), pod.OwnerReferences[0].Name, v1.DeleteOptions{})
-				if err != nil {
-					log.Printf("Error deleting stale job: %s", err.Error())
-				}
-			}
-		}
-		if list.Continue == "" {
-			break
-		}
-		continueToken = list.Continue
-	}
-
-	podErrorTracker.NewPodErrorTracker(pendingPodThreshold)
-	viper.Set(config.Cluster.CleanCheckRuns, 5)
-	return waitForClusterReadyWithOverrideAndExpectedNumberOfNodes(clusterID, logger, false, false)
 }
 
 func WaitForOCMProvisioning(provider spi.Provider, clusterID string, logger *log.Logger, isUpgrade bool) (becameReadyAt time.Time, err error) {
@@ -508,6 +444,26 @@ func ProvisionCluster(logger *log.Logger) (*spi.Cluster, error) {
 	var cluster *spi.Cluster
 	// get cluster ID from env
 	clusterID := viper.GetString(config.Cluster.ID)
+	ocmProvider, err := ocmprovider.NewWithEnv(viper.GetString(ocmprovider.Env))
+	if err != nil {
+		return nil, fmt.Errorf("could not setup ocm provider: %v", err)
+	}
+	// Only enable cluster reserve claiming for ROSA STS classic for now
+	if viper.GetBool(config.Cluster.UseExistingCluster) && viper.GetString(config.Provider) == "rosa" && !viper.GetBool(config.Hypershift) && viper.GetBool(rosaprovider.STS) {
+		ocmProvider, _ := ocmprovider.New()
+		clusterID = ocmProvider.ClaimClusterFromReserve(viper.GetString(config.Cluster.Version), "aws", "rosa")
+	}
+	if viper.GetBool(config.Cluster.Reserve) {
+		listResponse, err := ocmProvider.QueryReserve(viper.GetString(config.Cluster.Version), viper.GetString(config.CloudProvider.CloudProviderID), viper.GetString(config.Provider))
+		if err != nil {
+			return nil, fmt.Errorf("could not query reserve: %v", err)
+		}
+		if listResponse.Total() >= RESERVE_COUNT {
+			// Provision one cluster per job run. Job should be scheduled every so often to keep adding to reserve so that count is met.
+			return nil, nil
+		}
+	}
+
 	// create a new cluster if no ID is specified
 	if clusterID == "" {
 		log.Printf("no clusterid found, provisioning cluster")
@@ -596,6 +552,85 @@ func clusterName() string {
 	return "osde2e-" + suffix
 }
 
+func Provision(provider spi.Provider) (*spi.Cluster, error) {
+	status, err := ConfigureVersion(provider)
+	if status != config.Success {
+		return nil, fmt.Errorf("failed configure cluster version: %v", err)
+	}
+
+	cluster, err := ProvisionCluster(nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to set up or retrieve cluster: %v", err)
+	}
+
+	viper.Set(config.Cluster.ID, cluster.ID())
+	log.Printf("CLUSTER_ID set to %s from OCM.", viper.GetString(config.Cluster.ID))
+	_, err = WaitForOCMProvisioning(provider, viper.GetString(config.Cluster.ID), nil, false)
+	if err != nil {
+		return nil, fmt.Errorf("cluster never became ready: %v", err)
+	}
+	log.Printf("Cluster status is ready")
+
+	if viper.GetString(config.SharedDir) != "" {
+		if err = os.WriteFile(fmt.Sprintf("%s/cluster-id", viper.GetString(config.SharedDir)), []byte(cluster.ID()), 0o644); err != nil {
+			log.Printf("Error writing cluster ID to shared directory: %v", err)
+		} else {
+			log.Printf("Wrote cluster ID to shared dir: %v", cluster.ID())
+		}
+	} else {
+		log.Printf("No shared directory provided, skip writing cluster ID")
+	}
+
+	if (!viper.GetBool(config.Addons.SkipAddonList) || viper.GetString(config.Provider) != "mock") && len(cluster.Addons()) > 0 {
+		log.Printf("Found addons: %s", strings.Join(cluster.Addons(), ","))
+	}
+
+	if err = provider.AddProperty(cluster, "UpgradeVersion", viper.GetString(config.Upgrade.ReleaseName)); err != nil {
+		log.Printf("Error while adding upgrade version property to cluster via OCM: %v", err)
+	}
+
+	if !viper.GetBool(config.Tests.SkipClusterHealthChecks) {
+		// If this is a new cluster, we should check the OSD Ready job unless skipped
+		err = WaitForClusterReadyPostInstall(cluster.ID(), nil)
+		if err != nil {
+			log.Println("*******************")
+			log.Printf("Cluster failed health check: %v", err)
+			log.Println("*******************")
+		} else {
+			log.Println("Cluster is healthy and ready for testing")
+		}
+	} else {
+		log.Println("Skipping health checks as requested")
+	}
+
+	var kubeconfigBytes []byte
+	clusterConfigerr := wait.PollUntilContextTimeout(context.Background(), 2*time.Second, 5*time.Minute, false, func(ctx context.Context) (bool, error) {
+		kubeconfigBytes, err = provider.ClusterKubeconfig(viper.GetString(config.Cluster.ID))
+		if err != nil {
+			log.Printf("Failed to retrieve kubeconfig: %v\nWaiting two seconds before retrying", err)
+			return false, nil
+		} else {
+			log.Printf("Successfully retrieved kubeconfig from OCM.")
+			viper.Set(config.Kubeconfig.Contents, string(kubeconfigBytes))
+			return true, nil
+		}
+	})
+
+	if clusterConfigerr != nil {
+		return nil, fmt.Errorf("failed retrieving kubeconfig: %v", clusterConfigerr)
+	}
+
+	if viper.GetString(config.SharedDir) != "" {
+		if err = os.WriteFile(fmt.Sprintf("%s/kubeconfig", viper.GetString(config.SharedDir)), kubeconfigBytes, 0o644); err != nil {
+			log.Printf("Error writing cluster kubeconfig to shared directory: %v", err)
+		} else {
+			log.Printf("Passed kubeconfig to prow steps.")
+		}
+	}
+
+	return cluster, nil
+}
+
 // set cluster infor into viper and metadata
 func SetClusterIntoViperConfig(cluster *spi.Cluster) {
 	viper.Set(config.Cluster.Channel, cluster.ChannelGroup())
@@ -610,4 +645,32 @@ func SetClusterIntoViperConfig(cluster *spi.Cluster) {
 
 	viper.Set(config.CloudProvider.Region, cluster.Region())
 	log.Printf("CLOUD_PROVIDER_REGION set to %s from OCM.", viper.GetString(config.CloudProvider.Region))
+}
+
+func ConfigureVersion(provider spi.Provider) (int, error) {
+	// configure cluster and upgrade versions
+	versionSelector := versions.VersionSelector{Provider: provider}
+	if err := versionSelector.SelectClusterVersions(); err != nil {
+		// If we can't find a version to use, exit with an error code.
+		return config.Failure, err
+	}
+
+	switch {
+	case !viper.GetBool(config.Cluster.EnoughVersionsForOldestOrMiddleTest):
+		return config.Aborted, fmt.Errorf("there were not enough available cluster image sets to choose and oldest or middle cluster image set to test against -- skipping tests")
+	case !viper.GetBool(config.Cluster.PreviousVersionFromDefaultFound):
+		return config.Aborted, fmt.Errorf("no previous version from default found with the given arguments")
+	case viper.GetBool(config.Upgrade.UpgradeVersionEqualToInstallVersion):
+		return config.Aborted, fmt.Errorf("install version and upgrade version are the same -- skipping tests")
+	case viper.GetString(config.Upgrade.ReleaseName) == util.NoVersionFound:
+		return config.Aborted, fmt.Errorf("no valid upgrade versions were found. Skipping tests")
+	case viper.GetString(config.Cluster.Version) == "":
+		returnState := config.Aborted
+		if viper.GetBool(config.Cluster.LatestYReleaseAfterProdDefault) || viper.GetBool(config.Cluster.LatestZReleaseAfterProdDefault) {
+			log.Println("At the latest available version with no newer targets. Exiting...")
+			returnState = config.Success
+		}
+		return returnState, fmt.Errorf("no valid install version found")
+	}
+	return config.Success, nil
 }

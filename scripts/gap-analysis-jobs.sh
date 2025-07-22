@@ -23,10 +23,10 @@ docker create --name "${CONTAINER_NAME}" -e OCM_TOKEN \
 	-e OCM_ENV="${ENVIRONMENT}" \
 	-e ROSA_STS="${STS}" \
 	-e AWS_VPC_SUBNET_IDS \
-	-e HARNESS_TIMEOUT='600' \
 	-e CHANNEL \
 	-e INSTALL_LATEST_XY \
 	-e CLUSTER_VERSION \
+	-e ROSA_BILLING_ACCOUNT_ID \
 	-e GCP_CREDS_JSON \
 	-e INSTALL_LATEST_NIGHTLY \
 	-e REPORT_DIR='/tmp/osde2e-report' \

@@ -166,7 +166,7 @@ func (h *H) SetupNewProject(ctx context.Context, suffix string) (*projectv1.Proj
 	return v1project, nil
 }
 
-// Adds essential secrets to harness namespace to load onto harness pod
+// Adds essential secrets to test namespace to load onto ad hoc test pod
 func (h *H) SetPassthruSecretInProject(ctx context.Context, project *projectv1.Project) error {
 	err := h.GetClient().Create(ctx, &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
@@ -194,6 +194,7 @@ func (h *H) Cleanup(ctx context.Context) {
 	if err != nil {
 		ginkgo.GinkgoLogr.Error(err, "error listing existing projects")
 	}
+	// todo use k8s client to get namespace object and delete instead of for looping
 	for _, project := range projects.Items {
 		if h.proj.Name == project.Name {
 			ginkgo.GinkgoLogr.Info(fmt.Sprintf("Deleting project `%s`", project.Name))
@@ -449,8 +450,8 @@ func (h *H) GetClient() *openshift.Client {
 	return h.client
 }
 
-// GetRunnerCommandString Generates templated command string to provide to test harness container
-func (h *H) GetRunnerCommandString(templatePath string, timeout int, latestImageStream string, harness string, suffix string, jobName string, serviceAccountDir string, command string, serviceAccountNamespacedName string) string {
+// GetRunnerCommandString Generates templated command string to provide to test adHocTest container
+func (h *H) GetRunnerCommandString(templatePath string, timeout int, latestImageStream string, adHocTestImage string, suffix string, jobName string, serviceAccountDir string, command string, serviceAccountNamespacedName string) string {
 	ginkgo.GinkgoHelper()
 	values := struct {
 		Name                 string
@@ -478,7 +479,7 @@ func (h *H) GetRunnerCommandString(templatePath string, timeout int, latestImage
 		Name:                 jobName,
 		JobName:              jobName,
 		Timeout:              timeout,
-		Image:                harness,
+		Image:                adHocTestImage,
 		OutputDir:            runner.DefaultRunner.OutputDir,
 		ServiceAccount:       serviceAccountNamespacedName,
 		PushResultsContainer: latestImageStream,
@@ -507,7 +508,7 @@ func (h *H) GetRunnerCommandString(templatePath string, timeout int, latestImage
 				Value: viper.GetString(ocmprovider.Env),
 			},
 		},
-
+		// loaded as secrets to pod from env vars
 		EnvironmentVariablesFromSecret: []struct {
 			SecretName string
 			SecretKey  string
@@ -515,6 +516,14 @@ func (h *H) GetRunnerCommandString(templatePath string, timeout int, latestImage
 			{
 				SecretName: "ci-secrets",
 				SecretKey:  "OCM_TOKEN",
+			},
+			{
+				SecretName: "ci-secrets",
+				SecretKey:  "OCM_CLIENT_SECRET",
+			},
+			{
+				SecretName: "ci-secrets",
+				SecretKey:  "OCM_CLIENT_ID",
 			},
 			{
 				SecretName: "ci-secrets",
@@ -535,6 +544,10 @@ func (h *H) GetRunnerCommandString(templatePath string, timeout int, latestImage
 			{
 				SecretName: "ci-secrets",
 				SecretKey:  "GCP_CREDS_JSON",
+			},
+			{
+				SecretName: "ci-secrets",
+				SecretKey:  "CAD_PAGERDUTY_ROUTING_KEY",
 			},
 		},
 		Command: command,

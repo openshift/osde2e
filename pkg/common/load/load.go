@@ -107,7 +107,8 @@ func loadPassthruSecrets(secretLocations []string) {
 			}
 		}
 	}
-
+	passthruSecrets["OCM_CLIENT_ID"] = viper.GetString(ocmprovider.ClientID)
+	passthruSecrets["OCM_CLIENT_SECRET"] = viper.GetString(ocmprovider.ClientSecret)
 	passthruSecrets["OCM_TOKEN"] = viper.GetString(ocmprovider.Token)
 	passthruSecrets["CLUSTER_ID"] = viper.GetString(config.Cluster.ID)
 	passthruSecrets["GCP_CREDS_JSON"] = viper.GetString(config.GCPCredsJSON)
@@ -115,6 +116,7 @@ func loadPassthruSecrets(secretLocations []string) {
 	passthruSecrets["AWS_REGION"] = viper.GetString(config.AWSRegion)
 	passthruSecrets["AWS_PROFILE"] = viper.GetString(config.AWSProfile)
 	passthruSecrets["AWS_ACCESS_KEY_ID"] = viper.GetString(config.AWSAccessKey)
+	passthruSecrets["CAD_PAGERDUTY_ROUTING_KEY"] = viper.GetString(config.Cad.CADPagerDutyRoutingKey)
 
 	viper.Set(config.NonOSDe2eSecrets, passthruSecrets)
 }
