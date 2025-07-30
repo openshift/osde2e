@@ -177,6 +177,16 @@ func run(cmd *cobra.Command, argv []string) error {
 		}
 	}
 
+	if args.vpc {
+		vpcDeletedCounter := 0
+		vpcFailedCounter := 0
+		err = aws.CcsAwsSession.CleanupVPCs(args.dryRun, args.sendSummary, &vpcDeletedCounter, &vpcFailedCounter, &vpcErrorBuilder)
+		summaryBuilder.WriteString("VPCs: " + strconv.Itoa(vpcDeletedCounter) + "/" + strconv.Itoa(vpcFailedCounter) + "\n")
+		if err != nil {
+			return fmt.Errorf("could not cleanup vpc resources: %s", err.Error())
+		}
+	}
+
 	if args.clusters {
 		provider, err := ocmprovider.NewWithEnv(viper.GetString(ocmprovider.Env))
 		if err != nil {
@@ -281,16 +291,6 @@ func run(cmd *cobra.Command, argv []string) error {
 		summaryBuilder.WriteString("Elastic IPs: " + strconv.Itoa(elasticIpDeletedCounter) + "/" + strconv.Itoa(elasticIpFailedCounter) + "\n")
 		if err != nil {
 			return fmt.Errorf("could not release ips: %s", err.Error())
-		}
-	}
-
-	if args.vpc {
-		vpcDeletedCounter := 0
-		vpcFailedCounter := 0
-		err = aws.CcsAwsSession.CleanupVPCs(args.dryRun, args.sendSummary, &vpcDeletedCounter, &vpcFailedCounter, &vpcErrorBuilder)
-		summaryBuilder.WriteString("VPCs: " + strconv.Itoa(vpcDeletedCounter) + "/" + strconv.Itoa(vpcFailedCounter) + "\n")
-		if err != nil {
-			return fmt.Errorf("could not cleanup vpc resources: %s", err.Error())
 		}
 	}
 
