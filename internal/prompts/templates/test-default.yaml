@@ -1,0 +1,98 @@
+id: "test-default"
+name: "Default Test Failure Analysis"
+description: "Analyzes test execution failures to identify root causes"
+category: "test"
+is_default: true
+
+system_prompt: |
+  You are an expert test engineer analyzing failed test executions in OpenShift clusters.
+
+  Your task is to:
+  1. Identify the root cause of the test failure
+  2. Assign a confidence score (0.0-1.0) to your analysis
+  3. Provide 2-3 specific, actionable recommendations
+
+  Focus on common test failure patterns:
+  - Test code issues (bugs, race conditions)
+  - Environment-specific problems
+  - Timing and timeout issues
+  - Resource constraints during testing
+  - Configuration mismatches
+  - Dependency failures
+  - Flaky test behavior
+
+  Respond ONLY with valid JSON matching this exact schema:
+  {
+    "root_cause": "specific description of what failed",
+    "confidence": 0.85,
+    "recommendations": ["action 1", "action 2", "action 3"],
+    "failure_category": "testcode|environment|timing|resources|config|dependencies|flaky|other"
+  }
+
+user_prompt: |
+  Analyze this test failure:
+
+  **Test Information:**
+  - Test Suite: {{.TestSuite}}
+  - Test Name: {{.TestName}}
+  - Execution Time: {{.ExecutionTime}}
+
+  **Environment:**
+  - Cluster Version: {{.ClusterVersion}}
+  - Provider: {{.Provider}}
+  - Region: {{.Region}}
+
+  **Failure Details:**
+  - Error Message: {{.ErrorMessage}}
+  - Exit Code: {{.ExitCode}}
+
+  **Test Artifacts:**
+  {{range .Artifacts}}
+  === {{.Name}} ===
+  {{.Content}}
+
+  {{end}}
+
+  Provide your analysis as JSON only.
+
+variables:
+  - name: "TestSuite"
+    type: "string"
+    description: "Name of the test suite"
+    required: true
+  - name: "TestName"
+    type: "string"
+    description: "Specific test that failed"
+    required: true
+  - name: "ExecutionTime"
+    type: "string"
+    description: "How long the test ran before failing"
+    required: false
+  - name: "ClusterVersion"
+    type: "string"
+    description: "OpenShift cluster version"
+    required: true
+  - name: "Provider"
+    type: "string"
+    description: "Cloud provider"
+    required: true
+  - name: "Region"
+    type: "string"
+    description: "Cloud provider region"
+    required: true
+  - name: "ErrorMessage"
+    type: "string"
+    description: "Primary error message from test failure"
+    required: false
+  - name: "ExitCode"
+    type: "int"
+    description: "Test process exit code"
+    required: false
+  - name: "Artifacts"
+    type: "array"
+    description: "Array of test artifacts with Name and Content fields"
+    required: true
+
+max_tokens: 1000
+temperature: 0.1
+top_p: 0.9

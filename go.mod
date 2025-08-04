@@ -61,6 +61,7 @@ require (
 require (
 	github.com/hashicorp/go-version v1.7.0
 	github.com/openshift/api v0.0.0-20250409155250-8fcc4e71758a
+	github.com/stretchr/testify v1.10.0
 )
 
 require (
@@ -142,6 +143,7 @@ require (
 	github.com/openshift/library-go v0.0.0-20240517135010-e93e442c2b18 // indirect
 	github.com/pelletier/go-toml/v2 v2.2.2 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
+	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/prometheus/client_model v0.6.2 // indirect
 	github.com/prometheus/procfs v0.15.1 // indirect
 	github.com/prometheus/sigv4 v0.1.0 // indirect

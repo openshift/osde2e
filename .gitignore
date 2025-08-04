@@ -27,3 +27,6 @@ configs/custom-*
 custom-*
 
 *-kubeconfig
+.crush
+
+.env
