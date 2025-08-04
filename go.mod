@@ -118,7 +118,7 @@ require (
 	github.com/googleapis/enterprise-certificate-proxy v0.3.6 // indirect
 	github.com/googleapis/gax-go/v2 v2.14.1 // indirect
 	github.com/gorilla/css v1.0.1 // indirect
-	github.com/gorilla/websocket v1.5.0 // indirect
+	github.com/gorilla/websocket v1.5.3 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
 	github.com/hashicorp/go-retryablehttp v0.7.8 // indirect
@@ -171,6 +171,7 @@ require (
 	golang.org/x/term v0.32.0 // indirect
 	golang.org/x/text v0.26.0 // indirect
 	golang.org/x/time v0.11.0 // indirect
+	google.golang.org/genai v1.18.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20250409194420-de1ac958c67a // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250404141209-ee84b53bf3d0 // indirect
 	google.golang.org/grpc v1.71.0 // indirect
