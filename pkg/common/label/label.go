@@ -74,6 +74,9 @@ var (
 
 	// Runs tests that are using the ad-hoc image testing functionality
 	AdHocTestImages = ginkgo.Label("AdHocTestImages")
+
+	// Runs test(s) under development.  Good for isolating an individual suite.
+	Test = ginkgo.Label("Test")
 )
 
 func AllCloudProviders() []ginkgo.Labels {
