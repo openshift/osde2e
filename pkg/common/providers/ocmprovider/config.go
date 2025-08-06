@@ -60,7 +60,7 @@ func init() {
 	_ = viper.BindEnv(ClientSecret, "OCM_CLIENT_SECRET")
 	config.RegisterSecret(ClientSecret, "ocm-client-secret")
 
-	viper.SetDefault(Env, "prod")
+	viper.SetDefault(Env, "stage")
 	_ = viper.BindEnv(Env, "OSD_ENV")
 
 	viper.SetDefault(Debug, false)

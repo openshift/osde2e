@@ -17,6 +17,7 @@ import (
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/providers/ocmprovider"
+	"github.com/openshift/osde2e/pkg/common/spi"
 	"github.com/spf13/cobra"
 )
 
@@ -178,9 +179,22 @@ func run(cmd *cobra.Command, argv []string) error {
 	}
 
 	if args.vpc {
+		// Create OCM provider map for different environments
+		envs := []string{"int", "stage", "prod"}
+		providers := make(map[string]spi.Provider)
+
+		for _, env := range envs {
+			provider, err := ocmprovider.NewWithEnv(env)
+			if err != nil {
+				fmt.Printf("Warning: Could not create provider for environment %s: %v\n", env, err)
+				continue
+			}
+			providers[env] = provider
+		}
+
 		vpcDeletedCounter := 0
 		vpcFailedCounter := 0
-		err = aws.CcsAwsSession.CleanupVPCs(args.dryRun, args.sendSummary, &vpcDeletedCounter, &vpcFailedCounter, &vpcErrorBuilder)
+		err = aws.CcsAwsSession.CleanupVPCs(providers, args.dryRun, args.sendSummary, &vpcDeletedCounter, &vpcFailedCounter, &vpcErrorBuilder)
 		summaryBuilder.WriteString("VPCs: " + strconv.Itoa(vpcDeletedCounter) + "/" + strconv.Itoa(vpcFailedCounter) + "\n")
 		if err != nil {
 			return fmt.Errorf("could not cleanup vpc resources: %s", err.Error())
