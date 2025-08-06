@@ -3,6 +3,7 @@ package aws
 import (
 	"fmt"
 	"log"
+	"regexp"
 	"strings"
 
 	"github.com/openshift/osde2e/pkg/common/spi"
@@ -13,7 +14,7 @@ import (
 )
 
 // deletes VPCs that are not associated with any active osde2e cluster
-func (CcsAwsSession *ccsAwsSession) CleanupVPCs(dryrun bool, sendSummary bool,
+func (CcsAwsSession *ccsAwsSession) CleanupVPCs(providers map[string]spi.Provider, dryrun bool, sendSummary bool,
 	deletedCounter *int, failedCounter *int, errorBuilder *strings.Builder,
 ) error {
 	err := CcsAwsSession.GetAWSSessions()
@@ -59,26 +60,28 @@ func (CcsAwsSession *ccsAwsSession) CleanupVPCs(dryrun bool, sendSummary bool,
 			continue
 		}
 
-		vpcStacks = append(vpcStacks, vpcName)
+		vpcStacks = append(vpcStacks, getClusterNameFromVPCName(vpcName))
 	}
 
-	provider, err := spi.GetProvider("ocm")
-	if err != nil {
-		return err
-	}
-
-	// Get active osde2e clusters
-	clusters, err := provider.ListClusters("properties.MadeByOSDe2e='true'")
-	if err != nil {
-		return err
-	}
-
-	// Create a map with VPC stack name(cluster-name + "-vpc") from active osde2e clusters
 	activeVpcStacks := make(map[string]bool)
-	for _, cluster := range clusters {
-		vpcStackName := cluster.Name() + "-vpc"
-		activeVpcStacks[vpcStackName] = true
-		log.Printf("Cluster %s expects VPC stack: %s (state: %s)\n", cluster.Name(), vpcStackName, cluster.State())
+	for env, provider := range providers {
+		if provider == nil {
+			log.Printf("Warning: Provider for environment %s is nil, skipping\n", env)
+			continue
+		}
+
+		clusters, err := provider.ListClusters("properties.MadeByOSDe2e='true'")
+		if err != nil {
+			log.Printf("Error listing clusters for environment %s: %v\n", env, err)
+			continue
+		}
+
+		// Create a map with VPC stack name(cluster-name + "-vpc") from active osde2e clusters
+		for _, cluster := range clusters {
+			vpcStackName := cluster.Name() + "-vpc"
+			activeVpcStacks[vpcStackName] = true
+			log.Printf("Cluster %s expects VPC stack: %s (state: %s)\n", cluster.Name(), vpcStackName, cluster.State())
+		}
 	}
 
 	// Only delete VPC stacks that are not associated with any cluster
@@ -139,4 +142,16 @@ func (CcsAwsSession *ccsAwsSession) CleanupVPCs(dryrun bool, sendSummary bool,
 	}
 
 	return nil
+}
+
+// removes the -yyyyy suffix from VPC names that follow the osde2e-xxxxx-yyyyy-vpc format
+func getClusterNameFromVPCName(vpcName string) string {
+	// Match osde2e-xxxxx-yyyyy-vpc pattern and extract osde2e-xxxxx-vpc part
+	re := regexp.MustCompile(`^(osde2e-[^-]+)-[^-]+-vpc$`)
+	matches := re.FindStringSubmatch(vpcName)
+	if len(matches) == 2 {
+		return matches[1] + "-vpc"
+	}
+	// If pattern doesn't match, return original name
+	return vpcName
 }
