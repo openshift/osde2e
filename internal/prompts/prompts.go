@@ -10,7 +10,10 @@ import (
 	"strings"
 	"text/template"
 
+	"google.golang.org/genai"
 	"gopkg.in/yaml.v3"
+
+	"github.com/openshift/osde2e/internal/llm"
 )
 
 // Embed the default prompt templates
@@ -29,6 +32,58 @@ const (
 	UpgradeFailure        FailureCategory = "upgrade"
 )
 
+// getBaseResponseSchema returns the standard response schema used across all failure analysis templates
+func getBaseResponseSchema() *genai.Schema {
+	minItems := int64(2)
+	maxItems := int64(3)
+	minimum := 0.0
+	maximum := 1.0
+
+	return &genai.Schema{
+		Type: genai.TypeObject,
+		Properties: map[string]*genai.Schema{
+			"root_cause": {
+				Type:        genai.TypeString,
+				Description: "Specific description of what failed",
+			},
+			"confidence": {
+				Type:        genai.TypeNumber,
+				Description: "Confidence score between 0.0 and 1.0",
+				Minimum:     &minimum,
+				Maximum:     &maximum,
+			},
+			"recommendations": {
+				Type:        genai.TypeArray,
+				Description: "List of 2-3 specific, actionable recommendations",
+				Items: &genai.Schema{
+					Type: genai.TypeString,
+				},
+				MinItems: &minItems,
+				MaxItems: &maxItems,
+			},
+			"failure_category": {
+				Type:        genai.TypeString,
+				Description: "Category of the failure",
+			},
+		},
+		Required: []string{"root_cause", "confidence", "recommendations", "failure_category"},
+	}
+}
+
+// getResponseSchemaForTemplate returns a complete response schema for a specific template
+func getResponseSchemaForTemplate(template *PromptTemplate) *genai.Schema {
+	schema := getBaseResponseSchema()
+
+	// Add the template-specific enum values if provided
+	if len(template.Categories) > 0 {
+		if failureCategory, ok := schema.Properties["failure_category"]; ok {
+			failureCategory.Enum = template.Categories
+		}
+	}
+
+	return schema
+}
+
 // PromptTemplate represents a structured prompt template for LLM analysis
 type PromptTemplate struct {
 	ID          string          `yaml:"id"`
@@ -43,9 +98,11 @@ type PromptTemplate struct {
 	Variables    []TemplateVar `yaml:"variables"`
 
 	// LLM configuration
-	MaxTokens   int     `yaml:"max_tokens"`
-	Temperature float32 `yaml:"temperature"`
-	TopP        float32 `yaml:"top_p"`
+	MaxTokens      int           `yaml:"max_tokens"`
+	Temperature    float32       `yaml:"temperature"`
+	TopP           float32       `yaml:"top_p"`
+	ResponseSchema *genai.Schema `yaml:"response_schema,omitempty"`
+	Categories     []string      `yaml:"categories,omitempty"`
 
 	// compiled templates (not serialized)
 	systemTemplate *template.Template `yaml:"-"`
@@ -110,6 +167,11 @@ func (ps *PromptStore) LoadTemplates(filesystem fs.FS) error {
 		// Set template ID from filename if not specified
 		if template.ID == "" {
 			template.ID = strings.TrimSuffix(filepath.Base(path), ".yaml")
+		}
+
+		// Auto-generate response schema if not provided
+		if template.ResponseSchema == nil && template.Category != "" {
+			template.ResponseSchema = getResponseSchemaForTemplate(&template)
 		}
 
 		if err := template.Validate(); err != nil {
@@ -240,4 +302,21 @@ func (rp *RenderedPrompt) GetTopP() float32 {
 		return rp.Template.TopP
 	}
 	return 0.9 // default
+}
+
+// GetResponseSchema returns the response schema for the template
+func (rp *RenderedPrompt) GetResponseSchema() *genai.Schema {
+	return rp.Template.ResponseSchema
+}
+
+// ToAnalysisConfig converts the rendered prompt to an LLM AnalysisConfig
+func (rp *RenderedPrompt) ToAnalysisConfig() *llm.AnalysisConfig {
+	config := &llm.AnalysisConfig{
+		SystemInstruction: llm.StringPtr(rp.SystemPrompt),
+		Temperature:       llm.Float32Ptr(rp.GetTemperature()),
+		TopP:              llm.Float32Ptr(rp.GetTopP()),
+		MaxTokens:         llm.IntPtr(rp.GetMaxTokens()),
+		ResponseSchema:    rp.GetResponseSchema(),
+	}
+	return config
 }

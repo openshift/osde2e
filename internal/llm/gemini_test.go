@@ -5,6 +5,10 @@ import (
 	"os"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"google.golang.org/genai"
 )
 
 func TestGeminiClient_Analyze(t *testing.T) {
@@ -165,4 +169,45 @@ func TestGeminiClient_InvalidAPIKey(t *testing.T) {
 // Test that GeminiClient implements LLMClient interface
 func TestGeminiClient_ImplementsInterface(t *testing.T) {
 	var _ LLMClient = (*GeminiClient)(nil)
+}
+
+func TestGeminiClient_WithResponseSchema(t *testing.T) {
+	apiKey := os.Getenv("GEMINI_API_KEY")
+	if apiKey == "" {
+		t.Skip("GEMINI_API_KEY not set, skipping integration test")
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	client, err := NewGeminiClient(ctx, apiKey)
+	require.NoError(t, err)
+	defer client.Close()
+
+	t.Run("with genai.Schema", func(t *testing.T) {
+		schema := &genai.Schema{
+			Type: genai.TypeObject,
+			Properties: map[string]*genai.Schema{
+				"answer": {
+					Type:        genai.TypeString,
+					Description: "The mathematical answer",
+				},
+				"explanation": {
+					Type:        genai.TypeString,
+					Description: "Step by step explanation",
+				},
+			},
+			Required: []string{"answer", "explanation"},
+		}
+
+		config := &AnalysisConfig{
+			ResponseSchema: schema,
+		}
+
+		result, err := client.Analyze(ctx, "What is 7 + 2? Provide the answer and explanation.", config)
+		require.NoError(t, err)
+		assert.NotEmpty(t, result.Content)
+
+		t.Logf("Response with genai.Schema: %s", result.Content)
+	})
 }

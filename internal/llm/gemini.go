@@ -61,8 +61,16 @@ func (g *GeminiClient) Analyze(ctx context.Context, userPrompt string, config ..
 			genConfig.MaxOutputTokens = int32(*cfg.MaxTokens)
 		}
 
-		// TODO: Handle ResponseSchema and Tools when we need them
-		// These require more complex type mapping from interface{} to genai types
+		// Handle ResponseSchema
+		if cfg.ResponseSchema != nil {
+			genConfig.ResponseSchema = cfg.ResponseSchema
+			// Set JSON response type when schema is provided
+			if genConfig.ResponseMIMEType == "" {
+				genConfig.ResponseMIMEType = "application/json"
+			}
+		}
+
+		// TODO: Handle Tools when we need them
 	}
 
 	resp, err := g.client.Models.GenerateContent(ctx, g.model, contents, genConfig)

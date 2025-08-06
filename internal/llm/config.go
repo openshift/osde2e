@@ -1,5 +1,9 @@
 package llm
 
+import (
+	"google.golang.org/genai"
+)
+
 func StringPtr(s string) *string {
 	return &s
 }
@@ -14,12 +18,12 @@ func IntPtr(i int) *int {
 
 // AnalysisConfig contains configuration for LLM requests
 type AnalysisConfig struct {
-	SystemInstruction *string  `json:"systemInstruction,omitempty"`
-	Temperature       *float32 `json:"temperature,omitempty"`
-	TopP              *float32 `json:"topP,omitempty"`
-	ResponseSchema    any      `json:"responseSchema,omitempty"`
-	Tools             []any    `json:"tools,omitempty"`
-	MaxTokens         *int     `json:"maxTokens,omitempty"`
+	SystemInstruction *string       `json:"systemInstruction,omitempty"`
+	Temperature       *float32      `json:"temperature,omitempty"`
+	TopP              *float32      `json:"topP,omitempty"`
+	ResponseSchema    *genai.Schema `json:"responseSchema,omitempty"`
+	Tools             []any         `json:"tools,omitempty"`
+	MaxTokens         *int          `json:"maxTokens,omitempty"`
 }
 
 // AnalysisResult contains the response from the LLM

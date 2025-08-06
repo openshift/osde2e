@@ -21,13 +21,7 @@ system_prompt: |
   - Dependency failures
   - Flaky test behavior
 
-  Respond ONLY with valid JSON matching this exact schema:
-  {
-    "root_cause": "specific description of what failed",
-    "confidence": 0.85,
-    "recommendations": ["action 1", "action 2", "action 3"],
-    "failure_category": "testcode|environment|timing|resources|config|dependencies|flaky|other"
-  }
+  Respond with valid JSON matching the provided schema.
 
 user_prompt: |
   Analyze this test failure:
@@ -53,7 +47,7 @@ user_prompt: |
 
   {{end}}
 
-  Provide your analysis as JSON only.
+  Provide your analysis as JSON.
 
 variables:
   - name: "TestSuite"
@@ -96,3 +90,13 @@ variables:
 max_tokens: 1000
 temperature: 0.1
 top_p: 0.9
+
+categories:
+  - "testcode"
+  - "environment"
+  - "timing"
+  - "resources"
+  - "config"
+  - "dependencies"
+  - "flaky"
+  - "other"
