@@ -44,8 +44,8 @@ type PromptTemplate struct {
 
 	// LLM configuration
 	MaxTokens   int     `yaml:"max_tokens"`
-	Temperature float64 `yaml:"temperature"`
-	TopP        float64 `yaml:"top_p"`
+	Temperature float32 `yaml:"temperature"`
+	TopP        float32 `yaml:"top_p"`
 
 	// compiled templates (not serialized)
 	systemTemplate *template.Template `yaml:"-"`
@@ -227,7 +227,7 @@ func (rp *RenderedPrompt) GetMaxTokens() int {
 }
 
 // GetTemperature returns the temperature setting for the template
-func (rp *RenderedPrompt) GetTemperature() float64 {
+func (rp *RenderedPrompt) GetTemperature() float32 {
 	if rp.Template.Temperature > 0 {
 		return rp.Template.Temperature
 	}
@@ -235,7 +235,7 @@ func (rp *RenderedPrompt) GetTemperature() float64 {
 }
 
 // GetTopP returns the top-p setting for the template
-func (rp *RenderedPrompt) GetTopP() float64 {
+func (rp *RenderedPrompt) GetTopP() float32 {
 	if rp.Template.TopP > 0 {
 		return rp.Template.TopP
 	}
