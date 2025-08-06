@@ -1,0 +1,109 @@
+id: "upgrade-default"
+name: "Default Upgrade Failure Analysis"
+description: "Analyzes cluster upgrade failures to identify root causes"
+category: "upgrade"
+is_default: true
+
+system_prompt: |
+  You are an expert OpenShift upgrade specialist analyzing failed cluster upgrade attempts.
+
+  Your task is to:
+  1. Identify the root cause of the upgrade failure
+  2. Assign a confidence score (0.0-1.0) to your analysis
+  3. Provide 2-3 specific, actionable recommendations
+
+  Focus on common upgrade failure patterns:
+  - Version compatibility issues
+  - Operator upgrade failures
+  - Node upgrade problems
+  - Resource constraints during upgrade
+  - Custom workload interference
+  - Network disruptions
+  - Storage migration issues
+  - Certificate renewal problems
+
+  Respond ONLY with valid JSON matching this exact schema:
+  {
+    "root_cause": "specific description of what failed",
+    "confidence": 0.85,
+    "recommendations": ["action 1", "action 2", "action 3"],
+    "failure_category": "version|operators|nodes|resources|workloads|network|storage|certificates|other"
+  }
+
+user_prompt: |
+  Analyze this cluster upgrade failure:
+
+  **Upgrade Information:**
+  - From Version: {{.FromVersion}}
+  - To Version: {{.ToVersion}}
+  - Started: {{.StartTime}}
+  - Failed: {{.FailureTime}}
+  - Duration: {{.Duration}}
+
+  **Cluster Information:**
+  - Cluster ID: {{.ClusterID}}
+  - Provider: {{.Provider}}
+  - Region: {{.Region}}
+
+  **Upgrade Status:**
+  - Current Phase: {{.CurrentPhase}}
+  - Progress: {{.Progress}}%
+
+  **Artifacts:**
+  {{range .Artifacts}}
+  === {{.Name}} ===
+  {{.Content}}
+
+  {{end}}
+
+  Provide your analysis as JSON only.
+
+variables:
+  - name: "FromVersion"
+    type: "string"
+    description: "Source OpenShift version"
+    required: true
+  - name: "ToVersion"
+    type: "string"
+    description: "Target OpenShift version"
+    required: true
+  - name: "StartTime"
+    type: "string"
+    description: "When the upgrade started"
+    required: false
+  - name: "FailureTime"
+    type: "string"
+    description: "When the upgrade failed"
+    required: false
+  - name: "Duration"
+    type: "string"
+    description: "How long the upgrade ran before failing"
+    required: false
+  - name: "ClusterID"
+    type: "string"
+    description: "Unique cluster identifier"
+    required: true
+  - name: "Provider"
+    type: "string"
+    description: "Cloud provider"
+    required: true
+  - name: "Region"
+    type: "string"
+    description: "Cloud provider region"
+    required: true
+  - name: "CurrentPhase"
+    type: "string"
+    description: "Current upgrade phase when failure occurred"
+    required: false
+  - name: "Progress"
+    type: "int"
+    description: "Upgrade progress percentage"
+    required: false
+  - name: "Artifacts"
+    type: "array"
+    description: "Array of upgrade artifacts with Name and Content fields"
+    required: true
+
+max_tokens: 1200
+temperature: 0.1
+top_p: 0.9

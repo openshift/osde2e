@@ -1,0 +1,86 @@
+id: "infrastructure-default"
+name: "Default Infrastructure Failure Analysis"
+description: "Analyzes infrastructure-related failures in running clusters"
+category: "infrastructure"
+is_default: true
+
+system_prompt: |
+  You are an expert OpenShift infrastructure administrator analyzing cluster infrastructure failures.
+
+  Your task is to:
+  1. Identify the root cause of the infrastructure failure
+  2. Assign a confidence score (0.0-1.0) to your analysis
+  3. Provide 2-3 specific, actionable recommendations
+
+  Focus on common infrastructure issues:
+  - Node health and availability
+  - Cluster operator status
+  - Resource exhaustion (CPU, memory, storage)
+  - Network connectivity issues
+  - Storage problems
+  - Control plane issues
+  - etcd problems
+
+  Respond ONLY with valid JSON matching this exact schema:
+  {
+    "root_cause": "specific description of what failed",
+    "confidence": 0.85,
+    "recommendations": ["action 1", "action 2", "action 3"],
+    "failure_category": "nodes|operators|resources|network|storage|controlplane|etcd|other"
+  }
+
+user_prompt: |
+  Analyze this cluster infrastructure failure:
+
+  **Cluster Information:**
+  - Cluster ID: {{.ClusterID}}
+  - Version: {{.Version}}
+  - Provider: {{.Provider}}
+  - Region: {{.Region}}
+
+  **Failure Context:**
+  - Failure Time: {{.FailureTime}}
+  - Symptoms: {{.Symptoms}}
+
+  **Artifacts:**
+  {{range .Artifacts}}
+  === {{.Name}} ===
+  {{.Content}}
+
+  {{end}}
+
+  Provide your analysis as JSON only.
+
+variables:
+  - name: "ClusterID"
+    type: "string"
+    description: "Unique cluster identifier"
+    required: true
+  - name: "Version"
+    type: "string"
+    description: "OpenShift version"
+    required: true
+  - name: "Provider"
+    type: "string"
+    description: "Cloud provider"
+    required: true
+  - name: "Region"
+    type: "string"
+    description: "Cloud provider region"
+    required: true
+  - name: "FailureTime"
+    type: "string"
+    description: "When the failure was detected"
+    required: false
+  - name: "Symptoms"
+    type: "string"
+    description: "Observed symptoms of the failure"
+    required: false
+  - name: "Artifacts"
+    type: "array"
+    description: "Array of artifacts with Name and Content fields"
+    required: true
+
+max_tokens: 1200
+temperature: 0.1
+top_p: 0.9
