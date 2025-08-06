@@ -25,9 +25,6 @@ type PromptTemplate struct {
 	MaxTokens    int     `yaml:"max_tokens"`
 	Temperature  float32 `yaml:"temperature"`
 	TopP         float32 `yaml:"top_p"`
-
-	systemTemplate *template.Template `yaml:"-"`
-	userTemplate   *template.Template `yaml:"-"`
 }
 
 type PromptStore struct {
