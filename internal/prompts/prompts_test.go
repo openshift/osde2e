@@ -42,7 +42,7 @@ func TestRenderPrompt(t *testing.T) {
 		},
 	}
 
-	systemPrompt, userPrompt, config, err := store.RenderPrompt("provisioning-default", variables)
+	userPrompt, config, err := store.RenderPrompt("provisioning-default", variables)
 	require.NoError(t, err)
 	require.NotNil(t, config)
 
@@ -52,8 +52,8 @@ func TestRenderPrompt(t *testing.T) {
 	assert.Contains(t, userPrompt, "test-cluster")
 	assert.Contains(t, userPrompt, "installer.log")
 
-	assert.NotEmpty(t, systemPrompt)
-	assert.Contains(t, systemPrompt, "OpenShift cluster administrator")
+	assert.NotNil(t, config.SystemInstruction)
+	assert.Contains(t, *config.SystemInstruction, "OpenShift cluster administrator")
 
 	assert.NotNil(t, config.SystemInstruction)
 	assert.NotNil(t, config.Temperature)
