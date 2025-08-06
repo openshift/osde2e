@@ -312,10 +312,10 @@ func (rp *RenderedPrompt) GetResponseSchema() *genai.Schema {
 // ToAnalysisConfig converts the rendered prompt to an LLM AnalysisConfig
 func (rp *RenderedPrompt) ToAnalysisConfig() *llm.AnalysisConfig {
 	config := &llm.AnalysisConfig{
-		SystemInstruction: llm.StringPtr(rp.SystemPrompt),
-		Temperature:       llm.Float32Ptr(rp.GetTemperature()),
-		TopP:              llm.Float32Ptr(rp.GetTopP()),
-		MaxTokens:         llm.IntPtr(rp.GetMaxTokens()),
+		SystemInstruction: genai.Ptr(rp.SystemPrompt),
+		Temperature:       genai.Ptr(rp.GetTemperature()),
+		TopP:              genai.Ptr(rp.GetTopP()),
+		MaxTokens:         genai.Ptr(rp.GetMaxTokens()),
 		ResponseSchema:    rp.GetResponseSchema(),
 	}
 	return config

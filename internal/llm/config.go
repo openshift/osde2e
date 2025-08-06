@@ -4,18 +4,6 @@ import (
 	"google.golang.org/genai"
 )
 
-func StringPtr(s string) *string {
-	return &s
-}
-
-func Float32Ptr(f float32) *float32 {
-	return &f
-}
-
-func IntPtr(i int) *int {
-	return &i
-}
-
 // AnalysisConfig contains configuration for LLM requests
 type AnalysisConfig struct {
 	SystemInstruction *string       `json:"systemInstruction,omitempty"`
@@ -36,22 +24,22 @@ type AnalysisResult struct {
 // DefaultConfig returns a sensible default configuration
 func DefaultConfig() *AnalysisConfig {
 	return &AnalysisConfig{
-		Temperature: Float32Ptr(0.7),
-		TopP:        Float32Ptr(0.9),
-		MaxTokens:   IntPtr(1000),
+		Temperature: genai.Ptr[float32](0.7),
+		TopP:        genai.Ptr[float32](0.9),
+		MaxTokens:   genai.Ptr(1000),
 	}
 }
 
 // NewConfigWithSystem creates a config with just a system instruction
 func NewConfigWithSystem(systemInstruction string) *AnalysisConfig {
 	config := DefaultConfig()
-	config.SystemInstruction = StringPtr(systemInstruction)
+	config.SystemInstruction = genai.Ptr(systemInstruction)
 	return config
 }
 
 // NewConfigWithTemperature creates a config with custom temperature
 func NewConfigWithTemperature(temp float32) *AnalysisConfig {
 	config := DefaultConfig()
-	config.Temperature = Float32Ptr(temp)
+	config.Temperature = genai.Ptr(temp)
 	return config
 }
