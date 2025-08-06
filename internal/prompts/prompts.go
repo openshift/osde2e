@@ -77,20 +77,20 @@ func (ps *PromptStore) GetTemplate(id string) (*PromptTemplate, error) {
 	return template, nil
 }
 
-func (ps *PromptStore) RenderPrompt(templateID string, variables map[string]any) (systemPrompt, userPrompt string, config *llm.AnalysisConfig, err error) {
+func (ps *PromptStore) RenderPrompt(templateID string, variables map[string]any) (userPrompt string, config *llm.AnalysisConfig, err error) {
 	template, err := ps.GetTemplate(templateID)
 	if err != nil {
-		return "", "", nil, err
+		return "", nil, err
 	}
 
-	systemPrompt, err = template.render(template.SystemPrompt, variables)
+	systemPrompt, err := template.render(template.SystemPrompt, variables)
 	if err != nil {
-		return "", "", nil, fmt.Errorf("failed to render system prompt: %w", err)
+		return "", nil, fmt.Errorf("failed to render system prompt: %w", err)
 	}
 
 	userPrompt, err = template.render(template.UserPrompt, variables)
 	if err != nil {
-		return "", "", nil, fmt.Errorf("failed to render user prompt: %w", err)
+		return "", nil, fmt.Errorf("failed to render user prompt: %w", err)
 	}
 
 	config = &llm.AnalysisConfig{
@@ -100,7 +100,7 @@ func (ps *PromptStore) RenderPrompt(templateID string, variables map[string]any)
 		MaxTokens:         genai.Ptr(template.getMaxTokens()),
 	}
 
-	return systemPrompt, userPrompt, config, nil
+	return userPrompt, config, nil
 }
 
 func (pt *PromptTemplate) render(promptText string, variables map[string]any) (string, error) {
