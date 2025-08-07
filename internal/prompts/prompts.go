@@ -139,18 +139,7 @@ func getAnalysisResponseSchema() *genai.Schema {
 				Type:        genai.TypeArray,
 				Description: "List of 2-3 specific, actionable recommendations",
 				Items: &genai.Schema{
-					Type: genai.TypeObject,
-					Properties: map[string]*genai.Schema{
-						"title": {
-							Type:        genai.TypeString,
-							Description: "Brief title for the recommendation",
-						},
-						"description": {
-							Type:        genai.TypeString,
-							Description: "Detailed description of the recommendation",
-						},
-					},
-					Required: []string{"title", "description"},
+					Type: genai.TypeString,
 				},
 			},
 		},
