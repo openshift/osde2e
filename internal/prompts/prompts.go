@@ -102,6 +102,7 @@ func (ps *PromptStore) RenderPrompt(templateID string, variables map[string]any)
 		Temperature:       genai.Ptr[float32](defaultTemperature),
 		TopP:              genai.Ptr[float32](defaultTopP),
 		MaxTokens:         genai.Ptr(defaultMaxTokens),
+		ResponseSchema:    getAnalysisResponseSchema(),
 	}
 
 	return userPrompt, config, nil
@@ -119,4 +120,40 @@ func (pt *PromptTemplate) render(promptText string, variables map[string]any) (s
 	}
 
 	return strings.TrimSpace(buf.String()), nil
+}
+
+// getAnalysisResponseSchema returns the standard response schema for failure analysis
+func getAnalysisResponseSchema() *genai.Schema {
+	return &genai.Schema{
+		Type: genai.TypeObject,
+		Properties: map[string]*genai.Schema{
+			"root_cause": {
+				Type:        genai.TypeString,
+				Description: "Specific description of what failed",
+			},
+			"confidence_score": {
+				Type:        genai.TypeNumber,
+				Description: "Confidence score between 0.0 and 1.0",
+			},
+			"recommendations": {
+				Type:        genai.TypeArray,
+				Description: "List of 2-3 specific, actionable recommendations",
+				Items: &genai.Schema{
+					Type: genai.TypeObject,
+					Properties: map[string]*genai.Schema{
+						"title": {
+							Type:        genai.TypeString,
+							Description: "Brief title for the recommendation",
+						},
+						"description": {
+							Type:        genai.TypeString,
+							Description: "Detailed description of the recommendation",
+						},
+					},
+					Required: []string{"title", "description"},
+				},
+			},
+		},
+		Required: []string{"root_cause", "confidence_score", "recommendations"},
+	}
 }
