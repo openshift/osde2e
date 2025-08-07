@@ -12,7 +12,7 @@ type tool interface {
 	name() string
 	description() string
 	schema() *genai.Schema
-	execute(ctx context.Context, params map[string]any) (string, error)
+	execute(ctx context.Context, params map[string]any) (any, error)
 }
 
 // registry holds all available tools
@@ -41,10 +41,10 @@ func GetTools() []*genai.Tool {
 }
 
 // execute runs a tool by name with given parameters
-func execute(ctx context.Context, name string, params map[string]any) (string, error) {
+func execute(ctx context.Context, name string, params map[string]any) (any, error) {
 	tool, exists := registry[name]
 	if !exists {
-		return "", fmt.Errorf("unknown tool: %s", name)
+		return nil, fmt.Errorf("unknown tool: %s", name)
 	}
 	return tool.execute(ctx, params)
 }
@@ -63,4 +63,5 @@ func HandleToolCall(ctx context.Context, functionCall *genai.FunctionCall) (*gen
 // init registers default tools
 func init() {
 	register(&currentTimeTool{})
+	register(&addNumbersTool{})
 }

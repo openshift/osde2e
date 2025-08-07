@@ -64,61 +64,88 @@ func (g *GeminiClient) Analyze(ctx context.Context, userPrompt string, config *A
 		}
 	}
 
-	// Iteratively handle the conversation until no more function calls
-	maxIterations := 5 // Prevent infinite loops
-	for iteration := 0; iteration < maxIterations; iteration++ {
+	return g.handleConversationWithTools(ctx, contents, genConfig)
+}
+
+func (g *GeminiClient) handleConversationWithTools(ctx context.Context, contents []*genai.Content, genConfig *genai.GenerateContentConfig) (*AnalysisResult, error) {
+	const maxIterations = 5
+
+	for i := range maxIterations {
 		resp, err := g.client.Models.GenerateContent(ctx, g.model, contents, genConfig)
 		if err != nil {
 			return nil, fmt.Errorf("gemini API error: %w", err)
 		}
 
-		if len(resp.Candidates) == 0 {
-			return nil, fmt.Errorf("no response candidates from gemini")
+		candidate, err := g.extractCandidate(resp)
+		if err != nil {
+			return nil, err
 		}
 
-		candidate := resp.Candidates[0]
-		if candidate.Content == nil || len(candidate.Content.Parts) == 0 {
-			return nil, fmt.Errorf("no content in gemini response")
+		textContent, functionCalls := g.processCandidateParts(candidate)
+
+		// If no function calls, we're done
+		if len(functionCalls) == 0 {
+			return &AnalysisResult{Content: textContent}, nil
 		}
 
-		var hasFunctionCalls bool
-		var finalContent string
-
-		// Process all parts in this response
-		for _, part := range candidate.Content.Parts {
-			if part.Text != "" {
-				finalContent += part.Text
-			}
-			if part.FunctionCall != nil {
-				hasFunctionCalls = true
-				// Add the function call to conversation history
-				contents = append(contents, genai.NewContentFromParts([]*genai.Part{{FunctionCall: part.FunctionCall}}, genai.RoleModel))
-
-				// Handle the tool call and get the result
-				toolResult, err := tools.HandleToolCall(ctx, part.FunctionCall)
-				if err != nil {
-					return nil, fmt.Errorf("failed to handle tool call: %w", err)
-				}
-
-				// Add the tool result to conversation history
-				contents = append(contents, toolResult)
-			}
+		// Process function calls and continue conversation
+		contents, err = g.processFunctionCalls(ctx, contents, functionCalls)
+		if err != nil {
+			return nil, err
 		}
 
-		// If no function calls in this iteration, we're done
-		if !hasFunctionCalls {
-			return &AnalysisResult{
-				Content: finalContent,
-			}, nil
-		}
-
-		// If we reach max iterations, return what we have
-		if iteration == maxIterations-1 {
-			return &AnalysisResult{
-				Content: finalContent,
-			}, nil
+		// Return partial result if we hit max iterations
+		if i == maxIterations-1 {
+			return &AnalysisResult{Content: textContent}, nil
 		}
 	}
 
 	return nil, fmt.Errorf("max iterations reached without final response")
+}
+
+func (g *GeminiClient) extractCandidate(resp *genai.GenerateContentResponse) (*genai.Candidate, error) {
+	if len(resp.Candidates) == 0 {
+		return nil, fmt.Errorf("no response candidates from gemini")
+	}
+
+	candidate := resp.Candidates[0]
+	if candidate.Content == nil || len(candidate.Content.Parts) == 0 {
+		return nil, fmt.Errorf("no content in gemini response")
+	}
+
+	return candidate, nil
+}
+
+func (g *GeminiClient) processCandidateParts(candidate *genai.Candidate) (string, []*genai.FunctionCall) {
+	var textContent string
+	var functionCalls []*genai.FunctionCall
+
+	for _, part := range candidate.Content.Parts {
+		if part.Text != "" {
+			textContent += part.Text
+		}
+		if part.FunctionCall != nil {
+			functionCalls = append(functionCalls, part.FunctionCall)
+		}
+	}
+
+	return textContent, functionCalls
+}
+
+func (g *GeminiClient) processFunctionCalls(ctx context.Context, contents []*genai.Content, functionCalls []*genai.FunctionCall) ([]*genai.Content, error) {
+	for _, functionCall := range functionCalls {
+		// Add the function call to conversation history
+		contents = append(contents, genai.NewContentFromParts([]*genai.Part{{FunctionCall: functionCall}}, genai.RoleModel))
+
+		// Execute the tool and get the result
+		toolResult, err := tools.HandleToolCall(ctx, functionCall)
+		if err != nil {
+			return nil, fmt.Errorf("failed to handle tool call: %w", err)
+		}
+
+		// Add the tool result to conversation history
+		contents = append(contents, toolResult)
+	}
+
+	return contents, nil
 }
