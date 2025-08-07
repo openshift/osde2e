@@ -60,19 +60,3 @@ func TestRenderPrompt(t *testing.T) {
 	assert.NotNil(t, config.TopP)
 	assert.NotNil(t, config.MaxTokens)
 }
-
-func TestTemplateDefaults(t *testing.T) {
-	template := &PromptTemplate{}
-
-	assert.Equal(t, 1000, template.getMaxTokens())
-	assert.Equal(t, float32(0.1), template.getTemperature())
-	assert.Equal(t, float32(0.9), template.getTopP())
-
-	template.MaxTokens = 2000
-	template.Temperature = 0.5
-	template.TopP = 0.8
-
-	assert.Equal(t, 2000, template.getMaxTokens())
-	assert.Equal(t, float32(0.5), template.getTemperature())
-	assert.Equal(t, float32(0.8), template.getTopP())
-}

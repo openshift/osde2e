@@ -87,10 +87,6 @@ variables:
     description: "Array of test artifacts with Name and Content fields"
     required: true
 
-max_tokens: 1000
-temperature: 0.1
-top_p: 0.9
-
 categories:
   - "testcode"
   - "environment"

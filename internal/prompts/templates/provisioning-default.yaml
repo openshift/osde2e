@@ -91,10 +91,6 @@ variables:
     description: "Array of artifacts with Name and Content fields"
     required: true
 
-max_tokens: 1000
-temperature: 0.1
-top_p: 0.9
-
 categories:
   - "quota"
   - "permissions"
