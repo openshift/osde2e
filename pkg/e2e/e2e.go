@@ -205,6 +205,10 @@ func runGinkgoTests() (int, error) {
 		reporterConfig.Succinct = true
 	}
 
+	// Suppress color output
+	// https://onsi.github.io/ginkgo/#other-settings
+	reporterConfig.NoColor = true
+
 	reportDir := viper.GetString(config.ReportDir)
 	sharedDir := viper.GetString(config.SharedDir)
 	runtimeDir := fmt.Sprintf("%s/osde2e-%s", os.TempDir(), util.RandomStr(10))
