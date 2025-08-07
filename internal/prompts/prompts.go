@@ -18,13 +18,17 @@ import (
 //go:embed templates/*.yaml
 var defaultTemplates embed.FS
 
+// Package-wide defaults for all prompts
+const (
+	defaultMaxTokens   = 4000
+	defaultTemperature = float32(0.1)
+	defaultTopP        = float32(0.9)
+)
+
 type PromptTemplate struct {
-	ID           string  `yaml:"id"`
-	SystemPrompt string  `yaml:"system_prompt"`
-	UserPrompt   string  `yaml:"user_prompt"`
-	MaxTokens    int     `yaml:"max_tokens"`
-	Temperature  float32 `yaml:"temperature"`
-	TopP         float32 `yaml:"top_p"`
+	ID           string `yaml:"id"`
+	SystemPrompt string `yaml:"system_prompt"`
+	UserPrompt   string `yaml:"user_prompt"`
 }
 
 type PromptStore struct {
@@ -95,9 +99,9 @@ func (ps *PromptStore) RenderPrompt(templateID string, variables map[string]any)
 
 	config = &llm.AnalysisConfig{
 		SystemInstruction: genai.Ptr(systemPrompt),
-		Temperature:       genai.Ptr(template.getTemperature()),
-		TopP:              genai.Ptr(template.getTopP()),
-		MaxTokens:         genai.Ptr(template.getMaxTokens()),
+		Temperature:       genai.Ptr[float32](defaultTemperature),
+		TopP:              genai.Ptr[float32](defaultTopP),
+		MaxTokens:         genai.Ptr(defaultMaxTokens),
 	}
 
 	return userPrompt, config, nil
@@ -115,25 +119,4 @@ func (pt *PromptTemplate) render(promptText string, variables map[string]any) (s
 	}
 
 	return strings.TrimSpace(buf.String()), nil
-}
-
-func (pt *PromptTemplate) getMaxTokens() int {
-	if pt.MaxTokens > 0 {
-		return pt.MaxTokens
-	}
-	return 1000
-}
-
-func (pt *PromptTemplate) getTemperature() float32 {
-	if pt.Temperature > 0 {
-		return pt.Temperature
-	}
-	return 0.1
-}
-
-func (pt *PromptTemplate) getTopP() float32 {
-	if pt.TopP > 0 {
-		return pt.TopP
-	}
-	return 0.9
 }

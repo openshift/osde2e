@@ -75,10 +75,6 @@ variables:
     description: "Array of artifacts with Name and Content fields"
     required: true
 
-max_tokens: 1200
-temperature: 0.1
-top_p: 0.9
-
 categories:
   - "compute"
   - "storage"
