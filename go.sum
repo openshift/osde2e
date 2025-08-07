@@ -332,6 +332,8 @@ github.com/openshift/managed-upgrade-operator v0.0.0-20230525042514-a9b8c1d2571c
 github.com/openshift/managed-upgrade-operator v0.0.0-20230525042514-a9b8c1d2571c/go.mod h1:W/ajjexZ/T50ZRpk48HbgbtOXD4rt0/wHlwdXu8arQE=
 github.com/openshift/osde2e-common v0.0.0-20250804130535-082bd8035ce8 h1:ZjJP+ZKLYyUxrlV4FSXM+S174R2Y/9eNaJmptFr9VV8=
 github.com/openshift/osde2e-common v0.0.0-20250804130535-082bd8035ce8/go.mod h1:PVd8CEETL2pM+J4f0yLF6B+6PLfaZ2hVKiAOm+ejoFQ=
+github.com/openshift/osde2e-common v0.0.0-20250804220455-7806b74ec777 h1:tAgQfMTlBbfH88Q3pA6DeyifRZ4j0Yj6Wx9eySJDbuk=
+github.com/openshift/osde2e-common v0.0.0-20250804220455-7806b74ec777/go.mod h1:PVd8CEETL2pM+J4f0yLF6B+6PLfaZ2hVKiAOm+ejoFQ=
 github.com/operator-framework/api v0.30.0 h1:44hCmGnEnZk/Miol5o44dhSldNH0EToQUG7vZTl29kk=
 github.com/operator-framework/api v0.30.0/go.mod h1:FYxAPhjtlXSAty/fbn5YJnFagt6SpJZJgFNNbvDe5W0=
 github.com/operator-framework/operator-lifecycle-manager v0.22.0 h1:7DEWOq24HQ0l5xPOXMhn17XaJACgwoipz+JfQ7QCXZw=
