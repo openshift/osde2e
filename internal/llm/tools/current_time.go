@@ -24,6 +24,6 @@ func (t *currentTimeTool) schema() *genai.Schema {
 	}
 }
 
-func (t *currentTimeTool) execute(ctx context.Context, params map[string]any) (any, error) {
+func (t *currentTimeTool) execute(ctx context.Context, params map[string]any) (string, error) {
 	return time.Now().Format(time.RFC3339), nil
 }
