@@ -5,6 +5,8 @@ import (
 	"fmt"
 
 	"google.golang.org/genai"
+
+	"github.com/openshift/osde2e/internal/tools"
 )
 
 type GeminiClient struct {
@@ -56,34 +58,67 @@ func (g *GeminiClient) Analyze(ctx context.Context, userPrompt string, config *A
 			genConfig.ResponseSchema = config.ResponseSchema
 			genConfig.ResponseMIMEType = "application/json"
 		}
-	}
 
-	resp, err := g.client.Models.GenerateContent(ctx, g.model, contents, genConfig)
-	if err != nil {
-		return nil, fmt.Errorf("gemini API error: %w", err)
-	}
-
-	if len(resp.Candidates) == 0 {
-		return nil, fmt.Errorf("no response candidates from gemini")
-	}
-
-	candidate := resp.Candidates[0]
-	if candidate.Content == nil || len(candidate.Content.Parts) == 0 {
-		return nil, fmt.Errorf("no content in gemini response")
-	}
-
-	var content string
-	for _, part := range candidate.Content.Parts {
-		if part.Text != "" {
-			content += part.Text
+		if config.Tools != nil {
+			genConfig.Tools = config.Tools
 		}
 	}
 
-	if content == "" {
-		return nil, fmt.Errorf("no text content in gemini response")
+	// Iteratively handle the conversation until no more function calls
+	maxIterations := 5 // Prevent infinite loops
+	for iteration := 0; iteration < maxIterations; iteration++ {
+		resp, err := g.client.Models.GenerateContent(ctx, g.model, contents, genConfig)
+		if err != nil {
+			return nil, fmt.Errorf("gemini API error: %w", err)
+		}
+
+		if len(resp.Candidates) == 0 {
+			return nil, fmt.Errorf("no response candidates from gemini")
+		}
+
+		candidate := resp.Candidates[0]
+		if candidate.Content == nil || len(candidate.Content.Parts) == 0 {
+			return nil, fmt.Errorf("no content in gemini response")
+		}
+
+		var hasFunctionCalls bool
+		var finalContent string
+
+		// Process all parts in this response
+		for _, part := range candidate.Content.Parts {
+			if part.Text != "" {
+				finalContent += part.Text
+			}
+			if part.FunctionCall != nil {
+				hasFunctionCalls = true
+				// Add the function call to conversation history
+				contents = append(contents, genai.NewContentFromParts([]*genai.Part{{FunctionCall: part.FunctionCall}}, genai.RoleModel))
+
+				// Handle the tool call and get the result
+				toolResult, err := tools.HandleToolCall(part.FunctionCall)
+				if err != nil {
+					return nil, fmt.Errorf("failed to handle tool call: %w", err)
+				}
+
+				// Add the tool result to conversation history
+				contents = append(contents, toolResult)
+			}
+		}
+
+		// If no function calls in this iteration, we're done
+		if !hasFunctionCalls {
+			return &AnalysisResult{
+				Content: finalContent,
+			}, nil
+		}
+
+		// If we reach max iterations, return what we have
+		if iteration == maxIterations-1 {
+			return &AnalysisResult{
+				Content: finalContent,
+			}, nil
+		}
 	}
 
-	return &AnalysisResult{
-		Content: content,
-	}, nil
+	return nil, fmt.Errorf("max iterations reached without final response")
 }
