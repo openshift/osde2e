@@ -186,8 +186,7 @@ func run(cmd *cobra.Command, argv []string) error {
 		for _, env := range envs {
 			provider, err := ocmprovider.NewWithEnv(env)
 			if err != nil {
-				fmt.Printf("Warning: Could not create provider for environment %s: %v\n", env, err)
-				continue
+				return fmt.Errorf("could not create provider for environment %s: %v", env, err)
 			}
 			providers[env] = provider
 		}
