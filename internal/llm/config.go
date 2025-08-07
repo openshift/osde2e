@@ -10,7 +10,8 @@ type AnalysisConfig struct {
 	TopP              *float32      `json:"topP,omitempty"`
 	ResponseSchema    *genai.Schema `json:"responseSchema,omitempty"`
 	MaxTokens         *int          `json:"maxTokens,omitempty"`
-	Tools             []*genai.Tool `json:"tools,omitempty"`
+	// EnableTools indicates whether to enable function calling
+	EnableTools bool `json:"enableTools,omitempty"`
 }
 
 type AnalysisResult struct {
