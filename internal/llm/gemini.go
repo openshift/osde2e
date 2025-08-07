@@ -6,7 +6,7 @@ import (
 
 	"google.golang.org/genai"
 
-	"github.com/openshift/osde2e/internal/tools"
+	"github.com/openshift/osde2e/internal/llm/tools"
 )
 
 type GeminiClient struct {
@@ -59,8 +59,8 @@ func (g *GeminiClient) Analyze(ctx context.Context, userPrompt string, config *A
 			genConfig.ResponseMIMEType = "application/json"
 		}
 
-		if config.Tools != nil {
-			genConfig.Tools = config.Tools
+		if config.EnableTools {
+			genConfig.Tools = tools.GetTools()
 		}
 	}
 
@@ -95,7 +95,7 @@ func (g *GeminiClient) Analyze(ctx context.Context, userPrompt string, config *A
 				contents = append(contents, genai.NewContentFromParts([]*genai.Part{{FunctionCall: part.FunctionCall}}, genai.RoleModel))
 
 				// Handle the tool call and get the result
-				toolResult, err := tools.HandleToolCall(part.FunctionCall)
+				toolResult, err := tools.HandleToolCall(ctx, part.FunctionCall)
 				if err != nil {
 					return nil, fmt.Errorf("failed to handle tool call: %w", err)
 				}
