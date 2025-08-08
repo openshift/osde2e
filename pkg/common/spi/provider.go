@@ -36,6 +36,9 @@ type Provider interface {
 	// ListCluster lists clusters from a provider based on a SQL-like query.
 	ListClusters(query string) ([]*Cluster, error)
 
+	// GetVPC gets the VPC for the given cluster ID.
+	GetVPC(clusterID string) (string, error)
+
 	// GetCluster gets a cluster.
 	//
 	// This is what OSDe2e will use to gather cluster information, including whether

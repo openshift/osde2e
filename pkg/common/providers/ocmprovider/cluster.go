@@ -720,6 +720,29 @@ func (o *OCMProvider) GetCluster(clusterID string) (*spi.Cluster, error) {
 	return cluster, nil
 }
 
+// GetVPC returns the VPC for the given cluster ID.
+func (o *OCMProvider) GetVPC(clusterID string) (string, error) {
+	var resp *v1.VpcGetResponse
+
+	err := retryer().Do(func() error {
+		var err error
+		resp, err = o.conn.ClustersMgmt().V1().Clusters().Cluster(clusterID).Vpc().Get().Send()
+		if err != nil {
+			return err
+		}
+
+		if resp != nil && resp.Error() != nil {
+			return errResp(resp.Error())
+		}
+		return nil
+	})
+	if err != nil {
+		return "", err
+	}
+
+	return resp.Body().Name(), nil
+}
+
 func (o *OCMProvider) GetOCMCluster(clusterID string) (*v1.Cluster, error) {
 	var resp *v1.ClusterGetResponse
 

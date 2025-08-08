@@ -78,7 +78,10 @@ func (CcsAwsSession *ccsAwsSession) CleanupVPCs(providers map[string]spi.Provide
 
 		// Create a map with VPC stack name(cluster-name + "-vpc") from active osde2e clusters
 		for _, cluster := range clusters {
-			vpcStackName := cluster.Name() + "-vpc"
+			vpcStackName, err := provider.GetVPC(cluster.ID())
+			if err != nil {
+				return fmt.Errorf("error getting vpc for cluster %s: %v", cluster.Name(), err)
+			}
 			activeVpcStacks[vpcStackName] = true
 			log.Printf("Cluster %s expects VPC stack: %s (state: %s)\n", cluster.Name(), vpcStackName, cluster.State())
 		}
@@ -142,16 +145,4 @@ func (CcsAwsSession *ccsAwsSession) CleanupVPCs(providers map[string]spi.Provide
 	}
 
 	return nil
-}
-
-// removes the -yyyyy suffix from VPC names that follow the osde2e-xxxxx-yyyyy-vpc format
-func getClusterNameFromVPCName(vpcName string) string {
-	// Match osde2e-xxxxx-yyyyy-vpc pattern and extract osde2e-xxxxx-vpc part
-	re := regexp.MustCompile(`^(osde2e-[^-]+)-[^-]+-vpc$`)
-	matches := re.FindStringSubmatch(vpcName)
-	if len(matches) == 2 {
-		return matches[1] + "-vpc"
-	}
-	// If pattern doesn't match, return original name
-	return vpcName
 }

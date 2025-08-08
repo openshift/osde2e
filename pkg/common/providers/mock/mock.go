@@ -120,6 +120,11 @@ func (m *MockProvider) ListClusters(query string) ([]*spi.Cluster, error) {
 	return nil, nil
 }
 
+// GetVPC mocks a get VPC operation.
+func (m *MockProvider) GetVPC(clusterID string) (string, error) {
+	return "", nil
+}
+
 // GetCluster mocks a get cluster operation.
 func (m *MockProvider) GetCluster(clusterID string) (*spi.Cluster, error) {
 	if clusterID == "fail" {

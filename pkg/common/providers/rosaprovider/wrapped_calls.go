@@ -13,6 +13,11 @@ func (m *ROSAProvider) ListClusters(query string) ([]*spi.Cluster, error) {
 	return m.ocmProvider.ListClusters(query)
 }
 
+// GetVPC will call GetVPC from the OCM provider.
+func (m *ROSAProvider) GetVPC(clusterID string) (string, error) {
+	return m.ocmProvider.GetVPC(clusterID)
+}
+
 // GetCluster will call GetCluster from the OCM provider.
 func (m *ROSAProvider) GetCluster(clusterID string) (*spi.Cluster, error) {
 	return m.ocmProvider.GetCluster(clusterID)
