@@ -21,6 +21,9 @@ var (
 	// AWSAccountId is the AWS account (Env var: AWS_ACCOUNT_ID)
 	AWSAccountId = "config.aws.account"
 
+	// HCPBillingAccountId is the billing account for HCP (Env var: HCP_BILLING_ACCOUNT_ID)
+	HCPBillingAccountId = "config.aws.hcpBillingAccount"
+
 	// AWSAccessKey is the AWS access key
 	AWSAccessKey = "config.aws.accessKey"
 
@@ -94,6 +97,9 @@ func InitAWSViper() error {
 
 	_ = viper.BindEnv(AWSAccountId, "AWS_ACCOUNT_ID")
 	RegisterSecret(AWSAccountId, "aws-account")
+
+	_ = viper.BindEnv(HCPBillingAccountId, "HCP_BILLING_ACCOUNT_ID")
+	RegisterSecret(HCPBillingAccountId, "hcp-billing-account")
 
 	_ = viper.BindEnv(AWSAccessKey, "AWS_ACCESS_KEY", "OCM_AWS_ACCESS_KEY", "AWS_ACCESS_KEY_ID", "ROSA_AWS_ACCESS_KEY_ID")
 	RegisterSecret(AWSAccessKey, "aws-access-key")
