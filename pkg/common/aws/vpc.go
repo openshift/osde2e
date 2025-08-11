@@ -84,22 +84,31 @@ func (CcsAwsSession *ccsAwsSession) CleanupVPCs(providers map[string]spi.Provide
 		}
 	}
 
-	// Only delete VPC stacks that are not associated with any cluster
+	// Create CloudFormation client early to check stack existence
+	cfnClient := cloudformation.New(CcsAwsSession.session)
+	if cfnClient == nil {
+		return fmt.Errorf("failed to create CloudFormation client")
+	}
+
+	// Only delete VPC stacks that are not associated with any cluster and actually exist
 	var orphanedStacks []string
 	for _, vpcStackName := range vpcStacks {
 		if !activeVpcStacks[vpcStackName] {
+			// Check if the CloudFormation stack actually exists before adding to orphaned list
+			_, err := cfnClient.DescribeStacks(&cloudformation.DescribeStacksInput{
+				StackName: aws.String(vpcStackName),
+			})
+			if err != nil {
+				// Stack doesn't exist, skip it
+				log.Printf("VPC stack %s does not exist in CloudFormation, skipping\n", vpcStackName)
+				continue
+			}
+
 			log.Printf("Found orphaned VPC stack: %s\n", vpcStackName)
 			orphanedStacks = append(orphanedStacks, vpcStackName)
 		} else {
 			log.Printf("VPC stack %s has corresponding cluster, skipping\n", vpcStackName)
 		}
-	}
-
-	// Create CloudFormation client and delete orphaned stacks
-	cfnClient := cloudformation.New(CcsAwsSession.session)
-	if cfnClient == nil {
-		*failedCounter += len(orphanedStacks)
-		return fmt.Errorf("failed to create CloudFormation client")
 	}
 
 	log.Printf("Found %d orphaned VPC stacks to delete\n", len(orphanedStacks))
