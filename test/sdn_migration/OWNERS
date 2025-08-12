@@ -1,10 +1,12 @@
 reviewers:
   - abyrne55
-  - reedcort
   - dakotalongRH
-  - lnguyen1401
+  - joshbranham
   - luis-falcon
+  - reedcort
 approvers:
   - abyrne55
-  - reedcort
+  - dakotalongRH
+  - joshbranham
   - luis-falcon
+  - reedcort
