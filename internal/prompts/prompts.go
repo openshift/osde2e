@@ -102,7 +102,8 @@ func (ps *PromptStore) RenderPrompt(templateID string, variables map[string]any)
 		Temperature:       genai.Ptr[float32](defaultTemperature),
 		TopP:              genai.Ptr[float32](defaultTopP),
 		MaxTokens:         genai.Ptr(defaultMaxTokens),
-		ResponseSchema:    getAnalysisResponseSchema(),
+		// When tools are enabled, the response schema cannot be used
+		// ResponseSchema:    getAnalysisResponseSchema(),
 	}
 
 	return userPrompt, config, nil

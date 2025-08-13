@@ -25,15 +25,15 @@ func TestService_Collect(t *testing.T) {
 	logger := logr.Discard()
 	service := NewService(logger)
 
-	// Create test metadata
-	metadata := ClusterMetadata{
-		ClusterID: "test-cluster",
-		Provider:  "rosa",
-	}
+	// // Create test metadata
+	// metadata := ClusterMetadata{
+	// 	ClusterID: "test-cluster",
+	// 	Provider:  "rosa",
+	// }
 
 	// Test collection
 	ctx := context.Background()
-	data, err := service.Collect(ctx, reportDir, metadata)
+	data, err := service.Collect(ctx, reportDir)
 
 	require.NoError(t, err)
 	require.NotNil(t, data)
@@ -50,12 +50,12 @@ func TestService_NonExistentDirectory(t *testing.T) {
 	logger := logr.Discard()
 	service := NewService(logger)
 
-	metadata := ClusterMetadata{
-		ClusterID: "test-cluster",
-	}
+	// metadata := ClusterMetadata{
+	// 	ClusterID: "test-cluster",
+	// }
 
 	ctx := context.Background()
-	_, err := service.Collect(ctx, "/non/existent/path", metadata)
+	_, err := service.Collect(ctx, "/non/existent/path")
 
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "report directory does not exist")
