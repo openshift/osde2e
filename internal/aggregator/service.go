@@ -24,7 +24,7 @@ func NewService(logger logr.Logger) *Service {
 }
 
 // Collect collects all artifacts and metadata from the specified report directory
-func (s *Service) Collect(ctx context.Context, reportDir string, metadata ClusterMetadata) (*AggregatedData, error) {
+func (s *Service) Collect(ctx context.Context, reportDir string) (*AggregatedData, error) {
 	s.logger.Info("collecting data", "reportDir", reportDir)
 
 	// Collect artifacts
@@ -33,12 +33,14 @@ func (s *Service) Collect(ctx context.Context, reportDir string, metadata Cluste
 		return nil, fmt.Errorf("failed to collect artifacts: %w", err)
 	}
 
-	// Set provided metadata
-	data.Metadata = metadata
+	// // Set provided metadata
+	// data.Metadata = metadata
 
-	s.logger.Info("collection completed",
-		"failedTests", len(data.FailedTests),
-		"clusterId", metadata.ClusterID)
+	// s.logger.Info("collection completed",
+	// 	"failedTests", len(data.FailedTests),
+	// 	"clusterId", metadata.ClusterID)
+
+	// TODO: get metadata from the report directory
 
 	return data, nil
 }

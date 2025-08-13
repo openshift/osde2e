@@ -64,4 +64,5 @@ func HandleToolCall(ctx context.Context, functionCall *genai.FunctionCall) (*gen
 func init() {
 	register(&currentTimeTool{})
 	register(&addNumbersTool{})
+	register(&getArtifactsTool{})
 }

@@ -21,9 +21,21 @@ system_prompt: |
   - DNS resolution issues
   - Certificate problems
 
-  Respond with valid JSON matching the provided schema.
+  IMPORTANT: If you need more information for your analysis, you MUST first call the get_artifacts tool with appropriate parameter. Available artifact types:
+  - metadata: to get the cluster metadata
+  - failed_tests: to get the failed tests details
+  - build_logs: to get the build logs
+  - cluster_logs: to get the cluster logs 
+  - mustgather: to get the mustgather data
+  - test_results: to get the test results summary
+  - all: to get all artifacts at once
+
+  Call get_artifacts multiple times if needed to gather sufficient information before providing your final analysis.
+  
+  After gathering information via tools, then respond with valid JSON matching the provided schema.
 
 user_prompt: |
+
   Analyze this cluster provisioning failure:
 
   **Cluster Information:**
@@ -48,8 +60,11 @@ user_prompt: |
   {{.Content}}
 
   {{end}}
+  {{- if not .Artifacts}}
+  No initial artifacts provided. Use the get_artifacts tool to gather the information you need for analysis.
+  {{- end}}
 
-  Provide your analysis as JSON.
+  Begin by calling get_artifacts to collect relevant data, then provide your analysis as JSON.
 
 variables:
   - name: "Provider"
