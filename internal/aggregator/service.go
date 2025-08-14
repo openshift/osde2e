@@ -28,17 +28,10 @@ func (s *Service) Collect(ctx context.Context, reportDir string) (*AggregatedDat
 	s.logger.Info("collecting data", "reportDir", reportDir)
 
 	// Collect artifacts
-	data, err := s.artifactCollector.collectFromReportDir(ctx, reportDir)
+	data, err := s.artifactCollector.collectFromReportDir(reportDir)
 	if err != nil {
 		return nil, fmt.Errorf("failed to collect artifacts: %w", err)
 	}
-
-	// // Set provided metadata
-	// data.Metadata = metadata
-
-	// s.logger.Info("collection completed",
-	// 	"failedTests", len(data.FailedTests),
-	// 	"clusterId", metadata.ClusterID)
 
 	// TODO: get metadata from the report directory
 

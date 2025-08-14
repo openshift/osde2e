@@ -3,7 +3,6 @@
 package aggregator
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -21,27 +20,15 @@ type artifactCollector struct {
 
 // AggregatedData contains all collected artifacts and metadata
 type AggregatedData struct {
-	Metadata       ClusterMetadata   `json:"metadata"`
+	Metadata       map[string]any    `json:"metadata"`
 	TestResults    TestResultSummary `json:"testResults"`
 	FailedTests    []FailedTest      `json:"failedTests"`
-	ClusterLogs    []LogEntry        `json:"clusterLogs"`
-	MustGatherData []LogEntry        `json:"mustGatherData"`
-	BuildLogs      []LogEntry        `json:"buildLogs"`
+	Logs           []LogEntry        `json:"logs"`
 	CollectionTime time.Time         `json:"collectionTime"`
 }
 
-// ClusterMetadata contains essential cluster information
-type ClusterMetadata struct {
-	ClusterID      string            `json:"clusterId,omitempty"`
-	ClusterVersion string            `json:"clusterVersion,omitempty"`
-	Provider       string            `json:"provider,omitempty"`
-	CloudProvider  string            `json:"cloudProvider,omitempty"`
-	Region         string            `json:"region,omitempty"`
-	JobName        string            `json:"jobName,omitempty"`
-	JobID          string            `json:"jobId,omitempty"`
-	Phase          string            `json:"phase,omitempty"`
-	Environment    string            `json:"environment,omitempty"`
-	Properties     map[string]string `json:"properties,omitempty"`
+func (a *AggregatedData) SetMetadata(metadata map[string]any) {
+	a.Metadata = metadata
 }
 
 // TestResultSummary provides high-level test execution statistics
@@ -69,8 +56,7 @@ type FailedTest struct {
 
 // LogEntry represents a collected log file
 type LogEntry struct {
-	Source  string `json:"source"`  // File path or source identifier
-	Content string `json:"content"` // Log content
+	Source string `json:"source"` // File path or source identifier
 }
 
 // newArtifactCollector creates a new artifact collector
@@ -81,7 +67,7 @@ func newArtifactCollector(logger logr.Logger) *artifactCollector {
 }
 
 // collectFromReportDir collects artifacts from the specified report directory
-func (a *artifactCollector) collectFromReportDir(ctx context.Context, reportDir string) (*AggregatedData, error) {
+func (a *artifactCollector) collectFromReportDir(reportDir string) (*AggregatedData, error) {
 	a.logger.Info("collecting artifacts", "reportDir", reportDir)
 
 	if _, err := os.Stat(reportDir); os.IsNotExist(err) {
@@ -92,36 +78,24 @@ func (a *artifactCollector) collectFromReportDir(ctx context.Context, reportDir 
 		CollectionTime: time.Now(),
 	}
 
-	// Collect test results from JUnit files
-	if err := a.collectTestResults(reportDir, data); err != nil {
+	if err := a.collectLogs(reportDir, data); err != nil {
+		a.logger.Error(err, "failed to collect logs")
+	}
+
+	if err := a.collectTestResults(data); err != nil {
 		a.logger.Error(err, "failed to collect test results")
-	}
-
-	// Collect build logs
-	if err := a.collectBuildLogs(reportDir, data); err != nil {
-		a.logger.Error(err, "failed to collect build logs")
-	}
-
-	// Collect cluster logs
-	if err := a.collectClusterLogs(reportDir, data); err != nil {
-		a.logger.Error(err, "failed to collect cluster logs")
-	}
-
-	// Collect must-gather data
-	if err := a.collectMustGatherData(reportDir, data); err != nil {
-		a.logger.Error(err, "failed to collect must-gather data")
 	}
 
 	a.logger.Info("completed artifact collection",
 		"failedTests", len(data.FailedTests),
-		"logEntries", len(data.ClusterLogs)+len(data.MustGatherData)+len(data.BuildLogs))
+		"logEntries", len(data.Logs))
 
 	return data, nil
 }
 
 // collectTestResults processes JUnit XML files to extract test failure information
-func (a *artifactCollector) collectTestResults(reportDir string, data *AggregatedData) error {
-	junitFiles, err := a.findJUnitFiles(reportDir)
+func (a *artifactCollector) collectTestResults(data *AggregatedData) error {
+	junitFiles, err := a.findJUnitFiles(data)
 	if err != nil {
 		return fmt.Errorf("finding junit files: %w", err)
 	}
@@ -190,111 +164,43 @@ func (a *artifactCollector) convertJUnitTest(test junit.Test, suiteName string) 
 	return failed
 }
 
-// collectBuildLogs collects build logs from the report directory
-func (a *artifactCollector) collectBuildLogs(reportDir string, data *AggregatedData) error {
-	buildLogPath := filepath.Join(reportDir, "build-log.txt")
-	if content, err := a.readLogFile(buildLogPath); err == nil {
-		data.BuildLogs = append(data.BuildLogs, content)
-	}
-	return nil
-}
-
-// collectClusterLogs collects cluster-related logs
-func (a *artifactCollector) collectClusterLogs(reportDir string, data *AggregatedData) error {
-	clusterLogsDir := filepath.Join(reportDir, "cluster-logs")
-	return a.collectLogsFromDir(clusterLogsDir, &data.ClusterLogs)
-}
-
-// collectMustGatherData collects must-gather diagnostic data
-func (a *artifactCollector) collectMustGatherData(reportDir string, data *AggregatedData) error {
-	mustGatherDir := filepath.Join(reportDir, "must-gather")
-	return a.collectLogsFromDir(mustGatherDir, &data.MustGatherData)
-}
-
-// collectLogsFromDir recursively collects log files from a directory
-func (a *artifactCollector) collectLogsFromDir(dir string, logs *[]LogEntry) error {
-	if _, err := os.Stat(dir); os.IsNotExist(err) {
-		return nil // Directory doesn't exist, skip
-	}
-
-	return filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
+// collectLogs recursively iterates through the report directory and collects all file names
+func (a *artifactCollector) collectLogs(reportDir string, data *AggregatedData) error {
+	return filepath.Walk(reportDir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
-			return nil // Skip files with errors
+			// Log the error but continue walking
+			a.logger.Info("error accessing path", "path", path, "error", err)
+			return nil
 		}
 
+		// Skip directories, only collect files
 		if info.IsDir() {
 			return nil
 		}
 
-		// Only collect log files and important text files
-		if a.isLogFile(path) {
-			if content, err := a.readLogFile(path); err == nil {
-				*logs = append(*logs, content)
-			}
-		}
+		// Add the file path to the logs
+		data.Logs = append(data.Logs, LogEntry{
+			Source: path,
+		})
 
 		return nil
 	})
 }
 
-// isLogFile determines if a file should be collected as a log
-func (a *artifactCollector) isLogFile(path string) bool {
-	ext := strings.ToLower(filepath.Ext(path))
-	name := strings.ToLower(filepath.Base(path))
-
-	// Include common log file extensions and names
-	logExtensions := []string{".log", ".txt", ".out", ".err"}
-	for _, logExt := range logExtensions {
-		if ext == logExt {
-			return true
-		}
-	}
-
-	// Include files with log-like names
-	logNames := []string{"events", "describe", "status", "pods", "nodes"}
-	for _, logName := range logNames {
-		if strings.Contains(name, logName) {
-			return true
-		}
-	}
-
-	return false
-}
-
-// readLogFile reads a log file
-func (a *artifactCollector) readLogFile(path string) (LogEntry, error) {
-	content, err := os.ReadFile(path)
-	if err != nil {
-		return LogEntry{}, err
-	}
-
-	return LogEntry{
-		Source:  path,
-		Content: string(content),
-	}, nil
-}
-
-// findJUnitFiles recursively searches for JUnit XML files
-func (a *artifactCollector) findJUnitFiles(reportDir string) ([]string, error) {
+// findJUnitFiles searches for JUnit XML files from collected log entries
+func (a *artifactCollector) findJUnitFiles(data *AggregatedData) ([]string, error) {
 	var junitFiles []string
 
-	err := filepath.Walk(reportDir, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-
-		if info.IsDir() {
-			return nil
-		}
+	// Filter the already collected log entries for JUnit XML files
+	for _, logEntry := range data.Logs {
+		fileName := strings.ToLower(filepath.Base(logEntry.Source))
 
 		// Look for XML files that might be JUnit reports
-		if strings.HasSuffix(strings.ToLower(info.Name()), ".xml") &&
-			strings.Contains(strings.ToLower(info.Name()), "junit") {
-			junitFiles = append(junitFiles, path)
+		if strings.HasSuffix(fileName, ".xml") &&
+			strings.Contains(fileName, "junit") {
+			junitFiles = append(junitFiles, logEntry.Source)
 		}
+	}
 
-		return nil
-	})
-
-	return junitFiles, err
+	return junitFiles, nil
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/go-logr/logr"
@@ -38,12 +39,18 @@ func TestService_Collect(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, data)
 
-	// Verify metadata was set
-	assert.Equal(t, "test-cluster", data.Metadata.ClusterID)
-	assert.Equal(t, "rosa", data.Metadata.Provider)
+	// Verify logs were collected (build-log.txt should be in there)
+	assert.Greater(t, len(data.Logs), 0)
 
-	// Verify build logs were collected
-	assert.Greater(t, len(data.BuildLogs), 0)
+	// Check that our test file was collected
+	found := false
+	for _, log := range data.Logs {
+		if strings.Contains(log.Source, "build-log.txt") {
+			found = true
+			break
+		}
+	}
+	assert.True(t, found, "build-log.txt should be in collected logs")
 }
 
 func TestService_NonExistentDirectory(t *testing.T) {

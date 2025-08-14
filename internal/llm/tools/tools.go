@@ -4,8 +4,12 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/openshift/osde2e/internal/aggregator"
 	"google.golang.org/genai"
 )
+
+// globalCollectedData holds the collected aggregated data for tools to use
+var globalCollectedData *aggregator.AggregatedData
 
 // tool represents an internal tool interface
 type tool interface {
@@ -60,9 +64,14 @@ func HandleToolCall(ctx context.Context, functionCall *genai.FunctionCall) (*gen
 	return genai.NewContentFromText(response, genai.RoleUser), nil
 }
 
+// SetCollectedData sets the global collected data for tools to use
+func SetCollectedData(data *aggregator.AggregatedData) {
+	globalCollectedData = data
+}
+
 // init registers default tools
 func init() {
 	register(&currentTimeTool{})
 	register(&addNumbersTool{})
-	register(&getArtifactsTool{})
+	register(&readArtifactsTool{})
 }

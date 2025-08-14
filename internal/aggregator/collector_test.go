@@ -1,7 +1,6 @@
 package aggregator
 
 import (
-	"context"
 	"os"
 	"path/filepath"
 	"testing"
@@ -36,8 +35,7 @@ func TestArtifactCollector_collectFromReportDir(t *testing.T) {
 	collector := newArtifactCollector(logger)
 
 	// Test collection
-	ctx := context.Background()
-	data, err := collector.collectFromReportDir(ctx, reportDir)
+	data, err := collector.collectFromReportDir(reportDir)
 
 	require.NoError(t, err)
 	require.NotNil(t, data)
@@ -55,9 +53,7 @@ func TestArtifactCollector_collectFromReportDir(t *testing.T) {
 	assert.Contains(t, failedTest.ErrorMsg, "operator installation timed out")
 
 	// Verify logs were collected
-	assert.Greater(t, len(data.BuildLogs), 0)
-	assert.Greater(t, len(data.ClusterLogs), 0)
-	assert.Greater(t, len(data.MustGatherData), 0)
+	assert.Greater(t, len(data.Logs), 0)
 
 	// Verify collection time
 	assert.WithinDuration(t, time.Now(), data.CollectionTime, time.Minute)
@@ -67,8 +63,7 @@ func TestArtifactCollector_nonExistentDirectory(t *testing.T) {
 	logger := logr.Discard()
 	collector := newArtifactCollector(logger)
 
-	ctx := context.Background()
-	_, err := collector.collectFromReportDir(ctx, "/non/existent/path")
+	_, err := collector.collectFromReportDir("/non/existent/path")
 
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "report directory does not exist")
@@ -80,8 +75,7 @@ func TestArtifactCollector_emptyDirectory(t *testing.T) {
 	logger := logr.Discard()
 	collector := newArtifactCollector(logger)
 
-	ctx := context.Background()
-	data, err := collector.collectFromReportDir(ctx, tempDir)
+	data, err := collector.collectFromReportDir(tempDir)
 
 	require.NoError(t, err)
 	require.NotNil(t, data)
@@ -89,32 +83,7 @@ func TestArtifactCollector_emptyDirectory(t *testing.T) {
 	// Should have empty results but valid structure
 	assert.Equal(t, 0, data.TestResults.TotalTests)
 	assert.Equal(t, 0, len(data.FailedTests))
-	assert.Equal(t, 0, len(data.BuildLogs))
-}
-
-func TestIsLogFile(t *testing.T) {
-	logger := logr.Discard()
-	collector := newArtifactCollector(logger)
-
-	tests := []struct {
-		path     string
-		expected bool
-	}{
-		{"/path/to/file.log", true},
-		{"/path/to/file.txt", true},
-		{"/path/to/file.out", true},
-		{"/path/to/file.err", true},
-		{"/path/to/events", true},
-		{"/path/to/describe-pods", true},
-		{"/path/to/file.json", false},
-		{"/path/to/file.yaml", false},
-		{"/path/to/binary", false},
-	}
-
-	for _, test := range tests {
-		result := collector.isLogFile(test.path)
-		assert.Equal(t, test.expected, result, "path: %s", test.path)
-	}
+	assert.Equal(t, 0, len(data.Logs))
 }
 
 // Helper function to create test files
