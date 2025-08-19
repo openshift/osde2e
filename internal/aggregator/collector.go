@@ -173,6 +173,11 @@ func (a *artifactCollector) collectLogs(reportDir string, data *AggregatedData) 
 			return nil
 		}
 
+		// Skip directories that start with "."
+		if info.IsDir() && strings.HasPrefix(info.Name(), ".") {
+			return filepath.SkipDir
+		}
+
 		// Skip directories, only collect files
 		if info.IsDir() {
 			return nil
