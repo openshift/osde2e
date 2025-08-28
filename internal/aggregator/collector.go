@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/go-logr/logr"
@@ -105,14 +107,37 @@ func (a *artifactCollector) collectTestResults(data *AggregatedData) error {
 		return nil
 	}
 
-	var allSuites []junit.Suite
+	type junitResult struct {
+		suites []junit.Suite
+		err    error
+		file   string
+	}
+
+	resultCh := make(chan junitResult, len(junitFiles))
+	var wg sync.WaitGroup
+
+	// Process junit files concurrently
 	for _, file := range junitFiles {
-		suites, err := junit.IngestFile(file)
-		if err != nil {
-			a.logger.Error(err, "failed to parse junit file", "file", file)
+		wg.Add(1)
+		go func(f string) {
+			defer wg.Done()
+			suites, err := junit.IngestFile(f)
+			resultCh <- junitResult{suites: suites, err: err, file: f}
+		}(file)
+	}
+
+	go func() {
+		wg.Wait()
+		close(resultCh)
+	}()
+
+	var allSuites []junit.Suite
+	for result := range resultCh {
+		if result.err != nil {
+			a.logger.Error(result.err, "failed to parse junit file", "file", result.file)
 			continue
 		}
-		allSuites = append(allSuites, suites...)
+		allSuites = append(allSuites, result.suites...)
 	}
 
 	// Calculate summary statistics
@@ -138,6 +163,11 @@ func (a *artifactCollector) collectTestResults(data *AggregatedData) error {
 			}
 		}
 	}
+
+	// Sort failed tests for deterministic order
+	sort.Slice(failedTests, func(i, j int) bool {
+		return failedTests[i].Name < failedTests[j].Name
+	})
 
 	data.TestResults = summary
 	data.FailedTests = failedTests
