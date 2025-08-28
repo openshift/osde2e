@@ -1,8 +1,7 @@
-// Package aggregator provides functionality to collect artifacts and metadata
-// from osde2e test runs for LLM analysis.
 package aggregator
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -15,12 +14,10 @@ import (
 	"github.com/joshdk/go-junit"
 )
 
-// artifactCollector collects test failure artifacts
-type artifactCollector struct {
+type Aggregator struct {
 	logger logr.Logger
 }
 
-// AggregatedData contains all collected artifacts and metadata
 type AggregatedData struct {
 	Metadata       map[string]any    `json:"metadata"`
 	TestResults    TestResultSummary `json:"testResults"`
@@ -33,7 +30,6 @@ func (a *AggregatedData) SetMetadata(metadata map[string]any) {
 	a.Metadata = metadata
 }
 
-// TestResultSummary provides high-level test execution statistics
 type TestResultSummary struct {
 	TotalTests   int           `json:"totalTests"`
 	PassedTests  int           `json:"passedTests"`
@@ -44,7 +40,6 @@ type TestResultSummary struct {
 	SuiteCount   int           `json:"suiteCount"`
 }
 
-// FailedTest contains details about a specific test failure
 type FailedTest struct {
 	Name       string        `json:"name"`
 	ClassName  string        `json:"className,omitempty"`
@@ -56,20 +51,17 @@ type FailedTest struct {
 	SystemErr  string        `json:"systemErr,omitempty"`
 }
 
-// LogEntry represents a collected log file
 type LogEntry struct {
-	Source string `json:"source"` // File path or source identifier
+	Source string `json:"source"`
 }
 
-// newArtifactCollector creates a new artifact collector
-func newArtifactCollector(logger logr.Logger) *artifactCollector {
-	return &artifactCollector{
+func New(logger logr.Logger) *Aggregator {
+	return &Aggregator{
 		logger: logger,
 	}
 }
 
-// collectFromReportDir collects artifacts from the specified report directory
-func (a *artifactCollector) collectFromReportDir(reportDir string) (*AggregatedData, error) {
+func (a *Aggregator) Collect(ctx context.Context, reportDir string) (*AggregatedData, error) {
 	a.logger.Info("collecting artifacts", "reportDir", reportDir)
 
 	if _, err := os.Stat(reportDir); os.IsNotExist(err) {
@@ -95,8 +87,7 @@ func (a *artifactCollector) collectFromReportDir(reportDir string) (*AggregatedD
 	return data, nil
 }
 
-// collectTestResults processes JUnit XML files to extract test failure information
-func (a *artifactCollector) collectTestResults(data *AggregatedData) error {
+func (a *Aggregator) collectTestResults(data *AggregatedData) error {
 	junitFiles, err := a.findJUnitFiles(data)
 	if err != nil {
 		return fmt.Errorf("finding junit files: %w", err)
@@ -116,7 +107,6 @@ func (a *artifactCollector) collectTestResults(data *AggregatedData) error {
 	resultCh := make(chan junitResult, len(junitFiles))
 	var wg sync.WaitGroup
 
-	// Process junit files concurrently
 	for _, file := range junitFiles {
 		wg.Add(1)
 		go func(f string) {
@@ -140,7 +130,6 @@ func (a *artifactCollector) collectTestResults(data *AggregatedData) error {
 		allSuites = append(allSuites, result.suites...)
 	}
 
-	// Calculate summary statistics
 	summary := TestResultSummary{SuiteCount: len(allSuites)}
 	var failedTests []FailedTest
 
@@ -164,7 +153,6 @@ func (a *artifactCollector) collectTestResults(data *AggregatedData) error {
 		}
 	}
 
-	// Sort failed tests for deterministic order
 	sort.Slice(failedTests, func(i, j int) bool {
 		return failedTests[i].Name < failedTests[j].Name
 	})
@@ -175,8 +163,7 @@ func (a *artifactCollector) collectTestResults(data *AggregatedData) error {
 	return nil
 }
 
-// convertJUnitTest converts a junit.Test to our FailedTest structure
-func (a *artifactCollector) convertJUnitTest(test junit.Test, suiteName string) FailedTest {
+func (a *Aggregator) convertJUnitTest(test junit.Test, suiteName string) FailedTest {
 	failed := FailedTest{
 		Name:      test.Name,
 		ClassName: test.Classname,
@@ -194,26 +181,21 @@ func (a *artifactCollector) convertJUnitTest(test junit.Test, suiteName string) 
 	return failed
 }
 
-// collectLogs recursively iterates through the report directory and collects all file names
-func (a *artifactCollector) collectLogs(reportDir string, data *AggregatedData) error {
+func (a *Aggregator) collectLogs(reportDir string, data *AggregatedData) error {
 	return filepath.Walk(reportDir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
-			// Log the error but continue walking
 			a.logger.Info("error accessing path", "path", path, "error", err)
 			return nil
 		}
 
-		// Skip directories that start with "."
 		if info.IsDir() && strings.HasPrefix(info.Name(), ".") {
 			return filepath.SkipDir
 		}
 
-		// Skip directories, only collect files
 		if info.IsDir() {
 			return nil
 		}
 
-		// Add the file path to the logs
 		data.Logs = append(data.Logs, LogEntry{
 			Source: path,
 		})
@@ -222,15 +204,12 @@ func (a *artifactCollector) collectLogs(reportDir string, data *AggregatedData) 
 	})
 }
 
-// findJUnitFiles searches for JUnit XML files from collected log entries
-func (a *artifactCollector) findJUnitFiles(data *AggregatedData) ([]string, error) {
+func (a *Aggregator) findJUnitFiles(data *AggregatedData) ([]string, error) {
 	var junitFiles []string
 
-	// Filter the already collected log entries for JUnit XML files
 	for _, logEntry := range data.Logs {
 		fileName := strings.ToLower(filepath.Base(logEntry.Source))
 
-		// Look for XML files that might be JUnit reports
 		if strings.HasSuffix(fileName, ".xml") &&
 			strings.Contains(fileName, "junit") {
 			junitFiles = append(junitFiles, logEntry.Source)
