@@ -17,6 +17,7 @@ import (
 	"github.com/onsi/ginkgo/v2/reporters"
 	"github.com/onsi/ginkgo/v2/types"
 	"github.com/onsi/gomega"
+	"github.com/openshift/osde2e/internal/analysisengine"
 	clusterutil "github.com/openshift/osde2e/pkg/common/cluster"
 	"github.com/openshift/osde2e/pkg/common/clusterproperties"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
@@ -39,6 +40,77 @@ const (
 
 // provisioner is used to deploy and manage clusters.
 var provider spi.Provider
+
+// runLLMAnalysis performs LLM-powered failure analysis if enabled
+func runLLMAnalysis() {
+	// Check if LLM analysis is enabled
+	if !viper.GetBool(config.LLM.EnableAnalysis) {
+		log.Println("LLM analysis is disabled, skipping failure analysis")
+		return
+	}
+
+	reportDir := viper.GetString(config.ReportDir)
+	if reportDir == "" {
+		log.Println("No report directory available for LLM analysis")
+		return
+	}
+
+	// Determine analysis type based on current phase
+	analysisType := "test" // Default
+	if currentPhase := viper.GetString(config.Phase); currentPhase != "" {
+		switch currentPhase {
+		case phase.InstallPhase:
+			analysisType = "provisioning"
+		case phase.UpgradePhase:
+			analysisType = "upgrade"
+		default:
+			analysisType = "test"
+		}
+	}
+
+	log.Printf("Starting LLM analysis for %s failure", analysisType)
+
+	// Create engine configuration
+	engineConfig := &analysisengine.Config{
+		AnalysisType:   analysisType,
+		ArtifactsDir:   reportDir,
+		PromptTemplate: "", // Will auto-select based on analysis type
+		OutputFormat:   "json",
+		APIKey:         viper.GetString(config.LLM.APIKey),
+		Model:          viper.GetString(config.LLM.Model),
+		EnableTools:    true,
+		LogLevel:       "info",
+		DryRun:         false,
+		Verbose:        true,
+	}
+
+	// Create engine and run analysis
+	ctx := context.Background()
+	engine, err := analysisengine.New(ctx, engineConfig)
+	if err != nil {
+		log.Printf("Failed to create LLM analysis engine: %v", err)
+		return
+	}
+
+	// Run analysis
+	result, err := engine.Run(ctx)
+	if err != nil {
+		log.Printf("LLM analysis failed: %v", err)
+		return
+	}
+
+	// Print analysis results
+	log.Printf("LLM analysis result:\n%s", result.Content)
+}
+
+// llmFailHandler is a custom fail handler that includes LLM analysis
+func llmFailHandler(message string, callerSkip ...int) {
+	// Run LLM analysis on failure
+	go runLLMAnalysis()
+
+	// Call the original Ginkgo fail handler
+	ginkgo.Fail(message, callerSkip...)
+}
 
 // beforeSuite attempts to populate several required cluster fields (either by provisioning a new cluster, or re-using an existing one)
 // If there is an issue with provisioning, retrieving, or getting the kubeconfig, this will return `false`.
@@ -166,7 +238,8 @@ func RunTests() int {
 func runGinkgoTests() (int, error) {
 	var err error
 
-	gomega.RegisterFailHandler(ginkgo.Fail)
+	// Register custom fail handler with LLM analysis
+	gomega.RegisterFailHandler(llmFailHandler)
 	viper.Set(config.Cluster.Passing, false)
 	suiteConfig, reporterConfig := ginkgo.GinkgoConfiguration()
 	suiteConfig.Timeout = time.Hour * time.Duration(viper.GetInt(config.Tests.SuiteTimeout))
