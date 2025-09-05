@@ -454,12 +454,15 @@ func ProvisionCluster(logger *log.Logger) (*spi.Cluster, error) {
 		clusterID = ocmProvider.ClaimClusterFromReserve(viper.GetString(config.Cluster.Version), "aws", "rosa")
 	}
 	if viper.GetBool(config.Cluster.Reserve) {
+		logger.Printf("Cluster reserve provisioning requested, querying reserve")
 		listResponse, err := ocmProvider.QueryReserve(viper.GetString(config.Cluster.Version), viper.GetString(config.CloudProvider.CloudProviderID), viper.GetString(config.Provider))
 		if err != nil {
 			return nil, fmt.Errorf("could not query reserve: %v", err)
 		}
+		logger.Printf("Reserve count: %d", listResponse.Total())
 		if listResponse.Total() >= RESERVE_COUNT {
 			// Provision one cluster per job run. Job should be scheduled every so often to keep adding to reserve so that count is met.
+			logger.Printf("Reserve full")
 			return nil, nil
 		}
 	}
