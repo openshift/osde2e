@@ -18,7 +18,6 @@ import (
 //go:embed templates/*.yaml
 var defaultTemplates embed.FS
 
-// Package-wide defaults for all prompts
 const (
 	defaultMaxTokens   = 4000
 	defaultTemperature = float32(0.1)
@@ -26,7 +25,6 @@ const (
 )
 
 type PromptTemplate struct {
-	ID           string `yaml:"id"`
 	SystemPrompt string `yaml:"system_prompt"`
 	UserPrompt   string `yaml:"user_prompt"`
 }
@@ -64,11 +62,8 @@ func (ps *PromptStore) loadTemplates(filesystem fs.FS) error {
 			return err
 		}
 
-		if template.ID == "" {
-			template.ID = strings.TrimSuffix(filepath.Base(path), ".yaml")
-		}
-
-		ps.templates[template.ID] = &template
+		id := strings.TrimSuffix(filepath.Base(path), ".yaml")
+		ps.templates[id] = &template
 		return nil
 	})
 }
@@ -99,11 +94,9 @@ func (ps *PromptStore) RenderPrompt(templateID string, variables map[string]any)
 
 	config = &llm.AnalysisConfig{
 		SystemInstruction: genai.Ptr(systemPrompt),
-		Temperature:       genai.Ptr[float32](defaultTemperature),
-		TopP:              genai.Ptr[float32](defaultTopP),
+		Temperature:       genai.Ptr(defaultTemperature),
+		TopP:              genai.Ptr(defaultTopP),
 		MaxTokens:         genai.Ptr(defaultMaxTokens),
-		// When tools are enabled, the response schema cannot be used
-		// ResponseSchema:    getAnalysisResponseSchema(),
 	}
 
 	return userPrompt, config, nil
@@ -121,29 +114,4 @@ func (pt *PromptTemplate) render(promptText string, variables map[string]any) (s
 	}
 
 	return strings.TrimSpace(buf.String()), nil
-}
-
-// getAnalysisResponseSchema returns the standard response schema for failure analysis
-func getAnalysisResponseSchema() *genai.Schema {
-	return &genai.Schema{
-		Type: genai.TypeObject,
-		Properties: map[string]*genai.Schema{
-			"root_cause": {
-				Type:        genai.TypeString,
-				Description: "Specific description of what failed",
-			},
-			"confidence_score": {
-				Type:        genai.TypeNumber,
-				Description: "Confidence score between 0.0 and 1.0",
-			},
-			"recommendations": {
-				Type:        genai.TypeArray,
-				Description: "List of 2-3 specific, actionable recommendations",
-				Items: &genai.Schema{
-					Type: genai.TypeString,
-				},
-			},
-		},
-		Required: []string{"root_cause", "confidence_score", "recommendations"},
-	}
 }

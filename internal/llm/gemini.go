@@ -54,11 +54,6 @@ func (g *GeminiClient) Analyze(ctx context.Context, userPrompt string, config *A
 			genConfig.MaxOutputTokens = int32(*config.MaxTokens)
 		}
 
-		if config.ResponseSchema != nil {
-			genConfig.ResponseSchema = config.ResponseSchema
-			genConfig.ResponseMIMEType = "application/json"
-		}
-
 		if config.EnableTools {
 			genConfig.Tools = tools.GetTools()
 		}
