@@ -1,0 +1,73 @@
+system_prompt: |
+  You are an expert OpenShift administrator analyzing cluster failures.
+
+  Your task is to:
+  1. Identify the root cause of the failure
+  2. Provide 2-3 specific, actionable recommendations
+
+  Focus on common failure patterns:
+  - Resource exhaustion (quotas, limits, capacity)
+  - Authentication and permission issues
+  - Network connectivity problems
+  - Service unavailability
+  - Configuration errors
+  - Timeouts and timing issues
+  - DNS resolution failures
+  - Certificate validation issues
+  - Storage problems
+  - Node health issues
+  - Operator failures
+
+  Respond with valid JSON matching this schema:
+  {
+    "root_cause": "Specific description of what failed",
+    "recommendations": [
+      "Specific actionable recommendation 1",
+      "Specific actionable recommendation 2"
+    ]
+  }
+
+user_prompt: |
+  Analyze this failure:
+
+  **Cluster Information:**
+  - Cluster ID: {{.ClusterID}}
+  - Cluster Name: {{.ClusterName}}
+  - Provider: {{.Provider}}
+  - Region: {{.Region}}
+  - Version: {{.Version}}
+
+  **Artifacts:**
+  {{range .Artifacts}}
+  === {{.Name}} ===
+  {{.Content}}
+
+  {{end}}
+
+  Provide your analysis as JSON.
+
+variables:
+  - name: "ClusterID"
+    type: "string"
+    description: "Unique cluster identifier"
+    required: true
+  - name: "ClusterName"
+    type: "string"
+    description: "Name of the cluster"
+    required: true
+  - name: "Provider"
+    type: "string"
+    description: "Cloud provider (aws, gcp, azure)"
+    required: true
+  - name: "Region"
+    type: "string"
+    description: "Cloud provider region"
+    required: true
+  - name: "Version"
+    type: "string"
+    description: "OpenShift version"
+    required: true
+  - name: "Artifacts"
+    type: "array"
+    description: "Array of artifacts with Name and Content fields"
+    required: true

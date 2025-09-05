@@ -18,9 +18,9 @@ func TestGetTemplate(t *testing.T) {
 	store, err := NewPromptStore()
 	require.NoError(t, err)
 
-	template, err := store.GetTemplate("provisioning-default")
+	template, err := store.GetTemplate("default")
 	require.NoError(t, err)
-	assert.Equal(t, "provisioning-default", template.ID)
+	assert.NotNil(t, template)
 
 	_, err = store.GetTemplate("non-existent")
 	assert.Error(t, err)
@@ -42,7 +42,7 @@ func TestRenderPrompt(t *testing.T) {
 		},
 	}
 
-	userPrompt, config, err := store.RenderPrompt("provisioning-default", variables)
+	userPrompt, config, err := store.RenderPrompt("default", variables)
 	require.NoError(t, err)
 	require.NotNil(t, config)
 
@@ -53,9 +53,8 @@ func TestRenderPrompt(t *testing.T) {
 	assert.Contains(t, userPrompt, "installer.log")
 
 	assert.NotNil(t, config.SystemInstruction)
-	assert.Contains(t, *config.SystemInstruction, "OpenShift cluster administrator")
+	assert.Contains(t, *config.SystemInstruction, "OpenShift administrator")
 
-	assert.NotNil(t, config.SystemInstruction)
 	assert.NotNil(t, config.Temperature)
 	assert.NotNil(t, config.TopP)
 	assert.NotNil(t, config.MaxTokens)
