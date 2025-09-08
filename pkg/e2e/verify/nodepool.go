@@ -27,6 +27,7 @@ import (
 
 const (
 	nodePoolLabel = "hypershift.openshift.io/nodePool"
+	awsProvider   = "aws"
 )
 
 var nodePoolGVR = schema.GroupVersionResource{
@@ -42,11 +43,12 @@ var _ = ginkgo.Describe("[Suite: e2e] NodePool STS Permissions", ginkgo.Ordered,
 		clusterNamespace string
 		testNodePoolName string
 		createdNodePool  bool
+		canAccessAPI     bool
 	)
 
 	ginkgo.BeforeAll(func() {
 		cloudProvider := viper.GetString(config.CloudProvider.CloudProviderID)
-		if cloudProvider != "aws" {
+		if cloudProvider != awsProvider {
 			ginkgo.Skip(fmt.Sprintf("Tests only supported on AWS, got %s", cloudProvider))
 		}
 
@@ -59,20 +61,29 @@ var _ = ginkgo.Describe("[Suite: e2e] NodePool STS Permissions", ginkgo.Ordered,
 			ginkgo.Skip(fmt.Sprintf("Cannot determine cluster namespace: %v", err))
 		}
 
+		canAccessAPI = canAccessNodePoolAPI(h, clusterNamespace)
 		testNodePoolName = fmt.Sprintf("sts-test-%d", time.Now().Unix()%100000)
 	})
 
 	ginkgo.AfterAll(func() {
-		if createdNodePool && testNodePoolName != "" && clusterNamespace != "" {
-			cleanupNodePool(context.Background(), h, clusterNamespace, testNodePoolName)
+		if createdNodePool {
+			err := h.Dynamic().Resource(nodePoolGVR).Namespace(clusterNamespace).
+				Delete(context.Background(), testNodePoolName, metav1.DeleteOptions{})
+			if err != nil && !apierrors.IsNotFound(err) {
+				ginkgo.GinkgoLogr.Error(err, "Failed to cleanup test NodePool", "name", testNodePoolName)
+			}
+
+			wait.For(func(ctx context.Context) (bool, error) {
+				_, err := h.Dynamic().Resource(nodePoolGVR).Namespace(clusterNamespace).
+					Get(ctx, testNodePoolName, metav1.GetOptions{})
+				return apierrors.IsNotFound(err), nil
+			}, wait.WithTimeout(3*time.Minute), wait.WithInterval(10*time.Second))
 		}
 	})
 
 	ginkgo.It("validates existing nodes have proper AWS integration", func(ctx context.Context) {
 		nodePoolNodes, err := findNodePoolNodes(ctx, client)
-		if isSTSError(err) {
-			failWithSTSError(err, "node discovery", "ec2:DescribeInstances")
-		}
+		failIfSTSError(err, "node discovery", "ec2:DescribeInstances")
 		expect.NoError(err, "Failed to find NodePool nodes")
 		Expect(len(nodePoolNodes)).To(BeNumerically(">", 0), "No NodePool nodes found")
 
@@ -81,47 +92,40 @@ var _ = ginkgo.Describe("[Suite: e2e] NodePool STS Permissions", ginkgo.Ordered,
 		}
 	})
 
-	ginkgo.It("creates new NodePool successfully", func(ctx context.Context) {
-		if clusterNamespace == "" {
-			ginkgo.Skip("Cannot determine cluster namespace")
-		}
+	ginkgo.Describe("NodePool creation and provisioning", func() {
+		ginkgo.It("creates new NodePool successfully", func(ctx context.Context) {
+			if !canAccessAPI {
+				ginkgo.Skip("NodePool API not accessible from guest cluster")
+			}
 
-		if !canAccessNodePoolAPI(h, clusterNamespace) {
-			ginkgo.Skip("NodePool API not accessible from guest cluster")
-		}
+			nodePoolSpec := buildNodePoolSpec(testNodePoolName, clusterNamespace)
+			nodePoolObj := &unstructured.Unstructured{Object: nodePoolSpec}
 
-		nodePoolSpec := buildNodePoolSpec(testNodePoolName, clusterNamespace)
-		nodePoolObj := &unstructured.Unstructured{Object: nodePoolSpec}
+			_, err := h.Dynamic().Resource(nodePoolGVR).Namespace(clusterNamespace).
+				Create(ctx, nodePoolObj, metav1.CreateOptions{})
 
-		_, err := h.Dynamic().Resource(nodePoolGVR).Namespace(clusterNamespace).
-			Create(ctx, nodePoolObj, metav1.CreateOptions{})
+			failIfSTSError(err, "NodePool creation", "ec2:RunInstances,ec2:CreateTags")
+			expect.NoError(err, "NodePool creation failed")
+			createdNodePool = true
+		})
 
-		if isSTSError(err) {
-			failWithSTSError(err, "NodePool creation", "ec2:RunInstances,ec2:CreateTags")
-		}
+		ginkgo.It("provisions nodes from new NodePool", func(ctx context.Context) {
+			if !createdNodePool {
+				ginkgo.Skip("NodePool creation was skipped")
+			}
 
-		expect.NoError(err, "NodePool creation failed")
-		createdNodePool = true
-	})
+			err := waitForNodePoolReady(ctx, h, clusterNamespace, testNodePoolName, 10*time.Minute)
+			failIfSTSError(err, "node provisioning", "ec2:RunInstances")
+			expect.NoError(err, "NodePool failed to provision nodes")
 
-	ginkgo.It("provisions nodes from new NodePool", func(ctx context.Context) {
-		if !createdNodePool {
-			ginkgo.Skip("NodePool creation was skipped")
-		}
+			provisionedNodes, err := findNodesForNodePool(ctx, client, testNodePoolName)
+			expect.NoError(err, "Failed to find provisioned nodes")
+			Expect(len(provisionedNodes)).To(BeNumerically(">", 0), "No nodes were provisioned")
 
-		err := waitForNodePoolReady(ctx, h, clusterNamespace, testNodePoolName, 10*time.Minute)
-		if isSTSError(err) {
-			failWithSTSError(err, "node provisioning", "ec2:RunInstances")
-		}
-		expect.NoError(err, "NodePool failed to provision nodes")
-
-		provisionedNodes, err := findNodesForNodePool(ctx, client, testNodePoolName)
-		expect.NoError(err, "Failed to find provisioned nodes")
-		Expect(len(provisionedNodes)).To(BeNumerically(">", 0), "No nodes were provisioned")
-
-		for _, node := range provisionedNodes {
-			validateAWSIntegration(node)
-		}
+			for _, node := range provisionedNodes {
+				validateAWSIntegration(node)
+			}
+		})
 	})
 
 	ginkgo.It("schedules workloads on NodePool nodes", func(ctx context.Context) {
@@ -129,49 +133,66 @@ var _ = ginkgo.Describe("[Suite: e2e] NodePool STS Permissions", ginkgo.Ordered,
 		expect.NoError(err, "Failed to find ready NodePool nodes")
 		Expect(len(nodePoolNodes)).To(BeNumerically(">", 0), "No ready NodePool nodes available")
 
-		targetNode := &nodePoolNodes[0]
-		pod := createTestPod(h.CurrentProject(), targetNode.Name)
+		var targetNode *corev1.Node
+		for i := range nodePoolNodes {
+			if isNodeReady(nodePoolNodes[i]) {
+				targetNode = &nodePoolNodes[i]
+				break
+			}
+		}
+		if targetNode == nil {
+			targetNode = &nodePoolNodes[0]
+		}
+
+		pod := createPod(h.CurrentProject(), &podConfig{
+			namePrefix: "nodepool-test-",
+			nodeName:   targetNode.Name,
+			image:      "registry.access.redhat.com/ubi8/ubi-minimal:latest",
+			command:    []string{"/bin/sh", "-c", "echo 'NodePool test successful' && sleep 5"},
+			cpuRequest: "100m",
+			memRequest: "128Mi",
+		})
 
 		err = client.Create(ctx, pod)
-		if isSTSError(err) {
-			failWithSTSError(err, "workload creation", "ec2:RunInstances")
-		}
+		failIfSTSError(err, "workload creation", "ec2:RunInstances")
 		expect.NoError(err, "Failed to create test pod")
 		defer client.Delete(ctx, pod)
 
 		err = wait.For(conditions.New(client).PodPhaseMatch(pod, corev1.PodSucceeded),
 			wait.WithTimeout(3*time.Minute), wait.WithInterval(5*time.Second))
-		if isSTSError(err) {
-			failWithSTSError(err, "workload scheduling", "ec2:RunInstances")
-		}
+		failIfSTSError(err, "workload scheduling", "ec2:RunInstances")
 		expect.NoError(err, "Workload failed to complete")
 	})
 
 	ginkgo.It("handles invalid configurations gracefully", func(ctx context.Context) {
-		pod := createPodWithSelector(h.CurrentProject(), map[string]string{
-			nodePoolLabel: "non-existent-nodepool",
+		pod := createPod(h.CurrentProject(), &podConfig{
+			namePrefix:   "invalid-selector-test-",
+			nodeSelector: map[string]string{nodePoolLabel: "non-existent-nodepool"},
+			image:        "registry.access.redhat.com/ubi8/ubi-minimal:latest",
+			command:      []string{"/bin/sh", "-c", "sleep 30"},
+			cpuRequest:   "50m",
+			memRequest:   "64Mi",
 		})
 
 		err := client.Create(ctx, pod)
 		expect.NoError(err, "Should create pod with invalid selector")
 		defer client.Delete(ctx, pod)
 
-		time.Sleep(30 * time.Second)
-
-		podList := &corev1.PodList{}
-		err = client.WithNamespace(pod.Namespace).List(ctx, podList)
-		expect.NoError(err, "Failed to list pods")
-
-		var foundPod *corev1.Pod
-		for _, p := range podList.Items {
-			if p.Name == pod.Name {
-				foundPod = &p
-				break
+		err = wait.For(func(ctx context.Context) (bool, error) {
+			podList := &corev1.PodList{}
+			err := client.WithNamespace(pod.Namespace).List(ctx, podList)
+			if err != nil {
+				return false, err
 			}
-		}
 
-		Expect(foundPod).ToNot(BeNil(), "Pod should exist")
-		Expect(foundPod.Status.Phase).To(Equal(corev1.PodPending), "Pod should remain pending")
+			for _, p := range podList.Items {
+				if p.Name == pod.Name {
+					return p.Status.Phase == corev1.PodPending, nil
+				}
+			}
+			return false, nil
+		}, wait.WithTimeout(1*time.Minute), wait.WithInterval(5*time.Second))
+		expect.NoError(err, "Pod should remain in pending state")
 	})
 
 	ginkgo.It("handles resource-intensive workloads", func(ctx context.Context) {
@@ -179,8 +200,27 @@ var _ = ginkgo.Describe("[Suite: e2e] NodePool STS Permissions", ginkgo.Ordered,
 		expect.NoError(err, "Failed to find ready NodePool nodes")
 		Expect(len(nodePoolNodes)).To(BeNumerically(">", 0), "No ready NodePool nodes available")
 
-		targetNode := &nodePoolNodes[0]
-		pod := createResourceIntensivePod(h.CurrentProject(), targetNode.Name)
+		var targetNode *corev1.Node
+		for i := range nodePoolNodes {
+			if isNodeReady(nodePoolNodes[i]) {
+				targetNode = &nodePoolNodes[i]
+				break
+			}
+		}
+		if targetNode == nil {
+			targetNode = &nodePoolNodes[0]
+		}
+
+		pod := createPod(h.CurrentProject(), &podConfig{
+			namePrefix: "resource-intensive-test-",
+			nodeName:   targetNode.Name,
+			image:      "registry.access.redhat.com/ubi8/ubi-minimal:latest",
+			command:    []string{"/bin/sh", "-c", "echo 'Resource test' && sleep 10"},
+			cpuRequest: "500m",
+			memRequest: "512Mi",
+			cpuLimit:   "1000m",
+			memLimit:   "1Gi",
+		})
 
 		err = client.Create(ctx, pod)
 		expect.NoError(err, "Failed to create resource-intensive pod")
@@ -192,7 +232,7 @@ var _ = ginkgo.Describe("[Suite: e2e] NodePool STS Permissions", ginkgo.Ordered,
 	})
 
 	ginkgo.It("rejects operations on non-existent NodePools", func(ctx context.Context) {
-		if clusterNamespace == "" || !canAccessNodePoolAPI(h, clusterNamespace) {
+		if !canAccessAPI {
 			ginkgo.Skip("NodePool API not accessible")
 		}
 
@@ -204,7 +244,7 @@ var _ = ginkgo.Describe("[Suite: e2e] NodePool STS Permissions", ginkgo.Ordered,
 	})
 
 	ginkgo.It("rejects duplicate NodePool creation", func(ctx context.Context) {
-		if clusterNamespace == "" || !canAccessNodePoolAPI(h, clusterNamespace) {
+		if !canAccessAPI {
 			ginkgo.Skip("NodePool API not accessible")
 		}
 
@@ -222,6 +262,58 @@ var _ = ginkgo.Describe("[Suite: e2e] NodePool STS Permissions", ginkgo.Ordered,
 		Expect(apierrors.IsAlreadyExists(err)).To(BeTrue(), "Should return AlreadyExists error")
 	})
 })
+
+type podConfig struct {
+	namePrefix   string
+	nodeName     string
+	nodeSelector map[string]string
+	image        string
+	command      []string
+	cpuRequest   string
+	memRequest   string
+	cpuLimit     string
+	memLimit     string
+}
+
+func createPod(namespace string, config *podConfig) *corev1.Pod {
+	pod := &corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			GenerateName: config.namePrefix,
+			Namespace:    namespace,
+		},
+		Spec: corev1.PodSpec{
+			Containers: []corev1.Container{{
+				Name:    "test",
+				Image:   config.image,
+				Command: config.command,
+				Resources: corev1.ResourceRequirements{
+					Requests: corev1.ResourceList{
+						corev1.ResourceCPU:    resource.MustParse(config.cpuRequest),
+						corev1.ResourceMemory: resource.MustParse(config.memRequest),
+					},
+				},
+			}},
+			RestartPolicy: corev1.RestartPolicyNever,
+		},
+	}
+
+	if config.nodeName != "" {
+		pod.Spec.NodeName = config.nodeName
+	}
+
+	if config.nodeSelector != nil {
+		pod.Spec.NodeSelector = config.nodeSelector
+	}
+
+	if config.cpuLimit != "" && config.memLimit != "" {
+		pod.Spec.Containers[0].Resources.Limits = corev1.ResourceList{
+			corev1.ResourceCPU:    resource.MustParse(config.cpuLimit),
+			corev1.ResourceMemory: resource.MustParse(config.memLimit),
+		}
+	}
+
+	return pod
+}
 
 func findNodePoolNodes(ctx context.Context, client *resources.Resources) ([]corev1.Node, error) {
 	var nodeList corev1.NodeList
@@ -271,7 +363,7 @@ func findNodesForNodePool(ctx context.Context, client *resources.Resources, node
 }
 
 func validateAWSIntegration(node corev1.Node) {
-	Expect(node.Spec.ProviderID).To(HavePrefix("aws://"),
+	Expect(node.Spec.ProviderID).To(HavePrefix(fmt.Sprintf("%s://", awsProvider)),
 		fmt.Sprintf("Node %s missing AWS provider ID", node.Name))
 
 	hasInternalIP := false
@@ -289,7 +381,7 @@ func validateAWSIntegration(node corev1.Node) {
 
 func getClusterNamespace(h *helper.H) (string, error) {
 	if name := viper.GetString(config.Cluster.Name); name != "" {
-		return "clusters-" + name, nil
+		return fmt.Sprintf("clusters-%s", name), nil
 	}
 
 	current := h.CurrentProject()
@@ -326,7 +418,7 @@ func buildNodePoolSpec(name, namespace string) map[string]interface{} {
 				"upgradeType": "Replace",
 			},
 			"platform": map[string]interface{}{
-				"aws": map[string]interface{}{
+				awsProvider: map[string]interface{}{
 					"instanceType": "m5.large",
 				},
 			},
@@ -351,99 +443,9 @@ func waitForNodePoolReady(ctx context.Context, h *helper.H, namespace, nodePoolN
 	}, wait.WithTimeout(timeout), wait.WithInterval(30*time.Second))
 }
 
-func cleanupNodePool(ctx context.Context, h *helper.H, namespace, nodePoolName string) {
-	err := h.Dynamic().Resource(nodePoolGVR).Namespace(namespace).
-		Delete(ctx, nodePoolName, metav1.DeleteOptions{})
-	if err != nil && !apierrors.IsNotFound(err) {
-		ginkgo.GinkgoLogr.Error(err, "Failed to cleanup test NodePool", "name", nodePoolName)
-	}
-
-	wait.For(func(ctx context.Context) (bool, error) {
-		_, err := h.Dynamic().Resource(nodePoolGVR).Namespace(namespace).
-			Get(ctx, nodePoolName, metav1.GetOptions{})
-		return apierrors.IsNotFound(err), nil
-	}, wait.WithTimeout(3*time.Minute), wait.WithInterval(10*time.Second))
-}
-
-func createTestPod(namespace, nodeName string) *corev1.Pod {
-	return &corev1.Pod{
-		ObjectMeta: metav1.ObjectMeta{
-			GenerateName: "nodepool-test-",
-			Namespace:    namespace,
-		},
-		Spec: corev1.PodSpec{
-			NodeName: nodeName,
-			Containers: []corev1.Container{{
-				Name:    "test",
-				Image:   "registry.access.redhat.com/ubi8/ubi-minimal:latest",
-				Command: []string{"/bin/sh", "-c", "echo 'NodePool test successful' && sleep 5"},
-				Resources: corev1.ResourceRequirements{
-					Requests: corev1.ResourceList{
-						corev1.ResourceCPU:    resource.MustParse("100m"),
-						corev1.ResourceMemory: resource.MustParse("128Mi"),
-					},
-				},
-			}},
-			RestartPolicy: corev1.RestartPolicyNever,
-		},
-	}
-}
-
-func createPodWithSelector(namespace string, nodeSelector map[string]string) *corev1.Pod {
-	return &corev1.Pod{
-		ObjectMeta: metav1.ObjectMeta{
-			GenerateName: "invalid-selector-test-",
-			Namespace:    namespace,
-		},
-		Spec: corev1.PodSpec{
-			NodeSelector: nodeSelector,
-			Containers: []corev1.Container{{
-				Name:    "test",
-				Image:   "registry.access.redhat.com/ubi8/ubi-minimal:latest",
-				Command: []string{"/bin/sh", "-c", "sleep 30"},
-				Resources: corev1.ResourceRequirements{
-					Requests: corev1.ResourceList{
-						corev1.ResourceCPU:    resource.MustParse("50m"),
-						corev1.ResourceMemory: resource.MustParse("64Mi"),
-					},
-				},
-			}},
-			RestartPolicy: corev1.RestartPolicyNever,
-		},
-	}
-}
-
-func createResourceIntensivePod(namespace, nodeName string) *corev1.Pod {
-	return &corev1.Pod{
-		ObjectMeta: metav1.ObjectMeta{
-			GenerateName: "resource-intensive-test-",
-			Namespace:    namespace,
-		},
-		Spec: corev1.PodSpec{
-			NodeName: nodeName,
-			Containers: []corev1.Container{{
-				Name:    "resource-test",
-				Image:   "registry.access.redhat.com/ubi8/ubi-minimal:latest",
-				Command: []string{"/bin/sh", "-c", "echo 'Resource test' && sleep 10"},
-				Resources: corev1.ResourceRequirements{
-					Requests: corev1.ResourceList{
-						corev1.ResourceCPU:    resource.MustParse("500m"),
-						corev1.ResourceMemory: resource.MustParse("512Mi"),
-					},
-					Limits: corev1.ResourceList{
-						corev1.ResourceCPU:    resource.MustParse("1000m"),
-						corev1.ResourceMemory: resource.MustParse("1Gi"),
-					},
-				},
-			}},
-			RestartPolicy: corev1.RestartPolicyNever,
-		},
-	}
-}
-
-func isSTSError(err error) bool {
+func failIfSTSError(err error, operation, permissions string) {
 	if err == nil {
-		return false
+		return
 	}
 	msg := strings.ToLower(err.Error())
 	patterns := []string{
@@ -454,17 +456,12 @@ func isSTSError(err error) bool {
 	}
 	for _, pattern := range patterns {
 		if strings.Contains(msg, pattern) {
-			return true
+			ginkgo.Fail(fmt.Sprintf(
+				"STS_PERMISSION_ERROR: %s failed due to missing AWS permissions (%s): %v. "+
+				"This blocks release until STS policies are updated.",
+				operation, permissions, err))
 		}
 	}
-	return false
-}
-
-func failWithSTSError(err error, operation, permissions string) {
-	ginkgo.Fail(fmt.Sprintf(
-		"STS_PERMISSION_ERROR: %s failed due to missing AWS permissions (%s): %v. "+
-		"This blocks release until STS policies are updated.",
-		operation, permissions, err))
 }
 
 func isNodeReady(node corev1.Node) bool {
