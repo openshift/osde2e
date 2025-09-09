@@ -1,17 +1,18 @@
 package main
 
 import (
-	"fmt"
-	"log"
+	"context"
 	"os"
 
-	"github.com/openshift/osde2e/cmd/osde2e/provision"
+	"github.com/go-logr/logr"
 	"github.com/spf13/cobra"
+	"k8s.io/klog/v2/textlogger"
 
 	"github.com/openshift/osde2e/cmd/osde2e/arguments"
 	"github.com/openshift/osde2e/cmd/osde2e/cleanup"
 	"github.com/openshift/osde2e/cmd/osde2e/completion"
 	"github.com/openshift/osde2e/cmd/osde2e/healthcheck"
+	"github.com/openshift/osde2e/cmd/osde2e/provision"
 	"github.com/openshift/osde2e/cmd/osde2e/test"
 )
 
@@ -35,12 +36,12 @@ func init() {
 }
 
 func main() {
-	log.SetFlags(log.Flags() | log.Lshortfile)
+	logger := textlogger.NewLogger(textlogger.NewConfig())
+	ctx := logr.NewContext(context.Background(), logger)
+	root.SetContext(ctx)
 
-	// Execute the root command:
-	// root.SetArgs(os.Args[1:])
 	if err := root.Execute(); err != nil {
-		fmt.Fprintln(os.Stderr, err)
+		logger.Error(err, "command execution failed")
 		os.Exit(1)
 	}
 
