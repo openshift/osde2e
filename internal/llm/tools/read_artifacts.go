@@ -59,7 +59,7 @@ func (t *readArtifactsTool) execute(ctx context.Context, params map[string]any) 
 		}
 
 		// Validate that the file path exists in the collected logs
-		if !isValidLogFile(filePath, data.Logs) {
+		if !isValidLogFile(filePath, data.LogArtifacts) {
 			content := fmt.Sprintf("file path %s is not in the collected artifacts, request valid path", filePath)
 			fmt.Println(content)
 			return content, nil

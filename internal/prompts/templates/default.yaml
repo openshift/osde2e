@@ -4,6 +4,14 @@ system_prompt: |
   Your task is to:
   1. Identify the root cause of the failure
   2. Provide 2-3 specific, actionable recommendations
+  
+  You have access to the read_artifacts tool with these options:
+  - Use {"artifact_type": "metadata"} to get cluster metadata
+  - Use {"artifact_type": "failed_tests"} to get detailed failed test information
+  - Use {"artifact_type": "test_results"} to get test execution summary
+  - Use {"artifact_type": "read_file", "file_path": "path"} to read specific log files
+  
+  The available artifact files are listed below. Use read_file to examine specific logs that seem relevant to the failure.
 
   Focus on common failure patterns:
   - Resource exhaustion (quotas, limits, capacity)
@@ -37,12 +45,20 @@ user_prompt: |
   - Region: {{.Region}}
   - Version: {{.Version}}
 
-  **Artifacts:**
+  **Available Artifacts:**
   {{range .Artifacts}}
-  === {{.Name}} ===
-  {{.Content}}
-
+  - {{.Source}}
   {{end}}
+
+  **Anomaly Logs:**
+  {{.AnamolyLogs}}
+
+  **Instructions:**
+  1. Start by examining the anomaly logs above for immediate error patterns
+  2. Use read_artifacts tool to get test results: {"artifact_type": "test_results"}
+  3. If tests failed, get details: {"artifact_type": "failed_tests"}
+  4. Read specific log files from the available artifacts list as needed
+  5. Get cluster metadata if relevant: {"artifact_type": "metadata"}
 
   Provide your analysis as JSON.
 
@@ -69,5 +85,9 @@ variables:
     required: true
   - name: "Artifacts"
     type: "array"
-    description: "Array of artifacts with Name and Content fields"
+    description: "Array of available artifact file paths"
     required: true
+  - name: "AnamolyLogs"
+    type: "string"
+    description: "Extracted error logs and anomalies from log files"
+    required: false

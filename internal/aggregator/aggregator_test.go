@@ -30,10 +30,10 @@ func TestAggregator_Collect(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, data)
 
-	assert.Greater(t, len(data.Logs), 0)
+	assert.Greater(t, len(data.LogArtifacts), 0)
 
 	found := false
-	for _, log := range data.Logs {
+	for _, log := range data.LogArtifacts {
 		if strings.Contains(log.Source, "build-log.txt") {
 			found = true
 			break
@@ -88,7 +88,7 @@ func TestAggregator_CollectFromReportDir(t *testing.T) {
 	assert.Equal(t, "operators.test", failedTest.ClassName)
 	assert.Contains(t, failedTest.ErrorMsg, "operator installation timed out")
 
-	assert.Greater(t, len(data.Logs), 0)
+	assert.Greater(t, len(data.LogArtifacts), 0)
 	assert.WithinDuration(t, time.Now(), data.CollectionTime, time.Minute)
 }
 
@@ -106,7 +106,7 @@ func TestAggregator_EmptyDirectory(t *testing.T) {
 
 	assert.Equal(t, 0, data.TestResults.TotalTests)
 	assert.Equal(t, 0, len(data.FailedTests))
-	assert.Equal(t, 0, len(data.Logs))
+	assert.Equal(t, 0, len(data.LogArtifacts))
 }
 
 func createTestFiles(t *testing.T, reportDir, installDir, upgradeDir, mustGatherDir, clusterLogsDir string) {

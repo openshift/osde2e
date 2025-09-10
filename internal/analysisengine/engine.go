@@ -80,7 +80,8 @@ func (e *Engine) Run(ctx context.Context) (*Result, error) {
 		vars = make(map[string]any)
 	}
 	vars["AnalysisType"] = e.config.AnalysisType
-	vars["Artifacts"] = data.Logs
+	vars["Artifacts"] = data.LogArtifacts
+	vars["AnamolyLogs"] = data.AnamolyLogs
 
 	userPrompt, llmConfig, err := e.promptStore.RenderPrompt(promptTemplate, vars)
 	if err != nil {
@@ -108,7 +109,7 @@ func (e *Engine) Run(ctx context.Context) (*Result, error) {
 		Metadata: map[string]interface{}{
 			"analysis_type":      e.config.AnalysisType,
 			"prompt_template":    promptTemplate,
-			"artifacts_examined": len(data.Logs),
+			"artifacts_examined": len(data.LogArtifacts),
 		},
 	}, nil
 }
@@ -118,6 +119,7 @@ func (e *Engine) getPromptTemplate() string {
 		return e.config.PromptTemplate
 	}
 
+	// TODO: Simplify this
 	switch e.config.AnalysisType {
 	case "provisioning":
 		return "provisioning-default"

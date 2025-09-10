@@ -22,7 +22,8 @@ type AggregatedData struct {
 	Metadata       map[string]any    `json:"metadata"`
 	TestResults    TestResultSummary `json:"testResults"`
 	FailedTests    []FailedTest      `json:"failedTests"`
-	Logs           []LogEntry        `json:"logs"`
+	LogArtifacts   []LogEntry        `json:"logArtifacts"`
+	AnamolyLogs    string            `json:"anamolyLogs"`
 	CollectionTime time.Time         `json:"collectionTime"`
 }
 
@@ -72,8 +73,12 @@ func (a *Aggregator) Collect(ctx context.Context, reportDir string) (*Aggregated
 		CollectionTime: time.Now(),
 	}
 
-	if err := a.collectLogs(reportDir, data); err != nil {
-		a.logger.Error(err, "failed to collect logs")
+	if err := a.collectLogArtifacts(reportDir, data); err != nil {
+		a.logger.Error(err, "failed to collect log artifacts")
+	}
+
+	if err := a.collectLogAnomalies(reportDir, data); err != nil {
+		a.logger.Error(err, "failed to collect log anomaly")
 	}
 
 	if err := a.collectTestResults(data); err != nil {
@@ -82,9 +87,20 @@ func (a *Aggregator) Collect(ctx context.Context, reportDir string) (*Aggregated
 
 	a.logger.Info("completed artifact collection",
 		"failedTests", len(data.FailedTests),
-		"logEntries", len(data.Logs))
+		"logEntries", len(data.LogArtifacts))
 
 	return data, nil
+}
+
+func (a *Aggregator) collectLogAnomalies(reportDir string, data *AggregatedData) error {
+	// TODO: Get file name in a generic way
+	logFilePath := filepath.Join(reportDir, "test_output.log")
+	errors, err := ExtractErrorsFromLogFile(logFilePath)
+	if err != nil {
+		return fmt.Errorf("failed to collect log anomaly: %w", err)
+	}
+	data.AnamolyLogs = errors
+	return nil
 }
 
 func (a *Aggregator) collectTestResults(data *AggregatedData) error {
@@ -181,7 +197,7 @@ func (a *Aggregator) convertJUnitTest(test junit.Test, suiteName string) FailedT
 	return failed
 }
 
-func (a *Aggregator) collectLogs(reportDir string, data *AggregatedData) error {
+func (a *Aggregator) collectLogArtifacts(reportDir string, data *AggregatedData) error {
 	return filepath.Walk(reportDir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			a.logger.Info("error accessing path", "path", path, "error", err)
@@ -196,7 +212,7 @@ func (a *Aggregator) collectLogs(reportDir string, data *AggregatedData) error {
 			return nil
 		}
 
-		data.Logs = append(data.Logs, LogEntry{
+		data.LogArtifacts = append(data.LogArtifacts, LogEntry{
 			Source: path,
 		})
 
@@ -207,7 +223,7 @@ func (a *Aggregator) collectLogs(reportDir string, data *AggregatedData) error {
 func (a *Aggregator) findJUnitFiles(data *AggregatedData) ([]string, error) {
 	var junitFiles []string
 
-	for _, logEntry := range data.Logs {
+	for _, logEntry := range data.LogArtifacts {
 		fileName := strings.ToLower(filepath.Base(logEntry.Source))
 
 		if strings.HasSuffix(fileName, ".xml") &&
@@ -217,4 +233,25 @@ func (a *Aggregator) findJUnitFiles(data *AggregatedData) ([]string, error) {
 	}
 
 	return junitFiles, nil
+}
+
+// ExtractErrorsFromLogFile extracts error lines from a log file
+func ExtractErrorsFromLogFile(logFile string) (string, error) {
+	content, err := os.ReadFile(logFile)
+	if err != nil {
+		return "", err
+	}
+
+	lines := strings.Split(string(content), "\n")
+
+	// use string builder to collect errors
+	var errors strings.Builder
+	for _, line := range lines {
+		// Check all case variants directly - fastest approach
+		if strings.Contains(line, "error") || strings.Contains(line, "Error") || strings.Contains(line, "ERROR") {
+			errors.WriteString(line)
+			errors.WriteString("\n") // Add newline separator
+		}
+	}
+	return errors.String(), nil
 }
