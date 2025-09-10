@@ -37,6 +37,7 @@ var provider spi.Provider
 
 // runLLMAnalysis performs LLM-powered failure analysis if enabled
 func runLLMAnalysis() {
+	log.Println("Running LLM analysis")
 	// Check if LLM analysis is enabled
 	if !viper.GetBool(config.LLM.EnableAnalysis) {
 		log.Println("LLM analysis is disabled, skipping failure analysis")
@@ -68,7 +69,7 @@ func runLLMAnalysis() {
 	engineConfig := &analysisengine.Config{
 		AnalysisType:   analysisType,
 		ArtifactsDir:   reportDir,
-		PromptTemplate: "", // Will auto-select based on analysis type
+		PromptTemplate: "default",
 		OutputFormat:   "json",
 		APIKey:         viper.GetString(config.LLM.APIKey),
 		Model:          viper.GetString(config.LLM.Model),
@@ -95,15 +96,6 @@ func runLLMAnalysis() {
 
 	// Print analysis results
 	log.Printf("LLM analysis result:\n%s", result.Content)
-}
-
-// llmFailHandler is a custom fail handler that includes LLM analysis
-func llmFailHandler(message string, callerSkip ...int) {
-	// Run LLM analysis on failure
-	go runLLMAnalysis()
-
-	// Call the original Ginkgo fail handler
-	ginkgo.Fail(message, callerSkip...)
 }
 
 // beforeSuite attempts to populate several required cluster fields (either by provisioning a new cluster, or re-using an existing one)
@@ -224,6 +216,7 @@ func RunTests() int {
 		log.Printf("OSDE2E failed: %v", err)
 	}
 
+	go runLLMAnalysis()
 	return exitCode
 }
 
