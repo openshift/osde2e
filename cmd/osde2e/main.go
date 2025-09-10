@@ -20,6 +20,9 @@ import (
 	"github.com/openshift/osde2e/cmd/osde2e/test"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
+	"github.com/openshift/osde2e/pkg/common/providers/ocmprovider"
+	"github.com/openshift/osde2e/pkg/common/providers/rosaprovider"
+	"github.com/openshift/osde2e/pkg/common/spi"
 	"github.com/openshift/osde2e/pkg/common/util"
 )
 
@@ -81,6 +84,11 @@ func main() {
 	log.SetOutput(mw)
 
 	logger.Info("configured logging", "outputFile", buildLogPath, "reportDir", reportDir, "sharedDir", sharedDir)
+
+	// Register providers
+	spi.RegisterProvider("rosa", func() (spi.Provider, error) { return rosaprovider.New(ctx) })
+	spi.RegisterProvider("ocm", func() (spi.Provider, error) { return ocmprovider.New() })
+
 	if err := root.Execute(); err != nil {
 		logger.Error(err, "command execution failed")
 		os.Exit(1)
