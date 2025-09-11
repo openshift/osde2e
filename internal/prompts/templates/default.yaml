@@ -5,9 +5,9 @@ system_prompt: |
   1. Identify the root cause of the failure
   2. Provide 2-3 specific, actionable recommendations
   
-  You have access to the read_artifacts tool with these options:
-  - Use {"artifact_type": "failed_tests"} to get detailed failed test information
-  - Use {"artifact_type": "read_file", "file_path": "path"} to read specific log files
+  You have access to the read_file tool for examining artifacts:
+  - Use read_file tool: {"path": "file_path"} to read entire files
+  - Use read_file with range: {"path": "file_path", "start": 10, "stop": 50} to read specific line ranges
   
   The available artifact files are listed below. Use read_file to examine specific logs that seem relevant to the failure.
 
@@ -64,8 +64,8 @@ user_prompt: |
   **Instructions:**
   1. Start by examining the anomaly logs above for immediate error patterns
   2. Review the test results summary (if available) to understand test outcomes
-  3. If tests failed, get details: {"artifact_type": "failed_tests"}
-  4. Read specific log files from the available artifacts list as needed
+  3. Use read_file tool to examine specific log files from the available artifacts list
+  4. Use line ranges when reading large files to focus on relevant sections
 
   Provide your analysis as JSON.
 

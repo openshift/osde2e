@@ -30,7 +30,7 @@ func NewRegistry(data *aggregator.AggregatedData) *Registry {
 	}
 
 	// Register production tools only
-	r.Register(&readArtifactsTool{})
+	r.Register(&readFileTool{})
 
 	return r
 }
