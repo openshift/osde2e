@@ -95,7 +95,7 @@ func (a *Aggregator) Collect(ctx context.Context, reportDir string) (*Aggregated
 func (a *Aggregator) collectLogAnomalies(reportDir string, data *AggregatedData) error {
 	// TODO: Get file name in a generic way
 	logFilePath := filepath.Join(reportDir, "test_output.log")
-	errors, err := ExtractErrorsFromLogFile(logFilePath)
+	errors, err := extractErrorsFromLogFile(logFilePath)
 	if err != nil {
 		return fmt.Errorf("failed to collect log anomaly: %w", err)
 	}
@@ -235,8 +235,7 @@ func (a *Aggregator) findJUnitFiles(data *AggregatedData) ([]string, error) {
 	return junitFiles, nil
 }
 
-// ExtractErrorsFromLogFile extracts error lines from a log file
-func ExtractErrorsFromLogFile(logFile string) (string, error) {
+func extractErrorsFromLogFile(logFile string) (string, error) {
 	content, err := os.ReadFile(logFile)
 	if err != nil {
 		return "", err
