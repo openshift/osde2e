@@ -28,9 +28,7 @@ type Config struct {
 	OutputFormat   string
 	APIKey         string
 	Model          string
-	Temperature    *float32
-	MaxTokens      *int
-	EnableTools    bool
+	LLMConfig      *llm.AnalysisConfig
 	LogLevel       string
 	DryRun         bool
 	Verbose        bool
@@ -82,7 +80,8 @@ func (e *Engine) Run(ctx context.Context) (*Result, error) {
 		return nil, fmt.Errorf("data collection failed: %w", err)
 	}
 
-	tools.SetCollectedData(data)
+	// Create tool registry with collected data
+	toolRegistry := tools.NewRegistry(data)
 
 	// Prepare prompt variables
 	vars := make(map[string]any)
@@ -105,17 +104,21 @@ func (e *Engine) Run(ctx context.Context) (*Result, error) {
 		return nil, fmt.Errorf("prompt preparation failed: %w", err)
 	}
 
-	// Configure LLM
-	llmConfig.EnableTools = e.config.EnableTools
-	if e.config.Temperature != nil {
-		llmConfig.Temperature = e.config.Temperature
-	}
-	if e.config.MaxTokens != nil {
-		llmConfig.MaxTokens = e.config.MaxTokens
+	// Merge user-provided LLM config with prompt config
+	if e.config.LLMConfig != nil {
+		if e.config.LLMConfig.Temperature != nil {
+			llmConfig.Temperature = e.config.LLMConfig.Temperature
+		}
+		if e.config.LLMConfig.MaxTokens != nil {
+			llmConfig.MaxTokens = e.config.LLMConfig.MaxTokens
+		}
+		if e.config.LLMConfig.TopP != nil {
+			llmConfig.TopP = e.config.LLMConfig.TopP
+		}
 	}
 
 	// Run LLM analysis
-	result, err := e.llmClient.Analyze(ctx, userPrompt, llmConfig)
+	result, err := e.llmClient.Analyze(ctx, userPrompt, llmConfig, toolRegistry)
 	if err != nil {
 		return nil, fmt.Errorf("LLM analysis failed: %w", err)
 	}

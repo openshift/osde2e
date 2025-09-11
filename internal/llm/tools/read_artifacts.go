@@ -12,15 +12,15 @@ import (
 
 type readArtifactsTool struct{}
 
-func (t *readArtifactsTool) name() string {
+func (t *readArtifactsTool) Name() string {
 	return "read_artifacts"
 }
 
-func (t *readArtifactsTool) description() string {
+func (t *readArtifactsTool) Description() string {
 	return "Reads and returns specific artifacts from the current osde2e test run. Supports reading by artifact type: failed_tests or read_file"
 }
 
-func (t *readArtifactsTool) schema() *genai.Schema {
+func (t *readArtifactsTool) Schema() *genai.Schema {
 	return &genai.Schema{
 		Type: genai.TypeObject,
 		Properties: map[string]*genai.Schema{
@@ -38,18 +38,16 @@ func (t *readArtifactsTool) schema() *genai.Schema {
 	}
 }
 
-func (t *readArtifactsTool) execute(ctx context.Context, params map[string]any) (any, error) {
+func (t *readArtifactsTool) Execute(ctx context.Context, params map[string]any, data *aggregator.AggregatedData) (any, error) {
 	artifactType, err := extractString(params, "artifact_type")
 	if err != nil {
 		return nil, err
 	}
 	fmt.Println("Executing read_artifacts with params: ", params)
 
-	if globalCollectedData == nil {
-		return nil, fmt.Errorf("no data collected - call SetCollectedData first")
+	if data == nil {
+		return nil, fmt.Errorf("no data provided to tool")
 	}
-
-	data := globalCollectedData
 
 	// Handle file reading case
 	if artifactType == "read_file" {

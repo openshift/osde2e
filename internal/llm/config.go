@@ -5,7 +5,6 @@ type AnalysisConfig struct {
 	Temperature       *float32 `json:"temperature,omitempty"`
 	TopP              *float32 `json:"topP,omitempty"`
 	MaxTokens         *int     `json:"maxTokens,omitempty"`
-	EnableTools       bool     `json:"enableTools,omitempty"`
 }
 
 type AnalysisResult struct {

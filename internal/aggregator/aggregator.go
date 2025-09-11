@@ -19,12 +19,13 @@ type Aggregator struct {
 }
 
 type AggregatedData struct {
-	Metadata       map[string]any    `json:"metadata"`
-	TestResults    TestResultSummary `json:"testResults"`
-	FailedTests    []FailedTest      `json:"failedTests"`
-	LogArtifacts   []LogEntry        `json:"logArtifacts"`
-	AnamolyLogs    string            `json:"anamolyLogs"`
-	CollectionTime time.Time         `json:"collectionTime"`
+	Metadata         map[string]any    `json:"metadata"`
+	TestResults      TestResultSummary `json:"testResults"`
+	FailedTests      []FailedTest      `json:"failedTests"`
+	LogArtifacts     []LogEntry        `json:"logArtifacts"`
+	AnamolyLogs      string            `json:"anamolyLogs"`
+	CollectionTime   time.Time         `json:"collectionTime"`
+	CollectionErrors []string          `json:"collectionErrors,omitempty"`
 }
 
 func (a *AggregatedData) SetMetadata(metadata map[string]any) {
@@ -73,21 +74,32 @@ func (a *Aggregator) Collect(ctx context.Context, reportDir string) (*Aggregated
 		CollectionTime: time.Now(),
 	}
 
+	var collectionErrors []string
+
 	if err := a.collectLogArtifacts(reportDir, data); err != nil {
+		errMsg := fmt.Sprintf("failed to collect log artifacts: %v", err)
 		a.logger.Error(err, "failed to collect log artifacts")
+		collectionErrors = append(collectionErrors, errMsg)
 	}
 
 	if err := a.collectLogAnomalies(reportDir, data); err != nil {
+		errMsg := fmt.Sprintf("failed to collect log anomalies: %v", err)
 		a.logger.Error(err, "failed to collect log anomaly")
+		collectionErrors = append(collectionErrors, errMsg)
 	}
 
 	if err := a.collectTestResults(data); err != nil {
+		errMsg := fmt.Sprintf("failed to collect test results: %v", err)
 		a.logger.Error(err, "failed to collect test results")
+		collectionErrors = append(collectionErrors, errMsg)
 	}
+
+	data.CollectionErrors = collectionErrors
 
 	a.logger.Info("completed artifact collection",
 		"failedTests", len(data.FailedTests),
-		"logEntries", len(data.LogArtifacts))
+		"logEntries", len(data.LogArtifacts),
+		"errors", len(collectionErrors))
 
 	return data, nil
 }

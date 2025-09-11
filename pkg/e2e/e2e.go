@@ -45,7 +45,6 @@ func runLLMAnalysis(ctx context.Context, err error) {
 		return
 	}
 
-	// Collect cluster information
 	clusterInfo := &analysisengine.ClusterInfo{
 		ID:            viper.GetString(config.Cluster.ID),
 		Name:          viper.GetString(config.Cluster.Name),
@@ -55,14 +54,12 @@ func runLLMAnalysis(ctx context.Context, err error) {
 		Version:       viper.GetString(config.Cluster.Version),
 	}
 
-	// Create engine configuration
 	engineConfig := &analysisengine.Config{
 		ArtifactsDir:   reportDir,
 		PromptTemplate: "default",
 		OutputFormat:   "json",
 		APIKey:         viper.GetString(config.LLM.APIKey),
 		Model:          viper.GetString(config.LLM.Model),
-		EnableTools:    true,
 		LogLevel:       "info",
 		DryRun:         false,
 		Verbose:        true,
@@ -70,21 +67,18 @@ func runLLMAnalysis(ctx context.Context, err error) {
 		ClusterInfo:    clusterInfo,
 	}
 
-	// Create engine and run analysis
 	engine, err := analysisengine.New(ctx, engineConfig)
 	if err != nil {
 		log.Printf("Failed to create LLM analysis engine: %v", err)
 		return
 	}
 
-	// Run analysis
 	result, err := engine.Run(ctx)
 	if err != nil {
 		log.Printf("LLM analysis failed: %v", err)
 		return
 	}
 
-	// Print analysis results
 	log.Printf("LLM analysis result:\n%s", result.Content)
 }
 

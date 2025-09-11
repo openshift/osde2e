@@ -31,14 +31,25 @@ func TestRenderPrompt(t *testing.T) {
 	require.NoError(t, err)
 
 	variables := map[string]any{
-		"Provider":    "aws",
-		"Region":      "us-east-1",
-		"Version":     "4.12.0",
-		"ClusterName": "test-cluster",
-		"FailureTime": "2024-01-01T12:00:00Z",
-		"Duration":    "30m",
+		"ClusterID":      "test-cluster-id-123",
+		"ClusterName":    "test-cluster",
+		"Provider":       "aws",
+		"Region":         "us-east-1",
+		"Version":        "4.12.0",
+		"FailureContext": "Installation failed with timeout error",
+		"AnamolyLogs":    "ERROR: timeout waiting for machine-config-server",
 		"Artifacts": []any{
-			map[string]any{"Name": "installer.log", "Content": "ERROR: Installation failed"},
+			map[string]any{"Source": "/logs/installer.log"},
+			map[string]any{"Source": "/logs/machine-config.log"},
+		},
+		"TestResults": map[string]any{
+			"TotalTests":   5,
+			"PassedTests":  3,
+			"FailedTests":  2,
+			"SkippedTests": 0,
+			"ErrorTests":   0,
+			"Duration":     "5m30s",
+			"SuiteCount":   2,
 		},
 	}
 
@@ -46,15 +57,23 @@ func TestRenderPrompt(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, config)
 
+	// Verify template variables were substituted correctly
 	assert.Contains(t, userPrompt, "aws")
 	assert.Contains(t, userPrompt, "us-east-1")
 	assert.Contains(t, userPrompt, "4.12.0")
 	assert.Contains(t, userPrompt, "test-cluster")
-	assert.Contains(t, userPrompt, "installer.log")
+	assert.Contains(t, userPrompt, "test-cluster-id-123")
+	assert.Contains(t, userPrompt, "Installation failed with timeout error")
+	assert.Contains(t, userPrompt, "/logs/installer.log")
+	assert.Contains(t, userPrompt, "timeout waiting for machine-config-server")
 
+	// Verify test results section
+	assert.Contains(t, userPrompt, "Total Tests: 5")
+	assert.Contains(t, userPrompt, "Failed: 2")
+
+	// Verify configuration
 	assert.NotNil(t, config.SystemInstruction)
 	assert.Contains(t, *config.SystemInstruction, "OpenShift administrator")
-
 	assert.NotNil(t, config.Temperature)
 	assert.NotNil(t, config.TopP)
 	assert.NotNil(t, config.MaxTokens)

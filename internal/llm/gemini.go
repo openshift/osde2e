@@ -29,7 +29,7 @@ func NewGeminiClient(ctx context.Context, apiKey string) (*GeminiClient, error) 
 	}, nil
 }
 
-func (g *GeminiClient) Analyze(ctx context.Context, userPrompt string, config *AnalysisConfig) (*AnalysisResult, error) {
+func (g *GeminiClient) Analyze(ctx context.Context, userPrompt string, config *AnalysisConfig, toolRegistry *tools.Registry) (*AnalysisResult, error) {
 	contents := []*genai.Content{
 		genai.NewContentFromText(userPrompt, genai.RoleUser),
 	}
@@ -54,15 +54,15 @@ func (g *GeminiClient) Analyze(ctx context.Context, userPrompt string, config *A
 			genConfig.MaxOutputTokens = int32(*config.MaxTokens)
 		}
 
-		if config.EnableTools {
-			genConfig.Tools = tools.GetTools()
+		if toolRegistry != nil {
+			genConfig.Tools = toolRegistry.GetTools()
 		}
 	}
 
-	return g.handleConversationWithTools(ctx, contents, genConfig)
+	return g.handleConversationWithTools(ctx, contents, genConfig, toolRegistry)
 }
 
-func (g *GeminiClient) handleConversationWithTools(ctx context.Context, contents []*genai.Content, genConfig *genai.GenerateContentConfig) (*AnalysisResult, error) {
+func (g *GeminiClient) handleConversationWithTools(ctx context.Context, contents []*genai.Content, genConfig *genai.GenerateContentConfig, toolRegistry *tools.Registry) (*AnalysisResult, error) {
 	const maxIterations = 5
 
 	for i := range maxIterations {
@@ -84,7 +84,7 @@ func (g *GeminiClient) handleConversationWithTools(ctx context.Context, contents
 		}
 
 		// Process function calls and continue conversation
-		contents, err = g.processFunctionCalls(ctx, contents, functionCalls)
+		contents, err = g.processFunctionCalls(ctx, contents, functionCalls, toolRegistry)
 		if err != nil {
 			return nil, err
 		}
@@ -127,13 +127,13 @@ func (g *GeminiClient) processCandidateParts(candidate *genai.Candidate) (string
 	return textContent, functionCalls
 }
 
-func (g *GeminiClient) processFunctionCalls(ctx context.Context, contents []*genai.Content, functionCalls []*genai.FunctionCall) ([]*genai.Content, error) {
+func (g *GeminiClient) processFunctionCalls(ctx context.Context, contents []*genai.Content, functionCalls []*genai.FunctionCall, toolRegistry *tools.Registry) ([]*genai.Content, error) {
 	for _, functionCall := range functionCalls {
 		// Add the function call to conversation history
 		contents = append(contents, genai.NewContentFromParts([]*genai.Part{{FunctionCall: functionCall}}, genai.RoleModel))
 
 		// Execute the tool and get the result
-		toolResult, err := tools.HandleToolCall(ctx, functionCall)
+		toolResult, err := toolRegistry.HandleToolCall(ctx, functionCall)
 		if err != nil {
 			return nil, fmt.Errorf("failed to handle tool call: %w", err)
 		}
