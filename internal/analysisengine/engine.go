@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/onsi/ginkgo/v2"
 	"github.com/openshift/osde2e/internal/aggregator"
 	"github.com/openshift/osde2e/internal/llm"
 	"github.com/openshift/osde2e/internal/llm/tools"
@@ -46,9 +45,7 @@ type Engine struct {
 
 // New creates a new analysis engine
 func New(ctx context.Context, config *Config) (*Engine, error) {
-	// Initialize services
-	aggregatorService := aggregator.New(ginkgo.GinkgoLogr)
-
+	aggregatorService := aggregator.New(ctx)
 	promptStore, err := prompts.NewPromptStore()
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize prompt store: %w", err)

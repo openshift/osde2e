@@ -58,9 +58,9 @@ type LogEntry struct {
 	LineCount int    `json:"lineCount"`
 }
 
-func New(logger logr.Logger) *Aggregator {
+func New(ctx context.Context) *Aggregator {
 	return &Aggregator{
-		logger: logger,
+		logger: logr.FromContextOrDiscard(ctx),
 	}
 }
 
