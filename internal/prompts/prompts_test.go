@@ -39,8 +39,8 @@ func TestRenderPrompt(t *testing.T) {
 		"FailureContext": "Installation failed with timeout error",
 		"AnamolyLogs":    "ERROR: timeout waiting for machine-config-server",
 		"Artifacts": []any{
-			map[string]any{"Source": "/logs/installer.log"},
-			map[string]any{"Source": "/logs/machine-config.log"},
+			map[string]any{"Source": "/logs/installer.log", "LineCount": 522},
+			map[string]any{"Source": "/logs/machine-config.log", "LineCount": 143},
 		},
 		"TestResults": map[string]any{
 			"TotalTests":   5,
@@ -64,8 +64,8 @@ func TestRenderPrompt(t *testing.T) {
 	assert.Contains(t, userPrompt, "test-cluster")
 	assert.Contains(t, userPrompt, "test-cluster-id-123")
 	assert.Contains(t, userPrompt, "Installation failed with timeout error")
-	assert.Contains(t, userPrompt, "/logs/installer.log")
-	assert.Contains(t, userPrompt, "timeout waiting for machine-config-server")
+	assert.Contains(t, userPrompt, "/logs/installer.log (522 lines)")
+	assert.Contains(t, userPrompt, "/logs/machine-config.log (143 lines)")
 
 	// Verify test results section
 	assert.Contains(t, userPrompt, "Total Tests: 5")

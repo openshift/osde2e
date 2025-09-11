@@ -47,7 +47,7 @@ user_prompt: |
 
   **Available Artifacts:**
   {{range .Artifacts -}}
-  - {{.Source}}
+  - {{.Source}}{{if gt .LineCount 0}} ({{.LineCount}} lines){{end}}
   {{end}}
   {{if .TestResults}}**Test Results Summary:**
   - Total Tests: {{.TestResults.TotalTests}}

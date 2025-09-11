@@ -54,7 +54,8 @@ type FailedTest struct {
 }
 
 type LogEntry struct {
-	Source string `json:"source"`
+	Source    string `json:"source"`
+	LineCount int    `json:"lineCount"`
 }
 
 func New(logger logr.Logger) *Aggregator {
@@ -224,8 +225,19 @@ func (a *Aggregator) collectLogArtifacts(reportDir string, data *AggregatedData)
 			return nil
 		}
 
+		lineCount := 0
+		if content, err := os.ReadFile(path); err == nil {
+			lineCount = strings.Count(string(content), "\n")
+			if len(content) > 0 && !strings.HasSuffix(string(content), "\n") {
+				lineCount++
+			}
+		} else {
+			a.logger.Info("unable to read file for line count", "path", path, "error", err)
+		}
+
 		data.LogArtifacts = append(data.LogArtifacts, LogEntry{
-			Source: path,
+			Source:    path,
+			LineCount: lineCount,
 		})
 
 		return nil
