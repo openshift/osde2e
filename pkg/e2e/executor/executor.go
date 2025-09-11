@@ -91,7 +91,7 @@ func (e *Executor) Execute(ctx context.Context, image string) (*testResults, err
 	}
 
 	e.logger.Info("waiting for suite to complete")
-	if err := e.waitForSuite(ctx, job.Name, job.Namespace); err != nil {
+	if err := e.waitForSuite(ctx, job.Name, job.Namespace, image); err != nil {
 		return nil, fmt.Errorf("waiting for suite to finish: %w", err)
 	}
 
@@ -264,7 +264,7 @@ func (e *Executor) buildJobSpec(namespace string, image string) *batchv1.Job {
 
 // Wait for the e2e-suite container to complete (succeed/fail/stop)
 // We can't wait for the job because the pause container keeps it running for artifact collection
-func (e *Executor) waitForSuite(ctx context.Context, name, namespace string) error {
+func (e *Executor) waitForSuite(ctx context.Context, name, namespace, image string) error {
 	return wait.PollUntilContextTimeout(ctx, 10*time.Second, e.cfg.Timeout, false, func(ctx context.Context) (bool, error) {
 		pod, err := e.findJobPod(ctx, name, namespace)
 		if err != nil {
@@ -273,6 +273,13 @@ func (e *Executor) waitForSuite(ctx context.Context, name, namespace string) err
 		// Check the status of the e2e-suite container specifically
 		for _, containerStatus := range pod.Status.ContainerStatuses {
 			if containerStatus.Name == "e2e-suite" {
+				// Check for image pull failures first
+				if containerStatus.State.Waiting != nil {
+					reason := containerStatus.State.Waiting.Reason
+					if reason == "ImagePullBackOff" || reason == "ErrImagePull" {
+						return false, fmt.Errorf("failed to pull image: %s", image)
+					}
+				}
 				// Return true if container has terminated (succeeded or failed)
 				if containerStatus.State.Terminated != nil {
 					e.logger.Info("e2e-suite has terminated", "state", containerStatus.State)
