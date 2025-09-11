@@ -42,7 +42,6 @@ var _ = ginkgo.Describe("[Suite: e2e] NodePool STS Permissions", ginkgo.Ordered,
 		client           *resources.Resources
 		clusterNamespace string
 		testNodePoolName string
-		createdNodePool  bool
 		canAccessAPI     bool
 	)
 
@@ -61,24 +60,10 @@ var _ = ginkgo.Describe("[Suite: e2e] NodePool STS Permissions", ginkgo.Ordered,
 			ginkgo.Skip(fmt.Sprintf("Cannot determine cluster namespace: %v", err))
 		}
 
+		// Check API accessibility but don't fail the suite
 		canAccessAPI = canAccessNodePoolAPI(h, clusterNamespace)
+
 		testNodePoolName = fmt.Sprintf("sts-test-%d", time.Now().Unix()%100000)
-	})
-
-	ginkgo.AfterAll(func() {
-		if createdNodePool {
-			err := h.Dynamic().Resource(nodePoolGVR).Namespace(clusterNamespace).
-				Delete(context.Background(), testNodePoolName, metav1.DeleteOptions{})
-			if err != nil && !apierrors.IsNotFound(err) {
-				ginkgo.GinkgoLogr.Error(err, "Failed to cleanup test NodePool", "name", testNodePoolName)
-			}
-
-			wait.For(func(ctx context.Context) (bool, error) {
-				_, err := h.Dynamic().Resource(nodePoolGVR).Namespace(clusterNamespace).
-					Get(ctx, testNodePoolName, metav1.GetOptions{})
-				return apierrors.IsNotFound(err), nil
-			}, wait.WithTimeout(3*time.Minute), wait.WithInterval(10*time.Second))
-		}
 	})
 
 	ginkgo.It("validates existing nodes have proper AWS integration", func(ctx context.Context) {
@@ -93,7 +78,7 @@ var _ = ginkgo.Describe("[Suite: e2e] NodePool STS Permissions", ginkgo.Ordered,
 	})
 
 	ginkgo.Describe("NodePool creation and provisioning", func() {
-		ginkgo.It("creates new NodePool successfully", func(ctx context.Context) {
+		ginkgo.BeforeAll(func() {
 			if !canAccessAPI {
 				ginkgo.Skip("NodePool API not accessible from guest cluster")
 			}
@@ -102,18 +87,34 @@ var _ = ginkgo.Describe("[Suite: e2e] NodePool STS Permissions", ginkgo.Ordered,
 			nodePoolObj := &unstructured.Unstructured{Object: nodePoolSpec}
 
 			_, err := h.Dynamic().Resource(nodePoolGVR).Namespace(clusterNamespace).
-				Create(ctx, nodePoolObj, metav1.CreateOptions{})
+				Create(context.Background(), nodePoolObj, metav1.CreateOptions{})
 
 			failIfSTSError(err, "NodePool creation", "ec2:RunInstances,ec2:CreateTags")
 			expect.NoError(err, "NodePool creation failed")
-			createdNodePool = true
+		})
+
+		ginkgo.AfterAll(func() {
+			err := h.Dynamic().Resource(nodePoolGVR).Namespace(clusterNamespace).
+				Delete(context.Background(), testNodePoolName, metav1.DeleteOptions{})
+			if err != nil && !apierrors.IsNotFound(err) {
+				ginkgo.GinkgoLogr.Error(err, "Failed to cleanup test NodePool", "name", testNodePoolName)
+			}
+
+			wait.For(func(ctx context.Context) (bool, error) {
+				_, err := h.Dynamic().Resource(nodePoolGVR).Namespace(clusterNamespace).
+					Get(ctx, testNodePoolName, metav1.GetOptions{})
+				return apierrors.IsNotFound(err), nil
+			}, wait.WithTimeout(3*time.Minute), wait.WithInterval(10*time.Second))
+		})
+
+		ginkgo.It("creates NodePool successfully", func(ctx context.Context) {
+			// NodePool was created in BeforeAll - just verify it exists
+			_, err := h.Dynamic().Resource(nodePoolGVR).Namespace(clusterNamespace).
+				Get(ctx, testNodePoolName, metav1.GetOptions{})
+			expect.NoError(err, "NodePool should exist after creation")
 		})
 
 		ginkgo.It("provisions nodes from new NodePool", func(ctx context.Context) {
-			if !createdNodePool {
-				ginkgo.Skip("NodePool creation was skipped")
-			}
-
 			err := waitForNodePoolReady(ctx, h, clusterNamespace, testNodePoolName, 10*time.Minute)
 			failIfSTSError(err, "node provisioning", "ec2:RunInstances")
 			expect.NoError(err, "NodePool failed to provision nodes")
@@ -125,6 +126,17 @@ var _ = ginkgo.Describe("[Suite: e2e] NodePool STS Permissions", ginkgo.Ordered,
 			for _, node := range provisionedNodes {
 				validateAWSIntegration(node)
 			}
+		})
+
+		ginkgo.It("rejects duplicate NodePool creation", func(ctx context.Context) {
+			duplicateSpec := buildNodePoolSpec(testNodePoolName, clusterNamespace)
+			duplicateObj := &unstructured.Unstructured{Object: duplicateSpec}
+
+			_, err := h.Dynamic().Resource(nodePoolGVR).Namespace(clusterNamespace).
+				Create(ctx, duplicateObj, metav1.CreateOptions{})
+
+			Expect(err).To(HaveOccurred(), "Should fail creating duplicate NodePool")
+			Expect(apierrors.IsAlreadyExists(err)).To(BeTrue(), "Should return AlreadyExists error")
 		})
 	})
 
@@ -218,8 +230,6 @@ var _ = ginkgo.Describe("[Suite: e2e] NodePool STS Permissions", ginkgo.Ordered,
 			command:    []string{"/bin/sh", "-c", "echo 'Resource test' && sleep 10"},
 			cpuRequest: "500m",
 			memRequest: "512Mi",
-			cpuLimit:   "1000m",
-			memLimit:   "1Gi",
 		})
 
 		err = client.Create(ctx, pod)
@@ -242,25 +252,6 @@ var _ = ginkgo.Describe("[Suite: e2e] NodePool STS Permissions", ginkgo.Ordered,
 		Expect(err).To(HaveOccurred(), "Should fail accessing non-existent NodePool")
 		Expect(apierrors.IsNotFound(err)).To(BeTrue(), "Should return NotFound error")
 	})
-
-	ginkgo.It("rejects duplicate NodePool creation", func(ctx context.Context) {
-		if !canAccessAPI {
-			ginkgo.Skip("NodePool API not accessible")
-		}
-
-		if !createdNodePool {
-			ginkgo.Skip("No NodePool created to test duplication")
-		}
-
-		duplicateSpec := buildNodePoolSpec(testNodePoolName, clusterNamespace)
-		duplicateObj := &unstructured.Unstructured{Object: duplicateSpec}
-
-		_, err := h.Dynamic().Resource(nodePoolGVR).Namespace(clusterNamespace).
-			Create(ctx, duplicateObj, metav1.CreateOptions{})
-
-		Expect(err).To(HaveOccurred(), "Should fail creating duplicate NodePool")
-		Expect(apierrors.IsAlreadyExists(err)).To(BeTrue(), "Should return AlreadyExists error")
-	})
 })
 
 type podConfig struct {
@@ -271,8 +262,6 @@ type podConfig struct {
 	command      []string
 	cpuRequest   string
 	memRequest   string
-	cpuLimit     string
-	memLimit     string
 }
 
 func createPod(namespace string, config *podConfig) *corev1.Pod {
@@ -282,6 +271,8 @@ func createPod(namespace string, config *podConfig) *corev1.Pod {
 			Namespace:    namespace,
 		},
 		Spec: corev1.PodSpec{
+			NodeName:     config.nodeName,
+			NodeSelector: config.nodeSelector,
 			Containers: []corev1.Container{{
 				Name:    "test",
 				Image:   config.image,
@@ -295,21 +286,6 @@ func createPod(namespace string, config *podConfig) *corev1.Pod {
 			}},
 			RestartPolicy: corev1.RestartPolicyNever,
 		},
-	}
-
-	if config.nodeName != "" {
-		pod.Spec.NodeName = config.nodeName
-	}
-
-	if config.nodeSelector != nil {
-		pod.Spec.NodeSelector = config.nodeSelector
-	}
-
-	if config.cpuLimit != "" && config.memLimit != "" {
-		pod.Spec.Containers[0].Resources.Limits = corev1.ResourceList{
-			corev1.ResourceCPU:    resource.MustParse(config.cpuLimit),
-			corev1.ResourceMemory: resource.MustParse(config.memLimit),
-		}
 	}
 
 	return pod
@@ -457,8 +433,7 @@ func failIfSTSError(err error, operation, permissions string) {
 	for _, pattern := range patterns {
 		if strings.Contains(msg, pattern) {
 			ginkgo.Fail(fmt.Sprintf(
-				"STS_PERMISSION_ERROR: %s failed due to missing AWS permissions (%s): %v. "+
-				"This blocks release until STS policies are updated.",
+				"STS_PERMISSION_ERROR: %s failed due to missing AWS permissions (%s): %v. This blocks release until STS policies are updated.",
 				operation, permissions, err))
 		}
 	}
