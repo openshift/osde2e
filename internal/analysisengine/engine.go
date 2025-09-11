@@ -51,7 +51,6 @@ func New(ctx context.Context, config *Config) (*Engine, error) {
 		return nil, fmt.Errorf("failed to initialize prompt store: %w", err)
 	}
 
-	// Initialize LLM client
 	if config.APIKey == "" {
 		return nil, fmt.Errorf("GEMINI_API_KEY is required for LLM analysis")
 	}
@@ -71,23 +70,19 @@ func New(ctx context.Context, config *Config) (*Engine, error) {
 
 // Run executes the analysis workflow
 func (e *Engine) Run(ctx context.Context) (*Result, error) {
-	// Collect data
 	data, err := e.aggregatorService.Collect(ctx, e.config.ArtifactsDir)
 	if err != nil {
 		return nil, fmt.Errorf("data collection failed: %w", err)
 	}
 
-	// Create tool registry with collected data
 	toolRegistry := tools.NewRegistry(data)
 
-	// Prepare prompt variables
 	vars := make(map[string]any)
 	vars["Artifacts"] = data.LogArtifacts
 	vars["AnamolyLogs"] = data.AnamolyLogs
 	vars["TestResults"] = data.TestResults
 	vars["FailureContext"] = e.config.FailureContext
 
-	// Add cluster information if available
 	if e.config.ClusterInfo != nil {
 		vars["ClusterID"] = e.config.ClusterInfo.ID
 		vars["ClusterName"] = e.config.ClusterInfo.Name
@@ -101,7 +96,6 @@ func (e *Engine) Run(ctx context.Context) (*Result, error) {
 		return nil, fmt.Errorf("prompt preparation failed: %w", err)
 	}
 
-	// Merge user-provided LLM config with prompt config
 	if e.config.LLMConfig != nil {
 		if e.config.LLMConfig.Temperature != nil {
 			llmConfig.Temperature = e.config.LLMConfig.Temperature
@@ -114,7 +108,6 @@ func (e *Engine) Run(ctx context.Context) (*Result, error) {
 		}
 	}
 
-	// Run LLM analysis
 	result, err := e.llmClient.Analyze(ctx, userPrompt, llmConfig, toolRegistry)
 	if err != nil {
 		return nil, fmt.Errorf("LLM analysis failed: %w", err)
