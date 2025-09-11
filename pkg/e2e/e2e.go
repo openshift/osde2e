@@ -36,13 +36,8 @@ import (
 var provider spi.Provider
 
 // runLLMAnalysis performs LLM-powered failure analysis if enabled
-func runLLMAnalysis() {
+func runLLMAnalysis(ctx context.Context, err error) {
 	log.Println("Running LLM analysis")
-	// Check if LLM analysis is enabled
-	if !viper.GetBool(config.LLM.EnableAnalysis) {
-		log.Println("LLM analysis is disabled, skipping failure analysis")
-		return
-	}
 
 	reportDir := viper.GetString(config.ReportDir)
 	if reportDir == "" {
@@ -80,7 +75,6 @@ func runLLMAnalysis() {
 	}
 
 	// Create engine and run analysis
-	ctx := context.Background()
 	engine, err := analysisengine.New(ctx, engineConfig)
 	if err != nil {
 		log.Printf("Failed to create LLM analysis engine: %v", err)
@@ -205,7 +199,7 @@ func installAddons() (err error) {
 // -- END Ginkgo setup
 
 // RunTests initializes Ginkgo and runs the osde2e test suite.
-func RunTests() int {
+func RunTests(ctx context.Context) int {
 	var err error
 	var exitCode int
 
@@ -214,9 +208,11 @@ func RunTests() int {
 	exitCode, err = runGinkgoTests()
 	if err != nil {
 		log.Printf("OSDE2E failed: %v", err)
+		if viper.GetBool(config.LLM.EnableAnalysis) {
+			runLLMAnalysis(ctx, err)
+		}
 	}
 
-	go runLLMAnalysis()
 	return exitCode
 }
 

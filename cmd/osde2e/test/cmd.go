@@ -173,6 +173,6 @@ func run(cmd *cobra.Command, argv []string) {
 		log.Println("Canary job won!")
 	}
 
-	exitCode := e2e.RunTests()
+	exitCode := e2e.RunTests(cmd.Context())
 	os.Exit(exitCode)
 }
