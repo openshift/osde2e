@@ -3,11 +3,20 @@ package analysisengine
 import (
 	"context"
 	"fmt"
+	"os"
+	"path/filepath"
+	"time"
 
 	"github.com/openshift/osde2e/internal/aggregator"
 	"github.com/openshift/osde2e/internal/llm"
 	"github.com/openshift/osde2e/internal/llm/tools"
 	"github.com/openshift/osde2e/internal/prompts"
+	"gopkg.in/yaml.v3"
+)
+
+const (
+	AnalysisDirName = "llm-analysis"
+	SummaryFileName = "summary.yaml"
 )
 
 // ClusterInfo holds cluster-specific information for analysis
@@ -113,14 +122,20 @@ func (e *Engine) Run(ctx context.Context) (*Result, error) {
 		return nil, fmt.Errorf("LLM analysis failed: %w", err)
 	}
 
-	return &Result{
+	analysisResult := &Result{
 		Status:  "completed",
 		Content: result.Content,
+		Prompt:  userPrompt,
 		Metadata: map[string]any{
-			"prompt":             userPrompt,
 			"artifacts_examined": len(data.LogArtifacts),
 		},
-	}, nil
+	}
+
+	if err := analysisResult.WriteSummary(e.config.ArtifactsDir, e.config.ClusterInfo, e.config.FailureContext); err != nil {
+		return nil, fmt.Errorf("failed to write analysis files: %w", err)
+	}
+
+	return analysisResult, nil
 }
 
 // Result represents the analysis output
@@ -129,4 +144,42 @@ type Result struct {
 	Content  string         `json:"content"`
 	Metadata map[string]any `json:"metadata,omitempty"`
 	Error    string         `json:"error,omitempty"`
+	Prompt   string         `json:"prompt,omitempty"`
+}
+
+// WriteSummary writes the analysis result to a YAML summary file
+func (res *Result) WriteSummary(reportDir string, clusterInfo *ClusterInfo, failureContext string) error {
+	analysisDir := filepath.Join(reportDir, AnalysisDirName)
+	if err := os.MkdirAll(analysisDir, 0o755); err != nil {
+		return fmt.Errorf("failed to create analysis directory: %w", err)
+	}
+
+	artifactsCount := 0
+	if count, ok := res.Metadata["artifacts_examined"].(int); ok {
+		artifactsCount = count
+	}
+
+	summary := map[string]any{
+		"timestamp":          time.Now().Format(time.RFC3339),
+		"cluster_info":       clusterInfo,
+		"failure_context":    failureContext,
+		"artifacts_examined": artifactsCount,
+		"status":             res.Status,
+		"prompt":             res.Prompt,
+		"response":           res.Content,
+		"metadata":           res.Metadata,
+		"error":              res.Error,
+	}
+
+	yamlData, err := yaml.Marshal(summary)
+	if err != nil {
+		return fmt.Errorf("failed to marshal summary to YAML: %w", err)
+	}
+
+	summaryPath := filepath.Join(analysisDir, SummaryFileName)
+	if err := os.WriteFile(summaryPath, yamlData, 0o644); err != nil {
+		return fmt.Errorf("failed to write summary file: %w", err)
+	}
+
+	return nil
 }

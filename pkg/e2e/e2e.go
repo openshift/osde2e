@@ -69,17 +69,16 @@ func runLLMAnalysis(ctx context.Context, err error) {
 
 	engine, err := analysisengine.New(ctx, engineConfig)
 	if err != nil {
-		log.Printf("Failed to create LLM analysis engine: %v", err)
+		log.Printf("Unable to create analysis engine: %v", err)
 		return
 	}
 
-	result, err := engine.Run(ctx)
-	if err != nil {
-		log.Printf("LLM analysis failed: %v", err)
+	if _, runErr := engine.Run(ctx); runErr != nil {
+		log.Printf("LLM analysis failed: %v", runErr)
 		return
 	}
 
-	log.Printf("LLM analysis result:\n%s", result.Content)
+	log.Printf("LLM analysis completed successfully. Results written to %s/%s/", reportDir, analysisengine.AnalysisDirName)
 }
 
 // beforeSuite attempts to populate several required cluster fields (either by provisioning a new cluster, or re-using an existing one)
