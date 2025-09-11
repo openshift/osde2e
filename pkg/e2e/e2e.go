@@ -73,12 +73,14 @@ func runLLMAnalysis(ctx context.Context, err error) {
 		return
 	}
 
-	if _, runErr := engine.Run(ctx); runErr != nil {
+	result, runErr := engine.Run(ctx)
+	if runErr != nil {
 		log.Printf("LLM analysis failed: %v", runErr)
 		return
 	}
 
 	log.Printf("LLM analysis completed successfully. Results written to %s/%s/", reportDir, analysisengine.AnalysisDirName)
+	log.Printf("=== LLM Analysis Result ===\n%s", result.Content)
 }
 
 // beforeSuite attempts to populate several required cluster fields (either by provisioning a new cluster, or re-using an existing one)
