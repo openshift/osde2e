@@ -17,7 +17,7 @@ func (t *readArtifactsTool) name() string {
 }
 
 func (t *readArtifactsTool) description() string {
-	return "Reads and returns specific artifacts from the current osde2e test run. Supports reading by artifact type: failed_tests, test_results, or read_file"
+	return "Reads and returns specific artifacts from the current osde2e test run. Supports reading by artifact type: failed_tests or read_file"
 }
 
 func (t *readArtifactsTool) schema() *genai.Schema {
@@ -26,8 +26,8 @@ func (t *readArtifactsTool) schema() *genai.Schema {
 		Properties: map[string]*genai.Schema{
 			"artifact_type": {
 				Type:        genai.TypeString,
-				Description: "The type of artifacts to return. Options: failed_tests, test_results, read_file",
-				Enum:        []string{"failed_tests", "test_results", "read_file"},
+				Description: "The type of artifacts to return. Options: failed_tests, read_file",
+				Enum:        []string{"failed_tests", "read_file"},
 			},
 			"file_path": {
 				Type:        genai.TypeString,
@@ -75,12 +75,10 @@ func (t *readArtifactsTool) execute(ctx context.Context, params map[string]any) 
 	// Handle standard artifact types
 	var result any
 	switch artifactType {
-	case "test_results":
-		result = data.TestResults
 	case "failed_tests":
 		result = data.FailedTests
 	default:
-		return nil, fmt.Errorf("unsupported artifact type: %s. Supported types are: failed_tests, test_results, read_file", artifactType)
+		return nil, fmt.Errorf("unsupported artifact type: %s. Supported types are: failed_tests, read_file", artifactType)
 	}
 
 	// Convert to JSON for clean serialization

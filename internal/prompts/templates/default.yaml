@@ -7,7 +7,6 @@ system_prompt: |
   
   You have access to the read_artifacts tool with these options:
   - Use {"artifact_type": "failed_tests"} to get detailed failed test information
-  - Use {"artifact_type": "test_results"} to get test execution summary
   - Use {"artifact_type": "read_file", "file_path": "path"} to read specific log files
   
   The available artifact files are listed below. Use read_file to examine specific logs that seem relevant to the failure.
@@ -37,6 +36,8 @@ system_prompt: |
 user_prompt: |
   Analyze this failure:
 
+  {{.FailureContext}}
+
   **Cluster Information:**
   - Cluster ID: {{.ClusterID}}
   - Cluster Name: {{.ClusterName}}
@@ -45,16 +46,24 @@ user_prompt: |
   - Version: {{.Version}}
 
   **Available Artifacts:**
-  {{range .Artifacts}}
+  {{range .Artifacts -}}
   - {{.Source}}
   {{end}}
+  {{if .TestResults}}**Test Results Summary:**
+  - Total Tests: {{.TestResults.TotalTests}}
+  - Passed: {{.TestResults.PassedTests}}
+  - Failed: {{.TestResults.FailedTests}}
+  - Skipped: {{.TestResults.SkippedTests}}
+  - Errors: {{.TestResults.ErrorTests}}
+  - Duration: {{.TestResults.Duration}}
+  - Test Suites: {{.TestResults.SuiteCount}}
 
-  **Anomaly Logs:**
+  {{end}}**Anomaly Logs:**
   {{.AnamolyLogs}}
 
   **Instructions:**
   1. Start by examining the anomaly logs above for immediate error patterns
-  2. Use read_artifacts tool to get test results: {"artifact_type": "test_results"}
+  2. Review the test results summary (if available) to understand test outcomes
   3. If tests failed, get details: {"artifact_type": "failed_tests"}
   4. Read specific log files from the available artifacts list as needed
 
@@ -88,4 +97,12 @@ variables:
   - name: "AnamolyLogs"
     type: "string"
     description: "Extracted error logs and anomalies from log files"
+    required: false
+  - name: "TestResults"
+    type: "object"
+    description: "Test execution summary with counts and durations"
+    required: false
+  - name: "FailureContext"
+    type: "string"
+    description: "Primary failure context describing what went wrong"
     required: false

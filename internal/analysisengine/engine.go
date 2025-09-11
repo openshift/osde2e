@@ -11,9 +11,18 @@ import (
 	"github.com/openshift/osde2e/internal/prompts"
 )
 
+// ClusterInfo holds cluster-specific information for analysis
+type ClusterInfo struct {
+	ID            string
+	Name          string
+	Provider      string
+	Region        string
+	CloudProvider string
+	Version       string
+}
+
 // Config holds configuration for the analysis engine
 type Config struct {
-	AnalysisType   string
 	ArtifactsDir   string
 	PromptTemplate string
 	OutputFormat   string
@@ -25,6 +34,8 @@ type Config struct {
 	LogLevel       string
 	DryRun         bool
 	Verbose        bool
+	FailureContext string
+	ClusterInfo    *ClusterInfo
 }
 
 // Engine represents the analysis engine
@@ -73,14 +84,23 @@ func (e *Engine) Run(ctx context.Context) (*Result, error) {
 
 	tools.SetCollectedData(data)
 
-	// Prepare prompt
-	promptTemplate := e.getPromptTemplate()
+	// Prepare prompt variables
 	vars := make(map[string]any)
-	vars["AnalysisType"] = e.config.AnalysisType
 	vars["Artifacts"] = data.LogArtifacts
 	vars["AnamolyLogs"] = data.AnamolyLogs
+	vars["TestResults"] = data.TestResults
+	vars["FailureContext"] = e.config.FailureContext
 
-	userPrompt, llmConfig, err := e.promptStore.RenderPrompt(promptTemplate, vars)
+	// Add cluster information if available
+	if e.config.ClusterInfo != nil {
+		vars["ClusterID"] = e.config.ClusterInfo.ID
+		vars["ClusterName"] = e.config.ClusterInfo.Name
+		vars["Provider"] = e.config.ClusterInfo.Provider
+		vars["Region"] = e.config.ClusterInfo.Region
+		vars["Version"] = e.config.ClusterInfo.Version
+	}
+
+	userPrompt, llmConfig, err := e.promptStore.RenderPrompt(e.config.PromptTemplate, vars)
 	if err != nil {
 		return nil, fmt.Errorf("prompt preparation failed: %w", err)
 	}
@@ -103,40 +123,17 @@ func (e *Engine) Run(ctx context.Context) (*Result, error) {
 	return &Result{
 		Status:  "completed",
 		Content: result.Content,
-		Metadata: map[string]interface{}{
-			"analysis_type":      e.config.AnalysisType,
-			"prompt_template":    promptTemplate,
+		Metadata: map[string]any{
+			"prompt":             userPrompt,
 			"artifacts_examined": len(data.LogArtifacts),
 		},
 	}, nil
 }
 
-func (e *Engine) getPromptTemplate() string {
-	if e.config.PromptTemplate != "" {
-		return e.config.PromptTemplate
-	}
-
-	// TODO: Simplify this
-	switch e.config.AnalysisType {
-	case "provisioning":
-		return "provisioning-default"
-	case "infrastructure":
-		return "infrastructure-default"
-	case "test":
-		return "test-default"
-	case "cleanup":
-		return "cleanup-default"
-	case "upgrade":
-		return "upgrade-default"
-	default:
-		return "test-default" // Default for most failures
-	}
-}
-
 // Result represents the analysis output
 type Result struct {
-	Status   string                 `json:"status"`
-	Content  string                 `json:"content"`
-	Metadata map[string]interface{} `json:"metadata,omitempty"`
-	Error    string                 `json:"error,omitempty"`
+	Status   string         `json:"status"`
+	Content  string         `json:"content"`
+	Metadata map[string]any `json:"metadata,omitempty"`
+	Error    string         `json:"error,omitempty"`
 }

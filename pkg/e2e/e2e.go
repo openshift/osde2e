@@ -45,24 +45,18 @@ func runLLMAnalysis(ctx context.Context, err error) {
 		return
 	}
 
-	// Determine analysis type based on current phase
-	analysisType := "test" // Default
-	if currentPhase := viper.GetString(config.Phase); currentPhase != "" {
-		switch currentPhase {
-		case phase.InstallPhase:
-			analysisType = "provisioning"
-		case phase.UpgradePhase:
-			analysisType = "upgrade"
-		default:
-			analysisType = "test"
-		}
+	// Collect cluster information
+	clusterInfo := &analysisengine.ClusterInfo{
+		ID:            viper.GetString(config.Cluster.ID),
+		Name:          viper.GetString(config.Cluster.Name),
+		Provider:      viper.GetString(config.Provider),
+		Region:        viper.GetString(config.CloudProvider.Region),
+		CloudProvider: viper.GetString(config.CloudProvider.CloudProviderID),
+		Version:       viper.GetString(config.Cluster.Version),
 	}
-
-	log.Printf("Starting LLM analysis for %s failure", analysisType)
 
 	// Create engine configuration
 	engineConfig := &analysisengine.Config{
-		AnalysisType:   analysisType,
 		ArtifactsDir:   reportDir,
 		PromptTemplate: "default",
 		OutputFormat:   "json",
@@ -72,6 +66,8 @@ func runLLMAnalysis(ctx context.Context, err error) {
 		LogLevel:       "info",
 		DryRun:         false,
 		Verbose:        true,
+		FailureContext: err.Error(),
+		ClusterInfo:    clusterInfo,
 	}
 
 	// Create engine and run analysis
