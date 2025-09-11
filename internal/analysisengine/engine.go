@@ -75,10 +75,7 @@ func (e *Engine) Run(ctx context.Context) (*Result, error) {
 
 	// Prepare prompt
 	promptTemplate := e.getPromptTemplate()
-	vars := data.Metadata
-	if vars == nil {
-		vars = make(map[string]any)
-	}
+	vars := make(map[string]any)
 	vars["AnalysisType"] = e.config.AnalysisType
 	vars["Artifacts"] = data.LogArtifacts
 	vars["AnamolyLogs"] = data.AnamolyLogs

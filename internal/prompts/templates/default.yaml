@@ -6,7 +6,6 @@ system_prompt: |
   2. Provide 2-3 specific, actionable recommendations
   
   You have access to the read_artifacts tool with these options:
-  - Use {"artifact_type": "metadata"} to get cluster metadata
   - Use {"artifact_type": "failed_tests"} to get detailed failed test information
   - Use {"artifact_type": "test_results"} to get test execution summary
   - Use {"artifact_type": "read_file", "file_path": "path"} to read specific log files
@@ -58,7 +57,6 @@ user_prompt: |
   2. Use read_artifacts tool to get test results: {"artifact_type": "test_results"}
   3. If tests failed, get details: {"artifact_type": "failed_tests"}
   4. Read specific log files from the available artifacts list as needed
-  5. Get cluster metadata if relevant: {"artifact_type": "metadata"}
 
   Provide your analysis as JSON.
 
