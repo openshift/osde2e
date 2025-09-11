@@ -360,10 +360,6 @@ func deleteCluster(provider spi.Provider) error {
 	return nil
 }
 
-// ManyGroupedFailureName is the incident title assigned to incidents reperesenting a large
-// cluster of test failures.
-const ManyGroupedFailureName = "A lot of tests failed together"
-
 func cleanupAfterE2E(ctx context.Context, h *helper.H) (errors []error) {
 	clusterStatus := clusterproperties.StatusCompletedFailing
 	defer ginkgo.GinkgoRecover()
