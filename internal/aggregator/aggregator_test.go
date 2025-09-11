@@ -8,7 +8,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/go-logr/logr"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -21,10 +20,8 @@ func TestAggregator_Collect(t *testing.T) {
 	buildLog := "Test build log content"
 	require.NoError(t, os.WriteFile(filepath.Join(reportDir, "build-log.txt"), []byte(buildLog), 0o644))
 
-	logger := logr.Discard()
-	agg := New(logger)
-
 	ctx := context.Background()
+	agg := New(ctx)
 	data, err := agg.Collect(ctx, reportDir)
 
 	require.NoError(t, err)
@@ -43,10 +40,8 @@ func TestAggregator_Collect(t *testing.T) {
 }
 
 func TestAggregator_NonExistentDirectory(t *testing.T) {
-	logger := logr.Discard()
-	agg := New(logger)
-
 	ctx := context.Background()
+	agg := New(ctx)
 	_, err := agg.Collect(ctx, "/non/existent/path")
 
 	assert.Error(t, err)
@@ -69,10 +64,8 @@ func TestAggregator_CollectFromReportDir(t *testing.T) {
 
 	createTestFiles(t, reportDir, installDir, upgradeDir, mustGatherDir, clusterLogsDir)
 
-	logger := logr.Discard()
-	agg := New(logger)
-
 	ctx := context.Background()
+	agg := New(ctx)
 	data, err := agg.Collect(ctx, reportDir)
 
 	require.NoError(t, err)
@@ -95,10 +88,9 @@ func TestAggregator_CollectFromReportDir(t *testing.T) {
 func TestAggregator_EmptyDirectory(t *testing.T) {
 	tempDir := t.TempDir()
 
-	logger := logr.Discard()
-	agg := New(logger)
-
 	ctx := context.Background()
+	agg := New(ctx)
+
 	data, err := agg.Collect(ctx, tempDir)
 
 	require.NoError(t, err)
