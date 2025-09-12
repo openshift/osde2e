@@ -340,7 +340,7 @@ func (o *OCMProvider) ClaimClusterFromReserve(originalVersion string, cloudProvi
 		candidateCluster := listResponse.Items().Slice()[rand.Intn(listResponse.Total())]
 		spiCandidateCluster, err := o.ocmToSPICluster(candidateCluster)
 		if err != nil {
-			log.Printf("Error converting recycled cluster to an SPI Cluster: %s", err.Error())
+			log.Printf("Error converting reserved cluster to an SPI Cluster: %s", err.Error())
 			return ""
 		}
 
@@ -400,8 +400,8 @@ func (o *OCMProvider) ClaimClusterFromReserve(originalVersion string, cloudProvi
 		log.Printf("Cluster %s not ready, continuing... ", candidateCluster.ID())
 	}
 
-	// We couldn't resume the cluster. We'll log that we failed but continue the test with a new cluster
-	log.Println("Creating a new cluster instead")
+	// continue the test with a new cluster
+	log.Println("No reserved cluster available. Creating a new cluster instead")
 	return ""
 }
 

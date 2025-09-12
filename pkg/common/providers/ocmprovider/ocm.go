@@ -42,10 +42,6 @@ type OCMProvider struct {
 	versionGateLabel string
 }
 
-func init() {
-	spi.RegisterProvider("ocm", func() (spi.Provider, error) { return New() })
-}
-
 // OCMConnection returns a raw OCM connection.
 func OCMConnection(token, clientID, clientSecret, env string, debug bool) (*ocm.Connection, error) {
 	cacheKey := ocmConnectionKey{

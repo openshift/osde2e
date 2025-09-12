@@ -8,24 +8,20 @@ import (
 	"os"
 	"strings"
 
+	"github.com/go-logr/logr"
 	ocmclient "github.com/openshift/osde2e-common/pkg/clients/ocm"
 	rosaprovider "github.com/openshift/osde2e-common/pkg/openshift/rosa"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
 
 	"github.com/openshift/osde2e/pkg/common/providers/ocmprovider"
-	"github.com/openshift/osde2e/pkg/common/spi"
-	"k8s.io/klog/v2/textlogger"
 )
 
 var rosaProvider *rosaprovider.Provider
 
-func init() {
-	spi.RegisterProvider("rosa", func() (spi.Provider, error) { return New() })
-}
-
 // ROSAProvider will provision clusters via ROSA.
 type ROSAProvider struct {
+	logger           logr.Logger
 	ocmProvider      *ocmprovider.OCMProvider
 	provider         *rosaprovider.Provider
 	awsRegion        string
@@ -33,7 +29,9 @@ type ROSAProvider struct {
 }
 
 // New will create a new ROSAProvider.
-func New() (*ROSAProvider, error) {
+func New(ctx context.Context) (*ROSAProvider, error) {
+	logger := logr.FromContextOrDiscard(ctx)
+
 	fedramp := viper.GetBool(config.Cluster.FedRamp)
 	rosaEnv := viper.GetString(Env)
 	var ocmEnv ocmclient.Environment
@@ -76,7 +74,7 @@ func New() (*ROSAProvider, error) {
 				viper.GetString("ocm.clientID"),
 				viper.GetString("ocm.clientSecret"),
 				ocmEnv,
-				textlogger.NewLogger(textlogger.NewConfig()),
+				logger,
 			)
 			return err
 		})
@@ -94,6 +92,7 @@ func New() (*ROSAProvider, error) {
 	viper.Set(config.AWSRegion, rosaProvider.AWSRegion)
 
 	return &ROSAProvider{
+		logger:           logger,
 		ocmProvider:      ocmProvider,
 		awsRegion:        rosaProvider.AWSRegion,
 		versionGateLabel: versionGateLabel,

@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"log"
 	"os"
 	"path/filepath"
@@ -30,11 +29,6 @@ import (
 	"github.com/openshift/osde2e/pkg/common/util"
 	"github.com/openshift/osde2e/pkg/debug"
 	ctrlog "sigs.k8s.io/controller-runtime/pkg/log"
-)
-
-const (
-	// buildLog is the name of the build log file.
-	buildLog string = "test_output.log"
 )
 
 // provisioner is used to deploy and manage clusters.
@@ -164,8 +158,6 @@ func RunTests() int {
 // runGinkgoTests runs the osde2e test suite using Ginkgo.
 // nolint:gocyclo
 func runGinkgoTests() (int, error) {
-	var err error
-
 	gomega.RegisterFailHandler(ginkgo.Fail)
 	viper.Set(config.Cluster.Passing, false)
 	suiteConfig, reporterConfig := ginkgo.GinkgoConfiguration()
@@ -208,39 +200,6 @@ func runGinkgoTests() (int, error) {
 	// Suppress color output
 	// https://onsi.github.io/ginkgo/#other-settings
 	reporterConfig.NoColor = true
-
-	reportDir := viper.GetString(config.ReportDir)
-	sharedDir := viper.GetString(config.SharedDir)
-	runtimeDir := fmt.Sprintf("%s/osde2e-%s", os.TempDir(), util.RandomStr(10))
-
-	if reportDir == "" {
-		reportDir = runtimeDir
-		viper.Set(config.ReportDir, reportDir)
-	}
-
-	log.Printf("Writing files to report directory: %s", reportDir)
-	if err = os.MkdirAll(reportDir, os.ModePerm); err != nil {
-		log.Printf("Could not create report directory: %s, %v", reportDir, err)
-	}
-
-	if sharedDir != "" {
-		log.Printf("Writing shared files to directory: %s", sharedDir)
-		if err = os.MkdirAll(sharedDir, os.ModePerm); err != nil {
-			log.Printf("Could not create shared directory: %s, %v", sharedDir, err)
-		}
-	}
-
-	// Redirect stdout to where we want it to go
-	buildLogPath := filepath.Join(reportDir, buildLog)
-	buildLogWriter, err := os.Create(buildLogPath)
-	if err != nil {
-		return config.Failure, fmt.Errorf("unable to create build log in report directory: %v", err)
-	}
-
-	mw := io.MultiWriter(os.Stdout, buildLogWriter)
-	log.SetOutput(mw)
-
-	log.Printf("Outputting log to build log at %s", buildLogPath)
 
 	if viper.GetString(config.Suffix) == "" {
 		viper.Set(config.Suffix, util.RandomStr(5))
