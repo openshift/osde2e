@@ -90,6 +90,7 @@ func (e *Engine) Run(ctx context.Context) (*Result, error) {
 	vars["Artifacts"] = data.LogArtifacts
 	vars["AnamolyLogs"] = data.AnamolyLogs
 	vars["TestResults"] = data.TestResults
+	vars["FailedTests"] = data.FailedTests
 	vars["FailureContext"] = e.config.FailureContext
 
 	if e.config.ClusterInfo != nil {

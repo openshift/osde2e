@@ -47,9 +47,10 @@ user_prompt: |
 
   **Available Artifacts:**
   {{range .Artifacts -}}
-  - {{.Source}}{{if gt .LineCount 0}} ({{.LineCount}} lines){{end}}
+  - {{.Source}}{{if gt .LineCount 0}} ({{.LineCount}} lines){{- end}}
   {{end}}
-  {{if .TestResults}}**Test Results Summary:**
+  {{if .TestResults -}}
+  **Test Results Summary:**
   - Total Tests: {{.TestResults.TotalTests}}
   - Passed: {{.TestResults.PassedTests}}
   - Failed: {{.TestResults.FailedTests}}
@@ -58,7 +59,15 @@ user_prompt: |
   - Duration: {{.TestResults.Duration}}
   - Test Suites: {{.TestResults.SuiteCount}}
 
-  {{end}}**Anomaly Logs:**
+  {{if gt .TestResults.FailedTests 0 -}}
+  **Failed Tests:**
+  {{range .FailedTests -}}
+  - {{.Name}} ({{.ClassName}}){{if .SuiteName}} [{{.SuiteName}}]
+  {{- end}}
+  {{end -}}
+  {{end -}}
+  {{end}}
+  **Anomaly Logs:**
   {{.AnamolyLogs}}
 
   **Instructions:**
