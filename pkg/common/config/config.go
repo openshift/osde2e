@@ -593,6 +593,24 @@ var Cad = struct {
 	CADPagerDutyRoutingKey: "cad.pagerDutyRoutingKey",
 }
 
+var LLM = struct {
+	// EnableAnalysis enables LLM-powered failure analysis
+	// Env: ENABLE_LLM_ANALYSIS
+	EnableAnalysis string
+
+	// APIKey is the API key for the LLM service (e.g., Gemini)
+	// Env: GEMINI_API_KEY
+	APIKey string
+
+	// Model specifies which LLM model to use
+	// Env: LLM_MODEL
+	Model string
+}{
+	EnableAnalysis: "llm.enableAnalysis",
+	APIKey:         "llm.apiKey",
+	Model:          "llm.model",
+}
+
 func InitOSDe2eViper() {
 	// Here's where we bind environment variables to config options and set defaults
 
@@ -879,6 +897,16 @@ func InitOSDe2eViper() {
 	viper.SetDefault(Cad.CADPagerDutyRoutingKey, "notprovided")
 	_ = viper.BindEnv(Cad.CADPagerDutyRoutingKey, "CAD_PAGERDUTY_ROUTING_KEY")
 	RegisterSecret(Cad.CADPagerDutyRoutingKey, "pagerduty-routing-key")
+
+	// ----- LLM Configuration -----
+	viper.SetDefault(LLM.EnableAnalysis, false)
+	_ = viper.BindEnv(LLM.EnableAnalysis, "ENABLE_LLM_ANALYSIS")
+
+	_ = viper.BindEnv(LLM.APIKey, "GEMINI_API_KEY")
+	RegisterSecret(LLM.APIKey, "gemini-api-key")
+
+	viper.SetDefault(LLM.Model, "gemini-2.5-pro")
+	_ = viper.BindEnv(LLM.Model, "LLM_MODEL")
 }
 
 func init() {
