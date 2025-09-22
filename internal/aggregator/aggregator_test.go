@@ -6,7 +6,6 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -79,10 +78,8 @@ func TestAggregator_CollectFromReportDir(t *testing.T) {
 	failedTest := data.FailedTests[0]
 	assert.Equal(t, "TestOperatorInstallation", failedTest.Name)
 	assert.Equal(t, "operators.test", failedTest.ClassName)
-	assert.Contains(t, failedTest.ErrorMsg, "operator installation timed out")
 
 	assert.Greater(t, len(data.LogArtifacts), 0)
-	assert.WithinDuration(t, time.Now(), data.CollectionTime, time.Minute)
 }
 
 func TestAggregator_EmptyDirectory(t *testing.T) {

@@ -19,17 +19,10 @@ type Aggregator struct {
 }
 
 type AggregatedData struct {
-	Metadata         map[string]any    `json:"metadata"`
-	TestResults      TestResultSummary `json:"testResults"`
-	FailedTests      []FailedTest      `json:"failedTests"`
-	LogArtifacts     []LogEntry        `json:"logArtifacts"`
-	AnamolyLogs      string            `json:"anamolyLogs"`
-	CollectionTime   time.Time         `json:"collectionTime"`
-	CollectionErrors []string          `json:"collectionErrors,omitempty"`
-}
-
-func (a *AggregatedData) SetMetadata(metadata map[string]any) {
-	a.Metadata = metadata
+	TestResults  TestResultSummary `json:"testResults"`
+	FailedTests  []FailedTest      `json:"failedTests"`
+	LogArtifacts []LogEntry        `json:"logArtifacts"`
+	AnamolyLogs  string            `json:"anamolyLogs"`
 }
 
 type TestResultSummary struct {
@@ -43,14 +36,9 @@ type TestResultSummary struct {
 }
 
 type FailedTest struct {
-	Name       string        `json:"name"`
-	ClassName  string        `json:"className,omitempty"`
-	SuiteName  string        `json:"suiteName,omitempty"`
-	Duration   time.Duration `json:"duration"`
-	ErrorMsg   string        `json:"errorMessage,omitempty"`
-	StackTrace string        `json:"stackTrace,omitempty"`
-	SystemOut  string        `json:"systemOut,omitempty"`
-	SystemErr  string        `json:"systemErr,omitempty"`
+	Name      string `json:"name"`
+	ClassName string `json:"className,omitempty"`
+	SuiteName string `json:"suiteName,omitempty"`
 }
 
 type LogEntry struct {
@@ -71,9 +59,7 @@ func (a *Aggregator) Collect(ctx context.Context, reportDir string) (*Aggregated
 		return nil, fmt.Errorf("report directory does not exist: %s", reportDir)
 	}
 
-	data := &AggregatedData{
-		CollectionTime: time.Now(),
-	}
+	data := &AggregatedData{}
 
 	var collectionErrors []string
 
@@ -94,8 +80,6 @@ func (a *Aggregator) Collect(ctx context.Context, reportDir string) (*Aggregated
 		a.logger.Error(err, "failed to collect test results")
 		collectionErrors = append(collectionErrors, errMsg)
 	}
-
-	data.CollectionErrors = collectionErrors
 
 	a.logger.Info("completed artifact collection",
 		"failedTests", len(data.FailedTests),
@@ -193,21 +177,11 @@ func (a *Aggregator) collectTestResults(data *AggregatedData) error {
 }
 
 func (a *Aggregator) convertJUnitTest(test junit.Test, suiteName string) FailedTest {
-	failed := FailedTest{
+	return FailedTest{
 		Name:      test.Name,
 		ClassName: test.Classname,
 		SuiteName: suiteName,
-		Duration:  test.Duration,
-		SystemOut: test.SystemOut,
-		SystemErr: test.SystemErr,
 	}
-
-	if test.Error != nil {
-		failed.ErrorMsg = test.Error.Error()
-		failed.StackTrace = test.Error.Error()
-	}
-
-	return failed
 }
 
 func (a *Aggregator) collectLogArtifacts(reportDir string, data *AggregatedData) error {
