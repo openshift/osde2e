@@ -57,12 +57,7 @@ func runLLMAnalysis(ctx context.Context, err error) {
 	engineConfig := &analysisengine.Config{
 		ArtifactsDir:   reportDir,
 		PromptTemplate: "default",
-		OutputFormat:   "json",
 		APIKey:         viper.GetString(config.LLM.APIKey),
-		Model:          viper.GetString(config.LLM.Model),
-		LogLevel:       "info",
-		DryRun:         false,
-		Verbose:        true,
 		FailureContext: err.Error(),
 		ClusterInfo:    clusterInfo,
 	}

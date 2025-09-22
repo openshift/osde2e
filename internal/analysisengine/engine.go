@@ -33,13 +33,8 @@ type ClusterInfo struct {
 type Config struct {
 	ArtifactsDir   string
 	PromptTemplate string
-	OutputFormat   string
 	APIKey         string
-	Model          string
 	LLMConfig      *llm.AnalysisConfig
-	LogLevel       string
-	DryRun         bool
-	Verbose        bool
 	FailureContext string
 	ClusterInfo    *ClusterInfo
 }
