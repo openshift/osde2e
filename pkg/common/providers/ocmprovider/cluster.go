@@ -344,20 +344,13 @@ func (o *OCMProvider) ClaimClusterFromReserve(originalVersion string, cloudProvi
 			return ""
 		}
 
-		if candidateCluster.ExpirationTimestamp().Before(time.Now().Add(4 * time.Hour)) {
-			// Let's just expire this cluster immediately
-			err = o.AddProperty(spiCandidateCluster, clusterproperties.JobName, "expiring")
+		if candidateCluster.ExpirationTimestamp().Before(time.Now().Add(2 * time.Hour)) {
+			// extend expiration for sufficient time to allow for e2e tests to finish after claiming
+			err = o.Expire(spiCandidateCluster.ID(), 2*time.Hour)
 			if err != nil {
-				log.Printf("Error adding `expiring` to job name: %s", err.Error())
+				log.Printf("Error extending cluster %s: %s", spiCandidateCluster.ID(), err.Error())
 				return ""
 			}
-			err = o.Expire(spiCandidateCluster.ID(), 1*time.Minute)
-			if err != nil {
-				log.Printf("Error expiring cluster %s: %s", spiCandidateCluster.ID(), err.Error())
-				return ""
-			}
-			// Now try and grab a different existing cluster
-			return o.ClaimClusterFromReserve(originalVersion, cloudProvider, product)
 		}
 
 		err = o.AddProperty(spiCandidateCluster, clusterproperties.JobID, viper.GetString(config.JobID))
@@ -593,6 +586,14 @@ func (o *OCMProvider) GenerateProperties() (map[string]string, error) {
 
 	if jobID != "" {
 		properties[clusterproperties.JobID] = jobID
+	}
+
+	if viper.GetString(config.AWSAccountId) != "" {
+		properties[clusterproperties.AWSAccount] = viper.GetString(config.AWSAccountId)
+	}
+
+	if viper.GetString(config.Tests.AdHocTestImages) != "" {
+		properties[clusterproperties.AdHocTestImages] = viper.GetString(config.Tests.AdHocTestImages)
 	}
 
 	return properties, nil

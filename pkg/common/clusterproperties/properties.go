@@ -20,6 +20,12 @@ const (
 	// JobName is the name of job that is associated with the cluster.
 	JobName = "JobName"
 
+	// AWSAccount is the aws account associated with the cluster, if applicable.
+	AWSAccount = "AWSAccount"
+
+	// AdHocTestImages are the additional test images running on cluster
+	AdHocTestImages = "AdHocTestImages"
+
 	// JobID is the name of the job ID that is associated with the cluster.
 	JobID = "JobID"
 
