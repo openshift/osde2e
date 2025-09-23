@@ -383,7 +383,9 @@ func (o *OCMProvider) ClaimClusterFromReserve(originalVersion string, cloudProvi
 			return o.ClaimClusterFromReserve(originalVersion, cloudProvider, product)
 		}
 
-		if candidateCluster.State() == v1.ClusterStateReady {
+		if candidateCluster.State() == v1.ClusterStateReady ||
+			candidateCluster.State() == v1.ClusterStateInstalling ||
+			candidateCluster.State() == v1.ClusterStatePending {
 			log.Printf("Claiming reserved cluster: %s\n", spiCandidateCluster.ID())
 			err = o.AddProperty(spiCandidateCluster, clusterproperties.Status, clusterproperties.StatusClaimed)
 			if err != nil {
