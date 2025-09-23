@@ -1,0 +1,125 @@
+system_prompt: |
+  You are an expert OpenShift administrator analyzing cluster failures.
+
+  Your task is to:
+  1. Identify the root cause of the failure
+  2. Provide 2-3 specific, actionable recommendations
+  
+  You have access to the read_file tool for examining artifacts:
+  - Use read_file tool: {"path": "file_path"} to read entire files
+  - Use read_file with range: {"path": "file_path", "start": 10, "stop": 50} to read specific line ranges
+  
+  The available artifact files are listed below. Use read_file to examine specific logs that seem relevant to the failure.
+
+  Focus on common failure patterns:
+  - Resource exhaustion (quotas, limits, capacity)
+  - Authentication and permission issues
+  - Network connectivity problems
+  - Service unavailability
+  - Configuration errors
+  - Timeouts and timing issues
+  - DNS resolution failures
+  - Certificate validation issues
+  - Storage problems
+  - Node health issues
+  - Operator failures
+
+  Respond with valid JSON matching this schema:
+  {
+    "root_cause": "Specific description of what failed",
+    "recommendations": [
+      "Specific actionable recommendation 1",
+      "Specific actionable recommendation 2"
+    ]
+  }
+
+user_prompt: |
+  Analyze this failure:
+
+  {{.FailureContext}}
+
+  **Cluster Information:**
+  - Cluster ID: {{.ClusterID}}
+  - Cluster Name: {{.ClusterName}}
+  - Provider: {{.Provider}}
+  - Region: {{.Region}}
+  - Version: {{.Version}}
+
+  **Available Artifacts:**
+  {{range .Artifacts -}}
+  - {{.Source}}{{if gt .LineCount 0}} ({{.LineCount}} lines){{- end}}
+  {{end}}
+  {{if .TestResults -}}
+  **Test Results Summary:**
+  - Total Tests: {{.TestResults.TotalTests}}
+  - Passed: {{.TestResults.PassedTests}}
+  - Failed: {{.TestResults.FailedTests}}
+  - Skipped: {{.TestResults.SkippedTests}}
+  - Errors: {{.TestResults.ErrorTests}}
+  - Duration: {{.TestResults.Duration}}
+  - Test Suites: {{.TestResults.SuiteCount}}
+
+  {{if gt .TestResults.FailedTests 0 -}}
+  **Failed Tests:**
+  {{range .FailedTests -}}
+  - {{.Name}} ({{.ClassName}}){{if .SuiteName}} [{{.SuiteName}}]
+  {{- end}}
+  {{end -}}
+  {{end -}}
+  {{end}}
+  {{if .AnamolyLogs -}}
+  **Anomaly Logs:**
+  {{.AnamolyLogs}}
+
+  {{end -}}
+  **Instructions:**
+  {{if .AnamolyLogs -}}
+  1. Start by examining the anomaly logs above for immediate error patterns
+  2. Review the test results summary (if available) to understand test outcomes
+  3. Use read_file tool to examine specific log files from the available artifacts list
+  4. Use line ranges when reading large files to focus on relevant sections
+  {{- else -}}
+  1. Review the test results summary (if available) to understand test outcomes
+  2. Use read_file tool to examine specific log files from the available artifacts list
+  3. Use line ranges when reading large files to focus on relevant sections
+  {{- end}}
+
+  Provide your analysis as JSON.
+
+variables:
+  - name: "ClusterID"
+    type: "string"
+    description: "Unique cluster identifier"
+    required: true
+  - name: "ClusterName"
+    type: "string"
+    description: "Name of the cluster"
+    required: true
+  - name: "Provider"
+    type: "string"
+    description: "Cloud provider (aws, gcp, azure)"
+    required: true
+  - name: "Region"
+    type: "string"
+    description: "Cloud provider region"
+    required: true
+  - name: "Version"
+    type: "string"
+    description: "OpenShift version"
+    required: true
+  - name: "Artifacts"
+    type: "array"
+    description: "Array of available artifact file paths"
+    required: true
+  - name: "AnamolyLogs"
+    type: "string"
+    description: "Extracted error logs and anomalies from log files"
+    required: false
+  - name: "TestResults"
+    type: "object"
+    description: "Test execution summary with counts and durations"
+    required: false
+  - name: "FailureContext"
+    type: "string"
+    description: "Primary failure context describing what went wrong"
+    required: false
