@@ -356,12 +356,18 @@ func (o *OCMProvider) ClaimClusterFromReserve(originalVersion string, cloudProvi
 		err = o.AddProperty(spiCandidateCluster, clusterproperties.JobID, viper.GetString(config.JobID))
 		if err != nil {
 			log.Printf("Error adding property to cluster: %s", err.Error())
-			return ""
 		}
 		err = o.AddProperty(spiCandidateCluster, clusterproperties.JobName, viper.GetString(config.JobName))
 		if err != nil {
 			log.Printf("Error adding property to cluster: %s", err.Error())
-			return ""
+		}
+		err = o.AddProperty(spiCandidateCluster, clusterproperties.AdHocTestImages, viper.GetString(config.Tests.AdHocTestImages))
+		if err != nil {
+			log.Printf("Error adding AdHocTestImages to cluster property: %s", err.Error())
+		}
+		err = o.AddProperty(spiCandidateCluster, clusterproperties.AWSAccount, viper.GetString(config.AWSAccountId))
+		if err != nil {
+			log.Printf("Error adding AWSAccount to cluster property: %s", err.Error())
 		}
 
 		time.Sleep(5 * time.Second)
@@ -371,11 +377,6 @@ func (o *OCMProvider) ClaimClusterFromReserve(originalVersion string, cloudProvi
 			log.Printf("Error retrieving cluster during job ID check: %s", err.Error())
 			return ""
 		}
-		if jobID, ok := spiCandidateCluster.Properties()["JobID"]; ok && jobID != viper.GetString(config.JobID) {
-			log.Printf("Cluster already claimed by job %s", spiCandidateCluster.Properties()["JobID"])
-			return o.ClaimClusterFromReserve(originalVersion, cloudProvider, product)
-		}
-
 		if candidateCluster.State() == v1.ClusterStateReady ||
 			candidateCluster.State() == v1.ClusterStateInstalling ||
 			candidateCluster.State() == v1.ClusterStatePending {
