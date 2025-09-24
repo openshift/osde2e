@@ -335,9 +335,22 @@ func (o *OCMProvider) QueryReserve(originalVersion string, cloudProvider string,
 
 func (o *OCMProvider) ClaimClusterFromReserve(originalVersion string, cloudProvider string, product string) string {
 	listResponse, err := o.QueryReserve(originalVersion, cloudProvider, product)
+	var candidateCluster *v1.Cluster
 	if err == nil && listResponse.Total() > 0 {
-		log.Printf("We've found %d matching clusters to claim", listResponse.Total())
-		candidateCluster := listResponse.Items().Slice()[rand.Intn(listResponse.Total())]
+		for _, c := range listResponse.Items().Slice() {
+			if c.State() == v1.ClusterStateReady {
+				candidateCluster = c
+				break
+			} else if c.State() == v1.ClusterStateInstalling {
+				candidateCluster = c
+			}
+		}
+	}
+	if candidateCluster == nil {
+		// continue the test with a new cluster
+		log.Println("No reserved cluster available. Creating a new cluster instead")
+		return ""
+	} else {
 		spiCandidateCluster, err := o.ocmToSPICluster(candidateCluster)
 		if err != nil {
 			log.Printf("Error converting reserved cluster to an SPI Cluster: %s", err.Error())
@@ -353,14 +366,18 @@ func (o *OCMProvider) ClaimClusterFromReserve(originalVersion string, cloudProvi
 			}
 		}
 
-		err = o.AddProperty(spiCandidateCluster, clusterproperties.JobID, viper.GetString(config.JobID))
+		log.Printf("Claiming reserved cluster: %s\n", spiCandidateCluster.ID())
+		err = o.AddProperty(spiCandidateCluster, clusterproperties.Status, clusterproperties.StatusClaimed)
 		if err != nil {
-			log.Printf("Error adding property to cluster: %s", err.Error())
+			log.Printf("Error claiming cluster: %s", err.Error())
+			return ""
 		}
-		err = o.AddProperty(spiCandidateCluster, clusterproperties.JobName, viper.GetString(config.JobName))
-		if err != nil {
-			log.Printf("Error adding property to cluster: %s", err.Error())
+		viper.Set(config.Cluster.ClaimedFromReserve, true)
+		if candidateCluster.AWS().STS().RoleARN() != "" {
+			viper.Set("rosa.STS", true)
 		}
+
+		// add useful properties to track clusters
 		err = o.AddProperty(spiCandidateCluster, clusterproperties.AdHocTestImages, viper.GetString(config.Tests.AdHocTestImages))
 		if err != nil {
 			log.Printf("Error adding AdHocTestImages to cluster property: %s", err.Error())
@@ -370,35 +387,8 @@ func (o *OCMProvider) ClaimClusterFromReserve(originalVersion string, cloudProvi
 			log.Printf("Error adding AWSAccount to cluster property: %s", err.Error())
 		}
 
-		time.Sleep(5 * time.Second)
-
-		spiCandidateCluster, err = o.GetCluster(spiCandidateCluster.ID())
-		if err != nil {
-			log.Printf("Error retrieving cluster during job ID check: %s", err.Error())
-			return ""
-		}
-		if candidateCluster.State() == v1.ClusterStateReady ||
-			candidateCluster.State() == v1.ClusterStateInstalling ||
-			candidateCluster.State() == v1.ClusterStatePending {
-			log.Printf("Claiming reserved cluster: %s\n", spiCandidateCluster.ID())
-			err = o.AddProperty(spiCandidateCluster, clusterproperties.Status, clusterproperties.StatusClaimed)
-			if err != nil {
-				log.Printf("Error claiming cluster: %s", err.Error())
-				return ""
-			}
-			viper.Set(config.Cluster.ClaimedFromReserve, true)
-			if candidateCluster.AWS().STS().RoleARN() != "" {
-				viper.Set("rosa.STS", true)
-			}
-
-			return candidateCluster.ID()
-		}
-		log.Printf("Cluster %s not ready, continuing... ", candidateCluster.ID())
+		return candidateCluster.ID()
 	}
-
-	// continue the test with a new cluster
-	log.Println("No reserved cluster available. Creating a new cluster instead")
-	return ""
 }
 
 // DetermineRegion will return the region provided by configs. This mainly wraps the random functionality for use
