@@ -7,7 +7,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/openshift/osde2e-common/pkg/clients/ocm"
-	"github.com/openshift/osde2e/pkg/e2e/executor"
+	"github.com/openshift/osde2e/pkg/common/executor"
 	"k8s.io/klog/v2/textlogger"
 )
 

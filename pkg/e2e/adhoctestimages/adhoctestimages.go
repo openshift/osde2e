@@ -11,9 +11,9 @@ import (
 	"github.com/openshift/osde2e-common/pkg/clients/ocm"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
+	"github.com/openshift/osde2e/pkg/common/executor"
 	"github.com/openshift/osde2e/pkg/common/label"
 	"github.com/openshift/osde2e/pkg/common/providers/ocmprovider"
-	"github.com/openshift/osde2e/pkg/e2e/executor"
 	"k8s.io/client-go/tools/clientcmd"
 )
 

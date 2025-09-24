@@ -34,7 +34,7 @@ import (
 )
 
 const (
-	RESERVE_COUNT = 2
+	ReserveCount = 2
 	// errorWindow is the number of checks made to determine if a cluster has truly failed.
 	errorWindow = 20
 	// pendingPodThreshold is the maximum number of times a pod is allowed to be in pending state before erroring out in PollClusterHealth.
@@ -464,7 +464,7 @@ func ProvisionCluster(logger *log.Logger) (*spi.Cluster, error) {
 			return nil, fmt.Errorf("could not query reserve: %v", err)
 		}
 		logger.Printf("Reserve count: %d", listResponse.Total())
-		if listResponse.Total() >= RESERVE_COUNT {
+		if listResponse.Total() >= ReserveCount {
 			// Provision one cluster per job run. Job should be scheduled every so often to keep adding to reserve so that count is met.
 			return nil, ErrReserveFull
 		}
