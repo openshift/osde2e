@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"regexp"
@@ -147,6 +148,36 @@ func init() {
 	})
 }
 
+// collectActiveClusters collects active cluster names from multiple OCM environments
+func collectActiveClusters() (map[string]bool, error) {
+	// Create OCM provider map for different environments
+	envs := []string{"int", "stage", "prod"}
+	providers := make(map[string]spi.Provider)
+
+	for _, env := range envs {
+		provider, err := ocmprovider.NewWithEnv(env)
+		if err != nil {
+			return nil, fmt.Errorf("could not create provider for environment %s: %v", env, err)
+		}
+		providers[env] = provider
+	}
+
+	activeClusters := make(map[string]bool)
+	for env, provider := range providers {
+		clusters, err := provider.ListClusters("properties.MadeByOSDe2e='true'")
+		if err != nil {
+			return nil, fmt.Errorf("error listing clusters for environment %s: %v", env, err)
+		}
+
+		// Create a map with cluster names from active osde2e clusters
+		for _, cluster := range clusters {
+			activeClusters[cluster.Name()] = true
+			log.Printf("Found active cluster: %s (state: %s)\n", cluster.Name(), cluster.State())
+		}
+	}
+	return activeClusters, nil
+}
+
 //nolint:gocyclo
 func run(cmd *cobra.Command, argv []string) error {
 	var err error
@@ -178,22 +209,17 @@ func run(cmd *cobra.Command, argv []string) error {
 		}
 	}
 
+	// Collect active clusters once for all cleanup operations
+	activeClusters, err := collectActiveClusters()
+	if err != nil {
+		return fmt.Errorf("could not collect active clusters: %v", err)
+	}
+	log.Printf("Found %d active clusters for cleanup operations\n", len(activeClusters))
+
 	if args.vpc {
-		// Create OCM provider map for different environments
-		envs := []string{"int", "stage", "prod"}
-		providers := make(map[string]spi.Provider)
-
-		for _, env := range envs {
-			provider, err := ocmprovider.NewWithEnv(env)
-			if err != nil {
-				return fmt.Errorf("could not create provider for environment %s: %v", env, err)
-			}
-			providers[env] = provider
-		}
-
 		vpcDeletedCounter := 0
 		vpcFailedCounter := 0
-		err = aws.CcsAwsSession.CleanupVPCs(providers, args.dryRun, args.sendSummary, &vpcDeletedCounter, &vpcFailedCounter, &vpcErrorBuilder)
+		err = aws.CcsAwsSession.CleanupVPCs(activeClusters, args.dryRun, args.sendSummary, &vpcDeletedCounter, &vpcFailedCounter, &vpcErrorBuilder)
 		summaryBuilder.WriteString("VPCs: " + strconv.Itoa(vpcDeletedCounter) + "/" + strconv.Itoa(vpcFailedCounter) + "\n")
 		if err != nil {
 			return fmt.Errorf("could not cleanup vpc resources: %s", err.Error())
@@ -251,31 +277,24 @@ func run(cmd *cobra.Command, argv []string) error {
 	if args.iam {
 		oidcDeletedCounter := 0
 		oidcFailedCounter := 0
-		err = aws.CcsAwsSession.CleanupOpenIDConnectProviders(fmtDuration, args.dryRun, args.sendSummary, &oidcDeletedCounter, &oidcFailedCounter, &iamErrorBuilder)
+		err = aws.CcsAwsSession.CleanupOpenIDConnectProviders(activeClusters, args.dryRun, args.sendSummary, &oidcDeletedCounter, &oidcFailedCounter, &iamErrorBuilder)
 		summaryBuilder.WriteString("OIDC providers: " + strconv.Itoa(oidcDeletedCounter) + "/" + strconv.Itoa(oidcFailedCounter) + "\n")
 		if err != nil {
 			return fmt.Errorf("could not delete OIDC providers: %s", err.Error())
 		}
 		rolesDeletedCounter := 0
 		rolesFailedCounter := 0
-		err = aws.CcsAwsSession.CleanupRoles(fmtDuration, args.dryRun, args.sendSummary, &rolesDeletedCounter, &rolesFailedCounter, &iamErrorBuilder)
+		err = aws.CcsAwsSession.CleanupRoles(activeClusters, args.dryRun, args.sendSummary, &rolesDeletedCounter, &rolesFailedCounter, &iamErrorBuilder)
 		summaryBuilder.WriteString("Roles: " + strconv.Itoa(rolesDeletedCounter) + "/" + strconv.Itoa(rolesFailedCounter) + "\n")
 		if err != nil {
 			return fmt.Errorf("could not delete IAM roles: %s", err.Error())
-		}
-		policiesDeletedCounter := 0
-		policiesFailedCounter := 0
-		err = aws.CcsAwsSession.CleanupPolicies(fmtDuration, args.dryRun, args.sendSummary, &policiesDeletedCounter, &policiesFailedCounter, &iamErrorBuilder)
-		summaryBuilder.WriteString("Policies: " + strconv.Itoa(policiesDeletedCounter) + "/" + strconv.Itoa(policiesFailedCounter) + "\n")
-		if err != nil {
-			return fmt.Errorf("could not delete IAM policies: %s", err.Error())
 		}
 	}
 
 	if args.s3 {
 		s3BucketDeletedCounter := 0
 		s3BucketFailedCounter := 0
-		err = aws.CcsAwsSession.CleanupS3Buckets(fmtDuration, args.dryRun, args.sendSummary, &s3BucketDeletedCounter, &s3BucketFailedCounter, &s3ErrorBuilder)
+		err = aws.CcsAwsSession.CleanupS3Buckets(activeClusters, args.dryRun, args.sendSummary, &s3BucketDeletedCounter, &s3BucketFailedCounter, &s3ErrorBuilder)
 		summaryBuilder.WriteString("S3 Buckets: " + strconv.Itoa(s3BucketDeletedCounter) + "/" + strconv.Itoa(s3BucketFailedCounter) + "\n")
 		if err != nil {
 			return fmt.Errorf("could not delete s3 buckets: %s", err.Error())
@@ -283,7 +302,7 @@ func run(cmd *cobra.Command, argv []string) error {
 	}
 
 	if args.ec2 {
-		instancesDeleted, instancesFailedToDelete, err := aws.CcsAwsSession.TerminateEC2Instances(fmtDuration, args.dryRun)
+		instancesDeleted, instancesFailedToDelete, err := aws.CcsAwsSession.TerminateEC2Instances(activeClusters, args.dryRun)
 		summaryBuilder.WriteString("EC2 Instances: " + strconv.Itoa(instancesDeleted) + "/" + strconv.Itoa(instancesFailedToDelete) + "\n")
 		if err != nil {
 			if !errors.Is(err, aws.ErrTerminateEC2Instances) {

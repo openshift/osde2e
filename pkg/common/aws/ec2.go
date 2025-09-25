@@ -2,8 +2,9 @@ package aws
 
 import (
 	"fmt"
+	"log"
+	"regexp"
 	"strings"
-	"time"
 
 	"github.com/openshift/osde2e/pkg/common/config"
 
@@ -16,6 +17,23 @@ const (
 )
 
 var ErrTerminateEC2Instances = fmt.Errorf("unable to terminate EC2 instances")
+
+// isEC2InstanceFromActiveCluster checks if an EC2 instance belongs to an active cluster
+// Returns true if the instance should be skipped (belongs to active cluster), false if it can be cleaned up
+func isEC2InstanceFromActiveCluster(instanceName string, activeClusters map[string]bool) bool {
+	// Extract cluster name from instance name
+	// Example: "osde2e-i5u38-master-0" or "osde2e-i5u38-worker-1" -> "osde2e-i5u38"
+	re := regexp.MustCompile(`^(osde2e-[^-]+)-`)
+	matches := re.FindStringSubmatch(instanceName)
+	if len(matches) >= 2 {
+		clusterName := matches[1]
+		if activeClusters[clusterName] {
+			log.Printf("Skipping EC2 instance for active cluster %s: %s\n", clusterName, instanceName)
+			return true
+		}
+	}
+	return false
+}
 
 // Hypershift Test Helper Function:
 // This function is used to validate the worker nodes displayed by the cluster are the same as the worker nodes displayed by the AWS account.
@@ -87,9 +105,9 @@ func (CcsAwsSession *ccsAwsSession) ReleaseElasticIPs(dryrun bool, sendSummary b
 	return nil
 }
 
-// TerminateEC2Instances finds EC2 instances older than given duration, then terminates these EC2 instances.
-// Ignores EC2 instances with tag Name "osde2e-proxy*".
-func (CcsAwsSession *ccsAwsSession) TerminateEC2Instances(olderthan time.Duration, dryrun bool) (int, int, error) {
+// TerminateEC2Instances finds EC2 instances, then terminates these EC2 instances.
+// Ignores EC2 instances with tag Name "osde2e-proxy*" and instances belonging to active clusters.
+func (CcsAwsSession *ccsAwsSession) TerminateEC2Instances(activeClusters map[string]bool, dryrun bool) (int, int, error) {
 	err := CcsAwsSession.GetAWSSessions()
 	if err != nil {
 		return 0, 0, err
@@ -102,11 +120,8 @@ func (CcsAwsSession *ccsAwsSession) TerminateEC2Instances(olderthan time.Duratio
 	for _, reservation := range result.Reservations {
 		// Each reservation typically has only 1 instance
 		instance := reservation.Instances[0]
-		if time.Since(*instance.LaunchTime) < olderthan {
-			continue
-		}
 		for _, tag := range instance.Tags {
-			if *tag.Key != "Name" || strings.Contains(*tag.Value, tagKeyForExemptEC2Instances) {
+			if *tag.Key != "Name" || strings.Contains(*tag.Value, tagKeyForExemptEC2Instances) || isEC2InstanceFromActiveCluster(*tag.Value, activeClusters) {
 				continue
 			}
 			instanceIds = append(instanceIds, *instance.InstanceId)
