@@ -315,7 +315,7 @@ func (o *OCMProvider) QueryReserve(originalVersion string, cloudProvider string,
 		" and "+
 		"product.id='%s'"+
 		" and "+
-		"properties.Status like '%s%%'"+
+		"properties.Availability like '%s%%'"+
 		" and "+
 		"version.id like 'openshift-v%s%%'"+
 		" and "+
@@ -324,7 +324,7 @@ func (o *OCMProvider) QueryReserve(originalVersion string, cloudProvider string,
 		viper.GetString(config.CloudProvider.Region),
 		"true",
 		product,
-		clusterproperties.StatusReserved,
+		clusterproperties.Reserved,
 		version.String(),
 		"'ready','pending','installing'")
 
@@ -337,17 +337,12 @@ func (o *OCMProvider) ClaimClusterFromReserve(originalVersion string, cloudProvi
 	listResponse, err := o.QueryReserve(originalVersion, cloudProvider, product)
 	var candidateCluster *v1.Cluster
 	if err == nil && listResponse.Total() > 0 {
-
 		for _, c := range listResponse.Items().Slice() {
 			if c.State() == v1.ClusterStateReady {
 				candidateCluster = c
-			}
-		}
-		if candidateCluster == nil {
-			for _, c := range listResponse.Items().Slice() {
-				if c.State() == v1.ClusterStateInstalling {
-					candidateCluster = c
-				}
+				break
+			} else if c.State() == v1.ClusterStateInstalling {
+				candidateCluster = c
 			}
 		}
 	}
@@ -372,7 +367,7 @@ func (o *OCMProvider) ClaimClusterFromReserve(originalVersion string, cloudProvi
 		}
 
 		log.Printf("Claiming reserved cluster: %s\n", spiCandidateCluster.ID())
-		err = o.AddProperty(spiCandidateCluster, clusterproperties.Status, clusterproperties.StatusClaimed)
+		err = o.AddProperty(spiCandidateCluster, clusterproperties.Availability, clusterproperties.Claimed)
 		if err != nil {
 			log.Printf("Error claiming cluster: %s", err.Error())
 			return ""
@@ -394,7 +389,6 @@ func (o *OCMProvider) ClaimClusterFromReserve(originalVersion string, cloudProvi
 
 		return candidateCluster.ID()
 	}
-
 }
 
 // DetermineRegion will return the region provided by configs. This mainly wraps the random functionality for use
