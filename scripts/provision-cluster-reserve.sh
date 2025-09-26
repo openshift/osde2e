@@ -2,14 +2,10 @@
 
 set +e
 
-UNIQUE_ID=$(date +%s%N) # Generate a unique identifier for this instance
-CONTAINER_NAME="osde2e-${UNIQUE_ID}" # Name of the container based on the unique identifier
+CONTAINER_NAME="osde2e-run"
 
-# Check if the container already exists
-if docker ps -a --format '{{.Names}}' | grep -q "^${CONTAINER_NAME}$"; then
-    echo "Container ${CONTAINER_NAME} already exists. Exiting."
-    exit 1
-fi
+# ensure we have a clean environment
+docker rm "${CONTAINER_NAME}"
 
 # Create the container with environment variables and unique name
 docker create --name "${CONTAINER_NAME}" -e OCM_TOKEN \
@@ -29,5 +25,4 @@ docker start -a "${CONTAINER_NAME}"
 # Copy the junit results xml for publishing
 docker cp "${CONTAINER_NAME}":/tmp/osde2e-report .
 
-# Optionally, clean up by removing the container after use
-docker rm "${CONTAINER_NAME}"
+ 
