@@ -64,6 +64,7 @@ func (g *GeminiClient) Analyze(ctx context.Context, userPrompt string, config *A
 
 func (g *GeminiClient) handleConversationWithTools(ctx context.Context, contents []*genai.Content, genConfig *genai.GenerateContentConfig, toolRegistry *tools.Registry) (*AnalysisResult, error) {
 	const maxIterations = 5
+	var toolCalls []*genai.FunctionCall
 
 	for i := range maxIterations {
 		resp, err := g.client.Models.GenerateContent(ctx, g.model, contents, genConfig)
@@ -78,9 +79,15 @@ func (g *GeminiClient) handleConversationWithTools(ctx context.Context, contents
 
 		textContent, functionCalls := g.processCandidateParts(candidate)
 
+		// Track function calls from this iteration
+		toolCalls = append(toolCalls, functionCalls...)
+
 		// If no function calls, we're done
 		if len(functionCalls) == 0 {
-			return &AnalysisResult{Content: textContent}, nil
+			return &AnalysisResult{
+				Content:   textContent,
+				ToolCalls: toolCalls,
+			}, nil
 		}
 
 		// Process function calls and continue conversation
@@ -91,11 +98,14 @@ func (g *GeminiClient) handleConversationWithTools(ctx context.Context, contents
 
 		// Return partial result if we hit max iterations
 		if i == maxIterations-1 {
-			return &AnalysisResult{Content: textContent}, nil
+			return &AnalysisResult{
+				Content:   textContent,
+				ToolCalls: toolCalls,
+			}, nil
 		}
 	}
 
-	return nil, fmt.Errorf("max iterations reached without final response")
+	return &AnalysisResult{ToolCalls: toolCalls}, fmt.Errorf("max iterations reached without final response")
 }
 
 func (g *GeminiClient) extractCandidate(resp *genai.GenerateContentResponse) (*genai.Candidate, error) {
