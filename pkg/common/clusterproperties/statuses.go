@@ -45,10 +45,4 @@ const (
 
 	// StatusResuming represents the cluster having just been woken up
 	StatusResuming = "resuming"
-
-	// StatusReserved represents the cluster being ready to be claimed up by test job
-	StatusReserved = "reserved"
-
-	// StatusClaimed represents the cluster claimed up by test job
-	StatusClaimed = "claimed"
 )

@@ -31,4 +31,16 @@ const (
 
 	// ProvisionShardID is the shard ID that is set to provision a shard for the cluster.
 	ProvisionShardID = "provision_shard_id"
+
+	// Availability is the availability for reserved/claimed/used clusters
+	Availability = "Availability"
+
+	// Reserved represents availability of a cluster ready to be claimed up by test job
+	Reserved = "reserved"
+
+	// Claimed represents the availability of a cluster claimed up by test job
+	Claimed = "claimed"
+
+	// Used represents the availability when a test job is finished on a cluster
+	Used = "used"
 )
