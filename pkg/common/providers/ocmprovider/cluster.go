@@ -541,10 +541,9 @@ func (o *OCMProvider) GenerateProperties() (map[string]string, error) {
 
 	installedversion := viper.GetString(config.Cluster.Version)
 
-	provisionshardID := viper.GetString(config.Cluster.ProvisionShardID)
-	status := clusterproperties.StatusProvisioning
+	availability := ""
 	if viper.GetBool(config.Cluster.Reserve) {
-		status = clusterproperties.StatusReserved
+		availability = clusterproperties.Reserved
 	}
 
 	properties := map[string]string{
@@ -554,11 +553,11 @@ func (o *OCMProvider) GenerateProperties() (map[string]string, error) {
 		clusterproperties.OwnedBy:          username,
 		clusterproperties.InstalledVersion: installedversion,
 		clusterproperties.UpgradeVersion:   "--",
-		clusterproperties.Status:           status,
-	}
-
-	if provisionshardID != "" {
-		properties[clusterproperties.ProvisionShardID] = provisionshardID
+		clusterproperties.Status:           clusterproperties.StatusProvisioning,
+		clusterproperties.Availability:     availability,
+		clusterproperties.AWSAccount:       viper.GetString(config.AWSAccountId),
+		clusterproperties.AdHocTestImages:  viper.GetString(config.Tests.AdHocTestImages),
+		clusterproperties.ProvisionShardID: viper.GetString(config.Cluster.ProvisionShardID),
 	}
 
 	additionalLabels := viper.GetString(AdditionalLabels)
@@ -567,26 +566,6 @@ func (o *OCMProvider) GenerateProperties() (map[string]string, error) {
 			properties[label] = "true"
 		}
 	}
-
-	jobName := viper.GetString(config.JobName)
-	jobID := viper.GetString(config.JobID)
-
-	if jobName != "" {
-		properties[clusterproperties.JobName] = jobName
-	}
-
-	if jobID != "" {
-		properties[clusterproperties.JobID] = jobID
-	}
-
-	if viper.GetString(config.AWSAccountId) != "" {
-		properties[clusterproperties.AWSAccount] = viper.GetString(config.AWSAccountId)
-	}
-
-	if viper.GetString(config.Tests.AdHocTestImages) != "" {
-		properties[clusterproperties.AdHocTestImages] = viper.GetString(config.Tests.AdHocTestImages)
-	}
-
 	return properties, nil
 }
 
