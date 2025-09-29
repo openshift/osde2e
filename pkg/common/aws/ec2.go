@@ -125,6 +125,7 @@ func (CcsAwsSession *ccsAwsSession) TerminateEC2Instances(activeClusters map[str
 				continue
 			}
 			instanceIds = append(instanceIds, *instance.InstanceId)
+			fmt.Printf("Instance %s will be deleted\n", *instance.InstanceId)
 			break
 		}
 	}
@@ -145,6 +146,7 @@ func (CcsAwsSession *ccsAwsSession) TerminateEC2Instances(activeClusters map[str
 				instancesFailedToDelete++
 			} else {
 				instancesDeleted++
+				fmt.Printf("Instance %s deleted\n", instanceId)
 			}
 		}
 	}
