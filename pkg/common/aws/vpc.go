@@ -6,15 +6,13 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/openshift/osde2e/pkg/common/spi"
-
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/cloudformation"
 	"github.com/aws/aws-sdk-go/service/ec2"
 )
 
 // deletes VPCs that are not associated with any active osde2e cluster
-func (CcsAwsSession *ccsAwsSession) CleanupVPCs(providers map[string]spi.Provider, dryrun bool, sendSummary bool,
+func (CcsAwsSession *ccsAwsSession) CleanupVPCs(activeClusters map[string]bool, dryrun bool, sendSummary bool,
 	deletedCounter *int, failedCounter *int, errorBuilder *strings.Builder,
 ) error {
 	err := CcsAwsSession.GetAWSSessions()
@@ -63,25 +61,12 @@ func (CcsAwsSession *ccsAwsSession) CleanupVPCs(providers map[string]spi.Provide
 		vpcStacks = append(vpcStacks, getClusterNameFromVPCName(vpcName))
 	}
 
+	// Create a map with VPC stack names (cluster-name + "-vpc") from active osde2e clusters
 	activeVpcStacks := make(map[string]bool)
-	for env, provider := range providers {
-		if provider == nil {
-			log.Printf("Warning: Provider for environment %s is nil, skipping\n", env)
-			continue
-		}
-
-		clusters, err := provider.ListClusters("properties.MadeByOSDe2e='true'")
-		if err != nil {
-			log.Printf("Error listing clusters for environment %s: %v\n", env, err)
-			continue
-		}
-
-		// Create a map with VPC stack name(cluster-name + "-vpc") from active osde2e clusters
-		for _, cluster := range clusters {
-			vpcStackName := cluster.Name() + "-vpc"
-			activeVpcStacks[vpcStackName] = true
-			log.Printf("Cluster %s expects VPC stack: %s (state: %s)\n", cluster.Name(), vpcStackName, cluster.State())
-		}
+	for clusterName := range activeClusters {
+		vpcStackName := clusterName + "-vpc"
+		activeVpcStacks[vpcStackName] = true
+		log.Printf("Cluster %s expects VPC stack: %s\n", clusterName, vpcStackName)
 	}
 
 	// Create CloudFormation client early to check stack existence

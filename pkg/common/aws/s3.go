@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"log"
 	"net/url"
+	"regexp"
 	"strings"
-	"time"
 
 	"github.com/openshift/osde2e/pkg/common/config"
 
@@ -20,6 +20,23 @@ const (
 	velerosubstr = "managed-velero"
 	logsBucket   = "osde2e-logs"
 )
+
+// isS3BucketFromActiveCluster checks if an S3 bucket belongs to an active cluster
+// Returns true if the bucket should be skipped (belongs to active cluster), false if it can be cleaned up
+func isS3BucketFromActiveCluster(bucketName string, activeClusters map[string]bool) bool {
+	// Extract cluster name from bucket name
+	// Example: "osde2e-i5u38-image-registry-us-west-2-abcdef" -> "osde2e-i5u38"
+	re := regexp.MustCompile(`^(osde2e-[^-]+)-`)
+	matches := re.FindStringSubmatch(bucketName)
+	if len(matches) >= 2 {
+		clusterName := matches[1]
+		if activeClusters[clusterName] {
+			log.Printf("Skipping S3 bucket for active cluster %s: %s\n", clusterName, bucketName)
+			return true
+		}
+	}
+	return false
+}
 
 // ReadFromS3Session reads a key from S3 using given AWS context.
 func ReadFromS3Session(session *session.Session, inputKey string) ([]byte, error) {
@@ -92,8 +109,9 @@ func ParseS3URL(s3URL string) (string, string, error) {
 }
 
 // CleanupS3Buckets finds buckets with substring "osde2e-" or "managed-velero",
-// older than given duration, then deletes bucket objects and then buckets
-func (CcsAwsSession *ccsAwsSession) CleanupS3Buckets(olderthan time.Duration, dryrun bool, sendSummary bool,
+// then deletes bucket objects and then buckets
+// Ignores buckets belonging to active clusters.
+func (CcsAwsSession *ccsAwsSession) CleanupS3Buckets(activeClusters map[string]bool, dryrun bool, sendSummary bool,
 	deletedCounter *int, failedCounter *int, errorBuilder *strings.Builder,
 ) error {
 	err := CcsAwsSession.GetAWSSessions()
@@ -109,7 +127,7 @@ func (CcsAwsSession *ccsAwsSession) CleanupS3Buckets(olderthan time.Duration, dr
 	batchDeleteClient := s3manager.NewBatchDeleteWithClient(CcsAwsSession.s3)
 
 	for _, bucket := range result.Buckets {
-		if (strings.Contains(*bucket.Name, rolesubstr) || strings.Contains(*bucket.Name, velerosubstr)) && *bucket.Name != logsBucket && time.Since(*bucket.CreationDate) > olderthan {
+		if (strings.Contains(*bucket.Name, rolesubstr) || strings.Contains(*bucket.Name, velerosubstr)) && !isS3BucketFromActiveCluster(*bucket.Name, activeClusters) && *bucket.Name != logsBucket {
 			fmt.Printf("Bucket will be deleted: %s\n", bucket)
 			if !dryrun {
 				iter := s3manager.NewDeleteListIterator(CcsAwsSession.s3, &s3.ListObjectsInput{

@@ -2,6 +2,7 @@ package cluster
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"math/rand"
@@ -33,7 +34,7 @@ import (
 )
 
 const (
-	RESERVE_COUNT = 2
+	ReserveCount = 5
 	// errorWindow is the number of checks made to determine if a cluster has truly failed.
 	errorWindow = 20
 	// pendingPodThreshold is the maximum number of times a pod is allowed to be in pending state before erroring out in PollClusterHealth.
@@ -42,6 +43,9 @@ const (
 
 // podErrorTracker is the data structure that keeps track of pending state counters for each pod against their pod UIDs.
 var podErrorTracker healthchecks.PodErrorTracker
+
+// ErrReserveFull is returned for early exit from provisioner
+var ErrReserveFull = errors.New("reserve full")
 
 // GetClusterVersion will get the current cluster version for the cluster.
 func GetClusterVersion(provider spi.Provider, clusterID string) (*semver.Version, error) {
@@ -460,10 +464,9 @@ func ProvisionCluster(logger *log.Logger) (*spi.Cluster, error) {
 			return nil, fmt.Errorf("could not query reserve: %v", err)
 		}
 		logger.Printf("Reserve count: %d", listResponse.Total())
-		if listResponse.Total() >= RESERVE_COUNT {
+		if listResponse.Total() >= ReserveCount {
 			// Provision one cluster per job run. Job should be scheduled every so often to keep adding to reserve so that count is met.
-			logger.Printf("Reserve full")
-			return nil, nil
+			return nil, ErrReserveFull
 		}
 	}
 
@@ -560,9 +563,12 @@ func Provision(provider spi.Provider) (*spi.Cluster, error) {
 	if status != config.Success {
 		return nil, fmt.Errorf("failed configure cluster version: %v", err)
 	}
-
 	cluster, err := ProvisionCluster(nil)
 	if err != nil {
+		if errors.Is(err, ErrReserveFull) {
+			log.Printf("Reserve full, exiting without provisioning")
+			return nil, nil
+		}
 		return nil, fmt.Errorf("failed to set up or retrieve cluster: %v", err)
 	}
 

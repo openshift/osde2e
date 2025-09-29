@@ -16,6 +16,7 @@ import (
 	"github.com/onsi/ginkgo/v2/reporters"
 	"github.com/onsi/ginkgo/v2/types"
 	"github.com/onsi/gomega"
+	"github.com/openshift/osde2e/internal/analysisengine"
 	clusterutil "github.com/openshift/osde2e/pkg/common/cluster"
 	"github.com/openshift/osde2e/pkg/common/clusterproperties"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
@@ -33,6 +34,49 @@ import (
 
 // provisioner is used to deploy and manage clusters.
 var provider spi.Provider
+
+// runLLMAnalysis performs LLM-powered failure analysis if enabled
+func runLLMAnalysis(ctx context.Context, err error) {
+	log.Println("Running LLM analysis")
+
+	reportDir := viper.GetString(config.ReportDir)
+	if reportDir == "" {
+		log.Println("No report directory available for LLM analysis")
+		return
+	}
+
+	clusterInfo := &analysisengine.ClusterInfo{
+		ID:            viper.GetString(config.Cluster.ID),
+		Name:          viper.GetString(config.Cluster.Name),
+		Provider:      viper.GetString(config.Provider),
+		Region:        viper.GetString(config.CloudProvider.Region),
+		CloudProvider: viper.GetString(config.CloudProvider.CloudProviderID),
+		Version:       viper.GetString(config.Cluster.Version),
+	}
+
+	engineConfig := &analysisengine.Config{
+		ArtifactsDir:   reportDir,
+		PromptTemplate: "default",
+		APIKey:         viper.GetString(config.LLM.APIKey),
+		FailureContext: err.Error(),
+		ClusterInfo:    clusterInfo,
+	}
+
+	engine, err := analysisengine.New(ctx, engineConfig)
+	if err != nil {
+		log.Printf("Unable to create analysis engine: %v", err)
+		return
+	}
+
+	result, runErr := engine.Run(ctx)
+	if runErr != nil {
+		log.Printf("LLM analysis failed: %v", runErr)
+		return
+	}
+
+	log.Printf("LLM analysis completed successfully. Results written to %s/%s/", reportDir, analysisengine.AnalysisDirName)
+	log.Printf("=== LLM Analysis Result ===\n%s", result.Content)
+}
 
 // beforeSuite attempts to populate several required cluster fields (either by provisioning a new cluster, or re-using an existing one)
 // If there is an issue with provisioning, retrieving, or getting the kubeconfig, this will return `false`.
@@ -141,7 +185,7 @@ func installAddons() (err error) {
 // -- END Ginkgo setup
 
 // RunTests initializes Ginkgo and runs the osde2e test suite.
-func RunTests() int {
+func RunTests(ctx context.Context) int {
 	var err error
 	var exitCode int
 
@@ -150,6 +194,9 @@ func RunTests() int {
 	exitCode, err = runGinkgoTests()
 	if err != nil {
 		log.Printf("OSDE2E failed: %v", err)
+		if viper.GetBool(config.LLM.EnableAnalysis) {
+			runLLMAnalysis(ctx, err)
+		}
 	}
 
 	return exitCode
@@ -309,10 +356,6 @@ func deleteCluster(provider spi.Provider) error {
 	return nil
 }
 
-// ManyGroupedFailureName is the incident title assigned to incidents reperesenting a large
-// cluster of test failures.
-const ManyGroupedFailureName = "A lot of tests failed together"
-
 func cleanupAfterE2E(ctx context.Context, h *helper.H) (errors []error) {
 	clusterStatus := clusterproperties.StatusCompletedFailing
 	defer ginkgo.GinkgoRecover()
@@ -372,6 +415,7 @@ func cleanupAfterE2E(ctx context.Context, h *helper.H) (errors []error) {
 				err = provider.AddProperty(cluster, clusterproperties.Status, clusterStatus)
 				err = provider.AddProperty(cluster, clusterproperties.JobID, "")
 				err = provider.AddProperty(cluster, clusterproperties.JobName, "")
+				err = provider.AddProperty(cluster, clusterproperties.Availability, clusterproperties.Used)
 				if err != nil {
 					log.Printf("Failed setting completed status: %v", err)
 				}

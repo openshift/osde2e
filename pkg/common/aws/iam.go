@@ -2,6 +2,8 @@ package aws
 
 import (
 	"fmt"
+	"log"
+	"regexp"
 	"strings"
 	"time"
 
@@ -16,7 +18,42 @@ var (
 	providersubstr = "cloudfront"
 )
 
-func (CcsAwsSession *ccsAwsSession) CleanupOpenIDConnectProviders(olderthan time.Duration, dryrun bool, sendSummary bool,
+// isOIDCProviderFromActiveCluster checks if an OIDC provider belongs to an active cluster
+// Returns true if the provider should be skipped (belongs to active cluster), false if it can be cleaned up
+func isOIDCProviderFromActiveCluster(url string, activeClusters map[string]bool) bool {
+	// Extract cluster name from OIDC URL
+	// Example: "osde2e-i5u38-oidc-t8i8.s3.us-west-2.amazonaws.com" -> "osde2e-i5u38"
+	re := regexp.MustCompile(`^(osde2e-[^-]+)-oidc-`)
+	matches := re.FindStringSubmatch(url)
+	if len(matches) >= 2 {
+		clusterName := matches[1]
+		if activeClusters[clusterName] {
+			log.Printf("Skipping OIDC provider for active cluster %s: %s\n", clusterName, url)
+			return true
+		}
+	}
+	return false
+}
+
+// isRoleFromActiveCluster checks if an IAM role belongs to an active cluster
+// Returns true if the role should be skipped (belongs to active cluster), false if it can be cleaned up
+func isRoleFromActiveCluster(roleArn string, activeClusters map[string]bool) bool {
+	// Extract cluster name from role ARN
+	// Example: "arn:aws:iam::123456789012:role/osde2e-i5u38-installer-role" -> "osde2e-i5u38"
+	re := regexp.MustCompile(`osde2e-[^-]+-`)
+	matches := re.FindStringSubmatch(roleArn)
+	if len(matches) >= 1 {
+		// Remove the trailing dash to get the cluster name
+		clusterName := strings.TrimSuffix(matches[0], "-")
+		if activeClusters[clusterName] {
+			log.Printf("Skipping IAM role for active cluster %s: %s\n", clusterName, roleArn)
+			return true
+		}
+	}
+	return false
+}
+
+func (CcsAwsSession *ccsAwsSession) CleanupOpenIDConnectProviders(activeClusters map[string]bool, dryrun bool, sendSummary bool,
 	deletedCounter *int, failedCounter *int, errorBuilder *strings.Builder,
 ) error {
 	err := CcsAwsSession.GetAWSSessions()
@@ -41,9 +78,10 @@ func (CcsAwsSession *ccsAwsSession) CleanupOpenIDConnectProviders(olderthan time
 			return err
 		}
 
-		// If provider url contains "cloudfront" or "osde2e-" and is older than given days, delete it
-		if (strings.Contains(*result.Url, providersubstr) || strings.Contains(*result.Url, rolesubstr)) && time.Since(*result.CreateDate) > olderthan {
-			fmt.Printf("Provider will be deleted: %s\n", *provider.Arn)
+		// If provider url contains "cloudfront" or "osde2e-", delete it
+		if (strings.Contains(*result.Url, providersubstr) || strings.Contains(*result.Url, rolesubstr)) && !isOIDCProviderFromActiveCluster(*result.Url, activeClusters) {
+
+			fmt.Printf("Provider will be deleted: %s (URL: %s)\n", *provider.Arn, *result.Url)
 
 			if !dryrun {
 				input := &iam.DeleteOpenIDConnectProviderInput{
@@ -68,7 +106,7 @@ func (CcsAwsSession *ccsAwsSession) CleanupOpenIDConnectProviders(olderthan time
 	return nil
 }
 
-func (CcsAwsSession *ccsAwsSession) CleanupRoles(olderthan time.Duration, dryrun bool, sendSummary bool,
+func (CcsAwsSession *ccsAwsSession) CleanupRoles(activeClusters map[string]bool, dryrun bool, sendSummary bool,
 	deletedCounter *int, failedCounter *int, errorBuilder *strings.Builder,
 ) error {
 	err := CcsAwsSession.GetAWSSessions()
@@ -85,7 +123,7 @@ func (CcsAwsSession *ccsAwsSession) CleanupRoles(olderthan time.Duration, dryrun
 	}
 
 	for _, role := range result.Roles {
-		if strings.Contains(*role.Arn, rolesubstr) && time.Since(*role.CreateDate) > olderthan {
+		if strings.Contains(*role.Arn, rolesubstr) && !isRoleFromActiveCluster(*role.Arn, activeClusters) {
 			fmt.Printf("Role will be deleted: %s\n", *role.RoleName)
 
 			// Remove Roles from Instance Profiles
@@ -183,48 +221,6 @@ func (CcsAwsSession *ccsAwsSession) CleanupRoles(olderthan time.Duration, dryrun
 					return err
 				}
 				fmt.Println("Deleted role")
-			}
-		}
-	}
-
-	return nil
-}
-
-func (CcsAwsSession *ccsAwsSession) CleanupPolicies(olderthan time.Duration, dryrun bool, sendSummary bool,
-	deletedCounter *int, failedCounter *int, errorBuilder *strings.Builder,
-) error {
-	err := CcsAwsSession.GetAWSSessions()
-	if err != nil {
-		return err
-	}
-	input := &iam.ListPoliciesInput{
-		MaxItems: aws.Int64(1000),
-	}
-	result, err := CcsAwsSession.iam.ListPolicies(input)
-	if err != nil {
-		return err
-	}
-
-	for _, policy := range result.Policies {
-		if strings.Contains(*policy.Arn, rolesubstr) && time.Since(*policy.CreateDate) > olderthan {
-			fmt.Printf("Policy will be deleted: %s", *policy.PolicyName)
-
-			if !dryrun {
-				input := &iam.DeletePolicyInput{
-					PolicyArn: policy.Arn,
-				}
-				// Delete the policy
-				_, err := CcsAwsSession.iam.DeletePolicy(input)
-				if err != nil {
-					*failedCounter++
-					errorMsg := fmt.Sprintf("Policy %s not deleted: %s\n", *policy.PolicyName, err.Error())
-					if sendSummary && errorBuilder.Len() < config.SlackMessageLength {
-						errorBuilder.WriteString(errorMsg)
-					}
-					return err
-				}
-				*deletedCounter++
-				fmt.Println("Deleted")
 			}
 		}
 	}
