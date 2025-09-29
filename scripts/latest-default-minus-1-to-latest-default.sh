@@ -21,4 +21,3 @@ docker create --pull=always --name osde2e-run \
 
 docker start -a osde2e-run
 docker cp osde2e-run:/tmp/osde2e-report .
-
