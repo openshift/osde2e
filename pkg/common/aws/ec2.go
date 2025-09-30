@@ -116,7 +116,13 @@ func (CcsAwsSession *ccsAwsSession) TerminateEC2Instances(activeClusters map[str
 	if err != nil {
 		return 0, 0, err
 	}
-	var instanceIds []string
+
+	type instanceToDelete struct {
+		id   string
+		name string
+	}
+
+	var instancesToDelete []instanceToDelete
 	for _, reservation := range result.Reservations {
 		// Each reservation typically has only 1 instance
 		instance := reservation.Instances[0]
@@ -124,8 +130,11 @@ func (CcsAwsSession *ccsAwsSession) TerminateEC2Instances(activeClusters map[str
 			if *tag.Key != "Name" || strings.Contains(*tag.Value, tagKeyForExemptEC2Instances) || isEC2InstanceFromActiveCluster(*tag.Value, activeClusters) {
 				continue
 			}
-			instanceIds = append(instanceIds, *instance.InstanceId)
-			fmt.Printf("Instance %s will be deleted\n", *instance.InstanceId)
+			instancesToDelete = append(instancesToDelete, instanceToDelete{
+				id:   *instance.InstanceId,
+				name: *tag.Value,
+			})
+			fmt.Printf("Instance %s (%s) will be deleted\n", *instance.InstanceId, *tag.Value)
 			break
 		}
 	}
@@ -134,19 +143,19 @@ func (CcsAwsSession *ccsAwsSession) TerminateEC2Instances(activeClusters map[str
 	instancesDeleted := 0
 	instancesFailedToDelete := 0
 	if !dryrun {
-		for _, instanceId := range instanceIds {
+		for _, instance := range instancesToDelete {
 			input := &ec2.TerminateInstancesInput{
-				InstanceIds: aws.StringSlice([]string{instanceId}),
+				InstanceIds: aws.StringSlice([]string{instance.id}),
 			}
 			_, err := CcsAwsSession.ec2.TerminateInstances(input)
 			if err != nil {
-				errorMessage := fmt.Sprintf("Error terminating instance %s: %s\n", instanceId, err.Error())
+				errorMessage := fmt.Sprintf("Error terminating instance %s (%s): %s\n", instance.id, instance.name, err.Error())
 				ec2ErrorBuilder.WriteString(errorMessage)
 				fmt.Print(errorMessage)
 				instancesFailedToDelete++
 			} else {
 				instancesDeleted++
-				fmt.Printf("Instance %s deleted\n", instanceId)
+				fmt.Printf("Instance %s (%s) deleted\n", instance.id, instance.name)
 			}
 		}
 	}
