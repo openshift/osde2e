@@ -605,10 +605,20 @@ var LLM = struct {
 	// Model specifies which LLM model to use
 	// Env: LLM_MODEL
 	Model string
+
+	// EnableSlackNotify enables Slack notifications for LLM analysis results
+	// Env: LLM_ENABLE_SLACK_NOTIFY
+	EnableSlackNotify string
+
+	// SlackWebhook is the Slack webhook URL for LLM analysis notifications
+	// Env: LLM_SLACK_WEBHOOK
+	SlackWebhook string
 }{
-	EnableAnalysis: "llm.enableAnalysis",
-	APIKey:         "llm.apiKey",
-	Model:          "llm.model",
+	EnableAnalysis:    "llm.enableAnalysis",
+	APIKey:            "llm.apiKey",
+	Model:             "llm.model",
+	EnableSlackNotify: "llm.enableSlackNotify",
+	SlackWebhook:      "llm.slackWebhook",
 }
 
 func InitOSDe2eViper() {
@@ -907,6 +917,12 @@ func InitOSDe2eViper() {
 
 	viper.SetDefault(LLM.Model, "gemini-2.5-pro")
 	_ = viper.BindEnv(LLM.Model, "LLM_MODEL")
+
+	viper.SetDefault(LLM.EnableSlackNotify, false)
+	_ = viper.BindEnv(LLM.EnableSlackNotify, "LLM_ENABLE_SLACK_NOTIFY")
+
+	viper.SetDefault(LLM.SlackWebhook, "")
+	_ = viper.BindEnv(LLM.SlackWebhook, "LLM_SLACK_WEBHOOK")
 }
 
 func init() {
