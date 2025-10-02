@@ -454,7 +454,6 @@ func ProvisionCluster(logger *log.Logger) (*spi.Cluster, error) {
 	}
 	// Only enable cluster reserve claiming for ROSA STS classic for now
 	if viper.GetBool(config.Cluster.UseExistingCluster) && viper.GetString(config.Provider) == "rosa" && !viper.GetBool(config.Hypershift) && viper.GetBool(rosaprovider.STS) {
-		ocmProvider, _ := ocmprovider.New()
 		clusterID = ocmProvider.ClaimClusterFromReserve(viper.GetString(config.Cluster.Version), "aws", "rosa")
 	}
 	if viper.GetBool(config.Cluster.Reserve) {

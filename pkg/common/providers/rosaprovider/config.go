@@ -47,8 +47,8 @@ const (
 
 func init() {
 	// ----- ROSA -----
-	viper.SetDefault(Env, "prod")
-	_ = viper.BindEnv(Env, "ROSA_ENV")
+	viper.SetDefault(Env, "stage")
+	_ = viper.BindEnv(Env, "ROSA_ENV", "OCM_ENV")
 
 	_ = viper.BindEnv(MachineCIDR, "ROSA_MACHINE_CIDR")
 
