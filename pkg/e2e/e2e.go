@@ -17,6 +17,7 @@ import (
 	"github.com/onsi/ginkgo/v2/types"
 	"github.com/onsi/gomega"
 	"github.com/openshift/osde2e/internal/analysisengine"
+	"github.com/openshift/osde2e/internal/reporter"
 	clusterutil "github.com/openshift/osde2e/pkg/common/cluster"
 	"github.com/openshift/osde2e/pkg/common/clusterproperties"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
@@ -54,12 +55,32 @@ func runLLMAnalysis(ctx context.Context, err error) {
 		Version:       viper.GetString(config.Cluster.Version),
 	}
 
+	// Setup notification config - composable approach for multiple reporters
+	var notificationConfig *reporter.NotificationConfig
+	var reporters []reporter.ReporterConfig
+
+	// Add Slack reporter if enabled
+	enableSlackNotify := viper.GetBool(config.LLM.EnableSlackNotify)
+	slackWebhook := viper.GetString(config.LLM.SlackWebhook)
+	if enableSlackNotify && slackWebhook != "" {
+		reporters = append(reporters, reporter.SlackReporterConfig(slackWebhook, true))
+	}
+
+	// Create notification config if we have any reporters
+	if len(reporters) > 0 {
+		notificationConfig = &reporter.NotificationConfig{
+			Enabled:   true,
+			Reporters: reporters,
+		}
+	}
+
 	engineConfig := &analysisengine.Config{
-		ArtifactsDir:   reportDir,
-		PromptTemplate: "default",
-		APIKey:         viper.GetString(config.LLM.APIKey),
-		FailureContext: err.Error(),
-		ClusterInfo:    clusterInfo,
+		ArtifactsDir:       reportDir,
+		PromptTemplate:     "default",
+		APIKey:             viper.GetString(config.LLM.APIKey),
+		FailureContext:     err.Error(),
+		ClusterInfo:        clusterInfo,
+		NotificationConfig: notificationConfig,
 	}
 
 	engine, err := analysisengine.New(ctx, engineConfig)
