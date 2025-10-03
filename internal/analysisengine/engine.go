@@ -11,6 +11,7 @@ import (
 	"github.com/openshift/osde2e/internal/llm"
 	"github.com/openshift/osde2e/internal/llm/tools"
 	"github.com/openshift/osde2e/internal/prompts"
+	"google.golang.org/genai"
 	"gopkg.in/yaml.v3"
 )
 
@@ -119,11 +120,20 @@ func (e *Engine) Run(ctx context.Context) (*Result, error) {
 	}
 
 	analysisResult := &Result{
-		Status:  "completed",
-		Content: result.Content,
-		Prompt:  userPrompt,
+		Status:    "completed",
+		Content:   result.Content,
+		Prompt:    userPrompt,
+		ToolCalls: result.ToolCalls,
 		Metadata: map[string]any{
-			"artifacts_examined": len(data.LogArtifacts),
+			"artifacts_examined": func() (count int) {
+				for _, tc := range result.ToolCalls {
+					if tc.Name == "read_file" {
+						count++
+					}
+				}
+				return count
+			}(),
+			"tool_calls": len(result.ToolCalls),
 		},
 	}
 
@@ -136,11 +146,12 @@ func (e *Engine) Run(ctx context.Context) (*Result, error) {
 
 // Result represents the analysis output
 type Result struct {
-	Status   string         `json:"status"`
-	Content  string         `json:"content"`
-	Metadata map[string]any `json:"metadata,omitempty"`
-	Error    string         `json:"error,omitempty"`
-	Prompt   string         `json:"prompt,omitempty"`
+	Status    string                `json:"status"`
+	Content   string                `json:"content"`
+	Metadata  map[string]any        `json:"metadata,omitempty"`
+	Error     string                `json:"error,omitempty"`
+	Prompt    string                `json:"prompt,omitempty"`
+	ToolCalls []*genai.FunctionCall `json:"tool_calls,omitempty"`
 }
 
 // WriteSummary writes the analysis result to a YAML summary file
@@ -162,6 +173,7 @@ func (res *Result) WriteSummary(reportDir string, clusterInfo *ClusterInfo, fail
 		"artifacts_examined": artifactsCount,
 		"status":             res.Status,
 		"prompt":             res.Prompt,
+		"tool_calls":         res.ToolCalls,
 		"response":           res.Content,
 		"metadata":           res.Metadata,
 		"error":              res.Error,
