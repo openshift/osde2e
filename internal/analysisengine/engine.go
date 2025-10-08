@@ -11,6 +11,7 @@ import (
 	"github.com/openshift/osde2e/internal/llm"
 	"github.com/openshift/osde2e/internal/llm/tools"
 	"github.com/openshift/osde2e/internal/prompts"
+	"github.com/openshift/osde2e/internal/reporter"
 	"gopkg.in/yaml.v3"
 )
 
@@ -31,12 +32,13 @@ type ClusterInfo struct {
 
 // Config holds configuration for the analysis engine
 type Config struct {
-	ArtifactsDir   string
-	PromptTemplate string
-	APIKey         string
-	LLMConfig      *llm.AnalysisConfig
-	FailureContext string
-	ClusterInfo    *ClusterInfo
+	ArtifactsDir       string
+	PromptTemplate     string
+	APIKey             string
+	LLMConfig          *llm.AnalysisConfig
+	FailureContext     string
+	ClusterInfo        *ClusterInfo
+	NotificationConfig *reporter.NotificationConfig
 }
 
 // Engine represents the analysis engine
@@ -45,6 +47,7 @@ type Engine struct {
 	aggregatorService *aggregator.Aggregator
 	promptStore       *prompts.PromptStore
 	llmClient         llm.LLMClient
+	reporterRegistry  *reporter.ReporterRegistry
 }
 
 // New creates a new analysis engine
@@ -64,11 +67,16 @@ func New(ctx context.Context, config *Config) (*Engine, error) {
 		return nil, fmt.Errorf("failed to initialize LLM client: %w", err)
 	}
 
+	// Initialize reporter registry
+	reporterRegistry := reporter.NewReporterRegistry()
+	reporterRegistry.Register(reporter.NewSlackReporter())
+
 	return &Engine{
 		config:            config,
 		aggregatorService: aggregatorService,
 		promptStore:       promptStore,
 		llmClient:         client,
+		reporterRegistry:  reporterRegistry,
 	}, nil
 }
 
@@ -129,6 +137,26 @@ func (e *Engine) Run(ctx context.Context) (*Result, error) {
 
 	if err := analysisResult.WriteSummary(e.config.ArtifactsDir, e.config.ClusterInfo, e.config.FailureContext); err != nil {
 		return nil, fmt.Errorf("failed to write analysis files: %w", err)
+	}
+
+	// Send notifications if configured
+	if e.config.NotificationConfig != nil && e.config.NotificationConfig.Enabled {
+		// Convert to reporter.AnalysisResult to avoid import cycle
+		reporterResult := &reporter.AnalysisResult{
+			Status:   analysisResult.Status,
+			Content:  analysisResult.Content,
+			Metadata: analysisResult.Metadata,
+			Error:    analysisResult.Error,
+			Prompt:   analysisResult.Prompt,
+		}
+
+		// Send to all configured reporters
+		for _, reporterConfig := range e.config.NotificationConfig.Reporters {
+			if err := e.reporterRegistry.SendNotification(ctx, reporterResult, &reporterConfig); err != nil {
+				// Log error but don't fail the analysis
+				fmt.Fprintf(os.Stderr, "Warning: Failed to send notification via %s: %v\n", reporterConfig.Type, err)
+			}
+		}
 	}
 
 	return analysisResult, nil
