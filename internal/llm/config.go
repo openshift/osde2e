@@ -1,5 +1,7 @@
 package llm
 
+import "google.golang.org/genai"
+
 type AnalysisConfig struct {
 	SystemInstruction *string  `json:"systemInstruction,omitempty"`
 	Temperature       *float32 `json:"temperature,omitempty"`
@@ -8,5 +10,6 @@ type AnalysisConfig struct {
 }
 
 type AnalysisResult struct {
-	Content string
+	Content   string                `json:"content"`
+	ToolCalls []*genai.FunctionCall `json:"tool_calls,omitempty"`
 }
