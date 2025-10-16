@@ -32,12 +32,13 @@ type ClusterInfo struct {
 
 // Config holds configuration for the analysis engine
 type Config struct {
-	ArtifactsDir   string
-	PromptTemplate string
-	APIKey         string
-	LLMConfig      *llm.AnalysisConfig
-	FailureContext string
-	ClusterInfo    *ClusterInfo
+	ArtifactsDir     string
+	PromptTemplate   string
+	APIKey           string
+	LLMConfig        *llm.AnalysisConfig
+	FailureContext   string
+	ClusterInfo      *ClusterInfo
+	EnableMustGather bool // Enable must-gather tool integration
 }
 
 // Engine represents the analysis engine
@@ -80,7 +81,16 @@ func (e *Engine) Run(ctx context.Context) (*Result, error) {
 		return nil, fmt.Errorf("data collection failed: %w", err)
 	}
 
-	toolRegistry := tools.NewRegistry(data)
+	toolRegistry := tools.NewRegistry(data, &tools.RegistryConfig{
+		EnableMustGather: e.config.EnableMustGather,
+	})
+	// Set up cleanup to run when function exits
+	defer func() {
+		if err := toolRegistry.Cleanup(); err != nil {
+			// Log cleanup error but don't fail the analysis
+			fmt.Printf("Warning: Failed to cleanup tools: %v\n", err)
+		}
+	}()
 
 	vars := make(map[string]any)
 	vars["Artifacts"] = data.LogArtifacts
@@ -88,6 +98,7 @@ func (e *Engine) Run(ctx context.Context) (*Result, error) {
 	vars["TestResults"] = data.TestResults
 	vars["FailedTests"] = data.FailedTests
 	vars["FailureContext"] = e.config.FailureContext
+	vars["EnableMustGather"] = e.config.EnableMustGather
 
 	if e.config.ClusterInfo != nil {
 		vars["ClusterID"] = e.config.ClusterInfo.ID

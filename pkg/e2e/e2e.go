@@ -55,11 +55,12 @@ func runLLMAnalysis(ctx context.Context, err error) {
 	}
 
 	engineConfig := &analysisengine.Config{
-		ArtifactsDir:   reportDir,
-		PromptTemplate: "default",
-		APIKey:         viper.GetString(config.LLM.APIKey),
-		FailureContext: err.Error(),
-		ClusterInfo:    clusterInfo,
+		ArtifactsDir:     reportDir,
+		PromptTemplate:   "default",
+		APIKey:           viper.GetString(config.LLM.APIKey),
+		FailureContext:   err.Error(),
+		ClusterInfo:      clusterInfo,
+		EnableMustGather: !viper.GetBool(config.SkipMustGather),
 	}
 
 	engine, err := analysisengine.New(ctx, engineConfig)
