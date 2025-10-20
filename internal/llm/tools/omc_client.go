@@ -66,24 +66,43 @@ func (c *OMCClient) ensureOMCBinary(ctx context.Context) error {
 		return nil
 	}
 
-	// Download OMC binary to working directory
-	binaryName := "omc"
-	if runtime.GOOS == "windows" {
-		binaryName = "omc.exe"
-	}
+	c.omcBinaryPath = filepath.Join(c.workingDir, "omc")
 
-	c.omcBinaryPath = filepath.Join(c.workingDir, binaryName)
-
-	// Construct download URL
-	arch := runtime.GOARCH
-	if arch == "amd64" {
-		arch = "x86_64"
+	// Construct download URL with proper architecture mapping
+	arch := c.mapArchitecture(runtime.GOARCH)
+	osName, err := c.formatOSName(runtime.GOOS)
+	if err != nil {
+		return err
 	}
 
 	downloadURL := fmt.Sprintf("https://github.com/gmeghnag/omc/releases/latest/download/omc_%s_%s.tar.gz",
-		strings.Title(runtime.GOOS), arch)
+		osName, arch)
 
 	return c.downloadAndExtractOMC(ctx, downloadURL)
+}
+
+// mapArchitecture maps Go architecture names to OMC release architecture names
+func (c *OMCClient) mapArchitecture(goarch string) string {
+	switch goarch {
+	case "amd64":
+		return "x86_64"
+	case "arm64":
+		return "aarch64"
+	default:
+		return goarch
+	}
+}
+
+// formatOSName converts Go OS names to OMC release naming format
+func (c *OMCClient) formatOSName(goos string) (string, error) {
+	switch goos {
+	case "linux":
+		return "Linux", nil
+	case "darwin":
+		return "Darwin", nil
+	default:
+		return "", fmt.Errorf("operating system %q is not supported", goos)
+	}
 }
 
 // downloadAndExtractOMC downloads and extracts the OMC binary
