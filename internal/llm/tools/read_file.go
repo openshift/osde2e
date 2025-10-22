@@ -118,6 +118,11 @@ func readFileWithLineRange(filePath string, start, stop *int) (string, error) {
 	defer file.Close()
 
 	scanner := bufio.NewScanner(file)
+	// Increase buffer size to handle very long lines in CI logs (default is 64KB, set to 1MB)
+	const maxCapacity = 1024 * 1024 // 1MB
+	buf := make([]byte, maxCapacity)
+	scanner.Buffer(buf, maxCapacity)
+
 	var lines []string
 	lineNum := 1
 

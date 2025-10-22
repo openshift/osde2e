@@ -14,6 +14,11 @@ import (
 	"github.com/joshdk/go-junit"
 )
 
+// excludedFolders defines folder patterns that should be excluded from log collection
+var excludedFolders = []string{
+	"gather-extra", // Skip gather-extra folder
+}
+
 type Aggregator struct {
 	logger logr.Logger
 }
@@ -68,6 +73,8 @@ func (a *Aggregator) Collect(ctx context.Context, reportDir string) (*Aggregated
 		a.logger.Error(err, "failed to collect log artifacts")
 		collectionErrors = append(collectionErrors, errMsg)
 	}
+
+	fmt.Println("Log Artifacts Collected: ", len(data.LogArtifacts))
 
 	if err := a.collectLogAnomalies(reportDir, data); err != nil {
 		errMsg := fmt.Sprintf("failed to collect log anomalies: %v", err)
@@ -184,6 +191,25 @@ func (a *Aggregator) convertJUnitTest(test junit.Test, suiteName string) FailedT
 	}
 }
 
+// shouldExcludeFolder checks if a folder should be excluded based on configured patterns
+func (a *Aggregator) shouldExcludeFolder(folderName string) bool {
+	for _, pattern := range excludedFolders {
+		// Handle wildcard patterns (simple glob matching)
+		if strings.HasSuffix(pattern, "*") {
+			prefix := strings.TrimSuffix(pattern, "*")
+			if strings.HasPrefix(folderName, prefix) {
+				return true
+			}
+		} else {
+			// Exact match
+			if folderName == pattern {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 func (a *Aggregator) collectLogArtifacts(reportDir string, data *AggregatedData) error {
 	return filepath.Walk(reportDir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
@@ -191,7 +217,14 @@ func (a *Aggregator) collectLogArtifacts(reportDir string, data *AggregatedData)
 			return nil
 		}
 
+		// Skip hidden directories (starting with .)
 		if info.IsDir() && strings.HasPrefix(info.Name(), ".") {
+			return filepath.SkipDir
+		}
+
+		// Skip excluded directories
+		if info.IsDir() && a.shouldExcludeFolder(info.Name()) {
+			a.logger.Info("skipping excluded folder", "folder", info.Name())
 			return filepath.SkipDir
 		}
 
