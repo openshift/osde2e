@@ -41,9 +41,9 @@ func TestDataSanitizer_BasicFunctionality(t *testing.T) {
 		},
 		{
 			name:             "JWT Token",
-			input:            "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
+			input:            "Authorization: Bearer eyJGAKE.eyJTEST.FAKE-JWT-FOR-TESTING-ONLY",
 			shouldContain:    []string{"[JWT-TOKEN-REDACTED]"},
-			shouldNotContain: []string{"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9"},
+			shouldNotContain: []string{"eyJGAKE.eyJTEST.FAKE"},
 			expectMatches:    true,
 		},
 		{
@@ -218,7 +218,7 @@ func BenchmarkDataSanitizer(b *testing.B) {
 		AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE
 		GITHUB_TOKEN=ghp_1234567890abcdef1234567890abcdef12
 		Email: admin@company.com
-		JWT: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c
+		JWT: eyJGAKE.eyJTEST.FAKE-JWT-FOR-TESTING-ONLY
 		Database: postgresql://user:password123@localhost:5432/db
 	`
 
