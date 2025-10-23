@@ -12,10 +12,25 @@ import (
 
 	"github.com/go-logr/logr"
 	"github.com/joshdk/go-junit"
+	"github.com/openshift/osde2e/internal/sanitizer"
 )
 
 type Aggregator struct {
-	logger logr.Logger
+	logger    logr.Logger
+	sanitizer *sanitizer.Sanitizer // Optional data sanitizer
+}
+
+// NewWithSanitizer creates an aggregator with data sanitization capability
+func NewWithSanitizer(ctx context.Context, sanitizerConfig *sanitizer.Config) (*Aggregator, error) {
+	dataSanitizer, err := sanitizer.New(sanitizerConfig)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create sanitizer: %w", err)
+	}
+
+	return &Aggregator{
+		logger:    logr.FromContextOrDiscard(ctx),
+		sanitizer: dataSanitizer,
+	}, nil
 }
 
 type AggregatedData struct {
@@ -96,6 +111,24 @@ func (a *Aggregator) collectLogAnomalies(reportDir string, data *AggregatedData)
 	if err != nil {
 		return fmt.Errorf("failed to collect log anomaly: %w", err)
 	}
+
+	// If data sanitization is enabled, sanitize anomaly logs
+	if a.sanitizer != nil && errors != "" {
+		result, err := a.sanitizer.SanitizeText(errors, logFilePath)
+		if err != nil {
+			a.logger.Error(err, "failed to sanitize anomaly logs", "source", logFilePath)
+			// Use original content on sanitization failure, but log warning
+		} else {
+			errors = result.Content
+			if result.MatchesFound > 0 {
+				a.logger.Info("sanitized anomaly logs",
+					"source", logFilePath,
+					"matches_found", result.MatchesFound,
+					"rules_applied", result.RulesApplied)
+			}
+		}
+	}
+
 	data.AnamolyLogs = errors
 	return nil
 }

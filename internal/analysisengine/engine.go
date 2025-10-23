@@ -11,6 +11,7 @@ import (
 	"github.com/openshift/osde2e/internal/llm"
 	"github.com/openshift/osde2e/internal/llm/tools"
 	"github.com/openshift/osde2e/internal/prompts"
+	"github.com/openshift/osde2e/internal/sanitizer"
 	"google.golang.org/genai"
 	"gopkg.in/yaml.v3"
 )
@@ -32,12 +33,13 @@ type ClusterInfo struct {
 
 // Config holds configuration for the analysis engine
 type Config struct {
-	ArtifactsDir   string
-	PromptTemplate string
-	APIKey         string
-	LLMConfig      *llm.AnalysisConfig
-	FailureContext string
-	ClusterInfo    *ClusterInfo
+	ArtifactsDir    string
+	PromptTemplate  string
+	APIKey          string
+	LLMConfig       *llm.AnalysisConfig
+	FailureContext  string
+	ClusterInfo     *ClusterInfo
+	SanitizerConfig *sanitizer.Config // Data sanitization configuration
 }
 
 // Engine represents the analysis engine
@@ -50,7 +52,19 @@ type Engine struct {
 
 // New creates a new analysis engine
 func New(ctx context.Context, config *Config) (*Engine, error) {
-	aggregatorService := aggregator.New(ctx)
+	var aggregatorService *aggregator.Aggregator
+	var err error
+
+	// Create aggregator with or without sanitization
+	if config.SanitizerConfig != nil {
+		aggregatorService, err = aggregator.NewWithSanitizer(ctx, config.SanitizerConfig)
+		if err != nil {
+			return nil, fmt.Errorf("failed to initialize aggregator with sanitizer: %w", err)
+		}
+	} else {
+		aggregatorService = aggregator.New(ctx)
+	}
+
 	promptStore, err := prompts.NewPromptStore()
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize prompt store: %w", err)
