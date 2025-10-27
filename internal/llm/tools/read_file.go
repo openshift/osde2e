@@ -7,17 +7,33 @@ import (
 	"os"
 
 	"github.com/openshift/osde2e/internal/aggregator"
+	"github.com/openshift/osde2e/internal/sanitizer"
 	"google.golang.org/genai"
 )
 
-type readFileTool struct{}
+type readFileTool struct {
+	sanitizer *sanitizer.Sanitizer
+}
+
+// newReadFileTool creates a new read file tool with sanitizer
+func newReadFileTool() *readFileTool {
+	// Initialize sanitizer with default config
+	s, err := sanitizer.New(nil)
+	if err != nil {
+		// If sanitizer fails to initialize, create tool without it
+		// This ensures the tool still works even if sanitizer has issues
+		return &readFileTool{sanitizer: nil}
+	}
+
+	return &readFileTool{sanitizer: s}
+}
 
 func (t *readFileTool) Name() string {
 	return "read_file"
 }
 
 func (t *readFileTool) Description() string {
-	return "Reads a specific file from the collected artifacts, optionally specifying a line range. Use start and stop parameters to read specific line ranges."
+	return "Reads a specific file from the collected artifacts, optionally specifying a line range. Sensitive information is sanitized by default for security. Use start and stop parameters to read specific line ranges."
 }
 
 func (t *readFileTool) Schema() *genai.Schema {
@@ -35,6 +51,10 @@ func (t *readFileTool) Schema() *genai.Schema {
 			"stop": {
 				Type:        genai.TypeInteger,
 				Description: "Ending line number (1-based, optional). If not provided, reads to end.",
+			},
+			"sanitize": {
+				Type:        genai.TypeBoolean,
+				Description: "Whether to sanitize sensitive information from the content (default: true). Set to false only for debugging or testing purposes.",
 			},
 		},
 		Required: []string{"path"},
@@ -57,22 +77,14 @@ func (t *readFileTool) Execute(ctx context.Context, params map[string]any, data 
 		return nil, fmt.Errorf("file path %s is not in the collected artifacts", path)
 	}
 
-	// Extract optional start and stop parameters
-	var start, stop *int
-	if startVal, exists := params["start"]; exists {
-		if startInt, err := extractInteger(startVal, "start"); err != nil {
-			return nil, err
-		} else {
-			start = &startInt
-		}
-	}
+	// Extract parameters with defaults
+	start := extractIntPtr(params, "start")
+	stop := extractIntPtr(params, "stop")
+	shouldSanitize := extractBool(params, "sanitize", true)
 
-	if stopVal, exists := params["stop"]; exists {
-		if stopInt, err := extractInteger(stopVal, "stop"); err != nil {
-			return nil, err
-		} else {
-			stop = &stopInt
-		}
+	// Log when sanitization is disabled for security awareness
+	if !shouldSanitize {
+		fmt.Printf("⚠️  WARNING: Sanitization disabled for file %s - sensitive information may be exposed\n", path)
 	}
 
 	// Validate line range parameters
@@ -87,7 +99,7 @@ func (t *readFileTool) Execute(ctx context.Context, params map[string]any, data 
 	}
 
 	// Read the file with line range support
-	content, err := readFileWithLineRange(path, start, stop)
+	content, err := t.readFileWithLineRange(path, start, stop, shouldSanitize)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read file %s: %w", path, err)
 	}
@@ -95,33 +107,45 @@ func (t *readFileTool) Execute(ctx context.Context, params map[string]any, data 
 	return content, nil
 }
 
-// extractInteger extracts an integer parameter from the params map
-func extractInteger(val any, paramName string) (int, error) {
-	switch v := val.(type) {
-	case float64:
-		return int(v), nil
-	case int:
-		return v, nil
-	case int64:
-		return int(v), nil
-	default:
-		return 0, fmt.Errorf("parameter '%s' must be an integer, got %T", paramName, val)
-	}
-}
-
 // readFileWithLineRange reads a file and returns content within the specified line range
-func readFileWithLineRange(filePath string, start, stop *int) (string, error) {
-	file, err := os.Open(filePath)
+func (t *readFileTool) readFileWithLineRange(filePath string, start, stop *int, shouldSanitize bool) (string, error) {
+	// Read lines from file within the specified range
+	rawLines, lineNumbers, err := t.readLinesInRange(filePath, start, stop)
 	if err != nil {
 		return "", err
+	}
+
+	if len(rawLines) == 0 {
+		if start != nil {
+			startLine := 1
+			if start != nil {
+				startLine = *start
+			}
+			return fmt.Sprintf("No lines found in range %d-%s", startLine, formatStopLine(stop)), nil
+		}
+		return "File is empty", nil
+	}
+
+	// Process lines (with or without sanitization)
+	formattedLines := t.processLines(rawLines, lineNumbers, filePath, shouldSanitize)
+
+	// Join all lines with newlines
+	return joinLines(formattedLines), nil
+}
+
+// readLinesInRange reads lines from file within the specified range
+func (t *readFileTool) readLinesInRange(filePath string, start, stop *int) ([]string, []int, error) {
+	file, err := os.Open(filePath)
+	if err != nil {
+		return nil, nil, err
 	}
 	defer file.Close()
 
 	scanner := bufio.NewScanner(file)
-	var lines []string
+	var rawLines []string
+	var lineNumbers []int
 	lineNum := 1
 
-	// Determine actual start and stop values
 	startLine := 1
 	if start != nil {
 		startLine = *start
@@ -130,43 +154,102 @@ func readFileWithLineRange(filePath string, start, stop *int) (string, error) {
 	for scanner.Scan() {
 		line := scanner.Text()
 
-		// If we haven't reached the start line yet, skip
+		// Skip lines before start
 		if lineNum < startLine {
 			lineNum++
 			continue
 		}
 
-		// If we have a stop line and we've exceeded it, break
+		// Stop if we've reached the stop line
 		if stop != nil && lineNum > *stop {
 			break
 		}
 
-		// Add line number prefix and collect the line
-		lines = append(lines, fmt.Sprintf("%d\t%s", lineNum, line))
+		rawLines = append(rawLines, line)
+		lineNumbers = append(lineNumbers, lineNum)
 		lineNum++
 	}
 
-	if err := scanner.Err(); err != nil {
-		return "", err
+	return rawLines, lineNumbers, scanner.Err()
+}
+
+// processLines applies sanitization and formatting to lines
+func (t *readFileTool) processLines(rawLines []string, lineNumbers []int, filePath string, shouldSanitize bool) []string {
+	if !shouldSanitize || t.sanitizer == nil {
+		return t.formatLinesWithoutSanitization(rawLines, lineNumbers)
 	}
 
+	return t.sanitizeAndFormatLines(rawLines, lineNumbers, filePath)
+}
+
+// formatLinesWithoutSanitization formats lines without sanitization
+func (t *readFileTool) formatLinesWithoutSanitization(rawLines []string, lineNumbers []int) []string {
+	lines := make([]string, len(rawLines))
+	for i, line := range rawLines {
+		lines[i] = fmt.Sprintf("%d\t%s", lineNumbers[i], line)
+	}
+	return lines
+}
+
+// sanitizeAndFormatLines applies batch sanitization and formats lines
+func (t *readFileTool) sanitizeAndFormatLines(rawLines []string, lineNumbers []int, filePath string) []string {
+	const batchSize = 1000 // Fixed batch size for optimal performance
+	var formattedLines []string
+
+	// Process in batches
+	for batchStart := 0; batchStart < len(rawLines); batchStart += batchSize {
+		batchEnd := batchStart + batchSize
+		if batchEnd > len(rawLines) {
+			batchEnd = len(rawLines)
+		}
+
+		batchLines := rawLines[batchStart:batchEnd]
+		batchLineNumbers := lineNumbers[batchStart:batchEnd]
+
+		// Create sources for batch
+		sources := make([]string, len(batchLines))
+		for i := range sources {
+			sources[i] = fmt.Sprintf("%s:line_%d", filePath, batchLineNumbers[i])
+		}
+
+		// Try batch sanitization first
+		if results, err := t.sanitizer.SanitizeBatch(batchLines, sources); err == nil {
+			// Batch sanitization succeeded
+			for i, result := range results {
+				formattedLines = append(formattedLines, fmt.Sprintf("%d\t%s", batchLineNumbers[i], result.Content))
+			}
+		} else {
+			// Fallback to line-by-line sanitization
+			for i, line := range batchLines {
+				sanitizedLine := t.sanitizeSingleLine(line, sources[i])
+				formattedLines = append(formattedLines, fmt.Sprintf("%d\t%s", batchLineNumbers[i], sanitizedLine))
+			}
+		}
+	}
+
+	return formattedLines
+}
+
+// sanitizeSingleLine sanitizes a single line with error handling
+func (t *readFileTool) sanitizeSingleLine(line, source string) string {
+	result, err := t.sanitizer.SanitizeText(line, source)
+	if err != nil {
+		return fmt.Sprintf("%s [SANITIZATION-ERROR: %v]", line, err)
+	}
+	return result.Content
+}
+
+// joinLines joins formatted lines with newlines
+func joinLines(lines []string) string {
 	if len(lines) == 0 {
-		if start != nil {
-			return fmt.Sprintf("No lines found in range %d-%s", startLine, formatStopLine(stop)), nil
-		}
-		return "File is empty", nil
+		return ""
 	}
 
-	// Join all lines with newlines
-	result := ""
-	for i, line := range lines {
-		if i > 0 {
-			result += "\n"
-		}
-		result += line
+	result := lines[0]
+	for i := 1; i < len(lines); i++ {
+		result += "\n" + lines[i]
 	}
-
-	return result, nil
+	return result
 }
 
 // formatStopLine formats the stop line for display purposes
@@ -190,6 +273,41 @@ func extractString(params map[string]any, key string) (string, error) {
 	}
 
 	return str, nil
+}
+
+// extractIntPtr extracts an optional integer parameter and returns a pointer
+func extractIntPtr(params map[string]any, key string) *int {
+	val, exists := params[key]
+	if !exists {
+		return nil
+	}
+
+	switch v := val.(type) {
+	case float64:
+		result := int(v)
+		return &result
+	case int:
+		return &v
+	case int64:
+		result := int(v)
+		return &result
+	default:
+		return nil
+	}
+}
+
+// extractBool extracts a boolean parameter with a default value
+func extractBool(params map[string]any, key string, defaultValue bool) bool {
+	val, exists := params[key]
+	if !exists {
+		return defaultValue
+	}
+
+	if boolVal, ok := val.(bool); ok {
+		return boolVal
+	}
+
+	return defaultValue
 }
 
 // isValidLogFile checks if the given file path exists in the collected logs

@@ -32,13 +32,20 @@ type Config struct {
 	AuditRetentionDays int    `json:"audit_retention_days"` // 0 disables cleanup
 	MaxContentSize     int64  `json:"max_content_size"`
 	StrictMode         bool   `json:"strict_mode"`
+	SkipAuditOnNoMatch bool   `json:"skip_audit_on_no_match"` // Skip audit logging when no matches found
 }
 
 // Sanitizer provides data sanitization with configurable rules and audit logging.
 type Sanitizer struct {
-	rules    []Rule
-	auditLog *AuditLogger
-	config   *Config
+	auditLog      *AuditLogger
+	config        *Config
+	compiledRules []*compiledRule // Pre-compiled regex patterns for performance
+}
+
+// compiledRule holds a compiled regex pattern for faster matching
+type compiledRule struct {
+	rule  Rule
+	regex *regexp.Regexp
 }
 
 // New creates a sanitizer with default config if nil provided.
@@ -50,12 +57,17 @@ func New(config *Config) (*Sanitizer, error) {
 			AuditRetentionDays: 30,               // Keep logs for 30 days
 			MaxContentSize:     10 * 1024 * 1024, // 10MB
 			StrictMode:         false,
+			SkipAuditOnNoMatch: true, // Skip audit logging when no matches found (performance optimization)
 		}
 	}
 
 	s := &Sanitizer{
 		config: config,
-		rules:  getDefaultRules(),
+	}
+
+	// Pre-compile all regex patterns for better performance
+	if err := s.compileRules(); err != nil {
+		return nil, fmt.Errorf("failed to compile rules: %w", err)
 	}
 
 	if config.EnableAudit {
@@ -69,51 +81,92 @@ func New(config *Config) (*Sanitizer, error) {
 	return s, nil
 }
 
-// SanitizeText removes sensitive information using enabled rules.
-func (s *Sanitizer) SanitizeText(content, source string) (*Result, error) {
-	if s.config.MaxContentSize > 0 && int64(len(content)) > s.config.MaxContentSize {
-		return nil, fmt.Errorf("content size exceeds limit: %d > %d", len(content), s.config.MaxContentSize)
-	}
+// compileRules pre-compiles all enabled regex patterns for optimal performance
+func (s *Sanitizer) compileRules() error {
+	rules := getDefaultRules()
+	s.compiledRules = make([]*compiledRule, 0, len(rules))
 
-	result := &Result{
-		Content:      content,
-		Source:       source,
-		Timestamp:    time.Now(),
-		RulesApplied: []string{},
-	}
-
-	matchCount := 0
-	currentContent := content
-
-	for _, rule := range s.rules {
+	for _, rule := range rules {
 		if !rule.Enabled {
 			continue
 		}
 
-		matches, sanitized, err := s.applyRule(rule, currentContent)
+		regex, err := regexp.Compile(rule.Pattern)
 		if err != nil {
 			if s.config.StrictMode {
-				return nil, fmt.Errorf("rule %s failed: %w", rule.ID, err)
+				return fmt.Errorf("invalid regex pattern for rule %s: %w", rule.ID, err)
 			}
-			continue // Skip failed rules in graceful mode
+			continue // Skip invalid rules in graceful mode
 		}
 
-		if matches > 0 {
-			matchCount += matches
-			result.RulesApplied = append(result.RulesApplied, rule.ID)
-			currentContent = sanitized
-		}
+		s.compiledRules = append(s.compiledRules, &compiledRule{
+			rule:  rule,
+			regex: regex,
+		})
 	}
 
-	result.Content = currentContent
-	result.MatchesFound = matchCount
+	return nil
+}
+
+// SanitizeBatch efficiently processes multiple content strings with batch optimizations
+func (s *Sanitizer) SanitizeBatch(contents []string, sources []string) ([]*Result, error) {
+	if len(contents) != len(sources) {
+		return nil, fmt.Errorf("contents and sources length mismatch: %d vs %d", len(contents), len(sources))
+	}
+
+	// Pre-allocate results slice with exact capacity
+	results := make([]*Result, len(contents))
+	timestamp := time.Now() // Use single timestamp for the entire batch
+
+	for i, content := range contents {
+		source := sources[i] // Safe since we validated lengths match
+
+		result, err := s.sanitizeContent(content, source, timestamp)
+		if err != nil {
+			return nil, fmt.Errorf("failed to sanitize content %d: %w", i, err)
+		}
+		results[i] = result
+	}
+
+	return results, nil
+}
+
+// sanitizeContent processes content with pre-compiled rules and shared timestamp for batch efficiency
+func (s *Sanitizer) sanitizeContent(content, source string, timestamp time.Time) (*Result, error) {
+	if s.config.MaxContentSize > 0 && int64(len(content)) > s.config.MaxContentSize {
+		return nil, fmt.Errorf("content size exceeds limit: %d > %d", len(content), s.config.MaxContentSize)
+	}
+
+	// Pre-allocate slices with estimated capacity
+	rulesApplied := make([]string, 0, 4) // Most content has 0-4 matches
+	matchCount := 0
+	currentContent := content
+
+	for _, compiledRule := range s.compiledRules {
+		matches := compiledRule.regex.FindAllStringSubmatchIndex(currentContent, -1)
+		if len(matches) == 0 {
+			continue
+		}
+
+		matchCount += len(matches)
+		rulesApplied = append(rulesApplied, compiledRule.rule.ID)
+		currentContent = compiledRule.regex.ReplaceAllString(currentContent, compiledRule.rule.Replacement)
+	}
+
+	result := &Result{
+		Content:      currentContent,
+		Source:       source,
+		Timestamp:    timestamp,
+		RulesApplied: rulesApplied,
+		MatchesFound: matchCount,
+	}
 
 	// Perform audit logging asynchronously to avoid blocking
-	if s.auditLog != nil {
+	if s.auditLog != nil && (matchCount > 0 || !s.config.SkipAuditOnNoMatch) {
 		go s.auditLog.Log(AuditEntry{
-			Timestamp:    result.Timestamp,
+			Timestamp:    timestamp,
 			Source:       source,
-			RulesApplied: result.RulesApplied,
+			RulesApplied: rulesApplied,
 			MatchCount:   matchCount,
 		})
 	}
@@ -121,20 +174,9 @@ func (s *Sanitizer) SanitizeText(content, source string) (*Result, error) {
 	return result, nil
 }
 
-// applyRule applies a single rule and returns matches count, sanitized content, and any error.
-func (s *Sanitizer) applyRule(rule Rule, content string) (int, string, error) {
-	regex, err := regexp.Compile(rule.Pattern)
-	if err != nil {
-		return 0, content, fmt.Errorf("invalid regex pattern for rule %s: %w", rule.ID, err)
-	}
-
-	matches := regex.FindAllStringSubmatchIndex(content, -1)
-	if len(matches) == 0 {
-		return 0, content, nil
-	}
-
-	result := regex.ReplaceAllString(content, rule.Replacement)
-	return len(matches), result, nil
+// SanitizeText removes sensitive information using enabled rules.
+func (s *Sanitizer) SanitizeText(content, source string) (*Result, error) {
+	return s.sanitizeContent(content, source, time.Now())
 }
 
 // CleanupAuditLogs removes old audit logs based on retention policy.
