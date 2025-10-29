@@ -204,31 +204,29 @@ line 5`
 	})
 }
 
-func TestReadFileTool_ExtractInteger(t *testing.T) {
+func TestReadFileTool_ExtractIntPtr(t *testing.T) {
 	tests := []struct {
-		name      string
-		value     any
-		paramName string
-		expected  int
-		wantError bool
+		name     string
+		params   map[string]any
+		key      string
+		expected *int
 	}{
-		{"float64", float64(42), "test", 42, false},
-		{"int", int(42), "test", 42, false},
-		{"int64", int64(42), "test", 42, false},
-		{"string", "42", "test", 0, true},
-		{"bool", true, "test", 0, true},
+		{"float64", map[string]any{"test": float64(42)}, "test", func() *int { v := 42; return &v }()},
+		{"int", map[string]any{"test": int(42)}, "test", func() *int { v := 42; return &v }()},
+		{"int64", map[string]any{"test": int64(42)}, "test", func() *int { v := 42; return &v }()},
+		{"missing", map[string]any{}, "test", nil},
+		{"invalid", map[string]any{"test": "42"}, "test", nil},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, err := extractInteger(tt.value, tt.paramName)
+			result := extractIntPtr(tt.params, tt.key)
 
-			if tt.wantError {
-				assert.Error(t, err)
-				assert.Contains(t, err.Error(), tt.paramName)
+			if tt.expected == nil {
+				assert.Nil(t, result)
 			} else {
-				assert.NoError(t, err)
-				assert.Equal(t, tt.expected, result)
+				require.NotNil(t, result)
+				assert.Equal(t, *tt.expected, *result)
 			}
 		})
 	}
@@ -247,8 +245,10 @@ fifth line`
 	err := os.WriteFile(testFile, []byte(testContent), 0o644)
 	require.NoError(t, err)
 
+	tool := newReadFileTool()
+
 	t.Run("no range specified", func(t *testing.T) {
-		content, err := readFileWithLineRange(testFile, nil, nil)
+		content, err := tool.readFileWithLineRange(testFile, nil, nil, false)
 		require.NoError(t, err)
 
 		assert.Contains(t, content, "1\tfirst line")
@@ -257,7 +257,7 @@ fifth line`
 
 	t.Run("start only", func(t *testing.T) {
 		start := 3
-		content, err := readFileWithLineRange(testFile, &start, nil)
+		content, err := tool.readFileWithLineRange(testFile, &start, nil, false)
 		require.NoError(t, err)
 
 		assert.Contains(t, content, "3\tthird line")
@@ -268,7 +268,7 @@ fifth line`
 	t.Run("range specified", func(t *testing.T) {
 		start := 2
 		stop := 4
-		content, err := readFileWithLineRange(testFile, &start, &stop)
+		content, err := tool.readFileWithLineRange(testFile, &start, &stop, false)
 		require.NoError(t, err)
 
 		assert.Contains(t, content, "2\tsecond line")
@@ -279,7 +279,7 @@ fifth line`
 	})
 
 	t.Run("nonexistent file", func(t *testing.T) {
-		_, err := readFileWithLineRange("/nonexistent/file.log", nil, nil)
+		_, err := tool.readFileWithLineRange("/nonexistent/file.log", nil, nil, false)
 		assert.Error(t, err)
 	})
 }

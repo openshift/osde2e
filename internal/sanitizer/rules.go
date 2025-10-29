@@ -35,7 +35,7 @@ func getDefaultRules() []Rule {
 		},
 		{
 			ID:          "bearer-token",
-			Pattern:     `(?i)authorization:\s*bearer\s+[A-Za-z0-9_\-\.]{20,}`,
+			Pattern:     `(?i)authorization:\s*bearer\s+[A-Za-z0-9_\-\.]{10,}`,
 			Replacement: "Authorization: Bearer [TOKEN-REDACTED]",
 			Category:    "token",
 			Enabled:     true,
@@ -51,7 +51,7 @@ func getDefaultRules() []Rule {
 		},
 		{
 			ID:          "db-password",
-			Pattern:     `(?i)(password|pwd)["\s]*[:=]["\s]*[^;\s"']{8,}`,
+			Pattern:     `(?i)(password|pwd)["\s]*[:=]["\s]*[^\s"';]{8,}`,
 			Replacement: "$1=[PASSWORD-REDACTED]",
 			Category:    "password",
 			Enabled:     true,
@@ -101,6 +101,29 @@ func getDefaultRules() []Rule {
 			ID:          "generic-token",
 			Pattern:     `(?i)(token|access[_-]?token)["\s]*[:=]["\s]*[A-Za-z0-9_\-\.]{32,}`,
 			Replacement: "$1=[TOKEN-REDACTED]",
+			Category:    "token",
+			Enabled:     true,
+		},
+
+		// Additional Tokens
+		{
+			ID:          "slack-token",
+			Pattern:     `xox[baprs]-[0-9]+-[0-9]+-[A-Za-z0-9]+`,
+			Replacement: "[SLACK-TOKEN-REDACTED]",
+			Category:    "token",
+			Enabled:     true,
+		},
+		{
+			ID:          "azure-key",
+			Pattern:     `(?i)(azure[_-]?key|subscription[_-]?key)["\s]*[:=]["\s]*[A-Za-z0-9+/=]{40,}`,
+			Replacement: "$1=[AZURE-KEY-REDACTED]",
+			Category:    "token",
+			Enabled:     true,
+		},
+		{
+			ID:          "gcp-key",
+			Pattern:     `(?i)(gcp[_-]?key|google[_-]?key)["\s]*[:=]["\s]*[A-Za-z0-9+/=]{40,}`,
+			Replacement: "$1=[GCP-KEY-REDACTED]",
 			Category:    "token",
 			Enabled:     true,
 		},
