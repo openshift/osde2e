@@ -241,7 +241,7 @@ var Tests = struct {
 	// Env: SLACK_CHANNEL
 	SlackChannel string
 
-	// Slack Webhook is the URL for Cloud Account Cleanup Report workflow to send notifications.
+	// Slack Webhook is the URL to osde2e owner channel for Cloud Account Cleanup Report workflow to send notifications.
 	// Env: SLACK_WEBHOOK
 	SlackWebhook string
 
