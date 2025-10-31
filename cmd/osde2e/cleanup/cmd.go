@@ -1,12 +1,10 @@
 package cleanup
 
 import (
-	"bytes"
-	"encoding/json"
+	"context"
 	"errors"
 	"fmt"
 	"log"
-	"net/http"
 	"os"
 	"regexp"
 	"strconv"
@@ -18,6 +16,7 @@ import (
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/providers/ocmprovider"
+	commonslack "github.com/openshift/osde2e/pkg/common/slack"
 	"github.com/openshift/osde2e/pkg/common/spi"
 	"github.com/spf13/cobra"
 )
@@ -352,26 +351,13 @@ func run(cmd *cobra.Command, argv []string) error {
 			VPCErrors: "VPC Errors: " + vpcErrorBuilder.String(),
 		}
 
-		jsonDataMessage, err := json.Marshal(message)
-		if err != nil {
-			return fmt.Errorf("marshalling summary to JSON: %w", err)
+		// Send notification using common slack package
+		ctx := context.Background()
+		if err := commonslack.SendWebhook(ctx, webhook, message); err != nil {
+			return fmt.Errorf("failed to send slack notification: %w", err)
 		}
 
-		req, err := http.NewRequest("POST", webhook, bytes.NewBuffer(jsonDataMessage))
-		if err != nil {
-			return fmt.Errorf("creating request: %w", err)
-		}
-
-		req.Header.Set("Content-Type", "application/json; charset=utf-8")
-
-		client := &http.Client{}
-		resp, err := client.Do(req)
-		if err != nil {
-			return fmt.Errorf("making request: %w", err)
-		}
-		defer resp.Body.Close()
-
-		fmt.Printf("Slack Notification Response status: %s\n", resp.Status)
+		fmt.Println("Slack notification sent successfully")
 	}
 
 	return nil
