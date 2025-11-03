@@ -17,6 +17,12 @@ type Secret struct {
 	Key          string
 }
 
+// AdHocTestImage represents a test image with optional slack channel
+type AdHocTestImage struct {
+	Image        string `yaml:"image" json:"image"`
+	SlackChannel string `yaml:"slackChannel,omitempty" json:"slackChannel,omitempty"`
+}
+
 const (
 	Success = 0
 	Failure = 1
@@ -996,4 +1002,29 @@ func LoadClusterId() error {
 		}
 	}
 	return nil
+}
+
+// GetAdHocTestImages returns the parsed AdHocTestImages configuration.
+func GetAdHocTestImages() ([]AdHocTestImage, error) {
+	var adHocTestImages []AdHocTestImage
+	if err := viper.UnmarshalKey(Tests.AdHocTestImages, &adHocTestImages); err != nil {
+		return nil, fmt.Errorf("failed to parse adHocTestImages configuration: %w", err)
+	}
+
+	return adHocTestImages, nil
+}
+
+// GetAdHocTestImagesAsString returns only the images from the AdHocTestImages configuration as a comma-separated string
+func GetAdHocTestImagesAsString() string {
+	images, err := GetAdHocTestImages()
+	if err != nil {
+		return ""
+	}
+
+	var imageNames []string
+	for _, img := range images {
+		imageNames = append(imageNames, img.Image)
+	}
+
+	return strings.Join(imageNames, ",")
 }

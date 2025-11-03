@@ -21,7 +21,7 @@ var _ = ginkgo.Describe("Ad Hoc Test Images", ginkgo.Ordered, ginkgo.ContinueOnF
 	var (
 		logger           = ginkgo.GinkgoLogr
 		testImageEntries = []ginkgo.TableEntry{}
-		testImages       = viper.GetStringSlice(config.Tests.AdHocTestImages)
+		testImages       []config.AdHocTestImage
 		exeConfig        = &executor.Config{
 			CloudProviderID:     viper.GetString(config.CloudProvider.CloudProviderID),
 			CloudProviderRegion: viper.GetString(config.CloudProvider.Region),
@@ -34,8 +34,15 @@ var _ = ginkgo.Describe("Ad Hoc Test Images", ginkgo.Ordered, ginkgo.ContinueOnF
 		exe *executor.Executor
 	)
 
+	// Get test images using the new structured format
+	var err error
+	testImages, err = config.GetAdHocTestImages()
+	if err != nil {
+		ginkgo.Fail(fmt.Sprintf("Failed to get AdHocTestImages configuration: %v", err))
+	}
+
 	for _, testImage := range testImages {
-		testImageEntries = append(testImageEntries, ginkgo.Entry(testImage+" should pass", testImage))
+		testImageEntries = append(testImageEntries, ginkgo.Entry(testImage.Image+" should pass", testImage))
 	}
 
 	ginkgo.BeforeAll(func(ctx context.Context) {
@@ -45,15 +52,22 @@ var _ = ginkgo.Describe("Ad Hoc Test Images", ginkgo.Ordered, ginkgo.ContinueOnF
 
 		exe, err = executor.New(logger, exeConfig)
 		Expect(err).NotTo(HaveOccurred())
-		logger.Info("executing test suites", "suites", testImages)
+
+		// Log test images with their slack channels
+		imageNames := make([]string, len(testImages))
+		for i, img := range testImages {
+			imageNames[i] = img.Image
+		}
+		logger.Info("executing test suites", "suites", imageNames)
 	})
 
 	ginkgo.DescribeTable("execution",
-		func(ctx context.Context, testImage string) {
+		func(ctx context.Context, testImageConfig config.AdHocTestImage) {
+			testImage := testImageConfig.Image
 			baseImageName := strings.Split(testImage[strings.LastIndex(testImage, "/")+1:], ":")[0]
 			exeConfig.OutputDir = filepath.Join(viper.GetString(config.ReportDir), viper.GetString(config.Phase), baseImageName)
 
-			logger.Info("running test suite", "suite", testImage, "timeout", exeConfig.Timeout)
+			logger.Info("running test suite", "suite", testImage, "slackChannel", testImageConfig.SlackChannel, "timeout", exeConfig.Timeout)
 			results, err := exe.Execute(ctx, testImage)
 			Expect(err).NotTo(HaveOccurred(), "failed to run test suite")
 

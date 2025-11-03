@@ -378,7 +378,7 @@ func (o *OCMProvider) ClaimClusterFromReserve(originalVersion string, cloudProvi
 		}
 
 		// add useful properties to track clusters
-		err = o.AddProperty(spiCandidateCluster, clusterproperties.AdHocTestImages, viper.GetString(config.Tests.AdHocTestImages))
+		err = o.AddProperty(spiCandidateCluster, clusterproperties.AdHocTestImages, config.GetAdHocTestImagesAsString())
 		if err != nil {
 			log.Printf("Error adding AdHocTestImages to cluster property: %s", err.Error())
 		}
@@ -556,7 +556,7 @@ func (o *OCMProvider) GenerateProperties() (map[string]string, error) {
 		clusterproperties.Status:           clusterproperties.StatusProvisioning,
 		clusterproperties.Availability:     availability,
 		clusterproperties.AWSAccount:       viper.GetString(config.AWSAccountId),
-		clusterproperties.AdHocTestImages:  viper.GetString(config.Tests.AdHocTestImages),
+		clusterproperties.AdHocTestImages:  config.GetAdHocTestImagesAsString(),
 	}
 
 	if provisionshardID != "" {
