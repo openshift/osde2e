@@ -77,6 +77,8 @@ func loadPassthruSecrets(secretLocations []string) {
 	// Load secrets from folders
 	if len(secretLocations) > 0 {
 		secrets := config.GetAllSecrets()
+		secrets = append(secrets, getAdHocTestImagesSlackWebhookSecrets()...)
+
 		for _, secret := range secrets {
 			_ = loadSecretFileIntoKey(secret.Key, secret.FileLocation, secretLocations)
 		}
@@ -117,9 +119,23 @@ func loadPassthruSecrets(secretLocations []string) {
 	passthruSecrets["AWS_PROFILE"] = viper.GetString(config.AWSProfile)
 	passthruSecrets["AWS_ACCESS_KEY_ID"] = viper.GetString(config.AWSAccessKey)
 	passthruSecrets["CAD_PAGERDUTY_ROUTING_KEY"] = viper.GetString(config.Cad.CADPagerDutyRoutingKey)
-	passthruSecrets["GEMINI_API_KEY"] = viper.GetString(config.LLM.APIKey)
 
 	viper.Set(config.NonOSDe2eSecrets, passthruSecrets)
+}
+
+// getAdHocTestImagesSlackWebhookSecrets loads the slack webhook secrets for the ad hoc test images.
+func getAdHocTestImagesSlackWebhookSecrets() []config.Secret {
+	images := viper.GetStringSlice(config.Tests.AdHocTestImages)
+	secrets := []config.Secret{}
+	for _, testImage := range images {
+		baseImageName := strings.Split(testImage[strings.LastIndex(testImage, "/")+1:], ":")[0]
+		secret := config.Secret{
+			Key:          baseImageName + "-slack-webhook",
+			FileLocation: baseImageName + "-slack-webhook",
+		}
+		secrets = append(secrets, secret)
+	}
+	return secrets
 }
 
 // loadYAMLFromConfigs accepts a config name and attempts to unmarshal the config from the /configs directory.

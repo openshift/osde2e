@@ -599,9 +599,9 @@ var Cad = struct {
 	CADPagerDutyRoutingKey: "cad.pagerDutyRoutingKey",
 }
 
-var LLM = struct {
-	// EnableAnalysis enables LLM-powered failure analysis
-	// Env: ENABLE_LLM_ANALYSIS
+var LogAnalysis = struct {
+	// EnableAnalysis enables log analysis powered failure analysis
+	// Env: LOG_ANALYSIS_ENABLE
 	EnableAnalysis string
 
 	// APIKey is the API key for the LLM service (e.g., Gemini)
@@ -609,22 +609,22 @@ var LLM = struct {
 	APIKey string
 
 	// Model specifies which LLM model to use
-	// Env: LLM_MODEL
+	// Env: LOG_ANALYSIS_MODEL
 	Model string
 
-	// EnableSlackNotify enables Slack notifications for LLM analysis results
-	// Env: LLM_ENABLE_SLACK_NOTIFY
+	// EnableSlackNotify enables Slack notifications for log analysis results
+	// Env: LOG_ANALYSIS_SLACK_NOTIFY
 	EnableSlackNotify string
 
-	// SlackWebhook is the Slack webhook URL for LLM analysis notifications
-	// Env: LLM_SLACK_WEBHOOK
+	// SlackWebhook is the Slack webhook URL for log analysis notifications
+	// Env: LOG_ANALYSIS_SLACK_WEBHOOK
 	SlackWebhook string
 }{
-	EnableAnalysis:    "llm.enableAnalysis",
-	APIKey:            "llm.apiKey",
-	Model:             "llm.model",
-	EnableSlackNotify: "llm.enableSlackNotify",
-	SlackWebhook:      "llm.slackWebhook",
+	EnableAnalysis:    "logAnalysis.enableAnalysis",
+	APIKey:            "logAnalysis.apiKey",
+	Model:             "logAnalysis.model",
+	EnableSlackNotify: "logAnalysis.enableSlackNotify",
+	SlackWebhook:      "logAnalysis.slackWebhook",
 }
 
 func InitOSDe2eViper() {
@@ -915,20 +915,20 @@ func InitOSDe2eViper() {
 	RegisterSecret(Cad.CADPagerDutyRoutingKey, "pagerduty-routing-key")
 
 	// ----- LLM Configuration -----
-	viper.SetDefault(LLM.EnableAnalysis, false)
-	_ = viper.BindEnv(LLM.EnableAnalysis, "ENABLE_LLM_ANALYSIS")
+	viper.SetDefault(LogAnalysis.EnableAnalysis, false)
+	_ = viper.BindEnv(LogAnalysis.EnableAnalysis, "LOG_ANALYSIS_ENABLE")
 
-	_ = viper.BindEnv(LLM.APIKey, "GEMINI_API_KEY")
-	RegisterSecret(LLM.APIKey, "gemini-api-key")
+	_ = viper.BindEnv(LogAnalysis.APIKey, "GEMINI_API_KEY")
+	RegisterSecret(LogAnalysis.APIKey, "gemini-api-key")
 
-	viper.SetDefault(LLM.Model, "gemini-2.5-pro")
-	_ = viper.BindEnv(LLM.Model, "LLM_MODEL")
+	viper.SetDefault(LogAnalysis.Model, "gemini-2.5-pro")
+	_ = viper.BindEnv(LogAnalysis.Model, "LOG_ANALYSIS_MODEL")
 
-	viper.SetDefault(LLM.EnableSlackNotify, false)
-	_ = viper.BindEnv(LLM.EnableSlackNotify, "LLM_ENABLE_SLACK_NOTIFY")
+	viper.SetDefault(LogAnalysis.EnableSlackNotify, false)
+	_ = viper.BindEnv(LogAnalysis.EnableSlackNotify, "LOG_ANALYSIS_SLACK_NOTIFY")
 
-	viper.SetDefault(LLM.SlackWebhook, "")
-	_ = viper.BindEnv(LLM.SlackWebhook, "LLM_SLACK_WEBHOOK")
+	viper.SetDefault(LogAnalysis.SlackWebhook, "")
+	_ = viper.BindEnv(LogAnalysis.SlackWebhook, "LOG_ANALYSIS_SLACK_WEBHOOK")
 }
 
 func init() {
@@ -1002,29 +1002,4 @@ func LoadClusterId() error {
 		}
 	}
 	return nil
-}
-
-// GetAdHocTestImages returns the parsed AdHocTestImages configuration.
-func GetAdHocTestImages() ([]AdHocTestImage, error) {
-	var adHocTestImages []AdHocTestImage
-	if err := viper.UnmarshalKey(Tests.AdHocTestImages, &adHocTestImages); err != nil {
-		return nil, fmt.Errorf("failed to parse adHocTestImages configuration: %w", err)
-	}
-
-	return adHocTestImages, nil
-}
-
-// GetAdHocTestImagesAsString returns only the images from the AdHocTestImages configuration as a comma-separated string
-func GetAdHocTestImagesAsString() string {
-	images, err := GetAdHocTestImages()
-	if err != nil {
-		return ""
-	}
-
-	var imageNames []string
-	for _, img := range images {
-		imageNames = append(imageNames, img.Image)
-	}
-
-	return strings.Join(imageNames, ",")
 }

@@ -36,13 +36,13 @@ import (
 // provisioner is used to deploy and manage clusters.
 var provider spi.Provider
 
-// runLLMAnalysis performs LLM-powered failure analysis if enabled
-func runLLMAnalysis(ctx context.Context, err error) {
-	log.Println("Running LLM analysis")
+// runLogAnalysis performs log analysis powered failure analysis if enabled
+func runLogAnalysis(ctx context.Context, err error) {
+	log.Println("Running Log analysis")
 
 	reportDir := viper.GetString(config.ReportDir)
 	if reportDir == "" {
-		log.Println("No report directory available for LLM analysis")
+		log.Println("No report directory available for Log analysis")
 		return
 	}
 
@@ -60,8 +60,8 @@ func runLLMAnalysis(ctx context.Context, err error) {
 	var reporters []reporter.ReporterConfig
 
 	// Add Slack reporter if enabled
-	enableSlackNotify := viper.GetBool(config.LLM.EnableSlackNotify)
-	slackWebhook := viper.GetString(config.LLM.SlackWebhook)
+	enableSlackNotify := viper.GetBool(config.LogAnalysis.EnableSlackNotify)
+	slackWebhook := viper.GetString(config.LogAnalysis.SlackWebhook)
 	if enableSlackNotify && slackWebhook != "" {
 		reporters = append(reporters, reporter.SlackReporterConfig(slackWebhook, true))
 	}
@@ -77,7 +77,7 @@ func runLLMAnalysis(ctx context.Context, err error) {
 	engineConfig := &analysisengine.Config{
 		ArtifactsDir:       reportDir,
 		PromptTemplate:     "default",
-		APIKey:             viper.GetString(config.LLM.APIKey),
+		APIKey:             viper.GetString(config.LogAnalysis.APIKey),
 		FailureContext:     err.Error(),
 		ClusterInfo:        clusterInfo,
 		NotificationConfig: notificationConfig,
@@ -91,12 +91,12 @@ func runLLMAnalysis(ctx context.Context, err error) {
 
 	result, runErr := engine.Run(ctx)
 	if runErr != nil {
-		log.Printf("LLM analysis failed: %v", runErr)
+		log.Printf("Log analysis failed: %v", runErr)
 		return
 	}
 
-	log.Printf("LLM analysis completed successfully. Results written to %s/%s/", reportDir, analysisengine.AnalysisDirName)
-	log.Printf("=== LLM Analysis Result ===\n%s", result.Content)
+	log.Printf("Log analysis completed successfully. Results written to %s/%s/", reportDir, analysisengine.AnalysisDirName)
+	log.Printf("=== Log Analysis Result ===\n%s", result.Content)
 }
 
 // beforeSuite attempts to populate several required cluster fields (either by provisioning a new cluster, or re-using an existing one)
@@ -215,8 +215,8 @@ func RunTests(ctx context.Context) int {
 	exitCode, err = runGinkgoTests()
 	if err != nil {
 		log.Printf("OSDE2E failed: %v", err)
-		if viper.GetBool(config.LLM.EnableAnalysis) {
-			runLLMAnalysis(ctx, err)
+		if viper.GetBool(config.LogAnalysis.EnableAnalysis) {
+			runLogAnalysis(ctx, err)
 		}
 	}
 

@@ -74,7 +74,7 @@ func New(ctx context.Context, config *Config) (*Engine, error) {
 	}
 
 	if config.APIKey == "" {
-		return nil, fmt.Errorf("GEMINI_API_KEY is required for LLM analysis")
+		return nil, fmt.Errorf("GEMINI_API_KEY is required for Log analysis")
 	}
 
 	client, err := llm.NewGeminiClient(ctx, config.APIKey)
@@ -138,7 +138,7 @@ func (e *Engine) Run(ctx context.Context) (*Result, error) {
 
 	result, err := e.llmClient.Analyze(ctx, userPrompt, llmConfig, toolRegistry)
 	if err != nil {
-		return nil, fmt.Errorf("LLM analysis failed: %w", err)
+		return nil, fmt.Errorf("Log analysis failed: %w", err)
 	}
 
 	analysisResult := &Result{
