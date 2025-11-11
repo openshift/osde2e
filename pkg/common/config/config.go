@@ -619,12 +619,17 @@ var LogAnalysis = struct {
 	// SlackWebhook is the Slack webhook URL for log analysis notifications
 	// Env: LOG_ANALYSIS_SLACK_WEBHOOK
 	SlackWebhook string
+
+	// SlackChannel is the default Slack channel for OSDE2E notifications
+	// Env: LOG_ANALYSIS_SLACK_CHANNEL
+	SlackChannel string
 }{
 	EnableAnalysis:    "logAnalysis.enableAnalysis",
 	APIKey:            "logAnalysis.apiKey",
 	Model:             "logAnalysis.model",
 	EnableSlackNotify: "logAnalysis.enableSlackNotify",
 	SlackWebhook:      "logAnalysis.slackWebhook",
+	SlackChannel:      "logAnalysis.slackChannel",
 }
 
 func InitOSDe2eViper() {
@@ -929,6 +934,9 @@ func InitOSDe2eViper() {
 
 	viper.SetDefault(LogAnalysis.SlackWebhook, "")
 	_ = viper.BindEnv(LogAnalysis.SlackWebhook, "LOG_ANALYSIS_SLACK_WEBHOOK")
+
+	viper.SetDefault(LogAnalysis.SlackChannel, "C095XQANCBD")
+	_ = viper.BindEnv(LogAnalysis.SlackChannel, "LOG_ANALYSIS_SLACK_CHANNEL")
 }
 
 func init() {
@@ -1002,4 +1010,29 @@ func LoadClusterId() error {
 		}
 	}
 	return nil
+}
+
+// GetAdHocTestImages returns the parsed AdHocTestImages configuration.
+func GetAdHocTestImages() ([]AdHocTestImage, error) {
+	var adHocTestImages []AdHocTestImage
+	if err := viper.UnmarshalKey(Tests.AdHocTestImages, &adHocTestImages); err != nil {
+		return nil, fmt.Errorf("failed to parse adHocTestImages configuration: %w", err)
+	}
+
+	return adHocTestImages, nil
+}
+
+// GetAdHocTestImagesAsString returns only the images from the AdHocTestImages configuration as a comma-separated string
+func GetAdHocTestImagesAsString() string {
+	images, err := GetAdHocTestImages()
+	if err != nil {
+		return ""
+	}
+
+	var imageNames []string
+	for _, img := range images {
+		imageNames = append(imageNames, img.Image)
+	}
+
+	return strings.Join(imageNames, ",")
 }

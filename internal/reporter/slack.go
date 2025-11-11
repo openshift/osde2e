@@ -50,7 +50,8 @@ func (s *SlackReporter) Report(ctx context.Context, result *AnalysisResult, conf
 
 // Message represents a simple Slack message payload
 type Message struct {
-	Text string `json:"text"`
+	Text    string `json:"text"`
+	Channel string `json:"channel,omitempty"` // For workflow webhooks with specific channel
 }
 
 // formatMessage creates a simple text message for Slack
@@ -74,9 +75,16 @@ func (s *SlackReporter) formatMessage(result *AnalysisResult, config *ReporterCo
 		text += fmt.Sprintf("\n\n❌ Error: %s", result.Error)
 	}
 
-	return &Message{
+	message := &Message{
 		Text: text,
 	}
+
+	// Add channel if specified (for workflow webhooks)
+	if channel, ok := config.Settings["channel"].(string); ok && channel != "" {
+		message.Channel = channel
+	}
+
+	return message
 }
 
 // formatAnalysisContent tries to parse JSON and format it nicely for Slack

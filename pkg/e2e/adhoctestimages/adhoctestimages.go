@@ -25,7 +25,7 @@ var _ = ginkgo.Describe("Ad Hoc Test Images", ginkgo.Ordered, ginkgo.ContinueOnF
 	var (
 		logger           = ginkgo.GinkgoLogr
 		testImageEntries = []ginkgo.TableEntry{}
-		testImages       = viper.GetStringSlice(config.Tests.AdHocTestImages)
+		testImages       []config.AdHocTestImage
 		exeConfig        = &executor.Config{
 			CloudProviderID:     viper.GetString(config.CloudProvider.CloudProviderID),
 			CloudProviderRegion: viper.GetString(config.CloudProvider.Region),
@@ -40,12 +40,13 @@ var _ = ginkgo.Describe("Ad Hoc Test Images", ginkgo.Ordered, ginkgo.ContinueOnF
 
 	// Get test images using the new structured format
 	var err error
+	testImages, err = config.GetAdHocTestImages()
 	if err != nil {
 		ginkgo.Fail(fmt.Sprintf("Failed to get AdHocTestImages configuration: %v", err))
 	}
 
 	for _, testImage := range testImages {
-		testImageEntries = append(testImageEntries, ginkgo.Entry(testImage+" should pass", testImage))
+		testImageEntries = append(testImageEntries, ginkgo.Entry(testImage.Image+" should pass", testImage))
 	}
 
 	ginkgo.BeforeAll(func(ctx context.Context) {
@@ -55,16 +56,22 @@ var _ = ginkgo.Describe("Ad Hoc Test Images", ginkgo.Ordered, ginkgo.ContinueOnF
 
 		exe, err = executor.New(logger, exeConfig)
 		Expect(err).NotTo(HaveOccurred())
-		logger.Info("executing test suites", "suites", testImages)
+
+		// Log test images with their slack channels
+		imageNames := make([]string, len(testImages))
+		for i, img := range testImages {
+			imageNames[i] = img.Image
+		}
+		logger.Info("executing test suites", "suites", imageNames)
 	})
 
 	ginkgo.DescribeTable("execution",
-		func(ctx context.Context, testImage string) {
+		func(ctx context.Context, testImageConfig config.AdHocTestImage) {
+			testImage := testImageConfig.Image
 			baseImageName := strings.Split(testImage[strings.LastIndex(testImage, "/")+1:], ":")[0]
 			exeConfig.OutputDir = filepath.Join(viper.GetString(config.ReportDir), viper.GetString(config.Phase), baseImageName)
-			logger.Info(fmt.Sprintf("test image output dir: %s \n", exeConfig.OutputDir))
-			slackWebhook := viper.GetString(baseImageName + "-slack-webhook")
-			logger.Info("running test suite", "suite", testImage, "slackWebhook", slackWebhook, "timeout", exeConfig.Timeout)
+
+			logger.Info("running test suite", "suite", testImage, "slackChannel", testImageConfig.SlackChannel, "timeout", exeConfig.Timeout)
 			results, err := exe.Execute(ctx, testImage)
 
 			// Defer the Expect calls to ensure they always run and get logged
@@ -100,15 +107,15 @@ var _ = ginkgo.Describe("Ad Hoc Test Images", ginkgo.Ordered, ginkgo.ContinueOnF
 
 			if len(allFailures) > 0 && viper.GetBool(config.LogAnalysis.EnableAnalysis) {
 				combinedErr := fmt.Errorf("failures in %s: %s", testImage, strings.Join(allFailures, "; "))
-				runLogAnalysisForAdHocTestImage(ctx, logger, testImage, slackWebhook, combinedErr, exeConfig.OutputDir)
+				runLogAnalysisForAdHocTestImage(ctx, logger, testImageConfig, combinedErr, exeConfig.OutputDir)
 			}
 		},
 		testImageEntries)
 })
 
 // runLogAnalysisForAdHocTestImage performs log analysis powered failure analysis for a specific test image
-func runLogAnalysisForAdHocTestImage(ctx context.Context, logger logr.Logger, testImage string, slackWebhook string, err error, artifactsDir string) {
-	logger.Info("Running Log analysis for test image", "image", testImage)
+func runLogAnalysisForAdHocTestImage(ctx context.Context, logger logr.Logger, testImageConfig config.AdHocTestImage, err error, artifactsDir string) {
+	logger.Info("Running Log analysis for test image", "image", testImageConfig.Image, "slackChannel", testImageConfig.SlackChannel)
 
 	clusterInfo := &analysisengine.ClusterInfo{
 		ID:            viper.GetString(config.Cluster.ID),
@@ -123,9 +130,15 @@ func runLogAnalysisForAdHocTestImage(ctx context.Context, logger logr.Logger, te
 	var notificationConfig *reporter.NotificationConfig
 	var reporters []reporter.ReporterConfig
 
-	// Add Slack reporter if slack channel is configured for this image
-	if slackWebhook != "" {
-		reporters = append(reporters, reporter.SlackReporterConfig(slackWebhook, true))
+	// Get the global main slack workflow webhook
+	slackWebhook := viper.GetString(config.LogAnalysis.SlackWebhook)
+	enableSlackNotify := viper.GetBool(config.LogAnalysis.EnableSlackNotify)
+
+	// Add Slack reporter if enabled, webhook exists, and channel is specified
+	if enableSlackNotify && slackWebhook != "" && testImageConfig.SlackChannel != "" {
+		slackConfig := reporter.SlackReporterConfig(slackWebhook, true)
+		slackConfig.Settings["channel"] = testImageConfig.SlackChannel
+		reporters = append(reporters, slackConfig)
 	}
 
 	// Create notification config if we have any reporters
@@ -147,16 +160,16 @@ func runLogAnalysisForAdHocTestImage(ctx context.Context, logger logr.Logger, te
 
 	engine, err := analysisengine.New(ctx, engineConfig)
 	if err != nil {
-		logger.Error(err, "Unable to create analysis engine for image", "image", testImage)
+		logger.Error(err, "Unable to create analysis engine for image", "image", testImageConfig.Image)
 		return
 	}
 
 	result, runErr := engine.Run(ctx)
 	if runErr != nil {
-		logger.Error(runErr, "Log analysis failed for image", "image", testImage)
+		logger.Error(runErr, "Log analysis failed for image", "image", testImageConfig.Image)
 		return
 	}
 
-	logger.Info("Log analysis completed successfully", "image", testImage, "resultsDir", fmt.Sprintf("%s/%s/", artifactsDir, analysisengine.AnalysisDirName))
-	log.Printf("=== Log Analysis Result for %s ===\n%s", testImage, result.Content)
+	logger.Info("Log analysis completed successfully", "image", testImageConfig.Image, "resultsDir", fmt.Sprintf("%s/%s/", artifactsDir, analysisengine.AnalysisDirName))
+	log.Printf("=== Log Analysis Result for %s ===\n%s", testImageConfig.Image, result.Content)
 }
