@@ -1,8 +1,6 @@
 module github.com/openshift/osde2e
 
-go 1.23.0
-
-toolchain go1.23.7
+go 1.24.0
 
 require (
 	cloud.google.com/go/kms v1.21.1
@@ -40,10 +38,10 @@ require (
 	github.com/spf13/pflag v1.0.6
 	github.com/spf13/viper v1.19.0
 	github.com/vmware-tanzu/velero v1.10.2
-	golang.org/x/net v0.41.0
+	golang.org/x/net v0.47.0
 	golang.org/x/oauth2 v0.30.0 // indirect
-	golang.org/x/sync v0.15.0
-	golang.org/x/tools v0.33.0
+	golang.org/x/sync v0.18.0
+	golang.org/x/tools v0.38.0
 	google.golang.org/api v0.227.0
 	google.golang.org/genproto v0.0.0-20250409194420-de1ac958c67a // indirect
 	gopkg.in/yaml.v3 v3.0.1
@@ -165,12 +163,12 @@ require (
 	go.opentelemetry.io/otel/trace v1.35.0 // indirect
 	go.uber.org/automaxprocs v1.6.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
-	golang.org/x/crypto v0.39.0 // indirect
+	golang.org/x/crypto v0.45.0 // indirect
 	golang.org/x/exp v0.0.0-20250408133849-7e4ce0ab07d0 // indirect
-	golang.org/x/mod v0.25.0 // indirect
-	golang.org/x/sys v0.33.0 // indirect
-	golang.org/x/term v0.32.0 // indirect
-	golang.org/x/text v0.26.0 // indirect
+	golang.org/x/mod v0.29.0 // indirect
+	golang.org/x/sys v0.38.0 // indirect
+	golang.org/x/term v0.37.0 // indirect
+	golang.org/x/text v0.31.0 // indirect
 	golang.org/x/time v0.11.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20250409194420-de1ac958c67a // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250404141209-ee84b53bf3d0 // indirect
