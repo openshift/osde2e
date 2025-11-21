@@ -17,6 +17,7 @@ import (
 	"github.com/onsi/ginkgo/v2/types"
 	"github.com/onsi/gomega"
 	"github.com/openshift/osde2e/internal/analysisengine"
+	"github.com/openshift/osde2e/internal/reporter"
 	clusterutil "github.com/openshift/osde2e/pkg/common/cluster"
 	"github.com/openshift/osde2e/pkg/common/clusterproperties"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
@@ -35,13 +36,13 @@ import (
 // provisioner is used to deploy and manage clusters.
 var provider spi.Provider
 
-// runLLMAnalysis performs LLM-powered failure analysis if enabled
-func runLLMAnalysis(ctx context.Context, err error) {
-	log.Println("Running LLM analysis")
+// runLogAnalysis performs log analysis powered failure analysis if enabled
+func runLogAnalysis(ctx context.Context, err error) {
+	log.Println("Running Log analysis")
 
 	reportDir := viper.GetString(config.ReportDir)
 	if reportDir == "" {
-		log.Println("No report directory available for LLM analysis")
+		log.Println("No report directory available for Log analysis")
 		return
 	}
 
@@ -54,12 +55,35 @@ func runLLMAnalysis(ctx context.Context, err error) {
 		Version:       viper.GetString(config.Cluster.Version),
 	}
 
+	// Setup notification config - composable approach for multiple reporters
+	var notificationConfig *reporter.NotificationConfig
+	var reporters []reporter.ReporterConfig
+
+	// Add Slack reporter if enabled
+	enableSlackNotify := viper.GetBool(config.Tests.EnableSlackNotify)
+	slackWebhook := viper.GetString(config.LogAnalysis.SlackWebhook)
+	defaultChannel := viper.GetString(config.LogAnalysis.SlackChannel)
+	if enableSlackNotify && slackWebhook != "" && defaultChannel != "" {
+		slackConfig := reporter.SlackReporterConfig(slackWebhook, true)
+		slackConfig.Settings["channel"] = defaultChannel
+		reporters = append(reporters, slackConfig)
+	}
+
+	// Create notification config if we have any reporters
+	if len(reporters) > 0 {
+		notificationConfig = &reporter.NotificationConfig{
+			Enabled:   true,
+			Reporters: reporters,
+		}
+	}
+
 	engineConfig := &analysisengine.Config{
-		ArtifactsDir:   reportDir,
-		PromptTemplate: "default",
-		APIKey:         viper.GetString(config.LLM.APIKey),
-		FailureContext: err.Error(),
-		ClusterInfo:    clusterInfo,
+		ArtifactsDir:       reportDir,
+		PromptTemplate:     "default",
+		APIKey:             viper.GetString(config.LogAnalysis.APIKey),
+		FailureContext:     err.Error(),
+		ClusterInfo:        clusterInfo,
+		NotificationConfig: notificationConfig,
 	}
 
 	engine, err := analysisengine.New(ctx, engineConfig)
@@ -70,12 +94,12 @@ func runLLMAnalysis(ctx context.Context, err error) {
 
 	result, runErr := engine.Run(ctx)
 	if runErr != nil {
-		log.Printf("LLM analysis failed: %v", runErr)
+		log.Printf("Log analysis failed: %v", runErr)
 		return
 	}
 
-	log.Printf("LLM analysis completed successfully. Results written to %s/%s/", reportDir, analysisengine.AnalysisDirName)
-	log.Printf("=== LLM Analysis Result ===\n%s", result.Content)
+	log.Printf("Log analysis completed successfully. Results written to %s/%s/", reportDir, analysisengine.AnalysisDirName)
+	log.Printf("=== Log Analysis Result ===\n%s", result.Content)
 }
 
 // beforeSuite attempts to populate several required cluster fields (either by provisioning a new cluster, or re-using an existing one)
@@ -194,8 +218,8 @@ func RunTests(ctx context.Context) int {
 	exitCode, err = runGinkgoTests()
 	if err != nil {
 		log.Printf("OSDE2E failed: %v", err)
-		if viper.GetBool(config.LLM.EnableAnalysis) {
-			runLLMAnalysis(ctx, err)
+		if viper.GetBool(config.LogAnalysis.EnableAnalysis) {
+			runLogAnalysis(ctx, err)
 		}
 	}
 

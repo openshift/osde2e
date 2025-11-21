@@ -10,11 +10,18 @@ import (
 	"time"
 
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
+	"gopkg.in/yaml.v3"
 )
 
 type Secret struct {
 	FileLocation string
 	Key          string
+}
+
+// TestSuite represents a test image with optional slack channel
+type TestSuite struct {
+	Image        string `yaml:"image" json:"image" mapstructure:"image"`
+	SlackChannel string `yaml:"slackChannel,omitempty" json:"slackChannel,omitempty" mapstructure:"slackChannel,omitempty"`
 }
 
 const (
@@ -221,9 +228,13 @@ var Tests = struct {
 	// Env: AD_HOC_TEST_CONTAINER_TIMEOUT
 	AdHocTestContainerTimeout string
 
-	// AdHocTestImages is a list of test adHocTestImages to run.
+	// AdHocTestImages is a list of test adHocTestImages to run (DEPRECATED - use TestSuites).
 	// Env: AD_HOC_TEST_IMAGES
 	AdHocTestImages string
+
+	// TestSuites is a list of test suites to run with optional slack channels.
+	// Env: TEST_SUITES_YAML
+	TestSuites string
 
 	// PollingTimeout is how long (in seconds) to wait for an object to be created before failing the test.
 	// Env: POLLING_TIMEOUT
@@ -241,9 +252,13 @@ var Tests = struct {
 	// Env: SLACK_CHANNEL
 	SlackChannel string
 
-	// Slack Webhook is the URL for Cloud Account Cleanup Report workflow to send notifications.
+	// Slack Webhook is the URL to osde2e owner channel for Cloud Account Cleanup Report workflow to send notifications.
 	// Env: SLACK_WEBHOOK
 	SlackWebhook string
+
+	// SlackNotify is a boolean that determines if Slack notifications should be sent.
+	// Env: SLACK_NOTIFY
+	EnableSlackNotify string
 
 	// GinkgoSkip is a regex passed to Ginkgo that skips any test suites matching the regex. ex. "Operator"
 	// Env: GINKGO_SKIP
@@ -300,12 +315,14 @@ var Tests = struct {
 	OnlyHealthCheckNodes string
 }{
 	AdHocTestImages:            "tests.adHocTestImages",
+	TestSuites:                 "tests.testSuites",
 	SuiteTimeout:               "tests.suiteTimeout",
 	AdHocTestContainerTimeout:  "tests.adHocTestContainerTimeout",
 	PollingTimeout:             "tests.pollingTimeout",
 	ServiceAccount:             "tests.serviceAccount",
 	SlackChannel:               "tests.slackChannel",
 	SlackWebhook:               "tests.slackWebhook",
+	EnableSlackNotify:          "tests.enableSlackNotify",
 	GinkgoSkip:                 "tests.ginkgoSkip",
 	GinkgoFocus:                "tests.focus",
 	GinkgoLogLevel:             "tests.ginkgoLogLevel",
@@ -593,9 +610,9 @@ var Cad = struct {
 	CADPagerDutyRoutingKey: "cad.pagerDutyRoutingKey",
 }
 
-var LLM = struct {
-	// EnableAnalysis enables LLM-powered failure analysis
-	// Env: ENABLE_LLM_ANALYSIS
+var LogAnalysis = struct {
+	// EnableAnalysis enables log analysis powered failure analysis
+	// Env: LOG_ANALYSIS_ENABLE
 	EnableAnalysis string
 
 	// APIKey is the API key for the LLM service (e.g., Gemini)
@@ -605,10 +622,20 @@ var LLM = struct {
 	// Model specifies which LLM model to use
 	// Env: LLM_MODEL
 	Model string
+
+	// SlackWebhook is the Slack webhook URL for log analysis notifications
+	// Env: LOG_ANALYSIS_SLACK_WEBHOOK
+	SlackWebhook string
+
+	// SlackChannel is the default Slack channel for OSDE2E notifications
+	// Env: LOG_ANALYSIS_SLACK_CHANNEL
+	SlackChannel string
 }{
-	EnableAnalysis: "llm.enableAnalysis",
-	APIKey:         "llm.apiKey",
-	Model:          "llm.model",
+	EnableAnalysis: "logAnalysis.enableAnalysis",
+	APIKey:         "logAnalysis.apiKey",
+	Model:          "logAnalysis.model",
+	SlackWebhook:   "logAnalysis.slackWebhook",
+	SlackChannel:   "logAnalysis.slackChannel",
 }
 
 func InitOSDe2eViper() {
@@ -697,6 +724,7 @@ func InitOSDe2eViper() {
 
 	// ----- Tests -----
 	_ = viper.BindEnv(Tests.AdHocTestImages, "AD_HOC_TEST_IMAGES")
+	_ = viper.BindEnv(Tests.TestSuites, "TEST_SUITES_YAML")
 
 	viper.SetDefault(Tests.SuiteTimeout, 6)
 	_ = viper.BindEnv(Tests.SuiteTimeout, "SUITE_TIMEOUT")
@@ -745,6 +773,9 @@ func InitOSDe2eViper() {
 
 	_ = viper.BindEnv(Tests.SlackWebhook, "SLACK_WEBHOOK")
 	RegisterSecret(Tests.SlackWebhook, "cleanup-job-notification-webhook")
+
+	viper.SetDefault(Tests.EnableSlackNotify, false)
+	_ = viper.BindEnv(Tests.EnableSlackNotify, "SLACK_NOTIFY")
 
 	// ----- Cluster -----
 	viper.SetDefault(Cluster.MultiAZ, false)
@@ -899,14 +930,20 @@ func InitOSDe2eViper() {
 	RegisterSecret(Cad.CADPagerDutyRoutingKey, "pagerduty-routing-key")
 
 	// ----- LLM Configuration -----
-	viper.SetDefault(LLM.EnableAnalysis, false)
-	_ = viper.BindEnv(LLM.EnableAnalysis, "ENABLE_LLM_ANALYSIS")
+	viper.SetDefault(LogAnalysis.EnableAnalysis, false)
+	_ = viper.BindEnv(LogAnalysis.EnableAnalysis, "LOG_ANALYSIS_ENABLE")
 
-	_ = viper.BindEnv(LLM.APIKey, "GEMINI_API_KEY")
-	RegisterSecret(LLM.APIKey, "gemini-api-key")
+	_ = viper.BindEnv(LogAnalysis.APIKey, "GEMINI_API_KEY")
+	RegisterSecret(LogAnalysis.APIKey, "gemini-api-key")
 
-	viper.SetDefault(LLM.Model, "gemini-2.5-pro")
-	_ = viper.BindEnv(LLM.Model, "LLM_MODEL")
+	viper.SetDefault(LogAnalysis.Model, "gemini-2.5-pro")
+	_ = viper.BindEnv(LogAnalysis.Model, "LLM_MODEL")
+
+	viper.SetDefault(LogAnalysis.SlackWebhook, "")
+	_ = viper.BindEnv(LogAnalysis.SlackWebhook, "LOG_ANALYSIS_SLACK_WEBHOOK")
+
+	viper.SetDefault(LogAnalysis.SlackChannel, "C095XQANCBD")
+	_ = viper.BindEnv(LogAnalysis.SlackChannel, "LOG_ANALYSIS_SLACK_CHANNEL")
 }
 
 func init() {
@@ -980,4 +1017,54 @@ func LoadClusterId() error {
 		}
 	}
 	return nil
+}
+
+// GetTestSuites returns test suites, supporting both new TestSuites and legacy AdHocTestImages formats.
+// Checks TestSuites first, then falls back to legacy AdHocTestImages string slice.
+func GetTestSuites() ([]TestSuite, error) {
+	// Priority 1: Try new TestSuites format
+	if viper.IsSet(Tests.TestSuites) {
+		// Try structured unmarshaling first (config files)
+		var testSuites []TestSuite
+		if err := viper.UnmarshalKey(Tests.TestSuites, &testSuites); err == nil {
+			return testSuites, nil
+		}
+
+		// Try parsing as YAML string from environment variable
+		strValue := viper.GetString(Tests.TestSuites)
+		var suites []TestSuite
+		if err := yaml.Unmarshal([]byte(strValue), &suites); err != nil {
+			return nil, fmt.Errorf("failed to parse TEST_SUITES_YAML, format should be: '- image: ...\\n  slackChannel: ...'")
+		}
+		return suites, nil
+	}
+
+	// Priority 2: Try legacy AdHocTestImages as string slice (simple image names only)
+	if viper.IsSet(Tests.AdHocTestImages) {
+		legacyImages := viper.GetStringSlice(Tests.AdHocTestImages)
+		var suites []TestSuite
+		for _, img := range legacyImages {
+			if img != "" {
+				suites = append(suites, TestSuite{Image: img})
+			}
+		}
+		return suites, nil
+	}
+
+	return []TestSuite{}, nil
+}
+
+// GetAdHocTestImagesAsString returns only the images from the test suites configuration as a comma-separated string
+func GetAdHocTestImagesAsString() string {
+	suites, err := GetTestSuites()
+	if err != nil {
+		return ""
+	}
+
+	var imageNames []string
+	for _, suite := range suites {
+		imageNames = append(imageNames, suite.Image)
+	}
+
+	return strings.Join(imageNames, ",")
 }
