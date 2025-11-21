@@ -48,7 +48,7 @@ var args struct {
 	ocpTestSuite         string
 	ocpTestSkipRegex     string
 	onlyHealthCheckNodes bool
-	enableLLMAnalysis    bool
+	logAnalysisEnable    bool
 }
 
 func init() {
@@ -138,10 +138,10 @@ func init() {
 		"Only run any Ginkgo tests matching the ginkgo label filter",
 	)
 	pfs.BoolVar(
-		&args.enableLLMAnalysis,
-		"enable-llm-analysis",
+		&args.logAnalysisEnable,
+		"log-analysis-enable",
 		false,
-		"Enable LLM-powered failure analysis on test failures",
+		"Enable AI powered log analysis on test failures",
 	)
 
 	_ = viper.BindPFlag(config.Cluster.ID, Cmd.PersistentFlags().Lookup("cluster-id"))
@@ -154,7 +154,7 @@ func init() {
 	_ = viper.BindPFlag(config.Tests.GinkgoSkip, Cmd.PersistentFlags().Lookup("skip-tests"))
 	_ = viper.BindPFlag(config.SkipMustGather, Cmd.PersistentFlags().Lookup("skip-must-gather"))
 	_ = viper.BindPFlag(config.Tests.GinkgoLabelFilter, Cmd.PersistentFlags().Lookup("label-filter"))
-	_ = viper.BindPFlag(config.LLM.EnableAnalysis, Cmd.PersistentFlags().Lookup("enable-llm-analysis"))
+	_ = viper.BindPFlag(config.LogAnalysis.EnableAnalysis, Cmd.PersistentFlags().Lookup("log-analysis-enable"))
 }
 
 func run(cmd *cobra.Command, argv []string) {
