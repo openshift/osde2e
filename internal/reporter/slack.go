@@ -50,27 +50,24 @@ func (s *SlackReporter) Report(ctx context.Context, result *AnalysisResult, conf
 
 // Message represents a simple Slack message payload
 type Message struct {
-	Text    string `json:"text"`
-	Channel string `json:"channel,omitempty"`
+	Analysis string `json:"analysis"`
+	Summary  string `json:"summary,omitempty"`
+	Channel  string `json:"channel,omitempty"`
 }
 
 // formatMessage creates a simple text message for Slack
 func (s *SlackReporter) formatMessage(result *AnalysisResult, config *ReporterConfig) *Message {
 	// Create simple text message
-	statusEmoji := "❌"
-	text := fmt.Sprintf("%s E2E test failed\n", statusEmoji)
+	statusEmoji := ":failed:"
+	summary := fmt.Sprintf("%s Pipeline Failed at E2E Test\n", statusEmoji)
+	text := ""
 
-	message := &Message{}
-	// Add channel if specified (for workflow webhooks)
-	if channel, ok := config.Settings["channel"].(string); ok && channel != "" {
-		message.Channel = channel
-	}
 	if image, ok := config.Settings["image"].(string); ok && image != "" {
 		imageInfo := strings.Split(image, ":")
 		image := imageInfo[0]
 		commit := imageInfo[1]
 		env := config.Settings["env"].(string)
-		text += fmt.Sprintf("image: %s \tenv: %s \tcommit: %s\n", image, env, commit)
+		summary += fmt.Sprintf("Test suite: %s \nCommit: %s \nEnvironment: %s\n", image, commit, env)
 	}
 
 	// Try to parse and format JSON analysis
@@ -79,12 +76,17 @@ func (s *SlackReporter) formatMessage(result *AnalysisResult, config *ReporterCo
 	} else {
 		text += fmt.Sprintf("Analysis:\n%s", result.Content)
 	}
-
 	if result.Error != "" {
 		text += fmt.Sprintf("\n\n Error: %s", result.Error)
 	}
-
-	message.Text = text
+	message := &Message{
+		Summary:  summary,
+		Analysis: text,
+	}
+	// Add channel if specified (for workflow webhooks)
+	if channel, ok := config.Settings["channel"].(string); ok && channel != "" {
+		message.Channel = channel
+	}
 
 	return message
 }
@@ -123,14 +125,14 @@ func (s *SlackReporter) formatAnalysisContent(content string) string {
 
 	// Format root cause
 	if rootCause, ok := analysis["root_cause"].(string); ok && rootCause != "" {
-		formatted.WriteString("🔍 Root Cause:\n")
+		formatted.WriteString("====== 🔍 Possible Cause ======\n")
 		formatted.WriteString(rootCause)
 		formatted.WriteString("\n\n")
 	}
 
 	// Format recommendations
 	if recommendations, ok := analysis["recommendations"].([]interface{}); ok && len(recommendations) > 0 {
-		formatted.WriteString("💡 Recommendations:\n")
+		formatted.WriteString("====== 💡 Recommendations ======\n")
 		for i, rec := range recommendations {
 			if recStr, ok := rec.(string); ok {
 				formatted.WriteString(fmt.Sprintf("%d. %s\n", i+1, recStr))
