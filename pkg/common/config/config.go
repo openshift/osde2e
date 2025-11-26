@@ -13,6 +13,9 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+// channel id for #hcm-cicd-notifications
+const defaultNotificationsChannel = "C06HQR8HN0L"
+
 type Secret struct {
 	FileLocation string
 	Key          string
@@ -942,7 +945,7 @@ func InitOSDe2eViper() {
 	viper.SetDefault(LogAnalysis.SlackWebhook, "")
 	_ = viper.BindEnv(LogAnalysis.SlackWebhook, "LOG_ANALYSIS_SLACK_WEBHOOK")
 
-	viper.SetDefault(LogAnalysis.SlackChannel, "C095XQANCBD")
+	viper.SetDefault(LogAnalysis.SlackChannel, defaultNotificationsChannel)
 	_ = viper.BindEnv(LogAnalysis.SlackChannel, "LOG_ANALYSIS_SLACK_CHANNEL")
 }
 
