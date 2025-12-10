@@ -46,6 +46,14 @@ func runLogAnalysis(ctx context.Context, err error) {
 		return
 	}
 
+	// Get cluster expiration timestamp
+	clusterExpiration := ""
+	if provider != nil {
+		if cluster, err := provider.GetCluster(viper.GetString(config.Cluster.ID)); err == nil {
+			clusterExpiration = cluster.ExpirationTimestamp().Format("2006-01-02 15:04:05 MST")
+		}
+	}
+
 	clusterInfo := &analysisengine.ClusterInfo{
 		ID:            viper.GetString(config.Cluster.ID),
 		Name:          viper.GetString(config.Cluster.Name),
@@ -53,6 +61,7 @@ func runLogAnalysis(ctx context.Context, err error) {
 		Region:        viper.GetString(config.CloudProvider.Region),
 		CloudProvider: viper.GetString(config.CloudProvider.CloudProviderID),
 		Version:       viper.GetString(config.Cluster.Version),
+		Expiration:    clusterExpiration,
 	}
 
 	// Setup notification config - composable approach for multiple reporters
@@ -66,6 +75,8 @@ func runLogAnalysis(ctx context.Context, err error) {
 	if enableSlackNotify && slackWebhook != "" && defaultChannel != "" {
 		slackConfig := reporter.SlackReporterConfig(slackWebhook, true)
 		slackConfig.Settings["channel"] = defaultChannel
+		slackConfig.Settings["cluster_info"] = clusterInfo
+		slackConfig.Settings["report_dir"] = reportDir
 		reporters = append(reporters, slackConfig)
 	}
 
