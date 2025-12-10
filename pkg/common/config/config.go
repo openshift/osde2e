@@ -605,12 +605,17 @@ var LogAnalysis = struct {
 	// SlackChannel is the default Slack channel for OSDE2E notifications
 	// Env: LOG_ANALYSIS_SLACK_CHANNEL
 	SlackChannel string
+
+	// SlackBotToken is the Slack bot token for enhanced features (file attachments)
+	// Env: LOG_ANALYSIS_SLACK_BOT_TOKEN
+	SlackBotToken string
 }{
 	EnableAnalysis: "logAnalysis.enableAnalysis",
 	APIKey:         "logAnalysis.apiKey",
 	Model:          "logAnalysis.model",
 	SlackWebhook:   "logAnalysis.slackWebhook",
 	SlackChannel:   "logAnalysis.slackChannel",
+	SlackBotToken:  "logAnalysis.slackBotToken",
 }
 
 // KrknAI config keys for Kraken AI chaos testing.
@@ -951,6 +956,10 @@ func InitOSDe2eViper() {
 
 	viper.SetDefault(LogAnalysis.SlackChannel, defaultNotificationsChannel)
 	_ = viper.BindEnv(LogAnalysis.SlackChannel, "LOG_ANALYSIS_SLACK_CHANNEL")
+
+	viper.SetDefault(LogAnalysis.SlackBotToken, "")
+	_ = viper.BindEnv(LogAnalysis.SlackBotToken, "LOG_ANALYSIS_SLACK_BOT_TOKEN")
+	RegisterSecret(LogAnalysis.SlackBotToken, "slack-bot-token")
 
 	// ----- KrknAI Configuration -----
 	viper.SetDefault(KrknAI.Mode, "discover")

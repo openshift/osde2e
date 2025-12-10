@@ -188,6 +188,14 @@ func (o *E2EOrchestrator) AnalyzeLogs(ctx context.Context, testErr error) error 
 		return fmt.Errorf("no report directory available for log analysis")
 	}
 
+	// Get cluster expiration timestamp
+	clusterExpiration := ""
+	if o.provider != nil {
+		if cl, err := o.provider.GetCluster(viper.GetString(config.Cluster.ID)); err == nil {
+			clusterExpiration = cl.ExpirationTimestamp().Format("2006-01-02 15:04:05 MST")
+		}
+	}
+
 	clusterInfo := &analysisengine.ClusterInfo{
 		ID:            viper.GetString(config.Cluster.ID),
 		Name:          viper.GetString(config.Cluster.Name),
@@ -195,9 +203,18 @@ func (o *E2EOrchestrator) AnalyzeLogs(ctx context.Context, testErr error) error 
 		Region:        viper.GetString(config.CloudProvider.Region),
 		CloudProvider: viper.GetString(config.CloudProvider.CloudProviderID),
 		Version:       viper.GetString(config.Cluster.Version),
+		Expiration:    clusterExpiration,
 	}
+
+	// Setup notification config using BuildNotificationConfig
 	if viper.GetBool(config.Tests.EnableSlackNotify) {
-		notificationConfig = reporter.BuildNotificationConfig(viper.GetString(config.LogAnalysis.SlackWebhook), viper.GetString(config.LogAnalysis.SlackChannel))
+		notificationConfig = reporter.BuildNotificationConfig(
+			viper.GetString(config.LogAnalysis.SlackWebhook),
+			viper.GetString(config.LogAnalysis.SlackChannel),
+			clusterInfo,
+			reportDir,
+			viper.GetString(config.LogAnalysis.SlackBotToken),
+		)
 	}
 
 	engineConfig := &analysisengine.Config{

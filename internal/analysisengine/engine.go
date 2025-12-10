@@ -30,6 +30,7 @@ type ClusterInfo struct {
 	Region        string
 	CloudProvider string
 	Version       string
+	Expiration    string
 }
 
 // Config holds configuration for the analysis engine
