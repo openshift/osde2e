@@ -151,7 +151,7 @@ func (CcsAwsSession *ccsAwsSession) CleanupRoles(activeClusters map[string]bool,
 						if sendSummary && errorBuilder.Len() < config.SlackMessageLength {
 							errorBuilder.WriteString(errorMsg)
 						}
-						return fmt.Errorf(errorMsg)
+						return fmt.Errorf("%s", errorMsg)
 					}
 					*deletedCounter++
 					fmt.Println("Removed")
