@@ -1,4 +1,4 @@
-.PHONY: check generate test
+git add.PHONY: check generate test
 
 PKG := github.com/openshift/osde2e
 DOC_PKG := $(PKG)/cmd/osde2e-docs
@@ -16,7 +16,7 @@ fmt:
 	gofmt -s -w .
 
 lint:
-	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(shell go env GOPATH)/bin v2.0.1
+	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(shell go env GOPATH)/bin latest
 	(cd "$(DIR)"; golangci-lint run -c .golang-ci.yml ./...)
 
 check: lint shellcheck vipercheck diffproviders.txt
