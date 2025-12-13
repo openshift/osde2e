@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"os"
+	"path/filepath"
 	"strings"
 
 	commonslack "github.com/openshift/osde2e/pkg/common/slack"
@@ -62,12 +64,40 @@ func (s *SlackReporter) formatMessage(result *AnalysisResult, config *ReporterCo
 	summary := fmt.Sprintf("%s Pipeline Failed at E2E Test\n", statusEmoji)
 	text := ""
 
+	// Add cluster information to summary
+	if clusterInfo, ok := config.Settings["cluster_info"].(*ClusterInfo); ok && clusterInfo != nil {
+		summary += "\n====== Cluster Information ======\n"
+		summary += fmt.Sprintf("Cluster ID: %s\n", clusterInfo.ID)
+		if clusterInfo.Expiration != "" {
+			summary += fmt.Sprintf("Expiration: %s\n", clusterInfo.Expiration)
+		}
+		if clusterInfo.Name != "" {
+			summary += fmt.Sprintf("Name: %s\n", clusterInfo.Name)
+		}
+		if clusterInfo.Version != "" {
+			summary += fmt.Sprintf("Version: %s\n", clusterInfo.Version)
+		}
+		if clusterInfo.Provider != "" {
+			summary += fmt.Sprintf("Provider: %s\n", clusterInfo.Provider)
+		}
+		summary += "\n"
+	}
+
 	if image, ok := config.Settings["image"].(string); ok && image != "" {
 		imageInfo := strings.Split(image, ":")
 		image := imageInfo[0]
 		commit := imageInfo[1]
 		env := config.Settings["env"].(string)
 		summary += fmt.Sprintf("Test suite: %s \nCommit: %s \nEnvironment: %s\n", image, commit, env)
+	}
+
+	// Add test pod stdout if available
+	if reportDir, ok := config.Settings["report_dir"].(string); ok && reportDir != "" {
+		if testOutput := s.readTestOutput(reportDir); testOutput != "" {
+			text += "\n\n====== Test Pod Stdout ======\n"
+			text += testOutput
+			text += "\n"
+		}
 	}
 
 	// Try to parse and format JSON analysis
@@ -141,6 +171,34 @@ func (s *SlackReporter) formatAnalysisContent(content string) string {
 	}
 
 	return formatted.String()
+}
+
+// readTestOutput reads the test_output.txt or test_output.log file from the report directory
+func (s *SlackReporter) readTestOutput(reportDir string) string {
+	// Try test_output.txt first, then test_output.log
+	for _, filename := range []string{"test_output.txt", "test_output.log"} {
+		filePath := reportDir + "/" + filename
+		if content, err := os.ReadFile(filepath.Clean(filePath)); err == nil {
+			// Limit output size to prevent overwhelming Slack
+			maxBytes := 10000 // ~10KB limit for test output in Slack
+			if len(content) > maxBytes {
+				return string(content[:maxBytes]) + "\n... (truncated)"
+			}
+			return string(content)
+		}
+	}
+	return ""
+}
+
+// ClusterInfo holds cluster information for reporting (mirrored from analysisengine to avoid import cycle)
+type ClusterInfo struct {
+	ID            string
+	Name          string
+	Provider      string
+	Region        string
+	CloudProvider string
+	Version       string
+	Expiration    string
 }
 
 // SlackReporterConfig creates a reporter config for Slack
