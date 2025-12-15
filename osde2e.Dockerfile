@@ -1,4 +1,4 @@
-FROM brew.registry.redhat.io/rh-osbs/openshift-golang-builder:rhel_9_1.23 as builder
+FROM brew.registry.redhat.io/rh-osbs/openshift-golang-builder:rhel_9_1.24 as builder
 
 ENV GOFLAGS=
 ENV PKG=/go/src/github.com/openshift/osde2e/
@@ -13,7 +13,7 @@ RUN make build
 FROM registry.redhat.io/rhel9-2-els/rhel:9.2
 WORKDIR /
 # Create a writeable directory for licenses used by Tekton.
-RUN mkdir /licenses 
+RUN mkdir /licenses
 
 COPY --from=builder /go/src/github.com/openshift/osde2e/out/osde2e .
 COPY --from=builder /go/src/github.com/openshift/osde2e/LICENSE /licenses/.
