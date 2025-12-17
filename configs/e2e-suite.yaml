@@ -2,15 +2,15 @@ tests:
   ginkgoLabelFilter: >
     (E2E || Operators || AdHocTestImages || ServiceDefinition) && !Informing
   adHocTestImages:
-    - quay.io/app-sre/aws-vpce-operator-e2e
-    - quay.io/app-sre/cloud-ingress-operator-e2e
-    - quay.io/app-sre/managed-node-metadata-operator-e2e
+    - quay.io/redhat-services-prod/openshift/aws-vpce-operator-e2e
+    - quay.io/redhat-services-prod/openshift/cloud-ingress-operator-e2e
+    - quay.io/redhat-services-prod/openshift/managed-node-metadata-operator-e2e
     - quay.io/app-sre/managed-upgrade-operator-e2e
     - quay.io/app-sre/must-gather-operator-e2e
-    - quay.io/app-sre/ocm-agent-operator-e2e
-    - quay.io/app-sre/osd-metrics-exporter-e2e
+    - quay.io/redhat-services-prod/openshift/ocm-agent-operator-e2e
+    - quay.io/redhat-services-prod/openshift/osd-metrics-exporter-e2e
     - quay.io/app-sre/rbac-permissions-operator-e2e
     - quay.io/app-sre/splunk-forwarder-operator-e2e
-    - quay.io/app-sre/route-monitor-operator-e2e
-    - quay.io/app-sre/managed-cluster-validating-webhooks-e2e
+    - quay.io/redhat-services-prod/openshift/route-monitor-operator-e2e
+    - quay.io/redhat-services-prod/openshift/managed-cluster-validating-webhooks-e2e
     - quay.io/app-sre/ocm-agent-e2e
