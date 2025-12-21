@@ -4,6 +4,7 @@ package e2e
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -35,6 +36,9 @@ import (
 
 // provisioner is used to deploy and manage clusters.
 var provider spi.Provider
+
+// ErrTestsFailed is returned when one or more tests fail.
+var ErrTestsFailed = errors.New("tests failed, please inspect logs for more details")
 
 // runLogAnalysis performs log analysis powered failure analysis if enabled
 func runLogAnalysis(ctx context.Context, err error) {
@@ -218,7 +222,7 @@ func RunTests(ctx context.Context) int {
 	exitCode, err = runGinkgoTests()
 	if err != nil {
 		log.Printf("OSDE2E failed: %v", err)
-		if viper.GetBool(config.LogAnalysis.EnableAnalysis) {
+		if viper.GetBool(config.LogAnalysis.EnableAnalysis) && !errors.Is(err, ErrTestsFailed) {
 			runLogAnalysis(ctx, err)
 		}
 	}
@@ -350,7 +354,7 @@ func runGinkgoTests() (int, error) {
 
 	if !testsPassed || !upgradeTestsPassed {
 		viper.Set(config.Cluster.Passing, false)
-		return config.Failure, fmt.Errorf("tests failed, please inspect logs for more details")
+		return config.Failure, ErrTestsFailed
 	}
 
 	return config.Success, nil
