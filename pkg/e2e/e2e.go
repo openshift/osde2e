@@ -72,11 +72,15 @@ func runLogAnalysis(ctx context.Context, err error) {
 	enableSlackNotify := viper.GetBool(config.Tests.EnableSlackNotify)
 	slackWebhook := viper.GetString(config.LogAnalysis.SlackWebhook)
 	defaultChannel := viper.GetString(config.LogAnalysis.SlackChannel)
+	slackBotToken := viper.GetString(config.LogAnalysis.SlackBotToken)
 	if enableSlackNotify && slackWebhook != "" && defaultChannel != "" {
 		slackConfig := reporter.SlackReporterConfig(slackWebhook, true)
 		slackConfig.Settings["channel"] = defaultChannel
 		slackConfig.Settings["cluster_info"] = clusterInfo
 		slackConfig.Settings["report_dir"] = reportDir
+		if slackBotToken != "" {
+			slackConfig.Settings["bot_token"] = slackBotToken
+		}
 		reporters = append(reporters, slackConfig)
 	}
 
