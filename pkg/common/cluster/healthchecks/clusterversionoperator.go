@@ -2,7 +2,6 @@ package healthchecks
 
 import (
 	"context"
-	"fmt"
 	"log"
 
 	v1 "github.com/openshift/api/config/v1"
@@ -29,8 +28,6 @@ func CheckCVOReadiness(configClient configclient.ConfigV1Interface, logger *log.
 		return false, err
 	}
 
-	var metadataState []string
-
 	for _, v := range cvInfo.Status.Conditions {
 		switch v.Type {
 		case "Available":
@@ -48,7 +45,6 @@ func CheckCVOReadiness(configClient configclient.ConfigV1Interface, logger *log.
 				continue
 			}
 		}
-		metadataState = append(metadataState, fmt.Sprintf("%v", v))
 		logger.Printf("CVO State not complete: %v: %v %v", v.Type, v.Status, v.Message)
 		success = false
 	}

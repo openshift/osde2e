@@ -1,6 +1,7 @@
 package aws
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"regexp"
@@ -151,7 +152,7 @@ func (CcsAwsSession *ccsAwsSession) CleanupRoles(activeClusters map[string]bool,
 						if sendSummary && errorBuilder.Len() < config.SlackMessageLength {
 							errorBuilder.WriteString(errorMsg)
 						}
-						return fmt.Errorf("%s", errorMsg)
+						return errors.New(errorMsg)
 					}
 					*deletedCounter++
 					fmt.Println("Removed")
