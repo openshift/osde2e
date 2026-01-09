@@ -42,6 +42,21 @@ type Config struct {
 	OutputDir           string
 	SkipCleanup         bool
 	RestConfig          *rest.Config
+	KrknAIConfig        *KrknAIConfig
+}
+
+type KrknAIConfig struct {
+	Mode               string
+	Namespace          string
+	PodLabel           string
+	NodeLabel          string
+	SkipPodName        string
+	ConfigFile         string
+	OutputDir          string
+	ExtraParams        string
+	Verbose            string
+	KrknAIImage        string
+	KubeconfigContents string
 }
 
 type Executor struct {
@@ -62,7 +77,12 @@ func New(logger logr.Logger, cfg *Config) (*Executor, error) {
 	if err != nil {
 		return nil, fmt.Errorf("openshift client creation: %w", err)
 	}
-	return &Executor{oc: oc, cfg: cfg, logger: logger.WithName("executor")}, nil
+
+	return &Executor{
+		oc:     oc,
+		cfg:    cfg,
+		logger: logger.WithName("executor"),
+	}, nil
 }
 
 func (e *Executor) Execute(ctx context.Context, image string) (*testResults, error) {
@@ -152,7 +172,13 @@ func (e *Executor) setupProject(ctx context.Context) (*projectv1.Project, error)
 }
 
 func (e *Executor) createJob(ctx context.Context, namespace string, image string) (*batchv1.Job, error) {
-	job := e.buildJobSpec(namespace, image)
+	// Build the job spec based on configuration
+	var job *batchv1.Job
+	if e.cfg.KrknAIConfig != nil {
+		job = e.buildKrknAIJobSpec(namespace, image)
+	} else {
+		job = e.buildStandardJobSpec(namespace, image)
+	}
 
 	if len(e.cfg.PassthruSecrets) > 0 {
 		passthruSercret := &corev1.Secret{
@@ -175,6 +201,43 @@ func (e *Executor) createJob(ctx context.Context, namespace string, image string
 			})
 	}
 
+	// Create kubeconfig secret and mount it for krkn-ai jobs
+	if e.cfg.KrknAIConfig != nil && e.cfg.KrknAIConfig.KubeconfigContents != "" {
+		kubeconfigSecret := &corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "config",
+				Namespace: namespace,
+			},
+			StringData: map[string]string{
+				"config": e.cfg.KrknAIConfig.KubeconfigContents,
+			},
+		}
+
+		if err := e.oc.Create(ctx, kubeconfigSecret); err != nil {
+			return nil, fmt.Errorf("creating kubeconfig secret: %w", err)
+		}
+
+		// Add volume for kubeconfig secret
+		job.Spec.Template.Spec.Volumes = append(job.Spec.Template.Spec.Volumes,
+			corev1.Volume{
+				Name: "kubeconfig-volume",
+				VolumeSource: corev1.VolumeSource{
+					Secret: &corev1.SecretVolumeSource{
+						SecretName: "config",
+					},
+				},
+			})
+
+		// Mount kubeconfig volume in the krkn-ai container
+		job.Spec.Template.Spec.Containers[0].VolumeMounts = append(
+			job.Spec.Template.Spec.Containers[0].VolumeMounts,
+			corev1.VolumeMount{
+				Name:      "kubeconfig-volume",
+				ReadOnly:  true,
+				MountPath: "~/.kube/",
+			})
+	}
+
 	if err := e.oc.Create(ctx, job); err != nil {
 		return nil, err
 	}
@@ -182,7 +245,8 @@ func (e *Executor) createJob(ctx context.Context, namespace string, image string
 	return job, nil
 }
 
-func (e *Executor) buildJobSpec(namespace string, image string) *batchv1.Job {
+// buildStandardJobSpec creates a job spec for standard test suites
+func (e *Executor) buildStandardJobSpec(namespace string, image string) *batchv1.Job {
 	return &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
 			GenerateName: "executor-",
@@ -262,7 +326,147 @@ func (e *Executor) buildJobSpec(namespace string, image string) *batchv1.Job {
 	}
 }
 
-// Wait for the e2e-suite container to complete (succeed/fail/stop)
+// buildKrknAIJobSpec creates a job spec for krkn-ai chaos testing
+func (e *Executor) buildKrknAIJobSpec(namespace string, image string) *batchv1.Job {
+	// Build environment variables for krkn-ai
+	envVars := []corev1.EnvVar{
+		{
+			Name:  "OCM_CLUSTER_ID",
+			Value: e.cfg.ClusterID,
+		},
+		{
+			Name:  "OCM_ENV",
+			Value: string(e.cfg.Environment),
+		},
+		{
+			Name:  "CLOUD_PROVIDER_ID",
+			Value: e.cfg.CloudProviderID,
+		},
+		{
+			Name:  "CLOUD_PROVIDER_REGION",
+			Value: e.cfg.CloudProviderRegion,
+		},
+		{
+			Name:  "KUBECONFIG",
+			Value: "~/.kube/config",
+		},
+		{
+			Name:  "MODE",
+			Value: e.cfg.KrknAIConfig.Mode,
+		},
+		{
+			Name:  "NAMESPACE",
+			Value: e.cfg.KrknAIConfig.Namespace,
+		},
+		{
+			Name:  "POD_LABEL",
+			Value: e.cfg.KrknAIConfig.PodLabel,
+		},
+		{
+			Name:  "NODE_LABEL",
+			Value: e.cfg.KrknAIConfig.NodeLabel,
+		},
+		{
+			Name:  "OUTPUT_DIR",
+			Value: e.cfg.KrknAIConfig.OutputDir,
+		},
+		{
+			Name:  "VERBOSE",
+			Value: e.cfg.KrknAIConfig.Verbose,
+		},
+	}
+
+	// Add optional parameters if they are set
+	if e.cfg.KrknAIConfig.SkipPodName != "" {
+		envVars = append(envVars, corev1.EnvVar{
+			Name:  "SKIP_POD_NAME",
+			Value: e.cfg.KrknAIConfig.SkipPodName,
+		})
+	}
+
+	if e.cfg.KrknAIConfig.ConfigFile != "" {
+		envVars = append(envVars, corev1.EnvVar{
+			Name:  "CONFIG_FILE",
+			Value: e.cfg.KrknAIConfig.ConfigFile,
+		})
+	}
+
+	if e.cfg.KrknAIConfig.ExtraParams != "" {
+		envVars = append(envVars, corev1.EnvVar{
+			Name:  "EXTRA_PARAMS",
+			Value: e.cfg.KrknAIConfig.ExtraParams,
+		})
+	}
+
+	// Determine SecurityContext based on mode
+	var securityContext *corev1.SecurityContext
+	if e.cfg.KrknAIConfig.Mode == "run" {
+		// Run mode requires privileged permissions
+		securityContext = &corev1.SecurityContext{
+			Privileged: ptr.To(true),
+		}
+	}
+
+	return &batchv1.Job{
+		ObjectMeta: metav1.ObjectMeta{
+			GenerateName: "krkn-ai-",
+			Namespace:    namespace,
+		},
+		Spec: batchv1.JobSpec{
+			Parallelism:           ptr.To[int32](1),
+			Completions:           ptr.To[int32](1),
+			BackoffLimit:          ptr.To[int32](0),
+			ActiveDeadlineSeconds: ptr.To(int64(e.cfg.Timeout.Seconds())),
+			Template: corev1.PodTemplateSpec{
+				ObjectMeta: metav1.ObjectMeta{
+					Annotations: map[string]string{
+						"openshift.io/required-scc": "privileged",
+					},
+				},
+				Spec: corev1.PodSpec{
+					ServiceAccountName: "cluster-admin",
+					Containers: []corev1.Container{
+						{
+							Name:            "krkn-ai",
+							Image:           image,
+							ImagePullPolicy: corev1.PullAlways,
+							Env:             envVars,
+							SecurityContext: securityContext,
+							VolumeMounts: []corev1.VolumeMount{
+								{
+									Name:      "results",
+									MountPath: "/test-run-results",
+								},
+							},
+						},
+						{
+							Name:    "pause-for-artifacts",
+							Image:   "busybox:latest",
+							Command: []string{"tail", "-f", "/dev/null"},
+							VolumeMounts: []corev1.VolumeMount{
+								{
+									Name:      "results",
+									MountPath: "/test-run-results",
+								},
+							},
+						},
+					},
+					Volumes: []corev1.Volume{
+						{
+							Name: "results",
+							VolumeSource: corev1.VolumeSource{
+								EmptyDir: &corev1.EmptyDirVolumeSource{},
+							},
+						},
+					},
+					RestartPolicy: corev1.RestartPolicyNever,
+				},
+			},
+		},
+	}
+}
+
+// Wait for the test container (e2e-suite or krkn-ai) to complete (succeed/fail/stop)
 // We can't wait for the job because the pause container keeps it running for artifact collection
 func (e *Executor) waitForSuite(ctx context.Context, name, namespace, image string) error {
 	return wait.PollUntilContextTimeout(ctx, 10*time.Second, e.cfg.Timeout, false, func(ctx context.Context) (bool, error) {
@@ -270,9 +474,9 @@ func (e *Executor) waitForSuite(ctx context.Context, name, namespace, image stri
 		if err != nil {
 			return false, nil // pod not created yet
 		}
-		// Check the status of the e2e-suite container specifically
+		// Check the status of the test container (e2e-suite or krkn-ai)
 		for _, containerStatus := range pod.Status.ContainerStatuses {
-			if containerStatus.Name == "e2e-suite" {
+			if containerStatus.Name == "e2e-suite" || containerStatus.Name == "krkn-ai" {
 				// Check for image pull failures first
 				if containerStatus.State.Waiting != nil {
 					reason := containerStatus.State.Waiting.Reason
@@ -282,7 +486,7 @@ func (e *Executor) waitForSuite(ctx context.Context, name, namespace, image stri
 				}
 				// Return true if container has terminated (succeeded or failed)
 				if containerStatus.State.Terminated != nil {
-					e.logger.Info("e2e-suite has terminated", "state", containerStatus.State)
+					e.logger.Info("test container has terminated", "container", containerStatus.Name, "state", containerStatus.State)
 					return true, nil
 				}
 				// Return false if container is still running or waiting
@@ -332,7 +536,13 @@ func (e *Executor) findJobPod(ctx context.Context, jobName, namespace string) (*
 func (e *Executor) fetchPodLogs(ctx context.Context, clientSet *kubernetes.Clientset, pod *corev1.Pod, jobName string) error {
 	var logs strings.Builder
 
-	req := clientSet.CoreV1().Pods(pod.Namespace).GetLogs(pod.Name, &corev1.PodLogOptions{Container: "e2e-suite"})
+	// Determine container name based on job type
+	containerName := "e2e-suite"
+	if e.cfg.KrknAIConfig != nil {
+		containerName = "krkn-ai"
+	}
+
+	req := clientSet.CoreV1().Pods(pod.Namespace).GetLogs(pod.Name, &corev1.PodLogOptions{Container: containerName})
 	logStream, err := req.Stream(ctx)
 	if err != nil {
 		return fmt.Errorf("getting logs: %w", err)

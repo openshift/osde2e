@@ -641,6 +641,60 @@ var LogAnalysis = struct {
 	SlackChannel:   "logAnalysis.slackChannel",
 }
 
+// KrknAI config keys
+var KrknAI = struct {
+	// Enable toggles krkn-ai chaos testing
+	// Env: RUN_KRKN_AI
+	Enable string
+
+	// Mode is the krkn-ai mode: discover (generate config) or run (execute tests)
+	// Env: MODE
+	Mode string
+
+	// Namespace is the namespace to analyze (discover mode)
+	// Env: NAMESPACE
+	Namespace string
+
+	// PodLabel is the pod label to filter (discover mode)
+	// Env: POD_LABEL
+	PodLabel string
+
+	// NodeLabel is the node label to use (discover mode)
+	// Env: NODE_LABEL
+	NodeLabel string
+
+	// SkipPodName is a regex pattern for pod names to skip (discover mode)
+	// Env: SKIP_POD_NAME
+	SkipPodName string
+
+	// ConfigFile is the path to krkn-ai.yaml config file (run mode)
+	// Env: CONFIG_FILE
+	ConfigFile string
+
+	// OutputDir is the output directory inside container
+	// Env: OUTPUT_DIR
+	OutputDir string
+
+	// ExtraParams are extra parameters (e.g., HOST=example.com) (run mode)
+	// Env: EXTRA_PARAMS
+	ExtraParams string
+
+	// Verbose is the verbosity level (0-3)
+	// Env: VERBOSE
+	Verbose string
+}{
+	Enable:      "krknAI.enable",
+	Mode:        "krknAI.mode",
+	Namespace:   "krknAI.namespace",
+	PodLabel:    "krknAI.podLabel",
+	NodeLabel:   "krknAI.nodeLabel",
+	SkipPodName: "krknAI.skipPodName",
+	ConfigFile:  "krknAI.configFile",
+	OutputDir:   "krknAI.outputDir",
+	ExtraParams: "krknAI.extraParams",
+	Verbose:     "krknAI.verbose",
+}
+
 func InitOSDe2eViper() {
 	// Here's where we bind environment variables to config options and set defaults
 
@@ -947,6 +1001,37 @@ func InitOSDe2eViper() {
 
 	viper.SetDefault(LogAnalysis.SlackChannel, defaultNotificationsChannel)
 	_ = viper.BindEnv(LogAnalysis.SlackChannel, "LOG_ANALYSIS_SLACK_CHANNEL")
+
+	// ----- Krkn AI Configuration -----
+	viper.SetDefault(KrknAI.Enable, false)
+	_ = viper.BindEnv(KrknAI.Enable, "RUN_KRKN_AI")
+
+	viper.SetDefault(KrknAI.Mode, "discover")
+	_ = viper.BindEnv(KrknAI.Mode, "MODE")
+
+	viper.SetDefault(KrknAI.Namespace, "robot-shop")
+	_ = viper.BindEnv(KrknAI.Namespace, "NAMESPACE")
+
+	viper.SetDefault(KrknAI.PodLabel, "service")
+	_ = viper.BindEnv(KrknAI.PodLabel, "POD_LABEL")
+
+	viper.SetDefault(KrknAI.NodeLabel, "kubernetes.io/hostname")
+	_ = viper.BindEnv(KrknAI.NodeLabel, "NODE_LABEL")
+
+	viper.SetDefault(KrknAI.SkipPodName, "")
+	_ = viper.BindEnv(KrknAI.SkipPodName, "SKIP_POD_NAME")
+
+	viper.SetDefault(KrknAI.ConfigFile, "")
+	_ = viper.BindEnv(KrknAI.ConfigFile, "CONFIG_FILE")
+
+	viper.SetDefault(KrknAI.OutputDir, "/test-run-results")
+	_ = viper.BindEnv(KrknAI.OutputDir, "OUTPUT_DIR")
+
+	viper.SetDefault(KrknAI.ExtraParams, "")
+	_ = viper.BindEnv(KrknAI.ExtraParams, "EXTRA_PARAMS")
+
+	viper.SetDefault(KrknAI.Verbose, "2")
+	_ = viper.BindEnv(KrknAI.Verbose, "VERBOSE")
 }
 
 func init() {

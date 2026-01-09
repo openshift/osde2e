@@ -49,6 +49,7 @@ var args struct {
 	ocpTestSkipRegex     string
 	onlyHealthCheckNodes bool
 	logAnalysisEnable    bool
+	runKrknAI            bool
 }
 
 func init() {
@@ -143,6 +144,12 @@ func init() {
 		false,
 		"Enable AI powered log analysis on test failures",
 	)
+	pfs.BoolVar(
+		&args.runKrknAI,
+		"run-krkn-ai",
+		false,
+		"Enable krkn-ai chaos testing",
+	)
 
 	_ = viper.BindPFlag(config.Cluster.ID, Cmd.PersistentFlags().Lookup("cluster-id"))
 	_ = viper.BindPFlag(ocmprovider.Env, Cmd.PersistentFlags().Lookup("environment"))
@@ -155,6 +162,7 @@ func init() {
 	_ = viper.BindPFlag(config.SkipMustGather, Cmd.PersistentFlags().Lookup("skip-must-gather"))
 	_ = viper.BindPFlag(config.Tests.GinkgoLabelFilter, Cmd.PersistentFlags().Lookup("label-filter"))
 	_ = viper.BindPFlag(config.LogAnalysis.EnableAnalysis, Cmd.PersistentFlags().Lookup("log-analysis-enable"))
+	_ = viper.BindPFlag(config.KrknAI.Enable, Cmd.PersistentFlags().Lookup("run-krkn-ai"))
 }
 
 func run(cmd *cobra.Command, argv []string) {

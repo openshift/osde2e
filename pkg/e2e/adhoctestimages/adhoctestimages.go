@@ -38,6 +38,22 @@ var _ = ginkgo.Describe("Ad Hoc Test Images", ginkgo.Ordered, ginkgo.ContinueOnF
 		exe *executor.Executor
 	)
 
+	isKrknAITest := viper.GetBool(config.KrknAI.Enable)
+	if isKrknAITest {
+		exeConfig.KrknAIConfig = &executor.KrknAIConfig{
+			Mode:               viper.GetString(config.KrknAI.Mode),
+			Namespace:          viper.GetString(config.KrknAI.Namespace),
+			PodLabel:           viper.GetString(config.KrknAI.PodLabel),
+			NodeLabel:          viper.GetString(config.KrknAI.NodeLabel),
+			SkipPodName:        viper.GetString(config.KrknAI.SkipPodName),
+			ConfigFile:         viper.GetString(config.KrknAI.ConfigFile),
+			OutputDir:          viper.GetString(config.KrknAI.OutputDir),
+			ExtraParams:        viper.GetString(config.KrknAI.ExtraParams),
+			Verbose:            viper.GetString(config.KrknAI.Verbose),
+			KubeconfigContents: viper.GetString(config.Kubeconfig.Contents),
+		}
+	}
+
 	// Get test suites using the new structured format
 	var err error
 	testSuites, err = config.GetTestSuites()
