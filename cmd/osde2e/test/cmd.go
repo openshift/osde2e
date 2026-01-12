@@ -173,6 +173,13 @@ func run(cmd *cobra.Command, argv []string) {
 		log.Println("Canary job won!")
 	}
 
-	exitCode := e2e.RunTests(cmd.Context())
+	// Use new orchestrator-based architecture
+	orchestrator, err := e2e.NewOrchestrator() // Uses default preset
+	if err != nil {
+		log.Printf("Failed to create orchestrator: %v", err)
+		os.Exit(1)
+	}
+
+	exitCode := orchestrator.Run(cmd.Context())
 	os.Exit(exitCode)
 }

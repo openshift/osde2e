@@ -209,6 +209,8 @@ func installAddons() (err error) {
 // -- END Ginkgo setup
 
 // RunTests initializes Ginkgo and runs the osde2e test suite.
+// Deprecated: This function is maintained for backward compatibility but will be removed.
+// Use the new orchestrator-based architecture instead: e2e.NewFactory().NewOrchestrator().Run(ctx)
 func RunTests(ctx context.Context) int {
 	var err error
 	var exitCode int
