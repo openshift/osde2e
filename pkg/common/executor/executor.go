@@ -234,7 +234,7 @@ func (e *Executor) createJob(ctx context.Context, namespace string, image string
 			corev1.VolumeMount{
 				Name:      "kubeconfig-volume",
 				ReadOnly:  true,
-				MountPath: "~/.kube/",
+				MountPath: "/tmp/.kube/",
 			})
 	}
 
@@ -348,7 +348,7 @@ func (e *Executor) buildKrknAIJobSpec(namespace string, image string) *batchv1.J
 		},
 		{
 			Name:  "KUBECONFIG",
-			Value: "~/.kube/config",
+			Value: "/tmp/.kube/config",
 		},
 		{
 			Name:  "MODE",
