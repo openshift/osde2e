@@ -1,0 +1,46 @@
+#!/bin/bash
+
+set +e
+# ensure we have a clean environment
+docker rm osde2e-run
+
+# bind mounts run into permissions issues, this creates
+# the container and copies the secrets over to ensure it has perms
+docker create --pull=always --name osde2e-run -e OCM_TOKEN \
+	-e OCM_CLIENT_ID -e OCM_CLIENT_SECRET \
+	-e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY -e AWS_ACCOUNT_ID \
+	-e GCP_CREDS_JSON \
+	-e CLOUD_PROVIDER_REGION \
+	-e ROSA_AWS_REGION="${CLOUD_PROVIDER_REGION}" \
+	-e ROSA_ENV="${ENVIRONMENT}" \
+	-e OCM_ENV="${ENVIRONMENT}" \
+	-e ROSA_STS="${STS}" \
+	-e ROSA_MINT_MODE="${MINT_MODE}" \
+	-e INSTANCE_TYPE \
+	-e SKIP_DESTROY_CLUSTER \
+	-e SKIP_CLUSTER_HEALTH_CHECKS \
+	-e CLUSTER_ID \
+	-e SKIP_MUST_GATHER \
+	-e INSTALL_LATEST_XY \
+	-e INSTALL_LATEST_NIGHTLY \
+	-e AD_HOC_TEST_IMAGES \
+	-e POLLING_TIMEOUT \
+	-e OCM_CCS \
+	-e MULTI_AZ \
+	-e REPORT_DIR="/tmp/${REPORT_DIR}" \
+	-e AD_HOC_TEST_IMAGES="${KRKN_AI_IMAGE}" \
+	-e MODE="${MODE}" \
+	-e NAMESPACE="${NAMESPACE}" \
+	-e POD_LABEL="${POD_LABEL}" \
+	-e NODE_LABEL="${NODE_LABEL}" \
+	-e SKIP_POD_NAME="${SKIP_POD_NAME}" \
+	-e CONFIG_FILE="${CONFIG_FILE}" \
+	-e OUTPUT_DIR="${OUTPUT_DIR}" \
+	-e EXTRA_PARAMS="${EXTRA_PARAMS}" \
+	-e VERBOSE="${VERBOSE}" \
+	quay.io/redhat-services-prod/osde2e-cicada-tenant/osde2e:latest test --run-krkn-ai --configs "${CONFIGS}" "${ADDITIONAL_FLAGS}"
+
+docker start -a osde2e-run
+
+# copy the junit results xml for publishing
+docker cp osde2e-run:/tmp/osde2e-report .
