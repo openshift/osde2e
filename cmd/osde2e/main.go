@@ -16,6 +16,7 @@ import (
 	"github.com/openshift/osde2e/cmd/osde2e/cleanup"
 	"github.com/openshift/osde2e/cmd/osde2e/completion"
 	"github.com/openshift/osde2e/cmd/osde2e/healthcheck"
+	"github.com/openshift/osde2e/cmd/osde2e/krknai"
 	"github.com/openshift/osde2e/cmd/osde2e/provision"
 	"github.com/openshift/osde2e/cmd/osde2e/test"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
@@ -40,6 +41,7 @@ func init() {
 
 	root.AddCommand(provision.Cmd)
 	root.AddCommand(test.Cmd)
+	root.AddCommand(krknai.Cmd)
 	root.AddCommand(healthcheck.Cmd)
 	root.AddCommand(completion.Cmd)
 	root.AddCommand(cleanup.Cmd)
