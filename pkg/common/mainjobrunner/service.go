@@ -1,4 +1,4 @@
-package runner
+package mainjobrunner
 
 import (
 	"context"
@@ -23,7 +23,7 @@ const (
 )
 
 // createService returns a v1.Service pointing to a given v1.Pod object
-func (r *Runner) createService(ctx context.Context, pod *kubev1.Pod) (svc *kubev1.Service, err error) {
+func (r *MainJobRunner) createService(ctx context.Context, pod *kubev1.Pod) (svc *kubev1.Service, err error) {
 	var ports []kubev1.ServicePort
 	for _, c := range pod.Spec.Containers {
 		for _, p := range c.Ports {
@@ -46,7 +46,7 @@ func (r *Runner) createService(ctx context.Context, pod *kubev1.Pod) (svc *kubev
 
 // waitForCompletion will wait for a runner's pod to have a valid v1.Endpoint available
 // otherwise waits for pod to be running
-func (r *Runner) waitForCompletion(ctx context.Context, podName string, timeoutInSeconds int) error {
+func (r *MainJobRunner) waitForCompletion(ctx context.Context, podName string, timeoutInSeconds int) error {
 	var endpoints *kubev1.Endpoints
 	pendingCount := 0
 	return wait.PollUntilContextTimeout(ctx, slowPoll, time.Duration(timeoutInSeconds)*time.Second, false, func(ctx context.Context) (done bool, err error) {
@@ -91,7 +91,7 @@ func (r *Runner) waitForCompletion(ctx context.Context, podName string, timeoutI
 	})
 }
 
-func (r *Runner) getAllLogsFromPod(ctx context.Context, podName string) error {
+func (r *MainJobRunner) getAllLogsFromPod(ctx context.Context, podName string) error {
 	pod, err := r.Kube.CoreV1().Pods(r.svc.Namespace).Get(ctx, podName, metav1.GetOptions{})
 	if err != nil {
 		return err

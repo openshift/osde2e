@@ -1,4 +1,4 @@
-package runner
+package mainjobrunner
 
 import (
 	"context"
@@ -56,7 +56,7 @@ func ensurePassingXML(results map[string][]byte) (hadXML bool, err error) {
 }
 
 // RetrieveResults gathers the results from the test Pod. Should only be called after tests are finished.
-func (r *Runner) RetrieveResults() (map[string][]byte, error) {
+func (r *MainJobRunner) RetrieveResults() (map[string][]byte, error) {
 	results, err := r.retrieveResultsForDirectory("")
 	if err != nil {
 		return nil, fmt.Errorf("failed retrieving results: %w", err)
@@ -65,7 +65,7 @@ func (r *Runner) RetrieveResults() (map[string][]byte, error) {
 }
 
 // RetrieveTestResults gathers and validates the results from the test Pod. Should only be called after tests are finished. This method both fetches the results and ensures that they contain valid JUnit XML indicating that all tests passed.
-func (r *Runner) RetrieveTestResults() (map[string][]byte, error) {
+func (r *MainJobRunner) RetrieveTestResults() (map[string][]byte, error) {
 	results, err := r.RetrieveResults()
 	if err != nil {
 		return nil, fmt.Errorf("failed retrieving results: %w", err)
@@ -80,7 +80,7 @@ func (r *Runner) RetrieveTestResults() (map[string][]byte, error) {
 	return results, err
 }
 
-func (r *Runner) retrieveResultsForDirectory(directory string) (map[string][]byte, error) {
+func (r *MainJobRunner) retrieveResultsForDirectory(directory string) (map[string][]byte, error) {
 	var rdr io.ReadCloser
 	var resp restclient.ResponseWrapper
 	var err error
@@ -121,7 +121,7 @@ func (r *Runner) retrieveResultsForDirectory(directory string) (map[string][]byt
 
 // downloadLinks, given an html page, will download all present links.
 // This is useful when a pod is publishing an html list of artifacts.
-func (r *Runner) downloadLinks(n *html.Node, results map[string][]byte, directory string) error {
+func (r *MainJobRunner) downloadLinks(n *html.Node, results map[string][]byte, directory string) error {
 	if n.Type == html.ElementNode && n.Data == "a" {
 		for _, a := range n.Attr {
 			if a.Key == "href" {

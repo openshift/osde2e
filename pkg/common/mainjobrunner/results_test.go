@@ -1,4 +1,4 @@
-package runner
+package mainjobrunner
 
 import (
 	"bytes"
@@ -145,7 +145,7 @@ func TestRetrieveTestResults(t *testing.T) {
 			client.AddProxyReactor("services", reactor.React)
 
 			// setup runner
-			def := *DefaultRunner
+			def := *DefaultMainJobRunner
 			r := &def
 			r.Kube = client
 

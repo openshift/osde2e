@@ -1,4 +1,4 @@
-package executor
+package TestJobRunner
 
 import (
 	"archive/tar"
@@ -44,14 +44,14 @@ type Config struct {
 	RestConfig          *rest.Config
 }
 
-type Executor struct {
+type TestJobRunner struct {
 	oc     *openshift.Client
 	cfg    *Config
 	logger logr.Logger
 }
 
 // New sets up a new executor to run a given test suite image
-func New(logger logr.Logger, cfg *Config) (*Executor, error) {
+func New(logger logr.Logger, cfg *Config) (*TestJobRunner, error) {
 	var oc *openshift.Client
 	var err error
 	if cfg.RestConfig != nil {
@@ -62,10 +62,10 @@ func New(logger logr.Logger, cfg *Config) (*Executor, error) {
 	if err != nil {
 		return nil, fmt.Errorf("openshift client creation: %w", err)
 	}
-	return &Executor{oc: oc, cfg: cfg, logger: logger.WithName("executor")}, nil
+	return &TestJobRunner{oc: oc, cfg: cfg, logger: logger.WithName("executor")}, nil
 }
 
-func (e *Executor) Execute(ctx context.Context, image string) (*testResults, error) {
+func (e *TestJobRunner) Execute(ctx context.Context, image string) (*testResults, error) {
 	if err := os.MkdirAll(e.cfg.OutputDir, os.ModePerm); err != nil {
 		return nil, fmt.Errorf("creating output directory: %w", err)
 	}
@@ -109,7 +109,7 @@ func (e *Executor) Execute(ctx context.Context, image string) (*testResults, err
 	return results, nil
 }
 
-func (e *Executor) setupProject(ctx context.Context) (*projectv1.Project, error) {
+func (e *TestJobRunner) setupProject(ctx context.Context) (*projectv1.Project, error) {
 	// TODO: why does GenerateName not work?
 	project := &projectv1.Project{ObjectMeta: metav1.ObjectMeta{Name: "osde2e-executor-" + util.RandomStr(5)}}
 	if err := e.oc.Create(ctx, project); err != nil {
@@ -151,7 +151,7 @@ func (e *Executor) setupProject(ctx context.Context) (*projectv1.Project, error)
 	return project, nil
 }
 
-func (e *Executor) createJob(ctx context.Context, namespace string, image string) (*batchv1.Job, error) {
+func (e *TestJobRunner) createJob(ctx context.Context, namespace string, image string) (*batchv1.Job, error) {
 	job := e.buildJobSpec(namespace, image)
 
 	if len(e.cfg.PassthruSecrets) > 0 {
@@ -182,7 +182,7 @@ func (e *Executor) createJob(ctx context.Context, namespace string, image string
 	return job, nil
 }
 
-func (e *Executor) buildJobSpec(namespace string, image string) *batchv1.Job {
+func (e *TestJobRunner) buildJobSpec(namespace string, image string) *batchv1.Job {
 	return &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
 			GenerateName: "executor-",
@@ -264,7 +264,7 @@ func (e *Executor) buildJobSpec(namespace string, image string) *batchv1.Job {
 
 // Wait for the e2e-suite container to complete (succeed/fail/stop)
 // We can't wait for the job because the pause container keeps it running for artifact collection
-func (e *Executor) waitForSuite(ctx context.Context, name, namespace, image string) error {
+func (e *TestJobRunner) waitForSuite(ctx context.Context, name, namespace, image string) error {
 	return wait.PollUntilContextTimeout(ctx, 10*time.Second, e.cfg.Timeout, false, func(ctx context.Context) (bool, error) {
 		pod, err := e.findJobPod(ctx, name, namespace)
 		if err != nil {
@@ -294,7 +294,7 @@ func (e *Executor) waitForSuite(ctx context.Context, name, namespace, image stri
 	})
 }
 
-func (e *Executor) fetchArtifacts(ctx context.Context, name, namespace string) error {
+func (e *TestJobRunner) fetchArtifacts(ctx context.Context, name, namespace string) error {
 	clientSet, err := kubernetes.NewForConfig(e.oc.GetConfig())
 	if err != nil {
 		return fmt.Errorf("creating clientset: %w", err)
@@ -316,7 +316,7 @@ func (e *Executor) fetchArtifacts(ctx context.Context, name, namespace string) e
 	return nil
 }
 
-func (e *Executor) findJobPod(ctx context.Context, jobName, namespace string) (*corev1.Pod, error) {
+func (e *TestJobRunner) findJobPod(ctx context.Context, jobName, namespace string) (*corev1.Pod, error) {
 	pods := new(corev1.PodList)
 	if err := e.oc.WithNamespace(namespace).List(ctx, pods, resources.WithLabelSelector(labels.FormatLabels(map[string]string{"job-name": jobName}))); err != nil {
 		return nil, fmt.Errorf("listing pods for job: %w", err)
@@ -329,7 +329,7 @@ func (e *Executor) findJobPod(ctx context.Context, jobName, namespace string) (*
 	return &pods.Items[0], nil
 }
 
-func (e *Executor) fetchPodLogs(ctx context.Context, clientSet *kubernetes.Clientset, pod *corev1.Pod, jobName string) error {
+func (e *TestJobRunner) fetchPodLogs(ctx context.Context, clientSet *kubernetes.Clientset, pod *corev1.Pod, jobName string) error {
 	var logs strings.Builder
 
 	req := clientSet.CoreV1().Pods(pod.Namespace).GetLogs(pod.Name, &corev1.PodLogOptions{Container: "e2e-suite"})
@@ -354,7 +354,7 @@ func (e *Executor) fetchPodLogs(ctx context.Context, clientSet *kubernetes.Clien
 	return nil
 }
 
-func (e *Executor) fetchArtifactFiles(ctx context.Context, clientSet *kubernetes.Clientset, pod *corev1.Pod) error {
+func (e *TestJobRunner) fetchArtifactFiles(ctx context.Context, clientSet *kubernetes.Clientset, pod *corev1.Pod) error {
 	execRequest := clientSet.CoreV1().RESTClient().
 		Post().
 		Resource("pods").

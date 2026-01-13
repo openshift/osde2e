@@ -1,4 +1,4 @@
-package runner
+package mainjobrunner
 
 import (
 	"context"
@@ -38,7 +38,7 @@ func init() {
 	fullPayloadScriptPath = filepath.Join(osde2ePayloadMountPath, osde2ePayloadScript)
 }
 
-// DefaultContainer is used by the DefaultRunner to run workloads
+// DefaultContainer is used by the DefaultMainJobRunner to run workloads
 var DefaultContainer = kubev1.Container{
 	Ports: []kubev1.ContainerPort{
 		{
@@ -91,7 +91,7 @@ func volumes(name string) []kubev1.Volume {
 
 // createJobPod for creates an osde2e runner Job and returns the singular job pod for further processing.
 // Opting for Job creation instead of direct Pod creation to avoid orphan workloads.
-func (r *Runner) createJobPod(ctx context.Context) (pod *kubev1.Pod, err error) {
+func (r *MainJobRunner) createJobPod(ctx context.Context) (pod *kubev1.Pod, err error) {
 	// configure pod to run workload
 	cmName := fmt.Sprintf("%s-%s", osde2ePayload, util.RandomStr(5))
 	pod = &kubev1.Pod{
@@ -190,7 +190,7 @@ func (r *Runner) createJobPod(ctx context.Context) (pod *kubev1.Pod, err error) 
 }
 
 // waitForRunningPod, given a v1.Pod, will wait for 3 minutes for a pod to enter the running phase or return an error.
-func (r *Runner) waitForPodRunning(ctx context.Context, pod *kubev1.Pod) error {
+func (r *MainJobRunner) waitForPodRunning(ctx context.Context, pod *kubev1.Pod) error {
 	pendingCount := 0
 	return wait.PollUntilContextTimeout(ctx, fastPoll, 3*time.Minute, false, func(ctx context.Context) (done bool, err error) {
 		pod, err = r.Kube.CoreV1().Pods(pod.Namespace).Get(ctx, pod.Name, metav1.GetOptions{})

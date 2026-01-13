@@ -1,4 +1,4 @@
-package runner
+package mainjobrunner
 
 import (
 	"context"
@@ -17,12 +17,12 @@ const (
 )
 
 // GetLatestImageStreamTag returns the From name of the latest ImageStream tag.
-func (r *Runner) GetLatestImageStreamTag() (string, error) {
+func (r *MainJobRunner) GetLatestImageStreamTag() (string, error) {
 	return r.getImageStreamTag("latest")
 }
 
 // getImageStreamTag returns the From name of the given ImageStream tag.
-func (r *Runner) getImageStreamTag(tag string) (string, error) {
+func (r *MainJobRunner) getImageStreamTag(tag string) (string, error) {
 	if r.Image == nil {
 		return "", errors.New("client for Image must be set")
 	}

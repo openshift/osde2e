@@ -1,10 +1,10 @@
-package runner
+package mainjobrunner
 
 import "testing"
 
 func TestCommand(t *testing.T) {
 	// copy default runner
-	def := *DefaultRunner
+	def := *DefaultMainJobRunner
 	r := &def
 
 	_, err := r.Command()

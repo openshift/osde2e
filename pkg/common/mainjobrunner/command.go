@@ -1,4 +1,4 @@
-package runner
+package mainjobrunner
 
 import (
 	"bytes"
@@ -45,7 +45,7 @@ cd {{$outDir}} && echo "Starting server" && python -m "${MODULE}"
 var cmdTemplate = template.Must(template.New("testCmd").Parse(testCmd))
 
 // Command generates the templated command.
-func (r *Runner) Command() ([]byte, error) {
+func (r *MainJobRunner) Command() ([]byte, error) {
 	var cmd bytes.Buffer
 	if err := cmdTemplate.Execute(&cmd, r); err != nil {
 		return []byte{}, fmt.Errorf("failed templating command: %v", err)

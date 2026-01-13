@@ -1,4 +1,4 @@
-package runner
+package mainjobrunner
 
 import (
 	"context"
@@ -27,7 +27,7 @@ func TestResultsService(t *testing.T) {
 	})
 
 	// setup runner
-	def := *DefaultRunner
+	def := *DefaultMainJobRunner
 	r := &def
 	r.Kube = client
 	ctx := context.Background()

@@ -1,4 +1,4 @@
-package runner
+package mainjobrunner
 
 import (
 	"testing"
@@ -14,7 +14,7 @@ func TestGetLatestImageStreamTag(t *testing.T) {
 	expectedFromName := "quay.io/run/tests"
 
 	// copy default runner
-	def := *DefaultRunner
+	def := *DefaultMainJobRunner
 	r := &def
 
 	// create example ImageStream

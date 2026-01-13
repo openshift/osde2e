@@ -1,4 +1,4 @@
-package runner
+package mainjobrunner
 
 import (
 	"fmt"
@@ -58,8 +58,8 @@ func TestRunner(t *testing.T) {
 	}
 }
 
-func setupRunner(t *testing.T) *Runner {
-	r := DefaultRunner.DeepCopy()
+func setupRunner(t *testing.T) *MainJobRunner {
+	r := DefaultMainJobRunner.DeepCopy()
 	if filename := viper.GetString(config.Kubeconfig.Path); len(filename) == 0 {
 		t.Skipf("TEST_KUBECONFIG must be set to test against a cluster.")
 	} else if restConfig, err := clientcmd.BuildConfigFromFlags("", filename); err != nil {

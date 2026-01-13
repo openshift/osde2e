@@ -7,11 +7,11 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/openshift/osde2e-common/pkg/clients/ocm"
-	"github.com/openshift/osde2e/pkg/common/executor"
+	"github.com/openshift/osde2e/pkg/common/TestJobRunner"
 	"k8s.io/klog/v2/textlogger"
 )
 
-var _ = Describe("Executor", func() {
+var _ = Describe("TestJobRunner", func() {
 	BeforeEach(func() {
 		if os.Getenv("KUBECONFIG") == "" {
 			Skip("No KUBECONFIG available")
@@ -26,7 +26,7 @@ var _ = Describe("Executor", func() {
 		})
 
 		logger := textlogger.NewLogger(textlogger.NewConfig())
-		cfg := &executor.Config{
+		cfg := &TestJobRunner.Config{
 			OutputDir:           outputDir,
 			Environment:         ocm.Stage,
 			ClusterID:           "test-cluster",
@@ -38,7 +38,7 @@ var _ = Describe("Executor", func() {
 			Timeout: 5 * time.Minute,
 		}
 
-		exe, err := executor.New(logger, cfg)
+		exe, err := TestJobRunner.New(logger, cfg)
 		Expect(err).NotTo(HaveOccurred())
 
 		results, err := exe.Execute(ctx, "quay.io/app-sre/route-monitor-operator-test-harness")

@@ -18,8 +18,8 @@ import (
 	"github.com/openshift/osde2e-common/pkg/clients/openshift"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
+	"github.com/openshift/osde2e/pkg/common/mainjobrunner"
 	"github.com/openshift/osde2e/pkg/common/providers/ocmprovider"
-	"github.com/openshift/osde2e/pkg/common/runner"
 	"github.com/openshift/osde2e/pkg/common/templates"
 	"github.com/openshift/osde2e/pkg/common/util"
 	corev1 "k8s.io/api/core/v1"
@@ -480,7 +480,7 @@ func (h *H) GetRunnerCommandString(templatePath string, timeout int, latestImage
 		JobName:              jobName,
 		Timeout:              timeout,
 		Image:                adHocTestImage,
-		OutputDir:            runner.DefaultRunner.OutputDir,
+		OutputDir:            mainjobrunner.DefaultMainJobRunner.OutputDir,
 		ServiceAccount:       serviceAccountNamespacedName,
 		PushResultsContainer: latestImageStream,
 		Suffix:               suffix,

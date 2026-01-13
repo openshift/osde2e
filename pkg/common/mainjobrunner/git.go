@@ -1,4 +1,4 @@
-package runner
+package mainjobrunner
 
 import (
 	kubev1 "k8s.io/api/core/v1"

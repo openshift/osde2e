@@ -1,5 +1,5 @@
 // Package runner provides a wrapper for the OpenShift extended test suite image.
-package runner
+package mainjobrunner
 
 import (
 	"context"
@@ -15,14 +15,14 @@ import (
 )
 
 const (
-	// name used in Runner resources
+	// name used in MainJobRunner resources
 	defaultName = "osde2e-runner"
 	// directory containing service account credentials
 	serviceAccountDir = "/var/run/secrets/kubernetes.io/serviceaccount"
 )
 
-// DefaultRunner is a runner with the most commonly desired settings.
-var DefaultRunner = &Runner{
+// DefaultMainJobRunner is a runner with the most commonly desired settings.
+var DefaultMainJobRunner = &MainJobRunner{
 	Name:                 defaultName,
 	ImageStreamName:      testImageStreamName,
 	ImageStreamNamespace: testImageStreamNamespace,
@@ -39,8 +39,8 @@ var DefaultRunner = &Runner{
 	Logger:    ginkgo.GinkgoLogr,
 }
 
-// Runner runs the OpenShift extended test suite within a cluster.
-type Runner struct {
+// MainJobRunner runs the OpenShift extended test suite within a cluster.
+type MainJobRunner struct {
 	// Kube client used to run test in-cluster.
 	Kube kube.Interface
 
@@ -99,7 +99,7 @@ type Runner struct {
 }
 
 // Run deploys the suite into a cluster, waits for it to finish, and gathers the results.
-func (r *Runner) Run(timeoutInSeconds int, stopCh <-chan struct{}) (err error) {
+func (r *MainJobRunner) Run(timeoutInSeconds int, stopCh <-chan struct{}) (err error) {
 	// TODO: pass this in
 	ctx := context.TODO()
 
@@ -153,13 +153,13 @@ func (r *Runner) Run(timeoutInSeconds int, stopCh <-chan struct{}) (err error) {
 }
 
 // Status returns the current state of the runner.
-func (r *Runner) Status() Status {
+func (r *MainJobRunner) Status() Status {
 	return r.status
 }
 
 // DeepCopy returns a deep copy of a runner.
-func (r *Runner) DeepCopy() *Runner {
-	newRunner := *DefaultRunner
+func (r *MainJobRunner) DeepCopy() *MainJobRunner {
+	newRunner := *DefaultMainJobRunner
 
 	// copy repos & PodSpec
 	newRunner.Repos = make(Repos, len(r.Repos))
@@ -169,8 +169,8 @@ func (r *Runner) DeepCopy() *Runner {
 	return &newRunner
 }
 
-// meta returns the ObjectMeta used for Runner resources.
-func (r *Runner) meta() metav1.ObjectMeta {
+// meta returns the ObjectMeta used for MainJobRunner resources.
+func (r *MainJobRunner) meta() metav1.ObjectMeta {
 	return metav1.ObjectMeta{
 		Name: fmt.Sprintf("%s-%s", r.Name, util.RandomStr(5)),
 		Labels: map[string]string{

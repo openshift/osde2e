@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/openshift/osde2e/pkg/common/runner"
+	"github.com/openshift/osde2e/pkg/common/mainjobrunner"
 
 	projectv1 "github.com/openshift/api/project/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -63,7 +63,7 @@ func (h *H) inspect(ctx context.Context, projects []string) error {
 	}
 
 	projectsArg := strings.Join(inspectProjects, " ")
-	r := h.Runner(fmt.Sprintf("oc adm inspect %v --dest-dir=%v", projectsArg, runner.DefaultRunner.OutputDir))
+	r := h.Runner(fmt.Sprintf("oc adm inspect %v --dest-dir=%v", projectsArg, mainjobrunner.DefaultMainJobRunner.OutputDir))
 	r.Name = "must-gather-additional-projects"
 	r.Tarball = true
 	stopCh := make(chan struct{})

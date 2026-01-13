@@ -13,9 +13,9 @@ import (
 	"github.com/openshift/osde2e-common/pkg/clients/ocm"
 	"github.com/openshift/osde2e/internal/analysisengine"
 	"github.com/openshift/osde2e/internal/reporter"
+	"github.com/openshift/osde2e/pkg/common/TestJobRunner"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
-	"github.com/openshift/osde2e/pkg/common/executor"
 	"github.com/openshift/osde2e/pkg/common/label"
 	"github.com/openshift/osde2e/pkg/common/providers/ocmprovider"
 	"k8s.io/client-go/tools/clientcmd"
@@ -26,7 +26,7 @@ var _ = ginkgo.Describe("Ad Hoc Test Images", ginkgo.Ordered, ginkgo.ContinueOnF
 		logger           = ginkgo.GinkgoLogr
 		testImageEntries = []ginkgo.TableEntry{}
 		testSuites       []config.TestSuite
-		exeConfig        = &executor.Config{
+		exeConfig        = &TestJobRunner.Config{
 			CloudProviderID:     viper.GetString(config.CloudProvider.CloudProviderID),
 			CloudProviderRegion: viper.GetString(config.CloudProvider.Region),
 			ClusterID:           viper.GetString(config.Cluster.ID),
@@ -35,7 +35,7 @@ var _ = ginkgo.Describe("Ad Hoc Test Images", ginkgo.Ordered, ginkgo.ContinueOnF
 			SkipCleanup:         viper.GetBool(config.Cluster.SkipDestroyCluster),
 			Timeout:             viper.GetDuration(config.Tests.AdHocTestContainerTimeout),
 		}
-		exe *executor.Executor
+		exe *TestJobRunner.TestJobRunner
 	)
 
 	// Get test suites using the new structured format
@@ -54,7 +54,7 @@ var _ = ginkgo.Describe("Ad Hoc Test Images", ginkgo.Ordered, ginkgo.ContinueOnF
 		exeConfig.RestConfig, err = clientcmd.RESTConfigFromKubeConfig([]byte(viper.GetString(config.Kubeconfig.Contents)))
 		Expect(err).NotTo(HaveOccurred())
 
-		exe, err = executor.New(logger, exeConfig)
+		exe, err = TestJobRunner.New(logger, exeConfig)
 		Expect(err).NotTo(HaveOccurred())
 
 		// Log test suites with their slack channels
