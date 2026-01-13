@@ -33,7 +33,7 @@ type Provider interface {
 	// has begun. OSDe2e will not wait for the cluster to delete.
 	DeleteCluster(clusterID string) error
 
-	// ListCluster lists clusters from a provider based on a SQL-like query.
+	// ListClusters ListCluster lists clusters from a provider based on a SQL-like query.
 	ListClusters(query string) ([]*Cluster, error)
 
 	// GetCluster gets a cluster.

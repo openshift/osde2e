@@ -153,3 +153,18 @@ func SlackReporterConfig(webhookURL string, enabled bool) ReporterConfig {
 		},
 	}
 }
+
+// BuildNotificationConfig creates notification configuration for log analysis.
+func BuildNotificationConfig(webhook string, channel string) *NotificationConfig {
+	if webhook == "" || channel == "" {
+		return nil
+	}
+
+	slackConfig := SlackReporterConfig(webhook, true)
+	slackConfig.Settings["channel"] = channel
+
+	return &NotificationConfig{
+		Enabled:   true,
+		Reporters: []ReporterConfig{slackConfig},
+	}
+}
