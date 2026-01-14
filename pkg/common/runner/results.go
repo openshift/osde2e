@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"os"
 	"path"
 	"path/filepath"
 	"strconv"
@@ -13,6 +14,9 @@ import (
 	"time"
 
 	junit "github.com/joshdk/go-junit"
+	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
+	"github.com/openshift/osde2e/pkg/common/config"
+	"github.com/openshift/osde2e/pkg/common/spi"
 	"golang.org/x/net/html"
 	"k8s.io/apimachinery/pkg/util/wait"
 	restclient "k8s.io/client-go/rest"
@@ -159,4 +163,37 @@ func (r *Runner) downloadLinks(n *html.Node, results map[string][]byte, director
 		}
 	}
 	return nil
+}
+
+// ReportClusterInstallLogs retrieves cluster logs from the provider and writes them to the report directory.
+func ReportClusterInstallLogs(provider spi.Provider) {
+	if provider == nil {
+		log.Println("Skipping log collection (no provider)")
+		return
+	}
+
+	clusterID := viper.GetString(config.Cluster.ID)
+	if clusterID == "" {
+		log.Println("Skipping log collection (no cluster ID)")
+		return
+	}
+
+	logs, err := provider.Logs(clusterID)
+	if err != nil {
+		log.Printf("Error collecting cluster logs: %v", err)
+		return
+	}
+
+	WriteLogs(logs)
+}
+
+// WriteLogs writes logs to the report directory.
+func WriteLogs(logs map[string][]byte) {
+	reportDir := viper.GetString(config.ReportDir)
+	for name, content := range logs {
+		filePath := filepath.Join(reportDir, name+"-log.txt")
+		if err := os.WriteFile(filePath, content, os.ModePerm); err != nil {
+			log.Printf("Error writing log %s: %v", filePath, err)
+		}
+	}
 }

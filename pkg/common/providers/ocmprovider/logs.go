@@ -8,7 +8,7 @@ import (
 	v1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 )
 
-// Logs provides all logs available for clusterID, ids can be optionally provided for only specific logs.
+// GetClusterInstallLogs provides all logs available for clusterID, ids can be optionally provided for only specific logs.
 func (o *OCMProvider) Logs(clusterID string) (logs map[string][]byte, err error) {
 	var ids []string
 	if ids, err = o.getLogList(clusterID); err != nil {
