@@ -6,7 +6,10 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"os"
 	"os/exec"
+	"path/filepath"
+	"strings"
 
 	"github.com/openshift/osde2e/pkg/common/cluster"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
@@ -14,6 +17,7 @@ import (
 	"github.com/openshift/osde2e/pkg/common/orchestrator"
 	"github.com/openshift/osde2e/pkg/common/providers"
 	"github.com/openshift/osde2e/pkg/common/spi"
+	"gopkg.in/yaml.v3"
 )
 
 const (
@@ -76,6 +80,11 @@ func (k *KrknAI) Execute(ctx context.Context) error {
 		k.result.ExitCode = config.Failure
 		viper.Set(config.Cluster.Passing, false)
 		return fmt.Errorf("krkn-ai container execution failed: %w", err)
+	}
+
+	// Update the output YAML with config values
+	if err := k.updateKrknConfig(); err != nil {
+		log.Printf("KrknAI: Warning - failed to update config: %v", err)
 	}
 
 	log.Println("KrknAI: Chaos test execution completed")
@@ -143,6 +152,76 @@ func (k *KrknAI) runKrknContainer(ctx context.Context) error {
 		log.Printf("KrknAI: Container stderr:\n%s", stderr.String())
 	}
 
+	return nil
+}
+
+// updateKrknConfig updates the krkn-ai output YAML with values from viper config.
+func (k *KrknAI) updateKrknConfig() error {
+	sharedDir := viper.GetString(config.SharedDir)
+	fitnessQuery := viper.GetString(config.KrknAI.FitnessQuery)
+	scenarios := viper.GetString(config.KrknAI.Scenarios)
+
+	// Skip if no config values to update
+	if fitnessQuery == "" && scenarios == "" {
+		return nil
+	}
+
+	// Find YAML file in the shared directory
+	yamlFile := filepath.Join(sharedDir, "krkn-ai.yaml")
+	if _, err := os.Stat(yamlFile); os.IsNotExist(err) {
+		return fmt.Errorf("no krkn-ai config file found in %s", sharedDir)
+	}
+
+	// Read the YAML file
+	data, err := os.ReadFile(yamlFile)
+	if err != nil {
+		return fmt.Errorf("failed to read config file: %w", err)
+	}
+
+	// Parse YAML into a map
+	var cfg map[string]interface{}
+	if err := yaml.Unmarshal(data, &cfg); err != nil {
+		return fmt.Errorf("failed to parse config file: %w", err)
+	}
+
+	// Update fitness_function.query if set
+	if fitnessQuery != "" {
+		if ff, ok := cfg["fitness_function"].(map[string]interface{}); ok {
+			ff["query"] = fitnessQuery
+			log.Printf("KrknAI: Updated fitness_function.query to: %s", fitnessQuery)
+		}
+	}
+
+	// Update scenarios if set
+	// If the user has set a list of scenarios, enable all of them
+	// TODO: Add a way to disable specific scenarios
+	if scenarios != "" {
+		enabledScenarios := make(map[string]bool)
+		for _, s := range strings.Split(scenarios, ",") {
+			enabledScenarios[strings.TrimSpace(s)] = true
+		}
+
+		if scenarioCfg, ok := cfg["scenario"].(map[string]interface{}); ok {
+			for name, val := range scenarioCfg {
+				if scenarioMap, ok := val.(map[string]interface{}); ok {
+					scenarioMap["enable"] = enabledScenarios[name]
+				}
+			}
+			log.Printf("KrknAI: Updated scenarios: %v", scenarios)
+		}
+	}
+
+	// Write updated YAML back
+	updatedData, err := yaml.Marshal(cfg)
+	if err != nil {
+		return fmt.Errorf("failed to marshal updated config: %w", err)
+	}
+
+	if err := os.WriteFile(yamlFile, updatedData, 0o644); err != nil {
+		return fmt.Errorf("failed to write updated config: %w", err)
+	}
+
+	log.Printf("KrknAI: Config file updated: %s", yamlFile)
 	return nil
 }
 

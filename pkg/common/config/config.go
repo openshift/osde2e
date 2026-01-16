@@ -666,13 +666,23 @@ var KrknAI = struct {
 	// Verbose sets the verbosity level for krkn-ai output
 	// Env: KRKN_VERBOSE
 	Verbose string
+
+	// FitnessQuery is the Prometheus query for the fitness function
+	// Env: KRKN_FITNESS_QUERY
+	FitnessQuery string
+
+	// Scenarios is a comma-separated list of scenarios to enable
+	// Env: KRKN_SCENARIOS
+	Scenarios string
 }{
-	Mode:        "krknAI.mode",
-	Namespace:   "krknAI.namespace",
-	PodLabel:    "krknAI.podLabel",
-	NodeLabel:   "krknAI.nodeLabel",
-	SkipPodName: "krknAI.skipPodName",
-	Verbose:     "krknAI.verbose",
+	Mode:         "krknAI.mode",
+	Namespace:    "krknAI.namespace",
+	PodLabel:     "krknAI.podLabel",
+	NodeLabel:    "krknAI.nodeLabel",
+	SkipPodName:  "krknAI.skipPodName",
+	Verbose:      "krknAI.verbose",
+	FitnessQuery: "krknAI.fitnessQuery",
+	Scenarios:    "krknAI.scenarios",
 }
 
 func InitOSDe2eViper() {
@@ -1000,6 +1010,12 @@ func InitOSDe2eViper() {
 
 	viper.SetDefault(KrknAI.Verbose, "2")
 	_ = viper.BindEnv(KrknAI.Verbose, "KRKN_VERBOSE")
+
+	viper.SetDefault(KrknAI.FitnessQuery, "")
+	_ = viper.BindEnv(KrknAI.FitnessQuery, "KRKN_FITNESS_QUERY")
+
+	viper.SetDefault(KrknAI.Scenarios, "")
+	_ = viper.BindEnv(KrknAI.Scenarios, "KRKN_SCENARIOS")
 }
 
 func init() {
