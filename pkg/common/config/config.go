@@ -641,6 +641,40 @@ var LogAnalysis = struct {
 	SlackChannel:   "logAnalysis.slackChannel",
 }
 
+// KrknAI config keys for Kraken AI chaos testing.
+var KrknAI = struct {
+	// Mode is the krkn-ai execution mode (e.g., "discover")
+	// Env: KRKN_MODE
+	Mode string
+
+	// Namespace is the target namespace for chaos testing
+	// Env: KRKN_NAMESPACE
+	Namespace string
+
+	// PodLabel is the label selector for targeting pods
+	// Env: KRKN_POD_LABEL
+	PodLabel string
+
+	// NodeLabel is the label selector for targeting nodes
+	// Env: KRKN_NODE_LABEL
+	NodeLabel string
+
+	// SkipPodName is a pattern to skip specific pods
+	// Env: KRKN_SKIP_POD_NAME
+	SkipPodName string
+
+	// Verbose sets the verbosity level for krkn-ai output
+	// Env: KRKN_VERBOSE
+	Verbose string
+}{
+	Mode:        "krknAI.mode",
+	Namespace:   "krknAI.namespace",
+	PodLabel:    "krknAI.podLabel",
+	NodeLabel:   "krknAI.nodeLabel",
+	SkipPodName: "krknAI.skipPodName",
+	Verbose:     "krknAI.verbose",
+}
+
 func InitOSDe2eViper() {
 	// Here's where we bind environment variables to config options and set defaults
 
@@ -947,6 +981,25 @@ func InitOSDe2eViper() {
 
 	viper.SetDefault(LogAnalysis.SlackChannel, defaultNotificationsChannel)
 	_ = viper.BindEnv(LogAnalysis.SlackChannel, "LOG_ANALYSIS_SLACK_CHANNEL")
+
+	// ----- KrknAI Configuration -----
+	viper.SetDefault(KrknAI.Mode, "discover")
+	_ = viper.BindEnv(KrknAI.Mode, "KRKN_MODE")
+
+	viper.SetDefault(KrknAI.Namespace, "default")
+	_ = viper.BindEnv(KrknAI.Namespace, "KRKN_NAMESPACE")
+
+	viper.SetDefault(KrknAI.PodLabel, "")
+	_ = viper.BindEnv(KrknAI.PodLabel, "KRKN_POD_LABEL")
+
+	viper.SetDefault(KrknAI.NodeLabel, "kubernetes.io/hostname")
+	_ = viper.BindEnv(KrknAI.NodeLabel, "KRKN_NODE_LABEL")
+
+	viper.SetDefault(KrknAI.SkipPodName, "")
+	_ = viper.BindEnv(KrknAI.SkipPodName, "KRKN_SKIP_POD_NAME")
+
+	viper.SetDefault(KrknAI.Verbose, "2")
+	_ = viper.BindEnv(KrknAI.Verbose, "KRKN_VERBOSE")
 }
 
 func init() {
