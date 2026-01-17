@@ -194,7 +194,7 @@ func (k *KrknAI) updateKrknConfig() error {
 
 	// Update scenarios if set
 	// If the user has set a list of scenarios, enable all of them
-	// TODO: Add a way to disable specific scenarios
+	// TODO: Add a way to disable scenarios not selected by user
 	if scenarios != "" {
 		enabledScenarios := make(map[string]bool)
 		for _, s := range strings.Split(scenarios, ",") {
