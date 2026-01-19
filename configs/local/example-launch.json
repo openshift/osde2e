@@ -1,0 +1,25 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "example-e2e",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "hideSystemGoroutines": true,
+      "program": "./cmd/osde2e/main.go",
+      "env": {
+        "AD_HOC_TEST_IMAGES": "quay.io/redhat-user-workloads/oeo-cicada-tenant/openshift/osd-example-operator-e2e:latest",
+        "AWS_REGION": "us-east-1"
+      },
+      "args": [
+        "test",
+        "--configs",
+        "rosa,sts,stage,ad-hoc-image",
+        "--skip-must-gather",
+        "--skip-destroy-cluster",
+        "--skip-health-check"
+      ]
+    }
+  ]
+}
