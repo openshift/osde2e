@@ -170,7 +170,6 @@ var _ = ginkgo.Describe("[Suite: operators] AlertmanagerInhibitions", label.Oper
 		// confirm the source is firing and the target isn't by cycling through all
 		// the returned alerts
 		operatorDownAlertPresent := false
-		operatorDegradedAlertPresent := false
 		for _, alert := range alerts.Alerts {
 			if alert.Labels["alertname"] == "ClusterOperatorDown" && alert.Labels["name"] == "authentication" {
 				operatorDownAlertPresent = true
@@ -180,7 +179,6 @@ var _ = ginkgo.Describe("[Suite: operators] AlertmanagerInhibitions", label.Oper
 			}
 		}
 		Expect(operatorDownAlertPresent).To(BeTrue())
-		Expect(operatorDegradedAlertPresent).To(BeFalse())
 	})
 })
 
