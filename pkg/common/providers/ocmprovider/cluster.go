@@ -259,7 +259,7 @@ func (o *OCMProvider) LaunchCluster(clusterName string) (string, error) {
 
 	var resp *v1.ClustersAddResponse
 
-	if viper.GetBool(config.Cluster.UseExistingCluster) && viper.GetString(config.Addons.IDs) == "" {
+	if viper.GetBool(config.Cluster.UseClusterReserve) && viper.GetString(config.Addons.IDs) == "" {
 		product := cluster.Product().ID()
 		if product == "" {
 			product = "osd"

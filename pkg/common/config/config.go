@@ -35,7 +35,7 @@ const (
 	// Env: PROVIDER
 	Provider = "provider"
 
-	// OCM_CONFIG is the path for the ocm.json file.
+	// OcmConfig is the path for the ocm.json file.
 	// Env: OCM_CONFIG
 	OcmConfig = "ocmConfig"
 
@@ -81,7 +81,7 @@ const (
 	// Env: DRY_RUN
 	DryRun = "dryRun"
 
-	// will skip the Must-Gather process upon completion of the tests.
+	// SkipMustGather will skip the Must-Gather process upon completion of the tests.
 	// Env: SKIP_MUST_GATHER
 	SkipMustGather = "skipMustGather"
 
@@ -94,10 +94,10 @@ const (
 	// Project is both the project and SA automatically created to house all objects created during an osde2e-run
 	Project = "project"
 
-	// CanaryChance
 	CanaryChance = "canaryChance"
 
-	// Default network provider for OSD
+	// DefaultNetworkProvider Default network provider for OSD
+	// env: CLUSTER_NETWORK_PROVIDER
 	DefaultNetworkProvider = "OVNKubernetes"
 
 	// NonOSDe2eSecrets is an internal-only Viper Key.
@@ -110,7 +110,7 @@ const (
 	// Hypershift enables the use of hypershift for cluster creation.
 	Hypershift = "Hypershift"
 
-	// Ignores invalid certificates within HyperShift kubeconfig
+	// HypershiftIgnoreInvalidCert Ignores invalid certificates within HyperShift kubeconfig
 	HypershiftIgnoreInvalidCert = "HypershiftIgnoreInvalidCert"
 
 	// SharedDir is the location where files to be used by other processes/programs are stored.
@@ -119,7 +119,7 @@ const (
 
 	KonfluxTestOutputFile = "konfluxResultsPath"
 
-	// TotalSlackMessageLength is about 10000 characters
+	// SlackMessageLength TotalSlackMessageLength is about 10000 characters
 	// Summary: 1500 Characters
 	// Build file comment: 500 Characters
 	// Other comments(s3, ec2, elasticIP, iam): 2000 * 4 = 8000
@@ -456,10 +456,10 @@ var Cluster = struct {
 	// the test run, assuming the provider supports hibernation
 	HibernateAfterUse string
 
-	// UseExistingCluster will allow the test run to use an existing cluster if available
-	// ENV: USE_EXISTING_CLUSTER
+	// UseClusterReserve will allow the test run to use an existing cluster if available
+	// ENV: USE_CLUSTER_RESERVE, will also accept obsoleted var name: USE_EXISTING_CLUSTER
 	// Default: True
-	UseExistingCluster string
+	UseClusterReserve string
 
 	// Passing tracks the internal status of the tests: Pass or Fail
 	Passing string
@@ -512,7 +512,7 @@ var Cluster = struct {
 	NetworkProvider:                     "cluster.networkProvider",
 	ImageContentSource:                  "cluster.imageContentSource",
 	InstallConfig:                       "cluster.installConfig",
-	UseExistingCluster:                  "cluster.useExistingCluster",
+	UseClusterReserve:                   "cluster.useClusterReserve",
 	Passing:                             "cluster.passing",
 	ClaimedFromReserve:                  "cluster.claimedFromReserve",
 	InspectNamespaces:                   "cluster.inspectNamespaces",
@@ -544,18 +544,6 @@ var Addons = struct {
 	// Env: ADDON_IDS
 	IDs string
 
-	// todo: unused, remove
-	// RunCleanup is a boolean to specify whether the testHarnesses should have a separate
-	// cleanup phase. This phase would run at the end of all e2e testing
-	// Env: ADDON_RUN_CLEANUP
-	RunCleanup string
-
-	// todo: unused, remove
-	// CleanupHarnesses is a comma separated list of container images that will clean up any
-	// artifacts created after test harnesses have run
-	// Env: ADDON_CLEANUP_HARNESSES
-	CleanupHarnesses string
-
 	// Parameters is a nested json object. Top-level keys should be addon
 	// IDs provided in the IDs field. The values should be objects with
 	// string key-value pairs of parameters to provide to the addon with
@@ -569,26 +557,10 @@ var Addons = struct {
 	// Env: SKIP_ADDON_LIST
 	SkipAddonList string
 }{
-	IDsAtCreation:    "addons.idsAtCreation",
-	IDs:              "addons.ids",
-	RunCleanup:       "addons.runCleanup",
-	CleanupHarnesses: "addons.cleanupHarnesses",
-	SkipAddonList:    "addons.skipAddonlist",
-	Parameters:       "addons.parameters",
-}
-
-// Alert config keys.
-var Alert = struct {
-	// EnableAlerts is a boolean to indicate whether alerts should be enabled or not.
-	// Env: ENABLE_ALERTS
-	EnableAlerts string
-
-	// SlackAPIToken is a bot slack token
-	// Env: SLACK_API_TOKEN
-	SlackAPIToken string
-}{
-	EnableAlerts:  "alert.EnableAlerts",
-	SlackAPIToken: "alert.slackAPIToken",
+	IDsAtCreation: "addons.idsAtCreation",
+	IDs:           "addons.ids",
+	SkipAddonList: "addons.skipAddonlist",
+	Parameters:    "addons.parameters",
 }
 
 // Proxy config keys
@@ -605,7 +577,7 @@ var Proxy = struct {
 	UserCABundle: "proxy.user_ca_bundle",
 }
 
-// Configuration Anomaly Detection keys
+// Cad Configuration Anomaly Detection config
 var Cad = struct {
 	// Env: CAD_PAGERDUTY_ROUTING_KEY
 	CADPagerDutyRoutingKey string
@@ -904,8 +876,8 @@ func InitOSDe2eViper() {
 	viper.SetDefault(Cluster.NetworkProvider, DefaultNetworkProvider)
 	_ = viper.BindEnv(Cluster.NetworkProvider, "CLUSTER_NETWORK_PROVIDER")
 
-	viper.SetDefault(Cluster.UseExistingCluster, false)
-	_ = viper.BindEnv(Cluster.UseExistingCluster, "USE_EXISTING_CLUSTER")
+	viper.SetDefault(Cluster.UseClusterReserve, false)
+	_ = viper.BindEnv(Cluster.UseClusterReserve, "USE_EXISTING_CLUSTER", "USE_CLUSTER_RESERVE")
 
 	viper.SetDefault(Cluster.ClaimedFromReserve, false)
 	viper.SetDefault(Cluster.Passing, false)
@@ -932,24 +904,12 @@ func InitOSDe2eViper() {
 
 	_ = viper.BindEnv(Addons.IDs, "ADDON_IDS")
 
-	_ = viper.BindEnv(Addons.CleanupHarnesses, "ADDON_CLEANUP_HARNESSES")
-
-	viper.SetDefault(Addons.RunCleanup, false)
-	_ = viper.BindEnv(Addons.RunCleanup, "ADDON_RUN_CLEANUP")
-
 	viper.SetDefault(Addons.Parameters, "{}")
 	_ = viper.BindEnv(Addons.Parameters, "ADDON_PARAMETERS")
 	RegisterSecret(Addons.Parameters, "addon-parameters")
 
 	viper.SetDefault(Addons.SkipAddonList, false)
 	_ = viper.BindEnv(Addons.SkipAddonList, "SKIP_ADDON_LIST")
-
-	// ----- Alert ----
-	_ = viper.BindEnv(Alert.EnableAlerts, "ENABLE_ALERTS")
-	viper.SetDefault(Alert.EnableAlerts, false)
-
-	_ = viper.BindEnv(Alert.SlackAPIToken, "SLACK_API_TOKEN")
-	RegisterSecret(Alert.SlackAPIToken, "slack-api-token")
 
 	// ----- Proxy ------
 	_ = viper.BindEnv(Proxy.HttpProxy, "TEST_HTTP_PROXY")
