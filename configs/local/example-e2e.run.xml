@@ -1,0 +1,20 @@
+<component name="ProjectRunConfigurationManager">
+    <configuration default="false" name="example-e2e" type="GoApplicationRunConfiguration" factoryName="Go Application">
+        <module name="osde2e" />
+        <working_directory value="$PROJECT_DIR$" />
+        <useCustomBuildTags value="true" />
+        <parameters value="test --configs=rosa,sts,stage,ad-hoc-image" />
+        <envs>
+            <env name="AD_HOC_TEST_IMAGES" value="quay.io/redhat-user-workloads/oeo-cicada-tenant/openshift/osd-example-operator-e2e:latest" />
+            <env name="AWS_REGION" value="us-east-1" />
+            <env name="SKIP_CLUSTER_HEALTH_CHECKS" value="true" />
+            <env name="SKIP_DESTROY_CLUSTER" value="True" />
+            <env name="SKIP_MUST_GATHER" value="TRUE" />
+        </envs>
+        <kind value="PACKAGE" />
+        <package value="github.com/openshift/osde2e/cmd/osde2e" />
+        <directory value="$PROJECT_DIR$" />
+        <filePath value="$PROJECT_DIR$" />
+        <method v="2" />
+    </configuration>
+</component>
