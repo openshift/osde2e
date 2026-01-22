@@ -102,7 +102,7 @@ func WaitForClusterReadyPostInstall(clusterID string, logger *log.Logger) error 
 
 	if viper.GetBool(config.Hypershift) {
 		logger.Println("Waiting for nodes to be ready (up to 10 minutes)")
-		err := wait.PollUntilContextTimeout(context.TODO(), 30*time.Second, 10*time.Minute, false, func(ctx context.Context) (bool, error) {
+		err := wait.PollUntilContextTimeout(context.TODO(), 30*time.Second, 10*time.Minute, true, func(ctx context.Context) (bool, error) {
 			nodes, err := kubeClient.CoreV1().Nodes().List(ctx, v1.ListOptions{})
 			if err != nil {
 				// if the api server is not ready yet
@@ -129,7 +129,7 @@ func WaitForClusterReadyPostInstall(clusterID string, logger *log.Logger) error 
 
 	if viper.GetBool(config.Tests.OnlyHealthCheckNodes) {
 		logger.Println("Waiting up to 30 minutes for all nodes to be ready")
-		err := wait.PollUntilContextTimeout(context.TODO(), 30*time.Second, 30*time.Minute, false, func(_ context.Context) (bool, error) {
+		err := wait.PollUntilContextTimeout(context.TODO(), 30*time.Second, 30*time.Minute, true, func(_ context.Context) (bool, error) {
 			return healthchecks.CheckNodeHealth(kubeClient.CoreV1(), logger)
 		})
 		if err != nil {
@@ -175,7 +175,7 @@ func WaitForOCMProvisioning(provider spi.Provider, clusterID string, logger *log
 		healthcheckStatus = clusterproperties.StatusUpgradeHealthCheck
 	}
 
-	return readinessStarted, wait.PollUntilContextTimeout(context.TODO(), 30*time.Second, time.Duration(installTimeout)*time.Minute, false, func(_ context.Context) (bool, error) {
+	return readinessStarted, wait.PollUntilContextTimeout(context.TODO(), 30*time.Second, time.Duration(installTimeout)*time.Minute, true, func(_ context.Context) (bool, error) {
 		cluster, err := provider.GetCluster(clusterID)
 		if err != nil {
 			logger.Printf("Error fetching cluster details from provider: %s", err)
@@ -243,7 +243,7 @@ func waitForClusterReadyWithOverrideAndExpectedNumberOfNodes(clusterID string, l
 		return fmt.Errorf("error fetching cluster details from provider: %w", err)
 	}
 
-	if pollErr := wait.PollUntilContextTimeout(context.TODO(), 30*time.Second, time.Duration(installTimeout)*time.Minute, false, func(_ context.Context) (bool, error) {
+	if pollErr := wait.PollUntilContextTimeout(context.TODO(), 30*time.Second, time.Duration(installTimeout)*time.Minute, true, func(_ context.Context) (bool, error) {
 		if cluster.State() != spi.ClusterStateReady {
 			logger.Printf("Cluster is not ready, current status '%s'.", cluster.State())
 			return false, nil
@@ -615,7 +615,7 @@ func Provision(provider spi.Provider) (*spi.Cluster, error) {
 	}
 
 	var kubeconfigBytes []byte
-	clusterConfigerr := wait.PollUntilContextTimeout(context.Background(), 2*time.Second, 5*time.Minute, false, func(ctx context.Context) (bool, error) {
+	clusterConfigerr := wait.PollUntilContextTimeout(context.Background(), 2*time.Second, 5*time.Minute, true, func(ctx context.Context) (bool, error) {
 		kubeconfigBytes, err = provider.ClusterKubeconfig(viper.GetString(config.Cluster.ID))
 		if err != nil {
 			log.Printf("Failed to retrieve kubeconfig: %v\nWaiting two seconds before retrying", err)
