@@ -69,9 +69,8 @@ func NewOutsideGinkgo() (*H, error) {
 type H struct {
 	ServiceAccount string
 	OutsideGinkgo  bool
-
+	Client         *openshift.Client
 	// internal
-	client     *openshift.Client
 	restConfig *rest.Config
 	proj       *projectv1.Project
 	mutex      sync.Mutex
@@ -95,7 +94,7 @@ func (h *H) Setup() error {
 
 	Expect(err).ShouldNot(HaveOccurred(), "failed to configure client")
 
-	h.client, err = openshift.NewFromRestConfig(h.restConfig, ginkgo.GinkgoLogr)
+	h.Client, err = openshift.NewFromRestConfig(h.restConfig, ginkgo.GinkgoLogr)
 	if h.OutsideGinkgo && err != nil {
 		return fmt.Errorf("failed to create openshift client: %w", err)
 	}
@@ -212,7 +211,7 @@ func (h *H) Cleanup(ctx context.Context) {
 // CreateServiceAccountsInProject creates a set of serviceaccounts for test usage in given namespace
 func (h *H) CreateServiceAccountsInProject(ctx context.Context, project *projectv1.Project) *H {
 	// Create project-specific dedicated-admin account
-	err := h.client.Create(ctx, &corev1.ServiceAccount{
+	err := h.Client.Create(ctx, &corev1.ServiceAccount{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "dedicated-admin-project",
 			Namespace: project.Name,
@@ -223,7 +222,7 @@ func (h *H) CreateServiceAccountsInProject(ctx context.Context, project *project
 	ginkgo.GinkgoLogr.Info(fmt.Sprintf("Created SA: %v", "dedicated-admin-project"))
 
 	// Create cluster dedicated-admin account
-	err = h.client.Create(ctx, &corev1.ServiceAccount{
+	err = h.Client.Create(ctx, &corev1.ServiceAccount{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "dedicated-admin-cluster",
 			Namespace: project.Name,
@@ -234,7 +233,7 @@ func (h *H) CreateServiceAccountsInProject(ctx context.Context, project *project
 	ginkgo.GinkgoLogr.Info(fmt.Sprintf("Created SA: %v", "dedicated-admin-cluster"))
 
 	// Create cluster-admin account
-	err = h.client.Create(ctx, &corev1.ServiceAccount{
+	err = h.Client.Create(ctx, &corev1.ServiceAccount{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "cluster-admin",
 			Namespace: project.Name,
@@ -254,7 +253,7 @@ func (h *H) CreateClusterRoleBindingInProject(ctx context.Context, saName string
 	projRef := *metav1.NewControllerRef(project.DeepCopy(), gvk)
 
 	// create binding with OwnerReference
-	err := h.client.Create(ctx, &rbacv1.ClusterRoleBinding{
+	err := h.Client.Create(ctx, &rbacv1.ClusterRoleBinding{
 		ObjectMeta: metav1.ObjectMeta{
 			GenerateName: "osde2e-test-access-",
 			OwnerReferences: []metav1.OwnerReference{
@@ -294,7 +293,8 @@ func (h *H) SetServiceAccount(ctx context.Context, sa string) *H {
 	if h.ServiceAccount != "" {
 		parts := strings.Split(h.ServiceAccount, ":")
 		Expect(len(parts)).Should(Equal(4), "not a valid service account name: %v", h.ServiceAccount)
-		_, err := h.Kube().CoreV1().ServiceAccounts(parts[2]).Get(ctx, parts[3], metav1.GetOptions{})
+		var sa *corev1.ServiceAccount
+		err := h.Client.Get(ctx, parts[3], parts[2], sa)
 		Expect(err).ShouldNot(HaveOccurred(), "could not get sa '%s'", h.ServiceAccount)
 	}
 
@@ -447,7 +447,7 @@ func (h *H) GetConfig() *rest.Config {
 }
 
 func (h *H) GetClient() *openshift.Client {
-	return h.client
+	return h.Client
 }
 
 // GetRunnerCommandString Generates templated command string to provide to test adHocTest container
