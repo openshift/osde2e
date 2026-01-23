@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"reflect"
 	"time"
 )
 
@@ -114,15 +115,49 @@ func (c *Client) PostMessageWithFiles(ctx context.Context, botToken string, chan
 func (c *Client) postMessage(ctx context.Context, botToken string, channel string, message interface{}) (string, error) {
 	// Extract text content from message
 	var text string
+
+	// First try to get the text field directly (for simple messages)
 	if msg, ok := message.(map[string]interface{}); ok {
-		if summary, ok := msg["summary"].(string); ok {
-			text = summary
+		if msgText, ok := msg["text"].(string); ok {
+			text = msgText
 		}
-		if analysis, ok := msg["analysis"].(string); ok {
-			if text != "" {
-				text += "\n\n"
+	}
+
+	// If no text field found, try to extract from internal summary/analysis fields via reflection
+	// This handles the Message struct from reporter package
+	if text == "" {
+		msgValue := reflect.ValueOf(message)
+		if msgValue.Kind() == reflect.Ptr {
+			msgValue = msgValue.Elem()
+		}
+		if msgValue.Kind() == reflect.Struct {
+			// Try to get summary and analysis fields (lowercase, unexported)
+			summaryField := msgValue.FieldByName("summary")
+			analysisField := msgValue.FieldByName("analysis")
+
+			if summaryField.IsValid() && summaryField.CanInterface() {
+				if summary, ok := summaryField.Interface().(string); ok && summary != "" {
+					text = summary
+				}
 			}
-			text += analysis
+			if analysisField.IsValid() && analysisField.CanInterface() {
+				if analysis, ok := analysisField.Interface().(string); ok && analysis != "" {
+					if text != "" {
+						text += "\n\n"
+					}
+					text += analysis
+				}
+			}
+
+			// Fallback to Text field if nothing else worked
+			if text == "" {
+				textField := msgValue.FieldByName("Text")
+				if textField.IsValid() && textField.CanInterface() {
+					if msgText, ok := textField.Interface().(string); ok {
+						text = msgText
+					}
+				}
+			}
 		}
 	}
 

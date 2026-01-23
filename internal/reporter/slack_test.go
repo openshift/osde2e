@@ -57,13 +57,12 @@ func TestSlackReporter_readTestOutput(t *testing.T) {
 				}
 				return tmpDir
 			},
-			// With 250 lines, threshold is 250, so it returns full content
 			shouldContain:     []string{"line 1", "line 100", "line 250"},
 			shouldNotContain:  []string{"lines omitted"},
 			expectedTruncated: false,
 		},
 		{
-			name: "truncates large file with smart extraction",
+			name: "shows last 80 lines when no failures found in large file",
 			setupFunc: func(t *testing.T) string {
 				tmpDir := t.TempDir()
 				content := generateLines(500)
@@ -73,10 +72,9 @@ func TestSlackReporter_readTestOutput(t *testing.T) {
 				}
 				return tmpDir
 			},
-			// 500 lines: first 20 + last 80 with smart extraction
-			shouldContain:     []string{"line 1", "line 20", "line 421", "line 500", "lines omitted"},
-			shouldNotContain:  []string{"line 200"},
-			expectedTruncated: true,
+			shouldContain:     []string{"No [FAILED] markers found", "line 421", "line 500"},
+			shouldNotContain:  []string{"line 1", "line 20", "line 200"},
+			expectedTruncated: false,
 		},
 		{
 			name: "prefers test_output.txt over test_output.log",
@@ -118,9 +116,37 @@ func TestSlackReporter_readTestOutput(t *testing.T) {
 				}
 				return tmpDir
 			},
-			// 300 lines: first 20 + last 80 = 100 shown with smart extraction
-			shouldContain:     []string{"line 1", "line 20", "line 221", "line 300", "lines omitted"},
-			expectedTruncated: true,
+			shouldContain:     []string{"No [FAILED] markers found", "line 221", "line 300"},
+			expectedTruncated: false,
+		},
+		{
+			name: "extracts failure blocks from large file with [FAILED] markers",
+			setupFunc: func(t *testing.T) string {
+				tmpDir := t.TempDir()
+				var content strings.Builder
+				for i := 1; i <= 500; i++ {
+					if i == 100 {
+						content.WriteString("Running test: authentication\n")
+						content.WriteString("[FAILED] authentication failed\n")
+						content.WriteString("Expected: true\n")
+						content.WriteString("Got: false\n")
+					} else if i == 300 {
+						content.WriteString("Running test: database connection\n")
+						content.WriteString("• [FAILED] connection timeout\n")
+						content.WriteString("Timeout after 30s\n")
+					} else {
+						content.WriteString(fmt.Sprintf("line %d\n", i))
+					}
+				}
+				err := os.WriteFile(filepath.Join(tmpDir, "test_output.txt"), []byte(content.String()), 0o644)
+				if err != nil {
+					t.Fatalf("failed to create test file: %v", err)
+				}
+				t.Logf("Created test file with %d lines", len(strings.Split(content.String(), "\n")))
+				return tmpDir
+			},
+			shouldContain:    []string{"Found 2 test failure(s)", "[FAILED] authentication failed", "• [FAILED] connection timeout", "---"},
+			shouldNotContain: []string{"line 50", "line 450", "No [FAILED] markers found"},
 		},
 		{
 			name: "handles empty file",
@@ -207,9 +233,9 @@ func TestSlackReporter_formatAnalysisContent(t *testing.T) {
 			name:  "formats valid JSON with root_cause and recommendations",
 			input: "Analysis result:\n```json\n{\n  \"root_cause\": \"Database connection timeout\",\n  \"recommendations\": [\"Check network connectivity\", \"Verify database credentials\"]\n}\n```",
 			shouldContain: []string{
-				"====== 🔍 Possible Cause ======",
+				"# Possible Cause",
 				"Database connection timeout",
-				"====== 💡 Recommendations ======",
+				"# Recommendations",
 				"1. Check network connectivity",
 				"2. Verify database credentials",
 			},
@@ -218,7 +244,7 @@ func TestSlackReporter_formatAnalysisContent(t *testing.T) {
 			name:  "handles JSON with only root_cause",
 			input: "```json\n{\"root_cause\": \"Memory exhausted\"}\n```",
 			shouldContain: []string{
-				"====== 🔍 Possible Cause ======",
+				"# Possible Cause",
 				"Memory exhausted",
 			},
 		},
@@ -226,7 +252,7 @@ func TestSlackReporter_formatAnalysisContent(t *testing.T) {
 			name:  "handles JSON with only recommendations",
 			input: "```json\n{\"recommendations\": [\"Restart service\", \"Check logs\"]}\n```",
 			shouldContain: []string{
-				"====== 💡 Recommendations ======",
+				"# Recommendations",
 				"1. Restart service",
 				"2. Check logs",
 			},
@@ -235,7 +261,7 @@ func TestSlackReporter_formatAnalysisContent(t *testing.T) {
 			name:  "handles empty root_cause gracefully",
 			input: "```json\n{\"root_cause\": \"\", \"recommendations\": [\"Action item\"]}\n```",
 			shouldContain: []string{
-				"====== 💡 Recommendations ======",
+				"# Recommendations",
 				"1. Action item",
 			},
 		},
@@ -243,7 +269,7 @@ func TestSlackReporter_formatAnalysisContent(t *testing.T) {
 			name:  "handles empty recommendations array",
 			input: "```json\n{\"root_cause\": \"Error found\", \"recommendations\": []}\n```",
 			shouldContain: []string{
-				"====== 🔍 Possible Cause ======",
+				"# Possible Cause",
 				"Error found",
 			},
 		},
@@ -317,7 +343,6 @@ func TestSlackReporter_collectLogFiles(t *testing.T) {
 			name: "respects max file count limit",
 			setupFunc: func(t *testing.T) string {
 				tmpDir := t.TempDir()
-				// Create more files than the limit
 				for i := 0; i < 20; i++ {
 					filename := fmt.Sprintf("junit_%d.xml", i)
 					if err := os.WriteFile(filepath.Join(tmpDir, filename), []byte("content"), 0o644); err != nil {
@@ -573,37 +598,19 @@ func TestSlackReporter_readTestOutput_RealProwData(t *testing.T) {
 	resultLines := strings.Split(result, "\n")
 	t.Logf("Real Prow data - Total lines in result: %d", len(resultLines))
 	t.Logf("First 3 lines: %v", resultLines[0:3])
-	t.Logf("Contains 'Loading config': %v", strings.Contains(result, "Loading config"))
-	t.Logf("Contains 'Will load config': %v", strings.Contains(result, "Will load config"))
 	t.Logf("First line: %q", resultLines[0])
 
-	// The build log is 646 lines, so it should be truncated
-	if !strings.Contains(result, "lines omitted") {
-		t.Error("expected truncation notice in result")
+	// With the new approach, we extract only failure blocks, so we expect "Found N test failure(s)"
+	if !strings.Contains(result, "Found") || !strings.Contains(result, "test failure(s)") {
+		t.Error("expected 'Found N test failure(s)' in result")
 	}
 
-	// Verify we get the initial context (first ~20 lines)
-	expectedInitial := []string{
-		"Will load config", // From initial lines
-		"aws",              // Config name
-		"stage",            // Environment
-		"e2e-suite",        // Test suite
-	}
-
-	for _, expected := range expectedInitial {
-		if !strings.Contains(result, expected) {
-			t.Errorf("expected result to contain initial context %q", expected)
-		}
-	}
-
-	// Verify we get the important failure details (from the end)
+	// Verify we get the important failure details
+	// With the new approach, we extract only failure blocks with [FAILED] markers
 	expectedFailures := []string{
-		"FAIL",                                     // Test failure marker
-		"osd-metrics-exporter",                     // One of the failing tests
-		"managed-cluster-validating-webhooks",      // Another failing test
-		"Summarizing 2 Failures",                   // Summary section
-		"Tests failed: tests failed",               // Final result
-		"Cluster 2ntr2hoo8487ite28bd98pg5ph0m04gf", // Cluster ID at the end
+		"FAIL",                                // Test failure marker
+		"osd-metrics-exporter",                // One of the failing tests
+		"managed-cluster-validating-webhooks", // Another failing test
 	}
 
 	for _, expected := range expectedFailures {
@@ -612,19 +619,19 @@ func TestSlackReporter_readTestOutput_RealProwData(t *testing.T) {
 		}
 	}
 
-	// Verify we're getting meaningful content length
-	// With 20 first + 180 last lines, plus omission notice, should be substantial
+	// Verify we're getting reasonable content length with only failure blocks
+	// We extract up to 3 failure blocks with context, so should have meaningful content
 	lines := strings.Split(result, "\n")
-	if len(lines) < 150 {
-		t.Errorf("expected at least 150 lines in truncated output, got %d", len(lines))
+	if len(lines) < 10 {
+		t.Errorf("expected at least 10 lines in failure block output, got %d", len(lines))
 	}
 
-	// The middle repetitive content should be mostly omitted
+	// The middle repetitive content should be omitted since we only extract failure blocks
 	// Lines 100-300 had repeated "Unable to find image using selector" messages
 	repetitiveCount := strings.Count(result, "Unable to find image using selector")
-	// We should see some from the first 20 lines, but not all ~100+ instances
-	if repetitiveCount > 30 {
-		t.Errorf("expected truncation to reduce repetitive content, but found %d instances of repeated message", repetitiveCount)
+	// We should see very few instances since we're only extracting failure blocks
+	if repetitiveCount > 10 {
+		t.Errorf("expected failure block extraction to reduce repetitive content, but found %d instances of repeated message", repetitiveCount)
 	}
 }
 
@@ -635,4 +642,629 @@ func generateLines(n int) string {
 		lines[i] = fmt.Sprintf("line %d", i+1)
 	}
 	return strings.Join(lines, "\n") + "\n"
+}
+
+func TestSlackReporter_buildClusterInfoSection(t *testing.T) {
+	tests := []struct {
+		name          string
+		clusterInfo   *ClusterInfo
+		shouldContain []string
+		shouldBeEmpty bool
+	}{
+		{
+			name: "builds full cluster info section",
+			clusterInfo: &ClusterInfo{
+				ID:         "cluster-123",
+				Name:       "test-cluster",
+				Version:    "4.20.0",
+				Provider:   "aws",
+				Expiration: "2026-01-30",
+			},
+			shouldContain: []string{
+				"# Cluster Info",
+				"Cluster ID: cluster-123",
+				"Name: test-cluster",
+				"Version: 4.20.0",
+				"Provider: aws",
+				"Expiration: 2026-01-30",
+			},
+		},
+		{
+			name: "handles cluster info with only ID",
+			clusterInfo: &ClusterInfo{
+				ID: "cluster-456",
+			},
+			shouldContain: []string{
+				"# Cluster Info",
+				"Cluster ID: cluster-456",
+			},
+		},
+		{
+			name:          "returns empty string for nil cluster info",
+			clusterInfo:   nil,
+			shouldBeEmpty: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			reporter := &SlackReporter{}
+			config := &ReporterConfig{
+				Settings: map[string]interface{}{
+					"cluster_info": tt.clusterInfo,
+				},
+			}
+
+			result := reporter.buildClusterInfoSection(config)
+
+			if tt.shouldBeEmpty {
+				if result != "" {
+					t.Errorf("expected empty result, got: %q", result)
+				}
+				return
+			}
+
+			for _, expected := range tt.shouldContain {
+				if !strings.Contains(result, expected) {
+					t.Errorf("expected result to contain %q, but it didn't. Result: %s", expected, result)
+				}
+			}
+		})
+	}
+}
+
+func TestSlackReporter_buildTestSuiteSection(t *testing.T) {
+	tests := []struct {
+		name          string
+		image         string
+		env           string
+		shouldContain []string
+		shouldBeEmpty bool
+	}{
+		{
+			name:  "builds test suite section with image and env",
+			image: "quay.io/osde2e:abc123",
+			env:   "stage",
+			shouldContain: []string{
+				"Test suite: quay.io/osde2e",
+				"Commit: abc123",
+				"Environment: stage",
+			},
+		},
+		{
+			name:  "builds test suite section without env",
+			image: "quay.io/osde2e:def456",
+			shouldContain: []string{
+				"Test suite: quay.io/osde2e",
+				"Commit: def456",
+			},
+		},
+		{
+			name:          "returns empty for invalid image format",
+			image:         "invalid-image-no-colon",
+			shouldBeEmpty: true,
+		},
+		{
+			name:          "returns empty for empty image",
+			image:         "",
+			shouldBeEmpty: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			reporter := &SlackReporter{}
+			config := &ReporterConfig{
+				Settings: map[string]interface{}{
+					"image": tt.image,
+					"env":   tt.env,
+				},
+			}
+
+			result := reporter.buildTestSuiteSection(config)
+
+			if tt.shouldBeEmpty {
+				if result != "" {
+					t.Errorf("expected empty result, got: %q", result)
+				}
+				return
+			}
+
+			for _, expected := range tt.shouldContain {
+				if !strings.Contains(result, expected) {
+					t.Errorf("expected result to contain %q, but it didn't. Result: %s", expected, result)
+				}
+			}
+		})
+	}
+}
+
+func TestSlackReporter_buildAnalysisSection(t *testing.T) {
+	tests := []struct {
+		name          string
+		content       string
+		shouldContain []string
+	}{
+		{
+			name: "formats JSON analysis with root_cause and recommendations",
+			content: `Analysis result:
+` + "```json" + `
+{
+  "root_cause": "Database connection timeout",
+  "recommendations": ["Check network", "Verify credentials"]
+}
+` + "```",
+			shouldContain: []string{
+				"# Possible Cause",
+				"Database connection timeout",
+				"# Recommendations",
+				"1. Check network",
+				"2. Verify credentials",
+			},
+		},
+		{
+			name:          "returns plain content when no JSON",
+			content:       "This is plain analysis without JSON",
+			shouldContain: []string{"Analysis:", "This is plain analysis without JSON"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			reporter := &SlackReporter{}
+			result := &AnalysisResult{
+				Content: tt.content,
+			}
+
+			output := reporter.buildAnalysisSection(result)
+
+			for _, expected := range tt.shouldContain {
+				if !strings.Contains(output, expected) {
+					t.Errorf("expected output to contain %q, but it didn't. Output: %s", expected, output)
+				}
+			}
+		})
+	}
+}
+
+func TestSlackReporter_buildTruncationNotice(t *testing.T) {
+	tests := []struct {
+		name             string
+		omittedContent   string
+		hasBotToken      bool
+		shouldContain    []string
+		shouldNotContain []string
+	}{
+		{
+			name:           "notice with bot token mentions attached files",
+			omittedContent: "test suite info",
+			hasBotToken:    true,
+			shouldContain:  []string{"test suite info omitted", "see attached files"},
+		},
+		{
+			name:             "notice without bot token mentions length limit",
+			omittedContent:   "analysis",
+			hasBotToken:      false,
+			shouldContain:    []string{"analysis omitted", "Slack message length limit"},
+			shouldNotContain: []string{"attached files"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			reporter := &SlackReporter{}
+			result := reporter.buildTruncationNotice(tt.omittedContent, tt.hasBotToken)
+
+			for _, expected := range tt.shouldContain {
+				if !strings.Contains(result, expected) {
+					t.Errorf("expected result to contain %q, but it didn't. Result: %s", expected, result)
+				}
+			}
+
+			for _, notExpected := range tt.shouldNotContain {
+				if strings.Contains(result, notExpected) {
+					t.Errorf("expected result to NOT contain %q, but it did. Result: %s", notExpected, result)
+				}
+			}
+		})
+	}
+}
+
+func TestSlackReporter_buildTruncatedMessage(t *testing.T) {
+	tests := []struct {
+		name             string
+		header           string
+		clusterInfo      string
+		analysis         string
+		errorMsg         string
+		testSuiteInfo    string
+		maxLength        int
+		hasBotToken      bool
+		shouldContain    []string
+		shouldNotContain []string
+	}{
+		{
+			name:          "everything fits within limit",
+			header:        "Header\n",
+			clusterInfo:   "Cluster: 123\n",
+			analysis:      "Analysis content\n",
+			errorMsg:      "Error: test\n",
+			testSuiteInfo: "Test suite: foo\n",
+			maxLength:     1000,
+			hasBotToken:   false,
+			shouldContain: []string{"Header", "Cluster: 123", "Analysis content", "Error: test", "Test suite: foo"},
+		},
+		{
+			name:             "drops test suite when over limit",
+			header:           "Header\n",
+			clusterInfo:      "Cluster: 123\n",
+			analysis:         "Analysis content\n",
+			errorMsg:         "Error: test\n",
+			testSuiteInfo:    strings.Repeat("x", 500),
+			maxLength:        200,
+			hasBotToken:      true,
+			shouldContain:    []string{"Header", "Cluster: 123", "Analysis content", "Error: test", "test suite info omitted", "see attached files"},
+			shouldNotContain: []string{"xxxxx"},
+		},
+		{
+			name:             "drops error message when over limit",
+			header:           "Header\n",
+			clusterInfo:      "Cluster: 123\n",
+			analysis:         strings.Repeat("a", 50),
+			errorMsg:         strings.Repeat("e", 200),
+			testSuiteInfo:    "Test suite\n",
+			maxLength:        200,
+			hasBotToken:      false,
+			shouldContain:    []string{"Header", "Cluster: 123", "error message and test suite info omitted"},
+			shouldNotContain: []string{"eeeee"},
+		},
+		{
+			name:          "truncates analysis when over limit",
+			header:        "Header\n",
+			clusterInfo:   "Cluster: 123\n",
+			analysis:      strings.Repeat("a", 500),
+			errorMsg:      "",
+			testSuiteInfo: "",
+			maxLength:     300,
+			hasBotToken:   true,
+			shouldContain: []string{"Header", "Cluster: 123", "aaa", "partial analysis", "omitted", "see attached files"},
+		},
+		{
+			name:          "handles cluster info too large",
+			header:        "H\n",
+			clusterInfo:   strings.Repeat("c", 500),
+			analysis:      "A\n",
+			errorMsg:      "",
+			testSuiteInfo: "",
+			maxLength:     100,
+			hasBotToken:   false,
+			shouldContain: []string{"H", "WARNING: Cluster information too large"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			reporter := &SlackReporter{}
+			result := reporter.buildTruncatedMessage(
+				tt.header,
+				tt.clusterInfo,
+				tt.analysis,
+				tt.errorMsg,
+				tt.testSuiteInfo,
+				tt.maxLength,
+				tt.hasBotToken,
+			)
+
+			for _, expected := range tt.shouldContain {
+				if !strings.Contains(result, expected) {
+					t.Errorf("expected result to contain %q, but it didn't", expected)
+				}
+			}
+
+			for _, notExpected := range tt.shouldNotContain {
+				if strings.Contains(result, notExpected) {
+					t.Errorf("expected result to NOT contain %q, but it did", notExpected)
+				}
+			}
+
+			if len(result) > tt.maxLength {
+				t.Errorf("result length %d exceeds maxLength %d", len(result), tt.maxLength)
+			}
+		})
+	}
+}
+
+func TestSlackReporter_extractFailureBlocks(t *testing.T) {
+	tests := []struct {
+		name          string
+		lines         []string
+		startIdx      int
+		endIdx        int
+		expectedCount int
+		shouldContain []string
+	}{
+		{
+			name: "extracts single failure block",
+			lines: []string{
+				"line 1",
+				"line 2",
+				"[FAILED] test failed",
+				"error details",
+				"line 5",
+			},
+			startIdx:      0,
+			endIdx:        5,
+			expectedCount: 1,
+			shouldContain: []string{"[FAILED] test failed", "error details"},
+		},
+		{
+			name: "extracts multiple failure blocks",
+			lines: append(append(
+				generateLinesArray(50),
+				"[FAILED] first failure",
+				"error 1",
+			),
+				append(
+					generateLinesArray(50),
+					"• [FAILED] second failure",
+					"error 2",
+				)...,
+			),
+			startIdx:      0,
+			endIdx:        104,
+			expectedCount: 2,
+			shouldContain: []string{"[FAILED] first failure", "• [FAILED] second failure"},
+		},
+		{
+			name: "limits to 3 failure blocks maximum",
+			lines: func() []string {
+				lines := generateLinesArray(10)
+				lines = append(lines, "[FAILED] failure 1")
+				lines = append(lines, generateLinesArray(30)...)
+				lines = append(lines, "[FAILED] failure 2")
+				lines = append(lines, generateLinesArray(30)...)
+				lines = append(lines, "[FAILED] failure 3")
+				lines = append(lines, generateLinesArray(30)...)
+				lines = append(lines, "[FAILED] failure 4")
+				lines = append(lines, generateLinesArray(10)...)
+				return lines
+			}(),
+			startIdx:      0,
+			endIdx:        125,
+			expectedCount: 3,
+			shouldContain: []string{"failure 1", "failure 2", "failure 3"},
+		},
+		{
+			name:          "returns empty for no failures",
+			lines:         generateLinesArray(100),
+			startIdx:      0,
+			endIdx:        100,
+			expectedCount: 0,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			reporter := &SlackReporter{}
+			result := reporter.extractFailureBlocks(tt.lines, tt.startIdx, tt.endIdx)
+
+			if len(result) != tt.expectedCount {
+				t.Errorf("expected %d blocks, got %d", tt.expectedCount, len(result))
+			}
+
+			combinedResult := strings.Join(result, "\n")
+			for _, expected := range tt.shouldContain {
+				if !strings.Contains(combinedResult, expected) {
+					t.Errorf("expected result to contain %q, but it didn't", expected)
+				}
+			}
+		})
+	}
+}
+
+func TestSlackReporter_formatMessageWithStdout(t *testing.T) {
+	tests := []struct {
+		name             string
+		analysisResult   *AnalysisResult
+		reportDir        string
+		setupReportDir   func(t *testing.T) string
+		hasBotToken      bool
+		shouldContain    []string
+		shouldNotContain []string
+	}{
+		{
+			name: "includes full test failures when it fits",
+			analysisResult: &AnalysisResult{
+				Content: "Short analysis",
+			},
+			setupReportDir: func(t *testing.T) string {
+				tmpDir := t.TempDir()
+				content := "Found 1 test failure(s):\n\n[FAILED] test failed\nerror details\n"
+				if err := os.WriteFile(filepath.Join(tmpDir, "test_output.txt"), []byte(content), 0o644); err != nil {
+					t.Fatalf("failed to create file: %v", err)
+				}
+				return tmpDir
+			},
+			hasBotToken:   false,
+			shouldContain: []string{"# Test Failures", "Found 1 test failure(s)", "[FAILED] test failed"},
+		},
+		{
+			name: "truncates test failures from beginning when too long",
+			analysisResult: &AnalysisResult{
+				Content: strings.Repeat("Long analysis content. ", 100),
+			},
+			setupReportDir: func(t *testing.T) string {
+				tmpDir := t.TempDir()
+				var content strings.Builder
+				content.WriteString("Found 3 test failure(s):\n\n")
+				content.WriteString("FIRST FAILURE BLOCK - This should appear in truncated output\n")
+				content.WriteString(strings.Repeat("x", 1000))
+				content.WriteString("\n\nLAST FAILURE BLOCK - This should be truncated\n")
+				if err := os.WriteFile(filepath.Join(tmpDir, "test_output.txt"), []byte(content.String()), 0o644); err != nil {
+					t.Fatalf("failed to create file: %v", err)
+				}
+				return tmpDir
+			},
+			hasBotToken: false,
+			shouldContain: []string{
+				"# Test Failures",
+				"Found 3 test failure(s)",
+				"FIRST FAILURE BLOCK",
+				"...",
+			},
+			shouldNotContain: []string{"LAST FAILURE BLOCK"},
+		},
+		{
+			name: "mentions attached files when bot token is present",
+			analysisResult: &AnalysisResult{
+				Content: strings.Repeat("Analysis ", 200),
+			},
+			setupReportDir: func(t *testing.T) string {
+				tmpDir := t.TempDir()
+				content := "Found 2 test failure(s):\n\n" + strings.Repeat("Failure details\n", 200)
+				if err := os.WriteFile(filepath.Join(tmpDir, "test_output.txt"), []byte(content), 0o644); err != nil {
+					t.Fatalf("failed to create file: %v", err)
+				}
+				return tmpDir
+			},
+			hasBotToken:   true,
+			shouldContain: []string{"see attached files for full output"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			reporter := &SlackReporter{}
+			reportDir := tt.setupReportDir(t)
+
+			config := &ReporterConfig{
+				Settings: map[string]interface{}{
+					"report_dir": reportDir,
+				},
+			}
+			if tt.hasBotToken {
+				config.Settings["bot_token"] = "xoxb-test-token"
+			}
+
+			result := reporter.formatMessageWithStdout(tt.analysisResult, config)
+
+			for _, expected := range tt.shouldContain {
+				if !strings.Contains(result.Text, expected) {
+					t.Errorf("expected Text to contain %q, but it didn't. Text length: %d", expected, len(result.Text))
+				}
+			}
+
+			for _, notExpected := range tt.shouldNotContain {
+				if strings.Contains(result.Text, notExpected) {
+					t.Errorf("expected Text to NOT contain %q, but it did", notExpected)
+				}
+			}
+		})
+	}
+}
+
+func TestBuildNotificationConfig(t *testing.T) {
+	tests := []struct {
+		name        string
+		webhook     string
+		channel     string
+		clusterInfo interface{}
+		reportDir   string
+		botToken    string
+		expectNil   bool
+		checkFunc   func(t *testing.T, config *NotificationConfig)
+	}{
+		{
+			name:      "returns nil when webhook is empty",
+			webhook:   "",
+			channel:   "test-channel",
+			expectNil: true,
+		},
+		{
+			name:      "returns nil when channel is empty",
+			webhook:   "https://hooks.slack.com/test",
+			channel:   "",
+			expectNil: true,
+		},
+		{
+			name:    "creates config with all settings",
+			webhook: "https://hooks.slack.com/test",
+			channel: "test-channel",
+			clusterInfo: &ClusterInfo{
+				ID:   "cluster-123",
+				Name: "test-cluster",
+			},
+			reportDir: "/tmp/reports",
+			botToken:  "xoxb-test",
+			expectNil: false,
+			checkFunc: func(t *testing.T, config *NotificationConfig) {
+				if !config.Enabled {
+					t.Error("expected config to be enabled")
+				}
+				if len(config.Reporters) != 1 {
+					t.Fatalf("expected 1 reporter, got %d", len(config.Reporters))
+				}
+				reporter := config.Reporters[0]
+				if reporter.Type != "slack" {
+					t.Errorf("expected type 'slack', got %q", reporter.Type)
+				}
+				if !reporter.Enabled {
+					t.Error("expected reporter to be enabled")
+				}
+				if webhook, ok := reporter.Settings["webhook_url"].(string); !ok || webhook != "https://hooks.slack.com/test" {
+					t.Errorf("unexpected webhook_url: %v", reporter.Settings["webhook_url"])
+				}
+				if channel, ok := reporter.Settings["channel"].(string); !ok || channel != "test-channel" {
+					t.Errorf("unexpected channel: %v", reporter.Settings["channel"])
+				}
+				if reportDir, ok := reporter.Settings["report_dir"].(string); !ok || reportDir != "/tmp/reports" {
+					t.Errorf("unexpected report_dir: %v", reporter.Settings["report_dir"])
+				}
+				if botToken, ok := reporter.Settings["bot_token"].(string); !ok || botToken != "xoxb-test" {
+					t.Errorf("unexpected bot_token: %v", reporter.Settings["bot_token"])
+				}
+			},
+		},
+		{
+			name:    "creates config without bot token",
+			webhook: "https://hooks.slack.com/test",
+			channel: "test-channel",
+			checkFunc: func(t *testing.T, config *NotificationConfig) {
+				reporter := config.Reporters[0]
+				if _, exists := reporter.Settings["bot_token"]; exists {
+					t.Error("expected bot_token to not be set")
+				}
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := BuildNotificationConfig(tt.webhook, tt.channel, tt.clusterInfo, tt.reportDir, tt.botToken)
+
+			if tt.expectNil {
+				if result != nil {
+					t.Errorf("expected nil result, got %+v", result)
+				}
+				return
+			}
+
+			if result == nil {
+				t.Fatal("expected non-nil result")
+			}
+
+			if tt.checkFunc != nil {
+				tt.checkFunc(t, result)
+			}
+		})
+	}
+}
+
+// Helper function to generate array of lines
+func generateLinesArray(n int) []string {
+	lines := make([]string, n)
+	for i := 0; i < n; i++ {
+		lines[i] = fmt.Sprintf("line %d", i+1)
+	}
+	return lines
 }
