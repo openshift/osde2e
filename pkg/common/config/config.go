@@ -316,6 +316,22 @@ var Tests = struct {
 	// OnlyHealthcheckNodes focuses pre-install validation only on the nodes
 	// Env: ONLY_HEALTH_CHECK_NODES
 	OnlyHealthCheckNodes string
+
+	// S3ResultsBucket is the S3 bucket name to upload test results to
+	// Env: S3_RESULTS_BUCKET
+	S3ResultsBucket string
+
+	// S3ResultsRegion is the AWS region for the S3 bucket
+	// Env: S3_RESULTS_REGION
+	S3ResultsRegion string
+
+	// EnableS3Upload enables automatic upload of test results to S3
+	// Env: ENABLE_S3_UPLOAD
+	EnableS3Upload string
+
+	// OperatorName is the name of the operator being tested (auto-derived from TEST_IMAGE if not set)
+	// Env: OPERATOR_NAME
+	OperatorName string
 }{
 	AdHocTestImages:            "tests.adHocTestImages",
 	TestSuites:                 "tests.testSuites",
@@ -338,6 +354,10 @@ var Tests = struct {
 	LogBucket:                  "tests.logBucket",
 	ClusterHealthChecksTimeout: "tests.clusterHealthChecksTimeout",
 	OnlyHealthCheckNodes:       "tests.onlyHealthCheckNodes",
+	S3ResultsBucket:            "tests.s3ResultsBucket",
+	S3ResultsRegion:            "tests.s3ResultsRegion",
+	EnableS3Upload:             "tests.enableS3Upload",
+	OperatorName:               "tests.operatorName",
 }
 
 // Cluster config keys.
@@ -657,6 +677,40 @@ var KrknAI = struct {
 	Scenarios:    "krknAI.scenarios",
 }
 
+// S3Upload config keys for uploading test artifacts to S3.
+var S3Upload = struct {
+	// Enabled controls whether S3 upload is enabled
+	// Env: S3_UPLOAD_ENABLED
+	Enabled string
+
+	// Bucket is the S3 bucket name for storing test results
+	// Env: S3_UPLOAD_BUCKET
+	Bucket string
+
+	// Region is the AWS region for the S3 bucket
+	// Env: S3_UPLOAD_REGION
+	Region string
+
+	// Prefix is the key prefix for organizing results (e.g., "test-results")
+	// Env: S3_UPLOAD_PREFIX
+	Prefix string
+
+	// OperatorName is used in the S3 path to identify the operator being tested
+	// Env: S3_UPLOAD_OPERATOR_NAME
+	OperatorName string
+
+	// PresignedURLExpiry is the duration in hours for presigned URL validity
+	// Env: S3_UPLOAD_PRESIGNED_EXPIRY
+	PresignedURLExpiry string
+}{
+	Enabled:            "s3Upload.enabled",
+	Bucket:             "s3Upload.bucket",
+	Region:             "s3Upload.region",
+	Prefix:             "s3Upload.prefix",
+	OperatorName:       "s3Upload.operatorName",
+	PresignedURLExpiry: "s3Upload.presignedURLExpiry",
+}
+
 func InitOSDe2eViper() {
 	// Here's where we bind environment variables to config options and set defaults
 
@@ -786,6 +840,18 @@ func InitOSDe2eViper() {
 	_ = viper.BindEnv(Tests.ServiceAccount, "SERVICE_ACCOUNT")
 
 	_ = viper.BindEnv(Tests.OnlyHealthCheckNodes, "ONLY_HEALTH_CHECK_NODES")
+
+	// S3 Results Upload Defaults
+	viper.SetDefault(Tests.S3ResultsBucket, "osde2e-loki-logs")
+	_ = viper.BindEnv(Tests.S3ResultsBucket, "S3_RESULTS_BUCKET")
+
+	viper.SetDefault(Tests.S3ResultsRegion, "us-east-1")
+	_ = viper.BindEnv(Tests.S3ResultsRegion, "S3_RESULTS_REGION")
+
+	viper.SetDefault(Tests.EnableS3Upload, true)
+	_ = viper.BindEnv(Tests.EnableS3Upload, "ENABLE_S3_UPLOAD")
+
+	_ = viper.BindEnv(Tests.OperatorName, "OPERATOR_NAME")
 
 	viper.SetDefault(Tests.SlackChannel, "hcm-cicd-alerts")
 	_ = viper.BindEnv(Tests.SlackChannel, "SLACK_CHANNEL")
@@ -976,6 +1042,28 @@ func InitOSDe2eViper() {
 
 	viper.SetDefault(KrknAI.Scenarios, "")
 	_ = viper.BindEnv(KrknAI.Scenarios, "KRKN_SCENARIOS")
+
+	// ----- S3 Upload Configuration -----
+	viper.SetDefault(S3Upload.Enabled, false)
+	_ = viper.BindEnv(S3Upload.Enabled, "S3_UPLOAD_ENABLED")
+
+	viper.SetDefault(S3Upload.Enabled, true)
+	_ = viper.BindEnv(S3Upload.Enabled, "S3_UPLOAD_ENABLED")
+
+	viper.SetDefault(S3Upload.Bucket, "osde2e-loki-logs")
+	_ = viper.BindEnv(S3Upload.Bucket, "S3_UPLOAD_BUCKET")
+
+	viper.SetDefault(S3Upload.Region, "us-east-1")
+	_ = viper.BindEnv(S3Upload.Region, "S3_UPLOAD_REGION")
+
+	viper.SetDefault(S3Upload.Prefix, "test-results")
+	_ = viper.BindEnv(S3Upload.Prefix, "S3_UPLOAD_PREFIX")
+
+	viper.SetDefault(S3Upload.OperatorName, "")
+	_ = viper.BindEnv(S3Upload.OperatorName, "S3_UPLOAD_OPERATOR_NAME")
+
+	viper.SetDefault(S3Upload.PresignedURLExpiry, 168) // 7 days (max for IAM user credentials)
+	_ = viper.BindEnv(S3Upload.PresignedURLExpiry, "S3_UPLOAD_PRESIGNED_EXPIRY")
 }
 
 func init() {
