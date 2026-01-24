@@ -16,6 +16,7 @@ import (
 	"github.com/onsi/gomega"
 	"github.com/openshift/osde2e/internal/analysisengine"
 	"github.com/openshift/osde2e/internal/reporter"
+	"github.com/openshift/osde2e/pkg/common/aws"
 	"github.com/openshift/osde2e/pkg/common/cluster"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
@@ -24,7 +25,6 @@ import (
 	"github.com/openshift/osde2e/pkg/common/phase"
 	"github.com/openshift/osde2e/pkg/common/providers"
 	"github.com/openshift/osde2e/pkg/common/runner"
-	"github.com/openshift/osde2e/pkg/common/s3upload"
 	"github.com/openshift/osde2e/pkg/common/spi"
 	"github.com/openshift/osde2e/pkg/common/upgrade"
 	"github.com/openshift/osde2e/pkg/common/util"
@@ -235,7 +235,7 @@ func (o *E2EOrchestrator) Report(ctx context.Context) error {
 	runner.ReportClusterInstallLogs(o.provider)
 
 	// Upload test artifacts to S3 if enabled
-	if s3upload.IsEnabled() {
+	if aws.IsS3UploadEnabled() {
 		if err := o.uploadToS3(); err != nil {
 			log.Printf("S3 upload failed: %v", err)
 			// Don't fail the overall report phase for S3 upload errors
@@ -247,7 +247,7 @@ func (o *E2EOrchestrator) Report(ctx context.Context) error {
 
 // uploadToS3 uploads the report directory contents to S3.
 func (o *E2EOrchestrator) uploadToS3() error {
-	uploader, err := s3upload.NewUploader()
+	uploader, err := aws.NewS3Uploader()
 	if err != nil {
 		return fmt.Errorf("failed to create S3 uploader: %w", err)
 	}
@@ -265,7 +265,7 @@ func (o *E2EOrchestrator) uploadToS3() error {
 		return fmt.Errorf("failed to upload to S3: %w", err)
 	}
 
-	s3upload.LogUploadSummary(results)
+	aws.LogS3UploadSummary(results)
 	return nil
 }
 
