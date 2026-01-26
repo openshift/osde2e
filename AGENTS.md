@@ -1,7 +1,18 @@
-# AI Agent Instructions - OSDe2e
+# AI Agent Instructions 
 
 ## What This Is
-End-to-end testing framework for Managed services for OSD/ROSA. It is currently applied as a test framework in ROSA nightly CI jobs, OSD operator CICD pipelines and on-demand test schedules such as gap analysis. 
+Osde2e is End-to-end testing framework for Managed services for OSD/ROSA. 
+
+# Agent Rules
+- **Cross-reference osde2e-common**: Always download and analyze https://github.com/openshift/osde2e-common for existing core functionality and helper utilities before implementing new features. All core client functionality and helper updates MUST be made in osde2e-common to make them available across all consumer repositories. Only implement functionality in this repository if it's specific to osde2e testing logic.
+- **Reuse code**:Always first analyze pkg/common to extend existing core and helper utilities before implementing new features
+- Always use h.Client for k8s object crud operations
+- Propose commits in github.com/openshift/osde2e-common where changes to core clients are needed
+- Always ask for confirmation before adding new dependencies to go.mod
+- **Adhere to project architecture**: Strictly follow the structure in pkg/
+- Prefer implementing or extending interfaces, don't write extensive procedural logic
+- Keep code simple and concise 
+- Use go language best practices
 
 ## Core Test Workflow
 1. Load config (CLI flags → env vars → custom YAML → defaults)
@@ -57,15 +68,7 @@ osde2e
 └── test/                # Standalone Ginkgo test suites
 ```
 
-## Interacting With The Code
-- Always stick to existing design patterns in code
-- Keep new code simple and concise
-- Keep pull requests small
-- Always reuse existing code
-- Use go language best practices
-- Prefer implementing existing or new interfaces, don't write extensive procedural logic
-- Extend test helper functionality in https://github.com/openshift/osde2e-common, not here
-
+ 
 ## Before You Commit
 ```bash
 gofumpt -w .        # Format (not gofmt!)
