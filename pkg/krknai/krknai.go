@@ -76,7 +76,7 @@ func (k *KrknAI) Execute(ctx context.Context) error {
 	k.result.TestsPassed = true
 	viper.Set(config.Cluster.Passing, k.result.TestsPassed)
 	// Run the krkn-ai container
-	if err := k.runKrknContainer(ctx); err != nil {
+	if err := k.runKrknContainer(ctx, viper.GetBool(config.DryRun)); err != nil {
 		k.result.ExitCode = config.Failure
 		viper.Set(config.Cluster.Passing, false)
 		return fmt.Errorf("krkn-ai container execution failed: %w", err)
@@ -92,7 +92,7 @@ func (k *KrknAI) Execute(ctx context.Context) error {
 }
 
 // runKrknContainer executes the krkn-ai container using podman or docker.
-func (k *KrknAI) runKrknContainer(ctx context.Context) error {
+func (k *KrknAI) runKrknContainer(ctx context.Context, dryrun bool) error {
 	runtime, err := detectContainerRuntime()
 	if err != nil {
 		return err
@@ -131,25 +131,28 @@ func (k *KrknAI) runKrknContainer(ctx context.Context) error {
 
 	// Add the image name
 	args = append(args, image)
-
-	// Execute the container
-	cmd := exec.CommandContext(ctx, runtime, args...)
-
-	var stdout, stderr bytes.Buffer
-	cmd.Stdout = &stdout
-	cmd.Stderr = &stderr
-
 	log.Printf("KrknAI: Executing command: %s %v", runtime, args)
 
-	if err := cmd.Run(); err != nil {
-		log.Printf("KrknAI: Container stdout:\n%s", stdout.String())
-		log.Printf("KrknAI: Container stderr:\n%s", stderr.String())
-		return fmt.Errorf("container execution failed: %w", err)
-	}
+	if !dryrun {
+		// Execute the container
+		cmd := exec.CommandContext(ctx, runtime, args...)
 
-	log.Printf("KrknAI: Container output:\n%s", stdout.String())
-	if stderr.Len() > 0 {
-		log.Printf("KrknAI: Container stderr:\n%s", stderr.String())
+		var stdout, stderr bytes.Buffer
+		cmd.Stdout = &stdout
+		cmd.Stderr = &stderr
+
+		if err := cmd.Run(); err != nil {
+			log.Printf("KrknAI: Container stdout:\n%s", stdout.String())
+			log.Printf("KrknAI: Container stderr:\n%s", stderr.String())
+			return fmt.Errorf("container execution failed: %w", err)
+		}
+
+		log.Printf("KrknAI: Container output:\n%s", stdout.String())
+		if stderr.Len() > 0 {
+			log.Printf("KrknAI: Container stderr:\n%s", stderr.String())
+		}
+	} else {
+		log.Printf("Dry run completed.")
 	}
 
 	return nil
