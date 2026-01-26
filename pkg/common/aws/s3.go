@@ -1,20 +1,18 @@
 package aws
 
 import (
-	"bytes"
 	"fmt"
 	"io/fs"
 	"log"
-	"net/url"
+	"mime"
 	"os"
+	"path"
 	"path/filepath"
 	"regexp"
 	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/credentials"
-	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
@@ -26,13 +24,15 @@ const (
 	logsBucket   = "osde2e-logs"
 )
 
+// Pre-compiled regex for extracting cluster name from bucket name
+var clusterNameRegex = regexp.MustCompile(`^(osde2e-[^-]+)-`)
+
 // isS3BucketFromActiveCluster checks if an S3 bucket belongs to an active cluster
 // Returns true if the bucket should be skipped (belongs to active cluster), false if it can be cleaned up
 func isS3BucketFromActiveCluster(bucketName string, activeClusters map[string]bool) bool {
 	// Extract cluster name from bucket name
 	// Example: "osde2e-i5u38-image-registry-us-west-2-abcdef" -> "osde2e-i5u38"
-	re := regexp.MustCompile(`^(osde2e-[^-]+)-`)
-	matches := re.FindStringSubmatch(bucketName)
+	matches := clusterNameRegex.FindStringSubmatch(bucketName)
 	if len(matches) >= 2 {
 		clusterName := matches[1]
 		if activeClusters[clusterName] {
@@ -41,51 +41,6 @@ func isS3BucketFromActiveCluster(bucketName string, activeClusters map[string]bo
 		}
 	}
 	return false
-}
-
-// ReadFromS3Session reads a key from S3 using given AWS context.
-func ReadFromS3Session(session *session.Session, inputKey string) ([]byte, error) {
-	bucket, key, err := ParseS3URL(inputKey)
-	if err != nil {
-		return nil, fmt.Errorf("error trying to parse S3 URL: %v", err)
-	}
-
-	downloader := s3manager.NewDownloader(session)
-
-	buffer := aws.NewWriteAtBuffer([]byte{})
-
-	_, err = downloader.Download(buffer, &s3.GetObjectInput{
-		Bucket: aws.String(bucket),
-		Key:    aws.String(key),
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	return buffer.Bytes(), nil
-}
-
-// WriteToS3Session writes the given byte array to S3.
-func WriteToS3Session(session *session.Session, outputKey string, data []byte) {
-	bucket, key, err := ParseS3URL(outputKey)
-	if err != nil {
-		log.Printf("error trying to parse S3 URL %s: %v", outputKey, err)
-		return
-	}
-
-	uploader := s3manager.NewUploader(session)
-
-	reader := bytes.NewReader(data)
-	_, err = uploader.Upload(&s3manager.UploadInput{
-		Bucket: aws.String(bucket),
-		Key:    aws.String(key),
-		Body:   reader,
-	})
-	if err != nil {
-		log.Printf("Failed to upload to s3 %s", err.Error())
-		return
-	}
-	log.Printf("Uploaded to %s", outputKey)
 }
 
 // CreateS3URL creates an S3 URL from a bucket and a key string.
@@ -101,16 +56,6 @@ func CreateS3URL(bucket string, keys ...string) string {
 	s3JoinArray = append(s3JoinArray, strippedKeys...)
 
 	return strings.Join(s3JoinArray, "/")
-}
-
-// ParseS3URL parses an S3 url into a bucket and key.
-func ParseS3URL(s3URL string) (string, string, error) {
-	parsedURL, err := url.Parse(s3URL)
-	if err != nil {
-		return "", "", err
-	}
-
-	return parsedURL.Host, parsedURL.Path, nil
 }
 
 // CleanupS3Buckets finds buckets with substring "osde2e-" or "managed-velero",
@@ -174,10 +119,10 @@ func (CcsAwsSession *ccsAwsSession) CleanupS3Buckets(activeClusters map[string]b
 
 // S3Uploader handles uploading test artifacts to S3.
 type S3Uploader struct {
-	session   *session.Session
-	s3Client  *s3.S3
+	s3Client  *s3.S3              // cached S3 client for presigned URLs
+	uploader  *s3manager.Uploader // cached uploader for batch uploads
 	bucket    string
-	region    string
+	component string // component name for organizing artifacts (e.g., "osd-example-operator")
 	category  string // top-level category for organizing artifacts (e.g., "test-results")
 	urlExpiry time.Duration
 }
@@ -192,46 +137,35 @@ type S3UploadResult struct {
 
 // NewS3Uploader creates a new S3 uploader instance using configuration from viper.
 // Upload is automatically enabled when LOG_BUCKET is set.
-func NewS3Uploader() (*S3Uploader, error) {
+// Reuses the global CcsAwsSession for AWS credentials and session management.
+// The component parameter is used to organize artifacts in S3 (e.g., "osd-example-operator").
+func NewS3Uploader(component string) (*S3Uploader, error) {
 	bucket := viper.GetString(config.Tests.LogBucket)
 	if bucket == "" {
 		// S3 upload disabled - no bucket configured
 		return nil, nil
 	}
 
-	// Use AWS_REGION if set, otherwise default to us-east-1 (where osde2e-loki-logs bucket is)
-	region := viper.GetString(config.AWSRegion)
-	if region == "" {
-		region = "us-east-1"
+	// Ensure region is set (default to us-east-1 for osde2e-loki-logs bucket)
+	if viper.GetString(config.AWSRegion) == "" {
+		viper.Set(config.AWSRegion, "us-east-1")
 	}
 
-	// Create AWS session with explicit region
-	awsAccessKey := viper.GetString(config.AWSAccessKey)
-	awsSecretAccessKey := viper.GetString(config.AWSSecretAccessKey)
-	awsProfile := viper.GetString(config.AWSProfile)
-
-	options := session.Options{
-		Config: aws.Config{
-			Region: aws.String(region),
-		},
-	}
-
-	if awsProfile != "" {
-		options.Profile = awsProfile
-	} else if awsAccessKey != "" && awsSecretAccessKey != "" {
-		options.Config.Credentials = credentials.NewStaticCredentials(awsAccessKey, awsSecretAccessKey, "")
-	}
-
-	sess, err := session.NewSessionWithOptions(options)
+	// Use the global AWS session infrastructure
+	sess, err := CcsAwsSession.GetSession()
 	if err != nil {
-		return nil, fmt.Errorf("failed to create AWS session: %w", err)
+		return nil, fmt.Errorf("failed to get AWS session: %w", err)
+	}
+
+	if component == "" {
+		component = "unknown"
 	}
 
 	return &S3Uploader{
-		session:   sess,
 		s3Client:  s3.New(sess),
+		uploader:  s3manager.NewUploader(sess),
 		bucket:    bucket,
-		region:    region,
+		component: component,
 		category:  "test-results",  // fixed category for S3 path organization
 		urlExpiry: 168 * time.Hour, // 7 days (max for IAM user credentials)
 	}, nil
@@ -241,8 +175,6 @@ func NewS3Uploader() (*S3Uploader, error) {
 // Format: <category>/<component>/<date>/<job-id>/
 // Example: test-results/osd-example-operator/2026-01-24/abc123/
 func (u *S3Uploader) BuildS3Key() string {
-	component := deriveComponent()
-
 	date := time.Now().UTC().Format("2006-01-02")
 
 	jobID := viper.GetString(config.JobID)
@@ -253,67 +185,8 @@ func (u *S3Uploader) BuildS3Key() string {
 		jobID = fmt.Sprintf("run-%d", time.Now().Unix())
 	}
 
-	parts := []string{}
-	if u.category != "" {
-		parts = append(parts, strings.Trim(u.category, "/"))
-	}
-	parts = append(parts, component, date, jobID)
-
-	return strings.Join(parts, "/")
-}
-
-// deriveComponent determines the component name from the test image.
-// It extracts a meaningful name from the test image path to organize S3 artifacts.
-// Examples:
-//
-//	quay.io/org/osd-example-operator-e2e:tag -> osd-example-operator
-//	quay.io/org/my-service-test:latest -> my-service
-func deriveComponent() string {
-	testSuites, err := config.GetTestSuites()
-	if err == nil && len(testSuites) > 0 {
-		imageName := testSuites[0].Image
-		if component := extractNameFromImage(imageName); component != "" {
-			log.Printf("Derived component from test image: %s -> %s", imageName, component)
-			return component
-		}
-	}
-
-	log.Println("Could not derive component, using fallback: unknown")
-	return "unknown"
-}
-
-// extractNameFromImage extracts a meaningful name from a container image path.
-// It strips the registry, organization, tag, and common test suffixes.
-// Examples:
-//
-//	quay.io/org/osd-example-operator-e2e:tag -> osd-example-operator
-//	quay.io/org/my-service-test:latest -> my-service
-//	quay.io/org/simple:v1 -> simple
-func extractNameFromImage(image string) string {
-	if image == "" {
-		return ""
-	}
-
-	// Remove tag (everything after :)
-	if idx := strings.LastIndex(image, ":"); idx != -1 {
-		image = image[:idx]
-	}
-
-	// Remove registry and org (everything before last /)
-	if idx := strings.LastIndex(image, "/"); idx != -1 {
-		image = image[idx+1:]
-	}
-
-	// Strip common test suffixes
-	suffixes := []string{"-e2e", "-test", "-tests", "-harness"}
-	for _, suffix := range suffixes {
-		if strings.HasSuffix(image, suffix) {
-			image = strings.TrimSuffix(image, suffix)
-			break
-		}
-	}
-
-	return image
+	// path.Join handles empty strings correctly and always uses forward slashes
+	return path.Join(u.category, u.component, date, jobID)
 }
 
 // UploadDirectory uploads all files from a directory to S3.
@@ -325,11 +198,10 @@ func (u *S3Uploader) UploadDirectory(srcDir string) ([]S3UploadResult, error) {
 
 	baseKey := u.BuildS3Key()
 	var results []S3UploadResult
-	uploader := s3manager.NewUploader(u.session)
 
-	log.Printf("Starting S3 upload from %s to s3://%s/%s/", srcDir, u.bucket, baseKey)
+	log.Printf("Starting S3 upload from %s to %s", srcDir, CreateS3URL(u.bucket, baseKey))
 
-	err := filepath.WalkDir(srcDir, func(path string, d fs.DirEntry, err error) error {
+	err := filepath.WalkDir(srcDir, func(filePath string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
@@ -339,7 +211,7 @@ func (u *S3Uploader) UploadDirectory(srcDir string) ([]S3UploadResult, error) {
 		}
 
 		// Get relative path from source directory
-		relPath, err := filepath.Rel(srcDir, path)
+		relPath, err := filepath.Rel(srcDir, filePath)
 		if err != nil {
 			return fmt.Errorf("failed to get relative path: %w", err)
 		}
@@ -349,13 +221,13 @@ func (u *S3Uploader) UploadDirectory(srcDir string) ([]S3UploadResult, error) {
 			return nil
 		}
 
-		// Construct S3 key
-		s3Key := fmt.Sprintf("%s/%s", baseKey, relPath)
+		// Construct S3 key using path.Join (always uses forward slashes, correct for S3)
+		s3Key := path.Join(baseKey, relPath)
 
 		// Read file
-		file, err := os.Open(path)
+		file, err := os.Open(filePath)
 		if err != nil {
-			log.Printf("Warning: failed to open file %s: %v", path, err)
+			log.Printf("Warning: failed to open file %s: %v", filePath, err)
 			return nil // Continue with other files
 		}
 		defer file.Close()
@@ -363,34 +235,25 @@ func (u *S3Uploader) UploadDirectory(srcDir string) ([]S3UploadResult, error) {
 		// Get file info for size
 		fileInfo, err := file.Stat()
 		if err != nil {
-			log.Printf("Warning: failed to stat file %s: %v", path, err)
+			log.Printf("Warning: failed to stat file %s: %v", filePath, err)
 			return nil
 		}
 
-		// Determine content type
-		contentType := "application/octet-stream"
-		switch {
-		case strings.HasSuffix(path, ".xml"):
-			contentType = "application/xml"
-		case strings.HasSuffix(path, ".json"):
-			contentType = "application/json"
-		case strings.HasSuffix(path, ".log"), strings.HasSuffix(path, ".txt"):
-			contentType = "text/plain"
-		case strings.HasSuffix(path, ".yaml"), strings.HasSuffix(path, ".yml"):
-			contentType = "text/yaml"
-		case strings.HasSuffix(path, ".html"):
-			contentType = "text/html"
+		// Determine content type using standard mime package
+		contentType := mime.TypeByExtension(filepath.Ext(filePath))
+		if contentType == "" {
+			contentType = "application/octet-stream"
 		}
 
-		// Upload file
-		_, err = uploader.Upload(&s3manager.UploadInput{
+		// Upload file using cached uploader for better performance
+		_, err = u.uploader.Upload(&s3manager.UploadInput{
 			Bucket:      aws.String(u.bucket),
 			Key:         aws.String(s3Key),
 			Body:        file,
 			ContentType: aws.String(contentType),
 		})
 		if err != nil {
-			log.Printf("Warning: failed to upload %s: %v", path, err)
+			log.Printf("Warning: failed to upload %s: %v", filePath, err)
 			return nil // Continue with other files
 		}
 
@@ -401,7 +264,8 @@ func (u *S3Uploader) UploadDirectory(srcDir string) ([]S3UploadResult, error) {
 			presignedURL = ""
 		}
 
-		s3URI := fmt.Sprintf("s3://%s/%s", u.bucket, s3Key)
+		// Reuse existing CreateS3URL helper
+		s3URI := CreateS3URL(u.bucket, s3Key)
 		results = append(results, S3UploadResult{
 			S3URI:        s3URI,
 			PresignedURL: presignedURL,
@@ -438,7 +302,7 @@ func LogS3UploadSummary(results []S3UploadResult) {
 	log.Println("=== S3 Upload Summary ===")
 	log.Printf("Uploaded %d files", len(results))
 
-	// Group by directory for cleaner output
+	// Calculate total size
 	var totalSize int64
 	for _, r := range results {
 		totalSize += r.Size
@@ -448,20 +312,15 @@ func LogS3UploadSummary(results []S3UploadResult) {
 	// Print presigned URLs for key files (JUnit XML, logs)
 	log.Println("\n=== Presigned URLs (valid for 7 days) ===")
 	for _, r := range results {
-		if strings.HasSuffix(r.Key, ".xml") || strings.HasSuffix(r.Key, ".log") || strings.HasSuffix(r.Key, "test_output.log") {
+		// .log suffix covers test_output.log, no need for separate check
+		if strings.HasSuffix(r.Key, ".xml") || strings.HasSuffix(r.Key, ".log") {
 			log.Printf("%s:\n  %s", filepath.Base(r.Key), r.PresignedURL)
 		}
 	}
 
 	// Print base S3 URI
 	if len(results) > 0 {
-		baseKey := filepath.Dir(results[0].Key)
-		log.Printf("\nAll artifacts: s3://%s/%s/", viper.GetString(config.Tests.LogBucket), baseKey)
+		baseKey := path.Dir(results[0].Key)
+		log.Printf("\nAll artifacts: %s", CreateS3URL(viper.GetString(config.Tests.LogBucket), baseKey))
 	}
-}
-
-// IsS3UploadEnabled returns whether S3 upload is enabled.
-// Upload is enabled when LOG_BUCKET is configured.
-func IsS3UploadEnabled() bool {
-	return viper.GetString(config.Tests.LogBucket) != ""
 }

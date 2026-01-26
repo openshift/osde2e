@@ -1,12 +1,10 @@
 package helper
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
 
 	. "github.com/onsi/gomega"
-	"github.com/openshift/osde2e/pkg/common/aws"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 
 	"github.com/openshift/osde2e/pkg/common/config"
@@ -56,16 +54,4 @@ func (h *H) WriteResults(results map[string][]byte) {
 		err = os.WriteFile(dst, data, os.ModePerm)
 		Expect(err).NotTo(HaveOccurred())
 	}
-}
-
-// UploadResultsToS3 dumps runner results into the s3 bucket in given aws session.
-func (h *H) UploadResultsToS3(results map[string][]byte, key string) error {
-	for filename, data := range results {
-		session, err := aws.CcsAwsSession.GetSession()
-		if err != nil {
-			return fmt.Errorf("error getting aws session: %v", err)
-		}
-		aws.WriteToS3Session(session, aws.CreateS3URL(viper.GetString(config.Tests.LogBucket), key, filepath.Base(filename)), data)
-	}
-	return nil
 }
