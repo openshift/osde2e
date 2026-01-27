@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -16,6 +17,7 @@ import (
 	"github.com/onsi/gomega"
 	"github.com/openshift/osde2e/internal/analysisengine"
 	"github.com/openshift/osde2e/internal/reporter"
+	"github.com/openshift/osde2e/pkg/common/aws"
 	"github.com/openshift/osde2e/pkg/common/cluster"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
@@ -232,7 +234,95 @@ func (o *E2EOrchestrator) Report(ctx context.Context) error {
 	}
 
 	runner.ReportClusterInstallLogs(o.provider)
+
+	// Upload test artifacts to S3 if bucket set
+	if viper.GetString(config.Tests.LogBucket) != "" {
+		if err := o.uploadToS3(); err != nil {
+			log.Printf("S3 upload failed: %v", err)
+			// Don't fail the overall report phase for S3 upload errors
+		}
+	}
+
 	return nil
+}
+
+// uploadToS3 uploads the report directory contents to S3.
+func (o *E2EOrchestrator) uploadToS3() error {
+	component := deriveComponentFromTestImage()
+	uploader, err := aws.NewS3Uploader(component)
+	if err != nil {
+		return fmt.Errorf("failed to create S3 uploader: %w", err)
+	}
+	if uploader == nil {
+		return nil // S3 upload not enabled
+	}
+
+	reportDir := viper.GetString(config.ReportDir)
+	if reportDir == "" {
+		return fmt.Errorf("no report directory configured")
+	}
+
+	results, err := uploader.UploadDirectory(reportDir)
+	if err != nil {
+		return fmt.Errorf("failed to upload to S3: %w", err)
+	}
+
+	aws.LogS3UploadSummary(results)
+	return nil
+}
+
+// deriveComponentFromTestImage determines the component name from the test image.
+// It extracts a meaningful name from the test image path to organize S3 artifacts.
+// Examples:
+//
+//	quay.io/org/osd-example-operator-e2e:tag -> osd-example-operator
+//	quay.io/org/my-service-test:latest -> my-service
+func deriveComponentFromTestImage() string {
+	testSuites, err := config.GetTestSuites()
+	if err == nil && len(testSuites) > 0 {
+		imageName := testSuites[0].Image
+		if component := extractNameFromImage(imageName); component != "" {
+			log.Printf("Derived component from test image: %s -> %s", imageName, component)
+			return component
+		}
+	}
+
+	log.Println("Could not derive component, using fallback: unknown")
+	return "unknown"
+}
+
+// extractNameFromImage extracts a meaningful name from a container image path.
+// It strips the registry, organization, tag, and common test suffixes.
+// Examples:
+//
+//	quay.io/org/osd-example-operator-e2e:tag -> osd-example-operator
+//	quay.io/org/my-service-test:latest -> my-service
+//	quay.io/org/simple:v1 -> simple
+func extractNameFromImage(image string) string {
+	if image == "" {
+		return ""
+	}
+
+	// Remove tag (everything after :)
+	if idx := strings.LastIndex(image, ":"); idx != -1 {
+		image = image[:idx]
+	}
+
+	// Remove registry and org (everything before last /)
+	if idx := strings.LastIndex(image, "/"); idx != -1 {
+		image = image[idx+1:]
+	}
+
+	// Strip common test suffixes
+	suffixes := []string{"-e2e", "-test", "-tests", "-harness"}
+	for _, suffix := range suffixes {
+		if strings.HasSuffix(image, suffix) {
+			image = strings.TrimSuffix(image, suffix)
+			break
+		}
+	}
+
+	return image
 }
 
 // PostProcessCluster performs post-processing on the cluster including must-gather,
