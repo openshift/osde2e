@@ -35,20 +35,24 @@ func TestKrknAIViperConfig(t *testing.T) {
 		name     string
 		key      string
 		expected string
+		mode     string // "discover" or "run"
 	}{
-		{"Mode", config.KrknAI.Mode, "discover"},
-		{"Namespace", config.KrknAI.Namespace, "default"},
-		{"PodLabel", config.KrknAI.PodLabel, ""},
-		{"NodeLabel", config.KrknAI.NodeLabel, "kubernetes.io/hostname"},
-		{"SkipPodName", config.KrknAI.SkipPodName, ""},
-		{"Verbose", config.KrknAI.Verbose, "2"},
+		// Discover mode specific fields
+		{"Namespace", config.KrknAI.Namespace, "default", "discover"},
+		{"PodLabel", config.KrknAI.PodLabel, "", "discover"},
+		{"NodeLabel", config.KrknAI.NodeLabel, "kubernetes.io/hostname", "discover"},
+		{"SkipPodName", config.KrknAI.SkipPodName, "", "discover"},
+
+		// Run mode specific fields (FitnessQuery, Scenarios)
+		{"FitnessQuery", config.KrknAI.FitnessQuery, "", "run"},
+		{"Scenarios", config.KrknAI.Scenarios, "", "run"},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			value := viper.GetString(tt.key)
 			if value != tt.expected {
-				t.Errorf("viper.GetString(%q) = %q, want %q", tt.key, value, tt.expected)
+				t.Errorf("viper.GetString(%q) = %q, want %q (mode: %s)", tt.key, value, tt.expected, tt.mode)
 			}
 		})
 	}
