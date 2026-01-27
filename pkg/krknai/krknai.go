@@ -11,6 +11,9 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/go-logr/logr"
+	"github.com/openshift/osde2e-common/pkg/clients/openshift"
+	"github.com/openshift/osde2e-common/pkg/clients/prometheus"
 	"github.com/openshift/osde2e/pkg/common/cluster"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
@@ -24,6 +27,14 @@ const (
 	// DefaultKrknAIImage is the default container image for Kraken AI chaos testing.
 	// This value is also set as the viper default in config.KrknAI.Image.
 	DefaultKrknAIImage = "quay.io/krkn-chaos/krkn-ai:latest"
+
+	// Container mount paths
+	containerMountPath   = "/mount"
+	containerResultsPath = "/krknresults/"
+
+	// File names
+	kubeconfigFileName = "kubeconfig"
+	krknConfigFileName = "krkn-ai.yaml"
 )
 
 // KrknAI implements the orchestrator.Orchestrator interface for Kraken AI chaos testing.
@@ -70,71 +81,115 @@ func (k *KrknAI) Provision(ctx context.Context) error {
 }
 
 // Execute runs the configured test suites including chaos testing scenarios.
+// The execution flow: discover mode -> update YAML -> run mode
 func (k *KrknAI) Execute(ctx context.Context) error {
 	log.Println("KrknAI: Starting chaos test execution...")
-	// chaos tests don't have a pass/fail
 	k.result.TestsPassed = true
 	viper.Set(config.Cluster.Passing, k.result.TestsPassed)
-	// Run the krkn-ai container
-	if err := k.runKrknContainer(ctx, viper.GetBool(config.DryRun)); err != nil {
-		k.result.ExitCode = config.Failure
-		viper.Set(config.Cluster.Passing, false)
-		return fmt.Errorf("krkn-ai container execution failed: %w", err)
+
+	dryRun := viper.GetBool(config.DryRun)
+
+	// Step 1: Run discover mode to identify chaos targets
+	log.Println("KrknAI: [1/3] Running discover mode...")
+	if err := k.runKrknContainer(ctx, config.KrknAIModeDiscover, dryRun); err != nil {
+		return k.handleExecutionError(fmt.Errorf("discover mode failed: %w", err))
 	}
 
-	// Update the output YAML with config values
-	if err := k.updateKrknConfig(); err != nil {
-		log.Printf("KrknAI: Warning - failed to update config: %v", err)
+	// Step 2: Update the YAML config with discovered targets (skip in dry-run mode)
+	if !dryRun {
+		log.Println("KrknAI: [2/3] Updating config with discovered targets...")
+		if err := k.updateKrknConfig(); err != nil {
+			return k.handleExecutionError(fmt.Errorf("failed to update config: %w", err))
+		}
+	} else {
+		log.Println("KrknAI: [2/3] Skipping config update (dry run)")
+	}
+
+	// Step 3: Run run mode with the updated config
+	log.Println("KrknAI: [3/3] Running chaos scenarios...")
+	if err := k.runKrknContainer(ctx, config.KrknAIModeRun, dryRun); err != nil {
+		return k.handleExecutionError(fmt.Errorf("run mode failed: %w", err))
 	}
 
 	log.Println("KrknAI: Chaos test execution completed")
 	return nil
 }
 
-// runKrknContainer executes the krkn-ai container using podman or docker.
-func (k *KrknAI) runKrknContainer(ctx context.Context, dryrun bool) error {
+// handleExecutionError sets the failure state and returns the error
+func (k *KrknAI) handleExecutionError(err error) error {
+	k.result.ExitCode = config.Failure
+	viper.Set(config.Cluster.Passing, false)
+	return err
+}
+
+// runKrknContainer executes the krkn-ai container using podman or docker with the specified mode.
+func (k *KrknAI) runKrknContainer(ctx context.Context, mode string, dryRun bool) error {
 	runtime, err := detectContainerRuntime()
 	if err != nil {
 		return err
 	}
 
-	image := DefaultKrknAIImage
 	log.Printf("KrknAI: Using container runtime: %s", runtime)
-	log.Printf("KrknAI: Running image: %s", image)
+	log.Printf("KrknAI: Running image: %s", DefaultKrknAIImage)
+	log.Printf("KrknAI: Mode: %s", mode)
 
-	// Get shared directory for mounting
-	sharedDir := viper.GetString(config.SharedDir)
+	// Build base container arguments (common to both modes)
+	args := []string{"run", "--rm", "--net=host"}
 
-	// Build container run arguments
-	args := []string{
-		"run",
-		"--rm",
-		"-v", fmt.Sprintf("%s:/mount:Z", sharedDir),
-		"-e", fmt.Sprintf("MODE=%s", viper.GetString(config.KrknAI.Mode)),
-		"-e", "KUBECONFIG=/mount/kubeconfig",
-		"-e", "OUTPUT_DIR=/mount",
-		"-e", fmt.Sprintf("VERBOSE=%s", viper.GetString(config.KrknAI.Verbose)),
-	}
+	// Add volume mounts
+	args = append(args,
+		"-v", fmt.Sprintf("%s:%s:Z", viper.GetString(config.SharedDir), containerMountPath),
+		"-v", fmt.Sprintf("%s:%s:Z", viper.GetString(config.ReportDir), containerResultsPath),
+	)
 
-	// Add optional environment variables only if explicitly set
-	// Note: NAMESPACE with ".*" causes shell glob expansion issues inside the container
-	namespace := viper.GetString(config.KrknAI.Namespace)
-	args = append(args, "-e", fmt.Sprintf("NAMESPACE=%s", namespace))
-	podLabel := viper.GetString(config.KrknAI.PodLabel)
-	args = append(args, "-e", fmt.Sprintf("POD_LABEL=%s", podLabel))
-	if nodeLabel := viper.GetString(config.KrknAI.NodeLabel); nodeLabel != "" {
-		args = append(args, "-e", fmt.Sprintf("NODE_LABEL=%s", nodeLabel))
-	}
-	if skipPodName := viper.GetString(config.KrknAI.SkipPodName); skipPodName != "" {
-		args = append(args, "-e", fmt.Sprintf("SKIP_POD_NAME=%s", skipPodName))
+	// Add common environment variables
+	args = append(args,
+		"-e", fmt.Sprintf("MODE=%s", mode),
+		"-e", fmt.Sprintf("KUBECONFIG=%s/%s", containerMountPath, kubeconfigFileName),
+		"-e", fmt.Sprintf("VERBOSE=%s", config.KrknAIVerboseLevel),
+	)
+
+	// Add mode-specific flags and environment variables
+	if mode == config.KrknAIModeRun {
+		// Run mode: privileged flag, config file, results output, and Prometheus token
+		args = append(args, "--privileged")
+		args = append(args,
+			"-e", fmt.Sprintf("CONFIG_FILE=%s/%s", containerMountPath, krknConfigFileName),
+			"-e", fmt.Sprintf("OUTPUT_DIR=%s", containerResultsPath),
+		)
+
+		// Fetch Prometheus token from cluster
+		log.Println("KrknAI: Fetching Prometheus token from cluster...")
+		promToken, err := k.getPrometheusToken(ctx)
+		if err != nil {
+			log.Printf("KrknAI: Warning - failed to fetch Prometheus token: %v", err)
+			log.Println("KrknAI: Continuing without Prometheus token...")
+		} else {
+			log.Println("KrknAI: Successfully fetched Prometheus token")
+			args = append(args, "-e", fmt.Sprintf("PROMETHEUS_TOKEN=%s", promToken))
+		}
+	} else {
+		// Discover mode: namespace/pod/node targeting
+		args = append(args,
+			"-e", fmt.Sprintf("OUTPUT_DIR=%s", containerMountPath),
+			"-e", fmt.Sprintf("NAMESPACE=%s", viper.GetString(config.KrknAI.Namespace)),
+			"-e", fmt.Sprintf("POD_LABEL=%s", viper.GetString(config.KrknAI.PodLabel)),
+		)
+
+		if nodeLabel := viper.GetString(config.KrknAI.NodeLabel); nodeLabel != "" {
+			args = append(args, "-e", fmt.Sprintf("NODE_LABEL=%s", nodeLabel))
+		}
+		if skipPodName := viper.GetString(config.KrknAI.SkipPodName); skipPodName != "" {
+			args = append(args, "-e", fmt.Sprintf("SKIP_POD_NAME=%s", skipPodName))
+		}
 	}
 
 	// Add the image name
-	args = append(args, image)
+	args = append(args, DefaultKrknAIImage)
+
 	log.Printf("KrknAI: Executing command: %s %v", runtime, args)
 
-	if !dryrun {
-		// Execute the container
+	if !dryRun {
 		cmd := exec.CommandContext(ctx, runtime, args...)
 
 		var stdout, stderr bytes.Buffer
@@ -152,10 +207,26 @@ func (k *KrknAI) runKrknContainer(ctx context.Context, dryrun bool) error {
 			log.Printf("KrknAI: Container stderr:\n%s", stderr.String())
 		}
 	} else {
-		log.Printf("Dry run completed.")
+		log.Println("KrknAI: Skipping container execution (dry run)")
 	}
 
 	return nil
+}
+
+// getPrometheusToken retrieves a token for the prometheus-k8s service account from the cluster.
+func (k *KrknAI) getPrometheusToken(ctx context.Context) (string, error) {
+	// Get kubeconfig from shared dir
+	sharedDir := viper.GetString(config.SharedDir)
+	kubeconfigPath := filepath.Join(sharedDir, kubeconfigFileName)
+
+	// Create openshift client from kubeconfig
+	client, err := openshift.NewFromKubeconfig(kubeconfigPath, logr.Discard())
+	if err != nil {
+		return "", fmt.Errorf("failed to create openshift client: %w", err)
+	}
+
+	// Use osde2e-common prometheus package to create the token
+	return prometheus.GetPrometheusToken(ctx, client)
 }
 
 // updateKrknConfig updates the krkn-ai output YAML with values from viper config.
@@ -170,9 +241,9 @@ func (k *KrknAI) updateKrknConfig() error {
 	}
 
 	// Find YAML file in the shared directory
-	yamlFile := filepath.Join(sharedDir, "krkn-ai.yaml")
+	yamlFile := filepath.Join(sharedDir, krknConfigFileName)
 	if _, err := os.Stat(yamlFile); os.IsNotExist(err) {
-		return fmt.Errorf("no krkn-ai config file found in %s", sharedDir)
+		return fmt.Errorf("no %s config file found in %s", krknConfigFileName, sharedDir)
 	}
 
 	// Read the YAML file

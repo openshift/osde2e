@@ -31,6 +31,16 @@ const (
 	Success = 0
 	Failure = 1
 	Aborted = 130
+
+	// KrknAIModeDiscover is the mode for discover mode
+	KrknAIModeDiscover = "discover"
+
+	// KrknAIModeRun is the mode for run mode
+	KrknAIModeRun = "run"
+
+	// KrknAIVerboseLevel is the verbosity level for krkn-ai output
+	KrknAIVerboseLevel = "2"
+
 	// Provider is what provider to use to create/delete clusters.
 	// Env: PROVIDER
 	Provider = "provider"
@@ -615,10 +625,6 @@ var LogAnalysis = struct {
 
 // KrknAI config keys for Kraken AI chaos testing.
 var KrknAI = struct {
-	// Mode is the krkn-ai execution mode (e.g., "discover")
-	// Env: KRKN_MODE
-	Mode string
-
 	// Namespace is the target namespace for chaos testing
 	// Env: KRKN_NAMESPACE
 	Namespace string
@@ -635,10 +641,6 @@ var KrknAI = struct {
 	// Env: KRKN_SKIP_POD_NAME
 	SkipPodName string
 
-	// Verbose sets the verbosity level for krkn-ai output
-	// Env: KRKN_VERBOSE
-	Verbose string
-
 	// FitnessQuery is the Prometheus query for the fitness function
 	// Env: KRKN_FITNESS_QUERY
 	FitnessQuery string
@@ -647,12 +649,10 @@ var KrknAI = struct {
 	// Env: KRKN_SCENARIOS
 	Scenarios string
 }{
-	Mode:         "krknAI.mode",
 	Namespace:    "krknAI.namespace",
 	PodLabel:     "krknAI.podLabel",
 	NodeLabel:    "krknAI.nodeLabel",
 	SkipPodName:  "krknAI.skipPodName",
-	Verbose:      "krknAI.verbose",
 	FitnessQuery: "krknAI.fitnessQuery",
 	Scenarios:    "krknAI.scenarios",
 }
@@ -953,9 +953,6 @@ func InitOSDe2eViper() {
 	_ = viper.BindEnv(LogAnalysis.SlackChannel, "LOG_ANALYSIS_SLACK_CHANNEL")
 
 	// ----- KrknAI Configuration -----
-	viper.SetDefault(KrknAI.Mode, "discover")
-	_ = viper.BindEnv(KrknAI.Mode, "KRKN_MODE")
-
 	viper.SetDefault(KrknAI.Namespace, "default")
 	_ = viper.BindEnv(KrknAI.Namespace, "KRKN_NAMESPACE")
 
@@ -967,9 +964,6 @@ func InitOSDe2eViper() {
 
 	viper.SetDefault(KrknAI.SkipPodName, "")
 	_ = viper.BindEnv(KrknAI.SkipPodName, "KRKN_SKIP_POD_NAME")
-
-	viper.SetDefault(KrknAI.Verbose, "2")
-	_ = viper.BindEnv(KrknAI.Verbose, "KRKN_VERBOSE")
 
 	viper.SetDefault(KrknAI.FitnessQuery, "")
 	_ = viper.BindEnv(KrknAI.FitnessQuery, "KRKN_FITNESS_QUERY")
