@@ -46,9 +46,8 @@ When osde2e is invoked, the standard workflow is followed:
 
 Prior to running osde2e, make sure you meet the minimal prerequisites defined below:
 
-* Navigate to [OpenShift Cluster Manager (OCM)][OpenShift Offline Token] to obtain
-  an OpenShift offline token.
-  * Save your token into the environment variable `OCM_TOKEN` for later usage
+* Obtain OCM service account credentials (client ID and client secret)
+  * Save your credentials into environment variables `OCM_CLIENT_ID` and `OCM_CLIENT_SECRET`
 * Verify (submit a request if required to [ocm resources]) your Red Hat account
   has adequate quota for deploying clusters based on your preferred deployment type
 * A go workspace running the minimal version defined in the [go.mod](go.mod)
@@ -102,7 +101,7 @@ you wish to validate. It provides four ways for you to provide input
 * Environment variables
 * Command line options
 
-*It is highly recommended to leave sensitive settings as environment variables (e.g. `OCM_TOKEN`).
+*It is highly recommended to leave sensitive settings as environment variables (e.g. `OCM_CLIENT_ID`, `OCM_CLIENT_SECRET`).
 This way the chance of these settings defined in a custom config file are not checked into
 source control.*
 
@@ -170,7 +169,8 @@ Please refer to the [config package] for exact environment variable names.
 Below is an example to spin up a OSD cluster and test it:
 
 ```shell
-OCM_TOKEN=<ocm-token> \
+OCM_CLIENT_ID=<ocm-client-id> \
+OCM_CLIENT_SECRET=<ocm-client-secret> \
 OSD_ENV=prod \
 CLUSTER_NAME=my-cluster \
 CLUSTER_VERSION=4.12.0 \
@@ -180,13 +180,8 @@ osde2e test
 These also can be combined with pre-canned default configs and custom configs:
 
 ```shell
-OCM_TOKEN=<ocm-token> \
-CLUSTER_VERSION=4.12.0 \
-osde2e test --configs prod,e2e-suite
-```
-
-```shell
-OCM_TOKEN=<ocm-token> \
+OCM_CLIENT_ID=<ocm-client-id> \
+OCM_CLIENT_SECRET=<ocm-client-secret> \
 CLUSTER_VERSION=4.12.0 \
 osde2e test --configs prod,e2e-suite
 ```
@@ -227,6 +222,8 @@ To see more examples of configuring input for osde2e, refer to the
 [prowgen jobs][OSDE2E ProwGen Job Config] in the OpenShift release repository
 owned by the team. These will be always up to date with the latest changes
 osde2e has to offer.
+
+For detailed testing instructions, see the [Testing with OSDe2e](/docs/testing-with-osde2e.md) guide.
 
 ## Cluster Deployments
 
@@ -327,20 +324,44 @@ that ran and statistics about them (e.g. pass/fail, duration). These XML files w
 used by external applications to present metrics and data for others to see into. An example of
 this is they are used to present data in [TestGrid Dashboards][TestGrid Dashboard].
 
+### Log Analysis System
+
+OSDe2e includes an intelligent log analysis system that automatically analyzes test failures
+using LLM-powered insights and sends notifications to configured channels. The system consists
+of three main components:
+
+- **Data Sanitizer**: Removes sensitive information before analysis
+- **Analysis Engine**: Uses LLM (Gemini) for intelligent failure analysis
+- **Reporter System**: Sends notifications to Slack and other channels
+
+For detailed information, see the [Log Analysis System](/docs/Log-Analysis-System.md) documentation.
+
 ## CI Jobs
 
 Periodic jobs are run daily validating Managed OpenShift clusters, using
 `osde2e`. Check out the [CI Jobs] page to learn more.
 
-[Config variables]:/docs/Config.md
-[configs]:/configs/
-[config package]:/pkg/common/config/config.go
+## Contributing
+
+We welcome contributions! Please read our [Contributing Guide](CONTRIBUTING.md) for guidelines
+on how to submit changes, write tests, and follow our development workflow.
+
+Key points for contributors:
+- Always format code with `gofumpt`, not `gofmt`
+- Check [osde2e-common](https://github.com/openshift/osde2e-common) for existing functionality
+- Write unit tests for all new features
+- Follow the commit message format: `[JIRA-ID] type: description`
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for complete details.
+
+[Config variables]: /docs/Config.md
+[configs]: /configs/
+[config package]: /pkg/common/config/config.go
 [ocm resources]: https://gitlab.cee.redhat.com/service/ocm-resources/
 [OSDE2E Quay Image]: quay.io/redhat-services-prod/osde2e-cicada-tenant/osde2e
 [OpenShift Dedicated]: https://docs.openshift.com/dedicated/welcome/index.html
 [OSDE2E Test Harness]: https://github.com/openshift/osde2e-example-test-harness
-[OpenShift Offline Token]:https://cloud.redhat.com/openshift/token
 [OSDE2E ProwGen Job Config]: https://github.com/openshift/release/blob/master/ci-operator/config/openshift/osde2e/openshift-osde2e-main.yaml
 [TestGrid Dashboard]: https://testgrid.k8s.io/redhat-openshift-osd
-[Writing Tests]:/docs/Writing-Tests.md
+[Writing Tests]: /docs/Writing-Tests.md
 [CI Jobs]: /docs/CI-Jobs.md
