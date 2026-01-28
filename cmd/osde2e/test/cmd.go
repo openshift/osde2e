@@ -172,6 +172,8 @@ func run(cmd *cobra.Command, argv []string) {
 		}
 		log.Println("Canary job won!")
 	}
+	log.Println("do not merge, testing new PR check!")
+	log.Println("do not merge, testing new PR check!")
 
 	exitCode := e2e.RunTests(cmd.Context())
 	os.Exit(exitCode)
