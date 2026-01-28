@@ -1,0 +1,646 @@
+I0119 09:38:16.741960      27 main.go:88] "configured logging" outputFile="/logs/artifacts/test_output.log" reportDir="/logs/artifacts" sharedDir="/tmp/secret"
+2026/01/19 09:38:16 Will load config aws
+2026/01/19 09:38:16 Will load config stage
+2026/01/19 09:38:16 Will load config e2e-suite
+2026/01/19 09:38:16 Found secret for key tests.slackWebhook.
+2026/01/19 09:38:16 Found secret for key cad.pagerDutyRoutingKey.
+2026/01/19 09:38:16 Found secret for key config.aws.account.
+2026/01/19 09:38:16 Found secret for key config.aws.accessKey.
+2026/01/19 09:38:16 Found secret for key config.aws.secretAccessKey.
+2026/01/19 09:38:16 Found secret for key config.aws.region.
+2026/01/19 09:38:16 Found secret for key gcp.credsJSON.
+2026/01/19 09:38:16 Found secret for key ocm.token.
+2026/01/19 09:38:16 Found secret for key ocm.clientID.
+2026/01/19 09:38:16 Found secret for key ocm.clientSecret.
+2026/01/19 09:38:16 Querying cluster versions endpoint.
+2026/01/19 09:38:17 could not parse version 'aaaaaaaaaabbbbbbbbbbaaaaaaaaaabbbbbbbbbbaaaaaaaaaabbbbbbbbbbaaaaaaaaaabbbbbbbbbbaaaaaaaaaabbbbbbbbbb-imageset': invalid semantic version
+2026/01/19 09:38:17 could not parse version 'aaaaaaaaaabbbbbbbbbbaaaaaaaaaabbbbbbbbbbaaaaaaaaaabbbbbbbbbbaaaaaaaaaabbbbbbbbbb-imageset': invalid semantic version
+2026/01/19 09:38:17 could not parse version 'dgoodwin1-imageset': invalid semantic version
+2026/01/19 09:38:17 could not parse version 'dgoodwin-stg-imageset': invalid semantic version
+2026/01/19 09:39:15 specific image value: "registry.build04.ci.openshift.org/ci-op-3cikwr1p/release@sha256:ab7400593fc9728c82045614be306dcc0794fcc36a8b38e7d1550eda7832d2dd"
+2026/01/19 09:39:15 specific nightly value: ""
+2026/01/19 09:39:15 PROW_JOB_ID: "4.20.0-0.nightly-2026-01-19-092932-openshift-dedicated-aws"
+2026/01/19 09:39:15 Using version selector "triggered nightly"
+2026/01/19 09:39:15 Looking to match 4.20.0-0.nightly-2026-01-19-092932-nightly
+2026/01/19 09:39:15 Unable to find image using selector `triggered nightly`. Error: failed to find version "4.20.0-0.nightly-2026-01-19-092932-nightly"
+2026/01/19 09:39:15 Waiting for CIS to sync with the Release Controller
+2026/01/19 09:39:16 Querying cluster versions endpoint.
+2026/01/19 09:39:16 could not parse version 'aaaaaaaaaabbbbbbbbbbaaaaaaaaaabbbbbbbbbbaaaaaaaaaabbbbbbbbbbaaaaaaaaaabbbbbbbbbbaaaaaaaaaabbbbbbbbbb-imageset': invalid semantic version
+2026/01/19 09:39:16 could not parse version 'aaaaaaaaaabbbbbbbbbbaaaaaaaaaabbbbbbbbbbaaaaaaaaaabbbbbbbbbbaaaaaaaaaabbbbbbbbbb-imageset': invalid semantic version
+2026/01/19 09:39:16 could not parse version 'dgoodwin1-imageset': invalid semantic version
+2026/01/19 09:39:16 could not parse version 'dgoodwin-stg-imageset': invalid semantic version
+2026/01/19 09:40:16 specific image value: "registry.build04.ci.openshift.org/ci-op-3cikwr1p/release@sha256:ab7400593fc9728c82045614be306dcc0794fcc36a8b38e7d1550eda7832d2dd"
+2026/01/19 09:40:16 specific nightly value: ""
+2026/01/19 09:40:16 PROW_JOB_ID: "4.20.0-0.nightly-2026-01-19-092932-openshift-dedicated-aws"
+2026/01/19 09:40:16 Using version selector "triggered nightly"
+2026/01/19 09:40:16 Looking to match 4.20.0-0.nightly-2026-01-19-092932-nightly
+2026/01/19 09:40:16 Unable to find image using selector `triggered nightly`. Error: failed to find version "4.20.0-0.nightly-2026-01-19-092932-nightly"
+2026/01/19 09:40:16 Waiting for CIS to sync with the Release Controller
+2026/01/19 09:40:16 Querying cluster versions endpoint.
+2026/01/19 09:40:16 could not parse version 'aaaaaaaaaabbbbbbbbbbaaaaaaaaaabbbbbbbbbbaaaaaaaaaabbbbbbbbbbaaaaaaaaaabbbbbbbbbbaaaaaaaaaabbbbbbbbbb-imageset': invalid semantic version
+2026/01/19 09:40:16 could not parse version 'aaaaaaaaaabbbbbbbbbbaaaaaaaaaabbbbbbbbbbaaaaaaaaaabbbbbbbbbbaaaaaaaaaabbbbbbbbbb-imageset': invalid semantic version
+2026/01/19 09:40:16 could not parse version 'dgoodwin1-imageset': invalid semantic version
+2026/01/19 09:40:16 could not parse version 'dgoodwin-stg-imageset': invalid semantic version
+2026/01/19 09:41:16 specific image value: "registry.build04.ci.openshift.org/ci-op-3cikwr1p/release@sha256:ab7400593fc9728c82045614be306dcc0794fcc36a8b38e7d1550eda7832d2dd"
+2026/01/19 09:41:16 specific nightly value: ""
+2026/01/19 09:41:16 PROW_JOB_ID: "4.20.0-0.nightly-2026-01-19-092932-openshift-dedicated-aws"
+2026/01/19 09:41:16 Using version selector "triggered nightly"
+2026/01/19 09:41:16 Looking to match 4.20.0-0.nightly-2026-01-19-092932-nightly
+2026/01/19 09:41:16 Unable to find image using selector `triggered nightly`. Error: failed to find version "4.20.0-0.nightly-2026-01-19-092932-nightly"
+2026/01/19 09:41:16 Waiting for CIS to sync with the Release Controller
+2026/01/19 09:41:16 Querying cluster versions endpoint.
+2026/01/19 09:41:16 could not parse version 'aaaaaaaaaabbbbbbbbbbaaaaaaaaaabbbbbbbbbbaaaaaaaaaabbbbbbbbbbaaaaaaaaaabbbbbbbbbbaaaaaaaaaabbbbbbbbbb-imageset': invalid semantic version
+2026/01/19 09:41:16 could not parse version 'aaaaaaaaaabbbbbbbbbbaaaaaaaaaabbbbbbbbbbaaaaaaaaaabbbbbbbbbbaaaaaaaaaabbbbbbbbbb-imageset': invalid semantic version
+2026/01/19 09:41:16 could not parse version 'dgoodwin1-imageset': invalid semantic version
+2026/01/19 09:41:16 could not parse version 'dgoodwin-stg-imageset': invalid semantic version
+2026/01/19 09:42:16 specific image value: "registry.build04.ci.openshift.org/ci-op-3cikwr1p/release@sha256:ab7400593fc9728c82045614be306dcc0794fcc36a8b38e7d1550eda7832d2dd"
+2026/01/19 09:42:16 specific nightly value: ""
+2026/01/19 09:42:16 PROW_JOB_ID: "4.20.0-0.nightly-2026-01-19-092932-openshift-dedicated-aws"
+2026/01/19 09:42:16 Using version selector "triggered nightly"
+2026/01/19 09:42:16 Looking to match 4.20.0-0.nightly-2026-01-19-092932-nightly
+2026/01/19 09:42:16 Unable to find image using selector `triggered nightly`. Error: failed to find version "4.20.0-0.nightly-2026-01-19-092932-nightly"
+2026/01/19 09:42:16 Waiting for CIS to sync with the Release Controller
+2026/01/19 09:42:16 Querying cluster versions endpoint.
+2026/01/19 09:42:16 could not parse version 'aaaaaaaaaabbbbbbbbbbaaaaaaaaaabbbbbbbbbbaaaaaaaaaabbbbbbbbbbaaaaaaaaaabbbbbbbbbbaaaaaaaaaabbbbbbbbbb-imageset': invalid semantic version
+2026/01/19 09:42:16 could not parse version 'aaaaaaaaaabbbbbbbbbbaaaaaaaaaabbbbbbbbbbaaaaaaaaaabbbbbbbbbbaaaaaaaaaabbbbbbbbbb-imageset': invalid semantic version
+2026/01/19 09:42:16 could not parse version 'dgoodwin1-imageset': invalid semantic version
+2026/01/19 09:42:16 could not parse version 'dgoodwin-stg-imageset': invalid semantic version
+2026/01/19 09:43:16 specific image value: "registry.build04.ci.openshift.org/ci-op-3cikwr1p/release@sha256:ab7400593fc9728c82045614be306dcc0794fcc36a8b38e7d1550eda7832d2dd"
+2026/01/19 09:43:16 specific nightly value: ""
+2026/01/19 09:43:16 PROW_JOB_ID: "4.20.0-0.nightly-2026-01-19-092932-openshift-dedicated-aws"
+2026/01/19 09:43:16 Using version selector "triggered nightly"
+2026/01/19 09:43:16 Looking to match 4.20.0-0.nightly-2026-01-19-092932-nightly
+2026/01/19 09:43:16 Unable to find image using selector `triggered nightly`. Error: failed to find version "4.20.0-0.nightly-2026-01-19-092932-nightly"
+2026/01/19 09:43:16 Waiting for CIS to sync with the Release Controller
+2026/01/19 09:43:16 Querying cluster versions endpoint.
+2026/01/19 09:43:16 could not parse version 'aaaaaaaaaabbbbbbbbbbaaaaaaaaaabbbbbbbbbbaaaaaaaaaabbbbbbbbbbaaaaaaaaaabbbbbbbbbbaaaaaaaaaabbbbbbbbbb-imageset': invalid semantic version
+2026/01/19 09:43:16 could not parse version 'aaaaaaaaaabbbbbbbbbbaaaaaaaaaabbbbbbbbbbaaaaaaaaaabbbbbbbbbbaaaaaaaaaabbbbbbbbbb-imageset': invalid semantic version
+2026/01/19 09:43:16 could not parse version 'dgoodwin1-imageset': invalid semantic version
+2026/01/19 09:43:16 could not parse version 'dgoodwin-stg-imageset': invalid semantic version
+2026/01/19 09:44:15 specific image value: "registry.build04.ci.openshift.org/ci-op-3cikwr1p/release@sha256:ab7400593fc9728c82045614be306dcc0794fcc36a8b38e7d1550eda7832d2dd"
+2026/01/19 09:44:15 specific nightly value: ""
+2026/01/19 09:44:15 PROW_JOB_ID: "4.20.0-0.nightly-2026-01-19-092932-openshift-dedicated-aws"
+2026/01/19 09:44:15 Using version selector "triggered nightly"
+2026/01/19 09:44:15 Looking to match 4.20.0-0.nightly-2026-01-19-092932-nightly
+2026/01/19 09:44:15 Unable to find image using selector `triggered nightly`. Error: failed to find version "4.20.0-0.nightly-2026-01-19-092932-nightly"
+2026/01/19 09:44:15 Waiting for CIS to sync with the Release Controller
+2026/01/19 09:44:16 Querying cluster versions endpoint.
+2026/01/19 09:44:16 could not parse version 'aaaaaaaaaabbbbbbbbbbaaaaaaaaaabbbbbbbbbbaaaaaaaaaabbbbbbbbbbaaaaaaaaaabbbbbbbbbbaaaaaaaaaabbbbbbbbbb-imageset': invalid semantic version
+2026/01/19 09:44:16 could not parse version 'aaaaaaaaaabbbbbbbbbbaaaaaaaaaabbbbbbbbbbaaaaaaaaaabbbbbbbbbbaaaaaaaaaabbbbbbbbbb-imageset': invalid semantic version
+2026/01/19 09:44:16 could not parse version 'dgoodwin1-imageset': invalid semantic version
+2026/01/19 09:44:16 could not parse version 'dgoodwin-stg-imageset': invalid semantic version
+2026/01/19 09:45:15 specific image value: "registry.build04.ci.openshift.org/ci-op-3cikwr1p/release@sha256:ab7400593fc9728c82045614be306dcc0794fcc36a8b38e7d1550eda7832d2dd"
+2026/01/19 09:45:15 specific nightly value: ""
+2026/01/19 09:45:15 PROW_JOB_ID: "4.20.0-0.nightly-2026-01-19-092932-openshift-dedicated-aws"
+2026/01/19 09:45:15 Using version selector "triggered nightly"
+2026/01/19 09:45:15 Looking to match 4.20.0-0.nightly-2026-01-19-092932-nightly
+2026/01/19 09:45:15 Unable to find image using selector `triggered nightly`. Error: failed to find version "4.20.0-0.nightly-2026-01-19-092932-nightly"
+2026/01/19 09:45:15 Waiting for CIS to sync with the Release Controller
+2026/01/19 09:45:16 Querying cluster versions endpoint.
+2026/01/19 09:45:16 could not parse version 'aaaaaaaaaabbbbbbbbbbaaaaaaaaaabbbbbbbbbbaaaaaaaaaabbbbbbbbbbaaaaaaaaaabbbbbbbbbbaaaaaaaaaabbbbbbbbbb-imageset': invalid semantic version
+2026/01/19 09:45:16 could not parse version 'aaaaaaaaaabbbbbbbbbbaaaaaaaaaabbbbbbbbbbaaaaaaaaaabbbbbbbbbbaaaaaaaaaabbbbbbbbbb-imageset': invalid semantic version
+2026/01/19 09:45:16 could not parse version 'dgoodwin1-imageset': invalid semantic version
+2026/01/19 09:45:16 could not parse version 'dgoodwin-stg-imageset': invalid semantic version
+2026/01/19 09:46:15 specific image value: "registry.build04.ci.openshift.org/ci-op-3cikwr1p/release@sha256:ab7400593fc9728c82045614be306dcc0794fcc36a8b38e7d1550eda7832d2dd"
+2026/01/19 09:46:15 specific nightly value: ""
+2026/01/19 09:46:15 PROW_JOB_ID: "4.20.0-0.nightly-2026-01-19-092932-openshift-dedicated-aws"
+2026/01/19 09:46:15 Using version selector "triggered nightly"
+2026/01/19 09:46:15 Looking to match 4.20.0-0.nightly-2026-01-19-092932-nightly
+2026/01/19 09:46:15 Unable to find image using selector `triggered nightly`. Error: failed to find version "4.20.0-0.nightly-2026-01-19-092932-nightly"
+2026/01/19 09:46:15 Waiting for CIS to sync with the Release Controller
+2026/01/19 09:46:16 Querying cluster versions endpoint.
+2026/01/19 09:46:16 could not parse version 'aaaaaaaaaabbbbbbbbbbaaaaaaaaaabbbbbbbbbbaaaaaaaaaabbbbbbbbbbaaaaaaaaaabbbbbbbbbbaaaaaaaaaabbbbbbbbbb-imageset': invalid semantic version
+2026/01/19 09:46:16 could not parse version 'aaaaaaaaaabbbbbbbbbbaaaaaaaaaabbbbbbbbbbaaaaaaaaaabbbbbbbbbbaaaaaaaaaabbbbbbbbbb-imageset': invalid semantic version
+2026/01/19 09:46:16 could not parse version 'dgoodwin1-imageset': invalid semantic version
+2026/01/19 09:46:16 could not parse version 'dgoodwin-stg-imageset': invalid semantic version
+2026/01/19 09:47:15 specific image value: "registry.build04.ci.openshift.org/ci-op-3cikwr1p/release@sha256:ab7400593fc9728c82045614be306dcc0794fcc36a8b38e7d1550eda7832d2dd"
+2026/01/19 09:47:15 specific nightly value: ""
+2026/01/19 09:47:15 PROW_JOB_ID: "4.20.0-0.nightly-2026-01-19-092932-openshift-dedicated-aws"
+2026/01/19 09:47:15 Using version selector "triggered nightly"
+2026/01/19 09:47:15 Looking to match 4.20.0-0.nightly-2026-01-19-092932-nightly
+2026/01/19 09:47:15 Unable to find image using selector `triggered nightly`. Error: failed to find version "4.20.0-0.nightly-2026-01-19-092932-nightly"
+2026/01/19 09:47:15 Waiting for CIS to sync with the Release Controller
+2026/01/19 09:47:16 Querying cluster versions endpoint.
+2026/01/19 09:47:16 could not parse version 'aaaaaaaaaabbbbbbbbbbaaaaaaaaaabbbbbbbbbbaaaaaaaaaabbbbbbbbbbaaaaaaaaaabbbbbbbbbbaaaaaaaaaabbbbbbbbbb-imageset': invalid semantic version
+2026/01/19 09:47:16 could not parse version 'aaaaaaaaaabbbbbbbbbbaaaaaaaaaabbbbbbbbbbaaaaaaaaaabbbbbbbbbbaaaaaaaaaabbbbbbbbbb-imageset': invalid semantic version
+2026/01/19 09:47:16 could not parse version 'dgoodwin1-imageset': invalid semantic version
+2026/01/19 09:47:16 could not parse version 'dgoodwin-stg-imageset': invalid semantic version
+2026/01/19 09:48:14 specific image value: "registry.build04.ci.openshift.org/ci-op-3cikwr1p/release@sha256:ab7400593fc9728c82045614be306dcc0794fcc36a8b38e7d1550eda7832d2dd"
+2026/01/19 09:48:14 specific nightly value: ""
+2026/01/19 09:48:14 PROW_JOB_ID: "4.20.0-0.nightly-2026-01-19-092932-openshift-dedicated-aws"
+2026/01/19 09:48:14 Using version selector "triggered nightly"
+2026/01/19 09:48:14 Looking to match 4.20.0-0.nightly-2026-01-19-092932-nightly
+2026/01/19 09:48:14 Unable to find image using selector `triggered nightly`. Error: failed to find version "4.20.0-0.nightly-2026-01-19-092932-nightly"
+2026/01/19 09:48:14 Waiting for CIS to sync with the Release Controller
+2026/01/19 09:48:16 Querying cluster versions endpoint.
+2026/01/19 09:48:16 could not parse version 'aaaaaaaaaabbbbbbbbbbaaaaaaaaaabbbbbbbbbbaaaaaaaaaabbbbbbbbbbaaaaaaaaaabbbbbbbbbbaaaaaaaaaabbbbbbbbbb-imageset': invalid semantic version
+2026/01/19 09:48:16 could not parse version 'aaaaaaaaaabbbbbbbbbbaaaaaaaaaabbbbbbbbbbaaaaaaaaaabbbbbbbbbbaaaaaaaaaabbbbbbbbbb-imageset': invalid semantic version
+2026/01/19 09:48:16 could not parse version 'dgoodwin1-imageset': invalid semantic version
+2026/01/19 09:48:16 could not parse version 'dgoodwin-stg-imageset': invalid semantic version
+2026/01/19 09:49:15 specific image value: "registry.build04.ci.openshift.org/ci-op-3cikwr1p/release@sha256:ab7400593fc9728c82045614be306dcc0794fcc36a8b38e7d1550eda7832d2dd"
+2026/01/19 09:49:15 specific nightly value: ""
+2026/01/19 09:49:15 PROW_JOB_ID: "4.20.0-0.nightly-2026-01-19-092932-openshift-dedicated-aws"
+2026/01/19 09:49:15 Using version selector "triggered nightly"
+2026/01/19 09:49:15 Looking to match 4.20.0-0.nightly-2026-01-19-092932-nightly
+2026/01/19 09:49:15 Unable to find image using selector `triggered nightly`. Error: failed to find version "4.20.0-0.nightly-2026-01-19-092932-nightly"
+2026/01/19 09:49:15 Waiting for CIS to sync with the Release Controller
+2026/01/19 09:49:16 Querying cluster versions endpoint.
+2026/01/19 09:49:16 could not parse version 'aaaaaaaaaabbbbbbbbbbaaaaaaaaaabbbbbbbbbbaaaaaaaaaabbbbbbbbbbaaaaaaaaaabbbbbbbbbbaaaaaaaaaabbbbbbbbbb-imageset': invalid semantic version
+2026/01/19 09:49:16 could not parse version 'aaaaaaaaaabbbbbbbbbbaaaaaaaaaabbbbbbbbbbaaaaaaaaaabbbbbbbbbbaaaaaaaaaabbbbbbbbbb-imageset': invalid semantic version
+2026/01/19 09:49:16 could not parse version 'dgoodwin1-imageset': invalid semantic version
+2026/01/19 09:49:16 could not parse version 'dgoodwin-stg-imageset': invalid semantic version
+2026/01/19 09:50:16 specific image value: "registry.build04.ci.openshift.org/ci-op-3cikwr1p/release@sha256:ab7400593fc9728c82045614be306dcc0794fcc36a8b38e7d1550eda7832d2dd"
+2026/01/19 09:50:16 specific nightly value: ""
+2026/01/19 09:50:16 PROW_JOB_ID: "4.20.0-0.nightly-2026-01-19-092932-openshift-dedicated-aws"
+2026/01/19 09:50:16 Using version selector "triggered nightly"
+2026/01/19 09:50:16 Looking to match 4.20.0-0.nightly-2026-01-19-092932-nightly
+2026/01/19 09:50:16 Unable to find image using selector `triggered nightly`. Error: failed to find version "4.20.0-0.nightly-2026-01-19-092932-nightly"
+2026/01/19 09:50:16 Waiting for CIS to sync with the Release Controller
+2026/01/19 09:50:16 Querying cluster versions endpoint.
+2026/01/19 09:50:16 could not parse version 'aaaaaaaaaabbbbbbbbbbaaaaaaaaaabbbbbbbbbbaaaaaaaaaabbbbbbbbbbaaaaaaaaaabbbbbbbbbbaaaaaaaaaabbbbbbbbbb-imageset': invalid semantic version
+2026/01/19 09:50:16 could not parse version 'aaaaaaaaaabbbbbbbbbbaaaaaaaaaabbbbbbbbbbaaaaaaaaaabbbbbbbbbbaaaaaaaaaabbbbbbbbbb-imageset': invalid semantic version
+2026/01/19 09:50:16 could not parse version 'dgoodwin1-imageset': invalid semantic version
+2026/01/19 09:50:16 could not parse version 'dgoodwin-stg-imageset': invalid semantic version
+2026/01/19 09:51:18 specific image value: "registry.build04.ci.openshift.org/ci-op-3cikwr1p/release@sha256:ab7400593fc9728c82045614be306dcc0794fcc36a8b38e7d1550eda7832d2dd"
+2026/01/19 09:51:18 specific nightly value: ""
+2026/01/19 09:51:18 PROW_JOB_ID: "4.20.0-0.nightly-2026-01-19-092932-openshift-dedicated-aws"
+2026/01/19 09:51:18 Using version selector "triggered nightly"
+2026/01/19 09:51:18 Looking to match 4.20.0-0.nightly-2026-01-19-092932-nightly
+2026/01/19 09:51:18 Unable to find image using selector `triggered nightly`. Error: failed to find version "4.20.0-0.nightly-2026-01-19-092932-nightly"
+2026/01/19 09:51:18 Waiting for CIS to sync with the Release Controller
+2026/01/19 09:51:18 Querying cluster versions endpoint.
+2026/01/19 09:51:18 could not parse version 'aaaaaaaaaabbbbbbbbbbaaaaaaaaaabbbbbbbbbbaaaaaaaaaabbbbbbbbbbaaaaaaaaaabbbbbbbbbbaaaaaaaaaabbbbbbbbbb-imageset': invalid semantic version
+2026/01/19 09:51:18 could not parse version 'aaaaaaaaaabbbbbbbbbbaaaaaaaaaabbbbbbbbbbaaaaaaaaaabbbbbbbbbbaaaaaaaaaabbbbbbbbbb-imageset': invalid semantic version
+2026/01/19 09:51:18 could not parse version 'dgoodwin1-imageset': invalid semantic version
+2026/01/19 09:51:18 could not parse version 'dgoodwin-stg-imageset': invalid semantic version
+2026/01/19 09:52:17 specific image value: "registry.build04.ci.openshift.org/ci-op-3cikwr1p/release@sha256:ab7400593fc9728c82045614be306dcc0794fcc36a8b38e7d1550eda7832d2dd"
+2026/01/19 09:52:17 specific nightly value: ""
+2026/01/19 09:52:17 PROW_JOB_ID: "4.20.0-0.nightly-2026-01-19-092932-openshift-dedicated-aws"
+2026/01/19 09:52:17 Using version selector "triggered nightly"
+2026/01/19 09:52:17 Looking to match 4.20.0-0.nightly-2026-01-19-092932-nightly
+2026/01/19 09:52:17 Unable to find image using selector `triggered nightly`. Error: failed to find version "4.20.0-0.nightly-2026-01-19-092932-nightly"
+2026/01/19 09:52:17 Waiting for CIS to sync with the Release Controller
+2026/01/19 09:52:17 Querying cluster versions endpoint.
+2026/01/19 09:52:17 could not parse version 'aaaaaaaaaabbbbbbbbbbaaaaaaaaaabbbbbbbbbbaaaaaaaaaabbbbbbbbbbaaaaaaaaaabbbbbbbbbbaaaaaaaaaabbbbbbbbbb-imageset': invalid semantic version
+2026/01/19 09:52:17 could not parse version 'aaaaaaaaaabbbbbbbbbbaaaaaaaaaabbbbbbbbbbaaaaaaaaaabbbbbbbbbbaaaaaaaaaabbbbbbbbbb-imageset': invalid semantic version
+2026/01/19 09:52:17 could not parse version 'dgoodwin1-imageset': invalid semantic version
+2026/01/19 09:52:17 could not parse version 'dgoodwin-stg-imageset': invalid semantic version
+2026/01/19 09:53:15 specific image value: "registry.build04.ci.openshift.org/ci-op-3cikwr1p/release@sha256:ab7400593fc9728c82045614be306dcc0794fcc36a8b38e7d1550eda7832d2dd"
+2026/01/19 09:53:15 specific nightly value: ""
+2026/01/19 09:53:15 PROW_JOB_ID: "4.20.0-0.nightly-2026-01-19-092932-openshift-dedicated-aws"
+2026/01/19 09:53:15 Using version selector "triggered nightly"
+2026/01/19 09:53:15 Looking to match 4.20.0-0.nightly-2026-01-19-092932-nightly
+2026/01/19 09:53:15 Unable to find image using selector `triggered nightly`. Error: failed to find version "4.20.0-0.nightly-2026-01-19-092932-nightly"
+2026/01/19 09:53:15 Waiting for CIS to sync with the Release Controller
+2026/01/19 09:53:16 Querying cluster versions endpoint.
+2026/01/19 09:53:16 could not parse version 'aaaaaaaaaabbbbbbbbbbaaaaaaaaaabbbbbbbbbbaaaaaaaaaabbbbbbbbbbaaaaaaaaaabbbbbbbbbbaaaaaaaaaabbbbbbbbbb-imageset': invalid semantic version
+2026/01/19 09:53:16 could not parse version 'aaaaaaaaaabbbbbbbbbbaaaaaaaaaabbbbbbbbbbaaaaaaaaaabbbbbbbbbbaaaaaaaaaabbbbbbbbbb-imageset': invalid semantic version
+2026/01/19 09:53:16 could not parse version 'dgoodwin1-imageset': invalid semantic version
+2026/01/19 09:53:16 could not parse version 'dgoodwin-stg-imageset': invalid semantic version
+2026/01/19 09:54:15 specific image value: "registry.build04.ci.openshift.org/ci-op-3cikwr1p/release@sha256:ab7400593fc9728c82045614be306dcc0794fcc36a8b38e7d1550eda7832d2dd"
+2026/01/19 09:54:15 specific nightly value: ""
+2026/01/19 09:54:15 PROW_JOB_ID: "4.20.0-0.nightly-2026-01-19-092932-openshift-dedicated-aws"
+2026/01/19 09:54:15 Using version selector "triggered nightly"
+2026/01/19 09:54:15 Looking to match 4.20.0-0.nightly-2026-01-19-092932-nightly
+2026/01/19 09:54:15 Using the triggered nightly '4.20.0-0.nightly-2026-01-19-092932-nightly'
+2026/01/19 09:54:15 No upgrade selector found. Not selecting an upgrade version.
+2026/01/19 09:54:15 no clusterid found, provisioning cluster
+2026/01/19 09:54:15 cluster name set to osde2e-3laaf
+2026/01/19 09:54:15 Using flavour: osd-4
+2026/01/19 09:54:15 Using SKU:
+2026/01/19 09:54:15 No SKU specified, will not check if enough quota is available.
+2026/01/19 09:54:15 Image source not found: imageContentSources:
+- mirrors:
+  - quay.io/openshift-release-dev/ocp-release
+  - pull.q1w2.quay.rhcloud.com/openshift-release-dev/ocp-release
+  source: quay.io/openshift-release-dev/ocp-release
+- mirrors:
+  - quay.io/openshift-release-dev/ocp-v4.0-art-dev
+  - pull.q1w2.quay.rhcloud.com/openshift-release-dev/ocp-art-dev
+  source: quay.io/openshift-release-dev/ocp-v4.0-art-dev
+- mirrors:
+  - quay.io/app-sre/managed-upgrade-operator
+  - pull.q1w2.quay.rhcloud.com/app-sre/managed-upgrade-operator
+  source: quay.io/app-sre/managed-upgrade-operator
+- mirrors:
+  - quay.io/app-sre/managed-upgrade-operator-registry
+  - pull.q1w2.quay.rhcloud.com/app-sre/managed-upgrade-operator-registry
+  source: quay.io/app-sre/managed-upgrade-operator-registry
+2026/01/19 09:54:15 Install config:
+
+2026/01/19 09:54:16 CLUSTER_ID set to 2ntr2hoo8487ite28bd98pg5ph0m04gf from OCM.
+2026/01/19 09:54:16 clusterutil.go:168: Waiting 135 minutes for cluster to be ready...
+2026/01/19 09:54:46 Successfully added property[Status] - waiting-for-ready
+2026/01/19 09:54:47 clusterutil.go:207: cluster is not ready, state is: installing
+2026/01/19 09:55:16 clusterutil.go:207: cluster is not ready, state is: installing
+2026/01/19 09:55:46 clusterutil.go:207: cluster is not ready, state is: installing
+2026/01/19 09:56:16 clusterutil.go:207: cluster is not ready, state is: installing
+2026/01/19 09:56:46 clusterutil.go:207: cluster is not ready, state is: installing
+2026/01/19 09:57:16 clusterutil.go:207: cluster is not ready, state is: installing
+2026/01/19 09:57:46 clusterutil.go:207: cluster is not ready, state is: installing
+2026/01/19 09:58:16 clusterutil.go:207: cluster is not ready, state is: installing
+2026/01/19 09:58:46 clusterutil.go:207: cluster is not ready, state is: installing
+2026/01/19 09:59:16 clusterutil.go:207: cluster is not ready, state is: installing
+2026/01/19 09:59:46 clusterutil.go:207: cluster is not ready, state is: installing
+2026/01/19 10:00:16 clusterutil.go:207: cluster is not ready, state is: installing
+2026/01/19 10:00:46 clusterutil.go:207: cluster is not ready, state is: installing
+2026/01/19 10:01:16 clusterutil.go:207: cluster is not ready, state is: installing
+2026/01/19 10:01:46 clusterutil.go:207: cluster is not ready, state is: installing
+2026/01/19 10:02:16 clusterutil.go:207: cluster is not ready, state is: installing
+2026/01/19 10:02:46 clusterutil.go:207: cluster is not ready, state is: installing
+2026/01/19 10:03:16 clusterutil.go:207: cluster is not ready, state is: installing
+2026/01/19 10:03:46 clusterutil.go:207: cluster is not ready, state is: installing
+2026/01/19 10:04:16 clusterutil.go:207: cluster is not ready, state is: installing
+2026/01/19 10:04:46 clusterutil.go:207: cluster is not ready, state is: installing
+2026/01/19 10:05:16 clusterutil.go:207: cluster is not ready, state is: installing
+2026/01/19 10:05:46 clusterutil.go:207: cluster is not ready, state is: installing
+2026/01/19 10:06:16 clusterutil.go:207: cluster is not ready, state is: installing
+2026/01/19 10:06:46 clusterutil.go:207: cluster is not ready, state is: installing
+2026/01/19 10:07:16 clusterutil.go:207: cluster is not ready, state is: installing
+2026/01/19 10:07:46 clusterutil.go:207: cluster is not ready, state is: installing
+2026/01/19 10:08:16 clusterutil.go:207: cluster is not ready, state is: installing
+2026/01/19 10:08:46 clusterutil.go:207: cluster is not ready, state is: installing
+2026/01/19 10:09:16 clusterutil.go:207: cluster is not ready, state is: installing
+2026/01/19 10:09:46 clusterutil.go:207: cluster is not ready, state is: installing
+2026/01/19 10:10:16 clusterutil.go:207: cluster is not ready, state is: installing
+2026/01/19 10:10:46 clusterutil.go:207: cluster is not ready, state is: installing
+2026/01/19 10:11:16 clusterutil.go:207: cluster is not ready, state is: installing
+2026/01/19 10:11:46 clusterutil.go:207: cluster is not ready, state is: installing
+2026/01/19 10:12:16 clusterutil.go:207: cluster is not ready, state is: installing
+2026/01/19 10:12:46 clusterutil.go:207: cluster is not ready, state is: installing
+2026/01/19 10:13:16 clusterutil.go:207: cluster is not ready, state is: installing
+2026/01/19 10:13:46 clusterutil.go:207: cluster is not ready, state is: installing
+2026/01/19 10:14:16 clusterutil.go:207: cluster is not ready, state is: installing
+2026/01/19 10:14:46 clusterutil.go:207: cluster is not ready, state is: installing
+2026/01/19 10:15:16 clusterutil.go:207: cluster is not ready, state is: installing
+2026/01/19 10:15:46 clusterutil.go:207: cluster is not ready, state is: installing
+2026/01/19 10:16:16 clusterutil.go:207: cluster is not ready, state is: installing
+2026/01/19 10:16:46 clusterutil.go:207: cluster is not ready, state is: installing
+2026/01/19 10:17:16 clusterutil.go:207: cluster is not ready, state is: installing
+2026/01/19 10:17:46 clusterutil.go:207: cluster is not ready, state is: installing
+2026/01/19 10:18:16 clusterutil.go:207: cluster is not ready, state is: installing
+2026/01/19 10:18:46 clusterutil.go:207: cluster is not ready, state is: installing
+2026/01/19 10:19:16 clusterutil.go:207: cluster is not ready, state is: installing
+2026/01/19 10:19:46 clusterutil.go:207: cluster is not ready, state is: installing
+2026/01/19 10:20:16 clusterutil.go:207: cluster is not ready, state is: installing
+2026/01/19 10:20:46 clusterutil.go:207: cluster is not ready, state is: installing
+2026/01/19 10:21:16 clusterutil.go:207: cluster is not ready, state is: installing
+2026/01/19 10:21:46 clusterutil.go:207: cluster is not ready, state is: installing
+2026/01/19 10:22:16 clusterutil.go:207: cluster is not ready, state is: installing
+2026/01/19 10:22:46 clusterutil.go:207: cluster is not ready, state is: installing
+2026/01/19 10:23:16 clusterutil.go:207: cluster is not ready, state is: installing
+2026/01/19 10:23:46 clusterutil.go:207: cluster is not ready, state is: installing
+2026/01/19 10:24:16 clusterutil.go:207: cluster is not ready, state is: installing
+2026/01/19 10:24:46 clusterutil.go:207: cluster is not ready, state is: installing
+2026/01/19 10:25:16 clusterutil.go:207: cluster is not ready, state is: installing
+2026/01/19 10:25:46 clusterutil.go:207: cluster is not ready, state is: installing
+2026/01/19 10:26:16 clusterutil.go:207: cluster is not ready, state is: installing
+2026/01/19 10:26:46 clusterutil.go:207: cluster is not ready, state is: installing
+2026/01/19 10:27:16 clusterutil.go:207: cluster is not ready, state is: installing
+2026/01/19 10:27:46 clusterutil.go:207: cluster is not ready, state is: installing
+2026/01/19 10:28:16 clusterutil.go:207: cluster is not ready, state is: installing
+2026/01/19 10:28:46 clusterutil.go:207: cluster is not ready, state is: installing
+2026/01/19 10:29:16 clusterutil.go:207: cluster is not ready, state is: installing
+2026/01/19 10:29:46 clusterutil.go:207: cluster is not ready, state is: installing
+2026/01/19 10:30:16 clusterutil.go:207: cluster is not ready, state is: installing
+2026/01/19 10:30:46 clusterutil.go:207: cluster is not ready, state is: installing
+2026/01/19 10:31:16 clusterutil.go:207: cluster is not ready, state is: installing
+2026/01/19 10:31:46 clusterutil.go:207: cluster is not ready, state is: installing
+2026/01/19 10:32:16 clusterutil.go:207: cluster is not ready, state is: installing
+2026/01/19 10:32:46 clusterutil.go:207: cluster is not ready, state is: installing
+2026/01/19 10:33:16 clusterutil.go:207: cluster is not ready, state is: installing
+2026/01/19 10:33:46 clusterutil.go:207: cluster is not ready, state is: installing
+2026/01/19 10:34:16 clusterutil.go:207: cluster is not ready, state is: installing
+2026/01/19 10:34:46 clusterutil.go:207: cluster is not ready, state is: installing
+2026/01/19 10:35:16 clusterutil.go:207: cluster is not ready, state is: installing
+2026/01/19 10:35:46 clusterutil.go:207: cluster is not ready, state is: installing
+2026/01/19 10:36:16 clusterutil.go:207: cluster is not ready, state is: installing
+2026/01/19 10:36:46 clusterutil.go:207: cluster is not ready, state is: installing
+2026/01/19 10:37:16 clusterutil.go:207: cluster is not ready, state is: installing
+2026/01/19 10:37:46 clusterutil.go:207: cluster is not ready, state is: installing
+2026/01/19 10:38:16 clusterutil.go:207: cluster is not ready, state is: installing
+2026/01/19 10:38:46 clusterutil.go:207: cluster is not ready, state is: installing
+2026/01/19 10:39:16 clusterutil.go:207: cluster is not ready, state is: installing
+2026/01/19 10:39:46 clusterutil.go:207: cluster is not ready, state is: installing
+2026/01/19 10:40:16 clusterutil.go:207: cluster is not ready, state is: installing
+2026/01/19 10:40:46 Successfully added property[Status] - health-check
+2026/01/19 10:40:46 Cluster status is ready
+2026/01/19 10:40:46 Wrote cluster ID to shared dir: 2ntr2hoo8487ite28bd98pg5ph0m04gf
+2026/01/19 10:40:47 Successfully added property[UpgradeVersion] -
+  "level"=0 "msg"="Cluster job finished successfully!" "job_name"="osd-cluster-ready"
+2026/01/19 11:15:32 healthcheckjob.go:35: Healthcheck job passed
+2026/01/19 11:15:33 Successfully added property[Status] - healthy
+2026/01/19 11:15:33 Cluster is healthy and ready for testing
+2026/01/19 11:15:35 Successfully retrieved kubeconfig from OCM.
+2026/01/19 11:15:35 Passed kubeconfig to prow steps.
+2026/01/19 11:15:35 CLUSTER_NAME set to osde2e-3laaf from OCM.
+2026/01/19 11:15:35 CLUSTER_VERSION set to openshift-v4.20.0-0.nightly-2026-01-19-092932-nightly from OCM, for channel group nightly
+2026/01/19 11:15:35 CLOUD_PROVIDER_ID set to aws from OCM.
+2026/01/19 11:15:35 CLOUD_PROVIDER_REGION set to XXXXXXXXX from OCM.
+2026/01/19 11:15:36 Running e2e tests...
+[1768815496] OSD e2e suite - 67/90 specs SW0119 11:16:23.189480      27 warnings.go:70] v1 Endpoints is deprecated in v1.33+; use discovery.k8s.io/v1 EndpointSlice
+2026/01/19 11:16:23 Downloading collect-prometheus-err.txt
+2026/01/19 11:16:23 Downloading collect-prometheus-out.txt
+2026/01/19 11:16:24 Downloading prometheus.tar.gz
+•PS••••SSSSSSS2026/01/19 11:19:25 Waiting 4h59m59.968253092s for builds-pruner-76rmx job to complete
+•2026/01/19 11:19:30 Waiting 4h59m59.971311572s for deployments-pruner-qqxhw job to complete
+•SS••••SS••S••••••••••••••••••••••••••••••••W0119 11:21:09.033922      27 warnings.go:70] v1 Endpoints is deprecated in v1.33+; use discovery.k8s.io/v1 EndpointSlice
+W0119 11:21:54.419684      27 warnings.go:70] v1 Endpoints is deprecated in v1.33+; use discovery.k8s.io/v1 EndpointSlice
+••••SSSSSSSSS•••••••
+------------------------------
+• [FAILED] [50.649 seconds]
+Ad Hoc Test Images execution [It] quay.io/redhat-services-prod/openshift/osd-metrics-exporter-e2e should pass [AdHocTestImages]
+/go/src/github.com/openshift/osde2e/pkg/e2e/adhoctestimages/adhoctestimages.go:49
+
+  Timeline >>
+  "level"=0 "msg"="running test suite" "suite"="quay.io/redhat-services-prod/openshift/osd-metrics-exporter-e2e" "timeout"="30m0s"
+  executor "level"=0 "msg"="created namespace" "name"="osde2e-executor-cp39q"
+  executor "level"=0 "msg"="created service account" "name"="cluster-admin"
+  executor "level"=0 "msg"="created job" "name"="executor-pbf5j"
+  executor "level"=0 "msg"="waiting for suite to complete"
+  executor "level"=0 "msg"="e2e-suite has terminated" "state"={"terminated"="&ContainerStateTerminated{ExitCode:1,Signal:0,Reason:Error,Message:,StartedAt:2026-01-19 11:32:37 +0000 UTC,FinishedAt:2026-01-19 11:33:13 +0000 UTC,ContainerID:cri-o://fe8b3ad57ca60745cdbf924ec56d44943ada7d80d9f2fc469641b01dc17a1a90,}"}
+  executor "level"=0 "msg"="fetching artifacts"
+  executor "level"=0 "msg"="processing test results"
+  executor "level"=0 "msg"="found junit files" "count"=1
+  executor "level"=0 "msg"="processed test results" "total"=2 "passed"=1 "failed"=0 "skipped"=0 "errors"=1
+  executor "level"=0 "msg"="Skipping cleanup"
+  [FAILED] in [It] - /go/src/github.com/openshift/osde2e/pkg/e2e/adhoctestimages/adhoctestimages.go:83 @ 01/19/26 11:33:24.872
+  << Timeline
+
+  [FAILED] failed test case: "[It] osd-metrics-exporter is exporting metrics"
+  Expected
+      <junit.Error>:
+      [PANICKED] Test Panicked
+      In [It] at: /go/pkg/mod/github.com/onsi/gomega@v1.37.0/internal/async_assertion.go:333 @ 01/19/26 11:33:13.322
+
+      runtime error: index out of range [0] with length 0
+
+      Full Stack Trace
+        github.com/onsi/gomega/internal.(*AsyncAssertion).buildActualPoller.func3.1()
+        	/go/pkg/mod/github.com/onsi/gomega@v1.37.0/internal/async_assertion.go:333 +0x186
+        panic({0x286bb20?, 0xc000057740?})
+        	/usr/lib/golang/src/runtime/panic.go:792 +0x132
+        github.com/openshift/osd-metrics-exporter/test/e2e.init.func1.3.1({0x7f92ada6c0a0?, 0xc000d24060?})
+        	/go/src/github.com/openshift/osd-metrics-exporter/test/e2e/osd_metrics_exporter_tests.go:131 +0xd4
+        reflect.Value.call({0x2575ea0?, 0xc0005360e0?, 0x3?}, {0x2a6344c, 0x4}, {0xc000118ee8, 0x1, 0x90000000276dd20?})
+        	/usr/lib/golang/src/reflect/value.go:584 +0xca6
+        reflect.Value.Call({0x2575ea0?, 0xc0005360e0?, 0x0?}, {0xc000118ee8?, 0xc00051ac00?, 0x2c38448?})
+        	/usr/lib/golang/src/reflect/value.go:368 +0xb9
+        github.com/onsi/gomega/internal.(*AsyncAssertion).buildActualPoller.func3()
+        	/go/pkg/mod/github.com/onsi/gomega@v1.37.0/internal/async_assertion.go:337 +0x11f
+        github.com/onsi/gomega/internal.(*AsyncAssertion).match(0xc0004313b0, {0x2e8d380, 0xc0005b4ba0}, 0x1, {0xc000d26e40, 0x1, 0x1})
+        	/go/pkg/mod/github.com/onsi/gomega@v1.37.0/internal/async_assertion.go:560 +0x7a2
+        github.com/onsi/gomega/internal.(*AsyncAssertion).Should(0xc0004313b0, {0x2e8d380, 0xc0005b4ba0}, {0xc000d26e40, 0x1, 0x1})
+        	/go/pkg/mod/github.com/onsi/gomega@v1.37.0/internal/async_assertion.go:145 +0x85
+        github.com/openshift/osd-metrics-exporter/test/e2e.init.func1.3({0x7f92ada6c0a0, 0xc000d24060})
+        	/go/src/github.com/openshift/osd-metrics-exporter/test/e2e/osd_metrics_exporter_tests.go:135 +0xa32
+        github.com/onsi/ginkgo/v2/internal.extractBodyFunction.func2({0x2ea8e70?, 0xc000d24060?})
+        	/go/pkg/mod/github.com/openshift/onsi-ginkgo/v2@v2.6.1-0.20241205171354-8006f302fd12/internal/node.go:465 +0x3e
+        github.com/onsi/ginkgo/v2/internal.(*Suite).runNode.func3()
+        	/go/pkg/mod/github.com/openshift/onsi-ginkgo/v2@v2.6.1-0.20241205171354-8006f302fd12/internal/suite.go:901 +0x7b
+        created by github.com/onsi/ginkgo/v2/internal.(*Suite).runNode in goroutine 11
+        	/go/pkg/mod/github.com/openshift/onsi-ginkgo/v2@v2.6.1-0.20241205171354-8006f302fd12/internal/suite.go:888 +0xd7b
+
+      {
+          Message: "runtime error: index out of range [0] with length 0",
+          Type: "panicked",
+          Body: "[PANICKED] Test Panicked\nIn [It] at: /go/pkg/mod/github.com/onsi/gomega@v1.37.0/internal/async_assertion.go:333 @ 01/19/26 11:33:13.322\n\nruntime error: index out of range [0] with length 0\n\nFull Stack Trace\n  github.com/onsi/gomega/internal.(*AsyncAssertion).buildActualPoller.func3.1()\n  \t/go/pkg/mod/github.com/onsi/gomega@v1.37.0/internal/async_assertion.go:333 +0x186\n  panic({0x286bb20?, 0xc000057740?})\n  \t/usr/lib/golang/src/runtime/panic.go:792 +0x132\n  github.com/openshift/osd-metrics-exporter/test/e2e.init.func1.3.1({0x7f92ada6c0a0?, 0xc000d24060?})\n  \t/go/src/github.com/openshift/osd-metrics-exporter/test/e2e/osd_metrics_exporter_tests.go:131 +0xd4\n  reflect.Value.call({0x2575ea0?, 0xc0005360e0?, 0x3?}, {0x2a6344c, 0x4}, {0xc000118ee8, 0x1, 0x90000000276dd20?})\n  \t/usr/lib/golang/src/reflect/value.go:584 +0xca6\n  reflect.Value.Call({0x2575ea0?, 0xc0005360e0?, 0x0?}, {0xc000118ee8?, 0xc00051ac00?, 0x2c38448?})\n  \t/usr/lib/golang/src/reflect/value.go:368 +0xb9\n  github.com/onsi/gomega/internal.(*AsyncAssertion).buildActualPoller.func3()\n  \t/go/pkg/mod/github.com/onsi/gomega@v1.37.0/internal/async_assertion.go:337 +0x11f\n  github.com/onsi/gomega/internal.(*AsyncAssertion).match(0xc0004313b0, {0x2e8d380, 0xc0005b4ba0}, 0x1, {0xc000d26e40, 0x1, 0x1})\n  \t/go/pkg/mod/github.com/onsi/gomega@v1.37.0/internal/async_assertion.go:560 +0x7a2\n  github.com/onsi/gomega/internal.(*AsyncAssertion).Should(0xc0004313b0, {0x2e8d380, 0xc0005b4ba0}, {0xc000d26e40, 0x1, 0x1})\n  \t/go/pkg/mod/github.com/onsi/gomega@v1.37.0/internal/async_assertion.go:145 +0x85\n  github.com/openshift/osd-metrics-exporter/test/e2e.init.func1.3({0x7f92ada6c0a0, 0xc000d24060})\n  \t/go/src/github.com/openshift/osd-metrics-exporter/test/e2e/osd_metrics_exporter_tests.go:135 +0xa32\n  github.com/onsi/ginkgo/v2/internal.extractBodyFunction.func2({0x2ea8e70?, 0xc000d24060?})\n  \t/go/pkg/mod/github.com/openshift/onsi-ginkgo/v2@v2.6.1-0.20241205171354-8006f302fd12/internal/node.go:465 +0x3e\n  github.com/onsi/ginkgo/v2/internal.(*Suite).runNode.func3()\n  \t/go/pkg/mod/github.com/openshift/onsi-ginkgo/v2@v2.6.1-0.20241205171354-8006f302fd12/internal/suite.go:901 +0x7b\n  created by github.com/onsi/ginkgo/v2/internal.(*Suite).runNode in goroutine 11\n  \t/go/pkg/mod/github.com/openshift/onsi-ginkgo/v2@v2.6.1-0.20241205171354-8006f302fd12/internal/suite.go:888 +0xd7b\n",
+      }
+  to be nil
+  In [It] at: /go/src/github.com/openshift/osde2e/pkg/e2e/adhoctestimages/adhoctestimages.go:83 @ 01/19/26 11:33:24.872
+------------------------------
+•••
+------------------------------
+• [FAILED] [30.566 seconds]
+Ad Hoc Test Images execution [It] quay.io/redhat-services-prod/openshift/managed-cluster-validating-webhooks-e2e should pass [AdHocTestImages]
+/go/src/github.com/openshift/osde2e/pkg/e2e/adhoctestimages/adhoctestimages.go:49
+
+  Timeline >>
+  "level"=0 "msg"="running test suite" "suite"="quay.io/redhat-services-prod/openshift/managed-cluster-validating-webhooks-e2e" "timeout"="30m0s"
+  executor "level"=0 "msg"="created namespace" "name"="osde2e-executor-8uhh1"
+  executor "level"=0 "msg"="created service account" "name"="cluster-admin"
+  executor "level"=0 "msg"="created job" "name"="executor-zw6ws"
+  executor "level"=0 "msg"="waiting for suite to complete"
+  executor "level"=0 "msg"="e2e-suite has terminated" "state"={"terminated"="&ContainerStateTerminated{ExitCode:1,Signal:0,Reason:Error,Message:,StartedAt:2026-01-19 11:35:09 +0000 UTC,FinishedAt:2026-01-19 11:35:30 +0000 UTC,ContainerID:cri-o://2dc8686451f954efec0ae5705ea1c6427e96902df499de5d2fed55fa5f17a1ec,}"}
+  executor "level"=0 "msg"="fetching artifacts"
+  executor "level"=0 "msg"="processing test results"
+  executor "level"=0 "msg"="found junit files" "count"=1
+  executor "level"=0 "msg"="processed test results" "total"=24 "passed"=8 "failed"=1 "skipped"=15 "errors"=0
+  executor "level"=0 "msg"="Skipping cleanup"
+  [FAILED] in [It] - /go/src/github.com/openshift/osde2e/pkg/e2e/adhoctestimages/adhoctestimages.go:83 @ 01/19/26 11:35:37.292
+  << Timeline
+
+  [FAILED] failed test case: "[It] Managed Cluster Validating Webhooks sre-regular-user-validation only blocks configmap/user-ca-bundle changes"
+  Expected
+      <junit.Error>:
+      [FAILED] Expected to create ConfigMap in test namespace
+      Unexpected error:
+          <*errors.StatusError | 0xc001124460>:
+          configmaps is forbidden: User "test-user@redhat.com" cannot create resource "configmaps" in API group "" in the namespace "osde2e-temp-ns"
+          {
+              ErrStatus: {
+                  TypeMeta: {Kind: "", APIVersion: ""},
+                  ListMeta: {
+                      SelfLink: "",
+                      ResourceVersion: "",
+                      Continue: "",
+                      RemainingItemCount: nil,
+                  },
+                  Status: "Failure",
+                  Message: "configmaps is forbidden: User \"test-user@redhat.com\" cannot create resource \"configmaps\" in API group \"\" in the namespace \"osde2e-temp-ns\"",
+                  Reason: "Forbidden",
+                  Details: {Name: "", Group: "", Kind: "configmaps", UID: "", Causes: nil, RetryAfterSeconds: 0},
+                  Code: 403,
+              },
+          }
+      occurred
+      In [It] at: /opt/app-root/src/test/e2e/validation_webhook_tests.go:303 @ 01/19/26 11:35:20.134
+
+      {
+          Message: "Expected to create ConfigMap in test namespace\nUnexpected error:\n    <*errors.StatusError | 0xc001124460>: \n    configmaps is forbidden: User \"test-user@redhat.com\" cannot create resource \"configmaps\" in API group \"\" in the namespace \"osde2e-temp-ns\"\n    {\n        ErrStatus: {\n            TypeMeta: {Kind: \"\", APIVersion: \"\"},\n            ListMeta: {\n                SelfLink: \"\",\n                ResourceVersion: \"\",\n                Continue: \"\",\n                RemainingItemCount: nil,\n            },\n            Status: \"Failure\",\n            Message: \"configmaps is forbidden: User \\\"test-user@redhat.com\\\" cannot create resource \\\"configmaps\\\" in API group \\\"\\\" in the namespace \\\"osde2e-temp-ns\\\"\",\n            Reason: \"Forbidden\",\n            Details: {Name: \"\", Group: \"\", Kind: \"configmaps\", UID: \"\", Causes: nil, RetryAfterSeconds: 0},\n            Code: 403,\n        },\n    }\noccurred",
+          Type: "failed",
+          Body: "[FAILED] Expected to create ConfigMap in test namespace\nUnexpected error:\n    <*errors.StatusError | 0xc001124460>: \n    configmaps is forbidden: User \"test-user@redhat.com\" cannot create resource \"configmaps\" in API group \"\" in the namespace \"osde2e-temp-ns\"\n    {\n        ErrStatus: {\n            TypeMeta: {Kind: \"\", APIVersion: \"\"},\n            ListMeta: {\n                SelfLink: \"\",\n                ResourceVersion: \"\",\n                Continue: \"\",\n                RemainingItemCount: nil,\n            },\n            Status: \"Failure\",\n            Message: \"configmaps is forbidden: User \\\"test-user@redhat.com\\\" cannot create resource \\\"configmaps\\\" in API group \\\"\\\" in the namespace \\\"osde2e-temp-ns\\\"\",\n            Reason: \"Forbidden\",\n            Details: {Name: \"\", Group: \"\", Kind: \"configmaps\", UID: \"\", Causes: nil, RetryAfterSeconds: 0},\n            Code: 403,\n        },\n    }\noccurred\nIn [It] at: /opt/app-root/src/test/e2e/validation_webhook_tests.go:303 @ 01/19/26 11:35:20.134\n",
+      }
+  to be nil
+  In [It] at: /go/src/github.com/openshift/osde2e/pkg/e2e/adhoctestimages/adhoctestimages.go:83 @ 01/19/26 11:35:37.292
+------------------------------
+•••••
+
+Summarizing 2 Failures:
+  [FAIL] Ad Hoc Test Images execution [It] quay.io/redhat-services-prod/openshift/osd-metrics-exporter-e2e should pass [AdHocTestImages]
+  /go/src/github.com/openshift/osde2e/pkg/e2e/adhoctestimages/adhoctestimages.go:83
+  [FAIL] Ad Hoc Test Images execution [It] quay.io/redhat-services-prod/openshift/managed-cluster-validating-webhooks-e2e should pass [AdHocTestImages]
+  /go/src/github.com/openshift/osde2e/pkg/e2e/adhoctestimages/adhoctestimages.go:83
+
+Ran 66 of 90 Specs in 1316.647 seconds
+FAIL! -- 64 Passed | 2 Failed | 1 Pending | 23 Skipped
+2026/01/19 11:37:40 Looking up job history from https://deck-ci.apps.ci.l2s4.p1.openshiftapps.com/job-history/gs/origin-ci-test/logs/periodic-ci-openshift-osde2e-main-nightly-4.20-osd-aws
+2026/01/19 11:37:46 Grabbing diff from https://gcsweb-ci.apps.ci.l2s4.p1.openshiftapps.com/gcs/test-platform-results/logs/periodic-ci-openshift-osde2e-main-nightly-4.20-osd-aws/2013060602901041152/artifacts/osd-aws/osde2e-test/artifacts/install/dependencies.txt
+2026/01/19 11:37:47 [0;31m-MCC: 0a21f87e4b1eb3bad0e02ed4de46da54e563b6e7[0m
+2026/01/19 11:37:47 [0;32m+MCC: 694a27f91edef0a68290bf6cc50f8d54f376fa3d[0m
+2026/01/19 11:37:47  -----
+2026/01/19 11:37:47  Unknown/alertmanager                                                            : quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:117beca810a6438cb30146aafb16c88a7fdeb0d2a595ce709d4df47d552115cf
+2026/01/19 11:37:47  Unknown/collect-prometheus                                                      : quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:3b884829ee84fc173433b240a9d6c2fc231e84a3e6dacc70db893837f46f4b2f
+2026/01/19 11:37:47  Unknown/config-reloader                                                         : quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:c42ed662d1c73a7e41c554aff6279d6460679f8e63fe1f58298d3d245f27b0e5
+2026/01/19 11:37:47  Unknown/create-firewall                                                         : quay.io/openshift-release-dev/ocp-release@sha256:0a4c44daf1666f069258aa983a66afa2f3998b78ced79faa6174e0a0f438f0a5
+2026/01/19 11:37:47  Unknown/dns                                                                     : quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:90c3e20d684e0b90706a8fabb9c9bda2929bb957ffe3e1641ea68fe9dc919cbb
+2026/01/19 11:37:47  Unknown/dns-node-resolver                                                       : quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:e577dce25a9f06468c866700c8ff6d4122516ddbbd9995e5cf4ea1156d61988a
+2026/01/19 11:37:47  Unknown/e2e-suite                                                               : quay.io/app-sre/managed-upgrade-operator-e2e
+2026/01/19 11:37:47  Unknown/e2e-suite                                                               : quay.io/app-sre/must-gather-operator-e2e
+2026/01/19 11:37:47  Unknown/e2e-suite                                                               : quay.io/app-sre/ocm-agent-e2e
+2026/01/19 11:37:47  Unknown/e2e-suite                                                               : quay.io/app-sre/rbac-permissions-operator-e2e
+2026/01/19 11:37:47  Unknown/e2e-suite                                                               : quay.io/app-sre/splunk-forwarder-operator-e2e
+2026/01/19 11:37:47  Unknown/e2e-suite                                                               : quay.io/redhat-services-prod/openshift/aws-vpce-operator-e2e
+2026/01/19 11:37:47  Unknown/e2e-suite                                                               : quay.io/redhat-services-prod/openshift/cloud-ingress-operator-e2e
+2026/01/19 11:37:47  Unknown/e2e-suite                                                               : quay.io/redhat-services-prod/openshift/managed-cluster-validating-webhooks-e2e
+2026/01/19 11:37:47  Unknown/e2e-suite                                                               : quay.io/redhat-services-prod/openshift/managed-node-metadata-operator-e2e
+2026/01/19 11:37:47  Unknown/e2e-suite                                                               : quay.io/redhat-services-prod/openshift/ocm-agent-operator-e2e
+2026/01/19 11:37:47  Unknown/e2e-suite                                                               : quay.io/redhat-services-prod/openshift/osd-metrics-exporter-e2e
+2026/01/19 11:37:47  Unknown/e2e-suite                                                               : quay.io/redhat-services-prod/openshift/route-monitor-operator-e2e
+2026/01/19 11:37:47  Unknown/exporter                                                                : quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:c92bfedc218768d9d1f78392b68b775022f89df537956b35b1e6feeab24042cd
+2026/01/19 11:37:47  Unknown/extract                                                                 : quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:7290800c1daf30f811a950110a15ab75cd366eba88327d15030dc2be641e1d73
+2026/01/19 11:37:47  Unknown/extract-content                                                         : registry.redhat.io/redhat/certified-operator-index:v4.20
+2026/01/19 11:37:47  Unknown/extract-content                                                         : registry.redhat.io/redhat/community-operator-index:v4.20
+2026/01/19 11:37:47  Unknown/extract-content                                                         : registry.redhat.io/redhat/redhat-marketplace-index:v4.20
+2026/01/19 11:37:47  Unknown/extract-content                                                         : registry.redhat.io/redhat/redhat-operator-index:v4.20
+2026/01/19 11:37:47  Unknown/extractor                                                               : quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:1c466fb45bd3c74a418a8396a4c9921d21dda976dd74d68542a2bd4540e22a6e
+2026/01/19 11:37:47  Unknown/kube-state-metrics                                                      : quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:eeeeced0d5466346a4e55ae15ffaf94d1b536673c85e45bdd130018b7d026b31
+2026/01/19 11:37:47  Unknown/manager                                                                 : quay.io/app-sre/addon-operator@sha256:e0f8f872f07e2256907001697ada472fbf86508b68b1adf3c158bc8da7dc7789
+2026/01/19 11:37:47  Unknown/manager                                                                 : quay.io/app-sre/package-operator-manager@sha256:92513ffd0abbbd9a11754a93b6d2d7b3d0961a73012efe2985fa153647f19cc2
+2026/01/19 11:37:47  Unknown/manager                                                                 : quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:f7d0d3af8ca46727b17eae293799af55706dedd1ff2e9ef0fa73f804fd7a93fa
+2026/01/19 11:37:47  Unknown/metrics-server                                                          : quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:cffe1ed139c1ad34e99127684f184827b11c71df96350b52a69accb245f1b2af
+2026/01/19 11:37:47  Unknown/monitoring-plugin                                                       : quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:77288f24d51b6077469f02fe88c1316eab46f5cbf963a895f5c103e12282cdbf
+2026/01/19 11:37:47  Unknown/networking-console-plugin                                               : quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:144be6c7447f775d70368a593faa4a06558619097b5c9162579c7bc0e58af2d4
+2026/01/19 11:37:47  Unknown/node-exporter                                                           : quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:5f0275578312c055162cdb4468f1f08c09f0776a4d44c5e1d8ee4e9cc56ec3eb
+2026/01/19 11:37:47  Unknown/oadp-oadp-velero-plugin-for-aws-rhel8                                   : registry.redhat.io/oadp/oadp-velero-plugin-for-aws-rhel8@sha256:317149aaba6bbe1600330a381ba2f8a7c2aba36db4f7cbd68545e037cfeed9db
+2026/01/19 11:37:47  Unknown/openshift-state-metrics                                                 : quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:b056c0bec20e7b9ed01e3d641c34b87ec81b84e64f8267880e548b3260ff8d29
+2026/01/19 11:37:47  Unknown/osd-cluster-ready                                                       : quay.io/redhat-services-prod/openshift/osd-cluster-ready@sha256:b31101e1483fdedab934c8a214fce74d94d3005510b3d7df247d618fa573de7e
+2026/01/19 11:37:47  Unknown/osd-delete-ownerrefs-serviceaccounts                                    : image-registry.openshift-image-registry.svc:5000/openshift/cli:latest
+2026/01/19 11:37:47  Unknown/pause-for-artifacts                                                     : busybox:latest
+2026/01/19 11:37:47  Unknown/prom-label-proxy                                                        : quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:2333e75896298787fb09e4381d8f640d8f445a5c30856634aa193624c74594d2
+2026/01/19 11:37:47  Unknown/prometheus                                                              : quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:852562a69b65e84c454aec7dab14b3addb0df6ccc58133c593708457fc4934b7
+2026/01/19 11:37:47  Unknown/prometheus-operator                                                     : quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:b985fe559b00bd2ce208766ff7c152678f8748511f7ce08560579284a0c1b6e1
+2026/01/19 11:37:47  Unknown/prometheus-operator-admission-webhook                                   : quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:5928b467e38cce9a970336428d3722f4ce77639e67a3a21b7b4fbf4bb2bf5f48
+2026/01/19 11:37:47 [0;31m-Unknown/pull                                                                    : quay.io/app-sre/deployment-validation-operator-bundle:g8e9ca69[0m
+2026/01/19 11:37:47 [0;32m+Unknown/pull                                                                    : quay.io/app-sre/deployment-validation-operator-bundle:g13e8861[0m
+2026/01/19 11:37:47  Unknown/registry                                                                : quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:794f3e12469556df772c9409466e331e5cc6e2a58248ac68657575d78fec847f
+2026/01/19 11:37:47  Unknown/registry-server                                                         : quay.io/app-sre/addon-operator-registry@sha256:df1139f752392b12e4ecac52f94e1183a69b91c813feb68658a2020badd4826c
+2026/01/19 11:37:47  Unknown/registry-server                                                         : quay.io/app-sre/cloud-ingress-operator-registry@sha256:2aed8d3e3ce55868579da5d89eccdd7a1bc1735d84fa5ee870e03135a28323e0
+2026/01/19 11:37:47  Unknown/registry-server                                                         : quay.io/app-sre/configure-alertmanager-operator-registry@sha256:de622b81cd2e639e82429d1744505b66fff044e39234c98657d2d47732855f16
+2026/01/19 11:37:47  Unknown/registry-server                                                         : quay.io/app-sre/custom-domains-operator-registry@sha256:ab7dc9367721c5be83144544e8e8d2bb0f8a6ce846654ce41fefd2da3eb54476
+2026/01/19 11:37:47 [0;31m-Unknown/registry-server                                                         : quay.io/app-sre/deployment-validation-operator-catalog@sha256:d732efeff08192a6e594c984d88a4be534ea3477bc08353c93263cb29c389a85[0m
+2026/01/19 11:37:47 [0;32m+Unknown/registry-server                                                         : quay.io/app-sre/deployment-validation-operator-catalog@sha256:3590f6fdb219e2155d3209b7ed9d0e7985f1ceb660520dc30e065fc080fcbb0b[0m
+2026/01/19 11:37:47  Unknown/registry-server                                                         : quay.io/app-sre/managed-node-metadata-operator-registry@sha256:a55ff458383da793ef897cb1cfcfce14fb41f049c195c8052d9ec2ab2e358b12
+2026/01/19 11:37:47  Unknown/registry-server                                                         : quay.io/app-sre/managed-upgrade-operator-registry@sha256:fd2864968cb9f47fc3df39f6f7ad90b8c4017f33e968ff6ae795c2275dfeab47
+2026/01/19 11:37:47  Unknown/registry-server                                                         : quay.io/app-sre/managed-velero-operator-registry@sha256:34cda25f7df8e181277468ae0a2acfc116e22d99bf9a506a29cea72725f2e53b
+2026/01/19 11:37:47  Unknown/registry-server                                                         : quay.io/app-sre/must-gather-operator-registry@sha256:bbc87530533e44e5d8554e5d1ceae40ac633f2341f7bdcc953b1b3f16ca623cd
+2026/01/19 11:37:47  Unknown/registry-server                                                         : quay.io/app-sre/ocm-agent-operator-registry@sha256:17e5d0e51818f585799242ef712933e46e7fb5c068e85756b13fbaf83df61799
+2026/01/19 11:37:47  Unknown/registry-server                                                         : quay.io/app-sre/osd-metrics-exporter-registry@sha256:b3837b561090dc9031b44ada02e4055ed59c3b6ffdc27f80fa400390a269b3a4
+2026/01/19 11:37:47  Unknown/registry-server                                                         : quay.io/app-sre/rbac-permissions-operator-registry@sha256:24198915f8517190fe6c501795aa09189b2959c85cbe811977fddcd739fdc9b6
+2026/01/19 11:37:47  Unknown/registry-server                                                         : quay.io/app-sre/route-monitor-operator-registry@sha256:24bce383bbe659571c30e67864cd25e7ba8a388c266d8ab0f1370bcc8d1e2f8f
+2026/01/19 11:37:47  Unknown/registry-server                                                         : quay.io/app-sre/splunk-forwarder-operator-registry@sha256:489d4cfa73079b125df72fae9cc3a6eef343c4cc6d2f47ff6474aa7d9296f206
+2026/01/19 11:37:47  Unknown/router                                                                  : quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:cbf62d739e5d9109b736a9b1689b15541929b0d77563ccf0c3a5bc90eda6d973
+2026/01/19 11:37:47  Unknown/serve-healthcheck-canary                                                : quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:2eebce8fba164d649042a1f04dc5b7aef61bb696c00c43b65908efcfacc46cbf
+2026/01/19 11:37:47  Unknown/telemeter-client                                                        : quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:2176c1fee072fecc19c765be4dc9340e4cb009360d2fd8204240652ecaeb73b7
+2026/01/19 11:37:47  Unknown/thanos-sidecar                                                          : quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:b4df16e8c76e8f0d1a81d1356a29dc15230c72dcb9a5dcc12931b8a565ecdeb3
+2026/01/19 11:37:47  Unknown/util                                                                    : quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:941c71daa16180c08c62cb401a0337fdb7931e0bbf363172723eede6439b6439
+2026/01/19 11:37:47  Unknown/velero                                                                  : registry.redhat.io/oadp/oadp-velero-rhel8@sha256:035f48844600bd3beebd6740bf85cf54d98a9232f01c31621d4e995ff366690a
+2026/01/19 11:37:47  Unknown/webhook                                                                 : quay.io/app-sre/addon-operator-webhook@sha256:ac0a6a48350b3ae7ed66670f51210b067a983466084763232f6fc5a17536a01c
+2026/01/19 11:37:47  audit-exporter/audit-exporter                                                   : quay.io/app-sre/splunk-audit-exporter@sha256:9f1d08ea66bda7dcaf49c56dc1456d11e6705a22045ca02ac59cd8b540cec9c9
+2026/01/19 11:37:47  authentication-operator/authentication-operator                                 : quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:e0961ebf9e09b100ab7da477ad98bf48db105564f6dcfdcf2b7f326bc3edbd03
+2026/01/19 11:37:47  aws-cloud-controller-manager/cloud-controller-manager                           : quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:94a949679080eb25f4a442ed5f5ea67daa06a85ac4f96cf943cd70194c0ae744
+2026/01/19 11:37:47  aws-ebs-csi-driver-controller/csi-attacher                                      : quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:fbec5c24870ed6cd27985bed8371a888e9322898e5ae4d9989e099f05a1c6a23
+2026/01/19 11:37:47  aws-ebs-csi-driver-controller/csi-driver                                        : quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:16eec5fa72b90a0210d17a4497e5f430e1461046890512fc480568fa54542a80
+2026/01/19 11:37:47  aws-ebs-csi-driver-controller/csi-liveness-probe                                : quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:688fb2404fabe8055015a5750740f8c43a61dc3f96d0242b15345a54da695af1
+2026/01/19 11:37:47  aws-ebs-csi-driver-controller/csi-provisioner                                   : quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:6dce12cdd98f375e8a7688f4938dd832e5f894c0ba816d4a5a8d6720ff975904
+2026/01/19 11:37:47  aws-ebs-csi-driver-controller/csi-resizer                                       : quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:a3d4db4816440b5141aecead32da7cfa9eee4efb8a663c3f0d30a4e23d96d2bf
+2026/01/19 11:37:47  aws-ebs-csi-driver-controller/csi-snapshotter                                   : quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:deb4bbeb305282d6d6f762ef9e6988b2cd74c4a48c45bcc639f218f06e2da941
+2026/01/19 11:37:47  aws-ebs-csi-driver-controller/init-aws-credentials-file                         : quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:e10d54774aee431303272e849ca1d84d199d742d2ceabafab773ccc2e299db9f
+2026/01/19 11:37:47  aws-ebs-csi-driver-node/csi-node-driver-registrar                               : quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:2049797466a1536cbe9a72805e650920b4847965b8d55585545e9736385f262c
+2026/01/19 11:37:47  aws-ebs-csi-driver-operator/aws-ebs-csi-driver-operator                         : quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:a127655796264964b0aeb27fd0cf27157c6d4702554655aa35018829c98878cb
+2026/01/19 11:37:47  blackbox-exporter/blackbox-exporter                                             : quay.io/prometheus/blackbox-exporter@sha256:b04a9fef4fa086a02fc7fcd8dcdbc4b7b35cc30cdee860fdc6a19dd8b208d63e
+2026/01/19 11:37:47  cloud-credential-operator/cloud-credential-operator                             : quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:e1b82b0c6c41d1226bbe63659ac7491f45bdea3de83d563e65451bb63848aa24
+2026/01/19 11:37:47  cloud-ingress-operator/cloud-ingress-operator                                   : quay.io/app-sre/cloud-ingress-operator@sha256:92846b3246f41afb473f1a3d6fc8b3e8f06a3dd6a1497405c8e3d9a8ecc0484f
+2026/01/19 11:37:47  cloud-manager-operator/cluster-cloud-controller-manager                         : quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:8fa5cc6ccc9113ab5809d1c3203d585b8620671c91d3e8b2ca34a25da4f6305c
+2026/01/19 11:37:47  cloud-manager-operator/kube-rbac-proxy                                          : quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:a0de83cf18d336c19ea214987e67e382cffab05022e12fce60349cc89644374b
+2026/01/19 11:37:47  cloud-network-config-controller/controller                                      : quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:433e71999e326ef1d70ba325ed777289659ab8f2b1b659a6906aae5f4b511482
+2026/01/19 11:37:47  cluster-autoscaler-operator/cluster-autoscaler-operator                         : quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:b553d1f77711e80d30195893ed21fbad638f84dd049a34f83eb2400a0f79e704
+2026/01/19 11:37:47  cluster-baremetal-operator/cluster-baremetal-operator                           : quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:629d9904eead42901e6641296c332f8461f179624be37262e5360e719a2f9876
+2026/01/19 11:37:47  cluster-image-registry-operator/cluster-image-registry-operator                 : quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:d21a50efdfeb977ec3b52c82a910e31e90a2172c08afa958f8f031d736ac90f1
+2026/01/19 11:37:47  cluster-monitoring-operator/cluster-monitoring-operator                         : quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:bf063af3d63c18f387deef046b84edd219fde4594cb73257ac44ab602f718b8a
+2026/01/19 11:37:47  cluster-node-tuning-operator/cluster-node-tuning-operator                       : quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:49c9e6b171e348d9c1381db533c86583677acddd9c70a37508ab9854562f0f77
+2026/01/19 11:37:47  cluster-olm-operator/cluster-olm-operator                                       : quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:1ce75bb705ce22107366132679b7b435eb0d2e5ca6096f5669ea5c4eba39da1a
+2026/01/19 11:37:47  cluster-olm-operator/copy-operator-controller-manifests                         : quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:3f0a8a5999709f6e5fd01bc9c73c9aae75ea34e4eb919693b17ac272a2903b59
+2026/01/19 11:37:47  cluster-samples-operator/cluster-samples-operator                               : quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:a88df5e988177c695609c5e2c3907e649c76ae5655493fa2e373e5dee27a5787
+2026/01/19 11:37:47  cluster-storage-operator/cluster-storage-operator                               : quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:724fcbb751a5b0dbe321f26f1faa369b8c11db774dd006a4bdd07b91c337282f
+2026/01/19 11:37:47 [0;31m-cluster-version-operator/cluster-version-operator                               : registry.ci.openshift.org/ocp/release@sha256:a6218a031404a9b90b1fd3c8116202dce70d8b1c9df45aa7c6804f85a5580112[0m
+2026/01/19 11:37:47 [0;32m+cluster-version-operator/cluster-version-operator                               : registry.ci.openshift.org/ocp/release@sha256:ab7400593fc9728c82045614be306dcc0794fcc36a8b38e7d1550eda7832d2dd[0m
+2026/01/19 11:37:47  configure-alertmanager-operator/configure-alertmanager-operator                 : quay.io/app-sre/configure-alertmanager-operator@sha256:851ffe0f0269d90e91c987eb5dc12bf9830ca9fa2d6dafe093a64c1fa9fbee8a
+2026/01/19 11:37:47  console-operator/console-operator                                               : quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:d0ad732112def4c292306e2b7caa8712d1d5ae274b12330fa33d3f4cd447f70d
+2026/01/19 11:37:47  console/console                                                                 : quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:d5331caff08680d54a839c9b057ac60ff5190473115b253cfbb8e8c08483778d
+2026/01/19 11:37:47  console/download-server                                                         : quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:11cc1a07e6e81c0ec7350b3f73a241268227884c9f25e6e7b5fadae3adda0641
+2026/01/19 11:37:47  control-plane-machine-set-operator/control-plane-machine-set-operator           : quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:868c9ecf78ac840a89bc1d26215c73f569b739d55e4f8c31485318f9cdb78d25
+2026/01/19 11:37:47  controller/machine-controller                                                   : quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:edd3ad79d82cd5aa57213f3e2020b97525e5d70c8b0af34ac0187541d1fce0db
+2026/01/19 11:37:47  controller/machineset-controller                                                : quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:736b58f15407884529ad2bdbf0291b47c954f418b702ac91cc886469df654aad
+2026/01/19 11:37:47  csi-snapshot-controller-operator/csi-snapshot-controller-operator               : quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:bc800ab3580aa0208848fefa70a039b63f51a2de06b1f60e44a41fe79a05a049
+2026/01/19 11:37:47  csi-snapshot-controller/snapshot-controller                                     : quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:06da8736fec692e52b7ac6ca0903e609f8c56c80ae052d9d7c3378160bd734d6
+2026/01/19 11:37:47  custom-domains-operator/custom-domains-operator                                 : quay.io/app-sre/custom-domains-operator@sha256:ba5f518b82f871bcf5c6c58d32f1fee7b2fd97c3dfa5b84c69211e5249e9b393
+2026/01/19 11:37:47 [0;31m-deployment-validation-operator/deployment-validation-operator                   : quay.io/app-sre/deployment-validation-operator:0.1.545-g8e9ca69[0m
+2026/01/19 11:37:47 [0;32m+deployment-validation-operator/deployment-validation-operator                   : quay.io/app-sre/deployment-validation-operator:0.1.546-g13e8861[0m
+2026/01/19 11:37:47  dns-operator/dns-operator                                                       : quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:1d52b7d2a87c85312bded9db1a8f81f928b6f346f4dd906d3c208403f0f002af
+2026/01/19 11:37:47  etcd-operator/etcd-operator                                                     : quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:15f04c05213f230b93b63ac6ad35aabfee6d09e990166de1638b582088ad9af2
+2026/01/19 11:37:47  etcd/etcdctl                                                                    : quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:81078647a13d027b300d6958824ac091ddd3d91d5ec1a3dfbc80046e4fccc155
+2026/01/19 11:37:47  insights-operator/insights-operator                                             : quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:d563f26ef566da43a1c8ab34d29852f477533686074d0adbd29bb98e51195571
+2026/01/19 11:37:47  kube-controller-manager-operator/kube-controller-manager-operator               : quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:f96b1808afd9f4668b6ac008696616690a796ace4bdf46e4f2d2c3b46eaafc5e
+2026/01/19 11:37:47  kube-controller-manager/cluster-policy-controller                               : quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:845aa0726919c6280d01d1aa488a139444bf86198082e33f1da3ddb9d91aa3b7
+2026/01/19 11:37:47  kube-storage-version-migrator-operator/kube-storage-version-migrator-operator   : quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:152d1eb7c35baf2bf21c14332a130e7ac5735a89645f955945beda115a54a7ce
+2026/01/19 11:37:47  machine-approver/machine-approver-controller                                    : quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:2d454f6cdfa310ea8c032786a5dbd5f63cd70b7696b8dc7c2e18d2ffa2719aa3
+2026/01/19 11:37:47  machine-config-controller/machine-config-controller                             : quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:0d090b422424031f03ae0e94399b0a70e944a434f266d925e302b67e30577471
+2026/01/19 11:37:47  managed-node-metadata-operator/managed-node-metadata-operator                   : quay.io/app-sre/managed-node-metadata-operator:v0.1.311-g12d9b99
+2026/01/19 11:37:47  managed-upgrade-operator/managed-upgrade-operator                               : quay.io/app-sre/managed-upgrade-operator@sha256:c55d07c728004397f9798a102c18d716600b0a2677b23697742b924a58fe721f
+2026/01/19 11:37:47  managed-velero-operator/managed-velero-operator                                 : quay.io/app-sre/managed-velero-operator@sha256:4beeea713b6a13da907e98ca8bc5411f5039449d4309979c97ec1a14657b08d2
+2026/01/19 11:37:47  marketplace-operator/marketplace-operator                                       : quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:b6602902d7ba0ef54550782ccb514bbe26215b7d0da7239276fe3c51ce6b8126
+2026/01/19 11:37:47  migrator/migrator                                                               : quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:7035421c98933b1006ada36c6d4be4ea2c84c8805c92063a5cfea283d5145a8c
+2026/01/19 11:37:47  multus-additional-cni-plugins/bond-cni-plugin                                   : quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:454733fd181aace8613cae5f7cf9fcd2de5611445eeb0a78140e6ece467d123c
+2026/01/19 11:37:47  multus-additional-cni-plugins/cni-plugins                                       : quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:7e0645fdd4a85c0bfda5083073b9fb5a0510dae53714eefeee2c6ba91826b831
+2026/01/19 11:37:47  multus-additional-cni-plugins/egress-router-binary-copy                         : quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:a91e3de8081f371c9ff9f2f16619d915621264378f0c861e2ba1366f10053cb1
+2026/01/19 11:37:47  multus-additional-cni-plugins/routeoverride-cni                                 : quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:5521bde2b6ea859e756b1e38fafd336461e31f852e9d702256343b5813bce97c
+2026/01/19 11:37:47  multus-additional-cni-plugins/whereabouts-cni-bincopy                           : quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:b76ef910c8a1cb86aa50b11f659bb7dd777fb2f506ca92861d804f0234bcd832
+2026/01/19 11:37:47  multus-admission-controller/multus-admission-controller                         : quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:c745a7824df72a7a16acc1d384630cb7a5a317b2a4079ae053ecf4abce4785ea
+2026/01/19 11:37:47  multus/kube-multus                                                              : quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:78da13ad39dfe6aaaf55da62536d131bf1c2a769d6daa6e29d3b9e031c8a9003
+2026/01/19 11:37:47  must-gather-operator/must-gather-operator                                       : quay.io/app-sre/must-gather-operator@sha256:f31b35dcbb5c4eb89214b1558c20db42d885c20da93234ae0407ec1d0fbb6a41
+2026/01/19 11:37:47  network-check-source/check-endpoints                                            : quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:b5c764b41263998643ffda2148fdc0430f910b06a907a4101bf05a1582f27d15
+2026/01/19 11:37:47  network-metrics-daemon/network-metrics-daemon                                   : quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:d9bfae1f007c39d04a73292907669a1c0eb274202324001dd9363a0586bef1bc
+2026/01/19 11:37:47  network-node-identity/webhook                                                   : quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:d732505bbda1adfc700e58ea8b52de16c3e511aaeedc03c6d1b932057b9b3f49
+2026/01/19 11:37:47  oauth-openshift/oauth-openshift                                                 : quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:b74655c6c5b87e4acd3da9a59ba881f438e5d26b11208e6083dc2d7b594de000
+2026/01/19 11:37:47  ocm-agent-operator/ocm-agent-operator                                           : quay.io/app-sre/ocm-agent-operator@sha256:d9ff1c08a9fbf8b408337248d53323156c6a1cc733c5dc48bfbf5b7d83506286
+2026/01/19 11:37:47  ocm-agent/ocm-agent                                                             : quay.io/app-sre/ocm-agent@sha256:ab03a47872fc3c15c7d38ce87ab7fe565ccb508ab0c9811c09f549eccc12547e
+2026/01/19 11:37:47  openshift-apiserver-a/openshift-apiserver                                       : quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:e1635e15282fbc5014166f94bca3bfd66ea67c8a39498c82c3df3644cd4ed329
+2026/01/19 11:37:47  openshift-apiserver-a/openshift-apiserver-check-endpoints                       : quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:0554bda0a96d190367ed63955b942dd3552e1d90e8586dfd9f8879c964bf245d
+2026/01/19 11:37:47  openshift-apiserver-operator/openshift-apiserver-operator                       : quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:14203332e69dfb497d5c7cfa891e593c23cc4533026b810883075f4907ae5f5b
+2026/01/19 11:37:47  openshift-config-operator/openshift-api                                         : quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:dfef273bdf82465bc631b1a77b1dfeb5b72bae9fbb9ec5934663234d74a1fae2
+2026/01/19 11:37:47  openshift-config-operator/openshift-config-operator                             : quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:674f91f59e682bba705485d65e9ebf56942283772439cbdb2399a756fa51dd78
+2026/01/19 11:37:47  openshift-controller-manager-a/controller-manager                               : quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:4d56d44948e48ebc0586cd8b06645d0c7bcb85b08b99fde5e7877b0ea3284e5f
+2026/01/19 11:37:47  openshift-controller-manager-operator/openshift-controller-manager-operator     : quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:6ac80947f89b414a228a5fa246952d7f0d2a365b865473996de6f8a59387bf65
+2026/01/19 11:37:47  openshift-kube-apiserver/kube-apiserver                                         : quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:fb1529a27e685fb1b5b13a5d1e935a27c9b9591e884ec8f6c22025208ec02596
+2026/01/19 11:37:47  openshift-kube-scheduler-operator/kube-scheduler-operator-container             : quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:8da3ae0c230867d7c67107ad8fcd99839b6058f4e9ba9c94c5fc3a865bd20b9f
+2026/01/19 11:37:47  openshift-oauth-apiserver/oauth-apiserver                                       : quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:8ddd77f3c414e02cc89cf68a3ffe7dd44a259583e0daa338f0eb69de0c560176
+2026/01/19 11:37:47  osd-metrics-exporter/osd-metrics-exporter                                       : quay.io/app-sre/osd-metrics-exporter@sha256:84b6bbcaae864048be38d474ca2cd936227dd347f0a0bca4bdfea957e05a72fc
+2026/01/19 11:37:47  pod-identity-webhook/pod-identity-webhook                                       : quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:e9c4c574b2fb985c848dbd2d9bba5f94c039ce574439840d77d7421552f2b69d
+2026/01/19 11:37:47  rbac-permissions-operator/rbac-permissions-operator                             : quay.io/app-sre/rbac-permissions-operator@sha256:c1e95e5c455b126e4524488260ad3d0544f0e817615701d9f4e60cf16319fbb8
+2026/01/19 11:37:47  route-controller-manager/route-controller-manager                               : quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:c2ff51ed35c889dfdc665f42d758d0d33907e36ffb7c8328a967cd0a4ff52607
+2026/01/19 11:37:47  route-monitor-operator/manager                                                  : quay.io/app-sre/route-monitor-operator@sha256:b2f5af37992f344bcea08fdd8f601ab77d1796b2f0d8f9070a8d0f180cba4bd7
+2026/01/19 11:37:47  service-ca-operator/service-ca-operator                                         : quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:c38fdb4e629c6abe3ec3202c84381d0d383cb706b82d485867e518bf96d2ae1e
+2026/01/19 11:37:47  splunk-forwarder-operator/splunk-forwarder-operator                             : quay.io/app-sre/splunk-forwarder-operator@sha256:1c69c7af839433cf138a4fd421a1d362ecf8eb83507519449773fa31b917ad96
+2026/01/19 11:37:47  splunk-forwarder/splunk-uf                                                      : quay.io/app-sre/splunk-forwarder@sha256:e0f318f8570d568bb2033881df9a4e3132279d7325050acda6e92390f7a18941
+2026/01/19 11:37:47  validation-webhook/webhooks                                                     : quay.io/app-sre/managed-cluster-validating-webhooks@sha256:afc60a032eea7d347c656c2f6b22634f3f615142eccb9f4e2c3c5d160adc46e6
+2026/01/19 11:37:47  volume-data-source-validator/volume-data-source-validator                       : quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:5e0deb66c1015d9e084c78a8a5cdfbf5e795aeaaa2dad96d2388f760d14c30dc
+2026/01/19 11:37:47 Tests failed: tests failed
+2026/01/19 11:37:48 Cluster state: ready, flavor: osd-4
+2026/01/19 11:37:49 Successfully added property[JobName] -
+2026/01/19 11:37:49 Successfully added property[Availability] - used
+2026/01/19 11:37:49 Successfully added property[Status] - completed-failing
+2026/01/19 11:37:50 Successfully added property[JobID] -
+2026/01/19 11:37:50 Setting expiration on prod clusters is not allowed. Skipping...
+2026/01/19 11:37:50 Setting expiration on prod clusters is not allowed. Skipping...
+2026/01/19 11:37:50 Cluster 2ntr2hoo8487ite28bd98pg5ph0m04gf preserved in environment stage

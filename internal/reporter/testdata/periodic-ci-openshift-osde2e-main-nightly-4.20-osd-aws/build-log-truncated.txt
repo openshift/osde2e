@@ -1,0 +1,111 @@
+Found 3 test failure(s):
+
+•2026/01/19 11:19:30 Waiting 4h59m59.971311572s for deployments-pruner-qqxhw job to complete
+•SS••••SS••S••••••••••••••••••••••••••••••••W0119 11:21:09.033922      27 warnings.go:70] v1 Endpoints is deprecated in v1.33+; use discovery.k8s.io/v1 EndpointSlice
+W0119 11:21:54.419684      27 warnings.go:70] v1 Endpoints is deprecated in v1.33+; use discovery.k8s.io/v1 EndpointSlice
+••••SSSSSSSSS•••••••
+------------------------------
+• [FAILED] [50.649 seconds]
+Ad Hoc Test Images execution [It] quay.io/redhat-services-prod/openshift/osd-metrics-exporter-e2e should pass [AdHocTestImages]
+/go/src/github.com/openshift/osde2e/pkg/e2e/adhoctestimages/adhoctestimages.go:49
+
+  Timeline >>
+  "level"=0 "msg"="running test suite" "suite"="quay.io/redhat-services-prod/openshift/osd-metrics-exporter-e2e" "timeout"="30m0s"
+  executor "level"=0 "msg"="created namespace" "name"="osde2e-executor-cp39q"
+  executor "level"=0 "msg"="created service account" "name"="cluster-admin"
+  executor "level"=0 "msg"="created job" "name"="executor-pbf5j"
+  executor "level"=0 "msg"="waiting for suite to complete"
+  executor "level"=0 "msg"="e2e-suite has terminated" "state"={"terminated"="&ContainerStateTerminated{ExitCode:1,Signal:0,Reason:Error,Message:,StartedAt:2026-01-19 11:32:37 +0000 UTC,FinishedAt:2026-01-19 11:33:13 +0000 UTC,ContainerID:cri-o://fe8b3ad57ca60745cdbf924ec56d44943ada7d80d9f2fc469641b01dc17a1a90,}"}
+  executor "level"=0 "msg"="fetching artifacts"
+  executor "level"=0 "msg"="processing test results"
+  executor "level"=0 "msg"="found junit files" "count"=1
+  executor "level"=0 "msg"="processed test results" "total"=2 "passed"=1 "failed"=0 "skipped"=0 "errors"=1
+  executor "level"=0 "msg"="Skipping cleanup"
+  [FAILED] in [It] - /go/src/github.com/openshift/osde2e/pkg/e2e/adhoctestimages/adhoctestimages.go:83 @ 01/19/26 11:33:24.872
+  << Timeline
+
+  [FAILED] failed test case: "[It] osd-metrics-exporter is exporting metrics"
+  Expected
+      <junit.Error>:
+      [PANICKED] Test Panicked
+      In [It] at: /go/pkg/mod/github.com/onsi/gomega@v1.37.0/internal/async_assertion.go:333 @ 01/19/26 11:33:13.322
+
+      runtime error: index out of range [0] with length 0
+
+      Full Stack Trace
+        github.com/onsi/gomega/internal.(*AsyncAssertion).buildActualPoller.func3.1()
+        	/go/pkg/mod/github.com/onsi/gomega@v1.37.0/internal/async_assertion.go:333 +0x186
+---
+
+  to be nil
+  In [It] at: /go/src/github.com/openshift/osde2e/pkg/e2e/adhoctestimages/adhoctestimages.go:83 @ 01/19/26 11:33:24.872
+------------------------------
+•••
+------------------------------
+• [FAILED] [30.566 seconds]
+Ad Hoc Test Images execution [It] quay.io/redhat-services-prod/openshift/managed-cluster-validating-webhooks-e2e should pass [AdHocTestImages]
+/go/src/github.com/openshift/osde2e/pkg/e2e/adhoctestimages/adhoctestimages.go:49
+
+  Timeline >>
+  "level"=0 "msg"="running test suite" "suite"="quay.io/redhat-services-prod/openshift/managed-cluster-validating-webhooks-e2e" "timeout"="30m0s"
+  executor "level"=0 "msg"="created namespace" "name"="osde2e-executor-8uhh1"
+  executor "level"=0 "msg"="created service account" "name"="cluster-admin"
+  executor "level"=0 "msg"="created job" "name"="executor-zw6ws"
+  executor "level"=0 "msg"="waiting for suite to complete"
+  executor "level"=0 "msg"="e2e-suite has terminated" "state"={"terminated"="&ContainerStateTerminated{ExitCode:1,Signal:0,Reason:Error,Message:,StartedAt:2026-01-19 11:35:09 +0000 UTC,FinishedAt:2026-01-19 11:35:30 +0000 UTC,ContainerID:cri-o://2dc8686451f954efec0ae5705ea1c6427e96902df499de5d2fed55fa5f17a1ec,}"}
+  executor "level"=0 "msg"="fetching artifacts"
+  executor "level"=0 "msg"="processing test results"
+  executor "level"=0 "msg"="found junit files" "count"=1
+  executor "level"=0 "msg"="processed test results" "total"=24 "passed"=8 "failed"=1 "skipped"=15 "errors"=0
+  executor "level"=0 "msg"="Skipping cleanup"
+  [FAILED] in [It] - /go/src/github.com/openshift/osde2e/pkg/e2e/adhoctestimages/adhoctestimages.go:83 @ 01/19/26 11:35:37.292
+  << Timeline
+
+  [FAILED] failed test case: "[It] Managed Cluster Validating Webhooks sre-regular-user-validation only blocks configmap/user-ca-bundle changes"
+  Expected
+      <junit.Error>:
+      [FAILED] Expected to create ConfigMap in test namespace
+      Unexpected error:
+          <*errors.StatusError | 0xc001124460>:
+          configmaps is forbidden: User "test-user@redhat.com" cannot create resource "configmaps" in API group "" in the namespace "osde2e-temp-ns"
+          {
+              ErrStatus: {
+                  TypeMeta: {Kind: "", APIVersion: ""},
+                  ListMeta: {
+---
+
+      In [It] at: /opt/app-root/src/test/e2e/validation_webhook_tests.go:303 @ 01/19/26 11:35:20.134
+
+      {
+          Message: "Expected to create ConfigMap in test namespace\nUnexpected error:\n    <*errors.StatusError | 0xc001124460>: \n    configmaps is forbidden: User \"test-user@redhat.com\" cannot create resource \"configmaps\" in API group \"\" in the namespace \"osde2e-temp-ns\"\n    {\n        ErrStatus: {\n            TypeMeta: {Kind: \"\", APIVersion: \"\"},\n            ListMeta: {\n                SelfLink: \"\",\n                ResourceVersion: \"\",\n                Continue: \"\",\n                RemainingItemCount: nil,\n            },\n            Status: \"Failure\",\n            Message: \"configmaps is forbidden: User \\\"test-user@redhat.com\\\" cannot create resource \\\"configmaps\\\" in API group \\\"\\\" in the namespace \\\"osde2e-temp-ns\\\"\",\n            Reason: \"Forbidden\",\n            Details: {Name: \"\", Group: \"\", Kind: \"configmaps\", UID: \"\", Causes: nil, RetryAfterSeconds: 0},\n            Code: 403,\n        },\n    }\noccurred",
+          Type: "failed",
+          Body: "[FAILED] Expected to create ConfigMap in test namespace\nUnexpected error:\n    <*errors.StatusError | 0xc001124460>: \n    configmaps is forbidden: User \"test-user@redhat.com\" cannot create resource \"configmaps\" in API group \"\" in the namespace \"osde2e-temp-ns\"\n    {\n        ErrStatus: {\n            TypeMeta: {Kind: \"\", APIVersion: \"\"},\n            ListMeta: {\n                SelfLink: \"\",\n                ResourceVersion: \"\",\n                Continue: \"\",\n                RemainingItemCount: nil,\n            },\n            Status: \"Failure\",\n            Message: \"configmaps is forbidden: User \\\"test-user@redhat.com\\\" cannot create resource \\\"configmaps\\\" in API group \\\"\\\" in the namespace \\\"osde2e-temp-ns\\\"\",\n            Reason: \"Forbidden\",\n            Details: {Name: \"\", Group: \"\", Kind: \"configmaps\", UID: \"\", Causes: nil, RetryAfterSeconds: 0},\n            Code: 403,\n        },\n    }\noccurred\nIn [It] at: /opt/app-root/src/test/e2e/validation_webhook_tests.go:303 @ 01/19/26 11:35:20.134\n",
+      }
+  to be nil
+  In [It] at: /go/src/github.com/openshift/osde2e/pkg/e2e/adhoctestimages/adhoctestimages.go:83 @ 01/19/26 11:35:37.292
+------------------------------
+•••••
+
+Summarizing 2 Failures:
+  [FAIL] Ad Hoc Test Images execution [It] quay.io/redhat-services-prod/openshift/osd-metrics-exporter-e2e should pass [AdHocTestImages]
+  /go/src/github.com/openshift/osde2e/pkg/e2e/adhoctestimages/adhoctestimages.go:83
+  [FAIL] Ad Hoc Test Images execution [It] quay.io/redhat-services-prod/openshift/managed-cluster-validating-webhooks-e2e should pass [AdHocTestImages]
+  /go/src/github.com/openshift/osde2e/pkg/e2e/adhoctestimages/adhoctestimages.go:83
+
+Ran 66 of 90 Specs in 1316.647 seconds
+FAIL! -- 64 Passed | 2 Failed | 1 Pending | 23 Skipped
+2026/01/19 11:37:40 Looking up job history from https://deck-ci.apps.ci.l2s4.p1.openshiftapps.com/job-history/gs/origin-ci-test/logs/periodic-ci-openshift-osde2e-main-nightly-4.20-osd-aws
+2026/01/19 11:37:46 Grabbing diff from https://gcsweb-ci.apps.ci.l2s4.p1.openshiftapps.com/gcs/test-platform-results/logs/periodic-ci-openshift-osde2e-main-nightly-4.20-osd-aws/2013060602901041152/artifacts/osd-aws/osde2e-test/artifacts/install/dependencies.txt
+2026/01/19 11:37:47 [0;31m-MCC: 0a21f87e4b1eb3bad0e02ed4de46da54e563b6e7[0m
+2026/01/19 11:37:47 [0;32m+MCC: 694a27f91edef0a68290bf6cc50f8d54f376fa3d[0m
+2026/01/19 11:37:47  -----
+2026/01/19 11:37:47  Unknown/alertmanager                                                            : quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:117beca810a6438cb30146aafb16c88a7fdeb0d2a595ce709d4df47d552115cf
+2026/01/19 11:37:47  Unknown/collect-prometheus                                                      : quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:3b884829ee84fc173433b240a9d6c2fc231e84a3e6dacc70db893837f46f4b2f
+2026/01/19 11:37:47  Unknown/config-reloader                                                         : quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:c42ed662d1c73a7e41c554aff6279d6460679f8e63fe1f58298d3d245f27b0e5
+2026/01/19 11:37:47  Unknown/create-firewall                                                         : quay.io/openshift-release-dev/ocp-release@sha256:0a4c44daf1666f069258aa983a66afa2f3998b78ced79faa6174e0a0f438f0a5
+2026/01/19 11:37:47  Unknown/dns                                                                     : quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:90c3e20d684e0b90706a8fabb9c9bda2929bb957ffe3e1641ea68fe9dc919cbb
+2026/01/19 11:37:47  Unknown/dns-node-resolver                                                       : quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:e577dce25a9f06468c866700c8ff6d4122516ddbbd9995e5cf4ea1156d61988a
+2026/01/19 11:37:47  Unknown/e2e-suite                                                               : quay.io/app-sre/managed-upgrade-operator-e2e
+2026/01/19 11:37:47  Unknown/e2e-suite                                                               : quay.io/app-sre/must-gather-operator-e2e
+2026/01/19 11:37:47  Unknown/e2e-suite                                                               : quay.io/app-sre/ocm-agent-e2e
+2026/01/19 11:37:47  Unknown/e2e-suite                                                               : quay.io/app-sre/rbac-permissions-operator-e2e
