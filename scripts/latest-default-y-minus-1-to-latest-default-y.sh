@@ -12,8 +12,8 @@ docker create --pull=always --name osde2e-run \
   -e SKIP_CLUSTER_HEALTH_CHECKS \
   -e CLUSTER_ID \
   -e SKIP_MUST_GATHER \
-  -e "${INSTALL_LATEST_FROM_DELTA}" \
-  -e "${UPGRADE_TO_LATEST}" \
+  -e INSTALL_LATEST_Y_FROM_DELTA \
+  -e UPGRADE_TO_LATEST_Y \
   -e CONFIGS \
   -e REPORT_DIR="/tmp/${REPORT_DIR}" \
   quay.io/redhat-services-prod/osde2e-cicada-tenant/osde2e:latest \
