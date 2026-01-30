@@ -1,6 +1,8 @@
 package aws
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"io/fs"
 	"log"
@@ -322,5 +324,86 @@ func LogS3UploadSummary(results []S3UploadResult) {
 	if len(results) > 0 {
 		baseKey := path.Dir(results[0].Key)
 		log.Printf("\nAll artifacts: %s", CreateS3URL(viper.GetString(config.Tests.LogBucket), baseKey))
+	}
+
+	// Write structured JSON for downstream systems (qontract-reconcile, etc.)
+	writeArtifactsJSON(results)
+}
+
+// ArtifactsJSON is the structured output format for S3 artifact URLs.
+// This JSON is written to stdout and termination message for downstream consumption.
+// Note: Kubernetes termination message is limited to 4KB, so we only include key URLs.
+type ArtifactsJSON struct {
+	S3URI    string `json:"s3Uri"`
+	JUnitURL string `json:"junitUrl,omitempty"`
+	LogsURL  string `json:"logsUrl,omitempty"`
+}
+
+// writeArtifactsJSON outputs artifact URLs in a well-known JSON format.
+// This enables downstream systems to parse and link to artifacts.
+func writeArtifactsJSON(results []S3UploadResult) {
+	if len(results) == 0 {
+		return
+	}
+
+	artifacts := ArtifactsJSON{}
+
+	// Set base S3 URI (use the common prefix path, not the subdirectory)
+	// Example: if key is "test-results/component/2026-01-30/run-123/install/junit.xml"
+	// we want "test-results/component/2026-01-30/run-123"
+	baseKey := ""
+	if len(results) > 0 {
+		// Extract base path from the first result key
+		// Assume structure: <category>/<component>/<date>/<job-id>/<optional-subdir>/<file>
+		parts := strings.Split(results[0].Key, "/")
+		if len(parts) >= 4 {
+			// Take first 4 parts: category/component/date/job-id
+			baseKey = strings.Join(parts[:4], "/")
+		} else {
+			// Fallback: use directory of first file
+			baseKey = path.Dir(results[0].Key)
+		}
+	}
+	artifacts.S3URI = CreateS3URL(viper.GetString(config.Tests.LogBucket), baseKey)
+
+	// Find key artifact URLs (prioritize junit XML and main log file)
+	for _, r := range results {
+		// Match JUnit XML files (junit*.xml pattern)
+		baseName := filepath.Base(r.Key)
+		if strings.HasPrefix(baseName, "junit") && strings.HasSuffix(baseName, ".xml") && artifacts.JUnitURL == "" {
+			artifacts.JUnitURL = r.PresignedURL
+		}
+		// Match main log files
+		if (baseName == "test_output.log" || baseName == "osde2e-full.log") && artifacts.LogsURL == "" {
+			artifacts.LogsURL = r.PresignedURL
+		}
+	}
+
+	// Use encoder with SetEscapeHTML(false) to prevent & from being escaped as \u0026
+	// This ensures presigned URLs remain valid and clickable
+	var buf bytes.Buffer
+	encoder := json.NewEncoder(&buf)
+	encoder.SetEscapeHTML(false)
+	if err := encoder.Encode(artifacts); err != nil {
+		log.Printf("Warning: failed to marshal artifacts JSON: %v", err)
+		return
+	}
+	data := bytes.TrimSpace(buf.Bytes())
+
+	// Output with marker for easy parsing
+	fmt.Printf("\n###OSDE2E_ARTIFACTS_JSON###\n%s\n###END_ARTIFACTS_JSON###\n", string(data))
+
+	// Write to termination message (standard k8s pattern for job results)
+	// Note: termination message is limited to 4KB, keeping only essential URLs
+	writeTerminationMessage(data)
+}
+
+// writeTerminationMessage writes to /dev/termination-log for Kubernetes job results.
+// This is the standard pattern for making job output available in pod status.
+func writeTerminationMessage(data []byte) {
+	terminationPath := "/dev/termination-log"
+	if err := os.WriteFile(terminationPath, data, 0o644); err != nil {
+		// Not an error - termination-log may not exist outside k8s
+		log.Printf("Note: Could not write termination message: %v", err)
 	}
 }

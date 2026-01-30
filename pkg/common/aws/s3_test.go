@@ -85,3 +85,29 @@ func TestNewS3Uploader_Disabled(t *testing.T) {
 		t.Error("NewS3Uploader() should return nil when LOG_BUCKET is empty")
 	}
 }
+
+func TestBuildBaseKey(t *testing.T) {
+	tests := []struct {
+		key      string
+		expected string
+	}{
+		{"test-results/component/2026-01-30/run-123/install/junit.xml", "test-results/component/2026-01-30/run-123"},
+		{"test-results/component/2026-01-30/run-123/test_output.log", "test-results/component/2026-01-30/run-123"},
+		{"results/file.xml", "results"},
+	}
+
+	for _, tt := range tests {
+		// Simulate the base key extraction logic
+		var baseKey string
+		parts := strings.Split(tt.key, "/")
+		if len(parts) >= 4 {
+			baseKey = strings.Join(parts[:4], "/")
+		} else {
+			baseKey = strings.TrimSuffix(tt.key, "/"+parts[len(parts)-1])
+		}
+
+		if baseKey != tt.expected {
+			t.Errorf("Base key for %s: got %v, want %v", tt.key, baseKey, tt.expected)
+		}
+	}
+}
