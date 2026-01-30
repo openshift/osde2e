@@ -18,6 +18,8 @@ const (
 	// EnvVarTag is the Go struct tag containing the environment variable that sets the option.
 	EnvVarTag = "env"
 
+	SecretVarPrefix = "EXTERNAL_SECRET_"
+
 	// SectionTag is the Go struct tag containing the documentation section of the option.
 	SectionTag = "sect"
 
@@ -118,7 +120,14 @@ func loadPassthruSecrets(secretLocations []string) {
 	passthruSecrets["AWS_PROFILE"] = viper.GetString(config.AWSProfile)
 	passthruSecrets["AWS_ACCESS_KEY_ID"] = viper.GetString(config.AWSAccessKey)
 	passthruSecrets["CAD_PAGERDUTY_ROUTING_KEY"] = viper.GetString(config.Cad.CADPagerDutyRoutingKey)
-
+	for _, value := range os.Environ() {
+		parts := strings.Split(value, "=")
+		if len(parts) >= 2 && strings.HasPrefix(parts[0], SecretVarPrefix) {
+			key := parts[0]
+			val := strings.Join(parts[1:], "=")
+			passthruSecrets[key] = val
+		}
+	}
 	viper.Set(config.NonOSDe2eSecrets, passthruSecrets)
 }
 
