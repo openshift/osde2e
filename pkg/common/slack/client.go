@@ -66,7 +66,13 @@ func (c *Client) SendWebhook(ctx context.Context, webhookURL string, payload int
 
 	// Check response status
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("slack webhook returned status %d: %s", resp.StatusCode, resp.Status)
+		// Read response body for debugging
+		bodyBytes := make([]byte, 1024)
+		n, _ := resp.Body.Read(bodyBytes)
+		bodyText := string(bodyBytes[:n])
+
+		return fmt.Errorf("slack webhook returned status %d: %s\nResponse body: %s\nPayload sent: %s",
+			resp.StatusCode, resp.Status, bodyText, string(jsonData))
 	}
 
 	return nil

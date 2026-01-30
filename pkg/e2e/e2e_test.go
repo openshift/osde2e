@@ -138,7 +138,7 @@ func TestE2EOrchestrator_Result(t *testing.T) {
 func TestBuildNotificationConfig_Disabled(t *testing.T) {
 	setupTestConfig(t)
 
-	cfg := reporter.BuildNotificationConfig("", "")
+	cfg := reporter.BuildNotificationConfig("", "", nil, "")
 
 	if cfg != nil {
 		t.Error("Expected nil config when slack notifications disabled")
@@ -148,7 +148,7 @@ func TestBuildNotificationConfig_Disabled(t *testing.T) {
 func TestBuildNotificationConfig_MissingCredentials(t *testing.T) {
 	setupTestConfig(t)
 
-	cfg := reporter.BuildNotificationConfig("", "")
+	cfg := reporter.BuildNotificationConfig("", "", nil, "")
 
 	if cfg != nil {
 		t.Error("Expected nil config when webhook/channel missing")
@@ -158,7 +158,7 @@ func TestBuildNotificationConfig_MissingCredentials(t *testing.T) {
 func TestBuildNotificationConfig_MissingWebhook(t *testing.T) {
 	setupTestConfig(t)
 
-	cfg := reporter.BuildNotificationConfig("", "#test")
+	cfg := reporter.BuildNotificationConfig("", "#test", nil, "")
 
 	if cfg != nil {
 		t.Error("Expected nil config when webhook missing")
@@ -168,7 +168,7 @@ func TestBuildNotificationConfig_MissingWebhook(t *testing.T) {
 func TestBuildNotificationConfig_MissingChannel(t *testing.T) {
 	setupTestConfig(t)
 
-	cfg := reporter.BuildNotificationConfig("https://hooks.slack.com/test", "")
+	cfg := reporter.BuildNotificationConfig("https://hooks.slack.com/test", "", nil, "")
 
 	if cfg != nil {
 		t.Error("Expected nil config when channel missing")
@@ -178,7 +178,7 @@ func TestBuildNotificationConfig_MissingChannel(t *testing.T) {
 func TestBuildNotificationConfig_Enabled(t *testing.T) {
 	setupTestConfig(t)
 
-	cfg := reporter.BuildNotificationConfig("https://hooks.slack.com/test", "#test-channel")
+	cfg := reporter.BuildNotificationConfig("https://hooks.slack.com/test", "#test-channel", nil, "")
 
 	if cfg == nil {
 		t.Fatal("Expected non-nil notification config")
