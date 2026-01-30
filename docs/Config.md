@@ -132,6 +132,18 @@ Some environment variables commonly used for pipelines under osde2e are indicate
 | TEST_HTTPS_PROXY     | Address of the HTTPS Proxy to be added to a cluster.                                                               |
 | USER_CA_BUNDLE       | A file contains a PEM-encoded X.509 certificate bundle that will be added to the nodes' trusted certificate store. |
 
+### Log Analysis and LLM related:-
+
+| Environment variable          | Usage                                                                                                   |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------- |
+| GEMINI_API_KEY                | API key for Google Gemini LLM service used for intelligent failure analysis.                            |
+| LLM_MODEL                     | LLM model to use for analysis. Default: gemini-2.5-pro.                                                 |
+| LOG_ANALYSIS_SLACK_WEBHOOK    | Slack webhook URL for sending log analysis notifications.                                               |
+| LOG_ANALYSIS_SLACK_CHANNEL    | Slack channel ID for log analysis notifications. Default: C06HQR8HN0L (#hcm-cicd-notifications).       |
+| SLACK_NOTIFY                  | Enable/disable Slack notifications for test results and cleanup reports. Default: false.                |
+| SLACK_WEBHOOK                 | Slack webhook URL for general osde2e notifications and cleanup reports.                                 |
+| SLACK_CHANNEL                 | Slack channel name for test suite notifications. Default: hcm-cicd-alerts.                             |
+
 ## Command Line Flags for osde2e
 
 CLI flags that are commonly used include:
@@ -145,8 +157,11 @@ CLI flags that are commonly used include:
 --kube-config: Path to local Kube config for running tests against.
 --skip-destroy-cluster: Skip cluster deletion after test completion.
 --skip-health-check: Skip cluster health checks.
+--skip-must-gather: Skip must-gather collection after test completion.
 --skip-tests: Skip any Ginkgo tests whose names match the regular expression.
---only-health-check-nodes: Only validate the nodes are ready
+--focus-tests: Only run tests whose names match the regular expression.
+--label-filter: Ginkgo label filter expression (e.g., "Operators && !Upgrade").
+--only-health-check-nodes: Only validate the nodes are ready.
 ```
 
 ### For the query sub-command:
