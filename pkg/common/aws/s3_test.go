@@ -111,3 +111,46 @@ func TestBuildBaseKey(t *testing.T) {
 		}
 	}
 }
+
+func TestShouldUploadFile(t *testing.T) {
+	tests := []struct {
+		filename string
+		want     bool
+	}{
+		// Allowed extensions
+		{"junit.xml", true},
+		{"test_output.log", true},
+		{"summary.yaml", true},
+		{"config.yml", true},
+		{"report.json", true},
+		{"screenshot.png", true},
+		{"graph.jpg", true},
+		{"photo.jpeg", true},
+		{"animation.gif", true},
+		{"data.csv", true},
+		{"notes.txt", true},
+		{"report.html", true},
+
+		// Allowed filenames (case-insensitive)
+		{"test_output", true},
+		{"TEST_OUTPUT", true},
+		{"summary", true},
+		{"osde2e-full", true},
+		{"cluster-state", true},
+
+		// Not allowed
+		{"binary.exe", false},
+		{"archive.tar.gz", false},
+		{"data.bin", false},
+		{"library.so", false},
+		{"randomfile", false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.filename, func(t *testing.T) {
+			if got := shouldUploadFile(tt.filename); got != tt.want {
+				t.Errorf("shouldUploadFile(%q) = %v, want %v", tt.filename, got, tt.want)
+			}
+		})
+	}
+}
