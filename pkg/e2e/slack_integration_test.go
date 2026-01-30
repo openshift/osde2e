@@ -41,20 +41,23 @@ import (
 //
 // WHAT TO EXPECT IN SLACK:
 //
-//    Test 1 (Full): 3 threaded messages
-//      - Initial: Failure summary with cluster info and test suite info
-//      - Reply 1: AI analysis with root cause and recommendations
-//      - Reply 2: Extracted test failure logs from real Prow data
+//    Test 1 (Full): 4 threaded messages
+//      - Initial: Test suite info (what failed)
+//      - Reply 1: AI analysis with root cause and recommendations (briefly why)
+//      - Reply 2: Extracted test failure logs from real Prow data (evidence)
+//      - Reply 3: Cluster information for debugging
 //
-//    Test 2 (Minimal): 3 threaded messages
-//      - Initial: Failure summary with minimal cluster info
+//    Test 2 (Minimal): 4 threaded messages
+//      - Initial: Test suite info (minimal)
 //      - Reply 1: Plain text analysis (no JSON formatting)
 //      - Reply 2: Fallback message (no logs configured)
+//      - Reply 3: Minimal cluster info (cluster ID only)
 //
-//    Test 3 (Error): 3 threaded messages
-//      - Initial: Failure summary with cluster info
+//    Test 3 (Error): 4 threaded messages
+//      - Initial: Test suite info
 //      - Reply 1: Analysis with error section appended
 //      - Reply 2: Fallback message (no logs in config)
+//      - Reply 3: Cluster information
 //
 // TROUBLESHOOTING:
 //
@@ -148,9 +151,10 @@ func TestSlackReporter_Integration(t *testing.T) {
 	t.Log("Check your Slack channel for the test message with threaded replies")
 	t.Logf("Channel: %s", channelID)
 	t.Log("Expected:")
-	t.Log("  1. Initial message with cluster info and test suite info")
-	t.Log("  2. First reply with AI analysis (root cause and recommendations)")
-	t.Log("  3. Second reply with test failure logs (if testdata exists)")
+	t.Log("  1. Initial message with test suite info (what failed)")
+	t.Log("  2. First reply with AI analysis (briefly why)")
+	t.Log("  3. Second reply with test failure logs (evidence)")
+	t.Log("  4. Third reply with cluster information (for debugging)")
 }
 
 // TestSlackReporter_Integration_MinimalPayload tests with minimal required fields.

@@ -57,12 +57,26 @@ func TestSlackReporter_buildWorkflowPayload(t *testing.T) {
 		t.Error("analysis field is required but empty")
 	}
 
-	// Verify summary contains cluster info
-	if !contains(payload.Summary, "test-123") {
-		t.Error("summary should contain cluster ID")
+	// Verify summary contains test suite info (what failed)
+	if !contains(payload.Summary, "quay.io/test") {
+		t.Error("summary should contain image name")
 	}
-	if !contains(payload.Summary, "4.20") {
-		t.Error("summary should contain version")
+	if !contains(payload.Summary, "abc123") {
+		t.Error("summary should contain commit")
+	}
+	if !contains(payload.Summary, "stage") {
+		t.Error("summary should contain environment")
+	}
+
+	// Verify cluster_details contains cluster info (for debugging)
+	if payload.ClusterDetails == "" {
+		t.Error("cluster_details should not be empty when cluster info is provided")
+	}
+	if !contains(payload.ClusterDetails, "test-123") {
+		t.Error("cluster_details should contain cluster ID")
+	}
+	if !contains(payload.ClusterDetails, "4.20") {
+		t.Error("cluster_details should contain version")
 	}
 
 	// Verify analysis contains formatted content
@@ -144,8 +158,17 @@ func TestSlackReporter_Report_WorkflowFormat(t *testing.T) {
 		t.Error("analysis should not be empty")
 	}
 
-	if !contains(capturedPayload.Summary, "test-456") {
-		t.Error("summary should contain cluster ID")
+	// Verify cluster info is in cluster_details field (not summary)
+	if capturedPayload.ClusterDetails == "" {
+		t.Error("cluster_details should not be empty when cluster info is provided")
+	}
+	if !contains(capturedPayload.ClusterDetails, "test-456") {
+		t.Error("cluster_details should contain cluster ID")
+	}
+
+	// Verify summary contains test suite info
+	if !contains(capturedPayload.Summary, "quay.io/openshift/test") {
+		t.Error("summary should contain test image")
 	}
 
 	if capturedPayload.Image != "quay.io/openshift/test:v1.0" {
@@ -186,19 +209,8 @@ func TestSlackReporter_buildSummaryField(t *testing.T) {
 		t.Error("summary should contain failure message")
 	}
 
-	// Check for cluster info
-	if !contains(summary, "cluster-789") {
-		t.Error("summary should contain cluster ID")
-	}
-	if !contains(summary, "my-test-cluster") {
-		t.Error("summary should contain cluster name")
-	}
-	if !contains(summary, "4.22") {
-		t.Error("summary should contain version")
-	}
-	if !contains(summary, "gcp") {
-		t.Error("summary should contain provider")
-	}
+	// Summary should NOT contain cluster info (it's in cluster_details now)
+	// Summary should ONLY contain test suite info (what failed)
 
 	// Check for test suite info
 	if !contains(summary, "quay.io/app") {
@@ -407,6 +419,95 @@ func TestSlackReporter_ExtendedLogsFallback(t *testing.T) {
 		// Should contain failure markers from real data
 		if !contains(payload.ExtendedLogs, "Found") && !contains(payload.ExtendedLogs, "test failure") {
 			t.Error("Should contain failure count or marker")
+		}
+	})
+}
+
+func TestSlackReporter_ClusterDetailsFallback(t *testing.T) {
+	reporter := NewSlackReporter()
+
+	t.Run("no cluster_info returns fallback message", func(t *testing.T) {
+		result := &AnalysisResult{
+			Content: "Test analysis",
+		}
+
+		config := &ReporterConfig{
+			Settings: map[string]interface{}{
+				"webhook_url": "https://test.com",
+				"channel":     "C123456",
+				// No cluster_info
+			},
+		}
+
+		payload := reporter.buildWorkflowPayload(result, config)
+
+		if payload.ClusterDetails == "" {
+			t.Error("ClusterDetails should not be empty when no cluster_info")
+		}
+
+		if !contains(payload.ClusterDetails, "not available") {
+			t.Errorf("Expected fallback message, got: %s", payload.ClusterDetails)
+		}
+	})
+
+	t.Run("nil cluster_info returns fallback message", func(t *testing.T) {
+		result := &AnalysisResult{
+			Content: "Test analysis",
+		}
+
+		config := &ReporterConfig{
+			Settings: map[string]interface{}{
+				"webhook_url":  "https://test.com",
+				"channel":      "C123456",
+				"cluster_info": nil,
+			},
+		}
+
+		payload := reporter.buildWorkflowPayload(result, config)
+
+		if payload.ClusterDetails == "" {
+			t.Error("ClusterDetails should not be empty when cluster_info is nil")
+		}
+
+		if !contains(payload.ClusterDetails, "not available") {
+			t.Errorf("Expected fallback message, got: %s", payload.ClusterDetails)
+		}
+	})
+
+	t.Run("valid cluster_info returns cluster details", func(t *testing.T) {
+		result := &AnalysisResult{
+			Content: "Test analysis",
+		}
+
+		clusterInfo := &ClusterInfo{
+			ID:       "test-cluster-123",
+			Name:     "my-cluster",
+			Version:  "4.20",
+			Provider: "aws",
+		}
+
+		config := &ReporterConfig{
+			Settings: map[string]interface{}{
+				"webhook_url":  "https://test.com",
+				"channel":      "C123456",
+				"cluster_info": clusterInfo,
+			},
+		}
+
+		payload := reporter.buildWorkflowPayload(result, config)
+
+		if payload.ClusterDetails == "" {
+			t.Error("ClusterDetails should not be empty when valid cluster_info exists")
+		}
+
+		// Should contain actual cluster info, not fallback message
+		if contains(payload.ClusterDetails, "not available") {
+			t.Errorf("Should contain real cluster info, not fallback. Got: %s", payload.ClusterDetails)
+		}
+
+		// Should contain cluster details
+		if !contains(payload.ClusterDetails, "test-cluster-123") {
+			t.Error("Should contain cluster ID")
 		}
 	})
 }

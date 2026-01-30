@@ -68,13 +68,14 @@ func (s *SlackReporter) Report(ctx context.Context, result *AnalysisResult, conf
 
 // WorkflowPayload represents the Slack workflow webhook payload
 type WorkflowPayload struct {
-	Channel      string `json:"channel"`                 // Required - Slack channel ID
-	Summary      string `json:"summary"`                 // Required - Initial message
-	Analysis     string `json:"analysis"`                // Required - AI analysis (posted as reply)
-	ExtendedLogs string `json:"extended_logs,omitempty"` // Optional - Test failures (posted as reply)
-	Image        string `json:"image,omitempty"`         // Optional - Test image
-	Env          string `json:"env,omitempty"`           // Optional - Environment
-	Commit       string `json:"commit,omitempty"`        // Optional - Commit hash
+	Channel        string `json:"channel"`                   // Required - Slack channel ID
+	Summary        string `json:"summary"`                   // Required - Initial message (test suite info)
+	Analysis       string `json:"analysis"`                  // Required - AI analysis (posted as reply 1)
+	ExtendedLogs   string `json:"extended_logs,omitempty"`   // Optional - Test failures (posted as reply 2)
+	ClusterDetails string `json:"cluster_details,omitempty"` // Optional - Cluster info for debugging (posted as reply 3)
+	Image          string `json:"image,omitempty"`           // Optional - Test image
+	Env            string `json:"env,omitempty"`             // Optional - Environment
+	Commit         string `json:"commit,omitempty"`          // Optional - Commit hash
 }
 
 // ClusterInfo holds cluster information for reporting
@@ -116,6 +117,14 @@ func (s *SlackReporter) buildWorkflowPayload(result *AnalysisResult, config *Rep
 		payload.ExtendedLogs = "Test output logs not available (no report directory configured)."
 	}
 
+	// Optional: cluster_details (for debugging)
+	if clusterDetails := s.buildClusterInfoSection(config); clusterDetails != "" {
+		payload.ClusterDetails = clusterDetails
+	} else {
+		// Provide fallback when no cluster info is configured
+		payload.ClusterDetails = "Cluster information not available."
+	}
+
 	// Optional metadata
 	if image, ok := config.Settings["image"].(string); ok && image != "" {
 		payload.Image = image
@@ -140,10 +149,7 @@ func (s *SlackReporter) buildSummaryField(config *ReporterConfig) string {
 	// Header
 	builder.WriteString(":failed: Pipeline Failed at E2E Test\n\n")
 
-	// Cluster info
-	builder.WriteString(s.buildClusterInfoSection(config))
-
-	// Test suite info
+	// Test suite info (what failed)
 	builder.WriteString(s.buildTestSuiteSection(config))
 
 	return s.enforceFieldLimit(builder.String(), maxWorkflowFieldLength)
@@ -297,6 +303,7 @@ func (s *SlackReporter) readTestOutput(reportDir string) string {
 			failureBlocks := s.extractFailureBlocks(lines, 0, totalLines)
 			if len(failureBlocks) > 0 {
 				var result strings.Builder
+				result.WriteString("======  Log Extract ======\n")
 				result.WriteString(fmt.Sprintf("Found %d test failure(s):\n\n", len(failureBlocks)))
 				for i, block := range failureBlocks {
 					if i > 0 {
