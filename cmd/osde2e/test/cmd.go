@@ -158,6 +158,7 @@ func init() {
 }
 
 func run(cmd *cobra.Command, argv []string) {
+	log.Println("==== Starting E2E orchestration ====")
 	if err := common.LoadConfigs(args.configString, args.customConfig, args.secretLocations); err != nil {
 		log.Printf("error loading initial state: %v", err)
 		os.Exit(1)
@@ -174,5 +175,6 @@ func run(cmd *cobra.Command, argv []string) {
 	}
 
 	exitCode := e2e.RunTests(cmd.Context())
+	log.Println("==== Finished E2E orchestration ====")
 	os.Exit(exitCode)
 }

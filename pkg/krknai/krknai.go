@@ -61,7 +61,7 @@ func New(ctx context.Context) (orchestrator.Orchestrator, error) {
 // Provision prepares the test environment by provisioning or reusing a cluster,
 // loading kubeconfig, and installing required addons.
 func (k *KrknAI) Provision(ctx context.Context) error {
-	log.Println("KrknAI: Starting cluster provisioning...")
+	log.Println("Starting cluster provisioning")
 
 	// Load cluster context (kubeconfig and cluster ID)
 	if err := cluster.LoadClusterContext(); err != nil {
@@ -75,7 +75,6 @@ func (k *KrknAI) Provision(ctx context.Context) error {
 	}
 
 	k.result.ClusterID = cl.ID()
-	log.Printf("KrknAI: Cluster provisioned successfully with ID: %s", k.result.ClusterID)
 
 	return nil
 }
@@ -83,35 +82,32 @@ func (k *KrknAI) Provision(ctx context.Context) error {
 // Execute runs the configured test suites including chaos testing scenarios.
 // The execution flow: discover mode -> update YAML -> run mode
 func (k *KrknAI) Execute(ctx context.Context) error {
-	log.Println("KrknAI: Starting chaos test execution...")
 	k.result.TestsPassed = true
 	viper.Set(config.Cluster.Passing, k.result.TestsPassed)
 
-	dryRun := viper.GetBool(config.DryRun)
+	if !viper.GetBool(config.DryRun) {
+		// Step 1: Run discover mode to identify chaos targets
+		log.Println("Krkn-ai discover mode")
+		if err := k.runKrknContainer(ctx, config.KrknAIModeDiscover); err != nil {
+			return k.handleExecutionError(fmt.Errorf("discover mode failed: %w", err))
+		}
 
-	// Step 1: Run discover mode to identify chaos targets
-	log.Println("KrknAI: [1/3] Running discover mode...")
-	if err := k.runKrknContainer(ctx, config.KrknAIModeDiscover, dryRun); err != nil {
-		return k.handleExecutionError(fmt.Errorf("discover mode failed: %w", err))
-	}
-
-	// Step 2: Update the YAML config with discovered targets (skip in dry-run mode)
-	if !dryRun {
-		log.Println("KrknAI: [2/3] Updating config with discovered targets...")
+		// Step 2: Update the YAML config with discovered targets (skip in dry-run mode)
+		log.Println("Updating config with discovered targets")
 		if err := k.updateKrknConfig(); err != nil {
 			return k.handleExecutionError(fmt.Errorf("failed to update config: %w", err))
 		}
+
+		// Step 3: Run run mode with the updated config
+		log.Println("Krkn-ai run mode")
+		if err := k.runKrknContainer(ctx, config.KrknAIModeRun); err != nil {
+			return k.handleExecutionError(fmt.Errorf("run mode failed: %w", err))
+		}
 	} else {
-		log.Println("KrknAI: [2/3] Skipping config update (dry run)")
+		log.Println("Krkn-ai dry mode finished")
 	}
 
-	// Step 3: Run run mode with the updated config
-	log.Println("KrknAI: [3/3] Running chaos scenarios...")
-	if err := k.runKrknContainer(ctx, config.KrknAIModeRun, dryRun); err != nil {
-		return k.handleExecutionError(fmt.Errorf("run mode failed: %w", err))
-	}
-
-	log.Println("KrknAI: Chaos test execution completed")
+	log.Println("krkn-ai execution completed")
 	return nil
 }
 
@@ -122,16 +118,12 @@ func (k *KrknAI) handleExecutionError(err error) error {
 	return err
 }
 
-// runKrknContainer executes the krkn-ai container using podman or docker with the specified mode.
-func (k *KrknAI) runKrknContainer(ctx context.Context, mode string, dryRun bool) error {
+// runKrknContainer executes the Krkn-ai container using podman or docker with the specified mode.
+func (k *KrknAI) runKrknContainer(ctx context.Context, mode string) error {
 	runtime, err := detectContainerRuntime()
 	if err != nil {
 		return err
 	}
-
-	log.Printf("KrknAI: Using container runtime: %s", runtime)
-	log.Printf("KrknAI: Running image: %s", DefaultKrknAIImage)
-	log.Printf("KrknAI: Mode: %s", mode)
 
 	// Build base container arguments (common to both modes)
 	args := []string{"run", "--rm", "--net=host"}
@@ -159,13 +151,12 @@ func (k *KrknAI) runKrknContainer(ctx context.Context, mode string, dryRun bool)
 		)
 
 		// Fetch Prometheus token from cluster
-		log.Println("KrknAI: Fetching Prometheus token from cluster...")
+		log.Println("Fetching Prometheus token from cluster")
 		promToken, err := k.getPrometheusToken(ctx)
 		if err != nil {
-			log.Printf("KrknAI: Warning - failed to fetch Prometheus token: %v", err)
-			log.Println("KrknAI: Continuing without Prometheus token...")
+			log.Printf("Warning - failed to fetch Prometheus token: %v", err)
+			log.Println("Continuing without Prometheus token")
 		} else {
-			log.Println("KrknAI: Successfully fetched Prometheus token")
 			args = append(args, "-e", fmt.Sprintf("PROMETHEUS_TOKEN=%s", promToken))
 		}
 	} else {
@@ -187,27 +178,21 @@ func (k *KrknAI) runKrknContainer(ctx context.Context, mode string, dryRun bool)
 	// Add the image name
 	args = append(args, DefaultKrknAIImage)
 
-	log.Printf("KrknAI: Executing command: %s %v", runtime, args)
+	log.Printf("Executing command: %s %v", runtime, args)
 
-	if !dryRun {
-		cmd := exec.CommandContext(ctx, runtime, args...)
+	cmd := exec.CommandContext(ctx, runtime, args...)
 
-		var stdout, stderr bytes.Buffer
-		cmd.Stdout = &stdout
-		cmd.Stderr = &stderr
+	var stdout, stderr bytes.Buffer
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
 
-		if err := cmd.Run(); err != nil {
-			log.Printf("KrknAI: Container stdout:\n%s", stdout.String())
-			log.Printf("KrknAI: Container stderr:\n%s", stderr.String())
-			return fmt.Errorf("container execution failed: %w", err)
-		}
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("container execution failed: %w", err)
+	}
 
-		log.Printf("KrknAI: Container output:\n%s", stdout.String())
-		if stderr.Len() > 0 {
-			log.Printf("KrknAI: Container stderr:\n%s", stderr.String())
-		}
-	} else {
-		log.Println("KrknAI: Skipping container execution (dry run)")
+	log.Printf("Container output:\n%s", stdout.String())
+	if stderr.Len() > 0 {
+		log.Printf("Container stderr:\n%s", stderr.String())
 	}
 
 	return nil
@@ -229,7 +214,7 @@ func (k *KrknAI) getPrometheusToken(ctx context.Context) (string, error) {
 	return prometheus.GetPrometheusToken(ctx, client)
 }
 
-// updateKrknConfig updates the krkn-ai output YAML with values from viper config.
+// updateKrknConfig updates the Krkn-ai output YAML with values from viper config.
 func (k *KrknAI) updateKrknConfig() error {
 	sharedDir := viper.GetString(config.SharedDir)
 	fitnessQuery := viper.GetString(config.KrknAI.FitnessQuery)
@@ -243,26 +228,26 @@ func (k *KrknAI) updateKrknConfig() error {
 	// Find YAML file in the shared directory
 	yamlFile := filepath.Join(sharedDir, krknConfigFileName)
 	if _, err := os.Stat(yamlFile); os.IsNotExist(err) {
-		return fmt.Errorf("no %s config file found in %s", krknConfigFileName, sharedDir)
+		return fmt.Errorf("no file named %s found in %s", krknConfigFileName, sharedDir)
 	}
 
 	// Read the YAML file
 	data, err := os.ReadFile(yamlFile)
 	if err != nil {
-		return fmt.Errorf("failed to read config file: %w", err)
+		return fmt.Errorf("failed to read Krkn-ai config file: %w", err)
 	}
 
 	// Parse YAML into a map
 	var cfg map[string]interface{}
 	if err := yaml.Unmarshal(data, &cfg); err != nil {
-		return fmt.Errorf("failed to parse config file: %w", err)
+		return fmt.Errorf("failed to parse Krkn-ai config file: %w", err)
 	}
 
 	// Update fitness_function.query if set
 	if fitnessQuery != "" {
 		if ff, ok := cfg["fitness_function"].(map[string]interface{}); ok {
 			ff["query"] = fitnessQuery
-			log.Printf("KrknAI: Updated fitness_function.query to: %s", fitnessQuery)
+			log.Printf("Updated fitness_function.query to: %s", fitnessQuery)
 		}
 	}
 
@@ -281,7 +266,7 @@ func (k *KrknAI) updateKrknConfig() error {
 					scenarioMap["enable"] = enabledScenarios[name]
 				}
 			}
-			log.Printf("KrknAI: Updated scenarios: %v", scenarios)
+			log.Printf("Updated scenarios: %v", scenarios)
 		}
 	}
 
@@ -295,7 +280,7 @@ func (k *KrknAI) updateKrknConfig() error {
 		return fmt.Errorf("failed to write updated config: %w", err)
 	}
 
-	log.Printf("KrknAI: Config file updated: %s", yamlFile)
+	log.Printf("Config file updated: %s", yamlFile)
 	return nil
 }
 
@@ -317,7 +302,7 @@ func detectContainerRuntime() (string, error) {
 // AnalyzeLogs performs AI-powered log analysis when tests fail,
 // providing insights into failure root causes.
 func (k *KrknAI) AnalyzeLogs(ctx context.Context, testErr error) error {
-	log.Println("KrknAI: Analyzing logs for failure insights...")
+	log.Println("Analyzing logs for failure insights")
 
 	// TODO: Implement Kraken AI-specific log analysis
 	// This could include:
@@ -325,13 +310,13 @@ func (k *KrknAI) AnalyzeLogs(ctx context.Context, testErr error) error {
 	// - AI-powered root cause analysis
 	// - Generating remediation suggestions
 
-	log.Printf("KrknAI: Log analysis completed for error: %v", testErr)
+	log.Printf("Log analysis completed for error: %v", testErr)
 	return nil
 }
 
 // Report generates test reports and collects diagnostic data.
 func (k *KrknAI) Report(ctx context.Context) error {
-	log.Println("KrknAI: Generating test reports...")
+	log.Println("Generating test reports")
 
 	// TODO: Implement chaos test reporting
 	// This should include:
@@ -339,14 +324,14 @@ func (k *KrknAI) Report(ctx context.Context) error {
 	// - Cluster resilience metrics
 	// - Recovery time statistics
 
-	log.Println("KrknAI: Report generation completed")
+	log.Println("Report generation completed")
 	return nil
 }
 
 // Cleanup performs post-test cleanup including resource cleanup and
 // optionally destroys the cluster based on configuration.
 func (k *KrknAI) Cleanup(ctx context.Context) error {
-	log.Println("KrknAI: Starting cleanup...")
+	log.Println("Starting cleanup")
 
 	// Delete cluster if configured
 	if err := cluster.DeleteCluster(k.provider); err != nil {
@@ -354,22 +339,19 @@ func (k *KrknAI) Cleanup(ctx context.Context) error {
 		return fmt.Errorf("failed to delete cluster: %w", err)
 	}
 
-	log.Println("KrknAI: Cleanup completed")
+	log.Println("Cleanup completed")
 	return nil
 }
 
 // PostProcessCluster performs optional post-processing on the cluster
 // after test execution but before cleanup.
 func (k *KrknAI) PostProcessCluster(ctx context.Context) error {
-	log.Println("KrknAI: Post-processing cluster...")
-
 	// TODO: Implement post-processing logic
 	// This could include:
 	// - Collecting chaos experiment artifacts
 	// - Updating cluster metadata
 	// - Extending cluster expiration if needed
 
-	log.Println("KrknAI: Post-processing completed")
 	return nil
 }
 
