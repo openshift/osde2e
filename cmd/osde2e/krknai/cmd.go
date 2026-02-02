@@ -96,6 +96,7 @@ func run(cmd *cobra.Command, argv []string) {
 }
 
 func runKrknAI(ctx context.Context) int {
+	log.Println("==== Starting Krkn-ai orchestration ====")
 	orch, err := krknai.New(ctx)
 	if err != nil {
 		log.Printf("Failed to create KrknAI orchestrator: %v", err)
@@ -127,5 +128,6 @@ func runKrknAI(ctx context.Context) int {
 		log.Printf("Cleanup errors: %v", err)
 	}
 
+	log.Println("==== Finished Krkn-ai orchestration ====")
 	return orch.Result().ExitCode
 }
