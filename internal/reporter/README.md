@@ -1,6 +1,8 @@
-# Reporter System
+# Reporter System (Developer Documentation)
 
-The reporter system handles notification delivery after LLM analysis completion, providing a flexible and extensible way to send analysis results to external systems.
+The reporter system handles notification delivery after LLM analysis completion. This document covers the internal architecture and implementation details for developers working on the reporter system.
+
+**For user setup instructions, see the [root README](../../README.md#slack-notifications).**
 
 ## Architecture Overview
 
@@ -76,71 +78,20 @@ The Slack reporter sends test failure notifications using a **Slack Workflow** t
 
 ### How It Works
 
-The workflow creates three messages in a thread:
+The workflow creates four messages in a thread:
 
-1. **Initial Message** - Failure summary with cluster and test suite info
-2. **First Reply** - AI-powered analysis with root cause and recommendations
-3. **Second Reply** - Extracted test failure logs (only failure blocks, not full stdout)
+1. **Initial Message** - Test suite information (what failed)
+2. **First Reply** - AI-powered analysis with root cause and recommendations (briefly why)
+3. **Second Reply** - Extracted test failure logs (evidence - only failure blocks, not full stdout)
+4. **Third Reply** - Cluster information for debugging (least important - cluster is ephemeral)
 
-### Setup Instructions
-
-#### 1. Add Workflow to Your Slack Channel
-
-Each team adds the shared workflow to their channel:
-
-1. Open the workflow link: https://slack.com/shortcuts/Ft09RL7M2AMV/60f07b46919da20d103806a8f5bba094
-2. Click **Add to Slack**
-3. Select your destination channel
-4. **Copy the webhook URL** (starts with `https://hooks.slack.com/workflows/...`)
-
-#### 2. Get Your Channel ID
-
-The workflow requires a Slack **channel ID** (not channel name).
-
-**To find your channel ID:**
-1. Right-click the channel name in Slack
-2. Select **View channel details**
-3. Scroll to bottom and **copy the channel ID** (starts with `C`)
-
-**Example:** `C06HQR8HN0L`
-
-#### 3. Configure Pipeline
-
-Set these environment variables in your CI/CD pipeline or Vault:
-
-```bash
-LOG_ANALYSIS_SLACK_WEBHOOK=https://hooks.slack.com/workflows/T.../A.../...
-LOG_ANALYSIS_SLACK_CHANNEL=C06HQR8HN0L  # Channel ID, not #channel-name
-```
-
-#### 4. Enable in Config
-
-```yaml
-tests:
-  enableSlackNotify: true
-logAnalysis:
-  enableAnalysis: true
-```
-
-### Environment Variables
-
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `LOG_ANALYSIS_SLACK_WEBHOOK` | Yes | Workflow webhook URL from step 1 |
-| `LOG_ANALYSIS_SLACK_CHANNEL` | Yes | Channel ID (starts with `C`) |
+**Note:** The code sends fallback messages (e.g., "Test output logs not available") when data is unavailable. This ensures the workflow is resilient to version drift between code and workflow changes.
 
 ### Message Format
 
-**Summary (Initial Message):**
+**Summary (Initial Message - What Failed):**
 ```
 :failed: Pipeline Failed at E2E Test
-
-====== ☸️ Cluster Information ======
-• Cluster ID: `abc-123`
-• Name: `my-cluster`
-• Version: `4.20`
-• Provider: `aws`
-• Expiration: `2026-01-28T10:00:00Z`
 
 ====== 🧪 Test Suite Information ======
 • Image: `quay.io/openshift/osde2e-tests`
@@ -148,7 +99,7 @@ logAnalysis:
 • Environment: `stage`
 ```
 
-**Analysis (First Reply):**
+**Analysis (First Reply - Briefly Why):**
 ```
 ====== 🔍 Possible Cause ======
 <AI-generated root cause analysis>
@@ -158,13 +109,23 @@ logAnalysis:
 2. <recommendation 2>
 ```
 
-**Extended Logs (Second Reply):**
+**Extended Logs (Second Reply - Evidence):**
 ```
 Found 3 test failure(s):
 
 [FAILED] test description
 <failure context lines>
 ...
+```
+
+**Cluster Details (Third Reply - For Debugging):**
+```
+====== ☸️ Cluster Information ======
+• Cluster ID: `abc-123`
+• Name: `my-cluster`
+• Version: `4.20`
+• Provider: `aws`
+• Expiration: `2026-01-28T10:00:00Z`
 ```
 
 ### Testing
@@ -198,30 +159,35 @@ The reporter sends this JSON payload to the Slack Workflow:
 ```json
 {
   "channel": "C06HQR8HN0L",
-  "summary": "Pipeline Failed at E2E Test\n\n# Cluster Info...",
+  "summary": "Pipeline Failed at E2E Test\n\n# Test Suite Info...",
   "analysis": "# Possible Cause\n...",
   "extended_logs": "Found 3 test failure(s):\n...",
+  "cluster_details": "# Cluster Information\nCluster ID: abc-123\n...",
   "image": "quay.io/openshift/osde2e:abc123",
   "env": "stage",
   "commit": "abc123"
 }
 ```
 
-### Troubleshooting
+## Implementation Notes
 
-**Workflow not posting threaded messages:**
-- Verify webhook URL is from the workflow (not a legacy incoming webhook)
-- Workflow URLs contain `/workflows/` in the path
-- Legacy incoming webhook URLs contain `/services/` instead
+**Workflow vs Legacy Webhooks:**
+- Workflow webhooks use `/workflows/` in the URL path
+- Legacy incoming webhooks use `/services/` instead
+- The code uses workflow webhooks to support threaded messages
 
-**Channel not receiving messages:**
-- Ensure you're using the channel ID (starts with `C`), not channel name
-- Channel ID is case-sensitive
+**Payload Limits:**
+- Maximum field length: 30KB per field (enforced by `maxWorkflowFieldLength` constant)
+- Content exceeding limits is truncated with a notice
+- Slack workflows handle much larger payloads than legacy webhooks
 
-**Missing fields in Slack message:**
-- Check that all required fields are present: `channel`, `summary`, `analysis`
-- Verify environment variables are set correctly
+**Fallback Behavior:**
+- All optional fields provide fallback messages when data is unavailable
+- This ensures resilience to version drift between code and workflow changes
+- Required fields: `channel`, `summary`, `analysis`
 
-**Analysis too long:**
-- The workflow handles message splitting automatically
-- Payload limits: 30KB per field (enforced by code)
+**Log Extraction Strategy:**
+- For logs ≤250 lines: return full content
+- For logs >250 lines: extract up to 3 failure blocks (max 30 lines each)
+- Failure detection: `[FAILED]` markers and `ERROR`/`Error`/`error` strings
+- Block deduplication: skip-ahead logic prevents overlapping extractions

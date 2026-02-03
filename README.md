@@ -327,6 +327,61 @@ that ran and statistics about them (e.g. pass/fail, duration). These XML files w
 used by external applications to present metrics and data for others to see into. An example of
 this is they are used to present data in [TestGrid Dashboards][TestGrid Dashboard].
 
+## Slack Notifications
+
+OSDe2e can send AI-powered failure analysis to Slack when tests fail. Each test suite can notify a different Slack channel with failure details, analysis, and logs.
+
+### Setup
+
+**1. Add Workflow to Your Slack Channel**
+
+Each team adds the shared E2E Test Notifications workflow to their channel:
+
+1. Open the workflow: https://slack.com/shortcuts/Ft09RL7M2AMV/60f07b46919da20d103806a8f5bba094
+2. Click **Add to Slack**
+3. Select your destination channel
+4. Copy the webhook URL (starts with `https://hooks.slack.com/workflows/...`)
+
+**2. Get Your Channel ID**
+
+Right-click your channel → **View channel details** → copy the channel ID (starts with `C`, e.g., `C06HQR8HN0L`)
+
+**3. Configure Test Suites**
+
+Set `TEST_SUITES_YAML` with your test images, webhook URLs, and Slack channel IDs:
+
+```bash
+export TEST_SUITES_YAML='
+- image: quay.io/openshift/osde2e-tests:latest
+  slackWebhook: https://hooks.slack.com/workflows/T.../A.../...
+  slackChannel: C06HQR8HN0L
+- image: quay.io/openshift/custom-tests:v1.0
+  slackWebhook: https://hooks.slack.com/workflows/T.../B.../...
+  slackChannel: C07ABC123XY
+'
+```
+
+**4. Enable Notifications**
+
+Enable Slack notifications in your config:
+
+```yaml
+tests:
+  enableSlackNotify: true
+logAnalysis:
+  enableAnalysis: true
+```
+
+### What You'll Receive
+
+When tests fail, you'll get a threaded Slack message with:
+1. **Main message**: Test suite info (what failed)
+2. **Reply 1**: AI analysis (why it failed)
+3. **Reply 2**: Test failure logs (evidence)
+4. **Reply 3**: Cluster details (for debugging)
+
+For implementation details, see [internal/reporter/README.md](internal/reporter/README.md).
+
 ## CI Jobs
 
 Periodic jobs are run daily validating Managed OpenShift clusters, using

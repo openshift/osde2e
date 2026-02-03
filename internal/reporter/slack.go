@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	commonslack "github.com/openshift/osde2e/pkg/common/slack"
+	"github.com/openshift/osde2e/pkg/common/util"
 )
 
 const (
@@ -287,57 +288,56 @@ func (s *SlackReporter) formatAnalysisContent(content string) string {
 	return formatted.String()
 }
 
-// readTestOutput reads the test stdout from test_output.txt, test_output.log, or build-log.txt
+// readTestOutput reads the test stdout from test_output.log
 func (s *SlackReporter) readTestOutput(reportDir string) string {
-	for _, filename := range []string{"test_output.txt", "test_output.log", "build-log.txt"} {
-		filePath := filepath.Join(reportDir, filename)
-		if content, err := os.ReadFile(filepath.Clean(filePath)); err == nil {
-			lines := strings.Split(strings.TrimRight(string(content), "\n"), "\n")
-			totalLines := len(lines)
+	filePath := filepath.Join(reportDir, "test_output.log")
+	if content, err := os.ReadFile(filepath.Clean(filePath)); err == nil {
+		lines := strings.Split(strings.TrimRight(string(content), "\n"), "\n")
+		totalLines := len(lines)
 
-			if totalLines <= fullOutputThreshold {
-				return string(content)
-			}
+		if totalLines <= fullOutputThreshold {
+			return string(content)
+		}
 
-			// For large logs, extract only failure blocks - this is what matters
-			failureBlocks := s.extractFailureBlocks(lines, 0, totalLines)
-			if len(failureBlocks) > 0 {
-				var result strings.Builder
-				result.WriteString("======  Log Extract ======\n")
-				result.WriteString(fmt.Sprintf("Found %d test failure(s):\n\n", len(failureBlocks)))
-				for i, block := range failureBlocks {
-					if i > 0 {
-						result.WriteString("\n---\n\n")
-					}
-					result.WriteString(block)
-				}
-				return result.String()
-			}
-
-			// No failures found, return summary section
-			lastN := finalSummaryLines
+		// For large logs, extract only failure blocks - this is what matters
+		failureBlocks := s.extractFailureBlocks(lines, 0, totalLines)
+		if len(failureBlocks) > 0 {
 			var result strings.Builder
-			result.WriteString("No [FAILED] markers found. Showing final output:\n\n")
-			startIdx := totalLines - lastN
-			if startIdx < 0 {
-				startIdx = 0
-			}
-			for i := startIdx; i < totalLines; i++ {
-				result.WriteString(lines[i])
-				result.WriteString("\n")
+			result.WriteString("======  Log Extract ======\n")
+			result.WriteString(fmt.Sprintf("Found %d test failure(s):\n\n", len(failureBlocks)))
+			for i, block := range failureBlocks {
+				if i > 0 {
+					result.WriteString("\n---\n\n")
+				}
+				result.WriteString(block)
 			}
 			return result.String()
 		}
+
+		// No failures or errors found, return summary section
+		lastN := finalSummaryLines
+		var result strings.Builder
+		result.WriteString("No [FAILED] or ERROR markers found. Showing final output:\n\n")
+		startIdx := totalLines - lastN
+		if startIdx < 0 {
+			startIdx = 0
+		}
+		for i := startIdx; i < totalLines; i++ {
+			result.WriteString(lines[i])
+			result.WriteString("\n")
+		}
+		return result.String()
 	}
 	return ""
 }
 
-// extractFailureBlocks finds [FAILED] test blocks and extracts them with context
+// extractFailureBlocks finds [FAILED] test blocks and ERROR lines, then extracts them with context
 func (s *SlackReporter) extractFailureBlocks(lines []string, startIdx, endIdx int) []string {
 	var blocks []string
 
 	for i := startIdx; i < endIdx && len(blocks) < maxFailureBlocks; i++ {
-		if strings.Contains(lines[i], "[FAILED]") || strings.Contains(lines[i], "• [FAILED]") {
+		line := lines[i]
+		if util.ContainsFailureMarker(line) || util.ContainsErrorMarker(line) {
 			var block strings.Builder
 
 			start := i - failureContextLines

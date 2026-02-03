@@ -13,6 +13,7 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/joshdk/go-junit"
 	"github.com/openshift/osde2e/internal/sanitizer"
+	"github.com/openshift/osde2e/pkg/common/util"
 )
 
 type Aggregator struct {
@@ -277,8 +278,7 @@ func extractErrorsFromLogFile(logFile string) (string, error) {
 	// use string builder to collect errors
 	var errors strings.Builder
 	for _, line := range lines {
-		// Check all case variants directly - fastest approach
-		if strings.Contains(line, "error") || strings.Contains(line, "Error") || strings.Contains(line, "ERROR") {
+		if util.ContainsErrorMarker(line) {
 			errors.WriteString(line)
 			errors.WriteString("\n") // Add newline separator
 		}
