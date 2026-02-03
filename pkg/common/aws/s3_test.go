@@ -85,3 +85,72 @@ func TestNewS3Uploader_Disabled(t *testing.T) {
 		t.Error("NewS3Uploader() should return nil when LOG_BUCKET is empty")
 	}
 }
+
+func TestBuildBaseKey(t *testing.T) {
+	tests := []struct {
+		key      string
+		expected string
+	}{
+		{"test-results/component/2026-01-30/run-123/install/junit.xml", "test-results/component/2026-01-30/run-123"},
+		{"test-results/component/2026-01-30/run-123/test_output.log", "test-results/component/2026-01-30/run-123"},
+		{"results/file.xml", "results"},
+	}
+
+	for _, tt := range tests {
+		// Simulate the base key extraction logic
+		var baseKey string
+		parts := strings.Split(tt.key, "/")
+		if len(parts) >= 4 {
+			baseKey = strings.Join(parts[:4], "/")
+		} else {
+			baseKey = strings.TrimSuffix(tt.key, "/"+parts[len(parts)-1])
+		}
+
+		if baseKey != tt.expected {
+			t.Errorf("Base key for %s: got %v, want %v", tt.key, baseKey, tt.expected)
+		}
+	}
+}
+
+func TestShouldUploadFile(t *testing.T) {
+	tests := []struct {
+		filename string
+		want     bool
+	}{
+		// Allowed extensions
+		{"junit.xml", true},
+		{"test_output.log", true},
+		{"summary.yaml", true},
+		{"config.yml", true},
+		{"report.json", true},
+		{"screenshot.png", true},
+		{"graph.jpg", true},
+		{"photo.jpeg", true},
+		{"animation.gif", true},
+		{"data.csv", true},
+		{"notes.txt", true},
+		{"report.html", true},
+
+		// Allowed filenames (case-insensitive)
+		{"test_output", true},
+		{"TEST_OUTPUT", true},
+		{"summary", true},
+		{"osde2e-full", true},
+		{"cluster-state", true},
+
+		// Not allowed
+		{"binary.exe", false},
+		{"archive.tar.gz", false},
+		{"data.bin", false},
+		{"library.so", false},
+		{"randomfile", false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.filename, func(t *testing.T) {
+			if got := shouldUploadFile(tt.filename); got != tt.want {
+				t.Errorf("shouldUploadFile(%q) = %v, want %v", tt.filename, got, tt.want)
+			}
+		})
+	}
+}

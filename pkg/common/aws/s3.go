@@ -1,6 +1,8 @@
 package aws
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"io/fs"
 	"log"
@@ -185,12 +187,31 @@ func (u *S3Uploader) BuildS3Key() string {
 		jobID = fmt.Sprintf("run-%d", time.Now().Unix())
 	}
 
-	// path.Join handles empty strings correctly and always uses forward slashes
 	return path.Join(u.category, u.component, date, jobID)
 }
 
-// UploadDirectory uploads all files from a directory to S3.
-// Returns a list of upload results with S3 URIs and presigned URLs.
+// allowedExtensions defines file types to upload (prevents binaries, temp files, etc.)
+var allowedExtensions = map[string]bool{
+	".xml": true, ".log": true, ".yaml": true, ".yml": true, ".json": true,
+	".png": true, ".jpg": true, ".jpeg": true, ".gif": true,
+	".csv": true, ".txt": true, ".html": true,
+}
+
+// allowedFilenames are uploaded regardless of extension.
+var allowedFilenames = map[string]bool{
+	"test_output": true, "summary": true, "osde2e-full": true, "cluster-state": true,
+}
+
+func shouldUploadFile(filename string) bool {
+	ext := strings.ToLower(filepath.Ext(filename))
+	if allowedExtensions[ext] {
+		return true
+	}
+	baseName := strings.ToLower(strings.TrimSuffix(filepath.Base(filename), ext))
+	return allowedFilenames[baseName]
+}
+
+// UploadDirectory uploads files matching allowed extensions to S3.
 func (u *S3Uploader) UploadDirectory(srcDir string) ([]S3UploadResult, error) {
 	if u == nil {
 		return nil, nil
@@ -198,6 +219,7 @@ func (u *S3Uploader) UploadDirectory(srcDir string) ([]S3UploadResult, error) {
 
 	baseKey := u.BuildS3Key()
 	var results []S3UploadResult
+	var skippedCount int
 
 	log.Printf("Starting S3 upload from %s to %s", srcDir, CreateS3URL(u.bucket, baseKey))
 
@@ -205,47 +227,45 @@ func (u *S3Uploader) UploadDirectory(srcDir string) ([]S3UploadResult, error) {
 		if err != nil {
 			return err
 		}
-
 		if d.IsDir() {
 			return nil
 		}
 
-		// Get relative path from source directory
 		relPath, err := filepath.Rel(srcDir, filePath)
 		if err != nil {
 			return fmt.Errorf("failed to get relative path: %w", err)
 		}
 
-		// Skip hidden files and marker files
+		// Skip hidden files
 		if strings.HasPrefix(filepath.Base(relPath), ".") {
 			return nil
 		}
 
-		// Construct S3 key using path.Join (always uses forward slashes, correct for S3)
-		s3Key := path.Join(baseKey, relPath)
-
-		// Read file
-		file, err := os.Open(filePath)
-		if err != nil {
-			log.Printf("Warning: failed to open file %s: %v", filePath, err)
-			return nil // Continue with other files
-		}
-		defer file.Close()
-
-		// Get file info for size
-		fileInfo, err := file.Stat()
-		if err != nil {
-			log.Printf("Warning: failed to stat file %s: %v", filePath, err)
+		if !shouldUploadFile(filePath) {
+			skippedCount++
 			return nil
 		}
 
-		// Determine content type using standard mime package
+		s3Key := path.Join(baseKey, relPath)
+
+		file, err := os.Open(filePath)
+		if err != nil {
+			log.Printf("Warning: failed to open %s: %v", filePath, err)
+			return nil
+		}
+		defer file.Close()
+
+		fileInfo, err := file.Stat()
+		if err != nil {
+			log.Printf("Warning: failed to stat %s: %v", filePath, err)
+			return nil
+		}
+
 		contentType := mime.TypeByExtension(filepath.Ext(filePath))
 		if contentType == "" {
 			contentType = "application/octet-stream"
 		}
 
-		// Upload file using cached uploader for better performance
 		_, err = u.uploader.Upload(&s3manager.UploadInput{
 			Bucket:      aws.String(u.bucket),
 			Key:         aws.String(s3Key),
@@ -254,20 +274,17 @@ func (u *S3Uploader) UploadDirectory(srcDir string) ([]S3UploadResult, error) {
 		})
 		if err != nil {
 			log.Printf("Warning: failed to upload %s: %v", filePath, err)
-			return nil // Continue with other files
+			return nil // Continue with other files; partial upload is better than none
 		}
 
-		// Generate presigned URL
 		presignedURL, err := u.generatePresignedURL(s3Key)
 		if err != nil {
 			log.Printf("Warning: failed to generate presigned URL for %s: %v", s3Key, err)
 			presignedURL = ""
 		}
 
-		// Reuse existing CreateS3URL helper
-		s3URI := CreateS3URL(u.bucket, s3Key)
 		results = append(results, S3UploadResult{
-			S3URI:        s3URI,
+			S3URI:        CreateS3URL(u.bucket, s3Key),
 			PresignedURL: presignedURL,
 			Key:          s3Key,
 			Size:         fileInfo.Size(),
@@ -280,10 +297,10 @@ func (u *S3Uploader) UploadDirectory(srcDir string) ([]S3UploadResult, error) {
 		return results, fmt.Errorf("error walking directory: %w", err)
 	}
 
+	log.Printf("S3 upload complete: %d files uploaded, %d files skipped", len(results), skippedCount)
 	return results, nil
 }
 
-// generatePresignedURL creates a presigned URL for accessing an S3 object.
 func (u *S3Uploader) generatePresignedURL(key string) (string, error) {
 	req, _ := u.s3Client.GetObjectRequest(&s3.GetObjectInput{
 		Bucket: aws.String(u.bucket),
@@ -292,7 +309,7 @@ func (u *S3Uploader) generatePresignedURL(key string) (string, error) {
 	return req.Presign(u.urlExpiry)
 }
 
-// LogS3UploadSummary prints a summary of uploaded files with their access URLs.
+// LogS3UploadSummary prints upload summary and writes artifact URLs for downstream systems.
 func LogS3UploadSummary(results []S3UploadResult) {
 	if len(results) == 0 {
 		log.Println("No files were uploaded to S3")
@@ -302,25 +319,80 @@ func LogS3UploadSummary(results []S3UploadResult) {
 	log.Println("=== S3 Upload Summary ===")
 	log.Printf("Uploaded %d files", len(results))
 
-	// Calculate total size
 	var totalSize int64
 	for _, r := range results {
 		totalSize += r.Size
 	}
 	log.Printf("Total size: %d bytes", totalSize)
 
-	// Print presigned URLs for key files (JUnit XML, logs)
 	log.Println("\n=== Presigned URLs (valid for 7 days) ===")
 	for _, r := range results {
-		// .log suffix covers test_output.log, no need for separate check
 		if strings.HasSuffix(r.Key, ".xml") || strings.HasSuffix(r.Key, ".log") {
 			log.Printf("%s:\n  %s", filepath.Base(r.Key), r.PresignedURL)
 		}
 	}
 
-	// Print base S3 URI
 	if len(results) > 0 {
 		baseKey := path.Dir(results[0].Key)
 		log.Printf("\nAll artifacts: %s", CreateS3URL(viper.GetString(config.Tests.LogBucket), baseKey))
+	}
+
+	writeArtifactsJSON(results)
+}
+
+// ArtifactsJSON is written to stdout and /dev/termination-log for downstream consumption.
+// Only key URLs are included due to k8s termination message 4KB limit.
+type ArtifactsJSON struct {
+	S3URI    string `json:"s3Uri"`
+	JUnitURL string `json:"junitUrl,omitempty"`
+	LogsURL  string `json:"logsUrl,omitempty"`
+}
+
+func writeArtifactsJSON(results []S3UploadResult) {
+	if len(results) == 0 {
+		return
+	}
+
+	// Extract base path: category/component/date/job-id
+	var baseKey string
+	parts := strings.Split(results[0].Key, "/")
+	if len(parts) >= 4 {
+		baseKey = strings.Join(parts[:4], "/")
+	} else {
+		baseKey = path.Dir(results[0].Key)
+	}
+
+	artifacts := ArtifactsJSON{
+		S3URI: CreateS3URL(viper.GetString(config.Tests.LogBucket), baseKey),
+	}
+
+	for _, r := range results {
+		baseName := filepath.Base(r.Key)
+		if strings.HasPrefix(baseName, "junit") && strings.HasSuffix(baseName, ".xml") && artifacts.JUnitURL == "" {
+			artifacts.JUnitURL = r.PresignedURL
+		}
+		if (baseName == "test_output.log" || baseName == "osde2e-full.log") && artifacts.LogsURL == "" {
+			artifacts.LogsURL = r.PresignedURL
+		}
+	}
+
+	// SetEscapeHTML(false) keeps presigned URLs valid (prevents & -> \u0026)
+	var buf bytes.Buffer
+	encoder := json.NewEncoder(&buf)
+	encoder.SetEscapeHTML(false)
+	if err := encoder.Encode(artifacts); err != nil {
+		log.Printf("Warning: failed to marshal artifacts JSON: %v", err)
+		return
+	}
+	data := bytes.TrimSpace(buf.Bytes())
+
+	fmt.Printf("\n###OSDE2E_ARTIFACTS_JSON###\n%s\n###END_ARTIFACTS_JSON###\n", string(data))
+	writeTerminationMessage(data)
+}
+
+// writeTerminationMessage writes to /dev/termination-log (k8s job result pattern).
+func writeTerminationMessage(data []byte) {
+	if err := os.WriteFile("/dev/termination-log", data, 0o644); err != nil {
+		log.Printf("Note: Could not write termination message: %v", err)
 	}
 }
