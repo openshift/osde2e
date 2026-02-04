@@ -102,7 +102,7 @@ func (e *Engine) Run(ctx context.Context) (*Result, error) {
 		return nil, fmt.Errorf("data collection failed: %w", err)
 	}
 
-	toolRegistry := tools.NewRegistry(data)
+	toolRegistry := tools.NewRegistry(data.LogArtifacts)
 
 	vars := make(map[string]any)
 	vars["Artifacts"] = data.LogArtifacts

@@ -53,11 +53,9 @@ line 5`
 	err := os.WriteFile(testFile, []byte(testContent), 0o644)
 	require.NoError(t, err)
 
-	// Create aggregated data with the test file
-	data := &aggregator.AggregatedData{
-		LogArtifacts: []aggregator.LogEntry{
-			{Source: testFile},
-		},
+	// Create log artifacts with the test file
+	logArtifacts := []aggregator.LogEntry{
+		{Source: testFile},
 	}
 
 	tool := &readFileTool{}
@@ -68,7 +66,7 @@ line 5`
 			"path": testFile,
 		}
 
-		result, err := tool.Execute(ctx, params, data)
+		result, err := tool.Execute(ctx, params, logArtifacts)
 		require.NoError(t, err)
 
 		content := result.(string)
@@ -82,7 +80,7 @@ line 5`
 			"start": 3,
 		}
 
-		result, err := tool.Execute(ctx, params, data)
+		result, err := tool.Execute(ctx, params, logArtifacts)
 		require.NoError(t, err)
 
 		content := result.(string)
@@ -99,7 +97,7 @@ line 5`
 			"stop":  4,
 		}
 
-		result, err := tool.Execute(ctx, params, data)
+		result, err := tool.Execute(ctx, params, logArtifacts)
 		require.NoError(t, err)
 
 		content := result.(string)
@@ -116,7 +114,7 @@ line 5`
 			"stop": 3,
 		}
 
-		result, err := tool.Execute(ctx, params, data)
+		result, err := tool.Execute(ctx, params, logArtifacts)
 		require.NoError(t, err)
 
 		content := result.(string)
@@ -132,7 +130,7 @@ line 5`
 			"path": "/nonexistent/file.log",
 		}
 
-		_, err := tool.Execute(ctx, params, data)
+		_, err := tool.Execute(ctx, params, logArtifacts)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "not in the collected artifacts")
 	})
@@ -140,7 +138,7 @@ line 5`
 	t.Run("missing path parameter", func(t *testing.T) {
 		params := map[string]any{}
 
-		_, err := tool.Execute(ctx, params, data)
+		_, err := tool.Execute(ctx, params, logArtifacts)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "parameter 'path' is required")
 	})
@@ -151,7 +149,7 @@ line 5`
 			"start": 0,
 		}
 
-		_, err := tool.Execute(ctx, params, data)
+		_, err := tool.Execute(ctx, params, logArtifacts)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "start line must be >= 1")
 	})
@@ -162,7 +160,7 @@ line 5`
 			"stop": 0,
 		}
 
-		_, err := tool.Execute(ctx, params, data)
+		_, err := tool.Execute(ctx, params, logArtifacts)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "stop line must be >= 1")
 	})
@@ -174,7 +172,7 @@ line 5`
 			"stop":  3,
 		}
 
-		_, err := tool.Execute(ctx, params, data)
+		_, err := tool.Execute(ctx, params, logArtifacts)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "start line (5) cannot be greater than stop line (3)")
 	})
@@ -186,21 +184,21 @@ line 5`
 			"stop":  15,
 		}
 
-		result, err := tool.Execute(ctx, params, data)
+		result, err := tool.Execute(ctx, params, logArtifacts)
 		require.NoError(t, err)
 
 		content := result.(string)
 		assert.Contains(t, content, "No lines found in range 10-15")
 	})
 
-	t.Run("nil data", func(t *testing.T) {
+	t.Run("nil log artifacts", func(t *testing.T) {
 		params := map[string]any{
 			"path": testFile,
 		}
 
 		_, err := tool.Execute(ctx, params, nil)
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "no data provided to tool")
+		assert.Contains(t, err.Error(), "no log artifacts provided to tool")
 	})
 }
 

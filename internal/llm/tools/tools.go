@@ -13,20 +13,20 @@ type Tool interface {
 	Name() string
 	Description() string
 	Schema() *genai.Schema
-	Execute(ctx context.Context, params map[string]any, data *aggregator.AggregatedData) (any, error)
+	Execute(ctx context.Context, params map[string]any, logArtifacts []aggregator.LogEntry) (any, error)
 }
 
 // Registry manages available tools with their dependencies
 type Registry struct {
-	tools map[string]Tool
-	data  *aggregator.AggregatedData
+	tools        map[string]Tool
+	logArtifacts []aggregator.LogEntry
 }
 
-// NewRegistry creates a new tool registry with the provided data
-func NewRegistry(data *aggregator.AggregatedData) *Registry {
+// NewRegistry creates a new tool registry with the provided log artifacts
+func NewRegistry(logArtifacts []aggregator.LogEntry) *Registry {
 	r := &Registry{
-		tools: make(map[string]Tool),
-		data:  data,
+		tools:        make(map[string]Tool),
+		logArtifacts: logArtifacts,
 	}
 
 	// Register production tools only
@@ -63,7 +63,7 @@ func (r *Registry) Execute(ctx context.Context, name string, params map[string]a
 	if !exists {
 		return nil, fmt.Errorf("unknown tool: %s", name)
 	}
-	return tool.Execute(ctx, params, r.data)
+	return tool.Execute(ctx, params, r.logArtifacts)
 }
 
 // HandleToolCall processes a function call and returns the appropriate content
