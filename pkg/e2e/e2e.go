@@ -199,7 +199,12 @@ func (o *E2EOrchestrator) AnalyzeLogs(ctx context.Context, testErr error) error 
 		Version:       viper.GetString(config.Cluster.Version),
 	}
 	if viper.GetBool(config.Tests.EnableSlackNotify) {
-		notificationConfig = reporter.BuildNotificationConfig(viper.GetString(config.LogAnalysis.SlackWebhook), viper.GetString(config.LogAnalysis.SlackChannel))
+		notificationConfig = reporter.BuildNotificationConfig(
+			viper.GetString(config.LogAnalysis.SlackWebhook),
+			viper.GetString(config.LogAnalysis.SlackChannel),
+			clusterInfo,
+			reportDir,
+		)
 	}
 
 	engineConfig := &analysisengine.Config{

@@ -32,3 +32,13 @@ func OpenshiftVersionToSemver(openshiftVersion string) (*semver.Version, error) 
 func SemverToOpenshiftVersion(version *semver.Version) string {
 	return VersionPrefix + version.String()
 }
+
+// ContainsErrorMarker checks if a line contains an error marker (error, Error, or ERROR)
+func ContainsErrorMarker(line string) bool {
+	return strings.Contains(line, "error") || strings.Contains(line, "Error") || strings.Contains(line, "ERROR")
+}
+
+// ContainsFailureMarker checks if a line contains a test failure marker
+func ContainsFailureMarker(line string) bool {
+	return strings.Contains(line, "[FAILED]") || strings.Contains(line, "• [FAILED]")
+}
