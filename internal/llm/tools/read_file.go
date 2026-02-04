@@ -61,19 +61,19 @@ func (t *readFileTool) Schema() *genai.Schema {
 	}
 }
 
-func (t *readFileTool) Execute(ctx context.Context, params map[string]any, data *aggregator.AggregatedData) (any, error) {
+func (t *readFileTool) Execute(ctx context.Context, params map[string]any, logArtifacts []aggregator.LogEntry) (any, error) {
 	// Extract path parameter
 	path, err := extractString(params, "path")
 	if err != nil {
 		return nil, err
 	}
 
-	if data == nil {
-		return nil, fmt.Errorf("no data provided to tool")
+	if logArtifacts == nil {
+		return nil, fmt.Errorf("no log artifacts provided to tool")
 	}
 
 	// Validate that the file path exists in the collected artifacts
-	if !isValidLogFile(path, data.LogArtifacts) {
+	if !isValidLogFile(path, logArtifacts) {
 		return nil, fmt.Errorf("file path %s is not in the collected artifacts", path)
 	}
 
