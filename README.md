@@ -46,9 +46,8 @@ When osde2e is invoked, the standard workflow is followed:
 
 Prior to running osde2e, make sure you meet the minimal prerequisites defined below:
 
-* Navigate to [OpenShift Cluster Manager (OCM)][OpenShift Offline Token] to obtain
-  an OpenShift offline token.
-  * Save your token into the environment variable `OCM_TOKEN` for later usage
+* Navigate to [OpenShift Cluster Manager (OCM)] to create a service account with client ID and secret.
+  * Save your client ID into the environment variable `OCM_CLIENT_ID` and client secret into `OCM_CLIENT_SECRET` for later usage
 * Verify (submit a request if required to [ocm resources]) your Red Hat account
   has adequate quota for deploying clusters based on your preferred deployment type
 * A go workspace running the minimal version defined in the [go.mod](go.mod)
@@ -102,7 +101,7 @@ you wish to validate. It provides four ways for you to provide input
 * Environment variables
 * Command line options
 
-*It is highly recommended to leave sensitive settings as environment variables (e.g. `OCM_TOKEN`).
+*It is highly recommended to leave sensitive settings as environment variables (e.g. `OCM_CLIENT_ID`, `OCM_CLIENT_SECRET`).
 This way the chance of these settings defined in a custom config file are not checked into
 source control.*
 
@@ -170,7 +169,8 @@ Please refer to the [config package] for exact environment variable names.
 Below is an example to spin up a OSD cluster and test it:
 
 ```shell
-OCM_TOKEN=<ocm-token> \
+OCM_CLIENT_ID=<ocm-client-id> \
+OCM_CLIENT_SECRET=<ocm-client-secret> \
 OSD_ENV=prod \
 CLUSTER_NAME=my-cluster \
 CLUSTER_VERSION=4.12.0 \
@@ -180,13 +180,15 @@ osde2e test
 These also can be combined with pre-canned default configs and custom configs:
 
 ```shell
-OCM_TOKEN=<ocm-token> \
+OCM_CLIENT_ID=<ocm-client-id> \
+OCM_CLIENT_SECRET=<ocm-client-secret> \
 CLUSTER_VERSION=4.12.0 \
 osde2e test --configs prod,e2e-suite
 ```
 
 ```shell
-OCM_TOKEN=<ocm-token> \
+OCM_CLIENT_ID=<ocm-client-id> \
+OCM_CLIENT_SECRET=<ocm-client-secret> \
 CLUSTER_VERSION=4.12.0 \
 osde2e test --configs prod,e2e-suite
 ```
@@ -394,7 +396,6 @@ Periodic jobs are run daily validating Managed OpenShift clusters, using
 [OSDE2E Quay Image]: quay.io/redhat-services-prod/osde2e-cicada-tenant/osde2e
 [OpenShift Dedicated]: https://docs.openshift.com/dedicated/welcome/index.html
 [OSDE2E Test Harness]: https://github.com/openshift/osde2e-example-test-harness
-[OpenShift Offline Token]:https://cloud.redhat.com/openshift/token
 [OSDE2E ProwGen Job Config]: https://github.com/openshift/release/blob/master/ci-operator/config/openshift/osde2e/openshift-osde2e-main.yaml
 [TestGrid Dashboard]: https://testgrid.k8s.io/redhat-openshift-osd
 [Writing Tests]:/docs/Writing-Tests.md
