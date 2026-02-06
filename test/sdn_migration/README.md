@@ -20,7 +20,7 @@ Below outlines what the test suite is capable of:
     * Perform upgrade
     * Perform post upgrade health checks
         * Runs osd-cluster-ready health check job
-    * Perform sdn to ovn migration 
+    * Perform sdn to ovn migration
     * Perform post migration health checks
         * Runs osd-cluster-ready health check job
 
@@ -42,13 +42,14 @@ performed. For example:
 * The proxy needs to be created manually if end-to-end tests are going to be run against a cluster with a cluster-wide proxy
 
 ### Run Ginkgo
-*NOTE:CLUSTER_ID is optional (internal ID), and TEST_HTTP_PROXY, TEST_HTTPS_PROXY, USER_CA_BUNDLE, and 
+*NOTE:CLUSTER_ID is optional (internal ID), and TEST_HTTP_PROXY, TEST_HTTPS_PROXY, USER_CA_BUNDLE, and
 SUBNETS are also optional unless end-to-end tests need to be run against a cluster with a cluster-wide proxy
 ```shell
 AWS_REGION=<AWS_REGION> \
 AWS_SECRET_ACCESS_KEY=<AWS_SECRET_ACCESS_KEY> \
 AWS_ACCESS_KEY_ID=<AWS_ACCESS_KEY_ID> \
-OCM_TOKEN=<OCM_TOKEN> \
+OCM_CLIENT_ID=<OCM_CLIENT_ID> \
+OCM_CLIENT_SECRET=<OCM_CLIENT_SECRET> \
 CLUSTER_ID=<CLUSTER_ID> \
 CLUSTER_NAME = <CLUSTER_NAME> \
 REPLICAS=<REPLICAS>\
@@ -57,5 +58,5 @@ TEST_HTTPS_PROXY=<TEST_HTTPS_PROXY> \
 USER_CA_BUNDLE=<USER_CA_BUNDLE> \
 SUBNET_IDS=<SUBNET_IDS> \
 REPORT_DIR='/tmp/osde2e-report' \
-ginkgo run 
+ginkgo run
 ```
