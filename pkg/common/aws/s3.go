@@ -3,6 +3,7 @@ package aws
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/fs"
 	"log"
@@ -25,6 +26,9 @@ const (
 	velerosubstr = "managed-velero"
 	logsBucket   = "osde2e-logs"
 )
+
+// ErrS3Disabled is returned when S3 upload is disabled (no bucket configured)
+var ErrS3Disabled = errors.New("S3 upload disabled: no bucket configured")
 
 // Pre-compiled regex for extracting cluster name from bucket name
 var clusterNameRegex = regexp.MustCompile(`^(osde2e-[^-]+)-`)
@@ -145,7 +149,7 @@ func NewS3Uploader(component string) (*S3Uploader, error) {
 	bucket := viper.GetString(config.Tests.LogBucket)
 	if bucket == "" {
 		// S3 upload disabled - no bucket configured
-		return nil, nil
+		return nil, ErrS3Disabled
 	}
 
 	// Ensure region is set (default to us-east-1 for osde2e-loki-logs bucket)

@@ -1,6 +1,7 @@
 package aws
 
 import (
+	"errors"
 	"strings"
 	"testing"
 
@@ -78,11 +79,11 @@ func TestNewS3Uploader_Disabled(t *testing.T) {
 	viper.Set(config.Tests.LogBucket, "")
 
 	uploader, err := NewS3Uploader("test-component")
-	if err != nil {
-		t.Errorf("NewS3Uploader() with disabled config returned error: %v", err)
+	if !errors.Is(err, ErrS3Disabled) {
+		t.Errorf("NewS3Uploader() with disabled config should return ErrS3Disabled, got: %v", err)
 	}
 	if uploader != nil {
-		t.Error("NewS3Uploader() should return nil when LOG_BUCKET is empty")
+		t.Error("NewS3Uploader() should return nil uploader when LOG_BUCKET is empty")
 	}
 }
 

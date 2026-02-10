@@ -163,12 +163,14 @@ func (s *Sanitizer) sanitizeContent(content, source string, timestamp time.Time)
 
 	// Perform audit logging asynchronously to avoid blocking
 	if s.auditLog != nil && (matchCount > 0 || !s.config.SkipAuditOnNoMatch) {
-		go s.auditLog.Log(AuditEntry{
-			Timestamp:    timestamp,
-			Source:       source,
-			RulesApplied: rulesApplied,
-			MatchCount:   matchCount,
-		})
+		go func() {
+			_ = s.auditLog.Log(AuditEntry{
+				Timestamp:    timestamp,
+				Source:       source,
+				RulesApplied: rulesApplied,
+				MatchCount:   matchCount,
+			})
+		}()
 	}
 
 	return result, nil

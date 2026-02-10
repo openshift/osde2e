@@ -264,10 +264,10 @@ func runTerraformCommand(command string) (map[string]tfexec.OutputMeta, error) {
 		if err != nil {
 			return nil, fmt.Errorf("terraform destroy failed: %v", err.Error())
 		}
+		return map[string]tfexec.OutputMeta{}, nil
 	default:
 		return nil, fmt.Errorf("unknown command: %s", command)
 	}
-	return nil, nil
 }
 
 func cluterOperatorHealthCheck(ctx context.Context, clusterClient *openshiftclient.Client, logger logr.Logger) error {
