@@ -3,6 +3,7 @@ package aws
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/fs"
 	"log"
@@ -144,7 +145,7 @@ func NewS3Uploader(component string) (*S3Uploader, error) {
 	bucket := viper.GetString(config.Tests.LogBucket)
 	if bucket == "" {
 		// S3 upload disabled - no bucket configured
-		return nil, nil
+		return nil, errors.New("S3 upload disabled: no bucket configured")
 	}
 
 	// Ensure region is set (default to us-east-1)

@@ -569,7 +569,7 @@ func Provision(provider spi.Provider) (*spi.Cluster, error) {
 	if err != nil {
 		if errors.Is(err, ErrReserveFull) {
 			log.Printf("Reserve full, exiting without provisioning")
-			return nil, nil
+			return nil, ErrReserveFull
 		}
 		return nil, fmt.Errorf("failed to set up or retrieve cluster: %v", err)
 	}

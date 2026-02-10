@@ -6,16 +6,19 @@ linters:
   default: none
   enable:
     - copyloopvar
+    - errcheck
     - gocyclo
     - govet
     - ineffassign
     - loggercheck
     - mirror
     - misspell
+    - nilnil
+    - nolintlint
     - staticcheck
     - unconvert
-    - unused
     - unparam
+    - unused
   exclusions:
     generated: lax
     presets:
@@ -32,6 +35,7 @@ linters:
       - third_party$
       - builtin$
       - examples$
+      - pkg/common/concurrentviper/generated\.go$
 formatters:
   enable:
     - gofumpt

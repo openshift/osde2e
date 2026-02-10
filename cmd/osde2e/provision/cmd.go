@@ -1,6 +1,7 @@
 package provision
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/openshift/osde2e/cmd/osde2e/common"
@@ -80,7 +81,6 @@ func init() {
 	_ = viper.BindPFlag(config.Tests.OnlyHealthCheckNodes, Cmd.PersistentFlags().Lookup("only-health-check-nodes"))
 }
 
-//nolint:gocyclo
 func run(cmd *cobra.Command, argv []string) error {
 	var err error
 	if err = common.LoadConfigs(args.configString, "", args.secretLocations); err != nil {
@@ -92,5 +92,8 @@ func run(cmd *cobra.Command, argv []string) error {
 	}
 
 	_, err = clusterutil.Provision(provider)
-	return err
+	if err != nil && !errors.Is(err, clusterutil.ErrReserveFull) {
+		return err
+	}
+	return nil
 }
