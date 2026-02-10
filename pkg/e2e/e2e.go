@@ -166,7 +166,7 @@ func (o *E2EOrchestrator) Execute(ctx context.Context) error {
 	// Run upgrade and post-upgrade tests
 	o.result.UpgradePassed = true
 	if upgradeCluster {
-		if err := o.runUpgrade(ctx); err != nil {
+		if err := o.runUpgrade(); err != nil {
 			o.result.Errors = append(o.result.Errors, err)
 			o.result.UpgradePassed = false
 		}
@@ -444,7 +444,7 @@ func (o *E2EOrchestrator) runTestsInPhase(phaseName, description string) bool {
 }
 
 // runUpgrade performs cluster upgrade and runs post-upgrade tests.
-func (o *E2EOrchestrator) runUpgrade(ctx context.Context) error {
+func (o *E2EOrchestrator) runUpgrade() error {
 	if viper.GetString(config.Kubeconfig.Contents) == "" {
 		return fmt.Errorf("unable to perform upgrade: no kubeconfig found")
 	}

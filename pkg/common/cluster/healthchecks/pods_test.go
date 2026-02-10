@@ -16,11 +16,11 @@ const (
 	ns1 = "openshift-1"
 )
 
-func pod(name, namespace string, label map[string]string, phase v1.PodPhase) *v1.Pod {
+func pod(name string, label map[string]string, phase v1.PodPhase) *v1.Pod {
 	mockPod := &v1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
-			Namespace: namespace,
+			Namespace: ns1,
 			Labels:    label,
 		},
 		Spec: v1.PodSpec{
@@ -74,7 +74,7 @@ func TestCheckPodHealth(t *testing.T) {
 			isHealthy:     false,
 			expectedError: true,
 			objs: []runtime.Object{
-				pod("a", ns1, map[string]string{}, v1.PodFailed),
+				pod("a", map[string]string{}, v1.PodFailed),
 			},
 		},
 		{
@@ -82,12 +82,12 @@ func TestCheckPodHealth(t *testing.T) {
 			isHealthy:     true,
 			expectedError: false,
 			objs: []runtime.Object{
-				pod("running", ns1, map[string]string{}, v1.PodRunning),
-				pod("completed", ns1, map[string]string{}, v1.PodSucceeded),
-				pod("long-job-name", ns1, map[string]string{"job-name": "thisisalongjobnamethatisawhoppingsixtythreecharacterslongtotest"}, v1.PodSucceeded),
-				pod("failed-first-run", ns1, map[string]string{"job-name": "test-job-122"}, v1.PodFailed),
-				pod("but-completed-second-run", ns1, map[string]string{"job-name": "test-job-123"}, v1.PodSucceeded),
-				pod("worked-first-try", ns1, map[string]string{"job-name": "other-job-456"}, v1.PodSucceeded),
+				pod("running", map[string]string{}, v1.PodRunning),
+				pod("completed", map[string]string{}, v1.PodSucceeded),
+				pod("long-job-name", map[string]string{"job-name": "thisisalongjobnamethatisawhoppingsixtythreecharacterslongtotest"}, v1.PodSucceeded),
+				pod("failed-first-run", map[string]string{"job-name": "test-job-122"}, v1.PodFailed),
+				pod("but-completed-second-run", map[string]string{"job-name": "test-job-123"}, v1.PodSucceeded),
+				pod("worked-first-try", map[string]string{"job-name": "other-job-456"}, v1.PodSucceeded),
 			},
 		},
 		{
@@ -95,9 +95,9 @@ func TestCheckPodHealth(t *testing.T) {
 			isHealthy:     false,
 			expectedError: true,
 			objs: []runtime.Object{
-				pod("running-first-pod", ns1, map[string]string{}, v1.PodRunning),
-				pod("but-failed-second-pod", ns1, map[string]string{}, v1.PodFailed),
-				pod("and-failed-again-pod", ns1, map[string]string{}, v1.PodFailed),
+				pod("running-first-pod", map[string]string{}, v1.PodRunning),
+				pod("but-failed-second-pod", map[string]string{}, v1.PodFailed),
+				pod("and-failed-again-pod", map[string]string{}, v1.PodFailed),
 			},
 		},
 	}
@@ -129,7 +129,7 @@ func TestCheckJobPods(t *testing.T) {
 			expectError:         false,
 			expectedPendingPods: 0,
 			pods: []v1.Pod{
-				*pod("a", ns1, map[string]string{"job-name": "image-pruner-124"}, v1.PodSucceeded),
+				*pod("a", map[string]string{"job-name": "image-pruner-124"}, v1.PodSucceeded),
 			},
 		},
 		{
@@ -137,9 +137,9 @@ func TestCheckJobPods(t *testing.T) {
 			expectError:         false,
 			expectedPendingPods: 0,
 			pods: []v1.Pod{
-				*pod("a", ns1, map[string]string{"job-name": "image-pruner-124"}, v1.PodFailed),
-				*pod("b", ns1, map[string]string{"job-name": "image-pruner-125"}, v1.PodFailed),
-				*pod("c", ns1, map[string]string{"job-name": "image-pruner-126"}, v1.PodSucceeded),
+				*pod("a", map[string]string{"job-name": "image-pruner-124"}, v1.PodFailed),
+				*pod("b", map[string]string{"job-name": "image-pruner-125"}, v1.PodFailed),
+				*pod("c", map[string]string{"job-name": "image-pruner-126"}, v1.PodSucceeded),
 			},
 		},
 		{
@@ -147,8 +147,8 @@ func TestCheckJobPods(t *testing.T) {
 			expectError:         false,
 			expectedPendingPods: 1,
 			pods: []v1.Pod{
-				*pod("a", ns1, map[string]string{"job-name": "image-pruner-124"}, v1.PodSucceeded),
-				*pod("b", ns1, map[string]string{"job-name": "image-pruner-125"}, v1.PodPending),
+				*pod("a", map[string]string{"job-name": "image-pruner-124"}, v1.PodSucceeded),
+				*pod("b", map[string]string{"job-name": "image-pruner-125"}, v1.PodPending),
 			},
 		},
 		{
@@ -156,7 +156,7 @@ func TestCheckJobPods(t *testing.T) {
 			expectError:         true,
 			expectedPendingPods: 0,
 			pods: []v1.Pod{
-				*pod("a", ns1, map[string]string{}, v1.PodSucceeded),
+				*pod("a", map[string]string{}, v1.PodSucceeded),
 			},
 		},
 	}

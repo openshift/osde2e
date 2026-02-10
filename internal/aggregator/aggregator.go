@@ -91,11 +91,7 @@ func (a *Aggregator) Collect(ctx context.Context, reportDir string) (*Aggregated
 		collectionErrors = append(collectionErrors, errMsg)
 	}
 
-	if err := a.collectTestResults(data); err != nil {
-		errMsg := fmt.Sprintf("failed to collect test results: %v", err)
-		a.logger.Error(err, "failed to collect test results")
-		collectionErrors = append(collectionErrors, errMsg)
-	}
+	a.collectTestResults(data)
 
 	a.logger.Info("completed artifact collection",
 		"failedTests", len(data.FailedTests),
@@ -134,15 +130,12 @@ func (a *Aggregator) collectLogAnomalies(reportDir string, data *AggregatedData)
 	return nil
 }
 
-func (a *Aggregator) collectTestResults(data *AggregatedData) error {
-	junitFiles, err := a.findJUnitFiles(data)
-	if err != nil {
-		return fmt.Errorf("finding junit files: %w", err)
-	}
+func (a *Aggregator) collectTestResults(data *AggregatedData) {
+	junitFiles := a.findJUnitFiles(data)
 
 	if len(junitFiles) == 0 {
 		a.logger.Info("no junit files found")
-		return nil
+		return
 	}
 
 	type junitResult struct {
@@ -206,8 +199,6 @@ func (a *Aggregator) collectTestResults(data *AggregatedData) error {
 
 	data.TestResults = summary
 	data.FailedTests = failedTests
-
-	return nil
 }
 
 func (a *Aggregator) convertJUnitTest(test junit.Test, suiteName string) FailedTest {
@@ -252,7 +243,7 @@ func (a *Aggregator) collectLogArtifacts(reportDir string, data *AggregatedData)
 	})
 }
 
-func (a *Aggregator) findJUnitFiles(data *AggregatedData) ([]string, error) {
+func (a *Aggregator) findJUnitFiles(data *AggregatedData) []string {
 	var junitFiles []string
 
 	for _, logEntry := range data.LogArtifacts {
@@ -264,7 +255,7 @@ func (a *Aggregator) findJUnitFiles(data *AggregatedData) ([]string, error) {
 		}
 	}
 
-	return junitFiles, nil
+	return junitFiles
 }
 
 func extractErrorsFromLogFile(logFile string) (string, error) {

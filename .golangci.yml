@@ -10,6 +10,7 @@ linters:
     - ineffassign
     - misspell
     - unused
+    - unparam
   exclusions:
     generated: lax
     presets:

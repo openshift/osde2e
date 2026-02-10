@@ -116,18 +116,18 @@ func (v *VersionSelector) setUpgradeVersion() error {
 	}
 
 	upgradeSource := v.Provider.UpgradeSource()
-	releaseName, image, err := v.getUpgradeVersion()
+	releaseName, err := v.getUpgradeVersion()
 	if err != nil {
 		return fmt.Errorf("error selecting an upgrade version: %v", err)
 	}
 
-	if releaseName == "" && image == "" && err == nil {
+	if releaseName == "" && err == nil {
 		log.Printf("No upgrade selector found. Not selecting an upgrade version.")
 		return nil
 	}
 
 	viper.Set(config.Upgrade.ReleaseName, releaseName)
-	viper.Set(config.Upgrade.Image, image)
+	viper.Set(config.Upgrade.Image, "")
 
 	// set upgrade image
 	log.Printf("Selecting version '%s' to be able to upgrade to '%s' using upgrade source '%s'",
@@ -174,7 +174,7 @@ func (v *VersionSelector) getInstallVersion() (*semver.Version, string, error) {
 }
 
 // getUpgradeVersion will get a version based upon available configuration options.
-func (v *VersionSelector) getUpgradeVersion() (string, string, error) {
+func (v *VersionSelector) getUpgradeVersion() (string, error) {
 	var selectedVersionSelector upgradeselectors.Interface = nil
 
 	curPriority := math.MinInt32
@@ -190,7 +190,7 @@ func (v *VersionSelector) getUpgradeVersion() (string, string, error) {
 
 	// If no version selector has been found for an upgrade, assume that an upgrade is not being asked for.
 	if selectedVersionSelector == nil {
-		return "", "", nil
+		return "", nil
 	}
 
 	release, selector, err := selectedVersionSelector.SelectVersion(spi.NewVersionBuilder().Version(v.clusterVersion).Build(), v.versionList)
@@ -199,12 +199,12 @@ func (v *VersionSelector) getUpgradeVersion() (string, string, error) {
 		if err != nil {
 			log.Printf("Error selecting version: %s", err.Error())
 		}
-		return util.NoVersionFound, "", err
+		return util.NoVersionFound, err
 	}
 
 	openshiftRelease := fmt.Sprintf("openshift-v%s", release.Version().Original())
 
 	log.Printf("Selected %s using selector `%s`", openshiftRelease, selector)
 
-	return openshiftRelease, "", err
+	return openshiftRelease, err
 }

@@ -102,7 +102,7 @@ func TestSlackReporter_extractFailureBlocks(t *testing.T) {
 			"line 5",
 		}
 
-		blocks := reporter.extractFailureBlocks(lines, 0, len(lines))
+		blocks := reporter.extractFailureBlocks(lines, len(lines))
 
 		if len(blocks) != 1 {
 			t.Fatalf("expected 1 block, got %d", len(blocks))
@@ -133,7 +133,7 @@ func TestSlackReporter_extractFailureBlocks(t *testing.T) {
 			"end",
 		}
 
-		blocks := reporter.extractFailureBlocks(lines, 0, len(lines))
+		blocks := reporter.extractFailureBlocks(lines, len(lines))
 
 		if len(blocks) != 2 {
 			t.Fatalf("expected 2 blocks, got %d", len(blocks))
@@ -155,7 +155,7 @@ func TestSlackReporter_extractFailureBlocks(t *testing.T) {
 			lines = append(lines, "line after")
 		}
 
-		blocks := reporter.extractFailureBlocks(lines, 0, len(lines))
+		blocks := reporter.extractFailureBlocks(lines, len(lines))
 
 		if len(blocks) > maxFailureBlocks {
 			t.Errorf("expected max %d blocks, got %d", maxFailureBlocks, len(blocks))
@@ -164,7 +164,7 @@ func TestSlackReporter_extractFailureBlocks(t *testing.T) {
 
 	t.Run("handles no failures", func(t *testing.T) {
 		lines := []string{"line 1", "line 2", "line 3"}
-		blocks := reporter.extractFailureBlocks(lines, 0, len(lines))
+		blocks := reporter.extractFailureBlocks(lines, len(lines))
 
 		if len(blocks) != 0 {
 			t.Errorf("expected 0 blocks for no failures, got %d", len(blocks))
@@ -181,7 +181,7 @@ func TestSlackReporter_extractFailureBlocks(t *testing.T) {
 			"line 6",
 		}
 
-		blocks := reporter.extractFailureBlocks(lines, 0, len(lines))
+		blocks := reporter.extractFailureBlocks(lines, len(lines))
 
 		if len(blocks) != 1 {
 			t.Fatalf("expected 1 block, got %d", len(blocks))
@@ -212,7 +212,7 @@ func TestSlackReporter_extractFailureBlocks(t *testing.T) {
 			"end",
 		}
 
-		blocks := reporter.extractFailureBlocks(lines, 0, len(lines))
+		blocks := reporter.extractFailureBlocks(lines, len(lines))
 
 		if len(blocks) != 2 {
 			t.Fatalf("expected 2 blocks, got %d", len(blocks))
@@ -240,7 +240,7 @@ func TestSlackReporter_extractFailureBlocks(t *testing.T) {
 			"end",
 		}
 
-		blocks := reporter.extractFailureBlocks(lines, 0, len(lines))
+		blocks := reporter.extractFailureBlocks(lines, len(lines))
 
 		// Should only extract 1 block because [FAILED] is within 30 lines of ERROR
 		// The skip-ahead logic (i = end - 1) prevents extracting both
@@ -273,7 +273,7 @@ func TestSlackReporter_extractFailureBlocks(t *testing.T) {
 		lines = append(lines, "context line 2")
 		lines = append(lines, "end")
 
-		blocks := reporter.extractFailureBlocks(lines, 0, len(lines))
+		blocks := reporter.extractFailureBlocks(lines, len(lines))
 
 		// Should extract 2 blocks because markers are >30 lines apart
 		if len(blocks) != 2 {

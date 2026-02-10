@@ -215,7 +215,7 @@ var _ = Describe("SDN migration", Ordered, func() {
 	It("rosa cluster has no critical alerts firing post sdn to ovn migration", postMigrationCheck, func(ctx context.Context) {
 		err := cluterOperatorHealthCheck(ctx, testRosaCluster.client, logger)
 		Expect(err).ShouldNot(HaveOccurred(), err)
-		err = osdClusterReadyHealthCheck(ctx, testRosaCluster.client, "post-upgrade", testRosaCluster.reportDir)
+		err = osdClusterReadyHealthCheck(ctx, testRosaCluster.client, testRosaCluster.reportDir)
 		Expect(err).ShouldNot(HaveOccurred(), "osd-cluster-ready health check job failed post upgrade")
 	})
 })
@@ -332,7 +332,7 @@ func cluterOperatorHealthCheck(ctx context.Context, clusterClient *openshiftclie
 }
 
 // osdClusterReadyHealthCheck verifies the osd-cluster-ready health check job is passing
-func osdClusterReadyHealthCheck(ctx context.Context, clusterClient *openshiftclient.Client, action, reportDir string) error {
+func osdClusterReadyHealthCheck(ctx context.Context, clusterClient *openshiftclient.Client, reportDir string) error {
 	var (
 		err error
 		job batchv1.Job
