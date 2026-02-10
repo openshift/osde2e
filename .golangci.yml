@@ -5,10 +5,13 @@ run:
 linters:
   default: none
   enable:
+    - errcheck
     - gocyclo
     - govet
     - ineffassign
     - misspell
+    - nilnil
+    - nolintlint
     - unused
   exclusions:
     generated: lax
@@ -26,6 +29,7 @@ linters:
       - third_party$
       - builtin$
       - examples$
+      - pkg/common/concurrentviper/generated\.go$
 formatters:
   enable:
     - gofumpt

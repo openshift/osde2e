@@ -1,4 +1,3 @@
-// nolint
 package concurrentviper
 
 import (
