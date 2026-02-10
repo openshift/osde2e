@@ -796,7 +796,7 @@ func getLocalKubeConfig(path string) ([]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error reading provided kubeconfig: %v", err)
 	}
-	return []byte(f), nil
+	return f, nil
 }
 
 // InstallAddons loops through the addons list in the config

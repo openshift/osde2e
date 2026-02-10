@@ -71,7 +71,7 @@ func ReadK8sYaml(file string) (runtime.Object, error) {
 	}
 
 	decode := scheme.Codecs.UniversalDeserializer().Decode
-	obj, _, err := decode([]byte(f), nil, nil)
+	obj, _, err := decode(f, nil, nil)
 	if err != nil {
 		return nil, fmt.Errorf("error while decoding YAML object. Err was: %s", err)
 	}

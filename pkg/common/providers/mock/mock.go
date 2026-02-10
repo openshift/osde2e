@@ -161,7 +161,7 @@ func (m *MockProvider) ClusterKubeconfig(clusterID string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	return []byte(f), nil
+	return f, nil
 }
 
 // CheckQuota mocks a check quota operation.
