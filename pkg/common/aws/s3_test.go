@@ -68,18 +68,6 @@ func TestBuildS3Key(t *testing.T) {
 	}
 }
 
-func TestNewS3Uploader_Disabled(t *testing.T) {
-	viper.Set(config.Tests.LogBucket, "")
-
-	uploader, err := NewS3Uploader("test-component")
-	if err != nil {
-		t.Errorf("NewS3Uploader() with disabled config returned error: %v", err)
-	}
-	if uploader != nil {
-		t.Error("NewS3Uploader() should return nil when LOG_BUCKET is empty")
-	}
-}
-
 func TestBuildBaseKey(t *testing.T) {
 	tests := []struct {
 		key      string

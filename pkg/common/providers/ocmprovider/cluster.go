@@ -64,7 +64,8 @@ func (o *OCMProvider) IsValidClusterName(clusterName string) (bool, error) {
 }
 
 // LaunchCluster setups an new cluster using the OSD API and returns it's ID.
-// nolint:gocyclo
+//
+//nolint:gocyclo
 func (o *OCMProvider) LaunchCluster(clusterName string) (string, error) {
 	flavourID := getFlavour()
 	skuID := getSKU()

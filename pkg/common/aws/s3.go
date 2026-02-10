@@ -140,12 +140,12 @@ type S3UploadResult struct {
 // Upload is automatically enabled when LOG_BUCKET is set.
 // Reuses the global CcsAwsSession for AWS credentials and session management.
 // The component parameter is used to organize artifacts in S3 (e.g., "osd-example-operator").
+//
+// TODO: Refactor to use dependency injection instead of viper globals.
+// Should accept (bucket, region, component string) parameters for better testability
+// and reusability. Caller should check config and decide whether to upload.
 func NewS3Uploader(component string) (*S3Uploader, error) {
 	bucket := viper.GetString(config.Tests.LogBucket)
-	if bucket == "" {
-		// S3 upload disabled - no bucket configured
-		return nil, nil
-	}
 
 	// Ensure region is set (default to us-east-1)
 	if viper.GetString(config.AWSRegion) == "" {
