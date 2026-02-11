@@ -23,7 +23,7 @@ import (
 
 const (
 	velerosubstr = "managed-velero"
-	logsBucket   = "osde2e-logs"
+	logsBucket   = "sdcicd-osde2e-logs"
 )
 
 // Pre-compiled regex for extracting cluster name from bucket name
