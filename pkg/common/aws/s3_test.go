@@ -22,15 +22,12 @@ func TestBuildS3Key(t *testing.T) {
 			category:     "test-results",
 			component:    "osd-example-operator",
 			jobID:        "12345",
-			suffix:       "",
 			wantContains: []string{"test-results", "osd-example-operator", "12345"},
 		},
 		{
 			name:         "empty category",
-			category:     "",
 			component:    "my-service",
 			jobID:        "67890",
-			suffix:       "",
 			wantContains: []string{"my-service", "67890"},
 		},
 		{
@@ -46,14 +43,12 @@ func TestBuildS3Key(t *testing.T) {
 			category:     "test-results",
 			component:    "unknown",
 			jobID:        "test-job",
-			suffix:       "",
 			wantContains: []string{"unknown"},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Setup viper config
 			viper.Set(config.JobID, tt.jobID)
 			viper.Set(config.Suffix, tt.suffix)
 
@@ -74,7 +69,6 @@ func TestBuildS3Key(t *testing.T) {
 }
 
 func TestNewS3Uploader_Disabled(t *testing.T) {
-	// When LOG_BUCKET is empty, upload is disabled
 	viper.Set(config.Tests.LogBucket, "")
 
 	uploader, err := NewS3Uploader("test-component")
@@ -97,7 +91,6 @@ func TestBuildBaseKey(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		// Simulate the base key extraction logic
 		var baseKey string
 		parts := strings.Split(tt.key, "/")
 		if len(parts) >= 4 {
@@ -112,12 +105,43 @@ func TestBuildBaseKey(t *testing.T) {
 	}
 }
 
+func TestContentTypeForFile(t *testing.T) {
+	tests := []struct {
+		filename string
+		want     string
+	}{
+		{"executor.log", "text/plain; charset=utf-8"},
+		{"config.yaml", "text/plain; charset=utf-8"},
+		{"config.yml", "text/plain; charset=utf-8"},
+		{"data.csv", "text/csv; charset=utf-8"},
+		{"notes.txt", "text/plain; charset=utf-8"},
+		{"junit.xml", "text/xml; charset=utf-8"},
+		{"report.json", "application/json"},
+		{"report.html", "text/html; charset=utf-8"},
+		{"screenshot.png", "image/png"},
+		{"photo.jpg", "image/jpeg"},
+		{"photo.jpeg", "image/jpeg"},
+		{"animation.gif", "image/gif"},
+		{"EXECUTOR.LOG", "text/plain; charset=utf-8"},
+		{"binary.bin", "application/octet-stream"},
+		{"noext", "application/octet-stream"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.filename, func(t *testing.T) {
+			got := contentTypeForFile(tt.filename)
+			if got != tt.want {
+				t.Errorf("contentTypeForFile(%q) = %q, want %q", tt.filename, got, tt.want)
+			}
+		})
+	}
+}
+
 func TestShouldUploadFile(t *testing.T) {
 	tests := []struct {
 		filename string
 		want     bool
 	}{
-		// Allowed extensions
 		{"junit.xml", true},
 		{"test_output.log", true},
 		{"summary.yaml", true},
@@ -130,15 +154,11 @@ func TestShouldUploadFile(t *testing.T) {
 		{"data.csv", true},
 		{"notes.txt", true},
 		{"report.html", true},
-
-		// Allowed filenames (case-insensitive)
 		{"test_output", true},
 		{"TEST_OUTPUT", true},
 		{"summary", true},
 		{"osde2e-full", true},
 		{"cluster-state", true},
-
-		// Not allowed
 		{"binary.exe", false},
 		{"archive.tar.gz", false},
 		{"data.bin", false},

@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io/fs"
 	"log"
-	"mime"
 	"os"
 	"path"
 	"path/filepath"
@@ -148,7 +147,7 @@ func NewS3Uploader(component string) (*S3Uploader, error) {
 		return nil, nil
 	}
 
-	// Ensure region is set (default to us-east-1 for osde2e-loki-logs bucket)
+	// Ensure region is set (default to us-east-1)
 	if viper.GetString(config.AWSRegion) == "" {
 		viper.Set(config.AWSRegion, "us-east-1")
 	}
@@ -190,21 +189,41 @@ func (u *S3Uploader) BuildS3Key() string {
 	return path.Join(u.category, u.component, date, jobID)
 }
 
-// allowedExtensions defines file types to upload (prevents binaries, temp files, etc.)
-var allowedExtensions = map[string]bool{
-	".xml": true, ".log": true, ".yaml": true, ".yml": true, ".json": true,
-	".png": true, ".jpg": true, ".jpeg": true, ".gif": true,
-	".csv": true, ".txt": true, ".html": true,
+// artifactExtensions maps file extensions to Content-Type headers for S3 uploads.
+// Explicit values ensure consistent browser behavior across platforms (presigned URLs).
+var artifactExtensions = map[string]string{
+	".xml":  "text/xml; charset=utf-8",
+	".log":  "text/plain; charset=utf-8",
+	".yaml": "text/plain; charset=utf-8",
+	".yml":  "text/plain; charset=utf-8",
+	".json": "application/json",
+	".png":  "image/png",
+	".jpg":  "image/jpeg",
+	".jpeg": "image/jpeg",
+	".gif":  "image/gif",
+	".csv":  "text/csv; charset=utf-8",
+	".txt":  "text/plain; charset=utf-8",
+	".html": "text/html; charset=utf-8",
 }
 
-// allowedFilenames are uploaded regardless of extension.
 var allowedFilenames = map[string]bool{
-	"test_output": true, "summary": true, "osde2e-full": true, "cluster-state": true,
+	"test_output":   true,
+	"summary":       true,
+	"osde2e-full":   true,
+	"cluster-state": true,
+}
+
+func contentTypeForFile(filePath string) string {
+	ext := strings.ToLower(filepath.Ext(filePath))
+	if ct, ok := artifactExtensions[ext]; ok {
+		return ct
+	}
+	return "application/octet-stream"
 }
 
 func shouldUploadFile(filename string) bool {
 	ext := strings.ToLower(filepath.Ext(filename))
-	if allowedExtensions[ext] {
+	if _, ok := artifactExtensions[ext]; ok {
 		return true
 	}
 	baseName := strings.ToLower(strings.TrimSuffix(filepath.Base(filename), ext))
@@ -261,10 +280,7 @@ func (u *S3Uploader) UploadDirectory(srcDir string) ([]S3UploadResult, error) {
 			return nil
 		}
 
-		contentType := mime.TypeByExtension(filepath.Ext(filePath))
-		if contentType == "" {
-			contentType = "application/octet-stream"
-		}
+		contentType := contentTypeForFile(filePath)
 
 		_, err = u.uploader.Upload(&s3manager.UploadInput{
 			Bucket:      aws.String(u.bucket),
