@@ -208,12 +208,14 @@ func (o *E2EOrchestrator) AnalyzeLogs(ctx context.Context, testErr error) error 
 	}
 
 	engineConfig := &analysisengine.Config{
-		ArtifactsDir:       reportDir,
-		PromptTemplate:     "default",
-		APIKey:             viper.GetString(config.LogAnalysis.APIKey),
-		FailureContext:     testErr.Error(),
-		ClusterInfo:        clusterInfo,
-		NotificationConfig: notificationConfig,
+		BaseConfig: analysisengine.BaseConfig{
+			ArtifactsDir:       reportDir,
+			APIKey:             viper.GetString(config.LogAnalysis.APIKey),
+			NotificationConfig: notificationConfig,
+		},
+		PromptTemplate: "default",
+		FailureContext: testErr.Error(),
+		ClusterInfo:    clusterInfo,
 	}
 
 	engine, err := analysisengine.New(ctx, engineConfig)

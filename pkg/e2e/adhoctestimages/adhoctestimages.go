@@ -152,12 +152,14 @@ func runLogAnalysisForAdHocTestImage(ctx context.Context, logger logr.Logger, te
 	}
 
 	engineConfig := &analysisengine.Config{
-		ArtifactsDir:       artifactsDir,
-		PromptTemplate:     "default",
-		APIKey:             viper.GetString(config.LogAnalysis.APIKey),
-		FailureContext:     err.Error(),
-		ClusterInfo:        clusterInfo,
-		NotificationConfig: notificationConfig,
+		BaseConfig: analysisengine.BaseConfig{
+			ArtifactsDir:       artifactsDir,
+			APIKey:             viper.GetString(config.LogAnalysis.APIKey),
+			NotificationConfig: notificationConfig,
+		},
+		PromptTemplate: "default",
+		FailureContext: err.Error(),
+		ClusterInfo:    clusterInfo,
 	}
 
 	engine, err := analysisengine.New(ctx, engineConfig)
