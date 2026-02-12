@@ -244,7 +244,7 @@ var _ = Describe("HyperShift", Ordered, func() {
 	})
 
 	It("service cluster is healthy pre upgrade", scUpgrade, func(ctx context.Context) {
-		criticalAlerts, _, err := queryPrometheusAlerts(ctx, scCluster.client, fmt.Sprintf("%s/prometheus-alerts-pre-upgrade.log", scCluster.reportDir))
+		criticalAlerts, err := queryPrometheusAlerts(ctx, scCluster.client, fmt.Sprintf("%s/prometheus-alerts-pre-upgrade.log", scCluster.reportDir))
 		Expect(err).ShouldNot(HaveOccurred(), "failed to retrieve prometheus alerts")
 		Expect(criticalAlerts).ToNot(BeNumerically(">", 0), "critical alerts are firing pre upgrade")
 
@@ -258,11 +258,11 @@ var _ = Describe("HyperShift", Ordered, func() {
 	})
 
 	It("service cluster is healthy post upgrade", scUpgradeHealthChecks, func(ctx context.Context) {
-		criticalAlerts, _, err := queryPrometheusAlerts(ctx, scCluster.client, fmt.Sprintf("%s/prometheus-alerts-post-upgrade.log", scCluster.reportDir))
+		criticalAlerts, err := queryPrometheusAlerts(ctx, scCluster.client, fmt.Sprintf("%s/prometheus-alerts-post-upgrade.log", scCluster.reportDir))
 		Expect(err).ShouldNot(HaveOccurred(), "failed to retrieve prometheus alerts")
 		Expect(criticalAlerts).ToNot(BeNumerically(">", 0), "critical alerts are firing post upgrade")
 
-		err = osdClusterReadyHealthCheck(ctx, scCluster.client, "post-upgrade", scCluster.reportDir)
+		err = osdClusterReadyHealthCheck(ctx, scCluster.client, scCluster.reportDir)
 		Expect(err).ShouldNot(HaveOccurred(), "osd-cluster-ready health check job failed post upgrade")
 	})
 
@@ -271,13 +271,13 @@ var _ = Describe("HyperShift", Ordered, func() {
 			Skip("Unable to locate hosted control plane cluster kubeconfig, skipping health checks")
 		}
 
-		criticalAlerts, _, err := queryPrometheusAlerts(ctx, hcpCluster.client, fmt.Sprintf("%s/prometheus-alerts-post-sc-upgrade.log", hcpCluster.reportDir))
+		criticalAlerts, err := queryPrometheusAlerts(ctx, hcpCluster.client, fmt.Sprintf("%s/prometheus-alerts-post-sc-upgrade.log", hcpCluster.reportDir))
 		Expect(err).ShouldNot(HaveOccurred(), "failed to retrieve prometheus alerts")
 		Expect(criticalAlerts).ToNot(BeNumerically(">", 0), "critical alerts are firing post upgrade")
 	})
 
 	It("management cluster is healthy pre upgrade", mcUpgrade, func(ctx context.Context) {
-		criticalAlerts, _, err := queryPrometheusAlerts(ctx, mcCluster.client, fmt.Sprintf("%s/prometheus-alerts-pre-upgrade.log", mcCluster.reportDir))
+		criticalAlerts, err := queryPrometheusAlerts(ctx, mcCluster.client, fmt.Sprintf("%s/prometheus-alerts-pre-upgrade.log", mcCluster.reportDir))
 		Expect(err).ShouldNot(HaveOccurred(), "failed to retrieve prometheus alerts")
 		Expect(criticalAlerts).ToNot(BeNumerically(">", 0), "critical alerts are firing pre upgrade")
 
@@ -291,11 +291,11 @@ var _ = Describe("HyperShift", Ordered, func() {
 	})
 
 	It("management cluster is healthy post upgrade", mcUpgradeHealthChecks, func(ctx context.Context) {
-		criticalAlerts, _, err := queryPrometheusAlerts(ctx, mcCluster.client, fmt.Sprintf("%s/prometheus-alerts-post-upgrade.log", mcCluster.reportDir))
+		criticalAlerts, err := queryPrometheusAlerts(ctx, mcCluster.client, fmt.Sprintf("%s/prometheus-alerts-post-upgrade.log", mcCluster.reportDir))
 		Expect(err).ShouldNot(HaveOccurred(), "failed to retrieve prometheus alerts")
 		Expect(criticalAlerts).ToNot(BeNumerically(">", 0), "critical alerts are firing post upgrade")
 
-		err = osdClusterReadyHealthCheck(ctx, mcCluster.client, "post-upgrade", mcCluster.reportDir)
+		err = osdClusterReadyHealthCheck(ctx, mcCluster.client, mcCluster.reportDir)
 		Expect(err).ShouldNot(HaveOccurred(), "osd-cluster-ready health check job failed post upgrade")
 	})
 
@@ -304,14 +304,14 @@ var _ = Describe("HyperShift", Ordered, func() {
 			Skip("Unable to locate hosted control plane cluster kubeconfig, skipping health checks")
 		}
 
-		criticalAlerts, _, err := queryPrometheusAlerts(ctx, hcpCluster.client, fmt.Sprintf("%s/prometheus-alerts-post-mc-upgrade.log", hcpCluster.reportDir))
+		criticalAlerts, err := queryPrometheusAlerts(ctx, hcpCluster.client, fmt.Sprintf("%s/prometheus-alerts-post-mc-upgrade.log", hcpCluster.reportDir))
 		Expect(err).ShouldNot(HaveOccurred(), "failed to retrieve prometheus alerts")
 		Expect(criticalAlerts).ToNot(BeNumerically(">", 0), "critical alerts are firing post upgrade")
 	})
 })
 
-// queryPrometheusAlerts queries prometheus for alerts and provides a count for critical and warning alerts
-func queryPrometheusAlerts(ctx context.Context, client *openshiftclient.Client, logFilename string) (int, int, error) {
+// queryPrometheusAlerts queries prometheus for alerts and provides a count for critical alerts
+func queryPrometheusAlerts(ctx context.Context, client *openshiftclient.Client, logFilename string) (int, error) {
 	criticalAlertCount, warningAlertCount := 0, 0
 	alerts := ""
 
@@ -328,7 +328,7 @@ func queryPrometheusAlerts(ctx context.Context, client *openshiftclient.Client, 
 	prometheusClient, _ := prometheusclient.New(ctx, client)
 	vector, err := prometheusClient.InstantQuery(ctx, "ALERTS{alertstate!=\"pending\",alertname!=\"Watchdog\"}")
 	if err != nil {
-		return 0, 0, fmt.Errorf("failed to query prometheus: %v", err)
+		return 0, fmt.Errorf("failed to query prometheus: %v", err)
 	}
 
 	for _, model := range vector {
@@ -356,15 +356,15 @@ func queryPrometheusAlerts(ctx context.Context, client *openshiftclient.Client, 
 
 	if alerts != "" {
 		if err = os.WriteFile(logFilename, []byte(alerts), os.FileMode(0o644)); err != nil {
-			return criticalAlertCount, warningAlertCount, fmt.Errorf("failed to write prometheus alerts to file: %v", err)
+			return criticalAlertCount, fmt.Errorf("failed to write prometheus alerts to file: %v", err)
 		}
 	}
 
-	return criticalAlertCount, warningAlertCount, nil
+	return criticalAlertCount, nil
 }
 
 // osdClusterReadyHealthCheck verifies the osd-cluster-ready health check job is passing
-func osdClusterReadyHealthCheck(ctx context.Context, clusterClient *openshiftclient.Client, action, reportDir string) error {
+func osdClusterReadyHealthCheck(ctx context.Context, clusterClient *openshiftclient.Client, reportDir string) error {
 	var (
 		err error
 		job batchv1.Job

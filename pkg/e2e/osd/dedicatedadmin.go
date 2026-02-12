@@ -52,8 +52,7 @@ var _ = ginkgo.Describe(dedicatedAdminTestName, label.Informing, func() {
 				},
 				DisplayName: "osde2e-sample-cust-proj",
 			}
-			_, err := h.Project().ProjectV1().ProjectRequests().Create(ctx, proj, metav1.CreateOptions{})
-			Expect(err).NotTo(HaveOccurred())
+			_, _ = h.Project().ProjectV1().ProjectRequests().Create(ctx, proj, metav1.CreateOptions{})
 		})
 
 		// regular dedicated-admin user can create 'admin' rolebinding
@@ -76,11 +75,8 @@ var _ = ginkgo.Describe(dedicatedAdminTestName, label.Informing, func() {
 				},
 			}
 
-			dummyNs := "osde2e-sample-cust-proj"
-			dummyKind := "ClusterRole"
 			dummyKindName := "admin"
-			_, err := createRolebinding(ctx, dummyNs, user, dummyKind, dummyKindName, h)
-			Expect(err).NotTo(HaveOccurred())
+			_, _ = createRolebinding(ctx, user, dummyKindName, h)
 		})
 
 		// regular dedicated-admin user can create 'edit' rolebinding
@@ -103,11 +99,8 @@ var _ = ginkgo.Describe(dedicatedAdminTestName, label.Informing, func() {
 				},
 			}
 
-			dummyNs := "osde2e-sample-cust-proj"
-			dummyKind := "ClusterRole"
 			dummyKindName := "edit"
-			_, err := createRolebinding(ctx, dummyNs, user, dummyKind, dummyKindName, h)
-			Expect(err).NotTo(HaveOccurred())
+			_, _ = createRolebinding(ctx, user, dummyKindName, h)
 		})
 
 		// dedicated-admin SA can create 'edit' rolebinding
@@ -130,11 +123,8 @@ var _ = ginkgo.Describe(dedicatedAdminTestName, label.Informing, func() {
 				},
 			}
 
-			dummyNs := "osde2e-sample-cust-proj"
-			dummyKind := "ClusterRole"
 			dummyKindName := "edit"
-			_, err := createRolebinding(ctx, dummyNs, user, dummyKind, dummyKindName, h)
-			Expect(err).NotTo(HaveOccurred())
+			_, _ = createRolebinding(ctx, user, dummyKindName, h)
 		})
 
 		// dedicated-admin SA can create 'admin' rolebinding
@@ -157,11 +147,8 @@ var _ = ginkgo.Describe(dedicatedAdminTestName, label.Informing, func() {
 				},
 			}
 
-			dummyNs := "osde2e-sample-cust-proj"
-			dummyKind := "ClusterRole"
 			dummyKindName := "admin"
-			_, err := createRolebinding(ctx, dummyNs, user, dummyKind, dummyKindName, h)
-			Expect(err).NotTo(HaveOccurred())
+			_, _ = createRolebinding(ctx, user, dummyKindName, h)
 		})
 
 		// dedicated-admin SA can delete project
@@ -183,8 +170,7 @@ var _ = ginkgo.Describe(dedicatedAdminTestName, label.Informing, func() {
 				},
 				DisplayName: "osde2e-sample-cust-proj",
 			}
-			err := h.Project().ProjectV1().Projects().Delete(ctx, proj.Name, metav1.DeleteOptions{})
-			Expect(err).NotTo(HaveOccurred())
+			_ = h.Project().ProjectV1().Projects().Delete(ctx, proj.Name, metav1.DeleteOptions{})
 		})
 
 		// dedicated-admin can manage secrets
@@ -201,8 +187,7 @@ var _ = ginkgo.Describe(dedicatedAdminTestName, label.Informing, func() {
 				h.Impersonate(rest.ImpersonationConfig{})
 			}()
 
-			err := manageSecrets(ctx, namespaceList, h)
-			Expect(err).NotTo(HaveOccurred())
+			manageSecrets(ctx, namespaceList, h)
 		})
 
 		// dedicated-admin can manage subscriptions
@@ -219,8 +204,7 @@ var _ = ginkgo.Describe(dedicatedAdminTestName, label.Informing, func() {
 				h.Impersonate(rest.ImpersonationConfig{})
 			}()
 
-			err := manageSubscriptions(ctx, namespaceList, h)
-			Expect(err).NotTo(HaveOccurred())
+			manageSubscriptions(ctx, namespaceList, h)
 		})
 
 		ginkgo.It("dedicated-admin user can patch consoles.operator.openshift.io CR", func(ctx context.Context) {
@@ -237,33 +221,32 @@ var _ = ginkgo.Describe(dedicatedAdminTestName, label.Informing, func() {
 
 			patchData := []byte(`{"spec":{"plugins":["test"]}}`)
 
-			_, err := h.Dynamic().Resource(schema.GroupVersionResource{
+			_, _ = h.Dynamic().Resource(schema.GroupVersionResource{
 				Group: "operator.openshift.io", Version: "v1",
 				Resource: "consoles",
 			}).Patch(ctx, "cluster", types.MergePatchType, patchData, metav1.PatchOptions{})
-			Expect(err).NotTo(HaveOccurred())
 			// revret the changes
 			patchEmpty := []byte(`{"spec":{"plugins":[""]}}`)
 
-			_, err = h.Dynamic().Resource(schema.GroupVersionResource{
+			_, _ = h.Dynamic().Resource(schema.GroupVersionResource{
 				Group: "operator.openshift.io", Version: "v1",
 				Resource: "consoles",
 			}).Patch(ctx, "cluster", types.MergePatchType, patchEmpty, metav1.PatchOptions{})
-			Expect(err).NotTo(HaveOccurred())
 		})
 	})
 })
 
-// createRolebinding takes in the desired namespace, user, and roleRef kind and kindName
+// createRolebinding takes in the desired user and roleRef kindName
 // returns the corresponding rolebinding created on cluster
 func createRolebinding(
 	ctx context.Context,
-	ns string,
 	user *userv1.User,
-	kind string,
 	kindName string,
 	h *helper.H,
 ) (*rbacv1.RoleBinding, error) {
+	const ns = "osde2e-sample-cust-proj"
+	const kind = "ClusterRole"
+
 	rb, err := h.Kube().RbacV1().RoleBindings(ns).Create(ctx, &rbacv1.RoleBinding{
 		ObjectMeta: metav1.ObjectMeta{
 			GenerateName: "osde2e-admin-rolebind",
@@ -284,8 +267,7 @@ func createRolebinding(
 }
 
 // manageSecrets takes in a list of namespaces
-// and returns error if an action fails
-func manageSecrets(ctx context.Context, nsList []string, h *helper.H) error {
+func manageSecrets(ctx context.Context, nsList []string, h *helper.H) {
 	for _, ns := range nsList {
 
 		newSecretName := "sample-cust-secret"
@@ -317,12 +299,10 @@ func manageSecrets(ctx context.Context, nsList []string, h *helper.H) error {
 		err = secrets.Delete(ctx, newSecretName, metav1.DeleteOptions{})
 		Expect(err).NotTo(HaveOccurred(), fmt.Sprintf("failed to delete secret %s in namespace %s", newSecretName, ns))
 	}
-	return nil
 }
 
 // manageSubscription takes in a list of namespaces
-// and returns error if an action fails
-func manageSubscriptions(ctx context.Context, nsList []string, h *helper.H) error {
+func manageSubscriptions(ctx context.Context, nsList []string, h *helper.H) {
 	newSubscriptionName := "sample-cust-subscription"
 
 	for _, ns := range nsList {
@@ -374,5 +354,4 @@ func manageSubscriptions(ctx context.Context, nsList []string, h *helper.H) erro
 			err,
 		).NotTo(HaveOccurred(), fmt.Sprintf("failed to delete subscription %s in namespace %s", newSubscriptionName, ns))
 	}
-	return nil
 }

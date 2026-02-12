@@ -300,7 +300,7 @@ func (s *SlackReporter) readTestOutput(reportDir string) string {
 		}
 
 		// For large logs, extract only failure blocks - this is what matters
-		failureBlocks := s.extractFailureBlocks(lines, 0, totalLines)
+		failureBlocks := s.extractFailureBlocks(lines, totalLines)
 		if len(failureBlocks) > 0 {
 			var result strings.Builder
 			result.WriteString("======  Log Extract ======\n")
@@ -332,17 +332,17 @@ func (s *SlackReporter) readTestOutput(reportDir string) string {
 }
 
 // extractFailureBlocks finds [FAILED] test blocks and ERROR lines, then extracts them with context
-func (s *SlackReporter) extractFailureBlocks(lines []string, startIdx, endIdx int) []string {
+func (s *SlackReporter) extractFailureBlocks(lines []string, endIdx int) []string {
 	var blocks []string
 
-	for i := startIdx; i < endIdx && len(blocks) < maxFailureBlocks; i++ {
+	for i := 0; i < endIdx && len(blocks) < maxFailureBlocks; i++ {
 		line := lines[i]
 		if util.ContainsFailureMarker(line) || util.ContainsErrorMarker(line) {
 			var block strings.Builder
 
 			start := i - failureContextLines
-			if start < startIdx {
-				start = startIdx
+			if start < 0 {
+				start = 0
 			}
 
 			end := i + failureBlockLines

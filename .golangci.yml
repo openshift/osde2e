@@ -11,6 +11,7 @@ linters:
     - misspell
     - unconvert
     - unused
+    - unparam
   exclusions:
     generated: lax
     presets:
