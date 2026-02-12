@@ -18,6 +18,12 @@ import (
 //go:embed templates/*.yaml
 var defaultTemplates embed.FS
 
+// DefaultTemplates returns the built-in prompt templates as an fs.FS.
+func DefaultTemplates() fs.FS {
+	templatesFS, _ := fs.Sub(defaultTemplates, "templates")
+	return templatesFS
+}
+
 const (
 	defaultMaxTokens   = 4000
 	defaultTemperature = float32(0.1)
@@ -33,14 +39,11 @@ type PromptStore struct {
 	templates map[string]*PromptTemplate
 }
 
-func NewPromptStore() (*PromptStore, error) {
+// NewPromptStore creates a new prompt store loading templates from the provided filesystem.
+// The filesystem should contain .yaml files at its root.
+func NewPromptStore(templatesFS fs.FS) (*PromptStore, error) {
 	store := &PromptStore{
 		templates: make(map[string]*PromptTemplate),
-	}
-
-	templatesFS, err := fs.Sub(defaultTemplates, "templates")
-	if err != nil {
-		return nil, fmt.Errorf("failed to access templates: %w", err)
 	}
 
 	return store, store.loadTemplates(templatesFS)

@@ -13,7 +13,6 @@ import (
 	"github.com/openshift/osde2e/internal/prompts"
 	"github.com/openshift/osde2e/internal/reporter"
 	"github.com/openshift/osde2e/internal/sanitizer"
-	"google.golang.org/genai"
 	"gopkg.in/yaml.v3"
 )
 
@@ -32,16 +31,13 @@ type ClusterInfo struct {
 	Version       string
 }
 
-// Config holds configuration for the analysis engine
+// Config holds configuration for the analysis engine.
 type Config struct {
-	ArtifactsDir       string
-	PromptTemplate     string
-	APIKey             string
-	LLMConfig          *llm.AnalysisConfig
-	FailureContext     string
-	ClusterInfo        *ClusterInfo
-	SanitizerConfig    *sanitizer.Config // Data sanitization configuration
-	NotificationConfig *reporter.NotificationConfig
+	BaseConfig
+	PromptTemplate  string
+	FailureContext  string
+	ClusterInfo     *ClusterInfo
+	SanitizerConfig *sanitizer.Config // Data sanitization configuration
 }
 
 // Engine represents the analysis engine
@@ -68,7 +64,7 @@ func New(ctx context.Context, config *Config) (*Engine, error) {
 		aggregatorService = aggregator.New(ctx)
 	}
 
-	promptStore, err := prompts.NewPromptStore()
+	promptStore, err := prompts.NewPromptStore(prompts.DefaultTemplates())
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize prompt store: %w", err)
 	}
@@ -184,16 +180,6 @@ func (e *Engine) Run(ctx context.Context) (*Result, error) {
 	}
 
 	return analysisResult, nil
-}
-
-// Result represents the analysis output
-type Result struct {
-	Status    string                `json:"status"`
-	Content   string                `json:"content"`
-	Metadata  map[string]any        `json:"metadata,omitempty"`
-	Error     string                `json:"error,omitempty"`
-	Prompt    string                `json:"prompt,omitempty"`
-	ToolCalls []*genai.FunctionCall `json:"tool_calls,omitempty"`
 }
 
 // WriteSummary writes the analysis result to a YAML summary file

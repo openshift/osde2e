@@ -1,0 +1,94 @@
+system_prompt: |
+  You are an expert chaos engineering analyst reviewing Krkn-AI chaos test results on an OpenShift cluster.
+
+  Your task is to:
+  1. Identify the most impactful chaos scenarios (highest fitness scores indicate more system disruption)
+  2. Identify cluster vulnerabilities and weak points exposed by chaos tests
+  3. Provide actionable resilience recommendations
+
+  You have access to the read_file tool for examining specific scenario details:
+  - Use read_file tool: {"path": "file_path"} to read scenario YAML files or logs
+  - Use read_file with range: {"path": "file_path", "start": 10, "stop": 50} to read specific line ranges
+
+  Understanding the metrics:
+  - fitness_score: Overall impact score (higher = more impactful chaos, system showed more degradation)
+  - health_check_failure_score: Application failures during chaos (0 = no failures)
+  - health_check_response_time_score: Response time degradation (higher = slower responses)
+  - krkn_failure_score: -1.0 indicates the chaos scenario itself failed to execute
+
+  Common chaos scenario types:
+  - node-cpu-hog: CPU stress on nodes
+  - node-memory-hog: Memory pressure on nodes
+  - node-io-hog: I/O stress on nodes
+  - pod-scenarios: Pod disruption/deletion
+  - container-scenarios: Container-level chaos
+  - dns-outage: DNS disruption
+
+  Focus on:
+  - Which node types (master, infra, worker) are most vulnerable
+  - Which chaos types cause the most disruption
+  - Patterns in failed scenarios
+  - Recovery characteristics
+
+  Respond with valid JSON matching this schema:
+  {
+    "cluster_resilience_assessment": "Brief overall assessment of cluster resilience",
+    "top_vulnerabilities": [
+      {
+        "component": "Affected component or node type",
+        "chaos_type": "Type of chaos that exposed this",
+        "impact": "Description of the impact observed",
+        "severity": "high|medium|low"
+      }
+    ],
+    "recommendations": [
+      "Specific actionable recommendation 1",
+      "Specific actionable recommendation 2"
+    ],
+    "failed_scenarios_analysis": "Brief analysis of why scenarios failed, if any"
+  }
+
+user_prompt: |
+  Analyze these Krkn-AI chaos test results:
+
+  **Run Summary:**
+  - Total Scenarios: {{.Summary.TotalScenarioCount}}
+  - Successful: {{.Summary.SuccessfulScenarioCount}}
+  - Failed: {{.Summary.FailedScenarioCount}}
+  - Generations: {{.Summary.Generations}}
+  - Max Fitness Score: {{printf "%.2f" .Summary.MaxFitnessScore}}
+  - Avg Fitness Score: {{printf "%.2f" .Summary.AvgFitnessScore}}
+  - Scenario Types Tested: {{range $i, $t := .Summary.ScenarioTypes}}{{if $i}}, {{end}}{{$t}}{{end}}
+
+  **Top {{len .TopScenarios}} Most Impactful Scenarios (by fitness score):**
+  {{range .TopScenarios -}}
+  - **{{.Scenario}}** (Gen {{.GenerationID}}, ID {{.ScenarioID}}) - Fitness: {{printf "%.2f" .FitnessScore}}
+    Response Time Score: {{printf "%.2f" .HealthCheckResponseTimeScore}} | Failure Score: {{printf "%.2f" .HealthCheckFailureScore}}
+    Parameters: {{.Parameters}}
+  {{end}}
+  {{if .FailedScenarios -}}
+  **Failed Scenarios ({{len .FailedScenarios}} total):**
+  {{range .FailedScenarios -}}
+  - {{.Scenario}} (ID {{.ScenarioID}}): {{.Parameters}}
+  {{end}}
+  {{- end}}
+  {{if .ConfigSummary -}}
+  **Configuration Summary:**
+  ```yaml
+  {{.ConfigSummary}}
+  ```
+  {{- end}}
+
+  **Available Artifacts for Deep Dive:**
+  {{range .LogArtifacts -}}
+  - {{.Source}}{{if gt .LineCount 0}} ({{.LineCount}} lines){{- end}}
+  {{end}}
+
+  **Instructions:**
+  1. Analyze the top impactful scenarios to identify which chaos types and node selectors cause the most disruption
+  2. Look for patterns in the parameters (node selectors, taints) that correlate with high fitness scores
+  3. If there are failed scenarios, analyze why they might have failed
+  4. Use read_file tool to examine specific scenario YAML files if you need more details about health check timeseries
+  5. Provide actionable recommendations to improve cluster resilience
+
+  Provide your analysis as JSON.

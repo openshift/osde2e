@@ -8,14 +8,14 @@ import (
 )
 
 func TestNewPromptStore(t *testing.T) {
-	store, err := NewPromptStore()
+	store, err := NewPromptStore(DefaultTemplates())
 	require.NoError(t, err)
 	require.NotNil(t, store)
 	assert.Greater(t, len(store.templates), 0, "Should have loaded some templates")
 }
 
 func TestGetTemplate(t *testing.T) {
-	store, err := NewPromptStore()
+	store, err := NewPromptStore(DefaultTemplates())
 	require.NoError(t, err)
 
 	template, err := store.GetTemplate("default")
@@ -27,7 +27,7 @@ func TestGetTemplate(t *testing.T) {
 }
 
 func TestRenderPrompt(t *testing.T) {
-	store, err := NewPromptStore()
+	store, err := NewPromptStore(DefaultTemplates())
 	require.NoError(t, err)
 
 	variables := map[string]any{
