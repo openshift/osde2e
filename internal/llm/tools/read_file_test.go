@@ -19,7 +19,7 @@ func TestReadFileTool_Name(t *testing.T) {
 func TestReadFileTool_Description(t *testing.T) {
 	tool := &readFileTool{}
 	desc := tool.Description()
-	assert.Contains(t, desc, "Reads a specific file")
+	assert.Contains(t, desc, "Reads one or more files")
 	assert.Contains(t, desc, "line range")
 }
 
@@ -30,18 +30,27 @@ func TestReadFileTool_Schema(t *testing.T) {
 	require.NotNil(t, schema)
 	assert.Equal(t, "OBJECT", string(schema.Type))
 
-	// Check required parameters
-	assert.Contains(t, schema.Required, "path")
-	assert.Len(t, schema.Required, 1)
-
-	// Check properties
+	// Check properties exist for both single and multi-file modes
 	assert.Contains(t, schema.Properties, "path")
 	assert.Contains(t, schema.Properties, "start")
 	assert.Contains(t, schema.Properties, "stop")
+	assert.Contains(t, schema.Properties, "files")
+	assert.Contains(t, schema.Properties, "sanitize")
+
+	// No required fields at top level (either path or files)
+	assert.Empty(t, schema.Required)
+
+	// Check files array item schema
+	filesSchema := schema.Properties["files"]
+	require.NotNil(t, filesSchema.Items)
+	assert.Contains(t, filesSchema.Items.Properties, "path")
+	assert.Contains(t, filesSchema.Items.Properties, "start")
+	assert.Contains(t, filesSchema.Items.Properties, "stop")
+	assert.Contains(t, filesSchema.Items.Required, "path")
 }
 
 func TestReadFileTool_Execute(t *testing.T) {
-	// Create a temporary test file
+	// Create temporary test files
 	tmpDir := t.TempDir()
 	testFile := filepath.Join(tmpDir, "test.log")
 	testContent := `line 1
@@ -50,18 +59,26 @@ line 3
 line 4
 line 5`
 
+	testFile2 := filepath.Join(tmpDir, "test2.log")
+	testContent2 := `alpha
+beta
+gamma`
+
 	err := os.WriteFile(testFile, []byte(testContent), 0o644)
 	require.NoError(t, err)
+	err = os.WriteFile(testFile2, []byte(testContent2), 0o644)
+	require.NoError(t, err)
 
-	// Create log artifacts with the test file
+	// Create log artifacts with both test files
 	logArtifacts := []aggregator.LogEntry{
 		{Source: testFile},
+		{Source: testFile2},
 	}
 
 	tool := &readFileTool{}
 	ctx := context.Background()
 
-	t.Run("read entire file", func(t *testing.T) {
+	t.Run("read entire file via path", func(t *testing.T) {
 		params := map[string]any{
 			"path": testFile,
 		}
@@ -125,6 +142,51 @@ line 5`
 		assert.NotContains(t, content, "5\tline 5")
 	})
 
+	t.Run("multiple files via files array", func(t *testing.T) {
+		params := map[string]any{
+			"files": []any{
+				map[string]any{"path": testFile, "start": 1, "stop": 2},
+				map[string]any{"path": testFile2},
+			},
+		}
+
+		result, err := tool.Execute(ctx, params, logArtifacts)
+		require.NoError(t, err)
+
+		resultMap, ok := result.(map[string]any)
+		require.True(t, ok, "multiple files should return map[string]any")
+		assert.Len(t, resultMap, 2)
+
+		// Check first file
+		content1, ok := resultMap[testFile].(string)
+		require.True(t, ok)
+		assert.Contains(t, content1, "1\tline 1")
+		assert.Contains(t, content1, "2\tline 2")
+		assert.NotContains(t, content1, "3\tline 3")
+
+		// Check second file
+		content2, ok := resultMap[testFile2].(string)
+		require.True(t, ok)
+		assert.Contains(t, content2, "1\talpha")
+		assert.Contains(t, content2, "3\tgamma")
+	})
+
+	t.Run("single file via files array", func(t *testing.T) {
+		params := map[string]any{
+			"files": []any{
+				map[string]any{"path": testFile},
+			},
+		}
+
+		result, err := tool.Execute(ctx, params, logArtifacts)
+		require.NoError(t, err)
+
+		// Single file in array should return string directly
+		content, ok := result.(string)
+		require.True(t, ok, "single file in array should return string")
+		assert.Contains(t, content, "1\tline 1")
+	})
+
 	t.Run("invalid file path", func(t *testing.T) {
 		params := map[string]any{
 			"path": "/nonexistent/file.log",
@@ -135,12 +197,46 @@ line 5`
 		assert.Contains(t, err.Error(), "not in the collected artifacts")
 	})
 
-	t.Run("missing path parameter", func(t *testing.T) {
+	t.Run("missing path and files parameters", func(t *testing.T) {
 		params := map[string]any{}
 
 		_, err := tool.Execute(ctx, params, logArtifacts)
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "parameter 'path' is required")
+		assert.Contains(t, err.Error(), "must provide either 'path' for single file or 'files' for multiple files")
+	})
+
+	t.Run("cannot use both path and files", func(t *testing.T) {
+		params := map[string]any{
+			"path":  testFile,
+			"files": []any{map[string]any{"path": testFile2}},
+		}
+
+		_, err := tool.Execute(ctx, params, logArtifacts)
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "cannot use both 'path' and 'files'")
+	})
+
+	t.Run("multiple files - one invalid", func(t *testing.T) {
+		params := map[string]any{
+			"files": []any{
+				map[string]any{"path": testFile},
+				map[string]any{"path": "/nonexistent/file.log"},
+			},
+		}
+
+		_, err := tool.Execute(ctx, params, logArtifacts)
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "not in the collected artifacts")
+	})
+
+	t.Run("empty files array", func(t *testing.T) {
+		params := map[string]any{
+			"files": []any{},
+		}
+
+		_, err := tool.Execute(ctx, params, logArtifacts)
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "must not be empty")
 	})
 
 	t.Run("invalid start line", func(t *testing.T) {

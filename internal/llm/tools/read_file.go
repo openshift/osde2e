@@ -33,7 +33,9 @@ func (t *readFileTool) Name() string {
 }
 
 func (t *readFileTool) Description() string {
-	return "Reads a specific file from the collected artifacts, optionally specifying a line range. Sensitive information is sanitized by default for security. Use start and stop parameters to read specific line ranges."
+	return "Reads one or more files from the collected artifacts, optionally specifying line ranges. " +
+		"Use 'path' for a single file or 'files' array for multiple files in one call. " +
+		"Sensitive information is sanitized by default for security."
 }
 
 func (t *readFileTool) Schema() *genai.Schema {
@@ -42,63 +44,171 @@ func (t *readFileTool) Schema() *genai.Schema {
 		Properties: map[string]*genai.Schema{
 			"path": {
 				Type:        genai.TypeString,
-				Description: "Path to the file to read (must be from collected artifacts)",
+				Description: "Path to read a single file (convenience shorthand). Cannot be used together with 'files'.",
 			},
 			"start": {
 				Type:        genai.TypeInteger,
-				Description: "Starting line number (1-based, optional). If not provided, reads from beginning.",
+				Description: "Starting line number for single-file mode (1-based, optional).",
 			},
 			"stop": {
 				Type:        genai.TypeInteger,
-				Description: "Ending line number (1-based, optional). If not provided, reads to end.",
+				Description: "Ending line number for single-file mode (1-based, optional).",
 			},
 			"sanitize": {
 				Type:        genai.TypeBoolean,
-				Description: "Whether to sanitize sensitive information from the content (default: true). Set to false only for debugging or testing purposes.",
+				Description: "Whether to sanitize sensitive information (default: true).",
+			},
+			"files": {
+				Type:        genai.TypeArray,
+				Description: "Array of file specifications for reading multiple files in one call. Each element must have 'path' and optionally 'start', 'stop'.",
+				Items: &genai.Schema{
+					Type: genai.TypeObject,
+					Properties: map[string]*genai.Schema{
+						"path": {
+							Type:        genai.TypeString,
+							Description: "Path to the file to read (must be from collected artifacts)",
+						},
+						"start": {
+							Type:        genai.TypeInteger,
+							Description: "Starting line number (1-based, optional)",
+						},
+						"stop": {
+							Type:        genai.TypeInteger,
+							Description: "Ending line number (1-based, optional)",
+						},
+					},
+					Required: []string{"path"},
+				},
 			},
 		},
-		Required: []string{"path"},
 	}
 }
 
 func (t *readFileTool) Execute(ctx context.Context, params map[string]any, logArtifacts []aggregator.LogEntry) (any, error) {
-	// Extract path parameter
-	path, err := extractString(params, "path")
-	if err != nil {
-		return nil, err
-	}
-
 	if logArtifacts == nil {
 		return nil, fmt.Errorf("no log artifacts provided to tool")
 	}
 
-	// Validate that the file path exists in the collected artifacts
-	if !isValidLogFile(path, logArtifacts) {
-		return nil, fmt.Errorf("file path %s is not in the collected artifacts", path)
+	// Normalize input: convert single-file "path" param into a "files" array
+	filesArray, err := normalizeParams(params)
+	if err != nil {
+		return nil, err
 	}
 
-	// Extract parameters with defaults
-	start := extractIntPtr(params, "start")
-	stop := extractIntPtr(params, "stop")
+	// Extract sanitize flag (applies to all files)
 	shouldSanitize := extractBool(params, "sanitize", true)
 
-	// Log when sanitization is disabled for security awareness
+	// Validate all files upfront before processing any
+	if err := validateAllFiles(filesArray, logArtifacts); err != nil {
+		return nil, err
+	}
+
+	// Process all files
+	return t.processFiles(filesArray, shouldSanitize)
+}
+
+// normalizeParams converts single-file "path" parameter into a unified "files" array.
+func normalizeParams(params map[string]any) ([]any, error) {
+	_, hasPath := params["path"]
+	filesArg, hasFiles := params["files"]
+
+	if hasPath && hasFiles {
+		return nil, fmt.Errorf("cannot use both 'path' and 'files' parameters; use 'path' for single file or 'files' for multiple")
+	}
+
+	if hasFiles {
+		filesArray, ok := filesArg.([]any)
+		if !ok {
+			return nil, fmt.Errorf("'files' parameter must be an array")
+		}
+		if len(filesArray) == 0 {
+			return nil, fmt.Errorf("'files' array must not be empty")
+		}
+		return filesArray, nil
+	}
+
+	if hasPath {
+		// Convert single-file params to a files array entry
+		fileSpec := map[string]any{"path": params["path"]}
+		if start, ok := params["start"]; ok {
+			fileSpec["start"] = start
+		}
+		if stop, ok := params["stop"]; ok {
+			fileSpec["stop"] = stop
+		}
+		return []any{fileSpec}, nil
+	}
+
+	return nil, fmt.Errorf("must provide either 'path' for single file or 'files' for multiple files")
+}
+
+// validateAllFiles performs upfront validation of all file paths and line ranges.
+func validateAllFiles(filesArray []any, logArtifacts []aggregator.LogEntry) error {
+	for i, item := range filesArray {
+		fileMap, ok := item.(map[string]any)
+		if !ok {
+			return fmt.Errorf("files[%d]: each file specification must be an object", i)
+		}
+
+		path, err := extractString(fileMap, "path")
+		if err != nil {
+			return fmt.Errorf("files[%d]: %w", i, err)
+		}
+
+		if !isValidLogFile(path, logArtifacts) {
+			return fmt.Errorf("files[%d]: file path %s is not in the collected artifacts", i, path)
+		}
+
+		start := extractIntPtr(fileMap, "start")
+		stop := extractIntPtr(fileMap, "stop")
+
+		if start != nil && *start < 1 {
+			return fmt.Errorf("files[%d]: start line must be >= 1, got %d", i, *start)
+		}
+		if stop != nil && *stop < 1 {
+			return fmt.Errorf("files[%d]: stop line must be >= 1, got %d", i, *stop)
+		}
+		if start != nil && stop != nil && *start > *stop {
+			return fmt.Errorf("files[%d]: start line (%d) cannot be greater than stop line (%d)", i, *start, *stop)
+		}
+	}
+	return nil
+}
+
+// processFiles reads all files and returns results.
+// Single file: returns content directly as string.
+// Multiple files: returns map[string]any with path -> content.
+func (t *readFileTool) processFiles(filesArray []any, shouldSanitize bool) (any, error) {
+	if len(filesArray) == 1 {
+		fileMap := filesArray[0].(map[string]any)
+		return t.processSingleFile(fileMap, shouldSanitize)
+	}
+
+	results := make(map[string]any, len(filesArray))
+	for _, item := range filesArray {
+		fileMap := item.(map[string]any)
+		path, _ := extractString(fileMap, "path")
+
+		content, err := t.processSingleFile(fileMap, shouldSanitize)
+		if err != nil {
+			results[path] = fmt.Sprintf("error: %v", err)
+			continue
+		}
+		results[path] = content
+	}
+	return results, nil
+}
+
+// processSingleFile reads a single file based on its specification map.
+func (t *readFileTool) processSingleFile(fileMap map[string]any, shouldSanitize bool) (any, error) {
+	path, _ := extractString(fileMap, "path")
+	start := extractIntPtr(fileMap, "start")
+	stop := extractIntPtr(fileMap, "stop")
+
 	if !shouldSanitize {
 		fmt.Printf("⚠️  WARNING: Sanitization disabled for file %s - sensitive information may be exposed\n", path)
 	}
 
-	// Validate line range parameters
-	if start != nil && *start < 1 {
-		return nil, fmt.Errorf("start line must be >= 1, got %d", *start)
-	}
-	if stop != nil && *stop < 1 {
-		return nil, fmt.Errorf("stop line must be >= 1, got %d", *stop)
-	}
-	if start != nil && stop != nil && *start > *stop {
-		return nil, fmt.Errorf("start line (%d) cannot be greater than stop line (%d)", *start, *stop)
-	}
-
-	// Read the file with line range support
 	content, err := t.readFileWithLineRange(path, start, stop, shouldSanitize)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read file %s: %w", path, err)
