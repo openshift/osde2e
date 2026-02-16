@@ -103,12 +103,12 @@ func GetImageList(list *v1.PodList) (images map[string]string, err error) {
 	for _, pod := range list.Items {
 		// Default to Unknown for the name
 		name := "Unknown"
-		if _, ok := pod.ObjectMeta.Labels["app"]; ok {
-			name = pod.ObjectMeta.Labels["app"]
-		} else if _, ok := pod.ObjectMeta.Labels["name"]; ok {
-			name = pod.ObjectMeta.Labels["name"]
-		} else if _, ok := pod.ObjectMeta.Labels["k8s-app"]; ok {
-			name = pod.ObjectMeta.Labels["k8s-app"]
+		if _, ok := pod.Labels["app"]; ok {
+			name = pod.Labels["app"]
+		} else if _, ok := pod.Labels["name"]; ok {
+			name = pod.Labels["name"]
+		} else if _, ok := pod.Labels["k8s-app"]; ok {
+			name = pod.Labels["k8s-app"]
 		}
 		tmp = appendUniqueContainers(name, pod.Spec.Containers, tmp)
 		tmp = appendUniqueContainers(name, pod.Spec.InitContainers, tmp)

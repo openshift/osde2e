@@ -1,6 +1,7 @@
 package e2e
 
 import (
+	"context"
 	"testing"
 
 	"github.com/onsi/ginkgo/v2/types"
@@ -232,7 +233,7 @@ func TestPostProcessCluster_DryRun(t *testing.T) {
 	}
 
 	// Should return immediately in dry run mode
-	err := orch.PostProcessCluster(nil)
+	err := orch.PostProcessCluster(context.TODO())
 	if err != nil {
 		t.Errorf("Expected no error in dry run mode, got: %v", err)
 	}
@@ -254,7 +255,7 @@ func TestPostProcessCluster_SkipMustGather(t *testing.T) {
 	}
 
 	// Should handle helper creation failure gracefully
-	err := orch.PostProcessCluster(nil)
+	err := orch.PostProcessCluster(context.TODO())
 	if err == nil {
 		t.Error("Expected error when helper creation fails")
 	}
@@ -273,7 +274,7 @@ func TestCleanup_DryRun(t *testing.T) {
 	}
 
 	// Should return immediately in dry run mode
-	err := orch.Cleanup(nil)
+	err := orch.Cleanup(context.TODO())
 	if err != nil {
 		t.Errorf("Expected no error in dry run mode, got: %v", err)
 	}

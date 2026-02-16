@@ -120,7 +120,7 @@ func (m *ROSAProvider) DeleteCluster(clusterID string) error {
 	ctx := context.Background()
 
 	defer func() {
-		_ = m.provider.Client.Close()
+		_ = m.provider.Close()
 		_ = m.provider.Uninstall(ctx)
 	}()
 
@@ -129,15 +129,9 @@ func (m *ROSAProvider) DeleteCluster(clusterID string) error {
 		return fmt.Errorf("rosa delete cluster: failed to get clusters report directory: %v", err)
 	}
 
-	deleteHostedCPVPC := true
-	if viper.GetString(config.AWSVPCSubnetIDs) != "" {
-		deleteHostedCPVPC = false
-	}
+	deleteHostedCPVPC := viper.GetString(config.AWSVPCSubnetIDs) == ""
 
-	deleteOidcConfigID := true
-	if viper.GetString(OIDCConfigID) != "" {
-		deleteOidcConfigID = false
-	}
+	deleteOidcConfigID := viper.GetString(OIDCConfigID) == ""
 
 	return m.provider.DeleteCluster(
 		ctx,

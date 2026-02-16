@@ -44,17 +44,17 @@ func CheckOperatorReadiness(configClient configclient.ConfigV1Interface, logger 
 		if _, ok := operatorSkipList[co.GetName()]; !ok {
 			for _, cos := range co.Status.Conditions {
 				if cos.Type == "Available" && cos.Status == "False" {
-					logger.Printf("Operator %v not available: Condition %v has status %v: %v", co.ObjectMeta.Name, cos.Type, cos.Status, cos.Message)
+					logger.Printf("Operator %v not available: Condition %v has status %v: %v", co.Name, cos.Type, cos.Status, cos.Message)
 					success = false
 				}
 
 				if cos.Type == "Progressing" && cos.Status == "True" {
-					logger.Printf("Operator %v is progressing: Condition %v has status %v: %v", co.ObjectMeta.Name, cos.Type, cos.Status, cos.Message)
+					logger.Printf("Operator %v is progressing: Condition %v has status %v: %v", co.Name, cos.Type, cos.Status, cos.Message)
 					success = false
 				}
 
 				if cos.Type == "Degraded" && cos.Status == "True" {
-					logger.Printf("Operator %v is degraded: Condition %v has status %v: %v", co.ObjectMeta.Name, cos.Type, cos.Status, cos.Message)
+					logger.Printf("Operator %v is degraded: Condition %v has status %v: %v", co.Name, cos.Type, cos.Status, cos.Message)
 					success = false
 				}
 			}

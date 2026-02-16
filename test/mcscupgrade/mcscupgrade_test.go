@@ -129,7 +129,7 @@ var _ = Describe("HyperShift", Ordered, func() {
 
 		osdProvider, err = osdprovider.New(ctx, ocmToken, clientID, clientSecret, ocmEnv, logger)
 		Expect(err).ShouldNot(HaveOccurred(), "failed to construct osd provider")
-		DeferCleanup(osdProvider.Client.Close)
+		DeferCleanup(osdProvider.Close)
 
 		if scUpgrade.MatchesLabelFilter(GinkgoLabelFilter()) || scUpgradeHealthChecks.MatchesLabelFilter(GinkgoLabelFilter()) {
 			osdFleetManagerSC, err := osdProvider.OSDFleetMgmt().V1().ServiceClusters().ServiceCluster(scCluster.osdFleetMgmtID).Get().SendContext(ctx)
@@ -384,8 +384,8 @@ func osdClusterReadyHealthCheck(ctx context.Context, clusterClient *openshiftcli
 	}
 
 	newJob.Spec.Selector.MatchLabels = map[string]string{}
-	newJob.Spec.Template.ObjectMeta.Name = newJob.GetGenerateName()
-	newJob.Spec.Template.ObjectMeta.Labels = map[string]string{}
+	newJob.Spec.Template.Name = newJob.GetGenerateName()
+	newJob.Spec.Template.Labels = map[string]string{}
 	newJob.Spec.Template.Spec.Containers[0].Name = newJob.GetGenerateName()
 
 	if err = clusterClient.Create(ctx, newJob); err != nil {

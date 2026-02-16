@@ -35,8 +35,6 @@ func CheckMachinesObjectState(dynamicClient dynamic.Interface, logger *log.Logge
 		return false, fmt.Errorf("no machines found in the %s namespace", machinesNamespace)
 	}
 
-	var metadataState []string
-
 	for _, item := range obj.Items {
 		var machine machineapi.Machine
 		err = runtime.DefaultUnstructuredConverter.
@@ -46,7 +44,6 @@ func CheckMachinesObjectState(dynamicClient dynamic.Interface, logger *log.Logge
 		}
 
 		if machine.Status.Phase == nil || *machine.Status.Phase != runningPhase {
-			metadataState = append(metadataState, fmt.Sprintf("%v", machine))
 			logger.Printf("machine %s not ready", machine.Name)
 		}
 	}

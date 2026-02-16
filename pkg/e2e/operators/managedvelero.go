@@ -32,8 +32,8 @@ var _ = ginkgo.Describe(veleroOperatorTestName, ginkgo.Ordered, label.Operators,
 		}
 	})
 	operatorName := "managed-velero-operator"
-	var operatorNamespace string = "openshift-velero"
-	var operatorLockFile string = "managed-velero-operator-lock"
+	operatorNamespace := "openshift-velero"
+	operatorLockFile := "managed-velero-operator-lock"
 	var defaultDesiredReplicas int32 = 1
 	clusterRoles := []string{
 		"managed-velero-operator",

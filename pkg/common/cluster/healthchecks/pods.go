@@ -42,7 +42,7 @@ func CheckPodHealth(podClient v1.CoreV1Interface, logger *log.Logger, ns string,
 	if err != nil {
 		return false, err
 	}
-	return !(len(podlist) > 0), err
+	return len(podlist) == 0, err
 }
 
 // checkPods looks for pods matching the supplied predicates and returns the list of pods (pending pods) if any are found
@@ -103,7 +103,7 @@ func checkJobPods(pods []kubev1.Pod, logger *log.Logger) ([]kubev1.Pod, error) {
 			filteredPods[pod.Namespace] = make(map[string][]kubev1.Pod)
 		}
 
-		jobOrCronJobName, ok := pod.ObjectMeta.Labels["job-name"]
+		jobOrCronJobName, ok := pod.Labels["job-name"]
 		if !ok || len(jobOrCronJobName) == 0 {
 			return nil, fmt.Errorf("expected 'job-name' label to be non-empty for pod %s/%s", pod.Namespace, pod.Name)
 		}
@@ -112,9 +112,9 @@ func checkJobPods(pods []kubev1.Pod, logger *log.Logger) ([]kubev1.Pod, error) {
 		// cronJobName-timestamp, where timestamp is a numeric string.
 		// If it's a standalone job instead, it can be up to 63 characters
 		if len(jobOrCronJobName) <= 52 {
-			jobNameCutoff := strings.LastIndex(pod.ObjectMeta.Labels["job-name"], "-")
+			jobNameCutoff := strings.LastIndex(pod.Labels["job-name"], "-")
 			if jobNameCutoff != -1 {
-				jobOrCronJobName = pod.ObjectMeta.Labels["job-name"][:jobNameCutoff]
+				jobOrCronJobName = pod.Labels["job-name"][:jobNameCutoff]
 			}
 		}
 

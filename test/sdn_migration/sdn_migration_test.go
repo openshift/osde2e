@@ -93,7 +93,7 @@ var _ = Describe("SDN migration", Ordered, func() {
 		Expect(err).ShouldNot(HaveOccurred(), "failed to construct rosa provider")
 		osdProvider, err := osdprovider.New(ctx, ocmToken, clientID, clientSecret, ocmEnv, logger)
 		Expect(err).ShouldNot(HaveOccurred(), "failed to construct osd provider")
-		DeferCleanup(osdProvider.Client.Close)
+		DeferCleanup(osdProvider.Close)
 
 		if createRosaCluster.MatchesLabelFilter(GinkgoLabelFilter()) {
 			clusterOptions = &rosaprovider.CreateClusterOptions{
@@ -352,8 +352,8 @@ func osdClusterReadyHealthCheck(ctx context.Context, clusterClient *openshiftcli
 	}
 
 	newJob.Spec.Selector.MatchLabels = map[string]string{}
-	newJob.Spec.Template.ObjectMeta.Name = newJob.GetGenerateName()
-	newJob.Spec.Template.ObjectMeta.Labels = map[string]string{}
+	newJob.Spec.Template.Name = newJob.GetGenerateName()
+	newJob.Spec.Template.Labels = map[string]string{}
 	newJob.Spec.Template.Spec.Containers[0].Name = newJob.GetGenerateName()
 
 	if err = clusterClient.Create(ctx, newJob); err != nil {
@@ -429,7 +429,7 @@ func checkUpgradeStatus(ctx context.Context, client *openshiftclient.Client, upg
 
 		err = client.Get(ctx, "version", "", &cv)
 		if err != nil {
-			logger.Info("Failed to get cluster version config: %v", err)
+			logger.Info("Failed to get cluster version config", "error", err)
 			time.Sleep(upgradeDelay * time.Second)
 			continue
 		}
@@ -481,7 +481,7 @@ func checkUpgradeStatus(ctx context.Context, client *openshiftclient.Client, upg
 			logger.Info("Upgrade failed!")
 			return &upgradeError{err: fmt.Errorf("upgrade failed")}
 		default:
-			logger.Info("Unknown upgrade state: %s", upgradeState)
+			logger.Info("Unknown upgrade state", "state", upgradeState)
 		}
 
 		// Wait before the next poll attempt

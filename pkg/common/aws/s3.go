@@ -89,7 +89,7 @@ func (CcsAwsSession *ccsAwsSession) CleanupS3Buckets(activeClusters map[string]b
 					fmt.Println(errorMsg)
 					*failedCounter++
 					if sendSummary && errorBuilder.Len() < 10000 {
-						errorBuilder.WriteString(strings.Replace(errorMsg, `""`, "", -1))
+						errorBuilder.WriteString(strings.ReplaceAll(errorMsg, `""`, ""))
 					}
 					continue
 				}
@@ -101,7 +101,7 @@ func (CcsAwsSession *ccsAwsSession) CleanupS3Buckets(activeClusters map[string]b
 					fmt.Println(errorMsg)
 					*failedCounter++
 					if sendSummary && errorBuilder.Len() < config.SlackMessageLength {
-						errorBuilder.WriteString(strings.Replace(errorMsg, `""`, "", -1))
+						errorBuilder.WriteString(strings.ReplaceAll(errorMsg, `""`, ""))
 					}
 					continue
 				}
