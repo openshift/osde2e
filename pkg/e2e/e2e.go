@@ -46,6 +46,11 @@ func RunTests(ctx context.Context) int {
 	// Provision cluster
 	if err := orch.Provision(ctx); err != nil {
 		log.Printf("Provision failed: %v", err)
+		if viper.GetBool(config.LogAnalysis.EnableAnalysis) {
+			if err := orch.AnalyzeLogs(ctx, err); err != nil {
+				log.Printf("Log analysis failed: %v", err)
+			}
+		}
 		return config.Failure
 	}
 
@@ -55,7 +60,9 @@ func RunTests(ctx context.Context) int {
 	// Analyze logs on failure, if enabled
 	if testErr != nil {
 		log.Printf("Tests failed: %v", testErr)
-		if viper.GetBool(config.LogAnalysis.EnableAnalysis) {
+		// Run log analysis only if enableAnalysis is true and TestSuites and AdHocTestImages are not set
+		// This is to avoid double analysis when adhocTestImages or TestSuites are used
+		if viper.GetBool(config.LogAnalysis.EnableAnalysis) && viper.GetString(config.Tests.TestSuites) == "" && viper.GetString(config.Tests.AdHocTestImages) == "" {
 			if err := orch.AnalyzeLogs(ctx, testErr); err != nil {
 				log.Printf("Log analysis failed: %v", err)
 			}
