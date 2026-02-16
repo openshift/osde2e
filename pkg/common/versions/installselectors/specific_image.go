@@ -44,7 +44,7 @@ func (m specificImage) SelectVersion(versionList *spi.VersionList) (*semver.Vers
 
 	common.SortVersions(versionsWithoutDefault)
 
-	versionFromImage := strings.Replace(specificImage, "registry.ci.openshift.org/ocp/release:", "", -1)
+	versionFromImage := strings.ReplaceAll(specificImage, "registry.ci.openshift.org/ocp/release:", "")
 
 	if strings.Contains(versionFromImage, "nightly") {
 		versionFromImage += "-nightly"

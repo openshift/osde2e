@@ -44,7 +44,7 @@ func pod(name string, label map[string]string, phase v1.PodPhase) *v1.Pod {
 		if err != nil {
 			jobNumber = 0
 		}
-		mockPod.ObjectMeta.CreationTimestamp.Time = time.Unix(0, 0).Add(time.Duration(jobNumber) * time.Second)
+		mockPod.CreationTimestamp.Time = time.Unix(0, 0).Add(time.Duration(jobNumber) * time.Second)
 
 		mockPod.OwnerReferences = append(mockPod.OwnerReferences, metav1.OwnerReference{
 			APIVersion: "batch/v1",

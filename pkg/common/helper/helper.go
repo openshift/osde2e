@@ -139,7 +139,7 @@ func (h *H) SetupNewProject(ctx context.Context, suffix string) (*projectv1.Proj
 	// setup project and dedicated-admin account to run tests
 	// the service account is provisioned but only used when specified
 	var v1project *projectv1.Project
-	ginkgo.GinkgoLogr.Info("Setup called for %s", "osde2e-"+suffix)
+	ginkgo.GinkgoLogr.Info("Setup called", "project", "osde2e-"+suffix)
 	v1project, err = h.createProject(ctx, suffix)
 	if h.OutsideGinkgo && err != nil {
 		return nil, fmt.Errorf("failed to create project: %s", err.Error())

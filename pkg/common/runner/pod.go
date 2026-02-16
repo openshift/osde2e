@@ -151,7 +151,7 @@ func (r *Runner) createJobPod(ctx context.Context) (pod *kubev1.Pod, err error) 
 	}
 
 	// setup git repos to be cloned in init containers
-	r.Repos.ConfigurePod(&pod.Spec)
+	r.ConfigurePod(&pod.Spec)
 
 	job := &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{

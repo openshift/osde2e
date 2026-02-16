@@ -138,7 +138,7 @@ func (e *Engine) Run(ctx context.Context) (*Result, error) {
 
 	result, err := e.llmClient.Analyze(ctx, userPrompt, llmConfig, toolRegistry)
 	if err != nil {
-		return nil, fmt.Errorf("Log analysis failed: %w", err)
+		return nil, fmt.Errorf("log analysis failed: %w", err)
 	}
 
 	analysisResult := &Result{

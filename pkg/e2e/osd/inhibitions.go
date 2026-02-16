@@ -91,7 +91,7 @@ var _ = ginkgo.Describe("[Suite: operators] AlertmanagerInhibitions", label.Oper
 					// match the source
 					if rule.SourceMatch["alertname"] == test.expectedSource {
 						// match the target
-						rulePresent = rule.TargetMatchRE["alertname"].Regexp.Match([]byte(test.expectedTarget))
+						rulePresent = rule.TargetMatchRE["alertname"].Match([]byte(test.expectedTarget))
 					}
 				}
 			}

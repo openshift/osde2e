@@ -57,16 +57,17 @@ func TestSlackReporter_readTestOutput(t *testing.T) {
 		tmpDir := t.TempDir()
 		var content strings.Builder
 		for i := 1; i <= 500; i++ {
-			if i == 100 {
+			switch i {
+			case 100:
 				content.WriteString("Running test: authentication\n")
 				content.WriteString("[FAILED] authentication failed\n")
 				content.WriteString("Expected: true\n")
 				content.WriteString("Got: false\n")
-			} else if i == 300 {
+			case 300:
 				content.WriteString("Running test: database connection\n")
 				content.WriteString("• [FAILED] connection timeout\n")
 				content.WriteString("Timeout after 30s\n")
-			} else {
+			default:
 				content.WriteString("line " + string(rune('0'+i%10)) + "\n")
 			}
 		}

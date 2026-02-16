@@ -515,9 +515,10 @@ func (o *E2EOrchestrator) writeKonfluxReport(report ginkgo.Report, outputFile st
 
 	var successes, failures int
 	for _, spec := range report.SpecReports {
-		if spec.State == types.SpecStatePassed {
+		switch spec.State {
+		case types.SpecStatePassed:
 			successes++
-		} else if spec.State == types.SpecStateFailed {
+		case types.SpecStateFailed:
 			failures++
 		}
 	}

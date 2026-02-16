@@ -66,10 +66,11 @@ func (r *Runner) waitForCompletion(ctx context.Context, podName string, timeoutI
 			return false, err
 		}
 
-		if pod.Status.Phase == kubev1.PodFailed {
+		switch pod.Status.Phase {
+		case kubev1.PodFailed:
 			r.Info(fmt.Sprintf("Pod entered error state while waiting for endpoint: %+v", pod.Status))
 			return false, fmt.Errorf("pod failed while waiting for endpoints")
-		} else if pod.Status.Phase == kubev1.PodSucceeded {
+		case kubev1.PodSucceeded:
 			var err *multierror.Error
 			for _, containerStatus := range pod.Status.ContainerStatuses {
 				if containerStatus.State.Terminated != nil {
@@ -79,7 +80,7 @@ func (r *Runner) waitForCompletion(ctx context.Context, podName string, timeoutI
 				}
 			}
 			return err == nil, err.ErrorOrNil()
-		} else if pod.Status.Phase == kubev1.PodPending {
+		case kubev1.PodPending:
 			pendingCount++
 			if pendingCount > podPendingTimeout {
 				return false, fmt.Errorf("timed out waiting for pod to start")
