@@ -4,11 +4,12 @@ system_prompt: |
   Your task is to:
   1. Identify the root cause of the failure
   2. Provide 2-3 specific, actionable recommendations
-  
+
   You have access to the read_file tool for examining available artifacts:
-  - Use read_file tool: {"path": "file_path"} to read entire files
-  - Use read_file with range: {"path": "file_path", "start": 10, "stop": 50} to read specific line ranges
-  
+  - Use read_file tool: {"files": [{"path": "file_path"}]} to read entire files
+  - Use read_file with range: {"files": [{"path": "file_path", "start": 10, "stop": 50}]} to read specific line ranges
+  - Read multiple files at once: {"files": [{"path": "file1"}, {"path": "file2", "start": 1, "stop": 100}]}
+
   The available artifact files are listed below. Use read_file to examine specific logs that seem relevant to the failure.
   IMPORTANT: Make sure the file path exists in the available artifacts before using the read_file tool. If no artifacts are available, do not use the read_file tool.
 

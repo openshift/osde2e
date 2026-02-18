@@ -33,72 +33,141 @@ func (t *readFileTool) Name() string {
 }
 
 func (t *readFileTool) Description() string {
-	return "Reads a specific file from the collected artifacts, optionally specifying a line range. Sensitive information is sanitized by default for security. Use start and stop parameters to read specific line ranges."
+	return "Reads one or more files from the collected artifacts, optionally specifying line ranges. " +
+		"Pass a 'files' array with one or more file specifications. " +
+		"Sensitive information is sanitized by default for security."
 }
 
 func (t *readFileTool) Schema() *genai.Schema {
 	return &genai.Schema{
 		Type: genai.TypeObject,
 		Properties: map[string]*genai.Schema{
-			"path": {
-				Type:        genai.TypeString,
-				Description: "Path to the file to read (must be from collected artifacts)",
-			},
-			"start": {
-				Type:        genai.TypeInteger,
-				Description: "Starting line number (1-based, optional). If not provided, reads from beginning.",
-			},
-			"stop": {
-				Type:        genai.TypeInteger,
-				Description: "Ending line number (1-based, optional). If not provided, reads to end.",
-			},
 			"sanitize": {
 				Type:        genai.TypeBoolean,
-				Description: "Whether to sanitize sensitive information from the content (default: true). Set to false only for debugging or testing purposes.",
+				Description: "Whether to sanitize sensitive information (default: true).",
+			},
+			"files": {
+				Type:        genai.TypeArray,
+				Description: "Array of file specifications. Each element must have 'path' and optionally 'start', 'stop' line numbers.",
+				Items: &genai.Schema{
+					Type: genai.TypeObject,
+					Properties: map[string]*genai.Schema{
+						"path": {
+							Type:        genai.TypeString,
+							Description: "Path to the file to read (must be from collected artifacts)",
+						},
+						"start": {
+							Type:        genai.TypeInteger,
+							Description: "Starting line number (1-based, optional)",
+						},
+						"stop": {
+							Type:        genai.TypeInteger,
+							Description: "Ending line number (1-based, optional)",
+						},
+					},
+					Required: []string{"path"},
+				},
 			},
 		},
-		Required: []string{"path"},
+		Required: []string{"files"},
 	}
 }
 
-func (t *readFileTool) Execute(ctx context.Context, params map[string]any, logArtifacts []aggregator.LogEntry) (any, error) {
-	// Extract path parameter
-	path, err := extractString(params, "path")
-	if err != nil {
-		return nil, err
-	}
-
+func (t *readFileTool) Execute(_ context.Context, params map[string]any, logArtifacts []aggregator.LogEntry) (any, error) {
 	if logArtifacts == nil {
 		return nil, fmt.Errorf("no log artifacts provided to tool")
 	}
 
-	// Validate that the file path exists in the collected artifacts
-	if !isValidLogFile(path, logArtifacts) {
-		return nil, fmt.Errorf("file path %s is not in the collected artifacts", path)
+	filesArg, ok := params["files"]
+	if !ok {
+		return nil, fmt.Errorf("'files' parameter is required")
 	}
 
-	// Extract parameters with defaults
-	start := extractIntPtr(params, "start")
-	stop := extractIntPtr(params, "stop")
+	filesArray, ok := filesArg.([]any)
+	if !ok {
+		return nil, fmt.Errorf("'files' parameter must be an array")
+	}
+
+	if len(filesArray) == 0 {
+		return nil, fmt.Errorf("'files' array must not be empty")
+	}
+
 	shouldSanitize := extractBool(params, "sanitize", true)
 
-	// Log when sanitization is disabled for security awareness
+	if err := validateAllFiles(filesArray, logArtifacts); err != nil {
+		return nil, err
+	}
+
+	return t.processFiles(filesArray, shouldSanitize)
+}
+
+// validateAllFiles performs upfront validation of all file paths and line ranges.
+func validateAllFiles(filesArray []any, logArtifacts []aggregator.LogEntry) error {
+	for i, item := range filesArray {
+		fileMap, ok := item.(map[string]any)
+		if !ok {
+			return fmt.Errorf("files[%d]: each file specification must be an object", i)
+		}
+
+		path, err := extractString(fileMap, "path")
+		if err != nil {
+			return fmt.Errorf("files[%d]: %w", i, err)
+		}
+
+		if !isValidLogFile(path, logArtifacts) {
+			return fmt.Errorf("files[%d]: file path %s is not in the collected artifacts", i, path)
+		}
+
+		start := extractIntPtr(fileMap, "start")
+		stop := extractIntPtr(fileMap, "stop")
+
+		if start != nil && *start < 1 {
+			return fmt.Errorf("files[%d]: start line must be >= 1, got %d", i, *start)
+		}
+		if stop != nil && *stop < 1 {
+			return fmt.Errorf("files[%d]: stop line must be >= 1, got %d", i, *stop)
+		}
+		if start != nil && stop != nil && *start > *stop {
+			return fmt.Errorf("files[%d]: start line (%d) cannot be greater than stop line (%d)", i, *start, *stop)
+		}
+	}
+	return nil
+}
+
+// processFiles reads all files and returns results.
+// Single file: returns content directly as string.
+// Multiple files: returns map[string]any with path -> content.
+func (t *readFileTool) processFiles(filesArray []any, shouldSanitize bool) (any, error) {
+	if len(filesArray) == 1 {
+		fileMap := filesArray[0].(map[string]any)
+		return t.processSingleFile(fileMap, shouldSanitize)
+	}
+
+	results := make(map[string]any, len(filesArray))
+	for _, item := range filesArray {
+		fileMap := item.(map[string]any)
+		path, _ := extractString(fileMap, "path")
+
+		content, err := t.processSingleFile(fileMap, shouldSanitize)
+		if err != nil {
+			results[path] = fmt.Sprintf("error: %v", err)
+			continue
+		}
+		results[path] = content
+	}
+	return results, nil
+}
+
+// processSingleFile reads a single file based on its specification map.
+func (t *readFileTool) processSingleFile(fileMap map[string]any, shouldSanitize bool) (any, error) {
+	path, _ := extractString(fileMap, "path")
+	start := extractIntPtr(fileMap, "start")
+	stop := extractIntPtr(fileMap, "stop")
+
 	if !shouldSanitize {
 		fmt.Printf("⚠️  WARNING: Sanitization disabled for file %s - sensitive information may be exposed\n", path)
 	}
 
-	// Validate line range parameters
-	if start != nil && *start < 1 {
-		return nil, fmt.Errorf("start line must be >= 1, got %d", *start)
-	}
-	if stop != nil && *stop < 1 {
-		return nil, fmt.Errorf("stop line must be >= 1, got %d", *stop)
-	}
-	if start != nil && stop != nil && *start > *stop {
-		return nil, fmt.Errorf("start line (%d) cannot be greater than stop line (%d)", *start, *stop)
-	}
-
-	// Read the file with line range support
 	content, err := t.readFileWithLineRange(path, start, stop, shouldSanitize)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read file %s: %w", path, err)
@@ -117,11 +186,7 @@ func (t *readFileTool) readFileWithLineRange(filePath string, start, stop *int, 
 
 	if len(rawLines) == 0 {
 		if start != nil {
-			startLine := 1
-			if start != nil {
-				startLine = *start
-			}
-			return fmt.Sprintf("No lines found in range %d-%s", startLine, formatStopLine(stop)), nil
+			return fmt.Sprintf("No lines found in range %d-%s", *start, formatStopLine(stop)), nil
 		}
 		return "File is empty", nil
 	}
