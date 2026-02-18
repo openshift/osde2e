@@ -267,9 +267,6 @@ func (o *E2EOrchestrator) uploadToS3() error {
 	if err != nil {
 		return fmt.Errorf("failed to create S3 uploader: %w", err)
 	}
-	if uploader == nil {
-		return nil // S3 upload not enabled
-	}
 
 	reportDir := viper.GetString(config.ReportDir)
 	if reportDir == "" {
