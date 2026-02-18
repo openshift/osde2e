@@ -249,12 +249,10 @@ func (o *E2EOrchestrator) Report(ctx context.Context) error {
 
 	runner.ReportClusterInstallLogs(o.provider)
 
-	// Upload test artifacts to S3 if bucket set
-	if viper.GetString(config.Tests.LogBucket) != "" {
-		if err := o.uploadToS3(); err != nil {
-			log.Printf("S3 upload failed: %v", err)
-			// Don't fail the overall report phase for S3 upload errors
-		}
+	// Upload test artifacts to S3 if bucket configured
+	if err := o.uploadToS3(); err != nil {
+		log.Printf("S3 upload failed: %v", err)
+		// Don't fail the overall report phase for S3 upload errors
 	}
 
 	return nil
@@ -262,13 +260,15 @@ func (o *E2EOrchestrator) Report(ctx context.Context) error {
 
 // uploadToS3 uploads the report directory contents to S3.
 func (o *E2EOrchestrator) uploadToS3() error {
+	// Check if S3 bucket is configured
+	if viper.GetString(config.Tests.LogBucket) == "" {
+		return nil // S3 upload not configured, skip
+	}
+
 	component := deriveComponentFromTestImage()
 	uploader, err := aws.NewS3Uploader(component)
 	if err != nil {
 		return fmt.Errorf("failed to create S3 uploader: %w", err)
-	}
-	if uploader == nil {
-		return nil // S3 upload not enabled
 	}
 
 	reportDir := viper.GetString(config.ReportDir)
