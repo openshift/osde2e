@@ -75,8 +75,7 @@ func SampleService(port int32, targetPort int, serviceName, serviceNamespace str
 }
 
 func CreateService(ctx context.Context, svc *kv1.Service, h *H) error {
-	var uwm *kv1.Service
-	err := h.Client.WithNamespace(svc.Namespace).Create(ctx, uwm)
+	err := h.Client.WithNamespace(svc.Namespace).Create(ctx, svc)
 	if err != nil {
 		log.Printf("Could not issue create command")
 		return err
@@ -84,8 +83,8 @@ func CreateService(ctx context.Context, svc *kv1.Service, h *H) error {
 
 	// Wait for the pod to create.
 	err = wait.PollUntilContextTimeout(ctx, 5*time.Second, 1*time.Minute, false, func(ctx context.Context) (bool, error) {
-		var tmpSvc *kv1.Service
-		if err := h.Client.Get(ctx, uwm.Name, uwm.Namespace, tmpSvc); err != nil {
+		tmpSvc := &kv1.Service{}
+		if err := h.Client.Get(ctx, svc.Name, svc.Namespace, tmpSvc); err != nil {
 			return false, nil
 		}
 		return true, nil

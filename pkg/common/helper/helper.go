@@ -16,12 +16,6 @@ import (
 	configv1 "github.com/openshift/api/config/v1"
 	projectv1 "github.com/openshift/api/project/v1"
 	"github.com/openshift/osde2e-common/pkg/clients/openshift"
-	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
-	"github.com/openshift/osde2e/pkg/common/config"
-	"github.com/openshift/osde2e/pkg/common/providers/ocmprovider"
-	"github.com/openshift/osde2e/pkg/common/runner"
-	"github.com/openshift/osde2e/pkg/common/templates"
-	"github.com/openshift/osde2e/pkg/common/util"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -30,6 +24,13 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
+
+	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
+	"github.com/openshift/osde2e/pkg/common/config"
+	"github.com/openshift/osde2e/pkg/common/providers/ocmprovider"
+	"github.com/openshift/osde2e/pkg/common/runner"
+	"github.com/openshift/osde2e/pkg/common/templates"
+	"github.com/openshift/osde2e/pkg/common/util"
 )
 
 // Init is a common helper function to import the run state into Helper
@@ -293,7 +294,7 @@ func (h *H) SetServiceAccount(ctx context.Context, sa string) *H {
 	if h.ServiceAccount != "" {
 		parts := strings.Split(h.ServiceAccount, ":")
 		Expect(len(parts)).Should(Equal(4), "not a valid service account name: %v", h.ServiceAccount)
-		var sa *corev1.ServiceAccount
+		sa := &corev1.ServiceAccount{}
 		err := h.Client.Get(ctx, parts[3], parts[2], sa)
 		Expect(err).ShouldNot(HaveOccurred(), "could not get sa '%s'", h.ServiceAccount)
 	}
