@@ -12,7 +12,7 @@ import (
 	"github.com/openshift/osde2e/internal/llm/tools"
 	"github.com/openshift/osde2e/internal/prompts"
 	"github.com/openshift/osde2e/internal/reporter"
-	krknAggregator "github.com/openshift/osde2e/pkg/krknai/aggregator"
+	krknAgg "github.com/openshift/osde2e/pkg/krknai/aggregator"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v3"
@@ -50,13 +50,175 @@ func TestNew_ValidConfig(t *testing.T) {
 	assert.Contains(t, err.Error(), "results directory is required")
 }
 
-func TestEmbeddedPromptTemplate(t *testing.T) {
-	// Verify the embedded prompt template loads correctly
-	data, err := krknaiTemplatesFS.ReadFile("prompts/krknai.yaml")
+func TestPromptTemplatesAvailable(t *testing.T) {
+	store := newTestPromptStore(t)
+
+	tmpl, err := store.GetTemplate("krknai")
 	require.NoError(t, err)
-	assert.Contains(t, string(data), "system_prompt")
-	assert.Contains(t, string(data), "user_prompt")
-	assert.Contains(t, string(data), "chaos engineering")
+	assert.Contains(t, tmpl.SystemPrompt, "chaos engineering")
+	assert.Contains(t, tmpl.UserPrompt, "Summary")
+
+	assert.Contains(t, tmpl.SystemPrompt, "markdown")
+	assert.Contains(t, tmpl.SystemPrompt, "genetic algorithm")
+}
+
+func TestRenderKrknAIPrompt(t *testing.T) {
+	store := newTestPromptStore(t)
+
+	variables := map[string]any{
+		"ClusterInfo": &krknAgg.ClusterInfo{
+			ID:          "abc-123",
+			Version:     "4.17.3",
+			Type:        "aws/rosa-hcp",
+			Region:      "us-east-1",
+			Environment: "stage",
+		},
+		"Summary": map[string]any{
+			"TotalScenarioCount":      30,
+			"SuccessfulScenarioCount": 27,
+			"FailedScenarioCount":     3,
+			"Generations":             3,
+			"MaxFitnessScore":         8.75,
+			"AvgFitnessScore":         4.32,
+			"ScenarioTypes":           []string{"node-cpu-hog", "node-memory-hog", "pod-scenarios"},
+		},
+		"TopScenarios": []map[string]any{
+			{
+				"Scenario":                     "node-cpu-hog",
+				"GenerationID":                 2,
+				"ScenarioID":                   15,
+				"FitnessScore":                 8.75,
+				"HealthCheckResponseTimeScore": 6.50,
+				"HealthCheckFailureScore":      2.25,
+				"KrknFailureScore":             0.0,
+				"Parameters":                   "node_selector: node-role.kubernetes.io/worker",
+			},
+		},
+		"FailedScenarios": []map[string]any{
+			{
+				"Scenario":         "dns-outage",
+				"GenerationID":     1,
+				"ScenarioID":       7,
+				"KrknFailureScore": -1.0,
+				"Parameters":       "namespace: openshift-dns",
+			},
+		},
+		"HealthCheckReport": []map[string]any{
+			{
+				"ScenarioID":          15,
+				"ComponentName":       "console",
+				"MinResponseTime":     12.5,
+				"MaxResponseTime":     850.3,
+				"AverageResponseTime": 245.7,
+				"SuccessCount":        48,
+				"FailureCount":        2,
+			},
+		},
+		"LogArtifacts": []map[string]any{
+			{"Source": "/results/reports/all.csv", "LineCount": 31},
+			{"Source": "/results/krkn-ai.yaml", "LineCount": 85},
+		},
+		"ConfigSummary": "generations: 3\npopulation_size: 10\n",
+	}
+
+	userPrompt, config, err := store.RenderPrompt("krknai", variables)
+	require.NoError(t, err)
+	require.NotNil(t, config)
+
+	assert.Contains(t, userPrompt, "id=abc-123")
+	assert.Contains(t, userPrompt, "version=4.17.3")
+	assert.Contains(t, userPrompt, "type=aws/rosa-hcp")
+	assert.Contains(t, userPrompt, "region=us-east-1")
+	assert.Contains(t, userPrompt, "env=stage")
+
+	assert.Contains(t, userPrompt, "30 scenarios")
+	assert.Contains(t, userPrompt, "27 ok")
+	assert.Contains(t, userPrompt, "3 failed")
+	assert.Contains(t, userPrompt, "max=8.75")
+	assert.Contains(t, userPrompt, "fitness=8.75")
+	assert.Contains(t, userPrompt, "node_selector: node-role.kubernetes.io/worker")
+	assert.Contains(t, userPrompt, "dns-outage")
+	assert.Contains(t, userPrompt, "console")
+	assert.Contains(t, userPrompt, "avg=245.70ms")
+	assert.Contains(t, userPrompt, "/results/reports/all.csv (31L)")
+	assert.Contains(t, userPrompt, "generations: 3")
+
+	assert.NotNil(t, config.SystemInstruction)
+	assert.Contains(t, *config.SystemInstruction, "chaos engineering analyst")
+	assert.Contains(t, *config.SystemInstruction, "genetic algorithm")
+}
+
+func TestRun_MarkdownReportFormat(t *testing.T) {
+	tempDir := t.TempDir()
+	reportsDir := filepath.Join(tempDir, "reports")
+	require.NoError(t, os.MkdirAll(reportsDir, 0o755))
+
+	createTestResultFiles(t, tempDir, reportsDir)
+
+	ctx := context.Background()
+	agg := krknAgg.NewKrknAIAggregator(ctx)
+	promptStore := newTestPromptStore(t)
+
+	mockClient := &mockLLMClient{
+		response: &llm.AnalysisResult{
+			Content: "# Krkn-AI Chaos Test Report\n\n## Executive Summary\nCluster shows moderate resilience.",
+		},
+	}
+
+	engine := &Engine{
+		config: &Config{
+			BaseConfig:   analysisengine.BaseConfig{ArtifactsDir: tempDir, APIKey: "fake-key"},
+			ReportFormat: "markdown",
+		},
+		aggregator:       agg,
+		promptStore:      promptStore,
+		llmClient:        mockClient,
+		reporterRegistry: newTestReporterRegistry(),
+	}
+
+	result, err := engine.Run(ctx)
+	require.NoError(t, err)
+	require.NotNil(t, result)
+	assert.Contains(t, result.Content, "Chaos Test Report")
+}
+
+func TestRun_HTMLReportFormat(t *testing.T) {
+	tempDir := t.TempDir()
+	reportsDir := filepath.Join(tempDir, "reports")
+	require.NoError(t, os.MkdirAll(reportsDir, 0o755))
+
+	createTestResultFiles(t, tempDir, reportsDir)
+
+	ctx := context.Background()
+	agg := krknAgg.NewKrknAIAggregator(ctx)
+	promptStore := newTestPromptStore(t)
+
+	mockClient := &mockLLMClient{
+		response: &llm.AnalysisResult{
+			Content: "# Krkn-AI Chaos Test Report\n\n## Executive Summary\nCluster shows **moderate** resilience.\n\n| Metric | Value |\n|--------|-------|\n| Total | 5 |\n",
+		},
+	}
+
+	engine := &Engine{
+		config: &Config{
+			BaseConfig:   analysisengine.BaseConfig{ArtifactsDir: tempDir, APIKey: "fake-key"},
+			ReportFormat: "html",
+		},
+		aggregator:       agg,
+		promptStore:      promptStore,
+		llmClient:        mockClient,
+		reporterRegistry: newTestReporterRegistry(),
+	}
+
+	result, err := engine.Run(ctx)
+	require.NoError(t, err)
+	require.NotNil(t, result)
+
+	assert.Contains(t, result.Content, "<!DOCTYPE html>")
+	assert.Contains(t, result.Content, "<h1")
+	assert.Contains(t, result.Content, "<table>")
+	assert.Contains(t, result.Content, "<strong>moderate</strong>")
+	assert.NotContains(t, result.Content, "## Executive Summary")
 }
 
 func TestWriteSummary(t *testing.T) {
@@ -78,8 +240,8 @@ func TestWriteSummary(t *testing.T) {
 		},
 	}
 
-	data := &krknAggregator.KrknAIData{
-		Summary: krknAggregator.KrknAISummary{
+	data := &krknAgg.KrknAIData{
+		Summary: krknAgg.KrknAISummary{
 			TotalScenarioCount:      5,
 			SuccessfulScenarioCount: 4,
 			FailedScenarioCount:     1,
@@ -88,10 +250,10 @@ func TestWriteSummary(t *testing.T) {
 			AvgFitnessScore:         1.8,
 			ScenarioTypes:           []string{"node-cpu-hog", "pod-scenarios"},
 		},
-		TopScenarios: []krknAggregator.ScenarioResult{
+		TopScenarios: []krknAgg.ScenarioResult{
 			{ScenarioID: 1, Scenario: "node-cpu-hog", FitnessScore: 2.2},
 		},
-		FailedScenarios: []krknAggregator.ScenarioResult{
+		FailedScenarios: []krknAgg.ScenarioResult{
 			{ScenarioID: 5, Scenario: "dns-outage", KrknFailureScore: -1.0},
 		},
 	}
@@ -133,7 +295,7 @@ func TestRun_WithMockLLM(t *testing.T) {
 	ctx := context.Background()
 
 	// Build engine with mock LLM client
-	agg := krknAggregator.NewKrknAIAggregator(ctx)
+	agg := krknAgg.NewKrknAIAggregator(ctx)
 
 	promptStore := newTestPromptStore(t)
 
@@ -182,7 +344,7 @@ func TestRun_LLMFailure(t *testing.T) {
 	createTestResultFiles(t, tempDir, reportsDir)
 
 	ctx := context.Background()
-	agg := krknAggregator.NewKrknAIAggregator(ctx)
+	agg := krknAgg.NewKrknAIAggregator(ctx)
 	promptStore := newTestPromptStore(t)
 
 	mockClient := &mockLLMClient{
@@ -206,7 +368,7 @@ func TestRun_LLMFailure(t *testing.T) {
 
 func TestRun_MissingResults(t *testing.T) {
 	ctx := context.Background()
-	agg := krknAggregator.NewKrknAIAggregator(ctx)
+	agg := krknAgg.NewKrknAIAggregator(ctx)
 	promptStore := newTestPromptStore(t)
 
 	engine := &Engine{
@@ -224,13 +386,16 @@ func TestRun_MissingResults(t *testing.T) {
 	assert.Contains(t, err.Error(), "failed to collect krkn-ai results")
 }
 
-// newTestPromptStore creates a prompt store using the embedded krkn-ai templates.
+// newTestPromptStore creates a prompt store using the central prompt templates.
 func newTestPromptStore(t *testing.T) *prompts.PromptStore {
 	t.Helper()
-	templatesFS, err := fs.Sub(krknaiTemplatesFS, "prompts")
+	store, err := prompts.NewPromptStore(prompts.DefaultTemplates())
 	require.NoError(t, err)
-	store, err := prompts.NewPromptStore(templatesFS)
+
+	localFS, err := fs.Sub(krknPrompts, "prompts")
 	require.NoError(t, err)
+	require.NoError(t, store.RegisterTemplates(localFS))
+
 	return store
 }
 

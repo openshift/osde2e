@@ -12,6 +12,9 @@ func TestNewPromptStore(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, store)
 	assert.Greater(t, len(store.templates), 0, "Should have loaded some templates")
+
+	_, err = store.GetTemplate("default")
+	assert.NoError(t, err, "default template should be loaded")
 }
 
 func TestGetTemplate(t *testing.T) {
