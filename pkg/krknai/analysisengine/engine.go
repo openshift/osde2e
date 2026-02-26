@@ -14,6 +14,7 @@ import (
 	"github.com/gomarkdown/markdown"
 	mdhtml "github.com/gomarkdown/markdown/html"
 	"github.com/gomarkdown/markdown/parser"
+	"github.com/microcosm-cc/bluemonday"
 	"github.com/openshift/osde2e/internal/analysisengine"
 	"github.com/openshift/osde2e/internal/llm"
 	"github.com/openshift/osde2e/internal/llm/tools"
@@ -253,10 +254,11 @@ func markdownToHTML(content string) (string, error) {
 
 	p := parser.NewWithExtensions(parser.CommonExtensions | parser.AutoHeadingIDs)
 	renderer := mdhtml.NewRenderer(mdhtml.RendererOptions{Flags: mdhtml.CommonFlags | mdhtml.HrefTargetBlank})
-	body := markdown.ToHTML([]byte(content), p, renderer)
+	unsafeBody := markdown.ToHTML([]byte(content), p, renderer)
+	safeBody := bluemonday.UGCPolicy().SanitizeBytes(unsafeBody)
 
 	var buf bytes.Buffer
-	if err := tmpl.Execute(&buf, struct{ Body template.HTML }{Body: template.HTML(body)}); err != nil {
+	if err := tmpl.Execute(&buf, struct{ Body template.HTML }{Body: template.HTML(string(safeBody))}); err != nil {
 		return "", fmt.Errorf("failed to execute HTML template: %w", err)
 	}
 

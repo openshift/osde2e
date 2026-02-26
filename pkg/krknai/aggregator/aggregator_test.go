@@ -313,3 +313,44 @@ scenario:
 
 	require.NoError(t, os.WriteFile(filepath.Join(resultsDir, "krkn-ai.yaml"), []byte(configYAML), 0o644))
 }
+
+func TestWithClusterInfo_DefensiveCopy(t *testing.T) {
+	info := &ClusterInfo{
+		ID:          "original-id",
+		Version:     "4.14.0",
+		Type:        "aws/rosa-hcp",
+		Region:      "us-east-1",
+		Environment: "stage",
+	}
+
+	agg := NewKrknAIAggregator(context.Background())
+	agg.WithClusterInfo(info)
+
+	// Mutate the caller's struct after passing it in
+	info.ID = "mutated-id"
+	info.Region = "eu-west-1"
+
+	assert.Equal(t, "original-id", agg.clusterInfo.ID, "stored copy must be isolated from caller mutation")
+	assert.Equal(t, "us-east-1", agg.clusterInfo.Region, "stored copy must be isolated from caller mutation")
+}
+
+func TestCollect_ClusterInfoIsolation(t *testing.T) {
+	tempDir := t.TempDir()
+	resultsDir := filepath.Join(tempDir, "results")
+	reportsDir := filepath.Join(resultsDir, "reports")
+	require.NoError(t, os.MkdirAll(reportsDir, 0o755))
+	createKrknAITestFiles(t, resultsDir, reportsDir)
+
+	info := &ClusterInfo{ID: "test-cluster", Version: "4.14.0"}
+	agg := NewKrknAIAggregator(context.Background())
+	agg.WithClusterInfo(info)
+
+	data, err := agg.Collect(context.Background(), resultsDir)
+	require.NoError(t, err)
+	require.NotNil(t, data.ClusterInfo)
+
+	// The output ClusterInfo should be a separate copy from the aggregator's internal one
+	assert.Equal(t, "test-cluster", data.ClusterInfo.ID)
+	data.ClusterInfo.ID = "mutated-output"
+	assert.Equal(t, "test-cluster", agg.clusterInfo.ID, "aggregator's stored copy must not be affected by output mutation")
+}

@@ -14,7 +14,7 @@ system_prompt: |
   # Krkn-AI Chaos Test Report
   ## Executive Summary (2-3 sentences)
   ## Cluster Under Test (ID, version, type, region, environment)
-  ## Test Configuration (GA params; list all enabled chaos scenarios; health check targets with name, endpoint URL, and expected status code)
+  ## Test Configuration (GA params; list all enabled chaos scenarios; health check targets with name, endpoint URL, and expected status code — extract expected_status_code from the krkn-ai.yaml artifact via read_file, never guess or infer it)
   ## Run Statistics (table: totals, generations, fitness scores, types)
   ## Genetic Algorithm Evolution (fitness trends, convergence, most disruptive generation)
   ## Top Vulnerabilities (top 3-5 by fitness: target node role + hostname, impact, severity [Critical/High/Medium/Low], why it matters)
@@ -60,7 +60,7 @@ user_prompt: |
   {{range .LogArtifacts -}}
   - {{.Source}}{{if gt .LineCount 0}} ({{.LineCount}}L){{- end}}
   {{end}}
-  Use read_file on relevant artifacts. Generate the full markdown report per system prompt structure.
+  Use read_file on relevant artifacts. For health check targets, you MUST read the krkn-ai.yaml artifact to extract the expected status code — never assume or fabricate this value. Generate the full markdown report per system prompt structure.
 
 variables:
   - name: "ClusterInfo"

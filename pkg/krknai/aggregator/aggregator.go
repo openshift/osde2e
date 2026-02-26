@@ -101,8 +101,12 @@ func (a *KrknAIAggregator) WithTopScenariosCount(count int) *KrknAIAggregator {
 }
 
 // WithClusterInfo sets cluster metadata to include in collected data.
+// A defensive copy is stored so later mutations by the caller don't affect stored data.
 func (a *KrknAIAggregator) WithClusterInfo(info *ClusterInfo) *KrknAIAggregator {
-	a.clusterInfo = info
+	if info != nil {
+		cp := *info
+		a.clusterInfo = &cp
+	}
 	return a
 }
 
@@ -114,8 +118,10 @@ func (a *KrknAIAggregator) Collect(ctx context.Context, resultsDir string) (*Krk
 		return nil, fmt.Errorf("results directory does not exist: %s", resultsDir)
 	}
 
-	data := &KrknAIData{
-		ClusterInfo: a.clusterInfo,
+	data := &KrknAIData{}
+	if a.clusterInfo != nil {
+		cp := *a.clusterInfo
+		data.ClusterInfo = &cp
 	}
 	var collectionErrors []string
 
