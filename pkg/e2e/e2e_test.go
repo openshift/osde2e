@@ -22,7 +22,7 @@ func setupTestConfig(t *testing.T) {
 	viper.Set(config.DryRun, true)
 	viper.Set(config.Cluster.ID, "test-cluster-123")
 	viper.Set(config.Cluster.Name, "test-cluster")
-	viper.Set(config.Provider, "mock")
+	viper.Set(config.Provider, "ocm")
 	viper.Set(config.SkipMustGather, true)
 	viper.Set(config.Cluster.SkipDestroyCluster, true)
 }
