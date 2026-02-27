@@ -37,6 +37,9 @@ build:
 	mkdir -p "$(OUT_DIR)"
 	go build -o "$(OUT_DIR)" "$(DIR)cmd/..."
 
+test:
+	go test ./...
+
 diffproviders.txt:
 	"$(DIR)scripts/generate-providers-import.sh" > diffproviders.txt
 
