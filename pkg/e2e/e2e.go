@@ -423,14 +423,11 @@ func s3ResultsToArtifactLinks(results []aws.S3UploadResult) []reporter.ArtifactL
 func deriveComponentFromTestImage() string {
 	testSuites, err := config.GetTestSuites()
 	if err == nil && len(testSuites) > 0 {
-		imageName := testSuites[0].Image
-		if component := extractNameFromImage(imageName); component != "" {
-			log.Printf("Derived component from test image: %s -> %s", imageName, component)
+		if component := extractNameFromImage(testSuites[0].Image); component != "" {
 			return component
 		}
 	}
 
-	log.Println("Could not derive component, using fallback: unknown")
 	return "unknown"
 }
 

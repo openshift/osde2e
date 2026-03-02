@@ -238,9 +238,6 @@ func (u *S3Uploader) UploadDirectory(srcDir string) ([]S3UploadResult, error) {
 
 	baseKey := u.BuildS3Key()
 	var results []S3UploadResult
-	var skippedCount int
-
-	log.Printf("Starting S3 upload from %s to %s", srcDir, CreateS3URL(u.bucket, baseKey))
 
 	err := filepath.WalkDir(srcDir, func(filePath string, d fs.DirEntry, err error) error {
 		if err != nil {
@@ -261,7 +258,6 @@ func (u *S3Uploader) UploadDirectory(srcDir string) ([]S3UploadResult, error) {
 		}
 
 		if !shouldUploadFile(filePath) {
-			skippedCount++
 			return nil
 		}
 
@@ -306,14 +302,12 @@ func (u *S3Uploader) UploadDirectory(srcDir string) ([]S3UploadResult, error) {
 			Size:         fileInfo.Size(),
 		})
 
-		log.Printf("Uploaded: %s (%d bytes)", relPath, fileInfo.Size())
 		return nil
 	})
 	if err != nil {
 		return results, fmt.Errorf("error walking directory: %w", err)
 	}
 
-	log.Printf("S3 upload complete: %d files uploaded, %d files skipped", len(results), skippedCount)
 	return results, nil
 }
 
@@ -325,34 +319,14 @@ func (u *S3Uploader) generatePresignedURL(key string) (string, error) {
 	return req.Presign(u.urlExpiry)
 }
 
-// LogS3UploadSummary prints upload summary and writes artifact URLs for downstream systems.
+// LogS3UploadSummary writes a compact log line and the machine-readable
+// artifacts JSON block consumed by downstream systems (Tekton, k8s termination log).
 func LogS3UploadSummary(results []S3UploadResult) {
 	if len(results) == 0 {
-		log.Println("No files were uploaded to S3")
 		return
 	}
 
-	log.Println("=== S3 Upload Summary ===")
-	log.Printf("Uploaded %d files", len(results))
-
-	var totalSize int64
-	for _, r := range results {
-		totalSize += r.Size
-	}
-	log.Printf("Total size: %d bytes", totalSize)
-
-	log.Println("\n=== Presigned URLs (valid for 7 days) ===")
-	for _, r := range results {
-		if strings.HasSuffix(r.Key, ".xml") || strings.HasSuffix(r.Key, ".log") {
-			log.Printf("%s:\n  %s", filepath.Base(r.Key), r.PresignedURL)
-		}
-	}
-
-	if len(results) > 0 {
-		baseKey := path.Dir(results[0].Key)
-		log.Printf("\nAll artifacts: %s", CreateS3URL(viper.GetString(config.Tests.LogBucket), baseKey))
-	}
-
+	log.Printf("S3 upload: %d files to %s", len(results), CreateS3URL(viper.GetString(config.Tests.LogBucket), path.Dir(results[0].Key)))
 	writeArtifactsJSON(results)
 }
 
