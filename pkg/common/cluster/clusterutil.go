@@ -591,7 +591,7 @@ func Provision(provider spi.Provider) (*spi.Cluster, error) {
 		log.Printf("No shared directory provided, skip writing cluster ID")
 	}
 
-	if (!viper.GetBool(config.Addons.SkipAddonList) || viper.GetString(config.Provider) != "mock") && len(cluster.Addons()) > 0 {
+	if !viper.GetBool(config.Addons.SkipAddonList) && len(cluster.Addons()) > 0 {
 		log.Printf("Found addons: %s", strings.Join(cluster.Addons(), ","))
 	}
 
@@ -717,12 +717,6 @@ func ProvisionOrReuseCluster(provider spi.Provider) (*spi.Cluster, error) {
 func InstallAddonsIfConfigured(provider spi.Provider, clusterID string) (bool, error) {
 	addonIDsStr := viper.GetString(config.Addons.IDs)
 	if len(addonIDsStr) == 0 {
-		return false, nil
-	}
-
-	// Skip addon installation for mock provider
-	if viper.GetString(config.Provider) == "mock" {
-		log.Println("Skipping addon installation for mock provider")
 		return false, nil
 	}
 
