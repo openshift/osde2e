@@ -20,7 +20,7 @@ Some environment variables commonly used for pipelines under osde2e are indicate
 | PROVIDER                                 | Provider is what provider to use to create/delete clusters. Ex. ocm, rosa, mock                                                                  |
 | PROVISION_SHARD_ID                       | ProvisionShardID is the shard ID that is set to provision a shard for the cluster.                                                               |
 | MULTI_AZ                                 | MultiAZ deploys a cluster across multiple availability zones.                                                                                    |
-| SKIP_DESTROY_CLUSTER                     | Set to true if you want to the cluster to be retained after the test. Default value is false, i.e., cluster will be deleted.                     |
+| SKIP_DESTROY_CLUSTER                     | Set to false if you want to the cluster to be deleted after the test. Default value is true, i.e., cluster will be retained.                     |
 | AFTER_TEST_CLUSTER_WAIT                  | AfterTestWait is how long to keep a cluster around after tests have run.                                                                         |
 | CLUSTER_UP_TIMEOUT                       | InstallTimeout is how long to wait before failing a cluster launch.                                                                              |
 | USE_LATEST_VERSION_FOR_INSTALL           | UseLatestVersionForInstall will select the latest cluster image set available for a fresh install.                                               |

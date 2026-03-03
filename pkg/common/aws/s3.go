@@ -1,8 +1,6 @@
 package aws
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
 	"io/fs"
 	"log"
@@ -240,8 +238,6 @@ func (u *S3Uploader) UploadDirectory(srcDir string) ([]S3UploadResult, error) {
 	var results []S3UploadResult
 	var skippedCount int
 
-	log.Printf("Starting S3 upload from %s to %s", srcDir, CreateS3URL(u.bucket, baseKey))
-
 	err := filepath.WalkDir(srcDir, func(filePath string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
@@ -306,14 +302,13 @@ func (u *S3Uploader) UploadDirectory(srcDir string) ([]S3UploadResult, error) {
 			Size:         fileInfo.Size(),
 		})
 
-		log.Printf("Uploaded: %s (%d bytes)", relPath, fileInfo.Size())
 		return nil
 	})
 	if err != nil {
 		return results, fmt.Errorf("error walking directory: %w", err)
 	}
 
-	log.Printf("S3 upload complete: %d files uploaded, %d files skipped", len(results), skippedCount)
+	log.Printf("%d files uploaded to s3", len(results))
 	return results, nil
 }
 
@@ -323,92 +318,4 @@ func (u *S3Uploader) generatePresignedURL(key string) (string, error) {
 		Key:    aws.String(key),
 	})
 	return req.Presign(u.urlExpiry)
-}
-
-// LogS3UploadSummary prints upload summary and writes artifact URLs for downstream systems.
-func LogS3UploadSummary(results []S3UploadResult) {
-	if len(results) == 0 {
-		log.Println("No files were uploaded to S3")
-		return
-	}
-
-	log.Println("=== S3 Upload Summary ===")
-	log.Printf("Uploaded %d files", len(results))
-
-	var totalSize int64
-	for _, r := range results {
-		totalSize += r.Size
-	}
-	log.Printf("Total size: %d bytes", totalSize)
-
-	log.Println("\n=== Presigned URLs (valid for 7 days) ===")
-	for _, r := range results {
-		if strings.HasSuffix(r.Key, ".xml") || strings.HasSuffix(r.Key, ".log") {
-			log.Printf("%s:\n  %s", filepath.Base(r.Key), r.PresignedURL)
-		}
-	}
-
-	if len(results) > 0 {
-		baseKey := path.Dir(results[0].Key)
-		log.Printf("\nAll artifacts: %s", CreateS3URL(viper.GetString(config.Tests.LogBucket), baseKey))
-	}
-
-	writeArtifactsJSON(results)
-}
-
-// ArtifactsJSON is written to stdout and /dev/termination-log for downstream consumption.
-// Only key URLs are included due to k8s termination message 4KB limit.
-type ArtifactsJSON struct {
-	S3URI    string `json:"s3Uri"`
-	JUnitURL string `json:"junitUrl,omitempty"`
-	LogsURL  string `json:"logsUrl,omitempty"`
-}
-
-func writeArtifactsJSON(results []S3UploadResult) {
-	if len(results) == 0 {
-		return
-	}
-
-	// Extract base path: category/component/date/job-id
-	var baseKey string
-	parts := strings.Split(results[0].Key, "/")
-	if len(parts) >= 4 {
-		baseKey = strings.Join(parts[:4], "/")
-	} else {
-		baseKey = path.Dir(results[0].Key)
-	}
-
-	artifacts := ArtifactsJSON{
-		S3URI: CreateS3URL(viper.GetString(config.Tests.LogBucket), baseKey),
-	}
-
-	for _, r := range results {
-		baseName := filepath.Base(r.Key)
-		if strings.HasPrefix(baseName, "junit") && strings.HasSuffix(baseName, ".xml") && artifacts.JUnitURL == "" {
-			artifacts.JUnitURL = r.PresignedURL
-		}
-		if (baseName == "test_output.log" || baseName == "osde2e-full.log") && artifacts.LogsURL == "" {
-			artifacts.LogsURL = r.PresignedURL
-		}
-	}
-
-	// SetEscapeHTML(false) keeps presigned URLs valid (prevents & -> \u0026)
-	var buf bytes.Buffer
-	encoder := json.NewEncoder(&buf)
-	encoder.SetEscapeHTML(false)
-	if err := encoder.Encode(artifacts); err != nil {
-		log.Printf("Warning: failed to marshal artifacts JSON: %v", err)
-		return
-	}
-	data := bytes.TrimSpace(buf.Bytes())
-
-	fmt.Printf("\n###OSDE2E_ARTIFACTS_JSON###\n%s\n###END_ARTIFACTS_JSON###\n", string(data))
-	writeTerminationMessage(data)
-}
-
-// writeTerminationMessage writes to /dev/termination-log (k8s job result pattern).
-func writeTerminationMessage(data []byte) {
-	if err := os.WriteFile("/dev/termination-log", data, 0o644); err != nil {
-		log.Printf("Note: Could not write termination message: %v", err)
-	}
 }
