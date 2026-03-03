@@ -1,0 +1,20 @@
+inheritance: true
+language: "en-US"
+tone_instructions: >-
+  Maintain a very concise and formal tone, highlighting issues, and suggesting production-grade, elegant, and concise solutions. Avoid verbal clutter.
+reviews:
+  profile: chill
+  path_instructions:
+  - path: '**/*.go'
+    instructions: >-
+      Review the Go code, point out issues relative to principles of clean
+      code, security and performance.
+  auto_review:
+    enabled: false
+    drafts: false
+    # disables review for new commits
+    auto_incremental_review: false
+  poem: false
+  in_progress_fortune: false
+chat:
+  art: false

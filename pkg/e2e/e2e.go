@@ -381,7 +381,6 @@ func (o *E2EOrchestrator) uploadToS3() error {
 	}
 
 	o.s3Results = results
-	aws.LogS3UploadSummary(results)
 	return nil
 }
 
@@ -425,7 +424,6 @@ func deriveComponentFromTestImage() string {
 	if err == nil && len(testSuites) > 0 {
 		imageName := testSuites[0].Image
 		if component := extractNameFromImage(imageName); component != "" {
-			log.Printf("Derived component from test image: %s -> %s", imageName, component)
 			return component
 		}
 	}

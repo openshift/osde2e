@@ -760,7 +760,10 @@ func DeleteCluster(provider spi.Provider) error {
 		return nil
 	}
 
-	if !viper.GetBool(config.Cluster.SkipDestroyCluster) {
+	skipDestroy := viper.GetBool(config.Cluster.SkipDestroyCluster)
+	log.Printf("Before DeleteCluster for '%s', SkipDestroyCluster set to %v", clusterID, skipDestroy)
+
+	if !skipDestroy {
 		log.Printf("Destroying cluster '%s'...", clusterID)
 		if err := provider.DeleteCluster(clusterID); err != nil {
 			return fmt.Errorf("failed to delete cluster: %w", err)

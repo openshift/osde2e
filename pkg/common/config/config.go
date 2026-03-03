@@ -798,7 +798,7 @@ func InitOSDe2eViper() {
 	viper.SetDefault(Cluster.Channel, "stable")
 	_ = viper.BindEnv(Cluster.Channel, "CHANNEL")
 
-	viper.SetDefault(Cluster.SkipDestroyCluster, false)
+	viper.SetDefault(Cluster.SkipDestroyCluster, true)
 	_ = viper.BindEnv(Cluster.SkipDestroyCluster, "SKIP_DESTROY_CLUSTER")
 
 	_ = viper.BindEnv(Cluster.Reserve, "RESERVE")
