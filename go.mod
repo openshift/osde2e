@@ -11,7 +11,7 @@ require (
 	github.com/fsnotify/fsnotify v1.9.0
 	github.com/go-logr/logr v1.4.3
 	github.com/google/go-github/v31 v31.0.0
-	github.com/google/uuid v1.6.0
+	github.com/google/uuid v1.6.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/hashicorp/hc-install v0.9.2
 	github.com/hashicorp/terraform-exec v0.23.0
@@ -25,7 +25,7 @@ require (
 	github.com/openshift/client-go v0.0.0-20250402181141-b3bad3b645f2
 	github.com/openshift/cloud-credential-operator v0.0.0-20250326174647-d66761c09842
 	github.com/openshift/managed-upgrade-operator v0.0.0-20230525042514-a9b8c1d2571c
-	github.com/openshift/osde2e-common v0.0.0-20260126213857-862206787cf9
+	github.com/openshift/osde2e-common v0.0.0-20260304142534-c6a84e05ad94
 	github.com/operator-framework/api v0.30.0
 	github.com/operator-framework/operator-lifecycle-manager v0.22.0
 	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.64.0
