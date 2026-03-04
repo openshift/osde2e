@@ -12,7 +12,6 @@ import (
 	"github.com/openshift/osde2e/internal/llm/tools"
 	"github.com/openshift/osde2e/internal/prompts"
 	"github.com/openshift/osde2e/internal/sanitizer"
-	"github.com/openshift/osde2e/pkg/common/slack"
 	"gopkg.in/yaml.v3"
 )
 
@@ -48,7 +47,6 @@ type Engine struct {
 	aggregatorService *aggregator.Aggregator
 	promptStore       *prompts.PromptStore
 	llmClient         llm.LLMClient
-	reporterRegistry  *slack.ReporterRegistry
 }
 
 // New creates a new analysis engine
@@ -80,16 +78,11 @@ func New(ctx context.Context, config *Config) (*Engine, error) {
 		return nil, fmt.Errorf("failed to initialize LLM client: %w", err)
 	}
 
-	// Initialize reporter registry
-	reporterRegistry := slack.NewReporterRegistry()
-	reporterRegistry.Register(slack.NewSlackReporter())
-
 	return &Engine{
 		config:            config,
 		aggregatorService: aggregatorService,
 		promptStore:       promptStore,
 		llmClient:         client,
-		reporterRegistry:  reporterRegistry,
 	}, nil
 }
 
@@ -159,25 +152,6 @@ func (e *Engine) Run(ctx context.Context) (*Result, error) {
 
 	if err := analysisResult.WriteSummary(e.config.ArtifactsDir, e.config.ClusterInfo, e.config.FailureContext); err != nil {
 		return nil, fmt.Errorf("failed to write analysis files: %w", err)
-	}
-
-	// Send notifications if configured
-	if e.config.NotificationConfig != nil && e.config.NotificationConfig.Enabled {
-		reporterResult := &slack.AnalysisResult{
-			Status:   analysisResult.Status,
-			Content:  analysisResult.Content,
-			Metadata: analysisResult.Metadata,
-			Error:    analysisResult.Error,
-			Prompt:   analysisResult.Prompt,
-		}
-
-		// Send to all configured reporters
-		for _, reporterConfig := range e.config.NotificationConfig.Reporters {
-			if err := e.reporterRegistry.SendNotification(ctx, reporterResult, &reporterConfig); err != nil {
-				// Log error but don't fail the analysis
-				fmt.Fprintf(os.Stderr, "Warning: Failed to send notification via %s: %v\n", reporterConfig.Type, err)
-			}
-		}
 	}
 
 	return analysisResult, nil

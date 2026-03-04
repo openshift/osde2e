@@ -19,7 +19,6 @@ import (
 	"github.com/openshift/osde2e/internal/llm"
 	"github.com/openshift/osde2e/internal/llm/tools"
 	"github.com/openshift/osde2e/internal/prompts"
-	"github.com/openshift/osde2e/pkg/common/slack"
 	krknAggregator "github.com/openshift/osde2e/pkg/krknai/aggregator"
 	"gopkg.in/yaml.v3"
 )
@@ -44,11 +43,10 @@ type Config struct {
 
 // Engine analyzes krkn-ai chaos test results using LLM.
 type Engine struct {
-	config           *Config
-	aggregator       *krknAggregator.KrknAIAggregator
-	promptStore      *prompts.PromptStore
-	llmClient        llm.LLMClient
-	reporterRegistry *slack.ReporterRegistry
+	config      *Config
+	aggregator  *krknAggregator.KrknAIAggregator
+	promptStore *prompts.PromptStore
+	llmClient   llm.LLMClient
 }
 
 // New creates a new krkn-ai analysis engine.
@@ -85,16 +83,11 @@ func New(ctx context.Context, config *Config) (*Engine, error) {
 		return nil, fmt.Errorf("failed to initialize LLM client: %w", err)
 	}
 
-	// Initialize reporter registry
-	reporterRegistry := slack.NewReporterRegistry()
-	reporterRegistry.Register(slack.NewSlackReporter())
-
 	return &Engine{
-		config:           config,
-		aggregator:       agg,
-		promptStore:      promptStore,
-		llmClient:        client,
-		reporterRegistry: reporterRegistry,
+		config:      config,
+		aggregator:  agg,
+		promptStore: promptStore,
+		llmClient:   client,
 	}, nil
 }
 
@@ -191,11 +184,6 @@ func (e *Engine) Run(ctx context.Context) (*analysisengine.Result, error) {
 		return nil, fmt.Errorf("failed to write analysis summary: %w", err)
 	}
 
-	// Send notifications if configured
-	if e.config.NotificationConfig != nil && e.config.NotificationConfig.Enabled {
-		e.sendNotifications(ctx, analysisResult)
-	}
-
 	return analysisResult, nil
 }
 
@@ -263,21 +251,4 @@ func markdownToHTML(content string) (string, error) {
 	}
 
 	return buf.String(), nil
-}
-
-// sendNotifications sends analysis results to configured reporters.
-func (e *Engine) sendNotifications(ctx context.Context, result *analysisengine.Result) {
-	reporterResult := &slack.AnalysisResult{
-		Status:   result.Status,
-		Content:  result.Content,
-		Metadata: result.Metadata,
-		Error:    result.Error,
-		Prompt:   result.Prompt,
-	}
-
-	for _, reporterConfig := range e.config.NotificationConfig.Reporters {
-		if err := e.reporterRegistry.SendNotification(ctx, reporterResult, &reporterConfig); err != nil {
-			fmt.Fprintf(os.Stderr, "Warning: Failed to send notification via %s: %v\n", reporterConfig.Type, err)
-		}
-	}
 }

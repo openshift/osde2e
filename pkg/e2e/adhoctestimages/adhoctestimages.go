@@ -138,9 +138,9 @@ var _ = ginkgo.Describe("Ad Hoc Test Images", ginkgo.Ordered, ginkgo.ContinueOnF
 })
 
 // runLogAnalysisForAdHocTestImage runs AI analysis and queues the result for
-// deferred Slack delivery. The engine runs WITHOUT notification config because
+// deferred Slack delivery. The engine runs without sending notifications because
 // S3 artifacts have not been uploaded yet at this point. The queued result is
-// later sent by e2e.RunTests after UploadArtifacts populates presigned URLs.
+// later sent by Report after S3 upload populates presigned URLs.
 func runLogAnalysisForAdHocTestImage(ctx context.Context, logger logr.Logger, testSuite config.TestSuite, err error, artifactsDir string) {
 	logger.Info("Running Log analysis for test image", "image", testSuite.Image, "slackChannel", testSuite.SlackChannel)
 

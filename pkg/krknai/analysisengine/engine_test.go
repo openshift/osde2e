@@ -11,7 +11,6 @@ import (
 	"github.com/openshift/osde2e/internal/llm"
 	"github.com/openshift/osde2e/internal/llm/tools"
 	"github.com/openshift/osde2e/internal/prompts"
-	"github.com/openshift/osde2e/pkg/common/slack"
 	krknAgg "github.com/openshift/osde2e/pkg/krknai/aggregator"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -170,10 +169,9 @@ func TestRun_MarkdownReportFormat(t *testing.T) {
 			BaseConfig:   analysisengine.BaseConfig{ArtifactsDir: tempDir, APIKey: "fake-key"},
 			ReportFormat: "markdown",
 		},
-		aggregator:       agg,
-		promptStore:      promptStore,
-		llmClient:        mockClient,
-		reporterRegistry: newTestReporterRegistry(),
+		aggregator:  agg,
+		promptStore: promptStore,
+		llmClient:   mockClient,
 	}
 
 	result, err := engine.Run(ctx)
@@ -204,10 +202,9 @@ func TestRun_HTMLReportFormat(t *testing.T) {
 			BaseConfig:   analysisengine.BaseConfig{ArtifactsDir: tempDir, APIKey: "fake-key"},
 			ReportFormat: "html",
 		},
-		aggregator:       agg,
-		promptStore:      promptStore,
-		llmClient:        mockClient,
-		reporterRegistry: newTestReporterRegistry(),
+		aggregator:  agg,
+		promptStore: promptStore,
+		llmClient:   mockClient,
 	}
 
 	result, err := engine.Run(ctx)
@@ -309,10 +306,9 @@ func TestRun_WithMockLLM(t *testing.T) {
 		config: &Config{
 			BaseConfig: analysisengine.BaseConfig{ArtifactsDir: tempDir, APIKey: "fake-key"},
 		},
-		aggregator:       agg,
-		promptStore:      promptStore,
-		llmClient:        mockClient,
-		reporterRegistry: newTestReporterRegistry(),
+		aggregator:  agg,
+		promptStore: promptStore,
+		llmClient:   mockClient,
 	}
 
 	result, err := engine.Run(ctx)
@@ -355,10 +351,9 @@ func TestRun_LLMFailure(t *testing.T) {
 		config: &Config{
 			BaseConfig: analysisengine.BaseConfig{ArtifactsDir: tempDir, APIKey: "fake-key"},
 		},
-		aggregator:       agg,
-		promptStore:      promptStore,
-		llmClient:        mockClient,
-		reporterRegistry: newTestReporterRegistry(),
+		aggregator:  agg,
+		promptStore: promptStore,
+		llmClient:   mockClient,
 	}
 
 	_, err := engine.Run(ctx)
@@ -375,10 +370,9 @@ func TestRun_MissingResults(t *testing.T) {
 		config: &Config{
 			BaseConfig: analysisengine.BaseConfig{ArtifactsDir: "/nonexistent/path", APIKey: "fake-key"},
 		},
-		aggregator:       agg,
-		promptStore:      promptStore,
-		llmClient:        &mockLLMClient{},
-		reporterRegistry: newTestReporterRegistry(),
+		aggregator:  agg,
+		promptStore: promptStore,
+		llmClient:   &mockLLMClient{},
 	}
 
 	_, err := engine.Run(ctx)
@@ -397,11 +391,6 @@ func newTestPromptStore(t *testing.T) *prompts.PromptStore {
 	require.NoError(t, store.RegisterTemplates(localFS))
 
 	return store
-}
-
-// newTestReporterRegistry creates an empty reporter registry for testing.
-func newTestReporterRegistry() *slack.ReporterRegistry {
-	return slack.NewReporterRegistry()
 }
 
 func createTestResultFiles(t *testing.T, resultsDir, reportsDir string) {
