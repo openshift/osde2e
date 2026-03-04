@@ -94,7 +94,7 @@ func (k *KrknAI) Execute(ctx context.Context) error {
 
 		// Step 2: Update the YAML config with discovered targets (skip in dry-run mode)
 		log.Println("Updating config with discovered targets")
-		if err := k.updateKrknConfig(); err != nil {
+		if err := k.updateKrknConfig(ctx); err != nil {
 			return k.handleExecutionError(fmt.Errorf("failed to update config: %w", err))
 		}
 
@@ -215,13 +215,28 @@ func (k *KrknAI) getPrometheusToken(ctx context.Context) (string, error) {
 }
 
 // updateKrknConfig updates the Krkn-ai output YAML with values from viper config.
-func (k *KrknAI) updateKrknConfig() error {
+func (k *KrknAI) updateKrknConfig(ctx context.Context) error {
 	sharedDir := viper.GetString(config.SharedDir)
 	fitnessQuery := viper.GetString(config.KrknAI.FitnessQuery)
 	scenarios := viper.GetString(config.KrknAI.Scenarios)
+	generations := viper.GetInt(config.KrknAI.Generations)
+	population := viper.GetInt(config.KrknAI.Population)
+	healthCheck := viper.GetString(config.KrknAI.HealthCheck)
+
+	var healthCheckApps []map[string]interface{}
+	if healthCheck != "" {
+		apps, err := parseHealthCheckEndpoints(healthCheck)
+		if err != nil {
+			return err
+		}
+		if err := validateHealthCheckURLsReachable(ctx, apps); err != nil {
+			return err
+		}
+		healthCheckApps = apps
+	}
 
 	// Skip if no config values to update
-	if fitnessQuery == "" && scenarios == "" {
+	if fitnessQuery == "" && scenarios == "" && generations == 0 && population == 0 && healthCheck == "" {
 		return nil
 	}
 
@@ -241,6 +256,26 @@ func (k *KrknAI) updateKrknConfig() error {
 	var cfg map[string]interface{}
 	if err := yaml.Unmarshal(data, &cfg); err != nil {
 		return fmt.Errorf("failed to parse Krkn-ai config file: %w", err)
+	}
+
+	if generations > 0 {
+		cfg["generations"] = generations
+		log.Printf("Updated generations to: %d", generations)
+	}
+
+	if population > 0 {
+		cfg["population_size"] = population
+		log.Printf("Updated population_size to: %d", population)
+	}
+
+	if len(healthCheckApps) > 0 {
+		hc, ok := cfg["health_checks"].(map[string]interface{})
+		if !ok {
+			hc = map[string]interface{}{}
+		}
+		hc["applications"] = healthCheckApps
+		cfg["health_checks"] = hc
+		log.Printf("Updated health_checks with %d endpoint(s)", len(healthCheckApps))
 	}
 
 	// Update fitness_function.query if set
