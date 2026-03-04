@@ -1,11 +1,11 @@
-package reporter
+package slack
 
 import (
 	"context"
 	"fmt"
 )
 
-// AnalysisResult represents the analysis output (simplified to avoid import cycle)
+// AnalysisResult represents the analysis output passed to reporters.
 type AnalysisResult struct {
 	Status   string         `json:"status"`
 	Content  string         `json:"content"`
@@ -16,10 +16,7 @@ type AnalysisResult struct {
 
 // Reporter interface defines the contract for sending analysis results to external systems
 type Reporter interface {
-	// Report sends the analysis result to the configured destination
 	Report(ctx context.Context, result *AnalysisResult, config *ReporterConfig) error
-
-	// Name returns the reporter's identifier
 	Name() string
 }
 
@@ -65,7 +62,7 @@ func (r *ReporterRegistry) List() []string {
 // SendNotification sends analysis result to a specific reporter
 func (r *ReporterRegistry) SendNotification(ctx context.Context, result *AnalysisResult, config *ReporterConfig) error {
 	if !config.Enabled {
-		return nil // Skip disabled reporters
+		return nil
 	}
 
 	reporter, exists := r.Get(config.Type)

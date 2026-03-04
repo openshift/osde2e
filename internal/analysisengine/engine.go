@@ -11,8 +11,8 @@ import (
 	"github.com/openshift/osde2e/internal/llm"
 	"github.com/openshift/osde2e/internal/llm/tools"
 	"github.com/openshift/osde2e/internal/prompts"
-	"github.com/openshift/osde2e/internal/reporter"
 	"github.com/openshift/osde2e/internal/sanitizer"
+	"github.com/openshift/osde2e/pkg/common/slack"
 	"gopkg.in/yaml.v3"
 )
 
@@ -48,7 +48,7 @@ type Engine struct {
 	aggregatorService *aggregator.Aggregator
 	promptStore       *prompts.PromptStore
 	llmClient         llm.LLMClient
-	reporterRegistry  *reporter.ReporterRegistry
+	reporterRegistry  *slack.ReporterRegistry
 }
 
 // New creates a new analysis engine
@@ -81,8 +81,8 @@ func New(ctx context.Context, config *Config) (*Engine, error) {
 	}
 
 	// Initialize reporter registry
-	reporterRegistry := reporter.NewReporterRegistry()
-	reporterRegistry.Register(reporter.NewSlackReporter())
+	reporterRegistry := slack.NewReporterRegistry()
+	reporterRegistry.Register(slack.NewSlackReporter())
 
 	return &Engine{
 		config:            config,
@@ -163,8 +163,7 @@ func (e *Engine) Run(ctx context.Context) (*Result, error) {
 
 	// Send notifications if configured
 	if e.config.NotificationConfig != nil && e.config.NotificationConfig.Enabled {
-		// Convert to reporter.AnalysisResult to avoid import cycle
-		reporterResult := &reporter.AnalysisResult{
+		reporterResult := &slack.AnalysisResult{
 			Status:   analysisResult.Status,
 			Content:  analysisResult.Content,
 			Metadata: analysisResult.Metadata,

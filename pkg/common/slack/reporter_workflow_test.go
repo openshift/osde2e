@@ -1,4 +1,4 @@
-package reporter
+package slack
 
 import (
 	"context"
@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 )
 
@@ -58,13 +59,13 @@ func TestSlackReporter_buildWorkflowPayload(t *testing.T) {
 	}
 
 	// Verify summary contains test suite info (what failed)
-	if !contains(payload.Summary, "quay.io/test") {
+	if !strings.Contains(payload.Summary, "quay.io/test") {
 		t.Error("summary should contain image name")
 	}
-	if !contains(payload.Summary, "abc123") {
+	if !strings.Contains(payload.Summary, "abc123") {
 		t.Error("summary should contain commit")
 	}
-	if !contains(payload.Summary, "stage") {
+	if !strings.Contains(payload.Summary, "stage") {
 		t.Error("summary should contain environment")
 	}
 
@@ -72,18 +73,18 @@ func TestSlackReporter_buildWorkflowPayload(t *testing.T) {
 	if payload.ClusterDetails == "" {
 		t.Error("cluster_details should not be empty when cluster info is provided")
 	}
-	if !contains(payload.ClusterDetails, "test-123") {
+	if !strings.Contains(payload.ClusterDetails, "test-123") {
 		t.Error("cluster_details should contain cluster ID")
 	}
-	if !contains(payload.ClusterDetails, "4.20") {
+	if !strings.Contains(payload.ClusterDetails, "4.20") {
 		t.Error("cluster_details should contain version")
 	}
 
 	// Verify analysis contains formatted content
-	if !contains(payload.Analysis, "====== 🔍 Possible Cause ======") {
+	if !strings.Contains(payload.Analysis, "====== 🔍 Possible Cause ======") {
 		t.Error("analysis should contain formatted root cause")
 	}
-	if !contains(payload.Analysis, "====== 💡 Recommendations ======") {
+	if !strings.Contains(payload.Analysis, "====== 💡 Recommendations ======") {
 		t.Error("analysis should contain formatted recommendations")
 	}
 
@@ -162,12 +163,12 @@ func TestSlackReporter_Report_WorkflowFormat(t *testing.T) {
 	if capturedPayload.ClusterDetails == "" {
 		t.Error("cluster_details should not be empty when cluster info is provided")
 	}
-	if !contains(capturedPayload.ClusterDetails, "test-456") {
+	if !strings.Contains(capturedPayload.ClusterDetails, "test-456") {
 		t.Error("cluster_details should contain cluster ID")
 	}
 
 	// Verify summary contains test suite info
-	if !contains(capturedPayload.Summary, "quay.io/openshift/test") {
+	if !strings.Contains(capturedPayload.Summary, "quay.io/openshift/test") {
 		t.Error("summary should contain test image")
 	}
 
@@ -202,10 +203,10 @@ func TestSlackReporter_buildSummaryField(t *testing.T) {
 	summary := reporter.buildSummaryField(config)
 
 	// Check for header
-	if !contains(summary, ":failed:") {
+	if !strings.Contains(summary, ":failed:") {
 		t.Error("summary should contain failure emoji")
 	}
-	if !contains(summary, "Pipeline Failed") {
+	if !strings.Contains(summary, "Pipeline Failed") {
 		t.Error("summary should contain failure message")
 	}
 
@@ -213,13 +214,13 @@ func TestSlackReporter_buildSummaryField(t *testing.T) {
 	// Summary should ONLY contain test suite info (what failed)
 
 	// Check for test suite info
-	if !contains(summary, "quay.io/app") {
+	if !strings.Contains(summary, "quay.io/app") {
 		t.Error("summary should contain test image")
 	}
-	if !contains(summary, "commit-xyz") {
+	if !strings.Contains(summary, "commit-xyz") {
 		t.Error("summary should contain commit")
 	}
-	if !contains(summary, "dev") {
+	if !strings.Contains(summary, "dev") {
 		t.Error("summary should contain environment")
 	}
 }
@@ -262,13 +263,13 @@ func TestSlackReporter_buildAnalysisField(t *testing.T) {
 			analysis := reporter.buildAnalysisField(tt.result)
 
 			for _, expected := range tt.expectedContains {
-				if !contains(analysis, expected) {
+				if !strings.Contains(analysis, expected) {
 					t.Errorf("analysis should contain %q", expected)
 				}
 			}
 
 			for _, unexpected := range tt.unexpectedContains {
-				if contains(analysis, unexpected) {
+				if strings.Contains(analysis, unexpected) {
 					t.Errorf("analysis should not contain %q", unexpected)
 				}
 			}
@@ -308,7 +309,7 @@ func TestSlackReporter_enforceFieldLimit(t *testing.T) {
 			}
 
 			if tt.name == "content exceeds limit" {
-				if !contains(result, "truncated") {
+				if !strings.Contains(result, "truncated") {
 					t.Error("truncated content should contain notice")
 				}
 			}
@@ -338,7 +339,7 @@ func TestSlackReporter_ExtendedLogsFallback(t *testing.T) {
 			t.Error("ExtendedLogs should not be empty when no report_dir")
 		}
 
-		if !contains(payload.ExtendedLogs, "not available") {
+		if !strings.Contains(payload.ExtendedLogs, "not available") {
 			t.Errorf("Expected fallback message, got: %s", payload.ExtendedLogs)
 		}
 	})
@@ -362,7 +363,7 @@ func TestSlackReporter_ExtendedLogsFallback(t *testing.T) {
 			t.Error("ExtendedLogs should not be empty when report_dir is empty string")
 		}
 
-		if !contains(payload.ExtendedLogs, "not available") {
+		if !strings.Contains(payload.ExtendedLogs, "not available") {
 			t.Errorf("Expected fallback message, got: %s", payload.ExtendedLogs)
 		}
 	})
@@ -387,7 +388,7 @@ func TestSlackReporter_ExtendedLogsFallback(t *testing.T) {
 		}
 
 		// When readTestOutput returns empty string, we get the "not found" fallback
-		if !contains(payload.ExtendedLogs, "No test failure logs found") {
+		if !strings.Contains(payload.ExtendedLogs, "No test failure logs found") {
 			t.Errorf("Expected fallback message, got: %s", payload.ExtendedLogs)
 		}
 	})
@@ -412,12 +413,12 @@ func TestSlackReporter_ExtendedLogsFallback(t *testing.T) {
 		}
 
 		// Should contain actual failure logs, not fallback message
-		if contains(payload.ExtendedLogs, "not available") {
+		if strings.Contains(payload.ExtendedLogs, "not available") {
 			t.Errorf("Should contain real logs, not fallback. Got: %s", payload.ExtendedLogs[:100])
 		}
 
 		// Should contain failure markers from real data
-		if !contains(payload.ExtendedLogs, "Found") && !contains(payload.ExtendedLogs, "test failure") {
+		if !strings.Contains(payload.ExtendedLogs, "Found") && !strings.Contains(payload.ExtendedLogs, "test failure") {
 			t.Error("Should contain failure count or marker")
 		}
 	})
@@ -445,7 +446,7 @@ func TestSlackReporter_ClusterDetailsFallback(t *testing.T) {
 			t.Error("ClusterDetails should not be empty when no cluster_info")
 		}
 
-		if !contains(payload.ClusterDetails, "not available") {
+		if !strings.Contains(payload.ClusterDetails, "not available") {
 			t.Errorf("Expected fallback message, got: %s", payload.ClusterDetails)
 		}
 	})
@@ -469,7 +470,7 @@ func TestSlackReporter_ClusterDetailsFallback(t *testing.T) {
 			t.Error("ClusterDetails should not be empty when cluster_info is nil")
 		}
 
-		if !contains(payload.ClusterDetails, "not available") {
+		if !strings.Contains(payload.ClusterDetails, "not available") {
 			t.Errorf("Expected fallback message, got: %s", payload.ClusterDetails)
 		}
 	})
@@ -501,12 +502,12 @@ func TestSlackReporter_ClusterDetailsFallback(t *testing.T) {
 		}
 
 		// Should contain actual cluster info, not fallback message
-		if contains(payload.ClusterDetails, "not available") {
+		if strings.Contains(payload.ClusterDetails, "not available") {
 			t.Errorf("Should contain real cluster info, not fallback. Got: %s", payload.ClusterDetails)
 		}
 
 		// Should contain cluster details
-		if !contains(payload.ClusterDetails, "test-cluster-123") {
+		if !strings.Contains(payload.ClusterDetails, "test-cluster-123") {
 			t.Error("Should contain cluster ID")
 		}
 	})
@@ -532,23 +533,23 @@ func TestSlackReporter_ArtifactLinks(t *testing.T) {
 
 		payload := reporter.buildWorkflowPayload(result, config)
 
-		if !contains(payload.ExtendedLogs, "Artifacts") {
+		if !strings.Contains(payload.ExtendedLogs, "Artifacts") {
 			t.Error("should contain artifacts header")
 		}
-		if !contains(payload.ExtendedLogs, "test_output.log") {
+		if !strings.Contains(payload.ExtendedLogs, "test_output.log") {
 			t.Error("should list test_output.log")
 		}
-		if !contains(payload.ExtendedLogs, "junit_e2e.xml") {
+		if !strings.Contains(payload.ExtendedLogs, "junit_e2e.xml") {
 			t.Error("should list junit_e2e.xml")
 		}
-		if contains(payload.ExtendedLogs, "KB") || contains(payload.ExtendedLogs, "MB") {
+		if strings.Contains(payload.ExtendedLogs, "KB") || strings.Contains(payload.ExtendedLogs, "MB") {
 			t.Error("should not contain file sizes")
 		}
-		if !contains(payload.ExtendedLogs, "https://s3.example.com/test_output.log?sig=abc") {
+		if !strings.Contains(payload.ExtendedLogs, "https://s3.example.com/test_output.log?sig=abc") {
 			t.Error("should contain bare URL")
 		}
 		// Should NOT contain embedded log content
-		if contains(payload.ExtendedLogs, "Log Extract") {
+		if strings.Contains(payload.ExtendedLogs, "Log Extract") {
 			t.Error("should not contain embedded log content when artifact links are present")
 		}
 	})
@@ -566,7 +567,7 @@ func TestSlackReporter_ArtifactLinks(t *testing.T) {
 
 		payload := reporter.buildWorkflowPayload(result, config)
 
-		if contains(payload.ExtendedLogs, "Artifacts") {
+		if strings.Contains(payload.ExtendedLogs, "Artifacts") {
 			t.Error("should not contain artifacts header without artifact links")
 		}
 	})
@@ -585,7 +586,7 @@ func TestSlackReporter_ArtifactLinks(t *testing.T) {
 
 		payload := reporter.buildWorkflowPayload(result, config)
 
-		if contains(payload.ExtendedLogs, "Artifacts") {
+		if strings.Contains(payload.ExtendedLogs, "Artifacts") {
 			t.Error("should not contain artifacts header with empty artifact links")
 		}
 	})
@@ -601,39 +602,25 @@ func TestSlackReporter_buildArtifactLinksSection(t *testing.T) {
 
 	result := reporter.buildArtifactLinksSection(links)
 
-	if !contains(result, "Artifacts") {
+	if !strings.Contains(result, "Artifacts") {
 		t.Error("should contain artifacts header")
 	}
-	if !contains(result, "7 days") {
+	if !strings.Contains(result, "7 days") {
 		t.Error("should mention expiry")
 	}
-	if !contains(result, "▸ test_output.log") {
+	if !strings.Contains(result, "▸ test_output.log") {
 		t.Error("should contain label line for first file")
 	}
-	if !contains(result, "https://s3.example.com/test_output.log?sig=abc") {
+	if !strings.Contains(result, "https://s3.example.com/test_output.log?sig=abc") {
 		t.Error("should contain bare URL for first file")
 	}
-	if !contains(result, "▸ junit_e2e.xml") {
+	if !strings.Contains(result, "▸ junit_e2e.xml") {
 		t.Error("should contain label line for second file")
 	}
-	if contains(result, "<") || contains(result, "|") {
+	if strings.Contains(result, "<") || strings.Contains(result, "|") {
 		t.Error("should not use mrkdwn link syntax")
 	}
-	if contains(result, "KB") || contains(result, "MB") || contains(result, " B") {
+	if strings.Contains(result, "KB") || strings.Contains(result, "MB") || strings.Contains(result, " B") {
 		t.Error("should not contain file sizes")
 	}
-}
-
-// Helper function
-func contains(s, substr string) bool {
-	return len(s) > 0 && len(substr) > 0 && (s == substr || len(s) > len(substr) && hasSubstring(s, substr))
-}
-
-func hasSubstring(s, substr string) bool {
-	for i := 0; i <= len(s)-len(substr); i++ {
-		if s[i:i+len(substr)] == substr {
-			return true
-		}
-	}
-	return false
 }

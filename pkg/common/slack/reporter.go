@@ -1,4 +1,4 @@
-package reporter
+package slack
 
 import (
 	"context"
@@ -8,12 +8,10 @@ import (
 	"path/filepath"
 	"strings"
 
-	commonslack "github.com/openshift/osde2e/pkg/common/slack"
 	"github.com/openshift/osde2e/pkg/common/util"
 )
 
 // ArtifactLink represents a single uploaded artifact with its presigned URL.
-// Used to pass S3 upload results into the Slack reporter via config settings.
 type ArtifactLink struct {
 	Name string
 	URL  string
@@ -21,16 +19,11 @@ type ArtifactLink struct {
 }
 
 const (
-	// Slack workflow payload limits (conservative estimate)
-	// Slack workflows can handle much larger payloads than webhooks
-	maxWorkflowFieldLength = 30000 // 30KB per field
+	maxWorkflowFieldLength = 30000
 
-	// Test output truncation thresholds
 	fullOutputThreshold = 250
-	initialContextLines = 20
 	finalSummaryLines   = 80
 
-	// Failure block extraction
 	maxFailureBlocks    = 3
 	failureContextLines = 5
 	failureBlockLines   = 30
@@ -38,13 +31,13 @@ const (
 
 // SlackReporter implements Reporter interface for Slack webhook notifications
 type SlackReporter struct {
-	client *commonslack.Client
+	client *Client
 }
 
 // NewSlackReporter creates a new Slack reporter
 func NewSlackReporter() *SlackReporter {
 	return &SlackReporter{
-		client: commonslack.NewClient(),
+		client: NewClient(),
 	}
 }
 
@@ -64,10 +57,8 @@ func (s *SlackReporter) Report(ctx context.Context, result *AnalysisResult, conf
 		return fmt.Errorf("webhook_url is required and must be a string")
 	}
 
-	// Build workflow payload
 	payload := s.buildWorkflowPayload(result, config)
 
-	// Send to Slack workflow webhook
 	if err := s.client.SendWebhook(ctx, webhookURL, payload); err != nil {
 		return fmt.Errorf("failed to send to Slack: %w", err)
 	}
@@ -77,14 +68,14 @@ func (s *SlackReporter) Report(ctx context.Context, result *AnalysisResult, conf
 
 // WorkflowPayload represents the Slack workflow webhook payload
 type WorkflowPayload struct {
-	Channel        string `json:"channel"`                   // Required - Slack channel ID
-	Summary        string `json:"summary"`                   // Required - Initial message (test suite info)
-	Analysis       string `json:"analysis"`                  // Required - AI analysis (posted as reply 1)
-	ExtendedLogs   string `json:"extended_logs,omitempty"`   // Optional - Test failures (posted as reply 2)
-	ClusterDetails string `json:"cluster_details,omitempty"` // Optional - Cluster info for debugging (posted as reply 3)
-	Image          string `json:"image,omitempty"`           // Optional - Test image
-	Env            string `json:"env,omitempty"`             // Optional - Environment
-	Commit         string `json:"commit,omitempty"`          // Optional - Commit hash
+	Channel        string `json:"channel"`
+	Summary        string `json:"summary"`
+	Analysis       string `json:"analysis"`
+	ExtendedLogs   string `json:"extended_logs,omitempty"`
+	ClusterDetails string `json:"cluster_details,omitempty"`
+	Image          string `json:"image,omitempty"`
+	Env            string `json:"env,omitempty"`
+	Commit         string `json:"commit,omitempty"`
 }
 
 // ClusterInfo holds cluster information for reporting
@@ -98,22 +89,16 @@ type ClusterInfo struct {
 	Expiration    string
 }
 
-// buildWorkflowPayload constructs the JSON payload for the Slack Workflow
 func (s *SlackReporter) buildWorkflowPayload(result *AnalysisResult, config *ReporterConfig) *WorkflowPayload {
 	payload := &WorkflowPayload{}
 
-	// Required: channel ID
 	if channel, ok := config.Settings["channel"].(string); ok && channel != "" {
 		payload.Channel = channel
 	}
 
-	// Required: summary (initial message)
 	payload.Summary = s.buildSummaryField(config)
-
-	// Required: analysis (AI response)
 	payload.Analysis = s.buildAnalysisField(result)
 
-	// Optional: extended_logs — prefer S3 artifact links, fall back to embedded log content
 	if links, ok := config.Settings["artifact_links"].([]ArtifactLink); ok && len(links) > 0 {
 		payload.ExtendedLogs = s.enforceFieldLimit(s.buildArtifactLinksSection(links), maxWorkflowFieldLength)
 	} else if reportDir, ok := config.Settings["report_dir"].(string); ok && reportDir != "" {
@@ -126,18 +111,14 @@ func (s *SlackReporter) buildWorkflowPayload(result *AnalysisResult, config *Rep
 		payload.ExtendedLogs = "Test output logs not available (no report directory configured)."
 	}
 
-	// Optional: cluster_details (for debugging)
 	if clusterDetails := s.buildClusterInfoSection(config); clusterDetails != "" {
 		payload.ClusterDetails = clusterDetails
 	} else {
-		// Provide fallback when no cluster info is configured
 		payload.ClusterDetails = "Cluster information not available."
 	}
 
-	// Optional metadata
 	if image, ok := config.Settings["image"].(string); ok && image != "" {
 		payload.Image = image
-		// Extract commit from image tag if present
 		parts := strings.Split(image, ":")
 		if len(parts) == 2 {
 			payload.Commit = parts[1]
@@ -151,31 +132,22 @@ func (s *SlackReporter) buildWorkflowPayload(result *AnalysisResult, config *Rep
 	return payload
 }
 
-// buildSummaryField creates the initial message content
 func (s *SlackReporter) buildSummaryField(config *ReporterConfig) string {
 	var builder strings.Builder
-
-	// Header
 	builder.WriteString(":failed: Pipeline Failed at E2E Test\n\n")
-
-	// Test suite info (what failed)
 	builder.WriteString(s.buildTestSuiteSection(config))
-
 	return s.enforceFieldLimit(builder.String(), maxWorkflowFieldLength)
 }
 
-// buildAnalysisField formats the AI analysis
 func (s *SlackReporter) buildAnalysisField(result *AnalysisResult) string {
 	var builder strings.Builder
 
-	// Format the analysis content (handles JSON parsing)
 	if formattedAnalysis := s.formatAnalysisContent(result.Content); formattedAnalysis != "" {
 		builder.WriteString(formattedAnalysis)
 	} else if result.Content != "" {
 		builder.WriteString(result.Content)
 	}
 
-	// Add error if present
 	if result.Error != "" {
 		if builder.Len() > 0 {
 			builder.WriteString("\n\n")
@@ -187,7 +159,6 @@ func (s *SlackReporter) buildAnalysisField(result *AnalysisResult) string {
 	return s.enforceFieldLimit(builder.String(), maxWorkflowFieldLength)
 }
 
-// buildClusterInfoSection creates the cluster information section
 func (s *SlackReporter) buildClusterInfoSection(config *ReporterConfig) string {
 	clusterInfo, ok := config.Settings["cluster_info"].(*ClusterInfo)
 	if !ok || clusterInfo == nil {
@@ -214,7 +185,6 @@ func (s *SlackReporter) buildClusterInfoSection(config *ReporterConfig) string {
 	return builder.String()
 }
 
-// buildTestSuiteSection creates the test suite information section
 func (s *SlackReporter) buildTestSuiteSection(config *ReporterConfig) string {
 	image, ok := config.Settings["image"].(string)
 	if !ok || image == "" {
@@ -249,17 +219,14 @@ func (s *SlackReporter) buildArtifactLinksSection(links []ArtifactLink) string {
 	return strings.TrimRight(builder.String(), "\n")
 }
 
-// enforceFieldLimit truncates a field to the maximum allowed length
 func (s *SlackReporter) enforceFieldLimit(content string, maxLength int) string {
 	if len(content) <= maxLength {
 		return content
 	}
-	// Truncate and add notice
 	truncated := content[:maxLength-100]
 	return truncated + "\n\n... (content truncated due to length)"
 }
 
-// formatAnalysisContent tries to parse JSON and format it nicely for Slack
 func (s *SlackReporter) formatAnalysisContent(content string) string {
 	lines := strings.Split(content, "\n")
 	var jsonContent strings.Builder
@@ -307,7 +274,6 @@ func (s *SlackReporter) formatAnalysisContent(content string) string {
 	return formatted.String()
 }
 
-// readTestOutput reads the test stdout from test_output.log
 func (s *SlackReporter) readTestOutput(reportDir string) string {
 	filePath := filepath.Join(reportDir, "test_output.log")
 	if content, err := os.ReadFile(filepath.Clean(filePath)); err == nil {
@@ -318,7 +284,6 @@ func (s *SlackReporter) readTestOutput(reportDir string) string {
 			return string(content)
 		}
 
-		// For large logs, extract only failure blocks - this is what matters
 		failureBlocks := s.extractFailureBlocks(lines, totalLines)
 		if len(failureBlocks) > 0 {
 			var result strings.Builder
@@ -333,7 +298,6 @@ func (s *SlackReporter) readTestOutput(reportDir string) string {
 			return result.String()
 		}
 
-		// No failures or errors found, return summary section
 		lastN := finalSummaryLines
 		var result strings.Builder
 		result.WriteString("No [FAILED] or ERROR markers found. Showing final output:\n\n")
@@ -350,7 +314,6 @@ func (s *SlackReporter) readTestOutput(reportDir string) string {
 	return ""
 }
 
-// extractFailureBlocks finds [FAILED] test blocks and ERROR lines, then extracts them with context
 func (s *SlackReporter) extractFailureBlocks(lines []string, endIdx int) []string {
 	var blocks []string
 
@@ -377,8 +340,6 @@ func (s *SlackReporter) extractFailureBlocks(lines []string, endIdx int) []strin
 			}
 
 			blocks = append(blocks, block.String())
-
-			// Skip ahead to avoid overlapping blocks
 			i = end - 1
 		}
 	}

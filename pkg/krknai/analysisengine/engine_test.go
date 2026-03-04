@@ -11,7 +11,7 @@ import (
 	"github.com/openshift/osde2e/internal/llm"
 	"github.com/openshift/osde2e/internal/llm/tools"
 	"github.com/openshift/osde2e/internal/prompts"
-	"github.com/openshift/osde2e/internal/reporter"
+	"github.com/openshift/osde2e/pkg/common/slack"
 	krknAgg "github.com/openshift/osde2e/pkg/krknai/aggregator"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -400,8 +400,8 @@ func newTestPromptStore(t *testing.T) *prompts.PromptStore {
 }
 
 // newTestReporterRegistry creates an empty reporter registry for testing.
-func newTestReporterRegistry() *reporter.ReporterRegistry {
-	return reporter.NewReporterRegistry()
+func newTestReporterRegistry() *slack.ReporterRegistry {
+	return slack.NewReporterRegistry()
 }
 
 func createTestResultFiles(t *testing.T, resultsDir, reportsDir string) {
