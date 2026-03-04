@@ -1,4 +1,4 @@
-package reporter
+package slack
 
 import (
 	"os"
@@ -406,12 +406,4 @@ func TestSlackReporter_buildTestSuiteSection(t *testing.T) {
 			t.Errorf("expected empty string for invalid image format, got: %s", result)
 		}
 	})
-}
-
-// Helper function
-func min(a, b int) int {
-	if a < b {
-		return a
-	}
-	return b
 }

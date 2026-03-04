@@ -2,16 +2,16 @@ package analysisengine
 
 import (
 	"github.com/openshift/osde2e/internal/llm"
-	"github.com/openshift/osde2e/internal/reporter"
+	"github.com/openshift/osde2e/pkg/common/slack"
 	"google.golang.org/genai"
 )
 
 // BaseConfig holds common configuration shared by all analysis engines.
 type BaseConfig struct {
-	ArtifactsDir       string                       // Directory containing artifacts or results
-	APIKey             string                       // LLM API key
-	LLMConfig          *llm.AnalysisConfig          // Optional LLM configuration overrides
-	NotificationConfig *reporter.NotificationConfig // Optional notification configuration
+	ArtifactsDir       string                    // Directory containing artifacts or results
+	APIKey             string                    // LLM API key
+	LLMConfig          *llm.AnalysisConfig       // Optional LLM configuration overrides
+	NotificationConfig *slack.NotificationConfig // Optional notification configuration
 }
 
 // Result represents the analysis output shared across all engines.

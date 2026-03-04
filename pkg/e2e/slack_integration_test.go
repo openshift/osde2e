@@ -5,7 +5,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/openshift/osde2e/internal/reporter"
+	"github.com/openshift/osde2e/pkg/common/slack"
 )
 
 // Slack Integration Tests
@@ -92,7 +92,7 @@ func TestSlackReporter_Integration(t *testing.T) {
 	}
 
 	// Create test cluster info
-	clusterInfo := &reporter.ClusterInfo{
+	clusterInfo := &slack.ClusterInfo{
 		ID:         "test-cluster-123",
 		Name:       "integration-test-cluster",
 		Version:    "4.20",
@@ -101,7 +101,7 @@ func TestSlackReporter_Integration(t *testing.T) {
 	}
 
 	// Create analysis result with JSON content
-	result := &reporter.AnalysisResult{
+	result := &slack.AnalysisResult{
 		Content: `Based on the test output, here is my analysis:
 
 ` + "```json" + `
@@ -118,7 +118,7 @@ func TestSlackReporter_Integration(t *testing.T) {
 	}
 
 	// Create reporter config
-	config := &reporter.ReporterConfig{
+	config := &slack.ReporterConfig{
 		Type:    "slack",
 		Enabled: true,
 		Settings: map[string]interface{}{
@@ -127,12 +127,12 @@ func TestSlackReporter_Integration(t *testing.T) {
 			"cluster_info": clusterInfo,
 			"image":        "quay.io/openshift/osde2e-tests:integration-test",
 			"env":          "test",
-			"report_dir":   "../../internal/reporter/testdata/periodic-ci-openshift-osde2e-main-nightly-4.20-osd-aws",
+			"report_dir":   "../common/slack/testdata/periodic-ci-openshift-osde2e-main-nightly-4.20-osd-aws",
 		},
 	}
 
 	// Send notification
-	slackReporter := reporter.NewSlackReporter()
+	slackReporter := slack.NewSlackReporter()
 	ctx := context.Background()
 
 	// Debug: Show what we're sending
@@ -167,17 +167,17 @@ func TestSlackReporter_Integration_MinimalPayload(t *testing.T) {
 	}
 
 	// Minimal cluster info
-	clusterInfo := &reporter.ClusterInfo{
+	clusterInfo := &slack.ClusterInfo{
 		ID: "minimal-test-123",
 	}
 
 	// Plain text analysis (no JSON)
-	result := &reporter.AnalysisResult{
+	result := &slack.AnalysisResult{
 		Content: "This is a minimal test with plain text analysis content. No JSON formatting.",
 	}
 
 	// Minimal config
-	config := &reporter.ReporterConfig{
+	config := &slack.ReporterConfig{
 		Type:    "slack",
 		Enabled: true,
 		Settings: map[string]interface{}{
@@ -188,7 +188,7 @@ func TestSlackReporter_Integration_MinimalPayload(t *testing.T) {
 	}
 
 	// Send notification
-	slackReporter := reporter.NewSlackReporter()
+	slackReporter := slack.NewSlackReporter()
 	ctx := context.Background()
 
 	err := slackReporter.Report(ctx, result, config)
@@ -209,7 +209,7 @@ func TestSlackReporter_Integration_WithError(t *testing.T) {
 		t.Skip("Skipping integration test: LOG_ANALYSIS_SLACK_WEBHOOK or LOG_ANALYSIS_SLACK_CHANNEL not set")
 	}
 
-	clusterInfo := &reporter.ClusterInfo{
+	clusterInfo := &slack.ClusterInfo{
 		ID:       "error-test-456",
 		Name:     "error-handling-test",
 		Version:  "4.21",
@@ -217,7 +217,7 @@ func TestSlackReporter_Integration_WithError(t *testing.T) {
 	}
 
 	// Analysis with error
-	result := &reporter.AnalysisResult{
+	result := &slack.AnalysisResult{
 		Content: `Test analysis content with an error condition.
 
 ` + "```json" + `
@@ -230,7 +230,7 @@ func TestSlackReporter_Integration_WithError(t *testing.T) {
 		Error: "Integration test: This is a simulated error message to verify error display in Slack",
 	}
 
-	config := &reporter.ReporterConfig{
+	config := &slack.ReporterConfig{
 		Type:    "slack",
 		Enabled: true,
 		Settings: map[string]interface{}{
@@ -242,7 +242,7 @@ func TestSlackReporter_Integration_WithError(t *testing.T) {
 		},
 	}
 
-	slackReporter := reporter.NewSlackReporter()
+	slackReporter := slack.NewSlackReporter()
 	ctx := context.Background()
 
 	err := slackReporter.Report(ctx, result, config)

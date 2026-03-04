@@ -16,7 +16,6 @@ import (
 	"github.com/onsi/ginkgo/v2/types"
 	"github.com/onsi/gomega"
 	"github.com/openshift/osde2e/internal/analysisengine"
-	"github.com/openshift/osde2e/internal/reporter"
 	"github.com/openshift/osde2e/pkg/common/aws"
 	"github.com/openshift/osde2e/pkg/common/cluster"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
@@ -26,6 +25,7 @@ import (
 	"github.com/openshift/osde2e/pkg/common/phase"
 	"github.com/openshift/osde2e/pkg/common/providers"
 	"github.com/openshift/osde2e/pkg/common/runner"
+	"github.com/openshift/osde2e/pkg/common/slack"
 	"github.com/openshift/osde2e/pkg/common/spi"
 	"github.com/openshift/osde2e/pkg/common/upgrade"
 	"github.com/openshift/osde2e/pkg/common/util"
@@ -234,7 +234,7 @@ func cleanStaleJunitFiles() {
 // AnalyzeLogs performs AI-powered log analysis on test failures.
 func (o *E2EOrchestrator) AnalyzeLogs(ctx context.Context, testErr error) error {
 	log.Println("Running log analysis...")
-	var notificationConfig *reporter.NotificationConfig
+	var notificationConfig *slack.NotificationConfig
 	reportDir := viper.GetString(config.ReportDir)
 	if reportDir == "" {
 		return fmt.Errorf("no report directory available for log analysis")
@@ -249,10 +249,10 @@ func (o *E2EOrchestrator) AnalyzeLogs(ctx context.Context, testErr error) error 
 		Version:       viper.GetString(config.Cluster.Version),
 	}
 	if viper.GetBool(config.Tests.EnableSlackNotify) {
-		notificationConfig = reporter.BuildNotificationConfig(
+		notificationConfig = slack.BuildNotificationConfig(
 			viper.GetString(config.LogAnalysis.SlackWebhook),
 			viper.GetString(config.LogAnalysis.SlackChannel),
-			&reporter.ClusterInfo{
+			&slack.ClusterInfo{
 				ID:            clusterInfo.ID,
 				Name:          clusterInfo.Name,
 				Provider:      clusterInfo.Provider,
@@ -322,18 +322,18 @@ func (o *E2EOrchestrator) sendDeferredNotifications(ctx context.Context) {
 	}
 
 	artifactLinks := s3ResultsToArtifactLinks(o.s3Results)
-	slack := reporter.NewSlackReporter()
+	slackReporter := slack.NewSlackReporter()
 
 	for _, p := range pending {
 		if p.TestSuite.SlackChannel == "" {
 			continue
 		}
 
-		cfg := reporter.SlackReporterConfig(webhook, true)
+		cfg := slack.SlackReporterConfig(webhook, true)
 		cfg.Settings["channel"] = p.TestSuite.SlackChannel
 		cfg.Settings["image"] = p.TestSuite.Image
 		cfg.Settings["env"] = p.Env
-		cfg.Settings["cluster_info"] = &reporter.ClusterInfo{
+		cfg.Settings["cluster_info"] = &slack.ClusterInfo{
 			ID:            p.ClusterInfo.ID,
 			Name:          p.ClusterInfo.Name,
 			Provider:      p.ClusterInfo.Provider,
@@ -343,12 +343,12 @@ func (o *E2EOrchestrator) sendDeferredNotifications(ctx context.Context) {
 		}
 		cfg.Settings["artifact_links"] = artifactLinks
 
-		result := &reporter.AnalysisResult{
+		result := &slack.AnalysisResult{
 			Status:  "completed",
 			Content: p.AnalysisContent,
 		}
 
-		if err := slack.Report(ctx, result, &cfg); err != nil {
+		if err := slackReporter.Report(ctx, result, &cfg); err != nil {
 			log.Printf("Failed to send deferred notification for %s: %v", p.TestSuite.Image, err)
 		}
 	}
@@ -386,7 +386,7 @@ func (o *E2EOrchestrator) uploadToS3() error {
 
 // s3ResultsToArtifactLinks converts S3 upload results to artifact links for Slack.
 // Returns links in a fixed order: test_output.log, junit_<suffix>.xml.
-func s3ResultsToArtifactLinks(results []aws.S3UploadResult) []reporter.ArtifactLink {
+func s3ResultsToArtifactLinks(results []aws.S3UploadResult) []slack.ArtifactLink {
 	suffix := viper.GetString(config.Suffix)
 	currentJunit := "junit_" + suffix + ".xml"
 
@@ -400,10 +400,10 @@ func s3ResultsToArtifactLinks(results []aws.S3UploadResult) []reporter.ArtifactL
 		byName[filepath.Base(r.Key)] = r
 	}
 
-	links := make([]reporter.ArtifactLink, 0, len(orderedNames))
+	links := make([]slack.ArtifactLink, 0, len(orderedNames))
 	for _, name := range orderedNames {
 		if r, ok := byName[name]; ok {
-			links = append(links, reporter.ArtifactLink{
+			links = append(links, slack.ArtifactLink{
 				Name: name,
 				URL:  r.PresignedURL,
 				Size: r.Size,

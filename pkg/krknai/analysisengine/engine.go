@@ -19,7 +19,7 @@ import (
 	"github.com/openshift/osde2e/internal/llm"
 	"github.com/openshift/osde2e/internal/llm/tools"
 	"github.com/openshift/osde2e/internal/prompts"
-	"github.com/openshift/osde2e/internal/reporter"
+	"github.com/openshift/osde2e/pkg/common/slack"
 	krknAggregator "github.com/openshift/osde2e/pkg/krknai/aggregator"
 	"gopkg.in/yaml.v3"
 )
@@ -48,7 +48,7 @@ type Engine struct {
 	aggregator       *krknAggregator.KrknAIAggregator
 	promptStore      *prompts.PromptStore
 	llmClient        llm.LLMClient
-	reporterRegistry *reporter.ReporterRegistry
+	reporterRegistry *slack.ReporterRegistry
 }
 
 // New creates a new krkn-ai analysis engine.
@@ -86,8 +86,8 @@ func New(ctx context.Context, config *Config) (*Engine, error) {
 	}
 
 	// Initialize reporter registry
-	reporterRegistry := reporter.NewReporterRegistry()
-	reporterRegistry.Register(reporter.NewSlackReporter())
+	reporterRegistry := slack.NewReporterRegistry()
+	reporterRegistry.Register(slack.NewSlackReporter())
 
 	return &Engine{
 		config:           config,
@@ -267,7 +267,7 @@ func markdownToHTML(content string) (string, error) {
 
 // sendNotifications sends analysis results to configured reporters.
 func (e *Engine) sendNotifications(ctx context.Context, result *analysisengine.Result) {
-	reporterResult := &reporter.AnalysisResult{
+	reporterResult := &slack.AnalysisResult{
 		Status:   result.Status,
 		Content:  result.Content,
 		Metadata: result.Metadata,
