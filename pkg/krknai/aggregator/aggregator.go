@@ -15,6 +15,15 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+// ClusterInfo holds cluster metadata for krkn-ai analysis.
+type ClusterInfo struct {
+	ID          string `json:"id,omitempty" yaml:"id,omitempty"`
+	Version     string `json:"version,omitempty" yaml:"version,omitempty"`
+	Type        string `json:"type,omitempty" yaml:"type,omitempty"` // Combined: "cloud/platform[-hcp]", e.g. "aws/rosa-hcp"
+	Region      string `json:"region,omitempty" yaml:"region,omitempty"`
+	Environment string `json:"environment,omitempty" yaml:"environment,omitempty"` // e.g. "stage", "production", "integration"
+}
+
 const (
 	// Default file paths relative to results directory
 	allCSVPath               = "reports/all.csv"
@@ -29,6 +38,7 @@ const (
 type KrknAIAggregator struct {
 	logger            logr.Logger
 	topScenariosCount int
+	clusterInfo       *ClusterInfo
 }
 
 // KrknAIData holds aggregated krkn-ai results with minimal context.
@@ -39,6 +49,7 @@ type KrknAIData struct {
 	HealthCheckReport []HealthCheckResult           `json:"healthCheckReport"`
 	LogArtifacts      []internalAggregator.LogEntry `json:"logArtifacts"`
 	ConfigSummary     string                        `json:"configSummary,omitempty"`
+	ClusterInfo       *ClusterInfo                  `json:"clusterInfo,omitempty"`
 }
 
 // KrknAISummary provides high-level statistics about the chaos test run.
@@ -89,6 +100,16 @@ func (a *KrknAIAggregator) WithTopScenariosCount(count int) *KrknAIAggregator {
 	return a
 }
 
+// WithClusterInfo sets cluster metadata to include in collected data.
+// A defensive copy is stored so later mutations by the caller don't affect stored data.
+func (a *KrknAIAggregator) WithClusterInfo(info *ClusterInfo) *KrknAIAggregator {
+	if info != nil {
+		cp := *info
+		a.clusterInfo = &cp
+	}
+	return a
+}
+
 // Collect gathers krkn-ai results from the specified directory.
 func (a *KrknAIAggregator) Collect(ctx context.Context, resultsDir string) (*KrknAIData, error) {
 	a.logger.Info("collecting krkn-ai results", "resultsDir", resultsDir)
@@ -98,6 +119,10 @@ func (a *KrknAIAggregator) Collect(ctx context.Context, resultsDir string) (*Krk
 	}
 
 	data := &KrknAIData{}
+	if a.clusterInfo != nil {
+		cp := *a.clusterInfo
+		data.ClusterInfo = &cp
+	}
 	var collectionErrors []string
 
 	// Collect scenario results from all.csv

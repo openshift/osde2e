@@ -71,6 +71,12 @@ func (ps *PromptStore) loadTemplates(filesystem fs.FS) error {
 	})
 }
 
+// RegisterTemplates loads additional templates from the given filesystem,
+// overwriting any existing templates with the same ID.
+func (ps *PromptStore) RegisterTemplates(templatesFS fs.FS) error {
+	return ps.loadTemplates(templatesFS)
+}
+
 func (ps *PromptStore) GetTemplate(id string) (*PromptTemplate, error) {
 	template, exists := ps.templates[id]
 	if !exists {

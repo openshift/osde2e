@@ -1,14 +1,20 @@
 package analysisengine
 
 import (
+	"bytes"
 	"context"
 	"embed"
 	"fmt"
+	"html/template"
 	"io/fs"
 	"os"
 	"path/filepath"
 	"time"
 
+	"github.com/gomarkdown/markdown"
+	mdhtml "github.com/gomarkdown/markdown/html"
+	"github.com/gomarkdown/markdown/parser"
+	"github.com/microcosm-cc/bluemonday"
 	"github.com/openshift/osde2e/internal/analysisengine"
 	"github.com/openshift/osde2e/internal/llm"
 	"github.com/openshift/osde2e/internal/llm/tools"
@@ -18,21 +24,22 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-//go:embed prompts/krknai.yaml
-var krknaiTemplatesFS embed.FS
+//go:embed prompts/*
+var krknPrompts embed.FS
 
 const (
 	analysisDirName = "llm-analysis"
 	summaryFileName = "summary.yaml"
 
-	// krknAIPromptTemplate is the prompt template ID for krkn-ai analysis.
 	krknAIPromptTemplate = "krknai"
+	htmlTemplatePath     = "prompts/report.html"
 )
 
 // Config holds configuration for the krkn-ai analysis engine.
 type Config struct {
 	analysisengine.BaseConfig
-	TopScenariosCount int // Number of top scenarios to include (default: 10)
+	TopScenariosCount int    // Number of top scenarios to include (default: 10)
+	ReportFormat      string // "json" (default), "markdown", or "html"
 }
 
 // Engine analyzes krkn-ai chaos test results using LLM.
@@ -60,14 +67,17 @@ func New(ctx context.Context, config *Config) (*Engine, error) {
 		agg.WithTopScenariosCount(config.TopScenariosCount)
 	}
 
-	templatesFS, err := fs.Sub(krknaiTemplatesFS, "prompts")
-	if err != nil {
-		return nil, fmt.Errorf("failed to access embedded prompts: %w", err)
-	}
-
-	promptStore, err := prompts.NewPromptStore(templatesFS)
+	promptStore, err := prompts.NewPromptStore(prompts.DefaultTemplates())
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize prompt store: %w", err)
+	}
+
+	localFS, err := fs.Sub(krknPrompts, "prompts")
+	if err != nil {
+		return nil, fmt.Errorf("failed to load krkn-ai prompt templates: %w", err)
+	}
+	if err := promptStore.RegisterTemplates(localFS); err != nil {
+		return nil, fmt.Errorf("failed to register krkn-ai prompt templates: %w", err)
 	}
 
 	client, err := llm.NewGeminiClient(ctx, config.APIKey)
@@ -88,6 +98,12 @@ func New(ctx context.Context, config *Config) (*Engine, error) {
 	}, nil
 }
 
+// WithClusterInfo sets cluster metadata on the aggregator for inclusion in collected data.
+func (e *Engine) WithClusterInfo(info *krknAggregator.ClusterInfo) *Engine {
+	e.aggregator.WithClusterInfo(info)
+	return e
+}
+
 // Run executes the krkn-ai analysis workflow.
 func (e *Engine) Run(ctx context.Context) (*analysisengine.Result, error) {
 	// Collect krkn-ai results
@@ -99,7 +115,7 @@ func (e *Engine) Run(ctx context.Context) (*analysisengine.Result, error) {
 	// Create tool registry with log artifacts for read_file tool
 	toolRegistry := tools.NewRegistry(data.LogArtifacts)
 
-	// Prepare template variables
+	// Prepare template variables from collected data
 	vars := map[string]any{
 		"Summary":           data.Summary,
 		"TopScenarios":      data.TopScenarios,
@@ -107,6 +123,9 @@ func (e *Engine) Run(ctx context.Context) (*analysisengine.Result, error) {
 		"HealthCheckReport": data.HealthCheckReport,
 		"LogArtifacts":      data.LogArtifacts,
 		"ConfigSummary":     data.ConfigSummary,
+	}
+	if data.ClusterInfo != nil {
+		vars["ClusterInfo"] = data.ClusterInfo
 	}
 
 	// Render prompt using prompt store
@@ -134,10 +153,19 @@ func (e *Engine) Run(ctx context.Context) (*analysisengine.Result, error) {
 		return nil, fmt.Errorf("LLM analysis failed: %w", err)
 	}
 
+	content := result.Content
+	if e.config.ReportFormat == "html" {
+		var err error
+		content, err = markdownToHTML(content)
+		if err != nil {
+			return nil, fmt.Errorf("failed to convert markdown to HTML: %w", err)
+		}
+	}
+
 	// Build analysis result
 	analysisResult := &analysisengine.Result{
 		Status:  "completed",
-		Content: result.Content,
+		Content: content,
 		Prompt:  userPrompt,
 		Metadata: map[string]any{
 			"analysis_type":        "krknai",
@@ -181,6 +209,7 @@ func (e *Engine) writeSummary(result *analysisengine.Result, data *krknAggregato
 	summary := map[string]any{
 		"timestamp":     time.Now().Format(time.RFC3339),
 		"analysis_type": "krknai",
+		"cluster_info":  data.ClusterInfo,
 		"run_summary": map[string]any{
 			"total_scenarios":      data.Summary.TotalScenarioCount,
 			"successful_scenarios": data.Summary.SuccessfulScenarioCount,
@@ -210,6 +239,30 @@ func (e *Engine) writeSummary(result *analysisengine.Result, data *krknAggregato
 	}
 
 	return nil
+}
+
+func markdownToHTML(content string) (string, error) {
+	htmlTmplBytes, err := krknPrompts.ReadFile(htmlTemplatePath)
+	if err != nil {
+		return "", fmt.Errorf("failed to read HTML template: %w", err)
+	}
+
+	tmpl, err := template.New("report").Parse(string(htmlTmplBytes))
+	if err != nil {
+		return "", fmt.Errorf("failed to parse HTML template: %w", err)
+	}
+
+	p := parser.NewWithExtensions(parser.CommonExtensions | parser.AutoHeadingIDs)
+	renderer := mdhtml.NewRenderer(mdhtml.RendererOptions{Flags: mdhtml.CommonFlags | mdhtml.HrefTargetBlank})
+	unsafeBody := markdown.ToHTML([]byte(content), p, renderer)
+	safeBody := bluemonday.UGCPolicy().SanitizeBytes(unsafeBody)
+
+	var buf bytes.Buffer
+	if err := tmpl.Execute(&buf, struct{ Body template.HTML }{Body: template.HTML(string(safeBody))}); err != nil {
+		return "", fmt.Errorf("failed to execute HTML template: %w", err)
+	}
+
+	return buf.String(), nil
 }
 
 // sendNotifications sends analysis results to configured reporters.

@@ -29,6 +29,8 @@ type ClusterInfo struct {
 	Region        string
 	CloudProvider string
 	Version       string
+	Type          string // e.g. "rosa", "osd", "aro"
+	Hypershift    bool
 }
 
 // Config holds configuration for the analysis engine.

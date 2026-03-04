@@ -2,6 +2,7 @@ package prompts
 
 import (
 	"testing"
+	"testing/fstest"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -12,6 +13,33 @@ func TestNewPromptStore(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, store)
 	assert.Greater(t, len(store.templates), 0, "Should have loaded some templates")
+
+	_, err = store.GetTemplate("default")
+	assert.NoError(t, err, "default template should be loaded")
+}
+
+func TestRegisterTemplates_OverwritesExisting(t *testing.T) {
+	store, err := NewPromptStore(DefaultTemplates())
+	require.NoError(t, err)
+
+	original, err := store.GetTemplate("default")
+	require.NoError(t, err)
+	require.NotNil(t, original)
+
+	replacementYAML := `system_prompt: "replacement system prompt"
+user_prompt: "replacement user prompt"
+`
+	overrideFS := fstest.MapFS{
+		"default.yaml": &fstest.MapFile{Data: []byte(replacementYAML)},
+	}
+
+	err = store.RegisterTemplates(overrideFS)
+	require.NoError(t, err)
+
+	updated, err := store.GetTemplate("default")
+	require.NoError(t, err)
+	assert.Equal(t, "replacement system prompt", updated.SystemPrompt)
+	assert.Equal(t, "replacement user prompt", updated.UserPrompt)
 }
 
 func TestGetTemplate(t *testing.T) {
