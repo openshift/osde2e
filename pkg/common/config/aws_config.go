@@ -21,7 +21,7 @@ var (
 	// AWSAccountId is the AWS account (Env var: AWS_ACCOUNT_ID)
 	AWSAccountId = "config.aws.account"
 
-	// HCPBillingAccountId is the billing account for HCP (Env var: HCP_BILLING_ACCOUNT_ID)
+	// HCPBillingAccountId is the billing account for HCP (Env var: HCP_BILLING_ACCOUNT_ID). Defaults to given AWS account creds.
 	HCPBillingAccountId = "config.aws.hcpBillingAccount"
 
 	// AWSAccessKey is the AWS access key
