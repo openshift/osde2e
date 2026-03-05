@@ -643,6 +643,18 @@ var KrknAI = struct {
 	// Scenarios is a comma-separated list of scenarios to enable
 	// Env: KRKN_SCENARIOS
 	Scenarios string
+
+	// Generations is the number of generations for the genetic algorithm
+	// Env: KRKN_GENERATIONS
+	Generations string
+
+	// Population is the population size per generation for the genetic algorithm
+	// Env: KRKN_POPULATION
+	Population string
+
+	// HealthCheck is a comma-separated list of health check endpoints in name=url format
+	// Env: KRKN_HEALTH_CHECK
+	HealthCheck string
 }{
 	Namespace:    "krknAI.namespace",
 	PodLabel:     "krknAI.podLabel",
@@ -650,6 +662,9 @@ var KrknAI = struct {
 	SkipPodName:  "krknAI.skipPodName",
 	FitnessQuery: "krknAI.fitnessQuery",
 	Scenarios:    "krknAI.scenarios",
+	Generations:  "krknAI.generations",
+	Population:   "krknAI.population",
+	HealthCheck:  "krknAI.healthCheck",
 }
 
 func InitOSDe2eViper() {
@@ -963,6 +978,15 @@ func InitOSDe2eViper() {
 
 	viper.SetDefault(KrknAI.Scenarios, "")
 	_ = viper.BindEnv(KrknAI.Scenarios, "KRKN_SCENARIOS")
+
+	viper.SetDefault(KrknAI.Generations, 2)
+	_ = viper.BindEnv(KrknAI.Generations, "KRKN_GENERATIONS")
+
+	viper.SetDefault(KrknAI.Population, 2)
+	_ = viper.BindEnv(KrknAI.Population, "KRKN_POPULATION")
+
+	viper.SetDefault(KrknAI.HealthCheck, "")
+	_ = viper.BindEnv(KrknAI.HealthCheck, "KRKN_HEALTH_CHECK")
 }
 
 func init() {
