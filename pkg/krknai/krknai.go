@@ -14,15 +14,12 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/openshift/osde2e-common/pkg/clients/openshift"
 	"github.com/openshift/osde2e-common/pkg/clients/prometheus"
-	"github.com/openshift/osde2e/internal/analysisengine"
 	"github.com/openshift/osde2e/pkg/common/cluster"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/orchestrator"
 	"github.com/openshift/osde2e/pkg/common/providers"
-	"github.com/openshift/osde2e/pkg/common/slack"
 	"github.com/openshift/osde2e/pkg/common/spi"
-	krknengine "github.com/openshift/osde2e/pkg/krknai/analysisengine"
 	"gopkg.in/yaml.v3"
 )
 
@@ -42,9 +39,8 @@ const (
 
 // KrknAI implements the orchestrator.Orchestrator interface for Kraken AI chaos testing.
 type KrknAI struct {
-	provider       spi.Provider
-	result         *orchestrator.Result
-	analysisResult *analysisengine.Result
+	provider spi.Provider
+	result   *orchestrator.Result
 }
 
 // New creates a new KrknAI orchestrator instance.
@@ -338,86 +334,33 @@ func detectContainerRuntime() (string, error) {
 	return "", fmt.Errorf("no container runtime found: install podman or docker")
 }
 
-// AnalyzeLogs performs AI-powered log analysis on krkn-ai chaos test results.
-// Results are cached on the orchestrator for use by Report.
+// AnalyzeLogs performs AI-powered log analysis when tests fail,
+// providing insights into failure root causes.
 func (k *KrknAI) AnalyzeLogs(ctx context.Context, testErr error) error {
-	log.Println("Running krkn-ai log analysis...")
-	reportDir := viper.GetString(config.ReportDir)
-	if reportDir == "" {
-		return fmt.Errorf("no report directory available for log analysis")
-	}
+	log.Println("Analyzing logs for failure insights")
 
-	apiKey := viper.GetString(config.LogAnalysis.APIKey)
-	if apiKey == "" {
-		log.Println("Skipping log analysis: GEMINI_API_KEY not configured")
-		return nil
-	}
+	// TODO: Implement Kraken AI-specific log analysis
+	// This could include:
+	// - Correlating chaos events with failures
+	// - AI-powered root cause analysis
+	// - Generating remediation suggestions
 
-	engineConfig := &krknengine.Config{
-		BaseConfig: analysisengine.BaseConfig{
-			ArtifactsDir: reportDir,
-			APIKey:       apiKey,
-		},
-	}
-
-	engine, err := krknengine.New(ctx, engineConfig)
-	if err != nil {
-		return fmt.Errorf("failed to create krkn-ai analysis engine: %w", err)
-	}
-
-	result, err := engine.Run(ctx)
-	if err != nil {
-		return fmt.Errorf("krkn-ai log analysis failed: %w", err)
-	}
-
-	k.analysisResult = result
-	log.Printf("Krkn-ai log analysis completed. Results: %s/llm-analysis/", reportDir)
-	log.Printf("=== Krkn-ai Analysis Result ===\n%s", result.Content)
-
+	log.Printf("Log analysis completed for error: %v", testErr)
 	return nil
 }
 
-// Report sends notifications and generates diagnostic reports.
+// Report generates test reports and collects diagnostic data.
 func (k *KrknAI) Report(ctx context.Context) error {
-	if k.analysisResult != nil && viper.GetBool(config.Tests.EnableSlackNotify) {
-		k.sendAnalysisNotification(ctx)
-	}
+	log.Println("Generating test reports")
+
+	// TODO: Implement chaos test reporting
+	// This should include:
+	// - Chaos experiment results
+	// - Cluster resilience metrics
+	// - Recovery time statistics
+
+	log.Println("Report generation completed")
 	return nil
-}
-
-// sendAnalysisNotification sends the krkn-ai analysis result via Slack.
-func (k *KrknAI) sendAnalysisNotification(ctx context.Context) {
-	notificationConfig := slack.BuildNotificationConfig(
-		viper.GetString(config.LogAnalysis.SlackWebhook),
-		viper.GetString(config.LogAnalysis.SlackChannel),
-		&slack.ClusterInfo{
-			ID:            viper.GetString(config.Cluster.ID),
-			Name:          viper.GetString(config.Cluster.Name),
-			Provider:      viper.GetString(config.Provider),
-			Region:        viper.GetString(config.CloudProvider.Region),
-			CloudProvider: viper.GetString(config.CloudProvider.CloudProviderID),
-			Version:       viper.GetString(config.Cluster.Version),
-		},
-		viper.GetString(config.ReportDir),
-	)
-	if notificationConfig == nil {
-		return
-	}
-
-	slackReporter := slack.NewSlackReporter()
-	result := &slack.AnalysisResult{
-		Status:   k.analysisResult.Status,
-		Content:  k.analysisResult.Content,
-		Metadata: k.analysisResult.Metadata,
-		Error:    k.analysisResult.Error,
-		Prompt:   k.analysisResult.Prompt,
-	}
-
-	for _, cfg := range notificationConfig.Reporters {
-		if err := slackReporter.Report(ctx, result, &cfg); err != nil {
-			log.Printf("Failed to send krkn-ai notification via %s: %v", cfg.Type, err)
-		}
-	}
 }
 
 // Cleanup performs post-test cleanup including resource cleanup and

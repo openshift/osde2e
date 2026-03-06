@@ -129,6 +129,7 @@ func (o *E2EOrchestrator) Provision(ctx context.Context) error {
 
 	// Load cluster context (kubeconfig and cluster ID)
 	if err := cluster.LoadClusterContext(); err != nil {
+		o.result.ExitCode = config.Failure
 		return err
 	}
 
@@ -136,6 +137,7 @@ func (o *E2EOrchestrator) Provision(ctx context.Context) error {
 	cl, err := cluster.ProvisionOrReuseCluster(o.provider)
 	runner.ReportClusterInstallLogs(o.provider)
 	if err != nil {
+		o.result.ExitCode = config.Failure
 		return err
 	}
 
@@ -144,6 +146,7 @@ func (o *E2EOrchestrator) Provision(ctx context.Context) error {
 	// Install addons if configured
 	if _, err := cluster.InstallAddonsIfConfigured(o.provider, cl.ID()); err != nil {
 		runner.ReportClusterInstallLogs(o.provider)
+		o.result.ExitCode = config.Failure
 		return fmt.Errorf("addon installation failed: %w", err)
 	}
 
@@ -273,9 +276,9 @@ func (o *E2EOrchestrator) Report(ctx context.Context) error {
 		}
 	}
 
-	// Send built-in analysis notification (if analysis ran and Slack is enabled)
-	if o.analysisResult != nil && viper.GetBool(config.Tests.EnableSlackNotify) {
-		o.sendAnalysisNotification(ctx)
+	// Send failure notification (with or without LLM analysis)
+	if o.result.ExitCode != config.Success && viper.GetBool(config.Tests.EnableSlackNotify) {
+		o.sendFailureNotification(ctx)
 	}
 
 	// Send deferred ad-hoc test suite notifications (with S3 URLs)
@@ -285,9 +288,11 @@ func (o *E2EOrchestrator) Report(ctx context.Context) error {
 	return nil
 }
 
-// sendAnalysisNotification sends the built-in log analysis result via Slack.
-// Called by Report after S3 upload so that presigned URLs are available.
-func (o *E2EOrchestrator) sendAnalysisNotification(ctx context.Context) {
+// sendFailureNotification sends a test failure notification via Slack.
+// If LLM analysis results are available they are included; otherwise a
+// basic failure notice is sent. Called by Report after S3 upload so that
+// presigned URLs are available.
+func (o *E2EOrchestrator) sendFailureNotification(ctx context.Context) {
 	reportDir := viper.GetString(config.ReportDir)
 	notificationConfig := slack.BuildNotificationConfig(
 		viper.GetString(config.LogAnalysis.SlackWebhook),
@@ -313,18 +318,26 @@ func (o *E2EOrchestrator) sendAnalysisNotification(ctx context.Context) {
 		}
 	}
 
-	slackReporter := slack.NewSlackReporter()
-	result := &slack.AnalysisResult{
-		Status:   o.analysisResult.Status,
-		Content:  o.analysisResult.Content,
-		Metadata: o.analysisResult.Metadata,
-		Error:    o.analysisResult.Error,
-		Prompt:   o.analysisResult.Prompt,
+	var result *slack.AnalysisResult
+	if o.analysisResult != nil {
+		result = &slack.AnalysisResult{
+			Status:   o.analysisResult.Status,
+			Content:  o.analysisResult.Content,
+			Metadata: o.analysisResult.Metadata,
+			Error:    o.analysisResult.Error,
+			Prompt:   o.analysisResult.Prompt,
+		}
+	} else {
+		result = &slack.AnalysisResult{
+			Status:  "skipped",
+			Content: "Log analysis was not enabled for this run.",
+		}
 	}
 
+	slackReporter := slack.NewSlackReporter()
 	for _, cfg := range notificationConfig.Reporters {
 		if err := slackReporter.Report(ctx, result, &cfg); err != nil {
-			log.Printf("Failed to send analysis notification via %s: %v", cfg.Type, err)
+			log.Printf("Failed to send failure notification via %s: %v", cfg.Type, err)
 		}
 	}
 }

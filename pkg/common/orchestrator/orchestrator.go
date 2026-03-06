@@ -19,9 +19,7 @@ type Orchestrator interface {
 	// internally for use by Report.
 	AnalyzeLogs(ctx context.Context, testErr error) error
 
-	// Report uploads artifacts, sends notifications, and generates reports.
-	// It consolidates S3 uploads, Slack notifications (both built-in analysis
-	// and deferred ad-hoc test suite results), and diagnostic data collection.
+	// Report saves artifacts and/or sends notifications for generated results.
 	Report(ctx context.Context) error
 
 	// Cleanup performs post-test cleanup including resource cleanup and
