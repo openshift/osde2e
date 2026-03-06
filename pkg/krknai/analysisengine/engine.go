@@ -147,6 +147,9 @@ func (e *Engine) Run(ctx context.Context) (*analysisengine.Result, error) {
 	}
 
 	content := result.Content
+	if mustGatherPath := mustGatherRelativePath(e.config.ArtifactsDir); mustGatherPath != "" {
+		content += fmt.Sprintf("\n\n[Cluster must-gather](%s) (inspect cluster state at chaos run time)", mustGatherPath)
+	}
 	if e.config.ReportFormat == "html" {
 		var err error
 		content, err = markdownToHTML(content)
@@ -229,6 +232,23 @@ func (e *Engine) writeSummary(result *analysisengine.Result, data *krknAggregato
 	return nil
 }
 
+// mustGatherRelativePath returns the relative path to the must-gather directory from the
+// artifacts dir (e.g. "must-gather") if it exists, otherwise empty string.
+func mustGatherRelativePath(artifactsDir string) string {
+	if artifactsDir == "" {
+		return ""
+	}
+	mgDir := filepath.Join(artifactsDir, "must-gather")
+	info, err := os.Stat(mgDir)
+	if err != nil || info == nil {
+		return ""
+	}
+	if info.IsDir() {
+		return "must-gather"
+	}
+	return ""
+}
+
 func markdownToHTML(content string) (string, error) {
 	htmlTmplBytes, err := krknPrompts.ReadFile(htmlTemplatePath)
 	if err != nil {
@@ -245,8 +265,12 @@ func markdownToHTML(content string) (string, error) {
 	unsafeBody := markdown.ToHTML([]byte(content), p, renderer)
 	safeBody := bluemonday.UGCPolicy().SanitizeBytes(unsafeBody)
 
+	payload := struct {
+		Body template.HTML
+	}{Body: template.HTML(string(safeBody))}
+
 	var buf bytes.Buffer
-	if err := tmpl.Execute(&buf, struct{ Body template.HTML }{Body: template.HTML(string(safeBody))}); err != nil {
+	if err := tmpl.Execute(&buf, payload); err != nil {
 		return "", fmt.Errorf("failed to execute HTML template: %w", err)
 	}
 
