@@ -14,19 +14,12 @@ type Orchestrator interface {
 	// optional upgrade tests with their respective phases.
 	Execute(ctx context.Context) error
 
-	// UploadArtifacts persists test artifacts (logs, JUnit XML) to durable
-	// storage and generates shareable URLs. Called after Execute so that
-	// downstream phases (AnalyzeLogs) can include artifact links in
-	// notifications. Implementations that don't need artifact persistence
-	// should return nil.
-	UploadArtifacts(ctx context.Context) error
-
 	// AnalyzeLogs performs AI-powered log analysis when tests fail,
-	// providing insights into failure root causes.
+	// providing insights into failure root causes. Results are cached
+	// internally for use by Report.
 	AnalyzeLogs(ctx context.Context, testErr error) error
 
-	// Report generates test reports (JUnit, Konflux) and collects diagnostic data
-	// (must-gather, logs).
+	// Report saves artifacts and/or sends notifications for generated results.
 	Report(ctx context.Context) error
 
 	// Cleanup performs post-test cleanup including resource cleanup and

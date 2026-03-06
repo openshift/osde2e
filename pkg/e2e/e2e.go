@@ -52,21 +52,19 @@ func RunTests(ctx context.Context) int {
 				log.Printf("Log analysis failed: %v", err)
 			}
 		}
+		if err := orch.Report(ctx); err != nil {
+			log.Printf("Report errors: %v", err)
+		}
 		return config.Failure
 	}
 
 	// Execute tests
 	testErr := orch.Execute(ctx)
 
-	// On failure: upload artifacts, send notifications, and analyze logs
+	// On failure: analyze logs (results are cached for Report)
 	if testErr != nil {
 		log.Printf("Tests failed: %v", testErr)
 
-		if err := orch.UploadArtifacts(ctx); err != nil {
-			log.Printf("Artifact upload failed: %v", err)
-		}
-
-		// Built-in test analysis (skipped when TestSuites/AdHoc handle their own)
 		if viper.GetBool(config.LogAnalysis.EnableAnalysis) && viper.GetString(config.Tests.TestSuites) == "" && viper.GetString(config.Tests.AdHocTestImages) == "" {
 			if err := orch.AnalyzeLogs(ctx, testErr); err != nil {
 				log.Printf("Log analysis failed: %v", err)
@@ -74,7 +72,7 @@ func RunTests(ctx context.Context) int {
 		}
 	}
 
-	// Generate reports
+	// Report: upload artifacts, send notifications, generate reports
 	if err := orch.Report(ctx); err != nil {
 		log.Printf("Report errors: %v", err)
 	}
@@ -100,6 +98,7 @@ type E2EOrchestrator struct {
 	suiteConfig    types.SuiteConfig
 	reporterConfig types.ReporterConfig
 	s3Results      []aws.S3UploadResult
+	analysisResult *analysisengine.Result
 }
 
 // NewOrchestrator creates a new E2E orchestrator instance.
@@ -130,6 +129,7 @@ func (o *E2EOrchestrator) Provision(ctx context.Context) error {
 
 	// Load cluster context (kubeconfig and cluster ID)
 	if err := cluster.LoadClusterContext(); err != nil {
+		o.result.ExitCode = config.Failure
 		return err
 	}
 
@@ -137,6 +137,7 @@ func (o *E2EOrchestrator) Provision(ctx context.Context) error {
 	cl, err := cluster.ProvisionOrReuseCluster(o.provider)
 	runner.ReportClusterInstallLogs(o.provider)
 	if err != nil {
+		o.result.ExitCode = config.Failure
 		return err
 	}
 
@@ -145,6 +146,7 @@ func (o *E2EOrchestrator) Provision(ctx context.Context) error {
 	// Install addons if configured
 	if _, err := cluster.InstallAddonsIfConfigured(o.provider, cl.ID()); err != nil {
 		runner.ReportClusterInstallLogs(o.provider)
+		o.result.ExitCode = config.Failure
 		return fmt.Errorf("addon installation failed: %w", err)
 	}
 
@@ -194,20 +196,6 @@ func (o *E2EOrchestrator) Execute(ctx context.Context) error {
 	return nil
 }
 
-// UploadArtifacts persists test artifacts to S3 and delivers any deferred
-// Slack notifications that were queued during test execution.
-func (o *E2EOrchestrator) UploadArtifacts(ctx context.Context) error {
-	if viper.GetString(config.Tests.LogBucket) == "" {
-		return nil
-	}
-	cleanStaleJunitFiles()
-	if err := o.uploadToS3(); err != nil {
-		return err
-	}
-	o.sendDeferredNotifications(ctx)
-	return nil
-}
-
 // cleanStaleJunitFiles removes junit XML files from previous runs in the report directory,
 // keeping only the file matching the current run suffix.
 func cleanStaleJunitFiles() {
@@ -232,53 +220,29 @@ func cleanStaleJunitFiles() {
 }
 
 // AnalyzeLogs performs AI-powered log analysis on test failures.
+// Results are cached on the orchestrator for use by Report.
 func (o *E2EOrchestrator) AnalyzeLogs(ctx context.Context, testErr error) error {
 	log.Println("Running log analysis...")
-	var notificationConfig *slack.NotificationConfig
 	reportDir := viper.GetString(config.ReportDir)
 	if reportDir == "" {
 		return fmt.Errorf("no report directory available for log analysis")
 	}
 
-	clusterInfo := &analysisengine.ClusterInfo{
-		ID:            viper.GetString(config.Cluster.ID),
-		Name:          viper.GetString(config.Cluster.Name),
-		Provider:      viper.GetString(config.Provider),
-		Region:        viper.GetString(config.CloudProvider.Region),
-		CloudProvider: viper.GetString(config.CloudProvider.CloudProviderID),
-		Version:       viper.GetString(config.Cluster.Version),
-	}
-	if viper.GetBool(config.Tests.EnableSlackNotify) {
-		notificationConfig = slack.BuildNotificationConfig(
-			viper.GetString(config.LogAnalysis.SlackWebhook),
-			viper.GetString(config.LogAnalysis.SlackChannel),
-			&slack.ClusterInfo{
-				ID:            clusterInfo.ID,
-				Name:          clusterInfo.Name,
-				Provider:      clusterInfo.Provider,
-				Region:        clusterInfo.Region,
-				CloudProvider: clusterInfo.CloudProvider,
-				Version:       clusterInfo.Version,
-			},
-			reportDir,
-		)
-		if notificationConfig != nil && len(o.s3Results) > 0 {
-			artifactLinks := s3ResultsToArtifactLinks(o.s3Results)
-			for i := range notificationConfig.Reporters {
-				notificationConfig.Reporters[i].Settings["artifact_links"] = artifactLinks
-			}
-		}
-	}
-
 	engineConfig := &analysisengine.Config{
 		BaseConfig: analysisengine.BaseConfig{
-			ArtifactsDir:       reportDir,
-			APIKey:             viper.GetString(config.LogAnalysis.APIKey),
-			NotificationConfig: notificationConfig,
+			ArtifactsDir: reportDir,
+			APIKey:       viper.GetString(config.LogAnalysis.APIKey),
 		},
 		PromptTemplate: "default",
 		FailureContext: testErr.Error(),
-		ClusterInfo:    clusterInfo,
+		ClusterInfo: &analysisengine.ClusterInfo{
+			ID:            viper.GetString(config.Cluster.ID),
+			Name:          viper.GetString(config.Cluster.Name),
+			Provider:      viper.GetString(config.Provider),
+			Region:        viper.GetString(config.CloudProvider.Region),
+			CloudProvider: viper.GetString(config.CloudProvider.CloudProviderID),
+			Version:       viper.GetString(config.Cluster.Version),
+		},
 	}
 
 	engine, err := analysisengine.New(ctx, engineConfig)
@@ -291,25 +255,96 @@ func (o *E2EOrchestrator) AnalyzeLogs(ctx context.Context, testErr error) error 
 		return fmt.Errorf("log analysis failed: %w", err)
 	}
 
+	o.analysisResult = result
 	log.Printf("Log analysis completed. Results: %s/%s/", reportDir, analysisengine.AnalysisDirName)
 	log.Printf("=== Log Analysis Result ===\n%s", result.Content)
 
 	return nil
 }
 
-// Report generates reports and collects diagnostic data.
+// Report uploads artifacts, sends notifications, and generates diagnostic reports.
 func (o *E2EOrchestrator) Report(ctx context.Context) error {
 	if o.suiteConfig.DryRun {
 		return nil
 	}
 
+	// Upload artifacts to S3
+	if viper.GetString(config.Tests.LogBucket) != "" {
+		cleanStaleJunitFiles()
+		if err := o.uploadToS3(); err != nil {
+			log.Printf("S3 upload failed: %v", err)
+		}
+	}
+
+	// Send failure notification (with or without LLM analysis)
+	if o.result.ExitCode != config.Success && viper.GetBool(config.Tests.EnableSlackNotify) {
+		o.sendFailureNotification(ctx)
+	}
+
+	// Send deferred ad-hoc test suite notifications (with S3 URLs)
+	o.sendDeferredNotifications(ctx)
+
 	runner.ReportClusterInstallLogs(o.provider)
 	return nil
 }
 
+// sendFailureNotification sends a test failure notification via Slack.
+// If LLM analysis results are available they are included; otherwise a
+// basic failure notice is sent. Called by Report after S3 upload so that
+// presigned URLs are available.
+func (o *E2EOrchestrator) sendFailureNotification(ctx context.Context) {
+	reportDir := viper.GetString(config.ReportDir)
+	notificationConfig := slack.BuildNotificationConfig(
+		viper.GetString(config.LogAnalysis.SlackWebhook),
+		viper.GetString(config.LogAnalysis.SlackChannel),
+		&slack.ClusterInfo{
+			ID:            viper.GetString(config.Cluster.ID),
+			Name:          viper.GetString(config.Cluster.Name),
+			Provider:      viper.GetString(config.Provider),
+			Region:        viper.GetString(config.CloudProvider.Region),
+			CloudProvider: viper.GetString(config.CloudProvider.CloudProviderID),
+			Version:       viper.GetString(config.Cluster.Version),
+		},
+		reportDir,
+	)
+	if notificationConfig == nil {
+		return
+	}
+
+	if len(o.s3Results) > 0 {
+		artifactLinks := s3ResultsToArtifactLinks(o.s3Results)
+		for i := range notificationConfig.Reporters {
+			notificationConfig.Reporters[i].Settings["artifact_links"] = artifactLinks
+		}
+	}
+
+	var result *slack.AnalysisResult
+	if o.analysisResult != nil {
+		result = &slack.AnalysisResult{
+			Status:   o.analysisResult.Status,
+			Content:  o.analysisResult.Content,
+			Metadata: o.analysisResult.Metadata,
+			Error:    o.analysisResult.Error,
+			Prompt:   o.analysisResult.Prompt,
+		}
+	} else {
+		result = &slack.AnalysisResult{
+			Status:  "skipped",
+			Content: "Log analysis was not enabled for this run.",
+		}
+	}
+
+	slackReporter := slack.NewSlackReporter()
+	for _, cfg := range notificationConfig.Reporters {
+		if err := slackReporter.Report(ctx, result, &cfg); err != nil {
+			log.Printf("Failed to send failure notification via %s: %v", cfg.Type, err)
+		}
+	}
+}
+
 // sendDeferredNotifications delivers Slack notifications that were queued by
-// adhoctestimages during test execution. Called after UploadArtifacts so that
-// presigned S3 URLs are available for inclusion in the message.
+// adhoctestimages during test execution. Called by Report after S3 upload so
+// that presigned URLs are available for inclusion in the message.
 func (o *E2EOrchestrator) sendDeferredNotifications(ctx context.Context) {
 	pending := adhoctestimages.DrainPendingNotifications()
 	if len(pending) == 0 {

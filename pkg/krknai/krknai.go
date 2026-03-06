@@ -334,12 +334,6 @@ func detectContainerRuntime() (string, error) {
 	return "", fmt.Errorf("no container runtime found: install podman or docker")
 }
 
-// UploadArtifacts persists test artifacts to durable storage.
-func (k *KrknAI) UploadArtifacts(ctx context.Context) error {
-	// TODO: Upload chaos test artifacts when persistent storage is configured
-	return nil
-}
-
 // AnalyzeLogs performs AI-powered log analysis when tests fail,
 // providing insights into failure root causes.
 func (k *KrknAI) AnalyzeLogs(ctx context.Context, testErr error) error {
