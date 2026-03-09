@@ -20,7 +20,6 @@ import (
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/orchestrator"
 	"github.com/openshift/osde2e/pkg/common/providers"
-	"github.com/openshift/osde2e/pkg/common/slack"
 	"github.com/openshift/osde2e/pkg/common/spi"
 	krknaiengine "github.com/openshift/osde2e/pkg/krknai/analysisengine"
 	"gopkg.in/yaml.v3"
@@ -342,36 +341,15 @@ func detectContainerRuntime() (string, error) {
 func (k *KrknAI) AnalyzeLogs(ctx context.Context, testErr error) error {
 	log.Println("Running krkn-ai log analysis...")
 
-	var notificationConfig *slack.NotificationConfig
 	reportDir := viper.GetString(config.ReportDir)
 	if reportDir == "" {
 		return fmt.Errorf("no report directory available for log analysis")
 	}
 
-	// Build cluster info for notifications
-	slackClusterInfo := &slack.ClusterInfo{
-		ID:            viper.GetString(config.Cluster.ID),
-		Name:          viper.GetString(config.Cluster.Name),
-		Provider:      viper.GetString(config.Provider),
-		Region:        viper.GetString(config.CloudProvider.Region),
-		CloudProvider: viper.GetString(config.CloudProvider.CloudProviderID),
-		Version:       viper.GetString(config.Cluster.Version),
-	}
-
-	if viper.GetBool(config.Tests.EnableSlackNotify) {
-		notificationConfig = slack.BuildNotificationConfig(
-			viper.GetString(config.LogAnalysis.SlackWebhook),
-			viper.GetString(config.LogAnalysis.SlackChannel),
-			slackClusterInfo,
-			reportDir,
-		)
-	}
-
 	engineConfig := &krknaiengine.Config{
 		BaseConfig: analysisengine.BaseConfig{
-			ArtifactsDir:       reportDir,
-			APIKey:             viper.GetString(config.LogAnalysis.APIKey),
-			NotificationConfig: notificationConfig,
+			ArtifactsDir: reportDir,
+			APIKey:       viper.GetString(config.LogAnalysis.APIKey),
 		},
 		TopScenariosCount: 10, // Default from krknai engine
 	}
