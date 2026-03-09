@@ -1,0 +1,11 @@
+generation_id,scenario_id,scenario,parameters,health_check_failure_score,health_check_response_time_score,krkn_failure_score,fitness_score
+0,1,node-cpu-hog,"chaos-duration=60 cpu-percentage=61 node_selector=node-role.kubernetes.io/worker",0.0,1.2,0.0,2.2
+0,2,node-memory-hog,"chaos-duration=60 memory-consumption=49% node_selector=node-role.kubernetes.io/worker",0.0,1.0,0.0,2.0
+0,3,pod-scenarios,"namespace=openshift-monitoring kill_count=2",0.0,0.9,0.0,1.9
+1,4,node-io-hog,"chaos-duration=60 io-block-size=3m node_selector=node-role.kubernetes.io/worker",0.0,0.8,0.0,1.8
+1,5,pod-scenarios,"namespace=openshift-console kill_count=1",0.0,0.6,0.0,1.6
+1,6,network-chaos,"namespace=openshift-ingress duration=45 latency=100ms",0.2,0.5,0.0,0.7
+2,7,node-cpu-hog,"chaos-duration=90 cpu-percentage=75 node_selector=node-role.kubernetes.io/worker",0.0,1.5,0.0,2.5
+2,8,pod-scenarios,"namespace=openshift-oauth kill_count=3",0.5,0.3,0.0,0.8
+2,9,dns-outage,"chaos-duration=60 namespace=openshift-dns",1.0,0.0,-1.0,-1.0
+2,10,container-kill,"namespace=openshift-authentication kill_count=5",0.8,0.2,0.0,1.0
