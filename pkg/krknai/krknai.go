@@ -359,13 +359,12 @@ func (k *KrknAI) AnalyzeLogs(ctx context.Context, testErr error) error {
 		return fmt.Errorf("failed to create krkn-ai analysis engine: %w", err)
 	}
 
-	result, err := engine.Run(ctx)
+	_, err = engine.Run(ctx)
 	if err != nil {
 		return fmt.Errorf("krkn-ai log analysis failed: %w", err)
 	}
 
 	log.Printf("Krkn-AI analysis completed. Results: %s/llm-analysis/", reportDir)
-	log.Printf("=== Krkn-AI Analysis Result ===\n%s", result.Content)
 
 	return nil
 }
