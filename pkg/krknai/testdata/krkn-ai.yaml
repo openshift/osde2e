@@ -1,0 +1,32 @@
+generations: 3
+population_size: 10
+wait_duration: 120
+mutation_rate: 0.15
+crossover_rate: 0.75
+fitness_function:
+  query: sum(probe_success{job=~"console|oauth|api"})
+  type: range
+  lower_bound: 0
+  upper_bound: 100
+scenario:
+  pod_scenarios:
+    enable: true
+    namespace: ["openshift-monitoring", "openshift-console", "openshift-oauth"]
+  node_cpu_hog:
+    enable: true
+    cpu_percentage: [50, 60, 70, 80]
+    chaos_duration: [30, 60, 90]
+  node_memory_hog:
+    enable: true
+    memory_consumption: ["30%", "40%", "50%", "60%"]
+  node_io_hog:
+    enable: true
+    io_block_size: ["1m", "3m", "5m"]
+  network_chaos:
+    enable: true
+    latency: ["50ms", "100ms", "200ms"]
+  dns_outage:
+    enable: false
+  container_kill:
+    enable: true
+    kill_count: [1, 2, 3, 5]

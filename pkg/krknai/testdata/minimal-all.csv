@@ -1,0 +1,2 @@
+generation_id,scenario_id,scenario,parameters,health_check_failure_score,health_check_response_time_score,krkn_failure_score,fitness_score
+0,1,node-cpu-hog,"chaos-duration=60",0.0,1.0,0.0,1.0

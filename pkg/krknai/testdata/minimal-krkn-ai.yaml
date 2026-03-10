@@ -1,0 +1,5 @@
+generations: 1
+population_size: 5
+scenario:
+  node_cpu_hog:
+    enable: true

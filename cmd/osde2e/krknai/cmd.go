@@ -29,6 +29,7 @@ var args struct {
 	environment        string
 	kubeConfig         string
 	skipDestroyCluster bool
+	logAnalysisEnable  bool
 }
 
 func init() {
@@ -78,11 +79,18 @@ func init() {
 		false,
 		"Skip destroy cluster after test completion.",
 	)
+	pfs.BoolVar(
+		&args.logAnalysisEnable,
+		"log-analysis-enable",
+		false,
+		"Enable AI powered log analysis on test failures",
+	)
 
 	_ = viper.BindPFlag(config.Cluster.ID, Cmd.PersistentFlags().Lookup("cluster-id"))
 	_ = viper.BindPFlag(ocmprovider.Env, Cmd.PersistentFlags().Lookup("environment"))
 	_ = viper.BindPFlag(config.Kubeconfig.Path, Cmd.PersistentFlags().Lookup("kube-config"))
 	_ = viper.BindPFlag(config.Cluster.SkipDestroyCluster, Cmd.PersistentFlags().Lookup("skip-destroy-cluster"))
+	_ = viper.BindPFlag(config.LogAnalysis.EnableAnalysis, Cmd.PersistentFlags().Lookup("log-analysis-enable"))
 }
 
 func run(cmd *cobra.Command, argv []string) {
@@ -111,8 +119,10 @@ func runKrknAI(ctx context.Context) int {
 	testErr := orch.Execute(ctx)
 	if testErr != nil {
 		log.Printf("Tests failed: %v", testErr)
-		if err := orch.AnalyzeLogs(ctx, testErr); err != nil {
-			log.Printf("Log analysis failed: %v", err)
+		if viper.GetBool(config.LogAnalysis.EnableAnalysis) {
+			if err := orch.AnalyzeLogs(ctx, testErr); err != nil {
+				log.Printf("Log analysis failed: %v", err)
+			}
 		}
 	}
 

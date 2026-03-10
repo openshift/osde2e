@@ -655,16 +655,21 @@ var KrknAI = struct {
 	// HealthCheck is a comma-separated list of health check endpoints in name=url format
 	// Env: KRKN_HEALTH_CHECK
 	HealthCheck string
+
+	// TopScenariosCount is the number of top scenarios to include in analysis
+	// Env: KRKN_TOP_SCENARIOS_COUNT
+	TopScenariosCount string
 }{
-	Namespace:    "krknAI.namespace",
-	PodLabel:     "krknAI.podLabel",
-	NodeLabel:    "krknAI.nodeLabel",
-	SkipPodName:  "krknAI.skipPodName",
-	FitnessQuery: "krknAI.fitnessQuery",
-	Scenarios:    "krknAI.scenarios",
-	Generations:  "krknAI.generations",
-	Population:   "krknAI.population",
-	HealthCheck:  "krknAI.healthCheck",
+	Namespace:         "krknAI.namespace",
+	PodLabel:          "krknAI.podLabel",
+	NodeLabel:         "krknAI.nodeLabel",
+	SkipPodName:       "krknAI.skipPodName",
+	FitnessQuery:      "krknAI.fitnessQuery",
+	Scenarios:         "krknAI.scenarios",
+	Generations:       "krknAI.generations",
+	Population:        "krknAI.population",
+	HealthCheck:       "krknAI.healthCheck",
+	TopScenariosCount: "krknAI.topScenariosCount",
 }
 
 func InitOSDe2eViper() {
@@ -987,6 +992,9 @@ func InitOSDe2eViper() {
 
 	viper.SetDefault(KrknAI.HealthCheck, "")
 	_ = viper.BindEnv(KrknAI.HealthCheck, "KRKN_HEALTH_CHECK")
+
+	viper.SetDefault(KrknAI.TopScenariosCount, 10)
+	_ = viper.BindEnv(KrknAI.TopScenariosCount, "KRKN_TOP_SCENARIOS_COUNT")
 }
 
 func init() {

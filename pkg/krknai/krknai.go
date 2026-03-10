@@ -14,12 +14,14 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/openshift/osde2e-common/pkg/clients/openshift"
 	"github.com/openshift/osde2e-common/pkg/clients/prometheus"
+	"github.com/openshift/osde2e/internal/analysisengine"
 	"github.com/openshift/osde2e/pkg/common/cluster"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/orchestrator"
 	"github.com/openshift/osde2e/pkg/common/providers"
 	"github.com/openshift/osde2e/pkg/common/spi"
+	krknaiengine "github.com/openshift/osde2e/pkg/krknai/analysisengine"
 	"gopkg.in/yaml.v3"
 )
 
@@ -39,8 +41,9 @@ const (
 
 // KrknAI implements the orchestrator.Orchestrator interface for Kraken AI chaos testing.
 type KrknAI struct {
-	provider spi.Provider
-	result   *orchestrator.Result
+	provider       spi.Provider
+	result         *orchestrator.Result
+	analysisResult *analysisengine.Result
 }
 
 // New creates a new KrknAI orchestrator instance.
@@ -337,15 +340,35 @@ func detectContainerRuntime() (string, error) {
 // AnalyzeLogs performs AI-powered log analysis when tests fail,
 // providing insights into failure root causes.
 func (k *KrknAI) AnalyzeLogs(ctx context.Context, testErr error) error {
-	log.Println("Analyzing logs for failure insights")
+	log.Println("Running krkn-ai log analysis...")
 
-	// TODO: Implement Kraken AI-specific log analysis
-	// This could include:
-	// - Correlating chaos events with failures
-	// - AI-powered root cause analysis
-	// - Generating remediation suggestions
+	reportDir := viper.GetString(config.ReportDir)
+	if reportDir == "" {
+		return fmt.Errorf("no report directory available for log analysis")
+	}
 
-	log.Printf("Log analysis completed for error: %v", testErr)
+	engineConfig := &krknaiengine.Config{
+		BaseConfig: analysisengine.BaseConfig{
+			ArtifactsDir: reportDir,
+			APIKey:       viper.GetString(config.LogAnalysis.APIKey),
+		},
+		TopScenariosCount: viper.GetInt(config.KrknAI.TopScenariosCount),
+	}
+
+	engine, err := krknaiengine.New(ctx, engineConfig)
+	if err != nil {
+		return fmt.Errorf("failed to create krkn-ai analysis engine: %w", err)
+	}
+
+	result, err := engine.Run(ctx)
+	if err != nil {
+		return fmt.Errorf("krkn-ai log analysis failed: %w", err)
+	}
+
+	k.analysisResult = result
+
+	log.Printf("Krkn-AI analysis completed. Results: %s/llm-analysis/", reportDir)
+
 	return nil
 }
 
