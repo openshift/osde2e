@@ -41,8 +41,9 @@ const (
 
 // KrknAI implements the orchestrator.Orchestrator interface for Kraken AI chaos testing.
 type KrknAI struct {
-	provider spi.Provider
-	result   *orchestrator.Result
+	provider       spi.Provider
+	result         *orchestrator.Result
+	analysisResult *analysisengine.Result
 }
 
 // New creates a new KrknAI orchestrator instance.
@@ -351,7 +352,7 @@ func (k *KrknAI) AnalyzeLogs(ctx context.Context, testErr error) error {
 			ArtifactsDir: reportDir,
 			APIKey:       viper.GetString(config.LogAnalysis.APIKey),
 		},
-		TopScenariosCount: 10, // Default from krknai engine
+		TopScenariosCount: viper.GetInt(config.KrknAI.TopScenariosCount),
 	}
 
 	engine, err := krknaiengine.New(ctx, engineConfig)
@@ -359,10 +360,12 @@ func (k *KrknAI) AnalyzeLogs(ctx context.Context, testErr error) error {
 		return fmt.Errorf("failed to create krkn-ai analysis engine: %w", err)
 	}
 
-	_, err = engine.Run(ctx)
+	result, err := engine.Run(ctx)
 	if err != nil {
 		return fmt.Errorf("krkn-ai log analysis failed: %w", err)
 	}
+
+	k.analysisResult = result
 
 	log.Printf("Krkn-AI analysis completed. Results: %s/llm-analysis/", reportDir)
 
