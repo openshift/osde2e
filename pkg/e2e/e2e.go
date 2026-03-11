@@ -277,7 +277,7 @@ func (o *E2EOrchestrator) Report(ctx context.Context) error {
 	}
 
 	// Send failure notification (with or without LLM analysis)
-	if o.result.ExitCode != config.Success && viper.GetBool(config.Tests.EnableSlackNotify) {
+	if o.result.ExitCode != config.Success && viper.GetBool(config.Slack.Enable) {
 		o.sendFailureNotification(ctx)
 	}
 
@@ -295,8 +295,8 @@ func (o *E2EOrchestrator) Report(ctx context.Context) error {
 func (o *E2EOrchestrator) sendFailureNotification(ctx context.Context) {
 	reportDir := viper.GetString(config.ReportDir)
 	notificationConfig := slack.BuildNotificationConfig(
-		viper.GetString(config.LogAnalysis.SlackWebhook),
-		viper.GetString(config.LogAnalysis.SlackChannel),
+		viper.GetString(config.Slack.Webhook),
+		viper.GetString(config.Slack.Channel),
 		&slack.ClusterInfo{
 			ID:            viper.GetString(config.Cluster.ID),
 			Name:          viper.GetString(config.Cluster.Name),
@@ -351,8 +351,8 @@ func (o *E2EOrchestrator) sendDeferredNotifications(ctx context.Context) {
 		return
 	}
 
-	webhook := viper.GetString(config.LogAnalysis.SlackWebhook)
-	if webhook == "" || !viper.GetBool(config.Tests.EnableSlackNotify) {
+	webhook := viper.GetString(config.Slack.Webhook)
+	if webhook == "" || !viper.GetBool(config.Slack.Enable) {
 		return
 	}
 

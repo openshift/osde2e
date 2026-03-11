@@ -150,7 +150,7 @@ func init() {
 		return []string{"json", "prom"}, cobra.ShellCompDirectiveDefault
 	})
 
-	_ = viper.BindPFlag(config.Tests.EnableSlackNotify, Cmd.Flags().Lookup("send-cleanup-summary"))
+	_ = viper.BindPFlag(config.Slack.Enable, Cmd.Flags().Lookup("send-cleanup-summary"))
 }
 
 // collectActiveClusters collects active cluster names from multiple OCM environments
@@ -189,7 +189,7 @@ func sendSlackNotification(msg Message, runErr error) {
 	if !args.sendSummary {
 		return
 	}
-	webhook := viper.GetString(config.Tests.SlackWebhook)
+	webhook := viper.GetString(config.Slack.Webhook)
 	if webhook == "" {
 		fmt.Println("Slack Webhook is not set, skipping notification.")
 		return
