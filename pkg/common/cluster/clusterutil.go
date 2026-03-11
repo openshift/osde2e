@@ -8,8 +8,6 @@ import (
 	"log"
 	"math/rand"
 	"os"
-	"os/exec"
-	"path/filepath"
 	"strings"
 	"time"
 
@@ -25,6 +23,7 @@ import (
 	"github.com/openshift/osde2e/pkg/common/providers"
 	"github.com/openshift/osde2e/pkg/common/providers/ocmprovider"
 	"github.com/openshift/osde2e/pkg/common/providers/rosaprovider"
+	"github.com/openshift/osde2e/pkg/common/runner"
 	"github.com/openshift/osde2e/pkg/common/spi"
 	"github.com/openshift/osde2e/pkg/common/util"
 	"github.com/openshift/osde2e/pkg/common/versions"
@@ -632,12 +631,10 @@ func Provision(provider spi.Provider) (*spi.Cluster, error) {
 	}
 
 	if viper.GetString(config.SharedDir) != "" {
-		kubeconfigFile := filepath.Join(viper.GetString(config.SharedDir), "kubeconfig")
-		if err = os.WriteFile(kubeconfigFile, kubeconfigBytes, 0o644); err != nil {
+		if err = os.WriteFile(fmt.Sprintf("%s/kubeconfig", viper.GetString(config.SharedDir)), kubeconfigBytes, 0o644); err != nil {
 			log.Printf("Error writing cluster kubeconfig to shared directory: %v", err)
 		} else {
-			viper.Set(config.Kubeconfig.Path, kubeconfigFile)
-			log.Printf("Wrote kubeconfig to %s", kubeconfigFile)
+			log.Printf("Passed kubeconfig to prow steps.")
 		}
 	}
 
@@ -850,28 +847,25 @@ func LoadClusterContext() error {
 	return nil
 }
 
-func RunMustGather(ctx context.Context) error {
-	runCtx, cancel := context.WithTimeout(ctx, 30*time.Minute)
-	defer cancel()
-	dst := filepath.Join(viper.GetString(config.ReportDir), "must-gather")
-	if err := os.MkdirAll(filepath.Dir(dst), os.FileMode(0o755)); err != nil {
-		return fmt.Errorf("could not create directory %s: %w", filepath.Dir(dst), err)
-	}
+// RunMustGather executes must-gather and collects results.
+func RunMustGather(ctx context.Context, h *helper.H) error {
+	log.Print("Running must-gather...")
+	h.SetServiceAccount(ctx, "system:serviceaccount:%s:cluster-admin")
 
-	commandArgs := []string{
-		"adm", "must-gather",
-		"--dest-dir", dst,
-		"--kubeconfig", viper.GetString(config.Kubeconfig.Path),
-	}
-	log.Printf("Running must-gather for %v...", 30*time.Minute)
-	cmd := exec.CommandContext(runCtx, "oc", commandArgs...)
-	out, err := cmd.CombinedOutput()
-	if err != nil {
-		if len(out) > 0 {
-			log.Printf("must-gather output: %s", out)
-		}
+	r := h.Runner(fmt.Sprintf("oc adm must-gather --dest-dir=%v", runner.DefaultRunner.OutputDir))
+	r.Name = "must-gather"
+	r.Tarball = true
+
+	if err := r.Run(1800, make(chan struct{})); err != nil {
 		return fmt.Errorf("must-gather failed: %w", err)
 	}
+
+	results, err := r.RetrieveResults()
+	if err != nil {
+		return fmt.Errorf("failed to retrieve must-gather results: %w", err)
+	}
+
+	h.WriteResults(results)
 	return nil
 }
 
