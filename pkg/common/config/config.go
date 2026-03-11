@@ -961,6 +961,7 @@ func InitOSDe2eViper() {
 
 	viper.SetDefault(LogAnalysis.SlackWebhook, "")
 	_ = viper.BindEnv(LogAnalysis.SlackWebhook, "LOG_ANALYSIS_SLACK_WEBHOOK")
+	RegisterSecret(LogAnalysis.SlackWebhook, "notifier_slack_webhook")
 
 	viper.SetDefault(LogAnalysis.SlackChannel, defaultNotificationsChannel)
 	_ = viper.BindEnv(LogAnalysis.SlackChannel, "LOG_ANALYSIS_SLACK_CHANNEL")
