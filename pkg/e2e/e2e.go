@@ -522,7 +522,7 @@ func (o *E2EOrchestrator) PostProcessCluster(ctx context.Context) error {
 
 	// Run must-gather
 	if !viper.GetBool(config.SkipMustGather) {
-		if err := cluster.RunMustGather(ctx, h); err != nil {
+		if err := cluster.RunMustGather(ctx); err != nil {
 			errors = append(errors, err)
 			clusterStatus = "completed-error"
 		}

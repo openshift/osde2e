@@ -30,6 +30,7 @@ var args struct {
 	kubeConfig         string
 	skipDestroyCluster bool
 	logAnalysisEnable  bool
+	skipMustGather     bool
 }
 
 func init() {
@@ -85,12 +86,19 @@ func init() {
 		false,
 		"Enable AI powered log analysis on test failures",
 	)
+	pfs.BoolVar(
+		&args.skipMustGather,
+		"skip-must-gather",
+		true,
+		"Skip must-gather collection after chaos test run.",
+	)
 
 	_ = viper.BindPFlag(config.Cluster.ID, Cmd.PersistentFlags().Lookup("cluster-id"))
 	_ = viper.BindPFlag(ocmprovider.Env, Cmd.PersistentFlags().Lookup("environment"))
 	_ = viper.BindPFlag(config.Kubeconfig.Path, Cmd.PersistentFlags().Lookup("kube-config"))
 	_ = viper.BindPFlag(config.Cluster.SkipDestroyCluster, Cmd.PersistentFlags().Lookup("skip-destroy-cluster"))
 	_ = viper.BindPFlag(config.LogAnalysis.EnableAnalysis, Cmd.PersistentFlags().Lookup("log-analysis-enable"))
+	_ = viper.BindPFlag(config.SkipMustGather, Cmd.PersistentFlags().Lookup("skip-must-gather"))
 }
 
 func run(cmd *cobra.Command, argv []string) {
@@ -126,12 +134,13 @@ func runKrknAI(ctx context.Context) int {
 		}
 	}
 
-	if err := orch.Report(ctx); err != nil {
-		log.Printf("Report errors: %v", err)
-	}
-
+	// PostProcessCluster (must-gather) before Report so artifacts exist when report is generated
 	if err := orch.PostProcessCluster(ctx); err != nil {
 		log.Printf("Post-processing errors: %v", err)
+	}
+
+	if err := orch.Report(ctx); err != nil {
+		log.Printf("Report errors: %v", err)
 	}
 
 	if err := orch.Cleanup(ctx); err != nil {
