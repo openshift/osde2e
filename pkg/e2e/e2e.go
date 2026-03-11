@@ -276,13 +276,12 @@ func (o *E2EOrchestrator) Report(ctx context.Context) error {
 		}
 	}
 
-	// Send failure notification (with or without LLM analysis)
-	if o.result.ExitCode != config.Success && viper.GetBool(config.Tests.EnableSlackNotify) {
+	// Send deferred per-suite notifications first; fall back to global notification
+	// when no per-suite notifications were sent
+	deferredSent := o.sendDeferredNotifications(ctx)
+	if !deferredSent && o.result.ExitCode != config.Success && viper.GetBool(config.Tests.EnableSlackNotify) {
 		o.sendFailureNotification(ctx)
 	}
-
-	// Send deferred ad-hoc test suite notifications (with S3 URLs)
-	o.sendDeferredNotifications(ctx)
 
 	runner.ReportClusterInstallLogs(o.provider)
 	return nil
@@ -294,9 +293,13 @@ func (o *E2EOrchestrator) Report(ctx context.Context) error {
 // presigned URLs are available.
 func (o *E2EOrchestrator) sendFailureNotification(ctx context.Context) {
 	reportDir := viper.GetString(config.ReportDir)
+	channel := viper.GetString(config.Tests.SlackChannel)
+	if ch := viper.GetString(config.LogAnalysis.SlackChannel); ch != "" && ch != config.DefaultNotificationsChannel {
+		channel = ch
+	}
 	notificationConfig := slack.BuildNotificationConfig(
 		viper.GetString(config.LogAnalysis.SlackWebhook),
-		viper.GetString(config.LogAnalysis.SlackChannel),
+		channel,
 		&slack.ClusterInfo{
 			ID:            viper.GetString(config.Cluster.ID),
 			Name:          viper.GetString(config.Cluster.Name),
@@ -345,17 +348,19 @@ func (o *E2EOrchestrator) sendFailureNotification(ctx context.Context) {
 // sendDeferredNotifications delivers Slack notifications that were queued by
 // adhoctestimages during test execution. Called by Report after S3 upload so
 // that presigned URLs are available for inclusion in the message.
-func (o *E2EOrchestrator) sendDeferredNotifications(ctx context.Context) {
+// Returns true if at least one notification was sent.
+func (o *E2EOrchestrator) sendDeferredNotifications(ctx context.Context) bool {
 	pending := adhoctestimages.DrainPendingNotifications()
 	if len(pending) == 0 {
-		return
+		return false
 	}
 
 	webhook := viper.GetString(config.LogAnalysis.SlackWebhook)
 	if webhook == "" || !viper.GetBool(config.Tests.EnableSlackNotify) {
-		return
+		return false
 	}
 
+	sent := false
 	artifactLinks := s3ResultsToArtifactLinks(o.s3Results)
 	slackReporter := slack.NewSlackReporter()
 
@@ -385,8 +390,11 @@ func (o *E2EOrchestrator) sendDeferredNotifications(ctx context.Context) {
 
 		if err := slackReporter.Report(ctx, result, &cfg); err != nil {
 			log.Printf("Failed to send deferred notification for %s: %v", p.TestSuite.Image, err)
+		} else {
+			sent = true
 		}
 	}
+	return sent
 }
 
 // uploadToS3 uploads the report directory contents to S3 and caches results.

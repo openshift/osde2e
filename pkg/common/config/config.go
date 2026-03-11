@@ -14,7 +14,7 @@ import (
 )
 
 // channel id for #hcm-cicd-notifications
-const defaultNotificationsChannel = "C06HQR8HN0L"
+const DefaultNotificationsChannel = "C06HQR8HN0L"
 
 type Secret struct {
 	FileLocation string
@@ -949,7 +949,7 @@ func InitOSDe2eViper() {
 	_ = viper.BindEnv(LogAnalysis.SlackWebhook, "LOG_ANALYSIS_SLACK_WEBHOOK")
 	RegisterSecret(LogAnalysis.SlackWebhook, "notifier_slack_webhook")
 
-	viper.SetDefault(LogAnalysis.SlackChannel, defaultNotificationsChannel)
+	viper.SetDefault(LogAnalysis.SlackChannel, DefaultNotificationsChannel)
 	_ = viper.BindEnv(LogAnalysis.SlackChannel, "LOG_ANALYSIS_SLACK_CHANNEL")
 
 	// ----- KrknAI Configuration -----
