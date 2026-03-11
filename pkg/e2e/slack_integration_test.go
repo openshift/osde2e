@@ -26,8 +26,8 @@ import (
 //    - Scroll to bottom and copy the channel ID (starts with C, e.g., C06HQR8HN0L)
 //
 // 3. Set environment variables:
-//    export LOG_ANALYSIS_SLACK_WEBHOOK="https://hooks.slack.com/workflows/..."
-//    export LOG_ANALYSIS_SLACK_CHANNEL="C06HQR8HN0L"
+//    export SLACK_WEBHOOK="https://hooks.slack.com/workflows/..."
+//    export SLACK_CHANNEL="C06HQR8HN0L"
 //
 // RUNNING THE TESTS:
 //
@@ -75,20 +75,20 @@ import (
 //
 // Required environment variables:
 //
-//	LOG_ANALYSIS_SLACK_WEBHOOK - Workflow webhook URL
-//	LOG_ANALYSIS_SLACK_CHANNEL - Channel ID (e.g., C06HQR8HN0L)
+//	SLACK_WEBHOOK - Workflow webhook URL
+//	SLACK_CHANNEL - Channel ID (e.g., C06HQR8HN0L)
 //
 // To run:
 //
-//	export LOG_ANALYSIS_SLACK_WEBHOOK="https://hooks.slack.com/workflows/..."
-//	export LOG_ANALYSIS_SLACK_CHANNEL="C06HQR8HN0L"
+//	export SLACK_WEBHOOK="https://hooks.slack.com/workflows/..."
+//	export SLACK_CHANNEL="C06HQR8HN0L"
 //	go test -v -run TestSlackReporter_Integration github.com/openshift/osde2e/pkg/e2e
 func TestSlackReporter_Integration(t *testing.T) {
-	webhookURL := os.Getenv("LOG_ANALYSIS_SLACK_WEBHOOK")
-	channelID := os.Getenv("LOG_ANALYSIS_SLACK_CHANNEL")
+	webhookURL := os.Getenv("SLACK_WEBHOOK")
+	channelID := os.Getenv("SLACK_CHANNEL")
 
 	if webhookURL == "" || channelID == "" {
-		t.Skip("Skipping integration test: LOG_ANALYSIS_SLACK_WEBHOOK or LOG_ANALYSIS_SLACK_CHANNEL not set")
+		t.Skip("Skipping integration test: SLACK_WEBHOOK or SLACK_CHANNEL not set")
 	}
 
 	// Create test cluster info
@@ -159,11 +159,11 @@ func TestSlackReporter_Integration(t *testing.T) {
 
 // TestSlackReporter_Integration_MinimalPayload tests with minimal required fields.
 func TestSlackReporter_Integration_MinimalPayload(t *testing.T) {
-	webhookURL := os.Getenv("LOG_ANALYSIS_SLACK_WEBHOOK")
-	channelID := os.Getenv("LOG_ANALYSIS_SLACK_CHANNEL")
+	webhookURL := os.Getenv("SLACK_WEBHOOK")
+	channelID := os.Getenv("SLACK_CHANNEL")
 
 	if webhookURL == "" || channelID == "" {
-		t.Skip("Skipping integration test: LOG_ANALYSIS_SLACK_WEBHOOK or LOG_ANALYSIS_SLACK_CHANNEL not set")
+		t.Skip("Skipping integration test: SLACK_WEBHOOK or SLACK_CHANNEL not set")
 	}
 
 	// Minimal cluster info
@@ -202,11 +202,11 @@ func TestSlackReporter_Integration_MinimalPayload(t *testing.T) {
 
 // TestSlackReporter_Integration_WithError tests error handling and display.
 func TestSlackReporter_Integration_WithError(t *testing.T) {
-	webhookURL := os.Getenv("LOG_ANALYSIS_SLACK_WEBHOOK")
-	channelID := os.Getenv("LOG_ANALYSIS_SLACK_CHANNEL")
+	webhookURL := os.Getenv("SLACK_WEBHOOK")
+	channelID := os.Getenv("SLACK_CHANNEL")
 
 	if webhookURL == "" || channelID == "" {
-		t.Skip("Skipping integration test: LOG_ANALYSIS_SLACK_WEBHOOK or LOG_ANALYSIS_SLACK_CHANNEL not set")
+		t.Skip("Skipping integration test: SLACK_WEBHOOK or SLACK_CHANNEL not set")
 	}
 
 	clusterInfo := &slack.ClusterInfo{

@@ -49,7 +49,7 @@ func TestAnalyzeLogs_MissingAPIKey(t *testing.T) {
 	viper.Set(config.ReportDir, reportDir)
 	viper.Set(config.Cluster.ID, "test-cluster-123")
 	viper.Set(config.LogAnalysis.APIKey, "") // No API key
-	viper.Set(config.Tests.EnableSlackNotify, false)
+	viper.Set(config.Slack.Enable, false)
 
 	k := &KrknAI{
 		result: &orchestrator.Result{},
@@ -201,7 +201,7 @@ func TestAnalyzeLogs_WithRealLLM(t *testing.T) {
 	viper.Set(config.CloudProvider.CloudProviderID, "aws")
 	viper.Set(config.Cluster.Version, "4.17.3")
 	viper.Set(config.LogAnalysis.APIKey, apiKey)
-	viper.Set(config.Tests.EnableSlackNotify, false)
+	viper.Set(config.Slack.Enable, false)
 
 	// Test the full AnalyzeLogs workflow
 	k := &KrknAI{
@@ -248,9 +248,9 @@ func captureViperConfig() viperConfig {
 		cloudProvider:     viper.GetString(config.CloudProvider.CloudProviderID),
 		version:           viper.GetString(config.Cluster.Version),
 		apiKey:            viper.GetString(config.LogAnalysis.APIKey),
-		enableSlackNotify: viper.GetBool(config.Tests.EnableSlackNotify),
-		slackWebhook:      viper.GetString(config.LogAnalysis.SlackWebhook),
-		slackChannel:      viper.GetString(config.LogAnalysis.SlackChannel),
+		enableSlackNotify: viper.GetBool(config.Slack.Enable),
+		slackWebhook:      viper.GetString(config.Slack.Webhook),
+		slackChannel:      viper.GetString(config.Slack.Channel),
 	}
 }
 
@@ -263,7 +263,7 @@ func restoreViperConfig(cfg viperConfig) {
 	viper.Set(config.CloudProvider.CloudProviderID, cfg.cloudProvider)
 	viper.Set(config.Cluster.Version, cfg.version)
 	viper.Set(config.LogAnalysis.APIKey, cfg.apiKey)
-	viper.Set(config.Tests.EnableSlackNotify, cfg.enableSlackNotify)
-	viper.Set(config.LogAnalysis.SlackWebhook, cfg.slackWebhook)
-	viper.Set(config.LogAnalysis.SlackChannel, cfg.slackChannel)
+	viper.Set(config.Slack.Enable, cfg.enableSlackNotify)
+	viper.Set(config.Slack.Webhook, cfg.slackWebhook)
+	viper.Set(config.Slack.Channel, cfg.slackChannel)
 }

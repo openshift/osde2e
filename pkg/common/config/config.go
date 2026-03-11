@@ -255,19 +255,6 @@ var Tests = struct {
 	// Env: TEST_USER
 	TestUser string
 
-	// SlackChannel is the name of a slack channel in the Internal Red hat slack workspace that will
-	// receive an alert if the tests fail.
-	// Env: SLACK_CHANNEL
-	SlackChannel string
-
-	// Slack Webhook is the URL to osde2e owner channel for Cloud Account Cleanup Report workflow to send notifications.
-	// Env: SLACK_WEBHOOK
-	SlackWebhook string
-
-	// SlackNotify is a boolean that determines if Slack notifications should be sent.
-	// Env: SLACK_NOTIFY
-	EnableSlackNotify string
-
 	// GinkgoSkip is a regex passed to Ginkgo that skips any test suites matching the regex. ex. "Operator"
 	// Env: GINKGO_SKIP
 	GinkgoSkip string
@@ -322,15 +309,13 @@ var Tests = struct {
 	// Env: ONLY_HEALTH_CHECK_NODES
 	OnlyHealthCheckNodes string
 }{
-	AdHocTestImages:            "tests.adHocTestImages",
-	TestSuites:                 "tests.testSuites",
-	SuiteTimeout:               "tests.suiteTimeout",
-	AdHocTestContainerTimeout:  "tests.adHocTestContainerTimeout",
-	PollingTimeout:             "tests.pollingTimeout",
-	ServiceAccount:             "tests.serviceAccount",
-	SlackChannel:               "tests.slackChannel",
-	SlackWebhook:               "tests.slackWebhook",
-	EnableSlackNotify:          "tests.enableSlackNotify",
+	AdHocTestImages:           "tests.adHocTestImages",
+	TestSuites:                "tests.testSuites",
+	SuiteTimeout:              "tests.suiteTimeout",
+	AdHocTestContainerTimeout: "tests.adHocTestContainerTimeout",
+	PollingTimeout:            "tests.pollingTimeout",
+	ServiceAccount:            "tests.serviceAccount",
+
 	GinkgoSkip:                 "tests.ginkgoSkip",
 	GinkgoFocus:                "tests.focus",
 	GinkgoLogLevel:             "tests.ginkgoLogLevel",
@@ -602,20 +587,28 @@ var LogAnalysis = struct {
 	// Model specifies which LLM model to use
 	// Env: LLM_MODEL
 	Model string
-
-	// SlackWebhook is the Slack webhook URL for log analysis notifications
-	// Env: LOG_ANALYSIS_SLACK_WEBHOOK
-	SlackWebhook string
-
-	// SlackChannel is the default Slack channel for OSDE2E notifications
-	// Env: LOG_ANALYSIS_SLACK_CHANNEL
-	SlackChannel string
 }{
 	EnableAnalysis: "logAnalysis.enableAnalysis",
 	APIKey:         "logAnalysis.apiKey",
 	Model:          "logAnalysis.model",
-	SlackWebhook:   "logAnalysis.slackWebhook",
-	SlackChannel:   "logAnalysis.slackChannel",
+}
+
+var Slack = struct {
+	// SlackNotify is a boolean that determines if Slack notifications should be sent.
+	// Env: SLACK_NOTIFY
+	Enable string
+
+	// Webhook is the Slack webhook URL for log analysis notifications
+	// Env: SLACK_WEBHOOK
+	Webhook string
+
+	// Channel is the default Slack channel for OSDE2E notifications
+	// Env: SLACK_CHANNEL
+	Channel string
+}{
+	Enable:  "slack.enable",
+	Webhook: "slack.webhook",
+	Channel: "slack.channel",
 }
 
 // KrknAI config keys for Kraken AI chaos testing.
@@ -802,14 +795,14 @@ func InitOSDe2eViper() {
 
 	_ = viper.BindEnv(Tests.OnlyHealthCheckNodes, "ONLY_HEALTH_CHECK_NODES")
 
-	viper.SetDefault(Tests.SlackChannel, "hcm-cicd-alerts")
-	_ = viper.BindEnv(Tests.SlackChannel, "SLACK_CHANNEL")
+	viper.SetDefault(Slack.Channel, "hcm-cicd-alerts")
+	_ = viper.BindEnv(Slack.Channel, "SLACK_CHANNEL")
 
-	_ = viper.BindEnv(Tests.SlackWebhook, "SLACK_WEBHOOK")
-	RegisterSecret(Tests.SlackWebhook, "cleanup-job-notification-webhook")
+	_ = viper.BindEnv(Slack.Webhook, "SLACK_WEBHOOK")
+	RegisterSecret(Slack.Webhook, "notifier_slack_webhook")
 
-	viper.SetDefault(Tests.EnableSlackNotify, false)
-	_ = viper.BindEnv(Tests.EnableSlackNotify, "SLACK_NOTIFY")
+	viper.SetDefault(Slack.Enable, false)
+	_ = viper.BindEnv(Slack.Enable, "SLACK_NOTIFY")
 
 	// ----- Cluster -----
 	viper.SetDefault(Cluster.MultiAZ, false)
@@ -958,13 +951,6 @@ func InitOSDe2eViper() {
 
 	viper.SetDefault(LogAnalysis.Model, "gemini-2.5-pro")
 	_ = viper.BindEnv(LogAnalysis.Model, "LLM_MODEL")
-
-	viper.SetDefault(LogAnalysis.SlackWebhook, "")
-	_ = viper.BindEnv(LogAnalysis.SlackWebhook, "LOG_ANALYSIS_SLACK_WEBHOOK")
-	RegisterSecret(LogAnalysis.SlackWebhook, "notifier_slack_webhook")
-
-	viper.SetDefault(LogAnalysis.SlackChannel, defaultNotificationsChannel)
-	_ = viper.BindEnv(LogAnalysis.SlackChannel, "LOG_ANALYSIS_SLACK_CHANNEL")
 
 	// ----- KrknAI Configuration -----
 	viper.SetDefault(KrknAI.Namespace, "default")
