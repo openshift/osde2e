@@ -714,9 +714,6 @@ func InitOSDe2eViper() {
 	viper.SetDefault(DryRun, false)
 	_ = viper.BindEnv(DryRun, "DRY_RUN")
 
-	viper.SetDefault(SkipMustGather, false)
-	_ = viper.BindEnv(SkipMustGather, "SKIP_MUST_GATHER")
-
 	_ = viper.BindEnv(CanaryChance, "CANARY_CHANCE")
 
 	// ----- Upgrade -----
@@ -790,17 +787,12 @@ func InitOSDe2eViper() {
 	viper.SetDefault(Tests.OperatorSkip, "insights")
 	_ = viper.BindEnv(Tests.OperatorSkip, "OPERATOR_SKIP")
 
-	viper.SetDefault(Tests.SkipClusterHealthChecks, false)
-	_ = viper.BindEnv(Tests.SkipClusterHealthChecks, "SKIP_CLUSTER_HEALTH_CHECKS")
-
 	viper.SetDefault(Tests.ClusterHealthChecksTimeout, "2h")
 	_ = viper.BindEnv(Tests.ClusterHealthChecksTimeout, "CLUSTER_HEALTH_CHECKS_TIMEOUT")
 
 	_ = viper.BindEnv(Tests.LogBucket, "LOG_BUCKET")
 
 	_ = viper.BindEnv(Tests.ServiceAccount, "SERVICE_ACCOUNT")
-
-	_ = viper.BindEnv(Tests.OnlyHealthCheckNodes, "ONLY_HEALTH_CHECK_NODES")
 
 	viper.SetDefault(Tests.SlackChannel, "hcm-cicd-alerts")
 	_ = viper.BindEnv(Tests.SlackChannel, "SLACK_CHANNEL")
@@ -817,9 +809,6 @@ func InitOSDe2eViper() {
 
 	viper.SetDefault(Cluster.Channel, "stable")
 	_ = viper.BindEnv(Cluster.Channel, "CHANNEL")
-
-	viper.SetDefault(Cluster.SkipDestroyCluster, true)
-	_ = viper.BindEnv(Cluster.SkipDestroyCluster, "SKIP_DESTROY_CLUSTER")
 
 	_ = viper.BindEnv(Cluster.Reserve, "RESERVE")
 
@@ -950,9 +939,6 @@ func InitOSDe2eViper() {
 	RegisterSecret(Cad.CADPagerDutyRoutingKey, "pagerduty-routing-key")
 
 	// ----- LLM Configuration -----
-	viper.SetDefault(LogAnalysis.EnableAnalysis, false)
-	_ = viper.BindEnv(LogAnalysis.EnableAnalysis, "LOG_ANALYSIS_ENABLE")
-
 	_ = viper.BindEnv(LogAnalysis.APIKey, "GEMINI_API_KEY")
 	RegisterSecret(LogAnalysis.APIKey, "gemini-api-key")
 
