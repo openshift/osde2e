@@ -276,13 +276,14 @@ func (o *E2EOrchestrator) Report(ctx context.Context) error {
 		}
 	}
 
-	// Send failure notification (with or without LLM analysis)
-	if o.result.ExitCode != config.Success && viper.GetBool(config.Tests.EnableSlackNotify) {
+	// Drain per-suite pending notifications. If any were queued (suites ran),
+	// send them; otherwise fall back to global failure notification.
+	pending := adhoctestimages.DrainPendingNotifications()
+	if len(pending) > 0 {
+		o.sendDeferredNotifications(ctx, pending)
+	} else if o.result.ExitCode != config.Success && viper.GetBool(config.Tests.EnableSlackNotify) {
 		o.sendFailureNotification(ctx)
 	}
-
-	// Send deferred ad-hoc test suite notifications (with S3 URLs)
-	o.sendDeferredNotifications(ctx)
 
 	runner.ReportClusterInstallLogs(o.provider)
 	return nil
@@ -296,7 +297,7 @@ func (o *E2EOrchestrator) sendFailureNotification(ctx context.Context) {
 	reportDir := viper.GetString(config.ReportDir)
 	notificationConfig := slack.BuildNotificationConfig(
 		viper.GetString(config.LogAnalysis.SlackWebhook),
-		viper.GetString(config.LogAnalysis.SlackChannel),
+		viper.GetString(config.Tests.SlackChannel),
 		&slack.ClusterInfo{
 			ID:            viper.GetString(config.Cluster.ID),
 			Name:          viper.GetString(config.Cluster.Name),
@@ -342,15 +343,10 @@ func (o *E2EOrchestrator) sendFailureNotification(ctx context.Context) {
 	}
 }
 
-// sendDeferredNotifications delivers Slack notifications that were queued by
-// adhoctestimages during test execution. Called by Report after S3 upload so
-// that presigned URLs are available for inclusion in the message.
-func (o *E2EOrchestrator) sendDeferredNotifications(ctx context.Context) {
-	pending := adhoctestimages.DrainPendingNotifications()
-	if len(pending) == 0 {
-		return
-	}
-
+// sendDeferredNotifications delivers the given Slack notifications that were
+// queued by adhoctestimages during test execution. Called by Report after S3
+// upload so that presigned URLs are available for inclusion in the message.
+func (o *E2EOrchestrator) sendDeferredNotifications(ctx context.Context, pending []adhoctestimages.PendingNotification) {
 	webhook := viper.GetString(config.LogAnalysis.SlackWebhook)
 	if webhook == "" || !viper.GetBool(config.Tests.EnableSlackNotify) {
 		return
