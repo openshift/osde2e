@@ -129,19 +129,43 @@ var _ = ginkgo.Describe("Ad Hoc Test Images", ginkgo.Ordered, ginkgo.ContinueOnF
 				}
 			}
 
-			if len(allFailures) > 0 && viper.GetBool(config.LogAnalysis.EnableAnalysis) {
+			if len(allFailures) > 0 {
 				combinedErr := fmt.Errorf("failures in %s: %s", testImage, strings.Join(allFailures, "; "))
-				runLogAnalysisForAdHocTestImage(ctx, logger, testSuite, combinedErr, exeConfig.OutputDir)
+				var analysisContent string
+				if viper.GetBool(config.LogAnalysis.EnableAnalysis) {
+					analysisContent = runLogAnalysisForAdHocTestImage(ctx, logger, testSuite, combinedErr, exeConfig.OutputDir)
+				}
+				queueNotification(testSuite, analysisContent)
 			}
 		},
 		testImageEntries)
 })
 
-// runLogAnalysisForAdHocTestImage runs AI analysis and queues the result for
-// deferred Slack delivery. The engine runs without sending notifications because
-// S3 artifacts have not been uploaded yet at this point. The queued result is
-// later sent by Report after S3 upload populates presigned URLs.
-func runLogAnalysisForAdHocTestImage(ctx context.Context, logger logr.Logger, testSuite config.TestSuite, err error, artifactsDir string) {
+// queueNotification adds a PendingNotification for deferred Slack delivery.
+// Called directly when log analysis is disabled so notifications are still sent.
+func queueNotification(testSuite config.TestSuite, analysisContent string) {
+	clusterInfo := &analysisengine.ClusterInfo{
+		ID:            viper.GetString(config.Cluster.ID),
+		Name:          viper.GetString(config.Cluster.Name),
+		Provider:      viper.GetString(config.Provider),
+		Region:        viper.GetString(config.CloudProvider.Region),
+		CloudProvider: viper.GetString(config.CloudProvider.CloudProviderID),
+		Version:       viper.GetString(config.Cluster.Version),
+	}
+	pendingMu.Lock()
+	pendingNotifications = append(pendingNotifications, PendingNotification{
+		AnalysisContent: analysisContent,
+		TestSuite:       testSuite,
+		ClusterInfo:     clusterInfo,
+		Env:             viper.GetString(ocmprovider.Env),
+	})
+	pendingMu.Unlock()
+}
+
+// runLogAnalysisForAdHocTestImage runs AI analysis and returns the result content.
+// Returns an empty string if analysis fails. The caller is responsible for
+// queuing the notification via queueNotification.
+func runLogAnalysisForAdHocTestImage(ctx context.Context, logger logr.Logger, testSuite config.TestSuite, err error, artifactsDir string) string {
 	logger.Info("Running Log analysis for test image", "image", testSuite.Image, "slackChannel", testSuite.SlackChannel)
 
 	clusterInfo := &analysisengine.ClusterInfo{
@@ -166,24 +190,17 @@ func runLogAnalysisForAdHocTestImage(ctx context.Context, logger logr.Logger, te
 	engine, err := analysisengine.New(ctx, engineConfig)
 	if err != nil {
 		logger.Error(err, "Unable to create analysis engine for image", "image", testSuite.Image)
-		return
+		return ""
 	}
 
 	result, runErr := engine.Run(ctx)
 	if runErr != nil {
 		logger.Error(runErr, "Log analysis failed for image", "image", testSuite.Image)
-		return
+		return ""
 	}
 
 	logger.Info("Log analysis completed successfully", "image", testSuite.Image, "resultsDir", fmt.Sprintf("%s/%s/", artifactsDir, analysisengine.AnalysisDirName))
 	log.Printf("=== Log Analysis Result for %s ===\n%s", testSuite.Image, result.Content)
 
-	pendingMu.Lock()
-	pendingNotifications = append(pendingNotifications, PendingNotification{
-		AnalysisContent: result.Content,
-		TestSuite:       testSuite,
-		ClusterInfo:     clusterInfo,
-		Env:             viper.GetString(ocmprovider.Env),
-	})
-	pendingMu.Unlock()
+	return result.Content
 }
