@@ -125,12 +125,9 @@ func runKrknAI(ctx context.Context) int {
 	}
 
 	testErr := orch.Execute(ctx)
-	if testErr != nil {
-		log.Printf("Tests failed: %v", testErr)
-		if viper.GetBool(config.LogAnalysis.EnableAnalysis) {
-			if err := orch.AnalyzeLogs(ctx, testErr); err != nil {
-				log.Printf("Log analysis failed: %v", err)
-			}
+	if viper.GetBool(config.LogAnalysis.EnableAnalysis) {
+		if err := orch.AnalyzeLogs(ctx, testErr); err != nil {
+			log.Printf("Log analysis failed: %v", err)
 		}
 	}
 
