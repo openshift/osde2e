@@ -592,7 +592,6 @@ var Cad = struct {
 
 var LogAnalysis = struct {
 	// EnableAnalysis enables log analysis powered failure analysis
-	// Env: LOG_ANALYSIS_ENABLE
 	EnableAnalysis string
 
 	// APIKey is the API key for the LLM service (e.g., Gemini)

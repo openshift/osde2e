@@ -164,6 +164,42 @@ func run(cmd *cobra.Command, argv []string) {
 		os.Exit(1)
 	}
 
+	// SDCICD-1740 Override config file values with CLI flags if they were explicitly set,
+	// otherwise boolean flags get overridden
+	if cmd.PersistentFlags().Changed("cluster-id") {
+		viper.Set(config.Cluster.ID, args.clusterID)
+	}
+	if cmd.PersistentFlags().Changed("environment") {
+		viper.Set(ocmprovider.Env, args.environment)
+	}
+	if cmd.PersistentFlags().Changed("kube-config") {
+		viper.Set(config.Kubeconfig.Path, args.kubeConfig)
+	}
+	if cmd.PersistentFlags().Changed("skip-destroy-cluster") {
+		viper.Set(config.Cluster.SkipDestroyCluster, args.skipDestroyCluster)
+	}
+	if cmd.PersistentFlags().Changed("skip-health-check") {
+		viper.Set(config.Tests.SkipClusterHealthChecks, args.skipHealthChecks)
+	}
+	if cmd.PersistentFlags().Changed("only-health-check-nodes") {
+		viper.Set(config.Tests.OnlyHealthCheckNodes, args.onlyHealthCheckNodes)
+	}
+	if cmd.PersistentFlags().Changed("focus-tests") {
+		viper.Set(config.Tests.GinkgoFocus, args.focusTests)
+	}
+	if cmd.PersistentFlags().Changed("skip-tests") {
+		viper.Set(config.Tests.GinkgoSkip, args.skipTests)
+	}
+	if cmd.PersistentFlags().Changed("skip-must-gather") {
+		viper.Set(config.SkipMustGather, args.skipMustGather)
+	}
+	if cmd.PersistentFlags().Changed("label-filter") {
+		viper.Set(config.Tests.GinkgoLabelFilter, args.labelFilter)
+	}
+	if cmd.PersistentFlags().Changed("log-analysis-enable") {
+		viper.Set(config.LogAnalysis.EnableAnalysis, args.logAnalysisEnable)
+	}
+
 	canaryChance := viper.GetInt(config.CanaryChance)
 	if canaryChance > 0 {
 		log.Printf("Canary job detected with %d chance", canaryChance)
