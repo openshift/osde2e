@@ -766,7 +766,11 @@ func DeleteCluster(provider spi.Provider) error {
 			return fmt.Errorf("failed to delete cluster: %w", err)
 		}
 	} else {
-		log.Printf("Cluster %s preserved in environment %s", clusterID, provider.Environment())
+		if provider != nil {
+			log.Printf("Cluster %s preserved in environment %s", clusterID, provider.Environment())
+		} else {
+			log.Printf("Cluster %s preserved (skip destroy enabled)", clusterID)
+		}
 	}
 
 	return nil

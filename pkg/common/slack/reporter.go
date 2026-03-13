@@ -168,17 +168,14 @@ func (s *SlackReporter) buildClusterInfoSection(config *ReporterConfig) string {
 	var builder strings.Builder
 	builder.WriteString("====== ☸️ Cluster Information ======\n")
 	builder.WriteString(fmt.Sprintf("• Cluster ID: `%s`\n", clusterInfo.ID))
-	if clusterInfo.Name != "" {
-		builder.WriteString(fmt.Sprintf("• Name: `%s`\n", clusterInfo.Name))
+	if clusterInfo.Expiration != "" {
+		builder.WriteString(fmt.Sprintf("• Expiration: `%s`\n", clusterInfo.Expiration))
 	}
 	if clusterInfo.Version != "" {
 		builder.WriteString(fmt.Sprintf("• Version: `%s`\n", clusterInfo.Version))
 	}
 	if clusterInfo.Provider != "" {
 		builder.WriteString(fmt.Sprintf("• Provider: `%s`\n", clusterInfo.Provider))
-	}
-	if clusterInfo.Expiration != "" {
-		builder.WriteString(fmt.Sprintf("• Expiration: `%s`\n", clusterInfo.Expiration))
 	}
 	builder.WriteString("\n")
 
@@ -198,8 +195,7 @@ func (s *SlackReporter) buildTestSuiteSection(config *ReporterConfig) string {
 
 	var builder strings.Builder
 	builder.WriteString("====== 🧪 Test Suite Information ======\n")
-	builder.WriteString(fmt.Sprintf("• Image: `%s`\n", imageInfo[0]))
-	builder.WriteString(fmt.Sprintf("• Commit: `%s`\n", imageInfo[1]))
+	builder.WriteString(fmt.Sprintf("• Image: `%s`\n", image))
 	if env, ok := config.Settings["env"].(string); ok && env != "" {
 		builder.WriteString(fmt.Sprintf("• Environment: `%s`\n", env))
 	}

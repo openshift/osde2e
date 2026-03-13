@@ -24,6 +24,7 @@ import (
 	"github.com/openshift/osde2e/pkg/common/orchestrator"
 	"github.com/openshift/osde2e/pkg/common/phase"
 	"github.com/openshift/osde2e/pkg/common/providers"
+	"github.com/openshift/osde2e/pkg/common/providers/ocmprovider"
 	"github.com/openshift/osde2e/pkg/common/runner"
 	"github.com/openshift/osde2e/pkg/common/slack"
 	"github.com/openshift/osde2e/pkg/common/spi"
@@ -354,6 +355,10 @@ func (o *E2EOrchestrator) sendDeferredNotifications(ctx context.Context, pending
 
 	artifactLinks := s3ResultsToArtifactLinks(o.s3Results)
 	slackReporter := slack.NewSlackReporter()
+	cl, err := o.provider.GetCluster(viper.GetString(config.Cluster.ID))
+	if err != nil {
+		log.Printf("failed to get cluster %s: %v", viper.GetString(config.Cluster.ID), err)
+	}
 
 	for _, p := range pending {
 		if p.TestSuite.SlackChannel == "" {
@@ -363,14 +368,13 @@ func (o *E2EOrchestrator) sendDeferredNotifications(ctx context.Context, pending
 		cfg := slack.SlackReporterConfig(webhook, true)
 		cfg.Settings["channel"] = p.TestSuite.SlackChannel
 		cfg.Settings["image"] = p.TestSuite.Image
-		cfg.Settings["env"] = p.Env
+		cfg.Settings["env"] = viper.GetString(ocmprovider.Env)
 		cfg.Settings["cluster_info"] = &slack.ClusterInfo{
-			ID:            p.ClusterInfo.ID,
-			Name:          p.ClusterInfo.Name,
-			Provider:      p.ClusterInfo.Provider,
-			Region:        p.ClusterInfo.Region,
-			CloudProvider: p.ClusterInfo.CloudProvider,
-			Version:       p.ClusterInfo.Version,
+			ID:         viper.GetString(config.Cluster.ID),
+			Provider:   viper.GetString(config.CloudProvider.CloudProviderID),
+			Region:     viper.GetString(config.CloudProvider.Region),
+			Version:    viper.GetString(config.Cluster.Version),
+			Expiration: cl.ExpirationTimestamp().String(),
 		}
 		cfg.Settings["artifact_links"] = artifactLinks
 
