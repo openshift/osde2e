@@ -89,7 +89,7 @@ func init() {
 	pfs.BoolVar(
 		&args.skipMustGather,
 		"skip-must-gather",
-		true,
+		false,
 		"Skip must-gather collection after chaos test run.",
 	)
 
