@@ -300,12 +300,9 @@ func (o *E2EOrchestrator) sendFailureNotification(ctx context.Context) {
 		viper.GetString(config.LogAnalysis.SlackWebhook),
 		viper.GetString(config.Tests.SlackChannel),
 		&slack.ClusterInfo{
-			ID:            viper.GetString(config.Cluster.ID),
-			Name:          viper.GetString(config.Cluster.Name),
-			Provider:      viper.GetString(config.Provider),
-			Region:        viper.GetString(config.CloudProvider.Region),
-			CloudProvider: viper.GetString(config.CloudProvider.CloudProviderID),
-			Version:       viper.GetString(config.Cluster.Version),
+			ID:       viper.GetString(config.Cluster.ID),
+			Provider: viper.GetString(config.Provider),
+			Version:  viper.GetString(config.Cluster.Version),
 		},
 		reportDir,
 	)
@@ -355,9 +352,13 @@ func (o *E2EOrchestrator) sendDeferredNotifications(ctx context.Context, pending
 
 	artifactLinks := s3ResultsToArtifactLinks(o.s3Results)
 	slackReporter := slack.NewSlackReporter()
-	cl, err := o.provider.GetCluster(viper.GetString(config.Cluster.ID))
-	if err != nil {
-		log.Printf("failed to get cluster %s: %v", viper.GetString(config.Cluster.ID), err)
+	var expiration string
+	if o.provider != nil {
+		if cl, err := o.provider.GetCluster(viper.GetString(config.Cluster.ID)); err != nil {
+			log.Printf("failed to get cluster %s: %v", viper.GetString(config.Cluster.ID), err)
+		} else if cl != nil {
+			expiration = cl.ExpirationTimestamp().String()
+		}
 	}
 
 	for _, p := range pending {
@@ -371,10 +372,9 @@ func (o *E2EOrchestrator) sendDeferredNotifications(ctx context.Context, pending
 		cfg.Settings["env"] = viper.GetString(ocmprovider.Env)
 		cfg.Settings["cluster_info"] = &slack.ClusterInfo{
 			ID:         viper.GetString(config.Cluster.ID),
-			Provider:   viper.GetString(config.CloudProvider.CloudProviderID),
-			Region:     viper.GetString(config.CloudProvider.Region),
+			Provider:   viper.GetString(config.Provider),
 			Version:    viper.GetString(config.Cluster.Version),
-			Expiration: cl.ExpirationTimestamp().String(),
+			Expiration: expiration,
 		}
 		cfg.Settings["artifact_links"] = artifactLinks
 
