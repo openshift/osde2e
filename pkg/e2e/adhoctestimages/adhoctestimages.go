@@ -27,8 +27,6 @@ import (
 type PendingNotification struct {
 	AnalysisContent string
 	TestSuite       config.TestSuite
-	ClusterInfo     *analysisengine.ClusterInfo
-	Env             string
 }
 
 var (
@@ -144,20 +142,10 @@ var _ = ginkgo.Describe("Ad Hoc Test Images", ginkgo.Ordered, ginkgo.ContinueOnF
 // queueNotification adds a PendingNotification for deferred Slack delivery.
 // Called directly when log analysis is disabled so notifications are still sent.
 func queueNotification(testSuite config.TestSuite, analysisContent string) {
-	clusterInfo := &analysisengine.ClusterInfo{
-		ID:            viper.GetString(config.Cluster.ID),
-		Name:          viper.GetString(config.Cluster.Name),
-		Provider:      viper.GetString(config.Provider),
-		Region:        viper.GetString(config.CloudProvider.Region),
-		CloudProvider: viper.GetString(config.CloudProvider.CloudProviderID),
-		Version:       viper.GetString(config.Cluster.Version),
-	}
 	pendingMu.Lock()
 	pendingNotifications = append(pendingNotifications, PendingNotification{
 		AnalysisContent: analysisContent,
 		TestSuite:       testSuite,
-		ClusterInfo:     clusterInfo,
-		Env:             viper.GetString(ocmprovider.Env),
 	})
 	pendingMu.Unlock()
 }

@@ -313,7 +313,6 @@ func TestSlackReporter_buildClusterInfoSection(t *testing.T) {
 		expectedFields := []string{
 			"====== ☸️ Cluster Information ======",
 			"cluster-abc",
-			"production-cluster",
 			"4.23",
 			"aws",
 			"2026-03-01T00:00:00Z",
