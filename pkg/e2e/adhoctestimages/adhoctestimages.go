@@ -156,23 +156,21 @@ func queueNotification(testSuite config.TestSuite, analysisContent string) {
 func runLogAnalysisForAdHocTestImage(ctx context.Context, logger logr.Logger, testSuite config.TestSuite, err error, artifactsDir string) string {
 	logger.Info("Running Log analysis for test image", "image", testSuite.Image, "slackChannel", testSuite.SlackChannel)
 
-	clusterInfo := &analysisengine.ClusterInfo{
-		ID:            viper.GetString(config.Cluster.ID),
-		Name:          viper.GetString(config.Cluster.Name),
-		Provider:      viper.GetString(config.Provider),
-		Region:        viper.GetString(config.CloudProvider.Region),
-		CloudProvider: viper.GetString(config.CloudProvider.CloudProviderID),
-		Version:       viper.GetString(config.Cluster.Version),
-	}
-
 	engineConfig := &analysisengine.Config{
 		BaseConfig: analysisengine.BaseConfig{
 			ArtifactsDir: artifactsDir,
 			APIKey:       viper.GetString(config.LogAnalysis.APIKey),
+			ClusterInfo: &analysisengine.ClusterInfo{
+				ID:            viper.GetString(config.Cluster.ID),
+				Name:          viper.GetString(config.Cluster.Name),
+				Provider:      viper.GetString(config.Provider),
+				Region:        viper.GetString(config.CloudProvider.Region),
+				CloudProvider: viper.GetString(config.CloudProvider.CloudProviderID),
+				Version:       viper.GetString(config.Cluster.Version),
+			},
 		},
 		PromptTemplate: "default",
 		FailureContext: err.Error(),
-		ClusterInfo:    clusterInfo,
 	}
 
 	engine, err := analysisengine.New(ctx, engineConfig)

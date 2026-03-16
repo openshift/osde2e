@@ -65,7 +65,7 @@ user_prompt: |
 variables:
   - name: "ClusterInfo"
     type: "object"
-    description: "ClusterInfo: ID, Version, Type (cloud/platform[-hcp]), Region, Environment"
+    description: "ClusterInfo: ID, Name, Provider, Region, CloudProvider, Version, Type, Hypershift, Environment"
     required: false
   - name: "Summary"
     type: "object"

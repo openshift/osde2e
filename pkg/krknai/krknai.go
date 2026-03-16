@@ -20,6 +20,8 @@ import (
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/orchestrator"
 	"github.com/openshift/osde2e/pkg/common/providers"
+	"github.com/openshift/osde2e/pkg/common/providers/ocmprovider"
+	"github.com/openshift/osde2e/pkg/common/providers/rosaprovider"
 	"github.com/openshift/osde2e/pkg/common/spi"
 	krknaiengine "github.com/openshift/osde2e/pkg/krknai/analysisengine"
 	"gopkg.in/yaml.v3"
@@ -325,6 +327,16 @@ func (k *KrknAI) updateKrknConfig(ctx context.Context) error {
 	return nil
 }
 
+// providerEnv returns the environment (e.g. "stage", "production") for the active provider.
+func providerEnv() string {
+	switch viper.GetString(config.Provider) {
+	case "rosa":
+		return viper.GetString(rosaprovider.Env)
+	default:
+		return viper.GetString(ocmprovider.Env)
+	}
+}
+
 // detectContainerRuntime finds an available container runtime (podman or docker).
 func detectContainerRuntime() (string, error) {
 	// Check for podman first
@@ -354,6 +366,15 @@ func (k *KrknAI) AnalyzeLogs(ctx context.Context, testErr error) error {
 		BaseConfig: analysisengine.BaseConfig{
 			ArtifactsDir: reportDir,
 			APIKey:       viper.GetString(config.LogAnalysis.APIKey),
+			ClusterInfo: &analysisengine.ClusterInfo{
+				ID:            viper.GetString(config.Cluster.ID),
+				Name:          viper.GetString(config.Cluster.Name),
+				Provider:      viper.GetString(config.Provider),
+				Region:        viper.GetString(config.CloudProvider.Region),
+				CloudProvider: viper.GetString(config.CloudProvider.CloudProviderID),
+				Version:       viper.GetString(config.Cluster.Version),
+				Environment:   providerEnv(),
+			},
 		},
 		TopScenariosCount: viper.GetInt(config.KrknAI.TopScenariosCount),
 	}

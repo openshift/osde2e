@@ -233,17 +233,17 @@ func (o *E2EOrchestrator) AnalyzeLogs(ctx context.Context, testErr error) error 
 		BaseConfig: analysisengine.BaseConfig{
 			ArtifactsDir: reportDir,
 			APIKey:       viper.GetString(config.LogAnalysis.APIKey),
+			ClusterInfo: &analysisengine.ClusterInfo{
+				ID:            viper.GetString(config.Cluster.ID),
+				Name:          viper.GetString(config.Cluster.Name),
+				Provider:      viper.GetString(config.Provider),
+				Region:        viper.GetString(config.CloudProvider.Region),
+				CloudProvider: viper.GetString(config.CloudProvider.CloudProviderID),
+				Version:       viper.GetString(config.Cluster.Version),
+			},
 		},
 		PromptTemplate: "default",
 		FailureContext: testErr.Error(),
-		ClusterInfo: &analysisengine.ClusterInfo{
-			ID:            viper.GetString(config.Cluster.ID),
-			Name:          viper.GetString(config.Cluster.Name),
-			Provider:      viper.GetString(config.Provider),
-			Region:        viper.GetString(config.CloudProvider.Region),
-			CloudProvider: viper.GetString(config.CloudProvider.CloudProviderID),
-			Version:       viper.GetString(config.Cluster.Version),
-		},
 	}
 
 	engine, err := analysisengine.New(ctx, engineConfig)

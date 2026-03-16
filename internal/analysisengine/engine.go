@@ -20,24 +20,11 @@ const (
 	SummaryFileName = "summary.yaml"
 )
 
-// ClusterInfo holds cluster-specific information for analysis
-type ClusterInfo struct {
-	ID            string
-	Name          string
-	Provider      string
-	Region        string
-	CloudProvider string
-	Version       string
-	Type          string // e.g. "rosa", "osd", "aro"
-	Hypershift    bool
-}
-
 // Config holds configuration for the analysis engine.
 type Config struct {
 	BaseConfig
 	PromptTemplate  string
 	FailureContext  string
-	ClusterInfo     *ClusterInfo
 	SanitizerConfig *sanitizer.Config // Data sanitization configuration
 }
 

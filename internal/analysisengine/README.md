@@ -24,17 +24,19 @@ Analyzes test failures and artifacts using LLM (Gemini) to provide intelligent i
 
 - **Engine**: Orchestrates the analysis workflow
 - **Config**: Analysis configuration (API keys, templates, cluster info)
-- **ClusterInfo**: Cluster metadata (ID, provider, version, etc.)
+- **ClusterInfo**: Cluster metadata (ID, name, provider, region, version, type, environment, etc.) — part of BaseConfig, shared across all engines
 - **Result**: Analysis output with summary and metadata
 
 ## Usage
 
 ```go
 engine, err := analysisengine.New(ctx, &analysisengine.Config{
-    ArtifactsDir:   "/path/to/artifacts",
+    BaseConfig: analysisengine.BaseConfig{
+        ArtifactsDir: "/path/to/artifacts",
+        APIKey:       os.Getenv("GEMINI_API_KEY"),
+        ClusterInfo:  clusterInfo,
+    },
     PromptTemplate: "default",
-    APIKey:         os.Getenv("GEMINI_API_KEY"),
-    ClusterInfo:    clusterInfo,
 })
 result, err := engine.Run(ctx)
 ```
