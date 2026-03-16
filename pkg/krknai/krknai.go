@@ -189,14 +189,17 @@ func (k *KrknAI) runKrknContainer(ctx context.Context, mode string) error {
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 
+	defer func() {
+		if stderr.Len() > 0 {
+			log.Printf("Container stderr:\n%s", stderr.String())
+		}
+	}()
+
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("container execution failed: %w", err)
 	}
 
 	log.Printf("Container output:\n%s", stdout.String())
-	if stderr.Len() > 0 {
-		log.Printf("Container stderr:\n%s", stderr.String())
-	}
 
 	return nil
 }
