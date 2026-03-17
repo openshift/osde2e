@@ -94,37 +94,32 @@ var _ = ginkgo.Describe("Ad Hoc Test Images", ginkgo.Ordered, ginkgo.ContinueOnF
 
 			logger.Info("running test suite", "suite", testImage, "timeout", exeConfig.Timeout)
 			results, err := exe.Execute(ctx, testImage)
+			if err != nil {
+				logger.Error(err, "execution failed", "suite", testImage)
+			}
 
-			// Defer the Expect calls to ensure they always run and get logged
-			defer func() {
-				Expect(err).NotTo(HaveOccurred(), "failed to run test suite")
-				if results != nil {
-					for _, suite := range results.Suites {
-						for _, test := range suite.Tests {
-							Expect(test.Error).To(BeNil(), fmt.Sprintf("failed test case: %q", test.Name))
-						}
-					}
-				}
-			}()
-
-			// Collect failures in single loop
 			var allFailures []string
-
-			// Check for execution failure
 			if err != nil {
 				allFailures = append(allFailures, fmt.Sprintf("execution failure: %v", err))
 			}
-
-			// Collect test case failures in single loop
 			if results != nil {
 				for _, suite := range results.Suites {
+					var failed int
 					for _, test := range suite.Tests {
 						if test.Error != nil {
+							failed++
 							allFailures = append(allFailures, fmt.Sprintf("test case failure: %q - %v", test.Name, test.Error))
 						}
 					}
+					logger.Info("suite results", "suite", suite.Name, "total", len(suite.Tests), "failed", failed)
 				}
 			}
+
+			defer func() {
+				if len(allFailures) > 0 {
+					ginkgo.Fail(strings.Join(allFailures, "\n"))
+				}
+			}()
 
 			if len(allFailures) > 0 {
 				combinedErr := fmt.Errorf("failures in %s: %s", testImage, strings.Join(allFailures, "; "))

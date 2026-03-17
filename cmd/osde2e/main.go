@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/go-logr/logr"
 	"github.com/spf13/cobra"
@@ -78,8 +79,25 @@ func main() {
 	defer logFile.Close()
 
 	mw := io.MultiWriter(os.Stdout, logFile)
-	config := textlogger.NewConfig(textlogger.Output(mw))
-	logger := textlogger.NewLogger(config)
+
+	// Tee stderr into the log file so that panics and subprocess
+	// error output are captured in the uploaded artifact.
+	var stderrW *os.File
+	stderrDone := make(chan struct{})
+	origStderr := os.Stderr
+	if stderrR, sw, err := os.Pipe(); err == nil {
+		stderrW = sw
+		os.Stderr = stderrW
+		go func() {
+			defer close(stderrDone)
+			_, _ = io.Copy(io.MultiWriter(origStderr, logFile), stderrR)
+		}()
+	} else {
+		close(stderrDone)
+	}
+
+	cfg := textlogger.NewConfig(textlogger.Output(mw))
+	logger := textlogger.NewLogger(cfg)
 	ctx := logr.NewContext(context.Background(), logger)
 	root.SetContext(ctx)
 
@@ -91,10 +109,20 @@ func main() {
 	spi.RegisterProvider("rosa", func() (spi.Provider, error) { return rosaprovider.New(ctx) })
 	spi.RegisterProvider("ocm", func() (spi.Provider, error) { return ocmprovider.New() })
 
+	exitCode := 0
 	if err := root.Execute(); err != nil {
 		logger.Error(err, "command execution failed")
-		os.Exit(1)
+		exitCode = 1
 	}
 
-	os.Exit(0)
+	// Flush stderr pipe before exit so all output reaches the log file.
+	if stderrW != nil {
+		_ = stderrW.Close()
+	}
+	select {
+	case <-stderrDone:
+	case <-time.After(5 * time.Second):
+		logger.Error(fmt.Errorf("timeout waiting for stderr drain"), "forcing exit")
+	}
+	os.Exit(exitCode)
 }
