@@ -91,12 +91,6 @@ func New(ctx context.Context, config *Config) (*Engine, error) {
 	}, nil
 }
 
-// WithClusterInfo sets cluster metadata on the aggregator for inclusion in collected data.
-func (e *Engine) WithClusterInfo(info *krknAggregator.ClusterInfo) *Engine {
-	e.aggregator.WithClusterInfo(info)
-	return e
-}
-
 // Run executes the krkn-ai analysis workflow.
 func (e *Engine) Run(ctx context.Context) (*analysisengine.Result, error) {
 	// Collect krkn-ai results
@@ -117,8 +111,8 @@ func (e *Engine) Run(ctx context.Context) (*analysisengine.Result, error) {
 		"LogArtifacts":      data.LogArtifacts,
 		"ConfigSummary":     data.ConfigSummary,
 	}
-	if data.ClusterInfo != nil {
-		vars["ClusterInfo"] = data.ClusterInfo
+	if e.config.ClusterInfo != nil {
+		vars["ClusterInfo"] = e.config.ClusterInfo
 	}
 
 	// Render prompt using prompt store
@@ -200,7 +194,7 @@ func (e *Engine) writeSummary(result *analysisengine.Result, data *krknAggregato
 	summary := map[string]any{
 		"timestamp":     time.Now().Format(time.RFC3339),
 		"analysis_type": "krknai",
-		"cluster_info":  data.ClusterInfo,
+		"cluster_info":  e.config.ClusterInfo,
 		"run_summary": map[string]any{
 			"total_scenarios":      data.Summary.TotalScenarioCount,
 			"successful_scenarios": data.Summary.SuccessfulScenarioCount,

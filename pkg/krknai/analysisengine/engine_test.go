@@ -65,7 +65,7 @@ func TestRenderKrknAIPrompt(t *testing.T) {
 	store := newTestPromptStore(t)
 
 	variables := map[string]any{
-		"ClusterInfo": &krknAgg.ClusterInfo{
+		"ClusterInfo": &analysisengine.ClusterInfo{
 			ID:          "abc-123",
 			Version:     "4.17.3",
 			Type:        "aws/rosa-hcp",
