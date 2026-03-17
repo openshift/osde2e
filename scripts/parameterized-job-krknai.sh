@@ -40,6 +40,7 @@ docker create --pull=always --name osde2e-krknai-run \
 	-e KRKN_TOP_SCENARIOS_COUNT \
 	-e GEMINI_API_KEY \
 	-e REPORT_DIR="/tmp/${REPORT_DIR}" \
+	-e SHARED_DIR="/tmp/${SHARED_DIR}" \
 	quay.io/redhat-services-prod/osde2e-cicada-tenant/osde2e:latest krkn-ai "${args[@]}"
 
 docker start -a osde2e-krknai-run
