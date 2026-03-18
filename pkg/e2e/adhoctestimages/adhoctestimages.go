@@ -3,7 +3,6 @@ package adhoctestimages
 import (
 	"context"
 	"fmt"
-	"log"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -186,7 +185,6 @@ func runLogAnalysisForAdHocTestImage(ctx context.Context, logger logr.Logger, te
 	}
 
 	logger.Info("Log analysis completed successfully", "image", testSuite.Image, "resultsDir", fmt.Sprintf("%s/%s/", artifactsDir, analysisengine.AnalysisDirName))
-	log.Printf("=== Log Analysis Result for %s ===\n%s", testSuite.Image, result.Content)
 
 	return result.Content
 }
