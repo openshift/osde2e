@@ -73,14 +73,16 @@ func RunTests(ctx context.Context) int {
 		}
 	}
 
+	// Post-process cluster: must-gather, cluster state inspection, property
+	// updates. Runs before Report so diagnostic data is included in the
+	// S3 artifact upload.
+	if err := orch.PostProcessCluster(ctx); err != nil {
+		log.Printf("Cluster post-processing errors: %v", err)
+	}
+
 	// Report: upload artifacts, send notifications, generate reports
 	if err := orch.Report(ctx); err != nil {
 		log.Printf("Report errors: %v", err)
-	}
-
-	// Post-process cluster
-	if err := orch.PostProcessCluster(ctx); err != nil {
-		log.Printf("Cluster post-processing errors: %v", err)
 	}
 
 	// Cleanup resources and delete cluster
@@ -508,41 +510,32 @@ func (o *E2EOrchestrator) PostProcessCluster(ctx context.Context) error {
 		return nil
 	}
 
-	h, err := helper.NewOutsideGinkgo()
-	if h == nil {
-		log.Printf("Failed to generate helper object for post-processing: %v", err)
-		return fmt.Errorf("failed to generate helper for post-processing: %w", err)
-	}
-
 	// Post processing: must gather, cluster extension, cluster property updates (with ginkgo defer for recovery)
 	defer ginkgo.GinkgoRecover()
 
-	var errors []error
 	clusterStatus := "completed-failing"
 
-	// Run must-gather
 	if !viper.GetBool(config.SkipMustGather) {
 		if err := cluster.RunMustGather(ctx); err != nil {
-			errors = append(errors, err)
+			o.result.Errors = append(o.result.Errors, err)
 			clusterStatus = "completed-error"
 		}
-		cluster.InspectClusterState(ctx, h)
-	}
-
-	// Update cluster properties
-	if clusterID := viper.GetString(config.Cluster.ID); clusterID != "" {
-		if err := cluster.UpdateClusterProperties(o.provider, clusterStatus); err != nil {
-			errors = append(errors, err)
+		h, err := helper.NewOutsideGinkgo()
+		if err != nil {
+			log.Printf("Failed to generate helper object for cluster inspection: %v", err)
+		} else {
+			cluster.InspectClusterState(ctx, h)
 		}
 	}
 
-	// Extend expiration for nightly builds
-	if err := cluster.HandleExpirationExtension(o.provider); err != nil {
-		errors = append(errors, err)
+	if clusterID := viper.GetString(config.Cluster.ID); clusterID != "" {
+		if err := cluster.UpdateClusterProperties(o.provider, clusterStatus); err != nil {
+			o.result.Errors = append(o.result.Errors, err)
+		}
 	}
 
-	if len(errors) > 0 {
-		o.result.Errors = append(o.result.Errors, errors...)
+	if err := cluster.HandleExpirationExtension(o.provider); err != nil {
+		o.result.Errors = append(o.result.Errors, err)
 	}
 
 	return nil
