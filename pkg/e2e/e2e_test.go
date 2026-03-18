@@ -254,10 +254,9 @@ func TestPostProcessCluster_SkipMustGather(t *testing.T) {
 		},
 	}
 
-	// Should handle helper creation failure gracefully
 	err := orch.PostProcessCluster(context.TODO())
-	if err == nil {
-		t.Error("Expected error when helper creation fails")
+	if err != nil {
+		t.Errorf("Expected no error when must-gather is skipped, got: %v", err)
 	}
 }
 

@@ -855,6 +855,12 @@ func LoadClusterContext() error {
 }
 
 func RunMustGather(ctx context.Context) error {
+	ocPath, err := exec.LookPath("oc")
+	if err != nil {
+		log.Printf("Skipping must-gather: oc binary not found in $PATH")
+		return nil
+	}
+
 	runCtx, cancel := context.WithTimeout(ctx, 30*time.Minute)
 	defer cancel()
 	dst := filepath.Join(viper.GetString(config.ReportDir), "must-gather")
@@ -868,7 +874,7 @@ func RunMustGather(ctx context.Context) error {
 		"--kubeconfig", viper.GetString(config.Kubeconfig.Path),
 	}
 	log.Printf("Running must-gather for %v...", 30*time.Minute)
-	cmd := exec.CommandContext(runCtx, "oc", commandArgs...)
+	cmd := exec.CommandContext(runCtx, ocPath, commandArgs...)
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		if len(out) > 0 {
