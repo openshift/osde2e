@@ -15,9 +15,14 @@ fi
 # ensure we have a clean environment
 docker rm osde2e-krknai-run
 
+DOCKER_GID=$(stat -c '%g' /var/run/docker.sock)
+
 # bind mounts run into permissions issues, this creates
 # the container and copies the secrets over to ensure it has perms
 docker create --pull=always --name osde2e-krknai-run \
+	-v /var/run/docker.sock:/var/run/docker.sock \
+	-v "$(which docker)":/usr/bin/docker:ro \
+	--group-add "${DOCKER_GID}" \
 	-e OCM_CLIENT_ID -e OCM_CLIENT_SECRET \
 	-e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY -e AWS_ACCOUNT_ID \
 	-e GCP_CREDS_JSON \
