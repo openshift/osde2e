@@ -4,7 +4,9 @@ package krknai
 import (
 	"bytes"
 	"context"
+	_ "embed"
 	"fmt"
+	"html/template"
 	"log"
 	"os"
 	"os/exec"
@@ -12,6 +14,10 @@ import (
 	"strings"
 
 	"github.com/go-logr/logr"
+	"github.com/gomarkdown/markdown"
+	mdhtml "github.com/gomarkdown/markdown/html"
+	"github.com/gomarkdown/markdown/parser"
+	"github.com/microcosm-cc/bluemonday"
 	"github.com/openshift/osde2e-common/pkg/clients/openshift"
 	"github.com/openshift/osde2e-common/pkg/clients/prometheus"
 	"github.com/openshift/osde2e/internal/analysisengine"
@@ -26,6 +32,9 @@ import (
 	krknaiengine "github.com/openshift/osde2e/pkg/krknai/analysisengine"
 	"gopkg.in/yaml.v3"
 )
+
+//go:embed report.html
+var reportTemplate []byte
 
 const (
 	// DefaultKrknAIImage is the default container image for Kraken AI chaos testing.
@@ -43,9 +52,9 @@ const (
 
 // KrknAI implements the orchestrator.Orchestrator interface for Kraken AI chaos testing.
 type KrknAI struct {
-	provider       spi.Provider
-	result         *orchestrator.Result
-	analysisResult *analysisengine.Result
+	provider          spi.Provider
+	result            *orchestrator.Result
+	logAnalysisOutput string
 }
 
 // New creates a new KrknAI orchestrator instance.
@@ -389,22 +398,39 @@ func (k *KrknAI) AnalyzeLogs(ctx context.Context, testErr error) error {
 		return fmt.Errorf("krkn-ai log analysis failed: %w", err)
 	}
 
-	k.analysisResult = result
+	k.logAnalysisOutput = result.Content
 
 	log.Printf("Krkn-AI analysis completed. Results: %s/llm-analysis/", reportDir)
 
 	return nil
 }
 
-// Report generates test reports and collects diagnostic data.
+// Report generates test reports, converting the analysis result to HTML.
 func (k *KrknAI) Report(ctx context.Context) error {
 	log.Println("Generating test reports")
 
-	// TODO: Implement chaos test reporting
-	// This should include:
-	// - Chaos experiment results
-	// - Cluster resilience metrics
-	// - Recovery time statistics
+	if k.logAnalysisOutput != "" {
+		reportDir := viper.GetString(config.ReportDir)
+
+		content := k.logAnalysisOutput
+		if !viper.GetBool(config.SkipMustGather) {
+			mgDir := filepath.Join(reportDir, "must-gather")
+			if info, err := os.Stat(mgDir); err == nil && info.IsDir() {
+				content += "\n\n[Cluster must-gather](must-gather) (inspect cluster state at chaos run time)"
+			}
+		}
+
+		html, err := markdownToHTML(content)
+		if err != nil {
+			return fmt.Errorf("failed to convert report to HTML: %w", err)
+		}
+
+		reportFile := filepath.Join(reportDir, "report.html")
+		if err := os.WriteFile(reportFile, []byte(html), 0o644); err != nil {
+			return fmt.Errorf("failed to write HTML report: %w", err)
+		}
+		log.Printf("HTML report written to %s", reportFile)
+	}
 
 	log.Println("Report generation completed")
 	return nil
@@ -443,4 +469,28 @@ func (k *KrknAI) PostProcessCluster(ctx context.Context) error {
 // Result returns the outcome of the test run including exit code and status.
 func (k *KrknAI) Result() *orchestrator.Result {
 	return k.result
+}
+
+// markdownToHTML converts markdown content to a styled HTML report using the embedded template.
+func markdownToHTML(content string) (string, error) {
+	tmpl, err := template.New("report").Parse(string(reportTemplate))
+	if err != nil {
+		return "", fmt.Errorf("failed to parse HTML template: %w", err)
+	}
+
+	p := parser.NewWithExtensions(parser.CommonExtensions | parser.AutoHeadingIDs)
+	renderer := mdhtml.NewRenderer(mdhtml.RendererOptions{Flags: mdhtml.CommonFlags | mdhtml.HrefTargetBlank})
+	unsafeBody := markdown.ToHTML([]byte(content), p, renderer)
+	safeBody := bluemonday.UGCPolicy().SanitizeBytes(unsafeBody)
+
+	payload := struct {
+		Body template.HTML
+	}{Body: template.HTML(string(safeBody))}
+
+	var buf bytes.Buffer
+	if err := tmpl.Execute(&buf, payload); err != nil {
+		return "", fmt.Errorf("failed to execute HTML template: %w", err)
+	}
+
+	return buf.String(), nil
 }
