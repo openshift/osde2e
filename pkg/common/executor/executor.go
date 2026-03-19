@@ -40,6 +40,7 @@ type Config struct {
 	PassthruSecrets     map[string]string
 	Timeout             time.Duration
 	OutputDir           string
+	CCS                 bool
 	SkipCleanup         bool
 	RestConfig          *rest.Config
 }
@@ -222,6 +223,10 @@ func (e *Executor) buildJobSpec(namespace string, image string) *batchv1.Job {
 								{
 									Name:  "CLOUD_PROVIDER_REGION",
 									Value: e.cfg.CloudProviderRegion,
+								},
+								{
+									Name:  "OCM_CCS",
+									Value: fmt.Sprintf("%t", e.cfg.CCS),
 								},
 								{
 									Name:  "GINKGO_NO_COLOR",
