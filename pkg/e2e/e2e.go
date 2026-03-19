@@ -271,6 +271,15 @@ func (o *E2EOrchestrator) Report(ctx context.Context) error {
 		return nil
 	}
 
+	// Log analysis results before S3 upload so they are included in
+	// the uploaded test_output.log artifact.
+	pending := adhoctestimages.DrainPendingNotifications()
+	for _, p := range pending {
+		if p.AnalysisContent != "" {
+			log.Printf("=== Log Analysis Result for %s ===\n%s", p.TestSuite.Image, p.AnalysisContent)
+		}
+	}
+
 	// Upload artifacts to S3
 	if viper.GetString(config.Tests.LogBucket) != "" {
 		cleanStaleJunitFiles()
@@ -279,9 +288,7 @@ func (o *E2EOrchestrator) Report(ctx context.Context) error {
 		}
 	}
 
-	// Drain per-suite pending notifications. If any were queued (suites ran),
-	// send them; otherwise fall back to global failure notification.
-	pending := adhoctestimages.DrainPendingNotifications()
+	// Send notifications after S3 upload so presigned URLs are available.
 	if len(pending) > 0 {
 		o.sendDeferredNotifications(ctx, pending)
 	} else if o.result.ExitCode != config.Success && viper.GetBool(config.Tests.EnableSlackNotify) {
@@ -584,6 +591,27 @@ func (o *E2EOrchestrator) runTestsInPhase(phaseName, description string) bool {
 		)
 		if err != nil {
 			log.Printf("Error creating junit report: %v", err)
+		}
+
+		// Log failure details so they appear in test_output.log.
+		// Ginkgo's output interceptor is inactive during ReportAfterSuite,
+		// so log.Printf writes directly to the log file via the MultiWriter.
+		for _, spec := range report.SpecReports {
+			if !spec.State.Is(types.SpecStateFailed) && !spec.State.Is(types.SpecStatePanicked) {
+				continue
+			}
+			log.Printf("  FAIL: %s", spec.FullText())
+			if spec.Failure.Message != "" {
+				log.Printf("        %s", spec.Failure.Message)
+			}
+			log.Printf("        %s:%d", spec.Failure.Location.FileName, spec.Failure.Location.LineNumber)
+			if captured := spec.CapturedGinkgoWriterOutput; captured != "" {
+				const maxCaptured = 2000
+				if len(captured) > maxCaptured {
+					captured = captured[:maxCaptured] + "\n... (truncated)"
+				}
+				log.Printf("        --- Captured Output ---\n%s", captured)
+			}
 		}
 	})
 
