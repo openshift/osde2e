@@ -1,20 +1,14 @@
 package analysisengine
 
 import (
-	"bytes"
 	"context"
 	"embed"
 	"fmt"
-	"html/template"
 	"io/fs"
 	"os"
 	"path/filepath"
 	"time"
 
-	"github.com/gomarkdown/markdown"
-	mdhtml "github.com/gomarkdown/markdown/html"
-	"github.com/gomarkdown/markdown/parser"
-	"github.com/microcosm-cc/bluemonday"
 	"github.com/openshift/osde2e/internal/analysisengine"
 	"github.com/openshift/osde2e/internal/llm"
 	"github.com/openshift/osde2e/internal/llm/tools"
@@ -31,14 +25,12 @@ const (
 	summaryFileName = "summary.yaml"
 
 	krknAIPromptTemplate = "krknai"
-	htmlTemplatePath     = "prompts/report.html"
 )
 
 // Config holds configuration for the krkn-ai analysis engine.
 type Config struct {
 	analysisengine.BaseConfig
-	TopScenariosCount int    // Number of top scenarios to include (default: 10)
-	ReportFormat      string // "json" (default), "markdown", or "html"
+	TopScenariosCount int // Number of top scenarios to include (default: 10)
 }
 
 // Engine analyzes krkn-ai chaos test results using LLM.
@@ -140,22 +132,10 @@ func (e *Engine) Run(ctx context.Context) (*analysisengine.Result, error) {
 		return nil, fmt.Errorf("LLM analysis failed: %w", err)
 	}
 
-	content := result.Content
-	if mustGatherPath := mustGatherRelativePath(e.config.ArtifactsDir); mustGatherPath != "" {
-		content += fmt.Sprintf("\n\n[Cluster must-gather](%s) (inspect cluster state at chaos run time)", mustGatherPath)
-	}
-	if e.config.ReportFormat == "html" {
-		var err error
-		content, err = markdownToHTML(content)
-		if err != nil {
-			return nil, fmt.Errorf("failed to convert markdown to HTML: %w", err)
-		}
-	}
-
 	// Build analysis result
 	analysisResult := &analysisengine.Result{
 		Status:  "completed",
-		Content: content,
+		Content: result.Content,
 		Prompt:  userPrompt,
 		Metadata: map[string]any{
 			"analysis_type":        "krknai",
@@ -224,49 +204,4 @@ func (e *Engine) writeSummary(result *analysisengine.Result, data *krknAggregato
 	}
 
 	return nil
-}
-
-// mustGatherRelativePath returns the relative path to the must-gather directory from the
-// artifacts dir (e.g. "must-gather") if it exists, otherwise empty string.
-func mustGatherRelativePath(artifactsDir string) string {
-	if artifactsDir == "" {
-		return ""
-	}
-	mgDir := filepath.Join(artifactsDir, "must-gather")
-	info, err := os.Stat(mgDir)
-	if err != nil || info == nil {
-		return ""
-	}
-	if info.IsDir() {
-		return "must-gather"
-	}
-	return ""
-}
-
-func markdownToHTML(content string) (string, error) {
-	htmlTmplBytes, err := krknPrompts.ReadFile(htmlTemplatePath)
-	if err != nil {
-		return "", fmt.Errorf("failed to read HTML template: %w", err)
-	}
-
-	tmpl, err := template.New("report").Parse(string(htmlTmplBytes))
-	if err != nil {
-		return "", fmt.Errorf("failed to parse HTML template: %w", err)
-	}
-
-	p := parser.NewWithExtensions(parser.CommonExtensions | parser.AutoHeadingIDs)
-	renderer := mdhtml.NewRenderer(mdhtml.RendererOptions{Flags: mdhtml.CommonFlags | mdhtml.HrefTargetBlank})
-	unsafeBody := markdown.ToHTML([]byte(content), p, renderer)
-	safeBody := bluemonday.UGCPolicy().SanitizeBytes(unsafeBody)
-
-	payload := struct {
-		Body template.HTML
-	}{Body: template.HTML(string(safeBody))}
-
-	var buf bytes.Buffer
-	if err := tmpl.Execute(&buf, payload); err != nil {
-		return "", fmt.Errorf("failed to execute HTML template: %w", err)
-	}
-
-	return buf.String(), nil
 }

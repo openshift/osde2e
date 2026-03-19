@@ -147,7 +147,7 @@ func TestRenderKrknAIPrompt(t *testing.T) {
 	assert.Contains(t, *config.SystemInstruction, "genetic algorithm")
 }
 
-func TestRun_MarkdownReportFormat(t *testing.T) {
+func TestRun_MarkdownOutput(t *testing.T) {
 	tempDir := t.TempDir()
 	reportsDir := filepath.Join(tempDir, "reports")
 	require.NoError(t, os.MkdirAll(reportsDir, 0o755))
@@ -166,8 +166,7 @@ func TestRun_MarkdownReportFormat(t *testing.T) {
 
 	engine := &Engine{
 		config: &Config{
-			BaseConfig:   analysisengine.BaseConfig{ArtifactsDir: tempDir, APIKey: "fake-key"},
-			ReportFormat: "markdown",
+			BaseConfig: analysisengine.BaseConfig{ArtifactsDir: tempDir, APIKey: "fake-key"},
 		},
 		aggregator:  agg,
 		promptStore: promptStore,
@@ -178,78 +177,7 @@ func TestRun_MarkdownReportFormat(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, result)
 	assert.Contains(t, result.Content, "Chaos Test Report")
-}
-
-func TestRun_HTMLReportFormat(t *testing.T) {
-	tempDir := t.TempDir()
-	reportsDir := filepath.Join(tempDir, "reports")
-	require.NoError(t, os.MkdirAll(reportsDir, 0o755))
-
-	createTestResultFiles(t, tempDir, reportsDir)
-
-	ctx := context.Background()
-	agg := krknAgg.NewKrknAIAggregator(ctx)
-	promptStore := newTestPromptStore(t)
-
-	mockClient := &mockLLMClient{
-		response: &llm.AnalysisResult{
-			Content: "# Krkn-AI Chaos Test Report\n\n## Executive Summary\nCluster shows **moderate** resilience.\n\n| Metric | Value |\n|--------|-------|\n| Total | 5 |\n",
-		},
-	}
-
-	engine := &Engine{
-		config: &Config{
-			BaseConfig:   analysisengine.BaseConfig{ArtifactsDir: tempDir, APIKey: "fake-key"},
-			ReportFormat: "html",
-		},
-		aggregator:  agg,
-		promptStore: promptStore,
-		llmClient:   mockClient,
-	}
-
-	result, err := engine.Run(ctx)
-	require.NoError(t, err)
-	require.NotNil(t, result)
-
-	assert.Contains(t, result.Content, "<!DOCTYPE html>")
-	assert.Contains(t, result.Content, "<h1")
-	assert.Contains(t, result.Content, "<table>")
-	assert.Contains(t, result.Content, "<strong>moderate</strong>")
-	assert.NotContains(t, result.Content, "## Executive Summary")
-}
-
-func TestRun_HTMLReportFormat_WithMustGatherLink(t *testing.T) {
-	tempDir := t.TempDir()
-	reportsDir := filepath.Join(tempDir, "reports")
-	require.NoError(t, os.MkdirAll(reportsDir, 0o755))
-	require.NoError(t, os.MkdirAll(filepath.Join(tempDir, "must-gather"), 0o755))
-
-	createTestResultFiles(t, tempDir, reportsDir)
-
-	ctx := context.Background()
-	agg := krknAgg.NewKrknAIAggregator(ctx)
-	promptStore := newTestPromptStore(t)
-	mockClient := &mockLLMClient{
-		response: &llm.AnalysisResult{
-			Content: "# Report\n\nSummary.",
-		},
-	}
-
-	engine := &Engine{
-		config: &Config{
-			BaseConfig:   analysisengine.BaseConfig{ArtifactsDir: tempDir, APIKey: "fake-key"},
-			ReportFormat: "html",
-		},
-		aggregator:  agg,
-		promptStore: promptStore,
-		llmClient:   mockClient,
-	}
-
-	result, err := engine.Run(ctx)
-	require.NoError(t, err)
-	require.NotNil(t, result)
-	assert.Contains(t, result.Content, "Cluster must-gather")
-	assert.Contains(t, result.Content, "href=\"must-gather\"")
+	assert.Contains(t, result.Content, "## Executive Summary")
 }
 
 func TestWriteSummary(t *testing.T) {

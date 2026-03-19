@@ -202,6 +202,19 @@ func TestParseHealthCheckEndpoints(t *testing.T) {
 	}
 }
 
+func TestMarkdownToHTML(t *testing.T) {
+	input := "# Krkn-AI Chaos Test Report\n\n## Executive Summary\nCluster shows **moderate** resilience.\n\n| Metric | Value |\n|--------|-------|\n| Total | 5 |\n"
+
+	html, err := markdownToHTML(input)
+	require.NoError(t, err)
+
+	assert.Contains(t, html, "<!DOCTYPE html>")
+	assert.Contains(t, html, "<h1")
+	assert.Contains(t, html, "<table>")
+	assert.Contains(t, html, "<strong>moderate</strong>")
+	assert.NotContains(t, html, "## Executive Summary")
+}
+
 func TestKrknAIViperConfig(t *testing.T) {
 	tests := []struct {
 		name     string
