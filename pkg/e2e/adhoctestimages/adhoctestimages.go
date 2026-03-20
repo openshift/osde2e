@@ -48,6 +48,7 @@ var _ = ginkgo.Describe("Ad Hoc Test Images", ginkgo.Ordered, ginkgo.ContinueOnF
 		testImageEntries = []ginkgo.TableEntry{}
 		testSuites       []config.TestSuite
 		exeConfig        = &executor.Config{
+			CCS:                 viper.GetBool(ocmprovider.CCS),
 			CloudProviderID:     viper.GetString(config.CloudProvider.CloudProviderID),
 			CloudProviderRegion: viper.GetString(config.CloudProvider.Region),
 			ClusterID:           viper.GetString(config.Cluster.ID),
