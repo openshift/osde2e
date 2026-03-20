@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	commonconfig "github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/util"
 )
 
@@ -19,8 +20,6 @@ type ArtifactLink struct {
 }
 
 const (
-	maxWorkflowFieldLength = 30000
-
 	fullOutputThreshold = 250
 	finalSummaryLines   = 80
 
@@ -76,6 +75,7 @@ type WorkflowPayload struct {
 	Image          string `json:"image,omitempty"`
 	Env            string `json:"env,omitempty"`
 	Commit         string `json:"commit,omitempty"`
+	TektonURL      string `json:"tekton_url,omitempty"`
 }
 
 // ClusterInfo holds cluster information for reporting
@@ -96,14 +96,13 @@ func (s *SlackReporter) buildWorkflowPayload(result *AnalysisResult, config *Rep
 		payload.Channel = channel
 	}
 
-	payload.Summary = s.buildSummaryField(config)
 	payload.Analysis = s.buildAnalysisField(result)
 
 	if links, ok := config.Settings["artifact_links"].([]ArtifactLink); ok && len(links) > 0 {
-		payload.ExtendedLogs = s.enforceFieldLimit(s.buildArtifactLinksSection(links), maxWorkflowFieldLength)
+		payload.ExtendedLogs = s.enforceFieldLimit(s.buildArtifactLinksSection(links), commonconfig.SlackMessageLength)
 	} else if reportDir, ok := config.Settings["report_dir"].(string); ok && reportDir != "" {
 		if testOutput := s.readTestOutput(reportDir); testOutput != "" {
-			payload.ExtendedLogs = s.enforceFieldLimit(testOutput, maxWorkflowFieldLength)
+			payload.ExtendedLogs = s.enforceFieldLimit(testOutput, commonconfig.SlackMessageLength)
 		} else {
 			payload.ExtendedLogs = "No test failure logs found in the report directory."
 		}
@@ -117,26 +116,20 @@ func (s *SlackReporter) buildWorkflowPayload(result *AnalysisResult, config *Rep
 		payload.ClusterDetails = "Cluster information not available."
 	}
 
-	if image, ok := config.Settings["image"].(string); ok && image != "" {
+	if image, ok := config.Settings["repo"].(string); ok {
 		payload.Image = image
-		parts := strings.Split(image, ":")
-		if len(parts) == 2 {
-			payload.Commit = parts[1]
-		}
 	}
-
-	if env, ok := config.Settings["env"].(string); ok && env != "" {
+	if commit, ok := config.Settings["commit"].(string); ok {
+		payload.Commit = commit
+	}
+	if env, ok := config.Settings["env"].(string); ok {
 		payload.Env = env
+	}
+	if tektonURL, ok := config.Settings["tekton_url"].(string); ok {
+		payload.TektonURL = tektonURL
 	}
 
 	return payload
-}
-
-func (s *SlackReporter) buildSummaryField(config *ReporterConfig) string {
-	var builder strings.Builder
-	builder.WriteString(":failed: Pipeline Failed at E2E Test\n\n")
-	builder.WriteString(s.buildTestSuiteSection(config))
-	return s.enforceFieldLimit(builder.String(), maxWorkflowFieldLength)
 }
 
 func (s *SlackReporter) buildAnalysisField(result *AnalysisResult) string {
@@ -156,7 +149,7 @@ func (s *SlackReporter) buildAnalysisField(result *AnalysisResult) string {
 		builder.WriteString(result.Error)
 	}
 
-	return s.enforceFieldLimit(builder.String(), maxWorkflowFieldLength)
+	return s.enforceFieldLimit(builder.String(), commonconfig.SlackMessageLength)
 }
 
 func (s *SlackReporter) buildClusterInfoSection(config *ReporterConfig) string {
@@ -166,38 +159,13 @@ func (s *SlackReporter) buildClusterInfoSection(config *ReporterConfig) string {
 	}
 
 	var builder strings.Builder
-	builder.WriteString("====== ☸️ Cluster Information ======\n")
+	builder.WriteString(fmt.Sprintf("====== ☸️ Cluster (expires at %s) ======\n", clusterInfo.Expiration))
 	builder.WriteString(fmt.Sprintf("• Cluster ID: `%s`\n", clusterInfo.ID))
-	if clusterInfo.Expiration != "" {
-		builder.WriteString(fmt.Sprintf("• Expiration: `%s`\n", clusterInfo.Expiration))
-	}
 	if clusterInfo.Version != "" {
 		builder.WriteString(fmt.Sprintf("• Version: `%s`\n", clusterInfo.Version))
 	}
 	if clusterInfo.Provider != "" {
 		builder.WriteString(fmt.Sprintf("• Provider: `%s`\n", clusterInfo.Provider))
-	}
-	builder.WriteString("\n")
-
-	return builder.String()
-}
-
-func (s *SlackReporter) buildTestSuiteSection(config *ReporterConfig) string {
-	image, ok := config.Settings["image"].(string)
-	if !ok || image == "" {
-		return ""
-	}
-
-	imageInfo := strings.Split(image, ":")
-	if len(imageInfo) < 2 {
-		return ""
-	}
-
-	var builder strings.Builder
-	builder.WriteString("====== 🧪 Test Suite Information ======\n")
-	builder.WriteString(fmt.Sprintf("• Image: `%s`\n", image))
-	if env, ok := config.Settings["env"].(string); ok && env != "" {
-		builder.WriteString(fmt.Sprintf("• Environment: `%s`\n", env))
 	}
 	builder.WriteString("\n")
 

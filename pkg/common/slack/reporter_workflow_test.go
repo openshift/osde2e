@@ -8,6 +8,8 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestSlackReporter_buildWorkflowPayload(t *testing.T) {
@@ -38,7 +40,8 @@ func TestSlackReporter_buildWorkflowPayload(t *testing.T) {
 			"webhook_url":  "https://hooks.slack.com/test",
 			"channel":      "C06HQR8HN0L",
 			"cluster_info": clusterInfo,
-			"image":        "quay.io/test:abc123",
+			"repo":         "image quay.io/test",
+			"commit":       "abc123",
 			"env":          "stage",
 		},
 	}
@@ -50,23 +53,8 @@ func TestSlackReporter_buildWorkflowPayload(t *testing.T) {
 		t.Errorf("expected channel C06HQR8HN0L, got %s", payload.Channel)
 	}
 
-	if payload.Summary == "" {
-		t.Error("summary field is required but empty")
-	}
-
 	if payload.Analysis == "" {
 		t.Error("analysis field is required but empty")
-	}
-
-	// Verify summary contains test suite info (what failed)
-	if !strings.Contains(payload.Summary, "quay.io/test") {
-		t.Error("summary should contain image name")
-	}
-	if !strings.Contains(payload.Summary, "abc123") {
-		t.Error("summary should contain commit")
-	}
-	if !strings.Contains(payload.Summary, "stage") {
-		t.Error("summary should contain environment")
 	}
 
 	// Verify cluster_details contains cluster info (for debugging)
@@ -89,17 +77,9 @@ func TestSlackReporter_buildWorkflowPayload(t *testing.T) {
 	}
 
 	// Verify optional fields
-	if payload.Image != "quay.io/test:abc123" {
-		t.Errorf("expected image quay.io/test:abc123, got %s", payload.Image)
-	}
-
-	if payload.Commit != "abc123" {
-		t.Errorf("expected commit abc123, got %s", payload.Commit)
-	}
-
-	if payload.Env != "stage" {
-		t.Errorf("expected env stage, got %s", payload.Env)
-	}
+	assert.Equal(t, "image quay.io/test", payload.Image)
+	assert.Equal(t, "abc123", payload.Commit)
+	assert.Equal(t, "stage", payload.Env, "Env")
 }
 
 func TestSlackReporter_Report_WorkflowFormat(t *testing.T) {
@@ -151,77 +131,16 @@ func TestSlackReporter_Report_WorkflowFormat(t *testing.T) {
 		t.Errorf("expected channel C123456, got %s", capturedPayload.Channel)
 	}
 
-	if capturedPayload.Summary == "" {
-		t.Error("summary should not be empty")
-	}
-
 	if capturedPayload.Analysis == "" {
 		t.Error("analysis should not be empty")
 	}
 
-	// Verify cluster info is in cluster_details field (not summary)
+	// Verify cluster info is in cluster_details field
 	if capturedPayload.ClusterDetails == "" {
 		t.Error("cluster_details should not be empty when cluster info is provided")
 	}
 	if !strings.Contains(capturedPayload.ClusterDetails, "test-456") {
 		t.Error("cluster_details should contain cluster ID")
-	}
-
-	// Verify summary contains test suite info
-	if !strings.Contains(capturedPayload.Summary, "quay.io/openshift/test") {
-		t.Error("summary should contain test image")
-	}
-
-	if capturedPayload.Image != "quay.io/openshift/test:v1.0" {
-		t.Errorf("expected image quay.io/openshift/test:v1.0, got %s", capturedPayload.Image)
-	}
-
-	if capturedPayload.Commit != "v1.0" {
-		t.Errorf("expected commit v1.0, got %s", capturedPayload.Commit)
-	}
-}
-
-func TestSlackReporter_buildSummaryField(t *testing.T) {
-	reporter := NewSlackReporter()
-
-	clusterInfo := &ClusterInfo{
-		ID:         "cluster-789",
-		Name:       "my-test-cluster",
-		Version:    "4.22",
-		Provider:   "gcp",
-		Expiration: "2026-02-01T12:00:00Z",
-	}
-
-	config := &ReporterConfig{
-		Settings: map[string]interface{}{
-			"cluster_info": clusterInfo,
-			"image":        "quay.io/app:commit-xyz",
-			"env":          "dev",
-		},
-	}
-
-	summary := reporter.buildSummaryField(config)
-
-	// Check for header
-	if !strings.Contains(summary, ":failed:") {
-		t.Error("summary should contain failure emoji")
-	}
-	if !strings.Contains(summary, "Pipeline Failed") {
-		t.Error("summary should contain failure message")
-	}
-
-	// Summary should NOT contain cluster info (it's in cluster_details now)
-	// Summary should ONLY contain test suite info (what failed)
-
-	// Check for test suite info
-	if !strings.Contains(summary, "quay.io/app") {
-		t.Error("summary should contain test image")
-	}
-	if !strings.Contains(summary, "commit-xyz") {
-		t.Error("summary should contain commit")
-	}
-	if !strings.Contains(summary, "dev") {
-		t.Error("summary should contain environment")
 	}
 }
 
