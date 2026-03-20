@@ -15,14 +15,18 @@ fi
 # ensure we have a clean environment
 docker rm osde2e-krknai-run
 
-DOCKER_GID=$(stat -c '%g' /var/run/docker.sock)
+# --group-add only when we can read the socket's GID (Jenkins may fail stat)
+docker_group_add=()
+if docker_gid=$(stat -c '%g' /var/run/docker.sock 2>/dev/null); then
+	docker_group_add=(--group-add "${docker_gid}")
+fi
 
 # bind mounts run into permissions issues, this creates
 # the container and copies the secrets over to ensure it has perms
 docker create --pull=always --name osde2e-krknai-run \
 	-v /var/run/docker.sock:/var/run/docker.sock \
 	-v "$(which docker)":/usr/bin/docker:ro \
-	--group-add "${DOCKER_GID}" \
+	"${docker_group_add[@]}" \
 	-e OCM_CLIENT_ID -e OCM_CLIENT_SECRET \
 	-e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY -e AWS_ACCOUNT_ID \
 	-e GCP_CREDS_JSON \
