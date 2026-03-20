@@ -11,6 +11,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/spf13/cobra"
+
 	"github.com/openshift/osde2e/cmd/osde2e/common"
 	"github.com/openshift/osde2e/pkg/common/aws"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
@@ -18,7 +20,6 @@ import (
 	"github.com/openshift/osde2e/pkg/common/providers/ocmprovider"
 	commonslack "github.com/openshift/osde2e/pkg/common/slack"
 	"github.com/openshift/osde2e/pkg/common/spi"
-	"github.com/spf13/cobra"
 )
 
 var Cmd = &cobra.Command{
@@ -162,16 +163,23 @@ func collectActiveClusters() (map[string]bool, error) {
 	for _, env := range envs {
 		provider, err := ocmprovider.NewWithEnv(env)
 		if err != nil {
-			return nil, fmt.Errorf("could not create provider for environment %s: %v", env, err)
+			log.Printf("Warning: could not create provider for environment %s: %v (skipping)\n", env, err)
+			continue
 		}
 		providers[env] = provider
+	}
+
+	// If all environments failed to connect, return error to prevent unsafe cleanup
+	if len(providers) == 0 {
+		return nil, fmt.Errorf("failed to connect to any OCM environment (int, stage, prod)")
 	}
 
 	activeClusters := make(map[string]bool)
 	for env, provider := range providers {
 		clusters, err := provider.ListClusters("properties.MadeByOSDe2e='true'")
 		if err != nil {
-			return nil, fmt.Errorf("error listing clusters for environment %s: %v", env, err)
+			log.Printf("Warning: error listing clusters for environment %s: %v (skipping)\n", env, err)
+			continue
 		}
 
 		// Create a map with cluster names from active osde2e clusters
