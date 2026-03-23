@@ -35,6 +35,8 @@ import (
 	ctrlog "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
+const tektonurl = "https://console-openshift-console.apps.rosa.appsrep09ue1.03r5.p3.openshiftapps.com/pipelines/ns/%s-pipelines"
+
 // RunTests initializes the orchestrator and runs the complete e2e test lifecycle.
 // This includes provisioning, test execution, log analysis (on failure), and reporting.
 func RunTests(ctx context.Context) int {
@@ -366,7 +368,7 @@ func (o *E2EOrchestrator) sendDeferredNotifications(ctx context.Context, pending
 		if cl, err := o.provider.GetCluster(viper.GetString(config.Cluster.ID)); err != nil {
 			log.Printf("failed to get cluster %s: %v", viper.GetString(config.Cluster.ID), err)
 		} else if cl != nil {
-			expiration = cl.ExpirationTimestamp().String()
+			expiration = cl.ExpirationTimestamp().Format("Jan 02, 03:04 PM MST")
 		}
 	}
 
@@ -378,7 +380,10 @@ func (o *E2EOrchestrator) sendDeferredNotifications(ctx context.Context, pending
 		cfg := slack.SlackReporterConfig(webhook, true)
 		cfg.Settings["channel"] = p.TestSuite.SlackChannel
 		cfg.Settings["image"] = p.TestSuite.Image
+		cfg.Settings["repo"], cfg.Settings["commit"] = extractDetailsFromImage(p.TestSuite.Image)
 		cfg.Settings["env"] = viper.GetString(ocmprovider.Env)
+		tektonns := strings.ReplaceAll(strings.ToLower(cfg.Settings["repo"].(string)), " ", "-")
+		cfg.Settings["tekton_url"] = fmt.Sprintf(tektonurl, tektonns)
 		cfg.Settings["cluster_info"] = &slack.ClusterInfo{
 			ID:         viper.GetString(config.Cluster.ID),
 			Provider:   viper.GetString(config.Provider),
@@ -405,7 +410,7 @@ func (o *E2EOrchestrator) uploadToS3() error {
 		return nil
 	}
 
-	component := deriveComponentFromTestImage()
+	component := deriveComponentFromFirstImage()
 	uploader, err := aws.NewS3Uploader(component)
 	if err != nil {
 		return fmt.Errorf("failed to create S3 uploader: %w", err)
@@ -457,17 +462,17 @@ func s3ResultsToArtifactLinks(results []aws.S3UploadResult) []slack.ArtifactLink
 	return links
 }
 
-// deriveComponentFromTestImage determines the component name from the test image.
+// deriveComponentFromFirstImage determines the component name from the test image.
 // It extracts a meaningful name from the test image path to organize S3 artifacts.
 // Examples:
 //
 //	quay.io/org/osd-example-operator-e2e:tag -> osd-example-operator
 //	quay.io/org/my-service-test:latest -> my-service
-func deriveComponentFromTestImage() string {
+func deriveComponentFromFirstImage() string {
 	testSuites, err := config.GetTestSuites()
 	if err == nil && len(testSuites) > 0 {
 		imageName := testSuites[0].Image
-		if component := extractNameFromImage(imageName); component != "" {
+		if component, _ := extractDetailsFromImage(imageName); component != "" {
 			return component
 		}
 	}
@@ -476,20 +481,22 @@ func deriveComponentFromTestImage() string {
 	return "unknown"
 }
 
-// extractNameFromImage extracts a meaningful name from a container image path.
+// extractDetailsFromImage extracts a meaningful name from a container image path.
 // It strips the registry, organization, tag, and common test suffixes.
 // Examples:
 //
 //	quay.io/org/osd-example-operator-e2e:tag -> osd-example-operator
 //	quay.io/org/my-service-test:latest -> my-service
 //	quay.io/org/simple:v1 -> simple
-func extractNameFromImage(image string) string {
+func extractDetailsFromImage(image string) (string, string) {
 	if image == "" {
-		return ""
+		return "", ""
 	}
 
-	// Remove tag (everything after :)
+	// Separate tag (everything after :)
+	var tag string
 	if idx := strings.LastIndex(image, ":"); idx != -1 {
+		tag = image[idx+1:]
 		image = image[:idx]
 	}
 
@@ -507,7 +514,7 @@ func extractNameFromImage(image string) string {
 		}
 	}
 
-	return image
+	return image, tag
 }
 
 // PostProcessCluster performs post-processing on the cluster including must-gather,

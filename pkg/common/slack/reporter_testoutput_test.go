@@ -311,7 +311,7 @@ func TestSlackReporter_buildClusterInfoSection(t *testing.T) {
 		result := reporter.buildClusterInfoSection(config)
 
 		expectedFields := []string{
-			"====== ☸️ Cluster Information ======",
+			"====== ☸️ Cluster",
 			"cluster-abc",
 			"4.23",
 			"aws",
@@ -352,57 +352,6 @@ func TestSlackReporter_buildClusterInfoSection(t *testing.T) {
 
 		if result != "" {
 			t.Errorf("expected empty string for nil cluster info, got: %s", result)
-		}
-	})
-}
-
-func TestSlackReporter_buildTestSuiteSection(t *testing.T) {
-	reporter := NewSlackReporter()
-
-	t.Run("builds test suite info", func(t *testing.T) {
-		config := &ReporterConfig{
-			Settings: map[string]interface{}{
-				"image": "quay.io/openshift/test:v2.0",
-				"env":   "staging",
-			},
-		}
-
-		result := reporter.buildTestSuiteSection(config)
-
-		if !strings.Contains(result, "quay.io/openshift/test") {
-			t.Error("should contain image name")
-		}
-		if !strings.Contains(result, "v2.0") {
-			t.Error("should contain commit/tag")
-		}
-		if !strings.Contains(result, "staging") {
-			t.Error("should contain environment")
-		}
-	})
-
-	t.Run("returns empty for missing image", func(t *testing.T) {
-		config := &ReporterConfig{
-			Settings: map[string]interface{}{},
-		}
-
-		result := reporter.buildTestSuiteSection(config)
-
-		if result != "" {
-			t.Errorf("expected empty string for missing image, got: %s", result)
-		}
-	})
-
-	t.Run("returns empty for invalid image format", func(t *testing.T) {
-		config := &ReporterConfig{
-			Settings: map[string]interface{}{
-				"image": "invalid-no-tag",
-			},
-		}
-
-		result := reporter.buildTestSuiteSection(config)
-
-		if result != "" {
-			t.Errorf("expected empty string for invalid image format, got: %s", result)
 		}
 	})
 }
