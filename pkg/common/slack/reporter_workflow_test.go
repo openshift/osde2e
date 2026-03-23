@@ -451,26 +451,10 @@ func TestSlackReporter_ArtifactLinks(t *testing.T) {
 		}
 
 		payload := reporter.buildWorkflowPayload(result, config)
-
-		if !strings.Contains(payload.ExtendedLogs, "Artifacts") {
-			t.Error("should contain artifacts header")
-		}
-		if !strings.Contains(payload.ExtendedLogs, "test_output.log") {
-			t.Error("should list test_output.log")
-		}
-		if !strings.Contains(payload.ExtendedLogs, "junit_e2e.xml") {
-			t.Error("should list junit_e2e.xml")
-		}
-		if strings.Contains(payload.ExtendedLogs, "KB") || strings.Contains(payload.ExtendedLogs, "MB") {
-			t.Error("should not contain file sizes")
-		}
-		if !strings.Contains(payload.ExtendedLogs, "https://s3.example.com/test_output.log?sig=abc") {
-			t.Error("should contain bare URL")
-		}
-		// Should NOT contain embedded log content
-		if strings.Contains(payload.ExtendedLogs, "Log Extract") {
-			t.Error("should not contain embedded log content when artifact links are present")
-		}
+		// contains junit file
+		assert.Contains(t, payload.JunitXMLLink, "junit_e2e.xml")
+		// contains raw presigned url
+		assert.Contains(t, payload.LogLink, "https://s3.example.com/test_output.log?sig=abc")
 	})
 
 	t.Run("falls back to embedded logs when no artifact links", func(t *testing.T) {
@@ -509,37 +493,4 @@ func TestSlackReporter_ArtifactLinks(t *testing.T) {
 			t.Error("should not contain artifacts header with empty artifact links")
 		}
 	})
-}
-
-func TestSlackReporter_buildArtifactLinksSection(t *testing.T) {
-	reporter := NewSlackReporter()
-
-	links := []ArtifactLink{
-		{Name: "test_output.log", URL: "https://s3.example.com/test_output.log?sig=abc", Size: 512},
-		{Name: "junit_e2e.xml", URL: "https://s3.example.com/junit_e2e.xml?sig=def", Size: 1536},
-	}
-
-	result := reporter.buildArtifactLinksSection(links)
-
-	if !strings.Contains(result, "Artifacts") {
-		t.Error("should contain artifacts header")
-	}
-	if !strings.Contains(result, "7 days") {
-		t.Error("should mention expiry")
-	}
-	if !strings.Contains(result, "▸ test_output.log") {
-		t.Error("should contain label line for first file")
-	}
-	if !strings.Contains(result, "https://s3.example.com/test_output.log?sig=abc") {
-		t.Error("should contain bare URL for first file")
-	}
-	if !strings.Contains(result, "▸ junit_e2e.xml") {
-		t.Error("should contain label line for second file")
-	}
-	if strings.Contains(result, "<") || strings.Contains(result, "|") {
-		t.Error("should not use mrkdwn link syntax")
-	}
-	if strings.Contains(result, "KB") || strings.Contains(result, "MB") || strings.Contains(result, " B") {
-		t.Error("should not contain file sizes")
-	}
 }
