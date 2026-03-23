@@ -76,6 +76,8 @@ type WorkflowPayload struct {
 	Env            string `json:"env,omitempty"`
 	Commit         string `json:"commit,omitempty"`
 	TektonURL      string `json:"tekton_url,omitempty"`
+	LogLink        string `json:"log_link,omitempty"`
+	JunitXMLLink   string `json:"junit_xml_link,omitempty"`
 }
 
 // ClusterInfo holds cluster information for reporting
@@ -99,7 +101,17 @@ func (s *SlackReporter) buildWorkflowPayload(result *AnalysisResult, config *Rep
 	payload.Analysis = s.buildAnalysisField(result)
 
 	if links, ok := config.Settings["artifact_links"].([]ArtifactLink); ok && len(links) > 0 {
-		payload.ExtendedLogs = s.enforceFieldLimit(s.buildArtifactLinksSection(links), commonconfig.SlackMessageLength)
+		// currently artifactLinks are stored in an ordered list
+		// test output log, and then all junit xml files
+		// most commonly in PD, only one junit xml file is present,
+		// hence creating 2 slack workflow vars to print the long links gracefully
+		for _, link := range links {
+			if link.Name == "test_output.log" {
+				payload.LogLink = link.URL
+			} else {
+				payload.JunitXMLLink = link.URL
+			}
+		}
 	} else if reportDir, ok := config.Settings["report_dir"].(string); ok && reportDir != "" {
 		if testOutput := s.readTestOutput(reportDir); testOutput != "" {
 			payload.ExtendedLogs = s.enforceFieldLimit(testOutput, commonconfig.SlackMessageLength)
@@ -170,17 +182,6 @@ func (s *SlackReporter) buildClusterInfoSection(config *ReporterConfig) string {
 	builder.WriteString("\n")
 
 	return builder.String()
-}
-
-// buildArtifactLinksSection formats S3 artifact URLs for the Slack message.
-// Presigned URLs are valid for 7 days after upload.
-func (s *SlackReporter) buildArtifactLinksSection(links []ArtifactLink) string {
-	var builder strings.Builder
-	builder.WriteString("====== 🔗 Artifacts (links expire in 7 days) ======\n")
-	for _, link := range links {
-		builder.WriteString(fmt.Sprintf("▸ %s\n%s\n\n", link.Name, link.URL))
-	}
-	return strings.TrimRight(builder.String(), "\n")
 }
 
 func (s *SlackReporter) enforceFieldLimit(content string, maxLength int) string {
