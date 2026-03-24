@@ -1,4 +1,4 @@
-FROM brew.registry.redhat.io/rh-osbs/openshift-golang-builder:rhel_9_1.24 AS builder
+FROM registry.ci.openshift.org/openshift/release:rhel-9-release-golang-1.25-openshift-4.22 AS builder
 
 ENV PKG=/go/src/github.com/openshift/osde2e/test/sdn_migration/
 WORKDIR ${PKG}
