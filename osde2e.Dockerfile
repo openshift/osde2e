@@ -1,7 +1,7 @@
 FROM registry.access.redhat.com/ubi9/ubi-minimal:latest AS podman-installer
 RUN microdnf install -y podman-remote && microdnf clean all
 
-FROM brew.registry.redhat.io/rh-osbs/openshift-golang-builder:rhel_9_1.24 AS builder
+FROM registry.ci.openshift.org/openshift/release:rhel-9-release-golang-1.25-openshift-4.22 AS builder
 
 ENV GOFLAGS=
 ENV PKG=/go/src/github.com/openshift/osde2e/
