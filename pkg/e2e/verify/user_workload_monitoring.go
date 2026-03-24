@@ -153,8 +153,6 @@ func newServiceMonitor(name, namespace string) *monitoringv1.ServiceMonitor {
 			Endpoints:         []monitoringv1.Endpoint{},
 			Selector:          metav1.LabelSelector{},
 			NamespaceSelector: monitoringv1.NamespaceSelector{},
-			SampleLimit:       0,
-			TargetLimit:       0,
 		},
 	}
 }
