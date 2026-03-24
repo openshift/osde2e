@@ -76,8 +76,8 @@ type WorkflowPayload struct {
 	Env            string `json:"env,omitempty"`
 	Commit         string `json:"commit,omitempty"`
 	TektonURL      string `json:"tekton_url,omitempty"`
-	LogLink        string `json:"log_link,omitempty"`
-	JunitXMLLink   string `json:"junit_xml_link,omitempty"`
+	LogLink        string `json:"log_link"`
+	JunitXMLLink   string `json:"junit_xml_link"`
 }
 
 // ClusterInfo holds cluster information for reporting
