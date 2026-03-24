@@ -200,13 +200,31 @@ A list of commonly used environment variables are included in [Config variables]
 Some configuration settings are also exposed as command-line options.
 A full list can be displayed by providing `--help` after the command.
 
-Below is an example of using options for the `test` command:
+Below is an example of using options for the `provision` command:
+
+```shell
+./out/osde2e provision \
+  --cluster-name-prefix myteam \
+  --configs prod \
+  --environment prod
+```
+
+Below is an example of using options for the `test` command (with existing cluster):
 
 ```shell
 ./out/osde2e test --cluster-id <cluster-id> \
   --provider stage \
   --skip-health-check \
   --focus-tests "RBAC Operator"
+```
+
+Example of `test` command creating a new cluster with custom name prefix:
+
+```shell
+./out/osde2e test \
+  --cluster-name-prefix myteam \
+  --configs prod,e2e-suite \
+  --environment prod
 ```
 
 Another example below is you can skip cluster health check, must gather

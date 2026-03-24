@@ -26,6 +26,7 @@ var args struct {
 	configString         string
 	secretLocations      string
 	environment          string
+	clusterNamePrefix    string
 	skipHealthChecks     bool
 	onlyHealthCheckNodes bool
 	reserve              bool
@@ -56,6 +57,13 @@ func init() {
 		"Cluster provider environment to use.",
 	)
 
+	pfs.StringVar(
+		&args.clusterNamePrefix,
+		"cluster-name-prefix",
+		"",
+		"Prefix to use when generating cluster names (default: osde2e).",
+	)
+
 	pfs.BoolVar(
 		&args.skipHealthChecks,
 		"skip-health-check",
@@ -77,6 +85,7 @@ func init() {
 	)
 	_ = viper.BindPFlag(config.Cluster.Reserve, Cmd.PersistentFlags().Lookup("reserve"))
 	_ = viper.BindPFlag(ocmprovider.Env, Cmd.PersistentFlags().Lookup("environment"))
+	_ = viper.BindPFlag(config.Cluster.NamePrefix, Cmd.PersistentFlags().Lookup("cluster-name-prefix"))
 	_ = viper.BindPFlag(config.Tests.SkipClusterHealthChecks, Cmd.PersistentFlags().Lookup("skip-health-check"))
 	_ = viper.BindPFlag(config.Tests.OnlyHealthCheckNodes, Cmd.PersistentFlags().Lookup("only-health-check-nodes"))
 }

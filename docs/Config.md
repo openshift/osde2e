@@ -17,6 +17,7 @@ Some environment variables commonly used for pipelines under osde2e are indicate
 | CLUSTER_EXPIRY_IN_MINUTES                | Optional: Set this if you want to ensure the cluster gets cleaned up.                                                                            |
 | CLUSTER_ID                               | The value identifying the cluster. If set at start, an existing cluster is tested.                                                               |
 | CLUSTER_NAME                             | The name of the cluster to be created.                                                                                                           |
+| CLUSTER_NAME_PREFIX                      | The prefix to use when generating cluster names. Default is "osde2e".                                                                            |
 | PROVIDER                                 | Provider is what provider to use to create/delete clusters. Ex. ocm, rosa                                                                        |
 | PROVISION_SHARD_ID                       | ProvisionShardID is the shard ID that is set to provision a shard for the cluster.                                                               |
 | MULTI_AZ                                 | MultiAZ deploys a cluster across multiple availability zones.                                                                                    |
@@ -136,9 +137,20 @@ Some environment variables commonly used for pipelines under osde2e are indicate
 
 CLI flags that are commonly used include:
 
+### For the provision sub-command:
+```
+--cluster-name-prefix: Prefix to use when generating cluster names (default: osde2e).
+--configs: A comma separated list of built in configs to use. (stage, prod, e2e-suite, etc.)
+--environment: Cluster provider environment to use. (ocm, rosa, etc.).
+--skip-health-check: Skip cluster health checks.
+--only-health-check-nodes: Only validate the nodes are ready.
+--reserve: Create test cluster reserve.
+```
+
 ### For the test sub-command:
 ```
 --cluster-id: Existing OCM cluster ID to run tests against.
+--cluster-name-prefix: Prefix to use when generating cluster names (default: osde2e).
 --configs:  A comma separated list of built in configs to use. (stage, prod, e2e-suite, etc.)
 --custom-config: Custom config file for osde2e.
 --environment: Cluster provider environment to use. (ocm, rosa, etc.).

@@ -37,6 +37,7 @@ var args struct {
 	customConfig         string
 	secretLocations      string
 	clusterID            string
+	clusterNamePrefix    string
 	environment          string
 	kubeConfig           string
 	skipDestroyCluster   bool
@@ -85,6 +86,13 @@ func init() {
 		"e",
 		"",
 		"Cluster provider environment to use.",
+	)
+
+	pfs.StringVar(
+		&args.clusterNamePrefix,
+		"cluster-name-prefix",
+		"",
+		"Prefix to use when generating cluster names (default: osde2e).",
 	)
 
 	pfs.StringVarP(
@@ -146,6 +154,7 @@ func init() {
 
 	_ = viper.BindPFlag(config.Cluster.ID, Cmd.PersistentFlags().Lookup("cluster-id"))
 	_ = viper.BindPFlag(ocmprovider.Env, Cmd.PersistentFlags().Lookup("environment"))
+	_ = viper.BindPFlag(config.Cluster.NamePrefix, Cmd.PersistentFlags().Lookup("cluster-name-prefix"))
 	_ = viper.BindPFlag(config.Kubeconfig.Path, Cmd.PersistentFlags().Lookup("kube-config"))
 	_ = viper.BindPFlag(config.Cluster.SkipDestroyCluster, Cmd.PersistentFlags().Lookup("skip-destroy-cluster"))
 	_ = viper.BindPFlag(config.Tests.SkipClusterHealthChecks, Cmd.PersistentFlags().Lookup("skip-health-check"))
@@ -171,6 +180,9 @@ func run(cmd *cobra.Command, argv []string) {
 	}
 	if cmd.PersistentFlags().Changed("environment") {
 		viper.Set(ocmprovider.Env, args.environment)
+	}
+	if cmd.PersistentFlags().Changed("cluster-name-prefix") {
+		viper.Set(config.Cluster.NamePrefix, args.clusterNamePrefix)
 	}
 	if cmd.PersistentFlags().Changed("kube-config") {
 		viper.Set(config.Kubeconfig.Path, args.kubeConfig)

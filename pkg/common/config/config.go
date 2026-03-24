@@ -429,6 +429,10 @@ var Cluster = struct {
 	// Env: CLUSTER_NAME
 	Name string
 
+	// NamePrefix is the prefix used when generating cluster names.
+	// Env: CLUSTER_NAME_PREFIX
+	NamePrefix string
+
 	// Version is the version of the cluster being deployed.
 	// Env: CLUSTER_VERSION
 	Version string
@@ -509,6 +513,7 @@ var Cluster = struct {
 	CleanCheckRuns:                      "cluster.cleanCheckRuns",
 	ID:                                  "cluster.id",
 	Name:                                "cluster.name",
+	NamePrefix:                          "cluster.namePrefix",
 	Version:                             "cluster.version",
 	EnoughVersionsForOldestOrMiddleTest: "cluster.enoughVersionForOldestOrMiddleTest",
 	PreviousVersionFromDefaultFound:     "cluster.previousVersionFromDefaultFound",
@@ -867,6 +872,9 @@ func InitOSDe2eViper() {
 
 	viper.SetDefault(Cluster.Name, "")
 	_ = viper.BindEnv(Cluster.Name, "CLUSTER_NAME")
+
+	viper.SetDefault(Cluster.NamePrefix, "osde2e")
+	_ = viper.BindEnv(Cluster.NamePrefix, "CLUSTER_NAME_PREFIX")
 
 	viper.SetDefault(Cluster.Version, "")
 	_ = viper.BindEnv(Cluster.Version, "CLUSTER_VERSION")

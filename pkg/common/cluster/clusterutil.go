@@ -558,7 +558,12 @@ func clusterName() string {
 		suffix = util.RandomStr(5)
 	}
 
-	return "osde2e-" + suffix
+	prefix := viper.GetString(config.Cluster.NamePrefix)
+	if prefix == "" {
+		prefix = "osde2e"
+	}
+
+	return prefix + "-" + suffix
 }
 
 func Provision(provider spi.Provider) (*spi.Cluster, error) {
