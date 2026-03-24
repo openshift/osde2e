@@ -1,4 +1,4 @@
-FROM registry.ci.openshift.org/openshift/release:rhel-9-release-golang-1.25-openshift-4.22 AS builder
+FROM registry.ci.openshift.org/openshift/release:golang-1.25 AS builder
 WORKDIR /tmp/src
 COPY . .
 RUN make build
