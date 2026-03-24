@@ -1,4 +1,7 @@
-FROM brew.registry.redhat.io/rh-osbs/openshift-golang-builder:rhel_9_1.24 as builder
+FROM registry.access.redhat.com/ubi9/ubi-minimal:latest AS podman-installer
+RUN microdnf install -y podman-remote && microdnf clean all
+
+FROM brew.registry.redhat.io/rh-osbs/openshift-golang-builder:rhel_9_1.24 AS builder
 
 ENV GOFLAGS=
 ENV PKG=/go/src/github.com/openshift/osde2e/
@@ -20,6 +23,10 @@ COPY --from=builder /go/src/github.com/openshift/osde2e/LICENSE /licenses/.
 COPY --from=builder /usr/bin/git /usr/bin/git
 COPY --from=builder /usr/libexec/git-core/* /usr/libexec/git-core/
 COPY --from=builder /usr/share/git-core/* /usr/share/git-core/
+COPY --from=podman-installer /usr/bin/podman-remote /usr/bin/podman-remote
+COPY --from=podman-installer /usr/lib64/libsubid.so.3.0.0 /usr/lib64/libsubid.so.3.0.0
+RUN ln -s /usr/bin/podman-remote /usr/bin/podman && \
+    ln -s /usr/lib64/libsubid.so.3.0.0 /usr/lib64/libsubid.so.3
 
 ENV PATH="${PATH}:/"
 ENTRYPOINT ["/osde2e"]

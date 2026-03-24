@@ -13,20 +13,19 @@ if [ "$SKIP_MUST_GATHER" = "true" ]; then
 fi
 
 # ensure we have a clean environment
-docker rm osde2e-krknai-run
+podman rm osde2e-krknai-run
 
-# --group-add only when we can read the socket's GID (Jenkins may fail stat)
-docker_group_add=()
-if docker_gid=$(stat -c '%g' /var/run/docker.sock 2>/dev/null); then
-	docker_group_add=(--group-add "${docker_gid}")
-fi
+PODMAN_SOCK="/run/user/${UID}/podman/podman.sock"
 
-# bind mounts run into permissions issues, this creates
-# the container and copies the secrets over to ensure it has perms
-docker create --pull=always --name osde2e-krknai-run \
-	-v /var/run/docker.sock:/var/run/docker.sock \
-	-v "$(which docker)":/usr/bin/docker:ro \
-	"${docker_group_add[@]}" \
+HOST_SHARED="/tmp/${SHARED_DIR}"
+HOST_REPORT="/tmp/${REPORT_DIR}"
+mkdir -p "${HOST_SHARED}" "${HOST_REPORT}"
+
+podman create --pull=always --name osde2e-krknai-run \
+	-v "${PODMAN_SOCK}:/run/podman/podman.sock" \
+	-v "${HOST_SHARED}:${HOST_SHARED}" \
+	-v "${HOST_REPORT}:${HOST_REPORT}" \
+	-e CONTAINER_HOST="unix:///run/podman/podman.sock" \
 	-e OCM_CLIENT_ID -e OCM_CLIENT_SECRET \
 	-e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY -e AWS_ACCOUNT_ID \
 	-e GCP_CREDS_JSON \
@@ -48,13 +47,11 @@ docker create --pull=always --name osde2e-krknai-run \
 	-e KRKN_HEALTH_CHECK \
 	-e KRKN_TOP_SCENARIOS_COUNT \
 	-e GEMINI_API_KEY \
-	-e REPORT_DIR="/tmp/${REPORT_DIR}" \
-	-e SHARED_DIR="/tmp/${SHARED_DIR}" \
+	-e REPORT_DIR="${HOST_REPORT}" \
+	-e SHARED_DIR="${HOST_SHARED}" \
 	quay.io/redhat-services-prod/osde2e-cicada-tenant/osde2e:latest krkn-ai "${args[@]}"
 
-docker start -a osde2e-krknai-run
+podman start -a osde2e-krknai-run
 rc=$?
 
-# copy the krkn-ai results for publishing
-docker cp osde2e-krknai-run:/tmp/"${REPORT_DIR}" .
 exit $rc
