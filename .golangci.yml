@@ -31,6 +31,18 @@ linters:
         text: composites
       - path: (.+)\.go$
         text: 'ST1001: should not use dot imports'
+      - linters:
+          - staticcheck
+        text: 'SA1019.*aws-sdk-go is deprecated'
+      - linters:
+          - staticcheck
+        text: 'SA1019.*NewSimpleClientset is deprecated'
+      - linters:
+          - staticcheck
+        text: 'SA1019.*Endpoints is deprecated'
+      - linters:
+          - staticcheck
+        text: 'SA1019.*EndpointSubset is deprecated'
     paths:
       - third_party$
       - builtin$
