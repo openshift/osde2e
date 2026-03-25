@@ -32,6 +32,11 @@ import (
 	"sigs.k8s.io/e2e-framework/klient/k8s/resources"
 )
 
+// artifactCollectionBuffer is extra time added to the Job's ActiveDeadlineSeconds
+// beyond the suite timeout, ensuring the pause-for-artifacts sidecar stays alive
+// long enough for the executor to stream junit files after e2e-suite completes.
+const artifactCollectionBuffer = 5 * time.Minute
+
 type Config struct {
 	Environment         ocm.Environment
 	ClusterID           string
@@ -190,10 +195,14 @@ func (e *Executor) buildJobSpec(namespace string, image string) *batchv1.Job {
 			Namespace:    namespace,
 		},
 		Spec: batchv1.JobSpec{
-			Parallelism:           ptr.To[int32](1),
-			Completions:           ptr.To[int32](1),
-			BackoffLimit:          ptr.To[int32](0),
-			ActiveDeadlineSeconds: ptr.To(int64(e.cfg.Timeout.Seconds())),
+			Parallelism:  ptr.To[int32](1),
+			Completions:  ptr.To[int32](1),
+			BackoffLimit: ptr.To[int32](0),
+			// Allow extra time beyond the suite timeout for artifact collection.
+			// The suite timeout governs how long we wait for e2e-suite to finish;
+			// ActiveDeadlineSeconds must be longer to prevent the Job controller
+			// from killing the pause-for-artifacts sidecar before artifacts are streamed.
+			ActiveDeadlineSeconds: ptr.To(int64(e.cfg.Timeout.Seconds()) + int64(artifactCollectionBuffer.Seconds())),
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Annotations: map[string]string{
@@ -360,6 +369,24 @@ func (e *Executor) fetchPodLogs(ctx context.Context, clientSet *kubernetes.Clien
 }
 
 func (e *Executor) fetchArtifactFiles(ctx context.Context, clientSet *kubernetes.Clientset, pod *corev1.Pod) error {
+	// Refetch the pod to get current container statuses, then verify the
+	// pause-for-artifacts container is still running before attempting exec.
+	// Without this check, a terminated sidecar produces a confusing
+	// "unable to upgrade connection: container not found" error.
+	freshPod, err := clientSet.CoreV1().Pods(pod.Namespace).Get(ctx, pod.Name, metav1.GetOptions{})
+	if err != nil {
+		return fmt.Errorf("refreshing pod status: %w", err)
+	}
+	for _, cs := range freshPod.Status.ContainerStatuses {
+		if cs.Name == "pause-for-artifacts" {
+			if cs.State.Terminated != nil {
+				return fmt.Errorf("pause-for-artifacts container already terminated (reason: %s, exit code: %d) - unable to stream artifacts",
+					cs.State.Terminated.Reason, cs.State.Terminated.ExitCode)
+			}
+			break
+		}
+	}
+
 	execRequest := clientSet.CoreV1().RESTClient().
 		Post().
 		Resource("pods").
