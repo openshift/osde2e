@@ -1,0 +1,9 @@
+{
+  "skills": [
+    {
+      "name": "pdhelper",
+      "description": "Track progressive delivery status of commits across environments",
+      "file": "skills/pdhelper.md"
+    }
+  ]
+}
