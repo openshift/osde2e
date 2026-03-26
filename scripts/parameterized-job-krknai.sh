@@ -15,7 +15,37 @@ fi
 # ensure we have a clean environment
 podman rm osde2e-krknai-run
 
-PODMAN_SOCK="/run/user/${UID}/podman/podman.sock"
+: "${XDG_RUNTIME_DIR:=/run/user/$(id -u)}"
+PODMAN_SOCK="${XDG_RUNTIME_DIR}/podman/podman.sock"
+
+# If we start podman system service in the background, stop it on exit.
+PODMAN_SVC_PID=""
+cleanup_podman_service() {
+	if [ -n "${PODMAN_SVC_PID}" ]; then
+		kill "${PODMAN_SVC_PID}" 2>/dev/null
+		wait "${PODMAN_SVC_PID}" 2>/dev/null || true
+		PODMAN_SVC_PID=""
+	fi
+	return 0
+}
+
+# Start the podman socket if it isn't already running (e.g. before systemctl --user start podman.socket)
+if [ ! -S "${PODMAN_SOCK}" ]; then
+	mkdir -p "$(dirname "${PODMAN_SOCK}")"
+	podman system service --time=0 "unix://${PODMAN_SOCK}" &
+	PODMAN_SVC_PID=$!
+	for _ in $(seq 1 20); do
+		[ -S "${PODMAN_SOCK}" ] && break
+		sleep 0.5
+	done
+	if [ ! -S "${PODMAN_SOCK}" ]; then
+		echo "ERROR: podman API socket not available at ${PODMAN_SOCK}" >&2
+		cleanup_podman_service
+		exit 1
+	fi
+fi
+
+trap cleanup_podman_service EXIT
 
 HOST_SHARED="/tmp/${SHARED_DIR}"
 HOST_REPORT="/tmp/${REPORT_DIR}"
