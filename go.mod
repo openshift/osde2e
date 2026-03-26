@@ -62,7 +62,7 @@ require (
 	github.com/microcosm-cc/bluemonday v1.0.27
 	github.com/openshift/api v0.0.0-20260318185450-1f2fa3f09f4e
 	github.com/stretchr/testify v1.11.1
-	google.golang.org/genai v1.18.0
+	google.golang.org/genai v1.51.0
 )
 
 require (
