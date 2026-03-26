@@ -97,7 +97,11 @@ func (CcsAwsSession *ccsAwsSession) ReleaseElasticIPs(dryrun bool, sendSummary b
 				}
 			}
 		} else {
-			fmt.Printf("Skipping address %s still allocated to network interface id %s \n", *address.PublicIp, *address.NetworkInterfaceId)
+			if address.NetworkInterfaceId != nil {
+				fmt.Printf("Skipping address %s still allocated to network interface id %s \n", *address.PublicIp, *address.NetworkInterfaceId)
+			} else {
+				fmt.Printf("Skipping address %s (associated but no network interface ID)\n", *address.PublicIp)
+			}
 		}
 	}
 	fmt.Printf("Finished elastic IP cleanup. Deleted %d addresses.", *deletedCounter)
