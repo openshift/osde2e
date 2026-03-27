@@ -12,8 +12,7 @@ if [ "$SKIP_MUST_GATHER" = "true" ]; then
   args+=(--skip-must-gather)
 fi
 
-# ensure we have a clean environment
-podman rm osde2e-krknai-run
+podman rm -f osde2e-krknai-run
 
 : "${XDG_RUNTIME_DIR:=/run/user/$(id -u)}"
 PODMAN_SOCK="${XDG_RUNTIME_DIR}/podman/podman.sock"
@@ -50,6 +49,8 @@ trap cleanup_podman_service EXIT
 HOST_SHARED="/tmp/${SHARED_DIR}"
 HOST_REPORT="/tmp/${REPORT_DIR}"
 mkdir -p "${HOST_SHARED}" "${HOST_REPORT}"
+# Image runs as UID 65532; host dirs are often owned by Jenkins — allow writes for test_output.log
+chmod a+rwx "${HOST_SHARED}" "${HOST_REPORT}"
 
 podman create --pull=always --name osde2e-krknai-run \
 	-v "${PODMAN_SOCK}:/run/podman/podman.sock" \
