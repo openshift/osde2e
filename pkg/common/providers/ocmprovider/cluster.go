@@ -20,7 +20,6 @@ import (
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/spi"
-	"k8s.io/apimachinery/pkg/util/wait"
 )
 
 // IsValidClusterName validates the clustername prior to proceeding with it
@@ -588,35 +587,8 @@ func (o *OCMProvider) DeleteCluster(clusterID string) error {
 		return fmt.Errorf("cluster already uninstalling, skipped")
 	}
 
-	err = wait.PollUntilContextTimeout(context.Background(), 1*time.Minute, 15*time.Minute, false, func(ctx context.Context) (bool, error) {
-		// If the cluster state is anything but Hibernating or Ready, poll the state again
-		if cluster.State() == spi.ClusterStateReady {
-			cluster, err = o.GetCluster(clusterID)
-			if err != nil {
-				log.Printf("error retrieving cluster for deletion: %v", err)
-				return false, nil
-			}
-		}
-		// A cluster errored in OCM is unlikely to recover so we should fail fast
-		if cluster.State() == spi.ClusterStateError {
-			return false, fmt.Errorf("cluster %s is in an errored state", cluster.ID())
-		}
-
-		// We have a ready cluster, hooray
-		if cluster.State() == spi.ClusterStateReady {
-			return true, nil
-		}
-
-		// The cluster isn't ready so we should loop again
-		return false, nil
-	})
-	if err != nil {
-		return err
-	}
-
-	err = o.AddProperty(cluster, clusterproperties.Status, clusterproperties.StatusUninstalling)
-	if err != nil {
-		return fmt.Errorf("error adding uninstalling status to cluster: %v", err)
+	if cluster.State() == spi.ClusterStatePending {
+		return fmt.Errorf("cluster pending, skipped")
 	}
 
 	err = retryer().Do(func() error {

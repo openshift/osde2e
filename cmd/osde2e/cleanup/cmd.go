@@ -185,7 +185,7 @@ func collectActiveClusters() (map[string]bool, error) {
 		// Create a map with cluster names from active osde2e clusters
 		for _, cluster := range clusters {
 			activeClusters[cluster.Name()] = true
-			log.Printf("Found active cluster: %s (state: %s)\n", cluster.Name(), cluster.State())
+			log.Printf("Found active cluster: %s (state: %s, environment: %s)\n", cluster.ID(), cluster.State(), env)
 		}
 	}
 	return activeClusters, nil
