@@ -47,6 +47,7 @@ fi
 trap cleanup_podman_service EXIT
 
 podman create --pull=always --name osde2e-krknai-run \
+	--privileged \
 	-v "${PODMAN_SOCK}:/run/podman/podman.sock" \
 	-e CONTAINER_HOST="unix:///run/podman/podman.sock" \
 	-e OCM_CLIENT_ID -e OCM_CLIENT_SECRET \
