@@ -15,9 +15,10 @@ fi
 podman rm -f osde2e-krknai-run
 
 
-export DOCKER_HOST=unix:///run/user/${UID}/podman/podman.sock
+export PODMAN_SOCK=/run/user/${UID}/podman/podman.sock
 
 podman create --pull=always --name osde2e-krknai-run \
+	-v "${PODMAN_SOCK}:/var/run/podman.sock" \
 	-e OCM_CLIENT_ID -e OCM_CLIENT_SECRET \
 	-e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY -e AWS_ACCOUNT_ID \
 	-e GCP_CREDS_JSON \
