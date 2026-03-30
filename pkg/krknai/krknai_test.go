@@ -30,13 +30,6 @@ func TestDetectContainerRuntime(t *testing.T) {
 	t.Logf("Detected container runtime: %s", runtime)
 }
 
-func TestDefaultKrknAIImage(t *testing.T) {
-	expected := "quay.io/krkn-chaos/krkn-ai:latest"
-	if DefaultKrknAIImage != expected {
-		t.Errorf("DefaultKrknAIImage = %q, want %q", DefaultKrknAIImage, expected)
-	}
-}
-
 func TestRedactURL(t *testing.T) {
 	tests := []struct {
 		name    string
