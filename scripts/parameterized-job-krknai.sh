@@ -46,16 +46,8 @@ fi
 
 trap cleanup_podman_service EXIT
 
-HOST_SHARED="/tmp/${SHARED_DIR}"
-HOST_REPORT="/tmp/${REPORT_DIR}"
-mkdir -p "${HOST_SHARED}" "${HOST_REPORT}"
-# Image runs as UID 65532; host dirs are often owned by Jenkins — allow writes for test_output.log
-chmod a+rwx "${HOST_SHARED}" "${HOST_REPORT}"
-
 podman create --pull=always --name osde2e-krknai-run \
 	-v "${PODMAN_SOCK}:/run/podman/podman.sock" \
-	-v "${HOST_SHARED}:${HOST_SHARED}" \
-	-v "${HOST_REPORT}:${HOST_REPORT}" \
 	-e CONTAINER_HOST="unix:///run/podman/podman.sock" \
 	-e OCM_CLIENT_ID -e OCM_CLIENT_SECRET \
 	-e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY -e AWS_ACCOUNT_ID \
@@ -78,11 +70,14 @@ podman create --pull=always --name osde2e-krknai-run \
 	-e KRKN_HEALTH_CHECK \
 	-e KRKN_TOP_SCENARIOS_COUNT \
 	-e GEMINI_API_KEY \
-	-e REPORT_DIR="${HOST_REPORT}" \
-	-e SHARED_DIR="${HOST_SHARED}" \
+	-e REPORT_DIR="/tmp/${REPORT_DIR}" \
+	-e SHARED_DIR="/tmp/${SHARED_DIR}" \
 	quay.io/redhat-services-prod/osde2e-cicada-tenant/osde2e:latest krkn-ai "${args[@]}"
 
 podman start -a osde2e-krknai-run
 rc=$?
+
+# copy results for publishing (same as parameterized-job.sh docker cp)
+podman cp osde2e-krknai-run:/tmp/osde2e-report .
 
 exit $rc
