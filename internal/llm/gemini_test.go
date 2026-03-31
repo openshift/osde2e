@@ -14,6 +14,25 @@ func TestGeminiClient_ImplementsInterface(t *testing.T) {
 	var _ LLMClient = (*GeminiClient)(nil)
 }
 
+func TestGeminiClient_ModelSupported(t *testing.T) {
+	apiKey := os.Getenv("GEMINI_API_KEY")
+	if apiKey == "" {
+		t.Skip("GEMINI_API_KEY not set, skipping integration test")
+	}
+
+	ctx := context.Background()
+	client, err := genai.NewClient(ctx, &genai.ClientConfig{
+		APIKey:  apiKey,
+		Backend: genai.BackendGeminiAPI,
+	})
+	require.NoError(t, err)
+
+	model, err := client.Models.Get(ctx, DefaultModel, nil)
+	require.NoError(t, err, "model %q is not available in the Gemini API", DefaultModel)
+	assert.Equal(t, "models/"+DefaultModel, model.Name)
+	t.Logf("Model %q is available", DefaultModel)
+}
+
 func TestGeminiClient_Integration(t *testing.T) {
 	apiKey := os.Getenv("GEMINI_API_KEY")
 	if apiKey == "" {

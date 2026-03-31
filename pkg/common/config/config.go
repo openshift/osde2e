@@ -941,7 +941,7 @@ func InitOSDe2eViper() {
 	_ = viper.BindEnv(LogAnalysis.APIKey, "GEMINI_API_KEY")
 	RegisterSecret(LogAnalysis.APIKey, "gemini-api-key")
 
-	viper.SetDefault(LogAnalysis.Model, "gemini-3.1-pro")
+	viper.SetDefault(LogAnalysis.Model, "gemini-3.1-pro-preview")
 	_ = viper.BindEnv(LogAnalysis.Model, "LLM_MODEL")
 
 	viper.SetDefault(LogAnalysis.SlackWebhook, "")

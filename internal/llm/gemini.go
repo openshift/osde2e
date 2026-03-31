@@ -9,12 +9,18 @@ import (
 	"github.com/openshift/osde2e/internal/llm/tools"
 )
 
+const DefaultModel = "gemini-3.1-pro-preview"
+
 type GeminiClient struct {
 	client *genai.Client
 	model  string
 }
 
 func NewGeminiClient(ctx context.Context, apiKey string) (*GeminiClient, error) {
+	return NewGeminiClientWithModel(ctx, apiKey, DefaultModel)
+}
+
+func NewGeminiClientWithModel(ctx context.Context, apiKey, model string) (*GeminiClient, error) {
 	client, err := genai.NewClient(ctx, &genai.ClientConfig{
 		APIKey:  apiKey,
 		Backend: genai.BackendGeminiAPI,
@@ -25,7 +31,7 @@ func NewGeminiClient(ctx context.Context, apiKey string) (*GeminiClient, error) 
 
 	return &GeminiClient{
 		client: client,
-		model:  "gemini-3.1-pro",
+		model:  model,
 	}, nil
 }
 
