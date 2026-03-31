@@ -32,8 +32,12 @@ systemctl --user status podman.socket
 
 export PODMAN_SOCK=/run/user/${UID}/podman/podman.sock
 
+CONTAINER_SOCK_INNER="unix:///var/run/podman.sock"
+
 podman create --pull=always --name osde2e-krknai-run \
 	-v "${PODMAN_SOCK}:/var/run/podman.sock" \
+	-e "CONTAINER_HOST=${CONTAINER_SOCK_INNER}" \
+	-e "DOCKER_HOST=${CONTAINER_SOCK_INNER}" \
 	-e OCM_CLIENT_ID -e OCM_CLIENT_SECRET \
 	-e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY -e AWS_ACCOUNT_ID \
 	-e GCP_CREDS_JSON \
