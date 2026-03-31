@@ -14,6 +14,20 @@ fi
 
 podman rm -f osde2e-krknai-run
 
+PODMAN_SOCKET_STARTED=false
+cleanup_podman_socket() {
+	if [ "${PODMAN_SOCKET_STARTED_BY_US}" = true ]; then
+		systemctl --user stop podman.socket 2>/dev/null || true
+	fi
+}
+trap cleanup_podman_socket EXIT
+
+if ! systemctl --user is-active --quiet podman.socket 2>/dev/null; then
+	if systemctl --user start podman.socket; then
+		PODMAN_SOCKET_STARTED=true
+	fi
+fi
+
 systemctl --user status podman.socket
 
 export PODMAN_SOCK=/run/user/${UID}/podman/podman.sock
