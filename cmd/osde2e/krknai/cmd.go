@@ -119,6 +119,11 @@ func runKrknAI(ctx context.Context) int {
 		return config.Failure
 	}
 
+	if err := orch.PreProcess(ctx); err != nil {
+		log.Printf("Pre-processing failed: %v", err)
+		return config.Failure
+	}
+
 	if err := orch.Provision(ctx); err != nil {
 		log.Printf("Provision failed: %v", err)
 		return config.Failure

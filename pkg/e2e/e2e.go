@@ -128,6 +128,12 @@ func NewOrchestrator(ctx context.Context) (orchestrator.Orchestrator, error) {
 	}, nil
 }
 
+// PreProcess is a no-op for the E2E orchestrator; validation is handled
+// by the existing config loading pipeline.
+func (o *E2EOrchestrator) PreProcess(ctx context.Context) error {
+	return nil
+}
+
 // Provision prepares the cluster environment.
 func (o *E2EOrchestrator) Provision(ctx context.Context) error {
 	ctrlog.SetLogger(ginkgo.GinkgoLogr)
