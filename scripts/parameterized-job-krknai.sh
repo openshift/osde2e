@@ -34,7 +34,10 @@ export PODMAN_SOCK=/run/user/${UID}/podman/podman.sock
 
 CONTAINER_SOCK_INNER="unix:///var/run/podman.sock"
 
+# Run as the Jenkins/agent UID so we can connect to the rootless podman socket (mode 0600, same owner).
+# Image default USER 65532 would get "permission denied" on the mounted socket.
 podman create --pull=always --name osde2e-krknai-run \
+	--user "$(id -u):$(id -g)" \
 	-v "${PODMAN_SOCK}:/var/run/podman.sock" \
 	-e "CONTAINER_HOST=${CONTAINER_SOCK_INNER}" \
 	-e "DOCKER_HOST=${CONTAINER_SOCK_INNER}" \
