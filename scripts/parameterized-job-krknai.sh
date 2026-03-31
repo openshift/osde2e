@@ -14,7 +14,7 @@ fi
 
 podman rm -f osde2e-krknai-run
 
-systemctl status podman.socket
+systemctl --user status podman.socket
 
 export PODMAN_SOCK=/run/user/${UID}/podman/podman.sock
 
