@@ -16,7 +16,7 @@ podman rm -f osde2e-krknai-run
 
 PODMAN_SOCKET_STARTED=false
 cleanup_podman_socket() {
-	if [ "${PODMAN_SOCKET_STARTED_BY_US}" = true ]; then
+	if [ "${PODMAN_SOCKET_STARTED}" = true ]; then
 		systemctl --user stop podman.socket 2>/dev/null || true
 	fi
 }
@@ -38,6 +38,10 @@ podman create --pull=always --name osde2e-krknai-run \
 	-v "${PODMAN_SOCK}:/var/run/podman.sock" \
 	-e "CONTAINER_HOST=${CONTAINER_SOCK_INNER}" \
 	-e "DOCKER_HOST=${CONTAINER_SOCK_INNER}" \
+	-e HOME=/tmp \
+	-e XDG_CONFIG_HOME=/tmp/.config \
+	-e XDG_DATA_HOME=/tmp/.local/share \
+	-e TMPDIR=/tmp \
 	-e OCM_CLIENT_ID -e OCM_CLIENT_SECRET \
 	-e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY -e AWS_ACCOUNT_ID \
 	-e GCP_CREDS_JSON \
