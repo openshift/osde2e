@@ -6,6 +6,11 @@ import "context"
 // Orchestrator manages the complete lifecycle of e2e test execution including
 // cluster provisioning, test execution, failure analysis, and reporting.
 type Orchestrator interface {
+	// PreProcess validates configuration and environment prerequisites before
+	// heavy operations like cluster provisioning. Implementations should fail
+	// fast with clear error messages for invalid user inputs.
+	PreProcess(ctx context.Context) error
+
 	// Provision prepares the test environment by provisioning or reusing a cluster,
 	// loading kubeconfig, and installing required addons.
 	Provision(ctx context.Context) error

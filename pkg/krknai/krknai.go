@@ -72,6 +72,57 @@ func New(ctx context.Context) (orchestrator.Orchestrator, error) {
 	}, nil
 }
 
+// PreProcess validates all user-supplied configuration before heavy operations.
+// It ensures that required fields are set, optional fields have valid formats,
+// and the container runtime is available.
+func (k *KrknAI) PreProcess(ctx context.Context) error {
+	log.Println("Validating krkn-ai configuration")
+	var errs []string
+
+	if viper.GetString(config.Cluster.ID) == "" {
+		errs = append(errs, "CLUSTER_ID is required: provide an existing cluster ID to run chaos tests against")
+	}
+
+	if fq := viper.GetString(config.KrknAI.FitnessQuery); fq != "" {
+		if err := validatePromQL(fq); err != nil {
+			errs = append(errs, fmt.Sprintf("KRKN_FITNESS_QUERY: %v", err))
+		}
+	}
+
+	if hc := viper.GetString(config.KrknAI.HealthCheck); hc != "" {
+		apps, err := parseHealthCheckEndpoints(hc)
+		if err != nil {
+			errs = append(errs, fmt.Sprintf("KRKN_HEALTH_CHECK: %v", err))
+		} else {
+			for _, app := range apps {
+				rawURL, _ := app["url"].(string)
+				if !isClusterHealthEndpoint(rawURL) {
+					name, _ := app["name"].(string)
+					errs = append(errs, fmt.Sprintf(
+						"KRKN_HEALTH_CHECK: URL for %q must be a cluster API /health endpoint, got %s",
+						name, redactURL(rawURL)))
+				}
+			}
+			if err := validateHealthCheckURLsReachable(ctx, apps); err != nil {
+				errs = append(errs, err.Error())
+			}
+		}
+	}
+
+	if !viper.GetBool(config.DryRun) {
+		if _, err := detectContainerRuntime(); err != nil {
+			errs = append(errs, err.Error())
+		}
+	}
+
+	if len(errs) > 0 {
+		return fmt.Errorf("pre-processing validation failed:\n  - %s", strings.Join(errs, "\n  - "))
+	}
+
+	log.Println("Configuration validation passed")
+	return nil
+}
+
 // Provision prepares the test environment by provisioning or reusing a cluster,
 // loading kubeconfig, and installing required addons.
 func (k *KrknAI) Provision(ctx context.Context) error {
@@ -108,7 +159,7 @@ func (k *KrknAI) Execute(ctx context.Context) error {
 
 		// Step 2: Update the YAML config with discovered targets (skip in dry-run mode)
 		log.Println("Updating config with discovered targets")
-		if err := k.updateKrknConfig(ctx); err != nil {
+		if err := k.updateKrknConfig(); err != nil {
 			return k.handleExecutionError(fmt.Errorf("failed to update config: %w", err))
 		}
 
@@ -232,7 +283,7 @@ func (k *KrknAI) getPrometheusToken(ctx context.Context) (string, error) {
 }
 
 // updateKrknConfig updates the Krkn-ai output YAML with values from viper config.
-func (k *KrknAI) updateKrknConfig(ctx context.Context) error {
+func (k *KrknAI) updateKrknConfig() error {
 	sharedDir := viper.GetString(config.SharedDir)
 	fitnessQuery := viper.GetString(config.KrknAI.FitnessQuery)
 	scenarios := viper.GetString(config.KrknAI.Scenarios)
@@ -244,9 +295,6 @@ func (k *KrknAI) updateKrknConfig(ctx context.Context) error {
 	if healthCheck != "" {
 		apps, err := parseHealthCheckEndpoints(healthCheck)
 		if err != nil {
-			return err
-		}
-		if err := validateHealthCheckURLsReachable(ctx, apps); err != nil {
 			return err
 		}
 		healthCheckApps = apps

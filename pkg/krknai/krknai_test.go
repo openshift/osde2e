@@ -12,6 +12,7 @@ import (
 
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
+	"github.com/openshift/osde2e/pkg/common/orchestrator"
 )
 
 func TestDetectContainerRuntime(t *testing.T) {
@@ -193,6 +194,144 @@ func TestParseHealthCheckEndpoints(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestValidatePromQL(t *testing.T) {
+	tests := []struct {
+		name    string
+		query   string
+		wantErr bool
+	}{
+		{"valid simple metric", "up", false},
+		{"valid rate expression", "sum(rate(http_requests_total[5m]))", false},
+		{"valid with labels", `http_requests_total{method="GET"}`, false},
+		{"valid nested", "histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket[5m])) by (le))", false},
+		{"empty query", "", true},
+		{"whitespace only", "   ", true},
+		{"unbalanced paren", "sum(rate(http_requests_total[5m])", true},
+		{"unbalanced bracket", "rate(metric[5m)", true},
+		{"unbalanced brace", `metric{label="value"`, true},
+		{"extra closing paren", "sum(up))", true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := validatePromQL(tt.query)
+			if tt.wantErr {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestIsClusterHealthEndpoint(t *testing.T) {
+	tests := []struct {
+		name string
+		url  string
+		want bool
+	}{
+		{"valid /health path", "https://api.cluster.example.com:6443/health", true},
+		{"valid with trailing slash", "https://api.cluster.example.com:6443/health/", true},
+		{"wrong path /readyz", "https://api.cluster.example.com:6443/readyz", false},
+		{"no path", "https://api.cluster.example.com:6443", false},
+		{"path /healthz not /health", "https://api.cluster.example.com:6443/healthz", false},
+		{"nested health path", "https://api.cluster.example.com:6443/api/health", true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.want, isClusterHealthEndpoint(tt.url))
+		})
+	}
+}
+
+func TestPreProcess(t *testing.T) {
+	saveAndRestore := func(keys ...string) func() {
+		saved := make(map[string]interface{})
+		for _, k := range keys {
+			saved[k] = viper.Get(k)
+		}
+		return func() {
+			for _, k := range keys {
+				viper.Set(k, saved[k])
+			}
+		}
+	}
+
+	t.Run("missing cluster_id returns error", func(t *testing.T) {
+		restore := saveAndRestore(config.Cluster.ID, config.DryRun)
+		defer restore()
+		viper.Set(config.Cluster.ID, "")
+		viper.Set(config.DryRun, true)
+
+		k := &KrknAI{result: &orchestrator.Result{}}
+		err := k.PreProcess(context.Background())
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "CLUSTER_ID is required")
+	})
+
+	t.Run("invalid promql returns error", func(t *testing.T) {
+		restore := saveAndRestore(config.Cluster.ID, config.KrknAI.FitnessQuery, config.DryRun)
+		defer restore()
+		viper.Set(config.Cluster.ID, "test-123")
+		viper.Set(config.KrknAI.FitnessQuery, "sum(rate(metric[5m])")
+		viper.Set(config.DryRun, true)
+
+		k := &KrknAI{result: &orchestrator.Result{}}
+		err := k.PreProcess(context.Background())
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "KRKN_FITNESS_QUERY")
+	})
+
+	t.Run("health check without /health path returns error", func(t *testing.T) {
+		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			w.WriteHeader(200)
+		}))
+		defer ts.Close()
+
+		restore := saveAndRestore(config.Cluster.ID, config.KrknAI.HealthCheck, config.DryRun)
+		defer restore()
+		viper.Set(config.Cluster.ID, "test-123")
+		viper.Set(config.KrknAI.HealthCheck, "api="+ts.URL+"/readyz")
+		viper.Set(config.DryRun, true)
+
+		k := &KrknAI{result: &orchestrator.Result{}}
+		err := k.PreProcess(context.Background())
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "/health endpoint")
+	})
+
+	t.Run("valid config passes in dry-run", func(t *testing.T) {
+		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			w.WriteHeader(200)
+		}))
+		defer ts.Close()
+
+		restore := saveAndRestore(config.Cluster.ID, config.KrknAI.FitnessQuery, config.KrknAI.HealthCheck, config.DryRun)
+		defer restore()
+		viper.Set(config.Cluster.ID, "test-123")
+		viper.Set(config.KrknAI.FitnessQuery, "sum(rate(http_requests_total[5m]))")
+		viper.Set(config.KrknAI.HealthCheck, "cluster="+ts.URL+"/health")
+		viper.Set(config.DryRun, true)
+
+		k := &KrknAI{result: &orchestrator.Result{}}
+		err := k.PreProcess(context.Background())
+		require.NoError(t, err)
+	})
+
+	t.Run("collects multiple errors", func(t *testing.T) {
+		restore := saveAndRestore(config.Cluster.ID, config.KrknAI.FitnessQuery, config.DryRun)
+		defer restore()
+		viper.Set(config.Cluster.ID, "")
+		viper.Set(config.KrknAI.FitnessQuery, "bad(query[")
+		viper.Set(config.DryRun, true)
+
+		k := &KrknAI{result: &orchestrator.Result{}}
+		err := k.PreProcess(context.Background())
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "CLUSTER_ID")
+		assert.Contains(t, err.Error(), "KRKN_FITNESS_QUERY")
+	})
 }
 
 func TestMarkdownToHTML(t *testing.T) {

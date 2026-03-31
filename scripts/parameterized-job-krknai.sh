@@ -15,6 +15,7 @@ fi
 podman rm -f osde2e-krknai-run
 
 PODMAN_SOCKET_STARTED=false
+# shellcheck disable=SC2329
 cleanup_podman_socket() {
 	if [ "${PODMAN_SOCKET_STARTED}" = true ]; then
 		systemctl --user stop podman.socket 2>/dev/null || true

@@ -1,4 +1,4 @@
-// Health-check URL parsing and validation for krkn-ai config.
+// Input validation and health-check URL parsing for krkn-ai config.
 package krknai
 
 import (
@@ -9,6 +9,52 @@ import (
 	"strings"
 	"time"
 )
+
+// validatePromQL performs lightweight structural validation of a PromQL expression.
+// It checks for balanced parentheses/brackets and rejects obviously malformed input.
+// Full semantic validation happens server-side when krkn-ai evaluates the query.
+func validatePromQL(query string) error {
+	query = strings.TrimSpace(query)
+	if query == "" {
+		return fmt.Errorf("empty query")
+	}
+
+	var stack []rune
+	for _, r := range query {
+		switch r {
+		case '(', '[', '{':
+			stack = append(stack, r)
+		case ')':
+			if len(stack) == 0 || stack[len(stack)-1] != '(' {
+				return fmt.Errorf("unbalanced parenthesis in query: %s", query)
+			}
+			stack = stack[:len(stack)-1]
+		case ']':
+			if len(stack) == 0 || stack[len(stack)-1] != '[' {
+				return fmt.Errorf("unbalanced bracket in query: %s", query)
+			}
+			stack = stack[:len(stack)-1]
+		case '}':
+			if len(stack) == 0 || stack[len(stack)-1] != '{' {
+				return fmt.Errorf("unbalanced brace in query: %s", query)
+			}
+			stack = stack[:len(stack)-1]
+		}
+	}
+	if len(stack) > 0 {
+		return fmt.Errorf("unclosed %c in query: %s", stack[len(stack)-1], query)
+	}
+	return nil
+}
+
+// isClusterHealthEndpoint returns true when the URL path ends with "/health".
+func isClusterHealthEndpoint(rawURL string) bool {
+	u, err := url.Parse(rawURL)
+	if err != nil {
+		return false
+	}
+	return strings.HasSuffix(strings.TrimRight(u.Path, "/"), "/health")
+}
 
 // redactURL returns a URL string safe for logging: userinfo and query are stripped.
 // Invalid URLs return "<redacted>".
