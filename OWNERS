@@ -9,3 +9,23 @@ approvers:
   - yiqinzhang
   - varunraokadaparthi
   - christophermancini
+
+filters:
+  # Exclude openshift-osde2e-main.yaml and config.prowgen from ROSA engineer approval
+  "^(openshift-osde2e-main\\.yaml|config\\.prowgen)$":
+    approvers:
+      - ritmun
+      - yiqinzhang
+      - varunraokadaparthi
+      - christophermancini
+  # All other files can be approved by ROSA engineers
+  ".*":
+    approvers:
+      - bmeng
+      - dustman9000
+      - smarthall
+      - ravitri
+      - ritmun
+      - yiqinzhang
+      - varunraokadaparthi
+      - christophermancini
