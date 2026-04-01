@@ -40,8 +40,9 @@ CONTAINER_SOCK_INNER="unix:///var/run/podman.sock"
 # the socket owner even with --user $(id -u), causing "connect: permission denied".
 podman create --pull=always --name osde2e-krknai-run \
 	--userns=keep-id \
+	--security-opt label=disable \
 	--user "$(id -u):$(id -g)" \
-	-v "${PODMAN_SOCK}:/var/run/podman.sock" \
+	-v "${PODMAN_SOCK}:/var/run/podman.sock:z" \
 	-e "CONTAINER_HOST=${CONTAINER_SOCK_INNER}" \
 	-e "DOCKER_HOST=${CONTAINER_SOCK_INNER}" \
 	-e HOME=/tmp \
