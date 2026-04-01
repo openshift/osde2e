@@ -82,9 +82,3 @@ podman create --pull=always --name osde2e-krknai-run \
 	quay.io/vkadapar_openshift/osde2e:local krkn-ai "${args[@]}"
 
 podman start -a osde2e-krknai-run
-rc=$?
-
-# copy results for publishing (same as parameterized-job.sh docker cp)
-podman cp "osde2e-krknai-run:${HOST_REPORT}" .
-
-exit $rc
