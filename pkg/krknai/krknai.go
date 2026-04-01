@@ -38,8 +38,7 @@ var reportTemplate []byte
 
 const (
 	// DefaultKrknAIImage is the default container image for Kraken AI chaos testing.
-	// This value is also set as the viper default in config.KrknAI.Image.
-	DefaultKrknAIImage = "quay.io/krkn-chaos/krkn-ai:v0.03"
+	DefaultKrknAIImage = "quay.io/krkn-chaos/krkn-ai:0.0.3"
 
 	// Container mount paths
 	containerMountPath   = "/mount"

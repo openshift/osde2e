@@ -35,6 +35,11 @@ export PODMAN_SOCK=/run/user/${UID}/podman/podman.sock
 
 CONTAINER_SOCK_INNER="unix:///var/run/podman.sock"
 
+HOST_REPORT="/tmp/${REPORT_DIR}"
+HOST_SHARED="/tmp/${SHARED_DIR}"
+mkdir -p "${HOST_REPORT}" "${HOST_SHARED}"
+chmod a+rwx "${HOST_REPORT}" "${HOST_SHARED}" 2>/dev/null || true
+
 # Run as the Jenkins/agent UID and keep host mapping so we can use the rootless podman socket (0600).
 # Without --userns=keep-id, rootless Podman maps container UIDs to subuids; the process no longer matches
 # the socket owner even with --user $(id -u), causing "connect: permission denied".
@@ -43,6 +48,8 @@ podman create --pull=always --name osde2e-krknai-run \
 	--security-opt label=disable \
 	--user "$(id -u):$(id -g)" \
 	-v "${PODMAN_SOCK}:/var/run/podman.sock:z" \
+	-v "${HOST_REPORT}:${HOST_REPORT}:z" \
+	-v "${HOST_SHARED}:${HOST_SHARED}:z" \
 	-e "CONTAINER_HOST=${CONTAINER_SOCK_INNER}" \
 	-e "DOCKER_HOST=${CONTAINER_SOCK_INNER}" \
 	-e HOME=/tmp \
@@ -70,14 +77,14 @@ podman create --pull=always --name osde2e-krknai-run \
 	-e KRKN_HEALTH_CHECK \
 	-e KRKN_TOP_SCENARIOS_COUNT \
 	-e GEMINI_API_KEY \
-	-e REPORT_DIR="/tmp/${REPORT_DIR}" \
-	-e SHARED_DIR="/tmp/${SHARED_DIR}" \
+	-e REPORT_DIR="${HOST_REPORT}" \
+	-e SHARED_DIR="${HOST_SHARED}" \
 	quay.io/vkadapar_openshift/osde2e:local krkn-ai "${args[@]}"
 
 podman start -a osde2e-krknai-run
 rc=$?
 
 # copy results for publishing (same as parameterized-job.sh docker cp)
-podman cp osde2e-krknai-run:/tmp/osde2e-report .
+podman cp "osde2e-krknai-run:${HOST_REPORT}" .
 
 exit $rc
