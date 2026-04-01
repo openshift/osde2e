@@ -1,6 +1,7 @@
 package aws
 
 import (
+	"errors"
 	"fmt"
 	"io/fs"
 	"log"
@@ -17,6 +18,10 @@ import (
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
 )
+
+// ErrNoAWSCredentials is returned when S3 upload is requested but no AWS
+// credentials are configured. Callers should treat this as a non-fatal skip.
+var ErrNoAWSCredentials = errors.New("S3 upload skipped: AWS credentials not configured (set AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY)")
 
 const (
 	velerosubstr     = "managed-velero"
@@ -145,6 +150,12 @@ type S3UploadResult struct {
 // and reusability. Caller should check config and decide whether to upload.
 func NewS3Uploader(component string) (*S3Uploader, error) {
 	bucket := viper.GetString(config.Tests.LogBucket)
+
+	if viper.GetString(config.AWSProfile) == "" &&
+		viper.GetString(config.AWSAccessKey) == "" &&
+		viper.GetString(config.AWSSecretAccessKey) == "" {
+		return nil, ErrNoAWSCredentials
+	}
 
 	// Use the global AWS session for credentials, but override the region
 	// for the S3 client. The log bucket lives in a fixed AWS region that is
