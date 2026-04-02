@@ -249,7 +249,7 @@ func captureViperConfig() viperConfig {
 		version:           viper.GetString(config.Cluster.Version),
 		apiKey:            viper.GetString(config.LogAnalysis.APIKey),
 		enableSlackNotify: viper.GetBool(config.Tests.EnableSlackNotify),
-		slackWebhook:      viper.GetString(config.LogAnalysis.SlackWebhook),
+		slackWebhook:      viper.GetString(config.Slack.WebhookURL),
 		slackChannel:      viper.GetString(config.LogAnalysis.SlackChannel),
 	}
 }
@@ -264,6 +264,6 @@ func restoreViperConfig(cfg viperConfig) {
 	viper.Set(config.Cluster.Version, cfg.version)
 	viper.Set(config.LogAnalysis.APIKey, cfg.apiKey)
 	viper.Set(config.Tests.EnableSlackNotify, cfg.enableSlackNotify)
-	viper.Set(config.LogAnalysis.SlackWebhook, cfg.slackWebhook)
+	viper.Set(config.Slack.WebhookURL, cfg.slackWebhook)
 	viper.Set(config.LogAnalysis.SlackChannel, cfg.slackChannel)
 }
