@@ -197,7 +197,7 @@ func sendSlackNotification(msg Message, runErr error) {
 	if !args.sendSummary {
 		return
 	}
-	webhook := viper.GetString(config.Tests.SlackWebhook)
+	webhook := viper.GetString(config.Slack.WebhookURL)
 	if webhook == "" {
 		fmt.Println("Slack Webhook is not set, skipping notification.")
 		return

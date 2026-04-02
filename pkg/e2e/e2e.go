@@ -314,7 +314,7 @@ func (o *E2EOrchestrator) Report(ctx context.Context) error {
 func (o *E2EOrchestrator) sendFailureNotification(ctx context.Context) {
 	reportDir := viper.GetString(config.ReportDir)
 	notificationConfig := slack.BuildNotificationConfig(
-		viper.GetString(config.LogAnalysis.SlackWebhook),
+		viper.GetString(config.Slack.WebhookURL),
 		viper.GetString(config.Tests.SlackChannel),
 		&slack.ClusterInfo{
 			ID:       viper.GetString(config.Cluster.ID),
@@ -362,7 +362,7 @@ func (o *E2EOrchestrator) sendFailureNotification(ctx context.Context) {
 // queued by adhoctestimages during test execution. Called by Report after S3
 // upload so that presigned URLs are available for inclusion in the message.
 func (o *E2EOrchestrator) sendDeferredNotifications(ctx context.Context, pending []adhoctestimages.PendingNotification) {
-	webhook := viper.GetString(config.LogAnalysis.SlackWebhook)
+	webhook := viper.GetString(config.Slack.WebhookURL)
 	if webhook == "" || !viper.GetBool(config.Tests.EnableSlackNotify) {
 		return
 	}

@@ -226,6 +226,15 @@ var Kubeconfig = struct {
 	Contents: "kubeconfig.contents",
 }
 
+var Slack = struct {
+	// WebhookURL is the url to the slack workflow webhook url where notification data will be sent.
+	// Registered as file: notifier_slack_webhook
+	// Env: SLACK_WEBHOOK
+	WebhookURL string
+}{
+	WebhookURL: "slack.webhookURL",
+}
+
 // Tests config keys
 var Tests = struct {
 	// SuiteTimeout is how long (in hours) to wait for the entire suite to finish before timing out
@@ -259,10 +268,6 @@ var Tests = struct {
 	// receive an alert if the tests fail.
 	// Env: SLACK_CHANNEL
 	SlackChannel string
-
-	// Slack Webhook is the URL to osde2e owner channel for Cloud Account Cleanup Report workflow to send notifications.
-	// Env: SLACK_WEBHOOK
-	SlackWebhook string
 
 	// SlackNotify is a boolean that determines if Slack notifications should be sent.
 	// Env: SLACK_NOTIFY
@@ -329,7 +334,6 @@ var Tests = struct {
 	PollingTimeout:             "tests.pollingTimeout",
 	ServiceAccount:             "tests.serviceAccount",
 	SlackChannel:               "tests.slackChannel",
-	SlackWebhook:               "tests.slackWebhook",
 	EnableSlackNotify:          "tests.enableSlackNotify",
 	GinkgoSkip:                 "tests.ginkgoSkip",
 	GinkgoFocus:                "tests.focus",
@@ -602,10 +606,6 @@ var LogAnalysis = struct {
 	// Env: LLM_MODEL
 	Model string
 
-	// SlackWebhook is the Slack webhook URL for log analysis notifications
-	// Env: LOG_ANALYSIS_SLACK_WEBHOOK
-	SlackWebhook string
-
 	// SlackChannel is the default Slack channel for OSDE2E notifications
 	// Env: LOG_ANALYSIS_SLACK_CHANNEL
 	SlackChannel string
@@ -613,7 +613,6 @@ var LogAnalysis = struct {
 	EnableAnalysis: "logAnalysis.enableAnalysis",
 	APIKey:         "logAnalysis.apiKey",
 	Model:          "logAnalysis.model",
-	SlackWebhook:   "logAnalysis.slackWebhook",
 	SlackChannel:   "logAnalysis.slackChannel",
 }
 
@@ -796,8 +795,8 @@ func InitOSDe2eViper() {
 	viper.SetDefault(Tests.SlackChannel, "hcm-cicd-alerts")
 	_ = viper.BindEnv(Tests.SlackChannel, "SLACK_CHANNEL")
 
-	_ = viper.BindEnv(Tests.SlackWebhook, "SLACK_WEBHOOK")
-	RegisterSecret(Tests.SlackWebhook, "cleanup-job-notification-webhook")
+	_ = viper.BindEnv(Slack.WebhookURL, "SLACK_WEBHOOK")
+	RegisterSecret(Slack.WebhookURL, "notifier_slack_webhook")
 
 	viper.SetDefault(Tests.EnableSlackNotify, false)
 	_ = viper.BindEnv(Tests.EnableSlackNotify, "SLACK_NOTIFY")
@@ -943,10 +942,6 @@ func InitOSDe2eViper() {
 
 	viper.SetDefault(LogAnalysis.Model, "gemini-3.1-pro-preview")
 	_ = viper.BindEnv(LogAnalysis.Model, "LLM_MODEL")
-
-	viper.SetDefault(LogAnalysis.SlackWebhook, "")
-	_ = viper.BindEnv(LogAnalysis.SlackWebhook, "LOG_ANALYSIS_SLACK_WEBHOOK")
-	RegisterSecret(LogAnalysis.SlackWebhook, "notifier_slack_webhook")
 
 	viper.SetDefault(LogAnalysis.SlackChannel, defaultNotificationsChannel)
 	_ = viper.BindEnv(LogAnalysis.SlackChannel, "LOG_ANALYSIS_SLACK_CHANNEL")

@@ -143,7 +143,7 @@ go test -v -run TestSlackReporter_extractFailureBlocks
 #### Integration Test (with real Slack)
 ```bash
 # Set environment variables
-export LOG_ANALYSIS_SLACK_WEBHOOK="https://hooks.slack.com/workflows/..."
+export SLACK_WEBHOOK="https://hooks.slack.com/workflows/..."
 export LOG_ANALYSIS_SLACK_CHANNEL="C06HQR8HN0L"
 
 # Run integration test
