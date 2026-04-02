@@ -3,6 +3,7 @@ package e2e
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -418,11 +419,12 @@ func (o *E2EOrchestrator) uploadToS3() error {
 
 	component := deriveComponentFromFirstImage()
 	uploader, err := aws.NewS3Uploader(component)
+	if errors.Is(err, aws.ErrNoAWSCredentials) {
+		log.Printf("%v", err)
+		return nil
+	}
 	if err != nil {
 		return fmt.Errorf("failed to create S3 uploader: %w", err)
-	}
-	if uploader == nil {
-		return nil
 	}
 
 	reportDir := viper.GetString(config.ReportDir)

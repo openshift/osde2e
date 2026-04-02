@@ -1,6 +1,7 @@
 package aws
 
 import (
+	"errors"
 	"fmt"
 	"io/fs"
 	"log"
@@ -18,9 +19,14 @@ import (
 	"github.com/openshift/osde2e/pkg/common/config"
 )
 
+// ErrNoAWSCredentials is returned when S3 upload is requested but no AWS
+// credentials are configured. Callers should treat this as a non-fatal skip.
+var ErrNoAWSCredentials = errors.New("S3 upload skipped: AWS credentials not configured (set AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY)")
+
 const (
-	velerosubstr = "managed-velero"
-	logsBucket   = "osde2e-logs"
+	velerosubstr     = "managed-velero"
+	logsBucket       = "osde2e-logs"
+	logsBucketRegion = "us-east-1"
 )
 
 // Pre-compiled regex for extracting cluster name from bucket name
@@ -145,24 +151,30 @@ type S3UploadResult struct {
 func NewS3Uploader(component string) (*S3Uploader, error) {
 	bucket := viper.GetString(config.Tests.LogBucket)
 
-	// Ensure region is set (default to us-east-1)
-	if viper.GetString(config.AWSRegion) == "" {
-		viper.Set(config.AWSRegion, "us-east-1")
+	if viper.GetString(config.AWSProfile) == "" &&
+		viper.GetString(config.AWSAccessKey) == "" &&
+		viper.GetString(config.AWSSecretAccessKey) == "" {
+		return nil, ErrNoAWSCredentials
 	}
 
-	// Use the global AWS session infrastructure
+	// Use the global AWS session for credentials, but override the region
+	// for the S3 client. The log bucket lives in a fixed AWS region that is
+	// independent of the cluster's cloud provider region (which may be a GCP
+	// region like "us-east1" that is invalid for AWS).
 	sess, err := CcsAwsSession.GetSession()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get AWS session: %w", err)
 	}
+
+	s3Sess := sess.Copy(aws.NewConfig().WithRegion(logsBucketRegion))
 
 	if component == "" {
 		component = "unknown"
 	}
 
 	return &S3Uploader{
-		s3Client:  s3.New(sess),
-		uploader:  s3manager.NewUploader(sess),
+		s3Client:  s3.New(s3Sess),
+		uploader:  s3manager.NewUploader(s3Sess),
 		bucket:    bucket,
 		component: component,
 		category:  "test-results",  // fixed category for S3 path organization
