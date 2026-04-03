@@ -11,15 +11,11 @@ approvers:
   - christophermancini
 
 filters:
-  # Exclude openshift-osde2e-main.yaml and config.prowgen from ROSA engineer approval
-  "^(openshift-osde2e-main\\.yaml|config\\.prowgen)$":
-    approvers:
-      - ritmun
-      - yiqinzhang
-      - varunraokadaparthi
-      - christophermancini
-  # All other files can be approved by ROSA engineers
-  ".*":
+  # Nightly job YAML files in openshift/release repo - ROSA engineers can approve
+  # Pattern: openshift-osde2e-main__nightly-*.yaml
+  # These files don't exist in osde2e repo, so this filter has no effect here
+  # Other files (openshift-osde2e-main.yaml, .config.prowgen, OWNERS) fall back to top-level approvers
+  "^openshift-osde2e-main__nightly-.*\\.yaml$":
     approvers:
       - bmeng
       - dustman9000
