@@ -79,6 +79,11 @@ podman create --pull=always --name osde2e-krknai-run \
 	-e GEMINI_API_KEY \
 	-e REPORT_DIR="${HOST_REPORT}" \
 	-e SHARED_DIR="${HOST_SHARED}" \
-	quay.io/vkadapar_openshift/osde2e:local krkn-ai "${args[@]}"
+	quay.io/redhat-services-prod/osde2e-cicada-tenant/osde2e:latest krkn-ai "${args[@]}"
 
 podman start -a osde2e-krknai-run
+
+rc=$?
+
+cp -r "${HOST_REPORT}" "./${REPORT_DIR}"
+exit $rc
