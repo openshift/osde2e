@@ -190,7 +190,7 @@ func (k *KrknAI) runKrknContainer(ctx context.Context, mode string) error {
 	}
 
 	// Build base container arguments (common to both modes)
-	args := []string{"run", "--rm", "--net=host"}
+	args := []string{"run", "--rm"}
 
 	// Add volume mounts
 	args = append(args,

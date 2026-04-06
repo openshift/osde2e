@@ -28,6 +28,13 @@ COPY --from=podman-installer /usr/lib64/libsubid.so.3.0.0 /usr/lib64/libsubid.so
 RUN ln -s /usr/bin/podman-remote /usr/bin/podman && \
     ln -s /usr/lib64/libsubid.so.3.0.0 /usr/lib64/libsubid.so.3
 
+# Install OpenShift client (oc)
+RUN curl -fsSL -o openshift-client-linux.tar.gz https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/openshift-client-linux.tar.gz \
+    && tar -xzf openshift-client-linux.tar.gz \
+    && mv oc /usr/local/bin/oc \
+    && chmod +x /usr/local/bin/oc \
+    && rm -f openshift-client-linux.tar.gz
+
 ENV PATH="${PATH}:/"
 ENTRYPOINT ["/osde2e"]
 USER 65532:65532
