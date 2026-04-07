@@ -67,16 +67,16 @@ func CreateS3URL(bucket string, keys ...string) string {
 // then deletes bucket objects and then buckets
 // Ignores buckets belonging to active clusters.
 func (CcsAwsSession *ccsAwsSession) CleanupS3Buckets(activeClusters map[string]bool, dryrun bool, sendSummary bool,
-	deletedCounter *int, failedCounter *int, errorBuilder *strings.Builder,
-) error {
-	err := CcsAwsSession.GetAWSSessions()
+	errorBuilder *strings.Builder,
+) (counters Counters, err error) {
+	err = CcsAwsSession.GetAWSSessions()
 	if err != nil {
-		return err
+		return counters, err
 	}
 
 	result, err := CcsAwsSession.s3.ListBuckets(&s3.ListBucketsInput{})
 	if err != nil {
-		return err
+		return counters, err
 	}
 	// Setup BatchDeleteIterator to iterate through a list of objects.
 	batchDeleteClient := s3manager.NewBatchDeleteWithClient(CcsAwsSession.s3)
@@ -91,7 +91,7 @@ func (CcsAwsSession *ccsAwsSession) CleanupS3Buckets(activeClusters map[string]b
 				if err := batchDeleteClient.Delete(aws.BackgroundContext(), iter); err != nil {
 					errorMsg := fmt.Sprintf("error deleting objects from bucket %s, skipping: %s", *bucket.Name, err)
 					fmt.Println(errorMsg)
-					*failedCounter++
+					counters.Failed++
 					if sendSummary && errorBuilder.Len() < 10000 {
 						errorBuilder.WriteString(strings.ReplaceAll(errorMsg, `""`, ""))
 					}
@@ -103,19 +103,19 @@ func (CcsAwsSession *ccsAwsSession) CleanupS3Buckets(activeClusters map[string]b
 				}); err != nil {
 					errorMsg := fmt.Sprintf("error deleting bucket: %s: %s", *bucket.Name, err)
 					fmt.Println(errorMsg)
-					*failedCounter++
+					counters.Failed++
 					if sendSummary && errorBuilder.Len() < config.SlackMessageLength {
 						errorBuilder.WriteString(strings.ReplaceAll(errorMsg, `""`, ""))
 					}
 					continue
 				}
 				fmt.Println("Deleted bucket")
-				*deletedCounter++
+				counters.Deleted++
 			}
 		}
 	}
 
-	return nil
+	return counters, nil
 }
 
 // =============================================================================
