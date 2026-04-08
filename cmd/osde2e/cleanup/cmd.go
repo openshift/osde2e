@@ -48,6 +48,7 @@ var args struct {
 	sendSummary     bool
 	ec2             bool
 	vpc             bool
+	securityGroup   bool
 }
 
 type Message struct {
@@ -58,6 +59,7 @@ type Message struct {
 	IPErrors  string `json:"ip"`
 	EC2Errors string `json:"ec2"`
 	VPCErrors string `json:"vpc"`
+	SGErrors  string `json:"sg"`
 }
 
 func init() {
@@ -147,6 +149,13 @@ func init() {
 		"Cleanup vpc resources",
 	)
 
+	flags.BoolVar(
+		&args.securityGroup,
+		"security-group",
+		false,
+		"Cleanup leftover security groups in orphaned VPCs (workaround for OCPBUGS-74960)",
+	)
+
 	_ = Cmd.RegisterFlagCompletionFunc("output-format", func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		return []string{"json", "prom"}, cobra.ShellCompDirectiveDefault
 	})
@@ -221,6 +230,7 @@ func run(_ context.Context) (msg Message, err error) {
 	var ipErrorBuilder strings.Builder
 	var ec2ErrorBuilder strings.Builder
 	var vpcErrorBuilder strings.Builder
+	var sgErrorBuilder strings.Builder
 
 	defer func() {
 		buildFile := ""
@@ -240,6 +250,7 @@ func run(_ context.Context) (msg Message, err error) {
 			IPErrors:  "IP Errors: " + ipErrorBuilder.String(),
 			EC2Errors: "EC2 Errors: " + ec2ErrorBuilder.String(),
 			VPCErrors: "VPC Errors: " + vpcErrorBuilder.String(),
+			SGErrors:  "SG Errors: " + sgErrorBuilder.String(),
 		}
 	}()
 
@@ -268,6 +279,16 @@ func run(_ context.Context) (msg Message, err error) {
 		return msg, fmt.Errorf("could not collect active clusters: %v", err)
 	}
 	log.Printf("Found %d active clusters for cleanup operations\n", len(activeClusters))
+
+	if args.securityGroup {
+		sgDeletedCounter := 0
+		sgFailedCounter := 0
+		err = aws.CcsAwsSession.CleanupSecurityGroups(activeClusters, args.dryRun, args.sendSummary, &sgDeletedCounter, &sgFailedCounter, &sgErrorBuilder)
+		summaryBuilder.WriteString("Security Groups: " + strconv.Itoa(sgDeletedCounter) + "/" + strconv.Itoa(sgFailedCounter) + "\n")
+		if err != nil {
+			return msg, fmt.Errorf("could not cleanup security groups: %s", err.Error())
+		}
+	}
 
 	if args.vpc {
 		vpcCounters, err := aws.CcsAwsSession.CleanupVPCs(activeClusters, args.dryRun, args.sendSummary, &vpcErrorBuilder)
