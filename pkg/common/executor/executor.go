@@ -242,7 +242,7 @@ func (e *Executor) buildJobSpec(namespace string, image string) *batchv1.Job {
 						},
 						{
 							Name:    "pause-for-artifacts",
-							Image:   "busybox:latest",
+							Image:   "image-registry.openshift-image-registry.svc:5000/openshift/cli:latest",
 							Command: []string{"tail", "-f", "/dev/null"},
 							VolumeMounts: []corev1.VolumeMount{
 								{
