@@ -35,6 +35,8 @@ export PODMAN_SOCK=/run/user/${UID}/podman/podman.sock
 
 CONTAINER_SOCK_INNER="unix:///var/run/podman.sock"
 
+REPORT_DIR="osde2e-report"
+SHARED_DIR="shared-dir"
 HOST_REPORT="/tmp/${REPORT_DIR}"
 HOST_SHARED="/tmp/${SHARED_DIR}"
 mkdir -p "${HOST_REPORT}" "${HOST_SHARED}"
@@ -59,12 +61,6 @@ podman create --pull=always --name osde2e-krknai-run \
 	-e OCM_CLIENT_ID -e OCM_CLIENT_SECRET \
 	-e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY -e AWS_ACCOUNT_ID \
 	-e GCP_CREDS_JSON \
-	-e CLOUD_PROVIDER_REGION \
-	-e ROSA_AWS_REGION="${CLOUD_PROVIDER_REGION}" \
-	-e ROSA_ENV="${ENVIRONMENT}" \
-	-e OCM_ENV="${ENVIRONMENT}" \
-	-e ROSA_STS="${STS}" \
-	-e HYPERSHIFT \
 	-e CLUSTER_ID \
 	-e KRKN_NAMESPACE \
 	-e KRKN_POD_LABEL \
