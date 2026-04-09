@@ -66,16 +66,16 @@ func (CcsAwsSession *ccsAwsSession) CheckIfEC2ExistBasedOnNodeName(nodeName stri
 // associated with it, we skip its deletion and log tag name. Dryrun returns aws Error
 // from AWS api and is logged.
 func (CcsAwsSession *ccsAwsSession) ReleaseElasticIPs(dryrun bool, sendSummary bool,
-	deletedCounter *int, failedCounter *int, errorBuilder *strings.Builder,
-) error {
-	err := CcsAwsSession.GetAWSSessions()
+	errorBuilder *strings.Builder,
+) (counters Counters, err error) {
+	err = CcsAwsSession.GetAWSSessions()
 	if err != nil {
-		return err
+		return counters, err
 	}
 
 	results, err := CcsAwsSession.ec2.DescribeAddresses(&ec2.DescribeAddressesInput{})
 	if err != nil {
-		return err
+		return counters, err
 	}
 	fmt.Printf("Addresses found: %d\n", len(results.Addresses))
 
@@ -86,10 +86,10 @@ func (CcsAwsSession *ccsAwsSession) ReleaseElasticIPs(dryrun bool, sendSummary b
 				DryRun:       &dryrun,
 			})
 			if err == nil {
-				*deletedCounter++
+				counters.Deleted++
 				fmt.Printf("Address deleted: %s\n", *address.PublicIp)
 			} else {
-				*failedCounter++
+				counters.Failed++
 				errorMsg := fmt.Sprintf("Address %s not deleted: %s\n", *address.PublicIp, err.Error())
 				fmt.Println(errorMsg)
 				if sendSummary && errorBuilder.Len() < config.SlackMessageLength {
@@ -104,21 +104,21 @@ func (CcsAwsSession *ccsAwsSession) ReleaseElasticIPs(dryrun bool, sendSummary b
 			}
 		}
 	}
-	fmt.Printf("Finished elastic IP cleanup. Deleted %d addresses.", *deletedCounter)
+	fmt.Printf("Finished elastic IP cleanup. Deleted %d addresses.", counters.Deleted)
 
-	return nil
+	return counters, nil
 }
 
 // TerminateEC2Instances finds EC2 instances, then terminates these EC2 instances.
 // Ignores EC2 instances with tag Name "osde2e-proxy*" and instances belonging to active clusters.
-func (CcsAwsSession *ccsAwsSession) TerminateEC2Instances(activeClusters map[string]bool, dryrun bool) (int, int, error) {
-	err := CcsAwsSession.GetAWSSessions()
+func (CcsAwsSession *ccsAwsSession) TerminateEC2Instances(activeClusters map[string]bool, dryrun bool) (counters Counters, err error) {
+	err = CcsAwsSession.GetAWSSessions()
 	if err != nil {
-		return 0, 0, err
+		return counters, err
 	}
 	result, err := CcsAwsSession.ec2.DescribeInstances(&ec2.DescribeInstancesInput{})
 	if err != nil {
-		return 0, 0, err
+		return counters, err
 	}
 
 	type instanceToDelete struct {
@@ -144,8 +144,6 @@ func (CcsAwsSession *ccsAwsSession) TerminateEC2Instances(activeClusters map[str
 	}
 
 	ec2ErrorBuilder := strings.Builder{}
-	instancesDeleted := 0
-	instancesFailedToDelete := 0
 	if !dryrun {
 		for _, instance := range instancesToDelete {
 			input := &ec2.TerminateInstancesInput{
@@ -156,16 +154,16 @@ func (CcsAwsSession *ccsAwsSession) TerminateEC2Instances(activeClusters map[str
 				errorMessage := fmt.Sprintf("Error terminating instance %s (%s): %s\n", instance.id, instance.name, err.Error())
 				ec2ErrorBuilder.WriteString(errorMessage)
 				fmt.Print(errorMessage)
-				instancesFailedToDelete++
+				counters.Failed++
 			} else {
-				instancesDeleted++
+				counters.Deleted++
 				fmt.Printf("Instance %s (%s) deleted\n", instance.id, instance.name)
 			}
 		}
 	}
 	if ec2ErrorBuilder.Len() == 0 {
-		return instancesDeleted, instancesFailedToDelete, nil
+		return counters, nil
 	}
 	ec2Error := fmt.Errorf("%w: %s", ErrTerminateEC2Instances, ec2ErrorBuilder.String())
-	return instancesDeleted, instancesFailedToDelete, ec2Error
+	return counters, ec2Error
 }

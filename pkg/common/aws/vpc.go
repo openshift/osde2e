@@ -12,12 +12,11 @@ import (
 )
 
 // deletes VPCs that are not associated with any active osde2e cluster
-func (CcsAwsSession *ccsAwsSession) CleanupVPCs(activeClusters map[string]bool, dryrun bool, sendSummary bool,
-	deletedCounter *int, failedCounter *int, errorBuilder *strings.Builder,
-) error {
-	err := CcsAwsSession.GetAWSSessions()
+func (CcsAwsSession *ccsAwsSession) CleanupVPCs(activeClusters map[string]bool, dryrun bool, sendSummary bool, errorBuilder *strings.Builder,
+) (counters Counters, err error) {
+	err = CcsAwsSession.GetAWSSessions()
 	if err != nil {
-		return err
+		return counters, err
 	}
 
 	// Get osde2e VPCs from AWS
@@ -30,12 +29,12 @@ func (CcsAwsSession *ccsAwsSession) CleanupVPCs(activeClusters map[string]bool, 
 		},
 	})
 	if err != nil {
-		return err
+		return counters, err
 	}
 
 	if len(results.Vpcs) == 0 {
 		log.Printf("No VPCs found\n")
-		return nil
+		return counters, nil
 	}
 
 	log.Printf("VPCs found: %d\n", len(results.Vpcs))
@@ -72,7 +71,7 @@ func (CcsAwsSession *ccsAwsSession) CleanupVPCs(activeClusters map[string]bool, 
 	// Create CloudFormation client early to check stack existence
 	cfnClient := cloudformation.New(CcsAwsSession.session)
 	if cfnClient == nil {
-		return fmt.Errorf("failed to create CloudFormation client")
+		return counters, fmt.Errorf("failed to create CloudFormation client")
 	}
 
 	// Only delete VPC stacks that are not associated with any cluster and actually exist
@@ -106,7 +105,7 @@ func (CcsAwsSession *ccsAwsSession) CleanupVPCs(activeClusters map[string]bool, 
 				StackName: aws.String(stackName),
 			})
 			if err != nil {
-				*failedCounter++
+				counters.Failed++
 				errorMsg := fmt.Sprintf("Failed to delete CloudFormation stack %s: %v\n", stackName, err)
 				fmt.Print(errorMsg)
 				if sendSummary && errorBuilder.Len() < 10000 {
@@ -119,7 +118,7 @@ func (CcsAwsSession *ccsAwsSession) CleanupVPCs(activeClusters map[string]bool, 
 				StackName: aws.String(stackName),
 			})
 			if err != nil {
-				*failedCounter++
+				counters.Failed++
 				errorMsg := fmt.Sprintf("Failed waiting for stack deletion %s: %v\n", stackName, err)
 				fmt.Print(errorMsg)
 				if sendSummary && errorBuilder.Len() < 10000 {
@@ -128,14 +127,14 @@ func (CcsAwsSession *ccsAwsSession) CleanupVPCs(activeClusters map[string]bool, 
 				continue
 			}
 
-			*deletedCounter++
+			counters.Deleted++
 			log.Printf("AWS VPC stack %s successfully deleted\n", stackName)
 		} else {
 			log.Printf("Would delete AWS VPC stack %s\n", stackName)
 		}
 	}
 
-	return nil
+	return counters, nil
 }
 
 // removes the -yyyyy suffix from VPC names that follow the osde2e-xxxxx-yyyyy-vpc format

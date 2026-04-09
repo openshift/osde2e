@@ -270,10 +270,8 @@ func run(_ context.Context) (msg Message, err error) {
 	log.Printf("Found %d active clusters for cleanup operations\n", len(activeClusters))
 
 	if args.vpc {
-		vpcDeletedCounter := 0
-		vpcFailedCounter := 0
-		err = aws.CcsAwsSession.CleanupVPCs(activeClusters, args.dryRun, args.sendSummary, &vpcDeletedCounter, &vpcFailedCounter, &vpcErrorBuilder)
-		summaryBuilder.WriteString("VPCs: " + strconv.Itoa(vpcDeletedCounter) + "/" + strconv.Itoa(vpcFailedCounter) + "\n")
+		vpcCounters, err := aws.CcsAwsSession.CleanupVPCs(activeClusters, args.dryRun, args.sendSummary, &vpcErrorBuilder)
+		summaryBuilder.WriteString("VPCs: " + strconv.Itoa(vpcCounters.Deleted) + "/" + strconv.Itoa(vpcCounters.Failed) + "\n")
 		if err != nil {
 			return msg, fmt.Errorf("could not cleanup vpc resources: %s", err.Error())
 		}
@@ -327,35 +325,29 @@ func run(_ context.Context) (msg Message, err error) {
 	}
 
 	if args.iam {
-		oidcDeletedCounter := 0
-		oidcFailedCounter := 0
-		err = aws.CcsAwsSession.CleanupOpenIDConnectProviders(activeClusters, args.dryRun, args.sendSummary, &oidcDeletedCounter, &oidcFailedCounter, &iamErrorBuilder)
-		summaryBuilder.WriteString("OIDC providers: " + strconv.Itoa(oidcDeletedCounter) + "/" + strconv.Itoa(oidcFailedCounter) + "\n")
+		oidcCounters, err := aws.CcsAwsSession.CleanupOpenIDConnectProviders(activeClusters, args.dryRun, args.sendSummary, &iamErrorBuilder)
+		summaryBuilder.WriteString("OIDC providers: " + strconv.Itoa(oidcCounters.Deleted) + "/" + strconv.Itoa(oidcCounters.Failed) + "\n")
 		if err != nil {
 			return msg, fmt.Errorf("could not delete OIDC providers: %s", err.Error())
 		}
-		rolesDeletedCounter := 0
-		rolesFailedCounter := 0
-		err = aws.CcsAwsSession.CleanupRoles(activeClusters, args.dryRun, args.sendSummary, &rolesDeletedCounter, &rolesFailedCounter, &iamErrorBuilder)
-		summaryBuilder.WriteString("Roles: " + strconv.Itoa(rolesDeletedCounter) + "/" + strconv.Itoa(rolesFailedCounter) + "\n")
+		rolesCounters, err := aws.CcsAwsSession.CleanupRoles(activeClusters, args.dryRun, args.sendSummary, &iamErrorBuilder)
+		summaryBuilder.WriteString("Roles: " + strconv.Itoa(rolesCounters.Deleted) + "/" + strconv.Itoa(rolesCounters.Failed) + "\n")
 		if err != nil {
 			return msg, fmt.Errorf("could not delete IAM roles: %s", err.Error())
 		}
 	}
 
 	if args.s3 {
-		s3BucketDeletedCounter := 0
-		s3BucketFailedCounter := 0
-		err = aws.CcsAwsSession.CleanupS3Buckets(activeClusters, args.dryRun, args.sendSummary, &s3BucketDeletedCounter, &s3BucketFailedCounter, &s3ErrorBuilder)
-		summaryBuilder.WriteString("S3 Buckets: " + strconv.Itoa(s3BucketDeletedCounter) + "/" + strconv.Itoa(s3BucketFailedCounter) + "\n")
+		s3Counters, err := aws.CcsAwsSession.CleanupS3Buckets(activeClusters, args.dryRun, args.sendSummary, &s3ErrorBuilder)
+		summaryBuilder.WriteString("S3 Buckets: " + strconv.Itoa(s3Counters.Deleted) + "/" + strconv.Itoa(s3Counters.Failed) + "\n")
 		if err != nil {
 			return msg, fmt.Errorf("could not delete s3 buckets: %s", err.Error())
 		}
 	}
 
 	if args.ec2 {
-		instancesDeleted, instancesFailedToDelete, err := aws.CcsAwsSession.TerminateEC2Instances(activeClusters, args.dryRun)
-		summaryBuilder.WriteString("EC2 Instances: " + strconv.Itoa(instancesDeleted) + "/" + strconv.Itoa(instancesFailedToDelete) + "\n")
+		ec2Counters, err := aws.CcsAwsSession.TerminateEC2Instances(activeClusters, args.dryRun)
+		summaryBuilder.WriteString("EC2 Instances: " + strconv.Itoa(ec2Counters.Deleted) + "/" + strconv.Itoa(ec2Counters.Failed) + "\n")
 		if err != nil {
 			if !errors.Is(err, aws.ErrTerminateEC2Instances) {
 				return msg, fmt.Errorf("could not terminate ec2 instances: %s", err.Error())
@@ -369,10 +361,8 @@ func run(_ context.Context) (msg Message, err error) {
 	}
 
 	if args.elasticIP {
-		elasticIpDeletedCounter := 0
-		elasticIpFailedCounter := 0
-		err = aws.CcsAwsSession.ReleaseElasticIPs(args.dryRun, args.sendSummary, &elasticIpDeletedCounter, &elasticIpFailedCounter, &ipErrorBuilder)
-		summaryBuilder.WriteString("Elastic IPs: " + strconv.Itoa(elasticIpDeletedCounter) + "/" + strconv.Itoa(elasticIpFailedCounter) + "\n")
+		eipCounters, err := aws.CcsAwsSession.ReleaseElasticIPs(args.dryRun, args.sendSummary, &ipErrorBuilder)
+		summaryBuilder.WriteString("Elastic IPs: " + strconv.Itoa(eipCounters.Deleted) + "/" + strconv.Itoa(eipCounters.Failed) + "\n")
 		if err != nil {
 			return msg, fmt.Errorf("could not release ips: %s", err.Error())
 		}
