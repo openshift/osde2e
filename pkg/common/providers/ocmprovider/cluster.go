@@ -681,6 +681,19 @@ func (o *OCMProvider) ListClusters(query string) ([]*spi.Cluster, error) {
 	return clusters, nil
 }
 
+// GetClusterRegion returns the cloud region for the cluster from OCM.
+func (o *OCMProvider) GetClusterRegion(clusterID string) (string, error) {
+	c, err := o.GetCluster(clusterID)
+	if err != nil {
+		return "", err
+	}
+	region := c.Region()
+	if region == "" {
+		return "", fmt.Errorf("cluster %q has no region", clusterID)
+	}
+	return region, nil
+}
+
 // GetCluster returns a cluster from OCM.
 func (o *OCMProvider) GetCluster(clusterID string) (*spi.Cluster, error) {
 	ocmCluster, err := o.GetOCMCluster(clusterID)

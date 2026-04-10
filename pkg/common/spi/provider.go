@@ -42,6 +42,9 @@ type Provider interface {
 	// the cluser has finished provisioning.
 	GetCluster(clusterID string) (*Cluster, error)
 
+	// GetClusterRegion returns the cloud provider region for the cluster (e.g. AWS region).
+	GetClusterRegion(clusterID string) (string, error)
+
 	// ClusterKubeconfig should return the raw kubeconfig for the cluster.
 	//
 	// OSDe2e needs administrative cluster level access for a cluster, so this should

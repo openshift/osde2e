@@ -63,6 +63,16 @@ func New(ctx context.Context) (orchestrator.Orchestrator, error) {
 		return nil, fmt.Errorf("failed to get cluster provider: %w", err)
 	}
 
+	if viper.GetString(config.Cluster.ID) != "" {
+		// get cluster region from OCM; keep AWS_REGION and CLOUD_PROVIDER_REGION aligned.
+		clusterRegion, err := provider.GetClusterRegion(viper.GetString(config.Cluster.ID))
+		if err != nil {
+			return nil, fmt.Errorf("failed to get cluster region: %w", err)
+		}
+		viper.Set(config.AWSRegion, clusterRegion)
+		viper.Set(config.CloudProvider.Region, clusterRegion)
+	}
+
 	return &KrknAI{
 		provider: provider,
 		result: &orchestrator.Result{
