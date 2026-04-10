@@ -18,6 +18,17 @@ func (m *ROSAProvider) GetCluster(clusterID string) (*spi.Cluster, error) {
 	return m.ocmProvider.GetCluster(clusterID)
 }
 
+// GetClusterRegion will call GetClusterRegion from the OCM provider and keeps
+// ROSAProvider.awsRegion in sync with the resolved cluster region (see New).
+func (m *ROSAProvider) GetClusterRegion(clusterID string) (string, error) {
+	region, err := m.ocmProvider.GetClusterRegion(clusterID)
+	if err != nil {
+		return "", err
+	}
+	m.awsRegion = region
+	return region, nil
+}
+
 // ClusterKubeconfig will call ClusterKubeconfig from the OCM provider.
 func (m *ROSAProvider) ClusterKubeconfig(clusterID string) ([]byte, error) {
 	return m.ocmProvider.ClusterKubeconfig(clusterID)

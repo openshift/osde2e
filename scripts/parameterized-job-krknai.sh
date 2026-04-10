@@ -60,6 +60,7 @@ podman create --pull=always --name osde2e-krknai-run \
 	-e TMPDIR=/tmp \
 	-e OCM_CLIENT_ID -e OCM_CLIENT_SECRET \
 	-e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY -e AWS_ACCOUNT_ID \
+	-e AWS_REGION="us-east-1" \
 	-e GCP_CREDS_JSON \
 	-e CLUSTER_ID \
 	-e KRKN_NAMESPACE \
