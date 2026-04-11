@@ -213,6 +213,9 @@ func (k *KrknAI) runKrknContainer(ctx context.Context, mode string) error {
 		"-e", fmt.Sprintf("MODE=%s", mode),
 		"-e", fmt.Sprintf("KUBECONFIG=%s/%s", containerMountPath, kubeconfigFileName),
 		"-e", fmt.Sprintf("VERBOSE=%s", config.KrknAIVerboseLevel),
+		// Kraken uses ~/.krkn (run_kraken.py); krkn-ai image can leave HOME=/root while the process runs non-root.
+		"-e", "HOME=/tmp",
+		"-e", "TMPDIR=/tmp",
 	)
 
 	// Add mode-specific flags and environment variables
