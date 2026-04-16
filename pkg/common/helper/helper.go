@@ -546,10 +546,6 @@ func (h *H) GetRunnerCommandString(templatePath string, timeout int, latestImage
 				SecretName: "ci-secrets",
 				SecretKey:  "GCP_CREDS_JSON",
 			},
-			{
-				SecretName: "ci-secrets",
-				SecretKey:  "CAD_PAGERDUTY_ROUTING_KEY",
-			},
 		},
 		Command: command,
 	}

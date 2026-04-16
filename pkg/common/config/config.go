@@ -586,14 +586,6 @@ var Proxy = struct {
 	UserCABundle: "proxy.user_ca_bundle",
 }
 
-// Cad Configuration Anomaly Detection config
-var Cad = struct {
-	// Env: CAD_PAGERDUTY_ROUTING_KEY
-	CADPagerDutyRoutingKey string
-}{
-	CADPagerDutyRoutingKey: "cad.pagerDutyRoutingKey",
-}
-
 var LogAnalysis = struct {
 	// EnableAnalysis enables log analysis powered failure analysis
 	EnableAnalysis string
@@ -930,11 +922,6 @@ func InitOSDe2eViper() {
 
 	_ = viper.BindEnv(Proxy.UserCABundle, "USER_CA_BUNDLE")
 	RegisterSecret(Proxy.UserCABundle, "user-ca-bundle")
-
-	// ------- Configuration Anomaly Detection ------
-	viper.SetDefault(Cad.CADPagerDutyRoutingKey, "notprovided")
-	_ = viper.BindEnv(Cad.CADPagerDutyRoutingKey, "CAD_PAGERDUTY_ROUTING_KEY")
-	RegisterSecret(Cad.CADPagerDutyRoutingKey, "pagerduty-routing-key")
 
 	// ----- LLM Configuration -----
 	_ = viper.BindEnv(LogAnalysis.APIKey, "GEMINI_API_KEY")
