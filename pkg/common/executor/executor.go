@@ -282,7 +282,11 @@ func (e *Executor) waitForSuite(ctx context.Context, name, namespace, image stri
 				if containerStatus.State.Waiting != nil {
 					reason := containerStatus.State.Waiting.Reason
 					if reason == "ImagePullBackOff" || reason == "ErrImagePull" {
-						return false, fmt.Errorf("failed to pull image: %s", image)
+						msg := containerStatus.State.Waiting.Message
+						if msg == "" {
+							msg = "no details available"
+						}
+						return false, fmt.Errorf("failed to pull image %s: %s: %s", image, reason, msg)
 					}
 				}
 				// Return true if container has terminated (succeeded or failed)
