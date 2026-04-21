@@ -222,6 +222,7 @@ github.com/jackc/pgconn v0.0.0-20190824142844-760dd75542eb/go.mod h1:lLjNuW/+OfW
 github.com/jackc/pgconn v0.0.0-20190831204454-2fabfa3c18b7/go.mod h1:ZJKsE/KZfsUgOEh9hBm+xYTstcNHg7UPMVJqRfQxq4s=
 github.com/jackc/pgconn v1.8.0/go.mod h1:1C2Pb36bGIP9QHGBYCjnyhqu7Rv3sGshaQUvmfGIB/o=
 github.com/jackc/pgconn v1.9.0/go.mod h1:YctiPyvzfU11JFxoXokUOOKQXQmDMoJL9vJzHH8/2JY=
+github.com/jackc/pgconn v1.9.1-0.20210724152538-d89c8390a530 h1:dUJ578zuPEsXjtzOfEF0q9zDAfljJ9oFnTHcQaNkccw=
 github.com/jackc/pgconn v1.9.1-0.20210724152538-d89c8390a530/go.mod h1:4z2w8XhRbP1hYxkpTuBjTS3ne3J48K83+u0zoyvg2pI=
 github.com/jackc/pgconn v1.14.3 h1:bVoTr12EGANZz66nZPkMInAV/KHD2TxH9npjXXgiB3w=
 github.com/jackc/pgconn v1.14.3/go.mod h1:RZbme4uasqzybK2RK5c65VsHxoyaml09lx3tXOcO/VM=
@@ -239,9 +240,11 @@ github.com/jackc/pgproto3/v2 v2.0.0-alpha1.0.20190609003834-432c2951c711/go.mod 
 github.com/jackc/pgproto3/v2 v2.0.0-rc3/go.mod h1:ryONWYqW6dqSg1Lw6vXNMXoBJhpzvWKnT95C46ckYeM=
 github.com/jackc/pgproto3/v2 v2.0.0-rc3.0.20190831210041-4c03ce451f29/go.mod h1:ryONWYqW6dqSg1Lw6vXNMXoBJhpzvWKnT95C46ckYeM=
 github.com/jackc/pgproto3/v2 v2.0.6/go.mod h1:WfJCnwN3HIg9Ish/j3sgWXnAfK8A9Y0bwXYU5xKaEdA=
+github.com/jackc/pgproto3/v2 v2.1.1 h1:7PQ/4gLoqnl87ZxL7xjO0DR5gYuviDCZxQJsUlFW1eI=
 github.com/jackc/pgproto3/v2 v2.1.1/go.mod h1:WfJCnwN3HIg9Ish/j3sgWXnAfK8A9Y0bwXYU5xKaEdA=
 github.com/jackc/pgproto3/v2 v2.3.3 h1:1HLSx5H+tXR9pW3in3zaztoEwQYRC9SQaYUHjTSUOag=
 github.com/jackc/pgproto3/v2 v2.3.3/go.mod h1:WfJCnwN3HIg9Ish/j3sgWXnAfK8A9Y0bwXYU5xKaEdA=
+github.com/jackc/pgservicefile v0.0.0-20200714003250-2b9c44734f2b h1:C8S2+VttkHFdOOCXJe+YGfa4vHYwlt4Zx+IVXQ97jYg=
 github.com/jackc/pgservicefile v0.0.0-20200714003250-2b9c44734f2b/go.mod h1:vsD4gTJCa9TptPL8sPkXrLZ+hDuNrZCnj29CQpr4X1E=
 github.com/jackc/pgservicefile v0.0.0-20221227161230-091c0ba34f0a h1:bbPeKD0xmW/Y25WS6cokEszi5g+S0QxI/d45PkRi7Nk=
 github.com/jackc/pgservicefile v0.0.0-20221227161230-091c0ba34f0a/go.mod h1:5TJZWKEWniPve33vlWYSoGYefn3gLQRzjfDlhSJ9ZKM=
@@ -254,6 +257,7 @@ github.com/jackc/pgtype v1.14.2/go.mod h1:LUMuVrfsFfdKGLw+AFFVv6KtHOFMwRgDDzBt76
 github.com/jackc/pgx/v4 v4.0.0-20190420224344-cc3461e65d96/go.mod h1:mdxmSJJuR08CZQyj1PVQBHy9XOp5p8/SHH6a0psbY9Y=
 github.com/jackc/pgx/v4 v4.0.0-20190421002000-1b8f0016e912/go.mod h1:no/Y67Jkk/9WuGR0JG/JseM9irFbnEPbuWV2EELPNuM=
 github.com/jackc/pgx/v4 v4.0.0-pre1.0.20190824185557-6972a5742186/go.mod h1:X+GQnOEnf1dqHGpw7JmHqHc1NxDoalibchSk9/RWuDc=
+github.com/jackc/pgx/v4 v4.12.1-0.20210724153913-640aa07df17c h1:Dznn52SgVIVst9UyOT9brctYUgxs+CvVfPaC3jKrA50=
 github.com/jackc/pgx/v4 v4.12.1-0.20210724153913-640aa07df17c/go.mod h1:1QD0+tgSXP7iUjYm9C1NxKhny7lq6ee99u/z+IHFcgs=
 github.com/jackc/pgx/v4 v4.18.3 h1:dE2/TrEsGX3RBprb3qryqSV9Y60iZN1C6i8IrmW9/BA=
 github.com/jackc/pgx/v4 v4.18.3/go.mod h1:Ey4Oru5tH5sB6tV7hDmfWFahwF15Eb7DNXlRKx2CkVw=
@@ -340,6 +344,8 @@ github.com/openshift-online/ocm-api-model/model v0.0.453 h1:CsOyRhrpxzXcn4aaobDg
 github.com/openshift-online/ocm-api-model/model v0.0.453/go.mod h1:PQIoq6P8Vlb7goOdRMLK8nJY+B7HH0RTqYAa4kyidTE=
 github.com/openshift-online/ocm-sdk-go v0.1.498 h1:XOPq5eh2UZpv/21jlULAZ3oh7xCHv8wf7Sl3T3wsRUs=
 github.com/openshift-online/ocm-sdk-go v0.1.498/go.mod h1:V1upeXpkgHmyRy0cA2e+i9X/kUBEnv7sBYC6UdRXfzE=
+github.com/openshift-online/ocm-sdk-go v0.1.499 h1:QDr980dOSV0tFNrvOGiorno4l7iMq8lNxU7PY2rVqzY=
+github.com/openshift-online/ocm-sdk-go v0.1.499/go.mod h1:eKqLMWEeZ6vadCHjlRPsePdqap6c34aM8TGxjMgZwKY=
 github.com/openshift/api v0.0.0-20260318185450-1f2fa3f09f4e h1:n2fW82JRX5B/+eCULWIe06MAhJVaE8fUsvy0A0Gn9n4=
 github.com/openshift/api v0.0.0-20260318185450-1f2fa3f09f4e/go.mod h1:pyVjK0nZ4sRs4fuQVQ4rubsJdahI1PB94LnQ8sGdvxo=
 github.com/openshift/client-go v0.0.0-20260320040014-4b5fc2cdad98 h1:Ssuo/zELWqb7pFCwzB3QGEA4QeLW948hL2AhWq2SWjs=
@@ -350,8 +356,12 @@ github.com/openshift/library-go v0.0.0-20260311094140-ac826d10cb40 h1:0Q7pg6Et+9
 github.com/openshift/library-go v0.0.0-20260311094140-ac826d10cb40/go.mod h1:D797O/ssKTNglbrGchjIguFq+DbyRYdeds5w4/VTrKM=
 github.com/openshift/managed-upgrade-operator v0.0.0-20260318004129-350c2fbceedb h1:GRoevp6FBwCY4CTbo7cKXN8UeRyZUtVxrCRpxj4nOPU=
 github.com/openshift/managed-upgrade-operator v0.0.0-20260318004129-350c2fbceedb/go.mod h1:ggXFq+rD1cmbFj9PjZttXghhQqfkUIBHORHD9gAWkr8=
+github.com/openshift/osde2e-common v0.0.0-20251022030855-097ba22da034 h1:NnMR/6KicG8XcGFP6I2P3gCe6lzROoFOO2ahIVCkzjM=
+github.com/openshift/osde2e-common v0.0.0-20251022030855-097ba22da034/go.mod h1:vld698vhATt0azEnyMunH6HH/9LnXzUj38EPvtbobqo=
 github.com/openshift/osde2e-common v0.0.0-20260323184812-f5726d2f2f6b h1:7YgXwVb1H+dxtygIMoisx9JVi1VPEq/U8Xg49K1RYds=
 github.com/openshift/osde2e-common v0.0.0-20260323184812-f5726d2f2f6b/go.mod h1:EYupPh1eLrT0HQC4DyfbGDBYtxIYNyaA690hXvHwufQ=
+github.com/openshift/osde2e-common v0.0.0-20260421185005-d390433565e5 h1:NN8vFkHVv/mhdjU1voH523XqPXjJUQoHWKpzSz08Dt8=
+github.com/openshift/osde2e-common v0.0.0-20260421185005-d390433565e5/go.mod h1:CL/37fVHqLop8nekQnGKguyHnBn+6bPSSXhLOQReO/Q=
 github.com/operator-framework/api v0.30.0 h1:44hCmGnEnZk/Miol5o44dhSldNH0EToQUG7vZTl29kk=
 github.com/operator-framework/api v0.30.0/go.mod h1:FYxAPhjtlXSAty/fbn5YJnFagt6SpJZJgFNNbvDe5W0=
 github.com/operator-framework/operator-lifecycle-manager v0.22.0 h1:7DEWOq24HQ0l5xPOXMhn17XaJACgwoipz+JfQ7QCXZw=

@@ -6,7 +6,9 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
+	"github.com/openshift/osde2e-common/pkg/clients/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -53,6 +55,66 @@ func TestRedactURL(t *testing.T) {
 			if tt.has != "" && !strings.Contains(got, tt.has) {
 				t.Errorf("redactURL(%q) = %q, must contain %q", tt.rawURL, got, tt.has)
 			}
+		})
+	}
+}
+
+func TestKrknPrometheusTokenDuration(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name         string
+		generations  int
+		population   int
+		wantDuration time.Duration
+	}{
+		{
+			name:         "zero generations uses default",
+			generations:  0,
+			population:   10,
+			wantDuration: prometheus.DefaultPrometheusTokenDuration,
+		},
+		{
+			name:         "zero population uses default",
+			generations:  10,
+			population:   0,
+			wantDuration: prometheus.DefaultPrometheusTokenDuration,
+		},
+		{
+			name:         "negative generations uses default",
+			generations:  -1,
+			population:   5,
+			wantDuration: prometheus.DefaultPrometheusTokenDuration,
+		},
+		{
+			name:         "negative population uses default",
+			generations:  5,
+			population:   -1,
+			wantDuration: prometheus.DefaultPrometheusTokenDuration,
+		},
+		{
+			name:         "one times one times five minutes",
+			generations:  1,
+			population:   1,
+			wantDuration: 5 * time.Minute,
+		},
+		{
+			name:         "two times three times five minutes",
+			generations:  2,
+			population:   3,
+			wantDuration: 30 * time.Minute,
+		},
+		{
+			name:         "larger product",
+			generations:  4,
+			population:   5,
+			wantDuration: 100 * time.Minute,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			got := krknPrometheusTokenDuration(tt.generations, tt.population)
+			assert.Equal(t, tt.wantDuration, got)
 		})
 	}
 }
