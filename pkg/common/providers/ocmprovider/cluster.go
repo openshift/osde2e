@@ -1010,7 +1010,7 @@ func ocmStateToInternalState(state v1.ClusterState) spi.ClusterState {
 
 // ExtendExpiry extends the expiration time of an existing cluster
 func (o *OCMProvider) ExtendExpiry(clusterID string, hours uint64, minutes uint64, seconds uint64) error {
-	if o.Environment() != "prod" {
+	if o.Environment() == "prod" {
 		log.Printf("Setting expiration on prod clusters is not allowed. Skipping...")
 		return nil
 	}
@@ -1082,7 +1082,7 @@ func (o *OCMProvider) ExtendExpiry(clusterID string, hours uint64, minutes uint6
 
 // Expire sets the expiration time of an existing cluster to the current time + N minutes
 func (o *OCMProvider) Expire(clusterID string, duration time.Duration) error {
-	if o.Environment() != "prod" {
+	if o.Environment() == "prod" {
 		log.Printf("Setting expiration on prod clusters is not allowed. Skipping...")
 		return nil
 	}
