@@ -12,6 +12,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/go-logr/logr"
 	"github.com/gomarkdown/markdown"
@@ -47,13 +48,18 @@ const (
 	// File names
 	kubeconfigFileName = "kubeconfig"
 	krknConfigFileName = "krkn-ai.yaml"
+
+	krknTimePerScenario     = 5 * time.Minute
+	krknClusterExpiryBuffer = 1 * time.Hour
+	krknPostRunClusterGrace = 1 * time.Hour
 )
 
 // KrknAI implements the orchestrator.Orchestrator interface for Kraken AI chaos testing.
 type KrknAI struct {
-	provider          spi.Provider
-	result            *orchestrator.Result
-	logAnalysisOutput string
+	provider                  spi.Provider
+	result                    *orchestrator.Result
+	logAnalysisOutput         string
+	krknExtendedClusterExpiry bool
 }
 
 // New creates a new KrknAI orchestrator instance.
@@ -160,6 +166,12 @@ func (k *KrknAI) Execute(ctx context.Context) error {
 	viper.Set(config.Cluster.Passing, k.result.TestsPassed)
 
 	if !viper.GetBool(config.DryRun) {
+		defer k.restoreClusterExpiryAfterKrknRun()
+
+		if err := k.ensureClusterExpiryForKrknRun(); err != nil {
+			log.Printf("Warning: krkn-ai cluster expiry extension: %v", err)
+		}
+
 		// Step 1: Run discover mode to identify chaos targets
 		log.Println("Krkn-ai discover mode")
 		if err := k.runKrknContainer(ctx, config.KrknAIModeDiscover); err != nil {
@@ -278,6 +290,58 @@ func (k *KrknAI) runKrknContainer(ctx context.Context, mode string) error {
 	return nil
 }
 
+// krknPrometheusTokenDuration returns the Prometheus token lifetime from GA parameters:
+// generations × population × 5 minutes. If either parameter is non-positive, it returns
+// [prometheus.DefaultPrometheusTokenDuration].
+func krknPrometheusTokenDuration(generations int, population int) time.Duration {
+	if generations <= 0 || population <= 0 {
+		return prometheus.DefaultPrometheusTokenDuration
+	}
+	return time.Duration(int64(generations)*int64(population)) * krknTimePerScenario
+}
+
+func (k *KrknAI) ensureClusterExpiryForKrknRun() error {
+	clusterID := viper.GetString(config.Cluster.ID)
+	if clusterID == "" {
+		return nil
+	}
+
+	duration := krknPrometheusTokenDuration(
+		viper.GetInt(config.KrknAI.Generations),
+		viper.GetInt(config.KrknAI.Population),
+	) + krknClusterExpiryBuffer
+
+	cl, err := k.provider.GetCluster(clusterID)
+	if err != nil {
+		return fmt.Errorf("get cluster for expiry check: %w", err)
+	}
+
+	if time.Until(cl.ExpirationTimestamp()) >= duration {
+		return nil
+	}
+
+	log.Printf("krkn-ai: setting cluster %s expiration to now + %v (pre-run)", clusterID, duration)
+	if err := k.provider.Expire(clusterID, duration); err != nil {
+		return fmt.Errorf("extend cluster expiry: %w", err)
+	}
+	k.krknExtendedClusterExpiry = true
+	return nil
+}
+
+func (k *KrknAI) restoreClusterExpiryAfterKrknRun() {
+	if !k.krknExtendedClusterExpiry {
+		return
+	}
+	clusterID := viper.GetString(config.Cluster.ID)
+	if clusterID == "" {
+		return
+	}
+	log.Printf("krkn-ai: setting cluster %s expiration to now + %v (post-run)", clusterID, krknPostRunClusterGrace)
+	if err := k.provider.Expire(clusterID, krknPostRunClusterGrace); err != nil {
+		log.Printf("krkn-ai: warning: could not shorten cluster expiration after krkn-ai: %v", err)
+	}
+}
+
 // getPrometheusToken retrieves a token for the prometheus-k8s service account from the cluster.
 func (k *KrknAI) getPrometheusToken(ctx context.Context) (string, error) {
 	// Get kubeconfig from shared dir
@@ -290,8 +354,11 @@ func (k *KrknAI) getPrometheusToken(ctx context.Context) (string, error) {
 		return "", fmt.Errorf("failed to create openshift client: %w", err)
 	}
 
-	// Use osde2e-common prometheus package to create the token
-	return prometheus.GetPrometheusToken(ctx, client)
+	tokenDuration := krknPrometheusTokenDuration(
+		viper.GetInt(config.KrknAI.Generations),
+		viper.GetInt(config.KrknAI.Population),
+	)
+	return prometheus.GetPrometheusTokenWithDuration(ctx, client, tokenDuration)
 }
 
 // updateKrknConfig updates the Krkn-ai output YAML with values from viper config.

@@ -21,11 +21,11 @@ require (
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/onsi/ginkgo/v2 v2.28.1
 	github.com/onsi/gomega v1.39.1
-	github.com/openshift-online/ocm-sdk-go v0.1.498
+	github.com/openshift-online/ocm-sdk-go v0.1.499
 	github.com/openshift/client-go v0.0.0-20260320040014-4b5fc2cdad98
 	github.com/openshift/cloud-credential-operator v0.0.0-20250326174647-d66761c09842
 	github.com/openshift/managed-upgrade-operator v0.0.0-20260318004129-350c2fbceedb
-	github.com/openshift/osde2e-common v0.0.0-20260323184812-f5726d2f2f6b
+	github.com/openshift/osde2e-common v0.0.0-20260421185005-d390433565e5
 	github.com/operator-framework/api v0.30.0
 	github.com/operator-framework/operator-lifecycle-manager v0.22.0
 	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.74.0
