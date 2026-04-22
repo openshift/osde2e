@@ -242,7 +242,7 @@ func (e *Executor) buildJobSpec(namespace string, image string) *batchv1.Job {
 						},
 						{
 							Name:    "pause-for-artifacts",
-							Image:   "busybox:latest",
+							Image:   "registry.access.redhat.com/ubi10/ubi:10",
 							Command: []string{"tail", "-f", "/dev/null"},
 							VolumeMounts: []corev1.VolumeMount{
 								{
