@@ -12,6 +12,18 @@ import (
 	"github.com/openshift/osde2e/pkg/common/config"
 )
 
+type securityGroupEC2 interface {
+	DescribeVpcs(*ec2.DescribeVpcsInput) (*ec2.DescribeVpcsOutput, error)
+	DescribeSecurityGroups(*ec2.DescribeSecurityGroupsInput) (*ec2.DescribeSecurityGroupsOutput, error)
+	RevokeSecurityGroupIngress(*ec2.RevokeSecurityGroupIngressInput) (*ec2.RevokeSecurityGroupIngressOutput, error)
+	RevokeSecurityGroupEgress(*ec2.RevokeSecurityGroupEgressInput) (*ec2.RevokeSecurityGroupEgressOutput, error)
+	DeleteSecurityGroup(*ec2.DeleteSecurityGroupInput) (*ec2.DeleteSecurityGroupOutput, error)
+}
+
+type securityGroupCFN interface {
+	DescribeStacks(*cloudformation.DescribeStacksInput) (*cloudformation.DescribeStacksOutput, error)
+}
+
 // CleanupSecurityGroups deletes all non-default security groups in orphaned osde2e VPCs
 // whose CloudFormation stacks are in DELETE_FAILED state. Leftover security groups
 // (e.g. from OCPBUGS-74960) block CloudFormation stack deletion, so removing them
@@ -24,8 +36,16 @@ func (CcsAwsSession *ccsAwsSession) CleanupSecurityGroups(activeClusters map[str
 		return err
 	}
 
+	cfnClient := cloudformation.New(CcsAwsSession.session)
+	return cleanupSecurityGroups(CcsAwsSession.ec2, cfnClient, activeClusters, dryrun, sendSummary, deletedCounter, failedCounter, errorBuilder)
+}
+
+func cleanupSecurityGroups(ec2Client securityGroupEC2, cfnClient securityGroupCFN,
+	activeClusters map[string]bool, dryrun bool, sendSummary bool,
+	deletedCounter *int, failedCounter *int, errorBuilder *strings.Builder,
+) error {
 	// Find all osde2e VPCs
-	results, err := CcsAwsSession.ec2.DescribeVpcs(&ec2.DescribeVpcsInput{
+	results, err := ec2Client.DescribeVpcs(&ec2.DescribeVpcsInput{
 		Filters: []*ec2.Filter{
 			{
 				Name:   aws.String("tag:Name"),
@@ -49,8 +69,6 @@ func (CcsAwsSession *ccsAwsSession) CleanupSecurityGroups(activeClusters map[str
 	for clusterName := range activeClusters {
 		activeVpcStacks[clusterName+"-vpc"] = true
 	}
-
-	cfnClient := cloudformation.New(CcsAwsSession.session)
 
 	for _, vpc := range results.Vpcs {
 		vpcID := aws.StringValue(vpc.VpcId)
@@ -98,7 +116,7 @@ func (CcsAwsSession *ccsAwsSession) CleanupSecurityGroups(activeClusters map[str
 		}
 
 		// Find all non-default security groups in this VPC
-		sgResult, err := CcsAwsSession.ec2.DescribeSecurityGroups(&ec2.DescribeSecurityGroupsInput{
+		sgResult, err := ec2Client.DescribeSecurityGroups(&ec2.DescribeSecurityGroupsInput{
 			Filters: []*ec2.Filter{
 				{
 					Name:   aws.String("vpc-id"),
@@ -126,7 +144,7 @@ func (CcsAwsSession *ccsAwsSession) CleanupSecurityGroups(activeClusters map[str
 
 			// Revoke all ingress/egress rules before deleting, to avoid DependencyViolation errors
 			if len(sg.IpPermissions) > 0 {
-				_, err := CcsAwsSession.ec2.RevokeSecurityGroupIngress(&ec2.RevokeSecurityGroupIngressInput{
+				_, err := ec2Client.RevokeSecurityGroupIngress(&ec2.RevokeSecurityGroupIngressInput{
 					GroupId:       aws.String(sgID),
 					IpPermissions: sg.IpPermissions,
 				})
@@ -136,7 +154,7 @@ func (CcsAwsSession *ccsAwsSession) CleanupSecurityGroups(activeClusters map[str
 			}
 
 			if len(sg.IpPermissionsEgress) > 0 {
-				_, err := CcsAwsSession.ec2.RevokeSecurityGroupEgress(&ec2.RevokeSecurityGroupEgressInput{
+				_, err := ec2Client.RevokeSecurityGroupEgress(&ec2.RevokeSecurityGroupEgressInput{
 					GroupId:       aws.String(sgID),
 					IpPermissions: sg.IpPermissionsEgress,
 				})
@@ -146,7 +164,7 @@ func (CcsAwsSession *ccsAwsSession) CleanupSecurityGroups(activeClusters map[str
 			}
 
 			log.Printf("Deleting security group %s (%s) in VPC %s\n", sgID, sgName, vpcID)
-			_, err := CcsAwsSession.ec2.DeleteSecurityGroup(&ec2.DeleteSecurityGroupInput{
+			_, err := ec2Client.DeleteSecurityGroup(&ec2.DeleteSecurityGroupInput{
 				GroupId: aws.String(sgID),
 			})
 			if err != nil {
