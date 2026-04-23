@@ -137,11 +137,11 @@ func (CcsAwsSession *ccsAwsSession) CleanupVPCs(activeClusters map[string]bool, 
 	return counters, nil
 }
 
+var vpcNameRegexp = regexp.MustCompile(`^(osde2e-[^-]+)-[^-]+-vpc$`)
+
 // removes the -yyyyy suffix from VPC names that follow the osde2e-xxxxx-yyyyy-vpc format
 func getClusterNameFromVPCName(vpcName string) string {
-	// Match osde2e-xxxxx-yyyyy-vpc pattern and extract osde2e-xxxxx-vpc part
-	re := regexp.MustCompile(`^(osde2e-[^-]+)-[^-]+-vpc$`)
-	matches := re.FindStringSubmatch(vpcName)
+	matches := vpcNameRegexp.FindStringSubmatch(vpcName)
 	if len(matches) == 2 {
 		return matches[1] + "-vpc"
 	}
