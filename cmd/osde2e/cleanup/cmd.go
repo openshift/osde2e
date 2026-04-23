@@ -280,6 +280,7 @@ func run(_ context.Context) (msg Message, err error) {
 	}
 	log.Printf("Found %d active clusters for cleanup operations\n", len(activeClusters))
 
+	// Security groups exist inside VPCs so we want to make sure they are cleaned up before we try to clean up the VPCs
 	if args.securityGroup {
 		sgDeletedCounter := 0
 		sgFailedCounter := 0
