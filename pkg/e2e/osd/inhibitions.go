@@ -153,32 +153,33 @@ var _ = ginkgo.Describe("[Suite: operators] AlertmanagerInhibitions", label.Oper
 			cleanup(ctx, h)
 		}()
 
-		// the clusteroperatordown/degraded alerts take several minutes to trip
-		time.Sleep(3 * time.Minute)
-
 		oc, err := openshift.NewFromRestConfig(h.GetConfig(), ginkgo.GinkgoLogr)
 		Expect(err).NotTo(HaveOccurred(), "unable to create openshift client")
 		prom, err := prometheus.New(ctx, oc)
 		Expect(err).NotTo(HaveOccurred(), "unable to create prometheus client")
 		prometheusApiClient := prom.GetClient()
 
-		timeout, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-		defer cancel()
-		alerts, err := prometheusApiClient.Alerts(timeout)
-		Expect(err).To(BeNil())
-
-		// confirm the source is firing and the target isn't by cycling through all
-		// the returned alerts
-		operatorDownAlertPresent := false
-		for _, alert := range alerts.Alerts {
-			if alert.Labels["alertname"] == "ClusterOperatorDown" && alert.Labels["name"] == "authentication" {
-				operatorDownAlertPresent = true
+		// Poll for the alert to appear. The alert enters "pending" state once the
+		// operator reports degraded and Prometheus scrapes + evaluates the rule
+		// (typically 2-3 min). We check for existence, not firing state, so we
+		// don't need to wait for the full for: duration (10m/30m).
+		Eventually(ctx, func() bool {
+			timeout, cancel := context.WithTimeout(ctx, 10*time.Second)
+			defer cancel()
+			alerts, err := prometheusApiClient.Alerts(timeout)
+			if err != nil {
+				ginkgo.GinkgoLogr.Error(err, "Unable to query prom API")
+				return false
 			}
-			if alert.Labels["alertname"] == "ClusterOperatorDegraded" && alert.Labels["name"] == "authentication" {
-				operatorDownAlertPresent = true
+			for _, alert := range alerts.Alerts {
+				if (alert.Labels["alertname"] == "ClusterOperatorDown" ||
+					alert.Labels["alertname"] == "ClusterOperatorDegraded") &&
+					alert.Labels["name"] == "authentication" {
+					return true
+				}
 			}
-		}
-		Expect(operatorDownAlertPresent).To(BeTrue())
+			return false
+		}, 5*time.Minute, 30*time.Second).Should(BeTrue())
 	})
 })
 
