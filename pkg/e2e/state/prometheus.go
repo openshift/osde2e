@@ -36,7 +36,9 @@ var _ = ginkgo.Describe(clusterStateInformingName, label.E2E, func() {
 		// this command is has specific code to capture and suppress an exit code of
 		// 1 as tar 1.26 will exit 1 if files change while the tar is running, as is
 		// common for a running prometheus instance
-		cmd := "oc cp -c prometheus openshift-monitoring/prometheus-k8s-0:/prometheus /tmp/prometheus && tar -cvzf " + runner.DefaultRunner.OutputDir + "/prometheus.tar.gz -C /tmp/prometheus .; err=$? ; if (( $err != 0 )) ; then exit $err ; fi"
+		cmd := "oc cp -c prometheus openshift-monitoring/prometheus-k8s-0:/prometheus /tmp/prometheus || exit $?; " +
+			"tar -cvzf " + runner.DefaultRunner.OutputDir + "/prometheus.tar.gz -C /tmp/prometheus .; " +
+			"err=$?; if (( err != 1 )); then exit $err; fi"
 
 		// ensure prometheus pods are up before trying to extract data
 		poderr := wait.PollUntilContextTimeout(ctx, 2*time.Second, prometheusPodStartedDuration, true, func(ctx context.Context) (bool, error) {
