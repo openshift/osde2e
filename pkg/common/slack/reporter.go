@@ -76,6 +76,7 @@ type WorkflowPayload struct {
 	Env            string `json:"env,omitempty"`
 	Commit         string `json:"commit,omitempty"`
 	TektonURL      string `json:"tekton_url,omitempty"`
+	RepoLink       string `json:"repo_link"`
 	LogLink        string `json:"log_link"`
 	JunitXMLLink   string `json:"junit_xml_link"`
 }
@@ -140,6 +141,8 @@ func (s *SlackReporter) buildWorkflowPayload(result *AnalysisResult, config *Rep
 	if tektonURL, ok := config.Settings["tekton_url"].(string); ok {
 		payload.TektonURL = tektonURL
 	}
+
+	payload.RepoLink = fmt.Sprintf("https://github.com/openshift/%s/commit/%s", config.Settings["repo"], config.Settings["commit"])
 
 	return payload
 }
