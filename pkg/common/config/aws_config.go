@@ -4,17 +4,10 @@ package config
 import (
 	"encoding/base64"
 	"fmt"
-	"math"
 	"os"
 	"path/filepath"
-	"time"
 
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
-)
-
-const (
-	profileA = "profile-a"
-	profileB = "profile-b"
 )
 
 var (
@@ -31,9 +24,6 @@ var (
 	AWSSecretAccessKey = "config.aws.secretAccessKey"
 
 	// AWSSharedCredentials is the base64 encoded AWS credentials file content.
-	// This is used to optimize AWS resource spending
-	// by nuking each of the 2 accounts alternately.
-	// Should contain two named profiles: "profile-a" and "profile-b"
 	// If provided, supersedes AWS secret set in env.
 	AWSSharedCredentials = "config.aws.sharedCredentials"
 
@@ -62,9 +52,6 @@ func InitAWSViper() error {
 	customCredsPath := viper.GetString(AWSCredentialsFile)
 
 	if sharedCreds != "" {
-		// If shared credntials file is provided in env vars, it should contain two profiles named "profile-a" and profile-b"
-		// Osde2e will use one of them based on current week.
-		// While one profile is in use, the other is cleaned up using AWS nuke
 		if err := os.MkdirAll(filepath.Dir(customCredsPath), os.FileMode(0o755)); err != nil {
 			return fmt.Errorf("could not write given shared credentials file: %w", err)
 		}
@@ -79,18 +66,11 @@ func InitAWSViper() error {
 			return fmt.Errorf("could not write given shared credentials file: %w", err)
 		}
 
-		// use profile based on week
-		week := getWeekSince2024()
-		currentProfile := profileA
-		if week%2 != 0 {
-			currentProfile = profileB
-		}
 		// remove secrets set in environment so that profile can take effect
 		// by default, AWS gives higher precedence to secret env vars than profile.
 		os.Setenv("AWS_ACCESS_KEY_ID", "")
 		os.Setenv("AWS_SECRET_ACCESS_KEY", "")
 		os.Setenv("AWS_ACCOUNT_ID", "")
-		os.Setenv("AWS_PROFILE", currentProfile)
 	}
 	_ = viper.BindEnv(AWSProfile, "AWS_PROFILE")
 	RegisterSecret(AWSProfile, "aws-profile")
@@ -114,16 +94,4 @@ func InitAWSViper() error {
 	RegisterSecret(AWSVPCSubnetIDs, "subnet-ids")
 
 	return nil
-}
-
-// Since simply checking whether current week is odd or even
-// within current year may result in unexpected outage if a year has
-// odd number of weeks, use odd/even based on a constant start date.
-func getWeekSince2024() int {
-	timeFormat := "2006-01-02"
-	t, _ := time.Parse(timeFormat, "2024-01-01")
-	now := time.Now()
-	duration := now.Sub(t)
-	week := int(math.Floor(duration.Hours()/(24*7))) + 1
-	return week
 }
