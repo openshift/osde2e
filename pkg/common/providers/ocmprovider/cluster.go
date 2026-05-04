@@ -681,6 +681,64 @@ func (o *OCMProvider) ListClusters(query string) ([]*spi.Cluster, error) {
 	return clusters, nil
 }
 
+// ListOwnedClusters returns clusters matching the query that belong to the
+// currently authenticated OCM account. It queries accounts_mgmt subscriptions
+// to identify clusters created by the current service account, then filters
+// the clusters_mgmt results to exclude clusters owned by other accounts.
+func (o *OCMProvider) ListOwnedClusters(query string) ([]*spi.Cluster, error) {
+	acctResp, err := o.conn.AccountsMgmt().V1().CurrentAccount().Get().Send()
+	if err != nil {
+		return nil, fmt.Errorf("couldn't get current account: %v", err)
+	}
+	accountID := acctResp.Body().ID()
+	log.Printf("Current OCM account ID: %s\n", accountID)
+
+	ownedClusterIDs := make(map[string]bool)
+	subsSearch := fmt.Sprintf("creator.id='%s' and status in ('Active','Reserved')", accountID)
+	collected := 0
+	page := 1
+	for {
+		subsResp, err := o.conn.AccountsMgmt().V1().Subscriptions().List().
+			Search(subsSearch).
+			Page(page).
+			Size(100).
+			Send()
+		if err != nil {
+			return nil, fmt.Errorf("couldn't list subscriptions for account %s: %v", accountID, err)
+		}
+
+		for _, sub := range subsResp.Items().Slice() {
+			if cid := sub.ClusterID(); cid != "" {
+				ownedClusterIDs[cid] = true
+			}
+		}
+
+		collected += subsResp.Size()
+		if collected >= subsResp.Total() || subsResp.Size() == 0 {
+			break
+		}
+		page++
+	}
+	log.Printf("Found %d cluster IDs owned by current account\n", len(ownedClusterIDs))
+
+	allClusters, err := o.ListClusters(query)
+	if err != nil {
+		return nil, err
+	}
+
+	var ownedClusters []*spi.Cluster
+	for _, cluster := range allClusters {
+		if ownedClusterIDs[cluster.ID()] {
+			ownedClusters = append(ownedClusters, cluster)
+		} else {
+			log.Printf("Skipping cluster %s (%s): not owned by current account\n", cluster.ID(), cluster.Name())
+		}
+	}
+
+	log.Printf("Filtered to %d owned clusters (from %d total matching query)\n", len(ownedClusters), len(allClusters))
+	return ownedClusters, nil
+}
+
 // GetClusterRegion returns the cloud region for the cluster from OCM.
 func (o *OCMProvider) GetClusterRegion(clusterID string) (string, error) {
 	c, err := o.GetCluster(clusterID)

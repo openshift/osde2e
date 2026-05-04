@@ -19,7 +19,6 @@ import (
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/providers/ocmprovider"
 	commonslack "github.com/openshift/osde2e/pkg/common/slack"
-	"github.com/openshift/osde2e/pkg/common/spi"
 )
 
 var Cmd = &cobra.Command{
@@ -167,7 +166,7 @@ func init() {
 func collectActiveClusters() (map[string]bool, error) {
 	// Create OCM provider map for different environments
 	envs := []string{"int", "stage", "prod"}
-	providers := make(map[string]spi.Provider)
+	providers := make(map[string]*ocmprovider.OCMProvider)
 
 	for _, env := range envs {
 		provider, err := ocmprovider.NewWithEnv(env)
@@ -185,7 +184,7 @@ func collectActiveClusters() (map[string]bool, error) {
 
 	activeClusters := make(map[string]bool)
 	for env, provider := range providers {
-		clusters, err := provider.ListClusters("properties.MadeByOSDe2e='true'")
+		clusters, err := provider.ListOwnedClusters("properties.MadeByOSDe2e='true'")
 		if err != nil {
 			log.Printf("Warning: error listing clusters for environment %s: %v (skipping)\n", env, err)
 			continue
@@ -305,7 +304,7 @@ func run(_ context.Context) (msg Message, err error) {
 			return msg, fmt.Errorf("could not setup cluster provider: %v", err)
 		}
 
-		clusters, err := provider.ListClusters("properties.MadeByOSDe2e='true'")
+		clusters, err := provider.ListOwnedClusters("properties.MadeByOSDe2e='true'")
 		if err != nil {
 			return msg, err
 		}
