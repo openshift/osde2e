@@ -38,7 +38,7 @@ var _ = ginkgo.Describe(clusterStateInformingName, label.E2E, func() {
 		// common for a running prometheus instance
 		cmd := "oc cp -c prometheus openshift-monitoring/prometheus-k8s-0:/prometheus /tmp/prometheus || exit $?; " +
 			"tar -cvzf " + runner.DefaultRunner.OutputDir + "/prometheus.tar.gz -C /tmp/prometheus .; " +
-			"err=$?; if (( err != 1 )); then exit $err; fi"
+			"err=$?; if (( err > 1 )); then exit $err; fi"
 
 		// ensure prometheus pods are up before trying to extract data
 		poderr := wait.PollUntilContextTimeout(ctx, 2*time.Second, prometheusPodStartedDuration, true, func(ctx context.Context) (bool, error) {
