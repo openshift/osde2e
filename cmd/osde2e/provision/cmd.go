@@ -11,8 +11,22 @@ import (
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/providers"
 	"github.com/openshift/osde2e/pkg/common/providers/ocmprovider"
+	"github.com/openshift/osde2e/pkg/common/spi"
 	"github.com/spf13/cobra"
 )
+
+// Provisioner is an interface that abstracts cluster provisioning for testing.
+type Provisioner interface {
+	Provision(provider spi.Provider) (*spi.Cluster, error)
+}
+
+// RealProvisioner wraps the actual clusterutil.Provision function.
+type RealProvisioner struct{}
+
+// Provision calls the real clusterutil.Provision function.
+func (r *RealProvisioner) Provision(provider spi.Provider) (*spi.Cluster, error) {
+	return clusterutil.Provision(provider)
+}
 
 var Cmd = &cobra.Command{
 	Use:   "provision",
@@ -81,9 +95,20 @@ func init() {
 	_ = viper.BindPFlag(config.Tests.OnlyHealthCheckNodes, Cmd.PersistentFlags().Lookup("only-health-check-nodes"))
 }
 
-func run(cmd *cobra.Command, argv []string) error {
+// handleProvisionError determines whether a provision error should cause the command to fail.
+// Returns nil if the error should be treated as success (e.g., ErrReserveFull).
+// Returns the error if it should cause command failure.
+func handleProvisionError(err error) error {
+	if err != nil && !errors.Is(err, clusterutil.ErrReserveFull) {
+		return err
+	}
+	return nil
+}
+
+// runWithProvisioner allows dependency injection for testing.
+func runWithProvisioner(provisioner Provisioner, configString, secretLocations string) error {
 	var err error
-	if err = common.LoadConfigs(args.configString, "", args.secretLocations); err != nil {
+	if err = common.LoadConfigs(configString, "", secretLocations); err != nil {
 		return fmt.Errorf("error loading initial state: %v", err)
 	}
 	provider, err := providers.ClusterProvider()
@@ -91,9 +116,10 @@ func run(cmd *cobra.Command, argv []string) error {
 		return fmt.Errorf("error getting cluster provider: %s", err.Error())
 	}
 
-	_, err = clusterutil.Provision(provider)
-	if err != nil && !errors.Is(err, clusterutil.ErrReserveFull) {
-		return err
-	}
-	return nil
+	_, err = provisioner.Provision(provider)
+	return handleProvisionError(err)
+}
+
+func run(cmd *cobra.Command, argv []string) error {
+	return runWithProvisioner(&RealProvisioner{}, args.configString, args.secretLocations)
 }
