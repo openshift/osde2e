@@ -217,5 +217,52 @@ Secrets from vault volumes are automatically loaded and propagated from the top-
 
 **Files**: `pkg/common/load/load.go` (vault loading), `pkg/common/executor/executor.go:158-177` (pod injection)
 
+## Debugging osde2e-common Issues
+
+When debugging provisioning or cluster lifecycle issues in osde2e that originate from osde2e-common:
+
+### Identifying osde2e-common Issues
+1. **Check vendor path**: Issues in `vendor/github.com/openshift/osde2e-common/` indicate upstream problems
+2. **Common symptoms**:
+   - Silent failures or errors during cluster provisioning
+   - Timeout errors that should fail fast
+   - Missing error propagation from ROSA/OCM operations
+   - Type assertion panics in cluster state handling
+
+### Fixing osde2e-common Issues
+1. **Never edit vendor directory directly** - changes will be overwritten by `go mod vendor`
+2. **Clone and fix in osde2e-common repo**:
+   ```bash
+   cd ../osde2e-common  # Assumes osde2e-common is cloned alongside osde2e
+   git checkout -b fix-branch-name
+   # Make your fixes in pkg/openshift/rosa/ or other relevant paths
+   ```
+3. **Common error handling patterns to look for**:
+   - Swallowed errors: `return false, nil` when should be `return false, err`
+   - Missing fail-fast: Polling continues on terminal error states
+   - Unsafe type assertions: Missing `ok` checks on type assertions
+   - Silent error states: Logging errors but not returning them
+
+### Testing Changes Locally
+1. **Update go.mod in osde2e** to use local version:
+   ```bash
+   # From osde2e repo root
+   go mod edit -replace github.com/openshift/osde2e-common=../osde2e-common
+   go mod tidy
+   go mod vendor
+   ```
+2. **Test the fix** with your osde2e workflow
+3. **Before committing**: Remove the replace directive and test with actual version
+
+### Submitting Changes
+1. **Submit PR to osde2e-common first**
+2. **After merge**: Update osde2e's go.mod to use new version
+3. **Cross-reference**: Mention osde2e-common PR in osde2e commits/PRs
+
+### Example Fixes
+- **Error propagation**: Change `return false, nil` to `return false, err` in wait loops
+- **Fail-fast on error states**: Add checks for terminal states before continuing polls
+- **Safe type assertions**: Always check `ok` value: `status, ok := output["status"].(map[string]any)`
+
 ## PR instructions
 - Title format: [<jira-ID>] <Title>
