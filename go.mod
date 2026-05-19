@@ -15,7 +15,6 @@ require (
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/hashicorp/hc-install v0.9.2
 	github.com/hashicorp/terraform-exec v0.23.0
-	github.com/jackc/pgtype v1.14.2 // indirect
 	github.com/joshdk/go-junit v1.0.0
 	github.com/kylelemons/godebug v1.1.0
 	github.com/mitchellh/mapstructure v1.5.0
@@ -25,7 +24,7 @@ require (
 	github.com/openshift/client-go v0.0.0-20260320040014-4b5fc2cdad98
 	github.com/openshift/cloud-credential-operator v0.0.0-20250326174647-d66761c09842
 	github.com/openshift/managed-upgrade-operator v0.0.0-20260318004129-350c2fbceedb
-	github.com/openshift/osde2e-common v0.0.0-20260421185005-d390433565e5
+	github.com/openshift/osde2e-common v0.0.0-20260514215146-b07512784467
 	github.com/operator-framework/api v0.30.0
 	github.com/operator-framework/operator-lifecycle-manager v0.22.0
 	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.74.0
@@ -57,6 +56,7 @@ require (
 )
 
 require (
+	github.com/golang-jwt/jwt/v4 v4.5.2
 	github.com/gomarkdown/markdown v0.0.0-20260217112301-37c66b85d6ab
 	github.com/hashicorp/go-version v1.7.0
 	github.com/microcosm-cc/bluemonday v1.0.27
@@ -107,7 +107,6 @@ require (
 	github.com/go-openapi/jsonreference v0.21.0 // indirect
 	github.com/go-openapi/swag v0.23.0 // indirect
 	github.com/go-task/slim-sprig/v3 v3.0.0 // indirect
-	github.com/golang-jwt/jwt/v4 v4.5.2 // indirect
 	github.com/golang-jwt/jwt/v5 v5.3.0 // indirect
 	github.com/golang/glog v1.2.5 // indirect
 	github.com/google/gnostic-models v0.7.0 // indirect
