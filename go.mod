@@ -58,7 +58,7 @@ require (
 require (
 	github.com/golang-jwt/jwt/v4 v4.5.2
 	github.com/gomarkdown/markdown v0.0.0-20260217112301-37c66b85d6ab
-	github.com/hashicorp/go-version v1.7.0
+	github.com/hashicorp/go-version v1.9.0
 	github.com/microcosm-cc/bluemonday v1.0.27
 	github.com/openshift/api v0.0.0-20260318185450-1f2fa3f09f4e
 	github.com/stretchr/testify v1.11.1
