@@ -8,7 +8,7 @@ require (
 	github.com/PuerkitoBio/goquery v1.10.2
 	github.com/adamliesko/retry v0.0.0-20200123222335-86c8baac277d
 	github.com/aws/aws-sdk-go v1.55.8
-	github.com/fsnotify/fsnotify v1.9.0
+	github.com/fsnotify/fsnotify v1.10.1
 	github.com/go-logr/logr v1.4.3
 	github.com/google/go-github/v31 v31.0.0
 	github.com/google/uuid v1.6.0 // indirect
