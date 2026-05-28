@@ -18,7 +18,7 @@ var (
 func retryer() *retry.Retryer {
 	ocmOnce.Do(func() {
 		ocmRetryer = retry.New(retry.SleepFn(func(attempts int) {
-			time.Sleep(time.Duration(2^attempts) * time.Second)
+			time.Sleep(time.Duration(1<<attempts) * time.Second)
 		}))
 		ocmRetryer.Tries = viper.GetInt(NumRetries)
 		ocmRetryer.AfterEachFailFn = func(err error) {
