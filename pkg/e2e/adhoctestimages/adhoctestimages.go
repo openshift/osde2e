@@ -26,6 +26,7 @@ import (
 type PendingNotification struct {
 	AnalysisContent string
 	TestSuite       config.TestSuite
+	OutputDir       string // per-suite artifact directory for suite-specific S3 upload
 }
 
 var (
@@ -90,8 +91,10 @@ var _ = ginkgo.Describe("Ad Hoc Test Images", ginkgo.Ordered, ginkgo.ContinueOnF
 	ginkgo.DescribeTable("execution",
 		func(ctx context.Context, testSuite config.TestSuite) {
 			testImage := testSuite.Image
-			baseImageName := strings.Split(testImage[strings.LastIndex(testImage, "/")+1:], ":")[0]
-			exeConfig.OutputDir = filepath.Join(viper.GetString(config.ReportDir), viper.GetString(config.Phase), baseImageName)
+			// Use image name + tag as dir name so suites from the same repo
+			// but different tags get separate artifact directories.
+			dirName := strings.ReplaceAll(testImage[strings.LastIndex(testImage, "/")+1:], ":", "-")
+			exeConfig.OutputDir = filepath.Join(viper.GetString(config.ReportDir), viper.GetString(config.Phase), dirName)
 
 			logger.Info("running test suite", "suite", testImage, "timeout", exeConfig.Timeout)
 			results, err := exe.Execute(ctx, testImage)
@@ -128,7 +131,7 @@ var _ = ginkgo.Describe("Ad Hoc Test Images", ginkgo.Ordered, ginkgo.ContinueOnF
 				if viper.GetBool(config.LogAnalysis.EnableAnalysis) {
 					analysisContent = runLogAnalysisForAdHocTestImage(ctx, logger, testSuite, combinedErr, exeConfig.OutputDir)
 				}
-				queueNotification(testSuite, analysisContent)
+				queueNotification(testSuite, analysisContent, exeConfig.OutputDir)
 			}
 		},
 		testImageEntries)
@@ -136,11 +139,12 @@ var _ = ginkgo.Describe("Ad Hoc Test Images", ginkgo.Ordered, ginkgo.ContinueOnF
 
 // queueNotification adds a PendingNotification for deferred Slack delivery.
 // Called directly when log analysis is disabled so notifications are still sent.
-func queueNotification(testSuite config.TestSuite, analysisContent string) {
+func queueNotification(testSuite config.TestSuite, analysisContent, outputDir string) {
 	pendingMu.Lock()
 	pendingNotifications = append(pendingNotifications, PendingNotification{
 		AnalysisContent: analysisContent,
 		TestSuite:       testSuite,
+		OutputDir:       outputDir,
 	})
 	pendingMu.Unlock()
 }

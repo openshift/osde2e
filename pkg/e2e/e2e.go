@@ -99,12 +99,13 @@ func RunTests(ctx context.Context) int {
 
 // E2EOrchestrator implements the orchestrator.Orchestrator interface for OSD e2e tests.
 type E2EOrchestrator struct {
-	provider       spi.Provider
-	result         *orchestrator.Result
-	suiteConfig    types.SuiteConfig
-	reporterConfig types.ReporterConfig
-	s3Results      []aws.S3UploadResult
-	analysisResult *analysisengine.Result
+	provider          spi.Provider
+	result            *orchestrator.Result
+	suiteConfig       types.SuiteConfig
+	reporterConfig    types.ReporterConfig
+	s3Results         []aws.S3UploadResult
+	perSuiteS3Results map[string][]aws.S3UploadResult // keyed by test image
+	analysisResult    *analysisengine.Result
 }
 
 // NewOrchestrator creates a new E2E orchestrator instance.
@@ -120,9 +121,10 @@ func NewOrchestrator(ctx context.Context) (orchestrator.Orchestrator, error) {
 	configureGinkgo(&suiteConfig, &reporterConfig)
 
 	return &E2EOrchestrator{
-		provider:       provider,
-		suiteConfig:    suiteConfig,
-		reporterConfig: reporterConfig,
+		provider:          provider,
+		suiteConfig:       suiteConfig,
+		reporterConfig:    reporterConfig,
+		perSuiteS3Results: make(map[string][]aws.S3UploadResult),
 		result: &orchestrator.Result{
 			ExitCode: config.Success,
 		},
@@ -295,6 +297,9 @@ func (o *E2EOrchestrator) Report(ctx context.Context) error {
 		if err := o.uploadToS3(); err != nil {
 			log.Printf("S3 upload failed: %v", err)
 		}
+		if len(pending) > 0 {
+			o.uploadSuiteArtifacts(pending)
+		}
 	}
 
 	// Send notifications after S3 upload so presigned URLs are available.
@@ -364,11 +369,17 @@ func (o *E2EOrchestrator) sendFailureNotification(ctx context.Context) {
 // upload so that presigned URLs are available for inclusion in the message.
 func (o *E2EOrchestrator) sendDeferredNotifications(ctx context.Context, pending []adhoctestimages.PendingNotification) {
 	webhook := viper.GetString(config.Slack.WebhookURL)
-	if webhook == "" || !viper.GetBool(config.Tests.EnableSlackNotify) {
+	if webhook == "" {
+		log.Println("Skipping deferred notifications: no Slack webhook configured")
+		return
+	}
+	if !viper.GetBool(config.Tests.EnableSlackNotify) {
+		log.Println("Skipping deferred notifications: Slack notifications disabled")
 		return
 	}
 
-	artifactLinks := s3ResultsToArtifactLinks(o.s3Results)
+	globalLink := globalTestOutputLink(o.s3Results)
+	fallbackLinks := s3ResultsToArtifactLinks(o.s3Results)
 	slackReporter := slack.NewSlackReporter()
 	var expiration string
 	if o.provider != nil {
@@ -397,7 +408,7 @@ func (o *E2EOrchestrator) sendDeferredNotifications(ctx context.Context, pending
 			Version:    viper.GetString(config.Cluster.Version),
 			Expiration: expiration,
 		}
-		cfg.Settings["artifact_links"] = artifactLinks
+		cfg.Settings["artifact_links"] = o.artifactLinksForSuite(p.TestSuite.Image, globalLink, fallbackLinks)
 
 		result := &slack.AnalysisResult{
 			Status:  "completed",
@@ -406,8 +417,24 @@ func (o *E2EOrchestrator) sendDeferredNotifications(ctx context.Context, pending
 
 		if err := slackReporter.Report(ctx, result, &cfg); err != nil {
 			log.Printf("Failed to send deferred notification for %s: %v", p.TestSuite.Image, err)
+		} else {
+			log.Printf("Sent notification for %s to %s", p.TestSuite.Image, p.TestSuite.SlackChannel)
 		}
 	}
+}
+
+// artifactLinksForSuite returns per-suite artifact links if available,
+// prepending the global test_output.log link. Falls back to global links.
+func (o *E2EOrchestrator) artifactLinksForSuite(image string, globalLink *slack.ArtifactLink, fallback []slack.ArtifactLink) []slack.ArtifactLink {
+	results, ok := o.perSuiteS3Results[image]
+	if !ok {
+		return fallback
+	}
+	var links []slack.ArtifactLink
+	if globalLink != nil {
+		links = append(links, *globalLink)
+	}
+	return append(links, suiteArtifactLinks(results)...)
 }
 
 // uploadToS3 uploads the report directory contents to S3 and caches results.
@@ -417,7 +444,7 @@ func (o *E2EOrchestrator) uploadToS3() error {
 		return nil
 	}
 
-	component := deriveComponentFromFirstImage()
+	component := deriveGlobalComponent()
 	uploader, err := aws.NewS3Uploader(component)
 	if errors.Is(err, aws.ErrNoAWSCredentials) {
 		log.Printf("%v", err)
@@ -441,47 +468,111 @@ func (o *E2EOrchestrator) uploadToS3() error {
 	return nil
 }
 
+func toArtifactLink(r aws.S3UploadResult) slack.ArtifactLink {
+	return slack.ArtifactLink{
+		Name: filepath.Base(r.Key),
+		URL:  r.PresignedURL,
+		Size: r.Size,
+	}
+}
+
 // s3ResultsToArtifactLinks converts S3 upload results to artifact links for Slack.
 // Returns links in a fixed order: test_output.log, junit_<suffix>.xml.
 func s3ResultsToArtifactLinks(results []aws.S3UploadResult) []slack.ArtifactLink {
 	suffix := viper.GetString(config.Suffix)
 	currentJunit := "junit_" + suffix + ".xml"
-
 	orderedNames := []string{"test_output.log", currentJunit}
 
 	byName := make(map[string]aws.S3UploadResult, len(orderedNames))
 	for _, r := range results {
-		if r.PresignedURL == "" {
-			continue
+		if r.PresignedURL != "" {
+			byName[filepath.Base(r.Key)] = r
 		}
-		byName[filepath.Base(r.Key)] = r
 	}
 
 	links := make([]slack.ArtifactLink, 0, len(orderedNames))
 	for _, name := range orderedNames {
 		if r, ok := byName[name]; ok {
-			links = append(links, slack.ArtifactLink{
-				Name: name,
-				URL:  r.PresignedURL,
-				Size: r.Size,
-			})
+			links = append(links, toArtifactLink(r))
 		}
 	}
 	return links
 }
 
-// deriveComponentFromFirstImage determines the component name from the test image.
-// It extracts a meaningful name from the test image path to organize S3 artifacts.
-// Examples:
-//
-//	quay.io/org/osd-example-operator-e2e:tag -> osd-example-operator
-//	quay.io/org/my-service-test:latest -> my-service
-func deriveComponentFromFirstImage() string {
-	testSuites, err := config.GetTestSuites()
-	if err == nil && len(testSuites) > 0 {
-		imageName := testSuites[0].Image
-		if component, _ := extractDetailsFromImage(imageName); component != "" {
-			return component
+// uploadSuiteArtifacts uploads each failed suite's artifact directory to S3
+// under a suite-specific component key. Results are stored in perSuiteS3Results
+// keyed by the test image name for use in per-suite Slack notifications.
+func (o *E2EOrchestrator) uploadSuiteArtifacts(pending []adhoctestimages.PendingNotification) {
+	for _, p := range pending {
+		if p.OutputDir == "" {
+			continue
+		}
+		component, tag := extractDetailsFromImage(p.TestSuite.Image)
+		if tag != "" {
+			component = component + "-" + tag
+		}
+		uploader, err := aws.NewS3Uploader(component)
+		if errors.Is(err, aws.ErrNoAWSCredentials) {
+			return
+		}
+		if err != nil {
+			log.Printf("Failed to create S3 uploader for suite %s: %v", p.TestSuite.Image, err)
+			continue
+		}
+
+		results, err := uploader.UploadDirectory(p.OutputDir)
+		if err != nil {
+			log.Printf("Failed to upload artifacts for suite %s: %v", p.TestSuite.Image, err)
+			continue
+		}
+
+		o.perSuiteS3Results[p.TestSuite.Image] = results
+	}
+}
+
+// globalTestOutputLink extracts the test_output.log presigned URL from global
+// S3 upload results. Returns nil if not found.
+func globalTestOutputLink(results []aws.S3UploadResult) *slack.ArtifactLink {
+	for _, r := range results {
+		if r.PresignedURL != "" && filepath.Base(r.Key) == "test_output.log" {
+			link := toArtifactLink(r)
+			return &link
+		}
+	}
+	return nil
+}
+
+// suiteArtifactLinks converts all S3 upload results for a single suite into
+// artifact links suitable for Slack notifications.
+func suiteArtifactLinks(results []aws.S3UploadResult) []slack.ArtifactLink {
+	links := make([]slack.ArtifactLink, 0, len(results))
+	for _, r := range results {
+		if r.PresignedURL != "" {
+			links = append(links, toArtifactLink(r))
+		}
+	}
+	return links
+}
+
+// deriveGlobalComponent determines the component name for the global S3 upload.
+// For single-suite runs, it extracts from the image name (backward compatible).
+// For multi-suite runs, it uses the job name to avoid misleading attribution.
+func deriveGlobalComponent() string {
+	testSuites, _ := config.GetTestSuites()
+
+	if len(testSuites) == 1 {
+		if c, _ := extractDetailsFromImage(testSuites[0].Image); c != "" {
+			return c
+		}
+	}
+
+	if jn := viper.GetString(config.JobName); jn != "" {
+		return jn
+	}
+
+	if len(testSuites) > 0 {
+		if c, _ := extractDetailsFromImage(testSuites[0].Image); c != "" {
+			return c
 		}
 	}
 

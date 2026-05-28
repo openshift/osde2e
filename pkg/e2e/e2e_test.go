@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/onsi/ginkgo/v2/types"
+	"github.com/openshift/osde2e/pkg/common/aws"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/orchestrator"
@@ -276,5 +277,333 @@ func TestCleanup_DryRun(t *testing.T) {
 	err := orch.Cleanup(context.TODO())
 	if err != nil {
 		t.Errorf("Expected no error in dry run mode, got: %v", err)
+	}
+}
+
+func TestExtractDetailsFromImage(t *testing.T) {
+	tests := []struct {
+		name          string
+		image         string
+		wantComponent string
+		wantTag       string
+	}{
+		{
+			name:          "standard image with e2e suffix",
+			image:         "quay.io/org/osd-example-operator-e2e:v1.2.3",
+			wantComponent: "osd-example-operator",
+			wantTag:       "v1.2.3",
+		},
+		{
+			name:          "image with test suffix",
+			image:         "quay.io/org/my-service-test:latest",
+			wantComponent: "my-service",
+			wantTag:       "latest",
+		},
+		{
+			name:          "image with tests suffix",
+			image:         "quay.io/org/my-service-tests:abc123",
+			wantComponent: "my-service",
+			wantTag:       "abc123",
+		},
+		{
+			name:          "image with harness suffix",
+			image:         "quay.io/org/platform-harness:v1",
+			wantComponent: "platform",
+			wantTag:       "v1",
+		},
+		{
+			name:          "image without test suffix",
+			image:         "quay.io/org/simple:v1",
+			wantComponent: "simple",
+			wantTag:       "v1",
+		},
+		{
+			name:          "image without tag",
+			image:         "quay.io/org/my-operator-e2e",
+			wantComponent: "my-operator",
+			wantTag:       "",
+		},
+		{
+			name:          "image without registry or org",
+			image:         "my-image-test:latest",
+			wantComponent: "my-image",
+			wantTag:       "latest",
+		},
+		{
+			name:          "empty string",
+			image:         "",
+			wantComponent: "",
+			wantTag:       "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotComponent, gotTag := extractDetailsFromImage(tt.image)
+			if gotComponent != tt.wantComponent {
+				t.Errorf("extractDetailsFromImage(%q) component = %q, want %q", tt.image, gotComponent, tt.wantComponent)
+			}
+			if gotTag != tt.wantTag {
+				t.Errorf("extractDetailsFromImage(%q) tag = %q, want %q", tt.image, gotTag, tt.wantTag)
+			}
+		})
+	}
+}
+
+func TestS3ResultsToArtifactLinks(t *testing.T) {
+	setupTestConfig(t)
+	viper.Set(config.Suffix, "abc123")
+
+	results := []aws.S3UploadResult{
+		{Key: "test-results/comp/2026-01-30/123/test_output.log", PresignedURL: "https://s3/log", Size: 5000},
+		{Key: "test-results/comp/2026-01-30/123/install/junit_abc123.xml", PresignedURL: "https://s3/junit", Size: 200},
+		{Key: "test-results/comp/2026-01-30/123/install/operator-a-e2e/results.xml", PresignedURL: "https://s3/other", Size: 100},
+	}
+
+	links := s3ResultsToArtifactLinks(results)
+	if len(links) != 2 {
+		t.Fatalf("Expected 2 links (test_output.log + junit), got %d", len(links))
+	}
+	if links[0].Name != "test_output.log" {
+		t.Errorf("links[0].Name = %q, want %q", links[0].Name, "test_output.log")
+	}
+	if links[1].Name != "junit_abc123.xml" {
+		t.Errorf("links[1].Name = %q, want %q", links[1].Name, "junit_abc123.xml")
+	}
+}
+
+func TestS3ResultsToArtifactLinks_EmptyPresignedURL(t *testing.T) {
+	setupTestConfig(t)
+	viper.Set(config.Suffix, "test")
+
+	results := []aws.S3UploadResult{
+		{Key: "test-results/comp/2026-01-30/123/test_output.log", PresignedURL: "", Size: 5000},
+	}
+
+	links := s3ResultsToArtifactLinks(results)
+	if len(links) != 0 {
+		t.Errorf("Expected 0 links when presigned URLs are empty, got %d", len(links))
+	}
+}
+
+func TestS3ResultsToArtifactLinks_Empty(t *testing.T) {
+	setupTestConfig(t)
+
+	links := s3ResultsToArtifactLinks(nil)
+	if len(links) != 0 {
+		t.Errorf("Expected 0 links for nil input, got %d", len(links))
+	}
+}
+
+func TestGlobalTestOutputLink_EmptyPresignedURL(t *testing.T) {
+	results := []aws.S3UploadResult{
+		{Key: "test-results/comp/2026-01-30/123/test_output.log", PresignedURL: "", Size: 5000},
+	}
+
+	link := globalTestOutputLink(results)
+	if link != nil {
+		t.Errorf("Expected nil link when presigned URL is empty, got %+v", link)
+	}
+}
+
+func TestGlobalTestOutputLink_PreservesSize(t *testing.T) {
+	results := []aws.S3UploadResult{
+		{Key: "test-results/comp/2026-01-30/123/test_output.log", PresignedURL: "https://s3/log", Size: 12345},
+	}
+
+	link := globalTestOutputLink(results)
+	if link == nil {
+		t.Fatal("Expected non-nil link")
+	}
+	if link.Size != 12345 {
+		t.Errorf("link.Size = %d, want %d", link.Size, 12345)
+	}
+}
+
+func TestSuiteArtifactLinks_PreservesOrder(t *testing.T) {
+	results := []aws.S3UploadResult{
+		{Key: "test-results/op-a/2026-01-30/123/alpha.xml", PresignedURL: "https://s3/a", Size: 10},
+		{Key: "test-results/op-a/2026-01-30/123/beta.log", PresignedURL: "https://s3/b", Size: 20},
+		{Key: "test-results/op-a/2026-01-30/123/gamma.json", PresignedURL: "https://s3/c", Size: 30},
+	}
+
+	links := suiteArtifactLinks(results)
+	if len(links) != 3 {
+		t.Fatalf("Expected 3 links, got %d", len(links))
+	}
+	expected := []string{"alpha.xml", "beta.log", "gamma.json"}
+	for i, want := range expected {
+		if links[i].Name != want {
+			t.Errorf("links[%d].Name = %q, want %q", i, links[i].Name, want)
+		}
+	}
+}
+
+func TestDeriveGlobalComponent_LegacyAdHocTestImages(t *testing.T) {
+	setupTestConfig(t)
+	viper.Set(config.Tests.AdHocTestImages, "quay.io/org/legacy-operator-e2e:v1")
+	viper.Set(config.JobName, "")
+
+	got := deriveGlobalComponent()
+	if got != "legacy-operator" {
+		t.Errorf("deriveGlobalComponent() with legacy format = %q, want %q", got, "legacy-operator")
+	}
+}
+
+func TestDeriveGlobalComponent_SingleSuite(t *testing.T) {
+	setupTestConfig(t)
+	viper.Set(config.Tests.TestSuites, []config.TestSuite{
+		{Image: "quay.io/org/osd-example-operator-e2e:latest"},
+	})
+
+	got := deriveGlobalComponent()
+	if got != "osd-example-operator" {
+		t.Errorf("deriveGlobalComponent() = %q, want %q", got, "osd-example-operator")
+	}
+}
+
+func TestDeriveGlobalComponent_MultiSuiteWithJobName(t *testing.T) {
+	setupTestConfig(t)
+	viper.Set(config.Tests.TestSuites, []config.TestSuite{
+		{Image: "quay.io/org/operator-a-e2e:v1"},
+		{Image: "quay.io/org/operator-b-e2e:v2"},
+	})
+	viper.Set(config.JobName, "osde2e-prod-gcp-nightly")
+
+	got := deriveGlobalComponent()
+	if got != "osde2e-prod-gcp-nightly" {
+		t.Errorf("deriveGlobalComponent() = %q, want %q", got, "osde2e-prod-gcp-nightly")
+	}
+}
+
+func TestDeriveGlobalComponent_MultiSuiteNoJobName(t *testing.T) {
+	setupTestConfig(t)
+	viper.Set(config.Tests.TestSuites, []config.TestSuite{
+		{Image: "quay.io/org/operator-a-e2e:v1"},
+		{Image: "quay.io/org/operator-b-e2e:v2"},
+	})
+	viper.Set(config.JobName, "")
+
+	got := deriveGlobalComponent()
+	if got != "operator-a" {
+		t.Errorf("deriveGlobalComponent() = %q, want %q (fallback to first image)", got, "operator-a")
+	}
+}
+
+func TestDeriveGlobalComponent_NoSuites(t *testing.T) {
+	setupTestConfig(t)
+
+	got := deriveGlobalComponent()
+	if got != "unknown" {
+		t.Errorf("deriveGlobalComponent() = %q, want %q", got, "unknown")
+	}
+}
+
+func TestGlobalTestOutputLink(t *testing.T) {
+	results := []aws.S3UploadResult{
+		{Key: "test-results/comp/2026-01-30/123/install/junit_abc.xml", PresignedURL: "https://s3/junit", Size: 100},
+		{Key: "test-results/comp/2026-01-30/123/test_output.log", PresignedURL: "https://s3/log", Size: 5000},
+	}
+
+	link := globalTestOutputLink(results)
+	if link == nil {
+		t.Fatal("Expected non-nil link for test_output.log")
+	}
+	if link.Name != "test_output.log" {
+		t.Errorf("link.Name = %q, want %q", link.Name, "test_output.log")
+	}
+	if link.URL != "https://s3/log" {
+		t.Errorf("link.URL = %q, want %q", link.URL, "https://s3/log")
+	}
+}
+
+func TestGlobalTestOutputLink_NotFound(t *testing.T) {
+	results := []aws.S3UploadResult{
+		{Key: "test-results/comp/2026-01-30/123/install/junit_abc.xml", PresignedURL: "https://s3/junit", Size: 100},
+	}
+
+	link := globalTestOutputLink(results)
+	if link != nil {
+		t.Errorf("Expected nil link when test_output.log not present, got %+v", link)
+	}
+}
+
+func TestSuiteArtifactLinks(t *testing.T) {
+	results := []aws.S3UploadResult{
+		{Key: "test-results/operator-a/2026-01-30/123/junit.xml", PresignedURL: "https://s3/junit", Size: 100},
+		{Key: "test-results/operator-a/2026-01-30/123/executor.log", PresignedURL: "https://s3/exec", Size: 2000},
+		{Key: "test-results/operator-a/2026-01-30/123/no-url.log", PresignedURL: "", Size: 500},
+	}
+
+	links := suiteArtifactLinks(results)
+	if len(links) != 2 {
+		t.Fatalf("Expected 2 links (skipping empty presigned URL), got %d", len(links))
+	}
+	if links[0].Name != "junit.xml" {
+		t.Errorf("links[0].Name = %q, want %q", links[0].Name, "junit.xml")
+	}
+	if links[1].Name != "executor.log" {
+		t.Errorf("links[1].Name = %q, want %q", links[1].Name, "executor.log")
+	}
+}
+
+func TestSuiteArtifactLinks_Empty(t *testing.T) {
+	links := suiteArtifactLinks(nil)
+	if len(links) != 0 {
+		t.Errorf("Expected 0 links for nil input, got %d", len(links))
+	}
+}
+
+func TestArtifactLinksForSuite_PerSuite(t *testing.T) {
+	orch := &E2EOrchestrator{
+		perSuiteS3Results: map[string][]aws.S3UploadResult{
+			"quay.io/org/op-e2e:abc": {
+				{Key: "test-results/op-abc/junit.xml", PresignedURL: "https://s3/junit", Size: 100},
+				{Key: "test-results/op-abc/exec.log", PresignedURL: "https://s3/exec", Size: 200},
+			},
+		},
+		result: &orchestrator.Result{ExitCode: config.Success},
+	}
+	globalLink := &slack.ArtifactLink{Name: "test_output.log", URL: "https://s3/log", Size: 5000}
+	fallback := []slack.ArtifactLink{{Name: "fallback.log", URL: "https://s3/fb"}}
+
+	links := orch.artifactLinksForSuite("quay.io/org/op-e2e:abc", globalLink, fallback)
+	if len(links) != 3 {
+		t.Fatalf("Expected 3 links (1 global + 2 per-suite), got %d", len(links))
+	}
+	if links[0].Name != "test_output.log" {
+		t.Errorf("links[0] = %q, want global test_output.log", links[0].Name)
+	}
+	if links[1].Name != "junit.xml" {
+		t.Errorf("links[1] = %q, want junit.xml", links[1].Name)
+	}
+}
+
+func TestArtifactLinksForSuite_Fallback(t *testing.T) {
+	orch := &E2EOrchestrator{
+		perSuiteS3Results: map[string][]aws.S3UploadResult{},
+		result:            &orchestrator.Result{ExitCode: config.Success},
+	}
+	fallback := []slack.ArtifactLink{{Name: "test_output.log", URL: "https://s3/log"}}
+
+	links := orch.artifactLinksForSuite("quay.io/org/unknown:xyz", nil, fallback)
+	if len(links) != 1 || links[0].Name != "test_output.log" {
+		t.Errorf("Expected fallback links, got %v", links)
+	}
+}
+
+func TestArtifactLinksForSuite_NoGlobalLink(t *testing.T) {
+	orch := &E2EOrchestrator{
+		perSuiteS3Results: map[string][]aws.S3UploadResult{
+			"img:v1": {
+				{Key: "k/junit.xml", PresignedURL: "https://s3/j", Size: 50},
+			},
+		},
+		result: &orchestrator.Result{ExitCode: config.Success},
+	}
+
+	links := orch.artifactLinksForSuite("img:v1", nil, nil)
+	if len(links) != 1 || links[0].Name != "junit.xml" {
+		t.Errorf("Expected 1 per-suite link without global, got %v", links)
 	}
 }
