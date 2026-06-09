@@ -71,6 +71,18 @@ func TestRestartOperator_NoDeployment(t *testing.T) {
 	}
 }
 
+func TestRestartOperator_MultipleDeployments(t *testing.T) {
+	deploy1 := newDeployment(1)
+	deploy2 := newDeployment(1)
+	deploy2.Name = "controller-manager-2"
+	client := fake.NewSimpleClientset(deploy1, deploy2)
+
+	err := RestartOperator(context.Background(), client, testNS, "app=test-operator")
+	if err == nil || !strings.Contains(err.Error(), "multiple deployments") {
+		t.Fatalf("expected 'multiple deployments' error, got: %v", err)
+	}
+}
+
 func TestRestartOperator_NoPods(t *testing.T) {
 	deploy := newDeployment(1)
 	client := fake.NewSimpleClientset(deploy)
