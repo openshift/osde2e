@@ -662,6 +662,42 @@ var KrknAI = struct {
 	TopScenariosCount: "krknAI.topScenariosCount",
 }
 
+// MCSimulation config keys for Management Cluster simulation.
+// Enables HCP operator testing on ROSA Classic clusters by installing
+// minimal CRDs and optionally restarting the operator under test.
+var MCSimulation = struct {
+	// Enable turns on MC simulation (CRD installation + env propagation to executor pods).
+	// Env: MC_SIMULATION_ENABLE
+	Enable string
+
+	// CRDs is a comma-separated list of built-in CRD aliases to install.
+	// Supported aliases: "hcp" (HostedControlPlane), "vpce" (VpcEndpoint).
+	// Env: MC_SIMULATION_CRDS
+	CRDs string
+
+	// OperatorNamespace is the namespace where the operator under test is deployed.
+	// Used to restart the operator after CRD installation so it detects the new CRDs.
+	// Env: MC_SIMULATION_OPERATOR_NAMESPACE
+	OperatorNamespace string
+
+	// OperatorDeploymentLabel is the label selector to find operator pods to restart.
+	// Example: "name=route-monitor-operator"
+	// Env: MC_SIMULATION_OPERATOR_DEPLOYMENT_LABEL
+	OperatorDeploymentLabel string
+
+	// SkipInfraCheck tells the operator under test to skip infrastructure health checks
+	// (e.g. VPC endpoint readiness, kube-apiserver TLS). Passed to executor pods as
+	// MC_SIMULATION_SKIP_INFRA_CHECK env var.
+	// Env: MC_SIMULATION_SKIP_INFRA_CHECK
+	SkipInfraCheck string
+}{
+	Enable:                  "mcSimulation.enable",
+	CRDs:                    "mcSimulation.crds",
+	OperatorNamespace:       "mcSimulation.operatorNamespace",
+	OperatorDeploymentLabel: "mcSimulation.operatorDeploymentLabel",
+	SkipInfraCheck:          "mcSimulation.skipInfraCheck",
+}
+
 func InitOSDe2eViper() {
 	// Here's where we bind environment variables to config options and set defaults
 
@@ -963,6 +999,20 @@ func InitOSDe2eViper() {
 
 	viper.SetDefault(KrknAI.TopScenariosCount, 10)
 	_ = viper.BindEnv(KrknAI.TopScenariosCount, "KRKN_TOP_SCENARIOS_COUNT")
+
+	// ----- MC Simulation -----
+	viper.SetDefault(MCSimulation.Enable, false)
+	_ = viper.BindEnv(MCSimulation.Enable, "MC_SIMULATION_ENABLE")
+
+	viper.SetDefault(MCSimulation.CRDs, "hcp,vpce")
+	_ = viper.BindEnv(MCSimulation.CRDs, "MC_SIMULATION_CRDS")
+
+	_ = viper.BindEnv(MCSimulation.OperatorNamespace, "MC_SIMULATION_OPERATOR_NAMESPACE")
+
+	_ = viper.BindEnv(MCSimulation.OperatorDeploymentLabel, "MC_SIMULATION_OPERATOR_DEPLOYMENT_LABEL")
+
+	viper.SetDefault(MCSimulation.SkipInfraCheck, true)
+	_ = viper.BindEnv(MCSimulation.SkipInfraCheck, "MC_SIMULATION_SKIP_INFRA_CHECK")
 }
 
 func init() {
