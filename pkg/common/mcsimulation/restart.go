@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/klog/v2"
@@ -30,10 +30,22 @@ func RestartOperator(ctx context.Context, clientset kubernetes.Interface, namesp
 	if len(deployments.Items) == 0 {
 		return fmt.Errorf("no deployment found in %s matching %q", namespace, labelSelector)
 	}
+	if len(deployments.Items) > 1 {
+		names := make([]string, len(deployments.Items))
+		for i := range deployments.Items {
+			names[i] = deployments.Items[i].Name
+		}
+		return fmt.Errorf("multiple deployments found in %s matching %q, expected exactly one: %v", namespace, labelSelector, names)
+	}
 	deploy := &deployments.Items[0]
 
 	// Resolve the Deployment's pod selector to find matching pods.
-	podSelector := labels.SelectorFromSet(deploy.Spec.Selector.MatchLabels).String()
+	// Use LabelSelectorAsSelector to honour both matchLabels and matchExpressions.
+	selector, err := metav1.LabelSelectorAsSelector(deploy.Spec.Selector)
+	if err != nil {
+		return fmt.Errorf("converting deployment selector: %w", err)
+	}
+	podSelector := selector.String()
 	pods, err := clientset.CoreV1().Pods(namespace).List(ctx, metav1.ListOptions{
 		LabelSelector: podSelector,
 	})
@@ -49,6 +61,10 @@ func RestartOperator(ctx context.Context, clientset kubernetes.Interface, namesp
 		name := pods.Items[i].Name
 		klog.V(2).InfoS("Deleting pod to trigger restart", "pod", name, "namespace", namespace)
 		if err := clientset.CoreV1().Pods(namespace).Delete(ctx, name, metav1.DeleteOptions{}); err != nil {
+			if apierrors.IsNotFound(err) {
+				klog.V(2).InfoS("Pod already deleted", "pod", name, "namespace", namespace)
+				continue
+			}
 			return fmt.Errorf("deleting pod %s: %w", name, err)
 		}
 	}
