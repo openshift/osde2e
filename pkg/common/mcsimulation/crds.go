@@ -10,90 +10,94 @@ import (
 	"strings"
 	"time"
 
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+	apiextensionsclient "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/wait"
-	"k8s.io/apimachinery/pkg/util/yaml"
-	"k8s.io/client-go/dynamic"
 	"k8s.io/klog/v2"
+	"k8s.io/utils/ptr"
 )
 
-// Minimal CRD definitions with x-kubernetes-preserve-unknown-fields: true
-// so that any spec/status content is accepted without full schema validation.
-// Sourced from route-monitor-operator e2e tests.
-const (
-	HostedControlPlaneCRDYAML = `
-apiVersion: apiextensions.k8s.io/v1
-kind: CustomResourceDefinition
-metadata:
-  name: hostedcontrolplanes.hypershift.openshift.io
-spec:
-  group: hypershift.openshift.io
-  names:
-    kind: HostedControlPlane
-    listKind: HostedControlPlaneList
-    plural: hostedcontrolplanes
-    shortNames:
-    - hcp
-    singular: hostedcontrolplane
-  scope: Namespaced
-  versions:
-  - name: v1beta1
-    served: true
-    storage: true
-    schema:
-      openAPIV3Schema:
-        type: object
-        x-kubernetes-preserve-unknown-fields: true
-    subresources:
-      status: {}
-`
-
-	VpcEndpointCRDYAML = `
-apiVersion: apiextensions.k8s.io/v1
-kind: CustomResourceDefinition
-metadata:
-  name: vpcendpoints.avo.openshift.io
-spec:
-  group: avo.openshift.io
-  names:
-    kind: VpcEndpoint
-    listKind: VpcEndpointList
-    plural: vpcendpoints
-    singular: vpcendpoint
-  scope: Namespaced
-  versions:
-  - name: v1alpha2
-    served: true
-    storage: true
-    schema:
-      openAPIV3Schema:
-        type: object
-        x-kubernetes-preserve-unknown-fields: true
-    subresources:
-      status: {}
-`
-)
-
-// BuiltinCRDs maps short aliases (used in config) to embedded CRD YAML.
-// Keys: "hcp" (HostedControlPlane), "vpce" (VpcEndpoint).
-var BuiltinCRDs = map[string]string{
-	"hcp":  HostedControlPlaneCRDYAML,
-	"vpce": VpcEndpointCRDYAML,
+// Minimal stub CRDs with x-kubernetes-preserve-unknown-fields: true.
+// These accept any spec/status content without full schema validation,
+// keeping test fixtures lightweight.
+var builtinCRDs = map[string]*apiextensionsv1.CustomResourceDefinition{
+	"hcp": {
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "hostedcontrolplanes.hypershift.openshift.io",
+		},
+		Spec: apiextensionsv1.CustomResourceDefinitionSpec{
+			Group: "hypershift.openshift.io",
+			Names: apiextensionsv1.CustomResourceDefinitionNames{
+				Kind:       "HostedControlPlane",
+				ListKind:   "HostedControlPlaneList",
+				Plural:     "hostedcontrolplanes",
+				Singular:   "hostedcontrolplane",
+				ShortNames: []string{"hcp"},
+			},
+			Scope: apiextensionsv1.NamespaceScoped,
+			Versions: []apiextensionsv1.CustomResourceDefinitionVersion{{
+				Name:    "v1beta1",
+				Served:  true,
+				Storage: true,
+				Schema: &apiextensionsv1.CustomResourceValidation{
+					OpenAPIV3Schema: &apiextensionsv1.JSONSchemaProps{
+						Type:                   "object",
+						XPreserveUnknownFields: ptr.To(true),
+					},
+				},
+				Subresources: &apiextensionsv1.CustomResourceSubresources{
+					Status: &apiextensionsv1.CustomResourceSubresourceStatus{},
+				},
+			}},
+		},
+	},
+	"vpce": {
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "vpcendpoints.avo.openshift.io",
+		},
+		Spec: apiextensionsv1.CustomResourceDefinitionSpec{
+			Group: "avo.openshift.io",
+			Names: apiextensionsv1.CustomResourceDefinitionNames{
+				Kind:     "VpcEndpoint",
+				ListKind: "VpcEndpointList",
+				Plural:   "vpcendpoints",
+				Singular: "vpcendpoint",
+			},
+			Scope: apiextensionsv1.NamespaceScoped,
+			Versions: []apiextensionsv1.CustomResourceDefinitionVersion{{
+				Name:    "v1alpha2",
+				Served:  true,
+				Storage: true,
+				Schema: &apiextensionsv1.CustomResourceValidation{
+					OpenAPIV3Schema: &apiextensionsv1.JSONSchemaProps{
+						Type:                   "object",
+						XPreserveUnknownFields: ptr.To(true),
+					},
+				},
+				Subresources: &apiextensionsv1.CustomResourceSubresources{
+					Status: &apiextensionsv1.CustomResourceSubresourceStatus{},
+				},
+			}},
+		},
+	},
 }
 
-var crdGVR = schema.GroupVersionResource{
-	Group:    "apiextensions.k8s.io",
-	Version:  "v1",
-	Resource: "customresourcedefinitions",
+// BuiltinCRDAliases returns the known alias names for documentation/validation.
+func BuiltinCRDAliases() []string {
+	aliases := make([]string, 0, len(builtinCRDs))
+	for k := range builtinCRDs {
+		aliases = append(aliases, k)
+	}
+	return aliases
 }
 
 // EnsureCRDsInstalled resolves a list of CRD aliases and installs any that are
 // not already present on the cluster. Forbidden errors are collected and returned
 // together so callers get a single actionable message with all missing CRDs.
-func EnsureCRDsInstalled(ctx context.Context, dynClient dynamic.Interface, crdAliases []string) error {
+func EnsureCRDsInstalled(ctx context.Context, extClient apiextensionsclient.Interface, crdAliases []string) error {
+	crdClient := extClient.ApiextensionsV1().CustomResourceDefinitions()
 	var forbidden []string
 
 	for _, alias := range crdAliases {
@@ -102,32 +106,23 @@ func EnsureCRDsInstalled(ctx context.Context, dynClient dynamic.Interface, crdAl
 			continue
 		}
 
-		crdYAML, ok := BuiltinCRDs[alias]
+		crd, ok := builtinCRDs[alias]
 		if !ok {
-			return fmt.Errorf("unknown CRD alias %q (available: hcp, vpce)", alias)
+			return fmt.Errorf("unknown CRD alias %q (available: %s)", alias, strings.Join(BuiltinCRDAliases(), ", "))
 		}
+		name := crd.Name
 
-		// Decode the embedded YAML into an unstructured object to get the CRD name.
-		obj := &unstructured.Unstructured{}
-		if err := yaml.NewYAMLOrJSONDecoder(strings.NewReader(crdYAML), 4096).Decode(obj); err != nil {
-			return fmt.Errorf("decoding CRD YAML for %q: %w", alias, err)
-		}
-		name := obj.GetName()
-
-		// Check existence first to avoid unnecessary write attempts.
-		if _, err := dynClient.Resource(crdGVR).Get(ctx, name, metav1.GetOptions{}); err == nil {
+		if _, err := crdClient.Get(ctx, name, metav1.GetOptions{}); err == nil {
 			klog.V(2).InfoS("CRD already exists, skipping", "name", name)
 			continue
 		} else if !apierrors.IsNotFound(err) {
 			return fmt.Errorf("checking CRD %s: %w", name, err)
 		}
 
-		// Install the CRD.
 		klog.V(2).InfoS("Installing CRD", "name", name)
-		if _, err := dynClient.Resource(crdGVR).Create(ctx, obj, metav1.CreateOptions{}); err != nil {
+		if _, err := crdClient.Create(ctx, crd, metav1.CreateOptions{}); err != nil {
 			switch {
 			case apierrors.IsAlreadyExists(err):
-				// Another process created it concurrently; still wait for Established below.
 				klog.V(2).InfoS("CRD appeared concurrently, waiting for Established", "name", name)
 			case apierrors.IsForbidden(err):
 				klog.InfoS("Warning: permission denied installing CRD", "name", name)
@@ -138,9 +133,7 @@ func EnsureCRDsInstalled(ctx context.Context, dynClient dynamic.Interface, crdAl
 			}
 		}
 
-		// Wait for the API server to mark the CRD as Established before returning.
-		// Operators that detect CRD presence at startup will fail if it isn't ready.
-		if err := waitForCRDEstablished(ctx, dynClient, name, 30*time.Second); err != nil {
+		if err := waitForCRDEstablished(ctx, extClient, name, 30*time.Second); err != nil {
 			return fmt.Errorf("CRD %s not Established after install: %w", name, err)
 		}
 		klog.V(2).InfoS("CRD installed and Established", "name", name)
@@ -156,19 +149,15 @@ func EnsureCRDsInstalled(ctx context.Context, dynClient dynamic.Interface, crdAl
 }
 
 // waitForCRDEstablished polls until the CRD's Established condition is True.
-func waitForCRDEstablished(ctx context.Context, dynClient dynamic.Interface, name string, timeout time.Duration) error {
+func waitForCRDEstablished(ctx context.Context, extClient apiextensionsclient.Interface, name string, timeout time.Duration) error {
+	crdClient := extClient.ApiextensionsV1().CustomResourceDefinitions()
 	return wait.PollUntilContextTimeout(ctx, 2*time.Second, timeout, true, func(ctx context.Context) (bool, error) {
-		obj, err := dynClient.Resource(crdGVR).Get(ctx, name, metav1.GetOptions{})
+		crd, err := crdClient.Get(ctx, name, metav1.GetOptions{})
 		if err != nil {
 			return false, err
 		}
-		conditions, found, _ := unstructured.NestedSlice(obj.Object, "status", "conditions")
-		if !found {
-			return false, nil
-		}
-		for _, c := range conditions {
-			cond, ok := c.(map[string]interface{})
-			if ok && cond["type"] == "Established" && cond["status"] == "True" {
+		for _, c := range crd.Status.Conditions {
+			if c.Type == apiextensionsv1.Established && c.Status == apiextensionsv1.ConditionTrue {
 				return true, nil
 			}
 		}
