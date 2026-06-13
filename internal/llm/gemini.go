@@ -9,7 +9,10 @@ import (
 	"github.com/openshift/osde2e/internal/llm/tools"
 )
 
-const DefaultModel = "gemini-3.1-pro-preview"
+const (
+	DefaultModel  = "gemini-3.1-pro-preview"
+	FallbackModel = "gemini-2.5-pro"
+)
 
 type GeminiClient struct {
 	client *genai.Client
@@ -111,17 +114,17 @@ func (g *GeminiClient) handleConversationWithTools(ctx context.Context, contents
 		}
 	}
 
-	return &AnalysisResult{ToolCalls: toolCalls}, fmt.Errorf("max iterations reached without final response")
+	return &AnalysisResult{ToolCalls: toolCalls}, ErrMaxIterations
 }
 
 func (g *GeminiClient) extractCandidate(resp *genai.GenerateContentResponse) (*genai.Candidate, error) {
 	if len(resp.Candidates) == 0 {
-		return nil, fmt.Errorf("no response candidates from gemini")
+		return nil, ErrNoResponseCandidates
 	}
 
 	candidate := resp.Candidates[0]
 	if candidate.Content == nil || len(candidate.Content.Parts) == 0 {
-		return nil, fmt.Errorf("no content in gemini response")
+		return nil, ErrNoContentInResponse
 	}
 
 	return candidate, nil
@@ -151,7 +154,7 @@ func (g *GeminiClient) processFunctionCalls(ctx context.Context, contents []*gen
 		// Execute the tool and get the result
 		toolResult, err := toolRegistry.HandleToolCall(ctx, functionCall)
 		if err != nil {
-			return nil, fmt.Errorf("failed to handle tool call: %w", err)
+			return nil, fmt.Errorf("%w: %w", ErrToolCallFailed, err)
 		}
 
 		// Add the tool result to conversation history

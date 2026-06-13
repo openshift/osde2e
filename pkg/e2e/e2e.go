@@ -264,6 +264,10 @@ func (o *E2EOrchestrator) AnalyzeLogs(ctx context.Context, testErr error) error 
 
 	result, err := engine.Run(ctx)
 	if err != nil {
+		o.analysisResult = &analysisengine.Result{
+			Status: "failed",
+			Error:  err.Error(),
+		}
 		return fmt.Errorf("log analysis failed: %w", err)
 	}
 
