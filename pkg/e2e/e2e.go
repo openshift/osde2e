@@ -22,6 +22,7 @@ import (
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/helper"
+	"github.com/openshift/osde2e/pkg/common/mcsimulation"
 	"github.com/openshift/osde2e/pkg/common/orchestrator"
 	"github.com/openshift/osde2e/pkg/common/phase"
 	"github.com/openshift/osde2e/pkg/common/providers"
@@ -33,6 +34,9 @@ import (
 	"github.com/openshift/osde2e/pkg/common/util"
 	"github.com/openshift/osde2e/pkg/debug"
 	"github.com/openshift/osde2e/pkg/e2e/adhoctestimages"
+	apiextensionsclient "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/tools/clientcmd"
 	ctrlog "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
@@ -164,6 +168,54 @@ func (o *E2EOrchestrator) Provision(ctx context.Context) error {
 		return fmt.Errorf("addon installation failed: %w", err)
 	}
 
+	if viper.GetBool(config.MCSimulation.Enable) {
+		if err := o.setupMCSimulation(ctx); err != nil {
+			o.result.ExitCode = config.Failure
+			return fmt.Errorf("MC simulation setup failed: %w", err)
+		}
+	}
+
+	return nil
+}
+
+// setupMCSimulation installs stub HCP CRDs and optionally restarts the
+// operator under test so it detects the newly registered CRDs.
+func (o *E2EOrchestrator) setupMCSimulation(ctx context.Context) error {
+	log.Println("Setting up MC simulation environment...")
+
+	restCfg, err := clientcmd.RESTConfigFromKubeConfig(
+		[]byte(viper.GetString(config.Kubeconfig.Contents)),
+	)
+	if err != nil {
+		return fmt.Errorf("building rest config: %w", err)
+	}
+
+	extClient, err := apiextensionsclient.NewForConfig(restCfg)
+	if err != nil {
+		return fmt.Errorf("building apiextensions client: %w", err)
+	}
+
+	aliases := strings.Split(viper.GetString(config.MCSimulation.CRDs), ",")
+	if err := mcsimulation.EnsureCRDsInstalled(ctx, extClient, aliases); err != nil {
+		return err
+	}
+
+	ns := viper.GetString(config.MCSimulation.OperatorNamespace)
+	label := viper.GetString(config.MCSimulation.OperatorDeploymentLabel)
+	if (ns == "") != (label == "") {
+		return fmt.Errorf("operator restart requires both namespace and label, or neither: namespace=%q label=%q", ns, label)
+	}
+	if ns != "" {
+		kubeClient, err := kubernetes.NewForConfig(restCfg)
+		if err != nil {
+			return fmt.Errorf("building kubernetes client: %w", err)
+		}
+		if err := mcsimulation.RestartOperator(ctx, kubeClient, ns, label); err != nil {
+			return err
+		}
+	}
+
+	log.Println("MC simulation environment ready")
 	return nil
 }
 

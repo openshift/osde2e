@@ -49,14 +49,16 @@ var _ = ginkgo.Describe("Ad Hoc Test Images", ginkgo.Ordered, ginkgo.ContinueOnF
 		testImageEntries = []ginkgo.TableEntry{}
 		testSuites       []config.TestSuite
 		exeConfig        = &executor.Config{
-			CCS:                 viper.GetBool(ocmprovider.CCS),
-			CloudProviderID:     viper.GetString(config.CloudProvider.CloudProviderID),
-			CloudProviderRegion: viper.GetString(config.CloudProvider.Region),
-			ClusterID:           viper.GetString(config.Cluster.ID),
-			Environment:         ocm.Environment(viper.GetString(ocmprovider.Env)),
-			PassthruSecrets:     viper.GetStringMapString(config.NonOSDe2eSecrets),
-			SkipCleanup:         viper.GetBool(config.Cluster.SkipDestroyCluster),
-			Timeout:             viper.GetDuration(config.Tests.AdHocTestContainerTimeout),
+			CCS:                   viper.GetBool(ocmprovider.CCS),
+			CloudProviderID:       viper.GetString(config.CloudProvider.CloudProviderID),
+			CloudProviderRegion:   viper.GetString(config.CloudProvider.Region),
+			ClusterID:             viper.GetString(config.Cluster.ID),
+			Environment:           ocm.Environment(viper.GetString(ocmprovider.Env)),
+			PassthruSecrets:       viper.GetStringMapString(config.NonOSDe2eSecrets),
+			SkipCleanup:           viper.GetBool(config.Cluster.SkipDestroyCluster),
+			Timeout:               viper.GetDuration(config.Tests.AdHocTestContainerTimeout),
+			MCSimulationEnabled:   viper.GetBool(config.MCSimulation.Enable),
+			MCSimulationSkipInfra: viper.GetBool(config.MCSimulation.SkipInfraCheck),
 		}
 		exe *executor.Executor
 	)
