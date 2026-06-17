@@ -33,16 +33,18 @@ import (
 )
 
 type Config struct {
-	Environment         ocm.Environment
-	ClusterID           string
-	CloudProviderID     string
-	CloudProviderRegion string
-	PassthruSecrets     map[string]string
-	Timeout             time.Duration
-	OutputDir           string
-	CCS                 bool
-	SkipCleanup         bool
-	RestConfig          *rest.Config
+	Environment           ocm.Environment
+	ClusterID             string
+	CloudProviderID       string
+	CloudProviderRegion   string
+	PassthruSecrets       map[string]string
+	Timeout               time.Duration
+	OutputDir             string
+	CCS                   bool
+	SkipCleanup           bool
+	RestConfig            *rest.Config
+	MCSimulationEnabled   bool
+	MCSimulationSkipInfra bool
 }
 
 type Executor struct {
@@ -174,6 +176,13 @@ func (e *Executor) createJob(ctx context.Context, namespace string, image string
 					LocalObjectReference: corev1.LocalObjectReference{Name: "ci-secrets"},
 				},
 			})
+	}
+
+	if e.cfg.MCSimulationEnabled {
+		job.Spec.Template.Spec.Containers[0].Env = append(job.Spec.Template.Spec.Containers[0].Env,
+			corev1.EnvVar{Name: "MC_SIMULATION_ENABLED", Value: "true"},
+			corev1.EnvVar{Name: "MC_SIMULATION_SKIP_INFRA_CHECK", Value: fmt.Sprintf("%t", e.cfg.MCSimulationSkipInfra)},
+		)
 	}
 
 	if err := e.oc.Create(ctx, job); err != nil {

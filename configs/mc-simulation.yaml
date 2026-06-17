@@ -1,0 +1,4 @@
+mcSimulation:
+  enable: true
+  crds: "hcp,vpce"
+  skipInfraCheck: true
