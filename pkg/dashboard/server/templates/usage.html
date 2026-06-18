@@ -1,0 +1,119 @@
+{{template "base.html" .}}
+
+{{define "title"}}osde2e Dashboard - Cluster Usage{{end}}
+
+{{define "content"}}
+<h1 style="margin-bottom: 2rem;">Cluster Usage Metrics</h1>
+
+{{if gt (len .Usage) 0}}
+    {{range .Usage}}
+    <div class="card">
+        <h2>{{.Environment}} Environment</h2>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="value">{{.TotalClusters}}</div>
+                <div class="label">Total Clusters</div>
+            </div>
+            <div class="stat-card">
+                <div class="value">{{index .ByAvailability "reserved"}}</div>
+                <div class="label">Reserved</div>
+            </div>
+            <div class="stat-card">
+                <div class="value">{{index .ByAvailability "claimed"}}</div>
+                <div class="label">Claimed</div>
+            </div>
+            <div class="stat-card">
+                <div class="value">{{index .ByAvailability "used"}}</div>
+                <div class="label">Used</div>
+            </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 2rem;">
+            <div>
+                <h3 style="margin-bottom: 1rem; font-size: 1rem; color: #666;">By State</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>State</th>
+                            <th>Count</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{range $state, $count := .ByState}}
+                        <tr>
+                            <td>
+                                {{if eq $state "ready"}}
+                                    <span class="badge success">{{$state}}</span>
+                                {{else if eq $state "installing"}}
+                                    <span class="badge info">{{$state}}</span>
+                                {{else if eq $state "error"}}
+                                    <span class="badge danger">{{$state}}</span>
+                                {{else}}
+                                    <span class="badge secondary">{{$state}}</span>
+                                {{end}}
+                            </td>
+                            <td><strong>{{$count}}</strong></td>
+                        </tr>
+                        {{end}}
+                    </tbody>
+                </table>
+            </div>
+
+            <div>
+                <h3 style="margin-bottom: 1rem; font-size: 1rem; color: #666;">By Cloud Provider</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Provider</th>
+                            <th>Count</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{range $provider, $count := .ByCloudProvider}}
+                        <tr>
+                            <td>{{$provider}}</td>
+                            <td><strong>{{$count}}</strong></td>
+                        </tr>
+                        {{end}}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        {{if .ByVersion}}
+        <div style="margin-top: 2rem;">
+            <h3 style="margin-bottom: 1rem; font-size: 1rem; color: #666;">By Version</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Version</th>
+                        <th>Count</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{range $version, $count := .ByVersion}}
+                    <tr>
+                        <td class="text-muted">{{$version}}</td>
+                        <td><strong>{{$count}}</strong></td>
+                    </tr>
+                    {{end}}
+                </tbody>
+            </table>
+        </div>
+        {{end}}
+
+        <p class="text-muted" style="margin-top: 1.5rem;">
+            Last updated: {{.LastUpdated.Format "2006-01-02 15:04:05 MST"}}
+        </p>
+    </div>
+    {{end}}
+{{else}}
+<div class="card">
+    <div class="empty-state">
+        <p>No cluster usage data available</p>
+        <p class="text-muted">Clusters made by osde2e will appear here</p>
+    </div>
+</div>
+{{end}}
+{{end}}

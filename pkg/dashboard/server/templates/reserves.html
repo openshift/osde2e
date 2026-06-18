@@ -1,0 +1,82 @@
+{{template "base.html" .}}
+
+{{define "title"}}osde2e Dashboard - Cluster Reserves{{end}}
+
+{{define "content"}}
+<h1 style="margin-bottom: 2rem;">Cluster Reserves</h1>
+
+<div class="card">
+    <h2>Reserved Clusters ({{len .Reserves}})</h2>
+    {{if gt (len .Reserves) 0}}
+    <table>
+        <thead>
+            <tr>
+                <th>Cluster ID</th>
+                <th>Name</th>
+                <th>State</th>
+                <th>Availability</th>
+                <th>Version</th>
+                <th>Region</th>
+                <th>Provider</th>
+                <th>Product</th>
+                <th>Created</th>
+                <th>Expires</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{range .Reserves}}
+            <tr>
+                <td><code>{{.ID}}</code></td>
+                <td>{{.Name}}</td>
+                <td>
+                    {{if eq .State "ready"}}
+                        <span class="badge success">Ready</span>
+                    {{else if eq .State "installing"}}
+                        <span class="badge info">Installing</span>
+                    {{else if eq .State "pending"}}
+                        <span class="badge warning">Pending</span>
+                    {{else}}
+                        <span class="badge secondary">{{.State}}</span>
+                    {{end}}
+                </td>
+                <td>
+                    {{if eq .Availability "reserved"}}
+                        <span class="badge info">Reserved</span>
+                    {{else if eq .Availability "claimed"}}
+                        <span class="badge warning">Claimed</span>
+                    {{else if eq .Availability "used"}}
+                        <span class="badge secondary">Used</span>
+                    {{else}}
+                        <span class="badge secondary">{{.Availability}}</span>
+                    {{end}}
+                </td>
+                <td class="text-muted">{{.Version}}</td>
+                <td>{{.Region}}</td>
+                <td>{{.CloudProvider}}</td>
+                <td>{{.Product}}</td>
+                <td class="text-muted">{{localTime .CreatedAt}}</td>
+                <td>
+                    {{if .ExpiresAt.IsZero}}
+                        <span class="text-muted">—</span>
+                    {{else if .ExpiringSoon}}
+                        <span class="badge danger" title="Expiring soon!">{{localTime .ExpiresAt}}</span>
+                    {{else}}
+                        <span class="text-muted">{{localTime .ExpiresAt}}</span>
+                    {{end}}
+                </td>
+            </tr>
+            {{end}}
+        </tbody>
+    </table>
+    {{else}}
+    <div class="empty-state">
+        <p>No reserved clusters found</p>
+        <p class="text-muted">Clusters with Availability=reserved will appear here</p>
+    </div>
+    {{end}}
+</div>
+
+<p class="text-muted text-center mt-2">
+    Data fetched from OCM at {{now.Format "2006-01-02 15:04:05 MST"}}
+</p>
+{{end}}
