@@ -2,6 +2,7 @@
 
 {{define "title"}}Delivery Dashboard - Pipelines{{end}}
 
+
 {{define "extra-css"}}
 <style>
     .filter-bar {
@@ -228,8 +229,8 @@
 {{define "content"}}
 <h1 style="margin-bottom: 0.5rem;">Pipelines</h1>
 <p class="text-muted" style="margin-bottom: 1.5rem;">
-    Latest test result per component per environment — sourced from persisted osde2e-logs S3 bucket.
-    Click a status badge to see failure details. Click a component name to see full history.
+    Latest test result per deliverable per environment — sourced from persisted osde2e-logs S3 bucket.
+    Click a status badge to see failure details. Click a deliverable name to see full history.
 </p>
 
 <div class="filter-bar">
@@ -242,7 +243,7 @@
     <table id="op-table">
         <thead>
             <tr>
-                <th data-sort="name">Component</th>
+                <th data-sort="name">Deliverable</th>
                 <th>Integration</th>
                 <th>Stage</th>
             </tr>
@@ -370,7 +371,7 @@
     </table>
     {{else}}
     <div class="empty-state">
-        <p>No operator results found</p>
+        <p>No deliverable results found</p>
         <p class="text-muted">Results will appear here once tests have run and S3 is configured.</p>
     </div>
     {{end}}
@@ -430,7 +431,7 @@ function openDetail(id, event) {
 function goToDetail(name, event) {
     // Only navigate if click wasn't on a badge/button
     if (event.target.closest('button')) return;
-    window.location.href = '/dashboard/operators/' + encodeURIComponent(name);
+    window.location.href = '/dashboard/deliverables/' + encodeURIComponent(name);
 }
 </script>
 {{end}}

@@ -176,8 +176,17 @@ type PipelineRun struct {
 
 // PipelineHistory holds all historical runs for a single operator, grouped by version
 type PipelineHistory struct {
-	OperatorName string        `json:"operator_name"`
-	Runs         []PipelineRun `json:"runs"` // sorted newest first
+	OperatorName string            `json:"operator_name"`
+	Runs         []PipelineRun     `json:"runs"`     // sorted newest first (flat)
+	Versions     []VersionPipeline `json:"versions"` // grouped by version, newest first
+}
+
+// VersionPipeline represents one version of an operator and its run results per env
+type VersionPipeline struct {
+	Version  string                 `json:"version"`
+	Date     string                 `json:"date"`     // date of the most recent run
+	LastRun  time.Time              `json:"last_run"` // timestamp of most recent run
+	EnvRuns  map[string]*PipelineRun `json:"env_runs"` // keyed by env: "int", "stage", "prod"
 }
 
 // HealthStatus represents the health check response

@@ -1,6 +1,6 @@
 {{template "base.html" .}}
 
-{{define "title"}}Delivery Dashboard - Clusters{{end}}
+{{define "title"}}Delivery Dashboard - Infra{{end}}
 
 {{define "extra-css"}}
 <style>
@@ -112,7 +112,7 @@
 {{end}}
 
 {{define "content"}}
-<h1 style="margin-bottom: 0.5rem;">Clusters</h1>
+<h1 style="margin-bottom: 0.5rem;">Infra</h1>
 <p class="text-muted" style="margin-bottom: 1.5rem;">All osde2e clusters across environments. Click an environment heading to collapse.</p>
 
 {{if gt (len .EnvClusters) 0}}

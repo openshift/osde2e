@@ -22,8 +22,8 @@ type Server struct {
 	reserveCollector    *collectors.ReserveCollector
 	usageCollector      *collectors.UsageCollector
 	testResultCollector *collectors.TestResultsCollector
-	operatorCollector   *collectors.OperatorStatusCollector
-	store               *store.Store // optional; when set, operators/history served from DB
+	deliverableCollector *collectors.OperatorStatusCollector
+	store                *store.Store // optional; when set, deliverables/history served from DB
 	mux                 *http.ServeMux
 }
 
@@ -43,7 +43,7 @@ func NewServer(cfg *config.Config) (*Server, error) {
 	}
 
 	var testResultCollector *collectors.TestResultsCollector
-	var operatorCollector *collectors.OperatorStatusCollector
+	var deliverableCollector *collectors.OperatorStatusCollector
 	if cfg.S3Bucket != "" {
 		testResultCollector, err = collectors.NewTestResultsCollector(cfg.S3Bucket, cfg.S3Region)
 		if err != nil {
@@ -51,20 +51,20 @@ func NewServer(cfg *config.Config) (*Server, error) {
 			testResultCollector = nil
 		}
 
-		operatorCollector, err = collectors.NewOperatorStatusCollector(cfg.S3Bucket, cfg.S3Region, cfg.LookbackDays)
+		deliverableCollector, err = collectors.NewOperatorStatusCollector(cfg.S3Bucket, cfg.S3Region, cfg.LookbackDays)
 		if err != nil {
-			log.Printf("Warning: Failed to initialize operator status collector: %v", err)
-			operatorCollector = nil
+			log.Printf("Warning: Failed to initialize deliverable status collector: %v", err)
+			deliverableCollector = nil
 		}
 	}
 
 	srv := &Server{
-		config:              cfg,
-		reserveCollector:    reserveCollector,
-		usageCollector:      usageCollector,
-		testResultCollector: testResultCollector,
-		operatorCollector:   operatorCollector,
-		mux:                 http.NewServeMux(),
+		config:               cfg,
+		reserveCollector:     reserveCollector,
+		usageCollector:       usageCollector,
+		testResultCollector:  testResultCollector,
+		deliverableCollector: deliverableCollector,
+		mux:                  http.NewServeMux(),
 	}
 
 	// Setup routes
@@ -80,21 +80,21 @@ func (s *Server) setupRoutes() {
 	s.mux.HandleFunc("/dashboard", s.handleDashboard)
 	s.mux.HandleFunc("/dashboard/reserves", s.handleReservesPage)
 	s.mux.HandleFunc("/dashboard/usage", s.handleUsagePage)
-	s.mux.HandleFunc("/dashboard/operators", s.handleOperatorsPage)
-	s.mux.HandleFunc("/dashboard/operators/", s.handlePipelineDetailPage)
+	s.mux.HandleFunc("/dashboard/deliverables", s.handleDeliverablesPage)
+	s.mux.HandleFunc("/dashboard/deliverables/", s.handlePipelineDetailPage)
 
 	// API endpoints
 	s.mux.HandleFunc("/api/v1/reserves", s.handleReservesAPI)
 	s.mux.HandleFunc("/api/v1/usage", s.handleUsageAPI)
 	s.mux.HandleFunc("/api/v1/overview", s.handleOverviewAPI)
-	s.mux.HandleFunc("/api/v1/operators", s.handleOperatorsAPI)
+	s.mux.HandleFunc("/api/v1/deliverables", s.handleDeliverablesAPI)
 
 	// Health check
 	s.mux.HandleFunc("/health", s.handleHealth)
 }
 
 // WithStore attaches a SQLite store to the server.
-// When set, the operators overview and pipeline-detail pages read from the DB
+// When set, the deliverables overview and pipeline-detail pages read from the DB
 // instead of making live S3 API calls.
 func (s *Server) WithStore(st *store.Store) {
 	s.store = st
@@ -122,7 +122,7 @@ func (s *Server) Start(addr string, ctx context.Context) error {
 // handleRedirect redirects root to /dashboard
 func (s *Server) handleRedirect(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path == "/" || r.URL.Path == "/dashboard" {
-		http.Redirect(w, r, "/dashboard/usage", http.StatusMovedPermanently)
+		http.Redirect(w, r, "/dashboard/deliverables", http.StatusMovedPermanently)
 		return
 	}
 	http.NotFound(w, r)
@@ -246,10 +246,10 @@ func (s *Server) handleUsageAPI(w http.ResponseWriter, r *http.Request) {
 	s.sendAPISuccess(w, usage)
 }
 
-// handleOperatorsPage serves the operator status HTML page.
+// handleDeliverablesPage serves the deliverables pipeline status HTML page.
 // When a Store is configured it reads from SQLite (<1ms); otherwise falls back
 // to a live S3 scan (slow, legacy path).
-func (s *Server) handleOperatorsPage(w http.ResponseWriter, r *http.Request) {
+func (s *Server) handleDeliverablesPage(w http.ResponseWriter, r *http.Request) {
 	var operators []models.OperatorStatus
 
 	if s.store != nil {
@@ -261,11 +261,11 @@ func (s *Server) handleOperatorsPage(w http.ResponseWriter, r *http.Request) {
 		} else {
 			operators = result
 		}
-	} else if s.operatorCollector != nil {
+	} else if s.deliverableCollector != nil {
 		// Slow path: live S3 scan
-		collected, err := s.operatorCollector.CollectOperatorStatus()
+		collected, err := s.deliverableCollector.CollectOperatorStatus()
 		if err != nil {
-			log.Printf("Warning: Failed to collect operator status: %v", err)
+			log.Printf("Warning: Failed to collect deliverable status: %v", err)
 			operators = []models.OperatorStatus{}
 		} else {
 			operators = collected
@@ -284,15 +284,15 @@ func (s *Server) handleOperatorsPage(w http.ResponseWriter, r *http.Request) {
 	s.renderTemplate(w, "operators.html", data)
 }
 
-// handlePipelineDetailPage serves the per-operator pipeline history page.
-// URL: /dashboard/operators/<name>
+// handlePipelineDetailPage serves the per-deliverable pipeline history page.
+// URL: /dashboard/deliverables/<name>
 // When a Store is configured it reads from SQLite (<1ms); otherwise falls back
 // to a live S3 scan (slow, legacy path).
 func (s *Server) handlePipelineDetailPage(w http.ResponseWriter, r *http.Request) {
-	name := strings.TrimPrefix(r.URL.Path, "/dashboard/operators/")
+	name := strings.TrimPrefix(r.URL.Path, "/dashboard/deliverables/")
 	name = strings.TrimSpace(name)
 	if name == "" {
-		http.Redirect(w, r, "/dashboard/operators", http.StatusSeeOther)
+		http.Redirect(w, r, "/dashboard/deliverables", http.StatusSeeOther)
 		return
 	}
 
@@ -307,9 +307,9 @@ func (s *Server) handlePipelineDetailPage(w http.ResponseWriter, r *http.Request
 			s.sendError(w, "Failed to load pipeline history", http.StatusInternalServerError)
 			return
 		}
-	} else if s.operatorCollector != nil {
+	} else if s.deliverableCollector != nil {
 		// Slow path: live S3 scan
-		history, err = s.operatorCollector.CollectPipelineHistory(name)
+		history, err = s.deliverableCollector.CollectPipelineHistory(name)
 		if err != nil {
 			log.Printf("Failed to collect pipeline history for %s: %v", name, err)
 			s.sendError(w, "Failed to load pipeline history", http.StatusInternalServerError)
@@ -327,14 +327,14 @@ func (s *Server) handlePipelineDetailPage(w http.ResponseWriter, r *http.Request
 	s.renderTemplate(w, "pipeline-detail.html", data)
 }
 
-// handleOperatorsAPI returns operator status as JSON
-func (s *Server) handleOperatorsAPI(w http.ResponseWriter, r *http.Request) {
-	if s.operatorCollector == nil {
-		s.sendAPIError(w, "Operator status collector not initialized (S3 bucket not configured)", http.StatusServiceUnavailable)
+// handleDeliverablesAPI returns deliverable status as JSON
+func (s *Server) handleDeliverablesAPI(w http.ResponseWriter, r *http.Request) {
+	if s.deliverableCollector == nil {
+		s.sendAPIError(w, "Deliverable collector not initialized (S3 bucket not configured)", http.StatusServiceUnavailable)
 		return
 	}
 
-	operators, err := s.operatorCollector.CollectOperatorStatus()
+	operators, err := s.deliverableCollector.CollectOperatorStatus()
 	if err != nil {
 		s.sendAPIError(w, fmt.Sprintf("Failed to collect operator status: %v", err), http.StatusInternalServerError)
 		return

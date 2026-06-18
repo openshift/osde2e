@@ -321,9 +321,44 @@ func (s *Store) GetHistory(operatorName string) (*models.PipelineHistory, error)
 		return nil, err
 	}
 
+	// Group runs by version, preserving newest-first order per version.
+	// For each version we keep the newest run per env (int takes precedence over stage over prod).
+	type versionKey = string
+	versionOrder := []versionKey{}
+	versionMap := make(map[versionKey]*models.VersionPipeline)
+
+	for i := range runs {
+		run := &runs[i]
+		vp, exists := versionMap[run.Version]
+		if !exists {
+			vp = &models.VersionPipeline{
+				Version: run.Version,
+				Date:    run.Date,
+				LastRun: run.LastRun,
+				EnvRuns: make(map[string]*models.PipelineRun),
+			}
+			versionMap[run.Version] = vp
+			versionOrder = append(versionOrder, run.Version)
+		}
+		// Keep newest run per env (runs are already newest-first so first wins).
+		if _, seen := vp.EnvRuns[run.Env]; !seen {
+			vp.EnvRuns[run.Env] = run
+		}
+		if run.LastRun.After(vp.LastRun) {
+			vp.LastRun = run.LastRun
+			vp.Date = run.Date
+		}
+	}
+
+	versions := make([]models.VersionPipeline, 0, len(versionOrder))
+	for _, ver := range versionOrder {
+		versions = append(versions, *versionMap[ver])
+	}
+
 	return &models.PipelineHistory{
 		OperatorName: operatorName,
 		Runs:         runs,
+		Versions:     versions,
 	}, nil
 }
 
