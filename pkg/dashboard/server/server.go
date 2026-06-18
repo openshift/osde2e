@@ -121,8 +121,8 @@ func (s *Server) Start(addr string, ctx context.Context) error {
 
 // handleRedirect redirects root to /dashboard
 func (s *Server) handleRedirect(w http.ResponseWriter, r *http.Request) {
-	if r.URL.Path == "/" {
-		http.Redirect(w, r, "/dashboard", http.StatusMovedPermanently)
+	if r.URL.Path == "/" || r.URL.Path == "/dashboard" {
+		http.Redirect(w, r, "/dashboard/usage", http.StatusMovedPermanently)
 		return
 	}
 	http.NotFound(w, r)
@@ -168,25 +168,34 @@ func (s *Server) handleReservesPage(w http.ResponseWriter, r *http.Request) {
 	s.renderTemplate(w, "reserves.html", data)
 }
 
-// handleUsagePage serves the usage HTML page
+// handleUsagePage serves the Clusters page — all osde2e clusters grouped by env.
 func (s *Server) handleUsagePage(w http.ResponseWriter, r *http.Request) {
-	var usage []models.ClusterUsage
+	// EnvOrder defines the display sequence of environments.
+	envOrder := []string{"int", "stage", "prod"}
 
-	if s.usageCollector != nil {
-		collected, err := s.usageCollector.CollectUsage()
+	type EnvClusters struct {
+		Env      string
+		Clusters []models.ClusterReserve
+	}
+
+	var envClusters []EnvClusters
+
+	if s.reserveCollector != nil {
+		byEnv, err := s.reserveCollector.CollectClustersPerEnv()
 		if err != nil {
-			log.Printf("Warning: Failed to collect usage: %v", err)
-			usage = []models.ClusterUsage{}
+			log.Printf("Warning: Failed to collect clusters per env: %v", err)
 		} else {
-			usage = collected
+			for _, env := range envOrder {
+				if clusters, ok := byEnv[env]; ok {
+					envClusters = append(envClusters, EnvClusters{Env: env, Clusters: clusters})
+				}
+			}
 		}
-	} else {
-		usage = []models.ClusterUsage{}
 	}
 
 	data := map[string]interface{}{
-		"ActivePage": "usage",
-		"Usage":      usage,
+		"ActivePage":  "usage",
+		"EnvClusters": envClusters,
 	}
 
 	s.renderTemplate(w, "usage.html", data)

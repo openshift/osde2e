@@ -265,10 +265,8 @@
         <div class="container">
             <h1>Delivery Dashboard</h1>
             <nav>
-                <a href="/dashboard" {{if eq .ActivePage "dashboard"}}class="active"{{end}}>Dashboard</a>
-                <a href="/dashboard/reserves" {{if eq .ActivePage "reserves"}}class="active"{{end}}>Reserves</a>
-                <a href="/dashboard/usage" {{if eq .ActivePage "usage"}}class="active"{{end}}>Usage</a>
-                <a href="/dashboard/operators" {{if eq .ActivePage "operators"}}class="active"{{end}}>Operators</a>
+                <a href="/dashboard/usage" {{if eq .ActivePage "usage"}}class="active"{{end}}>Clusters</a>
+                <a href="/dashboard/operators" {{if eq .ActivePage "operators"}}class="active"{{end}}>Pipelines</a>
             </nav>
         </div>
     </header>

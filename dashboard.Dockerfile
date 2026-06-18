@@ -1,7 +1,8 @@
-FROM docker.io/golang:1.25 AS builder
+FROM registry.access.redhat.com/ubi9/go-toolset:latest AS builder
 
+USER root
 ENV GOFLAGS=
-ENV PKG=/go/src/github.com/openshift/osde2e/
+ENV PKG=/opt/app-root/src/github.com/openshift/osde2e/
 WORKDIR ${PKG}
 
 COPY go.* .
@@ -13,7 +14,7 @@ RUN make build
 FROM registry.access.redhat.com/ubi9/ubi-minimal:latest
 WORKDIR /
 
-COPY --from=builder /go/src/github.com/openshift/osde2e/out/osde2e .
+COPY --from=builder /opt/app-root/src/github.com/openshift/osde2e/out/osde2e .
 
 ENV PATH="${PATH}:/"
 ENTRYPOINT ["/osde2e"]

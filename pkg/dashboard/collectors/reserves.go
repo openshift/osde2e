@@ -92,6 +92,32 @@ func (c *ReserveCollector) ocmClusterToReserve(cluster *v1.Cluster) models.Clust
 	return reserve
 }
 
+// CollectClustersPerEnv returns all osde2e clusters grouped by environment name.
+func (c *ReserveCollector) CollectClustersPerEnv() (map[string][]models.ClusterReserve, error) {
+	result := make(map[string][]models.ClusterReserve)
+	for env, p := range c.providers {
+		resp, err := p.GetConnection().ClustersMgmt().V1().Clusters().List().
+			Search("properties.MadeByOSDe2e='true'").
+			Size(1000).
+			Send()
+		if err != nil {
+			if isAuthError(err) {
+				log.Printf("Info: skipping clusters for env %q (OCM account not available)", env)
+			} else {
+				log.Printf("Warning: failed to query clusters for env %q: %v", env, err)
+			}
+			continue
+		}
+		var clusters []models.ClusterReserve
+		resp.Items().Each(func(cluster *v1.Cluster) bool {
+			clusters = append(clusters, c.ocmClusterToReserve(cluster))
+			return true
+		})
+		result[env] = clusters
+	}
+	return result, nil
+}
+
 // CountExpiringSoon counts clusters expiring within the given threshold
 func (c *ReserveCollector) CountExpiringSoon(reserves []models.ClusterReserve, threshold time.Duration) int {
 	count := 0

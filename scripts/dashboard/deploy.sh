@@ -26,15 +26,16 @@ echo ""
 # 1. Ensure namespace exists
 oc new-project "${NAMESPACE}" 2>/dev/null || oc project "${NAMESPACE}"
 
-# 2. Build binary locally
+# 2. Build binary locally (linux/amd64 for cluster)
 echo "[1/5] Building osde2e binary..."
 cd "${REPO_ROOT}"
-GOFLAGS="-mod=mod" go build -o osde2e ./cmd/osde2e/
+mkdir -p out
+GOOS=linux GOARCH=amd64 GOFLAGS="-mod=mod" go build -o out/osde2e ./cmd/osde2e/
 
 # 3. Build container image in cluster
 echo "[2/5] Building container image..."
-mkdir -p /tmp/dashboard-build
-cp "${REPO_ROOT}/osde2e" /tmp/dashboard-build/osde2e
+mkdir -p /tmp/dashboard-build/out
+cp "${REPO_ROOT}/out/osde2e" /tmp/dashboard-build/out/osde2e
 cp "${REPO_ROOT}/Dockerfile" /tmp/dashboard-build/Dockerfile
 
 # Create BuildConfig if it doesn't exist
