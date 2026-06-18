@@ -50,21 +50,6 @@ oc start-build "${APP}" \
 # 4. Apply manifests
 echo "[3/5] Applying manifests..."
 
-# PVC for SQLite database
-oc apply -n "${NAMESPACE}" -f - <<EOF
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: dashboard-db
-  namespace: ${NAMESPACE}
-spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 1Gi
-EOF
-
 # ConfigMap for non-secret config
 oc apply -n "${NAMESPACE}" -f - <<EOF
 apiVersion: v1
@@ -78,7 +63,8 @@ data:
   AWS_REGION: "us-east-1"
 EOF
 
-# Deployment
+# Deployment — uses emptyDir for SQLite DB so RollingUpdate works without PVC conflicts.
+# The --backfill flag repopulates the DB from S3 on each pod start (~5s for typical history).
 oc apply -n "${NAMESPACE}" -f - <<EOF
 apiVersion: apps/v1
 kind: Deployment
@@ -89,6 +75,11 @@ metadata:
     app: ${APP}
 spec:
   replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
   selector:
     matchLabels:
       app: ${APP}
@@ -154,8 +145,7 @@ spec:
             periodSeconds: 30
       volumes:
         - name: db
-          persistentVolumeClaim:
-            claimName: dashboard-db
+          emptyDir: {}
 EOF
 
 # Service
@@ -173,12 +163,12 @@ spec:
       targetPort: 8080
 EOF
 
-# Route
+# Route (named "live" so hostname becomes live-delivery-dashboard.apps....)
 oc apply -n "${NAMESPACE}" -f - <<EOF
 apiVersion: route.openshift.io/v1
 kind: Route
 metadata:
-  name: ${APP}
+  name: live
   namespace: ${NAMESPACE}
 spec:
   to:
@@ -196,5 +186,5 @@ oc rollout status deployment/${APP} -n "${NAMESPACE}" --timeout=120s
 
 echo "[5/5] Done!"
 echo ""
-ROUTE=$(oc get route "${APP}" -n "${NAMESPACE}" -o jsonpath='{.spec.host}')
-echo "Dashboard URL: https://${ROUTE}/dashboard/operators"
+ROUTE=$(oc get route "live" -n "${NAMESPACE}" -o jsonpath='{.spec.host}')
+echo "Dashboard URL: https://${ROUTE}/dashboard/deliverables"
