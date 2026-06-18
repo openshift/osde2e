@@ -74,6 +74,16 @@ Or use the local script:
 
 ---
 
+## Environment Policy
+
+> **IMPORTANT: Development and testing must only target stage/non-production clusters.**
+>
+> The cluster `rh-hp-delivery` is **production**. Deployments to it are handled exclusively by the CI/CD pipeline — never manually.
+>
+> Use a personal or stage OpenShift cluster for all dev/test work.
+
+---
+
 ## Deploying to Your Own OpenShift Cluster
 
 ### Prerequisites

@@ -216,22 +216,9 @@ func (c *TestResultsCollector) parseJUnitXML(key, component, date, jobID string)
 		return nil, err
 	}
 
-	// Parse timestamp
-	timestamp, err := time.Parse("2006-01-02T15:04:05", suite.Timestamp)
-	if err != nil {
-		timestamp, err = time.Parse(time.RFC3339, suite.Timestamp)
-		if err != nil {
-			timestamp = time.Now()
-		}
-	}
+	timestamp := parseTimestamp(suite.Timestamp)
 
-	// Determine status
-	status := "passed"
-	if suite.Failures > 0 {
-		status = "failed"
-	} else if suite.Errors > 0 {
-		status = "error"
-	}
+	status := suiteStatus(suite)
 
 	// Build per-test-case list
 	testCases := make([]models.TestCase, 0, len(suite.TestCases))
@@ -300,54 +287,3 @@ func (c *TestResultsCollector) generatePresignedURL(key string) string {
 	return url
 }
 
-// GetTestResultByJobID retrieves detailed test results for a specific job
-func (c *TestResultsCollector) GetTestResultByJobID(jobID string) (*models.TestResult, error) {
-	// Search for the job in S3
-	prefix := "test-results/"
-
-	input := &s3.ListObjectsV2Input{
-		Bucket: aws.String(c.bucket),
-		Prefix: aws.String(prefix),
-	}
-
-	var result *models.TestResult
-
-	err := c.s3Client.ListObjectsV2Pages(input, func(page *s3.ListObjectsV2Output, lastPage bool) bool {
-		for _, obj := range page.Contents {
-			key := aws.StringValue(obj.Key)
-
-			if !strings.Contains(key, jobID) || !strings.HasSuffix(key, ".xml") {
-				continue
-			}
-
-			parts := strings.Split(key, "/")
-			if len(parts) < 4 {
-				continue
-			}
-
-			component := parts[1]
-			date := parts[2]
-
-			testResult, err := c.parseJUnitXML(key, component, date, jobID)
-			if err != nil {
-				log.Printf("Warning: failed to parse %s: %v", key, err)
-				continue
-			}
-
-			result = testResult
-			return false // Stop pagination
-		}
-
-		return true
-	})
-
-	if err != nil {
-		return nil, fmt.Errorf("failed to search for job %s: %w", jobID, err)
-	}
-
-	if result == nil {
-		return nil, fmt.Errorf("job %s not found", jobID)
-	}
-
-	return result, nil
-}

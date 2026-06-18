@@ -66,13 +66,6 @@ type TestResult struct {
 	TestCases    []TestCase `json:"test_cases,omitempty"`
 }
 
-// SuccessRate returns the percentage of passed tests
-func (t *TestResult) SuccessRate() float64 {
-	if t.TotalTests == 0 {
-		return 0
-	}
-	return float64(t.PassedTests) / float64(t.TotalTests) * 100
-}
 
 // DashboardOverview provides a high-level summary for the main dashboard view
 type DashboardOverview struct {
@@ -85,15 +78,6 @@ type DashboardOverview struct {
 	LastUpdated           time.Time      `json:"last_updated"`
 }
 
-// TestSummary provides aggregated test statistics
-type TestSummary struct {
-	TotalRuns      int     `json:"total_runs"`
-	PassedRuns     int     `json:"passed_runs"`
-	FailedRuns     int     `json:"failed_runs"`
-	SuccessRate    float64 `json:"success_rate"`
-	AverageDuration float64 `json:"average_duration"`
-	LastRun        *TestResult `json:"last_run,omitempty"`
-}
 
 // APIResponse is a generic wrapper for API responses
 type APIResponse struct {

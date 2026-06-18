@@ -160,12 +160,7 @@ func (c *SQSConsumer) processKey(bucket, key string) error {
 		return fmt.Errorf("parse junit %s: %w", key, err)
 	}
 
-	status := "passed"
-	if suite.Failures > 0 {
-		status = "failed"
-	} else if suite.Errors > 0 {
-		status = "error"
-	}
+	status := suiteStatus(suite)
 
 	s3Dir := strings.Join(parts[:4], "/")
 

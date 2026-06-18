@@ -230,13 +230,7 @@ func (c *OperatorStatusCollector) CollectOperatorStatus() ([]models.OperatorStat
 			continue
 		}
 
-		status := "passed"
-		if r.suite.Failures > 0 {
-			status = "failed"
-		} else if r.suite.Errors > 0 {
-			status = "error"
-		}
-
+		status := suiteStatus(r.suite)
 		logURL := c.generatePresignedURL(r.s3Dir + "/test_output.log")
 		junitURL := c.generatePresignedURL(r.key)
 
@@ -351,13 +345,7 @@ func (c *OperatorStatusCollector) downloadAndParseJUnit(key string) (*JUnitTestS
 		return nil, time.Time{}, err
 	}
 
-	ts, err := time.Parse("2006-01-02T15:04:05", suite.Timestamp)
-	if err != nil {
-		ts, err = time.Parse(time.RFC3339, suite.Timestamp)
-		if err != nil {
-			ts = time.Now()
-		}
-	}
+	ts := parseTimestamp(suite.Timestamp)
 
 	return suite, ts, nil
 }
@@ -503,16 +491,10 @@ func (c *OperatorStatusCollector) CollectPipelineHistory(operatorName string) (*
 		if r == nil {
 			continue
 		}
-		status := "passed"
-		if r.suite.Failures > 0 {
-			status = "failed"
-		} else if r.suite.Errors > 0 {
-			status = "error"
-		}
 		runs = append(runs, models.PipelineRun{
 			Version:  r.version,
 			Env:      r.env,
-			Status:   status,
+			Status:   suiteStatus(r.suite),
 			Date:     r.dateStr,
 			JobID:    r.jobID,
 			LastRun:  r.ts,

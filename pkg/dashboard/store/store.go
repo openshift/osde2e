@@ -486,20 +486,3 @@ func (s *Store) GetFailureGroups() ([]models.FailureGroup, error) {
 	return result, nil
 }
 
-// OperatorNames returns a sorted list of all distinct operator names in the store.
-func (s *Store) OperatorNames() ([]string, error) {
-	rows, err := s.db.Query(`SELECT DISTINCT operator_name FROM pipeline_latest ORDER BY operator_name`)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var names []string
-	for rows.Next() {
-		var n string
-		if err := rows.Scan(&n); err != nil {
-			return nil, err
-		}
-		names = append(names, n)
-	}
-	return names, rows.Err()
-}
