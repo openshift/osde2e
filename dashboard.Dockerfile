@@ -1,19 +1,27 @@
 FROM docker.io/golang:1.25 AS builder
 
-ENV GOFLAGS="-mod=mod"
+ENV GOFLAGS=
 ENV PKG=/go/src/github.com/openshift/osde2e/
 WORKDIR ${PKG}
 
+COPY go.* .
+RUN go mod download
 COPY . .
+RUN go env
 RUN make build
 
 FROM registry.access.redhat.com/ubi9/ubi-minimal:latest
 WORKDIR /
+
 COPY --from=builder /go/src/github.com/openshift/osde2e/out/osde2e .
 
 ENV PATH="${PATH}:/"
 ENTRYPOINT ["/osde2e"]
 
-LABEL name="osde2e"
-LABEL description="A comprehensive test framework used for Service Delivery to test all aspects of Managed OpenShift Clusters"
-LABEL summary="CLI tool to provision and test Managed OpenShift Clusters"
+LABEL name="delivery-dashboard"
+LABEL description="Delivery Dashboard — pipeline status for Service Delivery operators, sourced from S3 and SQS"
+LABEL summary="Web dashboard showing operator pipeline status across stage and integration environments"
+LABEL com.redhat.component="delivery-dashboard"
+LABEL io.k8s.description="delivery-dashboard"
+LABEL io.k8s.display-name="Delivery Dashboard"
+LABEL io.openshift.tags="dashboard,delivery,operators"
