@@ -77,8 +77,6 @@ func NewServer(cfg *config.Config) (*Server, error) {
 func (s *Server) setupRoutes() {
 	// HTML pages
 	s.mux.HandleFunc("/", s.handleRedirect)
-	s.mux.HandleFunc("/dashboard", s.handleDashboard)
-	s.mux.HandleFunc("/dashboard/reserves", s.handleReservesPage)
 	s.mux.HandleFunc("/dashboard/usage", s.handleUsagePage)
 	s.mux.HandleFunc("/dashboard/deliverables", s.handleDeliverablesPage)
 	s.mux.HandleFunc("/dashboard/deliverables/", s.handlePipelineDetailPage)
@@ -129,45 +127,6 @@ func (s *Server) handleRedirect(w http.ResponseWriter, r *http.Request) {
 	http.NotFound(w, r)
 }
 
-// handleDashboard serves the main dashboard HTML page
-func (s *Server) handleDashboard(w http.ResponseWriter, r *http.Request) {
-	overview, err := s.collectOverview()
-	if err != nil {
-		s.sendError(w, "Failed to collect dashboard data", http.StatusInternalServerError)
-		return
-	}
-
-	data := map[string]interface{}{
-		"ActivePage": "dashboard",
-		"Overview":   overview,
-	}
-
-	s.renderTemplate(w, "dashboard.html", data)
-}
-
-// handleReservesPage serves the reserves HTML page
-func (s *Server) handleReservesPage(w http.ResponseWriter, r *http.Request) {
-	var reserves []models.ClusterReserve
-
-	if s.reserveCollector != nil {
-		collected, err := s.reserveCollector.CollectReserves()
-		if err != nil {
-			log.Printf("Warning: Failed to collect reserves: %v", err)
-			reserves = []models.ClusterReserve{}
-		} else {
-			reserves = collected
-		}
-	} else {
-		reserves = []models.ClusterReserve{}
-	}
-
-	data := map[string]interface{}{
-		"ActivePage": "reserves",
-		"Reserves":   reserves,
-	}
-
-	s.renderTemplate(w, "reserves.html", data)
-}
 
 // handleUsagePage serves the Clusters page — all osde2e clusters grouped by env.
 func (s *Server) handleUsagePage(w http.ResponseWriter, r *http.Request) {
