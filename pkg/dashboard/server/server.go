@@ -82,6 +82,7 @@ func (s *Server) setupRoutes() {
 	s.mux.HandleFunc("/dashboard/usage", s.handleUsagePage)
 	s.mux.HandleFunc("/dashboard/deliverables", s.handleDeliverablesPage)
 	s.mux.HandleFunc("/dashboard/deliverables/", s.handlePipelineDetailPage)
+	s.mux.HandleFunc("/dashboard/analysis", s.handleAnalysisPage)
 
 	// API endpoints
 	s.mux.HandleFunc("/api/v1/reserves", s.handleReservesAPI)
@@ -325,6 +326,27 @@ func (s *Server) handlePipelineDetailPage(w http.ResponseWriter, r *http.Request
 	}
 
 	s.renderTemplate(w, "pipeline-detail.html", data)
+}
+
+// handleAnalysisPage groups all failed runs by AI root cause and renders the analysis page.
+func (s *Server) handleAnalysisPage(w http.ResponseWriter, r *http.Request) {
+	var groups []models.FailureGroup
+
+	if s.store != nil {
+		var err error
+		groups, err = s.store.GetFailureGroups()
+		if err != nil {
+			log.Printf("Warning: GetFailureGroups: %v", err)
+			groups = []models.FailureGroup{}
+		}
+	}
+
+	data := map[string]interface{}{
+		"ActivePage": "analysis",
+		"Groups":     groups,
+	}
+
+	s.renderTemplate(w, "analysis.html", data)
 }
 
 // handleDeliverablesAPI returns deliverable status as JSON

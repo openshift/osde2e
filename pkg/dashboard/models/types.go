@@ -189,6 +189,24 @@ type VersionPipeline struct {
 	EnvRuns  map[string]*PipelineRun `json:"env_runs"` // keyed by env: "int", "stage", "prod"
 }
 
+// FailureEntry is one deliverable+version+env that shares a common failure root cause
+type FailureEntry struct {
+	OperatorName string    `json:"operator_name"`
+	Version      string    `json:"version"`
+	Env          string    `json:"env"`
+	LastRun      time.Time `json:"last_run"`
+	JobID        string    `json:"job_id"`
+	LogURL       string    `json:"log_url,omitempty"`
+}
+
+// FailureGroup groups deliverables that share a similar failure summary
+type FailureGroup struct {
+	FailureMatch    string         `json:"failure_match"`    // first sentence of LLM root cause or failure message — the grouping key
+	RootCause       string         `json:"root_cause"`       // full LLM root cause (from most recent entry with analysis)
+	Recommendations []string       `json:"recommendations"`  // LLM recommendations
+	Entries         []FailureEntry `json:"entries"`          // sorted newest first
+}
+
 // HealthStatus represents the health check response
 type HealthStatus struct {
 	Status      string    `json:"status"` // ok, degraded, error

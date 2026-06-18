@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"strings"
 	"time"
 
 	_ "modernc.org/sqlite" // pure-Go SQLite driver, no CGO required
@@ -360,6 +361,129 @@ func (s *Store) GetHistory(operatorName string) (*models.PipelineHistory, error)
 		Runs:         runs,
 		Versions:     versions,
 	}, nil
+}
+
+// groupKeySummary extracts a stable grouping key from an LLM root cause or failure message.
+// It takes the first sentence (up to the first '.') capped at 120 chars.
+// This clusters similar failures across different deliverables while being stable enough to group.
+func groupKeySummary(text string) string {
+	if text == "" {
+		return ""
+	}
+	// Trim to first sentence
+	if idx := strings.Index(text, "."); idx > 0 && idx < 120 {
+		return strings.TrimSpace(text[:idx+1])
+	}
+	// No sentence break — cap at 120 chars
+	if len(text) > 120 {
+		return strings.TrimSpace(text[:120])
+	}
+	return strings.TrimSpace(text)
+}
+
+// GetFailureGroups returns all failed runs grouped by the first sentence of the LLM root cause
+// (falling back to the first line of the failure message). Groups with the same summary cluster
+// across deliverables. Sorted by number of entries descending.
+func (s *Store) GetFailureGroups() ([]models.FailureGroup, error) {
+	rows, err := s.db.Query(`
+		SELECT operator_name, env, version, job_id, last_run, log_url, failed_tests, llm_analysis
+		FROM pipeline_runs
+		WHERE status != 'passed' AND (failed_tests != '[]' OR llm_analysis != '')
+		ORDER BY last_run DESC
+	`)
+	if err != nil {
+		return nil, fmt.Errorf("query failure groups: %w", err)
+	}
+	defer rows.Close()
+
+	type groupKey = string
+	groupOrder := []groupKey{}
+	groups := make(map[groupKey]*models.FailureGroup)
+
+	for rows.Next() {
+		var (
+			name, env, ver, jobID   string
+			logURL, ftJSON, llmJSON string
+			lastRun                 time.Time
+		)
+		if err := rows.Scan(&name, &env, &ver, &jobID, &lastRun, &logURL, &ftJSON, &llmJSON); err != nil {
+			return nil, fmt.Errorf("scan failure groups: %w", err)
+		}
+
+		var llm *models.LLMAnalysis
+		if llmJSON != "" {
+			llm = &models.LLMAnalysis{}
+			if err := json.Unmarshal([]byte(llmJSON), llm); err != nil || llm.RootCause == "" {
+				llm = nil
+			}
+		}
+
+		var failedTests []models.FailedTestCase
+		_ = json.Unmarshal([]byte(ftJSON), &failedTests)
+
+		// Determine grouping key: prefer LLM root cause summary, fall back to first failure message line
+		var key string
+		if llm != nil {
+			key = groupKeySummary(llm.RootCause)
+		}
+		if key == "" && len(failedTests) > 0 {
+			// First line of the first failure message
+			msg := failedTests[0].Message
+			if nl := strings.Index(msg, "\n"); nl > 0 {
+				msg = msg[:nl]
+			}
+			key = groupKeySummary(msg)
+		}
+		if key == "" {
+			continue
+		}
+
+		entry := models.FailureEntry{
+			OperatorName: name,
+			Version:      ver,
+			Env:          env,
+			LastRun:      lastRun,
+			JobID:        jobID,
+			LogURL:       logURL,
+		}
+
+		if _, exists := groups[key]; !exists {
+			grp := &models.FailureGroup{
+				FailureMatch: key,
+			}
+			if llm != nil {
+				grp.RootCause = llm.RootCause
+				grp.Recommendations = llm.Recommendations
+			}
+			groups[key] = grp
+			groupOrder = append(groupOrder, key)
+		}
+		grp := groups[key]
+		grp.Entries = append(grp.Entries, entry)
+		// Enrich with LLM if the group doesn't have it yet
+		if llm != nil && grp.RootCause == "" {
+			grp.RootCause = llm.RootCause
+			grp.Recommendations = llm.Recommendations
+		}
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	result := make([]models.FailureGroup, 0, len(groupOrder))
+	for _, key := range groupOrder {
+		result = append(result, *groups[key])
+	}
+	// Sort: largest groups first
+	for i := 0; i < len(result)-1; i++ {
+		for j := i + 1; j < len(result); j++ {
+			if len(result[j].Entries) > len(result[i].Entries) {
+				result[i], result[j] = result[j], result[i]
+			}
+		}
+	}
+
+	return result, nil
 }
 
 // OperatorNames returns a sorted list of all distinct operator names in the store.

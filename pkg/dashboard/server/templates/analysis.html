@@ -1,0 +1,196 @@
+{{template "base.html" .}}
+
+{{define "title"}}Delivery Dashboard - Analysis{{end}}
+
+{{define "extra-css"}}
+<style>
+    .group-card {
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+        margin-bottom: 1.5rem;
+        overflow: hidden;
+        border-left: 4px solid #e74c3c;
+    }
+
+    .group-header {
+        padding: 1rem 1.25rem 0.75rem;
+        border-bottom: 1px solid #f0f0f0;
+    }
+
+    .group-count {
+        display: inline-block;
+        background: #e74c3c;
+        color: white;
+        font-size: 0.72rem;
+        font-weight: 700;
+        padding: 0.15rem 0.5rem;
+        border-radius: 10px;
+        margin-bottom: 0.5rem;
+    }
+
+    .root-cause {
+        font-size: 0.9rem;
+        color: #222;
+        line-height: 1.5;
+        margin-bottom: 0.5rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 100%;
+        cursor: default;
+    }
+
+    .recs {
+        font-size: 0.8rem;
+        color: #555;
+        margin-top: 0.5rem;
+    }
+
+    .recs ol {
+        margin: 0.25rem 0 0 1.2rem;
+        padding: 0;
+    }
+
+    .recs li { margin-bottom: 0.2rem; }
+
+    .entries-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.83rem;
+    }
+
+    .entries-table th {
+        background: #fafafa;
+        font-weight: 600;
+        color: #666;
+        font-size: 0.72rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        padding: 0.5rem 1.25rem;
+        text-align: left;
+        border-bottom: 1px solid #f0f0f0;
+    }
+
+    .entries-table td {
+        padding: 0.5rem 1.25rem;
+        border-bottom: 1px solid #f8f8f8;
+        vertical-align: middle;
+    }
+
+    .entries-table tr:last-child td { border-bottom: none; }
+    .entries-table tr:hover td { background: #fafafa; }
+
+    .deliverable-link {
+        color: #0066cc;
+        font-weight: 500;
+        text-decoration: none;
+    }
+    .deliverable-link:hover { text-decoration: underline; }
+
+    code.ver {
+        font-size: 0.78rem;
+        background: #f0f0f0;
+        padding: 0.1rem 0.35rem;
+        border-radius: 3px;
+        font-family: monospace;
+    }
+
+    .env-chip {
+        display: inline-block;
+        padding: 0.1rem 0.45rem;
+        border-radius: 8px;
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+    }
+
+    .env-int   { background: #d1ecf1; color: #0c5460; }
+    .env-stage { background: #fff3cd; color: #856404; }
+    .env-prod  { background: #d4edda; color: #155724; }
+    .env-other { background: #e2e3e5; color: #555; }
+
+    .datetime { color: #777; font-size: 0.8rem; white-space: nowrap; }
+
+    .empty-analysis {
+        text-align: center;
+        padding: 4rem 2rem;
+        color: #888;
+    }
+</style>
+{{end}}
+
+{{define "content"}}
+<h1 style="margin-bottom: 0.25rem;">Analysis</h1>
+<p class="text-muted" style="margin-bottom: 1.5rem;">
+    Failed deliverables grouped by AI-identified root cause — most widespread failures first.
+    Click a deliverable name to see its full pipeline history.
+</p>
+
+{{if gt (len .Groups) 0}}
+    {{range $gi, $group := .Groups}}
+    <div class="group-card">
+        <div class="group-header">
+            <div class="group-count">{{len $group.Entries}} matching</div>
+            <div class="root-cause" title="{{$group.FailureMatch}}">{{$group.FailureMatch}}</div>
+            {{if $group.RootCause}}
+            <div class="recs" style="margin-top:0.6rem;">
+                <strong style="color:#444;">AI Analysis:</strong> {{$group.RootCause}}
+                {{if gt (len $group.Recommendations) 0}}
+                <ol style="margin-top:0.3rem;">{{range $group.Recommendations}}<li>{{.}}</li>{{end}}</ol>
+                {{end}}
+            </div>
+            {{end}}
+        </div>
+
+        <table class="entries-table">
+            <thead>
+                <tr>
+                    <th>Deliverable</th>
+                    <th>Version</th>
+                    <th>Env</th>
+                    <th>When</th>
+                    <th>Logs</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{range $group.Entries}}
+                <tr>
+                    <td>
+                        <a class="deliverable-link" href="/dashboard/deliverables/{{.OperatorName}}">
+                            {{.OperatorName}}
+                        </a>
+                    </td>
+                    <td><code class="ver">{{.Version}}</code></td>
+                    <td>
+                        {{if eq .Env "int"}}
+                            <span class="env-chip env-int">int</span>
+                        {{else if eq .Env "stage"}}
+                            <span class="env-chip env-stage">stage</span>
+                        {{else if eq .Env "prod"}}
+                            <span class="env-chip env-prod">prod</span>
+                        {{else}}
+                            <span class="env-chip env-other">{{.Env}}</span>
+                        {{end}}
+                    </td>
+                    <td class="datetime">{{localTime .LastRun}}</td>
+                    <td>
+                        {{if .LogURL}}
+                            <a href="{{.LogURL}}" target="_blank" style="font-size:0.8rem;">Logs</a>
+                        {{else}}
+                            <span class="text-muted">—</span>
+                        {{end}}
+                    </td>
+                </tr>
+                {{end}}
+            </tbody>
+        </table>
+    </div>
+    {{end}}
+{{else}}
+<div class="empty-analysis">
+    <p style="font-size:1.1rem; margin-bottom:0.5rem;">No failure patterns found</p>
+    <p class="text-muted">AI analysis will appear here once failed runs with summary.yaml are backfilled.</p>
+</div>
+{{end}}
+{{end}}
