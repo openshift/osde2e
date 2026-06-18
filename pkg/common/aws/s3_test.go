@@ -1,9 +1,13 @@
 package aws
 
 import (
+	"io"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
+	"github.com/openshift/osde2e/internal/sanitizer"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
 )
@@ -160,5 +164,101 @@ func TestShouldUploadFile(t *testing.T) {
 				t.Errorf("shouldUploadFile(%q) = %v, want %v", tt.filename, got, tt.want)
 			}
 		})
+	}
+}
+
+func TestPrepareUploadBody_SanitizesSecrets(t *testing.T) {
+	tmpDir := t.TempDir()
+	logFile := filepath.Join(tmpDir, "test.log")
+	secretContent := "AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE\ntoken=ghp_abcdef1234567890abcdef1234567890abcdef\n"
+	if err := os.WriteFile(logFile, []byte(secretContent), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	s, err := sanitizer.New(&sanitizer.Config{
+		EnableAudit: false,
+		StrictMode:  false,
+	})
+	if err != nil {
+		t.Fatalf("Failed to create sanitizer: %v", err)
+	}
+
+	uploader := &S3Uploader{sanitizer: s}
+	body, size, err := uploader.prepareUploadBody(logFile, "test.log")
+	if err != nil {
+		t.Fatalf("prepareUploadBody failed: %v", err)
+	}
+
+	content, _ := io.ReadAll(body)
+	if size != int64(len(content)) {
+		t.Errorf("size mismatch: reported %d, actual %d", size, len(content))
+	}
+
+	result := string(content)
+	if strings.Contains(result, "AKIAIOSFODNN7EXAMPLE") {
+		t.Error("AWS access key was not redacted")
+	}
+	if strings.Contains(result, "ghp_abcdef") {
+		t.Error("GitHub token was not redacted")
+	}
+	if !strings.Contains(result, "[AWS-ACCESS-KEY-REDACTED]") {
+		t.Error("Expected AWS redaction marker not found")
+	}
+	if !strings.Contains(result, "[GITHUB-TOKEN-REDACTED]") {
+		t.Error("Expected GitHub redaction marker not found")
+	}
+}
+
+func TestPrepareUploadBody_FailOpenOnOversizedContent(t *testing.T) {
+	tmpDir := t.TempDir()
+	logFile := filepath.Join(tmpDir, "big.log")
+	content := strings.Repeat("AKIAIOSFODNN7EXAMPLE\n", 100)
+	if err := os.WriteFile(logFile, []byte(content), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	s, _ := sanitizer.New(&sanitizer.Config{
+		EnableAudit:    false,
+		MaxContentSize: 50, // Tiny limit to trigger failure
+		StrictMode:     false,
+	})
+	uploader := &S3Uploader{sanitizer: s}
+
+	body, size, err := uploader.prepareUploadBody(logFile, "big.log")
+	if err != nil {
+		t.Fatalf("prepareUploadBody should not error on sanitization failure: %v", err)
+	}
+	if size != int64(len(content)) {
+		t.Errorf("Expected raw content size %d, got %d", len(content), size)
+	}
+
+	// Should still return content (raw fallback)
+	result, _ := io.ReadAll(body)
+	if len(result) == 0 {
+		t.Error("Expected non-empty content on fail-open")
+	}
+}
+
+func TestPrepareUploadBody_NilSanitizer(t *testing.T) {
+	tmpDir := t.TempDir()
+	logFile := filepath.Join(tmpDir, "test.log")
+	content := "AKIAIOSFODNN7EXAMPLE"
+	if err := os.WriteFile(logFile, []byte(content), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	uploader := &S3Uploader{sanitizer: nil}
+	body, size, err := uploader.prepareUploadBody(logFile, "test.log")
+	if err != nil {
+		t.Fatalf("prepareUploadBody failed: %v", err)
+	}
+
+	// Without sanitizer, raw content is returned unchanged
+	result, _ := io.ReadAll(body)
+	if string(result) != content {
+		t.Errorf("Expected raw content %q, got %q", content, string(result))
+	}
+	if size != int64(len(content)) {
+		t.Errorf("Expected size %d, got %d", len(content), size)
 	}
 }

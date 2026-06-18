@@ -1,6 +1,7 @@
 package aws
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -17,6 +18,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/feature/s3/transfermanager"
 	s3v2 "github.com/aws/aws-sdk-go-v2/service/s3"
 	s3types "github.com/aws/aws-sdk-go-v2/service/s3/types"
+	"github.com/openshift/osde2e/internal/sanitizer"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
 )
@@ -171,6 +173,7 @@ type S3Uploader struct {
 	component string // component name for organizing artifacts (e.g., "osd-example-operator")
 	category  string // top-level category for organizing artifacts (e.g., "test-results")
 	urlExpiry time.Duration
+	sanitizer *sanitizer.Sanitizer // redacts secrets from text artifacts before upload
 }
 
 // S3UploadResult contains information about uploaded files.
@@ -215,6 +218,7 @@ func NewS3Uploader(component string) (*S3Uploader, error) {
 	}
 
 	s3Client := s3v2.NewFromConfig(cfgWithRegion)
+	s, _ := sanitizer.New(&sanitizer.Config{})
 
 	return &S3Uploader{
 		s3Client:  s3Client,
@@ -223,6 +227,7 @@ func NewS3Uploader(component string) (*S3Uploader, error) {
 		component: component,
 		category:  "test-results",  // fixed category for S3 path organization
 		urlExpiry: 168 * time.Hour, // 7 days (max for IAM user credentials)
+		sanitizer: s,
 	}, nil
 }
 
@@ -285,6 +290,7 @@ func shouldUploadFile(filename string) bool {
 }
 
 // UploadDirectory uploads files matching allowed extensions to S3.
+// Text-based artifacts are sanitized in-memory before upload to redact secrets.
 func (u *S3Uploader) UploadDirectory(srcDir string) ([]S3UploadResult, error) {
 	if u == nil {
 		return nil, nil
@@ -307,7 +313,6 @@ func (u *S3Uploader) UploadDirectory(srcDir string) ([]S3UploadResult, error) {
 			return fmt.Errorf("failed to get relative path: %w", err)
 		}
 
-		// Skip hidden files
 		if strings.HasPrefix(filepath.Base(relPath), ".") {
 			return nil
 		}
@@ -318,31 +323,23 @@ func (u *S3Uploader) UploadDirectory(srcDir string) ([]S3UploadResult, error) {
 		}
 
 		s3Key := path.Join(baseKey, relPath)
-
-		file, err := os.Open(filePath)
-		if err != nil {
-			log.Printf("Warning: failed to open %s: %v", filePath, err)
-			return nil
-		}
-		defer file.Close()
-
-		fileInfo, err := file.Stat()
-		if err != nil {
-			log.Printf("Warning: failed to stat %s: %v", filePath, err)
-			return nil
-		}
-
 		contentType := contentTypeForFile(filePath)
 
-		_, err = u.uploader.UploadObject(context.Background(), &transfermanager.UploadObjectInput{
+		body, size, prepErr := u.prepareUploadBody(filePath, relPath)
+		if prepErr != nil {
+			log.Printf("Warning: failed to prepare %s: %v", filePath, prepErr)
+			return nil
+		}
+
+		_, uploadErr := u.uploader.UploadObject(context.Background(), &transfermanager.UploadObjectInput{
 			Bucket:      aws.String(u.bucket),
 			Key:         aws.String(s3Key),
-			Body:        file,
+			Body:        body,
 			ContentType: aws.String(contentType),
 		})
-		if err != nil {
-			log.Printf("Warning: failed to upload %s: %v", filePath, err)
-			return nil // Continue with other files; partial upload is better than none
+		if uploadErr != nil {
+			log.Printf("Warning: failed to upload %s: %v", filePath, uploadErr)
+			return nil
 		}
 
 		presignedURL, err := u.generatePresignedURL(s3Key)
@@ -355,7 +352,7 @@ func (u *S3Uploader) UploadDirectory(srcDir string) ([]S3UploadResult, error) {
 			S3URI:        CreateS3URL(u.bucket, s3Key),
 			PresignedURL: presignedURL,
 			Key:          s3Key,
-			Size:         fileInfo.Size(),
+			Size:         size,
 		})
 
 		return nil
@@ -366,6 +363,26 @@ func (u *S3Uploader) UploadDirectory(srcDir string) ([]S3UploadResult, error) {
 
 	log.Printf("%d files uploaded to s3", len(results))
 	return results, nil
+}
+
+// prepareUploadBody reads a file and redacts secrets before upload.
+// Falls back to raw content if sanitizer is nil or sanitization fails.
+func (u *S3Uploader) prepareUploadBody(filePath, relPath string) (*bytes.Reader, int64, error) {
+	content, err := os.ReadFile(filePath)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	if u.sanitizer != nil {
+		if result, err := u.sanitizer.SanitizeText(string(content), relPath); err == nil {
+			if result.MatchesFound > 0 {
+				log.Printf("Sanitized %s: redacted %d secret(s)", relPath, result.MatchesFound)
+			}
+			content = []byte(result.Content)
+		}
+	}
+
+	return bytes.NewReader(content), int64(len(content)), nil
 }
 
 func (u *S3Uploader) generatePresignedURL(key string) (string, error) {
