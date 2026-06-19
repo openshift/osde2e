@@ -116,8 +116,8 @@ type EnvironmentResult struct {
 	LLMAnalysis *LLMAnalysis     `json:"llm_analysis,omitempty"`
 }
 
-// OperatorStatus represents the cross-environment test status for one operator+version
-type OperatorStatus struct {
+// DeliverableStatus represents the cross-environment test status for one operator+version
+type DeliverableStatus struct {
 	Name        string                        `json:"name"`
 	Version     string                        `json:"version"`
 	Results     map[string]*EnvironmentResult `json:"results"` // key: "stage", "prod", "integration", "unknown"
@@ -125,14 +125,14 @@ type OperatorStatus struct {
 }
 
 // Stage returns the result for the stage environment, or nil if not available.
-func (o OperatorStatus) Stage() *EnvironmentResult { return o.Results["stage"] }
+func (o DeliverableStatus) Stage() *EnvironmentResult { return o.Results["stage"] }
 
 // Prod returns the result for the prod environment, or nil if not available.
-func (o OperatorStatus) Prod() *EnvironmentResult { return o.Results["prod"] }
+func (o DeliverableStatus) Prod() *EnvironmentResult { return o.Results["prod"] }
 
 // Integration returns the result for the integration environment.
 // Checks both "int" (stored by SQS consumer) and "integration" (legacy).
-func (o OperatorStatus) Integration() *EnvironmentResult {
+func (o DeliverableStatus) Integration() *EnvironmentResult {
 	if r := o.Results["int"]; r != nil {
 		return r
 	}
@@ -140,7 +140,7 @@ func (o OperatorStatus) Integration() *EnvironmentResult {
 }
 
 // Unknown returns results from runs where the environment could not be determined.
-func (o OperatorStatus) Unknown() *EnvironmentResult { return o.Results["unknown"] }
+func (o DeliverableStatus) Unknown() *EnvironmentResult { return o.Results["unknown"] }
 
 // PipelineRun represents one test run of an operator version in one environment
 type PipelineRun struct {
@@ -160,7 +160,7 @@ type PipelineRun struct {
 
 // PipelineHistory holds all historical runs for a single operator, grouped by version
 type PipelineHistory struct {
-	OperatorName string            `json:"operator_name"`
+	Name string            `json:"name"`
 	Runs         []PipelineRun     `json:"runs"`     // sorted newest first (flat)
 	Versions     []VersionPipeline `json:"versions"` // grouped by version, newest first
 }
@@ -175,7 +175,7 @@ type VersionPipeline struct {
 
 // FailureEntry is one deliverable+version+env that shares a common failure root cause
 type FailureEntry struct {
-	OperatorName string    `json:"operator_name"`
+	Name string    `json:"name"`
 	Version      string    `json:"version"`
 	Env          string    `json:"env"`
 	LastRun      time.Time `json:"last_run"`

@@ -33,7 +33,7 @@ type s3Event struct {
 // parsed JUnit results into the Store.
 type SQSConsumer struct {
 	sqsClient *sqs.SQS
-	opCollect *OperatorStatusCollector
+	opCollect *DeliverableCollector
 	store     *store.Store
 	queueURL  string
 	bucket    string
@@ -41,9 +41,9 @@ type SQSConsumer struct {
 
 // NewSQSConsumer creates a new consumer.
 func NewSQSConsumer(queueURL, bucket, region string, st *store.Store) (*SQSConsumer, error) {
-	opCollect, err := NewOperatorStatusCollector(bucket, region, 0)
+	opCollect, err := NewDeliverableCollector(bucket, region, 0)
 	if err != nil {
-		return nil, fmt.Errorf("create operator collector: %w", err)
+		return nil, fmt.Errorf("create deliverable collector: %w", err)
 	}
 
 	sess, err := awscommon.CcsAwsSession.GetSession()
@@ -171,7 +171,7 @@ func (c *SQSConsumer) processKey(bucket, key string) error {
 	}
 
 	rec := store.RunRecord{
-		OperatorName: name,
+		Name: name,
 		Env:          env,
 		Version:      version,
 		Status:       status,

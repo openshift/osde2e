@@ -23,16 +23,16 @@ var versionRegex = regexp.MustCompile(`^(v\d+(\.\d+)*|[0-9a-f]{7,10})$`)
 
 var knownEnvSuffixes = []string{"integration", "stage", "prod", "int"}
 
-// OperatorStatusCollector scans S3 for operator test results grouped by name, version, and environment.
-type OperatorStatusCollector struct {
+// DeliverableCollector scans S3 for operator test results grouped by name, version, and environment.
+type DeliverableCollector struct {
 	s3Client     *s3.S3
 	bucket       string
 	region       string
 	lookbackDays int
 }
 
-// NewOperatorStatusCollector creates a new collector using the global AWS session.
-func NewOperatorStatusCollector(bucket, region string, lookbackDays int) (*OperatorStatusCollector, error) {
+// NewDeliverableCollector creates a new collector using the global AWS session.
+func NewDeliverableCollector(bucket, region string, lookbackDays int) (*DeliverableCollector, error) {
 	sess, err := awscommon.CcsAwsSession.GetSession()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get AWS session: %w", err)
@@ -44,7 +44,7 @@ func NewOperatorStatusCollector(bucket, region string, lookbackDays int) (*Opera
 		lookbackDays = 30
 	}
 
-	return &OperatorStatusCollector{
+	return &DeliverableCollector{
 		s3Client:     s3Client,
 		bucket:       bucket,
 		region:       region,
@@ -114,9 +114,9 @@ type downloadResult struct {
 	ts      time.Time
 }
 
-// CollectOperatorStatus scans S3 for junit XML files within the lookback window,
+// CollectDeliverables scans S3 for junit XML files within the lookback window,
 // groups them by operator name + version, and returns the latest result per environment.
-func (c *OperatorStatusCollector) CollectOperatorStatus() ([]models.OperatorStatus, error) {
+func (c *DeliverableCollector) CollectDeliverables() ([]models.DeliverableStatus, error) {
 	cutoff := time.Now().UTC().AddDate(0, 0, -c.lookbackDays)
 
 	// Phase 1: list all matching keys, deduplicate to newest per (name, env).
@@ -170,7 +170,7 @@ func (c *OperatorStatusCollector) CollectOperatorStatus() ([]models.OperatorStat
 		return nil, fmt.Errorf("failed to list S3 objects: %w", err)
 	}
 
-	log.Printf("Operator collector: %d unique (name, version, env) groups to download", len(newestByGroup))
+	log.Printf("Deliverable collector: %d unique (name, version, env) groups to download", len(newestByGroup))
 
 	// Phase 2: fan out downloads with a worker pool.
 	candidates := make([]*candidate, 0, len(newestByGroup))
@@ -224,7 +224,7 @@ func (c *OperatorStatusCollector) CollectOperatorStatus() ([]models.OperatorStat
 	wg.Wait()
 
 	// Phase 3: build the index.
-	index := make(map[string]*models.OperatorStatus)
+	index := make(map[string]*models.DeliverableStatus)
 	for _, r := range results {
 		if r == nil {
 			continue
@@ -237,7 +237,7 @@ func (c *OperatorStatusCollector) CollectOperatorStatus() ([]models.OperatorStat
 		indexKey := r.name
 		op, exists := index[indexKey]
 		if !exists {
-			op = &models.OperatorStatus{
+			op = &models.DeliverableStatus{
 				Name:    r.name,
 				Version: r.version,
 				Results: make(map[string]*models.EnvironmentResult),
@@ -267,7 +267,7 @@ func (c *OperatorStatusCollector) CollectOperatorStatus() ([]models.OperatorStat
 		}
 	}
 
-	result := make([]models.OperatorStatus, 0, len(index))
+	result := make([]models.DeliverableStatus, 0, len(index))
 	for _, op := range index {
 		result = append(result, *op)
 	}
@@ -278,7 +278,7 @@ func (c *OperatorStatusCollector) CollectOperatorStatus() ([]models.OperatorStat
 		return result[i].Version < result[j].Version
 	})
 
-	log.Printf("Collected operator status for %d operator+version combinations", len(result))
+	log.Printf("Collected deliverable status for %d operator+version combinations", len(result))
 	return result, nil
 }
 
@@ -289,7 +289,7 @@ var adHocImageRegex = regexp.MustCompile(`AdHocTestImages[:\]] ?-? ?\S+:(\S+?)[ 
 
 // fetchMetaFromLog reads test_output.log and extracts both the environment
 // ("Will load config <env>") and the image tag from the AdHocTestImages property line.
-func (c *OperatorStatusCollector) fetchMetaFromLog(name, date, jobID string) (env, version string) {
+func (c *DeliverableCollector) fetchMetaFromLog(name, date, jobID string) (env, version string) {
 	logKey := fmt.Sprintf("test-results/%s/%s/%s/test_output.log", name, date, jobID)
 	output, err := c.s3Client.GetObject(&s3.GetObjectInput{
 		Bucket: aws.String(c.bucket),
@@ -319,13 +319,13 @@ func (c *OperatorStatusCollector) fetchMetaFromLog(name, date, jobID string) (en
 }
 
 // fetchEnvFromLog is kept for callers that only need the environment.
-func (c *OperatorStatusCollector) fetchEnvFromLog(name, date, jobID string) string {
+func (c *DeliverableCollector) fetchEnvFromLog(name, date, jobID string) string {
 	env, _ := c.fetchMetaFromLog(name, date, jobID)
 	return env
 }
 
 // downloadAndParseJUnit fetches and parses a JUnit XML from S3.
-func (c *OperatorStatusCollector) downloadAndParseJUnit(key string) (*JUnitTestSuite, time.Time, error) {
+func (c *DeliverableCollector) downloadAndParseJUnit(key string) (*JUnitTestSuite, time.Time, error) {
 	output, err := c.s3Client.GetObject(&s3.GetObjectInput{
 		Bucket: aws.String(c.bucket),
 		Key:    aws.String(key),
@@ -372,7 +372,7 @@ func extractFailedTests(suite *JUnitTestSuite) []models.FailedTestCase {
 
 // CollectPipelineHistory scans all S3 runs for a named operator and returns every
 // (version, env, date, jobID) tuple found, sorted newest first.
-func (c *OperatorStatusCollector) CollectPipelineHistory(operatorName string) (*models.PipelineHistory, error) {
+func (c *DeliverableCollector) CollectPipelineHistory(operatorName string) (*models.PipelineHistory, error) {
 	prefix := "test-results/"
 
 	type runKey struct {
@@ -512,13 +512,13 @@ func (c *OperatorStatusCollector) CollectPipelineHistory(operatorName string) (*
 	})
 
 	return &models.PipelineHistory{
-		OperatorName: operatorName,
+		Name: operatorName,
 		Runs:         runs,
 	}, nil
 }
 
 // generatePresignedURL creates a 7-day presigned URL for an S3 object.
-func (c *OperatorStatusCollector) generatePresignedURL(key string) string {
+func (c *DeliverableCollector) generatePresignedURL(key string) string {
 	req, _ := c.s3Client.GetObjectRequest(&s3.GetObjectInput{
 		Bucket: aws.String(c.bucket),
 		Key:    aws.String(key),

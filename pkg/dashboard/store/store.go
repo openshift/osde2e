@@ -22,7 +22,7 @@ PRAGMA foreign_keys=ON;
 
 -- Latest result per (operator, env) — used by the Pipelines overview table.
 CREATE TABLE IF NOT EXISTS pipeline_latest (
-    operator_name TEXT NOT NULL,
+    name TEXT NOT NULL,
     env           TEXT NOT NULL,
     version       TEXT NOT NULL DEFAULT 'unknown',
     status        TEXT NOT NULL DEFAULT 'unknown',
@@ -35,13 +35,13 @@ CREATE TABLE IF NOT EXISTS pipeline_latest (
     junit_url     TEXT NOT NULL DEFAULT '',
     failed_tests  TEXT NOT NULL DEFAULT '[]', -- JSON []FailedTestCase
     llm_analysis  TEXT NOT NULL DEFAULT '',   -- JSON LLMAnalysis or empty
-    PRIMARY KEY (operator_name, env)
+    PRIMARY KEY (name, env)
 );
 
 -- Every individual run — used by the pipeline-detail history page.
 CREATE TABLE IF NOT EXISTS pipeline_runs (
     id            INTEGER PRIMARY KEY AUTOINCREMENT,
-    operator_name TEXT NOT NULL,
+    name TEXT NOT NULL,
     env           TEXT NOT NULL,
     version       TEXT NOT NULL DEFAULT 'unknown',
     status        TEXT NOT NULL DEFAULT 'unknown',
@@ -55,10 +55,10 @@ CREATE TABLE IF NOT EXISTS pipeline_runs (
     junit_url     TEXT NOT NULL DEFAULT '',
     failed_tests  TEXT NOT NULL DEFAULT '[]', -- JSON []FailedTestCase
     llm_analysis  TEXT NOT NULL DEFAULT '',   -- JSON LLMAnalysis or empty
-    UNIQUE (operator_name, env, job_id)       -- deduplicate on re-process
+    UNIQUE (name, env, job_id)       -- deduplicate on re-process
 );
 
-CREATE INDEX IF NOT EXISTS idx_runs_operator ON pipeline_runs (operator_name, last_run DESC);
+CREATE INDEX IF NOT EXISTS idx_runs_operator ON pipeline_runs (name, last_run DESC);
 
 -- Migration: add llm_analysis column to existing DBs that predate this field.
 -- SQLite ignores "duplicate column" errors but this pattern avoids them.
@@ -99,7 +99,7 @@ func (s *Store) Close() error { return s.db.Close() }
 
 // RunRecord is the flat struct used when writing to the store.
 type RunRecord struct {
-	OperatorName string
+	Name string
 	Env          string
 	Version      string
 	Status       string
@@ -140,9 +140,9 @@ func (s *Store) UpsertRun(r RunRecord) error {
 	// Upsert pipeline_latest — only overwrite if this run is newer.
 	_, err = tx.Exec(`
 		INSERT INTO pipeline_latest
-			(operator_name, env, version, status, passed, failed, total, job_id, last_run, log_url, junit_url, failed_tests, llm_analysis)
+			(name, env, version, status, passed, failed, total, job_id, last_run, log_url, junit_url, failed_tests, llm_analysis)
 		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-		ON CONFLICT(operator_name, env) DO UPDATE SET
+		ON CONFLICT(name, env) DO UPDATE SET
 			version      = excluded.version,
 			status       = excluded.status,
 			passed       = excluded.passed,
@@ -156,7 +156,7 @@ func (s *Store) UpsertRun(r RunRecord) error {
 			llm_analysis = excluded.llm_analysis
 		WHERE excluded.last_run > pipeline_latest.last_run
 	`,
-		r.OperatorName, r.Env, r.Version, r.Status,
+		r.Name, r.Env, r.Version, r.Status,
 		r.Passed, r.Failed, r.Total,
 		r.JobID, r.LastRun, r.LogURL, r.JUnitURL,
 		string(ft), llmStr,
@@ -168,10 +168,10 @@ func (s *Store) UpsertRun(r RunRecord) error {
 	// Insert pipeline_runs — ignore duplicate job_id.
 	_, err = tx.Exec(`
 		INSERT OR IGNORE INTO pipeline_runs
-			(operator_name, env, version, status, passed, failed, total, job_id, date, last_run, log_url, junit_url, failed_tests, llm_analysis)
+			(name, env, version, status, passed, failed, total, job_id, date, last_run, log_url, junit_url, failed_tests, llm_analysis)
 		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 	`,
-		r.OperatorName, r.Env, r.Version, r.Status,
+		r.Name, r.Env, r.Version, r.Status,
 		r.Passed, r.Failed, r.Total,
 		r.JobID, r.Date, r.LastRun, r.LogURL, r.JUnitURL,
 		string(ft), llmStr,
@@ -183,21 +183,21 @@ func (s *Store) UpsertRun(r RunRecord) error {
 	return tx.Commit()
 }
 
-// GetLatest returns all rows from pipeline_latest as []models.OperatorStatus,
+// GetLatest returns all rows from pipeline_latest as []models.DeliverableStatus,
 // grouped by operator name (one entry per operator, results keyed by env).
-func (s *Store) GetLatest() ([]models.OperatorStatus, error) {
+func (s *Store) GetLatest() ([]models.DeliverableStatus, error) {
 	rows, err := s.db.Query(`
-		SELECT operator_name, env, version, status, passed, failed, total,
+		SELECT name, env, version, status, passed, failed, total,
 		       job_id, last_run, log_url, junit_url, failed_tests, llm_analysis
 		FROM pipeline_latest
-		ORDER BY operator_name, env
+		ORDER BY name, env
 	`)
 	if err != nil {
 		return nil, fmt.Errorf("query pipeline_latest: %w", err)
 	}
 	defer rows.Close()
 
-	index := make(map[string]*models.OperatorStatus)
+	index := make(map[string]*models.DeliverableStatus)
 	var order []string
 
 	for rows.Next() {
@@ -240,7 +240,7 @@ func (s *Store) GetLatest() ([]models.OperatorStatus, error) {
 
 		op, ok := index[name]
 		if !ok {
-			op = &models.OperatorStatus{
+			op = &models.DeliverableStatus{
 				Name:    name,
 				Results: make(map[string]*models.EnvironmentResult),
 			}
@@ -256,7 +256,7 @@ func (s *Store) GetLatest() ([]models.OperatorStatus, error) {
 		return nil, err
 	}
 
-	result := make([]models.OperatorStatus, 0, len(order))
+	result := make([]models.DeliverableStatus, 0, len(order))
 	for _, name := range order {
 		result = append(result, *index[name])
 	}
@@ -269,7 +269,7 @@ func (s *Store) GetHistory(operatorName string) (*models.PipelineHistory, error)
 		SELECT env, version, status, passed, failed, total,
 		       job_id, date, last_run, log_url, junit_url, failed_tests, llm_analysis
 		FROM pipeline_runs
-		WHERE operator_name = ?
+		WHERE name = ?
 		ORDER BY last_run DESC
 	`, operatorName)
 	if err != nil {
@@ -357,7 +357,7 @@ func (s *Store) GetHistory(operatorName string) (*models.PipelineHistory, error)
 	}
 
 	return &models.PipelineHistory{
-		OperatorName: operatorName,
+		Name: operatorName,
 		Runs:         runs,
 		Versions:     versions,
 	}, nil
@@ -386,7 +386,7 @@ func groupKeySummary(text string) string {
 // across deliverables. Sorted by number of entries descending.
 func (s *Store) GetFailureGroups() ([]models.FailureGroup, error) {
 	rows, err := s.db.Query(`
-		SELECT operator_name, env, version, job_id, last_run, log_url, failed_tests, llm_analysis
+		SELECT name, env, version, job_id, last_run, log_url, failed_tests, llm_analysis
 		FROM pipeline_runs
 		WHERE status != 'passed' AND (failed_tests != '[]' OR llm_analysis != '')
 		ORDER BY last_run DESC
@@ -439,7 +439,7 @@ func (s *Store) GetFailureGroups() ([]models.FailureGroup, error) {
 		}
 
 		entry := models.FailureEntry{
-			OperatorName: name,
+			Name: name,
 			Version:      ver,
 			Env:          env,
 			LastRun:      lastRun,

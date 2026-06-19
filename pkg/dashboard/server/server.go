@@ -22,7 +22,7 @@ type Server struct {
 	reserveCollector    *collectors.ReserveCollector
 	usageCollector      *collectors.UsageCollector
 	testResultCollector *collectors.TestResultsCollector
-	deliverableCollector *collectors.OperatorStatusCollector
+	deliverableCollector *collectors.DeliverableCollector
 	store                *store.Store // optional; when set, deliverables/history served from DB
 	mux                 *http.ServeMux
 }
@@ -43,7 +43,7 @@ func NewServer(cfg *config.Config) (*Server, error) {
 	}
 
 	var testResultCollector *collectors.TestResultsCollector
-	var deliverableCollector *collectors.OperatorStatusCollector
+	var deliverableCollector *collectors.DeliverableCollector
 	if cfg.S3Bucket != "" {
 		testResultCollector, err = collectors.NewTestResultsCollector(cfg.S3Bucket, cfg.S3Region)
 		if err != nil {
@@ -51,7 +51,7 @@ func NewServer(cfg *config.Config) (*Server, error) {
 			testResultCollector = nil
 		}
 
-		deliverableCollector, err = collectors.NewOperatorStatusCollector(cfg.S3Bucket, cfg.S3Region, cfg.LookbackDays)
+		deliverableCollector, err = collectors.NewDeliverableCollector(cfg.S3Bucket, cfg.S3Region, cfg.LookbackDays)
 		if err != nil {
 			log.Printf("Warning: Failed to initialize deliverable status collector: %v", err)
 			deliverableCollector = nil
@@ -210,38 +210,38 @@ func (s *Server) handleUsageAPI(w http.ResponseWriter, r *http.Request) {
 // When a Store is configured it reads from SQLite (<1ms); otherwise falls back
 // to a live S3 scan (slow, legacy path).
 func (s *Server) handleDeliverablesPage(w http.ResponseWriter, r *http.Request) {
-	var operators []models.OperatorStatus
+	var deliverables []models.DeliverableStatus
 
 	if s.store != nil {
 		// Fast path: DB read
 		result, err := s.store.GetLatest()
 		if err != nil {
 			log.Printf("Warning: store.GetLatest: %v", err)
-			operators = []models.OperatorStatus{}
+			deliverables = []models.DeliverableStatus{}
 		} else {
-			operators = result
+			deliverables = result
 		}
 	} else if s.deliverableCollector != nil {
 		// Slow path: live S3 scan
-		collected, err := s.deliverableCollector.CollectOperatorStatus()
+		collected, err := s.deliverableCollector.CollectDeliverables()
 		if err != nil {
 			log.Printf("Warning: Failed to collect deliverable status: %v", err)
-			operators = []models.OperatorStatus{}
+			deliverables = []models.DeliverableStatus{}
 		} else {
-			operators = collected
+			deliverables = collected
 		}
 	} else {
-		operators = []models.OperatorStatus{}
+		deliverables = []models.DeliverableStatus{}
 	}
 
 	data := map[string]interface{}{
-		"ActivePage":   "operators",
-		"Operators":    operators,
+		"ActivePage":   "deliverables",
+		"Deliverables":  deliverables,
 		"Environments": []string{"stage", "integration"},
 		"S3Bucket":     s.config.S3Bucket,
 	}
 
-	s.renderTemplate(w, "operators.html", data)
+	s.renderTemplate(w, "deliverables.html", data)
 }
 
 // handlePipelineDetailPage serves the per-deliverable pipeline history page.
@@ -276,11 +276,11 @@ func (s *Server) handlePipelineDetailPage(w http.ResponseWriter, r *http.Request
 			return
 		}
 	} else {
-		history = &models.PipelineHistory{OperatorName: name}
+		history = &models.PipelineHistory{Name: name}
 	}
 
 	data := map[string]interface{}{
-		"ActivePage": "operators",
+		"ActivePage": "deliverables",
 		"History":    history,
 	}
 
@@ -315,24 +315,24 @@ func (s *Server) handleDeliverablesAPI(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	operators, err := s.deliverableCollector.CollectOperatorStatus()
+	deliverables, err := s.deliverableCollector.CollectDeliverables()
 	if err != nil {
-		s.sendAPIError(w, fmt.Sprintf("Failed to collect operator status: %v", err), http.StatusInternalServerError)
+		s.sendAPIError(w, fmt.Sprintf("Failed to collect deliverable status: %v", err), http.StatusInternalServerError)
 		return
 	}
 
 	// Optional ?name= filter
 	if nameFilter := r.URL.Query().Get("name"); nameFilter != "" {
-		filtered := operators[:0]
-		for _, op := range operators {
+		filtered := deliverables[:0]
+		for _, op := range deliverables {
 			if op.Name == nameFilter {
 				filtered = append(filtered, op)
 			}
 		}
-		operators = filtered
+		deliverables = filtered
 	}
 
-	s.sendAPISuccess(w, operators)
+	s.sendAPISuccess(w, deliverables)
 }
 
 // handleOverviewAPI returns dashboard overview data
