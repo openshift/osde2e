@@ -1,4 +1,4 @@
-.PHONY: check generate test
+.PHONY: check generate test dashboard
 
 PKG := github.com/openshift/osde2e
 DOC_PKG := $(PKG)/cmd/osde2e-docs
@@ -36,6 +36,9 @@ generate-providers:
 build:
 	mkdir -p "$(OUT_DIR)"
 	go build -o "$(OUT_DIR)" "$(DIR)cmd/..."
+
+dashboard: build
+	"$(OUT_DIR)/osde2e" dashboard --db="$(DIR)dashboard.db" --backfill --port=8080
 
 diffproviders.txt:
 	"$(DIR)scripts/generate-providers-import.sh" > diffproviders.txt
