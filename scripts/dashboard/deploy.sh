@@ -3,188 +3,80 @@
 # on the currently logged-in OpenShift cluster.
 #
 # Prerequisites:
+#   - docker login quay.io (push credentials)
 #   - oc login to target cluster
-#   - Secrets already exist: ocm-token, aws-credentials
-#   - SQS_QUEUE_URL set (or passed as first arg)
+#   - Secrets pre-created in the namespace:
+#       ocm-credentials  (keys: OCM_CLIENT_ID, OCM_CLIENT_SECRET)
+#       aws-credentials  (keys: AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY)
+#   - hp-delivery-apps repo cloned adjacent to this repo
+#     (git@gitlab.cee.redhat.com:hybrid-platforms-gitops/tenant-apps/hp-delivery-apps.git)
 #
 # Usage:
 #   ./scripts/dashboard/deploy.sh [SQS_QUEUE_URL]
+#
+# Environment variables:
+#   DASHBOARD_IMAGE   Image to build and deploy (default: quay.io/rmundhe_oc/delivery-dashboard:latest)
+#   QUAY_EXPIRE       If set, adds quay.expires-after label (e.g. 26w). Use for dev/local builds.
+#   SQS_QUEUE_URL     SQS queue URL for S3 event notifications
+#   OVERLAY           Kustomize overlay to apply, relative to delivery-dashboard/ (default: overlays/stage)
 
 set -euo pipefail
 
 NAMESPACE="delivery-dashboard"
 APP="delivery-dashboard"
+IMAGE="${DASHBOARD_IMAGE:-quay.io/rmundhe_oc/delivery-dashboard:latest}"
+QUAY_EXPIRE="${QUAY_EXPIRE:-}"
 SQS_QUEUE_URL="${1:-${SQS_QUEUE_URL:-}}"
+OVERLAY="${OVERLAY:-overlays/local}"
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
+MANIFESTS_REPO="$(cd "${REPO_ROOT}/../hp-delivery-apps" && pwd)"
+OVERLAY_DIR="${MANIFESTS_REPO}/delivery-dashboard/${OVERLAY}"
 
 echo "=== Delivery Dashboard Deployment ==="
-echo "Namespace: ${NAMESPACE}"
-echo "Cluster:   $(oc whoami --show-server)"
+echo "Namespace:  ${NAMESPACE}"
+echo "Image:      ${IMAGE}"
+echo "Overlay:    ${OVERLAY_DIR}"
+echo "Cluster:    $(oc whoami --show-server)"
 echo ""
 
 # 1. Ensure namespace exists
 oc new-project "${NAMESPACE}" 2>/dev/null || oc project "${NAMESPACE}"
 
-# 2. Build binary locally (linux/amd64 for cluster)
-echo "[1/5] Building osde2e binary..."
+# 2. Build container image locally and push to quay
+echo "[1/4] Building and pushing container image..."
 cd "${REPO_ROOT}"
-mkdir -p out
-GOOS=linux GOARCH=amd64 GOFLAGS="-mod=mod" go build -o out/osde2e ./cmd/osde2e/
+EXPIRE_LABEL_ARG=""
+if [[ -n "${QUAY_EXPIRE}" ]]; then
+  EXPIRE_LABEL_ARG="--label quay.expires-after=${QUAY_EXPIRE}"
+  echo "  (quay.expires-after=${QUAY_EXPIRE} will be applied)"
+fi
+# shellcheck disable=SC2086
+docker build -f dashboard.Dockerfile ${EXPIRE_LABEL_ARG} -t "${IMAGE}" .
+docker push "${IMAGE}"
 
-# 3. Build container image in cluster
-echo "[2/5] Building container image..."
-mkdir -p /tmp/dashboard-build/out
-cp "${REPO_ROOT}/out/osde2e" /tmp/dashboard-build/out/osde2e
-cp "${REPO_ROOT}/Dockerfile" /tmp/dashboard-build/Dockerfile
+# 3. Patch SQS_QUEUE_URL into the overlay configmap if provided, then apply via kustomize
+echo "[2/4] Applying manifests via kustomize..."
+if [[ -n "${SQS_QUEUE_URL}" ]]; then
+  # Patch the configmap in a temp copy so we don't dirty the manifests repo
+  TMPDIR=$(mktemp -d)
+  trap 'rm -rf "${TMPDIR}"' EXIT
+  cp -r "${OVERLAY_DIR}/." "${TMPDIR}/"
+  # Update SQS_QUEUE_URL in the configmap
+  sed -i.bak "s|SQS_QUEUE_URL:.*|SQS_QUEUE_URL: \"${SQS_QUEUE_URL}\"|" "${TMPDIR}/configmap.yaml"
+  # Update image tag in kustomization
+  (cd "${TMPDIR}" && kustomize edit set image "quay.io/rmundhe_oc/delivery-dashboard=${IMAGE}")
+  kustomize build "${TMPDIR}" | oc apply -f -
+else
+  (cd "${OVERLAY_DIR}" && kustomize edit set image "quay.io/rmundhe_oc/delivery-dashboard=${IMAGE}")
+  kustomize build "${OVERLAY_DIR}" | oc apply -f -
+fi
 
-# Create BuildConfig if it doesn't exist
-oc get buildconfig "${APP}" -n "${NAMESPACE}" &>/dev/null || \
-  oc new-build --name="${APP}" --binary --strategy=docker -n "${NAMESPACE}"
+echo "[3/4] Waiting for rollout..."
+oc rollout status "deployment/${APP}" -n "${NAMESPACE}" --timeout=120s
 
-oc start-build "${APP}" \
-  --from-dir=/tmp/dashboard-build \
-  --follow \
-  -n "${NAMESPACE}"
-
-# 4. Apply manifests
-echo "[3/5] Applying manifests..."
-
-# ConfigMap for non-secret config
-oc apply -n "${NAMESPACE}" -f - <<EOF
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: dashboard-config
-  namespace: ${NAMESPACE}
-data:
-  SQS_QUEUE_URL: "${SQS_QUEUE_URL}"
-  LOG_BUCKET: "osde2e-logs"
-  AWS_REGION: "us-east-1"
-EOF
-
-# Deployment — uses emptyDir for SQLite DB so RollingUpdate works without PVC conflicts.
-# The --backfill flag repopulates the DB from S3 on each pod start (~5s for typical history).
-oc apply -n "${NAMESPACE}" -f - <<EOF
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: ${APP}
-  namespace: ${NAMESPACE}
-  labels:
-    app: ${APP}
-spec:
-  replicas: 1
-  strategy:
-    type: RollingUpdate
-    rollingUpdate:
-      maxSurge: 1
-      maxUnavailable: 0
-  selector:
-    matchLabels:
-      app: ${APP}
-  template:
-    metadata:
-      labels:
-        app: ${APP}
-    spec:
-      containers:
-        - name: dashboard
-          image: image-registry.openshift-image-registry.svc:5000/${NAMESPACE}/${APP}:latest
-          command: ["/osde2e"]
-          args:
-            - dashboard
-            - --db=/data/dashboard.db
-            - --backfill
-            - --sqs-queue-url=\$(SQS_QUEUE_URL)
-            - --port=8080
-          env:
-            - name: SQS_QUEUE_URL
-              valueFrom:
-                configMapKeyRef:
-                  name: dashboard-config
-                  key: SQS_QUEUE_URL
-            - name: LOG_BUCKET
-              valueFrom:
-                configMapKeyRef:
-                  name: dashboard-config
-                  key: LOG_BUCKET
-            - name: AWS_DEFAULT_REGION
-              valueFrom:
-                configMapKeyRef:
-                  name: dashboard-config
-                  key: AWS_REGION
-          envFrom:
-            - secretRef:
-                name: ocm-token
-            - secretRef:
-                name: aws-credentials
-          ports:
-            - containerPort: 8080
-          volumeMounts:
-            - name: db
-              mountPath: /data
-          resources:
-            requests:
-              cpu: 100m
-              memory: 256Mi
-            limits:
-              cpu: 500m
-              memory: 512Mi
-          readinessProbe:
-            httpGet:
-              path: /health
-              port: 8080
-            initialDelaySeconds: 10
-            periodSeconds: 15
-          livenessProbe:
-            httpGet:
-              path: /health
-              port: 8080
-            initialDelaySeconds: 30
-            periodSeconds: 30
-      volumes:
-        - name: db
-          emptyDir: {}
-EOF
-
-# Service
-oc apply -n "${NAMESPACE}" -f - <<EOF
-apiVersion: v1
-kind: Service
-metadata:
-  name: ${APP}
-  namespace: ${NAMESPACE}
-spec:
-  selector:
-    app: ${APP}
-  ports:
-    - port: 8080
-      targetPort: 8080
-EOF
-
-# Route (named "live" so hostname becomes live-delivery-dashboard.apps....)
-oc apply -n "${NAMESPACE}" -f - <<EOF
-apiVersion: route.openshift.io/v1
-kind: Route
-metadata:
-  name: live
-  namespace: ${NAMESPACE}
-spec:
-  to:
-    kind: Service
-    name: ${APP}
-  port:
-    targetPort: 8080
-  tls:
-    termination: edge
-    insecureEdgeTerminationPolicy: Redirect
-EOF
-
-echo "[4/5] Waiting for rollout..."
-oc rollout status deployment/${APP} -n "${NAMESPACE}" --timeout=120s
-
-echo "[5/5] Done!"
+echo "[4/4] Done!"
 echo ""
 ROUTE=$(oc get route "live" -n "${NAMESPACE}" -o jsonpath='{.spec.host}')
 echo "Dashboard URL: https://${ROUTE}/dashboard/deliverables"

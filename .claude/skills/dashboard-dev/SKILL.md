@@ -92,7 +92,7 @@ Or use the local script:
 - Cluster must be able to pull from `registry.access.redhat.com` (UBI images)
 - Two secrets pre-created in the `delivery-dashboard` namespace:
   - `aws-credentials` — keys: `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`
-  - `ocm-token` — key: `OCM_TOKEN`
+  - `ocm-credentials` — keys: `OCM_CLIENT_ID`, `OCM_CLIENT_SECRET`
 - An SQS queue URL receiving S3 event notifications for osde2e log uploads
 
 ### Create secrets
@@ -104,8 +104,9 @@ oc create secret generic aws-credentials \
   --from-literal=AWS_ACCESS_KEY_ID=<your-key-id> \
   --from-literal=AWS_SECRET_ACCESS_KEY=<your-secret>
 
-oc create secret generic ocm-token \
-  --from-literal=OCM_TOKEN=<your-token>
+oc create secret generic ocm-credentials \
+  --from-literal=OCM_CLIENT_ID=<your-client-id> \
+  --from-literal=OCM_CLIENT_SECRET=<your-client-secret>
 ```
 
 ### Deploy
