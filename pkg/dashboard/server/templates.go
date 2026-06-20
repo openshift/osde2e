@@ -1,6 +1,7 @@
 package server
 
 import (
+	"bytes"
 	"embed"
 	"html/template"
 	"log"
@@ -25,6 +26,10 @@ var funcMap = template.FuncMap{
 	"subtract": func(a, b int) int {
 		return a - b
 	},
+	// add returns a + b (used in junit-report.html for aggregating totals)
+	"add": func(a, b int) int {
+		return a + b
+	},
 }
 
 // renderTemplate renders an HTML template with data.
@@ -41,11 +46,14 @@ func (s *Server) renderTemplate(w http.ResponseWriter, name string, data interfa
 		return
 	}
 
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	if err := tmpl.ExecuteTemplate(w, "base.html", data); err != nil {
+	var buf bytes.Buffer
+	if err := tmpl.ExecuteTemplate(&buf, "base.html", data); err != nil {
 		log.Printf("Error rendering template %s: %v", name, err)
 		http.Error(w, "Template rendering error", http.StatusInternalServerError)
+		return
 	}
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	_, _ = buf.WriteTo(w)
 }
 
 // PageData represents common data passed to all pages

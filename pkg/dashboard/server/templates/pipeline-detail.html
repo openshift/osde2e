@@ -1,6 +1,6 @@
 {{template "base.html" .}}
 
-{{define "title"}}Delivery Dashboard - {{.History.OperatorName}}{{end}}
+{{define "title"}}Delivery Dashboard - {{.History.Name}}{{end}}
 
 {{define "extra-css"}}
 <style>
@@ -160,9 +160,9 @@
 {{end}}
 
 {{define "content"}}
-<a class="back-link" href="/dashboard/deliverables">← Back to Pipelines</a>
+<a class="back-link" href="/dashboard/pipelines">← Back to Pipelines</a>
 
-<h1 style="margin-bottom: 0.25rem;">{{.History.OperatorName}}</h1>
+<h1 style="margin-bottom: 0.25rem;">{{.History.Name}}</h1>
 <p class="text-muted" style="margin-bottom: 1.5rem;">
     Each row is a version of this deliverable. Runs flow <strong>int → stage</strong>. Click a failed node to see details.
 </p>
@@ -241,18 +241,8 @@
                 <dt>Status</dt><dd><span class="badge danger">{{$intRun.Status}}</span></dd>
                 <dt>Tests</dt><dd>{{$intRun.Passed}} passed / {{subtract $intRun.Total $intRun.Passed}} failed / {{$intRun.Total}} total</dd>
                 <dt>Run at</dt><dd>{{$intRun.LastRun.Format "2006-01-02 15:04 UTC"}}</dd>
-                <dt>Job ID</dt><dd><code>{{$intRun.JobID}}</code></dd>
+                <dt>Job suffix</dt><dd><code>{{$intRun.JobID}}</code></dd>
             </dl>
-            {{if gt (len $intRun.Failed) 0}}
-            <div class="fail-list">
-                {{range $intRun.Failed}}
-                <div class="fail-item">
-                    <div class="fail-item-name">✗ {{.Name}}</div>
-                    <pre class="fail-item-msg">{{.Message}}</pre>
-                </div>
-                {{end}}
-            </div>
-            {{else}}<p class="text-muted">No individual test failure details available.</p>{{end}}
             {{with $intRun.LLMAnalysis}}
             <div class="ai-block">
                 <div class="ai-block-header">AI Analysis</div>
@@ -266,8 +256,8 @@
             {{end}}
         </div>
         <div class="dlg-links">
-            {{if $intRun.LogURL}}<a href="{{$intRun.LogURL}}" target="_blank">Logs</a>{{end}}
-            {{if $intRun.JUnitURL}}<a href="{{$intRun.JUnitURL}}" target="_blank">JUnit XML</a>{{end}}
+            {{if $intRun.LogURL}}<a href="{{$intRun.LogURL}}" target="_blank" rel="noopener noreferrer">Logs</a>{{end}}
+            {{if $intRun.JUnitURL}}<a href="{{$intRun.JUnitURL}}" target="_blank" rel="noopener noreferrer">JUnit Report</a>{{end}}
         </div>
     </dialog>
     {{end}}{{end}}
@@ -283,18 +273,8 @@
                 <dt>Status</dt><dd><span class="badge danger">{{$stageRun.Status}}</span></dd>
                 <dt>Tests</dt><dd>{{$stageRun.Passed}} passed / {{subtract $stageRun.Total $stageRun.Passed}} failed / {{$stageRun.Total}} total</dd>
                 <dt>Run at</dt><dd>{{$stageRun.LastRun.Format "2006-01-02 15:04 UTC"}}</dd>
-                <dt>Job ID</dt><dd><code>{{$stageRun.JobID}}</code></dd>
+                <dt>Job suffix</dt><dd><code>{{$stageRun.JobID}}</code></dd>
             </dl>
-            {{if gt (len $stageRun.Failed) 0}}
-            <div class="fail-list">
-                {{range $stageRun.Failed}}
-                <div class="fail-item">
-                    <div class="fail-item-name">✗ {{.Name}}</div>
-                    <pre class="fail-item-msg">{{.Message}}</pre>
-                </div>
-                {{end}}
-            </div>
-            {{else}}<p class="text-muted">No individual test failure details available.</p>{{end}}
             {{with $stageRun.LLMAnalysis}}
             <div class="ai-block">
                 <div class="ai-block-header">AI Analysis</div>
@@ -308,8 +288,8 @@
             {{end}}
         </div>
         <div class="dlg-links">
-            {{if $stageRun.LogURL}}<a href="{{$stageRun.LogURL}}" target="_blank">Logs</a>{{end}}
-            {{if $stageRun.JUnitURL}}<a href="{{$stageRun.JUnitURL}}" target="_blank">JUnit XML</a>{{end}}
+            {{if $stageRun.LogURL}}<a href="{{$stageRun.LogURL}}" target="_blank" rel="noopener noreferrer">Logs</a>{{end}}
+            {{if $stageRun.JUnitURL}}<a href="{{$stageRun.JUnitURL}}" target="_blank" rel="noopener noreferrer">JUnit Report</a>{{end}}
         </div>
     </dialog>
     {{end}}{{end}}
@@ -319,7 +299,7 @@
 
 {{else}}
 <div class="empty-state">
-    <p>No historical runs found for <strong>{{.History.OperatorName}}</strong></p>
+    <p>No historical runs found for <strong>{{.History.Name}}</strong></p>
     <p class="text-muted">Runs will appear here once test results are uploaded to S3.</p>
 </div>
 {{end}}

@@ -4,11 +4,15 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"strings"
 	"time"
 
+	"github.com/aws/aws-sdk-go/aws"
+	awss3 "github.com/aws/aws-sdk-go/service/s3"
+	junit "github.com/joshdk/go-junit"
 	"github.com/openshift/osde2e/pkg/dashboard/collectors"
 	"github.com/openshift/osde2e/pkg/dashboard/config"
 	"github.com/openshift/osde2e/pkg/dashboard/handlers"
@@ -78,8 +82,8 @@ func (s *Server) setupRoutes() {
 	// HTML pages
 	s.mux.HandleFunc("/", s.handleRedirect)
 	s.mux.HandleFunc("/dashboard/usage", s.handleUsagePage)
-	s.mux.HandleFunc("/dashboard/deliverables", s.handleDeliverablesPage)
-	s.mux.HandleFunc("/dashboard/deliverables/", s.handlePipelineDetailPage)
+	s.mux.HandleFunc("/dashboard/pipelines", s.handleDeliverablesPage)
+	s.mux.HandleFunc("/dashboard/pipelines/", s.handlePipelineDetailPage)
 	s.mux.HandleFunc("/dashboard/analysis", s.handleAnalysisPage)
 
 	// API endpoints
@@ -87,6 +91,12 @@ func (s *Server) setupRoutes() {
 	s.mux.HandleFunc("/api/v1/usage", s.handleUsageAPI)
 	s.mux.HandleFunc("/api/v1/overview", s.handleOverviewAPI)
 	s.mux.HandleFunc("/api/v1/deliverables", s.handleDeliverablesAPI)
+
+	// S3 object proxy (streams objects server-side, no presigned URL expiry)
+	s.mux.HandleFunc("/dashboard/s3", s.handleS3Proxy)
+
+	// JUnit XML viewer
+	s.mux.HandleFunc("/dashboard/junit", s.handleJUnitReport)
 
 	// Health check
 	s.mux.HandleFunc("/health", s.handleHealth)
@@ -101,7 +111,14 @@ func (s *Server) WithStore(st *store.Store) {
 
 // Start starts the HTTP server and blocks until ctx is cancelled, then shuts down gracefully.
 func (s *Server) Start(addr string, ctx context.Context) error {
-	srv := &http.Server{Addr: addr, Handler: s.mux}
+	srv := &http.Server{
+		Addr:              addr,
+		Handler:           s.mux,
+		ReadHeaderTimeout: 10 * time.Second,
+		ReadTimeout:       30 * time.Second,
+		WriteTimeout:      30 * time.Second,
+		IdleTimeout:       60 * time.Second,
+	}
 
 	go func() {
 		<-ctx.Done()
@@ -121,7 +138,7 @@ func (s *Server) Start(addr string, ctx context.Context) error {
 // handleRedirect redirects root to /dashboard
 func (s *Server) handleRedirect(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path == "/" || r.URL.Path == "/dashboard" {
-		http.Redirect(w, r, "/dashboard/deliverables", http.StatusMovedPermanently)
+		http.Redirect(w, r, "/dashboard/pipelines", http.StatusMovedPermanently)
 		return
 	}
 	http.NotFound(w, r)
@@ -245,14 +262,14 @@ func (s *Server) handleDeliverablesPage(w http.ResponseWriter, r *http.Request) 
 }
 
 // handlePipelineDetailPage serves the per-deliverable pipeline history page.
-// URL: /dashboard/deliverables/<name>
+// URL: /dashboard/pipelines/<name>
 // When a Store is configured it reads from SQLite (<1ms); otherwise falls back
 // to a live S3 scan (slow, legacy path).
 func (s *Server) handlePipelineDetailPage(w http.ResponseWriter, r *http.Request) {
-	name := strings.TrimPrefix(r.URL.Path, "/dashboard/deliverables/")
+	name := strings.TrimPrefix(r.URL.Path, "/dashboard/pipelines/")
 	name = strings.TrimSpace(name)
 	if name == "" {
-		http.Redirect(w, r, "/dashboard/deliverables", http.StatusSeeOther)
+		http.Redirect(w, r, "/dashboard/pipelines", http.StatusSeeOther)
 		return
 	}
 
@@ -344,6 +361,80 @@ func (s *Server) handleOverviewAPI(w http.ResponseWriter, r *http.Request) {
 	}
 
 	s.sendAPISuccess(w, overview)
+}
+
+// handleS3Proxy streams an S3 object through the server using its AWS credentials.
+// URL: /dashboard/s3?key=<s3-object-key>
+// This avoids presigned URL expiry — the server holds long-lived credentials.
+func (s *Server) handleS3Proxy(w http.ResponseWriter, r *http.Request) {
+	key := r.URL.Query().Get("key")
+	if key == "" {
+		http.Error(w, "missing key parameter", http.StatusBadRequest)
+		return
+	}
+	if s.deliverableCollector == nil {
+		http.Error(w, "S3 not configured", http.StatusServiceUnavailable)
+		return
+	}
+
+	s3Client, bucket := s.deliverableCollector.S3Client()
+	out, err := s3Client.GetObjectWithContext(r.Context(), &awss3.GetObjectInput{
+		Bucket: aws.String(bucket),
+		Key:    aws.String(key),
+	})
+	if err != nil {
+		log.Printf("handleS3Proxy: GetObject %s: %v", key, err)
+		http.Error(w, "Failed to fetch object from S3", http.StatusBadGateway)
+		return
+	}
+	defer out.Body.Close()
+
+	if ct := aws.StringValue(out.ContentType); ct != "" {
+		w.Header().Set("Content-Type", ct)
+	} else if strings.HasSuffix(key, ".log") {
+		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+	} else if strings.HasSuffix(key, ".xml") {
+		w.Header().Set("Content-Type", "application/xml")
+	}
+	_, _ = io.Copy(w, out.Body)
+}
+
+// handleJUnitReport fetches a JUnit XML from S3 and renders it as HTML.
+// URL: /dashboard/junit?key=<s3-object-key>
+func (s *Server) handleJUnitReport(w http.ResponseWriter, r *http.Request) {
+	key := r.URL.Query().Get("key")
+	if key == "" {
+		http.Error(w, "missing key parameter", http.StatusBadRequest)
+		return
+	}
+	if s.deliverableCollector == nil {
+		http.Error(w, "S3 not configured", http.StatusServiceUnavailable)
+		return
+	}
+
+	s3Client, bucket := s.deliverableCollector.S3Client()
+	out, err := s3Client.GetObjectWithContext(r.Context(), &awss3.GetObjectInput{
+		Bucket: aws.String(bucket),
+		Key:    aws.String(key),
+	})
+	if err != nil {
+		log.Printf("handleJUnitReport: GetObject %s: %v", key, err)
+		s.sendError(w, "Failed to fetch JUnit XML from S3", http.StatusBadGateway)
+		return
+	}
+	defer out.Body.Close()
+
+	suites, err := junit.IngestReader(out.Body)
+	if err != nil {
+		log.Printf("handleJUnitReport: parse error: %v", err)
+		s.sendError(w, "Failed to parse JUnit XML", http.StatusUnprocessableEntity)
+		return
+	}
+
+	s.renderTemplate(w, "junit-report.html", map[string]interface{}{
+		"ActivePage": "deliverables",
+		"Suites":     suites,
+	})
 }
 
 // handleHealth returns server health status

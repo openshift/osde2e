@@ -85,9 +85,15 @@ func Open(path string) (*Store, error) {
 		return nil, fmt.Errorf("apply schema: %w", err)
 	}
 
-	// Best-effort migrations for existing databases missing the llm_analysis column.
+	// Best-effort migrations for existing databases.
 	for _, tbl := range []string{"pipeline_latest", "pipeline_runs"} {
 		_, _ = db.Exec(`ALTER TABLE ` + tbl + ` ADD COLUMN llm_analysis TEXT NOT NULL DEFAULT ''`)
+		_, _ = db.Exec(`ALTER TABLE ` + tbl + ` RENAME COLUMN operator_name TO name`)
+		// Rewrite old presigned/plain S3 URLs to dashboard proxy URLs.
+		// Extract the S3 key by stripping the bucket hostname prefix, then build /dashboard/s3?key= or /dashboard/junit?key= URLs.
+		// Handles both https://bucket.s3.amazonaws.com/key?presign and previously-migrated https://bucket.s3.amazonaws.com/key forms.
+		_, _ = db.Exec(`UPDATE ` + tbl + ` SET log_url = '/dashboard/s3?key=' || SUBSTR(SUBSTR(log_url, 1, INSTR(log_url||'?', '?')-1), INSTR(SUBSTR(log_url, 1, INSTR(log_url||'?', '?')-1), '.amazonaws.com/') + LENGTH('.amazonaws.com/')) WHERE log_url LIKE 'https://%'`)
+		_, _ = db.Exec(`UPDATE ` + tbl + ` SET junit_url = '/dashboard/junit?key=' || SUBSTR(SUBSTR(junit_url, 1, INSTR(junit_url||'?', '?')-1), INSTR(SUBSTR(junit_url, 1, INSTR(junit_url||'?', '?')-1), '.amazonaws.com/') + LENGTH('.amazonaws.com/')) WHERE junit_url LIKE 'https://%'`)
 	}
 
 	log.Printf("Store: opened SQLite at %s", path)
@@ -96,6 +102,17 @@ func Open(path string) (*Store, error) {
 
 // Close closes the underlying database connection.
 func (s *Store) Close() error { return s.db.Close() }
+
+// Truncate removes all rows from pipeline_latest and pipeline_runs.
+// Called before a full backfill so stale rows (S3 objects that have been deleted) don't persist.
+func (s *Store) Truncate() error {
+	for _, tbl := range []string{"pipeline_latest", "pipeline_runs"} {
+		if _, err := s.db.Exec(`DELETE FROM ` + tbl); err != nil {
+			return fmt.Errorf("truncate %s: %w", tbl, err)
+		}
+	}
+	return nil
+}
 
 // RunRecord is the flat struct used when writing to the store.
 type RunRecord struct {
@@ -364,21 +381,29 @@ func (s *Store) GetHistory(operatorName string) (*models.PipelineHistory, error)
 }
 
 // groupKeySummary extracts a stable grouping key from an LLM root cause or failure message.
-// It takes the first sentence (up to the first '.') capped at 120 chars.
-// This clusters similar failures across different deliverables while being stable enough to group.
+// It takes the first sentence (up to the first '.') capped at 120 chars, then normalises
+// to lowercase with punctuation/quotes stripped so minor LLM phrasing differences still cluster.
 func groupKeySummary(text string) string {
 	if text == "" {
 		return ""
 	}
+	s := text
 	// Trim to first sentence
-	if idx := strings.Index(text, "."); idx > 0 && idx < 120 {
-		return strings.TrimSpace(text[:idx+1])
+	if idx := strings.Index(s, "."); idx > 0 && idx < 120 {
+		s = s[:idx]
+	} else if len(s) > 120 {
+		s = s[:120]
 	}
-	// No sentence break — cap at 120 chars
-	if len(text) > 120 {
-		return strings.TrimSpace(text[:120])
-	}
-	return strings.TrimSpace(text)
+	// Normalise: lowercase, strip quotes and leading/trailing punctuation
+	s = strings.ToLower(s)
+	s = strings.Map(func(r rune) rune {
+		switch r {
+		case '\'', '"', '`', '‘', '’', '“', '”':
+			return -1 // drop quote characters
+		}
+		return r
+	}, s)
+	return strings.TrimSpace(s)
 }
 
 // GetFailureGroups returns all failed runs grouped by the first sentence of the LLM root cause

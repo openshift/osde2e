@@ -239,7 +239,7 @@
 </div>
 
 <div class="card">
-    {{if gt (len .Operators) 0}}
+    {{if gt (len .Deliverables) 0}}
     <table id="op-table">
         <thead>
             <tr>
@@ -249,7 +249,7 @@
             </tr>
         </thead>
         <tbody>
-            {{range $i, $op := .Operators}}
+            {{range $i, $op := .Deliverables}}
             <tr class="op-row" data-name="{{$op.Name}}" onclick="goToDetail('{{$op.Name}}', event)">
                 <td class="name-cell">{{$op.Name}}</td>
 
@@ -276,99 +276,79 @@
                 </td>
             </tr>
 
-            {{/* Stage failure dialog */}}
-            {{with $op.Stage}}
-            <dialog id="d-{{$i}}-stage">
-                <div class="dlg-header">
-                    <span class="dlg-title">{{$op.Name}} — Stage</span>
-                    <button class="dlg-close" onclick="this.closest('dialog').close()">✕</button>
-                </div>
-                <div class="dlg-body">
-                    <dl class="dlg-meta">
-                        <dt>Status</dt>
-                        <dd>{{if eq .Status "passed"}}<span class="badge success">Passed</span>{{else}}<span class="badge danger">{{.Status}}</span>{{end}}</dd>
-                        <dt>Version</dt><dd><code class="version">{{.Version}}</code></dd>
-                        <dt>Tests</dt><dd>{{.Passed}} passed / {{.Failed}} failed / {{.Total}} total</dd>
-                        <dt>Last run</dt><dd>{{.LastRun.Format "2006-01-02 15:04 UTC"}}</dd>
-                        <dt>Job ID</dt><dd><code>{{.JobID}}</code></dd>
-                    </dl>
-                    {{if gt (len .FailedTests) 0}}
-                    <div class="fail-list">
-                        {{range .FailedTests}}
-                        <div class="fail-item">
-                            <div class="fail-item-name">✗ {{.Name}}</div>
-                            <pre class="fail-item-msg">{{.Message}}</pre>
-                        </div>
-                        {{end}}
-                    </div>
-                    {{end}}
-                    {{with .LLMAnalysis}}
-                    <div class="ai-block">
-                        <div class="ai-block-header">AI Analysis</div>
-                        <div class="ai-root-cause">{{.RootCause}}</div>
-                        {{if gt (len .Recommendations) 0}}
-                        <div class="ai-recs"><strong>Recommendations:</strong>
-                            <ol>{{range .Recommendations}}<li>{{.}}</li>{{end}}</ol>
-                        </div>
-                        {{end}}
-                    </div>
-                    {{end}}
-                </div>
-                <div class="dlg-links">
-                    {{if .LogURL}}<a href="{{.LogURL}}" target="_blank">Logs</a>{{end}}
-                    {{if .JUnitURL}}<a href="{{.JUnitURL}}" target="_blank">JUnit XML</a>{{end}}
-                </div>
-            </dialog>
-            {{end}}
-
-            {{/* Integration failure dialog */}}
-            {{with $op.Integration}}
-            <dialog id="d-{{$i}}-int">
-                <div class="dlg-header">
-                    <span class="dlg-title">{{$op.Name}} — Integration</span>
-                    <button class="dlg-close" onclick="this.closest('dialog').close()">✕</button>
-                </div>
-                <div class="dlg-body">
-                    <dl class="dlg-meta">
-                        <dt>Status</dt>
-                        <dd>{{if eq .Status "passed"}}<span class="badge success">Passed</span>{{else}}<span class="badge danger">{{.Status}}</span>{{end}}</dd>
-                        <dt>Version</dt><dd><code class="version">{{.Version}}</code></dd>
-                        <dt>Tests</dt><dd>{{.Passed}} passed / {{.Failed}} failed / {{.Total}} total</dd>
-                        <dt>Last run</dt><dd>{{.LastRun.Format "2006-01-02 15:04 UTC"}}</dd>
-                        <dt>Job ID</dt><dd><code>{{.JobID}}</code></dd>
-                    </dl>
-                    {{if gt (len .FailedTests) 0}}
-                    <div class="fail-list">
-                        {{range .FailedTests}}
-                        <div class="fail-item">
-                            <div class="fail-item-name">✗ {{.Name}}</div>
-                            <pre class="fail-item-msg">{{.Message}}</pre>
-                        </div>
-                        {{end}}
-                    </div>
-                    {{end}}
-                    {{with .LLMAnalysis}}
-                    <div class="ai-block">
-                        <div class="ai-block-header">AI Analysis</div>
-                        <div class="ai-root-cause">{{.RootCause}}</div>
-                        {{if gt (len .Recommendations) 0}}
-                        <div class="ai-recs"><strong>Recommendations:</strong>
-                            <ol>{{range .Recommendations}}<li>{{.}}</li>{{end}}</ol>
-                        </div>
-                        {{end}}
-                    </div>
-                    {{end}}
-                </div>
-                <div class="dlg-links">
-                    {{if .LogURL}}<a href="{{.LogURL}}" target="_blank">Logs</a>{{end}}
-                    {{if .JUnitURL}}<a href="{{.JUnitURL}}" target="_blank">JUnit XML</a>{{end}}
-                </div>
-            </dialog>
-            {{end}}
-
-            {{end}}{{/* end range .Operators */}}
+            {{end}}{{/* end range .Deliverables */}}
         </tbody>
     </table>
+
+    {{/* Dialogs must live outside <tbody> to produce valid HTML */}}
+    {{range $i, $op := .Deliverables}}
+    {{with $op.Stage}}
+    <dialog id="d-{{$i}}-stage">
+        <div class="dlg-header">
+            <span class="dlg-title">{{$op.Name}} — Stage</span>
+            <button class="dlg-close" onclick="this.closest('dialog').close()">✕</button>
+        </div>
+        <div class="dlg-body">
+            <dl class="dlg-meta">
+                <dt>Status</dt>
+                <dd>{{if eq .Status "passed"}}<span class="badge success">Passed</span>{{else}}<span class="badge danger">{{.Status}}</span>{{end}}</dd>
+                <dt>Tag</dt><dd><code class="version">{{.Version}}</code></dd>
+                <dt>Tests</dt><dd>{{.Passed}} passed / {{.Failed}} failed / {{.Total}} total</dd>
+                <dt>Last run</dt><dd>{{.LastRun.Format "2006-01-02 15:04 UTC"}}</dd>
+                <dt>Job suffix</dt><dd><code>{{.JobID}}</code></dd>
+            </dl>
+            {{with .LLMAnalysis}}
+            <div class="ai-block">
+                <div class="ai-block-header">AI Analysis</div>
+                <div class="ai-root-cause">{{.RootCause}}</div>
+                {{if gt (len .Recommendations) 0}}
+                <div class="ai-recs"><strong>Recommendations:</strong>
+                    <ol>{{range .Recommendations}}<li>{{.}}</li>{{end}}</ol>
+                </div>
+                {{end}}
+            </div>
+            {{end}}
+        </div>
+        <div class="dlg-links">
+            {{if .LogURL}}<a href="{{.LogURL}}" target="_blank" rel="noopener noreferrer">Logs</a>{{end}}
+            {{if .JUnitURL}}<a href="{{.JUnitURL}}" target="_blank" rel="noopener noreferrer">JUnit Report</a>{{end}}
+        </div>
+    </dialog>
+    {{end}}
+    {{with $op.Integration}}
+    <dialog id="d-{{$i}}-int">
+        <div class="dlg-header">
+            <span class="dlg-title">{{$op.Name}} — Integration</span>
+            <button class="dlg-close" onclick="this.closest('dialog').close()">✕</button>
+        </div>
+        <div class="dlg-body">
+            <dl class="dlg-meta">
+                <dt>Status</dt>
+                <dd>{{if eq .Status "passed"}}<span class="badge success">Passed</span>{{else}}<span class="badge danger">{{.Status}}</span>{{end}}</dd>
+                <dt>Tag</dt><dd><code class="version">{{.Version}}</code></dd>
+                <dt>Tests</dt><dd>{{.Passed}} passed / {{.Failed}} failed / {{.Total}} total</dd>
+                <dt>Last run</dt><dd>{{.LastRun.Format "2006-01-02 15:04 UTC"}}</dd>
+                <dt>Job suffix</dt><dd><code>{{.JobID}}</code></dd>
+            </dl>
+            {{with .LLMAnalysis}}
+            <div class="ai-block">
+                <div class="ai-block-header">AI Analysis</div>
+                <div class="ai-root-cause">{{.RootCause}}</div>
+                {{if gt (len .Recommendations) 0}}
+                <div class="ai-recs"><strong>Recommendations:</strong>
+                    <ol>{{range .Recommendations}}<li>{{.}}</li>{{end}}</ol>
+                </div>
+                {{end}}
+            </div>
+            {{end}}
+        </div>
+        <div class="dlg-links">
+            {{if .LogURL}}<a href="{{.LogURL}}" target="_blank" rel="noopener noreferrer">Logs</a>{{end}}
+            {{if .JUnitURL}}<a href="{{.JUnitURL}}" target="_blank" rel="noopener noreferrer">JUnit Report</a>{{end}}
+        </div>
+    </dialog>
+    {{end}}
+    {{end}}{{/* end dialog range */}}
     {{else}}
     <div class="empty-state">
         <p>No deliverable results found</p>
@@ -431,7 +411,7 @@ function openDetail(id, event) {
 function goToDetail(name, event) {
     // Only navigate if click wasn't on a badge/button
     if (event.target.closest('button')) return;
-    window.location.href = '/dashboard/deliverables/' + encodeURIComponent(name);
+    window.location.href = '/dashboard/pipelines/' + encodeURIComponent(name);
 }
 </script>
 {{end}}

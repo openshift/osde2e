@@ -17,9 +17,14 @@ type ClusterReserve struct {
 	Properties    map[string]string `json:"properties,omitempty"`
 }
 
-// IsExpiringSoon returns true if the cluster expires within the given duration
+// IsExpiringSoon returns true if the cluster expires within the given duration.
+// Returns false for zero or already-expired timestamps.
 func (c *ClusterReserve) IsExpiringSoon(threshold time.Duration) bool {
-	return time.Until(c.ExpiresAt) < threshold
+	if c.ExpiresAt.IsZero() {
+		return false
+	}
+	remaining := time.Until(c.ExpiresAt)
+	return remaining >= 0 && remaining < threshold
 }
 
 // ExpiringSoon returns true if the cluster expires within 2 hours (for template use)

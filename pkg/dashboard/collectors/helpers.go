@@ -1,10 +1,8 @@
 package collectors
 
 import (
+	"net/url"
 	"time"
-
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/s3"
 )
 
 // suiteStatus returns "passed", "failed", or "error" based on a parsed JUnit suite.
@@ -18,7 +16,8 @@ func suiteStatus(suite *JUnitTestSuite) string {
 	return "passed"
 }
 
-// parseTimestamp parses a JUnit timestamp string, falling back to time.Now().
+// parseTimestamp parses a JUnit timestamp string, returning zero time on failure.
+// Callers should apply their own fallback (e.g. S3 LastModified) for zero results.
 func parseTimestamp(ts string) time.Time {
 	if t, err := time.Parse("2006-01-02T15:04:05", ts); err == nil {
 		return t
@@ -26,18 +25,15 @@ func parseTimestamp(ts string) time.Time {
 	if t, err := time.Parse(time.RFC3339, ts); err == nil {
 		return t
 	}
-	return time.Now()
+	return time.Time{}
 }
 
-// presignURL creates a 7-day presigned URL for an S3 key using the given client and bucket.
-func presignURL(client *s3.S3, bucket, key string) string {
-	req, _ := client.GetObjectRequest(&s3.GetObjectInput{
-		Bucket: aws.String(bucket),
-		Key:    aws.String(key),
-	})
-	url, err := req.Presign(7 * 24 * time.Hour)
-	if err != nil {
-		return ""
-	}
-	return url
+// s3URL returns a dashboard proxy URL that streams the S3 object through the server.
+func s3URL(bucket, key string) string {
+	return "/dashboard/s3?key=" + url.QueryEscape(key)
+}
+
+// junitURL returns a dashboard URL that fetches the JUnit XML from S3 and renders it as HTML.
+func junitURL(bucket, key string) string {
+	return "/dashboard/junit?key=" + url.QueryEscape(key)
 }

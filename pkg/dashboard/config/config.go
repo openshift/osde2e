@@ -83,6 +83,8 @@ func (c *Config) OCMEnvironments() []string {
 	switch c.Environment {
 	case "all", "":
 		return []string{"stage", "int", "prod"}
+	case "integration":
+		return []string{"int"}
 	default:
 		return []string{c.Environment}
 	}

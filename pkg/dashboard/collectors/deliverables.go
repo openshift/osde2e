@@ -11,8 +11,8 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
+	awssession "github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
-	awscommon "github.com/openshift/osde2e/pkg/common/aws"
 	"github.com/openshift/osde2e/pkg/dashboard/models"
 )
 
@@ -31,14 +31,15 @@ type DeliverableCollector struct {
 	lookbackDays int
 }
 
-// NewDeliverableCollector creates a new collector using the global AWS session.
+// NewDeliverableCollector creates a new collector using the standard AWS credential chain
+// (env vars → ~/.aws/credentials → IAM role), independent of the osde2e viper config.
 func NewDeliverableCollector(bucket, region string, lookbackDays int) (*DeliverableCollector, error) {
-	sess, err := awscommon.CcsAwsSession.GetSession()
+	sess, err := awssession.NewSession(aws.NewConfig().WithRegion(region))
 	if err != nil {
-		return nil, fmt.Errorf("failed to get AWS session: %w", err)
+		return nil, fmt.Errorf("failed to create AWS session: %w", err)
 	}
 
-	s3Client := s3.New(sess, aws.NewConfig().WithRegion(region))
+	s3Client := s3.New(sess)
 
 	if lookbackDays <= 0 {
 		lookbackDays = 30
@@ -51,6 +52,9 @@ func NewDeliverableCollector(bucket, region string, lookbackDays int) (*Delivera
 		lookbackDays: lookbackDays,
 	}, nil
 }
+
+// S3Client returns the underlying S3 client and bucket name, used by the server's S3 proxy handler.
+func (c *DeliverableCollector) S3Client() (*s3.S3, string) { return c.s3Client, c.bucket }
 
 // parseComponentPath splits an S3 component string into operator name, version, and environment.
 func parseComponentPath(component string) (name, version, env string) {
@@ -119,9 +123,9 @@ type downloadResult struct {
 func (c *DeliverableCollector) CollectDeliverables() ([]models.DeliverableStatus, error) {
 	cutoff := time.Now().UTC().AddDate(0, 0, -c.lookbackDays)
 
-	// Phase 1: list all matching keys, deduplicate to newest per (name, env).
+	// Phase 1: list all matching keys, deduplicate to newest per (name, version, env).
 	// S3 listing is cheap; downloading is not. We only download one file per group.
-	type groupKey struct{ name, env string }
+	type groupKey struct{ name, version, env string }
 	newestByGroup := make(map[groupKey]*candidate)
 
 	input := &s3.ListObjectsV2Input{
@@ -149,8 +153,8 @@ func (c *DeliverableCollector) CollectDeliverables() ([]models.DeliverableStatus
 			}
 
 			component := parts[1]
-			name, _, env := parseComponentPath(component)
-			gk := groupKey{name, env}
+			name, version, env := parseComponentPath(component)
+			gk := groupKey{name, version, env}
 
 			modified := aws.TimeValue(obj.LastModified)
 			existing, seen := newestByGroup[gk]
@@ -231,8 +235,8 @@ func (c *DeliverableCollector) CollectDeliverables() ([]models.DeliverableStatus
 		}
 
 		status := suiteStatus(r.suite)
-		logURL := c.generatePresignedURL(r.s3Dir + "/test_output.log")
-		junitURL := c.generatePresignedURL(r.key)
+		logURL := s3URL(c.bucket, r.s3Dir+"/test_output.log")
+		junitURL := junitURL(c.bucket, r.key)
 
 		indexKey := r.name
 		op, exists := index[indexKey]
@@ -498,8 +502,8 @@ func (c *DeliverableCollector) CollectPipelineHistory(operatorName string) (*mod
 			Date:     r.dateStr,
 			JobID:    r.jobID,
 			LastRun:  r.ts,
-			LogURL:   c.generatePresignedURL(r.s3Dir + "/test_output.log"),
-			JUnitURL: c.generatePresignedURL(r.key),
+			LogURL:   s3URL(c.bucket, r.s3Dir+"/test_output.log"),
+			JUnitURL: junitURL(c.bucket, r.key),
 			Failed:   extractFailedTests(r.suite),
 			Total:    r.suite.Tests,
 			Passed:   r.suite.Tests - r.suite.Failures - r.suite.Errors - r.suite.Skipped,
@@ -517,15 +521,3 @@ func (c *DeliverableCollector) CollectPipelineHistory(operatorName string) (*mod
 	}, nil
 }
 
-// generatePresignedURL creates a 7-day presigned URL for an S3 object.
-func (c *DeliverableCollector) generatePresignedURL(key string) string {
-	req, _ := c.s3Client.GetObjectRequest(&s3.GetObjectInput{
-		Bucket: aws.String(c.bucket),
-		Key:    aws.String(key),
-	})
-	url, err := req.Presign(7 * 24 * time.Hour)
-	if err != nil {
-		return ""
-	}
-	return url
-}

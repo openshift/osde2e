@@ -8,7 +8,6 @@ import (
 	"path"
 	"sort"
 	"strings"
-	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/s3"
@@ -248,8 +247,8 @@ func (c *TestResultsCollector) parseJUnitXML(key, component, date, jobID string)
 	}
 
 	s3Path := path.Dir(key)
-	logURL := c.generatePresignedURL(path.Join(s3Path, "test_output.log"))
-	junitURL := c.generatePresignedURL(key)
+	logURL := s3URL(c.bucket, path.Join(s3Path, "test_output.log"))
+	junitURL := junitURL(c.bucket, key)
 
 	return &models.TestResult{
 		JobID:        jobID,
@@ -271,19 +270,4 @@ func (c *TestResultsCollector) parseJUnitXML(key, component, date, jobID string)
 	}, nil
 }
 
-// generatePresignedURL creates a presigned URL for an S3 object
-func (c *TestResultsCollector) generatePresignedURL(key string) string {
-	req, _ := c.s3Client.GetObjectRequest(&s3.GetObjectInput{
-		Bucket: aws.String(c.bucket),
-		Key:    aws.String(key),
-	})
-
-	url, err := req.Presign(7 * 24 * time.Hour) // 7 days
-	if err != nil {
-		log.Printf("Warning: failed to generate presigned URL for %s: %v", key, err)
-		return ""
-	}
-
-	return url
-}
 

@@ -48,9 +48,10 @@ podman push "${IMAGE}"
 
 echo "[3/4] Applying manifests..."
 kustomize build "${OVERLAY_DIR}" | oc apply -f -
+oc rollout restart "deployment/${APP}" -n "${NAMESPACE}"
 
 echo "[4/4] Waiting for rollout..."
 oc rollout status "deployment/${APP}" -n "${NAMESPACE}" --timeout=120s
 
 echo ""
-echo "Dashboard URL: https://$(oc get route live -n "${NAMESPACE}" -o jsonpath='{.spec.host}')/dashboard/deliverables"
+echo "Dashboard URL: https://$(oc get route live -n "${NAMESPACE}" -o jsonpath='{.spec.host}')/dashboard/pipelines"

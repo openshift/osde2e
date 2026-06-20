@@ -119,10 +119,15 @@ func (c *SQSConsumer) processMessage(body string) error {
 		return fmt.Errorf("unmarshal S3 event: %w", err)
 	}
 
+	var failed int
 	for _, rec := range event.Records {
 		if err := c.processKey(rec.S3.Bucket.Name, rec.S3.Object.Key); err != nil {
 			log.Printf("SQS consumer: skip %s: %v", rec.S3.Object.Key, err)
+			failed++
 		}
+	}
+	if failed > 0 {
+		return fmt.Errorf("%d record(s) failed processing; message will be retried", failed)
 	}
 	return nil
 }
@@ -181,8 +186,8 @@ func (c *SQSConsumer) processKey(bucket, key string) error {
 		JobID:        jobID,
 		Date:         dateStr,
 		LastRun:      ts,
-		LogURL:       c.opCollect.generatePresignedURL(s3Dir + "/test_output.log"),
-		JUnitURL:     c.opCollect.generatePresignedURL(key),
+		LogURL:       s3URL(c.opCollect.bucket, s3Dir+"/test_output.log"),
+		JUnitURL:     junitURL(c.opCollect.bucket, key),
 		FailedTests:  extractFailedTests(suite),
 		LLMAnalysis:  llm,
 	}

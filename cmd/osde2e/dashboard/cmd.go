@@ -10,7 +10,6 @@ import (
 
 	"github.com/openshift/osde2e/cmd/osde2e/common"
 	"github.com/openshift/osde2e/cmd/osde2e/helpers"
-	commonconfig "github.com/openshift/osde2e/pkg/common/config"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/providers/ocmprovider"
 	"github.com/openshift/osde2e/pkg/dashboard/collectors"
@@ -126,11 +125,6 @@ func run(cmd *cobra.Command, argv []string) {
 	log.Printf("  DB Path:        %s", dashboardConfig.DBPath)
 	log.Printf("  SQS Queue URL:  %s", dashboardConfig.SQSQueueURL)
 
-	// Initialize AWS configuration
-	if err := commonconfig.InitAWSViper(); err != nil {
-		log.Printf("Warning: Failed to initialize AWS config: %v", err)
-	}
-
 	// Open the SQLite store
 	st, err := store.Open(dashboardConfig.DBPath)
 	if err != nil {
@@ -158,6 +152,10 @@ func run(cmd *cobra.Command, argv []string) {
 				log.Printf("Warning: failed to create SQS consumer: %v", err)
 			} else {
 				if args.backfill {
+					log.Println("Truncating DB before backfill...")
+					if err := st.Truncate(); err != nil {
+						log.Printf("Warning: truncate failed: %v", err)
+					}
 					log.Println("Running backfill — this may take a few minutes...")
 					if err := consumer.Backfill(); err != nil {
 						log.Printf("Backfill error: %v", err)
