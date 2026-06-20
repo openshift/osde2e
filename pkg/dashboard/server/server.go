@@ -354,11 +354,7 @@ func (s *Server) handleDeliverablesAPI(w http.ResponseWriter, r *http.Request) {
 
 // handleOverviewAPI returns dashboard overview data
 func (s *Server) handleOverviewAPI(w http.ResponseWriter, r *http.Request) {
-	overview, err := s.collectOverview()
-	if err != nil {
-		s.sendAPIError(w, fmt.Sprintf("Failed to collect overview: %v", err), http.StatusInternalServerError)
-		return
-	}
+	overview := s.collectOverview()
 
 	s.sendAPISuccess(w, overview)
 }
@@ -456,7 +452,7 @@ func (s *Server) handleHealth(w http.ResponseWriter, r *http.Request) {
 // Helper methods
 
 // collectOverview aggregates data from all collectors
-func (s *Server) collectOverview() (*models.DashboardOverview, error) {
+func (s *Server) collectOverview() *models.DashboardOverview {
 	overview := &models.DashboardOverview{
 		LastUpdated:         handlers.Now(),
 		RecentTests:         []models.TestResult{},
@@ -496,7 +492,7 @@ func (s *Server) collectOverview() (*models.DashboardOverview, error) {
 		}
 	}
 
-	return overview, nil
+	return overview
 }
 
 // sendJSON sends a JSON response

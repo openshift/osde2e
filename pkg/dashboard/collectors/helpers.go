@@ -29,11 +29,11 @@ func parseTimestamp(ts string) time.Time {
 }
 
 // s3URL returns a dashboard proxy URL that streams the S3 object through the server.
-func s3URL(bucket, key string) string {
+func s3URL(_, key string) string {
 	return "/dashboard/s3?key=" + url.QueryEscape(key)
 }
 
 // junitURL returns a dashboard URL that fetches the JUnit XML from S3 and renders it as HTML.
-func junitURL(bucket, key string) string {
+func junitURL(_, key string) string {
 	return "/dashboard/junit?key=" + url.QueryEscape(key)
 }

@@ -6,6 +6,7 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -29,6 +30,16 @@ var funcMap = template.FuncMap{
 	// add returns a + b (used in junit-report.html for aggregating totals)
 	"add": func(a, b int) int {
 		return a + b
+	},
+	// githubRepo normalises an operator name to its GitHub repo name by stripping
+	// job-variant suffixes like -e2e-master that are not part of the repo name.
+	"githubRepo": func(name string) string {
+		for _, suffix := range []string{"-e2e-master", "-e2e"} {
+			if idx := strings.Index(name, suffix); idx > 0 {
+				return name[:idx]
+			}
+		}
+		return name
 	},
 }
 

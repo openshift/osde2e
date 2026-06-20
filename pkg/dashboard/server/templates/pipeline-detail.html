@@ -190,7 +190,7 @@
     <div class="pipeline-row">
         {{/* Version label */}}
         <div class="pipeline-version">
-            {{$vp.Version}}
+            <a href="https://github.com/openshift/{{$.History.Name | githubRepo}}/commit/{{$vp.Version}}" target="_blank" rel="noopener noreferrer" style="font-family:monospace;">{{$vp.Version}}</a>
             <span class="ver-date">{{$vp.LastRun.Format "2006-01-02"}}</span>
         </div>
 
