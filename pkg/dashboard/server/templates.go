@@ -1,0 +1,74 @@
+package server
+
+import (
+	"bytes"
+	"embed"
+	"html/template"
+	"log"
+	"net/http"
+	"strings"
+	"time"
+)
+
+//go:embed templates/*.html
+var templateFS embed.FS
+
+var funcMap = template.FuncMap{
+	"now": time.Now,
+	// localTime converts a time.Time to local timezone, formatted as "2006-01-02 15:04 MST"
+	"localTime": func(t time.Time) string {
+		return t.Local().Format("2006-01-02 15:04 MST")
+	},
+	// localTimeShort formats as "2006-01-02 15:04" without timezone suffix
+	"localDate": func(t time.Time) string {
+		return t.Local().Format("2006-01-02")
+	},
+	// subtract returns a - b (used in templates for failed count = total - passed)
+	"subtract": func(a, b int) int {
+		return a - b
+	},
+	// add returns a + b (used in junit-report.html for aggregating totals)
+	"add": func(a, b int) int {
+		return a + b
+	},
+	// githubRepo normalises an operator name to its GitHub repo name by stripping
+	// job-variant suffixes like -e2e-master that are not part of the repo name.
+	"githubRepo": func(name string) string {
+		for _, suffix := range []string{"-e2e-master", "-e2e"} {
+			if idx := strings.Index(name, suffix); idx > 0 {
+				return name[:idx]
+			}
+		}
+		return name
+	},
+}
+
+// renderTemplate renders an HTML template with data.
+// Each call parses base.html + the requested page file as a fresh template set
+// so that {{define "content"}} blocks from different pages don't collide.
+func (s *Server) renderTemplate(w http.ResponseWriter, name string, data interface{}) {
+	tmpl, err := template.New("").Funcs(funcMap).ParseFS(templateFS,
+		"templates/base.html",
+		"templates/"+name,
+	)
+	if err != nil {
+		log.Printf("Error loading template %s: %v", name, err)
+		http.Error(w, "Template error", http.StatusInternalServerError)
+		return
+	}
+
+	var buf bytes.Buffer
+	if err := tmpl.ExecuteTemplate(&buf, "base.html", data); err != nil {
+		log.Printf("Error rendering template %s: %v", name, err)
+		http.Error(w, "Template rendering error", http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	_, _ = buf.WriteTo(w)
+}
+
+// PageData represents common data passed to all pages
+type PageData struct {
+	ActivePage string
+	Data       interface{}
+}
