@@ -22,13 +22,13 @@ import (
 
 // Server represents the dashboard HTTP server
 type Server struct {
-	config              *config.Config
-	reserveCollector    *collectors.ReserveCollector
-	usageCollector      *collectors.UsageCollector
-	testResultCollector *collectors.TestResultsCollector
+	config               *config.Config
+	reserveCollector     *collectors.ReserveCollector
+	usageCollector       *collectors.UsageCollector
+	testResultCollector  *collectors.TestResultsCollector
 	deliverableCollector *collectors.DeliverableCollector
 	store                *store.Store // optional; when set, deliverables/history served from DB
-	mux                 *http.ServeMux
+	mux                  *http.ServeMux
 }
 
 // NewServer creates a new dashboard server instance
@@ -144,7 +144,6 @@ func (s *Server) handleRedirect(w http.ResponseWriter, r *http.Request) {
 	http.NotFound(w, r)
 }
 
-
 // handleUsagePage serves the Clusters page — all osde2e clusters grouped by env.
 func (s *Server) handleUsagePage(w http.ResponseWriter, r *http.Request) {
 	// EnvOrder defines the display sequence of environments.
@@ -253,7 +252,7 @@ func (s *Server) handleDeliverablesPage(w http.ResponseWriter, r *http.Request) 
 
 	data := map[string]interface{}{
 		"ActivePage":   "deliverables",
-		"Deliverables":  deliverables,
+		"Deliverables": deliverables,
 		"Environments": []string{"stage", "integration"},
 		"S3Bucket":     s.config.S3Bucket,
 	}
