@@ -57,13 +57,16 @@ Osde2e is End-to-end testing framework for Managed services for OSD/ROSA.
 3. Integration test failures? Check credentials/env vars
 4. Always use `gofumpt`, not `gofmt`
 5. Check git status before committing
+6. Dashboard work? Use the `/dashboard-dev` skill — it has deploy steps, architecture, and local dev instructions
 
 ## Architecture
 ```
 osde2e
-├── cmd/osde2e/          # CLI commands (provision, test, cleanup, krknai)
+├── cmd/osde2e/          # CLI commands (provision, test, cleanup, krknai, dashboard)
 ├── pkg/common/          # Core logic (config, providers, helpers)
+├── pkg/dashboard/       # Delivery Dashboard (server, store, collectors, models)
 ├── internal/            # LLM analysis (llm, sanitizer, prompts)
+├── .claude/skills/      # Claude Code skills (use /dashboard-dev for dashboard work)
 └── test/                # Standalone Ginkgo test suites
 ```
 

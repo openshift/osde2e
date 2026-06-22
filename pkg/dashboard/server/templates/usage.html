@@ -1,0 +1,218 @@
+{{template "base.html" .}}
+
+{{define "title"}}Delivery Dashboard - Infra{{end}}
+
+{{define "extra-css"}}
+<style>
+    .env-section {
+        margin-bottom: 2rem;
+    }
+
+    .env-section h2 {
+        font-size: 1.1rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: #555;
+        margin-bottom: 0.75rem;
+        padding-bottom: 0.4rem;
+        border-bottom: 2px solid #e0e0e0;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        user-select: none;
+    }
+
+    .env-section h2:hover { color: #222; }
+
+    .env-section h2 .toggle-icon {
+        font-size: 0.75rem;
+        color: #999;
+        transition: transform 0.2s;
+    }
+
+    .env-section h2 .count {
+        font-size: 0.8rem;
+        font-weight: 400;
+        color: #888;
+        margin-left: auto;
+    }
+
+    .env-table-wrap { overflow-x: auto; }
+
+    table.cluster-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.85rem;
+    }
+
+    .cluster-table th {
+        background: #f8f8f8;
+        font-weight: 600;
+        color: #444;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        padding: 0.6rem 0.75rem;
+        border-bottom: 1px solid #e0e0e0;
+        text-align: left;
+        white-space: nowrap;
+    }
+
+    .cluster-table td {
+        padding: 0.5rem 0.75rem;
+        border-bottom: 1px solid #f0f0f0;
+        vertical-align: middle;
+    }
+
+    .cluster-table tr:last-child td { border-bottom: none; }
+    .cluster-table tr:hover td { background: #f9f9f9; }
+
+    code.clid {
+        font-size: 0.78rem;
+        background: #f0f0f0;
+        padding: 0.1rem 0.35rem;
+        border-radius: 3px;
+        font-family: monospace;
+    }
+
+    .avail-badge {
+        display: inline-block;
+        padding: 0.15rem 0.5rem;
+        border-radius: 10px;
+        font-size: 0.72rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    .avail-reserved  { background: #d1ecf1; color: #0c5460; }
+    .avail-claimed   { background: #fff3cd; color: #856404; }
+    .avail-used      { background: #d4edda; color: #155724; }
+    .avail-other     { background: #e2e3e5; color: #383d41; }
+
+    .state-ready     { color: #155724; font-weight: 600; }
+    .state-installing{ color: #0c5460; }
+    .state-error     { color: #721c24; font-weight: 600; }
+
+    .datetime { white-space: nowrap; font-size: 0.8rem; color: #555; }
+    .expiring  { color: #c0392b; font-weight: 600; }
+
+    .image-tag {
+        font-size: 0.78rem;
+        font-family: monospace;
+        color: #444;
+        max-width: 220px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        display: block;
+    }
+</style>
+{{end}}
+
+{{define "content"}}
+<h1 style="margin-bottom: 0.5rem;">Infra</h1>
+<p class="text-muted" style="margin-bottom: 1.5rem;">All osde2e clusters across environments. Click an environment heading to collapse.</p>
+
+{{if gt (len .EnvClusters) 0}}
+    {{range .EnvClusters}}
+    <div class="card env-section">
+        <h2 onclick="toggleSection(this)">
+            <span class="toggle-icon">▼</span>
+            {{.Env}}
+            <span class="count">{{len .Clusters}} clusters</span>
+        </h2>
+        <div class="env-table-wrap">
+        {{if gt (len .Clusters) 0}}
+        <table class="cluster-table">
+            <thead>
+                <tr>
+                    <th>Cluster ID</th>
+                    <th>State</th>
+                    <th>Availability</th>
+                    <th>Version</th>
+                    <th>Flavor</th>
+                    <th>Ad Hoc Image</th>
+                    <th>Created</th>
+                    <th>Expires</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{range .Clusters}}
+                <tr>
+                    <td><code class="clid">{{.ID}}</code></td>
+                    <td>
+                        {{if eq .State "ready"}}
+                            <span class="state-ready">● ready</span>
+                        {{else if eq .State "installing"}}
+                            <span class="state-installing">◌ installing</span>
+                        {{else if eq .State "error"}}
+                            <span class="state-error">✗ error</span>
+                        {{else}}
+                            <span class="text-muted">{{.State}}</span>
+                        {{end}}
+                    </td>
+                    <td>
+                        {{$avail := index .Properties "Availability"}}
+                        {{if eq $avail "reserved"}}
+                            <span class="avail-badge avail-reserved">reserved</span>
+                        {{else if eq $avail "claimed"}}
+                            <span class="avail-badge avail-claimed">claimed</span>
+                        {{else if eq $avail "used"}}
+                            <span class="avail-badge avail-used">used</span>
+                        {{else if $avail}}
+                            <span class="avail-badge avail-other">{{$avail}}</span>
+                        {{else}}
+                            <span class="text-muted">—</span>
+                        {{end}}
+                    </td>
+                    <td>{{.Version}}</td>
+                    <td>{{.Product}}</td>
+                    <td>
+                        {{$img := index .Properties "AdHocTestImages"}}
+                        {{if $img}}
+                            <span class="image-tag" title="{{$img}}">{{$img}}</span>
+                        {{else}}
+                            <span class="text-muted">—</span>
+                        {{end}}
+                    </td>
+                    <td class="datetime">{{localTime .CreatedAt}}</td>
+                    <td class="datetime {{if .ExpiringSoon}}expiring{{end}}">
+                        {{if .ExpiresAt.IsZero}}—{{else}}{{localTime .ExpiresAt}}{{end}}
+                    </td>
+                </tr>
+                {{end}}
+            </tbody>
+        </table>
+        {{else}}
+        <p class="text-muted" style="padding: 1rem 0;">No clusters found for this environment.</p>
+        {{end}}
+        </div>
+    </div>
+    {{end}}
+{{else}}
+<div class="card">
+    <div class="empty-state">
+        <p>No cluster data available</p>
+        <p class="text-muted">OCM credentials may not be configured, or no osde2e clusters exist.</p>
+    </div>
+</div>
+{{end}}
+{{end}}
+
+{{define "extra-js"}}
+<script>
+function toggleSection(h2) {
+    var wrap = h2.nextElementSibling;
+    var icon = h2.querySelector('.toggle-icon');
+    if (wrap.style.display === 'none') {
+        wrap.style.display = '';
+        icon.style.transform = '';
+    } else {
+        wrap.style.display = 'none';
+        icon.style.transform = 'rotate(-90deg)';
+    }
+}
+</script>
+{{end}}
