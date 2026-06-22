@@ -310,7 +310,7 @@ func (o *E2EOrchestrator) AnalyzeLogs(ctx context.Context, testErr error) error 
 		},
 		PromptTemplate:  "default",
 		FailureContext:  testErr.Error(),
-		SanitizerConfig: &sanitizer.Config{},
+		SanitizerConfig: &sanitizer.Config{EnableAudit: false},
 	}
 
 	engine, err := analysisengine.New(ctx, engineConfig)

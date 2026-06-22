@@ -173,7 +173,7 @@ func runLogAnalysisForAdHocTestImage(ctx context.Context, logger logr.Logger, te
 		},
 		PromptTemplate:  "default",
 		FailureContext:  err.Error(),
-		SanitizerConfig: &sanitizer.Config{},
+		SanitizerConfig: &sanitizer.Config{EnableAudit: false},
 	}
 
 	engine, err := analysisengine.New(ctx, engineConfig)

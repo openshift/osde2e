@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"io/fs"
 	"log"
 	"os"
@@ -218,7 +219,10 @@ func NewS3Uploader(component string) (*S3Uploader, error) {
 	}
 
 	s3Client := s3v2.NewFromConfig(cfgWithRegion)
-	s, _ := sanitizer.New(&sanitizer.Config{})
+	s, err := sanitizer.New(&sanitizer.Config{EnableAudit: false})
+	if err != nil {
+		log.Printf("Warning: failed to initialize sanitizer, uploads will not be redacted: %v", err)
+	}
 
 	return &S3Uploader{
 		s3Client:  s3Client,
@@ -337,6 +341,7 @@ func (u *S3Uploader) UploadDirectory(srcDir string) ([]S3UploadResult, error) {
 			Body:        body,
 			ContentType: aws.String(contentType),
 		})
+		body.Close()
 		if uploadErr != nil {
 			log.Printf("Warning: failed to upload %s: %v", filePath, uploadErr)
 			return nil
@@ -365,24 +370,46 @@ func (u *S3Uploader) UploadDirectory(srcDir string) ([]S3UploadResult, error) {
 	return results, nil
 }
 
-// prepareUploadBody reads a file and redacts secrets before upload.
-// Falls back to raw content if sanitizer is nil or sanitization fails.
-func (u *S3Uploader) prepareUploadBody(filePath, relPath string) (*bytes.Reader, int64, error) {
+// maxSanitizableBytes is the upper bound for in-memory sanitization.
+// Files larger than this are streamed directly to S3 without sanitization
+// to avoid exhausting the uploader process memory.
+const maxSanitizableBytes int64 = 50 * 1024 * 1024 // 50MB
+
+// prepareUploadBody returns an io.ReadCloser and file size for S3 upload.
+// Files smaller than maxSanitizableBytes are read into memory and sanitized.
+// Larger files are streamed directly (raw) to avoid memory exhaustion.
+func (u *S3Uploader) prepareUploadBody(filePath, relPath string) (io.ReadCloser, int64, error) {
+	info, err := os.Stat(filePath)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	if u.sanitizer == nil || info.Size() > maxSanitizableBytes {
+		f, err := os.Open(filePath)
+		if err != nil {
+			return nil, 0, err
+		}
+		if info.Size() > maxSanitizableBytes {
+			log.Printf("Skipping sanitization for %s: file size %d exceeds limit", relPath, info.Size())
+		}
+		return f, info.Size(), nil
+	}
+
 	content, err := os.ReadFile(filePath)
 	if err != nil {
 		return nil, 0, err
 	}
 
-	if u.sanitizer != nil {
-		if result, err := u.sanitizer.SanitizeText(string(content), relPath); err == nil {
-			if result.MatchesFound > 0 {
-				log.Printf("Sanitized %s: redacted %d secret(s)", relPath, result.MatchesFound)
-			}
-			content = []byte(result.Content)
+	if result, err := u.sanitizer.SanitizeText(string(content), relPath); err != nil {
+		log.Printf("Warning: sanitization failed for %s, uploading raw content: %v", relPath, err)
+	} else {
+		if result.MatchesFound > 0 {
+			log.Printf("Sanitized %s: redacted %d secret(s)", relPath, result.MatchesFound)
 		}
+		content = []byte(result.Content)
 	}
 
-	return bytes.NewReader(content), int64(len(content)), nil
+	return io.NopCloser(bytes.NewReader(content)), int64(len(content)), nil
 }
 
 func (u *S3Uploader) generatePresignedURL(key string) (string, error) {
