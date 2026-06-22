@@ -116,20 +116,20 @@ func (s *Store) Truncate() error {
 
 // RunRecord is the flat struct used when writing to the store.
 type RunRecord struct {
-	Name        string
-	Env         string
-	Version     string
-	Status      string
-	Passed      int
-	Failed      int
-	Total       int
-	JobID       string
-	Date        string
-	LastRun     time.Time
-	LogURL      string
-	JUnitURL    string
-	FailedTests []models.FailedTestCase
-	LLMAnalysis *models.LLMAnalysis
+	Name string
+	Env          string
+	Version      string
+	Status       string
+	Passed       int
+	Failed       int
+	Total        int
+	JobID        string
+	Date         string
+	LastRun      time.Time
+	LogURL       string
+	JUnitURL     string
+	FailedTests  []models.FailedTestCase
+	LLMAnalysis  *models.LLMAnalysis
 }
 
 // UpsertRun inserts or updates both pipeline_latest and pipeline_runs for one run result.
@@ -297,12 +297,12 @@ func (s *Store) GetHistory(operatorName string) (*models.PipelineHistory, error)
 	var runs []models.PipelineRun
 	for rows.Next() {
 		var (
-			env, ver, status      string
-			passed, failed, total int
-			jobID, date           string
-			logURL, junitURL      string
-			lastRun               time.Time
-			ftJSON, llmJSON       string
+			env, ver, status        string
+			passed, failed, total   int
+			jobID, date             string
+			logURL, junitURL        string
+			lastRun                 time.Time
+			ftJSON, llmJSON         string
 		)
 		if err := rows.Scan(&env, &ver, &status, &passed, &failed, &total,
 			&jobID, &date, &lastRun, &logURL, &junitURL, &ftJSON, &llmJSON); err != nil {
@@ -374,9 +374,9 @@ func (s *Store) GetHistory(operatorName string) (*models.PipelineHistory, error)
 	}
 
 	return &models.PipelineHistory{
-		Name:     operatorName,
-		Runs:     runs,
-		Versions: versions,
+		Name: operatorName,
+		Runs:         runs,
+		Versions:     versions,
 	}, nil
 }
 
@@ -464,12 +464,12 @@ func (s *Store) GetFailureGroups() ([]models.FailureGroup, error) {
 		}
 
 		entry := models.FailureEntry{
-			Name:    name,
-			Version: ver,
-			Env:     env,
-			LastRun: lastRun,
-			JobID:   jobID,
-			LogURL:  logURL,
+			Name: name,
+			Version:      ver,
+			Env:          env,
+			LastRun:      lastRun,
+			JobID:        jobID,
+			LogURL:       logURL,
 		}
 
 		if _, exists := groups[key]; !exists {
@@ -510,3 +510,4 @@ func (s *Store) GetFailureGroups() ([]models.FailureGroup, error) {
 
 	return result, nil
 }
+

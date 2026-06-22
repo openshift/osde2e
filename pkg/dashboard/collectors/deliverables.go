@@ -517,6 +517,7 @@ func (c *DeliverableCollector) CollectPipelineHistory(operatorName string) (*mod
 
 	return &models.PipelineHistory{
 		Name: operatorName,
-		Runs: runs,
+		Runs:         runs,
 	}, nil
 }
+

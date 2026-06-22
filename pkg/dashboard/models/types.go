@@ -4,16 +4,16 @@ import "time"
 
 // ClusterReserve represents a reserved cluster available for testing
 type ClusterReserve struct {
-	ID            string            `json:"id"`
-	Name          string            `json:"name"`
-	State         string            `json:"state"`        // ready, installing, pending
-	Availability  string            `json:"availability"` // reserved, claimed, used
-	Version       string            `json:"version"`
-	Region        string            `json:"region"`
-	CloudProvider string            `json:"cloud_provider"`
-	CreatedAt     time.Time         `json:"created_at"`
-	ExpiresAt     time.Time         `json:"expires_at"`
-	Product       string            `json:"product"` // osd, rosa
+	ID            string    `json:"id"`
+	Name          string    `json:"name"`
+	State         string    `json:"state"` // ready, installing, pending
+	Availability  string    `json:"availability"` // reserved, claimed, used
+	Version       string    `json:"version"`
+	Region        string    `json:"region"`
+	CloudProvider string    `json:"cloud_provider"`
+	CreatedAt     time.Time `json:"created_at"`
+	ExpiresAt     time.Time `json:"expires_at"`
+	Product       string    `json:"product"` // osd, rosa
 	Properties    map[string]string `json:"properties,omitempty"`
 }
 
@@ -34,21 +34,21 @@ func (c *ClusterReserve) ExpiringSoon() bool {
 
 // ClusterUsage represents aggregate cluster usage metrics
 type ClusterUsage struct {
-	Environment     string         `json:"environment"` // stage, prod, integration
-	TotalClusters   int            `json:"total_clusters"`
-	ByState         map[string]int `json:"by_state"`        // ready: 5, installing: 2
-	ByAvailability  map[string]int `json:"by_availability"` // reserved: 3, claimed: 2, used: 1
-	ByCloudProvider map[string]int `json:"by_cloud_provider,omitempty"`
-	ByVersion       map[string]int `json:"by_version,omitempty"`
-	LastUpdated     time.Time      `json:"last_updated"`
+	Environment      string         `json:"environment"` // stage, prod, integration
+	TotalClusters    int            `json:"total_clusters"`
+	ByState          map[string]int `json:"by_state"` // ready: 5, installing: 2
+	ByAvailability   map[string]int `json:"by_availability"` // reserved: 3, claimed: 2, used: 1
+	ByCloudProvider  map[string]int `json:"by_cloud_provider,omitempty"`
+	ByVersion        map[string]int `json:"by_version,omitempty"`
+	LastUpdated      time.Time      `json:"last_updated"`
 }
 
 // TestCase holds a single test case result for rendering in the UI
 type TestCase struct {
-	Name     string  `json:"name"`
+	Name     string `json:"name"`
 	Duration float64 `json:"duration_seconds"`
-	Status   string  `json:"status"`            // passed, failed, error, skipped
-	Message  string  `json:"message,omitempty"` // failure/error/skip message
+	Status   string `json:"status"` // passed, failed, error, skipped
+	Message  string `json:"message,omitempty"` // failure/error/skip message
 }
 
 // TestResult represents the outcome of a test execution
@@ -71,6 +71,7 @@ type TestResult struct {
 	TestCases    []TestCase `json:"test_cases,omitempty"`
 }
 
+
 // DashboardOverview provides a high-level summary for the main dashboard view
 type DashboardOverview struct {
 	TotalReservedClusters int            `json:"total_reserved_clusters"`
@@ -81,6 +82,7 @@ type DashboardOverview struct {
 	ClusterUsageSummary   []ClusterUsage `json:"cluster_usage_summary"`
 	LastUpdated           time.Time      `json:"last_updated"`
 }
+
 
 // APIResponse is a generic wrapper for API responses
 type APIResponse struct {
@@ -163,42 +165,42 @@ type PipelineRun struct {
 
 // PipelineHistory holds all historical runs for a single operator, grouped by version
 type PipelineHistory struct {
-	Name     string            `json:"name"`
-	Runs     []PipelineRun     `json:"runs"`     // sorted newest first (flat)
-	Versions []VersionPipeline `json:"versions"` // grouped by version, newest first
+	Name string            `json:"name"`
+	Runs         []PipelineRun     `json:"runs"`     // sorted newest first (flat)
+	Versions     []VersionPipeline `json:"versions"` // grouped by version, newest first
 }
 
 // VersionPipeline represents one version of an operator and its run results per env
 type VersionPipeline struct {
-	Version string                  `json:"version"`
-	Date    string                  `json:"date"`     // date of the most recent run
-	LastRun time.Time               `json:"last_run"` // timestamp of most recent run
-	EnvRuns map[string]*PipelineRun `json:"env_runs"` // keyed by env: "int", "stage", "prod"
+	Version  string                 `json:"version"`
+	Date     string                 `json:"date"`     // date of the most recent run
+	LastRun  time.Time              `json:"last_run"` // timestamp of most recent run
+	EnvRuns  map[string]*PipelineRun `json:"env_runs"` // keyed by env: "int", "stage", "prod"
 }
 
 // FailureEntry is one deliverable+version+env that shares a common failure root cause
 type FailureEntry struct {
-	Name    string    `json:"name"`
-	Version string    `json:"version"`
-	Env     string    `json:"env"`
-	LastRun time.Time `json:"last_run"`
-	JobID   string    `json:"job_id"`
-	LogURL  string    `json:"log_url,omitempty"`
+	Name string    `json:"name"`
+	Version      string    `json:"version"`
+	Env          string    `json:"env"`
+	LastRun      time.Time `json:"last_run"`
+	JobID        string    `json:"job_id"`
+	LogURL       string    `json:"log_url,omitempty"`
 }
 
 // FailureGroup groups deliverables that share a similar failure summary
 type FailureGroup struct {
-	FailureMatch    string         `json:"failure_match"`   // first sentence of LLM root cause or failure message — the grouping key
-	RootCause       string         `json:"root_cause"`      // full LLM root cause (from most recent entry with analysis)
-	Recommendations []string       `json:"recommendations"` // LLM recommendations
-	Entries         []FailureEntry `json:"entries"`         // sorted newest first
+	FailureMatch    string         `json:"failure_match"`    // first sentence of LLM root cause or failure message — the grouping key
+	RootCause       string         `json:"root_cause"`       // full LLM root cause (from most recent entry with analysis)
+	Recommendations []string       `json:"recommendations"`  // LLM recommendations
+	Entries         []FailureEntry `json:"entries"`          // sorted newest first
 }
 
 // HealthStatus represents the health check response
 type HealthStatus struct {
-	Status       string    `json:"status"` // ok, degraded, error
-	Version      string    `json:"version,omitempty"`
-	Timestamp    time.Time `json:"timestamp"`
-	OCMConnected bool      `json:"ocm_connected"`
-	S3Connected  bool      `json:"s3_connected"`
+	Status      string    `json:"status"` // ok, degraded, error
+	Version     string    `json:"version,omitempty"`
+	Timestamp   time.Time `json:"timestamp"`
+	OCMConnected bool     `json:"ocm_connected"`
+	S3Connected  bool     `json:"s3_connected"`
 }

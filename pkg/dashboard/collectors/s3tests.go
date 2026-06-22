@@ -168,6 +168,7 @@ func (c *TestResultsCollector) CollectRecentTests(maxResults int) ([]models.Test
 		// Stop if we have enough results
 		return len(resultsByJob) < maxResults
 	})
+
 	if err != nil {
 		return nil, fmt.Errorf("failed to list S3 objects: %w", err)
 	}
@@ -268,3 +269,5 @@ func (c *TestResultsCollector) parseJUnitXML(key, component, date, jobID string)
 		TestCases:    testCases,
 	}, nil
 }
+
+
