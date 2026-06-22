@@ -176,20 +176,20 @@ func (c *SQSConsumer) processKey(bucket, key string) error {
 	}
 
 	rec := store.RunRecord{
-		Name: name,
-		Env:          env,
-		Version:      version,
-		Status:       status,
-		Passed:       suite.Tests - suite.Failures - suite.Errors - suite.Skipped,
-		Failed:       suite.Failures + suite.Errors,
-		Total:        suite.Tests,
-		JobID:        jobID,
-		Date:         dateStr,
-		LastRun:      ts,
-		LogURL:       s3URL(c.opCollect.bucket, s3Dir+"/test_output.log"),
-		JUnitURL:     junitURL(c.opCollect.bucket, key),
-		FailedTests:  extractFailedTests(suite),
-		LLMAnalysis:  llm,
+		Name:        name,
+		Env:         env,
+		Version:     version,
+		Status:      status,
+		Passed:      suite.Tests - suite.Failures - suite.Errors - suite.Skipped,
+		Failed:      suite.Failures + suite.Errors,
+		Total:       suite.Tests,
+		JobID:       jobID,
+		Date:        dateStr,
+		LastRun:     ts,
+		LogURL:      s3URL(c.opCollect.bucket, s3Dir+"/test_output.log"),
+		JUnitURL:    junitURL(c.opCollect.bucket, key),
+		FailedTests: extractFailedTests(suite),
+		LLMAnalysis: llm,
 	}
 
 	if err := c.store.UpsertRun(rec); err != nil {
