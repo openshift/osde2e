@@ -16,6 +16,7 @@ import (
 	"github.com/openshift/osde2e/cmd/osde2e/arguments"
 	"github.com/openshift/osde2e/cmd/osde2e/cleanup"
 	"github.com/openshift/osde2e/cmd/osde2e/completion"
+	"github.com/openshift/osde2e/cmd/osde2e/dashboard"
 	"github.com/openshift/osde2e/cmd/osde2e/healthcheck"
 	"github.com/openshift/osde2e/cmd/osde2e/krknai"
 	"github.com/openshift/osde2e/cmd/osde2e/provision"
@@ -46,6 +47,7 @@ func init() {
 	root.AddCommand(completion.Cmd)
 	root.AddCommand(cleanup.Cmd)
 	root.AddCommand(krknai.Cmd)
+	root.AddCommand(dashboard.Cmd)
 }
 
 func main() {
