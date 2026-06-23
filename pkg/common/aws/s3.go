@@ -14,7 +14,7 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
+	"github.com/aws/aws-sdk-go-v2/feature/s3/transfermanager"
 	s3v2 "github.com/aws/aws-sdk-go-v2/service/s3"
 	s3types "github.com/aws/aws-sdk-go-v2/service/s3/types"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
@@ -165,8 +165,8 @@ func deleteAllObjectsFromBucket(ctx context.Context, client *s3v2.Client, bucket
 
 // S3Uploader handles uploading test artifacts to S3.
 type S3Uploader struct {
-	s3Client  *s3v2.Client      // cached S3 client for presigned URLs
-	uploader  *manager.Uploader // cached uploader for batch uploads
+	s3Client  *s3v2.Client            // cached S3 client for presigned URLs
+	uploader  *transfermanager.Client // cached uploader for batch uploads
 	bucket    string
 	component string // component name for organizing artifacts (e.g., "osd-example-operator")
 	category  string // top-level category for organizing artifacts (e.g., "test-results")
@@ -218,7 +218,7 @@ func NewS3Uploader(component string) (*S3Uploader, error) {
 
 	return &S3Uploader{
 		s3Client:  s3Client,
-		uploader:  manager.NewUploader(s3Client),
+		uploader:  transfermanager.New(s3Client),
 		bucket:    bucket,
 		component: component,
 		category:  "test-results",  // fixed category for S3 path organization
@@ -334,7 +334,7 @@ func (u *S3Uploader) UploadDirectory(srcDir string) ([]S3UploadResult, error) {
 
 		contentType := contentTypeForFile(filePath)
 
-		_, err = u.uploader.Upload(context.Background(), &s3v2.PutObjectInput{
+		_, err = u.uploader.UploadObject(context.Background(), &transfermanager.UploadObjectInput{
 			Bucket:      aws.String(u.bucket),
 			Key:         aws.String(s3Key),
 			Body:        file,

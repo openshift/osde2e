@@ -42,9 +42,6 @@ linters:
         text: 'SA1019.*Endpoints is deprecated'
       - linters:
           - staticcheck
-        text: 'SA1019.*superceded by feature/s3/transfermanager'
-      - linters:
-          - staticcheck
         text: 'SA1019.*EndpointSubset is deprecated'
     paths:
       - third_party$
