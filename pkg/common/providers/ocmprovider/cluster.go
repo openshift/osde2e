@@ -138,7 +138,7 @@ func (o *OCMProvider) LaunchCluster(clusterName string) (string, error) {
 		// Refactor: This is a hack to get the AWS CCS cluster to work. In reality today we are loading too many secrets and need a better way to do this.
 		// IE: If aws keys are set but not awsAccount, we should mention it's an AWS execution but we are missing credentials.
 		if viper.GetString(config.CloudProvider.CloudProviderID) == "aws" {
-			awsCreds, err := aws.CcsAwsSession.GetCredentials()
+			awsCreds, err := aws.CcsAwsSession.GetCredentials(context.Background())
 			if err != nil {
 				return "", err
 			} else if aws.CcsAwsSession.GetAccountId() == "" {
