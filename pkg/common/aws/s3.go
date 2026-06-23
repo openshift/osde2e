@@ -83,7 +83,7 @@ func (CcsAwsSession *ccsAwsSession) CleanupS3Buckets(ctx context.Context, active
 
 	for _, bucket := range result.Buckets {
 		bucketName := aws.ToString(bucket.Name)
-		if !(strings.Contains(bucketName, rolesubstr) || strings.Contains(bucketName, velerosubstr)) ||
+		if !strings.Contains(bucketName, rolesubstr) && !strings.Contains(bucketName, velerosubstr) ||
 			isS3BucketFromActiveCluster(bucketName, activeClusters) ||
 			bucketName == logsBucket {
 			continue
