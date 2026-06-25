@@ -1,0 +1,9 @@
+# Preset for bonfire-provisioned ephemeral ROSA HCP clusters.
+# Pair with deploy init that writes SHARED_DIR/cluster-id from ROSAControlPlane.status.id.
+# Use: --configs rosa,sts,stage,hypershift,ad-hoc-image,ephemeral-cluster
+cluster:
+  skipDestroyCluster: true
+  useClusterReserve: false
+tests:
+  skipClusterHealthChecks: false
+  adHocTestContainerTimeout: 30m
