@@ -42,7 +42,7 @@ func (CcsAwsSession *ccsAwsSession) GetAWSSessions() error {
 
 		if awsProfile != "" {
 			opts = append(opts, awsconfig.WithSharedConfigProfile(awsProfile))
-		} else if awsAccessKey != "" || awsSecretAccessKey != "" {
+		} else if awsAccessKey != "" && awsSecretAccessKey != "" {
 			opts = append(opts, awsconfig.WithCredentialsProvider(
 				credentials.NewStaticCredentialsProvider(awsAccessKey, awsSecretAccessKey, ""),
 			))

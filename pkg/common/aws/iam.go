@@ -285,23 +285,23 @@ func (CcsAwsSession *ccsAwsSession) CleanupRoles(ctx context.Context, activeClus
 		return counters, err
 	}
 
-	result, err := CcsAwsSession.iam.ListRoles(ctx, &iamv2.ListRolesInput{
-		MaxItems: aws.Int32(1000),
-	})
-	if err != nil {
-		return counters, err
-	}
-
-	for i := range result.Roles {
-		role := &result.Roles[i]
-		if role.RoleName == nil || role.Arn == nil {
-			continue
+	paginator := iamv2.NewListRolesPaginator(CcsAwsSession.iam, &iamv2.ListRolesInput{})
+	for paginator.HasMorePages() {
+		page, err := paginator.NextPage(ctx)
+		if err != nil {
+			return counters, err
 		}
-		roleName := aws.ToString(role.RoleName)
-		if !strings.Contains(aws.ToString(role.Arn), rolesubstr) || isRoleFromActiveCluster(aws.ToString(role.Arn), activeClusters) {
-			continue
+		for i := range page.Roles {
+			role := &page.Roles[i]
+			if role.RoleName == nil || role.Arn == nil {
+				continue
+			}
+			roleName := aws.ToString(role.RoleName)
+			if !strings.Contains(aws.ToString(role.Arn), rolesubstr) || isRoleFromActiveCluster(aws.ToString(role.Arn), activeClusters) {
+				continue
+			}
+			CcsAwsSession.cleanupOsde2eRole(ctx, role, roleName, dryrun, sendSummary, errorBuilder, &counters)
 		}
-		CcsAwsSession.cleanupOsde2eRole(ctx, role, roleName, dryrun, sendSummary, errorBuilder, &counters)
 	}
 
 	return counters, nil
