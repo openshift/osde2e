@@ -222,7 +222,7 @@ func sendSlackNotification(msg Message, runErr error) {
 }
 
 //nolint:gocyclo
-func run(_ context.Context) (msg Message, err error) {
+func run(ctx context.Context) (msg Message, err error) {
 	var summaryBuilder strings.Builder
 	var iamErrorBuilder strings.Builder
 	var s3ErrorBuilder strings.Builder
@@ -283,7 +283,7 @@ func run(_ context.Context) (msg Message, err error) {
 	if args.securityGroup {
 		sgDeletedCounter := 0
 		sgFailedCounter := 0
-		err = aws.CcsAwsSession.CleanupSecurityGroups(activeClusters, args.dryRun, args.sendSummary, &sgDeletedCounter, &sgFailedCounter, &sgErrorBuilder)
+		err = aws.CcsAwsSession.CleanupSecurityGroups(ctx, activeClusters, args.dryRun, args.sendSummary, &sgDeletedCounter, &sgFailedCounter, &sgErrorBuilder)
 		summaryBuilder.WriteString("Security Groups: " + strconv.Itoa(sgDeletedCounter) + "/" + strconv.Itoa(sgFailedCounter) + "\n")
 		if err != nil {
 			return msg, fmt.Errorf("could not cleanup security groups: %s", err.Error())
@@ -291,7 +291,7 @@ func run(_ context.Context) (msg Message, err error) {
 	}
 
 	if args.vpc {
-		vpcCounters, err := aws.CcsAwsSession.CleanupVPCs(activeClusters, args.dryRun, args.sendSummary, &vpcErrorBuilder)
+		vpcCounters, err := aws.CcsAwsSession.CleanupVPCs(ctx, activeClusters, args.dryRun, args.sendSummary, &vpcErrorBuilder)
 		summaryBuilder.WriteString("VPCs: " + strconv.Itoa(vpcCounters.Deleted) + "/" + strconv.Itoa(vpcCounters.Failed) + "\n")
 		if err != nil {
 			return msg, fmt.Errorf("could not cleanup vpc resources: %s", err.Error())
@@ -346,12 +346,12 @@ func run(_ context.Context) (msg Message, err error) {
 	}
 
 	if args.iam {
-		oidcCounters, err := aws.CcsAwsSession.CleanupOpenIDConnectProviders(activeClusters, args.dryRun, args.sendSummary, &iamErrorBuilder)
+		oidcCounters, err := aws.CcsAwsSession.CleanupOpenIDConnectProviders(ctx, activeClusters, args.dryRun, args.sendSummary, &iamErrorBuilder)
 		summaryBuilder.WriteString("OIDC providers: " + strconv.Itoa(oidcCounters.Deleted) + "/" + strconv.Itoa(oidcCounters.Failed) + "\n")
 		if err != nil {
 			return msg, fmt.Errorf("could not delete OIDC providers: %s", err.Error())
 		}
-		rolesCounters, err := aws.CcsAwsSession.CleanupRoles(activeClusters, args.dryRun, args.sendSummary, &iamErrorBuilder)
+		rolesCounters, err := aws.CcsAwsSession.CleanupRoles(ctx, activeClusters, args.dryRun, args.sendSummary, &iamErrorBuilder)
 		summaryBuilder.WriteString("Roles: " + strconv.Itoa(rolesCounters.Deleted) + "/" + strconv.Itoa(rolesCounters.Failed) + "\n")
 		if err != nil {
 			return msg, fmt.Errorf("could not delete IAM roles: %s", err.Error())
@@ -359,7 +359,7 @@ func run(_ context.Context) (msg Message, err error) {
 	}
 
 	if args.s3 {
-		s3Counters, err := aws.CcsAwsSession.CleanupS3Buckets(activeClusters, args.dryRun, args.sendSummary, &s3ErrorBuilder)
+		s3Counters, err := aws.CcsAwsSession.CleanupS3Buckets(ctx, activeClusters, args.dryRun, args.sendSummary, &s3ErrorBuilder)
 		summaryBuilder.WriteString("S3 Buckets: " + strconv.Itoa(s3Counters.Deleted) + "/" + strconv.Itoa(s3Counters.Failed) + "\n")
 		if err != nil {
 			return msg, fmt.Errorf("could not delete s3 buckets: %s", err.Error())
@@ -367,7 +367,7 @@ func run(_ context.Context) (msg Message, err error) {
 	}
 
 	if args.ec2 {
-		ec2Counters, err := aws.CcsAwsSession.TerminateEC2Instances(activeClusters, args.dryRun)
+		ec2Counters, err := aws.CcsAwsSession.TerminateEC2Instances(ctx, activeClusters, args.dryRun)
 		summaryBuilder.WriteString("EC2 Instances: " + strconv.Itoa(ec2Counters.Deleted) + "/" + strconv.Itoa(ec2Counters.Failed) + "\n")
 		if err != nil {
 			if !errors.Is(err, aws.ErrTerminateEC2Instances) {
@@ -382,7 +382,7 @@ func run(_ context.Context) (msg Message, err error) {
 	}
 
 	if args.elasticIP {
-		eipCounters, err := aws.CcsAwsSession.ReleaseElasticIPs(args.dryRun, args.sendSummary, &ipErrorBuilder)
+		eipCounters, err := aws.CcsAwsSession.ReleaseElasticIPs(ctx, args.dryRun, args.sendSummary, &ipErrorBuilder)
 		summaryBuilder.WriteString("Elastic IPs: " + strconv.Itoa(eipCounters.Deleted) + "/" + strconv.Itoa(eipCounters.Failed) + "\n")
 		if err != nil {
 			return msg, fmt.Errorf("could not release ips: %s", err.Error())

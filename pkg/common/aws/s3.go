@@ -1,6 +1,7 @@
 package aws
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io/fs"
@@ -12,9 +13,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/s3"
-	"github.com/aws/aws-sdk-go/service/s3/s3manager"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/feature/s3/transfermanager"
+	s3v2 "github.com/aws/aws-sdk-go-v2/service/s3"
+	s3types "github.com/aws/aws-sdk-go-v2/service/s3/types"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
 )
@@ -64,9 +66,9 @@ func CreateS3URL(bucket string, keys ...string) string {
 }
 
 // CleanupS3Buckets finds buckets with substring "osde2e-" or "managed-velero",
-// then deletes bucket objects and then buckets
+// then deletes bucket objects and then buckets.
 // Ignores buckets belonging to active clusters.
-func (CcsAwsSession *ccsAwsSession) CleanupS3Buckets(activeClusters map[string]bool, dryrun bool, sendSummary bool,
+func (CcsAwsSession *ccsAwsSession) CleanupS3Buckets(ctx context.Context, activeClusters map[string]bool, dryrun bool, sendSummary bool,
 	errorBuilder *strings.Builder,
 ) (counters Counters, err error) {
 	err = CcsAwsSession.GetAWSSessions()
@@ -74,48 +76,87 @@ func (CcsAwsSession *ccsAwsSession) CleanupS3Buckets(activeClusters map[string]b
 		return counters, err
 	}
 
-	result, err := CcsAwsSession.s3.ListBuckets(&s3.ListBucketsInput{})
+	result, err := CcsAwsSession.s3.ListBuckets(ctx, &s3v2.ListBucketsInput{})
 	if err != nil {
 		return counters, err
 	}
-	// Setup BatchDeleteIterator to iterate through a list of objects.
-	batchDeleteClient := s3manager.NewBatchDeleteWithClient(CcsAwsSession.s3)
 
 	for _, bucket := range result.Buckets {
-		if (strings.Contains(*bucket.Name, rolesubstr) || strings.Contains(*bucket.Name, velerosubstr)) && !isS3BucketFromActiveCluster(*bucket.Name, activeClusters) && *bucket.Name != logsBucket {
-			fmt.Printf("Bucket will be deleted: %s\n", bucket)
-			if !dryrun {
-				iter := s3manager.NewDeleteListIterator(CcsAwsSession.s3, &s3.ListObjectsInput{
-					Bucket: bucket.Name,
-				})
-				if err := batchDeleteClient.Delete(aws.BackgroundContext(), iter); err != nil {
-					errorMsg := fmt.Sprintf("error deleting objects from bucket %s, skipping: %s", *bucket.Name, err)
-					fmt.Println(errorMsg)
-					counters.Failed++
-					if sendSummary && errorBuilder.Len() < 10000 {
-						errorBuilder.WriteString(strings.ReplaceAll(errorMsg, `""`, ""))
-					}
-					continue
+		bucketName := aws.ToString(bucket.Name)
+		if !strings.Contains(bucketName, rolesubstr) && !strings.Contains(bucketName, velerosubstr) ||
+			isS3BucketFromActiveCluster(bucketName, activeClusters) ||
+			bucketName == logsBucket {
+			continue
+		}
+
+		fmt.Printf("Bucket will be deleted: %s\n", bucketName)
+		if !dryrun {
+			err := deleteAllObjectsFromBucket(ctx, CcsAwsSession.s3, bucket.Name)
+			if err != nil {
+				errorMsg := fmt.Sprintf("error deleting objects from bucket %s, skipping: %s", bucketName, err)
+				fmt.Println(errorMsg)
+				counters.Failed++
+				if sendSummary && errorBuilder.Len() < 10000 {
+					errorBuilder.WriteString(strings.ReplaceAll(errorMsg, `""`, ""))
 				}
-				fmt.Println("Deleted object(s) from bucket")
-				if _, err := CcsAwsSession.s3.DeleteBucket(&s3.DeleteBucketInput{
-					Bucket: bucket.Name,
-				}); err != nil {
-					errorMsg := fmt.Sprintf("error deleting bucket: %s: %s", *bucket.Name, err)
-					fmt.Println(errorMsg)
-					counters.Failed++
-					if sendSummary && errorBuilder.Len() < config.SlackMessageLength {
-						errorBuilder.WriteString(strings.ReplaceAll(errorMsg, `""`, ""))
-					}
-					continue
-				}
-				fmt.Println("Deleted bucket")
-				counters.Deleted++
+				continue
 			}
+			fmt.Println("Deleted object(s) from bucket")
+
+			_, err = CcsAwsSession.s3.DeleteBucket(ctx, &s3v2.DeleteBucketInput{
+				Bucket: bucket.Name,
+			})
+			if err != nil {
+				errorMsg := fmt.Sprintf("error deleting bucket: %s: %s", bucketName, err)
+				fmt.Println(errorMsg)
+				counters.Failed++
+				if sendSummary && errorBuilder.Len() < config.SlackMessageLength {
+					errorBuilder.WriteString(strings.ReplaceAll(errorMsg, `""`, ""))
+				}
+				continue
+			}
+			fmt.Println("Deleted bucket")
+			counters.Deleted++
 		}
 	}
 
 	return counters, nil
+}
+
+// deleteAllObjectsFromBucket paginates over all objects in a bucket and deletes them
+// in batches of 1000 (the AWS limit per DeleteObjects call).
+func deleteAllObjectsFromBucket(ctx context.Context, client *s3v2.Client, bucketName *string) error {
+	paginator := s3v2.NewListObjectsV2Paginator(client, &s3v2.ListObjectsV2Input{
+		Bucket: bucketName,
+	})
+
+	for paginator.HasMorePages() {
+		page, err := paginator.NextPage(ctx)
+		if err != nil {
+			return fmt.Errorf("list objects: %w", err)
+		}
+		if len(page.Contents) == 0 {
+			continue
+		}
+
+		objects := make([]s3types.ObjectIdentifier, len(page.Contents))
+		for i, obj := range page.Contents {
+			objects[i] = s3types.ObjectIdentifier{Key: obj.Key}
+		}
+
+		_, err = client.DeleteObjects(ctx, &s3v2.DeleteObjectsInput{
+			Bucket: bucketName,
+			Delete: &s3types.Delete{
+				Objects: objects,
+				Quiet:   aws.Bool(true),
+			},
+		})
+		if err != nil {
+			return fmt.Errorf("delete objects batch: %w", err)
+		}
+	}
+
+	return nil
 }
 
 // =============================================================================
@@ -124,8 +165,8 @@ func (CcsAwsSession *ccsAwsSession) CleanupS3Buckets(activeClusters map[string]b
 
 // S3Uploader handles uploading test artifacts to S3.
 type S3Uploader struct {
-	s3Client  *s3.S3              // cached S3 client for presigned URLs
-	uploader  *s3manager.Uploader // cached uploader for batch uploads
+	s3Client  *s3v2.Client            // cached S3 client for presigned URLs
+	uploader  *transfermanager.Client // cached uploader for batch uploads
 	bucket    string
 	component string // component name for organizing artifacts (e.g., "osd-example-operator")
 	category  string // top-level category for organizing artifacts (e.g., "test-results")
@@ -157,24 +198,27 @@ func NewS3Uploader(component string) (*S3Uploader, error) {
 		return nil, ErrNoAWSCredentials
 	}
 
-	// Use the global AWS session for credentials, but override the region
+	// Use the global AWS config for credentials, but override the region
 	// for the S3 client. The log bucket lives in a fixed AWS region that is
 	// independent of the cluster's cloud provider region (which may be a GCP
 	// region like "us-east1" that is invalid for AWS).
-	sess, err := CcsAwsSession.GetSession()
+	cfg, err := CcsAwsSession.GetConfig()
 	if err != nil {
-		return nil, fmt.Errorf("failed to get AWS session: %w", err)
+		return nil, fmt.Errorf("failed to get AWS config: %w", err)
 	}
 
-	s3Sess := sess.Copy(aws.NewConfig().WithRegion(logsBucketRegion))
+	cfgWithRegion := cfg.Copy()
+	cfgWithRegion.Region = logsBucketRegion
 
 	if component == "" {
 		component = "unknown"
 	}
 
+	s3Client := s3v2.NewFromConfig(cfgWithRegion)
+
 	return &S3Uploader{
-		s3Client:  s3.New(s3Sess),
-		uploader:  s3manager.NewUploader(s3Sess),
+		s3Client:  s3Client,
+		uploader:  transfermanager.New(s3Client),
 		bucket:    bucket,
 		component: component,
 		category:  "test-results",  // fixed category for S3 path organization
@@ -290,7 +334,7 @@ func (u *S3Uploader) UploadDirectory(srcDir string) ([]S3UploadResult, error) {
 
 		contentType := contentTypeForFile(filePath)
 
-		_, err = u.uploader.Upload(&s3manager.UploadInput{
+		_, err = u.uploader.UploadObject(context.Background(), &transfermanager.UploadObjectInput{
 			Bucket:      aws.String(u.bucket),
 			Key:         aws.String(s3Key),
 			Body:        file,
@@ -325,9 +369,15 @@ func (u *S3Uploader) UploadDirectory(srcDir string) ([]S3UploadResult, error) {
 }
 
 func (u *S3Uploader) generatePresignedURL(key string) (string, error) {
-	req, _ := u.s3Client.GetObjectRequest(&s3.GetObjectInput{
+	presignClient := s3v2.NewPresignClient(u.s3Client)
+	req, err := presignClient.PresignGetObject(context.Background(), &s3v2.GetObjectInput{
 		Bucket: aws.String(u.bucket),
 		Key:    aws.String(key),
+	}, func(opts *s3v2.PresignOptions) {
+		opts.Expires = u.urlExpiry
 	})
-	return req.Presign(u.urlExpiry)
+	if err != nil {
+		return "", err
+	}
+	return req.URL, nil
 }

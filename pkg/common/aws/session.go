@@ -1,33 +1,34 @@
 package aws
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"sync"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/credentials"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/ec2"
-	"github.com/aws/aws-sdk-go/service/iam"
-	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	awsconfig "github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/credentials"
+	ec2v2 "github.com/aws/aws-sdk-go-v2/service/ec2"
+	iamv2 "github.com/aws/aws-sdk-go-v2/service/iam"
+	s3v2 "github.com/aws/aws-sdk-go-v2/service/s3"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
 )
 
 type ccsAwsSession struct {
-	session   *session.Session
+	cfg       aws.Config
 	accountId string
-	iam       *iam.IAM
-	s3        *s3.S3
-	ec2       *ec2.EC2
+	iam       *iamv2.Client
+	s3        *s3v2.Client
+	ec2       *ec2v2.Client
 	once      sync.Once
 }
 
-// CCSAWSSession is the global AWS session for interacting with AWS.
+// CcsAwsSession is the global AWS session for interacting with AWS.
 var CcsAwsSession ccsAwsSession
 
-// GetAWSSessions returns a new AWS type with the first AWS account in the config file. The session is cached for the rest of the program.
+// GetAWSSessions initializes the AWS config and service clients. The result is cached for the rest of the program.
 func (CcsAwsSession *ccsAwsSession) GetAWSSessions() error {
 	var err error
 
@@ -36,55 +37,55 @@ func (CcsAwsSession *ccsAwsSession) GetAWSSessions() error {
 		awsAccessKey := viper.GetString(config.AWSAccessKey)
 		awsSecretAccessKey := viper.GetString(config.AWSSecretAccessKey)
 
-		options := session.Options{
-			Config: aws.Config{
-				Region: aws.String(viper.GetString(config.AWSRegion)),
-			},
-		}
+		var opts []func(*awsconfig.LoadOptions) error
+		opts = append(opts, awsconfig.WithRegion(viper.GetString(config.AWSRegion)))
 
 		if awsProfile != "" {
-			options.Profile = awsProfile
-		} else if awsAccessKey != "" || awsSecretAccessKey != "" {
-			options.Config.Credentials = credentials.NewStaticCredentials(awsAccessKey, awsSecretAccessKey, "")
+			opts = append(opts, awsconfig.WithSharedConfigProfile(awsProfile))
+		} else if awsAccessKey != "" && awsSecretAccessKey != "" {
+			opts = append(opts, awsconfig.WithCredentialsProvider(
+				credentials.NewStaticCredentialsProvider(awsAccessKey, awsSecretAccessKey, ""),
+			))
 		}
 
-		CcsAwsSession.session, err = session.NewSessionWithOptions(options)
-		CcsAwsSession.iam = iam.New(CcsAwsSession.session)
-		CcsAwsSession.s3 = s3.New(CcsAwsSession.session)
-		CcsAwsSession.ec2 = ec2.New(CcsAwsSession.session)
+		CcsAwsSession.cfg, err = awsconfig.LoadDefaultConfig(context.Background(), opts...)
+		if err != nil {
+			log.Printf("error initializing AWS config: %v", err)
+			return
+		}
+		CcsAwsSession.iam = iamv2.NewFromConfig(CcsAwsSession.cfg)
+		CcsAwsSession.s3 = s3v2.NewFromConfig(CcsAwsSession.cfg)
+		CcsAwsSession.ec2 = ec2v2.NewFromConfig(CcsAwsSession.cfg)
 		CcsAwsSession.accountId = viper.GetString(config.AWSAccountId)
 	})
-	if err != nil {
-		log.Printf("error initializing AWS session: %v", err)
-	}
 
-	return nil
+	return err
 }
 
-func (CcsAwsSession *ccsAwsSession) GetSession() (*session.Session, error) {
+func (CcsAwsSession *ccsAwsSession) GetConfig() (aws.Config, error) {
 	err := CcsAwsSession.GetAWSSessions()
-	return CcsAwsSession.session, err
+	return CcsAwsSession.cfg, err
 }
 
-// GetCredentials returns the credentials for the current aws session
-func (CcsAwsSession *ccsAwsSession) GetCredentials() (*credentials.Value, error) {
+// GetCredentials returns the credentials for the current aws session.
+func (CcsAwsSession *ccsAwsSession) GetCredentials(ctx context.Context) (*aws.Credentials, error) {
 	if err := CcsAwsSession.GetAWSSessions(); err != nil {
 		return nil, fmt.Errorf("failed to create aws session to retrieve credentials: %v", err)
 	}
 
-	creds, err := CcsAwsSession.session.Config.Credentials.Get()
+	creds, err := CcsAwsSession.cfg.Credentials.Retrieve(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get aws credentials: %v", err)
 	}
 	return &creds, nil
 }
 
-// GetRegion returns the region set when the session was created
-func (CcsAwsSession *ccsAwsSession) GetRegion() *string {
-	return CcsAwsSession.session.Config.Region
+// GetRegion returns the region set when the session was created.
+func (CcsAwsSession *ccsAwsSession) GetRegion() string {
+	return CcsAwsSession.cfg.Region
 }
 
-// GetAccountId returns the aws account id in session
+// GetAccountId returns the aws account id in session.
 func (CcsAwsSession *ccsAwsSession) GetAccountId() string {
 	return CcsAwsSession.accountId
 }

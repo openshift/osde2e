@@ -1,72 +1,75 @@
 package aws
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"testing"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/awserr"
-	"github.com/aws/aws-sdk-go/service/cloudformation"
-	"github.com/aws/aws-sdk-go/service/ec2"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	cfnv2 "github.com/aws/aws-sdk-go-v2/service/cloudformation"
+	cfntypes "github.com/aws/aws-sdk-go-v2/service/cloudformation/types"
+	ec2v2 "github.com/aws/aws-sdk-go-v2/service/ec2"
+	ec2types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
+	smithy "github.com/aws/smithy-go"
 )
 
 type mockSGEC2 struct {
-	describeVpcsFn        func(*ec2.DescribeVpcsInput) (*ec2.DescribeVpcsOutput, error)
-	describeSGFn          func(*ec2.DescribeSecurityGroupsInput) (*ec2.DescribeSecurityGroupsOutput, error)
-	revokeIngressFn       func(*ec2.RevokeSecurityGroupIngressInput) (*ec2.RevokeSecurityGroupIngressOutput, error)
-	revokeEgressFn        func(*ec2.RevokeSecurityGroupEgressInput) (*ec2.RevokeSecurityGroupEgressOutput, error)
-	deleteSecurityGroupFn func(*ec2.DeleteSecurityGroupInput) (*ec2.DeleteSecurityGroupOutput, error)
+	describeVpcsFn        func(context.Context, *ec2v2.DescribeVpcsInput, ...func(*ec2v2.Options)) (*ec2v2.DescribeVpcsOutput, error)
+	describeSGFn          func(context.Context, *ec2v2.DescribeSecurityGroupsInput, ...func(*ec2v2.Options)) (*ec2v2.DescribeSecurityGroupsOutput, error)
+	revokeIngressFn       func(context.Context, *ec2v2.RevokeSecurityGroupIngressInput, ...func(*ec2v2.Options)) (*ec2v2.RevokeSecurityGroupIngressOutput, error)
+	revokeEgressFn        func(context.Context, *ec2v2.RevokeSecurityGroupEgressInput, ...func(*ec2v2.Options)) (*ec2v2.RevokeSecurityGroupEgressOutput, error)
+	deleteSecurityGroupFn func(context.Context, *ec2v2.DeleteSecurityGroupInput, ...func(*ec2v2.Options)) (*ec2v2.DeleteSecurityGroupOutput, error)
 }
 
-func (m *mockSGEC2) DescribeVpcs(input *ec2.DescribeVpcsInput) (*ec2.DescribeVpcsOutput, error) {
-	return m.describeVpcsFn(input)
+func (m *mockSGEC2) DescribeVpcs(ctx context.Context, input *ec2v2.DescribeVpcsInput, optFns ...func(*ec2v2.Options)) (*ec2v2.DescribeVpcsOutput, error) {
+	return m.describeVpcsFn(ctx, input, optFns...)
 }
 
-func (m *mockSGEC2) DescribeSecurityGroups(input *ec2.DescribeSecurityGroupsInput) (*ec2.DescribeSecurityGroupsOutput, error) {
-	return m.describeSGFn(input)
+func (m *mockSGEC2) DescribeSecurityGroups(ctx context.Context, input *ec2v2.DescribeSecurityGroupsInput, optFns ...func(*ec2v2.Options)) (*ec2v2.DescribeSecurityGroupsOutput, error) {
+	return m.describeSGFn(ctx, input, optFns...)
 }
 
-func (m *mockSGEC2) RevokeSecurityGroupIngress(input *ec2.RevokeSecurityGroupIngressInput) (*ec2.RevokeSecurityGroupIngressOutput, error) {
+func (m *mockSGEC2) RevokeSecurityGroupIngress(ctx context.Context, input *ec2v2.RevokeSecurityGroupIngressInput, optFns ...func(*ec2v2.Options)) (*ec2v2.RevokeSecurityGroupIngressOutput, error) {
 	if m.revokeIngressFn != nil {
-		return m.revokeIngressFn(input)
+		return m.revokeIngressFn(ctx, input, optFns...)
 	}
-	return &ec2.RevokeSecurityGroupIngressOutput{}, nil
+	return &ec2v2.RevokeSecurityGroupIngressOutput{}, nil
 }
 
-func (m *mockSGEC2) RevokeSecurityGroupEgress(input *ec2.RevokeSecurityGroupEgressInput) (*ec2.RevokeSecurityGroupEgressOutput, error) {
+func (m *mockSGEC2) RevokeSecurityGroupEgress(ctx context.Context, input *ec2v2.RevokeSecurityGroupEgressInput, optFns ...func(*ec2v2.Options)) (*ec2v2.RevokeSecurityGroupEgressOutput, error) {
 	if m.revokeEgressFn != nil {
-		return m.revokeEgressFn(input)
+		return m.revokeEgressFn(ctx, input, optFns...)
 	}
-	return &ec2.RevokeSecurityGroupEgressOutput{}, nil
+	return &ec2v2.RevokeSecurityGroupEgressOutput{}, nil
 }
 
-func (m *mockSGEC2) DeleteSecurityGroup(input *ec2.DeleteSecurityGroupInput) (*ec2.DeleteSecurityGroupOutput, error) {
-	return m.deleteSecurityGroupFn(input)
+func (m *mockSGEC2) DeleteSecurityGroup(ctx context.Context, input *ec2v2.DeleteSecurityGroupInput, optFns ...func(*ec2v2.Options)) (*ec2v2.DeleteSecurityGroupOutput, error) {
+	return m.deleteSecurityGroupFn(ctx, input, optFns...)
 }
 
 type mockSGCFN struct {
-	describeStacksFn func(*cloudformation.DescribeStacksInput) (*cloudformation.DescribeStacksOutput, error)
+	describeStacksFn func(context.Context, *cfnv2.DescribeStacksInput, ...func(*cfnv2.Options)) (*cfnv2.DescribeStacksOutput, error)
 }
 
-func (m *mockSGCFN) DescribeStacks(input *cloudformation.DescribeStacksInput) (*cloudformation.DescribeStacksOutput, error) {
-	return m.describeStacksFn(input)
+func (m *mockSGCFN) DescribeStacks(ctx context.Context, input *cfnv2.DescribeStacksInput, optFns ...func(*cfnv2.Options)) (*cfnv2.DescribeStacksOutput, error) {
+	return m.describeStacksFn(ctx, input, optFns...)
 }
 
-func makeVPC(id, name string) *ec2.Vpc {
-	vpc := &ec2.Vpc{
+func makeVPC(id, name string) ec2types.Vpc {
+	vpc := ec2types.Vpc{
 		VpcId: aws.String(id),
 	}
 	if name != "" {
-		vpc.Tags = []*ec2.Tag{
+		vpc.Tags = []ec2types.Tag{
 			{Key: aws.String("Name"), Value: aws.String(name)},
 		}
 	}
 	return vpc
 }
 
-func makeSG(id, name string, ingress, egress []*ec2.IpPermission) *ec2.SecurityGroup {
-	return &ec2.SecurityGroup{
+func makeSG(id, name string, ingress, egress []ec2types.IpPermission) ec2types.SecurityGroup {
+	return ec2types.SecurityGroup{
 		GroupId:             aws.String(id),
 		GroupName:           aws.String(name),
 		IpPermissions:       ingress,
@@ -74,24 +77,24 @@ func makeSG(id, name string, ingress, egress []*ec2.IpPermission) *ec2.SecurityG
 	}
 }
 
-func deleteFailedStack(name string) *cloudformation.DescribeStacksOutput {
-	return &cloudformation.DescribeStacksOutput{
-		Stacks: []*cloudformation.Stack{
-			{StackName: aws.String(name), StackStatus: aws.String("DELETE_FAILED")},
+func deleteFailedStack(name string) *cfnv2.DescribeStacksOutput {
+	return &cfnv2.DescribeStacksOutput{
+		Stacks: []cfntypes.Stack{
+			{StackName: aws.String(name), StackStatus: cfntypes.StackStatusDeleteFailed},
 		},
 	}
 }
 
 func TestCleanupSecurityGroups_NoVPCs(t *testing.T) {
 	ec2Mock := &mockSGEC2{
-		describeVpcsFn: func(*ec2.DescribeVpcsInput) (*ec2.DescribeVpcsOutput, error) {
-			return &ec2.DescribeVpcsOutput{Vpcs: []*ec2.Vpc{}}, nil
+		describeVpcsFn: func(_ context.Context, _ *ec2v2.DescribeVpcsInput, _ ...func(*ec2v2.Options)) (*ec2v2.DescribeVpcsOutput, error) {
+			return &ec2v2.DescribeVpcsOutput{Vpcs: []ec2types.Vpc{}}, nil
 		},
 	}
 
 	deleted, failed := 0, 0
 	var errBuilder strings.Builder
-	err := cleanupSecurityGroups(ec2Mock, &mockSGCFN{}, nil, false, false, &deleted, &failed, &errBuilder)
+	err := cleanupSecurityGroups(context.Background(), ec2Mock, &mockSGCFN{}, nil, false, false, &deleted, &failed, &errBuilder)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -102,14 +105,14 @@ func TestCleanupSecurityGroups_NoVPCs(t *testing.T) {
 
 func TestCleanupSecurityGroups_DescribeVpcsError(t *testing.T) {
 	ec2Mock := &mockSGEC2{
-		describeVpcsFn: func(*ec2.DescribeVpcsInput) (*ec2.DescribeVpcsOutput, error) {
+		describeVpcsFn: func(_ context.Context, _ *ec2v2.DescribeVpcsInput, _ ...func(*ec2v2.Options)) (*ec2v2.DescribeVpcsOutput, error) {
 			return nil, fmt.Errorf("ec2 api error")
 		},
 	}
 
 	deleted, failed := 0, 0
 	var errBuilder strings.Builder
-	err := cleanupSecurityGroups(ec2Mock, &mockSGCFN{}, nil, false, false, &deleted, &failed, &errBuilder)
+	err := cleanupSecurityGroups(context.Background(), ec2Mock, &mockSGCFN{}, nil, false, false, &deleted, &failed, &errBuilder)
 
 	if err == nil {
 		t.Fatal("expected error, got nil")
@@ -119,14 +122,14 @@ func TestCleanupSecurityGroups_DescribeVpcsError(t *testing.T) {
 func TestCleanupSecurityGroups_SkipsVPCWithNoNameTag(t *testing.T) {
 	cfnCalled := false
 	ec2Mock := &mockSGEC2{
-		describeVpcsFn: func(*ec2.DescribeVpcsInput) (*ec2.DescribeVpcsOutput, error) {
-			return &ec2.DescribeVpcsOutput{
-				Vpcs: []*ec2.Vpc{makeVPC("vpc-1", "")},
+		describeVpcsFn: func(_ context.Context, _ *ec2v2.DescribeVpcsInput, _ ...func(*ec2v2.Options)) (*ec2v2.DescribeVpcsOutput, error) {
+			return &ec2v2.DescribeVpcsOutput{
+				Vpcs: []ec2types.Vpc{makeVPC("vpc-1", "")},
 			}, nil
 		},
 	}
 	cfnMock := &mockSGCFN{
-		describeStacksFn: func(*cloudformation.DescribeStacksInput) (*cloudformation.DescribeStacksOutput, error) {
+		describeStacksFn: func(_ context.Context, _ *cfnv2.DescribeStacksInput, _ ...func(*cfnv2.Options)) (*cfnv2.DescribeStacksOutput, error) {
 			cfnCalled = true
 			return nil, fmt.Errorf("should not be called")
 		},
@@ -134,7 +137,7 @@ func TestCleanupSecurityGroups_SkipsVPCWithNoNameTag(t *testing.T) {
 
 	deleted, failed := 0, 0
 	var errBuilder strings.Builder
-	err := cleanupSecurityGroups(ec2Mock, cfnMock, nil, false, false, &deleted, &failed, &errBuilder)
+	err := cleanupSecurityGroups(context.Background(), ec2Mock, cfnMock, nil, false, false, &deleted, &failed, &errBuilder)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -146,14 +149,14 @@ func TestCleanupSecurityGroups_SkipsVPCWithNoNameTag(t *testing.T) {
 func TestCleanupSecurityGroups_SkipsActiveClusterVPC(t *testing.T) {
 	cfnCalled := false
 	ec2Mock := &mockSGEC2{
-		describeVpcsFn: func(*ec2.DescribeVpcsInput) (*ec2.DescribeVpcsOutput, error) {
-			return &ec2.DescribeVpcsOutput{
-				Vpcs: []*ec2.Vpc{makeVPC("vpc-1", "osde2e-abcde-fghij-vpc")},
+		describeVpcsFn: func(_ context.Context, _ *ec2v2.DescribeVpcsInput, _ ...func(*ec2v2.Options)) (*ec2v2.DescribeVpcsOutput, error) {
+			return &ec2v2.DescribeVpcsOutput{
+				Vpcs: []ec2types.Vpc{makeVPC("vpc-1", "osde2e-abcde-fghij-vpc")},
 			}, nil
 		},
 	}
 	cfnMock := &mockSGCFN{
-		describeStacksFn: func(*cloudformation.DescribeStacksInput) (*cloudformation.DescribeStacksOutput, error) {
+		describeStacksFn: func(_ context.Context, _ *cfnv2.DescribeStacksInput, _ ...func(*cfnv2.Options)) (*cfnv2.DescribeStacksOutput, error) {
 			cfnCalled = true
 			return nil, fmt.Errorf("should not be called")
 		},
@@ -162,7 +165,7 @@ func TestCleanupSecurityGroups_SkipsActiveClusterVPC(t *testing.T) {
 	activeClusters := map[string]bool{"osde2e-abcde": true}
 	deleted, failed := 0, 0
 	var errBuilder strings.Builder
-	err := cleanupSecurityGroups(ec2Mock, cfnMock, activeClusters, false, false, &deleted, &failed, &errBuilder)
+	err := cleanupSecurityGroups(context.Background(), ec2Mock, cfnMock, activeClusters, false, false, &deleted, &failed, &errBuilder)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -174,25 +177,25 @@ func TestCleanupSecurityGroups_SkipsActiveClusterVPC(t *testing.T) {
 func TestCleanupSecurityGroups_SkipsWhenStackNotFound(t *testing.T) {
 	sgCalled := false
 	ec2Mock := &mockSGEC2{
-		describeVpcsFn: func(*ec2.DescribeVpcsInput) (*ec2.DescribeVpcsOutput, error) {
-			return &ec2.DescribeVpcsOutput{
-				Vpcs: []*ec2.Vpc{makeVPC("vpc-1", "osde2e-abcde-fghij-vpc")},
+		describeVpcsFn: func(_ context.Context, _ *ec2v2.DescribeVpcsInput, _ ...func(*ec2v2.Options)) (*ec2v2.DescribeVpcsOutput, error) {
+			return &ec2v2.DescribeVpcsOutput{
+				Vpcs: []ec2types.Vpc{makeVPC("vpc-1", "osde2e-abcde-fghij-vpc")},
 			}, nil
 		},
-		describeSGFn: func(*ec2.DescribeSecurityGroupsInput) (*ec2.DescribeSecurityGroupsOutput, error) {
+		describeSGFn: func(_ context.Context, _ *ec2v2.DescribeSecurityGroupsInput, _ ...func(*ec2v2.Options)) (*ec2v2.DescribeSecurityGroupsOutput, error) {
 			sgCalled = true
 			return nil, fmt.Errorf("should not be called")
 		},
 	}
 	cfnMock := &mockSGCFN{
-		describeStacksFn: func(*cloudformation.DescribeStacksInput) (*cloudformation.DescribeStacksOutput, error) {
-			return nil, awserr.New("ValidationError", "Stack does not exist", nil)
+		describeStacksFn: func(_ context.Context, _ *cfnv2.DescribeStacksInput, _ ...func(*cfnv2.Options)) (*cfnv2.DescribeStacksOutput, error) {
+			return nil, &smithy.GenericAPIError{Code: "ValidationError", Message: "Stack does not exist"}
 		},
 	}
 
 	deleted, failed := 0, 0
 	var errBuilder strings.Builder
-	err := cleanupSecurityGroups(ec2Mock, cfnMock, nil, false, false, &deleted, &failed, &errBuilder)
+	err := cleanupSecurityGroups(context.Background(), ec2Mock, cfnMock, nil, false, false, &deleted, &failed, &errBuilder)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -204,25 +207,25 @@ func TestCleanupSecurityGroups_SkipsWhenStackNotFound(t *testing.T) {
 func TestCleanupSecurityGroups_SkipsNonValidationErrorFromDescribeStacks(t *testing.T) {
 	sgCalled := false
 	ec2Mock := &mockSGEC2{
-		describeVpcsFn: func(*ec2.DescribeVpcsInput) (*ec2.DescribeVpcsOutput, error) {
-			return &ec2.DescribeVpcsOutput{
-				Vpcs: []*ec2.Vpc{makeVPC("vpc-1", "osde2e-abcde-fghij-vpc")},
+		describeVpcsFn: func(_ context.Context, _ *ec2v2.DescribeVpcsInput, _ ...func(*ec2v2.Options)) (*ec2v2.DescribeVpcsOutput, error) {
+			return &ec2v2.DescribeVpcsOutput{
+				Vpcs: []ec2types.Vpc{makeVPC("vpc-1", "osde2e-abcde-fghij-vpc")},
 			}, nil
 		},
-		describeSGFn: func(*ec2.DescribeSecurityGroupsInput) (*ec2.DescribeSecurityGroupsOutput, error) {
+		describeSGFn: func(_ context.Context, _ *ec2v2.DescribeSecurityGroupsInput, _ ...func(*ec2v2.Options)) (*ec2v2.DescribeSecurityGroupsOutput, error) {
 			sgCalled = true
 			return nil, fmt.Errorf("should not be called")
 		},
 	}
 	cfnMock := &mockSGCFN{
-		describeStacksFn: func(*cloudformation.DescribeStacksInput) (*cloudformation.DescribeStacksOutput, error) {
-			return nil, awserr.New("InternalError", "something broke", nil)
+		describeStacksFn: func(_ context.Context, _ *cfnv2.DescribeStacksInput, _ ...func(*cfnv2.Options)) (*cfnv2.DescribeStacksOutput, error) {
+			return nil, &smithy.GenericAPIError{Code: "InternalError", Message: "something broke"}
 		},
 	}
 
 	deleted, failed := 0, 0
 	var errBuilder strings.Builder
-	err := cleanupSecurityGroups(ec2Mock, cfnMock, nil, false, false, &deleted, &failed, &errBuilder)
+	err := cleanupSecurityGroups(context.Background(), ec2Mock, cfnMock, nil, false, false, &deleted, &failed, &errBuilder)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -234,21 +237,21 @@ func TestCleanupSecurityGroups_SkipsNonValidationErrorFromDescribeStacks(t *test
 func TestCleanupSecurityGroups_SkipsStackNotInDeleteFailed(t *testing.T) {
 	sgCalled := false
 	ec2Mock := &mockSGEC2{
-		describeVpcsFn: func(*ec2.DescribeVpcsInput) (*ec2.DescribeVpcsOutput, error) {
-			return &ec2.DescribeVpcsOutput{
-				Vpcs: []*ec2.Vpc{makeVPC("vpc-1", "osde2e-abcde-fghij-vpc")},
+		describeVpcsFn: func(_ context.Context, _ *ec2v2.DescribeVpcsInput, _ ...func(*ec2v2.Options)) (*ec2v2.DescribeVpcsOutput, error) {
+			return &ec2v2.DescribeVpcsOutput{
+				Vpcs: []ec2types.Vpc{makeVPC("vpc-1", "osde2e-abcde-fghij-vpc")},
 			}, nil
 		},
-		describeSGFn: func(*ec2.DescribeSecurityGroupsInput) (*ec2.DescribeSecurityGroupsOutput, error) {
+		describeSGFn: func(_ context.Context, _ *ec2v2.DescribeSecurityGroupsInput, _ ...func(*ec2v2.Options)) (*ec2v2.DescribeSecurityGroupsOutput, error) {
 			sgCalled = true
 			return nil, fmt.Errorf("should not be called")
 		},
 	}
 	cfnMock := &mockSGCFN{
-		describeStacksFn: func(*cloudformation.DescribeStacksInput) (*cloudformation.DescribeStacksOutput, error) {
-			return &cloudformation.DescribeStacksOutput{
-				Stacks: []*cloudformation.Stack{
-					{StackName: aws.String("osde2e-abcde-vpc"), StackStatus: aws.String("CREATE_COMPLETE")},
+		describeStacksFn: func(_ context.Context, _ *cfnv2.DescribeStacksInput, _ ...func(*cfnv2.Options)) (*cfnv2.DescribeStacksOutput, error) {
+			return &cfnv2.DescribeStacksOutput{
+				Stacks: []cfntypes.Stack{
+					{StackName: aws.String("osde2e-abcde-vpc"), StackStatus: cfntypes.StackStatusCreateComplete},
 				},
 			}, nil
 		},
@@ -256,7 +259,7 @@ func TestCleanupSecurityGroups_SkipsStackNotInDeleteFailed(t *testing.T) {
 
 	deleted, failed := 0, 0
 	var errBuilder strings.Builder
-	err := cleanupSecurityGroups(ec2Mock, cfnMock, nil, false, false, &deleted, &failed, &errBuilder)
+	err := cleanupSecurityGroups(context.Background(), ec2Mock, cfnMock, nil, false, false, &deleted, &failed, &errBuilder)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -268,25 +271,25 @@ func TestCleanupSecurityGroups_SkipsStackNotInDeleteFailed(t *testing.T) {
 func TestCleanupSecurityGroups_SkipsEmptyStacksResponse(t *testing.T) {
 	sgCalled := false
 	ec2Mock := &mockSGEC2{
-		describeVpcsFn: func(*ec2.DescribeVpcsInput) (*ec2.DescribeVpcsOutput, error) {
-			return &ec2.DescribeVpcsOutput{
-				Vpcs: []*ec2.Vpc{makeVPC("vpc-1", "osde2e-abcde-fghij-vpc")},
+		describeVpcsFn: func(_ context.Context, _ *ec2v2.DescribeVpcsInput, _ ...func(*ec2v2.Options)) (*ec2v2.DescribeVpcsOutput, error) {
+			return &ec2v2.DescribeVpcsOutput{
+				Vpcs: []ec2types.Vpc{makeVPC("vpc-1", "osde2e-abcde-fghij-vpc")},
 			}, nil
 		},
-		describeSGFn: func(*ec2.DescribeSecurityGroupsInput) (*ec2.DescribeSecurityGroupsOutput, error) {
+		describeSGFn: func(_ context.Context, _ *ec2v2.DescribeSecurityGroupsInput, _ ...func(*ec2v2.Options)) (*ec2v2.DescribeSecurityGroupsOutput, error) {
 			sgCalled = true
 			return nil, fmt.Errorf("should not be called")
 		},
 	}
 	cfnMock := &mockSGCFN{
-		describeStacksFn: func(*cloudformation.DescribeStacksInput) (*cloudformation.DescribeStacksOutput, error) {
-			return &cloudformation.DescribeStacksOutput{Stacks: []*cloudformation.Stack{}}, nil
+		describeStacksFn: func(_ context.Context, _ *cfnv2.DescribeStacksInput, _ ...func(*cfnv2.Options)) (*cfnv2.DescribeStacksOutput, error) {
+			return &cfnv2.DescribeStacksOutput{Stacks: []cfntypes.Stack{}}, nil
 		},
 	}
 
 	deleted, failed := 0, 0
 	var errBuilder strings.Builder
-	err := cleanupSecurityGroups(ec2Mock, cfnMock, nil, false, false, &deleted, &failed, &errBuilder)
+	err := cleanupSecurityGroups(context.Background(), ec2Mock, cfnMock, nil, false, false, &deleted, &failed, &errBuilder)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -298,33 +301,33 @@ func TestCleanupSecurityGroups_SkipsEmptyStacksResponse(t *testing.T) {
 func TestCleanupSecurityGroups_SkipsDefaultSecurityGroup(t *testing.T) {
 	var deletedIDs []string
 	ec2Mock := &mockSGEC2{
-		describeVpcsFn: func(*ec2.DescribeVpcsInput) (*ec2.DescribeVpcsOutput, error) {
-			return &ec2.DescribeVpcsOutput{
-				Vpcs: []*ec2.Vpc{makeVPC("vpc-1", "osde2e-abcde-fghij-vpc")},
+		describeVpcsFn: func(_ context.Context, _ *ec2v2.DescribeVpcsInput, _ ...func(*ec2v2.Options)) (*ec2v2.DescribeVpcsOutput, error) {
+			return &ec2v2.DescribeVpcsOutput{
+				Vpcs: []ec2types.Vpc{makeVPC("vpc-1", "osde2e-abcde-fghij-vpc")},
 			}, nil
 		},
-		describeSGFn: func(*ec2.DescribeSecurityGroupsInput) (*ec2.DescribeSecurityGroupsOutput, error) {
-			return &ec2.DescribeSecurityGroupsOutput{
-				SecurityGroups: []*ec2.SecurityGroup{
+		describeSGFn: func(_ context.Context, _ *ec2v2.DescribeSecurityGroupsInput, _ ...func(*ec2v2.Options)) (*ec2v2.DescribeSecurityGroupsOutput, error) {
+			return &ec2v2.DescribeSecurityGroupsOutput{
+				SecurityGroups: []ec2types.SecurityGroup{
 					makeSG("sg-default", "default", nil, nil),
 					makeSG("sg-custom", "my-sg", nil, nil),
 				},
 			}, nil
 		},
-		deleteSecurityGroupFn: func(input *ec2.DeleteSecurityGroupInput) (*ec2.DeleteSecurityGroupOutput, error) {
-			deletedIDs = append(deletedIDs, aws.StringValue(input.GroupId))
-			return &ec2.DeleteSecurityGroupOutput{}, nil
+		deleteSecurityGroupFn: func(_ context.Context, input *ec2v2.DeleteSecurityGroupInput, _ ...func(*ec2v2.Options)) (*ec2v2.DeleteSecurityGroupOutput, error) {
+			deletedIDs = append(deletedIDs, aws.ToString(input.GroupId))
+			return &ec2v2.DeleteSecurityGroupOutput{}, nil
 		},
 	}
 	cfnMock := &mockSGCFN{
-		describeStacksFn: func(*cloudformation.DescribeStacksInput) (*cloudformation.DescribeStacksOutput, error) {
+		describeStacksFn: func(_ context.Context, _ *cfnv2.DescribeStacksInput, _ ...func(*cfnv2.Options)) (*cfnv2.DescribeStacksOutput, error) {
 			return deleteFailedStack("osde2e-abcde-vpc"), nil
 		},
 	}
 
 	deleted, failed := 0, 0
 	var errBuilder strings.Builder
-	err := cleanupSecurityGroups(ec2Mock, cfnMock, nil, false, false, &deleted, &failed, &errBuilder)
+	err := cleanupSecurityGroups(context.Background(), ec2Mock, cfnMock, nil, false, false, &deleted, &failed, &errBuilder)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -339,44 +342,44 @@ func TestCleanupSecurityGroups_SkipsDefaultSecurityGroup(t *testing.T) {
 func TestCleanupSecurityGroups_DeletesWithRuleRevocation(t *testing.T) {
 	var revokedIngressIDs, revokedEgressIDs, deletedIDs []string
 
-	ingress := []*ec2.IpPermission{{IpProtocol: aws.String("tcp")}}
-	egress := []*ec2.IpPermission{{IpProtocol: aws.String("-1")}}
+	ingress := []ec2types.IpPermission{{IpProtocol: aws.String("tcp")}}
+	egress := []ec2types.IpPermission{{IpProtocol: aws.String("-1")}}
 
 	ec2Mock := &mockSGEC2{
-		describeVpcsFn: func(*ec2.DescribeVpcsInput) (*ec2.DescribeVpcsOutput, error) {
-			return &ec2.DescribeVpcsOutput{
-				Vpcs: []*ec2.Vpc{makeVPC("vpc-1", "osde2e-abcde-fghij-vpc")},
+		describeVpcsFn: func(_ context.Context, _ *ec2v2.DescribeVpcsInput, _ ...func(*ec2v2.Options)) (*ec2v2.DescribeVpcsOutput, error) {
+			return &ec2v2.DescribeVpcsOutput{
+				Vpcs: []ec2types.Vpc{makeVPC("vpc-1", "osde2e-abcde-fghij-vpc")},
 			}, nil
 		},
-		describeSGFn: func(*ec2.DescribeSecurityGroupsInput) (*ec2.DescribeSecurityGroupsOutput, error) {
-			return &ec2.DescribeSecurityGroupsOutput{
-				SecurityGroups: []*ec2.SecurityGroup{
+		describeSGFn: func(_ context.Context, _ *ec2v2.DescribeSecurityGroupsInput, _ ...func(*ec2v2.Options)) (*ec2v2.DescribeSecurityGroupsOutput, error) {
+			return &ec2v2.DescribeSecurityGroupsOutput{
+				SecurityGroups: []ec2types.SecurityGroup{
 					makeSG("sg-1", "custom-sg", ingress, egress),
 				},
 			}, nil
 		},
-		revokeIngressFn: func(input *ec2.RevokeSecurityGroupIngressInput) (*ec2.RevokeSecurityGroupIngressOutput, error) {
-			revokedIngressIDs = append(revokedIngressIDs, aws.StringValue(input.GroupId))
-			return &ec2.RevokeSecurityGroupIngressOutput{}, nil
+		revokeIngressFn: func(_ context.Context, input *ec2v2.RevokeSecurityGroupIngressInput, _ ...func(*ec2v2.Options)) (*ec2v2.RevokeSecurityGroupIngressOutput, error) {
+			revokedIngressIDs = append(revokedIngressIDs, aws.ToString(input.GroupId))
+			return &ec2v2.RevokeSecurityGroupIngressOutput{}, nil
 		},
-		revokeEgressFn: func(input *ec2.RevokeSecurityGroupEgressInput) (*ec2.RevokeSecurityGroupEgressOutput, error) {
-			revokedEgressIDs = append(revokedEgressIDs, aws.StringValue(input.GroupId))
-			return &ec2.RevokeSecurityGroupEgressOutput{}, nil
+		revokeEgressFn: func(_ context.Context, input *ec2v2.RevokeSecurityGroupEgressInput, _ ...func(*ec2v2.Options)) (*ec2v2.RevokeSecurityGroupEgressOutput, error) {
+			revokedEgressIDs = append(revokedEgressIDs, aws.ToString(input.GroupId))
+			return &ec2v2.RevokeSecurityGroupEgressOutput{}, nil
 		},
-		deleteSecurityGroupFn: func(input *ec2.DeleteSecurityGroupInput) (*ec2.DeleteSecurityGroupOutput, error) {
-			deletedIDs = append(deletedIDs, aws.StringValue(input.GroupId))
-			return &ec2.DeleteSecurityGroupOutput{}, nil
+		deleteSecurityGroupFn: func(_ context.Context, input *ec2v2.DeleteSecurityGroupInput, _ ...func(*ec2v2.Options)) (*ec2v2.DeleteSecurityGroupOutput, error) {
+			deletedIDs = append(deletedIDs, aws.ToString(input.GroupId))
+			return &ec2v2.DeleteSecurityGroupOutput{}, nil
 		},
 	}
 	cfnMock := &mockSGCFN{
-		describeStacksFn: func(*cloudformation.DescribeStacksInput) (*cloudformation.DescribeStacksOutput, error) {
+		describeStacksFn: func(_ context.Context, _ *cfnv2.DescribeStacksInput, _ ...func(*cfnv2.Options)) (*cfnv2.DescribeStacksOutput, error) {
 			return deleteFailedStack("osde2e-abcde-vpc"), nil
 		},
 	}
 
 	deleted, failed := 0, 0
 	var errBuilder strings.Builder
-	err := cleanupSecurityGroups(ec2Mock, cfnMock, nil, false, false, &deleted, &failed, &errBuilder)
+	err := cleanupSecurityGroups(context.Background(), ec2Mock, cfnMock, nil, false, false, &deleted, &failed, &errBuilder)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -399,43 +402,43 @@ func TestCleanupSecurityGroups_DryRunSkipsDeletion(t *testing.T) {
 	revokeCalled := false
 
 	ec2Mock := &mockSGEC2{
-		describeVpcsFn: func(*ec2.DescribeVpcsInput) (*ec2.DescribeVpcsOutput, error) {
-			return &ec2.DescribeVpcsOutput{
-				Vpcs: []*ec2.Vpc{makeVPC("vpc-1", "osde2e-abcde-fghij-vpc")},
+		describeVpcsFn: func(_ context.Context, _ *ec2v2.DescribeVpcsInput, _ ...func(*ec2v2.Options)) (*ec2v2.DescribeVpcsOutput, error) {
+			return &ec2v2.DescribeVpcsOutput{
+				Vpcs: []ec2types.Vpc{makeVPC("vpc-1", "osde2e-abcde-fghij-vpc")},
 			}, nil
 		},
-		describeSGFn: func(*ec2.DescribeSecurityGroupsInput) (*ec2.DescribeSecurityGroupsOutput, error) {
-			return &ec2.DescribeSecurityGroupsOutput{
-				SecurityGroups: []*ec2.SecurityGroup{
+		describeSGFn: func(_ context.Context, _ *ec2v2.DescribeSecurityGroupsInput, _ ...func(*ec2v2.Options)) (*ec2v2.DescribeSecurityGroupsOutput, error) {
+			return &ec2v2.DescribeSecurityGroupsOutput{
+				SecurityGroups: []ec2types.SecurityGroup{
 					makeSG("sg-1", "custom-sg",
-						[]*ec2.IpPermission{{IpProtocol: aws.String("tcp")}},
-						[]*ec2.IpPermission{{IpProtocol: aws.String("-1")}},
+						[]ec2types.IpPermission{{IpProtocol: aws.String("tcp")}},
+						[]ec2types.IpPermission{{IpProtocol: aws.String("-1")}},
 					),
 				},
 			}, nil
 		},
-		revokeIngressFn: func(*ec2.RevokeSecurityGroupIngressInput) (*ec2.RevokeSecurityGroupIngressOutput, error) {
+		revokeIngressFn: func(_ context.Context, _ *ec2v2.RevokeSecurityGroupIngressInput, _ ...func(*ec2v2.Options)) (*ec2v2.RevokeSecurityGroupIngressOutput, error) {
 			revokeCalled = true
-			return &ec2.RevokeSecurityGroupIngressOutput{}, nil
+			return &ec2v2.RevokeSecurityGroupIngressOutput{}, nil
 		},
-		revokeEgressFn: func(*ec2.RevokeSecurityGroupEgressInput) (*ec2.RevokeSecurityGroupEgressOutput, error) {
+		revokeEgressFn: func(_ context.Context, _ *ec2v2.RevokeSecurityGroupEgressInput, _ ...func(*ec2v2.Options)) (*ec2v2.RevokeSecurityGroupEgressOutput, error) {
 			revokeCalled = true
-			return &ec2.RevokeSecurityGroupEgressOutput{}, nil
+			return &ec2v2.RevokeSecurityGroupEgressOutput{}, nil
 		},
-		deleteSecurityGroupFn: func(*ec2.DeleteSecurityGroupInput) (*ec2.DeleteSecurityGroupOutput, error) {
+		deleteSecurityGroupFn: func(_ context.Context, _ *ec2v2.DeleteSecurityGroupInput, _ ...func(*ec2v2.Options)) (*ec2v2.DeleteSecurityGroupOutput, error) {
 			deleteCalled = true
-			return &ec2.DeleteSecurityGroupOutput{}, nil
+			return &ec2v2.DeleteSecurityGroupOutput{}, nil
 		},
 	}
 	cfnMock := &mockSGCFN{
-		describeStacksFn: func(*cloudformation.DescribeStacksInput) (*cloudformation.DescribeStacksOutput, error) {
+		describeStacksFn: func(_ context.Context, _ *cfnv2.DescribeStacksInput, _ ...func(*cfnv2.Options)) (*cfnv2.DescribeStacksOutput, error) {
 			return deleteFailedStack("osde2e-abcde-vpc"), nil
 		},
 	}
 
 	deleted, failed := 0, 0
 	var errBuilder strings.Builder
-	err := cleanupSecurityGroups(ec2Mock, cfnMock, nil, true, false, &deleted, &failed, &errBuilder)
+	err := cleanupSecurityGroups(context.Background(), ec2Mock, cfnMock, nil, true, false, &deleted, &failed, &errBuilder)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -452,31 +455,31 @@ func TestCleanupSecurityGroups_DryRunSkipsDeletion(t *testing.T) {
 
 func TestCleanupSecurityGroups_DeleteFailureIncrementsCounter(t *testing.T) {
 	ec2Mock := &mockSGEC2{
-		describeVpcsFn: func(*ec2.DescribeVpcsInput) (*ec2.DescribeVpcsOutput, error) {
-			return &ec2.DescribeVpcsOutput{
-				Vpcs: []*ec2.Vpc{makeVPC("vpc-1", "osde2e-abcde-fghij-vpc")},
+		describeVpcsFn: func(_ context.Context, _ *ec2v2.DescribeVpcsInput, _ ...func(*ec2v2.Options)) (*ec2v2.DescribeVpcsOutput, error) {
+			return &ec2v2.DescribeVpcsOutput{
+				Vpcs: []ec2types.Vpc{makeVPC("vpc-1", "osde2e-abcde-fghij-vpc")},
 			}, nil
 		},
-		describeSGFn: func(*ec2.DescribeSecurityGroupsInput) (*ec2.DescribeSecurityGroupsOutput, error) {
-			return &ec2.DescribeSecurityGroupsOutput{
-				SecurityGroups: []*ec2.SecurityGroup{
+		describeSGFn: func(_ context.Context, _ *ec2v2.DescribeSecurityGroupsInput, _ ...func(*ec2v2.Options)) (*ec2v2.DescribeSecurityGroupsOutput, error) {
+			return &ec2v2.DescribeSecurityGroupsOutput{
+				SecurityGroups: []ec2types.SecurityGroup{
 					makeSG("sg-1", "custom-sg", nil, nil),
 				},
 			}, nil
 		},
-		deleteSecurityGroupFn: func(*ec2.DeleteSecurityGroupInput) (*ec2.DeleteSecurityGroupOutput, error) {
+		deleteSecurityGroupFn: func(_ context.Context, _ *ec2v2.DeleteSecurityGroupInput, _ ...func(*ec2v2.Options)) (*ec2v2.DeleteSecurityGroupOutput, error) {
 			return nil, fmt.Errorf("DependencyViolation: sg has dependencies")
 		},
 	}
 	cfnMock := &mockSGCFN{
-		describeStacksFn: func(*cloudformation.DescribeStacksInput) (*cloudformation.DescribeStacksOutput, error) {
+		describeStacksFn: func(_ context.Context, _ *cfnv2.DescribeStacksInput, _ ...func(*cfnv2.Options)) (*cfnv2.DescribeStacksOutput, error) {
 			return deleteFailedStack("osde2e-abcde-vpc"), nil
 		},
 	}
 
 	deleted, failed := 0, 0
 	var errBuilder strings.Builder
-	err := cleanupSecurityGroups(ec2Mock, cfnMock, nil, false, true, &deleted, &failed, &errBuilder)
+	err := cleanupSecurityGroups(context.Background(), ec2Mock, cfnMock, nil, false, true, &deleted, &failed, &errBuilder)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -493,31 +496,31 @@ func TestCleanupSecurityGroups_DeleteFailureIncrementsCounter(t *testing.T) {
 
 func TestCleanupSecurityGroups_SendSummaryFalseDoesNotWriteErrors(t *testing.T) {
 	ec2Mock := &mockSGEC2{
-		describeVpcsFn: func(*ec2.DescribeVpcsInput) (*ec2.DescribeVpcsOutput, error) {
-			return &ec2.DescribeVpcsOutput{
-				Vpcs: []*ec2.Vpc{makeVPC("vpc-1", "osde2e-abcde-fghij-vpc")},
+		describeVpcsFn: func(_ context.Context, _ *ec2v2.DescribeVpcsInput, _ ...func(*ec2v2.Options)) (*ec2v2.DescribeVpcsOutput, error) {
+			return &ec2v2.DescribeVpcsOutput{
+				Vpcs: []ec2types.Vpc{makeVPC("vpc-1", "osde2e-abcde-fghij-vpc")},
 			}, nil
 		},
-		describeSGFn: func(*ec2.DescribeSecurityGroupsInput) (*ec2.DescribeSecurityGroupsOutput, error) {
-			return &ec2.DescribeSecurityGroupsOutput{
-				SecurityGroups: []*ec2.SecurityGroup{
+		describeSGFn: func(_ context.Context, _ *ec2v2.DescribeSecurityGroupsInput, _ ...func(*ec2v2.Options)) (*ec2v2.DescribeSecurityGroupsOutput, error) {
+			return &ec2v2.DescribeSecurityGroupsOutput{
+				SecurityGroups: []ec2types.SecurityGroup{
 					makeSG("sg-1", "custom-sg", nil, nil),
 				},
 			}, nil
 		},
-		deleteSecurityGroupFn: func(*ec2.DeleteSecurityGroupInput) (*ec2.DeleteSecurityGroupOutput, error) {
+		deleteSecurityGroupFn: func(_ context.Context, _ *ec2v2.DeleteSecurityGroupInput, _ ...func(*ec2v2.Options)) (*ec2v2.DeleteSecurityGroupOutput, error) {
 			return nil, fmt.Errorf("delete failed")
 		},
 	}
 	cfnMock := &mockSGCFN{
-		describeStacksFn: func(*cloudformation.DescribeStacksInput) (*cloudformation.DescribeStacksOutput, error) {
+		describeStacksFn: func(_ context.Context, _ *cfnv2.DescribeStacksInput, _ ...func(*cfnv2.Options)) (*cfnv2.DescribeStacksOutput, error) {
 			return deleteFailedStack("osde2e-abcde-vpc"), nil
 		},
 	}
 
 	deleted, failed := 0, 0
 	var errBuilder strings.Builder
-	err := cleanupSecurityGroups(ec2Mock, cfnMock, nil, false, false, &deleted, &failed, &errBuilder)
+	err := cleanupSecurityGroups(context.Background(), ec2Mock, cfnMock, nil, false, false, &deleted, &failed, &errBuilder)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -532,39 +535,39 @@ func TestCleanupSecurityGroups_SendSummaryFalseDoesNotWriteErrors(t *testing.T) 
 func TestCleanupSecurityGroups_DescribeSGErrorContinues(t *testing.T) {
 	describeSGCalls := 0
 	ec2Mock := &mockSGEC2{
-		describeVpcsFn: func(*ec2.DescribeVpcsInput) (*ec2.DescribeVpcsOutput, error) {
-			return &ec2.DescribeVpcsOutput{
-				Vpcs: []*ec2.Vpc{
+		describeVpcsFn: func(_ context.Context, _ *ec2v2.DescribeVpcsInput, _ ...func(*ec2v2.Options)) (*ec2v2.DescribeVpcsOutput, error) {
+			return &ec2v2.DescribeVpcsOutput{
+				Vpcs: []ec2types.Vpc{
 					makeVPC("vpc-1", "osde2e-aaaaa-bbbbb-vpc"),
 					makeVPC("vpc-2", "osde2e-ccccc-ddddd-vpc"),
 				},
 			}, nil
 		},
-		describeSGFn: func(input *ec2.DescribeSecurityGroupsInput) (*ec2.DescribeSecurityGroupsOutput, error) {
+		describeSGFn: func(_ context.Context, input *ec2v2.DescribeSecurityGroupsInput, _ ...func(*ec2v2.Options)) (*ec2v2.DescribeSecurityGroupsOutput, error) {
 			describeSGCalls++
-			vpcID := aws.StringValue(input.Filters[0].Values[0])
+			vpcID := input.Filters[0].Values[0]
 			if vpcID == "vpc-1" {
 				return nil, fmt.Errorf("access denied")
 			}
-			return &ec2.DescribeSecurityGroupsOutput{
-				SecurityGroups: []*ec2.SecurityGroup{
+			return &ec2v2.DescribeSecurityGroupsOutput{
+				SecurityGroups: []ec2types.SecurityGroup{
 					makeSG("sg-2", "custom-sg-2", nil, nil),
 				},
 			}, nil
 		},
-		deleteSecurityGroupFn: func(*ec2.DeleteSecurityGroupInput) (*ec2.DeleteSecurityGroupOutput, error) {
-			return &ec2.DeleteSecurityGroupOutput{}, nil
+		deleteSecurityGroupFn: func(_ context.Context, _ *ec2v2.DeleteSecurityGroupInput, _ ...func(*ec2v2.Options)) (*ec2v2.DeleteSecurityGroupOutput, error) {
+			return &ec2v2.DeleteSecurityGroupOutput{}, nil
 		},
 	}
 	cfnMock := &mockSGCFN{
-		describeStacksFn: func(*cloudformation.DescribeStacksInput) (*cloudformation.DescribeStacksOutput, error) {
+		describeStacksFn: func(_ context.Context, _ *cfnv2.DescribeStacksInput, _ ...func(*cfnv2.Options)) (*cfnv2.DescribeStacksOutput, error) {
 			return deleteFailedStack("any-stack"), nil
 		},
 	}
 
 	deleted, failed := 0, 0
 	var errBuilder strings.Builder
-	err := cleanupSecurityGroups(ec2Mock, cfnMock, nil, false, false, &deleted, &failed, &errBuilder)
+	err := cleanupSecurityGroups(context.Background(), ec2Mock, cfnMock, nil, false, false, &deleted, &failed, &errBuilder)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -580,41 +583,41 @@ func TestCleanupSecurityGroups_RevokeErrorsDoNotBlockDeletion(t *testing.T) {
 	var deletedIDs []string
 
 	ec2Mock := &mockSGEC2{
-		describeVpcsFn: func(*ec2.DescribeVpcsInput) (*ec2.DescribeVpcsOutput, error) {
-			return &ec2.DescribeVpcsOutput{
-				Vpcs: []*ec2.Vpc{makeVPC("vpc-1", "osde2e-abcde-fghij-vpc")},
+		describeVpcsFn: func(_ context.Context, _ *ec2v2.DescribeVpcsInput, _ ...func(*ec2v2.Options)) (*ec2v2.DescribeVpcsOutput, error) {
+			return &ec2v2.DescribeVpcsOutput{
+				Vpcs: []ec2types.Vpc{makeVPC("vpc-1", "osde2e-abcde-fghij-vpc")},
 			}, nil
 		},
-		describeSGFn: func(*ec2.DescribeSecurityGroupsInput) (*ec2.DescribeSecurityGroupsOutput, error) {
-			return &ec2.DescribeSecurityGroupsOutput{
-				SecurityGroups: []*ec2.SecurityGroup{
+		describeSGFn: func(_ context.Context, _ *ec2v2.DescribeSecurityGroupsInput, _ ...func(*ec2v2.Options)) (*ec2v2.DescribeSecurityGroupsOutput, error) {
+			return &ec2v2.DescribeSecurityGroupsOutput{
+				SecurityGroups: []ec2types.SecurityGroup{
 					makeSG("sg-1", "custom-sg",
-						[]*ec2.IpPermission{{IpProtocol: aws.String("tcp")}},
-						[]*ec2.IpPermission{{IpProtocol: aws.String("-1")}},
+						[]ec2types.IpPermission{{IpProtocol: aws.String("tcp")}},
+						[]ec2types.IpPermission{{IpProtocol: aws.String("-1")}},
 					),
 				},
 			}, nil
 		},
-		revokeIngressFn: func(*ec2.RevokeSecurityGroupIngressInput) (*ec2.RevokeSecurityGroupIngressOutput, error) {
+		revokeIngressFn: func(_ context.Context, _ *ec2v2.RevokeSecurityGroupIngressInput, _ ...func(*ec2v2.Options)) (*ec2v2.RevokeSecurityGroupIngressOutput, error) {
 			return nil, fmt.Errorf("revoke ingress failed")
 		},
-		revokeEgressFn: func(*ec2.RevokeSecurityGroupEgressInput) (*ec2.RevokeSecurityGroupEgressOutput, error) {
+		revokeEgressFn: func(_ context.Context, _ *ec2v2.RevokeSecurityGroupEgressInput, _ ...func(*ec2v2.Options)) (*ec2v2.RevokeSecurityGroupEgressOutput, error) {
 			return nil, fmt.Errorf("revoke egress failed")
 		},
-		deleteSecurityGroupFn: func(input *ec2.DeleteSecurityGroupInput) (*ec2.DeleteSecurityGroupOutput, error) {
-			deletedIDs = append(deletedIDs, aws.StringValue(input.GroupId))
-			return &ec2.DeleteSecurityGroupOutput{}, nil
+		deleteSecurityGroupFn: func(_ context.Context, input *ec2v2.DeleteSecurityGroupInput, _ ...func(*ec2v2.Options)) (*ec2v2.DeleteSecurityGroupOutput, error) {
+			deletedIDs = append(deletedIDs, aws.ToString(input.GroupId))
+			return &ec2v2.DeleteSecurityGroupOutput{}, nil
 		},
 	}
 	cfnMock := &mockSGCFN{
-		describeStacksFn: func(*cloudformation.DescribeStacksInput) (*cloudformation.DescribeStacksOutput, error) {
+		describeStacksFn: func(_ context.Context, _ *cfnv2.DescribeStacksInput, _ ...func(*cfnv2.Options)) (*cfnv2.DescribeStacksOutput, error) {
 			return deleteFailedStack("osde2e-abcde-vpc"), nil
 		},
 	}
 
 	deleted, failed := 0, 0
 	var errBuilder strings.Builder
-	err := cleanupSecurityGroups(ec2Mock, cfnMock, nil, false, false, &deleted, &failed, &errBuilder)
+	err := cleanupSecurityGroups(context.Background(), ec2Mock, cfnMock, nil, false, false, &deleted, &failed, &errBuilder)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -630,14 +633,14 @@ func TestCleanupSecurityGroups_MultipleSGsInOneVPC(t *testing.T) {
 	var deletedIDs []string
 
 	ec2Mock := &mockSGEC2{
-		describeVpcsFn: func(*ec2.DescribeVpcsInput) (*ec2.DescribeVpcsOutput, error) {
-			return &ec2.DescribeVpcsOutput{
-				Vpcs: []*ec2.Vpc{makeVPC("vpc-1", "osde2e-abcde-fghij-vpc")},
+		describeVpcsFn: func(_ context.Context, _ *ec2v2.DescribeVpcsInput, _ ...func(*ec2v2.Options)) (*ec2v2.DescribeVpcsOutput, error) {
+			return &ec2v2.DescribeVpcsOutput{
+				Vpcs: []ec2types.Vpc{makeVPC("vpc-1", "osde2e-abcde-fghij-vpc")},
 			}, nil
 		},
-		describeSGFn: func(*ec2.DescribeSecurityGroupsInput) (*ec2.DescribeSecurityGroupsOutput, error) {
-			return &ec2.DescribeSecurityGroupsOutput{
-				SecurityGroups: []*ec2.SecurityGroup{
+		describeSGFn: func(_ context.Context, _ *ec2v2.DescribeSecurityGroupsInput, _ ...func(*ec2v2.Options)) (*ec2v2.DescribeSecurityGroupsOutput, error) {
+			return &ec2v2.DescribeSecurityGroupsOutput{
+				SecurityGroups: []ec2types.SecurityGroup{
 					makeSG("sg-default", "default", nil, nil),
 					makeSG("sg-1", "worker-sg", nil, nil),
 					makeSG("sg-2", "master-sg", nil, nil),
@@ -645,20 +648,20 @@ func TestCleanupSecurityGroups_MultipleSGsInOneVPC(t *testing.T) {
 				},
 			}, nil
 		},
-		deleteSecurityGroupFn: func(input *ec2.DeleteSecurityGroupInput) (*ec2.DeleteSecurityGroupOutput, error) {
-			deletedIDs = append(deletedIDs, aws.StringValue(input.GroupId))
-			return &ec2.DeleteSecurityGroupOutput{}, nil
+		deleteSecurityGroupFn: func(_ context.Context, input *ec2v2.DeleteSecurityGroupInput, _ ...func(*ec2v2.Options)) (*ec2v2.DeleteSecurityGroupOutput, error) {
+			deletedIDs = append(deletedIDs, aws.ToString(input.GroupId))
+			return &ec2v2.DeleteSecurityGroupOutput{}, nil
 		},
 	}
 	cfnMock := &mockSGCFN{
-		describeStacksFn: func(*cloudformation.DescribeStacksInput) (*cloudformation.DescribeStacksOutput, error) {
+		describeStacksFn: func(_ context.Context, _ *cfnv2.DescribeStacksInput, _ ...func(*cfnv2.Options)) (*cfnv2.DescribeStacksOutput, error) {
 			return deleteFailedStack("osde2e-abcde-vpc"), nil
 		},
 	}
 
 	deleted, failed := 0, 0
 	var errBuilder strings.Builder
-	err := cleanupSecurityGroups(ec2Mock, cfnMock, nil, false, false, &deleted, &failed, &errBuilder)
+	err := cleanupSecurityGroups(context.Background(), ec2Mock, cfnMock, nil, false, false, &deleted, &failed, &errBuilder)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -686,39 +689,39 @@ func TestCleanupSecurityGroups_SkipsNoRulesRevocation(t *testing.T) {
 	revokeEgressCalled := false
 
 	ec2Mock := &mockSGEC2{
-		describeVpcsFn: func(*ec2.DescribeVpcsInput) (*ec2.DescribeVpcsOutput, error) {
-			return &ec2.DescribeVpcsOutput{
-				Vpcs: []*ec2.Vpc{makeVPC("vpc-1", "osde2e-abcde-fghij-vpc")},
+		describeVpcsFn: func(_ context.Context, _ *ec2v2.DescribeVpcsInput, _ ...func(*ec2v2.Options)) (*ec2v2.DescribeVpcsOutput, error) {
+			return &ec2v2.DescribeVpcsOutput{
+				Vpcs: []ec2types.Vpc{makeVPC("vpc-1", "osde2e-abcde-fghij-vpc")},
 			}, nil
 		},
-		describeSGFn: func(*ec2.DescribeSecurityGroupsInput) (*ec2.DescribeSecurityGroupsOutput, error) {
-			return &ec2.DescribeSecurityGroupsOutput{
-				SecurityGroups: []*ec2.SecurityGroup{
+		describeSGFn: func(_ context.Context, _ *ec2v2.DescribeSecurityGroupsInput, _ ...func(*ec2v2.Options)) (*ec2v2.DescribeSecurityGroupsOutput, error) {
+			return &ec2v2.DescribeSecurityGroupsOutput{
+				SecurityGroups: []ec2types.SecurityGroup{
 					makeSG("sg-1", "empty-sg", nil, nil),
 				},
 			}, nil
 		},
-		revokeIngressFn: func(*ec2.RevokeSecurityGroupIngressInput) (*ec2.RevokeSecurityGroupIngressOutput, error) {
+		revokeIngressFn: func(_ context.Context, _ *ec2v2.RevokeSecurityGroupIngressInput, _ ...func(*ec2v2.Options)) (*ec2v2.RevokeSecurityGroupIngressOutput, error) {
 			revokeIngressCalled = true
-			return &ec2.RevokeSecurityGroupIngressOutput{}, nil
+			return &ec2v2.RevokeSecurityGroupIngressOutput{}, nil
 		},
-		revokeEgressFn: func(*ec2.RevokeSecurityGroupEgressInput) (*ec2.RevokeSecurityGroupEgressOutput, error) {
+		revokeEgressFn: func(_ context.Context, _ *ec2v2.RevokeSecurityGroupEgressInput, _ ...func(*ec2v2.Options)) (*ec2v2.RevokeSecurityGroupEgressOutput, error) {
 			revokeEgressCalled = true
-			return &ec2.RevokeSecurityGroupEgressOutput{}, nil
+			return &ec2v2.RevokeSecurityGroupEgressOutput{}, nil
 		},
-		deleteSecurityGroupFn: func(*ec2.DeleteSecurityGroupInput) (*ec2.DeleteSecurityGroupOutput, error) {
-			return &ec2.DeleteSecurityGroupOutput{}, nil
+		deleteSecurityGroupFn: func(_ context.Context, _ *ec2v2.DeleteSecurityGroupInput, _ ...func(*ec2v2.Options)) (*ec2v2.DeleteSecurityGroupOutput, error) {
+			return &ec2v2.DeleteSecurityGroupOutput{}, nil
 		},
 	}
 	cfnMock := &mockSGCFN{
-		describeStacksFn: func(*cloudformation.DescribeStacksInput) (*cloudformation.DescribeStacksOutput, error) {
+		describeStacksFn: func(_ context.Context, _ *cfnv2.DescribeStacksInput, _ ...func(*cfnv2.Options)) (*cfnv2.DescribeStacksOutput, error) {
 			return deleteFailedStack("osde2e-abcde-vpc"), nil
 		},
 	}
 
 	deleted, failed := 0, 0
 	var errBuilder strings.Builder
-	err := cleanupSecurityGroups(ec2Mock, cfnMock, nil, false, false, &deleted, &failed, &errBuilder)
+	err := cleanupSecurityGroups(context.Background(), ec2Mock, cfnMock, nil, false, false, &deleted, &failed, &errBuilder)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}

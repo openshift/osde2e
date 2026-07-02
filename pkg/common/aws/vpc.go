@@ -1,18 +1,21 @@
 package aws
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"regexp"
 	"strings"
+	"time"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/cloudformation"
-	"github.com/aws/aws-sdk-go/service/ec2"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	cfnv2 "github.com/aws/aws-sdk-go-v2/service/cloudformation"
+	ec2v2 "github.com/aws/aws-sdk-go-v2/service/ec2"
+	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
 )
 
-// deletes VPCs that are not associated with any active osde2e cluster
-func (CcsAwsSession *ccsAwsSession) CleanupVPCs(activeClusters map[string]bool, dryrun bool, sendSummary bool, errorBuilder *strings.Builder,
+// CleanupVPCs deletes VPCs that are not associated with any active osde2e cluster.
+func (CcsAwsSession *ccsAwsSession) CleanupVPCs(ctx context.Context, activeClusters map[string]bool, dryrun bool, sendSummary bool, errorBuilder *strings.Builder,
 ) (counters Counters, err error) {
 	err = CcsAwsSession.GetAWSSessions()
 	if err != nil {
@@ -20,11 +23,11 @@ func (CcsAwsSession *ccsAwsSession) CleanupVPCs(activeClusters map[string]bool, 
 	}
 
 	// Get osde2e VPCs from AWS
-	results, err := CcsAwsSession.ec2.DescribeVpcs(&ec2.DescribeVpcsInput{
-		Filters: []*ec2.Filter{
+	results, err := CcsAwsSession.ec2.DescribeVpcs(ctx, &ec2v2.DescribeVpcsInput{
+		Filters: []types.Filter{
 			{
 				Name:   aws.String("tag:Name"),
-				Values: []*string{aws.String("osde2e-*")},
+				Values: []string{"osde2e-*"},
 			},
 		},
 	})
@@ -53,7 +56,7 @@ func (CcsAwsSession *ccsAwsSession) CleanupVPCs(activeClusters map[string]bool, 
 
 		// Skip if no Name tag found
 		if !nameTagFound {
-			log.Printf("Skipping VPC %s with no Name tag\n", *vpc.VpcId)
+			log.Printf("Skipping VPC %s with no Name tag\n", aws.ToString(vpc.VpcId))
 			continue
 		}
 
@@ -69,17 +72,14 @@ func (CcsAwsSession *ccsAwsSession) CleanupVPCs(activeClusters map[string]bool, 
 	}
 
 	// Create CloudFormation client early to check stack existence
-	cfnClient := cloudformation.New(CcsAwsSession.session)
-	if cfnClient == nil {
-		return counters, fmt.Errorf("failed to create CloudFormation client")
-	}
+	cfnClient := cfnv2.NewFromConfig(CcsAwsSession.cfg)
 
 	// Only delete VPC stacks that are not associated with any cluster and actually exist
 	var orphanedStacks []string
 	for _, vpcStackName := range vpcStacks {
 		if !activeVpcStacks[vpcStackName] {
 			// Check if the CloudFormation stack actually exists before adding to orphaned list
-			_, err := cfnClient.DescribeStacks(&cloudformation.DescribeStacksInput{
+			_, err := cfnClient.DescribeStacks(ctx, &cfnv2.DescribeStacksInput{
 				StackName: aws.String(vpcStackName),
 			})
 			if err != nil {
@@ -101,7 +101,7 @@ func (CcsAwsSession *ccsAwsSession) CleanupVPCs(activeClusters map[string]bool, 
 		fmt.Printf("Attempting to delete CloudFormation stack: %s\n", stackName)
 
 		if !dryrun {
-			_, err := cfnClient.DeleteStack(&cloudformation.DeleteStackInput{
+			_, err := cfnClient.DeleteStack(ctx, &cfnv2.DeleteStackInput{
 				StackName: aws.String(stackName),
 			})
 			if err != nil {
@@ -114,9 +114,10 @@ func (CcsAwsSession *ccsAwsSession) CleanupVPCs(activeClusters map[string]bool, 
 				continue
 			}
 
-			err = cfnClient.WaitUntilStackDeleteComplete(&cloudformation.DescribeStacksInput{
+			waiter := cfnv2.NewStackDeleteCompleteWaiter(cfnClient)
+			err = waiter.Wait(ctx, &cfnv2.DescribeStacksInput{
 				StackName: aws.String(stackName),
-			})
+			}, 30*time.Minute)
 			if err != nil {
 				counters.Failed++
 				errorMsg := fmt.Sprintf("Failed waiting for stack deletion %s: %v\n", stackName, err)
@@ -139,7 +140,7 @@ func (CcsAwsSession *ccsAwsSession) CleanupVPCs(activeClusters map[string]bool, 
 
 var vpcNameRegexp = regexp.MustCompile(`^(osde2e-[^-]+)-[^-]+-vpc$`)
 
-// removes the -yyyyy suffix from VPC names that follow the osde2e-xxxxx-yyyyy-vpc format
+// getClusterNameFromVPCName removes the -yyyyy suffix from VPC names that follow the osde2e-xxxxx-yyyyy-vpc format.
 func getClusterNameFromVPCName(vpcName string) string {
 	matches := vpcNameRegexp.FindStringSubmatch(vpcName)
 	if len(matches) == 2 {

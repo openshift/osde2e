@@ -1,16 +1,17 @@
 package aws
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"regexp"
 	"strings"
 	"time"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
+	iamv2 "github.com/aws/aws-sdk-go-v2/service/iam"
+	iamtypes "github.com/aws/aws-sdk-go-v2/service/iam/types"
 	"github.com/openshift/osde2e/pkg/common/config"
-
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/iam"
 )
 
 var (
@@ -53,7 +54,7 @@ func isRoleFromActiveCluster(roleArn string, activeClusters map[string]bool) boo
 	return false
 }
 
-func (CcsAwsSession *ccsAwsSession) CleanupOpenIDConnectProviders(activeClusters map[string]bool, dryrun bool, sendSummary bool,
+func (CcsAwsSession *ccsAwsSession) CleanupOpenIDConnectProviders(ctx context.Context, activeClusters map[string]bool, dryrun bool, sendSummary bool,
 	errorBuilder *strings.Builder,
 ) (counters Counters, err error) {
 	err = CcsAwsSession.GetAWSSessions()
@@ -61,8 +62,7 @@ func (CcsAwsSession *ccsAwsSession) CleanupOpenIDConnectProviders(activeClusters
 		return counters, err
 	}
 
-	input := &iam.ListOpenIDConnectProvidersInput{}
-	result, err := CcsAwsSession.iam.ListOpenIDConnectProviders(input)
+	result, err := CcsAwsSession.iam.ListOpenIDConnectProviders(ctx, &iamv2.ListOpenIDConnectProvidersInput{})
 	if err != nil {
 		return counters, err
 	}
@@ -77,12 +77,12 @@ func (CcsAwsSession *ccsAwsSession) CleanupOpenIDConnectProviders(activeClusters
 	}
 
 	for _, provider := range result.OpenIDConnectProviderList {
-		arn := aws.StringValue(provider.Arn)
+		arn := aws.ToString(provider.Arn)
 		if arn == "" {
 			continue
 		}
 
-		output, errGet := CcsAwsSession.iam.GetOpenIDConnectProvider(&iam.GetOpenIDConnectProviderInput{
+		output, errGet := CcsAwsSession.iam.GetOpenIDConnectProvider(ctx, &iamv2.GetOpenIDConnectProviderInput{
 			OpenIDConnectProviderArn: provider.Arn,
 		})
 		if errGet != nil {
@@ -92,7 +92,7 @@ func (CcsAwsSession *ccsAwsSession) CleanupOpenIDConnectProviders(activeClusters
 		if output.Url == nil {
 			continue
 		}
-		url := aws.StringValue(output.Url)
+		url := aws.ToString(output.Url)
 
 		// If provider url contains "cloudfront" or "osde2e-", delete it
 		if !strings.Contains(url, providersubstr) && !strings.Contains(url, rolesubstr) || isOIDCProviderFromActiveCluster(url, activeClusters) {
@@ -102,7 +102,7 @@ func (CcsAwsSession *ccsAwsSession) CleanupOpenIDConnectProviders(activeClusters
 		fmt.Printf("Provider will be deleted: %s (URL: %s)\n", arn, url)
 
 		if !dryrun {
-			_, errDel := CcsAwsSession.iam.DeleteOpenIDConnectProvider(&iam.DeleteOpenIDConnectProviderInput{
+			_, errDel := CcsAwsSession.iam.DeleteOpenIDConnectProvider(ctx, &iamv2.DeleteOpenIDConnectProviderInput{
 				OpenIDConnectProviderArn: provider.Arn,
 			})
 			if errDel != nil {
@@ -120,9 +120,9 @@ func (CcsAwsSession *ccsAwsSession) CleanupOpenIDConnectProviders(activeClusters
 // removeRoleFromAllInstanceProfiles lists instance profiles for the role, then removes
 // the role from each. Returns nil on success; on failure the error message is suitable
 // for role cleanup reporting (no role name prefix).
-func (CcsAwsSession *ccsAwsSession) removeRoleFromAllInstanceProfiles(role *iam.Role, dryrun bool) error {
-	instanceProfiles, err := CcsAwsSession.iam.ListInstanceProfilesForRole(
-		&iam.ListInstanceProfilesForRoleInput{RoleName: role.RoleName},
+func (CcsAwsSession *ccsAwsSession) removeRoleFromAllInstanceProfiles(ctx context.Context, role *iamtypes.Role, dryrun bool) error {
+	instanceProfiles, err := CcsAwsSession.iam.ListInstanceProfilesForRole(ctx,
+		&iamv2.ListInstanceProfilesForRoleInput{RoleName: role.RoleName},
 	)
 	if err != nil {
 		return fmt.Errorf("list instance profiles: %w", err)
@@ -133,10 +133,10 @@ func (CcsAwsSession *ccsAwsSession) removeRoleFromAllInstanceProfiles(role *iam.
 		if instanceProfile.InstanceProfileName == nil {
 			continue
 		}
-		ipn := aws.StringValue(instanceProfile.InstanceProfileName)
+		ipn := aws.ToString(instanceProfile.InstanceProfileName)
 		fmt.Println("Removing role from instance profile: ", ipn)
 		if !dryrun {
-			_, errRm := CcsAwsSession.iam.RemoveRoleFromInstanceProfile(&iam.RemoveRoleFromInstanceProfileInput{
+			_, errRm := CcsAwsSession.iam.RemoveRoleFromInstanceProfile(ctx, &iamv2.RemoveRoleFromInstanceProfileInput{
 				InstanceProfileName: instanceProfile.InstanceProfileName,
 				RoleName:            role.RoleName,
 			})
@@ -154,8 +154,8 @@ func (CcsAwsSession *ccsAwsSession) removeRoleFromAllInstanceProfiles(role *iam.
 }
 
 // deleteAllInlineRolePolicies lists and deletes every inline policy on the role.
-func (CcsAwsSession *ccsAwsSession) deleteAllInlineRolePolicies(role *iam.Role, dryrun bool) error {
-	inlinePolicies, err := CcsAwsSession.iam.ListRolePolicies(&iam.ListRolePoliciesInput{
+func (CcsAwsSession *ccsAwsSession) deleteAllInlineRolePolicies(ctx context.Context, role *iamtypes.Role, dryrun bool) error {
+	inlinePolicies, err := CcsAwsSession.iam.ListRolePolicies(ctx, &iamv2.ListRolePoliciesInput{
 		RoleName: role.RoleName,
 	})
 	if err != nil {
@@ -163,16 +163,15 @@ func (CcsAwsSession *ccsAwsSession) deleteAllInlineRolePolicies(role *iam.Role, 
 	}
 
 	var errs []string
-	for _, policy := range inlinePolicies.PolicyNames {
-		pn := aws.StringValue(policy)
-		fmt.Println("Inline policy will be deleted: ", pn)
+	for _, policyName := range inlinePolicies.PolicyNames {
+		fmt.Println("Inline policy will be deleted: ", policyName)
 		if !dryrun {
-			_, errDel := CcsAwsSession.iam.DeleteRolePolicy(&iam.DeleteRolePolicyInput{
-				PolicyName: policy,
+			_, errDel := CcsAwsSession.iam.DeleteRolePolicy(ctx, &iamv2.DeleteRolePolicyInput{
+				PolicyName: aws.String(policyName),
 				RoleName:   role.RoleName,
 			})
 			if errDel != nil {
-				errs = append(errs, fmt.Sprintf("policy %s: %v", pn, errDel))
+				errs = append(errs, fmt.Sprintf("policy %s: %v", policyName, errDel))
 			} else {
 				fmt.Println("Deleted")
 			}
@@ -186,8 +185,8 @@ func (CcsAwsSession *ccsAwsSession) deleteAllInlineRolePolicies(role *iam.Role, 
 
 // detachAllAttachedRolePolicies lists and detaches every policy attached to the role (managed policies;
 // inline policies are removed in deleteAllInlineRolePolicies).
-func (CcsAwsSession *ccsAwsSession) detachAllAttachedRolePolicies(role *iam.Role, dryrun bool) error {
-	attachedPolicies, err := CcsAwsSession.iam.ListAttachedRolePolicies(&iam.ListAttachedRolePoliciesInput{
+func (CcsAwsSession *ccsAwsSession) detachAllAttachedRolePolicies(ctx context.Context, role *iamtypes.Role, dryrun bool) error {
+	attachedPolicies, err := CcsAwsSession.iam.ListAttachedRolePolicies(ctx, &iamv2.ListAttachedRolePoliciesInput{
 		RoleName: role.RoleName,
 	})
 	if err != nil {
@@ -199,10 +198,10 @@ func (CcsAwsSession *ccsAwsSession) detachAllAttachedRolePolicies(role *iam.Role
 		if policy.PolicyName == nil || policy.PolicyArn == nil {
 			continue
 		}
-		polName := aws.StringValue(policy.PolicyName)
+		polName := aws.ToString(policy.PolicyName)
 		fmt.Println("Policy will be detached: ", polName)
 		if !dryrun {
-			_, errDetach := CcsAwsSession.iam.DetachRolePolicy(&iam.DetachRolePolicyInput{
+			_, errDetach := CcsAwsSession.iam.DetachRolePolicy(ctx, &iamv2.DetachRolePolicyInput{
 				PolicyArn: policy.PolicyArn,
 				RoleName:  role.RoleName,
 			})
@@ -221,8 +220,8 @@ func (CcsAwsSession *ccsAwsSession) detachAllAttachedRolePolicies(role *iam.Role
 }
 
 // deleteIAMRole calls IAM DeleteRole for the given role.
-func (CcsAwsSession *ccsAwsSession) deleteIAMRole(role *iam.Role) error {
-	_, err := CcsAwsSession.iam.DeleteRole(&iam.DeleteRoleInput{RoleName: role.RoleName})
+func (CcsAwsSession *ccsAwsSession) deleteIAMRole(ctx context.Context, role *iamtypes.Role) error {
+	_, err := CcsAwsSession.iam.DeleteRole(ctx, &iamv2.DeleteRoleInput{RoleName: role.RoleName})
 	if err != nil {
 		return fmt.Errorf("delete role: %w", err)
 	}
@@ -233,7 +232,8 @@ func (CcsAwsSession *ccsAwsSession) deleteIAMRole(role *iam.Role) error {
 // attached policies, then DeleteRole. At most one Failed increment per role;
 // Deleted increments only after a successful DeleteRole when not dry-run.
 func (CcsAwsSession *ccsAwsSession) cleanupOsde2eRole(
-	role *iam.Role,
+	ctx context.Context,
+	role *iamtypes.Role,
 	roleName string,
 	dryrun bool,
 	sendSummary bool,
@@ -251,20 +251,24 @@ func (CcsAwsSession *ccsAwsSession) cleanupOsde2eRole(
 
 	fmt.Printf("Role will be deleted: %s\n", roleName)
 
-	if err := CcsAwsSession.removeRoleFromAllInstanceProfiles(role, dryrun); err != nil {
+	err := CcsAwsSession.removeRoleFromAllInstanceProfiles(ctx, role, dryrun)
+	if err != nil {
 		recordRoleFailure(err.Error())
 		return
 	}
-	if err := CcsAwsSession.deleteAllInlineRolePolicies(role, dryrun); err != nil {
+	err = CcsAwsSession.deleteAllInlineRolePolicies(ctx, role, dryrun)
+	if err != nil {
 		recordRoleFailure(err.Error())
 		return
 	}
-	if err := CcsAwsSession.detachAllAttachedRolePolicies(role, dryrun); err != nil {
+	err = CcsAwsSession.detachAllAttachedRolePolicies(ctx, role, dryrun)
+	if err != nil {
 		recordRoleFailure(err.Error())
 		return
 	}
 	if !dryrun {
-		if err := CcsAwsSession.deleteIAMRole(role); err != nil {
+		err = CcsAwsSession.deleteIAMRole(ctx, role)
+		if err != nil {
 			recordRoleFailure(err.Error())
 			return
 		}
@@ -273,7 +277,7 @@ func (CcsAwsSession *ccsAwsSession) cleanupOsde2eRole(
 	}
 }
 
-func (CcsAwsSession *ccsAwsSession) CleanupRoles(activeClusters map[string]bool, dryrun bool, sendSummary bool,
+func (CcsAwsSession *ccsAwsSession) CleanupRoles(ctx context.Context, activeClusters map[string]bool, dryrun bool, sendSummary bool,
 	errorBuilder *strings.Builder,
 ) (counters Counters, err error) {
 	err = CcsAwsSession.GetAWSSessions()
@@ -281,23 +285,23 @@ func (CcsAwsSession *ccsAwsSession) CleanupRoles(activeClusters map[string]bool,
 		return counters, err
 	}
 
-	input := &iam.ListRolesInput{
-		MaxItems: aws.Int64(1000),
-	}
-	result, err := CcsAwsSession.iam.ListRoles(input)
-	if err != nil {
-		return counters, err
-	}
-
-	for _, role := range result.Roles {
-		if role.RoleName == nil || role.Arn == nil {
-			continue
+	paginator := iamv2.NewListRolesPaginator(CcsAwsSession.iam, &iamv2.ListRolesInput{})
+	for paginator.HasMorePages() {
+		page, err := paginator.NextPage(ctx)
+		if err != nil {
+			return counters, err
 		}
-		roleName := aws.StringValue(role.RoleName)
-		if !strings.Contains(*role.Arn, rolesubstr) || isRoleFromActiveCluster(*role.Arn, activeClusters) {
-			continue
+		for i := range page.Roles {
+			role := &page.Roles[i]
+			if role.RoleName == nil || role.Arn == nil {
+				continue
+			}
+			roleName := aws.ToString(role.RoleName)
+			if !strings.Contains(aws.ToString(role.Arn), rolesubstr) || isRoleFromActiveCluster(aws.ToString(role.Arn), activeClusters) {
+				continue
+			}
+			CcsAwsSession.cleanupOsde2eRole(ctx, role, roleName, dryrun, sendSummary, errorBuilder, &counters)
 		}
-		CcsAwsSession.cleanupOsde2eRole(role, roleName, dryrun, sendSummary, errorBuilder, &counters)
 	}
 
 	return counters, nil

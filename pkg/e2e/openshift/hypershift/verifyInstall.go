@@ -37,7 +37,7 @@ var _ = ginkgo.Describe(suiteName, ginkgo.Ordered, label.HyperShift, func() {
 		Expect(len(*workerNodes)).To(BeNumerically(">", 0), "no worker nodes found in cluster")
 
 		ginkgo.By("checking if the worker nodes are present in aws")
-		err = checkWorkerNodesInAWS(workerNodes)
+		err = checkWorkerNodesInAWS(ctx, workerNodes)
 		Expect(err).NotTo(HaveOccurred(), "Error checking if worker nodes are present in AWS")
 	})
 })
@@ -60,9 +60,9 @@ func getWorkerNodesInCluster(ctx context.Context) (*[]string, error) {
 	return &workerNodes, nil
 }
 
-func checkWorkerNodesInAWS(workerNodes *[]string) error {
+func checkWorkerNodesInAWS(ctx context.Context, workerNodes *[]string) error {
 	for _, node := range *workerNodes {
-		exists, err := aws.CcsAwsSession.CheckIfEC2ExistBasedOnNodeName(node)
+		exists, err := aws.CcsAwsSession.CheckIfEC2ExistBasedOnNodeName(ctx, node)
 		if err != nil {
 			return err
 		}
