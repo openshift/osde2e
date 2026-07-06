@@ -12,6 +12,7 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/openshift/osde2e-common/pkg/clients/ocm"
 	"github.com/openshift/osde2e/internal/analysisengine"
+	"github.com/openshift/osde2e/internal/sanitizer"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
 	"github.com/openshift/osde2e/pkg/common/executor"
@@ -170,8 +171,9 @@ func runLogAnalysisForAdHocTestImage(ctx context.Context, logger logr.Logger, te
 				Version:       viper.GetString(config.Cluster.Version),
 			},
 		},
-		PromptTemplate: "default",
-		FailureContext: err.Error(),
+		PromptTemplate:  "default",
+		FailureContext:  err.Error(),
+		SanitizerConfig: &sanitizer.Config{EnableAudit: false},
 	}
 
 	engine, err := analysisengine.New(ctx, engineConfig)

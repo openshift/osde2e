@@ -1,9 +1,13 @@
 package aws
 
 import (
+	"io"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
+	"github.com/openshift/osde2e/internal/sanitizer"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
 )
@@ -160,5 +164,142 @@ func TestShouldUploadFile(t *testing.T) {
 				t.Errorf("shouldUploadFile(%q) = %v, want %v", tt.filename, got, tt.want)
 			}
 		})
+	}
+}
+
+func TestPrepareUploadBody_SanitizesSecrets(t *testing.T) {
+	tmpDir := t.TempDir()
+	logFile := filepath.Join(tmpDir, "test.log")
+	// Build synthetic secret-shaped values at runtime to avoid triggering secret scanners
+	// while still exercising the sanitizer rules with correctly formatted patterns.
+	awsKey := "AKIA" + "IOSFODNN7EXAMPLE"
+	ghToken := "ghp_" + strings.Repeat("a1b2c3d4", 5)
+	secretContent := "AWS_ACCESS_KEY_ID=" + awsKey + "\ntoken=" + ghToken + "\n"
+	if err := os.WriteFile(logFile, []byte(secretContent), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	s, err := sanitizer.New(&sanitizer.Config{
+		EnableAudit: false,
+	})
+	if err != nil {
+		t.Fatalf("Failed to create sanitizer: %v", err)
+	}
+
+	uploader := &S3Uploader{sanitizer: s}
+	body, size, err := uploader.prepareUploadBody(logFile, "test.log")
+	if err != nil {
+		t.Fatalf("prepareUploadBody failed: %v", err)
+	}
+
+	defer body.Close()
+	content, _ := io.ReadAll(body)
+	if size != int64(len(content)) {
+		t.Errorf("size mismatch: reported %d, actual %d", size, len(content))
+	}
+
+	result := string(content)
+	if strings.Contains(result, awsKey) {
+		t.Error("AWS access key was not redacted")
+	}
+	if strings.Contains(result, ghToken) {
+		t.Error("GitHub token was not redacted")
+	}
+	if !strings.Contains(result, "[AWS-ACCESS-KEY-REDACTED]") {
+		t.Error("Expected AWS redaction marker not found")
+	}
+	if !strings.Contains(result, "[GITHUB-TOKEN-REDACTED]") {
+		t.Error("Expected GitHub redaction marker not found")
+	}
+}
+
+func TestPrepareUploadBody_FailOpenOnOversizedContent(t *testing.T) {
+	tmpDir := t.TempDir()
+	logFile := filepath.Join(tmpDir, "big.log")
+	awsKey := "AKIA" + "IOSFODNN7EXAMPLE"
+	content := strings.Repeat(awsKey+"\n", 100)
+	if err := os.WriteFile(logFile, []byte(content), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	s, err := sanitizer.New(&sanitizer.Config{
+		EnableAudit:    false,
+		MaxContentSize: 50, // Tiny limit to trigger failure
+	})
+	if err != nil {
+		t.Fatalf("Failed to create sanitizer: %v", err)
+	}
+	uploader := &S3Uploader{sanitizer: s}
+
+	body, size, prepErr := uploader.prepareUploadBody(logFile, "big.log")
+	if prepErr != nil {
+		t.Fatalf("prepareUploadBody should not error on sanitization failure: %v", prepErr)
+	}
+	if size != int64(len(content)) {
+		t.Errorf("Expected raw content size %d, got %d", len(content), size)
+	}
+
+	// Fail-open: raw content must be returned unchanged
+	defer body.Close()
+	result, _ := io.ReadAll(body)
+	if string(result) != content {
+		t.Errorf("Expected raw content unchanged on fail-open, got different content")
+	}
+}
+
+func TestPrepareUploadBody_NilSanitizer(t *testing.T) {
+	tmpDir := t.TempDir()
+	logFile := filepath.Join(tmpDir, "test.log")
+	content := "AKIA" + "IOSFODNN7EXAMPLE"
+	if err := os.WriteFile(logFile, []byte(content), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	uploader := &S3Uploader{sanitizer: nil}
+	body, size, err := uploader.prepareUploadBody(logFile, "test.log")
+	if err != nil {
+		t.Fatalf("prepareUploadBody failed: %v", err)
+	}
+
+	// Without sanitizer, raw content is returned unchanged
+	defer body.Close()
+	result, _ := io.ReadAll(body)
+	if string(result) != content {
+		t.Errorf("Expected raw content %q, got %q", content, string(result))
+	}
+	if size != int64(len(content)) {
+		t.Errorf("Expected size %d, got %d", len(content), size)
+	}
+}
+
+func TestPrepareUploadBody_LargeFileStreamed(t *testing.T) {
+	tmpDir := t.TempDir()
+	logFile := filepath.Join(tmpDir, "large.log")
+	// Write a file larger than maxSanitizableBytes (50MB) — use sparse write via truncate
+	f, err := os.Create(logFile)
+	if err != nil {
+		t.Fatal(err)
+	}
+	size := maxSanitizableBytes + 1
+	if err := f.Truncate(size); err != nil {
+		f.Close()
+		t.Fatal(err)
+	}
+	f.Close()
+
+	s, err := sanitizer.New(&sanitizer.Config{EnableAudit: false})
+	if err != nil {
+		t.Fatalf("Failed to create sanitizer: %v", err)
+	}
+	uploader := &S3Uploader{sanitizer: s}
+
+	body, reportedSize, prepErr := uploader.prepareUploadBody(logFile, "large.log")
+	if prepErr != nil {
+		t.Fatalf("prepareUploadBody failed: %v", prepErr)
+	}
+	defer body.Close()
+
+	if reportedSize != size {
+		t.Errorf("Expected size %d, got %d", size, reportedSize)
 	}
 }

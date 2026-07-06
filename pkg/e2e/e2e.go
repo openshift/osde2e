@@ -17,6 +17,7 @@ import (
 	"github.com/onsi/ginkgo/v2/types"
 	"github.com/onsi/gomega"
 	"github.com/openshift/osde2e/internal/analysisengine"
+	"github.com/openshift/osde2e/internal/sanitizer"
 	"github.com/openshift/osde2e/pkg/common/aws"
 	"github.com/openshift/osde2e/pkg/common/cluster"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
@@ -307,8 +308,9 @@ func (o *E2EOrchestrator) AnalyzeLogs(ctx context.Context, testErr error) error 
 				Version:       viper.GetString(config.Cluster.Version),
 			},
 		},
-		PromptTemplate: "default",
-		FailureContext: testErr.Error(),
+		PromptTemplate:  "default",
+		FailureContext:  testErr.Error(),
+		SanitizerConfig: &sanitizer.Config{EnableAudit: false},
 	}
 
 	engine, err := analysisengine.New(ctx, engineConfig)
