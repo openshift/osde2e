@@ -3,13 +3,17 @@ package llm
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"google.golang.org/genai"
 
 	"github.com/openshift/osde2e/internal/llm/tools"
 )
 
-const DefaultModel = "gemini-3.1-pro-preview"
+const (
+	DefaultModel  = "gemini-3.1-pro-preview"
+	FallbackModel = "gemini-2.5-pro"
+)
 
 type GeminiClient struct {
 	client *genai.Client
@@ -72,23 +76,14 @@ func (g *GeminiClient) handleConversationWithTools(ctx context.Context, contents
 	const maxIterations = 5
 	var toolCalls []*genai.FunctionCall
 
-	for i := range maxIterations {
-		resp, err := g.client.Models.GenerateContent(ctx, g.model, contents, genConfig)
-		if err != nil {
-			return nil, fmt.Errorf("gemini API error: %w", err)
-		}
-
-		candidate, err := g.extractCandidate(resp)
+	for range maxIterations {
+		textContent, functionCalls, err := g.callLLM(ctx, contents, genConfig)
 		if err != nil {
 			return nil, err
 		}
 
-		textContent, functionCalls := g.processCandidateParts(candidate)
-
-		// Track function calls from this iteration
 		toolCalls = append(toolCalls, functionCalls...)
 
-		// If no function calls, we're done
 		if len(functionCalls) == 0 {
 			return &AnalysisResult{
 				Content:   textContent,
@@ -96,51 +91,84 @@ func (g *GeminiClient) handleConversationWithTools(ctx context.Context, contents
 			}, nil
 		}
 
-		// Process function calls and continue conversation
 		contents, err = g.processFunctionCalls(ctx, contents, functionCalls, toolRegistry)
 		if err != nil {
 			return nil, err
 		}
-
-		// Return partial result if we hit max iterations
-		if i == maxIterations-1 {
-			return &AnalysisResult{
-				Content:   textContent,
-				ToolCalls: toolCalls,
-			}, nil
-		}
 	}
 
-	return &AnalysisResult{ToolCalls: toolCalls}, fmt.Errorf("max iterations reached without final response")
+	// Loop exhausted: make one final call with tool calling disabled to force a text response
+	contents = append(contents, genai.NewContentFromText(
+		"You have used all available tool calls. Produce your final analysis based on the information gathered so far.",
+		genai.RoleUser,
+	))
+	finalConfig := g.configWithToolsDisabled(genConfig)
+	finalText, _, err := g.callLLM(ctx, contents, finalConfig)
+	if err != nil {
+		return &AnalysisResult{ToolCalls: toolCalls}, err
+	}
+
+	return &AnalysisResult{
+		Content:   finalText,
+		ToolCalls: toolCalls,
+	}, nil
+}
+
+func (g *GeminiClient) callLLM(ctx context.Context, contents []*genai.Content, genConfig *genai.GenerateContentConfig) (string, []*genai.FunctionCall, error) {
+	resp, err := g.client.Models.GenerateContent(ctx, g.model, contents, genConfig)
+	if err != nil {
+		return "", nil, fmt.Errorf("gemini API error: %w", err)
+	}
+
+	candidate, err := g.extractCandidate(resp)
+	if err != nil {
+		return "", nil, err
+	}
+
+	text, calls := g.processCandidateParts(candidate)
+	return text, calls, nil
+}
+
+func (g *GeminiClient) configWithToolsDisabled(genConfig *genai.GenerateContentConfig) *genai.GenerateContentConfig {
+	if genConfig == nil {
+		return nil
+	}
+	cfg := *genConfig
+	cfg.ToolConfig = &genai.ToolConfig{
+		FunctionCallingConfig: &genai.FunctionCallingConfig{
+			Mode: genai.FunctionCallingConfigModeNone,
+		},
+	}
+	return &cfg
 }
 
 func (g *GeminiClient) extractCandidate(resp *genai.GenerateContentResponse) (*genai.Candidate, error) {
 	if len(resp.Candidates) == 0 {
-		return nil, fmt.Errorf("no response candidates from gemini")
+		return nil, ErrNoResponseCandidates
 	}
 
 	candidate := resp.Candidates[0]
 	if candidate.Content == nil || len(candidate.Content.Parts) == 0 {
-		return nil, fmt.Errorf("no content in gemini response")
+		return nil, ErrNoContentInResponse
 	}
 
 	return candidate, nil
 }
 
 func (g *GeminiClient) processCandidateParts(candidate *genai.Candidate) (string, []*genai.FunctionCall) {
-	var textContent string
+	var text strings.Builder
 	var functionCalls []*genai.FunctionCall
 
 	for _, part := range candidate.Content.Parts {
 		if part.Text != "" {
-			textContent += part.Text
+			text.WriteString(part.Text)
 		}
 		if part.FunctionCall != nil {
 			functionCalls = append(functionCalls, part.FunctionCall)
 		}
 	}
 
-	return textContent, functionCalls
+	return text.String(), functionCalls
 }
 
 func (g *GeminiClient) processFunctionCalls(ctx context.Context, contents []*genai.Content, functionCalls []*genai.FunctionCall, toolRegistry *tools.Registry) ([]*genai.Content, error) {
@@ -151,7 +179,7 @@ func (g *GeminiClient) processFunctionCalls(ctx context.Context, contents []*gen
 		// Execute the tool and get the result
 		toolResult, err := toolRegistry.HandleToolCall(ctx, functionCall)
 		if err != nil {
-			return nil, fmt.Errorf("failed to handle tool call: %w", err)
+			return nil, fmt.Errorf("%w: %w", ErrToolCallFailed, err)
 		}
 
 		// Add the tool result to conversation history

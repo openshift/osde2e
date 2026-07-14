@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/go-logr/logr"
 	"github.com/openshift/osde2e/internal/aggregator"
 	"github.com/openshift/osde2e/internal/llm"
 	"github.com/openshift/osde2e/internal/llm/tools"
@@ -34,6 +35,7 @@ type Engine struct {
 	aggregatorService *aggregator.Aggregator
 	promptStore       *prompts.PromptStore
 	llmClient         llm.LLMClient
+	fallbackLLMClient llm.LLMClient
 }
 
 // New creates a new analysis engine
@@ -65,11 +67,17 @@ func New(ctx context.Context, config *Config) (*Engine, error) {
 		return nil, fmt.Errorf("failed to initialize LLM client: %w", err)
 	}
 
+	fallbackLLMClient, err := llm.NewGeminiClientWithModel(ctx, config.APIKey, llm.FallbackModel)
+	if err != nil {
+		return nil, fmt.Errorf("failed to initialize fallback LLM client: %w", err)
+	}
+
 	return &Engine{
 		config:            config,
 		aggregatorService: aggregatorService,
 		promptStore:       promptStore,
 		llmClient:         client,
+		fallbackLLMClient: fallbackLLMClient,
 	}, nil
 }
 
@@ -114,7 +122,15 @@ func (e *Engine) Run(ctx context.Context) (*Result, error) {
 		}
 	}
 
-	result, err := e.llmClient.Analyze(ctx, userPrompt, llmConfig, toolRegistry)
+	logger := logr.FromContextOrDiscard(ctx)
+	result, err := llm.AnalyzeWithRetry(ctx, logger,
+		func() (*llm.AnalysisResult, error) {
+			return e.llmClient.Analyze(ctx, userPrompt, llmConfig, toolRegistry)
+		},
+		func() (*llm.AnalysisResult, error) {
+			return e.fallbackLLMClient.Analyze(ctx, userPrompt, llmConfig, toolRegistry)
+		},
+	)
 	if err != nil {
 		return nil, fmt.Errorf("log analysis failed: %w", err)
 	}
