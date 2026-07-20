@@ -3,58 +3,58 @@ module github.com/openshift/osde2e
 go 1.25.0
 
 require (
-	cloud.google.com/go/kms v1.21.1
-	github.com/Masterminds/semver/v3 v3.4.0
-	github.com/PuerkitoBio/goquery v1.10.2
+	cloud.google.com/go/kms v1.32.0
+	github.com/Masterminds/semver/v3 v3.5.0
+	github.com/PuerkitoBio/goquery v1.12.0
 	github.com/adamliesko/retry v0.0.0-20200123222335-86c8baac277d
-	github.com/aws/aws-sdk-go-v2 v1.42.0
-	github.com/aws/aws-sdk-go-v2/config v1.32.25
-	github.com/aws/aws-sdk-go-v2/credentials v1.19.24
-	github.com/aws/aws-sdk-go-v2/service/cloudformation v1.71.4
-	github.com/aws/aws-sdk-go-v2/service/ec2 v1.294.1
-	github.com/aws/aws-sdk-go-v2/service/iam v1.54.5
-	github.com/aws/aws-sdk-go-v2/service/s3 v1.104.0
-	github.com/aws/smithy-go v1.27.1
-	github.com/fsnotify/fsnotify v1.9.0
+	github.com/aws/aws-sdk-go-v2 v1.42.1
+	github.com/aws/aws-sdk-go-v2/config v1.32.30
+	github.com/aws/aws-sdk-go-v2/credentials v1.19.29
+	github.com/aws/aws-sdk-go-v2/service/cloudformation v1.74.1
+	github.com/aws/aws-sdk-go-v2/service/ec2 v1.316.1
+	github.com/aws/aws-sdk-go-v2/service/iam v1.55.1
+	github.com/aws/aws-sdk-go-v2/service/s3 v1.105.2
+	github.com/aws/smithy-go v1.27.4
+	github.com/fsnotify/fsnotify v1.10.1
 	github.com/go-logr/logr v1.4.3
 	github.com/golang-jwt/jwt/v4 v4.5.2
-	github.com/gomarkdown/markdown v0.0.0-20260217112301-37c66b85d6ab
+	github.com/gomarkdown/markdown v0.0.0-20260614204949-e08cff860f76
 	github.com/google/go-github/v31 v31.0.0
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1
-	github.com/hashicorp/go-version v1.7.0
-	github.com/hashicorp/hc-install v0.9.2
-	github.com/hashicorp/terraform-exec v0.23.0
+	github.com/hashicorp/go-version v1.9.0
+	github.com/hashicorp/hc-install v0.9.5
+	github.com/hashicorp/terraform-exec v0.25.2
 	github.com/joshdk/go-junit v1.0.0
 	github.com/kylelemons/godebug v1.1.0
 	github.com/microcosm-cc/bluemonday v1.0.27
 	github.com/mitchellh/mapstructure v1.5.0
-	github.com/onsi/ginkgo/v2 v2.28.1
-	github.com/onsi/gomega v1.39.1
+	github.com/onsi/ginkgo/v2 v2.32.0
+	github.com/onsi/gomega v1.42.1
 	github.com/openshift-online/ocm-sdk-go v0.1.499
 	github.com/openshift/api v0.0.0-20260318185450-1f2fa3f09f4e
 	github.com/openshift/client-go v0.0.0-20260320040014-4b5fc2cdad98
 	github.com/openshift/cloud-credential-operator v0.0.0-20250326174647-d66761c09842
 	github.com/openshift/managed-upgrade-operator v0.0.0-20260318004129-350c2fbceedb
 	github.com/openshift/osde2e-common v0.0.0-20260514215146-b07512784467
-	github.com/operator-framework/api v0.30.0
-	github.com/operator-framework/operator-lifecycle-manager v0.22.0
-	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.74.0
-	github.com/prometheus-operator/prometheus-operator/pkg/client v0.74.0
+	github.com/operator-framework/api v0.44.0
+	github.com/operator-framework/operator-lifecycle-manager v0.45.0
+	github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring v0.92.1
+	github.com/prometheus-operator/prometheus-operator/pkg/client v0.92.1
 	github.com/prometheus/client_golang v1.23.2
 	github.com/prometheus/common v0.67.5 // indirect
-	github.com/spf13/afero v1.12.0
-	github.com/spf13/cobra v1.10.0
-	github.com/spf13/pflag v1.0.9
-	github.com/spf13/viper v1.19.0
+	github.com/spf13/afero v1.15.0
+	github.com/spf13/cobra v1.10.2
+	github.com/spf13/pflag v1.0.10
+	github.com/spf13/viper v1.21.0
 	github.com/stretchr/testify v1.11.1
-	github.com/vmware-tanzu/velero v1.10.2
+	github.com/vmware-tanzu/velero v1.18.2
 	golang.org/x/net v0.54.0
 	golang.org/x/oauth2 v0.34.0 // indirect
 	golang.org/x/sync v0.20.0
 	golang.org/x/tools v0.44.0
-	google.golang.org/api v0.227.0
-	google.golang.org/genai v1.51.0
+	google.golang.org/api v0.289.0
+	google.golang.org/genai v1.64.0
 	google.golang.org/genproto v0.0.0-20250409194420-de1ac958c67a // indirect
 	gopkg.in/yaml.v3 v3.0.1
 	gotest.tools/v3 v3.5.2
@@ -65,11 +65,11 @@ require (
 	k8s.io/klog/v2 v2.130.1
 	k8s.io/kubectl v0.35.2
 	k8s.io/utils v0.0.0-20251002143259-bc988d571ff4
-	sigs.k8s.io/controller-runtime v0.21.0
-	sigs.k8s.io/e2e-framework v0.6.0
+	sigs.k8s.io/controller-runtime v0.24.1
+	sigs.k8s.io/e2e-framework v0.7.0
 )
 
-require github.com/aws/aws-sdk-go-v2/feature/s3/transfermanager v0.2.11
+require github.com/aws/aws-sdk-go-v2/feature/s3/transfermanager v0.3.3
 
 require (
 	cloud.google.com/go v0.120.0 // indirect
