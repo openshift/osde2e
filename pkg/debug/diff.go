@@ -119,7 +119,10 @@ func GetImageList(list *v1.PodList) (images map[string]string, err error) {
 
 // GetCurrentMCCHash attempts to pull back the current master SHA1 hash from GitHub
 func GetCurrentMCCHash() (hash string, err error) {
-	gh := github.NewClient(nil)
+	gh, err := github.NewClient()
+	if err != nil {
+		return "", err
+	}
 
 	commits, _, err := gh.Repositories.ListCommits(context.Background(), "openshift", "managed-cluster-config", &github.CommitsListOptions{})
 	if err != nil {
