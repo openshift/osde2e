@@ -264,8 +264,8 @@ var Tests = struct {
 	// Env: TEST_USER
 	TestUser string
 
-	// SlackChannel is the name of a slack channel in the Internal Red hat slack workspace that will
-	// receive an alert if the tests fail.
+	// SlackChannel is the ID of a slack channel in the Internal Red hat slack workspace that will
+	// receive an alert if the tests fail. Must be a channel ID (starts with C), not a name.
 	// Env: SLACK_CHANNEL
 	SlackChannel string
 
@@ -820,7 +820,7 @@ func InitOSDe2eViper() {
 
 	_ = viper.BindEnv(Tests.ServiceAccount, "SERVICE_ACCOUNT")
 
-	viper.SetDefault(Tests.SlackChannel, "hcm-cicd-alerts")
+	viper.SetDefault(Tests.SlackChannel, "CNYM6PB6X") // #hcm-cicd-alerts channel ID
 	_ = viper.BindEnv(Tests.SlackChannel, "SLACK_CHANNEL")
 
 	_ = viper.BindEnv(Slack.WebhookURL, "SLACK_WEBHOOK")
