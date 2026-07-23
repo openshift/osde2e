@@ -14,7 +14,7 @@ import (
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
-	"github.com/google/go-github/v31/github"
+	"github.com/google/go-github/v89/github"
 	"github.com/kylelemons/godebug/diff"
 	viper "github.com/openshift/osde2e/pkg/common/concurrentviper"
 	"github.com/openshift/osde2e/pkg/common/config"
@@ -119,7 +119,10 @@ func GetImageList(list *v1.PodList) (images map[string]string, err error) {
 
 // GetCurrentMCCHash attempts to pull back the current master SHA1 hash from GitHub
 func GetCurrentMCCHash() (hash string, err error) {
-	gh := github.NewClient(nil)
+	gh, err := github.NewClient()
+	if err != nil {
+		return "", err
+	}
 
 	commits, _, err := gh.Repositories.ListCommits(context.Background(), "openshift", "managed-cluster-config", &github.CommitsListOptions{})
 	if err != nil {
