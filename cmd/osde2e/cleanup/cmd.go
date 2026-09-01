@@ -48,19 +48,22 @@ var args struct {
 	ec2             bool
 	vpc             bool
 	securityGroup   bool
+	secrets         bool
 }
 
 type Message struct {
-	Summary   string `json:"summary"`
-	BuildFile string `json:"buildfile"`
-	S3Errors  string `json:"s3"`
-	IAMErrors string `json:"iam"`
-	IPErrors  string `json:"ip"`
-	EC2Errors string `json:"ec2"`
-	VPCErrors string `json:"vpc"`
-	SGErrors  string `json:"sg"`
+	Summary       string `json:"summary"`
+	BuildFile     string `json:"buildfile"`
+	S3Errors      string `json:"s3"`
+	IAMErrors     string `json:"iam"`
+	IPErrors      string `json:"ip"`
+	EC2Errors     string `json:"ec2"`
+	VPCErrors     string `json:"vpc"`
+	SGErrors      string `json:"sg"`
+	SecretsErrors string `json:"secrets"`
 }
 
+// init registers cleanup command flags.
 func init() {
 	flags := Cmd.Flags()
 
@@ -106,6 +109,12 @@ func init() {
 		false,
 		"Cleanup s3 buckets",
 	)
+	flags.BoolVar(
+		&args.secrets,
+		"secrets",
+		false,
+		"Cleanup leftover Secrets Manager secrets (unmanaged ROSA OIDC keys and CAPA userdata). Must run as the same OCM account that created the clusters.",
+	)
 
 	flags.BoolVar(
 		&args.clusters,
@@ -118,7 +127,7 @@ func init() {
 		&args.olderThan,
 		"older-than",
 		"24h",
-		"Cleanup iam resources older than this duration. Accepts a sequence of decimal numbers with a unit suffix, such as '2h45m'",
+		"Cleanup IAM and Secrets Manager leftovers older than this duration. Accepts a sequence of decimal numbers with a unit suffix, such as '2h45m'",
 	)
 	flags.BoolVar(
 		&args.dryRun,
@@ -199,6 +208,54 @@ func collectActiveClusters() (map[string]bool, error) {
 	return activeClusters, nil
 }
 
+const osde2eClusterQuery = "properties.MadeByOSDe2e='true'"
+
+const requiredOCMEnvs = "int, stage, and prod"
+
+// collectSecretsCleanupSkipSets returns live MadeByOSDe2e cluster names and
+// unmanaged OIDC private-key ARNs owned by the current OCM account. Both maps
+// are never nil on success. This job must run as the fixed provisioner
+// account that created the clusters; a personal token is not supported.
+//
+// NewWithEnv only builds a client; invalid refresh tokens fail on the first
+// API call. Every environment is attempted so the error lists all failures.
+func collectSecretsCleanupSkipSets(ctx context.Context) (map[string]bool, map[string]bool, error) {
+	envs := []string{"int", "stage", "prod"}
+	clusters := make(map[string]bool)
+	arns := make(map[string]bool)
+	var errs []error
+
+	for _, env := range envs {
+		provider, err := ocmprovider.NewWithEnv(env)
+		if err != nil {
+			errs = append(errs, fmt.Errorf("%s: %w", env, err))
+			continue
+		}
+		owned, err := provider.ListOwnedClusters(osde2eClusterQuery)
+		if err != nil {
+			errs = append(errs, fmt.Errorf("%s: %w", env, err))
+			continue
+		}
+		envARNs, err := provider.ListOIDCSecretARNs(ctx, owned)
+		if err != nil {
+			errs = append(errs, fmt.Errorf("%s: list oidc secret arns: %w", env, err))
+			continue
+		}
+		for _, cluster := range owned {
+			clusters[cluster.Name()] = true
+			log.Printf("Skipping live cluster during secrets cleanup in %s: %s (state: %s)\n", env, cluster.Name(), cluster.State())
+		}
+		for arn := range envARNs {
+			arns[arn] = true
+			log.Printf("Skipping live OIDC secret ARN during secrets cleanup in %s: %s\n", env, arn)
+		}
+	}
+	if len(errs) > 0 {
+		return nil, nil, fmt.Errorf("secrets cleanup requires valid OCM credentials for %s (refresh OCM_TOKEN or ocm-refresh-token): %w", requiredOCMEnvs, errors.Join(errs...))
+	}
+	return clusters, arns, nil
+}
+
 // sendSlackNotification sends the cleanup summary to Slack if sendSummary is set and webhook is configured.
 // When runErr is non-nil, it appends the run failure to the message summary.
 func sendSlackNotification(msg Message, runErr error) {
@@ -221,6 +278,8 @@ func sendSlackNotification(msg Message, runErr error) {
 	fmt.Println("Slack notification sent successfully")
 }
 
+// run executes the selected cleanup operations and builds the Slack summary message.
+//
 //nolint:gocyclo
 func run(ctx context.Context) (msg Message, err error) {
 	var summaryBuilder strings.Builder
@@ -230,6 +289,7 @@ func run(ctx context.Context) (msg Message, err error) {
 	var ec2ErrorBuilder strings.Builder
 	var vpcErrorBuilder strings.Builder
 	var sgErrorBuilder strings.Builder
+	var secretsErrorBuilder strings.Builder
 
 	defer func() {
 		buildFile := ""
@@ -242,14 +302,15 @@ func run(ctx context.Context) (msg Message, err error) {
 		buildFile += "/" + viper.GetString(config.JobName) +
 			"/" + viper.GetString(config.JobID) + "/artifacts/test/build-log.txt"
 		msg = Message{
-			Summary:   summaryBuilder.String(),
-			BuildFile: "Build Logs: " + buildFile,
-			S3Errors:  "S3 Errors: " + s3ErrorBuilder.String(),
-			IAMErrors: "IAM Errors: " + iamErrorBuilder.String(),
-			IPErrors:  "IP Errors: " + ipErrorBuilder.String(),
-			EC2Errors: "EC2 Errors: " + ec2ErrorBuilder.String(),
-			VPCErrors: "VPC Errors: " + vpcErrorBuilder.String(),
-			SGErrors:  "SG Errors: " + sgErrorBuilder.String(),
+			Summary:       summaryBuilder.String(),
+			BuildFile:     "Build Logs: " + buildFile,
+			S3Errors:      "S3 Errors: " + s3ErrorBuilder.String(),
+			IAMErrors:     "IAM Errors: " + iamErrorBuilder.String(),
+			IPErrors:      "IP Errors: " + ipErrorBuilder.String(),
+			EC2Errors:     "EC2 Errors: " + ec2ErrorBuilder.String(),
+			VPCErrors:     "VPC Errors: " + vpcErrorBuilder.String(),
+			SGErrors:      "SG Errors: " + sgErrorBuilder.String(),
+			SecretsErrors: "Secrets Errors: " + secretsErrorBuilder.String(),
 		}
 	}()
 
@@ -272,13 +333,14 @@ func run(ctx context.Context) (msg Message, err error) {
 		}
 	}
 
-	// Collect active clusters once for all cleanup operations
-	activeClusters, err := collectActiveClusters()
-	if err != nil {
-		return msg, fmt.Errorf("could not collect active clusters: %v", err)
+	var activeClusters map[string]bool
+	if args.securityGroup || args.vpc || args.iam || args.s3 || args.ec2 {
+		activeClusters, err = collectActiveClusters()
+		if err != nil {
+			return msg, fmt.Errorf("could not collect active clusters: %v", err)
+		}
+		log.Printf("Found %d active clusters for cleanup operations\n", len(activeClusters))
 	}
-	log.Printf("Found %d active clusters for cleanup operations\n", len(activeClusters))
-
 	// Security groups exist inside VPCs so we want to make sure they are cleaned up before we try to clean up the VPCs
 	if args.securityGroup {
 		sgDeletedCounter := 0
@@ -363,6 +425,19 @@ func run(ctx context.Context) (msg Message, err error) {
 		summaryBuilder.WriteString("S3 Buckets: " + strconv.Itoa(s3Counters.Deleted) + "/" + strconv.Itoa(s3Counters.Failed) + "\n")
 		if err != nil {
 			return msg, fmt.Errorf("could not delete s3 buckets: %s", err.Error())
+		}
+	}
+
+	if args.secrets {
+		secretClusters, oidcARNs, err := collectSecretsCleanupSkipSets(ctx)
+		if err != nil {
+			return msg, fmt.Errorf("could not collect live clusters and oidc secret arns: %v", err)
+		}
+		log.Printf("Secrets cleanup will skip %d live clusters and %d live OIDC secret ARNs\n", len(secretClusters), len(oidcARNs))
+		secretsCounters, err := aws.CcsAwsSession.CleanupSecrets(ctx, secretClusters, oidcARNs, fmtDuration, args.dryRun, args.sendSummary, &secretsErrorBuilder)
+		summaryBuilder.WriteString("Secrets: " + strconv.Itoa(secretsCounters.Deleted) + "/" + strconv.Itoa(secretsCounters.Failed) + "\n")
+		if err != nil {
+			return msg, fmt.Errorf("could not delete secrets: %s", err.Error())
 		}
 	}
 
