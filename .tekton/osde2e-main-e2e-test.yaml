@@ -27,7 +27,7 @@ spec:
           - name: COMPONENT_IMAGE
             description: parsed component image spec
         steps:
-          - image: "registry.access.redhat.com/ubi8/ubi-minimal:latest@sha256:5d76d0cedabd7d7893b28bec684d7a3412dd8d95d186e7d4b6eeed4ea28c327b"
+          - image: "registry.access.redhat.com/ubi8/ubi-minimal:latest@sha256:d9beb74f4b32ef937d3a206430b6d9200a0b0d32ecc548325a738d0e4f7f0f1b"
             env:
               - name: SNAPSHOT
                 value: $(params.SNAPSHOT)
