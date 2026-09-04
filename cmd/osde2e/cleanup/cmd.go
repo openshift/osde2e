@@ -437,7 +437,14 @@ func run(ctx context.Context) (msg Message, err error) {
 		secretsCounters, err := aws.CcsAwsSession.CleanupSecrets(ctx, secretClusters, oidcARNs, fmtDuration, args.dryRun, args.sendSummary, &secretsErrorBuilder)
 		summaryBuilder.WriteString("Secrets: " + strconv.Itoa(secretsCounters.Deleted) + "/" + strconv.Itoa(secretsCounters.Failed) + "\n")
 		if err != nil {
-			return msg, fmt.Errorf("could not delete secrets: %s", err.Error())
+			if !errors.Is(err, aws.ErrSecretsCleanup) {
+				return msg, fmt.Errorf("could not delete secrets: %s", err.Error())
+			}
+			secretsErrorMessage := err.Error()
+			if len(secretsErrorMessage) > config.SlackMessageLength {
+				secretsErrorMessage = secretsErrorMessage[:config.SlackMessageLength]
+			}
+			secretsErrorBuilder.WriteString(secretsErrorMessage)
 		}
 	}
 
