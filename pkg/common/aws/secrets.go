@@ -20,6 +20,10 @@ const (
 	rosaOIDCSecretPref = "rosa-private-key-oidc-"
 )
 
+// ErrSecretsCleanup is returned when secrets cleanup completes with recoverable
+// errors, such as unreachable AWS regions from the CI network.
+var ErrSecretsCleanup = fmt.Errorf("secrets cleanup encountered errors")
+
 // CleanupSecrets deletes leftover Secrets Manager secrets created by osde2e ROSA STS/HCP
 // provision (unmanaged OIDC private keys and CAPA userdata) that are not tied to a live cluster.
 // activeClusters and activeOIDCSecretARNs must be non-nil. Nil means listing was
@@ -342,7 +346,10 @@ func cleanupSecrets(ctx context.Context, in cleanupSecretsInput, deps cleanupSec
 			regionErrs = append(regionErrs, regionErr)
 		}
 	}
-	return result, errors.Join(regionErrs...)
+	if len(regionErrs) > 0 {
+		return result, fmt.Errorf("%w: %v", ErrSecretsCleanup, errors.Join(regionErrs...))
+	}
+	return result, nil
 }
 
 // listSecretCleanupRegions returns enabled AWS regions to scan, or the session region on DescribeRegions failure.

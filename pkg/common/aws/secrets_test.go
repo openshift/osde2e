@@ -619,6 +619,9 @@ func TestCleanupSecretsContinuesAfterRegionListError(t *testing.T) {
 	if err == nil {
 		t.Fatal("cleanupSecrets() error = nil, want region list error")
 	}
+	if !errors.Is(err, ErrSecretsCleanup) {
+		t.Fatalf("cleanupSecrets() error = %v, want ErrSecretsCleanup", err)
+	}
 	if !strings.Contains(err.Error(), "us-east-1") {
 		t.Fatalf("error = %v, want us-east-1 list failure", err)
 	}
