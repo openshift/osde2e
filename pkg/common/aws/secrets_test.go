@@ -38,6 +38,16 @@ func TestIsLeftoverSecret(t *testing.T) {
 			want:   true,
 		},
 		{
+			name:   "unmanaged rosa oidc with osde2e cluster prefix",
+			secret: secretIdentity{Name: "rosa-private-key-osde2e-btf9i-oidc-b5x9"},
+			want:   true,
+		},
+		{
+			name:   "rosa private key without oidc bucket segment",
+			secret: secretIdentity{Name: "rosa-private-key-osde2e-btf9i-installer"},
+			want:   false,
+		},
+		{
 			name:   "user-defined name containing osde2e",
 			secret: secretIdentity{Name: "osde2e-shared-token"},
 			want:   false,
@@ -133,6 +143,12 @@ func TestBelongsToActiveCluster(t *testing.T) {
 		{
 			name:        "cluster name in secret name",
 			secret:      secretIdentity{Name: "osde2e-live1-oidc"},
+			wantCluster: "osde2e-live1",
+			wantSkip:    true,
+		},
+		{
+			name:        "rosa oidc key with osde2e cluster prefix in name",
+			secret:      secretIdentity{Name: "rosa-private-key-osde2e-live1-oidc-a1b2"},
 			wantCluster: "osde2e-live1",
 			wantSkip:    true,
 		},
@@ -439,10 +455,13 @@ func TestCleanupSecretsEmptyOIDCSkipSet(t *testing.T) {
 
 func TestCleanupSecretsKeepsLiveUnmarkedOIDC(t *testing.T) {
 	t.Parallel()
-	live := leftoverSecret("rosa-private-key-oidc-live", "arn:aws:secretsmanager:us-east-1:1:secret:rosa-private-key-oidc-live-AbCdEf")
+	live := leftoverSecret(
+		"rosa-private-key-osde2e-live1-oidc-a1b2",
+		"arn:aws:secretsmanager:us-east-1:1:secret:rosa-private-key-osde2e-live1-oidc-a1b2-AbCdEf",
+	)
 	live.Description = nil
 	client, result, err := runSecretsCleanup([]secretsmanagertypes.SecretListEntry{live}, cleanupSecretsInput{
-		ActiveClusters:       map[string]bool{},
+		ActiveClusters:       map[string]bool{"osde2e-live1": true},
 		ActiveOIDCSecretARNs: map[string]bool{aws.ToString(live.ARN): true},
 		OlderThan:            24 * time.Hour,
 	}, nil)
@@ -456,7 +475,10 @@ func TestCleanupSecretsKeepsLiveUnmarkedOIDC(t *testing.T) {
 
 func TestCleanupSecretsUnmarkedOIDCPrefix(t *testing.T) {
 	t.Parallel()
-	orphan := leftoverSecret("rosa-private-key-oidc-other", "arn:aws:secretsmanager:us-east-1:1:secret:rosa-private-key-oidc-other-AbCdEf")
+	orphan := leftoverSecret(
+		"rosa-private-key-osde2e-dead1-oidc-a1b2",
+		"arn:aws:secretsmanager:us-east-1:1:secret:rosa-private-key-osde2e-dead1-oidc-a1b2-XyZ123",
+	)
 	orphan.Description = nil
 	client, result, err := runSecretsCleanup([]secretsmanagertypes.SecretListEntry{orphan}, cleanupSecretsInput{
 		ActiveClusters:       map[string]bool{},

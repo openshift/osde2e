@@ -16,8 +16,10 @@ import (
 )
 
 const (
-	leftoverNameMarker = "osde2e"
-	rosaOIDCSecretPref = "rosa-private-key-oidc-"
+	leftoverNameMarker  = "osde2e"
+	rosaPrivateKeyPref  = "rosa-private-key-"
+	rosaOIDCSecretPref  = rosaPrivateKeyPref + "oidc-"
+	rosaOIDCBucketInfix = "-oidc-"
 )
 
 // ErrSecretsCleanup is returned when secrets cleanup completes with recoverable
@@ -177,13 +179,12 @@ func tagHasOSDe2eCluster(tagText string) bool {
 }
 
 // isLeftoverSecret reports whether a secret is in a class this janitor may delete.
-// Unmanaged ROSA OIDC private keys are named rosa-private-key-oidc-*. That prefix
-// is the leak: abort/timeout often leaves the key without an osde2e marker.
-// Live keys are kept by the OCM SecretArn skip set and --older-than, not by
-// requiring the marker. Other secrets (CAPA bootstrap userdata) are leftovers
-// when a tag key or value is an osde2e- cluster name. CAPA stores that name in
-// the tag key; a user-defined secret whose name merely contains "osde2e" is not
-// deleted.
+// Unmanaged ROSA OIDC private keys use either rosa-private-key-oidc-* (no cluster
+// prefix) or rosa-private-key-<prefix>-oidc-* (ROSA --prefix, e.g. osde2e-btf9i).
+// Live keys are kept by the OCM SecretArn skip set and --older-than. Other
+// secrets (CAPA bootstrap userdata) are leftovers when a tag key or value is an
+// osde2e- cluster name. CAPA stores that name in the tag key; a user-defined
+// secret whose name merely contains "osde2e" is not deleted.
 func isLeftoverSecret(secret secretIdentity) bool {
 	if isUnmanagedOIDCSecret(secret) {
 		return true
@@ -245,8 +246,19 @@ func awsSecretARNNameHasSuffix(full, base string) bool {
 }
 
 // isUnmanagedOIDCSecret reports whether the secret name is an unmanaged ROSA OIDC private key.
+// ROSA/ocm-common names secrets rosa-private-key-{bucket}; buckets are either oidc-{random}
+// or {clusterPrefix}-oidc-{random} when created with --prefix.
 func isUnmanagedOIDCSecret(secret secretIdentity) bool {
-	return strings.HasPrefix(secret.Name, rosaOIDCSecretPref)
+	name := secret.Name
+	if strings.HasPrefix(name, rosaOIDCSecretPref) {
+		return true
+	}
+	if !strings.HasPrefix(name, rosaPrivateKeyPref) {
+		return false
+	}
+	rest := name[len(rosaPrivateKeyPref):]
+	idx := strings.Index(rest, rosaOIDCBucketInfix)
+	return idx > 0 && idx+len(rosaOIDCBucketInfix) < len(rest)
 }
 
 // shouldSkipSecret reports whether a leftover must be kept. A nil OIDC skip set is
